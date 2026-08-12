@@ -1,0 +1,10 @@
+{
+  "name": "formline",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Football predictions, built and served from Vercel",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build:local": "node scripts/local-build.js"
+  }
+}

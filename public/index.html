@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="midnight">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Formline / Football predictions</title>
+<meta name="description" content="Statistical football predictions: match winner, double chance, goals and both teams to score.">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ==================================================================
+   THEMES
+   Every theme is dark. They differ in the temperature of the background
+   and the accent used for the home side. Set on <html data-theme="...">.
+   The published page bakes in whichever one is chosen in the admin.
+   ================================================================== */
+
+/* Midnight: true neutral black, nothing tinted. The default. */
+:root, [data-theme="midnight"]{
+  --ground:#08090A; --surface:#121316; --surface-2:#1B1D21; --line:#26282D;
+  --text:#EDEEF0; --dim:#8A8F98;
+  --home:#FFC244; --draw:#6E7480; --away:#4FB8F5;
+  --good:#5FD68A; --bad:#F0655A;
+}
+
+/* Carbon: charcoal with a colder accent pair. */
+[data-theme="carbon"]{
+  --ground:#0C0D0F; --surface:#16181C; --surface-2:#1F2228; --line:#2B2F36;
+  --text:#E9EBEE; --dim:#868C96;
+  --home:#E8E3D9; --draw:#5C6270; --away:#6F8FFF;
+  --good:#6BD68F; --bad:#F0655A;
+}
+
+/* Ink: deep blue-black, higher contrast accents. */
+[data-theme="ink"]{
+  --ground:#070B14; --surface:#101725; --surface-2:#182134; --line:#222E45;
+  --text:#E6ECF5; --dim:#7E8CA3;
+  --home:#F5C451; --draw:#5A6880; --away:#48C6E8;
+  --good:#5AD69B; --bad:#EF6B6B;
+}
+
+/* Slate: warm-neutral dark, softer than midnight. */
+[data-theme="slate"]{
+  --ground:#0D0D0E; --surface:#18181A; --surface-2:#222225; --line:#2E2E32;
+  --text:#EFEDEA; --dim:#8E8B87;
+  --home:#E9A23B; --draw:#66635E; --away:#7FB5A6;
+  --good:#7CC98E; --bad:#E0685C;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--ground);color:var(--text);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:15px;
+  line-height:1.5;padding-bottom:50px}
+.wrap{max-width:720px;margin:0 auto;padding:0 14px}
+
+header{padding:22px 0 12px;border-bottom:1px solid var(--line)}
+.brand{font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-weight:700;
+  font-size:34px;line-height:.95;letter-spacing:.02em;text-transform:uppercase}
+.brand span{color:var(--home)}
+.tagline{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;
+  color:var(--dim);text-transform:uppercase;letter-spacing:.11em;margin-top:6px}
+
+nav{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-top:10px}
+nav button{flex:1;background:none;border:0;cursor:pointer;color:var(--dim);
+  font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-weight:600;
+  font-size:15px;text-transform:uppercase;letter-spacing:.05em;padding:11px 2px;
+  border-bottom:2px solid transparent}
+nav button[aria-selected="true"]{color:var(--text);border-bottom-color:var(--home)}
+nav button:focus-visible{outline:2px solid var(--away);outline-offset:-2px}
+.panel{display:none;padding-top:14px}
+.panel.active{display:block}
+
+/* ------------------------------------------------------- filter bar */
+.filters{display:flex;gap:6px;overflow-x:auto;padding:12px 0 10px;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;background:var(--surface);border:1px solid var(--line);
+  color:var(--dim);font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:10px;text-transform:uppercase;letter-spacing:.07em;
+  padding:6px 11px;border-radius:2px;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--home);color:#0F1714;border-color:var(--home)}
+.chip:focus-visible{outline:2px solid var(--away);outline-offset:2px}
+
+/* --------------------------------------------------- league section */
+.league-head{display:flex;justify-content:space-between;align-items:baseline;
+  padding:18px 0 8px;border-bottom:1px solid var(--line);margin-bottom:2px}
+.league-name{font-family:'Barlow Condensed','Arial Narrow',sans-serif;
+  font-weight:600;font-size:20px;text-transform:uppercase;letter-spacing:.03em}
+.league-meta{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9px;
+  color:var(--dim);text-transform:uppercase;letter-spacing:.09em}
+
+/* ----------------------------------------------------------- match */
+.match{border-bottom:1px solid var(--line);padding:13px 0}
+.m-top{display:flex;justify-content:space-between;
+  font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9px;
+  color:var(--dim);letter-spacing:.09em;text-transform:uppercase;margin-bottom:7px}
+
+.m-main{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+.m-teams{min-width:0}
+.m-team{font-family:'Barlow Condensed','Arial Narrow',sans-serif;
+  font-weight:600;font-size:19px;line-height:1.25;
+  display:flex;justify-content:space-between;gap:8px}
+.m-team.win{color:var(--home)}
+.m-team span{font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:14px;font-weight:600;color:var(--dim);flex-shrink:0}
+.m-team.win span{color:var(--home)}
+
+.m-score{text-align:center;padding-left:10px;border-left:1px solid var(--line)}
+.m-score b{display:block;font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:22px;font-weight:600;letter-spacing:-.01em}
+.m-score i{display:block;font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:9px;color:var(--dim);font-style:normal;letter-spacing:.08em;
+  text-transform:uppercase;margin-top:2px}
+
+/* 1X2 bar */
+.wdl{display:flex;height:24px;border-radius:2px;overflow:hidden;margin-top:11px}
+.wdl div{display:flex;align-items:center;justify-content:center;
+  font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11px;
+  font-weight:600;color:#0F1714;overflow:hidden;white-space:nowrap;min-width:0}
+.w1{background:var(--home)} .wx{background:var(--draw)} .w2{background:var(--away)}
+.wdl-key{display:flex;font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:9px;color:var(--dim);letter-spacing:.08em;margin-top:4px;
+  text-transform:uppercase}
+.wdl-key span{flex:1}
+.wdl-key span:nth-child(2){text-align:center}
+.wdl-key span:nth-child(3){text-align:right}
+
+/* market grid */
+.mkts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:11px}
+.mkt{background:var(--surface);border-radius:2px;padding:8px 9px}
+.mkt em{display:block;font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;
+  font-style:normal}
+.mkt b{display:block;font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:15px;font-weight:600;margin-top:2px}
+.mkt.hi b{color:var(--good)}
+
+.tip{display:flex;align-items:center;gap:8px;margin-top:11px;
+  background:var(--surface-2);border-radius:2px;padding:8px 10px}
+.tip em{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9px;
+  color:var(--dim);text-transform:uppercase;letter-spacing:.09em;font-style:normal}
+.tip b{font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:17px;
+  font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.tip i{margin-left:auto;font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:13px;font-weight:600;font-style:normal;color:var(--good)}
+
+.conf{display:inline-block;font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:9px;letter-spacing:.07em;text-transform:uppercase;
+  padding:2px 6px;border-radius:2px;background:var(--surface);color:var(--dim)}
+.conf.h{color:var(--good)} .conf.l{color:var(--bad)}
+
+/* ---------------------------------------------------------- generic */
+h3{font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:19px;
+  font-weight:600;text-transform:uppercase;letter-spacing:.03em;margin-bottom:7px}
+.card{background:var(--surface);border-radius:2px;padding:15px;margin-bottom:12px}
+.card p{font-size:14px;color:var(--dim);line-height:1.65;margin-bottom:9px}
+.card p:last-child{margin-bottom:0}
+.card strong{color:var(--text);font-weight:500}
+button.act{background:var(--home);color:#0F1714;border:0;border-radius:2px;
+  font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-weight:700;
+  font-size:16px;text-transform:uppercase;letter-spacing:.05em;
+  padding:11px 18px;cursor:pointer}
+button.act.ghost{background:none;color:var(--text);border:1px solid var(--line)}
+button.act:disabled{opacity:.4;cursor:not-allowed}
+button.act:focus-visible{outline:2px solid var(--away);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+textarea,input,select{background:var(--ground);color:var(--text);
+  border:1px solid var(--line);border-radius:2px;padding:9px 10px;
+  font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;width:100%}
+textarea{min-height:90px;resize:vertical}
+label{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9px;
+  color:var(--dim);text-transform:uppercase;letter-spacing:.09em;
+  display:block;margin-bottom:4px}
+.field{margin-bottom:10px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.status{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11px;
+  color:var(--dim);margin-top:10px;line-height:1.7;white-space:pre-wrap}
+.bar{height:4px;background:var(--surface-2);border-radius:2px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--home);width:0%}
+.empty{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11px;
+  color:var(--dim);padding:30px 0;text-align:center;line-height:1.9}
+.note{font-size:13px;color:var(--dim);line-height:1.6;
+  border-left:2px solid var(--line);padding-left:11px;margin-top:14px}
+.note strong{color:var(--text);font-weight:500}
+.note.warn{border-left-color:var(--bad)}
+table{width:100%;border-collapse:collapse}
+th{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9px;font-weight:500;
+  color:var(--dim);text-transform:uppercase;letter-spacing:.08em;text-align:right;
+  padding:0 0 8px;border-bottom:1px solid var(--line)}
+th.l{text-align:left}
+td{padding:8px 0;border-bottom:1px solid var(--line);text-align:right;
+  font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px}
+td.l{text-align:left;font-family:'Barlow Condensed','Arial Narrow',sans-serif;
+  font-weight:600;font-size:16px}
+.step{display:flex;gap:11px;margin-bottom:13px}
+.step-n{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11px;
+  color:var(--home);flex-shrink:0;width:16px;padding-top:2px}
+.step-b{font-size:14px;color:var(--dim);line-height:1.6}
+.step-b b{color:var(--text);font-weight:500;display:block;margin-bottom:2px;font-size:15px}
+footer{margin-top:26px;padding-top:13px;border-top:1px solid var(--line);
+  font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;
+  color:var(--dim);letter-spacing:.05em;line-height:1.8}
+
+@media (max-width:420px){
+  .brand{font-size:29px}
+  .m-team{font-size:17px}
+  .m-score b{font-size:19px}
+  .mkts{grid-template-columns:repeat(3,1fr);gap:5px}
+  .mkt b{font-size:13px}
+  .split{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.mkt.wide em{letter-spacing:.05em}
+.badge{display:inline-block;font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:9px;letter-spacing:.07em;text-transform:uppercase;padding:2px 7px;
+  border-radius:2px;background:var(--surface-2);color:var(--draw);
+  border:1px solid var(--line);margin-left:6px}
+.badge.draw{color:var(--home);border-color:var(--home)}
+.mkt-group{margin-top:6px}
+.mkt-group-label{font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.09em;
+  margin:12px 0 5px}
+details.more{margin-top:8px}
+details.more summary{cursor:pointer;font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.09em;
+  padding:4px 0}
+details.more summary::-webkit-details-marker{color:var(--dim)}
+@media (max-width:420px){ .mkts{grid-template-columns:repeat(2,1fr)} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="brand">Form<span>line</span></div>
+  <div class="tagline" id="tagline"></div>
+</header>
+
+<nav role="tablist">
+  <button role="tab" aria-selected="true" data-p="pred">Predictions</button>
+  <button role="tab" aria-selected="false" data-p="help">How it works</button>
+</nav>
+
+<section class="panel active" id="pred">
+  <div class="filters" id="day-filters">
+    <button class="chip" data-day="0" aria-pressed="false">Today</button>
+    <button class="chip" data-day="1" aria-pressed="false">Tomorrow</button>
+    <button class="chip" data-day="01" aria-pressed="true">Next 2 days</button>
+    <button class="chip" data-day="all" aria-pressed="false">All upcoming</button>
+  </div>
+  <div class="filters" id="league-filters"></div>
+  <div id="pred-list"></div>
+</section>
+
+<section class="panel" id="help">
+  <div class="card">
+    <h3>Reading a prediction</h3>
+    <p><strong>The score</strong> on the right is the single most likely
+    result. Do not read too much into it. Even a good model rarely puts more
+    than about 12% on any one scoreline, so it describes the shape of the
+    game rather than forecasting it.</p>
+    <p><strong>The coloured bar</strong> is home win, draw and away win, and
+    the width of each part is its chance.</p>
+    <p><strong>Double chance</strong> covers two outcomes at once. 1X means
+    home win or draw, X2 means draw or away win, and 12 means either team
+    wins with only a draw losing.</p>
+    <p><strong>Confidence</strong> reflects how certain the result itself is,
+    not how safe the tip looks. Most football matches are genuinely close, so
+    low confidence is common and normal.</p>
+  </div>
+  <div class="card">
+    <h3>Where the numbers come from</h3>
+    <p>Every team carries an attack rating and a defence rating fitted from
+    its results, with recent matches weighted more heavily than old ones.
+    Each league has its own scoring baseline, because a Swiss game and a
+    Belgian game do not carry the same goal expectancy.</p>
+    <p>Those ratings give each side an expected goals figure, which becomes a
+    probability for every possible scoreline. The winner, double chance, over
+    and under, and both teams to score are all read from that one
+    distribution, so the numbers never contradict each other.</p>
+  </div>
+  <div class="card">
+    <h3>What it does not know</h3>
+    <p>Results, and nothing else. It has no knowledge of injuries,
+    suspensions, a new manager, a cup tie three days later, or a team already
+    safe in mid-table with nothing to play for. Treat it as one informed
+    opinion rather than the last word.</p>
+  </div>
+</section>
+
+<footer>
+  <div id="foot"></div>
+  <div>Predictions are statistical estimates, not certainties.</div>
+</footer>
+
+</div>
+
+<script>
+"use strict";
+let DATA = {generated:"", matches:0, leagues:[], fixtures:[]};
+const $=id=>document.getElementById(id);
+const P0=x=>Math.round(x*100);
+const VIEW={day:"01", league:""};
+
+document.querySelectorAll("nav button").forEach(b=>{
+  b.addEventListener("click",()=>{
+    document.querySelectorAll("nav button").forEach(x=>x.setAttribute("aria-selected","false"));
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    b.setAttribute("aria-selected","true");
+    $(b.dataset.p).classList.add("active");
+  });
+});
+
+function dayOff(iso){
+  const d=new Date(iso+"T00:00:00Z");
+  const n=new Date();
+  const t0=Date.UTC(n.getFullYear(),n.getMonth(),n.getDate());
+  return Math.round((Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())-t0)/86400000);
+}
+function dayName(o){
+  if(o===0) return "Today"; if(o===1) return "Tomorrow";
+  if(o===-1) return "Yesterday"; return null;
+}
+function confClass(p){ return p>=0.55?"h":(p<0.42?"l":""); }
+function confWord(p){ return p>=0.55?"High":(p<0.42?"Low":"Medium"); }
+
+function card(e){
+  const lab=dayName(dayOff(e.date))||e.date;
+  const homeWin=e.home_p>e.away_p&&e.home_p>e.draw_p;
+  const awayWin=e.away_p>e.home_p&&e.away_p>e.draw_p;
+  const outright=Math.max(e.home_p,e.draw_p,e.away_p);
+
+  const seg=(cls,v,txt)=>"<div class='"+cls+"' style='flex-grow:"+
+    (v*100).toFixed(2)+"'>"+(v>=0.12?txt:"")+"</div>";
+  const mkt=(l,v,hi)=>(v==null||isNaN(v))?"":
+    "<div class='mkt"+(hi?" hi":"")+"'><em>"+l+"</em><b>"+P0(v)+"%</b></div>";
+
+  return "<div class='match'>"+
+    "<div class='m-top'><span>"+lab+(e.time?" &middot; "+e.time:"")+"</span>"+
+      "<span class='conf "+confClass(outright)+"'>"+confWord(outright)+
+      " confidence</span></div>"+
+    "<div class='m-main'>"+
+      "<div class='m-teams'>"+
+        "<div class='m-team"+(homeWin?" win":"")+"'>"+e.home+
+          "<span>"+e.lh.toFixed(2)+"</span></div>"+
+        "<div class='m-team"+(awayWin?" win":"")+"'>"+e.away+
+          "<span>"+e.la.toFixed(2)+"</span></div>"+
+      "</div>"+
+      "<div class='m-score'><b>"+e.score+"</b><i>likely score</i></div>"+
+    "</div>"+
+    "<div class='wdl'>"+
+      seg("w1",e.home_p,P0(e.home_p)+"%")+
+      seg("wx",e.draw_p,P0(e.draw_p)+"%")+
+      seg("w2",e.away_p,P0(e.away_p)+"%")+
+    "</div>"+
+    "<div class='wdl-key'><span>Home</span><span>Draw</span><span>Away</span>"+
+      (e.draw_watch?"<span class='badge draw'>draw watch</span>":"")+"</div>"+
+
+    "<div class='mkt-group-label'>Double chance</div>"+
+    "<div class='mkts'>"+
+      mkt("1X",e.dc1x,e.dc1x>=0.75)+
+      mkt("Anybody wins",e.anybody!=null?e.anybody:e.dc12,
+        (e.anybody!=null?e.anybody:e.dc12)>=0.75)+
+      mkt("X2",e.dcx2,e.dcx2>=0.75)+
+    "</div>"+
+
+    "<div class='mkt-group-label'>Goals</div>"+
+    "<div class='mkts'>"+
+      mkt("Over 1.5",e.o15,e.o15>=0.75)+
+      mkt("Over 2.5",e.o25,e.o25>=0.6)+
+      mkt("Both score",e.btts,e.btts>=0.6)+
+    "</div>"+
+
+    "<details class='more'><summary>More markets</summary>"+
+      "<div class='mkts mkt-group'>"+
+        mkt("1st half goal",e.fh_o05,e.fh_o05!=null&&e.fh_o05>=0.7)+
+        mkt("BTTS &amp; O2.5",e.btts_o25,e.btts_o25!=null&&e.btts_o25>=0.55)+
+        mkt("Over 3.5",e.o35,e.o35>=0.5)+
+      "</div>"+
+      "<div class='mkts mkt-group'>"+
+        mkt("Draw or O2.5",e.draw_o25,e.draw_o25!=null&&e.draw_o25>=0.7)+
+        mkt("Draw or BTTS",e.draw_btts,e.draw_btts!=null&&e.draw_btts>=0.7)+
+        mkt("Under 2.5",1-e.o25,(1-e.o25)>=0.6)+
+      "</div>"+
+    "</details>"+
+
+    "<div class='tip'><em>Tip</em><b>"+e.tip+"</b><i>"+P0(e.tip_p)+"%</i></div>"+
+  "</div>";
+}
+
+function render(){
+  const lf=$("league-filters");
+  const leagues=DATA.leagues.slice().sort();
+  lf.innerHTML="<button class='chip' data-lg='' aria-pressed='"+
+    (VIEW.league===""?"true":"false")+"'>All leagues</button>"+
+    leagues.map(l=>"<button class='chip' data-lg=\""+l+"\" aria-pressed='"+
+      (VIEW.league===l?"true":"false")+"'>"+
+      l.replace(/^(\w+)\s.*/,"$1")+"</button>").join("");
+  lf.querySelectorAll(".chip").forEach(c=>{
+    c.addEventListener("click",()=>{VIEW.league=c.dataset.lg;render();});
+  });
+
+  let list=DATA.fixtures.filter(e=>{
+    const o=dayOff(e.date);
+    if(o<0) return false;
+    if(VIEW.day==="0"&&o!==0) return false;
+    if(VIEW.day==="1"&&o!==1) return false;
+    if(VIEW.day==="01"&&o!==0&&o!==1) return false;
+    if(VIEW.league&&e.league!==VIEW.league) return false;
+    return true;
+  });
+
+  if(!list.length){
+    $("pred-list").innerHTML="<div class='empty'>No fixtures for that "+
+      "selection.<br>Try All upcoming.</div>";
+    return;
+  }
+
+  const groups={};
+  for(const e of list)(groups[e.league]=groups[e.league]||[]).push(e);
+
+  $("pred-list").innerHTML=Object.keys(groups).sort().map(lg=>{
+    const g=groups[lg].sort((a,b)=>a.date.localeCompare(b.date)||
+      String(a.time).localeCompare(String(b.time)));
+    const avg=g.reduce((s,e)=>s+e.total,0)/g.length;
+    return "<div class='league-head'><span class='league-name'>"+lg+"</span>"+
+      "<span class='league-meta'>"+g.length+" games &middot; "+
+      avg.toFixed(2)+" goals avg</span></div>"+g.map(card).join("");
+  }).join("");
+}
+
+$("day-filters").querySelectorAll(".chip").forEach(c=>{
+  c.addEventListener("click",()=>{
+    $("day-filters").querySelectorAll(".chip")
+      .forEach(x=>x.setAttribute("aria-pressed","false"));
+    c.setAttribute("aria-pressed","true");
+    VIEW.day=c.dataset.day; render();
+  });
+});
+
+if(DATA.theme) document.documentElement.setAttribute("data-theme",DATA.theme);
+function paint(){
+  if(DATA.theme) document.documentElement.setAttribute("data-theme",DATA.theme);
+  $("tagline").textContent=DATA.leagues.length+" leagues / updated "+DATA.generated;
+  $("foot").textContent="Ratings built from "+DATA.matches.toLocaleString()+
+    " matches. Updated "+DATA.generated+".";
+  render();
+}
+
+/* The API builds from live sources and caches the result, so the first load
+   after the cache expires can take a few seconds. Show that rather than an
+   empty page, and keep the failure message specific enough to act on. */
+async function load(){
+  $("pred-list").innerHTML="<div class='empty'>Loading predictions...</div>";
+  $("tagline").textContent="Loading";
+  try{
+    const r=await fetch("/api/predictions",{headers:{"Accept":"application/json"}});
+    if(!r.ok){
+      const body=await r.json().catch(()=>({}));
+      throw new Error(body.error||("server returned "+r.status));
+    }
+    DATA=await r.json();
+    if(!DATA.fixtures||!DATA.fixtures.length){
+      $("tagline").textContent=(DATA.leagues?DATA.leagues.length:0)+
+        " leagues / updated "+(DATA.generated||"");
+      $("pred-list").innerHTML="<div class='empty'>No fixtures published yet.<br>"+
+        "New fixtures usually appear on Friday afternoons UK time.<br>"+
+        "This page updates itself once they do.</div>";
+      return;
+    }
+    paint();
+  }catch(err){
+    $("tagline").textContent="Could not load predictions";
+    $("pred-list").innerHTML="<div class='empty'>Predictions are not available "+
+      "right now.<br>"+String(err.message||err)+"<br>Try again in a few minutes.</div>";
+  }
+}
+load();
+</script>
+</body>
+</html>
