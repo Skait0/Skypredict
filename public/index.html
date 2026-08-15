@@ -641,6 +641,52 @@ html.mode-build #builder{display:block}
   .stat.odds{grid-column:1/-1}
   .book-btn{padding:14px 16px;font-size:14px}
 }
+/* ===================================================== retention features */
+.sotd{background:linear-gradient(150deg,var(--card),var(--card-2));
+  border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:16px}
+.sotd-top{display:flex;align-items:center;gap:9px;margin-bottom:4px}
+.sotd-top svg{color:var(--win)}
+.sotd-top b{font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+.sotd-top .k{margin-left:auto;font-size:11px;font-weight:700;color:var(--faint)}
+.sotd h2{font-size:20px;font-weight:800;letter-spacing:-.02em;margin:2px 0 2px}
+.sotd .sub{font-size:13px;color:var(--soft);margin-bottom:13px}
+.sotd-legs{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.sotd-leg{display:flex;align-items:center;gap:10px;font-size:13px;
+  padding:8px 0;border-bottom:1px solid var(--line-soft)}
+.sotd-leg:last-child{border-bottom:0}
+.sotd-leg .lg-t{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sotd-leg .lg-p{font-weight:800;color:var(--text);white-space:nowrap}
+.sotd-leg .lg-c{font-variant-numeric:tabular-nums;color:var(--win);font-weight:800;min-width:42px;text-align:right}
+.sotd-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.sotd-odds{flex:1}
+.sotd-odds i{display:block;font-style:normal;font-size:11px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.sotd-odds b{font-size:22px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
+.sotd-btn{background:var(--red);color:#fff;border:0;font:inherit;font-weight:800;
+  font-size:14px;padding:12px 18px;border-radius:10px;cursor:pointer}
+.sotd-btn:hover{filter:brightness(1.08)}
+.sotd-btn:disabled{opacity:.5;cursor:not-allowed}
+.share-btn{background:var(--card);color:var(--text);border:1px solid var(--line);
+  font:inherit;font-weight:800;font-size:14px;padding:12px 16px;border-radius:10px;
+  cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.share-btn:hover{border-color:var(--soft)}
+.streak::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--faint)}
+.streak b{color:var(--win);font-weight:800}
+.record{margin-top:14px}
+.record-in{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  background:var(--card);border:1px solid var(--line-soft);border-radius:13px;padding:14px 16px}
+.record-h{display:flex;flex-direction:column;gap:1px}
+.record-h b{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.record-h span{font-size:12px;color:var(--soft)}
+.record-stat{display:flex;align-items:baseline;gap:5px;margin-left:auto}
+.record-stat .pc{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--green)}
+.record-stat .of{font-size:13px;color:var(--soft);font-weight:600}
+.record-bar{flex-basis:100%;height:6px;border-radius:99px;background:var(--raise);overflow:hidden}
+.record-bar i{display:block;height:100%;background:var(--green);border-radius:99px}
+.notif{margin-top:12px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--soft)}
+.notif button{background:var(--raise);border:1px solid var(--line);color:var(--text);
+  font:inherit;font-weight:700;font-size:12.5px;padding:7px 13px;border-radius:99px;cursor:pointer}
+.notif button.on{background:var(--green-wash);color:var(--green-ink);border-color:var(--green)}
 </style>
 </head>
 <body>
@@ -673,6 +719,7 @@ html.mode-build #builder{display:block}
       results. Tap any match for the full set of markets.</p>
     <div class="trust">
       <span class="trust-i"><b id="when2">—</b> last updated</span>
+      <span class="trust-i" id="streak" hidden></span>
       <span class="trust-i">Rebuilt daily from results</span>
       <span class="trust-i">Estimates, not certainties</span>
       <a class="trust-i link" href="#how">How accurate?</a>
@@ -680,6 +727,8 @@ html.mode-build #builder{display:block}
   </section>
 
   <div id="potd"></div>
+  <div id="sotd"></div>
+  <div id="record"></div>
 
   <div class="bar">
     <div class="cats" id="cats"></div>
@@ -1006,6 +1055,7 @@ function renderCats(){
     return true;});
   $("cats").innerHTML=CATS.map(function(c){
     const n=base.filter(c.test).length;
+    if(!n && c.k!=="all" && c.k!=="fav") return "";
     return "<button class='cat' data-c='"+c.k+"' aria-pressed='"+(V.cat===c.k)+"'"+
       (n?"":" disabled")+">"+c.label+"<span class='n'>"+n+"</span></button>";}).join("");
   $("cats").querySelectorAll(".cat").forEach(function(b){
@@ -1062,7 +1112,7 @@ function opt(name,v,good){
     "<span class='fill'></span></div>";
 }
 function countMarkets(f){
-  return [f.dc1x,f.dcx2,(f.anybody!=null?f.anybody:f.dc12),f.o15,f.o25,f.o35,
+  return [f.dc1x,f.dcx2,(f.anybody!=null?f.anybody:f.dc12),f.o15,f.o25,
     (f.o25!=null?1-f.o25:null),f.btts,f.fh_o05,f.btts_o25,f.draw_o25,f.draw_btts]
     .filter(function(v){return v!=null&&!isNaN(v);}).length;
 }
@@ -1079,7 +1129,6 @@ function moreHTML(f){
     "<div class='grp'><h4>Goals</h4><div class='opts'>"+
       opt("Over 1.5 goals",f.o15,f.o15>=.75)+
       opt("Over 2.5 goals",f.o25,f.o25>=.6)+
-      opt("Over 3.5 goals",f.o35,f.o35>=.5)+
       opt("Under 2.5 goals",1-f.o25,(1-f.o25)>=.6)+
       opt("Both teams score",f.btts,f.btts>=.6)+
       opt("Goal in 1st half",f.fh_o05,f.fh_o05!=null&&f.fh_o05>=.7)+"</div></div>"+
@@ -1213,7 +1262,7 @@ function listBlock(l,games,withFlag){
 }
 function render(){
   document.documentElement.classList.toggle("list",!!V.list);
-  renderControls(); renderCats(); renderPotd();
+  renderControls(); renderCats(); renderPotd(); renderSlipOfDay(); renderRecord();
   const list=shown();
   if(!list.length){
     $("list").innerHTML="<div class='none'><b>No games in this filter</b>"+
@@ -1311,6 +1360,59 @@ var BUILD={risk:45,removed:{},picks:[],booking:false};
 try{var rr=localStorage.getItem("sw.risk"); if(rr!=null) BUILD.risk=+rr;}catch(e){}
 const BOOK_URL="https://web-production-798c0.up.railway.app/api/generate-booking-code";
 const SPORTY_URL="https://www.sportybet.com/ng/?shareCode=";
+const SPORTY_FIXTURES="https://web-production-798c0.up.railway.app/api/fixtures";
+function normTeam(s){
+  s=(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  s=s.replace(/[`'.\-]/g," ");
+  s=s.replace(/\butd\b/g,"united");
+  s=s.replace(/\b(fc|cf|sc|afc|ac|as|sv|us|ss|ssc|cd|ca|sk|if|bk|club|de|da|do|the)\b/g," ");
+  return s.replace(/\s+/g," ").trim();
+}
+function tokset(s){return normTeam(s).split(" ").filter(function(w){return w.length>=3;});}
+function simTeams(a,b){
+  var na=normTeam(a),nb=normTeam(b);
+  if(!na||!nb) return 0;
+  if(na===nb) return 1;
+  if(na.indexOf(nb)>=0||nb.indexOf(na)>=0) return 0.9;
+  var ta=tokset(a),tb=tokset(b),sh=0;
+  ta.forEach(function(x){
+    if(tb.some(function(y){return x===y||(x.length>=4&&y.length>=4&&(x.indexOf(y)===0||y.indexOf(x)===0));})) sh++;
+  });
+  return sh/Math.max(1,Math.min(ta.length,tb.length));
+}
+function attachEventIds(sporty){
+  if(!sporty||!sporty.length) return 0;
+  var byDate={};
+  sporty.forEach(function(m){
+    if(!m.eventId||!m.startTime) return;
+    var k=new Date(m.startTime).toISOString().slice(0,10);
+    (byDate[k]=byDate[k]||[]).push(m);
+  });
+  var hits=0;
+  DATA.fixtures.forEach(function(f){
+    var cand=[];
+    [-1,0,1].forEach(function(o){
+      var dt=new Date(f.date+"T12:00:00Z"); dt.setUTCDate(dt.getUTCDate()+o);
+      var k=dt.toISOString().slice(0,10);
+      if(byDate[k]) cand=cand.concat(byDate[k]);
+    });
+    var best=null,bestScore=0;
+    cand.forEach(function(m){
+      var s=simTeams(f.home,m.homeTeam)+simTeams(f.away,m.awayTeam);
+      if(s>bestScore){bestScore=s;best=m;}
+    });
+    if(best&&bestScore>=1.3){f.eventId=best.eventId;hits++;}
+  });
+  return hits;
+}
+async function loadSporty(){
+  try{
+    var r=await fetch(SPORTY_FIXTURES,{headers:{Accept:"application/json"}});
+    var d=await r.json();
+    if(d&&d.matches) return attachEventIds(d.matches);
+  }catch(e){}
+  return 0;
+}
 
 function riskParams(r){
   var f=r/100;
@@ -1419,18 +1521,7 @@ function bookSlip(){
     .then(function(d){
       BUILD.booking=false; renderBuilder();
       if(d&&d.success&&d.booking_code){
-        $("bookResult").innerHTML="<div class='code-card'><i>Your SportyBet booking code</i>"+
-          "<b id='theCode'>"+esc(d.booking_code)+"</b>"+
-          "<div class='code-acts'>"+
-            "<button class='code-copy' id='copyCode' type='button'>Copy code</button>"+
-            "<a class='code-open' href='"+SPORTY_URL+encodeURIComponent(d.booking_code)+
-              "' target='_blank' rel='noopener'>Open in SportyBet</a>"+
-          "</div></div>";
-        $("copyCode").addEventListener("click",function(){
-          var t=d.booking_code;
-          if(navigator.clipboard) navigator.clipboard.writeText(t);
-          $("copyCode").textContent="Copied \u2713";
-          setTimeout(function(){var b=$("copyCode"); if(b)b.textContent="Copy code";},1600);});
+        showCode(d.booking_code,"bookResult");
       } else {
         $("bookResult").innerHTML="<div class='code-err'>Couldn't generate a code"+
           (d&&d.message?": "+esc(d.message):"")+". Please try again.</div>";
@@ -1441,6 +1532,149 @@ function bookSlip(){
       $("bookResult").innerHTML="<div class='code-err'>Couldn't reach the booking "+
         "service. Check your connection and try again.</div>";
     });
+}
+/* ---- shared booking-code card, share + copy + open ---- */
+function showCode(code,hostId){
+  var host=$(hostId); if(!host) return;
+  host.innerHTML="<div class='code-card'><i>Your SportyBet booking code</i>"+
+    "<b>"+esc(code)+"</b>"+
+    "<div class='code-acts'>"+
+      "<button class='code-copy' type='button'>Copy code</button>"+
+      "<button class='share-btn' type='button' data-sh='1'>\u2197 Share</button>"+
+      "<a class='code-open' href='"+SPORTY_URL+encodeURIComponent(code)+
+        "' target='_blank' rel='noopener'>Open in SportyBet</a>"+
+    "</div></div>";
+  host.querySelector(".code-copy").addEventListener("click",function(){
+    if(navigator.clipboard) navigator.clipboard.writeText(code);
+    this.textContent="Copied \u2713"; var s=this;
+    setTimeout(function(){s.textContent="Copy code";},1600);});
+  host.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code);});
+}
+function shareText(picks,odds,code){
+  var lines=picks.slice(0,6).map(function(c){return "\u2022 "+c.f.home+" v "+c.f.away+" \u2014 "+
+    mLabel(c.f,c.code).replace(/<[^>]+>/g,"")+" ("+P0(c.p)+"%)";});
+  var t="\u26bd My SoccerWizard slip \u2014 "+picks.length+" games @ \u00d7"+odds.toFixed(2)+"\n"+lines.join("\n");
+  if(code) t+="\n\nSportyBet code: "+code;
+  return t;
+}
+function doShare(text,url){
+  if(navigator.share){ navigator.share({title:"SoccerWizard slip",text:text,url:url}).catch(function(){}); }
+  else if(navigator.clipboard){ navigator.clipboard.writeText(text+(url?"\n"+url:""));
+    alert("Slip copied \u2014 paste it anywhere to share."); }
+}
+function shareSlip(picks,odds){ doShare(shareText(picks,odds,null),location.href); }
+function shareCode(code){ doShare("\u26bd My SoccerWizard SportyBet slip. Code: "+code, SPORTY_URL+encodeURIComponent(code)); }
+function bookList(picks,resultId,btnId,label){
+  var sel=picks.filter(function(c){return c.eventId;})
+    .map(function(c){return {eventId:c.eventId,prediction:c.code};});
+  if(!sel.length) return;
+  var btn=$(btnId); if(btn){btn.disabled=true;btn.textContent="Booking\u2026";}
+  $(resultId).innerHTML="";
+  fetch(BOOK_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({selections:sel})})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(btn){btn.disabled=false;btn.textContent=label;}
+      if(d&&d.success&&d.booking_code) showCode(d.booking_code,resultId);
+      else $(resultId).innerHTML="<div class='code-err'>Couldn't generate a code"+
+        (d&&d.message?": "+esc(d.message):"")+".</div>";
+    })
+    .catch(function(){ if(btn){btn.disabled=false;btn.textContent=label;}
+      $(resultId).innerHTML="<div class='code-err'>Couldn't reach the booking service.</div>"; });
+}
+/* ---- Slip of the Day: safe pre-built acca ---- */
+var SOTD=[];
+function renderSlipOfDay(){
+  var host=$("sotd"); if(!host) return;
+  if(V.list){host.innerHTML="";return;}
+  var games=onDay(); if(!games.length) games=DATA.fixtures;
+  var allowed=["1X","X2","OVER_1.5","1","2"], cand=[];
+  games.forEach(function(f){
+    var best=null;
+    allowed.forEach(function(c){var v=mProb(f,c);
+      if(v==null||isNaN(v)||v<0.70)return; if(!best||v>best.p)best={code:c,p:v};});
+    if(best) cand.push({f:f,id:fid(f),code:best.code,p:best.p,eventId:f.eventId||null});
+  });
+  cand.sort(function(a,b){return b.p-a.p;});
+  SOTD=cand.slice(0,4);
+  if(SOTD.length<2){host.innerHTML="";return;}
+  var odds=SOTD.reduce(function(t,c){return t*(1/c.p);},1);
+  var bookable=SOTD.filter(function(c){return c.eventId;}).length;
+  host.innerHTML=
+    "<section class='sotd'>"+
+      "<div class='sotd-top'><svg width='15' height='15' viewBox='0 0 24 24' fill='currentColor'>"+
+        "<path d='M12 2l2.4 6.9 7.1.4-5.5 4.6 1.8 7-5.8-4-5.8 4 1.8-7L2.5 9.3l7.1-.4z'/></svg>"+
+        "<b>Slip of the day</b><span class='k'>"+SOTD.length+" bankers</span></div>"+
+      "<h2>The safest slip today</h2>"+
+      "<p class='sub'>Our highest-confidence picks, combined into one bet \u2014 no building needed.</p>"+
+      "<div class='sotd-legs'>"+SOTD.map(function(c){
+        return "<div class='sotd-leg'><span class='lg-t'>"+esc(c.f.home)+" v "+esc(c.f.away)+
+          "</span><span class='lg-p'>"+mLabel(c.f,c.code)+"</span><span class='lg-c'>"+P0(c.p)+"%</span></div>";
+      }).join("")+"</div>"+
+      "<div class='sotd-foot'><div class='sotd-odds'><i>Est. odds</i><b>\u00d7"+odds.toFixed(2)+"</b></div>"+
+        "<button class='share-btn' id='sotdShare'>\u2197 Share</button>"+
+        "<button class='sotd-btn' id='sotdBook'"+(bookable?"":" disabled")+">Book this slip</button></div>"+
+      "<div class='bld-note' id='sotdNote'></div><div id='sotdResult'></div>"+
+      renderNotif()+
+    "</section>";
+  $("sotdBook").addEventListener("click",function(){bookList(SOTD,"sotdResult","sotdBook","Book this slip");});
+  $("sotdShare").addEventListener("click",function(){shareSlip(SOTD,odds);});
+  wireNotif();
+  var note=$("sotdNote");
+  if(!bookable) note.textContent="Booking opens when these games are live on SportyBet.";
+  else if(bookable<SOTD.length) note.textContent=bookable+" of "+SOTD.length+" bookable right now.";
+}
+/* ---- Daily streak ---- */
+function renderStreak(){
+  var el=$("streak"); if(!el) return;
+  var today=new Date().toISOString().slice(0,10);
+  var last=null,streak=0;
+  try{last=localStorage.getItem("sw.lastseen");streak=+(localStorage.getItem("sw.streak")||0);}catch(e){}
+  if(last!==today){
+    var y=new Date(Date.now()-86400000).toISOString().slice(0,10);
+    streak=(last===y)?streak+1:1;
+    try{localStorage.setItem("sw.lastseen",today);localStorage.setItem("sw.streak",streak);}catch(e){}
+  }
+  if(streak>=2){el.hidden=false;el.className="trust-i streak";
+    el.innerHTML="<b>\ud83d\udd25 "+streak+"-day streak</b>";}
+  else el.hidden=true;
+}
+/* ---- Accuracy record (renders only with real data) ---- */
+function renderRecord(){
+  var host=$("record"); if(!host) return;
+  var rec=DATA.record;
+  if(!rec||!rec.total){host.innerHTML="";return;}
+  var pct=Math.round(100*rec.correct/rec.total);
+  host.innerHTML=
+    "<div class='record-in'>"+
+      "<div class='record-h'><b>Our recent record</b>"+
+        "<span>Tips graded against real results"+(rec.days?", last "+rec.days+" days":"")+"</span></div>"+
+      "<div class='record-stat'><span class='pc'>"+pct+"%</span>"+
+        "<span class='of'>"+rec.correct+"/"+rec.total+" correct</span></div>"+
+      "<div class='record-bar'><i style='width:"+pct+"%'></i></div>"+
+    "</div>";
+}
+/* ---- Notifications opt-in ---- */
+function renderNotif(host){
+  if(!("Notification" in window)) return "";
+  return "<div class='notif'><span>Never miss the daily slip.</span>"+
+    "<button id='notifBtn' type='button'></button></div>";
+}
+function wireNotif(){
+  var b=$("notifBtn"); if(!b) return;
+  function paintBtn(){
+    var on=(window.Notification&&Notification.permission==="granted");
+    b.textContent=on?"\u2713 Reminders on":"Turn on reminders";
+    b.classList.toggle("on",on);
+  }
+  paintBtn();
+  b.addEventListener("click",function(){
+    if(!("Notification" in window)) return;
+    Notification.requestPermission().then(function(p){
+      paintBtn();
+      if(p==="granted"){try{new Notification("SoccerWizard",{body:"Great \u2014 we'll nudge you when a fresh slip lands."});}catch(e){}}
+    });
+  });
 }
 function setMode(build){
   document.documentElement.classList.toggle("mode-build",!!build);
@@ -1482,6 +1716,7 @@ function paint(){
     {day:"numeric",month:"short",timeZone:"UTC"});}catch(e){}
   $("when").textContent=d;
   var w2=$("when2"); if(w2) w2.textContent=d;
+  renderStreak();
   var vs=$("v-cards"),vp=$("v-list");
   if(vs){vs.classList.toggle("on",!V.list); if(!vs._w){vs._w=1;vs.addEventListener("click",function(){setList(false);});}}
   if(vp){vp.classList.toggle("on",V.list); if(!vp._w){vp._w=1;vp.addEventListener("click",function(){setList(true);});}}
@@ -1505,6 +1740,7 @@ async function load(){
       throw new Error(body.error||("the server returned "+r.status));
     }
     DATA=await r.json();
+    await loadSporty();
     paint();
   }catch(err){
     var w=$("when"); if(w) w.textContent="\u2014";
