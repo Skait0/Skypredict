@@ -379,7 +379,20 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .lrow.conf-slight{border-left-color:var(--grey)}
 .lrow-top{display:none}
 .lt-time{font-size:12px;color:var(--faint);font-weight:700;min-width:38px}
-.lt-score{font-weight:800;font-size:15px;white-space:nowrap;color:var(--text)}
+.lt-score{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-width:50px;flex-shrink:0;line-height:1.1}
+.lt-score b{font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;color:var(--text)}
+.lt-score i{font-style:normal;font-size:9px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--faint);margin-top:2px}
+.clear-btn{background:var(--raise);color:var(--soft);border:1px solid var(--line);
+  font:inherit;font-weight:800;font-size:14px;padding:13px 16px;border-radius:11px;cursor:pointer;flex-shrink:0}
+.clear-btn:hover{background:var(--red-wash);color:var(--red-ink);border-color:var(--red)}
+.confirm-card{background:var(--card-2);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center}
+.confirm-card p{margin:0 0 12px;font-size:14px;color:var(--text);font-weight:600}
+.confirm-card .ca{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.confirm-card button{font:inherit;font-weight:800;font-size:14px;padding:11px 18px;border-radius:10px;cursor:pointer;border:0}
+.confirm-go{background:var(--red);color:#fff}
+.confirm-cancel{background:var(--card);color:var(--text);border:1px solid var(--line)!important}
 .lt-ou{font-weight:700}
 .lt-tip{display:flex;align-items:center;gap:7px;font-weight:700;color:var(--text);margin-left:auto}
 .lt-tip .grade{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
@@ -561,6 +574,65 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
 html.mode-build .intro,html.mode-build #potd,html.mode-build .bar,
 html.mode-build .key,html.mode-build #list,html.mode-build .note{display:none}
 html.mode-build #builder{display:block}
+/* live scores */
+#live{display:none;margin-top:8px}
+html.mode-live .intro,html.mode-live #potd,html.mode-live #sotd,html.mode-live #record,
+html.mode-live .bar,html.mode-live .key,html.mode-live #list,html.mode-live .note,
+html.mode-live #liveStrip,html.mode-live #builder{display:none}
+html.mode-live #live{display:block}
+.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff3b3b;
+  margin-left:3px;vertical-align:middle;animation:livePulse 1.4s infinite}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+.live-strip{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;margin-bottom:6px;
+  scrollbar-width:none}
+.live-strip::-webkit-scrollbar{display:none}
+.ls-card{flex:0 0 auto;min-width:172px;background:var(--card);border:1px solid var(--line-soft);
+  border-radius:12px;padding:10px 12px;cursor:pointer}
+.ls-card:hover{border-color:var(--line)}
+.ls-top{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;
+  letter-spacing:.05em;text-transform:uppercase;color:#ff3b3b;margin-bottom:7px}
+.ls-min{color:var(--faint)}
+.ls-row{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:700;line-height:1.5}
+.ls-row b{font-variant-numeric:tabular-nums}
+.live-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.live-head h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:6px 0}
+.live-refresh{background:var(--card);border:1px solid var(--line);color:var(--text);
+  font:inherit;font-weight:700;font-size:13px;padding:8px 14px;border-radius:9px;cursor:pointer}
+.live-refresh:hover{border-color:var(--red);color:var(--red-ink)}
+.live-refresh.spin{opacity:.6;pointer-events:none}
+.live-sub{color:var(--soft);font-size:14px;margin-bottom:16px}
+.lv{background:var(--card);border:1px solid var(--line-soft);border-radius:14px;
+  padding:14px 16px;margin-bottom:10px}
+.lv-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.lv-lg{font-size:12px;color:var(--faint);font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv-status{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11px;
+  font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#ff3b3b;flex-shrink:0}
+.lv-status.ft{color:var(--faint)}
+.lv-status .live-dot{margin:0}
+.lv-teams{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center}
+.lv-tm{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15.5px;min-width:0}
+.lv-sc{font-variant-numeric:tabular-nums;font-weight:800;font-size:19px;text-align:right}
+.lv-red{display:inline-block;width:11px;height:14px;border-radius:2px;background:#ff3b3b;
+  vertical-align:-2px;margin-left:2px}
+.lv-scorers{margin-top:9px;padding-top:9px;border-top:1px solid var(--line-soft);
+  display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;font-size:12px;color:var(--soft)}
+.lv-scorers .sr{display:flex;gap:5px}
+.lv-scorers .sr.h{grid-column:1}
+.lv-scorers .sr.a{justify-content:flex-end;text-align:right;grid-column:2}
+.lv-scorers .mn{color:var(--faint);font-variant-numeric:tabular-nums}
+.lv-tip{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12.5px;font-weight:700;flex-wrap:wrap}
+.lv-tip .lbl{color:var(--soft);font-weight:600}
+.lv-badge{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+  padding:4px 9px;border-radius:99px}
+.lv-badge.win{background:var(--green-wash);color:var(--green-ink)}
+.lv-badge.lose{background:var(--red-wash);color:var(--red-ink)}
+.lv-badge.level{background:var(--raise);color:var(--soft)}
+.lv-odds{margin-left:auto;display:flex;gap:6px;flex-shrink:0}
+.lv-odds span{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;
+  background:var(--raise);color:var(--text);padding:4px 8px;border-radius:7px}
+.live-empty{text-align:center;padding:44px 20px;color:var(--soft)}
+.live-empty b{display:block;color:var(--text);font-size:16px;margin-bottom:4px}
+@media(max-width:520px){.lv-scorers{grid-template-columns:1fr}.lv-scorers .sr.a{justify-content:flex-start;text-align:left;grid-column:1}}
 .bld-head h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:6px 0 4px}
 .bld-head p{color:var(--soft);font-size:14px;max-width:52ch;margin-bottom:18px}
 .bld-panel{background:var(--card);border:1px solid var(--line-soft);
@@ -701,6 +773,7 @@ html.mode-build #builder{display:block}
     </a>
     <nav class="nav" role="tablist" aria-label="View">
       <button id="tab-pred" class="navt on" type="button" role="tab">Predictions</button>
+      <button id="tab-live" class="navt" type="button" role="tab">Live <span class="live-dot" id="liveDot" hidden></span></button>
       <button id="tab-build" class="navt" type="button" role="tab">Build a slip</button>
     </nav>
     <span class="when" id="when"></span>
@@ -725,6 +798,8 @@ html.mode-build #builder{display:block}
       <a class="trust-i link" href="#how">How accurate?</a>
     </div>
   </section>
+
+  <div id="liveStrip" class="live-strip" hidden></div>
 
   <div id="potd"></div>
   <div id="sotd"></div>
@@ -788,10 +863,20 @@ html.mode-build #builder{display:block}
     <div id="slip"></div>
     <div class="bld-foot">
       <div class="bld-odds"><i>Estimated total odds</i><b id="totOdds">—</b></div>
+      <button class="clear-btn" id="clearBtn" type="button">Clear</button>
       <button class="book-btn" id="bookBtn" type="button">Get booking code</button>
     </div>
     <div class="bld-note" id="bldNote"></div>
     <div id="bookResult"></div>
+  </section>
+
+  <section id="live">
+    <div class="live-head">
+      <h1>Live scores</h1>
+      <button class="live-refresh" id="liveRefresh" type="button">Refresh</button>
+    </div>
+    <p class="live-sub" id="liveSub">Football matches in play right now, updating automatically.</p>
+    <div id="liveList"></div>
   </section>
 
   <section class="note" id="how">
@@ -1242,7 +1327,7 @@ function listRowHTML(f){
         "<span class='lt-p px"+(lead==="d"?" lead":"")+"'>"+P0(f.draw_p)+"<small>%</small></span>"+
         "<span class='lt-p pa"+(lead==="a"?" lead":"")+"'>"+P0(f.away_p)+"<small>%</small></span>"+
       "</div>"+
-      "<span class='lt-score num'>"+scoreLine(f)+"</span>"+
+      "<span class='lt-score'><b>"+scoreLine(f)+"</b><i>score</i></span>"+
       "<span class='lt-chev'>&#9662;</span>"+
     "</div>"+
     "<div class='lr-2'>"+
@@ -1453,7 +1538,9 @@ function buildPicks(){
     if(best) cand.push({f:f,id:fid(f),code:best.code,p:best.p,eventId:f.eventId||null});
   });
   cand.sort(function(a,b){return b.p-a.p;});
-  cand=cand.filter(function(c){return !BUILD.removed[c.id];}).slice(0,p.maxGames);
+  var removedCount=Object.keys(BUILD.removed).length;
+  var cap=Math.max(0,p.maxGames-removedCount);
+  cand=cand.filter(function(c){return !BUILD.removed[c.id];}).slice(0,cap);
   BUILD.picks=cand;
   return cand;
 }
@@ -1481,8 +1568,8 @@ function renderBuilder(){
     "<div class='stat odds'><b>"+(picks.length?"\u00d7"+odds.toFixed(2):"\u2014")+"</b><i>Est. odds</i></div>";
   // slip rows
   if(!picks.length){
-    $("slip").innerHTML="<div class='bld-empty'><b>No games clear this bar</b>"+
-      "Slide toward Risky to include more markets and lower-confidence picks.</div>";
+    $("slip").innerHTML="<div class='bld-empty'><b>Nothing in your slip</b>"+
+      "Move the slider to build a fresh set of games.</div>";
   } else {
     $("slip").innerHTML=picks.map(function(c){
       var f=c.f, cf=conf(c.p);
@@ -1506,12 +1593,33 @@ function renderBuilder(){
   var note=$("bldNote");
   if(!picks.length) note.textContent="";
   else if(!bookable) note.textContent="These fixtures have no SportyBet event ID yet, so they can't be booked automatically.";
-  else if(bookable<picks.length) note.textContent=bookable+" of "+picks.length+" games can be booked (others have no event ID yet).";
+  else if(bookable<picks.length) note.textContent=bookable+" of "+picks.length+" games are on SportyBet right now \u2014 you can book those and skip the rest.";
   else note.textContent="Booking "+bookable+" selection"+(bookable===1?"":"s")+" to SportyBet.";
 }
 function bookSlip(){
-  var sel=BUILD.picks.filter(function(c){return c.eventId;})
-    .map(function(c){return {eventId:c.eventId,prediction:c.code};});
+  var bookable=BUILD.picks.filter(function(c){return c.eventId;});
+  var missing=BUILD.picks.filter(function(c){return !c.eventId;});
+  if(!bookable.length){
+    $("bookResult").innerHTML="<div class='code-err'>None of these games are on "+
+      "SportyBet right now, so a code can't be created. Try lowering the risk, or "+
+      "check back nearer kickoff.</div>";
+    return;
+  }
+  if(missing.length){
+    $("bookResult").innerHTML="<div class='confirm-card'><p>"+missing.length+
+      " game"+(missing.length===1?" isn't":"s aren't")+" available on SportyBet yet. "+
+      "Book the other "+bookable.length+" without "+(missing.length===1?"it":"them")+"?</p>"+
+      "<div class='ca'><button class='confirm-go' type='button'>Book "+bookable.length+
+      " game"+(bookable.length===1?"":"s")+"</button>"+
+      "<button class='confirm-cancel' type='button'>Cancel</button></div></div>";
+    $("bookResult").querySelector(".confirm-go").addEventListener("click",function(){doBook(bookable);});
+    $("bookResult").querySelector(".confirm-cancel").addEventListener("click",function(){$("bookResult").innerHTML="";});
+    return;
+  }
+  doBook(bookable);
+}
+function doBook(picks){
+  var sel=picks.map(function(c){return {eventId:c.eventId,prediction:c.code};});
   if(!sel.length) return;
   BUILD.booking=true; renderBuilder();
   $("bookResult").innerHTML="";
@@ -1523,8 +1631,9 @@ function bookSlip(){
       if(d&&d.success&&d.booking_code){
         showCode(d.booking_code,"bookResult");
       } else {
+        var why=d&&d.detail?(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail)):(d&&d.message?d.message:"");
         $("bookResult").innerHTML="<div class='code-err'>Couldn't generate a code"+
-          (d&&d.message?": "+esc(d.message):"")+". Please try again.</div>";
+          (why?": "+esc(why):"")+". Please try again.</div>";
       }
     })
     .catch(function(){
@@ -1532,6 +1641,11 @@ function bookSlip(){
       $("bookResult").innerHTML="<div class='code-err'>Couldn't reach the booking "+
         "service. Check your connection and try again.</div>";
     });
+}
+function clearSlip(){
+  BUILD.picks.forEach(function(c){BUILD.removed[c.id]=1;});
+  $("bookResult").innerHTML="";
+  renderBuilder();
 }
 /* ---- shared booking-code card, share + copy + open ---- */
 function showCode(code,hostId){
@@ -1676,20 +1790,152 @@ function wireNotif(){
     });
   });
 }
-function setMode(build){
-  document.documentElement.classList.toggle("mode-build",!!build);
-  $("tab-pred").classList.toggle("on",!build);
-  $("tab-build").classList.toggle("on",build);
-  if(build) renderBuilder();
+/* ============================================================ live scores */
+const LIVE_URL="https://web-production-798c0.up.railway.app/api/livescores";
+var LIVE={matches:[],at:0,timer:null,loading:false};
+function esc2(s){return esc(s==null?"":s);}
+function tipEval(f){
+  var t=f.tip||"";
+  return function(h,a){
+    var tot=h+a, both=h>0&&a>0;
+    function res(ok){return ok?"win":"lose";}
+    if(t==="Home win") return h>a?"win":(h===a?"level":"lose");
+    if(t==="Away win") return a>h?"win":(a===h?"level":"lose");
+    if(t==="Draw") return h===a?"win":"lose";
+    if(t==="Both teams score") return res(both);
+    if(t==="First half goal") return res(tot>0);
+    if(t.indexOf("1X")===0) return h>=a?"win":"lose";
+    if(t.indexOf("X2")===0) return a>=h?"win":"lose";
+    if(t.indexOf("12")===0) return h!==a?"win":"lose";
+    if(t.indexOf("Draw or over")===0) return res(h===a||tot>2);
+    if(t.indexOf("Draw or both")===0) return res(h===a||both);
+    if(t.indexOf("Both score and")===0) return res(both&&tot>2);
+    return res(tot>=2);
+  };
+}
+function matchPrediction(lm){
+  var best=null,bs=0;
+  DATA.fixtures.forEach(function(f){
+    var o=dayOff(f.date); if(o< -1||o>1) return;
+    var s=simTeams(f.home,lm.home)+simTeams(f.away,lm.away);
+    if(s>bs){bs=s;best=f;}
+  });
+  return bs>=1.3?best:null;
+}
+async function fetchLive(){
+  if(LIVE.loading) return;
+  LIVE.loading=true;
+  var rb=$("liveRefresh"); if(rb) rb.classList.add("spin");
+  try{
+    var r=await fetch(LIVE_URL,{headers:{Accept:"application/json"}});
+    var d=await r.json();
+    if(d&&d.matches) LIVE.matches=d.matches;
+    LIVE.at=Date.now();
+  }catch(e){}
+  LIVE.loading=false;
+  if(rb) rb.classList.remove("spin");
+  var dot=$("liveDot"); if(dot) dot.hidden=!LIVE.matches.length;
+  renderLiveStrip();
+  if(document.documentElement.classList.contains("mode-live")) renderLive();
+}
+function statusText(m){
+  if(m.status==="FT"||m.status==="AET"||m.status==="PEN") return {t:"FT",ft:true};
+  if(m.status==="HT") return {t:"Half-time",ft:false};
+  return {t:(m.minute!=null?m.minute+"\u2019":"Live"),ft:false};
+}
+function scorersHTML(m){
+  var hs=(m.homeGoals||[]).map(function(g){return "<div class='sr h'><span>\u26bd "+esc2(g.player)+"</span><span class='mn'>"+esc2(g.minute)+"\u2019</span></div>";});
+  var as=(m.awayGoals||[]).map(function(g){return "<div class='sr a'><span class='mn'>"+esc2(g.minute)+"\u2019</span><span>\u26bd "+esc2(g.player)+"</span></div>";});
+  if(!hs.length&&!as.length) return "";
+  return "<div class='lv-scorers'>"+hs.join("")+as.join("")+"</div>";
+}
+function reds(n){var s="";for(var i=0;i<(n||0);i++)s+="<span class='lv-red'></span>";return s;}
+function oddsHTML(m){
+  if(!m.odds) return "";
+  var o=m.odds;
+  function b(k,v){return v?"<span>"+k+" "+(+v).toFixed(2)+"</span>":"";}
+  var h=b("1",o.home)+b("X",o.draw)+b("2",o.away);
+  return h?"<div class='lv-odds'>"+h+"</div>":"";
+}
+function tipHTML(m){
+  var f=matchPrediction(m);
+  if(!f) return oddsHTML(m)?"<div class='lv-tip'>"+oddsHTML(m)+"</div>":"";
+  var st=tipEval(f)(m.homeScore||0,m.awayScore||0);
+  var badge=st==="win"?"<span class='lv-badge win'>Tip winning</span>":
+            st==="lose"?"<span class='lv-badge lose'>Tip behind</span>":
+            "<span class='lv-badge level'>Level</span>";
+  return "<div class='lv-tip'><span class='lbl'>Our tip:</span> "+esc(plainTip(f))+" "+badge+oddsHTML(m)+"</div>";
+}
+function liveCardHTML(m){
+  var st=statusText(m);
+  return "<div class='lv'>"+
+    "<div class='lv-top'><span class='lv-lg'>"+esc2(m.league)+"</span>"+
+      "<span class='lv-status"+(st.ft?" ft":"")+"'>"+(st.ft?"":"<span class='live-dot'></span>")+st.t+"</span></div>"+
+    "<div class='lv-teams'>"+
+      "<div class='lv-tm'>"+esc2(m.home)+reds(m.homeReds)+"</div>"+
+      "<div class='lv-sc'>"+(m.homeScore!=null?m.homeScore:"-")+"</div>"+
+      "<div class='lv-tm'>"+esc2(m.away)+reds(m.awayReds)+"</div>"+
+      "<div class='lv-sc'>"+(m.awayScore!=null?m.awayScore:"-")+"</div>"+
+    "</div>"+
+    scorersHTML(m)+tipHTML(m)+
+  "</div>";
+}
+function renderLive(){
+  var host=$("liveList"); if(!host) return;
+  if(!LIVE.matches.length){
+    host.innerHTML="<div class='live-empty'><b>No live matches right now</b>"+
+      "Check back when games are in play \u2014 this updates automatically.</div>";
+    $("liveSub").textContent="Football matches in play right now, updating automatically.";
+    return;
+  }
+  $("liveSub").textContent=LIVE.matches.length+" match"+(LIVE.matches.length===1?"":"es")+" in play \u00b7 updates every 30s";
+  host.innerHTML=LIVE.matches.map(liveCardHTML).join("");
+}
+function renderLiveStrip(){
+  var host=$("liveStrip"); if(!host) return;
+  var root=document.documentElement;
+  if(root.classList.contains("mode-build")||root.classList.contains("mode-live")){host.hidden=true;return;}
+  var live=LIVE.matches.filter(function(m){return !statusText(m).ft;});
+  if(!live.length){host.hidden=true;host.innerHTML="";return;}
+  host.hidden=false;
+  host.innerHTML=live.slice(0,12).map(function(m){
+    var st=statusText(m);
+    return "<div class='ls-card' data-live='1'>"+
+      "<div class='ls-top'><span class='live-dot'></span>LIVE <span class='ls-min'>"+st.t+"</span></div>"+
+      "<div class='ls-row'><span>"+esc2(m.home)+"</span><b>"+(m.homeScore!=null?m.homeScore:"-")+"</b></div>"+
+      "<div class='ls-row'><span>"+esc2(m.away)+"</span><b>"+(m.awayScore!=null?m.awayScore:"-")+"</b></div>"+
+    "</div>";}).join("");
+  host.querySelectorAll("[data-live]").forEach(function(c){
+    c.addEventListener("click",function(){setView("live");});});
+}
+function startLive(){
+  fetchLive();
+  if(LIVE.timer) clearInterval(LIVE.timer);
+  LIVE.timer=setInterval(function(){ if(!document.hidden) fetchLive(); },30000);
+}
+function setView(v){
+  var root=document.documentElement;
+  root.classList.toggle("mode-build",v==="build");
+  root.classList.toggle("mode-live",v==="live");
+  $("tab-pred").classList.toggle("on",v==="pred");
+  $("tab-live").classList.toggle("on",v==="live");
+  $("tab-build").classList.toggle("on",v==="build");
+  if(v==="build") renderBuilder();
+  if(v==="live"){ renderLive(); fetchLive(); }
+  if(v==="pred") renderLiveStrip();
   window.scrollTo(0,0);
 }
-$("tab-pred").addEventListener("click",function(){setMode(false);});
-$("tab-build").addEventListener("click",function(){setMode(true);});
+function setMode(build){ setView(build?"build":"pred"); }
+$("tab-pred").addEventListener("click",function(){setView("pred");});
+$("tab-live").addEventListener("click",function(){setView("live");});
+$("tab-build").addEventListener("click",function(){setView("build");});
+$("liveRefresh").addEventListener("click",fetchLive);
 $("risk").addEventListener("input",function(){
   BUILD.risk=+this.value;
   try{localStorage.setItem("sw.risk",BUILD.risk);}catch(e){}
   BUILD.removed={}; $("bookResult").innerHTML=""; renderBuilder();});
 $("bookBtn").addEventListener("click",bookSlip);
+$("clearBtn").addEventListener("click",clearSlip);
 
 /* ------------------------------------------------------------- theming */
 const SUN='<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
@@ -1741,6 +1987,7 @@ async function load(){
     }
     DATA=await r.json();
     await loadSporty();
+    startLive();
     paint();
   }catch(err){
     var w=$("when"); if(w) w.textContent="\u2014";
