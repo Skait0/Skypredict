@@ -1067,7 +1067,11 @@ function kickTime(f){
   try{return new Date(f.kickoff).toLocaleTimeString([],
     {hour:"2-digit",minute:"2-digit",hour12:false});}catch(e){return f.time||"";}
 }
-function ahead(){return DATA.fixtures.filter(function(f){return dayOff(f.date)>=0;});}
+function isUpcoming(f){
+  if(f&&f.kickoff){return new Date(f.kickoff).getTime()>Date.now();}
+  return f?dayOff(f.date)>=0:false;
+}
+function ahead(){return DATA.fixtures.filter(function(f){return isUpcoming(f);});}
 function onDay(){return ahead().filter(function(f){return dayOff(f.date)===V.off;});}
 function activeDays(){
   const s={};
@@ -1598,7 +1602,7 @@ function mLabel(f,c){
 }
 function buildPicks(){
   var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier), cand=[];
-  DATA.fixtures.filter(function(f){return dayOff(f.date)>=0;}).forEach(function(f){
+  DATA.fixtures.filter(function(f){return isUpcoming(f);}).forEach(function(f){
     var best=null;
     allowed.forEach(function(c){
       var v=mProb(f,c);
@@ -2008,6 +2012,9 @@ function openMySheet(){renderMySheet();$("scrim").classList.add("on");$("mySheet
 function closeMySheet(){$("scrim").classList.remove("on");$("mySheet").classList.remove("on");}
 function renderMySheet(){
   var body=$("mySheetBody"); if(!body) return;
+  var _b=MYSLIP.length;
+  MYSLIP=MYSLIP.filter(function(x){var f=fixtureById(x.id);return f&&isUpcoming(f);});
+  if(MYSLIP.length!==_b){saveMy();renderFab();}
   if(!MYSLIP.length){
     body.innerHTML="<div class='bld-empty'><b>Your slip is empty</b>Tap + on any prediction to add it here.</div>";
     $("mySheetFoot").hidden=true; $("myBookResult").innerHTML=""; return;
