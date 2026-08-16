@@ -713,6 +713,41 @@ html.mode-live #live{display:block}
   .stat.odds{grid-column:1/-1}
   .book-btn{padding:14px 16px;font-size:14px}
 }
+/* brand loader */
+.loader{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;
+  align-items:center;justify-content:center;flex-direction:column;gap:20px;transition:opacity .45s ease}
+.loader.hide{opacity:0;pointer-events:none}
+.loader-orbit{position:relative;width:76px;height:76px}
+.loader-orbit .ring{position:absolute;border-radius:50%;border:4px solid transparent}
+.loader-orbit .r1{inset:0;border-top-color:var(--red);animation:ldrspin .9s linear infinite}
+.loader-orbit .r2{inset:11px;border-top-color:var(--win);animation:ldrspin 1.3s linear infinite reverse}
+.loader-ball{position:absolute;top:50%;left:50%;width:16px;height:16px;margin:-8px 0 0 -8px;
+  border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#c9c9c9);
+  animation:ldrpulse 1s ease-in-out infinite}
+.loader-word{font-weight:800;font-size:19px;letter-spacing:-.01em;color:var(--text)}
+.loader-word em{color:var(--red);font-style:normal}
+@keyframes ldrspin{to{transform:rotate(360deg)}}
+@keyframes ldrpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+/* opt add-to-slip button + floating my-slip */
+.opt.bk .n{padding-right:26px}
+.opt-add{position:absolute;top:8px;right:8px;z-index:2;width:24px;height:24px;border-radius:7px;
+  border:1px solid var(--line);background:var(--card);color:var(--text);font-weight:800;
+  font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.opt-add:hover{border-color:var(--red);color:var(--red-ink)}
+.opt-add.on{background:var(--green);border-color:var(--green);color:#04210f}
+.myfab{position:fixed;right:16px;bottom:16px;z-index:80;background:var(--red);color:#fff;
+  border:0;font:inherit;font-weight:800;font-size:15px;padding:14px 20px;border-radius:99px;
+  cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35);display:flex;align-items:center;gap:9px}
+.myfab:hover{filter:brightness(1.08)}
+.myfab-c{background:#fff;color:var(--red);min-width:22px;height:22px;border-radius:99px;
+  display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;padding:0 6px}
+.myslip-sheet .sheet-body{max-height:52vh}
+.mysheet-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 0 6px;
+  border-top:1px solid var(--line-soft);margin-top:14px}
+.mysheet-foot .bld-odds{flex:1;min-width:120px}
+.mysheet-foot .clear-btn,.mysheet-foot .book-btn{flex-shrink:0}
+#myBookResult{padding-bottom:20px}
+.myslip-sheet{padding-bottom:14px}
 /* ===================================================== retention features */
 .sotd{background:linear-gradient(150deg,var(--card),var(--card-2));
   border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:16px}
@@ -762,6 +797,11 @@ html.mode-live #live{display:block}
 </style>
 </head>
 <body>
+
+<div class="loader" id="loader">
+  <div class="loader-orbit"><span class="ring r1"></span><span class="ring r2"></span><span class="loader-ball"></span></div>
+  <div class="loader-word">Soccer<em>wizard</em></div>
+</div>
 
 <div class="top" id="top">
   <div class="top-in">
@@ -938,6 +978,22 @@ html.mode-live #live{display:block}
     <button class="sheet-x" id="sheet-x" aria-label="Close">&times;</button>
   </div>
   <div class="sheet-body" id="sheet-body"></div>
+</div>
+
+<button class="myfab" id="myFab" type="button" hidden><span class="myfab-c" id="myFabC">0</span> My slip</button>
+<div class="sheet myslip-sheet" id="mySheet" role="dialog" aria-modal="true" aria-labelledby="mySheet-title">
+  <div class="sheet-grab"><i></i></div>
+  <div class="sheet-head">
+    <div class="info"><h3 id="mySheet-title">My slip</h3><p>Predictions you picked — book them to SportyBet.</p></div>
+    <button class="sheet-x" id="mySheet-x" aria-label="Close">&times;</button>
+  </div>
+  <div class="sheet-body" id="mySheetBody"></div>
+  <div class="mysheet-foot" id="mySheetFoot" hidden>
+    <div class="bld-odds"><i>Estimated total odds</i><b id="myTotOdds">—</b></div>
+    <button class="clear-btn" id="myClearBtn" type="button">Clear</button>
+    <button class="book-btn" id="myBookBtn" type="button">Get booking code</button>
+  </div>
+  <div id="myBookResult"></div>
 </div>
 
 <script>
@@ -1190,10 +1246,12 @@ function renderControls(){
 }
 
 /* --------------------------------------------------------------- markets */
-function opt(name,v,good){
+function opt(name,v,good,code,id){
   if(v==null||isNaN(v)) return "";
-  return "<div class='opt"+(good?" good":"")+"' style='--w:"+v.toFixed(3)+"'>"+
-    "<span class='n'>"+name+"</span><span class='p num'>"+P0(v)+"%</span>"+
+  var on=(code&&id)?myslipHas(id,code):false;
+  var add=(code&&id)?"<button class='opt-add"+(on?" on":"")+"' data-add='"+id+"' data-code='"+code+"' data-label=\""+name+"\" data-p='"+v.toFixed(3)+"' aria-label='Add to slip'>"+(on?"\u2713":"+")+"</button>":"";
+  return "<div class='opt"+(good?" good":"")+(code?" bk":"")+"' style='--w:"+v.toFixed(3)+"'>"+
+    "<span class='n'>"+name+"</span><span class='p num'>"+P0(v)+"%</span>"+add+
     "<span class='fill'></span></div>";
 }
 function countMarkets(f){
@@ -1203,19 +1261,20 @@ function countMarkets(f){
 }
 function moreHTML(f){
   const noDraw=(f.anybody!=null)?f.anybody:f.dc12;
+  const id=fid(f);
   return "<div class='more-pad'>"+
     "<div class='grp'><h4>Who wins</h4><div class='opts'>"+
-      opt(esc(f.home)+" to win",f.home_p,f.home_p>=.6)+
-      opt(esc(f.away)+" to win",f.away_p,f.away_p>=.6)+
-      opt("Draw",f.draw_p,f.draw_p>=.4)+
-      opt(esc(f.home)+" or draw",f.dc1x,f.dc1x>=.75)+
-      opt(esc(f.away)+" or draw",f.dcx2,f.dcx2>=.75)+
-      opt("Any team to win",noDraw,noDraw>=.75)+"</div></div>"+
+      opt(esc(f.home)+" to win",f.home_p,f.home_p>=.6,"1",id)+
+      opt(esc(f.away)+" to win",f.away_p,f.away_p>=.6,"2",id)+
+      opt("Draw",f.draw_p,f.draw_p>=.4,"X",id)+
+      opt(esc(f.home)+" or draw",f.dc1x,f.dc1x>=.75,"1X",id)+
+      opt(esc(f.away)+" or draw",f.dcx2,f.dcx2>=.75,"X2",id)+
+      opt("Any team to win",noDraw,noDraw>=.75,"12",id)+"</div></div>"+
     "<div class='grp'><h4>Goals</h4><div class='opts'>"+
-      opt("Over 1.5 goals",f.o15,f.o15>=.75)+
-      opt("Over 2.5 goals",f.o25,f.o25>=.6)+
+      opt("Over 1.5 goals",f.o15,f.o15>=.75,"OVER_1.5",id)+
+      opt("Over 2.5 goals",f.o25,f.o25>=.6,"OVER_2.5",id)+
       opt("Under 2.5 goals",1-f.o25,(1-f.o25)>=.6)+
-      opt("Both teams score",f.btts,f.btts>=.6)+
+      opt("Both teams score",f.btts,f.btts>=.6,"GG",id)+
       opt("Goal in 1st half",f.fh_o05,f.fh_o05!=null&&f.fh_o05>=.7)+"</div></div>"+
     "<div class='grp'><h4>Combos</h4><div class='opts'>"+
       opt("Both score + over 2.5",f.btts_o25,f.btts_o25!=null&&f.btts_o25>=.55)+
@@ -1234,7 +1293,8 @@ function matchHTML(f){
   const aw=f.away_p>f.home_p&&f.away_p>f.draw_p;
   const cf=conf(f.tip_p);
   const pills=[];
-  if(f.draw_watch) pills.push("<span class='pill draw'>Could be a draw</span>");
+  var _sc=scoreLine(f).split("-"); var _mgn=Math.abs((+_sc[0])-(+_sc[1]));
+  if(f.draw_watch && _mgn<=1) pills.push("<span class='pill draw'>Could be a draw</span>");
   if(f.o25>=0.66) pills.push("<span class='pill goals'>Goals likely</span>");
   return "<article class='m conf-"+cf+"' id='"+fid(f)+"'>"+
     "<button class='m-btn' data-fx='"+fid(f)+"'>"+
@@ -1435,10 +1495,13 @@ function closeSheet(){
   document.documentElement.classList.remove("locked");
   if(SHEET_RETURN){SHEET_RETURN.focus();SHEET_RETURN=null;}
 }
-$("scrim").addEventListener("click",closeSheet);
+$("scrim").addEventListener("click",function(){closeSheet();closeMySheet();});
 $("sheet-x").addEventListener("click",closeSheet);
 addEventListener("keydown",function(e){
-  if(e.key==="Escape"&&$("sheet").classList.contains("on")) closeSheet();});
+  if(e.key==="Escape"){
+    if($("sheet").classList.contains("on")) closeSheet();
+    if($("mySheet").classList.contains("on")) closeMySheet();
+  }});
 
 /* ============================================================ build a slip */
 var BUILD={risk:45,removed:{},picks:[],booking:false};
@@ -1528,7 +1591,7 @@ function mLabel(f,c){
 }
 function buildPicks(){
   var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier), cand=[];
-  DATA.fixtures.forEach(function(f){
+  DATA.fixtures.filter(function(f){return dayOff(f.date)>=0;}).forEach(function(f){
     var best=null;
     allowed.forEach(function(c){
       var v=mProb(f,c);
@@ -1913,6 +1976,83 @@ function startLive(){
   if(LIVE.timer) clearInterval(LIVE.timer);
   LIVE.timer=setInterval(function(){ if(!document.hidden) fetchLive(); },30000);
 }
+/* ===================================================== my slip (manual pick) */
+var MYSLIP=[];
+try{MYSLIP=JSON.parse(localStorage.getItem("sw.myslip")||"[]");}catch(e){MYSLIP=[];}
+function saveMy(){try{localStorage.setItem("sw.myslip",JSON.stringify(MYSLIP));}catch(e){}}
+function myslipHas(id,code){return MYSLIP.some(function(x){return x.id===id&&x.code===code;});}
+function myOdds(){return MYSLIP.reduce(function(t,x){return t*(x.p>0?1/x.p:1);},1);}
+function renderFab(){var fab=$("myFab"); if(!fab) return; fab.hidden=MYSLIP.length===0;
+  var c=$("myFabC"); if(c) c.textContent=MYSLIP.length;}
+function clearMy(){
+  MYSLIP=[]; saveMy(); renderFab();
+  document.querySelectorAll("[data-add].on").forEach(function(b){b.classList.remove("on");b.textContent="+";});
+  $("myBookResult").innerHTML=""; renderMySheet();
+}
+function toggleMy(id,code,label,p){
+  var i=-1; for(var k=0;k<MYSLIP.length;k++){if(MYSLIP[k].id===id&&MYSLIP[k].code===code){i=k;break;}}
+  if(i>=0) MYSLIP.splice(i,1); else MYSLIP.push({id:id,code:code,label:label,p:+p});
+  saveMy(); renderFab();
+  document.querySelectorAll("[data-add='"+id+"'][data-code='"+code+"']").forEach(function(b){
+    var on=myslipHas(id,code); b.classList.toggle("on",on); b.textContent=on?"\u2713":"+";});
+  if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
+}
+function openMySheet(){renderMySheet();$("scrim").classList.add("on");$("mySheet").classList.add("on");}
+function closeMySheet(){$("scrim").classList.remove("on");$("mySheet").classList.remove("on");}
+function renderMySheet(){
+  var body=$("mySheetBody"); if(!body) return;
+  if(!MYSLIP.length){
+    body.innerHTML="<div class='bld-empty'><b>Your slip is empty</b>Tap + on any prediction to add it here.</div>";
+    $("mySheetFoot").hidden=true; $("myBookResult").innerHTML=""; return;
+  }
+  $("mySheetFoot").hidden=false;
+  body.innerHTML=MYSLIP.map(function(x){
+    var f=fixtureById(x.id);
+    var teams=f?esc(f.home)+" v "+esc(f.away):"Match";
+    var noid=(f&&f.eventId)?"":"<span class='sp-noid'>no ID</span>";
+    return "<div class='sp-row'>"+
+      "<div class='sp-main'><div class='sp-teams'>"+teams+noid+"</div>"+
+        "<div class='sp-meta'>"+esc(x.label)+"</div></div>"+
+      "<div class='sp-pick'><i>"+P0(x.p)+"%</i></div>"+
+      "<span class='sp-odd'>"+(x.p>0?(1/x.p).toFixed(2):"-")+"</span>"+
+      "<button class='sp-x' data-myrm='"+x.id+"|"+x.code+"' aria-label='Remove'>\u00d7</button>"+
+    "</div>";
+  }).join("");
+  $("myTotOdds").textContent="\u00d7"+myOdds().toFixed(2);
+  body.querySelectorAll("[data-myrm]").forEach(function(b){
+    b.addEventListener("click",function(){var p=b.dataset.myrm.split("|"); toggleMy(p[0],p[1]);});});
+}
+function bookMy(){
+  var picks=MYSLIP.map(function(x){var f=fixtureById(x.id);return {code:x.code,eventId:(f&&f.eventId)||null};});
+  var bookable=picks.filter(function(c){return c.eventId;});
+  var missing=picks.filter(function(c){return !c.eventId;});
+  if(!bookable.length){$("myBookResult").innerHTML="<div class='code-err'>None of these are on SportyBet right now, so a code can't be created.</div>";return;}
+  if(missing.length){
+    $("myBookResult").innerHTML="<div class='confirm-card'><p>"+missing.length+" game"+(missing.length===1?" isn't":"s aren't")+" available on SportyBet yet. Book the other "+bookable.length+"?</p><div class='ca'><button class='confirm-go' type='button'>Book "+bookable.length+"</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>";
+    $("myBookResult").querySelector(".confirm-go").addEventListener("click",function(){doBookMy(bookable);});
+    $("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){$("myBookResult").innerHTML="";});
+    return;
+  }
+  doBookMy(bookable);
+}
+function doBookMy(bookable){
+  var sel=bookable.map(function(c){return {eventId:c.eventId,prediction:c.code};});
+  var btn=$("myBookBtn"); if(btn){btn.disabled=true;btn.textContent="Booking\u2026";}
+  $("myBookResult").innerHTML="";
+  fetch(BOOK_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({selections:sel})})
+    .then(function(r){return r.json();}).then(function(d){
+      if(btn){btn.disabled=false;btn.textContent="Get booking code";}
+      if(d&&d.success&&d.booking_code) showCode(d.booking_code,"myBookResult");
+      else{var why=d&&d.detail?(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail)):(d&&d.message?d.message:"");
+        $("myBookResult").innerHTML="<div class='code-err'>Couldn't generate a code"+(why?": "+esc(why):"")+".</div>";}
+    }).catch(function(){if(btn){btn.disabled=false;btn.textContent="Get booking code";}
+      $("myBookResult").innerHTML="<div class='code-err'>Couldn't reach the booking service.</div>";});
+}
+document.addEventListener("click",function(e){
+  var a=e.target.closest&&e.target.closest("[data-add]");
+  if(a){e.preventDefault();e.stopPropagation();
+    toggleMy(a.dataset.add,a.dataset.code,a.dataset.label,a.dataset.p);}
+});
 function setView(v){
   var root=document.documentElement;
   root.classList.toggle("mode-build",v==="build");
@@ -1930,6 +2070,12 @@ $("tab-pred").addEventListener("click",function(){setView("pred");});
 $("tab-live").addEventListener("click",function(){setView("live");});
 $("tab-build").addEventListener("click",function(){setView("build");});
 $("liveRefresh").addEventListener("click",fetchLive);
+$("logo").addEventListener("click",function(e){e.preventDefault();setView("pred");});
+$("myFab").addEventListener("click",openMySheet);
+$("mySheet-x").addEventListener("click",closeMySheet);
+$("myBookBtn").addEventListener("click",bookMy);
+$("myClearBtn").addEventListener("click",clearMy);
+renderFab();
 $("risk").addEventListener("input",function(){
   BUILD.risk=+this.value;
   try{localStorage.setItem("sw.risk",BUILD.risk);}catch(e){}
@@ -1989,13 +2135,18 @@ async function load(){
     await loadSporty();
     startLive();
     paint();
+    hideLoader();
   }catch(err){
     var w=$("when"); if(w) w.textContent="\u2014";
     $("list").innerHTML="<div class='none'><b>Predictions unavailable</b>"+
       "<p>"+esc(err.message||err)+". This usually clears within a few "+
       "minutes. Reload to try again.</p></div>";
+    hideLoader();
   }
 }
+function hideLoader(){var l=$("loader"); if(!l) return; l.classList.add("hide");
+  setTimeout(function(){if(l&&l.parentNode) l.parentNode.removeChild(l);},500);}
+setTimeout(hideLoader,8000);
 load();
 </script>
 </body>
