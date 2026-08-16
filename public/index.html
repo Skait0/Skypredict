@@ -1539,7 +1539,7 @@ function attachEventIds(sporty){
   var hits=0;
   DATA.fixtures.forEach(function(f){
     var cand=[];
-    [-1,0,1].forEach(function(o){
+    [-2,-1,0,1,2].forEach(function(o){
       var dt=new Date(f.date+"T12:00:00Z"); dt.setUTCDate(dt.getUTCDate()+o);
       var k=dt.toISOString().slice(0,10);
       if(byDate[k]) cand=cand.concat(byDate[k]);
@@ -1549,8 +1549,15 @@ function attachEventIds(sporty){
       var s=simTeams(f.home,m.homeTeam)+simTeams(f.away,m.awayTeam);
       if(s>bestScore){bestScore=s;best=m;}
     });
-    if(best&&bestScore>=1.3){f.eventId=best.eventId;hits++;}
+    if(best&&bestScore>=1.3){f.eventId=best.eventId;hits++;return;}
+    var gb=null,gs=0;
+    sporty.forEach(function(m){
+      var s=simTeams(f.home,m.homeTeam)+simTeams(f.away,m.awayTeam);
+      if(s>gs){gs=s;gb=m;}
+    });
+    if(gb&&gs>=1.6){f.eventId=gb.eventId;hits++;}
   });
+  try{console.log("[sporty] matched "+hits+"/"+DATA.fixtures.length+" from "+sporty.length+" events");}catch(e){}
   return hits;
 }
 async function loadSporty(){
