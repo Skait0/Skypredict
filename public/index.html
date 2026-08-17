@@ -13,6 +13,11 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://skypredict-theta.vercel.app/wiz-logo.png">
 <link rel="icon" type="image/png" href="/wiz-logo.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Soccerwizard">
+<link rel="apple-touch-icon" href="/wiz-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -331,6 +336,55 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 @media(min-width:720px){.sig{height:48px}}
 @media(min-width:720px){.brand-img{height:54px}}
 .bar{background:var(--card);border:1px solid var(--line-soft);border-radius:14px;padding:12px}
+.bld-approx{font-size:11px;color:var(--faint);margin-top:8px;text-align:center}
+@media(min-width:720px){.bar{position:sticky;top:12px;z-index:40}}
+/* ==================================================== premium enhancements */
+.lrow,.m,.ls-card,.lv,.sp-row{transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
+.m:hover,.ls-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.28)}
+.rip{position:relative;overflow:hidden}
+.rip-ink{position:absolute;border-radius:50%;transform:scale(0);background:currentColor;
+  opacity:.22;pointer-events:none;animation:ripple .55s ease-out forwards}
+@keyframes ripple{to{transform:scale(2.6);opacity:0}}
+.sk{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line-soft);
+  border-radius:12px;height:56px;margin-bottom:8px}
+.sk::after{content:"";position:absolute;inset:0;transform:translateX(-100%);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
+  animation:shimmer 1.25s infinite}
+@keyframes shimmer{100%{transform:translateX(100%)}}
+#toasts{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:200;
+  display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--card);border:1px solid var(--line);color:var(--text);font-weight:700;
+  font-size:14px;padding:12px 18px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.4);
+  display:flex;align-items:center;gap:9px;opacity:0;transform:translateY(12px);
+  transition:opacity .25s,transform .25s;max-width:88vw}
+.toast.in{opacity:1;transform:translateY(0)}
+.toast.ok{border-color:var(--green)}
+.toast.ok::before{content:"\2713";color:var(--green);font-weight:800}
+.toast.err{border-color:var(--red)}
+.toast.err::before{content:"!";color:var(--red-ink);font-weight:800}
+.glance{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0 4px}
+.gl-card{position:relative;overflow:hidden;background:linear-gradient(150deg,var(--card),var(--card-2));
+  border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;
+  transition:transform .16s,box-shadow .16s}
+.gl-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.26)}
+.gl-k{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);
+  display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.gl-k .dot{width:6px;height:6px;border-radius:50%;background:var(--red)}
+.gl-card.banker .gl-k .dot{background:var(--green)}
+.gl-card.value .gl-k .dot{background:var(--win)}
+.gl-team{font-weight:800;font-size:15px;letter-spacing:-.01em;line-height:1.25}
+.gl-sub{font-size:12px;color:var(--soft);margin-top:3px}
+.gl-pc{position:absolute;right:12px;bottom:10px;font-size:22px;font-weight:800;
+  font-variant-numeric:tabular-nums;color:var(--text);opacity:.9}
+.gl-card.banker .gl-pc{color:var(--green)}
+@media(max-width:720px){.glance{grid-template-columns:1fr;gap:8px}
+  .gl-card{display:flex;align-items:center;justify-content:space-between}
+  .gl-pc{position:static}.gl-k{margin-bottom:4px}}
+.mono{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
+  border-radius:6px;font-size:10px;font-weight:800;color:#fff;flex-shrink:0;letter-spacing:.02em}
+@media(prefers-reduced-motion:reduce){
+  .rip-ink,.sk::after,.m:hover,.ls-card:hover{animation:none!important;transform:none!important}
+}
 .viewtoggle{display:inline-flex;background:var(--card-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;flex-shrink:0}
 .vt{background:none;border:0;color:var(--soft);font:inherit;font-weight:700;font-size:13px;padding:9px 16px;border-radius:8px;cursor:pointer}
 .vt.on{background:#F2B84B;color:#1a1400}
@@ -635,7 +689,9 @@ html.mode-live #live{display:block}
   margin-left:3px;vertical-align:middle;animation:livePulse 1.4s infinite}
 @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
 .live-strip{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;margin-bottom:6px;
-  scrollbar-width:none}
+  scrollbar-width:none;
+  -webkit-mask-image:linear-gradient(90deg,#000 0,#000 92%,transparent 100%);
+  mask-image:linear-gradient(90deg,#000 0,#000 92%,transparent 100%)}
 .ls-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 2px 4px}
 .ls-head span{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;
   letter-spacing:.05em;text-transform:uppercase;color:var(--soft)}
@@ -899,7 +955,7 @@ html.mode-live #live{display:block}
 <body>
 
 <div class="loader" id="loader">
-  <div class="loader-orbit"><span class="ring r1"></span><span class="ring r2"></span><img class="loader-sig" src="/wiz-logo.png" alt=""></div>
+  <div class="loader-orbit"><span class="ring r1"></span><span class="ring r2"></span><span class="loader-ball"></span></div>
   <div class="loader-word">Soccer<em>wizard</em></div>
 </div>
 
@@ -1011,6 +1067,7 @@ html.mode-live #live{display:block}
       <button class="book-btn" id="bookBtn" type="button">Get booking code</button>
     </div>
     <div class="bld-note" id="bldNote"></div>
+    <div class="bld-approx">*Est. odds are a rough model guide — real SportyBet odds are usually lower.</div>
     <div id="bookResult"></div>
   </section>
 
@@ -1656,13 +1713,13 @@ function attachEventIds(sporty){
       var s=simTeams(f.home,m.homeTeam)+simTeams(f.away,m.awayTeam);
       if(s>bestScore){bestScore=s;best=m;}
     });
-    if(best&&bestScore>=1.3){f.eventId=best.eventId;hits++;return;}
+    if(best&&bestScore>=1.3){f.eventId=best.eventId;f.sportyOdds=best.odds||{};hits++;return;}
     var gb=null,gs=0;
     sporty.forEach(function(m){
       var s=simTeams(f.home,m.homeTeam)+simTeams(f.away,m.awayTeam);
       if(s>gs){gs=s;gb=m;}
     });
-    if(gb&&gs>=1.6){f.eventId=gb.eventId;hits++;}
+    if(gb&&gs>=1.6){f.eventId=gb.eventId;f.sportyOdds=gb.odds||{};hits++;}
   });
   try{console.log("[sporty] matched "+hits+"/"+DATA.fixtures.length+" from "+sporty.length+" events");}catch(e){}
   return hits;
@@ -1705,24 +1762,30 @@ function mLabel(f,c){
 }
 function buildPicks(){
   var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier), cand=[];
-  DATA.fixtures.filter(function(f){return isUpcoming(f);}).forEach(function(f){
-    var best=null;
+  var f0=BUILD.risk/100;
+  DATA.fixtures.filter(function(f){return notStarted(f);}).forEach(function(f){
+    var best=null,bestScore=-1;
     allowed.forEach(function(c){
       var v=mProb(f,c);
       if(v==null||isNaN(v)||v<p.minConf) return;
-      if(!best||v>best.p) best={code:c,p:v};
+      var score=(1-f0)*v + f0*(oddOf(v)/12);
+      if(score>bestScore){bestScore=score;best={code:c,p:v};}
     });
     if(best) cand.push({f:f,id:fid(f),code:best.code,p:best.p,eventId:f.eventId||null});
   });
-  cand.sort(function(a,b){return b.p-a.p;});
+  cand.sort(function(a,b){return f0<0.5?(b.p-a.p):(oddOf(b.p)-oddOf(a.p));});
   var removedCount=Object.keys(BUILD.removed).length;
   var cap=Math.max(0,p.maxGames-removedCount);
   cand=cand.filter(function(c){return !BUILD.removed[c.id];}).slice(0,cap);
   BUILD.picks=cand;
   return cand;
 }
+function oddOf(p){var q=Math.max(0.06,Math.min(0.97,p));return Math.pow(1/q,0.85);}
+function legOdd(f,code,p){var o=f&&f.sportyOdds&&f.sportyOdds[code];return (o&&o>1.01)?o:oddOf(p);}
+function oddsAreReal(picks){return picks.length&&picks.every(function(c){var o=c.f&&c.f.sportyOdds&&c.f.sportyOdds[c.code];return o&&o>1.01;});}
+function notStarted(f){if(f&&f.kickoff){return new Date(f.kickoff).getTime()>Date.now();}return isUpcoming(f);}
 function totalOdds(picks){
-  return picks.reduce(function(t,c){return t*(1/c.p);},1);
+  return picks.reduce(function(t,c){return t*legOdd(c.f,c.code,c.p);},1);
 }
 function renderBuilder(){
   var p=riskParams(BUILD.risk);
@@ -1738,11 +1801,12 @@ function renderBuilder(){
     return "<span class='mkt"+(p.tier>=g[1]?" on":"")+"'>"+g[0]+"</span>";}).join("");
   // stats
   var odds=totalOdds(picks);
+  var real=oddsAreReal(picks), pre=real?"\u00d7":"~\u00d7";
   var avg=picks.length?picks.reduce(function(t,c){return t+c.p;},0)/picks.length:0;
   $("bldStats").innerHTML=
     "<div class='stat'><b>"+picks.length+"</b><i>Games</i></div>"+
     "<div class='stat'><b>"+(picks.length?P0(avg)+"%":"\u2014")+"</b><i>Avg confidence</i></div>"+
-    "<div class='stat odds'><b>"+(picks.length?"\u00d7"+odds.toFixed(2):"\u2014")+"</b><i>Est. odds</i></div>";
+    "<div class='stat odds'><b>"+(picks.length?pre+odds.toFixed(2):"\u2014")+"</b><i>"+(real?"SportyBet odds":"Est. odds*")+"</i></div>";
   // slip rows
   if(!picks.length){
     $("slip").innerHTML="<div class='bld-empty'><b>Nothing in your slip</b>"+
@@ -1755,14 +1819,14 @@ function renderBuilder(){
           (c.eventId?"":"<span class='sp-noid'>no ID</span>")+"</div>"+
           "<div class='sp-meta'>"+compOf(f.league)+" \u00b7 "+dayName(dayOff(f.date))+" "+kickTime(f)+"</div></div>"+
         "<div class='sp-pick'><b>"+mLabel(f,c.code)+"</b><i>"+P0(c.p)+"%</i></div>"+
-        "<span class='sp-odd'>"+(1/c.p).toFixed(2)+"</span>"+
+        "<span class='sp-odd'>"+legOdd(c.f,c.code,c.p).toFixed(2)+"</span>"+
         "<button class='sp-x' data-rm='"+c.id+"' aria-label='Remove'>\u00d7</button>"+
       "</div>";
     }).join("");
     $("slip").querySelectorAll("[data-rm]").forEach(function(b){
       b.addEventListener("click",function(){BUILD.removed[b.dataset.rm]=1;renderBuilder();});});
   }
-  $("totOdds").textContent=picks.length?"\u00d7"+odds.toFixed(2):"\u2014";
+  $("totOdds").textContent=picks.length?(real?"\u00d7":"~\u00d7")+odds.toFixed(2):"\u2014";
   var bookable=picks.filter(function(c){return c.eventId;}).length;
   var btn=$("bookBtn");
   btn.disabled=BUILD.booking||!bookable;
@@ -1899,7 +1963,7 @@ function renderSlipOfDay(){
   cand.sort(function(a,b){return b.p-a.p;});
   SOTD=cand.slice(0,4);
   if(SOTD.length<2){host.innerHTML="";return;}
-  var odds=SOTD.reduce(function(t,c){return t*(1/c.p);},1);
+  var odds=SOTD.reduce(function(t,c){return t*legOdd(c.f,c.code,c.p);},1);
   var bookable=SOTD.filter(function(c){return c.eventId;}).length;
   host.innerHTML=
     "<section class='sotd'>"+
@@ -1912,7 +1976,7 @@ function renderSlipOfDay(){
         return "<div class='sotd-leg'><span class='lg-t'>"+esc(c.f.home)+" v "+esc(c.f.away)+
           "</span><span class='lg-p'>"+mLabel(c.f,c.code)+"</span><span class='lg-c'>"+P0(c.p)+"%</span></div>";
       }).join("")+"</div>"+
-      "<div class='sotd-foot'><div class='sotd-odds'><i>Est. odds</i><b>\u00d7"+odds.toFixed(2)+"</b></div>"+
+      "<div class='sotd-foot'><div class='sotd-odds'><i>Est. odds*</i><b>~\u00d7"+odds.toFixed(2)+"</b></div>"+
         "<button class='share-btn' id='sotdShare'>\u2197 Share</button>"+
         "<button class='sotd-btn' id='sotdBook'"+(bookable?"":" disabled")+">Book this slip</button></div>"+
       "<div class='bld-note' id='sotdNote'></div><div id='sotdResult'></div>"+
@@ -2208,7 +2272,7 @@ var MYSLIP=[];
 try{MYSLIP=JSON.parse(localStorage.getItem("sw.myslip")||"[]");}catch(e){MYSLIP=[];}
 function saveMy(){try{localStorage.setItem("sw.myslip",JSON.stringify(MYSLIP));}catch(e){}}
 function myslipHas(id,code){return MYSLIP.some(function(x){return x.id===id&&x.code===code;});}
-function myOdds(){return MYSLIP.reduce(function(t,x){return t*(x.p>0?1/x.p:1);},1);}
+function myOdds(){return MYSLIP.reduce(function(t,x){return t*legOdd(fixtureById(x.id),x.code,x.p);},1);}
 function renderFab(){var fab=$("myFab"); if(!fab) return; fab.hidden=MYSLIP.length===0;
   var c=$("myFabC"); if(c) c.textContent=MYSLIP.length;}
 function clearMy(){
@@ -2244,7 +2308,7 @@ function renderMySheet(){
       "<div class='sp-main'><div class='sp-teams'>"+teams+noid+"</div>"+
         "<div class='sp-meta'>"+esc(x.label)+"</div></div>"+
       "<div class='sp-pick'><i>"+P0(x.p)+"%</i></div>"+
-      "<span class='sp-odd'>"+(x.p>0?(1/x.p).toFixed(2):"-")+"</span>"+
+      "<span class='sp-odd'>"+(x.p>0?legOdd(fixtureById(x.id),x.code,x.p).toFixed(2):"-")+"</span>"+
       "<button class='sp-x' data-myrm='"+x.id+"|"+x.code+"' aria-label='Remove'>\u00d7</button>"+
     "</div>";
   }).join("");
@@ -2377,6 +2441,80 @@ async function load(){
 function hideLoader(){var l=$("loader"); if(!l) return; l.classList.add("hide");
   setTimeout(function(){if(l&&l.parentNode) l.parentNode.removeChild(l);},500);}
 setTimeout(hideLoader,8000);
+/* ============================================= premium enhancement engine */
+(function(){
+  var host=document.createElement('div');host.id='toasts';document.body.appendChild(host);
+  window.swToast=function(msg,kind){var t=document.createElement('div');t.className='toast '+(kind||'');
+    t.textContent=msg;host.appendChild(t);requestAnimationFrame(function(){t.classList.add('in');});
+    setTimeout(function(){t.classList.remove('in');setTimeout(function(){t.remove();},300);},2600);};
+  document.addEventListener('click',function(e){
+    var el=e.target.closest('button,.lrow,.m,.gl-card,.ls-card,.vt,.navt,.mkt,.cat');
+    if(!el)return;
+    var r=el.getBoundingClientRect(),d=Math.max(r.width,r.height);
+    if(getComputedStyle(el).position==='static')el.style.position='relative';
+    el.classList.add('rip');
+    var ink=document.createElement('span');ink.className='rip-ink';
+    ink.style.width=ink.style.height=d+'px';
+    ink.style.left=(e.clientX-r.left-d/2)+'px';ink.style.top=(e.clientY-r.top-d/2)+'px';
+    el.appendChild(ink);setTimeout(function(){ink.remove();},560);
+  },true);
+  var REDU=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  var io=new IntersectionObserver(function(es){es.forEach(function(en){if(!en.isIntersecting)return;
+    io.unobserve(en.target);countUp(en.target);});},{threshold:.6});
+  function countUp(el){
+    if(el._done)return;var m=el.textContent.match(/-?\d[\d,]*\.?\d*/);if(!m)return;el._done=1;
+    if(REDU)return;
+    var prefix=el.textContent.slice(0,m.index),suffix=el.textContent.slice(m.index+m[0].length);
+    var target=parseFloat(m[0].replace(/,/g,''));if(isNaN(target))return;
+    var dec=(m[0].split('.')[1]||'').length,final=el.textContent,t0=null,dur=620;
+    function step(ts){if(!t0)t0=ts;var k=Math.min(1,(ts-t0)/dur);var v=target*(1-Math.pow(1-k,3));
+      el.textContent=prefix+(dec?v.toFixed(dec):Math.round(v).toLocaleString())+suffix;
+      if(k<1)requestAnimationFrame(step);else el.textContent=final;}
+    requestAnimationFrame(step);
+  }
+  window.__observeNums=function(root){(root||document).querySelectorAll('.big.num,.stat b,.gl-pc,.record-stat .pc,.sotd-odds b').forEach(function(el){if(!el._done)io.observe(el);});};
+  window.__buildGlance=function(){
+    var g=document.getElementById('glance'),root=document.documentElement;
+    if(root.classList.contains('mode-build')||root.classList.contains('mode-live')){if(g)g.style.display='none';return;}
+    var games=(typeof shown==='function')?shown():[];
+    if(games.length<3){if(g)g.style.display='none';return;}
+    if(!g){g=document.createElement('div');g.id='glance';g.className='glance';
+      var potd=document.getElementById('potd');if(!potd)return;potd.parentNode.insertBefore(g,potd);}
+    g.style.display='';
+    var banker=games.slice().sort(function(a,b){return b.tip_p-a.tip_p;})[0];
+    var goals=games.slice().sort(function(a,b){return (b.o25||0)-(a.o25||0);})[0];
+    var big=games.slice().sort(function(a,b){return (b.lh+b.la)-(a.lh+a.la);})[0];
+    function card(cls,k,f,pc,sub){return "<div class='gl-card "+cls+"' data-fx='"+fid(f)+"'>"+
+      "<div class='gl-k'><span class='dot'></span>"+k+"</div>"+
+      "<div class='gl-team'>"+esc(plainTip(f))+"</div>"+
+      "<div class='gl-sub'>"+esc(f.home)+" v "+esc(f.away)+" \u00b7 "+sub+"</div>"+
+      "<div class='gl-pc'>"+pc+"</div></div>";}
+    g.innerHTML=card('banker','Banker of the day',banker,P0(banker.tip_p)+'%',compOf(banker.league))+
+      card('value','Goal fest',goals,P0(goals.o25||0)+'%','over 2.5')+
+      card('','Biggest scoreline',big,scoreLine(big),compOf(big.league));
+    g.querySelectorAll('[data-fx]').forEach(function(c){c.addEventListener('click',function(){if(typeof openSheet==='function')openSheet(c.dataset.fx);});});
+    window.__observeNums(g);
+  };
+  function hashColor(s){var h=0;for(var i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h);return 'hsl('+(Math.abs(h)%360)+',52%,42%)';}
+  window.__monograms=function(){
+    document.querySelectorAll('.teams .tn, .tnames .tn').forEach(function(tn){
+      if(tn.querySelector('.mono'))return;var nm=(tn.textContent||'').trim();if(!nm)return;
+      var mono=document.createElement('span');mono.className='mono';
+      mono.style.background=hashColor(nm);mono.textContent=nm.replace(/[^A-Za-z ]/g,'').slice(0,2).toUpperCase();
+      tn.insertBefore(mono,tn.firstChild);
+    });
+  };
+  window.__afterRender=function(){try{window.__buildGlance();}catch(e){}try{window.__monograms();}catch(e){}try{window.__observeNums();}catch(e){}};
+  document.addEventListener('keydown',function(e){
+    if(e.key==='/'&&!/input|textarea|select/i.test((document.activeElement||{}).tagName||'')){
+      var q=document.getElementById('q');if(q){e.preventDefault();q.focus();}}
+  });
+  ['bookResult','myBookResult','sotdResult'].forEach(function(id){var el=document.getElementById(id);if(!el)return;
+    new MutationObserver(function(){if(el.querySelector('.code-card'))window.swToast('Booking code ready','ok');
+      else if(el.querySelector('.code-err'))window.swToast("Couldn't get a code",'err');}).observe(el,{childList:true});});
+  if(typeof render==='function'){var __ro=render;render=function(){__ro.apply(this,arguments);window.__afterRender();};}
+  if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
+})();
 load();
 </script>
 </body>
