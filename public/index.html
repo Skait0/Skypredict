@@ -411,22 +411,39 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
 .lv.just-scored{border-color:var(--green);box-shadow:0 0 0 2px rgba(43,199,120,.3)}
 .gl-team{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gl-card.score .gl-pc{font-size:30px;color:var(--text)}
+.gl-pc{white-space:nowrap}
 .myfab .lbl{white-space:nowrap}
+.nav .navt.build{display:none}
 .slip-cta{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin:14px 0 2px;
   background:linear-gradient(150deg,var(--card),var(--card-2));border:1px solid var(--red);
-  border-radius:14px;padding:14px 16px;cursor:pointer;color:var(--text);font:inherit}
+  border-radius:14px;padding:14px 16px;cursor:pointer;color:var(--text);font:inherit;
+  position:relative;overflow:hidden;animation:ctaPulse 2.6s ease-out infinite}
+@keyframes ctaPulse{0%{box-shadow:0 0 0 0 rgba(230,57,70,.5)}70%{box-shadow:0 0 0 12px rgba(230,57,70,0)}100%{box-shadow:0 0 0 0 rgba(230,57,70,0)}}
+.slip-cta::after{content:'';position:absolute;top:0;left:-60%;width:45%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.14),transparent);
+  transform:skewX(-18deg);animation:ctaShine 3.6s ease-in-out infinite}
+@keyframes ctaShine{0%,100%{left:-60%}55%,75%{left:130%}}
+.sc-go{transition:transform .2s}
+.slip-cta:hover .sc-go{transform:translateX(4px)}
 .slip-cta:hover{filter:brightness(1.06)}
 .sc-ic{color:var(--red-ink);flex-shrink:0;display:inline-flex}
 .sc-tx{flex:1;min-width:0}
 .sc-tx b{display:block;font-size:15px;font-weight:800}
 .sc-tx i{display:block;font-style:normal;font-size:12.5px;color:var(--soft);margin-top:2px}
 .sc-go{color:var(--red-ink);font-weight:800;font-size:18px;flex-shrink:0}
+.sc-logo{height:36px;width:auto;display:inline-block;border-radius:5px;vertical-align:-12px;margin-right:8px}
+@media(prefers-reduced-motion:reduce){.slip-cta{animation:none}.slip-cta::after{display:none}}
 html.mode-build .slip-cta,html.mode-live .slip-cta{display:none}
 @media(max-width:600px){
   .bld-foot{flex-wrap:wrap;padding:14px}
   .bld-foot .bld-odds{flex-basis:100%}
   .bld-foot .clear-btn,.bld-foot .book-btn{flex:1 1 auto}
   .nav{flex-wrap:wrap}
+  html.mode-build #slip{display:none}
+  html.mode-build .bld-foot .clear-btn,html.mode-build .bld-foot .book-btn,
+  html.mode-build #bldNote,html.mode-build .bld-approx{display:none}
+  html.mode-build .bld-foot{box-shadow:none;position:static}
+  .gl-card.score .gl-pc{flex-shrink:0}
   .myfab{padding:0;width:58px;height:58px;justify-content:center;border-radius:50%}
   .myfab .lbl{display:none}
   .myfab-c{background:transparent;color:#fff;font-size:20px;min-width:auto;height:auto;padding:0}
@@ -573,6 +590,10 @@ html.mode-build .slip-cta,html.mode-live .slip-cta{display:none}
 
 .tipbox{display:flex;align-items:center;gap:9px;margin-top:13px;
   background:var(--card-2);border-radius:10px;padding:11px 13px}
+.vdot{width:9px;height:9px;border-radius:50%;background:var(--grey);flex-shrink:0}
+.why{display:block;margin-top:9px;font-size:12.5px;line-height:1.5;color:var(--soft)}
+.conf-strong .vdot{background:var(--green)}
+.conf-lean .vdot{background:var(--win)}
 .tipbox .k{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
   color:var(--faint)}
 .tipbox .v{font-weight:700;font-size:14px}
@@ -671,23 +692,31 @@ html.locked{overflow:hidden}
 .none p{color:var(--soft);font-size:14px;max-width:44ch;margin:0 auto}
 .note{margin-top:40px;background:var(--card);border-radius:14px;padding:22px;
   border:1px solid var(--line-soft)}
-.note h3{font-weight:800;font-size:17px;margin-bottom:12px}
+.note h3{font-weight:800;font-size:17px;margin-bottom:12px;color:var(--red-ink)}
 .note p{color:var(--soft);font-size:14px;line-height:1.68;margin-bottom:11px;max-width:70ch}
+.note p b{color:var(--red-ink);font-weight:800}
 .note p:last-child{margin-bottom:0}
 .note b{color:var(--text);font-weight:700}
 footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
   color:var(--soft);font-size:13px}
-.foot-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.foot-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px;
+  padding-bottom:22px;border-bottom:1px solid var(--line-soft)}
 .foot-brand img{height:46px;width:auto}
 .foot-brand b{display:block;font-size:17px;font-weight:800;color:var(--text)}
 .foot-brand em{font-style:normal;color:var(--red)}
+.badge18{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:22px;
+  padding:0 7px;border:2px solid var(--red);color:var(--red-ink);border-radius:99px;
+  font-weight:800;font-size:12px;letter-spacing:.02em;line-height:1}
+.badge18 sup{font-size:8px;font-weight:800;margin-left:1px}
 .foot-brand span{display:block;font-size:12px;color:var(--faint);margin-top:2px}
 .foot-cols{display:grid;gap:20px;margin-bottom:22px}
 .foot-cols h5{font-size:11px;font-weight:800;letter-spacing:.09em;
-  text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+  text-transform:uppercase;color:var(--red-ink);margin-bottom:7px}
 .foot-cols p{font-size:13px;line-height:1.65;max-width:38ch}
-.foot-legal{display:flex;flex-wrap:wrap;gap:8px 18px;padding-top:16px;
+.foot-legal{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-top:16px;
   border-top:1px solid var(--line-soft);font-size:12px;color:var(--faint)}
+.foot-legal .rg{margin-left:auto;color:var(--red-ink);font-weight:700;text-decoration:none}
+.foot-legal .rg:hover{text-decoration:underline}
 @media(min-width:720px){.foot-cols{grid-template-columns:repeat(3,1fr);gap:26px}}
 
 @media (min-width:720px){
@@ -741,6 +770,7 @@ html.mode-live #live{display:block}
   scrollbar-width:none;
   -webkit-mask-image:linear-gradient(90deg,#000 0,#000 92%,transparent 100%);
   mask-image:linear-gradient(90deg,#000 0,#000 92%,transparent 100%)}
+#liveStripWrap{margin-top:22px;border-top:1px solid var(--line-soft);padding-top:14px}
 .ls-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 2px 4px}
 .ls-head span{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;
   letter-spacing:.05em;text-transform:uppercase;color:var(--soft)}
@@ -957,7 +987,7 @@ html.mode-live #live{display:block}
 .myfab-c{background:#fff;color:var(--red);min-width:22px;height:22px;border-radius:99px;
   display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;padding:0 6px}
 .myslip-sheet .sheet-body{max-height:52vh}
-.mysheet-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 0 6px;
+.mysheet-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 16px 6px;
   border-top:1px solid var(--line-soft);margin-top:14px}
 .mysheet-foot .bld-odds{flex:1;min-width:120px}
 .mysheet-foot .clear-btn,.mysheet-foot .book-btn{flex-shrink:0}
@@ -1009,6 +1039,10 @@ html.mode-live #live{display:block}
 .notif button{background:var(--raise);border:1px solid var(--line);color:var(--text);
   font:inherit;font-weight:700;font-size:12.5px;padding:7px 13px;border-radius:99px;cursor:pointer}
 .notif button.on{background:var(--green-wash);color:var(--green-ink);border-color:var(--green)}
+.powered{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
+.powered i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.powered img{height:16px;width:auto;display:block;border-radius:3px}
+@media(max-width:600px){.powered i{display:none}}
 </style>
 </head>
 <body>
@@ -1046,6 +1080,7 @@ html.mode-live #live{display:block}
     <div class="trust">
       <span class="trust-i"><b id="when2">-</b> last updated</span>
       <span class="trust-i" id="streak" hidden></span>
+      <span class="trust-i recap" id="recap" hidden></span>
       <span class="trust-i">Rebuilt daily from results</span>
       <span class="trust-i">Estimates, not certainties</span>
       <a class="trust-i link" href="#how">How accurate?</a>
@@ -1055,12 +1090,12 @@ html.mode-live #live{display:block}
   <button class="slip-cta" id="slipCta" type="button">
     <span class="sc-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z"/><path d="M13 6v12"/></svg></span>
     <span class="sc-tx"><b>Build a SportyBet slip</b><i>Pick a risk level and get a ready-to-play booking code in one tap.</i></span>
-    <span class="sc-go">→</span>
+    <span class="sc-go"><img class="sc-logo" src="/sportybet.png" alt="SportyBet">→</span>
   </button>
 
   <div id="liveStripWrap" hidden>
     <div class="ls-head"><span><span class="live-dot"></span> Live now <b id="liveStripN"></b></span>
-      <a href="#" id="liveStripAll">All live scores →</a></div>
+      <a href="#" id="liveStripAll">See all live</a></div>
     <div id="liveStrip" class="live-strip"></div>
   </div>
 
@@ -1191,8 +1226,9 @@ html.mode-live #live{display:block}
       </div>
       <div class="foot-legal">
         <span>&copy; <span id="yr"></span> Soccerwizard</span>
-        <span>18+ only</span>
+        <span class="badge18" aria-label="Eighteen plus only">18<sup>+</sup></span>
         <span>Predictions are estimates, not certainties</span>
+        <a class="rg" href="https://www.begambleaware.org" target="_blank" rel="noopener">BeGambleAware.org</a>
       </div>
     </div>
   </footer>
@@ -1230,6 +1266,7 @@ const $=function(id){return document.getElementById(id);};
 const P0=function(x){return Math.round(x*100);};
 function conf(p){var pc=Math.round(p*100);return pc>=75?"strong":pc>=60?"lean":"slight";}
 function confLabel(p){var pc=Math.round(p*100);return pc>=75?"Strong":pc>=60?"Likely":"Slight";}
+function verdict(p){var pc=Math.round(p*100);return pc>=75?"Good bet":pc>=60?"Worth a look":"Risky pick";}
 const V={off:0,country:"",league:"",q:"",cat:"all",list:true};
 try{var _sv=localStorage.getItem("sw.view"); if(_sv) V.list=(_sv==="list");}catch(e){}
 let DATA={generated:"",matches:0,leagues:[],fixtures:[]};
@@ -1322,7 +1359,7 @@ const CATS=[
   {k:"all",   label:"All games",   test:function(){return true;}},
   {k:"fav",   label:"\u2605 Favourites", test:function(f){return isFav(f.league)||isFav("c:"+countryOf(f.league));}},
   {k:"banker",label:"80%+ picks",  test:function(f){return f.tip_p>=0.80;}},
-  {k:"value", label:"\u2726 Value", test:function(f){return isValue(f);}},
+  {k:"value", label:"\u2726 Better price", test:function(f){return isValue(f);}},
   {k:"win",   label:"Straight win", test:function(f){
      return Math.max(f.home_p,f.away_p)>=0.60;}},
   {k:"o15",   label:"Over 1.5",     test:function(f){return f.o15>=0.80;}},
@@ -1359,11 +1396,25 @@ function plainTip(f){
   if(t.indexOf("Both score and")===0) return "Both score and over 2.5";
   return t;
 }
+function whyLine(f){
+  var hf=f.home_p>f.away_p, strong=hf?f.home:f.away, xg=Math.abs(f.lh-f.la);
+  var t=f.tip||"";
+  if(t==="Both teams score") return "Both teams have been scoring in most of their games.";
+  if(t.indexOf("Both score and")===0) return "Both teams score often and their games see goals.";
+  if(t==="Over 2.5"||t.indexOf("Draw or over")===0) return "Their recent games have had plenty of goals.";
+  if(t==="Under 2.5") return "Both teams have been in low-scoring games lately.";
+  if(t==="First half goal") return "Goals tend to come early in their matches.";
+  if(t==="Draw") return "The two sides look evenly matched.";
+  var form=hf?f.form_home:f.form_away, wins=form?form.filter(function(x){return x==="W";}).length:0;
+  if(wins>=3) return esc(strong)+" have won "+wins+" of their last "+form.length+".";
+  if(xg>=0.5) return esc(strong)+" are the stronger side and expected to score more.";
+  return esc(strong)+" have the edge on recent form.";
+}
 function tipCode(f){var t=f.tip||"";if(t==="Home win")return"1";if(t==="Away win")return"2";if(t==="Draw")return"X";if(t==="Both teams score")return"GG";if(t.indexOf("1X")===0)return"1X";if(t.indexOf("X2")===0)return"X2";if(t.indexOf("12")===0)return"12";return null;}
 function edgeOf(f){var c=tipCode(f);if(!c)return null;var o=f.sportyOdds&&f.sportyOdds[c];if(!o||o<=1.01)return null;return f.tip_p-1/o;}
 function isValue(f){var e=edgeOf(f);return e!=null&&e>=0.05;}
-function valPill(f){return isValue(f)?"<span class='pill value'>\u2726 Value +"+Math.round(edgeOf(f)*100)+"%</span>":"";}
-function valMark(f){return isValue(f)?"<span class='vmark' title='Value pick - our odds beat SportyBet'>\u2726 +"+Math.round(edgeOf(f)*100)+"%</span>":"";}
+function valPill(f){return isValue(f)?"<span class='pill value'>\u2726 Better price</span>":"";}
+function valMark(f){return isValue(f)?"<span class='vmark' title='Better price - our odds beat SportyBet'>\u2726 Better price</span>":"";}
 
 /* -------------------------------------------------------- pick of the day
    Chosen by confidence, then explained. A pick with no reasoning is just a
@@ -1568,10 +1619,11 @@ function matchHTML(f){
         "<b><i style='background:var(--grey)'></i>Draw "+P0(f.draw_p)+"%</b>"+
         "<b><i style='background:var(--cream)'></i>Away "+P0(f.away_p)+"%</b>"+
       "</span>"+
-      "<span class='tipbox'><span class='k'>Tip</span>"+
+      "<span class='tipbox'><span class='vdot'></span><span class='k'>Our call</span>"+
         "<span class='v'>"+esc(plainTip(f))+"</span>"+
-        "<span class='grade'>"+confLabel(f.tip_p)+"</span>"+
+        "<span class='grade'>"+verdict(f.tip_p)+"</span>"+
         "<span class='p num'>"+P0(f.tip_p)+"%</span></span>"+
+      "<span class='why'>"+whyLine(f)+"</span>"+
       "<span class='mtoggle'>"+
         "<span class='ls'>See "+countMarkets(f)+" more predictions</span>"+
         "<span class='cv'>&rsaquo;</span></span>"+
@@ -1745,7 +1797,7 @@ addEventListener("keydown",function(e){
   }});
 
 /* ============================================================ build a slip */
-var BUILD={risk:45,removed:{},picks:[],booking:false};
+var BUILD={risk:20,removed:{},picks:[],booking:false};
 try{var rr=localStorage.getItem("sw.risk"); if(rr!=null) BUILD.risk=+rr;}catch(e){}
 const BOOK_URL="https://web-production-798c0.up.railway.app/api/generate-booking-code";
 const SPORTY_URL="https://www.sportybet.com/ng/?shareCode=";
@@ -1907,6 +1959,9 @@ function renderBuilder(){
       b.addEventListener("click",function(){BUILD.removed[b.dataset.rm]=1;renderBuilder();});});
   }
   $("totOdds").textContent=picks.length?(real?"\u00d7":"~\u00d7")+odds.toFixed(2):"-";
+  // mirror the built slip into the floating bet slip
+  MYSLIP=picks.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p};});
+  saveMy(); renderFab();
   var bookable=picks.filter(function(c){return c.eventId;}).length;
   var btn=$("bookBtn");
   btn.disabled=BUILD.booking||!bookable;
@@ -2494,6 +2549,10 @@ function paint(){
   $("when").textContent=d;
   var w2=$("when2"); if(w2) w2.textContent=d;
   renderStreak();
+  var rc=$("recap"); if(rc){ var ry=DATA.recordYest;
+    if(ry&&ry.total){ rc.hidden=false; rc.innerHTML="\uD83D\uDC4D Yesterday <b>"+ry.correct+" of "+ry.total+"</b> tips landed"; }
+    else if(DATA.record&&DATA.record.total){ rc.hidden=false; rc.innerHTML="\uD83D\uDC4D Lately <b>"+DATA.record.correct+" of "+DATA.record.total+"</b> tips landed"; }
+    else rc.hidden=true; }
   var vs=$("v-cards"),vp=$("v-list");
   if(vs){vs.classList.toggle("on",!V.list); if(!vs._w){vs._w=1;vs.addEventListener("click",function(){setList(false);});}}
   if(vp){vp.classList.toggle("on",V.list); if(!vp._w){vp._w=1;vp.addEventListener("click",function(){setList(true);});}}
