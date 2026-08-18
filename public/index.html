@@ -413,7 +413,8 @@ html:not(.reduce) .m:nth-child(n+7),html:not(.reduce) .lrow:nth-child(n+7){anima
   padding:6px 12px;border-radius:99px;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.4);
   transition:transform .55s cubic-bezier(.5,.05,.5,1),opacity .55s}
 /* bottom tab bar (mobile only) */
-.btabs{display:none}
+.btabs{display:none;transition:transform .3s ease}
+.btabs.hide{transform:translateY(110%)}
 @media(max-width:720px){
   .btabs{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:120;
     background:var(--card);border-top:1px solid var(--line);
@@ -802,12 +803,12 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
 .navt:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .top-in .when{margin-left:auto}
 @media(max-width:560px){
-  .top-in{gap:8px;padding:10px 12px}
+  .top-in{gap:8px;padding:10px 12px;flex-wrap:nowrap}
   .top-in .when{display:none}
-  .nav{margin-left:auto;gap:2px}
-  .navt{padding:7px 10px;font-size:13px}
-  .logo{font-size:16px}
-  .sig{height:34px}
+  .logo{font-size:0;gap:0}
+  .sig{height:32px}
+  .nav{margin-left:auto;gap:2px;flex-shrink:1;min-width:0}
+  .navt{padding:7px 9px;font-size:12.5px;white-space:nowrap}
 }
 #builder{display:none;margin-top:8px}
 html.mode-build .intro,html.mode-build #potd,html.mode-build .bar,
@@ -854,6 +855,7 @@ html.mode-live #live{display:block}
 #liveStripWrap{margin-top:20px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);
   padding:0;background:linear-gradient(180deg,var(--card),var(--card-2))}
 .ticker{position:relative;display:flex;align-items:center;overflow:hidden;height:46px}
+@media(max-width:560px){.ticker-track{overflow-x:auto;-webkit-overflow-scrolling:touch}}
 .ticker-track{display:flex;align-items:center;gap:0;white-space:nowrap;will-change:transform;flex:1;min-width:0;overflow:hidden;
   animation:tickscroll 60s linear infinite}
 .ticker:hover .ticker-track{animation-play-state:paused}
@@ -980,8 +982,8 @@ html.mode-live #live{display:block}
 @keyframes goalBadgeIn{0%{opacity:0;transform:translateY(8px) scale(.7)}
   12%{opacity:1;transform:translateY(0) scale(1)}82%{opacity:1;transform:translateY(0) scale(1)}
   100%{opacity:0;transform:translateY(-4px) scale(1)}}
-.goal-badge{position:absolute;top:10px;right:12px;background:var(--green);color:#04210f;
-  font-size:12px;font-weight:800;letter-spacing:.09em;padding:5px 12px;border-radius:99px;
+.goal-badge{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:var(--green);color:#04210f;
+  font-size:11px;font-weight:800;letter-spacing:.06em;padding:4px 11px;border-radius:99px;
   animation:goalBadgeIn 3s ease-out forwards;pointer-events:none;z-index:2}
 @media(max-width:520px){.lv-scorers{grid-template-columns:1fr}.lv-scorers .sr.a{justify-content:flex-start;text-align:left;grid-column:1}}
 .bld-head h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:6px 0 4px}
@@ -2482,7 +2484,7 @@ async function fetchLive(){
 }
 function statusText(m){
   if(m.status==="FT"||m.status==="AET"||m.status==="PEN") return {t:"FT",ft:true};
-  if(m.status==="HT") return {t:"Half-time",ft:false};
+  if(m.status==="HT") return {t:"HT",ft:false};
   return {t:(m.minute!=null?m.minute+"\u2019":"Live"),ft:false};
 }
 function scorersHTML(m){
@@ -2878,6 +2880,10 @@ async function load(){
 function hideLoader(){var l=$("loader"); if(!l) return; l.classList.add("hide");
   setTimeout(function(){if(l&&l.parentNode) l.parentNode.removeChild(l);},500);}
 setTimeout(hideLoader,8000);
+(function(){var top=document.querySelector(".top"),bt=document.querySelector(".btabs");
+  if(!top||!bt||!("IntersectionObserver" in window))return;
+  new IntersectionObserver(function(es){bt.classList.toggle("hide",es[0].isIntersecting);},
+    {rootMargin:"-4px 0px 0px 0px"}).observe(top);})();
 /* ============================================= premium enhancement engine */
 (function(){
   var host=document.createElement('div');host.id='toasts';document.body.appendChild(host);
@@ -2959,11 +2965,8 @@ setTimeout(hideLoader,8000);
     new MutationObserver(function(){if(el.querySelector('.code-card'))window.swToast('Booking code ready','ok');
       else if(el.querySelector('.code-err'))window.swToast("Couldn't get a code",'err');}).observe(el,{childList:true});});
   var AC=null,soundOn=false;try{soundOn=localStorage.getItem('sw.sound')==='1';}catch(e){}
-  function beep(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();
-    [880,1320].forEach(function(fr,i){var o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=fr;
-      o.connect(g);g.connect(AC.destination);var t=AC.currentTime+i*0.12;g.gain.setValueAtTime(0.0001,t);
-      g.gain.exponentialRampToValueAtTime(0.25,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.3);
-      o.start(t);o.stop(t+0.32);});}catch(e){}}
+  var goalAudio=null;
+  function beep(){try{if(!goalAudio){goalAudio=new Audio('/goal.mp3');goalAudio.volume=0.7;}goalAudio.currentTime=0;goalAudio.play().catch(function(){});}catch(e){}}
   if(typeof applyGoalFX==='function'){var __ag=applyGoalFX;applyGoalFX=function(h){var n=Object.keys(LIVE.flash||{}).length;__ag(h);if(n&&soundOn)beep();};}
   window.__wireAlert=function(){var b=document.getElementById('liveAlert');if(!b||b._w)return;b._w=1;
     var base='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>';
