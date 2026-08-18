@@ -490,7 +490,7 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
   html.mode-build #bldNote,html.mode-build .bld-approx,
   html.mode-build #bookResult{display:none}
   .gl-card.score .gl-pc{flex-shrink:0}
-  .myfab{padding:0;width:58px;height:58px;justify-content:center;border-radius:50%}
+  .myfab{padding:0;width:58px;height:58px;justify-content:center;border-radius:50%;bottom:92px}
   .myfab .lbl{display:none}
   .myfab-c{background:transparent;color:#fff;font-size:20px;min-width:auto;height:auto;padding:0}
 }
@@ -1109,8 +1109,8 @@ html.mode-live #live{display:block}
   border:0;font:inherit;font-weight:800;font-size:15px;padding:14px 20px;border-radius:99px;
   cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35);display:flex;align-items:center;gap:9px}
 .myfab:hover{filter:brightness(1.08)}
-.myfab-c{background:#fff;color:var(--red);min-width:22px;height:22px;border-radius:99px;
-  display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;padding:0 6px}
+.myfab-c{background:transparent;color:#fff;min-width:22px;height:22px;border-radius:99px;
+  display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;padding:0 2px}
 .myslip-sheet .sheet-body{max-height:52vh}
 .mysheet-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 16px 6px;
   border-top:1px solid var(--line-soft);margin-top:14px}
@@ -2767,7 +2767,26 @@ $("bt-live").addEventListener("click",function(){setView("live");});
 $("bt-build").addEventListener("click",function(){setView("build");});
 $("logo").addEventListener("click",function(e){e.preventDefault();setView("pred");});
 if($("slipCta"))$("slipCta").addEventListener("click",function(){setView("build");});
-$("myFab").addEventListener("click",openMySheet);
+(function(){
+  var fab=$("myFab"); if(!fab) return;
+  var moved=false,sx=0,sy=0,ox=0,oy=0,drag=false;
+  try{var sp=JSON.parse(localStorage.getItem("sw.fabpos")||"null");
+    if(sp){fab.style.left=sp.x+"px";fab.style.top=sp.y+"px";fab.style.right="auto";fab.style.bottom="auto";}}catch(e){}
+  function down(e){drag=true;moved=false;var t=e.touches?e.touches[0]:e;
+    sx=t.clientX;sy=t.clientY;var r=fab.getBoundingClientRect();ox=r.left;oy=r.top;}
+  function move(e){if(!drag)return;var t=e.touches?e.touches[0]:e;
+    var dx=t.clientX-sx,dy=t.clientY-sy;
+    if(Math.abs(dx)+Math.abs(dy)>5)moved=true;
+    var nx=Math.max(6,Math.min(window.innerWidth-fab.offsetWidth-6,ox+dx));
+    var ny=Math.max(6,Math.min(window.innerHeight-fab.offsetHeight-6,oy+dy));
+    fab.style.left=nx+"px";fab.style.top=ny+"px";fab.style.right="auto";fab.style.bottom="auto";
+    if(e.cancelable)e.preventDefault();}
+  function up(){if(!drag)return;drag=false;
+    if(moved){try{localStorage.setItem("sw.fabpos",JSON.stringify({x:parseFloat(fab.style.left),y:parseFloat(fab.style.top)}));}catch(e){}}
+    else openMySheet();}
+  fab.addEventListener("mousedown",down);document.addEventListener("mousemove",move);document.addEventListener("mouseup",up);
+  fab.addEventListener("touchstart",down,{passive:false});document.addEventListener("touchmove",move,{passive:false});document.addEventListener("touchend",up);
+})();
 $("mySheet-x").addEventListener("click",closeMySheet);
 $("myBookBtn").addEventListener("click",bookMy);
 $("myClearBtn").addEventListener("click",clearMy);
