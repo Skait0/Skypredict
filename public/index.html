@@ -694,12 +694,12 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
    on a grid it shifts neighbouring cards too. A panel over the page keeps
    the list exactly where it was, and gives the markets more room than a
    card ever had. Slides from the bottom on a phone, centres on desktop. */
-.scrim{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.62);
+.scrim{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.62);
   opacity:0;pointer-events:none;transition:opacity .28s}
 .scrim.on{opacity:1;pointer-events:auto}
 [data-theme="light"] .scrim{background:rgba(28,24,38,.42)}
 
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:91;max-height:88vh;
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:151;max-height:88vh;
   background:var(--card);border-top:1px solid var(--line);
   border-radius:20px 20px 0 0;display:flex;flex-direction:column;
   /* hidden rather than merely off-screen: a translated panel still counts
@@ -866,8 +866,8 @@ html.mode-live #live{display:block}
   animation:tickscroll 60s linear infinite}
 .ticker:hover .ticker-track{animation-play-state:paused}
 @keyframes tickscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.tk-goalgif{width:auto;height:34px}
-.tk-goalgif img{height:34px;width:auto;border-radius:5px;display:block}
+.tk-goal.flash .tk-tag{animation:tkTagBlink .8s steps(1) infinite;box-shadow:0 0 10px rgba(43,199,120,.85)}
+@keyframes tkTagBlink{0%,100%{opacity:1;box-shadow:0 0 12px rgba(43,199,120,.95)}50%{opacity:.5;box-shadow:0 0 3px rgba(43,199,120,.4)}}
 .tk-item{display:inline-flex;align-items:center;gap:9px;padding:0 22px;font-size:13.5px;font-weight:700;
   color:var(--text);border-right:1px solid var(--line-soft)}
 .tk-min{color:var(--faint)!important}
@@ -996,6 +996,13 @@ html.mode-live #live{display:block}
 .goal-badge{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:120px;height:auto;
   border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.4);
   animation:goalBadgeIn 3s ease-out forwards;pointer-events:none;z-index:2}
+.goal-tag{display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;
+  letter-spacing:.06em;color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;
+  margin-right:6px;vertical-align:middle;animation:goalTagPop .35s ease-out}
+@keyframes goalTagPop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+.lv-sc.scored{color:var(--red-ink)!important;background:var(--red-wash);border-radius:7px;padding:1px 7px;
+  box-shadow:0 0 0 1px var(--red),0 0 12px rgba(230,57,70,.7);animation:scoredGlow 1s ease-in-out infinite}
+@keyframes scoredGlow{0%,100%{box-shadow:0 0 0 1px var(--red),0 0 8px rgba(230,57,70,.55)}50%{box-shadow:0 0 0 1px var(--red),0 0 16px rgba(230,57,70,.95)}}
 @media(max-width:520px){.lv-scorers{grid-template-columns:1fr}.lv-scorers .sr.a{justify-content:flex-start;text-align:left;grid-column:1}}
 .bld-head h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:6px 0 4px}
 .bld-head p{color:var(--soft);font-size:14px;max-width:52ch;margin-bottom:18px}
@@ -1119,6 +1126,27 @@ html.mode-live #live{display:block}
 .opt-add.on{background:none;border-color:var(--red);color:var(--red-ink)}
 .myfab.pop{animation:fabpop .4s ease-out}
 .myfab[hidden]{display:none!important}
+.wspfab{position:fixed;left:16px;bottom:16px;z-index:125;width:56px;height:56px;border-radius:50%;
+  border:0;padding:0;cursor:pointer;background:radial-gradient(circle at 50% 40%,#3a2a63,#1a1230);
+  box-shadow:0 6px 20px rgba(120,80,220,.5),0 0 0 1px rgba(180,150,255,.35) inset;
+  display:flex;align-items:center;justify-content:center;animation:wspFloat 3.2s ease-in-out infinite}
+.wspfab img{width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(180,150,255,.7))}
+.wspfab-spark{position:absolute;inset:-3px;border-radius:50%;pointer-events:none;
+  box-shadow:0 0 14px 2px rgba(150,110,240,.55);animation:wspGlow 2.4s ease-in-out infinite}
+@keyframes wspFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes wspGlow{0%,100%{opacity:.5}50%{opacity:1}}
+@media(max-width:720px){.wspfab{bottom:92px;width:52px;height:52px}.wspfab img{width:34px;height:34px}}
+.wsp-lead{font-size:13.5px;color:var(--soft);margin-bottom:16px;line-height:1.5}
+.wsp-lbl{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin:14px 0 8px}
+.wsp-chips{display:flex;flex-wrap:wrap;gap:8px}
+.wsp-chip{background:var(--card-2);border:1px solid var(--line);color:var(--soft);font:inherit;
+  font-weight:700;font-size:13px;padding:9px 15px;border-radius:99px;cursor:pointer}
+.wsp-chip.on{background:var(--red);border-color:var(--red);color:#fff}
+.wsp-prev{display:flex;align-items:center;justify-content:space-between;margin:18px 0 6px;
+  padding:14px 16px;background:var(--card-2);border:1px solid var(--line-soft);border-radius:13px}
+.wsp-prev span{font-weight:700;color:var(--soft)}
+.wsp-prev b{font-size:22px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
+.wsp-go{width:100%;margin-top:10px}
 @keyframes fabpop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
 .myfab{position:fixed;right:16px;bottom:16px;z-index:130;background:rgba(230,57,70,.55);color:#fff;
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
@@ -1165,9 +1193,16 @@ html.mode-live #live{display:block}
   font:inherit;font-weight:800;font-size:14px;padding:12px 16px;border-radius:10px;
   cursor:pointer;display:inline-flex;align-items:center;gap:7px}
 .share-btn:hover{border-color:var(--soft)}
-.streak::before{content:none}
+.streak::before{content:none!important}
+.streak.trust-i::before,.trust .streak::before{display:none!important;content:none!important}
+.goal-tag{display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;
+  letter-spacing:.06em;color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;
+  margin-right:6px;vertical-align:middle;box-shadow:0 0 8px rgba(43,199,120,.7);
+  animation:goalTagPop .35s ease-out, goalTagBlink 1s steps(1) .35s infinite}
+@keyframes goalTagBlink{0%,100%{opacity:1;box-shadow:0 0 12px rgba(43,199,120,.95)}50%{opacity:.45;box-shadow:0 0 4px rgba(43,199,120,.4)}}
+.lv-sc{font-weight:600}
+.lv.ft-row .lv-sc{font-weight:800}
 .streak b{color:var(--win);font-weight:800}
-.record{margin-top:14px}
 .record-in{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
   background:var(--card);border:1px solid var(--line-soft);border-radius:13px;padding:14px 16px}
 .record-h{display:flex;flex-direction:column;gap:1px}
@@ -1393,6 +1428,12 @@ html.mode-live #live{display:block}
   <div class="sheet-body" id="sheet-body"></div>
 </div>
 
+<button class="wspfab" id="wspFab" type="button" aria-label="Wizard's Special"><img src="/wiz-logo.png" alt=""><span class="wspfab-spark"></span></button>
+<div class="sheet wsp-sheet" id="wspSheet" role="dialog" aria-modal="true">
+  <div class="sheet-grab"><i></i></div>
+  <div class="sheet-head"><b>✨ Wizard's Special</b><button class="sheet-x" id="wspX" aria-label="Close">×</button></div>
+  <div class="sheet-body" id="wspBody"></div>
+</div>
 <button class="myfab" id="myFab" type="button" hidden><span class="myfab-c" id="myFabC">0</span><span class="lbl">My slip</span></button>
 <nav class="btabs" aria-label="Sections">
   <button class="btab on" id="bt-pred" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M4 12h16M4 19h10"/></svg></span>Tips</button>
@@ -2528,7 +2569,7 @@ function liveCardHTML(m){
   var id=m.eventId||(m.home+m.away);
   var hl=(m.homeScore!=null&&m.awayScore!=null&&m.homeScore>m.awayScore);
   var al=(m.homeScore!=null&&m.awayScore!=null&&m.awayScore>m.homeScore);
-  return "<div class='lv' data-ev=\""+esc(id)+"\">"+
+  return "<div class='lv"+(st.ft?" ft-row":"")+"' data-ev=\""+esc(id)+"\">"+
     "<div class='lv-top'><span class='lv-lg'>"+esc2(liveComp(m.league))+"</span>"+
       "<span class='lv-status"+(st.ft?" ft":"")+"'>"+(st.ft?"":"<span class='live-dot'></span>")+st.t+"</span></div>"+
     "<div class='lv-teams'>"+
@@ -2557,13 +2598,10 @@ function applyGoalFX(host){
   Object.keys(LIVE.flash).forEach(function(id){
     var card=host.querySelector('.lv[data-ev="'+(window.CSS&&CSS.escape?CSS.escape(id):id.replace(/([:.])/g,"\\$1"))+'"]');
     if(!card) return;
-    card.classList.add("goal");
-    var badge=document.createElement("img");
-    badge.className="goal-badge"; badge.src="/goal.gif"; badge.alt="GOAL";
-    card.appendChild(badge);
+    card.classList.add("just-scored");
     var f=LIVE.flash[id];
-    if(f.h){var e=card.querySelector('.lv-sc[data-side="h"]'); if(e) e.classList.add("pop");}
-    if(f.a){var e2=card.querySelector('.lv-sc[data-side="a"]'); if(e2) e2.classList.add("pop");}
+    if(f.h){var e=card.querySelector('.lv-sc[data-side="h"]'); if(e){e.classList.add("pop","scored");e.insertAdjacentHTML("beforebegin","<span class='goal-tag'>GOAL</span>");}}
+    if(f.a){var e2=card.querySelector('.lv-sc[data-side="a"]'); if(e2){e2.classList.add("pop","scored");e2.insertAdjacentHTML("beforebegin","<span class='goal-tag'>GOAL</span>");}}
   });
   LIVE.flash={};
   var now3=Date.now();
@@ -2624,13 +2662,11 @@ function tickerEvents(){
 function tickerItemHTML(e){
   var tag,ic;
   var S="<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'>";
-  if(e.kind==="goal"){tag="Goal";ic= e.fresh
-      ? "<span class='tk-ic tk-goalgif'><img src='/goal.gif' alt='GOAL'></span>"
-      : "<span class='tk-ic'><span class='tk-goalfx'><svg class='tk-goalpost' viewBox='0 0 13 14' fill='none' stroke='currentColor' stroke-width='1'><path d='M1 3h11M1 3v10M12 3v10'/><path d='M4 3v10M8 3v10M1 7h11M1 10h11' opacity='.6'/></svg><span class='tk-ball2'></span></span></span>";}
+  if(e.kind==="goal"){tag="Goal";ic="";}
   else if(e.kind==="red"){tag="Red card";ic="<span class='tk-ic'>"+S+"<rect x='7' y='4' width='10' height='16' rx='2'/></svg></span>";}
   else if(e.kind==="ht"){tag="Half-time";ic="<span class='tk-ic'>"+S+"<circle cx='12' cy='12' r='9'/><path d='M12 8v4l2.5 1.5'/></svg></span>";}
   else{tag="Full-time";ic="<span class='tk-ic'>"+S+"<circle cx='12' cy='12' r='9'/><path d='M8.5 12.5l2.4 2.4 4.6-5'/></svg></span>";}
-  var draw=(e.lead===""&&/^\d+-\d+$/.test(e.sc));
+  var draw=(e.kind==="ft"&&e.lead===""&&/^\d+-\d+$/.test(e.sc));
   var scHTML;
   if(e.kind==="goal"&&e.fresh){var pr=String(e.sc).split("-");
     scHTML="<b class='tk-sc'><span class='"+(e.gh?"glow":"")+"'>"+pr[0]+"</span>-<span class='"+(e.ga?"glow":"")+"'>"+pr[1]+"</span></b>";}
@@ -2821,6 +2857,53 @@ if($("slipCta"))$("slipCta").addEventListener("click",function(){setView("build"
 $("mySheet-x").addEventListener("click",closeMySheet);
 $("myBookBtn").addEventListener("click",bookMy);
 $("myClearBtn").addEventListener("click",clearMy);
+/* ---- Wizard's Special jackpot builder ---- */
+var WSP={odds:500,mk:{doubles:true,out:true,goals:true,both:true}};
+function wspMarkets(){var m=[];if(WSP.mk.doubles)m=m.concat(["1X","X2"]);if(WSP.mk.out)m=m.concat(["1","2"]);if(WSP.mk.goals)m=m.concat(["OVER_1.5","OVER_2.5"]);if(WSP.mk.both)m.push("GG");return m;}
+function wspBuild(){
+  var allowed=wspMarkets(),cand=[];
+  DATA.fixtures.filter(function(f){return notStarted(f);}).forEach(function(f){
+    var homeFav=f.home_p>f.away_p,best=null;
+    allowed.forEach(function(c){
+      if(c==="1"&&!homeFav)return; if(c==="2"&&homeFav)return;
+      if(c==="1X"&&!homeFav)return; if(c==="X2"&&homeFav)return;
+      var v=mProb(f,c); if(v==null||isNaN(v)||v<0.5)return;
+      if(!best||v>best.p) best={f:f,id:fid(f),code:c,p:v,od:legOdd(f,c,v)};
+    });
+    if(best)cand.push(best);
+  });
+  cand.sort(function(a,b){return b.p-a.p;});
+  var picks=[],prod=1;
+  for(var i=0;i<cand.length&&picks.length<20;i++){picks.push(cand[i]);prod*=cand[i].od;if(prod>=WSP.odds)break;}
+  return {picks:picks,odds:prod};
+}
+function renderWsp(){
+  var b=$("wspBody"); if(!b)return;
+  var odds=[100,500,2000,6000],mk=[["doubles","Safe doubles"],["out","Outright wins"],["goals","Goals"],["both","Both score"]];
+  var prev=wspBuild();
+  b.innerHTML="<p class='wsp-lead'>One tap conjures a mixed slip \u2014 safe bankers stacked with a few bold picks to chase a big return.</p>"+
+    "<div class='wsp-lbl'>Target payout</div><div class='wsp-chips'>"+odds.map(function(o){return "<button class='wsp-chip"+(WSP.odds===o?" on":"")+"' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>"+
+    "<div class='wsp-lbl'>Include markets</div><div class='wsp-chips'>"+mk.map(function(m){return "<button class='wsp-chip"+(WSP.mk[m[0]]?" on":"")+"' data-m='"+m[0]+"'>"+m[1]+"</button>";}).join("")+"</div>"+
+    "<div class='wsp-prev'><span>"+prev.picks.length+" games</span><b>~\u00d7"+prev.odds.toFixed(0)+"</b></div>"+
+    "<button class='book-btn wsp-go' id='wspGo'>\u2728 Conjure my slip</button>";
+  b.querySelectorAll("[data-o]").forEach(function(c){c.addEventListener("click",function(){WSP.odds=+c.dataset.o;renderWsp();});});
+  b.querySelectorAll("[data-m]").forEach(function(c){c.addEventListener("click",function(){var k=c.dataset.m;var on=Object.keys(WSP.mk).filter(function(x){return WSP.mk[x];});if(WSP.mk[k]&&on.length===1)return;WSP.mk[k]=!WSP.mk[k];renderWsp();});});
+  $("wspGo").addEventListener("click",wspConjure);
+}
+function wspConjure(){
+  var r=wspBuild();
+  if(!r.picks.length){window.swToast&&window.swToast("No games to conjure right now","err");return;}
+  MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
+    .concat(r.picks.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true};}));
+  var seen={};MYSLIP=MYSLIP.filter(function(x){if(seen[x.id])return false;seen[x.id]=1;return true;});
+  saveMy();renderFab();closeWsp();openMySheet();
+  window.swToast&&window.swToast("Conjured "+r.picks.length+" games \u00b7 ~\u00d7"+r.odds.toFixed(0),"ok");
+}
+function openWsp(){renderWsp();$("scrim").classList.add("on");$("wspSheet").classList.add("on");pushOverlay();}
+function closeWsp(){$("scrim").classList.remove("on");$("wspSheet").classList.remove("on");}
+$("wspFab").addEventListener("click",openWsp);
+$("wspX").addEventListener("click",closeWsp);
+$("scrim").addEventListener("click",closeWsp);
 renderFab();
 $("risk").addEventListener("input",function(){
   BUILD.risk=+this.value; BUILD.touched=true;
