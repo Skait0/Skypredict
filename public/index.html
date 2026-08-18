@@ -2156,8 +2156,10 @@ function renderBuilder(){
       b.addEventListener("click",function(){BUILD.removed[b.dataset.rm]=1;renderBuilder();});});
   }
   $("totOdds").textContent=picks.length?(real?"\u00d7":"~\u00d7")+odds.toFixed(2):"-";
-  // one slip: the built slip IS the floating My-slip
-  MYSLIP=picks.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p};});
+  // one slip: keep manual picks, refresh the builder-generated ones
+  MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
+    .concat(picks.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true};}));
+  var _seen={}; MYSLIP=MYSLIP.filter(function(x){if(_seen[x.id])return false;_seen[x.id]=1;return true;});
   saveMy(); renderFab();
   var bookable=picks.filter(function(c){return c.eventId;}).length;
   var btn=$("bookBtn");
