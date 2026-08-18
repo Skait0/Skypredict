@@ -1107,8 +1107,8 @@ html.mode-live #live{display:block}
 .myfab.pop{animation:fabpop .4s ease-out}
 .myfab[hidden]{display:none!important}
 @keyframes fabpop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
-.myfab{position:fixed;right:16px;bottom:16px;z-index:130;background:rgba(230,57,70,.82);color:#fff;
-  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+.myfab{position:fixed;right:16px;bottom:16px;z-index:130;background:rgba(230,57,70,.55);color:#fff;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
   border:0;font:inherit;font-weight:800;font-size:15px;padding:14px 20px;border-radius:99px;
   cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35);display:flex;align-items:center;gap:9px}
 .myfab:hover{filter:brightness(1.08)}
@@ -1199,6 +1199,9 @@ html.mode-live #live{display:block}
     <button class="tgl" id="tgl" aria-label="Switch theme">
       <svg id="tglicon" width="17" height="17" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round"></svg>
+    </button>
+    <button class="tgl" id="installBtn" aria-label="Install app" title="Install app" hidden>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
     </button>
   </div>
 </div>
@@ -2971,6 +2974,17 @@ setTimeout(hideLoader,8000);
   window.__settleRecord=function(){var bar=document.querySelector('.record-bar i');if(!bar||bar._settled)return;bar._settled=1;var w=bar.style.width;bar.style.width='0%';requestAnimationFrame(function(){requestAnimationFrame(function(){bar.style.width=w;});});};
   if(typeof render==='function'){var __ro=render;render=function(){__ro.apply(this,arguments);window.__afterRender();};}
   if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
+  var _dip=null, ib=document.getElementById('installBtn');
+  var _standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();_dip=e;if(ib)ib.hidden=false;});
+  window.addEventListener('appinstalled',function(){if(ib)ib.hidden=true;window.swToast&&window.swToast('Installed','ok');});
+  var _iOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  if(ib&&_iOS&&!_standalone) ib.hidden=false;
+  if(ib) ib.addEventListener('click',function(){
+    if(_dip){_dip.prompt();_dip=null;ib.hidden=true;}
+    else if(_iOS) window.swToast&&window.swToast('Tap Share, then "Add to Home Screen"','ok','ins');
+    else window.swToast&&window.swToast('Use your browser menu \u2192 Install app','ok','ins');
+  });
 })();
 load();
 </script>
