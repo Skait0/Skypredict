@@ -96,6 +96,8 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
 button,a,.m,.lrow,.gl-card,.cat,.vt,.navt,.btab,.opt-add{-webkit-tap-highlight-color:transparent;tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;overflow-x:hidden}
 body{background:var(--bg);color:var(--text);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1.1' stroke-linecap='round' opacity='0.028'%3E%3Cpath d='M22 20v16M16 24l6 4 6-4M22 28l-5 6M22 28l5 6'/%3E%3Cpath d='M104 30l7 10-7 10-7-10z'/%3E%3Cpath d='M62 96v14M56 100l6-4 6 4M58 110h8'/%3E%3Cpath d='M116 104l5 5-5 5-5-5z M116 100v18'/%3E%3Ccircle cx='40' cy='84' r='7'/%3E%3Cpath d='M40 77v14M33 84h14'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat:repeat;
   font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
   font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:40px;overflow-x:hidden}
 img,svg{max-width:100%}
@@ -296,6 +298,14 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .m-btn{width:100%;background:none;border:0;color:inherit;font:inherit;
   text-align:left;cursor:pointer;padding:15px 15px 0;display:block}
 .m-btn:focus-visible{outline:2px solid var(--red);outline-offset:-3px}
+.m-add{width:100%;background:var(--card-2);border:0;border-top:1px solid var(--line-soft);
+  color:var(--red-ink);font:inherit;font-weight:800;font-size:13px;padding:12px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px}
+.m-add:hover{background:var(--red-wash)}
+.m-add .ma-ic{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;
+  border-radius:50%;background:var(--red);color:#fff;font-size:14px;line-height:1}
+.m-add.on{color:var(--green-ink)}
+.m-add.on .ma-ic{background:var(--green)}
 .m-top{display:flex;align-items:center;gap:7px;margin-bottom:12px;flex-wrap:wrap}
 .t{font-size:12px;color:var(--faint);font-weight:700}
 .pill{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
@@ -344,8 +354,8 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .lrow,.m,.ls-card,.lv,.sp-row{transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
 .m:hover,.ls-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.28)}
 .rip{position:relative;overflow:hidden}
-.rip-ink{position:absolute;border-radius:50%;transform:scale(0);background:currentColor;
-  opacity:.22;pointer-events:none;animation:ripple .55s ease-out forwards}
+.rip-ink{position:absolute;border-radius:50%;transform:scale(0);background:rgba(150,150,160,.3);
+  opacity:.6;pointer-events:none;animation:ripple .55s ease-out forwards}
 @keyframes ripple{to{transform:scale(2.6);opacity:0}}
 .sk{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line-soft);
   border-radius:12px;height:56px;margin-bottom:8px}
@@ -708,7 +718,7 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
   display:flex;align-items:center;justify-content:center;font-family:inherit}
 .sheet-x:hover{color:var(--text)}
 .sheet-x:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px 18px 26px}
+.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px 18px calc(40px + env(safe-area-inset-bottom))}
 /* Lock on the root element rather than pinning the body. Pinning with
    position:fixed loses the scroll offset and has to be restored by hand,
    which lands a few dozen pixels out once the layout settles. Locking the
@@ -876,6 +886,12 @@ html.mode-live #live{display:block}
 .tk-ball{position:absolute;font-size:15px;animation:tkball 1.4s ease-in-out infinite}
 @keyframes tkball{0%{transform:translateX(-8px) rotate(0)}55%{transform:translateX(4px) rotate(320deg)}
   70%{transform:translateX(4px) rotate(320deg)}100%{transform:translateX(-8px) rotate(0)}}
+.tk-goalfx{position:relative;display:inline-block;width:22px;height:16px}
+.tk-goalpost{position:absolute;right:0;top:1px;width:13px;height:14px;color:var(--faint);opacity:.85}
+.tk-ball2{position:absolute;left:0;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff,#cfcfd6);box-shadow:0 0 5px rgba(43,199,120,.8);
+  animation:goalshot 1.7s cubic-bezier(.4,0,.5,1) infinite}
+@keyframes goalshot{0%{left:-1px;opacity:0;transform:scale(.8)}15%{opacity:1}55%{left:9px;transform:scale(1)}72%{left:9px}100%{left:-1px;opacity:0;transform:scale(.8)}}
 .tk-net{position:absolute;right:0;width:9px;height:16px;border:1.5px solid var(--faint);border-left:none;
   border-radius:0 3px 3px 0;opacity:.7}
 .tk-net::before{content:"";position:absolute;inset:0;background:
@@ -1085,7 +1101,7 @@ html.mode-live #live{display:block}
   border:1px solid var(--line);background:var(--card);color:var(--text);font-weight:800;
   font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .opt-add:hover{border-color:var(--red);color:var(--red-ink)}
-.opt-add.on{background:var(--green);border-color:var(--green);color:#04210f}
+.opt-add.on{background:none;border-color:var(--red);color:var(--red-ink)}
 .myfab.pop{animation:fabpop .4s ease-out}
 .myfab[hidden]{display:none!important}
 @keyframes fabpop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
@@ -1133,7 +1149,7 @@ html.mode-live #live{display:block}
   font:inherit;font-weight:800;font-size:14px;padding:12px 16px;border-radius:10px;
   cursor:pointer;display:inline-flex;align-items:center;gap:7px}
 .share-btn:hover{border-color:var(--soft)}
-.streak::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--faint)}
+.streak::before{content:none}
 .streak b{color:var(--win);font-weight:800}
 .record{margin-top:14px}
 .record-in{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
@@ -1529,9 +1545,27 @@ function whyLine(f){
   if(xg>=0.5) return esc(strong)+" are the stronger side and expected to score more.";
   return esc(strong)+" have the edge on recent form.";
 }
-function tipCode(f){var t=f.tip||"";if(t==="Home win")return"1";if(t==="Away win")return"2";if(t==="Draw")return"X";if(t==="Both teams score")return"GG";if(t.indexOf("1X")===0)return"1X";if(t.indexOf("X2")===0)return"X2";if(t.indexOf("12")===0)return"12";return null;}
+function tipCode(f){var t=f.tip||"";if(t==="Home win")return"1";if(t==="Away win")return"2";if(t==="Draw")return"X";if(t==="Both teams score")return"GG";if(t==="Over 2.5")return"OVER_2.5";if(t==="Over 1.5")return"OVER_1.5";if(t.indexOf("1X")===0)return"1X";if(t.indexOf("X2")===0)return"X2";if(t.indexOf("12")===0)return"12";return null;}
 function edgeOf(f){var c=tipCode(f);if(!c)return null;var o=f.sportyOdds&&f.sportyOdds[c];if(!o||o<=1.01)return null;return f.tip_p-1/o;}
 function isValue(f){var e=edgeOf(f);return e!=null&&e>=0.05;}
+function _devig3(o1,ox,o2){var a=1/o1,b=1/ox,c=1/o2,s=a+b+c;return (s>0)?[a/s,b/s,c/s]:null;}
+function blendFixture(f){
+  var o=f.sportyOdds; if(!o) return; var B=0.30;
+  if(o["1"]&&o["X"]&&o["2"]){
+    var m=_devig3(o["1"],o["X"],o["2"]);
+    if(m){
+      f.home_p=f.home_p*(1-B)+m[0]*B; f.draw_p=f.draw_p*(1-B)+m[1]*B; f.away_p=f.away_p*(1-B)+m[2]*B;
+      var s=f.home_p+f.draw_p+f.away_p; if(s>0){f.home_p/=s;f.draw_p/=s;f.away_p/=s;}
+      f.dc1x=f.home_p+f.draw_p; f.dcx2=f.draw_p+f.away_p; f.dc12=f.home_p+f.away_p; f.anybody=f.dc12;
+    }
+  }
+  function two(ov,un,field){ if(o[ov]&&o[un]){var a=1/o[ov],b=1/o[un],s=a+b; if(s>0) f[field]=f[field]*(1-B)+(a/s)*B;} }
+  two("OVER_2.5","UNDER_2.5","o25"); two("OVER_1.5","UNDER_1.5","o15"); two("GG","NG","btts");
+  var c=tipCode(f);
+  if(c){var mp={"1":f.home_p,"2":f.away_p,"X":f.draw_p,"1X":f.dc1x,"X2":f.dcx2,"12":f.dc12,"OVER_2.5":f.o25,"OVER_1.5":f.o15,"GG":f.btts};
+    if(mp[c]!=null) f.tip_p=mp[c];}
+  f.blended=true;
+}
 function valPill(f){return isValue(f)?"<span class='pill value'>\u2726 Better price</span>":"";}
 function valMark(f){return isValue(f)?"<span class='vmark' title='Better price - our odds beat SportyBet'>\u2726 Better price</span>":"";}
 
@@ -1747,6 +1781,7 @@ function matchHTML(f){
         "<span class='ls'>See "+countMarkets(f)+" more predictions</span>"+
         "<span class='cv'>&rsaquo;</span></span>"+
     "</button>"+
+    (tipCode(f)?"<button class='m-add' data-add='"+fid(f)+"' data-code='"+tipCode(f)+"' data-label=\""+esc(plainTip(f))+"\" data-p='"+f.tip_p.toFixed(3)+"' type='button'><span class='ma-ic'>+</span> Add to slip</button>":"")+
   "</article>";
 }
 
@@ -1860,11 +1895,22 @@ function render(){
         return blockFor(l,byL[l]);}).join("")+"</div></section>";}).join("");
   $("list").innerHTML=html;
   document.querySelectorAll(".lrow").forEach(function(r){
-    r.addEventListener("click",function(){
-      var id=r.dataset.lf; LOPEN[id]=!LOPEN[id]; r.classList.toggle("open",LOPEN[id]);});});
+    r.addEventListener("click",function(e){
+      if(e.target.closest(".lmore-x")) return;
+      var id=r.dataset.lf; LOPEN[id]=true; r.classList.add("open");});
+    var xb=r.querySelector(".lmore-x");
+    if(xb) xb.addEventListener("click",function(e){e.stopPropagation();
+      var id=r.dataset.lf; LOPEN[id]=false; r.classList.remove("open");});});
 
   document.querySelectorAll(".m-btn").forEach(function(b){
     b.addEventListener("click",function(){openSheet(b.dataset.fx);});});
+  document.querySelectorAll(".m-add").forEach(function(b){
+    var on=myslipHas(b.dataset.add,b.dataset.code); b.classList.toggle("on",on);
+    b.querySelector(".ma-ic").textContent=on?"\u2713":"+";
+    b.lastChild.textContent=on?" Added":" Add to slip";
+    b.addEventListener("click",function(e){e.stopPropagation();
+      if(!b.dataset.code) return;
+      toggleMy(b.dataset.add,b.dataset.code,b.dataset.label,b.dataset.p,b);});});
   document.querySelectorAll("[data-fav]").forEach(function(b){
     b.addEventListener("click",function(e){e.stopPropagation();toggleFav(b.dataset.fav);});});
   document.querySelectorAll("[data-toggle]").forEach(function(h){
@@ -1971,13 +2017,13 @@ function attachEventIds(sporty){
       var s=simTeams(f.home,m.homeTeam)+simTeams(f.away,m.awayTeam);
       if(s>bestScore){bestScore=s;best=m;}
     });
-    if(best&&bestScore>=1.3){f.eventId=best.eventId;f.sportyOdds=best.odds||{};hits++;return;}
+    if(best&&bestScore>=1.3){f.eventId=best.eventId;f.sportyOdds=best.odds||{};blendFixture(f);hits++;return;}
     var gb=null,gs=0;
     sporty.forEach(function(m){
       var s=simTeams(f.home,m.homeTeam)+simTeams(f.away,m.awayTeam);
       if(s>gs){gs=s;gb=m;}
     });
-    if(gb&&gs>=1.6){f.eventId=gb.eventId;f.sportyOdds=gb.odds||{};hits++;}
+    if(gb&&gs>=1.6){f.eventId=gb.eventId;f.sportyOdds=gb.odds||{};blendFixture(f);hits++;}
   });
   try{console.log("[sporty] matched "+hits+"/"+DATA.fixtures.length+" from "+sporty.length+" events");}catch(e){}
   return hits;
@@ -2540,7 +2586,7 @@ function tickerEvents(){
 function tickerItemHTML(e){
   var tag,ic;
   var S="<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'>";
-  if(e.kind==="goal"){tag="Goal";ic="<span class='tk-ic'><span class='tk-ball'>"+S+"<circle cx='12' cy='12' r='9'/><path d='M12 7.5l2.6 1.9-1 3.1h-3.2l-1-3.1z'/></svg></span></span>";}
+  if(e.kind==="goal"){tag="Goal";ic="<span class='tk-ic'><span class='tk-goalfx'><svg class='tk-goalpost' viewBox='0 0 13 14' fill='none' stroke='currentColor' stroke-width='1'><path d='M1 3h11M1 3v10M12 3v10'/><path d='M4 3v10M8 3v10M1 7h11M1 10h11' opacity='.6'/></svg><span class='tk-ball2'></span></span></span>";}
   else if(e.kind==="red"){tag="Red card";ic="<span class='tk-ic'>"+S+"<rect x='7' y='4' width='10' height='16' rx='2'/></svg></span>";}
   else if(e.kind==="ht"){tag="Half-time";ic="<span class='tk-ic'>"+S+"<circle cx='12' cy='12' r='9'/><path d='M12 8v4l2.5 1.5'/></svg></span>";}
   else{tag="Full-time";ic="<span class='tk-ic'>"+S+"<circle cx='12' cy='12' r='9'/><path d='M8.5 12.5l2.4 2.4 4.6-5'/></svg></span>";}
@@ -2603,7 +2649,9 @@ function toggleMy(id,code,label,p,srcEl){
   if(i>=0) MYSLIP.splice(i,1); else { MYSLIP.push({id:id,code:code,label:label,p:+p}); flyToSlip(srcEl); }
   saveMy(); renderFab();
   document.querySelectorAll("[data-add='"+id+"'][data-code='"+code+"']").forEach(function(b){
-    var on=myslipHas(id,code); b.classList.toggle("on",on); b.textContent=on?"\u2713":"+";});
+    var on=myslipHas(id,code); b.classList.toggle("on",on);
+    if(b.classList.contains("m-add")){var ic=b.querySelector(".ma-ic"); if(ic)ic.textContent=on?"\u2713":"+"; if(b.lastChild)b.lastChild.textContent=on?" Added":" Add to slip";}
+    else b.textContent=on?"\u2713":"+";});
   if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
 }
 function openMySheet(){renderMySheet();$("scrim").classList.add("on");$("mySheet").classList.add("on");pushOverlay();}
@@ -2679,6 +2727,8 @@ function setView(v){
   if(v==="build") renderBuilder();
   if(v==="live"){ renderLive(); fetchLive(); }
   if(v==="pred") renderLiveStrip();
+  for(var k in LOPEN) delete LOPEN[k];
+  if(typeof closeSheet==="function") closeSheet();
   window.scrollTo(0,0);
 }
 function setMode(build){ setView(build?"build":"pred"); }
