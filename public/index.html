@@ -275,9 +275,9 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .country-h .count{margin-left:auto;font-size:12px;color:var(--faint);
   background:var(--card);border:1px solid var(--line);border-radius:99px;
   padding:4px 11px;font-weight:700}
-.comp{margin-top:14px}
+.comp{margin-top:10px}
 .comp-h{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;
-  letter-spacing:.09em;text-transform:uppercase;color:var(--soft);padding-bottom:10px}
+  letter-spacing:.09em;text-transform:uppercase;color:var(--soft);padding-bottom:5px}
 .comp-h span{flex:1}
 .comp-h .flag{width:18px;height:13px}
 .star{width:34px;height:34px;flex-shrink:0;background:none;border:0;cursor:pointer;
@@ -620,7 +620,7 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
   text-transform:uppercase;color:var(--faint);border-bottom:1px solid var(--line-soft);
   border-left:3px solid transparent}
 .lthead .c{text-align:center}
-.lrow{padding:8px;border-bottom:1px solid var(--line-soft);cursor:pointer;
+.lrow{padding:5px 8px;border-bottom:1px solid var(--line-soft);cursor:pointer;
   border-left:3px solid var(--edge);border-radius:0}
 .lrow:hover{background:var(--raise)}
 .lt-time{font-size:12px;color:var(--faint);font-weight:700;font-variant-numeric:tabular-nums}
@@ -646,7 +646,7 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
 .lmore{grid-column:1/-1;padding-top:8px;font-size:13px}
 @media(max-width:640px){
   .lthead{display:none}
-  .lrow{display:flex;flex-wrap:wrap;align-items:center;gap:5px 10px;padding:10px 8px}
+  .lrow{display:flex;flex-wrap:wrap;align-items:center;gap:3px 10px;padding:6px 8px}
   .lt-time{order:1}
   .lt-match{order:2;flex:1 1 55%;font-size:14px}
   .lt-score{order:3;margin-left:auto;border-left:0;padding-left:0}
@@ -831,7 +831,8 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
   .navt{padding:7px 9px;font-size:12.5px;white-space:nowrap}
 }
 #builder{display:none;margin-top:8px}
-html.mode-build .intro,html.mode-build #potd,html.mode-build .bar,
+html.mode-build .intro,html.mode-build #potd,html.mode-build .bar,html.mode-build #glance,
+html.mode-build #sotd,html.mode-build #record,html.mode-build #liveStripWrap,html.mode-build .viewtoggle.top,
 html.mode-build .key,html.mode-build #list,html.mode-build .note{display:none}
 html.mode-build #builder{display:block}
 /* live scores */
@@ -2188,7 +2189,11 @@ async function loadSporty(){
 
 function riskParams(r){
   var f=r/100;
-  return {minConf:0.72-0.30*f, maxGames:Math.round(3+f*32),
+  // when there are plenty of fixtures, keep the floor higher so even "risky" stays safer
+  var pool=0; try{pool=DATA.fixtures.filter(function(x){return notStarted(x);}).length;}catch(e){}
+  var floorBoost = pool>=40 ? 0.10 : pool>=25 ? 0.06 : 0;
+  var span = pool>=40 ? 0.22 : pool>=25 ? 0.26 : 0.30;
+  return {minConf:Math.min(0.75,(0.72+floorBoost)-span*f), maxGames:Math.round(3+f*32),
     tier:(r<33?0:(r<66?1:2))};
 }
 function riskWord(r){return r<20?"Safest":r<40?"Safe":r<60?"Balanced":r<80?"Bold":"Risky";}
@@ -2900,8 +2905,8 @@ function setView(v){
   if(bp)bp.classList.toggle("on",v==="pred");
   if(bl)bl.classList.toggle("on",v==="live");
   if(bb)bb.classList.toggle("on",v==="build");
-  var tp=$("tab-pred"); if(tp&&tp.childNodes[0]) tp.childNodes[0].nodeValue=(v==="pred")?"Predictions":"Home";
-  if(bp&&bp.lastChild) bp.lastChild.textContent=(v==="pred")?"Tips":"Home";
+  var tp=$("tab-pred"); if(tp){ if(tp.childNodes[0]) tp.childNodes[0].nodeValue=(v==="pred")?"Predictions":"Home"; tp.style.display=(v==="pred")?"none":""; }
+  if(bp){ if(bp.lastChild) bp.lastChild.textContent=(v==="pred")?"Tips":"Home"; }
   if(v==="build") renderBuilder();
   if(v==="live"){ renderLive(); fetchLive(); }
   if(v==="pred") renderLiveStrip();
@@ -2938,6 +2943,7 @@ if($("slipCta"))$("slipCta").addEventListener("click",function(){setView("build"
     else { if($("mySheet").classList.contains("on")) closeMySheet(); else openMySheet(); }}
   fab.addEventListener("mousedown",down);document.addEventListener("mousemove",move);document.addEventListener("mouseup",up);
   fab.addEventListener("touchstart",down,{passive:false});document.addEventListener("touchmove",move,{passive:false});document.addEventListener("touchend",up);
+  fab.addEventListener("click",function(e){e.preventDefault();if(!moved){if($("mySheet").classList.contains("on"))closeMySheet();else openMySheet();}});
 })();
 $("mySheet-x").addEventListener("click",closeMySheet);
 $("myBookBtn").addEventListener("click",bookMy);
@@ -3003,6 +3009,7 @@ function closeWsp(){$("scrim").classList.remove("on");$("wspSheet").classList.re
     else openWsp();}
   fab.addEventListener("mousedown",down);document.addEventListener("mousemove",move);document.addEventListener("mouseup",up);
   fab.addEventListener("touchstart",down,{passive:false});document.addEventListener("touchmove",move,{passive:false});document.addEventListener("touchend",up);
+  fab.addEventListener("click",function(e){e.preventDefault();if(!moved){if($("wsp").classList.contains("on"))closeWsp();else openWsp();}});
 })();
 $("wspX").addEventListener("click",closeWsp);
 $("scrim").addEventListener("click",closeWsp);
