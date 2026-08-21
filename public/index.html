@@ -1203,6 +1203,11 @@ html.mode-live #live{display:block}
 .wsp-prev span{font-weight:700;color:var(--soft)}
 .wsp-prev b{font-size:22px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
 .wsp-go{width:100%;margin-top:16px;padding:11px;font-size:14px}
+/* Shuffle sits beside Conjure; Conjure keeps the width, Shuffle takes only what
+   its label needs. margin-top on .wsp-go is neutralised inside the row. */
+.wsp-acts{display:flex;gap:10px;margin-top:16px;align-items:stretch}
+.wsp-acts .wsp-go{width:auto;flex:1;margin-top:0}
+.wsp-acts .wsp-shuffle{flex:0 0 auto;padding:11px 16px;font-size:14px;white-space:nowrap}
 .book-btn{background:linear-gradient(180deg,#e6414e,var(--red))!important;box-shadow:0 3px 10px rgba(230,57,70,.4),inset 0 1px 0 rgba(255,255,255,.18)}
 .wsp-chip.on{background:var(--red);box-shadow:0 2px 8px rgba(230,57,70,.3)}
 .sheet-head{position:relative}
@@ -1706,6 +1711,20 @@ function esc(s){return String(s).replace(/[&<>"]/g,function(c){
   return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});}
 function fid(f){return "m"+(f.date+f.home+f.away).replace(/[^a-zA-Z0-9]/g,"");}
 function countryOf(l){return l.split(" ")[0];}
+/* CONMEBOL countries. Only Argentina and Brazil are in the feeds today, but
+   the whole set is listed so a new South American league is handled the moment
+   it appears rather than slipping through as if it were European. The builders
+   hold these back behind Europe; countryOf() gives the league's leading word. */
+var SA_COUNTRIES={Argentina:1,Bolivia:1,Brazil:1,Chile:1,Colombia:1,Ecuador:1,
+  Paraguay:1,Peru:1,Uruguay:1,Venezuela:1};
+/* "Fixtures are not a lot" = fewer than this many European games to choose
+   from. Below it a slip would be thin, so South America is allowed in to pad
+   it; at or above it Europe stands on its own. An absolute floor, not a share
+   of the risk-slider cap - that cap runs to ~35, so a relative test would rate
+   Europe "scarce" almost every day and defeat the whole point. */
+var SA_MIN_EURO=6;
+function isSAleague(l){return !!SA_COUNTRIES[countryOf(l||"")];}
+function isSouthAmerican(f){return isSAleague((f&&f.league)||"");}
 /* Predicted scoreline from expected goals. On a rounded tie, break toward the
    side the model leans on, so it never shows a draw against a "No draw" tip;
    a genuine draw is kept only when the draw is the most likely single result. */
@@ -2199,7 +2218,10 @@ function render(){
     html+="<div class='faves-h'><h2>\u2605 Pinned</h2><span>"+
       favL.reduce(function(n,l){return n+byL[l].length;},0)+" games</span></div>"+
       favL.map(function(l){return blockFor(l,byL[l],true);}).join("");
-  const tops=favL.length?[]:TOP_LEAGUES.filter(function(l){return byL[l];});
+  // Top leagues stays European by definition of TOP_LEAGUES; the isSAleague
+  // guard makes that a rule rather than a coincidence, so adding a South
+  // American entry to that list later still can't surface one here.
+  const tops=favL.length?[]:TOP_LEAGUES.filter(function(l){return byL[l]&&!isSAleague(l);});
   if(tops.length)
     html+="<div class='faves-h'><h2>Top leagues</h2><span>"+
       tops.reduce(function(n,l){return n+byL[l].length;},0)+" games</span></div>"+
@@ -2299,7 +2321,7 @@ addEventListener("keydown",function(e){
   }});
 
 /* ============================================================ build a slip */
-var BUILD={risk:20,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6)};
+var BUILD={risk:20,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0};
 try{var rr=localStorage.getItem("sw.risk"); if(rr!=null) BUILD.risk=+rr;}catch(e){}
 const BOOK_URL="https://web-production-798c0.up.railway.app/api/generate-booking-code";
 const SPORTY_URL="https://www.sportybet.com/ng/?shareCode=";
@@ -2422,13 +2444,22 @@ function buildPicks(){
     });
     if(best) cand.push({f:f,id:fid(f),code:best.code,p:best.p,eventId:f.eventId||null});
   });
+  var removedCount=Object.keys(BUILD.removed).length;
+  var cap=Math.max(0,p.maxGames-removedCount);
+  /* Europe first. South American games are held back unless Europe can't fill
+     the slip, or the user has reshuffled a couple of times and clearly wants a
+     different mix. Once allowed in they're penalised rather than cut, so Europe
+     still leads while a few South American games come through. */
+  var euroN=cand.filter(function(c){return !isSouthAmerican(c.f);}).length;
+  var saMode=(euroN<Math.min(cap,SA_MIN_EURO))?"fill":((BUILD.shuffles||0)>=2?"mix":"exclude");
+  if(saMode==="exclude") cand=cand.filter(function(c){return !isSouthAmerican(c.f);});
+  var saPenalty=(saMode==="mix")?0.6:0.85;
   cand.sort(function(a,b){
     var ka=(f0<0.5?a.p:oddOf(a.p)), kb=(f0<0.5?b.p:oddOf(b.p));
+    if(isSouthAmerican(a.f))ka*=saPenalty; if(isSouthAmerican(b.f))kb*=saPenalty;
     ka*=1+(h32(a.id+"|s"+(BUILD.seed||0))-0.5)*(0.9+f0); kb*=1+(h32(b.id+"|s"+(BUILD.seed||0))-0.5)*(0.9+f0);
     return kb-ka;
   });
-  var removedCount=Object.keys(BUILD.removed).length;
-  var cap=Math.max(0,p.maxGames-removedCount);
   cand=cand.filter(function(c){return !BUILD.removed[c.id];}).slice(0,cap);
   BUILD.picks=cand;
   return cand;
@@ -3163,10 +3194,12 @@ $("mySheet-x").addEventListener("click",closeMySheet);
 $("myBookBtn").addEventListener("click",bookMy);
 $("myClearBtn").addEventListener("click",clearMy);
 /* ---- Wizard's Special jackpot builder ---- */
-var WSP={odds:500,mk:{doubles:true,out:true,goals:true,both:true}};
+var WSP={odds:500,mk:{doubles:true,out:true,goals:true,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0};
 function wspMarkets(){var m=[];if(WSP.mk.doubles)m=m.concat(["1X","X2"]);if(WSP.mk.out)m=m.concat(["1","2"]);if(WSP.mk.goals)m=m.concat(["OVER_1.5","OVER_2.5"]);if(WSP.mk.both)m.push("GG");return m;}
 function wspBuild(){
-  var allowed=wspMarkets(),cand=[];
+  var allowed=wspMarkets(),all=[];
+  var seed=WSP.seed||0, shuffles=WSP.shuffles||0;
+  function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
   DATA.fixtures.filter(function(f){return notStarted(f);}).forEach(function(f){
     var homeFav=f.home_p>f.away_p,best=null;
     allowed.forEach(function(c){
@@ -3175,12 +3208,28 @@ function wspBuild(){
       var v=mProb(f,c); if(v==null||isNaN(v)||v<0.5)return;
       if(!best||v>best.p) best={f:f,id:fid(f),code:c,p:v,od:legOdd(f,c,v)};
     });
-    if(best)cand.push(best);
+    if(best)all.push(best);
   });
-  cand.sort(function(a,b){return b.p-a.p;});
-  var picks=[],prod=1;
-  for(var i=0;i<cand.length&&picks.length<20;i++){picks.push(cand[i]);prod*=cand[i].od;if(prod>=WSP.odds)break;}
-  return {picks:picks,odds:prod};
+  // Seed jitter so each shuffle surfaces a different mix; SA penalty keeps
+  // Europe ahead even once South America is allowed into the pool.
+  function key(c){return c.p*(1+(h32(c.id+"|"+seed)-0.5)*0.5);}
+  function ranked(list,pen){return list.slice().sort(function(a,b){
+    return key(b)*(isSouthAmerican(b.f)?pen:1)-key(a)*(isSouthAmerican(a.f)?pen:1);});}
+  function accumulate(list){
+    var picks=[],prod=1;
+    for(var i=0;i<list.length&&picks.length<20;i++){picks.push(list[i]);prod*=list[i].od;if(prod>=WSP.odds)break;}
+    return {picks:picks,odds:prod};
+  }
+  var euro=all.filter(function(c){return !isSouthAmerican(c.f);});
+  /* Same policy as the slider builder: Europe alone unless there are too few
+     European games to make a slip, or the user has reshuffled a couple of
+     times. "fill" keeps Europe ahead with a light penalty; "mix" (shuffling)
+     lets more South America through. A high payout Europe can't reach is not
+     a reason to reach for South America - the slip just falls short, and the
+     user can shuffle if they want to chase it with a wider net. */
+  var saMode=(euro.length<SA_MIN_EURO)?"fill":(shuffles>=2?"mix":"exclude");
+  var pool=(saMode==="exclude")?ranked(euro,1):ranked(all,saMode==="mix"?0.6:0.85);
+  return accumulate(pool);
 }
 function renderWsp(){
   var b=$("wspBody"); if(!b)return;
@@ -3188,19 +3237,24 @@ function renderWsp(){
   b.innerHTML="<p class='wsp-lead'>One tap conjures a mixed slip \u2014 safe bankers stacked with a few bold picks to chase a big return.</p>"+
     "<div class='wsp-lbl'>Target payout</div><div class='wsp-chips'>"+odds.map(function(o){return "<button class='wsp-chip"+(WSP.odds===o?" on":"")+"' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>"+
     "<div class='wsp-lbl'>Include markets</div><div class='wsp-chips'>"+mk.map(function(m){return "<button class='wsp-chip"+(WSP.mk[m[0]]?" on":"")+"' data-m='"+m[0]+"'>"+m[1]+"</button>";}).join("")+"</div>"+
-    "<button class='book-btn wsp-go' id='wspGo'>\u2728 Conjure my slip</button>";
+    "<div class='wsp-acts'>"+
+      "<button class='clear-btn wsp-shuffle' id='wspShuffle' type='button'>\u21bb Shuffle</button>"+
+      "<button class='book-btn wsp-go' id='wspGo' type='button'>\u2728 Conjure my slip</button>"+
+    "</div>";
   b.querySelectorAll("[data-o]").forEach(function(c){c.addEventListener("click",function(){WSP.odds=+c.dataset.o;renderWsp();});});
   b.querySelectorAll("[data-m]").forEach(function(c){c.addEventListener("click",function(){var k=c.dataset.m;var on=Object.keys(WSP.mk).filter(function(x){return WSP.mk[x];});if(WSP.mk[k]&&on.length===1)return;WSP.mk[k]=!WSP.mk[k];renderWsp();});});
-  $("wspGo").addEventListener("click",wspConjure);
+  $("wspGo").addEventListener("click",function(){wspConjure(false);});
+  $("wspShuffle").addEventListener("click",function(){wspConjure(true);});
 }
-function wspConjure(){
+function wspConjure(shuffle){
+  if(shuffle){WSP.seed=Math.floor(Math.random()*1e6);WSP.shuffles=(WSP.shuffles||0)+1;}
   var r=wspBuild();
   if(!r.picks.length){window.swToast&&window.swToast("No games to conjure right now","err");return;}
   MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
     .concat(r.picks.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true};}));
   var seen={};MYSLIP=MYSLIP.filter(function(x){if(seen[x.id])return false;seen[x.id]=1;return true;});
   saveMy();renderFab();closeWsp();openMySheet();
-  window.swToast&&window.swToast("Conjured "+r.picks.length+" games \u00b7 ~\u00d7"+r.odds.toFixed(0),"ok");
+  window.swToast&&window.swToast((shuffle?"Reshuffled \u2014 ":"Conjured ")+r.picks.length+" games \u00b7 ~\u00d7"+r.odds.toFixed(0),"ok");
 }
 function openWsp(){renderWsp();$("scrim").classList.add("on");$("wspSheet").classList.add("on");pushOverlay();}
 function closeWsp(){$("scrim").classList.remove("on");$("wspSheet").classList.remove("on");}
@@ -3217,7 +3271,7 @@ $("risk").addEventListener("input",function(){
   BUILD.removed={}; $("bookResult").innerHTML=""; renderBuilder();});
 $("bookBtn").addEventListener("click",bookSlip);
 $("clearBtn").addEventListener("click",clearSlip);
-$("shuffleBtn").addEventListener("click",function(){BUILD.touched=true;BUILD.seed=Math.floor(Math.random()*1e6);BUILD.removed={};$("bookResult").innerHTML="";renderBuilder();window.swToast&&window.swToast("Slip reshuffled","ok","shuffle");});
+$("shuffleBtn").addEventListener("click",function(){BUILD.touched=true;BUILD.seed=Math.floor(Math.random()*1e6);BUILD.shuffles=(BUILD.shuffles||0)+1;BUILD.removed={};$("bookResult").innerHTML="";renderBuilder();window.swToast&&window.swToast("Slip reshuffled","ok","shuffle");});
 
 /* ------------------------------------------------------------- theming */
 const SUN='<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
