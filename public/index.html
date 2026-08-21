@@ -840,8 +840,13 @@ html.mode-build .key,html.mode-build #list,html.mode-build .note{display:none}
 html.mode-build #builder{display:block}
 /* live scores */
 #live{display:none;margin-top:8px}
+/* Goal fest and Biggest scoreline read upcoming fixtures, so they have nothing
+   to say on the live page. __buildGlance already skips them in this mode, but
+   it only runs on a render and switching view does not force one - so the pair
+   stayed on screen from the predictions page. Hidden here instead. */
 html.mode-live .intro,html.mode-live #potd,html.mode-live #sotd,html.mode-live #record,
 html.mode-live .bar,html.mode-live .key,html.mode-live #list,html.mode-live .note,
+html.mode-live #glance,
 html.mode-live #liveStrip,html.mode-live #liveStripWrap,html.mode-live #builder{display:none}
 html.mode-live #live{display:block}
 .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff3b3b;
