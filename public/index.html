@@ -429,7 +429,7 @@ html.mode-live .btabs{transform:none!important}
   .btab.mid .bt-ic{width:52px;height:52px;border-radius:50%;background:var(--red);color:#fff;
     display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(230,57,70,.5)}
   .btab.mid svg{width:24px;height:24px}
-  body{padding-bottom:76px}
+  body{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
   .myfab{bottom:84px}
 }
 .record-bar i{transition:width 1.05s cubic-bezier(.25,.8,.3,1)}
@@ -592,6 +592,25 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
   font:inherit;font-weight:800;font-size:14px;padding:13px 16px;border-radius:11px;cursor:pointer;flex-shrink:0}
 .clear-btn:hover{background:var(--red-wash);color:var(--red-ink);border-color:var(--red)}
 .confirm-card{background:var(--card-2);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center}
+/* Book-all: a small flashy pill above the board. It only appears when the
+   visible tips are actually bookable, so it never sits there dead. */
+.bookall-row{display:flex;justify-content:flex-end;margin:8px 0 2px}
+.bookall{position:relative;overflow:hidden;display:none;align-items:center;gap:8px;
+  background:linear-gradient(120deg,var(--red),#ff5d6a);color:#fff;border:0;
+  font:inherit;font-weight:800;font-size:12.5px;padding:8px 14px;border-radius:99px;
+  cursor:pointer;box-shadow:0 3px 12px rgba(230,57,70,.35)}
+.bookall.show{display:inline-flex}
+.bookall:hover{filter:brightness(1.07)}
+.bookall:disabled{opacity:.6;cursor:not-allowed}
+.bookall .ba-n{background:rgba(255,255,255,.22);border-radius:99px;padding:1px 7px;
+  font-variant-numeric:tabular-nums;font-size:11.5px}
+.ba-spark{position:absolute;top:0;left:-60%;width:45%;height:100%;pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.42),transparent);
+  animation:baSweep 3.4s ease-in-out infinite}
+@keyframes baSweep{0%{left:-60%}55%{left:120%}100%{left:120%}}
+html.reduce .ba-spark{animation:none;opacity:0}
+html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookall-row{display:none}
+#bookAllResult:not(:empty){margin:10px 0 2px}
 .confirm-card p{margin:0 0 12px;font-size:14px;color:var(--text);font-weight:600}
 .confirm-card .ca{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .confirm-card button{font:inherit;font-weight:800;font-size:14px;padding:11px 18px;border-radius:10px;cursor:pointer;border:0}
@@ -858,6 +877,12 @@ html.mode-pred @media(max-width:720px){.nav{display:flex}}
   .sig{height:30px}
   .nav{gap:2px;flex-shrink:1;min-width:0}
   .navt{padding:7px 9px;font-size:12.5px;white-space:nowrap}
+  /* "Live scores" is the web label; the phone header only has room for "Live",
+     so the second word is dropped rather than shrinking the whole tab. */
+  .nv-x{display:none}
+  #tab-live{padding:5px 10px;font-size:12px;border-radius:8px;
+    background:var(--card-2);border:1px solid var(--line-soft)}
+  #tab-live.on{background:var(--card-2);border-color:var(--red)}
   /* Home page shows Live tab; Build page shows Home + Live tabs - both single line */
   html.mode-pred .navt:not(#tab-live){display:none}
   html.mode-build .navt:not(#tab-pred):not(#tab-live){display:none}
@@ -1066,9 +1091,10 @@ html.mode-live #live{display:block}
   letter-spacing:.06em;color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;
   margin-right:6px;vertical-align:middle;animation:goalTagPop .35s ease-out}
 @keyframes goalTagPop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
-.lv-sc.scored{position:relative;color:var(--red-ink)!important;background:var(--red-wash);border-radius:6px;
+.lv-sc.scored{position:relative;color:var(--red-ink)!important;background:var(--red-wash);
+   border-radius:7px;padding:2px 7px;margin:-2px -3px;
    box-shadow:0 0 0 1px var(--red),0 0 10px rgba(230,57,70,.7);animation:scoredGlow 1.1s ease-in-out infinite}
-.lv-sc .goal-tag{position:absolute;right:calc(100% + 5px);top:50%;bottom:auto;left:auto;transform:translateY(-50%);margin:0}
+.lv-sc .goal-tag{position:absolute;right:calc(100% + 3px);top:50%;bottom:auto;left:auto;transform:translateY(-50%);margin:0}
 @keyframes scoredGlow{0%,100%{box-shadow:0 0 0 1px var(--red),0 0 8px rgba(230,57,70,.55)}50%{box-shadow:0 0 0 1px var(--red),0 0 16px rgba(230,57,70,.95)}}
 @media(max-width:520px){.lv-scorers{grid-template-columns:1fr}.lv-scorers .sr.a{justify-content:flex-start;text-align:left;grid-column:1}}
 .bld-head h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:6px 0 4px}
@@ -1493,7 +1519,8 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .note{margin-top:22px;padding:15px}
 .note h3{margin-bottom:9px}
 .note p{line-height:1.6;margin-bottom:8px}
-footer{margin-top:26px;padding-top:18px}
+footer{margin-top:26px;padding-top:18px;
+  padding-bottom:calc(20px + env(safe-area-inset-bottom))}
 .foot-brand{margin-bottom:14px;padding-bottom:14px;gap:10px}
 .foot-cols{gap:14px;margin-bottom:14px}
 .foot-cols h5{margin-bottom:5px}
@@ -1527,7 +1554,7 @@ footer{margin-top:26px;padding-top:18px}
     </a>
     <nav class="nav" role="tablist" aria-label="View">
       <button id="tab-pred" class="navt on hide-tab" type="button" role="tab">Home</button>
-      <button id="tab-live" class="navt" type="button" role="tab">Live scores <span class="live-dot" id="liveDot" hidden></span></button>
+      <button id="tab-live" class="navt" type="button" role="tab">Live<span class="nv-x"> scores</span> <span class="live-dot" id="liveDot" hidden></span></button>
       <button id="tab-build" class="navt build" type="button" role="tab">Build me a slip</button>
     </nav>
     <span class="when" id="when"></span>
@@ -1559,6 +1586,15 @@ footer{margin-top:26px;padding-top:18px}
     <button type="button" id="v-cards" class="vt on">Cards</button>
     <button type="button" id="v-list" class="vt">List</button>
   </div>
+
+  <div class="bookall-row">
+    <button class="bookall" id="bookAll" type="button">
+      <span class="ba-spark" aria-hidden="true"></span>
+      <span class="ba-tx">Book all tips</span>
+      <span class="ba-n" id="bookAllN"></span>
+    </button>
+  </div>
+  <div id="bookAllResult"></div>
 
   <button class="slip-cta" id="slipCta" type="button">
     <span class="sc-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z"/><path d="M13 6v12"/></svg></span>
@@ -2260,7 +2296,7 @@ function render(){
     $("potd").innerHTML="";$("sotd").innerHTML="";$("record").innerHTML="";
     renderResults(); return; }
   document.documentElement.classList.remove("is-results");
-  renderPotd(); renderSlipOfDay(); renderRecord();
+  renderPotd(); renderSlipOfDay(); renderRecord(); renderBookAll();
   const list=shown();
   if(!list.length){
     $("list").innerHTML="<div class='none'><b>No games in this filter</b>"+
@@ -2725,6 +2761,50 @@ function bookList(picks,resultId,btnId,label){
   }
   doBookList(bookable,resultId,btnId,label);
 }
+/* Book-all: turns every tip currently on the board into one SportyBet slip.
+   It reuses the same picks the cards show, so what you see is what gets booked,
+   and it asks first because a 20-leg acca is not something to fire by accident. */
+function bookAllPicks(){
+  var out=[];
+  shown().forEach(function(f){
+    if(!notStarted(f)) return;
+    var code=tipCode(f); if(!code) return;
+    out.push({f:f,id:fid(f),code:code,p:f.tip_p,eventId:f.eventId||null});
+  });
+  return out;
+}
+function renderBookAll(){
+  var btn=$("bookAll"); if(!btn) return;
+  var picks=bookAllPicks();
+  var bookable=picks.filter(function(c){return c.eventId;});
+  btn.classList.toggle("show",bookable.length>=2);
+  var n=$("bookAllN"); if(n) n.textContent=bookable.length;
+}
+function confirmBookAll(){
+  var picks=bookAllPicks();
+  var bookable=picks.filter(function(c){return c.eventId;});
+  var host=$("bookAllResult"); if(!host) return;
+  if(!bookable.length){
+    host.innerHTML="<div class='code-err'>None of these games are on SportyBet right now.</div>";
+    return;
+  }
+  var odds=bookable.reduce(function(t,c){return t*legOdd(c.f,c.code,c.p);},1);
+  var skipped=picks.length-bookable.length;
+  host.innerHTML="<div class='confirm-card'><p>Book all <b>"+bookable.length+
+    "</b> Soccerwizard tips on this page as one slip?<br><span style='font-weight:600;color:var(--soft)'>"+
+    "Estimated odds \u00d7"+odds.toFixed(2)+
+    (skipped?" \u00b7 "+skipped+" not on SportyBet yet, skipped":"")+
+    "</span></p><div class='ca'>"+
+    "<button class='confirm-go' type='button'>Yes, book "+bookable.length+"</button>"+
+    "<button class='confirm-cancel' type='button'>Cancel</button></div></div>";
+  host.querySelector(".confirm-go").addEventListener("click",function(){
+    doBookList(bookable,"bookAllResult","bookAll","Book all tips");
+  });
+  host.querySelector(".confirm-cancel").addEventListener("click",function(){host.innerHTML="";});
+  host.scrollIntoView({block:"nearest"});
+}
+if($("bookAll")) $("bookAll").addEventListener("click",confirmBookAll);
+
 function doBookList(picks,resultId,btnId,label){
   var sel=picks.map(function(c){return {eventId:c.eventId,prediction:c.code};});
   if(!sel.length) return;
