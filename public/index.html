@@ -425,10 +425,18 @@ html.mode-live .btabs{transform:none!important}
     color:var(--faint);font:inherit;font-size:10px;font-weight:700;padding:6px 0;cursor:pointer}
   .btab svg{width:22px;height:22px}
   .btab.on{color:var(--red-ink)}
-  .btab.mid{margin-top:-18px}
-  .btab.mid .bt-ic{width:52px;height:52px;border-radius:50%;background:var(--red);color:#fff;
-    display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(230,57,70,.5)}
-  .btab.mid svg{width:24px;height:24px}
+  /* The bottom bar's middle button and the wizard fab opened the same sheet,
+     so on a phone one of them had to go. The bar wins: it is already the
+     navigation surface, and it keeps the screen free of floating clutter.
+     The wizard now rides in the bar as a plain icon rather than a raised
+     circle - it is a destination like the others, not a separate device. */
+  .wspfab{display:none!important}
+  .btab.mid{margin-top:0}
+  .btab.mid .bt-ic{width:auto;height:auto;border-radius:0;background:none;
+    color:inherit;box-shadow:none;display:flex;align-items:center;justify-content:center}
+  .btab.mid .bt-ic img{width:22px;height:22px;object-fit:contain;display:block}
+  .btab.mid svg{width:22px;height:22px}
+  .btab.mid.on{color:var(--red-ink)}
   body{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
   .myfab{bottom:84px}
 }
@@ -1308,10 +1316,21 @@ html.mode-live #live{display:block}
 .wsp-chip{background:var(--card-2);border:1px solid var(--line);color:var(--soft);font:inherit;
   font-weight:700;font-size:13px;padding:9px 15px;border-radius:99px;cursor:pointer}
 .wsp-chip.on{background:var(--red);border-color:var(--red);color:#fff}
-.wsp-prev{display:flex;align-items:center;justify-content:space-between;margin:18px 0 6px;
-  padding:14px 16px;background:var(--card-2);border:1px solid var(--line-soft);border-radius:13px}
+.wsp-prev{display:flex;align-items:center;justify-content:space-between;margin:18px 0 6px;  padding:14px 16px;background:var(--card-2);border:1px solid var(--line-soft);border-radius:13px}
 .wsp-prev span{font-weight:700;color:var(--soft)}
 .wsp-prev b{font-size:22px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
+.wsp-risk{display:flex;flex-direction:column;gap:2px;margin:16px 0 2px;padding:11px 14px;
+  background:var(--card-2);border:1px solid var(--line-soft);border-left-width:3px;border-radius:12px}
+.wsp-risk .wr-l{font-size:14px;font-weight:800;letter-spacing:-.01em}
+.wsp-risk .wr-s{font-size:12px;color:var(--soft);font-weight:600}
+.wsp-risk.r-safe{border-left-color:var(--green)}
+.wsp-risk.r-safe .wr-l{color:var(--green)}
+.wsp-risk.r-mid{border-left-color:var(--win)}
+.wsp-risk.r-mid .wr-l{color:var(--win-ink)}
+.wsp-risk.r-bold{border-left-color:#F2B84B}
+.wsp-risk.r-bold .wr-l{color:#F2B84B}
+.wsp-risk.r-wild{border-left-color:var(--red)}
+.wsp-risk.r-wild .wr-l{color:var(--red-ink)}
 .wsp-go{width:100%;margin-top:16px;padding:11px;font-size:14px}
 /* Shuffle sits beside Conjure; Conjure keeps the width, Shuffle takes only what
    its label needs. margin-top on .wsp-go is neutralised inside the row. */
@@ -1831,7 +1850,7 @@ footer{margin-top:26px;padding-top:18px;
 <button class="myfab" id="myFab" type="button" hidden><span class="myfab-c" id="myFabC">0</span><span class="lbl">My slip</span></button>
 <nav class="btabs" aria-label="Sections">
   <button class="btab on" id="bt-pred" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg></span>Home</button>
-  <button class="btab mid" id="bt-build" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>Build</button>
+  <button class="btab mid" id="bt-build" type="button"><span class="bt-ic"><img src="/wiz-logo.png" alt=""></span><span class="bt-lbl">Wizard</span></button>
   <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg><span class="live-dot btab-dot" id="liveDotB" hidden></span></span>Live</button>
 </nav>
 <div class="sheet myslip-sheet" id="mySheet" role="dialog" aria-modal="true" aria-labelledby="mySheet-title">
@@ -3484,7 +3503,7 @@ makeFab("myFab","sw.fabpos",
 $("myBookBtn").addEventListener("click",bookMy);
 $("myClearBtn").addEventListener("click",clearMy);
 /* ---- Wizard's Special jackpot builder ---- */
-var WSP={odds:500,mk:{doubles:true,out:true,goals:true,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0};
+var WSP={odds:500,max:20,mk:{doubles:true,out:true,goals:true,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0};
 function wspMarkets(){var m=[];if(WSP.mk.doubles)m=m.concat(["1X","X2"]);if(WSP.mk.out)m=m.concat(["1","2"]);if(WSP.mk.goals)m=m.concat(["OVER_1.5","OVER_2.5"]);if(WSP.mk.both)m.push("GG");return m;}
 function wspBuild(){
   var allowed=wspMarkets(),all=[];
@@ -3505,9 +3524,14 @@ function wspBuild(){
   function key(c){return c.p*(1+(h32(c.id+"|"+seed)-0.5)*0.5);}
   function ranked(list,pen){return list.slice().sort(function(a,b){
     return key(b)*(isSouthAmerican(b.f)?pen:1)-key(a)*(isSouthAmerican(a.f)?pen:1);});}
+  /* Payout target says how hard to chase; slip size says how many legs to risk
+     getting there. They are different questions - "five games, keep it safe"
+     is not the same ask as "x500" - so the size cap is its own control. If the
+     cap makes the target unreachable the slip simply falls short, which is the
+     honest outcome rather than quietly ignoring what the user chose. */
   function accumulate(list){
-    var picks=[],prod=1;
-    for(var i=0;i<list.length&&picks.length<20;i++){picks.push(list[i]);prod*=list[i].od;if(prod>=WSP.odds)break;}
+    var picks=[],prod=1,cap=WSP.max||20;
+    for(var i=0;i<list.length&&picks.length<cap;i++){picks.push(list[i]);prod*=list[i].od;if(prod>=WSP.odds)break;}
     return {picks:picks,odds:prod};
   }
   var euro=all.filter(function(c){return !isSouthAmerican(c.f);});
@@ -3528,15 +3552,39 @@ function renderWsp(){
     "<div class='wsp-lbl'>Fixture window</div><div class='wsp-chips'>"+
       [["day","Today only"],["all","All upcoming"]].map(function(sc){
         return "<button class='wsp-chip"+(SCOPE===sc[0]?" on":"")+"' data-sc='"+sc[0]+"'>"+sc[1]+"</button>";}).join("")+"</div>"+
+    "<div class='wsp-lbl'>Slip size</div><div class='wsp-chips'>"+
+      [[3,"3 games"],[5,"5 games"],[10,"10 games"],[20,"Max"]].map(function(z){
+        return "<button class='wsp-chip"+(WSP.max===z[0]?" on":"")+"' data-z='"+z[0]+"'>"+z[1]+"</button>";}).join("")+"</div>"+
     "<div class='wsp-lbl'>Target payout</div><div class='wsp-chips'>"+odds.map(function(o){return "<button class='wsp-chip"+(WSP.odds===o?" on":"")+"' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>"+
     "<div class='wsp-lbl'>Include markets</div><div class='wsp-chips'>"+mk.map(function(m){return "<button class='wsp-chip"+(WSP.mk[m[0]]?" on":"")+"' data-m='"+m[0]+"'>"+m[1]+"</button>";}).join("")+"</div>"+
     "<div class='wsp-acts'>"+
       "<button class='clear-btn wsp-shuffle' id='wspShuffle' type='button'>\u21bb Shuffle</button>"+
       "<button class='book-btn wsp-go' id='wspGo' type='button'>\u2728 Conjure my slip</button>"+
     "</div>";
+  /* Size, payout and markets each move the risk, so no single control can label
+     it. The read has to come from the slip those settings actually produce -
+     chance of landing all legs, stated plainly. */
+  (function(){
+    var pv=wspBuild(), n=pv.picks.length;
+    var host=document.createElement("div");
+    host.className="wsp-risk";
+    if(!n){ host.innerHTML="<span class='wr-l'>No slip yet</span>"+
+      "<span class='wr-s'>Loosen the settings to find games.</span>"; }
+    else{
+      var all=pv.picks.reduce(function(t,c){return t*c.p;},1);
+      var pc=Math.round(all*100);
+      var lvl=pc>=40?["safe","Safe"]:pc>=15?["mid","Balanced"]:pc>=4?["bold","Bold"]:["wild","Long shot"];
+      host.className="wsp-risk r-"+lvl[0];
+      host.innerHTML="<span class='wr-l'>"+lvl[1]+"</span>"+
+        "<span class='wr-s'>"+n+" game"+(n===1?"":"s")+" \u00b7 about "+
+        (pc<1?"under 1":pc)+"% chance all land \u00b7 \u00d7"+pv.odds.toFixed(0)+"</span>";
+    }
+    b.insertBefore(host,b.querySelector(".wsp-acts"));
+  })();
   b.querySelectorAll("[data-sc]").forEach(function(c){c.addEventListener("click",function(){
     if(!setScope(c.getAttribute("data-sc"))) return;
     renderWsp(); if(BUILD.touched) renderBuilder();});});
+  b.querySelectorAll("[data-z]").forEach(function(c){c.addEventListener("click",function(){WSP.max=+c.dataset.z;renderWsp();});});
   b.querySelectorAll("[data-o]").forEach(function(c){c.addEventListener("click",function(){WSP.odds=+c.dataset.o;renderWsp();});});
   b.querySelectorAll("[data-m]").forEach(function(c){c.addEventListener("click",function(){var k=c.dataset.m;var on=Object.keys(WSP.mk).filter(function(x){return WSP.mk[x];});if(WSP.mk[k]&&on.length===1)return;WSP.mk[k]=!WSP.mk[k];renderWsp();});});
   $("wspGo").addEventListener("click",function(){wspConjure(false);});
