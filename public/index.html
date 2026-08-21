@@ -509,13 +509,9 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
 @media(max-width:600px){
   .bld-foot{flex-wrap:wrap;padding:14px}
   .bld-foot .clear-btn,.bld-foot .book-btn{flex:1 1 auto}
-  /* The view tabs have to stay on one line. Wrapping gave Home a row of its
-     own and doubled the header height; the brand text gives way instead,
-     since the logo mark still identifies the page on its own. */
-  .nav{flex-wrap:nowrap}
-  .nav .navt{flex-shrink:0}
-  .logo{min-width:0}
-  .logo .word{min-width:0;overflow:hidden;text-overflow:ellipsis}
+  /* On a phone the bottom tab bar owns navigation, so the top view-tabs are
+     hidden (see the .nav rule near its definition). That frees the row for the
+     full wordmark and keeps the live dot away from the theme toggle. */
   html.mode-build #bldNote,html.mode-build .bld-approx{display:none}
   .gl-card.score .gl-pc{flex-shrink:0}
   .myfab{padding:0;width:58px;height:58px;justify-content:center;border-radius:50%;bottom:92px}
@@ -740,10 +736,17 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
 .sheet-head .info{flex:1;min-width:0}
 .sheet-head h3{font-size:18px;font-weight:800;letter-spacing:-.02em;line-height:1.25}
 .sheet-head p{font-size:12.5px;color:var(--soft);margin-top:4px}
-.sheet-x{width:34px;height:34px;flex-shrink:0;border-radius:10px;border:1px solid var(--line);
-  background:var(--card-2);color:var(--soft);font-size:22px;line-height:1;cursor:pointer;padding:0;
-  display:flex;align-items:center;justify-content:center;font-family:inherit}
-.sheet-x:hover{color:var(--text)}
+/* The cross is a drawn path, not a typed character. A text "x" or &times;
+   carries the font's own side and vertical bearings, so it lands a pixel or two
+   off centre inside a square button and reads as crooked whatever line-height
+   you give it. place-items on a block-level svg is exact. */
+.sheet-x{width:36px;height:36px;flex-shrink:0;border-radius:11px;border:1px solid var(--line);
+  background:var(--card-2);color:var(--soft);cursor:pointer;padding:0;
+  display:grid;place-items:center;font-family:inherit;
+  transition:background .16s,color .16s,border-color .16s,transform .12s}
+.sheet-x svg{display:block;width:15px;height:15px}
+.sheet-x:hover{color:var(--text);background:var(--raise);border-color:var(--soft)}
+.sheet-x:active{transform:scale(.93)}
 .sheet-x:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px 18px calc(40px + env(safe-area-inset-bottom))}
 /* Lock on the root element rather than pinning the body. Pinning with
@@ -822,6 +825,10 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
 }
 /* ===================================================== build a slip */
 .nav{display:flex;gap:4px;margin-left:20px}
+/* Phones navigate from the bottom tab bar, so the top view-tabs are redundant
+   there. Hiding them gives the wordmark its full width and takes the live dot
+   out from beside the theme toggle. The live cue moves to the bottom Live tab. */
+@media(max-width:720px){.nav{display:none}}
 .navt{background:none;border:0;color:var(--soft);font:inherit;font-weight:800;
   font-size:14px;padding:8px 14px;border-radius:9px;cursor:pointer;white-space:nowrap}
 .navt.on{background:var(--card-2);color:var(--text)}
@@ -833,9 +840,12 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
 @media(max-width:560px){
   .top-in{gap:8px;padding:10px 12px;flex-wrap:nowrap}
   .top-in .when{display:none}
-  .logo{font-size:15px;gap:6px}
+  /* the date carried margin-left:auto and did the pushing; with it hidden and
+     the view-tabs gone from phones, the logo has to push instead or the theme
+     toggle ends up parked against the wordmark */
+  .logo{font-size:15px;gap:6px;margin-right:auto}
   .sig{height:30px}
-  .nav{margin-left:auto;gap:2px;flex-shrink:1;min-width:0}
+  .nav{gap:2px;flex-shrink:1;min-width:0}
   .navt{padding:7px 9px;font-size:12.5px;white-space:nowrap}
 }
 #builder{display:none;margin-top:8px}
@@ -857,6 +867,13 @@ html.mode-live #live{display:block}
 .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff3b3b;
   margin-left:3px;vertical-align:middle;animation:livePulse 1.4s infinite}
 @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+/* On a phone the live cue rides the bottom Live tab. It used to sit in the top
+   nav, where at narrow widths it drifted into the theme toggle. Absolute so it
+   pins to the icon instead of pushing the label sideways, and ringed in the
+   bar's own background so it still reads as a badge at 8px. */
+.btab .bt-ic{position:relative;display:inline-flex;align-items:center;justify-content:center}
+.btab-dot{position:absolute;top:-2px;right:-4px;margin:0;width:8px;height:8px;
+  box-shadow:0 0 0 2px var(--card)}
 .live-strip{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;margin-bottom:6px;
   scrollbar-width:none;
   -webkit-mask-image:linear-gradient(90deg,#000 0,#000 92%,transparent 100%);
@@ -1068,6 +1085,12 @@ html.mode-live #live{display:block}
 .mkt{font-size:12px;font-weight:700;padding:6px 11px;border-radius:99px;
   background:var(--raise);color:var(--faint);border:1px solid transparent;transition:all .15s}
 .mkt.on{background:var(--green-wash);color:var(--green-ink);border-color:var(--green)}
+.scope-seg{display:flex;gap:3px;background:var(--raise);border-radius:11px;padding:3px;margin-bottom:13px}
+.scope-opt{flex:1;background:none;border:0;font:inherit;font-size:12px;font-weight:700;
+  color:var(--faint);padding:8px 6px;border-radius:9px;cursor:pointer;white-space:nowrap;
+  transition:background .16s,color .16s}
+.scope-opt.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.28)}
+.scope-opt:focus-visible{outline:2px solid var(--red);outline-offset:1px}
 .bld-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
 .stat{background:var(--card);border:1px solid var(--line-soft);border-radius:13px;padding:13px 14px}
 .stat b{display:block;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
@@ -1089,9 +1112,13 @@ html.mode-live #live{display:block}
 .sp-pick i{font-style:normal;font-size:11.5px;font-weight:700;color:var(--soft)}
 .sp-odd{font-variant-numeric:tabular-nums;font-weight:800;font-size:14px;color:var(--win);
   min-width:44px;text-align:right;flex-shrink:0}
-.sp-x{background:var(--raise);border:0;color:var(--soft);width:26px;height:26px;border-radius:8px;
-  font-size:15px;line-height:1;cursor:pointer;flex-shrink:0}
-.sp-x:hover{background:var(--red-wash);color:var(--red-ink)}
+.sp-x{background:var(--raise);border:1px solid transparent;color:var(--soft);
+  width:28px;height:28px;border-radius:9px;cursor:pointer;flex-shrink:0;padding:0;
+  display:grid;place-items:center;
+  transition:background .16s,color .16s,border-color .16s,transform .12s}
+.sp-x svg{display:block;width:12px;height:12px}
+.sp-x:hover{background:var(--red-wash);color:var(--red-ink);border-color:var(--red)}
+.sp-x:active{transform:scale(.93)}
 .sp-noid{font-size:10px;font-weight:800;color:var(--red-ink);background:var(--red-wash);
   padding:2px 6px;border-radius:5px;margin-left:6px}
 .bld-foot{position:sticky;bottom:0;display:flex;align-items:center;gap:14px;margin-top:16px;
@@ -1210,8 +1237,14 @@ html.mode-live #live{display:block}
 .wsp-acts .wsp-shuffle{flex:0 0 auto;padding:11px 16px;font-size:14px;white-space:nowrap}
 .book-btn{background:linear-gradient(180deg,#e6414e,var(--red))!important;box-shadow:0 3px 10px rgba(230,57,70,.4),inset 0 1px 0 rgba(255,255,255,.18)}
 .wsp-chip.on{background:var(--red);box-shadow:0 2px 8px rgba(230,57,70,.3)}
+/* The close button was absolutely positioned at right:0, which resolves against
+   the head's padding box - so it sat flush against the sheet's inner edge with
+   none of the gutter the rest of the header respects. Back to a plain flex item
+   pushed over with margin-left:auto: it now clears the edge by the same gutter
+   as the title, and the wsp head needs its <b> to flex for that to hold. */
 .sheet-head{position:relative}
-.sheet-head .sheet-x{position:absolute;right:0;top:50%;transform:translateY(-50%)}
+.sheet-head>b{flex:1;min-width:0;font-size:16.5px;font-weight:800;letter-spacing:-.02em}
+.sheet-head .sheet-x{margin-left:auto}
 @keyframes fabpop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
 .myfab{position:fixed;right:16px;bottom:16px;z-index:130;background:rgba(230,57,70,.92);color:#fff;
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
@@ -1422,6 +1455,8 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .risk-top{margin-bottom:10px}
 .risk-ticks{margin-top:6px}
 .mkts{margin-top:11px;padding-top:11px;gap:6px}
+.scope-seg{margin-bottom:10px}
+.scope-opt{padding:7px 6px;font-size:11.5px}
 .bld-stats{gap:7px;margin:11px 0}
 .stat{padding:10px 11px}
 #slip{gap:6px}
@@ -1571,6 +1606,13 @@ footer{margin-top:26px;padding-top:18px}
         and turn it into a SportyBet booking code you can load in one tap.</p>
     </div>
     <div class="bld-panel">
+      <!-- Ticket window. "Today only" keeps every leg inside today so the slip
+           settles the same evening; "All upcoming" keeps running for as long as
+           there are fixtures on the board. -->
+      <div class="scope-seg" id="scopeSeg" role="group" aria-label="Fixture window">
+        <button class="scope-opt" type="button" data-scope="day">Today only</button>
+        <button class="scope-opt" type="button" data-scope="all">All upcoming</button>
+      </div>
       <div class="risk-top">
         <span class="risk-name" id="riskName">Balanced</span>
         <span class="risk-sub" id="riskSub"></span>
@@ -1660,7 +1702,7 @@ footer{margin-top:26px;padding-top:18px}
   <div class="sheet-grab"><i></i></div>
   <div class="sheet-head">
     <div class="info"><h3 id="sheet-title"></h3><p id="sheet-sub"></p></div>
-    <button class="sheet-x" id="sheet-x" aria-label="Close">&times;</button>
+    <button class="sheet-x" id="sheet-x" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div class="sheet-body" id="sheet-body"></div>
 </div>
@@ -1668,20 +1710,20 @@ footer{margin-top:26px;padding-top:18px}
 <button class="wspfab" id="wspFab" type="button" aria-label="Wizard's Special"><img src="/wiz-logo.png" alt=""><span class="wspfab-spark"></span></button>
 <div class="sheet wsp-sheet" id="wspSheet" role="dialog" aria-modal="true">
   <div class="sheet-grab"><i></i></div>
-  <div class="sheet-head"><b>✨ Wizard's Special</b><button class="sheet-x" id="wspX" aria-label="Close">×</button></div>
+  <div class="sheet-head"><b>✨ Wizard's Special</b><button class="sheet-x" id="wspX" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="sheet-body" id="wspBody"></div>
 </div>
 <button class="myfab" id="myFab" type="button" hidden><span class="myfab-c" id="myFabC">0</span><span class="lbl">My slip</span></button>
 <nav class="btabs" aria-label="Sections">
   <button class="btab on" id="bt-pred" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg></span>Home</button>
   <button class="btab mid" id="bt-build" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>Build</button>
-  <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg></span>Live</button>
+  <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg><span class="live-dot btab-dot" id="liveDotB" hidden></span></span>Live</button>
 </nav>
 <div class="sheet myslip-sheet" id="mySheet" role="dialog" aria-modal="true" aria-labelledby="mySheet-title">
   <div class="sheet-grab"><i></i></div>
   <div class="sheet-head">
     <div class="info"><h3 id="mySheet-title">My slip</h3><p>Predictions you picked - book them to SportyBet.</p></div>
-    <button class="sheet-x" id="mySheet-x" aria-label="Close">&times;</button>
+    <button class="sheet-x" id="mySheet-x" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div class="sheet-body" id="mySheetBody"></div>
   <div class="mysheet-foot" id="mySheetFoot" hidden>
@@ -1695,6 +1737,8 @@ footer{margin-top:26px;padding-top:18px}
 <script>
 "use strict";
 const $=function(id){return document.getElementById(id);};
+/* the same drawn cross the static close buttons use - see .sheet-x in the css */
+var XSVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 const P0=function(x){return Math.round(x*100);};
 function conf(p){var pc=Math.round(p*100);return pc>=70?"strong":pc>=55?"lean":"slight";}
 function confLabel(p){var pc=Math.round(p*100);return pc>=70?"Strong":pc>=55?"Likely":"Slight";}
@@ -2323,6 +2367,34 @@ addEventListener("keydown",function(e){
 /* ============================================================ build a slip */
 var BUILD={risk:20,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0};
 try{var rr=localStorage.getItem("sw.risk"); if(rr!=null) BUILD.risk=+rr;}catch(e){}
+/* Ticket window. "day" holds every leg inside today, so the whole slip settles
+   the same evening; "all" runs for as long as there are fixtures published.
+   One shared preference, so the slider builder and Wizard's Special can never
+   disagree about which games are on the table. */
+var SCOPE="all";
+try{var sc0=localStorage.getItem("sw.scope"); if(sc0==="day"||sc0==="all") SCOPE=sc0;}catch(e){}
+function scopeFixtures(){
+  return DATA.fixtures.filter(function(f){
+    if(!notStarted(f)) return false;
+    return SCOPE!=="day"||dayOff(f.date)===0;
+  });
+}
+function paintScope(){
+  var seg=$("scopeSeg"); if(!seg) return;
+  seg.querySelectorAll("[data-scope]").forEach(function(b){
+    var on=b.getAttribute("data-scope")===SCOPE;
+    b.classList.toggle("on",on);
+    b.setAttribute("aria-pressed",on?"true":"false");
+  });
+}
+/* Persist and repaint only - callers decide what to re-render, because a change
+   made from the Wizard's Special sheet must not flip BUILD.touched and rewrite
+   the slip the user just conjured. */
+function setScope(s){
+  if((s!=="day"&&s!=="all")||s===SCOPE) return false;
+  SCOPE=s; try{localStorage.setItem("sw.scope",s);}catch(e){}
+  paintScope(); return true;
+}
 const BOOK_URL="https://web-production-798c0.up.railway.app/api/generate-booking-code";
 const SPORTY_URL="https://www.sportybet.com/ng/?shareCode=";
 const SPORTY_FIXTURES="https://web-production-798c0.up.railway.app/api/fixtures";
@@ -2424,7 +2496,7 @@ function buildPicks(){
   var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier), cand=[];
   var f0=BUILD.risk/100;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
-  DATA.fixtures.filter(function(f){return notStarted(f);}).forEach(function(f){
+  scopeFixtures().forEach(function(f){
     var homeFav=f.home_p>f.away_p;
     function sane(c){
       if(c==="1"&&!homeFav) return false;
@@ -2505,8 +2577,10 @@ function renderBuilder(){
       : "No games"; }
   // slip rows
   if(!picks.length){
+    var dry=(SCOPE==="day")&&!scopeFixtures().length;
     $("slip").innerHTML="<div class='bld-empty'><b>Nothing in your slip</b>"+
-      "Move the slider to build a fresh set of games.</div>";
+      (dry?"No fixtures left today \u2014 switch to All upcoming to keep building."
+         :"Move the slider to build a fresh set of games.")+"</div>";
   } else {
     $("slip").innerHTML=picks.map(function(c){
       var f=c.f, cf=conf(c.p);
@@ -2516,7 +2590,7 @@ function renderBuilder(){
           "<div class='sp-meta'>"+compOf(f.league)+" \u00b7 "+dayName(dayOff(f.date))+" "+kickTime(f)+"</div></div>"+
         "<div class='sp-pick'><b>"+mLabel(f,c.code)+"</b><i>"+P0(c.p)+"%</i></div>"+
         "<span class='sp-odd'>"+legOdd(c.f,c.code,c.p).toFixed(2)+"</span>"+
-        "<button class='sp-x' data-rm='"+c.id+"' aria-label='Remove'>\u00d7</button>"+
+        "<button class='sp-x' data-rm='"+c.id+"' aria-label='Remove'>"+XSVG+"</button>"+
       "</div>";
     }).join("");
     $("slip").querySelectorAll("[data-rm]").forEach(function(b){
@@ -2838,7 +2912,7 @@ async function fetchLive(){
   }catch(e){}
   LIVE.loading=false;
   if(rb) rb.classList.remove("spin");
-  var dot=$("liveDot"); if(dot) dot.hidden=!LIVE.matches.length;
+  syncLiveDots();
   renderLiveStrip();
   if(document.documentElement.classList.contains("mode-live")) renderLive();
 }
@@ -2985,6 +3059,15 @@ function tickerItemHTML(e){
     "<span>"+homeSpan+" "+scHTML+" "+awaySpan+"</span>"+
     "<span class='tk-min'>"+e.min+"</span></span>";
 }
+/* The pulse is a nudge toward live action you are not currently looking at, so
+   the bottom-tab one goes quiet while you are on the Live scores page itself.
+   The top-nav one needs no such guard - that whole tab is hidden there. */
+function syncLiveDots(){
+  var any=!!(typeof LIVE==="object"&&LIVE.matches&&LIVE.matches.length);
+  var here=document.documentElement.classList.contains("mode-live");
+  var d=$("liveDot"); if(d) d.hidden=!any;
+  var dB=$("liveDotB"); if(dB) dB.hidden=!any||here;
+}
 function renderLiveStrip(){
   var wrap=$("liveStripWrap"),host=$("liveStrip"); if(!wrap||!host) return;
   var root=document.documentElement;
@@ -3068,7 +3151,7 @@ function renderMySheet(){
         "<div class='sp-meta'>"+esc(x.label)+"</div></div>"+
       "<div class='sp-pick'><i>"+P0(x.p)+"%</i></div>"+
       "<span class='sp-odd'>"+(x.p>0?legOdd(fixtureById(x.id),x.code,x.p).toFixed(2):"-")+"</span>"+
-      "<button class='sp-x' data-myrm='"+x.id+"|"+x.code+"' aria-label='Remove'>\u00d7</button>"+
+      "<button class='sp-x' data-myrm='"+x.id+"|"+x.code+"' aria-label='Remove'>"+XSVG+"</button>"+
     "</div>";
   }).join("");
   $("myTotOdds").textContent="\u00d7"+myOdds().toFixed(2);
@@ -3127,10 +3210,15 @@ function setView(v){
   if(bp)bp.classList.toggle("on",v==="pred");
   if(bl)bl.classList.toggle("on",v==="live");
   if(bb)bb.classList.toggle("on",v==="build");
-  /* "Predictions" is the page itself, so that tab is only ever a way back:
-     hidden while you are on it, and labelled Home from anywhere else. The
-     bottom bar keeps all three tabs, so its first one just reads Home too. */
-  var tp=$("tab-pred"); if(tp){ if(tp.childNodes[0]) tp.childNodes[0].nodeValue="Home"; tp.classList.toggle("hide-tab",v==="pred"); }
+  /* A tab for the page you are already on is only ever a way back, so it is
+     not drawn at all - that goes for Live scores and Build too, not just
+     Predictions, and it is what keeps the header from crowding the wordmark on
+     a narrow screen. The bottom bar still carries all three. */
+  var tp=$("tab-pred"); if(tp){ if(tp.childNodes[0]) tp.childNodes[0].nodeValue="Home"; }
+  [["tab-pred","pred"],["tab-live","live"],["tab-build","build"]].forEach(function(t){
+    var el=$(t[0]); if(el) el.classList.toggle("hide-tab",v===t[1]);
+  });
+  syncLiveDots();
   if(v==="build") renderBuilder();
   if(v==="live"){ renderLive(); fetchLive(); }
   if(v==="pred") renderLiveStrip();
@@ -3200,7 +3288,7 @@ function wspBuild(){
   var allowed=wspMarkets(),all=[];
   var seed=WSP.seed||0, shuffles=WSP.shuffles||0;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
-  DATA.fixtures.filter(function(f){return notStarted(f);}).forEach(function(f){
+  scopeFixtures().forEach(function(f){
     var homeFav=f.home_p>f.away_p,best=null;
     allowed.forEach(function(c){
       if(c==="1"&&!homeFav)return; if(c==="2"&&homeFav)return;
@@ -3235,12 +3323,18 @@ function renderWsp(){
   var b=$("wspBody"); if(!b)return;
   var odds=[50,100,500,1000,2000,6000],mk=[["doubles","Safe doubles"],["out","Outright wins"],["goals","Goals"],["both","Both score"]];
   b.innerHTML="<p class='wsp-lead'>One tap conjures a mixed slip \u2014 safe bankers stacked with a few bold picks to chase a big return.</p>"+
+    "<div class='wsp-lbl'>Fixture window</div><div class='wsp-chips'>"+
+      [["day","Today only"],["all","All upcoming"]].map(function(sc){
+        return "<button class='wsp-chip"+(SCOPE===sc[0]?" on":"")+"' data-sc='"+sc[0]+"'>"+sc[1]+"</button>";}).join("")+"</div>"+
     "<div class='wsp-lbl'>Target payout</div><div class='wsp-chips'>"+odds.map(function(o){return "<button class='wsp-chip"+(WSP.odds===o?" on":"")+"' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>"+
     "<div class='wsp-lbl'>Include markets</div><div class='wsp-chips'>"+mk.map(function(m){return "<button class='wsp-chip"+(WSP.mk[m[0]]?" on":"")+"' data-m='"+m[0]+"'>"+m[1]+"</button>";}).join("")+"</div>"+
     "<div class='wsp-acts'>"+
       "<button class='clear-btn wsp-shuffle' id='wspShuffle' type='button'>\u21bb Shuffle</button>"+
       "<button class='book-btn wsp-go' id='wspGo' type='button'>\u2728 Conjure my slip</button>"+
     "</div>";
+  b.querySelectorAll("[data-sc]").forEach(function(c){c.addEventListener("click",function(){
+    if(!setScope(c.getAttribute("data-sc"))) return;
+    renderWsp(); if(BUILD.touched) renderBuilder();});});
   b.querySelectorAll("[data-o]").forEach(function(c){c.addEventListener("click",function(){WSP.odds=+c.dataset.o;renderWsp();});});
   b.querySelectorAll("[data-m]").forEach(function(c){c.addEventListener("click",function(){var k=c.dataset.m;var on=Object.keys(WSP.mk).filter(function(x){return WSP.mk[x];});if(WSP.mk[k]&&on.length===1)return;WSP.mk[k]=!WSP.mk[k];renderWsp();});});
   $("wspGo").addEventListener("click",function(){wspConjure(false);});
@@ -3269,6 +3363,17 @@ $("risk").addEventListener("input",function(){
   BUILD.risk=+this.value; BUILD.touched=true;
   try{localStorage.setItem("sw.risk",BUILD.risk);}catch(e){}
   BUILD.removed={}; $("bookResult").innerHTML=""; renderBuilder();});
+paintScope();
+(function(){
+  var seg=$("scopeSeg"); if(!seg) return;
+  seg.querySelectorAll("[data-scope]").forEach(function(b){
+    b.addEventListener("click",function(){
+      if(!setScope(b.getAttribute("data-scope"))) return;
+      BUILD.removed={}; BUILD.touched=true;
+      $("bookResult").innerHTML=""; renderBuilder();
+    });
+  });
+})();
 $("bookBtn").addEventListener("click",bookSlip);
 $("clearBtn").addEventListener("click",clearSlip);
 $("shuffleBtn").addEventListener("click",function(){BUILD.touched=true;BUILD.seed=Math.floor(Math.random()*1e6);BUILD.shuffles=(BUILD.shuffles||0)+1;BUILD.removed={};$("bookResult").innerHTML="";renderBuilder();window.swToast&&window.swToast("Slip reshuffled","ok","shuffle");});
