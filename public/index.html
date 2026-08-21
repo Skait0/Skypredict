@@ -1290,7 +1290,7 @@ html.mode-live #live{display:block}
       
     </a>
     <nav class="nav" role="tablist" aria-label="View">
-      <button id="tab-pred" class="navt on" type="button" role="tab">Home</button>
+      <button id="tab-pred" class="navt on" type="button" role="tab">Predictions</button>
       <button id="tab-live" class="navt" type="button" role="tab">Live scores <span class="live-dot" id="liveDot" hidden></span></button>
       <button id="tab-build" class="navt build" type="button" role="tab">Build me a slip</button>
     </nav>
@@ -2769,9 +2769,10 @@ function renderLiveStrip(){
   if(sig===LIVE._tksig) return;
   LIVE._tksig=sig;
   var items=evs.map(tickerItemHTML).join("");
-  var reps=evs.length<4?4:2; var big=""; for(var r=0;r<reps;r++) big+=items;
-  host.innerHTML=big;
-  host.style.animationDuration=Math.max(20,evs.length*6)+"s";
+  if(evs.length<=2){ host.innerHTML=items; host.style.animation="none"; host.style.justifyContent="center"; }
+  else { var reps=evs.length<4?3:2; var big=""; for(var r=0;r<reps;r++) big+=items;
+    host.innerHTML=big; host.style.animation=""; host.style.justifyContent="";
+    host.style.animationDuration=Math.max(20,evs.length*6)+"s"; }
   var all=$("liveStripAll");
   if(all&&!all._w){all._w=1;all.addEventListener("click",function(e){e.preventDefault();setView("live");});}
 }
@@ -2899,6 +2900,8 @@ function setView(v){
   if(bp)bp.classList.toggle("on",v==="pred");
   if(bl)bl.classList.toggle("on",v==="live");
   if(bb)bb.classList.toggle("on",v==="build");
+  var tp=$("tab-pred"); if(tp&&tp.childNodes[0]) tp.childNodes[0].nodeValue=(v==="pred")?"Predictions":"Home";
+  if(bp&&bp.lastChild) bp.lastChild.textContent=(v==="pred")?"Tips":"Home";
   if(v==="build") renderBuilder();
   if(v==="live"){ renderLive(); fetchLive(); }
   if(v==="pred") renderLiveStrip();
