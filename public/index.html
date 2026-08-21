@@ -441,7 +441,11 @@ html.mode-live .btabs{transform:none!important}
 .mono img{width:100%;height:100%;border-radius:inherit;object-fit:cover;display:block}
 .mono.has-crest{background:transparent!important}
 /* ============================ mobile + star build + goal-stay (batch) */
-.navt.build{background:var(--red);color:#fff;animation:starpulse 2.4s ease-out infinite}
+/* One thing on the page gets to move: the wizard fab. Everything else that used
+   to pulse now reads as enchanted rather than flashing - a thin rune-gold edge
+   and a warm ember, which is the same language as the runes in the background. */
+.navt.build{background:var(--red);color:#fff;
+  box-shadow:inset 0 0 0 1px rgba(242,184,75,.45),0 2px 10px rgba(230,57,70,.28)}
 .navt.build.on{background:var(--red);color:#fff}
 @keyframes starpulse{0%{box-shadow:0 0 0 0 rgba(230,57,70,.55)}70%{box-shadow:0 0 0 11px rgba(230,57,70,0)}100%{box-shadow:0 0 0 0 rgba(230,57,70,0)}}
 .lthead,.lrow{column-gap:12px}
@@ -596,18 +600,20 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
    visible tips are actually bookable, so it never sits there dead. */
 .bookall-row{display:flex;justify-content:flex-end;margin:8px 0 2px}
 .bookall{position:relative;overflow:hidden;display:none;align-items:center;gap:8px;
-  background:linear-gradient(120deg,var(--red),#ff5d6a);color:#fff;border:0;
+  background:linear-gradient(120deg,var(--red),#c8323d);color:#fff;
+  border:1px solid rgba(242,184,75,.5);
   font:inherit;font-weight:800;font-size:12.5px;padding:8px 14px;border-radius:99px;
-  cursor:pointer;box-shadow:0 3px 12px rgba(230,57,70,.35)}
+  cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.25)}
 .bookall.show{display:inline-flex}
 .bookall:hover{filter:brightness(1.07)}
 .bookall:disabled{opacity:.6;cursor:not-allowed}
 .bookall .ba-n{background:rgba(255,255,255,.22);border-radius:99px;padding:1px 7px;
   font-variant-numeric:tabular-nums;font-size:11.5px}
-.ba-spark{position:absolute;top:0;left:-60%;width:45%;height:100%;pointer-events:none;
-  background:linear-gradient(100deg,transparent,rgba(255,255,255,.42),transparent);
-  animation:baSweep 3.4s ease-in-out infinite}
-@keyframes baSweep{0%{left:-60%}55%{left:120%}100%{left:120%}}
+.ba-spark{position:absolute;top:50%;left:9px;width:5px;height:5px;margin-top:-2.5px;
+  border-radius:50%;background:#F2B84B;pointer-events:none;
+  box-shadow:0 0 7px 1px rgba(242,184,75,.85);animation:baEmber 3.6s ease-in-out infinite}
+@keyframes baEmber{0%,100%{opacity:.45;transform:scale(.85)}50%{opacity:1;transform:scale(1.15)}}
+.bookall .ba-tx{margin-left:9px}
 html.reduce .ba-spark{animation:none;opacity:0}
 html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookall-row{display:none}
 #bookAllResult:not(:empty){margin:10px 0 2px}
@@ -857,8 +863,12 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
 /* On phones the top tabs are hidden by default, BUT on the Home page (mode-pred)
    we expose just the Live scores tab so the user can jump straight to live action
    without opening the bottom bar. It sits on the same line as the logo + theme. */
-@media(max-width:720px){.nav{display:none}}
-html.mode-pred @media(max-width:720px){.nav{display:flex}}
+@media(max-width:720px){
+  .nav{display:none}
+  /* Home page keeps the header nav so the Live tab is reachable from the top.
+     (This has to live inside the media query - a selector cannot wrap one.) */
+  html.mode-pred .nav{display:flex}
+}
 .navt{background:none;border:0;color:var(--soft);font:inherit;font-weight:800;
   font-size:14px;padding:8px 14px;border-radius:9px;cursor:pointer;white-space:nowrap}
 .navt.on{background:var(--card-2);color:var(--text)}
@@ -1178,7 +1188,13 @@ html.mode-live #live{display:block}
 .bld-note{font-size:12px;color:var(--soft);margin-top:10px;text-align:center}
 #bookResult{margin-top:14px}
 .code-card{background:var(--green-wash);border:1px solid var(--green);border-radius:14px;
-  padding:18px;text-align:center}
+  padding:18px;text-align:center;position:relative}
+.code-x{position:absolute;top:8px;right:8px;width:30px;height:30px;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--card);border:1px solid var(--line);border-radius:9px;
+  color:var(--soft);cursor:pointer}
+.code-x svg{width:15px;height:15px}
+.code-x:hover{color:var(--text);border-color:var(--red)}
 .code-card i{font-style:normal;font-size:12px;font-weight:700;letter-spacing:.05em;
   text-transform:uppercase;color:var(--green-ink)}
 .code-card b{display:block;font-size:32px;font-weight:800;letter-spacing:.08em;
@@ -1255,7 +1271,7 @@ html.mode-live #live{display:block}
   filter:drop-shadow(0 0 5px rgba(255,225,120,.95));animation:wspBolt 2.6s ease-in-out infinite}
 @keyframes wspBolt{0%,72%,100%{opacity:.35;transform:scale(.9) rotate(0)}80%{opacity:1;transform:scale(1.25) rotate(-8deg)}88%{opacity:.6;transform:scale(1.05)}}
 .wspfab-spark{position:absolute;inset:-3px;border-radius:50%;pointer-events:none;
-  box-shadow:0 0 14px 2px rgba(150,110,240,.55);animation:wspGlow 2.4s ease-in-out infinite}
+  box-shadow:0 0 14px 2px rgba(242,184,75,.5);animation:wspGlow 2.4s ease-in-out infinite}
 @keyframes wspFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 @keyframes wspGlow{0%,100%{opacity:.5}50%{opacity:1}}
 @media(max-width:720px){.wspfab{bottom:92px;width:52px;height:52px}.wspfab img{width:34px;height:34px}}
@@ -1505,7 +1521,10 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .bld-note{margin-top:7px}
 #bookResult{margin-top:10px}
 .code-card{padding:14px}
-.code-card b{margin:5px 0 10px}
+.code-card b{margin:5px 0 10px;font-size:26px;letter-spacing:.06em;word-break:break-all}
+.code-acts{gap:7px}
+.code-acts button,.code-acts a{flex:1 1 auto;min-width:0;font-size:13px;padding:10px 12px;text-align:center}
+.code-x{top:6px;right:6px;width:28px;height:28px}
 .confirm-card{padding:13px}
 
 /* --- sheets --- */
@@ -2721,7 +2740,10 @@ function clearSlip(){
 /* ---- shared booking-code card, share + copy + open ---- */
 function showCode(code,hostId){
   var host=$(hostId); if(!host) return;
-  host.innerHTML="<div class='code-card'><i>Your SportyBet booking code</i>"+
+  host.innerHTML="<div class='code-card'>"+
+    "<button class='code-x' type='button' aria-label='Close'>"+
+      "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' aria-hidden='true'><path d='M6 6l12 12M18 6L6 18'/></svg></button>"+
+    "<i>Your SportyBet booking code</i>"+
     "<b>"+esc(code)+"</b>"+
     "<div class='code-acts'>"+
       "<button class='code-copy' type='button'>Copy code</button>"+
@@ -2729,6 +2751,7 @@ function showCode(code,hostId){
       "<a class='code-open' href='"+SPORTY_URL+encodeURIComponent(code)+
         "' target='_blank' rel='noopener'>Open in SportyBet</a>"+
     "</div></div>";
+  host.querySelector(".code-x").addEventListener("click",function(){host.innerHTML="";});
   host.querySelector(".code-copy").addEventListener("click",function(){
     if(navigator.clipboard) navigator.clipboard.writeText(code);
     this.textContent="Copied \u2713"; var s=this;
@@ -2798,6 +2821,12 @@ function confirmBookAll(){
     "<button class='confirm-go' type='button'>Yes, book "+bookable.length+"</button>"+
     "<button class='confirm-cancel' type='button'>Cancel</button></div></div>";
   host.querySelector(".confirm-go").addEventListener("click",function(){
+    /* Mirror the booked games into the floating slip so the sheet shows exactly
+       what the code contains, and the user can review or reuse it. */
+    MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
+      .concat(bookable.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true};}));
+    var seen={}; MYSLIP=MYSLIP.filter(function(x){if(seen[x.id])return false;seen[x.id]=1;return true;});
+    saveMy(); renderFab();
     doBookList(bookable,"bookAllResult","bookAll","Book all tips");
   });
   host.querySelector(".confirm-cancel").addEventListener("click",function(){host.innerHTML="";});
@@ -3300,6 +3329,9 @@ function setView(v){
   var root=document.documentElement;
   root.classList.toggle("mode-build",v==="build");
   root.classList.toggle("mode-live",v==="live");
+  /* mode-pred drives the phone-only rule that keeps the Live tab in the header
+     on the home page. Without it that CSS never fires and the nav stays hidden. */
+  root.classList.toggle("mode-pred",v==="pred");
   $("tab-pred").classList.toggle("on",v==="pred");
   $("tab-live").classList.toggle("on",v==="live");
   $("tab-build").classList.toggle("on",v==="build");
