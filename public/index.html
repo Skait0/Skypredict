@@ -821,6 +821,9 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
   font-size:14px;padding:8px 14px;border-radius:9px;cursor:pointer;white-space:nowrap}
 .navt.on{background:var(--card-2);color:var(--text)}
 .navt:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+/* the tab for the page you are already on is only a way back, so it is not
+   drawn at all until you have gone somewhere else */
+.navt.hide-tab{display:none!important}
 .top-in .when{margin-left:auto}
 @media(max-width:560px){
   .top-in{gap:8px;padding:10px 12px;flex-wrap:nowrap}
@@ -1273,6 +1276,171 @@ html.mode-live #live{display:block}
 .powered i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
 .powered img{height:16px;width:auto;display:block;border-radius:3px}
 @media(max-width:600px){.powered i{display:none}}
+
+/* ==========================================================================
+   DENSITY
+   The page was laid out generously enough that a phone showed barely three
+   matches at once. Everything below tightens the vertical rhythm - section
+   gaps, card padding, the space between one option and the next - without
+   touching type colour, weight or hierarchy. Tap targets stay at or above
+   40px so nothing gets harder to hit. Loaded last so it wins on specificity
+   alone, which also means the whole pass can be lifted out in one piece.
+   Applies to the installed app too: same file, same stylesheet.
+   ========================================================================== */
+body{line-height:1.45;padding-bottom:24px}
+@media(max-width:720px){body{padding-bottom:82px}}
+
+/* --- header + hero --- */
+.top-in{padding:9px 16px;gap:10px}
+.intro{padding:14px 0 2px}
+.hero-logo{margin:0 0 10px}
+.intro p{margin-top:6px}
+.trust{margin-top:10px;gap:6px 13px}
+
+/* --- pick of the day --- */
+.potd{margin-top:14px}
+.potd-top{padding:9px 15px}
+.potd-body{padding:13px 15px}
+.potd-grid{gap:14px}
+.potd .meta{margin-top:5px}
+.why{margin-top:11px;padding-top:11px}
+.why .eyebrow{margin-bottom:7px}
+.why ul{gap:6px}
+
+/* --- filters + finder --- */
+.bar{margin-top:14px;padding:9px;gap:8px}
+.cats{gap:6px}
+.cat{padding:8px 13px}
+.tools{gap:8px}
+.search input{padding:11px 12px 11px 38px}
+.search svg{left:12px}
+select{min-height:44px;padding:10px 32px 10px 12px}
+.finder{padding:11px}
+.finder-h{margin-bottom:9px}
+.picker{gap:7px}
+.field label{margin-bottom:4px}
+.chosen{margin-top:8px;padding:7px 10px}
+.datebar{padding:4px}
+.dnav{width:34px;height:34px}
+
+/* --- section groups --- */
+.country{margin-top:22px;padding-top:15px}
+.country-h{padding:1px 0 4px}
+.country-h h2{font-size:18px}
+.comp{margin-top:7px}
+.comp-h{padding-bottom:3px}
+.faves-h{margin:20px 0 5px}
+.grid{gap:8px}
+.key{margin-top:8px;padding:8px 12px;gap:9px 13px}
+.list-hint{margin:2px 2px 7px}
+.thin-note{padding:9px 12px;margin:0 0 8px}
+
+/* --- match cards --- */
+.m-btn{padding:11px 12px 0}
+.m-top{margin-bottom:8px;gap:6px}
+.m-add{padding:10px}
+.tn{padding:2px 0}
+.tipbox{margin-top:9px;padding:9px 11px;gap:8px}
+.valuebox{margin-top:6px;padding:8px 11px}
+.mtoggle{margin:10px -12px 0;padding:10px 12px}
+.more-pad{padding:3px 12px 11px}
+.grp{margin-top:10px}
+.grp h4{margin-bottom:6px}
+.opts{gap:6px}
+.opt{padding:9px 11px}
+.opt .p{margin-top:3px}
+.glance{gap:7px;margin:8px 0 2px}
+.gl-card{padding:10px 12px}
+.gl-k{margin-bottom:5px}
+@media(max-width:720px){.glance{gap:6px}}
+
+/* --- dense list rows --- */
+.ltable{margin-top:1px}
+.lthead{padding:5px 8px 4px}
+.lrow{padding:4px 8px}
+.lrow.open .lmore{padding-top:7px}
+.lmore{font-size:12.5px}
+.lmore-x{margin-top:7px;padding:7px 12px}
+@media(max-width:640px){.lrow{padding:5px 8px;gap:2px 9px}}
+
+/* --- results rows --- */
+.res-head{margin:2px 2px 8px}
+.rrow{padding:8px 11px;margin-bottom:5px}
+.rr-tip{margin-top:5px;padding-top:5px}
+
+/* --- call to action / toggles --- */
+.slip-cta{margin:10px 0 2px;padding:11px 13px;gap:10px}
+.viewtoggle.top{margin:10px 0 2px}
+.viewtoggle.top .vt{padding:6px 14px}
+.vt{padding:8px 14px}
+
+/* --- live --- */
+#liveStripWrap{margin-top:12px}
+.ticker{height:40px}
+.tk-item{padding:0 16px;gap:8px}
+.live-head h1{font-size:22px;margin:4px 0}
+.live-sub{margin-bottom:10px}
+.live-strip{gap:8px;padding:3px 2px 7px}
+.ls-head{margin:2px 2px 3px}
+.ls-card{padding:8px 11px}
+.ls-top{margin-bottom:5px}
+.lv-selwrap{margin:2px 0 9px}
+.lv-sel{padding:9px 12px}
+.lv-seg{gap:6px;padding:2px 14px 9px 0}
+.lv-chip{padding:7px 12px}
+.lv-grp{margin-bottom:9px}
+.lv-grp-h{padding:3px 2px 6px}
+.lv{padding:7px 11px;margin-bottom:5px}
+.lv-top{margin-bottom:4px}
+.lv-scorers{margin-top:7px;padding-top:7px}
+.lv-tip{margin-top:7px}
+.live-empty{padding:30px 18px}
+
+/* --- slip builder --- */
+#builder,#live{margin-top:5px}
+.bld-head h1{font-size:22px;margin:4px 0 3px}
+.bld-head p{margin-bottom:11px}
+.bld-panel{padding:13px 13px 12px}
+.risk-top{margin-bottom:10px}
+.risk-ticks{margin-top:6px}
+.mkts{margin-top:11px;padding-top:11px;gap:6px}
+.bld-stats{gap:7px;margin:11px 0}
+.stat{padding:10px 11px}
+#slip{gap:6px}
+.sp-row{padding:9px 11px;gap:10px}
+.bld-foot{margin-top:11px;padding:12px 14px;gap:11px}
+.bld-note{margin-top:7px}
+#bookResult{margin-top:10px}
+.code-card{padding:14px}
+.code-card b{margin:5px 0 10px}
+.confirm-card{padding:13px}
+
+/* --- sheets --- */
+.sheet-grab{padding:7px 0 2px}
+.sheet-head{padding:6px 15px 10px;gap:10px}
+.sheet-head p{margin-top:3px}
+.sheet-body{padding:2px 15px calc(28px + env(safe-area-inset-bottom))}
+@media(min-width:720px){.sheet-head{padding-top:13px}}
+
+/* --- notes + footer --- */
+.note{margin-top:22px;padding:15px}
+.note h3{margin-bottom:9px}
+.note p{line-height:1.6;margin-bottom:8px}
+footer{margin-top:26px;padding-top:18px}
+.foot-brand{margin-bottom:14px;padding-bottom:14px;gap:10px}
+.foot-cols{gap:14px;margin-bottom:14px}
+.foot-cols h5{margin-bottom:5px}
+.foot-cols p{line-height:1.55}
+.foot-legal{padding-top:12px;gap:8px 15px}
+@media(min-width:720px){.foot-cols{gap:20px}}
+.record-in{padding:8px 12px;margin-top:9px}
+.notif{margin-top:9px}
+.none{padding:30px 18px;margin-top:14px}
+.none b{margin-bottom:6px}
+
+/* A drag has to own the gesture or the page scrolls underneath the finger
+   instead of the button following it. */
+.myfab,.wspfab{touch-action:none}
 </style>
 </head>
 <body>
@@ -1291,7 +1459,7 @@ html.mode-live #live{display:block}
       
     </a>
     <nav class="nav" role="tablist" aria-label="View">
-      <button id="tab-pred" class="navt on" type="button" role="tab">Predictions</button>
+      <button id="tab-pred" class="navt on hide-tab" type="button" role="tab">Home</button>
       <button id="tab-live" class="navt" type="button" role="tab">Live scores <span class="live-dot" id="liveDot" hidden></span></button>
       <button id="tab-build" class="navt build" type="button" role="tab">Build me a slip</button>
     </nav>
@@ -2905,8 +3073,10 @@ function setView(v){
   if(bp)bp.classList.toggle("on",v==="pred");
   if(bl)bl.classList.toggle("on",v==="live");
   if(bb)bb.classList.toggle("on",v==="build");
-  var tp=$("tab-pred"); if(tp){ if(tp.childNodes[0]) tp.childNodes[0].nodeValue=(v==="pred")?"Predictions":"Home"; tp.style.display=(v==="pred")?"none":""; }
-  if(bp){ if(bp.lastChild) bp.lastChild.textContent=(v==="pred")?"Tips":"Home"; }
+  /* "Predictions" is the page itself, so that tab is only ever a way back:
+     hidden while you are on it, and labelled Home from anywhere else. The
+     bottom bar keeps all three tabs, so its first one just reads Home too. */
+  var tp=$("tab-pred"); if(tp){ if(tp.childNodes[0]) tp.childNodes[0].nodeValue="Home"; tp.classList.toggle("hide-tab",v==="pred"); }
   if(v==="build") renderBuilder();
   if(v==="live"){ renderLive(); fetchLive(); }
   if(v==="pred") renderLiveStrip();
@@ -2924,27 +3094,48 @@ $("bt-live").addEventListener("click",function(){setView("live");});
 $("bt-build").addEventListener("click",function(){setView("build");});
 $("logo").addEventListener("click",function(e){e.preventDefault();setView("pred");});
 if($("slipCta"))$("slipCta").addEventListener("click",function(){setView("build");});
-(function(){
-  var fab=$("myFab"); if(!fab) return;
+/* Draggable floating button, shared by My slip and the Wizard.
+   Three things this has to get right on a phone:
+   - only the click handler toggles. Opening on touchend as well meant the
+     click the browser sends immediately afterwards saw the panel already
+     open and shut it again, so the button looked dead.
+   - a position saved on a wide screen lands off-canvas on a phone, so
+     anything restored is clamped back into view.
+   - a finger never holds still, so a tap is allowed some slop before it
+     counts as a drag. */
+function makeFab(id,key,isOpen,open,close){
+  var fab=$(id); if(!fab) return;
   var moved=false,sx=0,sy=0,ox=0,oy=0,drag=false;
-  try{var sp=JSON.parse(localStorage.getItem("sw.fabpos")||"null");
-    if(sp){fab.style.left=sp.x+"px";fab.style.top=sp.y+"px";fab.style.right="auto";fab.style.bottom="auto";}}catch(e){}
+  function clamp(){
+    if(!fab.style.left) return;
+    var w=fab.offsetWidth||56,h=fab.offsetHeight||56;
+    fab.style.left=Math.max(6,Math.min(window.innerWidth-w-6,parseFloat(fab.style.left)||6))+"px";
+    fab.style.top=Math.max(6,Math.min(window.innerHeight-h-6,parseFloat(fab.style.top)||6))+"px";
+  }
+  try{var sp=JSON.parse(localStorage.getItem(key)||"null");
+    if(sp){fab.style.left=sp.x+"px";fab.style.top=sp.y+"px";
+      fab.style.right="auto";fab.style.bottom="auto";clamp();}}catch(e){}
+  window.addEventListener("resize",clamp);
   function down(e){drag=true;moved=false;var t=e.touches?e.touches[0]:e;
     sx=t.clientX;sy=t.clientY;var r=fab.getBoundingClientRect();ox=r.left;oy=r.top;}
   function move(e){if(!drag)return;var t=e.touches?e.touches[0]:e;
     var dx=t.clientX-sx,dy=t.clientY-sy;
-    if(Math.abs(dx)+Math.abs(dy)>5)moved=true;
-    var nx=Math.max(6,Math.min(window.innerWidth-fab.offsetWidth-6,ox+dx));
-    var ny=Math.max(6,Math.min(window.innerHeight-fab.offsetHeight-6,oy+dy));
-    fab.style.left=nx+"px";fab.style.top=ny+"px";fab.style.right="auto";fab.style.bottom="auto";
+    if(Math.abs(dx)+Math.abs(dy)>10)moved=true;
+    if(!moved)return;
+    fab.style.left=Math.max(6,Math.min(window.innerWidth-fab.offsetWidth-6,ox+dx))+"px";
+    fab.style.top=Math.max(6,Math.min(window.innerHeight-fab.offsetHeight-6,oy+dy))+"px";
+    fab.style.right="auto";fab.style.bottom="auto";
     if(e.cancelable)e.preventDefault();}
   function up(){if(!drag)return;drag=false;
-    if(moved){try{localStorage.setItem("sw.fabpos",JSON.stringify({x:parseFloat(fab.style.left),y:parseFloat(fab.style.top)}));}catch(e){}}
-    else { if($("mySheet").classList.contains("on")) closeMySheet(); else openMySheet(); }}
+    if(moved){try{localStorage.setItem(key,JSON.stringify(
+      {x:parseFloat(fab.style.left),y:parseFloat(fab.style.top)}));}catch(e){}}}
   fab.addEventListener("mousedown",down);document.addEventListener("mousemove",move);document.addEventListener("mouseup",up);
   fab.addEventListener("touchstart",down,{passive:false});document.addEventListener("touchmove",move,{passive:false});document.addEventListener("touchend",up);
-  fab.addEventListener("click",function(e){e.preventDefault();if(!moved){if($("mySheet").classList.contains("on"))closeMySheet();else openMySheet();}});
-})();
+  fab.addEventListener("click",function(e){e.preventDefault();
+    if(moved)return; if(isOpen())close(); else open();});
+}
+makeFab("myFab","sw.fabpos",
+  function(){return $("mySheet").classList.contains("on");},openMySheet,closeMySheet);
 $("mySheet-x").addEventListener("click",closeMySheet);
 $("myBookBtn").addEventListener("click",bookMy);
 $("myClearBtn").addEventListener("click",clearMy);
@@ -2990,27 +3181,10 @@ function wspConjure(){
 }
 function openWsp(){renderWsp();$("scrim").classList.add("on");$("wspSheet").classList.add("on");pushOverlay();}
 function closeWsp(){$("scrim").classList.remove("on");$("wspSheet").classList.remove("on");}
-(function(){
-  var fab=$("wspFab"); if(!fab) return;
-  var moved=false,sx=0,sy=0,ox=0,oy=0,drag=false;
-  try{var sp=JSON.parse(localStorage.getItem("sw.wsppos")||"null");
-    if(sp){fab.style.left=sp.x+"px";fab.style.top=sp.y+"px";fab.style.right="auto";fab.style.bottom="auto";}}catch(e){}
-  function down(e){drag=true;moved=false;var t=e.touches?e.touches[0]:e;
-    sx=t.clientX;sy=t.clientY;var r=fab.getBoundingClientRect();ox=r.left;oy=r.top;}
-  function move(e){if(!drag)return;var t=e.touches?e.touches[0]:e;
-    var dx=t.clientX-sx,dy=t.clientY-sy;
-    if(Math.abs(dx)+Math.abs(dy)>5)moved=true;
-    var nx=Math.max(6,Math.min(window.innerWidth-fab.offsetWidth-6,ox+dx));
-    var ny=Math.max(6,Math.min(window.innerHeight-fab.offsetHeight-6,oy+dy));
-    fab.style.left=nx+"px";fab.style.top=ny+"px";fab.style.right="auto";fab.style.bottom="auto";
-    if(e.cancelable)e.preventDefault();}
-  function up(){if(!drag)return;drag=false;
-    if(moved){try{localStorage.setItem("sw.wsppos",JSON.stringify({x:parseFloat(fab.style.left),y:parseFloat(fab.style.top)}));}catch(e){}}
-    else openWsp();}
-  fab.addEventListener("mousedown",down);document.addEventListener("mousemove",move);document.addEventListener("mouseup",up);
-  fab.addEventListener("touchstart",down,{passive:false});document.addEventListener("touchmove",move,{passive:false});document.addEventListener("touchend",up);
-  fab.addEventListener("click",function(e){e.preventDefault();if(!moved){if($("wsp").classList.contains("on"))closeWsp();else openWsp();}});
-})();
+/* the id here was "wsp", which does not exist - reading .classList off the
+   resulting null threw, so the tap never reached openWsp at all */
+makeFab("wspFab","sw.wsppos",
+  function(){return $("wspSheet").classList.contains("on");},openWsp,closeWsp);
 $("wspX").addEventListener("click",closeWsp);
 $("scrim").addEventListener("click",closeWsp);
 renderFab();
