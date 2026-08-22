@@ -372,7 +372,6 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
   transition:opacity .25s,transform .25s;max-width:88vw}
 .toast.in{opacity:1;transform:translateY(0)}
 .toast.ok{border-color:var(--green)}
-.toast.ok::before{content:"\2713";color:var(--green);font-weight:800}
 .toast.err{border-color:var(--red)}
 .toast.err::before{content:"!";color:var(--red-ink);font-weight:800}
 .glance{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0 4px}
@@ -458,6 +457,7 @@ html.mode-live .btabs{transform:none!important}
   display:grid;place-items:center;padding:0;opacity:.7;transition:opacity .16s,background .16s}
 .lmore-close svg{width:11px;height:11px}
 .lmore-close:hover{opacity:1;background:var(--card);color:var(--text)}
+.m .lmore-close{display:none}
 .list-hint{font-size:12.5px;color:var(--faint);margin:2px 2px 10px}
 .thin-note{background:var(--card-2);border:1px solid var(--line-soft);border-radius:11px;
   padding:11px 14px;margin:0 0 12px;font-size:13px;color:var(--soft);font-weight:600}
@@ -1875,6 +1875,7 @@ const $=function(id){return document.getElementById(id);};
 var XSVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 const P0=function(x){return Math.round(x*100);};
 var CHK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:block"><path d="M5 13l4 4L19 7"/></svg>';
+var PLUS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" style="width:12px;height:12px;display:block"><path d="M12 5v14M5 12h14"/></svg>';
 function conf(p){var pc=Math.round(p*100);return pc>=70?"strong":pc>=55?"lean":"slight";}
 function confLabel(p){var pc=Math.round(p*100);return pc>=70?"Strong":pc>=55?"Likely":"Slight";}
 function verdict(p){var pc=Math.round(p*100);return pc>=70?"Good bet":pc>=55?"Worth a look":"Risky pick";}
@@ -2044,19 +2045,17 @@ function isValue(f){var e=edgeOf(f);return e!=null&&e>=0.05;}
 function _devig3(o1,ox,o2){var a=1/o1,b=1/ox,c=1/o2,s=a+b+c;return (s>0)?[a/s,b/s,c/s]:null;}
 function refineTip(f){
   if(!f||f._refined) return; f._refined=1;
-  var t=f.tip||""; if(t.indexOf("12")!==0) return;
-  var hp=f.home_p||0, ap=f.away_p||0;
-  /* Keep "Any team to win" only where it genuinely belongs - two evenly matched
-     sides with an unlikely draw, which is exactly what 12 is for. When one side
-     is a clear favourite (>=15pt edge, or a strong home side), recast to that
-     team's double chance so a big team at home / away reads directionally
-     instead of the vague any-team line. The margin gate keeps natural variety. */
-  var edge=Math.abs(hp-ap);
-  var homeFav=hp>=ap;
-  var clear = edge>=0.15 || (homeFav && hp>=0.50) || (!homeFav && ap>=0.48);
-  if(!clear) return;
-  if(homeFav){ f.tip="1X"; if(f.dc1x!=null) f.tip_p=f.dc1x; }
-  else { f.tip="X2"; if(f.dcx2!=null) f.tip_p=f.dcx2; }
+  var t=f.tip||"";
+  if(t.indexOf("12")===0){
+    var hp=f.home_p||0, ap=f.away_p||0, edge=Math.abs(hp-ap), homeFav=hp>=ap;
+    var clear = edge>=0.15 || (homeFav && hp>=0.50) || (!homeFav && ap>=0.48);
+    if(clear) f.tip = homeFav ? "1X" : "X2";
+  }
+  /* A double-chance headline must show the same % as its row in the expanded
+     card (dc1x/dcx2). Otherwise the uncertainty-shrunk headline (e.g. 69%) and
+     the raw market row (52%+26% = 78%) disagree for the identical bet. */
+  if((f.tip||"").indexOf("1X")===0 && f.dc1x!=null) f.tip_p=f.dc1x;
+  else if((f.tip||"").indexOf("X2")===0 && f.dcx2!=null) f.tip_p=f.dcx2;
 }
 function blendFixture(f){
   var o=f.sportyOdds; if(!o) return; var B=0.30;
@@ -2301,7 +2300,7 @@ function matchHTML(f){
         "<span class='ls'>See "+countMarkets(f)+" more predictions</span>"+
         "<span class='cv'>&rsaquo;</span></span>"+
     "</button>"+
-    (tipCode(f)?"<button class='m-add' data-add='"+fid(f)+"' data-code='"+tipCode(f)+"' data-label=\""+esc(plainTip(f))+"\" data-p='"+f.tip_p.toFixed(3)+"' type='button'><span class='ma-ic'>+</span> Add to slip</button>":"")+
+    (tipCode(f)?"<button class='m-add' data-add='"+fid(f)+"' data-code='"+tipCode(f)+"' data-label=\""+esc(plainTip(f))+"\" data-p='"+f.tip_p.toFixed(3)+"' type='button'><span class='ma-ic'>"+PLUS+"</span> Add to slip</button>":"")+
   "</article>";
 }
 
@@ -2460,7 +2459,7 @@ function render(){
     b.addEventListener("click",function(){openSheet(b.dataset.fx);});});
   document.querySelectorAll(".m-add").forEach(function(b){
     var on=myslipHas(b.dataset.add,b.dataset.code); b.classList.toggle("on",on);
-    var _ic=b.querySelector(".ma-ic"); if(_ic)_ic.innerHTML=on?CHK:"+";
+    var _ic=b.querySelector(".ma-ic"); if(_ic)_ic.innerHTML=on?CHK:PLUS;
     b.lastChild.textContent=on?" Added":" Add to slip";
     b.addEventListener("click",function(e){e.stopPropagation();
       if(!b.dataset.code) return;
@@ -3416,7 +3415,7 @@ function toggleMy(id,code,label,p,srcEl){
   saveMy(); renderFab();
   document.querySelectorAll("[data-add='"+id+"'][data-code='"+code+"']").forEach(function(b){
     var on=myslipHas(id,code); b.classList.toggle("on",on);
-    if(b.classList.contains("m-add")){var ic=b.querySelector(".ma-ic"); if(ic)ic.innerHTML=on?CHK:"+"; if(b.lastChild)b.lastChild.textContent=on?" Added":" Add to slip";}
+    if(b.classList.contains("m-add")){var ic=b.querySelector(".ma-ic"); if(ic)ic.innerHTML=on?CHK:PLUS; if(b.lastChild)b.lastChild.textContent=on?" Added":" Add to slip";}
     else b.textContent=on?"\u2713":"+";});
   if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
 }
@@ -3850,8 +3849,7 @@ setTimeout(hideLoader,8000);
       var q=document.getElementById('q');if(q){e.preventDefault();q.focus();}}
   });
   ['bookResult','myBookResult','sotdResult'].forEach(function(id){var el=document.getElementById(id);if(!el)return;
-    new MutationObserver(function(){if(el.querySelector('.code-card'))window.swToast('Booking code ready','ok');
-      else if(el.querySelector('.code-err'))window.swToast("Couldn't get a code",'err');}).observe(el,{childList:true});});
+    new MutationObserver(function(){if(el.querySelector('.code-err'))window.swToast("Couldn't get a code",'err');}).observe(el,{childList:true});});
   var AC=null,soundOn=false;try{soundOn=localStorage.getItem('sw.sound')==='1';}catch(e){}
   var goalAudio=null;
   function beep(){try{if(!goalAudio){goalAudio=new Audio('/goal.mp3');goalAudio.volume=0.7;}goalAudio.currentTime=0;goalAudio.play().catch(function(){});}catch(e){}}
@@ -3916,9 +3914,13 @@ setTimeout(hideLoader,8000);
   var _iOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
   if(ib&&_iOS&&!_standalone) ib.hidden=false;
   if(ib) ib.addEventListener('click',function(){
-    if(_dip){_dip.prompt();_dip=null;ib.hidden=true;}
-    else if(_iOS) window.swToast&&window.swToast('Tap Share, then "Add to Home Screen"','ok','ins');
-    else window.swToast&&window.swToast('Use your browser menu \u2192 Install app','ok','ins');
+    if(_dip){ _dip.prompt(); _dip.userChoice&&_dip.userChoice.then(function(c){
+      if(c&&c.outcome==='accepted'){ib.hidden=true;} _dip=null; }); return; }
+    if(_iOS){ window.swToast&&window.swToast('Tap the Share icon, then "Add to Home Screen"','ok','ins'); return; }
+    var isAndroid=/android/i.test(navigator.userAgent);
+    window.swToast&&window.swToast(isAndroid
+      ? 'Tap the 3-dot menu, then "Install app" / "Add to Home screen"'
+      : 'In Chrome or Edge, click the install icon in the address bar','ok','ins');
   });
 })();
 load();
