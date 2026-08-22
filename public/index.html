@@ -1653,6 +1653,106 @@ footer{margin-top:26px;padding-top:18px;
 /* A drag has to own the gesture or the page scrolls underneath the finger
    instead of the button following it. */
 .myfab,.wspfab{touch-action:none}
+
+/* ==========================================================================
+   INSANE WEB UNIQUENESS — Desktop 3D Atmosphere
+   Only activates on desktop (min-width: 1060px) with hover capability
+   and no reduced-motion preference.
+   ========================================================================== */
+@media (min-width: 1060px) and (hover: hover) and (prefers-reduced-motion: no-preference) {
+  /* Global 3D context */
+  .wrap { perspective: 1200px; transform-style: preserve-3d; }
+  .intro { transform-style: preserve-3d; }
+  #builder { transform-style: preserve-3d; }
+  #live { transform-style: preserve-3d; }
+
+  /* Parallax depth layers — apply data-parallax="0.5|1|1.5|2" to elements */
+  .parallax-deep   { transform: translateZ(-150px) scale(1.15); }
+  .parallax-mid    { transform: translateZ(-50px)  scale(1.05); }
+  .parallax-shallow{ transform: translateZ(20px); }
+  .parallax-forward{ transform: translateZ(60px); }
+  .parallax-front  { transform: translateZ(100px); }
+
+  /* Entrance choreography */
+  @keyframes stageIn {
+    from { opacity: 0; transform: translateZ(-100px) translateY(30px); }
+    to   { opacity: 1; transform: translateZ(0) translateY(0); }
+  }
+  .stage-in { animation: stageIn 0.7s cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+  .stage-in-1 { animation-delay: 0.05s; }
+  .stage-in-2 { animation-delay: 0.10s; }
+  .stage-in-3 { animation-delay: 0.15s; }
+  .stage-in-4 { animation-delay: 0.20s; }
+  .stage-in-5 { animation-delay: 0.25s; }
+
+  /* Intro / Hero depth layers */
+  .intro .hero-logo { transform: translateZ(80px); }
+  .intro h1 { transform: translateZ(40px); }
+  .intro p  { transform: translateZ(20px); }
+  .potd { transform: translateZ(0); }
+
+  /* Build page — Control Room depth */
+  .bld-shared { transform: translateZ(0); }
+  .bld-panel { transform: translateZ(30px); }
+  .bld-panel .risk-wrap { transform: translateZ(10px); }
+  .risk { transform: translateZ(20px); }
+  .risk:active, .risk:focus { transform: translateZ(40px); }
+  .mkt-palette { transform: translateZ(10px); }
+  .mkt-chip { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+  .mkt-chip:hover { transform: translateZ(35px) scale(1.02); }
+  .mkt-chip.unlocking { animation: mktUnlock 0.35s ease; }
+  @keyframes mktUnlock {
+    0%   { transform: translateZ(10px) scale(0.92); opacity: 0; }
+    60%  { transform: translateZ(40px) scale(1.04); }
+    100% { transform: translateZ(10px) scale(1); opacity: 1; }
+  }
+  #slip { transform: translateZ(-20px); }
+  .sp-row { animation: stageIn 0.4s cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+  .bld-foot { transform: translateZ(0); }
+  .bld-note { transform: translateZ(-10px); }
+
+  /* Live page — Pitch atmosphere */
+  #live { background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(47,212,138,0.03) 0%, transparent 60%),
+    var(--bg); }
+  .ls-card, .lv { transform: translateZ(0); transition: transform 0.2s cubic-bezier(0.25, 0.9, 0.3, 1), box-shadow 0.2s; }
+  .ls-card:hover, .lv:hover {
+    transform: translateZ(50px) rotateX(-3deg) scale(1.01);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px var(--green);
+    z-index: 10;
+  }
+  .ls-card:active, .lv:active { transform: translateZ(30px) rotateX(-1deg) scale(0.99); }
+  .live-bell { transform: translateZ(20px); }
+  .live-refresh { transform: translateZ(20px); }
+  .btab-dot { transform: translateZ(15px); animation: pulseRing 1.5s ease-in-out infinite; }
+  @keyframes pulseRing {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(230,57,70,0.6); }
+    50% { box-shadow: 0 0 0 8px rgba(230,57,70,0); }
+  }
+
+  /* FAB depth */
+  .myfab { transform: translateZ(60px); transition: transform 0.2s; }
+  .myfab:hover { transform: translateZ(80px) scale(1.05); }
+  .myfab:active { transform: translateZ(40px) scale(0.98); }
+
+  /* Sheet depth when open */
+  .sheet { transform: translateZ(100px); }
+  .sheet-head { transform: translateZ(20px); }
+  .sheet-body { transform: translateZ(10px); }
+
+  /* Reduced motion fallback — disable all 3D transforms */
+}
+@media (prefers-reduced-motion: reduce) {
+  .wrap, .intro, #builder, #live { perspective: none; transform-style: flat; }
+  .parallax-deep, .parallax-mid, .parallax-shallow, .parallax-forward, .parallax-front,
+  .intro .hero-logo, .intro h1, .intro p, .potd,
+  .bld-shared, .bld-panel, .bld-panel .risk-wrap, .risk, .mkt-palette, #slip, .bld-foot, .bld-note,
+  .ls-card, .lv, .live-bell, .live-refresh, .btab-dot, .myfab, .sheet, .sheet-head, .sheet-body {
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -1689,8 +1789,9 @@ footer{margin-top:26px;padding-top:18px;
 <div class="wrap">
 
   <section class="intro">
-    <h1>Who's winning <span>today?</span></h1>
-    <div class="trust">
+    <img class="hero-logo parallax-front stage-in stage-in-1" src="/wiz-logo.png" alt="" aria-hidden="true" data-parallax="1.5">
+    <h1 class="parallax-forward stage-in stage-in-2" data-parallax="1.2">Who's winning <span>today?</span></h1>
+    <div class="trust parallax-shallow stage-in stage-in-3" data-parallax="0.8">
       <span class="trust-i"><b id="when2">-</b> last updated</span>
       <span class="trust-i" id="streak" hidden></span>
       <span class="trust-i recap" id="recap" hidden></span>
@@ -1770,53 +1871,75 @@ footer{margin-top:26px;padding-top:18px;
   <section id="builder">
     <div class="bld-head">
       <h1>Build a slip</h1>
-      <p>Set how much risk you want. We pick the games to match, estimate the odds,
-        and turn it into a SportyBet booking code you can load in one tap.</p>
+      <div class="bld-mode" role="tablist" aria-label="Build mode">
+        <button class="bld-mode-btn on" role="tab" data-mode="slider" aria-selected="true">Slider</button>
+        <button class="bld-mode-btn" role="tab" data-mode="wizard" aria-selected="false">Wizard</button>
+      </div>
     </div>
-    <div class="bld-panel">
+
+    <!-- SHARED CONTROLS (always visible) -->
+    <div class="bld-shared stage-in stage-in-1" id="bldShared" data-parallax="0.8">
       <!-- Ticket window. "Today only" keeps every leg inside today so the slip
            settles the same evening; "All upcoming" keeps running for as long as
            there are fixtures on the board. -->
-      <div class="scope-seg" id="scopeSeg" role="group" aria-label="Fixture window">
-        <button class="scope-opt" type="button" data-scope="day">Today only</button>
-        <button class="scope-opt" type="button" data-scope="all">All upcoming</button>
+      <div class="scope-seg stage-in stage-in-2" id="scopeSeg" role="group" aria-label="Fixture window">
+        <button class="scope-opt stage-in stage-in-3" type="button" data-scope="day">Today only</button>
+        <button class="scope-opt stage-in stage-in-3" type="button" data-scope="all">All upcoming</button>
       </div>
-      <div class="risk-top">
-        <span class="risk-name" id="riskName">Balanced</span>
+      <div class="wsp-lbl stage-in stage-in-2">Leagues</div>
+      <div class="wsp-chips stage-in stage-in-3" id="bldLeagues">
+        <button class="wsp-chip stage-in stage-in-4" type="button" data-btp="false">All leagues</button>
+        <button class="wsp-chip stage-in stage-in-4" type="button" data-btp="true">Top flight only</button>
+      </div>
+      <div class="wsp-lbl stage-in stage-in-2">Include markets</div>
+      <div class="wsp-chips mkt-palette stage-in stage-in-3" id="bldMk"></div>
+    </div>
+
+    <!-- SLIDER MODE PANEL -->
+    <div class="bld-panel slider-panel stage-in stage-in-2" id="sliderPanel" data-parallax="1">
+      <div class="risk-top stage-in stage-in-3">
+        <span class="risk-name" id="riskName">—</span>
         <span class="risk-sub" id="riskSub"></span>
       </div>
-      <div class="risk-wrap"><input type="range" id="risk" class="risk" min="0" max="100" value="45"
-        aria-label="Risk level"><span class="risk-bubble" id="riskBubble">Balanced</span></div>
-      <div class="risk-ticks"><span>Safe</span><span>Balanced</span><span>Risky</span></div>
-      <div class="wsp-lbl">Leagues</div>
-      <div class="wsp-chips" id="bldLeagues">
-        <button class="wsp-chip" type="button" data-btp="false">All leagues</button>
-        <button class="wsp-chip" type="button" data-btp="true">Top flight only</button>
-      </div>
-      <div class="wsp-lbl">Include markets</div>
-      <div class="wsp-chips mkt-palette" id="bldMk"></div>
+      <div class="risk-wrap stage-in stage-in-4"><input type="range" id="risk" class="risk" min="0" max="100" value="45"
+        aria-label="Risk level"><span class="risk-bubble" id="riskBubble">—</span></div>
+      <div class="risk-ticks stage-in stage-in-5"><span>Safe</span><span>Balanced</span><span>Risky</span></div>
     </div>
-    <div class="bld-stats" id="bldStats"></div>
-    <div id="slip"></div>
-    <div class="bld-foot" id="bldFoot">
+
+    <!-- WIZARD MODE PANEL -->
+    <div class="bld-panel wizard-panel stage-in stage-in-2" id="wizardPanel" hidden data-parallax="1">
+      <div class="wsp-lbl stage-in stage-in-3">Target payout</div>
+      <div class="wsp-chips stage-in stage-in-4" id="wspOddsChips"></div>
+      <div class="wsp-lbl stage-in stage-in-4">Slip style</div>
+      <div class="wsp-chips stage-in stage-in-5" id="wspStyleChips"></div>
+      <div class="wsp-acts stage-in stage-in-5">
+        <button class="clear-btn wsp-shuffle" id="wspShuffle" type="button">↻ Shuffle</button>
+        <button class="book-btn wsp-go" id="wspGo" type="button">✨ Conjure</button>
+      </div>
+    </div>
+
+    <!-- UNIFIED OUTPUT -->
+    <div class="bld-stats stage-in stage-in-3" id="bldStats" data-parallax="0.5"></div>
+    <div id="slip" data-parallax="0.3"></div>
+    <div class="bld-foot stage-in stage-in-4" id="bldFoot" data-parallax="0.2">
       <button class="clear-btn" id="shuffleBtn" type="button">↻ Shuffle</button>
       <button class="clear-btn" id="clearBtn" type="button">Clear</button>
       <button class="book-btn" id="bookBtn" type="button">Get code</button>
     </div>
-    <div class="bld-note" id="bldNote"></div>
+    <div class="bld-note stage-in stage-in-5" id="bldNote" data-parallax="0.1"></div>
     <div class="bld-approx">*Est. odds are a rough model guide - real SportyBet odds are usually lower.</div>
     <div id="bookResult"></div>
   </section>
 
   <section id="live">
-    <div class="live-head">
-      <h1>Live scores</h1>
-      <button class="live-bell" id="liveAlert" type="button" aria-pressed="false" aria-label="Goal alerts" title="Goal alerts"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg></button>
-      <button class="live-refresh" id="liveRefresh" type="button">Refresh</button>
+    <div class="live-head stage-in stage-in-1">
+      <h1 class="stage-in stage-in-2">Live scores</h1>
+      <button class="live-bell stage-in stage-in-3" id="liveAlert" type="button" aria-pressed="false" aria-label="Goal alerts" title="Goal alerts" data-parallax="0.8"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg></button>
+      <button class="live-refresh stage-in stage-in-3" id="liveRefresh" type="button" data-parallax="0.8">Refresh</button>
     </div>
-    <p class="live-sub" id="liveSub">Football matches in play right now, updating automatically.</p>
-    <div class="lv-selwrap" id="liveSelWrap" hidden><select id="liveCountrySel" class="lv-sel"></select></div>
-    <div id="liveList"></div>
+    <p class="live-sub stage-in stage-in-2" id="liveSub">Football matches in play right now, updating automatically.</p>
+    <div class="lv-selwrap stage-in stage-in-3" id="liveSelWrap" hidden><select id="liveCountrySel" class="lv-sel"></select></div>
+    <div id="liveList" data-parallax="0.3"></div>
   </section>
 
   <section class="note" id="how">
@@ -1881,12 +2004,6 @@ footer{margin-top:26px;padding-top:18px;
   <div class="sheet-body" id="sheet-body"></div>
 </div>
 
-<button class="wspfab" id="wspFab" type="button" aria-label="Wizard's Special"><img src="/wiz-logo.png" alt=""><span class="wspfab-spark"></span></button>
-<div class="sheet wsp-sheet" id="wspSheet" role="dialog" aria-modal="true">
-  <div class="sheet-grab"><i></i></div>
-  <div class="sheet-head"><b>✨ Wizard's Special</b><button class="sheet-x" id="wspX" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-  <div class="sheet-body" id="wspBody"></div>
-</div>
 <button class="myfab" id="myFab" type="button" hidden><span class="myfab-tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10a1 1 0 0 1 1 1v16l-2.2-1.5L13.6 20 12 18.6 10.4 20 8.2 18.5 6 20V4a1 1 0 0 1 1-1z"/></svg><span class="myfab-c" id="myFabC">0</span></span><span class="lbl">My slip</span></button>
 <nav class="btabs" aria-label="Sections">
   <button class="btab on" id="bt-pred" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg></span>Home</button>
@@ -2568,8 +2685,9 @@ addEventListener("keydown",function(e){
   }});
 
 /* ============================================================ build a slip */
-var BUILD={risk:20,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{dc:true,out:true,goals:true,both:true}};
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{dc:true,out:true,goals:true,both:true},touched:false,mode:"slider"};
 try{var rr=localStorage.getItem("sw.risk"); if(rr!=null) BUILD.risk=+rr;}catch(e){}
+try{var rm=localStorage.getItem("sw.mode"); if(rm==="slider"||rm==="wizard") BUILD.mode=rm;}catch(e){}
 /* Ticket window. "day" holds every leg inside today, so the whole slip settles
    the same evening; "all" runs for as long as there are fixtures published.
    One shared preference, so the slider builder and Wizard's Special can never
@@ -2758,7 +2876,9 @@ function totalOdds(picks){
   return picks.reduce(function(t,c){return t*legOdd(c.f,c.code,c.p);},1);
 }
 function renderBuilder(){
-  var p=riskParams(BUILD.risk);
+  // If risk not set yet (first visit), show empty state without generating picks
+  var firstVisit = BUILD.risk === null;
+  var p = firstVisit ? {tier:1, minConf:0.65, maxGames:18} : riskParams(BUILD.risk);
   // --- Unified Market Palette config ---
   var MKT_CFG=[
     {k:"dc", label:"Double chance", tier:0, sub:"1X, X2, 12"},
@@ -2799,11 +2919,13 @@ function renderBuilder(){
     // Remember tier for unlock animation next render
     window._prevTier=p.tier;
   })();
-  $("risk").value=BUILD.risk;
-  $("riskName").textContent=riskWord(BUILD.risk);
-  var picks=buildPicks();
-  $("riskSub").textContent=picks.length+" game"+(picks.length===1?"":"s")+
-    " \u00b7 "+P0(p.minConf)+"%+ confidence";
+  // Default slider position for first visit (visual only, not "touched")
+  var displayRisk = firstVisit ? 45 : BUILD.risk;
+  $("risk").value=displayRisk;
+  $("riskName").textContent=firstVisit ? "\u2014" : riskWord(BUILD.risk);
+  var picks = firstVisit ? [] : buildPicks();
+  $("riskSub").textContent=firstVisit ? "Move slider to build" : (picks.length+" game"+(picks.length===1?"":"s")+
+    " \u00b7 "+P0(p.minConf)+"%+ confidence");
   // markets chips - now rendered in unified palette above
   // Stats. Total odds reads as the third figure here rather than as its own
   // block down in the footer: the grid was already three columns wide with a
@@ -2821,16 +2943,16 @@ function renderBuilder(){
   // as you drag; the risk word is already named above the slider and on the
   // ticks below it, so repeating it there earned nothing.
   var _rb=$("riskBubble");
-  if(_rb){ _rb.style.left="calc("+BUILD.risk+"% + "+(13-BUILD.risk*0.26)+"px)";
-    _rb.textContent=picks.length
+  if(_rb){ _rb.style.left="calc("+displayRisk+"% + "+(13-displayRisk*0.26)+"px)";
+    _rb.textContent=firstVisit ? "\u2014" : (picks.length
       ? picks.length+" game"+(picks.length===1?"":"s")
-      : "No games"; }
+      : "No games"); }
   // slip rows
   if(!picks.length){
     var dry=(SCOPE==="day")&&!scopeFixtures().length;
     $("slip").innerHTML="<div class='bld-empty'><b>Nothing in your slip</b>"+
       (dry?"No fixtures left today - switch to All upcoming to keep building."
-         :"Move the slider to build a fresh set of games.")+"</div>";
+         : (firstVisit ? "Move the slider to build a fresh set of games." : "No games match \u2014 adjust risk or markets."))+"</div>";
   } else {
     $("slip").innerHTML=picks.map(function(c){
       var f=c.f, cf=conf(c.p);
@@ -3742,34 +3864,34 @@ function wspBuild(){
   var pool=(saMode==="exclude")?ranked(euro,1):ranked(all,saMode==="mix"?0.6:0.85);
   return accumulate(pool);
 }
-function renderWsp(){
-  var b=$("wspBody"); if(!b)return;
-  var odds=[50,100,500,1000,2000,6000],mk=[["doubles","Safe doubles"],["out","Outright wins"],["goals","Goals"],["both","Both score"]];
-  b.innerHTML="<p class='wsp-lead'>One tap conjures a mixed slip - safe bankers stacked with a few bold picks to chase a big return.</p>"+
-    "<div class='wsp-lbl'>Fixture window</div><div class='wsp-chips'>"+
-      [["day","Today only"],["all","All upcoming"]].map(function(sc){
-        return "<button class='wsp-chip"+(SCOPE===sc[0]?" on":"")+"' data-sc='"+sc[0]+"'>"+sc[1]+"</button>";}).join("")+"</div>"+
-    "<div class='wsp-lbl'>Target payout</div><div class='wsp-chips'>"+odds.map(function(o){return "<button class='wsp-chip"+(WSP.odds===o?" on":"")+"' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>"+
-    "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips'>"+
-      [[1.25,"Safer, more games"],[1.4,"Balanced"],[1.7,"Fewer, bigger games"]].map(function(st){
-        return "<button class='wsp-chip"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'>"+st[1]+"</button>";}).join("")+"</div>"+
-    "<div class='wsp-lbl'>Leagues</div><div class='wsp-chips'>"+
-      [[false,"All leagues"],[true,"Top flight only"]].map(function(tp){
-        return "<button class='wsp-chip"+(TOP_ONLY===tp[0]?" on":"")+"' data-tp='"+tp[0]+"'>"+tp[1]+"</button>";}).join("")+"</div>"+
-    "<div class='wsp-lbl'>Include markets</div><div class='wsp-chips'>"+mk.map(function(m){return "<button class='wsp-chip"+(WSP.mk[m[0]]?" on":"")+"' data-m='"+m[0]+"'>"+m[1]+"</button>";}).join("")+"</div>"+
-    "<div class='wsp-acts'>"+
-      "<button class='clear-btn wsp-shuffle' id='wspShuffle' type='button'>\u21bb Shuffle</button>"+
-      "<button class='book-btn wsp-go' id='wspGo' type='button'>\u2728 Conjure my slip</button>"+
+// --- Wizard panel rendering (replaces renderWsp) ---
+function renderWizardPanel(){
+  var odds=[50,100,500,1000,2000,6000];
+  var styles=[[1.25,"Safer, more games"],[1.4,"Balanced"],[1.7,"Fewer, bigger games"]];
+  var mk=[["doubles","Safe doubles"],["out","Outright wins"],["goals","Goals"],["both","Both score"]];
+  var html="";
+  html += "<div class='wsp-lbl'>Target payout</div><div class='wsp-chips' id='wspOddsChips'>"+
+    odds.map(function(o){return "<button class='wsp-chip"+(WSP.odds===o?" on":"")+"' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>";
+  html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips' id='wspStyleChips'>"+
+    styles.map(function(st){return "<button class='wsp-chip"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'>"+st[1]+"</button>";}).join("")+"</div>";
+  html += "<div class='wsp-acts'>"+
+    "<button class='clear-btn wsp-shuffle' id='wspShuffle' type='button'>\u21bb Shuffle</button>"+
+    "<button class='book-btn wsp-go' id='wspGo' type='button'>\u2728 Conjure</button>"+
     "</div>";
-  b.querySelectorAll("[data-sc]").forEach(function(c){c.addEventListener("click",function(){
-    if(!setScope(c.getAttribute("data-sc"))) return;
-    renderWsp(); if(BUILD.touched) renderBuilder();});});
-  b.querySelectorAll("[data-o]").forEach(function(c){c.addEventListener("click",function(){WSP.odds=+c.dataset.o;renderWsp();});});
-  b.querySelectorAll("[data-lo]").forEach(function(c){c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;renderWsp();});});
-  b.querySelectorAll("[data-tp]").forEach(function(c){c.addEventListener("click",function(){setTopOnly(c.dataset.tp==="true");renderWsp();if(BUILD.touched)renderBuilder();});});
-  b.querySelectorAll("[data-m]").forEach(function(c){c.addEventListener("click",function(){var k=c.dataset.m;var on=Object.keys(WSP.mk).filter(function(x){return WSP.mk[x];});if(WSP.mk[k]&&on.length===1)return;WSP.mk[k]=!WSP.mk[k];renderWsp();});});
+  $("wizardPanel").innerHTML=html;
+  // Event listeners
+  $("wspOddsChips").querySelectorAll("[data-o]").forEach(function(c){
+    c.addEventListener("click",function(){WSP.odds=+c.dataset.o;renderWizardPanel();});
+  });
+  $("wspStyleChips").querySelectorAll("[data-lo]").forEach(function(c){
+    c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;renderWizardPanel();});
+  });
+  $("wspShuffle").addEventListener("click",function(){
+    WSP.seed=Math.floor(Math.random()*1e6);WSP.shuffles=(WSP.shuffles||0)+1;
+    renderWizardPanel();
+    window.swToast&&window.swToast("Reshuffled","ok","shuffle");
+  });
   $("wspGo").addEventListener("click",function(){wspConjure(false);});
-  $("wspShuffle").addEventListener("click",function(){WSP.seed=Math.floor(Math.random()*1e6);WSP.shuffles=(WSP.shuffles||0)+1;renderWsp();});
 }
 function wspConjure(shuffle){
   if(shuffle){WSP.seed=Math.floor(Math.random()*1e6);WSP.shuffles=(WSP.shuffles||0)+1;}
@@ -3778,19 +3900,196 @@ function wspConjure(shuffle){
   MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
     .concat(r.picks.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true};}));
   var seen={};MYSLIP=MYSLIP.filter(function(x){if(seen[x.id])return false;seen[x.id]=1;return true;});
-  saveMy();renderFab();closeWsp();openMySheet();
+  saveMy();renderFab();openMySheet();
   window.__wizChime&&window.__wizChime();
   window.swToast&&window.swToast((shuffle?"Reshuffled - ":"Conjured ")+r.picks.length+" games \u00b7 ~\u00d7"+r.odds.toFixed(0),"ok");
 }
-function openWsp(){renderWsp();$("scrim").classList.add("on");$("wspSheet").classList.add("on");pushOverlay();}
-function closeWsp(){$("scrim").classList.remove("on");$("wspSheet").classList.remove("on");}
-/* the id here was "wsp", which does not exist - reading .classList off the
-   resulting null threw, so the tap never reached openWsp at all */
-makeFab("wspFab","sw.wsppos",
-  function(){return $("wspSheet").classList.contains("on");},
-  function(){window.__wizChime&&window.__wizChime(true);openWsp();},closeWsp);
-$("wspX").addEventListener("click",closeWsp);
-$("scrim").addEventListener("click",closeWsp);
+
+// --- Mode toggle + renderBuilder dispatcher ---
+function renderBuilder(){
+  // Sync shared controls state from BUILD/WSP
+  renderShared();
+  // Render mode-specific panel
+  if(BUILD.mode==="slider") renderSliderPanel();
+  else renderWizardPanel();
+  // Render unified output (stats, slip, footer)
+  renderBuilderOutput();
+}
+function renderShared(){
+  var p = BUILD.risk===null ? {tier:1, minConf:0.65, maxGames:18} : riskParams(BUILD.risk);
+  var MKT_CFG=[
+    {k:"dc", label:"Double chance", tier:0, sub:"1X, X2, 12"},
+    {k:"out", label:"Outright wins", tier:1, sub:"1, 2"},
+    {k:"goals", label:"Goals", tier:0, sub:"Over 1.5", tierMax:2, subMax:"Over 2.5"},
+    {k:"both", label:"Both score", tier:2, sub:"GG"}
+  ];
+  (function(){
+    var lg=$("bldLeagues"),mkw=$("bldMk"); if(!lg||!mkw) return;
+    lg.querySelectorAll("[data-btp]").forEach(function(c){c.classList.toggle("on",(c.dataset.btp==="true")===!!TOP_ONLY);});
+    var html=MKT_CFG.map(function(m){
+      var enabled=BUILD.mk[m.k]!==false;
+      var locked=p.tier < m.tier;
+      var tierLabel=["Safe","Balanced","Risky"][m.tier];
+      var subLabel=m.sub;
+      if(m.tierMax!==undefined && p.tier >= m.tierMax){
+        tierLabel=["Safe","Balanced","Risky"][m.tierMax];
+        subLabel=m.subMax;
+      }
+      var unlockClass=(window._prevTier!==undefined && p.tier > window._prevTier && p.tier >= m.tier && window._prevTier < m.tier) ? " unlocking" : "";
+      return "<button class='mkt-chip"+(enabled?" on":"")+(locked?" locked":"")+unlockClass+"' data-m='"+m.k+"' "+(locked?"disabled":"")+" type='button'>"+
+        "<span>"+m.label+"</span>"+
+        "<span class='tier-badge' title='Unlocks at "+tierLabel+" tier'>T"+(m.tier+1)+"</span>"+
+        "</button>";
+    }).join("");
+    mkw.innerHTML=html;
+    mkw.querySelectorAll("[data-m]").forEach(function(c){
+      c.addEventListener("click",function(){
+        var k=c.dataset.m;
+        var on=Object.keys(BUILD.mk).filter(function(x){return BUILD.mk[x];});
+        if(BUILD.mk[k]&&on.length===1) return;
+        BUILD.mk[k]=!BUILD.mk[k];
+        // Sync to WSP
+        var wspKey = k==="dc"?"doubles":k==="out"?"out":k==="goals"?"goals":"both";
+        WSP.mk[wspKey]=BUILD.mk[k];
+        renderBuilder();
+      });
+    });
+    window._prevTier=p.tier;
+  })();
+  // Scope segment
+  paintScope();
+  // Leagues chips
+  var lg=$("bldLeagues");
+  if(lg){
+    lg.querySelectorAll("[data-btp]").forEach(function(c){
+      c.classList.toggle("on",(c.dataset.btp==="true")===!!TOP_ONLY);
+    });
+    if(!lg._wired){
+      lg._wired=1;
+      lg.querySelectorAll("[data-btp]").forEach(function(c){
+        c.addEventListener("click",function(){
+          setTopOnly(c.dataset.btp==="true");
+          renderBuilder();
+        });
+      });
+    }
+  }
+}
+function renderSliderPanel(){
+  var firstVisit = BUILD.risk === null;
+  var p = firstVisit ? {tier:1, minConf:0.65, maxGames:18} : riskParams(BUILD.risk);
+  var displayRisk = firstVisit ? 45 : BUILD.risk;
+  $("risk").value=displayRisk;
+  $("riskName").textContent=firstVisit ? "\u2014" : riskWord(BUILD.risk);
+  // Slider panel visibility
+  $("sliderPanel").hidden=false;
+  $("wizardPanel").hidden=true;
+  // Update mode buttons
+  document.querySelectorAll(".bld-mode-btn").forEach(function(b){
+    b.classList.toggle("on",b.dataset.mode===BUILD.mode);
+    b.setAttribute("aria-selected",b.dataset.mode===BUILD.mode?"true":"false");
+  });
+}
+function renderWizardPanel(){
+  var odds=[50,100,500,1000,2000,6000];
+  var styles=[[1.25,"Safer, more games"],[1.4,"Balanced"],[1.7,"Fewer, bigger games"]];
+  var html="";
+  html += "<div class='wsp-lbl'>Target payout</div><div class='wsp-chips' id='wspOddsChips'>"+
+    odds.map(function(o){return "<button class='wsp-chip"+(WSP.odds===o?" on":"")+"' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>";
+  html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips' id='wspStyleChips'>"+
+    styles.map(function(st){return "<button class='wsp-chip"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'>"+st[1]+"</button>";}).join("")+"</div>";
+  html += "<div class='wsp-acts'>"+
+    "<button class='clear-btn wsp-shuffle' id='wspShuffle' type='button'>\u21bb Shuffle</button>"+
+    "<button class='book-btn wsp-go' id='wspGo' type='button'>\u2728 Conjure</button>"+
+    "</div>";
+  $("wizardPanel").innerHTML=html;
+  // Panel visibility
+  $("sliderPanel").hidden=true;
+  $("wizardPanel").hidden=false;
+  // Update mode buttons
+  document.querySelectorAll(".bld-mode-btn").forEach(function(b){
+    b.classList.toggle("on",b.dataset.mode===BUILD.mode);
+    b.setAttribute("aria-selected",b.dataset.mode===BUILD.mode?"true":"false");
+  });
+  // Event listeners
+  $("wspOddsChips").querySelectorAll("[data-o]").forEach(function(c){
+    c.addEventListener("click",function(){WSP.odds=+c.dataset.o;renderWizardPanel();});
+  });
+  $("wspStyleChips").querySelectorAll("[data-lo]").forEach(function(c){
+    c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;renderWizardPanel();});
+  });
+  $("wspShuffle").addEventListener("click",function(){
+    WSP.seed=Math.floor(Math.random()*1e6);WSP.shuffles=(WSP.shuffles||0)+1;
+    renderWizardPanel();
+    window.swToast&&window.swToast("Reshuffled","ok","shuffle");
+  });
+  $("wspGo").addEventListener("click",function(){wspConjure(false);});
+}
+function renderBuilderOutput(){
+  var firstVisit = BUILD.risk === null;
+  var p = firstVisit ? {tier:1, minConf:0.65, maxGames:18} : riskParams(BUILD.risk);
+  var displayRisk = firstVisit ? 45 : BUILD.risk;
+  var picks = firstVisit ? [] : buildPicks();
+  // Risk bubble
+  var _rb=$("riskBubble");
+  if(_rb){ _rb.style.left="calc("+displayRisk+"% + "+(13-displayRisk*0.26)+"px)";
+    _rb.textContent=firstVisit ? "\u2014" : (picks.length
+      ? picks.length+" game"+(picks.length===1?"":"s")
+      : "No games"); }
+  // Risk sub text
+  $("riskSub").textContent=firstVisit ? "Move slider to build" : (picks.length+" game"+(picks.length===1?"":"s")+
+    " \u00b7 "+P0(p.minConf)+"%+ confidence");
+  // Stats
+  var odds=totalOdds(picks);
+  var real=oddsAreReal(picks), pre=real?"\u00d7":"~\u00d7";
+  var avg=picks.length?picks.reduce(function(t,c){return t+c.p;},0)/picks.length:0;
+  $("bldStats").innerHTML=
+    "<div class='stat'><b>"+picks.length+"</b><i>Games</i></div>"+
+    "<div class='stat'><b>"+(picks.length?P0(avg)+"%":"-")+"</b><i>Avg confidence</i></div>"+
+    "<div class='stat odds'><b id='totOdds'>"+(picks.length?pre+odds.toFixed(2):"-")+"</b>"+
+      "<i>Total odds"+(picks.length&&!real?" (est.)":"")+"</i></div>";
+  // Slip rows
+  if(!picks.length){
+    var dry=(SCOPE==="day")&&!scopeFixtures().length;
+    $("slip").innerHTML="<div class='bld-empty'><b>Nothing in your slip</b>"+
+      (dry?"No fixtures left today - switch to All upcoming to keep building."
+         : (firstVisit ? "Move the slider to build a fresh set of games." : "No games match \u2014 adjust risk or markets."))+"</div>";
+  } else {
+    $("slip").innerHTML=picks.map(function(c){
+      var f=c.f, cf=conf(c.p);
+      return "<div class='sp-row conf-"+cf+"'>"+
+        "<div class='sp-main'><div class='sp-teams'>"+esc(f.home)+" v "+esc(f.away)+
+          (c.eventId?"":"<span class='sp-noid' title='Not on SportyBet yet - can&apos;t auto-book'>no ID</span>")+"</div>"+
+          "<div class='sp-meta'>"+compOf(f.league)+" \u00b7 "+dayName(dayOff(f.date))+" "+kickTime(f)+"</div></div>"+
+        "<div class='sp-pick'><b>"+mLabel(f,c.code)+"</b><i>"+P0(c.p)+"%</i></div>"+
+        "<span class='sp-odd'>"+legOdd(c.f,c.code,c.p).toFixed(2)+"</span>"+
+        "<button class='sp-x' data-rm='"+c.id+"' aria-label='Remove'>"+XSVG+"</button>"+
+      "</div>";
+    }).join("");
+    $("slip").querySelectorAll("[data-rm]").forEach(function(b){
+      b.addEventListener("click",function(){BUILD.removed[b.dataset.rm]=1;renderBuilder();});});
+  }
+  // Sync to MYSLIP (only after user engages slider)
+  if(BUILD.touched){
+    MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
+      .concat(picks.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true};}));
+    var _seen={}; MYSLIP=MYSLIP.filter(function(x){if(_seen[x.id])return false;_seen[x.id]=1;return true;});
+    saveMy(); renderFab();
+  }
+  var bookable=picks.filter(function(c){return c.eventId;}).length;
+  var btn=$("bookBtn");
+  btn.disabled=BUILD.booking||!bookable;
+  btn.textContent=BUILD.booking?"Booking\u2026":"Get code";
+  // Hide footer actions when slip is empty
+  var foot=$("bldFoot");
+  if(foot) foot.style.display = picks.length ? "flex" : "none";
+  var note=$("bldNote");
+  if(!picks.length) note.textContent="";
+  else if(!bookable) note.textContent="These fixtures have no SportyBet event ID yet, so they can't be booked automatically.";
+  else if(bookable<picks.length) note.textContent=bookable+" of "+picks.length+" games are on SportyBet right now - you can book those and skip the rest.";
+  else note.textContent="Booking "+bookable+" selection"+(bookable===1?"":"s")+" to SportyBet.";
+}
+
 renderFab();
 $("risk").addEventListener("input",function(){
   BUILD.risk=+this.value; BUILD.touched=true;
@@ -3807,6 +4106,16 @@ paintScope();
     });
   });
 })();
+// Mode toggle
+document.querySelectorAll(".bld-mode-btn").forEach(function(btn){
+  btn.addEventListener("click",function(){
+    var mode=btn.dataset.mode;
+    if(mode===BUILD.mode) return;
+    BUILD.mode=mode;
+    try{localStorage.setItem("sw.mode",mode);}catch(e){}
+    renderBuilder();
+  });
+});
 $("bookBtn").addEventListener("click",bookSlip);
 $("clearBtn").addEventListener("click",clearSlip);
 $("shuffleBtn").addEventListener("click",function(){BUILD.touched=true;BUILD.seed=Math.floor(Math.random()*1e6);BUILD.shuffles=(BUILD.shuffles||0)+1;BUILD.removed={};$("bookResult").innerHTML="";renderBuilder();window.swToast&&window.swToast("Slip reshuffled","ok","shuffle");});
@@ -4040,7 +4349,60 @@ setTimeout(hideLoader,8000);
       ? 'Tap the 3-dot menu, then "Install app" / "Add to Home screen"'
       : 'In Chrome or Edge, click the install icon in the address bar','ok','ins');
   });
+});
+
+/* ==========================================================================
+   Desktop Parallax Controller — Mouse-following 3D depth
+   Only runs on desktop (min-width: 1060px) with hover and no reduced-motion.
+   ========================================================================== */
+(function(){
+  var mq = window.matchMedia('(min-width: 1060px) and (hover: hover) and (prefers-reduced-motion: no-preference)');
+  if(!mq.matches) return;
+
+  var raf = 0;
+  var cx = window.innerWidth / 2;
+  var cy = window.innerHeight / 2;
+
+  function onMove(e){
+    cx = window.innerWidth / 2;
+    cy = window.innerHeight / 2;
+    var rx = (e.clientY - cy) / cy * 6;  // ±6° pitch
+    var ry = (e.clientX - cx) / cx * -6; // ±6° yaw
+    if(raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(function(){
+      document.querySelectorAll('[data-parallax]').forEach(function(el){
+        var depth = parseFloat(el.dataset.parallax) || 1;
+        el.style.transform = 'rotateX(' + (rx * depth) + 'deg) rotateY(' + (ry * depth) + 'deg)';
+      });
+    });
+  }
+
+  document.addEventListener('mousemove', onMove, {passive: true});
+
+  // Handle resize
+  window.addEventListener('resize', function(){
+    cx = window.innerWidth / 2;
+    cy = window.innerHeight / 2;
+  });
+
+  // Listen for media query changes (e.g., user toggles reduced motion)
+  mq.addEventListener ? mq.addEventListener('change', function(e){
+    if(!e.matches) {
+      document.removeEventListener('mousemove', onMove);
+      document.querySelectorAll('[data-parallax]').forEach(function(el){
+        el.style.transform = '';
+      });
+    }
+  }) : mq.addListener && mq.addListener(function(e){
+    if(!e.matches) {
+      document.removeEventEventListener('mousemove', onMove);
+      document.querySelectorAll('[data-parallax]').forEach(function(el){
+        el.style.transform = '';
+      });
+    }
+  });
 })();
+
 load();
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
