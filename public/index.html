@@ -1874,6 +1874,7 @@ const $=function(id){return document.getElementById(id);};
 /* the same drawn cross the static close buttons use - see .sheet-x in the css */
 var XSVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 const P0=function(x){return Math.round(x*100);};
+var CHK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:block"><path d="M5 13l4 4L19 7"/></svg>';
 function conf(p){var pc=Math.round(p*100);return pc>=70?"strong":pc>=55?"lean":"slight";}
 function confLabel(p){var pc=Math.round(p*100);return pc>=70?"Strong":pc>=55?"Likely":"Slight";}
 function verdict(p){var pc=Math.round(p*100);return pc>=70?"Good bet":pc>=55?"Worth a look":"Risky pick";}
@@ -2389,7 +2390,7 @@ function renderResults(){
             "<span class='rr-tm rr-a'>"+esc(r.away)+"</span>"+
           "</div>"+
           "<div class='rr-tip'><span class='rr-t'>"+esc(plainTip(r))+"</span>"+
-            "<span class='rr-badge'>"+(r.hit?"\u2713 Hit":"\u2717 Miss")+"</span></div>"+
+            "<span class='rr-badge'>"+(r.hit?"Hit":"Miss")+"</span></div>"+
         "</div>";}).join("")+"</div></section>";}).join("");
   $("list").innerHTML=html;
 }
@@ -2459,7 +2460,7 @@ function render(){
     b.addEventListener("click",function(){openSheet(b.dataset.fx);});});
   document.querySelectorAll(".m-add").forEach(function(b){
     var on=myslipHas(b.dataset.add,b.dataset.code); b.classList.toggle("on",on);
-    b.querySelector(".ma-ic").textContent=on?"\u2713":"+";
+    var _ic=b.querySelector(".ma-ic"); if(_ic)_ic.innerHTML=on?CHK:"+";
     b.lastChild.textContent=on?" Added":" Add to slip";
     b.addEventListener("click",function(e){e.stopPropagation();
       if(!b.dataset.code) return;
@@ -2845,7 +2846,7 @@ function showCode(code,hostId){
   host.querySelector(".code-x").addEventListener("click",function(){host.innerHTML="";});
   host.querySelector(".code-copy").addEventListener("click",function(){
     if(navigator.clipboard) navigator.clipboard.writeText(code);
-    this.textContent="Copied \u2713"; var s=this;
+    this.textContent="Copied"; var s=this;
     setTimeout(function(){s.textContent="Copy code";},1600);});
   host.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code);});
 }
@@ -3055,7 +3056,7 @@ function wireNotif(){
   var b=$("notifBtn"); if(!b) return;
   function paintBtn(){
     var on=(window.Notification&&Notification.permission==="granted");
-    b.textContent=on?"\u2713 Reminders on":"Turn on reminders";
+    b.textContent=on?"Reminders on":"Turn on reminders";
     b.classList.toggle("on",on);
   }
   paintBtn();
@@ -3415,7 +3416,7 @@ function toggleMy(id,code,label,p,srcEl){
   saveMy(); renderFab();
   document.querySelectorAll("[data-add='"+id+"'][data-code='"+code+"']").forEach(function(b){
     var on=myslipHas(id,code); b.classList.toggle("on",on);
-    if(b.classList.contains("m-add")){var ic=b.querySelector(".ma-ic"); if(ic)ic.textContent=on?"\u2713":"+"; if(b.lastChild)b.lastChild.textContent=on?" Added":" Add to slip";}
+    if(b.classList.contains("m-add")){var ic=b.querySelector(".ma-ic"); if(ic)ic.innerHTML=on?CHK:"+"; if(b.lastChild)b.lastChild.textContent=on?" Added":" Add to slip";}
     else b.textContent=on?"\u2713":"+";});
   if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
 }
@@ -3573,7 +3574,7 @@ makeFab("myFab","sw.fabpos",
 $("myBookBtn").addEventListener("click",bookMy);
 $("myClearBtn").addEventListener("click",clearMy);
 /* ---- Wizard's Special jackpot builder ---- */
-var WSP={odds:500,mk:{doubles:true,out:true,goals:true,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0};
+var WSP={odds:500,legodd:1.35,mk:{doubles:true,out:true,goals:true,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0};
 function wspMarkets(){var m=[];if(WSP.mk.doubles)m=m.concat(["1X","X2"]);if(WSP.mk.out)m=m.concat(["1","2"]);if(WSP.mk.goals)m=m.concat(["OVER_1.5","OVER_2.5"]);if(WSP.mk.both)m.push("GG");return m;}
 function wspBuild(){
   var allowed=wspMarkets(),all=[];
@@ -3595,8 +3596,26 @@ function wspBuild(){
   function ranked(list,pen){return list.slice().sort(function(a,b){
     return key(b)*(isSouthAmerican(b.f)?pen:1)-key(a)*(isSouthAmerican(a.f)?pen:1);});}
   function accumulate(list){
-    var picks=[],prod=1;
-    for(var i=0;i<list.length&&picks.length<20;i++){picks.push(list[i]);prod*=list[i].od;if(prod>=WSP.odds)break;}
+    /* Spread the risk: reach the target with MORE legs at modest odds rather
+       than a few long shots. We aim for a per-leg odds of ~1.5 (about 65-70%
+       each), derive how many legs that needs for the target, then pick the
+       legs whose odds sit closest to that mark. Bigger target -> more legs,
+       not riskier games. Top up with the biggest remaining odds only if short. */
+    var T=WSP.odds, cap=40, per=WSP.legodd||1.35;
+    var want=Math.max(4, Math.min(cap, Math.ceil(Math.log(T)/Math.log(per))));
+    var g=Math.pow(T,1/want);
+    var ranked=list.slice().sort(function(a,b){
+      return Math.abs(Math.log(a.od)-Math.log(g))-Math.abs(Math.log(b.od)-Math.log(g));});
+    var picks=[],used={},prod=1;
+    for(var i=0;i<ranked.length&&picks.length<want;i++){
+      var c=ranked[i]; used[c.id]=1; picks.push(c); prod*=c.od;
+    }
+    if(prod<T){
+      var rest=list.filter(function(c){return !used[c.id];}).sort(function(a,b){return b.od-a.od;});
+      for(var j=0;j<rest.length&&picks.length<cap&&prod<T;j++){
+        used[rest[j].id]=1; picks.push(rest[j]); prod*=rest[j].od;
+      }
+    }
     return {picks:picks,odds:prod};
   }
   var euro=all.filter(function(c){return !isSouthAmerican(c.f);});
@@ -3618,6 +3637,9 @@ function renderWsp(){
       [["day","Today only"],["all","All upcoming"]].map(function(sc){
         return "<button class='wsp-chip"+(SCOPE===sc[0]?" on":"")+"' data-sc='"+sc[0]+"'>"+sc[1]+"</button>";}).join("")+"</div>"+
     "<div class='wsp-lbl'>Target payout</div><div class='wsp-chips'>"+odds.map(function(o){return "<button class='wsp-chip"+(WSP.odds===o?" on":"")+"' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>"+
+    "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips'>"+
+      [[1.25,"Safer, more games"],[1.4,"Balanced"],[1.7,"Fewer, bigger games"]].map(function(st){
+        return "<button class='wsp-chip"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'>"+st[1]+"</button>";}).join("")+"</div>"+
     "<div class='wsp-lbl'>Include markets</div><div class='wsp-chips'>"+mk.map(function(m){return "<button class='wsp-chip"+(WSP.mk[m[0]]?" on":"")+"' data-m='"+m[0]+"'>"+m[1]+"</button>";}).join("")+"</div>"+
     "<div class='wsp-acts'>"+
       "<button class='clear-btn wsp-shuffle' id='wspShuffle' type='button'>\u21bb Shuffle</button>"+
@@ -3627,6 +3649,7 @@ function renderWsp(){
     if(!setScope(c.getAttribute("data-sc"))) return;
     renderWsp(); if(BUILD.touched) renderBuilder();});});
   b.querySelectorAll("[data-o]").forEach(function(c){c.addEventListener("click",function(){WSP.odds=+c.dataset.o;renderWsp();});});
+  b.querySelectorAll("[data-lo]").forEach(function(c){c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;renderWsp();});});
   b.querySelectorAll("[data-m]").forEach(function(c){c.addEventListener("click",function(){var k=c.dataset.m;var on=Object.keys(WSP.mk).filter(function(x){return WSP.mk[x];});if(WSP.mk[k]&&on.length===1)return;WSP.mk[k]=!WSP.mk[k];renderWsp();});});
   $("wspGo").addEventListener("click",function(){wspConjure(false);});
   $("wspShuffle").addEventListener("click",function(){wspConjure(true);});
