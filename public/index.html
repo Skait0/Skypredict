@@ -174,9 +174,6 @@ img,svg{max-width:100%}
 
 /* ================================================================ intro */
 .intro{padding:26px 0 4px}
-.hero-logo{width:210px;height:auto;display:block;margin:0 0 16px;
-  filter:drop-shadow(0 8px 22px rgba(0,0,0,.5))}
-@media(min-width:720px){.hero-logo{width:280px}}
 .intro h1{font-weight:800;font-size:clamp(28px,4.4vw,44px);line-height:1.1;
   letter-spacing:-.035em}
 .intro h1 span{color:var(--red)}
@@ -1164,6 +1161,19 @@ html.mode-live #live{display:block}
 @media(max-width:520px){.lv-scorers{grid-template-columns:1fr}.lv-scorers .sr.a{justify-content:flex-start;text-align:left;grid-column:1}}
 .bld-head h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:6px 0 4px}
 .bld-head p{color:var(--soft);font-size:14px;max-width:52ch;margin-bottom:18px}
+
+/* Mode toggle - premium segmented control */
+.bld-mode{display:inline-flex;background:var(--card-2);border:1px solid var(--line);border-radius:99px;padding:3px;gap:2px}
+.bld-mode-btn{display:inline-flex;align-items:center;gap:8px;background:none;border:0;font:inherit;font-weight:700;font-size:13px;color:var(--soft);
+  padding:8px 16px;border-radius:99px;cursor:pointer;white-space:nowrap;
+  transition:background .15s,color .15s,box-shadow .15s}
+.bld-mode-btn svg{flex-shrink:0;opacity:.8;transition:opacity .15s}
+.bld-mode-btn:hover{color:var(--text);background:var(--card)}
+.bld-mode-btn:hover svg{opacity:1}
+.bld-mode-btn.on{background:var(--red);color:#fff;box-shadow:0 2px 8px rgba(230,57,70,.3)}
+.bld-mode-btn.on svg{opacity:1}
+.bld-mode-btn:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+
 .bld-panel{background:var(--card);border:1px solid var(--line-soft);
   border-radius:var(--r-lg);padding:18px 18px 16px}
 .risk-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
@@ -1192,21 +1202,23 @@ html.mode-live #live{display:block}
 .mkt.on{background:var(--green-wash);color:var(--green-ink);border-color:var(--green)}
 
 /* Unified market palette - replaces both "Include markets" and #mkts */
-.mkt-palette{display:flex;flex-wrap:wrap;gap:7px}
-.mkt-chip{display:inline-flex;align-items:center;gap:6px;background:var(--card-2);
+.mkt-palette{display:flex;flex-wrap:wrap;gap:8px;overflow:visible}
+.mkt-chip{display:inline-flex;align-items:center;gap:8px;background:var(--card-2);
   border:1px solid var(--line);color:var(--soft);font:inherit;font-weight:700;
-  font-size:13px;padding:9px 14px;border-radius:99px;cursor:pointer;
-  transition:background .15s,border-color .15s,color .15s,opacity .15s,transform .1s}
+  font-size:13px;padding:10px 16px;border-radius:99px;cursor:pointer;
+  transition:background .15s,border-color .15s,color .15s,opacity .15s,transform .1s,box-shadow .15s}
+.mkt-chip:hover:not(.locked){border-color:var(--faint);transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.15)}
 .mkt-chip.on{background:var(--red);border-color:var(--red);color:#fff;
   box-shadow:0 2px 8px rgba(230,57,70,.3)}
-.mkt-chip.locked{opacity:.35;cursor:not-allowed}
+.mkt-chip:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.mkt-chip.locked{opacity:.4;cursor:not-allowed;filter:grayscale(.3)}
 .mkt-chip .tier-badge{display:inline-flex;align-items:center;justify-content:center;
-  min-width:18px;height:18px;font-size:10px;font-weight:800;color:var(--faint);
-  background:var(--raise);border:1px solid var(--line-soft);border-radius:99px;padding:0 6px}
+  min-width:20px;height:20px;font-size:10px;font-weight:800;color:var(--faint);
+  background:var(--raise);border:1px solid var(--line-soft);border-radius:99px;padding:0 7px}
 .mkt-chip.on .tier-badge{background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3)}
 .mkt-chip.unlocking{animation:mktUnlock .35s ease}
 @keyframes mktUnlock{0%{transform:scale(.92);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
-@media(max-width:560px){.mkt-chip{padding:8px 11px;font-size:12px}.mkt-chip .tier-badge{min-width:16px;height:16px;font-size:9px;padding:0 5px}}
+@media(max-width:560px){.mkt-chip{padding:9px 13px;font-size:12px}.mkt-chip .tier-badge{min-width:18px;height:18px;font-size:9px;padding:0 6px}}
 .scope-seg{display:flex;gap:3px;background:var(--raise);border-radius:var(--r-md);padding:3px;margin-bottom:13px}
 .scope-opt{flex:1;background:none;border:0;font:inherit;font-size:12px;font-weight:700;
   color:var(--faint);padding:8px 6px;border-radius:var(--r-sm);cursor:pointer;white-space:nowrap;
@@ -1356,11 +1368,10 @@ html.mode-live #live{display:block}
 .wsp-prev{display:flex;align-items:center;justify-content:space-between;margin:18px 0 6px;  padding:14px 16px;background:var(--card-2);border:1px solid var(--line-soft);border-radius:var(--r-md)}
 .wsp-prev span{font-weight:700;color:var(--soft)}
 .wsp-prev b{font-size:22px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
-.wsp-go{width:100%;margin-top:16px;padding:11px;font-size:14px}
+.wsp-go{width:auto;flex:1;min-width:0;margin-top:0;padding:12px 20px;font-size:14px}
 /* Shuffle sits beside Conjure; Conjure keeps the width, Shuffle takes only what
    its label needs. margin-top on .wsp-go is neutralised inside the row. */
 .wsp-acts{display:flex;gap:10px;margin-top:16px;align-items:stretch}
-.wsp-acts .wsp-go{width:auto;flex:1;margin-top:0}
 .wsp-acts .wsp-shuffle{flex:0 0 auto;padding:11px 16px;font-size:14px;white-space:nowrap}
 .book-btn{background:linear-gradient(180deg,#e6414e,var(--red))!important;box-shadow:0 3px 10px rgba(230,57,70,.4),inset 0 1px 0 rgba(255,255,255,.18)}
 .wsp-chip.on{background:var(--red);box-shadow:0 2px 8px rgba(230,57,70,.3)}
@@ -1498,7 +1509,6 @@ body{line-height:1.45;padding-bottom:24px}
 /* --- header + hero --- */
 .top-in{padding:9px 16px;gap:10px}
 .intro{padding:14px 0 2px}
-.hero-logo{margin:0 0 10px}
 .intro p{margin-top:6px}
 .trust{margin-top:10px;gap:6px 13px}
 
@@ -1686,13 +1696,16 @@ footer{margin-top:26px;padding-top:18px;
   .stage-in-5 { animation-delay: 0.25s; }
 
   /* Intro / Hero depth layers */
-  .intro .hero-logo { transform: translateZ(80px); }
   .intro h1 { transform: translateZ(40px); }
   .intro p  { transform: translateZ(20px); }
   .potd { transform: translateZ(0); }
 
   /* Build page — Control Room depth */
   .bld-shared { transform: translateZ(0); }
+  .bld-mode { transform: translateZ(40px); }
+  .bld-mode-btn { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+  .bld-mode-btn:hover { transform: translateZ(50px) scale(1.02); }
+  .bld-mode-btn.on { transform: translateZ(50px); box-shadow: 0 4px 16px rgba(230,57,70,.4); }
   .bld-panel { transform: translateZ(30px); }
   .bld-panel .risk-wrap { transform: translateZ(10px); }
   .risk { transform: translateZ(20px); }
@@ -1745,8 +1758,8 @@ footer{margin-top:26px;padding-top:18px;
 @media (prefers-reduced-motion: reduce) {
   .wrap, .intro, #builder, #live { perspective: none; transform-style: flat; }
   .parallax-deep, .parallax-mid, .parallax-shallow, .parallax-forward, .parallax-front,
-  .intro .hero-logo, .intro h1, .intro p, .potd,
-  .bld-shared, .bld-panel, .bld-panel .risk-wrap, .risk, .mkt-palette, #slip, .bld-foot, .bld-note,
+  .intro h1, .intro p, .potd,
+  .bld-shared, .bld-mode, .bld-panel, .bld-panel .risk-wrap, .risk, .mkt-palette, #slip, .bld-foot, .bld-note,
   .ls-card, .lv, .live-bell, .live-refresh, .btab-dot, .myfab, .sheet, .sheet-head, .sheet-body {
     transform: none !important;
     animation: none !important;
@@ -1789,9 +1802,8 @@ footer{margin-top:26px;padding-top:18px;
 <div class="wrap">
 
   <section class="intro">
-    <img class="hero-logo parallax-front stage-in stage-in-1" src="/wiz-logo.png" alt="" aria-hidden="true" data-parallax="1.5">
-    <h1 class="parallax-forward stage-in stage-in-2" data-parallax="1.2">Who's winning <span>today?</span></h1>
-    <div class="trust parallax-shallow stage-in stage-in-3" data-parallax="0.8">
+    <h1 class="parallax-forward stage-in stage-in-1" data-parallax="1.2">Who's winning <span>today?</span></h1>
+    <div class="trust parallax-shallow stage-in stage-in-2" data-parallax="0.8">
       <span class="trust-i"><b id="when2">-</b> last updated</span>
       <span class="trust-i" id="streak" hidden></span>
       <span class="trust-i recap" id="recap" hidden></span>
@@ -1871,9 +1883,9 @@ footer{margin-top:26px;padding-top:18px;
   <section id="builder">
     <div class="bld-head">
       <h1>Build a slip</h1>
-      <div class="bld-mode" role="tablist" aria-label="Build mode">
-        <button class="bld-mode-btn on" role="tab" data-mode="slider" aria-selected="true">Slider</button>
-        <button class="bld-mode-btn" role="tab" data-mode="wizard" aria-selected="false">Wizard</button>
+      <div class="bld-mode stage-in stage-in-1" role="tablist" aria-label="Build mode" data-parallax="1.2">
+        <button class="bld-mode-btn on" role="tab" data-mode="slider" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="12" x2="23" y2="12"/></svg><span>Slider</span></button>
+        <button class="bld-mode-btn" role="tab" data-mode="wizard" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>Wizard</span></button>
       </div>
     </div>
 
