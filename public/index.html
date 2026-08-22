@@ -524,10 +524,14 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
      full wordmark and keeps the live dot away from the theme toggle. */
   html.mode-build #bldNote,html.mode-build .bld-approx{display:none}
   .gl-card.score .gl-pc{flex-shrink:0}
-  .myfab{padding:8px 14px 8px 13px;width:auto;height:auto;justify-content:center;border-radius:99px;bottom:92px;gap:7px}
+  .myfab{padding:0;width:56px;height:56px;justify-content:center;border-radius:50%;bottom:92px;
+    background:var(--card);border:1px solid var(--line);
+    box-shadow:0 4px 16px rgba(230,57,70,.45),0 0 0 1px rgba(230,57,70,.35) inset;animation:none}
   .myfab .lbl{display:none}
-  .myfab-ic svg{width:18px;height:18px}
-  .myfab-c{background:rgba(58,36,0,.22);color:#3a2400;min-width:20px;height:20px;font-size:13px;padding:0 5px}
+  .myfab-tk{position:relative;display:inline-flex;color:var(--red)}
+  .myfab-tk svg{width:30px;height:30px}
+  .myfab-c{position:absolute;top:47%;left:50%;transform:translate(-50%,-50%);
+    background:none;color:#fff;min-width:auto;height:auto;padding:0;font-size:13px;font-weight:800}
 }
 .viewtoggle{display:inline-flex;background:var(--card-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;flex-shrink:0}
 .vt{background:none;border:0;color:var(--soft);font:inherit;font-weight:700;font-size:13px;padding:9px 16px;border-radius:8px;cursor:pointer}
@@ -1350,8 +1354,8 @@ html.reduce .myfab{animation:none}
 .myfab:hover{filter:brightness(1.06)}
 .myfab-c{background:rgba(58,36,0,.16);color:#3a2400;min-width:22px;height:22px;border-radius:99px;
   display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;padding:0 2px}
-.myfab-ic{display:inline-flex;align-items:center;justify-content:center}
-.myfab-ic svg{width:19px;height:19px}
+.myfab-tk{display:inline-flex;align-items:center;justify-content:center}
+.myfab-tk svg{width:19px;height:19px}
 .myslip-sheet .sheet-body{max-height:52vh}
 @media(max-width:720px){
   .sheet-head{padding:6px 14px 10px}
@@ -1844,7 +1848,7 @@ footer{margin-top:26px;padding-top:18px;
   <div class="sheet-head"><b>✨ Wizard's Special</b><button class="sheet-x" id="wspX" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="sheet-body" id="wspBody"></div>
 </div>
-<button class="myfab" id="myFab" type="button" hidden><span class="myfab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16a1 1 0 0 1 1 1v3.5a1.8 1.8 0 0 0 0 3.6V17a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3.9a1.8 1.8 0 0 0 0-3.6V6a1 1 0 0 1 1-1z"/><path d="M9.5 5v13" stroke-dasharray="1.5 2"/></svg></span><span class="myfab-c" id="myFabC">0</span><span class="lbl">My slip</span></button>
+<button class="myfab" id="myFab" type="button" hidden><span class="myfab-tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8a1 1 0 0 1 1 1v16l-2.2-1.4L12.5 20 10.7 18.6 8.5 20 6 18.6V4a1 1 0 0 1 1-1z"/><path d="M9.5 8h5M9.5 12h5"/></svg><span class="myfab-c" id="myFabC">0</span></span><span class="lbl">My slip</span></button>
 <nav class="btabs" aria-label="Sections">
   <button class="btab on" id="bt-pred" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg></span>Home</button>
   <button class="btab mid" id="bt-build" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>Build</button>
