@@ -1903,6 +1903,11 @@ var SA_COUNTRIES={Argentina:1,Bolivia:1,Brazil:1,Chile:1,Colombia:1,Ecuador:1,
    of the risk-slider cap - that cap runs to ~35, so a relative test would rate
    Europe "scarce" almost every day and defeat the whole point. */
 var SA_MIN_EURO=6;
+/* Lower divisions (2nd tiers and below) - some days the board is mostly these
+   and the user wants top-flight only. One shared setting drives both builders. */
+function isLowerLeague(l){return /\bchampionship\b|\bleague [12]\b|\bconference\b|\bligue 2\b|\bserie b\b|\bla liga 2\b|\bbundesliga 2\b/i.test(l||"");}
+var TOP_ONLY=false; try{TOP_ONLY=localStorage.getItem("sw.toponly")==="1";}catch(e){}
+function setTopOnly(v){TOP_ONLY=!!v;try{localStorage.setItem("sw.toponly",v?"1":"0");}catch(e){}}
 function isSAleague(l){return !!SA_COUNTRIES[countryOf(l||"")];}
 function isSouthAmerican(f){return isSAleague((f&&f.league)||"");}
 /* Predicted scoreline from expected goals. On a rounded tie, break toward the
@@ -2660,6 +2665,7 @@ function buildPicks(){
   var f0=BUILD.risk/100;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
   scopeFixtures().forEach(function(f){
+    if(TOP_ONLY && isLowerLeague(f.league)) return;
     var homeFav=f.home_p>f.away_p;
     function sane(c){
       if(c==="1"&&!homeFav) return false;
@@ -3580,6 +3586,7 @@ function wspBuild(){
   var seed=WSP.seed||0, shuffles=WSP.shuffles||0;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
   scopeFixtures().forEach(function(f){
+    if(TOP_ONLY && isLowerLeague(f.league)) return;
     var homeFav=f.home_p>f.away_p,best=null;
     allowed.forEach(function(c){
       if(c==="1"&&!homeFav)return; if(c==="2"&&homeFav)return;
@@ -3639,6 +3646,9 @@ function renderWsp(){
     "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips'>"+
       [[1.25,"Safer, more games"],[1.4,"Balanced"],[1.7,"Fewer, bigger games"]].map(function(st){
         return "<button class='wsp-chip"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'>"+st[1]+"</button>";}).join("")+"</div>"+
+    "<div class='wsp-lbl'>Leagues</div><div class='wsp-chips'>"+
+      [[false,"All leagues"],[true,"Top flight only"]].map(function(tp){
+        return "<button class='wsp-chip"+(TOP_ONLY===tp[0]?" on":"")+"' data-tp='"+tp[0]+"'>"+tp[1]+"</button>";}).join("")+"</div>"+
     "<div class='wsp-lbl'>Include markets</div><div class='wsp-chips'>"+mk.map(function(m){return "<button class='wsp-chip"+(WSP.mk[m[0]]?" on":"")+"' data-m='"+m[0]+"'>"+m[1]+"</button>";}).join("")+"</div>"+
     "<div class='wsp-acts'>"+
       "<button class='clear-btn wsp-shuffle' id='wspShuffle' type='button'>\u21bb Shuffle</button>"+
@@ -3649,6 +3659,7 @@ function renderWsp(){
     renderWsp(); if(BUILD.touched) renderBuilder();});});
   b.querySelectorAll("[data-o]").forEach(function(c){c.addEventListener("click",function(){WSP.odds=+c.dataset.o;renderWsp();});});
   b.querySelectorAll("[data-lo]").forEach(function(c){c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;renderWsp();});});
+  b.querySelectorAll("[data-tp]").forEach(function(c){c.addEventListener("click",function(){setTopOnly(c.dataset.tp==="true");renderWsp();if(BUILD.touched)renderBuilder();});});
   b.querySelectorAll("[data-m]").forEach(function(c){c.addEventListener("click",function(){var k=c.dataset.m;var on=Object.keys(WSP.mk).filter(function(x){return WSP.mk[x];});if(WSP.mk[k]&&on.length===1)return;WSP.mk[k]=!WSP.mk[k];renderWsp();});});
   $("wspGo").addEventListener("click",function(){wspConjure(false);});
   $("wspShuffle").addEventListener("click",function(){wspConjure(true);});
