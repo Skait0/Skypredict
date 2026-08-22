@@ -92,7 +92,7 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
      define the card without cutting it out */
   --edge:#9E99AA;
 }
-:root{--r-sm:8px;--r-md:12px;--r-lg:16px}
+:root{--r-sm:4px;--r-md:6px;--r-lg:8px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 button,a,.m,.lrow,.gl-card,.cat,.vt,.navt,.btab,.opt-add{-webkit-tap-highlight-color:transparent;tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;overflow-x:hidden}
@@ -453,6 +453,10 @@ html.mode-live .btabs{transform:none!important}
 .lmore-x{margin-top:8px;width:100%;background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);font:inherit;font-weight:700;font-size:11.5px;padding:8px 12px;border-radius:var(--r-sm);cursor:pointer;transition:background .16s,color .16s,border-color .16s}
 .lmore-x:hover{background:var(--card);color:var(--text);border-color:var(--soft)}
 .more-pad{position:relative}
+.more-collapse{margin-top:12px;width:100%;background:var(--raise);border:1px solid var(--line-soft);
+  color:var(--soft);font:inherit;font-weight:700;font-size:12px;padding:9px 12px;border-radius:var(--r-sm);
+  cursor:pointer;letter-spacing:.04em}
+.more-collapse:hover{background:var(--card);color:var(--text);border-color:var(--soft)}
 .lmore-close{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:var(--r-sm);
   background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);cursor:pointer;
   display:grid;place-items:center;padding:0;opacity:.7;transition:opacity .16s,background .16s}
@@ -2271,7 +2275,8 @@ function moreHTML(f){
       opt("Both score + over 2.5",f.btts_o25,f.btts_o25!=null&&f.btts_o25>=.55)+
       opt("Draw or over 2.5",f.draw_o25,f.draw_o25!=null&&f.draw_o25>=.7)+
       opt("Draw or both score",f.draw_btts,f.draw_btts!=null&&f.draw_btts>=.7)+
-    "</div></div></div>";
+    "</div></div>"+
+    "<button class='more-collapse' type='button'>Collapse \u25b4</button></div>";
 }
 function formHTML(arr){
   if(!arr||!arr.length) return "";
@@ -3619,6 +3624,13 @@ makeFab("myFab","sw.fabpos",
   function(){return $("mySheet").classList.contains("on");},openMySheet,closeMySheet);$("mySheet-x").addEventListener("click",closeMySheet);
 $("myBookBtn").addEventListener("click",bookMy);
 $("myClearBtn").addEventListener("click",clearMy);
+document.addEventListener("click",function(e){
+  var b=e.target.closest(".more-collapse"); if(!b) return;
+  e.stopPropagation();
+  var sh=b.closest(".sheet"); if(sh){var x=sh.querySelector(".sheet-x"); if(x)x.click(); return;}
+  var row=b.closest(".lrow"); if(row){if(window.LOPEN)LOPEN[row.dataset.lf]=false;row.classList.remove("open"); return;}
+  var card=b.closest(".m"); if(card)card.classList.remove("open");
+});
 /* ---- Wizard's Special jackpot builder ---- */
 var WSP={odds:500,legodd:1.35,mk:{doubles:true,out:true,goals:true,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0};
 function wspMarkets(){var m=[];if(WSP.mk.doubles)m=m.concat(["1X","X2"]);if(WSP.mk.out)m=m.concat(["1","2"]);if(WSP.mk.goals)m=m.concat(["OVER_1.5","OVER_2.5"]);if(WSP.mk.both)m.push("GG");return m;}
