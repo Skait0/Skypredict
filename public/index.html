@@ -1798,7 +1798,7 @@ footer{margin-top:26px;padding-top:18px;
     </div>
     <div class="bld-stats" id="bldStats"></div>
     <div id="slip"></div>
-    <div class="bld-foot">
+    <div class="bld-foot" id="bldFoot">
       <button class="clear-btn" id="shuffleBtn" type="button">↻ Shuffle</button>
       <button class="clear-btn" id="clearBtn" type="button">Clear</button>
       <button class="book-btn" id="bookBtn" type="button">Get code</button>
@@ -2857,6 +2857,9 @@ function renderBuilder(){
   var btn=$("bookBtn");
   btn.disabled=BUILD.booking||!bookable;
   btn.textContent=BUILD.booking?"Booking\u2026":"Get code";
+  // Hide footer actions when slip is empty
+  var foot=$("bldFoot");
+  if(foot) foot.style.display = picks.length ? "flex" : "none";
   var note=$("bldNote");
   if(!picks.length) note.textContent="";
   else if(!bookable) note.textContent="These fixtures have no SportyBet event ID yet, so they can't be booked automatically.";
