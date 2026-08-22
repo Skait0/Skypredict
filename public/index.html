@@ -452,6 +452,7 @@ html.mode-live .btabs{transform:none!important}
 .lmore{padding-top:8px;font-size:13px}
 .lmore-x{margin-top:8px;width:100%;background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);font:inherit;font-weight:700;font-size:11.5px;padding:8px 12px;border-radius:var(--r-sm);cursor:pointer;transition:background .16s,color .16s,border-color .16s}
 .lmore-x:hover{background:var(--card);color:var(--text);border-color:var(--soft)}
+.lmore .more-collapse{display:none}
 .more-pad{position:relative}
 .more-collapse{margin-top:12px;width:100%;background:var(--raise);border:1px solid var(--line-soft);
   color:var(--soft);font:inherit;font-weight:700;font-size:12px;padding:9px 12px;border-radius:var(--r-sm);
@@ -1540,7 +1541,7 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .ltable{margin-top:1px}
 .lthead{padding:5px 8px 4px}
 .lrow{padding:4px 8px}
-.lrow.open .lmore{max-height:600px;padding-top:7px}
+.lrow.open .lmore{max-height:2000px;padding-top:7px}
 .lmore{font-size:12.5px}
 .lmore-x{margin-top:7px;padding:7px 12px}
 @media(max-width:640px){.lrow{padding:5px 8px;gap:2px 9px}}
@@ -2593,7 +2594,9 @@ function normTeam(s){
      .replace(/\bpsg\b/g,"paris").replace(/\bparis sg\b/g,"paris").replace(/\bparis saint germain\b/g,"paris")
      .replace(/\bspurs\b/g,"tottenham").replace(/\bwolves\b/g,"wolverhampton")
      .replace(/\bnott m forest\b/g,"nottingham forest").replace(/\bnottm forest\b/g,"nottingham forest")
-     .replace(/\bwest brom\b/g,"west bromwich").replace(/\bespanyol\b/g,"espanol");
+     .replace(/\bwest brom\b/g,"west bromwich").replace(/\bespanyol\b/g,"espanol")
+     .replace(/\bolympiacos\b/g,"olympiakos").replace(/\baustria lustenau\b/g,"lustenau")
+     .replace(/\ba lustenau\b/g,"lustenau").replace(/\batromitos athinon\b/g,"atromitos");
   s=s.replace(/^\s*sporting\s*$/,"sp lisbon");
   s=s.replace(/\b(pa|sp|rj|mg|rs|sc|pr|ce|ba|go|pe|df|am|mt|ms|es|pb|rn|al|pi|ma|to|ap|ac|ro|rr|se)\b/g," ");
   s=s.replace(/\b(fc|cf|afc|ac|as|sv|us|ss|ssc|cd|ca|sk|if|bk|clube|club|do|da|de|dos|das|the|ec|se|ad|aa|cr|futebol)\b/g," ");
@@ -3475,6 +3478,7 @@ function openMySheet(){renderMySheet();$("scrim").classList.add("on");$("mySheet
 function closeMySheet(){$("scrim").classList.remove("on");$("mySheet").classList.remove("on");}
 function renderMySheet(){
   var body=$("mySheetBody"); if(!body) return;
+  MYSLIP=MYSLIP.filter(function(x){var f=fixtureById(x.id);return !f||notStarted(f);});
   var _b=MYSLIP.length;
   MYSLIP=MYSLIP.filter(function(x){var f=fixtureById(x.id);return f&&isUpcoming(f);});
   if(MYSLIP.length!==_b){saveMy();renderFab();}
@@ -3500,6 +3504,7 @@ function renderMySheet(){
     b.addEventListener("click",function(){var p=b.dataset.myrm.split("|"); toggleMy(p[0],p[1]);});});
 }
 function bookMy(){
+  MYSLIP=MYSLIP.filter(function(x){var f=fixtureById(x.id);return !f||notStarted(f);});
   var picks=MYSLIP.map(function(x){var f=fixtureById(x.id);return {code:x.code,eventId:(f&&f.eventId)||null};});
   var bookable=picks.filter(function(c){return c.eventId;});
   var missing=picks.filter(function(c){return !c.eventId;});
