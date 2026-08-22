@@ -7,7 +7,7 @@
 <meta name="description" content="Soccerwizard: simple football predictions. Who wins, goals, both teams to score. Updated every morning.">
 <meta name="theme-color" content="#0D0D0F">
 <meta property="og:title" content="Soccerwizard">
-<meta property="og:description" content="Simple football predictions from 38 leagues, updated every morning.">
+<meta property="og:description" content="Football predictions from 38 leagues, plus a ready-made SportyBet slip - we pick the games and hand you the booking code.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://skypredict-theta.vercel.app/wiz-logo.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -526,7 +526,7 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
   .gl-card.score .gl-pc{flex-shrink:0}
   .myfab{padding:0;width:58px;height:58px;justify-content:center;border-radius:50%;bottom:92px}
   .myfab .lbl{display:none}
-  .myfab-c{background:transparent;color:#fff;font-size:20px;min-width:auto;height:auto;padding:0}
+  .myfab-c{background:rgba(58,36,0,.16);color:#3a2400;font-size:20px;min-width:auto;height:auto;padding:0}
 }
 .viewtoggle{display:inline-flex;background:var(--card-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;flex-shrink:0}
 .vt{background:none;border:0;color:var(--soft);font:inherit;font-weight:700;font-size:13px;padding:9px 16px;border-radius:8px;cursor:pointer}
@@ -887,9 +887,10 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
    without opening the bottom bar. It sits on the same line as the logo + theme. */
 @media(max-width:720px){
   .nav{display:none}
-  /* Home page keeps the header nav so the Live tab is reachable from the top.
-     (This has to live inside the media query - a selector cannot wrap one.) */
-  html.mode-pred .nav{display:flex}
+  /* Home and Build both keep the header nav so Live is reachable from the top.
+     Without Build listed here the container stays hidden and the per-page tab
+     rules below never apply. */
+  html.mode-pred .nav,html.mode-build .nav{display:flex}
 }
 .navt{background:none;border:0;color:var(--soft);font:inherit;font-weight:800;
   font-size:14px;padding:8px 14px;border-radius:9px;cursor:pointer;white-space:nowrap}
@@ -1064,6 +1065,16 @@ html.mode-live #live{display:block}
 .lv-tm.lead{font-weight:800;color:var(--red-ink)}
 .lv-sc.lead{color:var(--red-ink)}
 .lv-selwrap{margin:2px 0 14px}
+.lv-tabs{display:flex;gap:8px;margin:0 0 12px}
+.lv-tab{background:var(--card-2);border:1px solid var(--line);color:var(--soft);font:inherit;
+  font-weight:800;font-size:12.5px;padding:7px 14px;border-radius:99px;cursor:pointer}
+.lv-tab.on{background:var(--red);border-color:var(--red);color:#fff}
+.lv-tab i{font-style:normal;background:rgba(255,255,255,.22);border-radius:99px;
+  padding:0 6px;margin-left:4px;font-size:11px}
+.lv-star{background:none;border:0;padding:0 0 0 8px;cursor:pointer;flex-shrink:0;
+  color:var(--faint);font-size:15px;line-height:1}
+.lv-star.on{color:#F2B84B}
+.lv-star:hover{color:#F2B84B}
 .lv-sel{width:100%;max-width:300px;background:var(--card);border:1px solid var(--line-soft);
   color:var(--text);font:inherit;font-weight:700;font-size:14px;padding:10px 14px;border-radius:10px;cursor:pointer}
 .lv-sel:focus-visible{outline:2px solid var(--red);outline-offset:2px}
@@ -1323,12 +1334,20 @@ html.mode-live #live{display:block}
 .sheet-head>b{flex:1;min-width:0;font-size:16.5px;font-weight:800;letter-spacing:-.02em}
 .sheet-head .sheet-x{margin-left:auto}
 @keyframes fabpop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
-.myfab{position:fixed;right:16px;bottom:16px;z-index:130;background:rgba(230,57,70,.92);color:#fff;
-  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+.myfab{position:fixed;right:16px;bottom:16px;z-index:130;
+  background:radial-gradient(circle at 38% 32%,#ffe89a,#f2b84b 46%,#c8871a 82%);color:#3a2400;
   border:0;font:inherit;font-weight:800;font-size:15px;padding:14px 20px;border-radius:99px;
-  cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35);display:flex;align-items:center;gap:9px}
-.myfab:hover{filter:brightness(1.08)}
-.myfab-c{background:transparent;color:#fff;min-width:22px;height:22px;border-radius:99px;
+  cursor:pointer;display:flex;align-items:center;gap:9px;
+  box-shadow:0 6px 20px rgba(0,0,0,.35),0 0 16px 2px rgba(242,184,75,.55),
+    inset 0 1px 2px rgba(255,255,255,.7),inset 0 -3px 6px rgba(150,90,10,.35);
+  animation:orbGlow 2.6s ease-in-out infinite}
+@keyframes orbGlow{0%,100%{box-shadow:0 6px 20px rgba(0,0,0,.35),0 0 14px 2px rgba(242,184,75,.5),
+    inset 0 1px 2px rgba(255,255,255,.7),inset 0 -3px 6px rgba(150,90,10,.35)}
+  50%{box-shadow:0 6px 22px rgba(0,0,0,.35),0 0 26px 6px rgba(255,214,110,.9),
+    inset 0 1px 2px rgba(255,255,255,.85),inset 0 -3px 6px rgba(150,90,10,.35)}}
+html.reduce .myfab{animation:none}
+.myfab:hover{filter:brightness(1.06)}
+.myfab-c{background:rgba(58,36,0,.16);color:#3a2400;min-width:22px;height:22px;border-radius:99px;
   display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;padding:0 2px}
 .myslip-sheet .sheet-body{max-height:52vh}
 @media(max-width:720px){
@@ -2150,11 +2169,15 @@ function renderControls(){
   const leagues=V.country?Array.from(byC[V.country]).sort()
     :Array.from(new Set(ps.map(function(f){return f.league;}))).sort();
   if(V.league&&leagues.indexOf(V.league)<0) V.league="";
+  /* Several countries run a "Serie A", so the bare competition name is
+     ambiguous. Prefix the country while the country filter is on "all"; once a
+     country is chosen it is already known and repeating it just adds noise. */
   $("league").innerHTML="<option value=''>All leagues</option>"+
     leagues.map(function(l){
       const n=ps.filter(function(f){return f.league===l;}).length;
+      const nm=V.country?compOf(l):(countryOf(l)+" \u203a "+compOf(l));
       return "<option value=\""+esc(l)+"\""+(V.league===l?" selected":"")+">"+
-        esc(compOf(l))+" ("+n+")</option>";}).join("");
+        esc(nm)+" ("+n+")</option>";}).join("");
   $("country").onchange=function(){V.country=this.value;V.league="";render();};
   $("league").onchange=function(){V.league=this.value;render();};
 
@@ -2362,7 +2385,7 @@ function render(){
       "<p>Try another category or day. New fixtures arrive Friday for the weekend.</p></div>";
     return;
   }
-  var _thin = list.length<=4 ? "<div class='thin-note'>Only "+list.length+" fixture"+(list.length===1?"":"s")+" available right now \u2014 more arrive as the weekend nears.</div>" : "";
+  var _thin = list.length<=4 ? "<div class='thin-note'>Only "+list.length+" fixture"+(list.length===1?"":"s")+" available right now - more arrive as the weekend nears.</div>" : "";
   const byL={};
   list.forEach(function(f){(byL[f.league]=byL[f.league]||[]).push(f);});
   const favL=Object.keys(byL).filter(isFav).sort();
@@ -2516,6 +2539,11 @@ function normTeam(s){
      .replace(/đ/g,"d").replace(/ð/g,"d").replace(/ł/g,"l").replace(/ı/g,"i").replace(/þ/g,"th");
   s=s.replace(/[`'.\-]/g," ");
   s=s.replace(/\butd\b/g,"united");
+  s=s.replace(/\bman united\b/g,"manchester united").replace(/\bman city\b/g,"manchester city")
+     .replace(/\bpsg\b/g,"paris").replace(/\bparis sg\b/g,"paris").replace(/\bparis saint germain\b/g,"paris")
+     .replace(/\bspurs\b/g,"tottenham").replace(/\bwolves\b/g,"wolverhampton")
+     .replace(/\bnott m forest\b/g,"nottingham forest").replace(/\bnottm forest\b/g,"nottingham forest")
+     .replace(/\bwest brom\b/g,"west bromwich");
   s=s.replace(/\b(pa|sp|rj|mg|rs|sc|pr|ce|ba|go|pe|df|am|mt|ms|es|pb|rn|al|pi|ma|to|ap|ac|ro|rr|se)\b/g," ");
   s=s.replace(/\b(fc|cf|afc|ac|as|sv|us|ss|ssc|cd|ca|sk|if|bk|clube|club|do|da|de|dos|das|the|ec|se|ad|aa|cr)\b/g," ");
   return s.replace(/\s+/g," ").trim();
@@ -2691,7 +2719,7 @@ function renderBuilder(){
   if(!picks.length){
     var dry=(SCOPE==="day")&&!scopeFixtures().length;
     $("slip").innerHTML="<div class='bld-empty'><b>Nothing in your slip</b>"+
-      (dry?"No fixtures left today \u2014 switch to All upcoming to keep building."
+      (dry?"No fixtures left today - switch to All upcoming to keep building."
          :"Move the slider to build a fresh set of games.")+"</div>";
   } else {
     $("slip").innerHTML=picks.map(function(c){
@@ -2983,7 +3011,7 @@ function renderRecord(){
           "</b><i>yesterday</i></div>":"")+
       "</div>"+
       "<div class='rec-bar'><i style='width:"+pct+"%'></i></div>"+
-      "<div class='rec-foot'>"+(cal?"When we say 70%, it lands near 70% \u2014 ":"")+
+      "<div class='rec-foot'>"+(cal?"When we say 70%, it lands near 70% - ":"")+
         "measured on games the model had not seen.</div>"+
     "</div>";
 }
@@ -3011,7 +3039,23 @@ function wireNotif(){
 }
 /* ============================================================ live scores */
 const LIVE_URL="https://web-production-798c0.up.railway.app/api/livescores";
-var LIVE={matches:[],at:0,timer:null,loading:false,prev:{},flash:{},filter:"",store:{},lit:{}};
+var LIVE={matches:[],at:0,timer:null,loading:false,prev:{},flash:{},filter:"",store:{},lit:{},favOnly:false};
+/* Followed matches: ids kept in localStorage so the star survives a refresh.
+   These are also the only games worth a notification - following a match is
+   the user saying "tell me about this one". */
+var LIVEFAV={};
+try{LIVEFAV=JSON.parse(localStorage.getItem("sw.livefav")||"{}");}catch(e){LIVEFAV={};}
+function saveLiveFav(){try{localStorage.setItem("sw.livefav",JSON.stringify(LIVEFAV));}catch(e){}}
+function isLiveFav(id){return !!LIVEFAV[id];}
+function toggleLiveFav(id){
+  if(LIVEFAV[id]) delete LIVEFAV[id]; else LIVEFAV[id]=1;
+  saveLiveFav();
+  if(LIVEFAV[id]&&window.Notification&&Notification.permission==="default"){
+    try{Notification.requestPermission();}catch(e){}
+  }
+  window.swToast&&window.swToast(LIVEFAV[id]?"Following - you'll be alerted on goals":"Stopped following","ok","lvfav");
+  renderLive();
+}
 var COUNTRY_ISO={argentina:"ar",australia:"au",austria:"at",azerbaijan:"az",belgium:"be",
   bolivia:"bo",brazil:"br",bulgaria:"bg",canada:"ca",chile:"cl",china:"cn",colombia:"co",
   "costa rica":"cr",croatia:"hr",cyprus:"cy","czech republic":"cz",czechia:"cz",denmark:"dk",
@@ -3145,7 +3189,9 @@ function liveCardHTML(m){
   var al=(m.homeScore!=null&&m.awayScore!=null&&m.awayScore>m.homeScore);
   return "<div class='lv"+(st.ft?" ft-row":"")+"' data-ev=\""+esc(id)+"\">"+
     "<div class='lv-top'><span class='lv-lg'>"+esc2(liveComp(m.league))+"</span>"+
-      "<span class='lv-status"+(st.ft?" ft":"")+"'>"+(st.ft?"":"<span class='live-dot'></span>")+st.t+"</span></div>"+
+      "<span class='lv-status"+(st.ft?" ft":"")+"'>"+(st.ft?"":"<span class='live-dot'></span>")+st.t+"</span>"+
+      "<button class='lv-star"+(isLiveFav(id)?" on":"")+"' type='button' data-lvfav=\""+esc(id)+"\" "+
+        "aria-label='Follow this match'>"+(isLiveFav(id)?"\u2605":"\u2606")+"</button></div>"+
     "<div class='lv-teams'>"+
       "<div class='lv-tm"+(hl?" lead":"")+"'>"+esc2(m.home)+reds(m.homeReds)+"</div>"+
       "<div class='lv-sc"+(hl?" lead":"")+"' data-side='h'>"+(m.homeScore!=null?m.homeScore:"-")+"</div>"+
@@ -3197,12 +3243,24 @@ function renderLive(){
     return;
   }
   renderLiveSegments(LIVE.matches);
-  var shown=LIVE.matches.filter(function(m){return !LIVE.filter||liveCountry(m.league||"")===LIVE.filter;});
+  var favN=LIVE.matches.filter(function(m){return isLiveFav(m.eventId||(m.home+m.away));}).length;
+  var shown=LIVE.matches.filter(function(m){
+    if(LIVE.favOnly && !isLiveFav(m.eventId||(m.home+m.away))) return false;
+    return !LIVE.filter||liveCountry(m.league||"")===LIVE.filter;});
   $("liveSub").textContent=LIVE.matches.length+" match"+(LIVE.matches.length===1?"":"es")+" in play \u00b7 updates every 30s";
+  var tabs="<div class='lv-tabs'>"+
+    "<button class='lv-tab"+(LIVE.favOnly?"":" on")+"' data-lvt='all' type='button'>All live</button>"+
+    "<button class='lv-tab"+(LIVE.favOnly?" on":"")+"' data-lvt='fav' type='button'>\u2605 Following"+
+      (favN?" <i>"+favN+"</i>":"")+"</button></div>";
+  if(LIVE.favOnly && !shown.length){
+    host.innerHTML=tabs+"<div class='live-empty'><b>No followed matches in play</b>"+
+      "Tap the star on any live game to follow it and get alerted when it scores.</div>";
+    wireLiveTabs(host); return;
+  }
   var byCn={};
   shown.forEach(function(m){var c=liveCountry(m.league||"");(byCn[c]=byCn[c]||[]).push(m);});
   var countries=Object.keys(byCn).sort();
-  host.innerHTML=countries.map(function(c){
+  host.innerHTML=tabs+countries.map(function(c){
     var list=byCn[c].slice().sort(function(a,b){
       var fa=statusText(a).ft?1:0,fb=statusText(b).ft?1:0;
       if(fa!==fb) return fa-fb;
@@ -3212,7 +3270,14 @@ function renderLive(){
       "<span>"+esc2(c)+"</span><span class='gc'>"+byCn[c].length+"</span></div>"+
       list.map(liveCardHTML).join("")+"</div>";
   }).join("");
+  wireLiveTabs(host);
   applyGoalFX(host);
+}
+function wireLiveTabs(host){
+  host.querySelectorAll("[data-lvt]").forEach(function(b){
+    b.addEventListener("click",function(){LIVE.favOnly=(b.dataset.lvt==="fav");renderLive();});});
+  host.querySelectorAll("[data-lvfav]").forEach(function(b){
+    b.addEventListener("click",function(e){e.stopPropagation();toggleLiveFav(b.getAttribute("data-lvfav"));});});
 }
 function tickerEvents(){
   var evs=[], now=Date.now();
@@ -3362,7 +3427,7 @@ function bookMy(){
   if(dups){
     var uniq=[],seenEv={};
     bookable.forEach(function(c){if(!seenEv[c.eventId]){seenEv[c.eventId]=1;uniq.push(c);}});
-    $("myBookResult").innerHTML="<div class='confirm-card'><p>You have the same match picked more than once. SportyBet takes one pick per match \u2014 book "+uniq.length+" unique game"+(uniq.length===1?"":"s")+"?</p><div class='ca'><button class='confirm-go' type='button'>Book "+uniq.length+"</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>";
+    $("myBookResult").innerHTML="<div class='confirm-card'><p>You have the same match picked more than once. SportyBet takes one pick per match - book "+uniq.length+" unique game"+(uniq.length===1?"":"s")+"?</p><div class='ca'><button class='confirm-go' type='button'>Book "+uniq.length+"</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>";
     $("myBookResult").querySelector(".confirm-go").addEventListener("click",function(){doBookMy(uniq);});
     $("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){$("myBookResult").innerHTML="";});
     return;
@@ -3518,7 +3583,7 @@ function wspBuild(){
 function renderWsp(){
   var b=$("wspBody"); if(!b)return;
   var odds=[50,100,500,1000,2000,6000],mk=[["doubles","Safe doubles"],["out","Outright wins"],["goals","Goals"],["both","Both score"]];
-  b.innerHTML="<p class='wsp-lead'>One tap conjures a mixed slip \u2014 safe bankers stacked with a few bold picks to chase a big return.</p>"+
+  b.innerHTML="<p class='wsp-lead'>One tap conjures a mixed slip - safe bankers stacked with a few bold picks to chase a big return.</p>"+
     "<div class='wsp-lbl'>Fixture window</div><div class='wsp-chips'>"+
       [["day","Today only"],["all","All upcoming"]].map(function(sc){
         return "<button class='wsp-chip"+(SCOPE===sc[0]?" on":"")+"' data-sc='"+sc[0]+"'>"+sc[1]+"</button>";}).join("")+"</div>"+
@@ -3545,7 +3610,7 @@ function wspConjure(shuffle){
   var seen={};MYSLIP=MYSLIP.filter(function(x){if(seen[x.id])return false;seen[x.id]=1;return true;});
   saveMy();renderFab();closeWsp();openMySheet();
   window.__wizChime&&window.__wizChime();
-  window.swToast&&window.swToast((shuffle?"Reshuffled \u2014 ":"Conjured ")+r.picks.length+" games \u00b7 ~\u00d7"+r.odds.toFixed(0),"ok");
+  window.swToast&&window.swToast((shuffle?"Reshuffled - ":"Conjured ")+r.picks.length+" games \u00b7 ~\u00d7"+r.odds.toFixed(0),"ok");
 }
 function openWsp(){renderWsp();$("scrim").classList.add("on");$("wspSheet").classList.add("on");pushOverlay();}
 function closeWsp(){$("scrim").classList.remove("on");$("wspSheet").classList.remove("on");}
@@ -3644,10 +3709,15 @@ async function load(){
 function hideLoader(){var l=$("loader"); if(!l) return; l.classList.add("hide");
   setTimeout(function(){if(l&&l.parentNode) l.parentNode.removeChild(l);},500);}
 setTimeout(hideLoader,8000);
-(function(){var top=document.querySelector(".top"),bt=document.querySelector(".btabs");
-  if(!top||!bt||!("IntersectionObserver" in window))return;
+/* The bar appears once the main call to action has scrolled away - while the
+   CTA is on screen there is already a way into the slip builder, so a second
+   one underneath it is just clutter. Falls back to the header if the CTA is
+   absent (Live and Build pages). */
+(function(){var cta=document.querySelector(".slip-cta")||document.querySelector(".top"),
+    bt=document.querySelector(".btabs");
+  if(!cta||!bt||!("IntersectionObserver" in window))return;
   new IntersectionObserver(function(es){bt.classList.toggle("hide",es[0].isIntersecting);},
-    {rootMargin:"-4px 0px 0px 0px"}).observe(top);})();
+    {rootMargin:"-4px 0px 0px 0px"}).observe(cta);})();
 /* ============================================= premium enhancement engine */
 (function(){
   var host=document.createElement('div');host.id='toasts';document.body.appendChild(host);
@@ -3758,7 +3828,24 @@ setTimeout(hideLoader,8000);
   }
   window.__wizChime=wizChime;
 
-  if(typeof applyGoalFX==='function'){var __ag=applyGoalFX;applyGoalFX=function(h){var n=Object.keys(LIVE.flash||{}).length;__ag(h);if(n&&soundOn)beep();};}
+  if(typeof applyGoalFX==='function'){var __ag=applyGoalFX;applyGoalFX=function(h){
+    var ids=Object.keys(LIVE.flash||{}), n=ids.length;
+    __ag(h);
+    if(n&&soundOn)beep();
+    /* Following a match is the user asking to be told about it, so a goal there
+       earns a notification even when the app is in the background. */
+    if(n&&window.Notification&&Notification.permission==="granted"){
+      ids.forEach(function(id){
+        if(!(typeof isLiveFav==="function"&&isLiveFav(id))) return;
+        var m=null;
+        (LIVE.matches||[]).forEach(function(x){if((x.eventId||(x.home+x.away))===id)m=x;});
+        if(!m) return;
+        try{new Notification("\u26bd GOAL - "+m.home+" "+
+          (m.homeScore!=null?m.homeScore:"-")+"-"+(m.awayScore!=null?m.awayScore:"-")+
+          " "+m.away,{body:liveComp(m.league||""),tag:"sw-goal-"+id});}catch(e){}
+      });
+    }
+  };}
   window.__wireAlert=function(){var b=document.getElementById('liveAlert');if(!b||b._w)return;b._w=1;
     var base='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>';
     var ON=base+'<path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>';
