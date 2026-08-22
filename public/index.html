@@ -1077,6 +1077,10 @@ html.mode-live #live{display:block}
 .lv-tab.on{background:var(--red);border-color:var(--red);color:#fff}
 .lv-tab i{font-style:normal;background:rgba(255,255,255,.22);border-radius:99px;
   padding:0 6px;margin-left:4px;font-size:11px}
+.lv-lgs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.lv-lg-chip{background:var(--card-2);border:1px solid var(--line-soft);color:var(--soft);font:inherit;
+  font-weight:700;font-size:11.5px;padding:5px 11px;border-radius:99px;cursor:pointer}
+.lv-lg-chip.on{background:var(--red);border-color:var(--red);color:#fff}
 .lv-star{background:none;border:0;padding:0 0 0 8px;cursor:pointer;flex-shrink:0;
   color:var(--faint);font-size:15px;line-height:1}
 .lv-star.on{color:#F2B84B}
@@ -1140,9 +1144,10 @@ html.mode-live #live{display:block}
   letter-spacing:.06em;color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;
   margin-right:6px;vertical-align:middle;animation:goalTagPop .35s ease-out}
 @keyframes goalTagPop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
-.lv-sc.scored{position:relative;color:var(--red-ink)!important;background:var(--red-wash);
-   border-radius:7px;padding:2px 7px;margin:-2px -3px;
-   box-shadow:0 0 0 1px var(--red),0 0 10px rgba(230,57,70,.7);animation:scoredGlow 1.1s ease-in-out infinite}
+.lv-sc.scored{position:relative;color:var(--red-ink)!important;z-index:1}
+.lv-sc.scored::before{content:"";position:absolute;inset:-2px -6px;border-radius:7px;
+   background:var(--red-wash);box-shadow:0 0 0 1px var(--red),0 0 10px rgba(230,57,70,.7);
+   z-index:-1;animation:scoredGlow 1.1s ease-in-out infinite}
 .lv-sc .goal-tag{position:absolute;right:calc(100% + 3px);top:50%;bottom:auto;left:auto;transform:translateY(-50%);margin:0}
 @keyframes scoredGlow{0%,100%{box-shadow:0 0 0 1px var(--red),0 0 8px rgba(230,57,70,.55)}50%{box-shadow:0 0 0 1px var(--red),0 0 16px rgba(230,57,70,.95)}}
 @media(max-width:520px){.lv-scorers{grid-template-columns:1fr}.lv-scorers .sr.a{justify-content:flex-start;text-align:left;grid-column:1}}
@@ -1754,6 +1759,18 @@ footer{margin-top:26px;padding-top:18px;
       <div class="risk-wrap"><input type="range" id="risk" class="risk" min="0" max="100" value="45"
         aria-label="Risk level"><span class="risk-bubble" id="riskBubble">Balanced</span></div>
       <div class="risk-ticks"><span>Safe</span><span>Balanced</span><span>Risky</span></div>
+      <div class="wsp-lbl">Leagues</div>
+      <div class="wsp-chips" id="bldLeagues">
+        <button class="wsp-chip" type="button" data-btp="false">All leagues</button>
+        <button class="wsp-chip" type="button" data-btp="true">Top flight only</button>
+      </div>
+      <div class="wsp-lbl">Include markets</div>
+      <div class="wsp-chips" id="bldMk">
+        <button class="wsp-chip" type="button" data-bmk="dc">Double chance</button>
+        <button class="wsp-chip" type="button" data-bmk="out">Outright wins</button>
+        <button class="wsp-chip" type="button" data-bmk="goals">Goals</button>
+        <button class="wsp-chip" type="button" data-bmk="both">Both score</button>
+      </div>
       <div class="mkts" id="mkts"></div>
     </div>
     <div class="bld-stats" id="bldStats"></div>
@@ -1857,7 +1874,7 @@ footer{margin-top:26px;padding-top:18px;
   <div class="sheet-grab"><i></i></div>
   <div class="sheet-head">
     <div class="info"><h3 id="mySheet-title">My slip</h3><p>Predictions you picked - book them to SportyBet.</p></div>
-    <button class="sheet-x" id="mySheet-x" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <button class="sheet-x" id="mySheet-x" aria-label="Collapse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
   </div>
   <div class="sheet-body" id="mySheetBody"></div>
   <div class="mysheet-foot" id="mySheetFoot" hidden>
@@ -2235,7 +2252,7 @@ function countMarkets(f){
 function moreHTML(f){
   const noDraw=(f.anybody!=null)?f.anybody:f.dc12;
   const id=fid(f);
-  return "<div class='more-pad'>"+"<button class='lmore-close' aria-label='Close' type='button'>"+XSVG+"</button>"+
+  return "<div class='more-pad'>"+
     "<div class='grp'><h4>Who wins</h4><div class='opts'>"+
       opt(esc(f.home)+" to win",f.home_p,f.home_p>=.6,"1",id)+
       opt(esc(f.away)+" to win",f.away_p,f.away_p>=.6,"2",id)+
@@ -2527,7 +2544,7 @@ addEventListener("keydown",function(e){
   }});
 
 /* ============================================================ build a slip */
-var BUILD={risk:20,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0};
+var BUILD={risk:20,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{dc:true,out:true,goals:true,both:true}};
 try{var rr=localStorage.getItem("sw.risk"); if(rr!=null) BUILD.risk=+rr;}catch(e){}
 /* Ticket window. "day" holds every leg inside today, so the whole slip settles
    the same evening; "all" runs for as long as there are fixtures published.
@@ -2570,7 +2587,7 @@ function normTeam(s){
      .replace(/\bpsg\b/g,"paris").replace(/\bparis sg\b/g,"paris").replace(/\bparis saint germain\b/g,"paris")
      .replace(/\bspurs\b/g,"tottenham").replace(/\bwolves\b/g,"wolverhampton")
      .replace(/\bnott m forest\b/g,"nottingham forest").replace(/\bnottm forest\b/g,"nottingham forest")
-     .replace(/\bwest brom\b/g,"west bromwich");
+     .replace(/\bwest brom\b/g,"west bromwich").replace(/\bespanyol\b/g,"espanol");
   s=s.replace(/^\s*sporting\s*$/,"sp lisbon");
   s=s.replace(/\b(pa|sp|rj|mg|rs|sc|pr|ce|ba|go|pe|df|am|mt|ms|es|pb|rn|al|pi|ma|to|ap|ac|ro|rr|se)\b/g," ");
   s=s.replace(/\b(fc|cf|afc|ac|as|sv|us|ss|ssc|cd|ca|sk|if|bk|clube|club|do|da|de|dos|das|the|ec|se|ad|aa|cr|futebol)\b/g," ");
@@ -2662,6 +2679,8 @@ function mLabel(f,c){
 }
 function buildPicks(){
   var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier), cand=[];
+  var mkOn={"1X":BUILD.mk.dc,"X2":BUILD.mk.dc,"12":BUILD.mk.dc,"1":BUILD.mk.out,"2":BUILD.mk.out,"OVER_1.5":BUILD.mk.goals,"OVER_2.5":BUILD.mk.goals,"GG":BUILD.mk.both};
+  allowed=allowed.filter(function(c){return mkOn[c]!==false;});
   var f0=BUILD.risk/100;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
   scopeFixtures().forEach(function(f){
@@ -2714,6 +2733,13 @@ function totalOdds(picks){
 }
 function renderBuilder(){
   var p=riskParams(BUILD.risk);
+  (function(){
+    var lg=$("bldLeagues"),mkw=$("bldMk"); if(!lg||!mkw) return;
+    lg.querySelectorAll("[data-btp]").forEach(function(c){c.classList.toggle("on",(c.dataset.btp==="true")===!!TOP_ONLY);});
+    mkw.querySelectorAll("[data-bmk]").forEach(function(c){c.classList.toggle("on",BUILD.mk[c.dataset.bmk]!==false);});
+    if(!lg._w){lg._w=1;lg.querySelectorAll("[data-btp]").forEach(function(c){c.addEventListener("click",function(){setTopOnly(c.dataset.btp==="true");renderBuilder();});});}
+    if(!mkw._w){mkw._w=1;mkw.querySelectorAll("[data-bmk]").forEach(function(c){c.addEventListener("click",function(){var k=c.dataset.bmk;var on=Object.keys(BUILD.mk).filter(function(x){return BUILD.mk[x];});if(BUILD.mk[k]&&on.length===1)return;BUILD.mk[k]=!BUILD.mk[k];renderBuilder();});});}
+  })();
   $("risk").value=BUILD.risk;
   $("riskName").textContent=riskWord(BUILD.risk);
   var picks=buildPicks();
@@ -3295,21 +3321,35 @@ function renderLive(){
   }
   var byCn={};
   shown.forEach(function(m){var c=liveCountry(m.league||"");(byCn[c]=byCn[c]||[]).push(m);});
-  var countries=Object.keys(byCn).sort();
+  var TOPC=["England","Spain","Italy","Germany","France","Netherlands","Portugal","Brazil","Argentina"];
+  var countries=Object.keys(byCn).sort(function(a,b){
+    var ia=TOPC.indexOf(a),ib=TOPC.indexOf(b);
+    if(ia<0)ia=99; if(ib<0)ib=99;
+    return ia!==ib ? ia-ib : a.localeCompare(b);});
   host.innerHTML=tabs+countries.map(function(c){
-    var list=byCn[c].slice().sort(function(a,b){
+    LIVE.lvLeague=LIVE.lvLeague||{};
+    var all=byCn[c].slice().sort(function(a,b){
       var fa=statusText(a).ft?1:0,fb=statusText(b).ft?1:0;
       if(fa!==fb) return fa-fb;
       return (a.league||"").localeCompare(b.league||"");
     });
+    var leagues=[]; all.forEach(function(m){if(leagues.indexOf(m.league)<0)leagues.push(m.league);});
+    var sel=LIVE.lvLeague[c]||"";
+    var list=sel?all.filter(function(m){return m.league===sel;}):all;
+    var chips = leagues.length>1 ? "<div class='lv-lgs'>"+
+      "<button class='lv-lg-chip"+(!sel?" on":"")+"' data-lvc=\""+esc2(c)+"\" data-lvl=''>All</button>"+
+      leagues.map(function(l){return "<button class='lv-lg-chip"+(sel===l?" on":"")+"' data-lvc=\""+esc2(c)+"\" data-lvl=\""+esc2(l)+"\">"+esc2(liveComp(l))+"</button>";}).join("")+"</div>" : "";
     return "<div class='lv-grp'><div class='lv-grp-h'>"+liveFlag(c)+
-      "<span>"+esc2(c)+"</span><span class='gc'>"+byCn[c].length+"</span></div>"+
+      "<span>"+esc2(c)+"</span><span class='gc'>"+byCn[c].length+"</span></div>"+chips+
       list.map(liveCardHTML).join("")+"</div>";
   }).join("");
   wireLiveTabs(host);
   applyGoalFX(host);
 }
 function wireLiveTabs(host){
+  host.querySelectorAll("[data-lvc]").forEach(function(b){
+    b.addEventListener("click",function(){LIVE.lvLeague=LIVE.lvLeague||{};
+      LIVE.lvLeague[b.getAttribute("data-lvc")]=b.getAttribute("data-lvl")||"";renderLive();});});
   host.querySelectorAll("[data-lvt]").forEach(function(b){
     b.addEventListener("click",function(){LIVE.favOnly=(b.dataset.lvt==="fav");renderLive();});});
   host.querySelectorAll("[data-lvfav]").forEach(function(b){
@@ -3598,7 +3638,7 @@ function wspBuild(){
   });
   // Seed jitter so each shuffle surfaces a different mix; SA penalty keeps
   // Europe ahead even once South America is allowed into the pool.
-  function key(c){return c.p*(1+(h32(c.id+"|"+seed)-0.5)*0.5);}
+  function key(c){return c.p*(1+(h32(c.id+"|"+seed)-0.5)*1.15);}
   function ranked(list,pen){return list.slice().sort(function(a,b){
     return key(b)*(isSouthAmerican(b.f)?pen:1)-key(a)*(isSouthAmerican(a.f)?pen:1);});}
   function accumulate(list){
@@ -3662,7 +3702,7 @@ function renderWsp(){
   b.querySelectorAll("[data-tp]").forEach(function(c){c.addEventListener("click",function(){setTopOnly(c.dataset.tp==="true");renderWsp();if(BUILD.touched)renderBuilder();});});
   b.querySelectorAll("[data-m]").forEach(function(c){c.addEventListener("click",function(){var k=c.dataset.m;var on=Object.keys(WSP.mk).filter(function(x){return WSP.mk[x];});if(WSP.mk[k]&&on.length===1)return;WSP.mk[k]=!WSP.mk[k];renderWsp();});});
   $("wspGo").addEventListener("click",function(){wspConjure(false);});
-  $("wspShuffle").addEventListener("click",function(){wspConjure(true);});
+  $("wspShuffle").addEventListener("click",function(){WSP.seed=Math.floor(Math.random()*1e6);WSP.shuffles=(WSP.shuffles||0)+1;renderWsp();});
 }
 function wspConjure(shuffle){
   if(shuffle){WSP.seed=Math.floor(Math.random()*1e6);WSP.shuffles=(WSP.shuffles||0)+1;}
