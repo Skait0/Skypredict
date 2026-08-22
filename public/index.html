@@ -1340,19 +1340,18 @@ html.mode-live #live{display:block}
 .sheet-head .sheet-x{margin-left:auto}
 @keyframes fabpop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
 .myfab{position:fixed;right:16px;bottom:16px;z-index:130;
-  background:radial-gradient(circle at 38% 32%,#ffe89a,#f2b84b 46%,#c8871a 82%);color:#3a2400;
+  background:rgba(230,57,70,.8);color:#fff;
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
   border:0;font:inherit;font-weight:800;font-size:15px;padding:14px 20px;border-radius:99px;
   cursor:pointer;display:flex;align-items:center;gap:9px;
-  box-shadow:0 6px 20px rgba(0,0,0,.35),0 0 16px 2px rgba(242,184,75,.55),
-    inset 0 1px 2px rgba(255,255,255,.7),inset 0 -3px 6px rgba(150,90,10,.35);
-  animation:orbGlow 2.6s ease-in-out infinite}
+  box-shadow:0 6px 20px rgba(0,0,0,.35)}
 @keyframes orbGlow{0%,100%{box-shadow:0 6px 20px rgba(0,0,0,.35),0 0 14px 2px rgba(242,184,75,.5),
     inset 0 1px 2px rgba(255,255,255,.7),inset 0 -3px 6px rgba(150,90,10,.35)}
   50%{box-shadow:0 6px 22px rgba(0,0,0,.35),0 0 26px 6px rgba(255,214,110,.9),
     inset 0 1px 2px rgba(255,255,255,.85),inset 0 -3px 6px rgba(150,90,10,.35)}}
 html.reduce .myfab{animation:none}
 .myfab:hover{filter:brightness(1.06)}
-.myfab-c{background:rgba(58,36,0,.16);color:#3a2400;min-width:22px;height:22px;border-radius:99px;
+.myfab-c{background:rgba(255,255,255,.2);color:#fff;min-width:22px;height:22px;border-radius:99px;
   display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;padding:0 2px}
 .myfab-tk{display:inline-flex;align-items:center;justify-content:center}
 .myfab-tk svg{width:19px;height:19px}
