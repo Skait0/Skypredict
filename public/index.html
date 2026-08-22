@@ -2041,6 +2041,22 @@ function tipCode(f){var t=f.tip||"";if(t==="Home win")return"1";if(t==="Away win
 function edgeOf(f){var c=tipCode(f);if(!c)return null;var o=f.sportyOdds&&f.sportyOdds[c];if(!o||o<=1.01)return null;return f.tip_p-1/o;}
 function isValue(f){var e=edgeOf(f);return e!=null&&e>=0.05;}
 function _devig3(o1,ox,o2){var a=1/o1,b=1/ox,c=1/o2,s=a+b+c;return (s>0)?[a/s,b/s,c/s]:null;}
+function refineTip(f){
+  if(!f||f._refined) return; f._refined=1;
+  var t=f.tip||""; if(t.indexOf("12")!==0) return;
+  var hp=f.home_p||0, ap=f.away_p||0;
+  /* Keep "Any team to win" only where it genuinely belongs - two evenly matched
+     sides with an unlikely draw, which is exactly what 12 is for. When one side
+     is a clear favourite (>=15pt edge, or a strong home side), recast to that
+     team's double chance so a big team at home / away reads directionally
+     instead of the vague any-team line. The margin gate keeps natural variety. */
+  var edge=Math.abs(hp-ap);
+  var homeFav=hp>=ap;
+  var clear = edge>=0.15 || (homeFav && hp>=0.50) || (!homeFav && ap>=0.48);
+  if(!clear) return;
+  if(homeFav){ f.tip="1X"; if(f.dc1x!=null) f.tip_p=f.dc1x; }
+  else { f.tip="X2"; if(f.dcx2!=null) f.tip_p=f.dcx2; }
+}
 function blendFixture(f){
   var o=f.sportyOdds; if(!o) return; var B=0.30;
   if(o["1"]&&o["X"]&&o["2"]){
@@ -2550,8 +2566,9 @@ function normTeam(s){
      .replace(/\bspurs\b/g,"tottenham").replace(/\bwolves\b/g,"wolverhampton")
      .replace(/\bnott m forest\b/g,"nottingham forest").replace(/\bnottm forest\b/g,"nottingham forest")
      .replace(/\bwest brom\b/g,"west bromwich");
+  s=s.replace(/^\s*sporting\s*$/,"sp lisbon");
   s=s.replace(/\b(pa|sp|rj|mg|rs|sc|pr|ce|ba|go|pe|df|am|mt|ms|es|pb|rn|al|pi|ma|to|ap|ac|ro|rr|se)\b/g," ");
-  s=s.replace(/\b(fc|cf|afc|ac|as|sv|us|ss|ssc|cd|ca|sk|if|bk|clube|club|do|da|de|dos|das|the|ec|se|ad|aa|cr)\b/g," ");
+  s=s.replace(/\b(fc|cf|afc|ac|as|sv|us|ss|ssc|cd|ca|sk|if|bk|clube|club|do|da|de|dos|das|the|ec|se|ad|aa|cr|futebol)\b/g," ");
   return s.replace(/\s+/g," ").trim();
 }
 function tokset(s){return normTeam(s).split(" ").filter(function(w){return w.length>=3;});}
@@ -3674,6 +3691,7 @@ addEventListener("scroll",function(){
   $("top").classList.toggle("stuck",scrollY>10);},{passive:true});
 
 function paint(){
+  (DATA.fixtures||[]).forEach(refineTip);
   let d=DATA.generated||"";
   try{d=new Date(d+"T00:00:00Z").toLocaleDateString(undefined,
     {day:"numeric",month:"short",timeZone:"UTC"});}catch(e){}
