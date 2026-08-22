@@ -2901,17 +2901,24 @@ function confirmBookAll(){
       "The first "+CAP+" will be loaded and the last "+(bookable.length-CAP)+
       " left off. To choose which ones make it, open <b>My slip</b> and remove a few first.</div>":"")+
     "<div class='ca'>"+
-    "<button class='confirm-go' type='button'>"+(over?"Book first "+CAP:"Yes, book "+bookable.length)+"</button>"+
+    "<button class='confirm-go' type='button'>"+(over?"Book first "+CAP:"Book all "+bookable.length)+"</button>"+
+    "<button class='confirm-trim' type='button'>Review &amp; trim</button>"+
     "<button class='confirm-cancel' type='button'>Cancel</button></div></div>";
-  host.querySelector(".confirm-go").addEventListener("click",function(){
-    /* Mirror the booked games into the floating slip so the sheet shows exactly
-       what the code contains, and the user can review or reuse it. */
+  function fillSlip(){
     MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
       .concat(bookable.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true};}));
     var seen={}; MYSLIP=MYSLIP.filter(function(x){if(seen[x.id])return false;seen[x.id]=1;return true;});
     saveMy(); renderFab();
+  }
+  host.querySelector(".confirm-go").addEventListener("click",function(){
+    fillSlip();
     window.__wizChime&&window.__wizChime();
     doBookList(going,"bookAllResult","bookAll","Book all tips");
+  });
+  host.querySelector(".confirm-trim").addEventListener("click",function(){
+    /* Load every pick into the slip and open it, so the user removes what they
+       want, then books from the sheet. This is how they confirm and trim. */
+    fillSlip(); host.innerHTML=""; openMySheet();
   });
   host.querySelector(".confirm-cancel").addEventListener("click",function(){host.innerHTML="";});
   host.scrollIntoView({block:"nearest"});
