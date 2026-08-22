@@ -1187,8 +1187,8 @@ html.mode-live #live{display:block}
 @keyframes scoredGlow{0%,100%{box-shadow:0 0 0 1px var(--red),0 0 8px rgba(230,57,70,.55)}50%{box-shadow:0 0 0 1px var(--red),0 0 16px rgba(230,57,70,.95)}}
 @media(max-width:520px){.lv-scorers{grid-template-columns:1fr}.lv-scorers .sr.a{justify-content:flex-start;text-align:left;grid-column:1}}
 .bld-head{margin-bottom:20px}
-.bld-head h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:6px 0 4px}
-.bld-head p{color:var(--soft);font-size:14px;max-width:52ch;margin-bottom:18px}
+.bld-head h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:8px 0 4px}
+.bld-head p{color:var(--soft);font-size:14px;max-width:52ch;margin-bottom:16px}
 
 /* Mode toggle - premium segmented control */
 .bld-mode{display:inline-flex;background:var(--card-2);border:1px solid var(--line);border-radius:99px;padding:3px;gap:2px}
@@ -1199,8 +1199,26 @@ html.mode-live #live{display:block}
 .bld-mode-btn:hover{color:var(--text);background:var(--card)}
 .bld-mode-btn:hover svg{opacity:1}
 .bld-mode-btn.on{background:var(--red);color:#fff;box-shadow:0 2px 8px rgba(230,57,70,.3)}
+/* Each mode wears its own identity when active: Slider = red/gold ember (fast,
+   hands-on); Wizard = violet/gold enchantment (let the app decide). */
+.bld-mode-btn.on[data-mode="slider"]{background:linear-gradient(120deg,#c8323d,var(--red));
+  box-shadow:inset 0 0 0 1px rgba(242,184,75,.5),0 2px 10px rgba(230,57,70,.4)}
+.bld-mode-btn.on[data-mode="wizard"]{background:linear-gradient(120deg,#6d3bd4,#8b5cf6);
+  box-shadow:inset 0 0 0 1px rgba(242,184,75,.55),0 2px 12px rgba(139,92,246,.5)}
+.bld-mode-btn.on[data-mode="wizard"] svg{filter:drop-shadow(0 0 4px rgba(242,184,75,.8))}
 .bld-mode-btn.on svg{opacity:1}
 .bld-mode-btn:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.filters-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;
+  background:var(--card-2);border:1px solid var(--line);color:var(--text);font:inherit;
+  font-weight:800;font-size:13px;padding:11px 14px;border-radius:var(--r-md);cursor:pointer;margin-bottom:12px}
+.filters-toggle .ft-l{display:inline-flex;align-items:center;gap:9px;letter-spacing:.02em}
+.filters-toggle .ft-l svg{width:16px;height:16px;color:var(--faint)}
+.filters-toggle .ft-r{display:inline-flex;align-items:center;gap:9px}
+.filters-toggle .ft-sum{font-size:12px;font-weight:700;color:var(--faint)}
+.filters-toggle .ft-chev{width:16px;height:16px;color:var(--soft);transition:transform .2s ease}
+.filters-toggle[aria-expanded="false"] .ft-chev{transform:rotate(-90deg)}
+.filters-body{overflow:hidden;transition:max-height .25s ease,opacity .2s ease;max-height:600px;opacity:1}
+.filters-body[hidden]{display:block;max-height:0;opacity:0;pointer-events:none;margin:0}
 
 .bld-panel{background:var(--card);border:1px solid var(--line-soft);
   border-radius:var(--r-lg);padding:18px 18px 16px}
@@ -1208,16 +1226,28 @@ html.mode-live #live{display:block}
 .risk-name{font-size:20px;font-weight:800;letter-spacing:-.01em}
 .risk-sub{font-size:13px;color:var(--soft);font-weight:600;text-align:right}
 .risk-wrap{position:relative;padding-top:8px}
-.risk{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:99px;
-  background:linear-gradient(90deg,var(--green),var(--win) 55%,var(--red));outline:none;cursor:pointer}
-.risk::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:26px;height:26px;
-  border-radius:50%;background:#fff;border:3px solid var(--bg);
-  box-shadow:0 2px 8px rgba(0,0,0,.45),0 0 0 4px rgba(230,57,70,0);transition:box-shadow .2s ease;cursor:grab}
-.risk::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;
-  border:3px solid var(--bg);box-shadow:0 2px 8px rgba(0,0,0,.45),0 0 0 4px rgba(230,57,70,0);transition:box-shadow .2s ease;cursor:grab}
+.risk{-webkit-appearance:none;appearance:none;width:100%;height:10px;border-radius:99px;
+  background:var(--raise);outline:none;cursor:pointer;
+  background-image:linear-gradient(90deg,var(--green),var(--win) 55%,var(--red));
+  background-repeat:no-repeat;background-size:var(--fill,45%) 100%}
+.risk::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;
+  border-radius:50%;background:radial-gradient(circle at 38% 32%,#fff,#e6e6ea);border:3px solid var(--bg);
+  box-shadow:0 2px 8px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.15),0 0 0 0 var(--rz,rgba(230,57,70,0));
+  transition:box-shadow .18s ease,transform .12s ease;cursor:grab}
+.risk::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#fff,#e6e6ea);
+  border:3px solid var(--bg);box-shadow:0 2px 8px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.15);transition:box-shadow .18s ease;cursor:grab}
 .risk:focus-visible::-webkit-slider-thumb{box-shadow:0 2px 8px rgba(0,0,0,.45),0 0 0 4px rgba(230,57,70,.5)}
 .risk:focus-visible{outline:2px solid var(--red);outline-offset:4px}
-.risk:active::-webkit-slider-thumb{transform:scale(1.1);box-shadow:0 4px 16px rgba(0,0,0,.5),0 0 0 6px rgba(230,57,70,.3)}
+.risk:active::-webkit-slider-thumb{transform:scale(1.14);box-shadow:0 4px 16px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.15),0 0 0 8px var(--rz,rgba(230,57,70,.25))}
+/* Zone-tinted panel accent: green in safe, gold in balanced, red in risky. */
+.slider-panel[data-zone="safe"]{--rz:rgba(43,199,120,.35);border-color:rgba(43,199,120,.4)}
+.slider-panel[data-zone="mid"]{--rz:rgba(242,184,75,.4);border-color:rgba(242,184,75,.4)}
+.slider-panel[data-zone="risky"]{--rz:rgba(230,57,70,.4);border-color:rgba(230,57,70,.45)}
+.slider-panel[data-zone="safe"] .risk-name{color:var(--green)}
+.slider-panel[data-zone="mid"] .risk-name{color:var(--win-ink)}
+.slider-panel[data-zone="risky"] .risk-name{color:var(--red-ink)}
+.risk-ticks span{transition:color .18s ease,transform .18s ease}
+.risk-ticks span.zone-live{color:var(--text);transform:scale(1.08)}
 .risk-ticks{display:flex;justify-content:space-between;margin-top:8px;
   font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
 /* Slider fill effect - webkit only but progressive enhancement */
@@ -1260,8 +1290,10 @@ html.mode-live #live{display:block}
   transition:background .16s,color .16s}
 .scope-opt.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.28)}
 .scope-opt:focus-visible{outline:2px solid var(--red);outline-offset:1px}
-.bld-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
-.stat{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r-md);padding:13px 14px}
+.bld-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
+.stat{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r-md);padding:14px 14px 12px;position:relative}
+.stat .stat-ic{position:absolute;top:12px;right:12px;color:var(--faint);opacity:.5}
+.stat .stat-ic svg{display:block;width:15px;height:15px}
 .stat b{display:block;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .stat i{display:block;font-style:normal;font-size:11px;font-weight:700;letter-spacing:.05em;
   text-transform:uppercase;color:var(--faint);margin-top:3px}
@@ -1290,19 +1322,27 @@ html.mode-live #live{display:block}
 .sp-x:active{transform:scale(.93)}
 .sp-noid{font-size:10px;font-weight:800;color:var(--red-ink);background:var(--red-wash);
   padding:2px 6px;border-radius:var(--r-sm);margin-left:6px}
-.bld-foot{position:sticky;bottom:0;display:flex;align-items:center;gap:14px;margin-top:16px;
-  background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:16px 18px;
+.bld-foot{position:sticky;bottom:0;display:flex;align-items:center;gap:8px;margin-top:16px;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:12px;
   box-shadow:0 -6px 20px rgba(0,0,0,.25)}
+/* Secondary actions become quiet icon-ghost buttons so Book owns the bar. */
+.bld-foot .clear-btn{flex:0 0 auto;width:44px;height:44px;padding:0;display:grid;place-items:center;
+  background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);border-radius:var(--r-sm);
+  cursor:pointer;font-size:0;transition:background .15s,color .15s,border-color .15s,transform .12s}
+.bld-foot .clear-btn svg{display:block;width:17px;height:17px}
+.bld-foot .clear-btn:hover{background:var(--card-2);color:var(--text);border-color:var(--soft)}
+.bld-foot .clear-btn:active{transform:scale(.94)}
 .bld-odds{flex:1}
 .bld-odds i{display:block;font-style:normal;font-size:11px;font-weight:700;
   letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
 .bld-odds b{font-size:24px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
 .book-btn{background:var(--red);color:#fff;border:0;font:inherit;font-weight:800;font-size:15px;
-  padding:14px 22px;border-radius:var(--r-md);cursor:pointer;white-space:nowrap}
+  padding:14px 22px;border-radius:var(--r-sm);cursor:pointer;white-space:nowrap;
+  box-shadow:inset 0 0 0 1px rgba(242,184,75,.4),0 2px 10px rgba(230,57,70,.3)}
 .book-btn:hover{filter:brightness(1.08)}
 .book-btn:disabled{opacity:.5;cursor:not-allowed}
-/* Total odds moved up into the stats row, so the primary action takes the
-   width it used to occupy instead of leaving a hole in the bar. */
+/* Book is the hero of the bar: it takes all remaining width beside the two
+   compact icon actions. */
 .bld-foot .book-btn{flex:1 1 auto}
 .bld-note{font-size:12px;color:var(--soft);margin-top:10px;text-align:center}
 #bookResult{margin-top:14px}
@@ -1395,7 +1435,7 @@ html.mode-live #live{display:block}
 @keyframes wspGlow{0%,100%{opacity:.5}50%{opacity:1}}
 @media(max-width:720px){.wspfab{bottom:92px;width:52px;height:52px}.wspfab img{width:34px;height:34px}}
 .wsp-lead{font-size:13.5px;color:var(--soft);margin-bottom:16px;line-height:1.5}
-.wsp-lbl{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin:14px 0 8px}
+.wsp-lbl{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin:16px 0 8px}
 .wsp-chips{display:flex;flex-wrap:wrap;gap:8px}
 .wsp-chip{background:var(--card-2);border:1px solid var(--line);color:var(--soft);font:inherit;
   font-weight:700;font-size:13px;padding:9px 15px;border-radius:99px;cursor:pointer}
@@ -1744,6 +1784,7 @@ footer{margin-top:26px;padding-top:18px;
   .bld-mode-btn { transition: transform 0.15s ease, box-shadow 0.15s ease; }
   .bld-mode-btn:hover { transform: translateZ(50px) scale(1.02); }
   .bld-mode-btn.on { transform: translateZ(50px); box-shadow: 0 4px 16px rgba(230,57,70,.4); }
+  .bld-mode-btn.on[data-mode="wizard"] { box-shadow: 0 4px 18px rgba(139,92,246,.5); }
   .bld-panel { transform: translateZ(30px); }
   .bld-panel .risk-wrap { transform: translateZ(10px); }
   .risk { transform: translateZ(20px); }
@@ -1929,9 +1970,11 @@ footer{margin-top:26px;padding-top:18px;
 
     <!-- SHARED CONTROLS (always visible) -->
     <div class="bld-shared stage-in stage-in-1" id="bldShared" data-parallax="0.8">
-      <!-- Ticket window. "Today only" keeps every leg inside today so the slip
-           settles the same evening; "All upcoming" keeps running for as long as
-           there are fixtures on the board. -->
+      <button class="filters-toggle" id="filtersToggle" type="button" aria-expanded="true" aria-controls="filtersBody">
+        <span class="ft-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16M7 12h10M10 19h4"/></svg>Filters</span>
+        <span class="ft-r"><span class="ft-sum" id="filtersSum"></span><svg class="ft-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+      </button>
+      <div class="filters-body" id="filtersBody">
       <div class="scope-seg stage-in stage-in-2" id="scopeSeg" role="group" aria-label="Fixture window">
         <button class="scope-opt stage-in stage-in-3" type="button" data-scope="day">Today only</button>
         <button class="scope-opt stage-in stage-in-3" type="button" data-scope="all">All upcoming</button>
@@ -1943,6 +1986,7 @@ footer{margin-top:26px;padding-top:18px;
       </div>
       <div class="wsp-lbl stage-in stage-in-2">Include markets</div>
       <div class="wsp-chips mkt-palette stage-in stage-in-3" id="bldMk"></div>
+      </div>
     </div>
 
     <!-- SLIDER MODE PANEL -->
@@ -1972,8 +2016,8 @@ footer{margin-top:26px;padding-top:18px;
     <div class="bld-stats stage-in stage-in-3" id="bldStats" data-parallax="0.5"></div>
     <div id="slip" data-parallax="0.3"></div>
     <div class="bld-foot stage-in stage-in-4" id="bldFoot" data-parallax="0.2">
-      <button class="clear-btn" id="shuffleBtn" type="button">↻ Shuffle</button>
-      <button class="clear-btn" id="clearBtn" type="button">Clear</button>
+      <button class="clear-btn" id="shuffleBtn" type="button" aria-label="Shuffle" title="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
+      <button class="clear-btn" id="clearBtn" type="button" aria-label="Clear" title="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg></button>
       <button class="book-btn" id="bookBtn" type="button">Get code</button>
     </div>
     <div class="bld-note stage-in stage-in-5" id="bldNote" data-parallax="0.1"></div>
@@ -2115,6 +2159,12 @@ var SA_MIN_EURO=6;
 function isLowerLeague(l){return /\bchampionship\b|\bleague [12]\b|\bconference\b|\bligue 2\b|\bserie b\b|\bla liga 2\b|\bbundesliga 2\b/i.test(l||"");}
 var TOP_ONLY=false; try{TOP_ONLY=localStorage.getItem("sw.toponly")==="1";}catch(e){}
 function setTopOnly(v){TOP_ONLY=!!v;try{localStorage.setItem("sw.toponly",v?"1":"0");}catch(e){}}
+function marketCount(){try{return Object.keys(BUILD.mk).filter(function(k){return BUILD.mk[k];}).length;}catch(e){return 0;}}
+function updateFiltersSum(){
+  var el=document.getElementById("filtersSum"); if(!el) return;
+  var n=marketCount();
+  el.textContent=(TOP_ONLY?"Top flight":"All leagues")+" \u00b7 "+n+" market"+(n===1?"":"s");
+}
 function isSAleague(l){return !!SA_COUNTRIES[countryOf(l||"")];}
 function isSouthAmerican(f){return isSAleague((f&&f.league)||"");}
 /* Predicted scoreline from expected goals. On a rounded tie, break toward the
@@ -2751,6 +2801,7 @@ function scopeFixtures(){
   });
 }
 function paintScope(){
+  updateFiltersSum();
   var seg=$("scopeSeg"); if(!seg) return;
   seg.querySelectorAll("[data-scope]").forEach(function(b){
     var on=b.getAttribute("data-scope")===SCOPE;
@@ -2973,6 +3024,9 @@ function renderBuilder(){
   // Default slider position for first visit (visual only, not "touched")
   var displayRisk = firstVisit ? 45 : BUILD.risk;
   $("risk").value=displayRisk;
+  (function(){var _r=$("risk");if(_r){_r.style.setProperty("--fill",displayRisk+"%");_r.style.backgroundSize=displayRisk+"% 100%";
+    var _z=displayRisk<33?"safe":displayRisk<66?"mid":"risky";var _sp=$("sliderPanel");if(_sp)_sp.setAttribute("data-zone",_z);
+    _r.style.setProperty("--rz",_z==="safe"?"rgba(43,199,120,.35)":_z==="mid"?"rgba(242,184,75,.4)":"rgba(230,57,70,.4)");}})();
   $("riskName").textContent=firstVisit ? "\u2014" : riskWord(BUILD.risk);
   var picks = firstVisit ? [] : buildPicks();
   $("riskSub").textContent=firstVisit ? "Move slider to build" : (picks.length+" game"+(picks.length===1?"":"s")+
@@ -2986,9 +3040,9 @@ function renderBuilder(){
   var real=oddsAreReal(picks), pre=real?"\u00d7":"~\u00d7";
   var avg=picks.length?picks.reduce(function(t,c){return t+c.p;},0)/picks.length:0;
   $("bldStats").innerHTML=
-    "<div class='stat'><b>"+picks.length+"</b><i>Games</i></div>"+
-    "<div class='stat'><b>"+(picks.length?P0(avg)+"%":"-")+"</b><i>Avg confidence</i></div>"+
-    "<div class='stat odds'><b id='totOdds'>"+(picks.length?pre+odds.toFixed(2):"-")+"</b>"+
+    "<div class='stat'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='4' y='7' width='16' height='13' rx='2'/><path d='M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/></svg></span><b>"+picks.length+"</b><i>Games</i></div>"+
+    "<div class='stat'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z'/></svg></span><b>"+(picks.length?P0(avg)+"%":"-")+"</b><i>Avg confidence</i></div>"+
+    "<div class='stat odds'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='8'/><path d='M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3H10a1.5 1.5 0 0 0 0 3h4'/></svg></span><b id='totOdds'>"+(picks.length?pre+odds.toFixed(2):"-")+"</b>"+
       "<i>Total odds"+(picks.length&&!real?" (est.)":"")+"</i></div>";
   // The bubble under the thumb spends its width on the two figures that move
   // as you drag; the risk word is already named above the slider and on the
@@ -4032,6 +4086,9 @@ function renderSliderPanel(){
   var p = firstVisit ? {tier:1, minConf:0.65, maxGames:18} : riskParams(BUILD.risk);
   var displayRisk = firstVisit ? 45 : BUILD.risk;
   $("risk").value=displayRisk;
+  (function(){var _r=$("risk");if(_r){_r.style.setProperty("--fill",displayRisk+"%");_r.style.backgroundSize=displayRisk+"% 100%";
+    var _z=displayRisk<33?"safe":displayRisk<66?"mid":"risky";var _sp=$("sliderPanel");if(_sp)_sp.setAttribute("data-zone",_z);
+    _r.style.setProperty("--rz",_z==="safe"?"rgba(43,199,120,.35)":_z==="mid"?"rgba(242,184,75,.4)":"rgba(230,57,70,.4)");}})();
   $("riskName").textContent=firstVisit ? "\u2014" : riskWord(BUILD.risk);
   // Slider panel visibility
   $("sliderPanel").hidden=false;
@@ -4096,9 +4153,9 @@ function renderBuilderOutput(){
   var real=oddsAreReal(picks), pre=real?"\u00d7":"~\u00d7";
   var avg=picks.length?picks.reduce(function(t,c){return t+c.p;},0)/picks.length:0;
   $("bldStats").innerHTML=
-    "<div class='stat'><b>"+picks.length+"</b><i>Games</i></div>"+
-    "<div class='stat'><b>"+(picks.length?P0(avg)+"%":"-")+"</b><i>Avg confidence</i></div>"+
-    "<div class='stat odds'><b id='totOdds'>"+(picks.length?pre+odds.toFixed(2):"-")+"</b>"+
+    "<div class='stat'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='4' y='7' width='16' height='13' rx='2'/><path d='M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/></svg></span><b>"+picks.length+"</b><i>Games</i></div>"+
+    "<div class='stat'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z'/></svg></span><b>"+(picks.length?P0(avg)+"%":"-")+"</b><i>Avg confidence</i></div>"+
+    "<div class='stat odds'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='8'/><path d='M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3H10a1.5 1.5 0 0 0 0 3h4'/></svg></span><b id='totOdds'>"+(picks.length?pre+odds.toFixed(2):"-")+"</b>"+
       "<i>Total odds"+(picks.length&&!real?" (est.)":"")+"</i></div>";
   // Slip rows
   if(!picks.length){
@@ -4146,10 +4203,15 @@ renderFab();
 $("risk").addEventListener("input",function(){
   BUILD.risk=+this.value; BUILD.touched=true;
   try{localStorage.setItem("sw.risk",BUILD.risk);}catch(e){}
-  // Update slider fill for visual feedback
-  var pct=this.value;
+  var pct=+this.value;
   this.style.setProperty('--fill',pct+'%');
   this.style.backgroundSize=pct+'% 100%';
+  var zone=pct<33?"safe":pct<66?"mid":"risky";
+  var sp=$("sliderPanel"); if(sp){var prev=sp.getAttribute("data-zone");sp.setAttribute("data-zone",zone);
+    if(prev&&prev!==zone&&navigator.vibrate)navigator.vibrate(8);}
+  this.style.setProperty('--rz',zone==="safe"?"rgba(43,199,120,.35)":zone==="mid"?"rgba(242,184,75,.4)":"rgba(230,57,70,.4)");
+  var ti=$("risk").closest(".slider-panel").querySelector(".risk-ticks");
+  if(ti){var sp2=ti.querySelectorAll("span");sp2.forEach(function(s,i){s.classList.toggle("zone-live",(zone==="safe"&&i===0)||(zone==="mid"&&i===1)||(zone==="risky"&&i===2));});}
   BUILD.removed={}; $("bookResult").innerHTML=""; renderBuilder();});
 paintScope();
 (function(){
@@ -4161,6 +4223,15 @@ paintScope();
       $("bookResult").innerHTML=""; renderBuilder();
     });
   });
+})();
+// Filters collapse (expanded on first visit; remembers choice after)
+(function(){
+  var t=document.getElementById("filtersToggle"),b=document.getElementById("filtersBody");
+  if(!t||!b) return;
+  var open=true; try{open=localStorage.getItem("sw.filters")!=="0";}catch(e){}
+  function apply(){ b.hidden=!open; t.setAttribute("aria-expanded",open?"true":"false"); }
+  apply();
+  t.addEventListener("click",function(){ open=!open; try{localStorage.setItem("sw.filters",open?"1":"0");}catch(e){} apply(); });
 })();
 // Mode toggle
 document.querySelectorAll(".bld-mode-btn").forEach(function(btn){
