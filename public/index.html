@@ -3886,7 +3886,7 @@ function setView(v){
      Predictions, and it is what keeps the header from crowding the wordmark on
      a narrow screen. The bottom bar still carries all three. */
   var tp=$("tab-pred"); if(tp&&tp.childNodes[0]) tp.childNodes[0].nodeValue = (v==="pred") ? "Predictions" : "Home";
-  [["tab-live","live"],["tab-build","build"]].forEach(function(t){
+  [["tab-pred","pred"],["tab-live","live"],["tab-build","build"]].forEach(function(t){
     var el=$(t[0]); if(el) el.classList.toggle("hide-tab",v===t[1]);
   });
   syncLiveDots();
