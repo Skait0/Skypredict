@@ -2834,6 +2834,28 @@ function setScope(s){
   paintScope(); return true;
 }
 const BOOK_URL="https://web-production-798c0.up.railway.app/api/generate-booking-code";
+/* SportyBet's share endpoint is intermittently flaky - it rejects or times out
+   on a first hit and works on retry. Retry up to 3x with backoff so the user
+   never has to. Only retries on network/5xx/no-code, never on a clean rejection. */
+function bookFetch(sel){
+  var tries=0;
+  function attempt(){
+    tries++;
+    return fetch(BOOK_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({selections:sel})})
+      .then(function(r){return r.json().catch(function(){return {};});})
+      .then(function(d){
+        if(d&&d.success&&d.booking_code) return d;
+        if(tries<3) return new Promise(function(res){setTimeout(res,600*tries);}).then(attempt);
+        return d||{};
+      })
+      .catch(function(){
+        if(tries<3) return new Promise(function(res){setTimeout(res,600*tries);}).then(attempt);
+        return {};
+      });
+  }
+  return attempt();
+}
 const SPORTY_URL="https://www.sportybet.com/ng/?shareCode=";
 const SPORTY_FIXTURES="https://web-production-798c0.up.railway.app/api/fixtures";
 function normTeam(s){
@@ -3143,9 +3165,7 @@ function doBook(picks){
   if(!sel.length) return;
   BUILD.booking=true; renderBuilder();
   $("bookResult").innerHTML="";
-  fetch(BOOK_URL,{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({selections:sel})})
-    .then(function(r){return r.json();})
+  bookFetch(sel)
     .then(function(d){
       BUILD.booking=false; renderBuilder();
       if(d&&d.success&&d.booking_code){
@@ -3287,9 +3307,7 @@ function doBookList(picks,resultId,btnId,label){
   if(!sel.length) return;
   var btn=$(btnId); if(btn){btn.disabled=true;btn.textContent="Booking\u2026";}
   $(resultId).innerHTML="";
-  fetch(BOOK_URL,{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({selections:sel})})
-    .then(function(r){return r.json();})
+  bookFetch(sel)
     .then(function(d){
       if(btn){btn.disabled=false;btn.textContent=label;}
       if(d&&d.success&&d.booking_code) showCode(d.booking_code,resultId);
@@ -3835,8 +3853,8 @@ function doBookMy(bookable){
   var sel=bookable.map(function(c){return {eventId:c.eventId,prediction:c.code};});
   var btn=$("myBookBtn"); if(btn){btn.disabled=true;btn.textContent="Booking\u2026";}
   $("myBookResult").innerHTML="";
-  fetch(BOOK_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({selections:sel})})
-    .then(function(r){return r.json();}).then(function(d){
+  bookFetch(sel)
+    .then(function(d){
       if(btn){btn.disabled=false;btn.textContent="Get code";}
       if(d&&d.success&&d.booking_code) showCode(d.booking_code,"myBookResult");
       else{var why=d&&d.detail?(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail)):(d&&d.message?d.message:"");
@@ -4536,7 +4554,15 @@ setTimeout(hideLoader,8000);
     var ON=base+'<path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>';
     var OFF=base+'<line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>';
     function pa(){b.classList.toggle('on',soundOn);b.setAttribute('aria-pressed',soundOn);b.title=soundOn?'Goal sound on':'Goal sound off';b.innerHTML=(soundOn?ON:OFF)+"<span class='bell-lbl'>"+(soundOn?'Sound on':'Sound off')+"</span>";}
-    pa();b.addEventListener('click',function(){soundOn=!soundOn;try{localStorage.setItem('sw.sound',soundOn?'1':'0');}catch(e){}if(soundOn)beep();pa();window.swToast(soundOn?'Goal alerts on':'Goal alerts off','ok','alert');});};
+    function testBeep(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();var o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=880;o.connect(g);g.connect(AC.destination);var t=AC.currentTime;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.25,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.28);o.start(t);o.stop(t+0.3);}catch(e){}}
+    pa();
+    b.onclick=function(){
+      soundOn=!soundOn;
+      try{localStorage.setItem('sw.sound',soundOn?'1':'0');}catch(e){}
+      pa();
+      if(soundOn){testBeep();try{beep();}catch(e){}}
+      window.swToast&&window.swToast(soundOn?'Goal sound on':'Goal sound off','ok','alert');
+    };};
   window.__settleRecord=function(){var bar=document.querySelector('.record-bar i');if(!bar||bar._settled)return;bar._settled=1;var w=bar.style.width;bar.style.width='0%';requestAnimationFrame(function(){requestAnimationFrame(function(){bar.style.width=w;});});};
   if(typeof render==='function'){var __ro=render;render=function(){__ro.apply(this,arguments);window.__afterRender();};}
   if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
