@@ -1874,7 +1874,7 @@ footer{margin-top:26px;padding-top:18px;
       
     </a>
     <nav class="nav" role="tablist" aria-label="View">
-      <button id="tab-pred" class="navt on hide-tab" type="button" role="tab">Home</button>
+      <button id="tab-pred" class="navt on" type="button" role="tab">Predictions</button>
       <button id="tab-live" class="navt" type="button" role="tab">Live<span class="nv-x"> scores</span> <span class="live-dot" id="liveDot" hidden></span></button>
       <button id="tab-build" class="navt build" type="button" role="tab">Build me a slip</button>
     </nav>
@@ -3851,8 +3851,8 @@ function setView(v){
      not drawn at all - that goes for Live scores and Build too, not just
      Predictions, and it is what keeps the header from crowding the wordmark on
      a narrow screen. The bottom bar still carries all three. */
-  var tp=$("tab-pred"); if(tp){ if(tp.childNodes[0]) tp.childNodes[0].nodeValue="Home"; }
-  [["tab-pred","pred"],["tab-live","live"],["tab-build","build"]].forEach(function(t){
+  var tp=$("tab-pred"); if(tp&&tp.childNodes[0]) tp.childNodes[0].nodeValue = (v==="pred") ? "Predictions" : "Home";
+  [["tab-live","live"],["tab-build","build"]].forEach(function(t){
     var el=$(t[0]); if(el) el.classList.toggle("hide-tab",v===t[1]);
   });
   syncLiveDots();
@@ -4168,14 +4168,14 @@ function renderWizardPanel(){
   });
   // Event listeners
   $("wspOddsChips").querySelectorAll("[data-o]").forEach(function(c){
-    c.addEventListener("click",function(){WSP.odds=+c.dataset.o;renderWizardPanel();});
+    c.addEventListener("click",function(){WSP.odds=+c.dataset.o;renderWizardPanel();renderBuilderOutput();});
   });
   $("wspStyleChips").querySelectorAll("[data-lo]").forEach(function(c){
-    c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;renderWizardPanel();});
+    c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;renderWizardPanel();renderBuilderOutput();});
   });
   $("wspShuffle").addEventListener("click",function(){
     WSP.seed=Math.floor(Math.random()*1e6);WSP.shuffles=(WSP.shuffles||0)+1;
-    renderWizardPanel();
+    renderWizardPanel();renderBuilderOutput();
     window.swToast&&window.swToast("Reshuffled","ok","shuffle");
   });
   $("wspGo").addEventListener("click",function(){wspConjure(false);});
@@ -4188,6 +4188,7 @@ function renderBuilderOutput(){
   var picks = isWiz
     ? wspBuild().picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};})
     : (firstVisit ? [] : buildPicks());
+  BUILD.picks = picks;
   // Risk bubble
   var _rb=$("riskBubble");
   if(_rb){ _rb.style.left="calc("+displayRisk+"% + "+(13-displayRisk*0.26)+"px)";
@@ -4228,8 +4229,8 @@ function renderBuilderOutput(){
     $("slip").querySelectorAll("[data-rm]").forEach(function(b){
       b.addEventListener("click",function(){BUILD.removed[b.dataset.rm]=1;renderBuilder();});});
   }
-  // Sync to MYSLIP (only after user engages slider)
-  if(BUILD.touched){
+  // Sync to MYSLIP (slider once touched; wizard always reflects its preview)
+  if(BUILD.touched || isWiz){
     MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
       .concat(picks.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true};}));
     var _seen={}; MYSLIP=MYSLIP.filter(function(x){if(_seen[x.id])return false;_seen[x.id]=1;return true;});
