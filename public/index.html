@@ -2043,7 +2043,7 @@ footer{margin-top:26px;padding-top:18px;
   <section id="live">
     <div class="live-head stage-in stage-in-1">
       <h1 class="stage-in stage-in-2">Live scores</h1>
-      <button class="live-bell stage-in stage-in-3" id="liveAlert" type="button" aria-pressed="false" aria-label="Goal alerts" title="Goal alerts" data-parallax="0.8"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg></button>
+      <button class="live-bell stage-in stage-in-3" id="liveAlert" type="button" aria-pressed="false" aria-label="Goal sound"><span class="bell-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg></span><span class="bell-lbl">Sound off</span></button>
       <button class="live-refresh stage-in stage-in-3" id="liveRefresh" type="button" data-parallax="0.8">Refresh</button>
     </div>
     <p class="live-sub stage-in stage-in-2" id="liveSub">Football matches in play right now, updating automatically.</p>
@@ -4532,10 +4532,10 @@ setTimeout(hideLoader,8000);
     }
   };}
   window.__wireAlert=function(){var b=document.getElementById('liveAlert');if(!b||b._w)return;b._w=1;
-    var base='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>';
+    var base='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>';
     var ON=base+'<path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>';
     var OFF=base+'<line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>';
-    function pa(){b.classList.toggle('on',soundOn);b.setAttribute('aria-pressed',soundOn);b.title=soundOn?'Goal alerts on':'Goal alerts off';b.innerHTML=(soundOn?ON:OFF)+"<span class='bell-lbl'>"+(soundOn?'On':'Off')+"</span>";}
+    function pa(){b.classList.toggle('on',soundOn);b.setAttribute('aria-pressed',soundOn);b.title=soundOn?'Goal sound on':'Goal sound off';b.innerHTML=(soundOn?ON:OFF)+"<span class='bell-lbl'>"+(soundOn?'Sound on':'Sound off')+"</span>";}
     pa();b.addEventListener('click',function(){soundOn=!soundOn;try{localStorage.setItem('sw.sound',soundOn?'1':'0');}catch(e){}if(soundOn)beep();pa();window.swToast(soundOn?'Goal alerts on':'Goal alerts off','ok','alert');});};
   window.__settleRecord=function(){var bar=document.querySelector('.record-bar i');if(!bar||bar._settled)return;bar._settled=1;var w=bar.style.width;bar.style.width='0%';requestAnimationFrame(function(){requestAnimationFrame(function(){bar.style.width=w;});});};
   if(typeof render==='function'){var __ro=render;render=function(){__ro.apply(this,arguments);window.__afterRender();};}
