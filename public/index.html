@@ -4564,6 +4564,7 @@ setTimeout(hideLoader,8000);
 (function(){
   var mq = window.matchMedia('(min-width: 1060px) and (hover: hover) and (prefers-reduced-motion: no-preference)');
   if(!mq.matches) return;
+  return; // mouse-follow parallax disabled: it moved the whole page on scroll/hover
 
   var raf = 0;
   var cx = window.innerWidth / 2;
