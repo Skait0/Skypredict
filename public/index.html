@@ -2537,8 +2537,9 @@ function formHTML(arr){
 }
 
 function matchHTML(f){
-  const hw=f.home_p>f.away_p&&f.home_p>f.draw_p;
-  const aw=f.away_p>f.home_p&&f.away_p>f.draw_p;
+  var _s0=scoreLine(f).split("-"); var _h0=+_s0[0], _a0=+_s0[1];
+  const hw=_h0>_a0;
+  const aw=_a0>_h0;
   const cf=conf(f.tip_p);
   const pills=[];
   var _sc=scoreLine(f).split("-"); var _mgn=Math.abs((+_sc[0])-(+_sc[1]));
@@ -3964,14 +3965,16 @@ function wspBuild(){
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
   scopeFixtures().forEach(function(f){
     if(TOP_ONLY && isLowerLeague(f.league)) return;
-    var homeFav=f.home_p>f.away_p,best=null;
+    var homeFav=f.home_p>f.away_p,cands=[];
     allowed.forEach(function(c){
       if(c==="1"&&!homeFav)return; if(c==="2"&&homeFav)return;
       if(c==="1X"&&!homeFav)return; if(c==="X2"&&homeFav)return;
       var v=mProb(f,c); if(v==null||isNaN(v)||v<0.5)return;
-      if(!best||v>best.p) best={f:f,id:fid(f),code:c,p:v,od:legOdd(f,c,v)};
+      cands.push({f:f,id:fid(f),code:c,p:v,od:legOdd(f,c,v)});
     });
-    if(best)all.push(best);
+    if(!cands.length)return;
+    var best=cands.reduce(function(a,b){return b.p>a.p?b:a;});
+    best.cands=cands; all.push(best);
   });
   // Seed jitter so each shuffle surfaces a different mix; SA penalty keeps
   // Europe ahead even once South America is allowed into the pool.
@@ -3979,22 +3982,28 @@ function wspBuild(){
   function ranked(list,pen){return list.slice().sort(function(a,b){
     return key(b)*(isSouthAmerican(b.f)?pen:1)-key(a)*(isSouthAmerican(a.f)?pen:1);});}
   function accumulate(list){
-    /* Spread the risk: reach the target with MORE legs at modest odds rather
-       than a few long shots. We aim for a per-leg odds of ~1.5 (about 65-70%
-       each), derive how many legs that needs for the target, then pick the
-       legs whose odds sit closest to that mark. Bigger target -> more legs,
-       not riskier games. Top up with the biggest remaining odds only if short. */
+    /* Spread the risk across MORE legs at a target per-leg odds derived from the
+       payout, and - crucially - pick EACH fixture's market to sit near that
+       target. A high payout pulls in the bigger-odds markets the user enabled
+       (outright wins, both-teams-score); a low one favours safe double-chance.
+       That is what makes the Slip-style and market toggles actually bite. */
     var T=WSP.odds, cap=40, per=WSP.legodd||1.35;
     var want=Math.max(4, Math.min(cap, Math.ceil(Math.log(T)/Math.log(per))));
     var g=Math.pow(T,1/want);
-    var ranked=list.slice().sort(function(a,b){
+    var chosen=list.map(function(c){
+      var cs=c.cands||[{f:c.f,id:c.id,code:c.code,p:c.p,od:c.od}];
+      var pick=cs.reduce(function(a,b){
+        return Math.abs(Math.log(b.od)-Math.log(g))<Math.abs(Math.log(a.od)-Math.log(g))?b:a;});
+      return {f:c.f,id:c.id,code:pick.code,p:pick.p,od:pick.od};
+    });
+    chosen.sort(function(a,b){
       return Math.abs(Math.log(a.od)-Math.log(g))-Math.abs(Math.log(b.od)-Math.log(g));});
     var picks=[],used={},prod=1;
-    for(var i=0;i<ranked.length&&picks.length<want;i++){
-      var c=ranked[i]; used[c.id]=1; picks.push(c); prod*=c.od;
+    for(var i=0;i<chosen.length&&picks.length<want;i++){
+      var c=chosen[i]; used[c.id]=1; picks.push(c); prod*=c.od;
     }
     if(prod<T){
-      var rest=list.filter(function(c){return !used[c.id];}).sort(function(a,b){return b.od-a.od;});
+      var rest=chosen.filter(function(c){return !used[c.id];}).sort(function(a,b){return b.od-a.od;});
       for(var j=0;j<rest.length&&picks.length<cap&&prod<T;j++){
         used[rest[j].id]=1; picks.push(rest[j]); prod*=rest[j].od;
       }
@@ -4181,7 +4190,10 @@ function renderBuilderOutput(){
   var firstVisit = BUILD.risk === null;
   var p = firstVisit ? {tier:1, minConf:0.65, maxGames:18} : riskParams(BUILD.risk);
   var displayRisk = firstVisit ? 45 : BUILD.risk;
-  var picks = (firstVisit || BUILD.mode==="wizard") ? [] : buildPicks();
+  var isWiz = BUILD.mode==="wizard";
+  var picks = isWiz
+    ? wspBuild().picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};})
+    : (firstVisit ? [] : buildPicks());
   // Risk bubble
   var _rb=$("riskBubble");
   if(_rb){ _rb.style.left="calc("+displayRisk+"% + "+(13-displayRisk*0.26)+"px)";
@@ -4203,9 +4215,10 @@ function renderBuilderOutput(){
   // Slip rows
   if(!picks.length){
     var dry=(SCOPE==="day")&&!scopeFixtures().length;
-    $("slip").innerHTML="<div class='bld-empty'><b>Nothing in your slip</b>"+
-      (dry?"No fixtures left today - switch to All upcoming to keep building."
-         : (firstVisit ? "Move the slider to build a fresh set of games." : "No games match \u2014 adjust risk or markets."))+"</div>";
+    $("slip").innerHTML="<div class='bld-empty'><b>"+(isWiz?"No slip yet":"Nothing in your slip")+"</b>"+
+      (isWiz?"No games match your wizard settings - try a lower payout or enable more markets."
+       : (dry?"No fixtures left today - switch to All upcoming to keep building."
+         : (firstVisit ? "Move the slider to build a fresh set of games." : "No games match \u2014 adjust risk or markets.")))+"</div>";
   } else {
     $("slip").innerHTML=picks.map(function(c){
       var f=c.f, cf=conf(c.p);
