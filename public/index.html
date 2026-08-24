@@ -1501,6 +1501,10 @@ html.mode-live #live{display:block}
 .wsp-acts .wsp-shuffle{flex:0 0 auto;padding:11px 16px;font-size:14px;white-space:nowrap}
 .book-btn{background:linear-gradient(180deg,#e6414e,var(--red))!important;box-shadow:0 3px 10px rgba(230,57,70,.4),inset 0 1px 0 rgba(255,255,255,.18)}
 .wsp-chip.on{background:var(--red);box-shadow:0 2px 8px rgba(230,57,70,.3)}
+/* Payout chips carry a risk hue (green x50 -> red x6000). Tinted when idle,
+   filled with the same hue when selected; overrides the generic red .on above. */
+.wsp-chip.wsp-risk{border-color:var(--wr);color:var(--wr)}
+.wsp-chip.wsp-risk.on{background:var(--wr);border-color:var(--wr);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.28)}
 /* The close button was absolutely positioned at right:0, which resolves against
    the head's padding box - so it sat flush against the sheet's inner edge with
    none of the gutter the rest of the header respects. Back to a plain flex item
@@ -2836,7 +2840,7 @@ addEventListener("keydown",function(e){
   }});
 
 /* ============================================================ build a slip */
-var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{dc:true,out:true,goals:true,both:true},touched:false,mode:"slider"};
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,goals:true,both:true},touched:false,mode:"slider"};
 try{var rr=localStorage.getItem("sw.risk"); if(rr!=null) BUILD.risk=+rr;}catch(e){}
 try{var rm=localStorage.getItem("sw.mode"); if(rm==="slider"||rm==="wizard") BUILD.mode=rm;}catch(e){}
 /* Ticket window. "day" holds every leg inside today, so the whole slip settles
@@ -3147,7 +3151,7 @@ function mLabel(f,c){
 }
 function buildPicks(){
   var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier), cand=[];
-  var mkOn={"1X":BUILD.mk.dc,"X2":BUILD.mk.dc,"12":BUILD.mk.dc,"1":BUILD.mk.out,"2":BUILD.mk.out,"OVER_1.5":BUILD.mk.goals,"OVER_2.5":BUILD.mk.goals,"GG":BUILD.mk.both};
+  var mkOn={"1X":BUILD.mk.wd,"X2":BUILD.mk.wd,"12":BUILD.mk.any,"1":BUILD.mk.out,"2":BUILD.mk.out,"OVER_1.5":BUILD.mk.goals,"OVER_2.5":BUILD.mk.goals,"GG":BUILD.mk.both};
   allowed=allowed.filter(function(c){return mkOn[c]!==false;});
   var f0=BUILD.risk/100;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
@@ -3167,6 +3171,11 @@ function buildPicks(){
       var v=mProb(f,c);
       if(v==null||isNaN(v)||v<p.minConf) return;
       var score=(1-f0)*v + f0*(oddOf(v)/12);
+      /* Goals lean: in a high-scoring game, nudge the over markets up so they can
+         beat the safe double-chance picks. Driven by the model's own Over-2.5
+         probability, so it favours high-scoring leagues (Eliteserien, Eredivisie,
+         Swiss) automatically - no hardcoded league list. */
+      if((c==="OVER_1.5"||c==="OVER_2.5") && f.o25!=null) score*=1+Math.max(0,f.o25-0.5)*0.8;
       score*=1+(h32(fid(f)+"|"+c+"|"+(BUILD.seed||0))-0.5)*(0.9+0.8*f0);
       if(score>bestScore){bestScore=score;best={code:c,p:v};}
     });
@@ -3188,9 +3197,23 @@ function buildPicks(){
     ka*=1+(h32(a.id+"|s"+(BUILD.seed||0))-0.5)*(0.9+f0); kb*=1+(h32(b.id+"|s"+(BUILD.seed||0))-0.5)*(0.9+f0);
     return kb-ka;
   });
-  cand=cand.filter(function(c){return !BUILD.removed[c.id];}).slice(0,cap);
-  BUILD.picks=cand;
-  return cand;
+  cand=cand.filter(function(c){return !BUILD.removed[c.id];});
+  /* League diversity: prefer spreading picks across leagues, softly. `cand` is
+     already sorted best-first; we take from the top but add a small rank penalty
+     per leg already drawn from the same country, so one league can't dominate the
+     slip. A clearly better pick from a saturated league still gets in. Mirrors
+     the wizard's soft cap. */
+  var picked=[],lc={},usedIx={},LEAGUE_PEN=3;
+  while(picked.length<cap){
+    var bi=-1,bs=Infinity;
+    for(var i=0;i<cand.length;i++){ if(usedIx[i]) continue;
+      var s=i+LEAGUE_PEN*(lc[countryOf(cand[i].f.league)]||0); if(s<bs){bs=s;bi=i;} }
+    if(bi<0) break;
+    usedIx[bi]=1; picked.push(cand[bi]);
+    var cc=countryOf(cand[bi].f.league); lc[cc]=(lc[cc]||0)+1;
+  }
+  BUILD.picks=picked;
+  return picked;
 }
 function oddOf(p){var q=Math.max(0.06,Math.min(0.97,p));return Math.pow(1/q,0.85);}
 function legOdd(f,code,p){var o=f&&f.sportyOdds&&f.sportyOdds[code];return (o&&o>1.01)?o:oddOf(p);}
@@ -3198,125 +3221,6 @@ function oddsAreReal(picks){return picks.length&&picks.every(function(c){var o=c
 function notStarted(f){if(f&&f.kickoff){return new Date(f.kickoff).getTime()>Date.now();}return isUpcoming(f);}
 function totalOdds(picks){
   return picks.reduce(function(t,c){return t*legOdd(c.f,c.code,c.p);},1);
-}
-function renderBuilder(){
-  // If risk not set yet (first visit), show empty state without generating picks
-  var firstVisit = BUILD.risk === null;
-  var displayRisk = firstVisit ? 45 : BUILD.risk;
-  var p = riskParams(displayRisk);
-  // --- Unified Market Palette config ---
-  var MKT_CFG=[
-    {k:"dc", label:"Double chance", tier:0, sub:"1X, X2, 12", icon:'<path d="M20 6L10 17L6 13"/>'},
-    {k:"out", label:"Outright wins", tier:1, sub:"1, 2", icon:'<path d="M5 12H19M19 12L12 5M19 12L12 19"/>'},
-    {k:"goals", label:"Goals", tier:0, sub:"Over 1.5", tierMax:2, subMax:"Over 2.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 8V12M12 16H12.01"/>'},
-    {k:"both", label:"Both score", tier:2, sub:"GG", icon:'<path d="M17 21V5A2 2 0 0015 3H9A2 2 0 007 5V21"/><path d="M7 7H17"/><path d="M9 11H15"/><path d="M9 15H15"/><path d="M9 19H15"/>'}
-  ];
-  (function(){
-    var lg=$("bldLeagues"),mkw=$("bldMk"); if(!lg||!mkw) return;
-    lg.querySelectorAll("[data-btp]").forEach(function(c){c.classList.toggle("on",(c.dataset.btp==="true")===!!TOP_ONLY);});
-    // Render unified market palette
-    var html=MKT_CFG.map(function(m){
-      var enabled=BUILD.mk[m.k]!==false;
-      var locked=p.tier < m.tier;
-      var tierLabel=["Safe","Balanced","Risky"][m.tier];
-      var subLabel=m.sub;
-      if(m.tierMax!==undefined && p.tier >= m.tierMax){
-        tierLabel=["Safe","Balanced","Risky"][m.tierMax];
-        subLabel=m.subMax;
-      }
-      var unlockClass=(window._prevTier!==undefined && p.tier > window._prevTier && p.tier >= m.tier && window._prevTier < m.tier) ? " unlocking" : "";
-      return "<button class='mkt-chip"+(enabled?" on":"")+(locked?" locked":"")+unlockClass+"' data-m='"+m.k+"' "+(locked?"disabled":"")+" type='button'>"+
-        "<span class='mkt-icon' aria-hidden='true'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>"+m.icon+"</svg></span>"+
-        "<span>"+m.label+"</span>"+
-        "<span class='tier-badge' title='Unlocks at "+tierLabel+" tier'>T"+(m.tier+1)+"</span>"+
-        "</button>";
-    }).join("");
-    mkw.innerHTML=html;
-    // Click handlers
-    mkw.querySelectorAll("[data-m]").forEach(function(c){
-      c.addEventListener("click",function(){
-        if (c.classList.contains("locked")) return; // respect tier lock
-        var k=c.dataset.m;
-        var on=Object.keys(BUILD.mk).filter(function(x){return BUILD.mk[x];});
-        if(BUILD.mk[k]&&on.length===1) return;
-        BUILD.mk[k]=!BUILD.mk[k];
-        renderBuilder();
-      });
-    });
-    // Remember tier for unlock animation next render
-    window._prevTier=p.tier;
-  })();
-  // Default slider position for first visit (visual only, not "touched")
-  var displayRisk = firstVisit ? 45 : BUILD.risk;
-  $("risk").value=displayRisk;
-  (function(){var _r=$("risk");if(_r){_r.style.setProperty("--fill",displayRisk+"%");_r.style.backgroundSize=displayRisk+"% 100%";
-    var _z=displayRisk<33?"safe":displayRisk<66?"mid":"risky";var _sp=$("sliderPanel");if(_sp)_sp.setAttribute("data-zone",_z);
-    _r.style.setProperty("--rz",_z==="safe"?"rgba(43,199,120,.35)":_z==="mid"?"rgba(242,184,75,.4)":"rgba(230,57,70,.4)");}})();
-  $("riskName").textContent=firstVisit ? "\u2014" : riskWord(BUILD.risk);
-  var picks = firstVisit ? [] : buildPicks();
-  $("riskSub").textContent=firstVisit ? "Move slider to build" : (picks.length+" game"+(picks.length===1?"":"s")+
-    " \u00b7 "+P0(p.minConf)+"%+ confidence");
-  // markets chips - now rendered in unified palette above
-  // Stats. Total odds reads as the third figure here rather than as its own
-  // block down in the footer: the grid was already three columns wide with a
-  // .stat.odds rule waiting on it, and since renderBuilder runs on every
-  // slider tick the payout previews live while you drag.
-  var odds=totalOdds(picks);
-  var real=oddsAreReal(picks), pre=real?"\u00d7":"~\u00d7";
-  var avg=picks.length?picks.reduce(function(t,c){return t+c.p;},0)/picks.length:0;
-  $("bldStats").innerHTML=
-    "<div class='stat'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='4' y='7' width='16' height='13' rx='2'/><path d='M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/></svg></span><b>"+picks.length+"</b><i>Games</i></div>"+
-    "<div class='stat'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z'/></svg></span><b>"+(picks.length?P0(avg)+"%":"-")+"</b><i>Avg confidence</i></div>"+
-    "<div class='stat odds'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='8'/><path d='M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3H10a1.5 1.5 0 0 0 0 3h4'/></svg></span><b id='totOdds'>"+(picks.length?pre+odds.toFixed(2):"-")+"</b>"+
-      "<i>Total odds"+(picks.length&&!real?" (est.)":"")+"</i></div>";
-  // The bubble under the thumb spends its width on the two figures that move
-  // as you drag; the risk word is already named above the slider and on the
-  // ticks below it, so repeating it there earned nothing.
-  var _rb=$("riskBubble");
-  if(_rb){ _rb.style.left="calc("+displayRisk+"% + "+(13-displayRisk*0.26)+"px)";
-    _rb.textContent=firstVisit ? "\u2014" : (picks.length
-      ? picks.length+" game"+(picks.length===1?"":"s")
-      : "No games"); }
-  // slip rows
-  if(!picks.length){
-    var dry=(SCOPE==="day")&&!scopeFixtures().length;
-    $("slip").innerHTML="<div class='bld-empty'><b>Nothing in your slip</b>"+
-      (dry?"No fixtures left today - switch to All upcoming to keep building."
-         : (firstVisit ? "Move the slider to build a fresh set of games." : "No games match \u2014 adjust risk or markets."))+"</div>";
-  } else {
-    $("slip").innerHTML=picks.map(function(c){
-      var f=c.f, cf=conf(c.p);
-      return "<div class='sp-row conf-"+cf+"'>"+
-        "<div class='sp-main'><div class='sp-teams'>"+esc(f.home)+" v "+esc(f.away)+
-          (c.eventId?"":"<span class='sp-noid' title='Not on SportyBet yet - can&apos;t auto-book'>no ID</span>")+"</div>"+
-          "<div class='sp-meta'>"+compOf(f.league)+" \u00b7 "+dayName(dayOff(f.date))+" "+kickTime(f)+"</div></div>"+
-        "<div class='sp-pick'><b>"+mLabel(f,c.code)+"</b><i>"+P0(c.p)+"%</i></div>"+
-        "<span class='sp-odd'>"+legOdd(c.f,c.code,c.p).toFixed(2)+"</span>"+
-        "<button class='sp-x' data-rm='"+c.id+"' aria-label='Remove'>"+XSVG+"</button>"+
-      "</div>";
-    }).join("");
-    $("slip").querySelectorAll("[data-rm]").forEach(function(b){
-      b.addEventListener("click",function(){if(BUILD.mode==="wizard"){WSP.removed[b.dataset.rm]=1;}else{BUILD.removed[b.dataset.rm]=1;}renderBuilder();});});
-  }
-  // one slip: keep manual picks, refresh the builder-generated ones (only after the user engages the slider)
-  if(BUILD.touched){
-    MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
-      .concat(picks.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true};}));
-    var _seen={}; MYSLIP=MYSLIP.filter(function(x){if(_seen[x.id])return false;_seen[x.id]=1;return true;});
-    saveMy(); renderFab();
-  }
-  var bookable=picks.filter(function(c){return c.eventId;}).length;
-  var btn=$("bookBtn");
-  btn.disabled=BUILD.booking||!bookable;
-  btn.textContent=BUILD.booking?"Booking\u2026":"Get code";
-  // Hide footer actions when slip is empty
-  var foot=$("bldFoot");
-  if(foot) foot.style.display = picks.length ? "flex" : "none";
-  var note=$("bldNote");
-  if(!picks.length) note.textContent="";
-  else if(!bookable) note.textContent="These fixtures have no SportyBet event ID yet, so they can't be booked automatically.";
-  else if(bookable<picks.length) note.textContent=bookable+" of "+picks.length+" games are on SportyBet right now - you can book those and skip the rest.";
-  else note.textContent="Booking "+bookable+" selection"+(bookable===1?"":"s")+" to SportyBet.";
 }
 async function bookSlip(){
   var picks = BUILD.picks;
@@ -4277,28 +4181,6 @@ function wspBuild(){
   return accumulate(pool);
 }
 // --- Wizard panel rendering (replaces renderWsp) ---
-function renderWizardPanel(){
-  var odds=[50,100,500,1000,2000,6000];
-  var styles=[[1.25,"Safer, more games"],[1.4,"Balanced"],[1.7,"Fewer, bigger games"]];
-  var mk=[["doubles","Safe doubles"],["out","Outright wins"],["goals","Goals"],["both","Both score"]];
-  var html="";
-  html += "<div class='wsp-lbl'>Target payout</div><div class='wsp-chips' id='wspOddsChips'>"+
-    odds.map(function(o){return "<button class='wsp-chip"+(WSP.odds===o?" on":"")+"' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>";
-  html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips' id='wspStyleChips'>"+
-    styles.map(function(st){return "<button class='wsp-chip"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'>"+st[1]+"</button>";}).join("")+"</div>";
-  html += "<div class='wsp-acts'>"+
-    "<button class='book-btn wsp-go' id='wspGo' type='button'>Conjure my slip</button>"+
-    "</div>";
-  $("wizardPanel").innerHTML=html;
-  // Event listeners
-  $("wspOddsChips").querySelectorAll("[data-o]").forEach(function(c){
-    c.addEventListener("click",function(){WSP.odds=+c.dataset.o;WSP.conjured=false;renderBuilder();});
-  });
-  $("wspStyleChips").querySelectorAll("[data-lo]").forEach(function(c){
-    c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;WSP.conjured=false;renderBuilder();});
-  });
-  $("wspGo").addEventListener("click",function(){wspConjure(false);});
-}
 function wspConjure(shuffle){
   if(shuffle){WSP.seed=Math.floor(Math.random()*1e6);WSP.shuffles=(WSP.shuffles||0)+1;}
   else {WSP.removed={};}
@@ -4324,7 +4206,8 @@ function renderBuilder(){
 function renderShared(){
   var p = BUILD.risk===null ? {tier:1, minConf:0.65, maxGames:18} : riskParams(BUILD.risk);
   var MKT_CFG=[
-    {k:"dc", label:"Double chance", tier:0, sub:"1X, X2, 12", icon:'<path d="M20 6L10 17L6 13"/>'},
+    {k:"wd", label:"Win or draw", tier:0, sub:"1X, X2", icon:'<path d="M20 6L10 17L6 13"/>'},
+    {k:"any", label:"Anybody wins", tier:1, sub:"12", icon:'<path d="M2 12h20M6 8l-4 4 4 4M18 8l4 4-4 4"/>'},
     {k:"out", label:"Outright wins", tier:1, sub:"1, 2", icon:'<path d="M5 12H19M19 12L12 5M19 12L12 19"/>'},
     {k:"goals", label:"Goals", tier:0, sub:"Over 1.5", tierMax:2, subMax:"Over 2.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 8V12M12 16H12.01"/>'},
     {k:"both", label:"Both score", tier:2, sub:"GG", icon:'<path d="M17 21V5A2 2 0 0015 3H9A2 2 0 007 5V21"/><path d="M7 7H17"/><path d="M9 11H15"/><path d="M9 15H15"/><path d="M9 19H15"/>'}
@@ -4356,9 +4239,10 @@ function renderShared(){
         var on=Object.keys(BUILD.mk).filter(function(x){return BUILD.mk[x];});
         if(BUILD.mk[k]&&on.length===1) return;
         BUILD.mk[k]=!BUILD.mk[k];
-        // Sync to WSP
-        var wspKey = k==="dc"?"doubles":k==="out"?"out":k==="goals"?"goals":"both";
-        WSP.mk[wspKey]=BUILD.mk[k];
+        // Sync to WSP where there's an equivalent. "any" (12) has none - the
+        // wizard never picks anybody-wins - so it doesn't sync.
+        var wspKey = k==="wd"?"doubles":k==="out"?"out":k==="goals"?"goals":k==="both"?"both":null;
+        if(wspKey) WSP.mk[wspKey]=BUILD.mk[k];
         renderBuilder();
       });
     });
@@ -4406,7 +4290,7 @@ function renderWizardPanel(){
   var styles=[[1.25,"Safer, more games"],[1.4,"Balanced"],[1.7,"Fewer, bigger games"]];
   var html="";
   html += "<div class='wsp-lbl'>Target payout</div><div class='wsp-chips' id='wspOddsChips'>"+
-    odds.map(function(o){return "<button class='wsp-chip"+(WSP.odds===o?" on":"")+"' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>";
+    odds.map(function(o,i){var hue=Math.round(145-145*(i/(odds.length-1)));return "<button class='wsp-chip wsp-risk"+(WSP.odds===o?" on":"")+"' style='--wr:hsl("+hue+",64%,46%)' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>";
   html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips' id='wspStyleChips'>"+
     styles.map(function(st){return "<button class='wsp-chip"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'>"+st[1]+"</button>";}).join("")+"</div>";
   html += "<div class='wsp-acts'>"+
@@ -4421,12 +4305,14 @@ function renderWizardPanel(){
     b.classList.toggle("on",b.dataset.mode===BUILD.mode);
     b.setAttribute("aria-selected",b.dataset.mode===BUILD.mode?"true":"false");
   });
-  // Event listeners
+  // Event listeners. Tapping a payout / style chip builds the preview live
+  // (conjured=true) so the games / avg-confidence / total-odds boxes update
+  // immediately - no separate Conjure tap needed just to see the numbers.
   $("wspOddsChips").querySelectorAll("[data-o]").forEach(function(c){
-    c.addEventListener("click",function(){WSP.odds=+c.dataset.o;WSP.conjured=false;renderBuilder();});
+    c.addEventListener("click",function(){WSP.odds=+c.dataset.o;WSP.conjured=true;renderBuilder();});
   });
   $("wspStyleChips").querySelectorAll("[data-lo]").forEach(function(c){
-    c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;WSP.conjured=false;renderBuilder();});
+    c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;WSP.conjured=true;renderBuilder();});
   });
   $("wspGo").addEventListener("click",function(){wspConjure(false);});
 }
@@ -4461,7 +4347,7 @@ function renderBuilderOutput(){
   if(!picks.length){
     var dry=(SCOPE==="day")&&!scopeFixtures().length;
     $("slip").innerHTML="<div class='bld-empty'><b>"+(isWiz?(WSP.conjured?"No slip yet":"Ready when you are")+"":"Nothing in your slip")+"</b>"+
-      (isWiz?(WSP.conjured?"No games match your wizard settings - try a lower payout or enable more markets.":"Set your target payout and tap Conjure.")
+      (isWiz?(WSP.conjured?"No games match your wizard settings - try a lower payout or enable more markets.":"Tap a target payout to preview your slip.")
        : (dry?"No fixtures left today - switch to All upcoming to keep building."
          : (firstVisit ? "Move the slider to build a fresh set of games." : "No games match \u2014 adjust risk or markets.")))+"</div>";
   } else {
