@@ -3001,14 +3001,12 @@ function attachEventIds(sporty){
   var hits=0, nearMisses=0, noMatches=0;
   DATA.fixtures.forEach(function(f){
     var cand=[];
-    /* Widened to ±3 days + hour proximity filter (within 12h of assumed 12:00 UTC) */
+    /* Candidate window: ±3 days around our fixture date (SportyBet's UTC start
+       can land a day either side of our local date, esp. late-night SA/MX games). */
     [-3,-2,-1,0,1,2,3].forEach(function(o){
       var dt=new Date(f.date+"T12:00:00Z"); dt.setUTCDate(dt.getUTCDate()+o);
       var k=dt.toISOString().slice(0,10);
-      if(byDate[k]) cand=cand.concat(byDate[k].filter(function(m){
-        var sportyHour = new Date(m.startTime).getUTCHours();
-        return Math.abs(sportyHour - 12) <= 12;  // within 12 hours of midday
-      }));
+      if(byDate[k]) cand=cand.concat(byDate[k]);
     });
     var best=null,bestScore=0;
     /* Exact-normalized match first: normTeam folds every known alias. */
@@ -3048,7 +3046,17 @@ function attachEventIds(sporty){
     }
     if (!best && bestScore === 0) {
       noMatches++;
-      try{console.log("[sporty] NO MATCH:", f.home, "v", f.away, "league:", f.league, "date:", f.date);}catch(e){}
+      /* Ungated closest event in the WHOLE feed - tells us "not in feed" (closest
+         is unrelated, low score) vs "named differently" (closest IS this game). */
+      var dbgBest=null, dbgScore=-1;
+      sporty.forEach(function(m){
+        var s = simTeams(f.home, m.homeTeam) + simTeams(f.away, m.awayTeam);
+        if (s > dbgScore) { dbgScore = s; dbgBest = m; }
+      });
+      try{console.log("[sporty] NO MATCH:", f.home, "v", f.away, "| league:", f.league, "| date:", f.date,
+        "|| closest in feed:", dbgBest?(dbgBest.homeTeam+" v "+dbgBest.awayTeam):"(none)",
+        "score:", dbgScore.toFixed(2),
+        "start:", dbgBest?new Date(dbgBest.startTime).toISOString().slice(0,10):"-");}catch(e){}
     }
   });
   try{console.log("[sporty] matched "+hits+"/"+DATA.fixtures.length+" from "+sporty.length+" events (near:"+nearMisses+", none:"+noMatches+")");}catch(e){}
