@@ -2869,6 +2869,7 @@ const SPORTY_FIXTURES="https://web-production-798c0.up.railway.app/api/fixtures"
 /* Common team name aliases that SportyBet uses but our data doesn't (or vice versa).
    These are applied AFTER accent stripping but BEFORE tokenization. */
 var TEAM_ALIASES = {
+  "athletico": "paranaense",
   "inter miami cf": "inter miami",
   "b. dortmund": "borussia dortmund",
   "b. monchengladbach": "borussia monchengladbach",
@@ -2962,7 +2963,14 @@ function normTeam(s){
   s=s.replace(/ø/g,"o").replace(/æ/g,"ae").replace(/å/g,"a").replace(/ß/g,"ss")
      .replace(/đ/g,"d").replace(/ð/g,"d").replace(/ł/g,"l").replace(/ı/g,"i").replace(/þ/g,"th");
   s=s.replace(/[`'.\-]/g," ");
+  /* Transliteration collapse: our data and SportyBet disagree on how they
+     romanise Scandinavian vowels - Brondby vs Broendby (ø), Valerenga vs
+     Vaalerenga (å). Collapse both spellings to the short form so they match. */
+  s=s.replace(/oe/g,"o").replace(/aa/g,"a");
   s=s.replace(/\butd\b/g,"united");
+  /* Cross-feed spelling variants seen in the wild (RU/AR leagues). */
+  s=s.replace(/\bdynamo\b/g,"dinamo").replace(/\btogliatti\b/g,"tolyatti")
+     .replace(/\bjrs\b/g,"juniors").replace(/\bjr\b/g,"juniors");
   s=s.replace(/\bman united\b/g,"manchester united").replace(/\bman city\b/g,"manchester city")
      .replace(/\bpsg\b/g,"paris").replace(/\bparis sg\b/g,"paris").replace(/\bparis saint germain\b/g,"paris")
      .replace(/\bspurs\b/g,"tottenham").replace(/\bwolves\b/g,"wolverhampton")
