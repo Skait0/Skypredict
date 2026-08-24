@@ -383,6 +383,7 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .toast.ok{border-color:var(--green)}
 .toast.err{border-color:var(--red)}
 .toast.err::before{content:"!";color:var(--red-ink);font-weight:800}
+.toast.info{border-color:var(--win)}
 .glance{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0 4px}
 .gl-card{position:relative;overflow:hidden;background:linear-gradient(150deg,var(--card),var(--card-2));
   border:1px solid var(--line);border-radius:var(--r-md);padding:14px;cursor:pointer;
@@ -1370,6 +1371,12 @@ html.mode-live #live{display:block}
 .code-open{background:var(--red);color:#fff}
 .code-err{background:var(--red-wash);border:1px solid var(--red);border-radius:var(--r-md);
   padding:15px;color:var(--red-ink);font-weight:600;font-size:14px}
+.code-info{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:15px;color:var(--soft);font-weight:600;font-size:14px;
+  display:flex;align-items:center;gap:10px}
+.code-info::before{content:"";width:14px;height:14px;flex-shrink:0;border-radius:50%;
+  border:2px solid var(--line);border-top-color:var(--win);animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .bld-empty{text-align:center;padding:40px 20px;color:var(--soft)}
 .bld-empty b{display:block;color:var(--text);font-size:16px;margin-bottom:4px}
 @media(max-width:560px){
@@ -2858,8 +2865,100 @@ function bookFetch(sel){
 }
 const SPORTY_URL="https://www.sportybet.com/ng/?shareCode=";
 const SPORTY_FIXTURES="https://web-production-798c0.up.railway.app/api/fixtures";
+
+/* Common team name aliases that SportyBet uses but our data doesn't (or vice versa).
+   These are applied AFTER accent stripping but BEFORE tokenization. */
+var TEAM_ALIASES = {
+  "inter miami cf": "inter miami",
+  "b. dortmund": "borussia dortmund",
+  "b. monchengladbach": "borussia monchengladbach",
+  "vfb stuttgart": "stuttgart",
+  "sv werder bremen": "werder bremen",
+  "rasenballsport leipzig": "leipzig",
+  "eintracht frankfurt": "frankfurt",
+  "bayern": "bayern munich",
+  "bayer": "bayer leverkusen",
+  "wolfsburg": "vfl wolfsburg",
+  "hoffenheim": "tsg hoffenheim",
+  "heidenheim": "1. fc heidenheim",
+  "st. pauli": "fc st pauli",
+  "union berlin": "1. fc union berlin",
+  "real madrid cf": "real madrid",
+  "atletico madrid": "atletico de madrid",
+  "athletic bilbao": "athletic club",
+  "deportivo alaves": "alaves",
+  "celta vigo": "celta de vigo",
+  "real sociedad": "sociedad",
+  "real betis": "betis",
+  "valencia cf": "valencia",
+  "villarreal cf": "villarreal",
+  "sevilla fc": "sevilla",
+  "getafe cf": "getafe",
+  "osasuna": "ca osasuna",
+  "mallorca": "rcd mallorca",
+  "rayo vallecano": "rayo",
+  "girona fc": "girona",
+  "las palmas": "ud las palmas",
+  "cadiz cf": "cadiz",
+  "almeria": "ud almeria",
+  "granada cf": "granada",
+  "ac milan": "milan",
+  "inter": "internazionale",
+  "as roma": "roma",
+  "ss lazio": "lazio",
+  "ssc napoli": "napoli",
+  "juventus fc": "juventus",
+  "torino fc": "torino",
+  "fiorentina": "acf fiorentina",
+  "bologna fc": "bologna",
+  "udinese": "udinese calcio",
+  "sassuolo": "us sassuolo",
+  "empoli fc": "empoli",
+  "salernitana": "us salernitana",
+  "lecce": "us lecce",
+  "cagliari": "cagliari calcio",
+  "genoa": "genoa cfc",
+  "hellas verona": "verona",
+  "frosinone": "frosinone calcio",
+  "psv eindhoven": "psv",
+  "feyenoord": "feyenoord rotterdam",
+  "az alkmaar": "az",
+  "twente": "fc twente",
+  "utrecht": "fc utrecht",
+  "heerenveen": "sc heerenveen",
+  "zwolle": "pec zwolle",
+  "groningen": "fc groningen",
+  "heracles": "heracles almelo",
+  "excelsior": "sbv excelsior",
+  "volendam": "fc volendam",
+  "almere city": "almere city fc",
+  "n.e.c.": "nec nijmegen",
+  "sparta rotterdam": "sparta",
+  "rkC waalwijk": "rkC",
+  "sc freiburg": "freiburg",
+  "vfl bochum": "bochum",
+  "vfl wolfsburg": "wolfsburg",
+  "fc koln": "koln",
+  "borussia mgladbach": "monchengladbach",
+  "tsg 1899 hoffenheim": "hoffenheim",
+  "sv darmstadt 98": "darmstadt",
+  "fc heidenheim": "heidenheim",
+  "fc union berlin": "union berlin",
+  "1. fc koln": "koln",
+  "1. fc heidenheim": "heidenheim",
+  "1. fc union berlin": "union berlin",
+  "fc st. pauli": "st. pauli",
+  "fc augsburg": "augsburg",
+  "vfb stuttgart": "stuttgart",
+  "eintracht frankfurt": "frankfurt",
+  "bayer 04 leverkusen": "leverkusen",
+  "borussia dortmund": "dortmund",
+  "fc bayern munchen": "bayern munich",
+  "rb leipzig": "leipzig",
+};
+
 function normTeam(s){
-  s=(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  s=(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
   s=s.replace(/ø/g,"o").replace(/æ/g,"ae").replace(/å/g,"a").replace(/ß/g,"ss")
      .replace(/đ/g,"d").replace(/ð/g,"d").replace(/ł/g,"l").replace(/ı/g,"i").replace(/þ/g,"th");
   s=s.replace(/[`'.\-]/g," ");
@@ -2874,14 +2973,17 @@ function normTeam(s){
   s=s.replace(/^\s*sporting\s*$/,"sp lisbon");
   s=s.replace(/\b(pa|sp|rj|mg|rs|sc|pr|ce|ba|go|pe|df|am|mt|ms|es|pb|rn|al|pi|ma|to|ap|ac|ro|rr|se)\b/g," ");
   s=s.replace(/\b(fc|cf|afc|ac|as|sv|us|ss|ssc|cd|ca|sk|if|bk|clube|club|do|da|de|dos|das|the|ec|se|ad|aa|cr|futebol)\b/g," ");
-  return s.replace(/\s+/g," ").trim();
+  s=s.replace(/\s+/g," ").trim();
+  /* Apply aliases AFTER cleaning so we match the canonical form */
+  if (TEAM_ALIASES[s]) s = TEAM_ALIASES[s];
+  return s;
 }
 function tokset(s){return normTeam(s).split(" ").filter(function(w){return w.length>=3;});}
 function simTeams(a,b){
   var na=normTeam(a),nb=normTeam(b);
   if(!na||!nb) return 0;
-  if(na===nb) return 1;
-  if(na.indexOf(nb)>=0||nb.indexOf(na)>=0) return 0.9;
+  if(na===nb) return 2.0;  // max score for perfect match
+  if(na.indexOf(nb)>=0||nb.indexOf(na)>=0) return 1.8;
   var ta=tokset(a),tb=tokset(b),sh=0;
   ta.forEach(function(x){
     if(tb.some(function(y){return x===y||(x.length>=4&&y.length>=4&&(x.indexOf(y)===0||y.indexOf(x)===0));})) sh++;
@@ -2896,35 +2998,60 @@ function attachEventIds(sporty){
     var k=new Date(m.startTime).toISOString().slice(0,10);
     (byDate[k]=byDate[k]||[]).push(m);
   });
-  var hits=0;
+  var hits=0, nearMisses=0, noMatches=0;
   DATA.fixtures.forEach(function(f){
     var cand=[];
-    [-2,-1,0,1,2].forEach(function(o){
+    /* Widened to ±3 days + hour proximity filter (within 12h of assumed 12:00 UTC) */
+    [-3,-2,-1,0,1,2,3].forEach(function(o){
       var dt=new Date(f.date+"T12:00:00Z"); dt.setUTCDate(dt.getUTCDate()+o);
       var k=dt.toISOString().slice(0,10);
-      if(byDate[k]) cand=cand.concat(byDate[k]);
+      if(byDate[k]) cand=cand.concat(byDate[k].filter(function(m){
+        var sportyHour = new Date(m.startTime).getUTCHours();
+        return Math.abs(sportyHour - 12) <= 12;  // within 12 hours of midday
+      }));
     });
     var best=null,bestScore=0;
-    /* Exact-normalized match first: normTeam folds every known alias, so a name
-       we recognise resolves deterministically (no fuzzy mis-book). The token
-       score below is only a guarded fallback for unseen decorations. */
+    /* Exact-normalized match first: normTeam folds every known alias. */
     var fh=normTeam(f.home),fa=normTeam(f.away);
     for(var i=0;i<cand.length;i++){
       if(normTeam(cand[i].homeTeam)===fh && normTeam(cand[i].awayTeam)===fa){best=cand[i];bestScore=99;break;}
     }
     if(!best) cand.forEach(function(m){
-      var s=simTeams(f.home,m.homeTeam)+simTeams(f.away,m.awayTeam);
-      if(s>bestScore){bestScore=s;best=m;}
+      /* Per-side scoring: BOTH sides must meet minimum (0.6), then combine */
+      var sHome = simTeams(f.home, m.homeTeam);
+      var sAway = simTeams(f.away, m.awayTeam);
+      if (sHome >= 0.6 && sAway >= 0.6) {
+        var combined = sHome + sAway;
+        if (combined > bestScore) { bestScore = combined; best = m; }
+      }
     });
-    if(best&&bestScore>=1.3){f.eventId=best.eventId;f.sportyOdds=best.odds||{};blendFixture(f);hits++;return;}
+    if(best && bestScore >= 1.2){  // lowered from 1.3
+      f.eventId=best.eventId; f.sportyOdds=best.odds||{}; blendFixture(f); hits++; return;
+    }
+    /* Fallback: search ALL sporty events (not just ±3 days) with stricter threshold */
     var gb=null,gs=0;
     sporty.forEach(function(m){
-      var s=simTeams(f.home,m.homeTeam)+simTeams(f.away,m.awayTeam);
-      if(s>gs){gs=s;gb=m;}
+      var sHome = simTeams(f.home, m.homeTeam);
+      var sAway = simTeams(f.away, m.awayTeam);
+      if (sHome >= 0.7 && sAway >= 0.7) {  // stricter for global search
+        var combined = sHome + sAway;
+        if (combined > gs) { gs = combined; gb = m; }
+      }
     });
-    if(gb&&gs>=1.6){f.eventId=gb.eventId;f.sportyOdds=gb.odds||{};blendFixture(f);hits++;}
+    if(gb && gs >= 1.4){  // lowered from 1.6
+      f.eventId=gb.eventId; f.sportyOdds=gb.odds||{}; blendFixture(f); hits++; return;
+    }
+    /* Debug logging */
+    if (bestScore > 0 && bestScore < 1.2) {
+      nearMisses++;
+      try{console.log("[sporty] NEAR MISS:", f.home, "v", f.away, "->", best?.homeTeam, "v", best?.awayTeam, "score:", bestScore.toFixed(2));}catch(e){}
+    }
+    if (!best && bestScore === 0) {
+      noMatches++;
+      try{console.log("[sporty] NO MATCH:", f.home, "v", f.away, "league:", f.league, "date:", f.date);}catch(e){}
+    }
   });
-  try{console.log("[sporty] matched "+hits+"/"+DATA.fixtures.length+" from "+sporty.length+" events");}catch(e){}
+  try{console.log("[sporty] matched "+hits+"/"+DATA.fixtures.length+" from "+sporty.length+" events (near:"+nearMisses+", none:"+noMatches+")");}catch(e){}
   return hits;
 }
 async function loadSporty(){
@@ -3024,7 +3151,8 @@ function totalOdds(picks){
 function renderBuilder(){
   // If risk not set yet (first visit), show empty state without generating picks
   var firstVisit = BUILD.risk === null;
-  var p = firstVisit ? {tier:1, minConf:0.65, maxGames:18} : riskParams(BUILD.risk);
+  var displayRisk = firstVisit ? 45 : BUILD.risk;
+  var p = riskParams(displayRisk);
   // --- Unified Market Palette config ---
   var MKT_CFG=[
     {k:"dc", label:"Double chance", tier:0, sub:"1X, X2, 12", icon:'<path d="M20 6L10 17L6 13"/>'},
@@ -3056,6 +3184,7 @@ function renderBuilder(){
     // Click handlers
     mkw.querySelectorAll("[data-m]").forEach(function(c){
       c.addEventListener("click",function(){
+        if (c.classList.contains("locked")) return; // respect tier lock
         var k=c.dataset.m;
         var on=Object.keys(BUILD.mk).filter(function(x){return BUILD.mk[x];});
         if(BUILD.mk[k]&&on.length===1) return;
@@ -3138,9 +3267,21 @@ function renderBuilder(){
   else if(bookable<picks.length) note.textContent=bookable+" of "+picks.length+" games are on SportyBet right now - you can book those and skip the rest.";
   else note.textContent="Booking "+bookable+" selection"+(bookable===1?"":"s")+" to SportyBet.";
 }
-function bookSlip(){
-  var bookable=BUILD.picks.filter(function(c){return c.eventId;});
-  var missing=BUILD.picks.filter(function(c){return !c.eventId;});
+async function bookSlip(){
+  var picks = BUILD.picks;
+  var bookable=picks.filter(function(c){return c.eventId;});
+  var missing=picks.filter(function(c){return !c.eventId;});
+
+  /* If some picks lack eventId, try to match them first before giving up */
+  if(missing.length > 0){
+    $("bookResult").innerHTML="<div class='code-info'>Matching SportyBet events...</div>";
+    await loadSporty();
+    /* Re-evaluate after matching */
+    picks = BUILD.picks;  // refresh in case DATA.fixtures updated
+    bookable = picks.filter(function(c){return c.eventId;});
+    missing = picks.filter(function(c){return !c.eventId;});
+  }
+
   if(!bookable.length){
     $("bookResult").innerHTML="<div class='code-err'>None of these games are on "+
       "SportyBet right now, so a code can't be created. Try lowering the risk, or "+
@@ -3788,7 +3929,14 @@ function flyToSlip(srcEl){
 }
 function toggleMy(id,code,label,p,srcEl){
   var i=-1; for(var k=0;k<MYSLIP.length;k++){if(MYSLIP[k].id===id&&MYSLIP[k].code===code){i=k;break;}}
-  if(i>=0) MYSLIP.splice(i,1); else { MYSLIP.push({id:id,code:code,label:label,p:+p}); flyToSlip(srcEl); }
+  if(i>=0) MYSLIP.splice(i,1); else {
+    MYSLIP.push({id:id,code:code,label:label,p:+p}); flyToSlip(srcEl);
+    /* Heads-up if this game isn't on SportyBet yet - it can still be added, and
+       we'll retry matching at book time, but the user should know up front. */
+    var _f=fixtureById(id);
+    if(_f && !_f.eventId){ try{loadSporty();}catch(e){}
+      window.swToast&&window.swToast("Added - not on SportyBet yet, we'll match it when you book","info","noid"); }
+  }
   saveMy(); renderFab();
   document.querySelectorAll("[data-add='"+id+"'][data-code='"+code+"']").forEach(function(b){
     var on=myslipHas(id,code); b.classList.toggle("on",on);
@@ -3825,11 +3973,23 @@ function renderMySheet(){
   body.querySelectorAll("[data-myrm]").forEach(function(b){
     b.addEventListener("click",function(){var p=b.dataset.myrm.split("|"); toggleMy(p[0],p[1]);});});
 }
-function bookMy(){
+async function bookMy(){
   MYSLIP=MYSLIP.filter(function(x){var f=fixtureById(x.id);return !f||notStarted(f);});
   var picks=MYSLIP.map(function(x){var f=fixtureById(x.id);return {code:x.code,eventId:(f&&f.eventId)||null};});
   var bookable=picks.filter(function(c){return c.eventId;});
   var missing=picks.filter(function(c){return !c.eventId;});
+
+  /* If some picks lack eventId, try to match them first before giving up */
+  if(missing.length > 0){
+    $("myBookResult").innerHTML="<div class='code-info'>Matching SportyBet events…</div>";
+    await loadSporty();
+    /* Re-evaluate after matching */
+    picks=MYSLIP.map(function(x){var f=fixtureById(x.id);return {code:x.code,eventId:(f&&f.eventId)||null};});
+    bookable=picks.filter(function(c){return c.eventId;});
+    missing=picks.filter(function(c){return !c.eventId;});
+    if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
+  }
+
   if(!bookable.length){$("myBookResult").innerHTML="<div class='code-err'>None of these are on SportyBet right now, so a code can't be created.</div>";return;}
   var byEv={},dups=0;
   bookable.forEach(function(c){byEv[c.eventId]=(byEv[c.eventId]||0)+1;if(byEv[c.eventId]===2)dups++;});
@@ -4126,6 +4286,7 @@ function renderShared(){
     mkw.innerHTML=html;
     mkw.querySelectorAll("[data-m]").forEach(function(c){
       c.addEventListener("click",function(){
+        if (c.classList.contains("locked")) return; // respect tier lock
         var k=c.dataset.m;
         var on=Object.keys(BUILD.mk).filter(function(x){return BUILD.mk[x];});
         if(BUILD.mk[k]&&on.length===1) return;
@@ -4159,8 +4320,8 @@ function renderShared(){
 }
 function renderSliderPanel(){
   var firstVisit = BUILD.risk === null;
-  var p = firstVisit ? {tier:1, minConf:0.65, maxGames:18} : riskParams(BUILD.risk);
   var displayRisk = firstVisit ? 45 : BUILD.risk;
+  var p = riskParams(displayRisk);
   $("risk").value=displayRisk;
   (function(){var _r=$("risk");if(_r){_r.style.setProperty("--fill",displayRisk+"%");_r.style.backgroundSize=displayRisk+"% 100%";
     var _z=displayRisk<33?"safe":displayRisk<66?"mid":"risky";var _sp=$("sliderPanel");if(_sp)_sp.setAttribute("data-zone",_z);
@@ -4206,8 +4367,8 @@ function renderWizardPanel(){
 }
 function renderBuilderOutput(){
   var firstVisit = BUILD.risk === null;
-  var p = firstVisit ? {tier:1, minConf:0.65, maxGames:18} : riskParams(BUILD.risk);
   var displayRisk = firstVisit ? 45 : BUILD.risk;
+  var p = riskParams(displayRisk);
   var isWiz = BUILD.mode==="wizard";
   var picks = isWiz
     ? (WSP.conjured ? wspBuild().picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};}) : [])
