@@ -4208,18 +4208,32 @@ function wspBuild(){
         return Math.abs(Math.log(b.od)-Math.log(g))<Math.abs(Math.log(a.od)-Math.log(g))?b:a;});
       return {f:c.f,id:c.id,code:pick.code,p:pick.p,od:pick.od};
     });
-    chosen.sort(function(a,b){
-      return (Math.abs(Math.log(a.od)-Math.log(g))-Math.abs(Math.log(b.od)-Math.log(g)))
-        + (h32(a.id+"|s"+seed)-h32(b.id+"|s"+seed))*0.25;});
-    var picks=[],used={},prod=1;
-    for(var i=0;i<chosen.length&&picks.length<want;i++){
-      var c=chosen[i]; used[c.id]=1; picks.push(c); prod*=c.od;
+    /* Soft league cap: spread legs across leagues instead of stacking one, but
+       only as a PREFERENCE - the payout target is never sacrificed for it. A
+       per-league penalty nudges selection away from leagues already well
+       represented; because it's small and bounded, a leg that's a much better
+       odds fit still wins. Applied in BOTH phases so the fill-to-target step
+       (below) can't quietly re-stack one league. LEAGUE_PEN is the dial:
+       higher = more spread, lower = closer to pure odds-proximity. */
+    var LEAGUE_PEN=0.30;
+    function lgOf(c){return countryOf(c.f.league);}
+    chosen.forEach(function(c){ c._cost=Math.abs(Math.log(c.od)-Math.log(g))+(h32(c.id+"|s"+seed)-0.5)*0.25; });
+    var picks=[],used={},prod=1,lc={};
+    function take(c){ used[c.id]=1; picks.push(c); prod*=c.od; lc[lgOf(c)]=(lc[lgOf(c)]||0)+1; }
+    // Phase 1 - fill up to `want` legs nearest the per-leg target, spread across leagues.
+    while(picks.length<want){
+      var b1=null,s1=Infinity;
+      for(var i=0;i<chosen.length;i++){ var c=chosen[i]; if(used[c.id]) continue;
+        var sc=c._cost+LEAGUE_PEN*(lc[lgOf(c)]||0); if(sc<s1){s1=sc;b1=c;} }
+      if(!b1) break; take(b1);
     }
-    if(prod<T){
-      var rest=chosen.filter(function(c){return !used[c.id];}).sort(function(a,b){return b.od-a.od;});
-      for(var j=0;j<rest.length&&picks.length<cap&&prod<T;j++){
-        used[rest[j].id]=1; picks.push(rest[j]); prod*=rest[j].od;
-      }
+    // Phase 2 - still short of target: add legs, favouring high odds to close the
+    // gap fast but still tilting toward fresh leagues via the same penalty.
+    while(prod<T && picks.length<cap){
+      var b2=null,s2=-Infinity;
+      for(var k=0;k<chosen.length;k++){ var c2=chosen[k]; if(used[c2.id]) continue;
+        var sc2=Math.log(c2.od)-LEAGUE_PEN*(lc[lgOf(c2)]||0); if(sc2>s2){s2=sc2;b2=c2;} }
+      if(!b2) break; take(b2);
     }
     return {picks:picks,odds:prod};
   }
