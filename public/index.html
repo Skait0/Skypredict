@@ -3000,6 +3000,11 @@ function simTeams(a,b){
 }
 function attachEventIds(sporty){
   if(!sporty||!sporty.length) return 0;
+  /* Verbose per-fixture match logging is opt-in: add ?debug=1 (or #debug) to the
+     URL. Off by default so visitors get a clean console and we skip the
+     full-feed closest-match scan that only exists to diagnose misses. */
+  var SPORTY_DEBUG=false;
+  try{SPORTY_DEBUG=/[?&]debug=1\b/.test(location.search)||/\bdebug\b/.test(location.hash);}catch(e){}
   var byDate={};
   sporty.forEach(function(m){
     if(!m.eventId||!m.startTime) return;
@@ -3047,24 +3052,26 @@ function attachEventIds(sporty){
     if(gb && gs >= 1.4){  // lowered from 1.6
       f.eventId=gb.eventId; f.sportyOdds=gb.odds||{}; blendFixture(f); hits++; return;
     }
-    /* Debug logging */
+    /* Debug logging (opt-in via ?debug=1). Counts stay live for the summary. */
     if (bestScore > 0 && bestScore < 1.2) {
       nearMisses++;
-      try{console.log("[sporty] NEAR MISS:", f.home, "v", f.away, "->", best?.homeTeam, "v", best?.awayTeam, "score:", bestScore.toFixed(2));}catch(e){}
+      if (SPORTY_DEBUG) try{console.log("[sporty] NEAR MISS:", f.home, "v", f.away, "->", best?.homeTeam, "v", best?.awayTeam, "score:", bestScore.toFixed(2));}catch(e){}
     }
     if (!best && bestScore === 0) {
       noMatches++;
-      /* Ungated closest event in the WHOLE feed - tells us "not in feed" (closest
-         is unrelated, low score) vs "named differently" (closest IS this game). */
-      var dbgBest=null, dbgScore=-1;
-      sporty.forEach(function(m){
-        var s = simTeams(f.home, m.homeTeam) + simTeams(f.away, m.awayTeam);
-        if (s > dbgScore) { dbgScore = s; dbgBest = m; }
-      });
-      try{console.log("[sporty] NO MATCH:", f.home, "v", f.away, "| league:", f.league, "| date:", f.date,
-        "|| closest in feed:", dbgBest?(dbgBest.homeTeam+" v "+dbgBest.awayTeam):"(none)",
-        "score:", dbgScore.toFixed(2),
-        "start:", dbgBest?new Date(dbgBest.startTime).toISOString().slice(0,10):"-");}catch(e){}
+      if (SPORTY_DEBUG) {
+        /* Ungated closest event in the WHOLE feed - tells us "not in feed" (closest
+           is unrelated, low score) vs "named differently" (closest IS this game). */
+        var dbgBest=null, dbgScore=-1;
+        sporty.forEach(function(m){
+          var s = simTeams(f.home, m.homeTeam) + simTeams(f.away, m.awayTeam);
+          if (s > dbgScore) { dbgScore = s; dbgBest = m; }
+        });
+        try{console.log("[sporty] NO MATCH:", f.home, "v", f.away, "| league:", f.league, "| date:", f.date,
+          "|| closest in feed:", dbgBest?(dbgBest.homeTeam+" v "+dbgBest.awayTeam):"(none)",
+          "score:", dbgScore.toFixed(2),
+          "start:", dbgBest?new Date(dbgBest.startTime).toISOString().slice(0,10):"-");}catch(e){}
+      }
     }
   });
   try{console.log("[sporty] matched "+hits+"/"+DATA.fixtures.length+" from "+sporty.length+" events (near:"+nearMisses+", none:"+noMatches+")");}catch(e){}
