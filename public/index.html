@@ -739,7 +739,11 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .lrow.open .lmore{max-height:600px;padding-top:10px}
 /* ---- dense table (predictz-style) ---- */
 .lthead,.lrow{display:grid;
-  grid-template-columns:46px minmax(0,1fr) 44px 44px 44px minmax(120px,190px) 62px 18px;
+  /* was: 46 | 1fr | 44 | 44 | 44 | 120-190 | 62 | 18
+     now:  46 | 1fr | 38 | 38 | 38 | 120-208 | 62 | 18
+     1/X/2 only need ~32px; giving 6px each back to Tip prevents
+     long team names from visually crowding the Pred column. */
+  grid-template-columns:46px minmax(0,1fr) 38px 38px 38px minmax(120px,208px) 62px 18px;
   align-items:center;column-gap:14px}
 .lthead{padding:7px 8px 6px;font-size:10px;font-weight:800;letter-spacing:.06em;
   text-transform:uppercase;color:var(--faint);border-bottom:1px solid var(--line-soft);
@@ -4627,6 +4631,9 @@ setTimeout(hideLoader,8000);
   ['bookResult','myBookResult','sotdResult'].forEach(function(id){var el=document.getElementById(id);if(!el)return;
     new MutationObserver(function(){if(el.querySelector('.code-err'))window.swToast("Couldn't get a code",'err');}).observe(el,{childList:true});});
   var AC=null,soundOn=false;try{soundOn=localStorage.getItem('sw.sound')==='1';}catch(e){}
+  // Paint the live-alert button immediately so it matches localStorage on first load
+  // (the hardcoded HTML defaults to "Sound off"; __wireAlert only runs after render())
+  setTimeout(function(){ window.__wireAlert && window.__wireAlert(); }, 0);
   var goalAudio=null;
   function beep(){try{if(!goalAudio){goalAudio=new Audio('/goal.mp3');goalAudio.volume=0.7;}goalAudio.currentTime=0;goalAudio.play().catch(function(){});}catch(e){}}
   /* A short spell-cast shimmer, synthesised rather than downloaded: a rising
