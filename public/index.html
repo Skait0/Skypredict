@@ -3008,7 +3008,7 @@ function normTeam(s){
      .replace(/\ba lustenau\b/g,"lustenau").replace(/\batromitos athinon\b/g,"atromitos");
   s=s.replace(/^\s*sporting\s*$/,"sp lisbon");
   s=s.replace(/\b(pa|sp|rj|mg|rs|sc|pr|ce|ba|go|pe|df|am|mt|ms|es|pb|rn|al|pi|ma|to|ap|ac|ro|rr|se)\b/g," ");
-  s=s.replace(/\b(fc|cf|afc|ac|as|sv|us|ss|ssc|cd|ca|sk|if|bk|clube|club|do|da|de|dos|das|the|ec|se|ad|aa|cr|futebol)\b/g," ");
+  s=s.replace(/\b(fc|fk|cf|afc|ac|as|sv|us|ss|ssc|cd|ca|sk|if|bk|clube|club|do|da|de|dos|das|the|ec|se|ad|aa|cr|futebol)\b/g," ");
   s=s.replace(/\s+/g," ").trim();
   /* Apply aliases AFTER cleaning so we match the canonical form */
   if (TEAM_ALIASES[s]) s = TEAM_ALIASES[s];

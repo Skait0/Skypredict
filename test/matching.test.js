@@ -1,0 +1,101 @@
+// Tests for the SportyBet matching logic that lives inline in index.html.
+// We extract the real normTeam/tokset/simTeams/attachEventIds source and eval
+// it with stubs, so we're testing the SHIPPED code, not a reimplementation.
+//
+// Run:  node --test        (from repo root)  or  npm test
+
+const fs = require("node:fs");
+const path = require("node:path");
+const { test } = require("node:test");
+const assert = require("node:assert");
+
+const html = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+
+// Slice from `var TEAM_ALIASES = {` through the end of attachEventIds().
+const start = html.indexOf("var TEAM_ALIASES = {");
+const anchor = html.indexOf("return hits;", start);
+const end = html.indexOf("}", anchor) + 1;
+if (start < 0 || anchor < 0) throw new Error("could not locate matching code in index.html");
+const slice = html.slice(start, end);
+
+// Build a factory that closes over injected DATA + blendFixture stub and returns
+// the real functions. attachEventIds reads DATA.fixtures and calls blendFixture.
+const factory = new Function(
+  "DATA", "blendFixture",
+  slice + "\nreturn { normTeam, tokset, simTeams, attachEventIds };"
+);
+function makeApi(fixtures) {
+  const DATA = { fixtures };
+  return { DATA, api: factory(DATA, function () {}) };
+}
+const { api } = makeApi([]);
+
+const TS = new Date("2026-08-24T12:00:00Z").getTime();  // start time within the window
+
+test("normTeam folds Scandinavian transliteration variants", () => {
+  assert.equal(api.normTeam("Brondby"), api.normTeam("Broendby IF"));
+  assert.equal(api.normTeam("Valerenga"), api.normTeam("Vaalerenga IF"));
+  assert.equal(api.normTeam("Bodo/Glimt"), api.normTeam("Bodoe/Glimt"));
+});
+
+test("normTeam folds spelling variants (RU/AR)", () => {
+  assert.equal(api.normTeam("Dynamo Moscow"), api.normTeam("FK Dinamo Moscow"));
+  assert.equal(api.normTeam("Akron Togliatti"), api.normTeam("FK Akron Tolyatti"));
+  assert.equal(api.normTeam("Argentinos Jrs"), api.normTeam("Argentinos Juniors"));
+  assert.equal(api.normTeam("Athletico-PR"), api.normTeam("CA Paranaense PR"));
+});
+
+test("simTeams: exact=2.0, substring high, unrelated low", () => {
+  assert.equal(api.simTeams("Arsenal", "Arsenal"), 2.0);
+  assert.ok(api.simTeams("Bayern", "Bayern Munich") >= 1.8);
+  assert.ok(api.simTeams("Arsenal", "Chelsea") < 0.6);
+});
+
+test("normTeam does NOT collapse distinct clubs (no false alias)", () => {
+  // Atletico (no h) vs Athletico (Brazilian) vs Athletic (Bilbao) stay distinct
+  assert.notEqual(api.normTeam("Atletico Madrid"), api.normTeam("Athletico Paranaense"));
+  assert.notEqual(api.normTeam("Athletic Bilbao"), api.normTeam("Athletico Paranaense"));
+});
+
+// The 17 real no-match pairs from production logs: [ourH, ourA, sportyH, sportyA, shouldMatch]
+const PAIRS = [
+  ["Racing Club","Boca Juniors","Gimnasia y Esgrima Mendoza","Boca Juniors", false],
+  ["Lanus","Argentinos Jrs","CA Lanus","Argentinos Juniors", true],
+  ["Botafogo RJ","Athletico-PR","Botafogo FR RJ","CA Paranaense PR", true],
+  ["Brondby","Silkeborg","Broendby IF","Silkeborg IF", true],
+  ["Atl. San Luis","Pachuca","San Luis de Quillota","Santiago Wanderers", false],
+  ["UNAM Pumas","Necaxa","Fulham","Chelsea", false],
+  ["Atlanta Utd","Sporting Kansas City","Atlanta United FC","Charlotte FC", false],
+  ["Valerenga","Molde","Vaalerenga IF","Molde", true],
+  ["Bodo/Glimt","Rosenborg","Bodoe/Glimt","Rosenborg BK", true],
+  ["Lillestrom","Fredrikstad","Lille","PSG", false],
+  ["Hacken","Vasteras SK","BK Hacken","Vasteraas SK", true],
+  ["Akron Togliatti","CSKA Moscow","FK Akron Tolyatti","CSKA Moscow", true],
+  ["Lokomotiv Moscow","Dynamo Moscow","Lokomotiv Moscow","FK Dinamo Moscow", true],
+  ["Orenburg","Akron Togliatti","FC Orenburg","FK Akron Tolyatti", true],
+  ["Dynamo Moscow","Spartak Moscow","FK Dinamo Moscow","FK Spartak Moscow", true],
+  ["Nordsjaelland","Brondby","Nordsjaelland","Broendby IF", true],
+  ["Akron Togliatti","Lokomotiv Moscow","FK Akron Tolyatti","Lokomotiv Moscow", true],
+];
+
+test("attachEventIds: 12 recover, 5 different-games correctly skipped (no mis-book)", () => {
+  let recovered = 0, skipped = 0;
+  for (const [oh, oa, sh, sa, should] of PAIRS) {
+    const { DATA, api: a } = makeApi([{ home: oh, away: oa, date: "2026-08-24" }]);
+    const sporty = [{ eventId: "sr:evt:1", homeTeam: sh, awayTeam: sa, startTime: TS, odds: {} }];
+    a.attachEventIds(sporty);
+    const matched = DATA.fixtures[0].eventId === "sr:evt:1";
+    assert.equal(matched, should, `${oh} v ${oa} -> ${sh} v ${sa}: expected match=${should}`);
+    if (should) recovered++; else skipped++;
+  }
+  assert.equal(recovered, 12);
+  assert.equal(skipped, 5);
+});
+
+test("attachEventIds sets sportyOdds on a real match", () => {
+  const { DATA, api: a } = makeApi([{ home: "Brondby", away: "Silkeborg", date: "2026-08-24" }]);
+  a.attachEventIds([{ eventId: "sr:evt:9", homeTeam: "Broendby IF", awayTeam: "Silkeborg IF",
+                      startTime: TS, odds: { "1": 2.0 } }]);
+  assert.equal(DATA.fixtures[0].eventId, "sr:evt:9");
+  assert.deepEqual(DATA.fixtures[0].sportyOdds, { "1": 2.0 });
+});
