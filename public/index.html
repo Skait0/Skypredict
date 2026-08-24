@@ -3279,7 +3279,11 @@ function doBook(picks){
     });
 }
 function clearSlip(){
+  // Clear BOTH builders so "clear" means clear whichever mode you switch to next
+  // (slider and wizard keep separate slips, which otherwise looks like cleared
+  // games "coming back" when you switch modes).
   BUILD.picks.forEach(function(c){BUILD.removed[c.id]=1;});
+  WSP.conjured=false; WSP.removed={}; WSP._slip=null; WSP._sig=null;
   $("bookResult").innerHTML="";
   var to=$("totOdds"); if(to) to.textContent="-";
   renderBuilder();
@@ -4184,6 +4188,7 @@ function wspBuild(){
 function wspConjure(shuffle){
   if(shuffle){WSP.seed=Math.floor(Math.random()*1e6);WSP.shuffles=(WSP.shuffles||0)+1;}
   else {WSP.removed={};}
+  WSP._sig=null;  // force a fresh build (not the cached slip)
   WSP.conjured=true;
   var r=wspBuild();
   if(!r.picks.length){WSP.conjured=false;window.swToast&&window.swToast("No games to conjure right now","err");return;}
@@ -4217,7 +4222,10 @@ function renderShared(){
     lg.querySelectorAll("[data-btp]").forEach(function(c){c.classList.toggle("on",(c.dataset.btp==="true")===!!TOP_ONLY);});
     var html=MKT_CFG.map(function(m){
       var enabled=BUILD.mk[m.k]!==false;
-      var locked=p.tier < m.tier;
+      // Tier locks are a slider concept (unlock riskier markets as you slide up).
+      // The wizard has its own market model, so nothing is tier-locked there -
+      // otherwise "Both score" (tier 2) shows greyed out and can't be enabled.
+      var locked=(BUILD.mode!=="wizard") && (p.tier < m.tier);
       var tierLabel=["Safe","Balanced","Risky"][m.tier];
       var subLabel=m.sub;
       if(m.tierMax!==undefined && p.tier >= m.tierMax){
@@ -4321,9 +4329,24 @@ function renderBuilderOutput(){
   var displayRisk = firstVisit ? 45 : BUILD.risk;
   var p = riskParams(displayRisk);
   var isWiz = BUILD.mode==="wizard";
-  var picks = isWiz
-    ? (WSP.conjured ? wspBuild().picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};}) : [])
-    : (firstVisit ? [] : buildPicks());
+  var picks;
+  if(isWiz){
+    if(WSP.conjured){
+      /* Cache the conjured slip and only rebuild when a build INPUT changes
+         (payout, style, markets, shuffle seed, league filter, scope). A plain
+         delete changes only WSP.removed - not the signature - so we filter the
+         cached slip instead of rebuilding, which means a removed leg shrinks the
+         slip and stays gone rather than getting back-filled to hit the target. */
+      var _sig=[WSP.odds,WSP.legodd,WSP.seed,JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE].join("|");
+      if(WSP._sig!==_sig || !WSP._slip){
+        WSP._slip=wspBuild().picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};});
+        WSP._sig=_sig;
+      }
+      picks=WSP._slip.filter(function(c){return !WSP.removed[c.id];});
+    } else picks=[];
+  } else {
+    picks = firstVisit ? [] : buildPicks();
+  }
   BUILD.picks = picks;
   // Risk bubble
   var _rb=$("riskBubble");
@@ -4651,20 +4674,29 @@ setTimeout(hideLoader,8000);
       });
     }
   };}
-  window.__wireAlert=function(){var b=document.getElementById('liveAlert');if(!b||b._w)return;b._w=1;
+  /* Sound toggle. One delegated click handler on document, so it works no matter
+     how often the live view re-renders - a per-element onclick can be lost if the
+     button element is ever replaced; delegation cannot. __wireAlert just repaints
+     the bell to the current state (safe to call on every render). */
+  function _bellPaint(b){
     var base='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>';
     var ON=base+'<path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>';
     var OFF=base+'<line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>';
-    function pa(){b.classList.toggle('on',soundOn);b.setAttribute('aria-pressed',soundOn);b.title=soundOn?'Goal sound on':'Goal sound off';b.innerHTML=(soundOn?ON:OFF)+"<span class='bell-lbl'>"+(soundOn?'Sound on':'Sound off')+"</span>";}
-    function testBeep(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();var o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=880;o.connect(g);g.connect(AC.destination);var t=AC.currentTime;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.25,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.28);o.start(t);o.stop(t+0.3);}catch(e){}}
-    pa();
-    b.onclick=function(){
-      soundOn=!soundOn;
-      try{localStorage.setItem('sw.sound',soundOn?'1':'0');}catch(e){}
-      pa();
-      if(soundOn){testBeep();try{beep();}catch(e){}}
-      window.swToast&&window.swToast(soundOn?'Goal sound on':'Goal sound off','ok','alert');
-    };};
+    b.classList.toggle('on',soundOn);
+    b.setAttribute('aria-pressed',soundOn?'true':'false');
+    b.title=soundOn?'Goal sound on':'Goal sound off';
+    b.innerHTML=(soundOn?ON:OFF)+"<span class='bell-lbl'>"+(soundOn?'Sound on':'Sound off')+"</span>";
+  }
+  function _bellTestBeep(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();var o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=880;o.connect(g);g.connect(AC.destination);var t=AC.currentTime;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.25,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.28);o.start(t);o.stop(t+0.3);}catch(e){}}
+  document.addEventListener('click',function(e){
+    var b=e.target&&e.target.closest&&e.target.closest('#liveAlert'); if(!b) return;
+    soundOn=!soundOn;
+    try{localStorage.setItem('sw.sound',soundOn?'1':'0');}catch(_e){}
+    _bellPaint(b);
+    if(soundOn){_bellTestBeep();try{beep();}catch(_e){}}
+    window.swToast&&window.swToast(soundOn?'Goal sound on':'Goal sound off','ok','alert');
+  });
+  window.__wireAlert=function(){var b=document.getElementById('liveAlert');if(b)_bellPaint(b);};
   window.__settleRecord=function(){var bar=document.querySelector('.record-bar i');if(!bar||bar._settled)return;bar._settled=1;var w=bar.style.width;bar.style.width='0%';requestAnimationFrame(function(){requestAnimationFrame(function(){bar.style.width=w;});});};
   if(typeof render==='function'){var __ro=render;render=function(){__ro.apply(this,arguments);window.__afterRender();};}
   if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
