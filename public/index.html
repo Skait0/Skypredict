@@ -574,6 +574,11 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
   letter-spacing:.09em;text-transform:uppercase;font-weight:800;position:relative;overflow:hidden;
   transition:box-shadow .2s,border-color .2s}
 .sc-logo{height:30px;width:auto;display:inline-block;margin-left:9px;vertical-align:-9px;border-radius:4px}
+.sc-head{display:flex;align-items:flex-start;gap:13px}
+.sc-actions{display:flex;gap:10px;margin-top:12px;padding-left:47px;flex-wrap:wrap}
+.slider-btn{background:linear-gradient(165deg,#5e1620 0%,#431019 60%,#2c0a11 100%)!important;
+  border-color:rgba(230,87,100,.55)!important;color:#FFE9EB!important}
+.slider-btn:hover{border-color:#E65764!important}
 .sc-logo{height:36px;width:auto;display:inline-block;border-radius:var(--r-sm);vertical-align:-12px;margin-right:8px}
 @media(prefers-reduced-motion:reduce){.slip-cta{animation:none}.slip-cta::after{display:none}}
 html.mode-build .slip-cta,html.mode-live .slip-cta{display:none}
@@ -2040,14 +2045,19 @@ footer{margin-top:26px;padding-top:18px;
   </div>
   <div id="bookAllResult"></div>
 
-  <button class="slip-cta slip-cta--wizard" id="slipCta" type="button">
-    <span class="sc-orb" aria-hidden="true"></span>
-    <span class="sc-tx">
-      <b>Don't pick. Let the wizard build it.</b>
-      <i id="scTease">A ready-to-play SportyBet slip, conjured for you.</i>
-    </span>
-    <span class="wsp-go sc-go-btn" aria-hidden="true">Conjure</span>
-  </button>
+  <div class="slip-cta slip-cta--wizard" id="slipCta">
+    <div class="sc-head">
+      <span class="sc-orb" aria-hidden="true"></span>
+      <span class="sc-tx">
+        <b>Don't pick. Let it be built for you.</b>
+        <i id="scTease">Two ways to a ready-to-play SportyBet slip.</i>
+      </span>
+    </div>
+    <div class="sc-actions">
+      <button class="wsp-go sc-go-btn" data-scmode="wizard" type="button">Conjure my slip</button>
+      <button class="slider-btn sc-go-btn" data-scmode="slider" type="button">Use the slider</button>
+    </div>
+  </div>
 
   <div id="liveStripWrap" hidden>
     <div class="ticker">
@@ -4132,7 +4142,15 @@ $("bt-pred").addEventListener("click",function(){setView("pred");});
 $("bt-live").addEventListener("click",function(){setView("live");});
 $("bt-build").addEventListener("click",function(){setView("build");});
 $("logo").addEventListener("click",function(e){e.preventDefault();setView("pred");});
-if($("slipCta"))$("slipCta").addEventListener("click",function(){setView("build");});
+(function(){
+  var cta=$("slipCta"); if(!cta) return;
+  function goMode(mode){ try{localStorage.setItem("sw.mode",mode);}catch(e){} BUILD.mode=mode; setView("build"); }
+  cta.querySelectorAll("[data-scmode]").forEach(function(b){
+    b.addEventListener("click",function(e){e.stopPropagation();goMode(b.dataset.scmode);});
+  });
+  /* Card click (not on a button) opens the builder in the current mode */
+  cta.addEventListener("click",function(){setView("build");});
+})();
 /* Live payout teaser: run a default wizard build and show its real games+odds
    on the hero CTA and sticky bar, so the pitch is a concrete number, not a verb. */
 function renderSlipTease(){
