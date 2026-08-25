@@ -28,6 +28,9 @@ self.addEventListener("activate", function (e) {
 self.addEventListener("fetch", function (e) {
   var req = e.request;
   if (req.method !== "GET") return;
+  /* Only handle http(s). Extension-injected requests use chrome-extension://
+     (and similar schemes), which Cache.put rejects with a TypeError. */
+  if (!/^https?:$/.test(req.url.split(":")[0] || "")) return;
   var url = new URL(req.url);
 
   // Live data / APIs: always try network first, don't cache stale predictions.
