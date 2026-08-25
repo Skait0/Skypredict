@@ -1439,8 +1439,13 @@ html.mode-live #live{display:block}
 .bld-foot .book-btn{flex:1 1 auto}
 .bld-note{font-size:12px;color:var(--soft);margin-top:10px;text-align:center}
 #bookResult{margin-top:14px}
-.code-card{background:var(--green-wash);border:1px solid var(--green);border-radius:var(--r-md);
-  padding:18px;text-align:center;position:relative}
+/* Compact centred modal for the booking code */
+.code-modal-scrim{position:fixed;inset:0;z-index:220;background:rgba(10,14,10,.45);
+  backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px}
+.code-card{background:rgba(46,204,113,.16);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(46,204,113,.55);border-radius:14px;
+  box-shadow:0 18px 50px rgba(0,20,8,.45),inset 0 1px 0 rgba(255,255,255,.12);
+  padding:22px 26px;text-align:center;position:relative;width:min(340px,92vw)}
 .code-x{position:absolute;top:8px;right:8px;width:30px;height:30px;padding:0;
   display:flex;align-items:center;justify-content:center;
   background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);
@@ -3363,25 +3368,34 @@ function clearSlip(){
   renderBuilder();
 }
 /* ---- shared booking-code card, share + copy + open ---- */
+/* Booking code appears as a compact centred modal (green glass) over a dimmed
+   scrim - not an elongated inline block. hostId kept for call-site compat. */
 function showCode(code,hostId){
-  var host=$(hostId); if(!host) return;
-  host.innerHTML="<div class='code-card'>"+
+  var old=document.getElementById("codeModal");
+  if(old) old.remove();
+  var wrap=document.createElement("div");
+  wrap.id="codeModal";
+  wrap.className="code-modal-scrim";
+  wrap.innerHTML="<div class='code-card code-card--modal' role='dialog' aria-modal='true' aria-label='Booking code'>"+
     "<button class='code-x' type='button' aria-label='Close'>"+
       "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' aria-hidden='true'><path d='M6 6l12 12M18 6L6 18'/></svg></button>"+
     "<i>Your SportyBet booking code</i>"+
     "<b>"+esc(code)+"</b>"+
     "<div class='code-acts'>"+
       "<button class='code-copy' type='button'>Copy code</button>"+
-      "<button class='share-btn' type='button' data-sh='1'>\u2197 Share</button>"+
+      "<button class='share-btn' type='button' data-sh='1'>↗ Share</button>"+
       "<a class='code-open' href='"+SPORTY_URL+encodeURIComponent(code)+
         "' target='_blank' rel='noopener'>Open in SportyBet</a>"+
     "</div></div>";
-  host.querySelector(".code-x").addEventListener("click",function(){host.innerHTML="";});
-  host.querySelector(".code-copy").addEventListener("click",function(){
+  document.body.appendChild(wrap);
+  function close(){wrap.remove();}
+  wrap.addEventListener("click",function(e){if(e.target===wrap)close();});
+  wrap.querySelector(".code-x").addEventListener("click",close);
+  wrap.querySelector(".code-copy").addEventListener("click",function(){
     if(navigator.clipboard) navigator.clipboard.writeText(code);
     this.textContent="Copied"; var s=this;
     setTimeout(function(){s.textContent="Copy code";},1600);});
-  host.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code);});
+  wrap.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code);});
 }
 function shareText(picks,odds,code){
   var lines=picks.slice(0,6).map(function(c){return "\u2022 "+c.f.home+" v "+c.f.away+" - "+
