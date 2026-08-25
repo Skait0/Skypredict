@@ -925,6 +925,24 @@ html.locked{overflow:hidden}
   .live-refresh{height:32px}
   /* Match cards breathe less; grid stays as-is */
   .m-add{border-radius:0 0 var(--r-md) var(--r-md)}
+
+  /* Get code / booking buttons: compact, not full-width slabs */
+  .book-btn{width:auto;flex:0 0 auto;padding:9px 18px;font-size:13.5px}
+  .bld-foot .book-btn{flex:1 1 auto}          /* keep Book stretching inside its bar */
+  .mysheet-foot .book-btn{flex:0 0 auto}
+
+  /* Conjure: wizardry - a compact enchanted button, not a stretched slab.
+     Violet gradient, soft arcane glow, sparkle shimmer on hover. */
+  .wsp-go{flex:0 0 auto;padding:10px 22px;font-size:14px;font-weight:800;
+    background:radial-gradient(120% 160% at 30% 20%,#7c4dff 0%,#5a2ed2 55%,#3c1e9e 100%)!important;
+    border:1px solid rgba(180,150,255,.55);
+    box-shadow:0 0 14px rgba(124,77,255,.45),inset 0 1px 0 rgba(255,255,255,.25)!important;
+    letter-spacing:.02em}
+  .wsp-go:hover{filter:brightness(1.12);box-shadow:0 0 20px rgba(124,77,255,.65),inset 0 1px 0 rgba(255,255,255,.3)!important}
+  .wsp-go::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;
+    background:linear-gradient(100deg,transparent,rgba(220,200,255,.35),transparent);
+    transform:skewX(-18deg);animation:wspShine 3s ease-in-out infinite}
+  @keyframes wspShine{0%,100%{left:-60%}55%{left:130%}}
 }
 @media (prefers-reduced-motion:reduce){
   .sheet,.scrim{transition:none!important}
@@ -1527,7 +1545,7 @@ html.mode-live #live{display:block}
 .wsp-prev{display:flex;align-items:center;justify-content:space-between;margin:18px 0 6px;  padding:14px 16px;background:var(--card-2);border:1px solid var(--line-soft);border-radius:var(--r-md)}
 .wsp-prev span{font-weight:700;color:var(--soft)}
 .wsp-prev b{font-size:22px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
-.wsp-go{width:auto;flex:1;min-width:0;margin-top:0;padding:12px 20px;font-size:14px}
+.wsp-go{width:auto;flex:1;min-width:0;margin-top:0;padding:12px 20px;font-size:14px;position:relative;overflow:hidden}
 /* Shuffle sits beside Conjure; Conjure keeps the width, Shuffle takes only what
    its label needs. margin-top on .wsp-go is neutralised inside the row. */
 .wsp-acts{display:flex;gap:10px;margin-top:16px;align-items:stretch}
