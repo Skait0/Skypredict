@@ -4480,9 +4480,8 @@ function renderBuilderOutput(){
       "<i>Total odds"+(picks.length&&!real?" (est.)":"")+"</i></div>";
   // Slip rows
   if(wizGhost){
-    /* Ghost mode: numbers above are real, games hidden, and the booking bar
-       stays hidden too - Get code makes no sense before the ticket exists. */
-    var _gf=$("bldFoot"); if(_gf) _gf.style.display="none";
+    /* Ghost mode: numbers above are real, games hidden. Foot visibility is
+       handled by the single source of truth at the end of this function. */
     $("slip").innerHTML="<div class='bld-empty'><b>"+picks.length+" game"+(picks.length===1?"":"s")+" ready</b>"+
       "<p>Tap Conjure to reveal your slip.</p></div>";
   } else if(!picks.length){
@@ -4517,9 +4516,11 @@ function renderBuilderOutput(){
   var btn=$("bookBtn");
   btn.disabled=BUILD.booking||!bookable;
   btn.textContent=BUILD.booking?"Booking\u2026":"Get code";
-  // Hide footer actions when slip is empty
+  // Hide footer actions when slip is empty, and in wizard GHOST mode (before
+  // Conjure) - the earlier hide was being overridden here because ghost picks
+  // are non-empty. This is the single source of truth for foot visibility.
   var foot=$("bldFoot");
-  if(foot) foot.style.display = picks.length ? "flex" : "none";
+  if(foot) foot.style.display = (picks.length && !wizGhost && !firstVisit) ? "flex" : "none";
   var note=$("bldNote");
   if(!picks.length) note.textContent="";
   else if(!bookable) note.textContent="These fixtures have no SportyBet event ID yet, so they can't be booked automatically.";
