@@ -931,7 +931,13 @@ html.locked{overflow:hidden}
      LATER in the sheet and would otherwise override these at equal weight. */
   /* .bld-foot .book-btn{flex:1} at ~line 1431 has higher specificity than any
      single-class rule, so match and beat it explicitly. */
-  button.book-btn, .bld-foot button.book-btn{width:auto;flex:0 0 auto;margin-left:auto;padding:9px 18px;font-size:13.5px}
+  button.book-btn:not(.wsp-go), .bld-foot button.book-btn{width:auto;flex:0 0 auto;margin-left:auto;padding:9px 18px;font-size:13.5px}
+  /* Conjure sits with the slip-style chips row, comfortably spaced - not shoved
+     to the far right of its action row. */
+  .wsp-acts button.wsp-go{margin-left:0;margin-top:0}
+  .wsp-style-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .wsp-style-row .wsp-chips{flex:1 1 auto}
+  .wsp-style-row .wsp-go{margin-left:4px}
 
   /* Conjure: wizardry - a compact enchanted button, not a stretched slab.
      Violet gradient, soft arcane glow, sparkle shimmer on hover. */
@@ -2112,10 +2118,12 @@ footer{margin-top:26px;padding-top:18px;
       <div class="wsp-lbl stage-in stage-in-3">Target payout</div>
       <div class="wsp-chips stage-in stage-in-4" id="wspOddsChips"></div>
       <div class="wsp-lbl stage-in stage-in-4">Slip style</div>
-      <div class="wsp-chips stage-in stage-in-5" id="wspStyleChips"></div>
+      <div class="wsp-style-row">
+        <div class="wsp-chips stage-in stage-in-5" id="wspStyleChips"></div>
+        <button class="book-btn wsp-go stage-in stage-in-5" id="wspGo" type="button">✨ Conjure</button>
+      </div>
       <div class="wsp-acts stage-in stage-in-5">
         <button class="clear-btn wsp-shuffle" id="wspShuffle" type="button">↻ Shuffle</button>
-        <button class="book-btn wsp-go" id="wspGo" type="button">✨ Conjure</button>
       </div>
     </div>
 
@@ -4377,10 +4385,12 @@ function renderWizardPanel(){
   var html="";
   html += "<div class='wsp-lbl'>Target payout</div><div class='wsp-chips' id='wspOddsChips'>"+
     odds.map(function(o,i){var hue=Math.round(145-145*(i/(odds.length-1)));return "<button class='wsp-chip wsp-risk"+(WSP.odds===o?" on":"")+"' style='--wr:hsl("+hue+",64%,46%)' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>";
-  html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips' id='wspStyleChips'>"+
-    styles.map(function(st){return "<button class='wsp-chip"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'>"+st[1]+"</button>";}).join("")+"</div>";
+  html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-style-row'>"+
+    "<div class='wsp-chips' id='wspStyleChips'>"+
+    styles.map(function(st){return "<button class='wsp-chip"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'>"+st[1]+"</button>";}).join("")+"</div>"+
+    "<button class='book-btn wsp-go' id='wspGo' type='button'>✨ Conjure</button></div>";
   html += "<div class='wsp-acts'>"+
-    "<button class='book-btn wsp-go' id='wspGo' type='button'>Conjure my slip</button>"+
+    "<button class='clear-btn wsp-shuffle' id='wspShuffle' type='button'>↻ Shuffle</button>"+
     "</div>";
   $("wizardPanel").innerHTML=html;
   // Panel visibility
@@ -4402,6 +4412,9 @@ function renderWizardPanel(){
     c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;WSP._sig=null;renderBuilder();});
   });
   $("wspGo").addEventListener("click",function(){wspConjure(false);});
+  /* Shuffle inside the wizard panel: re-conjures with a new seed. */
+  var _wsh=$("wspShuffle");
+  if(_wsh) _wsh.addEventListener("click",function(){wspConjure(true);});
 }
 function renderBuilderOutput(){
   var firstVisit = BUILD.risk === null;
