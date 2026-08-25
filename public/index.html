@@ -2340,7 +2340,7 @@ function plainTip(f){
   if(t==="First half goal") return "A goal in the first half";
   if(t.indexOf("1X")===0) return f.home+" or Draw";
   if(t.indexOf("X2")===0) return f.away+" or Draw";
-  if(t.indexOf("12")===0) return f.home+" or "+f.away;
+  if(t.indexOf("12")===0) return "Any team to win";
   if(t.indexOf("Draw or over")===0) return "Draw or over 2.5 goals";
   if(t.indexOf("Draw or both")===0) return "Draw or both teams score";
   if(t.indexOf("Both score and")===0) return "Both score and over 2.5";
