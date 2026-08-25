@@ -223,6 +223,18 @@ img,svg{max-width:100%}
 .potd .big{font-weight:800;font-size:clamp(40px,7vw,64px);line-height:1;
   letter-spacing:-.04em;color:var(--green)}
 .potd .big em{font-style:normal;font-size:.45em}
+/* Locked POTD status chip + result states */
+.potd-status{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.06em;
+  text-transform:uppercase;padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.22);color:#fff}
+.potd-status.potd-await{background:rgba(255,255,255,.2)}
+.potd-won .potd-top,.potd.potd-won .potd-top{background:var(--green)}
+.potd.potd-won{border-color:var(--green)}
+.potd.potd-lost{border-color:var(--grey)}
+.potd.potd-lost .potd-top{background:#6b6b72}
+.potd .big.potd-score{color:var(--text)}
+.potd.potd-won .big.potd-score{color:var(--green-ink)}
+.potd.potd-lost .big.potd-score{color:var(--soft)}
+.potd .big.potd-score em{font-size:.5em;color:var(--faint);margin:0 .05em}
 
 /* Market palette icons - transparent green */
 .mkt-chip .mkt-icon{display:inline-flex;align-items:center;justify-content:center;
@@ -2506,59 +2518,90 @@ function valMark(f){return isValue(f)?"<span class='vmark' title='Better price -
 /* -------------------------------------------------------- pick of the day
    Chosen by confidence, then explained. A pick with no reasoning is just a
    number, and numbers without reasons are what every tipster site sells. */
+function allOnDay(off){return (DATA.fixtures||[]).filter(function(f){return dayOff(f.date)===off;});}
+/* Locked Pick of the Day: one game chosen per 24h fixture day. Once set it does
+   not change - not when odds blend, not when the game kicks off. It stays shown
+   with its result (won/lost) until the next day's fixtures take over. Stored per
+   date in localStorage so a reload shows the same pick. */
+function potdResult(pick,f){
+  // 1) server-graded result (most reliable)
+  var nh=normTeam(pick.home), na=normTeam(pick.away);
+  var r=(DATA.results||[]).filter(function(x){
+    return x.date===pick.date && normTeam(x.home)===nh && normTeam(x.away)===na;})[0];
+  if(r) return {hg:r.hg,ag:r.ag,won:!!r.hit,push:false};
+  // 2) fixture enriched with an actual full-time score
+  if(f && f.hg!=null && f.ag!=null){
+    var v=tipEval(f)(f.hg,f.ag);
+    return {hg:f.hg,ag:f.ag,won:v==="win",push:v==="level"};
+  }
+  return null;
+}
+function prunePotdKeys(keepDate){
+  try{ for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i);
+    if(k&&k.indexOf("sw.potd.")===0 && k!=="sw.potd."+keepDate) localStorage.removeItem(k); } }catch(e){}
+}
 function renderPotd(){
-  const ps=onDay();
-  if(!ps.length){$("potd").innerHTML="";return;}
-  const top=ps.slice().sort(function(a,b){return b.tip_p-a.tip_p;})[0];
+  const day=allOnDay(V.off);
+  if(!day.length){$("potd").innerHTML="";return;}
+  const dateStr=day[0].date, lockKey="sw.potd."+dateStr;
+  // Reuse the locked pick for this date; only pick fresh if none stored yet.
+  let lock=null; try{lock=JSON.parse(localStorage.getItem(lockKey)||"null");}catch(e){}
+  let top=null;
+  if(lock&&lock.id){ top=day.filter(function(f){return fid(f)===lock.id;})[0]||null; }
+  if(!top){
+    // deterministic: highest confidence, tie-break by fixture id so every device agrees
+    top=day.slice().sort(function(a,b){return (b.tip_p-a.tip_p)||(fid(a)<fid(b)?-1:1);})[0];
+    try{localStorage.setItem(lockKey,JSON.stringify({id:fid(top),home:top.home,away:top.away,date:top.date}));}catch(e){}
+    prunePotdKeys(dateStr);
+  }
+
+  const started=!isUpcoming(top);
+  const result=started?potdResult(top,top):null;
+  let statusChip, bigHTML, stateClass="";
+  if(result){
+    stateClass=result.won?"potd-won":(result.push?"potd-push":"potd-lost");
+    statusChip="<span class='potd-status "+stateClass+"'>"+(result.won?"✔ Won":result.push?"Push":"✖ Lost")+"</span>";
+    bigHTML="<div class='big potd-score'>"+result.hg+"<em>-</em>"+result.ag+"</div>";
+  } else if(started){
+    statusChip="<span class='potd-status potd-await'>Awaiting result</span>";
+    bigHTML="<div class='big num'>"+P0(top.tip_p)+"<em>%</em></div>";
+  } else {
+    statusChip="<span class='k'>"+esc(compOf(top.league))+"</span>";
+    bigHTML="<div class='big num'>"+P0(top.tip_p)+"<em>%</em></div>";
+  }
 
   const reasons=[];
   const hf=top.home_p>top.away_p;
   const strong=hf?top.home:top.away;
   const xgLead=Math.abs(top.lh-top.la);
   if(xgLead>=0.5)
-    reasons.push("<b>"+esc(strong)+"</b> are expected to score "+
-      xgLead.toFixed(1)+" more goals than their opponent");
+    reasons.push("<b>"+esc(strong)+"</b> are expected to score "+xgLead.toFixed(1)+" more goals than their opponent");
   const form=hf?top.form_home:top.form_away;
   if(form&&form.length){
     const w=form.filter(function(x){return x==="W";}).length;
-    if(w>=3) reasons.push("<b>"+esc(strong)+"</b> have won "+w+
-      " of their last "+form.length);
+    if(w>=3) reasons.push("<b>"+esc(strong)+"</b> have won "+w+" of their last "+form.length);
   }
-  if(top.o25>=0.6) reasons.push("Goals look likely, over 2.5 at <b>"+
-    P0(top.o25)+"%</b>");
-  else if((1-top.o25)>=0.6) reasons.push("A tight game, under 2.5 at <b>"+
-    P0(1-top.o25)+"%</b>");
-  /* Only cite value when it points the same way as the pick. Quoting an
-     edge on the opposite side reads as the page arguing with itself. */
-  if(top.value&&top.value.edge>=0.03){
-    const vp=top.value.pick.toLowerCase();
-    const agrees=vp.indexOf(strong.toLowerCase())>=0 ||
-      (vp.indexOf("over")>=0&&top.o25>=0.6) ||
-      (vp.indexOf("under")>=0&&(1-top.o25)>=0.6);
-    if(agrees) reasons.push("The bookies rate this shorter than we do, <b>"+
-      (top.value.edge*100).toFixed(0)+" points</b> of value on "+esc(top.value.pick));
-  }
-  reasons.push("Our model puts this at <b>"+P0(top.tip_p)+
-    "%</b>, the strongest call on today's card");
+  if(top.o25>=0.6) reasons.push("Goals look likely, over 2.5 at <b>"+P0(top.o25)+"%</b>");
+  else if((1-top.o25)>=0.6) reasons.push("A tight game, under 2.5 at <b>"+P0(1-top.o25)+"%</b>");
+  reasons.push("Our model puts this at <b>"+P0(top.tip_p)+"%</b>, the strongest call on the day's card");
 
   $("potd").innerHTML=
-    "<section class='potd'>"+
+    "<section class='potd "+stateClass+"'>"+
       "<div class='potd-top'>"+
         "<svg width='15' height='15' viewBox='0 0 24 24' fill='currentColor'>"+
           "<path d='M12 2l2.4 6.9 7.1.4-5.5 4.6 1.8 7-5.8-4-5.8 4 1.8-7L2.5 9.3l7.1-.4z'/></svg>"+
-        "<b>Pick of the day</b>"+
-        "<span class='k'>"+esc(compOf(top.league))+"</span>"+
+        "<b>Pick of the day</b>"+statusChip+
       "</div>"+
       "<div class='potd-body'>"+
         "<div class='potd-grid'>"+
           "<div><h2>"+esc(plainTip(top))+"</h2>"+
             "<p class='meta'>"+esc(top.home)+" v "+esc(top.away)+" &middot; "+
-              dayName(dayOff(top.date))+" "+esc(kickTime(top))+"</p></div>"+
-          "<div class='big num'>"+P0(top.tip_p)+"<em>%</em></div>"+
+              dayName(dayOff(top.date))+" "+esc(kickTime(top))+
+              (result?" &middot; Full time":"")+"</p></div>"+
+          bigHTML+
         "</div>"+
-        "<div class='why'><span class='eyebrow'>Why we like it</span><ul>"+
-          reasons.map(function(r){
-            return "<li><span class='dot'></span><span>"+r+"</span></li>";}).join("")+
+        "<div class='why'><span class='eyebrow'>Why we like"+(result?"d":"")+" it</span><ul>"+
+          reasons.map(function(r){return "<li><span class='dot'></span><span>"+r+"</span></li>";}).join("")+
         "</ul></div>"+
       "</div>"+
     "</section>";
@@ -2571,7 +2614,6 @@ function renderPotd(){
   $("potd").querySelector(".potd").style.cursor="pointer";
 }
 
-/* --------------------------------------------------------------- controls */
 function renderCats(){
   const base=onDay().filter(function(f){
     if(V.country&&countryOf(f.league)!==V.country) return false;
