@@ -935,22 +935,24 @@ html.locked{overflow:hidden}
   /* Conjure sits with the slip-style chips row, comfortably spaced - not shoved
      to the far right of its action row. */
   .wsp-acts button.wsp-go{margin-left:0;margin-top:0}
-  .wsp-style-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  .wsp-style-row .wsp-chips{flex:1 1 auto}
-  .wsp-style-row .wsp-go{margin-left:4px}
+  .wsp-style-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .wsp-style-row .wsp-chips{flex:0 1 auto}   /* chips hug content, no stretching */
+  .wsp-style-row .wsp-go{margin-left:2px}     /* sits right after the style chips */
 
   /* Conjure: wizardry - a compact enchanted button, not a stretched slab.
      Violet gradient, soft arcane glow, sparkle shimmer on hover. */
-  button.wsp-go{width:auto;min-width:0;flex:0 0 auto;padding:10px 22px;font-size:14px;font-weight:800;
-    background:radial-gradient(120% 160% at 30% 20%,#7c4dff 0%,#5a2ed2 55%,#3c1e9e 100%)!important;
-    border:1px solid rgba(180,150,255,.55);
-    box-shadow:0 0 14px rgba(124,77,255,.45),inset 0 1px 0 rgba(255,255,255,.25)!important;
-    letter-spacing:.02em}
-  button.wsp-go:hover{filter:brightness(1.12);box-shadow:0 0 20px rgba(124,77,255,.65),inset 0 1px 0 rgba(255,255,255,.3)!important}
-  .wsp-go::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;
-    background:linear-gradient(100deg,transparent,rgba(220,200,255,.35),transparent);
-    transform:skewX(-18deg);animation:wspShine 3s ease-in-out infinite}
-  @keyframes wspShine{0%,100%{left:-60%}55%{left:130%}}
+  button.wsp-go{width:auto;min-width:0;flex:0 0 auto;padding:11px 26px;font-size:13.5px;font-weight:800;
+    letter-spacing:.09em;text-transform:uppercase;color:#EDE7FF!important;
+    background:linear-gradient(165deg,#2b1a5e 0%,#1d1142 60%,#140a30 100%)!important;
+    border:1px solid rgba(212,175,55,.6);
+    box-shadow:0 4px 18px rgba(90,46,210,.35),inset 0 0 12px rgba(124,77,255,.22),inset 0 1px 0 rgba(255,255,255,.14)!important;
+    position:relative;overflow:hidden}
+  button.wsp-go:hover{color:#fff!important;border-color:rgba(232,199,95,.9);
+    box-shadow:0 6px 26px rgba(112,66,240,.55),inset 0 0 18px rgba(140,96,255,.35),inset 0 1px 0 rgba(255,255,255,.2)!important}
+  /* slow arcane pulse instead of a shine gimmick */
+  button.wsp-go::after{content:'';position:absolute;inset:0;border-radius:inherit;
+    box-shadow:inset 0 0 0 1px rgba(212,175,55,.25);animation:runePulse 3.2s ease-in-out infinite}
+  @keyframes runePulse{0%,100%{opacity:.35}50%{opacity:.85}}
 }
 @media (prefers-reduced-motion:reduce){
   .sheet,.scrim{transition:none!important}
@@ -2125,7 +2127,7 @@ footer{margin-top:26px;padding-top:18px;
       <div class="wsp-lbl stage-in stage-in-4">Slip style</div>
       <div class="wsp-style-row">
         <div class="wsp-chips stage-in stage-in-5" id="wspStyleChips"></div>
-        <button class="book-btn wsp-go stage-in stage-in-5" id="wspGo" type="button">✨ Conjure</button>
+        <button class="book-btn wsp-go stage-in stage-in-5" id="wspGo" type="button">Conjure</button>
       </div>
       <div class="wsp-acts stage-in stage-in-5">
         <button class="clear-btn wsp-shuffle" id="wspShuffle" type="button">↻ Shuffle</button>
@@ -4402,7 +4404,7 @@ function renderWizardPanel(){
   html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-style-row'>"+
     "<div class='wsp-chips' id='wspStyleChips'>"+
     styles.map(function(st){return "<button class='wsp-chip"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'>"+st[1]+"</button>";}).join("")+"</div>"+
-    "<button class='book-btn wsp-go' id='wspGo' type='button'>✨ Conjure</button></div>";
+    "<button class='book-btn wsp-go' id='wspGo' type='button'>Conjure</button></div>";
   html += "<div class='wsp-acts'>"+
     "<button class='clear-btn wsp-shuffle' id='wspShuffle' type='button'>↻ Shuffle</button>"+
     "</div>";
