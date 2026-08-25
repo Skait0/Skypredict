@@ -576,6 +576,14 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
 .sc-logo{height:30px;width:auto;display:inline-block;margin-left:9px;vertical-align:-9px;border-radius:4px}
 .sc-head{display:flex;align-items:flex-start;gap:13px}
 .sc-actions{display:flex;gap:10px;margin-top:12px;padding-left:47px;flex-wrap:wrap}
+/* Both path buttons identical proportions on web (labels differ in length) */
+.sc-actions .sc-go-btn{flex:0 0 auto;width:auto}
+@media(min-width:720px){
+  .sc-actions{padding-left:47px}
+  .sc-actions .sc-go-btn{flex:1 1 0;min-width:170px;max-width:240px;
+    justify-content:center;text-align:center;white-space:nowrap;
+    padding:11px 10px;font-size:13px}
+}
 .slider-btn{background:linear-gradient(165deg,#5e1620 0%,#431019 60%,#2c0a11 100%)!important;
   border-color:rgba(230,87,100,.55)!important;color:#FFE9EB!important}
 .slider-btn:hover{border-color:#E65764!important}
