@@ -2086,7 +2086,6 @@ footer{margin-top:26px;padding-top:18px;
   <section id="live">
     <div class="live-head stage-in stage-in-1">
       <h1 class="stage-in stage-in-2">Live scores</h1>
-      <button class="live-bell stage-in stage-in-3" id="liveAlert" type="button" aria-pressed="false" aria-label="Goal sound"><span class="bell-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg></span><span class="bell-lbl">Sound off</span></button>
       <button class="live-refresh stage-in stage-in-3" id="liveRefresh" type="button" data-parallax="0.8">Refresh</button>
     </div>
     <p class="live-sub stage-in stage-in-2" id="liveSub">Football matches in play right now, updating automatically.</p>
@@ -4635,89 +4634,12 @@ setTimeout(hideLoader,8000);
   });
   ['bookResult','myBookResult','sotdResult'].forEach(function(id){var el=document.getElementById(id);if(!el)return;
     new MutationObserver(function(){if(el.querySelector('.code-err'))window.swToast("Couldn't get a code",'err');}).observe(el,{childList:true});});
-  var AC=null,soundOn=false;try{soundOn=localStorage.getItem('sw.sound')==='1';}catch(e){}
-  // Paint the live-alert button immediately so it matches localStorage on first load
-  // (the hardcoded HTML defaults to "Sound off"; __wireAlert only runs after render())
-  setTimeout(function(){ window.__wireAlert && window.__wireAlert(); }, 0);
-  var goalAudio=null;
-  function beep(){try{if(!goalAudio){goalAudio=new Audio('/goal.mp3');goalAudio.volume=0.7;}goalAudio.currentTime=0;goalAudio.play().catch(function(){});}catch(e){}}
-  /* A short spell-cast shimmer, synthesised rather than downloaded: a rising
-     minor arpeggio with a little detune, so it lands as "magic" instead of a
-     UI blip - and costs no extra kilobytes on a phone connection. It rides the
-     same mute switch as goal alerts, so there is one control, not two. */
-  function wizChime(soft){
-    if(!soundOn) return;
-    try{
-      AC=AC||new (window.AudioContext||window.webkitAudioContext)();
-      if(AC.state==='suspended') AC.resume();
-      var t0=AC.currentTime, notes=soft?[784,1046]:[523,784,1046,1318];
-      var peak=soft?0.05:0.09;
-      notes.forEach(function(f,i){
-        [0,7].forEach(function(det){
-          var o=AC.createOscillator(), g=AC.createGain();
-          o.type='triangle'; o.frequency.value=f+det;
-          o.connect(g); g.connect(AC.destination);
-          var t=t0+i*(soft?0.05:0.07);
-          g.gain.setValueAtTime(0.0001,t);
-          g.gain.exponentialRampToValueAtTime(peak,t+0.015);
-          g.gain.exponentialRampToValueAtTime(0.0001,t+(soft?0.28:0.5));
-          o.start(t); o.stop(t+(soft?0.3:0.55));
-        });
-      });
-    }catch(e){}
-  }
-  window.__wizChime=wizChime;
+  /* Sound toggle removed at owner's request (persistently broken across
+     rebuilds). Goal notifications still fire for followed matches; only the
+     audio path and its UI control are gone. */
+  window.__wizChime=function(){};   /* chime call sites become silent no-ops */
+  window.__wireAlert=function(){};  /* legacy render hook becomes a no-op */
 
-  if(typeof applyGoalFX==='function'){var __ag=applyGoalFX;applyGoalFX=function(h){
-    var ids=Object.keys(LIVE.flash||{}), n=ids.length;
-    __ag(h);
-    if(n&&soundOn)beep();
-    /* Following a match is the user asking to be told about it, so a goal there
-       earns a notification even when the app is in the background. */
-    if(n&&window.Notification&&Notification.permission==="granted"){
-      ids.forEach(function(id){
-        if(!(typeof isLiveFav==="function"&&isLiveFav(id))) return;
-        var m=null;
-        (LIVE.matches||[]).forEach(function(x){if((x.eventId||(x.home+x.away))===id)m=x;});
-        if(!m) return;
-        try{new Notification("\u26bd GOAL - "+m.home+" "+
-          (m.homeScore!=null?m.homeScore:"-")+"-"+(m.awayScore!=null?m.awayScore:"-")+
-          " "+m.away,{body:liveComp(m.league||""),tag:"sw-goal-"+id});}catch(e){}
-      });
-    }
-  };}
-  /* Sound toggle. The bell lives in the STATIC header (never re-rendered), so a
-     direct listener is safe. __wireAlert just repaints the bell to the current
-     state (safe to call on every render). */
-  function _bellPaint(b){
-    var base='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>';
-    var ON=base+'<path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>';
-    var OFF=base+'<line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>';
-    b.classList.toggle('on',soundOn);
-    b.setAttribute('aria-pressed',soundOn?'true':'false');
-    b.title=soundOn?'Goal sound on':'Goal sound off';
-    b.innerHTML=(soundOn?ON:OFF)+"<span class='bell-lbl'>"+(soundOn?'Sound on':'Sound off')+"</span>";
-  }
-  function _bellTestBeep(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();var o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=880;o.connect(g);g.connect(AC.destination);var t=AC.currentTime;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.25,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.28);o.start(t);o.stop(t+0.3);}catch(e){}}
-  /* Debounced shared toggle: guards against double-fired events (touch+click
-     synthesis), which flipped the flag twice per tap and made the bell look
-     stuck OFF. The button is in the STATIC header, so a direct listener is
-     safe here - no delegation needed. */
-  var _lastBellTap=0;
-  function _toggleSound(){
-    var now=Date.now();
-    if(now-_lastBellTap<300) return;   /* swallow double-fires within 300ms */
-    _lastBellTap=now;
-    soundOn=!soundOn;
-    try{localStorage.setItem('sw.sound',soundOn?'1':'0');}catch(_e){}
-    var b=document.getElementById('liveAlert');
-    if(b)_bellPaint(b);
-    if(soundOn){_bellTestBeep();try{beep();}catch(_e){}}
-    window.swToast&&window.swToast(soundOn?'Goal sound on':'Goal sound off','ok','alert');
-  }
-  var _bellEl=document.getElementById('liveAlert');
-  if(_bellEl) _bellEl.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();_toggleSound();});
-  window.__wireAlert=function(){var b=document.getElementById('liveAlert');if(b)_bellPaint(b);};
   window.__settleRecord=function(){var bar=document.querySelector('.record-bar i');if(!bar||bar._settled)return;bar._settled=1;var w=bar.style.width;bar.style.width='0%';requestAnimationFrame(function(){requestAnimationFrame(function(){bar.style.width=w;});});};
   if(typeof render==='function'){var __ro=render;render=function(){__ro.apply(this,arguments);window.__afterRender();};}
   if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
