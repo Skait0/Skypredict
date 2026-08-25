@@ -2338,9 +2338,9 @@ function plainTip(f){
   if(t==="Draw") return "A draw";
   if(t==="Both teams score") return "Both teams score";
   if(t==="First half goal") return "A goal in the first half";
-  if(t.indexOf("1X")===0) return f.home+" to win or draw";
-  if(t.indexOf("X2")===0) return f.away+" to win or draw";
-  if(t.indexOf("12")===0) return "Any team to win";
+  if(t.indexOf("1X")===0) return f.home+" or Draw";
+  if(t.indexOf("X2")===0) return f.away+" or Draw";
+  if(t.indexOf("12")===0) return f.home+" or "+f.away;
   if(t.indexOf("Draw or over")===0) return "Draw or over 2.5 goals";
   if(t.indexOf("Draw or both")===0) return "Draw or both teams score";
   if(t.indexOf("Both score and")===0) return "Both score and over 2.5";
@@ -4686,10 +4686,9 @@ setTimeout(hideLoader,8000);
       });
     }
   };}
-  /* Sound toggle. One delegated click handler on document, so it works no matter
-     how often the live view re-renders - a per-element onclick can be lost if the
-     button element is ever replaced; delegation cannot. __wireAlert just repaints
-     the bell to the current state (safe to call on every render). */
+  /* Sound toggle. The bell lives in the STATIC header (never re-rendered), so a
+     direct listener is safe. __wireAlert just repaints the bell to the current
+     state (safe to call on every render). */
   function _bellPaint(b){
     var base='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>';
     var ON=base+'<path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>';
@@ -4700,14 +4699,24 @@ setTimeout(hideLoader,8000);
     b.innerHTML=(soundOn?ON:OFF)+"<span class='bell-lbl'>"+(soundOn?'Sound on':'Sound off')+"</span>";
   }
   function _bellTestBeep(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();var o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=880;o.connect(g);g.connect(AC.destination);var t=AC.currentTime;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.25,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.28);o.start(t);o.stop(t+0.3);}catch(e){}}
-  document.addEventListener('click',function(e){
-    var b=e.target&&e.target.closest&&e.target.closest('#liveAlert'); if(!b) return;
+  /* Debounced shared toggle: guards against double-fired events (touch+click
+     synthesis), which flipped the flag twice per tap and made the bell look
+     stuck OFF. The button is in the STATIC header, so a direct listener is
+     safe here - no delegation needed. */
+  var _lastBellTap=0;
+  function _toggleSound(){
+    var now=Date.now();
+    if(now-_lastBellTap<300) return;   /* swallow double-fires within 300ms */
+    _lastBellTap=now;
     soundOn=!soundOn;
     try{localStorage.setItem('sw.sound',soundOn?'1':'0');}catch(_e){}
-    _bellPaint(b);
+    var b=document.getElementById('liveAlert');
+    if(b)_bellPaint(b);
     if(soundOn){_bellTestBeep();try{beep();}catch(_e){}}
     window.swToast&&window.swToast(soundOn?'Goal sound on':'Goal sound off','ok','alert');
-  });
+  }
+  var _bellEl=document.getElementById('liveAlert');
+  if(_bellEl) _bellEl.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();_toggleSound();});
   window.__wireAlert=function(){var b=document.getElementById('liveAlert');if(b)_bellPaint(b);};
   window.__settleRecord=function(){var bar=document.querySelector('.record-bar i');if(!bar||bar._settled)return;bar._settled=1;var w=bar.style.width;bar.style.width='0%';requestAnimationFrame(function(){requestAnimationFrame(function(){bar.style.width=w;});});};
   if(typeof render==='function'){var __ro=render;render=function(){__ro.apply(this,arguments);window.__afterRender();};}
