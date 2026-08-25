@@ -543,23 +543,37 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
 .gl-pc{white-space:nowrap}
 .myfab .lbl{white-space:nowrap}
 .nav .navt.build{display:none}
-.slip-cta{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin:14px 0 2px;
-  background:linear-gradient(150deg,var(--card),var(--card-2));border:1px solid var(--red);
-  border-radius:var(--r-md);padding:14px 16px;cursor:pointer;color:var(--text);font:inherit;
-  position:relative;overflow:hidden;animation:ctaPulse 2.6s ease-out infinite}
-@keyframes ctaPulse{0%{box-shadow:0 0 0 0 rgba(230,57,70,.5)}70%{box-shadow:0 0 0 12px rgba(230,57,70,0)}100%{box-shadow:0 0 0 0 rgba(230,57,70,0)}}
-.slip-cta::after{content:'';position:absolute;top:0;left:-60%;width:45%;height:100%;
-  background:linear-gradient(100deg,transparent,rgba(255,255,255,.14),transparent);
-  transform:skewX(-18deg);animation:ctaShine 3.6s ease-in-out infinite}
-@keyframes ctaShine{0%,100%{left:-60%}55%,75%{left:130%}}
-.sc-go{transition:transform .2s}
-.slip-cta:hover .sc-go{transform:translateX(4px)}
-.slip-cta:hover{filter:brightness(1.06)}
-.sc-ic{color:var(--red-ink);flex-shrink:0;display:inline-flex}
+/* Home CTA: unmissable wizard banner - deep amethyst field, gold trim,
+   breathing orb, and an inline Conjure button on its own line. */
+.slip-cta{display:flex;align-items:flex-start;gap:13px;width:100%;text-align:left;margin:14px 0 2px;
+  background:linear-gradient(160deg,#2b1a5e 0%,#1d1142 55%,#160b36 100%);
+  border:1px solid rgba(212,175,55,.55);
+  box-shadow:0 6px 24px rgba(70,35,170,.35),inset 0 1px 0 rgba(255,255,255,.08);
+  border-radius:var(--r-lg);padding:15px 16px;cursor:pointer;color:#F3EFFF;font:inherit;
+  position:relative;overflow:hidden}
+.slip-cta::before{content:'';position:absolute;top:-40%;left:-10%;width:55%;height:180%;
+  background:radial-gradient(closest-side,rgba(124,77,255,.28),transparent);
+  animation:wspOrbDrift 5s ease-in-out infinite alternate}
+@keyframes wspOrbDrift{from{transform:translate(0,0)}to{transform:translate(30px,12px)}}
+.slip-cta:hover{border-color:rgba(232,199,95,.85)}
+.slip-cta:hover .sc-go-btn{box-shadow:0 6px 26px rgba(112,66,240,.55),inset 0 0 18px rgba(140,96,255,.35),inset 0 1px 0 rgba(255,255,255,.2)!important;border-color:rgba(232,199,95,.9)}
+.sc-orb{flex-shrink:0;width:34px;height:34px;border-radius:50%;margin-top:2px;
+  background:radial-gradient(circle at 32% 28%,#c9b6ff,#7c4dff 55%,#3a2390 100%);
+  box-shadow:0 0 16px rgba(140,96,255,.65),inset 0 0 8px rgba(255,255,255,.25);
+  animation:orbBreath 3.4s ease-in-out infinite}
+@keyframes orbBreath{0%,100%{box-shadow:0 0 10px rgba(140,96,255,.5),inset 0 0 8px rgba(255,255,255,.25)}
+  50%{box-shadow:0 0 22px rgba(150,105,255,.9),inset 0 0 10px rgba(255,255,255,.35)}}
 .sc-tx{flex:1;min-width:0}
-.sc-tx b{display:block;font-size:15px;font-weight:800}
-.sc-tx i{display:block;font-style:normal;font-size:12.5px;color:var(--soft);margin-top:2px}
-.sc-go{color:var(--red-ink);font-weight:800;font-size:18px;flex-shrink:0}
+.sc-tx b{display:block;font-size:16.5px;font-weight:800;color:#fff;letter-spacing:.01em}
+.sc-tx i{display:block;font-style:normal;font-size:12.5px;color:#CFC4F2;margin-top:3px}
+.sc-go-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;
+  padding:9px 22px;font-size:12.5px;border-radius:var(--r-sm);
+  color:#EDE7FF;background:linear-gradient(165deg,#33206b 0%,#241453 60%,#190d3e 100%)!important;
+  border:1px solid rgba(212,175,55,.7)!important;
+  box-shadow:0 3px 12px rgba(90,46,210,.4),inset 0 0 10px rgba(124,77,255,.25)!important;
+  letter-spacing:.09em;text-transform:uppercase;font-weight:800;position:relative;overflow:hidden;
+  transition:box-shadow .2s,border-color .2s}
+.sc-logo{height:30px;width:auto;display:inline-block;margin-left:9px;vertical-align:-9px;border-radius:4px}
 .sc-logo{height:36px;width:auto;display:inline-block;border-radius:var(--r-sm);vertical-align:-12px;margin-right:8px}
 @media(prefers-reduced-motion:reduce){.slip-cta{animation:none}.slip-cta::after{display:none}}
 html.mode-build .slip-cta,html.mode-live .slip-cta{display:none}
@@ -2026,10 +2040,13 @@ footer{margin-top:26px;padding-top:18px;
   </div>
   <div id="bookAllResult"></div>
 
-  <button class="slip-cta" id="slipCta" type="button">
-    <span class="sc-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z"/><path d="M13 6v12"/></svg></span>
-    <span class="sc-tx"><b>Don't pick. Let the wizard build it.</b><i id="scTease">Tap for a ready-to-play SportyBet slip in one tap.</i></span>
-    <span class="sc-go"><img class="sc-logo" src="/sc-logo.png" alt="SportyBet">→</span>
+  <button class="slip-cta slip-cta--wizard" id="slipCta" type="button">
+    <span class="sc-orb" aria-hidden="true"></span>
+    <span class="sc-tx">
+      <b>Don't pick. Let the wizard build it.</b>
+      <i id="scTease">A ready-to-play SportyBet slip, conjured for you.</i>
+    </span>
+    <span class="wsp-go sc-go-btn" aria-hidden="true">Conjure</span>
   </button>
 
   <div id="liveStripWrap" hidden>
@@ -2129,9 +2146,7 @@ footer{margin-top:26px;padding-top:18px;
         <div class="wsp-chips stage-in stage-in-5" id="wspStyleChips"></div>
         <button class="book-btn wsp-go stage-in stage-in-5" id="wspGo" type="button">Conjure</button>
       </div>
-      <div class="wsp-acts stage-in stage-in-5">
-        <button class="clear-btn wsp-shuffle" id="wspShuffle" type="button">↻ Shuffle</button>
-      </div>
+
     </div>
 
     <!-- UNIFIED OUTPUT -->
@@ -4405,9 +4420,7 @@ function renderWizardPanel(){
     "<div class='wsp-chips' id='wspStyleChips'>"+
     styles.map(function(st){return "<button class='wsp-chip"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'>"+st[1]+"</button>";}).join("")+"</div>"+
     "<button class='book-btn wsp-go' id='wspGo' type='button'>Conjure</button></div>";
-  html += "<div class='wsp-acts'>"+
-    "<button class='clear-btn wsp-shuffle' id='wspShuffle' type='button'>↻ Shuffle</button>"+
-    "</div>";
+
   $("wizardPanel").innerHTML=html;
   // Panel visibility
   $("sliderPanel").hidden=true;
@@ -4428,9 +4441,7 @@ function renderWizardPanel(){
     c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;WSP._sig=null;renderBuilder();});
   });
   $("wspGo").addEventListener("click",function(){wspConjure(false);});
-  /* Shuffle inside the wizard panel: re-conjures with a new seed. */
-  var _wsh=$("wspShuffle");
-  if(_wsh) _wsh.addEventListener("click",function(){wspConjure(true);});
+
 }
 function renderBuilderOutput(){
   var firstVisit = BUILD.risk === null;
