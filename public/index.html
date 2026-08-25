@@ -545,7 +545,7 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
 .nav .navt.build{display:none}
 /* Home CTA: unmissable wizard banner - deep amethyst field, gold trim,
    breathing orb, and an inline Conjure button on its own line. */
-.slip-cta{display:flex;align-items:flex-start;gap:13px;width:100%;text-align:left;margin:14px 0 2px;
+.slip-cta{display:flex;flex-direction:column;align-items:stretch;gap:12px;width:100%;text-align:left;margin:14px 0 2px;
   background:linear-gradient(160deg,#2b1a5e 0%,#1d1142 55%,#160b36 100%);
   border:1px solid rgba(212,175,55,.55);
   box-shadow:0 6px 24px rgba(70,35,170,.35),inset 0 1px 0 rgba(255,255,255,.08);
@@ -575,9 +575,9 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
   transition:box-shadow .2s,border-color .2s}
 .sc-logo{height:30px;width:auto;display:inline-block;margin-left:9px;vertical-align:-9px;border-radius:4px}
 .sc-head{display:flex;align-items:flex-start;gap:13px}
-.sc-actions{display:flex;gap:10px;margin-top:12px;padding-left:47px;flex-wrap:wrap}
-/* Both path buttons identical proportions on web (labels differ in length) */
-.sc-actions .sc-go-btn{flex:0 0 auto;width:auto}
+.sc-actions{display:flex;gap:10px;flex-wrap:wrap}
+/* Mobile: two equal buttons that wrap if the row gets too tight */
+.sc-actions .sc-go-btn{flex:1 1 140px;width:auto;margin-top:0}
 @media(min-width:720px){
   .sc-actions{padding-left:47px}
   /* One identical box for BOTH buttons - overrides .wsp-go's own padding,
