@@ -2188,8 +2188,9 @@ var PLUS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-widt
 function conf(p){var pc=Math.round(p*100);return pc>=70?"strong":pc>=55?"lean":"slight";}
 function confLabel(p){var pc=Math.round(p*100);return pc>=70?"Strong":pc>=55?"Likely":"Slight";}
 function verdict(p){var pc=Math.round(p*100);return pc>=70?"Good bet":pc>=55?"Worth a look":"Risky pick";}
-const V={off:0,country:"",league:"",q:"",cat:"all",list:true};
+const V={off:0,country:"",league:"",q:"",cat:"all",list:true,view:"pred"};
 try{var _sv=localStorage.getItem("sw.view"); if(_sv) V.list=(_sv==="list");}catch(e){}
+try{var _sv2=localStorage.getItem("sw.viewtab"); if(_sv2 && ["pred","live","build"].includes(_sv2)) V.view=_sv2;}catch(e){}
 let DATA={generated:"",matches:0,leagues:[],fixtures:[],results:[]};
 const REDUCED=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 if(REDUCED) document.documentElement.classList.add("reduce");
@@ -3997,6 +3998,8 @@ function setView(v){
   /* mode-pred drives the phone-only rule that keeps the Live tab in the header
      on the home page. Without it that CSS never fires and the nav stays hidden. */
   root.classList.toggle("mode-pred",v==="pred");
+  V.view=v;
+  try{localStorage.setItem("sw.viewtab",v);}catch(e){}
   $("tab-pred").classList.toggle("on",v==="pred");
   $("tab-live").classList.toggle("on",v==="live");
   $("tab-build").classList.toggle("on",v==="build");
@@ -4494,6 +4497,8 @@ function paint(){
     });
     DATA.fixtures=out;
   })();
+  /* Restore saved view tab (pred/live/build) on reload. Default is "pred". */
+  setView(V.view || "pred");
   let d=DATA.generated||"";
   try{d=new Date(d+"T00:00:00Z").toLocaleDateString(undefined,
     {day:"numeric",month:"short",timeZone:"UTC"});}catch(e){}
