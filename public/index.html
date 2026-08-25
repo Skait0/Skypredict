@@ -582,10 +582,12 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
   .sc-actions{padding-left:47px}
   /* One identical box for BOTH buttons - overrides .wsp-go's own padding,
      uppercase spacing and shadows so neither renders larger. */
+  .sc-actions{align-items:center}
   .sc-actions .sc-go-btn, .sc-actions button.wsp-go{
     flex:1 1 0;width:auto;min-width:170px;max-width:240px;height:38px;
-    justify-content:center;text-align:center;white-space:nowrap;
-    padding:0 10px;font-size:13px;font-weight:800;letter-spacing:.06em;line-height:38px;
+    display:inline-flex;align-items:center;justify-content:center;margin:0;
+    text-align:center;white-space:nowrap;
+    padding:0 10px;font-size:13px;font-weight:800;letter-spacing:.06em;line-height:normal;
     box-sizing:border-box}
 }
 .slider-btn{background:linear-gradient(165deg,#5e1620 0%,#431019 60%,#2c0a11 100%)!important;
