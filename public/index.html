@@ -30,7 +30,7 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
    left empty this whole block is a no-op and loads nothing. The DSN is a public
    client key - safe to ship. Also honours ?nosentry to disable ad hoc. */
 (function(){
-  var SW_SENTRY_DSN = "";  // <-- paste browser DSN here to turn on
+  var SW_SENTRY_DSN = "https://8b1e90e4be45de92129b45e8b9663d3f@o4511967072026624.ingest.de.sentry.io/4511972134682704";  // <-- paste browser DSN here to turn on
   if(!SW_SENTRY_DSN) return;
   try{ if(/[?&]nosentry\b/.test(location.search)) return; }catch(e){}
   var s=document.createElement("script");
@@ -954,9 +954,9 @@ html.locked{overflow:hidden}
   /* Conjure sits with the slip-style chips row, comfortably spaced - not shoved
      to the far right of its action row. */
   .wsp-acts button.wsp-go{margin-left:0;margin-top:0}
-  .wsp-style-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .wsp-style-row .wsp-chips{flex:0 1 auto}   /* chips hug content, no stretching */
-  .wsp-style-row .wsp-go{margin-left:2px}     /* sits right after the style chips */
+  /* Conjure is a full-width-ish call to action on its own line below style chips */
+  button.wsp-go{display:inline-flex;margin-top:14px}
+  .wizard-panel button.wsp-go{min-width:200px;justify-content:center}
 
   /* Conjure: wizardry - a compact enchanted button, not a stretched slab.
      Violet gradient, soft arcane glow, sparkle shimmer on hover. */
@@ -2152,10 +2152,8 @@ footer{margin-top:26px;padding-top:18px;
       <div class="wsp-lbl stage-in stage-in-3">Target payout</div>
       <div class="wsp-chips stage-in stage-in-4" id="wspOddsChips"></div>
       <div class="wsp-lbl stage-in stage-in-4">Slip style</div>
-      <div class="wsp-style-row">
-        <div class="wsp-chips stage-in stage-in-5" id="wspStyleChips"></div>
-        <button class="book-btn wsp-go stage-in stage-in-5" id="wspGo" type="button">Conjure</button>
-      </div>
+      <div class="wsp-chips stage-in stage-in-5" id="wspStyleChips"></div>
+      <button class="book-btn wsp-go stage-in stage-in-5" id="wspGo" type="button">Conjure</button>
 
     </div>
 
@@ -4434,10 +4432,9 @@ function renderWizardPanel(){
   var html="";
   html += "<div class='wsp-lbl'>Target payout</div><div class='wsp-chips' id='wspOddsChips'>"+
     odds.map(function(o,i){var hue=Math.round(145-145*(i/(odds.length-1)));return "<button class='wsp-chip wsp-risk"+(WSP.odds===o?" on":"")+"' style='--wr:hsl("+hue+",64%,46%)' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>";
-  html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-style-row'>"+
-    "<div class='wsp-chips' id='wspStyleChips'>"+
+  html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips' id='wspStyleChips'>"+
     styles.map(function(st){return "<button class='wsp-chip"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'>"+st[1]+"</button>";}).join("")+"</div>"+
-    "<button class='book-btn wsp-go' id='wspGo' type='button'>Conjure</button></div>";
+    "<button class='book-btn wsp-go' id='wspGo' type='button'>Conjure</button>";
 
   $("wizardPanel").innerHTML=html;
   // Panel visibility
