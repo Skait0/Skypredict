@@ -3260,7 +3260,7 @@ async function bookSlip(){
   }
   doBook(bookable);
 }
-function doBook(picks){
+function doBook(picks,retried){
   var sel=picks.map(function(c){return {eventId:c.eventId,prediction:c.code};});
   if(!sel.length) return;
   BUILD.booking=true; renderBuilder();
@@ -3271,9 +3271,22 @@ function doBook(picks){
       if(d&&d.success&&d.booking_code){
         showCode(d.booking_code,"bookResult");
       } else {
-        var why=d&&d.detail?(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail)):(d&&d.message?d.message:"");
-        $("bookResult").innerHTML="<div class='code-err'>Couldn't generate a code"+
-          (why?": "+esc(why):"")+". Please try again.</div>";
+        /* SportyBet can reject individual markets ("no market") when our pick
+           used an estimated odd for a market it doesn't list. Retry once with
+           only the legs carrying real SportyBet odds - those are verified to
+           exist. Toggling slider/wizard used to be the manual workaround. */
+        var rejected=!d||!d.success;
+        var safe=picks.filter(function(c){
+          var o=c.f&&c.f.sportyOdds&&c.f.sportyOdds[c.code];
+          return o&&o>1.01;});
+        if(rejected&&!retried&&safe.length>=2){
+          $("bookResult").innerHTML="<div class='code-info'>Retrying without unavailable markets...</div>";
+          doBook(safe,true);
+        } else {
+          var why=d&&d.detail?(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail)):(d&&d.message?d.message:"");
+          $("bookResult").innerHTML="<div class='code-err'>Couldn't generate a code"+
+            (why?": "+esc(why):"")+". Please try again.</div>";
+        }
       }
     })
     .catch(function(){
@@ -4144,10 +4157,20 @@ function wspBuild(){
     var T=WSP.odds, cap=40, per=WSP.legodd||1.35;
     var want=Math.max(4, Math.min(cap, Math.ceil(Math.log(T)/Math.log(per))));
     var g=Math.pow(T,1/want);
+    /* Prefer markets with REAL SportyBet odds: a market chosen off an estimated
+       odd may not exist for that event at SportyBet, and the booking call then
+       fails with "Sporty rejected the slip" (the "no market" error). When real
+       odds exist for any candidate, only those are considered. */
+    function hasReal(c){var o=c.f&&c.f.sportyOdds&&c.f.sportyOdds[c.code];return !!(o&&o>1.01);}
+    function pickFrom(cs){
+      var real=cs.filter(hasReal);
+      var pool=real.length?real:cs;
+      return pool.reduce(function(a,b){
+        return Math.abs(Math.log(b.od)-Math.log(g))<Math.abs(Math.log(a.od)-Math.log(g))?b:a;});
+    }
     var chosen=list.map(function(c){
       var cs=c.cands||[{f:c.f,id:c.id,code:c.code,p:c.p,od:c.od}];
-      var pick=cs.reduce(function(a,b){
-        return Math.abs(Math.log(b.od)-Math.log(g))<Math.abs(Math.log(a.od)-Math.log(g))?b:a;});
+      var pick=pickFrom(cs);
       return {f:c.f,id:c.id,code:pick.code,p:pick.p,od:pick.od};
     });
     /* Soft league cap: spread legs across leagues instead of stacking one, but
@@ -4319,14 +4342,15 @@ function renderWizardPanel(){
     b.classList.toggle("on",b.dataset.mode===BUILD.mode);
     b.setAttribute("aria-selected",b.dataset.mode===BUILD.mode?"true":"false");
   });
-  // Event listeners. Tapping a payout / style chip builds the preview live
-  // (conjured=true) so the games / avg-confidence / total-odds boxes update
-  // immediately - no separate Conjure tap needed just to see the numbers.
+  // Event listeners. Chips update the build INPUTS and refresh the stat tiles
+  // (games / avg confidence / total odds) via the ghost preview - but the game
+  // list itself stays hidden until Conjure is tapped, so Conjure keeps its
+  // reveal moment.
   $("wspOddsChips").querySelectorAll("[data-o]").forEach(function(c){
-    c.addEventListener("click",function(){WSP.odds=+c.dataset.o;WSP.conjured=true;renderBuilder();});
+    c.addEventListener("click",function(){WSP.odds=+c.dataset.o;WSP._sig=null;renderBuilder();});
   });
   $("wspStyleChips").querySelectorAll("[data-lo]").forEach(function(c){
-    c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;WSP.conjured=true;renderBuilder();});
+    c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;WSP._sig=null;renderBuilder();});
   });
   $("wspGo").addEventListener("click",function(){wspConjure(false);});
 }
@@ -4335,7 +4359,7 @@ function renderBuilderOutput(){
   var displayRisk = firstVisit ? 45 : BUILD.risk;
   var p = riskParams(displayRisk);
   var isWiz = BUILD.mode==="wizard";
-  var picks;
+  var picks, wizGhost=false;
   if(isWiz){
     if(WSP.conjured){
       /* Cache the conjured slip and only rebuild when a build INPUT changes
@@ -4349,7 +4373,13 @@ function renderBuilderOutput(){
         WSP._sig=_sig;
       }
       picks=WSP._slip.filter(function(c){return !WSP.removed[c.id];});
-    } else picks=[];
+    } else {
+      /* Not conjured yet: show a GHOST preview - stat tiles computed from a
+         throwaway build so the numbers update as chips are tapped, but the
+         game list stays hidden until Conjure. */
+      wizGhost=true;
+      picks=wspBuild().picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};}).slice(0,40);
+    }
   } else {
     picks = firstVisit ? [] : buildPicks();
   }
@@ -4373,7 +4403,11 @@ function renderBuilderOutput(){
     "<div class='stat odds'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='8'/><path d='M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3H10a1.5 1.5 0 0 0 0 3h4'/></svg></span><b id='totOdds'>"+(picks.length?pre+odds.toFixed(2):"-")+"</b>"+
       "<i>Total odds"+(picks.length&&!real?" (est.)":"")+"</i></div>";
   // Slip rows
-  if(!picks.length){
+  if(wizGhost){
+    /* Ghost mode: numbers above are real, games hidden. Tease, don't reveal. */
+    $("slip").innerHTML="<div class='bld-empty'><b>"+picks.length+" game"+(picks.length===1?"":"s")+" ready</b>"+
+      "<p>Tap Conjure to reveal your slip.</p></div>";
+  } else if(!picks.length){
     var dry=(SCOPE==="day")&&!scopeFixtures().length;
     $("slip").innerHTML="<div class='bld-empty'><b>"+(isWiz?(WSP.conjured?"No slip yet":"Ready when you are")+"":"Nothing in your slip")+"</b>"+
       (isWiz?(WSP.conjured?"No games match your wizard settings - try a lower payout or enable more markets.":"Tap a target payout to preview your slip.")
