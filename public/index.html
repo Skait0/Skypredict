@@ -2052,6 +2052,42 @@ select{min-height:44px;padding:10px 32px 10px 12px}
   .board-head p{font-size:12px}
 }
 
+/* ============================================== builder settings dock
+   The builder runs long on a desktop - filters, scope, leagues, markets, the
+   panel, the stats, the slip - so by the time you are judging the output,
+   every control that shaped it is off screen. This is not really about the
+   mode toggle: it carries the settings, so the pixels it occupies do more
+   than one job. Tapping the summary returns you to the controls.
+   Top right, under the header, clear of the My slip button at bottom right.
+   Phones never see it - they have a bottom nav, a My slip button, and their
+   slip is in a sheet, so a fourth floating thing is the clutter we removed. */
+.bld-dock{position:fixed;top:74px;right:22px;z-index:115;
+  display:flex;align-items:center;gap:8px;padding:6px;
+  background:var(--card);border:1px solid var(--line);border-radius:99px;
+  box-shadow:0 8px 26px rgba(0,0,0,.34);
+  opacity:0;transform:translateY(-8px);pointer-events:none;
+  transition:opacity .22s ease,transform .22s ease}
+.bld-dock.on{opacity:1;transform:translateY(0);pointer-events:auto}
+.bld-dock[hidden]{display:none}
+html:not(.mode-build) .bld-dock{display:none}
+.bd-mode{display:flex;gap:2px;background:var(--card-2);border-radius:99px;padding:2px}
+.bd-m{background:none;border:0;font:inherit;font-weight:700;font-size:12px;
+  color:var(--soft);padding:6px 12px;border-radius:99px;cursor:pointer;
+  transition:background .15s,color .15s}
+.bd-m:hover{color:var(--text)}
+.bd-m.on{color:#fff}
+.bd-m.on[data-bdmode="slider"]{background:linear-gradient(120deg,#c8323d,var(--red))}
+.bd-m.on[data-bdmode="wizard"]{background:linear-gradient(120deg,#6d3bd4,#8b5cf6)}
+.bd-sum{display:inline-flex;align-items:center;gap:8px;background:none;border:0;
+  font:inherit;font-size:12px;font-weight:700;color:var(--faint);
+  padding:6px 10px 6px 4px;cursor:pointer;white-space:nowrap;
+  transition:color .15s}
+.bd-sum:hover{color:var(--text)}
+.bd-sum:focus-visible,.bd-m:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.bd-up{font-size:13px;opacity:.7}
+@media(max-width:720px){.bld-dock{display:none!important}}
+@media(prefers-reduced-motion:reduce){.bld-dock{transition:none}}
+
 /* Wizard: the panel carries the numbers, the slip is read in the sheet that
    comes up on Conjure. Two copies of the same legs, one of them with no way to
    book them, was the thing to lose. The sheet's own footer holds Shuffle,
@@ -5731,9 +5767,62 @@ function wspConjure(shuffle){
 }
 
 // --- Mode toggle + renderBuilder dispatcher ---
+/* ---- Builder settings dock ----
+   Mirrors the mode toggle and summarises what the slip is being built from,
+   so neither has to be scrolled back to. Shown only once the real controls
+   have left the screen, and only on a desktop. */
+function bldSummary(){
+  var mkN=0; try{
+    mkN=BUILD.mode==="wizard"
+      ? Object.keys(WSP.mk).filter(function(k){return WSP.mk[k];}).length
+      : marketCount();
+  }catch(e){}
+  var lead;
+  if(BUILD.mode==="wizard"){
+    lead = (WSP.odds==null) ? "No payout yet" : "×"+WSP.odds;
+  } else {
+    lead = (BUILD.risk==null) ? "No risk set" : riskWord(BUILD.risk);
+  }
+  return lead+" · "+mkN+" market"+(mkN===1?"":"s")+
+         (TOP_ONLY?" · top flight":"");
+}
+function renderBldDock(){
+  var dock=$("bldDock"); if(!dock) return;
+  dock.hidden=false;
+  var tx=$("bdSumTx"); if(tx) tx.textContent=bldSummary();
+  dock.querySelectorAll("[data-bdmode]").forEach(function(b){
+    b.classList.toggle("on",b.getAttribute("data-bdmode")===BUILD.mode);
+    b.setAttribute("aria-pressed",b.getAttribute("data-bdmode")===BUILD.mode?"true":"false");
+  });
+  if(dock._w) return;
+  dock._w=1;
+  dock.querySelectorAll("[data-bdmode]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var m=b.getAttribute("data-bdmode");
+      if(m===BUILD.mode) return;
+      BUILD.mode=m; try{localStorage.setItem("sw.mode",m);}catch(e){}
+      renderBuilder();
+    });
+  });
+  var sum=$("bdSum");
+  if(sum) sum.addEventListener("click",function(){
+    var head=document.querySelector(".bld-mode-row")||document.querySelector(".bld-head");
+    if(head) try{head.scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"start"});}
+             catch(e){head.scrollIntoView();}
+  });
+  /* Watches the real toggle: while it is on screen the dock stays out of the
+     way, because two copies of the same control at once is just noise. */
+  var head=document.querySelector(".bld-mode-row");
+  if(head&&"IntersectionObserver" in window){
+    new IntersectionObserver(function(es){
+      dock.classList.toggle("on",!es[0].isIntersecting);
+    },{threshold:0}).observe(head);
+  }
+}
 function renderBuilder(){
   /* The wizard shows the numbers and keeps the slip itself for the sheet. */
   document.documentElement.classList.toggle("wiz-mode",BUILD.mode==="wizard");
+  renderBldDock();
   wireBldHelp();
   /* Shown unprompted only to someone who has never dismissed it. */
   if(!bldCoachSeen()) renderBldCoach(true);
@@ -6323,6 +6412,20 @@ setTimeout(hideLoader,8000);
 
 load();
 </script>
+<!-- Builder settings dock. Appears once the real controls have scrolled away,
+     so the things that shape the slip stay reachable while you are looking at
+     it. Desktop only: a phone already carries the bottom nav and the My slip
+     button, and its slip lives in a sheet anyway. -->
+<div class="bld-dock" id="bldDock" hidden>
+  <div class="bd-mode" id="bdMode" role="group" aria-label="Build mode">
+    <button class="bd-m" type="button" data-bdmode="slider">Slider</button>
+    <button class="bd-m" type="button" data-bdmode="wizard">Wizard</button>
+  </div>
+  <button class="bd-sum" id="bdSum" type="button" aria-label="Back to the build settings">
+    <span id="bdSumTx"></span><span class="bd-up" aria-hidden="true">&#8593;</span>
+  </button>
+</div>
+
 <div class="slipbar" id="slipbar"><div class="slipbar-in" id="slipbarBtn"><span class="sb-tx"><b id="sbHead">Build me a SportyBet slip</b><i id="sbSub">We pick the games, you get the code</i></span><span class="sb-go">&rarr;</span></div></div>
 <div class="netpill off" id="netpill"><span class="dot"></span><span id="netpillTxt">Offline</span></div>
 <script>
