@@ -1879,9 +1879,6 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .coach{display:flex;align-items:center;gap:10px;margin:0 10px 10px;
   padding:10px 12px;border:1px solid var(--red);border-radius:var(--r-md);
   background:var(--red-wash);position:relative}
-.coach::before{content:'';position:absolute;top:-6px;left:24px;width:10px;height:10px;
-  transform:rotate(45deg);background:var(--red-wash);
-  border-left:1px solid var(--red);border-top:1px solid var(--red)}
 .coach-tx{flex:1;min-width:0;font-size:12px;line-height:1.45;color:var(--soft)}
 .coach-tx b{display:block;color:var(--text);font-size:13px;font-weight:800;
   margin-bottom:2px}
@@ -1890,10 +1887,16 @@ select{min-height:44px;padding:10px 32px 10px 12px}
   padding:8px 13px;cursor:pointer}
 .coach-x:hover{filter:brightness(1.08)}
 .coach-x:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-/* Draws the eye to the call without opening anything. */
-.coach-look{border-radius:var(--r-sm);animation:coachLook 1.7s ease-in-out 3}
-@keyframes coachLook{0%,100%{box-shadow:0 0 0 0 rgba(230,57,70,0)}
-  50%{box-shadow:0 0 0 3px rgba(230,57,70,.34)}}
+/* The tip does the pointing, not an arrow. An arrow drawn at a fixed offset
+   from the card's edge aims at whatever happens to sit above it - which was
+   the "see more predictions" row, not the call, and read as pointing at
+   nothing on a phone. A ring on the call itself cannot aim at the wrong
+   thing, and it works the same in both views and at every width.
+   The ring persists while the coach is up; the pulse is just the arrival. */
+.coach-look{border-radius:var(--r-sm);box-shadow:0 0 0 2px var(--red);
+  animation:coachLook 1.7s ease-in-out 3}
+@keyframes coachLook{0%,100%{box-shadow:0 0 0 2px var(--red)}
+  50%{box-shadow:0 0 0 6px rgba(230,57,70,.32)}}
 @media(prefers-reduced-motion:reduce){.coach-look{animation:none}}
 @media(max-width:560px){
   .coach{margin:0 8px 8px;padding:9px 10px;gap:8px;flex-wrap:wrap}
@@ -4157,7 +4160,9 @@ function runCoach(o){
 
   var c=document.createElement("div");
   c.className="coach";
-  c.innerHTML="<div class='coach-tx'><b>This is our call.</b>"+
+  /* Names the ring rather than gesturing at a position, so the words work
+     wherever on the card the call happens to sit. */
+  c.innerHTML="<div class='coach-tx'><b>The outlined row is our call.</b>"+
     "<span>The number beside it is how sure we are. Open any match to see "+
     "every other market we price.</span></div>"+
     "<button class='coach-x' type='button'>Got it</button>";
