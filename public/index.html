@@ -1862,6 +1862,15 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .viewtoggle.top .vt{padding:6px 14px}
 .vt{padding:8px 14px}
 
+/* "Tap" or "Click", chosen by how the device is actually driven rather than
+   by how wide it is - a touch laptop is tapped, a 1200px desktop is clicked,
+   and a narrow window on a mouse-driven machine is still clicked. */
+.v-click{display:none}
+@media (hover:hover) and (pointer:fine){
+  .v-tap{display:none}
+  .v-click{display:inline}
+}
+
 /* The board announces itself. scroll-margin keeps the heading clear of the
    sticky filter bar when the CTA jumps to it. */
 .board-head{margin:18px 0 10px;scroll-margin-top:14px}
@@ -2436,7 +2445,8 @@ footer{margin-top:26px;padding-top:18px;
       <i style="background:var(--green)">W</i> last 5 games</span>
   </div>
 
-  <p class="list-hint">▾ Open any match for its full markets.</p>
+  <p class="list-hint">▾ <span class="v-tap">Tap</span><span class="v-click">Click</span>
+    any match for every option we predict, and add any of them to your slip.</p>
   <main id="list"></main>
   <div id="listMore"></div>
     </div><!-- /.home-main -->
@@ -4199,10 +4209,12 @@ function runCoach(o){
   var c=document.createElement("div");
   c.className="coach";
   /* Names the ring rather than gesturing at a position, so the words work
-     wherever on the card the call happens to sit. */
+     wherever on the card the call happens to sit. The verb follows the input
+     device, not the screen width - a touch laptop is still tapped. */
   c.innerHTML="<div class='coach-tx'><b>The outlined row is our call.</b>"+
-    "<span>The number beside it is how sure we are. Open any match to see "+
-    "every other market we price.</span></div>"+
+    "<span>The number beside it is how sure we are. "+
+    "<span class='v-tap'>Tap</span><span class='v-click'>Click</span> any match "+
+    "for every option we predict, and add any of them to your slip.</span></div>"+
     "<button class='coach-x' type='button'>Got it</button>";
   /* A list row toggles open when clicked, so the tip must swallow its own. */
   c.addEventListener("click",function(e){e.stopPropagation();});
