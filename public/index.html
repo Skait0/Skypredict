@@ -1455,11 +1455,28 @@ html.mode-live #live{display:block}
 .mkt-chip.unlocking{animation:mktUnlock .35s ease}
 @keyframes mktUnlock{0%{transform:scale(.92);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
 @media(max-width:560px){.mkt-chip{padding:6px 11px;font-size:12px}}
-.scope-seg{display:flex;gap:3px;background:var(--raise);border-radius:var(--r-md);padding:3px;margin-bottom:13px}
-.scope-opt{flex:1;background:none;border:0;font:inherit;font-size:12px;font-weight:700;
-  color:var(--faint);padding:8px 6px;border-radius:var(--r-sm);cursor:pointer;white-space:nowrap;
-  transition:background .16s,color .16s}
-.scope-opt.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.28)}
+/* This decides how much of the card the builder may draw from, which is one of
+   the more consequential switches on the page, and it was styled like a quiet
+   preference nobody would notice. Bigger type, a real border, an accent on the
+   live side, and the count of games each option actually covers. */
+.scope-seg{display:flex;gap:4px;background:var(--raise);border:1px solid var(--line);
+  border-radius:var(--r-md);padding:4px;margin-bottom:13px}
+.scope-opt{flex:1;background:none;border:0;font:inherit;font-size:13px;font-weight:800;
+  color:var(--soft);padding:9px 8px;border-radius:var(--r-sm);cursor:pointer;
+  white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;
+  gap:7px;transition:background .16s,color .16s,box-shadow .16s}
+.scope-opt:hover{color:var(--text)}
+.scope-opt:focus-visible{outline:2px solid var(--red);outline-offset:1px}
+.scope-opt.on{background:var(--card);color:var(--text);
+  box-shadow:0 1px 3px rgba(0,0,0,.28),inset 0 0 0 1px var(--red)}
+.so-n{font-size:11px;font-weight:800;padding:1px 7px;border-radius:99px;
+  background:var(--card-2);color:var(--faint);font-variant-numeric:tabular-nums}
+.scope-opt.on .so-n{background:var(--red);color:#fff}
+.so-n:empty{display:none}
+@media(max-width:560px){
+  .scope-opt{font-size:12px;padding:8px 6px;gap:5px}
+  .so-n{font-size:10.5px;padding:1px 6px}
+}
 .scope-opt:focus-visible{outline:2px solid var(--red);outline-offset:1px}
 .bld-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
 .stat{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r-md);padding:14px 14px 12px;position:relative}
@@ -1885,14 +1902,64 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 
 /* Explains the two builders where the choice is made, rather than in front of
    it. Both produce a slip; the only difference is what you hand over. */
-.bld-mode-hint{margin:9px 0 0;font-size:11.5px;line-height:1.5;color:var(--faint)}
-.bld-mode-hint b{color:var(--soft);font-weight:800}
-.bmh-sep{opacity:.5;margin:0 3px}
-@media(max-width:560px){
-  .bld-mode-hint{font-size:11px;margin-top:8px}
-  .bmh-sep{display:none}
-  .bld-mode-hint b:nth-of-type(2){display:block;margin-top:2px}
+/* The heading was the page's plainest type on the page with the most
+   personality. Same treatment the home hero uses - tight tracking, the accent
+   carried by the second half - so the builder reads as part of the site. */
+.bld-title{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.03em;
+  line-height:1.05;margin:6px 0 12px}
+.bld-title em{font-style:normal;
+  background:linear-gradient(100deg,#8b5cf6 0%,#c084fc 45%,var(--win) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+/* A gradient that fails to clip leaves invisible text, so keep a real colour
+   underneath for anything that does not support it. */
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){
+  .bld-title em{color:#a78bfa;background:none}
 }
+.bld-mode-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.bld-help{width:26px;height:26px;flex-shrink:0;border-radius:50%;cursor:pointer;
+  background:var(--card-2);border:1px solid var(--line);color:var(--soft);
+  font:inherit;font-weight:800;font-size:13px;line-height:1;
+  display:inline-flex;align-items:center;justify-content:center;transition:.15s}
+.bld-help:hover{color:var(--text);border-color:var(--faint)}
+.bld-help:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.bld-help.on{background:var(--red);border-color:var(--red);color:#fff}
+
+/* Each phrase is one flex item, so a narrow screen wraps whole lines rather
+   than splitting a label from the words that explain it. */
+.bld-mode-hint{display:flex;flex-wrap:wrap;gap:3px 18px;margin:10px 0 0;
+  font-size:11.5px;line-height:1.5;color:var(--faint)}
+.bmh{display:inline-block}
+.bmh b{font-weight:800;margin-right:4px}
+.bmh-wiz b{color:#a78bfa}
+.bmh-slide b{color:var(--red-ink)}
+[data-theme="light"] .bmh-wiz b{color:#5b21b6}
+@media(max-width:560px){
+  /* One phrase per line, each kept whole. The old rule made the second label
+     a block on its own, which stranded "Slider" above its own explanation. */
+  .bld-mode-hint{font-size:11px;margin-top:8px;flex-direction:column;gap:3px}
+  .bld-title{margin:4px 0 10px}
+}
+
+/* The builder's own coach: opened by the ? beside the toggle, and shown once
+   unprompted to anyone who has not seen it. Same bargain as the board's -
+   dismissible, remembered, and never covering anything. */
+.bld-coach{margin:11px 0 0;padding:11px 13px;border:1px solid var(--line);
+  border-radius:var(--r-md);background:var(--card-2)}
+.bld-coach h4{font-size:12.5px;font-weight:800;margin-bottom:7px}
+.bld-coach ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+.bld-coach li{font-size:12px;line-height:1.5;color:var(--soft);
+  display:flex;gap:8px;align-items:flex-start}
+.bld-coach li b{font-weight:800}
+.bld-coach li.bc-wiz b{color:#a78bfa}
+.bld-coach li.bc-slide b{color:var(--red-ink)}
+[data-theme="light"] .bld-coach li.bc-wiz b{color:#5b21b6}
+.bc-num{flex-shrink:0;width:17px;height:17px;border-radius:50%;background:var(--raise);
+  color:var(--text);font-size:9.5px;font-weight:800;display:flex;
+  align-items:center;justify-content:center;margin-top:1px}
+.bld-coach .bc-x{margin-top:9px;background:var(--red);color:#fff;border:0;
+  border-radius:var(--r-sm);font:inherit;font-size:11.5px;font-weight:800;
+  padding:7px 13px;cursor:pointer}
+#bldCoach:empty{display:none}
 
 /* ============================================== first-run coach
    Anchored to the card it is talking about, inside it, so there is no
@@ -2457,16 +2524,24 @@ footer{margin-top:26px;padding-top:18px;
 
   <section id="builder">
     <div class="bld-head">
-      <h1>Build a slip</h1>
+      <h1 class="bld-title">Build <em>a slip</em></h1>
+      <div class="bld-mode-row">
       <div class="bld-mode stage-in stage-in-1" role="tablist" aria-label="Build mode" data-parallax="1.2">
         <button class="bld-mode-btn on" role="tab" data-mode="slider" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><line x1="4" y1="4" x2="4" y2="20" stroke-width="3"/><line x1="12" y1="4" x2="12" y2="20" stroke-width="3"/><line x1="20" y1="4" x2="20" y2="20" stroke-width="3"/><circle cx="4" cy="12" r="3" fill="currentColor"/><circle cx="12" cy="8" r="3" fill="currentColor"/><circle cx="20" cy="16" r="3" fill="currentColor"/></svg><span>Slider</span></button>
         <button class="bld-mode-btn" role="tab" data-mode="wizard" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><path d="M12 2L15 8H22M12 2L9 8H2M12 2V22M5 14H19M12 22L9 16H2M12 22L15 16H22"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg><span>Wizard</span></button>
       </div>
-      <!-- Both build a slip for you; the difference is what you tell us. Six
-           words each, here where the choice actually is - not in a gate in
-           front of the builder. -->
-      <p class="bld-mode-hint"><b>Wizard</b> - name a payout, we hit it.
-        <span class="bmh-sep">·</span> <b>Slider</b> - set how risky, we pick.</p>
+        <button class="bld-help" id="bldHelp" type="button"
+          aria-label="How the two builders differ" title="How these work">?</button>
+      </div>
+      <!-- Both build a slip for you; the difference is what you tell us. Each
+           phrase is one element, so a narrow screen wraps whole lines instead
+           of stranding "Slider" above its own explanation. Colours follow the
+           toggle: violet for the wizard, crimson for the slider. -->
+      <p class="bld-mode-hint">
+        <span class="bmh bmh-wiz"><b>Wizard</b> name a payout, we hit it.</span>
+        <span class="bmh bmh-slide"><b>Slider</b> set how risky, we pick.</span>
+      </p>
+      <div id="bldCoach"></div>
     </div>
 
     <!-- SHARED CONTROLS (always visible) -->
@@ -2477,8 +2552,10 @@ footer{margin-top:26px;padding-top:18px;
       </button>
       <div class="filters-body" id="filtersBody">
       <div class="scope-seg stage-in stage-in-2" id="scopeSeg" role="group" aria-label="Fixture window">
-        <button class="scope-opt stage-in stage-in-3" type="button" data-scope="day">Today only</button>
-        <button class="scope-opt stage-in stage-in-3" type="button" data-scope="all">All upcoming</button>
+        <button class="scope-opt stage-in stage-in-3" type="button" data-scope="day">
+          <span class="so-t">Today only</span><span class="so-n" data-scope-n="day"></span></button>
+        <button class="scope-opt stage-in stage-in-3" type="button" data-scope="all">
+          <span class="so-t">All upcoming</span><span class="so-n" data-scope-n="all"></span></button>
       </div>
       <div class="wsp-lbl stage-in stage-in-2">Leagues</div>
       <div class="wsp-chips stage-in stage-in-3" id="bldLeagues">
@@ -2630,7 +2707,14 @@ function confLabel(p){var pc=Math.round(p*100);return pc>=70?"Strong":pc>=55?"Li
 function verdict(p){var pc=Math.round(p*100);return pc>=70?"Good bet":pc>=55?"Worth a look":"Risky pick";}
 const V={off:0,country:"",league:"",q:"",cat:"all",list:true,view:"pred"};
 try{var _sv=localStorage.getItem("sw.view"); if(_sv) V.list=(_sv==="list");}catch(e){}
-try{var _sv2=localStorage.getItem("sw.viewtab"); if(_sv2 && ["pred","live","build"].includes(_sv2)) V.view=_sv2;}catch(e){}
+/* Which tab you are on is session state, not a preference. Kept in
+   sessionStorage so it survives moving around the site and a reload, and is
+   gone once the tab or the app is closed - coming back later should start at
+   the front door, not wherever you happened to stop. */
+try{var _sv2=sessionStorage.getItem("sw.viewtab"); if(_sv2 && ["pred","live","build"].includes(_sv2)) V.view=_sv2;}catch(e){}
+/* Clear the old localStorage copy so an existing visitor is not pinned to the
+   tab they were on when this changed. */
+try{localStorage.removeItem("sw.viewtab");}catch(e){}
 let DATA={generated:"",matches:0,leagues:[],fixtures:[],results:[]};
 const REDUCED=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 if(REDUCED) document.documentElement.classList.add("reduce");
@@ -3538,6 +3622,16 @@ function paintScope(){
     b.classList.toggle("on",on);
     b.setAttribute("aria-pressed",on?"true":"false");
   });
+  /* Counts make the choice concrete: "12" against "168" says more about what
+     the switch does than either label manages on its own. */
+  try{
+    var all=(DATA.fixtures||[]).filter(notStarted);
+    var today=all.filter(function(f){return dayOff(f.date)===0;}).length;
+    var n={day:today,all:all.length};
+    seg.querySelectorAll("[data-scope-n]").forEach(function(el){
+      el.textContent=n[el.getAttribute("data-scope-n")];
+    });
+  }catch(e){}
 }
 /* Persist and repaint only - callers decide what to re-render, because a change
    made from the Wizard's Special sheet must not flip BUILD.touched and rewrite
@@ -3824,6 +3918,18 @@ function riskParams(r){
     tier:(r<33?0:(r<66?1:2))};
 }
 function riskWord(r){return r<20?"Safest":r<40?"Safe":r<60?"Balanced":r<80?"Bold":"Risky";}
+/* "High scoring" is the model's own Over-2.5 read, not a league list - so it
+   follows Eliteserien, the Eredivisie and whoever else is scoring this season
+   without anyone maintaining names. Same bar the "Over 2.5" category uses. */
+const HIGH_SCORING_O25=0.60;
+function preferGoalsOverDouble(f,best,allowed,minConf){
+  if(!best||(best.code!=="1X"&&best.code!=="X2")) return best;
+  if(f.o25==null||f.o25<HIGH_SCORING_O25) return best;
+  if(allowed && allowed.indexOf("OVER_1.5")<0) return best;
+  var ov=mProb(f,"OVER_1.5");
+  if(ov==null||isNaN(ov)||ov<minConf) return best;
+  return {code:"OVER_1.5",p:ov};
+}
 function allowedMarkets(t){
   var m=["1X","X2","OVER_1.5","1","2"];
   if(t>=1) m=m.concat(["12","OVER_2.5"]);
@@ -3875,6 +3981,12 @@ function buildPicks(){
       score*=1+(h32(fid(f)+"|"+c+"|"+(BUILD.seed||0))-0.5)*(0.9+0.8*f0);
       if(score>bestScore){bestScore=score;best={code:c,p:v};}
     });
+    /* In a game the model expects goals in, a double chance is the timid pick:
+       it needs the favourite not to lose, in a match likely to be open. If
+       Over 1.5 clears the same confidence bar, take it instead. The lean above
+       only nudges the score and double chance could still out-rank it; this
+       decides it outright, which is what was being asked of the shuffle. */
+    best=preferGoalsOverDouble(f,best,allowed,p.minConf);
     if(best) cand.push({f:f,id:fid(f),code:best.code,p:best.p,eventId:f.eventId||null});
   });
   var removedCount=Object.keys(BUILD.removed).length;
@@ -4262,6 +4374,48 @@ function runCoach(o){
     try{card.scrollIntoView({behavior:"smooth",block:"center"});}
     catch(e){card.scrollIntoView();}
   }
+}
+
+/* ---- Builder coach ----
+   The toggle names two tools without saying what either does to you. This
+   opens from the ? beside it, and shows itself once to anyone who has not
+   seen it, so a first-timer is told rather than left to experiment. */
+const BLD_COACH_KEY="sw.bldcoached.v1";
+function bldCoachSeen(){
+  try{return localStorage.getItem(BLD_COACH_KEY)==="1";}catch(e){return true;}
+}
+function renderBldCoach(open){
+  var host=$("bldCoach"), btn=$("bldHelp");
+  if(!host) return;
+  if(!open){ host.innerHTML=""; if(btn) btn.classList.remove("on"); return; }
+  if(btn) btn.classList.add("on");
+  host.innerHTML=
+    "<div class='bld-coach'>"+
+      "<h4>Two ways to the same slip</h4>"+
+      "<ul>"+
+        "<li class='bc-wiz'><span class='bc-num'>1</span><span><b>Wizard</b> - "+
+          "you name the payout you want, say &times;100, and we choose the games "+
+          "that get there. Best if you know what you want to win.</span></li>"+
+        "<li class='bc-slide'><span class='bc-num'>2</span><span><b>Slider</b> - "+
+          "you set how much risk you are happy with and we pick to match. Best if "+
+          "you care more about the odds of landing than the size of the return.</span></li>"+
+        "<li><span class='bc-num'>3</span><span>Either way you get a booking code "+
+          "for SportyBet, and you can drop any game you do not fancy before you "+
+          "take it.</span></li>"+
+      "</ul>"+
+      "<button class='bc-x' type='button'>Got it</button>"+
+    "</div>";
+  host.querySelector(".bc-x").addEventListener("click",function(){
+    try{localStorage.setItem(BLD_COACH_KEY,"1");}catch(e){}
+    renderBldCoach(false);
+  });
+}
+function wireBldHelp(){
+  var btn=$("bldHelp"); if(!btn||btn._w) return;
+  btn._w=1;
+  btn.addEventListener("click",function(){
+    renderBldCoach(!btn.classList.contains("on"));
+  });
 }
 
 /* ---- Board cap ----
@@ -4871,7 +5025,7 @@ function setView(v){
      on the home page. Without it that CSS never fires and the nav stays hidden. */
   root.classList.toggle("mode-pred",v==="pred");
   V.view=v;
-  try{localStorage.setItem("sw.viewtab",v);}catch(e){}
+  try{sessionStorage.setItem("sw.viewtab",v);}catch(e){}
   $("tab-pred").classList.toggle("on",v==="pred");
   $("tab-live").classList.toggle("on",v==="live");
   $("tab-build").classList.toggle("on",v==="build");
@@ -5026,6 +5180,13 @@ function wspBuild(){
     });
     if(!cands.length)return;
     var best=cands.reduce(function(a,b){return b.p>a.p?b:a;});
+    /* Same rule the slider uses: in a game the model expects goals in, take
+       Over 1.5 over a double chance. Both shuffles should behave alike. */
+    var swapped=preferGoalsOverDouble(f,best,allowed,0.5);
+    if(swapped!==best){
+      var m=cands.filter(function(c){return c.code==="OVER_1.5";})[0];
+      if(m) best=m;
+    }
     best.cands=cands; all.push(best);
   });
   // Seed jitter so each shuffle surfaces a different mix; SA penalty keeps
@@ -5114,6 +5275,9 @@ function wspConjure(shuffle){
 
 // --- Mode toggle + renderBuilder dispatcher ---
 function renderBuilder(){
+  wireBldHelp();
+  /* Shown unprompted only to someone who has never dismissed it. */
+  if(!bldCoachSeen()) renderBldCoach(true);
   // Sync shared controls state from BUILD/WSP
   renderShared();
   // Render mode-specific panel
