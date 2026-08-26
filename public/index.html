@@ -1970,6 +1970,12 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .coach{display:flex;align-items:center;gap:10px;margin:0 10px 10px;
   padding:10px 12px;border:1px solid var(--red);border-radius:var(--r-md);
   background:var(--red-wash);position:relative}
+/* A list row is an eight-column grid, so appending the coach to it auto-placed
+   it into a cell: on desktop that rendered as a 26px-wide, 572px-tall column of
+   single words. It has to span the row. Written against any grid parent, not
+   just .lrow, so adding a column or a new row layout cannot bring this back. */
+.coach{grid-column:1/-1}
+.lrow .coach{margin:8px 0 2px}
 .coach-tx{flex:1;min-width:0;font-size:12px;line-height:1.45;color:var(--soft)}
 .coach-tx b{display:block;color:var(--text);font-size:13px;font-weight:800;
   margin-bottom:2px}
