@@ -617,29 +617,43 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
   animation:wspOrbDrift 5s ease-in-out infinite alternate}
 @keyframes wspOrbDrift{from{transform:translate(0,0)}to{transform:translate(30px,12px)}}
 .slip-cta:hover{border-color:var(--faint)}
-.slip-cta:hover .sc-go-btn{box-shadow:0 6px 22px rgba(198,35,48,.5),inset 0 1px 0 rgba(255,255,255,.28)!important}
+/* Deliberately nothing here: this used to restyle the button whenever the
+   panel was hovered, which meant hovering the button itself did nothing
+   extra. Each button now owns its own hover. */
 .sc-orb{flex-shrink:0;width:44px;height:44px;margin-top:0;
   background:url("/wiz-orb.png") center/cover no-repeat;border-radius:50%;
-  filter:drop-shadow(0 0 5px rgba(180,150,255,.55));
+  /* Washed to white so it sits with the palette instead of being the last
+     violet thing left on a card that no longer has any. */
+  filter:grayscale(1) brightness(1.75) contrast(.9)
+         drop-shadow(0 0 5px rgba(255,255,255,.45));
   animation:orbBreath 3.4s ease-in-out infinite}
-@keyframes orbBreath{0%,100%{filter:drop-shadow(0 0 4px rgba(180,150,255,.4))}
-  50%{filter:drop-shadow(0 0 8px rgba(200,175,255,.8))}}
+@keyframes orbBreath{
+  0%,100%{filter:grayscale(1) brightness(1.75) contrast(.9)
+          drop-shadow(0 0 4px rgba(255,255,255,.35))}
+  50%{filter:grayscale(1) brightness(1.9) contrast(.9)
+      drop-shadow(0 0 9px rgba(255,255,255,.7))}}
 .sc-tx{flex:1;min-width:0}
 .sc-tx b{display:block;font-size:16.5px;font-weight:800;color:var(--text);letter-spacing:.01em}
 .sc-tx i{display:block;font-style:normal;font-size:12.5px;color:var(--soft);margin-top:3px}
 /* SportyBet red. Beyond matching the palette this does real work: it says
    "this ends in a SportyBet code" before the label is read. Colour as a
    shortcut to meaning, rather than as decoration. */
+/* Uppercase at .09em tracking in an 800 weight is a shouted label, and in a
+   small button the letters crowd the edges - which is what made it read as a
+   cheap advert. Sentence case, normal tracking, a calmer weight and room
+   around the words: the button can be confident without raising its voice. */
 .sc-go-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;
-  padding:9px 22px;font-size:12.5px;border-radius:var(--r-sm);
+  padding:12px 22px;font-size:13.5px;line-height:1.15;border-radius:10px;
   color:#fff!important;
-  background:linear-gradient(165deg,#ef4551 0%,#e0212f 55%,#b8141f 100%)!important;
-  border:1px solid rgba(255,255,255,.16)!important;
-  box-shadow:0 4px 16px rgba(198,35,48,.38),inset 0 1px 0 rgba(255,255,255,.22)!important;
-  letter-spacing:.09em;text-transform:uppercase;font-weight:800;position:relative;overflow:hidden;
-  transition:box-shadow .2s,border-color .2s,filter .2s}
-.sc-go-btn:hover{filter:brightness(1.06);
-  box-shadow:0 6px 22px rgba(198,35,48,.5),inset 0 1px 0 rgba(255,255,255,.28)!important}
+  background:linear-gradient(178deg,#e8323f 0%,#d2202c 100%)!important;
+  border:1px solid rgba(255,255,255,.14)!important;
+  box-shadow:0 1px 0 rgba(255,255,255,.16) inset,0 2px 10px rgba(160,20,32,.3)!important;
+  letter-spacing:0;text-transform:none;font-weight:700;position:relative;overflow:hidden;
+  transition:background .18s,box-shadow .18s,transform .12s}
+.sc-go-btn:hover{
+  background:linear-gradient(178deg,#f0424f 0%,#dd2733 100%)!important;
+  box-shadow:0 1px 0 rgba(255,255,255,.22) inset,0 4px 16px rgba(160,20,32,.42)!important}
+.sc-go-btn:active{transform:translateY(1px)}
 .sc-logo{height:30px;width:auto;display:inline-block;margin-left:9px;vertical-align:-9px;border-radius:4px}
 .sc-head{display:flex;align-items:flex-start;gap:13px}
 .sc-actions{display:flex;gap:10px;flex-wrap:wrap}
@@ -661,9 +675,10 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
    this one is present and plainly second. */
 .slider-btn{background:transparent!important;
   border:1px solid var(--line)!important;color:var(--soft)!important;
-  box-shadow:none!important}
+  box-shadow:none!important;border-radius:10px;font-weight:700;
+  text-transform:none;letter-spacing:0;font-size:13.5px;padding:12px 22px}
 .slider-btn:hover{border-color:var(--faint)!important;color:var(--text)!important;
-  background:var(--card-2)!important;filter:none}
+  background:var(--card-2)!important;filter:none;transform:none}
 .sc-logo{height:36px;width:auto;display:inline-block;border-radius:var(--r-sm);vertical-align:-12px;margin-right:8px}
 @media(prefers-reduced-motion:reduce){.slip-cta{animation:none}.slip-cta::after{display:none}}
 html.mode-build .slip-cta,html.mode-live .slip-cta{display:none}
@@ -688,6 +703,15 @@ html.mode-build .slip-cta,html.mode-live .slip-cta{display:none}
 .toprow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 2px}
 .toprow .viewtoggle.top{margin:0}
 .toprow .datebar{margin-left:auto}
+/* The stretch between the view toggle and the day pager was dead space on a
+   wide screen. The add-all pill lives in it now - centred, so it reads as its
+   own thing rather than as an appendage of either control.
+   Phones keep it on its own line below: that row is already exactly full with
+   two controls, and a third would put the day pager back onto two lines. */
+.toprow .bookall-row{margin:0;display:flex;justify-content:center;flex:0 0 100%;order:3}
+@media(min-width:561px){
+  .toprow .bookall-row{flex:1 1 auto;order:0;margin:0 auto}
+}
 html.mode-build .toprow,html.mode-live .toprow{display:none}
 .viewtoggle.top{margin:14px 0 2px;width:auto;display:inline-flex}
 .viewtoggle.top .vt{flex:0 0 auto;text-align:center;padding:7px 16px;font-size:13px}
@@ -782,22 +806,19 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
 /* Book-all: a small flashy pill above the board. It only appears when the
    visible tips are actually bookable, so it never sits there dead. */
 .bookall-row{display:flex;justify-content:flex-end;margin:8px 0 2px}
-.bookall{position:relative;overflow:hidden;display:none;align-items:center;gap:8px;
-  background:linear-gradient(135deg,#6d1017,var(--red) 55%,#9c1620);color:#fff;
-  border:1px solid rgba(242,184,75,.55);
-  font:inherit;font-weight:800;font-size:12.5px;letter-spacing:.03em;
-  padding:8px 15px 8px 27px;border-radius:99px;cursor:pointer;
-  text-shadow:0 1px 2px rgba(0,0,0,.55);
-  box-shadow:0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.12);
-  transition:filter .25s,box-shadow .25s,transform .15s}
+/* It sits between two quiet controls now, so a filled crimson slab with a
+   gold rim and a text shadow was shouting over both. An outline pill in the
+   accent colour: present, clearly tappable, not competing. */
+.bookall{position:relative;overflow:hidden;display:none;align-items:center;gap:7px;
+  background:transparent;color:var(--red-ink);
+  border:1px solid var(--line);
+  font:inherit;font-weight:700;font-size:12.5px;letter-spacing:0;
+  padding:8px 15px;border-radius:99px;cursor:pointer;text-shadow:none;
+  box-shadow:none;
+  transition:border-color .18s,background .18s,color .18s}
 .bookall.show{display:inline-flex}
-/* Calm at rest, menacing on approach: the ember flares, a red bloom opens up
-   and the pill gives one small tremor - a spell about to be cast, not a
-   button begging to be pressed. */
-.bookall:hover{filter:brightness(1.1);
-  box-shadow:0 0 0 1px rgba(242,184,75,.85),0 7px 24px rgba(230,57,70,.55),
-             inset 0 1px 0 rgba(255,255,255,.16);
-  animation:baTremor .3s ease-in-out 1}
+/* A quiet lift on approach - it is one control among three. */
+.bookall:hover{border-color:var(--red);background:var(--red-wash);color:var(--red-ink)}
 .bookall:hover .ba-spark{background:#FFD873;box-shadow:0 0 13px 3px rgba(242,184,75,1)}
 .bookall:active{transform:scale(.97)}
 @keyframes baTremor{0%,100%{transform:translateX(0)}20%{transform:translateX(-1.5px)}
@@ -806,7 +827,7 @@ html.reduce .bookall:hover{animation:none}
 .bookall:disabled{opacity:.6;cursor:not-allowed}
 .bookall .ba-n{background:rgba(242,184,75,.92);color:#2a1400;border-radius:99px;padding:1px 7px;
   font-variant-numeric:tabular-nums;font-size:11.5px;text-shadow:none}
-.ba-spark{position:absolute;top:50%;left:11px;width:5px;height:5px;margin-top:-2.5px;
+.ba-spark{display:none;position:absolute;top:50%;left:11px;width:5px;height:5px;margin-top:-2.5px;
   border-radius:50%;background:#F2B84B;pointer-events:none;
   box-shadow:0 0 7px 1px rgba(242,184,75,.85);animation:baFlicker 2.8s ease-in-out infinite;
   transition:background .25s,box-shadow .25s}
@@ -864,7 +885,10 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .lthead .c{text-align:center}
 .lrow{padding:5px 8px;border-bottom:1px solid var(--line-soft);cursor:pointer;
   border-left:3px solid var(--edge);border-radius:0;overflow-anchor:none}
-.lrow:hover{background:var(--raise)}
+/* --raise is a solid step lighter than the card and read as a white slab
+   under the cursor. A translucent wash tints instead of covering. */
+.lrow:hover{background:rgba(255,255,255,.035)}
+[data-theme="light"] .lrow:hover{background:rgba(0,0,0,.035)}
 .lt-time{font-size:12px;color:var(--faint);font-weight:700;font-variant-numeric:tabular-nums}
 .lt-match{min-width:0;display:flex;align-items:center;gap:7px;font-weight:700;font-size:13.5px}
 .lt-match .tm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2049,10 +2073,13 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot{display:none}
 .coach-tx{flex:1;min-width:0;font-size:12px;line-height:1.45;color:var(--soft)}
 .coach-tx b{display:block;color:var(--text);font-size:13px;font-weight:800;
   margin-bottom:2px}
-.coach-x{flex-shrink:0;background:var(--red);color:#fff;border:0;
-  border-radius:var(--r-sm);font:inherit;font-size:11.5px;font-weight:800;
-  padding:8px 13px;cursor:pointer}
-.coach-x:hover{filter:brightness(1.08)}
+/* Dismissing a tip is the quietest action on the page; it does not need a
+   filled red block. */
+.coach-x{flex-shrink:0;background:transparent;color:var(--soft);
+  border:1px solid var(--line);border-radius:99px;font:inherit;font-size:11.5px;
+  font-weight:700;padding:6px 14px;cursor:pointer;
+  transition:color .15s,border-color .15s,background .15s}
+.coach-x:hover{color:var(--text);border-color:var(--faint);background:var(--card-2)}
 .coach-x:focus-visible{outline:2px solid var(--text);outline-offset:2px}
 /* The tip does the pointing, not an arrow. An arrow drawn at a fixed offset
    from the card's edge aims at whatever happens to sit above it - which was
@@ -2136,15 +2163,28 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot{display:none}
   .wrap{max-width:1420px}
   .home-grid{flex-direction:row;align-items:flex-start;gap:26px}
   .home-main{flex:1 1 auto}
-  .home-rail{flex:0 0 372px;order:2;position:sticky;top:12px;gap:14px;
-    max-height:calc(100vh - 24px);overflow-y:auto;overscroll-behavior:contain;
-    scrollbar-width:thin}
+  /* Its own top gap, matching the board's. The margin-reset below is what the
+     rail needs to space its children by gap alone, and it was also eating the
+     first child's margin - which left the panel butted flat against the live
+     ticker above it with no gap at all. */
+  .home-rail{flex:0 0 372px;order:2;gap:14px;margin-top:14px}
   .home-rail>*{margin-top:0}
   .home-rail .potd,.home-rail .slip-cta{margin-top:0}
   /* The filter bar sticks in its own column; without a matching offset the two
      sticky things fight over the same strip of screen. */
   .home-main .bar{top:12px}
 }
+/* Sticky only when there is room to be sticky. Pinning a rail taller than the
+   window caps it at the viewport height and gives it an inner scrollbar, which
+   on a short laptop reads as the panel being cut off. Below this height it
+   simply flows with the page, where all of it can be reached. The number is
+   the rail's own content plus its offsets, not a guess at a device. */
+@media(min-width:1060px) and (min-height:820px){
+  .home-rail{position:sticky;top:12px;
+    max-height:calc(100vh - 24px);overflow-y:auto;overscroll-behavior:contain;
+    scrollbar-width:thin}
+}
+
 /* Card columns follow the space the board actually has, not the viewport. The
    fixed 2- and 3-column rules were written before the rail existed and would
    now squeeze three cards into a 630px column on a 1060px screen. auto-fill
@@ -2590,6 +2630,14 @@ footer{margin-top:26px;padding-top:18px;
       <button type="button" id="v-cards" class="vt on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/></svg>Cards</button>
       <button type="button" id="v-list" class="vt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>List</button>
     </div>
+  <div class="bookall-row">
+        <button class="bookall" id="bookAll" type="button">
+          <span class="ba-spark" aria-hidden="true"></span>
+          <span class="ba-tx">Add all</span>
+          <span class="ba-n" id="bookAllN"></span>
+          <span class="ba-tx ba-tx2">tips to slip</span>
+        </button>
+      </div>
     <div class="datebar">
       <button class="dnav" id="prev" aria-label="Previous day">&#8249;</button>
       <div class="dlabel"><b id="dname">Today</b><i id="ddate"></i></div>
@@ -2597,14 +2645,6 @@ footer{margin-top:26px;padding-top:18px;
     </div>
   </div>
 
-  <div class="bookall-row">
-    <button class="bookall" id="bookAll" type="button">
-      <span class="ba-spark" aria-hidden="true"></span>
-      <span class="ba-tx">Build all</span>
-      <span class="ba-n" id="bookAllN"></span>
-      <span class="ba-tx ba-tx2">predicted tips</span>
-    </button>
-  </div>
   <div id="bookAllResult"></div>
 
   <div class="bar">
@@ -5271,6 +5311,15 @@ document.addEventListener("click",function(e){
 });
 function setView(v){
   var root=document.documentElement;
+  /* Leaving the board pushes a history entry, so the browser's Back button
+     returns here instead of leaving the site. popstate already knew how to
+     handle this - there was simply never an entry to pop. Guarded so
+     returning to the board, or re-selecting the view you are on, does not
+     stack entries you then have to press Back through. */
+  try{
+    if(v!=="pred" && V.view!==v && !root.classList.contains("mode-"+v))
+      history.pushState({sw:"view",v:v},"");
+  }catch(e){}
   root.classList.toggle("mode-build",v==="build");
   root.classList.toggle("mode-live",v==="live");
   /* mode-pred drives the phone-only rule that keeps the Live tab in the header
@@ -5336,7 +5385,10 @@ $("logo").addEventListener("click",function(e){e.preventDefault();setView("pred"
     },60);
   });
   /* Card click (not on a button) opens the builder in the current mode */
-  cta.addEventListener("click",function(){setView("build");});
+  /* The whole card used to be clickable, so anywhere in the panel - the
+     headline, the proof line, dead space - took you to the builder. Only the
+     buttons should act, and the panel now says so by not moving under the
+     cursor either. */
 })();
 /* Live payout teaser: run a default wizard build and show its real games+odds
    on the hero CTA and sticky bar, so the pitch is a concrete number, not a verb. */
