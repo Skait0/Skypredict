@@ -762,7 +762,8 @@ html.reduce .bookall:hover{animation:none}
   74%{opacity:.95;transform:scale(1.15)}}
 .bookall .ba-tx{margin-left:0}
 .bookall{white-space:nowrap}
-@media(max-width:400px){.bookall .ba-tx2{display:none}}  /* tiny screens: keep it short */
+/* "Build all 6 tips" fits even on a 320px phone, so nothing is hidden here any
+   more - the old rule dropped the trailing words and left a bare "Build all 6". */
 html.reduce .ba-spark{animation:none;opacity:0}
 html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookall-row{display:none}
 #bookAllResult:not(:empty){margin:10px 0 2px}
@@ -2078,9 +2079,9 @@ footer{margin-top:26px;padding-top:18px;
   <div class="bookall-row">
     <button class="bookall" id="bookAll" type="button">
       <span class="ba-spark" aria-hidden="true"></span>
-      <span class="ba-tx">Book all</span>
+      <span class="ba-tx">Build all</span>
       <span class="ba-n" id="bookAllN"></span>
-      <span class="ba-tx ba-tx2">tips on this page</span>
+      <span class="ba-tx ba-tx2">tips</span>
     </button>
   </div>
   <div id="bookAllResult"></div>
@@ -2673,11 +2674,12 @@ function renderControls(){
   const days=activeDays();
   if(days.length&&days.indexOf(V.off)<0){
     var up=days.filter(function(o){return o>=0;});
-    if(up.length){ var busiest=up[0], bn=-1;
-      up.forEach(function(o){var n=ahead().filter(function(f){return dayOff(f.date)===o;}).length;
-        if(n>bn){bn=n;busiest=o;}});
-      V.off=busiest;
-    } else { V.off=days[days.length-1]; }
+    /* Nearest upcoming day, never the busiest one. Today falls out of the list
+       the moment its last fixture kicks off, and picking the busiest day then
+       lands a Wednesday visitor on Saturday's big card - the wrong day, and a
+       tap back to get where they meant to be. days[] is sorted, so up[0] is
+       today whenever today still has games to come, and tomorrow otherwise. */
+    V.off = up.length ? up[0] : days[days.length-1];
   }
   const i=days.indexOf(V.off);
   $("dname").textContent=dayName(V.off);
