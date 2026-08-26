@@ -283,6 +283,12 @@ img,svg{max-width:100%}
 .dnav:disabled{opacity:.3;cursor:default}
 .dnav:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .dlabel{min-width:112px;text-align:center}
+/* The one control on that row with no colour in it, next to a red category
+   chip and a red pill - it read as disabled. The day takes the accent; the
+   date under it stays quiet. */
+.dlabel b{color:var(--red-ink)}
+.dnav{color:var(--soft)}
+.dnav:not(:disabled):hover{background:var(--red-wash);color:var(--red-ink)}
 .dlabel b{display:block;font-weight:700;font-size:14px}
 .dlabel i{display:block;font-style:normal;font-size:11px;color:var(--faint);font-weight:600}
 .search{position:relative;flex:1 1 240px}
@@ -629,10 +635,21 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
      are left exactly as they were. */
   background:url("/wiz-orb-white.png") center/cover no-repeat;border-radius:50%;
   filter:drop-shadow(0 0 5px rgba(255,255,255,.4));
+  /* set below for light mode, where a white ball has nothing to be white
+     against and just reads grey */
   animation:orbBreath 3.4s ease-in-out infinite}
 @keyframes orbBreath{
   0%,100%{filter:drop-shadow(0 0 4px rgba(255,255,255,.3))}
   50%{filter:drop-shadow(0 0 9px rgba(255,255,255,.6))}}
+/* On a near-white card the white sphere loses its edges and the shading is
+   all that is left, which is the grey ball. The original violet orb has
+   contrast to spare there, and the red S reads either way. */
+[data-theme="light"] .sc-orb{background-image:url("/wiz-orb.png");
+  filter:drop-shadow(0 0 4px rgba(90,60,170,.3))}
+[data-theme="light"] .sc-orb{animation:orbBreathLight 3.4s ease-in-out infinite}
+@keyframes orbBreathLight{
+  0%,100%{filter:drop-shadow(0 0 3px rgba(90,60,170,.25))}
+  50%{filter:drop-shadow(0 0 8px rgba(90,60,170,.5))}}
 .sc-tx{flex:1;min-width:0}
 .sc-tx b{display:block;font-size:16.5px;font-weight:800;color:var(--text);letter-spacing:.01em}
 .sc-tx i{display:block;font-style:normal;font-size:12.5px;color:var(--soft);margin-top:3px}
@@ -652,8 +669,9 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
   letter-spacing:0;text-transform:none;font-weight:700;position:relative;overflow:hidden;
   transition:background .18s,box-shadow .18s,transform .12s}
 .sc-go-btn:hover{
-  background:linear-gradient(178deg,#f0424f 0%,#dd2733 100%)!important;
-  box-shadow:0 1px 0 rgba(255,255,255,.22) inset,0 4px 16px rgba(160,20,32,.42)!important}
+  background:linear-gradient(178deg,#ff6b76 0%,#ef4551 100%)!important;
+  border-color:rgba(255,255,255,.34)!important;
+  box-shadow:0 1px 0 rgba(255,255,255,.3) inset!important}
 .sc-go-btn:active{transform:translateY(1px)}
 .sc-logo{height:30px;width:auto;display:inline-block;margin-left:9px;vertical-align:-9px;border-radius:4px}
 .sc-head{display:flex;align-items:flex-start;gap:13px}
@@ -1535,6 +1553,15 @@ html.mode-live #live{display:block}
   .scope-opt{font-size:12px;padding:8px 6px;gap:5px}
   .so-n{font-size:10.5px;padding:1px 6px}
 }
+/* flex:1 on each half is right on a phone, where the pair should fill the
+   width. On a desktop the builder is over a thousand pixels wide, so the same
+   rule stretched two words and two counts across the whole of it - a segmented
+   control the size of a banner. Sized to its own content here, sitting inline
+   with the chip rows above and below it. */
+@media(min-width:721px){
+  .scope-seg{display:inline-flex;width:auto;max-width:100%}
+  .scope-opt{flex:0 0 auto;padding:9px 20px}
+}
 .scope-opt:focus-visible{outline:2px solid var(--red);outline-offset:1px}
 .bld-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
 .stat{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r-md);padding:14px 14px 12px;position:relative}
@@ -1625,8 +1652,15 @@ html.mode-live #live{display:block}
 .bld-empty{text-align:center;padding:40px 20px;color:var(--soft)}
 .bld-empty b{display:block;color:var(--text);font-size:16px;margin-bottom:4px}
 @media(max-width:560px){
-  .bld-stats{grid-template-columns:1fr 1fr}
-  .stat.odds{grid-column:1/-1}
+  /* Three across rather than two-plus-one. They are short numbers with short
+     labels; the row only needed the padding and the type to come down a
+     little to stop the wrap. */
+  .bld-stats{grid-template-columns:repeat(3,1fr);gap:6px}
+  .stat.odds{grid-column:auto}
+  .stat{padding:9px 8px 8px}
+  .stat b{font-size:18px}
+  .stat i{font-size:9.5px;letter-spacing:.02em}
+  .stat .stat-ic{display:none}
   .book-btn{padding:14px 16px;font-size:14px}
 }
 /* brand loader */
@@ -1682,14 +1716,20 @@ html.mode-live #live{display:block}
    The badge says it positively, rather than dimming the rest into looking
    broken: a market we can book carries a +, and turns to a tick once it is
    in your slip. */
-.opt.bk::after{content:'+';position:absolute;top:8px;right:8px;
-  width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;
-  font-size:13px;font-weight:800;line-height:1;z-index:1;pointer-events:none;
-  display:flex;align-items:center;justify-content:center;
-  transition:transform .15s,background .15s}
+/* Drawn rather than typed. A "+" glyph sits off-centre in a circle because
+   its optical centre is not the em box's centre, and no amount of flex
+   centring fixes that - two bars are geometry, so they land dead centre. */
+.opt.bk::after{content:'';position:absolute;top:8px;right:8px;
+  width:18px;height:18px;border-radius:50%;background-color:var(--red);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.2' stroke-linecap='round'%3E%3Cpath d='M12 6v12M6 12h12'/%3E%3C/svg%3E");
+  background-size:11px 11px;background-position:center;background-repeat:no-repeat;
+  z-index:1;pointer-events:none;transition:transform .15s,background-color .15s}
 .opt.bk:hover{border-color:var(--red)}
 .opt.bk:hover::after{transform:scale(1.14)}
-.opt:has(.opt-add.on)::after{content:'\2713';background:var(--green)}
+/* Added: the same circle, carrying a check. */
+.opt:has(.opt-add.on)::after{background-color:var(--green);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 13l4.5 4.5L19 8'/%3E%3C/svg%3E");
+  background-size:12px 12px}
 /* Priced but not bookable: still worth reading, so it is quietened rather
    than greyed out - the label softens and there is no affordance to chase. */
 .opt:not(.bk) .n{color:var(--faint)}
@@ -1727,6 +1767,7 @@ html.mode-live #live{display:block}
 @media(max-width:720px){.wspfab{bottom:92px;width:52px;height:52px}.wspfab img{width:34px;height:34px}}
 .wsp-lead{font-size:13.5px;color:var(--soft);margin-bottom:16px;line-height:1.5}
 .wsp-lbl{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin:16px 0 8px}
+.wsp-hint{margin:-2px 0 2px;font-size:12px;line-height:1.5;color:var(--faint)}
 .wsp-chips{display:flex;flex-wrap:wrap;gap:8px}
 .wsp-chip{background:var(--card-2);border:1px solid var(--line);color:var(--soft);font:inherit;
   font-weight:700;font-size:13px;padding:9px 15px;border-radius:99px;cursor:pointer}
@@ -1820,7 +1861,8 @@ html.reduce .myfab{animation:none}
   cursor:pointer;display:inline-flex;align-items:center;gap:7px}
 .share-btn:hover{border-color:var(--soft)}
 .streak::before{content:none!important}
-.streak.trust-i::before,.trust .streak::before{display:none!important;content:none!important}
+/* The streak carries its dot now, like everything else on the row. */
+.trust-i.streak b{color:var(--win)}
 .goal-tag{position:absolute;right:calc(100% + 6px);top:50%;transform:translateY(-50%);
   display:inline-flex;align-items:center;font-size:9px;font-weight:800;letter-spacing:.06em;
   color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;white-space:nowrap;
@@ -1919,7 +1961,11 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .comp-h{padding-bottom:3px}
 .faves-h{margin:20px 0 5px}
 .grid{gap:8px}
-.key{margin-top:8px;padding:8px 12px;gap:9px 13px}
+/* The legend explained the expected-goals figure and the W/D/L chips. Both
+   read fine without it - the number carries a title tooltip and W/D/L are
+   letters - and it was a whole card of scroll before the first tip. Gone at
+   every width now, not just on phones. */
+.key{display:none}
 .list-hint{margin:2px 2px 7px}
 .thin-note{padding:9px 12px;margin:0 0 8px}
 
@@ -2088,10 +2134,13 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot{display:none}
    nothing on a phone. A ring on the call itself cannot aim at the wrong
    thing, and it works the same in both views and at every width.
    The ring persists while the coach is up; the pulse is just the arrival. */
-.coach-look{border-radius:var(--r-sm);box-shadow:0 0 0 2px var(--red);
+/* Ringed with room around it. A box-shadow at 2px traces the tip's own edge
+   so tightly that it reads as a border on the element rather than a marker
+   pointing at it; an outline with an offset stands clear of it. */
+.coach-look{border-radius:var(--r-sm);outline:2px solid var(--red);outline-offset:5px;
   animation:coachLook 1.7s ease-in-out 3}
-@keyframes coachLook{0%,100%{box-shadow:0 0 0 2px var(--red)}
-  50%{box-shadow:0 0 0 6px rgba(230,57,70,.32)}}
+@keyframes coachLook{0%,100%{outline-color:var(--red)}
+  50%{outline-color:rgba(230,57,70,.35)}}
 @media(prefers-reduced-motion:reduce){.coach-look{animation:none}}
 @media(max-width:560px){
   .coach{margin:0 8px 8px;padding:9px 10px;gap:8px;flex-wrap:wrap}
@@ -2203,7 +2252,12 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot{display:none}
   /* Cards/List and the day picker share one line. Wrapping cost a whole row
      of vertical space for two controls that are each mostly padding. Trimmed
      on width only: the row still stands ~36px tall, so both stay easy to hit. */
-  .toprow{gap:6px;flex-wrap:nowrap}
+  /* Wrap, not nowrap. The Cards/List switch and the day pager still share
+     line one - they were measured to fit - but the add-all pill is a
+     full-width third child, and with nowrap it had nowhere to go except off
+     the side of the screen. */
+  .toprow{gap:6px;flex-wrap:wrap}
+  .toprow .bookall-row{margin-top:8px;justify-content:flex-start}
   .toprow .viewtoggle{padding:2px}
   .toprow .viewtoggle.top .vt{padding:7px 9px;font-size:12px;gap:5px}
   .toprow .viewtoggle.top .vt svg{width:14px;height:14px}
@@ -2299,7 +2353,6 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot{display:none}
      it explains read fine without it - the xG number carries a title tooltip
      on the card itself, and W/D/L are letters. display:none takes the card's
      margin with it, so the list closes straight up under the filters. */
-  .key{display:none}
 
   /* The Live pill was sitting flush against the theme toggle. The logo holds
      margin-right:auto, so this gap comes out of the logo's slack and the row
@@ -2743,11 +2796,11 @@ footer{margin-top:26px;padding-top:18px;
 
     <!-- WIZARD MODE PANEL -->
     <div class="bld-panel wizard-panel stage-in stage-in-2" id="wizardPanel" hidden data-parallax="1">
-      <div class="wsp-lbl stage-in stage-in-3">Target payout</div>
+      <div class="wsp-lbl stage-in stage-in-3">Pick a target payout</div>
       <div class="wsp-chips stage-in stage-in-4" id="wspOddsChips"></div>
       <div class="wsp-lbl stage-in stage-in-4">Slip style</div>
       <div class="wsp-chips stage-in stage-in-5" id="wspStyleChips"></div>
-      <button class="book-btn wsp-go stage-in stage-in-5" id="wspGo" type="button">Conjure</button>
+      <button class="book-btn wsp-go stage-in stage-in-5" id="wspGo" type="button">Conjure ticket</button>
 
     </div>
 
@@ -4193,6 +4246,19 @@ function relLum(rgb){
     return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);});
   return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2];
 }
+/* Two-tone haptic for the conjure: a short tap, a gap, then a longer one, so
+   it lands as "done" rather than as a single buzz. Touch devices only -
+   navigator.vibrate does not exist on a desktop, and is ignored where the
+   platform or the user has it switched off. Silent when reduced motion is
+   asked for, since that setting is about being left alone. */
+function buzzConjure(){
+  try{
+    if(REDUCED) return;
+    if(!("vibrate" in navigator)) return;
+    if(!matchMedia("(hover:none) and (pointer:coarse)").matches) return;
+    navigator.vibrate([14,45,26]);
+  }catch(e){}
+}
 function inkOn(h,s,l){
   var L=relLum(hslToRgb(h,s,l));
   var white=1.05/(L+0.05), black=(L+0.05)/0.05;
@@ -4569,7 +4635,11 @@ function renderStreak(){
     streak=(last===y)?streak+1:1;
     try{localStorage.setItem("sw.lastseen",today);localStorage.setItem("sw.streak",streak);}catch(e){}
   }
-  if(streak>=2){el.hidden=false;el.className="streak";
+  /* Keeps trust-i, so it carries the same separator dot as every other item
+     on the row. It used to swap the class out and lead with a flame instead:
+     one item with a glyph where its neighbours have a dot, which beside the
+     real dot next to it read as two marks in a row. */
+  if(streak>=2){el.hidden=false;el.className="trust-i streak";
     el.innerHTML="<b>\ud83d\udd25 "+streak+"-day streak</b>";}
   else el.hidden=true;
 }
@@ -4753,8 +4823,7 @@ function renderProof(){
   if(!rec||!rec.total){el.hidden=true;el.innerHTML="";return;}
   var pct=Math.round(100*rec.correct/rec.total);
   el.hidden=false;
-  el.innerHTML="<span class='sc-tick' aria-hidden='true'>✔</span>"+
-    "<span><b>"+pct+"% of our tips landed</b> over the last "+
+  el.innerHTML="<span><b>"+pct+"% of our tips landed</b> over the last "+
     (rec.days||0)+" days · every one checked against the final score</span>";
 }
 
@@ -5194,13 +5263,26 @@ function clearMy(){
 function flyToSlip(srcEl){
   try{
     if(REDUCED||!srcEl)return;
-    var fab=$("myFab"); if(!fab)return;
-    var s=srcEl.getBoundingClientRect(), f=fab.getBoundingClientRect();
+    var fab=$("myFab"); if(!fab||fab.hidden)return;
+    var f=fab.getBoundingClientRect();
+    /* The My slip button lives at the bottom of the screen, but most adds come
+       from the sheet, which is also at the bottom - and while it is open the
+       button is behind it. Flying to something covered looked like the chip
+       heading off upwards for no reason. Aim at the button only when it can
+       actually be seen; otherwise let the count badge do the talking. */
+    if(f.width===0||f.bottom<0||f.top>window.innerHeight) return;
+    var sheetOpen=(typeof anyOverlayOpen==="function")&&anyOverlayOpen();
+    if(sheetOpen) return;
+    var s=srcEl.getBoundingClientRect();
     var chip=document.createElement("div"); chip.className="fly-chip"; chip.textContent="+1";
     chip.style.left=s.left+"px"; chip.style.top=s.top+"px";
     document.body.appendChild(chip);
     requestAnimationFrame(function(){
-      chip.style.transform="translate("+(f.left-s.left+f.width/2)+"px,"+(f.top-s.top)+"px) scale(.4)";
+      /* Centre to centre, so it lands on the button rather than beside it -
+         the y leg was measuring edge to edge while the x leg used the centre. */
+      chip.style.transform="translate("+
+        ((f.left+f.width/2)-(s.left+chip.offsetWidth/2))+"px,"+
+        ((f.top+f.height/2)-(s.top+chip.offsetHeight/2))+"px) scale(.4)";
       chip.style.opacity="0";});
     setTimeout(function(){chip.remove();
       fab.classList.remove("pop"); void fab.offsetWidth; fab.classList.add("pop");},560);
@@ -5400,7 +5482,11 @@ function renderSlipTease(){
     if(r&&r.picks&&r.picks.length>=2){
       /* Say what they get, in the fewest plain words: how many games, roughly
          what it pays, and that a SportyBet code comes out of it. */
-      var msg="Today's slip: "+r.picks.length+" games \u00b7 about \u00d7"+
+      /* Not "today's": the wizard builds from whatever window the visitor has
+         chosen, which defaults to every upcoming game - so on a day with four
+         fixtures it was offering a 23-game slip and calling it today's. Say
+         what it is instead of implying a day it does not belong to. */
+      var msg="Your slip: "+r.picks.length+" games \u00b7 about \u00d7"+
               r.odds.toFixed(0)+" \u00b7 SportyBet code ready";
       var short=r.picks.length+" games \u00b7 about \u00d7"+r.odds.toFixed(0)+
               " \u00b7 code ready";
@@ -5481,7 +5567,10 @@ document.addEventListener("click",function(e){
   var card=b.closest(".m"); if(card)card.classList.remove("open");
 });
 /* ---- Wizard's Special jackpot builder ---- */
-var WSP={odds:500,legodd:1.35,mk:{doubles:true,out:true,goals:true,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+/* odds starts null, the way BUILD.risk does. A pre-picked payout meant the
+   wizard had already decided for you: a slip existed, the hero advertised
+   it, and Conjure would fill My slip before you had chosen anything. */
+var WSP={odds:null,legodd:1.35,mk:{doubles:true,out:true,goals:true,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 function wspMarkets(){var m=[];if(WSP.mk.doubles)m=m.concat(["1X","X2"]);if(WSP.mk.out)m=m.concat(["1","2"]);if(WSP.mk.goals)m=m.concat(["OVER_1.5","OVER_2.5"]);if(WSP.mk.both)m.push("GG");return m;}
 function wspBuild(){
   var allowed=wspMarkets(),all=[];
@@ -5520,6 +5609,9 @@ function wspBuild(){
        (outright wins, both-teams-score); a low one favours safe double-chance.
        That is what makes the Slip-style and market toggles actually bite. */
     var T=WSP.odds, cap=40, per=WSP.legodd||1.35;
+    /* Nothing to aim at yet - say so with an empty slip rather than
+       inventing a target. */
+    if(T==null) return {picks:[],odds:1,conf:0};
     var want=Math.max(4, Math.min(cap, Math.ceil(Math.log(T)/Math.log(per))));
     var g=Math.pow(T,1/want);
     /* Prefer markets with REAL SportyBet odds: a market chosen off an estimated
@@ -5709,7 +5801,7 @@ function renderWizardPanel(){
   var odds=[50,100,500,1000,2000,6000];
   var styles=[[1.25,"Safer, more games"],[1.4,"Balanced"],[1.7,"Fewer, bigger games"]];
   var html="";
-  html += "<div class='wsp-lbl'>Target payout</div><div class='wsp-chips' id='wspOddsChips'>"+
+  html += "<div class='wsp-lbl'>Pick a target payout</div><div class='wsp-chips' id='wspOddsChips'>"+
     odds.map(function(o,i){
       var hue=Math.round(145-145*(i/(odds.length-1)));
       /* The scale runs green to red, and white text on the yellow-greens in
@@ -5719,9 +5811,15 @@ function renderWizardPanel(){
       return "<button class='wsp-chip wsp-risk"+(WSP.odds===o?" on":"")+
         "' style='--wr:hsl("+hue+",64%,46%);--wr-ink:"+inkOn(hue,0.64,0.46)+
         "' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>";
+  /* The slider tells a first-timer to move it; the wizard said nothing and
+     simply had a payout chosen already. With nothing picked, say what to do
+     and keep Conjure out of reach until there is something to aim at. */
+  if(WSP.odds==null)
+    html += "<p class='wsp-hint'>Pick a payout above - we'll find the games that reach it.</p>";
   html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips' id='wspStyleChips'>"+
     styles.map(function(st){return "<button class='wsp-chip"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'>"+st[1]+"</button>";}).join("")+"</div>"+
-    "<button class='book-btn wsp-go' id='wspGo' type='button'>Conjure</button>";
+    "<button class='book-btn wsp-go' id='wspGo' type='button'"+
+      (WSP.odds==null?" disabled":"")+">Conjure ticket</button>";
 
   $("wizardPanel").innerHTML=html;
   // Panel visibility
@@ -5742,7 +5840,7 @@ function renderWizardPanel(){
   $("wspStyleChips").querySelectorAll("[data-lo]").forEach(function(c){
     c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;WSP._sig=null;renderBuilder();});
   });
-  $("wspGo").addEventListener("click",function(){wspConjure(false);});
+  $("wspGo").addEventListener("click",function(){buzzConjure();wspConjure(false);});
 
 }
 function renderBuilderOutput(){
