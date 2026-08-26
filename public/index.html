@@ -380,6 +380,15 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .form i.W{background:var(--green)}
 .form i.D{background:var(--grey)}
 .form i.L{background:var(--red)}
+/* Provisional result from a match still in play: same colour as the settled
+   chips but ringed and breathing, so an unfinished game never reads as final. */
+.form i.prov{box-shadow:0 0 0 1.5px var(--bg),0 0 0 3px currentColor;opacity:.9;
+  animation:formPulse 1.8s ease-in-out infinite}
+.form i.prov.W{color:var(--green)}
+.form i.prov.D{color:var(--grey)}
+.form i.prov.L{color:var(--red)}
+@keyframes formPulse{0%,100%{opacity:.9}50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){.form i.prov{animation:none}}
 .tn .g{font-size:13px;color:var(--faint);font-weight:700;flex-shrink:0}
 .tn.win .g{color:var(--win-ink)}
 .sc{text-align:center;flex-shrink:0;padding-left:14px;border-left:1px solid var(--line)}
@@ -2751,10 +2760,48 @@ function moreHTML(f){
     "</div></div>"+
     "<button class='more-collapse' type='button'>Collapse \u25b4</button></div>";
 }
-function formHTML(arr){
-  if(!arr||!arr.length) return "";
-  return "<span class='form'>"+arr.slice(0,5).map(function(r){
-    return "<i class='"+r+"'>"+r+"</i>";}).join("")+"</span>";
+/* form_home / form_away are baked by the nightly build, so a game played today
+   is missing from them until tomorrow's rebuild. Overlay the live feed on top:
+   while a team is playing we prepend a provisional chip (ringed + breathing),
+   and it settles into a normal chip the moment the feed reports full time.
+   Match on name only, so the bar is high - 1.8 is exact-or-substring in
+   simTeams, anything looser risks pinning another club's result on a team. */
+const FT_RE=/(ft|finished|ended|aet|after et|pen|ap)/i;
+function liveFormFor(team){
+  if(!team||typeof LIVE==="undefined"||!LIVE||!LIVE.matches) return null;
+  var best=null,bs=0;
+  LIVE.matches.forEach(function(m){
+    if(m.homeScore==null||m.awayScore==null) return;
+    var sh=simTeams(team,m.home), sa=simTeams(team,m.away), s=Math.max(sh,sa);
+    if(s>bs){bs=s;best={m:m,isHome:sh>=sa};}
+  });
+  if(!best||bs<1.8) return null;
+  var m=best.m, gf=best.isHome?m.homeScore:m.awayScore,
+                ga=best.isHome?m.awayScore:m.homeScore;
+  return {r:gf>ga?"W":(gf<ga?"L":"D"), prov:!FT_RE.test(m.status||"")};
+}
+function formChips(arr,team){
+  var live=liveFormFor(team), out="";
+  if(live) out+="<i class='"+live.r+(live.prov?" prov":"")+"'>"+live.r+"</i>";
+  (arr||[]).slice(0,live?4:5).forEach(function(r){out+="<i class='"+r+"'>"+r+"</i>";});
+  return out;
+}
+function formHTML(arr,team){
+  if((!arr||!arr.length)&&!liveFormFor(team)) return "";
+  /* Keep the baked form and the team on the node so the 30s live poll can
+     repaint just these chips instead of re-rendering (and collapsing) cards. */
+  return "<span class='form' data-ft='"+esc(team||"")+"' data-fs='"+
+    (arr||[]).slice(0,5).join("")+"'>"+formChips(arr,team)+"</span>";
+}
+/* Called after every live poll: repaint form strips in place. */
+function refreshFormStrips(){
+  var nodes=document.querySelectorAll(".form[data-ft]");
+  for(var i=0;i<nodes.length;i++){
+    var n=nodes[i], team=n.getAttribute("data-ft"),
+        base=(n.getAttribute("data-fs")||"").split("");
+    var html=formChips(base,team);
+    if(n.innerHTML!==html) n.innerHTML=html;
+  }
 }
 
 function matchHTML(f){
@@ -2773,11 +2820,11 @@ function matchHTML(f){
       "<span class='teams'>"+
         "<span class='tnames'>"+
           "<span class='tn"+(hw?" win":"")+"'>"+
-            "<span class='who'><span>"+esc(f.home)+"</span>"+formHTML(f.form_home)+"</span>"+
+            "<span class='who'><span>"+esc(f.home)+"</span>"+formHTML(f.form_home,f.home)+"</span>"+
             "<span class='g num' title='Goals we expect them to score'>"+
               f.lh.toFixed(1)+"</span></span>"+
           "<span class='tn"+(aw?" win":"")+"'>"+
-            "<span class='who'><span>"+esc(f.away)+"</span>"+formHTML(f.form_away)+"</span>"+
+            "<span class='who'><span>"+esc(f.away)+"</span>"+formHTML(f.form_away,f.away)+"</span>"+
             "<span class='g num' title='Goals we expect them to score'>"+
               f.la.toFixed(1)+"</span></span>"+
         "</span>"+
@@ -3851,6 +3898,8 @@ async function fetchLive(){
   if(rb) rb.classList.remove("spin");
   syncLiveDots();
   renderLiveStrip();
+  /* Form strips carry today's in-play result, so they move with the feed. */
+  try{refreshFormStrips();}catch(e){}
   /* Keep the locked Pick of the Day mirroring the live score / full-time result
      as fresh scores arrive (only meaningful on the predictions/home view). */
   if(typeof renderPotd==="function" && !document.documentElement.classList.contains("mode-live")
