@@ -1129,7 +1129,10 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
 #builder{display:none;margin-top:8px}
 html.mode-build .intro,html.mode-build #potd,html.mode-build .bar,html.mode-build #glance,
 html.mode-build #sotd,html.mode-build #record,html.mode-build #liveStripWrap,html.mode-build .viewtoggle.top,
-html.mode-build .key,html.mode-build #list,html.mode-build .note{display:none}
+html.mode-build .key,html.mode-build #list,html.mode-build .note,
+/* Hiding the shell covers everything inside it, so a block added to the rail
+   later cannot leak onto the builder the way #daily otherwise would. */
+html.mode-build .home-grid{display:none}
 html.mode-build #builder{display:block}
 /* live scores */
 #live{display:none;margin-top:8px}
@@ -1140,7 +1143,8 @@ html.mode-build #builder{display:block}
 html.mode-live .intro,html.mode-live #potd,html.mode-live #sotd,html.mode-live #record,
 html.mode-live .bar,html.mode-live .key,html.mode-live #list,html.mode-live .note,
 html.mode-live #glance,
-html.mode-live #liveStrip,html.mode-live #liveStripWrap,html.mode-live #builder{display:none}
+html.mode-live #liveStrip,html.mode-live #liveStripWrap,html.mode-live #builder,
+html.mode-live .home-grid{display:none}
 html.mode-live #live{display:block}
 .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff3b3b;
   margin-left:3px;vertical-align:middle;animation:livePulse 1.4s infinite}
@@ -1858,6 +1862,77 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .viewtoggle.top .vt{padding:6px 14px}
 .vt{padding:8px 14px}
 
+/* ============================================== board cap (phones only)
+   Caps the opening height of the board and fades it out, so the first screen
+   is the pick and a taste of the card rather than a hundred fixtures. */
+@media(max-width:720px){
+  html.board-cap #list{max-height:78vh;overflow:hidden;position:relative}
+  html.board-cap #list::after{content:'';position:absolute;left:0;right:0;bottom:0;
+    height:110px;pointer-events:none;
+    background:linear-gradient(to bottom,transparent,var(--bg) 82%)}
+}
+#listMore:empty{display:none}
+.list-more{display:block;width:100%;margin:10px 0 2px;padding:12px 16px;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);
+  color:var(--text);font:inherit;font-weight:800;font-size:13.5px;cursor:pointer}
+.list-more:hover{border-color:var(--faint)}
+.list-more:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+@media(min-width:721px){#listMore{display:none}}
+
+/* ==================================================== daily recap
+   The one thing a first-time visitor needs before anything else: did this
+   thing get yesterday right. It was a chip in the trust row, which nobody
+   reads. Plain sentence, real numbers, top of the page. */
+.daily{margin-top:14px;border:1px solid var(--line);border-radius:var(--r-md);
+  background:var(--card);padding:12px 14px}
+.daily-h{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.daily-h b{font-size:13px;font-weight:800}
+.daily-h .dl-when{margin-left:auto;font-size:11px;color:var(--faint);font-weight:700}
+.daily-score{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.daily-score .dl-big{font-size:26px;font-weight:800;letter-spacing:-.02em;
+  line-height:1;font-variant-numeric:tabular-nums}
+.daily-score .dl-of{font-size:13px;color:var(--soft);font-weight:700}
+.daily-bar{display:flex;height:6px;border-radius:99px;overflow:hidden;
+  background:var(--card-2);margin-top:10px}
+.daily-bar i{display:block;background:var(--green)}
+.daily-foot{margin-top:9px;font-size:12px;color:var(--soft);line-height:1.45}
+.daily-foot b{color:var(--text);font-weight:800}
+.dl-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;
+  font-weight:800;padding:2px 8px;border-radius:99px}
+.dl-pill.good{background:var(--green-wash);color:var(--green-ink)}
+.dl-pill.bad{background:var(--red-wash);color:var(--red-ink)}
+.daily-empty{font-size:12.5px;color:var(--soft)}
+
+/* ==================================================== home layout
+   Phone: one column, rail first - the recap and the day's pick answer "is this
+   any good" and "what do I do" before the board asks anyone to browse.
+   Desktop: the board takes the width it has always wanted and the rail becomes
+   a sticky companion, so the pick and the record stay on screen while you
+   scroll a hundred fixtures. */
+.home-grid{display:flex;flex-direction:column;gap:0}
+.home-main{min-width:0}
+.home-rail{display:flex;flex-direction:column;gap:0}
+@media(min-width:1060px){
+  .wrap{max-width:1420px}
+  .home-grid{flex-direction:row;align-items:flex-start;gap:26px}
+  .home-main{flex:1 1 auto}
+  .home-rail{flex:0 0 372px;order:2;position:sticky;top:12px;gap:14px;
+    max-height:calc(100vh - 24px);overflow-y:auto;overscroll-behavior:contain;
+    scrollbar-width:thin}
+  .home-rail>*{margin-top:0}
+  .home-rail .potd,.home-rail .slip-cta{margin-top:0}
+  /* The filter bar sticks in its own column; without a matching offset the two
+     sticky things fight over the same strip of screen. */
+  .home-main .bar{top:12px}
+}
+/* Card columns follow the space the board actually has, not the viewport. The
+   fixed 2- and 3-column rules were written before the rail existed and would
+   now squeeze three cards into a 630px column on a 1060px screen. auto-fill
+   lets the board use every bit of a wide monitor and step down on its own. */
+@media(min-width:720px){
+  .home-main .grid{grid-template-columns:repeat(auto-fill,minmax(290px,1fr))}
+}
+
 /* ------------------------------------------------------------------ phones
    Everything between the header and the first tip is on trial here. The goal
    is fewer scrolls to reach a tip, so each block below gives up width or
@@ -1894,6 +1969,16 @@ select{min-height:44px;padding:10px 32px 10px 12px}
   .potd-grid{gap:11px}
   .potd .big{font-size:clamp(32px,9vw,44px)}
   .potd .why{margin-top:8px;padding-top:8px}
+
+  /* The card's job on a phone is: who is playing, what we call it, how sure we
+     are. The expected-goals figures and the 1/X/2 percentage row are the two
+     things that make a newcomer feel unqualified, and both are already spelled
+     out inside the expander - so on a phone the face keeps the probability bar
+     (same information, no arithmetic) and drops the rest. Desktop has the room
+     and keeps everything. */
+  .m .tn .g{display:none}
+  .m .legend{display:none}
+  .m .pbar{margin-top:2px}
 
   /* The legend card ("1.6 = goals we expect", and the W/D/L key) is a whole
      card of scroll sitting between the filters and the first tip. Both things
@@ -2176,13 +2261,44 @@ footer{margin-top:26px;padding-top:18px;
     <div class="trust parallax-shallow stage-in stage-in-2" data-parallax="0.8">
       <span class="trust-i"><b id="when2">-</b> last updated</span>
       <span class="trust-i" id="streak" hidden></span>
-      <span class="trust-i recap" id="recap" hidden></span>
       <span class="trust-i">Rebuilt daily from results</span>
       <span class="trust-i">Estimates, not certainties</span>
       <a class="trust-i link" href="#how">How accurate?</a>
     </div>
   </section>
 
+  <div id="liveStripWrap" hidden>
+    <div class="ticker">
+      <div class="ticker-track" id="liveStrip"></div>
+      <a href="#" id="liveStripAll" class="ticker-all">See all &rarr;</a>
+    </div>
+  </div>
+
+  <!-- Two columns on a desktop: the board gets the room it needs on the left,
+       and the three things that answer "should I trust this / what do I do"
+       ride along in a sticky rail on the right. On a phone the rail stacks
+       first, so the answer arrives before the 167-row board does. -->
+  <div class="home-grid">
+    <aside class="home-rail">
+      <div id="daily"></div>
+      <div id="potd"></div>
+
+      <div class="slip-cta slip-cta--wizard" id="slipCta">
+        <div class="sc-head">
+          <span class="sc-orb" aria-hidden="true"></span>
+          <span class="sc-tx">
+            <b>Don't pick. Let it be built for you.</b>
+            <i id="scTease">Pick a payout, get a ready-to-play SportyBet slip.</i>
+          </span>
+        </div>
+        <div class="sc-actions">
+          <button class="wsp-go sc-go-btn" data-scmode="wizard" type="button">Build my slip</button>
+          <button class="slider-btn sc-go-btn" data-scmode="slider" type="button">Choose games myself</button>
+        </div>
+      </div>
+    </aside>
+
+    <div class="home-main">
   <!-- The two controls that change what you are looking at - how it is drawn,
        and which day - sit together on one row above the board. -->
   <div class="toprow">
@@ -2206,29 +2322,6 @@ footer{margin-top:26px;padding-top:18px;
     </button>
   </div>
   <div id="bookAllResult"></div>
-
-  <div class="slip-cta slip-cta--wizard" id="slipCta">
-    <div class="sc-head">
-      <span class="sc-orb" aria-hidden="true"></span>
-      <span class="sc-tx">
-        <b>Don't pick. Let it be built for you.</b>
-        <i id="scTease">Two ways to a ready-to-play SportyBet slip.</i>
-      </span>
-    </div>
-    <div class="sc-actions">
-      <button class="wsp-go sc-go-btn" data-scmode="wizard" type="button">Conjure my slip</button>
-      <button class="slider-btn sc-go-btn" data-scmode="slider" type="button">Use the slider</button>
-    </div>
-  </div>
-
-  <div id="liveStripWrap" hidden>
-    <div class="ticker">
-      <div class="ticker-track" id="liveStrip"></div>
-      <a href="#" id="liveStripAll" class="ticker-all">See all &rarr;</a>
-    </div>
-  </div>
-
-  <div id="potd"></div>
 
   <div class="bar">
     <div class="cats" id="cats"></div>
@@ -2257,8 +2350,11 @@ footer{margin-top:26px;padding-top:18px;
       <i style="background:var(--green)">W</i> last 5 games</span>
   </div>
 
-  <p class="list-hint">▾ Tap any match to expand its full markets.</p>
+  <p class="list-hint">▾ Open any match for its full markets.</p>
   <main id="list"></main>
+  <div id="listMore"></div>
+    </div><!-- /.home-main -->
+  </div><!-- /.home-grid -->
 
   <div id="sotd"></div>
   <div id="record"></div>
@@ -3165,6 +3261,8 @@ function renderResults(){
 function render(){
   document.documentElement.classList.toggle("list",!!V.list);
   renderControls(); renderCats();
+  /* Rail content, so it survives the results-view early return below. */
+  renderDaily();
   if(V.off<0){ document.documentElement.classList.add("is-results");
     $("potd").innerHTML="";$("sotd").innerHTML="";$("record").innerHTML="";
     renderResults(); return; }
@@ -3213,6 +3311,7 @@ function render(){
       "<div class='country-body'>"+ls.map(function(l){
         return blockFor(l,byL[l]);}).join("")+"</div></section>";}).join("");
   $("list").innerHTML=_thin+html;
+  applyBoardCap(list.length);
   document.querySelectorAll(".lrow").forEach(function(r){
     r.addEventListener("click",function(e){
       if(e.target.closest(".opt-add")||e.target.closest(".m-add")) return;
@@ -3951,6 +4050,65 @@ function renderStreak(){
     el.innerHTML="<b>\ud83d\udd25 "+streak+"-day streak</b>";}
   else el.hidden=true;
 }
+/* ---- Board cap ----
+   A phone opening straight onto a hundred-plus fixtures is a wall, and the
+   newcomer we care about has already been given the day's pick above it. Show
+   a screenful and let people ask for the rest; once asked, it stays asked for
+   the session. Desktop is untouched - it has the room, and the CSS that does
+   the capping only exists under 720px. */
+var BOARD_ALL=false;
+const BOARD_CAP_AT=12;
+function applyBoardCap(n){
+  var host=$("listMore"); if(!host) return;
+  var many=n>BOARD_CAP_AT;
+  document.documentElement.classList.toggle("board-cap",many&&!BOARD_ALL);
+  if(!many||BOARD_ALL){host.innerHTML="";return;}
+  host.innerHTML="<button class='list-more' type='button'>Show all "+n+" games</button>";
+  var b=host.querySelector("button");
+  if(b) b.addEventListener("click",function(){
+    BOARD_ALL=true;
+    document.documentElement.classList.remove("board-cap");
+    host.innerHTML="";
+  });
+}
+
+/* ---- Yesterday, in one sentence ----
+   The first question a newcomer has is whether any of this works, and the
+   honest answer is a number we already compute. It used to be a chip in the
+   trust row that nobody reads. Graded from the results feed rather than
+   recordYest, which is a one-day backtest and is often null. */
+function renderDaily(){
+  var host=$("daily"); if(!host) return;
+  var res=(DATA.results||[]).filter(function(r){return dayOff(r.date)===-1;});
+  var rec=DATA.record;
+  if(!res.length&&(!rec||!rec.total)){host.innerHTML="";return;}
+
+  var hit=res.filter(function(r){return r.hit;}).length;
+  var pct=res.length?Math.round(100*hit/res.length):0;
+  var head="<div class='daily-h'><b>How we did yesterday</b>"+
+    (res.length?"<span class='dl-when'>"+esc(dayDate(-1))+"</span>":"")+"</div>";
+
+  var body;
+  if(res.length){
+    body="<div class='daily-score'><span class='dl-big num'>"+hit+"</span>"+
+      "<span class='dl-of'>of "+res.length+" tips landed</span>"+
+      "<span class='dl-pill "+(pct>=50?"good":"bad")+"'>"+pct+"%</span></div>"+
+      "<div class='daily-bar'><i style='width:"+pct+"%'></i></div>";
+  } else {
+    body="<div class='daily-empty'>Nothing finished yesterday - "+
+      "today's tips are below.</div>";
+  }
+
+  var foot="";
+  if(rec&&rec.total){
+    foot="<div class='daily-foot'>Over the last "+(rec.days||0)+" days, <b>"+
+      rec.correct+" of "+rec.total+"</b> tips landed ("+
+      Math.round(100*rec.correct/rec.total)+"%). Every tip is checked against "+
+      "the final score.</div>";
+  }
+  host.innerHTML="<div class='daily'>"+head+body+foot+"</div>";
+}
+
 /* ---- Accuracy record (renders only with real data) ---- */
 function renderRecord(){
   var host=$("record"); if(!host) return;
@@ -5022,10 +5180,8 @@ function paint(){
   $("when").textContent=d;
   var w2=$("when2"); if(w2) w2.textContent=d;
   renderStreak();
-  var rc=$("recap"); if(rc){ var ry=DATA.recordYest;
-    if(ry&&ry.total){ rc.hidden=false; rc.innerHTML="\uD83D\uDC4D Yesterday <b>"+ry.correct+" of "+ry.total+"</b> tips landed"; }
-    else if(DATA.record&&DATA.record.total){ rc.hidden=false; rc.innerHTML="\uD83D\uDC4D Lately <b>"+DATA.record.correct+" of "+DATA.record.total+"</b> tips landed"; }
-    else rc.hidden=true; }
+  /* The recap chip that used to live here is now the #daily card at the top of
+     the rail - same fact, somewhere people actually look. */
   var vs=$("v-cards"),vp=$("v-list");
   if(vs){vs.classList.toggle("on",!V.list); if(!vs._w){vs._w=1;vs.addEventListener("click",function(){setList(false);});}}
   if(vp){vp.classList.toggle("on",V.list); if(!vp._w){vp._w=1;vp.addEventListener("click",function(){setList(true);});}}
