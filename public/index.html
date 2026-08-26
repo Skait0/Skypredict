@@ -95,8 +95,12 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
   --card:#FDFDFB;     /* slightly warmer card */
   --card-2:#EFEBE3;   /* warmer subtle contrast */
   --raise:#E6E1D8;    /* warmer raised */
-  --line:#D4CFC3;     /* warmer line */
-  --line-soft:#E2DDD4; /* warmer soft line */
+  /* Card edges carry more weight in light mode than they used to. The dark
+     buttons on a near-white card were the only strong edge on the page, so
+     they read as cut out of it; a firmer border gives the card its own
+     outline and settles them back into it. Warm greys still, just deeper. */
+  --line:#BFB7A6;     /* warmer line */
+  --line-soft:#CFC8BA; /* warmer soft line */
 
   --text:#1C1A18;     /* slightly warmer dark */
   --soft:#5A554E;     /* warmer soft */
@@ -118,7 +122,7 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
   --shadow:0 1px 3px rgba(30,25,20,.08), 0 1px 2px rgba(30,25,20,.04);
   /* a full black edge was too hard against the page; this is dark enough to
      define the card without cutting it out */
-  --edge:#B8B0A3;     /* warmer edge */
+  --edge:#A69B89;     /* warmer edge */
 }
 :root{--r-sm:4px;--r-md:6px;--r-lg:8px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
