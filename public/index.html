@@ -2668,16 +2668,51 @@ function potdResult(pick,f){
   }
   return null;
 }
-/* The live-feed entry for a fixture, if it is on right now. Both team names have
-   to agree, so 1.3 across the pair is the same bar the Pick of the Day uses. */
-function liveForFixture(f){
-  if(typeof LIVE==="undefined"||!LIVE||!LIVE.matches) return null;
+/* A women's, youth or reserve side is a different team from the first XI that
+   shares its name. Without this, "Paris Saint-Germain W" normalises to
+   "paris w", which contains "paris" - a 1.8 substring score against "Paris SG". */
+function teamTag(s){
+  var t=" "+(s||"").toLowerCase().replace(/[^a-z0-9]+/g," ")+" ";
+  if(/ (w|women|womens|femenino|feminin|feminine|ladies) /.test(t)) return "w";
+  var u=t.match(/ u(15|16|17|18|19|20|21|23) /); if(u) return "u"+u[1];
+  if(/ (ii|iii|b|reserve|reserves|youth|academy|jr|juniors) /.test(t)) return "res";
+  return "";
+}
+/* Pair a fixture with the live-feed entry for the SAME game.
+   Both sides must clear a floor of their own. A combined threshold alone lets
+   one strong side carry the match: "Paris SG" scored 1.8 against
+   "Paris Saint-Germain W" while the home side matched nothing, which cleared
+   1.3 and put a LIVE badge on a fixture two days out. attachEventIds has
+   required a per-side floor all along - this is the same rule. */
+function liveMatchFor(f){
+  if(!f||typeof LIVE==="undefined"||!LIVE||!LIVE.matches) return null;
   var best=null,bs=0;
   LIVE.matches.forEach(function(m){
-    var s=simTeams(f.home,m.home)+simTeams(f.away,m.away);
-    if(s>bs){bs=s;best=m;}
+    if(teamTag(m.home)!==teamTag(f.home)||teamTag(m.away)!==teamTag(f.away)) return;
+    var sh=simTeams(f.home,m.home), sa=simTeams(f.away,m.away);
+    if(sh<0.6||sa<0.6) return;
+    var s=sh+sa; if(s>bs){bs=s;best=m;}
   });
   return bs>=1.3?best:null;
+}
+/* Kickoff in ms, from whichever field the fixture carries. */
+function kickMs(f){
+  if(!f) return null;
+  var t=null;
+  if(f.kickoff) t=new Date(f.kickoff).getTime();
+  else if(f.time&&/^\d{1,2}:\d{2}/.test(f.time)) t=new Date(f.date+"T"+f.time+":00Z").getTime();
+  return (t==null||isNaN(t))?null:t;
+}
+/* The live entry for a fixture, if that fixture could actually be on now.
+   The clock is checked as well as the names: a game cannot be in play before
+   its own kickoff, and is not still in play many hours after it. */
+const LIVE_WINDOW_MS=4.5*3600*1000;
+function liveForFixture(f){
+  var t=kickMs(f);
+  if(t==null) return null;
+  var age=Date.now()-t;
+  if(age<0||age>LIVE_WINDOW_MS) return null;
+  return liveMatchFor(f);
 }
 /* Where a fixture stands: null when it has not kicked off, otherwise in play or
    settled. A server-graded result wins over the live feed - it is the one that
@@ -2748,14 +2783,10 @@ function renderPotd(){
        - in play             -> mirror the live score (green if the tip is landing)
        - full time & WON     -> celebrate: score + "Won"
        - full time & LOST    -> leave the tip exactly as-is (never label a loss) */
-  function findLive(){
-    var best=null,bs=0;
-    (LIVE.matches||[]).forEach(function(m){
-      var sc=simTeams(top.home,m.home)+simTeams(top.away,m.away);
-      if(sc>bs){bs=sc;best=m;}
-    });
-    return (best&&bs>=1.3)?best:null;
-  }
+  /* Shares the strict matcher: both sides must clear a floor, tags must agree,
+     and the pick's own kickoff must have arrived. The loose version here used
+     to let one strong side carry the match. */
+  function findLive(){ return liveForFixture(top); }
   const FTre=/(ft|finished|ended|aet|after et|pen|ap)/i;
   let statusChip, bigHTML, stateClass="", metaExtra="", eyebrowPast=false, handled=false;
   const lm=findLive();
@@ -2946,18 +2977,24 @@ function moreHTML(f){
    Match on name only, so the bar is high - 1.8 is exact-or-substring in
    simTeams, anything looser risks pinning another club's result on a team. */
 const FT_RE=/(ft|finished|ended|aet|after et|pen|ap)/i;
+/* Read the overlay off one of OUR OWN fixtures rather than off the live feed
+   directly. Going through the fixture list means the game has to be one we
+   actually cover, with a kickoff that has arrived - so a women's or youth tie
+   sharing the club's name cannot write into a first-team form strip. */
 function liveFormFor(team){
-  if(!team||typeof LIVE==="undefined"||!LIVE||!LIVE.matches) return null;
-  var best=null,bs=0;
-  LIVE.matches.forEach(function(m){
-    if(m.homeScore==null||m.awayScore==null) return;
-    var sh=simTeams(team,m.home), sa=simTeams(team,m.away), s=Math.max(sh,sa);
-    if(s>bs){bs=s;best={m:m,isHome:sh>=sa};}
-  });
-  if(!best||bs<1.8) return null;
-  var m=best.m, gf=best.isHome?m.homeScore:m.awayScore,
-                ga=best.isHome?m.awayScore:m.homeScore;
-  return {r:gf>ga?"W":(gf<ga?"L":"D"), prov:!FT_RE.test(m.status||"")};
+  if(!team) return null;
+  var all=(typeof DATA!=="undefined"&&DATA.fixtures)?DATA.fixtures:[];
+  for(var i=0;i<all.length;i++){
+    var f=all[i];
+    if(teamTag(f.home)||teamTag(f.away)) continue;
+    var isHome=simTeams(team,f.home)>=1.8, isAway=simTeams(team,f.away)>=1.8;
+    if(!isHome&&!isAway) continue;
+    var st=fixtureState(f);
+    if(!st) continue;
+    var gf=isHome?st.hg:st.ag, ga=isHome?st.ag:st.hg;
+    return {r:gf>ga?"W":(gf<ga?"L":"D"), prov:st.kind==="live"};
+  }
+  return null;
 }
 function formChips(arr,team){
   var live=liveFormFor(team), out="";
@@ -4035,8 +4072,12 @@ function matchPrediction(lm){
   var best=null,bs=0;
   DATA.fixtures.forEach(function(f){
     var o=dayOff(f.date); if(o< -1||o>1) return;
-    var s=simTeams(f.home,lm.home)+simTeams(f.away,lm.away);
-    if(s>bs){bs=s;best=f;}
+    /* Same per-side floor and tag check as liveMatchFor - a combined score
+       alone let a women's side carry a match against the men's fixture. */
+    if(teamTag(lm.home)!==teamTag(f.home)||teamTag(lm.away)!==teamTag(f.away)) return;
+    var sh=simTeams(f.home,lm.home), sa=simTeams(f.away,lm.away);
+    if(sh<0.6||sa<0.6) return;
+    var s=sh+sa; if(s>bs){bs=s;best=f;}
   });
   return bs>=1.3?best:null;
 }
