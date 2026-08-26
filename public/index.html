@@ -1891,6 +1891,12 @@ select{min-height:44px;padding:10px 32px 10px 12px}
   .v-click{display:inline}
 }
 
+/* Most people arrive wanting a SportyBet code, so it is said in the first
+   thing under the headline, in gold so the eye finds it. */
+.trust-i.t-sporty{color:var(--win-ink)}
+.trust-i.t-sporty b{color:var(--win)}
+.trust-i.t-sporty::before{background:var(--win)}
+
 /* The board announces itself. scroll-margin keeps the heading clear of the
    sticky filter bar when the CTA jumps to it. */
 .board-head{margin:18px 0 10px;scroll-margin-top:14px}
@@ -2141,6 +2147,14 @@ select{min-height:44px;padding:10px 32px 10px 12px}
   .m .tn .g{display:none}
   .m .legend{display:none}
   .m .pbar{margin-top:2px}
+
+  /* The slip bar and the bottom nav both sat at bottom:0, the bar parked
+     behind the nav. The bar's glow is a 30px blur, so it spilled about twenty
+     pixels above the nav's top edge - a pink flash every time the bar slid in
+     or out, which is what fast scrolling triggers. Sit it above the nav
+     instead, where it is meant to be read. 77px is the nav's own height; the
+     safe-area inset is added because the nav grows by it. */
+  .slipbar{bottom:calc(77px + env(safe-area-inset-bottom));padding:0 10px 8px}
 
   /* The legend card ("1.6 = goals we expect", and the W/D/L key) is a whole
      card of scroll sitting between the filters and the first tip. Both things
@@ -2421,6 +2435,8 @@ footer{margin-top:26px;padding-top:18px;
   <section class="intro">
     <h1 class="parallax-forward stage-in stage-in-1" data-parallax="1.2">Who's winning <span>today?</span></h1>
     <div class="trust parallax-shallow stage-in stage-in-2" data-parallax="0.8">
+      <!-- The thing most people come for, said plainly and said first. -->
+      <span class="trust-i t-sporty"><b>Free SportyBet code</b> in one tap</span>
       <span class="trust-i"><b id="when2">-</b> last updated</span>
       <span class="trust-i" id="streak" hidden></span>
       <span class="trust-i t-static">Rebuilt daily from results</span>
@@ -2450,11 +2466,11 @@ footer{margin-top:26px;padding-top:18px;
           <span class="sc-orb" aria-hidden="true"></span>
           <span class="sc-tx">
             <b>Don't pick. Let it be built for you.</b>
-            <i id="scTease">Pick a payout, get a ready-to-play SportyBet slip.</i>
+            <i id="scTease">We pick the games. You get a SportyBet code to play them.</i>
           </span>
         </div>
         <div class="sc-actions">
-          <button class="wsp-go sc-go-btn" data-scmode="wizard" type="button">Build my slip</button>
+          <button class="wsp-go sc-go-btn" data-scmode="wizard" type="button">Build me a SportyBet slip</button>
           <button class="slider-btn sc-go-btn" id="scBrowse" type="button">See today's predictions</button>
         </div>
         <div class="sc-proof" id="scProof" hidden></div>
@@ -5121,8 +5137,12 @@ function renderSlipTease(){
     var r=wspBuild();
     var sub=$("scTease"), sb=$("sbSub");
     if(r&&r.picks&&r.picks.length>=2){
-      var msg="Today's slip: "+r.picks.length+" games \u00b7 ~\u00d7"+r.odds.toFixed(0)+" \u2014 tap to book";
-      var short=r.picks.length+" games \u00b7 ~\u00d7"+r.odds.toFixed(0);
+      /* Say what they get, in the fewest plain words: how many games, roughly
+         what it pays, and that a SportyBet code comes out of it. */
+      var msg="Today's slip: "+r.picks.length+" games \u00b7 about \u00d7"+
+              r.odds.toFixed(0)+" \u00b7 SportyBet code ready";
+      var short=r.picks.length+" games \u00b7 about \u00d7"+r.odds.toFixed(0)+
+              " \u00b7 code ready";
       if(sub) sub.textContent=msg;
       if(sb) sb.textContent=short;
     }
@@ -5867,7 +5887,7 @@ setTimeout(hideLoader,8000);
 
 load();
 </script>
-<div class="slipbar" id="slipbar"><div class="slipbar-in" id="slipbarBtn"><span class="sb-tx"><b id="sbHead">Build my SportyBet slip</b><i id="sbSub">Let the wizard pick &amp; get a code</i></span><span class="sb-go">&rarr;</span></div></div>
+<div class="slipbar" id="slipbar"><div class="slipbar-in" id="slipbarBtn"><span class="sb-tx"><b id="sbHead">Build me a SportyBet slip</b><i id="sbSub">We pick the games, you get the code</i></span><span class="sb-go">&rarr;</span></div></div>
 <div class="netpill off" id="netpill"><span class="dot"></span><span id="netpillTxt">Offline</span></div>
 <script>
 (function(){
