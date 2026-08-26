@@ -1757,6 +1757,9 @@ html.reduce .myfab{animation:none}
 .rec-grid{display:flex;flex-wrap:wrap;gap:10px 22px;margin-bottom:11px}
 .rec-cell b{display:block;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .rec-cell .pc{color:var(--green)}
+/* A short window running behind the long one is stated, not hidden - amber
+   rather than red, because seven days is a small sample and not a verdict. */
+.rec-cell .pc.cool{color:var(--amber)}
 .rec-cell i{display:block;font-style:normal;font-size:10.5px;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-top:2px}
 .rec-bar{height:5px;border-radius:99px;background:var(--raise);overflow:hidden}
@@ -4491,32 +4494,53 @@ function renderProof(){
 }
 
 /* ---- Accuracy record (renders only with real data) ---- */
+/* Hit rate over the last N days, graded from the results feed. A short window
+   is a small sample and swings hard; showing it beside the long one is what
+   keeps a cold week readable as a cold week rather than as the whole story. */
+function windowRecord(days){
+  var res=(DATA.results||[]).filter(function(r){
+    var o=dayOff(r.date); return o<0 && o>=-days;
+  });
+  if(!res.length) return null;
+  var hit=res.filter(function(r){return r.hit;}).length;
+  return {correct:hit,total:res.length,pct:Math.round(100*hit/res.length),days:days};
+}
 function renderRecord(){
   var host=$("record"); if(!host) return;
   var rec=DATA.record;
   if(!rec||!rec.total){host.innerHTML="";return;}
   var pct=Math.round(100*rec.correct/rec.total);
   /* This is the one claim no rival tips site makes: a graded, calibrated
-     history. It gets a real panel - the count, the hit rate, how well the
-     stated confidence matched reality, and yesterday - because it is the
-     reason to trust every other number on the page. */
+     history. It gets a real panel - both windows, how well the stated
+     confidence matched reality, and yesterday - because it is the reason to
+     trust every other number on the page.
+     Nothing here is hidden on a bad run. A record that only appears when it
+     flatters is what every tipster site already does, and it would make the
+     heading above it a lie. The short window is shown instead, so a poor week
+     reads as a poor week next to the longer record it sits inside. */
   var b=rec.brier;
   var cal=(b==null)?null:(b<=0.18?"Excellent":b<=0.21?"Good":b<=0.24?"Fair":"Rough");
   var yest=DATA.recordYest;
+  var wk=windowRecord(7);
+  var cold=wk&&wk.pct<pct-5;
   host.innerHTML=
     "<div class='rec-panel'>"+
       "<div class='rec-head'><b>Our record, graded honestly</b>"+
         "<span>every tip checked against the result</span></div>"+
       "<div class='rec-grid'>"+
-        "<div class='rec-cell'><b class='pc'>"+pct+"%</b><i>hit rate</i></div>"+
-        "<div class='rec-cell'><b>"+rec.correct+"/"+rec.total+"</b><i>tips landed"+
-          (rec.days?" \u00b7 "+rec.days+"d":"")+"</i></div>"+
+        (wk?"<div class='rec-cell'><b class='pc"+(cold?" cool":"")+"'>"+wk.pct+"%</b>"+
+          "<i>last 7 days \u00b7 "+wk.correct+"/"+wk.total+"</i></div>":"")+
+        "<div class='rec-cell'><b class='pc'>"+pct+"%</b><i>last "+
+          (rec.days||21)+" days \u00b7 "+rec.correct+"/"+rec.total+"</i></div>"+
         (cal?"<div class='rec-cell'><b>"+cal+"</b><i>calibration</i></div>":"")+
         (yest&&yest.total?"<div class='rec-cell'><b>"+yest.correct+"/"+yest.total+
           "</b><i>yesterday</i></div>":"")+
       "</div>"+
       "<div class='rec-bar'><i style='width:"+pct+"%'></i></div>"+
-      "<div class='rec-foot'>"+(cal?"When we say 70%, it lands near 70% - ":"")+
+      "<div class='rec-foot'>"+
+        (cold?"A short week swings hard - seven days is a small sample, and the "+
+              (rec.days||21)+"-day figure is the honest one. ":"")+
+        (cal?"When we say 70%, it lands near 70% - ":"")+
         "measured on games the model had not seen.</div>"+
     "</div>";
 }
