@@ -283,13 +283,14 @@ img,svg{max-width:100%}
 .dnav:disabled{opacity:.3;cursor:default}
 .dnav:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .dlabel{min-width:112px;text-align:center}
-/* The one control on that row with no colour in it, next to a red category
-   chip and a red pill - it read as disabled. The day takes the accent; the
-   date under it stays quiet. */
-.dlabel b{color:var(--red-ink)}
-.dnav{color:var(--soft)}
-.dnav:not(:disabled):hover{background:var(--red-wash);color:var(--red-ink)}
-.dlabel b{display:block;font-weight:700;font-size:14px}
+/* The colour belongs on the arrows - they are the part you press. The day
+   itself is a label, so it reads in the normal text colour at a normal
+   weight; it was carrying both the accent and a heavy weight, which made it
+   look like the button. */
+.dnav{color:var(--red-ink);background:var(--card-2)}
+.dnav:not(:disabled):hover{background:var(--red-wash);color:var(--red)}
+.dnav:disabled{color:var(--faint)}
+.dlabel b{display:block;font-weight:600;font-size:14px;color:var(--text)}
 .dlabel i{display:block;font-style:normal;font-size:11px;color:var(--faint);font-weight:600}
 .search{position:relative;flex:1 1 240px}
 .pick-sel{flex:0 1 148px;min-height:48px;border-radius:var(--r-md)}
@@ -637,7 +638,14 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
   filter:drop-shadow(0 0 5px rgba(255,255,255,.4));
   /* set below for light mode, where a white ball has nothing to be white
      against and just reads grey */
-  animation:orbBreath 3.4s ease-in-out infinite}
+  /* Turns slowly, the way a crystal ball should. The glow still breathes on
+     the filter; the spin is a separate transform so the two do not fight over
+     the same property. */
+  animation:orbBreath 3.4s ease-in-out infinite,orbSpin 22s linear infinite}
+@keyframes orbSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){
+  .sc-orb{animation:none}
+}
 @keyframes orbBreath{
   0%,100%{filter:drop-shadow(0 0 4px rgba(255,255,255,.3))}
   50%{filter:drop-shadow(0 0 9px rgba(255,255,255,.6))}}
@@ -646,7 +654,7 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
    contrast to spare there, and the red S reads either way. */
 [data-theme="light"] .sc-orb{background-image:url("/wiz-orb.png");
   filter:drop-shadow(0 0 4px rgba(90,60,170,.3))}
-[data-theme="light"] .sc-orb{animation:orbBreathLight 3.4s ease-in-out infinite}
+[data-theme="light"] .sc-orb{animation:orbBreathLight 3.4s ease-in-out infinite,orbSpin 22s linear infinite}
 @keyframes orbBreathLight{
   0%,100%{filter:drop-shadow(0 0 3px rgba(90,60,170,.25))}
   50%{filter:drop-shadow(0 0 8px rgba(90,60,170,.5))}}
@@ -1767,7 +1775,14 @@ html.mode-live #live{display:block}
 @media(max-width:720px){.wspfab{bottom:92px;width:52px;height:52px}.wspfab img{width:34px;height:34px}}
 .wsp-lead{font-size:13.5px;color:var(--soft);margin-bottom:16px;line-height:1.5}
 .wsp-lbl{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin:16px 0 8px}
-.wsp-hint{margin:-2px 0 2px;font-size:12px;line-height:1.5;color:var(--faint)}
+.wsp-hint{margin:9px 0 2px;font-size:12px;line-height:1.5;color:var(--faint)}
+/* Waiting on a payout: dimmed enough to read as not-yet-ready, but still
+   pressable, because being told what is missing beats a dead button. */
+button.wsp-go.waiting{opacity:.55}
+.wsp-nudge{animation:wspNudge .5s ease-in-out}
+@keyframes wspNudge{0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@media(prefers-reduced-motion:reduce){.wsp-nudge{animation:none}}
 .wsp-chips{display:flex;flex-wrap:wrap;gap:8px}
 .wsp-chip{background:var(--card-2);border:1px solid var(--line);color:var(--soft);font:inherit;
   font-weight:700;font-size:13px;padding:9px 15px;border-radius:99px;cursor:pointer}
@@ -2263,7 +2278,9 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot{display:none}
   .toprow .viewtoggle.top .vt svg{width:14px;height:14px}
   .toprow .datebar{padding:2px;gap:1px;flex-shrink:0}
   .toprow .dnav{width:32px;height:32px;font-size:14px}
-  .toprow .dlabel{min-width:0;padding:0 3px}
+  /* It sat almost against the arrows. A little breathing room either side,
+     which the row has space for now the pill has its own line. */
+  .toprow .dlabel{min-width:0;padding:0 10px}
   .toprow .dlabel b{font-size:12.5px;line-height:1.15;white-space:nowrap}
   .toprow .dlabel i{font-size:10px;white-space:nowrap}
   .toprow .viewtoggle{min-width:0}
@@ -4801,8 +4818,13 @@ function renderDaily(){
       "<span class='dl-pill "+(pct>=50?"good":"bad")+"'>"+pct+"%</span></div>"+
       "<div class='daily-bar'><i style='width:"+pct+"%'></i></div>";
   } else {
-    body="<div class='daily-empty'>Nothing finished yesterday - "+
-      "today's tips are below.</div>";
+    /* "Nothing finished yesterday" claimed to know something we do not. An
+       empty results list means we have no grades for that day - which happens
+       both when no games were on and when they were played and simply have not
+       been graded yet, since grading runs with the build. Say what is actually
+       true: the results are not in. */
+    body="<div class='daily-empty'>Yesterday's results aren't in yet - "+
+      "they arrive once the day's games are graded.</div>";
   }
 
   var foot="";
@@ -5258,7 +5280,18 @@ function clearMy(){
   MYSLIP=[]; saveMy(); renderFab();
   var mo=$("myTotOdds"); if(mo) mo.textContent="-";
   document.querySelectorAll("[data-add].on").forEach(function(b){b.classList.remove("on");b.textContent="+";});
-  $("myBookResult").innerHTML=""; renderMySheet();
+  $("myBookResult").innerHTML="";
+  /* Clearing the slip clears the ticket behind it. The conjured legs came from
+     the wizard, so leaving its preview showing the games and the odds you just
+     threw away would be describing a slip that no longer exists. Back to the
+     unset state - pick a payout and conjure again. */
+  try{
+    WSP.conjured=false; WSP._slip=null; WSP._sig=null;
+    WSP.removed={}; WSP.odds=null;
+    if(document.documentElement.classList.contains("mode-build")) renderBuilder();
+    if(typeof renderSlipTease==="function") renderSlipTease();
+  }catch(e){}
+  renderMySheet();
 }
 function flyToSlip(srcEl){
   try{
@@ -5818,8 +5851,8 @@ function renderWizardPanel(){
     html += "<p class='wsp-hint'>Pick a payout above - we'll find the games that reach it.</p>";
   html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips' id='wspStyleChips'>"+
     styles.map(function(st){return "<button class='wsp-chip"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'>"+st[1]+"</button>";}).join("")+"</div>"+
-    "<button class='book-btn wsp-go' id='wspGo' type='button'"+
-      (WSP.odds==null?" disabled":"")+">Conjure ticket</button>";
+    "<button class='book-btn wsp-go"+(WSP.odds==null?" waiting":"")+
+      "' id='wspGo' type='button'>Conjure ticket</button>";
 
   $("wizardPanel").innerHTML=html;
   // Panel visibility
@@ -5840,7 +5873,20 @@ function renderWizardPanel(){
   $("wspStyleChips").querySelectorAll("[data-lo]").forEach(function(c){
     c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;WSP._sig=null;renderBuilder();});
   });
-  $("wspGo").addEventListener("click",function(){buzzConjure();wspConjure(false);});
+  $("wspGo").addEventListener("click",function(){
+    /* Disabled would have been silent about why. It stays pressable and says
+       what is missing, then points at the chips that answer it. */
+    if(WSP.odds==null){
+      window.swToast&&window.swToast("Pick a target payout first","err");
+      var chips=$("wspOddsChips");
+      if(chips){
+        chips.classList.remove("wsp-nudge"); void chips.offsetWidth;
+        chips.classList.add("wsp-nudge");
+        try{chips.scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"center"});}catch(e){}
+      }
+      return;
+    }
+    buzzConjure(); wspConjure(false);});
 
 }
 function renderBuilderOutput(){
