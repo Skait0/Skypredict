@@ -2126,8 +2126,12 @@ select{min-height:44px;padding:10px 32px 10px 12px}
   .slip-cta .sc-orb{width:44px;height:44px}
   .slip-cta .sc-tx b{font-size:17px;line-height:1.2;letter-spacing:-.01em}
   .slip-cta .sc-tx i{font-size:12px;margin-top:4px}
-  .slip-cta .sc-actions{gap:8px}
-  .slip-cta .sc-go-btn{padding:12px 12px;font-size:12.5px;letter-spacing:.06em}
+  /* Side by side, "Build me a SportyBet slip" broke over three lines in a
+     160px column. Stacked, each button gets the full width and one line, and
+     the thing most people came for is the biggest target on the screen. */
+  .slip-cta .sc-actions{gap:8px;flex-direction:column}
+  .slip-cta .sc-go-btn{width:100%;flex:0 0 auto;padding:13px 12px;
+    font-size:12.5px;letter-spacing:.05em}
   .sc-proof{font-size:11px;margin-top:9px;padding-top:8px}
 
   /* Pick of the day: the number was the tallest thing on the page. */
