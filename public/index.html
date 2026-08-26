@@ -129,7 +129,7 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
 button,a,.m,.lrow,.gl-card,.cat,.vt,.navt,.btab,.opt-add{-webkit-tap-highlight-color:transparent;tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;overflow-x:hidden}
 body{background:var(--bg);color:var(--text);
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='210' viewBox='0 0 210 210'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-linecap='round' opacity='0.035'%3E%3Cpath d='M33 30v26M23 37l10 6 10-6M33 43l-8 10M33 43l8 10'/%3E%3Cpath d='M156 44l11 16-11 16-11-16z'/%3E%3Cpath d='M92 142v22M83 149l9-6 9 6M85 164h14'/%3E%3Cpath d='M172 154l8 8-8 8-8-8z M172 148v28'/%3E%3Ccircle cx='58' cy='126' r='11'/%3E%3Cpath d='M58 115v22M47 126h22'/%3E%3C/g%3E%3C/svg%3E");
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='210' viewBox='0 0 210 210'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-linecap='round' opacity='0.014'%3E%3Cpath d='M33 30v26M23 37l10 6 10-6M33 43l-8 10M33 43l8 10'/%3E%3Cpath d='M156 44l11 16-11 16-11-16z'/%3E%3Cpath d='M92 142v22M83 149l9-6 9 6M85 164h14'/%3E%3Cpath d='M172 154l8 8-8 8-8-8z M172 148v28'/%3E%3Ccircle cx='58' cy='126' r='11'/%3E%3Cpath d='M58 115v22M47 126h22'/%3E%3C/g%3E%3C/svg%3E");
   background-repeat:repeat;
   font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
   font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:40px;overflow-x:hidden}
@@ -354,10 +354,17 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .m-btn{width:100%;background:none;border:0;color:inherit;font:inherit;
   text-align:left;cursor:pointer;padding:15px 15px 0;display:block}
 .m-btn:focus-visible{outline:2px solid var(--red);outline-offset:-3px}
-.m-add{width:100%;background:var(--card-2);border:0;border-top:1px solid var(--line-soft);
-  color:var(--red-ink);font:inherit;font-weight:800;font-size:13px;padding:12px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:7px}
-.m-add:hover{background:var(--red-wash)}
+/* Two full-bleed grey slabs stacked at the foot of every card read like a
+   form, not a card. An inset pill with a hairline border sits inside the card
+   instead - lighter, and it still spans nearly the full width, so nothing is
+   lost as a tap target. */
+.m-add{width:calc(100% - 24px);margin:10px 12px 12px;
+  background:transparent;border:1px solid var(--line);border-radius:99px;
+  color:var(--red-ink);font:inherit;font-weight:800;font-size:12.5px;padding:10px 14px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:border-color .18s,background .18s,color .18s}
+.m-add:hover{background:var(--red-wash);border-color:var(--red)}
+.m-add.on{background:var(--green-wash);border-color:var(--green)}
 .m-add .ma-ic{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;
   border-radius:50%;background:var(--red);color:#fff;font-size:14px;line-height:1}
 .m-add.on{color:var(--green-ink)}
@@ -588,18 +595,29 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
 .nav .navt.build{display:none}
 /* Home CTA: unmissable wizard banner - deep amethyst field, gold trim,
    breathing orb, and an inline Conjure button on its own line. */
+/* Quiet container, loud button. This was the only large violet surface on a
+   page built from near-black, crimson and gold, so it read as something
+   embedded from elsewhere - and an advert is the one thing people are
+   practised at not seeing. It also sat directly above Pick of the Day, which
+   is itself a loud panel, and two shouting blocks in a row means neither
+   wins. The card is now the site's own surface; the contrast comes from the
+   button, which is what we actually want tapped. */
 .slip-cta{display:flex;flex-direction:column;align-items:stretch;gap:12px;width:100%;text-align:left;margin:14px 0 2px;
-  background:linear-gradient(160deg,#2b1a5e 0%,#1d1142 55%,#160b36 100%);
-  border:1px solid rgba(212,175,55,.55);
-  box-shadow:0 6px 24px rgba(70,35,170,.35),inset 0 1px 0 rgba(255,255,255,.08);
-  border-radius:var(--r-lg);padding:15px 16px;cursor:pointer;color:#F3EFFF;font:inherit;
+  background:linear-gradient(160deg,var(--card) 0%,var(--card-2) 100%);
+  border:1px solid var(--line);
+  box-shadow:0 4px 18px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.04);
+  border-radius:var(--r-lg);padding:15px 16px;cursor:pointer;color:var(--text);font:inherit;
   position:relative;overflow:hidden}
+/* A thin gold rule along the top - the site's premium accent, as a hairline
+   rather than a field of colour. */
+.slip-cta::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(242,184,75,.55),transparent)}
 .slip-cta::before{content:'';position:absolute;top:-40%;left:-10%;width:55%;height:180%;
-  background:radial-gradient(closest-side,rgba(124,77,255,.28),transparent);
+  background:radial-gradient(closest-side,rgba(124,77,255,.10),transparent);
   animation:wspOrbDrift 5s ease-in-out infinite alternate}
 @keyframes wspOrbDrift{from{transform:translate(0,0)}to{transform:translate(30px,12px)}}
-.slip-cta:hover{border-color:rgba(232,199,95,.85)}
-.slip-cta:hover .sc-go-btn{box-shadow:0 6px 26px rgba(112,66,240,.55),inset 0 0 18px rgba(140,96,255,.35),inset 0 1px 0 rgba(255,255,255,.2)!important;border-color:rgba(232,199,95,.9)}
+.slip-cta:hover{border-color:var(--faint)}
+.slip-cta:hover .sc-go-btn{box-shadow:0 6px 22px rgba(198,35,48,.5),inset 0 1px 0 rgba(255,255,255,.28)!important}
 .sc-orb{flex-shrink:0;width:44px;height:44px;margin-top:0;
   background:url("/wiz-orb.png") center/cover no-repeat;border-radius:50%;
   filter:drop-shadow(0 0 5px rgba(180,150,255,.55));
@@ -607,15 +625,21 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
 @keyframes orbBreath{0%,100%{filter:drop-shadow(0 0 4px rgba(180,150,255,.4))}
   50%{filter:drop-shadow(0 0 8px rgba(200,175,255,.8))}}
 .sc-tx{flex:1;min-width:0}
-.sc-tx b{display:block;font-size:16.5px;font-weight:800;color:#fff;letter-spacing:.01em}
-.sc-tx i{display:block;font-style:normal;font-size:12.5px;color:#CFC4F2;margin-top:3px}
+.sc-tx b{display:block;font-size:16.5px;font-weight:800;color:var(--text);letter-spacing:.01em}
+.sc-tx i{display:block;font-style:normal;font-size:12.5px;color:var(--soft);margin-top:3px}
+/* SportyBet red. Beyond matching the palette this does real work: it says
+   "this ends in a SportyBet code" before the label is read. Colour as a
+   shortcut to meaning, rather than as decoration. */
 .sc-go-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;
   padding:9px 22px;font-size:12.5px;border-radius:var(--r-sm);
-  color:#EDE7FF;background:linear-gradient(165deg,#33206b 0%,#241453 60%,#190d3e 100%)!important;
-  border:1px solid rgba(212,175,55,.7)!important;
-  box-shadow:0 3px 12px rgba(90,46,210,.4),inset 0 0 10px rgba(124,77,255,.25)!important;
+  color:#fff!important;
+  background:linear-gradient(165deg,#ef4551 0%,#e0212f 55%,#b8141f 100%)!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  box-shadow:0 4px 16px rgba(198,35,48,.38),inset 0 1px 0 rgba(255,255,255,.22)!important;
   letter-spacing:.09em;text-transform:uppercase;font-weight:800;position:relative;overflow:hidden;
-  transition:box-shadow .2s,border-color .2s}
+  transition:box-shadow .2s,border-color .2s,filter .2s}
+.sc-go-btn:hover{filter:brightness(1.06);
+  box-shadow:0 6px 22px rgba(198,35,48,.5),inset 0 1px 0 rgba(255,255,255,.28)!important}
 .sc-logo{height:30px;width:auto;display:inline-block;margin-left:9px;vertical-align:-9px;border-radius:4px}
 .sc-head{display:flex;align-items:flex-start;gap:13px}
 .sc-actions{display:flex;gap:10px;flex-wrap:wrap}
@@ -633,9 +657,13 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
     padding:0 10px;font-size:13px;font-weight:800;letter-spacing:.06em;line-height:normal;
     box-sizing:border-box}
 }
-.slider-btn{background:linear-gradient(165deg,#5e1620 0%,#431019 60%,#2c0a11 100%)!important;
-  border-color:rgba(230,87,100,.55)!important;color:#FFE9EB!important}
-.slider-btn:hover{border-color:#E65764!important}
+/* Ghost. Two filled buttons side by side compete and flatten the hierarchy;
+   this one is present and plainly second. */
+.slider-btn{background:transparent!important;
+  border:1px solid var(--line)!important;color:var(--soft)!important;
+  box-shadow:none!important}
+.slider-btn:hover{border-color:var(--faint)!important;color:var(--text)!important;
+  background:var(--card-2)!important;filter:none}
 .sc-logo{height:36px;width:auto;display:inline-block;border-radius:var(--r-sm);vertical-align:-12px;margin-right:8px}
 @media(prefers-reduced-motion:reduce){.slip-cta{animation:none}.slip-cta::after{display:none}}
 html.mode-build .slip-cta,html.mode-live .slip-cta{display:none}
@@ -897,10 +925,13 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .valuebox b{font-weight:700}
 .valuebox .odds{margin-left:auto;font-weight:800;color:var(--green-ink)}
 
-.mtoggle{display:flex;align-items:center;justify-content:center;gap:7px;
-  margin:14px -15px 0;padding:13px 15px;border-top:1px solid var(--line-soft);background:var(--card-2);
-  color:var(--red-ink);font-size:13px;font-weight:800;transition:background .18s}
-.m:hover .mtoggle{background:var(--red-wash)}
+/* Quiet type on a hairline rather than a filled bar: this is a disclosure,
+   not a call to action, and it was competing with the one below it. */
+.mtoggle{display:flex;align-items:center;justify-content:center;gap:6px;
+  margin:13px -15px 0;padding:11px 15px;border-top:1px solid var(--line-soft);
+  background:transparent;color:var(--faint);font-size:11.5px;font-weight:700;
+  letter-spacing:.03em;transition:color .18s}
+.m:hover .mtoggle{background:transparent;color:var(--red-ink)}
 .mtoggle .cv{font-size:10px;transition:transform .3s}
 .m:hover .mtoggle .cv{transform:translateX(3px)}
 .mtoggle .cv{font-size:15px}
@@ -1612,12 +1643,35 @@ html.mode-live #live{display:block}
 @keyframes ldrpulse{0%,100%{transform:scale(1) translateY(0)}50%{transform:scale(1.06) translateY(-2px)}}
 /* opt add-to-slip button + floating my-slip */
 .opt.bk .n{padding-right:26px}
-.opt.bk{cursor:pointer}
+.opt.bk{cursor:pointer;transition:border-color .15s,background .15s}
 .opt:has(.opt-add.on){background:var(--red-wash);border-color:var(--red)}
+/* The click target stays an invisible full-tile overlay - it just no longer
+   has to double as the affordance. */
 .opt-add{position:absolute;inset:0;z-index:2;width:100%;height:100%;border-radius:inherit;
   border:0;background:transparent;color:transparent;cursor:pointer;padding:0;font-size:0}
-.opt-add:hover{border-color:var(--red);color:var(--red-ink)}
-.opt-add.on{background:none;border-color:var(--red);color:var(--red-ink)}
+
+/* Which of these can I actually put in a slip? Every tile looked the same,
+   because the only marker was that overlay - rendered with a "+" in it and
+   then set to transparent at font-size 0. So a bookable market and a
+   prediction we simply price were indistinguishable until you clicked one.
+   The badge says it positively, rather than dimming the rest into looking
+   broken: a market we can book carries a +, and turns to a tick once it is
+   in your slip. */
+.opt.bk::after{content:'+';position:absolute;top:8px;right:8px;
+  width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;
+  font-size:13px;font-weight:800;line-height:1;z-index:1;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s,background .15s}
+.opt.bk:hover{border-color:var(--red)}
+.opt.bk:hover::after{transform:scale(1.14)}
+.opt:has(.opt-add.on)::after{content:'\2713';background:var(--green)}
+/* Priced but not bookable: still worth reading, so it is quietened rather
+   than greyed out - the label softens and there is no affordance to chase. */
+.opt:not(.bk) .n{color:var(--faint)}
+.opt:not(.bk){cursor:default}
+/* The list view's compact tiles need a smaller badge. */
+.lmore .opt.bk::after{width:15px;height:15px;font-size:11px;top:5px;right:5px}
+.lmore .opt.bk .n{padding-right:20px}
 .myfab.pop{animation:fabpop .4s ease-out}
 .myfab[hidden]{display:none!important}
 @media(max-width:720px){
@@ -1665,7 +1719,8 @@ html.mode-live #live{display:block}
 /* Payout chips carry a risk hue (green x50 -> red x6000). Tinted when idle,
    filled with the same hue when selected; overrides the generic red .on above. */
 .wsp-chip.wsp-risk{border-color:var(--wr);color:var(--wr)}
-.wsp-chip.wsp-risk.on{background:var(--wr);border-color:var(--wr);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.28)}
+.wsp-chip.wsp-risk.on{background:var(--wr);border-color:var(--wr);
+  color:var(--wr-ink,#fff);font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.28)}
 /* The close button was absolutely positioned at right:0, which resolves against
    the head's padding box - so it sat flush against the sheet's inner edge with
    none of the gutter the rest of the header respects. Back to a plain flex item
@@ -1911,6 +1966,13 @@ select{min-height:44px;padding:10px 32px 10px 12px}
   .board-head p{font-size:12px}
 }
 
+/* Wizard: the panel carries the numbers, the slip is read in the sheet that
+   comes up on Conjure. Two copies of the same legs, one of them with no way to
+   book them, was the thing to lose. The sheet's own footer holds Shuffle,
+   Clear and Get code, so nothing is out of reach - and the My slip button
+   brings it back after it is dismissed. */
+html.wiz-mode #slip,html.wiz-mode #bldFoot{display:none}
+
 /* Explains the two builders where the choice is made, rather than in front of
    it. Both produce a slip; the only difference is what you hand over. */
 /* The heading was the page's plainest type on the page with the most
@@ -2014,10 +2076,10 @@ select{min-height:44px;padding:10px 32px 10px 12px}
    worth more than the same claim a scroll away, and it costs no extra height
    worth speaking of. */
 .sc-proof{display:flex;align-items:flex-start;gap:7px;margin-top:10px;
-  padding-top:9px;border-top:1px solid rgba(232,199,95,.28);
-  font-size:11.5px;line-height:1.4;color:#CFC4F2}
-.sc-proof b{color:#fff;font-weight:800}
-.sc-tick{color:#8FE3B8;font-weight:900;flex-shrink:0;line-height:1.35}
+  padding-top:9px;border-top:1px solid var(--line);
+  font-size:11.5px;line-height:1.4;color:var(--soft)}
+.sc-proof b{color:var(--text);font-weight:800}
+.sc-tick{color:var(--green-ink);font-weight:900;flex-shrink:0;line-height:1.35}
 .sc-proof[hidden]{display:none}
 
 /* ============================================== board cap (phones only)
@@ -2138,11 +2200,39 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 
   /* Pick of the day: the number was the tallest thing on the page. */
   .potd{margin-top:10px}
-  .potd-top{padding:7px 12px}
-  .potd-body{padding:11px 12px}
-  .potd-grid{gap:11px}
+  .potd-top{padding:6px 11px}
+  .potd-body{padding:10px 11px}
+  .potd-grid{gap:10px}
   .potd .big{font-size:clamp(32px,9vw,44px)}
-  .potd .why{margin-top:8px;padding-top:8px}
+  .potd .why{margin-top:7px;padding-top:7px}
+  .potd .why .eyebrow{margin-bottom:5px}
+  .potd .why ul{gap:4px}
+  .potd .why li{font-size:13px}
+  /* Two reasons carry the argument. The third is the confidence figure, which
+     is already the biggest thing on the card - on a phone it is a line of
+     scroll spent repeating what the number just said. */
+  .potd .why li:nth-child(n+3){display:none}
+
+  /* The recap's headline is yesterday. The running record underneath is the
+     same sentence the hero already makes, and the full panel further down
+     says it properly - so on a phone the box keeps only what is new. */
+  .daily{padding:10px 12px}
+  .daily-foot{display:none}
+  .daily-h{margin-bottom:7px}
+  .daily-bar{margin-top:8px}
+  .daily-score .dl-big{font-size:24px}
+
+  /* Slip of the day: 18px of padding all round, and a lot of air between the
+     legs, for a card that is really a short list. */
+  .sotd{padding:12px;margin-top:10px}
+  .sotd h2{font-size:17px}
+  .sotd .sub{font-size:12.5px;margin-bottom:9px}
+  .sotd-legs{gap:4px;margin-bottom:10px}
+  .sotd-leg{font-size:12.5px}
+
+  /* The pill says what it builds and how many, so it needs the room. */
+  .bookall{padding:9px 13px}
+  .bookall .ba-tx{font-size:12px}
 
   /* The card's job on a phone is: who is playing, what we call it, how sure we
      are. The expected-goals figures and the 1/X/2 percentage row are the two
@@ -2512,7 +2602,7 @@ footer{margin-top:26px;padding-top:18px;
       <span class="ba-spark" aria-hidden="true"></span>
       <span class="ba-tx">Build all</span>
       <span class="ba-n" id="bookAllN"></span>
-      <span class="ba-tx ba-tx2">tips</span>
+      <span class="ba-tx ba-tx2">predicted tips</span>
     </button>
   </div>
   <div id="bookAllResult"></div>
@@ -2720,6 +2810,9 @@ footer{margin-top:26px;padding-top:18px;
   <div class="sheet-body" id="mySheetBody"></div>
   <div class="mysheet-foot" id="mySheetFoot" hidden>
     <div class="bld-odds"><i>Total odds</i><b id="myTotOdds">-</b></div>
+    <!-- Only for a conjured slip: reshuffling a slip somebody picked by hand
+         would throw their choices away. -->
+    <button class="clear-btn" id="mySheetShuffle" type="button" hidden>Shuffle</button>
     <button class="clear-btn" id="myClearBtn" type="button">Clear</button>
     <button class="book-btn" id="myBookBtn" type="button">Get code</button>
   </div>
@@ -2771,7 +2864,24 @@ var SA_COUNTRIES={Argentina:1,Bolivia:1,Brazil:1,Chile:1,Colombia:1,Ecuador:1,
 var SA_MIN_EURO=6;
 /* Lower divisions (2nd tiers and below) - some days the board is mostly these
    and the user wants top-flight only. One shared setting drives both builders. */
-function isLowerLeague(l){return /\bchampionship\b|\bleague [12]\b|\bconference\b|\bligue 2\b|\bserie b\b|\bla liga 2\b|\bbundesliga 2\b/i.test(l||"");}
+/* Second tier and below, by the competition's own name rather than a list of
+   leagues someone has to keep up to date.
+   The guard first: a few top flights read like tiers - Korea's K-League 1,
+   Japan's J1, Spain's La Liga 1 - and would otherwise be demoted by the
+   "league 1" pattern below. */
+function isLowerLeague(l){
+  var s=(l||"").toLowerCase();
+  if(/\bk-?league 1\b|\bj1 league\b|\bla liga 1\b|\bliga 1\b|\bligue 1\b|\bserie a\b|\bbundesliga 1\b/.test(s)) return false;
+  return /\bchampionship\b|\bleague [123]\b|\bj[23] league\b|\bconference\b|\bligue [23]\b|\bserie [bc]\b|\bla liga 2\b|\bbundesliga 2\b|\b2\. bundesliga\b|\b3\. liga\b|\beerste divisie\b|\bchallenge league\b|\bpromotion league\b|\b1st division\b|\bdivision [12]\b|\bprimera b\b|\bprimera nacional\b|\bsegunda\b|\btorneo federal\b|\bregionalliga\b|\bnext pro\b|\breserves?\b|\bu(19|20|21|23)\b|\bnb (ii|iii)\b|\bii lyga\b/.test(s);
+}
+/* Running order for whatever is left after the pinned and marquee sections:
+   a country's top flight before anybody's second tier, South America after
+   Europe's top flights, and the lower divisions last. */
+function leagueRank(l){
+  if(isLowerLeague(l)) return 3;
+  if(isSAleague(l)) return 2;
+  return 1;
+}
 var TOP_ONLY=false; try{TOP_ONLY=localStorage.getItem("sw.toponly")==="1";}catch(e){}
 function setTopOnly(v){TOP_ONLY=!!v;try{localStorage.setItem("sw.toponly",v?"1":"0");}catch(e){}}
 function marketCount(){try{return Object.keys(BUILD.mk).filter(function(k){return BUILD.mk[k];}).length;}catch(e){return 0;}}
@@ -3574,7 +3684,10 @@ function render(){
   // Top leagues stays European by definition of TOP_LEAGUES; the isSAleague
   // guard makes that a rule rather than a coincidence, so adding a South
   // American entry to that list later still can't surface one here.
-  const tops=favL.length?[]:TOP_LEAGUES.filter(function(l){return byL[l]&&!isSAleague(l);});
+  /* ...and no second tiers either: England's Championship is on that list, and
+     promoting it above everyone else's top flight is the thing being fixed. */
+  const tops=favL.length?[]:TOP_LEAGUES.filter(function(l){
+    return byL[l]&&!isSAleague(l)&&!isLowerLeague(l);});
   if(tops.length)
     html+="<div class='faves-h'><h2>Top leagues</h2><span>"+
       tops.reduce(function(n,l){return n+byL[l].length;},0)+" games</span></div>"+
@@ -3585,11 +3698,22 @@ function render(){
   Object.keys(byL).forEach(function(l){
     if(done[l]) return;
     const c=countryOf(l);(byC[c]=byC[c]||[]).push(l);});
+  /* A country is ranked by the best competition it still has on the board, so
+     Scotland's Premiership sits above Spain's second tier, Brazil and
+     Argentina follow Europe's top flights, and the lower divisions - which on
+     a busy day are most of the rows - come last instead of pushing the games
+     people came for down the page. Pinned countries still lead. */
+  const cRank={};
+  Object.keys(byC).forEach(function(c){
+    cRank[c]=Math.min.apply(null,byC[c].map(leagueRank));
+  });
   html+=Object.keys(byC).sort(function(a,b){
     var fa=isFav("c:"+a)?0:1, fb=isFav("c:"+b)?0:1;
-    return fa-fb || a.localeCompare(b);
+    return fa-fb || cRank[a]-cRank[b] || a.localeCompare(b);
   }).map(function(c){
-    const ls=byC[c].sort();
+    /* Within a country, its top flight leads too. */
+    const ls=byC[c].sort(function(x,y){
+      return leagueRank(x)-leagueRank(y) || x.localeCompare(y);});
     const n=ls.reduce(function(t,l){return t+byL[l].length;},0);
     return "<section class='country"+(SHUT[c]?" shut":"")+"'>"+
       "<div class='country-h' role='button' tabindex='0' data-toggle=\""+esc(c)+"\">"+
@@ -4011,6 +4135,27 @@ function preferGoalsOverDouble(f,best,allowed,minConf){
   var ov=mProb(f,"OVER_1.5");
   if(ov==null||isNaN(ov)||ov<minConf) return best;
   return {code:"OVER_1.5",p:ov};
+}
+/* Black or white on a given fill, decided by WCAG contrast ratio rather than
+   by eye. Used by the payout chips, whose fill hue changes per chip. */
+function hslToRgb(h,s,l){
+  h=(h%360)/360;
+  var a=s*Math.min(l,1-l);
+  function f(n){
+    var k=(n+h*12)%12;
+    return l-a*Math.max(-1,Math.min(k-3,Math.min(9-k,1)));
+  }
+  return [f(0),f(8),f(4)];
+}
+function relLum(rgb){
+  var c=rgb.map(function(v){
+    return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);});
+  return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2];
+}
+function inkOn(h,s,l){
+  var L=relLum(hslToRgb(h,s,l));
+  var white=1.05/(L+0.05), black=(L+0.05)/0.05;
+  return black>=white?"#14140F":"#ffffff";
 }
 function allowedMarkets(t){
   var m=["1X","X2","OVER_1.5","1","2"];
@@ -5050,6 +5195,10 @@ function renderMySheet(){
     $("mySheetFoot").hidden=true; $("myBookResult").innerHTML=""; return;
   }
   $("mySheetFoot").hidden=false;
+  /* Shuffle belongs to a conjured slip only - it rebuilds the machine picks,
+     which would be a strange thing to do to a slip somebody assembled. */
+  var shuf=$("mySheetShuffle");
+  if(shuf) shuf.hidden=!MYSLIP.some(function(x){return x.auto;});
   body.innerHTML=MYSLIP.map(function(x){
     var f=fixtureById(x.id);
     var teams=f?esc(f.home)+" v "+esc(f.away):"Match";
@@ -5181,7 +5330,9 @@ $("logo").addEventListener("click",function(e){e.preventDefault();setView("pred"
       var h=$("boardHead");
       if(h){ try{h.scrollIntoView({behavior:"smooth",block:"start"});}
              catch(err){h.scrollIntoView();} }
-      runCoach({force:true});
+      /* Not forced: someone who has already said "Got it" should not be taught
+         again every time they use this button to reach the board. */
+      runCoach();
     },60);
   });
   /* Card click (not on a button) opens the builder in the current mode */
@@ -5261,6 +5412,14 @@ makeFab("myFab","sw.fabpos",
   function(){return $("mySheet").classList.contains("on");},openMySheet,closeMySheet);$("mySheet-x").addEventListener("click",closeMySheet);
 $("myBookBtn").addEventListener("click",bookMy);
 $("myClearBtn").addEventListener("click",clearMy);
+/* Reshuffle the conjured legs without leaving the sheet. wspConjure rebuilds,
+   refills My slip and repaints this sheet, so there is nothing to do after. */
+(function(){
+  var b=$("mySheetShuffle"); if(!b) return;
+  b.addEventListener("click",function(){
+    if(typeof wspConjure==="function") wspConjure(true);
+  });
+})();
 document.addEventListener("click",function(e){
   var b=e.target.closest(".more-collapse"); if(!b) return;
   e.stopPropagation();
@@ -5375,13 +5534,28 @@ function wspConjure(shuffle){
   var r=wspBuild();
   if(!r.picks.length){WSP.conjured=false;window.swToast&&window.swToast("No games to conjure right now","err");return;}
   renderBuilder();
-  try{var fo=$("bldFoot"); if(fo) fo.scrollIntoView({behavior:"smooth",block:"center"});}catch(e){}
+  /* The conjured legs go into My slip and the sheet comes up with them. The
+     wizard panel keeps the numbers - games, confidence, odds - and the slip
+     itself is read where it can be acted on, which is also where Get code
+     lives. auto:true marks them as machine-picked, so a later conjure
+     replaces them and leaves anything hand-picked alone. */
+  MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
+    .concat(r.picks.map(function(c){
+      return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true};}));
+  var seen={}; MYSLIP=MYSLIP.filter(function(x){
+    if(seen[x.id])return false;seen[x.id]=1;return true;});
+  saveMy(); renderFab(); openMySheet();
+  /* Straight to the bottom - the last legs and the total are what you want to
+     see, and no animation, because it should already be there. */
+  try{var mb=$("mySheetBody"); if(mb) mb.scrollTop=mb.scrollHeight;}catch(e){}
   window.__wizChime&&window.__wizChime();
   window.swToast&&window.swToast((shuffle?"Reshuffled - ":"Conjured ")+r.picks.length+" games \u00b7 ~\u00d7"+r.odds.toFixed(0),"ok");
 }
 
 // --- Mode toggle + renderBuilder dispatcher ---
 function renderBuilder(){
+  /* The wizard shows the numbers and keeps the slip itself for the sheet. */
+  document.documentElement.classList.toggle("wiz-mode",BUILD.mode==="wizard");
   wireBldHelp();
   /* Shown unprompted only to someone who has never dismissed it. */
   if(!bldCoachSeen()) renderBldCoach(true);
@@ -5483,7 +5657,15 @@ function renderWizardPanel(){
   var styles=[[1.25,"Safer, more games"],[1.4,"Balanced"],[1.7,"Fewer, bigger games"]];
   var html="";
   html += "<div class='wsp-lbl'>Target payout</div><div class='wsp-chips' id='wspOddsChips'>"+
-    odds.map(function(o,i){var hue=Math.round(145-145*(i/(odds.length-1)));return "<button class='wsp-chip wsp-risk"+(WSP.odds===o?" on":"")+"' style='--wr:hsl("+hue+",64%,46%)' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>";
+    odds.map(function(o,i){
+      var hue=Math.round(145-145*(i/(odds.length-1)));
+      /* The scale runs green to red, and white text on the yellow-greens in
+         the middle - x100 and x500 - nearly vanished into the fill. The ink is
+         chosen by contrast ratio against the actual colour, so every chip is
+         readable whatever hue lands on it. */
+      return "<button class='wsp-chip wsp-risk"+(WSP.odds===o?" on":"")+
+        "' style='--wr:hsl("+hue+",64%,46%);--wr-ink:"+inkOn(hue,0.64,0.46)+
+        "' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>";
   html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips' id='wspStyleChips'>"+
     styles.map(function(st){return "<button class='wsp-chip"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'>"+st[1]+"</button>";}).join("")+"</div>"+
     "<button class='book-btn wsp-go' id='wspGo' type='button'>Conjure</button>";
