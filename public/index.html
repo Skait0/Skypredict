@@ -1862,6 +1862,17 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .viewtoggle.top .vt{padding:6px 14px}
 .vt{padding:8px 14px}
 
+/* ============================================== the hero offer
+   Proof inside the pitch. A claim made on the same card as the buttons is
+   worth more than the same claim a scroll away, and it costs no extra height
+   worth speaking of. */
+.sc-proof{display:flex;align-items:flex-start;gap:7px;margin-top:10px;
+  padding-top:9px;border-top:1px solid rgba(232,199,95,.28);
+  font-size:11.5px;line-height:1.4;color:#CFC4F2}
+.sc-proof b{color:#fff;font-weight:800}
+.sc-tick{color:#8FE3B8;font-weight:900;flex-shrink:0;line-height:1.35}
+.sc-proof[hidden]{display:none}
+
 /* ============================================== board cap (phones only)
    Caps the opening height of the board and fades it out, so the first screen
    is the pick and a taste of the card rather than a hundred fixtures. */
@@ -1953,14 +1964,26 @@ select{min-height:44px;padding:10px 32px 10px 12px}
   .toprow .dlabel i{font-size:10px;white-space:nowrap}
   .toprow .viewtoggle{min-width:0}
 
-  /* "Don't pick. Let it be built for you." - a banner, not a hero. */
-  .slip-cta{padding:9px 11px;gap:7px}
-  .slip-cta .sc-head{gap:10px}
-  .slip-cta .sc-orb{width:34px;height:34px}
-  .slip-cta .sc-tx b{font-size:14.5px}
-  .slip-cta .sc-tx i{font-size:11.5px;margin-top:2px}
+  /* Two of the trust chips ("Rebuilt daily from results", "Estimates, not
+     certainties") are claims the hero's proof line now makes better, with a
+     number attached. Dropping them on a phone lifts the offer up the screen
+     without losing anything a visitor was relying on - "How accurate?" and the
+     last-updated stamp stay. */
+  .trust-i.t-static{display:none}
+  .intro h1{font-size:clamp(23px,7vw,30px)}
+
+  /* This IS the hero on a phone - it is the reason the page exists and the
+     first thing in the column. It was trimmed to banner size when it sat
+     third; as the opening card it earns its presence back. Still tight: the
+     height goes into the headline and the buttons, not into padding. */
+  .slip-cta{padding:13px 13px;gap:10px;margin-top:12px}
+  .slip-cta .sc-head{gap:11px;align-items:center}
+  .slip-cta .sc-orb{width:44px;height:44px}
+  .slip-cta .sc-tx b{font-size:17px;line-height:1.2;letter-spacing:-.01em}
+  .slip-cta .sc-tx i{font-size:12px;margin-top:4px}
   .slip-cta .sc-actions{gap:8px}
-  .slip-cta .sc-go-btn{padding:9px 12px;font-size:12px;letter-spacing:.06em}
+  .slip-cta .sc-go-btn{padding:12px 12px;font-size:12.5px;letter-spacing:.06em}
+  .sc-proof{font-size:11px;margin-top:9px;padding-top:8px}
 
   /* Pick of the day: the number was the tallest thing on the page. */
   .potd{margin-top:10px}
@@ -2261,8 +2284,8 @@ footer{margin-top:26px;padding-top:18px;
     <div class="trust parallax-shallow stage-in stage-in-2" data-parallax="0.8">
       <span class="trust-i"><b id="when2">-</b> last updated</span>
       <span class="trust-i" id="streak" hidden></span>
-      <span class="trust-i">Rebuilt daily from results</span>
-      <span class="trust-i">Estimates, not certainties</span>
+      <span class="trust-i t-static">Rebuilt daily from results</span>
+      <span class="trust-i t-static">Estimates, not certainties</span>
       <a class="trust-i link" href="#how">How accurate?</a>
     </div>
   </section>
@@ -2280,10 +2303,10 @@ footer{margin-top:26px;padding-top:18px;
        first, so the answer arrives before the 167-row board does. -->
   <div class="home-grid">
     <aside class="home-rail">
-      <div id="daily"></div>
-      <div id="potd"></div>
-
-      <div class="slip-cta slip-cta--wizard" id="slipCta">
+      <!-- The offer leads. It is the reason the page exists, so it is the first
+           thing on a phone - with its own proof line inside it, so being
+           convincing costs no scroll. Everything else supports it. -->
+      <div class="slip-cta slip-cta--wizard slip-cta--hero" id="slipCta">
         <div class="sc-head">
           <span class="sc-orb" aria-hidden="true"></span>
           <span class="sc-tx">
@@ -2295,7 +2318,11 @@ footer{margin-top:26px;padding-top:18px;
           <button class="wsp-go sc-go-btn" data-scmode="wizard" type="button">Build my slip</button>
           <button class="slider-btn sc-go-btn" data-scmode="slider" type="button">Choose games myself</button>
         </div>
+        <div class="sc-proof" id="scProof" hidden></div>
       </div>
+
+      <div id="potd"></div>
+      <div id="daily"></div>
     </aside>
 
     <div class="home-main">
@@ -3261,8 +3288,10 @@ function renderResults(){
 function render(){
   document.documentElement.classList.toggle("list",!!V.list);
   renderControls(); renderCats();
-  /* Rail content, so it survives the results-view early return below. */
-  renderDaily();
+  /* Rail content, so it survives the results-view early return below.
+     renderProof stands on its own: the hero must carry its proof even on a
+     day the recap has nothing to say. */
+  renderDaily(); renderProof();
   if(V.off<0){ document.documentElement.classList.add("is-results");
     $("potd").innerHTML="";$("sotd").innerHTML="";$("record").innerHTML="";
     renderResults(); return; }
@@ -4107,6 +4136,19 @@ function renderDaily(){
       "the final score.</div>";
   }
   host.innerHTML="<div class='daily'>"+head+body+foot+"</div>";
+}
+/* The hero's own proof line. Same numbers as the recap card below it, read
+   from the same place - the offer has to be believable at the moment it is
+   made, not a scroll later. */
+function renderProof(){
+  var el=$("scProof"); if(!el) return;
+  var rec=DATA.record;
+  if(!rec||!rec.total){el.hidden=true;el.innerHTML="";return;}
+  var pct=Math.round(100*rec.correct/rec.total);
+  el.hidden=false;
+  el.innerHTML="<span class='sc-tick' aria-hidden='true'>✔</span>"+
+    "<span><b>"+pct+"% of our tips landed</b> over the last "+
+    (rec.days||0)+" days · every one checked against the final score</span>";
 }
 
 /* ---- Accuracy record (renders only with real data) ---- */
