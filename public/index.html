@@ -402,6 +402,8 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
   animation:fxBlink 1.4s ease-in-out infinite}
 @keyframes fxBlink{0%,100%{opacity:1}50%{opacity:.25}}
 @media (prefers-reduced-motion:reduce){.fx-live .ld{animation:none}}
+/* Played, but nothing to report yet - neutral, so it never reads as a result. */
+.fx-done{background:var(--card-2);color:var(--faint);border:1px solid var(--line)}
 .fx-hit{background:var(--green-wash);color:var(--green-ink)}
 .fx-miss{background:var(--red-wash);color:var(--red-ink)}
 .fx-push{background:var(--grey);color:#fff}
@@ -2152,13 +2154,14 @@ select{min-height:44px;padding:10px 32px 10px 12px}
   .m .legend{display:none}
   .m .pbar{margin-top:2px}
 
-  /* The slip bar and the bottom nav both sat at bottom:0, the bar parked
-     behind the nav. The bar's glow is a 30px blur, so it spilled about twenty
-     pixels above the nav's top edge - a pink flash every time the bar slid in
-     or out, which is what fast scrolling triggers. Sit it above the nav
-     instead, where it is meant to be read. 77px is the nav's own height; the
-     safe-area inset is added because the nav grows by it. */
-  .slipbar{bottom:calc(77px + env(safe-area-inset-bottom));padding:0 10px 8px}
+  /* The slip bar is a persistent call to action for once the hero has scrolled
+     away - which is a job the bottom nav already does here, and its middle
+     button is the same red and goes to the same builder. Three red controls in
+     eighty pixels, two of them the same button. The bar belongs to desktop,
+     where nothing else follows you down the page; the nav is phone-only, so
+     the two are exact complements. Also ends the pink bleed at the source:
+     with no bar behind the nav, its glow has nothing to spill over. */
+  .slipbar{display:none}
 
   /* The legend card ("1.6 = goals we expect", and the W/D/L key) is a whole
      card of scroll sitting between the filters and the first tip. Both things
@@ -2734,7 +2737,7 @@ var PLUS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-widt
 function conf(p){var pc=Math.round(p*100);return pc>=70?"strong":pc>=55?"lean":"slight";}
 function confLabel(p){var pc=Math.round(p*100);return pc>=70?"Strong":pc>=55?"Likely":"Slight";}
 function verdict(p){var pc=Math.round(p*100);return pc>=70?"Good bet":pc>=55?"Worth a look":"Risky pick";}
-const V={off:0,country:"",league:"",q:"",cat:"all",list:true,view:"pred"};
+const V={off:0,dayPicked:false,country:"",league:"",q:"",cat:"all",list:true,view:"pred"};
 try{var _sv=localStorage.getItem("sw.view"); if(_sv) V.list=(_sv==="list");}catch(e){}
 /* Which tab you are on is session state, not a preference. Kept in
    sessionStorage so it survives moving around the site and a reload, and is
@@ -2861,6 +2864,20 @@ function activeDays(){
   (DATA.fixtures||[]).forEach(function(f){var o=dayOff(f.date); if(o>=0) s[o]=1;});
   (DATA.results||[]).forEach(function(r){s[dayOff(r.date)]=1;});
   return Object.keys(s).map(Number).sort(function(a,b){return a-b;});
+}
+/* A game is done when the result is in, or when enough time has passed that it
+   cannot still be on. Used to decide whether a day has any football left. */
+function fixturePlayed(f){
+  if(potdResult(f,f)) return true;
+  var t=kickMs(f);
+  return t!=null && (Date.now()-t)>=MATCH_LEN_MS;
+}
+function dayHasUnplayed(off){
+  var all=DATA.fixtures||[];
+  for(var i=0;i<all.length;i++){
+    if(dayOff(all[i].date)===off && !fixturePlayed(all[i])) return true;
+  }
+  return false;
 }
 function resultsOnDay(){return (DATA.results||[]).filter(function(r){return dayOff(r.date)===V.off;});}
 function best(f){return Math.max(f.home_p,f.draw_p,f.away_p);}
@@ -3021,6 +3038,9 @@ function kickMs(f){
    The clock is checked as well as the names: a game cannot be in play before
    its own kickoff, and is not still in play many hours after it. */
 const LIVE_WINDOW_MS=4.5*3600*1000;
+/* Ninety minutes, half time and stoppage, with room to spare. Past this a
+   game without a score has been played, not merely started. */
+const MATCH_LEN_MS=2.25*3600*1000;
 function liveForFixture(f){
   var t=kickMs(f);
   if(t==null) return null;
@@ -3042,6 +3062,17 @@ function fixtureState(f){
       return {kind:"ft",hg:lm.homeScore,ag:lm.awayScore,won:ev==="win",push:ev==="level"};
     return {kind:"live",hg:lm.homeScore,ag:lm.awayScore,won:ev==="win",minute:lm.minute||""};
   }
+  /* Kicked off, but no score to be had. There is a real gap between the two
+     sources: the live feed drops a game the moment it finishes, and the
+     backend only grades it on the next build. In between, a game that has been
+     played looked exactly like one that had not - same tip, same confidence,
+     nothing to say it was over. Say which it is, even with no score. */
+  var t=kickMs(f);
+  if(t!=null){
+    var age=Date.now()-t;
+    if(age>=MATCH_LEN_MS) return {kind:"played"};
+    if(age>=0) return {kind:"started"};
+  }
   return null;
 }
 function statusBadge(f){
@@ -3050,6 +3081,11 @@ function statusBadge(f){
   if(st.kind==="live")
     return "<span class='fx-st fx-live'><span class='ld'></span>"+st.hg+"-"+st.ag+
       (st.minute?" "+esc(String(st.minute))+"’":"")+"</span>";
+  /* No score either way - do not guess at one, and do not imply a result. */
+  if(st.kind==="started")
+    return "<span class='fx-st fx-live'><span class='ld'></span>Started</span>";
+  if(st.kind==="played")
+    return "<span class='fx-st fx-done'>Played · result soon</span>";
   return "<span class='fx-st "+(st.push?"fx-push":(st.won?"fx-hit":"fx-miss"))+"'>"+
     st.hg+"-"+st.ag+" "+(st.push?"Void":(st.won?"Hit":"Miss"))+"</span>";
 }
@@ -3077,7 +3113,11 @@ function prunePotdKeys(keepDate){
     if(k&&k.indexOf("sw.potd.")===0 && k!=="sw.potd."+keepDate) localStorage.removeItem(k); } }catch(e){}
 }
 function renderPotd(){
-  const day=allOnDay(V.off);
+  /* Pick of the day means today's pick, and holding it - with its score, and
+     its result once graded - is this card's whole job. So it stays on today
+     even after the board has moved on to the next day with football in it.
+     Only if today has no card at all does it follow the board. */
+  const day=allOnDay(0).length ? allOnDay(0) : allOnDay(V.off);
   if(!day.length){$("potd").innerHTML="";return;}
   const dateStr=day[0].date, lockKey="sw.potd."+dateStr;
   // Reuse the locked pick for this date; only pick fresh if none stored yet.
@@ -3203,13 +3243,24 @@ function renderControls(){
        today whenever today still has games to come, and tomorrow otherwise. */
     V.off = up.length ? up[0] : days[days.length-1];
   }
+  /* The board follows the football. A day is done when every game on it has
+     been played, and once that happens there is nothing left to act on, so it
+     moves to the next day that still has some. Holding a finished card is the
+     Pick of the Day's job, not the board's.
+     Only when the day was chosen for you - paging with the arrows pins it, so
+     looking back over today's results is never yanked out from under you. */
+  if(!V.dayPicked && V.off>=0 && !dayHasUnplayed(V.off)){
+    var nxt=days.filter(function(o){return o>V.off && dayHasUnplayed(o);})[0];
+    if(nxt!=null) V.off=nxt;
+  }
   const i=days.indexOf(V.off);
   $("dname").textContent=dayName(V.off);
   $("ddate").textContent=dayDate(V.off);
   $("prev").disabled=(i<=0);
   $("next").disabled=(i<0||i>=days.length-1);
-  $("prev").onclick=function(){if(i>0){V.off=days[i-1];V.country="";V.league="";render();}};
-  $("next").onclick=function(){if(i<days.length-1){V.off=days[i+1];V.country="";V.league="";render();}};
+  /* Paging pins the day: from here on it is the visitor's choice, not ours. */
+  $("prev").onclick=function(){if(i>0){V.off=days[i-1];V.dayPicked=true;V.country="";V.league="";render();}};
+  $("next").onclick=function(){if(i<days.length-1){V.off=days[i+1];V.dayPicked=true;V.country="";V.league="";render();}};
 
   const ps=onDay();
   const byC={};
@@ -3310,7 +3361,9 @@ function formIndex(){
     var f=all[i];
     if(teamTag(f.home)||teamTag(f.away)) continue;
     var st=fixtureState(f);
-    if(st) out.push({f:f,st:st});
+    /* Only a state carrying an actual score can move a form strip. "started"
+       and "played" have none, and would turn a W/D/L into NaN. */
+    if(st&&st.hg!=null&&st.ag!=null) out.push({f:f,st:st});
   }
   FORM_IDX=out;
   return out;
