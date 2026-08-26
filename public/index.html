@@ -1862,6 +1862,18 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .viewtoggle.top .vt{padding:6px 14px}
 .vt{padding:8px 14px}
 
+/* The board announces itself. scroll-margin keeps the heading clear of the
+   sticky filter bar when the CTA jumps to it. */
+.board-head{margin:18px 0 10px;scroll-margin-top:14px}
+.board-head h2{font-size:20px;font-weight:800;letter-spacing:-.025em}
+.board-head p{margin-top:3px;font-size:12.5px;color:var(--faint);font-weight:600}
+.board-head:empty{display:none}
+@media(max-width:560px){
+  .board-head{margin:14px 0 8px}
+  .board-head h2{font-size:17.5px}
+  .board-head p{font-size:12px}
+}
+
 /* Explains the two builders where the choice is made, rather than in front of
    it. Both produce a slip; the only difference is what you hand over. */
 .bld-mode-hint{margin:9px 0 0;font-size:11.5px;line-height:1.5;color:var(--faint)}
@@ -2358,7 +2370,7 @@ footer{margin-top:26px;padding-top:18px;
         </div>
         <div class="sc-actions">
           <button class="wsp-go sc-go-btn" data-scmode="wizard" type="button">Build my slip</button>
-          <button class="slider-btn sc-go-btn" id="scBrowse" type="button">Browse today's games</button>
+          <button class="slider-btn sc-go-btn" id="scBrowse" type="button">See today's predictions</button>
         </div>
         <div class="sc-proof" id="scProof" hidden></div>
       </div>
@@ -2368,6 +2380,11 @@ footer{margin-top:26px;padding-top:18px;
     </aside>
 
     <div class="home-main">
+  <!-- The board used to just begin - controls, filters, cards - so a tap on
+       "See today's predictions" landed at a position rather than a place, and
+       felt like it had fizzled. Naming it makes the same scroll an arrival. -->
+  <header class="board-head" id="boardHead"></header>
+
   <!-- The two controls that change what you are looking at - how it is drawn,
        and which day - sit together on one row above the board. -->
   <div class="toprow">
@@ -3341,10 +3358,11 @@ function render(){
   renderDaily(); renderProof();
   if(V.off<0){ document.documentElement.classList.add("is-results");
     $("potd").innerHTML="";$("sotd").innerHTML="";$("record").innerHTML="";
-    renderResults(); return; }
+    renderBoardHead([]); renderResults(); return; }
   document.documentElement.classList.remove("is-results");
   renderPotd(); renderSlipOfDay(); renderRecord(); renderBookAll(); renderSlipTease();
   const list=shown();
+  renderBoardHead(list);
   if(!list.length){
     $("list").innerHTML="<div class='none'><b>No games in this filter</b>"+
       "<p>Try another category or day. New fixtures arrive Friday for the weekend.</p></div>";
@@ -4129,6 +4147,26 @@ function renderStreak(){
     el.innerHTML="<b>\ud83d\udd25 "+streak+"-day streak</b>";}
   else el.hidden=true;
 }
+/* ---- Board header ----
+   Says what the board is and how much of it there is, so arriving at it feels
+   like reaching a section rather than stopping halfway down a page. Counts
+   follow the current filter, so it stays honest when the list is narrowed. */
+function renderBoardHead(list){
+  var h=$("boardHead"); if(!h) return;
+  if(V.off<0){
+    var rs=resultsOnDay();
+    h.innerHTML="<h2>Results</h2><p>"+esc(dayName(V.off))+" · "+rs.length+
+      " game"+(rs.length===1?"":"s")+" graded</p>";
+    return;
+  }
+  var n=(list||[]).length, lg={};
+  (list||[]).forEach(function(f){lg[f.league]=1;});
+  var m=Object.keys(lg).length;
+  var when=V.off===0?"Today's":(V.off===1?"Tomorrow's":esc(dayName(V.off))+"'s");
+  h.innerHTML="<h2>"+when+" predictions</h2><p>"+
+    n+" game"+(n===1?"":"s")+(m?" · "+m+" league"+(m===1?"":"s"):"")+"</p>";
+}
+
 /* ---- First-run coaching ----
    Nothing on the board ever explained itself. A tip anchored to the actual
    call teaches better than a floating box of instructions, and it does not
@@ -4829,8 +4867,15 @@ $("logo").addEventListener("click",function(e){e.preventDefault();setView("pred"
   if(browse) browse.addEventListener("click",function(e){
     e.stopPropagation();
     setView("pred");
-    /* setView scrolls to the top, so the coach has to run after it. */
-    setTimeout(function(){ runCoach({force:true,scroll:true}); },60);
+    /* setView scrolls to the top, so this has to run after it. Land on the
+       board's own heading rather than on a card: the heading is the thing
+       that makes the tap feel like an arrival. */
+    setTimeout(function(){
+      var h=$("boardHead");
+      if(h){ try{h.scrollIntoView({behavior:"smooth",block:"start"});}
+             catch(err){h.scrollIntoView();} }
+      runCoach({force:true});
+    },60);
   });
   /* Card click (not on a button) opens the builder in the current mode */
   cta.addEventListener("click",function(){setView("build");});
