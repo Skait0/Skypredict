@@ -1,0 +1,5 @@
+node_modules/
+.vercel/
+.DS_Store
+# Scratch space for the inline-script syntax check (see HANDOFF.md)
+tmp/_check/
