@@ -1018,20 +1018,9 @@ html.locked{overflow:hidden}
   button.wsp-go{display:inline-flex;margin-top:14px}
   .wizard-panel button.wsp-go{min-width:200px;justify-content:center}
 
-  /* Conjure: wizardry - a compact enchanted button, not a stretched slab.
-     Violet gradient, soft arcane glow, sparkle shimmer on hover. */
-  button.wsp-go{width:auto;min-width:0;flex:0 0 auto;padding:11px 26px;font-size:13.5px;font-weight:800;
-    letter-spacing:.09em;text-transform:uppercase;color:#EDE7FF!important;
-    background:linear-gradient(165deg,#2b1a5e 0%,#1d1142 60%,#140a30 100%)!important;
-    border:1px solid rgba(212,175,55,.6);
-    box-shadow:0 4px 18px rgba(90,46,210,.35),inset 0 0 12px rgba(124,77,255,.22),inset 0 1px 0 rgba(255,255,255,.14)!important;
-    position:relative;overflow:hidden}
-  button.wsp-go:hover{color:#fff!important;border-color:rgba(232,199,95,.9);
-    box-shadow:0 6px 26px rgba(112,66,240,.55),inset 0 0 18px rgba(140,96,255,.35),inset 0 1px 0 rgba(255,255,255,.2)!important}
-  /* slow arcane pulse instead of a shine gimmick */
-  button.wsp-go::after{content:'';position:absolute;inset:0;border-radius:inherit;
-    box-shadow:inset 0 0 0 1px rgba(212,175,55,.25);animation:runePulse 3.2s ease-in-out infinite}
-  @keyframes runePulse{0%,100%{opacity:.35}50%{opacity:.85}}
+  /* Desktop sizing only. The wizardry look itself is defined globally further
+     down - it used to live in here, which is why the phone never got it. */
+  button.wsp-go{width:auto;min-width:0;flex:0 0 auto;padding:11px 26px;font-size:13.5px}
 }
 @media (prefers-reduced-motion:reduce){
   .sheet,.scrim{transition:none!important}
@@ -1859,11 +1848,102 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .rr-tip{margin-top:5px;padding-top:5px}
 
 /* --- call to action / toggles --- */
-.slip-cta{margin:10px 0 2px;padding:11px 13px;gap:10px}
+.slip-cta{margin:8px 0 2px;padding:9px 12px;gap:8px}
 .viewtoggle.top{margin:10px 0 2px}
-.toprow{margin:10px 0 2px;gap:8px}
+.toprow{margin:9px 0 2px;gap:8px}
 .viewtoggle.top .vt{padding:6px 14px}
 .vt{padding:8px 14px}
+
+/* ------------------------------------------------------------------ phones
+   Everything between the header and the first tip is on trial here. The goal
+   is fewer scrolls to reach a tip, so each block below gives up width or
+   padding - never type size that carries meaning, and never tap-target
+   height. Kept in one place so the whole pass can be read at once. */
+@media(max-width:560px){
+  /* Cards/List and the day picker share one line. Wrapping cost a whole row
+     of vertical space for two controls that are each mostly padding. Trimmed
+     on width only: the row still stands ~36px tall, so both stay easy to hit. */
+  .toprow{gap:6px;flex-wrap:nowrap}
+  .toprow .viewtoggle{padding:2px}
+  .toprow .viewtoggle.top .vt{padding:7px 9px;font-size:12px;gap:5px}
+  .toprow .viewtoggle.top .vt svg{width:14px;height:14px}
+  .toprow .datebar{padding:2px;gap:1px;flex-shrink:0}
+  .toprow .dnav{width:32px;height:32px;font-size:14px}
+  .toprow .dlabel{min-width:0;padding:0 3px}
+  .toprow .dlabel b{font-size:12.5px;line-height:1.15;white-space:nowrap}
+  .toprow .dlabel i{font-size:10px;white-space:nowrap}
+  .toprow .viewtoggle{min-width:0}
+
+  /* "Don't pick. Let it be built for you." - a banner, not a hero. */
+  .slip-cta{padding:9px 11px;gap:7px}
+  .slip-cta .sc-head{gap:10px}
+  .slip-cta .sc-orb{width:34px;height:34px}
+  .slip-cta .sc-tx b{font-size:14.5px}
+  .slip-cta .sc-tx i{font-size:11.5px;margin-top:2px}
+  .slip-cta .sc-actions{gap:8px}
+  .slip-cta .sc-go-btn{padding:9px 12px;font-size:12px;letter-spacing:.06em}
+
+  /* Pick of the day: the number was the tallest thing on the page. */
+  .potd{margin-top:10px}
+  .potd-top{padding:7px 12px}
+  .potd-body{padding:11px 12px}
+  .potd-grid{gap:11px}
+  .potd .big{font-size:clamp(32px,9vw,44px)}
+  .potd .why{margin-top:8px;padding-top:8px}
+
+  /* The Live pill was sitting flush against the theme toggle. The logo holds
+     margin-right:auto, so this gap comes out of the logo's slack and the row
+     stays on one line. */
+  .top-in .nav{margin-right:7px}
+}
+/* Smallest phones: a long day name ("Wednesday") plus two labelled buttons is
+   more than 320px holds, and nowrap would push the row into a sideways scroll.
+   The Cards/List icons go rather than the words - the words are the label. */
+@media(max-width:400px){
+  .toprow .viewtoggle.top .vt svg{display:none}
+  .toprow .viewtoggle.top .vt{padding:7px 12px}
+}
+
+/* ------------------------------------------------------- Conjure, any width
+   The wizardry look - violet glass, gold lining, slow rune pulse - used to be
+   declared inside a min-width:720px block, so phones fell back to a plain
+   button. Defined once here for every screen; the breakpoints above and below
+   only set its size. */
+/* :not(.sc-go-btn) keeps the home banner out of this. Its two path buttons are
+   a matched pair - violet Conjure beside crimson slider - and restyling one
+   half of it here would break a deliberate arrangement. */
+button.wsp-go:not(.sc-go-btn){font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  color:#EDE7FF!important;
+  background:linear-gradient(165deg,#2b1a5e 0%,#1d1142 60%,#140a30 100%)!important;
+  border:1px solid rgba(212,175,55,.6)!important;
+  box-shadow:0 4px 18px rgba(90,46,210,.35),inset 0 0 12px rgba(124,77,255,.22),
+    inset 0 1px 0 rgba(255,255,255,.14)!important;
+  position:relative;overflow:hidden}
+button.wsp-go:not(.sc-go-btn):hover{color:#fff!important;
+  border-color:rgba(232,199,95,.9)!important;
+  box-shadow:0 6px 26px rgba(112,66,240,.55),inset 0 0 18px rgba(140,96,255,.35),
+    inset 0 1px 0 rgba(255,255,255,.2)!important}
+button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
+  border-radius:inherit;pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(212,175,55,.25);
+  animation:runePulse 3.2s ease-in-out infinite}
+@keyframes runePulse{0%,100%{opacity:.35}50%{opacity:.85}}
+@media(prefers-reduced-motion:reduce){
+  button.wsp-go:not(.sc-go-btn)::after{animation:none;opacity:.5}}
+
+/* Slip style -> Conjure reads as one step: the chips choose the style, the
+   button acts on it. Tighten the label above the chips and let Conjure sit
+   centred just under them with air of its own, rather than hard against the
+   last chip or stretched across the panel. */
+.wizard-panel .wsp-lbl{margin:13px 0 7px}
+.wizard-panel .wsp-chips{gap:7px}
+.wizard-panel button.wsp-go{display:block;margin:15px auto 2px;min-width:210px;
+  justify-content:center;padding:12px 26px}
+@media(max-width:560px){
+  .wizard-panel .wsp-lbl{margin:11px 0 6px}
+  .wizard-panel button.wsp-go{margin:13px auto 2px;min-width:0;width:100%;
+    padding:12px 18px;font-size:13.5px}
+}
 
 /* --- live --- */
 #liveStripWrap{margin-top:12px}
@@ -3242,6 +3322,9 @@ var TEAM_ALIASES = {
   "real madrid cf": "real madrid",
   "atletico madrid": "atletico de madrid",
   "athletic bilbao": "athletic club",
+  /* football-data abbreviates this one; "ath" is too short for the prefix rule
+     in simTeams to bridge, so the two feeds scored 0.5 and missed each other. */
+  "ath bilbao": "athletic club",
   "deportivo alaves": "alaves",
   "celta vigo": "celta de vigo",
   "real sociedad": "sociedad",
