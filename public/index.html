@@ -1862,6 +1862,45 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .viewtoggle.top .vt{padding:6px 14px}
 .vt{padding:8px 14px}
 
+/* Explains the two builders where the choice is made, rather than in front of
+   it. Both produce a slip; the only difference is what you hand over. */
+.bld-mode-hint{margin:9px 0 0;font-size:11.5px;line-height:1.5;color:var(--faint)}
+.bld-mode-hint b{color:var(--soft);font-weight:800}
+.bmh-sep{opacity:.5;margin:0 3px}
+@media(max-width:560px){
+  .bld-mode-hint{font-size:11px;margin-top:8px}
+  .bmh-sep{display:none}
+  .bld-mode-hint b:nth-of-type(2){display:block;margin-top:2px}
+}
+
+/* ============================================== first-run coach
+   Anchored to the card it is talking about, inside it, so there is no
+   positioning to go wrong on a narrow screen and nothing covering content. */
+.coach{display:flex;align-items:center;gap:10px;margin:0 10px 10px;
+  padding:10px 12px;border:1px solid var(--red);border-radius:var(--r-md);
+  background:var(--red-wash);position:relative}
+.coach::before{content:'';position:absolute;top:-6px;left:24px;width:10px;height:10px;
+  transform:rotate(45deg);background:var(--red-wash);
+  border-left:1px solid var(--red);border-top:1px solid var(--red)}
+.coach-tx{flex:1;min-width:0;font-size:12px;line-height:1.45;color:var(--soft)}
+.coach-tx b{display:block;color:var(--text);font-size:13px;font-weight:800;
+  margin-bottom:2px}
+.coach-x{flex-shrink:0;background:var(--red);color:#fff;border:0;
+  border-radius:var(--r-sm);font:inherit;font-size:11.5px;font-weight:800;
+  padding:8px 13px;cursor:pointer}
+.coach-x:hover{filter:brightness(1.08)}
+.coach-x:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+/* Draws the eye to the call without opening anything. */
+.coach-look{border-radius:var(--r-sm);animation:coachLook 1.7s ease-in-out 3}
+@keyframes coachLook{0%,100%{box-shadow:0 0 0 0 rgba(230,57,70,0)}
+  50%{box-shadow:0 0 0 3px rgba(230,57,70,.34)}}
+@media(prefers-reduced-motion:reduce){.coach-look{animation:none}}
+@media(max-width:560px){
+  .coach{margin:0 8px 8px;padding:9px 10px;gap:8px;flex-wrap:wrap}
+  .coach-tx{font-size:11.5px;flex:1 1 100%}
+  .coach-x{margin-left:auto}
+}
+
 /* ============================================== the hero offer
    Proof inside the pitch. A claim made on the same card as the buttons is
    worth more than the same claim a scroll away, and it costs no extra height
@@ -2316,7 +2355,7 @@ footer{margin-top:26px;padding-top:18px;
         </div>
         <div class="sc-actions">
           <button class="wsp-go sc-go-btn" data-scmode="wizard" type="button">Build my slip</button>
-          <button class="slider-btn sc-go-btn" data-scmode="slider" type="button">Choose games myself</button>
+          <button class="slider-btn sc-go-btn" id="scBrowse" type="button">Browse today's games</button>
         </div>
         <div class="sc-proof" id="scProof" hidden></div>
       </div>
@@ -2393,6 +2432,11 @@ footer{margin-top:26px;padding-top:18px;
         <button class="bld-mode-btn on" role="tab" data-mode="slider" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><line x1="4" y1="4" x2="4" y2="20" stroke-width="3"/><line x1="12" y1="4" x2="12" y2="20" stroke-width="3"/><line x1="20" y1="4" x2="20" y2="20" stroke-width="3"/><circle cx="4" cy="12" r="3" fill="currentColor"/><circle cx="12" cy="8" r="3" fill="currentColor"/><circle cx="20" cy="16" r="3" fill="currentColor"/></svg><span>Slider</span></button>
         <button class="bld-mode-btn" role="tab" data-mode="wizard" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><path d="M12 2L15 8H22M12 2L9 8H2M12 2V22M5 14H19M12 22L9 16H2M12 22L15 16H22"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg><span>Wizard</span></button>
       </div>
+      <!-- Both build a slip for you; the difference is what you tell us. Six
+           words each, here where the choice actually is - not in a gate in
+           front of the builder. -->
+      <p class="bld-mode-hint"><b>Wizard</b> - name a payout, we hit it.
+        <span class="bmh-sep">·</span> <b>Slider</b> - set how risky, we pick.</p>
     </div>
 
     <!-- SHARED CONTROLS (always visible) -->
@@ -3341,6 +3385,9 @@ function render(){
         return blockFor(l,byL[l]);}).join("")+"</div></section>";}).join("");
   $("list").innerHTML=_thin+html;
   applyBoardCap(list.length);
+  /* Re-attaches after every render until it is dismissed. No scroll here -
+     a page that jumps on load is worse than one that explains nothing. */
+  runCoach();
   document.querySelectorAll(".lrow").forEach(function(r){
     r.addEventListener("click",function(e){
       if(e.target.closest(".opt-add")||e.target.closest(".m-add")) return;
@@ -4079,6 +4126,53 @@ function renderStreak(){
     el.innerHTML="<b>\ud83d\udd25 "+streak+"-day streak</b>";}
   else el.hidden=true;
 }
+/* ---- First-run coaching ----
+   Nothing on the board ever explained itself. A tip anchored to the actual
+   call teaches better than a floating box of instructions, and it does not
+   block anything - blocking overlays get dismissed unread, because people
+   reflexively hunt for the close button. Shown until dismissed, then never
+   again. Deliberately does NOT open the match sheet: in Cards view that is a
+   modal, and springing one on a first-time visitor takes the page away from
+   them. The pulse draws the eye; the visitor still decides. */
+const COACH_KEY="sw.coached.v1";
+function coachSeen(){
+  try{return localStorage.getItem(COACH_KEY)==="1";}catch(e){return true;}
+}
+function coachDone(){
+  try{localStorage.setItem(COACH_KEY,"1");}catch(e){}
+  var c=document.querySelector(".coach"); if(c) c.parentNode.removeChild(c);
+  document.querySelectorAll(".coach-look").forEach(function(el){
+    el.classList.remove("coach-look");});
+}
+function runCoach(o){
+  o=o||{};
+  if(!o.force&&coachSeen()) return;
+  var card=document.querySelector("#list .m")||document.querySelector("#list .lrow");
+  if(!card) return;
+  var old=document.querySelector(".coach");
+  if(old) old.parentNode.removeChild(old);
+
+  var tip=card.querySelector(".tipbox")||card.querySelector(".lt-tip");
+  if(tip) tip.classList.add("coach-look");
+
+  var c=document.createElement("div");
+  c.className="coach";
+  c.innerHTML="<div class='coach-tx'><b>This is our call.</b>"+
+    "<span>The number beside it is how sure we are. Open any match to see "+
+    "every other market we price.</span></div>"+
+    "<button class='coach-x' type='button'>Got it</button>";
+  /* A list row toggles open when clicked, so the tip must swallow its own. */
+  c.addEventListener("click",function(e){e.stopPropagation();});
+  c.querySelector(".coach-x").addEventListener("click",function(e){
+    e.stopPropagation(); coachDone();});
+  card.appendChild(c);
+
+  if(o.scroll){
+    try{card.scrollIntoView({behavior:"smooth",block:"center"});}
+    catch(e){card.scrollIntoView();}
+  }
+}
+
 /* ---- Board cap ----
    A phone opening straight onto a hundred-plus fixtures is a wall, and the
    newcomer we care about has already been given the day's pick above it. Show
@@ -4722,6 +4816,16 @@ $("logo").addEventListener("click",function(e){e.preventDefault();setView("pred"
   function goMode(mode){ try{localStorage.setItem("sw.mode",mode);}catch(e){} BUILD.mode=mode; setView("build"); }
   cta.querySelectorAll("[data-scmode]").forEach(function(b){
     b.addEventListener("click",function(e){e.stopPropagation();goMode(b.dataset.scmode);});
+  });
+  /* The second path is not another builder - it is the board. It used to say
+     "Choose games myself" and go to the slider, which chooses for you; the
+     label promised something the button did not do. */
+  var browse=$("scBrowse");
+  if(browse) browse.addEventListener("click",function(e){
+    e.stopPropagation();
+    setView("pred");
+    /* setView scrolls to the top, so the coach has to run after it. */
+    setTimeout(function(){ runCoach({force:true,scroll:true}); },60);
   });
   /* Card click (not on a button) opens the builder in the current mode */
   cta.addEventListener("click",function(){setView("build");});
