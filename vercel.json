@@ -6,5 +6,21 @@
   },
   "crons": [
     { "path": "/api/cron", "schedule": "30 6 * * *" }
+  ],
+  "headers": [
+    {
+      "comment": "app.<hash>.css/js are named by their contents, so a change is a new name. They can be cached forever and never go stale.",
+      "source": "/app.:hash([0-9a-f]+).:ext(css|js)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "comment": "The payload baked at deploy time. Same shape as the API's own caching: hold it at the edge, and keep serving it while a fresher one is fetched.",
+      "source": "/predictions.json",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, s-maxage=3600, stale-while-revalidate=86400" }
+      ]
+    }
   ]
 }

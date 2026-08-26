@@ -5,6 +5,7 @@
   "description": "Football predictions, built and served from Vercel",
   "engines": { "node": ">=20" },
   "scripts": {
+    "build": "node scripts/prebuild.js",
     "build:local": "node scripts/local-build.js",
     "test": "node --test"
   }

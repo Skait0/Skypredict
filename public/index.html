@@ -5440,21 +5440,59 @@ function paint(){
   render();
 }
 
-/* --------------------------------------------------------- live data */
+/* --------------------------------------------------------- live data
+   The payload is baked into a static file at deploy time. Preferring it means
+   the page loads from the CDN with no serverless invocation at all - fast for
+   the visitor, and the reason a crowd costs no more than one person. Building
+   inside a request takes tens of seconds, so whoever arrived on a cold cache
+   used to wait for it.
+   /api/predictions is the fallback and the freshness path: if the baked file
+   has aged past the window the CDN would have cached it for anyway, we paint
+   it immediately and quietly fetch the live one behind it. */
+const PAYLOAD_MAX_AGE_MS=6*3600*1000;
+async function fetchJSON(url){
+  const r=await fetch(url,{headers:{Accept:"application/json"}});
+  if(!r.ok){
+    const body=await r.json().catch(function(){return {};});
+    throw new Error(body.error||("the server returned "+r.status));
+  }
+  return r.json();
+}
+function payloadAge(p){
+  var t=(p&&p.generatedAt)?Date.parse(p.generatedAt):NaN;
+  return isNaN(t)?Infinity:(Date.now()-t);
+}
+function usablePayload(p){return !!(p&&Array.isArray(p.fixtures)&&p.fixtures.length);}
+async function fetchPayload(){
+  try{
+    const p=await fetchJSON("/predictions.json");
+    if(usablePayload(p)) return {payload:p,stale:payloadAge(p)>PAYLOAD_MAX_AGE_MS};
+  }catch(e){ /* not deployed yet, or being replaced - fall through to the API */ }
+  return {payload:await fetchJSON("/api/predictions"),stale:false};
+}
+/* Repaint only if the API really is newer, so a slow response cannot replace
+   fresh data with older data. */
+async function refreshPayload(){
+  try{
+    const p=await fetchJSON("/api/predictions");
+    if(usablePayload(p)&&payloadAge(p)<payloadAge(DATA)){
+      DATA=p;
+      await loadSporty();
+      paint();
+    }
+  }catch(e){}
+}
 async function load(){
   $("list").innerHTML="<div class='none'><span class='mini-load'></span><b>Loading predictions</b>"+
     "<p>Building from the latest results - just a moment.</p></div>";
   try{
-    const r=await fetch("/api/predictions",{headers:{Accept:"application/json"}});
-    if(!r.ok){
-      const body=await r.json().catch(function(){return {};});
-      throw new Error(body.error||("the server returned "+r.status));
-    }
-    DATA=await r.json();
+    const got=await fetchPayload();
+    DATA=got.payload;
     await loadSporty();
     startLive();
     paint();
     hideLoader();
+    if(got.stale) refreshPayload();
   }catch(err){
     var w=$("when"); if(w) w.textContent="-";
     $("list").innerHTML="<div class='none'><b>Predictions unavailable</b>"+
@@ -5625,7 +5663,7 @@ setTimeout(hideLoader,8000);
     }
   }) : mq.addListener && mq.addListener(function(e){
     if(!e.matches) {
-      document.removeEventEventListener('mousemove', onMove);
+      document.removeEventListener('mousemove', onMove);
       document.querySelectorAll('[data-parallax]').forEach(function(el){
         el.style.transform = '';
       });
