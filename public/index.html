@@ -389,6 +389,20 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .form i.prov.L{color:var(--red)}
 @keyframes formPulse{0%,100%{opacity:.9}50%{opacity:.45}}
 @media (prefers-reduced-motion:reduce){.form i.prov{animation:none}}
+/* Day-board status badge. A game on today's board is still to come (no badge),
+   in play (live score), or settled (score + whether the tip landed). */
+.fx-st{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;
+  padding:2px 7px;border-radius:99px;white-space:nowrap;vertical-align:middle}
+.fx-live{background:var(--red);color:#fff}
+.fx-live .ld{width:6px;height:6px;border-radius:50%;background:#fff;
+  animation:fxBlink 1.4s ease-in-out infinite}
+@keyframes fxBlink{0%,100%{opacity:1}50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.fx-live .ld{animation:none}}
+.fx-hit{background:var(--green-wash);color:var(--green-ink)}
+.fx-miss{background:var(--red-wash);color:var(--red-ink)}
+.fx-push{background:var(--grey);color:#fff}
+.lt-match .fx-st{margin-left:6px}
+.m-top .fx-st{margin-left:2px}
 .tn .g{font-size:13px;color:var(--faint);font-weight:700;flex-shrink:0}
 .tn.win .g{color:var(--win-ink)}
 .sc{text-align:center;flex-shrink:0;padding-left:14px;border-left:1px solid var(--line)}
@@ -635,6 +649,12 @@ html.mode-build .slip-cta,html.mode-live .slip-cta{display:none}
   width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);font-size:17px}
 @media(min-width:720px){.slipbar{display:none}}
 @media(prefers-reduced-motion:reduce){.slipbar{transition:none}}
+/* Cards/List on the left, the day being shown on the right. Wraps to two lines
+   on a narrow phone rather than crushing the day label. */
+.toprow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 2px}
+.toprow .viewtoggle.top{margin:0}
+.toprow .datebar{margin-left:auto}
+html.mode-build .toprow,html.mode-live .toprow{display:none}
 .viewtoggle.top{margin:14px 0 2px;width:auto;display:inline-flex}
 .viewtoggle.top .vt{flex:0 0 auto;text-align:center;padding:7px 16px;font-size:13px}
 html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
@@ -1841,6 +1861,7 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 /* --- call to action / toggles --- */
 .slip-cta{margin:10px 0 2px;padding:11px 13px;gap:10px}
 .viewtoggle.top{margin:10px 0 2px}
+.toprow{margin:10px 0 2px;gap:8px}
 .viewtoggle.top .vt{padding:6px 14px}
 .vt{padding:8px 14px}
 
@@ -2071,9 +2092,18 @@ footer{margin-top:26px;padding-top:18px;
     </div>
   </section>
 
-  <div class="viewtoggle top" role="group" aria-label="Detail level">
-    <button type="button" id="v-cards" class="vt on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/></svg>Cards</button>
-    <button type="button" id="v-list" class="vt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>List</button>
+  <!-- The two controls that change what you are looking at - how it is drawn,
+       and which day - sit together on one row above the board. -->
+  <div class="toprow">
+    <div class="viewtoggle top" role="group" aria-label="Detail level">
+      <button type="button" id="v-cards" class="vt on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/></svg>Cards</button>
+      <button type="button" id="v-list" class="vt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>List</button>
+    </div>
+    <div class="datebar">
+      <button class="dnav" id="prev" aria-label="Previous day">&#8249;</button>
+      <div class="dlabel"><b id="dname">Today</b><i id="ddate"></i></div>
+      <button class="dnav" id="next" aria-label="Next day">&#8250;</button>
+    </div>
   </div>
 
   <div class="bookall-row">
@@ -2112,11 +2142,6 @@ footer{margin-top:26px;padding-top:18px;
   <div class="bar">
     <div class="cats" id="cats"></div>
     <div class="tools">
-      <div class="datebar">
-        <button class="dnav" id="prev" aria-label="Previous day">&#8249;</button>
-        <div class="dlabel"><b id="dname">Today</b><i id="ddate"></i></div>
-        <button class="dnav" id="next" aria-label="Next day">&#8250;</button>
-      </div>
       <div class="search">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
           <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.7" opacity=".55"/>
@@ -2419,10 +2444,20 @@ function isUpcoming(f){
   return dayOff(f.date)>=0;
 }
 function ahead(){return DATA.fixtures.filter(function(f){return isUpcoming(f);});}
-function onDay(){return ahead().filter(function(f){return dayOff(f.date)===V.off;});}
+/* The day's board keeps every game for that day, including ones already kicked
+   off or finished - people come back through the afternoon to see how the day's
+   tips are doing, and a board that empties itself as games start is useless for
+   that. Past days stay with the results view, which grades them properly. */
+function onDay(){
+  if(V.off<0) return [];
+  return (DATA.fixtures||[]).filter(function(f){return dayOff(f.date)===V.off;});
+}
 function activeDays(){
   const s={};
-  ahead().forEach(function(f){s[dayOff(f.date)]=1;});
+  /* Any day from today forward that has fixtures at all. Keyed off the fixture
+     list rather than ahead(), so today does not drop off the strip the moment
+     its last game kicks off. */
+  (DATA.fixtures||[]).forEach(function(f){var o=dayOff(f.date); if(o>=0) s[o]=1;});
   (DATA.results||[]).forEach(function(r){s[dayOff(r.date)]=1;});
   return Object.keys(s).map(Number).sort(function(a,b){return a-b;});
 }
@@ -2545,6 +2580,61 @@ function potdResult(pick,f){
     return {hg:f.hg,ag:f.ag,won:v==="win",push:v==="level"};
   }
   return null;
+}
+/* The live-feed entry for a fixture, if it is on right now. Both team names have
+   to agree, so 1.3 across the pair is the same bar the Pick of the Day uses. */
+function liveForFixture(f){
+  if(typeof LIVE==="undefined"||!LIVE||!LIVE.matches) return null;
+  var best=null,bs=0;
+  LIVE.matches.forEach(function(m){
+    var s=simTeams(f.home,m.home)+simTeams(f.away,m.away);
+    if(s>bs){bs=s;best=m;}
+  });
+  return bs>=1.3?best:null;
+}
+/* Where a fixture stands: null when it has not kicked off, otherwise in play or
+   settled. A server-graded result wins over the live feed - it is the one that
+   decides the record - then a feed entry reporting full time, then a score in
+   play. */
+function fixtureState(f){
+  var r=potdResult(f,f);
+  if(r) return {kind:"ft",hg:r.hg,ag:r.ag,won:r.won,push:r.push};
+  var lm=liveForFixture(f);
+  if(lm&&lm.homeScore!=null&&lm.awayScore!=null){
+    var ev=tipEval(f)(lm.homeScore,lm.awayScore);
+    if(FT_RE.test(lm.status||""))
+      return {kind:"ft",hg:lm.homeScore,ag:lm.awayScore,won:ev==="win",push:ev==="level"};
+    return {kind:"live",hg:lm.homeScore,ag:lm.awayScore,won:ev==="win",minute:lm.minute||""};
+  }
+  return null;
+}
+function statusBadge(f){
+  var st=fixtureState(f);
+  if(!st) return "";
+  if(st.kind==="live")
+    return "<span class='fx-st fx-live'><span class='ld'></span>"+st.hg+"-"+st.ag+
+      (st.minute?" "+esc(String(st.minute))+"’":"")+"</span>";
+  return "<span class='fx-st "+(st.push?"fx-push":(st.won?"fx-hit":"fx-miss"))+"'>"+
+    st.hg+"-"+st.ag+" "+(st.push?"Void":(st.won?"Hit":"Miss"))+"</span>";
+}
+/* Wrapper so the 30s live poll can repaint the badge in place, rather than
+   re-rendering the board and collapsing whatever card is open. */
+function statusSlot(f){
+  return "<span class='fx-slot' data-fxst='"+fid(f)+"'>"+statusBadge(f)+"</span>";
+}
+function fixtureById(id){
+  var all=DATA.fixtures||[];
+  for(var i=0;i<all.length;i++) if(fid(all[i])===id) return all[i];
+  return null;
+}
+function refreshFixtureStates(){
+  var slots=document.querySelectorAll(".fx-slot[data-fxst]");
+  for(var i=0;i<slots.length;i++){
+    var f=fixtureById(slots[i].getAttribute("data-fxst"));
+    if(!f) continue;
+    var html=statusBadge(f);
+    if(slots[i].innerHTML!==html) slots[i].innerHTML=html;
+  }
 }
 function prunePotdKeys(keepDate){
   try{ for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i);
@@ -2818,7 +2908,7 @@ function matchHTML(f){
   var _vb=valPill(f); if(_vb) pills.unshift(_vb);
   return "<article class='m conf-"+cf+"' id='"+fid(f)+"'>"+
     "<button class='m-btn' data-fx='"+fid(f)+"'>"+
-      "<span class='m-top'><span class='t'>"+esc(kickTime(f))+"</span>"+pills.join("")+"</span>"+
+      "<span class='m-top'><span class='t'>"+esc(kickTime(f))+"</span>"+statusSlot(f)+pills.join("")+"</span>"+
       "<span class='teams'>"+
         "<span class='tnames'>"+
           "<span class='tn"+(hw?" win":"")+"'>"+
@@ -2899,7 +2989,7 @@ function listRowHTML(f){
   const lead=(f.home_p>=f.draw_p&&f.home_p>=f.away_p)?"h":(f.away_p>=f.draw_p?"a":"d");
   return "<div class='lrow conf-"+cf+openCls+"' data-lf='"+id+"'>"+
     "<span class='lt-time'>"+esc(kickTime(f))+"</span>"+
-    "<span class='lt-match'><span class='tm'>"+esc(f.home)+"</span><span class='vs'>v</span><span class='tm'>"+esc(f.away)+"</span></span>"+
+    "<span class='lt-match'><span class='tm'>"+esc(f.home)+"</span><span class='vs'>v</span><span class='tm'>"+esc(f.away)+"</span>"+statusSlot(f)+"</span>"+
     "<span class='lt-p"+(lead==="h"?" lead":"")+"'>"+P0(f.home_p)+"<small>%</small></span>"+
     "<span class='lt-p"+(lead==="d"?" lead":"")+"'>"+P0(f.draw_p)+"<small>%</small></span>"+
     "<span class='lt-p"+(lead==="a"?" lead":"")+"'>"+P0(f.away_p)+"<small>%</small></span>"+
@@ -3676,7 +3766,9 @@ function doBookList(picks,resultId,btnId,label){
 var SOTD=[];
 function renderSlipOfDay(){
   var host=$("sotd"); if(!host) return;
-  var games=onDay(); if(!games.length) games=ahead();
+  /* onDay() now keeps today's kicked-off games for the board; a slip must not
+     offer them, so filter back to what can still be booked. */
+  var games=onDay().filter(notStarted); if(!games.length) games=ahead();
   var allowed=["1X","X2","OVER_1.5","1","2"], cand=[];
   games.forEach(function(f){
     var best=null;
@@ -3902,6 +3994,8 @@ async function fetchLive(){
   renderLiveStrip();
   /* Form strips carry today's in-play result, so they move with the feed. */
   try{refreshFormStrips();}catch(e){}
+  /* Same for the per-fixture live / full-time badges on the day's board. */
+  try{refreshFixtureStates();}catch(e){}
   /* Keep the locked Pick of the Day mirroring the live score / full-time result
      as fresh scores arrive (only meaningful on the predictions/home view). */
   if(typeof renderPotd==="function" && !document.documentElement.classList.contains("mode-live")
