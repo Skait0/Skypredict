@@ -1891,6 +1891,13 @@ select{min-height:44px;padding:10px 32px 10px 12px}
   .potd .big{font-size:clamp(32px,9vw,44px)}
   .potd .why{margin-top:8px;padding-top:8px}
 
+  /* The legend card ("1.6 = goals we expect", and the W/D/L key) is a whole
+     card of scroll sitting between the filters and the first tip. Both things
+     it explains read fine without it - the xG number carries a title tooltip
+     on the card itself, and W/D/L are letters. display:none takes the card's
+     margin with it, so the list closes straight up under the filters. */
+  .key{display:none}
+
   /* The Live pill was sitting flush against the theme toggle. The logo holds
      margin-right:auto, so this gap comes out of the logo's slack and the row
      stays on one line. */
