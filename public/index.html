@@ -621,17 +621,18 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
    panel was hovered, which meant hovering the button itself did nothing
    extra. Each button now owns its own hover. */
 .sc-orb{flex-shrink:0;width:44px;height:44px;margin-top:0;
-  background:url("/wiz-orb.png") center/cover no-repeat;border-radius:50%;
-  /* Washed to white so it sits with the palette instead of being the last
-     violet thing left on a card that no longer has any. */
-  filter:grayscale(1) brightness(1.75) contrast(.9)
-         drop-shadow(0 0 5px rgba(255,255,255,.45));
+  /* A white sphere that keeps the red SportyBet mark. The first attempt did
+     this with grayscale() + brightness(), but a filter cannot pick out one
+     part of an image: it took the red S with it and left a dark grey ball.
+     The sphere is recoloured in the asset instead - its own luminance drives
+     the shading, so the highlight and the rim survive - and the red pixels
+     are left exactly as they were. */
+  background:url("/wiz-orb-white.png") center/cover no-repeat;border-radius:50%;
+  filter:drop-shadow(0 0 5px rgba(255,255,255,.4));
   animation:orbBreath 3.4s ease-in-out infinite}
 @keyframes orbBreath{
-  0%,100%{filter:grayscale(1) brightness(1.75) contrast(.9)
-          drop-shadow(0 0 4px rgba(255,255,255,.35))}
-  50%{filter:grayscale(1) brightness(1.9) contrast(.9)
-      drop-shadow(0 0 9px rgba(255,255,255,.7))}}
+  0%,100%{filter:drop-shadow(0 0 4px rgba(255,255,255,.3))}
+  50%{filter:drop-shadow(0 0 9px rgba(255,255,255,.6))}}
 .sc-tx{flex:1;min-width:0}
 .sc-tx b{display:block;font-size:16.5px;font-weight:800;color:var(--text);letter-spacing:.01em}
 .sc-tx i{display:block;font-style:normal;font-size:12.5px;color:var(--soft);margin-top:3px}
