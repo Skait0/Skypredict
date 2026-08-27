@@ -1668,57 +1668,46 @@ html.mode-live #live{display:block}
    it replaced until you notice you can change it, so it keeps that size and
    colour and carries a chevron as the only hint - a full form-control border
    on every row would turn a slip into a settings page. */
-/* Sized to its own text, not to the row: stretched full-width the chevron
-   ended up marooned in empty space, reading as unrelated to the words it
-   belongs to. */
+/* The visible label and the real control are separate on purpose. A native
+   select can only ever show its selected option's text, and the option text
+   has to carry the confidence and the price - that is what you compare when
+   the list is open. Showing all of it collapsed repeated, on every row, what
+   the total at the foot already says.
+   So the select lies over the row invisibly and does the work, and the span
+   underneath shows the pick alone. Tapping anywhere on it opens the ordinary
+   OS picker, where the numbers are. */
 .sp-swap{position:relative;display:inline-block;margin-top:2px;max-width:100%}
-.sp-sel{appearance:none;-webkit-appearance:none;
-  width:auto;max-width:100%;
-  /* The intrinsic width a select takes from its widest option is a width for
-     the text alone, so under border-box the room reserved for the chevron
-     came out of the words and clipped the price off the end. */
-  box-sizing:content-box;
-  /* Selects on this site carry a 44px minimum meant for the live-scores
-     dropdown, which stands alone. Inside a list of legs that minimum was
-     setting the row height and costing two visible games. 26px keeps a 32px
-     target once padding is counted, on a row that is 64px of reachable
-     surface anyway. */
-  min-height:26px;
-  font:inherit;font-size:12.5px;font-weight:700;
-  /* Now the only thing on the row besides the fixture, so it carries the
-     accent rather than sitting grey like the caption it replaced. */
-  color:var(--win);background:transparent;
-  border:1px solid transparent;border-radius:var(--r-sm,8px);
-  /* Right padding clears the chevron. On a narrow phone the label truncates
-     into it, and what gets cut - the confidence and the price - is already
-     in this row's own columns, so the ellipsis hides a duplicate. */
-  padding:2px 23px 2px 6px;margin-left:-6px;
-  cursor:pointer;
-  /* Long fixtures must not blow the row out; the OS picker shows the full
-     text when it opens, so trimming here costs nothing. */
+.sp-swap-lbl{display:block;max-width:100%;
+  font-size:12.5px;font-weight:700;color:var(--win);
+  padding:2px 23px 2px 0;
   text-overflow:ellipsis;white-space:nowrap;overflow:hidden;
-  transition:background .14s ease,border-color .14s ease,color .14s ease}
+  transition:color .14s ease}
+.sp-swap:hover .sp-swap-lbl{color:var(--win)}
+.sp-sel{appearance:none;-webkit-appearance:none;
+  /* Over the label, invisible, and the thing that is actually tapped. */
+  position:absolute;inset:0;width:100%;height:100%;opacity:0;
+  max-width:100%;min-height:0;margin:0;padding:0;border:0;
+  font:inherit;cursor:pointer}
+/* Chevron: the only hint the row carries that the pick can be changed. */
 .sp-swap::after{content:"";position:absolute;right:7px;top:50%;
   width:5px;height:5px;margin-top:-3px;pointer-events:none;
   border-right:1.5px solid var(--win);border-bottom:1.5px solid var(--win);
-  transform:rotate(45deg);transition:border-color .14s ease;opacity:.85}
-.sp-sel:hover{color:var(--text);background:var(--chip,rgba(255,255,255,.06));
-  border-color:var(--line)}
-.sp-swap:hover::after{border-color:var(--win)}
-/* A 2px red outline sat there long after the picker closed and read as a box
-   stuck round the row. The ring is the control's own border lighting up, so
-   keyboard focus is still obvious without shouting. */
-.sp-sel:focus-visible{outline:none;color:var(--text);
-  border-color:var(--win);background:var(--chip,rgba(255,255,255,.06))}
+  transform:rotate(45deg);opacity:.85;transition:border-color .14s ease}
+.sp-swap:hover::after{border-color:var(--text);opacity:1}
+/* Focus lives on the invisible control, so the ring has to be drawn on the
+   wrapper or a keyboard user sees nothing at all. */
+.sp-sel:focus-visible{outline:none}
+.sp-swap:has(.sp-sel:focus-visible){outline:2px solid var(--win);
+  outline-offset:2px;border-radius:var(--r-sm,8px)}
 .sp-sel:focus-visible+.sp-x{opacity:1}
 @media (max-width:640px){
-  /* Bigger tap target on a phone without making the row taller. */
-  .sp-sel{padding-top:5px;padding-bottom:5px}
+  /* The invisible control already fills the row, so the tap target is the
+     whole label area - no extra padding needed to make it reachable. */
   /* Tighter still inside the slip sheet, where the whole point is seeing as
      many of your legs at once as will fit. */
   .myslip-sheet .sp-row{padding:7px 10px;gap:8px}
   .myslip-sheet .sp-teams{font-size:13px;line-height:1.18}
-  .myslip-sheet .sp-sel{padding-top:2px;padding-bottom:2px;font-size:12px}
+  .myslip-sheet .sp-swap-lbl{padding-top:1px;padding-bottom:1px;font-size:12px}
   .myslip-sheet .sp-swap{margin-top:1px}
 }
 .sp-pick{text-align:right;flex-shrink:0}
@@ -5711,7 +5700,8 @@ function renderMySheet(){
        you are comparing this leg against it. */
     var opts=f?swapOptions(f):[];
     var picker=(opts.length>1)
-      ? "<div class='sp-swap'><select class='sp-sel' data-myswap=\""+esc(x.id)+"\" data-code=\""+esc(x.code)+"\" aria-label=\"Change the pick for "+teams+"\">"+
+      ? "<div class='sp-swap'><span class='sp-swap-lbl'>"+esc(x.label)+"</span>"+
+          "<select class='sp-sel' data-myswap=\""+esc(x.id)+"\" data-code=\""+esc(x.code)+"\" aria-label=\"Change the pick for "+teams+"\">"+
           opts.map(function(o){
             return "<option value=\""+esc(o.code)+"\""+(o.code===x.code?" selected":"")+">"+
               esc(o.label)+" · "+P0(o.p)+"% · ×"+legOdd(f,o.code,o.p).toFixed(2)+"</option>";
