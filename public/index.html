@@ -1678,6 +1678,12 @@ html.mode-live #live{display:block}
      the text alone, so under border-box the room reserved for the chevron
      came out of the words and clipped the price off the end. */
   box-sizing:content-box;
+  /* Selects on this site carry a 44px minimum meant for the live-scores
+     dropdown, which stands alone. Inside a list of legs that minimum was
+     setting the row height and costing two visible games. 26px keeps a 32px
+     target once padding is counted, on a row that is 64px of reachable
+     surface anyway. */
+  min-height:26px;
   font:inherit;font-size:12.5px;font-weight:700;
   /* Now the only thing on the row besides the fixture, so it carries the
      accent rather than sitting grey like the caption it replaced. */
@@ -1708,6 +1714,12 @@ html.mode-live #live{display:block}
 @media (max-width:640px){
   /* Bigger tap target on a phone without making the row taller. */
   .sp-sel{padding-top:5px;padding-bottom:5px}
+  /* Tighter still inside the slip sheet, where the whole point is seeing as
+     many of your legs at once as will fit. */
+  .myslip-sheet .sp-row{padding:7px 10px;gap:8px}
+  .myslip-sheet .sp-teams{font-size:13px;line-height:1.18}
+  .myslip-sheet .sp-sel{padding-top:2px;padding-bottom:2px;font-size:12px}
+  .myslip-sheet .sp-swap{margin-top:1px}
 }
 .sp-pick{text-align:right;flex-shrink:0}
 .sp-pick b{display:block;font-size:13px;font-weight:800;color:var(--text)}
