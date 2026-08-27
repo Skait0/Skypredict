@@ -662,25 +662,37 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
   filter:drop-shadow(0 0 5px rgba(255,255,255,.4));
   animation:orbBreath 3.4s ease-in-out infinite}
 /* Just the S, on transparency - a whole orb image cannot ride a surface. */
+/* Multiplied into the ball rather than laid over it. Drawn normally the mark
+   keeps its own flat brightness wherever it sits, so the sphere darkens
+   toward the edge and the S does not - and the eye reads that as a sticker
+   floating above the surface. Multiplying makes it take the shading beneath
+   it, so it dims into the limb with everything else and looks painted on. */
 .orb-mark{position:absolute;top:15%;bottom:15%;left:0;right:0;display:block;
   background:url("/wiz-orb-mark.png") center/auto 100% no-repeat;
+  mix-blend-mode:multiply;
   animation:orbRoll 8s linear infinite}
 .orb-shade{position:absolute;inset:0;border-radius:50%;display:block;
   pointer-events:none;
   background:
     radial-gradient(circle at 30% 25%,rgba(255,255,255,.55),rgba(255,255,255,0) 46%),
-    radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 54%,rgba(0,0,0,.30) 100%)}
+    /* The dark limb starts sooner and finishes deeper than it did. A gentle
+       edge let the ball read as a lit disc; the mark needs somewhere to dim
+       INTO as it turns away, or no amount of blending saves it. */
+    radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 44%,rgba(0,0,0,.42) 100%)}
 @keyframes orbRoll{
-  /* Facing us, held still. Leaves the centre fast and slows into the edge. */
-  0%,20%  {transform:translateX(0) scaleX(1);opacity:1;
+  /* Facing us, held still. Leaves the centre fast and slows into the edge.
+     The vertical squeeze at the limbs is small but it is what stops the mark
+     reading as a flat decal sliding across glass: a shape near the edge of a
+     sphere is foreshortened in both directions, not only across. */
+  0%,20%  {transform:translateX(0) scale(1,1);opacity:1;
            animation-timing-function:cubic-bezier(.28,.72,.52,1)}
-  33%     {transform:translateX(44%) scaleX(.10);opacity:1}
+  33%     {transform:translateX(44%) scale(.10,.93);opacity:1}
   /* Gone round the back. Hidden at its thinnest, so nothing pops. */
-  34%,66% {transform:translateX(44%) scaleX(.10);opacity:0}
-  67%     {transform:translateX(-44%) scaleX(.10);opacity:0}
-  68%     {transform:translateX(-44%) scaleX(.10);opacity:1;
+  34%,66% {transform:translateX(44%) scale(.10,.93);opacity:0}
+  67%     {transform:translateX(-44%) scale(.10,.93);opacity:0}
+  68%     {transform:translateX(-44%) scale(.10,.93);opacity:1;
            animation-timing-function:cubic-bezier(.48,0,.72,.28)}
-  100%    {transform:translateX(0) scaleX(1);opacity:1}
+  100%    {transform:translateX(0) scale(1,1);opacity:1}
 }
 @media(prefers-reduced-motion:reduce){
   .sc-orb,.orb-mark{animation:none}
@@ -1079,6 +1091,25 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    carries the font's own side and vertical bearings, so it lands a pixel or two
    off centre inside a square button and reads as crooked whatever line-height
    you give it. place-items on a block-level svg is exact. */
+/* The slip does not close, it tucks away - the legs are still there and the
+   button on the bar brings them back. A bare X in the corner said "discard",
+   which is the one thing this does not do, and it is the smallest target on
+   a sheet whose other controls are all full-size. Word and arrow, sized to
+   be found without looking for it. */
+.sheet-collapse{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;
+  height:36px;padding:0 13px 0 10px;border-radius:99px;
+  border:1px solid var(--line);background:var(--card-2);color:var(--soft);
+  font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;
+  transition:background .16s,color .16s,border-color .16s,transform .12s}
+.sheet-collapse svg{display:block;width:15px;height:15px}
+.sheet-collapse:hover{color:var(--text);background:var(--raise);border-color:var(--soft)}
+.sheet-collapse:active{transform:scale(.95)}
+.sheet-collapse:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+@media(max-width:420px){
+  /* On the narrowest phones the word costs the title its room. */
+  .sheet-collapse span{display:none}
+  .sheet-collapse{padding:0;width:36px;justify-content:center}
+}
 .sheet-x{width:36px;height:36px;flex-shrink:0;border-radius:var(--r-md);border:1px solid var(--line);
   background:var(--card-2);color:var(--soft);cursor:pointer;padding:0;
   display:grid;place-items:center;font-family:inherit;
@@ -3153,7 +3184,7 @@ footer{margin-top:26px;padding-top:18px;
   <div class="sheet-grab"><i></i></div>
   <div class="sheet-head">
     <div class="info"><h3 id="mySheet-title">My slip</h3><p>Predictions you picked - book them to SportyBet.</p></div>
-    <button class="sheet-x" id="mySheet-x" aria-label="Collapse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button class="sheet-collapse" id="mySheet-x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>Collapse</span></button>
   </div>
   <div class="sheet-body" id="mySheetBody"></div>
   <div class="mysheet-foot" id="mySheetFoot" hidden>
