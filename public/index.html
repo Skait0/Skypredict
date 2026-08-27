@@ -6673,8 +6673,16 @@ function renderMySheet(){
   $("mySheetFoot").hidden=false;
   /* Shuffle belongs to a conjured slip only - it rebuilds the machine picks,
      which would be a strange thing to do to a slip somebody assembled. */
+  /* Shuffle belongs to the builder. It rebuilds the machine-picked legs, which
+     is a thing you do while choosing a slip - not while looking at one from the
+     board, where the wizard is not even on screen. Offering it there was also
+     what made it look broken after a reload: the slip is stored and the wizard
+     is not, so the button came back with nothing behind it.
+     Two conditions, both required: there are conjured legs to rebuild, and you
+     are somewhere that rebuilding makes sense. */
   var shuf=$("mySheetShuffle");
-  if(shuf) shuf.hidden=!MYSLIP.some(function(x){return x.auto;});
+  if(shuf) shuf.hidden = !MYSLIP.some(function(x){return x.auto;})
+    || !document.documentElement.classList.contains("mode-build");
   body.innerHTML=MYSLIP.map(function(x){
     var f=fixtureById(x.id);
     var teams=f?esc(f.home)+" v "+esc(f.away):"Match";
