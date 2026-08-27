@@ -1683,26 +1683,40 @@ html.mode-live #live{display:block}
   text-overflow:ellipsis;white-space:nowrap;overflow:hidden;
   transition:color .14s ease}
 .sp-swap:hover .sp-swap-lbl{color:var(--win)}
-.sp-sel{appearance:none;-webkit-appearance:none;
-  /* Over the label, invisible, and the thing that is actually tapped.
-     Reaching past the label on every side gives a thumb something to hit:
-     the text itself is only about 19px tall, and the row has the room
-     going spare. Being absolutely positioned, none of this moves layout. */
-  position:absolute;inset:-9px -6px;width:auto;height:auto;opacity:0;
-  min-height:0;margin:0;padding:0;border:0;
-  font:inherit;cursor:pointer}
-/* Chevron: the only hint the row carries that the pick can be changed. */
-.sp-swap::after{content:"";position:absolute;right:7px;top:50%;
-  width:5px;height:5px;margin-top:-3px;pointer-events:none;
-  border-right:1.5px solid var(--win);border-bottom:1.5px solid var(--win);
-  transform:rotate(45deg);opacity:.85;transition:border-color .14s ease}
-.sp-swap:hover::after{border-color:var(--text);opacity:1}
-/* Focus lives on the invisible control, so the ring has to be drawn on the
-   wrapper or a keyboard user sees nothing at all. */
-.sp-sel:focus-visible{outline:none}
-.sp-swap:has(.sp-sel:focus-visible){outline:2px solid var(--win);
-  outline-offset:2px;border-radius:var(--r-sm,8px)}
-.sp-sel:focus-visible+.sp-x{opacity:1}
+/* The trigger: the pick, plus a chevron. Styled as text, not as a form
+   control - a bordered box on every row would turn a slip into a settings
+   page. */
+.sp-swap-btn{display:block;max-width:100%;margin:0;padding:2px 23px 2px 0;
+  background:none;border:0;font:inherit;text-align:left;cursor:pointer;
+  color:inherit}
+.sp-swap-btn:focus-visible{outline:2px solid var(--win);outline-offset:2px;
+  border-radius:var(--r-sm,8px)}
+/* The menu. Fixed, so the scrolling list of legs cannot clip it, and capped
+   so a long market list scrolls inside itself instead of covering the page -
+   which is the whole complaint with the native picker. */
+.swap-menu{position:fixed;z-index:300;min-width:212px;max-width:min(300px,92vw);
+  max-height:min(272px,52vh);overflow-y:auto;overscroll-behavior:contain;
+  background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-md);padding:5px;
+  box-shadow:0 14px 38px rgba(0,0,0,.42);
+  animation:swapIn .12s ease}
+@keyframes swapIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.swap-opt{display:flex;align-items:center;gap:8px;width:100%;
+  background:none;border:0;font:inherit;font-size:12.5px;font-weight:600;
+  color:var(--text);text-align:left;padding:8px 9px;border-radius:var(--r-sm);
+  cursor:pointer}
+.swap-opt:hover{background:var(--card-2)}
+.swap-opt:focus-visible{outline:2px solid var(--win);outline-offset:-2px}
+.swap-opt .sw-n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.swap-opt .sw-p{flex-shrink:0;font-size:11.5px;font-weight:700;color:var(--soft);
+  font-variant-numeric:tabular-nums}
+.swap-opt .sw-o{flex-shrink:0;font-size:12px;font-weight:800;color:var(--win);
+  font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
+/* The leg as it stands. */
+.swap-opt.on{background:var(--card-2)}
+.swap-opt.on .sw-n{color:var(--win);font-weight:800}
+
 @media (max-width:640px){
   /* The invisible control already fills the row, so the tap target is the
      whole label area - no extra padding needed to make it reachable. */
@@ -1710,7 +1724,8 @@ html.mode-live #live{display:block}
      many of your legs at once as will fit. */
   .myslip-sheet .sp-row{padding:7px 10px;gap:8px}
   .myslip-sheet .sp-teams{font-size:13px;line-height:1.18}
-  .myslip-sheet .sp-swap-lbl{padding-top:1px;padding-bottom:1px;font-size:12px}
+  .myslip-sheet .sp-swap-btn{padding-top:1px;padding-bottom:1px}
+  .myslip-sheet .sp-swap-lbl{font-size:12px}
   .myslip-sheet .sp-swap{margin-top:1px}
 }
 .sp-pick{text-align:right;flex-shrink:0}
@@ -5667,6 +5682,64 @@ function syncAddBtn(id,code){
    re-rendering IS the recalculation: there is no second copy of the odds to
    keep in step, and no way for the number at the bottom to drift from the
    legs above it. */
+/* A small menu anchored to the row, rather than a native select.
+   A select was the right instinct - it is the control people know - but on a
+   phone the OS opens it as a full-screen page, which is an enormous response
+   to changing one leg and hides the slip you are comparing against. This is
+   the same list, next to the row it belongs to.
+   Positioned fixed and parented to the body on purpose: inside the sheet it
+   would be clipped by the scrolling list it has to overlap. */
+var SWAPMENU=null;
+function closeSwapMenu(){
+  if(!SWAPMENU) return;
+  var btn=SWAPMENU._btn;
+  SWAPMENU.remove(); SWAPMENU=null;
+  if(btn) btn.setAttribute("aria-expanded","false");
+  document.removeEventListener("mousedown",swapAway,true);
+  document.removeEventListener("touchstart",swapAway,true);
+  document.removeEventListener("keydown",swapKey,true);
+  window.removeEventListener("resize",closeSwapMenu);
+}
+function swapAway(e){ if(SWAPMENU&&!SWAPMENU.contains(e.target)) closeSwapMenu(); }
+function swapKey(e){ if(e.key==="Escape"){ e.preventDefault(); closeSwapMenu(); } }
+function openSwapMenu(btn){
+  var wasOpen = SWAPMENU && SWAPMENU._btn===btn;
+  closeSwapMenu();
+  if(wasOpen) return;                 /* tapping it again just closes it */
+  var id=btn.dataset.myswap, code=btn.dataset.code;
+  var f=fixtureById(id); if(!f) return;
+  var opts=swapOptions(f); if(opts.length<2) return;
+  var m=document.createElement("div");
+  m.className="swap-menu"; m._btn=btn; m.setAttribute("role","listbox");
+  m.innerHTML=opts.map(function(o){
+    return "<button type='button' role='option' class='swap-opt"+(o.code===code?" on":"")+"'"+
+      (o.code===code?" aria-selected='true'":"")+" data-c=\""+esc(o.code)+"\">"+
+      "<span class='sw-n'>"+esc(o.label)+"</span>"+
+      "<span class='sw-p'>"+P0(o.p)+"%</span>"+
+      "<span class='sw-o'>×"+legOdd(f,o.code,o.p).toFixed(2)+"</span></button>";
+  }).join("");
+  document.body.appendChild(m);
+  /* Below the row if it fits, above if it does not, and never off an edge. */
+  var r=btn.getBoundingClientRect(), mh=m.offsetHeight, mw=m.offsetWidth;
+  var top=r.bottom+6, left=r.left;
+  if(top+mh>window.innerHeight-8) top=Math.max(8,r.top-mh-6);
+  if(left+mw>window.innerWidth-8) left=Math.max(8,window.innerWidth-mw-8);
+  m.style.top=top+"px"; m.style.left=left+"px";
+  btn.setAttribute("aria-expanded","true");
+  SWAPMENU=m;
+  m.querySelectorAll("[data-c]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var nc=b.dataset.c; closeSwapMenu(); swapMy(id,code,nc);
+    });
+  });
+  /* Deferred, or the click that opened this would immediately close it. */
+  setTimeout(function(){
+    document.addEventListener("mousedown",swapAway,true);
+    document.addEventListener("touchstart",swapAway,true);
+    document.addEventListener("keydown",swapKey,true);
+    window.addEventListener("resize",closeSwapMenu);
+  },0);
+}
 function swapMy(id,oldCode,newCode){
   if(oldCode===newCode) return;
   var f=fixtureById(id); if(!f) return;
@@ -5675,6 +5748,7 @@ function swapMy(id,oldCode,newCode){
   if(!pick) return;
   /* SportyBet takes one pick per match, so moving onto a market this match
      already occupies would build a slip that cannot be booked. */
+  closeSwapMenu();
   if(myslipHas(id,newCode)){
     window.swToast&&window.swToast("That pick is already on your slip","info","dupswap");
     renderMySheet(); return;
@@ -5738,12 +5812,11 @@ function renderMySheet(){
        you are comparing this leg against it. */
     var opts=f?swapOptions(f):[];
     var picker=(opts.length>1)
-      ? "<div class='sp-swap'><span class='sp-swap-lbl'>"+esc(x.label)+"</span>"+
-          "<select class='sp-sel' data-myswap=\""+esc(x.id)+"\" data-code=\""+esc(x.code)+"\" aria-label=\"Change the pick for "+teams+"\">"+
-          opts.map(function(o){
-            return "<option value=\""+esc(o.code)+"\""+(o.code===x.code?" selected":"")+">"+
-              esc(o.label)+" · "+P0(o.p)+"% · ×"+legOdd(f,o.code,o.p).toFixed(2)+"</option>";
-          }).join("")+"</select></div>"
+      ? "<div class='sp-swap'><button type='button' class='sp-swap-btn' "+
+          "data-myswap=\""+esc(x.id)+"\" data-code=\""+esc(x.code)+"\" "+
+          "aria-haspopup='listbox' aria-expanded='false' "+
+          "aria-label=\"Change the pick for "+teams+"\">"+
+          "<span class='sp-swap-lbl'>"+esc(x.label)+"</span></button></div>"
       : "<div class='sp-meta'>"+esc(x.label)+"</div>";
     return "<div class='sp-row'>"+
       "<div class='sp-main'><div class='sp-teams'>"+teams+noid+"</div>"+
@@ -5754,13 +5827,11 @@ function renderMySheet(){
   $("myTotOdds").textContent="\u00d7"+myOdds().toFixed(2);
   body.querySelectorAll("[data-myrm]").forEach(function(b){
     b.addEventListener("click",function(){var p=b.dataset.myrm.split("|"); toggleMy(p[0],p[1]);});});
-  body.querySelectorAll("[data-myswap]").forEach(function(s){
-    s.addEventListener("change",function(){
-      /* Let go of the control once it has been used. Left focused it keeps
-         its ring, which on a phone reads as a box stuck round the row. */
-      try{s.blur();}catch(e){}
-      swapMy(s.dataset.myswap,s.dataset.code,s.value);
-    });});
+  body.querySelectorAll("[data-myswap]").forEach(function(b){
+    b.addEventListener("click",function(e){ e.stopPropagation(); openSwapMenu(b); });});
+  /* Scrolling the legs would leave the menu floating over the wrong row. */
+  if(!body._swapScroll){ body._swapScroll=1;
+    body.addEventListener("scroll",function(){ closeSwapMenu(); },{passive:true}); }
 }
 async function bookMy(){
   MYSLIP=MYSLIP.filter(function(x){var f=fixtureById(x.id);return !f||notStarted(f);});
