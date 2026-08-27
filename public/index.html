@@ -7753,11 +7753,16 @@ setTimeout(hideLoader,8000);
   fab.addEventListener("click",function(){
     try{localStorage.setItem("sw.mode","wizard");}catch(e){}
     BUILD.mode="wizard"; setView("build");
+    apply();   /* it just sent you to the builder; it should not still be there */
   });
-  /* setView swaps these classes, so the button has to re-check after one. */
-  document.addEventListener("click",function(e){
-    if(e.target.closest(".navt,.btab")) setTimeout(apply,0);
-  });
+  /* Watch the state rather than guess at what changed it. The previous version
+     re-checked after a click on a nav tab, which missed every other way the
+     view changes - this button itself, the two buttons on the offer card, the
+     logo, the back button. Tapping this one took you to the builder and left
+     it sitting there, which is exactly the case it exists to avoid.
+     setView swaps these classes, so the classes are the thing to observe. */
+  new MutationObserver(apply).observe(document.documentElement,
+    {attributes:true, attributeFilter:["class"]});
 })();
 /* ============================================= premium enhancement engine */
 (function(){
