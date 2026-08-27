@@ -4108,7 +4108,7 @@ addEventListener("keydown",function(e){
   }});
 
 /* ============================================================ build a slip */
-var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:true,o35:false,fh:false,dnb:false,both:true},touched:false,mode:"slider"};
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:true,o35:false,fh:false,dnb:false,tts:false,tts2:false,both:true},touched:false,mode:"slider"};
 try{var rr=localStorage.getItem("sw.risk"); if(rr!=null) BUILD.risk=+rr;}catch(e){}
 try{var rm=localStorage.getItem("sw.mode"); if(rm==="slider"||rm==="wizard") BUILD.mode=rm;}catch(e){}
 /* Ticket window. "day" holds every leg inside today, so the whole slip settles
@@ -4556,7 +4556,9 @@ function mProb(f,c){
        handed back, so the chance is the win renormalised over the two
        outcomes that can still settle it. */
     case"DNB_1":return dnbProb(f,true);
-    case"DNB_2":return dnbProb(f,false);}
+    case"DNB_2":return dnbProb(f,false);
+    case"HOME_OVER_0.5":return f.h_o05;case"HOME_OVER_1.5":return f.h_o15;
+    case"AWAY_OVER_0.5":return f.a_o05;case"AWAY_OVER_1.5":return f.a_o15;}
   return null;
 }
 function mLabel(f,c){
@@ -4568,14 +4570,20 @@ function mLabel(f,c){
     case"FH_OVER_0.5":return"Goal in 1st half";
     case"OVER_3.5":return"Over 3.5 goals";
     case"DNB_1":return esc(f.home)+" (draw = stake back)";
-    case"DNB_2":return esc(f.away)+" (draw = stake back)";}
+    case"DNB_2":return esc(f.away)+" (draw = stake back)";
+    case"HOME_OVER_0.5":return esc(f.home)+" to score";
+    case"AWAY_OVER_0.5":return esc(f.away)+" to score";
+    case"HOME_OVER_1.5":return esc(f.home)+" to score 2+";
+    case"AWAY_OVER_1.5":return esc(f.away)+" to score 2+";}
   return c;
 }
 function buildPicks(){
   var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier), cand=[];
   var mkOn={"1X":BUILD.mk.wd,"X2":BUILD.mk.wd,"12":BUILD.mk.any,"1":BUILD.mk.out,"2":BUILD.mk.out,
     "OVER_1.5":BUILD.mk.o15,"OVER_2.5":BUILD.mk.o25,"OVER_3.5":BUILD.mk.o35,
-    "FH_OVER_0.5":BUILD.mk.fh,"DNB_1":BUILD.mk.dnb,"DNB_2":BUILD.mk.dnb,"GG":BUILD.mk.both};
+    "FH_OVER_0.5":BUILD.mk.fh,"DNB_1":BUILD.mk.dnb,"DNB_2":BUILD.mk.dnb,
+    "HOME_OVER_0.5":BUILD.mk.tts,"AWAY_OVER_0.5":BUILD.mk.tts,
+    "HOME_OVER_1.5":BUILD.mk.tts2,"AWAY_OVER_1.5":BUILD.mk.tts2,"GG":BUILD.mk.both};
   allowed=allowed.filter(function(c){return mkOn[c]!==false;});
   var f0=BUILD.risk/100;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
@@ -5572,7 +5580,11 @@ function swapOptions(f){
     {code:"FH_OVER_0.5",label:"Goal in 1st half",p:f.fh_o05},
     {code:"OVER_3.5",label:"Over 3.5 goals",p:f.o35},
     {code:"DNB_1",label:f.home+" (draw = stake back)",p:dnbProb(f,true)},
-    {code:"DNB_2",label:f.away+" (draw = stake back)",p:dnbProb(f,false)}
+    {code:"DNB_2",label:f.away+" (draw = stake back)",p:dnbProb(f,false)},
+    {code:"HOME_OVER_0.5",label:f.home+" to score",p:f.h_o05},
+    {code:"AWAY_OVER_0.5",label:f.away+" to score",p:f.a_o05},
+    {code:"HOME_OVER_1.5",label:f.home+" to score 2+",p:f.h_o15},
+    {code:"AWAY_OVER_1.5",label:f.away+" to score 2+",p:f.a_o15}
   ].filter(function(o){return o.p!=null&&!isNaN(o.p);});
 }
 function renderFab(){var fab=$("myFab"); if(!fab) return; fab.hidden=MYSLIP.length===0;
@@ -5959,7 +5971,7 @@ document.addEventListener("click",function(e){
 /* odds starts null, the way BUILD.risk does. A pre-picked payout meant the
    wizard had already decided for you: a slip existed, the hero advertised
    it, and Conjure would fill My slip before you had chosen anything. */
-var WSP={odds:null,legodd:1.35,everyGame:false,mk:{doubles:true,out:true,o15:true,o25:true,o35:false,fh:false,dnb:false,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.35,everyGame:false,mk:{doubles:true,out:true,o15:true,o25:true,o35:false,fh:false,dnb:false,tts:false,tts2:false,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* One entry per toggle, so turning everything else off leaves exactly one
    market and every leg of the slip is that market. That is the whole point
    of splitting the goals group: an all-Over-1.5 or all-first-half ticket is
@@ -5972,6 +5984,11 @@ function wspMarkets(){var m=[];
   if(WSP.mk.o35)m.push("OVER_3.5");
   if(WSP.mk.fh)m.push("FH_OVER_0.5");
   if(WSP.mk.dnb)m=m.concat(["DNB_1","DNB_2"]);
+  /* Both sides go in the pool and the better one wins on its own merits.
+     Unlike a match result, backing either team to score is a real bet
+     regardless of who is favourite. */
+  if(WSP.mk.tts)m=m.concat(["HOME_OVER_0.5","AWAY_OVER_0.5"]);
+  if(WSP.mk.tts2)m=m.concat(["HOME_OVER_1.5","AWAY_OVER_1.5"]);
   if(WSP.mk.both)m.push("GG");
   return m;}
 function wspBuild(){
@@ -6011,10 +6028,13 @@ function wspBuild(){
        target. A high payout pulls in the bigger-odds markets the user enabled
        (outright wins, both-teams-score); a low one favours safe double-chance.
        That is what makes the Slip-style and market toggles actually bite. */
-    /* SportyBet itself has no practical ceiling here - 199 legs in one code
-       came back fine - so this number is ours, and it is about what a person
-       can read and check, not what the bookmaker will take. */
-    var T=WSP.odds, cap=WSP.everyGame?120:40, per=WSP.legodd||1.35;
+    /* SportyBet has no practical ceiling here - 199 legs in one code came
+       back fine - but forty is the limit that matters, and it is not a
+       technical one. Forty legs is already the riskiest thing this site will
+       build; a hundred and twenty priced at fifty billion is not a slip
+       anybody can win, it is a lottery ticket wearing one. "Every game that
+       qualifies" changes which games go in, never how many past this. */
+    var T=WSP.odds, cap=40, per=WSP.legodd||1.35;
     /* Nothing to aim at yet - say so with an empty slip rather than
        inventing a target. */
     if(T==null && !WSP.everyGame) return {picks:[],odds:1,conf:0};
@@ -6198,6 +6218,10 @@ function renderShared(){
     {k:"dnb", label:"Draw = refund", tier:0, sub:"Draw no bet", icon:'<path d="M3 12h18"/><path d="M7 8l-4 4 4 4"/><path d="M21 6v6"/>'},
     /* Predicted since day one, bookable only now that market 68 is fetched. */
     {k:"fh", label:"1st half goal", tier:2, sub:"FH over 0.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l3.5 2"/>'},
+    /* One side's goals rather than the two added together. Both sides go in
+       the pool; whichever the model likes better is the one that gets used. */
+    {k:"tts", label:"A team scores", tier:0, sub:"Team over 0.5", icon:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 7v10"/>'},
+    {k:"tts2", label:"A team scores 2+", tier:2, sub:"Team over 1.5", icon:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M9 9h6M9 15h6"/>'},
     {k:"both", label:"Both score", tier:2, sub:"GG", icon:'<path d="M17 21V5A2 2 0 0015 3H9A2 2 0 007 5V21"/><path d="M7 7H17"/><path d="M9 11H15"/><path d="M9 15H15"/><path d="M9 19H15"/>'}
   ];
   (function(){
