@@ -1633,13 +1633,23 @@ html.mode-live #live{display:block}
    it replaced until you notice you can change it, so it keeps that size and
    colour and carries a chevron as the only hint - a full form-control border
    on every row would turn a slip into a settings page. */
-.sp-swap{position:relative;margin-top:2px;max-width:100%}
+/* Sized to its own text, not to the row: stretched full-width the chevron
+   ended up marooned in empty space, reading as unrelated to the words it
+   belongs to. */
+.sp-swap{position:relative;display:inline-block;margin-top:2px;max-width:100%}
 .sp-sel{appearance:none;-webkit-appearance:none;
-  width:100%;max-width:100%;
+  width:auto;max-width:100%;
+  /* The intrinsic width a select takes from its widest option is a width for
+     the text alone, so under border-box the room reserved for the chevron
+     came out of the words and clipped the price off the end. */
+  box-sizing:content-box;
   font:inherit;font-size:12px;font-weight:600;
   color:var(--soft);background:transparent;
   border:1px solid transparent;border-radius:var(--r-sm,8px);
-  padding:2px 20px 2px 6px;margin-left:-6px;
+  /* Right padding clears the chevron. On a narrow phone the label truncates
+     into it, and what gets cut - the confidence and the price - is already
+     in this row's own columns, so the ellipsis hides a duplicate. */
+  padding:2px 23px 2px 6px;margin-left:-6px;
   cursor:pointer;
   /* Long fixtures must not blow the row out; the OS picker shows the full
      text when it opens, so trimming here costs nothing. */
