@@ -680,19 +680,26 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
        INTO as it turns away, or no amount of blending saves it. */
     radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 44%,rgba(0,0,0,.42) 100%)}
 @keyframes orbRoll{
-  /* Facing us, held still. Leaves the centre fast and slows into the edge.
-     The vertical squeeze at the limbs is small but it is what stops the mark
-     reading as a flat decal sliding across glass: a shape near the edge of a
-     sphere is foreshortened in both directions, not only across. */
-  0%,20%  {transform:translateX(0) scale(1,1);opacity:1;
-           animation-timing-function:cubic-bezier(.28,.72,.52,1)}
-  33%     {transform:translateX(44%) scale(.10,.93);opacity:1}
+  /* Timings, on the 8s loop: the mark faces us for about five seconds and is
+     round the back for well under one. It was the other way about - two and a
+     half seconds of blank ball, which is a long time to look at nothing, and
+     only a second and a half of the thing you actually want to see.
+     The blank stretch is the one part that should hurry: nothing happens
+     there, so it is dead time, whereas the pause at the front is the point.
+     Leaves the centre fast and slows into the edge - a point on a turning
+     sphere moves quickest across the middle. The vertical squeeze at the
+     limbs is small but it is what stops the mark reading as a flat decal
+     sliding across glass: a shape near the edge of a sphere is foreshortened
+     in both directions, not only across. */
+  0%,30%   {transform:translateX(0) scale(1,1);opacity:1;
+            animation-timing-function:cubic-bezier(.28,.72,.52,1)}
+  40%      {transform:translateX(44%) scale(.10,.93);opacity:1}
   /* Gone round the back. Hidden at its thinnest, so nothing pops. */
-  34%,66% {transform:translateX(44%) scale(.10,.93);opacity:0}
-  67%     {transform:translateX(-44%) scale(.10,.93);opacity:0}
-  68%     {transform:translateX(-44%) scale(.10,.93);opacity:1;
-           animation-timing-function:cubic-bezier(.48,0,.72,.28)}
-  100%    {transform:translateX(0) scale(1,1);opacity:1}
+  41%,52%  {transform:translateX(44%) scale(.10,.93);opacity:0}
+  53%      {transform:translateX(-44%) scale(.10,.93);opacity:0}
+  54%      {transform:translateX(-44%) scale(.10,.93);opacity:1;
+            animation-timing-function:cubic-bezier(.48,0,.72,.28)}
+  64%,100% {transform:translateX(0) scale(1,1);opacity:1}
 }
 @media(prefers-reduced-motion:reduce){
   .sc-orb,.orb-mark{animation:none}
