@@ -2955,22 +2955,38 @@ footer{margin-top:26px;padding-top:18px;
    ========================================================================== */
 @media (min-width: 1060px) and (hover: hover) and (prefers-reduced-motion: no-preference) {
   /* Global 3D context */
-  .wrap { perspective: 1200px; transform-style: preserve-3d; }
+  /* The perspective is gone, and with it the whole 3D scene.
+     It existed for a mouse-following parallax that is switched off - there is
+     a return statement at the top of that controller saying it moved the page
+     on hover. What was left was the cost with none of the effect.
+     Under a perspective, translateZ changes APPARENT SIZE while the layout box
+     stays put: .intro h1 at translateZ(40px) painted about 3% larger than the
+     box meant to contain it, so content overflowed and was clipped by it. The
+     entrance ran from translateZ(-100px) to 0, which is an element starting
+     small and growing into place - the button being cut off and then expanding
+     on its own.
+     Without perspective every translateZ below is inert, so they can stay
+     where they are; only the explicit scales had to go. */
+  .wrap { }
   .intro { transform-style: preserve-3d; }
   #builder { transform-style: preserve-3d; }
   #live { transform-style: preserve-3d; }
 
   /* Parallax depth layers - apply data-parallax="0.5|1|1.5|2" to elements */
-  .parallax-deep   { transform: translateZ(-150px) scale(1.15); }
-  .parallax-mid    { transform: translateZ(-50px)  scale(1.05); }
+  /* These scaled up to compensate for being pushed back. With nothing pushing
+     them back, the scale is just everything rendered 15% too big. */
+  .parallax-deep   { transform: none; }
+  .parallax-mid    { transform: none; }
   .parallax-shallow{ transform: translateZ(20px); }
   .parallax-forward{ transform: translateZ(60px); }
   .parallax-front  { transform: translateZ(100px); }
 
   /* Entrance choreography */
+  /* A fade and a short rise. No Z, so nothing changes size on the way in and
+     nothing can spill out of the box holding it. */
   @keyframes stageIn {
-    from { opacity: 0; transform: translateZ(-100px) translateY(30px); }
-    to   { opacity: 1; transform: translateZ(0) translateY(0); }
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
   .stage-in { animation: stageIn 0.7s cubic-bezier(0.25, 0.9, 0.3, 1) both; }
   .stage-in-1 { animation-delay: 0.05s; }
@@ -2989,7 +3005,7 @@ footer{margin-top:26px;padding-top:18px;
   .bld-shared > * { margin:0 } /* labels and chip rows use internal gap */
   .bld-mode { transform: translateZ(40px); }
   .bld-mode-btn { transition: transform 0.15s ease, box-shadow 0.15s ease; }
-  .bld-mode-btn:hover { transform: translateZ(50px) scale(1.02); }
+  .bld-mode-btn:hover { transform: scale(1.02); }
   .bld-mode-btn.on { transform: translateZ(50px); box-shadow: 0 4px 16px rgba(230,57,70,.4); }
   .bld-mode-btn.on[data-mode="wizard"] { box-shadow: 0 4px 18px rgba(139,92,246,.5); }
   .bld-panel { transform: translateZ(30px); }
