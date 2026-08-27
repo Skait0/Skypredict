@@ -3322,7 +3322,7 @@ footer{margin-top:26px;padding-top:18px;
         <button class="scope-opt stage-in stage-in-3" type="button" data-scope="all">
           <span class="so-t">All upcoming</span><span class="so-n" data-scope-n="all"></span></button>
       </div>
-      <div class="scope-seg tod-seg stage-in stage-in-2" id="todSeg" role="group" aria-label="Time of day">
+      <div class="scope-seg tod-seg stage-in stage-in-2" id="todSeg" role="group" aria-label="Kick-off time, today only">
         <button class="scope-opt stage-in stage-in-3" type="button" data-tod="all"><span class="so-t">All day</span><span class="so-n" data-tod-n="all"></span></button>
         <button class="scope-opt stage-in stage-in-3" type="button" data-tod="early"><span class="so-t">Early</span><span class="so-n" data-tod-n="early"></span></button>
         <button class="scope-opt stage-in stage-in-3" type="button" data-tod="mid"><span class="so-t">Mid day</span><span class="so-n" data-tod-n="mid"></span></button>
@@ -4819,13 +4819,20 @@ try{var sc0=localStorage.getItem("sw.scope"); if(sc0==="day"||sc0==="all") SCOPE
 var TOD="all";
 try{var td0=localStorage.getItem("sw.tod");
   if(td0==="early"||td0==="mid"||td0==="late"||td0==="all") TOD=td0;}catch(e){}
+/* A bucket only means something against one day, so it never survives a wide
+   window - including a pair of preferences saved before that was true. */
+if(SCOPE!=="day") TOD="all";
 function todOf(f){
   var t=kickMs(f); if(!t) return null;
   var h=new Date(t).getHours();
   return h<15?"early":(h<19?"mid":"late");
 }
 function todFixtures(list){
-  if(TOD==="all") return list;
+  /* Early / mid / late describe how a single day splits. Applied to "all
+     upcoming" the same cut would run across every published day at once -
+     an evening in nine days' time is not what someone picking "Late" is
+     asking for - so the buckets only bite on a single fixture day. */
+  if(TOD==="all"||SCOPE!=="day") return list;
   return list.filter(function(f){var b=todOf(f); return b===null||b===TOD;});
 }
 function scopeFixtures(){
@@ -4865,9 +4872,10 @@ function paintTod(){
     b.setAttribute("aria-pressed",on?"true":"false");
   });
   try{
+    /* Always counted against today, whatever the window is set to: tapping a
+       bucket brings the window here, so the number is what the tap gives you. */
     var base=(DATA.fixtures||[]).filter(function(f){
-      if(!notStarted(f)) return false;
-      return SCOPE!=="day"||dayOff(f.date)===0;
+      return notStarted(f)&&dayOff(f.date)===0;
     });
     var n={all:base.length,early:0,mid:0,late:0};
     base.forEach(function(f){var b=todOf(f); if(b&&n[b]!=null) n[b]++;});
@@ -4882,8 +4890,15 @@ function paintTod(){
   }catch(e){}
 }
 function setTod(t){
-  if((t!=="all"&&t!=="early"&&t!=="mid"&&t!=="late")||t===TOD) return false;
-  TOD=t; try{localStorage.setItem("sw.tod",t);}catch(e){}
+  if(t!=="all"&&t!=="early"&&t!=="mid"&&t!=="late") return false;
+  var changed=false;
+  if(t!==TOD){TOD=t; try{localStorage.setItem("sw.tod",t);}catch(e){} changed=true;}
+  /* Naming a time of day is naming a day: pull the window in with it rather
+     than leave a lit-up bucket that quietly filters nothing. */
+  if(t!=="all"&&SCOPE!=="day"){
+    SCOPE="day"; try{localStorage.setItem("sw.scope","day");}catch(e){} changed=true;
+  }
+  if(!changed) return false;
   paintScope(); return true;
 }
 /* Persist and repaint only - callers decide what to re-render, because a change
@@ -4892,6 +4907,9 @@ function setTod(t){
 function setScope(s){
   if((s!=="day"&&s!=="all")||s===SCOPE) return false;
   SCOPE=s; try{localStorage.setItem("sw.scope",s);}catch(e){}
+  /* Widening past a single day retires the time bucket with it - the cut no
+     longer applies, and the segment should say so instead of staying lit. */
+  if(s!=="day"&&TOD!=="all"){TOD="all"; try{localStorage.setItem("sw.tod","all");}catch(e){}}
   paintScope(); return true;
 }
 const BOOK_URL="https://web-production-798c0.up.railway.app/api/generate-booking-code";
