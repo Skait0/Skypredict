@@ -1179,10 +1179,16 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .sl-when{flex:1;min-width:0;font-size:11.5px;color:var(--soft);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sl-odds{font-size:13px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
-.sl-leg{display:flex;align-items:baseline;gap:7px;padding:3px 0;font-size:12px;line-height:1.35}
-.sl-m{width:13px;flex-shrink:0;font-weight:800;text-align:center;color:var(--faint)}
-.sl-leg.win .sl-m{color:var(--green)}
-.sl-leg.lose .sl-m{color:var(--red)}
+.sl-leg{display:flex;align-items:center;gap:9px;padding:4px 0;font-size:12px;line-height:1.35}
+/* Green landed, red missed, hollow still to play, grey void. Reading the
+   colour is instant; reading a glyph is not. */
+.sl-m{width:7px;height:7px;flex-shrink:0;border-radius:50%;
+  background:var(--line);box-shadow:none}
+.sl-leg.win .sl-m{background:var(--green)}
+.sl-leg.lose .sl-m{background:var(--red)}
+.sl-leg.void .sl-m{background:var(--faint)}
+.sl-leg.open .sl-m{background:transparent;box-shadow:inset 0 0 0 1.5px var(--faint)}
+.sl-leg.lose .sl-t{color:var(--soft)}
 .sl-t{flex:1;min-width:0;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sl-p{flex-shrink:0;color:var(--faint);font-size:11px;max-width:46%;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -3598,9 +3604,12 @@ function renderSlipsSheet(){
         "<span class='sl-when'>"+esc(slipWhen(sp.at))+" · "+sp.legs.length+" games</span>"+
         "<span class='sl-odds'>×"+sp.odds.toFixed(2)+"</span></div>"+
       "<div class='sl-legs'>"+sp.legs.map(function(l){
-        var mark=l.res==="win"?"✓":(l.res==="lose"?"✕":(l.res==="void"?"–":"·"));
+        /* A dot, not a tick. Ticks and crosses read as a checklist somebody
+           is working through; these are results, and the site already says
+           status with a coloured dot everywhere else. The score does the
+           explaining - the dot only has to say which way it went. */
         var sc=(l.hg!=null&&l.ag!=null)?(" "+l.hg+"-"+l.ag):"";
-        return "<div class='sl-leg "+(l.res||"open")+"'><span class='sl-m'>"+mark+"</span>"+
+        return "<div class='sl-leg "+(l.res||"open")+"'><span class='sl-m'></span>"+
           "<span class='sl-t'>"+esc(l.home)+" v "+esc(l.away)+"</span>"+
           "<span class='sl-p'>"+esc(l.label||l.code)+esc(sc)+"</span></div>";
       }).join("")+"</div>"+
