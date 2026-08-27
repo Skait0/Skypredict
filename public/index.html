@@ -212,6 +212,11 @@ img,svg{max-width:100%}
   align-items:center;justify-content:center;color:var(--soft);transition:.18s;padding:0}
 .tgl:hover{color:var(--text);border-color:var(--faint)}
 .tgl:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+/* display:flex above beats the browser's own [hidden] rule, so the install
+   button sat in the header whether or not there was anything to install -
+   and pressing it could only apologise. It is hidden until the browser
+   offers a prompt to fire. */
+.tgl[hidden]{display:none}
 
 /* ================================================================ intro */
 .intro{padding:26px 0 4px}
