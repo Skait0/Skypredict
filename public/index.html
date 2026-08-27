@@ -4502,13 +4502,44 @@ function attachEventIds(sporty){
   try{console.log("[sporty] matched "+hits+"/"+DATA.fixtures.length+" from "+sporty.length+" events (near:"+nearMisses+", none:"+noMatches+")");}catch(e){}
   return hits;
 }
+/* Every leg shows "no ID" until this has run, because that badge is simply
+   the absence of an event id. So a single bad moment upstream - the API
+   restarting, a phone between cells - used to poison the whole session: the
+   fetch failed, the error was swallowed, nothing retried, and every game on
+   the slip read as unavailable on SportyBet until the page was reloaded.
+   It retries now, backing off, and repaints when a late attempt lands so the
+   badges clear themselves instead of lying until the next render. */
+var SPORTY_TRIES=0;
 async function loadSporty(){
-  try{
-    var r=await fetch(SPORTY_FIXTURES,{headers:{Accept:"application/json"}});
-    var d=await r.json();
-    if(d&&d.matches) return attachEventIds(d.matches);
-  }catch(e){}
+  var attempts=0;
+  while(attempts<3){
+    attempts++;
+    try{
+      var r=await fetch(SPORTY_FIXTURES,{headers:{Accept:"application/json"}});
+      if(r.ok){
+        var d=await r.json();
+        if(d&&d.matches&&d.matches.length){
+          var n=attachEventIds(d.matches);
+          /* Only repaint for a rescue - on the first load the caller paints
+             straight after us and doing it twice just flashes the board. */
+          if(n&&SPORTY_TRIES>0) repaintAfterMatch();
+          SPORTY_TRIES++;
+          return n;
+        }
+      }
+    }catch(e){}
+    if(attempts<3) await new Promise(function(res){setTimeout(res,700*attempts);});
+  }
+  SPORTY_TRIES++;
   return 0;
+}
+/* Redraw whatever is currently showing ids, without disturbing anything the
+   user is part-way through. */
+function repaintAfterMatch(){
+  try{
+    if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
+    if(typeof paint==="function") paint();
+  }catch(e){}
 }
 
 function riskParams(r){
@@ -5698,7 +5729,7 @@ function toggleMy(id,code,label,p,srcEl){
     /* Heads-up if this game isn't on SportyBet yet - it can still be added, and
        we'll retry matching at book time, but the user should know up front. */
     var _f=fixtureById(id);
-    if(_f && !_f.eventId){ try{loadSporty();}catch(e){}
+    if(_f && !_f.eventId){ try{loadSporty().then(repaintAfterMatch);}catch(e){}
       window.swToast&&window.swToast("Added - not on SportyBet yet, we'll match it when you book","info","noid"); }
   }
   saveMy(); renderFab(); syncAddBtn(id,code);
