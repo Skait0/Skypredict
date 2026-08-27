@@ -1754,9 +1754,14 @@ html.mode-live #live{display:block}
 /* Compact centred modal for the booking code */
 .code-modal-scrim{position:fixed;inset:0;z-index:220;background:rgba(10,14,10,.45);
   backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px}
-.code-card{background:rgba(46,204,113,.16);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+/* Opaque, and the card's own colour rather than a tint of whatever is behind
+   it. A translucent green over a dark scrim gave light mode dark text on a
+   dark wash - the code itself was barely readable. The green stays as the
+   border and the eyebrow, where it says "this worked" without having to be
+   the whole surface. */
+.code-card{background:var(--card);
   border:1px solid rgba(46,204,113,.55);border-radius:14px;
-  box-shadow:0 18px 50px rgba(0,20,8,.45),inset 0 1px 0 rgba(255,255,255,.12);
+  box-shadow:0 18px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);
   padding:22px 26px;text-align:center;position:relative;width:min(340px,92vw)}
 .code-x{position:absolute;top:8px;right:8px;width:30px;height:30px;padding:0;
   display:flex;align-items:center;justify-content:center;
@@ -1777,8 +1782,10 @@ html.mode-live #live{display:block}
 .code-copy{background:var(--card);color:var(--text);border:1px solid var(--line)!important;
   min-width:112px;text-align:center}
 .code-open{background:var(--red);color:#fff}
-.code-alt{margin:12px 0 0;font-size:11.5px;line-height:1.5;color:var(--soft);text-align:center}
-.code-alt b{color:var(--text);font-weight:800}
+/* A footnote. It was competing with the code itself for attention, which is
+   the wrong way round - the code is why the modal is open. */
+.code-alt{margin:11px 0 0;font-size:10.5px;line-height:1.4;color:var(--faint);text-align:center}
+.code-alt b{color:var(--soft);font-weight:700}
 .code-err{background:var(--red-wash);border:1px solid var(--red);border-radius:var(--r-md);
   padding:15px;color:var(--red-ink);font-weight:600;font-size:14px}
 .code-info{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
@@ -1813,9 +1820,7 @@ html.mode-live #live{display:block}
 .netpill.on .dot{background:var(--green);box-shadow:0 0 8px 1px rgba(43,199,120,.8)}
 .netpill.off{border-color:var(--line)}
 .netpill.on{border-color:var(--green)}
-/* Pitch black and the mark, nothing else. The rings and sparks were a second
-   thing to look at during the one moment there is nothing to look at. */
-.loader{position:fixed;inset:0;z-index:999;background:#000;display:flex;
+.loader{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;
   align-items:center;justify-content:center;flex-direction:column;gap:20px;transition:opacity .45s ease}
 .loader.hide{opacity:0;pointer-events:none}
 .loader-orbit{position:relative;width:96px;height:96px;display:flex;align-items:center;justify-content:center}
@@ -1835,12 +1840,7 @@ html.mode-live #live{display:block}
   animation:ldrpulse 1s ease-in-out infinite}
 .loader-word{font-weight:800;font-size:19px;letter-spacing:-.01em;color:var(--text)}
 .loader-word em{color:var(--red);font-style:normal}
-/* Bigger than the header's 42px, so the splash reads as the mark rather than
-   as a small copy of the page furniture. */
-.loader-sig{position:absolute;top:50%;left:50%;width:78px;height:78px;margin:-39px 0 0 -39px;object-fit:contain;filter:drop-shadow(0 0 14px rgba(242,184,75,.5));animation:ldrpulse 2.2s ease-in-out infinite}
-.loader .ring,.loader .loader-spark,.loader .loader-halo{display:none}
-.loader-orbit{width:120px;height:120px}
-.loader-word{color:#f2f1f0}
+.loader-sig{position:absolute;top:50%;left:50%;width:52px;height:52px;margin:-26px 0 0 -26px;object-fit:contain;filter:drop-shadow(0 0 14px rgba(242,184,75,.5));animation:ldrpulse 2.2s ease-in-out infinite}
 @keyframes ldrspin{to{transform:rotate(360deg)}}
 @keyframes ldrhalo{0%,100%{opacity:.5;transform:scale(.9)}50%{opacity:1;transform:scale(1.08)}}
 @keyframes ldrtwinkle{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.5)}}
@@ -1975,12 +1975,7 @@ html.reduce .myfab{animation:none}
   .wsp-chip{padding:8px 12px;font-size:12.5px}
   .wsp-lead{font-size:12.5px}.wsp-go{padding:10px;font-size:13.5px}
 }
-/* A drag anywhere on this bar used to scroll the page underneath the sheet,
-   because the footer is not itself a scroll container and overscroll-behavior
-   only governs scrollers. Refusing the pan gesture here keeps the page still;
-   taps are unaffected. */
-.mysheet-foot{touch-action:none;
-  display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 16px 6px;
+.mysheet-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 16px 6px;
   border-top:1px solid var(--line-soft);margin-top:14px}
 .mysheet-foot .bld-odds{flex:1;min-width:120px}
 .mysheet-foot .clear-btn,.mysheet-foot .book-btn{flex-shrink:0}
@@ -4206,10 +4201,21 @@ const BOOK_URL="https://web-production-798c0.up.railway.app/api/generate-booking
    never has to. Only retries on network/5xx/no-code, never on a clean rejection. */
 function bookFetch(sel){
   var tries=0;
+  /* Without a deadline a request that never settles - the API restarting, a
+     phone that lost signal mid-post - left the button reading "Booking..."
+     with no way back except a reload. */
+  function withTimeout(ms){
+    var ctrl=("AbortController" in window)?new AbortController():null;
+    var t=setTimeout(function(){ try{ctrl&&ctrl.abort();}catch(e){} },ms);
+    return {signal:ctrl?ctrl.signal:undefined, done:function(){clearTimeout(t);}};
+  }
   function attempt(){
     tries++;
+    var to=withTimeout(15000);
     return fetch(BOOK_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+      signal:to.signal,
       body:JSON.stringify({selections:sel})})
+      .then(function(r){to.done();return r;},function(e){to.done();throw e;})
       .then(function(r){return r.json().catch(function(){return {};});})
       .then(function(d){
         if(d&&d.success&&d.booking_code) return d;
@@ -4761,8 +4767,7 @@ function showCode(code,hostId){
     "</div>"+
     /* The same booking code is valid on football.com, and people who use that
        app would otherwise assume it is SportyBet-only and rebuild by hand. */
-    "<p class='code-alt'>This code also works on the <b>football.com</b> app - "+
-    "paste it in there too.</p>"+
+    "<p class='code-alt'>Also works on the <b>football.com</b> app.</p>"+
     "</div>";
   document.body.appendChild(wrap);
   function close(){wrap.remove();}
@@ -5686,8 +5691,26 @@ function swapMy(id,oldCode,newCode){
   var br=$("myBookResult"); if(br) br.innerHTML="";
   renderMySheet();
 }
-function openMySheet(){renderMySheet();$("scrim").classList.add("on");$("mySheet").classList.add("on");pushOverlay();}
-function closeMySheet(){$("scrim").classList.remove("on");$("mySheet").classList.remove("on");}
+/* While a sheet covers the page, the page itself must not scroll - a drag
+   that starts on the sheet's own chrome would otherwise pan the board behind
+   it. Locking the body is the ordinary way to do that, and unlike
+   touch-action on the bar it leaves every button in the sheet alone. */
+function lockBody(on){
+  try{
+    var b=document.body;
+    if(on){
+      if(!b.dataset.lockY){ b.dataset.lockY=String(window.scrollY||0); }
+      b.style.overflow="hidden";
+    }else{
+      b.style.overflow="";
+      delete b.dataset.lockY;
+    }
+  }catch(e){}
+}
+function openMySheet(){renderMySheet();$("scrim").classList.add("on");$("mySheet").classList.add("on");lockBody(true);pushOverlay();}
+function closeMySheet(){$("scrim").classList.remove("on");$("mySheet").classList.remove("on");
+  /* Only release the page if no other sheet is still up. */
+  if(!$("sheet")||!$("sheet").classList.contains("on")) lockBody(false);}
 function renderMySheet(){
   var body=$("mySheetBody"); if(!body) return;
   MYSLIP=MYSLIP.filter(function(x){var f=fixtureById(x.id);return !f||notStarted(f);});
