@@ -398,6 +398,13 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .pill{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
   padding:4px 9px;border-radius:99px;background:var(--card-2);color:var(--soft)}
 .pill.value{background:var(--green-wash);color:var(--green-ink)}
+/* Ties a board row to the Pick of the day card above it. Amber with the same
+   star the card carries, so the eye pairs them rather than reading two games. */
+.pill.potd-tag{background:var(--win-wash);color:var(--win-ink);letter-spacing:.02em}
+/* The list grid is tight - names already ellipsize - so the pick shows as a
+   bare gold star, not a pill. Same star as the card, enough to pair the row
+   with it without taking a column's worth of width. */
+.lt-pick{flex-shrink:0;margin-left:5px;font-size:12px;line-height:1;color:#F2B84B}
 .pill.draw{background:var(--raise);color:var(--soft)}
 .pill.banker{background:var(--win-wash);color:var(--win-ink)}
 
@@ -4246,13 +4253,15 @@ function prunePotdKeys(keepDate){
   try{ for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i);
     if(k&&k.indexOf("sw.potd.")===0 && k!=="sw.potd."+keepDate) localStorage.removeItem(k); } }catch(e){}
 }
+/* Which board row is the Pick of the day, so it can be tagged in the list. */
+var POTD_ID="";
 function renderPotd(){
   /* Pick of the day means today's pick, and holding it - with its score, and
      its result once graded - is this card's whole job. So it stays on today
      even after the board has moved on to the next day with football in it.
      Only if today has no card at all does it follow the board. */
   const day=allOnDay(0).length ? allOnDay(0) : allOnDay(V.off);
-  if(!day.length){$("potd").innerHTML="";return;}
+  if(!day.length){$("potd").innerHTML="";POTD_ID="";return;}
   const dateStr=day[0].date, lockKey="sw.potd."+dateStr;
   // Reuse the locked pick for this date; only pick fresh if none stored yet.
   let lock=null; try{lock=JSON.parse(localStorage.getItem(lockKey)||"null");}catch(e){}
@@ -4269,6 +4278,10 @@ function renderPotd(){
     try{localStorage.setItem(lockKey,JSON.stringify({id:fid(top),home:top.home,away:top.away,date:top.date}));}catch(e){}
     prunePotdKeys(dateStr);
   }
+  /* Tell the board which row is this pick, so it can be tagged rather than read
+     as a second, unrelated live game. render() calls renderPotd() before it
+     builds the rows, so this is set by the time they need it. */
+  POTD_ID=fid(top);
 
   /* Live-feed match for this pick gives near real-time score; falls back to the
      backend result once the live feed drops a finished game. Rules:
@@ -4553,6 +4566,10 @@ function matchHTML(f){
   if(f.draw_watch && _mgn<=1) pills.push("<span class='pill draw'>Could be a draw</span>");
   if(f.o25>=0.66) pills.push("<span class='pill goals'>Goals likely</span>");
   var _vb=valPill(f); if(_vb) pills.unshift(_vb);
+  /* The featured pick also sits in the board. Tag its row so the score it
+     shares with the Pick of the day card reads as the same game, not a second
+     one. */
+  if(fid(f)===POTD_ID) pills.unshift("<span class='pill potd-tag'>★ Pick</span>");
   return "<article class='m conf-"+cf+"' id='"+fid(f)+"'>"+
     "<button class='m-btn' data-fx='"+fid(f)+"'>"+
       "<span class='m-top'><span class='t'>"+esc(kickTime(f))+"</span>"+statusSlot(f)+pills.join("")+"</span>"+
@@ -4636,7 +4653,7 @@ function listRowHTML(f){
   const lead=(f.home_p>=f.draw_p&&f.home_p>=f.away_p)?"h":(f.away_p>=f.draw_p?"a":"d");
   return "<div class='lrow conf-"+cf+openCls+"' data-lf='"+id+"'>"+
     "<span class='lt-time'>"+esc(kickTime(f))+"</span>"+
-    "<span class='lt-match'><span class='tm'>"+esc(f.home)+"</span><span class='vs'>v</span><span class='tm'>"+esc(f.away)+"</span>"+statusSlot(f)+"</span>"+
+    "<span class='lt-match'><span class='tm'>"+esc(f.home)+"</span><span class='vs'>v</span><span class='tm'>"+esc(f.away)+"</span>"+statusSlot(f)+(id===POTD_ID?"<span class='lt-pick' title='Pick of the day' aria-label='Pick of the day'>★</span>":"")+"</span>"+
     "<span class='lt-p"+(lead==="h"?" lead":"")+"'>"+P0(f.home_p)+"<small>%</small></span>"+
     "<span class='lt-p"+(lead==="d"?" lead":"")+"'>"+P0(f.draw_p)+"<small>%</small></span>"+
     "<span class='lt-p"+(lead==="a"?" lead":"")+"'>"+P0(f.away_p)+"<small>%</small></span>"+
@@ -4690,7 +4707,7 @@ function render(){
      day the recap has nothing to say. */
   renderDaily(); renderProof();
   if(V.off<0){ document.documentElement.classList.add("is-results");
-    $("potd").innerHTML="";$("sotd").innerHTML="";$("record").innerHTML="";
+    $("potd").innerHTML="";POTD_ID="";$("sotd").innerHTML="";$("record").innerHTML="";
     renderBoardHead([]); renderResults(); return; }
   document.documentElement.classList.remove("is-results");
   renderPotd(); renderSlipOfDay(); renderRecord(); renderBookAll(); renderSlipTease();
