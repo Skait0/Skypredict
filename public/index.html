@@ -4079,7 +4079,8 @@ function bookFetch(sel){
   return attempt();
 }
 const SPORTY_URL="https://www.sportybet.com/ng/?shareCode=";
-const SPORTY_FIXTURES="https://web-production-798c0.up.railway.app/api/fixtures";
+/* Same-origin so Vercel's CDN can cache it - see lib/upstream.js. */
+const SPORTY_FIXTURES="/api/fixtures";
 
 /* Common team name aliases that SportyBet uses but our data doesn't (or vice versa).
    These are applied AFTER accent stripping but BEFORE tokenization. */
@@ -5029,7 +5030,8 @@ function wireNotif(){
   });
 }
 /* ============================================================ live scores */
-const LIVE_URL="https://web-production-798c0.up.railway.app/api/livescores";
+/* Same-origin so Vercel's CDN absorbs the polling - see lib/upstream.js. */
+const LIVE_URL="/api/live";
 var LIVE={matches:[],at:0,timer:null,loading:false,prev:{},flash:{},filter:"",store:{},lit:{},favOnly:false};
 /* Followed matches: ids kept in localStorage so the star survives a refresh.
    These are also the only games worth a notification - following a match is

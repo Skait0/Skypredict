@@ -1,23 +1,46 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/predictions.js": { "maxDuration": 60, "memory": 1024 },
-    "api/cron.js": { "maxDuration": 60, "memory": 1024 }
+    "api/predictions.js": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "api/cron.js": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "api/live.js": {
+      "maxDuration": 15,
+      "memory": 256
+    },
+    "api/fixtures.js": {
+      "maxDuration": 15,
+      "memory": 256
+    }
   },
   "crons": [
-    { "path": "/api/cron", "schedule": "30 6 * * *" }
+    {
+      "path": "/api/cron",
+      "schedule": "30 6 * * *"
+    }
   ],
   "headers": [
     {
       "source": "/app.(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/predictions.json",
       "headers": [
-        { "key": "Cache-Control", "value": "public, s-maxage=3600, stale-while-revalidate=86400" }
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=3600, stale-while-revalidate=86400"
+        }
       ]
     }
   ]
