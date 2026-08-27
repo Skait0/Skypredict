@@ -429,10 +429,12 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .fx-st{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;
   padding:2px 7px;border-radius:99px;white-space:nowrap;vertical-align:middle}
 .fx-live{background:var(--red);color:#fff}
-.fx-live .ld{width:6px;height:6px;border-radius:50%;background:#fff;
-  animation:fxBlink 1.4s ease-in-out infinite}
-@keyframes fxBlink{0%,100%{opacity:1}50%{opacity:.25}}
-@media (prefers-reduced-motion:reduce){.fx-live .ld{animation:none}}
+/* A solid dot, not a pulsing one. One live badge blinking reads as alive; a
+   busy Saturday of twenty blinking on their own timers reads as an emergency,
+   and attention does not scale - if every row grabs, none of them rank. The
+   red pill already says "in play"; the single animated pulse is spent on the
+   Pick of the day, where it has something to point at. */
+.fx-live .ld{width:6px;height:6px;border-radius:50%;background:#fff}
 /* Played, but nothing to report yet - neutral, so it never reads as a result. */
 .fx-done{background:var(--card-2);color:var(--faint);border:1px solid var(--line)}
 .fx-hit{background:var(--green-wash);color:var(--green-ink)}
