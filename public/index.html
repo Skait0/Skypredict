@@ -1791,15 +1791,23 @@ html.mode-live #live{display:block}
 /* Compact centred modal for the booking code */
 .code-modal-scrim{position:fixed;inset:0;z-index:220;background:rgba(10,14,10,.45);
   backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px}
-/* Opaque, and the card's own colour rather than a tint of whatever is behind
-   it. A translucent green over a dark scrim gave light mode dark text on a
-   dark wash - the code itself was barely readable. The green stays as the
-   border and the eyebrow, where it says "this worked" without having to be
-   the whole surface. */
-.code-card{background:var(--card);
+/* A tinted pane, the way it always was in dark mode - the green wash there
+   is half of why a code feels like a result rather than a dialog. What broke
+   was only light mode, where a green tint over a dark scrim left dark text
+   on a dark surface. So light mode gets its own wash instead of losing the
+   effect: the brand red, kept pale enough that black text clears contrast on
+   it, over a light scrim. */
+.code-card{background:rgba(46,204,113,.16);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   border:1px solid rgba(46,204,113,.55);border-radius:14px;
-  box-shadow:0 18px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);
+  box-shadow:0 18px 50px rgba(0,20,8,.45),inset 0 1px 0 rgba(255,255,255,.12);
   padding:22px 26px;text-align:center;position:relative;width:min(340px,92vw)}
+[data-theme="light"] .code-modal-scrim{background:rgba(28,20,22,.34)}
+[data-theme="light"] .code-card{
+  background:rgba(230,57,70,.10);
+  border-color:rgba(230,57,70,.42);
+  box-shadow:0 18px 50px rgba(60,10,16,.22),inset 0 1px 0 rgba(255,255,255,.6)}
+[data-theme="light"] .code-card i{color:var(--red)}
 .code-x{position:absolute;top:8px;right:8px;width:30px;height:30px;padding:0;
   display:flex;align-items:center;justify-content:center;
   background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);
@@ -1819,10 +1827,12 @@ html.mode-live #live{display:block}
 .code-copy{background:var(--card);color:var(--text);border:1px solid var(--line)!important;
   min-width:112px;text-align:center}
 .code-open{background:var(--red);color:#fff}
-/* A footnote. It was competing with the code itself for attention, which is
-   the wrong way round - the code is why the modal is open. */
-.code-alt{margin:11px 0 0;font-size:10.5px;line-height:1.4;color:var(--faint);text-align:center}
-.code-alt b{color:var(--soft);font-weight:700}
+/* A footnote, and quieter than the brand name in it deserves - the code is
+   why this modal is open, and a second bookmaker set in bold was reading
+   like an advert for one. Same weight and colour as the words around it. */
+.code-alt{margin:10px 0 0;font-size:10.5px;line-height:1.4;color:var(--faint);
+  text-align:center;opacity:.85}
+.code-alt b{color:inherit;font-weight:inherit}
 .code-err{background:var(--red-wash);border:1px solid var(--red);border-radius:var(--r-md);
   padding:15px;color:var(--red-ink);font-weight:600;font-size:14px}
 .code-info{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
@@ -4850,7 +4860,7 @@ function showCode(code,hostId){
     "</div>"+
     /* The same booking code is valid on football.com, and people who use that
        app would otherwise assume it is SportyBet-only and rebuild by hand. */
-    "<p class='code-alt'>Also works on the <b>football.com</b> app.</p>"+
+    "<p class='code-alt'>Works on football.com too.</p>"+
     "</div>";
   document.body.appendChild(wrap);
   function close(){wrap.remove();}
@@ -5768,12 +5778,23 @@ function closeSwapMenu(){
   document.removeEventListener("keydown",swapKey,true);
   window.removeEventListener("resize",closeSwapMenu);
 }
-function swapAway(e){ if(SWAPMENU&&!SWAPMENU.contains(e.target)) closeSwapMenu(); }
+/* The trigger is "outside" the menu, so a press on it closed the menu here
+   and the click that followed opened it straight back up - the icon looked
+   dead however many times you tapped it. Leave the trigger alone and let its
+   own handler do the toggling. */
+function swapAway(e){
+  if(!SWAPMENU) return;
+  if(SWAPMENU.contains(e.target)) return;
+  var t=SWAPMENU._btn;
+  if(t&&(t===e.target||t.contains(e.target))) return;
+  closeSwapMenu();
+}
 function swapKey(e){ if(e.key==="Escape"){ e.preventDefault(); closeSwapMenu(); } }
 function openSwapMenu(btn){
+  /* Second tap on the same row closes it. */
   var wasOpen = SWAPMENU && SWAPMENU._btn===btn;
   closeSwapMenu();
-  if(wasOpen) return;                 /* tapping it again just closes it */
+  if(wasOpen) return;
   var id=btn.dataset.myswap, code=btn.dataset.code;
   var f=fixtureById(id); if(!f) return;
   var opts=swapOptions(f); if(opts.length<2) return;
