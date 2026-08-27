@@ -7891,6 +7891,12 @@ function paint(){
   if(box){let t=null;box.addEventListener("input",function(){
     clearTimeout(t);t=setTimeout(function(){V.q=box.value;render();},160);});}
   render();
+  /* The scope segment is painted once at init, before any fixtures exist, and
+     a page deep-linked to #build can draw the builder before the payload lands.
+     Repaint it whenever data settles so the day pill's count and the picker's
+     rows are drawn from the same fixtures - otherwise the pill reads a stale 0
+     while the on-open menu shows the real number. */
+  try{paintScope();}catch(e){}
 }
 
 /* --------------------------------------------------------- live data
