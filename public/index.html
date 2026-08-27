@@ -2358,7 +2358,9 @@ body{line-height:1.45;padding-bottom:24px}
    Together these take the column back under a full screen, which is what
    stops it needing a scrollbar of its own. */
 @media(min-width:1060px){
-  .home-rail{gap:9px}
+  /* The column gap is set on the rail's own rule further down - this section
+     is earlier in the file, so a second .home-rail{gap} here would lose the
+     tie rather than win it. */
   /* Cards carry their own top/bottom margins for the flow layout; in here the
      column's gap already does that job, and the two were stacking. */
   .home-rail>*{margin-top:0;margin-bottom:0}
@@ -2372,7 +2374,7 @@ body{line-height:1.45;padding-bottom:24px}
 
   .home-rail .potd-top{padding:8px 15px}
   .home-rail .potd-body{padding:10px 14px}
-  .home-rail .potd .meta{margin-top:4px}
+  .home-rail .potd .meta{margin-top:4px;font-size:13px;line-height:1.38}
   .home-rail .why{margin-top:9px;padding-top:9px}
   .home-rail .why .eyebrow{margin-bottom:6px}
   .home-rail .why ul{gap:4px}
@@ -2700,7 +2702,7 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
      rail needs to space its children by gap alone, and it was also eating the
      first child's margin - which left the panel butted flat against the live
      ticker above it with no gap at all. */
-  .home-rail{flex:0 0 372px;order:2;gap:14px;margin-top:14px}
+  .home-rail{flex:0 0 372px;order:2;gap:9px;margin-top:14px}
   .home-rail>*{margin-top:0}
   .home-rail .potd,.home-rail .slip-cta{margin-top:0}
   /* The filter bar sticks in its own column; without a matching offset the two
@@ -2731,8 +2733,8 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
      Without it the wheel scrolls the rail while the rail has somewhere to go
      and hands over to the page when it does not, which is what a column
      inside a page should do. */
-  html.rail-fits .home-rail{position:sticky;top:12px;
-    max-height:calc(100vh - 24px);overflow-y:auto;
+  html.rail-fits .home-rail{position:sticky;top:10px;
+    max-height:calc(100vh - 20px);overflow-y:auto;
     scrollbar-width:thin}
   /* Cards in here must never be squashed to fit.
      The rail is a flex column with a height cap, and flex children shrink by
@@ -5871,7 +5873,7 @@ function fitRail(){
   if(!rail) return;
   if(!RAIL_MQ.matches){ de.classList.remove("rail-fits"); return; }
   de.classList.remove("rail-fits");          // measure it uncapped
-  var fits = rail.scrollHeight + 4 <= window.innerHeight - 24;
+  var fits = rail.scrollHeight + 4 <= window.innerHeight - 20;
   de.classList.toggle("rail-fits", fits);
 }
 (function(){
