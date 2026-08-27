@@ -124,6 +124,14 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
      define the card without cutting it out */
   --edge:#A69B89;     /* warmer edge */
 }
+/* Native controls - the live-score select in particular - were being drawn in
+   the browser's default scheme for a frame before ours applied, which is the
+   black flash when the list opens. color-scheme tells the engine up front
+   which set of system colours to build them from, so there is nothing to
+   correct afterwards. */
+:root{color-scheme:dark}
+[data-theme="light"]{color-scheme:light}
+select,option{background-color:var(--card);color:var(--text)}
 :root{--r-sm:4px;--r-md:6px;--r-lg:8px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 button,a,.m,.lrow,.gl-card,.cat,.vt,.navt,.btab,.opt-add{-webkit-tap-highlight-color:transparent;tap-highlight-color:transparent}
@@ -1679,8 +1687,14 @@ html.mode-live #live{display:block}
 .code-acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .code-acts button,.code-acts a{font:inherit;font-weight:800;font-size:14px;padding:11px 18px;
   border-radius:var(--r-md);cursor:pointer;text-decoration:none;border:0}
-.code-copy{background:var(--card);color:var(--text);border:1px solid var(--line)!important}
+/* "Copy code" becomes "Copied" and back. Auto width meant the button - and
+   the modal around it - resized twice on every copy. Reserve the wider label's
+   width so only the text changes. */
+.code-copy{background:var(--card);color:var(--text);border:1px solid var(--line)!important;
+  min-width:112px;text-align:center}
 .code-open{background:var(--red);color:#fff}
+.code-alt{margin:12px 0 0;font-size:11.5px;line-height:1.5;color:var(--soft);text-align:center}
+.code-alt b{color:var(--text);font-weight:800}
 .code-err{background:var(--red-wash);border:1px solid var(--red);border-radius:var(--r-md);
   padding:15px;color:var(--red-ink);font-weight:600;font-size:14px}
 .code-info{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
@@ -1715,7 +1729,9 @@ html.mode-live #live{display:block}
 .netpill.on .dot{background:var(--green);box-shadow:0 0 8px 1px rgba(43,199,120,.8)}
 .netpill.off{border-color:var(--line)}
 .netpill.on{border-color:var(--green)}
-.loader{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;
+/* Pitch black and the mark, nothing else. The rings and sparks were a second
+   thing to look at during the one moment there is nothing to look at. */
+.loader{position:fixed;inset:0;z-index:999;background:#000;display:flex;
   align-items:center;justify-content:center;flex-direction:column;gap:20px;transition:opacity .45s ease}
 .loader.hide{opacity:0;pointer-events:none}
 .loader-orbit{position:relative;width:96px;height:96px;display:flex;align-items:center;justify-content:center}
@@ -1735,7 +1751,12 @@ html.mode-live #live{display:block}
   animation:ldrpulse 1s ease-in-out infinite}
 .loader-word{font-weight:800;font-size:19px;letter-spacing:-.01em;color:var(--text)}
 .loader-word em{color:var(--red);font-style:normal}
-.loader-sig{position:absolute;top:50%;left:50%;width:40px;height:40px;margin:-20px 0 0 -20px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(242,184,75,.55));animation:ldrpulse 1.8s ease-in-out infinite}
+/* Bigger than the header's 42px, so the splash reads as the mark rather than
+   as a small copy of the page furniture. */
+.loader-sig{position:absolute;top:50%;left:50%;width:78px;height:78px;margin:-39px 0 0 -39px;object-fit:contain;filter:drop-shadow(0 0 14px rgba(242,184,75,.5));animation:ldrpulse 2.2s ease-in-out infinite}
+.loader .ring,.loader .loader-spark,.loader .loader-halo{display:none}
+.loader-orbit{width:120px;height:120px}
+.loader-word{color:#f2f1f0}
 @keyframes ldrspin{to{transform:rotate(360deg)}}
 @keyframes ldrhalo{0%,100%{opacity:.5;transform:scale(.9)}50%{opacity:1;transform:scale(1.08)}}
 @keyframes ldrtwinkle{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.5)}}
@@ -4344,14 +4365,18 @@ function relLum(rgb){
    navigator.vibrate does not exist on a desktop, and is ignored where the
    platform or the user has it switched off. Silent when reduced motion is
    asked for, since that setting is about being left alone. */
-function buzzConjure(){
+function buzz(pattern){
   try{
     if(REDUCED) return;
     if(!("vibrate" in navigator)) return;
     if(!matchMedia("(hover:none) and (pointer:coarse)").matches) return;
-    navigator.vibrate([14,45,26]);
+    navigator.vibrate(pattern);
   }catch(e){}
 }
+/* Two tones for the conjure: it is the moment something was made. */
+function buzzConjure(){ buzz([14,45,26]); }
+/* One short tick for navigation: enough to feel, not enough to notice. */
+function buzzTap(){ buzz(10); }
 function inkOn(h,s,l){
   var L=relLum(hslToRgb(h,s,l));
   var white=1.05/(L+0.05), black=(L+0.05)/0.05;
@@ -4555,7 +4580,12 @@ function showCode(code,hostId){
       "<button class='share-btn' type='button' data-sh='1'>↗ Share</button>"+
       "<a class='code-open' href='"+SPORTY_URL+encodeURIComponent(code)+
         "' target='_blank' rel='noopener'>Open in SportyBet</a>"+
-    "</div></div>";
+    "</div>"+
+    /* The same booking code is valid on football.com, and people who use that
+       app would otherwise assume it is SportyBet-only and rebuild by hand. */
+    "<p class='code-alt'>This code also works on the <b>football.com</b> app - "+
+    "paste it in there too.</p>"+
+    "</div>";
   document.body.appendChild(wrap);
   function close(){wrap.remove();}
   wrap.addEventListener("click",function(e){if(e.target===wrap)close();});
@@ -5547,9 +5577,9 @@ $("tab-pred").addEventListener("click",function(){setView("pred");});
 $("tab-live").addEventListener("click",function(){setView("live");});
 $("tab-build").addEventListener("click",function(){setView("build");});
 $("liveRefresh").addEventListener("click",fetchLive);
-$("bt-pred").addEventListener("click",function(){setView("pred");});
-$("bt-live").addEventListener("click",function(){setView("live");});
-$("bt-build").addEventListener("click",function(){setView("build");});
+$("bt-pred").addEventListener("click",function(){buzzTap();setView("pred");});
+$("bt-live").addEventListener("click",function(){buzzTap();setView("live");});
+$("bt-build").addEventListener("click",function(){buzzTap();setView("build");});
 $("logo").addEventListener("click",function(e){e.preventDefault();setView("pred");});
 (function(){
   var cta=$("slipCta"); if(!cta) return;
