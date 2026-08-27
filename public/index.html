@@ -1629,6 +1629,34 @@ html.mode-live #live{display:block}
 /* ...and stop the pick column taking more than its share on a narrow row. */
 .sp-pick{max-width:44%}
 .sp-meta{font-size:12px;color:var(--faint);margin-top:2px}
+/* The pick, as a control rather than a caption. It has to read as the label
+   it replaced until you notice you can change it, so it keeps that size and
+   colour and carries a chevron as the only hint - a full form-control border
+   on every row would turn a slip into a settings page. */
+.sp-swap{position:relative;margin-top:2px;max-width:100%}
+.sp-sel{appearance:none;-webkit-appearance:none;
+  width:100%;max-width:100%;
+  font:inherit;font-size:12px;font-weight:600;
+  color:var(--soft);background:transparent;
+  border:1px solid transparent;border-radius:var(--r-sm,8px);
+  padding:2px 20px 2px 6px;margin-left:-6px;
+  cursor:pointer;
+  /* Long fixtures must not blow the row out; the OS picker shows the full
+     text when it opens, so trimming here costs nothing. */
+  text-overflow:ellipsis;white-space:nowrap;overflow:hidden;
+  transition:background .14s ease,border-color .14s ease,color .14s ease}
+.sp-swap::after{content:"";position:absolute;right:7px;top:50%;
+  width:5px;height:5px;margin-top:-3px;pointer-events:none;
+  border-right:1.5px solid var(--faint);border-bottom:1.5px solid var(--faint);
+  transform:rotate(45deg);transition:border-color .14s ease}
+.sp-sel:hover{color:var(--text);background:var(--chip,rgba(255,255,255,.06));
+  border-color:var(--line)}
+.sp-swap:hover::after{border-color:var(--text)}
+.sp-sel:focus-visible{outline:2px solid var(--red);outline-offset:1px;color:var(--text)}
+@media (max-width:640px){
+  /* Bigger tap target on a phone without making the row taller. */
+  .sp-sel{padding-top:5px;padding-bottom:5px}
+}
 .sp-pick{text-align:right;flex-shrink:0}
 .sp-pick b{display:block;font-size:13px;font-weight:800;color:var(--text)}
 .sp-pick i{font-style:normal;font-size:11.5px;font-weight:700;color:var(--soft)}
@@ -5382,6 +5410,26 @@ try{MYSLIP=JSON.parse(localStorage.getItem("sw.myslip")||"[]");}catch(e){MYSLIP=
 function saveMy(){try{localStorage.setItem("sw.myslip",JSON.stringify(MYSLIP));}catch(e){}}
 function myslipHas(id,code){return MYSLIP.some(function(x){return x.id===id&&x.code===code;});}
 function myOdds(){return MYSLIP.reduce(function(t,x){return t*legOdd(fixtureById(x.id),x.code,x.p);},1);}
+/* The markets a leg can be changed to. Only ones carrying a SportyBet code:
+   we predict more than we can book - under 2.5, first-half goals and the
+   combos have no code - so offering those here would quietly build a leg
+   that fails when the code is generated. Order follows the expanded card,
+   so the same match reads the same way in both places. */
+function swapOptions(f){
+  if(!f) return [];
+  var noDraw=(f.anybody!=null)?f.anybody:f.dc12;
+  return [
+    {code:"1",label:f.home+" to win",p:f.home_p},
+    {code:"2",label:f.away+" to win",p:f.away_p},
+    {code:"X",label:"Draw",p:f.draw_p},
+    {code:"1X",label:f.home+" or draw",p:f.dc1x},
+    {code:"X2",label:f.away+" or draw",p:f.dcx2},
+    {code:"12",label:"Any team to win",p:noDraw},
+    {code:"OVER_1.5",label:"Over 1.5 goals",p:f.o15},
+    {code:"OVER_2.5",label:"Over 2.5 goals",p:f.o25},
+    {code:"GG",label:"Both teams score",p:f.btts}
+  ].filter(function(o){return o.p!=null&&!isNaN(o.p);});
+}
 function renderFab(){var fab=$("myFab"); if(!fab) return; fab.hidden=MYSLIP.length===0;
   var c=$("myFabC"); if(c) c.textContent=MYSLIP.length;}
 function clearMy(){
@@ -5439,12 +5487,47 @@ function toggleMy(id,code,label,p,srcEl){
     if(_f && !_f.eventId){ try{loadSporty();}catch(e){}
       window.swToast&&window.swToast("Added - not on SportyBet yet, we'll match it when you book","info","noid"); }
   }
-  saveMy(); renderFab();
+  saveMy(); renderFab(); syncAddBtn(id,code);
+  if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
+}
+/* Repaint the add buttons for one match+market wherever they sit on the
+   board, so the tick agrees with the slip. Shared by adding and by changing
+   a pick - a change has to repaint two markets, the one being left and the
+   one being taken. */
+function syncAddBtn(id,code){
   document.querySelectorAll("[data-add='"+id+"'][data-code='"+code+"']").forEach(function(b){
     var on=myslipHas(id,code); b.classList.toggle("on",on);
     if(b.classList.contains("m-add")){var ic=b.querySelector(".ma-ic"); if(ic)ic.innerHTML=on?CHK:PLUS; if(b.lastChild)b.lastChild.textContent=on?" Added":" Add to slip";}
     else b.textContent=on?"\u2713":"+";});
-  if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
+}
+/* Change one leg's market, keeping its place in the slip.
+   The total is derived from MYSLIP every time the sheet renders, so
+   re-rendering IS the recalculation: there is no second copy of the odds to
+   keep in step, and no way for the number at the bottom to drift from the
+   legs above it. */
+function swapMy(id,oldCode,newCode){
+  if(oldCode===newCode) return;
+  var f=fixtureById(id); if(!f) return;
+  var opts=swapOptions(f), pick=null;
+  for(var k=0;k<opts.length;k++){ if(opts[k].code===newCode){pick=opts[k];break;} }
+  if(!pick) return;
+  /* SportyBet takes one pick per match, so moving onto a market this match
+     already occupies would build a slip that cannot be booked. */
+  if(myslipHas(id,newCode)){
+    window.swToast&&window.swToast("That pick is already on your slip","info","dupswap");
+    renderMySheet(); return;
+  }
+  for(var i=0;i<MYSLIP.length;i++){
+    if(MYSLIP[i].id===id&&MYSLIP[i].code===oldCode){
+      MYSLIP[i].code=newCode; MYSLIP[i].label=pick.label; MYSLIP[i].p=+pick.p;
+      break;
+    }
+  }
+  saveMy(); renderFab();
+  syncAddBtn(id,oldCode); syncAddBtn(id,newCode);
+  /* A code generated from the old legs no longer describes this slip. */
+  var br=$("myBookResult"); if(br) br.innerHTML="";
+  renderMySheet();
 }
 function openMySheet(){renderMySheet();$("scrim").classList.add("on");$("mySheet").classList.add("on");pushOverlay();}
 function closeMySheet(){$("scrim").classList.remove("on");$("mySheet").classList.remove("on");}
@@ -5467,9 +5550,23 @@ function renderMySheet(){
     var f=fixtureById(x.id);
     var teams=f?esc(f.home)+" v "+esc(f.away):"Match";
     var noid=(f&&f.eventId)?"":"<span class='sp-noid' title='Not on SportyBet yet - can&apos;t auto-book'>no ID</span>";
+    /* Every other thing we predict for this match, so a leg can be changed
+       without leaving the slip and hunting the board for the same game.
+       A native select is deliberate: on a phone it opens the OS picker
+       people already know, and it keeps the rows around it still - a panel
+       that expanded in place would shove the rest of the slip down while
+       you are comparing this leg against it. */
+    var opts=f?swapOptions(f):[];
+    var picker=(opts.length>1)
+      ? "<div class='sp-swap'><select class='sp-sel' data-myswap=\""+esc(x.id)+"\" data-code=\""+esc(x.code)+"\" aria-label=\"Change the pick for "+teams+"\">"+
+          opts.map(function(o){
+            return "<option value=\""+esc(o.code)+"\""+(o.code===x.code?" selected":"")+">"+
+              esc(o.label)+" · "+P0(o.p)+"% · ×"+legOdd(f,o.code,o.p).toFixed(2)+"</option>";
+          }).join("")+"</select></div>"
+      : "<div class='sp-meta'>"+esc(x.label)+"</div>";
     return "<div class='sp-row'>"+
       "<div class='sp-main'><div class='sp-teams'>"+teams+noid+"</div>"+
-        "<div class='sp-meta'>"+esc(x.label)+"</div></div>"+
+        picker+"</div>"+
       "<div class='sp-pick'><i>"+P0(x.p)+"%</i></div>"+
       "<span class='sp-odd'>"+(x.p>0?legOdd(fixtureById(x.id),x.code,x.p).toFixed(2):"-")+"</span>"+
       "<button class='sp-x' data-myrm='"+x.id+"|"+x.code+"' aria-label='Remove'>"+XSVG+"</button>"+
@@ -5478,6 +5575,10 @@ function renderMySheet(){
   $("myTotOdds").textContent="\u00d7"+myOdds().toFixed(2);
   body.querySelectorAll("[data-myrm]").forEach(function(b){
     b.addEventListener("click",function(){var p=b.dataset.myrm.split("|"); toggleMy(p[0],p[1]);});});
+  body.querySelectorAll("[data-myswap]").forEach(function(s){
+    s.addEventListener("change",function(){
+      swapMy(s.dataset.myswap,s.dataset.code,s.value);
+    });});
 }
 async function bookMy(){
   MYSLIP=MYSLIP.filter(function(x){var f=fixtureById(x.id);return !f||notStarted(f);});
