@@ -787,6 +787,15 @@ html.mode-build .slip-cta,html.mode-live .slip-cta{display:none}
 @media(prefers-reduced-motion:reduce){.slipbar{transition:none}}
 /* Cards/List on the left, the day being shown on the right. Wraps to two lines
    on a narrow phone rather than crushing the day label. */
+/* The heading names the day and the pill acts on that day, so on a wide
+   screen they belong on one line - above the day arrows rather than beside
+   the view toggle, which changes something else entirely.
+   Desktop only. On a phone the pill has its own place in the row below, tuned
+   across three breakpoints, and none of that should move. */
+.head-line{display:flex;align-items:flex-end;justify-content:space-between;gap:18px}
+.head-line .board-head{flex:1 1 auto;min-width:0}
+.ba-slot{flex:0 0 auto;display:none}
+@media(min-width:721px){ .ba-slot{display:block} }
 .toprow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 2px}
 .toprow .viewtoggle.top{margin:0}
 .toprow .datebar{margin-left:auto}
@@ -3131,7 +3140,10 @@ footer{margin-top:26px;padding-top:18px;
   <!-- The board used to just begin - controls, filters, cards - so a tap on
        "See today's predictions" landed at a position rather than a place, and
        felt like it had fizzled. Naming it makes the same scroll an arrival. -->
-  <header class="board-head" id="boardHead"></header>
+  <div class="head-line">
+    <header class="board-head" id="boardHead"></header>
+    <span class="ba-slot" id="baSlot"></span>
+  </div>
 
   <!-- The two controls that change what you are looking at - how it is drawn,
        and which day - sit together on one row above the board. -->
@@ -5749,8 +5761,26 @@ function renderStreak(){
    Says what the board is and how much of it there is, so arriving at it feels
    like reaching a section rather than stopping halfway down a page. Counts
    follow the current filter, so it stays honest when the list is narrowed. */
+/* On a wide screen the Add-all pill belongs on the heading line, above the
+   day arrows: the heading names the day and the pill acts on that day, while
+   the view toggle beside its old home changes something else entirely.
+   The node is moved rather than duplicated, and only above 720px - on a phone
+   it has its own place in the row below, tuned across three breakpoints, and
+   none of that should shift. */
+var BA_MQ=window.matchMedia("(min-width:721px)");
+function placeBookAll(){
+  var row=document.querySelector(".bookall-row");
+  var slot=$("baSlot"), top=document.querySelector(".toprow"),
+      date=document.querySelector(".datebar");
+  if(!row||!slot||!top) return;
+  if(BA_MQ.matches){ if(row.parentNode!==slot) slot.appendChild(row); }
+  else if(row.parentNode!==top){ top.insertBefore(row, date||null); }
+}
+try{ BA_MQ.addEventListener("change",placeBookAll); }
+catch(e){ try{ BA_MQ.addListener(placeBookAll); }catch(e2){} }
 function renderBoardHead(list){
   var h=$("boardHead"); if(!h) return;
+  placeBookAll();
   if(V.off<0){
     var rs=resultsOnDay();
     h.innerHTML="<h2>Results</h2><p>"+esc(dayName(V.off))+" · "+rs.length+
@@ -6903,7 +6933,23 @@ $("myClearBtn").addEventListener("click",clearMy);
 (function(){
   var b=$("mySheetShuffle"); if(!b) return;
   b.addEventListener("click",function(){
-    if(typeof wspConjure==="function") wspConjure(true);
+    if(typeof wspConjure!=="function") return;
+    /* The slip is stored and the wizard is not. Reload the page and the
+       conjured legs come back - so this button appears, because auto legs
+       exist - while WSP.odds is null again, which makes wspBuild return an
+       empty slip and the click do visibly nothing.
+       Aim at the slip already in front of you. Somebody holding a x40
+       reshuffles because they want a different x40, so the total on screen
+       is the target, and it needs no payout to be chosen a second time. */
+    if(WSP.odds==null){
+      var cur=myOdds();
+      if(isFinite(cur)&&cur>1.05) WSP.odds=Math.round(cur*100)/100;
+    }
+    if(WSP.odds==null){
+      window.swToast&&window.swToast("Pick a target payout to shuffle","info","noodds");
+      setView("build"); return;
+    }
+    wspConjure(true);
   });
 })();
 document.addEventListener("click",function(e){
@@ -6917,11 +6963,16 @@ document.addEventListener("click",function(e){
 /* odds starts null, the way BUILD.risk does. A pre-picked payout meant the
    wizard had already decided for you: a slip existed, the hero advertised
    it, and Conjure would fill My slip before you had chosen anything. */
+/* The chosen payout outlives the tab. Without it a reload leaves a conjured
+   slip on screen with nothing behind it, and every control that rebuilds
+   comes back empty. */
 var WSP={odds:null,legodd:1.35,everyGame:false,mk:{doubles:true,out:true,o15:true,o25:true,o35:false,fh:false,tts:false,tts2:false,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* One entry per toggle, so turning everything else off leaves exactly one
    market and every leg of the slip is that market. That is the whole point
    of splitting the goals group: an all-Over-1.5 or all-first-half ticket is
    just this list with one thing in it. */
+try{var _wo=parseFloat(localStorage.getItem("sw.wspodds"));
+  if(isFinite(_wo)&&_wo>1) WSP.odds=_wo;}catch(e){}
 function wspMarkets(){var m=[];
   if(WSP.mk.doubles)m=m.concat(["1X","X2"]);
   if(WSP.mk.out)m=m.concat(["1","2"]);
@@ -7296,7 +7347,9 @@ function renderWizardPanel(){
   // list itself stays hidden until Conjure is tapped, so Conjure keeps its
   // reveal moment.
   $("wspOddsChips").querySelectorAll("[data-o]").forEach(function(c){
-    c.addEventListener("click",function(){WSP.odds=+c.dataset.o;WSP._sig=null;renderBuilder();});
+    c.addEventListener("click",function(){WSP.odds=+c.dataset.o;WSP._sig=null;
+      try{localStorage.setItem("sw.wspodds",String(WSP.odds));}catch(e){}
+      renderBuilder();});
   });
   $("wspStyleChips").querySelectorAll("[data-lo]").forEach(function(c){
     c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;WSP._sig=null;renderBuilder();});
