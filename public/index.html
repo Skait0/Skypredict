@@ -1569,10 +1569,13 @@ html.mode-live #live{display:block}
    columns to the panel and left the eleventh market sitting alone on a row
    of its own - which reads as an afterthought rather than a switch. Counts
    that divide eleven into even-looking rows at each width. */
-.mkt-palette{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+/* Written against both classes on purpose: this element is also .wsp-chips,
+   which sets display:flex further down the sheet, and a single-class rule
+   here lost to it - the grid was never applying at all. */
+.wsp-chips.mkt-palette{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
   gap:6px;overflow:visible;margin-bottom:2px}
-@media(min-width:700px){ .mkt-palette{grid-template-columns:repeat(4,minmax(0,1fr))} }
-@media(min-width:1100px){ .mkt-palette{grid-template-columns:repeat(6,minmax(0,1fr))} }
+@media(min-width:700px){ .wsp-chips.mkt-palette{grid-template-columns:repeat(4,minmax(0,1fr))} }
+@media(min-width:1100px){ .wsp-chips.mkt-palette{grid-template-columns:repeat(6,minmax(0,1fr))} }
 .mkt-chip{display:inline-flex;align-items:center;justify-content:center;
   gap:5px;background:var(--card-2);
   border:1px solid var(--line);color:var(--soft);font:inherit;font-weight:700;
