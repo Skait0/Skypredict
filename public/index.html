@@ -939,7 +939,14 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .confirm-go{background:var(--red);color:#fff}
 .confirm-cancel{background:var(--card);color:var(--text);border:1px solid var(--line)!important}
 .lt-ou{font-weight:700}
-.lt-tip{display:flex;align-items:center;gap:7px;font-weight:700;color:var(--text);margin-left:auto}
+/* margin-left:auto is gone. It dates from when this row was a flex line and
+   the tip was meant to sit hard right; the row is a grid now, where the same
+   declaration pushes the cell's contents to the right edge of a 208px column
+   instead. The TIP header stayed at the column start, the tips sat 52px to
+   its right, and the header read as though it belonged to the "2" beside it.
+   Everything else in this rule is already restated by the grid rule further
+   down - this line was the only thing still reaching the page. */
+.lt-tip{display:flex;align-items:center;gap:7px;font-weight:700;color:var(--text)}
 .lt-tip .grade{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
   padding:3px 8px;border-radius:99px;background:var(--raise);color:var(--soft)}
 .conf-strong .lt-tip .grade{background:var(--green-wash);color:var(--green-ink)}
@@ -1138,7 +1145,11 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .mr-coach-x:focus-visible{outline:2px solid var(--text);outline-offset:2px}
 .mr-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;
   margin-top:11px;padding-top:10px;border-top:1px solid var(--line)}
-.mr-rec{font-size:11.5px;font-weight:700;color:var(--faint)}
+/* This is the line somebody comes back for - their own record - and it was
+   set at caption size in the faintest colour on the card, which put it below
+   the furniture around it. */
+.mr-rec{font-size:12.5px;font-weight:800;color:var(--soft)}
+.mr-rec b{color:var(--text);font-weight:800}
 .mr-all{background:none;border:0;font:inherit;font-size:12px;font-weight:800;
   color:var(--red);cursor:pointer;padding:2px 0}
 .mr-all:hover{text-decoration:underline}
@@ -1964,7 +1975,13 @@ html.mode-live #live{display:block}
 .code-alt{margin:11px 0 0;padding-top:9px;border-top:1px solid var(--line);
   font-size:10.5px;line-height:1.4;color:var(--soft);text-align:center;
   font-weight:600;letter-spacing:.01em}
-.code-alt b{color:var(--text);font-weight:700}
+/* Every one of these is needed. ".code-card b" is the booking code itself -
+   display:block, 32px, wide letter-spacing - and it matches ANY b inside the
+   card, so the brand name in this footnote was inheriting all of it and
+   rendering as a 32px block on its own line. Shrinking the paragraph did
+   nothing to the word inside it, which is why this looked unfixed twice. */
+.code-alt b{display:inline;font-size:inherit;line-height:inherit;
+  letter-spacing:normal;margin:0;color:var(--text);font-weight:800}
 .code-err{background:var(--red-wash);border:1px solid var(--red);border-radius:var(--r-md);
   padding:15px;color:var(--red-ink);font-weight:600;font-size:14px}
 .code-info{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
@@ -3505,9 +3522,12 @@ function renderMyResults(){
         ? "All of them. That paid ×"+last.odds.toFixed(2)+"."
         : "One got away. That is how accumulators go.")+"</span>";
   }
+  /* The numbers carry the weight, the words explain them - reading "1 of 3"
+     at a glance is the point, not the sentence around it. */
   var rec=r.settled
-    ? r.won+" of "+r.settled+" slips landed"+(r.streak>1?" · "+r.streak+" in a row":"")
-    : r.built+" slip"+(r.built===1?"":"s")+" so far";
+    ? "<b>"+r.won+" of "+r.settled+"</b> slips landed"+
+      (r.streak>1?" · <b>"+r.streak+"</b> in a row":"")
+    : "<b>"+r.built+"</b> slip"+(r.built===1?"":"s")+" so far";
 
   /* Shown once, the first time there is anything here. Nobody expects a site
      to have kept their slip, so without a word about it the card reads as
@@ -3522,7 +3542,7 @@ function renderMyResults(){
       "<div class='mr-top'>"+head+"<span class='mr-ttl'>Your slips</span></div>"+
       "<div class='mr-body'>"+body+"</div>"+
       coach+
-      "<div class='mr-foot'><span class='mr-rec'>"+esc(rec)+"</span>"+
+      "<div class='mr-foot'><span class='mr-rec'>"+rec+"</span>"+
         "<button class='mr-all' id='mrAll' type='button'>See all</button></div>"+
     "</section>";
   $("mrAll").addEventListener("click",openSlipsSheet);
