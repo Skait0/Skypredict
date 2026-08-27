@@ -2346,6 +2346,44 @@ body{line-height:1.45;padding-bottom:24px}
 .why .eyebrow{margin-bottom:7px}
 .why ul{gap:6px}
 
+/* --- the right-hand rail ---
+   These cards were laid out to stand on their own in the page flow, then
+   stacked into a 372px column, and the spacing that reads as generous at full
+   width reads as slack in a narrow one. This is the same density pass applied
+   to the rail only: gaps, padding, and the doubled margins where a card's own
+   margin sat on top of the column's gap. Type, colour and hierarchy are
+   untouched apart from the reasons list, which drops half a point.
+   The offer card is deliberately left exactly as it is - it is the one thing
+   in the column that is meant to take up room.
+   Together these take the column back under a full screen, which is what
+   stops it needing a scrollbar of its own. */
+@media(min-width:1060px){
+  .home-rail{gap:9px}
+  /* Cards carry their own top/bottom margins for the flow layout; in here the
+     column's gap already does that job, and the two were stacking. */
+  .home-rail>*{margin-top:0;margin-bottom:0}
+  .home-rail .myres,.home-rail .daily,
+  .home-rail .potd,.home-rail .slip-cta{margin-top:0;margin-bottom:0}
+
+  .home-rail .myres{padding:11px 13px}
+  .home-rail .mr-top{margin-bottom:7px}
+  .home-rail .mr-coach{margin-top:7px;padding:7px 10px}
+  .home-rail .mr-foot{margin-top:9px;padding-top:8px}
+
+  .home-rail .potd-top{padding:8px 15px}
+  .home-rail .potd-body{padding:10px 14px}
+  .home-rail .potd .meta{margin-top:4px}
+  .home-rail .why{margin-top:9px;padding-top:9px}
+  .home-rail .why .eyebrow{margin-bottom:6px}
+  .home-rail .why ul{gap:4px}
+  .home-rail .why ul li{font-size:13.5px;line-height:1.42}
+
+  .home-rail .daily{padding:10px 12px}
+  .home-rail .daily-h{margin-bottom:7px}
+  .home-rail .daily-foot{margin-top:7px}
+  .home-rail .daily-back{margin-top:6px}
+}
+
 /* --- filters + finder --- */
 .bar{margin-top:14px;padding:9px;gap:8px}
 .cats{gap:6px}
@@ -2487,7 +2525,7 @@ html:not(.mode-build) .bld-dock{display:none}
    book them, was the thing to lose. The sheet's own footer holds Shuffle,
    Clear and Get code, so nothing is out of reach - and the My slip button
    brings it back after it is dismissed. */
-html.wiz-mode #slip,html.wiz-mode #bldFoot{display:none}
+html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
 
 /* Explains the two builders where the choice is made, rather than in front of
    it. Both produce a slip; the only difference is what you hand over. */
@@ -2673,7 +2711,16 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot{display:none}
    window caps it at the viewport height and gives it an inner scrollbar, which
    on a short laptop reads as the panel being cut off. Below this height it
    simply flows with the page, where all of it can be reached. The number is
-   the rail's own content plus its offsets, not a guess at a device. */
+   the rail's own content plus its offsets, not a guess at a device.
+
+   The height gate is now a floor, not the decision. A fixed number cannot
+   know how long today's reasons list or record card runs, so between 820px
+   and whatever the content happens to need, the rail still pinned and still
+   grew a scrollbar of its own. rail-fits is set by script from the rail's
+   measured content against the room it actually has: it pins only when the
+   whole column fits, and otherwise flows with the page, where all of it can
+   be reached by scrolling the page itself. Either way there is never an
+   inner scrollbar to find. */
 @media(min-width:1060px) and (min-height:820px){
   /* overscroll-behavior:contain was wrong here and it broke the page.
      It means "do not pass scrolling on to whatever is behind me", which is
@@ -2684,7 +2731,7 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot{display:none}
      Without it the wheel scrolls the rail while the rail has somewhere to go
      and hands over to the page when it does not, which is what a column
      inside a page should do. */
-  .home-rail{position:sticky;top:12px;
+  html.rail-fits .home-rail{position:sticky;top:12px;
     max-height:calc(100vh - 24px);overflow-y:auto;
     scrollbar-width:thin}
   /* Cards in here must never be squashed to fit.
@@ -5805,6 +5852,44 @@ function placeBookAll(){
 }
 try{ BA_MQ.addEventListener("change",placeBookAll); }
 catch(e){ try{ BA_MQ.addListener(placeBookAll); }catch(e2){} }
+
+/* Whether the rail is allowed to pin itself to the screen.
+   Pinning caps its height, and a capped column that does not fit grows a
+   scrollbar inside the page - a second, easily missed thing to scroll, which
+   is what this is here to prevent. No fixed breakpoint can answer it: the
+   record card appears once somebody has built a slip, the coach note sits
+   there until it is dismissed, and the reasons list is however long today's
+   pick needs. So it is measured. Unpinned the rail is a plain block with no
+   cap, so its scrollHeight is the full content height; if that fits the room
+   a pinned column would get, it may pin, and otherwise it flows with the page
+   where the page's own scrollbar reaches all of it.
+   The 4px is slack, so a card growing by a line does not flip it back and
+   forth on the same screen. */
+var RAIL_MQ=window.matchMedia("(min-width:1060px) and (min-height:820px)");
+function fitRail(){
+  var rail=document.querySelector(".home-rail"), de=document.documentElement;
+  if(!rail) return;
+  if(!RAIL_MQ.matches){ de.classList.remove("rail-fits"); return; }
+  de.classList.remove("rail-fits");          // measure it uncapped
+  var fits = rail.scrollHeight + 4 <= window.innerHeight - 24;
+  de.classList.toggle("rail-fits", fits);
+}
+(function(){
+  var t=null;
+  function soon(){ clearTimeout(t); t=setTimeout(fitRail,120); }
+  window.addEventListener("resize",soon);
+  try{ RAIL_MQ.addEventListener("change",soon); }
+  catch(e){ try{ RAIL_MQ.addListener(soon); }catch(e2){} }
+  /* The cards are rendered and re-rendered at various points - a settled slip,
+     a dismissed coach note, a new pick of the day - and each one changes the
+     answer. Watching the column itself covers all of them without every
+     render having to remember to ask. */
+  var rail=document.querySelector(".home-rail");
+  if(rail && "ResizeObserver" in window) new ResizeObserver(soon).observe(rail);
+  if(rail && "MutationObserver" in window)
+    new MutationObserver(soon).observe(rail,{childList:true,subtree:true});
+  fitRail();
+})();
 function renderBoardHead(list){
   var h=$("boardHead"); if(!h) return;
   placeBookAll();
@@ -7495,7 +7580,12 @@ function renderBuilderOutput(){
   // Conjure) - the earlier hide was being overridden here because ghost picks
   // are non-empty. This is the single source of truth for foot visibility.
   var foot=$("bldFoot");
-  if(foot) foot.style.display = (picks.length && !wizGhost && !firstVisit) ? "flex" : "none";
+  /* An inline style beats the html.wiz-mode rule in the stylesheet, so the
+     wizard has to be excluded here too - otherwise conjuring puts the bar
+     back. In the wizard the slip and Get code live in the My slip sheet;
+     the panel keeps only the numbers. */
+  if(foot) foot.style.display =
+    (!isWiz && picks.length && !wizGhost && !firstVisit) ? "flex" : "none";
   var note=$("bldNote");
   if(!picks.length) note.textContent="";
   else if(!bookable) note.textContent="These fixtures have no SportyBet event ID yet, so they can't be booked automatically.";
