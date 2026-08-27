@@ -4150,7 +4150,7 @@ addEventListener("keydown",function(e){
   }});
 
 /* ============================================================ build a slip */
-var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:true,fh:false,tts:false,tts2:false,both:true},touched:false,mode:"slider"};
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:true,o35:false,fh:false,tts:false,tts2:false,both:true},touched:false,mode:"slider"};
 try{var rr=localStorage.getItem("sw.risk"); if(rr!=null) BUILD.risk=+rr;}catch(e){}
 try{var rm=localStorage.getItem("sw.mode"); if(rm==="slider"||rm==="wizard") BUILD.mode=rm;}catch(e){}
 /* Ticket window. "day" holds every leg inside today, so the whole slip settles
@@ -4624,7 +4624,8 @@ function allowedMarkets(t){
             after a double chance. */
          "HOME_OVER_0.5","AWAY_OVER_0.5"];
   if(t>=1) m=m.concat(["12","OVER_2.5"]);
-  if(t>=2) m=m.concat(["GG","FH_OVER_0.5","HOME_OVER_1.5","AWAY_OVER_1.5"]);
+  if(t>=2) m=m.concat(["GG","OVER_3.5","FH_OVER_0.5",
+                       "HOME_OVER_1.5","AWAY_OVER_1.5"]);
   return m;
 }
 function mProb(f,c){
@@ -4633,6 +4634,7 @@ function mProb(f,c){
     case"12":return f.anybody!=null?f.anybody:f.dc12;
     case"OVER_1.5":return f.o15;case"OVER_2.5":return f.o25;case"GG":return f.btts;
     case"FH_OVER_0.5":return f.fh_o05;
+    case"OVER_3.5":return f.o35;
     case"HOME_OVER_0.5":return f.h_o05;case"HOME_OVER_1.5":return f.h_o15;
     case"AWAY_OVER_0.5":return f.a_o05;case"AWAY_OVER_1.5":return f.a_o15;}
   return null;
@@ -4644,6 +4646,7 @@ function mLabel(f,c){
     case"OVER_1.5":return"Over 1.5 goals";case"OVER_2.5":return"Over 2.5 goals";
     case"GG":return"Both teams to score";
     case"FH_OVER_0.5":return"Goal in 1st half";
+    case"OVER_3.5":return"Over 3.5 goals";
     case"HOME_OVER_0.5":return esc(f.home)+" over 0.5 goals";
     case"AWAY_OVER_0.5":return esc(f.away)+" over 0.5 goals";
     case"HOME_OVER_1.5":return esc(f.home)+" over 1.5 goals";
@@ -4653,7 +4656,7 @@ function mLabel(f,c){
 function buildPicks(){
   var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier), cand=[];
   var mkOn={"1X":BUILD.mk.wd,"X2":BUILD.mk.wd,"12":BUILD.mk.any,"1":BUILD.mk.out,"2":BUILD.mk.out,
-    "OVER_1.5":BUILD.mk.o15,"OVER_2.5":BUILD.mk.o25,
+    "OVER_1.5":BUILD.mk.o15,"OVER_2.5":BUILD.mk.o25,"OVER_3.5":BUILD.mk.o35,
     "FH_OVER_0.5":BUILD.mk.fh,
     "HOME_OVER_0.5":BUILD.mk.tts,"AWAY_OVER_0.5":BUILD.mk.tts,
     "HOME_OVER_1.5":BUILD.mk.tts2,"AWAY_OVER_1.5":BUILD.mk.tts2,"GG":BUILD.mk.both};
@@ -5650,6 +5653,7 @@ function swapOptions(f){
     {code:"OVER_2.5",label:"Over 2.5 goals",p:f.o25},
     {code:"GG",label:"Both teams score",p:f.btts},
     {code:"FH_OVER_0.5",label:"Goal in 1st half",p:f.fh_o05},
+    {code:"OVER_3.5",label:"Over 3.5 goals",p:f.o35},
     {code:"HOME_OVER_0.5",label:f.home+" over 0.5 goals",p:f.h_o05},
     {code:"AWAY_OVER_0.5",label:f.away+" over 0.5 goals",p:f.a_o05},
     {code:"HOME_OVER_1.5",label:f.home+" over 1.5 goals",p:f.h_o15},
@@ -6135,7 +6139,7 @@ document.addEventListener("click",function(e){
 /* odds starts null, the way BUILD.risk does. A pre-picked payout meant the
    wizard had already decided for you: a slip existed, the hero advertised
    it, and Conjure would fill My slip before you had chosen anything. */
-var WSP={odds:null,legodd:1.35,everyGame:false,mk:{doubles:true,out:true,o15:true,o25:true,fh:false,tts:false,tts2:false,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.35,everyGame:false,mk:{doubles:true,out:true,o15:true,o25:true,o35:false,fh:false,tts:false,tts2:false,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* One entry per toggle, so turning everything else off leaves exactly one
    market and every leg of the slip is that market. That is the whole point
    of splitting the goals group: an all-Over-1.5 or all-first-half ticket is
@@ -6145,6 +6149,7 @@ function wspMarkets(){var m=[];
   if(WSP.mk.out)m=m.concat(["1","2"]);
   if(WSP.mk.o15)m.push("OVER_1.5");
   if(WSP.mk.o25)m.push("OVER_2.5");
+  if(WSP.mk.o35)m.push("OVER_3.5");
   if(WSP.mk.fh)m.push("FH_OVER_0.5");
   /* Both sides go in the pool and the better one wins on its own merits.
      Unlike a match result, backing either team to score is a real bet
@@ -6373,6 +6378,7 @@ function renderShared(){
     {k:"o15", label:"Over 1.5", tier:0, sub:"Over 1.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 8V12M12 16H12.01"/>'},
     {k:"o25", label:"Over 2.5", tier:1, sub:"Over 2.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/>'},
     /* Predicted since day one, bookable only now that market 68 is fetched. */
+    {k:"o35", label:"Over 3.5", tier:2, sub:"Over 3.5", icon:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/>'},
     {k:"fh", label:"1st half", tier:2, sub:"FH over 0.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l3.5 2"/>'},
     /* One side's goals rather than the two added together. Both sides go in
        the pool; whichever the model likes better is the one that gets used. */
