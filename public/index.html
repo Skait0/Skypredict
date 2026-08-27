@@ -5063,30 +5063,40 @@ function doBookList(picks,resultId,btnId,label){
 }
 /* ---- Slip of the Day: safe pre-built acca ---- */
 var SOTD=[];
-/* Slip of the day pays up to double, and no more.
-   It used to take the four best picks and let the total land wherever it
-   landed - usually somewhere near three, because four legs at seventy per
-   cent multiply up quickly. A ceiling turns it into a different and better
-   thing: fill with the very safest games until adding one more would break
-   two, which fits MORE legs than four, each of them shorter and surer, for a
-   slip that roughly doubles the stake.
-   Candidates arrive sorted safest-first, and safest is also shortest-priced,
-   so the first leg that will not fit means none of the rest will either -
-   they only get longer from there. */
-const SOTD_MAX_ODDS=2.0;
+/* Slip of the day aims at double the stake - as near to two as it can get,
+   from whichever side lands closer.
+   It used to take the four best picks and let the total fall where it fell.
+   A hard ceiling at two was the obvious fix and it was the wrong one: on a
+   four-game card it dropped the last leg and finished at 1.70, when keeping
+   it would have finished at 2.18. Stopping short misses the target by more
+   than going slightly over does, and a little over two is still a slip that
+   roughly doubles your money.
+   So: fill with the safest games while they fit under two, then look at one
+   more. Take it when it lands nearer to two than stopping here would, and
+   when it does not sail past the hard limit. Either way that is the end of
+   it - candidates arrive safest-first, which is also shortest-priced, so
+   every leg after this one is longer still. */
+const SOTD_TARGET_ODDS=2.0;
+/* Far enough past the target to keep a leg worth keeping, close enough that
+   this never quietly becomes a long-odds accumulator. */
+const SOTD_HARD_MAX=2.4;
 const SOTD_MAX_LEGS=8;
 function sotdUnderCap(cand){
   var pick=[],prod=1;
   for(var i=0;i<cand.length && pick.length<SOTD_MAX_LEGS;i++){
     var o=legOdd(cand[i].f,cand[i].code,cand[i].p);
     if(!(o>1)) continue;
-    if(prod*o>SOTD_MAX_ODDS) break;
-    pick.push(cand[i]); prod*=o;
+    var next=prod*o;
+    if(next<=SOTD_TARGET_ODDS){ pick.push(cand[i]); prod=next; continue; }
+    if(next<=SOTD_HARD_MAX &&
+       Math.abs(next-SOTD_TARGET_ODDS)<Math.abs(prod-SOTD_TARGET_ODDS)){
+      pick.push(cand[i]); prod=next;
+    }
+    break;
   }
-  /* Some days there is no safe way to reach two - a thin card, or the safest
-     games priced so short that two of them still fall well under it, or so
-     long that even one busts the ceiling. Rather than show a one-leg "slip"
-     or nothing at all, fall back to what this always did. */
+  /* Some days two is not reachable at all - a thin card, or the safest games
+     priced so long that even one sails past the limit. Rather than show a
+     one-leg "slip" or nothing, fall back to what this always did. */
   return pick.length>=2 ? pick : cand.slice(0,4);
 }
 function renderSlipOfDay(){
