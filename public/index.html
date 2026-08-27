@@ -1986,7 +1986,13 @@ html.mode-live #live{display:block}
    card, so the brand name in this footnote was inheriting all of it and
    rendering as a 32px block on its own line. Shrinking the paragraph did
    nothing to the word inside it, which is why this looked unfixed twice. */
-.code-alt b{display:inline;font-size:inherit;line-height:inherit;
+/* Written against both classes deliberately. ".code-card b" is declared
+   twice - once here and once in the phone block far below - and a single-class
+   rule ties with those on specificity, so the LAST one wins and the later
+   declaration put this back to 26px. Two classes beats both wherever they
+   sit in the file, which is what the previous two attempts at this were
+   missing. */
+.code-card .code-alt b{display:inline;font-size:inherit;line-height:inherit;
   letter-spacing:normal;margin:0;color:var(--text);font-weight:800}
 .code-err{background:var(--red-wash);border:1px solid var(--red);border-radius:var(--r-md);
   padding:15px;color:var(--red-ink);font-weight:600;font-size:14px}
