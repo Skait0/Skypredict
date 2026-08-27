@@ -1827,12 +1827,15 @@ html.mode-live #live{display:block}
 .code-copy{background:var(--card);color:var(--text);border:1px solid var(--line)!important;
   min-width:112px;text-align:center}
 .code-open{background:var(--red);color:#fff}
-/* A footnote, and quieter than the brand name in it deserves - the code is
-   why this modal is open, and a second bookmaker set in bold was reading
-   like an advert for one. Same weight and colour as the words around it. */
-.code-alt{margin:10px 0 0;font-size:10.5px;line-height:1.4;color:var(--faint);
-  text-align:center;opacity:.85}
-.code-alt b{color:inherit;font-weight:inherit}
+/* A footnote that still has to be read. Bold and shouting was wrong, but so
+   was the whisper I replaced it with - it had faded into the card. Body-text
+   colour and size, on its own line above the card's edge, so it reads as a
+   useful aside rather than either an advert or a disclaimer. */
+.code-alt{margin:13px 0 0;padding-top:11px;border-top:1px solid var(--line);
+  font-size:12px;line-height:1.45;color:var(--text);text-align:center;
+  font-weight:600}
+[data-theme="light"] .code-alt{color:var(--text)}
+.code-alt b{color:inherit;font-weight:800}
 .code-err{background:var(--red-wash);border:1px solid var(--red);border-radius:var(--r-md);
   padding:15px;color:var(--red-ink);font-weight:600;font-size:14px}
 .code-info{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
@@ -3201,6 +3204,21 @@ function countryOf(l){return l.split(" ")[0];}
    hold these back behind Europe; countryOf() gives the league's leading word. */
 var SA_COUNTRIES={Argentina:1,Bolivia:1,Brazil:1,Chile:1,Colombia:1,Ecuador:1,
   Paraguay:1,Peru:1,Uruguay:1,Venezuela:1};
+/* Held back harder than South America. The model has less history to work
+   from in these leagues and the form is choppier, so a confident-looking
+   number here is worth less than the same number in Europe - which is
+   exactly the kind of leg that quietly sinks a slip.
+   They are not removed: on a thin day, or once somebody has shuffled a few
+   times and clearly wants a different mix, they come through.
+   Matched on the whole country prefix rather than the first word, because
+   countryOf() takes one word and "South", "United" and "Saudi" on their own
+   would have swept up South Africa and the United States. */
+var ASIA_PREFIXES=["Japan","China","India","Indonesia","Malaysia","Singapore",
+  "Thailand","Vietnam","Uzbekistan","Iran","Iraq","Qatar","Kuwait","Bahrain",
+  "Oman","Jordan","Lebanon","Kazakhstan","Azerbaijan","Taiwan","Myanmar",
+  "Cambodia","Nepal","Bangladesh","Tajikistan","Turkmenistan","Kyrgyzstan",
+  "Korea Republic","South Korea","Saudi Arabia","United Arab Emirates",
+  "Hong Kong","Chinese Taipei","Palestine","Syria","Yemen","Maldives"];
 /* "Fixtures are not a lot" = fewer than this many European games to choose
    from. Below it a slip would be thin, so South America is allowed in to pad
    it; at or above it Europe stands on its own. An absolute floor, not a share
@@ -3236,6 +3254,27 @@ function updateFiltersSum(){
   el.textContent=(TOP_ONLY?"Top flight":"All leagues")+" \u00b7 "+n+" market"+(n===1?"":"s");
 }
 function isSAleague(l){return !!SA_COUNTRIES[countryOf(l||"")];}
+function isAsianLeague(l){
+  var t=(l||"").trim();
+  for(var i=0;i<ASIA_PREFIXES.length;i++){
+    var pre=ASIA_PREFIXES[i];
+    if(t===pre||t.indexOf(pre+" ")===0) return true;
+  }
+  return false;
+}
+function isAsian(f){return isAsianLeague((f&&f.league)||"");}
+/* How hard to hold a South American game back.
+   The continent was never the problem - grinding, low-scoring leagues were,
+   and Argentina is the one that prompted the rule: it averages well under
+   half a goal past the over-2.5 bar, so its games stay held back here on
+   their own numbers. A South American fixture the model expects goals in is
+   not the game this penalty exists to avoid, so it keeps its full weight and
+   competes with Europe on merit. No league list to maintain: if Brazil or
+   Colombia are scoring, they come through by themselves. */
+function saWeight(f,base){
+  if(f&&f.o25!=null&&!isNaN(f.o25)&&f.o25>=HIGH_SCORING_O25) return 1;
+  return base;
+}
 function isSouthAmerican(f){return isSAleague((f&&f.league)||"");}
 /* Predicted scoreline from expected goals. On a rounded tie, break toward the
    side the model leans on, so it never shows a draw against a "No draw" tip;
@@ -4701,13 +4740,27 @@ function buildPicks(){
      the slip, or the user has reshuffled a couple of times and clearly wants a
      different mix. Once allowed in they're penalised rather than cut, so Europe
      still leads while a few South American games come through. */
-  var euroN=cand.filter(function(c){return !isSouthAmerican(c.f);}).length;
+  var euroN=cand.filter(function(c){return !isSouthAmerican(c.f)&&!isAsian(c.f);}).length;
   var saMode=(euroN<Math.min(cap,SA_MIN_EURO))?"fill":((BUILD.shuffles||0)>=2?"mix":"exclude");
   if(saMode==="exclude") cand=cand.filter(function(c){return !isSouthAmerican(c.f);});
-  var saPenalty=(saMode==="mix")?0.6:0.85;
+  /* Eased: these were 0.6 and 0.85, which held back the whole continent for
+     the sins of one league. The goals exemption in saWeight does the real
+     discriminating now, so the blanket number can be lighter. */
+  var saPenalty=(saMode==="mix")?0.75:0.92;
+  /* Asia is held back harder and for longer than South America: three
+     shuffles rather than two before it mixes in, and never at the safe
+     setting unless Europe genuinely cannot fill the slip. Somebody on
+     "Safest" is asking for the picks most likely to land, and these are the
+     leagues the model knows least well. */
+  var asiaMode=(euroN<Math.min(cap,SA_MIN_EURO))?"fill"
+              :((BUILD.shuffles||0)>=3&&p.tier>0?"mix":"exclude");
+  if(asiaMode==="exclude") cand=cand.filter(function(c){return !isAsian(c.f);});
+  var asiaPenalty=(asiaMode==="mix")?0.45:0.8;
   cand.sort(function(a,b){
     var ka=(f0<0.5?a.p:oddOf(a.p)), kb=(f0<0.5?b.p:oddOf(b.p));
-    if(isSouthAmerican(a.f))ka*=saPenalty; if(isSouthAmerican(b.f))kb*=saPenalty;
+    if(isSouthAmerican(a.f))ka*=saWeight(a.f,saPenalty);
+    if(isSouthAmerican(b.f))kb*=saWeight(b.f,saPenalty);
+    if(isAsian(a.f))ka*=asiaPenalty; if(isAsian(b.f))kb*=asiaPenalty;
     ka*=1+(h32(a.id+"|s"+(BUILD.seed||0))-0.5)*(0.9+f0); kb*=1+(h32(b.id+"|s"+(BUILD.seed||0))-0.5)*(0.9+f0);
     return kb-ka;
   });
@@ -4837,7 +4890,7 @@ function showCode(code,hostId){
     "</div>"+
     /* The same booking code is valid on football.com, and people who use that
        app would otherwise assume it is SportyBet-only and rebuild by hand. */
-    "<p class='code-alt'>Works on football.com too.</p>"+
+    "<p class='code-alt'>Same code works on <b>football.com</b></p>"+
     "</div>";
   document.body.appendChild(wrap);
   function close(){wrap.remove();}
@@ -5895,6 +5948,10 @@ function renderMySheet(){
     return "<div class='sp-row'>"+
       "<div class='sp-main'><div class='sp-teams'>"+teams+noid+"</div>"+
         picker+"</div>"+
+      /* This leg's price. The duplicate was the copy printed inside the pick
+         control itself - this column was never the problem, and without it a
+         slip shows a total with nothing to add up to it. */
+      "<span class='sp-odd'>"+(x.p>0?legOdd(f,x.code,x.p).toFixed(2):"-")+"</span>"+
       "<button class='sp-x' data-myrm='"+x.id+"|"+x.code+"' aria-label='Remove'>"+XSVG+"</button>"+
     "</div>";
   }).join("");
@@ -6186,8 +6243,14 @@ function wspBuild(){
   // Seed jitter so each shuffle surfaces a different mix; SA penalty keeps
   // Europe ahead even once South America is allowed into the pool.
   function key(c){return c.p*(1+(h32(c.id+"|"+seed)-0.5)*1.15);}
-  function ranked(list,pen){return list.slice().sort(function(a,b){
-    return key(b)*(isSouthAmerican(b.f)?pen:1)-key(a)*(isSouthAmerican(a.f)?pen:1);});}
+  function ranked(list,pen,asiaPen){
+    function w(c){
+      var m=1;
+      if(isSouthAmerican(c.f)) m*=saWeight(c.f,pen);
+      if(isAsian(c.f)) m*=(asiaPen==null?1:asiaPen);
+      return m;
+    }
+    return list.slice().sort(function(a,b){ return key(b)*w(b)-key(a)*w(a); });}
   function accumulate(list){
     /* Spread the risk across MORE legs at a target per-leg odds derived from the
        payout, and - crucially - pick EACH fixture's market to sit near that
@@ -6259,7 +6322,7 @@ function wspBuild(){
     }
     return {picks:picks,odds:prod};
   }
-  var euro=all.filter(function(c){return !isSouthAmerican(c.f);});
+  var euro=all.filter(function(c){return !isSouthAmerican(c.f)&&!isAsian(c.f);});
   /* Same policy as the slider builder: Europe alone unless there are too few
      European games to make a slip, or the user has reshuffled a couple of
      times. "fill" keeps Europe ahead with a light penalty; "mix" (shuffling)
@@ -6267,7 +6330,17 @@ function wspBuild(){
      a reason to reach for South America - the slip just falls short, and the
      user can shuffle if they want to chase it with a wider net. */
   var saMode=(euro.length<SA_MIN_EURO)?"fill":(shuffles>=2?"mix":"exclude");
-  var pool=(saMode==="exclude")?ranked(euro,1):ranked(all,saMode==="mix"?0.6:0.85);
+  /* Asia waits longer than South America - three shuffles rather than two -
+     and only joins at all once Europe cannot fill the slip on its own. */
+  var asiaMode=(euro.length<SA_MIN_EURO)?"fill":(shuffles>=3?"mix":"exclude");
+  var poolList=all.filter(function(c){
+    if(saMode==="exclude"&&isSouthAmerican(c.f)) return false;
+    if(asiaMode==="exclude"&&isAsian(c.f)) return false;
+    return true;
+  });
+  var pool=ranked(poolList,
+                  saMode==="mix"?0.75:0.92,
+                  asiaMode==="mix"?0.45:0.8);
   return accumulate(pool);
 }
 // --- Wizard panel rendering (replaces renderWsp) ---
