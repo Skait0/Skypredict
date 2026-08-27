@@ -2597,8 +2597,17 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot{display:none}
    simply flows with the page, where all of it can be reached. The number is
    the rail's own content plus its offsets, not a guess at a device. */
 @media(min-width:1060px) and (min-height:820px){
+  /* overscroll-behavior:contain was wrong here and it broke the page.
+     It means "do not pass scrolling on to whatever is behind me", which is
+     right for a sheet floating over the board and wrong for a column that IS
+     the page. On a tall screen the rail's content fits, so it has nothing of
+     its own to scroll - and contain then swallowed the wheel entirely.
+     Scrolling anywhere over the right-hand side did nothing at all.
+     Without it the wheel scrolls the rail while the rail has somewhere to go
+     and hands over to the page when it does not, which is what a column
+     inside a page should do. */
   .home-rail{position:sticky;top:12px;
-    max-height:calc(100vh - 24px);overflow-y:auto;overscroll-behavior:contain;
+    max-height:calc(100vh - 24px);overflow-y:auto;
     scrollbar-width:thin}
 }
 
