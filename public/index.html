@@ -4755,7 +4755,17 @@ function buildPicks(){
   var asiaMode=(euroN<Math.min(cap,SA_MIN_EURO))?"fill"
               :((BUILD.shuffles||0)>=3&&p.tier>0?"mix":"exclude");
   if(asiaMode==="exclude") cand=cand.filter(function(c){return !isAsian(c.f);});
-  var asiaPenalty=(asiaMode==="mix")?0.45:0.8;
+  /* Measured against a real card before choosing these.
+     A penalty does nothing useful in "mix": with about a hundred and fifty
+     European candidates for thirty-three places, any multiplier below one
+     keeps Asian games out entirely - 0.45, 0.65 and 0.85 all produced zero.
+     So the honest choice is between "never" and "on merit", and somebody who
+     has shuffled three times has asked for a different mix. On merit that is
+     roughly two legs in thirty-three, which is a sprinkle rather than a flood.
+     "fill" is the thin-card case where they come in regardless, held back
+     hardest at the safe setting - that is where landing matters most, and it
+     is the one place these leagues should almost never appear. */
+  var asiaPenalty=(asiaMode==="mix")?1:(p.tier>0?0.8:0.5);
   cand.sort(function(a,b){
     var ka=(f0<0.5?a.p:oddOf(a.p)), kb=(f0<0.5?b.p:oddOf(b.p));
     if(isSouthAmerican(a.f))ka*=saWeight(a.f,saPenalty);
@@ -6340,7 +6350,7 @@ function wspBuild(){
   });
   var pool=ranked(poolList,
                   saMode==="mix"?0.75:0.92,
-                  asiaMode==="mix"?0.45:0.8);
+                  asiaMode==="mix"?1:0.8);
   return accumulate(pool);
 }
 // --- Wizard panel rendering (replaces renderWsp) ---
