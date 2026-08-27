@@ -12,12 +12,13 @@
 <meta property="og:image" content="https://skypredict-theta.vercel.app/wiz-logo.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://skypredict-theta.vercel.app/wiz-logo.png">
-<link rel="icon" type="image/png" href="/app-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/app-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Soccerwizard">
-<link rel="apple-touch-icon" href="/app-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1562,15 +1563,18 @@ html.mode-live #live{display:block}
 .mkt.on{background:var(--green-wash);color:var(--green-ink);border-color:var(--green)}
 
 /* Unified market palette - replaces both "Include markets" and #mkts */
-/* A grid rather than a wrapping row. Seven chips of different widths wrapped
-   into ragged rows with holes in them, which reads as longer than it is and
-   costs a scroll on a phone. Even columns pack the same switches into fewer,
-   fuller rows - two on a desktop panel, four on a phone - and the eye can run
-   down a column instead of hunting along broken lines. */
-.mkt-palette{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));
+/* A grid rather than a wrapping row: chips of different widths wrapped into
+   ragged rows with holes in them, which reads as longer than it is.
+   Fixed column counts rather than auto-fill, because auto-fill sized the
+   columns to the panel and left the eleventh market sitting alone on a row
+   of its own - which reads as an afterthought rather than a switch. Counts
+   that divide eleven into even-looking rows at each width. */
+.mkt-palette{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
   gap:6px;overflow:visible;margin-bottom:2px}
-.mkt-chip{display:inline-flex;align-items:center;justify-content:flex-start;
-  gap:6px;background:var(--card-2);
+@media(min-width:700px){ .mkt-palette{grid-template-columns:repeat(4,minmax(0,1fr))} }
+@media(min-width:1100px){ .mkt-palette{grid-template-columns:repeat(6,minmax(0,1fr))} }
+.mkt-chip{display:inline-flex;align-items:center;justify-content:center;
+  gap:5px;background:var(--card-2);
   border:1px solid var(--line);color:var(--soft);font:inherit;font-weight:700;
   font-size:12.5px;padding:7px 11px;border-radius:99px;cursor:pointer;
   min-width:0;white-space:nowrap;
@@ -1586,7 +1590,12 @@ html.mode-live #live{display:block}
 .mkt-chip.on .tier-badge{background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3)}
 .mkt-chip.unlocking{animation:mktUnlock .35s ease}
 @keyframes mktUnlock{0%{transform:scale(.92);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
-@media(max-width:560px){.mkt-chip{padding:6px 11px;font-size:12px}}
+@media(max-width:560px){
+  .mkt-chip{padding:6px 7px;font-size:11.5px;gap:4px}
+  /* At three columns the icon is the first thing to go: the word is what
+     identifies the market, the glyph only decorates it. */
+  .mkt-chip .mkt-icon{display:none}
+}
 /* This decides how much of the card the builder may draw from, which is one of
    the more consequential switches on the page, and it was styled like a quiet
    preference nobody would notice. Bigger type, a real border, an accent on the
@@ -1601,11 +1610,18 @@ html.mode-live #live{display:block}
 .scope-opt:focus-visible{outline:2px solid var(--red);outline-offset:1px}
 .scope-opt.on{background:var(--card);color:var(--text);
   box-shadow:0 1px 3px rgba(0,0,0,.28),inset 0 0 0 1px var(--red)}
-/* Four buckets rather than two, so the type comes down and the count sits
-   under the label instead of beside it - four side-by-side pairs would not
-   survive a phone. */
+/* Four buckets rather than two. On a desktop panel there is room to read
+   them the way the window switch above reads - label and count on one line,
+   at a size that matches it. Left as-is these were 32 to 50px wide inside a
+   1266px panel, smaller targets on the big screen than on the small one,
+   which is the wrong way round. */
 .tod-seg{margin-top:-7px;margin-bottom:13px}
-.tod-seg .scope-opt{flex-direction:column;gap:1px;font-size:12px;padding:6px 4px}
+.tod-seg .scope-opt{flex-direction:row;gap:6px;font-size:12.5px;padding:8px 10px}
+@media(max-width:640px){
+  /* Four label-and-count pairs side by side do not survive a phone, so the
+     count tucks under the label there. */
+  .tod-seg .scope-opt{flex-direction:column;gap:1px;font-size:12px;padding:6px 4px}
+}
 .tod-seg .so-n{font-size:10.5px;font-weight:700;opacity:.75}
 /* Nothing kicks off in this window today. Still tappable - it says something
    true about the day - but it should not look like a live choice. */
@@ -5719,11 +5735,21 @@ function openSwapMenu(btn){
       "<span class='sw-o'>×"+legOdd(f,o.code,o.p).toFixed(2)+"</span></button>";
   }).join("");
   document.body.appendChild(m);
-  /* Below the row if it fits, above if it does not, and never off an edge. */
-  var r=btn.getBoundingClientRect(), mh=m.offsetHeight, mw=m.offsetWidth;
-  var top=r.bottom+6, left=r.left;
-  if(top+mh>window.innerHeight-8) top=Math.max(8,r.top-mh-6);
-  if(left+mw>window.innerWidth-8) left=Math.max(8,window.innerWidth-mw-8);
+  /* Below the row if it fits, above if it does not - and then clamped into
+     the viewport regardless. Choosing a side is not enough on its own: a row
+     near the bottom of a tall sheet can sit past the fold entirely, and
+     flipping a 272px menu above a trigger that is itself off-screen just
+     moves the overflow. Fit the menu to whichever side has more room, then
+     pin it inside the edges. */
+  var r=btn.getBoundingClientRect(), mw=m.offsetWidth;
+  var vh=window.innerHeight, vw=window.innerWidth, PAD=8;
+  var below=vh-r.bottom-6-PAD, above=r.top-6-PAD;
+  var room=Math.max(below,above,120);
+  if(m.offsetHeight>room) m.style.maxHeight=Math.min(room,vh-2*PAD)+"px";
+  var mh=m.offsetHeight;
+  var top=(below>=mh)?(r.bottom+6):(above>=mh?(r.top-mh-6):(below>=above?r.bottom+6:r.top-mh-6));
+  top=Math.min(Math.max(PAD,top),Math.max(PAD,vh-mh-PAD));
+  var left=Math.min(Math.max(PAD,r.left),Math.max(PAD,vw-mw-PAD));
   m.style.top=top+"px"; m.style.left=left+"px";
   btn.setAttribute("aria-expanded","true");
   SWAPMENU=m;
@@ -6297,8 +6323,8 @@ function renderShared(){
   var p = BUILD.risk===null ? {tier:1, minConf:0.65, maxGames:18} : riskParams(BUILD.risk);
   var MKT_CFG=[
     {k:"wd", label:"Win or draw", tier:0, sub:"1X, X2", icon:'<path d="M20 6L10 17L6 13"/>'},
-    {k:"any", label:"Anybody wins", tier:1, sub:"12", icon:'<path d="M2 12h20M6 8l-4 4 4 4M18 8l4 4-4 4"/>'},
-    {k:"out", label:"Outright wins", tier:1, sub:"1, 2", icon:'<path d="M5 12H19M19 12L12 5M19 12L12 19"/>'},
+    {k:"any", label:"Any winner", tier:1, sub:"12", icon:'<path d="M2 12h20M6 8l-4 4 4 4M18 8l4 4-4 4"/>'},
+    {k:"out", label:"Outright win", tier:1, sub:"1, 2", icon:'<path d="M5 12H19M19 12L12 5M19 12L12 19"/>'},
     /* Goals used to be one chip that quietly meant Over 1.5 at a safe setting
        and Over 2.5 at a risky one. That made an all-one-market ticket
        impossible: you could not ask for Over 1.5 and be sure that is what you
@@ -6311,11 +6337,11 @@ function renderShared(){
        backing favourites anyway. */
     {k:"dnb", label:"Draw = refund", tier:0, sub:"Draw no bet", icon:'<path d="M3 12h18"/><path d="M7 8l-4 4 4 4"/><path d="M21 6v6"/>'},
     /* Predicted since day one, bookable only now that market 68 is fetched. */
-    {k:"fh", label:"1st half goal", tier:2, sub:"FH over 0.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l3.5 2"/>'},
+    {k:"fh", label:"1st half", tier:2, sub:"FH over 0.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l3.5 2"/>'},
     /* One side's goals rather than the two added together. Both sides go in
        the pool; whichever the model likes better is the one that gets used. */
-    {k:"tts", label:"A team scores", tier:0, sub:"Team over 0.5", icon:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 7v10"/>'},
-    {k:"tts2", label:"A team scores 2+", tier:2, sub:"Team over 1.5", icon:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M9 9h6M9 15h6"/>'},
+    {k:"tts", label:"Team scores", tier:0, sub:"Team over 0.5", icon:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 7v10"/>'},
+    {k:"tts2", label:"Team 2+", tier:2, sub:"Team over 1.5", icon:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M9 9h6M9 15h6"/>'},
     {k:"both", label:"Both score", tier:2, sub:"GG", icon:'<path d="M17 21V5A2 2 0 0015 3H9A2 2 0 007 5V21"/><path d="M7 7H17"/><path d="M9 11H15"/><path d="M9 15H15"/><path d="M9 19H15"/>'}
   ];
   (function(){
