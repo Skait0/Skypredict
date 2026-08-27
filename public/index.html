@@ -1587,7 +1587,16 @@ html.mode-live #live{display:block}
 .sp-row.conf-lean{border-left-color:var(--win)}
 .sp-row.conf-slight{border-left-color:var(--grey)}
 .sp-main{flex:1;min-width:0}
-.sp-teams{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* A fixture name that does not fit was hidden behind an ellipsis, in the one
+   place you are deciding whether to keep the leg. Both rows use this class,
+   but the builder's is tighter - its pick column carries the market label as
+   well as the percentage, where the sheet's carries only the percentage - so
+   the name is squeezed out there first. Let it wrap instead: a second line
+   costs a few pixels, a hidden team name costs the decision. */
+.sp-teams{font-weight:700;font-size:14px;white-space:normal;overflow:visible;
+  overflow-wrap:break-word;line-height:1.25}
+/* ...and stop the pick column taking more than its share on a narrow row. */
+.sp-pick{max-width:44%}
 .sp-meta{font-size:12px;color:var(--faint);margin-top:2px}
 .sp-pick{text-align:right;flex-shrink:0}
 .sp-pick b{display:block;font-size:13px;font-weight:800;color:var(--text)}
@@ -2498,7 +2507,15 @@ button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
 .bld-stats{gap:7px;margin:11px 0}
 .stat{padding:10px 11px}
 #slip{gap:6px}
-.sp-row{padding:9px 11px;gap:10px}
+/* On a phone the row is ~343px and the pick column was taking 90 of it for a
+   market label, leaving the fixture 125px - which is what forced a long name
+   onto three lines once it stopped being truncated. Trim the pick column and
+   the type so the name gets the width. */
+.sp-row{padding:9px 11px;gap:9px}
+.sp-teams{font-size:13.5px}
+.sp-pick{max-width:32%}
+.sp-pick b{font-size:12px}
+.sp-pick i{font-size:11px}
 .bld-foot{margin-top:11px;padding:12px 14px;gap:11px}
 .bld-note{margin-top:7px}
 #bookResult{margin-top:10px}
