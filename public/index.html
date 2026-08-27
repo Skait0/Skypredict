@@ -4211,7 +4211,11 @@ function potdResult(pick,f){
   // 2) fixture enriched with an actual full-time score
   if(f && f.hg!=null && f.ag!=null){
     var v=tipEval(f)(f.hg,f.ag);
-    return {hg:f.hg,ag:f.ag,won:v==="win",push:v==="level"};
+    /* Ungradeable is not a result. Returning one here would print "Miss"
+       against a first-half tip we simply cannot settle - better to fall
+       through to "played, result soon" and let the next build say. */
+    if(v==="unknown") return null;
+    return {hg:f.hg,ag:f.ag,won:v==="win",push:false};
   }
   return null;
 }
@@ -4275,7 +4279,7 @@ function fixtureState(f){
   if(lm&&lm.homeScore!=null&&lm.awayScore!=null){
     var ev=tipEval(f)(lm.homeScore,lm.awayScore);
     if(FT_RE.test(lm.status||""))
-      return {kind:"ft",hg:lm.homeScore,ag:lm.awayScore,won:ev==="win",push:ev==="level"};
+      return {kind:"ft",hg:lm.homeScore,ag:lm.awayScore,won:ev==="win",push:ev==="unknown"};
     return {kind:"live",hg:lm.homeScore,ag:lm.awayScore,won:ev==="win",minute:lm.minute||""};
   }
   /* Kicked off, but no score to be had. There is a real gap between the two
@@ -6513,23 +6517,41 @@ function liveFlag(c){
     "srcset='https://flagcdn.com/w80/"+code+".png 2x' alt='' aria-hidden='true' loading='lazy'>";
 }
 function esc2(s){return esc(s==null?"":s);}
+/* Grade a tip against a score. This is lib/grade.js, inlined - the page is one
+   standalone file and cannot require it - and test/grade.test.js holds the two
+   to the same answers.
+   What it replaced ended on "return res(tot>=2)", a guess for every label it
+   did not recognise: "Over 2.5" landed on a 1-1, and "Under 2.5" was inverted
+   outright, a goalless draw reading as a miss. Harmless while it only coloured
+   a badge; not harmless once the full-time ledger began writing the verdict
+   down as a result. Nothing is guessed here - an unknown label, or a first-half
+   market with no half-time score, comes back "unknown" and callers must treat
+   that as ungraded rather than as a miss. */
 function tipEval(f){
-  var t=f.tip||"";
+  var t=(f&&f.tip!=null)?String(f.tip).trim():"";
   return function(h,a){
-    var tot=h+a, both=h>0&&a>0;
-    function res(ok){return ok?"win":"lose";}
-    if(t==="Home win") return h>a?"win":(h===a?"level":"lose");
-    if(t==="Away win") return a>h?"win":(a===h?"level":"lose");
-    if(t==="Draw") return h===a?"win":"lose";
+    if(typeof h!=="number"||typeof a!=="number"||isNaN(h)||isNaN(a)) return "unknown";
+    var diff=h-a, tot=h+a, both=h>0&&a>0, m;
+    function res(v){return v==null?"unknown":(v?"win":"lose");}
+    if(t==="Home win") return res(diff>0);
+    if(t==="Away win") return res(diff<0);
+    if(t==="Draw") return res(diff===0);
     if(t==="Both teams score") return res(both);
-    if(t==="First half goal") return res(tot>0);
-    if(t.indexOf("1X")===0) return h>=a?"win":"lose";
-    if(t.indexOf("X2")===0) return a>=h?"win":"lose";
-    if(t.indexOf("12")===0) return h!==a?"win":"lose";
-    if(t.indexOf("Draw or over")===0) return res(h===a||tot>2);
-    if(t.indexOf("Draw or both")===0) return res(h===a||both);
-    if(t.indexOf("Both score and")===0) return res(both&&tot>2);
-    return res(tot>=2);
+    /* No half-time score in the live feed, so this cannot be settled. */
+    if(/^First half goal/i.test(t)) return "unknown";
+    if(t.indexOf("1X")===0) return res(diff>=0);
+    if(t.indexOf("X2")===0) return res(diff<=0);
+    if(t.indexOf("12")===0) return res(diff!==0);
+    m=/^Draw or over\s*([\d.]+)/i.exec(t);
+    if(m) return res(diff===0||tot>parseFloat(m[1]));
+    if(/^Draw or both/i.test(t)) return res(diff===0||both);
+    m=/^Both score and over\s*([\d.]+)/i.exec(t);
+    if(m) return res(both&&tot>parseFloat(m[1]));
+    m=/^Over\s*([\d.]+)/i.exec(t);
+    if(m) return res(tot>parseFloat(m[1]));
+    m=/^Under\s*([\d.]+)/i.exec(t);
+    if(m) return res(tot<parseFloat(m[1]));
+    return "unknown";
   };
 }
 function matchPrediction(lm){
@@ -6614,10 +6636,17 @@ async function fetchLive(){
    underneath the server's results and never over them: a graded result from
    the build always wins, and this only fills the days and the cup ties it
    cannot reach. */
-var FT_KEY="sw.ft.v1", FT_KEEP_DAYS=21;
+/* v2: v1 was written by the grader that guessed at any label it did not know,
+   so a stored "Over 2.5" or "Under 2.5" row from it may be graded the wrong
+   way. There is no telling which rows are affected without regrading, and this
+   record is meant to be the trustworthy one - so v1 is dropped rather than
+   carried forward. A few days of history is a cheap price for not publishing a
+   number built on guesses. */
+var FT_KEY="sw.ft.v2", FT_KEEP_DAYS=21;
 var FTLOG=[];
 try{FTLOG=JSON.parse(localStorage.getItem(FT_KEY)||"[]");}catch(e){FTLOG=[];}
 if(!Array.isArray(FTLOG)) FTLOG=[];
+try{localStorage.removeItem("sw.ft.v1");}catch(e){}
 function ftKey(date,home,away){return date+"|"+normTeam(home)+"|"+normTeam(away);}
 function saveFTLog(){
   try{
@@ -6665,6 +6694,9 @@ function recordFinishedFixtures(){
       if(!lm||lm.homeScore==null||lm.awayScore==null) return;
       if(!statusText(lm).ft) return;
       var v=tipEval(f)(lm.homeScore,lm.awayScore);
+      /* Only write down what we can actually settle. A tip we cannot grade
+         from a final score has no business being stored as a miss. */
+      if(v==="unknown") return;
       FTLOG.push({date:f.date,league:f.league||"",home:f.home,away:f.away,
         hg:lm.homeScore,ag:lm.awayScore,tip:f.tip,hit:v==="win",
         tip_p:(f.tip_p!=null?f.tip_p:null),ours:1,at:Date.now()});
