@@ -1601,6 +1601,15 @@ html.mode-live #live{display:block}
 .scope-opt:focus-visible{outline:2px solid var(--red);outline-offset:1px}
 .scope-opt.on{background:var(--card);color:var(--text);
   box-shadow:0 1px 3px rgba(0,0,0,.28),inset 0 0 0 1px var(--red)}
+/* Four buckets rather than two, so the type comes down and the count sits
+   under the label instead of beside it - four side-by-side pairs would not
+   survive a phone. */
+.tod-seg{margin-top:-7px;margin-bottom:13px}
+.tod-seg .scope-opt{flex-direction:column;gap:1px;font-size:12px;padding:6px 4px}
+.tod-seg .so-n{font-size:10.5px;font-weight:700;opacity:.75}
+/* Nothing kicks off in this window today. Still tappable - it says something
+   true about the day - but it should not look like a live choice. */
+.tod-seg .scope-opt.tod-empty{opacity:.42}
 .so-n{font-size:11px;font-weight:800;padding:1px 7px;border-radius:99px;
   background:var(--card-2);color:var(--faint);font-variant-numeric:tabular-nums}
 .scope-opt.on .so-n{background:var(--red);color:#fff}
@@ -1628,8 +1637,15 @@ html.mode-live #live{display:block}
   text-transform:uppercase;color:var(--faint);margin-top:3px}
 .stat.odds b{color:var(--win)}
 #slip{display:flex;flex-direction:column;gap:8px}
-.sp-row{display:flex;align-items:center;gap:12px;background:var(--card);
-  border:1px solid var(--line-soft);border-radius:var(--r-md);padding:11px 13px;
+/* Shared by the slip sheet and the builder's preview. In the sheet this is
+   down to two columns - the fixture and the remove button. The confidence
+   and the price used to sit on every row there, repeating per leg what the
+   total at the foot already says and squeezing the fixture onto two lines to
+   do it. Both numbers are on every line of the dropdown, which is where you
+   compare them anyway. Giving that width back to the name is what fits more
+   games on a phone screen at once. */
+.sp-row{display:flex;align-items:center;gap:10px;background:var(--card);
+  border:1px solid var(--line-soft);border-radius:var(--r-md);padding:9px 12px;
   border-left-width:3px;border-left-style:solid}
 .sp-row.conf-strong{border-left-color:var(--green)}
 .sp-row.conf-lean{border-left-color:var(--win)}
@@ -1643,7 +1659,9 @@ html.mode-live #live{display:block}
    costs a few pixels, a hidden team name costs the decision. */
 .sp-teams{font-weight:700;font-size:14px;white-space:normal;overflow:visible;
   overflow-wrap:break-word;line-height:1.25}
-/* ...and stop the pick column taking more than its share on a narrow row. */
+/* The builder's preview row still carries a pick column, so its name is the
+   one that gets squeezed and still needs the guard. The sheet's rows no
+   longer render this at all. */
 .sp-pick{max-width:44%}
 .sp-meta{font-size:12px;color:var(--faint);margin-top:2px}
 /* The pick, as a control rather than a caption. It has to read as the label
@@ -1660,8 +1678,10 @@ html.mode-live #live{display:block}
      the text alone, so under border-box the room reserved for the chevron
      came out of the words and clipped the price off the end. */
   box-sizing:content-box;
-  font:inherit;font-size:12px;font-weight:600;
-  color:var(--soft);background:transparent;
+  font:inherit;font-size:12.5px;font-weight:700;
+  /* Now the only thing on the row besides the fixture, so it carries the
+     accent rather than sitting grey like the caption it replaced. */
+  color:var(--win);background:transparent;
   border:1px solid transparent;border-radius:var(--r-sm,8px);
   /* Right padding clears the chevron. On a narrow phone the label truncates
      into it, and what gets cut - the confidence and the price - is already
@@ -1674,12 +1694,17 @@ html.mode-live #live{display:block}
   transition:background .14s ease,border-color .14s ease,color .14s ease}
 .sp-swap::after{content:"";position:absolute;right:7px;top:50%;
   width:5px;height:5px;margin-top:-3px;pointer-events:none;
-  border-right:1.5px solid var(--faint);border-bottom:1.5px solid var(--faint);
-  transform:rotate(45deg);transition:border-color .14s ease}
+  border-right:1.5px solid var(--win);border-bottom:1.5px solid var(--win);
+  transform:rotate(45deg);transition:border-color .14s ease;opacity:.85}
 .sp-sel:hover{color:var(--text);background:var(--chip,rgba(255,255,255,.06));
   border-color:var(--line)}
-.sp-swap:hover::after{border-color:var(--text)}
-.sp-sel:focus-visible{outline:2px solid var(--red);outline-offset:1px;color:var(--text)}
+.sp-swap:hover::after{border-color:var(--win)}
+/* A 2px red outline sat there long after the picker closed and read as a box
+   stuck round the row. The ring is the control's own border lighting up, so
+   keyboard focus is still obvious without shouting. */
+.sp-sel:focus-visible{outline:none;color:var(--text);
+  border-color:var(--win);background:var(--chip,rgba(255,255,255,.06))}
+.sp-sel:focus-visible+.sp-x{opacity:1}
 @media (max-width:640px){
   /* Bigger tap target on a phone without making the row taller. */
   .sp-sel{padding-top:5px;padding-bottom:5px}
@@ -1946,7 +1971,12 @@ html.reduce .myfab{animation:none}
   .wsp-chip{padding:8px 12px;font-size:12.5px}
   .wsp-lead{font-size:12.5px}.wsp-go{padding:10px;font-size:13.5px}
 }
-.mysheet-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 16px 6px;
+/* A drag anywhere on this bar used to scroll the page underneath the sheet,
+   because the footer is not itself a scroll container and overscroll-behavior
+   only governs scrollers. Refusing the pan gesture here keeps the page still;
+   taps are unaffected. */
+.mysheet-foot{touch-action:none;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 16px 6px;
   border-top:1px solid var(--line-soft);margin-top:14px}
 .mysheet-foot .bld-odds{flex:1;min-width:120px}
 .mysheet-foot .clear-btn,.mysheet-foot .book-btn{flex-shrink:0}
@@ -2941,6 +2971,12 @@ footer{margin-top:26px;padding-top:18px;
           <span class="so-t">Today only</span><span class="so-n" data-scope-n="day"></span></button>
         <button class="scope-opt stage-in stage-in-3" type="button" data-scope="all">
           <span class="so-t">All upcoming</span><span class="so-n" data-scope-n="all"></span></button>
+      </div>
+      <div class="scope-seg tod-seg stage-in stage-in-2" id="todSeg" role="group" aria-label="Time of day">
+        <button class="scope-opt stage-in stage-in-3" type="button" data-tod="all"><span class="so-t">All day</span><span class="so-n" data-tod-n="all"></span></button>
+        <button class="scope-opt stage-in stage-in-3" type="button" data-tod="early"><span class="so-t">Early</span><span class="so-n" data-tod-n="early"></span></button>
+        <button class="scope-opt stage-in stage-in-3" type="button" data-tod="mid"><span class="so-t">Mid day</span><span class="so-n" data-tod-n="mid"></span></button>
+        <button class="scope-opt stage-in stage-in-3" type="button" data-tod="late"><span class="so-t">Late</span><span class="so-n" data-tod-n="late"></span></button>
       </div>
       <div class="wsp-lbl stage-in stage-in-2">Leagues</div>
       <div class="wsp-chips stage-in stage-in-3" id="bldLeagues">
@@ -4068,7 +4104,7 @@ addEventListener("keydown",function(e){
   }});
 
 /* ============================================================ build a slip */
-var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:true,fh:false,both:true},touched:false,mode:"slider"};
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:true,o35:false,fh:false,dnb:false,both:true},touched:false,mode:"slider"};
 try{var rr=localStorage.getItem("sw.risk"); if(rr!=null) BUILD.risk=+rr;}catch(e){}
 try{var rm=localStorage.getItem("sw.mode"); if(rm==="slider"||rm==="wizard") BUILD.mode=rm;}catch(e){}
 /* Ticket window. "day" holds every leg inside today, so the whole slip settles
@@ -4077,11 +4113,28 @@ try{var rm=localStorage.getItem("sw.mode"); if(rm==="slider"||rm==="wizard") BUI
    disagree about which games are on the table. */
 var SCOPE="all";
 try{var sc0=localStorage.getItem("sw.scope"); if(sc0==="day"||sc0==="all") SCOPE=sc0;}catch(e){}
+/* Time of day, by local kickoff. Someone building a slip at lunchtime does
+   not want games that started this morning, and someone who will be watching
+   in the evening wants only the evening card. The cuts follow how a day
+   actually splits for a Nigerian audience: most European football lands in
+   the late bucket, which is why "all day" stays the default. */
+var TOD="all";
+try{var td0=localStorage.getItem("sw.tod");
+  if(td0==="early"||td0==="mid"||td0==="late"||td0==="all") TOD=td0;}catch(e){}
+function todOf(f){
+  var t=kickMs(f); if(!t) return null;
+  var h=new Date(t).getHours();
+  return h<15?"early":(h<19?"mid":"late");
+}
+function todFixtures(list){
+  if(TOD==="all") return list;
+  return list.filter(function(f){var b=todOf(f); return b===null||b===TOD;});
+}
 function scopeFixtures(){
-  return DATA.fixtures.filter(function(f){
+  return todFixtures(DATA.fixtures.filter(function(f){
     if(!notStarted(f)) return false;
     return SCOPE!=="day"||dayOff(f.date)===0;
-  });
+  }));
 }
 function paintScope(){
   updateFiltersSum();
@@ -4101,6 +4154,39 @@ function paintScope(){
       el.textContent=n[el.getAttribute("data-scope-n")];
     });
   }catch(e){}
+  paintTod();
+}
+/* Same treatment for the time buckets, and the counts matter more here: on a
+   quiet weekday three of the four are empty, and a label alone would invite a
+   tap that returns nothing. */
+function paintTod(){
+  var seg=$("todSeg"); if(!seg) return;
+  seg.querySelectorAll("[data-tod]").forEach(function(b){
+    var on=b.getAttribute("data-tod")===TOD;
+    b.classList.toggle("on",on);
+    b.setAttribute("aria-pressed",on?"true":"false");
+  });
+  try{
+    var base=(DATA.fixtures||[]).filter(function(f){
+      if(!notStarted(f)) return false;
+      return SCOPE!=="day"||dayOff(f.date)===0;
+    });
+    var n={all:base.length,early:0,mid:0,late:0};
+    base.forEach(function(f){var b=todOf(f); if(b&&n[b]!=null) n[b]++;});
+    seg.querySelectorAll("[data-tod-n]").forEach(function(el){
+      var k=el.getAttribute("data-tod-n");
+      el.textContent=n[k];
+      var btn=el.closest(".scope-opt");
+      /* Nothing in this window - say so by dimming rather than by letting the
+         tap empty the board. */
+      if(btn) btn.classList.toggle("tod-empty",k!=="all"&&n[k]===0);
+    });
+  }catch(e){}
+}
+function setTod(t){
+  if((t!=="all"&&t!=="early"&&t!=="mid"&&t!=="late")||t===TOD) return false;
+  TOD=t; try{localStorage.setItem("sw.tod",t);}catch(e){}
+  paintScope(); return true;
 }
 /* Persist and repaint only - callers decide what to re-render, because a change
    made from the Wizard's Special sheet must not flip BUILD.touched and rewrite
@@ -4444,12 +4530,29 @@ function allowedMarkets(t){
   if(t>=2) m=m.concat(["GG"]);
   return m;
 }
+/* Draw-no-bet chance. A draw voids the bet and returns the stake, so the
+   only outcomes that settle it are the two wins - the chance is this side's
+   win share of those two. Returns null when the pair is unusable rather
+   than dividing by zero. */
+function dnbProb(f,home){
+  if(!f) return null;
+  var h=f.home_p,a=f.away_p;
+  if(h==null||a==null||isNaN(h)||isNaN(a)) return null;
+  var d=h+a; if(d<=0) return null;
+  return (home?h:a)/d;
+}
 function mProb(f,c){
   switch(c){case"1":return f.home_p;case"X":return f.draw_p;case"2":return f.away_p;
     case"1X":return f.dc1x;case"X2":return f.dcx2;
     case"12":return f.anybody!=null?f.anybody:f.dc12;
     case"OVER_1.5":return f.o15;case"OVER_2.5":return f.o25;case"GG":return f.btts;
-    case"FH_OVER_0.5":return f.fh_o05;}
+    case"FH_OVER_0.5":return f.fh_o05;
+    case"OVER_3.5":return f.o35;
+    /* Draw no bet is the match result with the draw removed and the stake
+       handed back, so the chance is the win renormalised over the two
+       outcomes that can still settle it. */
+    case"DNB_1":return dnbProb(f,true);
+    case"DNB_2":return dnbProb(f,false);}
   return null;
 }
 function mLabel(f,c){
@@ -4458,13 +4561,17 @@ function mLabel(f,c){
     case"X2":return esc(f.away)+" or draw";case"12":return"Any team to win";
     case"OVER_1.5":return"Over 1.5 goals";case"OVER_2.5":return"Over 2.5 goals";
     case"GG":return"Both teams to score";
-    case"FH_OVER_0.5":return"Goal in 1st half";}
+    case"FH_OVER_0.5":return"Goal in 1st half";
+    case"OVER_3.5":return"Over 3.5 goals";
+    case"DNB_1":return esc(f.home)+" (draw = stake back)";
+    case"DNB_2":return esc(f.away)+" (draw = stake back)";}
   return c;
 }
 function buildPicks(){
   var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier), cand=[];
   var mkOn={"1X":BUILD.mk.wd,"X2":BUILD.mk.wd,"12":BUILD.mk.any,"1":BUILD.mk.out,"2":BUILD.mk.out,
-    "OVER_1.5":BUILD.mk.o15,"OVER_2.5":BUILD.mk.o25,"FH_OVER_0.5":BUILD.mk.fh,"GG":BUILD.mk.both};
+    "OVER_1.5":BUILD.mk.o15,"OVER_2.5":BUILD.mk.o25,"OVER_3.5":BUILD.mk.o35,
+    "FH_OVER_0.5":BUILD.mk.fh,"DNB_1":BUILD.mk.dnb,"DNB_2":BUILD.mk.dnb,"GG":BUILD.mk.both};
   allowed=allowed.filter(function(c){return mkOn[c]!==false;});
   var f0=BUILD.risk/100;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
@@ -5458,7 +5565,10 @@ function swapOptions(f){
     {code:"OVER_1.5",label:"Over 1.5 goals",p:f.o15},
     {code:"OVER_2.5",label:"Over 2.5 goals",p:f.o25},
     {code:"GG",label:"Both teams score",p:f.btts},
-    {code:"FH_OVER_0.5",label:"Goal in 1st half",p:f.fh_o05}
+    {code:"FH_OVER_0.5",label:"Goal in 1st half",p:f.fh_o05},
+    {code:"OVER_3.5",label:"Over 3.5 goals",p:f.o35},
+    {code:"DNB_1",label:f.home+" (draw = stake back)",p:dnbProb(f,true)},
+    {code:"DNB_2",label:f.away+" (draw = stake back)",p:dnbProb(f,false)}
   ].filter(function(o){return o.p!=null&&!isNaN(o.p);});
 }
 function renderFab(){var fab=$("myFab"); if(!fab) return; fab.hidden=MYSLIP.length===0;
@@ -5598,8 +5708,6 @@ function renderMySheet(){
     return "<div class='sp-row'>"+
       "<div class='sp-main'><div class='sp-teams'>"+teams+noid+"</div>"+
         picker+"</div>"+
-      "<div class='sp-pick'><i>"+P0(x.p)+"%</i></div>"+
-      "<span class='sp-odd'>"+(x.p>0?legOdd(fixtureById(x.id),x.code,x.p).toFixed(2):"-")+"</span>"+
       "<button class='sp-x' data-myrm='"+x.id+"|"+x.code+"' aria-label='Remove'>"+XSVG+"</button>"+
     "</div>";
   }).join("");
@@ -5608,6 +5716,9 @@ function renderMySheet(){
     b.addEventListener("click",function(){var p=b.dataset.myrm.split("|"); toggleMy(p[0],p[1]);});});
   body.querySelectorAll("[data-myswap]").forEach(function(s){
     s.addEventListener("change",function(){
+      /* Let go of the control once it has been used. Left focused it keeps
+         its ring, which on a phone reads as a box stuck round the row. */
+      try{s.blur();}catch(e){}
       swapMy(s.dataset.myswap,s.dataset.code,s.value);
     });});
 }
@@ -5843,7 +5954,7 @@ document.addEventListener("click",function(e){
 /* odds starts null, the way BUILD.risk does. A pre-picked payout meant the
    wizard had already decided for you: a slip existed, the hero advertised
    it, and Conjure would fill My slip before you had chosen anything. */
-var WSP={odds:null,legodd:1.35,mk:{doubles:true,out:true,o15:true,o25:true,fh:false,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.35,everyGame:false,mk:{doubles:true,out:true,o15:true,o25:true,o35:false,fh:false,dnb:false,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* One entry per toggle, so turning everything else off leaves exactly one
    market and every leg of the slip is that market. That is the whole point
    of splitting the goals group: an all-Over-1.5 or all-first-half ticket is
@@ -5853,7 +5964,9 @@ function wspMarkets(){var m=[];
   if(WSP.mk.out)m=m.concat(["1","2"]);
   if(WSP.mk.o15)m.push("OVER_1.5");
   if(WSP.mk.o25)m.push("OVER_2.5");
+  if(WSP.mk.o35)m.push("OVER_3.5");
   if(WSP.mk.fh)m.push("FH_OVER_0.5");
+  if(WSP.mk.dnb)m=m.concat(["DNB_1","DNB_2"]);
   if(WSP.mk.both)m.push("GG");
   return m;}
 function wspBuild(){
@@ -5867,6 +5980,7 @@ function wspBuild(){
     allowed.forEach(function(c){
       if(c==="1"&&!homeFav)return; if(c==="2"&&homeFav)return;
       if(c==="1X"&&!homeFav)return; if(c==="X2"&&homeFav)return;
+      if(c==="DNB_1"&&!homeFav)return; if(c==="DNB_2"&&homeFav)return;
       var v=mProb(f,c); if(v==null||isNaN(v))return; if(v<((c==="GG")?0.42:0.5))return;
       cands.push({f:f,id:fid(f),code:c,p:v,od:legOdd(f,c,v)});
     });
@@ -5892,12 +6006,23 @@ function wspBuild(){
        target. A high payout pulls in the bigger-odds markets the user enabled
        (outright wins, both-teams-score); a low one favours safe double-chance.
        That is what makes the Slip-style and market toggles actually bite. */
-    var T=WSP.odds, cap=40, per=WSP.legodd||1.35;
+    /* SportyBet itself has no practical ceiling here - 199 legs in one code
+       came back fine - so this number is ours, and it is about what a person
+       can read and check, not what the bookmaker will take. */
+    var T=WSP.odds, cap=WSP.everyGame?120:40, per=WSP.legodd||1.35;
     /* Nothing to aim at yet - say so with an empty slip rather than
        inventing a target. */
-    if(T==null) return {picks:[],odds:1,conf:0};
-    var want=Math.max(4, Math.min(cap, Math.ceil(Math.log(T)/Math.log(per))));
-    var g=Math.pow(T,1/want);
+    if(T==null && !WSP.everyGame) return {picks:[],odds:1,conf:0};
+    /* "Every game that qualifies" asks a different question from "how many
+       legs reach this payout", so the payout stops driving the count. Take
+       the lot, up to the cap. */
+    var want=WSP.everyGame
+      ? Math.min(cap,list.length)
+      : Math.max(4, Math.min(cap, Math.ceil(Math.log(T)/Math.log(per))));
+    /* With no payout to hit there is no per-leg target to aim at either, so
+       aim low: the nearest-to-target rule below then picks each game's safest
+       available market instead of stretching for odds. */
+    var g=WSP.everyGame ? 1.01 : Math.pow(T,1/want);
     /* Prefer markets with REAL SportyBet odds: a market chosen off an estimated
        odd may not exist for that event at SportyBet, and the booking call then
        fails with "Sporty rejected the slip" (the "no market" error). When real
@@ -6061,6 +6186,11 @@ function renderShared(){
        got. Each line is its own switch now. */
     {k:"o15", label:"Over 1.5", tier:0, sub:"Over 1.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 8V12M12 16H12.01"/>'},
     {k:"o25", label:"Over 2.5", tier:1, sub:"Over 2.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/>'},
+    {k:"o35", label:"Over 3.5", tier:2, sub:"Over 3.5", icon:'<path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/>'},
+    /* The safe way to back a favourite: a draw hands the stake back rather
+       than losing it. Worth its own switch on a site where most people are
+       backing favourites anyway. */
+    {k:"dnb", label:"Draw = refund", tier:0, sub:"Draw no bet", icon:'<path d="M3 12h18"/><path d="M7 8l-4 4 4 4"/><path d="M21 6v6"/>'},
     /* Predicted since day one, bookable only now that market 68 is fetched. */
     {k:"fh", label:"1st half goal", tier:2, sub:"FH over 0.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l3.5 2"/>'},
     {k:"both", label:"Both score", tier:2, sub:"GG", icon:'<path d="M17 21V5A2 2 0 0015 3H9A2 2 0 007 5V21"/><path d="M7 7H17"/><path d="M9 11H15"/><path d="M9 15H15"/><path d="M9 19H15"/>'}
@@ -6215,7 +6345,7 @@ function renderBuilderOutput(){
          delete changes only WSP.removed - not the signature - so we filter the
          cached slip instead of rebuilding, which means a removed leg shrinks the
          slip and stays gone rather than getting back-filled to hit the target. */
-      var _sig=[WSP.odds,WSP.legodd,WSP.seed,JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE].join("|");
+      var _sig=[WSP.odds,WSP.legodd,WSP.seed,JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE,TOD,!!WSP.everyGame].join("|");
       if(WSP._sig!==_sig || !WSP._slip){
         WSP._slip=wspBuild().picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};});
         WSP._sig=_sig;
@@ -6321,6 +6451,20 @@ paintScope();
     b.addEventListener("click",function(){
       if(!setScope(b.getAttribute("data-scope"))) return;
       BUILD.removed={}; BUILD.touched=true;
+      $("bookResult").innerHTML=""; renderBuilder();
+    });
+  });
+})();
+(function(){
+  var seg=$("todSeg"); if(!seg) return;
+  seg.querySelectorAll("[data-tod]").forEach(function(b){
+    b.addEventListener("click",function(){
+      if(!setTod(b.getAttribute("data-tod"))) return;
+      /* Same reset as the window switch: the pool the slip was drawn from has
+         changed, so a removal list and a code from the old pool are both
+         stale. */
+      BUILD.removed={}; BUILD.touched=true;
+      WSP.removed={}; WSP._slip=null; WSP._sig=null;
       $("bookResult").innerHTML=""; renderBuilder();
     });
   });
