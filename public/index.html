@@ -924,19 +924,26 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
 /* Book-all: a small flashy pill above the board. It only appears when the
    visible tips are actually bookable, so it never sits there dead. */
 .bookall-row{display:flex;justify-content:flex-end;margin:8px 0 2px}
-/* It sits between two quiet controls now, so a filled crimson slab with a
-   gold rim and a text shadow was shouting over both. An outline pill in the
-   accent colour: present, clearly tappable, not competing. */
-.bookall{position:relative;overflow:hidden;display:none;align-items:center;gap:7px;
-  background:transparent;color:var(--red-ink);
-  border:1px solid var(--line);
-  font:inherit;font-weight:700;font-size:12.5px;letter-spacing:0;
-  padding:8px 15px;border-radius:99px;cursor:pointer;text-shadow:none;
-  box-shadow:none;
-  transition:border-color .18s,background .18s,color .18s}
+/* The outline version of this read as dull - it is the one control on the board
+   that starts a slip, and a grey-rimmed pill made it look like a tertiary
+   option next to the filters. Back to the crimson pill with the gold rim and
+   its ember: the brightest thing in the row, which is what it should be. */
+.bookall{position:relative;overflow:hidden;display:none;align-items:center;gap:8px;
+  background:linear-gradient(135deg,#6d1017,var(--red) 55%,#9c1620);color:#fff;
+  border:1px solid rgba(242,184,75,.55);
+  font:inherit;font-weight:800;font-size:12.5px;letter-spacing:.03em;
+  padding:8px 15px 8px 27px;border-radius:99px;cursor:pointer;
+  text-shadow:0 1px 2px rgba(0,0,0,.55);
+  box-shadow:0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.12);
+  transition:filter .25s,box-shadow .25s,transform .15s}
 .bookall.show{display:inline-flex}
-/* A quiet lift on approach - it is one control among three. */
-.bookall:hover{border-color:var(--red);background:var(--red-wash);color:var(--red-ink)}
+/* Calm at rest, menacing on approach: the ember flares, a red bloom opens up
+   and the pill gives one small tremor - a spell about to be cast, not a
+   button begging to be pressed. */
+.bookall:hover{filter:brightness(1.1);
+  box-shadow:0 0 0 1px rgba(242,184,75,.85),0 7px 24px rgba(230,57,70,.55),
+             inset 0 1px 0 rgba(255,255,255,.16);
+  animation:baTremor .3s ease-in-out 1}
 .bookall:hover .ba-spark{background:#FFD873;box-shadow:0 0 13px 3px rgba(242,184,75,1)}
 .bookall:active{transform:scale(.97)}
 @keyframes baTremor{0%,100%{transform:translateX(0)}20%{transform:translateX(-1.5px)}
@@ -945,7 +952,7 @@ html.reduce .bookall:hover{animation:none}
 .bookall:disabled{opacity:.6;cursor:not-allowed}
 .bookall .ba-n{background:rgba(242,184,75,.92);color:#2a1400;border-radius:99px;padding:1px 7px;
   font-variant-numeric:tabular-nums;font-size:11.5px;text-shadow:none}
-.ba-spark{display:none;position:absolute;top:50%;left:11px;width:5px;height:5px;margin-top:-2.5px;
+.ba-spark{position:absolute;top:50%;left:11px;width:5px;height:5px;margin-top:-2.5px;
   border-radius:50%;background:#F2B84B;pointer-events:none;
   box-shadow:0 0 7px 1px rgba(242,184,75,.85);animation:baFlicker 2.8s ease-in-out infinite;
   transition:background .25s,box-shadow .25s}
@@ -2929,8 +2936,9 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
   .sotd-legs{gap:4px;margin-bottom:10px}
   .sotd-leg{font-size:12.5px}
 
-  /* The pill says what it builds and how many, so it needs the room. */
-  .bookall{padding:9px 13px}
+  /* The pill says what it builds and how many, so it needs the room - but the
+     ember still needs its corner, so the left inset stays. */
+  .bookall{padding:9px 13px 9px 25px}
   .bookall .ba-tx{font-size:12px}
 
   /* The card's job on a phone is: who is playing, what we call it, how sure we
