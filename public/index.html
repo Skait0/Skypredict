@@ -994,7 +994,14 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .lt-tip{min-width:0;overflow:hidden;display:flex;align-items:center;gap:6px;font-weight:700;font-size:12.5px;color:var(--text);padding-right:16px}
 .lt-tip .vdot{width:7px;height:7px;flex-shrink:0}
 .lt-tip .tx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lt-tip .grade{flex-shrink:0;font-size:10px;font-weight:800;font-variant-numeric:tabular-nums;
+/* font-style:normal because this is an <i> - italic by default - and Plus
+   Jakarta Sans ships no italic face, so the browser was synthesising one by
+   mechanically slanting the upright digits. That fake oblique is what made
+   the percentage after a tip look wrong: it is not a real italic, it is
+   sheared numbers. The card view uses a span for the same chip, which is why
+   only the list slanted. */
+.lt-tip .grade{flex-shrink:0;font-style:normal;font-size:10px;font-weight:800;
+  font-variant-numeric:tabular-nums;
   padding:2px 7px;border-radius:99px;background:var(--raise);color:var(--soft)}
 .conf-strong .lt-tip .grade{background:var(--green-wash);color:var(--green-ink)}
 .conf-lean .lt-tip .grade{background:var(--win-wash);color:var(--win-ink)}
@@ -1203,7 +1210,13 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 }
 /* Kickoff countdown. Quiet by default; amber inside the hour, which is when
    it stops being information and starts being a deadline. */
-.fx-soon{display:inline-flex;align-items:center;font-size:11px;font-weight:700;
+/* Reserved width. This repaints every thirty to sixty seconds, and the text
+   narrows as the clock runs down - "in 1h 0m" becomes "in 59m" - so without a
+   floor the row re-flowed on its own every time, which reads as the page
+   twitching for no reason. Tabular figures keep the digits from shuffling;
+   the min-width keeps the box from resizing around them. */
+.fx-soon{display:inline-flex;align-items:center;justify-content:flex-end;
+  min-width:62px;font-size:11px;font-weight:700;
   color:var(--faint);letter-spacing:.01em;font-variant-numeric:tabular-nums;
   white-space:nowrap}
 .fx-soon.near{color:var(--win-ink);background:var(--win-wash);
