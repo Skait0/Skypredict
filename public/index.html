@@ -6879,11 +6879,26 @@ function payloadAge(p){
 }
 function usablePayload(p){return !!(p&&Array.isArray(p.fixtures)&&p.fixtures.length);}
 async function fetchPayload(){
-  try{
-    const p=await fetchJSON("/predictions.json");
-    if(usablePayload(p)) return {payload:p,stale:payloadAge(p)>PAYLOAD_MAX_AGE_MS};
-  }catch(e){ /* not deployed yet, or being replaced - fall through to the API */ }
-  return {payload:await fetchJSON("/api/predictions"),stale:false};
+  /* Both routes are tried more than once. The static file can 404 for a few
+     seconds while a deploy replaces it, and the function behind the API can
+     be cold at the same moment - a deploy is exactly when both are shaky.
+     One unlucky pass used to throw all the way out to the error screen and
+     stay there until somebody reloaded by hand. */
+  var lastErr=null;
+  for(var attempt=1;attempt<=3;attempt++){
+    try{
+      const p=await fetchJSON("/predictions.json");
+      if(usablePayload(p)) return {payload:p,stale:payloadAge(p)>PAYLOAD_MAX_AGE_MS};
+    }catch(e){ lastErr=e; }
+    try{
+      const q=await fetchJSON("/api/predictions");
+      /* Last time round, take whatever the API gave rather than throwing:
+         a thin payload still renders something, an exception renders nothing. */
+      if(usablePayload(q)||attempt===3) return {payload:q,stale:false};
+    }catch(e){ lastErr=e; }
+    if(attempt<3) await new Promise(function(r){setTimeout(r,700*attempt);});
+  }
+  throw lastErr||new Error("predictions could not be loaded");
 }
 /* Repaint only if the API really is newer, so a slow response cannot replace
    fresh data with older data. */
@@ -6897,6 +6912,9 @@ async function refreshPayload(){
     }
   }catch(e){}
 }
+/* Counts only consecutive failures - reset the moment a load succeeds, so a
+   blip today does not use up the retries for a blip an hour from now. */
+var LOAD_RETRY=0;
 async function load(){
   $("list").innerHTML="<div class='none'><span class='mini-load'></span><b>Loading predictions</b>"+
     "<p>Building from the latest results - just a moment.</p></div>";
@@ -6904,16 +6922,27 @@ async function load(){
     const got=await fetchPayload();
     DATA=got.payload;
     await loadSporty();
+    LOAD_RETRY=0;
     startLive();
     paint();
     hideLoader();
     if(got.stale) refreshPayload();
   }catch(err){
     var w=$("when"); if(w) w.textContent="-";
-    $("list").innerHTML="<div class='none'><b>Predictions unavailable</b>"+
-      "<p>"+esc(err.message||err)+". This usually clears within a few "+
-      "minutes. Reload to try again.</p></div>";
+    /* Keep trying rather than sitting there. The usual cause is a deploy
+       swapping the payload out underneath a visitor, which resolves in
+       seconds - and "reload to try again" put the fix on the person least
+       equipped to know it was temporary. */
+    var willRetry=LOAD_RETRY<4;
+    $("list").innerHTML="<div class='none'>"+
+      (willRetry?"<span class='mini-load'></span>":"")+
+      "<b>Predictions unavailable</b><p>"+esc(err.message||err)+". "+
+      (willRetry?"Trying again…":"Please reload the page.")+"</p></div>";
     hideLoader();
+    if(willRetry){
+      LOAD_RETRY++;
+      setTimeout(function(){ load(); }, Math.min(12000,1800*LOAD_RETRY));
+    }
   }
 }
 function hideLoader(){var l=$("loader"); if(!l) return; l.classList.add("hide");
