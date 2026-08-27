@@ -1687,24 +1687,27 @@ html.mode-live #live{display:block}
    it replaced until you notice you can change it, so it keeps that size and
    colour and carries a chevron as the only hint - a full form-control border
    on every row would turn a slip into a settings page. */
-/* The visible label and the real control are separate on purpose. A native
-   select can only ever show its selected option's text, and the option text
-   has to carry the confidence and the price - that is what you compare when
-   the list is open. Showing all of it collapsed repeated, on every row, what
-   the total at the foot already says.
-   So the select lies over the row invisibly and does the work, and the span
-   underneath shows the pick alone. Tapping anywhere on it opens the ordinary
-   OS picker, where the numbers are. */
+/* The row shows the pick and nothing else; the confidence and the price live
+   on each line of the menu, which is where you compare them. Repeating them
+   on every row said again what the total at the foot already says, and cost
+   the fixture the width it needed. */
 .sp-swap{position:relative;display:inline-block;margin-top:2px;max-width:100%}
 .sp-swap-lbl{display:block;max-width:100%;
   font-size:12.5px;font-weight:700;color:var(--win);
-  padding:2px 23px 2px 0;
   text-overflow:ellipsis;white-space:nowrap;overflow:hidden;
   transition:color .14s ease}
-.sp-swap:hover .sp-swap-lbl{color:var(--win)}
-/* The trigger: the pick, plus a chevron. Styled as text, not as a form
+/* The chevron. It is the only thing telling anyone this line can be changed
+   at all, so without it the control is invisible - which is exactly what
+   happened when this rule was lost in an edit. */
+.sp-swap::after{content:"";position:absolute;right:7px;top:50%;
+  width:5px;height:5px;margin-top:-4px;pointer-events:none;
+  border-right:1.6px solid var(--win);border-bottom:1.6px solid var(--win);
+  transform:rotate(45deg);opacity:.9;transition:border-color .14s ease,opacity .14s ease}
+.sp-swap:hover::after{border-color:var(--text);opacity:1}
+.sp-swap:hover .sp-swap-lbl{color:var(--text)}
+/* The trigger: the pick, plus that chevron. Styled as text, not as a form
    control - a bordered box on every row would turn a slip into a settings
-   page. */
+   page. The right padding is the chevron's room. */
 .sp-swap-btn{display:block;max-width:100%;margin:0;padding:2px 23px 2px 0;
   background:none;border:0;font:inherit;text-align:left;cursor:pointer;
   color:inherit}
@@ -4568,10 +4571,23 @@ function inkOn(h,s,l){
   var white=1.05/(L+0.05), black=(L+0.05)/0.05;
   return black>=white?"#14140F":"#ffffff";
 }
+/* Every market the slider may draw from, by risk tier. This has to list a
+   code before the market toggles can mean anything: the toggles filter this
+   list down, they never add to it, so a market missing here is a switch that
+   silently returns nothing however it is set.
+   Tiers match the chips: safe markets are the ones that win most often, and
+   the ones that pay are unlocked as the slider goes up. */
 function allowedMarkets(t){
-  var m=["1X","X2","OVER_1.5","1","2"];
+  var m=["1X","X2","OVER_1.5","1","2",
+         /* A draw refunds rather than loses, so it is safer than the
+            outright win it otherwise resembles. */
+         "DNB_1","DNB_2",
+         /* One side finding the net at all - the likeliest thing on the card
+            after a double chance. */
+         "HOME_OVER_0.5","AWAY_OVER_0.5"];
   if(t>=1) m=m.concat(["12","OVER_2.5"]);
-  if(t>=2) m=m.concat(["GG"]);
+  if(t>=2) m=m.concat(["GG","OVER_3.5","FH_OVER_0.5",
+                       "HOME_OVER_1.5","AWAY_OVER_1.5"]);
   return m;
 }
 /* Draw-no-bet chance. A draw voids the bet and returns the stake, so the
@@ -4611,10 +4627,10 @@ function mLabel(f,c){
     case"OVER_3.5":return"Over 3.5 goals";
     case"DNB_1":return esc(f.home)+" (draw = stake back)";
     case"DNB_2":return esc(f.away)+" (draw = stake back)";
-    case"HOME_OVER_0.5":return esc(f.home)+" to score";
-    case"AWAY_OVER_0.5":return esc(f.away)+" to score";
-    case"HOME_OVER_1.5":return esc(f.home)+" to score 2+";
-    case"AWAY_OVER_1.5":return esc(f.away)+" to score 2+";}
+    case"HOME_OVER_0.5":return esc(f.home)+" over 0.5 goals";
+    case"AWAY_OVER_0.5":return esc(f.away)+" over 0.5 goals";
+    case"HOME_OVER_1.5":return esc(f.home)+" over 1.5 goals";
+    case"AWAY_OVER_1.5":return esc(f.away)+" over 1.5 goals";}
   return c;
 }
 function buildPicks(){
@@ -4635,6 +4651,8 @@ function buildPicks(){
       if(c==="2"&&homeFav) return false;
       if(c==="1X"&&!homeFav) return false;
       if(c==="X2"&&homeFav) return false;
+      if(c==="DNB_1"&&!homeFav) return false;
+      if(c==="DNB_2"&&homeFav) return false;
       return true;
     }
     var best=null,bestScore=-1;
@@ -5620,10 +5638,10 @@ function swapOptions(f){
     {code:"OVER_3.5",label:"Over 3.5 goals",p:f.o35},
     {code:"DNB_1",label:f.home+" (draw = stake back)",p:dnbProb(f,true)},
     {code:"DNB_2",label:f.away+" (draw = stake back)",p:dnbProb(f,false)},
-    {code:"HOME_OVER_0.5",label:f.home+" to score",p:f.h_o05},
-    {code:"AWAY_OVER_0.5",label:f.away+" to score",p:f.a_o05},
-    {code:"HOME_OVER_1.5",label:f.home+" to score 2+",p:f.h_o15},
-    {code:"AWAY_OVER_1.5",label:f.away+" to score 2+",p:f.a_o15}
+    {code:"HOME_OVER_0.5",label:f.home+" over 0.5 goals",p:f.h_o05},
+    {code:"AWAY_OVER_0.5",label:f.away+" over 0.5 goals",p:f.a_o05},
+    {code:"HOME_OVER_1.5",label:f.home+" over 1.5 goals",p:f.h_o15},
+    {code:"AWAY_OVER_1.5",label:f.away+" over 1.5 goals",p:f.a_o15}
   ].filter(function(o){return o.p!=null&&!isNaN(o.p);});
 }
 function renderFab(){var fab=$("myFab"); if(!fab) return; fab.hidden=MYSLIP.length===0;
@@ -6343,8 +6361,8 @@ function renderShared(){
     {k:"fh", label:"1st half", tier:2, sub:"FH over 0.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l3.5 2"/>'},
     /* One side's goals rather than the two added together. Both sides go in
        the pool; whichever the model likes better is the one that gets used. */
-    {k:"tts", label:"Team scores", tier:0, sub:"Team over 0.5", icon:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 7v10"/>'},
-    {k:"tts2", label:"Team 2+", tier:2, sub:"Team over 1.5", icon:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M9 9h6M9 15h6"/>'},
+    {k:"tts", label:"Team over 0.5", tier:0, sub:"One side's goals", icon:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 7v10"/>'},
+    {k:"tts2", label:"Team over 1.5", tier:2, sub:"One side's goals", icon:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M9 9h6M9 15h6"/>'},
     {k:"both", label:"Both score", tier:2, sub:"GG", icon:'<path d="M17 21V5A2 2 0 0015 3H9A2 2 0 007 5V21"/><path d="M7 7H17"/><path d="M9 11H15"/><path d="M9 15H15"/><path d="M9 19H15"/>'}
   ];
   (function(){
