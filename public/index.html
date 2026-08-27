@@ -2687,6 +2687,17 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot{display:none}
   .home-rail{position:sticky;top:12px;
     max-height:calc(100vh - 24px);overflow-y:auto;
     scrollbar-width:thin}
+  /* Cards in here must never be squashed to fit.
+     The rail is a flex column with a height cap, and flex children shrink by
+     default - so once the contents grew past the cap, every card gave up
+     height to make room. The offer card lost a hundred pixels, and because it
+     clips its own overflow that took "See today's predictions" and the proof
+     line clean off it: the button appeared cut out of its box for no reason
+     visible on the card itself.
+     Adding the slips card is what pushed the column past the cap, so this
+     appeared without any of these cards changing. The rail already scrolls;
+     it should do that instead of compressing what is in it. */
+  .home-rail>*{flex-shrink:0}
 }
 
 /* Card columns follow the space the board actually has, not the viewport. The
