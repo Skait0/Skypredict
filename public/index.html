@@ -635,54 +635,63 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
 /* Deliberately nothing here: this used to restyle the button whenever the
    panel was hovered, which meant hovering the button itself did nothing
    extra. Each button now owns its own hover. */
-/* The orb is a two-sided coin turning on its vertical axis: the SportyBet
-   face out front, a plain white sphere behind it. It shows its back, comes
-   back to the front and rests there a while before going again.
-   Three things make this read as an object turning rather than an image
-   squashing. Perspective, so the near edge grows as it swings toward you and
-   the far edge shrinks - without it the flip is a horizontal scale and looks
-   like paper. preserve-3d on the inner element, so the two faces stay in
-   their own planes instead of being flattened into the parent. And
-   backface-visibility, so each face disappears the moment it turns away -
-   without it you see the front mirrored through the back.
-   The glow stays on the outer element: a filter forces its own element flat,
-   so it has to live above the 3D, not inside it. */
+/* The orb is a ball turning on its own axis: the SportyBet mark rides the
+   surface, slides off at one edge, and comes round the back to reappear at
+   the other. It rests facing us between turns.
+   CSS cannot wrap a texture onto a sphere, so this is the illusion every
+   rolling-planet effect uses, and it holds up because it obeys the three
+   things the eye actually checks.
+   The mark is squeezed horizontally as it nears an edge. A point on a
+   turning sphere is seen at cos(angle) of its width, so it thins to nothing
+   at the limb instead of walking off at full size like a sticker.
+   Its speed follows sin(angle) - quickest across the middle, slowest at the
+   edges - which is why the timing is set per segment rather than for the
+   whole loop: it eases OUT as it leaves the centre and IN as it returns.
+   A single ease-in-out would have it crawl through the middle, which is the
+   one place a real ball moves fastest.
+   And the shading does not travel with the mark. The light is fixed in the
+   room, so the highlight and the dark limb stay put while the surface turns
+   under them; painting that layer above the mark is what dims the mark as
+   it reaches the edge.
+   The ball itself is drawn rather than fetched - a gradient is a sphere's
+   shading, which is all a plain ball is. */
 .sc-orb{flex-shrink:0;width:44px;height:44px;margin-top:0;border-radius:50%;
-  perspective:340px;
+  position:relative;overflow:hidden;
+  background:radial-gradient(circle at 34% 28%,#ffffff 0%,#f4f3f1 46%,#dcd8d2 78%,#bdb7ae 100%);
   filter:drop-shadow(0 0 5px rgba(255,255,255,.4));
   animation:orbBreath 3.4s ease-in-out infinite}
-.orb-3d{position:relative;display:block;width:100%;height:100%;
-  transform-style:preserve-3d;
-  /* ease-in-out per segment: it takes a moment to break away and settles into
-     the stop rather than arriving at full speed. */
-  animation:orbFlip 9s ease-in-out infinite}
-.orb-face{position:absolute;inset:0;border-radius:50%;
-  -webkit-backface-visibility:hidden;backface-visibility:hidden}
-/* A white sphere that keeps the red SportyBet mark. A filter cannot pick out
-   one part of an image - grayscale() took the red S with it - so the sphere is
-   recoloured in the asset, its own luminance driving the shading. */
-.orb-front{background:url("/wiz-orb-white.png") center/cover no-repeat}
-/* The back is the same ball with nothing on it. Drawn rather than fetched, and
-   its highlight sits on the opposite side, which is where it belongs once the
-   ball has turned. */
-.orb-back{transform:rotateY(180deg);
-  background:radial-gradient(circle at 34% 28%,#ffffff 0%,#f2f2f5 45%,#d2d2da 78%,#b4b4bd 100%)}
-@keyframes orbFlip{
-  0%,12%   {transform:rotateY(0deg)}      /* front, resting */
-  22%,34%  {transform:rotateY(180deg)}    /* turned to the back, held */
-  44%,100% {transform:rotateY(360deg)}    /* home, and a long rest */
+/* Just the S, on transparency - a whole orb image cannot ride a surface. */
+.orb-mark{position:absolute;top:15%;bottom:15%;left:0;right:0;display:block;
+  background:url("/wiz-orb-mark.png") center/auto 100% no-repeat;
+  animation:orbRoll 8s linear infinite}
+.orb-shade{position:absolute;inset:0;border-radius:50%;display:block;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 30% 25%,rgba(255,255,255,.55),rgba(255,255,255,0) 46%),
+    radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 54%,rgba(0,0,0,.30) 100%)}
+@keyframes orbRoll{
+  /* Facing us, held still. Leaves the centre fast and slows into the edge. */
+  0%,20%  {transform:translateX(0) scaleX(1);opacity:1;
+           animation-timing-function:cubic-bezier(.28,.72,.52,1)}
+  33%     {transform:translateX(44%) scaleX(.10);opacity:1}
+  /* Gone round the back. Hidden at its thinnest, so nothing pops. */
+  34%,66% {transform:translateX(44%) scaleX(.10);opacity:0}
+  67%     {transform:translateX(-44%) scaleX(.10);opacity:0}
+  68%     {transform:translateX(-44%) scaleX(.10);opacity:1;
+           animation-timing-function:cubic-bezier(.48,0,.72,.28)}
+  100%    {transform:translateX(0) scaleX(1);opacity:1}
 }
 @media(prefers-reduced-motion:reduce){
-  .sc-orb,.orb-3d{animation:none}
+  .sc-orb,.orb-mark{animation:none}
+  .orb-mark{transform:none;opacity:1}
 }
 @keyframes orbBreath{
   0%,100%{filter:drop-shadow(0 0 4px rgba(255,255,255,.3))}
   50%{filter:drop-shadow(0 0 9px rgba(255,255,255,.6))}}
-/* On a near-white card the white sphere loses its edges and the shading is
-   all that is left, which is the grey ball. The original violet orb has
-   contrast to spare there, and the red S reads either way. */
-[data-theme="light"] .orb-front{background-image:url("/wiz-orb.png")}
-[data-theme="light"] .orb-back{
+/* On a near-white card a white ball loses its edges and the shading is all
+   that is left, which reads as a grey blob. The violet has contrast to
+   spare there, and the red S reads against either. */
+[data-theme="light"] .sc-orb{
   background:radial-gradient(circle at 34% 28%,#efeaff 0%,#d9cffa 45%,#b9a6ef 100%)}
 [data-theme="light"] .sc-orb{filter:drop-shadow(0 0 4px rgba(90,60,170,.3));
   animation:orbBreathLight 3.4s ease-in-out infinite}
@@ -2806,7 +2815,7 @@ footer{margin-top:26px;padding-top:18px;
            convincing costs no scroll. Everything else supports it. -->
       <div class="slip-cta slip-cta--wizard slip-cta--hero" id="slipCta">
         <div class="sc-head">
-          <span class="sc-orb" aria-hidden="true"><span class="orb-3d"><span class="orb-face orb-front"></span><span class="orb-face orb-back"></span></span></span>
+          <span class="sc-orb" aria-hidden="true"><span class="orb-mark"></span><span class="orb-shade"></span></span>
           <span class="sc-tx">
             <b>Don't pick. Let it be built for you.</b>
             <i id="scTease">We pick the games. You get a SportyBet code to play them.</i>
