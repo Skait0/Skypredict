@@ -1862,11 +1862,14 @@ html.mode-live #live{display:block}
    was the whisper I replaced it with - it had faded into the card. Body-text
    colour and size, on its own line above the card's edge, so it reads as a
    useful aside rather than either an advert or a disclaimer. */
-.code-alt{margin:13px 0 0;padding-top:11px;border-top:1px solid var(--line);
-  font-size:12px;line-height:1.45;color:var(--text);text-align:center;
-  font-weight:600}
-[data-theme="light"] .code-alt{color:var(--text)}
-.code-alt b{color:inherit;font-weight:800}
+/* Small, but not the whisper it was before. The code above it is 32px - this
+   only has to be legible next to that, not compete with it, and at 12px it
+   was doing the competing. The rule above does the separating so the type
+   does not have to. */
+.code-alt{margin:11px 0 0;padding-top:9px;border-top:1px solid var(--line);
+  font-size:10.5px;line-height:1.4;color:var(--soft);text-align:center;
+  font-weight:600;letter-spacing:.01em}
+.code-alt b{color:var(--text);font-weight:700}
 .code-err{background:var(--red-wash);border:1px solid var(--red);border-radius:var(--r-md);
   padding:15px;color:var(--red-ink);font-weight:600;font-size:14px}
 .code-info{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
