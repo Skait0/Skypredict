@@ -5351,7 +5351,94 @@ function doShare(text,url){
   else if(navigator.clipboard){ navigator.clipboard.writeText(text+(url?"\n"+url:""));
     alert("Slip copied - paste it anywhere to share."); }
 }
-function shareSlip(picks,odds){ doShare(shareText(picks,odds,null),location.href); }
+/* Render a slip as a picture and share that.
+   A link is close to useless where this spreads: WhatsApp shows a URL as a
+   line of grey text nobody taps, while an image gets looked at, and the
+   booking code inside it is readable without leaving the chat. Drawn on a
+   canvas rather than fetched, so it works offline and costs no round trip.
+   Falls back to the text share wherever files cannot be shared - which is
+   most desktop browsers - so nothing is lost by trying. */
+function slipImage(picks, odds, code){
+  const W=1080, PAD=64;
+  const rows=picks.slice(0,10);
+  const H=460+rows.length*76;
+  const c=document.createElement("canvas");
+  c.width=W; c.height=H;
+  const g=c.getContext("2d");
+
+  g.fillStyle="#0d0d0f"; g.fillRect(0,0,W,H);
+  /* A red wash at the top so the card reads as ours at thumbnail size, where
+     no text survives. */
+  const grad=g.createLinearGradient(0,0,W,300);
+  grad.addColorStop(0,"rgba(230,57,70,.22)"); grad.addColorStop(1,"rgba(230,57,70,0)");
+  g.fillStyle=grad; g.fillRect(0,0,W,300);
+
+  g.fillStyle="#f2f1f0";
+  g.font="800 46px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
+  g.fillText("Soccerwizard",PAD,96);
+  g.fillStyle="#e63946";
+  g.font="800 30px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
+  g.fillText(rows.length+"-game slip",PAD,150);
+
+  g.fillStyle="#f2b84b";
+  g.font="800 92px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
+  const oddsTxt="×"+(+odds||1).toFixed(2);
+  g.fillText(oddsTxt,PAD,258);
+  g.fillStyle="#8b8b90";
+  g.font="600 26px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
+  g.fillText("estimated return",PAD+g.measureText(oddsTxt).width+0,258);
+
+  let y=340;
+  rows.forEach(function(pk){
+    const f=pk.f||fixtureById(pk.id)||{};
+    g.fillStyle="#17171a"; g.fillRect(PAD,y-40,W-PAD*2,64);
+    g.fillStyle="#f2f1f0";
+    g.font="700 28px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
+    const teams=((f.home||"")+" v "+(f.away||"")).slice(0,38);
+    g.fillText(teams,PAD+20,y);
+    g.fillStyle="#f2b84b";
+    g.font="800 26px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
+    const lab=(typeof mLabel==="function"&&f.home?mLabel(f,pk.code):pk.code||"").slice(0,26);
+    const lw=g.measureText(lab).width;
+    g.fillText(lab,W-PAD-20-lw,y);
+    y+=76;
+  });
+
+  if(code){
+    g.fillStyle="#e63946";
+    g.fillRect(PAD,y+16,W-PAD*2,96);
+    g.fillStyle="#fff";
+    g.font="800 34px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
+    g.fillText("SportyBet code",PAD+24,y+62);
+    g.font="800 52px ui-monospace,SFMono-Regular,Menlo,monospace";
+    const cw=g.measureText(code).width;
+    g.fillText(code,W-PAD-24-cw,y+72);
+  }
+  g.fillStyle="#6b6b70";
+  g.font="600 22px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
+  g.fillText("skypredict-theta.vercel.app",PAD,H-34);
+  return c;
+}
+async function shareSlipImage(picks, odds, code, fallbackText){
+  try{
+    const canvas=slipImage(picks,odds,code);
+    const blob=await new Promise(function(res){canvas.toBlob(res,"image/png");});
+    if(blob&&navigator.canShare){
+      const file=new File([blob],"soccerwizard-slip.png",{type:"image/png"});
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],text:fallbackText||""});
+        return true;
+      }
+    }
+  }catch(e){}
+  return false;
+}
+function shareSlip(picks,odds){
+  const txt=shareText(picks,odds,null);
+  shareSlipImage(picks,odds,null,txt).then(function(ok){
+    if(!ok) doShare(txt,location.href);
+  });
+}
 function shareCode(code){ doShare("\u26bd My SoccerWizard SportyBet slip. Code: "+code, SPORTY_URL+encodeURIComponent(code)); }
 function bookList(picks,resultId,btnId,label){
   var bookable=picks.filter(function(c){return c.eventId;});
@@ -5796,11 +5883,33 @@ function renderRecord(){
         "measured on games the model had not seen.</div>"+
     "</div>";
 }
-/* ---- Notifications opt-in ---- */
+/* ---- Notifications opt-in ----
+   What this can honestly do is tell you the moment your slip finishes, while
+   the site is open in a tab. It cannot wake a closed phone: that needs a push
+   service and a server holding subscriptions, neither of which exists here.
+   The old copy promised a daily nudge that nothing ever sent, which is worse
+   than offering nothing - so it now describes the thing it actually does. */
 function renderNotif(host){
   if(!("Notification" in window)) return "";
-  return "<div class='notif'><span>Never miss the daily slip.</span>"+
+  return "<div class='notif'><span>Get told the moment your slip settles.</span>"+
     "<button id='notifBtn' type='button'></button></div>";
+}
+/* Fires once per slip. The flag rides in the slip itself, so a reload cannot
+   announce the same result twice. */
+function notifySettled(list){
+  if(!list||!list.length) return;
+  if(!("Notification" in window)||Notification.permission!=="granted") return;
+  var changed=false;
+  list.forEach(function(s){
+    if(s.told) return;
+    s.told=true; changed=true;
+    var body=s.won
+      ? "All "+s.legs.length+" landed. That paid ×"+s.odds.toFixed(2)+"."
+      : s.hits+" of "+s.legs.length+" landed this time.";
+    try{ new Notification(s.won?"Your slip won":"Your slip is settled",
+      {body:body, tag:"slip-"+s.sid, icon:"/icon-192-maskable.png"}); }catch(e){}
+  });
+  if(changed) saveSlips();
 }
 function wireNotif(){
   var b=$("notifBtn"); if(!b) return;
@@ -5814,7 +5923,9 @@ function wireNotif(){
     if(!("Notification" in window)) return;
     Notification.requestPermission().then(function(p){
       paintBtn();
-      if(p==="granted"){try{new Notification("SoccerWizard",{body:"Great - we'll nudge you when a fresh slip lands."});}catch(e){}}
+      if(p==="granted"){try{new Notification("SoccerWizard",
+        {body:"Done. We'll tell you as soon as one of your slips finishes.",
+         icon:"/icon-192-maskable.png"});}catch(e){}}
     });
   });
 }
@@ -7269,7 +7380,7 @@ function paint(){
   (DATA.fixtures||[]).forEach(refineTip);
   /* Grade anything the newest results can settle before drawing, so the card
      below never shows a slip as running when its last game has finished. */
-  try{ settleSlips(); }catch(e){}
+  try{ notifySettled(settleSlips()); }catch(e){}
   /* Safety dedupe: a swapped-orientation duplicate (PSG v Rennes AND Rennes v
      PSG on the same day) must never render twice. Keep the first seen per
      date+unordered-pair. */
@@ -7373,7 +7484,7 @@ async function load(){
     DATA=got.payload;
     await loadSporty();
     LOAD_RETRY=0;
-    settleSlips();
+    settleSlips();   /* first pass on load: results are already old news */
     startLive();
     paint();
     hideLoader();
