@@ -5361,7 +5361,11 @@ function doShare(text,url){
 function slipImage(picks, odds, code){
   const W=1080, PAD=64;
   const rows=picks.slice(0,10);
-  const H=460+rows.length*76;
+  /* Room for the header block, the rows, the code bar and a footer clear of
+     it. Worked out rather than guessed: the first version put the footer
+     inside the code bar and the caption on top of the odds. */
+  const ROW=76, TOP=360, BAR=96;
+  const H=TOP+rows.length*ROW+20+BAR+64;
   const c=document.createElement("canvas");
   c.width=W; c.height=H;
   const g=c.getContext("2d");
@@ -5382,13 +5386,15 @@ function slipImage(picks, odds, code){
 
   g.fillStyle="#f2b84b";
   g.font="800 92px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
-  const oddsTxt="×"+(+odds||1).toFixed(2);
-  g.fillText(oddsTxt,PAD,258);
+  g.fillText("×"+(+odds||1).toFixed(2),PAD,258);
+  /* Under the number, not beside it - measureText gives the width but the
+     odds are set at 92px, so anything sharing that baseline sits on top of
+     the digits rather than after them. */
   g.fillStyle="#8b8b90";
   g.font="600 26px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
-  g.fillText("estimated return",PAD+g.measureText(oddsTxt).width+0,258);
+  g.fillText("estimated return",PAD,296);
 
-  let y=340;
+  let y=TOP;
   rows.forEach(function(pk){
     const f=pk.f||fixtureById(pk.id)||{};
     g.fillStyle="#17171a"; g.fillRect(PAD,y-40,W-PAD*2,64);
@@ -5401,22 +5407,24 @@ function slipImage(picks, odds, code){
     const lab=(typeof mLabel==="function"&&f.home?mLabel(f,pk.code):pk.code||"").slice(0,26);
     const lw=g.measureText(lab).width;
     g.fillText(lab,W-PAD-20-lw,y);
-    y+=76;
+    y+=ROW;
   });
 
+  const barTop=y+20;
   if(code){
     g.fillStyle="#e63946";
-    g.fillRect(PAD,y+16,W-PAD*2,96);
+    g.fillRect(PAD,barTop,W-PAD*2,BAR);
     g.fillStyle="#fff";
-    g.font="800 34px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
-    g.fillText("SportyBet code",PAD+24,y+62);
-    g.font="800 52px ui-monospace,SFMono-Regular,Menlo,monospace";
+    g.font="800 32px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
+    g.fillText("SportyBet code",PAD+24,barTop+58);
+    g.font="800 50px ui-monospace,SFMono-Regular,Menlo,monospace";
     const cw=g.measureText(code).width;
-    g.fillText(code,W-PAD-24-cw,y+72);
+    g.fillText(code,W-PAD-24-cw,barTop+62);
   }
+  /* Below the bar, never over it. */
   g.fillStyle="#6b6b70";
   g.font="600 22px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
-  g.fillText("skypredict-theta.vercel.app",PAD,H-34);
+  g.fillText("skypredict-theta.vercel.app",PAD,barTop+BAR+40);
   return c;
 }
 async function shareSlipImage(picks, odds, code, fallbackText){
