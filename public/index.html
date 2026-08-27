@@ -3661,7 +3661,12 @@ function renderPotd(){
   if(lock&&lock.id){ top=day.filter(function(f){return fid(f)===lock.id;})[0]||null; }
   if(!top){
     // deterministic: highest confidence, tie-break by fixture id so every device agrees
-    top=day.slice().sort(function(a,b){return (b.tip_p-a.tip_p)||(fid(a)<fid(b)?-1:1);})[0];
+    /* Same reasoning as the slip of the day: pick of the day is the one call
+       this site puts its name to, so it is not made from an assumed number.
+       Only if the whole card is cross-division does one become eligible. */
+    var pool=day.filter(function(f){return !f.cross_tier;});
+    if(!pool.length) pool=day;
+    top=pool.slice().sort(function(a,b){return (b.tip_p-a.tip_p)||(fid(a)<fid(b)?-1:1);})[0];
     try{localStorage.setItem(lockKey,JSON.stringify({id:fid(top),home:top.home,away:top.away,date:top.date}));}catch(e){}
     prunePotdKeys(dateStr);
   }
@@ -5104,6 +5109,11 @@ function renderSlipOfDay(){
   /* onDay() now keeps today's kicked-off games for the board; a slip must not
      offer them, so filter back to what can still be booked. */
   var games=onDay().filter(notStarted); if(!games.length) games=ahead();
+  /* A cup tie between divisions is priced off an assumed gap between those
+     divisions, not off anything measured - see TIER_EDGE in the build. It can
+     sit on the board; it has no business in the slip built from the safest
+     numbers on the card. */
+  games=games.filter(function(f){return !f.cross_tier;});
   var allowed=["1X","X2","OVER_1.5","1","2"], cand=[];
   games.forEach(function(f){
     var best=null;
