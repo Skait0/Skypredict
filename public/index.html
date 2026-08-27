@@ -1103,6 +1103,70 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    which is the one thing this does not do, and it is the smallest target on
    a sheet whose other controls are all full-size. Word and arrow, sized to
    be found without looking for it. */
+/* ---------------------------------------------------------- your slips
+   Sits directly under the offer, because somebody returning has one question
+   and it is not "what is on today". Same card language as pick of the day so
+   the rail reads as one column rather than a stack of widgets. */
+.myres{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg,14px);
+  padding:13px 14px;margin-bottom:12px}
+.mr-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.mr-ttl{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--faint)}
+.mr-tag{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+  padding:3px 8px;border-radius:99px}
+.mr-tag.won{background:var(--green-wash);color:var(--green-ink)}
+.mr-tag.lost{background:var(--red-wash);color:var(--red-ink)}
+.mr-tag.live{background:var(--win-wash);color:var(--win-ink)}
+.mr-body b{display:block;font-size:14.5px;font-weight:800;color:var(--text);line-height:1.3}
+.mr-body span{display:block;font-size:12.5px;color:var(--soft);margin-top:3px;line-height:1.4}
+.mr-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-top:11px;padding-top:10px;border-top:1px solid var(--line)}
+.mr-rec{font-size:11.5px;font-weight:700;color:var(--faint)}
+.mr-all{background:none;border:0;font:inherit;font-size:12px;font-weight:800;
+  color:var(--red);cursor:pointer;padding:2px 0}
+.mr-all:hover{text-decoration:underline}
+.mr-all:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:4px}
+
+/* The history sheet. One card a slip, legs listed under it with a mark each,
+   so the whole thing is readable at a glance without opening anything. */
+.sl-rec{display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:8px;
+  margin:2px 0 14px}
+.sl-rec div{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:8px 6px;text-align:center}
+.sl-rec i{display:block;font-style:normal;font-size:10px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.sl-rec b{display:block;font-size:16px;font-weight:800;color:var(--text);margin-top:2px;
+  font-variant-numeric:tabular-nums}
+.sl-card{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r-md);
+  border-left-width:3px;border-left-style:solid;padding:10px 12px;margin-bottom:9px}
+.sl-card.won{border-left-color:var(--green)}
+.sl-card.lost{border-left-color:var(--red)}
+.sl-card.open{border-left-color:var(--win)}
+.sl-top{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.sl-tag{font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+  padding:2px 7px;border-radius:99px;flex-shrink:0}
+.sl-tag.won{background:var(--green-wash);color:var(--green-ink)}
+.sl-tag.lost{background:var(--red-wash);color:var(--red-ink)}
+.sl-tag.open{background:var(--win-wash);color:var(--win-ink)}
+.sl-when{flex:1;min-width:0;font-size:11.5px;color:var(--soft);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-odds{font-size:13px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
+.sl-leg{display:flex;align-items:baseline;gap:7px;padding:3px 0;font-size:12px;line-height:1.35}
+.sl-m{width:13px;flex-shrink:0;font-weight:800;text-align:center;color:var(--faint)}
+.sl-leg.win .sl-m{color:var(--green)}
+.sl-leg.lose .sl-m{color:var(--red)}
+.sl-t{flex:1;min-width:0;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-p{flex-shrink:0;color:var(--faint);font-size:11px;max-width:46%;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-code{margin-top:7px;padding-top:7px;border-top:1px solid var(--line);
+  font-size:11px;color:var(--faint);letter-spacing:.02em}
+.sl-code b{color:var(--soft);font-weight:800;letter-spacing:.08em}
+@media(max-width:640px){
+  .myres{padding:11px 12px;margin-bottom:10px}
+  .mr-body b{font-size:14px}
+  .sl-card{padding:9px 10px}
+  .sl-p{max-width:40%}
+}
 .sheet-collapse{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;
   height:36px;padding:0 13px 0 10px;border-radius:99px;
   border:1px solid var(--line);background:var(--card-2);color:var(--soft);
@@ -2956,6 +3020,7 @@ footer{margin-top:26px;padding-top:18px;
         <div class="sc-proof" id="scProof" hidden></div>
       </div>
 
+      <div id="myres"></div>
       <div id="potd"></div>
       <div id="daily"></div>
     </aside>
@@ -3190,6 +3255,15 @@ footer{margin-top:26px;padding-top:18px;
   <button class="btab mid" id="bt-build" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>Build</button>
   <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg><span class="live-dot btab-dot" id="liveDotB" hidden></span></span>Live</button>
 </nav>
+<div class="sheet slips-sheet" id="slipsSheet" role="dialog" aria-modal="true" aria-labelledby="slipsSheet-title">
+  <div class="sheet-grab"><i></i></div>
+  <div class="sheet-head">
+    <div class="info"><h3 id="slipsSheet-title">My slips</h3><p>Every slip you booked, and how it finished.</p></div>
+    <button class="sheet-collapse" id="slipsSheet-x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>Close</span></button>
+  </div>
+  <div class="sheet-body" id="slipsBody"></div>
+</div>
+
 <div class="sheet myslip-sheet" id="mySheet" role="dialog" aria-modal="true" aria-labelledby="mySheet-title">
   <div class="sheet-grab"><i></i></div>
   <div class="sheet-head">
@@ -3238,6 +3312,250 @@ const LOPEN={};
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){
   return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});}
 function fid(f){return "m"+(f.date+f.home+f.away).replace(/[^a-zA-Z0-9]/g,"");}
+
+/* ==================================================================
+   SLIP HISTORY
+   A slip you built is kept, graded against the final scores when they
+   arrive, and shown back to you. Without this the site finishes its job the
+   moment it hands over a code and there is nothing to come back for.
+   ================================================================== */
+
+/* Grade one leg by ITS OWN market, not the fixture's headline tip. A slip leg
+   is whatever you picked - Over 2.5, both teams, the away side - and the
+   headline tip is frequently something else entirely.
+   Returns "win", "lose", or null for a market a final score cannot settle:
+   first-half goals need a half-time score we do not carry. Null means
+   unknown, never lost, so a slip is never marked down on a leg nobody
+   actually graded. */
+function gradeCode(code, hg, ag){
+  if(hg==null||ag==null||isNaN(hg)||isNaN(ag)) return null;
+  var tot=hg+ag, both=hg>0&&ag>0;
+  switch(code){
+    case"1":  return hg>ag?"win":"lose";
+    case"2":  return ag>hg?"win":"lose";
+    case"X":  return hg===ag?"win":"lose";
+    case"1X": return hg>=ag?"win":"lose";
+    case"X2": return ag>=hg?"win":"lose";
+    case"12": return hg!==ag?"win":"lose";
+    case"OVER_1.5": return tot>1?"win":"lose";
+    case"OVER_2.5": return tot>2?"win":"lose";
+    case"OVER_3.5": return tot>3?"win":"lose";
+    case"GG": return both?"win":"lose";
+    case"HOME_OVER_0.5": return hg>0?"win":"lose";
+    case"HOME_OVER_1.5": return hg>1?"win":"lose";
+    case"AWAY_OVER_0.5": return ag>0?"win":"lose";
+    case"AWAY_OVER_1.5": return ag>1?"win":"lose";
+    /* Settled at half time, which no feed here reports after the fact. */
+    case"FH_OVER_0.5": return null;
+  }
+  return null;
+}
+
+/* The final score for a leg, from whichever source actually has one.
+   A graded server result outranks the live feed, the same order the board
+   already trusts. */
+function finalScoreFor(leg){
+  var nh=normTeam(leg.home||""), na=normTeam(leg.away||"");
+  var rs=DATA.results||[];
+  for(var i=0;i<rs.length;i++){
+    var r=rs[i];
+    if(r.date===leg.date && normTeam(r.home)===nh && normTeam(r.away)===na)
+      return {hg:r.hg, ag:r.ag};
+  }
+  var f=fixtureById(leg.id);
+  if(f && f.hg!=null && f.ag!=null) return {hg:f.hg, ag:f.ag};
+  if(f){
+    var st=fixtureState(f);
+    if(st && st.kind==="ft") return {hg:st.hg, ag:st.ag};
+  }
+  return null;
+}
+
+var SLIPS=[];
+try{SLIPS=JSON.parse(localStorage.getItem("sw.slips.v1")||"[]");}catch(e){SLIPS=[];}
+if(!Array.isArray(SLIPS)) SLIPS=[];
+/* Keeping every slip forever would grow without bound in a store measured in
+   megabytes, and nobody scrolls past a month of their own history anyway. */
+const SLIPS_KEEP=60;
+function saveSlips(){
+  try{
+    if(SLIPS.length>SLIPS_KEEP) SLIPS=SLIPS.slice(0,SLIPS_KEEP);
+    localStorage.setItem("sw.slips.v1",JSON.stringify(SLIPS));
+  }catch(e){}
+}
+
+/* Record a slip at the moment it becomes real - when a booking code exists.
+   Building and rebuilding in the wizard should not fill the history with
+   drafts nobody placed. */
+function rememberSlip(legs, odds, code){
+  if(!legs||legs.length<1) return null;
+  var snap=legs.map(function(x){
+    var f=fixtureById(x.id)||{};
+    return {id:x.id, code:x.code, label:x.label||"",
+            home:f.home||"", away:f.away||"", date:f.date||"",
+            kickoff:f.kickoff||null,
+            p:+x.p||0, odd:legOdd(f,x.code,x.p)};
+  });
+  /* The same code booked twice is the same slip, not two. */
+  if(code){
+    for(var i=0;i<SLIPS.length;i++) if(SLIPS[i].code===code) return SLIPS[i];
+  }
+  var slip={
+    sid:"s"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    at:new Date().toISOString(),
+    code:code||null,
+    legs:snap,
+    odds:+odds||snap.reduce(function(t,l){return t*(l.odd||1);},1),
+    settled:false, won:null, hits:0, graded:0,
+  };
+  SLIPS.unshift(slip); saveSlips();
+  return slip;
+}
+
+/* Grade everything that can be graded. Cheap, idempotent, and safe to call on
+   every payload refresh - a slip already settled is skipped. */
+function settleSlips(){
+  var changed=false, newlySettled=[];
+  SLIPS.forEach(function(s){
+    if(s.settled) return;
+    var hits=0, graded=0, lost=0, unknown=0;
+    s.legs.forEach(function(l){
+      if(l.res==="win"||l.res==="lose"){ graded++; if(l.res==="win")hits++; else lost++; return; }
+      var sc=finalScoreFor(l);
+      if(!sc){ unknown++; return; }
+      var g=gradeCode(l.code, sc.hg, sc.ag);
+      if(g==null){ l.res="void"; l.hg=sc.hg; l.ag=sc.ag; changed=true; return; }
+      l.res=g; l.hg=sc.hg; l.ag=sc.ag; graded++; changed=true;
+      if(g==="win") hits++; else lost++;
+    });
+    s.hits=hits; s.graded=graded;
+    /* One lost leg settles an accumulator - the rest cannot rescue it. */
+    if(lost>0){ s.settled=true; s.won=false; changed=true; newlySettled.push(s); }
+    else if(unknown===0 && graded+countVoid(s)===s.legs.length && graded>0){
+      s.settled=true; s.won=true; changed=true; newlySettled.push(s);
+    }
+  });
+  if(changed) saveSlips();
+  return newlySettled;
+}
+function countVoid(s){
+  return s.legs.filter(function(l){return l.res==="void";}).length;
+}
+
+/* Your record, from your own slips. Separate from the site's hit rate, which
+   measures our headline tips rather than anything you actually built. */
+/* The card a returning visitor is actually here for. Nothing else on the page
+   answers "did mine come in?", and until this existed the site had no reason
+   to be opened twice.
+   It only appears once there is something to say. A first-time visitor sees
+   the offer and the board, exactly as before. */
+function renderMyResults(){
+  var host=$("myres"); if(!host) return;
+  if(!SLIPS.length){ host.innerHTML=""; return; }
+  var r=myRecord();
+  var last=SLIPS.filter(function(x){return x.settled;})[0];
+  var open=SLIPS.filter(function(x){return !x.settled;})[0];
+
+  var head, body;
+  if(open){
+    /* A slip still running beats a finished one: it is the live thing. */
+    var done=open.legs.filter(function(l){return l.res==="win"||l.res==="lose";}).length;
+    head="<span class='mr-tag live'>Running</span>";
+    body="<b>"+open.legs.length+"-game slip · ×"+open.odds.toFixed(2)+"</b>"+
+      "<span>"+(done?done+" of "+open.legs.length+" settled so far":"None of these have finished yet")+
+      (open.hits?" · "+open.hits+" landed":"")+"</span>";
+  } else if(last){
+    var when=slipWhen(last.at);
+    head="<span class='mr-tag "+(last.won?"won":"lost")+"'>"+(last.won?"Won":"Lost")+"</span>";
+    body="<b>Your "+when+" slip: "+last.hits+" of "+last.legs.length+" landed</b>"+
+      "<span>"+(last.won
+        ? "All of them. That paid ×"+last.odds.toFixed(2)+"."
+        : "One got away. That is how accumulators go.")+"</span>";
+  }
+  var rec=r.settled
+    ? r.won+" of "+r.settled+" slips landed"+(r.streak>1?" · "+r.streak+" in a row":"")
+    : r.built+" slip"+(r.built===1?"":"s")+" so far";
+
+  host.innerHTML=
+    "<section class='myres'>"+
+      "<div class='mr-top'>"+head+"<span class='mr-ttl'>Your slips</span></div>"+
+      "<div class='mr-body'>"+body+"</div>"+
+      "<div class='mr-foot'><span class='mr-rec'>"+esc(rec)+"</span>"+
+        "<button class='mr-all' id='mrAll' type='button'>See all</button></div>"+
+    "</section>";
+  $("mrAll").addEventListener("click",openSlipsSheet);
+}
+/* "Tuesday" rather than a date: people remember the day they placed it. */
+function slipWhen(iso){
+  var d=new Date(iso); if(isNaN(d)) return "last";
+  var off=dayOff(d.toISOString().slice(0,10));
+  if(off===0) return "today's";
+  if(off===-1) return "yesterday's";
+  return dayName(off)+"'s";
+}
+
+function openSlipsSheet(){
+  renderSlipsSheet();
+  $("scrim").classList.add("on");
+  $("slipsSheet").classList.add("on");
+  lockBody(true); pushOverlay();
+}
+function closeSlipsSheet(){
+  $("scrim").classList.remove("on");
+  $("slipsSheet").classList.remove("on");
+  if(!$("mySheet")||!$("mySheet").classList.contains("on")) lockBody(false);
+}
+function renderSlipsSheet(){
+  var body=$("slipsBody"); if(!body) return;
+  if(!SLIPS.length){
+    body.innerHTML="<div class='bld-empty'><b>No slips yet</b>"+
+      "Book one and it will be kept here, with its result once the games finish.</div>";
+    return;
+  }
+  var r=myRecord();
+  var head="<div class='sl-rec'>"+
+    "<div><i>Slips</i><b>"+r.built+"</b></div>"+
+    "<div><i>Landed</i><b>"+r.won+"</b></div>"+
+    "<div><i>Legs</i><b>"+(r.legs?Math.round(100*r.legHits/r.legs)+"%":"-")+"</b></div>"+
+    (r.best?"<div><i>Best</i><b>×"+r.best.odds.toFixed(2)+"</b></div>":"")+
+    "</div>";
+  body.innerHTML=head+SLIPS.map(function(sp){
+    var state=sp.settled?(sp.won?"won":"lost"):"open";
+    var label=sp.settled?(sp.won?"Won":"Lost"):"Running";
+    return "<div class='sl-card "+state+"'>"+
+      "<div class='sl-top'><span class='sl-tag "+state+"'>"+label+"</span>"+
+        "<span class='sl-when'>"+esc(slipWhen(sp.at))+" · "+sp.legs.length+" games</span>"+
+        "<span class='sl-odds'>×"+sp.odds.toFixed(2)+"</span></div>"+
+      "<div class='sl-legs'>"+sp.legs.map(function(l){
+        var mark=l.res==="win"?"✓":(l.res==="lose"?"✕":(l.res==="void"?"–":"·"));
+        var sc=(l.hg!=null&&l.ag!=null)?(" "+l.hg+"-"+l.ag):"";
+        return "<div class='sl-leg "+(l.res||"open")+"'><span class='sl-m'>"+mark+"</span>"+
+          "<span class='sl-t'>"+esc(l.home)+" v "+esc(l.away)+"</span>"+
+          "<span class='sl-p'>"+esc(l.label||l.code)+esc(sc)+"</span></div>";
+      }).join("")+"</div>"+
+      (sp.code?"<div class='sl-code'>Code <b>"+esc(sp.code)+"</b></div>":"")+
+    "</div>";
+  }).join("");
+}
+
+function myRecord(){
+  var done=SLIPS.filter(function(s){return s.settled;});
+  var won=done.filter(function(s){return s.won;}).length;
+  var legs=0, legHits=0;
+  SLIPS.forEach(function(s){ s.legs.forEach(function(l){
+    if(l.res==="win"){legs++;legHits++;} else if(l.res==="lose"){legs++;} }); });
+  var best=null;
+  done.forEach(function(s){ if(s.won && (!best||s.odds>best.odds)) best=s; });
+  /* Consecutive winning slips, most recent first. */
+  var streak=0;
+  for(var i=0;i<SLIPS.length;i++){
+    if(!SLIPS[i].settled) continue;
+    if(SLIPS[i].won) streak++; else break;
+  }
+  return {built:SLIPS.length, settled:done.length, won:won,
+          legs:legs, legHits:legHits, best:best, streak:streak,
+          pending:SLIPS.filter(function(s){return !s.settled;}).length};
+}
 function countryOf(l){return l.split(" ")[0];}
 /* CONMEBOL countries. Only Argentina and Brazil are in the feeds today, but
    the whole set is listed so a new South American league is handled the moment
@@ -4095,6 +4413,7 @@ function render(){
     renderBoardHead([]); renderResults(); return; }
   document.documentElement.classList.remove("is-results");
   renderPotd(); renderSlipOfDay(); renderRecord(); renderBookAll(); renderSlipTease();
+  renderMyResults(); wireSlipsSheet();
   const list=shown();
   renderBoardHead(list);
   if(!list.length){
@@ -4220,7 +4539,7 @@ function closeSheet(){
   document.documentElement.classList.remove("locked");
   if(SHEET_RETURN){SHEET_RETURN.focus();SHEET_RETURN=null;}
 }
-$("scrim").addEventListener("click",function(){closeSheet();closeMySheet();});
+$("scrim").addEventListener("click",function(){closeSheet();closeMySheet();closeSlipsSheet();});
 $("sheet-x").addEventListener("click",closeSheet);
 function anyOverlayOpen(){return ($("sheet")&&$("sheet").classList.contains("on"))||($("mySheet")&&$("mySheet").classList.contains("on"));}
 window.addEventListener("popstate",function(){
@@ -4232,6 +4551,7 @@ addEventListener("keydown",function(e){
   if(e.key==="Escape"){
     if($("sheet").classList.contains("on")) closeSheet();
     if($("mySheet").classList.contains("on")) closeMySheet();
+    if($("slipsSheet")&&$("slipsSheet").classList.contains("on")) closeSlipsSheet();
   }});
 
 /* ============================================================ build a slip */
@@ -4888,6 +5208,7 @@ function doBook(picks,retried){
     .then(function(d){
       BUILD.booking=false; renderBuilder();
       if(d&&d.success&&d.booking_code){
+        rememberSlip(picks,totalOdds(picks),d.booking_code);
         showCode(d.booking_code,"bookResult");
       } else {
         /* SportyBet can reject individual markets ("no market") when our pick
@@ -5059,7 +5380,10 @@ function doBookList(picks,resultId,btnId,label){
   bookFetch(sel)
     .then(function(d){
       if(btn){btn.disabled=false;btn.textContent=label;}
-      if(d&&d.success&&d.booking_code) showCode(d.booking_code,resultId);
+      if(d&&d.success&&d.booking_code){
+        rememberSlip(picks,totalOdds(picks),d.booking_code);
+        showCode(d.booking_code,resultId);
+      }
       else{var why=d&&d.detail?(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail)):(d&&d.message?d.message:"");
         $(resultId).innerHTML="<div class='code-err'>Couldn't generate a code"+(why?": "+esc(why):"")+".</div>";}
     })
@@ -6009,6 +6333,9 @@ function lockBody(on){
   }catch(e){}
 }
 function openMySheet(){renderMySheet();$("scrim").classList.add("on");$("mySheet").classList.add("on");lockBody(true);pushOverlay();}
+function wireSlipsSheet(){
+  var x=$("slipsSheet-x"); if(x&&!x._w){x._w=1;x.addEventListener("click",closeSlipsSheet);}
+}
 function closeMySheet(){$("scrim").classList.remove("on");$("mySheet").classList.remove("on");
   /* Only release the page if no other sheet is still up. */
   if(!$("sheet")||!$("sheet").classList.contains("on")) lockBody(false);}
@@ -6107,7 +6434,10 @@ function doBookMy(bookable){
   bookFetch(sel)
     .then(function(d){
       if(btn){btn.disabled=false;btn.textContent="Get code";}
-      if(d&&d.success&&d.booking_code) showCode(d.booking_code,"myBookResult");
+      if(d&&d.success&&d.booking_code){
+        rememberSlip(MYSLIP,myOdds(),d.booking_code);
+        showCode(d.booking_code,"myBookResult");
+      }
       else{var why=d&&d.detail?(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail)):(d&&d.message?d.message:"");
         $("myBookResult").innerHTML="<div class='code-err'>Couldn't generate a code"+(why?": "+esc(why):"")+".</div>";}
     }).catch(function(){if(btn){btn.disabled=false;btn.textContent="Get code";}
@@ -6877,6 +7207,9 @@ addEventListener("scroll",function(){
 
 function paint(){
   (DATA.fixtures||[]).forEach(refineTip);
+  /* Grade anything the newest results can settle before drawing, so the card
+     below never shows a slip as running when its last game has finished. */
+  try{ settleSlips(); }catch(e){}
   /* Safety dedupe: a swapped-orientation duplicate (PSG v Rennes AND Rennes v
      PSG on the same day) must never render twice. Keep the first seen per
      date+unordered-pair. */
@@ -6964,6 +7297,7 @@ async function refreshPayload(){
     if(usablePayload(p)&&payloadAge(p)<payloadAge(DATA)){
       DATA=p;
       await loadSporty();
+      settleSlips();
       paint();
     }
   }catch(e){}
@@ -6979,6 +7313,7 @@ async function load(){
     DATA=got.payload;
     await loadSporty();
     LOAD_RETRY=0;
+    settleSlips();
     startLive();
     paint();
     hideLoader();
