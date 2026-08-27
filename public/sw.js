@@ -9,7 +9,7 @@
  * exist. Static assets stay cache-first, since those are the ones worth having
  * instantly and they change under a new name when they change at all.
  */
-const CACHE = "sw-v5";
+const CACHE = "sw-v6";
 const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/wiz-logo.png"];
 
 self.addEventListener("install", function (e) {
@@ -39,9 +39,18 @@ self.addEventListener("fetch", function (e) {
     return;
   }
 
+  /* The manifest goes with the page, not with the assets.
+     It was being served cache-first, which is how a fixed manifest stayed
+     broken: Chrome reads this file to decide whether the site can be
+     installed at all, and it was reading a copy from an earlier deploy. The
+     background refresh does not help, because the answer has already been
+     given by then. Unlike a hashed asset the manifest keeps one name forever,
+     so cache-first is the wrong default for it. */
+  var isManifest = url.pathname === "/manifest.webmanifest";
+
   // The page: network first, cache only as the offline fallback. A navigation
   // request covers a normal load; the Accept sniff catches the rest.
-  var isPage = req.mode === "navigate" ||
+  var isPage = isManifest || req.mode === "navigate" ||
     (req.headers.get("accept") || "").indexOf("text/html") >= 0;
 
   if (isPage) {
@@ -54,7 +63,11 @@ self.addEventListener("fetch", function (e) {
         return res;
       }).catch(function () {
         return caches.match(req).then(function (hit) {
-          return hit || caches.match("/index.html");
+          if (hit) return hit;
+          /* The shell stands in for a page that will not load. It must not
+             stand in for the manifest, which would hand Chrome an HTML
+             document where it expects JSON. */
+          return isManifest ? Response.error() : caches.match("/index.html");
         });
       })
     );
