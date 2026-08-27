@@ -1803,6 +1803,12 @@ html.mode-live #live{display:block}
   background:var(--card-2);color:var(--faint);font-variant-numeric:tabular-nums}
 .scope-opt.on .so-n{background:var(--red);color:#fff}
 .so-n:empty{display:none}
+/* The day pill is a dropdown, so it carries a chevron that leans open when its
+   menu is up. */
+.so-chev{width:13px;height:13px;flex-shrink:0;opacity:.65;margin-left:-2px;
+  transition:transform .16s,opacity .16s}
+.scope-day:hover .so-chev{opacity:.9}
+.scope-day[aria-expanded="true"] .so-chev{transform:rotate(180deg);opacity:1}
 @media(max-width:560px){
   .scope-opt{font-size:12px;padding:8px 6px;gap:5px}
   .so-n{font-size:10.5px;padding:1px 6px}
@@ -1908,6 +1914,23 @@ html.mode-live #live{display:block}
 /* The leg as it stands. */
 .swap-opt.on{background:var(--card-2)}
 .swap-opt.on .sw-n{color:var(--win);font-weight:800}
+/* Day picker rows - same menu shell, crimson accent to match the window switch
+   it drops out of rather than the green of the swap menu. */
+.day-menu{min-width:200px}
+.day-opt{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;
+  font:inherit;font-size:13px;font-weight:700;color:var(--text);text-align:left;
+  padding:9px 10px;border-radius:var(--r-sm);cursor:pointer}
+.day-opt:hover{background:var(--card-2)}
+.day-opt:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
+.day-opt .dy-n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-opt .dy-d{flex-shrink:0;font-size:11.5px;font-weight:700;color:var(--soft);
+  font-variant-numeric:tabular-nums}
+.day-opt .dy-c{flex-shrink:0;font-size:11px;font-weight:800;min-width:24px;text-align:center;
+  padding:1px 7px;border-radius:99px;background:var(--card-2);color:var(--faint);
+  font-variant-numeric:tabular-nums}
+.day-opt.on{background:var(--card-2)}
+.day-opt.on .dy-n{color:var(--red)}
+.day-opt.on .dy-c{background:var(--red);color:#fff}
 
 @media (max-width:640px){
   /* The invisible control already fills the row, so the tap target is the
@@ -3317,8 +3340,10 @@ footer{margin-top:26px;padding-top:18px;
       </button>
       <div class="filters-body" id="filtersBody">
       <div class="scope-seg stage-in stage-in-2" id="scopeSeg" role="group" aria-label="Fixture window">
-        <button class="scope-opt stage-in stage-in-3" type="button" data-scope="day">
-          <span class="so-t">Today only</span><span class="so-n" data-scope-n="day"></span></button>
+        <button class="scope-opt scope-day stage-in stage-in-3" type="button" id="scopeDayBtn"
+          aria-haspopup="listbox" aria-expanded="false" aria-label="Choose a day">
+          <span class="so-t" id="scopeDayLbl">Today only</span><span class="so-n" data-scope-n="day"></span>
+          <svg class="so-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
         <button class="scope-opt stage-in stage-in-3" type="button" data-scope="all">
           <span class="so-t">All upcoming</span><span class="so-n" data-scope-n="all"></span></button>
       </div>
@@ -4811,6 +4836,13 @@ try{var rm=localStorage.getItem("sw.mode"); if(rm==="slider"||rm==="wizard") BUI
    disagree about which games are on the table. */
 var SCOPE="all";
 try{var sc0=localStorage.getItem("sw.scope"); if(sc0==="day"||sc0==="all") SCOPE=sc0;}catch(e){}
+/* Which single day the "day" window points at: 0 today, 1 tomorrow, and so on.
+   Only meaningful while SCOPE is "day". A saved offset can outlive its
+   fixtures - yesterday's "tomorrow" is today - so clampDay() pulls it back to
+   a day that still has games before anything is painted. */
+var SDAY=0;
+try{var sd0=parseInt(localStorage.getItem("sw.sday"),10);
+  if(!isNaN(sd0)&&sd0>=0&&sd0<=14) SDAY=sd0;}catch(e){}
 /* Time of day, by local kickoff. Someone building a slip at lunchtime does
    not want games that started this morning, and someone who will be watching
    in the evening wants only the evening card. The cuts follow how a day
@@ -4838,23 +4870,57 @@ function todFixtures(list){
 function scopeFixtures(){
   return todFixtures(DATA.fixtures.filter(function(f){
     if(!notStarted(f)) return false;
-    return SCOPE!=="day"||dayOff(f.date)===0;
+    return SCOPE!=="day"||dayOff(f.date)===SDAY;
   }));
+}
+/* Games still buildable on a given day offset - the count shown against the
+   day, and what tells clampDay whether an offset is worth keeping. */
+function dayBuildable(off){
+  var n=0,all=DATA.fixtures||[];
+  for(var i=0;i<all.length;i++){var f=all[i];
+    if(dayOff(f.date)===off&&notStarted(f)) n++;}
+  return n;
+}
+/* Every day from today forward that still has a game to build with, ascending.
+   Days whose fixtures have all kicked off drop out, so the picker never offers
+   an empty day. */
+function dayPickList(){
+  return activeDays().filter(function(o){return o>=0&&dayBuildable(o)>0;});
+}
+/* A stored day can point at a day with nothing left on it - keep it if it still
+   has games, otherwise fall to the earliest day that does. */
+function clampDay(){
+  if(SCOPE!=="day"||dayBuildable(SDAY)>0) return;
+  var list=dayPickList();
+  if(list.length){SDAY=list[0]; try{localStorage.setItem("sw.sday",SDAY);}catch(e){}}
 }
 function paintScope(){
   updateFiltersSum();
   var seg=$("scopeSeg"); if(!seg) return;
+  clampDay();
+  /* Only "all" carries data-scope now; the day pill is a dropdown trigger and
+     is lit on its own below. */
   seg.querySelectorAll("[data-scope]").forEach(function(b){
     var on=b.getAttribute("data-scope")===SCOPE;
     b.classList.toggle("on",on);
     b.setAttribute("aria-pressed",on?"true":"false");
   });
+  var dayBtn=$("scopeDayBtn");
+  if(dayBtn){
+    var dayOn=SCOPE==="day";
+    dayBtn.classList.toggle("on",dayOn);
+    dayBtn.setAttribute("aria-pressed",dayOn?"true":"false");
+  }
+  /* "Today only" reads best when the day really is today; any other choice
+     shows its own name ("Tomorrow", "Saturday") so the pill says what it does. */
+  var lbl=$("scopeDayLbl");
+  if(lbl) lbl.textContent = SDAY===0 ? "Today only" : dayName(SDAY);
   /* Counts make the choice concrete: "12" against "168" says more about what
-     the switch does than either label manages on its own. */
+     the switch does than either label manages on its own. The day pill counts
+     against the day it points at. */
   try{
     var all=(DATA.fixtures||[]).filter(notStarted);
-    var today=all.filter(function(f){return dayOff(f.date)===0;}).length;
-    var n={day:today,all:all.length};
+    var n={day:dayBuildable(SDAY),all:all.length};
     seg.querySelectorAll("[data-scope-n]").forEach(function(el){
       el.textContent=n[el.getAttribute("data-scope-n")];
     });
@@ -4872,10 +4938,11 @@ function paintTod(){
     b.setAttribute("aria-pressed",on?"true":"false");
   });
   try{
-    /* Always counted against today, whatever the window is set to: tapping a
-       bucket brings the window here, so the number is what the tap gives you. */
+    /* Counted against the chosen day, whatever the window is set to: tapping a
+       bucket brings the window onto that day, so the number is what the tap
+       gives you. */
     var base=(DATA.fixtures||[]).filter(function(f){
-      return notStarted(f)&&dayOff(f.date)===0;
+      return notStarted(f)&&dayOff(f.date)===SDAY;
     });
     var n={all:base.length,early:0,mid:0,late:0};
     base.forEach(function(f){var b=todOf(f); if(b&&n[b]!=null) n[b]++;});
@@ -4898,6 +4965,16 @@ function setTod(t){
   if(t!=="all"&&SCOPE!=="day"){
     SCOPE="day"; try{localStorage.setItem("sw.scope","day");}catch(e){} changed=true;
   }
+  if(!changed) return false;
+  paintScope(); return true;
+}
+/* Point the day window at a specific day. Selecting a day is also selecting the
+   "day" window, so it flips SCOPE in with it - picking Tomorrow while on "All
+   upcoming" should show tomorrow, not stay wide. */
+function setDay(off){
+  var changed=false;
+  if(SCOPE!=="day"){SCOPE="day"; try{localStorage.setItem("sw.scope","day");}catch(e){} changed=true;}
+  if(off!==SDAY){SDAY=off; try{localStorage.setItem("sw.sday",off);}catch(e){} changed=true;}
   if(!changed) return false;
   paintScope(); return true;
 }
@@ -6749,6 +6826,77 @@ function openSwapMenu(btn){
     window.addEventListener("resize",closeSwapMenu);
   },0);
 }
+/* The day picker under "Today only". Same popover mechanics as the leg swap
+   menu - built on open so it always lists the days that actually have games
+   right now, positioned against its trigger, dismissed on outside tap / Escape
+   / resize. */
+var DAYMENU=null;
+function closeDayMenu(){
+  if(!DAYMENU) return;
+  var btn=DAYMENU._btn;
+  DAYMENU.remove(); DAYMENU=null;
+  if(btn) btn.setAttribute("aria-expanded","false");
+  document.removeEventListener("mousedown",dayAway,true);
+  document.removeEventListener("touchstart",dayAway,true);
+  document.removeEventListener("keydown",dayKey,true);
+  window.removeEventListener("resize",closeDayMenu);
+}
+function dayAway(e){
+  if(!DAYMENU) return;
+  if(DAYMENU.contains(e.target)) return;
+  var t=DAYMENU._btn;
+  if(t&&(t===e.target||t.contains(e.target))) return;
+  closeDayMenu();
+}
+function dayKey(e){ if(e.key==="Escape"){ e.preventDefault(); closeDayMenu(); } }
+function openDayMenu(btn){
+  var wasOpen=DAYMENU&&DAYMENU._btn===btn;
+  closeDayMenu();
+  if(wasOpen) return;
+  var list=dayPickList();
+  if(!list.length) return;
+  var m=document.createElement("div");
+  m.className="swap-menu day-menu"; m._btn=btn; m.setAttribute("role","listbox");
+  m.innerHTML=list.map(function(o){
+    var cur=(SCOPE==="day"&&o===SDAY);
+    return "<button type='button' role='option' class='day-opt"+(cur?" on":"")+"'"+
+      (cur?" aria-selected='true'":"")+" data-off='"+o+"'>"+
+      "<span class='dy-n'>"+esc(dayName(o))+"</span>"+
+      "<span class='dy-d'>"+esc(dayDate(o))+"</span>"+
+      "<span class='dy-c'>"+dayBuildable(o)+"</span></button>";
+  }).join("");
+  document.body.appendChild(m);
+  var r=btn.getBoundingClientRect(), mw=m.offsetWidth;
+  var vh=window.innerHeight, vw=window.innerWidth, PAD=8;
+  var below=vh-r.bottom-6-PAD, above=r.top-6-PAD;
+  var room=Math.max(below,above,120);
+  if(m.offsetHeight>room) m.style.maxHeight=Math.min(room,vh-2*PAD)+"px";
+  var mh=m.offsetHeight;
+  var top=(below>=mh)?(r.bottom+6):(above>=mh?(r.top-mh-6):(below>=above?r.bottom+6:r.top-mh-6));
+  top=Math.min(Math.max(PAD,top),Math.max(PAD,vh-mh-PAD));
+  var left=Math.min(Math.max(PAD,r.left),Math.max(PAD,vw-mw-PAD));
+  m.style.top=top+"px"; m.style.left=left+"px";
+  btn.setAttribute("aria-expanded","true");
+  DAYMENU=m;
+  m.querySelectorAll("[data-off]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var off=parseInt(b.dataset.off,10); closeDayMenu();
+      /* Same reset as the window and bucket switches: the pool changed, so a
+         removal list and any code from the old pool are stale. */
+      if(setDay(off)){
+        BUILD.removed={}; BUILD.touched=true;
+        WSP.removed={}; WSP._slip=null; WSP._sig=null;
+        $("bookResult").innerHTML=""; renderBuilder();
+      }
+    });
+  });
+  setTimeout(function(){
+    document.addEventListener("mousedown",dayAway,true);
+    document.addEventListener("touchstart",dayAway,true);
+    document.addEventListener("keydown",dayKey,true);
+    window.addEventListener("resize",closeDayMenu);
+  },0);
+}
 function swapMy(id,oldCode,newCode){
   if(oldCode===newCode) return;
   var f=fixtureById(id); if(!f) return;
@@ -7528,7 +7676,7 @@ function renderBuilderOutput(){
          delete changes only WSP.removed - not the signature - so we filter the
          cached slip instead of rebuilding, which means a removed leg shrinks the
          slip and stays gone rather than getting back-filled to hit the target. */
-      var _sig=[WSP.odds,WSP.legodd,WSP.seed,JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE,TOD,!!WSP.everyGame].join("|");
+      var _sig=[WSP.odds,WSP.legodd,WSP.seed,JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE,SDAY,TOD,!!WSP.everyGame].join("|");
       if(WSP._sig!==_sig || !WSP._slip){
         WSP._slip=wspBuild().picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};});
         WSP._sig=_sig;
@@ -7571,9 +7719,12 @@ function renderBuilderOutput(){
       "<p>Tap Conjure to reveal your slip.</p></div>";
   } else if(!picks.length){
     var dry=(SCOPE==="day")&&!scopeFixtures().length;
+    /* Name the day that came up empty rather than always saying "today" - with
+       a day picked, the blank board might be tomorrow or Saturday. */
+    var dryDay=SDAY===0?"today":(SDAY===1?"tomorrow":dayName(SDAY));
     $("slip").innerHTML="<div class='bld-empty'><b>"+(isWiz?(WSP.conjured?"No slip yet":"Ready when you are")+"":"Nothing in your slip")+"</b>"+
       (isWiz?(WSP.conjured?"No games match your wizard settings - try a lower payout or enable more markets.":"Tap a target payout to preview your slip.")
-       : (dry?"No fixtures left today - switch to All upcoming to keep building."
+       : (dry?("No fixtures "+(SDAY===0?"left ":"")+dryDay+(TOD!=="all"?" in this time window":"")+" - switch to All upcoming to keep building.")
          : (firstVisit ? "Move the slider to build a fresh set of games." : "No games match. Adjust risk or markets.")))+"</div>";
   } else {
     $("slip").innerHTML=picks.map(function(c){
@@ -7642,6 +7793,10 @@ paintScope();
       $("bookResult").innerHTML=""; renderBuilder();
     });
   });
+})();
+(function(){
+  var b=$("scopeDayBtn"); if(!b) return;
+  b.addEventListener("click",function(e){ e.stopPropagation(); openDayMenu(b); });
 })();
 (function(){
   var seg=$("todSeg"); if(!seg) return;
