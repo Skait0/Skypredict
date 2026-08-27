@@ -248,9 +248,14 @@ img,svg{max-width:100%}
 .potd-won .potd-top,.potd.potd-won .potd-top{background:var(--green)}
 .potd.potd-won{border-color:var(--green)}
 .potd.potd-live{border-color:var(--red)}
-.potd-status.potd-live .ld{width:7px;height:7px;border-radius:50%;background:#fff;
-  box-shadow:0 0 0 0 rgba(255,255,255,.7);animation:potdLivePulse 1.4s ease-out infinite}
-@keyframes potdLivePulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.6)}70%{box-shadow:0 0 0 6px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+/* White text on a 22%-white pill, sitting on the red header - the one state
+   that matters most to read was the hardest. Inverted: a solid white pill with
+   red type reads off the red header at a glance, and the dot goes red so the
+   single pulse we kept has something to be seen against. */
+.potd-status.potd-live{background:#fff;color:var(--red)}
+.potd-status.potd-live .ld{width:7px;height:7px;border-radius:50%;background:var(--red);
+  box-shadow:0 0 0 0 rgba(230,57,70,.7);animation:potdLivePulse 1.4s ease-out infinite}
+@keyframes potdLivePulse{0%{box-shadow:0 0 0 0 rgba(230,57,70,.55)}70%{box-shadow:0 0 0 6px rgba(230,57,70,0)}100%{box-shadow:0 0 0 0 rgba(230,57,70,0)}}
 /* Centre the separator against the digits. As a half-size <em> on the baseline
    it dropped to the foot of the numbers; a flex row aligns all three on the
    optical middle so the dash sits between them. */
@@ -1212,6 +1217,25 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .sl-when{flex:1;min-width:0;font-size:11.5px;color:var(--soft);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sl-odds{font-size:13px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
+/* Quiet until wanted: a record you have to be able to delete, not a delete
+   competing with the result it sits beside. */
+.sl-x{flex-shrink:0;width:24px;height:24px;padding:0;display:inline-flex;
+  align-items:center;justify-content:center;background:none;border:0;
+  border-radius:50%;color:var(--faint);cursor:pointer;opacity:.55;
+  transition:opacity .15s,color .15s,background .15s}
+.sl-x svg{width:13px;height:13px}
+.sl-x:hover{opacity:1;color:var(--red-ink);background:var(--red-wash)}
+.sl-x:focus-visible{opacity:1;outline:2px solid var(--red);outline-offset:1px}
+.sl-x.arm{opacity:1;width:auto;padding:2px 9px;border-radius:99px;
+  background:var(--red-wash);color:var(--red-ink);font:inherit;font-size:10.5px;
+  font-weight:800;letter-spacing:.03em}
+.sl-foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--line-soft);
+  display:flex;justify-content:center}
+.sl-clear{font:inherit;font-size:12px;font-weight:700;padding:8px 14px;
+  border-radius:99px;background:none;border:1px solid var(--line);
+  color:var(--soft);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+.sl-clear:hover{color:var(--red-ink);border-color:var(--red)}
+.sl-clear.arm{background:var(--red-wash);border-color:var(--red);color:var(--red-ink);font-weight:800}
 .sl-leg{display:flex;align-items:center;gap:9px;padding:4px 0;font-size:12px;line-height:1.35}
 /* Green landed, red missed, hollow still to play, grey void. Reading the
    colour is instant; reading a glyph is not. */
@@ -2032,9 +2056,16 @@ html.mode-live #live{display:block}
   border-radius:var(--r-md);cursor:pointer;text-decoration:none;border:0}
 /* "Copy code" becomes "Copied" and back. Auto width meant the button - and
    the modal around it - resized twice on every copy. Reserve the wider label's
-   width so only the text changes. */
-.code-copy{background:var(--card);color:var(--text);border:1px solid var(--line)!important;
-  min-width:112px;text-align:center}
+   width so only the text changes.
+   Written as ".code-acts .code-copy" deliberately: the phone block below sets
+   "min-width:0" on ".code-acts button", which at 0-1-1 outranks a lone
+   ".code-copy" and was quietly dropping the reserve on exactly the screens
+   this modal is used on most. Fixed basis too - with flex:1 1 auto the row
+   re-wrapped between one line and two as the label changed, so the whole card
+   jumped 46px taller and back on every copy. */
+.code-acts .code-copy{background:var(--card);color:var(--text);
+  border:1px solid var(--line)!important;
+  flex:0 0 auto;min-width:112px;text-align:center}
 .code-open{background:var(--red);color:#fff}
 /* A footnote that still has to be read. Bold and shouting was wrong, but so
    was the whisper I replaced it with - it had faded into the card. Body-text
@@ -2062,6 +2093,10 @@ html.mode-live #live{display:block}
   letter-spacing:normal;margin:0;color:var(--text);font-weight:800}
 .code-err{background:var(--red-wash);border:1px solid var(--red);border-radius:var(--r-md);
   padding:15px;color:var(--red-ink);font-weight:600;font-size:14px}
+/* What went wrong, then what to do about it - the second line is the useful
+   half, so it gets its own line rather than trailing the first as a clause. */
+.code-err b{display:block;font-weight:800;margin-bottom:3px}
+.code-err span{display:block;font-weight:600;font-size:12.5px;line-height:1.45;opacity:.9}
 .code-info{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
   padding:15px;color:var(--soft);font-weight:600;font-size:14px;
   display:flex;align-items:center;gap:10px}
@@ -2263,6 +2298,15 @@ html.reduce .myfab{animation:none}
   display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;padding:0}
 .myfab-tk{display:inline-flex;align-items:center;justify-content:center}
 .myfab-tk svg{width:19px;height:19px}
+/* It floats over the board on purpose - it should be reachable from anywhere -
+   but then it is always covering something, and while you are scrolling past
+   it that something is whatever you are trying to read. So it steps back to a
+   whisper while the page is moving and returns as soon as it stops. Hover,
+   focus and a live count always bring it straight back: a button you cannot
+   see is worse than a button in the way. */
+.myfab,.wspfab{transition:opacity .18s ease}
+html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
+.myfab:hover,.myfab:focus-visible,.wspfab:hover,.wspfab:focus-visible{opacity:1}
 .myslip-sheet .sheet-body{max-height:52vh}
 @media(max-width:720px){
   .sheet-head{padding:6px 14px 10px}
@@ -3021,6 +3065,12 @@ button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
 .code-card b{margin:5px 0 10px;font-size:26px;letter-spacing:.06em;word-break:break-all}
 .code-acts{gap:7px}
 .code-acts button,.code-acts a{flex:1 1 auto;min-width:0;font-size:13px;padding:10px 12px;text-align:center}
+/* Tracks the 13px type set on the line above, so the reserve matches the label
+   it actually has to hold. Note these rules are not inside a media query - the
+   phone block closes above them - so this is the reserve everywhere, and the
+   112px one further up never gets a say. Left as-is rather than rescoping the
+   whole group, which is a bigger change than this button. */
+.code-acts .code-copy{flex:0 0 auto;min-width:98px}
 .code-x{top:6px;right:6px;width:28px;height:28px}
 .confirm-card{padding:13px}
 
@@ -3035,8 +3085,11 @@ button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
 .note{margin-top:22px;padding:15px}
 .note h3{margin-bottom:9px}
 .note p{line-height:1.6;margin-bottom:8px}
+/* The floating slip button rests over this corner, so the last line of the page
+   needs room to clear it - at 20px the footer's final row sat underneath it
+   with nowhere left to scroll. */
 footer{margin-top:26px;padding-top:18px;
-  padding-bottom:calc(20px + env(safe-area-inset-bottom))}
+  padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 .foot-brand{margin-bottom:14px;padding-bottom:14px;gap:10px}
 .foot-cols{gap:14px;margin-bottom:14px}
 .foot-cols h5{margin-bottom:5px}
@@ -3766,6 +3819,21 @@ function closeSlipsSheet(){
   $("slipsSheet").classList.remove("on");
   if(!$("mySheet")||!$("mySheet").classList.contains("on")) lockBody(false);
 }
+/* A booked slip is a record, not a draft, so removing one asks first - and the
+   ask lives in the sheet rather than in a browser confirm(), which on a phone
+   is a jarring system dialog over a sheet the user is already inside. */
+function removeSlip(sid){
+  var i=SLIPS.findIndex?SLIPS.findIndex(function(s){return s.sid===sid;}):-1;
+  if(i<0){ for(var j=0;j<SLIPS.length;j++) if(SLIPS[j].sid===sid){i=j;break;} }
+  if(i<0) return;
+  SLIPS.splice(i,1); saveSlips(); renderSlipsSheet(); renderRecord();
+  window.swToast&&window.swToast("Slip removed","ok","sliprm");
+}
+function clearSlips(){
+  if(!SLIPS.length) return;
+  SLIPS=[]; saveSlips(); renderSlipsSheet(); renderRecord();
+  window.swToast&&window.swToast("Slip history cleared","ok","slipclr");
+}
 function renderSlipsSheet(){
   var body=$("slipsBody"); if(!body) return;
   if(!SLIPS.length){
@@ -3786,7 +3854,9 @@ function renderSlipsSheet(){
     return "<div class='sl-card "+state+"'>"+
       "<div class='sl-top'><span class='sl-tag "+state+"'>"+label+"</span>"+
         "<span class='sl-when'>"+esc(slipWhen(sp.at))+" · "+sp.legs.length+" games</span>"+
-        "<span class='sl-odds'>×"+sp.odds.toFixed(2)+"</span></div>"+
+        "<span class='sl-odds'>×"+sp.odds.toFixed(2)+"</span>"+
+        "<button class='sl-x' type='button' data-slrm='"+esc(sp.sid||"")+"' "+
+          "aria-label='Remove this slip'>"+XSVG+"</button></div>"+
       "<div class='sl-legs'>"+sp.legs.map(function(l){
         /* A dot, not a tick. Ticks and crosses read as a checklist somebody
            is working through; these are results, and the site already says
@@ -3799,8 +3869,29 @@ function renderSlipsSheet(){
       }).join("")+"</div>"+
       (sp.code?"<div class='sl-code'>Code <b>"+esc(sp.code)+"</b></div>":"")+
     "</div>";
-  }).join("");
+  }).join("")+
+  /* Under the list, not in the header: clearing the lot is the last thing
+     anyone wants here, so it should be the last thing they reach. */
+  "<div class='sl-foot'><button class='sl-clear' id='slipsClear' type='button'>"+
+    "Clear slip history</button></div>";
+  body.querySelectorAll("[data-slrm]").forEach(function(b){
+    b.addEventListener("click",function(){ askRemoveSlip(b,b.dataset.slrm); });
+  });
+  var ca=$("slipsClear");
+  if(ca) ca.addEventListener("click",function(){ askClearSlips(ca); });
 }
+/* Two-tap confirm in place: the button becomes "Sure?" and reverts if it is
+   not taken up, so nothing is lost to a stray tap and no dialog interrupts. */
+function armConfirm(btn,label,go){
+  if(btn._armed){ clearTimeout(btn._armed); btn._armed=null; go(); return; }
+  var was=btn.innerHTML;
+  btn.innerHTML=label; btn.classList.add("arm");
+  btn._armed=setTimeout(function(){
+    btn._armed=null; btn.innerHTML=was; btn.classList.remove("arm");
+  },2600);
+}
+function askRemoveSlip(btn,sid){ armConfirm(btn,"Sure?",function(){removeSlip(sid);}); }
+function askClearSlips(btn){ armConfirm(btn,"Tap again to clear everything",function(){clearSlips();}); }
 
 function myRecord(){
   var done=SLIPS.filter(function(s){return s.settled;});
@@ -4249,18 +4340,29 @@ setInterval(function(){
   if(document.hidden) return;
   try{ refreshFixtureStates(); }catch(e){}
 },60000);
-function prunePotdKeys(keepDate){
+/* Keep every lock from today forward, drop the ones already played out.
+   This used to keep only the date just rendered, which was fine while the card
+   never left today - but now that it follows the board, rendering tomorrow
+   would delete today's lock and rendering today would delete tomorrow's, so
+   flipping between them re-picked both every time. A day that has been and
+   gone is the only dead lock. */
+function prunePotdKeys(){
   try{ for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i);
-    if(k&&k.indexOf("sw.potd.")===0 && k!=="sw.potd."+keepDate) localStorage.removeItem(k); } }catch(e){}
+    if(!k||k.indexOf("sw.potd.")!==0) continue;
+    var d=k.slice(8);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||dayOff(d)<0) localStorage.removeItem(k); } }catch(e){}
 }
 /* Which board row is the Pick of the day, so it can be tagged in the list. */
 var POTD_ID="";
 function renderPotd(){
-  /* Pick of the day means today's pick, and holding it - with its score, and
-     its result once graded - is this card's whole job. So it stays on today
-     even after the board has moved on to the next day with football in it.
-     Only if today has no card at all does it follow the board. */
-  const day=allOnDay(0).length ? allOnDay(0) : allOnDay(V.off);
+  /* The card follows the day you are looking at: on tomorrow's board it is
+     tomorrow's pick, named as such by the meta line below. It used to pin
+     itself to today so it could hold a live score and a result through the
+     evening, but that left the card contradicting the board around it - a
+     "pick of the day" for a day you are not on. Each day's pick is locked
+     separately, so today's still holds its score and grade when you come back
+     to it. Falls back to today only when the chosen day has no card at all. */
+  const day=allOnDay(V.off).length ? allOnDay(V.off) : allOnDay(0);
   if(!day.length){$("potd").innerHTML="";POTD_ID="";return;}
   const dateStr=day[0].date, lockKey="sw.potd."+dateStr;
   // Reuse the locked pick for this date; only pick fresh if none stored yet.
@@ -4276,7 +4378,7 @@ function renderPotd(){
     if(!pool.length) pool=day;
     top=pool.slice().sort(function(a,b){return (b.tip_p-a.tip_p)||(fid(a)<fid(b)?-1:1);})[0];
     try{localStorage.setItem(lockKey,JSON.stringify({id:fid(top),home:top.home,away:top.away,date:top.date}));}catch(e){}
-    prunePotdKeys(dateStr);
+    prunePotdKeys();
   }
   /* Tell the board which row is this pick, so it can be tagged rather than read
      as a second, unrelated live game. render() calls renderPotd() before it
@@ -5035,19 +5137,55 @@ function bookFetch(sel){
     return fetch(BOOK_URL,{method:"POST",headers:{"Content-Type":"application/json"},
       signal:to.signal,
       body:JSON.stringify({selections:sel})})
-      .then(function(r){to.done();return r;},function(e){to.done();throw e;})
-      .then(function(r){return r.json().catch(function(){return {};});})
+      .then(function(r){to.done();
+        return r.json().catch(function(){return {};}).then(function(d){
+          d=d||{};
+          /* A non-JSON 500 or a gateway page carries no reason of its own -
+             say what the status was rather than nothing at all. */
+          if(!r.ok&&!d.detail&&!d.message&&!d.error)
+            d.message="the booking service returned "+r.status;
+          return d;
+        });},function(e){to.done();throw e;})
       .then(function(d){
         if(d&&d.success&&d.booking_code) return d;
         if(tries<3) return new Promise(function(res){setTimeout(res,600*tries);}).then(attempt);
-        return d||{};
+        d=d||{}; d._kind="refused"; return d;
       })
-      .catch(function(){
+      .catch(function(e){
         if(tries<3) return new Promise(function(res){setTimeout(res,600*tries);}).then(attempt);
-        return {};
+        /* Every failure used to come back as a bare {} - a dead network, a
+           15s timeout against a host that had gone to sleep and a flat refusal
+           were indistinguishable by the time a caller saw them, so all three
+           printed the same "Couldn't generate a code". Carry the shape of the
+           failure so the message can say something true and actionable. */
+        return {_kind:(e&&e.name==="AbortError")?"timeout":"net"};
       });
   }
   return attempt();
+}
+/* Whatever reason the service gave, in whichever field it used. */
+function bookReason(d){
+  if(!d) return "";
+  if(d.detail) return typeof d.detail==="string"?d.detail:JSON.stringify(d.detail);
+  return d.message||d.error||"";
+}
+/* One message builder for all three booking paths, so a failure reads the same
+   wherever it happens and says what to do next. The host sleeps when it is
+   quiet, and a first-time visitor is the most likely person to wake it - which
+   is exactly who was being told, unhelpfully, "Couldn't generate a code". */
+function bookErrHTML(d){
+  var kind=d&&d._kind, why=bookReason(d);
+  if(kind==="timeout")
+    return "<div class='code-err'><b>The booking service didn't answer in time.</b>"+
+      "<span>It goes to sleep when it is quiet and takes a few seconds to wake up. "+
+      "Tap again - the second try almost always works.</span></div>";
+  if(kind==="net")
+    return "<div class='code-err'><b>Couldn't reach the booking service.</b>"+
+      "<span>Check your connection and try again. Your slip is saved either way.</span></div>";
+  return "<div class='code-err'><b>SportyBet wouldn't take this slip.</b>"+
+    (why?"<span>"+esc(why)+"</span>"
+       :"<span>One of the picks may have just closed. Remove a leg and try again.</span>")+
+    "</div>";
 }
 const SPORTY_URL="https://www.sportybet.com/ng/?shareCode=";
 /* Same-origin so Vercel's CDN can cache it - see lib/upstream.js. */
@@ -5591,9 +5729,7 @@ function doBook(picks,retried){
           $("bookResult").innerHTML="<div class='code-info'>Retrying without unavailable markets...</div>";
           doBook(safe,true);
         } else {
-          var why=d&&d.detail?(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail)):(d&&d.message?d.message:"");
-          $("bookResult").innerHTML="<div class='code-err'>Couldn't generate a code"+
-            (why?": "+esc(why):"")+". Please try again.</div>";
+          $("bookResult").innerHTML=bookErrHTML(d);
         }
       }
     })
@@ -5847,11 +5983,10 @@ function doBookList(picks,resultId,btnId,label){
         rememberSlip(picks,totalOdds(picks),d.booking_code);
         showCode(d.booking_code,resultId);
       }
-      else{var why=d&&d.detail?(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail)):(d&&d.message?d.message:"");
-        $(resultId).innerHTML="<div class='code-err'>Couldn't generate a code"+(why?": "+esc(why):"")+".</div>";}
+      else{ $(resultId).innerHTML=bookErrHTML(d); }
     })
     .catch(function(){ if(btn){btn.disabled=false;btn.textContent=label;}
-      $(resultId).innerHTML="<div class='code-err'>Couldn't reach the booking service.</div>"; });
+      $(resultId).innerHTML=bookErrHTML({_kind:"net"}); });
 }
 /* ---- Slip of the Day: safe pre-built acca ---- */
 var SOTD=[];
@@ -7078,10 +7213,9 @@ function doBookMy(bookable){
         rememberSlip(MYSLIP,myOdds(),d.booking_code);
         showCode(d.booking_code,"myBookResult");
       }
-      else{var why=d&&d.detail?(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail)):(d&&d.message?d.message:"");
-        $("myBookResult").innerHTML="<div class='code-err'>Couldn't generate a code"+(why?": "+esc(why):"")+".</div>";}
+      else{ $("myBookResult").innerHTML=bookErrHTML(d); }
     }).catch(function(){if(btn){btn.disabled=false;btn.textContent="Get code";}
-      $("myBookResult").innerHTML="<div class='code-err'>Couldn't reach the booking service.</div>";});
+      $("myBookResult").innerHTML=bookErrHTML({_kind:"net"});});
 }
 document.addEventListener("click",function(e){
   var a=e.target.closest&&e.target.closest("[data-add]");
@@ -7877,8 +8011,17 @@ function setTheme(t){
   $("tgl").addEventListener("click",function(){
     setTheme(document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark");});
 })();
+var _scrollIdle=null;
 addEventListener("scroll",function(){
-  $("top").classList.toggle("stuck",scrollY>10);},{passive:true});
+  $("top").classList.toggle("stuck",scrollY>10);
+  /* Fades the floating buttons while the page moves - see .myfab above. The
+     class is dropped a beat after scrolling stops rather than on every frame,
+     so the button is not flickering its way down the page. */
+  var r=document.documentElement;
+  if(!r.classList.contains("scrolling")) r.classList.add("scrolling");
+  clearTimeout(_scrollIdle);
+  _scrollIdle=setTimeout(function(){r.classList.remove("scrolling");},320);
+},{passive:true});
 
 function paint(){
   (DATA.fixtures||[]).forEach(refineTip);
@@ -7934,6 +8077,57 @@ function paint(){
    /api/predictions is the fallback and the freshness path: if the baked file
    has aged past the window the CDN would have cached it for anyway, we paint
    it immediately and quietly fetch the live one behind it. */
+/* ---------------------------------------------- the day's card stands all day
+   A prediction should stay on the board until the day's football is actually
+   over. The feeds do not promise that: SportyBet supplies most of the card and
+   drops a match once it has been played, so a game that kicked off at 19:45 can
+   disappear at the next refresh - which is how an EFL Cup tie went missing from
+   today's board mid-evening, result and all.
+   So we keep our own copy of today's fixtures and put back anything a newer
+   payload has lost. Only today is held, and only until the date rolls over: a
+   day that has been and gone is pruned, so this never grows. A fixture that was
+   genuinely called off will linger until midnight, which is the right side to
+   err on - the board saying a game exists is recoverable, the board silently
+   losing a tip people are tracking is not. */
+var STICKY_PFX="sw.day.";
+function localTodayISO(){
+  var n=new Date(), p=function(x){return ("0"+x).slice(-2);};
+  return n.getFullYear()+"-"+p(n.getMonth()+1)+"-"+p(n.getDate());
+}
+function pruneStickyDays(){
+  try{ for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i);
+    if(!k||k.indexOf(STICKY_PFX)!==0) continue;
+    var d=k.slice(STICKY_PFX.length);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||dayOff(d)<0) localStorage.removeItem(k);
+  } }catch(e){}
+}
+function saveStickyDay(){
+  try{
+    var today=(DATA.fixtures||[]).filter(function(f){return dayOff(f.date)===0;});
+    if(!today.length) return;
+    localStorage.setItem(STICKY_PFX+localTodayISO(),JSON.stringify(today));
+  }catch(e){}
+}
+function mergeStickyDay(){
+  try{
+    var raw=localStorage.getItem(STICKY_PFX+localTodayISO()); if(!raw) return 0;
+    var saved=JSON.parse(raw); if(!Array.isArray(saved)||!saved.length) return 0;
+    var have={}; (DATA.fixtures||[]).forEach(function(f){have[fid(f)]=1;});
+    var back=saved.filter(function(f){
+      return f&&f.date&&dayOff(f.date)===0&&!have[fid(f)];});
+    if(back.length) DATA.fixtures=(DATA.fixtures||[]).concat(back);
+    return back.length;
+  }catch(e){ return 0; }
+}
+/* Restore what a payload has lost, then store the union, so the day only ever
+   accumulates. Called wherever DATA is replaced. */
+function holdTheDay(){
+  try{
+    var n=mergeStickyDay();
+    if(n) try{console.log("[sticky] restored "+n+" fixture(s) the feed dropped");}catch(e){}
+    saveStickyDay(); pruneStickyDays();
+  }catch(e){}
+}
 const PAYLOAD_MAX_AGE_MS=6*3600*1000;
 async function fetchJSON(url){
   const r=await fetch(url,{headers:{Accept:"application/json"}});
@@ -7977,6 +8171,7 @@ async function refreshPayload(){
     const p=await fetchJSON("/api/predictions");
     if(usablePayload(p)&&payloadAge(p)<payloadAge(DATA)){
       DATA=p;
+      holdTheDay();
       await loadSporty();
       settleSlips();
       paint();
@@ -7992,6 +8187,7 @@ async function load(){
   try{
     const got=await fetchPayload();
     DATA=got.payload;
+    holdTheDay();
     await loadSporty();
     LOAD_RETRY=0;
     settleSlips();   /* first pass on load: results are already old news */
