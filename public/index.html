@@ -1122,6 +1122,12 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 /* The one-time explainer. Inside the card rather than floating over it, so it
    cannot cover anything and needs no positioning to be right on either
    screen. */
+/* Quiet link, not a button: it is evidence for a claim, not an action the
+   page wants you to take. */
+.daily-back{display:inline-block;margin-top:10px;background:none;border:0;padding:0;
+  font:inherit;font-size:12px;font-weight:800;color:var(--red);cursor:pointer}
+.daily-back:hover{text-decoration:underline}
+.daily-back:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:4px}
 .mr-coach{display:flex;align-items:flex-start;gap:9px;margin-top:10px;
   padding:9px 10px;background:var(--card-2);border:1px solid var(--line);
   border-radius:var(--r-md)}
@@ -5825,7 +5831,25 @@ function renderDaily(){
       Math.round(100*rec.correct/rec.total)+"%). Every tip is checked against "+
       "the final score.</div>";
   }
-  host.innerHTML="<div class='daily'>"+head+body+foot+"</div>";
+  /* Every graded day is already reachable through the day stepper, thirteen
+     of them, and nothing on the page said so. The claim above is the site's
+     strongest one, so the evidence for it should be one tap away rather than
+     something you find by pressing an arrow enough times. */
+  var back=(DATA.results||[]).length
+    ? "<button class='daily-back' id='dailyBack' type='button'>See past results</button>" : "";
+  host.innerHTML="<div class='daily'>"+head+body+foot+back+"</div>";
+  var db=$("dailyBack");
+  if(db) db.addEventListener("click",function(){
+    /* The most recent day that actually has grades, not simply yesterday -
+       which is frequently still empty while the build catches up. */
+    var days=activeDays().filter(function(o){return o<0;});
+    var target=days.length?Math.max.apply(null,days):-1;
+    /* Same state the day arrows set, so the board treats this exactly as if
+       the day had been stepped to by hand. */
+    V.off=target; V.dayPicked=true; V.country=""; V.league="";
+    render();
+    var b=$("boardHead"); if(b) b.scrollIntoView({behavior:"smooth",block:"start"});
+  });
 }
 /* The hero's own proof line. Same numbers as the recap card below it, read
    from the same place - the offer has to be believable at the moment it is
