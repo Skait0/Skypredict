@@ -1,11 +1,11 @@
-/* Soccerwizard service worker — offline shell + fresh data
+/* Soccerwizard service worker - offline shell + fresh data
  *
  * Bump CACHE on any change here: the activate handler deletes every cache
  * whose name does not match, which is what clears a stale shell.
  *
  * The page itself is network-first. It used to be cache-first, which meant a
  * phone or an installed app served the previous index.html on every launch and
- * only picked up a deploy on some later run — so shipped fixes appeared not to
+ * only picked up a deploy on some later run, so shipped fixes appeared not to
  * exist. Static assets stay cache-first, since those are the ones worth having
  * instantly and they change under a new name when they change at all.
  */

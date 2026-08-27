@@ -2774,7 +2774,7 @@ footer{margin-top:26px;padding-top:18px;
 .myfab,.wspfab{touch-action:none}
 
 /* ==========================================================================
-   INSANE WEB UNIQUENESS — Desktop 3D Atmosphere
+   INSANE WEB UNIQUENESS - Desktop 3D Atmosphere
    Only activates on desktop (min-width: 1060px) with hover capability
    and no reduced-motion preference.
    ========================================================================== */
@@ -2785,7 +2785,7 @@ footer{margin-top:26px;padding-top:18px;
   #builder { transform-style: preserve-3d; }
   #live { transform-style: preserve-3d; }
 
-  /* Parallax depth layers — apply data-parallax="0.5|1|1.5|2" to elements */
+  /* Parallax depth layers - apply data-parallax="0.5|1|1.5|2" to elements */
   .parallax-deep   { transform: translateZ(-150px) scale(1.15); }
   .parallax-mid    { transform: translateZ(-50px)  scale(1.05); }
   .parallax-shallow{ transform: translateZ(20px); }
@@ -2809,7 +2809,7 @@ footer{margin-top:26px;padding-top:18px;
   .intro p  { transform: translateZ(20px); }
   .potd { transform: translateZ(0); }
 
-  /* Build page — Control Room depth */
+  /* Build page - Control Room depth */
   .bld-shared { transform: translateZ(0); display:flex; flex-direction:column; gap:18px; }
   .bld-shared > * { margin:0 } /* labels and chip rows use internal gap */
   .bld-mode { transform: translateZ(40px); }
@@ -2835,7 +2835,7 @@ footer{margin-top:26px;padding-top:18px;
   .bld-foot { transform: translateZ(0); }
   .bld-note { transform: translateZ(-10px); }
 
-  /* Live page — Pitch atmosphere */
+  /* Live page - Pitch atmosphere */
   #live { background-image:
     radial-gradient(ellipse at 50% 0%, rgba(47,212,138,0.03) 0%, transparent 60%),
     var(--bg); }
@@ -2864,7 +2864,7 @@ footer{margin-top:26px;padding-top:18px;
   .sheet-head { transform: translateZ(20px); }
   .sheet-body { transform: translateZ(10px); }
 
-  /* Reduced motion fallback — disable all 3D transforms */
+  /* Reduced motion fallback - disable all 3D transforms */
 }
 @media (prefers-reduced-motion: reduce) {
   .wrap, .intro, #builder, #live { perspective: none; transform-style: flat; }
@@ -3081,11 +3081,11 @@ footer{margin-top:26px;padding-top:18px;
     <!-- SLIDER MODE PANEL -->
     <div class="bld-panel slider-panel stage-in stage-in-2" id="sliderPanel" data-parallax="1">
       <div class="risk-top stage-in stage-in-3">
-        <span class="risk-name" id="riskName">—</span>
+        <span class="risk-name" id="riskName">-</span>
         <span class="risk-sub" id="riskSub"></span>
       </div>
       <div class="risk-wrap stage-in stage-in-4"><input type="range" id="risk" class="risk" min="0" max="100" value="45"
-        aria-label="Risk level"><span class="risk-bubble" id="riskBubble">—</span></div>
+        aria-label="Risk level"><span class="risk-bubble" id="riskBubble">-</span></div>
       <div class="risk-ticks stage-in stage-in-5"><span>Safe</span><span>Balanced</span><span>Risky</span></div>
     </div>
 
@@ -6617,7 +6617,7 @@ function renderSliderPanel(){
   (function(){var _r=$("risk");if(_r){_r.style.setProperty("--fill",displayRisk+"%");_r.style.backgroundSize=displayRisk+"% 100%";
     var _z=displayRisk<33?"safe":displayRisk<66?"mid":"risky";var _sp=$("sliderPanel");if(_sp)_sp.setAttribute("data-zone",_z);
     _r.style.setProperty("--rz",_z==="safe"?"rgba(43,199,120,.35)":_z==="mid"?"rgba(242,184,75,.4)":"rgba(230,57,70,.4)");}})();
-  $("riskName").textContent=firstVisit ? "\u2014" : riskWord(BUILD.risk);
+  $("riskName").textContent=firstVisit ? "-" : riskWord(BUILD.risk);
   // Slider panel visibility
   $("sliderPanel").hidden=false;
   $("wizardPanel").hidden=true;
@@ -6719,7 +6719,7 @@ function renderBuilderOutput(){
   // Risk bubble
   var _rb=$("riskBubble");
   if(_rb){ _rb.style.left="calc("+displayRisk+"% + "+(13-displayRisk*0.26)+"px)";
-    _rb.textContent=firstVisit ? "\u2014" : (picks.length
+    _rb.textContent=firstVisit ? "-" : (picks.length
       ? picks.length+" game"+(picks.length===1?"":"s")
       : "No games"); }
   // Risk sub text
@@ -6745,7 +6745,7 @@ function renderBuilderOutput(){
     $("slip").innerHTML="<div class='bld-empty'><b>"+(isWiz?(WSP.conjured?"No slip yet":"Ready when you are")+"":"Nothing in your slip")+"</b>"+
       (isWiz?(WSP.conjured?"No games match your wizard settings - try a lower payout or enable more markets.":"Tap a target payout to preview your slip.")
        : (dry?"No fixtures left today - switch to All upcoming to keep building."
-         : (firstVisit ? "Move the slider to build a fresh set of games." : "No games match \u2014 adjust risk or markets.")))+"</div>";
+         : (firstVisit ? "Move the slider to build a fresh set of games." : "No games match. Adjust risk or markets.")))+"</div>";
   } else {
     $("slip").innerHTML=picks.map(function(c){
       var f=c.f, cf=conf(c.p);
@@ -7109,7 +7109,7 @@ setTimeout(hideLoader,8000);
 });
 
 /* ==========================================================================
-   Desktop Parallax Controller — Mouse-following 3D depth
+   Desktop Parallax Controller - Mouse-following 3D depth
    Only runs on desktop (min-width: 1060px) with hover and no reduced-motion.
    ========================================================================== */
 (function(){
