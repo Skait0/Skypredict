@@ -6577,6 +6577,9 @@ async function fetchLive(){
   }catch(e){}
   LIVE.loading=false;
   if(rb) rb.classList.remove("spin");
+  /* Before anything repaints: a game that has just finished is written into the
+     ledger now, while the feed still has it. Ten minutes later it is gone. */
+  try{ recordFinishedFixtures(); }catch(e){}
   syncLiveDots();
   renderLiveStrip();
   /* Scores just moved, so anything derived from them is stale. */
@@ -6590,6 +6593,81 @@ async function fetchLive(){
   if(typeof renderPotd==="function" && !document.documentElement.classList.contains("mode-live")
      && !document.documentElement.classList.contains("mode-build")) { try{renderPotd();}catch(e){} }
   if(document.documentElement.classList.contains("mode-live")) renderLive();
+}
+/* ------------------------------------------------------- full-time ledger
+   The results feed is the slowest thing here. football-data publishes in
+   batches, so the newest day it covers runs a few days behind - which is why
+   walking back through the days runs out at Tuesday - and lib/build.js only
+   grades a match whose league the model was fitted on, so a cup tie never gets
+   a result at all. Meanwhile the live feed has been putting the final score on
+   the prediction page all day and then throwing it away.
+   So write it down. When a game we predicted reaches full time, grade our own
+   tip against the score that was on screen and keep it. This is merged
+   underneath the server's results and never over them: a graded result from
+   the build always wins, and this only fills the days and the cup ties it
+   cannot reach. */
+var FT_KEY="sw.ft.v1", FT_KEEP_DAYS=21;
+var FTLOG=[];
+try{FTLOG=JSON.parse(localStorage.getItem(FT_KEY)||"[]");}catch(e){FTLOG=[];}
+if(!Array.isArray(FTLOG)) FTLOG=[];
+function ftKey(date,home,away){return date+"|"+normTeam(home)+"|"+normTeam(away);}
+function saveFTLog(){
+  try{
+    /* Same window the record is measured over - past that nothing reads it. */
+    FTLOG=FTLOG.filter(function(r){return r&&r.date&&dayOff(r.date)>=-FT_KEEP_DAYS;});
+    localStorage.setItem(FT_KEY,JSON.stringify(FTLOG));
+  }catch(e){}
+}
+/* Fill the gaps in DATA.results with what we wrote down, leaving the server's
+   own grading exactly as it is. */
+function mergeFTLog(){
+  var added=0;
+  try{
+    if(!Array.isArray(DATA.results)) DATA.results=[];
+    var have={};
+    DATA.results.forEach(function(x){have[ftKey(x.date,x.home,x.away)]=1;});
+    FTLOG.forEach(function(r){
+      var k=ftKey(r.date,r.home,r.away);
+      if(have[k]) return;
+      DATA.results.push(r); have[k]=1; added++;
+    });
+    if(added) DATA.results.sort(function(a,b){return a.date<b.date?1:-1;});
+  }catch(e){}
+  return added;
+}
+/* One pass over the board: anything the feed now calls finished is graded and
+   written down. Idempotent - already logged or already graded by the server is
+   skipped - so it is safe on every poll.
+   The time guard matters: a match that simply drops out of the feed is held for
+   ten minutes with status forced to "FT" (see fetchLive), which is a guess, not
+   a result. Requiring a full match length since kickoff keeps a mid-game feed
+   hiccup from being written down as a final score. */
+function recordFinishedFixtures(){
+  var added=0;
+  try{
+    var seen={}; FTLOG.forEach(function(r){seen[ftKey(r.date,r.home,r.away)]=1;});
+    var served={}; (DATA.results||[]).forEach(function(x){served[ftKey(x.date,x.home,x.away)]=1;});
+    (DATA.fixtures||[]).forEach(function(f){
+      if(!f||!f.tip||!f.date||!f.home||!f.away) return;
+      var k=ftKey(f.date,f.home,f.away);
+      if(seen[k]||served[k]) return;
+      var t=kickMs(f);
+      if(t==null||Date.now()-t<MATCH_LEN_MS) return;
+      var lm=liveForFixture(f);
+      if(!lm||lm.homeScore==null||lm.awayScore==null) return;
+      if(!statusText(lm).ft) return;
+      var v=tipEval(f)(lm.homeScore,lm.awayScore);
+      FTLOG.push({date:f.date,league:f.league||"",home:f.home,away:f.away,
+        hg:lm.homeScore,ag:lm.awayScore,tip:f.tip,hit:v==="win",
+        tip_p:(f.tip_p!=null?f.tip_p:null),ours:1,at:Date.now()});
+      seen[k]=1; added++;
+    });
+    if(added){
+      saveFTLog(); mergeFTLog();
+      try{console.log("[ft] recorded "+added+" full-time result(s) from the live feed");}catch(e){}
+    }
+  }catch(e){}
+  return added;
 }
 function statusText(m){
   if(m.status==="FT"||m.status==="AET"||m.status==="PEN") return {t:"FT",ft:true};
@@ -8126,6 +8204,10 @@ function holdTheDay(){
     var n=mergeStickyDay();
     if(n) try{console.log("[sticky] restored "+n+" fixture(s) the feed dropped");}catch(e){}
     saveStickyDay(); pruneStickyDays();
+    /* A fresh payload arrives with only the server's results, so the days we
+       recorded ourselves have to be put back under them each time. */
+    var m=mergeFTLog();
+    if(m) try{console.log("[ft] filled "+m+" result(s) the feed has not published");}catch(e){}
   }catch(e){}
 }
 const PAYLOAD_MAX_AGE_MS=6*3600*1000;
