@@ -1119,6 +1119,17 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .mr-tag.live{background:var(--win-wash);color:var(--win-ink)}
 .mr-body b{display:block;font-size:14.5px;font-weight:800;color:var(--text);line-height:1.3}
 .mr-body span{display:block;font-size:12.5px;color:var(--soft);margin-top:3px;line-height:1.4}
+/* The one-time explainer. Inside the card rather than floating over it, so it
+   cannot cover anything and needs no positioning to be right on either
+   screen. */
+.mr-coach{display:flex;align-items:flex-start;gap:9px;margin-top:10px;
+  padding:9px 10px;background:var(--card-2);border:1px solid var(--line);
+  border-radius:var(--r-md)}
+.mr-coach span{flex:1;min-width:0;font-size:11.5px;line-height:1.45;color:var(--soft)}
+.mr-coach-x{flex-shrink:0;align-self:center;background:var(--red);color:#fff;border:0;
+  font:inherit;font-size:11px;font-weight:800;padding:6px 11px;border-radius:99px;
+  cursor:pointer}
+.mr-coach-x:focus-visible{outline:2px solid var(--text);outline-offset:2px}
 .mr-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;
   margin-top:11px;padding-top:10px;border-top:1px solid var(--line)}
 .mr-rec{font-size:11.5px;font-weight:700;color:var(--faint)}
@@ -1167,6 +1178,13 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
   .sl-card{padding:9px 10px}
   .sl-p{max-width:40%}
 }
+/* Kickoff countdown. Quiet by default; amber inside the hour, which is when
+   it stops being information and starts being a deadline. */
+.fx-soon{display:inline-flex;align-items:center;font-size:11px;font-weight:700;
+  color:var(--faint);letter-spacing:.01em;font-variant-numeric:tabular-nums;
+  white-space:nowrap}
+.fx-soon.near{color:var(--win-ink);background:var(--win-wash);
+  padding:2px 7px;border-radius:99px}
 .sheet-collapse{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;
   height:36px;padding:0 13px 0 10px;border-radius:99px;
   border:1px solid var(--line);background:var(--card-2);color:var(--soft);
@@ -3476,14 +3494,32 @@ function renderMyResults(){
     ? r.won+" of "+r.settled+" slips landed"+(r.streak>1?" · "+r.streak+" in a row":"")
     : r.built+" slip"+(r.built===1?"":"s")+" so far";
 
+  /* Shown once, the first time there is anything here. Nobody expects a site
+     to have kept their slip, so without a word about it the card reads as
+     another panel rather than as their own record. */
+  var coach=slipCoachSeen()?"":
+    "<div class='mr-coach'><span>We keep every slip you book and check it "+
+    "against the final scores. Come back and see how it finished.</span>"+
+    "<button class='mr-coach-x' type='button'>Got it</button></div>";
+
   host.innerHTML=
     "<section class='myres'>"+
       "<div class='mr-top'>"+head+"<span class='mr-ttl'>Your slips</span></div>"+
       "<div class='mr-body'>"+body+"</div>"+
+      coach+
       "<div class='mr-foot'><span class='mr-rec'>"+esc(rec)+"</span>"+
         "<button class='mr-all' id='mrAll' type='button'>See all</button></div>"+
     "</section>";
   $("mrAll").addEventListener("click",openSlipsSheet);
+  var cx=host.querySelector(".mr-coach-x");
+  if(cx) cx.addEventListener("click",function(){ slipCoachDone(); renderMyResults(); });
+}
+const SLIP_COACH_KEY="sw.coached.slips.v1";
+function slipCoachSeen(){
+  try{return localStorage.getItem(SLIP_COACH_KEY)==="1";}catch(e){return true;}
+}
+function slipCoachDone(){
+  try{localStorage.setItem(SLIP_COACH_KEY,"1");}catch(e){}
 }
 /* "Tuesday" rather than a date: people remember the day they placed it. */
 function slipWhen(iso){
@@ -3928,9 +3964,25 @@ function fixtureState(f){
   }
   return null;
 }
+/* Time until kickoff, once it is close enough to matter.
+   A fixture list with only clock times reads as a timetable; a card that says
+   "in 40m" reads as something happening. The cutoff is six hours because
+   beyond that the number is just the clock time restated, and the last hour
+   turns amber - not to hurry anybody, but because that is genuinely when a
+   slip stops being bookable. */
+const SOON_MS=6*3600*1000;
+function kickCountdown(f){
+  var t=kickMs(f); if(!t) return "";
+  var d=t-Date.now();
+  if(d<=0||d>SOON_MS) return "";
+  var mins=Math.round(d/60000);
+  var txt=mins>=60 ? (Math.floor(mins/60)+"h "+(mins%60?(mins%60)+"m":"")).trim()
+                   : mins+"m";
+  return "<span class='fx-soon"+(mins<=60?" near":"")+"'>in "+txt+"</span>";
+}
 function statusBadge(f){
   var st=fixtureState(f);
-  if(!st) return "";
+  if(!st) return kickCountdown(f);
   if(st.kind==="live")
     return "<span class='fx-st fx-live'><span class='ld'></span>"+st.hg+"-"+st.ag+
       (st.minute?" "+esc(String(st.minute))+"’":"")+"</span>";
@@ -3961,6 +4013,14 @@ function refreshFixtureStates(){
     if(slots[i].innerHTML!==html) slots[i].innerHTML=html;
   }
 }
+/* Countdowns ride the live-score poll, which is right while it is running and
+   wrong the moment that feed has a bad minute - a frozen "in 40m" is worse
+   than no countdown at all. Their own slow timer costs a handful of string
+   comparisons and keeps them honest when nothing else is happening. */
+setInterval(function(){
+  if(document.hidden) return;
+  try{ refreshFixtureStates(); }catch(e){}
+},60000);
 function prunePotdKeys(keepDate){
   try{ for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i);
     if(k&&k.indexOf("sw.potd.")===0 && k!=="sw.potd."+keepDate) localStorage.removeItem(k); } }catch(e){}
