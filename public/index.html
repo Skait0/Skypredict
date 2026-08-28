@@ -3905,6 +3905,27 @@ const $=function(id){return document.getElementById(id);};
 /* the same drawn cross the static close buttons use - see .sheet-x in the css */
 var XSVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 const P0=function(x){return Math.round(x*100);};
+/* Home, draw and away are one split of one certainty, so the three numbers we
+   print have to add to a hundred. Rounding each on its own does not: 36.6,
+   26.8 and 36.6 are exactly 100 and become 37, 27 and 37, which is 101 and
+   makes the whole card look like it cannot count.
+   Largest remainder: floor everything, then hand the leftover points to the
+   values with the biggest fractions. The result always totals 100 and each
+   number is still within one of its true value. Where two are genuinely equal
+   one of them takes the odd point - unavoidable when an odd remainder is
+   split two ways, and honest about it. */
+function split100(vals){
+  var raw=vals.map(function(v){return (Number(v)||0)*100;});
+  var sum=raw.reduce(function(a,b){return a+b;},0);
+  if(!(sum>0)) return raw.map(function(){return 0;});
+  raw=raw.map(function(r){return r*100/sum;});
+  var out=raw.map(function(r){return Math.floor(r);});
+  var left=100-out.reduce(function(a,b){return a+b;},0);
+  var order=raw.map(function(r,i){return {i:i,frac:r-Math.floor(r)};})
+               .sort(function(a,b){return b.frac-a.frac;});
+  for(var n=0;n<left;n++) out[order[n%order.length].i]++;
+  return out;
+}
 var CHK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:block"><path d="M5 13l4 4L19 7"/></svg>';
 var PLUS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" style="width:12px;height:12px;display:block"><path d="M12 5v14M5 12h14"/></svg>';
 function conf(p){var pc=Math.round(p*100);return pc>=70?"strong":pc>=55?"lean":"slight";}
@@ -3994,6 +4015,39 @@ if(!Array.isArray(SLIPS)) SLIPS=[];
 /* Keeping every slip forever would grow without bound in a store measured in
    megabytes, and nobody scrolls past a month of their own history anyway. */
 const SLIPS_KEEP=60;
+
+/* One-time repair for slips settled on half-time scores.
+   A leg keeps its verdict once it has one - settleSlips skips any leg already
+   marked win or lose, and a settled slip is never revisited. That is right
+   while the scores are right. They were not: the live feed spent its life
+   publishing the first half as the current score, so a leg could be frozen as
+   a loss against a score the match had long since passed. Bayern Munich sat in
+   the record as 1-0 with our Over 1.5 tip marked a miss; it finished 5-1.
+   Clearing the verdict lets settleSlips grade it again from data that is now
+   correct. Only legs recent enough for the results feed to still carry them
+   are touched: past that window there is nothing to re-grade against, and
+   blanking a leg we cannot settle again would replace a possibly-wrong answer
+   with certainly no answer. Older slips are left alone - the honest limit of
+   what this can repair. */
+try{
+  if(!localStorage.getItem("sw.slips.rescore1")){
+    var _fixed=0;
+    SLIPS.forEach(function(sl){
+      if(!sl||!Array.isArray(sl.legs)) return;
+      var touched=false;
+      sl.legs.forEach(function(l){
+        if(!l||!l.date) return;
+        if(dayOff(l.date) < -21) return;
+        if(l.res==="win"||l.res==="lose"){
+          delete l.res; delete l.hg; delete l.ag; touched=true;
+        }
+      });
+      if(touched){ sl.settled=false; sl.won=null; sl.hits=0; sl.graded=0; _fixed++; }
+    });
+    if(_fixed) saveSlips();
+    localStorage.setItem("sw.slips.rescore1","1");
+  }
+}catch(e){}
 function saveSlips(){
   try{
     if(SLIPS.length>SLIPS_KEEP) SLIPS=SLIPS.slice(0,SLIPS_KEEP);
@@ -5183,6 +5237,8 @@ function refreshFormStrips(){
 
 function matchHTML(f){
   var _s0=scoreLine(f).split("-"); var _h0=+_s0[0], _a0=+_s0[1];
+  /* One split of one certainty - print three numbers that add to a hundred. */
+  var _s100=split100([f.home_p,f.draw_p,f.away_p]);
   const hw=_h0>_a0;
   const aw=_a0>_h0;
   const cf=conf(f.tip_p);
@@ -5217,9 +5273,9 @@ function matchHTML(f){
         "<i style='flex:"+(f.away_p*100).toFixed(1)+";background:var(--cream)'></i>"+
       "</span>"+
       "<span class='legend'>"+
-        "<b><i style='background:var(--win)'></i>Home "+P0(f.home_p)+"%</b>"+
-        "<b><i style='background:var(--grey)'></i>Draw "+P0(f.draw_p)+"%</b>"+
-        "<b><i style='background:var(--cream)'></i>Away "+P0(f.away_p)+"%</b>"+
+        "<b><i style='background:var(--win)'></i>Home "+_s100[0]+"%</b>"+
+        "<b><i style='background:var(--grey)'></i>Draw "+_s100[1]+"%</b>"+
+        "<b><i style='background:var(--cream)'></i>Away "+_s100[2]+"%</b>"+
       "</span>"+
       "<span class='tipbox'><span class='vdot'></span><span class='k'>Our call</span>"+
         "<span class='v'>"+esc(plainTip(f))+"</span>"+
@@ -5276,12 +5332,14 @@ function blockFor(l,games,withFlag){return V.list?listBlock(l,games,withFlag):le
 function listRowHTML(f){
   const cf=conf(f.tip_p), id=fid(f), openCls=LOPEN[id]?" open":"";
   const lead=(f.home_p>=f.draw_p&&f.home_p>=f.away_p)?"h":(f.away_p>=f.draw_p?"a":"d");
+  /* One split of one certainty - print three numbers that add to a hundred. */
+  const _lt100=split100([f.home_p,f.draw_p,f.away_p]);
   return "<div class='lrow conf-"+cf+openCls+"' data-lf='"+id+"'>"+
     "<span class='lt-time'>"+esc(kickTime(f))+"</span>"+
     "<span class='lt-match'><span class='tm'>"+esc(f.home)+"</span><span class='vs'>v</span><span class='tm'>"+esc(f.away)+"</span>"+statusSlot(f)+(id===POTD_ID?"<span class='lt-pick' title='Pick of the day' aria-label='Pick of the day'>★</span>":"")+"</span>"+
-    "<span class='lt-p"+(lead==="h"?" lead":"")+"'>"+P0(f.home_p)+"<small>%</small></span>"+
-    "<span class='lt-p"+(lead==="d"?" lead":"")+"'>"+P0(f.draw_p)+"<small>%</small></span>"+
-    "<span class='lt-p"+(lead==="a"?" lead":"")+"'>"+P0(f.away_p)+"<small>%</small></span>"+
+    "<span class='lt-p"+(lead==="h"?" lead":"")+"'>"+_lt100[0]+"<small>%</small></span>"+
+    "<span class='lt-p"+(lead==="d"?" lead":"")+"'>"+_lt100[1]+"<small>%</small></span>"+
+    "<span class='lt-p"+(lead==="a"?" lead":"")+"'>"+_lt100[2]+"<small>%</small></span>"+
     "<span class='lt-tip'><span class='vdot'></span><span class='tx' title=\""+esc(plainTip(f))+"\">"+esc(plainTip(f))+"</span>"+
       "<i class='grade'>"+P0(f.tip_p)+"%</i></span>"+
     "<span class='lt-score' title='Predicted score'>"+scoreLine(f)+"</span>"+
@@ -7463,11 +7521,20 @@ async function fetchLive(){
    record is meant to be the trustworthy one - so v1 is dropped rather than
    carried forward. A few days of history is a cheap price for not publishing a
    number built on guesses. */
-var FT_KEY="sw.ft.v2", FT_KEEP_DAYS=21;
+/* v3: every score v2 holds was read from a live feed that was publishing the
+   FIRST HALF as the current score. The upstream scraper took gameScore[0] -
+   the opening period - instead of setScore, the running total, so any match
+   that scored after the break was recorded at its half-time score and graded
+   on it. Bayern Munich went into the ledger as 1-0, and our Over 1.5 tip on it
+   as a loss; the match finished 5-1.
+   45 of the 71 live games on the board were wrong the moment it was found, so
+   there is no picking out the bad rows - a 1-0 that was really 1-0 and a 1-0
+   that was really 5-1 look identical here. The whole ledger goes. */
+var FT_KEY="sw.ft.v3", FT_KEEP_DAYS=21;
 var FTLOG=[];
 try{FTLOG=JSON.parse(localStorage.getItem(FT_KEY)||"[]");}catch(e){FTLOG=[];}
 if(!Array.isArray(FTLOG)) FTLOG=[];
-try{localStorage.removeItem("sw.ft.v1");}catch(e){}
+try{localStorage.removeItem("sw.ft.v1");localStorage.removeItem("sw.ft.v2");}catch(e){}
 function ftKey(date,home,away){return date+"|"+normTeam(home)+"|"+normTeam(away);}
 function saveFTLog(){
   try{
