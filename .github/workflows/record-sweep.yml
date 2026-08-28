@@ -6,8 +6,23 @@ name: Record full-time results
 # near enough, so the schedule lives here instead. GitHub Actions is free for
 # this and the repo is already on GitHub.
 #
-# Every 10 minutes between 10:00 and 23:59 UTC, covering the football day from
-# the early kick-offs to the late finishes.
+# Every 10 minutes, around the clock.
+#
+# It used to run 10:00-23:59 UTC, described as "the football day". That is the
+# European football day. We publish 81 fixtures across MLS, Liga MX, Brazil
+# Serie A and the Argentine leagues, and 66 of them kick off between 22:00 and
+# 10:00 UTC - so the sweep was asleep for the whole of the Americas.
+#
+# The effect was not that those matches went unrecorded, which would be
+# survivable. It was worse: the last poll at 23:50 saw them in the first half,
+# the window then closed, and by the next run at 10:00 they were long gone from
+# the feed and last seen at around the 45th minute. That is below the 80th
+# minute the sweep requires, so every one of them was discarded as a match that
+# had vanished mid-game rather than finished. A fifth of the card could never
+# reach the record by construction.
+#
+# The repository is public, so scheduled runs cost nothing and there is no
+# reason to buy coverage back with a narrower window.
 #
 # The interval is not arbitrary. A match is recorded at the last score seen
 # before it left the feed, so the gap between polls is the window in which a
@@ -25,7 +40,7 @@ name: Record full-time results
 
 on:
   schedule:
-    - cron: "*/10 10-23 * * *"
+    - cron: "*/10 * * * *"
   workflow_dispatch:
     inputs:
       dry:
@@ -58,5 +73,5 @@ jobs:
           echo
           # A bad run should be visible in the Actions tab rather than silently
           # green, but a single failure is not worth an alarm - the next run is
-          # thirty minutes away and the work is idempotent.
+          # ten minutes away and the work is idempotent.
           test "$code" = "200"

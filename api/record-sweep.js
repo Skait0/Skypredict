@@ -202,23 +202,36 @@ module.exports = async (req, res) => {
     const present = new Set(seenRows.map(r => r.match_key));
     const rows = [], done = [], expired = [];
     const held = { stillOn: 0, tooSoon: 0, notLate: 0, ungradeable: 0 };
+    /* Counts alone say a row is stuck without saying which, or why, and the
+       answer lived only in the database. Carry a few examples out with the
+       response so a stuck sweep can be read from its own output. */
+    const heldWhy = [];
+    const note = (s, why) => {
+      if (heldWhy.length < 8) heldWhy.push(
+        s.match_date + " " + s.home + " v " + s.away +
+        " [" + (s.league || "?") + "] " + s.hg + "-" + s.ag +
+        " " + (s.status || "?") + " " + (s.minute == null ? "?" : s.minute) + "'" +
+        " seen " + Math.round((now - Date.parse(s.last_seen || "")) / 60000) + "m ago" +
+        ", ko " + Math.round((now - Date.parse(s.kickoff || "")) / 60000) + "m ago" +
+        " -> " + why);
+    };
 
     for (const s of (stored.rows || [])) {
       if (present.has(s.match_key)) { held.stillOn++; continue; }
       const lastSeen = Date.parse(s.last_seen || "");
       const kick = s.kickoff ? Date.parse(s.kickoff) : NaN;
       if (isFinite(lastSeen) && now - lastSeen > STALE_MS) { expired.push(s.match_key); continue; }
-      if (!isFinite(lastSeen) || now - lastSeen < ABSENT_MS) { held.stillOn++; continue; }
-      if (!isFinite(kick) || now - kick < MATCH_LEN_MS) { held.tooSoon++; continue; }
+      if (!isFinite(lastSeen) || now - lastSeen < ABSENT_MS) { held.stillOn++; note(s, "seen too recently to be gone"); continue; }
+      if (!isFinite(kick) || now - kick < MATCH_LEN_MS) { held.tooSoon++; note(s, "not long enough since kick-off"); continue; }
 
       /* Last seen deep enough into the second half for the score to be the
          one it finished on. */
       const late = (s.minute != null && Number(s.minute) >= LATE_MINUTE) ||
                    /^H2$/i.test(String(s.status || "")) && Number(s.minute || 0) >= LATE_MINUTE;
-      if (!late) { held.notLate++; continue; }
+      if (!late) { held.notLate++; note(s, "last seen before the " + LATE_MINUTE + "th minute"); continue; }
 
       const hit = G.gradeLabel(s.tip, Number(s.hg), Number(s.ag));
-      if (hit === null) { held.ungradeable++; continue; }
+      if (hit === null) { held.ungradeable++; note(s, "tip cannot be settled from a final score"); continue; }
 
       rows.push({
         match_date: s.match_date,
@@ -256,6 +269,7 @@ module.exports = async (req, res) => {
       inserted: inserted,
       expired: expired.length,
       held: held,
+      heldWhy: heldWhy,
       observeError: observeErr,
       storeError: storeErr,
       sample: rows.slice(0, 5).map(r =>

@@ -259,3 +259,26 @@ test("a fixture carrying no numbers stores null, not an empty snapshot", async (
   await run();
   assert.strictEqual(calls.upserted[0].model, null);
 });
+
+/* Counts said a row was stuck without saying which or why, and the answer was
+   only reachable through the database. */
+test("a held row explains itself in the response", async () => {
+  install({
+    live: [],
+    stored: [{
+      match_key: "h1", match_date: "2026-08-27",
+      home: "Dalian Yingbo", away: "Beijing Guoan",
+      home_norm: "dalian-yingbo", away_norm: "beijing-guoan",
+      league: "China Super League", tip: "Over 1.5",
+      kickoff: new Date(OLD).toISOString(),
+      hg: 0, ag: 1, minute: 55, status: "H2", last_seen: RECENT,
+    }],
+  });
+  const res = await run();
+  assert.strictEqual(res._j.held.notLate, 1);
+  const why = res._j.heldWhy.join(" ");
+  assert.match(why, /Dalian Yingbo v Beijing Guoan/);
+  assert.match(why, /China Super League/);
+  assert.match(why, /55'/);
+  assert.match(why, /before the 80th minute/);
+});
