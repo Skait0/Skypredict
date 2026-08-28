@@ -3047,6 +3047,7 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
 .daily-score .dl-big{font-size:26px;font-weight:800;letter-spacing:-.02em;
   line-height:1;font-variant-numeric:tabular-nums}
 .daily-score .dl-of{font-size:13px;color:var(--soft);font-weight:700}
+.daily-pending{margin-top:8px;font-size:12.5px;line-height:1.45;color:var(--faint)}
 .daily-bar{display:flex;height:6px;border-radius:99px;overflow:hidden;
   background:var(--card-2);margin-top:10px}
 .daily-bar i{display:block;background:var(--green)}
@@ -7174,15 +7175,33 @@ function renderDaily(){
 
   var hit=res.filter(function(r){return r.hit;}).length;
   var pct=res.length?Math.round(100*hit/res.length):0;
+  /* How many we actually published that day, which is not the same as how
+     many have been graded. Results arrive over two or three days, so the
+     morning after a full card we typically hold four or five of them - and
+     "1 of 4 tips landed" then reads as though we had made four tips, on a day
+     we made thirty-eight. Understating our own card is a worse error than
+     saying nothing.
+     The day's fixtures are already kept under sw.day.<date> so the board can
+     survive the feed dropping them, so the real figure is to hand - for
+     anyone who had the page open that day. Where it is not, the count is
+     simply not claimed. */
+  var predicted=0;
+  try{
+    var raw=localStorage.getItem(STICKY_PFX+isoOffset(-1));
+    if(raw){ var arr=JSON.parse(raw); if(Array.isArray(arr)) predicted=arr.length; }
+  }catch(e){}
+  var pending=predicted>res.length?predicted-res.length:0;
   var head="<div class='daily-h'><b>How we did yesterday</b>"+
     (res.length?"<span class='dl-when'>"+esc(dayDate(-1))+"</span>":"")+"</div>";
 
   var body;
   if(res.length){
     body="<div class='daily-score'><span class='dl-big num'>"+hit+"</span>"+
-      "<span class='dl-of'>of "+res.length+" tips landed</span>"+
+      "<span class='dl-of'>of "+res.length+" graded so far</span>"+
       "<span class='dl-pill "+(pct>=50?"good":"bad")+"'>"+pct+"%</span></div>"+
-      "<div class='daily-bar'><i style='width:"+pct+"%'></i></div>";
+      "<div class='daily-bar'><i style='width:"+pct+"%'></i></div>"+
+      (pending?"<div class='daily-pending'>"+pending+" of yesterday's "+predicted+
+        " games are still being graded - results arrive over the next day or two.</div>":"");
   } else {
     /* "Nothing finished yesterday" claimed to know something we do not. An
        empty results list means we have no grades for that day - which happens
@@ -9291,8 +9310,14 @@ function paint(){
    err on - the board saying a game exists is recoverable, the board silently
    losing a tip people are tracking is not. */
 var STICKY_PFX="sw.day.";
-function localTodayISO(){
-  var n=new Date(), p=function(x){return ("0"+x).slice(-2);};
+function localTodayISO(){ return isoOffset(0); }
+/* The same local calendar day the sticky store is keyed on, offset by days.
+   Built from the local date rather than from an ISO string so it cannot slip
+   a day for anyone west of UTC, which is the whole reason the store uses a
+   local key in the first place. */
+function isoOffset(off){
+  var n=new Date(); n.setDate(n.getDate()+(off||0));
+  var p=function(x){return ("0"+x).slice(-2);};
   return n.getFullYear()+"-"+p(n.getMonth()+1)+"-"+p(n.getDate());
 }
 function pruneStickyDays(){
