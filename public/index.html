@@ -2137,16 +2137,18 @@ html.mode-live #live{display:block}
 .code-opens .code-open{flex:0 0 auto;font:inherit;font-weight:800;font-size:14px;
   padding:11px 18px;border-radius:var(--r-md);text-decoration:none;
   display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
-/* football.com is a second book that happens to take the same code, not a
-   second call to action - so it stays the smallest thing in the modal. It
-   wears football.com's own colour rather than ours: #282450 is the theme
-   colour their site declares, so the pill reads as their badge and not as
-   another of our buttons. Dark enough for white type at any weight. */
-.code-opens .code-open-alt{font-size:10.5px;font-weight:700;padding:5px 11px;
-  border-radius:99px;letter-spacing:.01em;
-  background:#282450!important;color:#fff!important;border:0!important;
-  transition:filter .16s}
-.code-opens .code-open-alt:hover{filter:brightness(1.35)}
+/* The other book, on its own line and said as a sentence. Quiet enough that it
+   cannot be mistaken for a second call to action, but the name is a pill you
+   can press rather than a fact you have to act on yourself. */
+.code-also{display:flex;align-items:center;justify-content:center;gap:7px;
+  margin:9px 0 0;font-size:11px;font-weight:600;color:var(--soft)}
+/* football.com's own colour, #282450, which is the theme colour their site
+   declares - so the pill reads as their badge rather than as another of our
+   buttons. Dark enough for white type at any weight. */
+.code-also .code-open-alt{font-size:10.5px;font-weight:700;padding:5px 11px;
+  border-radius:99px;letter-spacing:.01em;text-decoration:none;white-space:nowrap;
+  background:#282450;color:#fff;border:0;transition:filter .16s}
+.code-also .code-open-alt:hover{filter:brightness(1.35)}
 .code-acts button,.code-acts a{font:inherit;font-weight:800;font-size:14px;padding:11px 18px;
   border-radius:var(--r-md);cursor:pointer;text-decoration:none;border:0}
 /* "Copy" becomes "Copied" and back. Auto width meant the button - and the
@@ -6015,10 +6017,10 @@ function showCode(code,hostId){
       "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' aria-hidden='true'><path d='M6 6l12 12M18 6L6 18'/></svg></button>"+
     "<i>Your SportyBet booking code</i>"+
     "<b>"+esc(code)+"</b>"+
-    /* Two rows, each holding a matched pair. What you do with the code -
-       copy it, send it - sits together and at one size; where you open it
-       sits below. Share used to grow to whatever room was left while Copy
-       held a fixed width, so the two never looked like the pair they are. */
+    /* Three rows, narrowing to a point. What you do with the code sits at the
+       top as a small pair; the one thing most people are here to do sits alone
+       under it, with nothing beside it to share the attention; and the other
+       book that takes the same code sits last, said as a sentence. */
     "<div class='code-acts'>"+
       "<button class='code-copy' type='button'>Copy</button>"+
       "<button class='share-btn' type='button' data-sh='1'>↗ Share</button>"+
@@ -6026,12 +6028,14 @@ function showCode(code,hostId){
     "<div class='code-opens'>"+
       "<a class='code-open' href='"+SPORTY_URL+encodeURIComponent(code)+
         "' target='_blank' rel='noopener'>Open in SportyBet</a>"+
-      /* Same code, same slip, other book. It was a footnote saying the code
-         "also works on football.com", which left anyone who uses that app to
-         copy it and find their own way there. */
-      "<a class='code-open code-open-alt' href='"+FOOTBALL_URL+encodeURIComponent(code)+
-        "' target='_blank' rel='noopener'>football.com</a>"+
     "</div>"+
+    /* Same code, same slip, other book. This was a footnote saying it "also
+       works on football.com", which left anyone who uses that app to copy the
+       code and go and find it. The sentence stays - it is what makes the pill
+       make sense - but the name is now the way in. */
+    "<p class='code-also'>Works on "+
+      "<a class='code-open-alt' href='"+FOOTBALL_URL+encodeURIComponent(code)+
+        "' target='_blank' rel='noopener'>football.com</a></p>"+
     "</div>";
   document.body.appendChild(wrap);
   function close(){wrap.remove();}
