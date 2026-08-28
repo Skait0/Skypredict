@@ -70,6 +70,89 @@ async function bakePayload() {
   log("baked " + n + " fixtures -> predictions.json (" +
       (fs.statSync(out).size / 1024).toFixed(0) + " KB, " +
       ((Date.now() - t0) / 1000).toFixed(1) + "s)");
+  return rest;
+}
+
+/* ------------------------------------------------------------- 1b. pages */
+/**
+ * A static page per match, plus the two files that let a crawler find them.
+ *
+ * The whole app is one URL, so every prediction we publish is invisible to
+ * search. These are the landing pages for them, built from the payload we
+ * just baked - same numbers, no second source.
+ *
+ * A page is written for finished matches too, at the same address the fixture
+ * had. A link shared before kick-off keeps working, and the archive of what we
+ * tipped against what happened builds itself.
+ */
+function writePages(payload) {
+  let P;
+  try {
+    P = require("../lib/pages.js");
+  } catch (e) {
+    warn("cannot load the page renderer, skipping: " + e.message);
+    return;
+  }
+  /* Fall back to whatever is already on disk. A skipped bake is exactly when
+     the feeds are unwell, and dropping every match page for a day would undo
+     far more than it protects. */
+  if (!payload) {
+    try {
+      payload = JSON.parse(fs.readFileSync(path.join(PUB, "predictions.json"), "utf8"));
+      log("pages: using the predictions.json already on disk");
+    } catch (e) {
+      warn("no payload for pages, skipping: " + e.message);
+      return;
+    }
+  }
+
+  const K = require("../lib/key.js");
+  const fixtures = Array.isArray(payload.fixtures) ? payload.fixtures : [];
+  const results = Array.isArray(payload.results) ? payload.results : [];
+
+  const byKey = new Map();
+  for (const r of results) {
+    if (r && r.date && r.home && r.away) byKey.set(K.fixtureKey(r.date, r.home, r.away), r);
+  }
+
+  /* Fixtures first so their model numbers win, then any result whose match has
+     already left the board - that is most of the archive. */
+  const seen = new Set(), pages = [];
+  for (const f of fixtures) {
+    if (!f || !f.date || !f.home || !f.away) continue;
+    const key = K.fixtureKey(f.date, f.home, f.away);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    pages.push({ f: f, r: byKey.get(key) || null });
+  }
+  for (const r of results) {
+    if (!r || !r.date || !r.home || !r.away) continue;
+    const key = K.fixtureKey(r.date, r.home, r.away);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    pages.push({ f: r, r: r });
+  }
+
+  const dir = path.join(PUB, "m");
+  fs.mkdirSync(dir, { recursive: true });
+  const paths = [];
+  let written = 0, failed = 0;
+  for (const pg of pages) {
+    try {
+      const rel = P.pagePath(pg.f);
+      fs.writeFileSync(path.join(PUB, rel + ".html"), P.renderMatchPage(pg.f, pg.r));
+      paths.push(rel);
+      written++;
+    } catch (e) {
+      failed++;
+      if (failed === 1) warn("page failed (" + (pg.f && pg.f.home) + "): " + e.message);
+    }
+  }
+
+  fs.writeFileSync(path.join(PUB, "sitemap.xml"), P.renderSitemap(paths));
+  fs.writeFileSync(path.join(PUB, "robots.txt"), P.renderRobots());
+  log("pages: " + written + " match pages" + (failed ? " (" + failed + " failed)" : "") +
+      " + sitemap.xml + robots.txt -> " + P.ORIGIN);
 }
 
 /* --------------------------------------------------------------- 2. split */
@@ -147,7 +230,8 @@ function splitAssets() {
 
 /* ------------------------------------------------------------------- run */
 (async () => {
-  await bakePayload();
+  const payload = await bakePayload();
+  writePages(payload);
   splitAssets();
 })().catch((e) => {
   /* Never fail the deploy over an optimisation. */
