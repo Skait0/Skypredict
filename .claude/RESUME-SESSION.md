@@ -1,5 +1,27 @@
 # Resume session — Skypredict / Soccerwizard
 
+## Read this first — two checks, one look each
+
+Set 28 Aug 2026, late evening. The results sweep had **never banked a
+result** before that night: the schedule had never fired, and the live feed
+was publishing half-time scores as current ones. Both were fixed the same
+evening, so this is the first honest test of the whole chain.
+
+1. **Does `results` have rows?** `select count(*) from public.results` in
+   Supabase. Anything above zero means the chain works end to end.
+2. **Is the cron still green?** cron-job.org job **8344846**, every 10
+   minutes. Its execution history stores the sweep's own JSON, so a held row
+   explains itself in `heldWhy` without opening the database.
+
+If results are landing, API-Football becomes a considered upgrade rather than
+a rescue. If they are not, `heldWhy` says which rule is holding them and why.
+
+**Deadline:** the Railway trial read "16 days or $4.47 left" on 28 Aug, so
+around **13 Sep 2026**. When it ends the `web` service stops and takes live
+scores, fixtures and booking codes with it.
+
+---
+
 Last updated 2026-08-28 (evening). Repo: `C:\Users\DELL\Desktop\skypredict`
 Live: https://skypredict-theta.vercel.app · remote `main` @ `fd31dfb`
 Tests: `npm test` → **143/143**.
