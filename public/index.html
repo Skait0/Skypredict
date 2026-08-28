@@ -4688,11 +4688,29 @@ const MATCH_LEN_MS=2*3600*1000;
    knows about matches seen since the page was opened, which is why the clock
    stays as the fallback for anyone arriving after the whistle. */
 var SEEN_LIVE={};
+/* The last score each fixture was showing while it was still in the feed.
+   The feed has no full time: a match is there, and then it is not. So the
+   final score is simply the last one we saw before it went - which is only
+   knowable if somebody wrote it down while it was still there. */
+var LIVE_LAST={};
+/* Deep enough into the second half that the last score we saw is the one it
+   finished on. A match that vanishes at 55 minutes vanished for some other
+   reason - a feed hiccup, an abandonment - and recording that as a result
+   would put a wrong row in the record. The same bar the server sweep uses,
+   for the same reason. */
+const LATE_MINUTE=80;
 function noteLiveSeen(){
   try{
-    if(!LIVE||!LIVE.matches||!LIVE.matches.length) return;
+    if(!LIVE||!LIVE.matches) return;
     (DATA.fixtures||[]).forEach(function(f){
-      if(liveMatchFor(f)) SEEN_LIVE[fid(f)]=1;
+      var lm=liveMatchFor(f);
+      if(!lm) return;
+      var id=fid(f);
+      SEEN_LIVE[id]=1;
+      if(lm.homeScore!=null&&lm.awayScore!=null){
+        LIVE_LAST[id]={hg:lm.homeScore,ag:lm.awayScore,
+          minute:(lm.minute!=null?lm.minute:0),f:f};
+      }
     });
   }catch(e){}
 }
@@ -4723,7 +4741,10 @@ function fixtureState(f){
      played looked exactly like one that had not - same tip, same confidence,
      nothing to say it was over. Say which it is, even with no score. */
   /* We watched this one being played and it has gone from the feed, so it is
-     over - said straight away rather than after a timer. */
+     over - said straight away rather than after a timer. If we noted a score
+     late enough to trust, show it rather than promising one later. */
+  var last=LIVE_LAST[fid(f)];
+  if(last&&last.minute>=LATE_MINUTE) return {kind:"played",hg:last.hg,ag:last.ag};
   if(SEEN_LIVE[fid(f)]) return {kind:"played"};
   var t=kickMs(f);
   if(t!=null){
@@ -4759,7 +4780,7 @@ function statusBadge(f){
   if(st.kind==="started")
     return "<span class='fx-st fx-live'><span class='ld'></span>Started</span>";
   if(st.kind==="played")
-    return "<span class='fx-st fx-done'>Played · result soon</span>";
+    return "<span class='fx-st fx-done'>"+(st.hg!=null?st.hg+"-"+st.ag+" FT":"Ended")+"</span>";
   return "<span class='fx-st "+(st.push?"fx-push":(st.won?"fx-hit":"fx-miss"))+"'>"+
     st.hg+"-"+st.ag+" "+(st.push?"Void":(st.won?"Hit":"Miss"))+"</span>";
 }
@@ -7461,15 +7482,33 @@ function recordFinishedFixtures(){
       if(seen[k]||served[k]) return;
       var t=kickMs(f);
       if(t==null||Date.now()-t<MATCH_LEN_MS) return;
-      var lm=liveForFixture(f);
-      if(!lm||lm.homeScore==null||lm.awayScore==null) return;
-      if(!statusText(lm).ft) return;
-      var v=tipEval(f)(lm.homeScore,lm.awayScore);
+      /* Two ways a match reaches full time here, and the feed only ever
+         admits to one of them.
+         If it says FT, believe it. It almost never does: this feed drops a
+         match the moment it ends rather than marking it finished, which is
+         why this ledger stayed empty for weeks while games were being played
+         in front of it.
+         So the other way is absence. A fixture we watched, last seen deep
+         enough into the second half, that is no longer in the feed has
+         finished, and the last score we saw is the one it finished on. The
+         80th-minute bar is what keeps a feed hiccup at 55 minutes from being
+         written down as a result - a missing result is recoverable, a wrong
+         one is not. */
+      var lm=liveForFixture(f), hg=null, ag=null;
+      if(lm&&lm.homeScore!=null&&lm.awayScore!=null&&statusText(lm).ft){
+        hg=lm.homeScore; ag=lm.awayScore;
+      }else if(!lm){
+        var last=LIVE_LAST[fid(f)];
+        if(!last||last.minute<LATE_MINUTE) return;
+        hg=last.hg; ag=last.ag;
+      }
+      if(hg==null||ag==null) return;
+      var v=tipEval(f)(hg,ag);
       /* Only write down what we can actually settle. A tip we cannot grade
          from a final score has no business being stored as a miss. */
       if(v==="unknown") return;
       FTLOG.push({date:f.date,league:f.league||"",home:f.home,away:f.away,
-        hg:lm.homeScore,ag:lm.awayScore,tip:f.tip,hit:v==="win",
+        hg:hg,ag:ag,tip:f.tip,hit:v==="win",
         tip_p:(f.tip_p!=null?f.tip_p:null),ours:1,at:Date.now()});
       seen[k]=1; added++;
     });
