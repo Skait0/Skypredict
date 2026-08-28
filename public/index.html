@@ -2123,6 +2123,22 @@ html.mode-live #live{display:block}
 .code-card b{display:block;font-size:32px;font-weight:800;letter-spacing:.08em;
   color:var(--text);margin:6px 0 14px;font-variant-numeric:tabular-nums}
 .code-acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+/* Two halves of one row. flex-basis 0 rather than auto is what makes them
+   equal: with auto they size to their own labels first and only then share
+   what is left, which is how "Share" ended up wider than "Copy code" despite
+   being the shorter word. */
+.code-acts .code-copy,.code-acts .share-btn{flex:1 1 0;min-width:0}
+/* Where to open it. Same shape as the row above so the modal reads as two
+   pairs rather than four loose buttons. */
+.code-opens{display:flex;gap:10px;justify-content:center;margin-top:10px}
+.code-opens a{flex:1 1 0;min-width:0;font:inherit;font-weight:800;font-size:14px;
+  padding:11px 18px;border-radius:var(--r-md);text-decoration:none;text-align:center;
+  display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+/* The alternative book: the same offer, said quietly, so the primary stays
+   primary. */
+.code-open-alt{background:var(--card)!important;color:var(--text)!important;
+  border:1px solid var(--line)!important}
+.code-open-alt:hover{border-color:var(--soft)!important}
 .code-acts button,.code-acts a{font:inherit;font-weight:800;font-size:14px;padding:11px 18px;
   border-radius:var(--r-md);cursor:pointer;text-decoration:none;border:0}
 /* "Copy code" becomes "Copied" and back. Auto width meant the button - and
@@ -3170,12 +3186,15 @@ button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
 .code-card b{margin:5px 0 10px;font-size:26px;letter-spacing:.06em;word-break:break-all}
 .code-acts{gap:7px}
 .code-acts button,.code-acts a{flex:1 1 auto;min-width:0;font-size:13px;padding:10px 12px;text-align:center}
-/* Tracks the 13px type set on the line above, so the reserve matches the label
-   it actually has to hold. Note these rules are not inside a media query - the
-   phone block closes above them - so this is the reserve everywhere, and the
-   112px one further up never gets a say. Left as-is rather than rescoping the
-   whole group, which is a bigger change than this button. */
-.code-acts .code-copy{flex:0 0 auto;min-width:98px}
+.code-opens{gap:7px}
+.code-opens a{font-size:13px;padding:10px 12px}
+/* Both halves on a basis of 0, so they stay the same width as each other
+   whatever their labels say. The reserved min-width that used to sit on Copy
+   alone is gone with it: it existed to stop the button resizing when the label
+   became "Copied", and an equal half does that by itself.
+   Note these rules are not inside a media query - the phone block closes above
+   them - so this applies everywhere. */
+.code-acts .code-copy,.code-acts .share-btn{flex:1 1 0;min-width:0}
 .code-x{top:6px;right:6px;width:28px;height:28px}
 .confirm-card{padding:13px}
 
@@ -5314,6 +5333,10 @@ function bookErrHTML(d){
     "</div>";
 }
 const SPORTY_URL="https://www.sportybet.com/ng/?shareCode=";
+/* The same booking code loads the same slip on football.com, which until now
+   the modal only mentioned in a footnote - leaving anyone who uses that app to
+   copy the code and find their own way there. */
+const FOOTBALL_URL="https://www.football.com/ng/m?shareCode=";
 /* Same-origin so Vercel's CDN can cache it - see lib/upstream.js. */
 const SPORTY_FIXTURES="/api/fixtures";
 
@@ -5970,15 +5993,23 @@ function showCode(code,hostId){
       "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' aria-hidden='true'><path d='M6 6l12 12M18 6L6 18'/></svg></button>"+
     "<i>Your SportyBet booking code</i>"+
     "<b>"+esc(code)+"</b>"+
+    /* Two rows, each holding a matched pair. What you do with the code -
+       copy it, send it - sits together and at one size; where you open it
+       sits below. Share used to grow to whatever room was left while Copy
+       held a fixed width, so the two never looked like the pair they are. */
     "<div class='code-acts'>"+
       "<button class='code-copy' type='button'>Copy code</button>"+
       "<button class='share-btn' type='button' data-sh='1'>↗ Share</button>"+
+    "</div>"+
+    "<div class='code-opens'>"+
       "<a class='code-open' href='"+SPORTY_URL+encodeURIComponent(code)+
         "' target='_blank' rel='noopener'>Open in SportyBet</a>"+
+      /* Same code, same slip, other book. It was a footnote saying the code
+         "also works on football.com", which left anyone who uses that app to
+         copy it and find their own way there. */
+      "<a class='code-open code-open-alt' href='"+FOOTBALL_URL+encodeURIComponent(code)+
+        "' target='_blank' rel='noopener'>football.com</a>"+
     "</div>"+
-    /* The same booking code is valid on football.com, and people who use that
-       app would otherwise assume it is SportyBet-only and rebuild by hand. */
-    "<p class='code-alt'>Same code works on <b>football.com</b></p>"+
     "</div>";
   document.body.appendChild(wrap);
   function close(){wrap.remove();}
