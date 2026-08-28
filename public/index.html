@@ -2033,8 +2033,16 @@ html.mode-live #live{display:block}
 .stat .stat-ic{position:absolute;top:12px;right:12px;color:var(--faint);opacity:.5}
 .stat .stat-ic svg{display:block;width:15px;height:15px}
 .stat b{display:block;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
-.stat i{display:block;font-style:normal;font-size:11px;font-weight:700;letter-spacing:.05em;
-  text-transform:uppercase;color:var(--faint);margin-top:3px}
+/* "Average confidence" is longer than "Games" and much longer than the number
+   above it, and these tiles are a third of the row each. Rather than let the
+   longest label decide the height of all three - or ellipsise a label nobody
+   can then read - it wraps to a second line and the tracking eases off, so the
+   words fit the box instead of the box straining round the words. */
+.stat i{display:block;font-style:normal;font-size:11px;font-weight:700;letter-spacing:.03em;
+  text-transform:uppercase;color:var(--faint);margin-top:3px;
+  line-height:1.25;overflow-wrap:anywhere;hyphens:none}
+/* Two tiles, not three, when the confidence one is dropped for a jackpot. */
+.bld-stats.stats-2{grid-template-columns:repeat(2,1fr)}
 .stat.odds b{color:var(--win)}
 #slip{display:flex;flex-direction:column;gap:8px}
 /* Shared by the slip sheet and the builder's preview. In the sheet this is
@@ -8705,9 +8713,19 @@ function renderBuilderOutput(){
   var odds=totalOdds(picks);
   var real=oddsAreReal(picks), pre=real?"\u00d7":"~\u00d7";
   var avg=picks.length?picks.reduce(function(t,c){return t+c.p;},0)/picks.length:0;
-  $("bldStats").innerHTML=
+  /* On a jackpot ticket the confidence tile is dropped rather than shown.
+     It reads as the chance of the slip and it is nothing of the kind - it is
+     the average of forty-odd legs, so a 79% sits above a ticket whose real
+     chance of coming in is a fraction of one per cent. On an ordinary four-leg
+     slip the average is a fair summary; here it flatters a lottery ticket, and
+     the tier already says plainly what it is. Two tiles then, not three - the
+     grid follows the count so the row stays even. */
+  var _jackSlip=isJackpotOdds(WSP.odds)&&BUILD.mode==="wizard";
+  var _statsEl=$("bldStats");
+  _statsEl.classList.toggle("stats-2",_jackSlip);
+  _statsEl.innerHTML=
     "<div class='stat'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='4' y='7' width='16' height='13' rx='2'/><path d='M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/></svg></span><b>"+picks.length+"</b><i>Games</i></div>"+
-    "<div class='stat'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z'/></svg></span><b>"+(picks.length?P0(avg)+"%":"-")+"</b><i>Avg confidence</i></div>"+
+    (_jackSlip?"":"<div class='stat'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z'/></svg></span><b>"+(picks.length?P0(avg)+"%":"-")+"</b><i>Average confidence</i></div>")+
     "<div class='stat odds'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='8'/><path d='M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3H10a1.5 1.5 0 0 0 0 3h4'/></svg></span><b id='totOdds'>"+(picks.length?pre+odds.toFixed(2):"-")+"</b>"+
       "<i>Total odds"+(picks.length&&!real?" (est.)":"")+"</i></div>";
   // Slip rows
