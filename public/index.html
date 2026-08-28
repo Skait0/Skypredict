@@ -4584,8 +4584,24 @@ function renderPotd(){
     const w=form.filter(function(x){return x==="W";}).length;
     if(w>=3) reasons.push("<b>"+esc(strong)+"</b> have won "+w+" of their last "+form.length);
   }
-  if(top.o25>=0.6) reasons.push("Goals look likely, over 2.5 at <b>"+P0(top.o25)+"%</b>");
-  else if((1-top.o25)>=0.6) reasons.push("A tight game, under 2.5 at <b>"+P0(1-top.o25)+"%</b>");
+  /* The goals line, said so it backs the tip instead of arguing with it.
+     Bayern v Stuttgart went out as "Over 1.5 - 90%" with a bullet underneath
+     reading "Goals look likely, over 2.5 at 75%": a second, lower number at a
+     different bar, directly under the headline, which reads as a correction
+     rather than as evidence.
+     So when the call is itself a goals line, the only thing worth adding is
+     the bar above it - clearing a higher one is a reason to trust the lower.
+     When the call is at or above that bar, or is an under, the headline has
+     already said it and there is nothing to add. */
+  var _ov=/^Over\s*([\d.]+)/i.exec(top.tip||"");
+  var _un=/^Under\s*([\d.]+)/i.exec(top.tip||"");
+  if(_ov){
+    if(parseFloat(_ov[1])<2.5 && top.o25>=0.6)
+      reasons.push("Room to spare: even <b>over 2.5</b> lands "+P0(top.o25)+"% of the time");
+  } else if(!_un){
+    if(top.o25>=0.6) reasons.push("Goals look likely, over 2.5 at <b>"+P0(top.o25)+"%</b>");
+    else if((1-top.o25)>=0.6) reasons.push("A tight game, under 2.5 at <b>"+P0(1-top.o25)+"%</b>");
+  }
   reasons.push("Our model puts this at <b>"+P0(top.tip_p)+"%</b>, the strongest call on the day's card");
 
   $("potd").innerHTML=
