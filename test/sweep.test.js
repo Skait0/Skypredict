@@ -282,3 +282,64 @@ test("a held row explains itself in the response", async () => {
   assert.match(why, /55'/);
   assert.match(why, /before the 80th minute/);
 });
+
+/* A match in play cannot be one that kicks off later. Seen in the wild: our
+   Liga MX fixture carried a kick-off five hours in the future while the live
+   feed showed that pairing at the 85th minute. Either the kick-off was wrong
+   or two different games shared both club names, and the sweep cannot tell
+   which - so it must not write either down. */
+test("a fixture that has not kicked off yet is never paired to a live match", async () => {
+  const calls = install({
+    live: [{ home: "Boreham Wood", away: "Boston Utd", homeScore: 1, awayScore: 0,
+             minute: 85, status: "H2" }],
+    payloadBody: payload({
+      fixtures: [{
+        date: "2026-08-29", home: "Boreham Wood", away: "Boston Utd",
+        league: "Mexico Liga MX", tip: "Over 1.5", tip_p: 0.8,
+        kickoff: new Date(Date.now() + 5 * 3600 * 1000).toISOString(),
+      }],
+    }),
+  });
+  const res = await run();
+  assert.strictEqual(res._j.observed, 0);
+  assert.strictEqual(res._j.notYet, 1);
+  assert.match(res._j.notYetWhy[0], /kicks off in \d+m/);
+  assert.strictEqual(calls.upserted.length, 0, "nothing may be written down");
+});
+
+/* The guard must not swallow ordinary matches: a feed a few minutes ahead of
+   our clock is normal, and a game already under way is the whole point. */
+test("a match already under way is still observed", async () => {
+  const calls = install({
+    live: [{ home: "Boreham Wood", away: "Boston Utd", homeScore: 1, awayScore: 0,
+             minute: 85, status: "H2" }],
+    payloadBody: payload({
+      fixtures: [{
+        date: "2026-08-27", home: "Boreham Wood", away: "Boston Utd",
+        league: "England Conference National", tip: "Over 1.5", tip_p: 0.8,
+        kickoff: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
+      }],
+    }),
+  });
+  const res = await run();
+  assert.strictEqual(res._j.observed, 1);
+  assert.strictEqual(res._j.notYet, 0);
+  assert.strictEqual(calls.upserted.length, 1);
+});
+
+test("a kick-off a few minutes ahead of our clock is tolerated", async () => {
+  const calls = install({
+    live: [{ home: "Boreham Wood", away: "Boston Utd", homeScore: 0, awayScore: 0,
+             minute: 3, status: "H1" }],
+    payloadBody: payload({
+      fixtures: [{
+        date: "2026-08-27", home: "Boreham Wood", away: "Boston Utd",
+        league: "England Conference National", tip: "Over 1.5", tip_p: 0.8,
+        kickoff: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+      }],
+    }),
+  });
+  const res = await run();
+  assert.strictEqual(res._j.notYet, 0, "ten minutes ahead is a clock skew, not an impossibility");
+  assert.strictEqual(calls.upserted.length, 1);
+});

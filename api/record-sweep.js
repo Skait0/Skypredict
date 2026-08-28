@@ -60,6 +60,16 @@ const ABSENT_MS = 6 * 60 * 1000;
 const LATE_MINUTE = 80;
 /* Anything still unresolved after this is abandoned, not finished. */
 const STALE_MS = 26 * 3600 * 1000;
+/* A match in play cannot be one that kicks off later. Seen in the wild: our
+   Liga MX fixture for Necaxa v Cruz Azul carried a kick-off five hours in the
+   future while the live feed showed that pairing at the 85th minute. Whatever
+   the cause - a wrong kick-off on the fixtures feed, or two different games
+   sharing both club names - the one thing we know is that we cannot tell which,
+   and the row would still have been banked hours later once the listed
+   kick-off finally passed. A score nothing downstream will ever correct is not
+   worth a guess. Small tolerance so a feed a few minutes ahead of the clock is
+   not treated as impossible. */
+const NOT_YET_MS = 30 * 60 * 1000;
 
 function selfOrigin(req) {
   const host = req.headers["x-forwarded-host"] || req.headers.host;
@@ -164,13 +174,21 @@ module.exports = async (req, res) => {
       served.add(K.fixtureKey(r.date, r.home, r.away));
 
     /* ---------------------------------------------------------- observe */
-    const seenRows = [];
+    const seenRows = [], notYet = [];
     for (const f of fixtures) {
       if (!f || !f.date || !f.home || !f.away || !f.tip) continue;
       const key = K.fixtureKey(f.date, f.home, f.away);
       if (served.has(key)) continue;
       const lm = byName.get(M.normName(f.home) + "|" + M.normName(f.away));
       if (!lm || lm.homeScore == null || lm.awayScore == null) continue;
+      /* Paired to something that has not started yet - see NOT_YET_MS. */
+      const kickAt = f.kickoff ? Date.parse(f.kickoff) : NaN;
+      if (isFinite(kickAt) && kickAt - now > NOT_YET_MS) {
+        notYet.push(f.date + " " + f.home + " v " + f.away +
+          " [" + (f.league || "?") + "] live at " + (lm.minute == null ? "?" : lm.minute) +
+          "' but kicks off in " + Math.round((kickAt - now) / 60000) + "m");
+        continue;
+      }
       seenRows.push({
         match_key: key,
         match_date: f.date,
@@ -264,6 +282,10 @@ module.exports = async (req, res) => {
       liveMatches: realMatches.length,
       simulatedIgnored: liveMatches.length - realMatches.length,
       observed: observed,
+      /* Live pairings refused because the fixture had not kicked off yet. A
+         number above zero is a data problem worth looking at, not noise. */
+      notYet: notYet.length,
+      notYetWhy: notYet.slice(0, 5),
       watching: (stored.rows || []).length,
       finalised: rows.length,
       inserted: inserted,

@@ -68,7 +68,7 @@ const api = new Function([
   "var FIXTURES=[];",
   "function scopeFixtures(){return FIXTURES;}",
   konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
-  konst("HIGH_SCORING_O25"), konst("SA_MIN_EURO"),
+  konst("HIGH_SCORING_O25"), konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
   konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"),
   (/^var BUILD=\{[\s\S]*?\};/m.exec(src) || [""])[0],
   (/^var WSP=\{[\s\S]*?\};/m.exec(src) || [""])[0],

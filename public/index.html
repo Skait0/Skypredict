@@ -4353,6 +4353,14 @@ var ASIA_PREFIXES=["Japan","China","India","Indonesia","Malaysia","Singapore",
    of the risk-slider cap - that cap runs to ~35, so a relative test would rate
    Europe "scarce" almost every day and defeat the whole point. */
 var SA_MIN_EURO=6;
+/* Asia gets its own, lower bar than South America. Both used SA_MIN_EURO, so
+   any card with fewer than six European candidates - "Today only" early in the
+   day, a single time-of-day bucket, top-flight-only - dropped straight into
+   "fill" and let Japan and China through regardless of tier or shuffles. That
+   is most of the reason they turned up in slips that were never meant to
+   have them. Three means Europe has genuinely run out rather than merely
+   thinned. */
+var ASIA_MIN_EURO=3;
 /* Lower divisions (2nd tiers and below) - some days the board is mostly these
    and the user wants top-flight only. One shared setting drives both builders. */
 /* Second tier and below, by the competition's own name rather than a list of
@@ -4794,7 +4802,14 @@ function renderPotd(){
        Only if the whole card is cross-division does one become eligible. */
     var pool=day.filter(function(f){return !f.cross_tier;});
     if(!pool.length) pool=day;
-    top=pool.slice().sort(function(a,b){return (b.tip_p-a.tip_p)||(fid(a)<fid(b)?-1:1);})[0];
+    /* Same two demerits as the slip - thin support, and a league the model
+       knows least well - with confidence deciding inside each group. The
+       headline pick is the last place a number nobody has earned should lead
+       the page. */
+    var potdDemerit=function(f){ return (f.thin?1:0)+(isAsian(f)?1:0); };
+    top=pool.slice().sort(function(a,b){
+      return potdDemerit(a)-potdDemerit(b) || (b.tip_p-a.tip_p) || (fid(a)<fid(b)?-1:1);
+    })[0];
     try{localStorage.setItem(lockKey,JSON.stringify({id:fid(top),home:top.home,away:top.away,date:top.date}));}catch(e){}
     prunePotdKeys();
   }
@@ -6225,7 +6240,7 @@ function buildPicks(){
      setting unless Europe genuinely cannot fill the slip. Somebody on
      "Safest" is asking for the picks most likely to land, and these are the
      leagues the model knows least well. */
-  var asiaMode=(euroN<Math.min(cap,SA_MIN_EURO))?"fill"
+  var asiaMode=(euroN<Math.min(cap,ASIA_MIN_EURO))?"fill"
               :((BUILD.shuffles||0)>=3&&p.tier>0?"mix":"exclude");
   if(asiaMode==="exclude") cand=cand.filter(function(c){return !isAsian(c.f);});
   /* Measured against a real card before choosing these.
@@ -6699,7 +6714,26 @@ function renderSlipOfDay(){
   /* Safest first, which is also cheapest first - a higher confidence always
      carries a shorter price - so filling in this order fits the most legs
      under the ceiling. */
-  cand.sort(function(a,b){return b.p-a.p;});
+  /* Confidence alone put the leagues the model knows least well at the top of
+     the slip, which is exactly backwards - a fit with little behind it does not
+     produce cautious numbers, it produces confident ones nobody has earned.
+     Measured on a real card, Asia was 6% of the eligible pool and took 10% of
+     the top twenty, with two Chinese games at seven and eight.
+     Two demerits rather than one, because they catch different things and the
+     obvious single answer does not work. `thin` marks a fixture whose weaker
+     side has little recent history, which is the honest measure of what we do
+     not know - but the Chinese Super League is not thin, all eight of its
+     fixtures cleared the bar, so sorting on support alone left both of those
+     games exactly where they were. The continent flag is cruder and catches
+     them; `thin` catches a European league nobody thought to name. One point
+     each, so a thin European and a well-supported Asian game rank together and
+     a thin Asian one ranks below both.
+     Neither is a ban. On a quiet card these still fill the slip - they just
+     stop outranking a game we actually know something about. */
+  function sotdDemerit(f){ return (f.thin?1:0)+(isAsian(f)?1:0); }
+  cand.sort(function(a,b){
+    return sotdDemerit(a.f)-sotdDemerit(b.f) || (b.p-a.p);
+  });
 
   /* The day this slip belongs to. Held to today while today still has a card,
      so the slip does not jump to tomorrow's games the moment the last of
@@ -8445,8 +8479,10 @@ function wspBuild(){
      user can shuffle if they want to chase it with a wider net. */
   var saMode=(euro.length<SA_MIN_EURO)?"fill":(shuffles>=2?"mix":"exclude");
   /* Asia waits longer than South America - three shuffles rather than two -
-     and only joins at all once Europe cannot fill the slip on its own. */
-  var asiaMode=(euro.length<SA_MIN_EURO)?"fill":(shuffles>=3?"mix":"exclude");
+     and only joins at all once Europe cannot fill the slip on its own. Its own
+     bar, lower than South America's: sharing SA_MIN_EURO meant any thinned
+     card let Japan and China straight in. */
+  var asiaMode=(euro.length<ASIA_MIN_EURO)?"fill":(shuffles>=3?"mix":"exclude");
   var poolList=all.filter(function(c){
     if(saMode==="exclude"&&isSouthAmerican(c.f)) return false;
     if(asiaMode==="exclude"&&isAsian(c.f)) return false;
