@@ -1900,6 +1900,14 @@ html.mode-live #live{display:block}
 .bld-mode-btn.on[data-mode="wizard"] svg{filter:drop-shadow(0 0 4px rgba(242,184,75,.8))}
 .bld-mode-btn.on svg{opacity:1}
 .bld-mode-btn:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+/* The filters bar and the copy button were the two remaining controls that
+   answered a cursor with nothing. */
+@media (hover:hover){
+  .filters-toggle:hover{border-color:var(--faint);background:var(--raise)}
+  .code-acts .code-copy:hover{background:var(--raise);border-color:var(--faint)}
+}
+.filters-toggle,.code-acts .code-copy{
+  transition:background .16s ease,border-color .16s ease}
 .filters-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;
   background:var(--card-2);border:1px solid var(--line);color:var(--text);font:inherit;
   font-weight:800;font-size:13px;padding:11px 14px;border-radius:var(--r-md);cursor:pointer;margin-bottom:12px}
@@ -2477,10 +2485,7 @@ html.mode-live #live{display:block}
   border-left:2px solid var(--win);border-radius:0 var(--r-sm) var(--r-sm) 0;
   padding:8px 11px;margin:10px 0 2px}
 .wsp-hint-jack b{color:var(--win-ink);font-weight:800}
-/* The two longest shots wear a gold rim, so the tier is visible before it is
-   read. */
-.wsp-chip.wsp-jack{box-shadow:inset 0 0 0 1px rgba(242,184,75,.55)}
-.wsp-chip.wsp-jack.on{box-shadow:inset 0 0 0 1px rgba(242,184,75,.9),0 0 14px rgba(242,184,75,.28)}
+/* The jackpot pair is styled further down, with the rest of the payout row. */
 /* Waiting on a payout: dimmed enough to read as not-yet-ready, but still
    pressable, because being told what is missing beats a dead button. */
 button.wsp-go.waiting{opacity:.55}
@@ -2492,6 +2497,27 @@ button.wsp-go.waiting{opacity:.55}
 .wsp-chip{background:var(--card-2);border:1px solid var(--line);color:var(--soft);font:inherit;
   font-weight:700;font-size:13px;padding:9px 15px;border-radius:99px;cursor:pointer}
 .wsp-chip.on{background:var(--red);border-color:var(--red);color:#fff}
+/* A control that does nothing under a cursor reads as a label, not a choice.
+   The payout row had a hue of its own to lift; these have none, so they take
+   the plain treatment - a step up in surface and ink, and a pixel of rise.
+   Behind hover:hover throughout: a phone leaves :hover on the last thing
+   tapped, and a chip left in its hover colours looks selected when it is not.
+   Same reason the Clear button used to sit there red after a tap. */
+.wsp-chip{transition:background .16s ease,border-color .16s ease,color .16s ease,
+  transform .12s ease,box-shadow .16s ease}
+@media (hover:hover){
+  .wsp-chip:not(.wsp-risk):not(.on):hover{background:var(--raise);
+    border-color:var(--faint);color:var(--text);transform:translateY(-1px);
+    box-shadow:0 3px 10px rgba(0,0,0,.22)}
+  /* Already chosen: it still answers the cursor, but it must not look like a
+     different state - only that it is reachable. */
+  .wsp-chip.on:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
+}
+.wsp-chip:active{transform:translateY(0) scale(.97)}
+@media (prefers-reduced-motion:reduce){
+  .wsp-chip{transition:none}
+  .wsp-chip:hover,.wsp-chip.on:hover{transform:none}
+}
 .wsp-prev{display:flex;align-items:center;justify-content:space-between;margin:18px 0 6px;  padding:14px 16px;background:var(--card-2);border:1px solid var(--line-soft);border-radius:var(--r-md)}
 .wsp-prev span{font-weight:700;color:var(--soft)}
 .wsp-prev b{font-size:22px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
@@ -2504,9 +2530,51 @@ button.wsp-go.waiting{opacity:.55}
 .wsp-chip.on{background:var(--red);box-shadow:0 2px 8px rgba(230,57,70,.3)}
 /* Payout chips carry a risk hue (green x50 -> red x6000). Tinted when idle,
    filled with the same hue when selected; overrides the generic red .on above. */
-.wsp-chip.wsp-risk{border-color:var(--wr);color:var(--wr)}
+.wsp-chip.wsp-risk{border-color:var(--wr);color:var(--wr);
+  transition:background .16s ease,color .16s ease,transform .12s ease,box-shadow .16s ease}
 .wsp-chip.wsp-risk.on{background:var(--wr);border-color:var(--wr);
   color:var(--wr-ink,#fff);font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.28)}
+/* Nothing happened under a cursor here, so on a desktop the row read as a
+   label rather than a set of choices. Hovering fills the chip with its own
+   risk hue - the same colour it will take once picked - so the pointer is
+   previewing the decision rather than merely highlighting a target.
+   Behind hover:hover because a phone leaves :hover on the last thing tapped,
+   and a chip stuck in its chosen colour would look selected when it is not. */
+@media (hover:hover){
+  .wsp-chip.wsp-risk:hover{background:var(--wr);color:var(--wr-ink,#fff);
+    transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
+  .wsp-chip.wsp-risk.on:hover{transform:none}
+}
+.wsp-chip.wsp-risk:active{transform:translateY(0) scale(.97)}
+
+/* The jackpot pair should not look like more of the same scale.
+   x50 to x6000 is a spectrum; x20k and x50k are a different proposition -
+   forty-odd results in a row, a ticket that will almost certainly lose. The
+   gold rim said "special", which is the wrong word. Hazard stripes say what
+   this actually is, and they cost nothing to read: everybody already knows
+   what diagonal warning tape means. */
+.wsp-chip.wsp-jack{position:relative;overflow:hidden;
+  box-shadow:inset 0 0 0 1px rgba(242,184,75,.55)}
+.wsp-chip.wsp-jack::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(135deg,
+    rgba(242,184,75,.16) 0 6px, transparent 6px 12px);
+  opacity:.9;transition:opacity .16s ease}
+.wsp-chip.wsp-jack.on{box-shadow:inset 0 0 0 1px rgba(242,184,75,.9),
+  0 0 14px rgba(242,184,75,.28)}
+/* Chosen or hovered, the stripes step back so the number stays readable -
+   the warning is for the glance before the click, not after it. */
+.wsp-chip.wsp-jack.on::before{opacity:.35}
+@media (hover:hover){
+  .wsp-chip.wsp-jack:hover::before{opacity:.45}
+  /* A harder lift and a red bloom rather than the neutral shadow the others
+     get: the one chip on the row whose hover should feel like a warning. */
+  .wsp-chip.wsp-jack:hover{box-shadow:inset 0 0 0 1px rgba(242,184,75,.95),
+    0 6px 18px rgba(200,16,46,.34)}
+}
+@media (prefers-reduced-motion:reduce){
+  .wsp-chip.wsp-risk{transition:none}
+  .wsp-chip.wsp-risk:hover{transform:none}
+}
 /* The close button was absolutely positioned at right:0, which resolves against
    the head's padding box - so it sat flush against the sheet's inner edge with
    none of the gutter the rest of the header respects. Back to a plain flex item
@@ -9119,7 +9187,15 @@ function renderBuilderOutput(){
       b.addEventListener("click",function(){if(BUILD.mode==="wizard"){WSP.removed[b.dataset.rm]=1;}else{BUILD.removed[b.dataset.rm]=1;}renderBuilder();});});
   }
   // Sync to MYSLIP (slider once touched; wizard always reflects its preview)
-  if(!BUILD_NOSYNC && (BUILD.touched || isWiz)){
+  /* Never sync the ghost.
+     Before Conjure is pressed the wizard renders a preview of what it would
+     build - that is the point of it, you see the shape of the ticket while
+     choosing a payout. But the sync condition asked only whether we were in
+     wizard mode, so those preview legs went straight into My slip, and the
+     slip filled itself before the button was touched. Conjure then appeared
+     to do nothing, because its work was already on screen.
+     A preview is a preview until somebody says yes. */
+  if(!BUILD_NOSYNC && !wizGhost && (BUILD.touched || isWiz)){
     MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
       .concat(picks.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true};}));
     var _seen={}; MYSLIP=MYSLIP.filter(function(x){if(_seen[x.id])return false;_seen[x.id]=1;return true;});
