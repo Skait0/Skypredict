@@ -1038,7 +1038,17 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
   text-transform:uppercase;color:var(--faint);margin-top:2px}
 .clear-btn{background:var(--raise);color:var(--soft);border:1px solid var(--line);
   font:inherit;font-weight:800;font-size:14px;padding:13px 16px;border-radius:var(--r-md);cursor:pointer;flex-shrink:0}
-.clear-btn:hover{background:var(--red-wash);color:var(--red-ink);border-color:var(--red)}
+/* Only where there is a pointer that can hover. A phone has none, and Android
+   Chrome leaves :hover applied to the last thing tapped until something else
+   is tapped - so Clear went red on touch and stayed red, which reads as a
+   button that has jammed. Every :hover on a control the thumb reaches wants
+   this guard, and this is the one that turns a colour. */
+@media (hover:hover){
+  .clear-btn:hover{background:var(--red-wash);color:var(--red-ink);border-color:var(--red)}
+}
+/* Touch gets the press instead: it says the tap landed and it ends by itself. */
+.clear-btn:active{transform:scale(.96)}
+.clear-btn{-webkit-tap-highlight-color:transparent}
 .confirm-card{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);padding:16px;text-align:center}
 /* Book-all: a small flashy pill above the board. It only appears when the
    visible tips are actually bookable, so it never sits there dead. */
@@ -1372,7 +1382,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
   border-radius:50%;color:var(--faint);cursor:pointer;opacity:.55;
   transition:opacity .15s,color .15s,background .15s}
 .sl-x svg{width:13px;height:13px}
-.sl-x:hover{opacity:1;color:var(--red-ink);background:var(--red-wash)}
+@media (hover:hover){.sl-x:hover{opacity:1;color:var(--red-ink);background:var(--red-wash)}}
 .sl-x:focus-visible{opacity:1;outline:2px solid var(--red);outline-offset:1px}
 .sl-x.arm{opacity:1;width:auto;padding:2px 9px;border-radius:99px;
   background:var(--red-wash);color:var(--red-ink);font:inherit;font-size:10.5px;
@@ -1382,7 +1392,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .sl-clear{font:inherit;font-size:12px;font-weight:700;padding:8px 14px;
   border-radius:99px;background:none;border:1px solid var(--line);
   color:var(--soft);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
-.sl-clear:hover{color:var(--red-ink);border-color:var(--red)}
+@media (hover:hover){.sl-clear:hover{color:var(--red-ink);border-color:var(--red)}}
 .sl-clear.arm{background:var(--red-wash);border-color:var(--red);color:var(--red-ink);font-weight:800}
 .sl-leg{display:flex;align-items:center;gap:9px;padding:4px 0;font-size:12px;line-height:1.35}
 /* Green landed, red missed, hollow still to play, grey void. Reading the
@@ -1415,7 +1425,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .sl-mini:focus-visible{outline:2px solid var(--red);outline-offset:1px}
 .sl-mini.ok{color:var(--green-ink);border-color:var(--green)}
 /* Delete asks before it acts, and only turns red once it has. */
-.sl-mini-x:hover{color:var(--red-ink);border-color:var(--red)}
+@media (hover:hover){.sl-mini-x:hover{color:var(--red-ink);border-color:var(--red)}}
 .sl-mini-x.arm{background:var(--red-wash);border-color:var(--red);color:var(--red-ink);font-weight:800}
 @media(max-width:640px){
   .myres{padding:11px 12px;margin-bottom:10px}
@@ -5379,6 +5389,9 @@ addEventListener("keydown",function(e){
   }});
 
 /* ============================================================ build a slip */
+/* Set only while clearMy repaints the builder, to stop that repaint from
+   syncing the picks back into a slip the user just emptied. */
+var BUILD_NOSYNC=false;
 var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:true,o35:false,fh:false,tts:false,tts2:false,both:true},touched:false,mode:"slider"};
 try{var rr=localStorage.getItem("sw.risk"); if(rr!=null) BUILD.risk=+rr;}catch(e){}
 try{var rm=localStorage.getItem("sw.mode"); if(rm==="slider"||rm==="wizard") BUILD.mode=rm;}catch(e){}
@@ -7644,6 +7657,11 @@ function renderFab(){var fab=$("myFab"); if(!fab) return; fab.hidden=MYSLIP.leng
   var c=$("myFabC"); if(c) c.textContent=MYSLIP.length;}
 function clearMy(){
   MYSLIP=[]; saveMy(); renderFab();
+  /* Abandon any booking still in flight and put its button back. Clearing left
+     "Booking..." disabled for as long as the request ran, and if it never
+     settled the button stayed dead - add one pick back and there it was, stuck,
+     with no way to try again. */
+  MYBOOK_GEN++; resetMyBookBtn();
   var mo=$("myTotOdds"); if(mo) mo.textContent="-";
   document.querySelectorAll("[data-add].on").forEach(function(b){b.classList.remove("on");b.textContent="+";});
   $("myBookResult").innerHTML="";
@@ -7654,9 +7672,25 @@ function clearMy(){
   try{
     WSP.conjured=false; WSP._slip=null; WSP._sig=null;
     WSP.removed={}; WSP.odds=null;
-    if(document.documentElement.classList.contains("mode-build")) renderBuilder();
-    if(typeof renderSlipTease==="function") renderSlipTease();
-  }catch(e){}
+    /* The builder writes its picks into MYSLIP on every render, which is what
+       makes the slider and the slip feel like one thing. Here it was the bug:
+       Clear emptied the slip and then called renderBuilder to repaint the
+       preview, and that render put the very same legs straight back before the
+       sheet was drawn. The slip never cleared. Once the slider has been touched
+       the sync is unconditional, so this happened on every Clear from the
+       slider page - and since a phone leaves :hover on the last thing tapped,
+       the button stayed red as well, which is why it read as jammed rather than
+       as undoing its own work.
+       Suppress the sync for this one repaint, and lower touched afterwards so
+       an incidental render cannot resurrect the slip either. Moving the slider
+       or changing a filter raises it again, so the next deliberate act brings
+       the sync straight back. */
+    BUILD_NOSYNC=true; BUILD.touched=false; BUILD.removed={};
+    try{
+      if(document.documentElement.classList.contains("mode-build")) renderBuilder();
+      if(typeof renderSlipTease==="function") renderSlipTease();
+    }finally{ BUILD_NOSYNC=false; }
+  }catch(e){ BUILD_NOSYNC=false; }
   renderMySheet();
 }
 function flyToSlip(srcEl){
@@ -8009,19 +8043,31 @@ async function bookMy(){
   }
   doBookMy(bookable);
 }
+/* Bumped whenever the slip is emptied or rebuilt, so a booking still in the
+   air can tell that the slip it was for no longer exists. */
+var MYBOOK_GEN=0;
+function resetMyBookBtn(){
+  var b=$("myBookBtn"); if(b){ b.disabled=false; b.textContent="Get code"; }
+}
 function doBookMy(bookable){
   var sel=bookable.map(function(c){return {eventId:c.eventId,prediction:c.code};});
-  var btn=$("myBookBtn"); if(btn){btn.disabled=true;btn.textContent="Booking\u2026";}
+  var gen=MYBOOK_GEN;
+  var btn=$("myBookBtn"); if(btn){btn.disabled=true;btn.textContent="Booking…";}
   $("myBookResult").innerHTML="";
   bookFetch(sel)
     .then(function(d){
-      if(btn){btn.disabled=false;btn.textContent="Get code";}
+      /* Cleared while we waited: this code is for a slip that is gone, so
+         showing it would hand somebody a ticket they no longer hold. */
+      if(gen!==MYBOOK_GEN) return;
+      resetMyBookBtn();
       if(d&&d.success&&d.booking_code){
         rememberSlip(MYSLIP,myOdds(),d.booking_code);
         showCode(d.booking_code,"myBookResult");
       }
       else{ $("myBookResult").innerHTML=bookErrHTML(d); }
-    }).catch(function(){if(btn){btn.disabled=false;btn.textContent="Get code";}
+    }).catch(function(){
+      if(gen!==MYBOOK_GEN) return;
+      resetMyBookBtn();
       $("myBookResult").innerHTML=bookErrHTML({_kind:"net"});});
 }
 document.addEventListener("click",function(e){
@@ -8775,7 +8821,7 @@ function renderBuilderOutput(){
       b.addEventListener("click",function(){if(BUILD.mode==="wizard"){WSP.removed[b.dataset.rm]=1;}else{BUILD.removed[b.dataset.rm]=1;}renderBuilder();});});
   }
   // Sync to MYSLIP (slider once touched; wizard always reflects its preview)
-  if(BUILD.touched || isWiz){
+  if(!BUILD_NOSYNC && (BUILD.touched || isWiz)){
     MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
       .concat(picks.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true};}));
     var _seen={}; MYSLIP=MYSLIP.filter(function(x){if(_seen[x.id])return false;_seen[x.id]=1;return true;});
