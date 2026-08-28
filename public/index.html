@@ -3904,6 +3904,21 @@ footer{margin-top:26px;padding-top:18px;
 const $=function(id){return document.getElementById(id);};
 /* the same drawn cross the static close buttons use - see .sheet-x in the css */
 var XSVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+/* writeText returns a promise, and it rejects - "Document is not focused" is
+   the common one, thrown when the tap lands while focus sits in another frame
+   or the page has just been backgrounded. try/catch does not catch a rejected
+   promise, so every copy on the site was an unhandled rejection waiting for
+   the wrong moment; Sentry had logged six before anybody noticed.
+   Nothing useful can be done beyond not crashing: the button has already said
+   "Copied", and the code is on screen to select by hand. */
+function copyText(t){
+  try{
+    if(!navigator.clipboard) return false;
+    var r=navigator.clipboard.writeText(t);
+    if(r&&r.catch) r.catch(function(){});
+    return true;
+  }catch(e){ return false; }
+}
 const P0=function(x){return Math.round(x*100);};
 /* Home, draw and away are one split of one certainty, so the three numbers we
    print have to add to a hundred. Rounding each on its own does not: 36.6,
@@ -4299,7 +4314,7 @@ function renderSlipsSheet(){
   body.querySelectorAll("[data-slcp]").forEach(function(b){
     b.addEventListener("click",function(){
       var code=b.dataset.slcp;
-      try{ if(navigator.clipboard) navigator.clipboard.writeText(code); }catch(e){}
+      copyText(code);
       var was=b.textContent; b.textContent="Copied"; b.classList.add("ok");
       setTimeout(function(){ b.textContent=was; b.classList.remove("ok"); },1500);
     });
@@ -6546,7 +6561,7 @@ function showCode(code,hostId){
   wrap.addEventListener("click",function(e){if(e.target===wrap)close();});
   wrap.querySelector(".code-x").addEventListener("click",close);
   wrap.querySelector(".code-copy").addEventListener("click",function(){
-    if(navigator.clipboard) navigator.clipboard.writeText(code);
+    copyText(code);
     this.textContent="Copied"; var s=this;
     setTimeout(function(){s.textContent="Copy";},1600);});
   wrap.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code);});
@@ -6560,7 +6575,7 @@ function shareText(picks,odds,code){
 }
 function doShare(text,url){
   if(navigator.share){ navigator.share({title:"SoccerWizard slip",text:text,url:url}).catch(function(){}); }
-  else if(navigator.clipboard){ navigator.clipboard.writeText(text+(url?"\n"+url:""));
+  else if(copyText(text+(url?"\n"+url:""))){
     alert("Slip copied - paste it anywhere to share."); }
 }
 /* Render a slip as a picture and share that.
@@ -8317,9 +8332,14 @@ function setView(v){
   root.classList.toggle("mode-pred",v==="pred");
   V.view=v;
   try{sessionStorage.setItem("sw.viewtab",v);}catch(e){}
-  $("tab-pred").classList.toggle("on",v==="pred");
-  $("tab-live").classList.toggle("on",v==="live");
-  $("tab-build").classList.toggle("on",v==="build");
+  /* Guarded like the bottom-bar buttons just below, which always have been.
+     An unguarded $() here throws on a null and abandons the rest of setView -
+     the live dots, the builder render, the scroll reset - so one missing
+     element took the whole view change with it rather than just itself. */
+  var tp0=$("tab-pred"), tl0=$("tab-live"), tb0=$("tab-build");
+  if(tp0) tp0.classList.toggle("on",v==="pred");
+  if(tl0) tl0.classList.toggle("on",v==="live");
+  if(tb0) tb0.classList.toggle("on",v==="build");
   var bp=$("bt-pred"),bl=$("bt-live"),bb=$("bt-build");
   if(bp)bp.classList.toggle("on",v==="pred");
   if(bl)bl.classList.toggle("on",v==="live");
