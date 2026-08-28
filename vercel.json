@@ -13,6 +13,10 @@
       "maxDuration": 15,
       "memory": 256
     },
+    "api/record-sweep.js": {
+      "maxDuration": 30,
+      "memory": 512
+    },
     "api/fixtures.js": {
       "maxDuration": 15,
       "memory": 256

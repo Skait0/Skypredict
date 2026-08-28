@@ -2393,6 +2393,26 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
 .rec-bar{height:5px;border-radius:99px;background:var(--raise);overflow:hidden}
 .rec-bar i{display:block;height:100%;border-radius:99px;background:var(--green);
   transition:width 1.05s cubic-bezier(.25,.8,.3,1)}
+/* Per-market rows. A quiet table under the headline, not a second scoreboard
+   competing with it - the overall figure stays the loud number. */
+.rec-mk{margin-top:12px;padding-top:11px;border-top:1px solid var(--line-soft)}
+.rec-mk-h{font-size:10.5px;font-weight:800;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+.rec-mk-row{display:grid;grid-template-columns:1fr 52px 34px 40px;align-items:center;
+  gap:8px;padding:3px 0;font-size:12px}
+.rec-mk-row .mk-n{color:var(--text);font-weight:700;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rec-mk-row .mk-bar{height:4px;border-radius:99px;background:var(--raise);overflow:hidden}
+.rec-mk-row .mk-bar i{display:block;height:100%;border-radius:99px;background:var(--green)}
+.rec-mk-row .mk-p{font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.rec-mk-row .mk-c{font-size:11px;color:var(--faint);text-align:right;
+  font-variant-numeric:tabular-nums}
+/* Called only a handful of times - shown, but not dressed up as evidence. */
+.rec-mk-row.thin{opacity:.62}
+.rec-mk-row.thin .mk-bar i{background:var(--soft)}
+@media(max-width:560px){
+  .rec-mk-row{grid-template-columns:1fr 40px 32px 38px;gap:6px;font-size:11.5px}
+}
 .rec-foot{font-size:11.5px;color:var(--soft);margin-top:9px;line-height:1.45}
 @media(max-width:560px){
   .rec-panel{padding:12px 13px}
@@ -6381,6 +6401,32 @@ function windowRecord(days){
   var hit=res.filter(function(r){return r.hit;}).length;
   return {correct:hit,total:res.length,pct:Math.round(100*hit/res.length),days:days};
 }
+/* The headline percentage is a blend, and a blend moves with its mix rather
+   than with the model: folding Over 1.5 into the graded set lifted the overall
+   figure several points on its own, because Over 1.5 lands more often than a
+   double chance does. Shown per market that is visible instead of flattering,
+   and it answers the question a reader actually has - not "how good are you"
+   but "how good are you at the kind of call I am about to follow".
+   Thin samples are shown with their count rather than hidden: a market we have
+   called four times says so, and 4/4 reads as the small number it is. */
+function marketBreakdownHTML(rec){
+  var rows=(rec&&rec.byMarket)||[];
+  if(rows.length<2) return "";
+  var vis=rows.filter(function(m){return m.total>=3;}).slice(0,6);
+  if(vis.length<2) return "";
+  return "<div class='rec-mk'>"+
+    "<div class='rec-mk-h'>By market</div>"+
+    vis.map(function(m){
+      var p=Math.round(100*m.correct/m.total);
+      var thin=m.total<10;
+      return "<div class='rec-mk-row"+(thin?" thin":"")+"'>"+
+        "<span class='mk-n'>"+esc(m.market)+"</span>"+
+        "<span class='mk-bar'><i style='width:"+p+"%'></i></span>"+
+        "<span class='mk-p'>"+p+"%</span>"+
+        "<span class='mk-c'>"+m.correct+"/"+m.total+"</span></div>";
+    }).join("")+
+  "</div>";
+}
 function renderRecord(){
   var host=$("record"); if(!host) return;
   var rec=DATA.record;
@@ -6413,6 +6459,7 @@ function renderRecord(){
           "</b><i>yesterday</i></div>":"")+
       "</div>"+
       "<div class='rec-bar'><i style='width:"+pct+"%'></i></div>"+
+      marketBreakdownHTML(rec)+
       "<div class='rec-foot'>"+
         (cold?"A short week swings hard - seven days is a small sample, and the "+
               (rec.days||21)+"-day figure is the honest one. ":"")+

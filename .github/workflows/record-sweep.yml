@@ -1,0 +1,62 @@
+name: Record full-time results
+
+# The live feed only holds matches that are in play - a game is there while it
+# is on and gone shortly after - so catching every result means looking often,
+# not once. Vercel's Hobby plan allows one cron run a day, which is nowhere
+# near enough, so the schedule lives here instead. GitHub Actions is free for
+# this and the repo is already on GitHub.
+#
+# Every 10 minutes between 10:00 and 23:59 UTC, covering the football day from
+# the early kick-offs to the late finishes.
+#
+# The interval is not arbitrary. A match is recorded at the last score seen
+# before it left the feed, so the gap between polls is the window in which a
+# late goal can be missed. Ten minutes keeps that tight enough that the last
+# observation is usually past the 80th minute, which is what the sweep requires
+# before it will treat a score as final. At thirty minutes most matches were
+# last seen too early to qualify and would simply go unrecorded.
+#
+# GitHub can delay scheduled runs under load, which costs coverage but never
+# correctness - a late poll means a match is missed, not mis-scored.
+#
+# Needs two repository secrets:
+#   SWEEP_URL  https://skypredict-theta.vercel.app/api/record-sweep
+#   SWEEP_KEY  the same value as the SWEEP_KEY environment variable on Vercel
+
+on:
+  schedule:
+    - cron: "*/10 10-23 * * *"
+  workflow_dispatch:
+    inputs:
+      dry:
+        description: "Grade but do not write"
+        type: boolean
+        default: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call the sweep
+        env:
+          SWEEP_URL: ${{ secrets.SWEEP_URL }}
+          SWEEP_KEY: ${{ secrets.SWEEP_KEY }}
+          DRY: ${{ inputs.dry && '?dry=1' || '' }}
+        run: |
+          if [ -z "$SWEEP_URL" ] || [ -z "$SWEEP_KEY" ]; then
+            echo "SWEEP_URL or SWEEP_KEY is not set - add them under repository secrets."
+            exit 1
+          fi
+          # -f would hide the body on a non-2xx, and the body is the diagnosis.
+          code=$(curl -sS -o response.json -w '%{http_code}' \
+                  -H "x-sweep-key: $SWEEP_KEY" \
+                  --max-time 60 \
+                  "$SWEEP_URL$DRY")
+          echo "HTTP $code"
+          cat response.json
+          echo
+          # A bad run should be visible in the Actions tab rather than silently
+          # green, but a single failure is not worth an alarm - the next run is
+          # thirty minutes away and the work is idempotent.
+          test "$code" = "200"
