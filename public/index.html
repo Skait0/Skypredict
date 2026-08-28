@@ -4674,7 +4674,28 @@ function kickMs(f){
 const LIVE_WINDOW_MS=4.5*3600*1000;
 /* Ninety minutes, half time and stoppage, with room to spare. Past this a
    game without a score has been played, not merely started. */
-const MATCH_LEN_MS=2.25*3600*1000;
+/* Long enough that a match cannot still be on: 45 + 15 + 45 is 105 minutes,
+   and generous stoppage in both halves takes a slow game to about 120. The old
+   value was 135, which is a quarter of an hour past the point where anything
+   is still being played, and for that quarter hour a finished match sat on the
+   page as "Started" with a pulsing live dot. */
+const MATCH_LEN_MS=2*3600*1000;
+
+/* Fixtures this page has actually watched being played.
+   The clock above is a guess; this is a fact. The live feed drops a match the
+   moment it ends, so a fixture we saw in the feed and can no longer find has
+   finished - no waiting for a threshold, no inferring from kick-off. It only
+   knows about matches seen since the page was opened, which is why the clock
+   stays as the fallback for anyone arriving after the whistle. */
+var SEEN_LIVE={};
+function noteLiveSeen(){
+  try{
+    if(!LIVE||!LIVE.matches||!LIVE.matches.length) return;
+    (DATA.fixtures||[]).forEach(function(f){
+      if(liveMatchFor(f)) SEEN_LIVE[fid(f)]=1;
+    });
+  }catch(e){}
+}
 function liveForFixture(f){
   var t=kickMs(f);
   if(t==null) return null;
@@ -4701,6 +4722,9 @@ function fixtureState(f){
      backend only grades it on the next build. In between, a game that has been
      played looked exactly like one that had not - same tip, same confidence,
      nothing to say it was over. Say which it is, even with no score. */
+  /* We watched this one being played and it has gone from the feed, so it is
+     over - said straight away rather than after a timer. */
+  if(SEEN_LIVE[fid(f)]) return {kind:"played"};
   var t=kickMs(f);
   if(t!=null){
     var age=Date.now()-t;
@@ -7354,6 +7378,9 @@ async function fetchLive(){
   /* Before anything repaints: a game that has just finished is written into the
      ledger now, while the feed still has it. Ten minutes later it is gone. */
   try{ recordFinishedFixtures(); }catch(e){}
+  /* Note which of our fixtures are in the feed right now. When one drops out
+     of a later poll, that absence is what tells us it has finished. */
+  try{ noteLiveSeen(); }catch(e){}
   syncLiveDots();
   renderLiveStrip();
   /* Scores just moved, so anything derived from them is stale. */
