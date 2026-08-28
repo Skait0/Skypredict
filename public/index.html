@@ -3023,14 +3023,18 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
   .potd-body{padding:10px 11px}
   .potd-grid{gap:10px}
   .potd .big{font-size:clamp(32px,9vw,44px)}
-  .potd .why{margin-top:7px;padding-top:7px}
-  .potd .why .eyebrow{margin-bottom:5px}
-  .potd .why ul{gap:4px}
-  .potd .why li{font-size:13px}
-  /* Two reasons carry the argument. The third is the confidence figure, which
-     is already the biggest thing on the card - on a phone it is a line of
-     scroll spent repeating what the number just said. */
-  .potd .why li:nth-child(n+3){display:none}
+  /* All four reasons here too, as on a wide screen. Two of them were hidden to
+     save height, but the two that went were the ones doing the arguing - the
+     form line and the goals line - leaving the card asserting a number with
+     barely a case for it. The height comes back out of the spacing instead:
+     tighter rows, a smaller eyebrow and less air above the list, which costs
+     nothing anyone reads. */
+  .potd .why{margin-top:6px;padding-top:6px}
+  .potd .why .eyebrow{margin-bottom:4px;font-size:9.5px}
+  .potd .why ul{gap:3px}
+  .potd .why li{font-size:12.5px;line-height:1.34;gap:7px}
+  .potd .why li .dot{margin-top:5px}
+  .potd .meta{font-size:12px;line-height:1.3}
 
   /* The recap's headline is yesterday. The running record underneath is the
      same sentence the hero already makes, and the full panel further down
@@ -8686,31 +8690,13 @@ setTimeout(hideLoader,8000);
     requestAnimationFrame(step);
   }
   window.__observeNums=function(root){(root||document).querySelectorAll('.big.num,.stat b,.gl-pc,.record-stat .pc,.sotd-odds b').forEach(function(el){if(!el._done)io.observe(el);});};
-  window.__buildGlance=function(){
-    var g=document.getElementById('glance'),root=document.documentElement;
-    if(root.classList.contains('mode-build')||root.classList.contains('mode-live')){if(g)g.style.display='none';return;}
-    var games=(typeof shown==='function')?shown():[];
-    games=games.filter(function(f){return (typeof notStarted!=='function')||notStarted(f);});
-    if(games.length<2){if(g)g.style.display='none';return;}
-    if(!g){g=document.createElement('div');g.id='glance';g.className='glance';
-      var potd=document.getElementById('potd');if(!potd)return;potd.parentNode.insertBefore(g,potd.nextSibling);}
-    g.style.display='';
-    var byId={},uniq=[];
-    games.forEach(function(f){var k=fid(f);if(!byId[k]){byId[k]=1;uniq.push(f);}});
-    function pick(arr,used){for(var i=0;i<arr.length;i++){if(!used[fid(arr[i])])return arr[i];}return arr[0];}
-    var used={};
-    var goals=pick(uniq.slice().sort(function(a,b){return (b.o25||0)-(a.o25||0);}),used);used[fid(goals)]=1;
-    var big=pick(uniq.slice().sort(function(a,b){return (b.lh+b.la)-(a.lh+a.la);}),used);used[fid(big)]=1;
-    function card(cls,k,f,pc,sub){return "<div class='gl-card "+cls+"' data-fx='"+fid(f)+"'>"+
-      "<div class='gl-txt'><div class='gl-k'><span class='dot'></span>"+k+"</div>"+
-      "<div class='gl-team'>"+esc(plainTip(f))+"</div>"+
-      "<div class='gl-sub'>"+esc(f.home)+" v "+esc(f.away)+" \u00b7 "+sub+"</div></div>"+
-      "<div class='gl-pc'>"+pc+"</div></div>";}
-    g.innerHTML=card('value','Goal fest',goals,P0(goals.o25||0)+'%','over 2.5')+
-      card('score','Biggest scoreline',big,scoreLine(big),compOf(big.league));
-    g.querySelectorAll('[data-fx]').forEach(function(c){c.addEventListener('click',function(){if(typeof openSheet==='function')openSheet(c.dataset.fx);});});
-    window.__observeNums(g);
-  };
+  /* Goal fest and Biggest scoreline used to be built here and inserted
+     under the Pick of the day. They were asked for removal, and they had
+     appeared to go - but only because this whole block was never running:
+     it closed on "});" instead of "})();", so __afterRender never existed
+     to call the builder. Fixing that brought them straight back. Removed
+     properly this time, on every screen. The .glance and .gl-* rules in the
+     stylesheet no longer match anything. */
   function hashColor(s){var h=0;for(var i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h);return 'hsl('+(Math.abs(h)%360)+',52%,42%)';}
   var CREST={};
   window.__monograms=function(){
@@ -8725,7 +8711,7 @@ setTimeout(hideLoader,8000);
     });
   };
   window.__setCrests=function(map){CREST=map||{};if(window.render)render();};
-  window.__afterRender=function(){try{window.__buildGlance();}catch(e){}try{window.__monograms();}catch(e){}try{window.__observeNums();}catch(e){}try{window.__wireAlert();}catch(e){}try{window.__settleRecord();}catch(e){}};
+  window.__afterRender=function(){try{window.__monograms();}catch(e){}try{window.__observeNums();}catch(e){}try{window.__wireAlert();}catch(e){}try{window.__settleRecord();}catch(e){}};
   document.addEventListener('keydown',function(e){
     if(e.key==='/'&&!/input|textarea|select/i.test((document.activeElement||{}).tagName||'')){
       var q=document.getElementById('q');if(q){e.preventDefault();q.focus();}}
