@@ -32,6 +32,11 @@ const api = new Function([
   "function legOdd(f,c,p){return 1/Math.max(0.05,p);}",
   "const SLIPS_KEEP=60;",
   "function saveSlips(){ if(SLIPS.length>SLIPS_KEEP) SLIPS=SLIPS.slice(0,SLIPS_KEEP); }",
+  /* Read the threshold out of the page rather than restating it here, so a
+     change to what counts as a jackpot cannot pass these tests by default. */
+  "const JACKPOT_ODDS=" +
+    ((/const\s+JACKPOT_ODDS\s*=\s*(\d+)/.exec(src) || [, "20000"])[1]) + ";",
+  grab("isJackpotOdds"), grab("isJackpotSlip"),
   grab("gradeCode"), grab("finalScoreFor"), grab("countVoid"),
   grab("settleSlips"), grab("myRecord"),
 ].join("\n") + `
@@ -210,6 +215,48 @@ test("the record counts slips and legs separately", () => {
   assert.equal(r.legs, 4, "four graded legs across the settled slips");
   assert.equal(r.legHits, 3);
   assert.equal(r.best.sid, "a", "best is the biggest WINNING slip, not the biggest");
+});
+
+/* A jackpot ticket is a lottery ticket and is counted as one. It is stored and
+   graded like anything else, but it must not set the percentages - one lost
+   twenty-thousand-to-one should not make a genuine run of form read as a
+   losing one. */
+test("a jackpot slip is left out of the record entirely", () => {
+  api.setSlips([
+    { sid: "j", settled: true, won: false, odds: 24500,
+      legs: [{ res: "win" }, { res: "lose" }] },
+    { sid: "a", settled: true, won: true, odds: 4.2,
+      legs: [{ res: "win" }, { res: "win" }] },
+    { sid: "b", settled: true, won: true, odds: 3.1,
+      legs: [{ res: "win" }, { res: "win" }] },
+  ]);
+  const r = api.myRecord();
+  assert.equal(r.built, 2, "the jackpot is not one of the slips counted");
+  assert.equal(r.settled, 2);
+  assert.equal(r.won, 2, "both real slips won; the lost jackpot is not a loss here");
+  assert.equal(r.legs, 4, "its legs are not in the leg count either");
+  assert.equal(r.legHits, 4);
+  assert.equal(r.jack, 1, "but it is still reported, separately");
+  assert.equal(r.jackWon, 0);
+  assert.equal(r.best.sid, "a", "and it cannot take the best-odds slot");
+});
+
+test("a jackpot slip neither continues a streak nor breaks one", () => {
+  api.setSlips([
+    { sid: "w2", settled: true, won: true, odds: 2, legs: [] },
+    { sid: "j", settled: true, won: false, odds: 30000, legs: [] },
+    { sid: "w1", settled: true, won: true, odds: 2, legs: [] },
+    { sid: "l", settled: true, won: false, odds: 2, legs: [] },
+  ]);
+  assert.equal(api.myRecord().streak, 2, "stepped over, not counted and not fatal");
+});
+
+test("what counts as a jackpot is decided by odds, not by how it was built", () => {
+  api.setSlips([{ sid: "h", settled: true, won: false, odds: 20000, legs: [] }]);
+  assert.equal(api.myRecord().jack, 1, "exactly at the threshold is a jackpot");
+  api.setSlips([{ sid: "h", settled: true, won: false, odds: 19999.99, legs: [] }]);
+  assert.equal(api.myRecord().jack, 0, "just under it is an ordinary slip");
+  assert.equal(api.myRecord().settled, 1);
 });
 
 test("the streak counts consecutive wins from the most recent", () => {
