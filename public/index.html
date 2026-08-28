@@ -8302,7 +8302,7 @@ const JACKPOT_ODDS=20000;
    at booking. */
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
-var WSP={odds:null,legodd:1.35,everyGame:false,mk:{doubles:true,out:true,o15:true,o25:true,o35:false,fh:false,tts:false,tts2:false,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.35,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:true,o35:false,fh:false,tts:false,tts2:false,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* One entry per toggle, so turning everything else off leaves exactly one
    market and every leg of the slip is that market. That is the whole point
    of splitting the goals group: an all-Over-1.5 or all-first-half ticket is
@@ -8310,7 +8310,13 @@ var WSP={odds:null,legodd:1.35,everyGame:false,mk:{doubles:true,out:true,o15:tru
 try{var _wo=parseFloat(localStorage.getItem("sw.wspodds"));
   if(isFinite(_wo)&&_wo>1) WSP.odds=_wo;}catch(e){}
 function wspMarkets(){var m=[];
-  if(WSP.mk.doubles)m=m.concat(["1X","X2"]);
+  if(WSP.mk.wd)m=m.concat(["1X","X2"]);
+  /* Either team to win. The wizard used to have no key for this at all, so the
+     "Any winner" chip was drawn and could be tapped but changed nothing here -
+     a market you could select and not get. Everything it needs already existed:
+     dc12 for the probability, and no favourite rule, because either side
+     winning does not depend on which one is favourite. */
+  if(WSP.mk.any)m.push("12");
   if(WSP.mk.out)m=m.concat(["1","2"]);
   if(WSP.mk.o15)m.push("OVER_1.5");
   if(WSP.mk.o25)m.push("OVER_2.5");
@@ -8597,12 +8603,12 @@ function renderShared(){
         var on=Object.keys(BUILD.mk).filter(function(x){return BUILD.mk[x];});
         if(BUILD.mk[k]&&on.length===1) return;
         BUILD.mk[k]=!BUILD.mk[k];
-        // Sync to WSP where there's an equivalent. "any" (12) has none - the
-        // wizard never picks anybody-wins - so it doesn't sync.
-        /* Keys line up either side now except win-or-draw, which the wizard
-           calls "doubles". "any" (12) has no wizard equivalent. */
-        var wspKey = k==="wd"?"doubles":(k==="any"?null:k);
-        if(wspKey) WSP.mk[wspKey]=BUILD.mk[k];
+        /* One chip, both builders. The two market sets now use the same keys,
+           so this is a straight copy - no renaming, and nothing silently
+           dropped. It used to translate "wd" to the wizard's "doubles" and
+           throw "any" away, which is why Any winner looked available in wizard
+           mode and did nothing. */
+        WSP.mk[k]=BUILD.mk[k];
         renderBuilder();
       });
     });
