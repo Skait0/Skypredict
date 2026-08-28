@@ -490,13 +490,24 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .teams{display:flex;justify-content:space-between;align-items:center;gap:14px}
 .tnames{flex:1;min-width:0}
 .tn{display:flex;justify-content:space-between;gap:10px;padding:3px 0;align-items:center}
-.tn .who{display:flex;align-items:center;gap:8px;min-width:0}
+/* The club's name is the point of the row; the form chips beside it are
+   decoration and never shrink, so the gap is the only slack there is.
+   At eight pixels "Crystal Palace" missed fitting by one and rendered as
+   "Crystal Pala...". Six gives it back. Names genuinely longer than the row
+   still ellipsize, which is right - the alternative is squeezing the score. */
+.tn .who{display:flex;align-items:center;gap:6px;min-width:0}
 .tn .who>span{font-weight:600;font-size:16px;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap}
 .tn.win .who>span{font-weight:800}
 .tn:not(.win) .who>span{color:var(--soft)}
 .form{display:inline-flex;gap:2px;flex-shrink:0;vertical-align:middle}
-.form i{width:14px;height:14px;border-radius:var(--r-sm);font-style:normal;font-size:9px;
+/* Five chips at 14px took 78 of the 227 pixels the name row has, which left
+   111 for the club - enough for most, five short of "Bayern Munich" and one
+   short of "Slask Wroclaw". Twelve gives ten pixels back to the name at no
+   real cost to a chip that carries one letter. Names genuinely longer than
+   the row still ellipsize, which is correct: the club and the score matter
+   more than a full run of form. */
+.form i{width:12px;height:12px;border-radius:var(--r-sm);font-style:normal;font-size:9px;
   font-weight:800;display:flex;align-items:center;justify-content:center;color:#fff}
 .form i.W{background:var(--green)}
 .form i.D{background:var(--grey)}
@@ -4415,7 +4426,19 @@ function isSouthAmerican(f){return isSAleague((f&&f.league)||"");}
 /* Predicted scoreline from expected goals. On a rounded tie, break toward the
    side the model leans on, so it never shows a draw against a "No draw" tip;
    a genuine draw is kept only when the draw is the most likely single result. */
+/* The scoreline shown on a card.
+   The build already publishes one - f.score - and it is chosen to be the
+   likeliest scoreline the fixture's own tip actually survives, settled by the
+   same grader that settles real matches. Prefer it.
+   What follows is the old local heuristic, kept only for a record that has no
+   published score. It is why "Alaves 2-1 Villarreal" sat beside the tip
+   "Villarreal or draw": it rebuilt a scoreline from the goal expectations and
+   the over/under call without ever consulting the tip, so for two evenly
+   matched sides it rounded 1.38 and 1.38 into a home win and contradicted the
+   call printed next to it. Two independent answers to one question, and the
+   page showed the wrong one. */
 function scoreLine(f){
+  if(f&&typeof f.score==="string"&&/^\d+-\d+$/.test(f.score)) return f.score;
   var sum=f.lh+f.la;
   if(sum<=0) return "0-0";
   var over=f.o25>=0.5;
@@ -4740,11 +4763,15 @@ function fixtureState(f){
      backend only grades it on the next build. In between, a game that has been
      played looked exactly like one that had not - same tip, same confidence,
      nothing to say it was over. Say which it is, even with no score. */
-  /* We watched this one being played and it has gone from the feed, so it is
-     over - said straight away rather than after a timer. If we noted a score
-     late enough to trust, show it rather than promising one later. */
+  /* Watched to a late minute and now gone from the feed: that last score is
+     the final one, so it is a full-time result like any other and gets graded
+     as one. This is the only full time this feed will ever give us - it drops
+     a match rather than marking it finished. */
   var last=LIVE_LAST[fid(f)];
-  if(last&&last.minute>=LATE_MINUTE) return {kind:"played",hg:last.hg,ag:last.ag};
+  if(last&&last.minute>=LATE_MINUTE){
+    var lev=tipEval(f)(last.hg,last.ag);
+    return {kind:"ft",hg:last.hg,ag:last.ag,won:lev==="win",push:lev==="unknown"};
+  }
   if(SEEN_LIVE[fid(f)]) return {kind:"played"};
   var t=kickMs(f);
   if(t!=null){
@@ -4772,15 +4799,17 @@ function kickCountdown(f){
 }
 function statusBadge(f){
   var st=fixtureState(f);
-  if(!st) return kickCountdown(f);
-  if(st.kind==="live")
-    return "<span class='fx-st fx-live'><span class='ld'></span>"+st.hg+"-"+st.ag+
-      (st.minute?" "+esc(String(st.minute))+"’":"")+"</span>";
-  /* No score either way - do not guess at one, and do not imply a result. */
-  if(st.kind==="started")
-    return "<span class='fx-st fx-live'><span class='ld'></span>Started</span>";
-  if(st.kind==="played")
-    return "<span class='fx-st fx-done'>"+(st.hg!=null?st.hg+"-"+st.ag+" FT":"Ended")+"</span>";
+  /* Two things belong beside a prediction: how long until it starts, and how
+     it finished. Everything between those was the live pill, and it cost more
+     than it paid. It claimed a match was live after the final whistle, it
+     showed a pulsing dot on a game that was over, it published half-time
+     scores as current ones, and when it had nothing to say it said "Played,
+     result soon" - twenty characters that pushed the team names out of the
+     card to promise something the page could not deliver.
+     Live football has its own tab. Here we say what we predicted and what
+     happened, and while a match is in play we say nothing at all, because
+     nothing is what we reliably know. */
+  if(!st || st.kind!=="ft" || st.hg==null) return kickCountdown(f);
   return "<span class='fx-st "+(st.push?"fx-push":(st.won?"fx-hit":"fx-miss"))+"'>"+
     st.hg+"-"+st.ag+" "+(st.push?"Void":(st.won?"Hit":"Miss"))+"</span>";
 }
