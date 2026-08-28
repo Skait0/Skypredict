@@ -1,8 +1,16 @@
 # Resume session — Skypredict / Soccerwizard
 
 Last updated 2026-08-28 (evening). Repo: `C:\Users\DELL\Desktop\skypredict`
-Live: https://skypredict-theta.vercel.app · remote `main` @ `182ead8`
-Tests: `npm test` → **119/119**.
+Live: https://skypredict-theta.vercel.app · remote `main` @ `fd31dfb`
+Tests: `npm test` → **143/143**.
+
+**There is a second repo.** `C:\Users\DELL\Documents\soccerwizard-api`
+(github Skait0/soccerwizard-api, deploys to Railway at
+`web-production-798c0.up.railway.app`) is the Flask service that scrapes
+SportyBet and serves `/api/livescores`, `/api/fixtures` and booking codes.
+Vercel's `/api/live` and `/api/fixtures` are thin cached mirrors of it — see
+`lib/upstream.js`. When a score looks wrong, that repo is where the bug is;
+`python -m unittest test_server` there, 20 tests. Its HEAD: `0f909ed`.
 
 ## How to pick this up in PowerShell
 
@@ -250,6 +258,82 @@ half-finished scores into the one record meant to be trustworthy.
 
 ---
 
+## The live board was publishing half-time scores (found + fixed 28 Aug)
+
+The worst bug of the day, and it was in the **other** repo.
+
+SportyBet sends `setScore` as the running total and `gameScore` as the same
+thing split by period — Crystal Palace v Man City at 73 minutes carried
+`setScore "1:3"` and `gameScore ["0:1","1:2"]`, which sums to it.
+`fetch_live_scores` read `gameScore[0]` first, so it published the **first
+half**, and the correct `setScore` branch below never ran because `hs`/`aw`
+were no longer `None` by then.
+
+Every match that scored after the break was wrong: **45 of the 71** live games
+on the board when it was found. Bayern Munich showed 1-0 at the 90th minute
+of a game that finished 5-1. We were tipping Over 1.5 on it at 90%.
+
+Not cosmetic — the sweep banks these as final scores, so a tip that landed is
+recorded as a loss. It only escaped corrupting the record because the schedule
+had never fired, so `results` was still empty. Both were fixed the same
+evening; had only the cron been fixed, that night would have written wrong
+results that `ignore-duplicates` makes permanent.
+
+Fixed by reading `setScore` first and, in fallback, **summing** the periods
+rather than taking one. Verified against the live payload: 71 of 71 correct,
+up from 26, and the periods sum to `setScore` in all 71.
+
+Alongside it: `liveOrPrematchEvents` **ignores `pageNum`** — pages 1 to 5 come
+back byte-identical, so the loop appended the same 71 events five times and the
+feed served 400 entries for 80 matches. Fixed in the scraper (stop when a page
+adds nothing new) and defensively in `lib/upstream.js` (`dedupeMatches`).
+
+**The lesson worth keeping:** a field whose *type or meaning* depends on the
+outcome is where these hide. `gameScore` is a list whose first element equals
+the whole score only before half time. API-Sports has the same shape of trap —
+`errors` is `[]` on success and an **object** on failure, so `data.errors.length`
+reads fine on success and silently misses every error.
+
+---
+
+## API-Football evaluated 28 Aug — verified, do not re-derive
+
+Free plan, key at `~/.apisports.key` (outside both repos). Host is
+`v3.football.api-sports.io`; the docs that surface first are the NFL ones on
+`v1.american-football`. Auth header `x-apisports-key`.
+
+- **100 requests/day**, resets 00:00 UTC. `/status` is **free** and reports
+  `requests.current / limit_day`.
+- `season=2026` is refused — "Free plans do not have access to this season,
+  try from 2022 to 2024". **Omitting `season` bypasses it entirely**:
+  `fixtures?date=2026-08-28` returned 443 fixtures, 324 already `FT`, across
+  208 competitions. One request covers a whole day of results.
+- Gives what SportyBet structurally cannot: an explicit `FT` status, the exact
+  final score, and the halftime split. That is precisely why `live_seen`, the
+  80-minute guard, `ABSENT_MS`/`MATCH_LEN_MS` and the 10-minute cron exist —
+  all of it infers what this states outright.
+- Coverage passed the deal-breaker: every league on our card including
+  Conference National, Liga MX, China, Japan J1/J2, plus **455 cup
+  competitions**. Cups are what football-data never publishes.
+- **It will not replace the live board**: `live=all` returned 18 fixtures
+  across 12 competitions against SportyBet's 43. No odds and no SportyBet
+  event ids either, so booking stays where it is.
+
+**The real cost is name matching.** Only **13 of our 38** fixtures paired on
+exact `normName`: theirs is "Bayern München", "Eintracht Braunschweig",
+"Manchester City". A *third* convention after SportyBet and football-data.
+They return stable team and fixture **ids**, so the answer is a one-time stored
+mapping rather than per-fixture fuzzy matching — and it must not be rushed,
+because a wrong mapping writes wrong scores into the record.
+
+**Agreed plan, not started:** build the team-id mapping first (self-contained,
+touches nothing live), then run both sources in **shadow for a week** logging
+disagreements without acting on them — that measures how wrong the sweep's
+approximation really is *and* validates the mapping — then switch, keeping
+`live_seen` and its guards as fallback rather than deleting them.
+
+---
+
 ## Still open
 
 - **Submit the sitemap to Google Search Console.** The 591 pages exist and are
@@ -281,7 +365,7 @@ half-finished scores into the one record meant to be trustworthy.
 ## Conventions
 
 - Comments explain *why*, in prose, usually naming what broke before.
-- `npm test` before pushing (node --test, 119 tests).
+- `npm test` before pushing (node --test, 143 tests).
 - Syntax-check the inline scripts after editing `public/index.html`:
   `node -e "const h=require('fs').readFileSync('public/index.html','utf8');const re=/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g;let m,i=0;while((m=re.exec(h))){i++;try{new Function(m[1])}catch(e){console.log('#'+i,e.message)}}console.log('checked',i)"`
 - Render the real board locally:
