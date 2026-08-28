@@ -5379,7 +5379,7 @@ function renderResults(){
   var hits=rs.filter(function(r){return r.hit;}).length;
   var head="<div class='res-head'><b>Results \u00b7 "+dayName(V.off)+"</b>"+
     (rs.length?"<span>"+hits+"/"+rs.length+" tips landed</span>":"")+"</div>";
-  if(!rs.length){$("list").innerHTML=head+"<div class='none'><b>No results for this day</b><p>Play a day forward for upcoming games.</p></div>";return;}
+  if(!rs.length){setBoard(head+"<div class='none'><b>No results for this day</b><p>Play a day forward for upcoming games.</p></div>");return;}
   var byC={};
   rs.forEach(function(r){var c=countryOf(r.league);(byC[c]=byC[c]||[]).push(r);});
   var html=head+Object.keys(byC).sort().map(function(c){
@@ -5394,7 +5394,7 @@ function renderResults(){
           "<div class='rr-tip'><span class='rr-t'>"+esc(plainTip(r))+"</span>"+
             "<span class='rr-badge'>"+(r.hit?"Hit":"Miss")+"</span></div>"+
         "</div>";}).join("")+"</div></section>";}).join("");
-  $("list").innerHTML=html;
+  setBoard(html);
 }
 function render(){
   document.documentElement.classList.toggle("list",!!V.list);
@@ -5413,8 +5413,8 @@ function render(){
   const list=shown();
   renderBoardHead(list);
   if(!list.length){
-    $("list").innerHTML="<div class='none'><b>No games in this filter</b>"+
-      "<p>Try another category or day. New fixtures arrive Friday for the weekend.</p></div>";
+    setBoard("<div class='none'><b>No games in this filter</b>"+
+      "<p>Try another category or day. New fixtures arrive Friday for the weekend.</p></div>");
     return;
   }
   var _thin = list.length<=4 ? "<div class='thin-note'>Only "+list.length+" fixture"+(list.length===1?"":"s")+" available right now - more arrive as the weekend nears.</div>" : "";
@@ -5467,7 +5467,7 @@ function render(){
         "<span class='count'>"+n+"</span></div>"+
       "<div class='country-body'>"+ls.map(function(l){
         return blockFor(l,byL[l]);}).join("")+"</div></section>";}).join("");
-  $("list").innerHTML=_thin+html;
+  setBoard(_thin+html);
   applyBoardCap(list.length);
   /* Re-attaches after every render until it is dismissed. No scroll here -
      a page that jumps on load is worse than one that explains nothing. */
@@ -9211,7 +9211,10 @@ function setTheme(t){
 })();
 var _scrollIdle=null;
 addEventListener("scroll",function(){
-  $("top").classList.toggle("stuck",scrollY>10);
+  /* A scroll handler is the worst place to assume an element is there:
+     it runs dozens of times a second, so one missing node is not one
+     error but a stream of them, and every frame of scrolling throws. */
+  var _top=$("top"); if(_top) _top.classList.toggle("stuck",scrollY>10);
   /* Fades the floating buttons while the page moves - see .myfab above. The
      class is dropped a beat after scrolling stops rather than on every frame,
      so the button is not flickering its way down the page. */
@@ -9383,9 +9386,17 @@ async function refreshPayload(){
 /* Counts only consecutive failures - reset the moment a load succeeds, so a
    blip today does not use up the retries for a blip an hour from now. */
 var LOAD_RETRY=0;
+/* Writing the board, guarded.
+   Six places set this innerHTML straight off a $() lookup, including load()'s
+   own error handler - so if the element were ever missing, the handler for the
+   failure would fail too, and the second throw would replace the first. That
+   is how a 404 on /api/fixtures surfaced in Sentry as "Cannot set properties
+   of null" with nothing about the fetch in it. */
+function setBoard(html){ var el=$("list"); if(el) el.innerHTML=html; return !!el; }
+
 async function load(){
-  $("list").innerHTML="<div class='none'><span class='mini-load'></span><b>Loading predictions</b>"+
-    "<p>Building from the latest results - just a moment.</p></div>";
+  setBoard("<div class='none'><span class='mini-load'></span><b>Loading predictions</b>"+
+    "<p>Building from the latest results - just a moment.</p></div>");
   try{
     const got=await fetchPayload();
     DATA=got.payload;
@@ -9404,14 +9415,16 @@ async function load(){
        seconds - and "reload to try again" put the fix on the person least
        equipped to know it was temporary. */
     var willRetry=LOAD_RETRY<4;
-    $("list").innerHTML="<div class='none'>"+
+    setBoard("<div class='none'>"+
       (willRetry?"<span class='mini-load'></span>":"")+
       "<b>Predictions unavailable</b><p>"+esc(err.message||err)+". "+
-      (willRetry?"Trying again…":"Please reload the page.")+"</p></div>";
+      (willRetry?"Trying again…":"Please reload the page.")+"</p></div>");
     hideLoader();
     if(willRetry){
       LOAD_RETRY++;
-      setTimeout(function(){ load(); }, Math.min(12000,1800*LOAD_RETRY));
+      /* Nothing awaits this, so a throw here has nowhere to go but
+         window.onunhandledrejection. */
+      setTimeout(function(){ load().catch(function(){}); }, Math.min(12000,1800*LOAD_RETRY));
     }
   }
 }
@@ -9681,7 +9694,7 @@ setTimeout(hideLoader,8000);
   });
 })();
 
-load();
+load().catch(function(){});
 </script>
 <!-- Builder settings dock. Appears once the real controls have scrolled away,
      so the things that shape the slip stay reachable while you are looking at
