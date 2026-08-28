@@ -2378,6 +2378,16 @@ html.mode-live #live{display:block}
 .wsp-lead{font-size:13.5px;color:var(--soft);margin-bottom:16px;line-height:1.5}
 .wsp-lbl{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin:16px 0 8px}
 .wsp-hint{margin:9px 0 2px;font-size:12px;line-height:1.5;color:var(--faint)}
+/* The jackpot note is the one hint that has to be read rather than glanced at,
+   so it gets an edge and a little weight - still a note, not a warning box. */
+.wsp-hint-jack{color:var(--soft);background:var(--win-wash);
+  border-left:2px solid var(--win);border-radius:0 var(--r-sm) var(--r-sm) 0;
+  padding:8px 11px;margin:10px 0 2px}
+.wsp-hint-jack b{color:var(--win-ink);font-weight:800}
+/* The two longest shots wear a gold rim, so the tier is visible before it is
+   read. */
+.wsp-chip.wsp-jack{box-shadow:inset 0 0 0 1px rgba(242,184,75,.55)}
+.wsp-chip.wsp-jack.on{box-shadow:inset 0 0 0 1px rgba(242,184,75,.9),0 0 14px rgba(242,184,75,.28)}
 /* Waiting on a payout: dimmed enough to read as not-yet-ready, but still
    pressable, because being told what is missing beats a dead button. */
 button.wsp-go.waiting{opacity:.55}
@@ -4132,29 +4142,33 @@ function rebuildSlip(sid){
   var sp=null;
   for(var i=0;i<SLIPS.length;i++) if(SLIPS[i].sid===sid){sp=SLIPS[i];break;}
   if(!sp) return;
-  var added=0, played=0, missing=0, dupe=0;
+  var added=0, played=0, missing=0;
+  /* Replaces what is on the slip rather than adding to it. Rebuilding is
+     "give me this slip again", and folding it into whatever was already there
+     gives a third thing that is neither - and, run twice, a slip with every
+     leg on it once and then twice over. What it replaced is said out loud
+     below, since it is the one thing here that throws work away. */
+  var had=MYSLIP.length;
+  MYSLIP=[];
   sp.legs.forEach(function(l){
     var f=fixtureById(l.id);
     if(!f){ missing++; return; }                    /* no longer on the card */
     if(!notStarted(f)){ played++; return; }          /* kicked off or finished */
-    if(myslipHas(l.id,l.code)){ dupe++; return; }    /* already on the slip */
     var p=(l.p!=null?l.p:mProb(f,l.code));
     MYSLIP.push({id:l.id,code:l.code,label:l.label||mLabel(f,l.code),p:+p||0});
     added++;
   });
-  if(added){ saveMy(); renderFab(); }
+  saveMy(); renderFab();
   var lost=played+missing;
   if(!added){
-    window.swToast&&window.swToast(
-      lost?"None of these games are still open":"Those picks are already on your slip",
-      "info","rb");
+    window.swToast&&window.swToast("None of these games are still open","info","rb");
     return;
   }
   closeSlipsSheet(); openMySheet();
-  window.swToast&&window.swToast(
-    lost ? ("Added "+added+" - "+lost+" no longer available")
-         : ("Added "+added+" to your slip"),
-    "ok","rb");
+  var msg="Slip rebuilt with "+added+" pick"+(added===1?"":"s");
+  if(lost) msg+=" - "+lost+" no longer available";
+  if(had) msg+=had===1?" (replaced 1)":(" (replaced "+had+")");
+  window.swToast&&window.swToast(msg,"ok","rb");
 }
 /* Two-tap confirm in place: the button becomes "Sure?" and reverts if it is
    not taken up, so nothing is lost to a stray tap and no dialog interrupts. */
@@ -8423,7 +8437,14 @@ function renderSliderPanel(){
   });
 }
 function renderWizardPanel(){
-  var odds=[50,100,500,1000,2000,6000];
+  /* The last two are the jackpot tier. SportyBet's own top prize needs a
+     payout in this range, and people come here wanting exactly that, so it is
+     built rather than pretended away - but it is marked as what it is, and the
+     note under the chips says how many results in a row it takes. Both sit
+     inside the forty-leg cap: x20000 wants about nineteen legs at the bigger
+     style, x50000 about twenty-one. */
+  var odds=[50,100,500,1000,2000,6000,20000,50000];
+  var JACKPOT_FROM=20000;
   var styles=[[1.25,"Safer, more games"],[1.4,"Balanced"],[1.7,"Fewer, bigger games"]];
   var html="";
   html += "<div class='wsp-lbl'>Pick a target payout</div><div class='wsp-chips' id='wspOddsChips'>"+
@@ -8433,9 +8454,20 @@ function renderWizardPanel(){
          the middle - x100 and x500 - nearly vanished into the fill. The ink is
          chosen by contrast ratio against the actual colour, so every chip is
          readable whatever hue lands on it. */
-      return "<button class='wsp-chip wsp-risk"+(WSP.odds===o?" on":"")+
+      var big=o>=JACKPOT_FROM;
+      return "<button class='wsp-chip wsp-risk"+(WSP.odds===o?" on":"")+(big?" wsp-jack":"")+
         "' style='--wr:hsl("+hue+",64%,46%);--wr-ink:"+inkOn(hue,0.64,0.46)+
-        "' data-o='"+o+"'>\u00d7"+o+"</button>";}).join("")+"</div>";
+        "' data-o='"+o+"'>\u00d7"+(o>=1000?(o/1000)+"k":o)+"</button>";}).join("")+"</div>";
+  /* What a jackpot ticket actually is, said before it is built rather than
+     after it loses. The number of legs is the honest part - it is the thing
+     that has to come in, and it is a different order of ask from a x50. */
+  if(WSP.odds>=JACKPOT_FROM){
+    var _per=WSP.legodd||1.35;
+    var _legs=Math.max(4,Math.min(40,Math.ceil(Math.log(WSP.odds)/Math.log(_per))));
+    html += "<p class='wsp-hint wsp-hint-jack'><b>Jackpot ticket.</b> About "+_legs+
+      " results in a row, every one of them right. This is the long shot the "+
+      "big prizes need - it is not the slip our record is built on.</p>";
+  }
   /* The slider tells a first-timer to move it; the wizard said nothing and
      simply had a payout chosen already. With nothing picked, say what to do
      and keep Conjure out of reach until there is something to aim at. */
