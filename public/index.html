@@ -217,6 +217,32 @@ img,svg{max-width:100%}
    and pressing it could only apologise. It is hidden until the browser
    offers a prompt to fire. */
 .tgl[hidden]{display:none}
+/* The install offer, for phones. The header icon stays for desktop, where the
+   row has the width to hold it; here it would sit off the right edge. */
+.inst-bar{display:none;align-items:center;gap:10px;margin:14px 0 2px;
+  padding:10px 12px;border-radius:var(--r-md);
+  background:var(--card);border:1px solid var(--line)}
+.inst-bar[hidden]{display:none!important}
+@media(max-width:720px){ .inst-bar:not([hidden]){display:flex} }
+.ib-ic{flex-shrink:0;width:32px;height:32px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--red-wash);color:var(--red-ink)}
+.ib-ic svg{width:16px;height:16px}
+.ib-tx{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:1px}
+.ib-tx b{font-size:13.5px;font-weight:800;color:var(--text);line-height:1.2}
+.ib-tx i{font-style:normal;font-size:11.5px;color:var(--soft);line-height:1.25;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ib-go{flex:0 0 auto;white-space:nowrap;font:inherit;font-size:12.5px;font-weight:800;
+  padding:8px 14px;border-radius:99px;border:0;cursor:pointer;
+  background:var(--red);color:#fff}
+.ib-x{flex:0 0 auto;width:26px;height:26px;padding:0;border:0;background:none;
+  color:var(--faint);font-size:13px;cursor:pointer;border-radius:50%}
+.ib-x:hover{color:var(--text);background:var(--raise)}
+@media(max-width:380px){
+  /* Narrowest phones: the sub-line is the first thing that can go. */
+  .ib-tx i{display:none}
+  .inst-bar{gap:8px;padding:9px 10px}
+}
 
 /* ================================================================ intro */
 .intro{padding:26px 0 4px}
@@ -3307,6 +3333,22 @@ footer{margin-top:26px;padding-top:18px;
       <span class="trust-i t-static">Rebuilt daily from results</span>
       <span class="trust-i t-static">Estimates, not certainties</span>
       <a class="trust-i link" href="#how">How accurate?</a>
+    </div>
+    <!-- The header's install icon cannot be reached on a phone: that row needs
+         527px of content and a phone gives it 320-390, so the last item sits
+         off the right edge whether or not it is unhidden. A wider labelled
+         button would only push it further out, so on a phone the offer lives
+         here instead, where there is room to say what it is. Shown only when
+         the browser has actually offered a prompt, and dismissible - an
+         install nag that will not go away is worse than no install button. -->
+    <div class="inst-bar" id="instBar" hidden>
+      <span class="ib-ic" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+      </span>
+      <span class="ib-tx"><b>Install Soccerwizard</b><i>Straight to today's card, no browser</i></span>
+      <button class="ib-go" id="instGo" type="button">Install</button>
+      <button class="ib-x" id="instX" type="button" aria-label="Not now">✕</button>
     </div>
   </section>
 
@@ -8529,19 +8571,40 @@ setTimeout(hideLoader,8000);
   if(typeof render==='function'){var __ro=render;render=function(){__ro.apply(this,arguments);window.__afterRender();};}
   if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
   var _dip=null, ib=document.getElementById('installBtn');
+  var bar=document.getElementById('instBar');
   var _standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
-  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();_dip=e;if(ib)ib.hidden=false;});
-  window.addEventListener('appinstalled',function(){if(ib)ib.hidden=true;window.swToast&&window.swToast('Installed','ok');});
+  /* Dismissed once, stays dismissed. The offer is worth making; it is not
+     worth making every visit. */
+  var _instOff=false;
+  try{_instOff=localStorage.getItem('sw.instoff')==='1';}catch(e){}
+  function offerInstall(on){
+    if(ib) ib.hidden=!on;
+    if(bar) bar.hidden=!(on&&!_instOff&&!_standalone);
+  }
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();_dip=e;offerInstall(true);});
+  window.addEventListener('appinstalled',function(){
+    offerInstall(false);
+    try{localStorage.setItem('sw.instoff','1');}catch(e){}
+    window.swToast&&window.swToast('Installed','ok');});
   var _iOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-  if(ib&&_iOS&&!_standalone) ib.hidden=false;
-  if(ib) ib.addEventListener('click',function(){
+  /* iOS never fires beforeinstallprompt, so the offer is made on the platform
+     alone and the click explains the Share-sheet route. */
+  if(_iOS&&!_standalone) offerInstall(true);
+  function doInstall(){
     if(_dip){ _dip.prompt(); _dip.userChoice&&_dip.userChoice.then(function(c){
-      if(c&&c.outcome==='accepted'){ib.hidden=true;} _dip=null; }); return; }
+      if(c&&c.outcome==='accepted'){offerInstall(false);} _dip=null; }); return; }
     if(_iOS){ window.swToast&&window.swToast('Tap the Share icon, then "Add to Home Screen"','ok','ins'); return; }
     var isAndroid=/android/i.test(navigator.userAgent);
     window.swToast&&window.swToast(isAndroid
       ? 'Tap the 3-dot menu, then "Install app" / "Add to Home screen"'
       : 'In Chrome or Edge, click the install icon in the address bar','ok','ins');
+  }
+  if(ib) ib.addEventListener('click',doInstall);
+  var ig=document.getElementById('instGo'); if(ig) ig.addEventListener('click',doInstall);
+  var ix=document.getElementById('instX');
+  if(ix) ix.addEventListener('click',function(){
+    _instOff=true; if(bar) bar.hidden=true;
+    try{localStorage.setItem('sw.instoff','1');}catch(e){}
   });
 });
 
