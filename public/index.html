@@ -2123,36 +2123,39 @@ html.mode-live #live{display:block}
 .code-card b{display:block;font-size:32px;font-weight:800;letter-spacing:.08em;
   color:var(--text);margin:6px 0 14px;font-variant-numeric:tabular-nums}
 .code-acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-/* Two halves of one row. flex-basis 0 rather than auto is what makes them
-   equal: with auto they size to their own labels first and only then share
-   what is left, which is how "Share" ended up wider than "Copy code" despite
-   being the shorter word. */
-.code-acts .code-copy,.code-acts .share-btn{flex:1 1 0;min-width:0}
-/* Where to open it. Same shape as the row above so the modal reads as two
-   pairs rather than four loose buttons. */
-.code-opens{display:flex;gap:10px;justify-content:center;margin-top:10px}
-.code-opens a{flex:1 1 0;min-width:0;font:inherit;font-weight:800;font-size:14px;
-  padding:11px 18px;border-radius:var(--r-md);text-decoration:none;text-align:center;
+/* Copy and Share are what you do with the code once you have it - secondary to
+   opening the slip, so they are the small pair. Sized to their own labels
+   rather than stretched across the row; the reserve on Copy is only there to
+   hold "Copied" without the button changing width mid-press. */
+.code-acts .code-copy,.code-acts .share-btn{flex:0 0 auto;font-size:12.5px;
+  padding:8px 15px;min-width:0}
+.code-acts .code-copy{min-width:78px}
+/* Where to open it. SportyBet keeps the weight it always had - it is what
+   most people are here to do. */
+.code-opens{display:flex;gap:9px;justify-content:center;align-items:center;
+  margin-top:11px;flex-wrap:wrap}
+.code-opens .code-open{flex:0 0 auto;font:inherit;font-weight:800;font-size:14px;
+  padding:11px 18px;border-radius:var(--r-md);text-decoration:none;
   display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
-/* The alternative book: the same offer, said quietly, so the primary stays
-   primary. */
-.code-open-alt{background:var(--card)!important;color:var(--text)!important;
-  border:1px solid var(--line)!important}
-.code-open-alt:hover{border-color:var(--soft)!important}
+/* football.com is a second book that happens to take the same code, not a
+   second call to action - so it is the smallest thing in the modal, carrying
+   the page's own colour rather than a border of its own. */
+.code-opens .code-open-alt{font-size:10.5px;font-weight:700;padding:5px 11px;
+  border-radius:99px;letter-spacing:.01em;
+  background:var(--bg)!important;color:#fff!important;border:0!important;opacity:.75}
+.code-opens .code-open-alt:hover{opacity:1}
 .code-acts button,.code-acts a{font:inherit;font-weight:800;font-size:14px;padding:11px 18px;
   border-radius:var(--r-md);cursor:pointer;text-decoration:none;border:0}
-/* "Copy code" becomes "Copied" and back. Auto width meant the button - and
-   the modal around it - resized twice on every copy. Reserve the wider label's
-   width so only the text changes.
+/* "Copy" becomes "Copied" and back. Auto width meant the button - and the
+   modal around it - resized twice on every copy, so the wider label's width is
+   reserved and only the text changes. The reserve lives with the size a few
+   lines above now; here it is only the colours.
    Written as ".code-acts .code-copy" deliberately: the phone block below sets
    "min-width:0" on ".code-acts button", which at 0-1-1 outranks a lone
    ".code-copy" and was quietly dropping the reserve on exactly the screens
-   this modal is used on most. Fixed basis too - with flex:1 1 auto the row
-   re-wrapped between one line and two as the label changed, so the whole card
-   jumped 46px taller and back on every copy. */
+   this modal is used on most. */
 .code-acts .code-copy{background:var(--card);color:var(--text);
-  border:1px solid var(--line)!important;
-  flex:0 0 auto;min-width:112px;text-align:center}
+  border:1px solid var(--line)!important;text-align:center}
 .code-open{background:var(--red);color:#fff}
 /* A footnote that still has to be read. Bold and shouting was wrong, but so
    was the whisper I replaced it with - it had faded into the card. Body-text
@@ -3189,16 +3192,12 @@ button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
 .code-card{padding:14px}
 .code-card b{margin:5px 0 10px;font-size:26px;letter-spacing:.06em;word-break:break-all}
 .code-acts{gap:7px}
-.code-acts button,.code-acts a{flex:1 1 auto;min-width:0;font-size:13px;padding:10px 12px;text-align:center}
+.code-acts button,.code-acts a{min-width:0;text-align:center}
 .code-opens{gap:7px}
-.code-opens a{font-size:13px;padding:10px 12px}
-/* Both halves on a basis of 0, so they stay the same width as each other
-   whatever their labels say. The reserved min-width that used to sit on Copy
-   alone is gone with it: it existed to stop the button resizing when the label
-   became "Copied", and an equal half does that by itself.
-   Note these rules are not inside a media query - the phone block closes above
-   them - so this applies everywhere. */
-.code-acts .code-copy,.code-acts .share-btn{flex:1 1 0;min-width:0}
+/* Note these rules are not inside a media query - the phone block closes above
+   them - so they apply everywhere, and they sit after the sizes set further up.
+   Anything that sets a size here would undo that hierarchy, so the sizes stay
+   where they are declared and only the gap is adjusted. */
 .code-x{top:6px;right:6px;width:28px;height:28px}
 .confirm-card{padding:13px}
 
@@ -6018,7 +6017,7 @@ function showCode(code,hostId){
        sits below. Share used to grow to whatever room was left while Copy
        held a fixed width, so the two never looked like the pair they are. */
     "<div class='code-acts'>"+
-      "<button class='code-copy' type='button'>Copy code</button>"+
+      "<button class='code-copy' type='button'>Copy</button>"+
       "<button class='share-btn' type='button' data-sh='1'>↗ Share</button>"+
     "</div>"+
     "<div class='code-opens'>"+
@@ -6038,7 +6037,7 @@ function showCode(code,hostId){
   wrap.querySelector(".code-copy").addEventListener("click",function(){
     if(navigator.clipboard) navigator.clipboard.writeText(code);
     this.textContent="Copied"; var s=this;
-    setTimeout(function(){s.textContent="Copy code";},1600);});
+    setTimeout(function(){s.textContent="Copy";},1600);});
   wrap.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code);});
 }
 function shareText(picks,odds,code){
