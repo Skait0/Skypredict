@@ -2955,8 +2955,12 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
      160px column. Stacked, each button gets the full width and one line, and
      the thing most people came for is the biggest target on the screen. */
   .slip-cta .sc-actions{gap:8px;flex-direction:column}
-  .slip-cta .sc-go-btn{width:100%;flex:0 0 auto;padding:13px 12px;
-    font-size:12.5px;letter-spacing:.05em}
+  /* Bigger here than on desktop, not smaller. These were 12.5px against a
+     13.5px base, which had it backwards: stacked they own the full width of
+     the screen, so there is room, and this is the one thing most people came
+     to tap. */
+  .slip-cta .sc-go-btn{width:100%;flex:0 0 auto;padding:14px 12px;
+    font-size:15px;letter-spacing:.01em}
   .sc-proof{font-size:11px;margin-top:9px;padding-top:8px}
 
   /* Pick of the day: the number was the tallest thing on the page. */
@@ -5367,6 +5371,17 @@ var TEAM_ALIASES = {
   "borussia dortmund": "dortmund",
   "fc bayern munchen": "bayern munich",
   "rb leipzig": "leipzig",
+  /* Finnish clubs are known by their initials on our side and written out in
+     full by SportyBet, so the two share no token at all and scored zero. Both
+     spellings fold to the long form. */
+  "sjk": "seinajoen jk",
+  "tps": "turun palloseura",
+  "kups": "kuopion palloseura",
+  "vps": "vaasan palloseura",
+  "hjk": "hjk helsinki",
+  "ifk mariehamn": "mariehamn",
+  /* Renamed, and the feeds have not agreed on it. */
+  "shenzhen xinpengcheng": "shenzhen peng city",
 };
 
 /* normTeam is the hottest function on the page by a wide margin - matching the
@@ -5391,12 +5406,32 @@ function normTeamRaw(s){
   s=(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
   s=s.replace(/ø/g,"o").replace(/æ/g,"ae").replace(/å/g,"a").replace(/ß/g,"ss")
      .replace(/đ/g,"d").replace(/ð/g,"d").replace(/ł/g,"l").replace(/ı/g,"i").replace(/þ/g,"th");
-  s=s.replace(/[`'.\-]/g," ");
+  /* Every punctuation mark, not a hand-picked five. "Saint Patrick´s" carries
+     U+00B4, an acute accent standing in for an apostrophe, which survived the
+     old class and left the token as "patrick´s" - so it matched nothing. The
+     transliterations above have already done their work by this point, so
+     anything still not a letter, digit or space is a separator. */
+  s=s.replace(/[^a-z0-9 ]/g," ");
   /* Transliteration collapse: our data and SportyBet disagree on how they
      romanise Scandinavian vowels - Brondby vs Broendby (ø), Valerenga vs
      Vaalerenga (å). Collapse both spellings to the short form so they match. */
   s=s.replace(/oe/g,"o").replace(/aa/g,"a");
   s=s.replace(/\butd\b/g,"united");
+  /* Abbreviated qualifiers. Our feed writes "Dep. Riestra", "Atl. Tucuman",
+     "Ind. Rivadavia", "St. Patricks"; SportyBet writes them out in full. The
+     token compare below will not bridge a three-letter stub to its full word,
+     so bridge it here. Which spelling wins does not matter - both feeds run
+     through this same function, so all that matters is that they converge. */
+  s=s.replace(/\bdep\b/g,"deportivo").replace(/\batl\b/g,"atletico")
+     .replace(/\bind\b/g,"independiente").replace(/\bst\b/g,"saint");
+  /* Only expansions an actual miss called for. A speculative "univ" ->
+     "universidad" looked harmless and broke Romania: Rapid Bucuresti v Univ.
+     Craiova had been matching, and Craiova is Universitatea, not Universidad,
+     so the expansion pushed the two spellings apart. An abbreviation means
+     different things in different languages - leave the stub alone unless a
+     real miss shows it has to go. */
+  /* Same club, different language. */
+  s=s.replace(/\bvienna\b/g,"wien");
   /* Cross-feed spelling variants seen in the wild (RU/AR leagues). */
   s=s.replace(/\bdynamo\b/g,"dinamo").replace(/\btogliatti\b/g,"tolyatti")
      .replace(/\bjrs\b/g,"juniors").replace(/\bjr\b/g,"juniors");
@@ -5413,6 +5448,13 @@ function normTeamRaw(s){
   s=s.replace(/\s+/g," ").trim();
   /* Apply aliases AFTER cleaning so we match the canonical form */
   if (TEAM_ALIASES[s]) s = TEAM_ALIASES[s];
+  /* ...then put the alias through the same transliteration collapse the rest of
+     the name already went through. Without this an alias had to be written in
+     the collapsed spelling to work at all: "seinajoen jk" never matched the
+     feed, because the feed's own "Seinajoen JK" had already become
+     "seinajon jk" up above, and "vaasan" had become "vasan". Aliases can now be
+     written the way the club is actually spelt. */
+  s = s.replace(/oe/g,"o").replace(/aa/g,"a").replace(/\s+/g," ").trim();
   return s;
 }
 function tokset(s){return normTeam(s).split(" ").filter(function(w){return w.length>=3;});}
@@ -5422,9 +5464,17 @@ function simTeams(a,b){
   if(na===nb) return 2.0;  // max score for perfect match
   if(na.indexOf(nb)>=0||nb.indexOf(na)>=0) return 1.8;
   var ta=tokset(a),tb=tokset(b),sh=0;
-  ta.forEach(function(x){
-    if(tb.some(function(y){return x===y||(x.length>=4&&y.length>=4&&(x.indexOf(y)===0||y.indexOf(x)===0));})) sh++;
-  });
+  /* "Urawa Reds" against "Urawa Red Diamonds" turned on nothing more than a
+     plural: "reds" and "red" are not equal, and the prefix rule below needs
+     four characters on both sides, which "red" does not have. A trailing s is
+     not a different club. */
+  function same(x,y){
+    if(x===y) return true;
+    if(x.length>=4&&y.length>=4&&(x.indexOf(y)===0||y.indexOf(x)===0)) return true;
+    var sx=x.replace(/s$/,""), sy=y.replace(/s$/,"");
+    return sx.length>=3&&sx===sy;
+  }
+  ta.forEach(function(x){ if(tb.some(function(y){return same(x,y);})) sh++; });
   return sh/Math.max(1,Math.min(ta.length,tb.length));
 }
 function attachEventIds(sporty){
