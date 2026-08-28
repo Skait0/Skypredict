@@ -103,10 +103,21 @@ module.exports = async (req, res) => {
 
   try {
     const origin = selfOrigin(req);
-    const [payload, live] = await Promise.all([
+    /* Same fallback the page uses. The baked file is an optimisation, not a
+       guarantee: prebuild skips it whenever the sources are having a bad
+       moment - "only 0 results downloaded, refusing to build" is a real build
+       log - and leaves /api/predictions to serve. Reading only the baked file
+       meant the sweep stopped dead on exactly the days the feeds were flaky,
+       which are the days it is most needed. */
+    const [baked, live] = await Promise.all([
       getJSON(origin + "/predictions.json?sweep=" + Date.now()),
       getJSON(origin + "/api/live?sweep=" + Date.now()),
     ]);
+    let payload = baked, payloadFrom = "predictions.json";
+    if (!payload.ok || !payload.body || !Array.isArray(payload.body.fixtures) || !payload.body.fixtures.length) {
+      payload = await getJSON(origin + "/api/predictions?sweep=" + Date.now(), 25000);
+      payloadFrom = "api/predictions";
+    }
     if (!payload.ok) return res.status(502).json({ ok: false, error: "payload: " + payload.why });
     if (!live.ok) return res.status(502).json({ ok: false, error: "live: " + live.why });
 
@@ -202,6 +213,7 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       ok: true,
       dry: dry,
+      payloadFrom: payloadFrom,
       fixtures: fixtures.length,
       liveMatches: liveMatches.length,
       observed: observed,
