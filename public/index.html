@@ -2149,6 +2149,10 @@ html.mode-live #live{display:block}
   border-radius:99px;letter-spacing:.01em;text-decoration:none;white-space:nowrap;
   background:#282450;color:#fff;border:0;transition:filter .16s}
 .code-also .code-open-alt:hover{filter:brightness(1.35)}
+/* The dot in "football.com" takes their lime, #9FF611 - the accent that runs
+   against this purple on their own site. It is the one spot of it here, which
+   is as much as it can take next to our crimson. */
+.code-also .code-open-alt .fb-dot{color:#9FF611;font-weight:800}
 .code-acts button,.code-acts a{font:inherit;font-weight:800;font-size:14px;padding:11px 18px;
   border-radius:var(--r-md);cursor:pointer;text-decoration:none;border:0}
 /* "Copy" becomes "Copied" and back. Auto width meant the button - and the
@@ -2439,6 +2443,14 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
 .sotd-leg .lg-t{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sotd-leg .lg-p{font-weight:800;color:var(--text);white-space:nowrap}
 .sotd-leg .lg-c{font-variant-numeric:tabular-nums;color:var(--win);font-weight:800;min-width:42px;text-align:right}
+/* A leg that has been played shows its score instead of the confidence we had
+   before it, and says which way it went - the slip stays put now, so it has to
+   be readable afterwards. */
+.sotd-leg .lg-c.res{color:var(--text)}
+.sotd-leg.won .lg-c.res{color:var(--green-ink)}
+.sotd-leg.lost .lg-c.res{color:var(--red-ink)}
+.sotd-leg.lost .lg-t,.sotd-leg.lost .lg-p{opacity:.6}
+.sotd-leg.live .lg-c.res{color:var(--red-ink)}
 .sotd-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .sotd-odds{flex:1}
 .sotd-odds i{display:block;font-style:normal;font-size:11px;font-weight:700;
@@ -5804,6 +5816,31 @@ function mProb(f,c){
     case"AWAY_OVER_0.5":return f.a_o05;case"AWAY_OVER_1.5":return f.a_o15;}
   return null;
 }
+/* Did one leg land? Keyed on the market code rather than the tip label, since a
+   slip's legs are chosen by code and need not be the fixture's own tip.
+   Returns null for anything a final score cannot settle, and callers treat that
+   as ungraded rather than as a loss - the same rule lib/grade.js follows. */
+function gradeLeg(f,c,hg,ag){
+  if(typeof hg!=="number"||typeof ag!=="number"||isNaN(hg)||isNaN(ag)) return null;
+  var d=hg-ag, tot=hg+ag, both=hg>0&&ag>0;
+  switch(c){
+    case"1": return d>0;
+    case"2": return d<0;
+    case"X": return d===0;
+    case"1X": return d>=0;
+    case"X2": return d<=0;
+    case"12": return d!==0;
+    case"GG": return both;
+    case"OVER_1.5": return tot>1.5;
+    case"OVER_2.5": return tot>2.5;
+    case"OVER_3.5": return tot>3.5;
+    case"HOME_OVER_0.5": return hg>0.5;
+    case"HOME_OVER_1.5": return hg>1.5;
+    case"AWAY_OVER_0.5": return ag>0.5;
+    case"AWAY_OVER_1.5": return ag>1.5;
+  }
+  return null;   /* first-half markets and anything unknown */
+}
 function mLabel(f,c){
   switch(c){case"1":return esc(f.home)+" to win";case"2":return esc(f.away)+" to win";
     case"X":return"Draw";case"1X":return esc(f.home)+" or draw";
@@ -6035,7 +6072,7 @@ function showCode(code,hostId){
        make sense - but the name is now the way in. */
     "<p class='code-also'>Works on "+
       "<a class='code-open-alt' href='"+FOOTBALL_URL+encodeURIComponent(code)+
-        "' target='_blank' rel='noopener'>football.com</a></p>"+
+        "' target='_blank' rel='noopener'>football<span class='fb-dot'>.</span>com</a></p>"+
     "</div>";
   document.body.appendChild(wrap);
   function close(){wrap.remove();}
@@ -6290,6 +6327,38 @@ function sotdUnderCap(cand){
      one-leg "slip" or nothing, fall back to what this always did. */
   return pick.length>=2 ? pick : cand.slice(0,4);
 }
+/* The slip of the day, once chosen, is the slip of that day.
+   It used to be rebuilt from scratch on every render out of games that had not
+   kicked off, so the moment one of its legs started it fell out of the pool and
+   a different game took its place - the card quietly rewrote itself through the
+   afternoon, and anyone who had booked it watched it turn into a slip they had
+   not backed. Worse, it can only ever have looked right: a slip you cannot
+   check afterwards is not a claim, it is a moving target.
+   So it is locked per day, the way the Pick of the day is. Legs are stored by
+   fixture id and read back whatever state those games are now in. */
+function sotdLockKey(dateStr){ return "sw.sotd."+dateStr; }
+function loadSotdLock(dateStr){
+  try{ var raw=localStorage.getItem(sotdLockKey(dateStr));
+    if(!raw) return null;
+    var v=JSON.parse(raw);
+    return (v&&Array.isArray(v.legs)&&v.legs.length>=2)?v:null;
+  }catch(e){ return null; }
+}
+function saveSotdLock(dateStr,legs){
+  try{
+    localStorage.setItem(sotdLockKey(dateStr),JSON.stringify({
+      date:dateStr, legs:legs.map(function(c){return {id:c.id,code:c.code,p:c.p};})
+    }));
+    /* Same rule as the pick's keys: a day that has been and gone is dead, the
+       rest are still worth holding. */
+    for(var i=localStorage.length-1;i>=0;i--){
+      var k=localStorage.key(i);
+      if(!k||k.indexOf("sw.sotd.")!==0) continue;
+      var d=k.slice(8);
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||dayOff(d)<0) localStorage.removeItem(k);
+    }
+  }catch(e){}
+}
 function renderSlipOfDay(){
   var host=$("sotd"); if(!host) return;
   /* onDay() now keeps today's kicked-off games for the board; a slip must not
@@ -6311,10 +6380,35 @@ function renderSlipOfDay(){
      carries a shorter price - so filling in this order fits the most legs
      under the ceiling. */
   cand.sort(function(a,b){return b.p-a.p;});
-  SOTD=sotdUnderCap(cand);
+
+  /* The day this slip belongs to. Held to today while today still has a card,
+     so the slip does not jump to tomorrow's games the moment the last of
+     today's kicks off - the same rule the Pick of the day follows. */
+  var _sdDay=allOnDay(0).length?allOnDay(0):allOnDay(V.off);
+  var _sdDate=_sdDay.length?_sdDay[0].date:null;
+  var lock=_sdDate?loadSotdLock(_sdDate):null;
+  if(lock){
+    /* Read the locked legs back as they stand now - kicked off, finished or
+       still to come. A leg whose fixture has gone from the payload entirely is
+       dropped rather than faked. */
+    var back=[];
+    lock.legs.forEach(function(l){
+      var f=fixtureById(l.id); if(!f) return;
+      back.push({f:f,id:l.id,code:l.code,p:(l.p!=null?l.p:mProb(f,l.code)),eventId:f.eventId||null});
+    });
+    if(back.length>=2) SOTD=back;
+    else { SOTD=sotdUnderCap(cand); if(SOTD.length>=2&&_sdDate) saveSotdLock(_sdDate,SOTD); }
+  } else {
+    SOTD=sotdUnderCap(cand);
+    if(SOTD.length>=2&&_sdDate) saveSotdLock(_sdDate,SOTD);
+  }
   if(SOTD.length<2){host.innerHTML="";return;}
   var odds=SOTD.reduce(function(t,c){return t*legOdd(c.f,c.code,c.p);},1);
-  var bookable=SOTD.filter(function(c){return c.eventId;}).length;
+  /* A leg that has kicked off cannot be booked, whatever SportyBet still lists,
+     so the button goes by what is actually still open rather than by whether an
+     event id exists. */
+  var started=SOTD.filter(function(c){return !notStarted(c.f);}).length;
+  var bookable=SOTD.filter(function(c){return c.eventId&&notStarted(c.f);}).length;
   host.innerHTML=
     "<section class='sotd'>"+
       "<div class='sotd-top'><svg width='15' height='15' viewBox='0 0 24 24' fill='currentColor'>"+
@@ -6322,9 +6416,22 @@ function renderSlipOfDay(){
         "<b>Slip of the day</b><span class='k'>"+SOTD.length+" bankers</span></div>"+
       "<h2>The safest slip today</h2>"+
       "<p class='sub'>Our highest-confidence picks, combined into one bet - no building needed.</p>"+
+      /* Once a leg has been played it shows how it went rather than the
+         confidence we had beforehand - the slip stays put now, so it has to be
+         readable after the fact as well as before it. */
       "<div class='sotd-legs'>"+SOTD.map(function(c){
-        return "<div class='sotd-leg'><span class='lg-t'>"+esc(c.f.home)+" v "+esc(c.f.away)+
-          "</span><span class='lg-p'>"+mLabel(c.f,c.code)+"</span><span class='lg-c'>"+P0(c.p)+"%</span></div>";
+        var st=null; try{st=fixtureState(c.f);}catch(e){}
+        var right="<span class='lg-c'>"+P0(c.p)+"%</span>", cls="";
+        if(st&&st.kind==="ft"&&st.hg!=null){
+          var v=null; try{v=gradeLeg(c.f,c.code,st.hg,st.ag);}catch(e){}
+          cls=(v===true?" won":(v===false?" lost":""));
+          right="<span class='lg-c res'>"+st.hg+"-"+st.ag+"</span>";
+        } else if(st&&st.kind==="live"&&st.hg!=null){
+          cls=" live";
+          right="<span class='lg-c res'>"+st.hg+"-"+st.ag+"</span>";
+        }
+        return "<div class='sotd-leg"+cls+"'><span class='lg-t'>"+esc(c.f.home)+" v "+esc(c.f.away)+
+          "</span><span class='lg-p'>"+mLabel(c.f,c.code)+"</span>"+right+"</div>";
       }).join("")+"</div>"+
       "<div class='sotd-foot'><div class='sotd-odds'><i>Est. odds*</i><b>~\u00d7"+odds.toFixed(2)+"</b></div>"+
         "<button class='share-btn' id='sotdShare'>\u2197 Share</button>"+
@@ -6336,7 +6443,11 @@ function renderSlipOfDay(){
   $("sotdShare").addEventListener("click",function(){shareSlip(SOTD,odds);});
   wireNotif();
   var note=$("sotdNote");
-  if(!bookable) note.textContent="Booking opens when these games are live on SportyBet.";
+  if(started>=SOTD.length)
+    note.textContent="These games have started - today's slip stays here so you can see how it finished.";
+  else if(started)
+    note.textContent=started+" of "+SOTD.length+" have kicked off, so this can no longer be booked in full.";
+  else if(!bookable) note.textContent="Booking opens when these games are live on SportyBet.";
   else if(bookable<SOTD.length) note.textContent=bookable+" of "+SOTD.length+" bookable right now.";
 }
 /* ---- Daily streak ---- */
