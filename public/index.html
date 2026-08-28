@@ -3347,9 +3347,10 @@ footer{margin-top:26px;padding-top:18px;
       <svg id="tglicon" width="17" height="17" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round"></svg>
     </button>
-    <button class="tgl" id="installBtn" aria-label="Install app" title="Install app" hidden>
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
-    </button>
+    <!-- The install icon lived here. It could not be reached on a phone - that
+         row needs more width than a phone has, so it sat off the right edge -
+         and the labelled bar under the hero says what it is and does the same
+         job on every screen. One offer, in one place. -->
   </div>
 </div>
 
@@ -5559,6 +5560,41 @@ function attachEventIds(sporty){
     if(gb && gs >= 1.4){  // lowered from 1.6
       f.eventId=gb.eventId; f.sportyOdds=gb.odds||{}; blendFixture(f); hits++; return;
     }
+    /* ------------------------------------------- reconcile by kick-off time
+       Names are the weakest thing to match on, and the alias list only ever
+       grows: every miss so far has been the same fixture spelt differently,
+       and each one needed a human to notice and write a rule.
+       The clock does not need a rule. Every miss had one side already certain
+       - "Velez Sarsfield" against "Velez Sarsfield", "Salzburg" against
+       "Salzburg" - and a kick-off to the minute. So: among the events starting
+       at the same moment, if exactly one has a side we are already sure of,
+       that is the fixture, whatever the other side is called.
+       Uniqueness is what makes this safe. A full round kicks off together, so
+       the same time alone means nothing; one certain side alone means nothing
+       either, since a club plays many matches. Both together, with no second
+       candidate, leave nothing else it could be. */
+    var myKick = f.kickoff ? Date.parse(f.kickoff) : NaN;
+    if (isFinite(myKick)) {
+      var sameTime = [];
+      sporty.forEach(function(m){
+        if (!m.startTime) return;
+        var t = Date.parse(m.startTime);
+        if (!isFinite(t) || Math.abs(t - myKick) > 10*60*1000) return;
+        var sh = simTeams(f.home, m.homeTeam), sa = simTeams(f.away, m.awayTeam);
+        /* One side at 1.8 is an exact or containing name, not a coincidence. */
+        if (Math.max(sh, sa) >= 1.8) sameTime.push({m:m, sh:sh, sa:sa});
+      });
+      if (sameTime.length === 1) {
+        var only = sameTime[0];
+        f.eventId = only.m.eventId; f.sportyOdds = only.m.odds || {};
+        blendFixture(f); hits++;
+        if (SPORTY_DEBUG) try{console.log("[sporty] BY KICK-OFF:", f.home, "v", f.away,
+          "->", only.m.homeTeam, "v", only.m.awayTeam,
+          "(sides", only.sh.toFixed(2), "/", only.sa.toFixed(2)+")");}catch(e){}
+        return;
+      }
+    }
+
     /* Debug logging (opt-in via ?debug=1). Counts stay live for the summary. */
     if (bestScore > 0 && bestScore < 1.2) {
       nearMisses++;
@@ -8648,48 +8684,73 @@ setTimeout(hideLoader,8000);
   window.__settleRecord=function(){var bar=document.querySelector('.record-bar i');if(!bar||bar._settled)return;bar._settled=1;var w=bar.style.width;bar.style.width='0%';requestAnimationFrame(function(){requestAnimationFrame(function(){bar.style.width=w;});});};
   if(typeof render==='function'){var __ro=render;render=function(){__ro.apply(this,arguments);window.__afterRender();};}
   if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
-  var _dip=null, ib=document.getElementById('installBtn');
+  var _dip=null;
   var bar=document.getElementById('instBar');
   var _standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
-  /* Dismissed once, stays dismissed. The offer is worth making; it is not
-     worth making every visit. */
-  var _instOff=false;
-  try{_instOff=localStorage.getItem('sw.instoff')==='1';}catch(e){}
-  function offerInstall(on){
-    if(ib) ib.hidden=!on;
-    if(bar) bar.hidden=!(on&&!_instOff&&!_standalone);
+  /* Installed once, never offered again - remembered, because a browser tab
+     cannot see that the app exists on the home screen. display-mode only says
+     whether *this* window is the app. */
+  var _installed=false;
+  try{_installed=localStorage.getItem('sw.installed')==='1';}catch(e){}
+  /* Hidden for this visit only. The offer stands until the app is installed,
+     so a dismissal lasts the page view rather than for ever - otherwise one
+     stray tap retires it permanently. */
+  var _hidNow=false;
+  function offerInstall(){
+    if(!bar) return;
+    bar.hidden = _standalone || _installed || _hidNow;
   }
-  /* The head script may already have caught it before this file even ran, so
-     take what is waiting there as well as listening for a later one. */
+  /* The offer no longer waits for beforeinstallprompt. That event is Chrome's
+     alone - Safari never fires it, Firefox never fires it, and Chrome itself
+     fires it once, early, and not again - so hanging the only install button
+     on it meant most people never saw one. The bar stands on the simpler
+     question of whether the app is already installed, and the prompt, when it
+     does arrive, only decides what tapping Install can do: fire the real
+     dialog, or explain where the browser keeps it. */
+  offerInstall();
   function takeEvent(){
-    if(window.__swInstallEvent){ _dip=window.__swInstallEvent; offerInstall(true); }
+    if(window.__swInstallEvent){ _dip=window.__swInstallEvent; offerInstall(); }
   }
   window.addEventListener('sw-installable',takeEvent);
-  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();_dip=e;offerInstall(true);});
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();_dip=e;offerInstall();});
   takeEvent();
   window.addEventListener('appinstalled',function(){
-    offerInstall(false);
-    try{localStorage.setItem('sw.instoff','1');}catch(e){}
+    _installed=true; offerInstall();
+    try{localStorage.setItem('sw.installed','1');}catch(e){}
     window.swToast&&window.swToast('Installed','ok');});
   var _iOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-  /* iOS never fires beforeinstallprompt, so the offer is made on the platform
-     alone and the click explains the Share-sheet route. */
-  if(_iOS&&!_standalone) offerInstall(true);
+  /* Chrome can tell us the app is already on the device even from a browser
+     tab, which is the one case the bar would otherwise get wrong: installed,
+     but opened from a link rather than the home screen. */
+  try{
+    if(navigator.getInstalledRelatedApps){
+      navigator.getInstalledRelatedApps().then(function(apps){
+        if(apps&&apps.length){ _installed=true; offerInstall();
+          try{localStorage.setItem('sw.installed','1');}catch(e){} }
+      }).catch(function(){});
+    }
+  }catch(e){}
   function doInstall(){
     if(_dip){ _dip.prompt(); _dip.userChoice&&_dip.userChoice.then(function(c){
-      if(c&&c.outcome==='accepted'){offerInstall(false);} _dip=null; }); return; }
+      if(c&&c.outcome==='accepted'){
+        _installed=true; offerInstall();
+        try{localStorage.setItem('sw.installed','1');}catch(e){}
+      } _dip=null; }); return; }
     if(_iOS){ window.swToast&&window.swToast('Tap the Share icon, then "Add to Home Screen"','ok','ins'); return; }
     var isAndroid=/android/i.test(navigator.userAgent);
     window.swToast&&window.swToast(isAndroid
       ? 'Tap the 3-dot menu, then "Install app" / "Add to Home screen"'
       : 'In Chrome or Edge, click the install icon in the address bar','ok','ins');
   }
-  if(ib) ib.addEventListener('click',doInstall);
   var ig=document.getElementById('instGo'); if(ig) ig.addEventListener('click',doInstall);
   var ix=document.getElementById('instX');
-  if(ix) ix.addEventListener('click',function(){
-    _instOff=true; if(bar) bar.hidden=true;
-    try{localStorage.setItem('sw.instoff','1');}catch(e){}
+  if(ix) ix.addEventListener('click',function(){ _hidNow=true; offerInstall(); });
+  /* A stale flag from a phone the app was removed from would hide the offer
+     for good, so a prompt arriving is taken as proof it is not installed. */
+  window.addEventListener('beforeinstallprompt',function(){
+    if(_installed){ _installed=false;
+      try{localStorage.removeItem('sw.installed');}catch(e){}
+      offerInstall(); }
   });
 /* This closed on "});" - a parenthesised function expression, defined and then
    dropped on the floor. Valid JavaScript, so nothing ever threw and the board
