@@ -5521,7 +5521,13 @@ function normTeamRaw(s){
      so bridge it here. Which spelling wins does not matter - both feeds run
      through this same function, so all that matters is that they converge. */
   s=s.replace(/\bdep\b/g,"deportivo").replace(/\batl\b/g,"atletico")
-     .replace(/\bind\b/g,"independiente").replace(/\bst\b/g,"saint");
+     .replace(/\bind\b/g,"independiente");
+  /* "st" is deliberately not expanded. It looked obvious - "St. Patricks"
+     against "Saint Patrick's" - but Saint is not the only thing it stands for:
+     "St. Gilloise" is Union Saint-Gilloise, which SportyBet lists as "Union
+     Gilloise", and expanding ours to "saint gilloise" pushed the two apart.
+     Left alone the stub is two characters, dropped by tokset, and the clubs
+     match on the name that actually distinguishes them. */
   /* Only expansions an actual miss called for. A speculative "univ" ->
      "universidad" looked harmless and broke Romania: Rapid Bucuresti v Univ.
      Craiova had been matching, and Craiova is Universitatea, not Universidad,
@@ -5575,6 +5581,18 @@ function simTeams(a,b){
   ta.forEach(function(x){ if(tb.some(function(y){return same(x,y);})) sh++; });
   return sh/Math.max(1,Math.min(ta.length,tb.length));
 }
+/* SportyBet sends startTime as epoch milliseconds, not as a date string, so
+   Date.parse on it returns NaN - which is how the kick-off matcher below came
+   to compare every event against NaN and quietly reject all of them. Takes a
+   number, a numeric string, or a date string. */
+function evStart(m){
+  var t=m&&m.startTime;
+  if(t==null) return NaN;
+  if(typeof t==="number") return t;
+  var n=Number(t);
+  if(isFinite(n)&&n>1e11) return n;
+  return Date.parse(t);
+}
 function attachEventIds(sporty){
   if(!sporty||!sporty.length) return 0;
   /* Verbose per-fixture match logging is opt-in: add ?debug=1 (or #debug) to the
@@ -5588,7 +5606,7 @@ function attachEventIds(sporty){
     var k=new Date(m.startTime).toISOString().slice(0,10);
     (byDate[k]=byDate[k]||[]).push(m);
   });
-  var hits=0, nearMisses=0, noMatches=0;
+  var hits=0, nearMisses=0, noMatches=0, goneFromFeed=0;
   DATA.fixtures.forEach(function(f){
     var cand=[];
     /* Candidate window: ±3 days around our fixture date (SportyBet's UTC start
@@ -5646,21 +5664,31 @@ function attachEventIds(sporty){
     if (isFinite(myKick)) {
       var sameTime = [];
       sporty.forEach(function(m){
-        if (!m.startTime) return;
-        var t = Date.parse(m.startTime);
+        var t = evStart(m);
         if (!isFinite(t) || Math.abs(t - myKick) > 10*60*1000) return;
         var sh = simTeams(f.home, m.homeTeam), sa = simTeams(f.away, m.awayTeam);
         /* One side at 1.8 is an exact or containing name, not a coincidence. */
-        if (Math.max(sh, sa) >= 1.8) sameTime.push({m:m, sh:sh, sa:sa});
+        if (Math.max(sh, sa) >= 1.8) sameTime.push({m:m, sh:sh, sa:sa, sum:sh+sa});
       });
-      if (sameTime.length === 1) {
-        var only = sameTime[0];
-        f.eventId = only.m.eventId; f.sportyOdds = only.m.odds || {};
-        blendFixture(f); hits++;
-        if (SPORTY_DEBUG) try{console.log("[sporty] BY KICK-OFF:", f.home, "v", f.away,
-          "->", only.m.homeTeam, "v", only.m.awayTeam,
-          "(sides", only.sh.toFixed(2), "/", only.sa.toFixed(2)+")");}catch(e){}
-        return;
+      /* Not "exactly one candidate" - on a Saturday a dozen games kick off
+         together and several will share a common club word, so that test almost
+         never fired when it was needed. What matters is that one candidate is
+         clearly ahead of the rest: the best total at this kick-off, winning by
+         a margin no near-miss could close. A second candidate within 0.4 means
+         the clock cannot tell them apart, and then it is right to give up. */
+      if (sameTime.length) {
+        sameTime.sort(function(a,b){return b.sum-a.sum;});
+        var top = sameTime[0];
+        var clear = sameTime.length === 1 || (top.sum - sameTime[1].sum) >= 0.4;
+        if (clear) {
+          f.eventId = top.m.eventId; f.sportyOdds = top.m.odds || {};
+          blendFixture(f); hits++;
+          if (SPORTY_DEBUG) try{console.log("[sporty] BY KICK-OFF:", f.home, "v", f.away,
+            "->", top.m.homeTeam, "v", top.m.awayTeam,
+            "(sides", top.sh.toFixed(2), "/", top.sa.toFixed(2),
+            "| runner-up", sameTime[1]?sameTime[1].sum.toFixed(2):"none", ")");}catch(e){}
+          return;
+        }
       }
     }
 
@@ -5671,7 +5699,14 @@ function attachEventIds(sporty){
     }
     if (!best && bestScore === 0) {
       noMatches++;
-      if (SPORTY_DEBUG) {
+      /* A game that has kicked off is gone from SportyBet's fixtures feed -
+         they list what can still be bet on, and we keep the day's card on the
+         board long after that. So an unmatched game that has already started
+         is the expected outcome, not a naming failure, and logging it buries
+         the ones that are still worth fixing. Counted, not printed. */
+      var _started = (typeof notStarted==="function") && !notStarted(f);
+      if (_started) { goneFromFeed++; }
+      else if (SPORTY_DEBUG) {
         /* Ungated closest event in the WHOLE feed - tells us "not in feed" (closest
            is unrelated, low score) vs "named differently" (closest IS this game). */
         var dbgBest=null, dbgScore=-1;
@@ -5686,7 +5721,9 @@ function attachEventIds(sporty){
       }
     }
   });
-  try{console.log("[sporty] matched "+hits+"/"+DATA.fixtures.length+" from "+sporty.length+" events (near:"+nearMisses+", none:"+noMatches+")");}catch(e){}
+  try{console.log("[sporty] matched "+hits+"/"+DATA.fixtures.length+" from "+sporty.length+
+    " events (near:"+nearMisses+", none:"+noMatches+", of which "+goneFromFeed+
+    " already kicked off and are no longer listed)");}catch(e){}
   return hits;
 }
 /* Every leg shows "no ID" until this has run, because that badge is simply
