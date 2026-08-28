@@ -2523,10 +2523,26 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
   .wsp-chip{padding:8px 12px;font-size:12.5px}
   .wsp-lead{font-size:12.5px}.wsp-go{padding:10px;font-size:13.5px}
 }
-.mysheet-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 16px 6px;
-  border-top:1px solid var(--line-soft);margin-top:14px}
-.mysheet-foot .bld-odds{flex:1;min-width:120px}
-.mysheet-foot .clear-btn,.mysheet-foot .book-btn{flex-shrink:0}
+/* Four things across one row only hold while the numbers are small. A jackpot
+   total is "×20,717" where a normal one is "×2.40", and on a phone the row
+   gave up and put the odds on one line, the two icons on the next and Get code
+   alone on a third - a 125px footer that looked like a mistake, because it was
+   one.
+   So the break is chosen rather than left to chance: odds and the two icon
+   actions share the top line, and Get code takes a full-width row of its own
+   beneath. It is the button everything here exists to reach, and a full-width
+   target is better than a stranded one. */
+.mysheet-foot{display:flex;align-items:center;gap:10px 12px;flex-wrap:wrap;
+  padding:16px 16px 6px;border-top:1px solid var(--line-soft);margin-top:14px}
+.mysheet-foot .bld-odds{flex:1 1 auto;min-width:0}
+/* Long totals stop competing for the row and shrink instead. */
+.mysheet-foot .bld-odds b{font-size:clamp(17px,5.2vw,24px);white-space:nowrap}
+.mysheet-foot .clear-btn{flex:0 0 auto}
+.mysheet-foot .book-btn{flex:1 1 100%;order:2}
+@media(min-width:560px){
+  /* With room for all four, the original single row is still the better shape. */
+  .mysheet-foot .book-btn{flex:0 0 auto;order:0}
+}
 #myBookResult{padding:0 16px 20px}
 #myBookResult:not(:empty),#bookResult:not(:empty),#sotdResult:not(:empty){margin-top:12px}
 .code-card,.confirm-card,.code-err{position:relative;z-index:1}
