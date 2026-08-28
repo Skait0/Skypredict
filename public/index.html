@@ -1274,11 +1274,24 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
   letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
 .sl-rec b{display:block;font-size:16px;font-weight:800;color:var(--text);margin-top:2px;
   font-variant-numeric:tabular-nums}
+/* Collapsed, a slip is one line; the padding lives on the parts now so a shut
+   card is only as tall as its own line. */
 .sl-card{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r-md);
-  border-left-width:3px;border-left-style:solid;padding:10px 12px;margin-bottom:9px}
+  border-left-width:3px;border-left-style:solid;margin-bottom:6px;overflow:hidden}
 .sl-card.won{border-left-color:var(--green)}
 .sl-card.lost{border-left-color:var(--red)}
 .sl-card.open{border-left-color:var(--win)}
+/* The whole line is the control - a real button, so it takes a tab stop and
+   the Enter key without any of it being wired by hand. */
+.sl-head{display:flex;align-items:center;gap:8px;width:100%;
+  padding:9px 12px;background:none;border:0;font:inherit;color:inherit;
+  text-align:left;cursor:pointer}
+.sl-head:hover{background:var(--raise)}
+.sl-head:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
+.sl-chev{flex-shrink:0;color:var(--faint);font-size:11px;transition:transform .18s}
+.sl-card.is-open .sl-chev{transform:rotate(180deg)}
+.sl-body{display:none;padding:0 12px 10px}
+.sl-card.is-open .sl-body{display:block}
 .sl-top{display:flex;align-items:center;gap:8px;margin-bottom:7px}
 .sl-tag{font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
   padding:2px 7px;border-radius:99px;flex-shrink:0}
@@ -1320,9 +1333,26 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .sl-t{flex:1;min-width:0;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sl-p{flex-shrink:0;color:var(--faint);font-size:11px;max-width:46%;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sl-code{margin-top:7px;padding-top:7px;border-top:1px solid var(--line);
-  font-size:11px;color:var(--faint);letter-spacing:.02em}
+/* The code and the three things you can do with this slip, on one line under
+   the legs. Kept in the same quiet register as the card - small text buttons,
+   not pills, so the row reads as a footnote and the result above it stays the
+   loudest thing on the card. */
+.sl-acts{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  margin-top:7px;padding-top:7px;border-top:1px solid var(--line)}
+.sl-code{flex:1 1 auto;min-width:0;font-size:11px;color:var(--faint);letter-spacing:.02em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sl-code b{color:var(--soft);font-weight:800;letter-spacing:.08em}
+.sl-code-none{opacity:.6}
+.sl-mini{flex:0 0 auto;font:inherit;font-size:10.5px;font-weight:700;
+  padding:3px 9px;border-radius:99px;cursor:pointer;white-space:nowrap;
+  background:var(--raise);border:1px solid var(--line);color:var(--soft);
+  transition:color .15s,border-color .15s,background .15s}
+.sl-mini:hover{color:var(--text);border-color:var(--faint)}
+.sl-mini:focus-visible{outline:2px solid var(--red);outline-offset:1px}
+.sl-mini.ok{color:var(--green-ink);border-color:var(--green)}
+/* Delete asks before it acts, and only turns red once it has. */
+.sl-mini-x:hover{color:var(--red-ink);border-color:var(--red)}
+.sl-mini-x.arm{background:var(--red-wash);border-color:var(--red);color:var(--red-ink);font-weight:800}
 @media(max-width:640px){
   .myres{padding:11px 12px;margin-bottom:10px}
   .mr-body b{font-size:14px}
@@ -3995,6 +4025,9 @@ function clearSlips(){
   SLIPS=[]; saveSlips(); renderSlipsSheet(); renderRecord();
   window.swToast&&window.swToast("Slip history cleared","ok","slipclr");
 }
+/* Which slip is expanded. null until the sheet has been drawn once, so the
+   first draw can choose the newest without overriding a later choice. */
+var SLOPEN=null;
 function renderSlipsSheet(){
   var body=$("slipsBody"); if(!body) return;
   if(!SLIPS.length){
@@ -4009,15 +4042,27 @@ function renderSlipsSheet(){
     "<div><i>Legs</i><b>"+(r.legs?Math.round(100*r.legHits/r.legs)+"%":"-")+"</b></div>"+
     (r.best?"<div><i>Best</i><b>×"+r.best.odds.toFixed(2)+"</b></div>":"")+
     "</div>";
+  /* Nothing chosen yet means the newest is the one to show. Once anything has
+     been opened or closed by hand, that choice is what holds. */
+  if(SLOPEN===null) SLOPEN=(SLIPS[0]&&SLIPS[0].sid)||"";
   body.innerHTML=head+SLIPS.map(function(sp){
     var state=sp.settled?(sp.won?"won":"lost"):"open";
     var label=sp.settled?(sp.won?"Won":"Lost"):"Running";
-    return "<div class='sl-card "+state+"'>"+
-      "<div class='sl-top'><span class='sl-tag "+state+"'>"+label+"</span>"+
+    var open=(sp.sid===SLOPEN);
+    return "<div class='sl-card "+state+(open?" is-open":"")+"'>"+
+      /* One line each, opened on demand. A booked slip is mostly answered by
+         its first line - did it land, when, for how much - and sixty of them
+         stacked open meant scrolling past hundreds of legs to find the one you
+         were looking for. The legs are the detail behind the answer, so they
+         wait until asked for. The newest is open, because that is the one
+         anyone arriving here is almost always checking. */
+      "<button class='sl-head' type='button' data-slop='"+esc(sp.sid||"")+"' "+
+        "aria-expanded='"+(open?"true":"false")+"'>"+
+        "<span class='sl-tag "+state+"'>"+label+"</span>"+
         "<span class='sl-when'>"+esc(slipWhen(sp.at))+" · "+sp.legs.length+" games</span>"+
         "<span class='sl-odds'>×"+sp.odds.toFixed(2)+"</span>"+
-        "<button class='sl-x' type='button' data-slrm='"+esc(sp.sid||"")+"' "+
-          "aria-label='Remove this slip'>"+XSVG+"</button></div>"+
+        "<span class='sl-chev' aria-hidden='true'>▾</span></button>"+
+      "<div class='sl-body'>"+
       "<div class='sl-legs'>"+sp.legs.map(function(l){
         /* A dot, not a tick. Ticks and crosses read as a checklist somebody
            is working through; these are results, and the site already says
@@ -4028,18 +4073,88 @@ function renderSlipsSheet(){
           "<span class='sl-t'>"+esc(l.home)+" v "+esc(l.away)+"</span>"+
           "<span class='sl-p'>"+esc(l.label||l.code)+esc(sc)+"</span></div>";
       }).join("")+"</div>"+
-      (sp.code?"<div class='sl-code'>Code <b>"+esc(sp.code)+"</b></div>":"")+
+      /* The code was printed as plain text, which is the one thing on this card
+         somebody actually needs to use - and it could not be copied. */
+      "<div class='sl-acts'>"+
+        (sp.code
+          ? "<span class='sl-code'>Code <b>"+esc(sp.code)+"</b></span>"+
+            "<button class='sl-mini' type='button' data-slcp=\""+esc(sp.code)+"\" "+
+              "aria-label='Copy booking code'>Copy</button>"
+          : "<span class='sl-code sl-code-none'>No code</span>")+
+        /* Not "edit": this slip is a bet that was placed, and nothing here can
+           change it. What is useful is starting a new one from it, so it loads
+           the legs that are still open into My slip and says what it had to
+           leave behind. */
+        "<button class='sl-mini' type='button' data-slrb='"+esc(sp.sid||"")+"'>Rebuild</button>"+
+        "<button class='sl-mini sl-mini-x' type='button' data-slrm='"+esc(sp.sid||"")+"' "+
+          "aria-label='Remove this slip'>Delete</button>"+
+      "</div>"+
+      "</div>"+
     "</div>";
   }).join("")+
   /* Under the list, not in the header: clearing the lot is the last thing
      anyone wants here, so it should be the last thing they reach. */
   "<div class='sl-foot'><button class='sl-clear' id='slipsClear' type='button'>"+
     "Clear slip history</button></div>";
+  /* One open at a time. Two or three expanded and the density this is for is
+     gone again; and with one, opening the next always closes the last without
+     anyone having to tidy up. */
+  body.querySelectorAll("[data-slop]").forEach(function(b){
+    b.addEventListener("click",function(){
+      SLOPEN=(SLOPEN===b.dataset.slop)?"":b.dataset.slop;
+      renderSlipsSheet();
+    });
+  });
   body.querySelectorAll("[data-slrm]").forEach(function(b){
     b.addEventListener("click",function(){ askRemoveSlip(b,b.dataset.slrm); });
   });
+  body.querySelectorAll("[data-slcp]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var code=b.dataset.slcp;
+      try{ if(navigator.clipboard) navigator.clipboard.writeText(code); }catch(e){}
+      var was=b.textContent; b.textContent="Copied"; b.classList.add("ok");
+      setTimeout(function(){ b.textContent=was; b.classList.remove("ok"); },1500);
+    });
+  });
+  body.querySelectorAll("[data-slrb]").forEach(function(b){
+    b.addEventListener("click",function(){ rebuildSlip(b.dataset.slrb); });
+  });
   var ca=$("slipsClear");
   if(ca) ca.addEventListener("click",function(){ askClearSlips(ca); });
+}
+/* Start a new slip from an old one.
+   Deliberately not called "edit": the slip in this list is a bet that was
+   placed, and nothing here can change it - the code is already at SportyBet.
+   What is useful is the shape of it, so the legs that are still open are
+   loaded into My slip and the ones that are not are named rather than dropped
+   in silence. */
+function rebuildSlip(sid){
+  var sp=null;
+  for(var i=0;i<SLIPS.length;i++) if(SLIPS[i].sid===sid){sp=SLIPS[i];break;}
+  if(!sp) return;
+  var added=0, played=0, missing=0, dupe=0;
+  sp.legs.forEach(function(l){
+    var f=fixtureById(l.id);
+    if(!f){ missing++; return; }                    /* no longer on the card */
+    if(!notStarted(f)){ played++; return; }          /* kicked off or finished */
+    if(myslipHas(l.id,l.code)){ dupe++; return; }    /* already on the slip */
+    var p=(l.p!=null?l.p:mProb(f,l.code));
+    MYSLIP.push({id:l.id,code:l.code,label:l.label||mLabel(f,l.code),p:+p||0});
+    added++;
+  });
+  if(added){ saveMy(); renderFab(); }
+  var lost=played+missing;
+  if(!added){
+    window.swToast&&window.swToast(
+      lost?"None of these games are still open":"Those picks are already on your slip",
+      "info","rb");
+    return;
+  }
+  closeSlipsSheet(); openMySheet();
+  window.swToast&&window.swToast(
+    lost ? ("Added "+added+" - "+lost+" no longer available")
+         : ("Added "+added+" to your slip"),
+    "ok","rb");
 }
 /* Two-tap confirm in place: the button becomes "Sure?" and reverts if it is
    not taken up, so nothing is lost to a stray tap and no dialog interrupts. */
