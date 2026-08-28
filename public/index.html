@@ -19,6 +19,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Soccerwizard">
 <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png">
+<!-- The mark that rides the sphere on the offer card. Fetched with the
+     stylesheet rather than when the CSS background is first needed, because
+     the roll begins the instant the card paints and does not wait for it. -->
+<link rel="preload" as="image" href="/wiz-orb-mark.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -44,6 +48,22 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
   window.addEventListener("unhandledrejection",function(ev){
     try{window.__swErr.push({m:"unhandled: "+String((ev.reason&&ev.reason.message)||ev.reason)});}catch(_){}
   });
+})();
+/* Hold the sphere still until its mark has arrived, so the first thing anyone
+   sees is the S facing them rather than the blank back of the ball turning
+   into view. Decode rather than load, so the class lands when it can actually
+   be painted. Fails open: if the image never arrives the class is set anyway
+   after a moment, and a still ball beats a permanently frozen one. */
+(function(){
+  var go=function(){ document.documentElement.classList.add("orb-ready"); };
+  try{
+    var im=new Image();
+    im.onload=function(){ (im.decode?im.decode():Promise.resolve()).then(go,go); };
+    im.onerror=go;
+    im.src="/wiz-orb-mark.png";
+    if(im.complete) go();
+  }catch(e){ go(); }
+  setTimeout(go,4000);
 })();
 (function(){
   window.__swInstallEvent=null;
@@ -718,6 +738,34 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
   background:radial-gradient(closest-side,rgba(124,77,255,.10),transparent);
   animation:wspOrbDrift 5s ease-in-out infinite alternate}
 @keyframes wspOrbDrift{from{transform:translate(0,0)}to{transform:translate(30px,12px)}}
+/* A crimson light running the border. The angle is animated rather than the
+   element, because rotating a wide box would drag the gradient out of round
+   and the light would race the long sides and crawl the short ones.
+   The ring is the border and nothing else: two masks, one clipped to the
+   padding box, composited so only the 1.5px frame between them survives. */
+@property --ctaAng{syntax:'<angle>';initial-value:0deg;inherits:false}
+.cta-run{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:2;
+  padding:1.5px;
+  background:conic-gradient(from var(--ctaAng),
+    transparent 0deg 210deg,
+    rgba(230,57,70,.35) 250deg,
+    var(--red) 292deg,
+    #ff8f97 300deg,
+    var(--red) 308deg,
+    rgba(230,57,70,.35) 340deg,
+    transparent 360deg);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask-composite:exclude;
+  animation:ctaRun 3.6s linear infinite}
+@keyframes ctaRun{to{--ctaAng:360deg}}
+/* Where @property is unsupported the angle never animates, so the light would
+   sit frozen on one edge. Better to show nothing than a smear. */
+@supports not (background:conic-gradient(from var(--ctaAng),red,blue)){
+  .cta-run{display:none}
+}
+@media(prefers-reduced-motion:reduce){.cta-run{display:none}}
 .slip-cta:hover{border-color:var(--faint)}
 /* Deliberately nothing here: this used to restyle the button whenever the
    panel was hovered, which meant hovering the button itself did nothing
@@ -753,10 +801,17 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
    toward the edge and the S does not - and the eye reads that as a sticker
    floating above the surface. Multiplying makes it take the shading beneath
    it, so it dims into the limb with everything else and looks painted on. */
+/* The roll waits for the mark. It used to start the moment the card painted,
+   while the PNG behind it was still on the wire - so a fresh load showed a
+   blank ball, and by the time the image landed the animation had already
+   carried it off to one side or round the back. That is the "starts on a
+   blank side": nothing was wrong with the timing, the thing being timed had
+   not arrived. The html class is set the moment the image decodes, so the
+   turn always begins with the mark facing forward. */
 .orb-mark{position:absolute;top:15%;bottom:15%;left:0;right:0;display:block;
   background:url("/wiz-orb-mark.png") center/auto 100% no-repeat;
-  mix-blend-mode:multiply;
-  animation:orbRoll 8s linear infinite}
+  mix-blend-mode:multiply}
+html.orb-ready .orb-mark{animation:orbRoll 8s linear infinite}
 .orb-shade{position:absolute;inset:0;border-radius:50%;display:block;
   pointer-events:none;
   background:
@@ -1079,6 +1134,12 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
   text-transform:uppercase;color:var(--faint);border-bottom:1px solid var(--line-soft);
   border-left:3px solid transparent}
 .lthead .c{text-align:center}
+/* MATCH, TIP, PRED are 10px uppercase, which is the size that needs contrast
+   most and had the least of it: --faint against the light paper is about 3:1,
+   under the 4.5 a body of small text wants. Dark mode is fine - faint on
+   near-black clears it comfortably - so only the light theme is lifted, to
+   --soft, which reads without turning a column label into a heading. */
+[data-theme="light"] .lthead{color:var(--soft)}
 .lrow{padding:5px 8px;border-bottom:1px solid var(--line-soft);cursor:pointer;
   border-left:3px solid var(--edge);border-radius:0;overflow-anchor:none}
 /* --raise is a solid step lighter than the card and read as a white slab
@@ -3494,6 +3555,11 @@ footer{margin-top:26px;padding-top:18px;
            thing on a phone - with its own proof line inside it, so being
            convincing costs no scroll. Everything else supports it. -->
       <div class="slip-cta slip-cta--wizard slip-cta--hero" id="slipCta">
+        <!-- A light running the card's edge. This is the one thing on the page
+             the site exists to get tapped, and it sat in the same still box as
+             everything around it. Its own element because both pseudo-elements
+             here are spoken for - the gold hairline and the violet drift. -->
+        <span class="cta-run" aria-hidden="true"></span>
         <div class="sc-head">
           <span class="sc-orb" aria-hidden="true"><span class="orb-mark"></span><span class="orb-shade"></span></span>
           <span class="sc-tx">
