@@ -545,15 +545,25 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 @keyframes shimmer{100%{transform:translateX(100%)}}
 #toasts{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:200;
   display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
-.toast{background:var(--card);border:1px solid var(--line);color:var(--text);font-weight:700;
-  font-size:14px;padding:12px 18px;border-radius:var(--r-md);box-shadow:0 12px 30px rgba(0,0,0,.4);
-  display:flex;align-items:center;gap:9px;opacity:0;transform:translateY(12px);
-  transition:opacity .25s,transform .25s;max-width:88vw}
+/* "Installed." "Back online." These say a small thing and then leave, so they
+   should read as a note rather than an alert - and they were dressed as an
+   alert: 14px bold in a bordered card, 12 by 18 of padding, and a 30px shadow
+   under it. A pill at 13px with the state carried by one small dot says the
+   same thing and asks for much less. The coloured border went with the dot:
+   ringing the whole box in green to say "installed" was the heaviest part. */
+.toast{background:var(--card);border:1px solid var(--line);color:var(--text);font-weight:600;
+  font-size:13px;padding:9px 15px;border-radius:99px;box-shadow:0 6px 18px rgba(0,0,0,.26);
+  display:flex;align-items:center;gap:8px;opacity:0;transform:translateY(8px);
+  transition:opacity .22s,transform .22s;max-width:88vw}
 .toast.in{opacity:1;transform:translateY(0)}
-.toast.ok{border-color:var(--green)}
-.toast.err{border-color:var(--red)}
-.toast.err::before{content:"!";color:var(--red-ink);font-weight:800}
-.toast.info{border-color:var(--win)}
+/* The state, as a dot. Neutral unless the message is actually one of the
+   three - a plain toast keeps a quiet grey mark rather than no mark, so the
+   text always starts at the same place. */
+.toast::before{content:"";flex-shrink:0;width:6px;height:6px;border-radius:50%;
+  background:var(--faint)}
+.toast.ok::before{background:var(--green)}
+.toast.err::before{background:var(--red)}
+.toast.info::before{background:var(--win)}
 .glance{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0 4px}
 .gl-card{position:relative;overflow:hidden;background:linear-gradient(150deg,var(--card),var(--card-2));
   border:1px solid var(--line);border-radius:var(--r-md);padding:14px;cursor:pointer;
