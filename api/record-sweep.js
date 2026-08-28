@@ -219,7 +219,7 @@ module.exports = async (req, res) => {
     const stored = dry ? { ok: true, rows: [] } : await DB.listLiveSeen();
     const present = new Set(seenRows.map(r => r.match_key));
     const rows = [], done = [], expired = [];
-    const held = { stillOn: 0, tooSoon: 0, notLate: 0, ungradeable: 0 };
+    const held = { stillOn: 0, tooSoon: 0, notLate: 0, ungradeable: 0, impossible: 0 };
     /* Counts alone say a row is stuck without saying which, or why, and the
        answer lived only in the database. Carry a few examples out with the
        response so a stuck sweep can be read from its own output. */
@@ -239,6 +239,17 @@ module.exports = async (req, res) => {
       const lastSeen = Date.parse(s.last_seen || "");
       const kick = s.kickoff ? Date.parse(s.kickoff) : NaN;
       if (isFinite(lastSeen) && now - lastSeen > STALE_MS) { expired.push(s.match_key); continue; }
+      /* Watched before it started, which cannot have happened. The observe
+         guard refuses these now, but rows written before that guard existed
+         are still sitting here waiting for their listed kick-off to pass, at
+         which point they would bank a score for a game we may never have been
+         looking at. Drop them rather than let the clock make them plausible. */
+      if (isFinite(lastSeen) && isFinite(kick) && lastSeen < kick) {
+        held.impossible++;
+        note(s, "last seen before its own kick-off - dropped");
+        expired.push(s.match_key);
+        continue;
+      }
       if (!isFinite(lastSeen) || now - lastSeen < ABSENT_MS) { held.stillOn++; note(s, "seen too recently to be gone"); continue; }
       if (!isFinite(kick) || now - kick < MATCH_LEN_MS) { held.tooSoon++; note(s, "not long enough since kick-off"); continue; }
 

@@ -343,3 +343,48 @@ test("a kick-off a few minutes ahead of our clock is tolerated", async () => {
   assert.strictEqual(res._j.notYet, 0, "ten minutes ahead is a clock skew, not an impossibility");
   assert.strictEqual(calls.upserted.length, 1);
 });
+
+/* The observe guard stops new rows like this, but rows written before it
+   existed are still in the table, waiting for their listed kick-off to pass so
+   they can look reasonable. A row last seen before its own kick-off is proof
+   that either the kick-off or the pairing is wrong, and the sweep cannot tell
+   which - so it goes, rather than being banked once the clock catches up. */
+test("a row last seen before its own kick-off is dropped, not banked", async () => {
+  const calls = install({
+    live: [],
+    stored: [{
+      match_key: "impossible1", match_date: "2026-08-29",
+      home: "Necaxa", away: "Cruz Azul",
+      home_norm: "necaxa", away_norm: "cruz-azul", league: "Mexico Liga MX",
+      tip: "Over 1.5", tip_p: 0.8,
+      /* kick-off five hours from now, yet somehow watched at the 85th minute */
+      kickoff: new Date(Date.now() + 5 * 3600 * 1000).toISOString(),
+      hg: 1, ag: 0, minute: 85, status: "H2",
+      last_seen: new Date(Date.now() - 50 * 60 * 1000).toISOString(),
+    }],
+  });
+  const res = await run();
+  assert.strictEqual(res._j.finalised, 0);
+  assert.strictEqual(res._j.held.impossible, 1);
+  assert.strictEqual(calls.inserted.length, 0, "it must never reach the record");
+  assert.deepStrictEqual(calls.deleted, ["impossible1"], "and it must not linger");
+  assert.match(res._j.heldWhy.join(" "), /before its own kick-off/);
+});
+
+/* The ordinary case must survive the new check unharmed. */
+test("a normal finished match is still banked", async () => {
+  const calls = install({
+    live: [],
+    stored: [{
+      match_key: "normal1", match_date: "2026-08-27",
+      home: "Boreham Wood", away: "Boston Utd",
+      home_norm: "boreham-wood", away_norm: "boston-utd", league: "FA Cup",
+      tip: "Over 1.5", tip_p: 0.82, kickoff: new Date(OLD).toISOString(),
+      hg: 2, ag: 1, minute: 88, status: "H2", last_seen: RECENT,
+    }],
+  });
+  const res = await run();
+  assert.strictEqual(res._j.held.impossible, 0);
+  assert.strictEqual(res._j.finalised, 1);
+  assert.strictEqual(calls.inserted[0].hit, true);
+});
