@@ -5583,6 +5583,23 @@ const SPORTY_URL="https://www.sportybet.com/ng/?shareCode=";
    the modal only mentioned in a footnote - leaving anyone who uses that app to
    copy the code and find their own way there. */
 const FOOTBALL_URL="https://www.football.com/ng/m?shareCode=";
+/* football.com serves a 404 for /.well-known/assetlinks.json, which is the file
+   Android requires before it will let an app claim a site's https links. So a
+   plain https link can never open their app, however installed it is - which is
+   why SportyBet's opens and theirs did not.
+   An intent:// URL asks Android for the app by name instead. The fallback is
+   the part that makes this safe: no app, wrong package, or an app that does not
+   want the link, and the browser opens the web page exactly as it does today.
+   Android only - nothing else understands the scheme, and iOS and desktop are
+   already served properly by the plain URL. */
+const FOOTBALL_PKG="com.football.app.android";
+function footballLink(code){
+  var web=FOOTBALL_URL+encodeURIComponent(code);
+  if(!/android/i.test(navigator.userAgent)) return {href:web,blank:true};
+  return {href:"intent://"+web.replace(/^https?:\/\//,"")+
+    "#Intent;scheme=https;package="+FOOTBALL_PKG+
+    ";S.browser_fallback_url="+encodeURIComponent(web)+";end", blank:false};
+}
 /* Same-origin so Vercel's CDN can cache it - see lib/upstream.js. */
 const SPORTY_FIXTURES="/api/fixtures";
 
@@ -6296,6 +6313,7 @@ function showCode(code,hostId){
   var wrap=document.createElement("div");
   wrap.id="codeModal";
   wrap.className="code-modal-scrim";
+  var _fb=footballLink(code);
   wrap.innerHTML="<div class='code-card code-card--modal' role='dialog' aria-modal='true' aria-label='Booking code'>"+
     "<button class='code-x' type='button' aria-label='Close'>"+
       "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' aria-hidden='true'><path d='M6 6l12 12M18 6L6 18'/></svg></button>"+
@@ -6318,8 +6336,9 @@ function showCode(code,hostId){
        code and go and find it. The sentence stays - it is what makes the pill
        make sense - but the name is now the way in. */
     "<p class='code-also'>Works on "+
-      "<a class='code-open-alt' href='"+FOOTBALL_URL+encodeURIComponent(code)+
-        "' target='_blank' rel='noopener'>football<span class='fb-dot'>.</span>com</a></p>"+
+      "<a class='code-open-alt' href=\""+esc(_fb.href)+"\""+
+        (_fb.blank?" target='_blank'":"")+" rel='noopener'>"+
+        "football<span class='fb-dot'>.</span>com</a></p>"+
     "</div>";
   document.body.appendChild(wrap);
   function close(){wrap.remove();}
