@@ -1,7 +1,7 @@
 # Skypredict — Session Handoff (updated 2026-08-26)
 
 ## Deployed state
-- **Live URL:** https://skypredict-theta.vercel.app
+- **Live URL:** https://skypredict-theta.vercel.app (set `SITE_ORIGIN` on Vercel to move it)
 - **Deploy model:** push to `main` → Vercel GitHub integration → prod (~30s)
 - **Repo:** https://github.com/Skait0/Skypredict.git — local `main` synced with origin
 - **Working tree:** clean

@@ -1,8 +1,8 @@
 # Resume session — Skypredict / Soccerwizard
 
-Last updated 2026-08-28. Repo: `C:\Users\DELL\Desktop\skypredict`
-Live: https://skypredict-theta.vercel.app · remote `main` @ `7d0b237`
-Tests: `npm test` → **89/89**.
+Last updated 2026-08-28 (evening). Repo: `C:\Users\DELL\Desktop\skypredict`
+Live: https://skypredict-theta.vercel.app · remote `main` @ `182ead8`
+Tests: `npm test` → **119/119**.
 
 ## How to pick this up in PowerShell
 
@@ -180,15 +180,41 @@ curl -s -H "x-sweep-key: <SWEEP_KEY>" \
   https://skypredict-theta.vercel.app/api/record-sweep
 ```
 
-### Not yet exercised on real data
+### Why it recorded nothing for a week, and what fixed it
 
-Both tables were still empty at the end of the session, because the only live
-football at 02:00 was South American and we publish no tips for those leagues —
-`observed: 0` was correct, not a fault.
+`results` was empty until 28 Aug evening. Three causes, found in this order:
 
-- **Name matching is untested against our actual leagues.** The sweep pairs the
-  live feed to fixtures with `M.normName`. If `observed` stays 0 while European
-  games are live, look there, not at the plumbing.
+1. **The schedule never fired.** The GitHub Actions workflow's entire history
+   was one manual run. Actions were enabled and permissions open — GitHub's
+   scheduler is best-effort and drops high-frequency crons. **Replaced by
+   cron-job.org** (job 8344846, every 10 min, `x-sweep-key` header, response
+   saving on). First run 28 Aug 18:30 WAT returned 200, `ok:true`, `dry:false`,
+   both error fields null. The GH workflow stays as a fallback; the sweep is
+   idempotent if both ever run.
+2. **The cron window excluded the Americas.** `*/10 10-23 * * *` was the
+   *European* football day. 66 of our 81 MLS / Liga MX / Brazil / Argentina
+   fixtures kick off 22:00–10:00 UTC. Worse than missing them: the 23:50 poll
+   saw them in the first half, the window shut, and by 10:00 they were gone and
+   last seen at ~45' — below the 80th-minute bar, so each was discarded as
+   "vanished mid-game". Now `*/10 * * * *`.
+3. **A held row said nothing.** `held: {notLate: 2}` could only be explained by
+   opening Postgres. The response now carries `heldWhy` — a line per held row
+   with match, score, minute, status, ages and the rule that held it. It shows
+   up directly in the cron-job execution history.
+
+**A trap avoided, worth remembering:** seeing `notLate` the instinct is to lower
+the 80-minute bar. That would have been wrong. Those rows were stuck because
+*nothing was polling*, not because the rule is too strict — with a working cron
+they'd have been seen at 85'. Loosening it would have started writing
+half-finished scores into the one record meant to be trustworthy.
+
+- **Name matching is only partly exercised.** Measured 28 Aug: of 3 fixtures
+  actually in play, 1 paired, 1 was absent from the live feed entirely, and 1
+  was a real normaliser miss (`Braunschweig` vs the feed's `Eintracht
+  Braunschweig`). **Deliberately not fixed yet** — the sweep had just started
+  working and a fuzzy matcher writes to the permanent record. Let a few nights
+  of `observed` counts and `heldWhy` accumulate, then fix with evidence. Any
+  fallback wants one-side-exact + unique candidate + kick-off agreement.
 - The client ledger remains the **better** capture when someone is on the site:
   it polls every 30s, so it catches the true final score. The sweep records the
   last seen score, which is why it needs the 80th-minute guard. They fill the
@@ -196,8 +222,46 @@ football at 02:00 was South American and we publish no tips for those leagues �
 
 ---
 
+## Shipped 28 Aug (evening)
+
+- **Clear was undoing itself.** `clearMy` emptied the slip then called
+  `renderBuilder`, which syncs the builder's picks into `MYSLIP` on every
+  render — refilling it in the same click. `BUILD.touched` arms that sync the
+  moment the slider moves and was never lowered. Fixed with `BUILD_NOSYNC` plus
+  lowering `touched`. Second cause, same complaint: the sheet's Clear left the
+  builder preview and its total odds on screen, so closing the sheet looked
+  like Clear had been ignored — both buttons now share `clearSlipState()`.
+  Third: `.clear-btn:hover` paints it red and a phone leaves `:hover` on the
+  last thing tapped, so it *stayed* red. Now behind `@media (hover:hover)`.
+- **A page per match** — `lib/pages.js` + `writePages` in prebuild. 591 static
+  pages, `robots.txt`, `sitemap.xml`, JSON-LD, `cleanUrls`. A fixture page
+  becomes a result page at the same URL once played. Gitignored build output.
+- **Results keep the model's numbers** so a page never goes thin once played.
+  Free for build-graded results (predictTotals had just run); cup ties need the
+  snapshot the sweep stores, hence `model jsonb` on `live_seen` and `results`
+  (migration applied 28 Aug). The store drops the column and writes the row
+  anyway if the migration has not run — losing a snapshot costs a page some
+  numbers, losing the row costs a result nothing can recover. Stripped from
+  `predictions.json` by `leanResults` (it added 70KB).
+- **"Any winner" was a dead chip in wizard mode.** The chip sync renamed `wd`
+  to the wizard's `doubles` and threw `any` away. Same keys both sides now.
+- **The domain is one env var.** Set `SITE_ORIGIN` on Vercel and canonicals,
+  sitemap, robots, social cards and the share-image canvas all follow.
+
+---
+
 ## Still open
 
+- **Submit the sitemap to Google Search Console.** The 591 pages exist and are
+  crawlable; nothing has told Google they are there. Owner action — needs the
+  owner's Google account. Highest-leverage remaining item for traffic.
+- **Sweep name matching** — see the measured miss above. Evidence first.
+- **Collapse slider + wizard onto one engine.** They are one builder with two
+  ways of stating the goal ("how risky" vs "what payout"); everything else —
+  fixture pool, league filter, home/away sanity, `h32`, goals lean, seed jitter
+  — is written twice. `clearSlipState` was one symptom. Neither engine has a
+  single test: write characterisation tests *first*.
+- **Weight**: 207KB CSS + 287KB JS for one page, on Nigerian mobile data.
 - **Booking errors** — now *diagnosable*, not fixed. `bookFetch` used to return
   a bare `{}` for everything, so a dead network, a 15s timeout against the
   sleeping Railway host and a flat refusal all printed the same thing. They now
@@ -217,7 +281,7 @@ football at 02:00 was South American and we publish no tips for those leagues �
 ## Conventions
 
 - Comments explain *why*, in prose, usually naming what broke before.
-- `npm test` before pushing (node --test, 89 tests).
+- `npm test` before pushing (node --test, 119 tests).
 - Syntax-check the inline scripts after editing `public/index.html`:
   `node -e "const h=require('fs').readFileSync('public/index.html','utf8');const re=/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g;let m,i=0;while((m=re.exec(h))){i++;try{new Function(m[1])}catch(e){console.log('#'+i,e.message)}}console.log('checked',i)"`
 - Render the real board locally:
