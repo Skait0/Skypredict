@@ -138,6 +138,18 @@ function writePages(payload) {
 
   const dir = path.join(PUB, "m");
   fs.mkdirSync(dir, { recursive: true });
+  /* Clear the directory first. On Vercel this is a no-op - every build starts
+     from a fresh checkout - but locally the pages accumulate, and a fixture
+     that has dropped off the card leaves its page behind holding whatever the
+     numbers were the day it was written. That page then answers checks made
+     against the whole directory, which is how a percentage bug appeared to
+     survive a fix it had never been through. */
+  let swept = 0;
+  try {
+    for (const f of fs.readdirSync(dir)) {
+      if (f.endsWith(".html")) { fs.unlinkSync(path.join(dir, f)); swept++; }
+    }
+  } catch (e) { warn("could not clear public/m: " + e.message); }
   const paths = [];
   let written = 0, failed = 0;
   for (const pg of pages) {
@@ -155,7 +167,8 @@ function writePages(payload) {
   fs.writeFileSync(path.join(PUB, "sitemap.xml"), P.renderSitemap(paths));
   fs.writeFileSync(path.join(PUB, "robots.txt"), P.renderRobots());
   log("pages: " + written + " match pages" + (failed ? " (" + failed + " failed)" : "") +
-      " + sitemap.xml + robots.txt -> " + P.ORIGIN);
+      " + sitemap.xml + robots.txt -> " + P.ORIGIN +
+      (swept ? " (cleared " + swept + " stale)" : ""));
 }
 
 /* -------------------------------------------------------------- 1c. host */
