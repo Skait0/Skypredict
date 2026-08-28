@@ -158,6 +158,55 @@ function writePages(payload) {
       " + sitemap.xml + robots.txt -> " + P.ORIGIN);
 }
 
+/* -------------------------------------------------------------- 1c. host */
+/**
+ * Point the built site at whatever host it is being deployed to.
+ *
+ * The hostname is written into the page in three places a build cannot reach
+ * from lib/pages.js: the og:image and twitter:image tags, and - easy to miss -
+ * the share-image canvas, which literally draws the domain onto every picture
+ * anybody shares. The manifest names it too.
+ *
+ * None of that breaks when a custom domain is added, because Vercel keeps
+ * serving the .vercel.app name as well. What it does is quietly send the new
+ * domain's SEO to the old one: pages served from the new host would carry
+ * canonical tags naming the old, and search engines would consolidate on the
+ * old. So this exists to make buying a domain one environment variable rather
+ * than a hunt through the source.
+ *
+ * Set SITE_ORIGIN on Vercel (e.g. https://soccerwizard.com) and everything -
+ * canonicals, sitemap, robots, social cards, the share image - follows.
+ */
+const DEFAULT_ORIGIN = "https://skypredict-theta.vercel.app";
+function applyOrigin() {
+  const raw = process.env.SITE_ORIGIN;
+  if (!raw) return;
+  const to = raw.replace(/\/+$/, "");
+  if (to === DEFAULT_ORIGIN) return;
+  /* Rewrites tracked files, so it may only run where the checkout is thrown
+     away - the same rule the asset split follows, and for the same reason. */
+  if (!process.env.VERCEL && !process.env.SPLIT) {
+    log("SITE_ORIGIN is set but this is not a deploy - leaving the source alone");
+    return;
+  }
+  const toHost = to.replace(/^https?:\/\//, "");
+  const fromHost = DEFAULT_ORIGIN.replace(/^https?:\/\//, "");
+  const touched = [];
+  for (const rel of ["index.html", "manifest.webmanifest"]) {
+    const f = path.join(PUB, rel);
+    try {
+      const before = fs.readFileSync(f, "utf8");
+      /* Full URL first, then any bare hostname left over - the canvas draws
+         the host on its own, without a scheme. */
+      const after = before.split(DEFAULT_ORIGIN).join(to).split(fromHost).join(toHost);
+      if (after !== before) { fs.writeFileSync(f, after); touched.push(rel); }
+    } catch (e) {
+      warn("origin rewrite skipped for " + rel + ": " + e.message);
+    }
+  }
+  log("origin -> " + to + (touched.length ? " (" + touched.join(", ") + ")" : " (nothing to change)"));
+}
+
 /* --------------------------------------------------------------- 2. split */
 function biggest(html, re) {
   const found = [...html.matchAll(re)];
@@ -235,6 +284,9 @@ function splitAssets() {
 (async () => {
   const payload = await bakePayload();
   writePages(payload);
+  /* Before the split, so the hostname inside the big inline script - the
+     share-image canvas - is rewritten while it is still in the page. */
+  applyOrigin();
   splitAssets();
 })().catch((e) => {
   /* Never fail the deploy over an optimisation. */
