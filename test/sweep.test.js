@@ -209,3 +209,53 @@ test("a row nobody ever resolved is expired rather than kept forever", async () 
   assert.strictEqual(res._j.expired, 1);
   assert.deepStrictEqual(calls.deleted, ["k5"]);
 });
+
+/* A match page shows the probability spread and both sides' form. Once the
+   game is played the fixture leaves the board and takes those with it, and for
+   a cup tie the build can never re-derive them - a cup has no league in the
+   model's index. The snapshot taken while the match was still a fixture is the
+   only copy that will ever exist, so it has to survive both hops. */
+const MODEL = { home_p: 0.43, draw_p: 0.27, away_p: 0.30, o15: 0.75, o25: 0.5,
+                lh: 1.49, la: 1.2, score: "1-1", form_home: ["W", "L"] };
+
+test("the model's numbers are stored with the match while it is on", async () => {
+  const calls = install({
+    live: [{ home: "Boreham Wood", away: "Boston Utd", homeScore: 1, awayScore: 0,
+             minute: 70, status: "H2" }],
+    payloadBody: payload({
+      fixtures: [Object.assign({
+        date: "2026-08-27", home: "Boreham Wood", away: "Boston Utd",
+        league: "England Conference National", tip: "Over 1.5", tip_p: 0.82,
+        kickoff: new Date(OLD).toISOString(),
+      }, MODEL)],
+    }),
+  });
+  await run();
+  assert.deepStrictEqual(calls.upserted[0].model, MODEL);
+});
+
+test("they travel from the working row into the result", async () => {
+  const calls = install({
+    live: [],
+    stored: [{
+      match_key: "m1", match_date: "2026-08-27", home: "Boreham Wood", away: "Boston Utd",
+      home_norm: "boreham-wood", away_norm: "boston-utd", league: "FA Cup",
+      tip: "Over 1.5", tip_p: 0.82, kickoff: new Date(OLD).toISOString(),
+      hg: 2, ag: 1, minute: 88, status: "H2", last_seen: RECENT, model: MODEL,
+    }],
+  });
+  const res = await run();
+  assert.strictEqual(res._j.finalised, 1);
+  assert.deepStrictEqual(calls.inserted[0].model, MODEL);
+});
+
+/* A fixture with no numbers must not write an empty object that looks like a
+   snapshot to everything downstream. */
+test("a fixture carrying no numbers stores null, not an empty snapshot", async () => {
+  const calls = install({
+    live: [{ home: "Boreham Wood", away: "Boston Utd", homeScore: 0, awayScore: 0,
+             minute: 30, status: "H1" }],
+  });
+  await run();
+  assert.strictEqual(calls.upserted[0].model, null);
+});

@@ -151,3 +151,29 @@ test("the percentages note only appears where there are percentages", () => {
     { hg: 1, ag: 0, tip: "1", hit: true });
   assert.ok(!bare.includes("Percentages are our model"));
 });
+
+/* The numbers exist for the match pages and nothing else. Shipping them in
+   predictions.json put 70KB on a download every visitor makes, so the payload
+   keeps them and the file does not - and the fields dropped have to be exactly
+   the ones the page reads, or a page goes thin again without anyone noticing. */
+test("stripping a result leaves everything the site actually reads", () => {
+  const B = require("../lib/build.js");
+  const full = { results: [{ date: "2026-08-25", league: "L", home: "A", away: "B",
+    hg: 2, ag: 1, tip: "1X", hit: true, tip_p: 0.7, recorded: true,
+    home_p: 0.43, o15: 0.75, lh: 1.4, form_home: ["W"], score: "1-1" }] };
+  const lean = B.leanResults(full).results[0];
+  assert.deepStrictEqual(lean, { date: "2026-08-25", league: "L", home: "A", away: "B",
+    hg: 2, ag: 1, tip: "1X", hit: true, tip_p: 0.7, recorded: true });
+  // and the original is untouched, since the pages are built from it afterwards
+  assert.strictEqual(full.results[0].home_p, 0.43);
+});
+
+test("every field the page renders is one the stripper knows about", () => {
+  const B = require("../lib/build.js");
+  const rendered = ["form_home", "form_away", "lh", "la", "score",
+    "home_p", "draw_p", "away_p", "dc1x", "dc12", "dcx2",
+    "o15", "o25", "o35", "btts", "fh_o05"];
+  for (const k of rendered) {
+    assert.ok(B.RESULT_MODEL_KEYS.indexOf(k) >= 0, k + " is rendered but never stripped");
+  }
+});

@@ -16,7 +16,7 @@
  * visitor of the day already has warm data.
  */
 
-const { buildPayload } = require("../lib/build.js");
+const { buildPayload, leanResults } = require("../lib/build.js");
 
 // Survives between invocations while a container stays warm. Not a real
 // cache, just a cheap guard against two builds running back to back.
@@ -75,7 +75,9 @@ module.exports = async (req, res) => {
       return res.status(200).json(stripLog(memo.payload, debug));
     }
 
-    const payload = await buildPayload({});
+    /* Same shape the baked file has: the per-result model numbers are for
+       the static match pages, and no client asks for them. */
+    const payload = leanResults(await buildPayload({}));
     const out = chooseResponse(payload, lastGood);
 
     /* A thin build never becomes the stored copy: it must not evict good data

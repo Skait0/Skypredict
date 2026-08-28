@@ -41,9 +41,9 @@ function hash(s) {
 
 /* ---------------------------------------------------------------- 1. bake */
 async function bakePayload() {
-  let buildPayload, MIN;
+  let buildPayload, leanResults, MIN;
   try {
-    ({ buildPayload } = require("../lib/build.js"));
+    ({ buildPayload, leanResults } = require("../lib/build.js"));
     MIN = require("../api/predictions.js").MIN_HEALTHY_FIXTURES || 20;
   } catch (e) {
     warn("cannot load the builder, skipping bake: " + e.message);
@@ -66,7 +66,10 @@ async function bakePayload() {
   }
   const { log: _drop, ...rest } = payload;
   const out = path.join(PUB, "predictions.json");
-  fs.writeFileSync(out, JSON.stringify(rest));
+  /* The file the site downloads, without the per-result model numbers - they
+     exist for the match pages, which are generated below from `rest` while it
+     still has them. */
+  fs.writeFileSync(out, JSON.stringify(leanResults(rest)));
   log("baked " + n + " fixtures -> predictions.json (" +
       (fs.statSync(out).size / 1024).toFixed(0) + " KB, " +
       ((Date.now() - t0) / 1000).toFixed(1) + "s)");

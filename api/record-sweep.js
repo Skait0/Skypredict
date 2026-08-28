@@ -91,6 +91,20 @@ async function getJSON(url, ms) {
    written into the record as a real result, and for a cup tie nothing
    downstream would ever correct it. Drop them by name. */
 const NOT_REAL = /\bsrl\b|esoccer|e-?football|cyber|simulat|virtual|\b8 ?mins?\b|\b10 ?mins?\b|\b12 ?mins?\b/i;
+/* The model's numbers for a fixture, carried through live_seen and into the
+   result so the match page keeps them after the game is played. A cup tie has
+   no league in the model's index, so the build can never re-derive these for
+   one - if they are not captured here, that page is a bare scoreline forever.
+   Field names match a fixture's exactly, so a page reads either the same way. */
+const MODEL_KEYS = ["form_home", "form_away", "lh", "la", "total", "score",
+  "home_p", "draw_p", "away_p", "dc1x", "dc12", "dcx2",
+  "o15", "o25", "o35", "btts", "fh_o05"];
+function modelOf(f) {
+  const o = {};
+  for (const k of MODEL_KEYS) if (f[k] != null) o[k] = f[k];
+  return Object.keys(o).length ? o : null;
+}
+
 function isSimulated(m) {
   return NOT_REAL.test(((m && m.league) || "") + " " + ((m && m.home) || "") + " " + ((m && m.away) || ""));
 }
@@ -169,6 +183,7 @@ module.exports = async (req, res) => {
         hg: Number(lm.homeScore), ag: Number(lm.awayScore),
         minute: (lm.minute != null ? Number(lm.minute) : null),
         status: String(lm.status || ""),
+        model: modelOf(f),
         last_seen: new Date(now).toISOString(),
       });
     }
@@ -213,6 +228,7 @@ module.exports = async (req, res) => {
         hg: Number(s.hg), ag: Number(s.ag),
         tip: s.tip, hit: hit,
         tip_p: (s.tip_p != null ? s.tip_p : null),
+        model: (s.model && typeof s.model === "object") ? s.model : null,
         source: "sweep",
       });
       done.push(s.match_key);

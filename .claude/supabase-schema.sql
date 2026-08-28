@@ -91,3 +91,27 @@ alter table public.live_seen enable row level security;
 -- 4. Run the workflow once by hand (Actions -> Record full-time results ->
 --    Run workflow) with "Grade but do not write" ticked, and read the summary
 --    it prints before letting it write anything.
+
+-- ---------------------------------------------------------------------------
+-- Migration, 2026-08-28: keep the model's numbers with the result.
+--
+-- A match page shows the tip, the probability spread, expected goals and both
+-- sides' form. When the game is played the fixture leaves the board and takes
+-- all of that with it, so the page that showed the full picture in the morning
+-- showed a bare scoreline by night.
+--
+-- The build can re-derive the numbers for a league match - it re-runs the model
+-- over recent games to grade them anyway. It cannot for a cup tie: a cup has no
+-- league in the model's index, which is exactly why cup ties reach the record
+-- through the sweep and no other way. For those, this snapshot is the only
+-- copy that will ever exist.
+--
+-- jsonb rather than twenty columns because nothing queries inside it; it is
+-- carried from the fixture to the page unread.
+--
+-- Safe to run more than once, and safe to run late - the code that writes this
+-- drops the column and writes the row without it if the column is not there.
+-- ---------------------------------------------------------------------------
+
+alter table public.live_seen add column if not exists model jsonb;
+alter table public.results   add column if not exists model jsonb;
