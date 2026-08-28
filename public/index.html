@@ -9246,7 +9246,10 @@ setTimeout(hideLoader,8000);
   var _iOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
   /* Chrome can tell us the app is already on the device even from a browser
      tab, which is the one case the bar would otherwise get wrong: installed,
-     but opened from a link rather than the home screen. */
+     but opened from a link rather than the home screen. It only reports apps
+     the manifest lists under related_applications, so the manifest names this
+     PWA as one of its own - without that entry this always came back empty and
+     the offer stood in front of people who had already taken it. */
   try{
     if(navigator.getInstalledRelatedApps){
       navigator.getInstalledRelatedApps().then(function(apps){
@@ -9255,6 +9258,21 @@ setTimeout(hideLoader,8000);
       }).catch(function(){});
     }
   }catch(e){}
+  /* The signal that does not depend on the manifest being read correctly, or
+     on having been here when the install happened: Chrome does not fire
+     beforeinstallprompt for a site that is already installed. So on Android,
+     no prompt within a couple of seconds means there is nothing to offer -
+     either it is installed, or this browser will not install it - and either
+     way the bar has no business being there.
+     Not applied to iOS, which never fires the event at all and where the bar
+     is the only route to the Share-sheet instructions. */
+  if(/android/i.test(navigator.userAgent)&&!_iOS){
+    setTimeout(function(){
+      if(!_dip&&!window.__swInstallEvent&&!_installed){
+        _installed=true; offerInstall();
+      }
+    },2500);
+  }
   function doInstall(){
     if(_dip){ _dip.prompt(); _dip.userChoice&&_dip.userChoice.then(function(c){
       if(c&&c.outcome==='accepted'){
