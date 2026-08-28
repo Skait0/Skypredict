@@ -1,5 +1,9 @@
 -- Skypredict / Soccerwizard - Supabase phase 1
--- Run this in the Supabase SQL editor on a new project.
+--
+-- APPLIED 2026-08-28 to project SoccerWizard.Com (utwtcvfliljydnhedpdw,
+-- AWS eu-west-2, org SoccerWizard, free plan). Verified after running:
+-- both tables present, rls_on = true, policies = 0.
+-- Re-running is safe - every statement is create-if-not-exists.
 --
 -- Nothing here is reachable from the browser. Every table has row-level
 -- security on and *no policies at all*, which denies anon and authenticated
@@ -69,9 +73,14 @@ create table if not exists public.live_seen (
 alter table public.live_seen enable row level security;
 
 -- ------------------------------------------------------------- how to wire
--- 1. Project settings -> API: copy the URL and the *service_role* key.
+-- Step 1 is done. Steps 2-4 move a service-role key around, so they are the
+-- owner's to do: that key bypasses row-level security, which makes it a write
+-- handle on the record, and it should not pass through a chat transcript or
+-- any tool that keeps one.
+--
+-- 1. DONE - tables created and verified.
 -- 2. Vercel -> project -> Settings -> Environment Variables, all environments:
---      SUPABASE_URL                = https://<project>.supabase.co
+--      SUPABASE_URL                = https://utwtcvfliljydnhedpdw.supabase.co
 --      SUPABASE_SERVICE_ROLE_KEY   = <service_role key>
 --      SWEEP_KEY                   = <any long random string you invent>
 --    The service-role key bypasses RLS, so it must never be prefixed in a way
