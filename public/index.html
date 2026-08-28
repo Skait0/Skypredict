@@ -25,6 +25,34 @@
 <script>
 (function(){var t=null;try{t=localStorage.getItem("sw.theme");}catch(e){}
 document.documentElement.setAttribute("data-theme",t||"dark");})();
+/* Catch the install offer here, in the head, rather than in the main bundle.
+   Chrome fires beforeinstallprompt early in the load, and the bundle is a
+   deferred external file by the time it reaches a browser - it does not run
+   until parsing is done. The event does not queue and does not fire twice, so
+   a listener attached later can miss it outright, which is exactly what it
+   looks like when the install button never appears no matter how installable
+   the site is. Hold the event on window and let the bundle collect it. */
+/* Anything that throws before the page has finished wiring itself, kept where
+   it can be read back. A script that dies half way still leaves a working
+   board behind it - the render has already happened by then - so the failure
+   is invisible except as features that quietly do not exist. */
+(function(){
+  window.__swErr=[];
+  window.addEventListener("error",function(ev){
+    try{window.__swErr.push({m:String(ev.message),l:ev.lineno,c:ev.colno});}catch(_){}
+  },true);
+  window.addEventListener("unhandledrejection",function(ev){
+    try{window.__swErr.push({m:"unhandled: "+String((ev.reason&&ev.reason.message)||ev.reason)});}catch(_){}
+  });
+})();
+(function(){
+  window.__swInstallEvent=null;
+  window.addEventListener("beforeinstallprompt",function(e){
+    e.preventDefault();
+    window.__swInstallEvent=e;
+    try{window.dispatchEvent(new Event("sw-installable"));}catch(_){}
+  });
+})();
 </script>
 <script>
 /* Error tracking (opt-in). Paste your Sentry *browser* DSN below to enable;
@@ -8631,7 +8659,14 @@ setTimeout(hideLoader,8000);
     if(ib) ib.hidden=!on;
     if(bar) bar.hidden=!(on&&!_instOff&&!_standalone);
   }
+  /* The head script may already have caught it before this file even ran, so
+     take what is waiting there as well as listening for a later one. */
+  function takeEvent(){
+    if(window.__swInstallEvent){ _dip=window.__swInstallEvent; offerInstall(true); }
+  }
+  window.addEventListener('sw-installable',takeEvent);
   window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();_dip=e;offerInstall(true);});
+  takeEvent();
   window.addEventListener('appinstalled',function(){
     offerInstall(false);
     try{localStorage.setItem('sw.instoff','1');}catch(e){}
@@ -8656,7 +8691,13 @@ setTimeout(hideLoader,8000);
     _instOff=true; if(bar) bar.hidden=true;
     try{localStorage.setItem('sw.instoff','1');}catch(e){}
   });
-});
+/* This closed on "});" - a parenthesised function expression, defined and then
+   dropped on the floor. Valid JavaScript, so nothing ever threw and the board
+   carried on rendering; everything inside simply did not exist. That is the
+   whole of this block: toasts, the install offer, the "/" search shortcut, the
+   booking-error watcher. Every caller guards with "window.swToast &&", so a
+   missing swToast is silent by design - which is why it went unnoticed. */
+})();
 
 /* ==========================================================================
    Desktop Parallax Controller - Mouse-following 3D depth
