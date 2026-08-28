@@ -3186,12 +3186,21 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
 
   /* The recap's headline is yesterday. The running record underneath is the
      same sentence the hero already makes, and the full panel further down
-     says it properly - so on a phone the box keeps only what is new. */
-  .daily{padding:10px 12px}
+     says it properly - so on a phone the box keeps only what is new.
+     What was left was still carrying desktop spacing around it: padding, a
+     gap under the title, and ten pixels above a one-line link. This box sits
+     directly under the Pick of the day, which now runs to four reasons, so
+     every row of it is a row of scroll before the board. Tightened to the
+     text and no further - the type is untouched, only the air around it. */
+  .daily{padding:9px 11px;margin-top:10px}
   .daily-foot{display:none}
-  .daily-h{margin-bottom:7px}
-  .daily-bar{margin-top:8px}
-  .daily-score .dl-big{font-size:24px}
+  .daily-h{margin-bottom:5px}
+  .daily-h b{font-size:12.5px}
+  .daily-empty{font-size:12px;line-height:1.4}
+  .daily-bar{margin-top:6px;height:5px}
+  .daily-score{gap:6px}
+  .daily-score .dl-big{font-size:22px}
+  .daily-back{margin-top:6px}
 
   /* Slip of the day: 18px of padding all round, and a lot of air between the
      legs, for a card that is really a short list. */
@@ -8694,7 +8703,14 @@ function renderBuilderOutput(){
          throwaway build so the numbers update as chips are tapped, but the
          game list stays hidden until Conjure. */
       wizGhost=true;
-      picks=wspBuild().picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};}).slice(0,40);
+      /* Capped to match the build, not to a number of its own. This said 40
+         while wspBuild was returning 45 for x20000 and 49 for x50000, so the
+         preview reported forty games and odds well short of the target - and
+         since the preview is what you read while choosing, the jackpot tier
+         looked broken when only this line was. A preview that does not agree
+         with the thing it previews is worse than no preview. */
+      picks=wspBuild().picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};})
+        .slice(0,isJackpotOdds(WSP.odds)?JACKPOT_LEG_CAP:40);
     }
   } else {
     picks = firstVisit ? [] : buildPicks();
