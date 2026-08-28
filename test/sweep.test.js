@@ -170,6 +170,30 @@ test("a fixture the build has already graded is not re-recorded", async () => {
   assert.strictEqual(calls.upserted.length, 0);
 });
 
+/* The Simulated Reality League runs simulated versions of the very card we
+   publish, all night, in short cycles. If one were ever paired to a real
+   fixture its invented scoreline would land in the record as a result. */
+test("a simulated match is never paired to a real fixture", async () => {
+  const calls = install({
+    live: [{ home: "Boreham Wood", away: "Boston Utd", league: "Simulated Reality League",
+             homeScore: 5, awayScore: 5, minute: 88, status: "H2" }],
+  });
+  const res = await run();
+  assert.strictEqual(res._j.observed, 0);
+  assert.strictEqual(res._j.simulatedIgnored, 1);
+  assert.strictEqual(calls.upserted.length, 0);
+});
+
+test("the SRL suffix on club names is caught too, not just the league", async () => {
+  const calls = install({
+    live: [{ home: "Boreham Wood SRL", away: "Boston Utd SRL", league: "Premier League",
+             homeScore: 5, awayScore: 5, minute: 88, status: "H2" }],
+  });
+  const res = await run();
+  assert.strictEqual(res._j.observed, 0);
+  assert.strictEqual(calls.upserted.length, 0);
+});
+
 test("a row nobody ever resolved is expired rather than kept forever", async () => {
   const calls = install({
     live: [],

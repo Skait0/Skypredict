@@ -79,6 +79,21 @@ async function getJSON(url, ms) {
   } finally { clearTimeout(t); }
 }
 
+/* Simulated and virtual competitions, which are not football that happened.
+   The same filter the page applies in fetchLive, and it matters more here than
+   there: the Simulated Reality League runs simulated versions of exactly the
+   card we publish - "Crystal Palace SRL v Man City SRL" against a real Crystal
+   Palace v Man City, "Bayern SRL v VFB Stuttgart SRL" against a real Pick of
+   the Day - in short repeating cycles all night.
+   Today nothing collides only because normName leaves the "SRL" on the club
+   names, which is an accident of spelling rather than a safeguard. If that
+   suffix ever moved into the league name alone, a simulated scoreline would be
+   written into the record as a real result, and for a cup tie nothing
+   downstream would ever correct it. Drop them by name. */
+const NOT_REAL = /\bsrl\b|esoccer|e-?football|cyber|simulat|virtual|\b8 ?mins?\b|\b10 ?mins?\b|\b12 ?mins?\b/i;
+function isSimulated(m) {
+  return NOT_REAL.test(((m && m.league) || "") + " " + ((m && m.home) || "") + " " + ((m && m.away) || ""));
+}
 /* The live feed spells clubs its own way, so pair its matches to ours on
    normalised names - the same function the build uses to reconcile SportyBet
    against football-data, which is the identical problem. */
@@ -86,6 +101,7 @@ function liveIndex(matches) {
   const by = new Map();
   for (const m of (matches || [])) {
     if (!m || !m.home || !m.away) continue;
+    if (isSimulated(m)) continue;
     by.set(M.normName(m.home) + "|" + M.normName(m.away), m);
   }
   return by;
@@ -123,6 +139,7 @@ module.exports = async (req, res) => {
 
     const fixtures = (payload.body && payload.body.fixtures) || [];
     const liveMatches = (live.body && live.body.matches) || [];
+    const realMatches = liveMatches.filter(m => !isSimulated(m));
     const byName = liveIndex(liveMatches);
     const now = Date.now();
 
@@ -215,7 +232,8 @@ module.exports = async (req, res) => {
       dry: dry,
       payloadFrom: payloadFrom,
       fixtures: fixtures.length,
-      liveMatches: liveMatches.length,
+      liveMatches: realMatches.length,
+      simulatedIgnored: liveMatches.length - realMatches.length,
       observed: observed,
       watching: (stored.rows || []).length,
       finalised: rows.length,
