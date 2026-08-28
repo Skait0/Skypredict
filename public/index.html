@@ -1298,6 +1298,9 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .sl-tag.won{background:var(--green-wash);color:var(--green-ink)}
 .sl-tag.lost{background:var(--red-wash);color:var(--red-ink)}
 .sl-tag.open{background:var(--win-wash);color:var(--win-ink)}
+/* Says why this one is not in the percentages above it. */
+.sl-tag-jack{background:rgba(242,184,75,.16);color:#F2B84B;
+  box-shadow:inset 0 0 0 1px rgba(242,184,75,.4)}
 .sl-when{flex:1;min-width:0;font-size:11.5px;color:var(--soft);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sl-odds{font-size:13px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
@@ -4069,8 +4072,9 @@ function renderSlipsSheet(){
       "<button class='sl-head' type='button' data-slop='"+esc(sp.sid||"")+"' "+
         "aria-expanded='"+(open?"true":"false")+"'>"+
         "<span class='sl-tag "+state+"'>"+label+"</span>"+
+        (isJackpotSlip(sp)?"<span class='sl-tag sl-tag-jack'>Jackpot</span>":"")+
         "<span class='sl-when'>"+esc(slipWhen(sp.at))+" · "+sp.legs.length+" games</span>"+
-        "<span class='sl-odds'>×"+sp.odds.toFixed(2)+"</span>"+
+        "<span class='sl-odds'>×"+(sp.odds>=1000?Math.round(sp.odds).toLocaleString():sp.odds.toFixed(2))+"</span>"+
         "<span class='sl-chev' aria-hidden='true'>▾</span></button>"+
       "<div class='sl-body'>"+
       "<div class='sl-legs'>"+sp.legs.map(function(l){
@@ -4183,23 +4187,34 @@ function armConfirm(btn,label,go){
 function askRemoveSlip(btn,sid){ armConfirm(btn,"Sure?",function(){removeSlip(sid);}); }
 function askClearSlips(btn){ armConfirm(btn,"Tap again to clear everything",function(){clearSlips();}); }
 
+/* A slip priced at jackpot odds is a lottery ticket, and it is counted as one:
+   kept out of the record entirely rather than allowed to drag a genuine run of
+   form down with it. Judged by odds rather than by how it was built, so a
+   twenty-thousand-to-one ticket assembled by hand counts the same as one the
+   wizard conjured. They are still stored, still graded, still shown - they
+   simply do not set the percentages. */
+function isJackpotSlip(s){ return !!(s && isJackpotOdds(+s.odds)); }
 function myRecord(){
-  var done=SLIPS.filter(function(s){return s.settled;});
+  var real=SLIPS.filter(function(s){return !isJackpotSlip(s);});
+  var done=real.filter(function(s){return s.settled;});
   var won=done.filter(function(s){return s.won;}).length;
   var legs=0, legHits=0;
-  SLIPS.forEach(function(s){ s.legs.forEach(function(l){
+  real.forEach(function(s){ s.legs.forEach(function(l){
     if(l.res==="win"){legs++;legHits++;} else if(l.res==="lose"){legs++;} }); });
   var best=null;
   done.forEach(function(s){ if(s.won && (!best||s.odds>best.odds)) best=s; });
-  /* Consecutive winning slips, most recent first. */
+  /* Consecutive winning slips, most recent first. A jackpot ticket neither
+     continues a streak nor ends one - it is simply stepped over. */
   var streak=0;
   for(var i=0;i<SLIPS.length;i++){
-    if(!SLIPS[i].settled) continue;
+    if(isJackpotSlip(SLIPS[i])||!SLIPS[i].settled) continue;
     if(SLIPS[i].won) streak++; else break;
   }
-  return {built:SLIPS.length, settled:done.length, won:won,
+  var jack=SLIPS.filter(isJackpotSlip);
+  return {built:real.length, settled:done.length, won:won,
           legs:legs, legHits:legHits, best:best, streak:streak,
-          pending:SLIPS.filter(function(s){return !s.settled;}).length};
+          jack:jack.length, jackWon:jack.filter(function(s){return s.settled&&s.won;}).length,
+          pending:real.filter(function(s){return !s.settled;}).length};
 }
 function countryOf(l){return l.split(" ")[0];}
 /* CONMEBOL countries. Only Argentina and Brazil are in the feeds today, but
@@ -8093,6 +8108,20 @@ document.addEventListener("click",function(e){
 /* The chosen payout outlives the tab. Without it a reload leaves a conjured
    slip on screen with nothing behind it, and every control that rebuilds
    comes back empty. */
+/* Where the jackpot tier starts. A slip priced at or above this is a swing at
+   a life-changing payout rather than a considered bet, and the site treats it
+   as its own thing: it needs the whole card to reach, it is allowed more legs
+   than anything else here, and it is kept out of the running record - see
+   myRecord. Nothing about it touches the accuracy figure on the front page,
+   which is measured on single tips by the build and never on what anyone
+   books. */
+const JACKPOT_ODDS=20000;
+/* Forty legs is the limit everywhere else. The jackpot tier gets forty-five,
+   which is what "safer, more games" needs to reach x20000 at 1.25 a leg - so
+   the choice between few big prices and many small ones stays open at this
+   tier instead of collapsing to one style that happens to fit. */
+const JACKPOT_LEG_CAP=45;
+function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
 var WSP={odds:null,legodd:1.35,everyGame:false,mk:{doubles:true,out:true,o15:true,o25:true,o35:false,fh:false,tts:false,tts2:false,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* One entry per toggle, so turning everything else off leaves exactly one
    market and every leg of the slip is that market. That is the whole point
@@ -8162,7 +8191,7 @@ function wspBuild(){
        build; a hundred and twenty priced at fifty billion is not a slip
        anybody can win, it is a lottery ticket wearing one. "Every game that
        qualifies" changes which games go in, never how many past this. */
-    var T=WSP.odds, cap=40, per=WSP.legodd||1.35;
+    var T=WSP.odds, cap=isJackpotOdds(T)?JACKPOT_LEG_CAP:40, per=WSP.legodd||1.35;
     /* Nothing to aim at yet - say so with an empty slip rather than
        inventing a target. */
     if(T==null && !WSP.everyGame) return {picks:[],odds:1,conf:0};
@@ -8443,8 +8472,18 @@ function renderWizardPanel(){
      note under the chips says how many results in a row it takes. Both sit
      inside the forty-leg cap: x20000 wants about nineteen legs at the bigger
      style, x50000 about twenty-one. */
-  var odds=[50,100,500,1000,2000,6000,20000,50000];
-  var JACKPOT_FROM=20000;
+  /* The jackpot tier needs the whole card - nineteen legs at the bigger style,
+     forty-five at the smaller - and a single fixture day rarely holds that
+     many games worth backing. So it is offered only on "All upcoming", and a
+     target already chosen is dropped if the window narrows, rather than left
+     selected against a pool that cannot reach it. */
+  var JACKPOT_FROM=JACKPOT_ODDS;
+  var jackOK=(SCOPE==="all");
+  if(!jackOK && isJackpotOdds(WSP.odds)){
+    WSP.odds=null; WSP._sig=null; WSP._slip=null;
+    try{localStorage.removeItem("sw.wspodds");}catch(e){}
+  }
+  var odds=jackOK?[50,100,500,1000,2000,6000,20000,50000]:[50,100,500,1000,2000,6000];
   var styles=[[1.25,"Safer, more games"],[1.4,"Balanced"],[1.7,"Fewer, bigger games"]];
   var html="";
   html += "<div class='wsp-lbl'>Pick a target payout</div><div class='wsp-chips' id='wspOddsChips'>"+
@@ -8461,12 +8500,13 @@ function renderWizardPanel(){
   /* What a jackpot ticket actually is, said before it is built rather than
      after it loses. The number of legs is the honest part - it is the thing
      that has to come in, and it is a different order of ask from a x50. */
-  if(WSP.odds>=JACKPOT_FROM){
+  if(isJackpotOdds(WSP.odds)){
     var _per=WSP.legodd||1.35;
-    var _legs=Math.max(4,Math.min(40,Math.ceil(Math.log(WSP.odds)/Math.log(_per))));
-    html += "<p class='wsp-hint wsp-hint-jack'><b>Jackpot ticket.</b> About "+_legs+
-      " results in a row, every one of them right. This is the long shot the "+
-      "big prizes need - it is not the slip our record is built on.</p>";
+    var _legs=Math.max(4,Math.min(JACKPOT_LEG_CAP,Math.ceil(Math.log(WSP.odds)/Math.log(_per))));
+    html += "<p class='wsp-hint wsp-hint-jack'><b>Jackpot ticket.</b> "+_legs+
+      " results in a row, every one of them right. Long odds on purpose - this "+
+      "is a swing at the big one, taken at your own risk, and it is kept out of "+
+      "your running record.</p>";
   }
   /* The slider tells a first-timer to move it; the wizard said nothing and
      simply had a payout chosen already. With nothing picked, say what to do
