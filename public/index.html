@@ -8217,11 +8217,17 @@ document.addEventListener("click",function(e){
    which is measured on single tips by the build and never on what anyone
    books. */
 const JACKPOT_ODDS=20000;
-/* Forty legs is the limit everywhere else. The jackpot tier gets forty-five,
-   which is what "safer, more games" needs to reach x20000 at 1.25 a leg - so
-   the choice between few big prices and many small ones stays open at this
-   tier instead of collapsing to one style that happens to fit. */
-const JACKPOT_LEG_CAP=45;
+/* Forty legs is the limit everywhere else. The jackpot tier gets fifty, so
+   that the choice between few big prices and many small ones stays open here
+   instead of collapsing to whichever style happens to fit: at 1.25 a leg,
+   forty could not reach x20000 at all and forty-five only just did, which made
+   "safer, more games" the one style that could not do the thing it is for.
+   Fifty leaves it room at both targets.
+   Note this is a ceiling, not a promise. The builder only uses games it has a
+   real SportyBet price for, so a thin card can still come back short - and it
+   says so rather than padding the slip out with markets that would be rejected
+   at booking. */
+const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
 var WSP={odds:null,legodd:1.35,everyGame:false,mk:{doubles:true,out:true,o15:true,o25:true,o35:false,fh:false,tts:false,tts2:false,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* One entry per toggle, so turning everything else off leaves exactly one
