@@ -80,14 +80,17 @@ test("the scoreline chosen for a tip is one that tip survives", () => {
   }
 });
 
-/* A market a scoreline cannot settle must not cause an invented scoreline -
-   an honest mode is better than a fabricated one. */
-test("an unsettleable tip falls back to the mode rather than inventing", () => {
+/* A market a final score cannot settle has nothing to disagree with, so the
+   ordinary scoreline stands - no reaching for an alternative that solves a
+   conflict which does not exist. */
+test("a tip a scoreline cannot settle leaves the scoreline alone", () => {
   const B = require("../lib/build.js");
   const k = marketsFor(1.5, 1.2);
   assert.strictEqual(G.gradeLabel("First half goal", 2, 1), null,
     "precondition: a final score cannot settle this market");
-  assert.strictEqual(B.scoreForTip(k, "First half goal"), k.score);
+  assert.strictEqual(B.scoreForTip(k, "First half goal"),
+                     B.scoreForTip(k, "Over 1.5"),
+                     "same fixture, same scoreline - the tip changed nothing");
 });
 
 test("a missing shortlist degrades to the mode instead of throwing", () => {
@@ -161,4 +164,65 @@ test("values that do not sum to one are normalised, not printed raw", () => {
 test("all-zero input does not invent a hundred percent", () => {
   const out = P.split100([0, 0, 0]);
   assert.ok(out.every(v => v === null || v === 0), "got " + JSON.stringify(out));
+});
+
+/* Coherence alone is not enough, and chasing it blindly made things worse.
+   Taking the first scoreline the tip merely survives printed 1-1 on 87% of the
+   card: a draw satisfies both 1X and X2, two goals clears Over 1.5, and 1-1 is
+   the modal cell for most fixtures. Every number was defensible and the board
+   was useless - a page of identical draws beside tips that mostly favour a
+   side. A scoreline has to agree with the model's lean as well as the tip. */
+
+test("the scoreline follows the model's lean, not just the tip", () => {
+  const B = require("../lib/build.js");
+  const homeFav = marketsFor(1.93, 1.02);
+  assert.ok(homeFav.home > homeFav.draw, "precondition: home is favoured");
+  const s = B.scoreForTip(homeFav, "1X, home or draw");
+  const [h, a] = s.split("-").map(Number);
+  assert.ok(h > a, `1X on a home favourite should show a home win, got ${s}`);
+
+  const awayFav = marketsFor(0.95, 1.90);
+  assert.ok(awayFav.away > awayFav.draw, "precondition: away is favoured");
+  const s2 = B.scoreForTip(awayFav, "X2, draw or away");
+  const [h2, a2] = s2.split("-").map(Number);
+  assert.ok(a2 > h2, `X2 on an away favourite should show an away win, got ${s2}`);
+});
+
+/* Where the model really does favour the draw, 1-1 is the honest answer and
+   must still be reachable - the fix is variety that reflects the model, not
+   variety for its own sake. */
+test("a genuinely drawish fixture may still show a draw", () => {
+  const B = require("../lib/build.js");
+  const k = marketsFor(1.02, 1.02);
+  const s = B.scoreForTip(k, "1X, home or draw");
+  const [h, a] = s.split("-").map(Number);
+  if (k.draw >= k.home && k.draw >= k.away) {
+    assert.strictEqual(h, a, "an evenly matched, low-scoring game may draw");
+  }
+  assert.notStrictEqual(GRADE_OK(s, "1X, home or draw"), false);
+  function GRADE_OK(sc, tip) {
+    const [x, y] = sc.split("-").map(Number);
+    return G.gradeLabel(tip, x, y);
+  }
+});
+
+/* The measurement that caught it: no single scoreline may dominate the board.
+   Runs over the built payload, so it fails on the real card rather than on a
+   shape chosen to pass. */
+test("no one scoreline takes over the whole card", () => {
+  let payload;
+  try { payload = require("../public/predictions.json"); } catch (e) { return; }
+  const counts = {};
+  let total = 0;
+  for (const f of payload.fixtures || []) {
+    if (!/^\d+-\d+$/.test(f.score || "")) continue;
+    counts[f.score] = (counts[f.score] || 0) + 1;
+    total++;
+  }
+  if (total < 50) return;
+  const [top, n] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  const share = n / total;
+  assert.ok(share < 0.55,
+    `"${top}" is ${(share * 100).toFixed(0)}% of ${total} fixtures - ` +
+    `a board of one scoreline tells the reader nothing`);
 });
