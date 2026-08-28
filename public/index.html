@@ -6340,14 +6340,22 @@ function doBook(picks,retried){
         "service. Check your connection and try again.</div>";
     });
 }
-function clearSlip(){
-  // Clear BOTH builders so "clear" means clear whichever mode you switch to next
-  // (slider and wizard keep separate slips, which otherwise looks like cleared
-  // games "coming back" when you switch modes).
+/* The state half of Clear, without the repaint. Both Clear buttons run this -
+   the trash in the builder foot and the one in the My slip sheet - because
+   they are the same slip seen from two places, and a Clear that emptied one
+   view while the other still showed the games and the odds was the whole
+   complaint. Keep them on one definition rather than two that drift.
+   Clear BOTH builders so "clear" means clear whichever mode you switch to next
+   (slider and wizard keep separate slips, which otherwise looks like cleared
+   games "coming back" when you switch modes). */
+function clearSlipState(){
   BUILD.picks.forEach(function(c){BUILD.removed[c.id]=1;});
   WSP.conjured=false; WSP.removed={}; WSP._slip=null; WSP._sig=null;
   $("bookResult").innerHTML="";
   var to=$("totOdds"); if(to) to.textContent="-";
+}
+function clearSlip(){
+  clearSlipState();
   renderBuilder();
 }
 /* ---- shared booking-code card, share + copy + open ---- */
@@ -7665,13 +7673,15 @@ function clearMy(){
   var mo=$("myTotOdds"); if(mo) mo.textContent="-";
   document.querySelectorAll("[data-add].on").forEach(function(b){b.classList.remove("on");b.textContent="+";});
   $("myBookResult").innerHTML="";
-  /* Clearing the slip clears the ticket behind it. The conjured legs came from
-     the wizard, so leaving its preview showing the games and the odds you just
-     threw away would be describing a slip that no longer exists. Back to the
-     unset state - pick a payout and conjure again. */
+  /* Clearing the slip clears the ticket behind it. Leaving the builder preview
+     showing the games and the odds you just threw away would be describing a
+     slip that no longer exists - and since the sheet covers that preview, you
+     only saw it on closing the sheet, which read as the Clear having been
+     ignored. Same reset the builder's own trash button runs, so both buttons
+     mean one thing. Back to the unset state - pick a payout and conjure. */
   try{
-    WSP.conjured=false; WSP._slip=null; WSP._sig=null;
-    WSP.removed={}; WSP.odds=null;
+    WSP.odds=null;
+    clearSlipState();
     /* The builder writes its picks into MYSLIP on every render, which is what
        makes the slider and the slip feel like one thing. Here it was the bug:
        Clear emptied the slip and then called renderBuilder to repaint the
@@ -7685,7 +7695,7 @@ function clearMy(){
        an incidental render cannot resurrect the slip either. Moving the slider
        or changing a filter raises it again, so the next deliberate act brings
        the sync straight back. */
-    BUILD_NOSYNC=true; BUILD.touched=false; BUILD.removed={};
+    BUILD_NOSYNC=true; BUILD.touched=false;
     try{
       if(document.documentElement.classList.contains("mode-build")) renderBuilder();
       if(typeof renderSlipTease==="function") renderSlipTease();
