@@ -8255,7 +8255,7 @@ var MYBOOK_GEN=0;
 function resetMyBookBtn(){
   var b=$("myBookBtn"); if(b){ b.disabled=false; b.textContent="Get code"; }
 }
-function doBookMy(bookable){
+function doBookMy(bookable,retried){
   var sel=bookable.map(function(c){return {eventId:c.eventId,prediction:c.code};});
   var gen=MYBOOK_GEN;
   var btn=$("myBookBtn"); if(btn){btn.disabled=true;btn.textContent="Booking…";}
@@ -8270,7 +8270,25 @@ function doBookMy(bookable){
         rememberSlip(MYSLIP,myOdds(),d.booking_code);
         showCode(d.booking_code,"myBookResult");
       }
-      else{ $("myBookResult").innerHTML=bookErrHTML(d); }
+      else{
+        /* The builder no longer offers a market SportyBet does not list, but a
+           slip can outlive the card it was built from - a market pulled after
+           the pick was made, or a slip restored from storage days later. One
+           unplaceable leg loses all forty, so drop the legs whose odds we
+           never verified and try once more. The board's own Get code has done
+           this for a while; My slip had nothing and simply failed. */
+        var safe=bookable.filter(function(c){
+          var f=fixtureById(c.id)||c.f;
+          var o=f&&f.sportyOdds&&f.sportyOdds[c.code];
+          return o&&o>1.01;});
+        if(!retried&&safe.length>=2&&safe.length<bookable.length){
+          $("myBookResult").innerHTML=
+            "<div class='code-info'>Retrying without unavailable markets…</div>";
+          doBookMy(safe,true);
+          return;
+        }
+        $("myBookResult").innerHTML=bookErrHTML(d);
+      }
     }).catch(function(){
       if(gen!==MYBOOK_GEN) return;
       resetMyBookBtn();
@@ -8592,16 +8610,43 @@ function wspBuild(){
        fails with "Sporty rejected the slip" (the "no market" error). When real
        odds exist for any candidate, only those are considered. */
     function hasReal(c){var o=c.f&&c.f.sportyOdds&&c.f.sportyOdds[c.code];return !!(o&&o>1.01);}
-    function pickFrom(cs){
-      var real=cs.filter(hasReal);
-      var pool=real.length?real:cs;
+    /* Only markets SportyBet actually lists for this event.
+       It used to fall back to the estimated-odds candidates when none of a
+       fixture's markets were real - "prefer real, settle for anything". That
+       put legs on the slip that cannot be placed: half the card carries no
+       team-totals market at all (888 of 1797 fixtures on the day this was
+       found), and asking to book one returns "invalid event data, no market
+       there" and takes the whole slip down with it. One bad leg among forty
+       loses all forty.
+       A bet that cannot be placed is not a bet, so the fixture is dropped
+       instead. The slip gets shorter; it also gets bookable. */
+    /* Do we know what SportyBet lists for this fixture at all? Having no
+       prices is not the same as having prices that exclude our market, and
+       conflating them empties the whole builder whenever the odds feed is
+       slow or down - a far worse failure than the one being fixed. */
+    function priced(f){
+      try{ return !!(f&&f.sportyOdds&&Object.keys(f.sportyOdds).length); }
+      catch(e){ return false; }
+    }
+    function nearest(pool){
       return pool.reduce(function(a,b){
         return Math.abs(Math.log(b.od)-Math.log(g))<Math.abs(Math.log(a.od)-Math.log(g))?b:a;});
     }
-    var chosen=list.map(function(c){
+    function pickFrom(cs){
+      var real=cs.filter(hasReal);
+      if(real.length) return nearest(real);
+      /* Prices exist for this fixture and none of our markets is among them,
+         so the leg cannot be placed - drop the fixture. With no prices at all
+         we know nothing, and an estimated odd is the honest best guess. */
+      if(cs.length&&priced(cs[0].f)) return null;
+      return cs.length?nearest(cs):null;
+    }
+    var chosen=[];
+    list.forEach(function(c){
       var cs=c.cands||[{f:c.f,id:c.id,code:c.code,p:c.p,od:c.od}];
       var pick=pickFrom(cs);
-      return {f:c.f,id:c.id,code:pick.code,p:pick.p,od:pick.od};
+      if(!pick) return;
+      chosen.push({f:c.f,id:c.id,code:pick.code,p:pick.p,od:pick.od});
     });
     /* Soft league cap: spread legs across leagues instead of stacking one, but
        only as a PREFERENCE - the payout target is never sacrificed for it. A
