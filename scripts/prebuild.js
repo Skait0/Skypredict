@@ -80,6 +80,22 @@ function biggest(html, re) {
 }
 
 function splitAssets() {
+  /* This rewrites the source file in place, so it may only run where the
+     checkout is disposable. On Vercel that is true - the build tree is thrown
+     away after deploy. On a developer's machine it is not: public/index.html
+     is the source of truth in git, and it is the one generated file that is
+     not gitignored, because it is also its own input. Running here left the
+     560KB source replaced by the 60KB built page, whose CSS and JS live in
+     gitignored files - so a `git add` on the same command line committed a
+     page with no styles and no script at all.
+     The split is only ever an optimisation; an unsplit page is the old,
+     un-optimised one and works fine. So off Vercel, do nothing. SPLIT=1 is
+     there for inspecting the real output, and warns that it is destructive. */
+  if (!process.env.VERCEL && !process.env.SPLIT) {
+    log("not a Vercel build - leaving public/index.html alone (SPLIT=1 to force)");
+    return;
+  }
+
   let html;
   try {
     html = fs.readFileSync(IDX, "utf8");
@@ -124,7 +140,7 @@ function splitAssets() {
       (Buffer.byteLength(html) / 1024).toFixed(0) + " KB");
 
   if (!process.env.VERCEL) {
-    warn("NOT a Vercel build - public/index.html has been rewritten in place.");
+    warn("SPLIT=1 - public/index.html has been rewritten in place.");
     warn("Restore it before committing:  git checkout public/index.html");
   }
 }
