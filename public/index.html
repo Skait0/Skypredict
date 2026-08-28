@@ -2423,9 +2423,18 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
 .record-in .rl b{color:var(--text);font-weight:800;margin-right:2px}
 .record-stat{margin-left:auto}
 .record-stat .pc{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--green)}
-.notif{margin-top:12px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--soft)}
+/* Wraps rather than squeezes. The sentence beside the button is long enough to
+   take the whole width of a phone, and with nothing said about it the flex row
+   took the space out of the button instead - so the pill shrank until its own
+   label wrapped inside it, 34px tall becoming 52px with "Reminders" over "on".
+   The button keeps its width and drops to the next line when there is no room
+   for both. */
+.notif{margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  font-size:13px;color:var(--soft)}
+.notif>span{flex:1 1 180px;min-width:0}
 .notif button{background:var(--raise);border:1px solid var(--line);color:var(--text);
-  font:inherit;font-weight:700;font-size:12.5px;padding:7px 13px;border-radius:99px;cursor:pointer}
+  font:inherit;font-weight:700;font-size:12.5px;padding:7px 13px;border-radius:99px;
+  cursor:pointer;flex:0 0 auto;white-space:nowrap}
 .notif button.on{background:var(--green-wash);color:var(--green-ink);border-color:var(--green)}
 .powered{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
 .powered i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
