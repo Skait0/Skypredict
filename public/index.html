@@ -1228,6 +1228,17 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
   .lt-p{display:none}
   .lt-chev{display:none}
   .lt-tip{order:4;flex-basis:100%}
+  /* Every cell above carries an explicit order, so anything appended to the
+     row without one falls to the flex default of 0 and is laid out BEFORE all
+     of them. That is how the first-run coach came to sit above its own
+     fixture, reading as a note attached to the match before it - and the
+     expanded detail panel had the same fault waiting behind it. Both are
+     full-width blocks that belong under the row, so both are ordered after
+     the last cell and given their own line.
+     The grid-column span they carry is inert here; flex-basis is what makes
+     a full-width child work in this layout. */
+  .lrow .coach{order:5;flex-basis:100%;width:100%}
+  .lrow .lmore{order:6;flex-basis:100%;width:100%}
 }
 .pbar{display:flex;height:7px;gap:3px;margin-top:14px}
 .pbar i{display:block;border-radius:99px;transform:scaleX(0);transform-origin:left;
