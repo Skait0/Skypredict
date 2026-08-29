@@ -140,38 +140,62 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
   --edge:#2A2A30;
 }
 [data-theme="light"]{
-  --bg:#F6F3ED;       /* warm off-white, easier on eyes than stark lavender-gray */
-  --card:#FDFDFB;     /* slightly warmer card */
-  --card-2:#EFEBE3;   /* warmer subtle contrast */
-  --raise:#E6E1D8;    /* warmer raised */
+  /* Toned down a step. This was a warm off-white sitting at 96% lightness
+     with cards at 99% - correct by the book and glaring in practice, because
+     a full screen of near-white is a lamp pointed at the reader. Every surface
+     comes down about six points, which keeps the page unmistakably light while
+     taking the glare out of it.
+     The order is preserved deliberately: cards stay lighter than the page they
+     sit on, so the hierarchy still reads. Text is untouched at #1C1A18, which
+     leaves contrast around 13:1 - well past the 7:1 that AAA asks for, so this
+     is easier to look at without being harder to read. */
+  --bg:#E9E4DA;       /* warm, a shade off the old near-white */
+  --card:#F4F1EA;     /* still lighter than the page beneath it */
+  --card-2:#E1DBCF;   /* subtle contrast, moved with the rest */
+  --raise:#D6CFC1;    /* raised */
   /* Card edges carry more weight in light mode than they used to. The dark
      buttons on a near-white card were the only strong edge on the page, so
      they read as cut out of it; a firmer border gives the card its own
-     outline and settles them back into it. Warm greys still, just deeper. */
-  --line:#BFB7A6;     /* warmer line */
-  --line-soft:#CFC8BA; /* warmer soft line */
+     outline and settles them back into it. They firm up again here, because
+     a border tuned against near-white would fade into the calmer page. */
+  --line:#B3AA96;
+  --line-soft:#C2BAA9;
 
-  --text:#1C1A18;     /* slightly warmer dark */
-  --soft:#5A554E;     /* warmer soft */
-  --faint:#8B857C;    /* warmer faint */
+  /* The muted inks come down with the surfaces. Dropping the page brightness
+     by itself would have cost 13% of contrast everywhere - fine for body text,
+     which has it to spare, but it pushed --faint under 3:1 and that is the
+     floor for anything a reader still has to make out. Both are re-fitted to
+     the exact ratios they held before, so the page is calmer to look at
+     without a word on it being harder to read. */
+  --text:#1C1A18;     /* unchanged - 13.7:1, still past AAA */
+  --soft:#514C46;     /* 6.70:1, matching its old 6.67 */
+  --faint:#817B73;    /* 3.31:1, matching its old 3.30 */
 
+  /* Semantic inks, re-fitted to the calmer surfaces. --green and --win are
+     used as text in dozens of places (not only as fills, despite the -ink
+     variants existing), so darkening the page underneath them would have cost
+     real legibility: --win fell to 2.98:1, below even the 3:1 floor. Each is
+     nudged just far enough to hold the contrast ratio it had before.
+     --red is deliberately left alone: it is the brand colour, it still clears
+     AA on both surfaces, and shifting it to buy half a point is not worth
+     repainting every button on the site. */
   --red:#C62330;
   --red-ink:#B01D29;
   --red-wash:rgba(198,35,48,.09);
-  --green:#0E8A55;
+  --green:#0D814F;    /* 4.36:1, holding its old 4.31 */
   --green-ink:#0B7047;
   --green-wash:rgba(14,138,85,.10);
-  --amber:#B5760F;
+  --amber:#AA6F0E;
 
-  --win:#B5760F;
-  --win-ink:#8F5C08;
+  --win:#AA6F0E;      /* 3.73:1, holding its old 3.71 */
+  --win-ink:#8E5B08;  /* 4.54:1 on the page, back over AA */
   --win-wash:rgba(181,118,15,.12);
-  --grey:#ADA9B6;
+  --grey:#A39FAB;     /* muted/disabled, kept at its old relative weight */
   --cream:#35323C;
   --shadow:0 1px 3px rgba(30,25,20,.08), 0 1px 2px rgba(30,25,20,.04);
   /* a full black edge was too hard against the page; this is dark enough to
      define the card without cutting it out */
-  --edge:#A69B89;     /* warmer edge */
+  --edge:#9A8E7A;
 }
 /* Native controls - the live-score select in particular - were being drawn in
    the browser's default scheme for a frame before ours applied, which is the
@@ -5650,10 +5674,25 @@ try{var td0=localStorage.getItem("sw.tod");
 /* A bucket only means something against one day, so it never survives a wide
    window - including a pair of preferences saved before that was true. */
 if(SCOPE!=="day") TOD="all";
+/* The buckets are named for the part of the day a reader is in, so they have
+   to match what the clock on the card says.
+     Early   05:00 - 12:59  morning
+     Mid day 13:00 - 17:59  afternoon
+     Late    18:00 - 04:59  evening, and on past midnight
+   Two things were wrong before. "Early" was everything before 15:00, so a
+   14:30 kickoff was filed as early - it is not, and it was reported as one.
+   Worse, the late bucket ended at midnight while getHours() wraps to 0, so
+   every overnight game came back as hour 0-4 and landed in "Early" as well:
+   61 of today's 357 fixtures, which is why picking Early returned a screen of
+   late-night football. Late now runs through to 05:00 rather than stopping at
+   the date boundary, because a 00:30 kickoff is the end of an evening, not the
+   start of a morning. */
 function todOf(f){
   var t=kickMs(f); if(!t) return null;
   var h=new Date(t).getHours();
-  return h<15?"early":(h<19?"mid":"late");
+  if(h>=5&&h<13) return "early";
+  if(h>=13&&h<18) return "mid";
+  return "late";
 }
 function todFixtures(list){
   /* Early / mid / late describe how a single day splits. Applied to "all
@@ -5661,7 +5700,11 @@ function todFixtures(list){
      an evening in nine days' time is not what someone picking "Late" is
      asking for - so the buckets only bite on a single fixture day. */
   if(TOD==="all"||SCOPE!=="day") return list;
-  return list.filter(function(f){var b=todOf(f); return b===null||b===TOD;});
+  /* A fixture with no readable kickoff used to pass every bucket, so it turned
+     up under Early and Mid day and Late alike. If we cannot say when it starts
+     we cannot honour the choice, so it stays out of a narrowed view - it is
+     still there under "All day". */
+  return list.filter(function(f){ return todOf(f)===TOD; });
 }
 function scopeFixtures(){
   return todFixtures(DATA.fixtures.filter(function(f){
