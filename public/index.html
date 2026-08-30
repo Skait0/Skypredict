@@ -6909,7 +6909,10 @@ function doBook(picks,retried){
   var sel=picks.map(function(c){return {eventId:c.eventId,prediction:c.code};});
   if(!sel.length) return;
   BUILD.booking=true; renderBuilder();
-  $("bookResult").innerHTML="";
+  /* Not on a retry: the caller has just written which pick it dropped and
+     why, and clearing here wiped that within the same tick - so the note
+     never reached the screen and the recovery looked like a stall. */
+  if(!retried) $("bookResult").innerHTML="";
   bookFetch(sel)
     .then(function(d){
       BUILD.booking=false; renderBuilder();
@@ -8760,7 +8763,10 @@ function doBookMy(bookable,retried){
   var sel=bookable.map(function(c){return {eventId:c.eventId,prediction:c.code};});
   var gen=MYBOOK_GEN;
   var btn=$("myBookBtn"); if(btn){btn.disabled=true;btn.textContent="Booking…";}
-  $("myBookResult").innerHTML="";
+  /* Not on a retry: the caller has just written which pick it dropped and
+     why, and clearing here wiped that within the same tick - so the note
+     never reached the screen and the recovery looked like a stall. */
+  if(!retried) $("myBookResult").innerHTML="";
   bookFetch(sel)
     .then(function(d){
       /* Cleared while we waited: this code is for a slip that is gone, so

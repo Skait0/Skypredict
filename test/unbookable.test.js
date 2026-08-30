@@ -162,3 +162,22 @@ test("the reader is told what was dropped, in plain words", () => {
   assert.doesNotMatch(branch, /error|failed|rejected/i,
     "this is a recovery, not a fault - it should not be worded like one");
 });
+
+test("the retry does not wipe the note explaining itself", () => {
+  /* Caught on production, not by the assertions above: they proved the message
+     string was in the source, which is not the same as it reaching a screen.
+     Both booking functions cleared their result panel on entry, and the retry
+     calls straight back into them - so the note naming the dropped pick was
+     erased within the same tick and the recovery looked like a stall.
+     A test can tell you the words exist. Only running it tells you they show. */
+  /* Scoped to the ENTRY-time clear in each booking function. The clears in the
+     confirm-cancel handlers are a different thing and should stay unguarded -
+     dismissing a prompt ought to empty the panel. */
+  [["doBook", "bookResult"], ["doBookMy", "myBookResult"]].forEach(([fn, panel]) => {
+    const body = grab(fn);
+    const i = body.indexOf(`$("${panel}").innerHTML="";`);
+    assert.ok(i > 0, `${fn} has no entry-time clear of ${panel}`);
+    assert.match(body.slice(Math.max(0, i - 40), i), /if\(!retried\)\s*$/,
+      `${fn}'s entry clear must be skipped on a retry, or it eats the note`);
+  });
+});
