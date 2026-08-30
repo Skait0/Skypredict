@@ -8789,8 +8789,22 @@ function doBookMy(bookable,retried){
            this for a while; My slip had nothing and simply failed. */
         var safe=dropUnbookable(bookable,d);
         if(!retried&&safe.length>=1&&safe.length<bookable.length){
-          $("myBookResult").innerHTML=
-            "<div class='code-info'>Retrying without unavailable markets…</div>";
+          /* Take the refused legs out of the slip itself, not just out of the
+             request. Left in, the code says three games while the sheet above
+             it lists four and totals odds for all of them - and the leg that
+             cannot be booked is the one still on screen. The odd we had for it
+             is gone by now, so its price would quietly fall back to our own
+             estimate and the total would be wrong as well as the count. */
+          var _keep={}; safe.forEach(function(c){_keep[c.id+"|"+c.code]=1;});
+          var _dropped=MYSLIP.filter(function(x){return !_keep[x.id+"|"+x.code];});
+          MYSLIP=MYSLIP.filter(function(x){return _keep[x.id+"|"+x.code];});
+          saveMy(); renderFab();
+          if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
+          var _n=_dropped.length;
+          $("myBookResult").innerHTML="<div class='code-info'>"+
+            esc(_n===1?(_dropped[0].label||"One pick")+" isn't on SportyBet right now"
+                      :_n+" picks aren't on SportyBet right now")+
+            " - booking the other "+safe.length+"…</div>";
           doBookMy(safe,true);
           return;
         }
