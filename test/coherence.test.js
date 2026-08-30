@@ -80,17 +80,59 @@ test("the scoreline chosen for a tip is one that tip survives", () => {
   }
 });
 
-/* A market a final score cannot settle has nothing to disagree with, so the
-   ordinary scoreline stands - no reaching for an alternative that solves a
-   conflict which does not exist. */
-test("a tip a scoreline cannot settle leaves the scoreline alone", () => {
+/* A market a final score cannot settle has nothing to disagree with, so it
+   places no constraint at all - the scoreline is drawn from the whole
+   distribution exactly as it would be with no tip.
+   This used to assert that such a tip gave the same answer as "Over 1.5",
+   which was true only while the scoreline ignored the tip entirely. It does
+   not any more: Over 1.5 rules out 0-0, 1-0 and 0-1, so it draws from a
+   smaller pool. The contract worth pinning is the one below - an unsettleable
+   tip constrains nothing. */
+test("a tip a scoreline cannot settle constrains nothing", () => {
   const B = require("../lib/build.js");
   const k = marketsFor(1.5, 1.2);
   assert.strictEqual(G.gradeLabel("First half goal", 2, 1), null,
     "precondition: a final score cannot settle this market");
   assert.strictEqual(B.scoreForTip(k, "First half goal"),
-                     B.scoreForTip(k, "Over 1.5"),
-                     "same fixture, same scoreline - the tip changed nothing");
+                     B.scoreForTip(k, null),
+                     "an unsettleable tip must land where no tip lands");
+});
+
+/* The scoreline is drawn from a distribution, so it has to be drawn the SAME
+   way every time or a fixture would change its result between builds. */
+test("the same fixture always gets the same scoreline", () => {
+  const B = require("../lib/build.js");
+  const k = marketsFor(1.6, 1.25);
+  const seed = "2026-09-05|Arsenal|Chelsea";
+  const first = B.scoreForTip(k, "Over 1.5", seed);
+  for (let i = 0; i < 20; i++) {
+    assert.strictEqual(B.scoreForTip(k, "Over 1.5", seed), first,
+      "a fixture's scoreline must be stable across rebuilds");
+  }
+});
+
+test("different fixtures do not all get the same scoreline", () => {
+  const B = require("../lib/build.js");
+  const k = marketsFor(1.6, 1.25);
+  const seen = new Set();
+  for (let i = 0; i < 40; i++) seen.add(B.scoreForTip(k, "Over 1.5", "fixture-" + i));
+  assert.ok(seen.size >= 4,
+    "one distribution should still spread across several scorelines, got " +
+    [...seen].join(", "));
+});
+
+/* The point of the change: a board has to be able to show the results football
+   actually produces. Draws are 29% of real results and were 0% of ours. */
+test("draws and low-scoring games are reachable at all", () => {
+  const B = require("../lib/build.js");
+  const k = marketsFor(1.45, 1.30);
+  const out = [];
+  for (let i = 0; i < 200; i++) out.push(B.scoreForTip(k, "1X, home or draw", "f" + i));
+  const draws = out.filter(s => { const [h, a] = s.split("-").map(Number); return h === a; });
+  const low = out.filter(s => { const [h, a] = s.split("-").map(Number); return h + a <= 1; });
+  assert.ok(draws.length > 0, "a level scoreline must be reachable - it never was before");
+  assert.ok(low.length > 0, "so must a game of one goal or none");
+  assert.ok(new Set(out).size >= 6, "and the spread must be wider than the old five");
 });
 
 test("a missing shortlist degrades to the mode instead of throwing", () => {
@@ -173,19 +215,37 @@ test("all-zero input does not invent a hundred percent", () => {
    was useless - a page of identical draws beside tips that mostly favour a
    side. A scoreline has to agree with the model's lean as well as the tip. */
 
-test("the scoreline follows the model's lean, not just the tip", () => {
+/* This used to assert that a 1X tip on a home favourite always showed a home
+   win, and an X2 on an away favourite an away win. That rule is what made
+   draws unpublishable: it fired on every level scoreline, all 130 of them on a
+   276-fixture board, and the card ended up with 0% draws against 29% in
+   reality.
+   It is gone. A draw satisfies 1X, so a draw is a legitimate thing to print
+   beside it - across 300 seeds this fixture gives 177 home wins and 123 draws,
+   which is roughly the split the model itself implies.
+   What must NEVER happen is the scoreline losing the tip. That is the real
+   invariant, it is checked over the whole distribution rather than one draw,
+   and it is the thing the lean rule was a clumsy proxy for. */
+test("the scoreline never contradicts its own tip, over the whole distribution", () => {
   const B = require("../lib/build.js");
+
   const homeFav = marketsFor(1.93, 1.02);
   assert.ok(homeFav.home > homeFav.draw, "precondition: home is favoured");
-  const s = B.scoreForTip(homeFav, "1X, home or draw");
-  const [h, a] = s.split("-").map(Number);
-  assert.ok(h > a, `1X on a home favourite should show a home win, got ${s}`);
+  let sawDraw = false, sawHome = false;
+  for (let i = 0; i < 200; i++) {
+    const [h, a] = B.scoreForTip(homeFav, "1X, home or draw", "s" + i).split("-").map(Number);
+    assert.ok(h >= a, `1X must never show an away win, got ${h}-${a}`);
+    if (h === a) sawDraw = true; else sawHome = true;
+  }
+  assert.ok(sawHome, "a home favourite should mostly show a home win");
+  assert.ok(sawDraw, "and a draw must still be reachable - that was the bug");
 
   const awayFav = marketsFor(0.95, 1.90);
   assert.ok(awayFav.away > awayFav.draw, "precondition: away is favoured");
-  const s2 = B.scoreForTip(awayFav, "X2, draw or away");
-  const [h2, a2] = s2.split("-").map(Number);
-  assert.ok(a2 > h2, `X2 on an away favourite should show an away win, got ${s2}`);
+  for (let i = 0; i < 200; i++) {
+    const [h, a] = B.scoreForTip(awayFav, "X2, draw or away", "s" + i).split("-").map(Number);
+    assert.ok(a >= h, `X2 must never show a home win, got ${h}-${a}`);
+  }
 });
 
 /* Where the model really does favour the draw, 1-1 is the honest answer and
