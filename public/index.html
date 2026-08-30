@@ -4325,8 +4325,31 @@ function rememberSlip(legs, odds, code){
     odds:+odds||snap.reduce(function(t,l){return t*(l.odd||1);},1),
     settled:false, won:null, hits:0, graded:0,
   };
-  SLIPS.unshift(slip); saveSlips();
+  SLIPS.unshift(slip); saveSlips(); refreshSlipUI();
   return slip;
+}
+
+/* Everything on the page that reads SLIPS, redrawn together.
+   Reported: "when i click on save your slip, it doesnt show on the home page
+   till i refresh. also, in the your slip, when i delete the last ticket, it
+   still shows that i have a slip till i refresh."
+   Both were the same omission. renderMyResults draws the home-page card and was
+   only ever called once, at startup - so saving a slip left the card absent and
+   deleting the last one left it stranded, each until a reload rebuilt the page
+   from storage. removeSlip and clearSlips did redraw the sheet and the record,
+   which is why the sheet looked right while the home page did not.
+   Deliberately not folded into saveSlips(), tempting as that chokepoint is:
+   renderRecord() itself calls saveSlips() when grading changes something, so a
+   redraw hung there would recurse. The guard below is belt and braces for the
+   same reason. */
+var SLIPUI_BUSY=false;
+function refreshSlipUI(){
+  if(SLIPUI_BUSY) return;
+  SLIPUI_BUSY=true;
+  try{ renderMyResults(); }catch(e){}
+  try{ renderRecord(); }catch(e){}
+  try{ renderSlipsSheet(); }catch(e){}
+  SLIPUI_BUSY=false;
 }
 
 /* Grade everything that can be graded. Cheap, idempotent, and safe to call on
@@ -4450,12 +4473,12 @@ function removeSlip(sid){
   var i=SLIPS.findIndex?SLIPS.findIndex(function(s){return s.sid===sid;}):-1;
   if(i<0){ for(var j=0;j<SLIPS.length;j++) if(SLIPS[j].sid===sid){i=j;break;} }
   if(i<0) return;
-  SLIPS.splice(i,1); saveSlips(); renderSlipsSheet(); renderRecord();
+  SLIPS.splice(i,1); saveSlips(); refreshSlipUI();
   window.swToast&&window.swToast("Slip removed","ok","sliprm");
 }
 function clearSlips(){
   if(!SLIPS.length) return;
-  SLIPS=[]; saveSlips(); renderSlipsSheet(); renderRecord();
+  SLIPS=[]; saveSlips(); refreshSlipUI();
   window.swToast&&window.swToast("Slip history cleared","ok","slipclr");
 }
 /* Which slip is expanded. null until the sheet has been drawn once, so the
