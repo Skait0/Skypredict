@@ -6590,9 +6590,30 @@ function buildPicks(){
       if(c==="X2"&&homeFav) return false;
       return true;
     }
+    /* Prefer a leg SportyBet will actually take.
+       The wizard has done this for a while; the slider never did, and picked
+       purely on model merit - which is why a slip built here could look
+       perfect and then be refused whole, since one unplaceable leg among forty
+       loses all forty. Measured on the live board: 1X2 and double chance are
+       priced on 100% of our fixtures, goals and GG on 93-94%, team totals on
+       88-90%. Per leg that is fine; across an eight-leg slip on team totals it
+       is a 62% chance of at least one leg that cannot be placed.
+       The rule is the wizard's, verbatim in spirit: among the markets that
+       pass the sanity check, keep the ones carrying a real SportyBet odd. If
+       none do BUT the fixture is priced, SportyBet lists this game and does
+       not list any market we offer on it, so the leg cannot be placed and the
+       fixture is dropped. If the fixture has no prices at all we know nothing
+       - the odds feed may simply be slow - and an estimate stays the honest
+       best guess, exactly as before. Conflating those two cases would empty
+       the builder whenever the feed is down, which is a far worse failure than
+       the one being fixed. */
+    var usable=allowed.filter(sane);
+    var realCodes=usable.filter(function(c){return hasRealOdd(f,c);});
+    if(realCodes.length) usable=realCodes;
+    else if(pricedFixture(f)) return;
+
     var best=null,bestScore=-1;
-    allowed.forEach(function(c){
-      if(!sane(c)) return;
+    usable.forEach(function(c){
       var v=mProb(f,c);
       if(v==null||isNaN(v)||v<p.minConf) return;
       var score=(1-f0)*v + f0*(oddOf(v)/12);
@@ -6609,7 +6630,7 @@ function buildPicks(){
        Over 1.5 clears the same confidence bar, take it instead. The lean above
        only nudges the score and double chance could still out-rank it; this
        decides it outright, which is what was being asked of the shuffle. */
-    best=preferGoalsOverDouble(f,best,allowed,p.minConf);
+    best=preferGoalsOverDouble(f,best,usable,p.minConf);
     if(best) cand.push({f:f,id:fid(f),code:best.code,p:best.p,eventId:f.eventId||null});
   });
   var removedCount=Object.keys(BUILD.removed).length;
@@ -6672,6 +6693,16 @@ function buildPicks(){
 }
 function oddOf(p){var q=Math.max(0.06,Math.min(0.97,p));return Math.pow(1/q,0.85);}
 function legOdd(f,code,p){var o=f&&f.sportyOdds&&f.sportyOdds[code];return (o&&o>1.01)?o:oddOf(p);}
+/* Does SportyBet price this exact market on this fixture? A real odd in
+   sportyOdds came FROM SportyBet, so its presence is proof the market
+   exists and its absence is proof it does not. */
+function hasRealOdd(f,c){var o=f&&f.sportyOdds&&f.sportyOdds[c];return !!(o&&o>1.01);}
+/* Do we know anything at all about this fixture's prices? Having no prices
+   is not the same as having prices that exclude our market. */
+function pricedFixture(f){
+  try{ return !!(f&&f.sportyOdds&&Object.keys(f.sportyOdds).length); }
+  catch(e){ return false; }
+}
 function oddsAreReal(picks){return picks.length&&picks.every(function(c){var o=c.f&&c.f.sportyOdds&&c.f.sportyOdds[c.code];return o&&o>1.01;});}
 function notStarted(f){if(f&&f.kickoff){return new Date(f.kickoff).getTime()>Date.now();}return isUpcoming(f);}
 function totalOdds(picks){
