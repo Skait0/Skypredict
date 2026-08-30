@@ -109,3 +109,58 @@ test("cutting the tail has not flattened the board", () => {
   assert.ok(draws / fx.length > 0.12,
     `draws are ${Math.round(draws / fx.length * 100)}% of the board; real football is near 29%`);
 });
+
+/* ------------------------------------------------- the model's own verdict */
+
+/**
+ * A scoreline must not contradict the model that produced it.
+ *
+ * Reported: Real Madrid, whom the model makes 68% to win with 2.34 expected
+ * goals against 0.93, published as 2-2. And Napoli v Como at 41/28/31 and 2.47
+ * expected goals, published as 3-0.
+ *
+ * Both sat inside the distribution, and both read as the site arguing with
+ * itself - a reader sees "68% home win" beside a drawn scoreline.
+ *
+ * The old rule forced the scoreline onto whichever outcome was likeliest,
+ * which is why draws disappeared entirely: in a Poisson model the draw is
+ * almost never the single most likely outcome even when it is a real
+ * possibility. So the gate is relative. An outcome stays in play while it is
+ * at least a third as likely as the favourite - which keeps the draw on a
+ * 41/28/31 fixture and removes it from a 68/19/13 one.
+ */
+test("no scoreline contradicts a clear favourite", () => {
+  const p = payload();
+  if (!p) return;
+  const fx = (p.fixtures || []).filter(
+    f => /^\d+-\d+$/.test(f.score || "") && f.home_p != null && f.draw_p != null && f.away_p != null);
+  if (fx.length < 50) return;
+
+  const FLOOR = 0.35;
+  const bad = [];
+  for (const f of fx) {
+    const [h, a] = f.score.split("-").map(Number);
+    const shown = h > a ? "home" : (h < a ? "away" : "draw");
+    const P = { home: f.home_p, draw: f.draw_p, away: f.away_p };
+    const best = Math.max(P.home, P.draw, P.away);
+    if (P[shown] < best * FLOOR) {
+      bad.push(`${f.home} v ${f.away}: ${f.score} shows a ${shown} the model gives ` +
+        `${Math.round(P[shown] * 100)}% against a best of ${Math.round(best * 100)}%`);
+    }
+  }
+  assert.deepStrictEqual(bad, [],
+    bad.length + " scoreline(s) argue with the model that produced them");
+});
+
+test("but a genuinely close fixture can still be drawn", () => {
+  /* The other half. The gate must not quietly become "always show the
+     favourite", which is the rule it replaced and which gave 0% draws. */
+  const p = payload();
+  if (!p) return;
+  const fx = (p.fixtures || []).filter(f => /^\d+-\d+$/.test(f.score || ""));
+  if (fx.length < 50) return;
+  const draws = fx.filter(f => { const [h, a] = f.score.split("-").map(Number); return h === a; });
+  assert.ok(draws.length / fx.length > 0.12,
+    `draws are ${Math.round(draws.length / fx.length * 100)}% of the board; ` +
+    `the outcome gate has gone from filtering to censoring`);
+});
