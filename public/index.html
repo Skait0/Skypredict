@@ -5163,7 +5163,24 @@ function renderPotd(){
      another one, losing the result it was supposed to be holding. The lock is
      the promise; only a fixture that has genuinely left the payload breaks
      it. */
-  if(lock&&lock.id){
+  /* The build's own pick wins when it has one. Deciding this per browser meant
+     two people never had to be looking at the same "pick of the day", and a
+     cleared cache re-rolled it - for the one call this site puts its name to.
+     It is chosen once in lib/build.js and carried forward across rebakes, so
+     the localStorage lock below is now only the fallback for a payload built
+     before this existed. */
+  const baked=(DATA.potd&&DATA.potd.date===dateStr)?DATA.potd:null;
+  if(baked&&baked.id){
+    top=day.filter(function(f){return fid(f)===baked.id;})[0]
+      || (DATA.fixtures||[]).filter(function(f){return fid(f)===baked.id;})[0]
+      || null;
+    /* Mirror it into the lock so a later payload that somehow lacks one still
+       shows the same game rather than re-picking. */
+    if(top&&(!lock||lock.id!==baked.id)){
+      try{localStorage.setItem(lockKey,JSON.stringify(baked));}catch(e){}
+    }
+  }
+  if(!top&&lock&&lock.id){
     top=day.filter(function(f){return fid(f)===lock.id;})[0]
       || (DATA.fixtures||[]).filter(function(f){return fid(f)===lock.id;})[0]
       || null;

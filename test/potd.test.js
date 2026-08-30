@@ -66,8 +66,8 @@ function custInputHandler() {
 test("the lock is searched across the whole payload, not just the day", () => {
   /* The exact fall-through. Searching only `day` meant a rebake that moved the
      row silently re-picked and overwrote the lock. */
-  const i = potd.indexOf("if(lock&&lock.id)");
-  assert.ok(i > 0, "the lock lookup is gone");
+  const i = potd.indexOf("if(!top&&lock&&lock.id)");
+  assert.ok(i > 0, "the lock fallback is gone");
   const lookup = potd.slice(i, i + 320);
   assert.match(lookup, /DATA\.fixtures/,
     "a lock that is not among today's rows must still be looked for in the payload");
@@ -144,4 +144,88 @@ test("it only redraws once, not on every keystroke", () => {
   assert.match(h, /if\(WSP\.odds==null && !WSP\.conjured\) return;/,
     "with nothing selected and nothing built there is nothing to clear, so " +
     "every keystroke after the first must return early");
+});
+
+/* ------------------------------------------------- decided once, in the build */
+
+const build = require("../lib/build.js");
+
+function fx(o) {
+  return Object.assign({ date: "2026-08-30", league: "Eliteserien", tip_p: 0.8,
+    kickoff: "2026-08-30T20:00:00.000Z" }, o);
+}
+const FUTURE = Date.parse("2026-08-30T12:00:00.000Z");
+
+test("the build stamps the pick, so every device shows the same one", () => {
+  /* Deciding it per browser meant two people never had to be looking at the
+     same "pick of the day", and a cleared cache re-rolled it. */
+  const p = build.choosePotd([
+    fx({ home: "A", away: "B", tip_p: 0.80 }),
+    fx({ home: "C", away: "D", tip_p: 0.94 }),
+  ], null, FUTURE);
+  assert.strictEqual(p.home, "C", "highest confidence wins");
+  assert.strictEqual(p.id, "m20260830CD", "and carries the client's own id form");
+});
+
+test("a pick already made is kept, which is the whole point", () => {
+  const board = [fx({ home: "A", away: "B", tip_p: 0.80 }),
+                 fx({ home: "C", away: "D", tip_p: 0.94 })];
+  const prev = { id: "m20260830AB", home: "A", away: "B", date: "2026-08-30" };
+  assert.deepStrictEqual(build.choosePotd(board, prev, FUTURE), prev,
+    "the weaker previous pick still holds - a rebake must not re-roll it");
+});
+
+test("but a pick that has left the card is replaced", () => {
+  const board = [fx({ home: "C", away: "D", tip_p: 0.94 })];
+  const prev = { id: "m20260830AB", home: "A", away: "B", date: "2026-08-30" };
+  assert.strictEqual(build.choosePotd(board, prev, FUTURE).home, "C");
+});
+
+test("a game that has already kicked off is not picked", () => {
+  /* The reported case: an MLS kickoff at 23:30 UTC is 00:30 in Lagos, played
+     overnight, still stamped as today's, and it was ranking second. */
+  const p = build.choosePotd([
+    fx({ home: "Inter Miami", away: "CF Montreal", tip_p: 0.93,
+         kickoff: "2026-08-29T23:30:00.000Z" }),
+    fx({ home: "Viking", away: "Aalesund", tip_p: 0.88 }),
+  ], null, FUTURE);
+  assert.strictEqual(p.home, "Viking",
+    "the overnight game is out even though it is the stronger call");
+});
+
+test("a day with nothing left to come still yields a pick", () => {
+  const past = [fx({ home: "A", away: "B", kickoff: "2026-08-30T09:00:00.000Z" })];
+  assert.ok(build.choosePotd(past, null, FUTURE),
+    "a hard filter would blank the headline late at night");
+});
+
+test("thin support and a league we model badly are still demerits", () => {
+  const p = build.choosePotd([
+    fx({ home: "A", away: "B", tip_p: 0.95, thin: true }),
+    fx({ home: "C", away: "D", tip_p: 0.94, league: "Japan J1 League" }),
+    fx({ home: "E", away: "F", tip_p: 0.70 }),
+  ], null, FUTURE);
+  assert.strictEqual(p.home, "E",
+    "the headline is the last place a number nobody has earned should lead");
+});
+
+test("the build's Asia list matches the app's, character for character", () => {
+  /* Two copies exist because index.html is standalone and cannot import. This
+     turns the drift risk into a failing test instead of a silent divergence. */
+  const m = /var ASIA_PREFIXES=\[([\s\S]*?)\];/.exec(src);
+  assert.ok(m, "ASIA_PREFIXES not found in index.html");
+  /* Collapse the line breaks between entries only - stripping all whitespace
+     would also eat the spaces inside "Saudi Arabia" and report a drift that
+     is not there. */
+  const app = JSON.parse("[" + m[1].replace(/\s*\n\s*/g, " ") + "]");
+  assert.deepStrictEqual(build.POTD_ASIA, app,
+    "lib/build.js POTD_ASIA and index.html ASIA_PREFIXES have drifted apart");
+});
+
+test("the app prefers the baked pick over its own localStorage lock", () => {
+  assert.match(potd, /DATA\.potd&&DATA\.potd\.date===dateStr/,
+    "the payload's pick must be consulted first");
+  const i = potd.indexOf("const baked=");
+  const j = potd.indexOf("if(!top&&lock&&lock.id)");
+  assert.ok(i > 0 && j > i, "the lock is now only the fallback");
 });

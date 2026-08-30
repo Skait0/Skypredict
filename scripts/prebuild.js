@@ -50,9 +50,22 @@ async function bakePayload() {
     return;
   }
   const t0 = Date.now();
+  /* The pick of the day the live site is already showing. Handed to the
+     builder so a redeploy keeps it instead of choosing again - every deploy
+     rebakes this file, and re-picking each time is exactly what made the card
+     jump off a game that had already been played. Best-effort: no network, a
+     cold site or a payload without one simply means a fresh pick, which is
+     what used to happen every time anyway. */
+  let prevPotd = null;
+  try {
+    const origin = process.env.SITE_ORIGIN || "https://skypredict-theta.vercel.app";
+    const r = await fetch(origin + "/predictions.json", { signal: AbortSignal.timeout(8000) });
+    if (r.ok) prevPotd = (await r.json()).potd || null;
+    if (prevPotd) log("carrying forward pick of the day: " + prevPotd.home + " v " + prevPotd.away);
+  } catch (e) { warn("could not read the live pick of the day (" + e.message + "), choosing fresh"); }
   let payload;
   try {
-    payload = await buildPayload({});
+    payload = await buildPayload({ prevPotd });
   } catch (e) {
     warn("build failed, skipping bake (the page will use /api/predictions): " + e.message);
     return;
