@@ -144,7 +144,7 @@ test("a refused leg leaves the slip, not just the request", () => {
      estimate and the total was wrong as well as the count. */
   const i = src.indexOf("var safe=dropUnbookable(bookable,d);");
   assert.ok(i > 0, "My slip's retry not found");
-  const branch = src.slice(i, i + 1400);
+  const branch = src.slice(i, i + 2200);
   assert.match(branch, /MYSLIP=MYSLIP\.filter\(function\(x\)\{return _keep\[/,
     "the refused legs must be removed from MYSLIP");
   assert.match(branch, /saveMy\(\)/, "and the change persisted");
@@ -154,11 +154,14 @@ test("a refused leg leaves the slip, not just the request", () => {
 
 test("the reader is told what was dropped, in plain words", () => {
   const i = src.indexOf("var safe=dropUnbookable(bookable,d);");
-  const branch = src.slice(i, i + 1400);
+  const branch = src.slice(i, i + 2200);
   assert.match(branch, /isn't on SportyBet right now/,
     "name the situation rather than showing a bare retry spinner");
   assert.match(branch, /booking the other /,
     "and say what is still happening, so it does not read as a failure");
+  assert.match(branch, /f\.home\+" v "\+f\.away/,
+    "name the match, not just the market - the same complaint that put team " +
+    "names into the pre-flight applies here");
   assert.doesNotMatch(branch, /error|failed|rejected/i,
     "this is a recovery, not a fault - it should not be worded like one");
 });

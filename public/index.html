@@ -8806,9 +8806,15 @@ function doBookMy(bookable,retried){
           MYSLIP=MYSLIP.filter(function(x){return _keep[x.id+"|"+x.code];});
           saveMy(); renderFab();
           if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
+          /* Name the match, not just the market. "Over 1.5 goals isn't on
+             SportyBet" leaves the reader hunting through their own slip for
+             which game it means - the same complaint that put the team names
+             into the booking pre-flight. */
           var _n=_dropped.length;
+          var _who=function(x){var f=fixtureById(x.id);
+            return f?(f.home+" v "+f.away+(x.label?" - "+x.label:"")):(x.label||"One pick");};
           $("myBookResult").innerHTML="<div class='code-info'>"+
-            esc(_n===1?(_dropped[0].label||"One pick")+" isn't on SportyBet right now"
+            esc(_n===1?_who(_dropped[0])+" isn't on SportyBet right now"
                       :_n+" picks aren't on SportyBet right now")+
             " - booking the other "+safe.length+"…</div>";
           doBookMy(safe,true);
