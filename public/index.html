@@ -9066,13 +9066,17 @@ function wspBuild(){
       var pr=Math.min(0.999,Math.max(0.001,c.p));
       return Math.log(pr)/Math.log(od);
     }
-    /* With no payout to reach there is nothing to be efficient about, so fall
-       back to the safest market - which is what "every game that qualifies"
-       and an unset target both want. */
+    /* WHICH MARKET on a given fixture is a different question from which
+       fixtures to use, and it wants a different answer.
+       Ranking markets by edge too was measured and rejected: it reaches for
+       the longer market on every fixture, which dropped average confidence
+       from 69% to 58% while the landing rate rose. Efficiency across fixtures
+       is worth having; buying it twice on the same match is not, because the
+       second helping comes straight out of how sure we are of each pick.
+       So the safest market we can actually book, always. The efficiency comes
+       from choosing WHICH fixtures to back, below. */
     function bestOf(pool){
-      return pool.reduce(function(a,b){
-        if(WSP.everyGame||WSP.odds==null) return b.p>a.p?b:a;
-        return edge(b)>edge(a)?b:a;});
+      return pool.reduce(function(a,b){ return b.p>a.p?b:a; });
     }
     function pickFrom(cs){
       var real=cs.filter(hasReal);
