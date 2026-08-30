@@ -9467,7 +9467,24 @@ function wspBuild(){
        simply not enough long-odds games to reach a big payout. */
     var styleTilt=(per<=1.3?-1.2:(per>=1.6?1.2:0));
     chosen.forEach(function(c){
-      c._cost=-(edge(c)+styleTilt*Math.log(c.od))+(h32(c.id+"|s"+seed)-0.5)*0.10;
+      /* Shuffle jitter, widening each time it is asked for.
+         Reported: "when i shuffle, some games dont leave the ticket".
+         Measured on a x100 target: 24 candidates for a 12-leg slip, costs
+         running 0.55 to 1.43. Around the cutoff the gaps between adjacent
+         legs are 0.003 to 0.046, so a jitter of +/-0.05 swaps those freely -
+         eight of the twelve slots did rotate. But the best leg sat at 0.55
+         with a 0.22 gap to the next, and the twelfth at about 1.06, so the
+         top six could not be displaced by any amount this jitter could
+         reach. Those were the six that never left.
+         Widening it flat would mean routinely trading a 0.55 leg for a 1.0
+         one - paying for variety with the quality that makes the slip worth
+         taking. So it escalates instead: the first shuffle varies the
+         margins, and somebody still shuffling on the fourth is plainly
+         asking for different GAMES rather than a different arrangement of
+         the same ones. Same escalation the South America and Asia gates use
+         a few lines down, and for the same reason. */
+      var jit=Math.min(0.50,0.10+0.13*shuffles);
+      c._cost=-(edge(c)+styleTilt*Math.log(c.od))+(h32(c.id+"|s"+seed)-0.5)*jit;
       /* A fixture SportyBet lists no prices for at all is still allowed - not
          knowing its markets is not the same as knowing it has none - but it
          goes to the back of the queue. Its odds are our estimate rather than a
@@ -9618,7 +9635,10 @@ function wspBuild(){
 // --- Wizard panel rendering (replaces renderWsp) ---
 function wspConjure(shuffle){
   if(shuffle){WSP.seed=Math.floor(Math.random()*1e6);WSP.shuffles=(WSP.shuffles||0)+1;}
-  else {WSP.removed={};}
+  /* A fresh conjure is a new question, so the shuffle escalation starts over.
+     The counter only ever incremented, which would have left a session that
+     shuffled once permanently jittery for every target chosen afterwards. */
+  else {WSP.removed={};WSP.shuffles=0;}
   WSP._sig=null;  // force a fresh build (not the cached slip)
   WSP.conjured=true;
   var r=wspBuild();
