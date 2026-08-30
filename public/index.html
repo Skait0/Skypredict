@@ -9076,7 +9076,17 @@ function wspBuild(){
        So the safest market we can actually book, always. The efficiency comes
        from choosing WHICH fixtures to back, below. */
     function bestOf(pool){
-      return pool.reduce(function(a,b){ return b.p>a.p?b:a; });
+      /* The safest market that still pulls its weight toward the payout.
+         Plain "safest available" was tried and undershoots: on a thin board the
+         short markets cannot multiply up to the target at all, and the wizard
+         returned x8 for a x12 request - breaking the one promise it makes.
+         `g` is the per-leg odds the target needs across `want` legs, so a
+         market at or above it carries its share. Among those, take the highest
+         probability. Where a fixture has nothing that long, take its longest
+         market so it contributes what it can. */
+      var pull=pool.filter(function(c){ return c.od>=g; });
+      if(pull.length) return pull.reduce(function(a,b){ return b.p>a.p?b:a; });
+      return pool.reduce(function(a,b){ return b.od>a.od?b:a; });
     }
     function pickFrom(cs){
       var real=cs.filter(hasReal);
