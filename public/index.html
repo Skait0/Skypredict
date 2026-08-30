@@ -9121,6 +9121,12 @@ function wspBuild(){
     var styleTilt=(per<=1.3?-0.35:(per>=1.6?0.35:0));
     chosen.forEach(function(c){
       c._cost=-(edge(c)+styleTilt*Math.log(c.od))+(h32(c.id+"|s"+seed)-0.5)*0.10;
+      /* A fixture SportyBet lists no prices for at all is still allowed - not
+         knowing its markets is not the same as knowing it has none - but it
+         goes to the back of the queue. Its odds are our estimate rather than a
+         quote, and it is the one leg that might not be placeable, so there is
+         no reason to reach for it while priced fixtures remain. */
+      if(!priced(c.f)) c._cost+=1.0;
     });
     var picks=[],used={},prod=1,lc={};
     function take(c){ used[c.id]=1; picks.push(c); prod*=c.od; lc[lgOf(c)]=(lc[lgOf(c)]||0)+1; }
@@ -9183,6 +9189,8 @@ function wspBuild(){
           for(var ai=0; ai<(leg._alts||[]).length; ai++){
             var alt=leg._alts[ai];
             if(!(alt.od>leg.od)) continue;
+            /* Never lengthen a placeable leg into one that cannot be booked. */
+            if(hasReal(leg)&&!hasReal(alt)) continue;
             /* Confidence given up per unit of odds gained. */
             var cost=(Math.log(leg.p)-Math.log(Math.max(0.001,alt.p)))/
                      (Math.log(alt.od)-Math.log(leg.od));
