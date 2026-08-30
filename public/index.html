@@ -9075,18 +9075,14 @@ function wspBuild(){
        second helping comes straight out of how sure we are of each pick.
        So the safest market we can actually book, always. The efficiency comes
        from choosing WHICH fixtures to back, below. */
+    /* The safest market we can book on this fixture. Nothing more clever:
+       filtering markets by a per-leg odds threshold was tried and it forces
+       every fixture to abandon its safest pick, which cost 8 points of average
+       confidence. The efficiency belongs in WHICH fixtures get backed, not in
+       stretching each one. Where the target still cannot be reached this way,
+       the escalation pass below lengthens legs - but only as far as it must. */
     function bestOf(pool){
-      /* The safest market that still pulls its weight toward the payout.
-         Plain "safest available" was tried and undershoots: on a thin board the
-         short markets cannot multiply up to the target at all, and the wizard
-         returned x8 for a x12 request - breaking the one promise it makes.
-         `g` is the per-leg odds the target needs across `want` legs, so a
-         market at or above it carries its share. Among those, take the highest
-         probability. Where a fixture has nothing that long, take its longest
-         market so it contributes what it can. */
-      var pull=pool.filter(function(c){ return c.od>=g; });
-      if(pull.length) return pull.reduce(function(a,b){ return b.p>a.p?b:a; });
-      return pool.reduce(function(a,b){ return b.od>a.od?b:a; });
+      return pool.reduce(function(a,b){ return b.p>a.p?b:a; });
     }
     function pickFrom(cs){
       var real=cs.filter(hasReal);
@@ -9102,7 +9098,8 @@ function wspBuild(){
       var cs=c.cands||[{f:c.f,id:c.id,code:c.code,p:c.p,od:c.od}];
       var pick=pickFrom(cs);
       if(!pick) return;
-      chosen.push({f:c.f,id:c.id,code:pick.code,p:pick.p,od:pick.od});
+      chosen.push({f:c.f,id:c.id,code:pick.code,p:pick.p,od:pick.od,
+                   _alts:cs.filter(hasReal).length?cs.filter(hasReal):cs});
     });
     /* Soft league cap: spread legs across leagues instead of stacking one, but
        only as a PREFERENCE - the payout target is never sacrificed for it. A
@@ -9170,6 +9167,34 @@ function wspBuild(){
       var next=enough||big;
       if(!next) break;
       take(next);
+    }
+    /* Still short after every fixture on the board has been used. That happens
+       on a thin card, and the promise is "at least the payout you asked for" -
+       so lengthen legs rather than hand back a slip that misses.
+       Cheapest first: each step costs the least confidence per unit of odds it
+       buys, which is the same measure the fixtures were ranked by. Nothing is
+       lengthened unless the target genuinely cannot be reached without it, so
+       on an ordinary board this loop never runs at all. */
+    if(!WSP.everyGame && T!=null && prod<T){
+      for(var guard=0; guard<200 && prod<T; guard++){
+        var bestSwap=null, bestCost=Infinity;
+        for(var pi=0; pi<picks.length; pi++){
+          var leg=picks[pi];
+          for(var ai=0; ai<(leg._alts||[]).length; ai++){
+            var alt=leg._alts[ai];
+            if(!(alt.od>leg.od)) continue;
+            /* Confidence given up per unit of odds gained. */
+            var cost=(Math.log(leg.p)-Math.log(Math.max(0.001,alt.p)))/
+                     (Math.log(alt.od)-Math.log(leg.od));
+            if(cost<bestCost){ bestCost=cost; bestSwap={leg:leg,alt:alt}; }
+          }
+        }
+        if(!bestSwap) break;
+        prod=prod/bestSwap.leg.od*bestSwap.alt.od;
+        bestSwap.leg.code=bestSwap.alt.code;
+        bestSwap.leg.p=bestSwap.alt.p;
+        bestSwap.leg.od=bestSwap.alt.od;
+      }
     }
     return {picks:picks,odds:prod};
   }
