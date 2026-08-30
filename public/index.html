@@ -6668,7 +6668,24 @@ function buildPicks(){
        only nudges the score and double chance could still out-rank it; this
        decides it outright, which is what was being asked of the shuffle. */
     best=preferGoalsOverDouble(f,best,usable,p.minConf);
-    if(best) cand.push({f:f,id:fid(f),code:best.code,p:best.p,eventId:f.eventId||null});
+    if(best){
+      /* Every market this fixture could offer, so the slip can spread across
+         markets instead of stacking one. Same reason as the league spread. */
+      var alts=[];
+      usable.forEach(function(c){
+        var v=mProb(f,c);
+        if(v==null||isNaN(v)||v<p.minConf) return;
+        /* The same score the market was chosen by above, kept so the spread
+           below can prefer a different market without abandoning what the risk
+           dial asked for. Scoring alternatives by probability alone broke the
+           dial outright: at high risk it quietly went back to safe markets and
+           the odds stopped rising with the slider. */
+        var sc=(1-f0)*v + f0*(oddOf(v)/12);
+        if((c==="OVER_1.5"||c==="OVER_2.5") && f.o25!=null) sc*=1+Math.max(0,f.o25-0.5)*0.8;
+        alts.push({code:c,p:v,score:sc});
+      });
+      cand.push({f:f,id:fid(f),code:best.code,p:best.p,eventId:f.eventId||null,_alts:alts});
+    }
   });
   var removedCount=Object.keys(BUILD.removed).length;
   var cap=Math.max(0,p.maxGames-removedCount);
@@ -6716,14 +6733,38 @@ function buildPicks(){
      per leg already drawn from the same country, so one league can't dominate the
      slip. A clearly better pick from a saturated league still gets in. Mirrors
      the wizard's soft cap. */
-  var picked=[],lc={},usedIx={},LEAGUE_PEN=3;
+  var picked=[],lc={},mc={},usedIx={},LEAGUE_PEN=3,MARKET_PEN=0.06;
+  /* The market is settled when the leg is taken, not before, with a penalty for
+     one already well used - exactly as the wizard does it. Choosing each
+     fixture's best market independently stacks the slip onto whichever market
+     happens to win most often, which at the safe end of the dial was 75% of
+     legs on a single market. Bounded and small: a clearly better market still
+     wins, and with only one market enabled there is nothing else to reach for,
+     so a single-market ticket is still exactly what the toggles give you. */
+  function marketFor(c){
+    var alts=c._alts||[];
+    if(alts.length<2) return c;
+    var best=null,bs=-Infinity;
+    for(var j=0;j<alts.length;j++){
+      var a=alts[j];
+      /* Proportional, so the penalty means the same thing wherever on the dial
+         the scores happen to sit. */
+      var sc=(a.score||a.p)*(1-MARKET_PEN*(mc[a.code]||0));
+      if(sc>bs){bs=sc;best=a;}
+    }
+    if(best){ c.code=best.code; c.p=best.p; }
+    return c;
+  }
   while(picked.length<cap){
     var bi=-1,bs=Infinity;
     for(var i=0;i<cand.length;i++){ if(usedIx[i]) continue;
       var s=i+LEAGUE_PEN*(lc[countryOf(cand[i].f.league)]||0); if(s<bs){bs=s;bi=i;} }
     if(bi<0) break;
-    usedIx[bi]=1; picked.push(cand[bi]);
+    usedIx[bi]=1;
+    marketFor(cand[bi]);
+    picked.push(cand[bi]);
     var cc=countryOf(cand[bi].f.league); lc[cc]=(lc[cc]||0)+1;
+    mc[cand[bi].code]=(mc[cand[bi].code]||0)+1;
   }
   BUILD.picks=picked;
   return picked;
