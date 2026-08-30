@@ -2573,6 +2573,31 @@ button.wsp-go.waiting{opacity:.55}
 .wsp-chip{background:var(--card-2);border:1px solid var(--line);color:var(--soft);font:inherit;
   font-weight:700;font-size:13px;padding:9px 15px;border-radius:99px;cursor:pointer}
 .wsp-chip.on{background:var(--red);border-color:var(--red);color:#fff}
+/* Slip style pills.
+   The labels now carry the trade-off ("More games / lesser odds"), which is
+   too long for the free-flowing chip row the payout ladder uses - on a phone
+   the three would wrap to three full-width rows. An equal-width grid with the
+   qualifier on a second line keeps each pill sized to its own text and the
+   three of them on one line, which is what makes them comparable at a
+   glance. Scoped to .wsp-style so the payout ladder keeps its own size. */
+#wspStyleChips{display:flex;flex-wrap:nowrap;gap:6px}
+.wsp-chip.wsp-style{display:inline-flex;flex:0 1 auto;flex-direction:column;
+  align-items:center;justify-content:center;gap:1px;padding:6px 12px;
+  line-height:1.18;min-width:0}
+.wsp-chip.wsp-style b{font-weight:800;font-size:12.5px;white-space:nowrap}
+.wsp-chip.wsp-style i{font-style:normal;font-weight:600;font-size:10.5px;
+  color:var(--faint);white-space:nowrap}
+.wsp-chip.wsp-style.on i{color:rgba(255,255,255,.82)}
+/* The narrowest phones still in use are 320px wide. Three pills at the
+   desktop size come to 305px plus the page gutter, which does not fit, and
+   wrapping one onto its own line would break the side-by-side comparison
+   these exist for. Trimmed until they do. */
+@media(max-width:380px){
+  #wspStyleChips{gap:5px}
+  .wsp-chip.wsp-style{padding:6px 8px}
+  .wsp-chip.wsp-style b{font-size:11.5px}
+  .wsp-chip.wsp-style i{font-size:9.5px}
+}
 
 /* ---- league picker ----
    A disclosure rather than another row of chips: there are forty-odd leagues
@@ -9775,7 +9800,7 @@ function renderWizardPanel(){
      shorter one. Calling it "safer" told people the opposite of the truth
      and the confidence figure beside it agreed with the lie. These say what
      you get and let the chance figure say what it costs. */
-  var styles=[[1.25,"More games"],[1.4,"Balanced"],[1.7,"Fewer games"]];
+  var styles=[[1.25,"More games","lesser odds"],[1.4,"Balanced",""],[1.7,"Fewer games","bigger odds"]];
   var html="";
   html += "<div class='wsp-lbl'>Pick a target payout</div><div class='wsp-chips' id='wspOddsChips'>"+
     odds.map(function(o,i){
@@ -9816,7 +9841,7 @@ function renderWizardPanel(){
   if(WSP.odds==null)
     html += "<p class='wsp-hint'>Pick a payout above - we'll find the games that reach it.</p>";
   html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips' id='wspStyleChips'>"+
-    styles.map(function(st){return "<button class='wsp-chip"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'>"+st[1]+"</button>";}).join("")+"</div>"+
+    styles.map(function(st){return "<button class='wsp-chip wsp-style"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'><b>"+st[1]+"</b>"+(st[2]?"<i>"+st[2]+"</i>":"")+"</button>";}).join("")+"</div>"+
     "<button class='book-btn wsp-go"+(WSP.odds==null?" waiting":"")+
       "' id='wspGo' type='button'>Conjure ticket</button>";
 

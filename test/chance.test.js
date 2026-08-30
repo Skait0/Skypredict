@@ -56,8 +56,22 @@ test("the slip styles are not named for a promise they cannot keep", () => {
   assert.ok(line, "styles array not found");
   assert.doesNotMatch(line[0], /Safer/,
     'the "Safer" label told people the opposite of the truth');
-  assert.match(line[0], /\[1\.25,\s*"More games"\]/);
-  assert.match(line[0], /\[1\.7,\s*"Fewer games"\]/);
+  assert.match(line[0], /\[1\.25,\s*"More games","lesser odds"\]/);
+  assert.match(line[0], /\[1\.7,\s*"Fewer games","bigger odds"\]/);
+});
+
+test("each style says which way its odds go", () => {
+  /* The names alone said what you get and nothing about the trade. The
+     qualifier is per-leg odds, not the payout - the payout is the target you
+     already chose, and it is the same whichever style you pick. More legs at
+     lower odds each, or fewer at higher; that is the entire choice. */
+  const line = /var styles=\[\[[\s\S]*?\]\];/.exec(src)[0];
+  const lo = /\[([\d.]+),"More games"/.exec(line)[1];
+  const hi = /\[([\d.]+),"Fewer games"/.exec(line)[1];
+  assert.ok(+lo < +hi,
+    `"lesser odds" must be the lower per-leg target (${lo}) and "bigger odds" ` +
+    `the higher (${hi}) - swapping these would print the opposite of the truth, ` +
+    `which is the mistake the previous labels made`);
 });
 
 /* The arithmetic the labels rest on, so the claim in the comments above stays
