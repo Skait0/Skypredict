@@ -17,5 +17,13 @@ public/m/
 public/sitemap.xml
 public/robots.txt
 
+# The standing pages, likewise. They carry the build date and the
+# training-set size, so a committed copy would go stale and then be
+# served in place of the fresh one.
+public/privacy.html
+public/terms.html
+public/how-it-works.html
+public/matches.html
+
 .vercel
 .env*
