@@ -100,6 +100,18 @@ test("a tip a scoreline cannot settle constrains nothing", () => {
 
 /* The scoreline is drawn from a distribution, so it has to be drawn the SAME
    way every time or a fixture would change its result between builds. */
+/* Seeds must look like real ones.
+   scoreForTip hashes its seed with FNV-1a, which distributes badly over short,
+   near-identical strings: "f0".."f199" lands 28% of draws in one bucket and
+   none in three others (chi-square 203 against a 16.9 threshold). Probing with
+   those measures the hash, not the sampler - it showed 3-1 taking 28% of a
+   fixture where its true share is 9%, and sent me looking for a sampling bug
+   that was not there. Production seeds are "date|home|away", which tests clean
+   at chi-square 5.9, so tests use the same shape. */
+function seedFor(i) {
+  return "2026-09-0" + (1 + (i % 9)) + "|Team " + i + "|Opponent " + (i * 7 + 3);
+}
+
 test("the same fixture always gets the same scoreline", () => {
   const B = require("../lib/build.js");
   const k = marketsFor(1.6, 1.25);
@@ -115,7 +127,7 @@ test("different fixtures do not all get the same scoreline", () => {
   const B = require("../lib/build.js");
   const k = marketsFor(1.6, 1.25);
   const seen = new Set();
-  for (let i = 0; i < 40; i++) seen.add(B.scoreForTip(k, "Over 1.5", "fixture-" + i));
+  for (let i = 0; i < 40; i++) seen.add(B.scoreForTip(k, "Over 1.5", seedFor(i)));
   assert.ok(seen.size >= 4,
     "one distribution should still spread across several scorelines, got " +
     [...seen].join(", "));
@@ -127,7 +139,7 @@ test("draws and low-scoring games are reachable at all", () => {
   const B = require("../lib/build.js");
   const k = marketsFor(1.45, 1.30);
   const out = [];
-  for (let i = 0; i < 200; i++) out.push(B.scoreForTip(k, "1X, home or draw", "f" + i));
+  for (let i = 0; i < 200; i++) out.push(B.scoreForTip(k, "1X, home or draw", seedFor(i)));
   const draws = out.filter(s => { const [h, a] = s.split("-").map(Number); return h === a; });
   const low = out.filter(s => { const [h, a] = s.split("-").map(Number); return h + a <= 1; });
   assert.ok(draws.length > 0, "a level scoreline must be reachable - it never was before");
@@ -233,7 +245,7 @@ test("the scoreline never contradicts its own tip, over the whole distribution",
   assert.ok(homeFav.home > homeFav.draw, "precondition: home is favoured");
   let sawDraw = false, sawHome = false;
   for (let i = 0; i < 200; i++) {
-    const [h, a] = B.scoreForTip(homeFav, "1X, home or draw", "s" + i).split("-").map(Number);
+    const [h, a] = B.scoreForTip(homeFav, "1X, home or draw", seedFor(i)).split("-").map(Number);
     assert.ok(h >= a, `1X must never show an away win, got ${h}-${a}`);
     if (h === a) sawDraw = true; else sawHome = true;
   }
@@ -243,7 +255,7 @@ test("the scoreline never contradicts its own tip, over the whole distribution",
   const awayFav = marketsFor(0.95, 1.90);
   assert.ok(awayFav.away > awayFav.draw, "precondition: away is favoured");
   for (let i = 0; i < 200; i++) {
-    const [h, a] = B.scoreForTip(awayFav, "X2, draw or away", "s" + i).split("-").map(Number);
+    const [h, a] = B.scoreForTip(awayFav, "X2, draw or away", seedFor(i)).split("-").map(Number);
     assert.ok(a >= h, `X2 must never show a home win, got ${h}-${a}`);
   }
 });
