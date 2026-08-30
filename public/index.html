@@ -6857,7 +6857,23 @@ function buildPicks(){
      different mix. Once allowed in they're penalised rather than cut, so Europe
      still leads while a few South American games come through. */
   var euroN=cand.filter(function(c){return !isSouthAmerican(c.f)&&!isAsian(c.f);}).length;
-  var saMode=(euroN<Math.min(cap,SA_MIN_EURO))?"fill":((BUILD.shuffles||0)>=2?"mix":"exclude");
+  /* "Can't fill the slip" means exactly that: fewer European candidates than
+     the dial asked for. This used to read `euroN < Math.min(cap,
+     SA_MIN_EURO)`, which with a cap of six or more is just `euroN < 6` - an
+     absolute floor that ignores how many games were actually wanted.
+     That produced a slip that SHRANK as risk rose. Measured on Today+Late,
+     14 fixtures: risk 40 gave 11 games (5 European, 6 South American), and
+     risk 50 gave 7 - because Europe crossed six candidates, South America
+     was excluded outright, and the six it lost outnumbered the two Europe
+     gained. Seven games against a cap of nineteen, with the dial insisting
+     it wanted nineteen.
+     The comment above already said "unless Europe can't fill the slip"; the
+     code just did not implement it. The older note here worried a relative
+     test would call Europe scarce almost every day - measured, it does not:
+     on a full card Europe alone fills every cap up to 35, so this is false
+     there and nothing changes. It only fires in the thin windows where the
+     slip was visibly short. */
+  var saMode=(euroN<cap)?"fill":((BUILD.shuffles||0)>=2?"mix":"exclude");
   if(saMode==="exclude") cand=cand.filter(function(c){return !isSouthAmerican(c.f);});
   /* Eased: these were 0.6 and 0.85, which held back the whole continent for
      the sins of one league. The goals exemption in saWeight does the real

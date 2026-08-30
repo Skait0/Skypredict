@@ -136,3 +136,52 @@ test("the reader is told when the window, not the dial, is the limit", () => {
   assert.match(h, /clear the bar in this window/,
     "and say so, or a working slider reads as a broken one");
 });
+
+/* --------------------------------------------- the slip that shrank */
+
+/**
+ * More risk must never mean fewer games.
+ *
+ * On Today + Late (14 fixtures) the sweep read 40->11, 50->7, 60->7 — the slip
+ * got SMALLER as the dial moved toward risky, and then sat at 7 against a cap
+ * of 19 and then 35.
+ *
+ * The cause was the South America gate:
+ *
+ *     saMode = (euroN < Math.min(cap, SA_MIN_EURO)) ? "fill" : ... "exclude"
+ *
+ * With a cap of six or more, `Math.min(cap, SA_MIN_EURO)` is just 6 — an
+ * absolute floor that ignores how many games were actually asked for. As risk
+ * rose, the lower confidence bar pushed European candidates past six, South
+ * America was excluded outright, and the six legs it lost outnumbered the two
+ * Europe gained.
+ *
+ * The comment above that line already said "held back unless Europe can't fill
+ * the slip". The code did not implement it. It now compares against the cap.
+ *
+ * The older note warned that a relative test would call Europe scarce almost
+ * every day. Measured, it does not: on a full card (219 in scope) Europe alone
+ * fills every cap up to 35, so the test is false there and nothing changes —
+ * zero South American legs at every risk setting, before and after. In the thin
+ * window the ceiling went from 7 games to 14, and both sweeps became monotonic.
+ */
+test("the South America gate asks whether Europe can fill THIS slip", () => {
+  const i = src.indexOf("var saMode=");
+  assert.ok(i > 0, "the South America gate is gone");
+  const line = src.slice(i, i + 120);
+  assert.match(line, /euroN<cap/,
+    "it must compare against the cap the dial asked for");
+  assert.doesNotMatch(line, /Math\.min\(cap,\s*SA_MIN_EURO\)/,
+    "the absolute floor ignored how many games were wanted, and made the slip " +
+    "shrink as risk rose");
+});
+
+test("Asia stays on its own stricter bar", () => {
+  /* Deliberately not changed with South America: the comment on ASIA_MIN_EURO
+     records these leagues turning up in slips that were never meant to have
+     them, and "genuinely run out rather than merely thinned" is the intent. */
+  const i = src.indexOf("var asiaMode=");
+  assert.ok(i > 0);
+  assert.match(src.slice(i, i + 160), /ASIA_MIN_EURO/,
+    "Asia keeps the absolute floor");
+});
