@@ -8995,7 +8995,7 @@ const JACKPOT_ODDS=20000;
    at booking. */
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
-var WSP={odds:null,legodd:1.35,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:true,o35:false,fh:false,tts:false,tts2:false,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:true,o35:false,fh:false,tts:false,tts2:false,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* One entry per toggle, so turning everything else off leaves exactly one
    market and every leg of the slip is that market. That is the whole point
    of splitting the goals group: an all-Over-1.5 or all-first-half ticket is
@@ -9076,7 +9076,11 @@ function wspBuild(){
        build; a hundred and twenty priced at fifty billion is not a slip
        anybody can win, it is a lottery ticket wearing one. "Every game that
        qualifies" changes which games go in, never how many past this. */
-    var T=WSP.odds, cap=isJackpotOdds(T)?JACKPOT_LEG_CAP:40, per=WSP.legodd||1.35;
+    /* 1.4 is the Balanced chip. The default used to be 1.35, which matches no
+       chip at all - so a first-time visitor got a slip built to a style that
+       none of the three buttons showed as chosen, and tapping Balanced
+       silently changed the result while appearing to change nothing. */
+    var T=WSP.odds, cap=isJackpotOdds(T)?JACKPOT_LEG_CAP:40, per=WSP.legodd||1.4;
     /* Nothing to aim at yet - say so with an empty slip rather than
        inventing a target. */
     if(T==null && !WSP.everyGame) return {picks:[],odds:1,conf:0};
