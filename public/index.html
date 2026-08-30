@@ -9141,14 +9141,28 @@ function wspBuild(){
        second helping comes straight out of how sure we are of each pick.
        So the safest market we can actually book, always. The efficiency comes
        from choosing WHICH fixtures to back, below. */
-    /* The safest market we can book on this fixture. Nothing more clever:
-       filtering markets by a per-leg odds threshold was tried and it forces
-       every fixture to abandon its safest pick, which cost 8 points of average
-       confidence. The efficiency belongs in WHICH fixtures get backed, not in
-       stretching each one. Where the target still cannot be reached this way,
-       the escalation pass below lengthens legs - but only as far as it must. */
+    /* The safest market that reaches the odds this SLIP STYLE is built around.
+       Both halves matter and dropping either one breaks something:
+       Safest-with-no-floor makes every leg roughly 1.2-1.4, so the leg count
+       can barely move and all three styles collapsed onto the same 20-23 leg
+       slip - the buttons stopped meaning anything.
+       Floor-with-no-safety reaches for the longest market on every fixture and
+       cost eight points of average confidence.
+       So: `g` is the per-leg odds this style needs across `want` legs, and
+       among the markets that clear it we take the highest probability. A small
+       tolerance below g, because insisting on the exact figure throws away a
+       much safer market that falls a hair short.
+       This is what makes the styles a real choice rather than three names for
+       one slip. More games means shorter legs and more of them, each one
+       likelier on its own; fewer games means longer legs and fewer, less
+       likely one by one. That trade is the honest content of the setting. */
     function bestOf(pool){
-      return pool.reduce(function(a,b){ return b.p>a.p?b:a; });
+      var floor=g*0.92;
+      var pull=pool.filter(function(c){ return c.od>=floor; });
+      if(pull.length) return pull.reduce(function(a,b){ return b.p>a.p?b:a; });
+      /* Nothing on this fixture is long enough - take its longest so it still
+         carries what it can toward the payout. */
+      return pool.reduce(function(a,b){ return b.od>a.od?b:a; });
     }
     function pickFrom(cs){
       var real=cs.filter(hasReal);
@@ -9220,9 +9234,14 @@ function wspBuild(){
     function marketFor(c){
       var alts=c._alts||[];
       if(alts.length<2) return c;
-      var best=null,bs=-Infinity;
-      for(var i=0;i<alts.length;i++){
-        var a=alts[i];
+      var best=null,bs=-Infinity,floor2=g*0.92;
+      /* Only markets that still reach the style's per-leg odds, or the spread
+         would quietly hand back the shorter legs bestOf just ruled out and
+         undo the style along with them. */
+      var elig=alts.filter(function(a){ return a.od>=floor2; });
+      if(!elig.length) elig=alts;
+      for(var i=0;i<elig.length;i++){
+        var a=elig[i];
         /* Never trade a placeable leg for one SportyBet does not price. */
         if(hasReal(c)&&!hasReal(a)) continue;
         var sc=Math.log(Math.max(0.001,a.p))-MARKET_PEN*(mc[a.code]||0);
