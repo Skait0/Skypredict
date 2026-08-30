@@ -6067,6 +6067,44 @@ function bookErrHTML(d){
        :"<span>One of the picks may have just closed. Remove a leg and try again.</span>")+
     "</div>";
 }
+/* Which legs to drop after SportyBet has refused the slip.
+
+   Both Get code buttons already retried once "without unavailable markets",
+   and that retry could never fire. It re-filtered on OUR copy of sportyOdds -
+   the same numbers the pre-flight had just cleared - so `safe` always equalled
+   the list we sent, the `safe.length<picks.length` guard was never true, and
+   the reader got "SportyBet wouldn't take this slip" with every leg intact.
+
+   The disagreement is about time, not markets. The client reads the odds once
+   at page load; the server's fixtures cache refreshes every 45 minutes. Leave
+   a slip open across a refresh that thins a market and our copy still shows a
+   price the server no longer has. Sentry caught exactly that: 31 legs sent,
+   3 refused, all of them OVER_1.5.
+
+   The server already answers the question - it names the offending legs in
+   `unbookable` - and we were throwing that away. So trust it, and fall back to
+   the local filter only when it says nothing. Clearing the odd as we go keeps
+   the board from advertising a price that cannot be booked, and stops the same
+   slip failing the same way on the next tap. */
+function dropUnbookable(picks,d){
+  var bad=(d&&d.unbookable)||[];
+  if(bad.length){
+    var kill={};
+    bad.forEach(function(b){kill[b.eventId+"|"+b.prediction]=1;});
+    var kept=picks.filter(function(c){return !kill[c.eventId+"|"+c.code];});
+    /* Our price for that market was wrong. Forget it rather than keep showing
+       it - the pre-flight and the board both read this. */
+    picks.forEach(function(c){
+      if(!kill[c.eventId+"|"+c.code]) return;
+      var f=c.f||fixtureById(c.id);
+      if(f&&f.sportyOdds) delete f.sportyOdds[c.code];});
+    return kept;
+  }
+  return picks.filter(function(c){
+    var f=c.f||fixtureById(c.id);
+    var o=f&&f.sportyOdds&&f.sportyOdds[c.code];
+    return o&&o>1.01;});
+}
 const SPORTY_URL="https://www.sportybet.com/ng/?shareCode=";
 /* The same booking code loads the same slip on football.com, which until now
    the modal only mentioned in a footnote - leaving anyone who uses that app to
@@ -6884,9 +6922,7 @@ function doBook(picks,retried){
            only the legs carrying real SportyBet odds - those are verified to
            exist. Toggling slider/wizard used to be the manual workaround. */
         var rejected=!d||!d.success;
-        var safe=picks.filter(function(c){
-          var o=c.f&&c.f.sportyOdds&&c.f.sportyOdds[c.code];
-          return o&&o>1.01;});
+        var safe=dropUnbookable(picks,d);
         if(rejected&&!retried&&safe.length>=1&&safe.length<picks.length){
           $("bookResult").innerHTML="<div class='code-info'>Retrying without unavailable markets...</div>";
           doBook(safe,true);
@@ -8732,7 +8768,15 @@ function doBookMy(bookable,retried){
       if(gen!==MYBOOK_GEN) return;
       resetMyBookBtn();
       if(d&&d.success&&d.booking_code){
-        var _legs=MYSLIP.slice(), _od=myOdds();
+        /* What was BOOKED, which after a retry is not the whole slip. Taken
+           from MYSLIP so the legs keep their labels, but narrowed to the ones
+           actually sent - saving all of them would file a ticket claiming
+           games the code does not contain, and those legs would then be graded
+           against a bet nobody holds. */
+        var _sent={}; bookable.forEach(function(c){_sent[c.id+"|"+c.code]=1;});
+        var _legs=MYSLIP.filter(function(x){return _sent[x.id+"|"+x.code];});
+        var _od=_legs.reduce(function(t,x){
+          return t*legOdd(fixtureById(x.id),x.code,x.p);},1);
         showCode(d.booking_code,"myBookResult",function(){
           rememberSlip(_legs,_od,d.booking_code);});
       }
@@ -8743,10 +8787,7 @@ function doBookMy(bookable,retried){
            unplaceable leg loses all forty, so drop the legs whose odds we
            never verified and try once more. The board's own Get code has done
            this for a while; My slip had nothing and simply failed. */
-        var safe=bookable.filter(function(c){
-          var f=fixtureById(c.id)||c.f;
-          var o=f&&f.sportyOdds&&f.sportyOdds[c.code];
-          return o&&o>1.01;});
+        var safe=dropUnbookable(bookable,d);
         if(!retried&&safe.length>=1&&safe.length<bookable.length){
           $("myBookResult").innerHTML=
             "<div class='code-info'>Retrying without unavailable markets…</div>";
