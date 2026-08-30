@@ -139,3 +139,49 @@ test("one placeable leg is still a slip worth offering", () => {
   H.el._handlers["confirm-go"]();
   assert.strictEqual(booked.length, 1);
 });
+
+/* ------------------------------------------------ the shape actually passed */
+
+/**
+ * The pre-flight has to work on the objects the CALLERS really build.
+ *
+ * Reported from a phone: a My-slip of five legs, each showing its odds on
+ * screen, refused to book with "SportyBet isn't offering any of these markets
+ * right now."
+ *
+ * hasSportyMarket resolves a fixture through `c.f` or `c.id`. The board path
+ * passes both. My slip passed neither - it built `{code, eventId}` - so every
+ * leg looked unplaceable and the pre-flight took the "nothing can be booked"
+ * branch, blocking booking entirely.
+ *
+ * My earlier tests all built their own pick objects and so all had `.f`. They
+ * proved the logic and said nothing about whether the callers satisfy it. That
+ * is the gap these close: assert against the real construction sites.
+ */
+const idxSrc = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+
+test("every list handed to the pre-flight carries the fixture", () => {
+  /* The two places bookMy builds its picks. Both must carry id and f, or
+     hasSportyMarket cannot resolve anything. */
+  const builds = idxSrc.match(/picks\s*=\s*MYSLIP\.map\([\s\S]{0,260}?\}\);/g) || [];
+  assert.ok(builds.length >= 2,
+    "expected both MYSLIP pick constructions, found " + builds.length);
+  builds.forEach((b, i) => {
+    assert.match(b, /id:\s*x\.id/, `MYSLIP pick construction ${i + 1} drops the id`);
+    assert.match(b, /f:\s*f/, `MYSLIP pick construction ${i + 1} drops the fixture`);
+  });
+});
+
+test("a leg shaped like My slip's is resolvable", () => {
+  /* The exact failure: a pick with no `.f`, relying on `id` alone. */
+  const H = harness();
+  const f = { home: "Man United", away: "Ipswich", sportyOdds: { "OVER_1.5": 1.17 } };
+  const byId = { "mu-ips": f };
+  const api = new Function("BY",
+    "function fixtureById(id){return BY[id]||null;}" +
+    grab("hasSportyMarket") + "\nreturn hasSportyMarket;")(byId);
+  assert.strictEqual(api({ id: "mu-ips", code: "OVER_1.5" }), true,
+    "a leg with only an id must still resolve through fixtureById");
+  assert.strictEqual(api({ code: "OVER_1.5" }), false,
+    "and one carrying neither id nor fixture cannot resolve - which is the bug");
+});
