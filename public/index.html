@@ -8940,8 +8940,14 @@ var WSP={odds:null,legodd:1.35,everyGame:false,mk:{wd:true,any:false,out:true,o1
    market and every leg of the slip is that market. That is the whole point
    of splitting the goals group: an all-Over-1.5 or all-first-half ticket is
    just this list with one thing in it. */
-try{var _wo=parseFloat(localStorage.getItem("sw.wspodds"));
-  if(isFinite(_wo)&&_wo>1) WSP.odds=_wo;}catch(e){}
+/* The payout target is deliberately NOT restored from a previous visit.
+   Coming back to a wizard already set to x1000 was reported as a bug, and it
+   is the same trap as a stored time-of-day filter: a narrowing choice made
+   days ago, still in force, with nothing on screen saying so. The wizard's
+   first-run state says "pick a payout - we'll find the games that reach it",
+   and that is the right thing to show someone arriving fresh. Any stored value
+   is cleared so nobody is left holding one. */
+try{localStorage.removeItem("sw.wspodds");}catch(e){}
 function wspMarkets(){var m=[];
   if(WSP.mk.wd)m=m.concat(["1X","X2"]);
   /* Either team to win. The wizard used to have no key for this at all, so the
@@ -9128,8 +9134,42 @@ function wspBuild(){
          no reason to reach for it while priced fixtures remain. */
       if(!priced(c.f)) c._cost+=1.0;
     });
-    var picks=[],used={},prod=1,lc={};
-    function take(c){ used[c.id]=1; picks.push(c); prod*=c.od; lc[lgOf(c)]=(lc[lgOf(c)]||0)+1; }
+    var picks=[],used={},prod=1,lc={},mc={};
+    /* Spread across MARKETS as well as leagues.
+       Choosing each fixture's safest market independently collapses the whole
+       slip onto one market, because whichever market is safest tends to be
+       safest on every game - enable Team over 0.5 and a team scoring at all is
+       the safest thing on the board, so all forty legs became Team over 0.5.
+       Reported as the wizard ignoring the other options, and it was: they were
+       selected, they were eligible, and nothing ever reached them.
+       So the market is settled when the leg is taken rather than before, with a
+       penalty for one already well used - the same shape as the league spread
+       beside it. Small and bounded, so a clearly safer market still wins; it
+       takes several legs of the same market before another gets the nod.
+       Turning every other market OFF still gives a single-market ticket,
+       because then there is nothing else to reach for - which is the point of
+       the toggles. */
+    var MARKET_PEN=0.055;
+    function marketFor(c){
+      var alts=c._alts||[];
+      if(alts.length<2) return c;
+      var best=null,bs=-Infinity;
+      for(var i=0;i<alts.length;i++){
+        var a=alts[i];
+        /* Never trade a placeable leg for one SportyBet does not price. */
+        if(hasReal(c)&&!hasReal(a)) continue;
+        var sc=Math.log(Math.max(0.001,a.p))-MARKET_PEN*(mc[a.code]||0);
+        if(sc>bs){bs=sc;best=a;}
+      }
+      if(!best) return c;
+      c.code=best.code; c.p=best.p; c.od=best.od;
+      return c;
+    }
+    function take(c){
+      marketFor(c);
+      used[c.id]=1; picks.push(c); prod*=c.od;
+      lc[lgOf(c)]=(lc[lgOf(c)]||0)+1; mc[c.code]=(mc[c.code]||0)+1;
+    }
     /* Phase 1 - take the best-ranked legs, spread across leagues, but stop the
        moment the payout is reached. `want` is now a ceiling rather than a
        quota: it is what slip style asks for, and there is no reason to keep
