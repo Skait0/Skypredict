@@ -12,6 +12,18 @@
 <meta property="og:image" content="https://skypredict-theta.vercel.app/wiz-logo.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://skypredict-theta.vercel.app/wiz-logo.png">
+<!-- Every view of this site is one URL with different state - the board, the
+     builder, live scores and results are all "/" - and the day picker and share
+     links add query strings on top. Without a canonical, a search engine treats
+     each of those as a separate page competing with the others, which splits
+     the ranking of the one page that matters. Absolute, because a relative
+     canonical is ignored by some crawlers, and rewritten at deploy time by
+     applyOrigin() along with the og: tags above. -->
+<link rel="canonical" href="https://skypredict-theta.vercel.app/">
+<meta property="og:url" content="https://skypredict-theta.vercel.app/">
+<!-- Names the site itself for search results. The per-match pages carry their
+     own SportsEvent schema; this is the one that can win a sitelinks box. -->
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Soccerwizard","url":"https://skypredict-theta.vercel.app/","description":"Football predictions from 38 leagues, plus a ready-made SportyBet slip.","publisher":{"@type":"Organization","name":"Soccerwizard","logo":{"@type":"ImageObject","url":"https://skypredict-theta.vercel.app/wiz-logo.png"}}}</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/app-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
