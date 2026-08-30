@@ -59,7 +59,7 @@ function konst(name) {
 }
 
 const FNS = ["countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmerican",
-  "saWeight", "isLowerLeague", "fid", "oddOf", "legOdd", "mProb", "riskParams",
+  "saWeight", "isLowerLeague", "isLowerFixture", "fid", "oddOf", "legOdd", "mProb", "riskParams",
   "allowedMarkets", "preferGoalsOverDouble", "isJackpotOdds", "wspMarkets",
   "buildPicks", "wspBuild"];
 
