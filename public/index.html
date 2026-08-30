@@ -6259,6 +6259,10 @@ var TEAM_ALIASES = {
   "osasuna": "ca osasuna",
   "mallorca": "rcd mallorca",
   "rayo vallecano": "rayo",
+  /* Our feed says "Vallecano", SportyBet says "Rayo Vallecano". Without this
+     the two scored zero against each other, which is half of how a La Liga
+     fixture came to be booked as an Ecuadorian one - see sameSlot below. */
+  "vallecano": "rayo",
   "girona fc": "girona",
   "las palmas": "ud las palmas",
   "cadiz cf": "cadiz",
@@ -6494,6 +6498,31 @@ function evStart(m){
   if(isFinite(n)&&n>1e11) return n;
   return Date.parse(t);
 }
+/* Two events with the same name are not the same match if they kick off two
+   days apart. Reported: a slip booked from "Barcelona v Vallecano" in La
+   Liga came back with an Ecuadorian game on it.
+   "Barcelona SC" - Barcelona Sporting Club, Guayaquil - normalises to
+   exactly "barcelona", because the SC is stripped as a Brazilian state
+   code (Santa Catarina). So the home sides matched perfectly, and the
+   away sides decided it: our feed writes "Vallecano" where SportyBet
+   writes "Rayo Vallecano", which an alias folded to "rayo" - scoring
+   ZERO against ours - while "Vallecano" matched "Independiente del VALLE"
+   at 1.0 through the token prefix rule. The Ecuador fixture won 3.0 to
+   2.0 and the right game lost to the wrong one.
+   Measured on the live feed: of 214 attached fixtures, 212 sit within
+   fifteen minutes of their event and one more within seven hours (a
+   provisional time). The only one outside a day was this bug, at 52.5
+   hours. A day is therefore a wide, safe fence.
+   Permissive when either time is missing: no time is not evidence of a
+   mismatch, and refusing on it would drop good matches whenever the feed
+   omits a kick-off. */
+var MATCH_WINDOW_MS=24*60*60*1000;
+function sameSlot(f,m){
+  if(!f||!f.kickoff) return true;
+  var t=evStart(m); if(!isFinite(t)) return true;
+  var k=Date.parse(f.kickoff); if(!isFinite(k)) return true;
+  return Math.abs(t-k)<=MATCH_WINDOW_MS;
+}
 function attachEventIds(sporty){
   if(!sporty||!sporty.length) return 0;
   /* Verbose per-fixture match logging is opt-in: add ?debug=1 (or #debug) to the
@@ -6521,9 +6550,11 @@ function attachEventIds(sporty){
     /* Exact-normalized match first: normTeam folds every known alias. */
     var fh=normTeam(f.home),fa=normTeam(f.away);
     for(var i=0;i<cand.length;i++){
+      if(!sameSlot(f,cand[i])) continue;
       if(normTeam(cand[i].homeTeam)===fh && normTeam(cand[i].awayTeam)===fa){best=cand[i];bestScore=99;break;}
     }
     if(!best) cand.forEach(function(m){
+      if(!sameSlot(f,m)) return;
       /* Per-side scoring: BOTH sides must meet minimum (0.6), then combine */
       var sHome = simTeams(f.home, m.homeTeam);
       var sAway = simTeams(f.away, m.awayTeam);
@@ -6538,6 +6569,9 @@ function attachEventIds(sporty){
     /* Fallback: search ALL sporty events (not just ±3 days) with stricter threshold */
     var gb=null,gs=0;
     sporty.forEach(function(m){
+      /* The widest net of the three, so it needs the fence most: this one
+         searches every event on the feed regardless of date. */
+      if(!sameSlot(f,m)) return;
       var sHome = simTeams(f.home, m.homeTeam);
       var sAway = simTeams(f.away, m.awayTeam);
       if (sHome >= 0.7 && sAway >= 0.7) {  // stricter for global search
