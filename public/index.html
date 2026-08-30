@@ -6305,6 +6305,16 @@ var TEAM_ALIASES = {
   "ifk mariehamn": "mariehamn",
   /* Renamed, and the feeds have not agreed on it. */
   "shenzhen xinpengcheng": "shenzhen peng city",
+  /* Both were matching, but only on kick-off time with the name scoring
+     0.00 - the clock carrying a pairing the names could not. That works
+     until two games in the same league start together, and then the
+     fixture goes unpriced. Greek ει against ι is one letter, so the
+     containment rule misses by a hair; Basaksehir is a different word
+     in each feed. Aliased to the same canonical form, not bridged with a
+     general rule: "istanbul" alone would also match Kasimpasa Istanbul. */
+  "levadeiakos": "levadiakos",
+  "buyuksehyr": "basaksehir",
+  "istanbul bb": "basaksehir",
 };
 
 /* normTeam is the hottest function on the page by a wide margin - matching the
@@ -6387,9 +6397,52 @@ function normTeamRaw(s){
   return s;
 }
 function tokset(s){return normTeam(s).split(" ").filter(function(w){return w.length>=3;});}
+/* A reserve, youth or women's side is not its first team.
+   Every string matcher gets this wrong by default and this one did: tokset
+   drops tokens under three characters, which is exactly what "II" and "B"
+   are, and the containment rule then scores "Stuttgart" against
+   "Stuttgart II" at 1.8 - the same score it gives a genuine match. Measured
+   before the fix, all of these collided at 1.80: Stuttgart II, Bayern Munich
+   II, Real Madrid B, Jong Ajax, Jong PSV, Barcelona U19, Chelsea Women. These
+   are real fixtures on the same card - Jong Ajax and Jong PSV play in the
+   Eerste Divisie - so this could hang a reserve game's odds on a first-team
+   pick, and the kick-off fallback below would have accepted it.
+   Markers are compared as a SET that must agree exactly, separately from
+   string similarity, because it is a different question. Mirrors markers()
+   in lib/oracle.js, which got this guard when the same bug bit the results
+   matcher; the odds matcher never had it. */
+function teamMarkers(s){
+  var out={}, n=0;
+  var raw=" "+String(s==null?"":s).toLowerCase().normalize("NFD")
+    .replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g," ")+" ";
+  function add(k){ if(!out[k]){out[k]=1;n++;} }
+  /* Anchored to the END of the name. A reserve side is "Sociedad B",
+     "Portland Timbers II", "Rosenborg BK 2" - the marker is always a
+     suffix. Matching it anywhere would catch the Danish club B 93 and the
+     Faroese B36 and B68, whose names simply begin with a B, and then a
+     feed writing "B93" against one writing "B 93" would disagree about
+     the marker and refuse a perfectly good match. */
+  if(/ (ii|2|b) $/.test(raw)) add("reserves");
+  if(/ iii $/.test(raw)) add("third");
+  if(/ (u ?1[5-9]|u ?2[0-3]) /.test(raw)) add("youth");
+  if(/ (women|feminin|femenino|femenina|frauen|ladies) /.test(raw)) add("women");
+  if(/ (reserves?|academy|youth|jugend|primavera|junioren) /.test(raw)) add("youth");
+  /* Dutch reserve sides are named "Jong Ajax", with no numeral at all. */
+  if(/ jong /.test(raw)) add("reserves");
+  out.__n=n; return out;
+}
+function sameVariant(a,b){
+  var A=teamMarkers(a), B=teamMarkers(b);
+  if(A.__n!==B.__n) return false;
+  for(var k in A){ if(k!=="__n" && !B[k]) return false; }
+  return true;
+}
 function simTeams(a,b){
   var na=normTeam(a),nb=normTeam(b);
   if(!na||!nb) return 0;
+  /* Asked before similarity, not after: a containing name scores 1.8 and
+     would otherwise sail past every check below. */
+  if(!sameVariant(a,b)) return 0;
   if(na===nb) return 2.0;  // max score for perfect match
   if(na.indexOf(nb)>=0||nb.indexOf(na)>=0) return 1.8;
   var ta=tokset(a),tb=tokset(b),sh=0;
