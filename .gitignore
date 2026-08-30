@@ -16,3 +16,6 @@ public/predictions.json
 public/m/
 public/sitemap.xml
 public/robots.txt
+
+.vercel
+.env*
