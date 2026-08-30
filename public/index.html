@@ -2536,6 +2536,46 @@ button.wsp-go.waiting{opacity:.55}
 .wsp-chip{background:var(--card-2);border:1px solid var(--line);color:var(--soft);font:inherit;
   font-weight:700;font-size:13px;padding:9px 15px;border-radius:99px;cursor:pointer}
 .wsp-chip.on{background:var(--red);border-color:var(--red);color:#fff}
+
+/* ---- league picker ----
+   A disclosure rather than another row of chips: there are forty-odd leagues
+   on a busy day and they would bury every control under them. Closed, it
+   states the current choice in words, because "Any league" and "3 leagues" are
+   the only things worth knowing at a glance. */
+.lgp-wrap{position:relative;margin-top:9px}
+.lgp-open{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  width:100%;background:var(--card-2);border:1px solid var(--line);color:var(--text);
+  font:inherit;font-weight:700;font-size:13px;padding:9px 14px;border-radius:var(--r-md);
+  cursor:pointer;text-align:left;
+  transition:background .16s ease,border-color .16s ease,color .16s ease}
+.lgp-open .lgp-caret{color:var(--faint);transition:transform .2s ease}
+.lgp-open[aria-expanded="true"] .lgp-caret{transform:rotate(180deg)}
+.lgp-open.narrowed{border-color:var(--red);color:var(--red-ink)}
+.lgp-box{margin-top:8px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-md);overflow:hidden}
+.lgp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:9px 12px;border-bottom:1px solid var(--line-soft);
+  font-size:11.5px;font-weight:700;color:var(--faint)}
+.lgp-clear{background:transparent;border:0;color:var(--red-ink);font:inherit;
+  font-weight:700;font-size:11.5px;cursor:pointer;padding:2px 4px;border-radius:var(--r-sm)}
+.lgp-list{max-height:270px;overflow-y:auto;overscroll-behavior:contain}
+.lgp-row{display:flex;align-items:center;gap:10px;width:100%;background:transparent;
+  border:0;border-bottom:1px solid var(--line-soft);color:var(--text);font:inherit;
+  font-size:13px;padding:9px 12px;cursor:pointer;text-align:left}
+.lgp-row:last-child{border-bottom:0}
+.lgp-row .lgp-tick{flex:0 0 16px;width:16px;height:16px;border-radius:4px;
+  border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:transparent}
+.lgp-row.on .lgp-tick{background:var(--red);border-color:var(--red);color:#fff}
+.lgp-row .lgp-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lgp-row .lgp-n{flex:0 0 auto;font-size:11.5px;font-weight:700;color:var(--faint)}
+.lgp-row .lgp-ct{color:var(--faint);font-weight:600}
+.lgp-empty{padding:14px 12px;font-size:12.5px;color:var(--faint);text-align:center}
+@media (hover:hover){
+  .lgp-open:hover{background:var(--raise);border-color:var(--soft)}
+  .lgp-clear:hover{background:var(--card-2);color:var(--red)}
+  .lgp-row:hover{background:var(--card-2)}
+}
 /* A control that does nothing under a cursor reads as a label, not a choice.
    The payout row had a hue of its own to lift; these have none, so they take
    the plain treatment - a step up in surface and ink, and a pixel of rise.
@@ -3858,6 +3898,19 @@ footer{margin-top:26px;padding-top:18px;
       <div class="wsp-chips stage-in stage-in-3" id="bldLeagues">
         <button class="wsp-chip stage-in stage-in-4" type="button" data-btp="false">All leagues</button>
         <button class="wsp-chip stage-in stage-in-4" type="button" data-btp="true">Top flight only</button>
+      </div>
+      <div class="lgp-wrap stage-in stage-in-3">
+        <button class="lgp-open" type="button" id="lgpOpen" aria-expanded="false" aria-controls="lgpBox">
+          <span id="lgpSum">Any league</span>
+          <span class="lgp-caret" aria-hidden="true">&#9662;</span>
+        </button>
+        <div class="lgp-box" id="lgpBox" hidden>
+          <div class="lgp-head">
+            <span id="lgpCount"></span>
+            <button class="lgp-clear" type="button" id="lgpClear">Any league</button>
+          </div>
+          <div class="lgp-list" id="lgpList"></div>
+        </div>
       </div>
       <div class="wsp-lbl stage-in stage-in-2">Include markets</div>
       <div class="wsp-chips mkt-palette stage-in stage-in-3" id="bldMk"></div>
@@ -5733,11 +5786,49 @@ function todFixtures(list){
      still there under "All day". */
   return list.filter(function(f){ return todOf(f)===TOD; });
 }
+/* Which leagues a slip may draw from.
+   Empty means every league, which is both the default and what "clear" returns
+   to - a stored set that had emptied itself would otherwise build nothing and
+   look broken. Kept as a plain object so it survives JSON round-tripping into
+   localStorage. */
+var BLD_LEAGUES={};
+try{var _bl0=JSON.parse(localStorage.getItem("sw.bldleagues")||"{}");
+  if(_bl0&&typeof _bl0==="object"&&!Array.isArray(_bl0)) BLD_LEAGUES=_bl0;}catch(e){}
+function leaguesChosen(){for(var k in BLD_LEAGUES){if(BLD_LEAGUES[k])return true;}return false;}
+function leagueAllowed(l){return !leaguesChosen()||!!BLD_LEAGUES[l];}
+function leagueChosenCount(){var n=0;for(var k in BLD_LEAGUES){if(BLD_LEAGUES[k])n++;}return n;}
+function setLeaguePicked(l,on){
+  if(on) BLD_LEAGUES[l]=1; else delete BLD_LEAGUES[l];
+  try{localStorage.setItem("sw.bldleagues",JSON.stringify(BLD_LEAGUES));}catch(e){}
+}
+function clearLeaguePicks(){
+  BLD_LEAGUES={};
+  try{localStorage.removeItem("sw.bldleagues");}catch(e){}
+}
 function scopeFixtures(){
   return todFixtures(DATA.fixtures.filter(function(f){
     if(!notStarted(f)) return false;
+    if(!leagueAllowed(f.league)) return false;
     return SCOPE!=="day"||dayOff(f.date)===SDAY;
   }));
+}
+/* The leagues actually available to choose from, with how many games each has
+   in the current day/time window - so the picker offers what can be built with
+   rather than every league the payload has ever carried. Counted BEFORE the
+   league filter, or choosing one league would empty the list of the others. */
+function leaguesOnBoard(){
+  var seen={};
+  todFixtures(DATA.fixtures.filter(function(f){
+    if(!notStarted(f)) return false;
+    return SCOPE!=="day"||dayOff(f.date)===SDAY;
+  })).forEach(function(f){
+    if(TOP_ONLY&&isLowerFixture(f)) return;
+    seen[f.league]=(seen[f.league]||0)+1;
+  });
+  return Object.keys(seen).sort(function(a,b){
+    var r=leagueRank(a)-leagueRank(b); if(r) return r;
+    return a.localeCompare(b);
+  }).map(function(l){return {league:l,n:seen[l]};});
 }
 /* Games still buildable on a given day offset - the count shown against the
    day, and what tells clampDay whether an offset is worth keeping. */
@@ -9101,6 +9192,65 @@ function renderShared(){
       });
     }
   }
+  renderLeaguePicker();
+}
+/* The league picker.
+   Repainted with the rest of the builder because its contents depend on the
+   day and time window above it - change those and a different set of leagues
+   is available, with different counts. The open/closed state is deliberately
+   kept on the element rather than in a variable, so a repaint does not shut a
+   list somebody is halfway down. */
+function renderLeaguePicker(){
+  var open=$("lgpOpen"),box=$("lgpBox"),list=$("lgpList"),
+      sum=$("lgpSum"),cnt=$("lgpCount"),clr=$("lgpClear");
+  if(!open||!box||!list) return;
+
+  var avail=leaguesOnBoard();
+  var n=leagueChosenCount();
+  /* A stored pick for a league that is not playing today would otherwise show
+     "2 leagues" over an empty board with nothing to un-tick. */
+  var live=avail.filter(function(x){return BLD_LEAGUES[x.league];}).length;
+  sum.textContent = !n ? "Any league"
+    : (live ? live+" league"+(live===1?"":"s") : n+" picked, none playing");
+  open.classList.toggle("narrowed",!!n);
+  if(cnt) cnt.textContent=avail.length+" available";
+  if(clr) clr.hidden=!n;
+
+  list.innerHTML = avail.length
+    ? avail.map(function(x){
+        return "<button class='lgp-row"+(BLD_LEAGUES[x.league]?" on":"")+"' type='button' "+
+          "data-lg=\""+esc(x.league)+"\" aria-pressed='"+(!!BLD_LEAGUES[x.league])+"'>"+
+          "<span class='lgp-tick' aria-hidden='true'>✓</span>"+
+          "<span class='lgp-nm'>"+esc(compOf(x.league))+"<span class='lgp-ct'> · "+esc(countryOf(x.league))+"</span></span>"+
+          "<span class='lgp-n'>"+x.n+"</span></button>";
+      }).join("")
+    : "<div class='lgp-empty'>No games in this window.</div>";
+
+  list.querySelectorAll("[data-lg]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var l=b.dataset.lg;
+      setLeaguePicked(l,!BLD_LEAGUES[l]);
+      /* The slip is built from a pool that just changed, so any conjured slip
+         is stale. Drop it rather than leave legs from a league now excluded. */
+      WSP._sig=null;
+      renderBuilder();
+    });
+  });
+
+  if(!open._wired){
+    open._wired=1;
+    open.addEventListener("click",function(){
+      var showing=!box.hidden;
+      box.hidden=showing;
+      open.setAttribute("aria-expanded",String(!showing));
+    });
+    clr.addEventListener("click",function(e){
+      e.stopPropagation();
+      clearLeaguePicks();
+      WSP._sig=null;
+      renderBuilder();
+    });
+  }
 }
 function renderSliderPanel(){
   var firstVisit = BUILD.risk === null;
@@ -9287,8 +9437,8 @@ function renderBuilderOutput(){
        a day picked, the blank board might be tomorrow or Saturday. */
     var dryDay=SDAY===0?"today":(SDAY===1?"tomorrow":dayName(SDAY));
     $("slip").innerHTML="<div class='bld-empty'><b>"+(isWiz?(WSP.conjured?"No slip yet":"Ready when you are")+"":"Nothing in your slip")+"</b>"+
-      (isWiz?(WSP.conjured?"No games match your wizard settings - try a lower payout or enable more markets.":"Tap a target payout to preview your slip.")
-       : (dry?("No fixtures "+(SDAY===0?"left ":"")+dryDay+(TOD!=="all"?" in this time window":"")+" - switch to All upcoming to keep building.")
+      (isWiz?(WSP.conjured?("No games match your wizard settings - try a lower payout"+(leaguesChosen()?", widen the leagues":"")+" or enable more markets."):"Tap a target payout to preview your slip.")
+       : (dry?("No fixtures "+(SDAY===0?"left ":"")+dryDay+(TOD!=="all"?" in this time window":"")+(leaguesChosen()?" in the leagues you picked":"")+" - "+(leaguesChosen()?"widen the leagues":"switch to All upcoming")+" to keep building.")
          : (firstVisit ? "Move the slider to build a fresh set of games." : "No games match. Adjust risk or markets.")))+"</div>";
   } else {
     $("slip").innerHTML=picks.map(function(c){
