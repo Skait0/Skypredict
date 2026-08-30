@@ -1164,7 +1164,11 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .wsp-cust-in{width:56px;background:transparent;border:0;outline:0;color:var(--text);
   font:inherit;font-weight:700;font-size:13px;padding:0}
 .wsp-cust-in::placeholder{color:var(--faint);font-weight:600}
-.wsp-cust:focus-within{border-style:solid;border-color:var(--red);background:var(--red-wash)}
+/* Focus is neutral on purpose. Red is what a chip turns when it is SELECTED,
+   and on a field it reads as either "chosen" or "wrong" - neither of which is
+   what a cursor sitting in a box means. Firming the border and lifting the
+   surface says "you are typing here" without borrowing a meaning. */
+.wsp-cust:focus-within{border-style:solid;border-color:var(--soft);background:var(--raise)}
 @media (hover:hover){ .wsp-cust:hover{border-color:var(--soft)} }
 @media (hover:hover){
   .code-save:not(.done):hover{background:var(--card-2);border-color:var(--soft)}
