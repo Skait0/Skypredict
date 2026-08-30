@@ -2542,16 +2542,17 @@ button.wsp-go.waiting{opacity:.55}
    on a busy day and they would bury every control under them. Closed, it
    states the current choice in words, because "Any league" and "3 leagues" are
    the only things worth knowing at a glance. */
-.lgp-wrap{position:relative;margin-top:9px}
-.lgp-open{display:flex;align-items:center;justify-content:space-between;gap:10px;
-  width:100%;background:var(--card-2);border:1px solid var(--line);color:var(--text);
-  font:inherit;font-weight:700;font-size:13px;padding:9px 14px;border-radius:var(--r-md);
-  cursor:pointer;text-align:left;
-  transition:background .16s ease,border-color .16s ease,color .16s ease}
-.lgp-open .lgp-caret{color:var(--faint);transition:transform .2s ease}
+.lgp-wrap{position:relative}
+/* Sized to its own text, sitting in the chip row - it was full width, which
+   made a filter look like a heading for the section beneath it. */
+.lgp-open{display:inline-flex;align-items:center;gap:7px;width:auto;
+  color:var(--text);text-align:left}
+.lgp-open .lgp-caret{color:var(--faint);transition:transform .2s ease;font-size:11px}
 .lgp-open[aria-expanded="true"] .lgp-caret{transform:rotate(180deg)}
-.lgp-open.narrowed{border-color:var(--red);color:var(--red-ink)}
-.lgp-box{margin-top:8px;background:var(--card);border:1px solid var(--line);
+/* Narrowed reads as a live filter without borrowing the solid red of a chip
+   that is switched ON - this one is a door, not a state. */
+.lgp-open.narrowed{border-color:var(--red);color:var(--red-ink);background:var(--red-wash)}
+.lgp-box{margin-top:9px;background:var(--card);border:1px solid var(--line);
   border-radius:var(--r-md);overflow:hidden}
 .lgp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
   padding:9px 12px;border-bottom:1px solid var(--line-soft);
@@ -2571,6 +2572,8 @@ button.wsp-go.waiting{opacity:.55}
 .lgp-row .lgp-n{flex:0 0 auto;font-size:11.5px;font-weight:700;color:var(--faint)}
 .lgp-row .lgp-ct{color:var(--faint);font-weight:600}
 .lgp-empty{padding:14px 12px;font-size:12.5px;color:var(--faint);text-align:center}
+.lgp-hint{padding:9px 12px;font-size:12px;line-height:1.45;color:var(--soft);
+  background:var(--card-2);border-bottom:1px solid var(--line-soft)}
 @media (hover:hover){
   .lgp-open:hover{background:var(--raise);border-color:var(--soft)}
   .lgp-clear:hover{background:var(--card-2);color:var(--red)}
@@ -3898,12 +3901,16 @@ footer{margin-top:26px;padding-top:18px;
       <div class="wsp-chips stage-in stage-in-3" id="bldLeagues">
         <button class="wsp-chip stage-in stage-in-4" type="button" data-btp="false">All leagues</button>
         <button class="wsp-chip stage-in stage-in-4" type="button" data-btp="true">Top flight only</button>
-      </div>
-      <div class="lgp-wrap stage-in stage-in-3">
-        <button class="lgp-open" type="button" id="lgpOpen" aria-expanded="false" aria-controls="lgpBox">
+        <!-- Third control in the same row rather than a bar of its own: it is
+             one more way to narrow the same thing, and full width made it read
+             as a section heading over the markets below it. -->
+        <button class="wsp-chip lgp-open stage-in stage-in-4" type="button" id="lgpOpen"
+                aria-expanded="false" aria-controls="lgpBox">
           <span id="lgpSum">Any league</span>
           <span class="lgp-caret" aria-hidden="true">&#9662;</span>
         </button>
+      </div>
+      <div class="lgp-wrap stage-in stage-in-3">
         <div class="lgp-box" id="lgpBox" hidden>
           <div class="lgp-head">
             <span id="lgpCount"></span>
@@ -5748,9 +5755,15 @@ try{var sd0=parseInt(localStorage.getItem("sw.sday"),10);
    in the evening wants only the evening card. The cuts follow how a day
    actually splits for a Nigerian audience: most European football lands in
    the late bucket, which is why "all day" stays the default. */
+/* Always starts at All day, deliberately not restored from a previous
+   visit. A stored bucket is a filter you cannot see the edge of: someone
+   who picked Early once came back to a card holding five leagues out of
+   twenty-eight and reported the league picker as broken, because nothing
+   on screen said a time window was still on from days ago. A day filter is
+   worth remembering; a slice of a day is not. The stored value is cleared
+   so anyone already holding one is let out of it. */
 var TOD="all";
-try{var td0=localStorage.getItem("sw.tod");
-  if(td0==="early"||td0==="mid"||td0==="late"||td0==="all") TOD=td0;}catch(e){}
+try{localStorage.removeItem("sw.tod");}catch(e){}
 /* A bucket only means something against one day, so it never survives a wide
    window - including a pair of preferences saved before that was true. */
 if(SCOPE!=="day") TOD="all";
@@ -5916,7 +5929,7 @@ function paintTod(){
 function setTod(t){
   if(t!=="all"&&t!=="early"&&t!=="mid"&&t!=="late") return false;
   var changed=false;
-  if(t!==TOD){TOD=t; try{localStorage.setItem("sw.tod",t);}catch(e){} changed=true;}
+  if(t!==TOD){TOD=t; changed=true;}
   /* Naming a time of day is naming a day: pull the window in with it rather
      than leave a lit-up bucket that quietly filters nothing. */
   if(t!=="all"&&SCOPE!=="day"){
@@ -5943,7 +5956,7 @@ function setScope(s){
   SCOPE=s; try{localStorage.setItem("sw.scope",s);}catch(e){}
   /* Widening past a single day retires the time bucket with it - the cut no
      longer applies, and the segment should say so instead of staying lit. */
-  if(s!=="day"&&TOD!=="all"){TOD="all"; try{localStorage.setItem("sw.tod","all");}catch(e){}}
+  if(s!=="day"&&TOD!=="all"){TOD="all";}
   paintScope(); return true;
 }
 const BOOK_URL="https://web-production-798c0.up.railway.app/api/generate-booking-code";
@@ -9207,16 +9220,40 @@ function renderLeaguePicker(){
 
   var avail=leaguesOnBoard();
   var n=leagueChosenCount();
+  /* Name the window this list describes.
+     Without it, "5 available" reads as a broken picker. It was reported as
+     one: with Early selected the list held five leagues while the reporter
+     was looking at a day on which nearly every top flight was playing - all
+     of them outside the Early window. The list was right and said nothing
+     about why, which is the same thing as being wrong. */
+  var win = (SCOPE!=="day") ? "in all upcoming games"
+          : ("playing "+(TOD==="all" ? "" :
+              (TOD==="early"?"in the morning ":TOD==="mid"?"in the afternoon ":"in the evening "))+
+             dayName(SDAY).toLowerCase());
   /* A stored pick for a league that is not playing today would otherwise show
      "2 leagues" over an empty board with nothing to un-tick. */
   var live=avail.filter(function(x){return BLD_LEAGUES[x.league];}).length;
   sum.textContent = !n ? "Any league"
     : (live ? live+" league"+(live===1?"":"s") : n+" picked, none playing");
   open.classList.toggle("narrowed",!!n);
-  if(cnt) cnt.textContent=avail.length+" available";
+  if(cnt) cnt.textContent=avail.length+" league"+(avail.length===1?"":"s")+" "+win;
   if(clr) clr.hidden=!n;
 
-  list.innerHTML = avail.length
+  /* A time window narrow enough to hide most of the card should say so here,
+     beside the short list it caused, rather than leaving the reader to connect
+     it to a segment further up the page. */
+  var hint="";
+  if(SCOPE==="day"&&TOD!=="all"){
+    var allDay=DATA.fixtures.filter(function(f){
+      return notStarted(f)&&dayOff(f.date)===SDAY;
+    }).length;
+    var here=scopeFixtures().length;
+    if(allDay>here) hint="<div class='lgp-hint'>"+(allDay-here)+
+      " more game"+((allDay-here)===1?"":"s")+" "+esc(dayName(SDAY).toLowerCase())+
+      " outside this time window - switch to All day to see their leagues.</div>";
+  }
+
+  list.innerHTML = hint + (avail.length
     ? avail.map(function(x){
         return "<button class='lgp-row"+(BLD_LEAGUES[x.league]?" on":"")+"' type='button' "+
           "data-lg=\""+esc(x.league)+"\" aria-pressed='"+(!!BLD_LEAGUES[x.league])+"'>"+
@@ -9224,7 +9261,7 @@ function renderLeaguePicker(){
           "<span class='lgp-nm'>"+esc(compOf(x.league))+"<span class='lgp-ct'> · "+esc(countryOf(x.league))+"</span></span>"+
           "<span class='lgp-n'>"+x.n+"</span></button>";
       }).join("")
-    : "<div class='lgp-empty'>No games in this window.</div>";
+    : "<div class='lgp-empty'>No games in this window.</div>");
 
   list.querySelectorAll("[data-lg]").forEach(function(b){
     b.addEventListener("click",function(){
