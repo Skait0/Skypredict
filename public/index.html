@@ -10029,9 +10029,18 @@ function renderBuilderOutput(){
     _rb.textContent=firstVisit ? "-" : (picks.length
       ? picks.length+" game"+(picks.length===1?"":"s")
       : "No games"); }
-  // Risk sub text
-  $("riskSub").textContent=firstVisit ? "Move slider to build" : (picks.length+" game"+(picks.length===1?"":"s")+
-    " \u00b7 "+P0(p.minConf)+"%+ confidence");
+  /* Risk sub text.
+     When the slip is smaller than the dial asked for, say so and say why.
+     Reported as "the slider being stuck at 9 games": on a narrow window - Today
+     only, Late - the scope is 16 fixtures and only 9 of them carry a market
+     clearing the bar, so from about 60 upward the dial moves and the slip
+     cannot grow. Nothing on screen said that, which makes a working slider look
+     broken. Naming the window is the actionable half: the fix is to widen it,
+     not to keep dragging. */
+  var _short = !firstVisit && picks.length < p.maxGames;
+  $("riskSub").textContent=firstVisit ? "Move slider to build"
+    : (picks.length+" game"+(picks.length===1?"":"s")+" \u00b7 "+P0(p.minConf)+"%+ confidence"+
+       (_short ? " \u00b7 all that clear the bar in this window" : ""));
   // Stats
   var odds=totalOdds(picks);
   var real=oddsAreReal(picks), pre=real?"\u00d7":"~\u00d7";
@@ -10118,6 +10127,7 @@ function renderBuilderOutput(){
 }
 
 renderFab();
+var RISK_RAF=0;
 $("risk").addEventListener("input",function(){
   BUILD.risk=+this.value; BUILD.touched=true;
   try{localStorage.setItem("sw.risk",BUILD.risk);}catch(e){}
@@ -10130,7 +10140,26 @@ $("risk").addEventListener("input",function(){
   this.style.setProperty('--rz',zone==="safe"?"rgba(43,199,120,.35)":zone==="mid"?"rgba(242,184,75,.4)":"rgba(230,57,70,.4)");
   var ti=$("risk").closest(".slider-panel").querySelector(".risk-ticks");
   if(ti){var sp2=ti.querySelectorAll("span");sp2.forEach(function(s,i){s.classList.toggle("zone-live",(zone==="safe"&&i===0)||(zone==="mid"&&i===1)||(zone==="risky"&&i===2));});}
-  BUILD.removed={}; $("bookResult").innerHTML=""; renderBuilder();});
+  BUILD.removed={}; $("bookResult").innerHTML="";
+  /* Coalesced to one rebuild per frame. A range input fires `input` on every
+     pixel of a drag, and this handler used to run renderBuilder synchronously
+     on each one - measured at 20.8ms on this desktop, of which 11.8ms is
+     buildPicks over the whole card. Several of those inside one frame, on a
+     phone that is several times slower, saturates the main thread and the
+     handle visibly lags the finger. Reported as the slider feeling "glitchy
+     and sticky".
+     The cheap parts above - fill, zone, ticks, haptic - still run on every
+     event, so the track keeps up with the thumb. Only the slip rebuild waits
+     for the frame, and a queued one is never stacked. */
+  if(!RISK_RAF) RISK_RAF=requestAnimationFrame(function(){ RISK_RAF=0; renderBuilder(); });
+});
+/* And once more when the drag ends, so the slip always settles on the value
+   the thumb was finally left at rather than on the last frame that happened to
+   render. */
+$("risk").addEventListener("change",function(){
+  if(RISK_RAF){ cancelAnimationFrame(RISK_RAF); RISK_RAF=0; }
+  renderBuilder();
+});
 paintScope();
 (function(){
   var seg=$("scopeSeg"); if(!seg) return;
