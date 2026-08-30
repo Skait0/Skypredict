@@ -177,10 +177,39 @@ function writePages(payload) {
     }
   }
 
+  /* The standing pages: contact, privacy, terms, method, and the hub that
+     makes every match page reachable by a link rather than only by sitemap.
+     They go into the sitemap alongside the match pages, and they are written
+     after them so `paths` already holds the full set. */
+  const updated = new Date().toLocaleDateString("en-GB",
+    { day: "numeric", month: "long", year: "numeric" });
+  /* `matches` is the training set the model was fitted on - 29,594 of them
+     today. `results` is only the recent graded ones, 199, and using it made
+     the method page claim the model was built from 199 results. Same two
+     fields the site footer already uses, so the pages agree. */
+  const stats = {
+    results: (payload && payload.matches) || null,
+    leagues: (payload && payload.leagues && payload.leagues.length) || null,
+  };
+  const standing = [
+    ["/privacy", () => P.renderPrivacy(updated)],
+    ["/terms", () => P.renderTerms(updated)],
+    ["/how-it-works", () => P.renderHowItWorks(stats)],
+    ["/matches", () => P.renderMatchesIndex(pages.map((pg) => pg.f))],
+  ];
+  let standingWritten = 0;
+  for (const [rel, render] of standing) {
+    try {
+      fs.writeFileSync(path.join(PUB, rel.slice(1) + ".html"), render());
+      paths.push(rel);
+      standingWritten++;
+    } catch (e) { warn("standing page " + rel + " failed: " + e.message); }
+  }
+
   fs.writeFileSync(path.join(PUB, "sitemap.xml"), P.renderSitemap(paths));
   fs.writeFileSync(path.join(PUB, "robots.txt"), P.renderRobots());
   log("pages: " + written + " match pages" + (failed ? " (" + failed + " failed)" : "") +
-      " + sitemap.xml + robots.txt -> " + P.ORIGIN +
+      " + " + standingWritten + " standing + sitemap.xml + robots.txt -> " + P.ORIGIN +
       (swept ? " (cleared " + swept + " stale)" : ""));
 }
 

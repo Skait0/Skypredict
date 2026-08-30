@@ -1655,6 +1655,13 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
 .foot-cols h5{font-size:11px;font-weight:800;letter-spacing:.09em;
   text-transform:uppercase;color:var(--red-ink);margin-bottom:7px}
 .foot-cols p{font-size:13px;line-height:1.65;max-width:38ch}
+/* Footer link row. Sits between the three columns and the legal line, so the
+   legal line keeps the last word. Wraps rather than scrolls on a phone. */
+.foot-links{display:flex;flex-wrap:wrap;gap:6px 18px;margin:18px 0 0;
+  padding-top:16px;border-top:1px solid var(--line)}
+.foot-links a{color:var(--soft);font-size:13px;font-weight:600;text-decoration:none}
+@media (hover:hover){.foot-links a:hover{color:var(--text);text-decoration:underline}}
+.foot-links a:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:3px}
 .foot-legal{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-top:16px;
   border-top:1px solid var(--line-soft);font-size:12px;color:var(--faint)}
 .foot-legal .rg{margin-left:auto;color:var(--red-ink);font-weight:700;text-decoration:none}
@@ -4072,6 +4079,18 @@ footer{margin-top:26px;padding-top:18px;
           fun, step away and seek support.</p>
         </div>
       </div>
+      <!-- The footer used to end at BeGambleAware, so the only link out of it
+           was that one - no contact route, no privacy policy, no terms, and
+           the match pages the build generates were reachable only from the
+           sitemap. Search engines weight real internal links well above a
+           sitemap, and a reader had nowhere to go. -->
+      <nav class="foot-links" aria-label="Site">
+        <a href="/matches">All match predictions</a>
+        <a href="/how-it-works">How it works</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="mailto:hello@soccerwizard.live">Contact</a>
+      </nav>
       <div class="foot-legal">
         <span>&copy; <span id="yr"></span> Soccerwizard</span>
         <span class="badge18" aria-label="Eighteen plus only">18<sup>+</sup></span>

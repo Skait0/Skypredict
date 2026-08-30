@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How it works | Soccerwizard</title>
+<meta name="description" content="How Soccerwizard builds football predictions: time-weighted team ratings, expected goals, and confidence corrected from its own results.">
+<link rel="canonical" href="https://skypredict-theta.vercel.app/how-it-works">
+<meta property="og:type" content="website">
+<meta property="og:title" content="How it works">
+<meta property="og:description" content="How Soccerwizard builds football predictions: time-weighted team ratings, expected goals, and confidence corrected from its own results.">
+<meta property="og:url" content="https://skypredict-theta.vercel.app/how-it-works">
+<meta property="og:site_name" content="Soccerwizard">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/icon-32.png">
+<style>:root{--bg:#e9e4da;--card:#f4f1ea;--text:#1c1a18;--soft:#514c46;--line:#b3aa96;
+--accent:#6d3bf5;--w:#0f6f40;--l:#bc0f2b;--d:#817b73}
+:root:not([data-theme=light]){}
+@media (prefers-color-scheme:dark){:root{--bg:#0d0d0f;--card:#16171b;--text:#f2f3f5;
+--soft:#9aa1ad;--line:#26282e;--accent:#9b7bff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:680px;margin:0 auto;padding:20px 16px 56px}
+a{color:var(--accent)}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:22px}
+.top a{text-decoration:none;color:var(--text);display:inline-flex;align-items:center;gap:8px}
+.top b{font-size:15px;letter-spacing:-.01em}
+.top .dot{width:9px;height:9px;border-radius:50%;background:var(--accent)}
+h1{font-size:26px;line-height:1.22;letter-spacing:-.02em;margin:0 0 6px}
+.meta{color:var(--soft);font-size:14px;margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+padding:16px;margin:0 0 16px}
+.tip i{display:block;font-style:normal;font-size:11px;font-weight:700;
+letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+.tip b{display:block;font-size:21px;letter-spacing:-.01em;margin:3px 0 2px}
+.tip span{color:var(--soft);font-size:14px}
+.score{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0}
+.verdict{display:inline-block;font-size:13px;font-weight:700;border-radius:999px;
+padding:4px 11px;margin-top:8px}
+.hit{background:rgba(18,137,79,.14);color:var(--w)}
+.miss{background:rgba(200,16,46,.13);color:var(--l)}
+h2{font-size:13px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+color:var(--soft);margin:24px 0 9px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;font-weight:400;color:var(--soft);padding:7px 0;
+border-bottom:1px solid var(--line)}
+td{text-align:right;font-weight:600;padding:7px 0;border-bottom:1px solid var(--line);
+font-variant-numeric:tabular-nums}
+tr:last-child th,tr:last-child td{border-bottom:0}
+.form{display:flex;align-items:center;gap:9px;padding:7px 0}
+.form em{font-style:normal;flex:1;font-size:15px}
+.f{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:5px;
+font-style:normal;font-size:11px;font-weight:700;color:#fff;margin-left:3px}
+.f-w{background:var(--w)}.f-l{background:var(--l)}.f-d{background:var(--d)}
+.cta{display:block;text-align:center;background:var(--accent);color:#fff;
+text-decoration:none;font-weight:700;padding:14px;border-radius:12px;margin:26px 0 0}
+.note{color:var(--soft);font-size:13px;margin:22px 0 0}
+footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
+color:var(--soft);font-size:12.5px}
+.prose h2{margin:26px 0 8px;font-size:17px}
+.prose p,.prose li{color:var(--soft);line-height:1.65}
+.prose ul{margin:8px 0 0 18px;padding:0}
+.prose li{margin:4px 0}
+footer .links{margin:0 0 10px}
+.updated{font-size:12.5px;opacity:.85}
+.mx-day{margin:22px 0 6px;font-size:15px;font-weight:800}
+.mx-list{margin:0;padding:0;list-style:none}
+@media(min-width:640px){.mx-list{column-count:2;column-gap:26px}}
+@media(min-width:980px){.mx-list{column-count:3}}
+.mx-list li{margin:0 0 5px;break-inside:avoid;font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a href="/"><span class="dot"></span><b>Soccerwizard</b></a></div>
+  <h1>How the predictions are made</h1>
+  <p class="meta">The method, without the marketing.</p>
+  <div class="prose">
+<h2>Where the numbers come from</h2>
+<p>Every morning the model is rebuilt from scratch out of past results - 29,594 of them across 45 leagues. Nothing is hand-picked, and no tip is
+written by a person.</p>
+
+<h2>The model</h2>
+<p>Each team carries an attack and a defence rating, fitted by a time-weighted
+regression over results with a 200-day half-life - so last week counts for more
+than last autumn, without last autumn counting for nothing. Ratings are centred
+<em>within</em> each league, because a mid-table side in one division is not the
+same animal as a mid-table side in another. Fixtures across divisions are handled
+with an explicit tier ladder, and where two leagues cannot honestly be compared
+the fixture is skipped rather than guessed at.</p>
+<p>Those ratings give an expected goals figure for each side. From that pair every
+market on the page is derived as one coherent set - match outcome, double chance,
+over and under, both teams to score, team totals - which is why the numbers on a
+match page agree with one another.</p>
+
+<h2>What the percentages mean</h2>
+<p>They are the model's estimate of how often that outcome happens in games like
+this one. They are not odds. A bookmaker's price carries their margin; ours does
+not, which is why the two rarely match exactly.</p>
+
+<h2>It learns from being wrong</h2>
+<p>Results are graded against an authoritative source, and the published
+confidence is corrected from the model's own record: where a market has been
+landing more or less often than claimed, the shift is measured and applied,
+shrunk toward no correction while the sample is still small. The more games that
+are played, the better calibrated the numbers become.</p>
+
+<h2>What it cannot do</h2>
+<p>It cannot see injuries, suspensions, team news, a manager resting a squad, or
+the weather. It has no opinion on motivation. On any single match it can be
+comfortably wrong, and sometimes will be. What it offers is consistency across a
+lot of matches, not certainty about one.</p>
+
+<p><a class="cta" href="/">See today's predictions</a></p></div>
+  <footer>
+    <p class="links"><a href="/">Predictions</a> &middot; <a href="/matches">All matches</a> &middot; <a href="/how-it-works">How it works</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="mailto:hello@soccerwizard.live">Contact</a></p>
+    <p>Soccerwizard publishes football predictions for information only. 18+. Please gamble responsibly &middot; <a href="https://www.begambleaware.org" rel="noopener nofollow">BeGambleAware.org</a></p>
+  </footer>
+</div>
+</body>
+</html>
