@@ -5155,7 +5155,19 @@ function renderPotd(){
   // Reuse the locked pick for this date; only pick fresh if none stored yet.
   let lock=null; try{lock=JSON.parse(localStorage.getItem(lockKey)||"null");}catch(e){}
   let top=null;
-  if(lock&&lock.id){ top=day.filter(function(f){return fid(f)===lock.id;})[0]||null; }
+  /* Look the lock up across the WHOLE payload, not just this day's rows.
+     The board is rebaked on every deploy as well as by the daily cron, and a
+     rebake can drop or re-date a row. Searching only `day` meant the lock
+     silently fell through to a fresh pick whenever that happened - which is
+     how the card jumped off a game that had already been played and onto
+     another one, losing the result it was supposed to be holding. The lock is
+     the promise; only a fixture that has genuinely left the payload breaks
+     it. */
+  if(lock&&lock.id){
+    top=day.filter(function(f){return fid(f)===lock.id;})[0]
+      || (DATA.fixtures||[]).filter(function(f){return fid(f)===lock.id;})[0]
+      || null;
+  }
   if(!top){
     // deterministic: highest confidence, tie-break by fixture id so every device agrees
     /* Same reasoning as the slip of the day: pick of the day is the one call
@@ -5163,6 +5175,15 @@ function renderPotd(){
        Only if the whole card is cross-division does one become eligible. */
     var pool=day.filter(function(f){return !f.cross_tier;});
     if(!pool.length) pool=day;
+    /* A pick of the day has to still be playable when it is picked. The
+       fixture day is a calendar date in UTC, so an MLS game at 23:30 UTC is
+       half past midnight here - already played by breakfast, and it was
+       ranking second on the board. Calling a game we could have watched last
+       night "the pick of the day" is not a prediction. Kept as a preference
+       rather than a hard filter so a card with nothing left to come still
+       shows something. */
+    var upcoming=pool.filter(function(f){return notStarted(f);});
+    if(upcoming.length) pool=upcoming;
     /* Same two demerits as the slip - thin support, and a league the model
        knows least well - with confidence deciding inside each group. The
        headline pick is the last place a number nobody has earned should lead
@@ -5251,7 +5272,15 @@ function renderPotd(){
     if(top.o25>=0.6) reasons.push("Goals look likely, over 2.5 at <b>"+P0(top.o25)+"%</b>");
     else if((1-top.o25)>=0.6) reasons.push("A tight game, under 2.5 at <b>"+P0(1-top.o25)+"%</b>");
   }
-  reasons.push("Our model puts this at <b>"+P0(top.tip_p)+"%</b>, the strongest call on the day's card");
+  /* "The strongest call on the day's card" is only true while it is. The pick
+     is locked for the day but the board is refitted underneath it, so another
+     fixture can overtake it by the evening - and the card would go on claiming
+     a rank it no longer holds. Say the number either way; claim the rank only
+     when it is still earned. */
+  var _stillTop=!(DATA.fixtures||[]).some(function(f){
+    return dayOff(f.date)===dayOff(top.date) && !f.cross_tier && f.tip_p>top.tip_p;});
+  reasons.push("Our model puts this at <b>"+P0(top.tip_p)+"%</b>"+
+    (_stillTop?", the strongest call on the day's card":""));
 
   $("potd").innerHTML=
     "<section class='potd "+stateClass+"'>"+
@@ -9825,6 +9854,22 @@ function renderWizardPanel(){
     _cust.addEventListener("input",function(){
       var c=_cust.value.replace(/[^0-9]/g,"");
       if(c!==_cust.value) _cust.value=c;
+      /* Starting your own number abandons the ladder. The chip stayed lit and
+         the slip built for it stayed on screen until you committed, so the
+         panel showed x1k selected, x1k's games below, and a half-typed
+         different target in the box - three answers to one question.
+         Only on the first keystroke: re-rendering per character would fight
+         the typing. The value and caret are put back afterwards because the
+         re-render builds a fresh input. */
+      if(WSP.odds==null && !WSP.conjured) return;
+      WSP.odds=null; WSP._sig=null; WSP._slip=null; WSP.conjured=false; WSP.removed={};
+      try{localStorage.removeItem("sw.wspodds");}catch(e){}
+      var _to=$("totOdds"); if(_to) _to.textContent="-";
+      var _br=$("bookResult"); if(_br) _br.innerHTML="";
+      renderBuilder();
+      var again=$("wspCust");
+      if(again){ again.value=c; again.focus();
+        try{again.setSelectionRange(c.length,c.length);}catch(e){} }
     });
   }
   $("wspStyleChips").querySelectorAll("[data-lo]").forEach(function(c){
