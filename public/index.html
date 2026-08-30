@@ -1148,6 +1148,27 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    rather than a count. Quieter than the question above it. */
 .confirm-card .cf-list{display:block;margin-top:7px;font-size:12.5px;
   font-weight:500;line-height:1.5;color:var(--soft)}
+/* Keeping a slip is a decision, so it gets a control - quieter than Copy
+   and Open, which are what most people came for. */
+.code-keep{margin-top:12px;display:flex;flex-direction:column;align-items:center;gap:5px}
+.code-save{background:transparent;border:1px solid var(--line);color:var(--text);
+  font:inherit;font-weight:700;font-size:12.5px;padding:8px 16px;border-radius:99px;
+  cursor:pointer;transition:background .16s ease,border-color .16s ease,color .16s ease}
+.code-save.done{border-color:var(--green);color:var(--green-ink);cursor:default}
+.code-keep-n{font-size:11px;line-height:1.4;color:var(--faint);text-align:center}
+/* The custom payout box, sized and shaped like the chips beside it so it
+   reads as one more option in the row rather than a form. */
+.wsp-cust{display:inline-flex;align-items:center;gap:2px;background:var(--card-2);
+  border:1px dashed var(--line);border-radius:99px;padding:0 12px 0 13px;height:38px}
+.wsp-cust-x{font-size:13px;font-weight:700;color:var(--faint)}
+.wsp-cust-in{width:56px;background:transparent;border:0;outline:0;color:var(--text);
+  font:inherit;font-weight:700;font-size:13px;padding:0}
+.wsp-cust-in::placeholder{color:var(--faint);font-weight:600}
+.wsp-cust:focus-within{border-style:solid;border-color:var(--red);background:var(--red-wash)}
+@media (hover:hover){ .wsp-cust:hover{border-color:var(--soft)} }
+@media (hover:hover){
+  .code-save:not(.done):hover{background:var(--card-2);border-color:var(--soft)}
+}
 .cap-warn{background:var(--win-wash);border:1px solid var(--win);border-radius:var(--r-md);
   padding:10px 12px;margin:0 0 12px;font-size:12.5px;line-height:1.5;
   color:var(--text);text-align:left}
@@ -6809,8 +6830,8 @@ function doBook(picks,retried){
     .then(function(d){
       BUILD.booking=false; renderBuilder();
       if(d&&d.success&&d.booking_code){
-        rememberSlip(picks,totalOdds(picks),d.booking_code);
-        showCode(d.booking_code,"bookResult");
+        showCode(d.booking_code,"bookResult",function(){
+          rememberSlip(picks,totalOdds(picks),d.booking_code);});
       } else {
         /* SportyBet can reject individual markets ("no market") when our pick
            used an estimated odd for a market it doesn't list. Retry once with
@@ -6855,7 +6876,10 @@ function clearSlip(){
 /* ---- shared booking-code card, share + copy + open ---- */
 /* Booking code appears as a compact centred modal (green glass) over a dimmed
    scrim - not an elongated inline block. hostId kept for call-site compat. */
-function showCode(code,hostId){
+/* `save` is a function that files this slip in Your slips, or null when
+   there is nothing to file. Passing it makes saving an offer rather than
+   something that already happened. */
+function showCode(code,hostId,save){
   var old=document.getElementById("codeModal");
   if(old) old.remove();
   var wrap=document.createElement("div");
@@ -6875,6 +6899,16 @@ function showCode(code,hostId){
       "<button class='code-copy' type='button'>Copy</button>"+
       "<button class='share-btn' type='button' data-sh='1'>↗ Share</button>"+
     "</div>"+
+    /* Every booked slip used to be filed in Your slips automatically,
+       so a code pulled to compare odds, or to see what a x50k looks
+       like, landed in the record beside the ones actually staked - and
+       the running tally counted it. Keeping a slip is now a decision.
+       The code is still yours either way: this saves the record, not
+       the bet. */
+    (save?"<div class='code-keep'>"+
+      "<button class='code-save' type='button'>Save to Your slips</button>"+
+      "<span class='code-keep-n'>Only saved slips count towards your record.</span>"+
+    "</div>":"")+
     "<div class='code-opens'>"+
       "<a class='code-open' href='"+SPORTY_URL+encodeURIComponent(code)+
         "' target='_blank' rel='noopener'>Open in SportyBet</a>"+
@@ -6897,6 +6931,13 @@ function showCode(code,hostId){
     this.textContent="Copied"; var s=this;
     setTimeout(function(){s.textContent="Copy";},1600);});
   wrap.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code);});
+  var sv=wrap.querySelector(".code-save");
+  if(sv) sv.addEventListener("click",function(){
+    try{ save(); }catch(e){}
+    sv.textContent="Saved"; sv.disabled=true; sv.classList.add("done");
+    var n=wrap.querySelector(".code-keep-n");
+    if(n) n.textContent="In Your slips. It will be graded as the games finish.";
+  });
 }
 function shareText(picks,odds,code){
   var lines=picks.slice(0,6).map(function(c){return "\u2022 "+c.f.home+" v "+c.f.away+" - "+
@@ -7095,8 +7136,8 @@ function doBookList(picks,resultId,btnId,label){
     .then(function(d){
       if(btn){btn.disabled=false;btn.textContent=label;}
       if(d&&d.success&&d.booking_code){
-        rememberSlip(picks,totalOdds(picks),d.booking_code);
-        showCode(d.booking_code,resultId);
+        showCode(d.booking_code,resultId,function(){
+          rememberSlip(picks,totalOdds(picks),d.booking_code);});
       }
       else{ $(resultId).innerHTML=bookErrHTML(d); }
     })
@@ -8635,8 +8676,9 @@ function doBookMy(bookable,retried){
       if(gen!==MYBOOK_GEN) return;
       resetMyBookBtn();
       if(d&&d.success&&d.booking_code){
-        rememberSlip(MYSLIP,myOdds(),d.booking_code);
-        showCode(d.booking_code,"myBookResult");
+        var _legs=MYSLIP.slice(), _od=myOdds();
+        showCode(d.booking_code,"myBookResult",function(){
+          rememberSlip(_legs,_od,d.booking_code);});
       }
       else{
         /* The builder no longer offers a market SportyBet does not list, but a
@@ -9368,7 +9410,15 @@ function renderWizardPanel(){
     WSP.odds=null; WSP._sig=null; WSP._slip=null;
     try{localStorage.removeItem("sw.wspodds");}catch(e){}
   }
-  var odds=jackOK?[50,100,500,1000,2000,6000,20000,50000]:[50,100,500,1000,2000,6000];
+  /* x10 added at the bottom. It was missing and it is the rung most likely
+     to actually land - three or four legs - which makes it the one worth
+     showing a first-timer, not the one to hide. */
+  var odds=jackOK?[10,50,100,500,1000,2000,6000,20000,50000]:[10,50,100,500,1000,2000,6000];
+  /* The ceiling the chips currently express, so the custom box can clamp to
+     the same limit. It moves with the window: the jackpot rungs are only
+     offered on All upcoming, because a single day rarely holds the twenty
+     games one needs. */
+  WSP._maxTarget=odds[odds.length-1];
   var styles=[[1.25,"Safer, more games"],[1.4,"Balanced"],[1.7,"Fewer, bigger games"]];
   var html="";
   html += "<div class='wsp-lbl'>Pick a target payout</div><div class='wsp-chips' id='wspOddsChips'>"+
@@ -9381,7 +9431,18 @@ function renderWizardPanel(){
       var big=o>=JACKPOT_FROM;
       return "<button class='wsp-chip wsp-risk"+(WSP.odds===o?" on":"")+(big?" wsp-jack":"")+
         "' style='--wr:hsl("+hue+",64%,46%);--wr-ink:"+inkOn(hue,0.64,0.46)+
-        "' data-o='"+o+"'>\u00d7"+(o>=1000?(o/1000)+"k":o)+"</button>";}).join("")+"</div>";
+        "' data-o='"+o+"'>\u00d7"+(o>=1000?(o/1000)+"k":o)+"</button>";}).join("")+
+    /* The chips stay the way in: one tap, and the green-to-red hue says what
+       kind of ask it is before you commit. The box is for someone who knows
+       the number they want and it is not on the ladder - x250, x7500 - not a
+       replacement for it. Typing five digits on a phone is slower than a tap
+       and tells you nothing about the risk you are taking. */
+    "<span class='wsp-cust'><span class='wsp-cust-x' aria-hidden='true'>×</span>"+
+      "<input id='wspCust' class='wsp-cust-in' type='text' inputmode='numeric' "+
+      "autocomplete='off' maxlength='5' placeholder='own' "+
+      "aria-label='Your own target payout, from 2 to 50000' value='"+
+      ((WSP.odds&&odds.indexOf(WSP.odds)<0)?WSP.odds:"")+"'></span>"+
+    "</div>";
   /* What a jackpot ticket actually is, said before it is built rather than
      after it loses. The number of legs is the honest part - it is the thing
      that has to come in, and it is a different order of ask from a x50. */
@@ -9421,6 +9482,41 @@ function renderWizardPanel(){
       try{localStorage.setItem("sw.wspodds",String(WSP.odds));}catch(e){}
       renderBuilder();});
   });
+  /* The custom box. Committed on blur or Enter rather than per keystroke, or
+     typing "5000" would rebuild the slip at 5, 50 and 500 on the way. Clamped
+     to the same ceiling the chips stop at: above that the wizard cannot reach
+     the target from one card and would just return its longest slip while
+     appearing to have hit a number nobody can hit. */
+  var _cust=$("wspCust");
+  if(_cust){
+    var commit=function(){
+      var raw=String(_cust.value||"").replace(/[^0-9]/g,"");
+      if(!raw){ return; }
+      /* Clamped to the ladder's own ceiling rather than a flat 50000. On a
+         single day the jackpot rungs are not offered at all, and a target
+         above them was being silently wiped by the guard above - typing
+         50000 on Today cleared the box and chose nothing. Landing on the
+         highest reachable number says what happened. */
+      var _ceil=WSP._maxTarget||50000;
+      var v=Math.max(2,Math.min(_ceil,parseInt(raw,10)||0));
+      _cust.value=v;
+      if(v===WSP.odds) return;
+      WSP.odds=v; WSP._sig=null;
+      try{localStorage.setItem("sw.wspodds",String(v));}catch(e){}
+      renderBuilder();
+      var again=$("wspCust"); if(again){ again.focus(); }
+    };
+    _cust.addEventListener("blur",commit);
+    _cust.addEventListener("keydown",function(e){
+      if(e.key==="Enter"){ e.preventDefault(); commit(); }
+    });
+    /* Keep it to digits while typing, so the clamp never has to argue with a
+       value the field itself allowed. */
+    _cust.addEventListener("input",function(){
+      var c=_cust.value.replace(/[^0-9]/g,"");
+      if(c!==_cust.value) _cust.value=c;
+    });
+  }
   $("wspStyleChips").querySelectorAll("[data-lo]").forEach(function(c){
     c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;WSP._sig=null;renderBuilder();});
   });
