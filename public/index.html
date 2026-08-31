@@ -9,9 +9,18 @@
 <meta property="og:title" content="Soccerwizard">
 <meta property="og:description" content="Football predictions from 38 leagues, plus a ready-made SportyBet slip - we pick the games and hand you the booking code.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://skypredict-theta.vercel.app/wiz-logo.png">
+<!-- The share card. wiz-logo.png was pointed at here and it is 473x544 -
+     portrait. summary_large_image wants roughly 1.91:1, so platforms had
+     nothing they could render large and fell back to no card at all. Every
+     other asset here is square, so this one is purpose-made at 2.03:1.
+     Width and height are declared because some crawlers will not lay out a
+     card until they know the shape, and that is a fetch they can skip. -->
+<meta property="og:image" content="https://skypredict-theta.vercel.app/og-card.jpg">
+<meta property="og:image:width" content="1568">
+<meta property="og:image:height" content="772">
+<meta property="og:image:alt" content="Soccerwizard - football predictions across 45 leagues, free SportyBet code in one tap">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://skypredict-theta.vercel.app/wiz-logo.png">
+<meta name="twitter:image" content="https://skypredict-theta.vercel.app/og-card.jpg">
 <!-- Every view of this site is one URL with different state - the board, the
      builder, live scores and results are all "/" - and the day picker and share
      links add query strings on top. Without a canonical, a search engine treats
