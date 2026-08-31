@@ -193,3 +193,39 @@ test("the build writes the standing pages and lists them in the sitemap", () => 
     "the standing pages must be pushed into `paths` BEFORE the sitemap is " +
     "written, or they are generated and then left out of it");
 });
+
+/* ------------------------------------------------------------------- social */
+
+/**
+ * A link is a claim that the destination exists.
+ *
+ * The first X link shipped pointing at @soccerwizardlive - sixteen characters.
+ * X caps handles at fifteen, so that profile could never be registered, and
+ * every click on "Follow us" hit a 404 for about an hour. I had been given the
+ * handle and linked it without checking it could exist.
+ *
+ * The length rule is the part a test can hold. Whether the account is live is
+ * not checkable offline, so that stays a thing to verify by hand before
+ * shipping - but a handle that is structurally impossible never gets that far
+ * again.
+ */
+test("the X handle is one X could actually issue", () => {
+  const links = [...index.matchAll(/https:\/\/x\.com\/([A-Za-z0-9_]+)/g)].map((m) => m[1]);
+  assert.ok(links.length > 0, "the X link is gone");
+  links.forEach((h) => {
+    assert.ok(h.length <= 15,
+      `@${h} is ${h.length} characters; X caps handles at 15, so this profile ` +
+      `cannot exist and the link is guaranteed to 404`);
+    assert.match(h, /^[A-Za-z0-9_]+$/, `@${h} has characters X does not allow`);
+  });
+});
+
+test("one handle, used everywhere", () => {
+  /* The footer and the contact dialog both link out. Two different handles
+     would send people to two different places, one of which is wrong. */
+  const links = [...index.matchAll(/https:\/\/x\.com\/([A-Za-z0-9_]+)/g)].map((m) => m[1]);
+  assert.deepStrictEqual([...new Set(links)], ["soccerwizardhq"],
+    "more than one X handle on the site: " + [...new Set(links)].join(", "));
+  assert.strictEqual(links.length, 2,
+    "expected the footer link and the contact dialog's, found " + links.length);
+});
