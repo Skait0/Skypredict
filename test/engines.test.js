@@ -68,9 +68,13 @@ const api = new Function([
   "var TOP_ONLY=false;",
   "var FIXTURES=[];",
   "function scopeFixtures(){return FIXTURES;}",
+  /* No saved slips in this harness, so nothing is already exposed; the
+     spread penalty is exercised on its own in spread.test.js. */
+  "function slipUse(){return {};}",
   konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
   konst("HIGH_SCORING_O25"), konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
   konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"),
+  konst("SPREAD_PEN"), konst("SPREAD_MULT"),
   (/^var BUILD=\{[\s\S]*?\};/m.exec(src) || [""])[0],
   (/^var WSP=\{[\s\S]*?\};/m.exec(src) || [""])[0],
 ].concat(FNS.map(grab)).join("\n") + `

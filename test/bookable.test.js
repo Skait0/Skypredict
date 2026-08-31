@@ -58,8 +58,12 @@ function engine(fixtures) {
     "var TOP_ONLY=false;",
     "var FIXTURES=FX;",
     "function scopeFixtures(){return FIXTURES;}",
+    /* No saved slips in these harnesses, so nothing is already exposed;
+       the spread penalty is exercised on its own in spread.test.js. */
+    "function slipUse(){return {};}",
     konst("HIGH_SCORING_O25"), konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
     konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"),
+  konst("SPREAD_PEN"), konst("SPREAD_MULT"),
     (/^var BUILD=\{[\s\S]*?\};/m.exec(src) || [""])[0],
   ].concat(FNS.map(grab)).join("\n") +
     "\nBUILD.risk=45; BUILD.seed=1; BUILD.removed={}; BUILD.shuffles=0;" +

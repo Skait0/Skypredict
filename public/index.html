@@ -6846,6 +6846,38 @@ function mLabel(f,c){
     case"AWAY_OVER_1.5":return esc(f.away)+" over 1.5 goals";}
   return c;
 }
+/* How many of your still-running slips already carry this fixture.
+   Reported: "i had one game spoil 8 of my tickets yesterday because it was
+   everywhere." Measured on a live board: build eight tickets and four games
+   appear in all eight, and eight games appear in six or more. That is not a
+   shuffling problem - shuffling rearranges one ticket. Each build was simply
+   independent, so neither builder had any idea what was already on your other
+   slips, and the best legs went into every one of them.
+   The harm is correlated risk: eight tickets sharing a leg are not eight bets,
+   they are one bet with extra steps, and a single result takes the lot.
+   Only slips still running count. A settled one is history and carries no risk,
+   and legs whose game has kicked off cannot be avoided any more either. */
+function slipUse(){
+  var m={};
+  try{
+    (SLIPS||[]).forEach(function(s){
+      if(!s||s.settled) return;
+      (s.legs||[]).forEach(function(l){
+        if(!l||!l.id) return;
+        var f=fixtureById(l.id);
+        if(f&&!notStarted(f)) return;      /* already under way - nothing to spread */
+        m[l.id]=(m[l.id]||0)+1;
+      });
+    });
+  }catch(e){}
+  return m;
+}
+/* Bounded, like the league and market spreads beside it: a clearly better leg
+   still wins, but it takes something to beat a game you are not already exposed
+   to. Not exclusion - if the board is thin, or you genuinely want that game,
+   it can still come through. */
+var SPREAD_PEN=0.15;    /* wizard: added to _cost, where the whole spread is ~0.9 */
+var SPREAD_MULT=0.85;   /* slider: multiplies the ranking key */
 function buildPicks(){
   var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier), cand=[];
   var mkOn={"1X":BUILD.mk.wd,"X2":BUILD.mk.wd,"12":BUILD.mk.any,"1":BUILD.mk.out,"2":BUILD.mk.out,
@@ -6926,6 +6958,7 @@ function buildPicks(){
       cand.push({f:f,id:fid(f),code:best.code,p:best.p,eventId:f.eventId||null,_alts:alts});
     }
   });
+  var _use=slipUse();
   var removedCount=Object.keys(BUILD.removed).length;
   var cap=Math.max(0,p.maxGames-removedCount);
   /* Europe first. South American games are held back unless Europe can't fill
@@ -6980,6 +7013,9 @@ function buildPicks(){
     if(isSouthAmerican(b.f))kb*=saWeight(b.f,saPenalty);
     if(isAsian(a.f))ka*=asiaPenalty; if(isAsian(b.f))kb*=asiaPenalty;
     ka*=1+(h32(a.id+"|s"+(BUILD.seed||0))-0.5)*(0.9+f0); kb*=1+(h32(b.id+"|s"+(BUILD.seed||0))-0.5)*(0.9+f0);
+    /* Push down what your open slips already hold, so a second ticket is a
+       second bet rather than the same one again. */
+    ka*=Math.pow(SPREAD_MULT,_use[a.id]||0); kb*=Math.pow(SPREAD_MULT,_use[b.id]||0);
     return kb-ka;
   });
   cand=cand.filter(function(c){return !BUILD.removed[c.id];});
@@ -9494,6 +9530,8 @@ function wspBuild(){
        is floor-limited by the board: below about twenty legs there are
        simply not enough long-odds games to reach a big payout. */
     var styleTilt=(per<=1.3?-1.2:(per>=1.6?1.2:0));
+    /* Read once, before the costs are set - it is the same for every leg. */
+    var _use=slipUse();
     chosen.forEach(function(c){
       /* Shuffle jitter, widening each time it is asked for.
          Reported: "when i shuffle, some games dont leave the ticket".
@@ -9512,7 +9550,8 @@ function wspBuild(){
          the same ones. Same escalation the South America and Asia gates use
          a few lines down, and for the same reason. */
       var jit=Math.min(0.50,0.10+0.13*shuffles);
-      c._cost=-(edge(c)+styleTilt*Math.log(c.od))+(h32(c.id+"|s"+seed)-0.5)*jit;
+      c._cost=-(edge(c)+styleTilt*Math.log(c.od))+(h32(c.id+"|s"+seed)-0.5)*jit
+        +SPREAD_PEN*(_use[c.id]||0);
       /* A fixture SportyBet lists no prices for at all is still allowed - not
          knowing its markets is not the same as knowing it has none - but it
          goes to the back of the queue. Its odds are our estimate rather than a
