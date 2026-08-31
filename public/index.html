@@ -4153,10 +4153,11 @@ footer{margin-top:26px;padding-top:18px;
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
         <button type="button" id="contactBtn">Contact us</button>
-        <a class="fl-x" href="https://x.com/soccerwizardlive" target="_blank" rel="noopener"
-           aria-label="Soccerwizard on X">
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.2 2.3h3.4l-7.4 8.5 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9.1L.9 2.3h7l4.8 6.4zm-1.2 17.9h1.9L7.1 4.2H5z"/></svg>
-          <span>Follow us</span></a>
+        <!-- The X link is out until the account exists. It pointed at
+             @soccerwizardlive, which is sixteen characters - X caps handles
+             at fifteen, so that profile could never be registered and every
+             click hit a 404. Put it back with the real handle; the markup and
+             styling are ready for it. -->
       </nav>
       <div class="foot-legal">
         <span>&copy; <span id="yr"></span> Soccerwizard</span>
@@ -10485,7 +10486,6 @@ function openContact(){
     "</div>"+
     "<div class='contact-acts'>"+
       "<a class='primary' href='mailto:"+esc(CONTACT_EMAIL)+"'>Send an email</a>"+
-      "<a href='https://x.com/soccerwizardlive' target='_blank' rel='noopener'>Message on X</a>"+
     "</div></div>";
   function close(){ wrap.remove(); document.removeEventListener("keydown",onKey); }
   function onKey(e){ if(e.key==="Escape") close(); }
