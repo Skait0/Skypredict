@@ -50,12 +50,15 @@ function konst(name) {
   return Function("return " + m[1].trim())();
 }
 
-/* slipUse with the two things it consults injected. */
-function useWith(slips, started) {
-  return new Function("SLIPS", "STARTED",
+/* slipUse with everything it consults injected. MYSLIP was missing at first,
+   and that mattered: it is read inside its own try/catch, so a ReferenceError
+   would have been swallowed and these tests would have passed while measuring
+   nothing. */
+function useWith(slips, current, started) {
+  return new Function("SLIPS", "MYSLIP", "STARTED",
     "function fixtureById(id){return {id:id};}" +
     "function notStarted(f){return !STARTED[f.id];}" +
-    grab("slipUse") + "\nreturn slipUse();")(slips, started || {});
+    grab("slipUse") + "\nreturn slipUse();")(slips, current || [], started || {});
 }
 
 const slip = (settled, ids) => ({ settled, legs: ids.map((id) => ({ id })) });
@@ -80,7 +83,7 @@ test("settled slips carry no risk, so they do not count", () => {
 
 test("a game already under way is not worth avoiding either", () => {
   /* The exposure exists and cannot be undone by leaving it out of a new slip. */
-  const u = useWith([slip(false, ["kicked", "later"])], { kicked: true });
+  const u = useWith([slip(false, ["kicked", "later"])], [], { kicked: true });
   assert.strictEqual(u.kicked, undefined);
   assert.strictEqual(u.later, 1);
 });
@@ -130,4 +133,45 @@ test("with no history, nothing changes at all", () => {
   assert.deepStrictEqual(u, {});
   assert.strictEqual(Math.pow(konst("SPREAD_MULT"), u.anything || 0), 1);
   assert.strictEqual(konst("SPREAD_PEN") * (u.anything || 0), 0);
+});
+
+/* -------------------------------------------- the slip already on screen */
+
+/**
+ * Reported after the first version shipped: "i tested it now and some games
+ * kept coming up, are you sure the changes took?"
+ *
+ * The changes had taken; they just did nothing. slipUse read SLIPS alone, and
+ * SLIPS only fills when a ticket is SAVED - a deliberate, separate step. So
+ * anyone building several tickets in a row without saving got no spread at all.
+ * Reproduced on the live site: six conjures, eleven games, identical every
+ * time, with slipUse returning an empty map.
+ *
+ * wspConjure calls wspBuild before it replaces MYSLIP, so during the build the
+ * previous conjure is still sitting there. Counting it is what makes a
+ * re-conjure move off the games in front of you.
+ */
+test("the slip currently on screen counts, saved or not", () => {
+  const u = useWith([], [{ id: "a" }, { id: "b" }]);
+  assert.deepStrictEqual(u, { a: 1, b: 1 },
+    "with nothing saved, the on-screen slip must still be avoided");
+});
+
+test("saved and on-screen add up", () => {
+  /* A game in a running ticket AND in the slip you are looking at is the one
+     you are most exposed to, so it should be pushed hardest. */
+  const u = useWith([slip(false, ["a"])], [{ id: "a" }, { id: "b" }]);
+  assert.strictEqual(u.a, 2);
+  assert.strictEqual(u.b, 1);
+});
+
+test("a started game on screen is still not worth avoiding", () => {
+  const u = useWith([], [{ id: "kicked" }, { id: "later" }], { kicked: true });
+  assert.strictEqual(u.kicked, undefined);
+  assert.strictEqual(u.later, 1);
+});
+
+test("a malformed on-screen slip never throws", () => {
+  assert.doesNotThrow(() => useWith([], [null, {}, { id: "ok" }]));
+  assert.deepStrictEqual(useWith([], []), {});
 });

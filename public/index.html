@@ -1656,12 +1656,59 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
   text-transform:uppercase;color:var(--red-ink);margin-bottom:7px}
 .foot-cols p{font-size:13px;line-height:1.65;max-width:38ch}
 /* Footer link row. Sits between the three columns and the legal line, so the
-   legal line keeps the last word. Wraps rather than scrolls on a phone. */
-.foot-links{display:flex;flex-wrap:wrap;gap:6px 18px;margin:18px 0 0;
-  padding-top:16px;border-top:1px solid var(--line)}
-.foot-links a{color:var(--soft);font-size:13px;font-weight:600;text-decoration:none}
-@media (hover:hover){.foot-links a:hover{color:var(--text);text-decoration:underline}}
-.foot-links a:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:3px}
+   legal line keeps the last word. Wraps rather than scrolls on a phone.
+   Bare underlined text read as an afterthought pasted under the columns -
+   nothing else on the site looks like that. Everything here is a pill, so
+   these are too, just quieter than the ones that do something: no fill until
+   the cursor arrives, and the same lift the market and payout chips use. */
+.foot-links{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 0;
+  padding-top:18px;border-top:1px solid var(--line)}
+.foot-links a,.foot-links button{display:inline-flex;align-items:center;gap:7px;
+  background:transparent;border:1px solid var(--line);color:var(--soft);
+  font:inherit;font-size:12.5px;font-weight:600;line-height:1;
+  padding:8px 13px;border-radius:99px;cursor:pointer;text-decoration:none;
+  transition:background .16s ease,border-color .16s ease,color .16s ease,transform .12s ease}
+.foot-links svg{width:14px;height:14px;flex:0 0 auto}
+@media (hover:hover){
+  .foot-links a:hover,.foot-links button:hover{background:var(--card-2);
+    border-color:var(--faint);color:var(--text);transform:translateY(-1px)}
+}
+.foot-links a:focus-visible,.foot-links button:focus-visible{
+  outline:2px solid var(--red);outline-offset:2px}
+/* The one that leaves the site sits apart from the four that do not. */
+.foot-links .fl-x{margin-left:auto}
+@media(max-width:560px){.foot-links .fl-x{margin-left:0}}
+
+/* Contact dialog. Reuses the booking-code modal shell so there is one kind of
+   centred dialog on the site rather than two that nearly match. */
+.contact-card{background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-lg,14px);box-shadow:0 18px 50px rgba(0,0,0,.42);
+  padding:24px 26px 22px;position:relative;width:min(420px,92vw);text-align:left}
+.contact-card h3{margin:0 0 6px;font-size:19px;font-weight:800;color:var(--text)}
+.contact-card p{margin:0 0 16px;color:var(--soft);font-size:13.5px;line-height:1.6}
+.contact-mail{display:flex;align-items:center;gap:10px;background:var(--card-2);
+  border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:12px}
+.contact-mail a{flex:1 1 auto;font-size:14px;font-weight:700;color:var(--text);
+  word-break:break-all;text-decoration:none;border-bottom:1px solid var(--line)}
+@media (hover:hover){.contact-mail a:hover{color:var(--red-ink);border-bottom-color:var(--red)}}
+.contact-mail a:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:3px}
+.contact-mail .c-copy{flex:0 0 auto;background:transparent;border:1px solid var(--line);
+  color:var(--soft);font:inherit;font-size:12px;font-weight:700;padding:5px 11px;
+  border-radius:99px;cursor:pointer;transition:border-color .16s,color .16s}
+@media (hover:hover){.contact-mail .c-copy:hover{border-color:var(--faint);color:var(--text)}}
+.contact-mail .c-copy:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.contact-acts{display:flex;gap:9px;flex-wrap:wrap}
+.contact-acts a,.contact-acts button{display:inline-flex;align-items:center;gap:7px;
+  border-radius:99px;padding:9px 15px;font:inherit;font-size:13px;font-weight:700;
+  cursor:pointer;text-decoration:none;border:1px solid var(--line);
+  background:var(--card-2);color:var(--soft);transition:background .16s,border-color .16s,color .16s}
+.contact-acts .primary{background:var(--red);border-color:var(--red);color:#fff}
+@media (hover:hover){
+  .contact-acts a:hover,.contact-acts button:hover{border-color:var(--faint);color:var(--text)}
+  .contact-acts .primary:hover{filter:brightness(1.08);color:#fff}
+}
+.contact-acts a:focus-visible,.contact-acts button:focus-visible{
+  outline:2px solid var(--red);outline-offset:2px}
 .foot-legal{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-top:16px;
   border-top:1px solid var(--line-soft);font-size:12px;color:var(--faint)}
 .foot-legal .rg{margin-left:auto;color:var(--red-ink);font-weight:700;text-decoration:none}
@@ -4089,7 +4136,11 @@ footer{margin-top:26px;padding-top:18px;
         <a href="/how-it-works">How it works</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
-        <a href="mailto:hello@soccerwizard.live">Contact</a>
+        <button type="button" id="contactBtn">Contact us</button>
+        <a class="fl-x" href="https://x.com/soccerwizardlive" target="_blank" rel="noopener"
+           aria-label="Soccerwizard on X">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.2 2.3h3.4l-7.4 8.5 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9.1L.9 2.3h7l4.8 6.4zm-1.2 17.9h1.9L7.1 4.2H5z"/></svg>
+          <span>Follow us</span></a>
       </nav>
       <div class="foot-legal">
         <span>&copy; <span id="yr"></span> Soccerwizard</span>
@@ -6859,6 +6910,24 @@ function mLabel(f,c){
    and legs whose game has kicked off cannot be avoided any more either. */
 function slipUse(){
   var m={};
+  /* The slip already on screen counts too, not just saved ones.
+     Shipped first reading SLIPS alone, which meant it did nothing at all
+     unless you had saved each ticket - and reported as exactly that:
+     conjure six times without saving and all eleven games came back
+     identical, because slipUse saw an empty list. Saving is a deliberate
+     step here, so most people building a few tickets in a row never
+     trigger it, and the guard was inert precisely when it was wanted.
+     wspConjure calls wspBuild BEFORE it replaces MYSLIP, so during the
+     build this still holds the previous conjure - which is what makes a
+     re-conjure move off the games you are looking at. */
+  try{
+    (MYSLIP||[]).forEach(function(l){
+      if(!l||!l.id) return;
+      var f=fixtureById(l.id);
+      if(f&&!notStarted(f)) return;
+      m[l.id]=(m[l.id]||0)+1;
+    });
+  }catch(e){}
   try{
     (SLIPS||[]).forEach(function(s){
       if(!s||s.settled) return;
@@ -10372,6 +10441,54 @@ $("bookBtn").addEventListener("click",bookSlip);
 $("clearBtn").addEventListener("click",clearSlip);
 $("shuffleBtn").addEventListener("click",function(){if(BUILD.mode==="wizard"){wspConjure(true);return;}BUILD.touched=true;BUILD.seed=Math.floor(Math.random()*1e6);BUILD.shuffles=(BUILD.shuffles||0)+1;BUILD.removed={};$("bookResult").innerHTML="";renderBuilder();window.swToast&&window.swToast("Slip reshuffled","ok","shuffle");});
 
+var CONTACT_EMAIL="hello@soccerwizard.live";
+/* Contact dialog.
+   "Contact" was a bare mailto: on a site where nothing else hands you off to
+   an external app without warning - on a phone that either opens a mail client
+   you may not use or does nothing at all, with no way to tell which. A dialog
+   shows the address, lets it be copied, and keeps the mail app as a choice
+   rather than the only route.
+   Built on the booking-code modal shell so there is one kind of centred dialog
+   here, not two that nearly match. */
+function openContact(){
+  var old=document.getElementById("contactModal"); if(old) old.remove();
+  var wrap=document.createElement("div");
+  wrap.id="contactModal"; wrap.className="code-modal-scrim";
+  wrap.innerHTML="<div class='contact-card' role='dialog' aria-modal='true' aria-labelledby='contactTitle'>"+
+    "<button class='code-x' type='button' aria-label='Close'>"+
+      "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' aria-hidden='true'><path d='M6 6l12 12M18 6L6 18'/></svg></button>"+
+    "<h3 id='contactTitle'>Contact us</h3>"+
+    "<p>Spotted something wrong with a prediction, a result or a booking code? "+
+      "Tell us and we will look. We read everything.</p>"+
+    /* The address is the link. Reading it and clicking it are the same
+       gesture, and hiding it behind a button called "Open mail app" made
+       people copy it by selecting the text anyway. */
+    "<div class='contact-mail'>"+
+      "<a href='mailto:"+esc(CONTACT_EMAIL)+"'>"+esc(CONTACT_EMAIL)+"</a>"+
+      "<button type='button' class='c-copy' aria-label='Copy email address'>Copy</button>"+
+    "</div>"+
+    "<div class='contact-acts'>"+
+      "<a class='primary' href='mailto:"+esc(CONTACT_EMAIL)+"'>Send an email</a>"+
+      "<a href='https://x.com/soccerwizardlive' target='_blank' rel='noopener'>Message on X</a>"+
+    "</div></div>";
+  function close(){ wrap.remove(); document.removeEventListener("keydown",onKey); }
+  function onKey(e){ if(e.key==="Escape") close(); }
+  wrap.querySelector(".code-x").addEventListener("click",close);
+  /* Clicking the backdrop closes; clicking inside the card must not. */
+  wrap.addEventListener("click",function(e){ if(e.target===wrap) close(); });
+  document.addEventListener("keydown",onKey);
+  var cp=wrap.querySelector(".c-copy");
+  cp.addEventListener("click",function(){
+    copyText(CONTACT_EMAIL);
+    var was=cp.textContent; cp.textContent="Copied";
+    setTimeout(function(){ cp.textContent=was; },1500);
+  });
+  document.body.appendChild(wrap);
+  /* Focus the close button so the dialog is reachable from the keyboard the
+     moment it opens, and Escape has something to act on. */
+  try{ wrap.querySelector(".code-x").focus(); }catch(e){}
+}
+(function(){ var b=$("contactBtn"); if(b) b.addEventListener("click",openContact); })();
 /* ------------------------------------------------------------- theming */
 const SUN='<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
 const MOON='<path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/>';

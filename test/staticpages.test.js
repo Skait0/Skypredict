@@ -72,20 +72,44 @@ test("match pages carry the same footer", () => {
 
 test("the app's own footer links them too", () => {
   /* index.html is hand-written, not generated, so it does not get the shared
-     footer for free. */
+     footer for free. Contact is a dialog here rather than a bare mailto - the
+     address is built from CONTACT_EMAIL at open time - so this checks the
+     control exists and the address is right, not that a literal mailto is in
+     the markup. */
   assert.match(index, /class="foot-links"/, "the footer link row is gone");
-  ["/matches", "/how-it-works", "/privacy", "/terms", "mailto:" + P.CONTACT]
+  ["/matches", "/how-it-works", "/privacy", "/terms"]
     .forEach((w) => assert.ok(index.includes(w), "index.html does not link " + w));
+  assert.match(index, /id="contactBtn"[^>]*>|>Contact us</,
+    "the footer needs a Contact us control");
+  assert.match(index, /function openContact\(\)/, "and a dialog for it to open");
 });
 
 test("one contact address, used everywhere", () => {
   assert.match(P.CONTACT, /^[^@\s]+@soccerwizard\.live$/,
     "the contact address should be on the site's own domain");
-  const all = Object.values(PAGES).join("") + index;
-  const others = all.match(/mailto:([^"']+)/g) || [];
-  const distinct = [...new Set(others.map((m) => m.replace("mailto:", "")))];
-  assert.deepStrictEqual(distinct, [P.CONTACT],
-    "more than one contact address is on the site: " + distinct.join(", "));
+  /* The generated pages carry a literal mailto; the app holds it in a constant.
+     Both must be the same address, or people reach different inboxes depending
+     on which page they were on. */
+  const m = /var CONTACT_EMAIL="([^"]+)"/.exec(index);
+  assert.ok(m, "index.html has no CONTACT_EMAIL");
+  assert.strictEqual(m[1], P.CONTACT,
+    "index.html and lib/pages.js disagree about the contact address");
+  const others = (Object.values(PAGES).join("").match(/mailto:([^"']+)/g) || [])
+    .map((x) => x.replace("mailto:", ""));
+  assert.deepStrictEqual([...new Set(others)], [P.CONTACT],
+    "more than one contact address on the generated pages");
+});
+
+test("the address in the dialog is itself the mail link", () => {
+  /* Reported: "let the email address show, its also a link show, so the users
+     can click on it to mail and also copy it." Reading it and clicking it
+     should be the same gesture. */
+  const i = index.indexOf("function openContact()");
+  const fn = index.slice(i, i + 2600);
+  assert.match(fn, /class='contact-mail'/);
+  assert.match(fn, /"<a href='mailto:"\+esc\(CONTACT_EMAIL\)\+"'>"\+esc\(CONTACT_EMAIL\)\+"<\/a>"/,
+    "the visible address must be the anchor, not a label beside one");
+  assert.match(fn, /class='c-copy'/, "and it must still be copyable");
 });
 
 /* ------------------------------------------------------- privacy accuracy */
