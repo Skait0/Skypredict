@@ -1661,8 +1661,11 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
    nothing else on the site looks like that. Everything here is a pill, so
    these are too, just quieter than the ones that do something: no fill until
    the cursor arrives, and the same lift the market and payout chips use. */
-.foot-links{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 0;
-  padding-top:18px;border-top:1px solid var(--line)}
+/* Breathing room on BOTH sides. The pills sat 19px under the rule above and
+   flush against the legal rule below - zero gap, measured - so the row read
+   as crowding the line rather than sitting between two of them. */
+.foot-links{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 0;
+  padding:26px 0 24px;border-top:1px solid var(--line)}
 .foot-links a,.foot-links button{display:inline-flex;align-items:center;gap:7px;
   background:transparent;border:1px solid var(--line);color:var(--soft);
   font:inherit;font-size:12.5px;font-weight:600;line-height:1;
