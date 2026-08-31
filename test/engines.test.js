@@ -62,6 +62,12 @@ const FNS = ["countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmer
   "saWeight", "isLowerLeague", "isLowerFixture", "fid", "oddOf", "legOdd",
   "hasRealOdd", "pricedFixture", "mProb", "riskParams",
   "allowedMarkets", "preferGoalsOverDouble", "isJackpotOdds", "wspMarkets",
+  /* The wizard now asks which markets have a published record before it
+     reaches for one, so its harness needs them too. */
+  "codeMarket", "provenMarkets", "isProven",
+  /* Both builders now restrict themselves to markets SportyBet always lists
+     when a fixture has no prices at all, so the harness needs that too. */
+  "safeUnpriced",
   "buildPicks", "wspBuild"];
 
 const api = new Function([
@@ -71,6 +77,7 @@ const api = new Function([
   /* No saved slips in this harness, so nothing is already exposed; the
      spread penalty is exercised on its own in spread.test.js. */
   "function slipUse(){return {};}",
+  konst("SAFE_UNPRICED"),
   konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
   konst("HIGH_SCORING_O25"), konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
   konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"),
@@ -101,8 +108,26 @@ const BOARD = [
 /* Every test starts from the same board and the same seeds. The engines jitter
    their scores with a hash of the seed, so an unfixed seed makes every
    assertion below a coin toss. */
+/* Real SportyBet prices, so the board behaves like the live one.
+   Without them every fixture counts as UNPRICED, and both builders now restrict
+   an unpriced fixture to the markets SportyBet always lists (1X2 and double
+   chance) - which meant the whole suite was silently exercising the guess path
+   and no test could ever see an Over 2.5 or a GG leg. Derived from each
+   fixture's own probability so the prices stay coherent with the model. */
+function priced(f) {
+  const o = (p) => Math.round((1 / Math.max(0.02, p)) * 100) / 100;
+  return Object.assign({}, f, { sportyOdds: {
+    "1": o(f.home_p), "2": o(f.away_p), "X": o(f.draw_p),
+    "1X": o(f.dc1x), "X2": o(f.dcx2), "12": o(f.dc12),
+    "OVER_1.5": o(f.o15), "OVER_2.5": o(f.o25), "OVER_3.5": o(f.o35),
+    "GG": o(f.btts), "FH_OVER_0.5": o(f.fh_o05),
+    "HOME_OVER_0.5": o(f.h_o05), "AWAY_OVER_0.5": o(f.a_o05),
+    "HOME_OVER_1.5": o(f.h_o15), "AWAY_OVER_1.5": o(f.a_o15),
+  } });
+}
+
 function reset() {
-  api.setFixtures(BOARD.map(f => Object.assign({}, f)));
+  api.setFixtures(BOARD.map(priced));
   api.setTopOnly(false);
   Object.assign(api.BUILD, { risk: 50, seed: 12345, shuffles: 0, removed: {}, touched: true });
   api.BUILD.mk = { wd: true, any: false, out: true, o15: true, o25: true,

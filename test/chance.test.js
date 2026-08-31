@@ -56,8 +56,18 @@ test("the slip styles are not named for a promise they cannot keep", () => {
   assert.ok(line, "styles array not found");
   assert.doesNotMatch(line[0], /Safer/,
     'the "Safer" label told people the opposite of the truth');
-  assert.match(line[0], /\[1\.25,\s*"More games","lesser odds"\]/);
+  assert.match(line[0], /\[1\.25,\s*"More games","smaller odds"\]/);
   assert.match(line[0], /\[1\.7,\s*"Fewer games","bigger odds"\]/);
+  /* Plain words, and short ones. The pills are white-space:nowrap in a
+     three-across row budgeted for a 320px phone, so the qualifier has about
+     eleven characters before the row overflows - "smaller odds each" was tried
+     and is six too many. */
+  [/\[1\.25,"More games","([^"]+)"/, /\[1\.7,"Fewer games","([^"]+)"/].forEach((re) => {
+    const q = re.exec(line[0])[1];
+    assert.ok(q.length <= 13,
+      `"${q}" is ${q.length} characters; the pill row cannot wrap and is ` +
+      `budgeted for a 320px screen`);
+  });
 });
 
 test("each style says which way its odds go", () => {
@@ -69,9 +79,9 @@ test("each style says which way its odds go", () => {
   const lo = /\[([\d.]+),"More games"/.exec(line)[1];
   const hi = /\[([\d.]+),"Fewer games"/.exec(line)[1];
   assert.ok(+lo < +hi,
-    `"lesser odds" must be the lower per-leg target (${lo}) and "bigger odds" ` +
-    `the higher (${hi}) - swapping these would print the opposite of the truth, ` +
-    `which is the mistake the previous labels made`);
+    `"smaller odds" must be the lower per-game target (${lo}) and ` +
+    `"bigger odds" the higher (${hi}) - swapping these would print the ` +
+    `opposite of the truth, which is the mistake the previous labels made`);
 });
 
 /* The arithmetic the labels rest on, so the claim in the comments above stays

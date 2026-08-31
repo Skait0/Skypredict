@@ -190,6 +190,10 @@ function writePages(payload) {
   const stats = {
     results: (payload && payload.matches) || null,
     leagues: (payload && payload.leagues && payload.leagues.length) || null,
+    /* Per-market calibration, published on /how-it-works. Every market graded
+       on every held-out match, not just the headline tip - see
+       gradeEveryMarket in lib/model.js. */
+    markets: (payload && payload.record && payload.record.markets) || null,
   };
   const standing = [
     ["/privacy", () => P.renderPrivacy(updated)],
@@ -335,10 +339,51 @@ function splitAssets() {
   }
 }
 
+/* ---------------------------------------------------------- share card
+ *
+ * The card people see when the link is pasted into WhatsApp or X. It carries
+ * two figures, and both used to be painted into a JPEG by hand: within a day
+ * of shipping, the picture said "45 leagues" while the board carried 47, and
+ * nothing in the build could have noticed.
+ *
+ * lib/ogcard.js composites the digits onto a baked background and encodes a
+ * PNG with nothing but zlib, so the card is now rebuilt from the payload on
+ * every deploy and cannot drift from it.
+ */
+function writeCard(payload) {
+  if (!payload) { warn("no payload, keeping the existing share card"); return; }
+  let card;
+  try {
+    card = require("../lib/ogcard.js");
+  } catch (e) { warn("share card unavailable: " + e.message); return; }
+
+  const leagues = payload.leagues && payload.leagues.length;
+  const rec = payload.record;
+  const pct = rec && rec.total ? Math.round((rec.correct / rec.total) * 100) : null;
+
+  let png = null;
+  try {
+    png = card.buildCard({ leagues: leagues, pct: pct });
+  } catch (e) { warn("share card failed: " + e.message); return; }
+
+  /* buildCard returns null rather than throwing when a figure will not fit the
+     cells baked for it. Yesterday's card is a far better outcome than a card
+     with a hole in it, or a failed deploy. */
+  if (!png) {
+    warn("share card not rebuilt: leagues=" + leagues + " pct=" + pct +
+         " does not fit the baked two-digit slots; keeping the last one");
+    return;
+  }
+  fs.writeFileSync(path.join(PUB, "og-card.png"), png);
+  log("share card: " + leagues + " leagues, " + pct + "% -> og-card.png (" +
+      (png.length / 1024).toFixed(0) + " KB)");
+}
+
 /* ------------------------------------------------------------------- run */
 (async () => {
   const payload = await bakePayload();
   writePages(payload);
+  writeCard(payload);
   /* Before the split, so the hostname inside the big inline script - the
      share-image canvas - is rewritten while it is still in the page. */
   applyOrigin();

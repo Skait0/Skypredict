@@ -36,6 +36,9 @@ name: Record full-time results
 #
 # Needs two repository secrets:
 #   SWEEP_URL  https://skypredict-theta.vercel.app/api/record-sweep
+#   REBUILD_HOOK  a Vercel deploy hook (Project > Settings > Git > Deploy Hooks).
+#     Optional: without it the sweep still records everything and the results
+#     appear at the next daily build. With it they appear within minutes.
 #   SWEEP_KEY  the same value as the SWEEP_KEY environment variable on Vercel
 
 on:
@@ -75,3 +78,42 @@ jobs:
           # green, but a single failure is not worth an alarm - the next run is
           # ten minutes away and the work is idempotent.
           test "$code" = "200"
+
+      # Publishing what the sweep just banked.
+      #
+      # A finalised result goes into Supabase within about twenty minutes of full
+      # time, but it only reaches the site during a BUILD - lib/build.js merges
+      # Supabase rows into the payload, and public/predictions.json is written by
+      # prebuild at deploy. The only scheduled build is Vercel's daily cron at
+      # 06:30 UTC (one run a day is the Hobby plan limit), so a match finishing
+      # at nine in the evening sat in the database until the following morning.
+      #
+      # This fires a Vercel deploy hook, and only when there is something to
+      # publish: most runs finalise nothing, and rebuilding the whole site every
+      # ten minutes to change nothing would be wasteful and would churn every CDN
+      # cache for no reason.
+      - name: Publish, if anything was finalised
+        if: ${{ !inputs.dry }}
+        env:
+          REBUILD_HOOK: ${{ secrets.REBUILD_HOOK }}
+        run: |
+          n=$(jq -r '.finalised // 0' response.json 2>/dev/null || echo 0)
+          echo "finalised this run: $n"
+          if [ "$n" = "0" ] || [ "$n" = "null" ]; then
+            echo "nothing new - leaving the site as it is"
+            exit 0
+          fi
+          if [ -z "$REBUILD_HOOK" ]; then
+            echo "REBUILD_HOOK is not set, so these results will appear at the"
+            echo "next daily build instead of within a few minutes."
+            exit 0
+          fi
+          code=$(curl -sS -X POST -o hook.json -w '%{http_code}' \
+                  --max-time 30 "$REBUILD_HOOK")
+          echo "deploy hook: HTTP $code"
+          cat hook.json 2>/dev/null || true
+          echo
+          # Worth going red for. The results are safe in Supabase either way, but
+          # a hook that has quietly stopped working means every result waits for
+          # the morning again, and that is the thing this step exists to prevent.
+          case "$code" in 2*) exit 0 ;; *) exit 1 ;; esac

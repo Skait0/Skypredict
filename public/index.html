@@ -18,13 +18,17 @@
      nothing they could render large and fell back to no card at all. Every
      other asset here is square, so this one is purpose-made at 2.03:1.
      Width and height are declared because some crawlers will not lay out a
-     card until they know the shape, and that is a fetch they can skip. -->
-<meta property="og:image" content="https://skypredict-theta.vercel.app/og-card.jpg">
+     card until they know the shape, and that is a fetch they can skip.
+     PNG, and written by scripts/prebuild.js on every deploy rather than drawn
+     by hand: the figures on it come from the payload, so they cannot drift the
+     way the hand-made JPEG did. og-card.jpg is left in place unreferenced so
+     the caches still holding it keep resolving until they expire. -->
+<meta property="og:image" content="https://skypredict-theta.vercel.app/og-card.png">
 <meta property="og:image:width" content="1568">
 <meta property="og:image:height" content="772">
-<meta property="og:image:alt" content="Soccerwizard - football predictions across 45 leagues, free SportyBet code in one tap">
+<meta property="og:image:alt" content="Soccerwizard - football predictions with a free SportyBet code in one tap">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://skypredict-theta.vercel.app/og-card.jpg">
+<meta name="twitter:image" content="https://skypredict-theta.vercel.app/og-card.png">
 <!-- Every view of this site is one URL with different state - the board, the
      builder, live scores and results are all "/" - and the day picker and share
      links add query strings on top. Without a canonical, a search engine treats
@@ -38,7 +42,17 @@
      own SportsEvent schema; this is the one that can win a sitelinks box. -->
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Soccerwizard","url":"https://skypredict-theta.vercel.app/","description":"Football predictions from 38 leagues, plus a ready-made SportyBet slip.","publisher":{"@type":"Organization","name":"Soccerwizard","logo":{"@type":"ImageObject","url":"https://skypredict-theta.vercel.app/wiz-logo.png"}}}</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
-<link rel="icon" type="image/png" sizes="512x512" href="/app-icon.png">
+<!-- The 512 icon is deliberately NOT linked here.
+     Browsers fetch every rel=icon during first paint, and this one is 297 KB,
+     roughly a third of the page weight, for an image only needed when somebody
+     installs the app.
+     Reported as "Safari couldn't open the page because the server stopped
+     responding" on a two-bar LTE connection. Nothing was wrong with the server:
+     a first load came to 1.6 MB, about eight seconds of transfer on a weak
+     link, and Safari gives up before that.
+     manifest.webmanifest still lists it, which is where an install looks, and
+     that file is fetched lazily rather than on first paint. icon-32 stays the
+     favicon and icon-180 the apple-touch icon. -->
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -2644,7 +2658,7 @@ button.wsp-go.waiting{opacity:.55}
   font-weight:700;font-size:13px;padding:9px 15px;border-radius:99px;cursor:pointer}
 .wsp-chip.on{background:var(--red);border-color:var(--red);color:#fff}
 /* Slip style pills.
-   The labels now carry the trade-off ("More games / lesser odds"), which is
+   The labels now carry the trade-off ("More games / smaller odds"), which is
    too long for the free-flowing chip row the payout ladder uses - on a phone
    the three would wrap to three full-width rows. An equal-width grid with the
    qualifier on a second line keeps each pill sized to its own text and the
@@ -5956,14 +5970,34 @@ addEventListener("keydown",function(e){
 /* Set only while clearMy repaints the builder, to stop that repaint from
    syncing the picks back into a slip the user just emptied. */
 var BUILD_NOSYNC=false;
-var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:true,o35:false,fh:false,tts:false,tts2:false,both:true},touched:false,mode:"slider"};
+/* The markets a fresh visit starts with.
+   Four, not seven. Win or draw and Team over 0.5 are the two safest things on
+   the board (tier 0), Over 1.5 is the one goals line safe enough to headline,
+   and Outright win is what people come looking for. Over 2.5 and Both score
+   used to be on by default despite being tier 1 and tier 2 - the riskiest
+   chips were pre-selected while the safest one, Team over 0.5, was not.
+   Nothing here is persisted, so this set is what everyone gets on every load;
+   the chips stay available for anyone who wants the rest. WSP below carries
+   the same set so the two builders start from the same place. */
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false},touched:false,mode:"slider"};
 try{var rr=localStorage.getItem("sw.risk"); if(rr!=null) BUILD.risk=+rr;}catch(e){}
 try{var rm=localStorage.getItem("sw.mode"); if(rm==="slider"||rm==="wizard") BUILD.mode=rm;}catch(e){}
 /* Ticket window. "day" holds every leg inside today, so the whole slip settles
    the same evening; "all" runs for as long as there are fixtures published.
    One shared preference, so the slider builder and Wizard's Special can never
    disagree about which games are on the table. */
-var SCOPE="all";
+/* Today, not everything. A slip whose legs run across three days cannot be
+   watched in one evening and cannot settle in one, and "all upcoming" was
+   quietly the wider, slower default. Anyone who wants the long window still
+   has the toggle, and their choice is still remembered. */
+var SCOPE="day";
+/* One-time reset so the new default actually reaches people who already have
+   "all" saved from before it changed - otherwise this is a default nobody
+   returning ever sees. Guarded by a flag rather than run every load, or
+   choosing "all" would never stick again. Same move the sw.tod clear below
+   makes, for the same reason. */
+try{ if(!localStorage.getItem("sw.scopedflt2")){ localStorage.removeItem("sw.scope");
+  localStorage.setItem("sw.scopedflt2","1"); } }catch(e){}
 try{var sc0=localStorage.getItem("sw.scope"); if(sc0==="day"||sc0==="all") SCOPE=sc0;}catch(e){}
 /* Which single day the "day" window points at: 0 today, 1 tomorrow, and so on.
    Only meaningful while SCOPE is "day". A saved offset can outlive its
@@ -6073,6 +6107,30 @@ function dayBuildable(off){
     if(dayOff(f.date)===off&&notStarted(f)) n++;}
   return n;
 }
+/* What a tap actually hands you: the three filters both builders apply before
+   they pick anything. The counts beside the day and time buttons used to come
+   off the raw payload, so switching on Top flight left every number unchanged
+   while the board behind it shrank, and a bucket could advertise nine games and
+   then produce two.
+   Deliberately NOT used by dayPickList or clampDay below. Which days EXIST is a
+   structural question, and letting a league choice empty the day picker would
+   make it jump about while somebody is still choosing. */
+function buildableOn(off){
+  var out=[],all=DATA.fixtures||[];
+  for(var i=0;i<all.length;i++){var f=all[i];
+    if(!notStarted(f)) continue;
+    if(dayOff(f.date)!==off) continue;
+    if(!leagueAllowed(f.league)) continue;
+    if(TOP_ONLY&&isLowerFixture(f)) continue;
+    out.push(f);}
+  return out;
+}
+/* The same three filters with no day at all, for the "All upcoming" count. */
+function buildableAll(){
+  return (DATA.fixtures||[]).filter(function(f){
+    return notStarted(f)&&leagueAllowed(f.league)&&!(TOP_ONLY&&isLowerFixture(f));
+  });
+}
 /* Every day from today forward that still has a game to build with, ascending.
    Days whose fixtures have all kicked off drop out, so the picker never offers
    an empty day. */
@@ -6111,8 +6169,7 @@ function paintScope(){
      the switch does than either label manages on its own. The day pill counts
      against the day it points at. */
   try{
-    var all=(DATA.fixtures||[]).filter(notStarted);
-    var n={day:dayBuildable(SDAY),all:all.length};
+    var n={day:buildableOn(SDAY).length,all:buildableAll().length};
     seg.querySelectorAll("[data-scope-n]").forEach(function(el){
       el.textContent=n[el.getAttribute("data-scope-n")];
     });
@@ -6124,8 +6181,18 @@ function paintScope(){
    tap that returns nothing. */
 function paintTod(){
   var seg=$("todSeg"); if(!seg) return;
+  /* On "All upcoming" none of these is in force. A time of day is a slice of
+     ONE day and that window spans several, so TOD is pinned to "all" and
+     todFixtures ignores it entirely - yet "All day" still came up lit, claiming
+     a filter that was not running.
+     Reported: "when i click on all upcoming, i think all day should not look
+     active. since all upcoming is not one day."
+     setTod already says the same thing from the other side: naming a time of
+     day is naming a day, so tapping any bucket here pulls the window onto one.
+     That still works; it simply is not selected until it does. */
+  var live=(SCOPE==="day");
   seg.querySelectorAll("[data-tod]").forEach(function(b){
-    var on=b.getAttribute("data-tod")===TOD;
+    var on=live&&b.getAttribute("data-tod")===TOD;
     b.classList.toggle("on",on);
     b.setAttribute("aria-pressed",on?"true":"false");
   });
@@ -6133,9 +6200,7 @@ function paintTod(){
     /* Counted against the chosen day, whatever the window is set to: tapping a
        bucket brings the window onto that day, so the number is what the tap
        gives you. */
-    var base=(DATA.fixtures||[]).filter(function(f){
-      return notStarted(f)&&dayOff(f.date)===SDAY;
-    });
+    var base=buildableOn(SDAY);
     var n={all:base.length,early:0,mid:0,late:0};
     base.forEach(function(f){var b=todOf(f); if(b&&n[b]!=null) n[b]++;});
     seg.querySelectorAll("[data-tod-n]").forEach(function(el){
@@ -6878,6 +6943,62 @@ function mProb(f,c){
     case"AWAY_OVER_0.5":return f.a_o05;case"AWAY_OVER_1.5":return f.a_o15;}
   return null;
 }
+/* Which markets have actually been graded, and enough times to mean something.
+ *
+ * The site publishes a record and stakes everything on it. A market that has
+ * never appeared in that record has no business being the first thing the
+ * wizard reaches for.
+ *
+ * That is not hypothetical. Team over 0.5 was switched on by default on 31 Aug
+ * and immediately became the model's strongest call on 27 of 34 fixtures, so
+ * the wizard led with it on every lopsided game - the weaker side to score,
+ * against Barcelona, against Liverpool. Reported as: "you shouldnt pick a less
+ * favoured game because you want to hit the target... its about the likelyhood
+ * of the games coming." The sharper version is that we did not KNOW the
+ * likelihood, because 216 graded results contained not one of them.
+ *
+ * Read off the published record rather than hard-coded, so a market earns its
+ * place by accumulating results and this restriction lifts itself. Nobody has
+ * to remember to come back and remove it. */
+/* Markets SportyBet lists on effectively every event (99-100% of 1,232 live
+   events measured 31 Aug). Used only when we have NO prices for a fixture and
+   are picking on our own estimated odds - see pickFrom and buildPicks. Team
+   goals sit at 70-76% and were booking-rejecting about one leg in four. */
+var SAFE_UNPRICED={"1":1,"2":1,"X":1,"1X":1,"X2":1,"12":1};
+function safeUnpriced(code){ return !!SAFE_UNPRICED[code]; }
+var MIN_GRADED=10;
+function codeMarket(c){
+  switch(c){
+    case"1":case"2":case"X":return"Match result";
+    case"1X":case"X2":case"12":return"Double chance";
+    case"GG":return"Both to score";
+    case"FH_OVER_0.5":return"First-half goal";
+    case"OVER_1.5":return"Over 1.5";
+    case"OVER_2.5":return"Over 2.5";
+    case"OVER_3.5":return"Over 3.5";
+    case"HOME_OVER_0.5":case"AWAY_OVER_0.5":return"Team over 0.5";
+    case"HOME_OVER_1.5":case"AWAY_OVER_1.5":return"Team over 1.5";}
+  return null;
+}
+/* Same families lib/grade.js groups the record by, so the two agree. */
+function provenMarkets(){
+  var out={};
+  try{
+    /* `markets` grades EVERY market on every held-out match, so each one gets
+       the whole window. `byMarket` only ever recorded the headline tip, which
+       meant the markets competed for the same few hundred matches and the ones
+       that can never headline - team goals, Over 2.5, both teams to score -
+       had no record at all and could never earn one. Fall back to byMarket so
+       a payload baked before this existed still behaves. */
+    var rows=(DATA.record&&(DATA.record.markets||DATA.record.byMarket))||[];
+    rows.forEach(function(m){
+      if(m&&m.market&&m.total>=MIN_GRADED) out[m.market]=1; });
+  }catch(e){}
+  return out;
+}
+/* Unknown codes count as proven: the guard exists to hold back markets we can
+   see have no record, not to block anything the mapping has not met yet. */
+function isProven(c,prov){ var m=codeMarket(c); return !m || !!prov[m]; }
 /* Did one leg land? Keyed on the market code rather than the tip label, since a
    slip's legs are chosen by code and need not be the fixture's own tip.
    Returns null for anything a final score cannot settle, and callers treat that
@@ -7008,6 +7129,10 @@ function buildPicks(){
     var realCodes=usable.filter(function(c){return hasRealOdd(f,c);});
     if(realCodes.length) usable=realCodes;
     else if(pricedFixture(f)) return;
+    /* Same rule as the wizard: with no prices for this fixture we are guessing,
+       so guess only among markets SportyBet always lists. */
+    else { usable=usable.filter(function(c){ return safeUnpriced(c); });
+           if(!usable.length) return; }
 
     var best=null,bestScore=-1;
     usable.forEach(function(c){
@@ -8962,6 +9087,15 @@ function swapMy(id,oldCode,newCode){
   for(var i=0;i<MYSLIP.length;i++){
     if(MYSLIP[i].id===id&&MYSLIP[i].code===oldCode){
       MYSLIP[i].code=newCode; MYSLIP[i].label=pick.label; MYSLIP[i].p=+pick.p;
+      /* Changing a leg makes it yours.
+         auto:true means "machine-picked, replace me on the next shuffle", and
+         a swapped leg kept carrying it - so a reshuffle deleted the market the
+         user had just chosen and put the model's original pick back. Reported
+         as: "i changed an option, when i shuffled, it changed the game i
+         changed to the default one it initially predicted for me."
+         Both builders filter on this flag before refilling, so clearing it is
+         what makes an edited leg survive either of them. */
+      MYSLIP[i].auto=false;
       break;
     }
   }
@@ -9404,7 +9538,7 @@ const JACKPOT_ODDS=20000;
    at booking. */
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
-var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:true,o35:false,fh:false,tts:false,tts2:false,both:true},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* One entry per toggle, so turning everything else off leaves exactly one
    market and every leg of the slip is that market. That is the whole point
    of splitting the goals group: an all-Over-1.5 or all-first-half ticket is
@@ -9569,13 +9703,55 @@ function wspBuild(){
        one slip. More games means shorter legs and more of them, each one
        likelier on its own; fewer games means longer legs and fewer, less
        likely one by one. That trade is the honest content of the setting. */
+    /* How far above the per-leg need a market may sit before it stops being a
+       fit for THIS slip.
+       The floor alone was half a rule. It said "long enough" and never said
+       "not longer than we asked for", so on a lopsided match - where every safe
+       market is priced at 1.03 to 1.14 - the only thing clearing a 1.25 need was
+       the underdog side at 1.91, and the slip took it. Not because it wanted
+       risk, but because safety had been filtered out and nothing stopped the
+       overshoot.
+       Reported as: Estoril and Vallecano to score arriving on a "more games,
+       lesser odds" slip and surviving every shuffle. Both were the top two by
+       edge on the board, at 64-65% confidence, in a style whose name promises
+       the opposite.
+       Measured on that board at g=1.25: ceilings of x1.25, x1.30, x1.40 and
+       x1.50 all give the same 12 fixtures in band at 75% average confidence,
+       and x1.75 lets both offenders back in at 74%. A flat plateau, so x1.40
+       sits in the middle of it rather than on the edge of a cliff - this is not
+       tuned to one afternoon. */
+    var OVERSHOOT=1.40;
+    var PROVEN=provenMarkets();
     function bestOf(pool){
-      var floor=g*0.92;
-      var pull=pool.filter(function(c){ return c.od>=floor; });
-      if(pull.length) return pull.reduce(function(a,b){ return b.p>a.p?b:a; });
-      /* Nothing on this fixture is long enough - take its longest so it still
-         carries what it can toward the payout. */
-      return pool.reduce(function(a,b){ return b.od>a.od?b:a; });
+      var lo=g*0.92, hi=g*OVERSHOOT;
+      /* In the band: the safest one, exactly as before. */
+      var band=pool.filter(function(c){ return c.od>=lo&&c.od<=hi; });
+      /* A market with a published record comes first. Only when nothing
+         proven fits this slip do we reach for one we have never graded. */
+      var tried=band.filter(function(c){ return isProven(c.code,PROVEN); });
+      if(tried.length) return tried.reduce(function(a,b){ return b.p>a.p?b:a; });
+      if(band.length) return band.reduce(function(a,b){ return b.p>a.p?b:a; });
+      /* Everything too SHORT is fine - it just carries less toward the payout,
+         and the ranking below already knows that. But "take the longest of
+         those" was the wrong way to choose between them: on Benfica v Estoril
+         the short markets are 1X at 1.03/82%, Over 1.5 at 1.09/81% and Benfica
+         at 1.14/60%, and longest-wins picks the 60% one - the least confident
+         of the three - for four pence of extra payout.
+         Reported as: "benfica still has usable markets in my opinion." It does,
+         and they are the other two.
+         So rank them the way every other choice here is ranked: by edge, the
+         probability bought per unit of odds. That takes Over 1.5 (-2.44) over
+         Benfica (-3.95) and over 1X (-6.83), which is both the safest usable
+         leg and the one that carries most per chance of being wrong. */
+      var under=pool.filter(function(c){ return c.od<lo; });
+      var underOk=under.filter(function(c){ return isProven(c.code,PROVEN); });
+      if(underOk.length) return underOk.reduce(function(a,b){ return edge(b)>edge(a)?b:a; });
+      if(under.length) return under.reduce(function(a,b){ return edge(b)>edge(a)?b:a; });
+      /* Only markets far longer than this slip asked for. That is the fixture
+         offering a bet nobody ordered, so it is declined rather than stretched
+         to fit. Dropping one fixture costs a leg; taking it costs the meaning
+         of the style. */
+      return null;
     }
     function pickFrom(cs){
       var real=cs.filter(hasReal);
@@ -9584,7 +9760,12 @@ function wspBuild(){
          so the leg cannot be placed - drop the fixture. With no prices at all
          we know nothing, and an estimated odd is the honest best guess. */
       if(cs.length&&priced(cs[0].f)) return null;
-      return cs.length?bestOf(cs):null;
+      /* No prices at all for this fixture, so these are our own estimates.
+         Stay inside the markets SportyBet always carries: a guessed team-goals
+         leg is listed on only ~70-76% of events and was coming back as "no
+         market" at booking time. */
+      var guessable=cs.filter(function(c){ return safeUnpriced(c.code); });
+      return guessable.length?bestOf(guessable):null;
     }
     var chosen=[];
     list.forEach(function(c){
@@ -9695,10 +9876,31 @@ function wspBuild(){
        adding results that have to come in after the target is already met.
        That alone was most of why "Safer, more games" landed least often. */
     while(picks.length<want && (WSP.everyGame||WSP.odds==null||prod<T)){
-      var b1=null,s1=Infinity;
+      /* The multiple still needed. Null when there is no payout to aim at. */
+      var need1=(WSP.everyGame||WSP.odds==null)?null:T/prod;
+      var b1=null,s1=Infinity, fin1=null,f1=Infinity;
       for(var i=0;i<chosen.length;i++){ var c=chosen[i]; if(used[c.id]) continue;
-        var sc=c._cost+LEAGUE_PEN*(lc[lgOf(c)]||0); if(sc<s1){s1=sc;b1=c;} }
-      if(!b1) break; take(b1);
+        var pen1=LEAGUE_PEN*(lc[lgOf(c)]||0);
+        var sc=c._cost+pen1; if(sc<s1){s1=sc;b1=c;}
+        /* A leg that on its own carries us over the line. */
+        if(need1!=null && c.od>=need1){
+          var over1=Math.log(c.od/need1)+pen1;
+          if(over1<f1){f1=over1;fin1=c;} } }
+      /* If any single leg finishes the slip, take the one that clears the
+         target by the LEAST rather than the best-ranked one.
+         Phase 2 has done this for a while; phase 1 did not, and phase 1 is
+         where most slips actually finish - so the careful rule below almost
+         never ran. Sitting on x45 against a x50 target, this loop would take
+         its best-ranked leg at 1.55 and hand back x70.
+         Reported as: "i asked for 50 odds, it gave me 70. theres no need to
+         over compensate and pick crazy games like so." Exactly right, and the
+         overshoot is what forced the crazy games: a target beaten by 40% was
+         reached through longer legs than the payout ever needed, which on a
+         lopsided fixture means the weaker side to score.
+         The promise is still "at least what you asked for". It is simply no
+         longer beaten by more than it needs to be. */
+      var take1=fin1||b1;
+      if(!take1) break; take(take1);
     }
     /* Phase 2 - still short of the target, so add legs until it is reached.
        This used to take the BIGGEST remaining odds every time, to "close the
@@ -9750,6 +9952,13 @@ function wspBuild(){
             if(!(alt.od>leg.od)) continue;
             /* Never lengthen a placeable leg into one that cannot be booked. */
             if(hasReal(leg)&&!hasReal(alt)) continue;
+            /* Nor lengthen a graded market into one we have never checked.
+               This loop exists to reach the payout, and reaching it through a
+               market with no record is exactly the trade the user rejected:
+               "thats not how our gambling works... its about the likelyhood
+               of the games coming." If the board cannot get there on tested
+               markets, the slip comes back short and says so. */
+            if(isProven(leg.code,PROVEN)&&!isProven(alt.code,PROVEN)) continue;
             /* Confidence given up per unit of odds gained. */
             var cost=(Math.log(leg.p)-Math.log(Math.max(0.001,alt.p)))/
                      (Math.log(alt.od)-Math.log(leg.od));
@@ -9763,7 +9972,11 @@ function wspBuild(){
         bestSwap.leg.od=bestSwap.alt.od;
       }
     }
-    return {picks:picks,odds:prod};
+    /* Whether we got there. The promise used to be "at least the payout you
+       asked for", kept by stretching legs until the number was met. That is
+       the wrong promise: it buys a figure with games we would not otherwise
+       have chosen. Report the shortfall instead and let the slip be honest. */
+    return {picks:picks,odds:prod,short:(!WSP.everyGame&&T!=null&&prod<T*0.995)};
   }
   var euro=all.filter(function(c){return !isSouthAmerican(c.f)&&!isAsian(c.f);});
   /* Same policy as the slider builder: Europe alone unless there are too few
@@ -9815,7 +10028,17 @@ function wspConjure(shuffle){
      see, and no animation, because it should already be there. */
   try{var mb=$("mySheetBody"); if(mb) mb.scrollTop=mb.scrollHeight;}catch(e){}
   window.__wizChime&&window.__wizChime();
-  window.swToast&&window.swToast((shuffle?"Reshuffled - ":"Conjured ")+r.picks.length+" games \u00b7 ~\u00d7"+r.odds.toFixed(0),"ok");
+  /* Say what was actually built. When the board could not reach the target on
+     markets we have a record for, tell the person plainly instead of quietly
+     handing them a smaller number. Reported: "you shouldnt pick a less
+     favoured game because you want to hit the target." So we no longer do, and
+     the honest consequence is that some targets are not reachable today. */
+  if(r.short){
+    window.swToast&&window.swToast("Best we can build today is ×"+r.odds.toFixed(0)+
+      " from "+r.picks.length+" games we rate","info","wspshort");
+  } else {
+    window.swToast&&window.swToast((shuffle?"Reshuffled - ":"Conjured ")+r.picks.length+" games \u00b7 ~\u00d7"+r.odds.toFixed(0),"ok");
+  }
 }
 
 // --- Mode toggle + renderBuilder dispatcher ---
@@ -10102,7 +10325,7 @@ function renderWizardPanel(){
      shorter one. Calling it "safer" told people the opposite of the truth
      and the confidence figure beside it agreed with the lie. These say what
      you get and let the chance figure say what it costs. */
-  var styles=[[1.25,"More games","lesser odds"],[1.4,"Balanced",""],[1.7,"Fewer games","bigger odds"]];
+  var styles=[[1.25,"More games","smaller odds"],[1.4,"Balanced",""],[1.7,"Fewer games","bigger odds"]];
   var html="";
   html += "<div class='wsp-lbl'>Pick a target payout</div><div class='wsp-chips' id='wspOddsChips'>"+
     odds.map(function(o,i){
