@@ -2717,6 +2717,15 @@ button.wsp-go.waiting{opacity:.55}
 .lgp-row .lgp-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lgp-row .lgp-n{flex:0 0 auto;font-size:11.5px;font-weight:700;color:var(--faint)}
 .lgp-row .lgp-ct{color:var(--faint);font-weight:600}
+/* Nothing picked means every league is in. An empty tick box says the opposite,
+   so in that state each row carries a muted tick: included, but not chosen. The
+   red tick stays for a deliberate choice, which keeps the first tap reading as
+   "narrow to this one" rather than "untick this one". */
+.lgp-list.all-in .lgp-tick{background:var(--card-2);border-color:var(--faint);
+  color:var(--faint)}
+.lgp-allin{padding:9px 12px;font-size:12px;line-height:1.45;color:var(--soft);
+  border-bottom:1px solid var(--line-soft)}
+.lgp-allin b{color:var(--text);font-weight:700}
 .lgp-empty{padding:14px 12px;font-size:12.5px;color:var(--faint);text-align:center}
 .lgp-hint{padding:9px 12px;font-size:12px;line-height:1.45;color:var(--soft);
   background:var(--card-2);border-bottom:1px solid var(--line-soft)}
@@ -5155,6 +5164,34 @@ var SEEN_LIVE={};
    final score is simply the last one we saw before it went - which is only
    knowable if somebody wrote it down while it was still there. */
 var LIVE_LAST={};
+/* Kept across reloads. Without this the score vanished on refresh, which is
+   exactly what happened: watched to full time, on screen for hours, gone the
+   moment the page was reloaded, and never there at all for anyone arriving
+   later.
+   Only the three fields anything reads are stored. The entry also carries the
+   whole fixture object, which is never read back and has no business in
+   storage. Stamped with the day so nothing accumulates: by the next day the
+   build has baked the real score and this is dead weight. */
+var LIVE_LAST_KEY="sw.livelast";
+function saveLiveLast(){
+  try{
+    var day=new Date().toISOString().slice(0,10), out={day:day,at:{}};
+    for(var k in LIVE_LAST){ var v=LIVE_LAST[k];
+      if(v&&v.hg!=null&&v.ag!=null) out.at[k]={hg:v.hg,ag:v.ag,minute:v.minute||0}; }
+    localStorage.setItem(LIVE_LAST_KEY,JSON.stringify(out));
+  }catch(e){}
+}
+(function restoreLiveLast(){
+  try{
+    var raw=localStorage.getItem(LIVE_LAST_KEY); if(!raw) return;
+    var o=JSON.parse(raw); if(!o||!o.at) return;
+    if(o.day!==new Date().toISOString().slice(0,10)){
+      localStorage.removeItem(LIVE_LAST_KEY); return;
+    }
+    for(var k in o.at){ var v=o.at[k];
+      if(v&&v.hg!=null&&v.ag!=null) LIVE_LAST[k]={hg:v.hg,ag:v.ag,minute:v.minute||0}; }
+  }catch(e){}
+})();
 /* Deep enough into the second half that the last score we saw is the one it
    finished on. A match that vanishes at 55 minutes vanished for some other
    reason - a feed hiccup, an abandonment - and recording that as a result
@@ -5174,6 +5211,7 @@ function noteLiveSeen(){
           minute:(lm.minute!=null?lm.minute:0),f:f};
       }
     });
+    saveLiveLast();
   }catch(e){}
 }
 function liveForFixture(f){
@@ -10237,7 +10275,12 @@ function renderLeaguePicker(){
       " outside this time window - switch to All day to see their leagues.</div>";
   }
 
-  list.innerHTML = hint + (avail.length
+  /* Said once, where the doubt actually is, rather than only in the summary
+     button above the open panel. */
+  var allIn = n ? "" : "<div class='lgp-allin'><b>All " + avail.length +
+    " leagues are in.</b> Tap any to build from that one only.</div>";
+  list.classList.toggle("all-in", !n);
+  list.innerHTML = allIn + hint + (avail.length
     ? avail.map(function(x){
         return "<button class='lgp-row"+(BLD_LEAGUES[x.league]?" on":"")+"' type='button' "+
           "data-lg=\""+esc(x.league)+"\" aria-pressed='"+(!!BLD_LEAGUES[x.league])+"'>"+

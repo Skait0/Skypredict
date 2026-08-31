@@ -98,9 +98,21 @@ jobs:
           REBUILD_HOOK: ${{ secrets.REBUILD_HOOK }}
         run: |
           n=$(jq -r '.finalised // 0' response.json 2>/dev/null || echo 0)
-          echo "finalised this run: $n"
-          if [ "$n" = "0" ] || [ "$n" = "null" ]; then
-            echo "nothing new - leaving the site as it is"
+          obs=$(jq -r '.observed // 0' response.json 2>/dev/null || echo 0)
+          echo "finalised this run: $n   observed: $obs"
+          # Rebuild when the sweep banked something OR when it watched anything
+          # at all, because the build has a second source the sweep does not:
+          # the score oracle, which now enriches FIXTURES as well as results and
+          # filled 25 of them in a single build. Waiting for `finalised` alone
+          # would leave those scores until 06:30.
+          #
+          # This does not run away with itself. GitHub throttles this schedule
+          # hard - the cron asks for every 10 minutes and it actually fires four
+          # or five times a day - so this is a handful of rebuilds, not 144. If
+          # GitHub ever starts honouring the schedule, tighten this back to
+          # `finalised` only.
+          if [ "$n" = "0" ] && { [ "$obs" = "0" ] || [ "$obs" = "null" ]; }; then
+            echo "nothing banked and nothing in play - leaving the site as it is"
             exit 0
           fi
           if [ -z "$REBUILD_HOOK" ]; then
