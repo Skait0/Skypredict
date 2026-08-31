@@ -7,7 +7,11 @@
 <meta name="description" content="Soccerwizard: simple football predictions. Who wins, goals, both teams to score. Updated every morning.">
 <meta name="theme-color" content="#0D0D0F">
 <meta property="og:title" content="Soccerwizard">
-<meta property="og:description" content="Football predictions from 38 leagues, plus a ready-made SportyBet slip - we pick the games and hand you the booking code.">
+<!-- No league count here on purpose. It said 38 while the payload carried 45
+     and the share card said 45, and a number baked into a tag nobody
+     rebuilds goes stale the first time a league starts or ends its season.
+     The claim that does not rot is what the site does. -->
+<meta property="og:description" content="Football predictions rebuilt every morning from results, plus a ready-made SportyBet slip - we pick the games and hand you the booking code.">
 <meta property="og:type" content="website">
 <!-- The share card. wiz-logo.png was pointed at here and it is 473x544 -
      portrait. summary_large_image wants roughly 1.91:1, so platforms had
