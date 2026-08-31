@@ -7870,7 +7870,16 @@ function renderDaily(){
   var body;
   if(res.length){
     body="<div class='daily-score'><span class='dl-big num'>"+hit+"</span>"+
-      "<span class='dl-of'>of "+res.length+" graded so far</span>"+
+      /* "28 of 35 graded so far" was read - correctly, by the wording - as
+         "28 of the 35 have been graded", implying seven still pending. The
+         28 is the number that LANDED; 35 is how many have been graded. The
+         label described the wrong quantity, so the card looked broken on a
+         day when every result was in. Reported as "this says 28 of 35
+         graded. but all 36 are graded".
+         "tips landed" is what the record line below this already says, and
+         the percentage pill beside it agrees. Whether more results are still
+         to come is a separate sentence, and it already has one. */
+      "<span class='dl-of'>of "+res.length+" tips landed</span>"+
       "<span class='dl-pill "+(pct>=50?"good":"bad")+"'>"+pct+"%</span></div>"+
       "<div class='daily-bar'><i style='width:"+pct+"%'></i></div>"+
       (pending?"<div class='daily-pending'>"+pending+" of yesterday's "+predicted+
