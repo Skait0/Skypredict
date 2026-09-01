@@ -161,3 +161,30 @@ test("the match-rate script measures the matcher the site actually ships", () =>
   assert.doesNotMatch(s, /process\.argv\.includes\("--wide"\)/,
     "and it must not be behind a flag that can be left off");
 });
+
+test("nothing on a third-party host may block the first paint", () => {
+  /* Reported: on LTE the page does not load at all, only on wifi. A plain
+     <link rel=stylesheet> to fonts.googleapis.com is render-blocking, so the
+     browser painted nothing until that request resolved - and the document
+     already carries ~2,600 characters of server-rendered text. On wifi it
+     answers instantly and the fault is invisible; on a Nigerian mobile network
+     it can be slow, throttled or filtered, and the reader gets a blank screen.
+     display=swap does not help: it governs the font FILE, not the stylesheet
+     request in front of it. */
+  const head = src.slice(0, src.indexOf("</head>"));
+  /* The <noscript> copy is SUPPOSED to be a plain blocking link - that is the
+     point of it, and it only ever runs for a reader with scripting off, who
+     cannot be served by the onload trick. Matching tag by tag cannot see that
+     a tag sits inside one, so those blocks come out first. */
+  const live = head.replace(/<noscript>[\s\S]*?<\/noscript>/g, "");
+  const links = live.match(/<link[^>]+rel=["']?stylesheet[^>]*>/g) || [];
+  for (const l of links) {
+    if (!/https?:\/\//.test(l)) continue;             // same-origin is fine
+    assert.match(l, /media=["']print["']/,
+      "a third-party stylesheet must be fetched without blocking render: " + l.slice(0, 90));
+  }
+  assert.match(head, /onload="this\.media='all'/,
+    "and it has to be promoted once it arrives, or the font never applies");
+  assert.match(head, /<noscript><link rel="stylesheet"/,
+    "with a plain link for readers who have scripting off");
+});

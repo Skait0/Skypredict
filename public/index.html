@@ -64,7 +64,25 @@
 <link rel="preload" as="image" href="/wiz-orb-mark.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- The webfont must not hold up the first paint.
+     Reported: on LTE the page does not load at all, only on wifi. A plain
+     <link rel=stylesheet> to a third-party host is render-blocking - the
+     browser paints nothing until that request resolves - and this document
+     already carries 2,600 characters of real text that could have been on
+     screen. On wifi fonts.googleapis.com answers in milliseconds and the
+     problem is invisible; on a Nigerian mobile network it can be slow,
+     throttled or filtered, and the reader gets a blank screen.
+     media="print" makes it a non-blocking, low-priority fetch; onload flips
+     it back to all and the font swaps in. display=swap was already set, so
+     text has always been readable in the fallback the moment the font file is
+     the only thing outstanding - what was missing is that the STYLESHEET
+     itself was blocking, which display=swap has no say over.
+     If the font never arrives, the fallback stack stands and the site works.
+     That is the right failure. -->
+<link rel="stylesheet" media="print" onload="this.media='all';this.onload=null"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<noscript><link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
 <script>
 (function(){var t=null;try{t=localStorage.getItem("sw.theme");}catch(e){}
 document.documentElement.setAttribute("data-theme",t||"dark");})();
