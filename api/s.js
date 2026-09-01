@@ -19,7 +19,7 @@ const SL = require("../lib/sliplink.js");
    have and must never hold the page up: a shared slip that will not render
    because our own stats endpoint is slow is a worse failure than one that
    renders without them. */
-async function record(req) {
+async function payload(req) {
   try {
     const host = req.headers["x-forwarded-host"] || req.headers.host;
     if (!host) return null;
@@ -28,8 +28,7 @@ async function record(req) {
     const r = await fetch("https://" + host + "/predictions.json", { signal: ctl.signal });
     clearTimeout(t);
     if (!r.ok) return null;
-    const j = await r.json();
-    return j && j.record && j.record.total ? j.record : null;
+    return await r.json();
   } catch (e) { return null; }
 }
 
@@ -52,10 +51,22 @@ module.exports = async function handler(req, res) {
     return res.end(SL.renderError(got.why));
   }
 
-  /* The page is a pure function of the URL, so it can sit on the edge for a
-     long time. Slips get shared in bursts and every reader of one post hits
-     the same URL. */
-  res.setHeader("Cache-Control", "public, s-maxage=86400, stale-while-revalidate=604800");
+  const j = await payload(req);
+  const results = j && Array.isArray(j.results) ? j.results : null;
+  const rec = j && j.record && j.record.total ? j.record : null;
+  /* Grade whatever has finished. A leg with no result, or a market a final
+     score cannot settle, stays null and renders as not settled - never as a
+     loss. */
+  const legs = results ? SL.gradeLegs(got.legs, results) : got.legs;
+
+  /* A settled slip will never change again, so it can sit on the edge for a
+     week. One still playing must not: the verdicts on it are the whole point
+     and a day-old copy would show a finished game as unplayed. Slips get
+     shared in bursts, so even the short window does real work. */
+  const done = SL.verdict(legs).settled;
+  res.setHeader("Cache-Control", done
+    ? "public, s-maxage=604800, stale-while-revalidate=604800"
+    : "public, s-maxage=300, stale-while-revalidate=3600");
   res.statusCode = 200;
-  res.end(SL.renderPage(got.legs, await record(req), "/s"));
+  res.end(SL.renderPage(legs, rec, "/s"));
 };

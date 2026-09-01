@@ -174,6 +174,86 @@ test("totals multiply, they do not add", () => {
   assert.ok(Math.abs(t.prob - 0.91 * 0.77 * 0.55) < 1e-9);
 });
 
+/* --------------------------------------------------------- grading */
+
+const RESULTS = [
+  { date: "2026-09-02", home: "Thun", away: "Lausanne", hg: 2, ag: 1 },
+  { date: "2026-09-02", home: "Orenburg", away: "Rubin Kazan", hg: 0, ag: 2 },
+];
+
+test("a finished leg gets a verdict from the one shared grader", () => {
+  const g = SL.gradeLegs(LEGS, RESULTS);
+  assert.strictEqual(g[0].won, true, "Over 1.5 on a 2-1 landed");
+  assert.strictEqual(g[1].won, false, "1X on a 0-2 did not");
+  assert.strictEqual(g[0].hg, 2);
+  assert.strictEqual(g[0].ag, 1);
+});
+
+test("a leg with no result is unknown, not a loss", () => {
+  /* The distinction this whole page depends on. Marking an unplayed game as
+     lost is the bug that hit a reader's slip on 1 Sep, from the other side. */
+  const g = SL.gradeLegs(LEGS, RESULTS);
+  assert.strictEqual(g[2].won, null, "Gent had no result, so it is unknown");
+  assert.notStrictEqual(g[2].won, false);
+});
+
+test("a market a final score cannot settle stays unknown", () => {
+  /* Team totals have no case in lib/grade.js, and adding one here would be a
+     second grader by the back door - which is how two graders once disagreed
+     and wrote wrong rows into the record. */
+  const legs = [{ home: "Thun", away: "Lausanne", date: "2026-09-02",
+                  code: "HOME_OVER_1.5", od: 2.2, p: 0.45 }];
+  assert.strictEqual(SL.gradeLegs(legs, RESULTS)[0].won, null);
+  const fh = [{ home: "Thun", away: "Lausanne", date: "2026-09-02",
+                code: "FH_OVER_0.5", od: 1.36, p: 0.7 }];
+  assert.strictEqual(SL.gradeLegs(fh, RESULTS)[0].won, null,
+    "a first-half market cannot be read off a full-time score");
+});
+
+test("one lost leg sinks the slip, and an unknown leg leaves it open", () => {
+  const g = SL.gradeLegs(LEGS, RESULTS);
+  const v = SL.verdict(g);
+  assert.strictEqual(v.slipLost, true, "the 1X missed");
+  assert.strictEqual(v.slipWon, false);
+  assert.strictEqual(v.settled, false, "a leg is still unknown");
+
+  const allWon = SL.verdict([{ won: true }, { won: true }]);
+  assert.strictEqual(allWon.slipWon, true);
+  assert.strictEqual(allWon.settled, true);
+
+  const oneOpen = SL.verdict([{ won: true }, { won: null }]);
+  assert.strictEqual(oneOpen.slipWon, false, "not won until every leg is in");
+  assert.strictEqual(oneOpen.slipLost, false, "and not lost either");
+});
+
+test("the page shows verdicts and scores, and never calls an unknown a loss", () => {
+  const html = SL.renderPage(SL.gradeLegs(LEGS, RESULTS), null, "/s");
+  assert.match(html, /2 - 1/, "the score of a finished leg");
+  assert.match(html, /sl-w">won/, "a landed leg is marked");
+  assert.match(html, /sl-l">lost/, "and a missed one");
+  /* Three legs, one of them unknown, so exactly two badges. */
+  assert.strictEqual((html.match(/sl-leg .*?>(won|lost)/g) || []).length, 0,
+    "sanity: badges are inside the pick line, not the leg element");
+  assert.strictEqual((html.match(/>won</g) || []).length, 1);
+  assert.strictEqual((html.match(/>lost</g) || []).length, 1);
+});
+
+test("an ungraded slip renders exactly as before", () => {
+  const plain = SL.renderPage(LEGS, null, "/s");
+  assert.doesNotMatch(plain, />won</);
+  assert.doesNotMatch(plain, />lost</);
+  /* Match the rendered element, not the stylesheet - `.sl-verdict{...}` is in
+     the CSS on every page whether or not a verdict is shown. */
+  assert.doesNotMatch(plain, /<p class="sl-verdict/);
+});
+
+test("grading survives junk in the results feed", () => {
+  const junk = [null, {}, { date: "2026-09-02", home: "Thun", away: "Lausanne" }];
+  assert.doesNotThrow(() => SL.gradeLegs(LEGS, junk));
+  assert.strictEqual(SL.gradeLegs(LEGS, junk)[0].won, null, "a row with no score settles nothing");
+  assert.doesNotThrow(() => SL.gradeLegs(LEGS, null));
+});
+
 /* ------------------------------------- the two encoders must not drift */
 
 /* index.html is standalone and cannot import from lib/, so the encoder exists

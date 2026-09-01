@@ -114,8 +114,22 @@ though we said it, which makes it a defacement vector on our own domain.
 every field is escaped at the point of use. Field separators are control
 characters so no delimiter can be smuggled inside a team name.
 
-Not built yet: a per-slip preview image (`lib/ogcard.js` already renders PNGs
-in pure Node, so it is close), and grading a slip whose games have finished.
+**Grading.** `gradeLegs` maps each market code onto the label `lib/grade.js`
+already understands and lets that one shared grader decide. It never settles a
+market itself: two graders disagreed once and started writing wrong rows into
+the record. A leg with no result, or a market a full-time score cannot settle
+(team totals, first-half lines), comes back `null` and renders as **not
+settled - never as a loss**. A settled slip is cached a week, an unsettled one
+five minutes, or a day-old copy would show a finished game as unplayed.
+
+**Every page now emits `og:image`.** It had none at all, including all 578
+match pages, so every shared link previewed without a picture. Points at
+`/og-card.png` with `twitter:card: summary_large_image`.
+
+Not built yet: a **per-slip** preview image. `lib/ogcard.js` composites digits
+onto a baked background with fixed slots, so a per-slip card needs new slots
+baked by `scripts/mkogbase.js` (a manual, canvas-based step) - more work than
+it looks.
 
 ## Key architecture notes
 - Single-file SPA: `public/index.html` (~5000 lines, all UI + logic).
