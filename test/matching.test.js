@@ -153,3 +153,23 @@ test("defaulting to SportyBet keeps every existing caller working", () => {
   a.attachEventIds(B9EV("sr:evt:9"));
   assert.equal(DATA.fixtures[0].eventId, "sr:evt:9");
 });
+
+test("Bet9ja's Atletico Rosario is Rosario Central", () => {
+  /* Their feed keeps the wrong two words of "Club Atletico Rosario Central".
+     Identified from the fixture rather than the name: it is against Newell's
+     Old Boys - the Rosario derby - at the same minute as ours, and there is no
+     club called Atletico Rosario in the Argentine top flight. */
+  assert.equal(api.normTeam("Atletico Rosario"), api.normTeam("Rosario Central"));
+  assert.equal(api.simTeams("Atletico Rosario", "Rosario Central"), 2.0);
+});
+
+test("that alias does not swallow the other Atleticos", () => {
+  /* "atl" is expanded to "atletico" upstream, so several clubs arrive here
+     carrying the word. The alias is a whole-name match, not a token rule, and
+     these have to stay apart. */
+  for (const other of ["Atl. Tucuman", "Atletico Madrid", "Atletico Mineiro",
+                       "Ind. Rivadavia", "Newells Old Boys"]) {
+    assert.ok(api.simTeams("Atletico Rosario", other) < 0.6,
+      `Atletico Rosario must not match ${other}`);
+  }
+});
