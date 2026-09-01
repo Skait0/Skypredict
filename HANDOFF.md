@@ -7,9 +7,9 @@
   added 1 Sep. Apex + www proxied; every mail record DNS-only.
 - **Deploy model:** push to `main` → Vercel GitHub integration → prod (~30s)
 - **Repo:** https://github.com/Skait0/Skypredict.git — `main` synced with origin
-- **Working tree:** clean · **HEAD:** `277abcd` "www is the canonical host now"
+- **Working tree:** clean · **HEAD:** `2391d7e` "Keep a match on the board while it is being played"
 - **API:** `C:\Users\DELL\Documents\soccerwizard-api` on Railway.
-  **Trial ends ~13 Sep 2026.**
+  **On the paid Hobby plan since 1 Sep 2026** - the trial deadline is gone.
 
 ## The one that will bite you: DNS
 The site was **blank on Nigerian mobile data** for a day. Not the app - the
@@ -127,7 +127,16 @@ stricter thing and is not done.
   feed is Opta data under *their* licence, not ours, and it sits ahead of the
   oracle only by ordering, not by any limit. If it goes down, every build falls
   through to the oracle at full volume.
-- **Railway trial ends ~13 Sep 2026.**
+- ~~**Railway trial**~~ **PAID 1 Sep 2026.** Hobby plan, billing 1st to 1st.
+  Project `modest-expression`, service `web`, on `tobioluwadare@gmail.com`.
+  It answers on TWO hostnames - `web-production-798c0` (what our code
+  uses) and `web-production-71f907` - and they are the same service: they
+  share one Redis, so a value written through one reads back cached
+  through the other. Do not assume 798c0 is a separate deployment.
+  **Watch the bill.** Hobby is $5/month including $5 of usage, and memory
+  alone at 512 MB running all month is about $4.99 - so two services
+  (web + Redis) can exceed the included amount. There is a spend limit
+  control on the usage page if you want a hard ceiling.
 - ~~**Service worker**~~ **DONE 1 Sep, and it was broken.** `sw-v7`.
   **The worker had been a complete no-op since `9cfdea0`.** Its "skip non-http
   schemes" guard compared `req.url.split(":")[0]` - which is `"https"`, no
