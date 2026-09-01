@@ -199,27 +199,80 @@ test("a day with nothing left to come still yields a pick", () => {
     "a hard filter would blank the headline late at night");
 });
 
-test("thin support and a league we model badly are still demerits", () => {
+test("thin support is still a demerit whatever league it is in", () => {
+  /* A fit with little behind it does not produce cautious numbers, it produces
+     confident ones nobody has earned - so it still loses to a lower number
+     that is supported. This half of the rule did not change. */
   const p = build.choosePotd([
-    fx({ home: "A", away: "B", tip_p: 0.95, thin: true }),
-    fx({ home: "C", away: "D", tip_p: 0.94, league: "Japan J1 League" }),
-    fx({ home: "E", away: "F", tip_p: 0.70 }),
+    fx({ home: "A", away: "B", tip_p: 0.95, tier: 1, thin: true }),
+    fx({ home: "E", away: "F", tip_p: 0.70, tier: 1 }),
   ], null, FUTURE);
-  assert.strictEqual(p.home, "E",
-    "the headline is the last place a number nobody has earned should lead");
+  assert.strictEqual(p.home, "E");
 });
 
-test("the build's Asia list matches the app's, character for character", () => {
+test("the headline is ranked by league tier, not by continent", () => {
+  /* The old rule demerited any Asian league, and because that sorted ahead of
+     confidence it worked as a ban. It was reaching past a China Super League
+     pick at 89.9% to reach a Conference National game - and LEAGUE_TIER has
+     China Super League at 1, level with the Premier League, against 5 for
+     Conference National. It was overruling our own judgement of quality with
+     a guess about geography. */
+  const p = build.choosePotd([
+    fx({ home: "China", away: "B", league: "China Super League", tier: 1, tip_p: 0.8986 }),
+    fx({ home: "Conf", away: "D", league: "England Conference National", tier: 5, tip_p: 0.80 }),
+  ], null, FUTURE);
+  assert.strictEqual(p.home, "China",
+    "a top-flight pick must not lose the headline to a fifth-tier one");
+});
+
+test("a higher tier takes priority when the day offers one", () => {
+  /* The other half of the ask: allowed, but below a better league on a day
+     that has one. Two points of confidence per tier - so the top flight leads
+     a near-tie and a lower-tier pick has to be clearly better, not merely
+     present. */
+  const near = build.choosePotd([
+    fx({ home: "L1", away: "B", league: "England League 1", tier: 3, tip_p: 0.85 }),
+    fx({ home: "EPL", away: "D", league: "England Premier League", tier: 1, tip_p: 0.84 }),
+  ], null, FUTURE);
+  assert.strictEqual(near.home, "EPL", "a point of confidence does not buy two tiers");
+
+  const clear = build.choosePotd([
+    fx({ home: "L1", away: "B", league: "England League 1", tier: 3, tip_p: 0.92 }),
+    fx({ home: "EPL", away: "D", league: "England Premier League", tier: 1, tip_p: 0.84 }),
+  ], null, FUTURE);
+  assert.strictEqual(clear.home, "L1", "but a standout still takes it");
+});
+
+test("a league missing from the table ranks below every named one", () => {
+  /* Not a punishment - the honest place for a competition nobody has
+     assessed. Two tiers below the bottom of the table, so it needs a real
+     margin rather than a rounding error. */
+  const p = build.choosePotd([
+    fx({ home: "Unknown", away: "B", league: "Somewhere Cup", tip_p: 0.90 }),
+    fx({ home: "Ranked", away: "D", league: "England Conference National", tier: 5, tip_p: 0.88 }),
+  ], null, FUTURE);
+  assert.strictEqual(p.home, "Ranked");
+});
+
+test("the app and the build rank the headline the same way", () => {
   /* Two copies exist because index.html is standalone and cannot import. This
-     turns the drift risk into a failing test instead of a silent divergence. */
-  const m = /var ASIA_PREFIXES=\[([\s\S]*?)\];/.exec(src);
-  assert.ok(m, "ASIA_PREFIXES not found in index.html");
-  /* Collapse the line breaks between entries only - stripping all whitespace
-     would also eat the spaces inside "Saudi Arabia" and report a drift that
-     is not there. */
-  const app = JSON.parse("[" + m[1].replace(/\s*\n\s*/g, " ") + "]");
-  assert.deepStrictEqual(build.POTD_ASIA, app,
-    "lib/build.js POTD_ASIA and index.html ASIA_PREFIXES have drifted apart");
+     turns the drift risk into a failing test rather than a silent divergence -
+     it used to guard the two Asia lists, which is the rule that just went. */
+  assert.match(src, /var TIER_COST=0\.02/,
+    "index.html must use the same cost per tier as lib/build.js");
+  assert.strictEqual(build.POTD_TIER_COST, 0.02);
+  assert.match(src, /var potdDemerit=function\(f\)\{ return \(f\.thin\?1:0\); \};/,
+    "the app's headline demerit is thin support and nothing else now");
+  assert.match(src, /function sotdDemerit\(f\)\{ return \(f\.thin\?1:0\); \}/,
+    "and the slip's is too");
+  assert.match(src, /tierScore\(b\.tip_p,b\)-tierScore\(a\.tip_p,a\)/,
+    "the headline sorts on the tier-adjusted score");
+  assert.match(src, /tierScore\(b\.p,b\.f\)-tierScore\(a\.p,a\.f\)/,
+    "and so does the slip");
+  assert.doesNotMatch(src, /potdDemerit=function\(f\)\{ return \(f\.thin\?1:0\)\+\(isAsian/,
+    "the continent demerit must be gone from the headline");
+  assert.doesNotMatch(src, /sotdDemerit\(f\)\{ return \(f\.thin\?1:0\)\+\(isAsian/,
+    "and from the slip of the day");
 });
 
 test("the app prefers the baked pick over its own localStorage lock", () => {

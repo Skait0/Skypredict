@@ -5286,6 +5286,21 @@ function isAsianLeague(l){
   return false;
 }
 function isAsian(f){return isAsianLeague((f&&f.league)||"");}
+
+/* Ranking a headline by the league table rather than by continent.
+   Both the Pick and the Slip of the day used to demerit any Asian league, and
+   because that demerit sorted ahead of confidence it worked as a ban whenever
+   anything else was on the card - reaching past a China Super League pick at
+   89.9% to a Conference National game. Our own table has China Super League at
+   tier 1, level with the Premier League, and Conference National at 5, so the
+   rule was overruling our judgement of quality with a guess about geography.
+   A step down in tier costs two points of confidence rather than the pick: a
+   strong top-flight game leads the day, and a standout lower down has to be
+   clearly better to take the headline rather than merely present. An unranked
+   league sits below every named one. Mirrors choosePotd in lib/build.js. */
+var TIER_COST=0.02, TIER_UNRANKED=6;
+function tierOf(f){ var t=Number(f&&f.tier); return (t>=1&&t<=5)?t:TIER_UNRANKED; }
+function tierScore(p,f){ return (Number(p)||0)-TIER_COST*(tierOf(f)-1); }
 /* How hard to hold a South American game back.
    The continent was never the problem - grinding, low-scoring leagues were,
    and Argentina is the one that prompted the rule: it averages well under
@@ -5819,13 +5834,13 @@ function renderPotd(){
        shows something. */
     var upcoming=pool.filter(function(f){return notStarted(f);});
     if(upcoming.length) pool=upcoming;
-    /* Same two demerits as the slip - thin support, and a league the model
-       knows least well - with confidence deciding inside each group. The
-       headline pick is the last place a number nobody has earned should lead
-       the page. */
-    var potdDemerit=function(f){ return (f.thin?1:0)+(isAsian(f)?1:0); };
+    /* Thin support is still its own demerit - the headline is the last place a
+       number nobody has earned should lead the page - and league quality is
+       carried by tierScore rather than by a continent. */
+    var potdDemerit=function(f){ return (f.thin?1:0); };
     top=pool.slice().sort(function(a,b){
-      return potdDemerit(a)-potdDemerit(b) || (b.tip_p-a.tip_p) || (fid(a)<fid(b)?-1:1);
+      return potdDemerit(a)-potdDemerit(b) ||
+        (tierScore(b.tip_p,b)-tierScore(a.tip_p,a)) || (fid(a)<fid(b)?-1:1);
     })[0];
     try{localStorage.setItem(lockKey,JSON.stringify({id:fid(top),home:top.home,away:top.away,date:top.date}));}catch(e){}
     prunePotdKeys();
@@ -8607,22 +8622,26 @@ function renderSlipOfDay(){
   /* Confidence alone put the leagues the model knows least well at the top of
      the slip, which is exactly backwards - a fit with little behind it does not
      produce cautious numbers, it produces confident ones nobody has earned.
-     Measured on a real card, Asia was 6% of the eligible pool and took 10% of
-     the top twenty, with two Chinese games at seven and eight.
-     Two demerits rather than one, because they catch different things and the
-     obvious single answer does not work. `thin` marks a fixture whose weaker
-     side has little recent history, which is the honest measure of what we do
-     not know - but the Chinese Super League is not thin, all eight of its
-     fixtures cleared the bar, so sorting on support alone left both of those
-     games exactly where they were. The continent flag is cruder and catches
-     them; `thin` catches a European league nobody thought to name. One point
-     each, so a thin European and a well-supported Asian game rank together and
-     a thin Asian one ranks below both.
-     Neither is a ban. On a quiet card these still fill the slip - they just
-     stop outranking a game we actually know something about. */
-  function sotdDemerit(f){ return (f.thin?1:0)+(isAsian(f)?1:0); }
+     `thin` marks a fixture whose weaker side has little recent history, which
+     is the honest measure of that, and it stays.
+
+     What has gone is the second demerit, a flag for any Asian league. It was
+     added because the Chinese Super League is not thin - all eight of its
+     fixtures cleared the support bar - so sorting on support alone left them
+     near the top. But it sorted ahead of confidence, which made it a ban
+     rather than a demerit, and it was answering a question about quality with
+     a fact about geography. Our own table has China Super League at tier 1,
+     level with the Premier League, while England League 1 is 3 and Conference
+     National is 5 - so the rule was pushing the slip DOWN the league ladder in
+     the name of pushing it up.
+     League quality is carried by tierScore now: a step down in tier costs two
+     points of confidence. A top-flight game leads on a day that has one, and a
+     lower-tier standout has to be clearly better to outrank it rather than
+     merely present. */
+  function sotdDemerit(f){ return (f.thin?1:0); }
   cand.sort(function(a,b){
-    return sotdDemerit(a.f)-sotdDemerit(b.f) || (b.p-a.p);
+    return sotdDemerit(a.f)-sotdDemerit(b.f) ||
+      (tierScore(b.p,b.f)-tierScore(a.p,a.f));
   });
 
   /* The day this slip belongs to. Held to today while today still has a card,
