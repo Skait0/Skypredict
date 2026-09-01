@@ -27,6 +27,18 @@ DNS only      3x hostingermail-*._domainkey (DKIM), autodiscover, autoconfig,
 SSL/TLS       Full (strict) + Always Use HTTPS
 ```
 
+**Cloudflare rewrites Cache-Control.** Its free-plan **Browser Cache TTL** was
+4 hours and overrode any *shorter* max-age from Vercel, so `sw.js` shipped as
+`max-age=14400` instead of `max-age=0` - a four-hour delay on worker updates
+and on the kill switch. Now set to **Respect Existing Headers**
+(Caching -> Configuration). The `immutable` bundles were never affected; a
+longer origin TTL wins. After any CDN change, diff the headers through the
+proxy against the origin:
+```bash
+curl -sI https://www.soccerwizard.live/sw.js        | grep -i cache-control
+curl -sI https://skypredict-theta.vercel.app/sw.js  | grep -i cache-control
+```
+
 **Cloudflare's import marks every CNAME proxied by default.** That silently
 breaks DKIM (the lookup must follow the CNAME to Hostinger's key, and a proxied
 record answers with a Cloudflare IP) and mail-client autoconfig. Nothing errors;
