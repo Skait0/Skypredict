@@ -139,7 +139,10 @@ test("a crafted team name cannot inject markup", () => {
                   date: "2026-09-02", code: "1", od: 2, p: 0.5 }];
   const html = SL.renderPage(SL.decode(SL.encode(evil)).legs, null, "/s");
   assert.doesNotMatch(html, /<script>alert/, "no script tag may be formed");
-  assert.doesNotMatch(html, /<img /, "no img tag either");
+  /* The page has a legitimate <img> now - the wizard head - so this checks
+     that the INJECTED one was not formed, rather than that no img exists. */
+  assert.doesNotMatch(html, /<img src=x/, "the injected img must not be formed");
+  assert.match(html, /<img src="\/icon-192\.png"/, "and ours is untouched");
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/,
     "it shows as text");
   assert.match(html, /&quot;&gt;&lt;img src=x onerror=alert\(1\)&gt;/,
@@ -148,8 +151,8 @@ test("a crafted team name cannot inject markup", () => {
 
 test("the page states it is a reader's slip, not our tip", () => {
   const html = SL.renderPage(LEGS, null, "/s");
-  assert.match(html, /not our tip/i,
-    "or a shared slip reads as something we recommended");
+  assert.match(html, /Every pick is Soccerwizard's own call/,
+    "the picks ARE ours - the reader chose which to combine, not what to back");
   assert.match(html, /18\+/, "the same line every other page carries");
 });
 
@@ -157,8 +160,9 @@ test("it shows the odds and the chance every leg lands", () => {
   const html = SL.renderPage(LEGS, null, "/s");
   const t = SL.totals(LEGS);
   assert.match(html, new RegExp(t.odds.toFixed(2)));
-  assert.match(html, new RegExp((t.prob * 100).toFixed(1) + "%"),
-    "the honest number, and the one nobody else shows");
+  const conf = Math.round(SL.avgConfidence(LEGS) * 100);
+  assert.match(html, new RegExp(conf + "%"),
+    "average confidence, not the product of every leg - that reads as near zero on a long slip however good the picks are");
 });
 
 test("the record appears when we have one and is skipped when we do not", () => {
@@ -228,23 +232,21 @@ test("one lost leg sinks the slip, and an unknown leg leaves it open", () => {
 
 test("the page shows verdicts and scores, and never calls an unknown a loss", () => {
   const html = SL.renderPage(SL.gradeLegs(LEGS, RESULTS), null, "/s");
-  assert.match(html, /2 - 1/, "the score of a finished leg");
-  assert.match(html, /sl-w">won/, "a landed leg is marked");
-  assert.match(html, /sl-l">lost/, "and a missed one");
+  assert.match(html, /2-1/, "the score of a finished leg");
+  assert.match(html, /class="won">Won/, "a landed leg is marked");
+  assert.match(html, /class="lost">Lost/, "and a missed one");
   /* Three legs, one of them unknown, so exactly two badges. */
-  assert.strictEqual((html.match(/sl-leg .*?>(won|lost)/g) || []).length, 0,
-    "sanity: badges are inside the pick line, not the leg element");
-  assert.strictEqual((html.match(/>won</g) || []).length, 1);
-  assert.strictEqual((html.match(/>lost</g) || []).length, 1);
+  assert.strictEqual((html.match(/>Won</g) || []).length, 1);
+  assert.strictEqual((html.match(/>Lost</g) || []).length, 1);
 });
 
 test("an ungraded slip renders exactly as before", () => {
   const plain = SL.renderPage(LEGS, null, "/s");
-  assert.doesNotMatch(plain, />won</);
-  assert.doesNotMatch(plain, />lost</);
+  assert.doesNotMatch(plain, />Won</);
+  assert.doesNotMatch(plain, />Lost</);
   /* Match the rendered element, not the stylesheet - `.sl-verdict{...}` is in
      the CSS on every page whether or not a verdict is shown. */
-  assert.doesNotMatch(plain, /<p class="sl-verdict/);
+  assert.doesNotMatch(plain, /<p class="vd/);
 });
 
 test("grading survives junk in the results feed", () => {

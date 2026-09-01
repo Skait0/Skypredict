@@ -34,10 +34,15 @@ async function payload(req) {
 
 module.exports = async function handler(req, res) {
   let p = req.query && req.query.p;
+  let code = req.query && req.query.c;
+  let book = req.query && req.query.b;
   /* Vercel populates req.query, but parse the URL too so the function is
      runnable anywhere and a missing query object is not a 500. */
   if (!p && req.url) {
-    try { p = new URL(req.url, "https://x").searchParams.get("p"); } catch (e) { p = null; }
+    try {
+      const q = new URL(req.url, "https://x").searchParams;
+      p = q.get("p"); code = code || q.get("c"); book = book || q.get("b");
+    } catch (e) { p = null; }
   }
 
   const got = SL.decode(p);
@@ -68,5 +73,5 @@ module.exports = async function handler(req, res) {
     ? "public, s-maxage=604800, stale-while-revalidate=604800"
     : "public, s-maxage=300, stale-while-revalidate=3600");
   res.statusCode = 200;
-  res.end(SL.renderPage(legs, rec, "/s"));
+  res.end(SL.renderPage(legs, rec, "/s", { code, book }));
 };
