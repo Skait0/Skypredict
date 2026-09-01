@@ -81,6 +81,23 @@ rule pushed the board onto third-tier European games, which is worse.
 **A bookmaker refusing part of a slip now asks** rather than silently dropping
 legs and re-sending.
 
+## The two fixture feeds do not behave the same
+- **football-data CSVs** publish a league schedule ahead of time and keep it, so
+  a league match is found again by every rebuild. **League only - no cup ties.**
+- **SportyBet `/api/fixtures`** lists what you can still bet on and **drops a
+  match at kick-off**. Measured 1 Sep: 1,385 fixtures in it and *none* of that
+  day's games. It is the **only** source of cup ties.
+
+So a cup tie used to vanish from the board on the first rebuild after it
+started, taking the reader's in-play match with it - and, worse, making the
+fixture unresolvable by `fixtureById`, so a slip leg on it could never be
+re-graded. `carryInPlay` in `lib/build.js` now puts back anything on the
+previous board that has kicked off, is inside `IN_PLAY_MAX_MS` (4.5h, so extra
+time and penalties still count), and is not already in the new list.
+**Note:** the tip is recomputed for a carried fixture like any other, so it can
+move mid-match. Pinning the published tip while a match is in play is the
+stricter thing and is not done.
+
 ## Key architecture notes
 - Single-file SPA: `public/index.html` (~5000 lines, all UI + logic).
   **It is both source and build output** - the prebuild only rewrites it under
