@@ -174,6 +174,81 @@ test("totals multiply, they do not add", () => {
   assert.ok(Math.abs(t.prob - 0.91 * 0.77 * 0.55) < 1e-9);
 });
 
+/* ------------------------------------- the two encoders must not drift */
+
+/* index.html is standalone and cannot import from lib/, so the encoder exists
+   twice: once in the browser to build the link, once here to read it. Two
+   copies of one wire format is exactly the shape that rots quietly - a
+   separator changed on one side and every shared link ever posted stops
+   opening. So the browser's encoder is lifted out of index.html by name and
+   round-tripped through the real decoder. */
+const fs = require("fs");
+const path = require("path");
+const SRC = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+
+function grab(name) {
+  const i = SRC.search(new RegExp("(?:^|\\n)function " + name + "\\s*\\(", "m"));
+  assert.ok(i >= 0, "not found in index.html: " + name);
+  let d = 0, k = SRC.indexOf("{", i);
+  for (; k < SRC.length; k++) { if (SRC[k] === "{") d++; else if (SRC[k] === "}") { d--; if (!d) break; } }
+  return SRC.slice(i, k + 1);
+}
+
+const clientPayload = new Function("fixtureById", "legOdd", "SLIP_FS", "SLIP_RS",
+  grab("slipName") + "\n" + grab("slipPayload") + "\nreturn slipPayload;")(
+  () => null, (f, code, p) => (f.sportyOdds && f.sportyOdds[code]) || 2, FS, RS);
+
+test("what the browser encodes, the server decodes", () => {
+  const picks = LEGS.map((l) => ({
+    f: { home: l.home, away: l.away, date: l.date, sportyOdds: { [l.code]: l.od } },
+    code: l.code, p: l.p,
+  }));
+  const got = SL.decode(Buffer.from(clientPayload(picks), "utf8").toString("base64url"));
+  assert.strictEqual(got.ok, true, "the browser built something the server refuses");
+  assert.deepStrictEqual(got.legs, LEGS, "and it must be the same slip, field for field");
+});
+
+test("the two copies of the separators agree", () => {
+  /* Read them out of index.html rather than trusting the round trip above,
+     which would still pass if BOTH sides changed to the same wrong thing. */
+  const m = /const SLIP_FS="([^"]*)", SLIP_RS="([^"]*)";/.exec(SRC);
+  assert.ok(m, "the browser's separators were not found in index.html");
+  assert.strictEqual(JSON.parse('"' + m[1] + '"'), FS);
+  assert.strictEqual(JSON.parse('"' + m[2] + '"'), RS);
+});
+
+test("the browser strips delimiters before they reach the wire", () => {
+  /* Added after a mutation escaped. Team names come from feeds we do not
+     control, so a name carrying a separator is not only an attack - it is a
+     bad row in somebody's data. Unstripped, it would forge an extra leg inside
+     the reader's own link, and the tests above never noticed because none of
+     them put a delimiter in a name on the browser side. */
+  const picks = [{
+    f: { home: "Thun" + FS + "Forged" + RS + "2026-09-02", away: "Lausanne",
+         date: "2026-09-02", sportyOdds: { "1X": 1.44 } },
+    code: "1X", p: 0.77,
+  }];
+  const got = SL.decode(Buffer.from(clientPayload(picks), "utf8").toString("base64url"));
+  assert.strictEqual(got.ok, true);
+  assert.strictEqual(got.legs.length, 1, "one game in, one game out - nothing forged");
+  assert.strictEqual(got.legs[0].home, "ThunForged2026-09-02");
+});
+
+test("a leg whose fixture has gone is dropped, not encoded as junk", () => {
+  /* My slip legs carry only an id, and the fixture behind one can leave the
+     board. Encoding it anyway would produce a link the server refuses, so the
+     reader would get nothing at all instead of the rest of their slip. */
+  const picks = [
+    { id: "gone", code: "1X", p: 0.7 },
+    { f: { home: "Thun", away: "Lausanne", date: "2026-09-02", sportyOdds: { "1X": 1.44 } },
+      code: "1X", p: 0.77 },
+  ];
+  const got = SL.decode(Buffer.from(clientPayload(picks), "utf8").toString("base64url"));
+  assert.strictEqual(got.ok, true);
+  assert.strictEqual(got.legs.length, 1, "the resolvable leg still travels");
+  assert.strictEqual(got.legs[0].home, "Thun");
+});
+
 test("the error page offers a way forward and does not leak the payload", () => {
   const html = SL.renderError("that link is damaged");
   assert.match(html, /Build a slip/);

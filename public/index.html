@@ -8292,7 +8292,7 @@ function doBook(picks,retried,B){
       var code=B.codeOf(d);
       if(d&&d.success&&code){
         showCode(code,"bookResult",function(){
-          rememberSlip(picks,totalOdds(picks),code);},B);
+          rememberSlip(picks,totalOdds(picks),code);},B,picks);
       } else {
         /* SportyBet can reject individual markets ("no market") when our pick
            used an estimated odd for a market it doesn't list. Retry once with
@@ -8342,7 +8342,7 @@ function clearSlip(){
 /* `save` is a function that files this slip in Your slips, or null when
    there is nothing to file. Passing it makes saving an offer rather than
    something that already happened. */
-function showCode(code,hostId,save,B){
+function showCode(code,hostId,save,B,picks){
   B=B||curBook();
   /* The host still holds whatever was last written there, and after a partial
      booking that is "...booking the other 2..." - a progress note with a
@@ -8407,7 +8407,7 @@ function showCode(code,hostId,save,B){
     copyText(code);
     this.textContent="Copied"; var s=this;
     setTimeout(function(){s.textContent="Copy";},1600);});
-  wrap.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code);});
+  wrap.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code,picks);});
   var sv=wrap.querySelector(".code-save");
   if(sv) sv.addEventListener("click",function(){
     try{ save(); }catch(e){}
@@ -8518,13 +8518,62 @@ async function shareSlipImage(picks, odds, code, fallbackText){
   }catch(e){}
   return false;
 }
+/* A link that renders the slip itself, read by /s (see lib/sliplink.js).
+   Everything the page needs travels inside the link: teams, date, market,
+   odds and confidence. It is deliberately NOT a list of fixture ids - a
+   fixture can leave the board while its match is still being played, and a
+   link keyed on ids would then resolve to nothing, silently, on somebody
+   else's post.
+   The separators and the field order must match lib/sliplink.js exactly.
+   index.html cannot import from lib/, so a test round-trips this encoder
+   through that decoder and fails loudly if either side drifts. */
+const SLIP_FS="\u001f", SLIP_RS="\u001e";
+function slipName(s){
+  return String(s==null?"":s).replace(/[\u0000-\u001f\u007f]/g,"").trim().slice(0,40);
+}
+/* Takes builder picks ({f,code,p}) or My slip legs ({id,code,p}), which is
+   why the fixture is resolved here rather than assumed. A leg whose fixture
+   has gone is dropped: a slip missing a game is bad, a link that will not
+   open at all is worse, and the reader still gets the rest of what they
+   built. */
+function slipPayload(items){
+  var rows=[];
+  (items||[]).slice(0,40).forEach(function(c){
+    var f=c.f||fixtureById(c.id);
+    if(!f||!f.home||!f.away||!f.date||!c.code) return;
+    var od=legOdd(f,c.code,c.p);
+    if(!(od>1.01)) return;
+    rows.push([slipName(f.home),slipName(f.away),String(f.date),String(c.code),
+      od.toFixed(2),Math.round((+c.p)*100)].join(SLIP_FS));
+  });
+  return rows.join(SLIP_RS);
+}
+function slipUrl(items){
+  try{
+    var raw=slipPayload(items);
+    if(!raw) return null;
+    var bytes=new TextEncoder().encode(raw),bin="";
+    for(var i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+    return location.origin+"/s?p="+
+      btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  }catch(e){ return null; }
+}
 function shareSlip(picks,odds){
   const txt=shareText(picks,odds,null);
   shareSlipImage(picks,odds,null,txt).then(function(ok){
-    if(!ok) doShare(txt,location.href);
+    if(!ok) doShare(txt,slipUrl(picks)||location.href);
   });
 }
-function shareCode(code){ doShare("\u26bd My SoccerWizard SportyBet slip. Code: "+code, SPORTY_URL+encodeURIComponent(code)); }
+/* The link points at the slip on our own site rather than straight into
+   the bookmaker. A shared code used to send the reader to SportyBet - the
+   one place they could already reach - while the games, the confidence and
+   our record never travelled with it. The slip page carries the code
+   onward, so nothing is lost. It also stopped saying "SportyBet" on a
+   Bet9ja code. */
+function shareCode(code,picks){
+  doShare("\u26bd My SoccerWizard slip. Code: "+code,
+          slipUrl(picks)||(SPORTY_URL+encodeURIComponent(code)));
+}
 function bookList(picks,resultId,btnId,label){
   var bookable=picks.filter(function(c){return c.eventId;});
   var missing=picks.filter(function(c){return !c.eventId;});
@@ -8623,7 +8672,7 @@ function doBookList(picks,resultId,btnId,label,B){
       var code=B.codeOf(d);
       if(d&&d.success&&code){
         showCode(code,resultId,function(){
-          rememberSlip(going,totalOdds(going),code);},B);
+          rememberSlip(going,totalOdds(going),code);},B,going);
       }
       else{ $(resultId).innerHTML=bookErrHTML(d,B); }
     })
@@ -10230,7 +10279,7 @@ function doBookMy(bookable,retried,B){
         var _od=_legs.reduce(function(t,x){
           return t*legOdd(fixtureById(x.id),x.code,x.p);},1);
         showCode(_code,"myBookResult",function(){
-          rememberSlip(_legs,_od,_code);},B);
+          rememberSlip(_legs,_od,_code);},B,_legs);
       }
       else{
         /* The builder no longer offers a market SportyBet does not list, but a
