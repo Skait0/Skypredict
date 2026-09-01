@@ -4821,7 +4821,15 @@ function finalScoreFor(leg){
   if(f && f.hg!=null && f.ag!=null) return {hg:f.hg, ag:f.ag};
   if(f){
     var st=fixtureState(f);
-    if(st && st.kind==="ft") return {hg:st.hg, ag:st.ag};
+    /* An INFERRED full time is refused here on purpose. Everything else in
+       this function is a score somebody stands behind - the results feed, the
+       baked payload, or the live feed saying full time in as many words. The
+       inference is a guess drawn from a match being absent, and settleSlips
+       freezes whatever it is told and settles the whole slip on one lost leg,
+       so a guess here is not a display glitch that corrects itself: it is a
+       permanent wrong verdict on somebody's ticket. Waiting for the next build
+       costs minutes. Being wrong costs the slip. */
+    if(st && st.kind==="ft" && !st.inferred) return {hg:st.hg, ag:st.ag};
   }
   return null;
 }
@@ -5671,13 +5679,42 @@ function saveLiveLast(){
    would put a wrong row in the record. The same bar the server sweep uses,
    for the same reason. */
 const LATE_MINUTE=80;
+/* Being past the 80th minute is not on its own evidence that a match ended.
+   The feed drops a match when it finishes, so "seen late, absent now" is the
+   only full-time signal there is - but ONE absent poll looks exactly the same
+   whether the match ended, the feed hiccuped, or liveMatchFor simply failed to
+   pair the names that time round. With no other condition this fires
+   continuously from the 80th minute on.
+   Reported 1 Sep 2026: FK Rostov v CSKA Moscow marked lost in My slip while it
+   was still playing - our own feed had it at minute 84, status H2, 1-0. A leg
+   on over 1.5 or the away side grades as a loss against that, settleSlips
+   never revisits a leg once it says win or lose, and one lost leg settles the
+   whole accumulator. So a single dropped poll became a permanent wrong answer.
+   Two more conditions, both cheap:
+   - gone for several consecutive polls, not one
+   - and far enough past kick-off that 90 minutes plus a half-time interval
+     have actually elapsed. At minute 84 roughly 99 minutes have passed, which
+     is short of this, so the Rostov case cannot arise. */
+const FT_MIN_ELAPSED_MS=115*60*1000;
+const FT_MIN_MISSES=3;
+var LIVE_MISS={};
+function ftInferable(f,id){
+  if((LIVE_MISS[id]||0)<FT_MIN_MISSES) return false;
+  var t=kickMs(f);
+  return t!=null&&(Date.now()-t)>=FT_MIN_ELAPSED_MS;
+}
 function noteLiveSeen(){
   try{
     if(!LIVE||!LIVE.matches) return;
     (DATA.fixtures||[]).forEach(function(f){
       var lm=liveMatchFor(f);
-      if(!lm) return;
-      var id=fid(f);
+      var mid=fid(f);
+      /* Only count absences for a match we have actually seen in play. A
+         fixture that has never appeared is not missing, it just has not
+         started. */
+      if(!lm){ if(SEEN_LIVE[mid]) LIVE_MISS[mid]=(LIVE_MISS[mid]||0)+1; return; }
+      LIVE_MISS[mid]=0;
+      var id=mid;
       SEEN_LIVE[id]=1;
       if(lm.homeScore!=null&&lm.awayScore!=null){
         LIVE_LAST[id]={hg:lm.homeScore,ag:lm.awayScore,
@@ -5718,9 +5755,12 @@ function fixtureState(f){
      as one. This is the only full time this feed will ever give us - it drops
      a match rather than marking it finished. */
   var last=LIVE_LAST[fid(f)];
-  if(last&&last.minute>=LATE_MINUTE){
+  if(last&&last.minute>=LATE_MINUTE&&ftInferable(f,fid(f))){
     var lev=tipEval(f)(last.hg,last.ag);
-    return {kind:"ft",hg:last.hg,ag:last.ag,won:lev==="win",push:lev==="unknown"};
+    /* Flagged as inferred. It is good enough to show a result on the board,
+       and deliberately NOT good enough to settle somebody's slip: this is a
+       guess from an absence, and finalScoreFor refuses it for that reason. */
+    return {kind:"ft",inferred:true,hg:last.hg,ag:last.ag,won:lev==="win",push:lev==="unknown"};
   }
   if(SEEN_LIVE[fid(f)]) return {kind:"played"};
   var t=kickMs(f);
