@@ -169,6 +169,20 @@ stricter thing and is not done.
 - Sweep cadence: GitHub throttles the 10-minute cron to ~5 runs/day.
 - Bet9ja is deliberately the quieter brand in the UI. SportyBet is the primary.
 
+## Before sending traffic at the site
+```bash
+node scripts/preflight.js --value
+```
+Checks the LIVE deployment rather than the code: board built today, fixtures
+and tips present, the record and that it still shows its misses, both booking
+paths up, robots.txt still crawlable, and the service worker kill switch still
+off. Prints the exact record line to paste into a post, and with `--value`
+re-runs the campaign's "about 20 games against about 5" claim on the day's real
+prices. Exits non-zero if anything fails.
+
+Written for the influencer campaign, where the pitch is "go and check us
+yourself" - which makes a stale board worse than no campaign.
+
 ## Verify commands
 ```bash
 cd /c/Users/DELL/Desktop/skypredict
