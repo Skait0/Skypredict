@@ -95,9 +95,21 @@ legs and re-sending.
   built their own inputs.
 
 ## Open / deferred
-- **API-Football account is SUSPENDED.** Only the owner can fix it, in their
-  dashboard. SoccerVista covers for it, but note that feed is Opta data under
-  *their* licence, not ours.
+- **API-Football account is SUSPENDED, because we overran the free plan.**
+  100 requests/day allowed; the build grades scores, *every deploy rebuilds*,
+  and there were 37-63 deploys a day. Worse, two passes - `confirmScores`
+  (~line 740) and `recordPublishedTips` (~line 817) - each build their own
+  `byDate` map and never share, so every date is paid for twice. That is
+  200-400 requests/day against a 100 limit. `inScoreWindow` also allowed 4 days
+  (now 7) where the free plan serves 3, and **a refusal still costs a request**.
+  **Do not install a new key until this is bounded** or the new account goes the
+  same way. Wanted: memoise date lookups within a build, cap oracle calls per
+  build (~3), only ask inside its real 3-day window, and log
+  `x-ratelimit-requests-remaining` so the quota shows up in the build output.
+  Deferred by the owner 1 Sep. SoccerVista covers grading meanwhile - but that
+  feed is Opta data under *their* licence, not ours, and it sits ahead of the
+  oracle only by ordering, not by any limit. If it goes down, every build falls
+  through to the oracle at full volume.
 - **Railway trial ends ~13 Sep 2026.**
 - ~~**Service worker**~~ **DONE 1 Sep, and it was broken.** `sw-v7`.
   **The worker had been a complete no-op since `9cfdea0`.** Its "skip non-http
