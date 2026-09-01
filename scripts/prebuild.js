@@ -77,7 +77,17 @@ async function bakePayload() {
     warn("only " + n + " fixtures - refusing to bake a thin payload");
     return;
   }
-  const { log: _drop, ...rest } = payload;
+  /* The build keeps a running account of where its numbers came from - how
+     many results it graded, how many it held back for want of a confirmed
+     score, whether the score oracle answered. All of it was dropped here and
+     never printed, which is why a morning that graded six games out of thirty
+     looked exactly like a morning that graded thirty.
+     The lines that say something went short are printed; the rest is dropped
+     as before, so the build output stays readable. */
+  const { log: buildLog, ...rest } = payload;
+  (buildLog || [])
+    .filter((l) => /held back|unavailable|failed|oracle|suspended|record:|recorded result/i.test(l))
+    .forEach((l) => log(l));
   const out = path.join(PUB, "predictions.json");
   /* The file the site downloads, without the per-result model numbers - they
      exist for the match pages, which are generated below from `rest` while it

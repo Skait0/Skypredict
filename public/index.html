@@ -8559,16 +8559,28 @@ function renderDaily(){
      "1 of 4 tips landed" then reads as though we had made four tips, on a day
      we made thirty-eight. Understating our own card is a worse error than
      saying nothing.
-     The day's fixtures are already kept under sw.day.<date> so the board can
-     survive the feed dropping them, so the real figure is to hand - for
-     anyone who had the page open that day. Where it is not, the count is
-     simply not claimed. */
+     The day's fixtures are kept under sw.day.<date> so the board can survive
+     the feed dropping them, which gives the real figure - to anyone who had
+     the page open that day. A first-time reader had no such record, so the
+     line was dropped and the card read "6 of 6 tips landed, 100%" on a
+     morning when six of thirty games had been graded. That is our own card
+     understated to a tenth of its size, and it reads as a boast.
+     The build now publishes how many it is holding for want of a confirmed
+     score, so the same sentence is available to everybody; the stored board
+     is still preferred where it exists, being the count of what we actually
+     showed rather than of what is queued. */
   var predicted=0;
   try{
     var raw=localStorage.getItem(STICKY_PFX+isoOffset(-1));
     if(raw){ var arr=JSON.parse(raw); if(Array.isArray(arr)) predicted=arr.length; }
   }catch(e){}
   var pending=predicted>res.length?predicted-res.length:0;
+  if(!pending){
+    try{
+      var held=(DATA.pendingByDate||{})[isoOffset(-1)]||0;
+      if(held>0){ pending=held; predicted=res.length+held; }
+    }catch(e){}
+  }
   var head="<div class='daily-h'><b>How we did yesterday</b>"+
     (res.length?"<span class='dl-when'>"+esc(dayDate(-1))+"</span>":"")+"</div>";
 
