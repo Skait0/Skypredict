@@ -329,12 +329,20 @@ test("the sheet's own line names the book the buttons will act on", () => {
      that would produce a Bet9ja code. It is a promise about which app the
      code opens in, so it has to follow the picker. */
   const idx = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
-  const fn = idx.slice(idx.indexOf("function paintBookPickers()"),
-                       idx.indexOf("function bookIdOf"));
+  const at = idx.indexOf("function paintBookPickers()");
+  /* A real end anchor. indexOf returning -1 makes slice() run to the end of
+     the file, and then every assertion below passes against the whole source
+     rather than against this function - a test that cannot fail. */
+  const fnEnd = idx.indexOf('document.addEventListener("click"', at);
+  assert.ok(fnEnd > at, "end anchor for paintBookPickers not found");
+  const fn = idx.slice(at, fnEnd);
   assert.match(fn, /mySheetSub/, "the line has to be updated when the book changes");
   assert.match(fn, /curBook\(\)\.mark/, "and named with the current book's mark");
   assert.match(idx, /id="mySheetSub"/, "the element needs an id to be reachable");
   /* setBook repaints the pickers, which is what carries this. */
-  const sb = idx.slice(idx.indexOf("function setBook(k)"), idx.indexOf("function bookIdOf"));
+  const sbAt = idx.indexOf("function setBook(k)");
+  const sbEnd = idx.indexOf("function bookIdOf", sbAt);
+  assert.ok(sbEnd > sbAt, "end anchor for setBook not found");
+  const sb = idx.slice(sbAt, sbEnd);
   assert.match(sb, /paintBookPickers\(\)/);
 });
