@@ -111,3 +111,17 @@ test("the glitch tears in bands rather than fading", () => {
   assert.match(src, /@keyframes bkOut\{[\s\S]*?text-shadow:[^}]*rgba\(0,229,255/,
     "a cyan channel pulled against a red one");
 });
+
+test("every trust item after the first carries its separator dot", () => {
+  /* The row separates its items with a ::before dot and suppresses only the
+     first. A `.streak::before{content:none!important}` survived a redesign in
+     which the streak stopped leading with a flame and started carrying a dot
+     like everything else - so the row had one gap, after "last updated", and
+     the two comments describing the intended behaviour sat right beside the
+     rule defeating it. */
+  assert.match(src, /\.trust-i::before\{content:""/);
+  assert.match(src, /\.trust-i:first-child::before\{display:none\}/,
+    "the first item leads the row, so it has no separator before it");
+  assert.doesNotMatch(src, /\.streak::before\{content:none/,
+    "that rule blanked the dot the streak is supposed to carry");
+});

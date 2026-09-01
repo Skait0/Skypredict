@@ -3137,8 +3137,13 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
   font:inherit;font-weight:800;font-size:14px;padding:12px 16px;border-radius:var(--r-md);
   cursor:pointer;display:inline-flex;align-items:center;gap:7px}
 .share-btn:hover{border-color:var(--soft)}
-.streak::before{content:none!important}
-/* The streak carries its dot now, like everything else on the row. */
+/* The streak carries its dot, like everything else on the row.
+   A rule blanking the streak's own pseudo-element used to sit above this
+   line, left over from when the item led with a flame INSTEAD of a dot. The
+   flame moved inside the label and the comment was written, but the rule that
+   suppressed the dot was never deleted - so the row had a gap after "last
+   updated" and nowhere else. Two other comments in this file already describe
+   the behaviour this rule was preventing. */
 .trust-i.streak b{color:var(--win)}
 .goal-tag{position:absolute;right:calc(100% + 6px);top:50%;transform:translateY(-50%);
   display:inline-flex;align-items:center;font-size:9px;font-weight:800;letter-spacing:.06em;
