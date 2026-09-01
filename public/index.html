@@ -2387,24 +2387,53 @@ html.mode-live #live{display:block}
    third control in there pushed Book onto its own line. This is also a
    setting rather than an action, so it reads better as a quiet line above
    the thing it governs. */
-.bookpick{display:flex;align-items:center;gap:7px;margin-top:12px;flex-wrap:wrap}
+:root{--b9-red:#D42127;--b9-green:#14B151}
+.bookpick{display:flex;align-items:center;gap:7px;margin-top:12px;flex-wrap:wrap;
+  padding:0 2px}
+/* Nothing to book, nothing to choose between. Hidden rather than emptied so
+   the row takes no space at all - it was showing on the wizard page above a
+   slip of nought games. */
+.bookpick[hidden]{display:none}
 .bookpick-l{font-size:11px;font-weight:700;letter-spacing:.05em;
   text-transform:uppercase;color:var(--faint);margin-right:1px}
 .bp{font:inherit;font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:99px;
-  background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);
-  cursor:pointer;white-space:nowrap;
-  transition:background .15s,color .15s,border-color .15s,transform .12s}
+  border:1px solid transparent;cursor:pointer;white-space:nowrap;line-height:1.15;
+  transition:opacity .15s,box-shadow .15s,transform .12s}
 .bp:active{transform:scale(.96)}
-.bp.on{background:var(--red);border-color:var(--red);color:#fff}
-/* Hover only where there is a real pointer - a phone would otherwise keep the
-   hover state stuck on the last pill tapped. */
-@media(hover:hover){
-  .bp:hover{background:var(--card-2);color:var(--text);border-color:var(--soft)}
-  .bp.on:hover{background:var(--red);color:#fff;filter:brightness(1.08)}
-}
+/* Each book wears its own colours, always - it is a logo, not a label, and a
+   Nigerian reader knows both of these on sight long before they read the word.
+   Selection is a ring and full opacity rather than a colour swap, because
+   there is no colour left to swap to that would not be somebody's brand. */
+.bp:not(.on){opacity:.42}
+.bp.on{opacity:1}
+/* The two are not equals and the row should not pretend they are. This site
+   is a SportyBet site - the hero button says so, the sample codes say so, and
+   most people arriving have a SportyBet account. Bet9ja is the alternative for
+   the people who bank there, so it is offered rather than advertised.
+   SportyBet keeps the full-size pill in their red on white. */
+.bp[data-book="sporty"]{background:#fff;color:var(--red)}
+.bp[data-book="sporty"].on{box-shadow:0 0 0 2px var(--red)}
+/* Bet9ja sits a clear step down: smaller type, tighter padding, on black.
+   Their mark is two saturated colours and at equal size it pulled the eye off
+   SportyBet entirely. Small enough to be second, whole enough to be theirs. */
+.bp[data-book="bet9ja"]{background:#000;padding:5px 10px;font-size:10.5px}
+.bp[data-book="bet9ja"].on{box-shadow:0 0 0 1.5px var(--b9-green)}
+.bp[data-book="bet9ja"] small{font-size:9.5px}
+@media(hover:hover){ .bp:not(.on):hover{opacity:.72} }
 /* How many of the slip this book can actually take, so the choice is informed
    rather than a coin toss. */
 .bp small{display:inline;font-size:10.5px;font-weight:700;opacity:.72;margin-left:4px}
+/* The Bet9ja wordmark: "bet" in their red, "9ja" in their green. Sampled from
+   the logo file rather than eyeballed. */
+/* Spans rather than <i>/<b>: ".code-card b" is the booking code's own style -
+   display:block, 32px - and it matches any b inside the card, so a <b> here
+   rendered "9ja" as a giant line of its own. Two earlier fixes in this file
+   were caught by the same rule. */
+.b9m{font-weight:800;letter-spacing:-.01em;white-space:nowrap}
+.b9m .b9r,.b9m .b9g{font-style:normal;font-weight:800;font-size:inherit;
+  display:inline;letter-spacing:inherit;line-height:inherit;margin:0}
+.b9m .b9r{color:var(--b9-red)}
+.b9m .b9g{color:var(--b9-green)}
 .bld-note{font-size:12px;color:var(--soft);margin-top:10px;text-align:center}
 #bookResult{margin-top:14px}
 /* Compact centred modal for the booking code */
@@ -2505,6 +2534,26 @@ html.mode-live #live{display:block}
    missing. */
 .code-card .code-alt b{display:inline;font-size:inherit;line-height:inherit;
   letter-spacing:normal;margin:0;color:var(--text);font-weight:800}
+/* ---- the code card in Bet9ja's colours --------------------------------
+   The card is the same shape whichever book issued the code; only the palette
+   changes, so a reader can tell at a glance which app the code belongs to
+   before reading a word of it. */
+.code-card--b9 i{color:#fff}
+/* The wordmark keeps its own colours everywhere except where it sits on
+   black, so it needs no override here - "Your bet9ja booking code" reads as
+   white type with their mark inside it. */
+.code-card--b9 .code-acts .code-copy,
+.code-card--b9 .code-acts .share-btn{
+  background:var(--b9-green);color:#fff;border:1px solid var(--b9-green)!important}
+@media(hover:hover){
+  .code-card--b9 .code-acts .code-copy:hover,
+  .code-card--b9 .code-acts .share-btn:hover{filter:brightness(1.1)}
+}
+/* Their own button is white with the wordmark on it, the way it appears on
+   their site - a green button here would collide with the two green ones
+   above it and stop being the obvious next step. */
+.code-card--b9 .code-open{background:#fff;color:#14161a}
+.code-card--b9 .code-open .b9m{margin-left:1px}
 .code-err{background:var(--red-wash);border:1px solid var(--red);border-radius:var(--r-md);
   padding:15px;color:var(--red-ink);font-weight:600;font-size:14px}
 /* What went wrong, then what to do about it - the second line is the useful
@@ -3692,6 +3741,11 @@ button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
 .sp-pick b{font-size:12px}
 .sp-pick i{font-size:11px}
 .bld-foot{margin-top:11px;padding:12px 14px;gap:11px}
+/* "Book with" was touching the edge of the screen while the bar under it is
+   inset by 14. Row-gap as well, because two brand pills and a label wrap on a
+   320px phone and the wrapped line was landing on top of the first. */
+.bookpick{margin-top:10px;padding:0 4px;gap:6px 7px}
+.bookpick-l{font-size:10.5px}
 .bld-note{margin-top:7px}
 #bookResult{margin-top:10px}
 .code-card{padding:14px}
@@ -6961,6 +7015,12 @@ function bookWire(){
     return !!(o&&o>1.01);
   };
 
+  /* `label` is the name in a sentence; `mark` is the brand drawn in its own
+     colours, for the places that show a logo rather than say a word. */
+  BOOKS.sporty.mark="SportyBet";
+  BOOKS.bet9ja.mark="<span class='b9m'><span class='b9r'>bet</span>"+
+    "<span class='b9g'>9ja</span></span>";
+
   BOOKS.bet9ja.book=B9_BOOK_URL;
   BOOKS.bet9ja.open=B9_URL;
   BOOKS.bet9ja.sel=function(c){return {eventId:bookIdOf(c,BOOKS.bet9ja),code:c.code};};
@@ -6988,28 +7048,40 @@ bookWire();
 /* The picker. Two pills, each carrying how much of the slip that book can
    take - the count is the whole reason this is a choice and not a preference,
    because Bet9ja does not carry every game SportyBet does. */
-function bookCounts(){
-  var picks=[];
+/* The slip a given picker governs. Each one asks about its OWN slip rather
+   than guessing from which sheet is open - guessing is how the builder's
+   picker came to be counting My slip's legs. */
+function pickerPicks(which){
   try{
-    if($("mySheet")&&$("mySheet").classList.contains("on")){
-      picks=MYSLIP.map(function(x){return {id:x.id,f:fixtureById(x.id),code:x.code};});
-    } else { picks=BUILD.picks||[]; }
-  }catch(e){ picks=[]; }
-  var out={n:picks.length};
-  for(var k in BOOKS) out[k]=picks.filter(function(c){return !!bookIdOf(c,BOOKS[k]);}).length;
-  return out;
+    if(which==="my")
+      return MYSLIP.map(function(x){return {id:x.id,f:fixtureById(x.id),code:x.code};});
+    return BUILD.picks||[];
+  }catch(e){ return []; }
 }
 function paintBookPicker(el){
   if(!el) return;
-  var c=bookCounts();
+  var which=el.getAttribute("data-bookpick");
+  var picks=pickerPicks(which);
+  /* Two rules, and between them only ever one picker is on screen.
+     Nothing to book: there is no choice to make, so the row is not drawn -
+     it was appearing on the wizard page above a slip of nought games.
+     The sheet is open: it covers the builder, and the builder's picker was
+     showing through underneath it as a second, identical pair of pills. */
+  var sheetOpen=false;
+  try{ sheetOpen=!!($("mySheet")&&$("mySheet").classList.contains("on")); }catch(e){}
+  if(!picks.length || (which==="bld" && sheetOpen)){ el.hidden=true; el.innerHTML=""; return; }
+  el.hidden=false;
+
+  var n=picks.length;
   var html="<span class='bookpick-l'>Book with</span>";
   ["sporty","bet9ja"].forEach(function(k){
     var B=BOOKS[k];
-    /* Only worth showing when it is not the whole slip - "12 of 12" on both
-       pills is noise, and on an empty slip there is nothing to count. */
-    var n=(c.n&&c[k]<c.n)?("<small>"+c[k]+"/"+c.n+"</small>"):"";
+    var got=picks.filter(function(c){return !!bookIdOf(c,B);}).length;
+    /* Only worth showing when it is not the whole slip - "12/12" on both pills
+       is noise that makes the row look like a warning. */
+    var cnt=(got<n)?("<small>"+got+"/"+n+"</small>"):"";
     html+="<button type='button' class='bp"+(BOOKMAKER===k?" on":"")+"' data-book='"+k+"'"+
-      " aria-pressed='"+(BOOKMAKER===k)+"'>"+esc(B.label)+n+"</button>";
+      " aria-label='"+esc(B.label)+"' aria-pressed='"+(BOOKMAKER===k)+"'>"+B.mark+cnt+"</button>";
   });
   el.innerHTML=html;
 }
@@ -7562,11 +7634,13 @@ async function bookSlip(){
     return;
   }
   if(missing.length){
-    $("bookResult").innerHTML="<div class='confirm-card'><p>"+missing.length+
-      " game"+(missing.length===1?" isn't":"s aren't")+" available on "+esc(B.label)+" yet. "+
-      "Book the other "+bookable.length+" without "+(missing.length===1?"it":"them")+"?</p>"+
-      "<div class='ca'><button class='confirm-go' type='button'>Book "+bookable.length+
-      " game"+(bookable.length===1?"":"s")+"</button>"+
+    /* Said once, short. It was "1 game isn't available on Bet9ja yet. Book
+       the other 2 without it?" - two sentences and a trailing clause to carry
+       one fact and one question. */
+    $("bookResult").innerHTML="<div class='confirm-card'><p>"+B.mark+" doesn't have "+
+      missing.length+" of these games.</p>"+
+      "<div class='ca'><button class='confirm-go' type='button'>Book the other "+
+      (bookable.length===1?"one":bookable.length)+"</button>"+
       "<button class='confirm-cancel' type='button'>Cancel</button></div></div>";
     $("bookResult").querySelector(".confirm-go").addEventListener("click",function(){
       if(!confirmDropUnpriced(bookable,"bookResult",doBook,B)) doBook(bookable);});
@@ -7602,27 +7676,24 @@ function confirmDropUnpriced(picks,target,go,B){
      is about the game and not about the market - saying it "isn't offering
      that market" would be a guess, and usually a wrong one. */
   var byEvent=(B.key==="bet9ja");
-  var missT=byEvent?"doesn't have "+(un===1?"this game":"these games"):
-                    "isn't offering "+(un===1?"that market":"those markets");
   if(!priced.length){
-    el.innerHTML="<div class='code-err'><b>"+esc(B.label)+" "+
-      (byEvent?("doesn't have "+(picks.length===1?"this game":"any of these games")+" right now."):
-               ("isn't offering "+(picks.length===1?"this market":"any of these markets")+" right now."))+"</b>"+
-      "<span>"+(byEvent?"Try the other bookmaker, or a different game.":
-        "Swap the pick"+(picks.length===1?"":"s")+" for another market, or try again nearer kickoff.")+"</span></div>";
+    el.innerHTML="<div class='code-err'><b>"+B.mark+
+      (byEvent?" doesn't have "+(picks.length===1?"this game.":"any of these games."):
+               " isn't offering "+(picks.length===1?"this market.":"any of these markets."))+"</b>"+
+      "<span>"+(byEvent?"Try the other bookmaker.":
+        "Swap for another market, or try again nearer kickoff.")+"</span></div>";
     return true;
   }
   var names=picks.filter(function(c){return !B.priced(c);})
     .map(function(c){var f=(c&&c.f)||fixtureById(c.id);
       return f?(f.home+" v "+f.away):null;}).filter(Boolean).slice(0,4);
-  el.innerHTML="<div class='confirm-card'><p><b>"+un+" pick"+(un===1?"":"s")+
-    " can't be booked</b> - "+esc(B.label)+" "+missT+
-    " on "+(un===1?"this game":"these games")+"."+
+  el.innerHTML="<div class='confirm-card'><p><b>"+B.mark+" can't take "+un+
+    " pick"+(un===1?"":"s")+"</b>"+
     (names.length?"<span class='cf-list'>"+names.map(esc).join("<br>")+
       (un>names.length?"<br>and "+(un-names.length)+" more":"")+"</span>":"")+
-    "</p><p>Book the other "+priced.length+" game"+(priced.length===1?"":"s")+"?</p>"+
-    "<div class='ca'><button class='confirm-go' type='button'>Book "+priced.length+
-    "</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>";
+    "</p><div class='ca'><button class='confirm-go' type='button'>Book the other "+
+    (priced.length===1?"one":priced.length)+"</button>"+
+    "<button class='confirm-cancel' type='button'>Cancel</button></div></div>";
   el.querySelector(".confirm-go").addEventListener("click",function(){go(priced);});
   el.querySelector(".confirm-cancel").addEventListener("click",function(){el.innerHTML="";});
   return true;
@@ -7690,16 +7761,23 @@ function clearSlip(){
    something that already happened. */
 function showCode(code,hostId,save,B){
   B=B||curBook();
+  /* The host still holds whatever was last written there, and after a partial
+     booking that is "...booking the other 2..." - a progress note with a
+     spinner in it. The code has arrived, so the progress is over; leaving it
+     up left a spinner turning behind the modal and still turning after the
+     modal was closed. Reported as a loading animation that never ends. */
+  try{ var _h=$(hostId); if(_h) _h.innerHTML=""; }catch(e){}
   var old=document.getElementById("codeModal");
   if(old) old.remove();
   var wrap=document.createElement("div");
   wrap.id="codeModal";
   wrap.className="code-modal-scrim";
   var _fb=footballLink(code);
-  wrap.innerHTML="<div class='code-card code-card--modal' role='dialog' aria-modal='true' aria-label='Booking code'>"+
+  wrap.innerHTML="<div class='code-card code-card--modal"+(B.key==="bet9ja"?" code-card--b9":"")+
+    "' role='dialog' aria-modal='true' aria-label='Booking code'>"+
     "<button class='code-x' type='button' aria-label='Close'>"+
       "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' aria-hidden='true'><path d='M6 6l12 12M18 6L6 18'/></svg></button>"+
-    "<i>Your "+esc(B.label)+" booking code</i>"+
+    "<i>Your "+B.mark+" booking code</i>"+
     "<b>"+esc(code)+"</b>"+
     /* Three rows, narrowing to a point. What you do with the code sits at the
        top as a small pair; the one thing most people are here to do sits alone
@@ -7721,7 +7799,7 @@ function showCode(code,hostId,save,B){
     "</div>":"")+
     "<div class='code-opens'>"+
       "<a class='code-open' href='"+B.open+encodeURIComponent(code)+
-        "' target='_blank' rel='noopener'>Open in "+esc(B.label)+"</a>"+
+        "' target='_blank' rel='noopener'>Open in "+B.mark+"</a>"+
     "</div>"+
     /* Same code, same slip, other book. This was a footnote saying it "also
        works on football.com", which left anyone who uses that app to copy the
@@ -7733,7 +7811,12 @@ function showCode(code,hostId,save,B){
         "football<span class='fb-dot'>.</span>com</a></p>":"")+
     "</div>";
   document.body.appendChild(wrap);
-  function close(){wrap.remove();}
+  /* A fixed scrim stops clicks, not the wheel: the board went on scrolling
+     behind the code, and on a phone the modal appeared to drift off. Locked
+     while it is open, and only while it is open. */
+  var _ovf=document.body.style.overflow;
+  document.body.style.overflow="hidden";
+  function close(){wrap.remove();document.body.style.overflow=_ovf;}
   wrap.addEventListener("click",function(e){if(e.target===wrap)close();});
   wrap.querySelector(".code-x").addEventListener("click",close);
   wrap.querySelector(".code-copy").addEventListener("click",function(){
@@ -9499,7 +9582,11 @@ async function bookMy(){
     return;
   }
   if(missing.length){
-    $("myBookResult").innerHTML="<div class='confirm-card'><p>"+missing.length+" game"+(missing.length===1?" isn't":"s aren't")+" available on "+esc(B.label)+" yet. Book the other "+bookable.length+"?</p><div class='ca'><button class='confirm-go' type='button'>Book "+bookable.length+"</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>";
+    $("myBookResult").innerHTML="<div class='confirm-card'><p>"+B.mark+" doesn't have "+
+      missing.length+" of these games.</p>"+
+      "<div class='ca'><button class='confirm-go' type='button'>Book the other "+
+      (bookable.length===1?"one":bookable.length)+"</button>"+
+      "<button class='confirm-cancel' type='button'>Cancel</button></div></div>";
     $("myBookResult").querySelector(".confirm-go").addEventListener("click",function(){
       if(!confirmDropUnpriced(bookable,"myBookResult",doBookMy,B)) doBookMy(bookable);});
     $("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){$("myBookResult").innerHTML="";});

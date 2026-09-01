@@ -99,10 +99,11 @@ test("an unplaceable leg is named and the choice is offered", () => {
   let booked = null;
   assert.strictEqual(H.confirmDropUnpriced(picks, "bookResult", (p) => { booked = p; }), true,
     "it takes over and waits for an answer");
-  assert.match(H.el.innerHTML, /can't be booked/);
+  assert.match(H.el.innerHTML, /can't take 1 pick/);
   assert.match(H.el.innerHTML, /Leeds v Everton/,
     "the reader has to be told WHICH game, not just how many");
-  assert.match(H.el.innerHTML, /Book 1/);
+  assert.match(H.el.innerHTML, /Book the other one/,
+    "and 'Book the other 1' is not a sentence");
   assert.strictEqual(booked, null, "nothing is sent before the answer");
 
   H.el._handlers["confirm-go"]();
@@ -247,10 +248,24 @@ test("the pre-flight names the book it is talking about", () => {
   const stopped = H.confirmDropUnpriced(
     [b9pick("1X"), b9pick("1X", { b9: false })], "x", function () {}, H.BOOKS.bet9ja);
   assert.strictEqual(stopped, true, "one unbookable leg must interrupt");
-  assert.match(H.el.innerHTML, /Bet9ja/);
+  /* Bet9ja is drawn as its wordmark, not spelt out, so the mark is what to
+     look for. */
+  assert.match(H.el.innerHTML, /class='b9m'/);
+  assert.match(H.el.innerHTML, />bet</, "their red half");
+  assert.match(H.el.innerHTML, />9ja</, "their green half");
   assert.doesNotMatch(H.el.innerHTML, /SportyBet/);
-  assert.match(H.el.innerHTML, /doesn't have/,
-    "Bet9ja is judged on the game, so the sentence must be about the game");
+});
+
+test("the wordmark carries no <b>, whatever it is dropped into", () => {
+  /* ".code-card b" is the booking code's own style - display:block, 32px -
+     and it matches any b inside the modal, where this mark also appears. A
+     <b> in here rendered "9ja" as a giant line of its own. Two earlier fixes
+     in index.html were caught by that same rule, so it is asserted on the
+     mark itself rather than on any one place that prints it. */
+  const H = harness("bet9ja");
+  assert.doesNotMatch(H.BOOKS.bet9ja.mark, /<b[\s>]/);
+  assert.doesNotMatch(H.BOOKS.bet9ja.mark, /<i[\s>]/,
+    "and no <i> either - the card italicises those");
 });
 
 test("a fully bookable Bet9ja slip is not interrupted", () => {
