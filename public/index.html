@@ -2398,7 +2398,9 @@ html.mode-live #live{display:block}
   text-transform:uppercase;color:var(--faint);margin-right:1px}
 .bp{font:inherit;font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:99px;
   border:1px solid transparent;cursor:pointer;white-space:nowrap;line-height:1.15;
-  transition:opacity .15s,box-shadow .15s,transform .12s}
+  display:inline-flex;align-items:center;min-height:30px;
+  box-shadow:0 1px 3px rgba(0,0,0,.28);
+  transition:opacity .16s,box-shadow .16s,transform .12s}
 .bp:active{transform:scale(.96)}
 /* Each book wears its own colours, always - it is a logo, not a label, and a
    Nigerian reader knows both of these on sight long before they read the word.
@@ -2421,8 +2423,12 @@ html.mode-live #live{display:block}
 .bp[data-book="bet9ja"] small{font-size:9.5px}
 @media(hover:hover){ .bp:not(.on):hover{opacity:.72} }
 /* How many of the slip this book can actually take, so the choice is informed
-   rather than a coin toss. */
-.bp small{display:inline;font-size:10.5px;font-weight:700;opacity:.72;margin-left:4px}
+   rather than a coin toss. A chip rather than loose type, so it reads as a
+   count attached to the name and not as part of the brand. */
+.bp small{display:inline-flex;align-items:center;margin-left:6px;padding:1px 6px;
+  border-radius:99px;font-size:9.5px;font-weight:800;letter-spacing:.01em}
+.bp[data-book="sporty"] small{background:rgba(230,57,70,.13);color:var(--red)}
+.bp[data-book="bet9ja"] small{background:rgba(255,255,255,.15);color:#fff}
 /* The Bet9ja wordmark: "bet" in their red, "9ja" in their green. Sampled from
    the logo file rather than eyeballed. */
 /* Spans rather than <i>/<b>: ".code-card b" is the booking code's own style -
@@ -2535,9 +2541,13 @@ html.mode-live #live{display:block}
 .code-card .code-alt b{display:inline;font-size:inherit;line-height:inherit;
   letter-spacing:normal;margin:0;color:var(--text);font-weight:800}
 /* ---- the code card in Bet9ja's colours --------------------------------
-   The card is the same shape whichever book issued the code; only the palette
-   changes, so a reader can tell at a glance which app the code belongs to
-   before reading a word of it. */
+
+   Same card, their palette. A reader should know which app the code belongs
+   to before reading a word of it, and the two must not be mistakable for one
+   another: SportyBet's keeps the green success wash it has always had, so
+   Bet9ja's is black. That is their own ground - their site is dark with the
+   red and the green carried as accents - and it is as far from a green wash
+   as the brand allows. */
 /* Its own ground, the same in both themes.
    The light theme paints the standard card with a wash of OUR red and its
    title in our red too - the wrong brand on a Bet9ja code - and both of those
@@ -2545,21 +2555,33 @@ html.mode-live #live{display:block}
    the surface rather than trying to patch over them, which also means the
    white type below is legible whichever theme the reader is in. */
 .code-card--b9,[data-theme="light"] .code-card--b9{
-  background:#0b2b19;border-color:rgba(20,177,81,.5);
-  box-shadow:0 18px 50px rgba(0,20,8,.5),inset 0 1px 0 rgba(255,255,255,.1)}
-.code-card--b9 i,[data-theme="light"] .code-card--b9 i{color:#fff}
+  background:linear-gradient(180deg,#16191d,#0a0c0e);
+  border-color:rgba(20,177,81,.42);
+  box-shadow:0 22px 58px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.07)}
+.code-card--b9 i,[data-theme="light"] .code-card--b9 i{color:rgba(255,255,255,.8)}
 .code-card--b9 b,[data-theme="light"] .code-card--b9 b{color:#fff}
-.code-card--b9 .code-keep-n{color:rgba(255,255,255,.66)}
-.code-card--b9 .code-save{background:rgba(255,255,255,.1);color:#fff;
-  border-color:rgba(255,255,255,.28)}
-.code-card--b9 .code-x{background:rgba(255,255,255,.1);color:#fff;
-  border-color:rgba(255,255,255,.24)}
+/* Their two colours as a rule under the title - the logo said quietly, so the
+   card is theirs even at a glance with the words out of focus. */
+.code-card--b9 i::after{content:"";display:block;width:42px;height:2px;
+  margin:8px auto 2px;border-radius:2px;
+  background:linear-gradient(90deg,var(--b9-red) 0 50%,var(--b9-green) 50%)}
+.code-card--b9 .code-keep-n{color:rgba(255,255,255,.6)}
+.code-card--b9 .code-save{background:rgba(255,255,255,.08);color:#fff;
+  border-color:rgba(255,255,255,.24)!important}
+.code-card--b9 .code-save.done{border-color:var(--b9-green)!important;
+  color:var(--b9-green)}
+.code-card--b9 .code-x{background:rgba(255,255,255,.08);color:#fff;
+  border-color:rgba(255,255,255,.2)}
+@media(hover:hover){
+  .code-card--b9 .code-x:hover{border-color:var(--b9-green);color:#fff}
+}
 /* The mark stays lowercase in a heading that is otherwise uppercased - their
    logo is lowercase and "BET9JA" is not their name. */
 .code-card--b9 i .b9m{text-transform:none}
 .code-card--b9 .code-acts .code-copy,
 .code-card--b9 .code-acts .share-btn{
-  background:var(--b9-green);color:#fff;border:1px solid var(--b9-green)!important}
+  background:var(--b9-green);color:#fff;border:1px solid transparent!important;
+  box-shadow:0 2px 10px rgba(20,177,81,.3)}
 @media(hover:hover){
   .code-card--b9 .code-acts .code-copy:hover,
   .code-card--b9 .code-acts .share-btn:hover{filter:brightness(1.1)}
@@ -2567,7 +2589,9 @@ html.mode-live #live{display:block}
 /* Their own button is white with the wordmark on it, the way it appears on
    their site - a green button here would collide with the two green ones
    above it and stop being the obvious next step. */
-.code-card--b9 .code-open{background:#fff;color:#14161a}
+.code-card--b9 .code-open{background:#fff;color:#14161a;
+  box-shadow:0 3px 16px rgba(0,0,0,.45)}
+@media(hover:hover){ .code-card--b9 .code-open:hover{filter:brightness(.96)} }
 .code-card--b9 .code-open .b9m{margin-left:5px}
 .code-err{background:var(--red-wash);border:1px solid var(--red);border-radius:var(--r-md);
   padding:15px;color:var(--red-ink);font-weight:600;font-size:14px}
