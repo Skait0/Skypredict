@@ -159,3 +159,98 @@ test("recording is non-fatal and never rewrites a row already on file", () => {
     "this runs on every build; without ignore-duplicates it would rewrite history");
 });
 
+
+/* What it actually writes, rather than what the source says it writes. This
+   function files history; a source-pattern test is not enough. */
+
+const SV = require("../lib/soccervista.js");
+
+function withStubs(fn) {
+  const realInsert = DB.insertResults, realConf = DB.configured;
+  const realSV = SV.resultsFor, realSVc = SV.configured;
+  const sent = [];
+  DB.configured = () => true;
+  DB.insertResults = async (rows) => { sent.push(rows); return { ok: true, inserted: rows.length }; };
+  /* This file switches every score source off at the top - that is the point
+     of the tests above it. These need one back on, and firstScoreSource asks
+     configured() before it asks for rows. */
+  SV.configured = () => true;
+  SV.resultsFor = async () => ({ ok: true, rows: [
+    { home: "Halifax", away: "Hartlepool", hg: 2, ag: 0, league: "x", status: "FT" },
+    { home: "Ipswich", away: "Liverpool", hg: 0, ag: 3, league: "x", status: "FT" },
+  ] });
+  return Promise.resolve(fn(sent)).finally(() => {
+    DB.insertResults = realInsert; DB.configured = realConf;
+    SV.resultsFor = realSV; SV.configured = realSVc;
+  });
+}
+
+const YESTERDAY = new Date(Date.now() - 26 * 3600 * 1000);
+const ymd = (d) => d.toISOString().slice(0, 10);
+const PLAYED = (over) => Object.assign({
+  date: ymd(YESTERDAY), kickoff: YESTERDAY.toISOString(),
+  home: "Halifax", away: "Hartlepool", league: "England Conference National",
+  tip: "1X, home or draw", tip_p: 0.7672,
+}, over || {});
+
+test("a played fixture is filed with its published tip and the observed score", async () => {
+  await withStubs(async (sent) => {
+    await B.recordPublishedTips([PLAYED()], []);
+    assert.strictEqual(sent.length, 1, "one insert");
+    const r = sent[0][0];
+    assert.strictEqual(r.tip, "1X, home or draw", "the tip we published, verbatim");
+    assert.strictEqual(r.hg, 2);
+    assert.strictEqual(r.ag, 0);
+    assert.strictEqual(r.hit, true, "2-0 settles 1X as a hit");
+    assert.strictEqual(r.source, "oracle", "settled, so confirmScores will not re-ask");
+    assert.strictEqual(r.match_date, ymd(YESTERDAY));
+  });
+});
+
+test("the verdict follows the score, not the hope", async () => {
+  await withStubs(async (sent) => {
+    await B.recordPublishedTips([PLAYED({ home: "Ipswich", away: "Liverpool" })], []);
+    assert.strictEqual(sent[0][0].hit, false, "0-3 loses 1X and must be filed as a loss");
+  });
+});
+
+test("a fixture that has not kicked off is not filed", async () => {
+  await withStubs(async (sent) => {
+    const later = new Date(Date.now() + 6 * 3600 * 1000);
+    await B.recordPublishedTips([PLAYED({ kickoff: later.toISOString() })], []);
+    assert.strictEqual(sent.length, 0, "nothing may be written about a game not yet played");
+  });
+});
+
+test("a fixture the score source does not carry is not filed", async () => {
+  await withStubs(async (sent) => {
+    await B.recordPublishedTips([PLAYED({ home: "Someone", away: "Else" })], []);
+    assert.strictEqual(sent.length, 0, "no score, no row - never a guessed one");
+  });
+});
+
+test("a fixture with no tip is not filed", async () => {
+  await withStubs(async (sent) => {
+    await B.recordPublishedTips([PLAYED({ tip: null })], []);
+    assert.strictEqual(sent.length, 0);
+  });
+});
+
+test("a store outage is logged, not thrown", async () => {
+  const realInsert = DB.insertResults, realConf = DB.configured;
+  const realSV = SV.resultsFor, realSVc = SV.configured;
+  DB.configured = () => true;
+  SV.configured = () => true;
+  DB.insertResults = async () => { throw new Error("supabase down"); };
+  SV.resultsFor = async () => ({ ok: true, rows: [
+    { home: "Halifax", away: "Hartlepool", hg: 2, ag: 0, league: "x", status: "FT" }] });
+  const lines = [];
+  try {
+    await B.recordPublishedTips([PLAYED()], lines);
+    assert.ok(lines.some((l) => /recording published tips failed/.test(l)),
+      "a build must survive the store being down, and say so");
+  } finally {
+    DB.insertResults = realInsert; DB.configured = realConf;
+    SV.resultsFor = realSV; SV.configured = realSVc;
+  }
+});
