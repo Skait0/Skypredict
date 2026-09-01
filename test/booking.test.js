@@ -378,3 +378,19 @@ test("the mark keeps a space from the word before it inside a flex button", () =
   assert.match(idx, /\.code-open \.sbm,\.code-open \.b9m\{margin-left:/,
     "both books, not just the one that was noticed");
 });
+
+test("bet9ja keeps its small b wherever it is set", () => {
+  /* The logo file is lowercase, so "bet9ja" is the name rather than an
+     informal spelling of it - a brand is not sentence case. The code card's
+     title is uppercased by its own rule, so the mark has to opt out of that;
+     it briefly went to capitalize, which was a correction of something that
+     was never wrong. */
+  const idx = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  const H = harness("bet9ja");
+  assert.match(H.BOOKS.bet9ja.mark, />bet</, "lowercase in the mark itself");
+  assert.doesNotMatch(H.BOOKS.bet9ja.mark, />Bet</);
+  assert.match(idx, /\.code-card--b9 i \.b9m\{text-transform:none\}/,
+    "and it must opt out of the title's uppercase rather than be re-cased by it");
+  assert.doesNotMatch(idx, /\.b9m\{text-transform:(capitalize|uppercase)/,
+    "no rule may re-case the mark");
+});

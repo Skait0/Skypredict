@@ -2767,12 +2767,13 @@ html.mode-live #live{display:block}
 @media(hover:hover){
   .code-card--b9 .code-x:hover{border-color:var(--b9-green);color:#fff}
 }
-/* "Your Bet9ja booking code". The heading is uppercased, which made their
-   mark shout BET9JA; lowercase was the first correction and reads as a
-   sentence that forgot its capital. Capitalised is the name as it is written
-   in prose, and only here - the pill and the confirm cards keep the lowercase
-   logo form. */
-.code-card--b9 i .b9m{text-transform:capitalize}
+/* "Your bet9ja booking code", with the small b.
+   The heading is uppercased, which made their mark shout BET9JA. It went to
+   lowercase, then to capitalised because it read like a sentence that had
+   forgotten its capital - and that was wrong: the logo file is lowercase, so
+   "bet9ja" IS the name, not an informal spelling of it. A brand is not
+   sentence case. Back to lowercase, everywhere it appears. */
+.code-card--b9 i .b9m{text-transform:none}
 .code-card--b9 .code-acts .code-copy,
 .code-card--b9 .code-acts .share-btn{
   background:var(--b9-green);color:#fff;border:1px solid transparent!important;
