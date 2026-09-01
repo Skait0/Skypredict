@@ -98,6 +98,25 @@ time and penalties still count), and is not already in the new list.
 move mid-match. Pinning the published tip while a match is in play is the
 stricter thing and is not done.
 
+## Shared slips: /s?p=...
+`lib/sliplink.js` + `api/s.js`, rewritten from `/s` in vercel.json. A reader
+builds a slip and can send a link that renders it, instead of a booking code
+that means nothing until it is pasted into a bookmaker.
+
+**The payload carries its own teams, date, market, odds and probability, and is
+NOT keyed on fixture ids.** A leg in the browser stores a `fid()` hash, and a
+fixture can leave the board mid-match (see the fixture-feeds section above), so
+an id-keyed link would rot silently and permanently on somebody else's post.
+
+**Treat the payload as hostile.** Anyone can craft `/s?p=` and share it as
+though we said it, which makes it a defacement vector on our own domain.
+`decode` refuses rather than repairs - one bad leg rejects the whole slip - and
+every field is escaped at the point of use. Field separators are control
+characters so no delimiter can be smuggled inside a team name.
+
+Not built yet: a per-slip preview image (`lib/ogcard.js` already renders PNGs
+in pure Node, so it is close), and grading a slip whose games have finished.
+
 ## Key architecture notes
 - Single-file SPA: `public/index.html` (~5000 lines, all UI + logic).
   **It is both source and build output** - the prebuild only rewrites it under

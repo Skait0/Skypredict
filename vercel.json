@@ -24,6 +24,10 @@
     "api/bet9ja.js": {
       "maxDuration": 15,
       "memory": 256
+    },
+    "api/s.js": {
+      "maxDuration": 10,
+      "memory": 256
     }
   },
   "crons": [
@@ -68,6 +72,12 @@
           "value": "public, s-maxage=3600, stale-while-revalidate=86400"
         }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/s",
+      "destination": "/api/s"
     }
   ],
   "cleanUrls": true
