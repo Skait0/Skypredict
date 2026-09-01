@@ -2381,6 +2381,30 @@ html.mode-live #live{display:block}
 /* Book is the hero of the bar: it takes all remaining width beside the two
    compact icon actions. */
 .bld-foot .book-btn{flex:1 1 auto}
+/* Which bookmaker the code is for.
+   Above the foot rather than in it: that bar is sticky and budgeted to a
+   320px phone - two icon buttons and a Get code that takes the rest - and a
+   third control in there pushed Book onto its own line. This is also a
+   setting rather than an action, so it reads better as a quiet line above
+   the thing it governs. */
+.bookpick{display:flex;align-items:center;gap:7px;margin-top:12px;flex-wrap:wrap}
+.bookpick-l{font-size:11px;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--faint);margin-right:1px}
+.bp{font:inherit;font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:99px;
+  background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);
+  cursor:pointer;white-space:nowrap;
+  transition:background .15s,color .15s,border-color .15s,transform .12s}
+.bp:active{transform:scale(.96)}
+.bp.on{background:var(--red);border-color:var(--red);color:#fff}
+/* Hover only where there is a real pointer - a phone would otherwise keep the
+   hover state stuck on the last pill tapped. */
+@media(hover:hover){
+  .bp:hover{background:var(--card-2);color:var(--text);border-color:var(--soft)}
+  .bp.on:hover{background:var(--red);color:#fff;filter:brightness(1.08)}
+}
+/* How many of the slip this book can actually take, so the choice is informed
+   rather than a coin toss. */
+.bp small{display:inline;font-size:10.5px;font-weight:700;opacity:.72;margin-left:4px}
 .bld-note{font-size:12px;color:var(--soft);margin-top:10px;text-align:center}
 #bookResult{margin-top:14px}
 /* Compact centred modal for the booking code */
@@ -4103,6 +4127,7 @@ footer{margin-top:26px;padding-top:18px;
     <!-- UNIFIED OUTPUT -->
     <div class="bld-stats stage-in stage-in-3" id="bldStats" data-parallax="0.5"></div>
     <div id="slip" data-parallax="0.3"></div>
+    <div class="bookpick" data-bookpick="bld" role="group" aria-label="Bookmaker"></div>
     <div class="bld-foot stage-in stage-in-4" id="bldFoot" data-parallax="0.2">
       <button class="clear-btn" id="shuffleBtn" type="button" aria-label="Shuffle" title="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
       <button class="clear-btn" id="clearBtn" type="button" aria-label="Clear" title="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg></button>
@@ -4231,6 +4256,7 @@ footer{margin-top:26px;padding-top:18px;
     <button class="sheet-collapse" id="mySheet-x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>Collapse</span></button>
   </div>
   <div class="sheet-body" id="mySheetBody"></div>
+  <div class="bookpick" data-bookpick="my" role="group" aria-label="Bookmaker"></div>
   <div class="mysheet-foot" id="mySheetFoot" hidden>
     <div class="bld-odds"><i>Total odds</i><b id="myTotOdds">-</b></div>
     <!-- Only for a conjured slip: reshuffling a slip somebody picked by hand
@@ -6288,7 +6314,8 @@ const BOOK_URL="https://web-production-798c0.up.railway.app/api/generate-booking
 /* SportyBet's share endpoint is intermittently flaky - it rejects or times out
    on a first hit and works on retry. Retry up to 3x with backoff so the user
    never has to. Only retries on network/5xx/no-code, never on a clean rejection. */
-function bookFetch(sel){
+function bookFetch(sel,B){
+  B=B||curBook();
   var tries=0;
   /* Without a deadline a request that never settles - the API restarting, a
      phone that lost signal mid-post - left the button reading "Booking..."
@@ -6301,7 +6328,7 @@ function bookFetch(sel){
   function attempt(){
     tries++;
     var to=withTimeout(15000);
-    return fetch(BOOK_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+    return fetch(B.book,{method:"POST",headers:{"Content-Type":"application/json"},
       signal:to.signal,
       body:JSON.stringify({selections:sel})})
       .then(function(r){to.done();
@@ -6314,7 +6341,11 @@ function bookFetch(sel){
           return d;
         });},function(e){to.done();throw e;})
       .then(function(d){
-        if(d&&d.success&&d.booking_code) return d;
+        if(d&&d.success&&B.codeOf(d)) return d;
+        /* A named refusal is an answer, not a blip. Retrying it spends two
+           more round trips to be told the same thing, and delays the retry
+           that actually helps - the one without those legs. */
+        if(d&&d.unbookable&&d.unbookable.length){ d._kind="refused"; return d; }
         if(tries<3) return new Promise(function(res){setTimeout(res,600*tries);}).then(attempt);
         d=d||{}; d._kind="refused"; return d;
       })
@@ -6340,7 +6371,8 @@ function bookReason(d){
    wherever it happens and says what to do next. The host sleeps when it is
    quiet, and a first-time visitor is the most likely person to wake it - which
    is exactly who was being told, unhelpfully, "Couldn't generate a code". */
-function bookErrHTML(d){
+function bookErrHTML(d,B){
+  B=B||curBook();
   var kind=d&&d._kind, why=bookReason(d);
   if(kind==="timeout")
     return "<div class='code-err'><b>The booking service didn't answer in time.</b>"+
@@ -6349,7 +6381,7 @@ function bookErrHTML(d){
   if(kind==="net")
     return "<div class='code-err'><b>Couldn't reach the booking service.</b>"+
       "<span>Check your connection and try again. Your slip is saved either way.</span></div>";
-  return "<div class='code-err'><b>SportyBet wouldn't take this slip.</b>"+
+  return "<div class='code-err'><b>"+esc(B.label)+" wouldn't take this slip.</b>"+
     (why?"<span>"+esc(why)+"</span>"
        :"<span>One of the picks may have just closed. Remove a leg and try again.</span>")+
     "</div>";
@@ -6373,26 +6405,30 @@ function bookErrHTML(d){
    the local filter only when it says nothing. Clearing the odd as we go keeps
    the board from advertising a price that cannot be booked, and stops the same
    slip failing the same way on the next tap. */
-function dropUnbookable(picks,d){
+function dropUnbookable(picks,d,B){
+  B=B||curBook();
   var bad=(d&&d.unbookable)||[];
+  /* Keyed on the id THIS book used, not on the pick's SportyBet id: the
+     server echoes back whatever we sent it, so matching on the wrong one
+     drops nothing and the retry resends the same doomed slip. */
   if(bad.length){
     var kill={};
     bad.forEach(function(b){kill[b.eventId+"|"+b.prediction]=1;});
-    var kept=picks.filter(function(c){return !kill[c.eventId+"|"+c.code];});
+    var key=function(c){return bookIdOf(c,B)+"|"+c.code;};
+    var kept=picks.filter(function(c){return !kill[key(c)];});
     /* Our price for that market was wrong. Forget it rather than keep showing
        it - the pre-flight and the board both read this. */
     picks.forEach(function(c){
-      if(!kill[c.eventId+"|"+c.code]) return;
+      if(!kill[key(c)]) return;
       var f=c.f||fixtureById(c.id);
-      if(f&&f.sportyOdds) delete f.sportyOdds[c.code];});
+      if(f&&f[B.odds]) delete f[B.odds][c.code];});
     return kept;
   }
-  return picks.filter(function(c){
-    var f=c.f||fixtureById(c.id);
-    var o=f&&f.sportyOdds&&f.sportyOdds[c.code];
-    return o&&o>1.01;});
+  return picks.filter(function(c){return B.priced(c);});
 }
 const SPORTY_URL="https://www.sportybet.com/ng/?shareCode=";
+const B9_URL="https://sports.bet9ja.com/?BookABet=";
+const B9_BOOK_URL="https://web-production-798c0.up.railway.app/api/bet9ja/booking-code";
 /* The same booking code loads the same slip on football.com, which until now
    the modal only mentioned in a footnote - leaving anyone who uses that app to
    copy the code and find their own way there. */
@@ -6886,6 +6922,107 @@ function attachEventIds(sporty,B){
     " already kicked off and are no longer listed)");}catch(e){}
   return hits;
 }
+
+/* ---- the booking half of a bookmaker -----------------------------------
+   Below attachEventIds on purpose. The matching tests evaluate the source
+   from `var BOOKS={` to the end of attachEventIds, so anything in that
+   range runs when they do - and this half needs endpoints, localStorage
+   and a DOM. The table above is shared; everything that books lives here. */
+/* Which book the buttons act on. Remembered, because somebody who banks with
+   Bet9ja banks with Bet9ja every time and should not have to say so twice. */
+var BOOK_KEY="sw.book";
+var BOOKMAKER="sporty";
+try{ var _b=localStorage.getItem(BOOK_KEY); if(_b&&BOOKS[_b]) BOOKMAKER=_b; }catch(e){}
+function curBook(){ return BOOKS[BOOKMAKER]||BOOKS.sporty; }
+function setBook(k){
+  if(!BOOKS[k]||k===BOOKMAKER) return;
+  BOOKMAKER=k;
+  try{ localStorage.setItem(BOOK_KEY,k); }catch(e){}
+  /* The badges on every leg say whether THIS book has the game, so they all
+     change meaning at once. */
+  try{ renderBuilder(); }catch(e){}
+  try{ if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet(); }catch(e){}
+  try{ paintBookPickers(); }catch(e){}
+}
+/* The event id this book knows the fixture by. Picks carry SportyBet's id
+   inline from when they were built, so read the fixture rather than the pick -
+   one of the two ids would otherwise always be missing. */
+function bookWire(){
+  BOOKS.sporty.book=BOOK_URL;
+  BOOKS.sporty.open=SPORTY_URL;
+  BOOKS.sporty.sel=function(c){return {eventId:bookIdOf(c,BOOKS.sporty),prediction:c.code};};
+  BOOKS.sporty.codeOf=function(d){return d&&d.booking_code;};
+  /* SportyBet lists team totals on roughly half its card and one leg it
+     cannot take rejects the whole ticket, so a real price in the listing is
+     the proof the market exists. */
+  BOOKS.sporty.priced=function(c){
+    var f=(c&&c.f)||fixtureById(c&&c.id);
+    var o=f&&f.sportyOdds&&f.sportyOdds[c.code];
+    return !!(o&&o>1.01);
+  };
+
+  BOOKS.bet9ja.book=B9_BOOK_URL;
+  BOOKS.bet9ja.open=B9_URL;
+  BOOKS.bet9ja.sel=function(c){return {eventId:bookIdOf(c,BOOKS.bet9ja),code:c.code};};
+  BOOKS.bet9ja.codeOf=function(d){return d&&d.code;};
+  /* Bet9ja is judged on the event, not on the listed price, and that is not
+     an oversight. Their per-league feed ignores the market group, so it never
+     carries a team-goals price - but the booking route reads the event itself,
+     which has about thirteen hundred markets, and books it happily. Requiring
+     a listed price here would refuse legs the bookmaker will take. If it turns
+     out not to price one, it now says so by name and the retry drops it. */
+  BOOKS.bet9ja.priced=function(c){ return !!bookIdOf(c,BOOKS.bet9ja); };
+}
+function bookIdOf(c,B){
+  B=B||curBook();
+  var f=(c&&c.f)||fixtureById(c&&c.id);
+  /* The fixture first, because a later match run updates it and the pick's
+     copy is a snapshot from when the pick was made. The pick second, because
+     picks are built carrying `eventId` and one can outlive the fixture it came
+     from - a slip restored from storage after the board has moved on. Reading
+     only the fixture dropped exactly those legs. */
+  return (f&&f[B.id])||(c&&c[B.id])||null;
+}
+bookWire();
+
+/* The picker. Two pills, each carrying how much of the slip that book can
+   take - the count is the whole reason this is a choice and not a preference,
+   because Bet9ja does not carry every game SportyBet does. */
+function bookCounts(){
+  var picks=[];
+  try{
+    if($("mySheet")&&$("mySheet").classList.contains("on")){
+      picks=MYSLIP.map(function(x){return {id:x.id,f:fixtureById(x.id),code:x.code};});
+    } else { picks=BUILD.picks||[]; }
+  }catch(e){ picks=[]; }
+  var out={n:picks.length};
+  for(var k in BOOKS) out[k]=picks.filter(function(c){return !!bookIdOf(c,BOOKS[k]);}).length;
+  return out;
+}
+function paintBookPicker(el){
+  if(!el) return;
+  var c=bookCounts();
+  var html="<span class='bookpick-l'>Book with</span>";
+  ["sporty","bet9ja"].forEach(function(k){
+    var B=BOOKS[k];
+    /* Only worth showing when it is not the whole slip - "12 of 12" on both
+       pills is noise, and on an empty slip there is nothing to count. */
+    var n=(c.n&&c[k]<c.n)?("<small>"+c[k]+"/"+c.n+"</small>"):"";
+    html+="<button type='button' class='bp"+(BOOKMAKER===k?" on":"")+"' data-book='"+k+"'"+
+      " aria-pressed='"+(BOOKMAKER===k)+"'>"+esc(B.label)+n+"</button>";
+  });
+  el.innerHTML=html;
+}
+function paintBookPickers(){
+  try{ document.querySelectorAll("[data-bookpick]").forEach(paintBookPicker); }catch(e){}
+}
+document.addEventListener("click",function(e){
+  var b=e.target&&e.target.closest&&e.target.closest("[data-book]");
+  if(!b) return;
+  e.preventDefault();
+  setBook(b.getAttribute("data-book"));
+  paintBookPickers();
+});
 /* Every leg shows "no ID" until this has run, because that badge is simply
    the absence of an event id. So a single bad moment upstream - the API
    restarting, a phone between cells - used to poison the whole session: the
@@ -6960,6 +7097,7 @@ function repaintAfterMatch(){
   try{
     if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
     if(typeof paint==="function") paint();
+    paintBookPickers();
   }catch(e){}
 }
 
@@ -7399,39 +7537,43 @@ function totalOdds(picks){
   return picks.reduce(function(t,c){return t*legOdd(c.f,c.code,c.p);},1);
 }
 async function bookSlip(){
+  var B=curBook();
   var picks = BUILD.picks;
-  var bookable=picks.filter(function(c){return c.eventId;});
-  var missing=picks.filter(function(c){return !c.eventId;});
+  var has=function(c){return !!bookIdOf(c,B);};
+  var bookable=picks.filter(has);
+  var missing=picks.filter(function(c){return !has(c);});
 
-  /* If some picks lack eventId, try to match them first before giving up */
-  if(missing.length > 0){
-    $("bookResult").innerHTML="<div class='code-info'>Matching SportyBet events...</div>";
+  /* If some picks have no id for this book, try to match them first before
+     giving up. Only SportyBet is worth awaiting - Bet9ja loads once at boot
+     and a game it does not carry will not appear by asking again. */
+  if(missing.length > 0 && B.key==="sporty"){
+    $("bookResult").innerHTML="<div class='code-info'>Matching "+esc(B.label)+" events...</div>";
     await loadSporty();
     /* Re-evaluate after matching */
     picks = BUILD.picks;  // refresh in case DATA.fixtures updated
-    bookable = picks.filter(function(c){return c.eventId;});
-    missing = picks.filter(function(c){return !c.eventId;});
+    bookable = picks.filter(has);
+    missing = picks.filter(function(c){return !has(c);});
   }
 
   if(!bookable.length){
     $("bookResult").innerHTML="<div class='code-err'>None of these games are on "+
-      "SportyBet right now, so a code can't be created. Try lowering the risk, or "+
+      esc(B.label)+" right now, so a code can't be created. Try lowering the risk, or "+
       "check back nearer kickoff.</div>";
     return;
   }
   if(missing.length){
     $("bookResult").innerHTML="<div class='confirm-card'><p>"+missing.length+
-      " game"+(missing.length===1?" isn't":"s aren't")+" available on SportyBet yet. "+
+      " game"+(missing.length===1?" isn't":"s aren't")+" available on "+esc(B.label)+" yet. "+
       "Book the other "+bookable.length+" without "+(missing.length===1?"it":"them")+"?</p>"+
       "<div class='ca'><button class='confirm-go' type='button'>Book "+bookable.length+
       " game"+(bookable.length===1?"":"s")+"</button>"+
       "<button class='confirm-cancel' type='button'>Cancel</button></div></div>";
     $("bookResult").querySelector(".confirm-go").addEventListener("click",function(){
-      if(!confirmDropUnpriced(bookable,"bookResult",doBook)) doBook(bookable);});
+      if(!confirmDropUnpriced(bookable,"bookResult",doBook,B)) doBook(bookable);});
     $("bookResult").querySelector(".confirm-cancel").addEventListener("click",function(){$("bookResult").innerHTML="";});
     return;
   }
-  if(confirmDropUnpriced(bookable,"bookResult",doBook)) return;
+  if(confirmDropUnpriced(bookable,"bookResult",doBook,B)) return;
   doBook(bookable);
 }
 /* Does SportyBet actually price this exact pick?
@@ -7440,11 +7582,9 @@ async function bookSlip(){
    all of them (team totals are missing on roughly half its card), and one leg
    it cannot take rejects the whole ticket. A real odd in sportyOdds is proof
    the market exists, because that number came from SportyBet. */
-function hasSportyMarket(c){
-  var f=(c&&c.f)||fixtureById(c&&c.id);
-  var o=f&&f.sportyOdds&&f.sportyOdds[c.code];
-  return !!(o&&o>1.01);
-}
+/* Kept as a name because the board and the badges still ask specifically
+   about SportyBet. The pre-flight asks the CURRENT book instead. */
+function hasSportyMarket(c){ return BOOKS.sporty.priced(c); }
 /* Ask before booking rather than after failing.
    Both slips used to send everything, let SportyBet refuse the lot, and then
    quietly retry a subset - which showed "SportyBet wouldn't take this slip"
@@ -7452,22 +7592,31 @@ function hasSportyMarket(c){
    was the problem. The legs that cannot be placed are knowable up front, so
    the choice belongs to the reader before the ticket is spent.
    Returns true when it has taken over and is waiting on an answer. */
-function confirmDropUnpriced(picks,target,go){
-  var priced=picks.filter(hasSportyMarket);
+function confirmDropUnpriced(picks,target,go,B){
+  B=B||curBook();
+  var priced=picks.filter(function(c){return B.priced(c);});
   var un=picks.length-priced.length;
   if(!un) return false;
   var el=$(target); if(!el) return false;
+  /* Bet9ja is judged on whether it carries the GAME, so the honest sentence
+     is about the game and not about the market - saying it "isn't offering
+     that market" would be a guess, and usually a wrong one. */
+  var byEvent=(B.key==="bet9ja");
+  var missT=byEvent?"doesn't have "+(un===1?"this game":"these games"):
+                    "isn't offering "+(un===1?"that market":"those markets");
   if(!priced.length){
-    el.innerHTML="<div class='code-err'><b>SportyBet isn't offering "+
-      (picks.length===1?"this market":"any of these markets")+" right now.</b>"+
-      "<span>Swap the pick"+(picks.length===1?"":"s")+" for another market, or try again nearer kickoff.</span></div>";
+    el.innerHTML="<div class='code-err'><b>"+esc(B.label)+" "+
+      (byEvent?("doesn't have "+(picks.length===1?"this game":"any of these games")+" right now."):
+               ("isn't offering "+(picks.length===1?"this market":"any of these markets")+" right now."))+"</b>"+
+      "<span>"+(byEvent?"Try the other bookmaker, or a different game.":
+        "Swap the pick"+(picks.length===1?"":"s")+" for another market, or try again nearer kickoff.")+"</span></div>";
     return true;
   }
-  var names=picks.filter(function(c){return !hasSportyMarket(c);})
+  var names=picks.filter(function(c){return !B.priced(c);})
     .map(function(c){var f=(c&&c.f)||fixtureById(c.id);
       return f?(f.home+" v "+f.away):null;}).filter(Boolean).slice(0,4);
   el.innerHTML="<div class='confirm-card'><p><b>"+un+" pick"+(un===1?"":"s")+
-    " can't be booked</b> - SportyBet isn't offering "+(un===1?"that market":"those markets")+
+    " can't be booked</b> - "+esc(B.label)+" "+missT+
     " on "+(un===1?"this game":"these games")+"."+
     (names.length?"<span class='cf-list'>"+names.map(esc).join("<br>")+
       (un>names.length?"<br>and "+(un-names.length)+" more":"")+"</span>":"")+
@@ -7478,32 +7627,34 @@ function confirmDropUnpriced(picks,target,go){
   el.querySelector(".confirm-cancel").addEventListener("click",function(){el.innerHTML="";});
   return true;
 }
-function doBook(picks,retried){
-  var sel=picks.map(function(c){return {eventId:c.eventId,prediction:c.code};});
+function doBook(picks,retried,B){
+  B=B||curBook();
+  var sel=picks.map(function(c){return B.sel(c);});
   if(!sel.length) return;
   BUILD.booking=true; renderBuilder();
   /* Not on a retry: the caller has just written which pick it dropped and
      why, and clearing here wiped that within the same tick - so the note
      never reached the screen and the recovery looked like a stall. */
   if(!retried) $("bookResult").innerHTML="";
-  bookFetch(sel)
+  bookFetch(sel,B)
     .then(function(d){
       BUILD.booking=false; renderBuilder();
-      if(d&&d.success&&d.booking_code){
-        showCode(d.booking_code,"bookResult",function(){
-          rememberSlip(picks,totalOdds(picks),d.booking_code);});
+      var code=B.codeOf(d);
+      if(d&&d.success&&code){
+        showCode(code,"bookResult",function(){
+          rememberSlip(picks,totalOdds(picks),code);},B);
       } else {
         /* SportyBet can reject individual markets ("no market") when our pick
            used an estimated odd for a market it doesn't list. Retry once with
            only the legs carrying real SportyBet odds - those are verified to
            exist. Toggling slider/wizard used to be the manual workaround. */
         var rejected=!d||!d.success;
-        var safe=dropUnbookable(picks,d);
+        var safe=dropUnbookable(picks,d,B);
         if(rejected&&!retried&&safe.length>=1&&safe.length<picks.length){
           $("bookResult").innerHTML="<div class='code-info'>Retrying without unavailable markets...</div>";
-          doBook(safe,true);
+          doBook(safe,true,B);
         } else {
-          $("bookResult").innerHTML=bookErrHTML(d);
+          $("bookResult").innerHTML=bookErrHTML(d,B);
         }
       }
     })
@@ -7537,7 +7688,8 @@ function clearSlip(){
 /* `save` is a function that files this slip in Your slips, or null when
    there is nothing to file. Passing it makes saving an offer rather than
    something that already happened. */
-function showCode(code,hostId,save){
+function showCode(code,hostId,save,B){
+  B=B||curBook();
   var old=document.getElementById("codeModal");
   if(old) old.remove();
   var wrap=document.createElement("div");
@@ -7547,7 +7699,7 @@ function showCode(code,hostId,save){
   wrap.innerHTML="<div class='code-card code-card--modal' role='dialog' aria-modal='true' aria-label='Booking code'>"+
     "<button class='code-x' type='button' aria-label='Close'>"+
       "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' aria-hidden='true'><path d='M6 6l12 12M18 6L6 18'/></svg></button>"+
-    "<i>Your SportyBet booking code</i>"+
+    "<i>Your "+esc(B.label)+" booking code</i>"+
     "<b>"+esc(code)+"</b>"+
     /* Three rows, narrowing to a point. What you do with the code sits at the
        top as a small pair; the one thing most people are here to do sits alone
@@ -7568,17 +7720,17 @@ function showCode(code,hostId,save){
       "<span class='code-keep-n'>Only saved slips count towards your record.</span>"+
     "</div>":"")+
     "<div class='code-opens'>"+
-      "<a class='code-open' href='"+SPORTY_URL+encodeURIComponent(code)+
-        "' target='_blank' rel='noopener'>Open in SportyBet</a>"+
+      "<a class='code-open' href='"+B.open+encodeURIComponent(code)+
+        "' target='_blank' rel='noopener'>Open in "+esc(B.label)+"</a>"+
     "</div>"+
     /* Same code, same slip, other book. This was a footnote saying it "also
        works on football.com", which left anyone who uses that app to copy the
        code and go and find it. The sentence stays - it is what makes the pill
        make sense - but the name is now the way in. */
-    "<p class='code-also'>Works on "+
+    (B.key==="sporty"?"<p class='code-also'>Works on "+
       "<a class='code-open-alt' href=\""+esc(_fb.href)+"\""+
         (_fb.blank?" target='_blank'":"")+" rel='noopener'>"+
-        "football<span class='fb-dot'>.</span>com</a></p>"+
+        "football<span class='fb-dot'>.</span>com</a></p>":"")+
     "</div>";
   document.body.appendChild(wrap);
   function close(){wrap.remove();}
@@ -7601,7 +7753,7 @@ function shareText(picks,odds,code){
   var lines=picks.slice(0,6).map(function(c){return "\u2022 "+c.f.home+" v "+c.f.away+" - "+
     mLabel(c.f,c.code).replace(/<[^>]+>/g,"")+" ("+P0(c.p)+"%)";});
   var t="\u26bd My SoccerWizard slip - "+picks.length+" games @ \u00d7"+odds.toFixed(2)+"\n"+lines.join("\n");
-  if(code) t+="\n\nSportyBet code: "+code;
+  if(code) t+="\n\n"+curBook().label+" code: "+code;
   return t;
 }
 function doShare(text,url){
@@ -7785,22 +7937,31 @@ function confirmBookAll(){
 }
 if($("bookAll")) $("bookAll").addEventListener("click",confirmBookAll);
 
-function doBookList(picks,resultId,btnId,label){
-  var sel=picks.map(function(c){return {eventId:c.eventId,prediction:c.code};});
-  if(!sel.length) return;
+function doBookList(picks,resultId,btnId,label,B){
+  B=B||curBook();
+  /* A pick with no id at this book cannot be sent - the server would be asked
+     to price `null` and refuse the whole slip over it. */
+  var going=picks.filter(function(c){return !!bookIdOf(c,B);});
+  var sel=going.map(function(c){return B.sel(c);});
+  if(!sel.length){
+    $(resultId).innerHTML="<div class='code-err'>None of these games are on "+
+      esc(B.label)+" right now, so a code can't be created.</div>";
+    return;
+  }
   var btn=$(btnId); if(btn){btn.disabled=true;btn.textContent="Booking\u2026";}
   $(resultId).innerHTML="";
-  bookFetch(sel)
+  bookFetch(sel,B)
     .then(function(d){
       if(btn){btn.disabled=false;btn.textContent=label;}
-      if(d&&d.success&&d.booking_code){
-        showCode(d.booking_code,resultId,function(){
-          rememberSlip(picks,totalOdds(picks),d.booking_code);});
+      var code=B.codeOf(d);
+      if(d&&d.success&&code){
+        showCode(code,resultId,function(){
+          rememberSlip(going,totalOdds(going),code);},B);
       }
-      else{ $(resultId).innerHTML=bookErrHTML(d); }
+      else{ $(resultId).innerHTML=bookErrHTML(d,B); }
     })
     .catch(function(){ if(btn){btn.disabled=false;btn.textContent=label;}
-      $(resultId).innerHTML=bookErrHTML({_kind:"net"}); });
+      $(resultId).innerHTML=bookErrHTML({_kind:"net"},B); });
 }
 /* ---- Slip of the Day: safe pre-built acca ---- */
 var SOTD=[];
@@ -9236,6 +9397,7 @@ function closeMySheet(){$("scrim").classList.remove("on");$("mySheet").classList
   /* Only release the page if no other sheet is still up. */
   if(!$("sheet")||!$("sheet").classList.contains("on")) lockBody(false);}
 function renderMySheet(){
+  paintBookPickers();
   var body=$("mySheetBody"); if(!body) return;
   MYSLIP=MYSLIP.filter(function(x){var f=fixtureById(x.id);return !f||notStarted(f);});
   var _b=MYSLIP.length;
@@ -9305,43 +9467,45 @@ async function bookMy(){
      odds on screen, and blocking booking from My slip entirely.
      The board path always passed the fixture, which is why this survived
      testing there and shipped anyway. */
+  var B=curBook();
+  var has=function(c){return !!bookIdOf(c,B);};
   var picks=MYSLIP.map(function(x){var f=fixtureById(x.id);
     return {id:x.id,f:f,code:x.code,p:x.p,eventId:(f&&f.eventId)||null};});
-  var bookable=picks.filter(function(c){return c.eventId;});
-  var missing=picks.filter(function(c){return !c.eventId;});
+  var bookable=picks.filter(has);
+  var missing=picks.filter(function(c){return !has(c);});
 
-  /* If some picks lack eventId, try to match them first before giving up */
-  if(missing.length > 0){
-    $("myBookResult").innerHTML="<div class='code-info'>Matching SportyBet events…</div>";
+  /* Only SportyBet is worth awaiting - see bookSlip. */
+  if(missing.length > 0 && B.key==="sporty"){
+    $("myBookResult").innerHTML="<div class='code-info'>Matching "+esc(B.label)+" events…</div>";
     await loadSporty();
     /* Re-evaluate after matching */
     picks=MYSLIP.map(function(x){var f=fixtureById(x.id);
       return {id:x.id,f:f,code:x.code,p:x.p,eventId:(f&&f.eventId)||null};});
-    bookable=picks.filter(function(c){return c.eventId;});
-    missing=picks.filter(function(c){return !c.eventId;});
+    bookable=picks.filter(has);
+    missing=picks.filter(function(c){return !has(c);});
     if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
   }
 
-  if(!bookable.length){$("myBookResult").innerHTML="<div class='code-err'>None of these are on SportyBet right now, so a code can't be created.</div>";return;}
+  if(!bookable.length){$("myBookResult").innerHTML="<div class='code-err'>None of these are on "+esc(B.label)+" right now, so a code can't be created.</div>";return;}
   var byEv={},dups=0;
-  bookable.forEach(function(c){byEv[c.eventId]=(byEv[c.eventId]||0)+1;if(byEv[c.eventId]===2)dups++;});
+  bookable.forEach(function(c){var k=bookIdOf(c,B);byEv[k]=(byEv[k]||0)+1;if(byEv[k]===2)dups++;});
   if(dups){
     var uniq=[],seenEv={};
-    bookable.forEach(function(c){if(!seenEv[c.eventId]){seenEv[c.eventId]=1;uniq.push(c);}});
-    $("myBookResult").innerHTML="<div class='confirm-card'><p>You have the same match picked more than once. SportyBet takes one pick per match - book "+uniq.length+" unique game"+(uniq.length===1?"":"s")+"?</p><div class='ca'><button class='confirm-go' type='button'>Book "+uniq.length+"</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>";
+    bookable.forEach(function(c){var k=bookIdOf(c,B);if(!seenEv[k]){seenEv[k]=1;uniq.push(c);}});
+    $("myBookResult").innerHTML="<div class='confirm-card'><p>You have the same match picked more than once. "+esc(B.label)+" takes one pick per match - book "+uniq.length+" unique game"+(uniq.length===1?"":"s")+"?</p><div class='ca'><button class='confirm-go' type='button'>Book "+uniq.length+"</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>";
     $("myBookResult").querySelector(".confirm-go").addEventListener("click",function(){
-      if(!confirmDropUnpriced(uniq,"myBookResult",doBookMy)) doBookMy(uniq);});
+      if(!confirmDropUnpriced(uniq,"myBookResult",doBookMy,B)) doBookMy(uniq);});
     $("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){$("myBookResult").innerHTML="";});
     return;
   }
   if(missing.length){
-    $("myBookResult").innerHTML="<div class='confirm-card'><p>"+missing.length+" game"+(missing.length===1?" isn't":"s aren't")+" available on SportyBet yet. Book the other "+bookable.length+"?</p><div class='ca'><button class='confirm-go' type='button'>Book "+bookable.length+"</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>";
+    $("myBookResult").innerHTML="<div class='confirm-card'><p>"+missing.length+" game"+(missing.length===1?" isn't":"s aren't")+" available on "+esc(B.label)+" yet. Book the other "+bookable.length+"?</p><div class='ca'><button class='confirm-go' type='button'>Book "+bookable.length+"</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>";
     $("myBookResult").querySelector(".confirm-go").addEventListener("click",function(){
-      if(!confirmDropUnpriced(bookable,"myBookResult",doBookMy)) doBookMy(bookable);});
+      if(!confirmDropUnpriced(bookable,"myBookResult",doBookMy,B)) doBookMy(bookable);});
     $("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){$("myBookResult").innerHTML="";});
     return;
   }
-  if(confirmDropUnpriced(bookable,"myBookResult",doBookMy)) return;
+  if(confirmDropUnpriced(bookable,"myBookResult",doBookMy,B)) return;
   doBookMy(bookable);
 }
 /* Bumped whenever the slip is emptied or rebuilt, so a booking still in the
@@ -9350,21 +9514,23 @@ var MYBOOK_GEN=0;
 function resetMyBookBtn(){
   var b=$("myBookBtn"); if(b){ b.disabled=false; b.textContent="Get code"; }
 }
-function doBookMy(bookable,retried){
-  var sel=bookable.map(function(c){return {eventId:c.eventId,prediction:c.code};});
+function doBookMy(bookable,retried,B){
+  B=B||curBook();
+  var sel=bookable.map(function(c){return B.sel(c);});
   var gen=MYBOOK_GEN;
   var btn=$("myBookBtn"); if(btn){btn.disabled=true;btn.textContent="Booking…";}
   /* Not on a retry: the caller has just written which pick it dropped and
      why, and clearing here wiped that within the same tick - so the note
      never reached the screen and the recovery looked like a stall. */
   if(!retried) $("myBookResult").innerHTML="";
-  bookFetch(sel)
+  bookFetch(sel,B)
     .then(function(d){
       /* Cleared while we waited: this code is for a slip that is gone, so
          showing it would hand somebody a ticket they no longer hold. */
       if(gen!==MYBOOK_GEN) return;
       resetMyBookBtn();
-      if(d&&d.success&&d.booking_code){
+      var _code=B.codeOf(d);
+      if(d&&d.success&&_code){
         /* What was BOOKED, which after a retry is not the whole slip. Taken
            from MYSLIP so the legs keep their labels, but narrowed to the ones
            actually sent - saving all of them would file a ticket claiming
@@ -9374,8 +9540,8 @@ function doBookMy(bookable,retried){
         var _legs=MYSLIP.filter(function(x){return _sent[x.id+"|"+x.code];});
         var _od=_legs.reduce(function(t,x){
           return t*legOdd(fixtureById(x.id),x.code,x.p);},1);
-        showCode(d.booking_code,"myBookResult",function(){
-          rememberSlip(_legs,_od,d.booking_code);});
+        showCode(_code,"myBookResult",function(){
+          rememberSlip(_legs,_od,_code);},B);
       }
       else{
         /* The builder no longer offers a market SportyBet does not list, but a
@@ -9384,7 +9550,7 @@ function doBookMy(bookable,retried){
            unplaceable leg loses all forty, so drop the legs whose odds we
            never verified and try once more. The board's own Get code has done
            this for a while; My slip had nothing and simply failed. */
-        var safe=dropUnbookable(bookable,d);
+        var safe=dropUnbookable(bookable,d,B);
         if(!retried&&safe.length>=1&&safe.length<bookable.length){
           /* Take the refused legs out of the slip itself, not just out of the
              request. Left in, the code says three games while the sheet above
@@ -9405,18 +9571,18 @@ function doBookMy(bookable,retried){
           var _who=function(x){var f=fixtureById(x.id);
             return f?(f.home+" v "+f.away+(x.label?" - "+x.label:"")):(x.label||"One pick");};
           $("myBookResult").innerHTML="<div class='code-info'>"+
-            esc(_n===1?_who(_dropped[0])+" isn't on SportyBet right now"
-                      :_n+" picks aren't on SportyBet right now")+
+            esc(_n===1?_who(_dropped[0])+" isn't on "+B.label+" right now"
+                      :_n+" picks aren't on "+B.label+" right now")+
             " - booking the other "+safe.length+"…</div>";
-          doBookMy(safe,true);
+          doBookMy(safe,true,B);
           return;
         }
-        $("myBookResult").innerHTML=bookErrHTML(d);
+        $("myBookResult").innerHTML=bookErrHTML(d,B);
       }
     }).catch(function(){
       if(gen!==MYBOOK_GEN) return;
       resetMyBookBtn();
-      $("myBookResult").innerHTML=bookErrHTML({_kind:"net"});});
+      $("myBookResult").innerHTML=bookErrHTML({_kind:"net"},B);});
 }
 document.addEventListener("click",function(e){
   var a=e.target.closest&&e.target.closest("[data-add]");
@@ -10202,6 +10368,7 @@ function renderBldDock(){
   }
 }
 function renderBuilder(){
+  paintBookPickers();
   /* The wizard shows the numbers and keeps the slip itself for the sheet. */
   document.documentElement.classList.toggle("wiz-mode",BUILD.mode==="wizard");
   renderBldDock();

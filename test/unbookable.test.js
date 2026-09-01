@@ -45,10 +45,13 @@ function grab(name) {
 }
 
 /* dropUnbookable resolves fixtures through c.f or fixtureById, same as the
-   pre-flight. Here every pick carries its own .f, so the lookup is a stub. */
+   pre-flight. Here every pick carries its own .f, so the lookup is a stub.
+   It also reads the CURRENT book - which fields hold that book's event id and
+   odds - so the real table comes in with it rather than a hand-written one. */
+const BOOKS = require("./books.js");
 const dropUnbookable = new Function(
-  "function fixtureById(){return null;}" + grab("dropUnbookable") +
-  "\nreturn dropUnbookable;")();
+  "function fixtureById(){return null;}" + BOOKS.prelude("sporty") +
+  grab("dropUnbookable") + "\nreturn dropUnbookable;")();
 
 function leg(ev, code, odd) {
   return { id: "id" + ev, eventId: ev, code: code,
@@ -142,7 +145,7 @@ test("a refused leg leaves the slip, not just the request", () => {
      for all four - including the one SportyBet had just refused. Worse, its
      sporty odd had been cleared by then, so legOdd fell back to our own
      estimate and the total was wrong as well as the count. */
-  const i = src.indexOf("var safe=dropUnbookable(bookable,d);");
+  const i = src.indexOf("var safe=dropUnbookable(bookable,d,B);");
   assert.ok(i > 0, "My slip's retry not found");
   const branch = src.slice(i, i + 2200);
   assert.match(branch, /MYSLIP=MYSLIP\.filter\(function\(x\)\{return _keep\[/,
@@ -153,10 +156,14 @@ test("a refused leg leaves the slip, not just the request", () => {
 });
 
 test("the reader is told what was dropped, in plain words", () => {
-  const i = src.indexOf("var safe=dropUnbookable(bookable,d);");
+  const i = src.indexOf("var safe=dropUnbookable(bookable,d,B);");
   const branch = src.slice(i, i + 2200);
-  assert.match(branch, /isn't on SportyBet right now/,
+  /* The bookmaker's name is interpolated now that there are two of them,
+     so the constant part is what can be asserted. */
+  assert.match(branch, /isn't on "\+B\.label\+" right now/,
     "name the situation rather than showing a bare retry spinner");
+  assert.match(branch, /aren't on "\+B\.label\+" right now/,
+    "and the plural too - both used to say SportyBet unconditionally");
   assert.match(branch, /booking the other /,
     "and say what is still happening, so it does not read as a failure");
   assert.match(branch, /f\.home\+" v "\+f\.away/,

@@ -29,6 +29,7 @@ const assert = require("node:assert");
 const fs = require("fs");
 const path = require("path");
 
+const BOOKCTX = require("./books.js");
 const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
 function grab(name) {
   const i = src.search(new RegExp("(?:^|\\n)function " + name + "\\s*\\(", "m"));
@@ -39,8 +40,9 @@ function grab(name) {
 }
 
 /* A stand-in for the one element these functions write into, so the decision
-   can be exercised without a DOM. */
-function harness() {
+   can be exercised without a DOM. `book` is which bookmaker is selected -
+   these functions read that now, and the two books answer differently. */
+function harness(book) {
   const el = { innerHTML: "", _handlers: {},
     querySelector(sel) {
       const key = sel.replace(".", "");
@@ -51,8 +53,10 @@ function harness() {
     "function $(id){return EL;}" +
     "function esc(s){return String(s);}" +
     "function fixtureById(){return null;}" +
+    BOOKCTX.prelude(book) +
     grab("hasSportyMarket") + "\n" + grab("confirmDropUnpriced") + "\n" +
-    "return {hasSportyMarket:hasSportyMarket, confirmDropUnpriced:confirmDropUnpriced, el:EL};"
+    "return {hasSportyMarket:hasSportyMarket, confirmDropUnpriced:confirmDropUnpriced," +
+    " BOOKS:BOOKS, curBook:curBook, bookIdOf:bookIdOf, el:EL};"
   )(el);
   return api;
 }
@@ -178,10 +182,81 @@ test("a leg shaped like My slip's is resolvable", () => {
   const f = { home: "Man United", away: "Ipswich", sportyOdds: { "OVER_1.5": 1.17 } };
   const byId = { "mu-ips": f };
   const api = new Function("BY",
-    "function fixtureById(id){return BY[id]||null;}" +
+    "function fixtureById(id){return BY[id]||null;}" + BOOKCTX.prelude("sporty") +
     grab("hasSportyMarket") + "\nreturn hasSportyMarket;")(byId);
   assert.strictEqual(api({ id: "mu-ips", code: "OVER_1.5" }), true,
     "a leg with only an id must still resolve through fixtureById");
   assert.strictEqual(api({ code: "OVER_1.5" }), false,
     "and one carrying neither id nor fixture cannot resolve - which is the bug");
+});
+
+/* ------------------------------------------------- the second bookmaker */
+
+/* A pick as Bet9ja sees one: the fixture carries both ids, and Bet9ja's league
+   listing has no team-goals price - which is the case that matters. */
+function b9pick(code, opts) {
+  opts = opts || {};
+  return { id: "p", code: code,
+           f: { home: "Ipswich", away: "Liverpool",
+                eventId: opts.sporty === false ? undefined : "sr:1",
+                b9EventId: opts.b9 === false ? undefined : "825683591",
+                sportyOdds: opts.sportyOdds || {},
+                b9Odds: opts.b9Odds || {} } };
+}
+
+test("Bet9ja judges a leg on the game, not on a listed price", () => {
+  /* Their per-league feed ignores the market group, so it never carries a
+     team-goals price. The booking route reads the event itself - about
+     thirteen hundred markets - and takes it happily. Requiring a listed price
+     here would refuse legs the bookmaker will accept, which is the whole
+     reason the two books do not share one rule. */
+  const H = harness("bet9ja");
+  const leg = b9pick("HOME_OVER_0.5", { b9Odds: { "1X": 2.4 } });
+  assert.strictEqual(H.BOOKS.bet9ja.priced(leg), true,
+    "an unlisted market on a game Bet9ja carries is still bookable");
+  assert.strictEqual(H.BOOKS.sporty.priced(leg), false,
+    "SportyBet still needs a real price, because one bad leg loses the ticket");
+});
+
+test("a game Bet9ja does not carry is not bookable there", () => {
+  const H = harness("bet9ja");
+  assert.strictEqual(H.BOOKS.bet9ja.priced(b9pick("1X", { b9: false })), false);
+});
+
+test("each book sends the id that book knows the game by", () => {
+  const H = harness("bet9ja");
+  const leg = b9pick("1X");
+  assert.deepStrictEqual(H.BOOKS.sporty.sel(leg), { eventId: "sr:1", prediction: "1X" });
+  assert.deepStrictEqual(H.BOOKS.bet9ja.sel(leg), { eventId: "825683591", code: "1X" });
+});
+
+test("each book reads its code out of its own answer", () => {
+  const H = harness("sporty");
+  assert.strictEqual(H.BOOKS.sporty.codeOf({ booking_code: "ABC" }), "ABC");
+  assert.strictEqual(H.BOOKS.bet9ja.codeOf({ code: "5PTLZRT" }), "5PTLZRT");
+  /* Crossed over, each must come back empty rather than showing the other's
+     field - a code from the wrong book is worse than no code. */
+  assert.ok(!H.BOOKS.sporty.codeOf({ code: "5PTLZRT" }));
+  assert.ok(!H.BOOKS.bet9ja.codeOf({ booking_code: "ABC" }));
+});
+
+test("the pre-flight names the book it is talking about", () => {
+  /* It said "SportyBet isn't offering that market" whichever book was
+     selected, which on Bet9ja is both the wrong name and the wrong reason. */
+  const H = harness("bet9ja");
+  const stopped = H.confirmDropUnpriced(
+    [b9pick("1X"), b9pick("1X", { b9: false })], "x", function () {}, H.BOOKS.bet9ja);
+  assert.strictEqual(stopped, true, "one unbookable leg must interrupt");
+  assert.match(H.el.innerHTML, /Bet9ja/);
+  assert.doesNotMatch(H.el.innerHTML, /SportyBet/);
+  assert.match(H.el.innerHTML, /doesn't have/,
+    "Bet9ja is judged on the game, so the sentence must be about the game");
+});
+
+test("a fully bookable Bet9ja slip is not interrupted", () => {
+  const H = harness("bet9ja");
+  assert.strictEqual(
+    H.confirmDropUnpriced([b9pick("HOME_OVER_0.5"), b9pick("1X")], "x",
+                          function () {}, H.BOOKS.bet9ja),
+    false, "every game is on Bet9ja, so there is nothing to ask about");
 });
