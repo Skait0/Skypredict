@@ -283,3 +283,42 @@ test("a fully bookable Bet9ja slip is not interrupted", () => {
                           function () {}, H.BOOKS.bet9ja),
     false, "every game is on Bet9ja, so there is nothing to ask about");
 });
+
+/* ------------------------------------------------ the brand marks */
+
+test("each book renders as its own mark, never as bare text", () => {
+  /* The name appears in the code card's title, on their own button, in the
+     pre-flight and in every refusal. If some of those print a plain word the
+     brand shows up half the time and looks like a bug the other half. */
+  const H = harness("sporty");
+  assert.match(H.BOOKS.sporty.mark, /class='sbm'/);
+  assert.match(H.BOOKS.bet9ja.mark, /class='b9m'/);
+  for (const B of [H.BOOKS.sporty, H.BOOKS.bet9ja]) {
+    assert.doesNotMatch(B.mark, /<b[\s>]|<i[\s>]/,
+      "no <b> or <i>: .code-card b is the booking code's own 32px block style");
+  }
+});
+
+test("no user-facing sentence prints the bare label any more", () => {
+  /* esc(B.label) is still right for an aria-label or a title attribute, where
+     markup cannot go. It is wrong in a sentence the reader sees. */
+  const idx = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  const bare = idx.match(/esc\(B\.label\)/g) || [];
+  assert.strictEqual(bare.length, 1,
+    "one left, and it is the picker's aria-label; found " + bare.length);
+  /* The ones that remain must be attributes, not body copy. */
+  const re = /(.{40})esc\(B\.label\)/g;
+  let m;
+  while ((m = re.exec(idx))) {
+    assert.match(m[1], /aria-label|title=/,
+      "a bare label outside an attribute: " + m[1].slice(-40));
+  }
+});
+
+test("the mark takes the ground's colour where the ground is already red", () => {
+  const idx = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  assert.match(idx, /\.code-open \.sbm,\.book-btn \.sbm,\.wsp-go \.sbm,\.slipbar \.sbm\{color:inherit\}/,
+    "red on red is invisible; those four sit on the brand colour already");
+  assert.match(idx, /\.code-card--sb \.code-open \.sbm\{color:var\(--red\)\}/,
+    "except their own button on the code card, which is white");
+});

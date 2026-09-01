@@ -2460,6 +2460,17 @@ html.mode-live #live{display:block}
   border-radius:99px;font-size:9.5px;font-weight:800;letter-spacing:.01em}
 .bp[data-book="sporty"] small{background:rgba(230,57,70,.13);color:var(--red)}
 .bp[data-book="bet9ja"] small{background:rgba(255,255,255,.15);color:#fff}
+/* The SportyBet wordmark. One colour, so it needs no inner spans - but it does
+   need to be a mark rather than a word, so that every place the name appears
+   carries it: the code card's title, their own button, the pre-flight when it
+   says what they cannot take.
+   `currentColor` on a red ground rather than red-on-red. The name sits on
+   white and on near-black in different places, and on their own red button it
+   has to stay white or it disappears - so the mark takes the brand red only
+   where the ground is not already it. */
+.sbm{color:var(--red);font-weight:800;white-space:nowrap}
+.code-open .sbm,.book-btn .sbm,.wsp-go .sbm,.slipbar .sbm{color:inherit}
+.code-card--sb .code-open .sbm{color:var(--red)}
 /* The Bet9ja wordmark: "bet" in their red, "9ja" in their green. Sampled from
    the logo file rather than eyeballed. */
 /* Spans rather than <i>/<b>: ".code-card b" is the booking code's own style -
@@ -3364,13 +3375,30 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 [data-theme="light"] .trust-i.t-sporty{color:#14161a}
 .trust-i.t-sporty::before{background:var(--red)}
 
-/* All three names occupy the same grid cell, so the box is as wide as the
-   widest and the rest of the sentence never moves. Measuring in JS and setting
-   a width would do the same thing worse: it would be a frame late on a webfont
-   and the line would jump once on load. */
-.bkc{display:inline-grid;vertical-align:baseline;font-weight:800}
+/* The slot is SportyBet's width and never changes.
+   Two attempts got here. A slot sized to the LONGEST name left SportyBet - the
+   name showing almost all the time - floating in dead air with a hole before
+   "code". Morphing the width to each name closed the hole but moved the rest
+   of the sentence on every flicker. Both were solving for three equals, and
+   they are not: this is a SportyBet site and the other two are glimpses.
+   So the box is sized to the name that rests in it, and a visitor too wide for
+   that is scaled down to fit. Nothing on the line ever moves, and a name that
+   arrives smaller reads as the aside it is. */
+/* The whole sentence is one flex item. .trust-i is an inline-flex row with a
+   7px gap - that gap is there to space the dotted separators between trust
+   items, and with the words as bare children it was being applied between
+   "Free", the name and "code in one tap" as well. */
+.bk-line{display:inline}
+/* min-width:0 because a grid container's automatic minimum is its content, so
+   the width set below was being floored at the widest name and ignored - the
+   morph did nothing until this was here. */
+/* min-width:0 because a grid container's automatic minimum is its content:
+   without it the box is floored at the widest name and the width set in
+   startBookCycle is silently ignored. A scaled child still occupies its full
+   layout width, so this is load-bearing even though nothing here animates. */
+.bkc{display:inline-grid;vertical-align:baseline;font-weight:800;min-width:0}
 .bkc-i{grid-area:1/1;font-style:normal;white-space:nowrap;opacity:0;
-  justify-self:start;transition:opacity .18s linear}
+  justify-self:center;transition:opacity .16s linear}
 .bkc-i.on{opacity:1}
 .bkc-i[data-bk="sporty"]{color:var(--red)}
 .bkc-i[data-bk="b9"] .b9r{color:var(--b9-red)}
@@ -3382,22 +3410,65 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 [data-theme="light"] .bkc-i[data-bk="fb"]{color:#282450}
 .bkc-i[data-bk="fb"] .fb-dot{color:#9FF611;font-weight:900}
 
-/* The switch. Two clipped copies slide against each other for a moment - the
-   RGB split of a bad signal - then the name is simply the next one. Short on
-   purpose: this is a hero line, not a screensaver. */
-.bkc-i.glx{animation:bkGlitch .26s steps(2,end) 2}
-@keyframes bkGlitch{
-  0%   {clip-path:inset(0 0 0 0);      transform:translate(0)}
-  20%  {clip-path:inset(18% 0 52% 0);  transform:translate(-2px,-1px)}
-  40%  {clip-path:inset(62% 0 12% 0);  transform:translate(2px,1px)}
-  60%  {clip-path:inset(34% 0 38% 0);  transform:translate(-1px,1px)}
-  80%  {clip-path:inset(8% 0 74% 0);   transform:translate(1px,-1px)}
-  100% {clip-path:inset(0 0 0 0);      transform:translate(0)}
+/* The switch.
+ *
+ * Three things do the work, and it is the combination rather than any one of
+ * them that stops this reading as a cheap CSS trick:
+ *
+ *   channel split   a red and a cyan copy pulled a couple of pixels apart, the
+ *                   chromatic aberration of a signal losing sync. This is the
+ *                   part the eye recognises as "glitch" and it is done with
+ *                   text-shadow, so there is no second element to keep aligned.
+ *   torn bands      horizontal slices displaced in opposite directions, and the
+ *                   outgoing name's bands are the complement of the incoming
+ *                   one's - so for about a tenth of a second both names are on
+ *                   screen in alternating strips and the eye sees one becoming
+ *                   the other rather than a crossfade.
+ *   hard cuts       steps(1) between keyframes. Interpolating turns tearing
+ *                   into sliding, which reads as motion graphics; digital
+ *                   failure does not ease.
+ *
+ * The bands are irregular on purpose. Evenly spaced ones look like a venetian
+ * blind, and real signal loss has no rhythm.
+ */
+.bkc-i.glx-out{animation:bkOut .22s steps(1,end) both}
+.bkc-i.glx-in{animation:bkIn .3s steps(1,end) both}
+@keyframes bkOut{
+  0%  {clip-path:inset(0 0 0 0);     transform:translate(0);      text-shadow:none}
+  22% {clip-path:inset(0 0 62% 0);   transform:translate(-3px,0);
+       text-shadow:2px 0 rgba(255,26,72,.95),-2px 0 rgba(0,229,255,.8)}
+  48% {clip-path:inset(46% 0 22% 0); transform:translate(4px,0);
+       text-shadow:-3px 0 rgba(255,26,72,.9),3px 0 rgba(0,229,255,.75)}
+  72% {clip-path:inset(76% 0 0 0);   transform:translate(-2px,0);
+       text-shadow:1px 0 rgba(255,26,72,.7),-1px 0 rgba(0,229,255,.6)}
+  100%{clip-path:inset(0 0 100% 0);  transform:translate(0);      text-shadow:none}
+}
+@keyframes bkIn{
+  0%  {clip-path:inset(0 0 100% 0);  transform:translate(0);      text-shadow:none}
+  18% {clip-path:inset(58% 0 0 0);   transform:translate(3px,0);
+       text-shadow:-2px 0 rgba(255,26,72,.9),2px 0 rgba(0,229,255,.8)}
+  40% {clip-path:inset(14% 0 54% 0); transform:translate(-4px,0);
+       text-shadow:3px 0 rgba(255,26,72,.85),-3px 0 rgba(0,229,255,.7)}
+  62% {clip-path:inset(0 0 12% 0);   transform:translate(2px,0);
+       text-shadow:-1px 0 rgba(255,26,72,.6),1px 0 rgba(0,229,255,.5)}
+  /* One clean frame before it settles, so the name arrives rather than fades. */
+  78% {clip-path:inset(0 0 0 0);     transform:translate(-1px,0);
+       text-shadow:1px 0 rgba(255,26,72,.3),-1px 0 rgba(0,229,255,.25)}
+  100%{clip-path:inset(0 0 0 0);     transform:translate(0);      text-shadow:none}
+}
+/* The line itself twitches once, a single pixel. Without it the name tears
+   while the words around it sit perfectly still, and the effect reads as
+   something happening TO the text rather than to the signal carrying it. */
+.bkc.tw{animation:bkTwitch .22s steps(1,end)}
+@keyframes bkTwitch{
+  0%,100%{transform:translateX(0)}
+  30%    {transform:translateX(1px)}
+  65%    {transform:translateX(-1px)}
 }
 /* A glitch in the first screenful is exactly the motion that hurts people who
-   have told their machine they do not want it. They get the first name, still. */
+   have told their machine they do not want it. They get SportyBet, still. */
 @media (prefers-reduced-motion: reduce){
-  .bkc-i.glx{animation:none}
+  .bkc-i.glx-out,.bkc-i.glx-in,.bkc.tw{animation:none}
 }
 
 /* The board announces itself. scroll-margin keeps the heading clear of the
@@ -4126,7 +4197,7 @@ footer{margin-top:26px;padding-top:18px;
     <h1 class="parallax-forward stage-in stage-in-1" data-parallax="1.2">Who's winning <span>today?</span></h1>
     <div class="trust parallax-shallow stage-in stage-in-2" data-parallax="0.8">
       <!-- The thing most people come for, said plainly and said first. -->
-      <span class="trust-i t-sporty">Free <b class="bkc" id="bkCycle" aria-label="SportyBet, Bet9ja or football.com"><i class="bkc-i on" data-bk="sporty">SportyBet</i><i class="bkc-i" data-bk="b9"><span class="b9r">bet</span><span class="b9g">9ja</span></i><i class="bkc-i" data-bk="fb">football<span class="fb-dot">.</span>com</i></b> code in one tap</span>
+      <span class="trust-i t-sporty"><span class="bk-line">Free <b class="bkc" id="bkCycle" aria-label="SportyBet, Bet9ja or football.com"><i class="bkc-i on" data-bk="sporty">SportyBet</i><i class="bkc-i" data-bk="b9"><span class="b9r">bet</span><span class="b9g">9ja</span></i><i class="bkc-i" data-bk="fb">football<span class="fb-dot">.</span>com</i></b> code in one tap</span></span>
       <span class="trust-i"><b id="when2">-</b> last updated</span>
       <span class="trust-i" id="streak" hidden></span>
       <span class="trust-i t-static">Rebuilt daily from results</span>
@@ -4181,7 +4252,7 @@ footer{margin-top:26px;padding-top:18px;
           </span>
         </div>
         <div class="sc-actions">
-          <button class="wsp-go sc-go-btn" data-scmode="wizard" type="button">Build me a SportyBet slip</button>
+          <button class="wsp-go sc-go-btn" data-scmode="wizard" type="button">Build me a <span class="sbm">SportyBet</span> slip</button>
           <button class="slider-btn sc-go-btn" id="scBrowse" type="button">See today's predictions</button>
         </div>
         <div class="sc-proof" id="scProof" hidden></div>
@@ -4480,7 +4551,7 @@ footer{margin-top:26px;padding-top:18px;
 <div class="sheet myslip-sheet" id="mySheet" role="dialog" aria-modal="true" aria-labelledby="mySheet-title">
   <div class="sheet-grab"><i></i></div>
   <div class="sheet-head">
-    <div class="info"><h3 id="mySheet-title">My slip</h3><p>Predictions you picked - book them to SportyBet.</p></div>
+    <div class="info"><h3 id="mySheet-title">My slip</h3><p>Predictions you picked - book them to <span class="sbm">SportyBet</span>.</p></div>
     <button class="sheet-collapse" id="mySheet-x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>Collapse</span></button>
   </div>
   <div class="sheet-body" id="mySheetBody"></div>
@@ -6609,7 +6680,7 @@ function bookErrHTML(d,B){
   if(kind==="net")
     return "<div class='code-err'><b>Couldn't reach the booking service.</b>"+
       "<span>Check your connection and try again. Your slip is saved either way.</span></div>";
-  return "<div class='code-err'><b>"+esc(B.label)+" wouldn't take this slip.</b>"+
+  return "<div class='code-err'><b>"+B.mark+" wouldn't take this slip.</b>"+
     (why?"<span>"+esc(why)+"</span>"
        :"<span>One of the picks may have just closed. Remove a leg and try again.</span>")+
     "</div>";
@@ -7204,7 +7275,7 @@ function bookWire(){
 
   /* `label` is the name in a sentence; `mark` is the brand drawn in its own
      colours, for the places that show a logo rather than say a word. */
-  BOOKS.sporty.mark="SportyBet";
+  BOOKS.sporty.mark="<span class='sbm'>SportyBet</span>";
   BOOKS.bet9ja.mark="<span class='b9m'><span class='b9r'>bet</span>"+
     "<span class='b9g'>9ja</span></span>";
 
@@ -7337,31 +7408,80 @@ async function loadBet9ja(){
 /* Bet9ja never blocks the board. SportyBet is awaited because the model wants
    its prices before the first paint; Bet9ja only decides whether a second
    button appears on a leg, so it rides alongside and repaints if it lands. */
-/* The name in "Free ... code in one tap" cycles through the three books we can
-   actually produce a code for. It is the one place the site says that at all.
-   Paused when the tab is hidden - an animation nobody is looking at is a timer
-   nobody asked for - and never started at all for a reader who has asked their
-   machine for less motion. */
+/* "Free SportyBet code in one tap", where the name flickers.
+ *
+ * SportyBet is where it rests and where it returns. This is a SportyBet site -
+ * the hero button says so and most readers arriving have an account there - so
+ * the line reads "SportyBet" almost all of the time and shows the other two the
+ * way a sign shows a second language: briefly, then back. Cycling evenly
+ * through three would have said the opposite of what is true.
+ *
+ * The box is SportyBet's width and stays there, so nothing on the line ever
+ * moves. A visitor wider than that is scaled down to fit - football.com
+ * arrives a little smaller than the name it interrupts, which is the correct
+ * order of importance said in the type rather than in a caption.
+ *
+ * Paused when the tab is hidden, and never started at all for a reader who has
+ * asked their machine for less motion: a glitch in the first screenful is
+ * exactly the kind that hurts. They get "SportyBet", still and correct.
+ */
 function startBookCycle(){
   var host=document.getElementById("bkCycle");
   if(!host) return;
   var items=[].slice.call(host.querySelectorAll(".bkc-i"));
   if(items.length<2) return;
+  var home=items[0], away=items.slice(1), w=[];
+
+  function measure(){
+    w=items.map(function(e){ return e.scrollWidth; });
+    if(!w[0]) return;
+    host.style.width=w[0]+"px";
+    /* Anything wider than the resting name is scaled to fit it. Uniform, not
+       scaleX: squeezing one axis warps the letterforms, and these are logos.
+       A transform does not change the layout box, which is why the container
+       still needs min-width:0 to hold the narrower width. */
+    items.forEach(function(e,i){
+      e.style.transform = (i && w[i] > w[0]) ? "scale(" + (w[0] / w[i]).toFixed(4) + ")" : "";
+    });
+  }
+  /* After the webfont, or the widths are the fallback face's and every name
+     sits a few pixels wrong for the rest of the session. */
+  try{ (document.fonts?document.fonts.ready:Promise.resolve()).then(measure); }
+  catch(e){ measure(); }
+
   try{
     if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   }catch(e){}
-  var i=0, timer=null;
-  function step(){
-    var cur=items[i], nxt=items[(i+1)%items.length];
-    cur.classList.add("glx");
+
+  /* The two halves overlap by about a tenth of a second. That overlap is the
+     effect: for those few frames the outgoing name is showing its bottom bands
+     and the incoming one its top, so the eye reads one tearing into the other.
+     Sequencing them end to end instead gives a blink, which is what this
+     looked like before. */
+  function swap(from,to){
+    host.classList.remove("tw"); void host.offsetWidth; host.classList.add("tw");
+    from.classList.add("glx-out");
     setTimeout(function(){
-      cur.classList.remove("on","glx");
-      nxt.classList.add("on","glx");
-      setTimeout(function(){ nxt.classList.remove("glx"); },520);
-      i=(i+1)%items.length;
-    },260);
+      to.classList.add("on","glx-in");
+    },120);
+    setTimeout(function(){
+      from.classList.remove("on","glx-out");
+    },220);
+    setTimeout(function(){
+      to.classList.remove("glx-in");
+      host.classList.remove("tw");
+    },440);
   }
-  function run(){ if(!timer) timer=setInterval(step,3400); }
+
+  var n=0, timer=null;
+  function excursion(){
+    var other=away[n%away.length]; n++;
+    swap(home,other);
+    /* Long enough to be read, short enough that the line is SportyBet again
+       before anyone wonders whether it changed for good. */
+    setTimeout(function(){ swap(other,home); },1500);
+  }
+  function run(){ if(!timer) timer=setInterval(excursion,6000); }
   function halt(){ if(timer){ clearInterval(timer); timer=null; } }
   document.addEventListener("visibilitychange",function(){
     if(document.hidden) halt(); else run();
@@ -7853,7 +7973,7 @@ async function bookSlip(){
      giving up. Only SportyBet is worth awaiting - Bet9ja loads once at boot
      and a game it does not carry will not appear by asking again. */
   if(missing.length > 0 && B.key==="sporty"){
-    $("bookResult").innerHTML="<div class='code-info'>Matching "+esc(B.label)+" events...</div>";
+    $("bookResult").innerHTML="<div class='code-info'>Matching "+B.mark+" events...</div>";
     await loadSporty();
     /* Re-evaluate after matching */
     picks = BUILD.picks;  // refresh in case DATA.fixtures updated
@@ -7863,7 +7983,7 @@ async function bookSlip(){
 
   if(!bookable.length){
     $("bookResult").innerHTML="<div class='code-err'>None of these games are on "+
-      esc(B.label)+" right now, so a code can't be created. Try lowering the risk, or "+
+      B.mark+" right now, so a code can't be created. Try lowering the risk, or "+
       "check back nearer kickoff.</div>";
     return;
   }
@@ -8266,7 +8386,7 @@ function doBookList(picks,resultId,btnId,label,B){
   var sel=going.map(function(c){return B.sel(c);});
   if(!sel.length){
     $(resultId).innerHTML="<div class='code-err'>None of these games are on "+
-      esc(B.label)+" right now, so a code can't be created.</div>";
+      B.mark+" right now, so a code can't be created.</div>";
     return;
   }
   var btn=$(btnId); if(btn){btn.disabled=true;btn.textContent="Booking\u2026";}
@@ -9809,7 +9929,7 @@ async function bookMy(){
 
   /* Only SportyBet is worth awaiting - see bookSlip. */
   if(missing.length > 0 && B.key==="sporty"){
-    $("myBookResult").innerHTML="<div class='code-info'>Matching "+esc(B.label)+" events…</div>";
+    $("myBookResult").innerHTML="<div class='code-info'>Matching "+B.mark+" events…</div>";
     await loadSporty();
     /* Re-evaluate after matching */
     picks=MYSLIP.map(function(x){var f=fixtureById(x.id);
@@ -9819,13 +9939,13 @@ async function bookMy(){
     if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
   }
 
-  if(!bookable.length){$("myBookResult").innerHTML="<div class='code-err'>None of these are on "+esc(B.label)+" right now, so a code can't be created.</div>";return;}
+  if(!bookable.length){$("myBookResult").innerHTML="<div class='code-err'>None of these are on "+B.mark+" right now, so a code can't be created.</div>";return;}
   var byEv={},dups=0;
   bookable.forEach(function(c){var k=bookIdOf(c,B);byEv[k]=(byEv[k]||0)+1;if(byEv[k]===2)dups++;});
   if(dups){
     var uniq=[],seenEv={};
     bookable.forEach(function(c){var k=bookIdOf(c,B);if(!seenEv[k]){seenEv[k]=1;uniq.push(c);}});
-    showPrompt("myBookResult","<div class='confirm-card'><p>You have the same match picked more than once. "+esc(B.label)+" takes one pick per match - book "+uniq.length+" unique game"+(uniq.length===1?"":"s")+"?</p><div class='ca'><button class='confirm-go' type='button'>Book "+uniq.length+"</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>");
+    showPrompt("myBookResult","<div class='confirm-card'><p>You have the same match picked more than once. "+B.mark+" takes one pick per match - book "+uniq.length+" unique game"+(uniq.length===1?"":"s")+"?</p><div class='ca'><button class='confirm-go' type='button'>Book "+uniq.length+"</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>");
     $("myBookResult").querySelector(".confirm-go").addEventListener("click",function(){
       clearPrompt("myBookResult");
       if(!confirmDropUnpriced(uniq,"myBookResult",doBookMy,B)) doBookMy(uniq);});
@@ -11875,7 +11995,7 @@ load().catch(function(){});
   </button>
 </div>
 
-<div class="slipbar" id="slipbar"><div class="slipbar-in" id="slipbarBtn"><span class="sb-tx"><b id="sbHead">Build me a SportyBet slip</b><i id="sbSub">We pick the games, you get the code</i></span><span class="sb-go">&rarr;</span></div></div>
+<div class="slipbar" id="slipbar"><div class="slipbar-in" id="slipbarBtn"><span class="sb-tx"><b id="sbHead">Build me a <span class="sbm">SportyBet</span> slip</b><i id="sbSub">We pick the games, you get the code</i></span><span class="sb-go">&rarr;</span></div></div>
 <div class="netpill off" id="netpill"><span class="dot"></span><span id="netpillTxt">Offline</span></div>
 <script>
 (function(){
