@@ -159,3 +159,22 @@ test("it runs after the scores are enriched, so it sees real kick-offs", () => {
   assert.ok(src.indexOf("await enrichWithFTScores();") < src.indexOf("await recordPredictions("),
     "order matters: recordPredictions reads f.kickoff off the finished fixture list");
 });
+
+test("a placeholder score can never be published", async () => {
+  /* The row the build writes before kick-off carries -1/-1 where the schema
+     demands a number. It reaches a page only if something confirms it, and
+     confirmScores confirms nothing while every source is off - which is the
+     state these tests run in. If this ever passes a -1 through, the results
+     page prints a match that finished minus one nil. */
+  const row = { match_date: "2026-09-01", home: "Halifax", away: "Hartlepool",
+                hg: DB.UNPLAYED, ag: DB.UNPLAYED, tip: "1X, home or draw",
+                hit: false, source: "build" };
+  const out = await B.confirmScores([row], log());
+  assert.strictEqual(out.has(row), false,
+    "an unplayed placeholder must be held exactly like a sweep guess");
+});
+
+test("the placeholder is not a plausible score", () => {
+  assert.ok(DB.UNPLAYED < 0,
+    "0 would be a real scoreline; the point of this value is that it cannot be one");
+});

@@ -138,6 +138,9 @@ test("a row with no verdict is retried with one rather than lost", async () => {
     assert.strictEqual(sent.length, 2, "one refusal, one retry");
     assert.strictEqual(sent[0][0].hit, null);
     assert.strictEqual(sent[1][0].hit, false, "a default verdict, not a claimed one");
-    assert.strictEqual(sent[1][0].hg, null, "and still no score - that is the point of the row");
+    /* -1, not 0. A plausible wrong score is the exact failure the confirmation
+       path exists to prevent; this one cannot be mistaken for a result. */
+    assert.strictEqual(sent[1][0].hg, -1);
+    assert.strictEqual(sent[1][0].ag, -1);
   } finally { global.fetch = real; }
 });
