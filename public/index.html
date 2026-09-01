@@ -2561,7 +2561,12 @@ html.mode-live #live{display:block}
 .code-card--b9 i,[data-theme="light"] .code-card--b9 i{color:rgba(255,255,255,.8)}
 .code-card--b9 b,[data-theme="light"] .code-card--b9 b{color:#fff}
 /* Their two colours as a rule under the title - the logo said quietly, so the
-   card is theirs even at a glance with the words out of focus. */
+   card is theirs even at a glance with the words out of focus.
+   The title has to be a block for this: `.code-card i` is inline, and auto
+   margins cannot centre anything inside an inline formatting context, so the
+   rule rendered at 42x2 exactly as specified and sat invisibly off to one
+   side. Nothing about it looked wrong in the CSS. */
+.code-card--b9 i{display:block}
 .code-card--b9 i::after{content:"";display:block;width:42px;height:2px;
   margin:8px auto 2px;border-radius:2px;
   background:linear-gradient(90deg,var(--b9-red) 0 50%,var(--b9-green) 50%)}
