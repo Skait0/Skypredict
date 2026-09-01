@@ -145,21 +145,23 @@ it looks.
   built their own inputs.
 
 ## Open / deferred
-- **API-Football account is SUSPENDED, because we overran the free plan.**
-  100 requests/day allowed; the build grades scores, *every deploy rebuilds*,
-  and there were 37-63 deploys a day. Worse, two passes - `confirmScores`
-  (~line 740) and `recordPublishedTips` (~line 817) - each build their own
-  `byDate` map and never share, so every date is paid for twice. That is
-  200-400 requests/day against a 100 limit. `inScoreWindow` also allowed 4 days
-  (now 7) where the free plan serves 3, and **a refusal still costs a request**.
-  **Do not install a new key until this is bounded** or the new account goes the
-  same way. Wanted: memoise date lookups within a build, cap oracle calls per
-  build (~3), only ask inside its real 3-day window, and log
-  `x-ratelimit-requests-remaining` so the quota shows up in the build output.
-  Deferred by the owner 1 Sep. SoccerVista covers grading meanwhile - but that
-  feed is Opta data under *their* licence, not ours, and it sits ahead of the
-  oracle only by ordering, not by any limit. If it goes down, every build falls
-  through to the oracle at full volume.
+- **API-Football is SUSPENDED, and the spend is now bounded so a new key is
+  safe to install.** The old one died on arithmetic: 100 requests/day allowed,
+  the build grades scores, *every deploy rebuilds*, and there were 37-63
+  deploys a day. Two passes each built their own `byDate` map and never shared,
+  so every date was paid for twice - 200-400 requests/day against a limit of
+  100, with nothing in the output able to say so.
+  **Fixed 2 Sep:** one shared `scoreBudget` per build, so a date asked about
+  twice costs once; a hard `ORACLE_BUDGET` of 3 calls per build whatever
+  happens; `ORACLE_MAX_AGE_DAYS` of 3, because the free plan serves three days
+  and *a refusal still costs a request*; and the remaining allowance is read
+  off `x-ratelimit-requests-remaining` and logged, with a warning under 20.
+  `firstScoreSource(date, log, budget, sources)` takes injectable sources so
+  this is testable without reaching the network.
+  **Still true:** SoccerVista leads by ordering, not by any limit. 3 calls x 63
+  deploys is still 189, so the budget makes a SoccerVista outage survivable
+  rather than free - if the oracle ever becomes primary, that number must come
+  down.
 - ~~**Railway trial**~~ **PAID 1 Sep 2026.** Hobby plan, billing 1st to 1st.
   Project `modest-expression`, service `web`, on `tobioluwadare@gmail.com`.
   It answers on TWO hostnames - `web-production-798c0` (what our code

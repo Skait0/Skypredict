@@ -126,12 +126,16 @@ test("the tip written to the record is the one that was published", () => {
      the build doing the writing. */
   const fn = src.slice(src.indexOf("async function recordPublishedTips"),
                        src.indexOf("async function buildPayload"));
-  assert.match(fn, /recordPublishedTips\(prevFixtures, log\)/,
+  /* Pinned on the first parameter rather than the whole signature: what
+     matters is that the tip comes from the board we already published, not
+     from a fresh fit. The list gained a shared score budget afterwards and
+     that is none of this test's business. */
+  assert.match(fn, /recordPublishedTips\(prevFixtures[,)]/,
     "it must take the previously published board as its input");
   assert.match(fn, /tip: f\.tip/, "and write that board's tip verbatim");
   assert.doesNotMatch(fn, /bestTip|chooseTip|scoreForTip/,
     "it must never decide a tip of its own");
-  assert.match(src, /await recordPublishedTips\(cfg\.prevFixtures, log\)/,
+  assert.match(src, /await recordPublishedTips\(cfg\.prevFixtures[,)]/,
     "wired to the previous board, not to the fixtures this build just made");
 });
 
