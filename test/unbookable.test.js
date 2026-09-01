@@ -139,40 +139,47 @@ test("a partly-booked slip is filed as what was booked", () => {
     "it must be narrowed to the legs actually sent");
 });
 
-test("a refused leg leaves the slip, not just the request", () => {
-  /* Observed on production after the retry started working: the code came
-     back for three games while My slip still listed four and totalled odds
-     for all four - including the one SportyBet had just refused. Worse, its
-     sporty odd had been cleared by then, so legOdd fell back to our own
-     estimate and the total was wrong as well as the count. */
+test("a refused leg is dropped only after the reader agrees", () => {
+  /* Reported: the warning naming the unavailable game shows briefly and then
+     it books anyway. It did - both paths dropped the refused legs and re-sent
+     on their own, and My slip went further and deleted those legs from the
+     reader's own slip before asking. A slip is somebody's choice; a bookmaker
+     refusing part of it is a reason to ask, not a licence to edit. */
   const i = src.indexOf("var safe=dropUnbookable(bookable,d,B);");
-  assert.ok(i > 0, "My slip's retry not found");
+  assert.ok(i > 0, "My slip's refusal branch not found");
   const branch = src.slice(i, i + 2200);
-  assert.match(branch, /MYSLIP=MYSLIP\.filter\(function\(x\)\{return _keep\[/,
-    "the refused legs must be removed from MYSLIP");
-  assert.match(branch, /saveMy\(\)/, "and the change persisted");
+  assert.match(branch, /confirmAfterRefusal\("myBookResult"/,
+    "it has to ask");
+  /* Everything that changes the slip must sit INSIDE the callback, which only
+     runs on confirm. */
+  const goAt = branch.indexOf("confirmAfterRefusal(");
+  for (const step of ["MYSLIP=MYSLIP.filter", "saveMy()", "doBookMy(safe,true,B)"]) {
+    const at = branch.indexOf(step);
+    assert.ok(at > goAt, step + " must not run before the reader has agreed");
+  }
   assert.match(branch, /renderMySheet\(\)/,
     "and the open sheet redrawn, or the screen keeps showing the dropped leg");
 });
 
-test("the reader is told what was dropped, in plain words", () => {
-  const i = src.indexOf("var safe=dropUnbookable(bookable,d,B);");
-  const branch = src.slice(i, i + 2200);
-  /* The bookmaker's name is interpolated now that there are two of them,
-     so the constant part is what can be asserted. */
-  assert.match(branch, /isn't on "\+B\.label\+" right now/,
-    "name the situation rather than showing a bare retry spinner");
-  assert.match(branch, /aren't on "\+B\.label\+" right now/,
-    "and the plural too - both used to say SportyBet unconditionally");
-  assert.match(branch, /booking the other /,
-    "and say what is still happening, so it does not read as a failure");
-  assert.match(branch, /f\.home\+" v "\+f\.away/,
-    "name the match, not just the market - the same complaint that put team " +
-    "names into the pre-flight applies here");
-  assert.doesNotMatch(branch, /error|failed|rejected/i,
-    "this is a recovery, not a fault - it should not be worded like one");
+test("the board's refusal asks too, rather than quietly re-sending", () => {
+  const i = src.indexOf("var safe=dropUnbookable(picks,d,B);");
+  assert.ok(i > 0, "the board's refusal branch not found");
+  const branch = src.slice(i, i + 1400);
+  assert.match(branch, /confirmAfterRefusal\("bookResult"/);
+  assert.doesNotMatch(branch, /Retrying without unavailable markets/,
+    "that note was the sound of a decision being taken for somebody");
 });
 
+test("the question names the games, and offers a way out", () => {
+  const fn = src.slice(src.indexOf("function confirmAfterRefusal"),
+                       src.indexOf("function confirmDropUnpriced"));
+  assert.match(fn, /confirm-go/, "a way forward");
+  assert.match(fn, /confirm-cancel/, "and a way out - it is a choice or it is not");
+  assert.match(fn, /cf-list/, "the games are named, not counted");
+  assert.match(fn, /showPrompt\(target/,
+    "raised as a prompt, so the Get code button stands down while it is up");
+  assert.match(fn, /B\.mark/, "and it says which bookmaker refused");
+});
 test("the retry does not wipe the note explaining itself", () => {
   /* Caught on production, not by the assertions above: they proved the message
      string was in the source, which is not the same as it reaching a screen.

@@ -8146,6 +8146,29 @@ function hasSportyMarket(c){ return BOOKS.sporty.priced(c); }
    was the problem. The legs that cannot be placed are knowable up front, so
    the choice belongs to the reader before the ticket is spent.
    Returns true when it has taken over and is waiting on an answer. */
+/* The bookmaker refused some legs. Ask, rather than deciding for them.
+   Both booking paths used to drop the refused legs and re-send on their own,
+   flashing a note as they went - and My slip went further and deleted those
+   legs from the reader's own slip before asking. A slip is somebody's choice;
+   a bookmaker refusing part of it is a reason to ask, not a licence to edit.
+   The same card as the pre-flight, because it is the same question arriving a
+   moment later - the only difference is that this one had to be sent to find
+   out. */
+function confirmAfterRefusal(target,names,keep,B,go){
+  var n=names.length, list=names.slice(0,4);
+  showPrompt(target,"<div class='confirm-card'><p><b>"+B.mark+" can't take "+n+
+    " of these</b>"+
+    (list.length?"<span class='cf-list'>"+list.map(esc).join("<br>")+
+      (n>list.length?"<br>and "+(n-list.length)+" more":"")+"</span>":"")+
+    "</p><div class='ca'><button class='confirm-go' type='button'>Book the other "+
+    (keep===1?"one":keep)+"</button>"+
+    "<button class='confirm-cancel' type='button'>Cancel</button></div></div>");
+  var el=$(target); if(!el) return;
+  el.querySelector(".confirm-go").addEventListener("click",function(){
+    clearPrompt(target); go();});
+  el.querySelector(".confirm-cancel").addEventListener("click",function(){
+    clearPrompt(target);});
+}
 function confirmDropUnpriced(picks,target,go,B){
   B=B||curBook();
   var priced=picks.filter(function(c){return B.priced(c);});
@@ -8204,8 +8227,12 @@ function doBook(picks,retried,B){
         var rejected=!d||!d.success;
         var safe=dropUnbookable(picks,d,B);
         if(rejected&&!retried&&safe.length>=1&&safe.length<picks.length){
-          $("bookResult").innerHTML="<div class='code-info'>Retrying without unavailable markets...</div>";
-          doBook(safe,true,B);
+          var _kept={}; safe.forEach(function(c){_kept[c.id+"|"+c.code]=1;});
+          var _out=picks.filter(function(c){return !_kept[c.id+"|"+c.code];})
+            .map(function(c){var f=c.f||fixtureById(c.id);
+              return f?(f.home+" v "+f.away):"One pick";});
+          confirmAfterRefusal("bookResult",_out,safe.length,B,function(){
+            doBook(safe,true,B);});
         } else {
           $("bookResult").innerHTML=bookErrHTML(d,B);
         }
@@ -10140,29 +10167,26 @@ function doBookMy(bookable,retried,B){
            this for a while; My slip had nothing and simply failed. */
         var safe=dropUnbookable(bookable,d,B);
         if(!retried&&safe.length>=1&&safe.length<bookable.length){
-          /* Take the refused legs out of the slip itself, not just out of the
-             request. Left in, the code says three games while the sheet above
-             it lists four and totals odds for all of them - and the leg that
-             cannot be booked is the one still on screen. The odd we had for it
-             is gone by now, so its price would quietly fall back to our own
-             estimate and the total would be wrong as well as the count. */
           var _keep={}; safe.forEach(function(c){_keep[c.id+"|"+c.code]=1;});
           var _dropped=MYSLIP.filter(function(x){return !_keep[x.id+"|"+x.code];});
-          MYSLIP=MYSLIP.filter(function(x){return _keep[x.id+"|"+x.code];});
-          saveMy(); renderFab();
-          if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
           /* Name the match, not just the market. "Over 1.5 goals isn't on
              SportyBet" leaves the reader hunting through their own slip for
              which game it means - the same complaint that put the team names
              into the booking pre-flight. */
-          var _n=_dropped.length;
           var _who=function(x){var f=fixtureById(x.id);
             return f?(f.home+" v "+f.away+(x.label?" - "+x.label:"")):(x.label||"One pick");};
-          $("myBookResult").innerHTML="<div class='code-info'>"+
-            esc(_n===1?_who(_dropped[0])+" isn't on "+B.label+" right now"
-                      :_n+" picks aren't on "+B.label+" right now")+
-            " - booking the other "+safe.length+"…</div>";
-          doBookMy(safe,true,B);
+          confirmAfterRefusal("myBookResult",_dropped.map(_who),safe.length,B,function(){
+            /* Only now. Taking the refused legs out of the slip itself, not
+               just out of the request: left in, the code says three games
+               while the sheet above it lists four and totals odds for all of
+               them, and the odd we had for the refused one is gone by now so
+               its price would fall back to our own estimate. Correct - but it
+               is an edit to somebody's slip, so it waits for them to agree. */
+            MYSLIP=MYSLIP.filter(function(x){return _keep[x.id+"|"+x.code];});
+            saveMy(); renderFab();
+            if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
+            doBookMy(safe,true,B);
+          });
           return;
         }
         $("myBookResult").innerHTML=bookErrHTML(d,B);
