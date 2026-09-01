@@ -1,122 +1,145 @@
-# Skypredict — Session Handoff (updated 2026-08-26)
+# Soccerwizard — Session Handoff (updated 2026-09-01)
 
 ## Deployed state
-- **Live URL:** https://skypredict-theta.vercel.app (set `SITE_ORIGIN` on Vercel to move it)
+- **Live URL:** https://www.soccerwizard.live — **www is canonical**, the bare
+  domain 308s to it. `SITE_ORIGIN` must be the www form.
+- **In front of it:** Cloudflare (free plan, account `Sowizardsb@gmail.com`),
+  added 1 Sep. Apex + www proxied; every mail record DNS-only.
 - **Deploy model:** push to `main` → Vercel GitHub integration → prod (~30s)
-- **Repo:** https://github.com/Skait0/Skypredict.git — local `main` synced with origin
-- **Working tree:** clean
-- **HEAD:** `697a7f8` "Form strips move with the live feed"
+- **Repo:** https://github.com/Skait0/Skypredict.git — `main` synced with origin
+- **Working tree:** clean · **HEAD:** `277abcd` "www is the canonical host now"
+- **API:** `C:\Users\DELL\Documents\soccerwizard-api` on Railway.
+  **Trial ends ~13 Sep 2026.**
 
-## This session (2026-08-26)
-Shipped **live form strips** — the last-5 W/D/L chips now move as matches play.
+## The one that will bite you: DNS
+The site was **blank on Nigerian mobile data** for a day. Not the app - the
+carrier blocks `76.76.21.21`, Vercel's *shared* apex IP. Fixed by making www
+canonical (Vercel CDN addresses), then by putting Cloudflare in front so the
+apex stops resolving to that IP at all.
 
-| Commit | What |
-|--------|------|
-| `1dfd0bc` | `lib/build.js`: populate `form_home` / `form_away` (last 5 results per team, most recent first, keyed by the canonical index name) |
-| `697a7f8` | `public/index.html`: overlay the live feed onto the baked form strips |
+```
+nameservers   mustafa.ns.cloudflare.com / zariyah.ns.cloudflare.com
+rolled back by setting these to atlas.dns-parking.com / hyperion.dns-parking.com
+              at Hostinger - the records still exist there, so the old setup returns
+proxied       apex A, www CNAME
+DNS only      3x hostingermail-*._domainkey (DKIM), autodiscover, autoconfig,
+              2x MX, SPF, DMARC, google-site-verification
+SSL/TLS       Full (strict) + Always Use HTTPS
+```
 
-Why it was two commits: the UI had been reading `f.form_home` / `f.form_away` in
-four places for a while, but **nothing ever populated them** — the strips were
-silently always empty. `1dfd0bc` was found sitting uncommitted in the working
-tree and finishes the backend half; `697a7f8` is the new live behaviour.
+**Cloudflare's import marks every CNAME proxied by default.** That silently
+breaks DKIM (the lookup must follow the CNAME to Hostinger's key, and a proxied
+record answers with a Cloudflare IP) and mail-client autoconfig. Nothing errors;
+mail just starts failing DKIM. If you ever re-import, set those five back to
+grey cloud. `scratchpad/dns-baseline.txt` holds all 12 records as they were.
 
-How the overlay works (`formHTML` / `formChips` / `liveFormFor` / `refreshFormStrips`):
-- baked form is a nightly snapshot, so a game played *today* is invisible to it
-- while a team is in play → prepend a **provisional** chip (`.form i.prov`:
-  ringed + breathing, `prefers-reduced-motion` aware); oldest of the five drops
-- feed reports FT → ring drops, it becomes a normal settled chip
-- **matching bar is deliberately high**: overlay matches on team name alone, so
-  it requires `simTeams >= 1.8` (exact-or-substring only). Looser thresholds
-  eventually pin one club's result onto another club's form. A missing chip is
-  much cheaper than a wrong one — do not lower this without a very good reason.
-- the 30s poll calls `refreshFormStrips()`, which rewrites **only** the chips via
-  `data-ft` (team) / `data-fs` (baked form) attributes. It deliberately does not
-  call `render()` — that would collapse any expanded fixture card mid-read.
+DNSSEC was confirmed empty before the cutover. With DNSSEC live, changing
+nameservers is a hard SERVFAIL outage, not a soft handover.
 
-Not done on purpose: the POTD prose reason ("have won 3 of their last 5",
-~line 2611) still uses baked form only. Folding a half-played match into that
-sentence reads as confusing rather than live.
+## This session (2026-09-01)
+Large session. Themes, newest last:
 
-## Recent history before this session (~35 commits, grouped)
-The previous handoff was stale — it named `fce0337` as HEAD when ~35 commits had
-already landed on top. Themes since then:
-- **Pick of the Day** (`9c813db`, `6847c88`): one game locked per fixture day (no
-  re-ranking on odds-blend or kickoff); mirrors the live score while playing,
-  celebrates wins only, **never labels a loss** (tip stays as-is)
-- **Home CTA / wizard banner** (~12 commits, `ddc8fe2`…`330dd3c`): amethyst/gold
-  banner, both builder paths shown equally (Conjure / slider), mobile column
-  stacking, and several rounds of CTA-orb art (now a violet crystal-ball sphere)
-- **Headline tip markets** (`274dc0f`, `b117294`, `6bfcc4b`): main page shows
-  safest bets only (1X2 + double chance); goals/BTTS/combos are builder-only
-- **Booking** (`8828f50`, `43e1193`): compact green-glass modal; booking prefers
-  real-odds markets and auto-retries on a SportyBet "no market" rejection
-- **Sentry DSN corrected** (`6d89780`) — now points at the project actually
-  visible in the owner's Issues tab
+**Bet9ja, end to end.** Full league coverage (1154/1154 competitions) via
+`GetEventsInGroup`, which ignores `MKEY`, unlike `GetEventsInCouponV2` which
+honours it but only exposes 14 coupons. Fixture matching measured at **98.4%**
+and needing exactly one alias (`"atletico rosario" -> "rosario central"`); the
+remaining misses are fixtures Bet9ja has not published yet, not matcher bugs.
+
+**Two outages on the API, one loud and one silent.**
+1. `bet9ja.py` imported `requests`, which was never in `requirements.txt`. It
+   was present locally as a transitive dep, so every test passed. 42 min down.
+2. Then the routes came back answering `{"count":0,"success":true}` - a lie,
+   not a crash. Bet9ja was serving a block page to the datacentre. Fixed with
+   `curl_cffi` TLS impersonation (`impersonate="chrome120"`); `_get_json`
+   retries transport errors but never accepts a block page as data.
+
+**Bookmaker toggle.** `BOOKS` table in `index.html` (`sporty` / `bet9ja`) holds
+per-book id, odds field, wordmark, code lookup and deep link. Bet9ja's deep link
+parameter is `bookABetCode` - this was guessed wrong once and shipped broken.
+
+**Grading was reading 6 of ~30 games.** Both sources were down at once. See
+`grading-two-sources-both-fragile` in memory. `lib/soccervista.js` is now a
+second score source ahead of the oracle, and `recordPublishedTips` files
+predictions independently of the sweep, reading the tip from the previously
+published board rather than recomputing it. Rows went 132 → 308.
+
+**POTD/SOTD rank by league tier**, not by continent. The old no-Asian-league
+rule pushed the board onto third-tier European games, which is worse.
+
+**A bookmaker refusing part of a slip now asks** rather than silently dropping
+legs and re-sending.
 
 ## Key architecture notes
-- Single-file SPA: `public/index.html` (~5000 lines, all UI+logic)
-- Backend: `lib/build.js` (nightly build, Vercel cron `30 6 * * *` UTC) +
+- Single-file SPA: `public/index.html` (~5000 lines, all UI + logic).
+  **It is both source and build output** - the prebuild only rewrites it under
+  `VERCEL` / `SPLIT=1`, so plain local builds are safe.
+- Backend: `lib/build.js` (nightly, Vercel cron `30 6 * * *` UTC) +
   `lib/model.js` (Dixon-Coles)
-- API: `/api/predictions` (6h CDN cache + 1h server memo), served by `api/predictions.js`
-- Live scores: `LIVE_URL` → Railway `/api/livescores`, polled every 30s by
-  `fetchLive()`. `LIVE.store` keeps a finished game ~10 min after it leaves the
-  feed, restamped `status="FT"`.
-- Feeds: football-data CSVs (leagues only), SportyBet fixtures (**no competition
-  field**), SportyBet livescores (has league, no eventId)
-- Service worker `sw-v5`: network-first for page, cache-first assets
-- Companion repo: `C:\Users\DELL\Documents\soccerwizard-api` (the Railway API)
+- Live scores: `LIVE_URL` → Railway `/api/livescores`, polled every 30s
+- **Every deploy rebakes the board.** Anything that must stay put (pick of the
+  day, published tips) has to be *recorded*, not recomputed.
+- Tests: `node --test`, zero runtime deps. **Test the callers, not just the
+  logic** - three bugs shipped past green tests that asserted source strings or
+  built their own inputs.
 
-## Sound toggle history (READ THIS — do not re-add without asking)
-The bell was rebuilt 3× (per-element onclick → document delegation → debounced
-direct listener). Owner still saw it stuck "Sound off" and asked for **complete
-removal** (`fce0337`). Still removed as of this session: call sites remain at
-lines ~3645/4476/4917 but `window.__wizChime` and `window.__wireAlert` are empty
-functions (~4927-4928) so nothing throws. If the owner ever wants it back, treat
-it as a fresh feature, not a revert — the root cause on their device was never
-confirmed (the double-fire theory was unproven; their browser/device is unknown).
-
-## Open / deferred items
-- **EFL/Cup exact competition names**: currently "England Cup" style labels. Real
-  name upgrade depends on football-data `Latest_Results.csv` carrying cup
-  results — it mostly does NOT (league-only). Proper fix needs an upstream feed change.
-- **Sentry**: ENABLED, browser DSN inline in `public/index.html` (~line 33,
-  `SW_SENTRY_DSN`). Errors-only, origin-scoped, SRI-pinned CDN, fails silent if
-  blocked, honors `?nosentry`. Test: `Sentry.captureException(new Error("x"))`.
-- **Push notifications**: permission banner exists (`renderNotif`/`wireNotif`);
-  goal notifications fire for followed matches. Daily-slip reminder not built.
-- **No automated test for the form overlay**: it was verified by driving the real
-  `index.html` function sources against a stubbed feed (11 cases: in-play W/D/L,
-  settling at FT, empty baked form, null scores, alias matching, and the negative
-  case that an unrelated club stays untouched). That harness lived in scratch and
-  was not kept. `test/matching.test.js` does **not** cover it.
-- **Debug flag**: `?debug=1` or `#debug` enables verbose `[sporty]` match logs.
+## Open / deferred
+- **API-Football account is SUSPENDED.** Only the owner can fix it, in their
+  dashboard. SoccerVista covers for it, but note that feed is Opta data under
+  *their* licence, not ours.
+- **Railway trial ends ~13 Sep 2026.**
+- ~~**Service worker**~~ **DONE 1 Sep, and it was broken.** `sw-v7`.
+  **The worker had been a complete no-op since `9cfdea0`.** Its "skip non-http
+  schemes" guard compared `req.url.split(":")[0]` - which is `"https"`, no
+  colon - against `/^https?:$/`, which requires the colon. It matched nothing,
+  so `fetch` returned early on *every* request: no offline shell, no
+  cache-first assets, no network-first page. The two later fixes on top of it
+  (network-first page, manifest) could never have done anything. Now compares
+  `new URL(req.url).protocol`.
+  Also added: a **`KILL` switch** (set true, deploy, and every installed worker
+  drops its caches, unregisters and reloads its tabs - the only way to recall a
+  bad worker, since it is the one thing that outlives a deploy), a **cap of 24
+  hashed bundles** so the cache stops growing by one copy of the app per deploy
+  forever, `/api/*` never cached and no longer given a dead cache fallback, and
+  `sw.js` pinned to `max-age=0, must-revalidate` in `vercel.json`.
+  `test/sw.test.js` is new: 18 tests, all 8 mutations caught.
+  `predictions.json` stays cache-first **on purpose** - the page compares the
+  payload's build time and calls `refreshPayload()`, which asks
+  `/api/predictions` and so goes to the network, not this cache. It self-heals,
+  and painting instantly then correcting beats a blank screen on a slow phone.
+- ~~**Google Search Console**~~ **DONE 1 Sep.** *Domain* property
+  `sc-domain:soccerwizard.live` on `tobioluwadare@gmail.com`, verified by DNS
+  TXT. Both sitemaps read Success: the www one (578 URLs) and an older
+  bare-domain one submitted 31 Aug (582). Notes:
+  - The verification TXT now lives in **Cloudflare**. Do not delete it or the
+    property loses verification. It sits alongside a second, older
+    `google-site-verification` token and the SPF record - all three must stay.
+  - Google offered to verify by **authorizing it against the Cloudflare
+    account**. Declined: that is a standing OAuth grant with write access to the
+    zone that carries the MX and DKIM records. A single TXT does the same job.
+- Sweep cadence: GitHub throttles the 10-minute cron to ~5 runs/day.
+- Bet9ja is deliberately the quieter brand in the UI. SportyBet is the primary.
 
 ## Verify commands
 ```bash
-cd /c/Users/DELL/Desktop/Skypredict
-git log --oneline -3          # 697a7f8 should be HEAD
-node --test                   # 6 matching tests pass
-node --check lib/build.js
+cd /c/Users/DELL/Desktop/skypredict
+git log --oneline -3          # 277abcd should be HEAD
+node --test                   # full suite
+node scripts/b9match.js       # Bet9ja coverage against the live board
 ```
-Syntax-checking the inline scripts (there are 4 `<script>` blocks). Writes into
-`tmp/_check/`, which is gitignored so this never dirties the tree:
-```bash
-mkdir -p tmp/_check
-python -c "
-import re,io
-src=io.open('public/index.html',encoding='utf-8').read()
-for i,b in enumerate(re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',src,re.S)):
-    io.open('tmp/_check/blk%d.js'%i,'w',encoding='utf-8').write(b)
-"
-for f in tmp/_check/blk*.js; do node --check "$f" || echo "FAIL $f"; done
+DNS, after any change:
+```powershell
+Resolve-DnsName soccerwizard.live -Type NS -Server 8.8.8.8
+Resolve-DnsName soccerwizard.live -Type MX -Server 8.8.8.8   # mail must survive
+Resolve-DnsName hostingermail-a._domainkey.soccerwizard.live -Type CNAME -Server 8.8.8.8
 ```
 
 ## Gotchas
-- `/tmp` in Git Bash ≠ Windows Python's `/tmp` — write temp files into repo
-  `tmp/_check/` (gitignored). Note `tmp/blk0.js` / `tmp/blk1.js` are *tracked*
-  leftovers from an earlier session; don't write over them.
-- The predictions API memo-caches 1h server-side; use `?refresh=1` (cron does) or
-  wait out the CDN `s-maxage=21600`
-- `git` warns "LF will be replaced by CRLF" on most writes here — harmless
-- `lib/build.js` refuses to build on `< 400` downloaded results (guard against a
-  half-empty feed silently shipping bad predictions)
+- Grepping `index.html` to check whether something is live gives a false
+  "not live" - the production build splits CSS/JS into hashed files.
+- `vercel env pull` will NOT give you `SUPABASE_URL`; it returns the literal
+  `[SENSITIVE]`, so the Supabase path cannot be run locally.
+- Supabase errors get truncated at 200 chars, cutting off the column name. Use
+  `explain()`.
+- `lib/build.js` refuses to build on `< 400` downloaded results.
+- Mutation scripts must restore in a `finally`. One left a broken CRC in a
+  source PNG, and Chrome renders bad-CRC PNGs, so nothing looked wrong.
