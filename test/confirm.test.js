@@ -100,3 +100,62 @@ test("the build says out loud that it could not confirm", async () => {
   assert.ok(lines.some(l => /1 recorded result/.test(l)),
     "and it must say how many rows it is holding, or the line says nothing useful");
 });
+
+/* ---------------------------------------------------- recording the tip */
+
+/**
+ * A tip only reaches the record if a row exists saying we made it, and until
+ * now the only thing writing those rows was the sweep - which notices a match
+ * by seeing it live. GitHub throttles that to about five runs a day, so on
+ * 31 Aug 2026 it recorded 21 of roughly 30 tips and the other nine never
+ * happened as far as the record was concerned.
+ *
+ * The build knows every tip, because it is the thing that decides them. What
+ * these pin is WHEN it is allowed to write one down.
+ */
+
+const DB = require("../lib/supabase.js");
+const src = require("fs").readFileSync(
+  require("path").join(__dirname, "..", "lib", "build.js"), "utf8");
+
+test("only fixtures that have not kicked off are recorded", () => {
+  /* The whole integrity of the record rests on this. The model refits on every
+     build, so an evening rebuild can reach a different call than the morning
+     one did; recording after the whistle would file the luckier of the two and
+     the record would flatter us. */
+  const fn = src.slice(src.indexOf("async function recordPredictions"),
+                       src.indexOf("async function buildPayload"));
+  assert.match(fn, /if \(!isFinite\(ko\) \|\| ko <= now\) continue;/,
+    "a started match must not be recorded");
+  assert.match(fn, /hg: null, ag: null, hit: null/,
+    "and it must be written with no score - the score comes from confirmScores");
+  assert.match(fn, /source: "build"/,
+    "tagged so confirmScores treats it as needing confirmation, like a sweep row");
+  assert.doesNotMatch(fn, /gradeLabel/,
+    "the build must never decide a verdict here; it has no score to decide it from");
+});
+
+test("a missing kick-off is treated as started, not as fair game", () => {
+  const fn = src.slice(src.indexOf("async function recordPredictions"),
+                       src.indexOf("async function buildPayload"));
+  assert.match(fn, /!isFinite\(ko\)/,
+    "we would rather miss a row than record a tip we cannot prove predates the result");
+});
+
+test("recording is non-fatal and never overwrites a tip already on file", () => {
+  const fn = src.slice(src.indexOf("async function recordPredictions"),
+                       src.indexOf("async function buildPayload"));
+  assert.match(fn, /if \(!DB\.configured\(\)\) return;/);
+  assert.match(fn, /failed \(non-fatal\)/, "a store outage must not fail a build");
+  /* insertResults is ignore-duplicates, which is what makes running this on
+     every build safe. If that ever changes, this test should fail. */
+  const store = require("fs").readFileSync(
+    require("path").join(__dirname, "..", "lib", "supabase.js"), "utf8");
+  assert.match(store, /resolution=ignore-duplicates/,
+    "recording runs on every build; without ignore-duplicates it would rewrite tips");
+});
+
+test("it runs after the scores are enriched, so it sees real kick-offs", () => {
+  assert.ok(src.indexOf("await enrichWithFTScores();") < src.indexOf("await recordPredictions("),
+    "order matters: recordPredictions reads f.kickoff off the finished fixture list");
+});
