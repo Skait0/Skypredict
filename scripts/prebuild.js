@@ -86,7 +86,7 @@ async function bakePayload() {
      as before, so the build output stays readable. */
   const { log: buildLog, ...rest } = payload;
   (buildLog || [])
-    .filter((l) => /held back|unavailable|failed|oracle|suspended|record:|recorded result/i.test(l))
+    .filter((l) => /held back|unavailable|failed|oracle|soccervista|suspended|record:|recorded result|score source|FT score map|confirmed from/i.test(l))
     .forEach((l) => log(l));
   const out = path.join(PUB, "predictions.json");
   /* The file the site downloads, without the per-result model numbers - they

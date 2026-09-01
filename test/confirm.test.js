@@ -10,9 +10,14 @@
  * from the live feed. So the prediction is kept and the score has to be
  * re-sourced before anything reaches a page.
  *
- * These run with no API key set, which is the honest default for a checkout
- * and also the case that matters most: when the oracle cannot answer, the
- * build must fall silent rather than fall back on the guess.
+ * These run with EVERY score source switched off, which is the honest default
+ * for a checkout and also the case that matters most: when nothing can answer,
+ * the build must fall silent rather than fall back on the guess.
+ *
+ * There are two sources now. Unsetting the API key alone stopped being enough
+ * the moment SoccerVista arrived - it needs no key, so it is on by default and
+ * these tests started confirming rows over the real network, which is both a
+ * false pass and a test suite that phones a stranger.
  */
 
 const test = require("node:test");
@@ -21,9 +26,17 @@ const assert = require("node:assert");
 const B = require("../lib/build.js");
 
 const KEY_ENV = "APISPORTS_KEY";
-let saved;
-test.before(() => { saved = process.env[KEY_ENV]; delete process.env[KEY_ENV]; });
-test.after(() => { if (saved !== undefined) process.env[KEY_ENV] = saved; });
+const OFF_ENV = "SOCCERVISTA_OFF";
+let saved, savedOff;
+test.before(() => {
+  saved = process.env[KEY_ENV]; delete process.env[KEY_ENV];
+  savedOff = process.env[OFF_ENV]; process.env[OFF_ENV] = "1";
+});
+test.after(() => {
+  if (saved !== undefined) process.env[KEY_ENV] = saved;
+  if (savedOff === undefined) delete process.env[OFF_ENV];
+  else process.env[OFF_ENV] = savedOff;
+});
 
 const log = () => [];
 
@@ -82,6 +95,8 @@ test("the build says out loud that it could not confirm", async () => {
   const lines = [];
   await B.confirmScores([{ match_date: "2026-08-28", home: "A", away: "B",
     hg: 0, ag: 0, tip: "Over 1.5", hit: false, source: "sweep" }], lines);
-  assert.ok(lines.some(l => /oracle not configured/i.test(l)),
+  assert.ok(lines.some(l => /no score source configured/i.test(l)),
     "a silent hold is indistinguishable from having no results; it must be logged");
+  assert.ok(lines.some(l => /1 recorded result/.test(l)),
+    "and it must say how many rows it is holding, or the line says nothing useful");
 });
