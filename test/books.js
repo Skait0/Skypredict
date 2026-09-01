@@ -61,6 +61,9 @@ function prelude(book) {
     'var BOOK_KEY="sw.book";\n' +
     "var BOOKMAKER=" + JSON.stringify(book || "sporty") + ";\n" +
     fn("curBook") + "\n" + fn("bookIdOf") + "\n" + fn("bookWire") + "\n" +
+    /* A confirmation hides the Get code button beside it while it is up, so
+       anything that raises one needs these three as well. */
+    fn("promptFoot") + "\n" + fn("showPrompt") + "\n" + fn("clearPrompt") + "\n" +
     "bookWire();\n"
   );
 }

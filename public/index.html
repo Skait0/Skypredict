@@ -2394,6 +2394,10 @@ html.mode-live #live{display:block}
    the row takes no space at all - it was showing on the wizard page above a
    slip of nought games. */
 .bookpick[hidden]{display:none}
+/* See showPrompt: while a confirmation is on screen, the button that raised it
+   is a second way to do the same thing and knows nothing about the choice
+   being offered. The card carries its own Book and Cancel. */
+.prompting .book-btn{display:none}
 .bookpick-l{font-size:11px;font-weight:700;letter-spacing:.05em;
   text-transform:uppercase;color:var(--faint);margin-right:1px}
 .bp{font:inherit;font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:99px;
@@ -2413,13 +2417,28 @@ html.mode-live #live{display:block}
    most people arriving have a SportyBet account. Bet9ja is the alternative for
    the people who bank there, so it is offered rather than advertised.
    SportyBet keeps the full-size pill in their red on white. */
-.bp[data-book="sporty"]{background:#fff;color:var(--red)}
-.bp[data-book="sporty"].on{box-shadow:0 0 0 2px var(--red)}
+/* Weight and a little dimension. Flat white read as a disabled chip rather
+   than a brand: the name now carries the weight their own logo does, and the
+   pill has a soft top light and a shadow under it so it sits on the surface
+   instead of being printed on it. */
+.bp[data-book="sporty"]{
+  background:linear-gradient(180deg,#fff,#f0f1f3);
+  color:var(--red);font-weight:900;letter-spacing:-.01em;font-size:13px;
+  box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(0,0,0,.08),
+             0 2px 6px rgba(0,0,0,.32)}
+.bp[data-book="sporty"].on{
+  box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(0,0,0,.08),
+             0 2px 8px rgba(0,0,0,.36),0 0 0 2px var(--red)}
 /* Bet9ja sits a clear step down: smaller type, tighter padding, on black.
    Their mark is two saturated colours and at equal size it pulled the eye off
    SportyBet entirely. Small enough to be second, whole enough to be theirs. */
-.bp[data-book="bet9ja"]{background:#000;padding:5px 10px;font-size:10.5px}
-.bp[data-book="bet9ja"].on{box-shadow:0 0 0 1.5px var(--b9-green)}
+.bp[data-book="bet9ja"]{
+  background:linear-gradient(180deg,#191c20,#000);
+  padding:5px 10px;font-size:10.5px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 2px 6px rgba(0,0,0,.4)}
+.bp[data-book="bet9ja"].on{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 2px 8px rgba(0,0,0,.45),
+             0 0 0 1.5px var(--b9-green)}
 .bp[data-book="bet9ja"] small{font-size:9.5px}
 @media(hover:hover){ .bp:not(.on):hover{opacity:.72} }
 /* How many of the slip this book can actually take, so the choice is informed
@@ -7045,6 +7064,10 @@ function setBook(k){
   if(!BOOKS[k]||k===BOOKMAKER) return;
   BOOKMAKER=k;
   try{ localStorage.setItem(BOOK_KEY,k); }catch(e){}
+  /* Whatever the last book said about this slip is now about the wrong book.
+     "bet9ja doesn't have 2 of these games" is not true of SportyBet, and
+     leaving it up covered the button that would have found that out. */
+  try{ clearPrompts(); }catch(e){}
   /* The badges on every leg say whether THIS book has the game, so they all
      change meaning at once. */
   try{ renderBuilder(); }catch(e){}
@@ -7086,6 +7109,25 @@ function bookWire(){
      out not to price one, it now says so by name and the retry drops it. */
   BOOKS.bet9ja.priced=function(c){ return !!bookIdOf(c,BOOKS.bet9ja); };
 }
+/* A question on screen and a Get code button beside it are two ways to do the
+   same thing, and the button knows nothing about the choice being offered -
+   press it and you are asked again. So while a confirmation is up, the button
+   that raised it stands down. The card carries its own Book and Cancel. */
+function promptFoot(target){
+  return $(target==="myBookResult"?"mySheetFoot":"bldFoot");
+}
+function showPrompt(target,html){
+  var el=$(target); if(!el) return false;
+  el.innerHTML=html;
+  var f=promptFoot(target); if(f) f.classList.add("prompting");
+  return true;
+}
+function clearPrompt(target){
+  var el=$(target); if(el) el.innerHTML="";
+  var f=promptFoot(target); if(f) f.classList.remove("prompting");
+}
+/* Every prompt on the page, whichever slip raised it. */
+function clearPrompts(){ clearPrompt("bookResult"); clearPrompt("myBookResult"); }
 function bookIdOf(c,B){
   B=B||curBook();
   var f=(c&&c.f)||fixtureById(c&&c.id);
@@ -7690,14 +7732,15 @@ async function bookSlip(){
     /* Said once, short. It was "1 game isn't available on Bet9ja yet. Book
        the other 2 without it?" - two sentences and a trailing clause to carry
        one fact and one question. */
-    $("bookResult").innerHTML="<div class='confirm-card'><p>"+B.mark+" doesn't have "+
+    showPrompt("bookResult","<div class='confirm-card'><p>"+B.mark+" doesn't have "+
       missing.length+" of these games.</p>"+
       "<div class='ca'><button class='confirm-go' type='button'>Book the other "+
       (bookable.length===1?"one":bookable.length)+"</button>"+
-      "<button class='confirm-cancel' type='button'>Cancel</button></div></div>";
+      "<button class='confirm-cancel' type='button'>Cancel</button></div></div>");
     $("bookResult").querySelector(".confirm-go").addEventListener("click",function(){
+      clearPrompt("bookResult");
       if(!confirmDropUnpriced(bookable,"bookResult",doBook,B)) doBook(bookable);});
-    $("bookResult").querySelector(".confirm-cancel").addEventListener("click",function(){$("bookResult").innerHTML="";});
+    $("bookResult").querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt("bookResult");});
     return;
   }
   if(confirmDropUnpriced(bookable,"bookResult",doBook,B)) return;
@@ -7730,6 +7773,7 @@ function confirmDropUnpriced(picks,target,go,B){
      that market" would be a guess, and usually a wrong one. */
   var byEvent=(B.key==="bet9ja");
   if(!priced.length){
+    clearPrompt(target);
     el.innerHTML="<div class='code-err'><b>"+B.mark+
       (byEvent?" doesn't have "+(picks.length===1?"this game.":"any of these games."):
                " isn't offering "+(picks.length===1?"this market.":"any of these markets."))+"</b>"+
@@ -7740,15 +7784,16 @@ function confirmDropUnpriced(picks,target,go,B){
   var names=picks.filter(function(c){return !B.priced(c);})
     .map(function(c){var f=(c&&c.f)||fixtureById(c.id);
       return f?(f.home+" v "+f.away):null;}).filter(Boolean).slice(0,4);
-  el.innerHTML="<div class='confirm-card'><p><b>"+B.mark+" can't take "+un+
+  showPrompt(target,"<div class='confirm-card'><p><b>"+B.mark+" can't take "+un+
     " pick"+(un===1?"":"s")+"</b>"+
     (names.length?"<span class='cf-list'>"+names.map(esc).join("<br>")+
       (un>names.length?"<br>and "+(un-names.length)+" more":"")+"</span>":"")+
     "</p><div class='ca'><button class='confirm-go' type='button'>Book the other "+
     (priced.length===1?"one":priced.length)+"</button>"+
-    "<button class='confirm-cancel' type='button'>Cancel</button></div></div>";
-  el.querySelector(".confirm-go").addEventListener("click",function(){go(priced);});
-  el.querySelector(".confirm-cancel").addEventListener("click",function(){el.innerHTML="";});
+    "<button class='confirm-cancel' type='button'>Cancel</button></div></div>");
+  el.querySelector(".confirm-go").addEventListener("click",function(){
+    clearPrompt(target); go(priced);});
+  el.querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt(target);});
   return true;
 }
 function doBook(picks,retried,B){
@@ -9628,21 +9673,23 @@ async function bookMy(){
   if(dups){
     var uniq=[],seenEv={};
     bookable.forEach(function(c){var k=bookIdOf(c,B);if(!seenEv[k]){seenEv[k]=1;uniq.push(c);}});
-    $("myBookResult").innerHTML="<div class='confirm-card'><p>You have the same match picked more than once. "+esc(B.label)+" takes one pick per match - book "+uniq.length+" unique game"+(uniq.length===1?"":"s")+"?</p><div class='ca'><button class='confirm-go' type='button'>Book "+uniq.length+"</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>";
+    showPrompt("myBookResult","<div class='confirm-card'><p>You have the same match picked more than once. "+esc(B.label)+" takes one pick per match - book "+uniq.length+" unique game"+(uniq.length===1?"":"s")+"?</p><div class='ca'><button class='confirm-go' type='button'>Book "+uniq.length+"</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>");
     $("myBookResult").querySelector(".confirm-go").addEventListener("click",function(){
+      clearPrompt("myBookResult");
       if(!confirmDropUnpriced(uniq,"myBookResult",doBookMy,B)) doBookMy(uniq);});
-    $("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){$("myBookResult").innerHTML="";});
+    $("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt("myBookResult");});
     return;
   }
   if(missing.length){
-    $("myBookResult").innerHTML="<div class='confirm-card'><p>"+B.mark+" doesn't have "+
+    showPrompt("myBookResult","<div class='confirm-card'><p>"+B.mark+" doesn't have "+
       missing.length+" of these games.</p>"+
       "<div class='ca'><button class='confirm-go' type='button'>Book the other "+
       (bookable.length===1?"one":bookable.length)+"</button>"+
-      "<button class='confirm-cancel' type='button'>Cancel</button></div></div>";
+      "<button class='confirm-cancel' type='button'>Cancel</button></div></div>");
     $("myBookResult").querySelector(".confirm-go").addEventListener("click",function(){
+      clearPrompt("myBookResult");
       if(!confirmDropUnpriced(bookable,"myBookResult",doBookMy,B)) doBookMy(bookable);});
-    $("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){$("myBookResult").innerHTML="";});
+    $("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt("myBookResult");});
     return;
   }
   if(confirmDropUnpriced(bookable,"myBookResult",doBookMy,B)) return;

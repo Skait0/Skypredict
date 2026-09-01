@@ -44,11 +44,19 @@ function grab(name) {
    these functions read that now, and the two books answer differently. */
 function harness(book) {
   const el = { innerHTML: "", _handlers: {},
+    /* promptFoot() asks $() for the foot and toggles "prompting" on it, which
+       is what hides the Get code button while a question is up. The same
+       stand-in serves as both element here; what these tests care about is
+       that the class goes on and comes off. */
+    classList: new Set(),
     querySelector(sel) {
       const key = sel.replace(".", "");
       const self = this;
       return { addEventListener(_, fn) { self._handlers[key] = fn; } };
     } };
+  el.classList.add = Set.prototype.add.bind(el.classList);
+  el.classList.remove = Set.prototype.delete.bind(el.classList);
+  el.classList.contains = Set.prototype.has.bind(el.classList);
   const api = new Function("EL",
     "function $(id){return EL;}" +
     "function esc(s){return String(s);}" +
