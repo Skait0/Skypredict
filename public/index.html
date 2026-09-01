@@ -1487,6 +1487,10 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .sheet-head .info{flex:1;min-width:0}
 .sheet-head h3{font-size:18px;font-weight:800;letter-spacing:-.02em;line-height:1.25}
 .sheet-head p{font-size:12.5px;color:var(--soft);margin-top:4px}
+/* "book them to SportyBet" read tight against the name. Not the flex problem
+   above - this is an ordinary paragraph and the space is really there - it
+   just wants a little more air around a word set in a heavier weight. */
+#mySheetSub .sbm,#mySheetSub .b9m{margin-left:.18em}
 /* The cross is a drawn path, not a typed character. A text "x" or &times;
    carries the font's own side and vertical bearings, so it lands a pixel or two
    off centre inside a square button and reads as crooked whatever line-height
@@ -2763,9 +2767,12 @@ html.mode-live #live{display:block}
 @media(hover:hover){
   .code-card--b9 .code-x:hover{border-color:var(--b9-green);color:#fff}
 }
-/* The mark stays lowercase in a heading that is otherwise uppercased - their
-   logo is lowercase and "BET9JA" is not their name. */
-.code-card--b9 i .b9m{text-transform:none}
+/* "Your Bet9ja booking code". The heading is uppercased, which made their
+   mark shout BET9JA; lowercase was the first correction and reads as a
+   sentence that forgot its capital. Capitalised is the name as it is written
+   in prose, and only here - the pill and the confirm cards keep the lowercase
+   logo form. */
+.code-card--b9 i .b9m{text-transform:capitalize}
 .code-card--b9 .code-acts .code-copy,
 .code-card--b9 .code-acts .share-btn{
   background:var(--b9-green);color:#fff;border:1px solid transparent!important;
@@ -2780,7 +2787,11 @@ html.mode-live #live{display:block}
 .code-card--b9 .code-open{background:#fff;color:#14161a;
   box-shadow:0 3px 16px rgba(0,0,0,.45)}
 @media(hover:hover){ .code-card--b9 .code-open:hover{filter:brightness(.96)} }
-.code-card--b9 .code-open .b9m{margin-left:5px}
+/* .code-opens .code-open is inline-flex so its contents centre, which makes
+   "Open in" and the mark two flex items with nothing between them:
+   "Open inbet9ja". A space in the string cannot survive that, so it is a
+   margin. Both books, because both had it - only Bet9ja's was noticed. */
+.code-open .sbm,.code-open .b9m{margin-left:.3em}
 .code-err{background:var(--red-wash);border:1px solid var(--red);border-radius:var(--r-md);
   padding:15px;color:var(--red-ink);font-weight:600;font-size:14px}
 /* What went wrong, then what to do about it - the second line is the useful
@@ -6844,7 +6855,11 @@ function dropUnbookable(picks,d,B){
   return picks.filter(function(c){return B.priced(c);});
 }
 const SPORTY_URL="https://www.sportybet.com/ng/?shareCode=";
-const B9_URL="https://sports.bet9ja.com/?BookABet=";
+/* Their own bundle matches /[?&]bookABetCode=([\da-zA-Z]+)/ against
+   window.location.search - so this is the parameter, and "BookABet" (which
+   was a guess from the POST endpoint's name) loaded their home page with the
+   code ignored. */
+const B9_URL="https://sports.bet9ja.com/?bookABetCode=";
 const B9_BOOK_URL="https://web-production-798c0.up.railway.app/api/bet9ja/booking-code";
 /* The same booking code loads the same slip on football.com, which until now
    the modal only mentioned in a footnote - leaving anyone who uses that app to

@@ -346,3 +346,35 @@ test("the sheet's own line names the book the buttons will act on", () => {
   const sb = idx.slice(sbAt, sbEnd);
   assert.match(sb, /paintBookPickers\(\)/);
 });
+
+test("each book's deep link uses the parameter that book actually reads", () => {
+  /* Bet9ja's was "?BookABet=", guessed from the name of the POST endpoint that
+     mints the code. Their own bundle matches
+     /[?&]bookABetCode=([\da-zA-Z]+)/ against window.location.search, so the
+     guess loaded their home page with the code ignored - reported as "when i
+     click on open in bet9ja it doesnt load the slip". */
+  /* Read from the source: the harness substitutes stub endpoints, which is
+     right for exercising behaviour and useless for checking a constant. */
+  const idx = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  const b9 = /const B9_URL="([^"]+)"/.exec(idx);
+  const sb = /const SPORTY_URL="([^"]+)"/.exec(idx);
+  assert.ok(b9 && sb, "both deep links must be declared");
+  assert.match(b9[1], /[?&]bookABetCode=$/,
+    "the parameter their bundle reads, not the one that mints the code");
+  assert.match(sb[1], /shareCode=$/);
+  for (const u of [b9[1], sb[1]]) {
+    assert.match(u, /^https:\/\//, "and https, since a code is appended to it");
+  }
+});
+
+test("the mark keeps a space from the word before it inside a flex button", () => {
+  /* .code-opens .code-open is inline-flex so its contents centre, which makes
+     "Open in" and the mark two flex items with nothing between them:
+     "Open inbet9ja". A space in the string cannot survive that. Third time
+     this shape of bug has appeared - the hero sentence, the sphere button,
+     this - so the rule is worth stating: a flex row is not a place to put a
+     sentence, and where one ends up there, the spaces have to be margins. */
+  const idx = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  assert.match(idx, /\.code-open \.sbm,\.code-open \.b9m\{margin-left:/,
+    "both books, not just the one that was noticed");
+});
