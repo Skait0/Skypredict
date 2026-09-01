@@ -114,33 +114,3 @@ test("a PostgREST error leads with the message, not the failing row", async () =
   } finally { global.fetch = real; }
 });
 
-test("a row with no verdict is retried with one rather than lost", async () => {
-  /* A prediction written before kick-off has no score and no verdict. The
-     results table was built for finished matches and may refuse that, so the
-     one case is recognised and the row is written anyway - the same shape of
-     answer as the missing `model` column. */
-  const real = global.fetch;
-  const sent = [];
-  global.fetch = async (_url, init) => {
-    const rows = JSON.parse(init.body);
-    sent.push(rows);
-    if (sent.length === 1) return {
-      ok: false, status: 400,
-      text: async () => JSON.stringify({ code: "23502",
-        message: 'null value in column "hit" violates not-null constraint' }),
-    };
-    return { ok: true, status: 201, text: async () => JSON.stringify(rows) };
-  };
-  try {
-    const out = await DB.insertResults([{ match_date: "2026-09-01", home: "A", away: "B",
-      tip: "1X, home or draw", hg: null, ag: null, hit: null, source: "build" }]);
-    assert.strictEqual(out.ok, true);
-    assert.strictEqual(sent.length, 2, "one refusal, one retry");
-    assert.strictEqual(sent[0][0].hit, null);
-    assert.strictEqual(sent[1][0].hit, false, "a default verdict, not a claimed one");
-    /* -1, not 0. A plausible wrong score is the exact failure the confirmation
-       path exists to prevent; this one cannot be mistaken for a result. */
-    assert.strictEqual(sent[1][0].hg, -1);
-    assert.strictEqual(sent[1][0].ag, -1);
-  } finally { global.fetch = real; }
-});

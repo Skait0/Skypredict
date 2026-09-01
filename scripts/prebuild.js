@@ -56,16 +56,24 @@ async function bakePayload() {
      jump off a game that had already been played. Best-effort: no network, a
      cold site or a payload without one simply means a fresh pick, which is
      what used to happen every time anyway. */
-  let prevPotd = null;
+  let prevPotd = null, prevFixtures = null;
   try {
     const origin = process.env.SITE_ORIGIN || "https://skypredict-theta.vercel.app";
     const r = await fetch(origin + "/predictions.json", { signal: AbortSignal.timeout(8000) });
-    if (r.ok) prevPotd = (await r.json()).potd || null;
+    if (r.ok) {
+      const prev = await r.json();
+      prevPotd = prev.potd || null;
+      /* The board as readers saw it, tips and all. recordPublishedTips writes
+         those tips to the record once the games have been played, which is the
+         only way to file the tip we actually showed rather than one this build
+         would decide now with a refitted model. */
+      prevFixtures = Array.isArray(prev.fixtures) ? prev.fixtures : null;
+    }
     if (prevPotd) log("carrying forward pick of the day: " + prevPotd.home + " v " + prevPotd.away);
-  } catch (e) { warn("could not read the live pick of the day (" + e.message + "), choosing fresh"); }
+  } catch (e) { warn("could not read the live board (" + e.message + "), choosing fresh"); }
   let payload;
   try {
-    payload = await buildPayload({ prevPotd });
+    payload = await buildPayload({ prevPotd, prevFixtures });
   } catch (e) {
     warn("build failed, skipping bake (the page will use /api/predictions): " + e.message);
     return;

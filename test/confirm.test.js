@@ -118,63 +118,44 @@ const DB = require("../lib/supabase.js");
 const src = require("fs").readFileSync(
   require("path").join(__dirname, "..", "lib", "build.js"), "utf8");
 
-test("only fixtures that have not kicked off are recorded", () => {
+test("the tip written to the record is the one that was published", () => {
   /* The whole integrity of the record rests on this. The model refits on every
-     build, so an evening rebuild can reach a different call than the morning
-     one did; recording after the whistle would file the luckier of the two and
-     the record would flatter us. */
-  const fn = src.slice(src.indexOf("async function recordPredictions"),
+     build, so re-deciding a tip after the final whistle would file whichever
+     call happened to look better. The tips come from the board the site was
+     already showing - prebuild fetches it for the pick of the day - not from
+     the build doing the writing. */
+  const fn = src.slice(src.indexOf("async function recordPublishedTips"),
                        src.indexOf("async function buildPayload"));
-  assert.match(fn, /if \(!isFinite\(ko\) \|\| ko <= now\) continue;/,
-    "a started match must not be recorded");
-  assert.match(fn, /hg: null, ag: null, hit: null/,
-    "and it must be written with no score - the score comes from confirmScores");
-  assert.match(fn, /source: "build"/,
-    "tagged so confirmScores treats it as needing confirmation, like a sweep row");
-  assert.doesNotMatch(fn, /gradeLabel/,
-    "the build must never decide a verdict here; it has no score to decide it from");
+  assert.match(fn, /recordPublishedTips\(prevFixtures, log\)/,
+    "it must take the previously published board as its input");
+  assert.match(fn, /tip: f\.tip/, "and write that board's tip verbatim");
+  assert.doesNotMatch(fn, /bestTip|chooseTip|scoreForTip/,
+    "it must never decide a tip of its own");
+  assert.match(src, /await recordPublishedTips\(cfg\.prevFixtures, log\)/,
+    "wired to the previous board, not to the fixtures this build just made");
 });
 
-test("a missing kick-off is treated as started, not as fair game", () => {
-  const fn = src.slice(src.indexOf("async function recordPredictions"),
+test("only matches that have finished are written", () => {
+  const fn = src.slice(src.indexOf("async function recordPublishedTips"),
                        src.indexOf("async function buildPayload"));
+  assert.match(fn, /now - ko < 2 \* 3600 \* 1000/,
+    "two hours past kick-off, so a game still being played is left alone");
   assert.match(fn, /!isFinite\(ko\)/,
-    "we would rather miss a row than record a tip we cannot prove predates the result");
+    "and a fixture with no kick-off time is skipped rather than assumed over");
+  assert.match(fn, /GRADE\.gradeLabel\(f\.tip, m\.hg, m\.ag\)/,
+    "the verdict is graded from the published tip and the observed score");
+  assert.match(fn, /if \(hit === null\) continue;/,
+    "a tip no final score can settle is not filed with a guessed verdict");
 });
 
-test("recording is non-fatal and never overwrites a tip already on file", () => {
-  const fn = src.slice(src.indexOf("async function recordPredictions"),
+test("recording is non-fatal and never rewrites a row already on file", () => {
+  const fn = src.slice(src.indexOf("async function recordPublishedTips"),
                        src.indexOf("async function buildPayload"));
   assert.match(fn, /if \(!DB\.configured\(\)\) return;/);
   assert.match(fn, /failed \(non-fatal\)/, "a store outage must not fail a build");
-  /* insertResults is ignore-duplicates, which is what makes running this on
-     every build safe. If that ever changes, this test should fail. */
   const store = require("fs").readFileSync(
     require("path").join(__dirname, "..", "lib", "supabase.js"), "utf8");
   assert.match(store, /resolution=ignore-duplicates/,
-    "recording runs on every build; without ignore-duplicates it would rewrite tips");
+    "this runs on every build; without ignore-duplicates it would rewrite history");
 });
 
-test("it runs after the scores are enriched, so it sees real kick-offs", () => {
-  assert.ok(src.indexOf("await enrichWithFTScores();") < src.indexOf("await recordPredictions("),
-    "order matters: recordPredictions reads f.kickoff off the finished fixture list");
-});
-
-test("a placeholder score can never be published", async () => {
-  /* The row the build writes before kick-off carries -1/-1 where the schema
-     demands a number. It reaches a page only if something confirms it, and
-     confirmScores confirms nothing while every source is off - which is the
-     state these tests run in. If this ever passes a -1 through, the results
-     page prints a match that finished minus one nil. */
-  const row = { match_date: "2026-09-01", home: "Halifax", away: "Hartlepool",
-                hg: DB.UNPLAYED, ag: DB.UNPLAYED, tip: "1X, home or draw",
-                hit: false, source: "build" };
-  const out = await B.confirmScores([row], log());
-  assert.strictEqual(out.has(row), false,
-    "an unplayed placeholder must be held exactly like a sweep guess");
-});
-
-test("the placeholder is not a plausible score", () => {
-  assert.ok(DB.UNPLAYED < 0,
-    "0 would be a real scoreline; the point of this value is that it cannot be one");
-});
