@@ -26,6 +26,13 @@ test("the slot is SportyBet's width and a wider visitor is scaled to fit", () =>
      CSS reads perfectly well without it. */
   assert.match(src, /\.bkc\{[^}]*min-width:0/,
     "without min-width:0 the width set in startBookCycle is silently floored");
+  /* And the column has to be pinned to the container. A width on a grid
+     container does not constrain its automatic track: the column stayed as
+     wide as "football.com" while the box was 63px, so every name was centred
+     in a column that overflowed by 18px and SportyBet sat on top of the word
+     "code". Reported from a phone, but it was true at every width. */
+  assert.match(src, /\.bkc\{[^}]*grid-template-columns:minmax\(0,1fr\)/,
+    "an auto track ignores the container width and the names overflow the slot");
   const fn = src.slice(src.indexOf("function startBookCycle()"),
                        src.indexOf("function loadBet9jaSoon"));
   assert.match(fn, /host\.style\.width=w\[0\]\+"px"/,

@@ -3392,11 +3392,23 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 /* min-width:0 because a grid container's automatic minimum is its content, so
    the width set below was being floored at the widest name and ignored - the
    morph did nothing until this was here. */
-/* min-width:0 because a grid container's automatic minimum is its content:
-   without it the box is floored at the widest name and the width set in
-   startBookCycle is silently ignored. A scaled child still occupies its full
-   layout width, so this is load-bearing even though nothing here animates. */
-.bkc{display:inline-grid;vertical-align:baseline;font-weight:800;min-width:0}
+/* Two declarations here that look like boilerplate and are not.
+ *
+ * min-width:0 - a grid container's automatic minimum is its content, so
+ *   without it the box is floored at the widest name and the width set in
+ *   startBookCycle is ignored. A transform does not shrink a layout box, so
+ *   this holds even though nothing here animates.
+ *
+ * grid-template-columns:minmax(0,1fr) - and this is the one that took a
+ *   measurement to find. Setting a width on the CONTAINER does not constrain
+ *   the automatic TRACK inside it: the column stayed as wide as
+ *   "football.com" while the box was 63px, so every name was centred in an
+ *   81px column that overflowed the box by 18px and SportyBet sat 9px on top
+ *   of the word "code". Reported on a phone as the name running into it; it
+ *   was doing the same thing on every width. Pinning the column to the
+ *   container is what makes the slot mean anything. */
+.bkc{display:inline-grid;grid-template-columns:minmax(0,1fr);
+  vertical-align:baseline;font-weight:800;min-width:0}
 .bkc-i{grid-area:1/1;font-style:normal;white-space:nowrap;opacity:0;
   justify-self:center;transition:opacity .16s linear}
 .bkc-i.on{opacity:1}
