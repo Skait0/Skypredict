@@ -3408,7 +3408,12 @@ select{min-height:44px;padding:10px 32px 10px 12px}
  *   was doing the same thing on every width. Pinning the column to the
  *   container is what makes the slot mean anything. */
 .bkc{display:inline-grid;grid-template-columns:minmax(0,1fr);
-  vertical-align:baseline;font-weight:800;min-width:0}
+  vertical-align:baseline;font-weight:800;min-width:0;
+  /* One more space either side. As a margin rather than a character: the slot
+     is a measured box, so an &nbsp; in the markup would sit INSIDE it and eat
+     the width the name needs. .25em is a space in this face, and in em so it
+     holds at any size. */
+  margin:0 .25em}
 .bkc-i{grid-area:1/1;font-style:normal;white-space:nowrap;opacity:0;
   justify-self:center;transition:opacity .16s linear}
 .bkc-i.on{opacity:1}
