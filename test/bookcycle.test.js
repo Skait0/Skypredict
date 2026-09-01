@@ -125,3 +125,24 @@ test("every trust item after the first carries its separator dot", () => {
   assert.doesNotMatch(src, /\.streak::before\{content:none/,
     "that rule blanked the dot the streak is supposed to carry");
 });
+
+test("a wordmark inside a flex button is wrapped so the words keep their spaces", () => {
+  /* .sc-go-btn is inline-flex so its contents centre. Bare words either side
+     of the wordmark therefore become three anonymous flex items, and with no
+     gap they butt together: "Build me aSportyBetslip". Reported from the
+     sphere card. The same shape of bug, mirrored, put 7px gaps inside the
+     hero sentence - a flex row is not a place to put a sentence. */
+  assert.match(src, /<span class="sc-lbl">Build me a <span class="sbm">SportyBet<\/span> slip<\/span>/,
+    "the label must be a single flex item");
+  assert.match(src, /\.sc-lbl\{display:inline\}/);
+});
+
+test("the primary offer is a black pill and the mark is red on it", () => {
+  assert.match(src, /\.sc-go-primary[^{]*\{[^}]*border-radius:999px/,
+    "a pill, and it has to beat .sc-go-btn's own 10px");
+  assert.match(src, /\.sc-go-primary \.sbm\{color:var\(--red\)!important\}/,
+    "on black the mark is their red; on the red buttons it inherits white");
+  /* The list that forces the mark to inherit exists so it does not vanish on
+     a red ground. This button is no longer one of those. */
+  assert.match(src, /\.code-open \.sbm,\.book-btn \.sbm,\.wsp-go \.sbm,\.slipbar \.sbm\{color:inherit\}/);
+});
