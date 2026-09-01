@@ -2404,7 +2404,7 @@ html.mode-live #live{display:block}
    Nigerian reader knows both of these on sight long before they read the word.
    Selection is a ring and full opacity rather than a colour swap, because
    there is no colour left to swap to that would not be somebody's brand. */
-.bp:not(.on){opacity:.42}
+.bp:not(.on){opacity:.62}
 .bp.on{opacity:1}
 /* The two are not equals and the row should not pretend they are. This site
    is a SportyBet site - the hero button says so, the sample codes say so, and
@@ -2538,10 +2538,25 @@ html.mode-live #live{display:block}
    The card is the same shape whichever book issued the code; only the palette
    changes, so a reader can tell at a glance which app the code belongs to
    before reading a word of it. */
-.code-card--b9 i{color:#fff}
-/* The wordmark keeps its own colours everywhere except where it sits on
-   black, so it needs no override here - "Your bet9ja booking code" reads as
-   white type with their mark inside it. */
+/* Its own ground, the same in both themes.
+   The light theme paints the standard card with a wash of OUR red and its
+   title in our red too - the wrong brand on a Bet9ja code - and both of those
+   are two-class rules that outrank anything single-class here. So this sets
+   the surface rather than trying to patch over them, which also means the
+   white type below is legible whichever theme the reader is in. */
+.code-card--b9,[data-theme="light"] .code-card--b9{
+  background:#0b2b19;border-color:rgba(20,177,81,.5);
+  box-shadow:0 18px 50px rgba(0,20,8,.5),inset 0 1px 0 rgba(255,255,255,.1)}
+.code-card--b9 i,[data-theme="light"] .code-card--b9 i{color:#fff}
+.code-card--b9 b,[data-theme="light"] .code-card--b9 b{color:#fff}
+.code-card--b9 .code-keep-n{color:rgba(255,255,255,.66)}
+.code-card--b9 .code-save{background:rgba(255,255,255,.1);color:#fff;
+  border-color:rgba(255,255,255,.28)}
+.code-card--b9 .code-x{background:rgba(255,255,255,.1);color:#fff;
+  border-color:rgba(255,255,255,.24)}
+/* The mark stays lowercase in a heading that is otherwise uppercased - their
+   logo is lowercase and "BET9JA" is not their name. */
+.code-card--b9 i .b9m{text-transform:none}
 .code-card--b9 .code-acts .code-copy,
 .code-card--b9 .code-acts .share-btn{
   background:var(--b9-green);color:#fff;border:1px solid var(--b9-green)!important}
@@ -2553,7 +2568,7 @@ html.mode-live #live{display:block}
    their site - a green button here would collide with the two green ones
    above it and stop being the obvious next step. */
 .code-card--b9 .code-open{background:#fff;color:#14161a}
-.code-card--b9 .code-open .b9m{margin-left:1px}
+.code-card--b9 .code-open .b9m{margin-left:5px}
 .code-err{background:var(--red-wash);border:1px solid var(--red);border-radius:var(--r-md);
   padding:15px;color:var(--red-ink);font-weight:600;font-size:14px}
 /* What went wrong, then what to do about it - the second line is the useful
