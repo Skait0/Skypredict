@@ -251,8 +251,14 @@ function writePages(payload) {
  * old. So this exists to make buying a domain one environment variable rather
  * than a hunt through the source.
  *
- * Set SITE_ORIGIN on Vercel (e.g. https://soccerwizard.com) and everything -
- * canonicals, sitemap, robots, social cards, the share image - follows.
+ * Set SITE_ORIGIN on Vercel and everything - canonicals, sitemap, robots,
+ * social cards, the share image - follows.
+ *
+ * It is https://www.soccerwizard.live as of 1 Sep 2026. The bare domain
+ * 308s to www, so SITE_ORIGIN has to be the www form: pointing it at the
+ * apex would have every canonical tag and every sitemap URL naming a page
+ * that immediately redirects somewhere else, which is exactly the split this
+ * whole mechanism exists to prevent.
  */
 const DEFAULT_ORIGIN = "https://skypredict-theta.vercel.app";
 function applyOrigin() {
