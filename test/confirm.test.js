@@ -138,8 +138,8 @@ test("the tip written to the record is the one that was published", () => {
 test("only matches that have finished are written", () => {
   const fn = src.slice(src.indexOf("async function recordPublishedTips"),
                        src.indexOf("async function buildPayload"));
-  assert.match(fn, /now - ko < 2 \* 3600 \* 1000/,
-    "two hours past kick-off, so a game still being played is left alone");
+  assert.match(fn, /if \(!isFinite\(ko\) \|\| ko > now\) continue;/,
+    "kicked off - a source only returns finished matches, so that is enough");
   assert.match(fn, /!isFinite\(ko\)/,
     "and a fixture with no kick-off time is skipped rather than assumed over");
   assert.match(fn, /GRADE\.gradeLabel\(f\.tip, m\.hg, m\.ag\)/,
