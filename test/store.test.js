@@ -85,3 +85,59 @@ test("the working rows behave the same way", async () => {
   assert.ok(!("model" in seen[1].body[0]));
   assert.strictEqual(seen[1].body[0].hg, 1);
 });
+
+/* ------------------------------------------- errors you can act on */
+
+test("a PostgREST error leads with the message, not the failing row", async () => {
+  /* `details` comes first in their JSON and prints the entire failing row, so
+     truncating the body at 200 characters threw away `message` - the half that
+     names the column. A not-null violation reported as "Failing row contains
+     (2026-09-01, Halifax, Hartlepool, ..." and stopped there, which told the
+     build it had failed but not at what. */
+  const real = global.fetch;
+  global.fetch = async () => ({
+    ok: false, status: 400,
+    text: async () => JSON.stringify({
+      code: "23502",
+      details: "Failing row contains (" + "x".repeat(400) + ")",
+      hint: null,
+      message: 'null value in column "hit" of relation "results" violates not-null constraint',
+    }),
+  });
+  try {
+    const out = await DB.insertResults(ROWS);
+    assert.strictEqual(out.ok, false);
+    assert.match(out.why, /null value in column "hit"/,
+      "the column name is the only part of this worth printing");
+    assert.match(out.why, /23502/, "and the code, so the caller can branch on it");
+    assert.doesNotMatch(out.why, /xxxxxxxxxx/, "the failing row is noise here");
+  } finally { global.fetch = real; }
+});
+
+test("a row with no verdict is retried with one rather than lost", async () => {
+  /* A prediction written before kick-off has no score and no verdict. The
+     results table was built for finished matches and may refuse that, so the
+     one case is recognised and the row is written anyway - the same shape of
+     answer as the missing `model` column. */
+  const real = global.fetch;
+  const sent = [];
+  global.fetch = async (_url, init) => {
+    const rows = JSON.parse(init.body);
+    sent.push(rows);
+    if (sent.length === 1) return {
+      ok: false, status: 400,
+      text: async () => JSON.stringify({ code: "23502",
+        message: 'null value in column "hit" violates not-null constraint' }),
+    };
+    return { ok: true, status: 201, text: async () => JSON.stringify(rows) };
+  };
+  try {
+    const out = await DB.insertResults([{ match_date: "2026-09-01", home: "A", away: "B",
+      tip: "1X, home or draw", hg: null, ag: null, hit: null, source: "build" }]);
+    assert.strictEqual(out.ok, true);
+    assert.strictEqual(sent.length, 2, "one refusal, one retry");
+    assert.strictEqual(sent[0][0].hit, null);
+    assert.strictEqual(sent[1][0].hit, false, "a default verdict, not a claimed one");
+    assert.strictEqual(sent[1][0].hg, null, "and still no score - that is the point of the row");
+  } finally { global.fetch = real; }
+});
