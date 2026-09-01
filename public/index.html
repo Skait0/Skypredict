@@ -1029,6 +1029,13 @@ html.orb-ready .orb-mark{animation:orbRoll 8s linear infinite}
   .sc-go-primary::after{animation:none}
   .sc-go-arw{transition:none}
 }
+/* The pair share a shape.
+   These two sit one above the other at the same width and height, and a 999px
+   pill beside a 10px rounded rectangle reads as two buttons that arrived from
+   different places. Hierarchy is carried by weight - one is a solid black key,
+   the other a hairline outline - which is the difference worth seeing. Shape
+   is not. */
+.sc-actions .slider-btn.sc-go-btn{border-radius:999px!important}
 .sc-logo{height:30px;width:auto;display:inline-block;margin-left:9px;vertical-align:-9px;border-radius:4px}
 .sc-head{display:flex;align-items:flex-start;gap:13px}
 .sc-actions{display:flex;gap:10px;flex-wrap:wrap}
