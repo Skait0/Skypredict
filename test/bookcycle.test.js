@@ -146,3 +146,18 @@ test("the primary offer is a black pill and the mark is red on it", () => {
      a red ground. This button is no longer one of those. */
   assert.match(src, /\.code-open \.sbm,\.book-btn \.sbm,\.wsp-go \.sbm,\.slipbar \.sbm\{color:inherit\}/);
 });
+
+test("the match-rate script measures the matcher the site actually ships", () => {
+  /* scripts/b9match.js gated the exact-name clock relaxation behind --wide
+     while index.html applied it on every match, so the script reported 97.6%
+     where the site was doing 98.4% - and the four "misses" it printed included
+     two it would have paired. A measurement tool that disagrees with
+     production is worse than no measurement tool: it sends you looking for
+     aliases that are not missing. */
+  const s = require("fs").readFileSync(
+    require("path").join(__dirname, "..", "scripts", "b9match.js"), "utf8");
+  assert.match(s, /const WIDE = true;/,
+    "the relaxation ships, so it is not optional here");
+  assert.doesNotMatch(s, /process\.argv\.includes\("--wide"\)/,
+    "and it must not be behind a flag that can be left off");
+});

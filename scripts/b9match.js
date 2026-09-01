@@ -12,21 +12,23 @@
  * ANSWER, measured 1 Sep 2026: the tail is empty.
  *
  *     sportybet   238 of 238 upcoming fixtures   100%
- *     bet9ja      230 of 238                      96.6%
+ *     bet9ja      250 of 254                      98.4%
  *
- * Not one of the eight misses is an alias problem. Five are fixtures Bet9ja
- * does not price (the Russian top flight twelve days out, League of Ireland),
- * two are La Liga fixtures they list on a provisional date more than 24 hours
- * from ours, and one is a correct rejection - Rosario Central is not Atletico
- * Rosario. normTeam is aggressive enough, and the two bookmakers spell clubs
- * more alike than either spells them like our feed.
+ * Not one miss has ever been an alias problem except Rosario Central, which
+ * Bet9ja calls "Atletico Rosario" and which is now aliased. Everything else
+ * that has ever shown up here is a fixture Bet9ja has not published: they open
+ * the Russian top flight about a week out while our board carries it twelve
+ * days out, so those four appear on their own as the date comes round.
  *
- * --wide tests one change: let an exact match on BOTH normalised names ignore
- * the 24h clock fence. That fence exists because of the Barcelona SC bug,
- * which was a FUZZY match, so a both-sides-exact rule cannot reach it. Worth
- * 230 -> 232 on Bet9ja and, importantly, 238 -> 238 on SportyBet: it gains
- * without disturbing the live path. Not shipped yet - it belongs with the
- * site-side work, where it can be tested against both bookmakers at once.
+ * Which means the useful figure is not 98.4% of our board but 100% of what
+ * Bet9ja actually lists. Before spending an evening on this, check whether the
+ * misses are inside their horizon at all - `dates they publish` per country is
+ * one call away.
+ *
+ * An exact match on BOTH normalised names ignores the 24h clock fence. That
+ * fence exists because of the Barcelona SC bug, which was a FUZZY match, so a
+ * both-sides-exact rule cannot reach it. It ships in index.html and it is
+ * always on here, because this script exists to measure what the site does.
  *
  * Uses the site's own normTeam/simTeams/sameSlot, lifted out of index.html
  * rather than reimplemented. A separate copy would measure a matcher we do not
@@ -35,7 +37,6 @@
  *   node scripts/b9match.js            live from the API
  *   node scripts/b9match.js --misses   list every unpaired fixture
  *   node scripts/b9match.js --sporty   the same matcher against SportyBet
- *   node scripts/b9match.js --wide     with the exact-name clock relaxation
  */
 
 const fs = require("fs");
@@ -46,7 +47,12 @@ const HOST = process.env.SW_API || "https://web-production-798c0.up.railway.app"
 /* --sporty measures the same matcher against SportyBet, which is the only
    way to tell a shared improvement from a Bet9ja-shaped one. */
 const SPORTY = process.argv.includes("--sporty");
-const WIDE = process.argv.includes("--wide");
+/* The exact-name clock relaxation is not an experiment any more - index.html
+   applies it on every match. It used to be behind --wide here, which meant
+   this script measured a matcher the site had stopped using and reported 97.6%
+   where the site was doing 98.4%. A measurement tool that disagrees with
+   production is worse than no measurement tool. */
+const WIDE = true;
 
 /* ---------------------------------------------------- the shipped matcher */
 
@@ -135,12 +141,11 @@ function pair(fixtures, events) {
     let best = null, score = 0, exact = false;
     for (const m of cand) {
       const bothExact = M.normTeam(m.homeTeam) === fh && M.normTeam(m.awayTeam) === fa;
-      /* --wide: does an exact match on BOTH sides justify a wider clock fence?
-         The 24h fence exists because of the Barcelona SC bug, and that was a
-         fuzzy match - home exact, away scoring 1.00 against the wrong club
-         through a token prefix rule. A rule that demands both sides normalise
-         identically cannot reach it, which is the point of testing it here
-         before touching the matcher the site actually ships. */
+      /* An exact match on BOTH sides is allowed past the clock fence, exactly
+         as index.html does it. The fence exists because of the Barcelona SC
+         bug, and that was a fuzzy match - home exact, away scoring 1.00
+         against the wrong club through a token prefix rule - so a rule
+         demanding both sides normalise identically cannot reach it. */
       if (!(bothExact && WIDE) && !M.sameSlot(f, m)) continue;
       if (bothExact) { best = m; score = 99; exact = true; break; }
     }
@@ -200,7 +205,6 @@ function closest(f, cand, ignoreClock) {
               fixtures.length, (data.fixtures || []).length);
   console.log("%s %d", pad((SPORTY ? "sportybet" : "bet9ja") + " events", 15),
               events.length);
-  if (WIDE) console.log("(--wide: an exact match on both sides ignores the clock fence)");
   console.log("paired          %d  (%s)", hits.length, pct(hits.length));
   console.log("  exact name    %d", hits.filter((h) => h.exact).length);
   console.log("  fuzzy         %d", hits.filter((h) => !h.exact).length);
