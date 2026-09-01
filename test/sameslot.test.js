@@ -109,16 +109,58 @@ test("a missing time never refuses a match", () => {
 
 /* ------------------------------------------------------- wiring and aliases */
 
-test("every name-based matching path is fenced", () => {
-  /* Three paths attach an event id by name: the exact-normalised pass, the
-     per-side scoring pass, and the global fallback that searches the whole
-     feed regardless of date. The kick-off fallback has its own ten-minute
-     bound. All of them need the fence; the global one most of all. */
+test("every fuzzy matching path is fenced", () => {
+  /* Two paths attach an event id on a FUZZY name score: the per-side scoring
+     pass and the global fallback that searches the whole feed regardless of
+     date. Both need the fence; the global one most of all. The kick-off
+     fallback has its own ten-minute bound.
+
+     It used to be three. The exact-normalised pass now decides on names
+     alone - see the test below for why that is safe and what it bought. */
   /* Anchored on the `!` so this counts guard sites, not the declaration
      `function sameSlot(f,m){`, which the looser pattern also matched. */
   const calls = src.match(/if\(!sameSlot\(f,\s*(?:m|cand\[i\])\)\)/g) || [];
-  assert.strictEqual(calls.length, 3,
-    "expected the fence on all three name-based passes, found " + calls.length);
+  assert.strictEqual(calls.length, 2,
+    "expected the fence on both fuzzy passes, found " + calls.length);
+});
+
+test("the exact pass needs BOTH sides, which is what keeps Barcelona out", () => {
+  /* The exact-normalised pass is allowed past the clock because Bet9ja lists
+     a La Liga round twelve days out on a provisional day, putting two
+     fixtures more than 24 hours from ours with names that agreed perfectly.
+
+     That is safe only because this bug was a FUZZY pairing. Barcelona SC
+     normalises to exactly "barcelona", so the HOME sides did agree - but
+     "Vallecano" folds to "rayo" and never equals "Independiente del Valle".
+     A rule demanding both sides normalise identically cannot reach it.
+
+     Asserted on the pairing itself rather than on the shape of the source,
+     because what matters is that this fixture is still refused. */
+  const start = src.indexOf("var BOOKS={");
+  const anchor = src.indexOf("return hits;", start);
+  const slice = src.slice(start, src.indexOf("}", anchor) + 1);
+  const DATA = { fixtures: [{ home: "Barcelona", away: "Vallecano",
+                              date: "2026-08-31",
+                              kickoff: "2026-08-31T19:30:00.000Z" }] };
+  const a = new Function("DATA", "blendFixture",
+    slice + "\nreturn {attachEventIds: attachEventIds, BOOKS: BOOKS};")(DATA, function () {});
+
+  /* The Ecuadorian game, 52.5 hours away, exactly as it arrived. */
+  a.attachEventIds([{ eventId: "sr:match:68687872",
+                      homeTeam: "Barcelona SC",
+                      awayTeam: "CSD Independiente del Valle",
+                      startTime: Date.parse("2026-09-03T00:00:00.000Z"),
+                      odds: {} }]);
+  assert.strictEqual(DATA.fixtures[0].eventId, undefined,
+    "the Ecuador fixture is back on the slip");
+
+  /* And the thing the relaxation was for: both sides identical, a day and a
+     half out because their kick-off is still provisional. */
+  a.attachEventIds([{ eventId: "b9:1", homeTeam: "Barcelona", awayTeam: "Rayo Vallecano",
+                      startTime: Date.parse("2026-09-02T12:00:00.000Z"),
+                      odds: {} }]);
+  assert.strictEqual(DATA.fixtures[0].eventId, "b9:1",
+    "an exact match on both sides should survive a provisional kick-off");
 });
 
 test("our Vallecano and their Rayo Vallecano converge", () => {

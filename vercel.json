@@ -20,6 +20,10 @@
     "api/fixtures.js": {
       "maxDuration": 15,
       "memory": 256
+    },
+    "api/bet9ja.js": {
+      "maxDuration": 15,
+      "memory": 256
     }
   },
   "crons": [

@@ -6416,6 +6416,23 @@ function footballLink(code){
 }
 /* Same-origin so Vercel's CDN can cache it - see lib/upstream.js. */
 const SPORTY_FIXTURES="/api/fixtures";
+/* Bet9ja. Same-origin for the same reason - see lib/upstream.js. */
+const BET9JA_FIXTURES="/api/bet9ja";
+
+/* The two bookmakers differ in what they are FOR, not just in their
+   field names, and the matcher needs to know which it is filling in.
+
+   SportyBet is also our odds source: blendFixture folds its prices into
+   the model. Bet9ja is not, and deliberately. It covers 96.6% of the
+   board against SportyBet's 100%, its listing carries no team-goals
+   price at all (their per-league endpoint ignores the market group), and
+   a second opinion feeding the model is a modelling change nobody asked
+   for. It is here so that somebody who banks with Bet9ja can take the
+   same slip to their own bookmaker. */
+var BOOKS={
+  sporty:{key:"sporty",label:"SportyBet",id:"eventId",odds:"sportyOdds",blend:true},
+  bet9ja:{key:"bet9ja",label:"Bet9ja",  id:"b9EventId",odds:"b9Odds",  blend:false}
+};
 
 /* Common team name aliases that SportyBet uses but our data doesn't (or vice versa).
    These are applied AFTER accent stripping but BEFORE tokenization. */
@@ -6716,7 +6733,14 @@ function sameSlot(f,m){
   var k=Date.parse(f.kickoff); if(!isFinite(k)) return true;
   return Math.abs(t-k)<=MATCH_WINDOW_MS;
 }
-function attachEventIds(sporty){
+function attachTo(f,m,B){
+  f[B.id]=m.eventId;
+  f[B.odds]=m.odds||{};
+  /* Only the bookmaker we price from moves the model. */
+  if(B.blend) blendFixture(f);
+}
+function attachEventIds(sporty,B){
+  B=B||BOOKS.sporty;
   if(!sporty||!sporty.length) return 0;
   /* Verbose per-fixture match logging is opt-in: add ?debug=1 (or #debug) to the
      URL. Off by default so visitors get a clean console and we skip the
@@ -6740,10 +6764,19 @@ function attachEventIds(sporty){
       if(byDate[k]) cand=cand.concat(byDate[k]);
     });
     var best=null,bestScore=0;
-    /* Exact-normalized match first: normTeam folds every known alias. */
+    /* Exact-normalized match first: normTeam folds every known alias.
+       An exact match on BOTH sides is allowed past the kick-off fence, and
+       only that case is. The fence exists because of the Barcelona SC
+       booking, and that was a FUZZY pairing - the home sides matched exactly
+       while "Vallecano" scored 1.00 against "Independiente del VALLE" through
+       the token prefix rule - so a test demanding both sides normalise
+       identically cannot reach it. Bet9ja lists a La Liga round twelve days
+       out on a provisional day, which put two fixtures more than 24 hours
+       from ours with names that agreed perfectly. Measured before shipping
+       (scripts/b9match.js --wide): Bet9ja 230 -> 232 of 238, SportyBet
+       unchanged at 238. */
     var fh=normTeam(f.home),fa=normTeam(f.away);
     for(var i=0;i<cand.length;i++){
-      if(!sameSlot(f,cand[i])) continue;
       if(normTeam(cand[i].homeTeam)===fh && normTeam(cand[i].awayTeam)===fa){best=cand[i];bestScore=99;break;}
     }
     if(!best) cand.forEach(function(m){
@@ -6757,7 +6790,7 @@ function attachEventIds(sporty){
       }
     });
     if(best && bestScore >= 1.2){  // lowered from 1.3
-      f.eventId=best.eventId; f.sportyOdds=best.odds||{}; blendFixture(f); hits++; return;
+      attachTo(f,best,B); hits++; return;
     }
     /* Fallback: search ALL sporty events (not just ±3 days) with stricter threshold */
     var gb=null,gs=0;
@@ -6773,7 +6806,7 @@ function attachEventIds(sporty){
       }
     });
     if(gb && gs >= 1.4){  // lowered from 1.6
-      f.eventId=gb.eventId; f.sportyOdds=gb.odds||{}; blendFixture(f); hits++; return;
+      attachTo(f,gb,B); hits++; return;
     }
     /* ------------------------------------------- reconcile by kick-off time
        Names are the weakest thing to match on, and the alias list only ever
@@ -6809,9 +6842,8 @@ function attachEventIds(sporty){
         var top = sameTime[0];
         var clear = sameTime.length === 1 || (top.sum - sameTime[1].sum) >= 0.4;
         if (clear) {
-          f.eventId = top.m.eventId; f.sportyOdds = top.m.odds || {};
-          blendFixture(f); hits++;
-          if (SPORTY_DEBUG) try{console.log("[sporty] BY KICK-OFF:", f.home, "v", f.away,
+          attachTo(f,top.m,B); hits++;
+          if (SPORTY_DEBUG) try{console.log("["+B.key+"] BY KICK-OFF:", f.home, "v", f.away,
             "->", top.m.homeTeam, "v", top.m.awayTeam,
             "(sides", top.sh.toFixed(2), "/", top.sa.toFixed(2),
             "| runner-up", sameTime[1]?sameTime[1].sum.toFixed(2):"none", ")");}catch(e){}
@@ -6823,7 +6855,7 @@ function attachEventIds(sporty){
     /* Debug logging (opt-in via ?debug=1). Counts stay live for the summary. */
     if (bestScore > 0 && bestScore < 1.2) {
       nearMisses++;
-      if (SPORTY_DEBUG) try{console.log("[sporty] NEAR MISS:", f.home, "v", f.away, "->", best?.homeTeam, "v", best?.awayTeam, "score:", bestScore.toFixed(2));}catch(e){}
+      if (SPORTY_DEBUG) try{console.log("["+B.key+"] NEAR MISS:", f.home, "v", f.away, "->", best?.homeTeam, "v", best?.awayTeam, "score:", bestScore.toFixed(2));}catch(e){}
     }
     if (!best && bestScore === 0) {
       noMatches++;
@@ -6842,14 +6874,14 @@ function attachEventIds(sporty){
           var s = simTeams(f.home, m.homeTeam) + simTeams(f.away, m.awayTeam);
           if (s > dbgScore) { dbgScore = s; dbgBest = m; }
         });
-        try{console.log("[sporty] NO MATCH:", f.home, "v", f.away, "| league:", f.league, "| date:", f.date,
+        try{console.log("["+B.key+"] NO MATCH:", f.home, "v", f.away, "| league:", f.league, "| date:", f.date,
           "|| closest in feed:", dbgBest?(dbgBest.homeTeam+" v "+dbgBest.awayTeam):"(none)",
           "score:", dbgScore.toFixed(2),
           "start:", dbgBest?new Date(dbgBest.startTime).toISOString().slice(0,10):"-");}catch(e){}
       }
     }
   });
-  try{console.log("[sporty] matched "+hits+"/"+DATA.fixtures.length+" from "+sporty.length+
+  try{console.log("["+B.key+"] matched "+hits+"/"+DATA.fixtures.length+" from "+sporty.length+
     " events (near:"+nearMisses+", none:"+noMatches+", of which "+goneFromFeed+
     " already kicked off and are no longer listed)");}catch(e){}
   return hits;
@@ -6861,6 +6893,43 @@ function attachEventIds(sporty){
    the slip read as unavailable on SportyBet until the page was reloaded.
    It retries now, backing off, and repaints when a late attempt lands so the
    badges clear themselves instead of lying until the next render. */
+/* Bet9ja's feed is one object keyed by event id, and it names the two sides in
+   a single "Home - Away" string. Reshaped here, once, into what the matcher
+   already speaks, rather than teaching the matcher a second dialect.
+   " - " and not "-": plenty of clubs carry a hyphen (Union Saint-Gilloise),
+   and splitting on the bare character cuts them in half. */
+function b9Rows(matches){
+  var out=[];
+  for(var k in matches){
+    var m=matches[k]; if(!m||!m.eventId) continue;
+    var bits=String(m.teams||"").split(" - ");
+    if(bits.length<2) continue;
+    out.push({eventId:m.eventId,
+              homeTeam:bits[0].trim(),
+              awayTeam:bits.slice(1).join(" - ").trim(),
+              startTime:Date.parse(m.kickoff),
+              league:m.league,odds:m.odds||{}});
+  }
+  return out;
+}
+/* Failing here costs the Bet9ja button on a leg and nothing else: the board,
+   the model and the SportyBet code are all untouched. So one quiet attempt,
+   no retry ladder, and never a thrown error. */
+async function loadBet9ja(){
+  try{
+    var r=await fetch(BET9JA_FIXTURES,{headers:{Accept:"application/json"}});
+    if(!r.ok) return 0;                 /* 503 while their sweep is still cold */
+    var d=await r.json();
+    var rows=b9Rows((d&&d.matches)||{});
+    return rows.length?attachEventIds(rows,BOOKS.bet9ja):0;
+  }catch(e){ return 0; }
+}
+/* Bet9ja never blocks the board. SportyBet is awaited because the model wants
+   its prices before the first paint; Bet9ja only decides whether a second
+   button appears on a leg, so it rides alongside and repaints if it lands. */
+function loadBet9jaSoon(){
+  try{ loadBet9ja().then(function(n){ if(n) repaintAfterMatch(); }); }catch(e){}
+}
 var SPORTY_TRIES=0;
 async function loadSporty(){
   var attempts=0;
@@ -6871,7 +6940,7 @@ async function loadSporty(){
       if(r.ok){
         var d=await r.json();
         if(d&&d.matches&&d.matches.length){
-          var n=attachEventIds(d.matches);
+          var n=attachEventIds(d.matches,BOOKS.sporty);
           /* Only repaint for a rescue - on the first load the caller paints
              straight after us and doing it twice just flashes the board. */
           if(n&&SPORTY_TRIES>0) repaintAfterMatch();
@@ -10966,6 +11035,7 @@ async function refreshPayload(){
       DATA=p;
       holdTheDay();
       await loadSporty();
+      loadBet9jaSoon();
       settleSlips();
       paint();
     }
@@ -10990,6 +11060,7 @@ async function load(){
     DATA=got.payload;
     holdTheDay();
     await loadSporty();
+    loadBet9jaSoon();
     LOAD_RETRY=0;
     settleSlips();   /* first pass on load: results are already old news */
     startLive();

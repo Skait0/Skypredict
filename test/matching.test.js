@@ -11,8 +11,15 @@ const assert = require("node:assert");
 
 const html = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
 
-// Slice from `var TEAM_ALIASES = {` through the end of attachEventIds().
-const start = html.indexOf("var TEAM_ALIASES = {");
+// Slice from `var BOOKS={` through the end of attachEventIds().
+//
+// It used to start at TEAM_ALIASES. BOOKS sits above that - it is the table
+// telling the matcher which bookmaker's fields it is filling in - and leaving
+// it out made every test here die on "BOOKS is not defined". The fix is to
+// widen the slice rather than hand the factory a BOOKS of our own: a
+// hand-written one would be a reimplementation, and the point of this file is
+// to run the code the site ships.
+const start = html.indexOf("var BOOKS={");
 const anchor = html.indexOf("return hits;", start);
 const end = html.indexOf("}", anchor) + 1;
 if (start < 0 || anchor < 0) throw new Error("could not locate matching code in index.html");
@@ -22,7 +29,7 @@ const slice = html.slice(start, end);
 // the real functions. attachEventIds reads DATA.fixtures and calls blendFixture.
 const factory = new Function(
   "DATA", "blendFixture",
-  slice + "\nreturn { normTeam, tokset, simTeams, attachEventIds };"
+  slice + "\nreturn { normTeam, tokset, simTeams, attachEventIds, BOOKS };"
 );
 function makeApi(fixtures) {
   const DATA = { fixtures };
@@ -98,4 +105,51 @@ test("attachEventIds sets sportyOdds on a real match", () => {
                       startTime: TS, odds: { "1": 2.0 } }]);
   assert.equal(DATA.fixtures[0].eventId, "sr:evt:9");
   assert.deepEqual(DATA.fixtures[0].sportyOdds, { "1": 2.0 });
+});
+
+/* --------------------------------------------------- the second bookmaker */
+
+const B9EV = (id, o) => [{ eventId: id, homeTeam: "Broendby IF",
+                           awayTeam: "Silkeborg IF", startTime: TS, odds: o || {} }];
+const ONE = () => [{ home: "Brondby", away: "Silkeborg", date: "2026-08-24" }];
+
+test("a Bet9ja pairing lands in its own fields and leaves SportyBet's alone", () => {
+  const { DATA, api: a } = makeApi(ONE());
+  a.attachEventIds(B9EV("b9:1", { "1": 2.4 }), a.BOOKS.bet9ja);
+  const f = DATA.fixtures[0];
+  assert.equal(f.b9EventId, "b9:1");
+  assert.deepEqual(f.b9Odds, { "1": 2.4 });
+  assert.equal(f.eventId, undefined, "a Bet9ja match must not claim the SportyBet id");
+  assert.equal(f.sportyOdds, undefined);
+});
+
+test("both bookmakers can hold the same fixture at once", () => {
+  const { DATA, api: a } = makeApi(ONE());
+  a.attachEventIds(B9EV("sr:evt:9", { "1": 2.0 }), a.BOOKS.sporty);
+  a.attachEventIds(B9EV("b9:1", { "1": 2.4 }), a.BOOKS.bet9ja);
+  const f = DATA.fixtures[0];
+  assert.equal(f.eventId, "sr:evt:9");
+  assert.equal(f.b9EventId, "b9:1");
+  assert.deepEqual(f.sportyOdds, { "1": 2.0 });
+  assert.deepEqual(f.b9Odds, { "1": 2.4 });
+});
+
+test("only the bookmaker we price from moves the model", () => {
+  /* Bet9ja covers 96.6% of the board to SportyBet's 100%, and its league
+     listing carries no team-goals price at all. Folding it into the blend
+     would be a modelling change dressed up as an integration. */
+  const blended = [];
+  const DATA = { fixtures: ONE() };
+  const a = factory(DATA, function (f) { blended.push(f.home); });
+  a.attachEventIds(B9EV("b9:1"), a.BOOKS.bet9ja);
+  assert.deepEqual(blended, [], "Bet9ja must not reach blendFixture");
+  a.attachEventIds(B9EV("sr:evt:9"), a.BOOKS.sporty);
+  assert.deepEqual(blended, ["Brondby"], "SportyBet still blends");
+});
+
+test("defaulting to SportyBet keeps every existing caller working", () => {
+  /* attachEventIds is called from five places and only two pass a book. */
+  const { DATA, api: a } = makeApi(ONE());
+  a.attachEventIds(B9EV("sr:evt:9"));
+  assert.equal(DATA.fixtures[0].eventId, "sr:evt:9");
 });
