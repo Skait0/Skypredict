@@ -322,3 +322,19 @@ test("the mark takes the ground's colour where the ground is already red", () =>
   assert.match(idx, /\.code-card--sb \.code-open \.sbm\{color:var\(--red\)\}/,
     "except their own button on the code card, which is white");
 });
+
+test("the sheet's own line names the book the buttons will act on", () => {
+  /* "Predictions you picked - book them to SportyBet" was hardcoded, so
+     choosing Bet9ja left the sheet naming SportyBet directly above a button
+     that would produce a Bet9ja code. It is a promise about which app the
+     code opens in, so it has to follow the picker. */
+  const idx = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  const fn = idx.slice(idx.indexOf("function paintBookPickers()"),
+                       idx.indexOf("function bookIdOf"));
+  assert.match(fn, /mySheetSub/, "the line has to be updated when the book changes");
+  assert.match(fn, /curBook\(\)\.mark/, "and named with the current book's mark");
+  assert.match(idx, /id="mySheetSub"/, "the element needs an id to be reachable");
+  /* setBook repaints the pickers, which is what carries this. */
+  const sb = idx.slice(idx.indexOf("function setBook(k)"), idx.indexOf("function bookIdOf"));
+  assert.match(sb, /paintBookPickers\(\)/);
+});

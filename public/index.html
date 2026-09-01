@@ -4563,7 +4563,7 @@ footer{margin-top:26px;padding-top:18px;
 <div class="sheet myslip-sheet" id="mySheet" role="dialog" aria-modal="true" aria-labelledby="mySheet-title">
   <div class="sheet-grab"><i></i></div>
   <div class="sheet-head">
-    <div class="info"><h3 id="mySheet-title">My slip</h3><p>Predictions you picked - book them to <span class="sbm">SportyBet</span>.</p></div>
+    <div class="info"><h3 id="mySheet-title">My slip</h3><p id="mySheetSub">Predictions you picked - book them to <span class="sbm">SportyBet</span>.</p></div>
     <button class="sheet-collapse" id="mySheet-x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>Collapse</span></button>
   </div>
   <div class="sheet-body" id="mySheetBody"></div>
@@ -7371,6 +7371,13 @@ function paintBookPicker(el){
 }
 function paintBookPickers(){
   try{ document.querySelectorAll("[data-bookpick]").forEach(paintBookPicker); }catch(e){}
+  /* "book them to SportyBet" is a promise about which app the code opens in,
+     and it was hardcoded - so choosing Bet9ja left the sheet still naming
+     SportyBet above a button that would produce a Bet9ja code. */
+  try{
+    var sub=$("mySheetSub");
+    if(sub) sub.innerHTML="Predictions you picked - book them to "+curBook().mark+".";
+  }catch(e){}
 }
 document.addEventListener("click",function(e){
   var b=e.target&&e.target.closest&&e.target.closest("[data-book]");
