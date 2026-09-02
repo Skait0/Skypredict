@@ -92,5 +92,12 @@ module.exports = async function handler(req, res) {
     ? "public, s-maxage=604800, stale-while-revalidate=604800"
     : "public, s-maxage=300, stale-while-revalidate=3600");
   res.statusCode = 200;
-  res.end(SL.renderPage(legs, rec, "/s", { code, book }));
+  /* The slip's OWN url, not the bare route.
+     Every shared slip used to declare og:url as "/s", so X and WhatsApp saw
+     one resource shared over and over: they collapse on the canonical url,
+     which means the first slip crawled supplies the preview for every slip
+     after it. A short code has a real address and has to say so. */
+  const selfPath = code ? "/s/" + encodeURIComponent(code)
+                        : "/s?p=" + encodeURIComponent(p || "");
+  res.end(SL.renderPage(legs, rec, selfPath, { code, book }));
 };

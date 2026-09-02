@@ -336,3 +336,30 @@ test("the error page offers a way forward and does not leak the payload", () => 
   assert.match(html, /Build a slip/);
   assert.doesNotMatch(html, /undefined|NaN/);
 });
+
+/* ------------------------------------------- what a link preview resolves to */
+
+test("a shared slip declares its own address, not the bare route", () => {
+  /* Every slip used to render og:url as "/s". X and WhatsApp key their preview
+     cache on the canonical url, so one resource was being shared over and over
+     and the first slip crawled supplied the picture for every slip after it -
+     which reads to the person sharing as "my slip has no card".
+     Asserted on the route, because renderPage will happily accept whatever
+     path it is handed and the bug was entirely in the handing. */
+  const fs = require("fs"), path = require("path");
+  const route = fs.readFileSync(path.join(__dirname, "..", "api", "s.js"), "utf8");
+  assert.doesNotMatch(route, /renderPage\([^)]*,\s*"\/s"\s*,/,
+    "the bare route must not be passed as the slip's own url");
+  assert.match(route, /"\/s\/"\s*\+\s*encodeURIComponent\(code\)/,
+    "a coded slip lives at /s/CODE and should say so");
+});
+
+test("the rendered page puts that path in every place a crawler reads", () => {
+  /* The file's own fixture, not one invented here - a hand-made leg missing a
+     field tests the fixture, not the page. */
+  const html = SL.renderPage(LEGS, null, "/s/ABC123", { code: "ABC123" });
+  for (const re of [/<link rel="canonical" href="[^"]*\/s\/ABC123"/,
+                    /<meta property="og:url" content="[^"]*\/s\/ABC123"/]) {
+    assert.match(html, re, String(re));
+  }
+});
