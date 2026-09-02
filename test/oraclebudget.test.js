@@ -30,15 +30,22 @@ const today = iso(Date.now());
 
 test("a date is looked up once per build, however many passes ask", async () => {
   /* The halving. confirmScores and recordPublishedTips both ask about the same
-     day; the second one must cost nothing. */
+     day; the second one must cost nothing.
+
+     Driven through a stub rather than by seeding budget.memo directly. The
+     seeded version pinned the memo's KEY SHAPE, which is an implementation
+     detail and duly changed - the key is source-and-date now that the
+     fall-through is per fixture - and the seeded entry simply stopped being
+     found, so the call walked the REAL source list and made live requests to
+     SoccerVista. It still passed for a while, on somebody else's data. */
+  const o = stub("oracle", HIT);
   const budget = B.makeScoreBudget();
-  /* Seeded and then asked twice. Identity of the returned object is the proof
-     that nothing was re-fetched: a second lookup would build a new one. */
-  budget.memo.set(today, { rows: [{ home: "A" }], from: "oracle" });
-  const a = await B.firstScoreSource(today, [], budget);
-  const b = await B.firstScoreSource(today, [], budget);
-  assert.strictEqual(a, b, "the same answer object, so nothing was re-fetched");
-  assert.strictEqual(budget.spent, 0, "and no allowance was spent");
+  const a = await B.firstScoreSource(today, [], budget, [o.src]);
+  const b = await B.firstScoreSource(today, [], budget, [o.src]);
+  assert.deepStrictEqual(o.calls, [today], "one request served both passes");
+  assert.strictEqual(a.rows, b.rows,
+    "the same rows object, so nothing was re-fetched behind the memo");
+  assert.strictEqual(budget.spent, 1, "and it was charged once, not twice");
 });
 
 /* A stand-in source, so nothing here touches the network. */
@@ -112,11 +119,15 @@ test("the allowance the oracle reports is carried back", async () => {
 
 test("a date with no result is remembered too", async () => {
   /* Otherwise a blank day is asked about again by the second pass and costs a
-     second request to be told the same nothing. */
+     second request to be told the same nothing. Through a stub, for the same
+     reason as above: seeding the memo pinned its key shape and sent the real
+     call to the network once that shape changed. */
+  const o = stub("oracle", NOTHING);
   const budget = B.makeScoreBudget();
-  budget.memo.set(today, null);
-  assert.strictEqual(await B.firstScoreSource(today, [], budget), null);
-  assert.strictEqual(budget.spent, 0, "a remembered miss must not spend budget");
+  assert.strictEqual(await B.firstScoreSource(today, [], budget, [o.src]), null);
+  assert.strictEqual(await B.firstScoreSource(today, [], budget, [o.src]), null);
+  assert.deepStrictEqual(o.calls, [today], "a remembered miss is not asked again");
+  assert.strictEqual(budget.spent, 1, "and the one request it did make is counted");
 });
 
 test("the oracle is never asked more than its budget in one build", async () => {
