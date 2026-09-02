@@ -28,6 +28,10 @@
     "api/s.js": {
       "maxDuration": 10,
       "memory": 256
+    },
+    "api/share.js": {
+      "maxDuration": 10,
+      "memory": 256
     }
   },
   "crons": [
@@ -77,6 +81,10 @@
   "rewrites": [
     {
       "source": "/s",
+      "destination": "/api/s"
+    },
+    {
+      "source": "/s/:code",
       "destination": "/api/s"
     }
   ],

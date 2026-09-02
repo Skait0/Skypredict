@@ -14,6 +14,7 @@
  */
 
 const SL = require("../lib/sliplink.js");
+const DB = require("../lib/supabase.js");
 
 /* The record is the credibility line at the bottom of the page. It is nice to
    have and must never hold the page up: a shared slip that will not render
@@ -43,6 +44,24 @@ module.exports = async function handler(req, res) {
       const q = new URL(req.url, "https://x").searchParams;
       p = q.get("p"); code = code || q.get("c"); book = book || q.get("b");
     } catch (e) { p = null; }
+  }
+
+  /* /s/MS0LJY - the short form. The booking code is already a short unique
+     name for the slip, so it is the key: the stored payload is looked up and
+     everything below runs exactly as it does for the long form. `?p=` still
+     works, so every link already shared keeps opening. */
+  if (!p) {
+    const m = /\/s\/([A-Za-z0-9-]{4,24})\/?$/.exec(String(req.url || "").split("?")[0]);
+    if (m) {
+      const hit = await DB.getSharedSlip(m[1]);
+      if (hit.ok && hit.row) { p = hit.row.payload; code = hit.row.code; book = hit.row.book; }
+      else {
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        res.setHeader("Cache-Control", "no-store");
+        res.statusCode = 404;
+        return res.end(SL.renderError("we have no slip saved against that code"));
+      }
+    }
   }
 
   const got = SL.decode(p);

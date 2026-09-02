@@ -8407,6 +8407,7 @@ function showCode(code,hostId,save,B,picks){
     copyText(code);
     this.textContent="Copied"; var s=this;
     setTimeout(function(){s.textContent="Copy";},1600);});
+  rememberShortLink(code,picks);
   wrap.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code,picks);});
   var sv=wrap.querySelector(".code-save");
   if(sv) sv.addEventListener("click",function(){
@@ -8419,7 +8420,7 @@ function showCode(code,hostId,save,B,picks){
 function shareText(picks,odds,code){
   var lines=picks.slice(0,6).map(function(c){return "\u2022 "+c.f.home+" v "+c.f.away+" - "+
     mLabel(c.f,c.code).replace(/<[^>]+>/g,"")+" ("+P0(c.p)+"%)";});
-  var t="\u26bd My SoccerWizard slip - "+picks.length+" games @ \u00d7"+odds.toFixed(2)+"\n"+lines.join("\n");
+  var t="\ud83e\uddd9 My Soccerwizard slip - "+picks.length+" games at "+odds.toFixed(2)+" odds\n"+lines.join("\n");
   if(code) t+="\n\n"+curBook().label+" code: "+code;
   return t;
 }
@@ -8558,6 +8559,34 @@ function slipUrl(items){
       btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
   }catch(e){ return null; }
 }
+/* The short share link.
+   `/s?p=...` carries the whole slip in the URL and runs to four hundred
+   characters, which is fine on X and miserable in WhatsApp. The booking code
+   is already a short unique name for this slip, so the payload is posted once
+   and the link becomes `/s/MS0LJY`.
+   It is posted rather than looked up from SportyBet on the way back: their
+   endpoint returns event ids with no team names, and the only feed that maps
+   those ids to teams drops a match at kick-off, so a link built that way would
+   lose its games a few hours after it was sent.
+   Best effort. If the post fails the long link still works, so nothing is
+   lost and nothing is waited for. */
+var SHORT_LINKS={};
+function shortSlipUrl(code){ return code&&SHORT_LINKS[code]||null; }
+function rememberShortLink(code,items){
+  try{
+    if(!code) return;
+    var raw=slipPayload(items);
+    if(!raw) return;
+    var bytes=new TextEncoder().encode(raw),bin="";
+    for(var i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+    var p=btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+    fetch("/api/share",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({code:code,book:(curBook()&&curBook().key)||"sporty",p:p})})
+      .then(function(r){return r.json();})
+      .then(function(d){ if(d&&d.ok) SHORT_LINKS[code]=location.origin+"/s/"+encodeURIComponent(code); })
+      .catch(function(){});
+  }catch(e){}
+}
 function shareSlip(picks,odds){
   const txt=shareText(picks,odds,null);
   shareSlipImage(picks,odds,null,txt).then(function(ok){
@@ -8571,8 +8600,8 @@ function shareSlip(picks,odds){
    onward, so nothing is lost. It also stopped saying "SportyBet" on a
    Bet9ja code. */
 function shareCode(code,picks){
-  doShare("\u26bd My SoccerWizard slip. Code: "+code,
-          slipUrl(picks)||(SPORTY_URL+encodeURIComponent(code)));
+  doShare("\ud83e\uddd9 My Soccerwizard slip. Code: "+code,
+          shortSlipUrl(code)||slipUrl(picks)||(SPORTY_URL+encodeURIComponent(code)));
 }
 function bookList(picks,resultId,btnId,label){
   var bookable=picks.filter(function(c){return c.eventId;});
