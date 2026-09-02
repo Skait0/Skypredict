@@ -175,3 +175,95 @@ test("a two or three letter remainder is refused on principle", () => {
   const p = pool("France Ligue 1", ["Ren", "Marseille"]);
   assert.strictEqual(M.matchTeam(p, "AJ Ren", 0), null);
 });
+
+/* ------------------------------- vendor qualifiers the model file omits */
+
+/**
+ * 99 fixtures were being dropped on 2 September for this alone - whole rounds
+ * of the Eredivisie, Serie B, Ligue 2, Belgium, Switzerland, Poland and
+ * Romania. The fixture feed decorates club names with a city, a region or a
+ * legal form; football-data, which the model index is built from, does not.
+ */
+
+const NL = pool("Netherlands Eredivisie", ["Twente", "Willem II", "Excelsior", "Sparta Rotterdam", "Heerenveen"]);
+
+test("a trailing city is dropped to find the club", () => {
+  assert.strictEqual(M.matchTeam(NL, "FC Twente Enschede", 0), "Twente");
+  assert.strictEqual(M.matchTeam(NL, "Willem II Tilburg", 0), "Willem II");
+  assert.strictEqual(M.matchTeam(NL, "Excelsior Rotterdam", 0), "Excelsior");
+});
+
+test("club-type initialisms the feed uses are folded away", () => {
+  const be = pool("Belgium Pro League", ["Kortrijk", "Westerlo", "Standard"]);
+  assert.strictEqual(M.matchTeam(be, "KV Kortrijk", 0), "Kortrijk");
+  assert.strictEqual(M.matchTeam(be, "KVC Westerlo", 0), "Westerlo");
+  const se = pool("Sweden Allsvenskan", ["Mjallby", "Goteborg", "Malmo FF"]);
+  assert.strictEqual(M.matchTeam(se, "Mjallby AIF", 0), "Mjallby");
+  assert.strictEqual(M.matchTeam(se, "IFK Goteborg", 0), "Goteborg");
+});
+
+/* ------------------------- the guard, which is the point of the exercise */
+
+test("a word that is itself a club is never dropped", () => {
+  /* THE HAZARD. An earlier draft of the trailing-qualifier rule turned
+     "Queens Park Rangers" into Queens Park, a different and real club, and
+     "Tokyo Verdy" into FC Tokyo. Both would have booked the wrong game.
+     Refusing the fixture is the correct outcome here. */
+  const scot = pool("Scotland League 1", ["Queens Park", "Stirling", "Rangers"]);
+  assert.strictEqual(M.matchTeam(scot, "Queens Park Rangers", 0), null,
+    "Rangers is a club, so it cannot be treated as a qualifier");
+
+  const jp = pool("Japan J1 League", ["FC Tokyo", "Verdy", "Machida"]);
+  assert.strictEqual(M.matchTeam(jp, "Tokyo Verdy", 0), null,
+    "Verdy is a club, so Tokyo Verdy must not collapse onto FC Tokyo");
+});
+
+test("the guard looks across the whole index, not one league", () => {
+  /* Where the first version of the guard failed. Rangers play in the
+     Premiership and Queens Park in League One, so checking only the pool
+     being searched let the wrong match through anyway. */
+  const idx = {
+    teams: ["Queens Park", "Stirling", "Rangers"],
+    teamLeague: [0, 0, 1],
+    leagues: ["Scotland League 1", "Scotland Premiership"],
+  };
+  assert.strictEqual(M.matchTeam(idx, "Queens Park Rangers", 0), null);
+});
+
+test("a qualifier that is not a club is still dropped", () => {
+  /* The guard must not be so broad it undoes the fix. */
+  const ch = pool("Switzerland Super League", ["Servette", "Young Boys", "Lausanne"]);
+  assert.strictEqual(M.matchTeam(ch, "Servette Geneva", 0), "Servette");
+  assert.strictEqual(M.matchTeam(ch, "Young Boys Bern", 0), "Young Boys");
+  assert.strictEqual(M.matchTeam(ch, "Lausanne-Sport", 0), "Lausanne");
+});
+
+test("dropping a qualifier still needs a unique answer", () => {
+  const sheff = pool("England Championship", ["Sheffield United", "Sheffield Wednesday"]);
+  assert.strictEqual(M.matchTeam(sheff, "Sheffield Rovers", 0), null);
+});
+
+test("the club-token list carries names the other rules cannot reach", () => {
+  /* These nine needed the extended token list specifically - measured by
+     removing it and re-running against the day's dropped fixtures, which took
+     recovery from 52 to 44. Without a case here the list looks like dead
+     weight and gets deleted. */
+  assert.strictEqual(M.matchTeam(pool("Sweden Allsvenskan", ["Malmo FF", "Mjallby"]),
+    "Malmo", 0), "Malmo FF", "our own name carries the suffix, the feed's does not");
+  assert.strictEqual(M.matchTeam(pool("Italy Serie B", ["Padova", "Ascoli"]),
+    "Calcio Padova", 0), "Padova");
+  assert.strictEqual(M.matchTeam(pool("Belgium Pro League", ["St Truiden", "Gent"]),
+    "St. Truidense VV", 0), "St Truiden");
+  assert.strictEqual(M.matchTeam(pool("Poland Ekstraklasa", ["Cracovia", "Legia"]),
+    "KS Cracovia Krakow", 0), "Cracovia");
+});
+
+test("a qualifier drop that leaves too little is refused", () => {
+  /* Deliberate conservatism, pinned so it is not tidied away: three
+     characters is too weak a basis on which to decide a club's identity, even
+     when it happens to match. */
+  const p = pool("France Ligue 2", ["Ren", "Grenoble"]);
+  assert.strictEqual(M.matchTeam(p, "Ren Foot", 0), null);
+  assert.strictEqual(M.matchTeam(p, "Grenoble Foot", 0), "Grenoble",
+    "but a full name still resolves");
+});
