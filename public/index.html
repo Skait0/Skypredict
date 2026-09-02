@@ -7516,6 +7516,25 @@ function clearPrompt(target){
 }
 /* Every prompt on the page, whichever slip raised it. */
 function clearPrompts(){ clearPrompt("bookResult"); clearPrompt("myBookResult"); }
+/* Will this book actually take this leg?
+   bookIdOf answers a narrower question: does the book have the GAME. It says
+   nothing about the market, and Bet9ja carries plenty of fixtures without
+   carrying every line on them. Counting ids alone reported a whole slip as
+   bookable, the API then refused a leg, and the reader watched a game vanish
+   after booking with only a warning to explain it. The count is supposed to
+   be the warning.
+   If we hold no prices for this book at all we know nothing, and the id is
+   the honest guess - reporting nought of twenty-two because a feed has not
+   finished loading is worse than being optimistic. */
+function bookTakes(c,B){
+  B=B||curBook();
+  if(!bookIdOf(c,B)) return false;
+  var f=(c&&c.f)||fixtureById(c&&c.id);
+  var o=f&&f[B.odds];
+  if(!o||!Object.keys(o).length) return true;
+  var v=o[c&&c.code];
+  return !!(v&&v>1.01);
+}
 function bookIdOf(c,B){
   B=B||curBook();
   var f=(c&&c.f)||fixtureById(c&&c.id);
@@ -7553,7 +7572,7 @@ function paintBookPickerWith(el,picks){
   var html="<span class='bookpick-l'>Book with</span>";
   ["sporty","bet9ja"].forEach(function(k){
     var B=BOOKS[k];
-    var got=picks.filter(function(c){return !!bookIdOf(c,B);}).length;
+    var got=picks.filter(function(c){return bookTakes(c,B);}).length;
     /* Only worth showing when it is not the whole slip - "12/12" on both pills
        is noise that makes the row look like a warning. */
     var cnt=(got<n)?("<small>"+got+"/"+n+"</small>"):"";
@@ -8424,8 +8443,8 @@ function showCode(code,hostId,save,B,picks){
     copyText(code);
     this.textContent="Copied"; var s=this;
     setTimeout(function(){s.textContent="Copy";},1600);});
-  rememberShortLink(code,picks);
-  wrap.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code,picks);});
+  rememberShortLink(code,picks,B);
+  wrap.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code,picks,B);});
   var sv=wrap.querySelector(".code-save");
   if(sv) sv.addEventListener("click",function(){
     try{ save(); }catch(e){}
@@ -8566,14 +8585,20 @@ function slipPayload(items){
   });
   return rows.join(SLIP_RS);
 }
-function slipUrl(items){
+/* The code and the book travel with the link. Without them the page has no
+   code to show and falls back to SportyBet, so a Bet9ja slip arrived saying
+   "SportyBet booking code" over a button into the wrong app. */
+function slipUrl(items,code,book){
   try{
     var raw=slipPayload(items);
     if(!raw) return null;
     var bytes=new TextEncoder().encode(raw),bin="";
     for(var i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
-    return location.origin+"/s?p="+
+    var u=location.origin+"/s?p="+
       btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+    if(code) u+="&c="+encodeURIComponent(code);
+    if(book) u+="&b="+encodeURIComponent(book);
+    return u;
   }catch(e){ return null; }
 }
 /* The short share link.
@@ -8589,7 +8614,7 @@ function slipUrl(items){
    lost and nothing is waited for. */
 var SHORT_LINKS={};
 function shortSlipUrl(code){ return code&&SHORT_LINKS[code]||null; }
-function rememberShortLink(code,items){
+function rememberShortLink(code,items,B){
   try{
     if(!code) return;
     var raw=slipPayload(items);
@@ -8598,7 +8623,7 @@ function rememberShortLink(code,items){
     for(var i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
     var p=btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
     fetch("/api/share",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({code:code,book:(curBook()&&curBook().key)||"sporty",p:p})})
+      body:JSON.stringify({code:code,book:(B&&B.key)||(curBook()&&curBook().key)||"sporty",p:p})})
       .then(function(r){return r.json();})
       .then(function(d){ if(d&&d.ok) SHORT_LINKS[code]=location.origin+"/s/"+encodeURIComponent(code); })
       .catch(function(){});
@@ -8616,9 +8641,10 @@ function shareSlip(picks,odds){
    our record never travelled with it. The slip page carries the code
    onward, so nothing is lost. It also stopped saying "SportyBet" on a
    Bet9ja code. */
-function shareCode(code,picks){
+function shareCode(code,picks,B){
+  var bk=(B&&B.key)||(curBook()&&curBook().key)||"sporty";
   doShare("\ud83e\uddd9 My Soccerwizard slip. Code: "+code,
-          shortSlipUrl(code)||slipUrl(picks)||(SPORTY_URL+encodeURIComponent(code)));
+          shortSlipUrl(code)||slipUrl(picks,code,bk)||(SPORTY_URL+encodeURIComponent(code)));
 }
 function bookList(picks,resultId,btnId,label){
   var bookable=picks.filter(function(c){return c.eventId;});
