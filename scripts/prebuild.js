@@ -94,7 +94,13 @@ async function bakePayload() {
      as before, so the build output stays readable. */
   const { log: buildLog, ...rest } = payload;
   (buildLog || [])
-    .filter((l) => /held back|unavailable|failed|oracle|soccervista|suspended|record:|recorded result|score source|FT score map|confirmed from/i.test(l))
+    /* `of N confirmed`, not `confirmed from`: the confirmation line stopped
+       saying "confirmed from 485 finished" when the fall-through went
+       per-fixture, and this whitelist silently swallowed it for a whole
+       deploy. A filter keyed on another function's exact wording breaks
+       without failing - see test/fallback.test.js, which now drives this very
+       regex against a line confirmScores really emits. */
+    .filter((l) => /held back|unavailable|failed|oracle|soccervista|suspended|record:|recorded result|score source|FT score map|of \d+ confirmed/i.test(l))
     .forEach((l) => log(l));
   const out = path.join(PUB, "predictions.json");
   /* The file the site downloads, without the per-result model numbers - they

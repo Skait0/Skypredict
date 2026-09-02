@@ -270,3 +270,33 @@ test("the memo keys on source and date, not the date alone", () => {
   assert.match(src, /const key = src\.name \+ "\|" \+ date;/,
     "a date-only key makes the second source reuse the first source's rows");
 });
+
+/* --------------------------------------------- and it has to reach the log */
+
+test("prebuild's whitelist passes the line confirmScores actually emits", async () => {
+  /* This shipped broken for one deploy. The confirmation line was correct in
+     build.js and the whitelist in prebuild.js still matched the OLD wording
+     ("confirmed from 485 finished"), so the line was written and silently
+     dropped - a filter keyed on another function's phrasing breaks without
+     failing anything.
+   *
+   * So: the real regex, lifted out of the real script, run against a line this
+   * test made confirmScores produce. Nothing here is hand-written, which is the
+   * only version of this test worth having. */
+  const script = fs.readFileSync(path.join(__dirname, "..", "scripts", "prebuild.js"), "utf8");
+  const m = script.match(/\.filter\(\(l\) => (\/.+\/i)\.test\(l\)\)/);
+  assert.ok(m, "the build-log whitelist must still be findable in prebuild.js");
+  const whitelist = eval(m[1]);   // the script's own regex, not a copy of it
+
+  const src = stub("soccervista", { [DATE]: [R("Halifax", "Hartlepool", 2, 0)] });
+  const log = [];
+  await B.confirmScores(
+    [{ match_date: DATE, home: "Petro Luanda", away: "Al Ahly",
+       hg: 1, ag: 1, tip: "Over 1.5", hit: false, source: "sweep" }],
+    log, B.makeScoreBudget(), [src]);
+
+  const line = log.find((l) => /of \d+ confirmed/.test(l));
+  assert.ok(line, "confirmScores must say what it confirmed: " + JSON.stringify(log));
+  assert.ok(whitelist.test(line),
+    "prebuild drops this line, so the deploy log will not show it: " + line);
+});
