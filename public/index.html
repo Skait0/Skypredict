@@ -11676,7 +11676,22 @@ function renderBuilderOutput(){
     var _seen={}; MYSLIP=MYSLIP.filter(function(x){if(_seen[x.id])return false;_seen[x.id]=1;return true;});
     saveMy(); renderFab();
   }
-  var bookable=picks.filter(function(c){return c.eventId;}).length;
+  /* What the CURRENT book will take, not what SportyBet would. This counted
+     c.eventId, which is SportyBet's id, so the note under a Bet9ja slip
+     described SportyBet's coverage. */
+  var canTake=picks.filter(function(c){return bookTakes(c);});
+  var bookable=canTake.length;
+  /* Which markets the shortfall is actually about. Bet9ja prices nine markets
+     and no others - not team totals, not first-half, not both-to-score - so a
+     leg on one of those is not unlucky, it can never be booked there. Naming
+     them turns "3 of 26" into something the reader can act on by switching a
+     toggle off. */
+  var lostMk=[];
+  picks.forEach(function(c){
+    if(bookTakes(c)) return;
+    var lbl=mLabel(c.f,c.code).replace(/<[^>]+>/g,"");
+    if(lostMk.indexOf(lbl)<0) lostMk.push(lbl);
+  });
   var btn=$("bookBtn");
   btn.disabled=BUILD.booking||!bookable;
   btn.textContent=BUILD.booking?"Booking\u2026":"Get code";
@@ -11704,8 +11719,11 @@ function renderBuilderOutput(){
 
   var note=$("bldNote");
   if(!picks.length) note.textContent="";
-  else if(!bookable) note.textContent="These fixtures have no "+curBook().label+" event ID yet, so they can't be booked automatically.";
-  else if(bookable<picks.length) note.textContent=bookable+" of "+picks.length+" games are on "+curBook().label+" right now - you can book those and skip the rest.";
+  else if(!bookable) note.textContent=curBook().label+" does not offer "+
+    (lostMk.length?lostMk.join(" or "):"these markets")+" on this slip, so none of it can be booked there.";
+  else if(bookable<picks.length) note.textContent=bookable+" of "+picks.length+
+    " can be booked on "+curBook().label+
+    (lostMk.length?" - it does not offer "+lostMk.join(" or ")+".":".");
   else note.textContent="Booking "+bookable+" selection"+(bookable===1?"":"s")+" to SportyBet.";
 }
 

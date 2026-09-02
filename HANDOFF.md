@@ -131,6 +131,29 @@ onto a baked background with fixed slots, so a per-slip card needs new slots
 baked by `scripts/mkogbase.js` (a manual, canvas-based step) - more work than
 it looks.
 
+## Bet9ja prices nine markets and no others
+Measured 2 Sep against the live feed, 1,303 fixtures:
+
+```
+priced 98-100%   1  X  2  1X  X2  12  OVER_1.5  OVER_2.5  OVER_3.5
+NEVER priced     GG  FH_OVER_0.5  HOME_OVER_0.5  AWAY_OVER_0.5
+                 HOME_OVER_1.5  AWAY_OVER_1.5
+```
+
+A leg on one of those is not unlucky on that game, it **cannot be booked on
+Bet9ja at all**. `bet9ja.py`'s `MARKET_MAP` maps HOME/AWAY_OVER_0.5 but the
+feed never carries a price for them, so mapping is not coverage.
+
+`bookTakes()` in index.html is the check to use: it asks whether the book has
+the game **and** prices the market. `bookIdOf()` answers only the first, and
+using it to count is what let a slip report itself fully bookable and then have
+five legs refused by the API.
+
+**Still open:** the builder happily offers those markets while Bet9ja is
+selected, so a reader can build a slip that is structurally unbookable. The
+count and the note now say so before booking, but disabling the toggles per
+book would be better.
+
 ## Key architecture notes
 - Single-file SPA: `public/index.html` (~5000 lines, all UI + logic).
   **It is both source and build output** - the prebuild only rewrites it under
