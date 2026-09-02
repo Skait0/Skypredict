@@ -6971,8 +6971,24 @@ const BET9JA_FIXTURES="/api/bet9ja";
    for. It is here so that somebody who banks with Bet9ja can take the
    same slip to their own bookmaker. */
 var BOOKS={
-  sporty:{key:"sporty",label:"SportyBet",id:"eventId",odds:"sportyOdds",blend:true},
-  bet9ja:{key:"bet9ja",label:"Bet9ja",  id:"b9EventId",odds:"b9Odds",  blend:false}
+  /* `full` says whether the odds we hold for a book list EVERY market it
+     offers. SportyBet's feed does. Bet9ja's does not, and cannot: the bulk
+     endpoint ignores MKEY and returns the same default markets whatever you
+     ask for, while the book itself carries 771 on one fixture. So a missing
+     price means "not offered" for SportyBet and only "we did not fetch it"
+     for Bet9ja - and only the first is worth telling a reader about.
+     `blend` stays off for Bet9ja, and that is a MODELLING decision rather than
+     an integration gap. bet9ja.py maps every under line since b93c250, so the
+     mapping is no longer the obstacle - but blendFixture mutates the fixture
+     itself, not a per-book view, so switching this on moves the probabilities
+     every reader sees whichever bookmaker they use. Bet9ja also covers 96.6%
+     of the board against SportyBet's 100%, so some fixtures would be blended
+     against two books and some against one, and the published record and the
+     calibration were both built on SportyBet-only prices.
+     Turning it on is one word here. It should be a decision, taken on purpose,
+     not a side effect of fixing a market map. */
+  sporty:{key:"sporty",label:"SportyBet",id:"eventId",odds:"sportyOdds",blend:true, full:true},
+  bet9ja:{key:"bet9ja",label:"Bet9ja",  id:"b9EventId",odds:"b9Odds",  blend:false,full:false}
 };
 
 /* Common team name aliases that SportyBet uses but our data doesn't (or vice versa).
@@ -7529,6 +7545,15 @@ function clearPrompts(){ clearPrompt("bookResult"); clearPrompt("myBookResult");
 function bookTakes(c,B){
   B=B||curBook();
   if(!bookIdOf(c,B)) return false;
+  /* Only where the prices we hold are the book's whole book. For Bet9ja they
+     are the handful the bulk endpoint returns whatever you ask it for, out of
+     hundreds it actually offers, so reading a missing price as "not offered"
+     would report legs unbookable that book perfectly well. That is the same
+     mistake this function was written to stop, made in the other direction -
+     and it is the one that produced a wrong "Bet9ja does not carry these"
+     conclusion in the first place. Booking asks the event endpoint, which sees
+     everything, so the id is the honest answer here. */
+  if(!B.full) return true;
   var f=(c&&c.f)||fixtureById(c&&c.id);
   var o=f&&f[B.odds];
   if(!o||!Object.keys(o).length) return true;
