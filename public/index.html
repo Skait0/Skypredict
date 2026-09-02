@@ -6829,7 +6829,12 @@ function setScope(s){
   if(s!=="day"&&TOD!=="all"){TOD="all";}
   paintScope(); return true;
 }
-const BOOK_URL="https://web-production-798c0.up.railway.app/api/generate-booking-code";
+/* Same origin, so booking reaches the browser over the Cloudflare edge that
+   already serves this page instead of an intercontinental hop to Railway.
+   Measured from Lagos: 0.5s here against 2-60s direct. See
+   lib/bookproxy.js - the 400 a refused slip returns passes through intact,
+   which dropUnbookable below depends on. */
+const BOOK_URL="/api/book?book=sporty";
 /* SportyBet's share endpoint is intermittently flaky - it rejects or times out
    on a first hit and works on retry. Retry up to 3x with backoff so the user
    never has to. Only retries on network/5xx/no-code, never on a clean rejection. */
@@ -6951,7 +6956,7 @@ const SPORTY_URL="https://www.sportybet.com/ng/?shareCode=";
    was a guess from the POST endpoint's name) loaded their home page with the
    code ignored. */
 const B9_URL="https://sports.bet9ja.com/?bookABetCode=";
-const B9_BOOK_URL="https://web-production-798c0.up.railway.app/api/bet9ja/booking-code";
+const B9_BOOK_URL="/api/book?book=bet9ja";
 /* The same booking code loads the same slip on football.com, which until now
    the modal only mentioned in a footnote - leaving anyone who uses that app to
    copy the code and find their own way there. */
