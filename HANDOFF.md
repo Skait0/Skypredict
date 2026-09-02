@@ -131,6 +131,33 @@ onto a baked background with fixed slots, so a per-slip card needs new slots
 baked by `scripts/mkogbase.js` (a manual, canvas-based step) - more work than
 it looks.
 
+## Three score sources, in this order
+```
+1  soccervista   fastest, widest, reaches a week back      THEIR licence
+2  footballdata  free, already downloaded, HALF-TIME too   ours
+3  oracle        API-Football, 100 requests a day          ours
+```
+SoccerVista stays first because it *is* the best - it took grading from 132
+rows to 308. Demoting it to feel less dependent on somebody else's feed trades
+real coverage for a feeling, and reordering an array does not answer a licence
+question: read their terms, or stop using it.
+
+football-data costs nothing. `lib/build.js` already downloads every CSV to fit
+the model (it refuses to build under 400 results), so `FD.fromMatches(matches)`
+turns what is already in memory into a source. No request, no key, no quota.
+
+It sits ahead of the oracle because the oracle is rationed and there is no
+reason to spend an allowance on a date something free can answer.
+
+**It is the only source with a half-time score.** `gradeLabel` refuses a
+first-half market outright without one - correctly, a full-time score cannot
+settle it - so every `FH_OVER_0.5` tip came back ungraded, and the builder
+offers that market. Both grading passes now hand `{hth, hta}` through when the
+source has it, and a test counts BOTH: a single `assert.match` passed while one
+pass had lost it.
+
+League only. Cup ties stay with the other two.
+
 ## Bet9ja carries far more than our bulk feed shows
 **A wrong conclusion was committed here on 2 Sep and is corrected below. Read
 this before trusting any coverage number.**

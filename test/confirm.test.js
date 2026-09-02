@@ -146,7 +146,11 @@ test("only matches that have finished are written", () => {
     "kicked off - a source only returns finished matches, so that is enough");
   assert.match(fn, /!isFinite\(ko\)/,
     "and a fixture with no kick-off time is skipped rather than assumed over");
-  assert.match(fn, /GRADE\.gradeLabel\(f\.tip, m\.hg, m\.ag\)/,
+  /* The first three arguments are the point: the published tip and the score
+     that was actually observed. A fourth was added for the half-time score,
+     which only football-data carries and which gradeLabel needs before it will
+     settle a first-half market at all. */
+  assert.match(fn, /GRADE\.gradeLabel\(f\.tip, m\.hg, m\.ag[,)]/,
     "the verdict is graded from the published tip and the observed score");
   assert.match(fn, /if \(hit === null\) continue;/,
     "a tip no final score can settle is not filed with a guessed verdict");
