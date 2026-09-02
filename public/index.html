@@ -655,7 +655,12 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
   background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
   animation:shimmer 1.25s infinite}
 @keyframes shimmer{100%{transform:translateX(100%)}}
-#toasts{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:200;
+/* Clear of the bottom tab bar and the slip bar, both of which are fixed to
+   the bottom and both of which hold things people tap. A toast landing on
+   the controls is in the way even though it cannot be clicked - you still
+   cannot see what you are aiming at. */
+#toasts{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));
+  transform:translateX(-50%);z-index:200;
   display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
 /* "Installed." "Back online." These say a small thing and then leave, so they
    should read as a note rather than an alert - and they were dressed as an
@@ -722,6 +727,10 @@ html.mode-live .btabs{transform:none!important}
   .btabs{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:120;
     background:var(--card);border-top:1px solid var(--line);
     padding:6px 8px calc(6px + env(safe-area-inset-bottom));align-items:flex-end;justify-content:space-around}
+  /* Above the tab bar, not on it. The bar is fixed to the bottom and every
+     item in it is a target, so a toast landing there hides what you are
+     aiming at even though it cannot intercept the tap. */
+  #toasts{bottom:calc(68px + env(safe-area-inset-bottom))}
   .btab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;
     color:var(--faint);font:inherit;font-size:10px;font-weight:700;padding:6px 0;cursor:pointer}
   .btab svg{width:22px;height:22px}
@@ -4123,7 +4132,11 @@ button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
 /* "Book with" was touching the edge of the screen while the bar under it is
    inset by 14. Row-gap as well, because two brand pills and a label wrap on a
    320px phone and the wrapped line was landing on top of the first. */
-.bookpick{margin-top:10px;padding:0 4px;gap:6px 7px}
+.bookpick{margin-top:10px;padding:0 14px;gap:6px 7px}
+  /* The sheet insets its body by 18, and the picker is a sibling of it
+     rather than a child, so it has to match by hand or it sits proud of
+     every row above it. */
+  .myslip-sheet .bookpick{padding:0 18px}
 .bookpick-l{font-size:10.5px}
 .bld-note{margin-top:7px}
 #bookResult{margin-top:10px}
@@ -7530,9 +7543,8 @@ function pickerPicks(){
     return MYSLIP.map(function(x){return {id:x.id,f:fixtureById(x.id),code:x.code};});
   }catch(e){ return []; }
 }
-function paintBookPicker(el){
+function paintBookPickerWith(el,picks){
   if(!el) return;
-  var picks=pickerPicks();
   /* Nothing to book is no choice to make. */
   if(!picks.length){ el.hidden=true; el.innerHTML=""; return; }
   el.hidden=false;
@@ -7550,8 +7562,12 @@ function paintBookPicker(el){
   });
   el.innerHTML=html;
 }
+/* My slip is the default source, which is right for the sheet and wrong for
+   the builder - the builder passes its own picks in. */
+function paintBookPicker(el){ paintBookPickerWith(el,pickerPicks()); }
 function paintBookPickers(){
-  try{ document.querySelectorAll("[data-bookpick]").forEach(paintBookPicker); }catch(e){}
+  try{ document.querySelectorAll('[data-bookpick]:not([data-bookpick="build"])')
+    .forEach(paintBookPicker); }catch(e){}
   /* "book them to SportyBet" is a promise about which app the code opens in,
      and it was hardcoded - so choosing Bet9ja left the sheet still naming
      SportyBet above a button that would produce a Bet9ja code. */
@@ -10161,9 +10177,22 @@ function closeMySheet(){$("scrim").classList.remove("on");$("mySheet").classList
 function renderMySheet(){
   paintBookPickers();
   var body=$("mySheetBody"); if(!body) return;
-  MYSLIP=MYSLIP.filter(function(x){var f=fixtureById(x.id);return !f||notStarted(f);});
+  /* ONE rule, because there used to be two and they disagreed. The first
+     kept a leg whose fixture could not be found; the second, immediately
+     after, dropped it. The second won and saveMy() wrote it down, so a leg
+     was deleted from somebody's slip for good.
+     A leg goes only when we can SEE that its match is past. Not finding the
+     fixture is not evidence of anything: the board drops a match at
+     kick-off and carries cup ties only while the bookmaker lists them, so
+     "gone from the board" happens to games that are still being played.
+     This list is saved, so a wrong drop cannot be taken back. */
+  MYSLIP=MYSLIP.filter(function(x){
+    var f=fixtureById(x.id);
+    if(!f) return true;
+    return notStarted(f)&&isUpcoming(f);
+  });
   var _b=MYSLIP.length;
-  MYSLIP=MYSLIP.filter(function(x){var f=fixtureById(x.id);return f&&isUpcoming(f);});
+
   if(MYSLIP.length!==_b){saveMy();renderFab();}
   if(!MYSLIP.length){
     body.innerHTML="<div class='bld-empty'><b>Your slip is empty</b>Tap + on any prediction to add it here.</div>";
@@ -11640,7 +11669,13 @@ function renderBuilderOutput(){
      so Get code silently used whatever the My slip sheet was set to - and
      the wizard looked fine because its slip opens in that very sheet. */
   var bp=document.querySelector('[data-bookpick="build"]');
-  if(bp) bp.hidden = !showFoot;
+  /* Its own picks, not My slip's. Counted here rather than in
+     paintBookPicker because only this function knows about wizard mode and
+     the ghost preview. */
+  try{ paintBookPickerWith(bp, showFoot ? picks.map(function(c){
+    return {id:c.id,f:c.f||fixtureById(c.id),code:c.code};
+  }) : []); }catch(e){}
+
   var note=$("bldNote");
   if(!picks.length) note.textContent="";
   else if(!bookable) note.textContent="These fixtures have no "+curBook().label+" event ID yet, so they can't be booked automatically.";
@@ -11732,7 +11767,7 @@ document.querySelectorAll(".bld-mode-btn").forEach(function(btn){
 });
 $("bookBtn").addEventListener("click",bookSlip);
 $("clearBtn").addEventListener("click",clearSlip);
-$("shuffleBtn").addEventListener("click",function(){if(BUILD.mode==="wizard"){wspConjure(true);return;}BUILD.touched=true;BUILD.seed=Math.floor(Math.random()*1e6);BUILD.shuffles=(BUILD.shuffles||0)+1;BUILD.removed={};$("bookResult").innerHTML="";renderBuilder();window.swToast&&window.swToast("Slip reshuffled","ok","shuffle");});
+$("shuffleBtn").addEventListener("click",function(){if(BUILD.mode==="wizard"){wspConjure(true);return;}BUILD.touched=true;BUILD.seed=Math.floor(Math.random()*1e6);BUILD.shuffles=(BUILD.shuffles||0)+1;BUILD.removed={};$("bookResult").innerHTML="";renderBuilder();});
 
 var CONTACT_EMAIL="hello@soccerwizard.live";
 /* Contact dialog.

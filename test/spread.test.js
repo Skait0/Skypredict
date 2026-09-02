@@ -110,7 +110,11 @@ test("the wizard reads it before it uses it", () => {
   /* First attempt defined _use after the loop that reads it. `var` hoists, so
      it was undefined rather than a ReferenceError inside the page - it threw
      only under the test harness, which is the one place it was visible. */
-  const i = src.indexOf("var _use=slipUse();\r\n    chosen.forEach");
+  /* Line-ending agnostic on purpose. This pinned a literal CRLF, which made it
+     a test of how the file happens to be checked out rather than of the code:
+     it went red the moment a tool rewrote the file as LF, and it would fail for
+     anyone on a platform that does not use CRLF. */
+  const i = src.search(/var _use=slipUse\(\);\s*chosen\.forEach/);
   const j = src.indexOf("+SPREAD_PEN*(_use[c.id]||0)");
   assert.ok(i > 0, "the wizard's _use is not defined before its loop");
   assert.ok(j > i, "_use is read before it is assigned");
