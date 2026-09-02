@@ -453,3 +453,31 @@ const MATCHES_FOR_WINDOWS = [
   { date: new Date(Date.now() - 3 * 86400000), league: "England Premier League",
     home: "Chelsea", away: "Fulham", hg: 2, ag: 0, hth: 1, hta: 0 },
 ];
+
+test("every score source's own diagnostics survive prebuild's whitelist", () => {
+  /* football-data reported into a void from the day it shipped. The whitelist
+     listed source names one at a time - "oracle", "soccervista" - and nobody
+     added the third, so `footballdata 2026-08-28: no finished matches` was
+     written on every build and printed on none. That is the line that would
+     have explained a held-back Ligue 1 game the source demonstrably carries.
+   *
+   * Names come from scoreSources(), so a fourth source cannot repeat this:
+   * add it to the list and this test covers it without being touched. The
+   * line is produced by sourceRows itself, not typed out here. */
+  const script = fs.readFileSync(path.join(__dirname, "..", "scripts", "prebuild.js"), "utf8");
+  const m = script.match(/\.filter\(\(l\) => (\/.+\/i)\.test\(l\)\)/);
+  assert.ok(m, "the build-log whitelist must still be findable in prebuild.js");
+  const whitelist = eval(m[1]);
+
+  const names = B.scoreSources(MATCHES_FOR_WINDOWS).map((s) => s.name);
+  assert.ok(names.length >= 3, "expected the full source list, got " + names);
+
+  return Promise.all(names.map(async (name) => {
+    const silent = stub(name, {});          // has the date, holds nothing
+    const log = [];
+    await B.sourceRows({ name, api: silent.api, days: 30 }, DATE, log, B.makeScoreBudget());
+    assert.strictEqual(log.length, 1, name + " must say it had nothing");
+    assert.ok(whitelist.test(log[0]),
+      "prebuild drops " + name + "'s diagnostics, so they do not exist: " + log[0]);
+  }));
+});

@@ -94,13 +94,20 @@ async function bakePayload() {
      as before, so the build output stays readable. */
   const { log: buildLog, ...rest } = payload;
   (buildLog || [])
-    /* `of N confirmed`, not `confirmed from`: the confirmation line stopped
+    /* Two lessons are baked into this pattern, both learned the same way.
+       `of N confirmed`, not `confirmed from`: the confirmation line stopped
        saying "confirmed from 485 finished" when the fall-through went
-       per-fixture, and this whitelist silently swallowed it for a whole
-       deploy. A filter keyed on another function's exact wording breaks
-       without failing - see test/fallback.test.js, which now drives this very
-       regex against a line confirmScores really emits. */
-    .filter((l) => /held back|unavailable|failed|oracle|soccervista|suspended|record:|recorded result|score source|FT score map|of \d+ confirmed/i.test(l))
+       per-fixture, and this whitelist swallowed it for a whole deploy.
+       And `^name YYYY-MM-DD:` rather than a list of source names. Every score
+       source reports a date it could not answer for in that exact shape, but
+       the names were listed one by one, so football-data - added months after
+       this line was written - has been reporting into a void ever since. It
+       took a held-back Ligue 1 game that football-data demonstrably HAS to
+       notice that its side of the story was never printed.
+       A filter keyed on another function's wording breaks without failing, so
+       both halves are covered by tests that drive this very regex - see
+       test/fallback.test.js. */
+    .filter((l) => /held back|unavailable|failed|oracle|soccervista|suspended|record:|recorded result|score source|FT score map|backfill|of \d+ confirmed|^\S+ \d{4}-\d{2}-\d{2}:/i.test(l))
     .forEach((l) => log(l));
   const out = path.join(PUB, "predictions.json");
   /* The file the site downloads, without the per-result model numbers - they
