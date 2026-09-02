@@ -481,3 +481,47 @@ test("every score source's own diagnostics survive prebuild's whitelist", () => 
       "prebuild drops " + name + "'s diagnostics, so they do not exist: " + log[0]);
   }));
 });
+
+test("an unmatched fixture says what each source actually held", async () => {
+  /* "no source had these games" is true and useless. It stood over Lille v
+     Paris SG for days while football-data, second in the chain, carried that
+     exact fixture under that exact spelling with a half-time score. The line
+     could not distinguish "asked and got nothing" from "never asked". */
+  const sv = stub("soccervista", { [DATE]: [R("Halifax", "Hartlepool", 2, 0)] });
+  const fd = stub("footballdata", {});                    // has the date, holds nothing
+  const sources = [
+    { name: "soccervista", api: sv.api, days: 7 },
+    { name: "footballdata", api: fd.api, days: 30 },
+    { name: "oracle", api: stub("oracle", {}).api, days: 3 },
+  ];
+  const budget = B.makeScoreBudget();
+  budget.spent = 99;                                      // so the oracle is skipped, not asked
+  const log = [];
+  await B.confirmScores(
+    [{ match_date: DATE, home: "Lille", away: "Paris SG",
+       hg: 0, ag: 0, tip: "Over 1.5", hit: false, source: "sweep" }],
+    log, budget, sources);
+
+  const line = log.find((l) => /^unmatched/.test(l));
+  assert.ok(line, "an unexplained hold must explain itself: " + JSON.stringify(log));
+  assert.match(line, /Lille v Paris SG/);
+  assert.match(line, /soccervista 1/, "how many rows it really had");
+  assert.match(line, /footballdata 0/, "asked and empty is not the same as unasked");
+  assert.match(line, /oracle skipped/, "and never asked must say so");
+});
+
+test("the trace costs no extra request", async () => {
+  /* It re-reads the memo the failed lookup already filled. If it refetched,
+     every unmatched fixture would double the day's requests - on exactly the
+     bad day when the most fixtures go unmatched. */
+  const sv = stub("soccervista", { [DATE]: [R("Halifax", "Hartlepool", 2, 0)] });
+  const sources = [{ name: "soccervista", api: sv.api, days: 7 }];
+  await B.confirmScores(
+    [{ match_date: DATE, home: "Lille", away: "Paris SG",
+       hg: 0, ag: 0, tip: "Over 1.5", hit: false, source: "sweep" },
+     { match_date: DATE, home: "Rio Ave", away: "Sp Lisbon",
+       hg: 0, ag: 0, tip: "Over 1.5", hit: false, source: "sweep" }],
+    [], B.makeScoreBudget(), sources);
+  assert.deepStrictEqual(sv.calls, [DATE],
+    "one fetch, however many rows failed to match and got traced");
+});
