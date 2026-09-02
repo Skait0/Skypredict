@@ -10720,7 +10720,133 @@ function wspMarkets(){var m=[];
   if(WSP.mk.tts2)m=m.concat(["HOME_OVER_1.5","AWAY_OVER_1.5"]);
   if(WSP.mk.both)m.push("GG");
   return m;}
+/* WHERE THE SLIDER ENDS AND THE WIZARD BEGINS.
+ *
+ * The two builders answer different questions. The Slider is given a risk and
+ * returns games; the Wizard is given a payout and works backwards to games.
+ * They are not equally good at the same job. Inside the range the Slider can
+ * reach, its picks are the safer ones - it selects on model confidence with a
+ * floor, while the Wizard is pulled toward longer legs by the arithmetic of
+ * hitting a number.
+ *
+ * So the payout decides which method runs. If the target is inside the
+ * Slider's envelope, the Wizard hands the whole job over and returns the
+ * Slider's selection exactly - same markets, same games, same order. Only a
+ * payout beyond the Slider's reach gets the Wizard's own method.
+ *
+ * THE ENVELOPE IS NOT A CONSTANT, and it is much wider than one day's card
+ * suggests. It moves with three things at once: the fixture window, the market
+ * toggles, and the board itself. Measured 2 September:
+ *
+ *     day scope, default markets     28 legs      2,198
+ *     all scope, default markets     35 legs     11,476
+ *     all scope, every market on     35 legs    123,616
+ *
+ * and a full Saturday card reaches 229,863. The first of those is what a
+ * midweek afternoon looks like and it is the least representative number
+ * available - reading the ceiling off it would put the handover in the wrong
+ * place for most of the week.
+ *
+ * At the top the 35-leg cap does bite; on a thin day the board runs out of
+ * fixtures clearing the confidence floor first and legs plateau below it.
+ * Which of the two limits applies is not knowable in advance, so nothing here
+ * is hardcoded: the range is measured at build time, every build.
+ *
+ * Odds rise monotonically with risk, which is what makes a binary search valid
+ * and keeps this to about seven builds instead of a hundred and one. */
+function sliderRunAt(r, seed, removed, mk){
+  var saveR=BUILD.risk, saveS=BUILD.seed, saveRm=BUILD.removed, saveMk=BUILD.mk;
+  BUILD.risk=r;
+  if(seed!=null) BUILD.seed=seed;
+  if(removed) BUILD.removed=removed;
+  /* The Slider's METHOD, the caller's MARKETS. Both panels ship the same
+     defaults, so an untouched Wizard gets exactly what the Slider would build.
+     A user who turns a market off in the Wizard is obeyed rather than quietly
+     overruled - a toggle that does nothing is worse than no toggle. */
+  if(mk) BUILD.mk=mk;
+  try{
+    var picks=buildPicks()||[];
+    var o=1;
+    for(var i=0;i<picks.length;i++){
+      var c=picks[i];
+      /* Same odd the slip will be booked at, not a re-derivation. */
+      c.od=(typeof legOdd==="function")?legOdd(c.f,c.code,c.p):oddOf(c.p);
+      o*=c.od;
+    }
+    return {picks:picks,odds:o,risk:r};
+  } finally { BUILD.risk=saveR; BUILD.seed=saveS; BUILD.removed=saveRm; BUILD.mk=saveMk; }
+}
+
+/* The top of the Slider's range, remembered per set of inputs.
+ *
+ * The panel has to know which builder will answer BEFORE it draws its
+ * controls, and it draws them before the slip is built. Running the whole
+ * search there would cost seven builds on every keystroke; this costs one, and
+ * only when something that moves the ceiling actually changes. */
+function sliderCeiling(seed,removed,mk){
+  /* Every global here is read defensively. This runs from the render path and
+     from harnesses that supply only what they need, and a ReferenceError in a
+     cache key would take down the whole panel to save one rebuild. */
+  function _g(n,d){ try{ return eval("typeof "+n+"===\"undefined\"")?d:eval(n); }catch(e){ return d; } }
+  var sig=[seed,JSON.stringify(mk||null),_g("SCOPE",""),_g("SDAY",""),
+           _g("TOD",""),!!_g("TOP_ONLY",false),JSON.stringify(removed||null)].join("|");
+  /* The memo hangs off the function rather than sitting beside it, so it
+     travels wherever the function does - including into the test harnesses,
+     which lift functions out one at a time and would otherwise trip over a
+     free variable they never asked for. */
+  var memo=sliderCeiling.memo;
+  if(memo && memo.sig===sig) return memo.odds;
+  var top=sliderRunAt(100,seed,removed,mk);
+  sliderCeiling.memo={sig:sig,odds:top.picks.length?top.odds:0};
+  return sliderCeiling.memo.odds;
+}
+/* Does the Slider answer this payout? The question the panel asks. */
+function sliderDrives(){
+  if(WSP.everyGame || WSP.odds==null) return false;
+  var rm={};
+  for(var k in (BUILD.removed||{})) rm[k]=1;
+  for(var k2 in (WSP.removed||{})) rm[k2]=1;
+  return WSP.odds <= sliderCeiling(WSP.seed, rm, WSP.mk);
+}
+
+/* The Slider's answer for this payout, or null when the payout is past its
+   reach and the Wizard should do the work.
+ *
+ * Smallest risk that REACHES the target, not the closest to it. The Wizard's
+ * promise is "at least what you asked for", and undershooting to land nearer
+ * the number would quietly break it. */
+function sliderReach(T, seed, removed, mk){
+  if(!(T>1)) return null;
+  /* One place decides whether this is the Slider's job: the ceiling. A second
+     check on top.odds said the same thing twice, so either could be deleted
+     without any test noticing - each was covered by the other. */
+  if(sliderCeiling(seed,removed,mk)<T) return null;  /* beyond the Slider */
+  var top=sliderRunAt(100,seed,removed,mk);
+  if(!top.picks.length) return null;
+  var lo=0, hi=100, best=top;
+  while(lo<=hi){
+    var mid=(lo+hi)>>1;
+    var got=sliderRunAt(mid,seed,removed,mk);
+    if(got.picks.length && got.odds>=T){ best=got; hi=mid-1; }
+    else lo=mid+1;
+  }
+  return best;
+}
+
 function wspBuild(){
+  /* Inside the Slider's range, the Slider picks. See sliderReach above: this
+     is a handover, not an imitation - buildPicks does the work and its result
+     is returned untouched. "Every game that qualifies" asks a different
+     question from a payout, so it keeps the Wizard's method. */
+  if(!WSP.everyGame && WSP.odds!=null){
+    /* Games the user dropped in the Wizard stay dropped; the method is the
+       Slider's, the exclusions are still theirs. */
+    var rm={};
+    for(var k in (BUILD.removed||{})) rm[k]=1;
+    for(var k2 in (WSP.removed||{})) rm[k2]=1;
+    var handed=sliderReach(WSP.odds, WSP.seed, rm, WSP.mk);
+    if(handed) return {picks:handed.picks, odds:handed.odds, short:false, via:"slider"};
+  }
   var allowed=wspMarkets(),all=[];
   var seed=WSP.seed||0, shuffles=WSP.shuffles||0;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
@@ -11520,8 +11646,22 @@ function renderWizardPanel(){
      and keep Conjure out of reach until there is something to aim at. */
   if(WSP.odds==null)
     html += "<p class='wsp-hint'>Pick a payout above - we'll find the games that reach it.</p>";
+  /* Slip style is the Wizard's dial: it trades legs against odds while
+     reaching the same payout. Inside the Slider's range the Slider is doing
+     the picking, and it ties legs and odds together - one risk setting gives
+     one answer - so there is no trade left to make. Three buttons that change
+     nothing is the failure this panel has had before, so say what is
+     happening instead of drawing them. */
+  if(sliderDrives()){
+    html += "<p class='wsp-hint'><b>Safest method.</b> At this payout we build "+
+      "it the way the Slider does - picked on confidence, not stretched to "+
+      "reach a number. Slip style applies above "+
+      Math.round(sliderCeiling(WSP.seed,{},WSP.mk))+"x.</p>";
+  } else {
   html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips' id='wspStyleChips'>"+
-    styles.map(function(st){return "<button class='wsp-chip wsp-style"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'><b>"+st[1]+"</b>"+(st[2]?"<i>"+st[2]+"</i>":"")+"</button>";}).join("")+"</div>"+
+    styles.map(function(st){return "<button class='wsp-chip wsp-style"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'><b>"+st[1]+"</b>"+(st[2]?"<i>"+st[2]+"</i>":"")+"</button>";}).join("")+"</div>";
+  }
+  html +=
     "<button class='book-btn wsp-go"+(WSP.odds==null?" waiting":"")+
       "' id='wspGo' type='button'>Conjure ticket</button>";
 
@@ -11594,7 +11734,11 @@ function renderWizardPanel(){
         try{again.setSelectionRange(c.length,c.length);}catch(e){} }
     });
   }
-  $("wspStyleChips").querySelectorAll("[data-lo]").forEach(function(c){
+  /* Absent whenever the Slider is answering this payout - see sliderDrives.
+     Unguarded this threw and took the whole panel down with it, which is a
+     blank Wizard rather than a missing row. */
+  var _sty=$("wspStyleChips");
+  if(_sty) _sty.querySelectorAll("[data-lo]").forEach(function(c){
     c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;WSP._sig=null;renderBuilder();});
   });
   $("wspGo").addEventListener("click",function(){

@@ -68,7 +68,11 @@ const FNS = ["countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmer
   /* Both builders now restrict themselves to markets SportyBet always lists
      when a fixture has no prices at all, so the harness needs that too. */
   "safeUnpriced",
-  "buildPicks", "wspBuild"];
+  "buildPicks",
+  /* wspBuild now consults the Slider before doing its own work, so the
+     handover functions have to come with it or it throws. */
+  "sliderRunAt", "sliderCeiling", "sliderDrives", "sliderReach",
+  "wspBuild"];
 
 const api = new Function([
   "var TOP_ONLY=false;",
