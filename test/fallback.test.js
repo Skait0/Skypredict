@@ -191,7 +191,8 @@ test("the oracle stops once its build budget is gone", async () => {
   const got = await B.findScore(DATE, "Petro Luanda", "Al Ahly", log, budget, c.all);
   assert.strictEqual(got, null, "held back rather than overrunning the plan");
   assert.deepStrictEqual(c.last.calls, []);
-  assert.ok(log.some((l) => /oracle .*not asked/.test(l)));
+  assert.ok(log.some((l) => /oracle.*budget/i.test(l)),
+    "the budget refusal is the actionable one and must be said: " + JSON.stringify(log));
 });
 
 test("a budget refusal is not cached, because it is about now and not the date", async () => {
@@ -300,3 +301,155 @@ test("prebuild's whitelist passes the line confirmScores actually emits", async 
   assert.ok(whitelist.test(line),
     "prebuild drops this line, so the deploy log will not show it: " + line);
 });
+
+/* ------------------------------------------------------- backfill windows */
+
+/**
+ * One window for everybody made the metered source's limit everyone's limit.
+ * Rows older than a week were dropped before football-data - which holds the
+ * whole downloaded season in memory - was ever offered them.
+ *
+ * The oracle is deliberately NOT widened. Its free plan refuses anything older
+ * than a few days and a refusal still costs a request, so a wider window would
+ * turn a free local skip into a real refused request. At forty-odd builds a
+ * day that is 80-120 wasted requests against a limit of 100, which is exactly
+ * how the last account was suspended.
+ */
+
+const DAY = 86400000;
+const ago = (n) => new Date(Date.now() - n * DAY).toISOString().slice(0, 10);
+
+test("football-data is asked about a date three weeks old", () => {
+  /* It costs a Map lookup over results the build already downloaded. There was
+     never a reason for its window to be small. */
+  assert.strictEqual(
+    B.sourceCanAnswer({ name: "footballdata" }, ago(21), B.makeScoreBudget()), true);
+});
+
+test("the oracle is not, and that is the whole point", () => {
+  assert.strictEqual(
+    B.sourceCanAnswer({ name: "oracle" }, ago(21), B.makeScoreBudget()), false,
+    "widening the metered source is how the last account died");
+  assert.strictEqual(
+    B.sourceCanAnswer({ name: "oracle" }, ago(5), B.makeScoreBudget()), false,
+    "five days is already past what the free plan will serve");
+  assert.strictEqual(
+    B.sourceCanAnswer({ name: "oracle" }, ago(1), B.makeScoreBudget()), true,
+    "yesterday is still its job");
+});
+
+test("SoccerVista keeps its week - it is somebody else's server", () => {
+  assert.strictEqual(
+    B.sourceCanAnswer({ name: "soccervista" }, ago(3), B.makeScoreBudget()), true);
+  assert.strictEqual(
+    B.sourceCanAnswer({ name: "soccervista" }, ago(21), B.makeScoreBudget()), false,
+    "a month of dates every build would be rude, slow, and unanswered");
+});
+
+test("an old row reaches the free source instead of being dropped", async () => {
+  /* The behaviour, end to end. Three weeks back: SoccerVista and the oracle
+     both decline locally, football-data answers, and the row is confirmed
+     without a single request being made. */
+  const old = ago(21);
+  const sv = stub("soccervista", { [old]: [R("Halifax", "Hartlepool", 9, 9)] });
+  const fd = stub("footballdata", { [old]: [R("Chelsea", "Fulham", 2, 0)] });
+  const or = stub("oracle", { [old]: [R("Chelsea", "Fulham", 5, 5)] });
+  const sources = [
+    { name: "soccervista", api: sv.api, days: 7 },
+    { name: "footballdata", api: fd.api, days: 30 },
+    { name: "oracle", api: or.api, days: 3 },
+  ];
+  const log = [];
+  const budget = B.makeScoreBudget();
+  const row = { match_date: old, home: "Chelsea", away: "Fulham",
+                hg: 0, ag: 0, tip: "1X, home or draw", hit: false, source: "sweep" };
+
+  const out = await B.confirmScores([row], log, budget, sources);
+
+  assert.strictEqual(out.size, 1, "the row was confirmed, not dropped as stale");
+  assert.strictEqual(out.get(row).hg, 2, "and from football-data's score");
+  assert.deepStrictEqual(sv.calls, [], "SoccerVista declined locally, no request");
+  assert.deepStrictEqual(or.calls, [], "and the oracle was never touched");
+  assert.strictEqual(budget.spent, 0, "not one unit of allowance spent");
+  assert.ok(log.some((l) => /backfill: 1 result/.test(l)),
+    "and it says what the wider window was worth: " + JSON.stringify(log));
+});
+
+test("with no source reaching back, an old row is still left alone", async () => {
+  /* The gate must follow the sources, not a constant. Given only SoccerVista,
+     a three-week-old row is out of everybody's reach and must not be put to
+     anyone. */
+  const old = ago(21);
+  const sv = stub("soccervista", { [old]: [R("Chelsea", "Fulham", 2, 0)] });
+  const log = [];
+  const out = await B.confirmScores(
+    [{ match_date: old, home: "Chelsea", away: "Fulham",
+       hg: 0, ag: 0, tip: "1X, home or draw", hit: false, source: "sweep" }],
+    log, B.makeScoreBudget(), [{ name: "soccervista", api: sv.api, days: 7 }]);
+  assert.strictEqual(out.size, 0);
+  assert.deepStrictEqual(sv.calls, [], "nobody could answer, so nobody was asked");
+  assert.ok(log.some((l) => /older than the oracle window/.test(l)));
+});
+
+test("the age refusal is not logged once per fixture", async () => {
+  /* It became the ordinary case the moment backfill widened the row gate - a
+     month of dates past the oracle's three days is what the window is FOR - so
+     logging it per fixture buried the build output in "working as intended".
+     The budget refusal still speaks, because that one means something. */
+  const old = ago(21);
+  const fd = stub("footballdata", { [old]: [
+    R("Chelsea", "Fulham", 2, 0), R("Inter", "Udinese", 1, 1)] });
+  const sources = [
+    { name: "footballdata", api: fd.api, days: 30 },
+    { name: "oracle", api: stub("oracle", {}).api, days: 3 },
+  ];
+  const log = [];
+  const budget = B.makeScoreBudget();
+  for (const [h, a] of [["Chelsea", "Fulham"], ["Inter", "Udinese"], ["No", "Body"]]) {
+    await B.findScore(old, h, a, log, budget, sources);
+  }
+  assert.strictEqual(log.filter((l) => /older than/.test(l)).length, 0,
+    "an expected skip is not news: " + JSON.stringify(log));
+});
+
+test("the budget refusal still speaks, and exactly once", async () => {
+  const c = chain();
+  const budget = B.makeScoreBudget();
+  budget.spent = 99;
+  const log = [];
+  for (const [h, a] of [["No", "Body"], ["Still", "Nobody"], ["Third", "Miss"]]) {
+    await B.findScore(DATE, h, a, log, budget, c.all);
+  }
+  const said = log.filter((l) => /budget/i.test(l));
+  assert.strictEqual(said.length, 1,
+    "said once per build, not once per fixture: " + JSON.stringify(log));
+});
+
+test("the windows on the list a real build uses", () => {
+  /* Asserted on scoreSources() itself, not on a hand-made {name:"oracle"}.
+     Every window test above went through sourceDays' NAME FALLBACK, so
+     widening the oracle to the backfill window in the real list changed
+     nothing any of them could see - the mutation ran green. The list the
+     build actually grades from is the only place these numbers matter.
+
+     If a window is deliberately changed, change it here too and say why in
+     the commit. That is the point of pinning it. */
+  const days = {};
+  for (const s of B.scoreSources(MATCHES_FOR_WINDOWS)) days[s.name] = s.days;
+
+  assert.strictEqual(days.oracle, 3,
+    "the metered source must stay narrow - a refusal still costs a request, " +
+    "and 40-odd builds a day of those is how the last account was suspended");
+  assert.strictEqual(days.soccervista, 7,
+    "somebody else's server, and it does not reach further than a week anyway");
+  assert.strictEqual(days.footballdata, 30,
+    "a Map lookup over results already downloaded - nothing to ration");
+
+  assert.ok(days.footballdata > days.oracle,
+    "the whole backfill is that the free source reaches further than the metered one");
+});
+
+const MATCHES_FOR_WINDOWS = [
+  { date: new Date(Date.now() - 3 * 86400000), league: "England Premier League",
+    home: "Chelsea", away: "Fulham", hg: 2, ag: 0, hth: 1, hta: 0 },
+];
