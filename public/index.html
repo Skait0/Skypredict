@@ -4560,6 +4560,7 @@ footer{margin-top:26px;padding-top:18px;
     <!-- UNIFIED OUTPUT -->
     <div class="bld-stats stage-in stage-in-3" id="bldStats" data-parallax="0.5"></div>
     <div id="slip" data-parallax="0.3"></div>
+    <div class="bookpick" data-bookpick="build" role="group" aria-label="Bookmaker" hidden></div>
     <div class="bld-foot stage-in stage-in-4" id="bldFoot" data-parallax="0.2">
       <button class="clear-btn" id="shuffleBtn" type="button" aria-label="Shuffle" title="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
       <button class="clear-btn" id="clearBtn" type="button" aria-label="Clear" title="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg></button>
@@ -11632,12 +11633,18 @@ function renderBuilderOutput(){
      wizard has to be excluded here too - otherwise conjuring puts the bar
      back. In the wizard the slip and Get code live in the My slip sheet;
      the panel keeps only the numbers. */
+  var showFoot = (!isWiz && picks.length && !wizGhost && !firstVisit);
   if(foot) foot.style.display =
-    (!isWiz && picks.length && !wizGhost && !firstVisit) ? "flex" : "none";
+    showFoot ? "flex" : "none";
+  /* The picker rides the same rule. Until now the slider had none at all,
+     so Get code silently used whatever the My slip sheet was set to - and
+     the wizard looked fine because its slip opens in that very sheet. */
+  var bp=document.querySelector('[data-bookpick="build"]');
+  if(bp) bp.hidden = !showFoot;
   var note=$("bldNote");
   if(!picks.length) note.textContent="";
-  else if(!bookable) note.textContent="These fixtures have no SportyBet event ID yet, so they can't be booked automatically.";
-  else if(bookable<picks.length) note.textContent=bookable+" of "+picks.length+" games are on SportyBet right now - you can book those and skip the rest.";
+  else if(!bookable) note.textContent="These fixtures have no "+curBook().label+" event ID yet, so they can't be booked automatically.";
+  else if(bookable<picks.length) note.textContent=bookable+" of "+picks.length+" games are on "+curBook().label+" right now - you can book those and skip the rest.";
   else note.textContent="Booking "+bookable+" selection"+(bookable===1?"":"s")+" to SportyBet.";
 }
 
