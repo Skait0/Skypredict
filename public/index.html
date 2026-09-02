@@ -149,6 +149,24 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
         dsn:SW_SENTRY_DSN,
         /* Only report our own app errors, not noise from extensions/other origins. */
         allowUrls:[location.origin],
+        /* WHY allowUrls IS NOT ENOUGH.
+           It filters on the URL in the stack frame, and a script INJECTED into
+           the page reports the document's own URL - which is location.origin,
+           so it sails straight through. On 2 Sep an iOS webview threw
+           "Can't find variable: CONFIG" from updateGapFiller(). Neither CONFIG
+           nor updateGapFiller appears anywhere in our 400KB bundle, this HTML,
+           or the analytics script; only two scripts load and both are ours.
+           The campaign sends X traffic, which opens in an in-app browser -
+           exactly the thing that injects these - so expect more of it.
+           Matched on the message instead. Deliberately the exact identifier
+           and both engines' phrasings rather than anything like /ReferenceError/:
+           a broad rule here would swallow OUR undefined variables, which is
+           the single most useful error this reporter catches. If a new one
+           shows up, add its name; do not widen the pattern. */
+        ignoreErrors:[
+          /Can't find variable: CONFIG\b/,      // WebKit / iOS Safari
+          /\bCONFIG is not defined\b/           // V8 / Chrome, same thing
+        ],
         tracesSampleRate:0,          // errors only, no perf overhead
         replaysSessionSampleRate:0,
         replaysOnErrorSampleRate:0
