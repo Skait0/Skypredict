@@ -131,28 +131,40 @@ onto a baked background with fixed slots, so a per-slip card needs new slots
 baked by `scripts/mkogbase.js` (a manual, canvas-based step) - more work than
 it looks.
 
-## Bet9ja prices nine markets and no others
-Measured 2 Sep against the live feed, 1,303 fixtures:
+## Bet9ja carries far more than our bulk feed shows
+**A wrong conclusion was committed here on 2 Sep and is corrected below. Read
+this before trusting any coverage number.**
+
+Our `/api/bet9ja/fixtures` returns nine markets per game: 1, X, 2, 1X, X2, 12
+and the three over lines. That is NOT Bet9ja's catalogue - it is the blind spot
+of the endpoint we bulk-fetch with. `bet9ja.py` says so in a comment:
+`GetEventsInGroup` **ignores MKEY** and only ever returns the default markets,
+so team goals and the rest "are simply not reachable by GID".
+
+Asked directly, `GetEvent?EVENTID=` returns **771 distinct odds keys for one
+fixture**. Verified 2 Sep on a Liga MX game:
 
 ```
-priced 98-100%   1  X  2  1X  X2  12  OVER_1.5  OVER_2.5  OVER_3.5
-NEVER priced     GG  FH_OVER_0.5  HOME_OVER_0.5  AWAY_OVER_0.5
-                 HOME_OVER_1.5  AWAY_OVER_1.5
+GG            S_GGNG_Y        present, and NOT in bet9ja.py MARKET_MAP
+FH_OVER_0.5   S_OU1T@0.5_O    present, and NOT in MARKET_MAP
+HOME_OVER_1.5 S_HAOU@1.5_OH   present, and NOT in MARKET_MAP
+AWAY_OVER_1.5 S_HAOU@1.5_OA   present, and NOT in MARKET_MAP
+HOME_OVER_0.5 S_HTS_Y         present AND mapped
+AWAY_OVER_0.5 S_AWAYSCORE_Y   present AND mapped
 ```
 
-A leg on one of those is not unlucky on that game, it **cannot be booked on
-Bet9ja at all**. `bet9ja.py`'s `MARKET_MAP` maps HOME/AWAY_OVER_0.5 but the
-feed never carries a price for them, so mapping is not coverage.
+The booking route already fetches all 771 (`bet9ja.fetch_event`), then rejects a
+leg with `p.code not in ev["raw"]` - and `raw` only holds codes that appear in
+`MARKET_MAP`. So **an unmapped market is refused however well Bet9ja carries
+it.** Every GG leg has been refused on Bet9ja for this reason, and we offer GG
+by default.
 
-`bookTakes()` in index.html is the check to use: it asks whether the book has
-the game **and** prices the market. `bookIdOf()` answers only the first, and
-using it to count is what let a slip report itself fully bookable and then have
-five legs refused by the API.
+**The fix is to add those four rows to `MARKET_MAP`, not to hide the markets in
+the UI.** Do not grey out toggles on the strength of the bulk feed: absence
+there measures our fetch, not their book.
 
-**Still open:** the builder happily offers those markets while Bet9ja is
-selected, so a reader can build a slip that is structurally unbookable. The
-count and the note now say so before booking, but disabling the toggles per
-book would be better.
+Measuring lesson: our own feed is not a source of truth about somebody else's
+catalogue. Ask the thing itself.
 
 ## Key architecture notes
 - Single-file SPA: `public/index.html` (~5000 lines, all UI + logic).
