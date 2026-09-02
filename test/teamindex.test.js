@@ -213,9 +213,18 @@ test("a word that is itself a club is never dropped", () => {
   assert.strictEqual(M.matchTeam(scot, "Queens Park Rangers", 0), null,
     "Rangers is a club, so it cannot be treated as a qualifier");
 
+  /* Tokyo Verdy now has a hand-checked alias, so it resolves to the RIGHT
+     club rather than being refused. What must never happen either way is it
+     landing on FC Tokyo, which is what the tail rule did before the guard. */
   const jp = pool("Japan J1 League", ["FC Tokyo", "Verdy", "Machida"]);
-  assert.strictEqual(M.matchTeam(jp, "Tokyo Verdy", 0), null,
-    "Verdy is a club, so Tokyo Verdy must not collapse onto FC Tokyo");
+  assert.notStrictEqual(M.matchTeam(jp, "Tokyo Verdy", 0), "FC Tokyo",
+    "Tokyo Verdy must never collapse onto FC Tokyo");
+  assert.strictEqual(M.matchTeam(jp, "Tokyo Verdy", 0), "Verdy");
+
+  /* And the guard itself, on a name with no alias to rescue it. */
+  const jp2 = pool("Japan J1 League", ["FC Tokyo", "Machida"]);
+  assert.strictEqual(M.matchTeam(jp2, "Machida Tokyo", 0), null,
+    "Tokyo is a club here, so it cannot be treated as a qualifier");
 });
 
 test("the guard looks across the whole index, not one league", () => {
@@ -266,4 +275,83 @@ test("a qualifier drop that leaves too little is refused", () => {
   assert.strictEqual(M.matchTeam(p, "Ren Foot", 0), null);
   assert.strictEqual(M.matchTeam(p, "Grenoble Foot", 0), "Grenoble",
     "but a full name still resolves");
+});
+
+/* --------------------------------------------- names that cannot be derived */
+
+test("hand-checked aliases resolve", () => {
+  /* No rule turns "Heart of Midlothian" into "Hearts" or "Fortuna Sittard"
+     into football-data's "For Sittard". These 41 pairs were read off the live
+     feed against the index and checked one by one; they recovered 50 of the
+     53 fixtures still being dropped. */
+  assert.strictEqual(M.matchTeam(pool("Scotland Premiership", ["Hearts", "Hibernian"]),
+    "Heart of Midlothian FC", 0), "Hearts");
+  assert.strictEqual(M.matchTeam(pool("Netherlands Eredivisie", ["For Sittard", "Ajax"]),
+    "Fortuna Sittard", 0), "For Sittard");
+  assert.strictEqual(M.matchTeam(pool("England Championship", ["QPR", "Cardiff"]),
+    "Queens Park Rangers", 0), "QPR");
+  assert.strictEqual(M.matchTeam(pool("Japan J1 League", ["Verdy", "FC Tokyo"]),
+    "Tokyo Verdy", 0), "Verdy");
+});
+
+test("an alias beats the fuzzy pass", () => {
+  /* Tokyo Verdy is the case that matters: left to similarity it drifts toward
+     FC Tokyo, a different club. A hand-checked pair must not be overruled by
+     a coincidence of spelling. */
+  const jp = pool("Japan J1 League", ["FC Tokyo", "Verdy"]);
+  assert.strictEqual(M.matchTeam(jp, "Tokyo Verdy", 0), "Verdy");
+});
+
+test("an alias still has to find its target in that league", () => {
+  /* Fails closed. An alias whose target is not in the pool being searched
+     resolves to nothing rather than reaching into another division. */
+  const wrongLeague = pool("Italy Serie A", ["Inter", "Milan"]);
+  assert.strictEqual(M.matchTeam(wrongLeague, "Heart of Midlothian FC", 0), null);
+});
+
+test("the two clubs we deliberately refuse to guess stay out of the table", () => {
+  /* Panaitolikos: the nearest name we hold is Panathinaikos, a different
+     Athens club, and we do not carry Panaitolikos at all.
+     CS Universitatea Craiova: the index holds U Craiova, Univ. Craiova AND
+     U Craiova 1948, and the 1948 side is a different club from a split.
+     Both are better dropped than guessed, and this test exists so nobody
+     "completes" the table later without reading why. */
+  const keys = Object.keys(M.TEAM_ALIAS).join(" ");
+  assert.ok(!/panaitolikos/.test(keys), "Panaitolikos must not be aliased to Panathinaikos");
+  assert.ok(!/craiova/.test(keys), "Craiova is ambiguous in our own index");
+});
+
+test("no alias points at itself or at nothing", () => {
+  for (const [from, to] of Object.entries(M.TEAM_ALIAS)) {
+    assert.ok(to && to.length, from + " has an empty target");
+    assert.notStrictEqual(from, to, from + " aliases to itself, which does nothing");
+  }
+});
+
+test("an alias cannot reach across leagues", () => {
+  /* Needs a real two-league index: the single-league `pool` helper above
+     makes the pool and the whole index the same array, so a mutation that
+     scans everything instead of the league looks identical there. */
+  const idx = {
+    teams: ["Hearts", "Inter"],
+    teamLeague: [0, 1],
+    leagues: ["Scotland Premiership", "Italy Serie A"],
+  };
+  assert.strictEqual(M.matchTeam(idx, "Heart of Midlothian FC", 1), null,
+    "searching Serie A must not pull a Scottish club in by alias");
+  assert.strictEqual(M.matchTeam(idx, "Heart of Midlothian FC", 0), "Hearts",
+    "but it still resolves in its own league");
+});
+
+test("an alias with two possible targets is refused", () => {
+  /* The index holds the same club under two spellings often enough - it is
+     most of the duplicate "(team)" noise in a build log. Taking whichever
+     came first would be a coin flip on identity. */
+  const idx = {
+    teams: ["Hearts", "Hearts FC"],
+    teamLeague: [0, 0],
+    leagues: ["Scotland Premiership"],
+  };
+  assert.strictEqual(M.matchTeam(idx, "Heart of Midlothian FC", 0), null,
+    "two entries normalise to the alias target, so there is no unique answer");
 });
