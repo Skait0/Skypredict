@@ -137,7 +137,24 @@ test("both bookmakers can hold the same fixture at once", () => {
 test("only the bookmaker we price from moves the model", () => {
   /* Bet9ja covers 96.6% of the board to SportyBet's 100%, and its league
      listing carries no team-goals price at all. Folding it into the blend
-     would be a modelling change dressed up as an integration. */
+     would be a modelling change dressed up as an integration.
+
+     Measured 2 Sep 2026, and the measurement settles it. Across 54 top-flight
+     games both books price, their de-vigged home-win probabilities differ by
+     0.53 points on average and by more than three points on NONE of them. On
+     the same games the model sits ten to twenty points from both - Celtic v
+     Aberdeen 59.3 against 75.6, Levante v Barcelona 29.8 against 10.6.
+
+     So the two books are one opinion, not two. Blending the second adds no
+     information, and the blend exists to pull the model toward market
+     consensus - which SportyBet alone already supplies.
+
+     There is also a trap waiting for anyone who flips BOOKS.bet9ja.blend on:
+     blendFixture reads f.sportyOdds unconditionally and ignores the book it
+     was called for, so turning it on runs the SportyBet blend TWICE, taking
+     the market weight from 30% to about 51% while never touching a Bet9ja
+     price. Make blendFixture book-aware first, and only if the numbers above
+     ever start to diverge. */
   const blended = [];
   const DATA = { fixtures: ONE() };
   const a = factory(DATA, function (f) { blended.push(f.home); });

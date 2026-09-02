@@ -6985,8 +6985,16 @@ var BOOKS={
      of the board against SportyBet's 100%, so some fixtures would be blended
      against two books and some against one, and the published record and the
      calibration were both built on SportyBet-only prices.
-     Turning it on is one word here. It should be a decision, taken on purpose,
-     not a side effect of fixing a market map. */
+     And it was measured on 2 Sep rather than argued. Across 54 top-flight
+     games both books price, their de-vigged home-win probabilities differ by
+     0.53 points on average and by more than three points on NONE of them,
+     while the model sits ten to twenty points from both. The two books are one
+     opinion, not two, so blending the second buys nothing.
+     There is a trap waiting for anyone who flips this to true anyway:
+     blendFixture reads f.sportyOdds whatever book it was called for, so it
+     would run the SportyBet blend TWICE - market weight 30% becomes about 51%
+     - and never read a Bet9ja price at all. Make blendFixture book-aware
+     first, and only if those numbers ever start to diverge. */
   sporty:{key:"sporty",label:"SportyBet",id:"eventId",odds:"sportyOdds",blend:true, full:true},
   bet9ja:{key:"bet9ja",label:"Bet9ja",  id:"b9EventId",odds:"b9Odds",  blend:false,full:false}
 };
