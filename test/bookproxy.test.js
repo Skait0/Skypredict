@@ -99,6 +99,27 @@ test("the timeout is longer than the feeds but still bounded", () => {
 
 /* ------------------------------------------------------- the request body */
 
+/* NOTHING IN THIS FILE MAY REACH THE NETWORK.
+ *
+ * It already did once. The mutation that strips the POST guard let the
+ * handler fall through to postUpstream, and the test below - which only meant
+ * to prove a GET is refused - sent {"selections":[{}]} at the live booking
+ * API. SportyBet rejected it and it arrived in Sentry as "booking: SportyBet
+ * rejected a slip that passed validation", a real production warning raised
+ * by a unit test.
+ *
+ * Refusing at the boundary rather than relying on the handler's own guards is
+ * the point: those guards are exactly what the mutations remove. */
+let fetchCalls = [];
+const realFetch = global.fetch;
+test.before(() => {
+  global.fetch = async (url) => {
+    fetchCalls.push(String(url));
+    throw new Error("test tried to reach the network: " + url);
+  };
+});
+test.after(() => { global.fetch = realFetch; });
+
 function fakeReq(body, method, book) {
   return { body, method: method || "POST", query: { book: book || "sporty" } };
 }
@@ -166,4 +187,11 @@ test("the site posts booking at this origin, not at Railway", () => {
     "the browser must not call Railway directly for booking: " + direct.join(", "));
   assert.match(html, /BOOK_URL\s*=\s*"\/api\/book\?book=sporty"/);
   assert.match(html, /B9_BOOK_URL\s*=\s*"\/api\/book\?book=bet9ja"/);
+});
+
+test("no test in this file reached the network", () => {
+  /* Runs last. If a mutation ever removes a guard and lets a request through,
+     this fails here instead of in your Sentry inbox. */
+  assert.deepStrictEqual(fetchCalls, [],
+    "a unit test called the live booking API: " + fetchCalls.join(", "));
 });
