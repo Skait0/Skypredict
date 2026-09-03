@@ -12806,7 +12806,10 @@ function holdTheDay(){
     if(m) try{console.log("[ft] filled "+m+" result(s) the feed has not published");}catch(e){}
   }catch(e){}
 }
-const PAYLOAD_MAX_AGE_MS=6*3600*1000;
+/* PAYLOAD_MAX_AGE_MS lived here and decided when to re-fetch the payload from
+   /api/predictions. Nothing re-fetches it now - see the note in load() - so a
+   threshold for "old enough to go and ask again" has nothing to govern. The
+   payload's actual age is still shown to the reader as "last updated". */
 async function fetchJSON(url){
   const r=await fetch(url,{headers:{Accept:"application/json"}});
   if(!r.ok){
@@ -12830,32 +12833,17 @@ async function fetchPayload(){
   for(var attempt=1;attempt<=3;attempt++){
     try{
       const p=await fetchJSON("/predictions.json");
-      if(usablePayload(p)) return {payload:p,stale:payloadAge(p)>PAYLOAD_MAX_AGE_MS};
+      if(usablePayload(p)) return {payload:p};
     }catch(e){ lastErr=e; }
     try{
       const q=await fetchJSON("/api/predictions");
       /* Last time round, take whatever the API gave rather than throwing:
          a thin payload still renders something, an exception renders nothing. */
-      if(usablePayload(q)||attempt===3) return {payload:q,stale:false};
+      if(usablePayload(q)||attempt===3) return {payload:q};
     }catch(e){ lastErr=e; }
     if(attempt<3) await new Promise(function(r){setTimeout(r,700*attempt);});
   }
   throw lastErr||new Error("predictions could not be loaded");
-}
-/* Repaint only if the API really is newer, so a slow response cannot replace
-   fresh data with older data. */
-async function refreshPayload(){
-  try{
-    const p=await fetchJSON("/api/predictions");
-    if(usablePayload(p)&&payloadAge(p)<payloadAge(DATA)){
-      DATA=p;
-      holdTheDay();
-      await loadSporty();
-      loadBet9jaSoon();
-      settleSlips();
-      paint();
-    }
-  }catch(e){}
 }
 /* Counts only consecutive failures - reset the moment a load succeeds, so a
    blip today does not use up the retries for a blip an hour from now. */
@@ -12882,7 +12870,17 @@ async function load(){
     startLive();
     paint();
     hideLoader();
-    if(got.stale) refreshPayload();
+    /* THE FRESHNESS FETCH IS GONE, and this is the note for whoever wonders
+       where it went. It called /api/predictions whenever the baked payload was
+       over six hours old - which is most of the day - and repainted only if the
+       answer came back NEWER. It never could. Both sides read the same file:
+       within a deployment the baked payload cannot change, and a new deployment
+       replaces the static file and the function bundle together. So the
+       comparison was always equal and the repaint never ran.
+       That would merely have been waste, except /api/predictions used to BUILD:
+       577 invocations in 12 hours, 8 hours of active CPU, every one killed at
+       60 seconds, and 47,000 requests to football-data.co.uk. This line is
+       where most of those came from. */
   }catch(err){
     var w=$("when"); if(w) w.textContent="-";
     /* Keep trying rather than sitting there. The usual cause is a deploy

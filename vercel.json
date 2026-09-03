@@ -2,11 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "api/predictions.js": {
-      "maxDuration": 60,
-      "memory": 1024
+      "maxDuration": 10,
+      "memory": 512,
+      "includeFiles": "public/predictions.json"
     },
     "api/cron.js": {
-      "maxDuration": 60,
+      "maxDuration": 300,
       "memory": 1024
     },
     "api/live.js": {
