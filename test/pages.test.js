@@ -177,3 +177,55 @@ test("every field the page renders is one the stripper knows about", () => {
     assert.ok(B.RESULT_MODEL_KEYS.indexOf(k) >= 0, k + " is rendered but never stripped");
   }
 });
+
+
+/* ------------------------------------------- the scoreline is not a prediction
+
+   `score` is drawn from the fixture's distribution by scoreForTip - one of the
+   ways the match plausibly ends, constrained so it cannot contradict the tip.
+   The long note above scoreForTip in lib/build.js says in terms that it must
+   not be labelled as the mode. It was, and a reader who compared "most likely
+   score 1-1" against a real 0-0 concluded the site had the score wrong. */
+
+test("the match page does not call the drawn scoreline the most likely one", () => {
+  const html = P.renderMatchPage(fixture(), {});
+  assert.ok(html.includes("1-1"), "the scoreline should still be shown");
+  assert.ok(!/most likely score/i.test(html),
+    "scoreForTip draws a representative scoreline, it does not report the mode");
+});
+
+test("and it still says the scoreline is only one possibility", () => {
+  const html = P.renderMatchPage(fixture(), {});
+  assert.match(html, /one way it could finish\s*<strong>1-1<\/strong>/,
+    "the label must frame it as one outcome among many");
+});
+
+test("a fixture with no scoreline says nothing about one", () => {
+  const html = P.renderMatchPage(fixture({ score: null }), {});
+  assert.ok(!/one way it could finish/.test(html));
+  assert.ok(html.includes("Expected goals"), "the expected goals line stays");
+});
+
+
+/* -------------------------------------------------------- shareable previews
+
+   The homepage has carried og:image:width/height and twitter:image since the
+   card was added; the 578 match pages and the static pages never did. X falls
+   back to og:image, but WhatsApp and several others are markedly less reliable
+   without explicit dimensions - the crawler has to fetch and measure the image
+   before it will lay out a large card, and gives up rather than waiting. */
+
+test("a match page gives a crawler the image AND its size", () => {
+  const html = P.renderMatchPage(fixture(), {});
+  assert.match(html, /property="og:image" content="[^"]+\/og-card\.png"/);
+  assert.match(html, /property="og:image:width" content="1568"/);
+  assert.match(html, /property="og:image:height" content="772"/);
+  assert.match(html, /name="twitter:image" content="[^"]+\/og-card\.png"/);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
+});
+
+test("the image url is absolute - a crawler has no page to resolve it against", () => {
+  const html = P.renderMatchPage(fixture(), {});
+  const m = /property="og:image" content="([^"]+)"/.exec(html);
+  assert.ok(m && /^https?:\/\//.test(m[1]), "og:image must be absolute, got " + (m && m[1]));
+});
