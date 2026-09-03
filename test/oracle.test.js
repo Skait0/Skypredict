@@ -145,8 +145,15 @@ test("nothing matches an empty or absent name", () => {
 
 /* ------------------------------------------------------------- parsing */
 
-function fx(short, hg, ag, home, away) {
+/* The API always sends a `score` block alongside `goals`, so a fixture built
+   without one is not a shape this parser ever meets. `score.fulltime` defaults
+   to `goals` here, which is the FT case; a cup tie passes its own. */
+function fx(short, hg, ag, home, away, score) {
   return { fixture: { status: { short } }, goals: { home: hg, away: ag },
+           score: score || { halftime: { home: null, away: null },
+                             fulltime: { home: hg, away: ag },
+                             extratime: { home: null, away: null },
+                             penalty: { home: null, away: null } },
            teams: { home: { name: home }, away: { name: away } },
            league: { name: "Test League" } };
 }
@@ -175,6 +182,71 @@ test("junk in gives nothing out rather than throwing", () => {
   assert.deepStrictEqual(O.parseFixtures({}), []);
   assert.deepStrictEqual(O.parseFixtures({ response: null }), []);
   assert.deepStrictEqual(O.parseFixtures({ response: [null, {}] }), []);
+});
+
+
+/* --------------------------------------------- 90 minutes, not 120 or a shootout
+
+   Every market on the board settles on the 90-minute score. `goals` is the
+   score the fixture ENDED on, so reading it graded cup ties against extra time
+   and wrote wrong rows into the record. */
+
+test("a cup tie won in extra time is a DRAW to every market we grade", () => {
+  const rows = O.parseFixtures({ response: [
+    fx("AET", 3, 1, "Basel", "Servette", {
+      halftime:  { home: 0, away: 0 },
+      fulltime:  { home: 1, away: 1 },   // level after 90 - the score that settles
+      extratime: { home: 3, away: 1 },
+      penalty:   { home: null, away: null },
+    }),
+  ]});
+  assert.strictEqual(rows.length, 1);
+  assert.strictEqual(rows[0].hg, 1, "the home side did not score 3 inside 90 minutes");
+  assert.strictEqual(rows[0].ag, 1);
+});
+
+test("a shootout does not decide a 1X2 - the 90-minute score does", () => {
+  const rows = O.parseFixtures({ response: [
+    fx("PEN", 0, 0, "Zurich", "Lugano", {
+      halftime:  { home: 0, away: 0 },
+      fulltime:  { home: 0, away: 0 },
+      extratime: { home: 0, away: 0 },
+      penalty:   { home: 4, away: 2 },   // 4-2 on penalties settles NOTHING we offer
+    }),
+  ]});
+  assert.strictEqual(rows.length, 1);
+  assert.strictEqual(rows[0].hg, 0, "a shootout was counted as a goal");
+  assert.strictEqual(rows[0].ag, 0);
+});
+
+test("an ordinary FT match is unchanged - goals and fulltime agree", () => {
+  const rows = O.parseFixtures({ response: [fx("FT", 2, 1, "A", "B")] });
+  assert.strictEqual(rows[0].hg, 2);
+  assert.strictEqual(rows[0].ag, 1);
+});
+
+test("FT still reads a score when the API sends no score block at all", () => {
+  const bare = { fixture: { status: { short: "FT" } }, goals: { home: 2, away: 1 },
+                 teams: { home: { name: "A" }, away: { name: "B" } },
+                 league: { name: "Test League" } };
+  const rows = O.parseFixtures({ response: [bare] });
+  assert.deepStrictEqual([rows.length, rows[0].hg, rows[0].ag], [1, 2, 1]);
+});
+
+test("a cup tie with no 90-minute score is dropped, never guessed from goals", () => {
+  const noFt = { fixture: { status: { short: "AET" } }, goals: { home: 3, away: 1 },
+                 teams: { home: { name: "A" }, away: { name: "B" } },
+                 league: { name: "Test League" } };
+  assert.deepStrictEqual(O.parseFixtures({ response: [noFt] }), [],
+    "guessing 3-1 here would settle an over line on extra-time goals");
+});
+
+test("ninety() reads fulltime ahead of goals", () => {
+  assert.deepStrictEqual(O.ninety(fx("AET", 3, 1, "A", "B",
+    { fulltime: { home: 1, away: 1 } })), [1, 1]);
+  assert.strictEqual(O.ninety({ fixture: { status: { short: "PEN" } },
+    goals: { home: 1, away: 1 } }), null);
+  assert.strictEqual(O.ninety(null), null);
 });
 
 /* ------------------------------------------------------------- degradation */
