@@ -1957,9 +1957,18 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
 }
 .foot-links a:focus-visible,.foot-links button:focus-visible{
   outline:2px solid var(--red);outline-offset:2px}
-/* The one that leaves the site sits apart from the four that do not. */
+/* The two that leave the site sit apart from the four that do not.
+   The auto margin belongs on the FIRST of the outbound pair - X, which comes
+   first in the markup - so the two are pushed over as a group. Put on the
+   second, it pushes Telegram to the far edge and leaves X where it was:
+   measured, 8px between every other chip and 617px between those two. */
 .foot-links .fl-x{margin-left:auto}
 @media(max-width:560px){.foot-links .fl-x{margin-left:0}}
+/* Telegram's blue on hover, the way X's mark takes the site's own ink: enough
+   to say which service without colouring a footer chip at rest. */
+@media (hover:hover){
+  .foot-links .fl-tg:hover{border-color:#2AABEE;color:#2AABEE}
+}
 
 /* Contact dialog. Reuses the booking-code modal shell so there is one kind of
    centred dialog on the site rather than two that nearly match. */
@@ -4919,6 +4928,16 @@ footer{margin-top:26px;padding-top:18px;
            aria-label="Soccerwizard on X">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.2 2.3h3.4l-7.4 8.5 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9.1L.9 2.3h7l4.8 6.4zm-1.2 17.9h1.9L7.1 4.2H5z"/></svg>
           <span>Follow us</span></a>
+        <!-- t.me/soccerwizardTG. Verified resolving before shipping - the X
+             link above 404d for everyone who clicked it because the handle was
+             a character too long for X to issue, and the rule that came out of
+             it applies to every outbound link on this site: a link is a claim
+             the destination exists, so check it. This one answers 200 as
+             "Soccerwizard Channel". -->
+        <a class="fl-tg" href="https://t.me/soccerwizardTG" target="_blank" rel="noopener"
+           aria-label="Soccerwizard community on Telegram">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.1 3.8 19.6 20.3c-.3 1.2-1 1.5-2 .9l-5.5-4-2.7 2.6c-.3.3-.6.6-1.2.6l.4-5.6L18.8 6c.4-.4-.1-.6-.7-.2L5.5 13.7 0 12c-1.2-.4-1.2-1.2.3-1.8L21.5 2c1-.4 1.9.2 1.6 1.8z"/></svg>
+          <span>Community</span></a>
       </nav>
       <div class="foot-legal">
         <span>&copy; <span id="yr"></span> Soccerwizard</span>

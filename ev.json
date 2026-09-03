@@ -1,0 +1,97 @@
+[
+{"created":1788460862599,"date":1788460862599,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460862599497063576200000","text":"Running build in Washington, D.C., USA (East) – iad1","type":"stdout","serial":"1788460862599497063576200000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460862599,"date":1788460862599,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460862599497063576200001","text":"Build machine configuration: 2 cores, 8 GB","type":"stdout","serial":"1788460862599497063576200001","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460862725,"date":1788460862725,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460862725497063576200000","text":"Cloning github.com/Skait0/Skypredict (Branch: main, Commit: af05117)","type":"stdout","serial":"1788460862725497063576200000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460862726,"date":1788460862726,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460862726497063576200001","text":"Previous build caches not available.","type":"stdout","serial":"1788460862726497063576200001","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460863837,"date":1788460863837,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460863837497063576200000","text":"Cloning completed: 1.112s","type":"stdout","serial":"1788460863837497063576200000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460864243,"date":1788460864243,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460864243979174085600000","text":"Running \"vercel build\"","type":"stdout","serial":"1788460864243979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460864265,"date":1788460864265,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460864265979174085600000","text":"Vercel CLI 59.3.0","type":"stderr","serial":"1788460864265979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460865124,"date":1788460865124,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460865124979174085600000","text":"Warning: Detected \"engines\": { \"node\": \">=20\" } in your `package.json` that will automatically upgrade when a new major Node.js Version is released. Learn More: https://vercel.link/node-version","type":"stderr","serial":"1788460865124979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."},"level":"warning"}
+,
+{"created":1788460865130,"date":1788460865130,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460865130979174085600000","text":"Installing dependencies...","type":"stdout","serial":"1788460865130979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460865924,"date":1788460865924,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460865924979174085600000","text":"","type":"stdout","serial":"1788460865924979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460865924,"date":1788460865924,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460865924979174085600001","text":"up to date in 652ms","type":"stdout","serial":"1788460865924979174085600001","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460865952,"date":1788460865952,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460865952979174085600000","text":"Running \"npm run build\"","type":"stdout","serial":"1788460865952979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460866098,"date":1788460866098,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460866098979174085600000","text":"","type":"stdout","serial":"1788460866098979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460866098,"date":1788460866098,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460866098979174085600001","text":"> formline@1.0.0 build","type":"stdout","serial":"1788460866098979174085600001","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460866098,"date":1788460866098,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460866098979174085600002","text":"> node scripts/prebuild.js","type":"stdout","serial":"1788460866098979174085600002","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460866098,"date":1788460866098,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460866098979174085600003","text":"","type":"stdout","serial":"1788460866098979174085600003","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460867328,"date":1788460867328,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460867328979174085600000","text":"[prebuild] carrying forward pick of the day: FC Copenhagen v Nordsjaelland","type":"stdout","serial":"1788460867328979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460918576,"date":1788460918576,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460918576979174085600000","text":"[prebuild] downloaded 82/82 sources","type":"stdout","serial":"1788460918576979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460918577,"date":1788460918577,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460918577979174085600000","text":"[prebuild] score sources: soccervista -> footballdata -> oracle","type":"stdout","serial":"1788460918577979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460918577,"date":1788460918577,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460918577979174085600001","text":"[prebuild] 74 recorded result(s) published with a confirmed score","type":"stdout","serial":"1788460918577979174085600001","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460918577,"date":1788460918577,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460918577979174085600002","text":"[prebuild] record: 629/855 tips (74%), brier 0.188, graded in 615ms","type":"stdout","serial":"1788460918577979174085600002","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460918577,"date":1788460918577,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460918577979174085600003","text":"[prebuild] FT score map built: 129 dated, 0 live, 451 from the score sources","type":"stdout","serial":"1788460918577979174085600003","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460918577,"date":1788460918577,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460918577979174085600004","text":"[prebuild] footballdata 2026-09-03: no finished matches","type":"stdout","serial":"1788460918577979174085600004","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460918577,"date":1788460918577,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460918577979174085600005","text":"[prebuild] oracle: 1 of 3 calls used, 1 date(s) looked up, 86 left on the plan today","type":"stdout","serial":"1788460918577979174085600005","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460918584,"date":1788460918584,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460918584979174085600000","text":"[prebuild] baked 407 fixtures -> predictions.json (425 KB, 52.4s)","type":"stdout","serial":"1788460918584979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460918714,"date":1788460918714,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460918714979174085600000","text":"[prebuild] pages: 1115 match pages + 4 standing + 404 + sitemap.xml + robots.txt -> https://www.soccerwizard.live","type":"stdout","serial":"1788460918714979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460918950,"date":1788460918950,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460918950979174085600000","text":"[prebuild] share card: 53 leagues, 74% -> og-card.png (88 KB)","type":"stdout","serial":"1788460918950979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460918961,"date":1788460918961,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460918961979174085600000","text":"[prebuild] origin -> https://www.soccerwizard.live (index.html, manifest.webmanifest)","type":"stdout","serial":"1788460918961979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460918969,"date":1788460918969,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460918969979174085600000","text":"[prebuild] extracted app.390db81e16.css (260 KB)","type":"stdout","serial":"1788460918969979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460918973,"date":1788460918973,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460918973979174085600000","text":"[prebuild] extracted app.54c504dc53.js (431 KB)","type":"stdout","serial":"1788460918973979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460918974,"date":1788460918974,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460918974979174085600000","text":"[prebuild] index.html 761 KB -> 69 KB","type":"stdout","serial":"1788460918974979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460919135,"date":1788460919135,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460919135979174085600000","text":"Warning: Detected \"engines\": { \"node\": \">=20\" } in your `package.json` that will automatically upgrade when a new major Node.js Version is released. Learn More: https://vercel.link/node-version","type":"stderr","serial":"1788460919135979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."},"level":"warning"}
+,
+{"created":1788460919744,"date":1788460919744,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460919744979174085600000","text":"Warning: Detected \"engines\": { \"node\": \">=20\" } in your `package.json` that will automatically upgrade when a new major Node.js Version is released. Learn More: https://vercel.link/node-version","type":"stderr","serial":"1788460919744979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."},"level":"warning"}
+,
+{"created":1788460919774,"date":1788460919774,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460919774979174085600000","text":"Warning: Detected \"engines\": { \"node\": \">=20\" } in your `package.json` that will automatically upgrade when a new major Node.js Version is released. Learn More: https://vercel.link/node-version","type":"stderr","serial":"1788460919774979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."},"level":"warning"}
+,
+{"created":1788460919983,"date":1788460919983,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460919983979174085600000","text":"Warning: Detected \"engines\": { \"node\": \">=20\" } in your `package.json` that will automatically upgrade when a new major Node.js Version is released. Learn More: https://vercel.link/node-version","type":"stderr","serial":"1788460919983979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."},"level":"warning"}
+,
+{"created":1788460920004,"date":1788460920004,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460920004979174085600000","text":"Warning: Detected \"engines\": { \"node\": \">=20\" } in your `package.json` that will automatically upgrade when a new major Node.js Version is released. Learn More: https://vercel.link/node-version","type":"stderr","serial":"1788460920004979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."},"level":"warning"}
+,
+{"created":1788460920027,"date":1788460920027,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460920027979174085600000","text":"Warning: Detected \"engines\": { \"node\": \">=20\" } in your `package.json` that will automatically upgrade when a new major Node.js Version is released. Learn More: https://vercel.link/node-version","type":"stderr","serial":"1788460920027979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."},"level":"warning"}
+,
+{"created":1788460920170,"date":1788460920170,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460920170979174085600000","text":"Warning: Detected \"engines\": { \"node\": \">=20\" } in your `package.json` that will automatically upgrade when a new major Node.js Version is released. Learn More: https://vercel.link/node-version","type":"stderr","serial":"1788460920170979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."},"level":"warning"}
+,
+{"created":1788460920262,"date":1788460920262,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460920262979174085600000","text":"Warning: Detected \"engines\": { \"node\": \">=20\" } in your `package.json` that will automatically upgrade when a new major Node.js Version is released. Learn More: https://vercel.link/node-version","type":"stderr","serial":"1788460920262979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."},"level":"warning"}
+,
+{"created":1788460920331,"date":1788460920331,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460920331979174085600000","text":"Warning: Detected \"engines\": { \"node\": \">=20\" } in your `package.json` that will automatically upgrade when a new major Node.js Version is released. Learn More: https://vercel.link/node-version","type":"stderr","serial":"1788460920331979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."},"level":"warning"}
+,
+{"created":1788460920448,"date":1788460920448,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460920448979174085600000","text":"Warning: Detected \"engines\": { \"node\": \">=20\" } in your `package.json` that will automatically upgrade when a new major Node.js Version is released. Learn More: https://vercel.link/node-version","type":"stderr","serial":"1788460920448979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."},"level":"warning"}
+,
+{"created":1788460921198,"date":1788460921198,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460921198979174085600000","text":"Build Completed in /vercel/output [56s]","type":"stderr","serial":"1788460921198979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460921223,"date":1788460921223,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460921223979174085600000","text":"Deploying outputs...","type":"stdout","serial":"1788460921223979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460921557,"date":1788460921557,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460921557979174085600000","text":"Warning: Provided `memory` setting in `vercel.json` is ignored on Active CPU billing. You can safely remove this setting from your configuration. Learn more: https://vercel.com/docs/fluid-compute/pricing","type":"stderr","serial":"1788460921557979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."},"level":"warning"}
+,
+{"created":1788460921581,"date":1788460921581,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460921581979174085600000","text":"Warning: Provided `memory` setting in `vercel.json` is ignored on Active CPU billing. You can safely remove this setting from your configuration. Learn more: https://vercel.com/docs/fluid-compute/pricing","type":"stderr","serial":"1788460921581979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."},"level":"warning"}
+,
+{"created":1788460928424,"date":1788460928424,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460928424979174085600000","text":"Deployment completed","type":"stdout","serial":"1788460928424979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460928560,"date":1788460928560,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460928560979174085600000","text":"Creating build cache...","type":"stdout","serial":"1788460928560979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+,
+{"created":1788460929615,"date":1788460929615,"deploymentId":"dpl_Dgb9DSdy1WHYDuzbi1VuSfhoJo7B","id":"1788460929615979174085600000","text":"Skipping cache upload because no files were prepared","type":"stdout","serial":"1788460929615979174085600000","info":{"type":"build","name":"bld_4sbn5w79j","entrypoint":"."}}
+]
