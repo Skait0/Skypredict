@@ -34,6 +34,16 @@
 <meta property="og:image:alt" content="Soccerwizard - type a payout and get a SportyBet or Bet9ja booking code">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://skypredict-theta.vercel.app/og-card.png">
+<!-- X FALLS BACK TO THE og: TAGS WHEN THESE ARE ABSENT, so their absence was
+     never the bug - but "should fall back" is a thing to reason about at two in
+     the morning when a preview will not appear, and these cost nothing. Stated
+     explicitly, there is one less variable. Same for og:site_name, which is
+     what puts the name above the card rather than the bare hostname. -->
+<meta name="twitter:title" content="Soccerwizard">
+<meta name="twitter:description" content="Stop picking games one by one. Type how much you want to win. It finds the games for you and gives you the SportyBet or Bet9ja code.">
+<meta name="twitter:image:alt" content="Soccerwizard - type a payout and get a SportyBet or Bet9ja booking code">
+<meta property="og:site_name" content="Soccerwizard">
+<meta property="og:locale" content="en_GB">
 <!-- Every view of this site is one URL with different state - the board, the
      builder, live scores and results are all "/" - and the day picker and share
      links add query strings on top. Without a canonical, a search engine treats
