@@ -6683,7 +6683,7 @@ var BUILD_NOSYNC=false;
    Nothing here is persisted, so this set is what everyone gets on every load;
    the chips stay available for anyone who wants the rest. WSP below carries
    the same set so the two builders start from the same place. */
-var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false},touched:false,mode:"slider"};
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,draw:false},touched:false,mode:"slider"};
 try{var rr=localStorage.getItem("sw.risk"); if(rr!=null) BUILD.risk=+rr;}catch(e){}
 try{var rm=localStorage.getItem("sw.mode"); if(rm==="slider"||rm==="wizard") BUILD.mode=rm;}catch(e){}
 /* Ticket window. "day" holds every leg inside today, so the whole slip settles
@@ -10875,7 +10875,7 @@ const JACKPOT_ODDS=20000;
 const BETSLIP_MAX=50;
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
-var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,draw:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* `slider:false` - Balanced is what a reader lands on, not Auto.
    Measured 3 Sep over ten seeds on the 386-fixture board, counting how often
    each method gave the highest chance of the slip landing AT THE PAYOUT ASKED
@@ -10917,6 +10917,13 @@ function wspMarkets(){var m=[];
   if(WSP.mk.tts)m=m.concat(["HOME_OVER_0.5","AWAY_OVER_0.5"]);
   if(WSP.mk.tts2)m=m.concat(["HOME_OVER_1.5","AWAY_OVER_1.5"]);
   if(WSP.mk.both)m.push("GG");
+  /* THE DRAW, AND ONLY WHEN ASKED FOR. Off by default and absent from the
+     Slider entirely: allowedMarkets never lists "X" and neither does the
+     Slider's mkOn map, so no risk setting can reach a draw however far the
+     dial goes. That is deliberate - the Slider picks on confidence against a
+     floor, and a draw never clears a confidence floor worth having. Somebody
+     who wants draws is making a different bet, and has to say so. */
+  if(WSP.mk.draw)m.push("X");
   return m;}
 
 /* WHICH CHIP IS LIT. One line, and kept as a function rather than reading
@@ -10947,7 +10954,17 @@ function wspBuild(){
     allowed.forEach(function(c){
       if(c==="1"&&!homeFav)return; if(c==="2"&&homeFav)return;
       if(c==="1X"&&!homeFav)return; if(c==="X2"&&homeFav)return;
-      var v=mProb(f,c); if(v==null||isNaN(v))return; if(v<((c==="GG")?0.42:0.5))return;
+      var v=mProb(f,c); if(v==null||isNaN(v))return;
+      /* A DRAW NEVER CLEARS A HALF. Three-way probability puts it around 0.28
+         on a typical fixture and it tops out near 0.33, so the flat 0.5 floor
+         below rejects every one of them - adding "X" to the market list without
+         this would have produced a toggle that turned on and changed nothing,
+         which is the failure this builder keeps having.
+         0.30 is the site's own bar for "a draw is live here": it is what
+         draw_watch uses to flag a fixture on the board, so the chip and the
+         flag agree about which games qualify. */
+      var floor=(c==="X")?0.30:(c==="GG")?0.42:0.5;
+      if(v<floor)return;
       cands.push({f:f,id:fid(f),code:c,p:v,od:legOdd(f,c,v)});
     });
     if(!cands.length)return;
@@ -11494,12 +11511,20 @@ function renderShared(){
        the pool; whichever the model likes better is the one that gets used. */
     {k:"tts", label:"Team over 0.5", tier:0, sub:"One side's goals", icon:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 7v10"/>'},
     {k:"tts2", label:"Team over 1.5", tier:2, sub:"One side's goals", icon:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M9 9h6M9 15h6"/>'},
-    {k:"both", label:"Both score", tier:2, sub:"GG", icon:'<path d="M17 21V5A2 2 0 0015 3H9A2 2 0 007 5V21"/><path d="M7 7H17"/><path d="M9 11H15"/><path d="M9 15H15"/><path d="M9 19H15"/>'}
+    {k:"both", label:"Both score", tier:2, sub:"GG", icon:'<path d="M17 21V5A2 2 0 0015 3H9A2 2 0 007 5V21"/><path d="M7 7H17"/><path d="M9 11H15"/><path d="M9 15H15"/><path d="M9 19H15"/>'},
+    /* WIZARD ONLY. The Slider cannot build a draw - "X" is in neither
+       allowedMarkets nor its mkOn map - so drawing this chip in the Slider
+       would be a control that turns on and does nothing, which is exactly the
+       failure this panel has had before. Filtered out below rather than shown
+       greyed, because there is no risk setting that would ever unlock it. */
+    {k:"draw", label:"Draw", tier:2, sub:"X", wizardOnly:true, icon:'<path d="M4 12h16"/><circle cx="12" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/>'}
   ];
   (function(){
     var lg=$("bldLeagues"),mkw=$("bldMk"); if(!lg||!mkw) return;
     lg.querySelectorAll("[data-btp]").forEach(function(c){c.classList.toggle("on",(c.dataset.btp==="true")===!!TOP_ONLY);});
-    var html=MKT_CFG.map(function(m){
+    var html=MKT_CFG.filter(function(m){
+      return !m.wizardOnly || BUILD.mode==="wizard";
+    }).map(function(m){
       var enabled=BUILD.mk[m.k]!==false;
       // Tier locks are a slider concept (unlock riskier markets as you slide up).
       // The wizard has its own market model, so nothing is tier-locked there -
