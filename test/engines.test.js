@@ -569,3 +569,41 @@ test("the Wizard always builds its own way now", () => {
     assert.ok(r.picks.length, "x" + odds + " must still return a slip");
   }
 });
+
+test("building a Wizard slip leaves the Slider's own dial alone", () => {
+  /* Carries forward what "the Slider's own state survives being borrowed" used
+     to guard in test/sliderhandoff.test.js. That test watched sliderRunAt put
+     BUILD.risk back after driving buildPicks at a temporary risk to measure the
+     ceiling. Nothing borrows BUILD any more - the ceiling search and the whole
+     handover are deleted - so the old test has no subject and was not restored.
+
+     The hazard it protected against is still worth naming, though: the two
+     builders share one BUILD object, and a Wizard build that wrote to it would
+     move the Slider's risk dial under the reader with nothing on screen saying
+     so. wspBuild currently does not touch BUILD at all. This is what would
+     start failing if that coupling ever came back. */
+  reset();
+  /* Every field has to hold something the Wizard could visibly destroy. With
+     BUILD.removed left at {} - which is what reset gives you - a mutation that
+     clears it changes {} to {} and this test passes while the Slider's dropped
+     games are being wiped. Mutation-tested, and it did. */
+  api.BUILD.removed = { "m3": 1, "m7": 1 };
+  api.BUILD.shuffles = 2;
+  api.BUILD.risk = 45;
+  const before = JSON.stringify({
+    risk: api.BUILD.risk, seed: api.BUILD.seed, shuffles: api.BUILD.shuffles,
+    removed: api.BUILD.removed, mk: api.BUILD.mk, touched: api.BUILD.touched,
+  });
+  for (const odds of [10, 100, 2000]) {
+    for (const lo of [1.25, 1.4, 1.7]) {
+      api.WSP.odds = odds; api.WSP.legodd = lo; api.WSP._sig = null;
+      api.wspBuild();
+    }
+  }
+  const after = JSON.stringify({
+    risk: api.BUILD.risk, seed: api.BUILD.seed, shuffles: api.BUILD.shuffles,
+    removed: api.BUILD.removed, mk: api.BUILD.mk, touched: api.BUILD.touched,
+  });
+  assert.strictEqual(after, before,
+    "the Wizard moved the Slider's state. before=" + before + " after=" + after);
+});
