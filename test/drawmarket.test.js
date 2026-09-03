@@ -139,8 +139,16 @@ test("turning the draw ON asks first", () => {
   const ask = src.slice(src.indexOf("window.askDrawOn="),
                         src.indexOf("window.askDrawOn=") + 1600);
   assert.match(ask, /least likely result/i, "the warning must say what it is");
-  assert.match(ask, /28%/, "and give the number");
   assert.match(ask, /confirm-cancel/, "and be refusable");
+  /* THE COPY MUST QUOTE THE FLOOR THE BUILDER ACTUALLY USES. It said "reaches
+     30%" for a while after the floor moved to 26% - a warning describing a
+     rule that no longer existed, which is worse than no number at all. */
+  const floor = /var floor=\(c==="X"\)\?([0-9.]+):/.exec(grab("wspBuild"));
+  assert.ok(floor, "the draw floor must be findable");
+  const pct = Math.round(parseFloat(floor[1]) * 100);
+  assert.ok(ask.indexOf(pct + "%") >= 0,
+    "the warning quotes a threshold the builder does not use - floor is " +
+    pct + "% and the copy does not say so");
 });
 
 test("only confirming actually enables it", () => {

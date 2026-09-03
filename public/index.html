@@ -11598,9 +11598,14 @@ function renderShared(){
      a different proposition from a slip that does not. */
   window.askDrawOn=function(k){
     if(!showPrompt("mkAsk",
+      /* THE NUMBERS HERE ARE THE ONES THE BUILDER USES. They said 28% and 30%
+         while the floor was 26%, which is a warning that misdescribes the
+         thing it is warning about. 25% is where the model actually sits across
+         the card - measured, most fixtures land in the 0.22-0.26 band - and 26%
+         is the floor in wspBuild. If that floor moves, this moves with it. */
       "<div class='confirm-card'><p><b>Draws are the least likely result.</b> "+
-      "On most fixtures the model puts a draw around <b>28%</b> - below either "+
-      "side winning. We only offer one where it reaches 30%, and it will still "+
+      "Across the card the model puts a draw near <b>25%</b> - below either "+
+      "side winning. We only pick one where it reaches 26%, and it will still "+
       "lose more often than it lands.</p>"+
       "<p>Add draws to what the builder can pick?</p>"+
       "<div class='ca'><button class='confirm-go' type='button'>Add draws</button>"+
