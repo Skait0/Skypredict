@@ -3123,7 +3123,7 @@ button.wsp-go.waiting{opacity:.55}
    takes the same red ground as every other chosen chip and only the rim and
    the stripes carry the amber, so choosing it reads as chosen rather than as
    a prize won. */
-.mkt-chip.is-draw{position:relative;overflow:hidden;
+.mkt-chip.is-draw{position:relative;overflow:hidden;isolation:isolate;
   border-color:rgba(242,184,75,.5)}
 /* The icon carried `color:#F2B84B` and showed green anyway: the svg is drawn
    with `stroke:var(--green)` from the rule above, which beats a presentation
@@ -3136,14 +3136,32 @@ button.wsp-go.waiting{opacity:.55}
   border-radius:inherit;
   background:repeating-linear-gradient(135deg,
     rgba(242,184,75,.14) 0 6px, transparent 6px 12px);
-  opacity:.9;transition:opacity .16s ease}
+  opacity:.9;transition:opacity .16s ease;
+  /* THE STRIPES GO BEHIND THE LABEL WITHOUT TOUCHING A SINGLE CHILD, and that
+     is the whole point of doing it this way.
+     The obvious version - `.mkt-chip.is-draw>*{position:relative;z-index:1}` to
+     lift the content above an absolutely positioned pseudo-element - shipped
+     and broke the chip on phones. The page has a global ripple handler that
+     APPENDS `<span class="rip-ink">` into whatever was clicked, sized to the
+     element's longest side and positioned absolutely. A `>*` rule outranks
+     `.rip-ink`'s own class rule, so the ink was forced back into flow: a
+     159x159 square landed inside a 31px-tall flex chip, the chip grew to fit,
+     the whole grid row grew with it, and at border-radius:99px both chips in
+     that row rendered as giant circles for the 560ms the ripple lives.
+     Reported as: "when i click on the draw button it shows two big circles",
+     and "it gets big along with both score" - Both score being its row-mate,
+     which is the detail that identified the row as the thing stretching.
+     `isolation:isolate` on the chip makes it a stacking context, and inside
+     one a negative z-index paints above the element's own background but below
+     its in-flow content. So the stripes sit exactly where they should and no
+     rule reaches a child at all - which matters, because the children here are
+     injected by code that knows nothing about this chip. */
+  z-index:-1}
 /* Chosen, the stripes step back so the label stays readable - the warning is
    for the glance before the tap, not after it. */
 .mkt-chip.is-draw.on{border-color:#F2B84B;
   box-shadow:inset 0 0 0 1px rgba(242,184,75,.85)}
 .mkt-chip.is-draw.on::before{opacity:.32}
-/* The chip's own content sits above the stripe layer. */
-.mkt-chip.is-draw>*{position:relative;z-index:1}
 @media(hover:hover){
   .mkt-chip.is-draw:not(.on):hover{border-color:#F2B84B}
   .mkt-chip.is-draw:hover::before{opacity:.45}
