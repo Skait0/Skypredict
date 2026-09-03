@@ -29,6 +29,11 @@
       "maxDuration": 10,
       "memory": 256
     },
+    "api/slipcard.js": {
+      "maxDuration": 15,
+      "memory": 1024,
+      "includeFiles": "assets/**"
+    },
     "api/share.js": {
       "maxDuration": 10,
       "memory": 256
