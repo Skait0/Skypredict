@@ -11580,8 +11580,18 @@ function renderShared(){
       c.addEventListener("click",function(){
         if (c.classList.contains("locked")) return; // respect tier lock
         var k=c.dataset.m;
-        var on=Object.keys(BUILD.mk).filter(function(x){return BUILD.mk[x];});
-        if(BUILD.mk[k]&&on.length===1) return;
+        /* "DON'T TURN OFF THE LAST MARKET" HAS TO COUNT THE SET THAT IS
+           GOVERNING. It counted BUILD.mk alone, which stopped being the whole
+           picture the moment the draw moved into WSP.mk on its own: in wizard
+           mode with the draw on and everything else off, BUILD.mk still saw one
+           market left and refused to let it go - so an all-draw slip, the exact
+           thing the draw toggle exists for, could not be built. Reported as
+           "it won't let me pick just draw without another option".
+           The wizard builds from WSP.mk and the slider from BUILD.mk, so the
+           guard asks whichever one is about to be used. */
+        var gov=(BUILD.mode==="wizard") ? WSP.mk : BUILD.mk;
+        var on=Object.keys(gov).filter(function(x){return gov[x];});
+        if(gov[k]&&on.length===1) return;
         /* THE DRAW ASKS FIRST, and only on the way ON. Turning it off is the
            safe direction and needs no ceremony; turning it on puts the least
            likely of three results on a slip, and somebody who taps a chip in a

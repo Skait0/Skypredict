@@ -230,3 +230,35 @@ test("the league lift is derived, not a list of names", () => {
   assert.match(blk, /if \(v\.n >= DRAW_MIN_N\) out\.set\(name,/,
     "a league needs a real sample before its rate is trusted");
 });
+
+test("an all-draw slip can actually be built", () => {
+  /* Reported: "it won't let me pick just draw without another option when I
+     want an all draw pick." The guard that stops you turning off the LAST
+     market counted BUILD.mk, and the draw does not live there - so in wizard
+     mode with the draw on and everything else off, BUILD.mk still saw one
+     market remaining and refused to release it. The one slip the draw toggle
+     exists to build was the one it could not build. */
+  assert.match(src, /var gov=\(BUILD\.mode==="wizard"\) \? WSP\.mk : BUILD\.mk;/,
+    "the guard must count the market set that will actually be used");
+  assert.match(src, /var on=Object\.keys\(gov\)\.filter/,
+    "and count from that set");
+  assert.match(src, /if\(gov\[k\]&&on\.length===1\) return;/,
+    "and test membership in it");
+  assert.ok(!/Object\.keys\(BUILD\.mk\)\.filter\(function\(x\)\{return BUILD\.mk\[x\];\}\)/.test(src),
+    "the old BUILD-only count must be gone, or the wizard is still governed by " +
+    "a set that does not contain its own draw market");
+});
+
+test("the wizard can end up with the draw as its only market", () => {
+  /* The behaviour behind the guard, not just its shape: wspMarkets must be
+     willing to return exactly ["X"], or an all-draw slip is impossible however
+     the chips behave. */
+  const fn = grab("wspMarkets");
+  assert.match(fn, /var m=\[\];/, "it builds a list from nothing");
+  assert.match(fn, /if\(WSP\.mk\.draw\)m\.push\("X"\);/,
+    "and the draw is appended on its own terms, not attached to another market");
+  /* Every other market sits behind its own independent `if`, so turning them
+     all off leaves the list empty and the draw alone in it. */
+  const ifs = (fn.match(/if\(WSP\.mk\./g) || []).length;
+  assert.ok(ifs >= 8, "each market must be its own switch, found " + ifs);
+});
