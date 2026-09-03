@@ -46,10 +46,13 @@ test("the slot is SportyBet's width and a wider visitor is scaled to fit", () =>
 test("the sentence is one flex item", () => {
   /* .trust-i is an inline-flex row with gap:7px, which exists to space the
      dotted separators BETWEEN trust items. With the words as bare children of
-     it, that gap lands between "Free", the name and "code in one tap" too -
-     three loose gaps in the middle of a sentence. */
-  assert.match(src, /<span class="bk-line">Free <b class="bkc"/,
+     it, that gap lands between the name and "code in one tap" too - loose gaps
+     in the middle of a sentence. The line opened with "Free" until 3 Sep; the
+     wrapper is what this guards, not the wording. */
+  assert.match(src, /<span class="bk-line"><b class="bkc"/,
     "the whole sentence must be wrapped, or the flex gap breaks it up");
+  assert.ok(!/bk-line">Free/.test(src),
+    "the free claim was dropped deliberately - it may not be free later");
   assert.match(src, /\.bk-line\{display:inline\}/);
 });
 

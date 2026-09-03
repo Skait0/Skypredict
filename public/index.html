@@ -4,14 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Soccerwizard - Football predictions</title>
-<meta name="description" content="Soccerwizard: simple football predictions. Who wins, goals, both teams to score. Updated every morning.">
+<!-- What the site DOES, in the order somebody discovers it: the annoyance
+     first, then the fix, then what they walk away with. The old line listed
+     markets, which is a feature list and answers a question nobody arrives
+     with. Kept identical to og:description so a search result and a shared
+     link make the same promise. -->
+<meta name="description" content="Stop picking games one by one. Type how much you want to win. It finds the games for you and gives you the SportyBet or Bet9ja code.">
 <meta name="theme-color" content="#0D0D0F">
 <meta property="og:title" content="Soccerwizard">
 <!-- No league count here on purpose. It said 38 while the payload carried 45
      and the share card said 45, and a number baked into a tag nobody
      rebuilds goes stale the first time a league starts or ends its season.
      The claim that does not rot is what the site does. -->
-<meta property="og:description" content="Football predictions rebuilt every morning from results, plus a ready-made SportyBet slip - we pick the games and hand you the booking code.">
+<meta property="og:description" content="Stop picking games one by one. Type how much you want to win. It finds the games for you and gives you the SportyBet or Bet9ja code.">
 <meta property="og:type" content="website">
 <!-- The share card. wiz-logo.png was pointed at here and it is 473x544 -
      portrait. summary_large_image wants roughly 1.91:1, so platforms had
@@ -26,7 +31,7 @@
 <meta property="og:image" content="https://skypredict-theta.vercel.app/og-card.png">
 <meta property="og:image:width" content="1568">
 <meta property="og:image:height" content="772">
-<meta property="og:image:alt" content="Soccerwizard - football predictions with a free SportyBet code in one tap">
+<meta property="og:image:alt" content="Soccerwizard - type a payout and get a SportyBet or Bet9ja booking code">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://skypredict-theta.vercel.app/og-card.png">
 <!-- Every view of this site is one URL with different state - the board, the
@@ -3590,7 +3595,10 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 
 /* Most people arrive wanting a SportyBet code, so it is said in the first
    thing under the headline, in gold so the eye finds it. */
-/* "Free SportyBet code in one tap", where the name cycles.
+/* "SportyBet code in one tap", where the name cycles.
+   The line opened with "Free" until 3 Sep. Dropped on the owner's call -
+   it may not be free later, and a promise that has to be withdrawn is worth
+   less than never having made it.
    The sentence is true of all three books - football.com takes a SportyBet
    code and Bet9ja issues its own - and saying so in one line is worth more
    than saying it in a paragraph nobody reads. */
@@ -3610,7 +3618,7 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 /* The whole sentence is one flex item. .trust-i is an inline-flex row with a
    7px gap - that gap is there to space the dotted separators between trust
    items, and with the words as bare children it was being applied between
-   "Free", the name and "code in one tap" as well. */
+   the name and "code in one tap" as well. */
 .bk-line{display:inline}
 /* min-width:0 because a grid container's automatic minimum is its content, so
    the width set below was being floored at the widest name and ignored - the
@@ -4441,7 +4449,7 @@ footer{margin-top:26px;padding-top:18px;
     <h1 class="parallax-forward stage-in stage-in-1" data-parallax="1.2">Who's winning <span>today?</span></h1>
     <div class="trust parallax-shallow stage-in stage-in-2" data-parallax="0.8">
       <!-- The thing most people come for, said plainly and said first. -->
-      <span class="trust-i t-sporty"><span class="bk-line">Free <b class="bkc" id="bkCycle" aria-label="SportyBet, Bet9ja or football.com"><i class="bkc-i on" data-bk="sporty">SportyBet</i><i class="bkc-i" data-bk="b9"><span class="b9r">bet</span><span class="b9g">9ja</span></i><i class="bkc-i" data-bk="fb">football<span class="fb-dot">.</span>com</i></b> code in one tap</span></span>
+      <span class="trust-i t-sporty"><span class="bk-line"><b class="bkc" id="bkCycle" aria-label="SportyBet, Bet9ja or football.com"><i class="bkc-i on" data-bk="sporty">SportyBet</i><i class="bkc-i" data-bk="b9"><span class="b9r">bet</span><span class="b9g">9ja</span></i><i class="bkc-i" data-bk="fb">football<span class="fb-dot">.</span>com</i></b> code in one tap</span></span>
       <span class="trust-i"><b id="when2">-</b> last updated</span>
       <span class="trust-i" id="streak" hidden></span>
       <span class="trust-i t-static">Rebuilt daily from results</span>
@@ -7812,7 +7820,7 @@ async function loadBet9ja(){
 /* Bet9ja never blocks the board. SportyBet is awaited because the model wants
    its prices before the first paint; Bet9ja only decides whether a second
    button appears on a leg, so it rides alongside and repaints if it lands. */
-/* "Free SportyBet code in one tap", where the name flickers.
+/* "SportyBet code in one tap", where the name flickers.
  *
  * SportyBet is where it rests and where it returns. This is a SportyBet site -
  * the hero button says so and most readers arriving have an account there - so
