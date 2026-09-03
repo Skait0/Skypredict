@@ -5837,11 +5837,57 @@ function refineTip(f){
   if((f.tip||"").indexOf("1X")===0 && f.dc1x!=null) f.tip_p=f.dc1x;
   else if((f.tip||"").indexOf("X2")===0 && f.dcx2!=null) f.tip_p=f.dcx2;
 }
+/* HOW HARD TO TRUST THE MARKET OVER OURSELVES, and it is not a constant.
+   Measured across a 394-fixture live board, our probability for the favourite
+   against the de-vigged book price, AFTER the flat 30% blend that used to be
+   the whole rule:
+
+     book says fav is   n     we say    gap    home fav   away fav
+        40-50%         150     42.2%    -2.3      -0.9       -6.1
+        50-60%          96     47.5%    -6.7      -5.2      -11.5
+        60-70%          49     53.5%   -11.4      -9.8      -17.1
+        70-80%          21     59.9%   -14.4     -11.3      -18.5
+        80%+             5     65.8%   -16.5     -16.5         -
+
+   The model compresses toward the middle: it will not say anyone is a strong
+   favourite. Where the book says 82% it says 66%, and it is worse for AWAY
+   favourites at every level. That is the signature of ratings shrunk toward a
+   league mean, and it is not a small effect - it is the reason no big team
+   ever reached a wizard ticket. Reported as: "im not even seeing outright of
+   Real madrid and big teams on wizard". Ipswich v Liverpool: the book prices
+   Liverpool at 1.54, about 65%; we said 41%; Ipswich-to-score sat at 81%, and
+   the builder takes the highest probability in the band, so 81% beat 41%
+   every time. The outright was never excluded - it just could not compete
+   with a number we had priced too low.
+
+   A FLAT WEIGHT CANNOT FIX THIS, because the error is not flat. Thirty per
+   cent of a two-point disagreement is noise; thirty per cent of a twenty-point
+   one leaves fourteen points standing. So the weight scales with the size of
+   the disagreement: small gaps are left almost alone - that is where a model
+   is allowed to have an opinion, and where "Better price" lives - and large
+   ones are pulled most of the way to the book, because a large disagreement
+   with a well-calibrated market is overwhelmingly our error, not our edge.
+
+   0.30 to 0.75 over a 20-point gap. Both ends are measured rather than
+   chosen: 0.30 is what the flat rule already used and leaves the small-gap
+   behaviour unchanged, and 20 points is where the observed error tops out. */
+var BLEND_MIN=0.30, BLEND_MAX=0.75, BLEND_FULL_GAP=0.20;
+function blendWeight(gap){
+  var t=Math.min(1, Math.abs(gap)/BLEND_FULL_GAP);
+  return BLEND_MIN + (BLEND_MAX-BLEND_MIN)*t;
+}
 function blendFixture(f){
   var o=f.sportyOdds; if(!o) return; var B=0.30;
   if(o["1"]&&o["X"]&&o["2"]){
     var m=_devig3(o["1"],o["X"],o["2"]);
     if(m){
+      /* The largest single-outcome disagreement sets the weight for all three,
+         so the three-way stays coherent and still sums to one. Weighing each
+         outcome separately would pull them apart and need a renormalise that
+         quietly undoes the difference. */
+      var B3=blendWeight(Math.max(
+        Math.abs(f.home_p-m[0]), Math.abs(f.draw_p-m[1]), Math.abs(f.away_p-m[2])));
+      var B=B3;
       f.home_p=f.home_p*(1-B)+m[0]*B; f.draw_p=f.draw_p*(1-B)+m[1]*B; f.away_p=f.away_p*(1-B)+m[2]*B;
       var s=f.home_p+f.draw_p+f.away_p; if(s>0){f.home_p/=s;f.draw_p/=s;f.away_p/=s;}
       f.dc1x=f.home_p+f.draw_p; f.dcx2=f.draw_p+f.away_p; f.dc12=f.home_p+f.away_p; f.anybody=f.dc12;
