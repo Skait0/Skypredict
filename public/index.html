@@ -5820,7 +5820,6 @@ function kickCountdown(f){
   return "<span class='fx-soon"+(mins<=60?" near":"")+"'>in "+txt+"</span>";
 }
 function statusBadge(f){
-  var st=fixtureState(f);
   /* Two things belong beside a prediction: how long until it starts, and how
      it finished. Everything between those was the live pill, and it cost more
      than it paid. It claimed a match was live after the final whistle, it
@@ -5830,10 +5829,32 @@ function statusBadge(f){
      card to promise something the page could not deliver.
      Live football has its own tab. Here we say what we predicted and what
      happened, and while a match is in play we say nothing at all, because
-     nothing is what we reliably know. */
-  if(!st || st.kind!=="ft" || st.hg==null) return kickCountdown(f);
-  return "<span class='fx-st "+(st.push?"fx-push":(st.won?"fx-hit":"fx-miss"))+"'>"+
-    st.hg+"-"+st.ag+" "+(st.push?"Void":(st.won?"Hit":"Miss"))+"</span>";
+     nothing is what we reliably know.
+
+     NOTHING ON THE DAY ITSELF, and the verdict comes from the backend or not
+     at all. Reported 3 Sep 2026: a game that finished 0-0 was shown as a Hit.
+     This asked fixtureState, which reaches a full-time verdict three ways, and
+     only the first of them is a score anybody stands behind:
+       1. potdResult  - the graded results feed, or a score baked into the
+          payload by the build. Server truth.
+       2. the live feed saying FT - name-matched to our fixture, and the pairing
+          is the same one that once put a LIVE badge on a game two days out.
+       3. INFERRED FROM ABSENCE - seen past the 80th minute, then gone for three
+          polls. The last score we happened to see is assumed to be the final
+          one, so a stale or mispaired score becomes a printed verdict.
+     finalScoreFor already refuses 3 for settling a slip, in as many words: a
+     guess from an absence is not good enough to decide somebody's ticket. It
+     was never good enough to print on the board either.
+     So the board waits. While a day is still running there is no verdict of any
+     kind, only the countdown; once the day is behind us the backend has graded
+     it and the whole day's results appear together. A reader comes back the
+     next morning to a page that is either silent or right, which is the only
+     pair of states worth offering. */
+  if(dayOff(f.date)>=0) return kickCountdown(f);
+  var r=potdResult(f,f);
+  if(!r || r.hg==null) return "";
+  return "<span class='fx-st "+(r.push?"fx-push":(r.won?"fx-hit":"fx-miss"))+"'>"+
+    r.hg+"-"+r.ag+" "+(r.push?"Void":(r.won?"Hit":"Miss"))+"</span>";
 }
 /* Wrapper so the 30s live poll can repaint the badge in place, rather than
    re-rendering the board and collapsing whatever card is open. */
