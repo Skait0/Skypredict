@@ -69,8 +69,8 @@ test("the card is a PNG a crawler will actually accept", () => {
   assert.ok(types.includes("IDAT"), "no image data");
 
   const ihdr = chunks[0].data;
-  assert.strictEqual(ihdr.readUInt32BE(0), meta.w);
-  assert.strictEqual(ihdr.readUInt32BE(4), meta.h);
+  assert.strictEqual(ihdr.readUInt32BE(0), SHIP.w);
+  assert.strictEqual(ihdr.readUInt32BE(4), SHIP.h);
   assert.strictEqual(ihdr[8], 8, "bit depth must be 8");
   assert.strictEqual(ihdr[9], 2, "colour type 2 (RGB) - the card is opaque");
   assert.strictEqual(ihdr[12], 0, "interlacing would break some scrapers");
@@ -79,10 +79,10 @@ test("the card is a PNG a crawler will actually accept", () => {
 test("the image data inflates to exactly one filtered row per scanline", () => {
   const idat = parsePng(card73).filter((c) => c.type === "IDAT").map((c) => c.data);
   const raw = zlib.inflateSync(Buffer.concat(idat));
-  assert.strictEqual(raw.length, (meta.w * 3 + 1) * meta.h,
+  assert.strictEqual(raw.length, (SHIP.w * 3 + 1) * SHIP.h,
     "row count or stride is wrong; the file would decode as garbage");
-  for (let y = 0; y < meta.h; y++) {
-    const f = raw[y * (meta.w * 3 + 1)];
+  for (let y = 0; y < SHIP.h; y++) {
+    const f = raw[y * (SHIP.w * 3 + 1)];
     assert.ok(f >= 0 && f <= 4, "row " + y + " has filter type " + f + ", which is not a filter");
   }
 });
@@ -94,9 +94,12 @@ test("the declared shape matches what index.html promises", () => {
   const w = /<meta property="og:image:width" content="(\d+)"/.exec(index);
   const h = /<meta property="og:image:height" content="(\d+)"/.exec(index);
   assert.ok(w && h, "the card's dimensions are not declared");
-  assert.strictEqual(Number(w[1]), meta.w);
-  assert.strictEqual(Number(h[1]), meta.h);
-  const ratio = meta.w / meta.h;
+  /* Against what SHIPS, not what is baked. The card is composited at the baked
+     size and halved before encoding, so comparing the meta to meta.w/h would
+     pass while the file on disk was a different shape entirely. */
+  assert.strictEqual(Number(w[1]), SHIP.w);
+  assert.strictEqual(Number(h[1]), SHIP.h);
+  const ratio = SHIP.w / SHIP.h;
   assert.ok(ratio > 1.7 && ratio < 2.1,
     "summary_large_image wants roughly 1.91:1; this is " + ratio.toFixed(2) + ":1");
 });
@@ -110,16 +113,21 @@ test("the meta tags point at the file the build writes", () => {
 
 /* ------------------------------------------------------- the digits land */
 
+/* The card SHIPS at half the baked size - see SHRINK in lib/ogcard.js - so
+   anything decoding the PNG works in shipped pixels, while anything indexing
+   the baked digit slots has to work on the composite buffer instead. */
+const SHIP = OG.cardSize();
+
 function pixels(buf) {
   const idat = parsePng(buf).filter((c) => c.type === "IDAT").map((c) => c.data);
   const raw = zlib.inflateSync(Buffer.concat(idat));
-  const stride = meta.w * 3;
-  const out = Buffer.alloc(stride * meta.h);
+  const stride = SHIP.w * 3;
+  const out = Buffer.alloc(stride * SHIP.h);
   const paeth = (a, b, c) => {
     const p = a + b - c, pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c);
     return pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
   };
-  for (let y = 0; y < meta.h; y++) {
+  for (let y = 0; y < SHIP.h; y++) {
     const f = raw[y * (stride + 1)];
     for (let i = 0; i < stride; i++) {
       const v = raw[y * (stride + 1) + 1 + i];
@@ -152,16 +160,19 @@ test("changing a figure changes the digit cells and nothing else", () => {
   /* The strongest thing available: the background is baked, so if a pixel
      outside a digit cell ever moves, the compositor is writing where it should
      not be - which is exactly how a card ends up with a stray mark on it. */
-  const a = pixels(card73);
-  const b = pixels(OG.buildCard({ leagues: 12, pct: 88 }));
-  const stride = meta.w * 3;
+  /* On the COMPOSITE buffer, not the encoded card: the digit slots are baked in
+     full-resolution coordinates, and the shipped PNG is half that. Encoding is
+     also the slow half and proves nothing here. RGBA, so four bytes a pixel. */
+  const a = OG.composite({ leagues: 47, pct: 73 });
+  const b = OG.composite({ leagues: 12, pct: 88 });
+  const stride = meta.w * 4;
   const boxes = cells();
   const inside = (x, y) => boxes.some((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
 
   let changedInside = 0, changedOutside = 0;
   for (let y = 0; y < meta.h; y++) {
     for (let x = 0; x < meta.w; x++) {
-      const i = y * stride + x * 3;
+      const i = y * stride + x * 4;
       if (a[i] === b[i] && a[i + 1] === b[i + 1] && a[i + 2] === b[i + 2]) continue;
       if (inside(x, y)) changedInside++; else changedOutside++;
     }
@@ -177,19 +188,19 @@ test("each cell is actually used, not just the first", () => {
   /* A one-cell bug renders "4" where "47" belongs and still looks plausible in
      a thumbnail. Compare a number against one differing only in its second
      digit and require the second cell to be the one that moved. */
-  const stride = meta.w * 3;
+  const stride = meta.w * 4;               /* composite is RGBA, and full size */
   for (const name of Object.keys(meta.styles)) {
     const s = meta.styles[name];
     const base = { leagues: 47, pct: 73 };
     const alt = Object.assign({}, base);
     alt[name] = base[name] + 1;              /* 47 -> 48: only the last digit */
-    const a = pixels(OG.buildCard(base));
-    const b = pixels(OG.buildCard(alt));
+    const a = OG.composite(base);
+    const b = OG.composite(alt);
     const moved = s.slots.map(([x0, y0]) => {
       let n = 0;
       for (let y = y0; y < y0 + meta.cellH; y++) {
         for (let x = x0; x < x0 + s.cellW; x++) {
-          const i = y * stride + x * 3;
+          const i = y * stride + x * 4;
           if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) n++;
         }
       }
@@ -205,8 +216,12 @@ test("each style's digits are drawn in that style's colour", () => {
      colour changes pixels just as convincingly as one painted the right one.
      The chip is green and the leagues line is grey; swapping them, or dropping
      a channel in the blend, would sail through otherwise. */
-  const px = pixels(card73);
-  const stride = meta.w * 3;
+  /* On the composite buffer for the same reason as the cell tests: the slots
+     are baked in full-resolution coordinates. It also keeps the colour exact -
+     downscaling averages a stroke with the background beside it, so even a
+     correctly drawn digit would no longer be the style's colour on the nose. */
+  const px = OG.composite({ leagues: 47, pct: 73 });
+  const stride = meta.w * 4;
   for (const name of Object.keys(meta.styles)) {
     const s = meta.styles[name];
     const want = [1, 3, 5].map((k) => parseInt(s.color.slice(k, k + 2), 16));
@@ -216,7 +231,7 @@ test("each style's digits are drawn in that style's colour", () => {
     let best = null, bestD = -1;
     for (let y = y0; y < y0 + meta.cellH; y++) {
       for (let x = x0; x < x0 + s.cellW; x++) {
-        const i = y * stride + x * 3;
+        const i = y * stride + x * 4;
         const got = [px[i], px[i + 1], px[i + 2]];
         const d = got.reduce((n, v, k) => n + Math.abs(v - want[k]), 0);
         if (bestD < 0 || d < bestD) { bestD = d; best = got; }

@@ -146,7 +146,11 @@ function advanceOf(ctx, font) {
   x.fillText(post, lx, baseY1);
 
   x.textAlign = "center";
-  x.fillText("Free SportyBet code in one tap", 784, 520);
+  /* "Free" came off the card on 3 Sep, with the same line on the page: it
+     may not be free later, and a promise that has to be withdrawn is worth
+     less than one never made. Both books are named now because the site
+     books both, and the summary beside this card says so too. */
+  x.fillText("SportyBet or Bet9ja code in one tap", 784, 520);
   x.textAlign = "left";
 
   /* ------------------------------------------------------------- the chip
