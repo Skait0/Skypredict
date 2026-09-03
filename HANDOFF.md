@@ -7,8 +7,8 @@
   added 1 Sep. Apex + www proxied; every mail record DNS-only.
 - **Deploy model:** push to `main` → Vercel GitHub integration → prod (~30s)
 - **Repo:** https://github.com/Skait0/Skypredict.git — `main` synced with origin
-- **Working tree:** clean · **HEAD:** `292f749` "Check the slip card on the pixels it actually draws"
-- **Tests:** `npm test` → **804/804**
+- **Working tree:** clean · **HEAD:** `9190f2d` "Give the way out to the Slider something to catch the eye"
+- **Tests:** `npm test` → **812/812** · API `python -m unittest test_server` → **59/59**
 - **API:** `C:\Users\DELL\Documents\soccerwizard-api` on Railway.
   **On the paid Hobby plan since 1 Sep 2026** - the trial deadline is gone.
 
@@ -48,6 +48,101 @@ grey cloud. `scratchpad/dns-baseline.txt` holds all 12 records as they were.
 
 DNSSEC was confirmed empty before the cutover. With DNSSEC live, changing
 nameservers is a hard SERVFAIL outage, not a soft handover.
+
+## 2026-09-03 morning - the betslip cap, and what Google actually thinks
+
+**BOTH BOOKS REFUSE MORE THAN 50 SELECTIONS ON ONE BETSLIP.** SportyBet says so
+in as many words - "There cannot be over 50 selections within a betslip" - and
+Bet9ja is the same. **The limit is on the BETSLIP, not on making the code**,
+which is why an earlier session booked 199 legs, called it a success, and wrote
+into lib comments that there is no practical ceiling. Their share endpoint takes
+whatever you send and returns a valid code; the wall appears when a person opens
+it. Our API sees success, Sentry sees nothing, the reader sees a dialog.
+
+`BETSLIP_MAX` is declared once now. "Add all" already capped what it booked, but
+its "confirm and trim" branch loads every pick into the slip and hands the
+reader to the slip sheet, and `bookMy` counted nothing - so a Saturday card
+(136 fixtures) went straight past it. Verified live with a 55-pick slip: the
+prompt appears, names both numbers, and nothing is sent.
+
+**The Slider link has an effect now** - hairline, sliding arrow, slow sheen.
+Still a link, not a fourth chip.
+
+### Two decisions, both the owner's, both already argued
+
+- **Shuffle jitter stays 0.10.** "First tap is quality." Tried at 0.20 and
+  reverted. Full reasoning in test/shuffle.test.js - read it before touching.
+- **Balanced stays the default**, and no attempt to make it 15 legs: 15 at x10
+  needs legodd ~1.166, which pins Balanced at the 40-leg cap from x500 up and
+  leaves "More games" nowhere to sit. Dropped on the owner's "never mind".
+
+### The Slider was not changed, and here is the proof
+
+Asked whether anything this session moved how the Slider picks. Nothing did.
+buildPicks, riskParams, allowedMarkets, preferGoalsOverDouble, mProb, legOdd,
+oddOf, hasRealOdd, pricedFixture, saWeight, isLowerFixture are byte-identical to
+72606d2, as are the BUILD defaults and every risk constant, and so are
+renderBuilder, bookSlip and doBook.
+
+**What DOES make picks feel heavier, and it is not code: `sw.risk` never
+resets.** riskWord splits Balanced/Bold at 60. A dial left at 63 reads "Bold",
+which drops the minimum leg confidence from 57% to 53%. It has no expiry and no
+reset - unlike sw.wspodds and sw.tod, which are deliberately cleared on load.
+First place to look if anyone reports heavy picks.
+
+Also worth knowing: on a thin midweek card the dial barely bites. Risk
+40/50/63/70 all returned the same 15 legs at ~78% on a 15-fixture board -
+maxGames is 17-23 there, so the BOARD is the binding constraint, not the
+setting. It will bite on a Saturday.
+
+### Sentry, and why "no market at SportyBet" is not what it looks like
+
+54 events, regressed - and **not a dead end**. `_unbookable` refuses the slip,
+names the legs, and the client's `dropUnbookable` drops exactly those, clears
+the stale price, ASKS the reader and retries with the rest. Friction, not
+failure.
+
+The disagreement is about TIME, not markets: the fixtures cache lives 45
+minutes and the browser read its own copy at page load. **The obvious fixes are
+both unavailable.** There is no single-event endpoint to re-check against, only
+the full-card scrape; and shortening the TTL means more of it - a refresh is ~49
+sequential requests and this server has been blocked by SportyBet for less.
+Refusing on stale data is also the safer error, since a false refusal costs a
+prompt while a false pass can take the whole ticket down.
+
+So it is instrumented rather than guessed at (`0267426` in the API repo).
+`_unbookable` returns `(bad, how)` and the route sends `cache_age_s`,
+`legs_judged` and `legs_unknown` to Sentry. **Next session: read those on the
+existing issue.** If the refusals cluster at high cache ages they are stale-copy
+false positives and worth fixing; if they are spread evenly they are real market
+gaps and the current behaviour is correct.
+
+The other one - `SportyBet rejected a slip that passed validation` - is
+`legs=1 markets=? reason=Invalid`. One leg, so nothing to do with the 50 cap.
+One occurrence in 20 hours, unexplained.
+
+### Google: indexed, just not crawled deep
+
+The premise "Google hasn't indexed us" is wrong, checked in Search Console:
+
+- `https://www.soccerwizard.live/` - **URL is on Google, page is indexed**
+- `https://www.soccerwizard.live/matches` - **also indexed** (so Request
+  Indexing on it is a no-op; do not spend the daily quota there)
+- a match page - **"Discovered - currently not indexed", Last crawl N/A**
+- Page indexing report - "Processing data, check again in a day or so"
+
+Everything technical is right and was verified as Googlebot: robots allows,
+1,105 URLs in the sitemap, canonical correct, no noindex, Cloudflare does not
+challenge the crawler, apex 308s to www, and match pages are fully
+server-rendered with real titles and h1s. `/matches` carries 1,100 internal
+links and is linked from the homepage.
+
+So this is **crawl budget on a domain a few days old**, not a fault. Google has
+the front door and the hub; it has not walked the 1,100 children yet. What moves
+that is age and inbound links, not configuration. Nothing to fix.
+
+*(Beware `/matches.html` - cleanUrls redirects it, and checking that instead of
+`/matches` makes the match pages look orphaned when they are not.)*
 
 ## Later on 2026-09-03 - the Wizard, and what the board may claim
 
