@@ -117,3 +117,54 @@ test("a draw is still gradeable and still a proven market", () => {
     "X must resolve to a market the record already grades, or isProven " +
     "holds every draw leg back as unproven");
 });
+
+/* ------------------------------------------- it asks before it turns on */
+
+test("the draw chip does not look like the other markets", () => {
+  /* Every other chip in that row is a shade of the same bet. This one backs
+     the outcome the model ranks third on most fixtures, and it should not be
+     one indistinguishable pill among nine. */
+  assert.match(src, /\{k:"draw",[^}]*warn:true/, "the chip must be flagged");
+  assert.match(src, /\(m\.warn\?" is-draw":""\)/,
+    "and the flag must reach the class list");
+  assert.match(src, /\.mkt-chip\.is-draw\{/, "it needs its own rule");
+});
+
+test("turning the draw ON asks first", () => {
+  /* Somebody tapping a chip in a row of nine has not necessarily read what
+     this one does. */
+  assert.match(src, /if\(cfg&&cfg\.warn&&!BUILD\.mk\[k\]\)\{ askDrawOn\(k\); return; \}/,
+    "the on-tap must be intercepted before the toggle flips");
+  const ask = src.slice(src.indexOf("window.askDrawOn="),
+                        src.indexOf("window.askDrawOn=") + 1600);
+  assert.match(ask, /least likely result/i, "the warning must say what it is");
+  assert.match(ask, /28%/, "and give the number");
+  assert.match(ask, /confirm-cancel/, "and be refusable");
+});
+
+test("only confirming actually enables it", () => {
+  /* The failure worth guarding: a prompt that appears while the market has
+     already been switched on behind it. */
+  const ask = src.slice(src.indexOf("window.askDrawOn="),
+                        src.indexOf("window.askDrawOn=") + 1600);
+  /* INSIDE THE HANDLER, not merely after the word "confirm-go" somewhere.
+     Mutation-tested: the first comparison found "confirm-go" in the markup
+     STRING, which comes before everything, so hoisting the assignment out of
+     the handler - making the prompt pure decoration and the market switch on
+     regardless - passed cleanly. The handler body is what has to be read. */
+  const at = ask.indexOf('.confirm-go").addEventListener("click",function(){');
+  assert.ok(at >= 0, "the confirm button must be wired");
+  const body = ask.slice(at, ask.indexOf("});", at));
+  assert.match(body, /BUILD\.mk\[k\]=true/,
+    "the market must be enabled INSIDE the confirm handler, not before it");
+  assert.match(body, /WSP\.mk\[k\]=true/, "and the wizard must get it too");
+  const before = ask.slice(0, at);
+  assert.ok(!/BUILD\.mk\[k\]=true/.test(before),
+    "the market is switched on before the reader answers - the prompt is decoration");
+});
+
+test("turning it OFF needs no ceremony", () => {
+  /* Off is the safe direction. Asking there would be a nag. */
+  assert.match(src, /cfg&&cfg\.warn&&!BUILD\.mk\[k\]/,
+    "the guard must be conditional on it currently being off");
+});

@@ -3107,6 +3107,21 @@ button.wsp-go.waiting{opacity:.55}
     -webkit-text-fill-color:var(--soft)}
   .wsp-slider-link .wsl-a,.wsp-slider-link::after{transition:none}
 }
+/* THE DRAW LOOKS DIFFERENT BECAUSE IT IS DIFFERENT. Every other chip here
+   raises or lowers the odds a little; this one backs the least likely of the
+   three results, at roughly 0.28 on a typical fixture. An amber rim says
+   "this is not like the others" before it is tapped, and the confirm says why
+   after. Off, it is outlined rather than filled - a warning, not a state. */
+.mkt-chip.is-draw{border-color:rgba(242,184,75,.55)}
+.mkt-chip.is-draw .mkt-icon{color:#F2B84B}
+.mkt-chip.is-draw.on{background:linear-gradient(120deg,#F2B84B,#ffd873);
+  border-color:#F2B84B;color:#1a1400}
+.mkt-chip.is-draw.on .mkt-icon,.mkt-chip.is-draw.on .tier-badge{color:#1a1400}
+@media(hover:hover){ .mkt-chip.is-draw:not(.on):hover{border-color:#F2B84B} }
+/* The ask. Sits under the row it belongs to and goes when answered. */
+#mkAsk:not(:empty){margin:10px 0 2px}
+#mkAsk .confirm-card{border-color:rgba(242,184,75,.45)}
+#mkAsk .confirm-card b{color:#F2B84B}
 .wsp-chip.wsp-style{display:inline-flex;flex:0 1 auto;flex-direction:column;
   align-items:center;justify-content:center;gap:1px;padding:6px 12px;
   line-height:1.18;min-width:0}
@@ -4664,6 +4679,8 @@ footer{margin-top:26px;padding-top:18px;
       </div>
       <div class="wsp-lbl stage-in stage-in-2">Include markets</div>
       <div class="wsp-chips mkt-palette stage-in stage-in-3" id="bldMk"></div>
+      <!-- Where the draw asks before it turns on. Empty until then. -->
+      <div id="mkAsk"></div>
       </div>
     </div>
 
@@ -11517,7 +11534,7 @@ function renderShared(){
        would be a control that turns on and does nothing, which is exactly the
        failure this panel has had before. Filtered out below rather than shown
        greyed, because there is no risk setting that would ever unlock it. */
-    {k:"draw", label:"Draw", tier:2, sub:"X", wizardOnly:true, icon:'<path d="M4 12h16"/><circle cx="12" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/>'}
+    {k:"draw", label:"Draw", tier:2, sub:"X", wizardOnly:true, warn:true, icon:'<path d="M4 12h16"/><circle cx="12" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/>'}
   ];
   (function(){
     var lg=$("bldLeagues"),mkw=$("bldMk"); if(!lg||!mkw) return;
@@ -11537,7 +11554,8 @@ function renderShared(){
         subLabel=m.subMax;
       }
       var unlockClass=(window._prevTier!==undefined && p.tier > window._prevTier && p.tier >= m.tier && window._prevTier < m.tier) ? " unlocking" : "";
-      return "<button class='mkt-chip"+(enabled?" on":"")+(locked?" locked":"")+unlockClass+"' data-m='"+m.k+"' "+(locked?"disabled":"")+" type='button'>"+
+      return "<button class='mkt-chip"+(enabled?" on":"")+(locked?" locked":"")+unlockClass+
+        (m.warn?" is-draw":"")+"' data-m='"+m.k+"' "+(locked?"disabled":"")+" type='button'>"+
         "<span class='mkt-icon' aria-hidden='true'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>"+m.icon+"</svg></span>"+
         "<span>"+m.label+"</span>"+
         "<span class='tier-badge' title='Unlocks at "+tierLabel+" tier'>T"+(m.tier+1)+"</span>"+
@@ -11550,6 +11568,14 @@ function renderShared(){
         var k=c.dataset.m;
         var on=Object.keys(BUILD.mk).filter(function(x){return BUILD.mk[x];});
         if(BUILD.mk[k]&&on.length===1) return;
+        /* THE DRAW ASKS FIRST, and only on the way ON. Turning it off is the
+           safe direction and needs no ceremony; turning it on puts the least
+           likely of three results on a slip, and somebody who taps a chip in a
+           row of nine has not necessarily read what this one does. Every other
+           market here is a shade of the same bet - this one is a different
+           bet, so it is the one place a tap is not enough. */
+        var cfg=MKT_CFG.filter(function(x){return x.k===k;})[0];
+        if(cfg&&cfg.warn&&!BUILD.mk[k]){ askDrawOn(k); return; }
         BUILD.mk[k]=!BUILD.mk[k];
         /* One chip, both builders. The two market sets now use the same keys,
            so this is a straight copy - no renaming, and nothing silently
@@ -11562,6 +11588,29 @@ function renderShared(){
     });
     window._prevTier=p.tier;
   })();
+  /* Said plainly and once, with the number that matters. "Least likely" is the
+     honest framing: a draw is not a riskier version of the same bet, it is the
+     outcome the model ranks third on most fixtures, and a slip carrying one is
+     a different proposition from a slip that does not. */
+  window.askDrawOn=function(k){
+    if(!showPrompt("mkAsk",
+      "<div class='confirm-card'><p><b>Draws are the least likely result.</b> "+
+      "On most fixtures the model puts a draw around <b>28%</b> - below either "+
+      "side winning. We only offer one where it reaches 30%, and it will still "+
+      "lose more often than it lands.</p>"+
+      "<p>Add draws to what the builder can pick?</p>"+
+      "<div class='ca'><button class='confirm-go' type='button'>Add draws</button>"+
+      "<button class='confirm-cancel' type='button'>No thanks</button></div></div>")) return;
+    var host=$("mkAsk");
+    host.querySelector(".confirm-go").addEventListener("click",function(){
+      clearPrompt("mkAsk");
+      BUILD.mk[k]=true; WSP.mk[k]=true;
+      WSP._sig=null; renderBuilder();
+    });
+    host.querySelector(".confirm-cancel").addEventListener("click",function(){
+      clearPrompt("mkAsk");
+    });
+  };
   // Scope segment
   paintScope();
   // Leagues chips
