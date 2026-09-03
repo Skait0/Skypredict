@@ -97,7 +97,9 @@ setting. It will bite on a Saturday.
 
 ### Sentry, and why "no market at SportyBet" is not what it looks like
 
-54 events, regressed - and **not a dead end**. `_unbookable` refuses the slip,
+54 events over FOURTEEN DAYS - about two a day, not the daily plague the raw
+total suggests, and the 24h view is where to read it. Also **not a dead end**:
+`_unbookable` refuses the slip,
 names the legs, and the client's `dropUnbookable` drops exactly those, clears
 the stale price, ASKS the reader and retries with the rest. Friction, not
 failure.
@@ -110,12 +112,32 @@ sequential requests and this server has been blocked by SportyBet for less.
 Refusing on stale data is also the safer error, since a false refusal costs a
 prompt while a false pass can take the whole ticket down.
 
-So it is instrumented rather than guessed at (`0267426` in the API repo).
-`_unbookable` returns `(bad, how)` and the route sends `cache_age_s`,
-`legs_judged` and `legs_unknown` to Sentry. **Next session: read those on the
-existing issue.** If the refusals cluster at high cache ages they are stale-copy
-false positives and worth fixing; if they are spread evenly they are real market
-gaps and the current behaviour is correct.
+So it is instrumented rather than guessed at (`0267426` in the API repo,
+deployed 3 Sep 10:09 and confirmed from the boot line). `_unbookable` returns
+`(bad, how)` and the route sends `cache_age_s`, `legs_judged` and
+`legs_unknown` to Sentry. Only refusals from 10:10 onward carry them, and at
+two a day it takes a few days to gather enough to read.
+
+**How to read it when there is enough:** refusals clustered at HIGH cache ages
+mean our 45-minute copy was stale and the market was probably there - worth
+fixing, and the fix is not a shorter TTL. Spread evenly across ages means real
+market gaps, the current behaviour is correct, and nothing needs building.
+
+**A reminder is scheduled so this does not get forgotten.** Windows task
+`Soccerwizard Sentry check`, one-shot, **Sun 6 Sep 10:00**, running as DELL with
+LogonType Interactive so its dialog can appear; `StartWhenAvailable` is on, so a
+machine that is off catches up at next login. It **deletes itself after firing**
+rather than becoming a nag. The script is
+`C:\Users\DELL\soccerwizard-sentry-reminder.ps1` and carries the same
+read-it-this-way note as above, so it is useful without Claude in the room.
+
+Deliberately a plain scheduled task and not a cloud agent or a routine: the
+owner asked for nothing that bills, and this involves no model at all - it
+nudges a human, who then asks. To cancel early:
+`Unregister-ScheduledTask -TaskName "Soccerwizard Sentry check" -Confirm:$false`.
+Note it was never test-fired, because running it would both block on a dialog
+and trigger its own self-delete; verified instead by parsing the script and
+checking the registration, principal and next run time.
 
 The other one - `SportyBet rejected a slip that passed validation` - is
 `legs=1 markets=? reason=Invalid`. One leg, so nothing to do with the 50 cap.
@@ -222,7 +244,8 @@ pattern names an agreed identifier rather than hardcoding CONFIG.
 
 The rest are booking, in soccerwizard-api:
 
-- **`picks with no market at SportyBet`, 54 events, regressed.** NOT a dead end:
+- **`picks with no market at SportyBet`, ~2 a day** (54 over 14 days; the raw
+  total misleads). NOT a dead end:
   `_unbookable` refuses the whole slip, names the legs, and the client's
   `dropUnbookable` drops exactly those, clears the stale price, ASKS the reader
   and retries with the rest. It is friction, not failure. Root cause is the
