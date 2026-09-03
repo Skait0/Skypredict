@@ -395,6 +395,24 @@ img,svg{max-width:100%}
 .ib-x{flex:0 0 auto;width:26px;height:26px;padding:0;border:0;background:none;
   color:var(--faint);font-size:13px;cursor:pointer;border-radius:50%}
 .ib-x:hover{color:var(--text);background:var(--raise)}
+/* The iOS steps. Sits under the install bar rather than floating, because it
+   has to survive the reader looking down at the Safari toolbar and back. */
+.ios-steps{position:relative;margin:8px 0 0;padding:12px 34px 12px 14px;
+  border:1px solid var(--line);border-radius:12px;background:var(--card-2)}
+.ios-steps .is-h{font-size:13px;font-weight:800;color:var(--text);margin:0 0 8px}
+.ios-steps .is-l{margin:0;padding:0 0 0 18px;display:flex;flex-direction:column;gap:7px}
+.ios-steps .is-l li{font-size:12.5px;line-height:1.45;color:var(--soft)}
+.ios-steps .is-l b{color:var(--text);font-weight:700}
+/* The glyph is the point: "the Share icon" means nothing until you have seen
+   it, and it is not the same shape as our own install arrow above. */
+.ios-steps .is-ic{display:inline-flex;vertical-align:-4px;margin:0 2px;
+  width:17px;height:17px;color:var(--red-ink)}
+.ios-steps .is-ic svg{width:17px;height:17px}
+.ios-steps .is-note{margin:9px 0 0;font-size:11.5px;line-height:1.4;color:var(--faint)}
+.is-x{position:absolute;top:6px;right:6px;width:26px;height:26px;padding:0;border:0;
+  background:none;color:var(--faint);font-size:13px;line-height:1;cursor:pointer;
+  border-radius:8px}
+@media(hover:hover){ .is-x:hover{color:var(--text);background:var(--raise)} }
 @media(max-width:380px){
   /* Narrowest phones: the sub-line is the first thing that can go. */
   .ib-tx i{display:none}
@@ -4445,6 +4463,18 @@ footer{margin-top:26px;padding-top:18px;
       <span class="ib-tx"><b>Install Soccerwizard</b><i>Straight to today's card, no browser</i></span>
       <button class="ib-go" id="instGo" type="button">Install</button>
       <button class="ib-x" id="instX" type="button" aria-label="Not now">✕</button>
+    </div>
+    <!-- iOS HAS NO INSTALL PROMPT, so tapping Install cannot install anything -
+         it can only say where Safari keeps the control. That used to be a
+         toast, which is the wrong shape for it: the Share button is at the
+         BOTTOM of Safari, the toast is at the top, and it has gone by the time
+         anyone has looked away and back. Steps that stay put until dismissed,
+         with the actual glyph to look for, are the whole fix. -->
+    <div class="ios-steps" id="iosSteps" hidden>
+      <button class="is-x" id="iosStepsX" type="button" aria-label="Close">✕</button>
+      <div class="is-h" id="iosStepsH">Add Soccerwizard to your Home Screen</div>
+      <ol class="is-l" id="iosStepsL"></ol>
+      <p class="is-note" id="iosStepsN" hidden></p>
     </div>
   </section>
 
@@ -12604,15 +12634,78 @@ setTimeout(hideLoader,8000);
         _installed=true; offerInstall();
         try{localStorage.setItem('sw.installed','1');}catch(e){}
       } _dip=null; }); return; }
-    if(_iOS){ window.swToast&&window.swToast('Tap the Share icon, then "Add to Home Screen"','ok','ins'); return; }
+    if(_iOS){ showIosSteps(); return; }
     var isAndroid=/android/i.test(navigator.userAgent);
     window.swToast&&window.swToast(isAndroid
       ? 'Tap the 3-dot menu, then "Install app" / "Add to Home screen"'
       : 'In Chrome or Edge, click the install icon in the address bar','ok','ins');
   }
+  /* WHICH iOS BROWSER THIS IS, because the answer changes the instructions and
+     one of the three cannot install at all.
+     An in-app browser - X, Instagram, Facebook - has no Add to Home Screen,
+     and the campaign drives X traffic, so this is not an edge case: it is the
+     likeliest way an iPhone reaches the site. Telling that reader to "tap
+     Share" sends them looking for something that is not there.
+     Detected on the UA tokens rather than on navigator.standalone being
+     undefined: that is also true in Chrome for iOS, which CAN install, and
+     calling Chrome an in-app browser would send working installs to a dead
+     end. */
+  function iosInstallKind(ua){
+    ua = String(ua || "");
+    if(/FBAN|FBAV|Instagram|Twitter|Line\/|MicroMessenger|Snapchat|TikTok/i.test(ua)) return "inapp";
+    if(/CriOS/i.test(ua)) return "chrome";
+    if(/FxiOS|EdgiOS/i.test(ua)) return "other";
+    return "safari";
+  }
+  var SHARE_ICON = "<span class='is-ic' aria-hidden='true'><svg viewBox='0 0 24 24' "+
+    "fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' "+
+    "stroke-linejoin='round'><path d='M12 15V3M8 7l4-4 4 4'/>"+
+    "<path d='M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6'/></svg></span>";
+  function showIosSteps(){
+    var box=document.getElementById('iosSteps'),
+        head=document.getElementById('iosStepsH'),
+        list=document.getElementById('iosStepsL'),
+        note=document.getElementById('iosStepsN');
+    if(!box||!list) return;
+    var kind=iosInstallKind(navigator.userAgent), html="", noteTx="";
+    if(kind==="inapp"){
+      head.textContent="Open this in Safari first";
+      html="<li>Tap the <b>\u22ef</b> or <b>Share</b> button in this app\u2019s browser bar.</li>"+
+           "<li>Choose <b>Open in Safari</b> (or <b>Open in browser</b>).</li>"+
+           "<li>In Safari, tap <b>Install</b> here again.</li>";
+      noteTx="Apps opened inside X, Instagram or Facebook cannot add anything "+
+             "to the Home Screen \u2014 only Safari can.";
+    } else if(kind==="chrome"){
+      head.textContent="Add Soccerwizard to your Home Screen";
+      html="<li>Tap the <b>Share</b> button "+SHARE_ICON+" in the address bar.</li>"+
+           "<li>Tap <b>Add to Home Screen</b>.</li>"+
+           "<li>Tap <b>Add</b>.</li>";
+    } else if(kind==="other"){
+      head.textContent="Add Soccerwizard to your Home Screen";
+      html="<li>Open this page in <b>Safari</b>.</li>"+
+           "<li>Tap the <b>Share</b> button "+SHARE_ICON+", then <b>Add to Home Screen</b>.</li>";
+    } else {
+      head.textContent="Add Soccerwizard to your Home Screen";
+      html="<li>Tap the <b>Share</b> button "+SHARE_ICON+" at the <b>bottom</b> of the screen.</li>"+
+           "<li>Scroll down and tap <b>Add to Home Screen</b>.</li>"+
+           "<li>Tap <b>Add</b>, top right.</li>";
+    }
+    list.innerHTML=html;
+    if(note){ note.textContent=noteTx; note.hidden=!noteTx; }
+    box.hidden=false;
+    try{ box.scrollIntoView({block:'nearest',behavior:'smooth'}); }catch(e){}
+  }
+  var isx=document.getElementById('iosStepsX');
+  if(isx) isx.addEventListener('click',function(){
+    var b=document.getElementById('iosSteps'); if(b) b.hidden=true; });
+  /* Hidden with the bar it belongs to, or a dismissed offer leaves its
+     instructions behind. */
+  window.__hideIosSteps=function(){ var b=document.getElementById('iosSteps');
+    if(b) b.hidden=true; };
   var ig=document.getElementById('instGo'); if(ig) ig.addEventListener('click',doInstall);
   var ix=document.getElementById('instX');
-  if(ix) ix.addEventListener('click',function(){ _hidNow=true; offerInstall(); });
+  if(ix) ix.addEventListener('click',function(){ _hidNow=true;
+    window.__hideIosSteps&&window.__hideIosSteps(); offerInstall(); });
   /* A stale flag from a phone the app was removed from would hide the offer
      for good, so a prompt arriving is taken as proof it is not installed. */
   window.addEventListener('beforeinstallprompt',function(){
