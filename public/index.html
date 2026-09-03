@@ -9245,6 +9245,48 @@ function applyBoardCap(n){
    honest answer is a number we already compute. It used to be a chip in the
    trust row that nobody reads. Graded from the results feed rather than
    recordYest, which is a one-day backtest and is often null. */
+/* HOW MANY OF YESTERDAY'S TIPS ARE STILL OUT, and how many there were.
+   Three sources, best first, because each knows something the next does not:
+
+   1. This reader's own sticky copy of yesterday's board. Exact, and the count
+      of what they were actually shown - but only a returning reader has it.
+   2. publishedByDate, from the build. The same figure for everybody, carried
+      forward across days because the board holds today and onward and a day's
+      fixtures vanish the moment it rolls over.
+   3. pendingByDate - rows the record holds and cannot confirm. Narrower than it
+      sounds: a tip is only filed while its fixture is still on the board, so a
+      late game with no build before midnight is never written down at all and
+      never appears here.
+
+   Why this matters: on 2 Sep the board carried 40 fixtures and 31 were graded,
+   pendingByDate was empty, and a first-time reader was shown "18 of 31 tips
+   landed, 58%" with nothing saying nine were still out. Reported as: how we did
+   yesterday is damning when all fixtures have not been graded. A partial day
+   presented as a finished one is the same mistake the board made when it called
+   a match a hit before the backend had graded it.
+
+   Never negative, and never claims MORE are pending than were published. */
+function yestCounts(graded){
+  var day=isoOffset(-1), predicted=0;
+  try{
+    var raw=localStorage.getItem(STICKY_PFX+day);
+    if(raw){ var arr=JSON.parse(raw); if(Array.isArray(arr)) predicted=arr.length; }
+  }catch(e){}
+  if(predicted<=graded){
+    try{
+      var pub=+((DATA.publishedByDate||{})[day])||0;
+      if(pub>predicted) predicted=pub;
+    }catch(e){}
+  }
+  if(predicted<=graded){
+    try{
+      var held=+((DATA.pendingByDate||{})[day])||0;
+      if(held>0) predicted=graded+held;
+    }catch(e){}
+  }
+  var pending=predicted>graded?predicted-graded:0;
+  return {predicted:pending?predicted:graded, pending:pending};
+}
 function renderDaily(){
   var host=$("daily"); if(!host) return;
   var res=(DATA.results||[]).filter(function(r){return dayOff(r.date)===-1;});
@@ -9269,18 +9311,7 @@ function renderDaily(){
      score, so the same sentence is available to everybody; the stored board
      is still preferred where it exists, being the count of what we actually
      showed rather than of what is queued. */
-  var predicted=0;
-  try{
-    var raw=localStorage.getItem(STICKY_PFX+isoOffset(-1));
-    if(raw){ var arr=JSON.parse(raw); if(Array.isArray(arr)) predicted=arr.length; }
-  }catch(e){}
-  var pending=predicted>res.length?predicted-res.length:0;
-  if(!pending){
-    try{
-      var held=(DATA.pendingByDate||{})[isoOffset(-1)]||0;
-      if(held>0){ pending=held; predicted=res.length+held; }
-    }catch(e){}
-  }
+  var _yc=yestCounts(res.length), predicted=_yc.predicted, pending=_yc.pending;
   var head="<div class='daily-h'><b>How we did yesterday</b>"+
     (res.length?"<span class='dl-when'>"+esc(dayDate(-1))+"</span>":"")+"</div>";
 
