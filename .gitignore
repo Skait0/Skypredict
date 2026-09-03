@@ -24,6 +24,7 @@ public/privacy.html
 public/terms.html
 public/how-it-works.html
 public/matches.html
+public/404.html
 
 .vercel
 .env*

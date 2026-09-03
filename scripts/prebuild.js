@@ -251,10 +251,21 @@ function writePages(payload) {
     } catch (e) { warn("standing page " + rel + " failed: " + e.message); }
   }
 
+  /* The 404 is written like the standing pages but is NOT one of them: it
+     never goes in `paths`, because a sitemap is a list of pages that exist and
+     listing a 404 asks a crawler to index the thing telling it to go away.
+     Vercel serves public/404.html for any unmatched route on its own. */
+  let notFound = false;
+  try {
+    fs.writeFileSync(path.join(PUB, "404.html"), P.renderNotFound());
+    notFound = true;
+  } catch (e) { warn("404 page failed: " + e.message); }
+
   fs.writeFileSync(path.join(PUB, "sitemap.xml"), P.renderSitemap(paths));
   fs.writeFileSync(path.join(PUB, "robots.txt"), P.renderRobots());
   log("pages: " + written + " match pages" + (failed ? " (" + failed + " failed)" : "") +
-      " + " + standingWritten + " standing + sitemap.xml + robots.txt -> " + P.ORIGIN +
+      " + " + standingWritten + " standing + " + (notFound ? "404 + " : "") +
+      "sitemap.xml + robots.txt -> " + P.ORIGIN +
       (swept ? " (cleared " + swept + " stale)" : ""));
 }
 
