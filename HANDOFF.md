@@ -1,4 +1,4 @@
-# Soccerwizard — Session Handoff (updated 2026-09-01)
+# Soccerwizard — Session Handoff (updated 2026-09-03)
 
 ## Deployed state
 - **Live URL:** https://www.soccerwizard.live — **www is canonical**, the bare
@@ -7,7 +7,8 @@
   added 1 Sep. Apex + www proxied; every mail record DNS-only.
 - **Deploy model:** push to `main` → Vercel GitHub integration → prod (~30s)
 - **Repo:** https://github.com/Skait0/Skypredict.git — `main` synced with origin
-- **Working tree:** clean · **HEAD:** `2391d7e` "Keep a match on the board while it is being played"
+- **Working tree:** clean · **HEAD:** `5683925` "Let the backend decide a verdict, and only after the day"
+- **Tests:** `npm test` → **786/786**
 - **API:** `C:\Users\DELL\Documents\soccerwizard-api` on Railway.
   **On the paid Hobby plan since 1 Sep 2026** - the trial deadline is gone.
 
@@ -47,6 +48,92 @@ grey cloud. `scratchpad/dns-baseline.txt` holds all 12 records as they were.
 
 DNSSEC was confirmed empty before the cutover. With DNSSEC live, changing
 nameservers is a hard SERVFAIL outage, not a soft handover.
+
+## This session (2026-09-03)
+
+Five commits, pushed and deployed as `soccerwizard-6c1sy8ujm`. `preflight` all
+clear afterwards. Newest last:
+
+**`bf1f5cf` Grade every market on the 90-minute score.** API-Football's `goals`
+is the score a fixture ENDED on - for AET it carries the extra-time goals, for
+PEN the score at the end of extra time. Every market we grade settles on 90
+minutes, so a cup tie level at 90 and won in extra time is a DRAW to every
+market we offer and was being recorded as a home or away win. `ninety()` reads
+`score.fulltime` whatever the status and falls back to `goals` only for FT.
+
+**`922cbc2` The Wizard's dead style chips.** Two causes. The slider ceiling was
+memoised under a key that never named the board, so a ceiling measured before
+the payload arrived - empty card, ceiling 0 - was served forever after,
+`sliderDrives()` answered false for every payout, the handover never fired, and
+the Slip style chips it replaces stayed up permanently. The key now carries the
+card's length and both end ids. Second, the chips flickered in while typing a
+custom payout, because the first keystroke clears `WSP.odds` on purpose and
+`wspBuild` returns an empty slip while it is null.
+
+**`867509f` "most likely score" was a claim the model never made.** `scoreForTip`
+draws a representative scoreline from the fixture's own distribution; the mode
+is 1-1 across most of the card and was reverted for being right and useless.
+Now reads "one way it could finish". Match and standing pages also gained the
+`twitter:image` and `og:image` dimensions the homepage already had.
+
+**`19fbeaa` Per-slip share card.** See the shared-slips section below.
+
+**`5683925` The board no longer decides a verdict.** *Reported: a game that
+finished 0-0 showed "Hit".* `statusBadge` asked `fixtureState`, which reaches a
+full-time verdict three ways and only the first is a score anybody stands
+behind: `potdResult` (graded results feed, or a score baked into the payload),
+the live feed saying FT, and **an inference drawn from a match going absent from
+the feed after the 80th minute**. `finalScoreFor` already refused the third for
+settling a slip - a guess from an absence must not decide somebody's ticket - and
+the board printed it as a verdict anyway. This is the same mechanism the skill
+file records as the worst data bug of the build; it was fixed in the sweep and
+left live in the client.
+
+The rule now, chosen by the owner: **nothing on the day itself, everything the
+next day.** While a day is running the board offers no verdict at all, only the
+countdown; once the day is behind us the backend has graded it. Silent or right,
+nothing in between.
+
+**Where results are actually read.** The board holds today and forward only, so
+`statusBadge`'s past-day branch almost never fires - the exception is a fixture
+`carryInPlay` holds over from a late kickoff. Yesterday's hit/miss lives in the
+**"See past results"** view, driven by `DATA.results`, which this change does not
+touch. Verified in the browser on the live build, 3 Sep: 19 rows on today's
+board carrying zero verdicts (17 empty, 2 countdowns), and the past-results view
+rendering all 31 Sep-2 results, 18 hits, matching the sidebar. *If you sample
+that view less than ~1.5s after clicking you will catch it mid-render and
+miscount it - I did.*
+
+Scope deliberately left alone: `formIndex` uses live scores on purpose and flags
+them provisional, and the slip-of-the-day legs still read `fixtureState`, so they
+can still show an inferred leg result. Both are candidates if the same complaint
+returns.
+
+**Slider -> Wizard handoff, verified live** (it had never been checked in a
+browser): ceiling 93.24 on the 3 Sep board, hands over at 2/10/50/90, declines
+at 120/5000, and declines with no target set. Before `922cbc2` every one of
+those was false.
+
+### Two environment traps, both cost time tonight
+
+- **The mouse-escape flood is per shell.** The PowerShell guard was installed on
+  2 Sep and the terminal died again the same night, because Claude Code had been
+  launched from **Command Prompt**, which loads no PowerShell profile and never
+  touches PSReadLine. cmd now has its own guard (`HKCU\Environment\PROMPT` +
+  `HKCU\Console\VirtualTerminalLevel`, plus `C:\Users\DELL\resetmouse.cmd`).
+  Tell them apart from the flooded line: `PS C:\Users\DELL>` vs bare
+  `C:\Users\DELL>`. Prefer Windows Terminal on `pwsh` - now the default profile.
+- **A Bash heredoc here collapses doubled backslashes**, quoted delimiter or not.
+  A doubled-backslash `s+` written into a JS file arrives singled, which JS then
+  reads as a bare `s+`. It fails as a wrong-looking regex match, never as a write
+  error. Use `String.raw` / Python `r'...'` with single backslashes, or the Write
+  tool. It bit three times in one session, including while writing this file.
+
+### Resuming after a crash
+Sessions are scoped to the directory Claude Code was launched from, which for
+this work is `C:\Users\DELL`, **not the repo**. `claude --continue` from inside
+Skypredict finds nothing. Transcripts live in
+`~/.claude/projects/C--Users-DELL/`; `claude --resume <id>` picks a specific one.
 
 ## This session (2026-09-01)
 Large session. Themes, newest last:
@@ -126,7 +213,19 @@ five minutes, or a day-old copy would show a finished game as unplayed.
 match pages, so every shared link previewed without a picture. Points at
 `/og-card.png` with `twitter:card: summary_large_image`.
 
-Not built yet: a **per-slip** preview image. `lib/ogcard.js` composites digits
+**Built 3 Sep** (`19fbeaa`), by a different route than the one sketched here:
+`api/slipcard.js` + `lib/slipcard.js` composite the slip's games count and odds
+onto a baked base per request, pure Node, no browser and no canvas dep in the
+function. Assets are baked by `scripts/mkslipcard.js`, re-run only to change the
+design. Each glyph sits on its OWN advance and the string is centred about a
+point - putting every digit on the widest digit's advance renders "3.81" as
+"3 . 81". **Known gap: the pixel path has no test.** Mutating `pen += a` to
+`pen += 0` in the blit loop (every glyph at the same x, figures overlapping into
+a smear) survives all 13 slipcard tests, because they assert on the baked JSON
+and on `textWidth`, and nothing renders. Fix with a test that renders and
+asserts ink position.
+
+Superseded note, kept for the reasoning: `lib/ogcard.js` composites digits
 onto a baked background with fixed slots, so a per-slip card needs new slots
 baked by `scripts/mkogbase.js` (a manual, canvas-based step) - more work than
 it looks.
@@ -283,7 +382,7 @@ yourself" - which makes a stale board worse than no campaign.
 ## Verify commands
 ```bash
 cd /c/Users/DELL/Desktop/skypredict
-git log --oneline -3          # 277abcd should be HEAD
+git log --oneline -3          # 5683925 should be HEAD
 node --test                   # full suite
 node scripts/b9match.js       # Bet9ja coverage against the live board
 ```

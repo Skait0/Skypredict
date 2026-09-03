@@ -24,7 +24,11 @@ scores, fixtures and booking codes with it.
 
 Last updated 2026-08-28 (evening). Repo: `C:\Users\DELL\Desktop\skypredict`
 Live: https://skypredict-theta.vercel.app · remote `main` @ `fd31dfb`
-Tests: `npm test` → **143/143**.
+Tests: `npm test` → **786/786** (this file's 143 is from 28 Aug).
+
+> **This file is the OLD handoff (28 Aug) and is kept for the Supabase and
+> API-Football reasoning it records. For current state read `HANDOFF.md` at
+> the repo root, which supersedes it.**
 
 **There is a second repo.** `C:\Users\DELL\Documents\soccerwizard-api`
 (github Skait0/soccerwizard-api, deploys to Railway at
