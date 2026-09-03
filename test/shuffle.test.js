@@ -39,6 +39,33 @@
  * because a conjure only replaces the ones it marked `auto`. That is
  * deliberate, and it is the likelier explanation when the games that stay are
  * ones that were chosen by hand.
+ *
+ * ---------------------------------------------------------------------------
+ * THE OTHER THING THIS NUMBER DOES, and why it is still 0.10.
+ *
+ * WSP.seed is fresh on every visit and enters the cost through this same term,
+ * so the base is also the only thing separating one READER'S ticket from
+ * another's. Measured 3 Sep over 200 simulated readers on a full Saturday card
+ * with live SportyBet prices, at 0.10:
+ *
+ *     x100         35 distinct legs   most popular leg in 100%   70% overlap
+ *     x1000 Fewer  17 distinct legs   most popular leg in 100%   79% overlap
+ *
+ * Two hundred people building twelve-leg slips out of seventeen legs. Raising
+ * the base to 0.20 halves that - overlap fell in all eight payout/style cells,
+ * 75% to 58% at x1000 - and costs at most 2% of the landing chance.
+ *
+ * It was tried, and REVERTED ON THE OWNER'S CALL, 3 Sep: "first tap is quality
+ * is what i think". The 0.12 ceiling below is that decision, not an oversight -
+ * somebody who has not asked for variety gets the ranking, and cross-reader
+ * spread is not worth taking from them. Do not raise this because the
+ * uniformity measurement looks compelling; it was already weighed against it.
+ *
+ * If the uniformity is ever worth solving, note what raising this CANNOT do:
+ * the most popular leg stayed in 100% of tickets at every jitter tested, up to
+ * 1.00, because the gap from the best leg to the next is far outside the noise.
+ * Displacing the head needs a different mechanism - rotating among
+ * near-equivalent top legs - not more randomness here.
  */
 
 const test = require("node:test");

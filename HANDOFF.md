@@ -1,4 +1,4 @@
-# Soccerwizard — Session Handoff (updated 2026-09-03)
+# Soccerwizard — Session Handoff (updated 2026-09-03, late)
 
 ## Deployed state
 - **Live URL:** https://www.soccerwizard.live — **www is canonical**, the bare
@@ -7,8 +7,8 @@
   added 1 Sep. Apex + www proxied; every mail record DNS-only.
 - **Deploy model:** push to `main` → Vercel GitHub integration → prod (~30s)
 - **Repo:** https://github.com/Skait0/Skypredict.git — `main` synced with origin
-- **Working tree:** clean · **HEAD:** `5683925` "Let the backend decide a verdict, and only after the day"
-- **Tests:** `npm test` → **786/786**
+- **Working tree:** clean · **HEAD:** `292f749` "Check the slip card on the pixels it actually draws"
+- **Tests:** `npm test` → **804/804**
 - **API:** `C:\Users\DELL\Documents\soccerwizard-api` on Railway.
   **On the paid Hobby plan since 1 Sep 2026** - the trial deadline is gone.
 
@@ -48,6 +48,103 @@ grey cloud. `scratchpad/dns-baseline.txt` holds all 12 records as they were.
 
 DNSSEC was confirmed empty before the cutover. With DNSSEC live, changing
 nameservers is a hard SERVFAIL outage, not a soft handover.
+
+## Later on 2026-09-03 - the Wizard, and what the board may claim
+
+**The Wizard no longer defers to the Slider at all, and the handover is gone.**
+Reported as "when i click on fewer games bigger odds, it doesn't do that
+anymore" - and on All upcoming it genuinely never did. wspBuild handed the
+payout to the Slider whenever the Slider could reach it, and hid the Slip style
+chips while it did. That threshold is a property of the BOARD and moves by five
+orders of magnitude between cards: measured, x93 on a thin midweek day scope and
+**x18,606,289 on All upcoming**. So the chips were permanently dead on a big
+card, live on a small one, and nothing named the number deciding it.
+
+The swap was not free either. On the real 386-fixture board at x2000, prices
+derived from the model the way engines.test.js does:
+
+    Slider (was automatic)   25 legs   x2259   lands 0.044%   73.7% avg
+    Wizard / Fewer games     12 legs   x2001   lands 0.050%   53.5% avg
+
+Per leg the Slider is much safer; across a slip it is not, because compounding
+punishes leg count harder than it rewards per-leg confidence. Same result as the
+x10 measurement that put the edge metric in.
+
+So: three style chips always, once a payout is chosen, and a plain link out to
+the Slider tab. Auto was briefly a fourth chip and was dropped - over a full
+Saturday with live SportyBet prices it lost every rung, 30 legs landing 0.001%
+at x6000 against 16 landing 0.182%. **Balanced is the default** (`WSP.legodd`
+1.4). No chips at all in "every game that qualifies", because that mode pins the
+count and legodd cannot move it - measured, all three styles return the same 40
+legs.
+
+`sliderReach` and its whole chain were deleted once nothing called them, along
+with test/sliderhandoff.test.js. Three of its guards survive in
+test/wizardpanel.test.js. 614 lines out.
+
+**WSP.everyGame IS DEAD STATE.** It is never assigned anywhere - no control, no
+handler. Not the same thing as "All upcoming", which is `SCOPE` and is a real
+live control. If you wire the mode up, the panel already handles it.
+
+**The board no longer decides a verdict; the backend does, and only after the
+day.** See the section above. Note where results are actually read: the board
+holds today and forward, so yesterday's hit/miss lives in the "See past results"
+view off `DATA.results`, not on the board.
+
+**"How we did yesterday" now says how much is still out.** It could only do that
+for a reader whose browser kept yesterday's board, or from `pendingByDate` -
+which counts rows the record HOLDS and cannot confirm, and a tip is filed only
+while its fixture is on the board, so a late game with no build before midnight
+is never written down. Hence `{}` on a day with nine ungraded games, and
+"18 of 31 tips landed, 58%" shown as finished. The build now records
+`publishedByDate` and carries it forward. **Takes effect from the next rollover**
+- 2 Sep was already off the board.
+
+**The slip card is checked on its pixels now.** test/slipcard.test.js asserts on
+the baked JSON and textWidth and renders nothing, so `pen += a` -> `pen += 0`
+survived all 13. test/slipcardpixels.test.js decodes the PNG and measures ink;
+5/5 mutations caught.
+
+### Two decisions made deliberately - do not re-derive them
+
+- **Ticket uniformity is known and accepted.** 200 simulated readers on a
+  Saturday card: the most popular leg is in 100% of tickets at x100 and above,
+  pairwise overlap 70-79%, 200 twelve-leg slips drawn from a pool of 17. Raising
+  the shuffle jitter base from 0.10 to 0.20 halves the overlap for at most 2% of
+  the landing chance. **Tried, reverted on the owner's call: "first tap is
+  quality is what i think."** The reasoning is written into
+  test/shuffle.test.js, where the 0.12 ceiling lives. Raising this later without
+  reading that is going round the loop again.
+- **Balanced stays the default over Fewer**, though Fewer won 6 of 7 rungs on
+  real prices. Owner's call.
+
+### Sentry, triaged 3 Sep
+
+Eight unresolved. Three are NOT ours - `CONFIG`, `currentInset` and
+`window.webkit.messageHandlers`, all injected by in-app browsers off X traffic;
+all three are named in `ignoreErrors` now, and the guard test checks each
+pattern names an agreed identifier rather than hardcoding CONFIG.
+
+The rest are booking, in soccerwizard-api:
+
+- **`picks with no market at SportyBet`, 54 events, regressed.** NOT a dead end:
+  `_unbookable` refuses the whole slip, names the legs, and the client's
+  `dropUnbookable` drops exactly those, clears the stale price, ASKS the reader
+  and retries with the rest. It is friction, not failure. Root cause is the
+  45-minute server cache against a client copy read at page load. The fix worth
+  building is the server re-checking a "missing" market against the live event
+  before refusing, the way the Bet9ja path can with `fetch_event`.
+- **`SportyBet rejected a slip that passed validation`, 1 event**, `legs=1
+  markets=? reason=Invalid`. One leg, so nothing to do with any selection-count
+  limit. Unexplained; one occurrence in 20 hours.
+- Bet9ja's unmapped markets were **already fixed** in `b93c250` - GG,
+  FH_OVER_0.5, HOME/AWAY_OVER_1.5 plus nine de-vig unders. Deployed, and the
+  issue has had no events since.
+
+**On SportyBet's selection limit:** there is none in our code, and a previous
+session booked 199 legs in one code successfully. Our caps are 40, and 50 for
+jackpot. If a 50-selection limit is real, it is not recorded anywhere and the
+jackpot cap sits exactly on it - worth confirming before trusting x20000+.
 
 ## This session (2026-09-03)
 
