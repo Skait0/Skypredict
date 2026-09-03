@@ -10800,166 +10800,21 @@ function wspMarkets(){var m=[];
   if(WSP.mk.tts2)m=m.concat(["HOME_OVER_1.5","AWAY_OVER_1.5"]);
   if(WSP.mk.both)m.push("GG");
   return m;}
-/* WHERE THE SLIDER ENDS AND THE WIZARD BEGINS.
- *
- * The two builders answer different questions. The Slider is given a risk and
- * returns games; the Wizard is given a payout and works backwards to games.
- * They are not equally good at the same job. Inside the range the Slider can
- * reach, its picks are the safer ones - it selects on model confidence with a
- * floor, while the Wizard is pulled toward longer legs by the arithmetic of
- * hitting a number.
- *
- * So the payout decides which method runs. If the target is inside the
- * Slider's envelope, the Wizard hands the whole job over and returns the
- * Slider's selection exactly - same markets, same games, same order. Only a
- * payout beyond the Slider's reach gets the Wizard's own method.
- *
- * THE ENVELOPE IS NOT A CONSTANT, and it is much wider than one day's card
- * suggests. It moves with three things at once: the fixture window, the market
- * toggles, and the board itself. Measured 2 September:
- *
- *     day scope, default markets     28 legs      2,198
- *     all scope, default markets     35 legs     11,476
- *     all scope, every market on     35 legs    123,616
- *
- * and a full Saturday card reaches 229,863. The first of those is what a
- * midweek afternoon looks like and it is the least representative number
- * available - reading the ceiling off it would put the handover in the wrong
- * place for most of the week.
- *
- * At the top the 35-leg cap does bite; on a thin day the board runs out of
- * fixtures clearing the confidence floor first and legs plateau below it.
- * Which of the two limits applies is not knowable in advance, so nothing here
- * is hardcoded: the range is measured at build time, every build.
- *
- * Odds rise monotonically with risk, which is what makes a binary search valid
- * and keeps this to about seven builds instead of a hundred and one. */
-function sliderRunAt(r, seed, removed, mk){
-  var saveR=BUILD.risk, saveS=BUILD.seed, saveRm=BUILD.removed, saveMk=BUILD.mk;
-  BUILD.risk=r;
-  if(seed!=null) BUILD.seed=seed;
-  if(removed) BUILD.removed=removed;
-  /* The Slider's METHOD, the caller's MARKETS. Both panels ship the same
-     defaults, so an untouched Wizard gets exactly what the Slider would build.
-     A user who turns a market off in the Wizard is obeyed rather than quietly
-     overruled - a toggle that does nothing is worse than no toggle. */
-  if(mk) BUILD.mk=mk;
-  try{
-    var picks=buildPicks()||[];
-    var o=1;
-    for(var i=0;i<picks.length;i++){
-      var c=picks[i];
-      /* Same odd the slip will be booked at, not a re-derivation. */
-      c.od=(typeof legOdd==="function")?legOdd(c.f,c.code,c.p):oddOf(c.p);
-      o*=c.od;
-    }
-    return {picks:picks,odds:o,risk:r};
-  } finally { BUILD.risk=saveR; BUILD.seed=saveS; BUILD.removed=saveRm; BUILD.mk=saveMk; }
-}
 
-/* The top of the Slider's range, remembered per set of inputs.
- *
- * The panel has to know which builder will answer BEFORE it draws its
- * controls, and it draws them before the slip is built. Running the whole
- * search there would cost seven builds on every keystroke; this costs one, and
- * only when something that moves the ceiling actually changes. */
-function sliderCeiling(seed,removed,mk){
-  /* Every global here is read defensively. This runs from the render path and
-     from harnesses that supply only what they need, and a ReferenceError in a
-     cache key would take down the whole panel to save one rebuild. */
-  function _g(n,d){ try{ return eval("typeof "+n+"===\"undefined\"")?d:eval(n); }catch(e){ return d; } }
-  /* THE BOARD IS PART OF THE QUESTION. Nothing else in this key names it, so a
-     ceiling measured before the payload arrived - an empty card, ceiling 0 -
-     was served forever afterwards under the same key. sliderDrives() then
-     answered false for every payout, the Wizard never handed over, and the
-     Slip style chips the handover is supposed to replace stayed on screen and
-     never went away again. Length with both ends is O(1) and moves whenever
-     the card does; scopeFixtures is read defensively like every other global
-     here, because this runs from harnesses that supply only what they need. */
-  var _fx; try{ _fx=scopeFixtures()||[]; }catch(e){ _fx=[]; }
-  var _card=_fx.length+":"+((_fx[0]&&_fx[0].id)||"")+":"+((_fx[_fx.length-1]&&_fx[_fx.length-1].id)||"");
-  var sig=[seed,JSON.stringify(mk||null),_g("SCOPE",""),_g("SDAY",""),
-           _g("TOD",""),!!_g("TOP_ONLY",false),JSON.stringify(removed||null),_card].join("|");
-  /* The memo hangs off the function rather than sitting beside it, so it
-     travels wherever the function does - including into the test harnesses,
-     which lift functions out one at a time and would otherwise trip over a
-     free variable they never asked for. */
-  var memo=sliderCeiling.memo;
-  if(memo && memo.sig===sig) return memo.odds;
-  var top=sliderRunAt(100,seed,removed,mk);
-  sliderCeiling.memo={sig:sig,odds:top.picks.length?top.odds:0};
-  return sliderCeiling.memo.odds;
-}
-/* Does the Slider answer this payout? The question the panel asks. */
-/* The ceiling for the board as it stands, with the reader's own removals
-   applied. One place computes it so the chip label and the reachability test
-   cannot disagree - they did, because the panel passed {} for removals and
-   this passed the real set. */
-function sliderCeilingNow(){
-  var rm={};
-  for(var k in (BUILD.removed||{})) rm[k]=1;
-  for(var k2 in (WSP.removed||{})) rm[k2]=1;
-  return sliderCeiling(WSP.seed, rm, WSP.mk);
-}
-/* CAN the Slider answer this payout - a fact about the board, not a choice. */
-function sliderCanReach(){
-  if(WSP.everyGame || WSP.odds==null) return false;
-  return WSP.odds <= sliderCeilingNow();
-}
-/* ...and is it the method the reader actually picked.
-   These were one function, and that made the builder change identity under
-   the reader at a threshold nobody can see: measured 3 Sep, the ceiling is 93
-   on a thin midweek day scope and 18,606,289 on All upcoming, so the same tap
-   got the Slider on one card and the Wizard on another, and the Slip style
-   chips were live on one and absent on the other. Worse, the switch was not
-   free - at x2000 on the real board the Slider builds 25 legs landing 0.044%
-   where the Wizard's "Fewer games" builds 12 landing 0.050%. Per leg the
-   Slider is safer (73.7% against 53.5%); across a slip it is not, because
-   compounding punishes leg count harder than it rewards per-leg confidence.
-   So the Slider is offered as a style and the reader chooses. */
-function sliderDrives(){
-  return WSP.slider!==false && sliderCanReach();
-}
-/* WHICH CHIP IS LIT - derived, never stored.
-   Storing it meant a payout moved past the Slider's reach left WSP.slider true
-   with the Auto chip disabled, so no chip in the row rendered as selected at
-   all while the build quietly used WSP.legodd. Clearing the flag during the
-   render fixed the display and put a state mutation inside a draw, which is
-   its own bug waiting to happen. Deriving it cannot drift from what wspBuild
-   will actually do, because both ask sliderCanReach. */
+/* WHICH CHIP IS LIT. One line, and kept as a function rather than reading
+   WSP.legodd in both places: the chip row and the preview cache key both ask
+   this, so what the row shows cannot drift from what gets built. It briefly had
+   a fourth answer, "slider", when Auto was a chip in this row. */
 function wspStyleOn(){
   return WSP.legodd;
 }
 
-/* The Slider's answer for this payout, or null when the payout is past its
-   reach and the Wizard should do the work.
- *
- * Smallest risk that REACHES the target, not the closest to it. The Wizard's
- * promise is "at least what you asked for", and undershooting to land nearer
- * the number would quietly break it. */
-function sliderReach(T, seed, removed, mk){
-  if(!(T>1)) return null;
-  /* One place decides whether this is the Slider's job: the ceiling. A second
-     check on top.odds said the same thing twice, so either could be deleted
-     without any test noticing - each was covered by the other. */
-  if(sliderCeiling(seed,removed,mk)<T) return null;  /* beyond the Slider */
-  var top=sliderRunAt(100,seed,removed,mk);
-  if(!top.picks.length) return null;
-  var lo=0, hi=100, best=top;
-  while(lo<=hi){
-    var mid=(lo+hi)>>1;
-    var got=sliderRunAt(mid,seed,removed,mk);
-    if(got.picks.length && got.odds>=T){ best=got; hi=mid-1; }
-    else lo=mid+1;
-  }
-  return best;
-}
-
 function wspBuild(){
-  /* Inside the Slider's range, the Slider picks. See sliderReach above: this
-     is a handover, not an imitation - buildPicks does the work and its result
-     is returned untouched. "Every game that qualifies" asks a different
-     question from a payout, so it keeps the Wizard's method. */
+  /* The Wizard's own method, always. It used to hand a payout to the Slider
+     whenever the Slider could reach it, which on a big card was every rung on
+     the ladder - so the Slip style chips changed nothing and were not even
+     drawn. The Slider is its own tab now, reached by the link under the chips.
+     See renderWizardPanel. */
   /* No handover any more. The Wizard was given a payout and quietly answered
      it with the Slider's method whenever the Slider could reach it, which is
      how "fewer games, bigger odds" came to do nothing on a big card. The Slider
@@ -11774,9 +11629,10 @@ function renderWizardPanel(){
      that decided it. Reported as "fewer games bigger odds doesn't do that
      anymore" - and on All upcoming it genuinely never did, because the Slider
      was answering every rung on the ladder.
-     Making it a chip also puts the trade in front of the reader instead of
-     deciding it for them, which matters because the switch is not free in
-     either direction - see sliderDrives. */
+     Making it a choice also puts the trade in front of the reader instead of
+     deciding it for them, which matters because the switch was never free:
+     measured on a full Saturday with live prices, the Slider's method lost
+     every rung, by 30 legs landing 0.001% against 16 landing 0.182% at x6000. */
   /* NO TARGET YET - which includes the moment the first keystroke lands in the
      custom box, because that clears the payout on purpose (see the input
      handler). wspBuild returns an empty slip while WSP.odds is null, so every

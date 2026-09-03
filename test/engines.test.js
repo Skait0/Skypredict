@@ -69,10 +69,6 @@ const FNS = ["countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmer
      when a fixture has no prices at all, so the harness needs that too. */
   "safeUnpriced",
   "buildPicks",
-  /* wspBuild now consults the Slider before doing its own work, so the
-     handover functions have to come with it or it throws. */
-  "sliderRunAt", "sliderCeiling", "sliderCeilingNow", "sliderCanReach",
-  "sliderDrives", "sliderReach",
   /* Which chip is lit, derived from the same predicate wspBuild uses. */
   "wspStyleOn",
   "wspBuild"];
@@ -93,7 +89,7 @@ const api = new Function([
   (/^var WSP=\{[\s\S]*?\};/m.exec(src) || [""])[0],
 ].concat(FNS.map(grab)).join("\n") + `
   return { BUILD, WSP, buildPicks, wspBuild, wspMarkets, legOdd, fid,
-           sliderCanReach, sliderDrives, sliderCeilingNow, wspStyleOn,
+           wspStyleOn,
            JACKPOT_ODDS, JACKPOT_LEG_CAP,
            setFixtures(f){ FIXTURES = f; },
            setTopOnly(v){ TOP_ONLY = v; } };
@@ -418,8 +414,6 @@ test("the styles give different slips at a payout the Slider could have taken", 
      the target, so before this every one of these was the same slip. */
   reset();
   api.WSP.odds = 100;
-  assert.strictEqual(api.sliderCanReach(), true,
-    "x100 must be inside the Slider's reach or this proves nothing");
   const legs = [1.25, 1.4, 1.7].map(lo => {
     api.WSP.slider = false; api.WSP.legodd = lo; api.WSP._sig = null;
     return api.wspBuild().picks.length;
@@ -430,24 +424,7 @@ test("the styles give different slips at a payout the Slider could have taken", 
     "More games must build more legs than Fewer games, got " + legs.join(","));
 });
 
-test("reachability is a fact about the board, the method is a choice", () => {
-  reset();
-  api.WSP.odds = 100;
-  api.WSP.slider = true;
-  assert.strictEqual(api.sliderCanReach(), true);
-  assert.strictEqual(api.sliderDrives(), true);
-  api.WSP.slider = false;
-  assert.strictEqual(api.sliderCanReach(), true, "the board has not changed");
-  assert.strictEqual(api.sliderDrives(), false, "but the reader has chosen otherwise");
-});
 
-test("a payout past the Slider's reach cannot be driven by it", () => {
-  reset();
-  api.WSP.odds = 50000; api.WSP.slider = true;
-  assert.strictEqual(api.sliderCanReach(), false, "this board cannot reach x50000");
-  assert.strictEqual(api.sliderDrives(), false,
-    "so Auto must not answer it even while selected - the panel clears the chip");
-});
 
 
 
