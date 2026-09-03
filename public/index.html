@@ -3021,7 +3021,11 @@ button.wsp-go.waiting{opacity:.55}
    qualifier on a second line keeps each pill sized to its own text and the
    three of them on one line, which is what makes them comparable at a
    glance. Scoped to .wsp-style so the payout ladder keeps its own size. */
-#wspStyleChips{display:flex;flex-wrap:nowrap;gap:6px}
+/* Four chips now, not three: Auto joined the styles. Three fitted 320px on
+   one line and four do not, so the row wraps to 2x2 on the narrowest phones
+   rather than clipping one off the end. Two rows of two still compare. */
+#wspStyleChips{display:flex;flex-wrap:wrap;gap:6px}
+.wsp-chip.wsp-style.off{opacity:.42;cursor:not-allowed}
 .wsp-chip.wsp-style{display:inline-flex;flex:0 1 auto;flex-direction:column;
   align-items:center;justify-content:center;gap:1px;padding:6px 12px;
   line-height:1.18;min-width:0}
@@ -10708,7 +10712,7 @@ const JACKPOT_ODDS=20000;
    at booking. */
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
-var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.4,slider:true,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* One entry per toggle, so turning everything else off leaves exactly one
    market and every leg of the slip is that market. That is the whole point
    of splitting the goals group: an all-Over-1.5 or all-first-half ticket is
@@ -10832,12 +10836,44 @@ function sliderCeiling(seed,removed,mk){
   return sliderCeiling.memo.odds;
 }
 /* Does the Slider answer this payout? The question the panel asks. */
-function sliderDrives(){
-  if(WSP.everyGame || WSP.odds==null) return false;
+/* The ceiling for the board as it stands, with the reader's own removals
+   applied. One place computes it so the chip label and the reachability test
+   cannot disagree - they did, because the panel passed {} for removals and
+   this passed the real set. */
+function sliderCeilingNow(){
   var rm={};
   for(var k in (BUILD.removed||{})) rm[k]=1;
   for(var k2 in (WSP.removed||{})) rm[k2]=1;
-  return WSP.odds <= sliderCeiling(WSP.seed, rm, WSP.mk);
+  return sliderCeiling(WSP.seed, rm, WSP.mk);
+}
+/* CAN the Slider answer this payout - a fact about the board, not a choice. */
+function sliderCanReach(){
+  if(WSP.everyGame || WSP.odds==null) return false;
+  return WSP.odds <= sliderCeilingNow();
+}
+/* ...and is it the method the reader actually picked.
+   These were one function, and that made the builder change identity under
+   the reader at a threshold nobody can see: measured 3 Sep, the ceiling is 93
+   on a thin midweek day scope and 18,606,289 on All upcoming, so the same tap
+   got the Slider on one card and the Wizard on another, and the Slip style
+   chips were live on one and absent on the other. Worse, the switch was not
+   free - at x2000 on the real board the Slider builds 25 legs landing 0.044%
+   where the Wizard's "Fewer games" builds 12 landing 0.050%. Per leg the
+   Slider is safer (73.7% against 53.5%); across a slip it is not, because
+   compounding punishes leg count harder than it rewards per-leg confidence.
+   So the Slider is offered as a style and the reader chooses. */
+function sliderDrives(){
+  return WSP.slider!==false && sliderCanReach();
+}
+/* WHICH CHIP IS LIT - derived, never stored.
+   Storing it meant a payout moved past the Slider's reach left WSP.slider true
+   with the Auto chip disabled, so no chip in the row rendered as selected at
+   all while the build quietly used WSP.legodd. Clearing the flag during the
+   render fixed the display and put a state mutation inside a draw, which is
+   its own bug waiting to happen. Deriving it cannot drift from what wspBuild
+   will actually do, because both ask sliderCanReach. */
+function wspStyleOn(){
+  return (WSP.slider!==false && sliderCanReach()) ? "slider" : WSP.legodd;
 }
 
 /* The Slider's answer for this payout, or null when the payout is past its
@@ -10869,7 +10905,7 @@ function wspBuild(){
      is a handover, not an imitation - buildPicks does the work and its result
      is returned untouched. "Every game that qualifies" asks a different
      question from a payout, so it keeps the Wizard's method. */
-  if(!WSP.everyGame && WSP.odds!=null){
+  if(WSP.slider!==false && !WSP.everyGame && WSP.odds!=null){
     /* Games the user dropped in the Wizard stay dropped; the method is the
        Slider's, the exclusions are still theirs. */
     var rm={};
@@ -11677,12 +11713,20 @@ function renderWizardPanel(){
      and keep Conjure out of reach until there is something to aim at. */
   if(WSP.odds==null)
     html += "<p class='wsp-hint'>Pick a payout above - we'll find the games that reach it.</p>";
-  /* Slip style is the Wizard's dial: it trades legs against odds while
-     reaching the same payout. Inside the Slider's range the Slider is doing
-     the picking, and it ties legs and odds together - one risk setting gives
-     one answer - so there is no trade left to make. Three buttons that change
-     nothing is the failure this panel has had before, so say what is
-     happening instead of drawing them. */
+  /* Slip style trades legs against odds while reaching the same payout, and
+     the Slider is one of the four answers rather than a mode that replaces the
+     other three.
+     It used to be a hidden switch: below the Slider's ceiling it took over and
+     the chips were not drawn at all. The ceiling is a property of the board and
+     moves by five orders of magnitude between cards (93 on a thin midweek day,
+     18,606,289 on All upcoming), so the chips were permanently dead on a big
+     card and live on a small one, with nothing on screen naming the threshold
+     that decided it. Reported as "fewer games bigger odds doesn't do that
+     anymore" - and on All upcoming it genuinely never did, because the Slider
+     was answering every rung on the ladder.
+     Making it a chip also puts the trade in front of the reader instead of
+     deciding it for them, which matters because the switch is not free in
+     either direction - see sliderDrives. */
   /* NO TARGET YET - which includes the moment the first keystroke lands in the
      custom box, because that clears the payout on purpose (see the input
      handler). wspBuild returns an empty slip while WSP.odds is null, so every
@@ -11690,16 +11734,19 @@ function renderWizardPanel(){
      again, and it flickered the chips in for the whole time it took to type a
      number that then hid them. The "Pick a payout above" hint above already
      says what to do, so nothing is drawn here. */
-  if(WSP.odds==null){
-    /* nothing to style until there is something to aim at */
-  } else if(sliderDrives()){
-    html += "<p class='wsp-hint'><b>Safest method.</b> At this payout we build "+
-      "it the way the Slider does - picked on confidence, not stretched to "+
-      "reach a number. Slip style applies above "+
-      Math.round(sliderCeiling(WSP.seed,{},WSP.mk))+"x.</p>";
-  } else {
-  html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips' id='wspStyleChips'>"+
-    styles.map(function(st){return "<button class='wsp-chip wsp-style"+(WSP.legodd===st[0]?" on":"")+"' data-lo='"+st[0]+"'><b>"+st[1]+"</b>"+(st[2]?"<i>"+st[2]+"</i>":"")+"</button>";}).join("")+"</div>";
+  if(WSP.odds!=null){
+    /* A chip that cannot answer must not sit there selected. The Slider is
+       offered only while it can actually reach the payout; past that the row
+       falls back to a style rather than leaving a dead control lit, or worse,
+       nothing lit at all. wspStyleOn decides, so this cannot disagree with what
+       wspBuild does. */
+    var _canSlide=sliderCanReach(), _on=wspStyleOn();
+    var _ceil=(WSP.everyGame||WSP.odds==null)?0:Math.round(sliderCeilingNow());
+    html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips' id='wspStyleChips'>"+
+      "<button class='wsp-chip wsp-style"+(_on==="slider"?" on":"")+(_canSlide?"":" off")+
+        "' data-lo='slider'"+(_canSlide?"":" disabled aria-disabled='true'")+"><b>Auto</b>"+
+        "<i>"+(_canSlide?"we choose the count":"needs \u00d7"+_ceil+" or less")+"</i></button>"+
+      styles.map(function(st){return "<button class='wsp-chip wsp-style"+(_on===st[0]?" on":"")+"' data-lo='"+st[0]+"'><b>"+st[1]+"</b>"+(st[2]?"<i>"+st[2]+"</i>":"")+"</button>";}).join("")+"</div>";
   }
   html +=
     "<button class='book-btn wsp-go"+(WSP.odds==null?" waiting":"")+
@@ -11774,12 +11821,19 @@ function renderWizardPanel(){
         try{again.setSelectionRange(c.length,c.length);}catch(e){} }
     });
   }
-  /* Absent whenever the Slider is answering this payout - see sliderDrives.
-     Unguarded this threw and took the whole panel down with it, which is a
-     blank Wizard rather than a missing row. */
+  /* Absent until a payout is chosen, so still guarded. Unguarded this threw
+     and took the whole panel down with it, which is a blank Wizard rather than
+     a missing row. */
   var _sty=$("wspStyleChips");
   if(_sty) _sty.querySelectorAll("[data-lo]").forEach(function(c){
-    c.addEventListener("click",function(){WSP.legodd=+c.dataset.lo;WSP._sig=null;renderBuilder();});
+    c.addEventListener("click",function(){
+      /* "slider" is a method, not a per-leg target, so it must not be coerced
+         with + - that yields NaN, and NaN||1.4 silently builds Balanced while
+         the Auto chip shows as chosen. */
+      if(c.dataset.lo==="slider"){ WSP.slider=true; }
+      else { WSP.slider=false; WSP.legodd=+c.dataset.lo; }
+      WSP._sig=null;renderBuilder();
+    });
   });
   $("wspGo").addEventListener("click",function(){
     /* Disabled would have been silent about why. It stays pressable and says
@@ -11810,7 +11864,7 @@ function renderBuilderOutput(){
          delete changes only WSP.removed - not the signature - so we filter the
          cached slip instead of rebuilding, which means a removed leg shrinks the
          slip and stays gone rather than getting back-filled to hit the target. */
-      var _sig=[WSP.odds,WSP.legodd,WSP.seed,JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE,SDAY,TOD,!!WSP.everyGame].join("|");
+      var _sig=[WSP.odds,WSP.legodd,!!WSP.slider,WSP.seed,JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE,SDAY,TOD,!!WSP.everyGame].join("|");
       if(WSP._sig!==_sig || !WSP._slip){
         WSP._slip=wspBuild().picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};});
         WSP._sig=_sig;

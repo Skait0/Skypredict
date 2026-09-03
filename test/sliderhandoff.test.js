@@ -51,7 +51,8 @@ const FNS = ["countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmer
   "saWeight", "isLowerLeague", "isLowerFixture", "fid", "oddOf", "legOdd",
   "hasRealOdd", "pricedFixture", "mProb", "riskParams", "safeUnpriced",
   "allowedMarkets", "preferGoalsOverDouble", "buildPicks",
-  "sliderRunAt", "sliderCeiling", "sliderDrives", "sliderReach"];
+  "sliderRunAt", "sliderCeiling", "sliderCeilingNow", "sliderCanReach",
+  "sliderDrives", "sliderReach"];
 
 function engine(fixtures) {
   return new Function("FX", [
@@ -296,8 +297,11 @@ test("the style chips are only wired when they are drawn", () => {
      failure than the dead buttons it was fixing. */
   assert.match(src, /var _sty=\$\("wspStyleChips"\);\s*\n\s*if\(_sty\)/,
     "the style-chip listener must tolerate the chips being absent");
-  assert.match(src, /if\(sliderDrives\(\)\)\{[\s\S]{0,400}Safest method/,
-    "and the panel must explain the swap rather than show dead controls");
+  /* The Auto chip carries a method, not a per-leg number. Coercing it with +
+     yields NaN, and `NaN||1.4` then silently builds Balanced while the Auto
+     chip shows as chosen - a control that lies about what it did. */
+  assert.match(src, /if\(c\.dataset\.lo==="slider"\)\{ WSP\.slider=true; \}/,
+    "the Auto chip must set the method rather than be coerced to a number");
 });
 
 test("the memo notices when the inputs change", () => {
@@ -361,9 +365,11 @@ test("the panel draws no style chips before a payout is chosen", () => {
   /* Source-level, like the wiring check above, because the branch lives in a
      string-building render with no DOM to drive here. The behaviour it protects
      is asserted properly in engines.test.js: with WSP.odds null every style
-     builds the same empty slip, so the chips are dead controls. */
-  assert.match(src, /if\(WSP\.odds==null\)\{[\s\S]{0,200}\}\s*else if\(sliderDrives\(\)\)\{/,
-    "no-target must be handled before the Slider check, not after it");
+     builds the same empty slip, so the chips are dead controls.
+     The Slider is a chip in that row now rather than a mode that hides it, so
+     the only thing gating the row is whether there is a payout at all. */
+  assert.match(src, /if\(WSP\.odds!=null\)\{[\s\S]{0,900}wspStyleChips/,
+    "the chip row must be drawn only once there is a payout to aim at");
 });
 
 

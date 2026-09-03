@@ -71,7 +71,10 @@ const FNS = ["countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmer
   "buildPicks",
   /* wspBuild now consults the Slider before doing its own work, so the
      handover functions have to come with it or it throws. */
-  "sliderRunAt", "sliderCeiling", "sliderDrives", "sliderReach",
+  "sliderRunAt", "sliderCeiling", "sliderCeilingNow", "sliderCanReach",
+  "sliderDrives", "sliderReach",
+  /* Which chip is lit, derived from the same predicate wspBuild uses. */
+  "wspStyleOn",
   "wspBuild"];
 
 const api = new Function([
@@ -90,6 +93,7 @@ const api = new Function([
   (/^var WSP=\{[\s\S]*?\};/m.exec(src) || [""])[0],
 ].concat(FNS.map(grab)).join("\n") + `
   return { BUILD, WSP, buildPicks, wspBuild, wspMarkets, legOdd, fid,
+           sliderCanReach, sliderDrives, sliderCeilingNow, wspStyleOn,
            JACKPOT_ODDS, JACKPOT_LEG_CAP,
            setFixtures(f){ FIXTURES = f; },
            setTopOnly(v){ TOP_ONLY = v; } };
@@ -136,7 +140,10 @@ function reset() {
   Object.assign(api.BUILD, { risk: 50, seed: 12345, shuffles: 0, removed: {}, touched: true });
   api.BUILD.mk = { wd: true, any: false, out: true, o15: true, o25: true,
                    o35: false, fh: false, tts: false, tts2: false, both: true };
-  Object.assign(api.WSP, { odds: null, legodd: 1.35, everyGame: false,
+  /* slider:true reproduces the behaviour every test below was written against:
+     wspBuild consulted the Slider whenever it could reach the payout. The tests
+     that care about the Wizard's own method set it false themselves. */
+  Object.assign(api.WSP, { odds: null, legodd: 1.35, slider: true, everyGame: false,
                            seed: 4242, shuffles: 0, conjured: false, removed: {} });
   api.WSP.mk = { wd: true, any: false, out: true, o15: true, o25: true,
                  o35: false, fh: false, tts: false, tts2: false, both: true };
@@ -386,4 +393,84 @@ test("the empty slip is caused by the missing target, not by the harness", () =>
     assert.ok(api.wspBuild().picks.length > 0,
       `style ${lo} should build a real slip once a target is set`);
   }
+});
+
+/* ------------------------------------------- the Slider as a slip style */
+
+/* The Slider used to take over silently below a ceiling that moves by five
+   orders of magnitude between boards (93 on a thin day scope, 18,606,289 on
+   All upcoming), which is why "fewer games, bigger odds" appeared to stop
+   working: on a big card the Slider was answering every rung and the chips
+   were never drawn. It is a chip now, so these assert the reader's choice is
+   the thing that decides, not the board. */
+
+test("Auto hands the payout to the Slider", () => {
+  reset();
+  api.WSP.odds = 100; api.WSP.slider = true;
+  const r = api.wspBuild();
+  assert.strictEqual(r.via, "slider", "Auto must return the Slider's own slip");
+});
+
+test("choosing a style takes the payout back from the Slider", () => {
+  reset();
+  api.WSP.odds = 100; api.WSP.slider = false; api.WSP.legodd = 1.7;
+  const r = api.wspBuild();
+  assert.notStrictEqual(r.via, "slider", "a chosen style must build the Wizard's way");
+  assert.ok(r.picks.length, "and must actually return a slip");
+});
+
+test("the styles give different slips at a payout the Slider could have taken", () => {
+  /* The whole point of the change. At x100 on this board the Slider can reach
+     the target, so before this every one of these was the same slip. */
+  reset();
+  api.WSP.odds = 100;
+  assert.strictEqual(api.sliderCanReach(), true,
+    "x100 must be inside the Slider's reach or this proves nothing");
+  const legs = [1.25, 1.4, 1.7].map(lo => {
+    api.WSP.slider = false; api.WSP.legodd = lo; api.WSP._sig = null;
+    return api.wspBuild().picks.length;
+  });
+  assert.ok(new Set(legs).size > 1,
+    "More/Balanced/Fewer must not collapse onto one slip, got " + legs.join(","));
+  assert.ok(legs[0] > legs[2],
+    "More games must build more legs than Fewer games, got " + legs.join(","));
+});
+
+test("reachability is a fact about the board, the method is a choice", () => {
+  reset();
+  api.WSP.odds = 100;
+  api.WSP.slider = true;
+  assert.strictEqual(api.sliderCanReach(), true);
+  assert.strictEqual(api.sliderDrives(), true);
+  api.WSP.slider = false;
+  assert.strictEqual(api.sliderCanReach(), true, "the board has not changed");
+  assert.strictEqual(api.sliderDrives(), false, "but the reader has chosen otherwise");
+});
+
+test("a payout past the Slider's reach cannot be driven by it", () => {
+  reset();
+  api.WSP.odds = 50000; api.WSP.slider = true;
+  assert.strictEqual(api.sliderCanReach(), false, "this board cannot reach x50000");
+  assert.strictEqual(api.sliderDrives(), false,
+    "so Auto must not answer it even while selected - the panel clears the chip");
+});
+
+test("the lit chip never disagrees with the slip that gets built", () => {
+  /* A payout past the Slider's reach with Auto still chosen used to light no
+     chip at all, while the build fell through to WSP.legodd - the row said
+     nothing was selected and a slip came out anyway. */
+  reset();
+  api.WSP.slider = true; api.WSP.legodd = 1.4;
+
+  api.WSP.odds = 100;
+  assert.strictEqual(api.sliderCanReach(), true);
+  assert.strictEqual(api.wspStyleOn(), "slider", "Auto is lit while it can answer");
+  assert.strictEqual(api.wspBuild().via, "slider", "and it is what builds");
+
+  api.WSP.odds = 50000;
+  assert.strictEqual(api.sliderCanReach(), false, "past this board's reach");
+  assert.strictEqual(api.wspStyleOn(), 1.4,
+    "so the row falls back to the style, rather than lighting nothing");
+  assert.notStrictEqual(api.wspBuild().via, "slider",
+    "and that style is what actually builds");
 });
