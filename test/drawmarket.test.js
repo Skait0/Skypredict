@@ -40,17 +40,24 @@ const mkObj = (name) => {
 
 /* ------------------------------------------------------- off until asked */
 
-test("the draw is off by default in both builders", () => {
+test("the draw is off by default, and only the wizard has one", () => {
   /* A market that turns itself on is not a market somebody chose. */
-  assert.strictEqual(mkObj("BUILD").draw, false, "slider default");
-  assert.strictEqual(mkObj("WSP").draw, false, "wizard default");
+  assert.strictEqual(mkObj("WSP").draw, false, "wizard default must be off");
+  /* And the Slider has NO KEY FOR IT. It was briefly mirrored into BUILD.mk
+     like every other toggle, which was inert - "X" is in neither
+     allowedMarkets nor mkOn - but inert is not safe: the flag sat there set to
+     true, one list change away from the Slider building draws nobody asked
+     for. A key that does not exist cannot be read by accident. */
+  assert.ok(!("draw" in mkObj("BUILD")),
+    "BUILD.mk must not carry a draw key at all");
 });
 
-test("the key exists rather than being undefined", () => {
-  /* The chip renders lit when BUILD.mk[k] !== false, so a missing key would
-     draw it ON while the builder treated it as off. */
-  assert.ok("draw" in mkObj("BUILD"), "BUILD.mk must declare it explicitly");
-  assert.ok("draw" in mkObj("WSP"), "WSP.mk must declare it explicitly");
+test("the chip reads the state that actually governs it", () => {
+  /* A wizard-only market is absent from BUILD.mk, so asking BUILD whether it
+     is on answers "undefined !== false" - true - and the chip renders LIT
+     while the builder treats it as off. */
+  assert.match(src, /var enabled=m\.wizardOnly \? \(WSP\.mk\[m\.k\]===true\) : \(BUILD\.mk\[m\.k\]!==false\);/,
+    "a wizard-only chip must read WSP.mk, not BUILD.mk");
 });
 
 /* --------------------------------------------- the Slider cannot reach it */
@@ -134,7 +141,9 @@ test("the draw chip does not look like the other markets", () => {
 test("turning the draw ON asks first", () => {
   /* Somebody tapping a chip in a row of nine has not necessarily read what
      this one does. */
-  assert.match(src, /if\(cfg&&cfg\.warn&&!BUILD\.mk\[k\]\)\{ askDrawOn\(k\); return; \}/,
+  assert.match(src, /if\(cfg&&cfg\.wizardOnly\)\{/,
+    "a wizard-only market must take its own path");
+  assert.match(src, /if\(cfg\.warn&&!WSP\.mk\[k\]\)\{ askDrawOn\(k\); return; \}/,
     "the on-tap must be intercepted before the toggle flips");
   const ask = src.slice(src.indexOf("window.askDrawOn="),
                         src.indexOf("window.askDrawOn=") + 1600);
@@ -164,17 +173,18 @@ test("only confirming actually enables it", () => {
   const at = ask.indexOf('.confirm-go").addEventListener("click",function(){');
   assert.ok(at >= 0, "the confirm button must be wired");
   const body = ask.slice(at, ask.indexOf("});", at));
-  assert.match(body, /BUILD\.mk\[k\]=true/,
+  assert.match(body, /WSP\.mk\[k\]=true/,
     "the market must be enabled INSIDE the confirm handler, not before it");
-  assert.match(body, /WSP\.mk\[k\]=true/, "and the wizard must get it too");
+  assert.ok(!/BUILD\.mk\[k\]/.test(ask),
+    "the confirm must never write the Slider's market state");
   const before = ask.slice(0, at);
-  assert.ok(!/BUILD\.mk\[k\]=true/.test(before),
+  assert.ok(!/WSP\.mk\[k\]=true/.test(before),
     "the market is switched on before the reader answers - the prompt is decoration");
 });
 
 test("turning it OFF needs no ceremony", () => {
   /* Off is the safe direction. Asking there would be a nag. */
-  assert.match(src, /cfg&&cfg\.warn&&!BUILD\.mk\[k\]/,
+  assert.match(src, /cfg\.warn&&!WSP\.mk\[k\]/,
     "the guard must be conditional on it currently being off");
 });
 

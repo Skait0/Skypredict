@@ -6700,7 +6700,14 @@ var BUILD_NOSYNC=false;
    Nothing here is persisted, so this set is what everyone gets on every load;
    the chips stay available for anyone who wants the rest. WSP below carries
    the same set so the two builders start from the same place. */
-var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,draw:false},touched:false,mode:"slider"};
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false},touched:false,mode:"slider"};
+/* NO `draw` KEY HERE, deliberately. The draw is a Wizard market and lives in
+   WSP.mk alone. It was briefly mirrored into BUILD.mk like every other toggle,
+   which was inert - "X" is in neither allowedMarkets nor mkOn, so no risk
+   setting could reach it - but inert is not the same as safe: the flag sat
+   there set to true, waiting for the day somebody adds "X" to either list and
+   the Slider quietly starts building draws nobody asked it for. A key that
+   does not exist cannot be read by accident. */
 try{var rr=localStorage.getItem("sw.risk"); if(rr!=null) BUILD.risk=+rr;}catch(e){}
 try{var rm=localStorage.getItem("sw.mode"); if(rm==="slider"||rm==="wizard") BUILD.mode=rm;}catch(e){}
 /* Ticket window. "day" holds every leg inside today, so the whole slip settles
@@ -11546,7 +11553,10 @@ function renderShared(){
     var html=MKT_CFG.filter(function(m){
       return !m.wizardOnly || BUILD.mode==="wizard";
     }).map(function(m){
-      var enabled=BUILD.mk[m.k]!==false;
+      /* A wizard-only market is not in BUILD.mk at all, so asking BUILD
+         whether it is on would answer "undefined !== false" - true - and draw
+         the chip lit while the builder treated it as off. */
+      var enabled=m.wizardOnly ? (WSP.mk[m.k]===true) : (BUILD.mk[m.k]!==false);
       // Tier locks are a slider concept (unlock riskier markets as you slide up).
       // The wizard has its own market model, so nothing is tier-locked there -
       // otherwise "Both score" (tier 2) shows greyed out and can't be enabled.
@@ -11579,7 +11589,11 @@ function renderShared(){
            market here is a shade of the same bet - this one is a different
            bet, so it is the one place a tap is not enough. */
         var cfg=MKT_CFG.filter(function(x){return x.k===k;})[0];
-        if(cfg&&cfg.warn&&!BUILD.mk[k]){ askDrawOn(k); return; }
+        if(cfg&&cfg.wizardOnly){
+          /* Never touches BUILD.mk - see the note on its declaration. */
+          if(cfg.warn&&!WSP.mk[k]){ askDrawOn(k); return; }
+          WSP.mk[k]=!WSP.mk[k]; WSP._sig=null; renderBuilder(); return;
+        }
         BUILD.mk[k]=!BUILD.mk[k];
         /* One chip, both builders. The two market sets now use the same keys,
            so this is a straight copy - no renaming, and nothing silently
@@ -11613,7 +11627,7 @@ function renderShared(){
     var host=$("mkAsk");
     host.querySelector(".confirm-go").addEventListener("click",function(){
       clearPrompt("mkAsk");
-      BUILD.mk[k]=true; WSP.mk[k]=true;
+      WSP.mk[k]=true;               /* the wizard only - never BUILD.mk */
       WSP._sig=null; renderBuilder();
     });
     host.querySelector(".confirm-cancel").addEventListener("click",function(){

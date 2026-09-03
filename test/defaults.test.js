@@ -50,12 +50,28 @@ test("a fresh visit starts on four markets", () => {
 test("both builders start from the same markets", () => {
   /* The slider and the wizard each carry their own copy. They are synced on
      every toggle, so starting them apart means the first slip built in one
-     mode differs from the same slip built in the other. */
+     mode differs from the same slip built in the other.
+     WIZARD-ONLY MARKETS ARE THE EXCEPTION, and there is exactly one: the draw
+     has no key in BUILD.mk at all, because the Slider must never be able to
+     build one. Compared on the keys they share, so a market drifting apart
+     still fails while the deliberate absence does not. */
   const sets = marketSets();
   assert.strictEqual(sets.length, 2,
     "expected the slider's set and the wizard's, found " + sets.length);
-  assert.deepStrictEqual(sets[0], sets[1],
+  const WIZARD_ONLY = ["draw"];
+  const strip = (o) => {
+    const c = Object.assign({}, o);
+    for (const k of WIZARD_ONLY) delete c[k];
+    return c;
+  };
+  assert.deepStrictEqual(strip(sets[0]), strip(sets[1]),
     "the slider and the wizard start on different markets");
+  for (const k of WIZARD_ONLY) {
+    assert.ok(!(k in sets[0]),
+      k + " must not exist in the slider's market state at all - an inert " +
+      "flag is one list change away from the slider building it");
+    assert.strictEqual(sets[1][k], false, k + " must start off in the wizard");
+  }
 });
 
 test("the riskier markets are off, not missing", () => {
