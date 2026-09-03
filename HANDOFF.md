@@ -1,4 +1,4 @@
-# Soccerwizard — Session Handoff (updated 2026-09-03, afternoon)
+# Soccerwizard — Session Handoff (updated 2026-09-03, evening)
 
 ## Deployed state
 - **Live URL:** https://www.soccerwizard.live — **www is canonical**, the bare
@@ -263,6 +263,92 @@ The rest are booking, in soccerwizard-api:
 session booked 199 legs in one code successfully. Our caps are 40, and 50 for
 jackpot. If a 50-selection limit is real, it is not recorded anywhere and the
 jackpot cap sits exactly on it - worth confirming before trusting x20000+.
+
+## 2026-09-03 evening - the CPU incident, and four smaller things
+
+**READ THIS FIRST: `/api/predictions` was rebuilding the model on every
+request.** Found by reading the Vercel usage page, which is the only place it
+was visible.
+
+```
+577 invocations / 12h     8 HOURS of active CPU      100% error rate
+every one:  Vercel Runtime Timeout Error: Task timed out after 60 seconds
+47,000 requests to football-data.co.uk (~94,000 a day)
+89% of the entire Vercel bill; ~$59/month against $20 of included credit
+```
+
+Nothing visible broke, which is why it ran so long: the static
+`/predictions.json` served fine throughout, so the site looked healthy. Three
+failures compounded - a 504 is never cached so every visitor started another
+build; the client's freshness path called the route for most visitors all day;
+and **the route's own catch/serve-stale/503 handling had never run once**,
+because it assumed failure throws. A timeout does not throw - the runtime kills
+the invocation. *Error handling that cannot run is not error handling.*
+
+Fixed: the route reads the file prebuild bakes and cannot reach `lib/build.js`
+at all. Verified live, before and after in one command: **60.85s / 504 ->
+2.07s / 200**, and it now edge-caches (`x-vercel-cache: HIT`), which a 504
+never could. maxDuration 60s -> 10s; `vercel.json` bundles the baked file via
+`includeFiles` (without it the route deploys fine and 503s on everything).
+
+**The daily cron was failing too** - same 60s cap, same build. Raised to 300s.
+Only deploys were keeping the data fresh, and the deploy frequency hid it.
+
+**The client's freshness fetch is gone.** It could never return anything newer:
+both sides read the same file, and a deploy replaces the static file and the
+function bundle together. A guaranteed no-op run by nearly every visitor, and
+the source of most of those 577 calls. `fetchPayload`'s fallback stays - that
+one only fires if `/predictions.json` itself fails mid-deploy.
+
+**Reminder set:** Windows task "Soccerwizard CPU check", 4 Sep 10:00, one-shot,
+self-deleting. Fluid Active CPU should be near zero; the per-route table at
+Observability -> Functions names any remaining offender in one look.
+
+**Where the dashboard actually is:** the team is `soccerwizard`, NOT
+`skypredict` - that second scope exists, is empty, and is on Hobby, which is
+how I twice reported the wrong plan. **The account is on Pro already.**
+`vercel.com/soccerwizard/~/usage`. The v1/usage API rejects every date range
+tried; use the dashboard.
+
+---
+
+**Three other things, all live and verified:**
+
+- **A circuit breaker in front of the Railway feeds** (`lib/upstream.js`). The
+  fallback already worked; what it did not do was stop WAITING - every request
+  during an outage burned the full 8s timeout. Three consecutive failures trip
+  it, 30s cooldown, one probe to reopen, and a stalled probe is retired so a
+  killed request cannot wedge it open. Per warm container only, like `lastGood`
+  - stated honestly, not a global guarantee. Deliberately NOT on booking: a read
+  arriving stale costs nothing, a booking refused by an unrelated breaker costs
+  somebody their slip.
+
+- **A real 404 page.** Vercel was answering with its bare 79-byte default. It
+  matters here because 1,120 match pages are retired as fixtures age out, so a
+  404 is what a search result from three weeks ago leads to. noindex but
+  `follow`, no canonical, and deliberately never added to `paths` so it cannot
+  reach the sitemap.
+
+- **A Telegram community link**, `t.me/soccerwizardTG`, in BOTH footers - the
+  hand-written one and the generated one, so it reaches all 1,120 match pages.
+  One exported constant with a test that the two agree, same rule as CONTACT.
+  Verified resolving before shipping, because the X link once 404d.
+
+- **A hero band** behind the headline: CSS only, ~1KB, gradients plus an inline
+  pitch SVG, full-bleed via `100vw` which is safe ONLY because
+  `body{overflow-x:hidden}` is set three thousand lines away. A test says so.
+
+**Two lessons that generalise, both now in tests:**
+
+1. *A `>*` rule is a rule about elements you have not written yet.* The draw
+   chip became a giant circle on phones because `.mkt-chip.is-draw>*` caught the
+   ripple `<span>` the global click handler injects, forcing a 159x159 square
+   into a 31px flex chip. Use `isolation:isolate` plus a negative z-index
+   instead - it touches no children.
+
+2. *When a club's full name contains another club's whole name, alias TOWARD the
+   form that does not.* Expanding QPR to "queens park rangers" made it score
+   1.80 against Glasgow Rangers and Queens Park FC.
 
 ## 2026-09-03 afternoon - the empty draw slip, the matcher, and a chip that became a circle
 
