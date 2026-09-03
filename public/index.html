@@ -11451,9 +11451,63 @@ function wspBuild(){
        reachable, though - pinned flat at 1.01 this was the second half of the
        empty-draw-slip bug. */
     g=WSP.everyGame ? Math.max(1.01, reach*0.95) : Math.pow(T,1/want);
+    /* The value cap sits ABOVE the OVERSHOOT constant deliberately.
+       test/overshoot.test.js finds bestOf by taking the first
+       `function ` after `var OVERSHOOT=`, so a function declared
+       between the two is lifted instead of bestOf and every test in
+       that file throws. Keep bestOf the first function after it. */
+    /* DO NOT BUY OUR OWN DISAGREEMENT WITH THE BOOK.
+       Measured on a 394-fixture board, our probability minus the bookmaker's
+       implied one, averaged:
+
+         every priced option on the board   -3.5 pts   we are higher on 26%
+         "more games" legs chosen           -0.6 pts   ...on 39%
+         "balanced" legs chosen            +10.1 pts   ...on 80%
+         "fewer games" legs chosen         +14.8 pts   ...on 100%
+
+       The model is not over-confident - across the whole board it sits BELOW
+       the book on every market. What went wrong is what the builder SELECTS.
+       On a lopsided fixture every safe market is priced 1.05-1.10, all of it
+       under the band, so the only thing in range is the unlikely thing; and
+       then `edge` prefers exactly those, because a high probability at a long
+       price looks efficient. But a high probability at a long price is, by
+       definition, where our number disagrees with the market's - so the band
+       and the edge ranking together act as a filter that isolates our own
+       errors, and the higher the per-leg target the purer that filter gets.
+       At "fewer games" it was 100% pure.
+
+       Reported as: "Monaco against PSG to score, Betis to score against
+       Madrid - these teams are playing against giants and might not be able
+       to score". Correct. Across 1,752 matches in five top leagues, against a
+       favourite at 65%+ the underdog scored in 52-56% of them; those legs
+       were claiming 63-74%.
+
+       THIS IS NOT A RULE AGAINST TEAM-TO-SCORE. That market grades 81.6%
+       against 78% claimed and is one of the best calibrated on the board - a
+       ban on it was tried before and was wrong. The aggregate is carried by
+       FAVOURITES scoring, which happens 91-98% of the time; the underdog
+       subset is where it breaks, and the average hides it. So the rule is
+       about the gap, not the market, and it applies to every market equally.
+
+       5 points, because the board's own mean is -3.5: a leg we like five
+       points more than the book is ordinary disagreement, and +10 to +15 is
+       where the losers live. Only real prices are judged - an estimated odd
+       carries no opinion from anybody to disagree with. */
+    var VALUE_CAP=0.05;
+    function overpriced(c){
+      var od=c.f&&c.f.sportyOdds&&c.f.sportyOdds[c.code];
+      if(!(od>1.01)) return false;          /* no book price, no opinion */
+      return (c.p - 1/od) > VALUE_CAP;
+    }
     var OVERSHOOT=1.40;
     var PROVEN=provenMarkets();
     function bestOf(pool){
+      /* Applied to the whole pool before anything is ranked, so a capped leg
+         cannot win the band, the under-band fallback, or the tie-break. If it
+         empties the fixture, the fixture is dropped - there are 394 of them
+         and this one was only ever going to be sold on our own error. */
+      pool=pool.filter(function(c){ return !overpriced(c); });
+      if(!pool.length) return null;
       var lo=g*0.92, hi=g*OVERSHOOT;
       /* In the band: the safest one, exactly as before. */
       var band=pool.filter(function(c){ return c.od>=lo&&c.od<=hi; });
@@ -11503,8 +11557,19 @@ function wspBuild(){
       var cs=c.cands||[{f:c.f,id:c.id,code:c.code,p:c.p,od:c.od}];
       var pick=pickFrom(cs);
       if(!pick) return;
+      /* The alternatives a later phase may swap this leg to, and they must
+         carry the value cap too. Two loops below reach into _alts to LENGTHEN
+         a leg - the overshoot trim and the "still short" rescue - and neither
+         re-checks how the price got there. Filtering bestOf alone left a hole
+         they both walked through: Porto v Moreirense went on a slip at 2.45
+         with our number 15 points above the book, which is exactly the leg
+         the cap exists to refuse. Filter once, here, and no phase can
+         reinstate one. */
+      var alts=cs.filter(hasReal);
+      if(!alts.length) alts=cs;
+      var altsOk=alts.filter(function(x){ return !overpriced(x); });
       chosen.push({f:c.f,id:c.id,code:pick.code,p:pick.p,od:pick.od,
-                   _alts:cs.filter(hasReal).length?cs.filter(hasReal):cs});
+                   _alts:altsOk.length?altsOk:[pick]});
     });
     /* Soft league cap: spread legs across leagues instead of stacking one, but
        only as a PREFERENCE - the payout target is never sacrificed for it. A

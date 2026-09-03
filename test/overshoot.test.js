@@ -60,9 +60,18 @@ const RECORD = { byMarket: [
 ]};
 
 function bestOfWith(g, record) {
-  const deps = ["    function edge(c){", "function codeMarket(c){",
-                "function provenMarkets(){", "function isProven(c,prov){"]
-    .map((h) => chunkOf(h, h)).join("\n");
+  /* bestOf also filters its pool through overpriced() now - the value cap -
+     so the harness has to carry it, and the constant it reads. Without them
+     every test in this file throws rather than failing, which reads like the
+     extraction broke rather than like a missing dependency. The fixtures here
+     carry no sportyOdds, so the cap sees no book price and refuses nothing:
+     these tests measure the band and the edge ranking exactly as before. */
+  const cap = /var VALUE_CAP=[\d.]+;/.exec(src);
+  assert.ok(cap, "VALUE_CAP is gone from index.html");
+  const deps = [cap[0]].concat(
+    ["    function overpriced(c){", "    function edge(c){", "function codeMarket(c){",
+     "function provenMarkets(){", "function isProven(c,prov){"]
+      .map((h) => chunkOf(h, h))).join("\n");
   const best = chunkOf("    var OVERSHOOT=", "bestOf");
   return new Function("g", "DATA", "MIN_GRADED",
     deps + "\n" + best + "\nreturn bestOf;")(g, { record: record || RECORD }, 10);
