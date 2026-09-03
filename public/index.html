@@ -228,6 +228,14 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
   --cream:#DCD8D2;
   --shadow:none;
   --edge:#2A2A30;
+  /* THE HERO BAND. Three values, so the whole band re-themes from here rather
+     than from six numbers buried in a gradient. `top` is the ground the band
+     stands on - a lift off the page, not a colour; `glow` is the brand red at
+     an alpha low enough that it never competes with the headline sitting on
+     it; `line` inks the pitch drawing. */
+  --hero-top:rgba(255,255,255,.045);
+  --hero-glow:rgba(230,57,70,.17);
+  --hero-line:.55;
 }
 [data-theme="light"]{
   /* Toned down a step. This was a warm off-white sitting at 96% lightness
@@ -286,6 +294,15 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
   /* a full black edge was too hard against the page; this is dark enough to
      define the card without cutting it out */
   --edge:#9A8E7A;
+  /* Lighter ground and a weaker glow. A full screen of near-white is already
+     a lamp - see the note at the top of this block - so the band lifts by
+     about half what it does in the dark theme, and the red is pulled back
+     because it saturates far harder against a warm page than a near-black
+     one. The pitch drawing goes the other way and needs MORE ink: a mid grey
+     that reads clearly on #0D0D0F is nearly invisible on #E9E4DA. */
+  --hero-top:rgba(255,255,255,.55);
+  --hero-glow:rgba(230,57,70,.09);
+  --hero-line:.85;
 }
 /* Native controls - the live-score select in particular - were being drawn in
    the browser's default scheme for a frame before ours applied, which is the
@@ -425,7 +442,68 @@ img,svg{max-width:100%}
 }
 
 /* ================================================================ intro */
-.intro{padding:26px 0 4px}
+/* ==================================================== the hero band
+   The top of the page was the page background and nothing else: the sticky
+   bar is `background:var(--bg)`, the same colour, so the whole masthead read
+   as one flat slab until you scrolled far enough for `.stuck` to draw a
+   border. This gives the headline something to sit on.
+
+   CSS only, deliberately. A photograph would cost a request and 40-150KB,
+   need a second treatment for the light theme, and risk blocking first paint
+   - and page weight is not free here: the WhatsApp preview already failed
+   once on it, and repeat visits re-download nothing only because every asset
+   is immutable. Two gradients and one inline SVG cost about 1KB inside a
+   bundle that is already being fetched.
+
+   Three layers, painted back to front:
+     1. a ground that lifts the band a few points off the page
+     2. a wide, low-alpha glow in the brand red, off to the left where the
+        headline starts
+     3. a pitch, drawn small and far right, as the thing that says football
+        without a stadium photograph saying it loudly
+
+   FULL BLEED WITHOUT BREAKING THE LAYOUT. `.intro` lives inside `.wrap`,
+   which is capped at 1180px, so the band has to escape its own container:
+   `left:50%;width:100vw;margin-left:-50vw`. On a desktop with a visible
+   scrollbar 100vw is a little wider than the content box, which would
+   normally add a horizontal scrollbar - `body` already carries
+   `overflow-x:hidden`, which is what makes this safe.
+
+   AND WITHOUT A RULE THAT TOUCHES A CHILD. `isolation:isolate` makes `.intro`
+   a stacking context, and inside one a negative z-index paints above the
+   element's own background but below its in-flow content. So the band sits
+   behind the headline with no `>*` rule lifting anything - the same mistake
+   that turned the draw chip into a circle, and worth not making twice. The
+   band deliberately overhangs the bottom of `.intro`: that overhang belongs to
+   `.intro`'s stacking context, which is painted before its later siblings, so
+   the Pick of the day card lands cleanly on top of it. */
+.intro{position:relative;isolation:isolate;padding:26px 0 4px}
+.intro::before{
+  content:"";position:absolute;z-index:-1;pointer-events:none;
+  top:-18px;bottom:-58px;left:50%;width:100vw;margin-left:-50vw;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 300'%3E%3Cg fill='none' stroke='%23888891' stroke-width='2'%3E%3Crect x='10' y='2' width='200' height='296' rx='3'/%3E%3Cpath d='M10 150h200'/%3E%3Ccircle cx='110' cy='150' r='42'/%3E%3Ccircle cx='110' cy='150' r='3' fill='%23888891' stroke='none'/%3E%3Crect x='45' y='2' width='130' height='60'/%3E%3Crect x='82' y='2' width='56' height='24'/%3E%3Ccircle cx='110' cy='42' r='2.5' fill='%23888891' stroke='none'/%3E%3Cpath d='M78 62q32 26 64 0'/%3E%3Crect x='45' y='238' width='130' height='60'/%3E%3Crect x='82' y='274' width='56' height='24'/%3E%3Ccircle cx='110' cy='258' r='2.5' fill='%23888891' stroke='none'/%3E%3Cpath d='M78 238q32 -26 64 0'/%3E%3C/g%3E%3C/svg%3E")
+      no-repeat calc(50% + 200px) 50% / auto 208px,
+    radial-gradient(120% 150% at 14% -20%, var(--hero-glow) 0%, transparent 60%),
+    linear-gradient(180deg, var(--hero-top) 0%, transparent 100%);
+  /* The band has to stop being a band. A hard bottom edge would draw a line
+     across the page exactly where nothing changes; the mask lets it hold its
+     ground for two thirds and then leave. */
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 58%,transparent 100%);
+  mask-image:linear-gradient(180deg,#000 0%,#000 58%,transparent 100%);
+  opacity:var(--hero-line);
+}
+/* The pitch is decoration and the headline is not. Below the point where the
+   two would overlap, the drawing goes - a hero graphic that crowds the words
+   it exists to frame has stopped helping. The gradients stay: they cost the
+   headline nothing and they are what makes the band read as a band. */
+@media(max-width:860px){
+  .intro::before{
+    background:
+      radial-gradient(120% 150% at 14% -20%, var(--hero-glow) 0%, transparent 60%),
+      linear-gradient(180deg, var(--hero-top) 0%, transparent 100%);
+  }
+}
 .intro h1{font-weight:800;font-size:clamp(28px,4.4vw,44px);line-height:1.1;
   letter-spacing:-.035em}
 .intro h1 span{color:var(--red)}
