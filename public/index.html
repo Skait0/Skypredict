@@ -8782,9 +8782,9 @@ function confirmBookAll(){
   }
   var odds=bookable.reduce(function(t,c){return t*legOdd(c.f,c.code,c.p);},1);
   var skipped=picks.length-bookable.length;
-  /* SportyBet caps a slip at 50 selections. Rather than silently truncating,
-     say what will happen and point at the slip sheet, where trimming is easy. */
-  var CAP=50, over=bookable.length>CAP;
+  /* Rather than silently truncating, say what will happen and point at the
+     slip sheet, where trimming is easy. See BETSLIP_MAX. */
+  var CAP=BETSLIP_MAX, over=bookable.length>CAP;
   var going=over?bookable.slice(0,CAP):bookable;
   var goingOdds=going.reduce(function(t,c){return t*legOdd(c.f,c.code,c.p);},1);
   host.innerHTML="<div class='confirm-card'><p>Book all <b>"+bookable.length+
@@ -10454,6 +10454,28 @@ async function bookMy(){
     $("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt("myBookResult");});
     return;
   }
+  /* MORE SELECTIONS THAN THE BETSLIP TAKES.
+     "Add all" caps what it books, but its "confirm and trim" branch loads every
+     pick into the slip and hands the reader here - and on a full Saturday card
+     that is well over fifty. Booking from the sheet never counted them, so a
+     code was made, the reader opened it, and SportyBet refused the lot with
+     "Bet Limit Reached". Nothing failed on our side to tell us.
+     Asked rather than trimmed silently, the same as every other thing this
+     path refuses: they chose these games and they should choose which go. */
+  if(bookable.length>BETSLIP_MAX){
+    var _fit=bookable.slice(0,BETSLIP_MAX), _cut=bookable.length-BETSLIP_MAX;
+    showPrompt("myBookResult","<div class='confirm-card'><p>"+B.mark+" takes "+
+      BETSLIP_MAX+" picks on one slip and you have "+bookable.length+
+      ". Book the first "+BETSLIP_MAX+", or close this and remove "+_cut+
+      "?</p><div class='ca'><button class='confirm-go' type='button'>Book "+
+      BETSLIP_MAX+"</button><button class='confirm-cancel' type='button'>"+
+      "Let me trim</button></div></div>");
+    $("myBookResult").querySelector(".confirm-go").addEventListener("click",function(){
+      clearPrompt("myBookResult");
+      if(!confirmDropUnpriced(_fit,"myBookResult",doBookMy,B)) doBookMy(_fit);});
+    $("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt("myBookResult");});
+    return;
+  }
   if(confirmDropUnpriced(bookable,"myBookResult",doBookMy,B)) return;
   doBookMy(bookable);
 }
@@ -10755,6 +10777,20 @@ const JACKPOT_ODDS=20000;
    real SportyBet price for, so a thin card can still come back short - and it
    says so rather than padding the slip out with markets that would be rejected
    at booking. */
+/* BOTH BOOKS REFUSE A BETSLIP OF MORE THAN 50 SELECTIONS. SportyBet says so
+   in as many words - "There cannot be over 50 selections within a betslip" -
+   and Bet9ja is the same, so this is one number rather than one per book.
+   If that ever stops being true it belongs on the BOOKS table, not forked
+   at each call site.
+   The limit is on the BETSLIP, not on making the code - their share endpoint
+   takes as many as you send it and hands back a perfectly good code, which is
+   why a previous session booked 199 legs "successfully" and recorded that
+   there is no practical ceiling. There is. It appears when a person opens the
+   code, and nothing on our side ever hears about it: our API sees a success,
+   Sentry sees nothing, and the reader sees a dialog they cannot get past.
+   An upstream that answers success with something unusable is worse than one
+   that errors, so the check has to be ours. */
+const BETSLIP_MAX=50;
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
 var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
