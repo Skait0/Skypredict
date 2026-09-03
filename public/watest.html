@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- TEMPORARY DIAGNOSTIC PAGE - delete once the WhatsApp question is settled.
+
+     The site's own preview works on Snapchat and not on WhatsApp. Snapchat
+     fetches from its servers; WhatsApp fetches from the SENDER'S PHONE, which
+     is why its preview appears in the compose box before the message is sent.
+     Everything server-side checks out - tags at byte 439, 200 to every crawler
+     UA, sub-second fetches, and the phone loads the image fine on the same
+     wifi - so what is left is WhatsApp's own fetcher being stricter than the
+     others.
+
+     The one difference worth testing is the image. The real card is a 207KB
+     PNG; this page points at the 87KB JPEG that is still sitting on the
+     server. Everything else here is identical to the homepage's tags.
+
+     Share this link in WhatsApp:
+       preview appears  -> the format or the weight is the problem, and the fix
+                           is to emit a JPEG (or a smaller card) from prebuild
+       still nothing    -> not the image; the difference is elsewhere and this
+                           page has ruled a whole branch out
+
+     noindex because it must never reach a search result. -->
+<meta name="robots" content="noindex, nofollow">
+<title>Soccerwizard</title>
+<meta property="og:type" content="website">
+<meta property="og:title" content="Soccerwizard">
+<meta property="og:description" content="Football predictions rebuilt every morning from results, plus a ready-made SportyBet slip - we pick the games and hand you the booking code.">
+<meta property="og:url" content="https://www.soccerwizard.live/watest">
+<meta property="og:site_name" content="Soccerwizard">
+<meta property="og:image" content="https://www.soccerwizard.live/og-card.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1568">
+<meta property="og:image:height" content="772">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://www.soccerwizard.live/og-card.jpg">
+<style>
+  body{margin:0;min-height:100vh;display:grid;place-items:center;
+    background:#0D0D0F;color:#F2F1F0;
+    font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px}
+  .b{max-width:420px;text-align:center}
+  h1{font-size:17px;margin:0 0 10px}
+  p{color:#A3A0A6;font-size:13.5px;margin:0 0 8px}
+  code{color:#FF6B75;font-size:12.5px}
+  a{color:#FF6B75}
+</style>
+</head>
+<body>
+  <div class="b">
+    <h1>WhatsApp preview test</h1>
+    <p>This page is identical to the homepage except its share image is the
+       <b>87KB JPEG</b> instead of the 207KB PNG.</p>
+    <p>Share this link in WhatsApp. If a preview appears here but not on the
+       homepage, the image format or its weight is the cause.</p>
+    <p><code>/watest</code> &middot; temporary, safe to delete</p>
+    <p><a href="/">Back to Soccerwizard</a></p>
+  </div>
+</body>
+</html>
