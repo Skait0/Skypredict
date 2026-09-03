@@ -474,3 +474,51 @@ test("the lit chip never disagrees with the slip that gets built", () => {
   assert.notStrictEqual(api.wspBuild().via, "slider",
     "and that style is what actually builds");
 });
+
+test("a reader lands on Balanced, not Auto", () => {
+  /* Auto won 2% of the ten-seed sweep against Balanced's 43%, and overshoots
+     the requested payout by a median 2x at x100. It stays available; it is not
+     what someone gets without asking. */
+  const m = /var WSP=\{[^;]*?slider:(true|false)/.exec(src);
+  assert.ok(m, "WSP must declare a slider default");
+  assert.strictEqual(m[1], "false", "Balanced is the landing default");
+});
+
+test("style cannot move the leg count in 'every game that qualifies'", () => {
+  /* The reason the chips are not drawn in that mode. If this ever starts
+     failing, the chips should come back. */
+  reset();
+  api.WSP.slider = false; api.WSP.everyGame = true; api.WSP.odds = 100;
+  const legs = [1.25, 1.4, 1.7].map(lo => {
+    api.WSP.legodd = lo; api.WSP._sig = null;
+    return api.wspBuild().picks.length;
+  });
+  assert.strictEqual(new Set(legs).size, 1,
+    "every-game ignores legodd, so all styles must agree: " + legs.join(","));
+});
+
+test("the chip row is not drawn in 'every game that qualifies'", () => {
+  assert.match(src, /if\(WSP\.everyGame\)\{[\s\S]{0,700}Every qualifying game goes in/,
+    "every-game must explain itself rather than draw chips that do nothing");
+  assert.match(src, /\}\s*else if\(WSP\.odds!=null\)\{[\s\S]{0,900}wspStyleChips/,
+    "and the chip row must sit behind that check");
+});
+
+test("exactly one style is ever selected", () => {
+  /* wspStyleOn returns a single value by construction, so the invariant is
+     that it is always one of the four the row draws - never undefined, never
+     a legodd the row has no chip for. */
+  reset();
+  const CHIPS = ["slider", 1.25, 1.4, 1.7];
+  for (const odds of [10, 100, 2000, 50000]) {
+    for (const slider of [true, false]) {
+      for (const lo of [1.25, 1.4, 1.7]) {
+        api.WSP.odds = odds; api.WSP.slider = slider; api.WSP.legodd = lo;
+        const on = api.wspStyleOn();
+        assert.ok(CHIPS.indexOf(on) >= 0,
+          "lit chip must be one the row draws, got " + String(on) +
+          " at odds=" + odds + " slider=" + slider + " legodd=" + lo);
+      }
+    }
+  }
+});

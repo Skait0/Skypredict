@@ -73,6 +73,7 @@ function engine(fixtures) {
     "\nBUILD.risk=45; BUILD.seed=1; BUILD.removed={}; BUILD.shuffles=0;" +
     "\nreturn {buildPicks:buildPicks, sliderRunAt:sliderRunAt, sliderReach:sliderReach," +
     "\n        sliderCeiling:sliderCeiling, sliderDrives:sliderDrives," +
+    "\n        sliderCanReach:sliderCanReach," +
     "\n        BUILD:BUILD, WSP:WSP," +
     "\n        setCeilCache:function(v){sliderCeiling.memo=v;}," +
     "\n        getCeilCache:function(){return sliderCeiling.memo;}};")(fixtures);
@@ -251,18 +252,28 @@ test("the Slider's own market settings survive being borrowed", () => {
 
 test("the panel can tell which builder will answer", () => {
   /* renderBuilder draws its controls BEFORE the slip is built, so it needs a
-     cheap answer to "is the Slider doing this one". */
+     cheap answer to "can the Slider do this one".
+     Reachability and choice are separate now: sliderCanReach is the fact about
+     the board, sliderDrives adds "and Auto is selected". This test is about the
+     board, so it asks the predicate that means that - asking sliderDrives here
+     was really asserting the default, which is Balanced. */
   const e = engine(board(40));
   e.WSP.everyGame = false; e.WSP.removed = {};
   e.WSP.odds = 10;
-  assert.strictEqual(e.sliderDrives(), true, "x10 is inside any usable board");
+  assert.strictEqual(e.sliderCanReach(), true, "x10 is inside any usable board");
   e.WSP.odds = 1e12;
-  assert.strictEqual(e.sliderDrives(), false, "a payout past the ceiling is the Wizard's");
+  assert.strictEqual(e.sliderCanReach(), false, "a payout past the ceiling is out of reach");
+  /* And the choice rides on top of the fact, in both directions. */
+  e.WSP.odds = 10; e.WSP.slider = true;
+  assert.strictEqual(e.sliderDrives(), true, "reachable and chosen");
+  e.WSP.slider = false;
+  assert.strictEqual(e.sliderDrives(), false, "reachable, not chosen");
 });
 
 test("'every game that qualifies' is always the Wizard's", () => {
-  /* It asks a different question from a payout, so the Slider never takes it
-     and the style control must stay. */
+  /* It asks a different question from a payout, so the Slider never takes it.
+     The style chips do not stay either - that mode pins the leg count to
+     whatever qualifies, so legodd cannot move it; see engines.test.js. */
   const e = engine(board(40));
   e.WSP.odds = 10; e.WSP.everyGame = true; e.WSP.removed = {};
   assert.strictEqual(e.sliderDrives(), false);
@@ -338,14 +349,14 @@ test("a ceiling measured on an empty board is not served after the board fills",
   e.WSP.removed = {}; e.WSP.everyGame = false;
 
   assert.strictEqual(e.sliderCeiling(1, {}, null), 0, "an empty card reaches nothing");
-  assert.strictEqual(e.sliderDrives(), false, "and so cannot answer x10");
+  assert.strictEqual(e.sliderCanReach(), false, "and so cannot answer x10");
 
   board(40).forEach((f) => live.push(f));   // the payload arrives
 
   assert.ok(e.sliderCeiling(1, {}, null) >= 10,
     "the ceiling must be re-measured once there are fixtures to measure");
-  assert.strictEqual(e.sliderDrives(), true,
-    "x10 is inside the Slider's range, so the Slider drives and Slip style is hidden");
+  assert.strictEqual(e.sliderCanReach(), true,
+    "x10 is back inside the Slider's range once the board has filled");
 });
 
 test("a board that empties again lowers the ceiling rather than keeping the old one", () => {

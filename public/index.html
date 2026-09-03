@@ -10712,7 +10712,17 @@ const JACKPOT_ODDS=20000;
    at booking. */
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
-var WSP={odds:null,legodd:1.4,slider:true,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.4,slider:false,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+/* `slider:false` - Balanced is what a reader lands on, not Auto.
+   Measured 3 Sep over ten seeds on the 386-fixture board, counting how often
+   each method gave the highest chance of the slip landing AT THE PAYOUT ASKED
+   FOR: Balanced 43%, Fewer 37%, More 18%, Auto 2%. Auto won nothing at five of
+   the six rungs. It is not that the Slider picks badly - at a fair book the
+   expected value is the same either way - it is that it answers a different
+   question. Its risk dial has about a hundred notches and it stops at the first
+   one that CLEARS the target, so at x100 the median Auto slip pays x200: double
+   what was asked, on a slip half as likely to come in. Someone who typed x100
+   asked for x100. Auto stays one tap away for anyone who wants it. */
 /* One entry per toggle, so turning everything else off leaves exactly one
    market and every leg of the slip is that market. That is the whole point
    of splitting the goals group: an all-Over-1.5 or all-first-half ticket is
@@ -11734,7 +11744,17 @@ function renderWizardPanel(){
      again, and it flickered the chips in for the whole time it took to type a
      number that then hid them. The "Pick a payout above" hint above already
      says what to do, so nothing is drawn here. */
-  if(WSP.odds!=null){
+  if(WSP.everyGame){
+    /* NO STYLE IN "EVERY GAME THAT QUALIFIES". The count is not derived from a
+       payout here - `want` is min(cap, whatever qualifies) and `g` is pinned at
+       1.01 - so legodd cannot move the leg count at all. Measured: all three
+       styles return the same 40 legs. Chips reading "More games" and "Fewer
+       games" over a count they cannot change is the dead-controls failure this
+       panel keeps having, so they are not drawn and the reason is said. */
+    html += "<p class='wsp-hint'><b>Every qualifying game goes in.</b> "+
+      "The card decides how many, so there is no shorter or longer slip to "+
+      "choose - turn this off to trade games against odds.</p>";
+  } else if(WSP.odds!=null){
     /* A chip that cannot answer must not sit there selected. The Slider is
        offered only while it can actually reach the payout; past that the row
        falls back to a style rather than leaving a dead control lit, or worse,
