@@ -11260,6 +11260,14 @@ function wspBuild(){
   function ranked(list,pen,asiaPen){
     function w(c){
       var m=1;
+      /* A DRAW PAYS NO REGIONAL PENALTY, and leaving it to saWeight would have
+         been worse than useless here: that function waives the penalty for
+         fixtures the model expects GOALS in, so on a draw slip it would rank
+         the high-scoring South American games above the grinding ones - the
+         exact opposite of what a draw wants. The penalty exists to keep these
+         leagues out of goals markets; on the one market where they are the
+         best source on the board it has no business applying at all. */
+      if(c.code==="X") return 1;
       if(isSouthAmerican(c.f)) m*=saWeight(c.f,pen);
       if(isAsian(c.f)) m*=(asiaPen==null?1:asiaPen);
       return m;
@@ -11695,10 +11703,32 @@ function wspBuild(){
      bar, lower than South America's: sharing SA_MIN_EURO meant any thinned
      card let Japan and China straight in. */
   var asiaMode=(euro.length<ASIA_MIN_EURO)?"fill":(shuffles>=3?"mix":"exclude");
-  var poolList=all.filter(function(c){
-    if(saMode==="exclude"&&isSouthAmerican(c.f)) return false;
-    if(asiaMode==="exclude"&&isAsian(c.f)) return false;
-    return true;
+  /* A DRAW REOPENS THE DOOR, FOR THE DRAW AND NOTHING ELSE.
+     The exclusion above exists because these leagues grind: they are a poor
+     source of goals markets, which is what the rest of this builder is mostly
+     buying. For a DRAW that same grinding is the merit, not the fault.
+     Measured on a 409-fixture board: South American fixtures average a draw
+     probability of 0.298 against 0.262 everywhere else, and 86% of them clear
+     the draw floor against 58% of the rest. They are the single most
+     draw-prone region on the card - and every one of them was being removed
+     from the pool before ranking began, because with a full European card
+     saMode and asiaMode both settle on "exclude" and only 2-3 shuffles undo
+     it. Reported as: "im barely seeing any of those there".
+     So a fixture barred by region is readmitted when the user has asked for
+     draws AND the fixture actually offers one. It comes back carrying ONLY
+     its draw candidate: admitted for the draw, it cannot then be spent on an
+     Over 1.5 - which would be the exclusion quietly leaking through a door
+     opened for something else. */
+  var drawsOn=!!(WSP.mk&&WSP.mk.draw);
+  var poolList=[];
+  all.forEach(function(c){
+    var barred=(saMode==="exclude"&&isSouthAmerican(c.f))||
+               (asiaMode==="exclude"&&isAsian(c.f));
+    if(!barred){ poolList.push(c); return; }
+    if(!drawsOn) return;
+    var dc=(c.cands||[]).filter(function(x){return x.code==="X";});
+    if(!dc.length) return;
+    poolList.push({f:c.f,id:c.id,code:"X",p:dc[0].p,od:dc[0].od,cands:dc});
   });
   var pool=ranked(poolList,
                   saMode==="mix"?0.75:0.92,
