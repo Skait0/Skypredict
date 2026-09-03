@@ -404,12 +404,6 @@ test("the empty slip is caused by the missing target, not by the harness", () =>
    were never drawn. It is a chip now, so these assert the reader's choice is
    the thing that decides, not the board. */
 
-test("Auto hands the payout to the Slider", () => {
-  reset();
-  api.WSP.odds = 100; api.WSP.slider = true;
-  const r = api.wspBuild();
-  assert.strictEqual(r.via, "slider", "Auto must return the Slider's own slip");
-});
 
 test("choosing a style takes the payout back from the Slider", () => {
   reset();
@@ -455,34 +449,7 @@ test("a payout past the Slider's reach cannot be driven by it", () => {
     "so Auto must not answer it even while selected - the panel clears the chip");
 });
 
-test("the lit chip never disagrees with the slip that gets built", () => {
-  /* A payout past the Slider's reach with Auto still chosen used to light no
-     chip at all, while the build fell through to WSP.legodd - the row said
-     nothing was selected and a slip came out anyway. */
-  reset();
-  api.WSP.slider = true; api.WSP.legodd = 1.4;
 
-  api.WSP.odds = 100;
-  assert.strictEqual(api.sliderCanReach(), true);
-  assert.strictEqual(api.wspStyleOn(), "slider", "Auto is lit while it can answer");
-  assert.strictEqual(api.wspBuild().via, "slider", "and it is what builds");
-
-  api.WSP.odds = 50000;
-  assert.strictEqual(api.sliderCanReach(), false, "past this board's reach");
-  assert.strictEqual(api.wspStyleOn(), 1.4,
-    "so the row falls back to the style, rather than lighting nothing");
-  assert.notStrictEqual(api.wspBuild().via, "slider",
-    "and that style is what actually builds");
-});
-
-test("a reader lands on Balanced, not Auto", () => {
-  /* Auto won 2% of the ten-seed sweep against Balanced's 43%, and overshoots
-     the requested payout by a median 2x at x100. It stays available; it is not
-     what someone gets without asking. */
-  const m = /var WSP=\{[^;]*?slider:(true|false)/.exec(src);
-  assert.ok(m, "WSP must declare a slider default");
-  assert.strictEqual(m[1], "false", "Balanced is the landing default");
-});
 
 test("style cannot move the leg count in 'every game that qualifies'", () => {
   /* The reason the chips are not drawn in that mode. If this ever starts
@@ -602,4 +569,26 @@ test("the cache key follows the method that will build, not the raw flag", () =>
      because a removal can change it. */
   assert.match(src, /var _sig=\[WSP\.odds,WSP\.legodd,wspStyleOn\(\),/,
     "the preview cache must key on wspStyleOn(), not WSP.slider");
+});
+
+test("a reader lands on Balanced", () => {
+  /* 1.4 is the Balanced chip. A default matching no chip means a first visit
+     builds to a style none of the buttons shows as chosen, and tapping
+     Balanced then changes the slip while appearing to change nothing. */
+  const m = /var WSP=\{[^;]*?legodd:([0-9.]+)/.exec(src);
+  assert.ok(m, "WSP must declare a legodd default");
+  assert.strictEqual(m[1], "1.4", "the default must be the Balanced chip");
+  assert.ok(!/\bslider:/.test(m.input.slice(m.index, m.index + 200)),
+    "and there is no Auto flag any more - the Slider is a link, not a style");
+});
+
+test("the Wizard always builds its own way now", () => {
+  reset();
+  for (const odds of [10, 100, 2000]) {
+    api.WSP.odds = odds; api.WSP._sig = null;
+    const r = api.wspBuild();
+    assert.notStrictEqual(r.via, "slider",
+      "x" + odds + " must be the Wizard's own method");
+    assert.ok(r.picks.length, "x" + odds + " must still return a slip");
+  }
 });

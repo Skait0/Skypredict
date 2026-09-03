@@ -165,7 +165,17 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
            shows up, add its name; do not widen the pattern. */
         ignoreErrors:[
           /Can't find variable: CONFIG\b/,      // WebKit / iOS Safari
-          /\bCONFIG is not defined\b/           // V8 / Chrome, same thing
+          /\bCONFIG is not defined\b/,          // V8 / Chrome, same thing
+          /* Two more of the same, 3 Sep. `currentInset` threw from init() for
+             three readers and `window.webkit.messageHandlers` from
+             sendScrollEvent() for one. Neither identifier appears anywhere in
+             our bundle, this HTML or the analytics script, and
+             webkit.messageHandlers IS the iOS webview bridge - it exists only
+             inside an in-app browser. Same source as CONFIG: X traffic opening
+             in one. Named exactly, per the rule above. */
+          /Can't find variable: currentInset\b/,
+          /\bcurrentInset is not defined\b/,
+          /window\.webkit\.messageHandlers/
         ],
         tracesSampleRate:0,          // errors only, no perf overhead
         replaysSessionSampleRate:0,
@@ -3021,11 +3031,15 @@ button.wsp-go.waiting{opacity:.55}
    qualifier on a second line keeps each pill sized to its own text and the
    three of them on one line, which is what makes them comparable at a
    glance. Scoped to .wsp-style so the payout ladder keeps its own size. */
-/* Four chips now, not three: Auto joined the styles. Three fitted 320px on
-   one line and four do not, so the row wraps to 2x2 on the narrowest phones
-   rather than clipping one off the end. Two rows of two still compare. */
+/* Three chips again - Auto became a link out to the Slider. Wrap is kept
+   anyway: it costs nothing at three and stops a longer label ever clipping. */
 #wspStyleChips{display:flex;flex-wrap:wrap;gap:6px}
-.wsp-chip.wsp-style.off{opacity:.42;cursor:not-allowed}
+/* The way out to the other builder. Deliberately a link and not a fourth
+   pill: it does not set a style, it leaves. */
+.wsp-slider-link{display:inline-block;margin:8px 0 0;padding:0;border:0;
+  background:none;color:var(--soft);font:inherit;font-size:12px;font-weight:600;
+  text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+@media(hover:hover){ .wsp-slider-link:hover{color:var(--text)} }
 .wsp-chip.wsp-style{display:inline-flex;flex:0 1 auto;flex-direction:column;
   align-items:center;justify-content:center;gap:1px;padding:6px 12px;
   line-height:1.18;min-width:0}
@@ -10712,7 +10726,7 @@ const JACKPOT_ODDS=20000;
    at booking. */
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
-var WSP={odds:null,legodd:1.4,slider:false,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* `slider:false` - Balanced is what a reader lands on, not Auto.
    Measured 3 Sep over ten seeds on the 386-fixture board, counting how often
    each method gave the highest chance of the slip landing AT THE PAYOUT ASKED
@@ -10883,7 +10897,7 @@ function sliderDrives(){
    its own bug waiting to happen. Deriving it cannot drift from what wspBuild
    will actually do, because both ask sliderCanReach. */
 function wspStyleOn(){
-  return (WSP.slider!==false && sliderCanReach()) ? "slider" : WSP.legodd;
+  return WSP.legodd;
 }
 
 /* The Slider's answer for this payout, or null when the payout is past its
@@ -10915,15 +10929,10 @@ function wspBuild(){
      is a handover, not an imitation - buildPicks does the work and its result
      is returned untouched. "Every game that qualifies" asks a different
      question from a payout, so it keeps the Wizard's method. */
-  if(WSP.slider!==false && !WSP.everyGame && WSP.odds!=null){
-    /* Games the user dropped in the Wizard stay dropped; the method is the
-       Slider's, the exclusions are still theirs. */
-    var rm={};
-    for(var k in (BUILD.removed||{})) rm[k]=1;
-    for(var k2 in (WSP.removed||{})) rm[k2]=1;
-    var handed=sliderReach(WSP.odds, WSP.seed, rm, WSP.mk);
-    if(handed) return {picks:handed.picks, odds:handed.odds, short:false, via:"slider"};
-  }
+  /* No handover any more. The Wizard was given a payout and quietly answered
+     it with the Slider's method whenever the Slider could reach it, which is
+     how "fewer games, bigger odds" came to do nothing on a big card. The Slider
+     is a tab, reached by the link under Slip style. See renderWizardPanel. */
   var allowed=wspMarkets(),all=[];
   var seed=WSP.seed||0, shuffles=WSP.shuffles||0;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
@@ -11760,13 +11769,23 @@ function renderWizardPanel(){
        falls back to a style rather than leaving a dead control lit, or worse,
        nothing lit at all. wspStyleOn decides, so this cannot disagree with what
        wspBuild does. */
-    var _canSlide=sliderCanReach(), _on=wspStyleOn();
-    var _ceil=(WSP.everyGame||WSP.odds==null)?0:Math.round(sliderCeilingNow());
+    var _on=wspStyleOn();
     html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips' id='wspStyleChips'>"+
-      "<button class='wsp-chip wsp-style"+(_on==="slider"?" on":"")+(_canSlide?"":" off")+
-        "' data-lo='slider'"+(_canSlide?"":" disabled aria-disabled='true'")+"><b>Auto</b>"+
-        "<i>"+(_canSlide?"we choose the count":"needs \u00d7"+_ceil+" or less")+"</i></button>"+
       styles.map(function(st){return "<button class='wsp-chip wsp-style"+(_on===st[0]?" on":"")+"' data-lo='"+st[0]+"'><b>"+st[1]+"</b>"+(st[2]?"<i>"+st[2]+"</i>":"")+"</button>";}).join("")+"</div>";
+    /* AUTO WAS A CHIP HERE AND IS NOW A LINK OUT.
+       As a chip it had to be greyed whenever the Slider could not reach the
+       payout, which meant a control that changed appearance for a reason no
+       reader could see - and it lost on every measurement anyway: over a full
+       Saturday card with live SportyBet prices it built 30 legs landing 0.001%
+       at x6000 where "Fewer games" built 16 landing 0.182%, and it never won a
+       single rung. Keeping it as a fourth chip sold the worst option beside
+       three better ones.
+       The Slider is still there and still worth using - it just answers "how
+       much risk", not "what payout", so it belongs behind its own tab rather
+       than inside this row. A link says that honestly and never needs greying,
+       because the Slider tab always works. */
+    html += "<button class='wsp-slider-link' id='wspToSlider' type='button'>"+
+      "Or let the Slider pick the games \u2192</button>";
   }
   html +=
     "<button class='book-btn wsp-go"+(WSP.odds==null?" waiting":"")+
@@ -11847,13 +11866,16 @@ function renderWizardPanel(){
   var _sty=$("wspStyleChips");
   if(_sty) _sty.querySelectorAll("[data-lo]").forEach(function(c){
     c.addEventListener("click",function(){
-      /* "slider" is a method, not a per-leg target, so it must not be coerced
-         with + - that yields NaN, and NaN||1.4 silently builds Balanced while
-         the Auto chip shows as chosen. */
-      if(c.dataset.lo==="slider"){ WSP.slider=true; }
-      else { WSP.slider=false; WSP.legodd=+c.dataset.lo; }
+      WSP.legodd=+c.dataset.lo;
       WSP._sig=null;renderBuilder();
     });
+  });
+  /* Absent before a payout is chosen, like the chips it sits under. */
+  var _toSlider=$("wspToSlider");
+  if(_toSlider) _toSlider.addEventListener("click",function(){
+    BUILD.mode="slider";
+    try{localStorage.setItem("sw.mode","slider");}catch(e){}
+    renderBuilder();
   });
   $("wspGo").addEventListener("click",function(){
     /* Disabled would have been silent about why. It stays pressable and says

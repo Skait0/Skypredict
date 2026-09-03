@@ -32,6 +32,11 @@ const path = require("path");
 const HTML = fs.readFileSync(
   path.join(__dirname, "..", "public", "index.html"), "utf8");
 
+/* The identifiers we have agreed to drop, each one traced to an in-app
+   browser injecting script into our page. Adding to this list is the
+   deliberate act; widening a pattern is not. */
+const SILENCED = ["CONFIG", "currentInset", "webkit"];
+
 /* The array as the browser actually receives it. */
 function ignorePatterns() {
   const at = HTML.indexOf("ignoreErrors:[");
@@ -125,8 +130,13 @@ test("the filter is a list of identifiers, not a blanket error-type rule", () =>
   for (const re of ignorePatterns()) {
     assert.strictEqual(re.test("ReferenceError: something is not defined"), false,
       "matches any ReferenceError, which is far too wide: " + re);
-    assert.ok(/CONFIG/.test(re.source),
-      "every pattern must name the identifier it silences: " + re);
+    /* Every pattern must still NAME what it silences. The list is explicit so
+       that adding a new silence is a deliberate edit here as well as in the
+       page - a pattern for an identifier nobody has written down is exactly
+       the blanket rule this test exists to stop. */
+    assert.ok(SILENCED.some((id) => re.source.indexOf(id) >= 0),
+      "every pattern must name one of the identifiers we have agreed to " +
+      "silence (" + SILENCED.join(", ") + "): " + re);
   }
 });
 

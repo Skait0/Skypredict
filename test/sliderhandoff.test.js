@@ -198,18 +198,20 @@ test("every handed-back leg carries the odd it will be booked at", () => {
 
 /* ------------------------------------------------------------ the call site */
 
-test("the Wizard actually hands over", () => {
-  /* Call-site assertion. Everything above drives sliderReach directly and
-     would pass unchanged while wspBuild ignored it, which is exactly the bug
-     worth guarding. */
+test("the Wizard no longer hands over", () => {
+  /* The inverse of what this asserted until 3 Sep. The handover was the reason
+     "fewer games, bigger odds" did nothing on a big card: the Wizard was given
+     a payout and quietly answered it with the Slider's method whenever the
+     Slider could reach it, which on All upcoming was every rung on the ladder.
+     Measured on a full Saturday with live prices, that method also lost every
+     rung - 30 legs landing 0.001% at x6000 where "Fewer games" built 16 landing
+     0.182%. The Slider is reached by its own tab now. */
   const fn = src.slice(src.indexOf("function wspBuild()"),
                        src.indexOf("function wspBuild()") + 1800);
-  assert.match(fn, /sliderReach\(WSP\.odds/,
-    "wspBuild must consult the Slider before doing its own work");
-  assert.match(fn, /if\(handed\) return \{picks:handed\.picks/,
-    "and return the Slider's selection untouched");
-  assert.match(fn, /!WSP\.everyGame/,
-    '"every game that qualifies" asks a different question and keeps the Wizard');
+  assert.ok(!/sliderReach\(WSP\.odds/.test(fn),
+    "wspBuild must build its own way, not defer to the Slider");
+  assert.match(src, /id=.wspToSlider./,
+    "and the Slider must still be reachable, by a link out of the panel");
 });
 
 test("the envelope is measured, never hardcoded", () => {
@@ -308,11 +310,11 @@ test("the style chips are only wired when they are drawn", () => {
      failure than the dead buttons it was fixing. */
   assert.match(src, /var _sty=\$\("wspStyleChips"\);\s*\n\s*if\(_sty\)/,
     "the style-chip listener must tolerate the chips being absent");
-  /* The Auto chip carries a method, not a per-leg number. Coercing it with +
-     yields NaN, and `NaN||1.4` then silently builds Balanced while the Auto
-     chip shows as chosen - a control that lies about what it did. */
-  assert.match(src, /if\(c\.dataset\.lo==="slider"\)\{ WSP\.slider=true; \}/,
-    "the Auto chip must set the method rather than be coerced to a number");
+  /* Every chip in this row is now a per-leg target and nothing else, so the
+     handler may coerce with + again. The link out is a separate control with
+     its own guard, because it is absent until a payout is chosen too. */
+  assert.match(src, /var _toSlider=\$\("wspToSlider"\);\s*\n\s*if\(_toSlider\)/,
+    "the Slider link must tolerate being absent");
 });
 
 test("the memo notices when the inputs change", () => {
