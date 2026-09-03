@@ -177,3 +177,47 @@ test("the dot is marked up, not typed into the label", () => {
   assert.match(body({ code: "ABC123", book: "sporty" }),
     /Open in football<span>\.<\/span>com/);
 });
+
+test("THE PAGE'S OWN SCRIPT MUST PARSE", () => {
+  /* The test that would have caught a live regression, and the reason it is
+     shouted about.
+     Everything in that <script> block is inside a TEMPLATE LITERAL, so
+     JavaScript processes escapes on the way out. A regex written in the source
+     as /^https?:\/\// was emitted as /^https?:///, which terminates at the
+     second slash and turns the remainder of the line into a comment. Syntax
+     error - and not a quiet one confined to the feature being added: the whole
+     block failed, so Copy code stopped working on every shared slip page too.
+     Nothing else here would have noticed. Every other test in this file reads
+     the markup as a string, and a string containing broken JavaScript is still
+     a perfectly good string.
+     So: compile what is actually emitted. */
+  const vm = require("node:vm");
+  const legs = [{ home: "Arsenal", away: "Chelsea", date: "2026-09-04",
+    code: "1X", od: 1.38, p: 0.72 }];
+  for (const opts of [{ code: "ABC123", book: "sporty" },
+                      { code: "ABC123", book: "bet9ja" },
+                      { book: "sporty" }]) {
+    const html = S.renderPage(legs, null, "/s", opts);
+    const blocks = html.match(/<script>([\s\S]*?)<\/script>/g) || [];
+    assert.ok(blocks.length, "the page must still carry its script");
+    blocks.forEach((b, i) => {
+      const code = b.replace(/^<script>/, "").replace(/<\/script>$/, "");
+      assert.doesNotThrow(() => new vm.Script(code),
+        "script block " + i + " does not parse for " + JSON.stringify(opts));
+    });
+  }
+});
+
+test("and it contains no backslash at all", () => {
+  /* The rule that keeps the above true rather than merely tested. Inside a
+     template literal every backslash is a question about what survives, and
+     the answer is easy to get wrong and invisible until something breaks. A
+     plain indexOf cannot be mangled; a regex can. */
+  const src = require("fs").readFileSync(
+    require("path").join(__dirname, "..", "lib", "sliplink.js"), "utf8");
+  const m = /<script>([\s\S]*?)<\/script>/.exec(src);
+  assert.ok(m, "the script block must be findable in the source");
+  assert.ok(m[1].indexOf("\\") < 0,
+    "a backslash in this template literal is emitted as something else; use "
+    + "string methods instead of a regex");
+});
