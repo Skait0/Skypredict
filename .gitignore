@@ -29,3 +29,7 @@ public/404.html
 .vercel
 .env*
 live.html
+
+# Scratch dumps from poking the Vercel API while debugging. They are build
+# event logs - no secrets, just noise that does not belong in the repo.
+ev*.json
