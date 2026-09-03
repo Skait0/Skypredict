@@ -10977,10 +10977,14 @@ function wspBuild(){
          below rejects every one of them - adding "X" to the market list without
          this would have produced a toggle that turned on and changed nothing,
          which is the failure this builder keeps having.
-         0.30 is the site's own bar for "a draw is live here": it is what
-         draw_watch uses to flag a fixture on the board, so the chip and the
-         flag agree about which games qualify. */
-      var floor=(c==="X")?0.30:(c==="GG")?0.42:0.5;
+         0.26 comes from measurement, not taste. Over 863 held-out matches on
+         3 Sep 2026 the model's draw probability reached 0.30 on TWO of them -
+         a floor there is a toggle that turns on and returns nothing. At 0.26
+         and above it covers about a third of the card and those fixtures drew
+         29.7% of the time, so the bar admits draws that actually land more
+         often than the 24.2% base. The model reads low on draws, which is the
+         same under-confidence the calibration work found elsewhere. */
+      var floor=(c==="X")?0.26:(c==="GG")?0.42:0.5;
       if(v<floor)return;
       cands.push({f:f,id:fid(f),code:c,p:v,od:legOdd(f,c,v)});
     });

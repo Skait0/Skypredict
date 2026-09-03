@@ -93,18 +93,19 @@ test("the Wizard offers the draw only when the toggle is on", () => {
 test("a draw is not held to a floor no draw can clear", () => {
   /* Without this the toggle would turn on and change nothing: the flat 0.5
      minimum rejects every draw on the card, since three-way probability tops
-     out near 0.33. 0.30 is the site's own bar - draw_watch uses it to flag a
-     fixture as draw-ish on the board - so the chip and the flag agree. */
+     out near 0.33.
+     0.26 rather than 0.30, and the difference is the whole point. Measured
+     over 863 held-out matches, the model's draw probability reached 0.30 on
+     TWO - so a floor there is a market that switches on and returns an empty
+     slip, which is the failure this builder keeps having. At 0.26 it covers
+     about a third of the card at a 29.7% actual draw rate, against a 24.2%
+     base. */
   const fn = grab("wspBuild");
-  assert.match(fn, /var floor=\(c==="X"\)\?0\.30:\(c==="GG"\)\?0\.42:0\.5;/,
-    "the draw needs its own floor or it can never be picked");
+  assert.match(fn, /var floor=\(c==="X"\)\?0\.26:\(c==="GG"\)\?0\.42:0\.5;/,
+    "the draw needs a floor it can actually clear");
   assert.match(fn, /if\(v<floor\)return;/, "and the floor must be applied");
-  const watch = /draw_watch:\s*k\.draw >= ([0-9.]+)/.exec(
-    fs.readFileSync(path.join(__dirname, "..", "lib", "build.js"), "utf8"));
-  assert.ok(watch, "draw_watch must still declare its threshold");
-  assert.strictEqual(watch[1], "0.30",
-    "the builder's draw floor is pinned to this; if the board's idea of a " +
-    "live draw moves, the two must move together");
+  assert.ok(!/0\.30/.test(/var floor=[^;]*/.exec(fn)[0]),
+    "0.30 was measured to admit 2 fixtures in 863 - it must not come back");
 });
 
 test("a draw is still gradeable and still a proven market", () => {
@@ -167,4 +168,47 @@ test("turning it OFF needs no ceremony", () => {
   /* Off is the safe direction. Asking there would be a nag. */
   assert.match(src, /cfg&&cfg\.warn&&!BUILD\.mk\[k\]/,
     "the guard must be conditional on it currently being off");
+});
+
+/* --------------------------------- where the board says a draw is live */
+
+test("draw_watch keys on evenness, and on a league key that resolves", () => {
+  /* It used to require k.draw >= 0.30, which fired on TWO of 863 held-out
+     matches - 0.2% of the card against the "one game in thirty" its comment
+     claimed. A flag that never fires looks exactly like one switched off.
+     What predicts a draw is the sides being evenly matched, and it is a cliff:
+     inside 0.10 expected goals the rate is 33.3% against a 24.2% base, past
+     0.15 it flattens to about 21%. */
+  const build = fs.readFileSync(path.join(__dirname, "..", "lib", "build.js"), "utf8");
+  assert.ok(!/draw_watch:\s*k\.draw >= 0\.30/.test(build),
+    "the probability threshold fired on 0.2% of fixtures - it must not return");
+  assert.match(build, /const gap = Math\.abs\(k\.lh - k\.la\);/,
+    "draw_watch must key on how evenly matched the sides are");
+  assert.match(build, /gap < \(lift >= 1\.10 \? 0\.18 : 0\.12\)/,
+    "inside the cliff, widened for a league that actually draws");
+  /* THE KEY HAS TO RESOLVE. drawLift is keyed on the league names carried by
+     `matches`; the model is queried with idx.leagues[...]. Look it up with
+     anything else and every fixture gets the default 1, the league term
+     quietly does nothing, and nothing anywhere fails. */
+  assert.match(build, /drawLift\.get\(idx\.leagues\[li\]\)/,
+    "the lift must be looked up in the namespace matches actually use");
+  assert.match(build, /acc\.get\(m\.league\)/,
+    "and built in that same namespace");
+});
+
+test("the league lift is derived, not a list of names", () => {
+  /* The same rule "high scoring" follows. A hardcoded league list needs
+     maintaining and goes stale the season a division changes character;
+     Argentina qualifies on its record (30.2% over 6,340 matches, the
+     lowest-scoring league of the 36) and drops out if it stops drawing. */
+  const build = fs.readFileSync(path.join(__dirname, "..", "lib", "build.js"), "utf8");
+  const blk = build.slice(build.indexOf("const drawLift"), build.indexOf("const heldByDate"));
+  assert.ok(blk.length > 0, "the lift table must exist");
+  assert.ok(!/Argentina|Liga Profesional/.test(blk),
+    "no league may be named here - the rate is the qualification");
+  /* On the line that ADMITS a league, not just anywhere in the block: the
+     same condition also guards the base-rate loop, so a looser match stayed
+     green while every three-match league went into the table. */
+  assert.match(blk, /if \(v\.n >= DRAW_MIN_N\) out\.set\(name,/,
+    "a league needs a real sample before its rate is trusted");
 });
