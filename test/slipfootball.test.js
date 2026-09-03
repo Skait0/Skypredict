@@ -15,14 +15,25 @@
  * one a link lands on, which is where somebody who is not already a user
  * arrives - only ever offered SportyBet.
  *
- * NOT INCLUDED, deliberately: the intent:// workaround the app uses. Its
- * comment says football.com serves a 404 for /.well-known/assetlinks.json, the
- * file Android needs before an app may claim a site's https links. That could
- * not be verified from here - football.com's CDN block-pages this machine, and
- * so does SportyBet's, all with an identical 919-byte CloudFront 403 - and the
- * owner reports the plain link opening on both mobile and web. An unverifiable
- * workaround for a problem nobody can currently observe is not worth the
- * complexity, so the href is the plain web URL, which works everywhere.
+ * THE ANDROID INTENT, WHICH I REMOVED AND HAD TO PUT BACK. Worth the space,
+ * because the reasoning that removed it looked sound.
+ *
+ * The app's modal upgrades this link to an intent:// URL on Android, because
+ * football.com serves no /.well-known/assetlinks.json - the file Android needs
+ * before an app may claim a site's https links. I could not confirm that from
+ * the build machine: football.com block-pages it with a CloudFront 403, and so
+ * does SportyBet, both with the same 919-byte body, while example.com answers
+ * fine. So the claim was unverifiable, and the owner reported the link opening
+ * the app on his phone. I took the workaround out as unnecessary.
+ *
+ * It was necessary. He had been tapping the modal, which already used
+ * intent://. A reader tapping a SHARED slip, which carried only the plain URL,
+ * landed on the website. Two different links, not two different phones - and
+ * "it works for me" is the weakest evidence there is when the two paths are
+ * not the same code.
+ *
+ * So the plain URL ships in the markup, where iPhone, desktop and no-JS all
+ * need it, and Android is upgraded on top by the page's own script.
  */
 
 const test = require("node:test");
@@ -101,11 +112,45 @@ test("it opens away from the page, safely", () => {
     + "an outbound commercial link on 1,120 indexed pages");
 });
 
-test("the href is a plain https url", () => {
-  /* No intent:// - see the note at the top of this file. Anything device
-     specific rendered by a server that cannot see the device is a guess. */
+test("the markup ships the plain url, not a device guess", () => {
+  /* The server cannot see the device, so what it renders must work on all of
+     them. iPhone and desktop get this href and nothing else. */
   const h = body({ code: "ABC123", book: "sporty" });
-  assert.ok(!/intent:\/\//.test(h), "no unverifiable scheme in server-rendered markup");
+  assert.ok(!/intent:\/\//.test(h),
+    "the rendered body must not contain an Android-only scheme");
+  assert.match(h, /href="https:\/\/www\.football\.com\//);
+});
+
+test("and Android is upgraded by the page script", () => {
+  /* The half that had to come back. Without this the shared slip opens the
+     website on Android while the app's own modal opens the app - which is
+     exactly the split a reader reported. */
+  const src = require("fs").readFileSync(
+    require("path").join(__dirname, "..", "lib", "sliplink.js"), "utf8");
+  assert.match(src, /if\(fb && \/android\/i\.test\(navigator\.userAgent\)\)\{/,
+    "the upgrade must be gated on Android");
+  assert.match(src, /intent:\/\//, "and must build an intent URL");
+  assert.match(src, /S\.browser_fallback_url=/,
+    "with a fallback - no app, wrong package, or an app that declines, and the "
+    + "browser opens the same page it would have anyway");
+  assert.match(body({ code: "ABC123", book: "sporty" }), /id="fb"/,
+    "and the script needs the anchor to carry an id");
+});
+
+test("both paths name the same Android package", () => {
+  /* The app modal and this page each hold the package name, in files that
+     cannot import from one another - index.html is standalone. Two copies
+     drift, and a wrong package silently sends everyone to the website with
+     nothing to show for it, so they are checked against each other. */
+  const fs = require("fs"), path = require("path");
+  const slip = fs.readFileSync(path.join(__dirname, "..", "lib", "sliplink.js"), "utf8");
+  const app = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  const a = /package=([a-z0-9.]+)/.exec(slip);
+  const b = /FOOTBALL_PKG="([a-z0-9.]+)"/.exec(app);
+  assert.ok(a, "the shared page must name a package");
+  assert.ok(b, "the app must name a package");
+  assert.strictEqual(a[1], b[1],
+    "the two paths disagree about football.com's Android package");
 });
 
 /* --------------------------------------------------------------- how it looks */
