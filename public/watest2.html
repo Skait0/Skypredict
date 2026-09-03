@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- TEMPORARY DIAGNOSTIC PAGE - delete with watest.html once this is settled.
+
+     /watest proved the image is the cause: the 87KB JPEG previews on WhatsApp
+     where the 207KB PNG does not. But that test moved TWO things at once,
+     format and weight, so it could not say which.
+
+     This moves one. The image here is the SAME card, still a PNG, box-downscaled
+     to 784x386 - which lands at 87KB, the same weight as the JPEG that worked.
+
+       preview appears  -> WEIGHT. The fix is to emit a smaller card from
+                           prebuild, which is a resize in the generator and
+                           keeps everything else as it is.
+       still nothing    -> FORMAT. PNG is the problem whatever it weighs, and
+                           the fix has to produce a JPEG - a real piece of work
+                           in a zero-dependency build, so worth being sure
+                           before starting it.
+
+     noindex, and absent from the sitemap. -->
+<meta name="robots" content="noindex, nofollow">
+<title>Soccerwizard</title>
+<meta property="og:type" content="website">
+<meta property="og:title" content="Soccerwizard">
+<meta property="og:description" content="Football predictions rebuilt every morning from results, plus a ready-made SportyBet slip - we pick the games and hand you the booking code.">
+<meta property="og:url" content="https://www.soccerwizard.live/watest2">
+<meta property="og:site_name" content="Soccerwizard">
+<meta property="og:image" content="https://www.soccerwizard.live/og-card-small.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="784">
+<meta property="og:image:height" content="386">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://www.soccerwizard.live/og-card-small.png">
+<style>
+  body{margin:0;min-height:100vh;display:grid;place-items:center;
+    background:#0D0D0F;color:#F2F1F0;
+    font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px}
+  .b{max-width:440px;text-align:center}
+  h1{font-size:17px;margin:0 0 10px}
+  p{color:#A3A0A6;font-size:13.5px;margin:0 0 8px}
+  code{color:#FF6B75;font-size:12.5px}
+  a{color:#FF6B75}
+</style>
+</head>
+<body>
+  <div class="b">
+    <h1>WhatsApp preview test 2</h1>
+    <p>Same card, still a <b>PNG</b>, shrunk to 784&times;386 &mdash; <b>87KB</b>,
+       the same weight as the JPEG that worked.</p>
+    <p>If this previews, the problem is <b>weight</b>. If it doesn't, the problem
+       is the <b>format</b>.</p>
+    <p><code>/watest2</code> &middot; temporary, safe to delete</p>
+    <p><a href="/">Back to Soccerwizard</a></p>
+  </div>
+</body>
+</html>
