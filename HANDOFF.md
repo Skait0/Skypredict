@@ -1,4 +1,4 @@
-# Soccerwizard — Session Handoff (updated 2026-09-03, late)
+# Soccerwizard — Session Handoff (updated 2026-09-03, afternoon)
 
 ## Deployed state
 - **Live URL:** https://www.soccerwizard.live — **www is canonical**, the bare
@@ -263,6 +263,100 @@ The rest are booking, in soccerwizard-api:
 session booked 199 legs in one code successfully. Our caps are 40, and 50 for
 jackpot. If a 50-selection limit is real, it is not recorded anywhere and the
 jackpot cap sits exactly on it - worth confirming before trusting x20000+.
+
+## 2026-09-03 afternoon - the empty draw slip, the matcher, and a chip that became a circle
+
+Two commits, both pushed and verified live by fetching the hashed bundles
+(`app.b1922afb09.js`, `app.1b13cf1693.css`) - never by grepping `index.html`,
+which is rewritten at deploy time and always looks wrong.
+
+**`76898c2` The draw slip came back empty, and the matcher paired the wrong
+clubs.**
+
+*The draw.* Turning on Draw returned "No games to conjure", and returned it on
+"all upcoming" too. That second half is the diagnosis: that path pins the
+per-leg target at 1.01, which NARROWS the market band to 1.41 rather than
+widening anything. `bestOf` picks each fixture's market from a band of
+`g*0.92` to `g*OVERSHOOT`, and `g` came straight from the Slip style - 1.4 for
+Balanced - so the band only ever accepted legs of about 1.3 to 2.0. A draw is
+priced near 3.2. Every draw overshot, nothing sat under it, `bestOf` returned
+`null` on EVERY fixture. `reachablePerLeg()` now asks the board what a leg
+actually costs (median across fixtures of each fixture's cheapest bookable
+candidate) and the target is `max(style, reachable)`. With the usual markets on
+that is ~1.05, the style stays in charge, and no existing slip changes.
+Measured either side of the two lines: draw-only 0 legs to 5 at x100 and 0 to 6
+on "all upcoming"; a normal slip unchanged at 11.
+
+*The matcher.* Containment ignored word boundaries and scored coincidences at
+1.8 - the figure reserved for an exact or containing name: Gent inside
+arGENTinos Juniors, Rakow inside kRAKOW, Angers inside rANGERS, Farul Constanta
+against "Tanta FC". Separately the reserve guard anchors markers to the end of a
+name, so "Willem II" read as a reserve side and the club could never be matched
+at all. Working the sixteen unmatched fixtures from a live log turned up three
+more faults that pair a fixture with the wrong football: eight women's sides
+scoring 1.8 against their own men's team (Manchester City WFC, Arsenal WFC, Zhfk
+Krylya Sovetov), reserve sides numbered MID-name that the end-anchored rule
+never saw (Arsenal-2 Tula, FC Zenit-2 St Petersburg, FC Spartak-2 Moscow), and
+two clubs called America in two countries.
+
+**One alias was worse than the miss it fixed, and the rule generalises.**
+Expanding QPR to "queens park rangers" scored 1.8 against GLASGOW RANGERS and
+Queens Park FC, because the long name contains both. It collapses to "qpr"
+instead. *When a club's full name contains another club's whole name, alias
+toward the form that does not.*
+
+Verified by scoring all 1,562,940 name pairs the live feeds produce under old
+and new code: 12 gained, 120 lost, every loss a substring coincidence, a
+women's side or a reserve side. Harness kept in the scratchpad (`namelib2.js`
+lifts the matcher from any `index.html`, `namediff.js` diffs the verdicts) -
+re-run it against a fresh log rather than reasoning about a name.
+
+**`a4a9171` The draw chip became a giant circle on phones.** Reported as "it
+shows two big circles", then "it gets big along with both score" - and the
+row-mate is what identified it, because a whole GRID ROW stretching is a
+different fault from one chip misbehaving. **The page installs a global ripple
+handler that APPENDS `<span class="rip-ink">` into whatever was clicked**, sized
+to the element's longest side. The stripe styling had lifted the chip's content
+with `.mkt-chip.is-draw>*{position:relative;z-index:1}`, which outranks
+`.rip-ink`'s own class rule and forced the ink into flow: a 159x159 square in a
+31px flex chip, the row grew with it, and at `border-radius:99px` both chips
+rendered as circles for the 560ms the ripple lives. Now `isolation:isolate` on
+the chip and `z-index:-1` on the stripe layer, so no rule reaches a child at
+all. **A `>*` rule is a rule about elements you have not written yet.**
+
+The gold gradient it replaced was itself a fix: gold reads as a jackpot, on the
+least likely bet the site builds. The payout row had already solved this with
+hazard stripes; the chip now uses the same device.
+
+**Reproducing mobile:** Claude's viewport is pinned, so `@media(max-width:560px)`
+never fires. Render the page in a 540px `<iframe>` - it gets its own viewport -
+and drive it through `contentWindow`. Half a dozen theories died at desktop
+width; at 536px the chips measured 159x31 then 159x173 and named the fault at
+once. Note `getBoundingClientRect` (visual) disagreed with
+`gridTemplateRows` (layout), and that disagreement is what proved an in-flow
+injection rather than a sizing rule.
+
+**Tests: 866 pass.** New: `drawtarget`, `teamnames`, `teamaliases`, `drawchip`.
+`variant.test.js` had to learn to lift `containsWords` or every score threw.
+22 mutants across the three fixes, all caught - including one that only died
+after a test case whose numbers sort differently as text than as numbers.
+
+**Still open from this session:** `Spartak Moscow` vs `Sparta Rotterdam` scores
+1.00 and `Fortuna Sittard` brushes `Fortuna D`; both are weak, both pre-existing,
+neither can pair a fixture alone. The `"sparta rotterdam": "sparta"` alias is
+what does it.
+
+**Vercel is asking for Pro over Fluid CPU.** Ruled out as causes: `/api/live`
+(edge-cached, MISS then HIT with Age climbing), `/api/predictions` (static file
+first, function cached 6h), the sweep (GitHub throttles it to ~5 runs a day).
+Cause not yet identified - the breakdown is under **Usage at team level**, not
+the project Observability tab, which asks for a connector. Two things to weigh
+before paying: Hobby is licensed non-commercial and this site hands out booking
+codes, so Pro may be required by terms regardless of CPU; and Railway is already
+paid with usage included, so `slipcard.js` (PNG encoding at 1GB) and the sweep
+could move onto capacity already bought. Deploy volume is also worth trimming -
+63, 59, 43 and 37 deploys a day last week, each one a full board rebuild, which
+is what killed the API-Football key.
 
 ## This session (2026-09-03)
 
