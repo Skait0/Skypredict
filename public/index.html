@@ -3036,10 +3036,54 @@ button.wsp-go.waiting{opacity:.55}
 #wspStyleChips{display:flex;flex-wrap:wrap;gap:6px}
 /* The way out to the other builder. Deliberately a link and not a fourth
    pill: it does not set a style, it leaves. */
-.wsp-slider-link{display:inline-block;margin:8px 0 0;padding:0;border:0;
-  background:none;color:var(--soft);font:inherit;font-size:12px;font-weight:600;
-  text-decoration:underline;text-underline-offset:3px;cursor:pointer}
-@media(hover:hover){ .wsp-slider-link:hover{color:var(--text)} }
+/* THE WAY OUT TO THE OTHER BUILDER.
+   Still a link and not a fourth pill - it does not set a style, it leaves, and
+   a pill in that row would read as a fourth thing to choose. But a plain grey
+   underline beside three lit chips is the quietest thing on the panel, and a
+   reader who wants "pick it for me" never sees it.
+   So it gets a rule of its own: a hairline that draws itself under the words,
+   an arrow that slides, and one slow sheen that passes across every few
+   seconds to catch the eye without ever moving the layout. The sheen is
+   `background-position` on a gradient - no transform, no reflow, and it costs
+   nothing on a phone. */
+.wsp-slider-link{position:relative;display:inline-flex;align-items:center;gap:6px;
+  margin:10px 0 0;padding:2px 0;border:0;background:none;color:var(--soft);
+  font:inherit;font-size:12px;font-weight:700;letter-spacing:.01em;
+  text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.wsp-slider-link .wsl-t{
+  background-image:linear-gradient(100deg,
+    var(--soft) 0%, var(--soft) 38%, var(--text) 50%, var(--soft) 62%, var(--soft) 100%);
+  background-size:280% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:wslSheen 5.5s ease-in-out infinite}
+/* The arrow is its own element so it can move without dragging the text. */
+.wsp-slider-link .wsl-a{display:inline-block;color:var(--red-ink);font-weight:800;
+  transition:transform .22s cubic-bezier(.2,.7,.3,1)}
+/* The hairline grows from the left rather than fading, so the eye follows it
+   to the words instead of the whole thing simply brightening. */
+.wsp-slider-link::after{content:"";position:absolute;left:0;right:0;bottom:-1px;
+  height:1px;background:var(--red-ink);opacity:.5;
+  transform:scaleX(.35);transform-origin:left center;
+  transition:transform .26s cubic-bezier(.2,.7,.3,1),opacity .26s ease}
+@keyframes wslSheen{
+  0%,72%{background-position:120% 0}
+  100%{background-position:-40% 0}
+}
+@media(hover:hover){
+  .wsp-slider-link:hover .wsl-t{animation-play-state:paused;color:var(--text);
+    -webkit-text-fill-color:var(--text)}
+  .wsp-slider-link:hover .wsl-a{transform:translateX(4px)}
+  .wsp-slider-link:hover::after{transform:scaleX(1);opacity:.9}
+}
+.wsp-slider-link:active .wsl-a{transform:translateX(2px)}
+.wsp-slider-link:focus-visible{outline:2px solid var(--red-ink);outline-offset:3px;
+  border-radius:3px}
+/* Somebody who has asked for less movement gets none of it. */
+@media(prefers-reduced-motion:reduce){
+  .wsp-slider-link .wsl-t{animation:none;color:var(--soft);
+    -webkit-text-fill-color:var(--soft)}
+  .wsp-slider-link .wsl-a,.wsp-slider-link::after{transition:none}
+}
 .wsp-chip.wsp-style{display:inline-flex;flex:0 1 auto;flex-direction:column;
   align-items:center;justify-content:center;gap:1px;padding:6px 12px;
   line-height:1.18;min-width:0}
@@ -11708,7 +11752,8 @@ function renderWizardPanel(){
        than inside this row. A link says that honestly and never needs greying,
        because the Slider tab always works. */
     html += "<button class='wsp-slider-link' id='wspToSlider' type='button'>"+
-      "Or let the Slider pick the games \u2192</button>";
+      "<span class='wsl-t'>Or let the Slider pick the games</span>"+
+      "<span class='wsl-a' aria-hidden='true'>\u2192</span></button>";
   }
   html +=
     "<button class='book-btn wsp-go"+(WSP.odds==null?" waiting":"")+
