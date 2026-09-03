@@ -3258,6 +3258,17 @@ button.wsp-go.waiting{opacity:.55}
 }
 /* The ask. Sits under the row it belongs to and goes when answered. */
 #mkAsk:not(:empty){margin:10px 0 2px}
+/* The idle-market note. One line, muted, and it takes no space at all when
+   there is nothing to say - :not(:empty) rather than a class, so an empty
+   string is genuinely empty and cannot leave a gap in the panel.
+   Deliberately small on a phone: the chip row it explains is already three
+   rows tall at 560px, and a two-line explanation under it would push the
+   payout ladder off the first screen. */
+#mkIdle:not(:empty){margin:8px 0 0}
+.mk-idle{font-size:12px;line-height:1.45;color:var(--faint);margin:0}
+.mk-idle span{color:var(--soft);font-weight:700}
+.mk-idle b{color:var(--text);font-weight:700}
+@media(max-width:560px){ .mk-idle{font-size:11.5px} }
 #mkAsk .confirm-card{border-color:rgba(242,184,75,.45)}
 #mkAsk .confirm-card b{color:#F2B84B}
 .wsp-chip.wsp-style{display:inline-flex;flex:0 1 auto;flex-direction:column;
@@ -4819,6 +4830,10 @@ footer{margin-top:26px;padding-top:18px;
       <div class="wsp-chips mkt-palette stage-in stage-in-3" id="bldMk"></div>
       <!-- Where the draw asks before it turns on. Empty until then. -->
       <div id="mkAsk"></div>
+      <!-- Where a market that was switched on and then contributed nothing
+           explains itself. Empty the rest of the time, and it carries no
+           margin when empty so it cannot push the panel around. -->
+      <div id="mkIdle"></div>
       </div>
     </div>
 
@@ -11866,6 +11881,103 @@ function wspBuild(){
   return accumulate(pool);
 }
 // --- Wizard panel rendering (replaces renderWsp) ---
+/* WHICH TOGGLE PRODUCES WHICH LEG. Kept beside the chips rather than derived,
+   because the mapping is the one thing that would silently rot: a market added
+   to wspMarkets and not to this list simply stops being reported on. */
+var MKT_CODES={wd:["1X","X2"],any:["12"],out:["1","2"],o15:["OVER_1.5"],
+  o25:["OVER_2.5"],o35:["OVER_3.5"],fh:["FH_OVER_0.5"],
+  tts:["HOME_OVER_0.5","AWAY_OVER_0.5"],tts2:["HOME_OVER_1.5","AWAY_OVER_1.5"],
+  both:["GG"],draw:["X"]};
+
+/* A MARKET YOU SWITCHED ON THAT CHANGED NOTHING LOOKS BROKEN.
+   Measured on a 394-fixture board: turning "Team over 1.5" on at Balanced
+   produces a slip byte-identical to leaving it off, and turning on Over 3.5
+   does the same. Neither is a fault - a team scoring twice is genuinely
+   unlikely, only 101 of 790 candidates clear the 50% floor, and the survivors
+   are priced 1.9 to 3.0 while the Balanced band is 1.28 to 1.95. At Fewer
+   games the band moves to 1.53-2.34 and four of nine legs become team-over-1.5
+   immediately.
+   But the panel said none of that, and a control that visibly does nothing is
+   indistinguishable from one that is broken - the same failure as the league
+   picker showing five of twenty-eight leagues correctly and explaining
+   nothing. So name it, and say where it WOULD work. */
+function idleMarkets(picks){
+  var used={}; (picks||[]).forEach(function(p){ used[p.code]=1; });
+  var out=[];
+  Object.keys(MKT_CODES).forEach(function(k){
+    if(!WSP.mk[k]) return;
+    if(MKT_CODES[k].some(function(c){ return used[c]; })) return;
+    out.push(k);
+  });
+  return out;
+}
+/* WHY IT SAT OUT. Three different answers and only one of them is worth
+   acting on, so guessing between them is worse than saying nothing.
+     "floor"     nothing on the card clears the market's confidence bar
+     "range"     it would appear at a longer slip style - actionable
+     "outranked" it is in range, another market was simply safer every time
+   The middle one is decided by ASKING rather than by modelling the band: the
+   slip is rebuilt at the longest style and we look. Reconstructing `g` out
+   here would mean a second copy of the per-leg target arithmetic, which is
+   exactly the sort of thing that drifts and then gives confident wrong advice.
+   One extra build of a 400-fixture board costs a few milliseconds, and only
+   when a market actually sat out. */
+function idleReason(k, longStyle){
+  var codes=MKT_CODES[k], any=false;
+  scopeFixtures().forEach(function(f){
+    codes.forEach(function(c){
+      var p=mProb(f,c);
+      if(p==null||isNaN(p)) return;
+      var floor=(c==="X")?0.26:(c==="GG")?0.42:0.5;
+      if(p>=floor) any=true;
+    });
+  });
+  if(!any) return "floor";
+  return codes.some(function(c){ return longStyle[c]; }) ? "range" : "outranked";
+}
+/* What the slip would contain at the longest style, so idleReason can check
+   whether a market is merely priced out of the one in use. Built once per
+   note however many markets sat out. */
+function longStyleCodes(){
+  var was=WSP.legodd, seen={};
+  try{
+    WSP.legodd=1.7;
+    wspBuild().picks.forEach(function(p){ seen[p.code]=1; });
+  }catch(e){}
+  WSP.legodd=was;
+  return seen;
+}
+function renderIdleMarkets(picks){
+  var host=$("mkIdle"); if(!host) return;
+  var idle=idleMarkets(picks);
+  if(!idle.length){ host.innerHTML=""; return; }
+  /* The label is read off the chip itself, not from a second copy of the
+     list. MKT_CFG is local to renderShared, and duplicating its labels here
+     would give the same market two names that drift apart the first time one
+     is reworded. The chip is what the reader is looking at, so the note should
+     use its exact words. */
+  var names=idle.map(function(k){
+    var el=document.querySelector('.mkt-chip[data-m="'+k+'"] span:not(.tier-badge):not(.mkt-icon)');
+    return (el&&el.textContent.trim())||k;
+  });
+  /* One line however many markets sat out - a list of reasons is longer than
+     the chip row it is explaining, and on a phone that is most of a screen.
+     So the reasons are collapsed to the most useful one present: if any of
+     them would come back at a longer style, that is the sentence worth
+     showing, because it is the only one the reader can act on. */
+  var longStyle=(WSP.legodd<1.7)?longStyleCodes():{};
+  var reasons=idle.map(function(k){ return idleReason(k,longStyle); });
+  var reason = reasons.indexOf("range")>=0 ? "range"
+             : (reasons.indexOf("outranked")>=0 ? "outranked" : "floor");
+  var tail = (reason==="floor")
+    ? "no game clears its confidence bar today."
+    : (reason==="range")
+      ? "priced above this slip style - try <b>Fewer games</b>."
+      : "a safer market won on every game.";
+  host.innerHTML="<p class='mk-idle'><span>"+esc(names.join(", "))+
+    "</span> added nothing: "+tail+"</p>";
+}
+
 function wspConjure(shuffle){
   if(shuffle){WSP.seed=Math.floor(Math.random()*1e6);WSP.shuffles=(WSP.shuffles||0)+1;}
   /* A fresh conjure is a new question, so the shuffle escalation starts over.
@@ -11877,6 +11989,12 @@ function wspConjure(shuffle){
   var r=wspBuild();
   if(!r.picks.length){WSP.conjured=false;window.swToast&&window.swToast("No games to conjure right now","err");return;}
   renderBuilder();
+  /* Deferred, because working out WHY a market sat out costs a second build of
+     the whole board - up to 260ms measured on a 400-fixture card, and a phone
+     is slower than that. The slip is what was asked for; a footnote explaining
+     a chip must not stand in front of it. Rendered on the next frame, by which
+     time the sheet is already up. */
+  setTimeout(function(){ try{ renderIdleMarkets(r.picks); }catch(e){} },0);
   /* The conjured legs go into My slip and the sheet comes up with them. The
      wizard panel keeps the numbers - games, confidence, odds - and the slip
      itself is read where it can be acted on, which is also where Get code
@@ -12055,6 +12173,10 @@ function renderShared(){
         var cfg=MKT_CFG.filter(function(x){return x.k===k;})[0];
         if(cfg&&cfg.wizardOnly){
           /* Never touches BUILD.mk - see the note on its declaration. */
+          /* The note describes the slip that was built, so it stops being
+             true the moment the markets change. Clear it here rather than
+             leave a sentence about a market that is now off. */
+          var _idle=$("mkIdle"); if(_idle) _idle.innerHTML="";
           if(cfg.warn&&!WSP.mk[k]){ askDrawOn(k); return; }
           WSP.mk[k]=!WSP.mk[k]; WSP._sig=null; renderBuilder(); return;
         }
