@@ -522,3 +522,84 @@ test("exactly one style is ever selected", () => {
     }
   }
 });
+
+/* --------------------------------- the panel and the slip must never differ */
+
+/* One invariant covers every way a reader can reach this panel: whatever chip
+   is lit is the method that actually builds. Everything below drives real
+   option changes - payout, style, markets, every-game, removals, top-flight -
+   and asserts it after each one. */
+function assertAgrees(where) {
+  const on = api.wspStyleOn();
+  const r = api.wspBuild();
+  const builtBySlider = r.via === "slider";
+  assert.strictEqual(on === "slider", builtBySlider,
+    where + ": chip says " + String(on) + " but via=" + String(r.via));
+  return r;
+}
+
+test("the lit chip matches the builder through every option change", () => {
+  reset();
+  for (const odds of [10, 100, 1000, 50000]) {
+    for (const slider of [true, false]) {
+      for (const lo of [1.25, 1.4, 1.7]) {
+        for (const top of [false, true]) {
+          api.setTopOnly(top);
+          api.WSP.odds = odds; api.WSP.slider = slider; api.WSP.legodd = lo;
+          api.WSP._sig = null;
+          assertAgrees("odds=" + odds + " slider=" + slider +
+                       " legodd=" + lo + " top=" + top);
+        }
+      }
+    }
+  }
+  api.setTopOnly(false);
+});
+
+test("turning markets off cannot leave Auto lit but not building", () => {
+  /* Markets change the pool, which changes the ceiling. If that drops below the
+     target, Auto has to stop being the answer AND stop being lit. */
+  reset();
+  api.WSP.odds = 500; api.WSP.slider = true;
+  assertAgrees("all markets on");
+  api.WSP.mk = { wd: true, any: false, out: false, o15: false, o25: false,
+                 o35: false, fh: false, tts: false, tts2: false, both: false };
+  api.WSP._sig = null;
+  assertAgrees("double chance only");
+});
+
+test("removing games cannot leave Auto lit but not building", () => {
+  /* The case the cache key was getting wrong: a removal can drop the ceiling
+     under the target without any other input changing. */
+  reset();
+  api.WSP.odds = 100; api.WSP.slider = true;
+  assertAgrees("nothing removed");
+  const all = api.wspBuild().picks.map(c => c.id);
+  const rm = {};
+  for (const id of all.slice(0, Math.max(1, all.length - 1))) rm[id] = 1;
+  api.WSP.removed = rm; api.WSP._sig = null;
+  assertAgrees("most of the board removed");
+  api.WSP.removed = {};
+});
+
+test("toggling every-game and back leaves the reader where they were", () => {
+  reset();
+  api.WSP.odds = 100; api.WSP.slider = true;
+  const before = api.wspStyleOn();
+  api.WSP.everyGame = true; api.WSP._sig = null;
+  const r = api.wspBuild();
+  assert.notStrictEqual(r.via, "slider", "every-game is always the Wizard's");
+  assert.ok(r.picks.length, "and still builds a slip");
+  api.WSP.everyGame = false; api.WSP._sig = null;
+  assert.strictEqual(api.wspStyleOn(), before,
+    "coming back must restore the method, not silently change it");
+  assertAgrees("after every-game round trip");
+});
+
+test("the cache key follows the method that will build, not the raw flag", () => {
+  /* Removals are deliberately absent from the key so a delete filters rather
+     than rebuilds. That is only safe while the key carries the DERIVED method,
+     because a removal can change it. */
+  assert.match(src, /var _sig=\[WSP\.odds,WSP\.legodd,wspStyleOn\(\),/,
+    "the preview cache must key on wspStyleOn(), not WSP.slider");
+});

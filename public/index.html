@@ -11884,7 +11884,15 @@ function renderBuilderOutput(){
          delete changes only WSP.removed - not the signature - so we filter the
          cached slip instead of rebuilding, which means a removed leg shrinks the
          slip and stays gone rather than getting back-filled to hit the target. */
-      var _sig=[WSP.odds,WSP.legodd,!!WSP.slider,WSP.seed,JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE,SDAY,TOD,!!WSP.everyGame].join("|");
+      /* wspStyleOn(), not WSP.slider: the METHOD THAT WILL BUILD, not the flag.
+         Removals are left out of this key on purpose (see above) - a delete
+         filters the cached slip instead of rebuilding it - but a removal can
+         also drop the Slider's ceiling below the target, and then Auto stops
+         being able to answer. Keying on the raw flag left the cached
+         Slider-built slip in place while the panel relit Balanced: the row
+         said one thing and the slip on screen was the other. The derived
+         value moves when the answer moves, so the two cannot drift. */
+      var _sig=[WSP.odds,WSP.legodd,wspStyleOn(),WSP.seed,JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE,SDAY,TOD,!!WSP.everyGame].join("|");
       if(WSP._sig!==_sig || !WSP._slip){
         WSP._slip=wspBuild().picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};});
         WSP._sig=_sig;
