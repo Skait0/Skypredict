@@ -3109,15 +3109,48 @@ button.wsp-go.waiting{opacity:.55}
 }
 /* THE DRAW LOOKS DIFFERENT BECAUSE IT IS DIFFERENT. Every other chip here
    raises or lowers the odds a little; this one backs the least likely of the
-   three results, at roughly 0.28 on a typical fixture. An amber rim says
-   "this is not like the others" before it is tapped, and the confirm says why
-   after. Off, it is outlined rather than filled - a warning, not a state. */
-.mkt-chip.is-draw{border-color:rgba(242,184,75,.55)}
-.mkt-chip.is-draw .mkt-icon{color:#F2B84B}
-.mkt-chip.is-draw.on{background:linear-gradient(120deg,#F2B84B,#ffd873);
-  border-color:#F2B84B;color:#1a1400}
-.mkt-chip.is-draw.on .mkt-icon,.mkt-chip.is-draw.on .tier-badge{color:#1a1400}
-@media(hover:hover){ .mkt-chip.is-draw:not(.on):hover{border-color:#F2B84B} }
+   three results, at roughly 0.28 on a typical fixture.
+   It was a gold gradient when switched on, and gold is the one thing it must
+   not say. Reported as: "the gold pill colour for draw makes it look like a
+   goldmine" - a solid fill in the colour every betting app reserves for a
+   jackpot, sitting on the least likely bet the site will build. It read as a
+   reward for finding it.
+   The jackpot chips on the payout row hit this same wall and the answer is
+   already written above: hazard stripes, because everybody can read diagonal
+   warning tape and nobody mistakes it for treasure. Same device here, so the
+   two warnings on this sheet look like each other rather than like prizes.
+   Off, it is outlined rather than filled - a warning, not a state. On, it
+   takes the same red ground as every other chosen chip and only the rim and
+   the stripes carry the amber, so choosing it reads as chosen rather than as
+   a prize won. */
+.mkt-chip.is-draw{position:relative;overflow:hidden;
+  border-color:rgba(242,184,75,.5)}
+/* The icon carried `color:#F2B84B` and showed green anyway: the svg is drawn
+   with `stroke:var(--green)` from the rule above, which beats a presentation
+   attribute of currentColor, so the one thing meant to mark this chip out
+   never did. Set the stroke, and only while the chip is off - amber on the
+   red chosen ground is the worse of the two contrasts, and white is what
+   every other chosen chip uses. */
+.mkt-chip.is-draw:not(.on) .mkt-icon svg{stroke:#F2B84B}
+.mkt-chip.is-draw::before{content:"";position:absolute;inset:0;pointer-events:none;
+  border-radius:inherit;
+  background:repeating-linear-gradient(135deg,
+    rgba(242,184,75,.14) 0 6px, transparent 6px 12px);
+  opacity:.9;transition:opacity .16s ease}
+/* Chosen, the stripes step back so the label stays readable - the warning is
+   for the glance before the tap, not after it. */
+.mkt-chip.is-draw.on{border-color:#F2B84B;
+  box-shadow:inset 0 0 0 1px rgba(242,184,75,.85)}
+.mkt-chip.is-draw.on::before{opacity:.32}
+/* The chip's own content sits above the stripe layer. */
+.mkt-chip.is-draw>*{position:relative;z-index:1}
+@media(hover:hover){
+  .mkt-chip.is-draw:not(.on):hover{border-color:#F2B84B}
+  .mkt-chip.is-draw:hover::before{opacity:.45}
+}
+@media (prefers-reduced-motion:reduce){
+  .mkt-chip.is-draw::before{transition:none}
+}
 /* The ask. Sits under the row it belongs to and goes when answered. */
 #mkAsk:not(:empty){margin:10px 0 2px}
 #mkAsk .confirm-card{border-color:rgba(242,184,75,.45)}
@@ -7238,11 +7271,59 @@ var TEAM_ALIASES = {
   "zwolle": "pec zwolle",
   "groningen": "fc groningen",
   "heracles": "heracles almelo",
+  /* Our side is aliased to "sbv excelsior" while the odds feed writes
+     "Excelsior Rotterdam", and neither name contains the other - so the club
+     could not be matched from either direction. Both spellings now land on
+     the same canonical name. */
   "excelsior": "sbv excelsior",
+  "excelsior rotterdam": "sbv excelsior",
   "volendam": "fc volendam",
   "almere city": "almere city fc",
   "n.e.c.": "nec nijmegen",
   "sparta rotterdam": "sparta",
+  /* ------------------------------------------------------------------
+     Abbreviations one feed uses and the other does not. Every one of these
+     was a fixture that could never be priced, taken from a live matcher log.
+     They are exact whole-name keys, so none can fire on a name that merely
+     contains the abbreviation. */
+  /* QPR COLLAPSES DOWN, NOT UP, AND THE DIRECTION IS THE WHOLE POINT.
+     Aliasing "qpr" to the full "queens park rangers" fixed the reported miss
+     and bought two far worse matches with it: the full name contains "rangers"
+     as a whole word and "queens park" as a whole phrase, so QPR scored 1.80
+     against GLASGOW RANGERS and against Queens Park FC - two other clubs, one
+     of them in a different country. Caught by diffing every name pair the live
+     feeds produce; it would have shown up as a Premiership fixture priced off
+     a Championship one.
+     Mapping the long name down to the short one has no such reach: "qpr"
+     contains nothing and is contained by nothing. Any feed spelling of the
+     club lands on it, and neither Rangers nor Queens Park can get near it.
+     The lesson generalises - when a club's full name contains another club's
+     whole name, alias TOWARD the form that does not. */
+  "queens park rangers": "qpr",
+  /* TWO CLUBS CALLED AMERICA, IN TWO COUNTRIES. Club America of Mexico City
+     normalises to bare "america", which is a whole-word containment inside
+     America de Cali's "america cali" - so the two scored 1.80, the figure
+     reserved for an exact or containing name, and a Liga MX fixture could be
+     priced off a Colombian one. Giving the Mexican club its full name keeps
+     the two apart while still matching either feed's spelling of it, since
+     both arrive here as "america" before this line runs. */
+  "america": "club america",
+  "for sittard": "fortuna sittard",
+  "inverness c": "inverness caledonian thistle",
+  /* "the" is stripped before aliases run, so the feed's "Queen of the South"
+     arrives here as "queen of south". */
+  "queen of sth": "queen of south",
+  "airdrie united": "airdrieonians",
+  "volos nps": "volos nfc",
+  "rapid bucuresti": "rapid 1923",
+  /* FCSB, WITH A CAVEAT WORTH KNOWING. The Bucharest club plays as FCSB in one
+     feed and Steaua in the other, and without this it matched nothing at all.
+     But CSA Steaua Bucuresti is a DIFFERENT, lower-division club carrying the
+     same name, so this alias makes the two collide if they ever appear on one
+     card. They are separated by division, not by name, and that is the whole
+     of the protection - if the tier filter is ever loosened, revisit this
+     line first. */
+  "fcsb": "steaua bucharest",
   "rkC waalwijk": "rkC",
   "sc freiburg": "freiburg",
   "vfl bochum": "bochum",
@@ -7359,6 +7440,12 @@ function normTeamRaw(s){
      .replace(/\bnott m forest\b/g,"nottingham forest").replace(/\bnottm forest\b/g,"nottingham forest")
      .replace(/\bwest brom\b/g,"west bromwich").replace(/\bespanyol\b/g,"espanol")
      .replace(/\bolympiacos\b/g,"olympiakos").replace(/\baustria lustenau\b/g,"lustenau")
+     /* Transliteration and abbreviation seen across the two feeds. Krylia and
+        Krylya are the same Samara club spelt two ways, and one feed adds the
+        city while the other does not - collapsing the spelling lets ordinary
+        word containment do the rest. "Rvs" is how the Scottish feed shortens
+        Rovers. */
+     .replace(/\bkrylya\b/g,"krylia").replace(/\brvs\b/g,"rovers")
      .replace(/\ba lustenau\b/g,"lustenau").replace(/\batromitos athinon\b/g,"atromitos");
   s=s.replace(/^\s*sporting\s*$/,"sp lisbon");
   s=s.replace(/\b(pa|sp|rj|mg|rs|sc|pr|ce|ba|go|pe|df|am|mt|ms|es|pb|rn|al|pi|ma|to|ap|ac|ro|rr|se)\b/g," ");
@@ -7402,9 +7489,24 @@ function teamMarkers(s){
      feed writing "B93" against one writing "B 93" would disagree about
      the marker and refuse a perfectly good match. */
   if(/ (ii|2|b) $/.test(raw)) add("reserves");
+  /* A HYPHENATED NUMBER IS A RESERVE SIDE WHEREVER IT SITS. The rule above is
+     anchored to the end of the name for good reason - see the comment - but
+     the Russian feeds write the second team as "Dinamo-2 Makhachkala" and
+     "Spartak-2 Moscow", with the city still to come. Measured: our first-team
+     "Dinamo Makhachkala" scored 1.00 against "FC Dinamo-2 Makhachkala" with no
+     marker found on either side.
+     The hyphen is what makes this safe to read anywhere in the name, so it is
+     tested against the ORIGINAL string, before punctuation is flattened to
+     spaces. B 93 and B36 carry no hyphen and are untouched. */
+  if(/-\s?(2|3|ii|iii)\b/i.test(String(s==null?"":s))) add("reserves");
   if(/ iii $/.test(raw)) add("third");
   if(/ (u ?1[5-9]|u ?2[0-3]) /.test(raw)) add("youth");
-  if(/ (women|feminin|femenino|femenina|frauen|ladies) /.test(raw)) add("women");
+  /* ZhFK is the Russian women's-club prefix, transliterated. Measured: our
+     "Krylya Sovetov" scored 1.80 against "Zhfk Krylya Sovetov Samara" - the
+     women's side of the same club, an exact containment with no marker
+     anywhere for the guard to catch. Wfc and Zhfc are the same abbreviation
+     spelt differently. */
+  if(/ (women|feminin|femenino|femenina|frauen|ladies|zhfk|zhfc|wfc) /.test(raw)) add("women");
   if(/ (reserves?|academy|youth|jugend|primavera|junioren) /.test(raw)) add("youth");
   /* Dutch reserve sides are named "Jong Ajax", with no numeral at all. */
   if(/ jong /.test(raw)) add("reserves");
@@ -7412,9 +7514,49 @@ function teamMarkers(s){
 }
 function sameVariant(a,b){
   var A=teamMarkers(a), B=teamMarkers(b);
-  if(A.__n!==B.__n) return false;
-  for(var k in A){ if(k!=="__n" && !B[k]) return false; }
-  return true;
+  if(A.__n===B.__n){
+    for(var k in A){ if(k!=="__n" && !B[k]) return false; }
+    return true;
+  }
+  /* A FIRST TEAM WHOSE NAME ENDS IN A MARKER. Willem II is an Eredivisie club,
+     not anybody's reserve side, and the marker rule is anchored to the end of
+     the name - so "Willem II" reads as a reserve team while "Willem II
+     Tilburg" does not, the two disagree, and simTeams returns 0. Measured: the
+     fixture could never be matched at all, whatever the feed called it.
+     The direction is what tells the two cases apart, and it is exact:
+       marked name is a WORD-PREFIX of the unmarked one   -> same club
+         "Willem II" inside "Willem II Tilburg" - the II belongs to the name,
+         and the extra words are the rest of the club, not a squad.
+       unmarked name is a word-prefix of the marked one   -> different
+         "Stuttgart" against "Stuttgart II" - the marker is a suffix on a name
+         that stands alone without it, which is exactly a reserve side.
+     Everything else stays refused, so B 93 and Rosenborg BK 2 are untouched. */
+  var marked   = A.__n>B.__n ? a : b;
+  var unmarked = A.__n>B.__n ? b : a;
+  var nm=normTeam(marked), nu=normTeam(unmarked);
+  if(!nm||!nu) return false;
+  return nm.length<nu.length && containsWords(nu,nm) && nu.indexOf(nm)===0;
+}
+/* Is `inner` present in `outer` as a run of whole words? */
+function containsWords(outer,inner){
+  if(!inner||inner.length>outer.length) return false;
+  var i=outer.indexOf(inner);
+  while(i>=0){
+    var beforeOk = i===0 || outer.charAt(i-1)===" ";
+    var end=i+inner.length;
+    /* A trailing s still ends the word. Nordic and Spanish names carry it as a
+       genitive or a feminine ending, not as a different club: Djurgarden
+       against "Djurgardens IF", Aalesund against "Aalesunds FK", Espanol
+       against "Union Espanola". Measured over 1.56m live name pairs, those
+       three were the only real clubs a strict boundary lost, and allowing the
+       one letter brings back none of the coincidences - every one of those
+       fails on the character BEFORE the match, not after it. */
+    if(end<outer.length && (outer.charAt(end)==="s"||outer.charAt(end)==="a")) end++;
+    var afterOk = end===outer.length || outer.charAt(end)===" ";
+    if(beforeOk&&afterOk) return true;
+    i=outer.indexOf(inner,i+1);
+  }
+  return false;
 }
 function simTeams(a,b){
   var na=normTeam(a),nb=normTeam(b);
@@ -7423,7 +7565,17 @@ function simTeams(a,b){
      would otherwise sail past every check below. */
   if(!sameVariant(a,b)) return 0;
   if(na===nb) return 2.0;  // max score for perfect match
-  if(na.indexOf(nb)>=0||nb.indexOf(na)>=0) return 1.8;
+  /* CONTAINMENT, ON WORD BOUNDARIES. A plain indexOf matches inside a word,
+     and the names this feed carries are full of the resulting nonsense:
+     "Tanta" sits inside "Farul ConsTANTA" and "Sparta" inside "SPARTAk
+     Moscow", both scoring 1.8 - the score reserved for an exact or containing
+     name. Measured on the live feeds, those two alone were one date check away
+     from booking somebody onto the wrong fixture, and a wrong match is the one
+     failure nothing downstream can correct.
+     Requiring the shorter name to start and end on a word boundary keeps every
+     real case - "Otelul" in "Otelul Galati", "Kalamata" in "PAE PS Kalamata" -
+     and drops the coincidences. */
+  if(containsWords(na,nb)||containsWords(nb,na)) return 1.8;
   var ta=tokset(a),tb=tokset(b),sh=0;
   /* "Urawa Reds" against "Urawa Red Diamonds" turned on nothing more than a
      plural: "reds" and "red" are not equal, and the prefix rule below needs
@@ -11040,13 +11192,11 @@ function wspBuild(){
     /* "Every game that qualifies" asks a different question from "how many
        legs reach this payout", so the payout stops driving the count. Take
        the lot, up to the cap. */
-    var want=WSP.everyGame
-      ? Math.min(cap,list.length)
-      : Math.max(4, Math.min(cap, Math.ceil(Math.log(T)/Math.log(per))));
-    /* With no payout to hit there is no per-leg target to aim at either, so
-       aim low: the nearest-to-target rule below then picks each game's safest
-       available market instead of stretching for odds. */
-    var g=WSP.everyGame ? 1.01 : Math.pow(T,1/want);
+    /* want and g are worked out further down, once the bookability helpers
+       exist - the leg count depends on what the enabled markets actually cost,
+       and that cannot be measured until we can tell a real odd from a guess.
+       See reachablePerLeg. */
+    var want, g;
     /* Prefer markets with REAL SportyBet odds: a market chosen off an estimated
        odd may not exist for that event at SportyBet, and the booking call then
        fails with "Sporty rejected the slip" (the "no market" error). When real
@@ -11130,6 +11280,54 @@ function wspBuild(){
        and x1.75 lets both offenders back in at 74%. A flat plateau, so x1.40
        sits in the middle of it rather than on the edge of a cliff - this is not
        tuned to one afternoon. */
+    /* WHAT A LEG ACTUALLY COSTS IN THE MARKETS THAT ARE ON.
+       The per-leg target used to be the Slip-style figure outright - 1.4 for
+       Balanced - and the band below spans 0.92 to 1.40 of it, so the builder
+       would only ever accept legs priced about 1.3 to 2.0. That is fine while
+       the enabled markets can be bought at those prices. It is fatal the
+       moment they cannot.
+       Reported as: turning on Draw and getting "No games to conjure", and
+       getting it on "all upcoming" too - which is the tell, because that path
+       pins g at 1.01 and so narrows the ceiling to 1.41 rather than widening
+       anything. A draw is priced around 3.2. Every draw overshot the band,
+       nothing sat under it, so bestOf returned null on EVERY fixture and the
+       slip came back empty. The toggle turned on and returned nothing, which
+       is the exact failure this builder keeps having.
+       So ask the board rather than assuming: take each fixture's cheapest
+       bookable candidate and use the median across fixtures. With the usual
+       spread of markets on that lands near 1.05 and max() below leaves the
+       Slip style in charge exactly as before - this changes nothing for any
+       existing slip. It only bites when the user has narrowed the markets to
+       ones that are inherently long, and then it tells the truth: a slip of
+       draws reaches x100 in five legs, not fourteen. */
+    function reachablePerLeg(){
+      var mins=[];
+      list.forEach(function(c){
+        var cs=c.cands||[{f:c.f,id:c.id,code:c.code,p:c.p,od:c.od}];
+        var usable=cs.filter(hasReal);
+        if(!usable.length){
+          if(cs.length&&priced(cs[0].f)) return;   // unbookable, dropped anyway
+          usable=cs.filter(function(x){ return safeUnpriced(x.code); });
+        }
+        if(!usable.length) return;
+        mins.push(usable.reduce(function(a,b){ return b.od<a.od?b:a; }).od);
+      });
+      if(!mins.length) return 1.01;
+      mins.sort(function(a,b){ return a-b; });
+      return mins[Math.floor(mins.length/2)] || 1.01;
+    }
+    var reach=reachablePerLeg();
+    /* The style still sets the ambition; the board sets the floor. */
+    var perEff=Math.max(per, reach);
+    want=WSP.everyGame
+      ? Math.min(cap,list.length)
+      : Math.max(4, Math.min(cap, Math.ceil(Math.log(T)/Math.log(perEff))));
+    /* With no payout to hit there is no per-leg target to aim at either, so
+       aim low: the nearest-to-target rule below then picks each game's safest
+       available market instead of stretching for odds. Low still has to mean
+       reachable, though - pinned flat at 1.01 this was the second half of the
+       empty-draw-slip bug. */
+    g=WSP.everyGame ? Math.max(1.01, reach*0.95) : Math.pow(T,1/want);
     var OVERSHOOT=1.40;
     var PROVEN=provenMarkets();
     function bestOf(pool){

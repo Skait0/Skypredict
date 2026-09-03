@@ -45,7 +45,11 @@ function grab(name) {
 /* The whole normalisation block: aliases, cache, normTeam, normTeamRaw,
    tokset, then the variant guard and simTeams itself. */
 const block = src.slice(src.indexOf("var TEAM_ALIASES ="), src.indexOf("/* A reserve, youth"));
-const api = new Function(block + grab("teamMarkers") + grab("sameVariant") + grab("simTeams") +
+/* containsWords sits between the block above and simTeams, so it has to be
+   grabbed by name - simTeams calls it, and without it every score here throws
+   "containsWords is not defined". */
+const api = new Function(block + grab("teamMarkers") + grab("sameVariant") +
+  grab("containsWords") + grab("simTeams") +
   "\nreturn {simTeams: simTeams, sameVariant: sameVariant, normTeam: normTeam};")();
 
 /* Two different thresholds, and confusing them is easy: the caller requires
