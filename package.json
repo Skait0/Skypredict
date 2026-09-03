@@ -9,5 +9,8 @@
   "scripts": {
     "build": "node scripts/prebuild.js",
     "test": "node --test"
+  },
+  "dependencies": {
+    "@vercel/speed-insights": "^2.0.0"
   }
 }
