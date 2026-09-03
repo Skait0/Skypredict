@@ -10788,8 +10788,18 @@ function sliderCeiling(seed,removed,mk){
      from harnesses that supply only what they need, and a ReferenceError in a
      cache key would take down the whole panel to save one rebuild. */
   function _g(n,d){ try{ return eval("typeof "+n+"===\"undefined\"")?d:eval(n); }catch(e){ return d; } }
+  /* THE BOARD IS PART OF THE QUESTION. Nothing else in this key names it, so a
+     ceiling measured before the payload arrived - an empty card, ceiling 0 -
+     was served forever afterwards under the same key. sliderDrives() then
+     answered false for every payout, the Wizard never handed over, and the
+     Slip style chips the handover is supposed to replace stayed on screen and
+     never went away again. Length with both ends is O(1) and moves whenever
+     the card does; scopeFixtures is read defensively like every other global
+     here, because this runs from harnesses that supply only what they need. */
+  var _fx; try{ _fx=scopeFixtures()||[]; }catch(e){ _fx=[]; }
+  var _card=_fx.length+":"+((_fx[0]&&_fx[0].id)||"")+":"+((_fx[_fx.length-1]&&_fx[_fx.length-1].id)||"");
   var sig=[seed,JSON.stringify(mk||null),_g("SCOPE",""),_g("SDAY",""),
-           _g("TOD",""),!!_g("TOP_ONLY",false),JSON.stringify(removed||null)].join("|");
+           _g("TOD",""),!!_g("TOP_ONLY",false),JSON.stringify(removed||null),_card].join("|");
   /* The memo hangs off the function rather than sitting beside it, so it
      travels wherever the function does - including into the test harnesses,
      which lift functions out one at a time and would otherwise trip over a
@@ -11652,7 +11662,16 @@ function renderWizardPanel(){
      one answer - so there is no trade left to make. Three buttons that change
      nothing is the failure this panel has had before, so say what is
      happening instead of drawing them. */
-  if(sliderDrives()){
+  /* NO TARGET YET - which includes the moment the first keystroke lands in the
+     custom box, because that clears the payout on purpose (see the input
+     handler). wspBuild returns an empty slip while WSP.odds is null, so every
+     style chip builds exactly the same nothing: the dead-controls failure
+     again, and it flickered the chips in for the whole time it took to type a
+     number that then hid them. The "Pick a payout above" hint above already
+     says what to do, so nothing is drawn here. */
+  if(WSP.odds==null){
+    /* nothing to style until there is something to aim at */
+  } else if(sliderDrives()){
     html += "<p class='wsp-hint'><b>Safest method.</b> At this payout we build "+
       "it the way the Slider does - picked on confidence, not stretched to "+
       "reach a number. Slip style applies above "+

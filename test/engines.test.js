@@ -342,3 +342,48 @@ test("both engines draw only from the shared fixture pool", () => {
   for (const c of api.buildPicks()) assert.ok(ids.has(c.id), "slider invented " + c.id);
   for (const c of api.wspBuild().picks) assert.ok(ids.has(c.id), "wizard invented " + c.id);
 });
+
+
+/* --------------------------------------------- nothing to style with no target
+
+   The Wizard panel hides the Slip style chips while WSP.odds is null. This is
+   the reason it is allowed to: with no target every style builds the same empty
+   slip, so all three chips are dead controls. The custom payout box clears the
+   payout on the first keystroke, which is how a user meets this state - and the
+   chips used to flicker in for as long as it took to type a number. */
+
+test("with no payout chosen, every slip style builds the same nothing", () => {
+  reset();
+  api.WSP.odds = null;
+  const shapes = [1.25, 1.4, 1.8].map((lo) => {
+    api.WSP.legodd = lo;
+    const r = api.wspBuild();
+    return { n: r.picks.length, odds: r.odds };
+  });
+  assert.deepStrictEqual(shapes[0], { n: 0, odds: 1 },
+    "no target means no slip, whatever the style says");
+  assert.deepStrictEqual(shapes[1], shapes[0]);
+  assert.deepStrictEqual(shapes[2], shapes[0],
+    "three chips that all produce the same empty slip are dead controls");
+});
+
+test("the empty slip is caused by the missing target, not by the harness", () => {
+  /* The control for the case above. Leg count is deliberately NOT compared
+     across styles here: inside the Slider's range the Slider does the picking
+     and one risk gives one answer, so style is *meant* to change nothing - and
+     on a board this size the leg count is capped by the number of fixtures
+     anyway. What must hold is that the same styles build a real slip the moment
+     there is a number to reach. */
+  reset();
+  for (const lo of [1.25, 1.4, 1.8]) {
+    api.WSP.legodd = lo;
+
+    api.WSP.odds = null;
+    assert.strictEqual(api.wspBuild().picks.length, 0,
+      `style ${lo} should build nothing with no target`);
+
+    api.WSP.odds = 12;
+    assert.ok(api.wspBuild().picks.length > 0,
+      `style ${lo} should build a real slip once a target is set`);
+  }
+});

@@ -316,3 +316,99 @@ test("the memo notices when the inputs change", () => {
   /* And back again, so the first value was not simply overwritten. */
   assert.strictEqual(e.sliderCeiling(1, {}, wide), a);
 });
+
+
+/* ------------------------------------------- the ceiling must follow the board
+
+   The memo key is [seed, markets, SCOPE, SDAY, TOD, TOP_ONLY, removed]. None of
+   those name the BOARD, so a ceiling measured while the payload had not arrived
+   yet - an empty card, ceiling 0 - is served forever afterwards under the same
+   key. sliderDrives() then answers false for every payout, the Wizard never
+   hands over, and the Slip style chips it is supposed to replace stay on screen
+   and never go away again. */
+
+test("a ceiling measured on an empty board is not served after the board fills", () => {
+  const live = [];                 // scopeFixtures() hands back this very array
+  const e = engine(live);
+  e.WSP.odds = 10; e.WSP.seed = 1; e.WSP.mk = null;
+  e.WSP.removed = {}; e.WSP.everyGame = false;
+
+  assert.strictEqual(e.sliderCeiling(1, {}, null), 0, "an empty card reaches nothing");
+  assert.strictEqual(e.sliderDrives(), false, "and so cannot answer x10");
+
+  board(40).forEach((f) => live.push(f));   // the payload arrives
+
+  assert.ok(e.sliderCeiling(1, {}, null) >= 10,
+    "the ceiling must be re-measured once there are fixtures to measure");
+  assert.strictEqual(e.sliderDrives(), true,
+    "x10 is inside the Slider's range, so the Slider drives and Slip style is hidden");
+});
+
+test("a board that empties again lowers the ceiling rather than keeping the old one", () => {
+  const live = board(40).slice();
+  const e = engine(live);
+  e.WSP.odds = 10; e.WSP.seed = 1; e.WSP.mk = null;
+  e.WSP.removed = {}; e.WSP.everyGame = false;
+
+  assert.ok(e.sliderCeiling(1, {}, null) >= 10);
+  live.length = 0;
+  assert.strictEqual(e.sliderCeiling(1, {}, null), 0,
+    "a stale high ceiling would hand the Wizard's job to a Slider with nothing to pick");
+});
+
+
+test("the panel draws no style chips before a payout is chosen", () => {
+  /* Source-level, like the wiring check above, because the branch lives in a
+     string-building render with no DOM to drive here. The behaviour it protects
+     is asserted properly in engines.test.js: with WSP.odds null every style
+     builds the same empty slip, so the chips are dead controls. */
+  assert.match(src, /if\(WSP\.odds==null\)\{[\s\S]{0,200}\}\s*else if\(sliderDrives\(\)\)\{/,
+    "no-target must be handled before the Slider check, not after it");
+});
+
+
+test("a different board of the same size still re-measures the ceiling", () => {
+  /* Keying the memo on fixture COUNT alone would pass the empty-to-full case
+     above and still be wrong: switching leagues, or a rebuild that swaps the
+     card for a different set of the same size, would keep quoting the old
+     ceiling. */
+  const live = board(40).slice();
+  const e = engine(live);
+  e.WSP.seed = 1; e.WSP.mk = null; e.WSP.removed = {}; e.WSP.everyGame = false;
+  const wide = e.sliderCeiling(1, {}, null);
+
+  /* Same count, different games: near-certainties, so the reachable payout is
+     far lower even at maximum risk. */
+  live.length = 0;
+  for (let i = 0; i < 40; i++) {
+    live.push({
+      id: "z" + i, date: "2026-09-05", league: "England Premier League",
+      home: "Z" + i, away: "Y" + i,
+      home_p: 0.93, draw_p: 0.05, away_p: 0.02,
+      dc1x: 0.98, dcx2: 0.07, dc12: 0.95, anybody: 0.95,
+      o15: 0.97, o25: 0.95, o35: 0.93, btts: 0.94, fh_o05: 0.96,
+      h_o05: 0.98, h_o15: 0.96, a_o05: 0.95, a_o15: 0.93,
+    });
+  }
+  const safe = e.sliderCeiling(1, {}, null);
+  assert.strictEqual(live.length, 40, "the count is deliberately unchanged");
+  assert.notStrictEqual(safe, wide,
+    `a board swap must move the ceiling (both measured ${wide})`);
+});
+
+
+test("dropping games from the middle re-measures the ceiling too", () => {
+  /* Same first fixture, same last fixture, fewer games between them - which is
+     what a league filter or a rebuild that drops kicked-off matches looks like.
+     Keying on the two ends alone would keep quoting the old ceiling. */
+  const live = board(40).slice();
+  const e = engine(live);
+  e.WSP.seed = 1; e.WSP.mk = null; e.WSP.removed = {}; e.WSP.everyGame = false;
+  const before = e.sliderCeiling(1, {}, null);
+
+  live.splice(1, 20);                       // ends untouched, 20 games gone
+  assert.strictEqual(live.length, 20);
+  const after = e.sliderCeiling(1, {}, null);
+  assert.notStrictEqual(after, before,
+    `half the card left, so the reachable payout must change (both ${before})`);
+});
