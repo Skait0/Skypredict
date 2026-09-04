@@ -439,23 +439,51 @@ widens later, and a per-reader response should carry its own refusal. The
 regression test found two more routes with the original bug, `/api/s` and
 `/api/slipcard`, both fixed.
 
-**STILL HALF DONE - THE SITE IS NOT YET CHEAPER.** Headers verified live on all
-four feeds, but Cloudflare still answers `cf-cache-status: DYNAMIC`, because its
-free plan only caches by file extension and a JSON path has none. **It needs a
-Cache Rule**, and until that exists this change has bought nothing:
+**BOTH HALVES ARE DONE.** Headers verified live on all four feeds, and the
+Cloudflare Cache Rule is deployed and Active - a JSON path has no file
+extension, so on the free plan it is not cache-eligible by default no matter
+what the headers say, and without the rule the header change bought nothing.
 
 ```
 name        Cache the read-only API feeds
 if          (http.request.method eq "GET" and http.request.uri.path in
              {"/api/predictions" "/api/fixtures" "/api/bet9ja" "/api/live"})
 then        Cache eligibility  -> Eligible for cache
-            Edge TTL           -> Use cache-control header if present
-            Browser TTL        -> Respect origin
+            Edge TTL           -> Use cache-control header if present,
+                                  BYPASS cache if not
+            Browser TTL        -> Respect origin TTL
+            Serve stale while revalidating -> on
 ```
 
-**Name the four paths; do NOT write `/api/*`.** `/api/book`, `/api/share` and
-`/api/s` are per-reader, and a shared cache is the last place any of them
-belongs. Their own `no-store` is the backstop, not the plan.
+Two of those defaults are load-bearing. **Edge TTL bypasses when there is no
+header** rather than falling back to Cloudflare's own TTL, so a response that
+forgets to say anything is not cached on a guess. And **"Serve stale content
+while revalidating" is a NEGATIVE toggle** - the label reads "Do NOT serve
+stale content while updating", and it must stay OFF. Off is what lets the short
+windows cost nothing in latency.
+
+Verified 4 Sep after deploying:
+
+```
+/api/predictions  MISS then HIT, age climbing    /api/s       DYNAMIC, no-store
+/api/fixtures     MISS then HIT, age climbing    /api/share   DYNAMIC, no-store
+/api/bet9ja       MISS then HIT, age climbing    /api/book    DYNAMIC, no-store
+/api/live         REVALIDATED - the 10s window   /api/slipcard    DYNAMIC
+                  honoured, not extended         /api/nonexistent DYNAMIC
+board still serves 461 fixtures
+```
+
+**The rule names four paths and must keep doing so.** `/api/book`, `/api/share`
+and `/api/s` are per-reader and a shared cache is the last place any of them
+belongs; `/api/*` would have swept all three in. Their own three-tier
+`no-store` is the backstop, not the plan - confirmed above, they answer
+DYNAMIC with `no-store` on both `Cache-Control` and `CDN-Cache-Control`.
+
+**Not done, and worth doing:** `/api/slipcard` now carries correct immutable
+headers but is not in the rule, so Cloudflare still forwards every share-card
+fetch to Vercel - and a share card is pulled by every crawler and reader who
+sees a shared link. Its URL carries the payload it is drawn from, so caching it
+is safe. Adding `"/api/slipcard"` to the path list is the whole change.
 
 Cloudflare sign-in is Google SSO on **sowizardsb@gmail.com**, not the Vercel
 account.
