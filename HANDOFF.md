@@ -447,7 +447,8 @@ what the headers say, and without the rule the header change bought nothing.
 ```
 name        Cache the read-only API feeds
 if          (http.request.method eq "GET" and http.request.uri.path in
-             {"/api/predictions" "/api/fixtures" "/api/bet9ja" "/api/live"})
+             {"/api/predictions" "/api/fixtures" "/api/bet9ja"
+             "/api/live" "/api/slipcard"})
 then        Cache eligibility  -> Eligible for cache
             Edge TTL           -> Use cache-control header if present,
                                   BYPASS cache if not
@@ -468,8 +469,9 @@ Verified 4 Sep after deploying:
 /api/predictions  MISS then HIT, age climbing    /api/s       DYNAMIC, no-store
 /api/fixtures     MISS then HIT, age climbing    /api/share   DYNAMIC, no-store
 /api/bet9ja       MISS then HIT, age climbing    /api/book    DYNAMIC, no-store
-/api/live         REVALIDATED - the 10s window   /api/slipcard    DYNAMIC
-                  honoured, not extended         /api/nonexistent DYNAMIC
+/api/live         REVALIDATED - the 10s window   /api/nonexistent DYNAMIC
+                  honoured, not extended
+/api/slipcard     MISS then HIT, 139 KB PNG; a different query string MISSes
 board still serves 461 fixtures
 ```
 
@@ -479,11 +481,13 @@ belongs; `/api/*` would have swept all three in. Their own three-tier
 `no-store` is the backstop, not the plan - confirmed above, they answer
 DYNAMIC with `no-store` on both `Cache-Control` and `CDN-Cache-Control`.
 
-**Not done, and worth doing:** `/api/slipcard` now carries correct immutable
-headers but is not in the rule, so Cloudflare still forwards every share-card
-fetch to Vercel - and a share card is pulled by every crawler and reader who
-sees a shared link. Its URL carries the payload it is drawn from, so caching it
-is safe. Adding `"/api/slipcard"` to the path list is the whole change.
+**`/api/slipcard` is in the rule too, added 4 Sep.** A share card is pulled by
+every crawler and reader who sees a shared link, and each of those was a Vercel
+egress. Its URL carries the payload it is drawn from, so the address can only
+mean that image - which is why every tier gets the full year. Verified: MISS
+then HIT on a 139 KB PNG, and **a different `?g=&o=` is its own cache entry**
+(MISS), because Cloudflare's cache key includes the query string. That was the
+one real risk with caching it and it is clean.
 
 Cloudflare sign-in is Google SSO on **sowizardsb@gmail.com**, not the Vercel
 account.
