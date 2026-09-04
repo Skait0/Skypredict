@@ -45,8 +45,9 @@ test("the full bleed cannot introduce a horizontal scrollbar", () => {
   assert.match(BAND, /width:100vw/, "the band is full-bleed");
   const body = /\nbody\{([\s\S]*?)\}/.exec(css);
   assert.ok(body, "body must still be styled");
-  assert.match(body[1], /overflow-x:hidden/,
-    "body{overflow-x:hidden} is load-bearing for the 100vw hero band");
+  assert.match(body[1], /overflow-x:hidden;overflow-x:clip/,
+    "body must still clip the 100vw hero band - BOTH declarations, because a "
+    + "browser that does not know `clip` needs `hidden` to fall back to");
 });
 
 test("it sits behind the headline without a rule that touches a child", () => {
@@ -130,4 +131,21 @@ test("the pitch is dropped on narrow screens but the band survives", () => {
     "the pitch must not be drawn where it would sit under the headline");
   assert.match(mq[1], /radial-gradient/, "the glow stays");
   assert.match(mq[1], /linear-gradient/, "and so does the ground");
+});
+
+test("and it clips without becoming a scroll container", () => {
+  /* overflow-x:hidden made body a scroll container, and a scroll container
+     breaks position:sticky for everything inside it - so the masthead was
+     declared sticky and scrolled away anyway. Measured at 306px of scroll its
+     top sat at -306; after the change, headerTop 0 with scrollY 600.
+     `clip` does the same clipping without becoming a scroller, so the header
+     sticks AND the full-bleed band still cannot add a horizontal scrollbar.
+     Verified live: scrollWidth 1905 against clientWidth 1905. */
+  const body = /\nbody\{([\s\S]*?)\}/.exec(css);
+  assert.match(body[1], /overflow-x:clip/,
+    "clip is what lets the sticky header stick");
+  const top = /\n\.top\{([^}]*)\}/.exec(css);
+  assert.ok(top, ".top must still be styled");
+  assert.match(top[1], /position:sticky/,
+    "and the header must still declare itself sticky");
 });

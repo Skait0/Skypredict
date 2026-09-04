@@ -243,6 +243,17 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
      stands on - a lift off the page, not a colour; `glow` is the brand red at
      an alpha low enough that it never competes with the headline sitting on
      it; `line` inks the pitch drawing. */
+  /* THE MASTHEAD, as glass rather than a slab. The bar used to be
+     background:var(--bg) - the page colour exactly - so it was invisible until
+     it was stuck, and then it announced itself with a hard 1px rule and
+     nothing else, because --shadow is `none` on this theme. A line with no
+     falloff is a cut, and that is what it looked like.
+     Translucent, so the board passes under it and you can see that it does;
+     a hairline for definition; and a short gradient below the bar so the edge
+     ends instead of stopping. */
+  --top-bg:rgba(13,13,15,.72);
+  --top-hair:rgba(255,255,255,.07);
+  --top-fade:rgba(0,0,0,.38);
   --hero-top:rgba(255,255,255,.045);
   --hero-glow:rgba(230,57,70,.17);
   --hero-line:.55;
@@ -310,6 +321,12 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
      because it saturates far harder against a warm page than a near-black
      one. The pitch drawing goes the other way and needs MORE ink: a mid grey
      that reads clearly on #0D0D0F is nearly invisible on #E9E4DA. */
+  /* Same three, warmer and weaker. On a light page a heavy fade under the
+     bar reads as dirt rather than depth, and the hairline only has to be dark
+     enough to separate two surfaces that are already close in value. */
+  --top-bg:rgba(233,228,218,.75);
+  --top-hair:rgba(30,25,20,.09);
+  --top-fade:rgba(30,25,20,.10);
   --hero-top:rgba(255,255,255,.55);
   --hero-glow:rgba(230,57,70,.09);
   --hero-line:.85;
@@ -330,7 +347,16 @@ body{background:var(--bg);color:var(--text);
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='210' viewBox='0 0 210 210'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-linecap='round' opacity='0.014'%3E%3Cpath d='M33 30v26M23 37l10 6 10-6M33 43l-8 10M33 43l8 10'/%3E%3Cpath d='M156 44l11 16-11 16-11-16z'/%3E%3Cpath d='M92 142v22M83 149l9-6 9 6M85 164h14'/%3E%3Cpath d='M172 154l8 8-8 8-8-8z M172 148v28'/%3E%3Ccircle cx='58' cy='126' r='11'/%3E%3Cpath d='M58 115v22M47 126h22'/%3E%3C/g%3E%3C/svg%3E");
   background-repeat:repeat;
   font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
-  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:40px;overflow-x:hidden}
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:40px;
+  /* overflow-x HIDDEN creates a scroll container, and a scroll container
+     breaks position:sticky for everything inside it - which is why the
+     masthead was declared sticky and scrolled away anyway: measured at 306px
+     of scroll its top sat at -306. CLIP does the same clipping without
+     becoming a scroller, so the header sticks and the full-bleed hero band,
+     which needs 100vw not to add a horizontal scrollbar, still cannot.
+     Both are declared: a browser that does not know `clip` keeps `hidden`
+     and behaves exactly as it did before. */
+  overflow-x:hidden;overflow-x:clip}
 @media(max-width:720px){body{padding-bottom:96px}}
 img,svg{max-width:100%}
 .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
@@ -339,9 +365,31 @@ img,svg{max-width:100%}
   color:var(--faint)}
 
 /* ================================================================== top */
-.top{position:sticky;top:0;z-index:60;background:var(--bg);
-  border-bottom:1px solid transparent;transition:border-color .25s}
-.top.stuck{border-bottom-color:var(--line);box-shadow:var(--shadow)}
+.top{position:sticky;top:0;z-index:60;background:var(--top-bg);
+  -webkit-backdrop-filter:blur(16px) saturate(150%);
+  backdrop-filter:blur(16px) saturate(150%);
+  /* No border. A border is a box edge and it lands as a hard line however
+     faint it is; the hairline below is drawn INTO the surface with an inset
+     shadow, so it belongs to the bar rather than fencing it. */
+  border-bottom:0;
+  transition:background .28s ease,box-shadow .28s ease}
+/* Where the edge stops being an edge. Eighteen pixels of falloff under the
+   bar, so content does not meet it at a line - this is the half that was
+   missing, and the reason a 1px rule read as "sharply cut off". Painted below
+   the bar rather than inside it, so it never sits over the header's own
+   contents. */
+.top::after{content:"";position:absolute;left:0;right:0;top:100%;height:18px;
+  pointer-events:none;opacity:0;transition:opacity .28s ease;
+  background:linear-gradient(to bottom,var(--top-fade),transparent)}
+.top.stuck::after{opacity:1}
+.top.stuck{box-shadow:inset 0 -1px 0 var(--top-hair)}
+/* Backdrop blur is what makes the translucency read as glass rather than as a
+   washed-out colour. Where it is unavailable the bar goes solid instead: a
+   see-through header over unblurred scrolling text is unreadable, which is
+   worse than the slab this replaced. */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .top{background:var(--bg)}
+}
 .top-in{max-width:1180px;margin:0 auto;padding:12px 16px;display:flex;
   align-items:center;gap:11px}
 .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:19px;
