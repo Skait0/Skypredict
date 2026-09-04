@@ -1,5 +1,7 @@
 "use strict";
 
+const { applyCache, NO_STORE } = require("../lib/cachepolicy.js");
+
 /**
  * GET/POST /api/record-sweep
  *
@@ -133,7 +135,7 @@ function liveIndex(matches) {
 
 module.exports = async (req, res) => {
   const started = Date.now();
-  res.setHeader("Cache-Control", "no-store");
+  applyCache(res, NO_STORE);
 
   const want = process.env.SWEEP_KEY || "";
   const got = req.headers["x-sweep-key"] || "";

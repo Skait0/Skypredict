@@ -1,5 +1,7 @@
 "use strict";
 
+const { applyCache, NO_STORE } = require("../lib/cachepolicy.js");
+
 /* POST /api/share - remember a slip against its booking code.
  *
  * Called once, by the browser, right after a code is minted. It exists so the
@@ -44,7 +46,7 @@ function readBody(req) {
 function reply(res, status, obj) {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store");
+  applyCache(res, NO_STORE);
   res.end(JSON.stringify(obj));
 }
 

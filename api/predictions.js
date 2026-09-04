@@ -39,6 +39,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { applyCache, BROWSER_REVALIDATE, NO_STORE } = require("../lib/cachepolicy.js");
 
 /* Where prebuild puts it. Listed in vercel.json under includeFiles so the
    function bundle actually carries it - without that this route deploys
@@ -61,6 +62,29 @@ const FULL_CACHE = "public, s-maxage=21600, stale-while-revalidate=86400";
    that a sustained upstream outage cannot turn every visitor into a rebuild. */
 const SHORT_CACHE = "public, s-maxage=300";
 
+/* THE SAME WINDOWS ARE UNSAFE AT CLOUDFLARE, and this is the one route where
+   that gap really bites.
+ *
+ * Six hours is only sound above because Vercel drops its own cache when a
+ * deployment goes out - and this payload is baked at deploy, so every push
+ * replaces it. Cloudflare knows nothing about deploys. Handed 21600 it would
+ * serve a six-hour-old board through however many builds landed in the
+ * meantime, including the 06:30 rebuild, and no amount of pushing would shift
+ * it.
+ *
+ * Five minutes instead: long enough that a million readers cost Vercel a
+ * handful of requests per edge, short enough that a deploy is on the site
+ * before anyone notices it is not. The stale window does the rest of the work
+ * - Cloudflare keeps answering instantly while it refreshes behind the
+ * reader - so the short TTL costs latency nowhere.
+ *
+ * If this ever needs to be longer, the honest way is a cache purge on deploy,
+ * not a bigger number. */
+const FULL_CACHE_CDN = "public, s-maxage=300, stale-while-revalidate=3600";
+/* A degraded board must clear even faster, and for the same reason: the fix
+   arrives as a build. */
+const SHORT_CACHE_CDN = "public, s-maxage=60";
+
 function fixtureCount(p) {
   return (p && Array.isArray(p.fixtures)) ? p.fixtures.length : 0;
 }
@@ -73,11 +97,15 @@ function isHealthy(p) {
    rule that decides how long a bad day stays on the site. */
 function chooseResponse(fresh, lastGoodPayload) {
   if (isHealthy(fresh)) {
-    return { body: fresh, cacheControl: FULL_CACHE, tag: "miss", store: true };
+    return {
+      body: fresh, cacheControl: FULL_CACHE, cdnCacheControl: FULL_CACHE_CDN,
+      tag: "miss", store: true,
+    };
   }
   return {
     body: lastGoodPayload || fresh,
     cacheControl: SHORT_CACHE,
+    cdnCacheControl: SHORT_CACHE_CDN,
     tag: lastGoodPayload ? "thin-served-last-good" : "thin",
     store: false,
     thinCount: fixtureCount(fresh),
@@ -106,7 +134,11 @@ module.exports = async (req, res) => {
     res.setHeader("X-Formline-Fixtures", String(fixtureCount(out.body)));
     res.setHeader("X-Formline-Bytes", String(bytes));
     if (!out.store) res.setHeader("X-Formline-Thin", String(out.thinCount));
-    res.setHeader("Cache-Control", out.cacheControl);
+    applyCache(res, {
+      browser: BROWSER_REVALIDATE,
+      cdn: out.cdnCacheControl,
+      vercel: out.cacheControl,
+    });
     return res.status(200).json(out.body);
   } catch (err) {
     /* No baked file, or it is not JSON. Both mean the deploy is wrong, and
@@ -114,7 +146,7 @@ module.exports = async (req, res) => {
        uncached rather than an attempt to paper over it by building. The
        client falls back to /predictions.json from the CDN, which is the same
        file and is what it reads first anyway. */
-    res.setHeader("Cache-Control", "no-store");
+    applyCache(res, NO_STORE);
     return res.status(503).json({
       error: "no baked payload",
       detail: String((err && err.message) || err),
@@ -129,4 +161,6 @@ module.exports.isHealthy = isHealthy;
 module.exports.MIN_HEALTHY_FIXTURES = MIN_HEALTHY_FIXTURES;
 module.exports.FULL_CACHE = FULL_CACHE;
 module.exports.SHORT_CACHE = SHORT_CACHE;
+module.exports.FULL_CACHE_CDN = FULL_CACHE_CDN;
+module.exports.SHORT_CACHE_CDN = SHORT_CACHE_CDN;
 module.exports.BAKED = BAKED;

@@ -1,5 +1,7 @@
 "use strict";
 
+const { applyCache, BROWSER_REVALIDATE } = require("../lib/cachepolicy.js");
+
 /* GET /api/slipcard?g=<games>&o=<odds> - the link-preview image for a slip.
  *
  * Composited per request from baked parts, because the numbers belong to the
@@ -50,15 +52,30 @@ module.exports = (req, res) => {
     if (!fb) { res.statusCode = 404; return res.end("no card"); }
     res.setHeader("Content-Type", "image/png");
     /* Short, because the reason it fell back may be a bad link rather than a
-       bad figure, and a wrong picture should not be pinned for a year. */
-    res.setHeader("Cache-Control", "public, s-maxage=300");
+       bad figure, and a wrong picture should not be pinned for a year - least
+       of all in Cloudflare, which no deploy can purge. */
+    applyCache(res, {
+      browser: BROWSER_REVALIDATE,
+      cdn: "public, s-maxage=60",
+      vercel: "public, s-maxage=240",
+    });
     res.statusCode = 200;
     return res.end(fb);
   }
 
   res.setHeader("Content-Type", "image/png");
   res.setHeader("Content-Length", png.length);
-  res.setHeader("Cache-Control", "public, max-age=31536000, s-maxage=31536000, immutable");
+  /* Immutable in the strict sense: the card is drawn from the payload in the
+     query string, so this URL can only ever mean this image. That is the one
+     case where every tier gets the full year - and it matters here more than
+     anywhere, because a share card is fetched by every crawler and reader who
+     sees the link, and each of those was a Vercel egress before Cloudflare
+     could hold it. */
+  applyCache(res, {
+    browser: "public, max-age=31536000, immutable",
+    cdn: "public, s-maxage=31536000, immutable",
+    vercel: "public, s-maxage=31536000, immutable",
+  });
   res.statusCode = 200;
   return res.end(png);
 };

@@ -1,5 +1,7 @@
 "use strict";
 
+const { applyCache, NO_STORE, BROWSER_REVALIDATE } = require("../lib/cachepolicy.js");
+
 /* GET /s?p=... - render a slip somebody built and shared.
  *
  * A function rather than a generated page, because the match pages under /m/
@@ -57,7 +59,7 @@ module.exports = async function handler(req, res) {
       if (hit.ok && hit.row) { p = hit.row.payload; code = hit.row.code; book = hit.row.book; }
       else {
         res.setHeader("Content-Type", "text/html; charset=utf-8");
-        res.setHeader("Cache-Control", "no-store");
+        applyCache(res, NO_STORE);
         res.statusCode = 404;
         return res.end(SL.renderError("we have no slip saved against that code"));
       }
@@ -70,7 +72,7 @@ module.exports = async function handler(req, res) {
   if (!got.ok) {
     /* Do not cache a refusal: the usual cause is a link truncated in a chat
        app, and the next person may paste it whole. */
-    res.setHeader("Cache-Control", "no-store");
+    applyCache(res, NO_STORE);
     res.statusCode = 400;
     return res.end(SL.renderError(got.why));
   }
@@ -88,9 +90,22 @@ module.exports = async function handler(req, res) {
      and a day-old copy would show a finished game as unplayed. Slips get
      shared in bursts, so even the short window does real work. */
   const done = SL.verdict(legs).settled;
-  res.setHeader("Cache-Control", done
-    ? "public, s-maxage=604800, stale-while-revalidate=604800"
-    : "public, s-maxage=300, stale-while-revalidate=3600");
+  /* Both caches, because Vercel strips a lone Cache-Control before Cloudflare
+     ever sees it - lib/cachepolicy.js. A slip's content is decided entirely by
+     its own URL, so Cloudflare holding a copy is safe in a way the board is
+     not: there is no deploy that could change what this address means.
+     A settled slip is therefore given the same week at both tiers. One still
+     playing splits the five minutes rather than adding to it, because the
+     whole value of an in-play slip is that its verdicts are current. */
+  applyCache(res, done ? {
+    browser: BROWSER_REVALIDATE,
+    cdn: "public, s-maxage=604800, stale-while-revalidate=604800",
+    vercel: "public, s-maxage=604800, stale-while-revalidate=604800",
+  } : {
+    browser: BROWSER_REVALIDATE,
+    cdn: "public, s-maxage=150, stale-while-revalidate=1800",
+    vercel: "public, s-maxage=150, stale-while-revalidate=3600",
+  });
   res.statusCode = 200;
   /* The slip's OWN url, not the bare route.
      Every shared slip used to declare og:url as "/s", so X and WhatsApp saw

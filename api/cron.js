@@ -1,5 +1,7 @@
 "use strict";
 
+const { applyCache, NO_STORE } = require("../lib/cachepolicy.js");
+
 /**
  * Called on a schedule by Vercel Cron (see vercel.json).
  *
@@ -14,7 +16,7 @@ module.exports = async (req, res) => {
   const started = Date.now();
   try {
     const payload = await buildPayload({});
-    res.setHeader("Cache-Control", "no-store");
+    applyCache(res, NO_STORE);
     return res.status(200).json({
       ok: true,
       generated: payload.generated,
@@ -25,7 +27,7 @@ module.exports = async (req, res) => {
       log: payload.log,
     });
   } catch (err) {
-    res.setHeader("Cache-Control", "no-store");
+    applyCache(res, NO_STORE);
     return res.status(500).json({
       ok: false,
       error: String(err && err.message || err),
