@@ -19,10 +19,13 @@
  * when html's is visible. The bar now sits outside .wrap and .top-in re-creates
  * the column inside it, so no viewport units appear anywhere.
  *
- * AND NO GLOW HERE, deliberately. The app has one because its bar sits at the
- * top of a landing page with nothing behind it, so the glass had nothing to
- * reveal. These are documents: content starts immediately and scrolls under the
- * bar within a screen, which is the glass doing its job unaided.
+ * AND THE GLOW, which was left off once and then added. The argument for
+ * leaving it out - documents scroll content under the bar within a screen, so
+ * the glass works unaided - was half true and half a rationalisation of the
+ * failure above. Uniformity is the better argument: search drops people on
+ * these pages first, and they should not read as a different site from the one
+ * the link promised. It is painted as a BACKGROUND LAYER on body, which is
+ * already full width, so it is sized in percentages and cannot overflow.
  */
 
 const test = require("node:test");
@@ -106,4 +109,25 @@ test("there is a solid fallback where backdrop-filter is unavailable", () => {
      the flat bar this replaced. */
   assert.match(PAGES.match, /@supports not \(\(backdrop-filter/,
     "the fallback must be declared");
+});
+
+test("the glow matches the app, without a single viewport unit", () => {
+  /* On body rather than a pseudo-element: body is already full width, so the
+     layer is sized in percentages, has nothing to stack against, and cannot
+     miscount a scrollbar the way 100vw did. Verified: 1905 against 1905. */
+  Object.entries(PAGES).forEach(([name, h]) => {
+    const css = /<style>([\s\S]*?)<\/style>/.exec(h)[1].replace(/\/\*[\s\S]*?\*\//g, " ");
+    const body = /body\{([^}]*)\}/.exec(css);
+    assert.ok(body, name + ": body rule must be findable");
+    assert.match(body[1], /radial-gradient\([^)]*var\(--hero-glow\)/,
+      name + " has no glow layer");
+    assert.match(body[1], /100% 320px/, name + ": the layer must be sized, not stretched");
+  });
+});
+
+test("the glow is defined for both colour schemes", () => {
+  const css = /<style>([\s\S]*?)<\/style>/.exec(PAGES.privacy)[1];
+  const light = /@media \(prefers-color-scheme:light\)\{:root\{([\s\S]*?)\}\}/.exec(css);
+  assert.ok(light[1].includes("--hero-glow"),
+    "the light scheme needs its own, weaker glow - red saturates harder on a warm page");
 });
