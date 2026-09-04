@@ -7,8 +7,8 @@
   added 1 Sep. Apex + www proxied; every mail record DNS-only.
 - **Deploy model:** push to `main` → Vercel GitHub integration → prod (~30s)
 - **Repo:** https://github.com/Skait0/Skypredict.git — `main` synced with origin
-- **Working tree:** clean · **HEAD:** `9190f2d` "Give the way out to the Slider something to catch the eye"
-- **Tests:** `npm test` → **812/812** · API `python -m unittest test_server` → **59/59**
+- **Working tree:** clean · **HEAD:** `a32416c` "Bring the handoff up to date for a fresh session"
+- **Tests:** `npm test` → **978/978** · API `python -m unittest test_server` → **59/59**
 - **API:** `C:\Users\DELL\Documents\soccerwizard-api` on Railway.
   **On the paid Hobby plan since 1 Sep 2026** - the trial deadline is gone.
 
@@ -396,8 +396,32 @@ The glow there is a background LAYER on body, sized in percentages.
   slips LAND more often. The graded record answers that once enough settle.
 - Whether outrights should be preferred when close to the best in-band option.
   Taste, not correctness - ask before changing.
-- The Fri 4 Sep 10:00 CPU reminder and the Sun 6 Sep Sentry reminder are both
-  still scheduled Windows tasks.
+- The Sun 6 Sep 10:00 Sentry reminder is still a scheduled Windows task
+  (`cache_age_s` on booking refusals). The Fri 4 Sep CPU reminder is **answered**
+  — see below — but the task is still armed and will fire.
+
+### CPU: verified fixed, 4 Sep 09:15 (the reminder's answer)
+
+`/api/predictions` was 577 invocations, **8 hours of Active CPU** and a 100%
+timeout rate over 12h. Read off Observability → Functions with the window
+narrowed to the last 6 hours, so nothing pre-fix is in frame:
+
+```
+                        during the incident   now (6h window)
+invocations             577 / 12h             22 / 6h
+active CPU              8 HOURS               810ms
+P75 duration            60s (timeout)         98ms
+error rate              100%                  0%
+football-data.co.uk     ~47,000 / 12h         85 / 6h, in two build-shaped spikes
+```
+
+It is now the **second-smallest** CPU consumer on the board; the top row is
+`/api/cron`, the 06:30 rebuild, at 1m — which is what should be there. Billing
+agrees: the cycle that opened 3 Sep 08:00 has used **$2.16 of the $20 credit**,
+almost all of it in the 3 Sep bar; the 4 Sep bar is a sliver. Confirmed from
+outside too — a cache-busted cold hit returns 200 in ~1.0s carrying
+`x-formline-cache: baked`, so the route serves the payload rather than
+rebuilding it.
 
 ## 2026-09-03 evening - the CPU incident, and four smaller things
 
