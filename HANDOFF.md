@@ -389,6 +389,77 @@ The glow there is a background LAYER on body, sized in percentages.
 4. **Check the scope before quoting a Vercel plan.** `skypredict` is an empty
    Hobby scope; the real one is `soccerwizard`, on Pro.
 
+## 2026-09-04 - the cache headers Cloudflare never saw
+
+**Every cacheable route already carried a considered `s-maxage`, and none of it
+ever reached Cloudflare.** Vercel consumes `s-maxage` and
+`stale-while-revalidate` for its own edge and rewrites the header it sends
+downstream. Measured straight at the Vercel origin with Cloudflare out of the
+path, so this is Vercel's transform and not Cloudflare's:
+
+```
+/api/slipcard asks for   public, max-age=31536000, s-maxage=31536000, immutable
+the client received      public
+```
+
+Handed a bare `public`, Cloudflare marks a feed DYNAMIC and forwards it. So the
+board, the SportyBet card and the Bet9ja card - **2.3 MB of byte-identical JSON
+that `load()` fetches before first paint for every visitor** - came through
+Cloudflare from Vercel every time and were billed as Vercel egress. At a
+million visitors a month that is ~3.4 TB against a 1 TB allowance, about $360.
+
+**The fix is one header per audience** (`lib/cachepolicy.js`):
+
+```
+Vercel-CDN-Cache-Control   Vercel's edge. Stripped before the client.
+CDN-Cache-Control          CDNs in front of Vercel - Cloudflare. Forwarded.
+Cache-Control              the browser. Vercel stops rewriting it once the
+                           other two are present, which is the second reason
+                           to always set all three.
+```
+
+**THE NUMBER THAT SHAPES EVERY WINDOW: CLOUDFLARE IS NOT DEPLOY-AWARE.** Vercel
+drops its cache when a deployment lands, which is the only reason
+`/api/predictions` can hold six hours - the payload is baked at build time, so
+every push replaces it. Cloudflare gets no such signal and would serve that
+board through every build of the morning. Its window is therefore the delay
+between pushing a fix and anyone seeing it, and it is capped at **300s**. If it
+ever needs to be longer, the honest way is a purge on deploy, not a bigger
+number.
+
+**Nothing got staler.** The two caches lapse independently, so worst case is
+`cdn + vercel`, and every upstream feed splits the window it already had rather
+than adding to it - live 10+10 against 20 before, fixtures and bet9ja 300+300
+against 600. `test/cachepolicy.test.js` holds that line against the old numbers,
+so widening one has to be argued for rather than typed.
+
+The no-store routes - shared slips, share, booking, cron, the sweep - now refuse
+on all three tiers. A rule that names four safe feeds today is a rule somebody
+widens later, and a per-reader response should carry its own refusal. The
+regression test found two more routes with the original bug, `/api/s` and
+`/api/slipcard`, both fixed.
+
+**STILL HALF DONE - THE SITE IS NOT YET CHEAPER.** Headers verified live on all
+four feeds, but Cloudflare still answers `cf-cache-status: DYNAMIC`, because its
+free plan only caches by file extension and a JSON path has none. **It needs a
+Cache Rule**, and until that exists this change has bought nothing:
+
+```
+name        Cache the read-only API feeds
+if          (http.request.method eq "GET" and http.request.uri.path in
+             {"/api/predictions" "/api/fixtures" "/api/bet9ja" "/api/live"})
+then        Cache eligibility  -> Eligible for cache
+            Edge TTL           -> Use cache-control header if present
+            Browser TTL        -> Respect origin
+```
+
+**Name the four paths; do NOT write `/api/*`.** `/api/book`, `/api/share` and
+`/api/s` are per-reader, and a shared cache is the last place any of them
+belongs. Their own `no-store` is the backstop, not the plan.
+
+Cloudflare sign-in is Google SSO on **sowizardsb@gmail.com**, not the Vercel
+account.
+
 ## Still open
 
 - Whether the +5 value cap is the right number. It is calibrated to the board's
