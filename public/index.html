@@ -7780,7 +7780,32 @@ function normTeamRaw(s){
   s = s.replace(/oe/g,"o").replace(/aa/g,"a").replace(/\s+/g," ").trim();
   return s;
 }
-function tokset(s){return normTeam(s).split(" ").filter(function(w){return w.length>=3;});}
+/* Cached for the same reason normTeam above is, and measured the same way.
+   normTeam was memoised and these two were not, which left the saving half
+   collected: simTeams calls tokset twice and teamMarkers twice on every
+   comparison, and attachEventIds' global fallback compares every fixture
+   against every event on the feed. On the live payload - 462 fixtures, a
+   2,003-event feed - that is 1.85 million simTeams calls, and caching these
+   two took the block from 7,358ms to 2,094ms.
+   Safe because both are pure functions of one string AND because each has
+   exactly one caller which only ever reads the result: sameVariant reads
+   teamMarkers' object, simTeams iterates tokset's array. Neither mutates.
+   If that ever stops being true, these have to return copies. */
+function tokset(s){
+  var k=s||"";
+  var C=tokset.C||(tokset.C=Object.create(null));
+  var hit=C[k];
+  if(hit!==undefined) return hit;
+  var v=normTeam(k).split(" ").filter(function(w){return w.length>=3;});
+  /* On the function, not in a module-level var, and capped like NT_CACHE.
+     Two test files lift these functions out of the page by name and run them
+     standalone; a cache declared outside would be undefined there, and the
+     first thing anyone would do is stub it in the test - which is a second
+     place to keep in step. Self-contained, it travels. */
+  tokset.n=tokset.n||0;
+  if(tokset.n<20000){C[k]=v;tokset.n++;}
+  return v;
+}
 /* A reserve, youth or women's side is not its first team.
    Every string matcher gets this wrong by default and this one did: tokset
    drops tokens under three characters, which is exactly what "II" and "B"
@@ -7796,6 +7821,18 @@ function tokset(s){return normTeam(s).split(" ").filter(function(w){return w.len
    in lib/oracle.js, which got this guard when the same bug bit the results
    matcher; the odds matcher never had it. */
 function teamMarkers(s){
+  /* Cached alongside tokset above - see that comment for the measurement and
+     for why this is safe. This is the more expensive of the two: it runs
+     normalize("NFD") and three regexes over the raw name on every call, and
+     sameVariant asks for BOTH sides before simTeams scores anything at all.
+     The cache hangs off the function rather than sitting in a module-level
+     var, and that is deliberate: test/variant.test.js lifts this function out
+     of the page by name and evaluates it on its own, so a cache declared
+     outside it would be undefined there. Self-contained, it travels. */
+  var ck=s||"";
+  var C=teamMarkers.C||(teamMarkers.C=Object.create(null));
+  var hit=C[ck];
+  if(hit!==undefined) return hit;
   var out={}, n=0;
   var raw=" "+String(s==null?"":s).toLowerCase().normalize("NFD")
     .replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g," ")+" ";
@@ -7828,7 +7865,12 @@ function teamMarkers(s){
   if(/ (reserves?|academy|youth|jugend|primavera|junioren) /.test(raw)) add("youth");
   /* Dutch reserve sides are named "Jong Ajax", with no numeral at all. */
   if(/ jong /.test(raw)) add("reserves");
-  out.__n=n; return out;
+  out.__n=n;
+  /* Capped for the same reason NT_CACHE is: club names, not user input, but a
+     runaway feed should not grow this without bound. */
+  teamMarkers.n=teamMarkers.n||0;
+  if(teamMarkers.n<20000){C[ck]=out;teamMarkers.n++;}
+  return out;
 }
 function sameVariant(a,b){
   var A=teamMarkers(a), B=teamMarkers(b);
