@@ -538,11 +538,27 @@ img,svg{max-width:100%}
 .intro{position:relative;isolation:isolate;padding:26px 0 4px}
 .intro::before{
   content:"";position:absolute;z-index:-1;pointer-events:none;
-  top:-18px;bottom:-58px;left:50%;width:100vw;margin-left:-50vw;
+  /* RUNS UP BEHIND THE MASTHEAD, which is the point.
+     Making the bar translucent changed nothing at the top of the page, and the
+     arithmetic says why: rgba(13,13,15,.72) composited over a page that is
+     already #0D0D0F is #0D0D0F. Glass over the same colour is a no-op, so the
+     header stayed exactly as black as it was - reported as "the black
+     background is there the same way", which was correct.
+     Glass needs something behind it. The band now starts above the header
+     rather than below it, so the brand glow passes under the bar and the blur
+     picks it up: warm at the top of the page, and plain neutral glass once you
+     scroll and there is only the board behind it. That is the behaviour worth
+     having - colour where the page introduces itself, quiet where it has work
+     to do.
+     -96px clears the masthead, which is about 58px tall plus its own offset.
+     The glow's vertical origin moves with it - it was anchored at -20% of a
+     shorter box, and left alone the whole gradient would have slid down the
+     band by the height just added. */
+  top:-96px;bottom:-58px;left:50%;width:100vw;margin-left:-50vw;
   background:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 300'%3E%3Cg fill='none' stroke='%23888891' stroke-width='2'%3E%3Crect x='10' y='2' width='200' height='296' rx='3'/%3E%3Cpath d='M10 150h200'/%3E%3Ccircle cx='110' cy='150' r='42'/%3E%3Ccircle cx='110' cy='150' r='3' fill='%23888891' stroke='none'/%3E%3Crect x='45' y='2' width='130' height='60'/%3E%3Crect x='82' y='2' width='56' height='24'/%3E%3Ccircle cx='110' cy='42' r='2.5' fill='%23888891' stroke='none'/%3E%3Cpath d='M78 62q32 26 64 0'/%3E%3Crect x='45' y='238' width='130' height='60'/%3E%3Crect x='82' y='274' width='56' height='24'/%3E%3Ccircle cx='110' cy='258' r='2.5' fill='%23888891' stroke='none'/%3E%3Cpath d='M78 238q32 -26 64 0'/%3E%3C/g%3E%3C/svg%3E")
-      no-repeat calc(50% + 200px) 50% / auto 208px,
-    radial-gradient(120% 150% at 14% -20%, var(--hero-glow) 0%, transparent 60%),
+      no-repeat calc(50% + 200px) 62% / auto 208px,
+    radial-gradient(120% 150% at 14% 6%, var(--hero-glow) 0%, transparent 60%),
     linear-gradient(180deg, var(--hero-top) 0%, transparent 100%);
   /* The band has to stop being a band. A hard bottom edge would draw a line
      across the page exactly where nothing changes; the mask lets it hold its
@@ -573,7 +589,7 @@ img,svg{max-width:100%}
 @media(max-width:860px){
   .intro::before{
     background:
-      radial-gradient(120% 150% at 14% -20%, var(--hero-glow) 0%, transparent 60%),
+      radial-gradient(120% 150% at 14% 6%, var(--hero-glow) 0%, transparent 60%),
       linear-gradient(180deg, var(--hero-top) 0%, transparent 100%);
   }
 }
