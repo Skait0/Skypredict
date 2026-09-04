@@ -1,4 +1,4 @@
-# Soccerwizard — Session Handoff (updated 2026-09-03, evening)
+# Soccerwizard — Session Handoff (updated 2026-09-04)
 
 ## Deployed state
 - **Live URL:** https://www.soccerwizard.live — **www is canonical**, the bare
@@ -263,6 +263,141 @@ The rest are booking, in soccerwizard-api:
 session booked 199 legs in one code successfully. Our caps are 40, and 50 for
 jackpot. If a 50-selection limit is real, it is not recorded anywhere and the
 jackpot cap sits exactly on it - worth confirming before trusting x20000+.
+
+## 2026-09-04 - the wizard's picks, and the header
+
+Twelve commits. All pushed, all verified live by fetching the hashed bundles.
+
+### The wizard was buying its own mistakes
+
+Reported: at x100 it picked "Monaco to score against PSG", "Betis to score
+against Madrid", while the SLIDER at its riskiest - 32 legs, x3000 - picked
+Real Madrid or draw. Measured on a 394-fixture board, our probability minus the
+bookmaker's implied one:
+
+```
+every priced option on the board   -3.5 pts   we are higher on 26%
+"more games" legs chosen           -0.6 pts   ...on 39%
+"balanced" legs chosen            +10.1 pts   ...on 80%
+"fewer games" legs chosen         +14.8 pts   ...on 100%
+```
+
+The model is not over-confident - across the board it sits BELOW the book on
+every market. The fault was in what the builder SELECTED. It fixes leg count
+from the payout then needs each leg to hit a price; on a lopsided fixture every
+safe market is 1.05-1.10, all under the band, so the only thing in range is the
+unlikely thing - and `edge` then PREFERS those, because a high probability at a
+long price looks efficient. Band plus edge acted as a filter isolating our own
+errors, and the higher the per-leg target the purer it got.
+
+**The Slider never did this because it has no per-leg price target at all.**
+That is the whole difference, and it is worth remembering before adding one.
+
+Fixed with a **value cap**: refuse a leg whose probability exceeds the book's
+implied one by more than 5 points, judged only where a real price exists. NOT a
+ban on team-to-score - that market grades 81.6% against 78% claimed and a rule
+against it was tried once and was wrong. Balanced x100 went from 10 legs at a
++10.1 mean gap to 13 legs at +2.0. **The leak was `_alts`**: two later loops
+reach in to lengthen legs and neither re-checks the price.
+
+Ground truth: across 1,752 matches in five top leagues, against a favourite at
+65%+ the underdog scored **52-56%** of the time. Those legs claimed 63-74%.
+
+### The model would not call a favourite
+
+Chasing "why no big teams on wizard tickets" found a real calibration fault.
+Against the de-vigged book price, after the flat 30% blend:
+
+```
+book says fav is   40-50%  50-60%  60-70%  70-80%  80%+
+our gap             -2.3    -6.7   -11.4   -14.4   -16.5
+away favourites     -6.1   -11.5   -17.1   -18.5      -
+```
+
+`blendFixture` now scales its weight with the size of the disagreement, 0.30 up
+to 0.75 over a 20-point gap. After: -1.6, -3.9, -5.3, -6.0, -6.2. Liverpool at
+Ipswich went 41% to 56%.
+
+**It still will not put Real Madrid on a ticket, and that is structural:** a team
+winning is always less likely than the same team scoring, and bestOf takes the
+highest probability in band. Changing that is a taste decision about what a
+ticket should look like, and the owner should call it.
+
+### Smaller, all live
+
+- **A toggled market that contributes nothing now says so**, and says where it
+  WOULD work - decided by rebuilding at the longest style and looking, not by
+  modelling the band. Team over 1.5 clears its 50% floor on only 101 of 790
+  candidates and is priced above the Balanced band; at Fewer games it takes 4 of
+  9 legs. The toggle was never broken.
+- **A typed payout the current window cannot reach** warns and offers to switch
+  scope, instead of silently clamping x20,000 to x6,000.
+- **"Open in football.com" on shared SportyBet slips.** See the warnings below.
+- **Social tags** completed (twitter:title, description, og:site_name).
+
+### The header, and a bug under it
+
+The masthead was `background:var(--bg)` - the page colour exactly - with a hard
+1px rule on scroll and `--shadow:none` on dark. Now glass: translucent, 16px
+backdrop blur, hairline drawn INTO the surface with an inset shadow, and 18px of
+gradient falloff so the edge ends rather than stops.
+
+**Translucency over the same colour is a no-op.** The first attempt changed
+nothing at the top of the page, correctly reported as "the black background is
+there the same way". The hero band now starts ABOVE the masthead so the glow
+passes under the glass.
+
+**And the header was never sticking.** Declared `position:sticky`, measured at
+-306 with 306 of scroll. `body{overflow-x:hidden}` made body a scroll container,
+and a scroll container breaks sticky for everything inside it. `overflow-x:clip`
+clips identically without becoming a scroller. Both declarations kept.
+
+The nav tabs became a segmented control - a recessed rail, the current view
+lifted off it, hover lift behind `@media (hover:hover)`, a press state. On
+phones the Live tab had to lose its own fill/border/small-radius, which rendered
+as a box inside the new rail.
+
+All of it carried through to the 1,120 generated pages, where the bar now sits
+OUTSIDE `.wrap` - **a full-width bar with viewport units inside a 680px column
+put 348px of horizontal scroll on every page**, because 100vw counts the
+scrollbar and body's overflow propagates to the viewport when html's is visible.
+The glow there is a background LAYER on body, sized in percentages.
+
+---
+
+## Warnings earned today, in order of how much they cost
+
+1. **A template literal is not a text file.** A regex written into the shared
+   slip's inline script lost its escaped slashes, terminated early, and turned
+   the rest of the line into a comment - a syntax error that killed the WHOLE
+   script block, so **Copy code was dead on every shared slip page**. None of
+   thirteen tests caught it: they all read the rendered markup as a string, and
+   a string containing broken JavaScript is a perfectly good string. There is
+   now a test that COMPILES what the page emits, and another that refuses any
+   backslash in that literal. Later the same day a backtick inside a CSS comment
+   in `lib/pages.js` ended the stylesheet literal the same way.
+
+2. **"It works for me" is worthless when two paths are not the same code.** The
+   owner reported football.com opening the app, so I removed the `intent://`
+   workaround as unnecessary. He was tapping the app's modal, which had it; a
+   reader tapping a SHARED slip, which did not, got the website. Restored.
+
+3. **Computed styles on a transitioning property are a moving target.** Half an
+   hour went into a header "bug" that was me sampling box-shadow and opacity
+   mid-transition. Disable the transition before measuring.
+
+4. **Check the scope before quoting a Vercel plan.** `skypredict` is an empty
+   Hobby scope; the real one is `soccerwizard`, on Pro.
+
+## Still open
+
+- Whether the +5 value cap is the right number. It is calibrated to the board's
+  own -3.5 mean, which is sound reasoning, but the real test is whether capped
+  slips LAND more often. The graded record answers that once enough settle.
+- Whether outrights should be preferred when close to the best in-band option.
+  Taste, not correctness - ask before changing.
+- The Fri 4 Sep 10:00 CPU reminder and the Sun 6 Sep Sentry reminder are both
+  still scheduled Windows tasks.
 
 ## 2026-09-03 evening - the CPU incident, and four smaller things
 
