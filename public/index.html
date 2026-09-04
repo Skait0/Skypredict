@@ -503,6 +503,21 @@ img,svg{max-width:100%}
   mask-image:linear-gradient(180deg,#000 0%,#000 58%,transparent 100%);
   opacity:var(--hero-line);
 }
+/* SOFTEN THE PITCH. Reported: "the football pitch added to header background
+   is too pronounced, blur it out so its not so sharp, its interupting the
+   visuals." At a 2px stroke it read as a diagram sitting behind the headline
+   rather than as texture under it - the eye kept resolving it into lines
+   instead of letting it recede.
+   Blurred rather than faded: fading alone makes a sharp thing faint, the edges
+   stay crisp and the eye still finds them. Two and a half pixels stops a
+   stroke reading as a stroke while the shape of a pitch survives.
+   Scoped to the width where the pitch is actually drawn. Below 860px the
+   background is gradients only, and blurring a gradient is a filter on a
+   full-width element for no visible gain - on a phone that is a cost with no
+   return. */
+@media(min-width:861px){
+  .intro::before{filter:blur(2.5px)}
+}
 /* The pitch is decoration and the headline is not. Below the point where the
    two would overlap, the drawing goes - a hero graphic that crowds the words
    it exists to frame has stopped helping. The gradients stay: they cost the
@@ -2050,10 +2065,52 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
      rules below never apply. */
   html.mode-pred .nav,html.mode-build .nav{display:flex}
 }
-.navt{background:none;border:0;color:var(--soft);font:inherit;font-weight:800;
-  font-size:14px;padding:8px 14px;border-radius:var(--r-sm);cursor:pointer;white-space:nowrap}
-.navt.on{background:var(--card-2);color:var(--text)}
+/* THE VIEW TABS, WHICH WERE NOT DESIGNED AT ALL.
+   `background:none;border:0` with a flat grey fill on the selected one - no
+   surface, no hover, nothing to say these were controls rather than words.
+   Reported as "no design or buttons".
+
+   Built out of what the page already uses, so it reads as the same product
+   rather than a new idea: a grouped track like the scope segment, pill radius
+   like every chip, and the raise/card/line tokens that carry every other
+   surface here. Nothing new is introduced - no gradients invented for this, no
+   colour outside the palette.
+
+   The group gets a track. Two bare words beside a wordmark read as text; the
+   same two words inside a recessed rail read as a switch, and that is the
+   whole difference between "no buttons" and a segmented control. */
+.nav{background:var(--raise);border:1px solid var(--line);
+  border-radius:999px;padding:3px;gap:2px}
+.navt{background:transparent;border:1px solid transparent;color:var(--soft);
+  font:inherit;font-weight:800;font-size:14px;padding:7px 15px;
+  border-radius:999px;cursor:pointer;white-space:nowrap;position:relative;
+  transition:background .18s ease,color .18s ease,border-color .18s ease,
+             transform .12s ease,box-shadow .18s ease}
+/* The selected tab is LIFTED off the track rather than filled in. A flat
+   darker rectangle said "highlighted"; a raised surface with a hairline and a
+   soft shadow says "this is the one you are on", which is the thing the
+   control exists to answer. */
+.navt.on{background:var(--card);color:var(--text);border-color:var(--line-soft);
+  box-shadow:0 1px 2px rgba(0,0,0,.28),0 0 0 .5px rgba(255,255,255,.03) inset}
+[data-theme="light"] .navt.on{box-shadow:0 1px 2px rgba(30,25,20,.10)}
+/* Hover, behind the guard the whole site uses - a phone keeps :hover on the
+   last thing tapped, and a tab stuck in its hover state is a tab that looks
+   selected when it is not. The lift is one pixel: enough to feel like it
+   answered, small enough that a row of them does not jump about. */
+@media (hover:hover){
+  .navt:hover:not(.on){background:var(--card-2);color:var(--text);
+    transform:translateY(-1px)}
+  .navt.on:hover{transform:translateY(-1px);
+    box-shadow:0 3px 10px rgba(0,0,0,.32),0 0 0 .5px rgba(255,255,255,.04) inset}
+}
+/* Pressed. Without this the lift has no counterpart and the button feels like
+   it floats away from the finger rather than being pushed. */
+.navt:active{transform:translateY(0) scale(.97);transition-duration:.06s}
 .navt:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){
+  .navt{transition:background .18s ease,color .18s ease}
+  .navt:hover,.navt.on:hover,.navt:active{transform:none}
+}
 /* the tab for the page you are already on is only a way back, so it is not
    drawn at all until you have gone somewhere else */
 .navt.hide-tab{display:none!important}
@@ -3268,6 +3325,10 @@ button.wsp-go.waiting{opacity:.55}
 }
 /* The ask. Sits under the row it belongs to and goes when answered. */
 #mkAsk:not(:empty){margin:10px 0 2px}
+/* The payout ask, under the ladder it is about. Same shape as the market ask
+   above it, and the same rule: no margin when empty, so a panel with nothing
+   to say has no gap in it. */
+#payAsk:not(:empty){margin:10px 0 2px}
 /* The idle-market note. One line, muted, and it takes no space at all when
    there is nothing to say - :not(:empty) rather than a class, so an empty
    string is genuinely empty and cannot leave a gap in the panel.
@@ -12376,7 +12437,13 @@ function renderWizardPanel(){
   /* x10 added at the bottom. It was missing and it is the rung most likely
      to actually land - three or four legs - which makes it the one worth
      showing a first-timer, not the one to hide. */
-  var odds=jackOK?[10,50,100,500,1000,2000,6000,20000,50000]:[10,50,100,500,1000,2000,6000];
+  /* ONE ladder, sliced. The two lists were written out separately, which is
+     fine until something reads "the highest the wider window reaches" - the
+     offer to switch scope promises exactly that number, and a second copy of
+     it would drift the first time a rung is added or moved. */
+  var WIDE_ODDS=[10,50,100,500,1000,2000,6000,20000,50000];
+  var odds=jackOK?WIDE_ODDS:WIDE_ODDS.filter(function(o){return o<JACKPOT_FROM;});
+  WSP._wideMaxTarget=WIDE_ODDS[WIDE_ODDS.length-1];
   /* The ceiling the chips currently express, so the custom box can clamp to
      the same limit. It moves with the window: the jackpot rungs are only
      offered on All upcoming, because a single day rarely holds the twenty
@@ -12412,7 +12479,10 @@ function renderWizardPanel(){
       "autocomplete='off' maxlength='5' placeholder='own' "+
       "aria-label='Your own target payout, from 2 to 50000' value='"+
       ((WSP.odds&&odds.indexOf(WSP.odds)<0)?WSP.odds:"")+"'></span>"+
-    "</div>";
+    "</div>"+
+    /* Where a target the current window cannot reach explains itself. Empty
+       the rest of the time, and it carries no margin when empty. */
+    "<div id='payAsk'></div>";
   /* What a jackpot ticket actually is, said before it is built rather than
      after it loses. The number of legs is the honest part - it is the thing
      that has to come in, and it is a different order of ask from a x50. */
@@ -12513,6 +12583,45 @@ function renderWizardPanel(){
      to the same ceiling the chips stop at: above that the wizard cannot reach
      the target from one card and would just return its longest slip while
      appearing to have hit a number nobody can hit. */
+  /* A TARGET ONLY THE WIDER WINDOW CAN REACH.
+     The ladder tops out at x6,000 on a single day and x50,000 on All upcoming,
+     because the jackpot rungs want about twenty legs and one fixture day
+     rarely holds that many worth backing. Typing x20,000 on Today used to be
+     clamped to x6,000 in silence: the box changed under the fingers that had
+     just typed it, and nothing said why or that the number asked for was
+     available one tap away.
+     So say it, and offer the tap. The offer is only made when it would
+     actually work - above x50,000 there is no window that reaches it, and an
+     offer that changes nothing is worse than the clamp it replaced. */
+  /* The chips label a payout as x6k rather than x6000, so the sentence about
+     them must read the same way or it looks like a different number. */
+  function payLbl(n){ return n>=1000 ? (n/1000)+"k" : String(n); }
+  window.askWiderWindow=function(typed,ceil){
+    if(!showPrompt("payAsk",
+      "<div class='confirm-card'><p><b>\u00d7"+payLbl(typed)+" needs a wider window.</b> "+
+      "A single day rarely holds the games for it, so today tops out at "+
+      "<b>\u00d7"+payLbl(ceil)+"</b>. All upcoming can reach it.</p>"+
+      "<div class='ca'><button class='confirm-go' type='button'>Use all upcoming</button>"+
+      "<button class='confirm-cancel' type='button'>Keep \u00d7"+payLbl(ceil)+"</button></div></div>")) return;
+    var host=$("payAsk");
+    host.querySelector(".confirm-go").addEventListener("click",function(){
+      clearPrompt("payAsk");
+      /* setScope does the storing and the repaint; the rest is the same reset
+         a scope button performs, because the pool the slip was drawn from has
+         just changed and a removal list from the old one is stale. */
+      if(setScope("all")){
+        BUILD.removed={}; BUILD.touched=true;
+        WSP.removed={}; WSP._slip=null; WSP._sig=null;
+        var _br=$("bookResult"); if(_br) _br.innerHTML="";
+      }
+      WSP.odds=typed; WSP._sig=null;
+      try{localStorage.setItem("sw.wspodds",String(typed));}catch(e){}
+      renderBuilder();
+    });
+    host.querySelector(".confirm-cancel").addEventListener("click",function(){
+      clearPrompt("payAsk");
+    });
+  };
   var _cust=$("wspCust");
   if(_cust){
     var commit=function(){
@@ -12524,13 +12633,24 @@ function renderWizardPanel(){
          50000 on Today cleared the box and chose nothing. Landing on the
          highest reachable number says what happened. */
       var _ceil=WSP._maxTarget||50000;
-      var v=Math.max(2,Math.min(_ceil,parseInt(raw,10)||0));
+      var _typed=parseInt(raw,10)||0;
+      var v=Math.max(2,Math.min(_ceil,_typed));
       _cust.value=v;
-      if(v===WSP.odds) return;
-      WSP.odds=v; WSP._sig=null;
-      try{localStorage.setItem("sw.wspodds",String(v));}catch(e){}
-      renderBuilder();
-      var again=$("wspCust"); if(again){ again.focus(); }
+      /* Clamped, and the wider window would not have clamped it. */
+      var _needsWider=(_typed>_ceil && SCOPE==="day" && _typed<=(WSP._wideMaxTarget||50000));
+      if(v!==WSP.odds){
+        WSP.odds=v; WSP._sig=null;
+        try{localStorage.setItem("sw.wspodds",String(v));}catch(e){}
+        renderBuilder();
+        var again=$("wspCust"); if(again){ again.focus(); }
+      }
+      /* AFTER the render, never before. #payAsk lives inside the panel that
+         renderBuilder replaces, so an ask raised first is wiped by the redraw
+         that follows it - and silently, because showPrompt succeeded and the
+         node it wrote into no longer exists. Caught in the browser, not by
+         reading: the first version fired correctly and left nothing on
+         screen. */
+      if(_needsWider) askWiderWindow(_typed,_ceil);
     };
     _cust.addEventListener("blur",commit);
     _cust.addEventListener("keydown",function(e){
