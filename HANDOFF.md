@@ -492,6 +492,63 @@ one real risk with caching it and it is clean.
 Cloudflare sign-in is Google SSO on **sowizardsb@gmail.com**, not the Vercel
 account.
 
+## 2026-09-04 - the two seconds the board spent frozen
+
+**The site was fast to first byte and slow in the browser.** TTFB 216ms, load
+event 518ms - and then the main thread locked solid for about two seconds.
+Measured live, twice, before the fix:
+
+```
+/predictions.json   464 -> 467 ms
+/api/fixtures       497 -> 665 ms
+                    <- 1,951 ms of nothing ->
+/api/bet9ja        2616 -> 2782 ms
+```
+
+`load()` awaits `loadSporty()`; the very next line, `loadBet9jaSoon()`, did not
+run for nearly two seconds. On an eight-core desktop. A mid-range Android is
+four to six times slower single-core, which is most of the audience.
+
+**Not parsing** - `JSON.parse` on those payloads is 13ms and 21ms. It was
+`attachEventIds`, whose global fallback compares every unmatched fixture against
+every event on the feed. `simTeams` calls `tokset` twice and `teamMarkers` twice
+per comparison; `normTeam` was memoised long ago and **these two never were**,
+which left the saving half collected. `teamMarkers` is the dearer of the pair -
+`normalize("NFD")` plus three regexes over the raw name - and `sameVariant` asks
+for both sides before any scoring happens.
+
+```
+                     before      after
+benchmark, live data  7,296 ms   2,408 ms   3.0x   (1,850,772 simTeams calls)
+live gap in browser   1,951 ms     693 ms
+                      1,639 ms     500 ms
+```
+
+**Proved identical, not assumed.** Every one of the 1,850,772 scores matches
+before and after. That mattered more than the speed: a wrong pairing books
+somebody onto the wrong fixture and nothing downstream can correct it. The
+harness is `scratchpad/matchbench.js` - it slices the matcher out of index.html
+BY MARKER rather than line number, drives it over the live board and the live
+feed, and diffs every score.
+
+**THE CACHES HANG OFF THE FUNCTIONS ON PURPOSE** - `tokset.C`, `teamMarkers.C` -
+and this is the thing to know before touching them. `test/variant.test.js` and
+`test/teamnames.test.js` both lift these functions out of the page BY NAME and
+evaluate them standalone. A cache in a module-level var is undefined there. The
+first attempt used module vars, broke both files, and the tempting fix is to
+stub the cache in each test - which is a second and third place to keep in step.
+Self-contained, they travel.
+
+Safe to cache because both are pure functions of one string AND each has exactly
+one caller that only reads the result: `sameVariant` reads `teamMarkers`' object,
+`simTeams` iterates `tokset`'s array. **If either caller ever starts mutating,
+these have to return copies.**
+
+**Still open here:** the fallback is still O(fixtures x feed) - 462 x 2,003 x 2
+comparisons in the worst case. Memoising made each one cheap; it did not make
+there be fewer. An index on normalised name would, and would be a bigger change
+than this one.
+
 ## Still open
 
 - Whether the +5 value cap is the right number. It is calibrated to the board's
