@@ -2192,9 +2192,16 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
   /* "Live scores" is the web label; the phone header only has room for "Live",
      so the second word is dropped rather than shrinking the whole tab. */
   .nv-x{display:none}
-  #tab-live{padding:5px 10px;font-size:12px;border-radius:var(--r-sm);
-    background:var(--card-2);border:1px solid var(--line-soft)}
-  #tab-live.on{background:var(--card-2);border-color:var(--red)}
+  /* A BOX INSIDE A PILL. This tab used to carry its own surface - a fill, a
+     border and a small corner radius - because the row around it had no design
+     at all and it needed to look like a button on its own. The row is a
+     segmented control now, so that surface renders as a squared-off box
+     floating inside a rounded rail. Reported as "the live pill still has box
+     pill look inside the new pill on mobile".
+     It follows the row's language instead: transparent at rest, lifted only
+     when it is the view you are on, pill radius like every other tab. The one
+     thing it keeps is the live dot, which is what actually distinguishes it. */
+  #tab-live{padding:6px 11px;font-size:12px}
   /* Home page shows Live tab; Build page shows Home + Live tabs - both single line */
   html.mode-pred .navt:not(#tab-live){display:none}
   html.mode-build .navt:not(#tab-pred):not(#tab-live){display:none}
