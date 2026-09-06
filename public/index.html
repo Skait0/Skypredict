@@ -4811,6 +4811,21 @@ html.sw-gate-still #swGate video{display:none}
   letter-spacing:-.02em; color:#F7F7F8; text-wrap:balance;
 }
 #swGate .sw-g-sub{margin:0; font-size:clamp(14px,3.4vw,17px); color:#C9C9CE; font-weight:500}
+/* THREE GREYS, NOT FIVE.
+   The panel had #C9C9CE, #A9A9B2, #9A9AA2, #8B8B94 and white. Four greys inside
+   one small block, and the middle two were 8.33:1 and 6.95:1 - close enough that
+   the eye cannot rank them, so they read as one tier pretending to be two.
+   A panel this size can express three levels and no more:
+
+     #F7F7F8  the question              18.14:1
+     #C9C9CE  the promise, and Skip     11.77:1
+     #9A9AA2  under 18, and fine print   6.95:1
+     #F2555F  the age line, off the ladder entirely
+
+   Skip moving UP to the second tier is deliberate. It is a real choice, not a
+   footnote, and it does not compete with Enter because Enter is a filled red
+   pill - the hierarchy there is carried by FORM, which is what frees the colour
+   ladder to be this short. */
 /* The compliance line, in red - and NOT the brand red.
    #E63946 measures 4.66:1 on this background, which scrapes AA against a
    FLAT colour and the background here is video. #F2555F is the same hue
@@ -4866,7 +4881,7 @@ html.sw-gate-known #swGate .sw-g-under{display:none}
    the control someone in a hurry reaches for. */
 #swGate .sw-g-skip{
   appearance:none; background:none; border:0; cursor:pointer;
-  color:#A9A9B2; font-family:inherit; font-size:15px; font-weight:600;
+  color:#C9C9CE; font-family:inherit; font-size:15px; font-weight:600;
   min-height:44px; padding:10px 28px; transition:color .15s ease;
 }
 #swGate .sw-g-under{
@@ -4878,7 +4893,7 @@ html.sw-gate-known #swGate .sw-g-under{display:none}
 /* Was #6E6E77 at 3.85:1, which fails AA outright - and it is the line that
    says play responsibly, so it is the last one that should be decorative.
    #8B8B94 is 5.42:1 and still reads as fine print. */
-#swGate .sw-g-legal{margin:8px 0 0; font-size:11.5px; color:#8B8B94; letter-spacing:.02em}
+#swGate .sw-g-legal{margin:8px 0 0; font-size:11.5px; color:#9A9AA2; letter-spacing:.02em}
 
 /* The under-18 answer. Not a dismissal - the panel is replaced and the gate
    stays up, because the one thing this must not do is let the answer through. */
