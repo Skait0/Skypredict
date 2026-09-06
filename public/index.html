@@ -4980,7 +4980,16 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
      The poster is the only image that always loads, and it is 37 KB. -->
 <div id="swGate" role="dialog" aria-modal="true" aria-labelledby="swGateQ" hidden>
   <div class="sw-g-media">
-    <img class="sw-g-poster" src="/intro-wizard-poster.jpg" alt="" aria-hidden="true" decoding="async">
+    <!-- Two crops, and the reason is continuity rather than sharpness. The
+         portrait video is cut from source x211-459, centred on 335; a landscape
+         poster cover-cropped on a phone centres on 432. Ship one poster for
+         both and the picture JUMPS SIDEWAYS the moment the video fades in.
+         A <picture> resolves at parse time, so this still paints immediately -
+         and only ONE of the two is ever fetched. -->
+    <picture>
+      <source media="(max-aspect-ratio: 3/4)" srcset="/intro-wizard-poster-p.jpg">
+      <img class="sw-g-poster" src="/intro-wizard-poster.jpg" alt="" aria-hidden="true" decoding="async">
+    </picture>
     <video class="sw-g-loop" muted playsinline autoplay loop preload="none"
            poster="/intro-wizard-poster.jpg" aria-hidden="true" tabindex="-1"></video>
     <video class="sw-g-reveal" muted playsinline preload="none"
@@ -5134,9 +5143,23 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     }catch(e){}
     return "";
   }
+  /* WHICH CROP, and it is a question about the shape of the hole rather than
+     the kind of device.
+     object-fit:cover on a portrait phone shows only 31% of a landscape frame -
+     the other 69% is decoded, paid for, and thrown away. A portrait cut of the
+     same scene at the same file size carries 2.6x the pixels the reader can
+     actually see: 343,008 against 132,849 per frame.
+     Measured, not assumed. And keyed on the viewport ratio so a narrow desktop
+     window gets it too, because the geometry is the same either way. */
+  function variant(){
+    try{
+      if(window.innerHeight>0 && (window.innerWidth/window.innerHeight)<0.75) return "-p";
+    }catch(e){}
+    return sharpSet()?"-hd":"";
+  }
   function play(){
     if(!wantsVideo()) return;
-    var hd=sharpSet()?"-hd":"";
+    var hd=variant();
     var cx=bestCodec();
     try{
       loop.src="/intro-wizard-loop"+hd+cx+".mp4";

@@ -80,8 +80,27 @@ test("the whole first load stays inside a phone budget", () => {
      baked payload is fetched immediately too. */
   let total = Math.round(fs.statSync(path.join(PUB, "index.html")).size / 1024);
   try { total += kb("predictions.json"); } catch (e) { /* not built yet */ }
+
+  /* A <picture> fetches exactly ONE of its candidates - the browser picks by
+     media query and never downloads the rest. Summing them all overstated the
+     page by whichever alternatives lost, which would have blocked a second
+     poster crop that costs a phone nothing. So each picture contributes its
+     LARGEST candidate, which is the worst case that can actually be fetched.
+     Everything outside a picture still counts in full. */
+  const pictures = [...index.matchAll(/<picture[\s\S]*?<\/picture>/g)].map((m) => m[0]);
+  let counted = new Set();
+  pictures.forEach((p) => {
+    const cands = [...new Set([...p.matchAll(/(?:src|srcset)="\/([^"\s]+\.(?:png|jpe?g|webp))"/g)]
+      .map((m) => m[1]))];
+    cands.forEach((c) => counted.add(c));
+    const worst = cands.reduce((n, f) => { try { return Math.max(n, kb(f)); } catch (e) { return n; } }, 0);
+    total += worst;
+  });
   [...new Set([...index.matchAll(/(?:href|src)="\/([^"]+\.(?:png|jpe?g|webp))"/g)]
-    .map((m) => m[1]))].forEach((f) => { try { total += kb(f); } catch (e) {} });
+    .map((m) => m[1]))].forEach((f) => {
+      if (counted.has(f)) return;
+      try { total += kb(f); } catch (e) {}
+    });
 
   assert.ok(total <= 1200,
     "a first load is about " + total + " KB. It was 1,600 KB when phones on LTE " +
@@ -154,12 +173,30 @@ test("the AV1 set is never bigger than the H.264 it replaces", () => {
 });
 
 test("the gate's phone payload stays small on either codec", () => {
-  const poster = introKb("intro-wizard-poster.jpg");
-  for (const f of ["intro-wizard-loop.mp4", "intro-wizard-loop.av1.mp4"]) {
+  /* A phone fetches the PORTRAIT pair, so that is what the budget has to be
+     measured against - the landscape files it will never request are beside
+     the point. */
+  const poster = introKb("intro-wizard-poster-p.jpg");
+  for (const f of ["intro-wizard-loop-p.mp4", "intro-wizard-loop-p.av1.mp4"]) {
     const loop = introKb(f);
-    if (loop === null) continue;
+    if (loop === null || poster === null) continue;
     assert.ok(poster + loop <= 420,
       f + " puts the gate at " + (poster + loop) + " KB on a phone. Budget is 420 KB.");
+  }
+});
+
+test("the portrait cut is not a false economy", () => {
+  /* It exists to put pixels where a phone can see them, which is only a gain
+     while it costs about the same. If a portrait file ever grows well past its
+     landscape equivalent the trade has quietly reversed. */
+  for (const [p, l] of [["loop-p", "loop"], ["reveal-p", "reveal"],
+                        ["loop-p.av1", "loop.av1"], ["reveal-p.av1", "reveal.av1"]]) {
+    const a = introKb("intro-wizard-" + p + ".mp4");
+    const b = introKb("intro-wizard-" + l + ".mp4");
+    if (a === null || b === null) continue;
+    assert.ok(a <= b * 1.15,
+      "intro-wizard-" + p + " is " + a + " KB against " + b + " KB landscape; " +
+      "the portrait cut should carry more detail for about the same bytes, not more bytes.");
   }
 });
 
@@ -168,7 +205,9 @@ test("both video sets exist, or the gate half works", () => {
                    "intro-wizard-loop-hd.mp4", "intro-wizard-reveal-hd.mp4",
                    "intro-wizard-loop.av1.mp4", "intro-wizard-reveal.av1.mp4",
                    "intro-wizard-loop-hd.av1.mp4", "intro-wizard-reveal-hd.av1.mp4",
-                   "intro-wizard-poster.jpg"]) {
+                   "intro-wizard-loop-p.mp4", "intro-wizard-reveal-p.mp4",
+                   "intro-wizard-loop-p.av1.mp4", "intro-wizard-reveal-p.av1.mp4",
+                   "intro-wizard-poster.jpg", "intro-wizard-poster-p.jpg"]) {
     assert.ok(introKb(f) !== null, f + " is missing");
   }
 });
