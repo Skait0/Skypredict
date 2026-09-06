@@ -54,10 +54,45 @@ test("rebuilding the same board does not double the day", () => {
     "forty deploys must still report nineteen, got " + carried["2026-09-03"]);
 });
 
-test("a day still on the board is recounted, not added to", () => {
-  /* Even when the previous figure disagrees - a shortened card must shrink. */
+test("a day still on the board keeps its highest count, and is not added to", () => {
+  /* THIS TEST USED TO ASSERT THE OPPOSITE, and the old rule was the bug.
+     It read "a shortened card must shrink - the board is the authority while
+     it holds the day". The board is not the authority: it holds today and
+     onward and drops each game as it KICKS OFF, so its count for today falls
+     all day. Whatever it read at the last build before midnight was frozen
+     and carried forward as the day's total.
+     Live evidence, 4 Sep: 2026-09-03 recorded 11 published while the results
+     feed had graded 19 of that same day. Fewer published than graded is not
+     possible, and it left "how we did yesterday" unable to say that anything
+     was missing.
+     Still not ADDED to - forty deploys of the same board stay put - which is
+     the property the test below this one guards. */
   const got = mergePublished({ "2026-09-03": 19 }, fx("2026-09-03", 12), NOW);
-  assert.strictEqual(got["2026-09-03"], 12, "the board is the authority while it holds the day");
+  assert.strictEqual(got["2026-09-03"], 19,
+    "the day's peak is the count; the shrinking board is games kicking off");
+});
+
+test("a day cannot end up reporting fewer published than were graded", () => {
+  /* The reported failure, as the sequence that produced it: a card of 43 that
+     empties through the day as games kick off, rebuilt each time. */
+  let carried = null;
+  for (const remaining of [43, 40, 31, 22, 14, 11, 4, 0]) {
+    carried = mergePublished(carried, fx("2026-09-03", remaining), NOW);
+  }
+  assert.strictEqual(carried["2026-09-03"], 43,
+    "should hold the day's peak of 43, got " + carried["2026-09-03"]);
+  /* And it must survive the rollover to the next day, which is when the
+     panel actually reads it. */
+  const after = mergePublished(carried, fx("2026-09-04", 37), NOW);
+  assert.strictEqual(after["2026-09-03"], 43, "lost the peak at the rollover");
+  assert.strictEqual(after["2026-09-04"], 37);
+});
+
+test("a genuinely bigger card still raises the day", () => {
+  /* Max must not freeze a day that is legitimately growing - fixtures get
+     added to a card during the morning. */
+  const got = mergePublished({ "2026-09-03": 12 }, fx("2026-09-03", 30), NOW);
+  assert.strictEqual(got["2026-09-03"], 30);
 });
 
 /* ------------------------------------------------------ across the rollover */
