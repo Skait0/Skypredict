@@ -6065,11 +6065,81 @@ function blendFixture(f){
      WORSE of the two double chances, because it was the right call before the
      blend and nobody asked the question again afterwards. */
   var re=bestTipFrom(kOf(f));
-  if(re){ f.tip=re.label; f.tip_p=re.p; }
+  if(re){
+    var flipped=(re.label!==f.tip);
+    f.tip=re.label; f.tip_p=re.p;
+    /* AND THE SCORELINE HAS TO FOLLOW THE TIP, or we publish a contradiction.
+       The build draws the scoreline from the full distribution and keeps only
+       cells the tip survives, so the baked pair always agree. Re-choosing the
+       tip here broke that agreement the moment it flipped: reported as
+       "Everton v Man United - double chance on Man U but you predicted 1-0",
+       where 1-0 is an Everton win and the new tip was Man United or draw.
+       Both halves were individually right and together they were nonsense. */
+    if(flipped) f.score=reconcileScore(f, f.tip);
+  }
   var c=tipCode(f);
   if(c){var mp={"1":f.home_p,"2":f.away_p,"X":f.draw_p,"1X":f.dc1x,"X2":f.dcx2,"12":f.dc12,"OVER_2.5":f.o25,"OVER_1.5":f.o15,"GG":f.btts};
     if(mp[c]!=null) f.tip_p=mp[c];}
   f.blended=true;
+}
+/* A SCORELINE THE NEW TIP CAN SURVIVE.
+ *
+ * The build picks its scoreline by filtering the full distribution down to
+ * cells the tip does not lose on, then drawing from what is left - so a baked
+ * tip and a baked score always agree. The payload does not carry that
+ * distribution, only the two expected-goal figures, so this rebuilds the
+ * agreement from those when the tip changes underneath it.
+ *
+ * Three steps, cheapest first, and the order is the point:
+ *
+ *   1. Keep the baked score if the new tip already survives it. Most flips are
+ *      1X to X2 on a scoreline like 1-1, which both tips accept, so nothing
+ *      moves and the reader sees no churn.
+ *   2. Otherwise MIRROR it. A 1X flipping to X2 is the model changing its mind
+ *      about which side is favoured, not about the shape of the game, and
+ *      "Everton 1-0" becoming "Man United 1-0" says exactly that. It also
+ *      always works for that flip, which is the common one.
+ *   3. Only if neither holds, pick the likeliest cell the tip survives, under
+ *      the model's own expected goals. Last because it is the one that can
+ *      change the character of the prediction.
+ *
+ * Deliberately NOT the argmax in the general case: the build measured that
+ * publishing the single likeliest cell gives 1-1 on 91% of the card, which is
+ * why it samples instead. Step 3 only runs for the handful of flips the first
+ * two cannot settle, so it cannot flatten the board.
+ */
+function scoreSurvives(label, s){
+  var m=/^(\d+)\s*-\s*(\d+)$/.exec(String(s == null ? "" : s).trim());
+  if(!m) return false;
+  /* "unknown" is not a failure - a first-half market places no constraint on a
+     full-time score. Matches the build's `gradeLabel(...) !== false`. */
+  return tipEval({tip:label})(+m[1], +m[2]) !== "lose";
+}
+function mirrorScore(s){
+  var m=/^(\d+)\s*-\s*(\d+)$/.exec(String(s == null ? "" : s).trim());
+  return m ? (m[2]+"-"+m[1]) : null;
+}
+function reconcileScore(f, label){
+  var cur=f && f.score;
+  if(scoreSurvives(label, cur)) return cur;
+  var mir=mirrorScore(cur);
+  if(mir && scoreSurvives(label, mir)) return mir;
+  var lh=+f.lh, la=+f.la;
+  if(!isFinite(lh)||lh<=0) lh=1.3;
+  if(!isFinite(la)||la<=0) la=1.1;
+  function pois(k, lam){
+    var p=Math.exp(-lam), t=p;
+    for(var i=1;i<=k;i++){ t*=lam/i; p=t; }
+    return p;
+  }
+  var best=cur, bp=-1;
+  for(var h=0;h<=5;h++) for(var a=0;a<=5;a++){
+    var s=h+"-"+a;
+    if(!scoreSurvives(label, s)) continue;
+    var p=pois(h,lh)*pois(a,la);
+    if(p>bp){ bp=p; best=s; }
+  }
+  return best;
 }
 /* The fixture's probabilities under the names lib/model.js uses, so the two
    implementations of the choice below take byte-identical input. */

@@ -142,3 +142,61 @@ test("the chosen probability is always the largest available option", () => {
     }
   }
 });
+
+/* ---- the tip and its scoreline must never contradict ---- */
+
+const clientSrc2 = fs.readFileSync(path.join(ROOT, "public", "index.html"), "utf8");
+const SC = new Function(
+  grab(clientSrc2, "tipEval") + grab(clientSrc2, "scoreSurvives") +
+  grab(clientSrc2, "mirrorScore") + grab(clientSrc2, "reconcileScore") +
+  "\nreturn { scoreSurvives, reconcileScore };")();
+
+test("the reported pair: Everton 1-0 under a Man United double chance", () => {
+  /* Reported live: "still seeing the double chance on man u but you predicted
+     1-0". The build bakes a scoreline the baked tip survives, so the pair
+     always agreed - until the client started re-choosing the tip after the
+     blend and left the scoreline where it was. Both halves right, the pair
+     nonsense. */
+  assert.equal(SC.scoreSurvives("1X, home or draw", "1-0"), true, "baked pair was fine");
+  assert.equal(SC.scoreSurvives("X2, draw or away", "1-0"), false, "this is the contradiction");
+  const fixed = SC.reconcileScore({ score: "1-0", lh: 1.35, la: 1.30 }, "X2, draw or away");
+  assert.equal(fixed, "0-1", "a flip should mirror the game, not redraw it; got " + fixed);
+  assert.equal(SC.scoreSurvives("X2, draw or away", fixed), true);
+});
+
+test("a scoreline the new tip already survives is left alone", () => {
+  /* The common flip is 1X to X2 on a draw, which both accept. Nothing should
+     move, or the board churns for no reason. */
+  assert.equal(SC.reconcileScore({ score: "1-1", lh: 1.3, la: 1.2 }, "X2, draw or away"), "1-1");
+  assert.equal(SC.reconcileScore({ score: "2-2", lh: 1.4, la: 1.4 }, "1X, home or draw"), "2-2");
+});
+
+test("every tip a flip can produce ends up with a scoreline it survives", () => {
+  /* The invariant, over the labels bestTipFrom can actually return and a range
+     of baked scorelines and expected-goal shapes. */
+  const labels = ["Home win", "Draw", "Away win", "Over 1.5",
+                  "1X, home or draw", "X2, draw or away"];
+  const scores = ["0-0", "1-0", "0-1", "1-1", "2-0", "0-2", "2-1", "1-2", "3-1"];
+  const bad = [];
+  for (const label of labels) {
+    for (const score of scores) {
+      for (const [lh, la] of [[1.6, 0.9], [1.1, 1.1], [0.8, 1.7], [2.2, 1.8]]) {
+        const out = SC.reconcileScore({ score, lh, la }, label);
+        if (!SC.scoreSurvives(label, out)) {
+          bad.push(label + " + " + score + " -> " + out);
+        }
+      }
+    }
+  }
+  assert.deepEqual(bad.slice(0, 5), [], bad.length + " contradictions, e.g. " + bad.slice(0, 5).join("; "));
+});
+
+test("reconcile survives a missing or malformed scoreline", () => {
+  for (const s of [null, undefined, "", "abc", "1-", "-2", 5, {}]) {
+    assert.doesNotThrow(() => SC.reconcileScore({ score: s, lh: 1.3, la: 1.1 }, "X2, draw or away"));
+  }
+  /* With nothing usable to start from it must still return something the tip
+     survives, rather than handing back the junk it was given. */
+  const out = SC.reconcileScore({ score: "abc", lh: 1.3, la: 1.1 }, "Away win");
+  assert.equal(SC.scoreSurvives("Away win", out), true, "got " + out);
+});
