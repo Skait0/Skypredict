@@ -56,12 +56,17 @@ async function bakePayload() {
      jump off a game that had already been played. Best-effort: no network, a
      cold site or a payload without one simply means a fresh pick, which is
      what used to happen every time anyway. */
-  let prevPotd = null, prevFixtures = null, prevPublished = null;
+  let prevPotd = null, prevFixtures = null, prevPublished = null, prevPayload = null;
   try {
     const origin = process.env.SITE_ORIGIN || "https://skypredict-theta.vercel.app";
     const r = await fetch(origin + "/predictions.json", { signal: AbortSignal.timeout(8000) });
     if (r.ok) {
       const prev = await r.json();
+      /* Kept WHOLE, not just picked over. If this build cannot produce a board
+         - which happens when the results feed is down, not only when our code
+         is wrong - this is the board the site keeps serving. See the fallback
+         below for why that matters more than it sounds. */
+      prevPayload = prev;
       prevPotd = prev.potd || null;
       /* The board as readers saw it, tips and all. recordPublishedTips writes
          those tips to the record once the games have been played, which is the
@@ -77,19 +82,61 @@ async function bakePayload() {
     }
     if (prevPotd) log("carrying forward pick of the day: " + prevPotd.home + " v " + prevPotd.away);
   } catch (e) { warn("could not read the live board (" + e.message + "), choosing fresh"); }
+  /* THE LAST GOOD BOARD, WHEN THIS BUILD CANNOT MAKE ONE.
+   *
+   * On 5 Sep 2026 football-data.co.uk returned 503 to everybody for hours.
+   * buildPayload refuses under 400 results - correctly - so it threw, this
+   * function returned early, and nothing was baked. The comment here used to
+   * say "the page will use /api/predictions", and that stopped being true the
+   * day /api/predictions became a READER of this very file rather than a
+   * builder. So the fallback pointed at something that depends on the thing
+   * that just failed:
+   *
+   *     /predictions.json   404
+   *     /api/predictions    503   "no baked payload"
+   *
+   * A third party we do not control went down and took the whole site's data
+   * with it. THAT is ours to fix, and this is the fix: a board from this
+   * morning is worth a great deal, and nothing is worth nothing.
+   *
+   * Marked stale with the reason and the age, so this can be seen from the
+   * outside instead of being inferred - a site quietly serving an old board
+   * for days is the failure this is one step away from.
+   */
+  function fallBackToPrevious(why) {
+    const fx = (prevPayload && Array.isArray(prevPayload.fixtures)) ? prevPayload.fixtures : null;
+    if (!fx || fx.length < MIN) {
+      warn("and there is no previous board to fall back on - skipping bake");
+      return null;
+    }
+    warn("carrying the last good board forward: " + fx.length + " fixtures, generated " +
+         (prevPayload.generatedAt || "?"));
+    return Object.assign({}, prevPayload, {
+      stale: true,
+      staleReason: String(why || "build failed"),
+      staleSince: new Date().toISOString(),
+      /* generatedAt is left AS IT WAS on purpose. It is the honest age of
+         these numbers, and overwriting it would make a stale board look
+         freshly built to every reader and every check we have. */
+    });
+  }
+
   let payload;
   try {
     payload = await buildPayload({ prevPotd, prevFixtures, prevPublished });
   } catch (e) {
-    warn("build failed, skipping bake (the page will use /api/predictions): " + e.message);
-    return;
+    warn("build failed: " + e.message);
+    payload = fallBackToPrevious(e.message);
+    if (!payload) return;
   }
   const n = (payload && Array.isArray(payload.fixtures)) ? payload.fixtures.length : 0;
   if (n < MIN) {
     /* Same rule the API uses: a thin build is a broken feed, not a quiet day,
-       and baking one would pin it in place until the next deploy. */
+       and baking one would pin it in place until the next deploy. The previous
+       board is a better answer than either the thin one or none at all. */
     warn("only " + n + " fixtures - refusing to bake a thin payload");
-    return;
+    payload = fallBackToPrevious("thin build: " + n + " fixtures");
+    if (!payload) return;
   }
   /* The build keeps a running account of where its numbers came from - how
      many results it graded, how many it held back for want of a confirmed
