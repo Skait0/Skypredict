@@ -6052,10 +6052,66 @@ function blendFixture(f){
   }
   function two(ov,un,field){ if(o[ov]&&o[un]){var a=1/o[ov],b=1/o[un],s=a+b; if(s>0) f[field]=f[field]*(1-B)+(a/s)*B;} }
   two("OVER_2.5","UNDER_2.5","o25"); two("OVER_1.5","UNDER_1.5","o15"); two("GG","NG","btts");
+  /* THE HEADLINE HAS TO BE CHOSEN AGAIN, NOT JUST REPRICED.
+     This is the bug that cost real money. The build picks the tip from the
+     model's own numbers; the blend above then moves those numbers toward the
+     bookmaker, and that can change WHO THE FAVOURITE IS. The old code read
+     the baked tip with tipCode and only refreshed its percentage, so the
+     label went on pointing at the side that was no longer favoured and
+     faithfully displayed its now-lower number.
+     Reported: "Hull or draw at 56%" with Hull on 28% and Aston Villa on 46% -
+     when "Villa or draw" was 72%. Same shape on Nice v Le Mans: "Le Mans or
+     draw 50%" while Nice were 50% and "Nice or draw" was 75%. Both times the
+     WORSE of the two double chances, because it was the right call before the
+     blend and nobody asked the question again afterwards. */
+  var re=bestTipFrom(kOf(f));
+  if(re){ f.tip=re.label; f.tip_p=re.p; }
   var c=tipCode(f);
   if(c){var mp={"1":f.home_p,"2":f.away_p,"X":f.draw_p,"1X":f.dc1x,"X2":f.dcx2,"12":f.dc12,"OVER_2.5":f.o25,"OVER_1.5":f.o15,"GG":f.btts};
     if(mp[c]!=null) f.tip_p=mp[c];}
   f.blended=true;
+}
+/* The fixture's probabilities under the names lib/model.js uses, so the two
+   implementations of the choice below take byte-identical input. */
+function kOf(f){
+  /* cross_tier is only written when the build found one - `cross_tier:
+     crossTier ? n : undefined` - so its presence IS the flag, and reading it
+     as a boolean is what keeps the 0.72 Over-1.5 bar in step with the build. */
+  return {home:f.home_p, draw:f.draw_p, away:f.away_p,
+          o15:f.o15, dc1x:f.dc1x, dcx2:f.dcx2,
+          crossTier:(f.cross_tier!=null)};
+}
+/* A LINE-FOR-LINE MIRROR OF bestTip IN lib/model.js, and it has to stay one.
+   Blending only happens in the browser - the bookmaker's odds arrive after the
+   page loads - so the build cannot make this call and the client has to. That
+   means the same rule lives in two places, which is exactly the thing that has
+   bitten this codebase before: "it works for me" is worthless when two paths
+   are not the same code. So test/tipparity.test.js lifts BOTH functions out of
+   their files and runs them over a grid of probability vectors, asserting they
+   agree on every one. Change either and that test fails until you change both. */
+function bestTipFrom(k){
+  if(!k||k.home==null||k.draw==null||k.away==null||k.dc1x==null||k.dcx2==null) return null;
+  var cands=[
+    {label:"Home win", p:k.home},
+    {label:"Draw", p:k.draw},
+    {label:"Away win", p:k.away}
+  ];
+  var o15Bar=k.crossTier?0.72:0.80;
+  if(k.o15>=o15Bar) cands.push({label:"Over 1.5", p:k.o15});
+  var outright=Math.max(k.home,k.draw,k.away);
+  var dc=[
+    {label:"1X, home or draw", p:k.dc1x},
+    {label:"X2, draw or away", p:k.dcx2}
+  ].sort(function(a,b){return b.p-a.p;})[0];
+  if(dc.p-outright>0.14) cands.push(dc);
+  var top=cands.sort(function(a,b){return b.p-a.p;})[0];
+  if(k.home>=0.55 && top.label==="1X, home or draw") top={label:"Home win", p:k.home};
+  if(k.crossTier && k.o15>=o15Bar &&
+     (top.label==="Home win"||top.label==="Away win") &&
+     top.p < k.o15+0.06){
+    top={label:"Over 1.5", p:k.o15};
+  }
+  return top;
 }
 function valPill(f){return isValue(f)?"<span class='pill value'>\u2726 Better price</span>":"";}
 function valMark(f){return isValue(f)?"<span class='vmark' title='Better price - our odds beat SportyBet'>\u2726 Better price</span>":"";}
