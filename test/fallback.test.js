@@ -525,3 +525,27 @@ test("the trace costs no extra request", async () => {
   assert.deepStrictEqual(sv.calls, [DATE],
     "one fetch, however many rows failed to match and got traced");
 });
+
+test("the committed-floor line reaches the build log", () => {
+  /* The build's most important diagnostic: it says the results feed was down
+     and the model refitted on cached history instead. It is the difference
+     between a board to trust for weeks and one to check today.
+     It was written as "football-data was unreachable" while the filter tested
+     for "unavailable", so it never printed once - the same failure the comment
+     beside that filter describes, walked into again by the next person to add
+     a line. Hence this test, which drives the real regex. */
+  const fs = require("fs");
+  const path = require("path");
+  const src = fs.readFileSync(path.join(__dirname, "..", "scripts", "prebuild.js"), "utf8");
+  const m = /\.filter\(\(l\) => \/(.+?)\/i\.test\(l\)\)/.exec(src);
+  assert.ok(m, "could not find the build-log filter in prebuild.js");
+  const re = new RegExp(m[1], "i");
+
+  const line = "served 68 result files from the committed floor - " +
+               "football-data was unreachable for those";
+  assert.ok(re.test(line), "the committed-floor line is filtered out of the build log");
+
+  /* And a line that genuinely says nothing should still be dropped, or the
+     filter has stopped being a filter. */
+  assert.ok(!re.test("22713 results across 35 leagues"), "the filter now passes everything");
+});

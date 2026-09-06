@@ -160,11 +160,16 @@ async function bakePayload() {
        A filter keyed on another function's wording breaks without failing, so
        both halves are covered by tests that drive this very regex - see
        test/fallback.test.js. */
-    /* `downloaded N/M` and `skip <file>` are the ones that say the build was
+    /* `committed floor` is the newest, and it walked into the very trap this
+       comment describes. The line reads "football-data was UNREACHABLE" while
+       the filter tested for "unavailable", so the single most important
+       diagnostic this build has - we are fitting on cached history rather than
+       live data - printed into a void from the day it was written.
+    `downloaded N/M` and `skip <file>` are the ones that say the build was
        working from less data than it thought. A source file that fails to
        download does not fail the build - it just quietly removes a league -
        and until now neither line was printed. */
-    .filter((l) => /held back|unavailable|failed|oracle|soccervista|suspended|record:|recorded result|score source|FT score map|backfill|of \d+ confirmed|^\S+ \d{4}-\d{2}-\d{2}:|^downloaded \d+\/\d+|^skip \S+\.csv/i.test(l))
+    .filter((l) => /held back|unavailable|failed|oracle|soccervista|suspended|committed floor|record:|recorded result|score source|FT score map|backfill|of \d+ confirmed|^\S+ \d{4}-\d{2}-\d{2}:|^downloaded \d+\/\d+|^skip \S+\.csv/i.test(l))
     .forEach((l) => log(l));
   const out = path.join(PUB, "predictions.json");
   /* The file the site downloads, without the per-result model numbers - they
