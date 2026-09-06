@@ -23,6 +23,14 @@ const { tierEdge, TIER_HANDICAP, countryHandicap, UEFA_COEFFICIENT, COUNTRY_CAP 
 
 const M = require("../lib/model.js");
 
+/* Which countries the committed artefact actually fitted. Absent before the
+   first harvest, and absent is a supported state - an empty set puts every
+   country back under the monotonicity assertion, which is what this file said
+   before the fit existed. */
+let EUROFF_COUNTRIES = {};
+try { EUROFF_COUNTRIES = require("../data/country-offsets.json").countries || {}; }
+catch (e) { EUROFF_COUNTRIES = {}; }
+
 test("the divisions are not evenly spaced", () => {
   /* The whole reason this table exists rather than a flat step per division.
      The Premier League to Championship gap is the widest in English football;
@@ -102,8 +110,22 @@ test("the cross-country edge is bounded, however lopsided the coefficients", () 
   assert.equal(countryHandicap(""), null);
 });
 
-test("a stronger coefficient never yields a bigger handicap", () => {
+/* ORDER IS A PROPERTY OF THE IMPORTED NUMBER, NOT OF THE FITTED ONE.
+ *
+ * Until Sep 2026 every handicap was 0.5 x (ln England - ln country), so the
+ * table was monotone in the coefficient by construction and this test said so.
+ * The fitted offsets (data/country-offsets.json) are measured from real
+ * cross-border results, and measurement is allowed to disagree with the
+ * five-season coefficient - France ahead of Germany, Sweden ahead of Scotland.
+ * Suppressing that would be discarding the evidence the fit exists to use.
+ *
+ * So monotonicity is asserted where the arithmetic still runs on its own: the
+ * countries the artefact does not cover. A fitted country only has to stay
+ * inside the range every handicap must obey. */
+test("a stronger coefficient never yields a bigger handicap, where the coefficient is all we have", () => {
+  const fitted = new Set(Object.keys(EUROFF_COUNTRIES));
   const byCoef = Object.keys(UEFA_COEFFICIENT)
+    .filter((c) => !fitted.has(c))
     .sort((a, b) => UEFA_COEFFICIENT[b] - UEFA_COEFFICIENT[a]);
   for (let i = 1; i < byCoef.length; i++) {
     const hi = countryHandicap(byCoef[i - 1]), lo = countryHandicap(byCoef[i]);
@@ -111,6 +133,17 @@ test("a stronger coefficient never yields a bigger handicap", () => {
       byCoef[i] + " (" + UEFA_COEFFICIENT[byCoef[i]] + ") is handicapped " + lo +
       " but " + byCoef[i - 1] + " (" + UEFA_COEFFICIENT[byCoef[i - 1]] + ") only " + hi);
   }
+});
+
+test("a fitted country is still bound by the range every handicap obeys", () => {
+  for (const c of Object.keys(EUROFF_COUNTRIES)) {
+    if (UEFA_COEFFICIENT[c] === undefined) continue;
+    const h = countryHandicap(c);
+    assert.ok(h !== null && h >= 0 && h <= COUNTRY_CAP,
+      c + " is fitted to " + h + ", outside [0, " + COUNTRY_CAP + "]");
+  }
+  assert.equal(countryHandicap("England"), 0,
+    "England anchors the table at zero, fitted or not");
 });
 
 test("every ladder starts its country at zero", () => {
