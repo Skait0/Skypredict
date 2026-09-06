@@ -138,9 +138,36 @@ test("the sharp set is desktop-only and never in the markup", () => {
   }
 });
 
+test("the AV1 set is never bigger than the H.264 it replaces", () => {
+  /* The whole point of carrying a second codec is more picture for the same
+     bytes. SVT-AV1's VBR overshoots its target - the first encode came out
+     15-30% LARGER than the h264 at a matched bitrate, which would have made
+     this a downgrade for anyone whose browser preferred it. */
+  for (const n of ["loop", "loop-hd", "reveal", "reveal-hd"]) {
+    const h = introKb("intro-wizard-" + n + ".mp4");
+    const a = introKb("intro-wizard-" + n + ".av1.mp4");
+    if (h === null || a === null) continue;
+    assert.ok(a <= h,
+      "intro-wizard-" + n + ".av1.mp4 is " + a + " KB against " + h + " KB of h264. " +
+      "AV1 must not cost more than the file it replaces.");
+  }
+});
+
+test("the gate's phone payload stays small on either codec", () => {
+  const poster = introKb("intro-wizard-poster.jpg");
+  for (const f of ["intro-wizard-loop.mp4", "intro-wizard-loop.av1.mp4"]) {
+    const loop = introKb(f);
+    if (loop === null) continue;
+    assert.ok(poster + loop <= 420,
+      f + " puts the gate at " + (poster + loop) + " KB on a phone. Budget is 420 KB.");
+  }
+});
+
 test("both video sets exist, or the gate half works", () => {
   for (const f of ["intro-wizard-loop.mp4", "intro-wizard-reveal.mp4",
                    "intro-wizard-loop-hd.mp4", "intro-wizard-reveal-hd.mp4",
+                   "intro-wizard-loop.av1.mp4", "intro-wizard-reveal.av1.mp4",
+                   "intro-wizard-loop-hd.av1.mp4", "intro-wizard-reveal-hd.av1.mp4",
                    "intro-wizard-poster.jpg"]) {
     assert.ok(introKb(f) !== null, f + " is missing");
   }

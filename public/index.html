@@ -5111,18 +5111,42 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     }catch(e){ return false; }
     return true;
   }
+  /* AV1 WHERE IT PLAYS, H.264 EVERYWHERE ELSE.
+     Measured on these exact clips at matched bitrates - the AV1 files are 1-2%
+     SMALLER and better on every one:
+
+       loop       191 KB -> 187 KB   SSIM 0.953 -> 0.973
+       loop-hd    459 KB -> 447 KB   SSIM 0.971 -> 0.981
+       reveal     370 KB -> 364 KB   SSIM 0.972 -> 0.980
+       reveal-hd  757 KB -> 744 KB   SSIM 0.979 -> 0.985
+
+     canPlayType rather than a <source> list, because the file is already
+     chosen at runtime for viewport and connection and a source list cannot see
+     either. "probably" only: Safari answers "maybe" for codecs it cannot
+     actually decode, and a maybe that turns out to be no is a black gate.
+     VP9 is deliberately not here. It beats H.264 by much less than AV1 does,
+     and the browsers that have VP9 but not AV1 - Safari 14 to 16 - get the
+     H.264 file, which is the same file they would have got anyway. */
+  function bestCodec(){
+    try{
+      var v=document.createElement("video");
+      if(v.canPlayType('video/mp4; codecs="av01.0.05M.08"')==="probably") return ".av1";
+    }catch(e){}
+    return "";
+  }
   function play(){
     if(!wantsVideo()) return;
     var hd=sharpSet()?"-hd":"";
+    var cx=bestCodec();
     try{
-      loop.src="/intro-wizard-loop"+hd+".mp4";
+      loop.src="/intro-wizard-loop"+hd+cx+".mp4";
       loop.addEventListener("canplay",function(){ loop.className+=" is-in"; },{once:true});
       var p=loop.play();
       if(p&&p.catch) p.catch(function(){ /* refused - the poster stands */ });
       /* The reveal is fetched only once the loop is going, so the two never
          compete for the first seconds of bandwidth. */
       setTimeout(function(){
-        try{ reveal.src="/intro-wizard-reveal"+hd+".mp4"; reveal.load(); }catch(e){}
+        try{ reveal.src="/intro-wizard-reveal"+hd+cx+".mp4"; reveal.load(); }catch(e){}
       }, 1200);
     }catch(e){}
   }
