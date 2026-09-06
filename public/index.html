@@ -4274,6 +4274,11 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
   line-height:1;font-variant-numeric:tabular-nums}
 .daily-score .dl-of{font-size:13px;color:var(--soft);font-weight:700}
 .daily-pending{margin-top:8px;font-size:12.5px;line-height:1.45;color:var(--faint)}
+/* Deliberately the same weight as .daily-pending above, not a warning strip.
+   It is a caveat a reader should be able to find and weigh, not an alarm - the
+   picks are still the best the model can make, they are just made on older
+   form. Anything louder would train people to ignore it. */
+.board-stale{margin-top:6px;font-size:12.5px;line-height:1.45;color:var(--faint)}
 .daily-bar{display:flex;height:6px;border-radius:99px;overflow:hidden;
   background:var(--card-2);margin-top:10px}
 .daily-bar i{display:block;background:var(--green)}
@@ -10562,7 +10567,35 @@ function renderBoardHead(list){
   var m=Object.keys(lg).length;
   var when=V.off===0?"Today's":(V.off===1?"Tomorrow's":esc(dayName(V.off))+"'s");
   h.innerHTML="<h2>"+when+" predictions</h2><p>"+
-    n+" game"+(n===1?"":"s")+(m?" · "+m+" league"+(m===1?"":"s"):"")+"</p>";
+    n+" game"+(n===1?"":"s")+(m?" · "+m+" league"+(m===1?"":"s"):"")+"</p>"+
+    formNote();
+}
+/* HOW OLD THE FORM BEHIND THESE PICKS IS, SAID OUT LOUD.
+   The board carries no sign of this on its own. When football-data is down the
+   build serves its result files from the committed floor - the site stays up,
+   which is the point - but the model is then fitted on whatever the floor last
+   held. Measured 6 Sep 2026 during a real outage: nine divisions had any of the
+   current season at all, six to thirty-six days behind, and every other
+   division was on last season. Every number on the page looked exactly as it
+   always does.
+   generatedAt is no help here: it says the BOARD is ten minutes old, which is
+   true and completely misleading about the ratings underneath it.
+   Quiet on a normal day. Under three days behind with a healthy feed is the
+   ordinary gap between rounds and saying so would be noise, so this shows only
+   when the feed actually failed, or when the form is old enough to matter
+   whatever the reason. */
+function formNote(){
+  var d=DATA||{};
+  var days=d.formStaleDays;
+  if(days==null||!isFinite(days)) return "";
+  var degraded=(+d.degradedSources||0)>0;
+  if(!degraded && days<3) return "";
+  var age=(days===0)?"is current":((days===1?"is 1 day":"is "+days+" days")+" old");
+  var why=degraded
+    ? "the results feed is unavailable, so ratings have not updated"
+    : "ratings have not updated";
+  return "<p class='board-stale'>Form data "+esc(age)+" · "+esc(why)+
+    (d.formThrough?" since "+esc(d.formThrough):"")+"</p>";
 }
 
 /* ---- First-run coaching ----
