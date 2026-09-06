@@ -4811,8 +4811,14 @@ html.sw-gate-still #swGate video{display:none}
   letter-spacing:-.02em; color:#F7F7F8; text-wrap:balance;
 }
 #swGate .sw-g-sub{margin:0; font-size:clamp(14px,3.4vw,17px); color:#C9C9CE; font-weight:500}
+/* The compliance line, in red - and NOT the brand red.
+   #E63946 measures 4.66:1 on this background, which scrapes AA against a
+   FLAT colour and the background here is video. #F2555F is the same hue
+   lifted to 5.77:1, so it still reads as the brand and survives a bright
+   frame of lightning behind it.  */
 #swGate .sw-g-age{
-  margin:2px 0 0; font-size:13px; color:#9A9AA2; font-weight:600; letter-spacing:.01em;
+  margin:4px 0 0; font-size:13px; color:#F2555F; font-weight:700;
+  letter-spacing:.015em;
 }
 html.sw-gate-known #swGate .sw-g-age,
 html.sw-gate-known #swGate .sw-g-under{display:none}
@@ -4865,11 +4871,14 @@ html.sw-gate-known #swGate .sw-g-under{display:none}
 }
 #swGate .sw-g-under{
   appearance:none; background:none; border:0; cursor:pointer;
-  color:#7C7C85; font-family:inherit; font-size:12px; font-weight:500;
+  color:#9A9AA2; font-family:inherit; font-size:12.5px; font-weight:500;
   min-height:44px; padding:12px 18px; text-decoration:underline; text-underline-offset:3px;
   transition:color .15s ease;
 }
-#swGate .sw-g-legal{margin:6px 0 0; font-size:11px; color:#6E6E77; letter-spacing:.02em}
+/* Was #6E6E77 at 3.85:1, which fails AA outright - and it is the line that
+   says play responsibly, so it is the last one that should be decorative.
+   #8B8B94 is 5.42:1 and still reads as fine print. */
+#swGate .sw-g-legal{margin:8px 0 0; font-size:11.5px; color:#8B8B94; letter-spacing:.02em}
 
 /* The under-18 answer. Not a dismissal - the panel is replaced and the gate
    stays up, because the one thing this must not do is let the answer through. */
