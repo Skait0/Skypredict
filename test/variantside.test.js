@@ -107,3 +107,24 @@ test("empty and junk input is not a variant, and does not throw", () => {
   assert.equal(M.isVariantSide(""), false);
   assert.equal(M.isVariantSide(null), false);
 });
+
+test("a club is not refused for an accent in its own name", () => {
+  /* An accented letter is not a word character to JS, so the word boundary
+     matched inside the club's own name and the "w" ending "Krakow" read as the
+     women's-team marker in VARIANT_TAIL. Four Polish first teams were refused
+     this way, in exactly the spellings the live feed and openfootball use. */
+  assert.equal(M.isVariantSide("Wisła Kraków"), false);
+  assert.equal(M.isVariantSide("Śląsk Wrocław"), false);
+  assert.equal(M.isVariantSide("Stal Rzeszów"), false);
+  assert.equal(M.isVariantSide("Cracovia Kraków"), false);
+});
+
+test("stripping accents has not weakened the guard", () => {
+  /* The marker and its separator both survive deaccenting, so a genuine
+     variant is still caught however it is spelled. */
+  assert.equal(M.isVariantSide("Beşiktaş W"), true);
+  assert.equal(M.isVariantSide("Fenerbahçe U19"), true);
+  assert.equal(M.isVariantSide("Bayern München Frauen"), true);
+  assert.equal(M.isVariantSide("Atlético Madrid Femenino"), true);
+  assert.equal(M.isVariantSide("Jong PSV"), true);
+});
