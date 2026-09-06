@@ -141,10 +141,33 @@ test("draws and low-scoring games are reachable at all", () => {
   const out = [];
   for (let i = 0; i < 200; i++) out.push(B.scoreForTip(k, "1X, home or draw", seedFor(i)));
   const draws = out.filter(s => { const [h, a] = s.split("-").map(Number); return h === a; });
-  const low = out.filter(s => { const [h, a] = s.split("-").map(Number); return h + a <= 1; });
   assert.ok(draws.length > 0, "a level scoreline must be reachable - it never was before");
-  assert.ok(low.length > 0, "so must a game of one goal or none");
-  assert.ok(new Set(out).size >= 6, "and the spread must be wider than the old five");
+  /* THIS NUMBER WAS 6 AND IS NOW 4, deliberately, and the trade is worth
+     stating. The goals gate removes every 0 and 1 goal cell on a fixture this
+     shape (2.75 expected goals, 76% over 1.5), which costs two of the six.
+     What it buys is that the board stops contradicting its own goals row,
+     which was 19% of the live card.
+     The property this assertion actually protects - a card that does not show
+     the same scoreline everywhere - was checked at card level instead, on the
+     real board: 280 scorelines came out 32% draws and spread 0g=6, 1g=17,
+     2g=110, 3g=84, 4+=63. Variety survived; it moved to where the model says
+     the goals are. */
+  assert.ok(new Set(out).size >= 4, "one distribution must still spread across several scorelines");
+
+  /* THE ONE-GOAL ASSERTION MOVED, and this is why rather than a weakening.
+     This shape is 1.45 + 1.30 = 2.75 expected goals, which the same fixture
+     publishes as roughly 76% for over 1.5. A 0-0 or 1-0 here is not a quiet
+     game honestly reported, it is the board contradicting its own goals row -
+     the "barca predicts 0-0 at 69 percent" report, which measured at 19% of
+     the live card. The goals gate in scoreForTip now refuses it.
+     The intent of this assertion is still guarded, on a fixture where a quiet
+     scoreline is the honest answer: see "a low-scoring fixture may still print
+     0-0 or 1-0" below, which uses 0.75 + 0.70. */
+  const kQuiet = marketsFor(0.75, 0.70);
+  const quiet = [];
+  for (let i = 0; i < 200; i++) quiet.push(B.scoreForTip(kQuiet, "1X, home or draw", seedFor(i)));
+  const low = quiet.filter(s => { const [h, a] = s.split("-").map(Number); return h + a <= 1; });
+  assert.ok(low.length > 0, "a game of one goal or none must still be reachable where it fits");
 });
 
 test("a missing shortlist degrades to the mode instead of throwing", () => {
@@ -297,4 +320,75 @@ test("no one scoreline takes over the whole card", () => {
   assert.ok(share < 0.55,
     `"${top}" is ${(share * 100).toFixed(0)}% of ${total} fixtures - ` +
     `a board of one scoreline tells the reader nothing`);
+});
+
+/* ---------------------------------------------- coherence with the GOALS row
+
+   The gates above stop a scoreline contradicting the fixture's home/draw/away
+   numbers. Nothing stopped it contradicting the GOALS numbers, and the board
+   publishes those in the same row.
+
+   Reported twice by the owner - "barca predicts 0-0 at 69 percent". Measured
+   on the live board it was not one fixture: 54 of 280 scorelines (19%) showed
+   0 or 1 goal on a fixture the same row called 70%+ for over 1.5. Chelsea v
+   Hull printed 0-0 beside "78% over 1.5" and an expected 2.85 goals.
+
+   Cause: DRAW_WEIGHT damps draws to 0.60 to correct a real selection effect,
+   which pushes 1-1 below 1-0 - and 1-0 is a one-goal game on a card expecting
+   nearly three. */
+
+test("a fixture that expects goals does not print a 0 or 1 goal scoreline", () => {
+  const B = require("../lib/build.js");
+  const GOALY = [
+    { name: "even, high scoring", lh: 1.85, la: 1.85 },
+    { name: "goal-heavy home favourite", lh: 2.60, la: 1.40 },
+    { name: "the reported shape", lh: 1.35, la: 1.50 },
+  ];
+  const bad = [];
+  for (const shape of GOALY) {
+    const k = marketsFor(shape.lh, shape.la);
+    if (!(k.o15 >= 0.70)) continue;   // the guard only claims to act above this
+    for (const tip of ["Home win", "Away win", "Draw", "1X, home or draw",
+                       "X2, draw or away", "Over 1.5"]) {
+      const s = B.scoreForTip(k, tip, shape.name + "|" + tip);
+      const m = /^(\d+)-(\d+)$/.exec(String(s || ""));
+      if (!m) continue;
+      const goals = Number(m[1]) + Number(m[2]);
+      if (goals <= 1) bad.push(shape.name + " / " + tip + " -> " + s + " (o15 " + k.o15.toFixed(2) + ")");
+    }
+  }
+  assert.deepEqual(bad, [], "scorelines contradicting their own over-1.5 call: " + bad.join("; "));
+});
+
+test("the tip still wins when the two coherence rules disagree", () => {
+  /* The ordering that matters. A scoreline losing its own tip is the worse
+     contradiction, so the goals gate must never be allowed to cause one - it
+     is applied after the tip filter and may not empty the pool.
+     "Under 2.5" on a goal-heavy fixture is where the two pull hardest. */
+  const B = require("../lib/build.js");
+  const G2 = require("../lib/grade.js");
+  const k = marketsFor(2.60, 1.40);
+  for (const tip of ["Under 2.5", "Draw", "Home win"]) {
+    const s = B.scoreForTip(k, tip, "clash|" + tip);
+    const m = /^(\d+)-(\d+)$/.exec(String(s || ""));
+    assert.ok(m, tip + " produced no scoreline");
+    assert.notStrictEqual(G2.gradeLabel(tip, Number(m[1]), Number(m[2])), false,
+      tip + " got a scoreline it loses: " + s);
+  }
+});
+
+test("a low-scoring fixture may still print 0-0 or 1-0", () => {
+  /* The guard is conditional, not a blanket ban on quiet games. Where the
+     model does NOT expect goals, a one-goal scoreline is the honest answer and
+     must stay reachable. */
+  const B = require("../lib/build.js");
+  const k = marketsFor(0.75, 0.70);
+  assert.ok(k.o15 < 0.70, "premise: this shape should not be a goals fixture");
+  const seen = new Set();
+  for (let i = 0; i < 40; i++) seen.add(B.scoreForTip(k, "1X, home or draw", "quiet|" + i));
+  const low = [...seen].filter((s) => {
+    const m = /^(\d+)-(\d+)$/.exec(String(s || ""));
+    return m && Number(m[1]) + Number(m[2]) <= 1;
+  });
+  assert.ok(low.length > 0, "a quiet fixture should still be able to print a quiet score");
 });
