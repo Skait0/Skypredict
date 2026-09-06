@@ -549,6 +549,51 @@ comparisons in the worst case. Memoising made each one cheap; it did not make
 there be fewer. An index on normalised name would, and would be a bigger change
 than this one.
 
+## 2026-09-06 - the day the JS died and nothing in the repo was wrong
+
+```
+through Cloudflare   /app.<hash>.js -> 404  cf-cache-status: HIT  Age: 444
+                     Cache-Control: public, max-age=31536000, immutable
+straight at Vercel   /app.<hash>.js -> 200  466 KB
+```
+
+**Cloudflare cached a 404 for the bundle, and the 404 inherited the immutable
+year-long TTL** that `vercel.json` applies to `/app.(.*)`. Ten of ten fresh page
+loads were broken while the origin was perfectly healthy.
+
+**The symptom is deceptive and worth knowing.** The HTML serves, the board JSON
+serves, curl on `/` says 200. Only the console shows it. To detect: fetch `/`
+and the bundle it references back to back, then the same path at
+`skypredict-theta.vercel.app`. Origin 200 plus edge 404 is this.
+
+**To restore:** Caching -> Configuration -> Custom Purge -> **Hostname** ->
+`www.soccerwizard.live`. Purging by URL clears one path and the CSS can be
+poisoned too.
+
+**Now guarded**, Cache Rules rule 2 "Never cache a missing hashed bundle":
+status code TTL, range 400 to 511, **No store**, scoped to `/app.*.js|css`.
+Verified: a missing bundle now answers `cf-cache-status: BYPASS`.
+
+The general lesson is bigger than the bug: **a Cache-Control header applied by
+path pattern applies to ERROR responses on that path too.** Any long-lived
+immutable header on a pattern is one failed request away from pinning an error.
+
+### Two fixes that came out of the same session
+
+**The scoreline follows the tip now.** Re-choosing the tip in the browser after
+the odds blend left the baked scoreline behind - "double chance on Man U but you
+predicted 1-0", where 1-0 was an Everton win. `reconcileScore` keeps the score
+if the new tip survives it, otherwise mirrors it, otherwise takes the likeliest
+cell the tip survives.
+
+**The scoreline agrees with the goals row now.** 54 of 280 live scorelines (19%)
+showed 0 or 1 goal on a fixture the same row called 70%+ for over 1.5 - Chelsea
+v Hull printed 0-0 beside "78% over 1.5". scoreForTip gained a goals gate built
+like the existing outcome gate. Cost, stated plainly: one distribution spreads
+across four scorelines instead of six on a goals fixture, and an existing test
+asserting six now asserts four. Card-level variety was measured instead and
+survived: 32% draws, 0g=6 1g=17 2g=110 3g=84 4+=63.
+
 ## Still open
 
 - Whether the +5 value cap is the right number. It is calibrated to the board's
