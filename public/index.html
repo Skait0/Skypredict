@@ -122,15 +122,22 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
   var D=document.documentElement;
   try{
     if(location.pathname!=="/"&&location.pathname!=="/index.html") return;
-    /* IT SHOWS EVERY VISIT NOW, not once a day.
-       It used to suppress itself for the rest of the calendar day, which meant
-       a returning reader never saw the wizard again and the whole thing existed
-       for first-timers only. Owner's call, and the trade is explicit: everyone
-       sees it, so everyone needs a fast way past. That is what sw-gate-known
-       below is for - anyone who has been here before gets a Skip they can
-       actually see, and no age question to answer twice. */
+    /* ONCE A SESSION. Two complaints, one on each side of this, and the answer
+       is between them.
+       It began as once a CALENDAR DAY, which meant a returning reader never saw
+       the wizard again - the whole thing existed for first-timers only. Opened
+       to every visit, and then: "anytime i reload any page it takes me back to
+       the entry page", which is the same rule read from the other end. A reload
+       is not a visit.
+       sessionStorage is exactly the line between them. It survives a reload and
+       a wander through the match pages, and it dies when the tab does - so
+       coming back tomorrow, or in a new tab, shows the wizard again, and
+       pressing refresh never does.
+       localStorage still records that they have EVER seen it, which is a
+       different question and drives the visible Skip below. */
     var seen=false;
     try{ seen=!!localStorage.getItem("sw.intro.day"); }catch(e){}
+    try{ if(sessionStorage.getItem("sw.intro.session")==="1") return; }catch(e){}
     var r=document.referrer||"";
     if(r&&/^https?:\/\/([^\/]*\.)?(google|bing|duckduckgo|yahoo|yandex|baidu|ecosia|brave|search\.marcia)\./i.test(r)) return;
     /* Reduced motion still gets the gate - it is an age check as well as a
@@ -4855,7 +4862,7 @@ html.sw-gate-known #swGate .sw-g-under{display:none}
 html.sw-gate-known #swGate .sw-g-panel{animation-delay:.18s}
 html.sw-gate-known #swGate .sw-g-skip{
   border:1.5px solid rgba(201,201,206,.42); border-radius:999px;
-  padding:12px 30px; color:#E8E8EC; background:rgba(13,13,15,.35);
+  padding:10px 26px; color:#E8E8EC; background:rgba(13,13,15,.35);
   -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
   margin-top:2px;
 }
@@ -4865,7 +4872,7 @@ html.sw-gate-known #swGate .sw-g-skip{
   }
 }
 @media (max-width:560px){
-  html.sw-gate-known #swGate .sw-g-skip{width:100%; padding:14px 24px}
+  html.sw-gate-known #swGate .sw-g-skip{width:auto; min-width:min(200px,54vw); padding:11px 24px}
 }
 
 /* THE SAME PILL AS "Add all tips to slip", scaled up to a hero.
@@ -4877,17 +4884,17 @@ html.sw-gate-known #swGate .sw-g-skip{
 #swGate .sw-g-enter{
   position:relative; overflow:hidden; appearance:none; cursor:pointer; margin-top:4px;
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
-  min-width:min(320px,84vw); padding:16px 34px 16px 44px; border-radius:999px;
+  min-width:min(268px,74vw); padding:13px 30px 13px 40px; border-radius:999px;
   background:linear-gradient(135deg,#6d1017,#E63946 55%,#9c1620); color:#fff;
   border:1.5px solid rgba(242,184,75,.62);
-  font:inherit; font-weight:800; font-size:17px; letter-spacing:.03em;
+  font:inherit; font-weight:800; font-size:15.5px; letter-spacing:.03em;
   text-shadow:0 1px 2px rgba(0,0,0,.55);
   box-shadow:0 2px 12px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.13);
   transition:filter .25s, box-shadow .25s, transform .15s;
 }
 /* The ember, same as the one on the slip pill. */
 #swGate .sw-g-enter .sw-g-spark{
-  position:absolute; top:50%; left:20px; width:6px; height:6px; margin-top:-3px;
+  position:absolute; top:50%; left:18px; width:5px; height:5px; margin-top:-2.5px;
   border-radius:50%; background:#F2B84B; pointer-events:none;
   box-shadow:0 0 9px 2px rgba(242,184,75,.75);
   transition:background .25s, box-shadow .25s;
@@ -4912,7 +4919,7 @@ html.sw-gate-known #swGate .sw-g-skip{
 #swGate .sw-g-skip{
   appearance:none; background:none; border:0; cursor:pointer;
   color:#C9C9CE; font-family:inherit; font-size:15px; font-weight:600;
-  min-height:44px; padding:10px 28px; transition:color .15s ease;
+  min-height:44px; padding:9px 24px; font-size:14.5px; transition:color .15s ease;
 }
 #swGate .sw-g-under{
   appearance:none; background:none; border:0; cursor:pointer;
@@ -5029,7 +5036,9 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     justify-content:flex-end; gap:12px;
     padding:0 18px calc(34px + env(safe-area-inset-bottom)) 18px;
   }
-  #swGate .sw-g-enter{width:100%; min-width:0; padding:16px 24px; font-size:17px}
+  /* NOT width:100%. A pill stretched to both margins stops reading as a pill
+     and starts reading as a bar, which is what made these look oversized. */
+  #swGate .sw-g-enter{width:auto; min-width:min(252px,68vw); padding:14px 26px 14px 34px; font-size:15.5px}
   #swGate .sw-g-mark{height:28px}
   #swGate .sw-g-sub{font-size:14px}
   /* This block comes AFTER the max-aspect-ratio one above and would otherwise
@@ -5144,7 +5153,13 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+
            "-"+String(d.getDate()).padStart(2,"0");
   }
-  function remember(){ try{ localStorage.setItem("sw.intro.day", today()); }catch(e){} }
+  function remember(){
+    /* Two records, two questions. The session one stops a reload re-showing the
+       gate; the localStorage one remembers they have ever seen it, which is
+       what gives a returning reader the visible Skip. */
+    try{ sessionStorage.setItem("sw.intro.session","1"); }catch(e){}
+    try{ localStorage.setItem("sw.intro.day", today()); }catch(e){}
+  }
   /* Kept far longer than the splash: the splash is a once-a-day flourish,
      being 18 is not a daily question. */
   function affirm(){ try{ localStorage.setItem("sw.age18","1"); }catch(e){} }
