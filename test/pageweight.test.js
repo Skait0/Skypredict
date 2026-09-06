@@ -87,3 +87,61 @@ test("the whole first load stays inside a phone budget", () => {
     "a first load is about " + total + " KB. It was 1,600 KB when phones on LTE " +
     "started timing out. Something heavy has been added back.");
 });
+
+/* ---------------------------------------------------------- the intro gate
+
+   The budget above counts images and never video, so the gate walked straight
+   through it: the poster tripped the limit at 1201 KB while 742 KB of loop went
+   uncounted beside it. A guard with a hole that shape is worse than none,
+   because it reads as cover.
+
+   What a phone actually fetches when the gate shows is the poster plus the LEAN
+   loop. The sharp set exists for desktop only and is chosen in script, never
+   referenced in the markup - which is the property worth pinning, because the
+   moment an -hd file appears in an attribute every phone downloads it. */
+
+const introKb = (f) => { try { return kb(f); } catch (e) { return null; } };
+/* Markup only. The first version of these checks matched
+   `reveal.src="/intro-wizard-reveal"` inside the gate's own script and
+   reported the reveal as part of first paint, which is the opposite of what
+   that line does - it runs 1.2 seconds later. A script is not markup. */
+const markup = index.replace(/<script[\s\S]*?<\/script>/g, "");
+
+test("the gate's phone payload stays small", () => {
+  const poster = introKb("intro-wizard-poster.jpg");
+  const loop = introKb("intro-wizard-loop.mp4");
+  assert.ok(poster !== null && loop !== null, "the gate's assets are missing");
+  /* 420 KB: the poster paints immediately and the loop follows. Chosen against
+     the same LTE the 1.6 MB page timed out on - about two seconds of transfer,
+     and nothing waits on it because the copy is on a CSS timer. */
+  assert.ok(poster + loop <= 420,
+    "the gate costs a phone " + (poster + loop) + " KB before anything else " +
+    "(poster " + poster + " + loop " + loop + "). Budget is 420 KB.");
+});
+
+test("the reveal is never part of the first load", () => {
+  /* It is fetched 1.2s after the loop is running, on purpose, so the two never
+     compete for the opening seconds. If it ever lands in the markup it becomes
+     part of first paint instead. */
+  assert.ok(!/(?:href|src)="\/intro-wizard-reveal/.test(markup),
+    "the reveal is referenced in the markup, so it is fetched during first paint");
+});
+
+test("the sharp set is desktop-only and never in the markup", () => {
+  assert.ok(!/(?:href|src|poster)="\/intro-wizard-[a-z-]*-hd\.mp4"/.test(markup),
+    "an -hd file is referenced in an attribute, which makes every phone fetch it");
+  const hdLoop = introKb("intro-wizard-loop-hd.mp4");
+  if (hdLoop !== null) {
+    /* Not a tight budget - desktop can afford it - but it should not drift into
+       the megabytes unnoticed. */
+    assert.ok(hdLoop <= 1100, "the sharp loop is " + hdLoop + " KB");
+  }
+});
+
+test("both video sets exist, or the gate half works", () => {
+  for (const f of ["intro-wizard-loop.mp4", "intro-wizard-reveal.mp4",
+                   "intro-wizard-loop-hd.mp4", "intro-wizard-reveal-hd.mp4",
+                   "intro-wizard-poster.jpg"]) {
+    assert.ok(introKb(f) !== null, f + " is missing");
+  }
+});

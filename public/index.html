@@ -4770,7 +4770,7 @@ html.sw-gate-on #swGate:not([hidden]){
 }
 /* Covers the mobile bottom nav too, until dismissed. */
 html.sw-gate-on, html.sw-gate-on body{overflow:hidden; overscroll-behavior:none}
-#swGate.is-out{opacity:0; pointer-events:none}
+html.sw-gate-on #swGate.is-out:not([hidden]){opacity:0; pointer-events:none}
 
 /* The poster is underneath and always painted, so there is something on screen
    the instant the HTML lands. The video fades in over it only once it can
@@ -4817,21 +4817,40 @@ html.sw-gate-still #swGate video{display:none}
 html.sw-gate-known #swGate .sw-g-age,
 html.sw-gate-known #swGate .sw-g-under{display:none}
 
+/* THE SAME PILL AS "Add all tips to slip", scaled up to a hero.
+   That control is the site's strongest call to action and it is not a gold
+   fill - it is a deep red gradient with a GOLD HAIRLINE EDGE, white text and
+   an ember on the left. Borrowing it means Enter already looks like this site
+   before the reader has seen any of it, and the first thing they meet is the
+   same shape as the thing we actually want them to press later. */
 #swGate .sw-g-enter{
-  appearance:none; border:0; cursor:pointer; margin-top:4px;
-  min-width:min(320px,84vw); padding:15px 30px; border-radius:999px;
-  background:#F2B84B; color:#17140C; font-weight:800; font-size:17px;
-  font-family:inherit; letter-spacing:.01em;
-  box-shadow:0 10px 30px rgba(242,184,75,.28);
-  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+  position:relative; overflow:hidden; appearance:none; cursor:pointer; margin-top:4px;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  min-width:min(320px,84vw); padding:16px 34px 16px 44px; border-radius:999px;
+  background:linear-gradient(135deg,#6d1017,#E63946 55%,#9c1620); color:#fff;
+  border:1.5px solid rgba(242,184,75,.62);
+  font:inherit; font-weight:800; font-size:17px; letter-spacing:.03em;
+  text-shadow:0 1px 2px rgba(0,0,0,.55);
+  box-shadow:0 2px 12px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.13);
+  transition:filter .25s, box-shadow .25s, transform .15s;
+}
+/* The ember, same as the one on the slip pill. */
+#swGate .sw-g-enter .sw-g-spark{
+  position:absolute; top:50%; left:20px; width:6px; height:6px; margin-top:-3px;
+  border-radius:50%; background:#F2B84B; pointer-events:none;
+  box-shadow:0 0 9px 2px rgba(242,184,75,.75);
+  transition:background .25s, box-shadow .25s;
 }
 @media (hover:hover){
-  #swGate .sw-g-enter:hover{background:#F7C766; transform:translateY(-1px);
-    box-shadow:0 14px 36px rgba(242,184,75,.36)}
+  #swGate .sw-g-enter:hover{filter:brightness(1.1);
+    box-shadow:0 0 0 1px rgba(242,184,75,.85), 0 8px 28px rgba(230,57,70,.55),
+               inset 0 1px 0 rgba(255,255,255,.16)}
+  #swGate .sw-g-enter:hover .sw-g-spark{background:#FFD873;
+    box-shadow:0 0 14px 3px rgba(242,184,75,1)}
   #swGate .sw-g-skip:hover{color:#E8E8EC}
   #swGate .sw-g-under:hover{color:#C9C9CE}
 }
-#swGate .sw-g-enter:active{transform:translateY(0)}
+#swGate .sw-g-enter:active{transform:scale(.97)}
 #swGate .sw-g-enter:focus-visible,
 #swGate .sw-g-skip:focus-visible,
 #swGate .sw-g-under:focus-visible{outline:2px solid #F2B84B; outline-offset:3px}
@@ -4875,6 +4894,19 @@ html.sw-gate-known #swGate .sw-g-under{display:none}
   #swGate,#swGate video{transition:none}
 }
 
+/* The wordmark, as text. No logo mark: on this frame the mark sat on the
+   wizard's eye and read as a blob rather than a brand. */
+#swGate .sw-g-brand{
+  position:absolute; z-index:4; top:calc(18px + env(safe-area-inset-top));
+  left:calc(20px + env(safe-area-inset-left));
+  font-size:17px; font-weight:800; letter-spacing:-.01em; color:#F2B84B;
+  text-shadow:0 2px 14px rgba(0,0,0,.6); pointer-events:none;
+}
+#swGate .sw-g-brand span{color:#F7F7F8}
+@media (max-width:560px){
+  #swGate .sw-g-brand{font-size:15px; top:calc(14px + env(safe-area-inset-top)); left:16px}
+}
+
 /* ---- landing: the zoom does not stop, it arrives -----------------------------
    Measured on the asset: the reveal ends at mean brightness 75 with a bright
    spot at 229, so it finishes ON the glowing eye rather than whiting out. A
@@ -4882,9 +4914,27 @@ html.sw-gate-known #swGate .sw-g-under{display:none}
    the viewport while a short gold flash carries the eye's light makes the last
    thing the reader sees continue into the page underneath, which is already
    rendered and waiting. */
-#swGate video.sw-g-reveal{transform:scale(1); transition:transform .42s cubic-bezier(.4,0,.75,.2), opacity .34s ease-in}
-#swGate.is-landing video.sw-g-reveal{transform:scale(1.7); opacity:0}
-#swGate.is-landing{opacity:0; transition:opacity .34s ease-in .06s}
+/* NOTHING OF THE WIZARD MAY SURVIVE THE LANDING.
+   Scaling only the reveal left the poster and the loop sitting behind it,
+   still at scale 1, so as the gate faded you saw a moment of static wizard
+   underneath the zoom. The whole media layer moves together now, and the
+   scrim goes with it - one thing travelling through the eye, not a video
+   leaving a photograph behind.
+   The media clears BEFORE the gate does: opacity is gone by .30s while the
+   gate finishes at .40s, so the last tenth of the fade is flat #0D0D0F,
+   which is what makes the arrival read as the page rather than a dissolve. */
+#swGate .sw-g-media,#swGate .sw-g-scrim{
+  transform:scale(1); transform-origin:50% 46%;
+  transition:transform .44s cubic-bezier(.4,0,.7,.2), opacity .30s ease-in;
+}
+#swGate.is-landing .sw-g-media{transform:scale(2.4); opacity:0}
+#swGate.is-landing .sw-g-scrim{transform:scale(2.4); opacity:0}
+/* Specificity, not style: the base rule is `html.sw-gate-on #swGate:not([hidden])`
+   at (1,2,1), which outranks a plain `#swGate.is-landing` at (1,1,0) - so the
+   gate never faded and the tail of the landing was a black screen that cut to
+   the site. Measured: media opacity reached 0 while gate opacity stayed 1.
+   Matching the base selector fixes it without !important. */
+html.sw-gate-on #swGate.is-landing:not([hidden]){opacity:0; transition:opacity .40s ease-in .04s}
 #swGate .sw-g-flash{
   position:absolute; inset:0; z-index:3; pointer-events:none; opacity:0;
   background:radial-gradient(circle at 50% 46%,rgba(255,225,160,.85) 0%,rgba(242,184,75,.35) 34%,rgba(13,13,15,0) 68%);
@@ -4939,11 +4989,12 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   <div class="sw-g-scrim" aria-hidden="true"></div>
   <div class="sw-g-flash" aria-hidden="true"></div>
 
+  <div class="sw-g-brand" aria-hidden="true"><span>Soccer</span>wizard</div>
   <div class="sw-g-panel">
     <h2 id="swGateQ">Are you tired of picking games one by one?</h2>
     <p class="sw-g-sub">We build the slip. You get the code.</p>
     <p class="sw-g-age">You must be 18 or over to continue.</p>
-    <button type="button" class="sw-g-enter" id="swGateEnter">Enter</button>
+    <button type="button" class="sw-g-enter" id="swGateEnter"><span class="sw-g-spark" aria-hidden="true"></span>Enter</button>
     <button type="button" class="sw-g-skip" id="swGateSkip">Skip</button>
     <button type="button" class="sw-g-under" id="swGateUnder">I am under 18</button>
     <p class="sw-g-legal">18+ only. Play responsibly.</p>
@@ -5035,20 +5086,43 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
         t.setAttribute("tabindex","-1"); t.focus({preventScroll:true});
       }catch(e){}
     }
-    setTimeout(finish, landing?430:320);
+    setTimeout(finish, landing?480:320);   /* the media transition is 440ms; removing at 430 clipped it */
   }
 
+  /* SHARPNESS IS A DESKTOP PROBLEM, so only desktop pays for it.
+     The source is 864x496. On a 390px phone that is already 2.2x oversampled
+     and looks clean; on a 1568px desktop it is a 1.8x UPSCALE, which is where
+     the softness comes from. So there are two sets, and the wide one costs
+     roughly two and a half times the bytes:
+
+       lean  864x496   loop 301 KB  reveal 371 KB
+       sharp 1296x744  loop 742 KB  reveal 758 KB
+
+     Chosen on the viewport, and only when the connection has not already told
+     us to be careful - wantsVideo has refused save-data and 2G before we get
+     here. A large phone in landscape is still a phone, so this asks about
+     coarse pointers as well as width. */
+  function sharpSet(){
+    try{
+      if(window.innerWidth < 900) return false;
+      if(window.matchMedia && window.matchMedia("(pointer:coarse)").matches) return false;
+      var c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+      if(c && /^(slow-2g|2g|3g)$/.test(c.effectiveType||"")) return false;
+    }catch(e){ return false; }
+    return true;
+  }
   function play(){
     if(!wantsVideo()) return;
+    var hd=sharpSet()?"-hd":"";
     try{
-      loop.src="/intro-wizard-loop.mp4";
+      loop.src="/intro-wizard-loop"+hd+".mp4";
       loop.addEventListener("canplay",function(){ loop.className+=" is-in"; },{once:true});
       var p=loop.play();
       if(p&&p.catch) p.catch(function(){ /* refused - the poster stands */ });
       /* The reveal is fetched only once the loop is going, so the two never
          compete for the first seconds of bandwidth. */
       setTimeout(function(){
-        try{ reveal.src="/intro-wizard-reveal.mp4"; reveal.load(); }catch(e){}
+        try{ reveal.src="/intro-wizard-reveal"+hd+".mp4"; reveal.load(); }catch(e){}
       }, 1200);
     }catch(e){}
   }
