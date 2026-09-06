@@ -71,26 +71,36 @@ test("the two agree on every point of a dense probability grid", () => {
       if (a < 0.02) continue;
       for (const o15 of [0.40, 0.72, 0.79, 0.80, 0.85, 0.95]) {
         for (const crossTier of [false, true]) {
+        /* crossCountry too, since 6 Sep 2026. It makes both functions able to
+           return NULL, which is a second way for them to disagree - one
+           dropping the fixture while the other names a winner would put a
+           match-result tip on a Champions League game the build never
+           published. Compared explicitly below rather than assumed non-null. */
+        for (const crossCountry of [false, true]) {
           const k = vec(h, d, o15);
-          const B = buildPick(Object.assign({}, k), { crossTier });
-          const C = clientPick(Object.assign({}, k, { crossTier }));
+          const B = buildPick(Object.assign({}, k), { crossTier, crossCountry });
+          const C = clientPick(Object.assign({}, k, { crossTier, crossCountry }));
           checked++;
-          if (B.label !== C.label || Math.abs(B.p - C.p) > 1e-12) {
+          const same = (B === null && C === null) ||
+            (B !== null && C !== null && B.label === C.label && Math.abs(B.p - C.p) <= 1e-12);
+          if (!same) {
             if (disagreements.length < 5) {
-              disagreements.push({ h: +h.toFixed(2), d: +d.toFixed(2), o15, crossTier,
-                                   build: B.label + "@" + B.p.toFixed(4),
-                                   client: C.label + "@" + C.p.toFixed(4) });
+              disagreements.push({ h: +h.toFixed(2), d: +d.toFixed(2), o15,
+                                   crossTier, crossCountry,
+                                   build: B ? B.label + "@" + B.p.toFixed(4) : "null",
+                                   client: C ? C.label + "@" + C.p.toFixed(4) : "null" });
             }
           }
+        }
         }
       }
     }
   }
-  /* ~32.8k points: every 1% of home from 5-90 crossed with every 1% of draw
+  /* ~65.6k points: every 1% of home from 5-90 crossed with every 1% of draw
      from 5-45, six Over-1.5 values chosen to straddle both bars (0.72/0.80),
-     and both cross-tier states. Dense enough that a rule change anywhere in
-     either function lands on it. */
-  assert.ok(checked > 30000, "grid should be dense; checked " + checked);
+     and both cross-tier states crossed with both cross-country states. Dense
+     enough that a rule change anywhere in either function lands on it. */
+  assert.ok(checked > 60000, "grid should be dense; checked " + checked);
   assert.deepEqual(disagreements, [],
     "build and client disagree on " + disagreements.length + " points");
 });

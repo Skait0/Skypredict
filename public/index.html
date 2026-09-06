@@ -6832,9 +6832,14 @@ function kOf(f){
   /* cross_tier is only written when the build found one - `cross_tier:
      crossTier ? n : undefined` - so its presence IS the flag, and reading it
      as a boolean is what keeps the 0.72 Over-1.5 bar in step with the build. */
+  /* cross_country the same way - written only when the tie crosses a border,
+     so its presence is the flag. Without it the browser would re-derive a
+     match result on a Champions League game the build deliberately published
+     as a goals call, and the reader would see the card contradict itself. */
   return {home:f.home_p, draw:f.draw_p, away:f.away_p,
           o15:f.o15, dc1x:f.dc1x, dcx2:f.dcx2,
-          crossTier:(f.cross_tier!=null)};
+          crossTier:(f.cross_tier!=null),
+          crossCountry:(f.cross_country!=null)};
 }
 /* A LINE-FOR-LINE MIRROR OF bestTip IN lib/model.js, and it has to stay one.
    Blending only happens in the browser - the bookmaker's odds arrive after the
@@ -6853,6 +6858,12 @@ function bestTipFrom(k){
   ];
   var o15Bar=k.crossTier?0.72:0.80;
   if(k.o15>=o15Bar) cands.push({label:"Over 1.5", p:k.o15});
+  /* Across a border: goals or nothing. See the long note in lib/model.js -
+     the country gap is imported rather than fitted, and it moves who wins far
+     more than it moves how many goals get scored. */
+  if(k.crossCountry){
+    return k.o15>=o15Bar ? {label:"Over 1.5", p:k.o15} : null;
+  }
   var outright=Math.max(k.home,k.draw,k.away);
   var dc=[
     {label:"1X, home or draw", p:k.dc1x},

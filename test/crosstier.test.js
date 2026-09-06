@@ -1,24 +1,25 @@
 "use strict";
 
-/* Cup ties between divisions.
+/* Cup ties between divisions, and ties between countries.
  *
  * These rest on the one assumption in the model: how much weaker each
- * division is than its country's top flight. Nothing in the data can measure
- * it - no cup results in the training feeds, and no club appears in two
- * leagues - so the tests here pin down the shape of the assumption and, more
- * importantly, what happens when it cannot be applied at all.
+ * division is than its country's top flight, and since 6 Sep 2026 how much
+ * weaker each country is than England. Nothing in the data can measure either
+ * - no cup results in the training feeds, no club appears in two leagues, and
+ * no match crosses a border - so the tests here pin down the shape of the
+ * assumption and, more importantly, what happens when it cannot be applied.
+ *
+ * This used to lift tierEdge out of build.js by slicing the source between two
+ * landmarks and eval'ing it. That worked until the file grew a function
+ * between them, which is a silent way to test nothing at all. It imports the
+ * real module now.
  */
 
 const test = require("node:test");
 const assert = require("node:assert");
-const fs = require("fs");
-const path = require("path");
 
-const src = fs.readFileSync(path.join(__dirname, "..", "lib", "build.js"), "utf8");
-const a = src.indexOf("const TIER_HANDICAP");
-const b = src.indexOf("/* The league a club actually plays in");
-const { tierEdge, TIER_HANDICAP } =
-  new Function(src.slice(a, b) + "return {tierEdge, TIER_HANDICAP};")();
+const { tierEdge, TIER_HANDICAP, countryHandicap, UEFA_COEFFICIENT, COUNTRY_CAP } =
+  require("../lib/build.js");
 
 const M = require("../lib/model.js");
 
@@ -47,14 +48,69 @@ test("same division is no edge at all", () => {
 });
 
 test("divisions that cannot be compared return null, never zero", () => {
-  /* This is the one that matters. Zero would quietly declare a top-flight
-     side and a third-tier side evenly matched, and the fixture would go out
-     unmarked and eligible to headline the site. Null means "do not predict". */
-  assert.equal(tierEdge("England Premier League", "Spain La Liga 1"), null,
-    "different countries are not on one ladder");
-  assert.equal(tierEdge("England Premier League", "Russia Premier League"), null);
-  assert.equal(tierEdge("England Premier League", "Japan J1 League"), null);
+  /* This is the one that matters, and it is unchanged in substance. Zero would
+     quietly declare a top-flight side and a third-tier side evenly matched,
+     and the fixture would go out unmarked and eligible to headline the site.
+     Null means "do not predict".
+
+     What DID change, 6 Sep 2026: two countries that both hold a UEFA
+     association coefficient are now comparable, so England v Spain returns a
+     number instead of null. That is the whole point of the change - the board
+     used to refuse every European tie. The cases below are the ones still
+     genuinely incomparable, and they are the ones the guard now protects. */
+  assert.equal(tierEdge("England Premier League", "Japan J1 League"), null,
+    "Japan is not a UEFA association - there is no published number bridging it");
+  assert.equal(tierEdge("Brazil Serie A", "Argentina Liga Profesional"), null,
+    "CONMEBOL has no coefficient comparable to UEFA's; Libertadores stays refused");
+  assert.equal(tierEdge("England Premier League", "USA MLS"), null);
   assert.equal(tierEdge("Nowhere Division 1", "Nowhere Division 2"), null);
+  assert.equal(tierEdge("England Premier League", "Nowhere Division 1"), null,
+    "a league missing from the ladder is refused even against a known one");
+});
+
+test("two UEFA countries are now comparable, and in the right direction", () => {
+  /* Sanity, not precision. The exact numbers come from the coefficient table
+     and will move each season; what must not move is the ordering. */
+  const eq = tierEdge("Spain La Liga 1", "Italy Serie A");
+  assert.ok(eq !== null, "Real Madrid v Inter must not be refused any more");
+  assert.ok(Math.abs(eq) < 0.10,
+    "Spain and Italy are within a whisker of each other; got " + eq);
+
+  /* Positive means the HOME side is favoured by the ladder. */
+  assert.ok(tierEdge("Germany Bundesliga 1", "Norway Eliteserien") > 0.25,
+    "Bayern at home to a Norwegian side should carry a real edge");
+  assert.ok(tierEdge("Norway Eliteserien", "Germany Bundesliga 1") < -0.25,
+    "and the same tie the other way round must flip sign");
+  assert.ok(tierEdge("Portugal Primeira Liga", "England Premier League") < 0,
+    "Porto at home to Man City should not be the favourite on the ladder");
+});
+
+test("the cross-country edge is bounded, however lopsided the coefficients", () => {
+  /* Log scaling runs away in the tail - Wales would come out near four English
+     divisions - so the cap exists. Nothing may exceed the widest step the
+     domestic ladder carries. */
+  const WIDEST_DOMESTIC = TIER_HANDICAP["England Conference National"];
+  for (const a of Object.keys(UEFA_COEFFICIENT)) {
+    const h = countryHandicap(a);
+    assert.ok(h !== null && h >= 0 && h <= COUNTRY_CAP,
+      a + " has a handicap of " + h + ", outside [0, " + COUNTRY_CAP + "]");
+    assert.ok(h < WIDEST_DOMESTIC,
+      a + " is handicapped " + h + ", wider than Premier League to Conference");
+  }
+  assert.equal(countryHandicap("England"), 0, "England anchors the table at zero");
+  assert.equal(countryHandicap("Brazil"), null, "non-UEFA countries have no handicap");
+  assert.equal(countryHandicap(""), null);
+});
+
+test("a stronger coefficient never yields a bigger handicap", () => {
+  const byCoef = Object.keys(UEFA_COEFFICIENT)
+    .sort((a, b) => UEFA_COEFFICIENT[b] - UEFA_COEFFICIENT[a]);
+  for (let i = 1; i < byCoef.length; i++) {
+    const hi = countryHandicap(byCoef[i - 1]), lo = countryHandicap(byCoef[i]);
+    assert.ok(lo >= hi,
+      byCoef[i] + " (" + UEFA_COEFFICIENT[byCoef[i]] + ") is handicapped " + lo +
+      " but " + byCoef[i - 1] + " (" + UEFA_COEFFICIENT[byCoef[i - 1]] + ") only " + hi);
+  }
 });
 
 test("every ladder starts its country at zero", () => {
