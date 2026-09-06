@@ -122,10 +122,15 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
   var D=document.documentElement;
   try{
     if(location.pathname!=="/"&&location.pathname!=="/index.html") return;
-    var d=new Date();
-    var day=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+
-            "-"+String(d.getDate()).padStart(2,"0");
-    if(localStorage.getItem("sw.intro.day")===day) return;
+    /* IT SHOWS EVERY VISIT NOW, not once a day.
+       It used to suppress itself for the rest of the calendar day, which meant
+       a returning reader never saw the wizard again and the whole thing existed
+       for first-timers only. Owner's call, and the trade is explicit: everyone
+       sees it, so everyone needs a fast way past. That is what sw-gate-known
+       below is for - anyone who has been here before gets a Skip they can
+       actually see, and no age question to answer twice. */
+    var seen=false;
+    try{ seen=!!localStorage.getItem("sw.intro.day"); }catch(e){}
     var r=document.referrer||"";
     if(r&&/^https?:\/\/([^\/]*\.)?(google|bing|duckduckgo|yahoo|yandex|baidu|ecosia|brave|search\.marcia)\./i.test(r)) return;
     /* Reduced motion still gets the gate - it is an age check as well as a
@@ -133,7 +138,7 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
     if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){
       D.className+=" sw-gate-still";
     }
-    if(localStorage.getItem("sw.age18")==="1") D.className+=" sw-gate-known";
+    if(seen||localStorage.getItem("sw.age18")==="1") D.className+=" sw-gate-known";
     D.className+=" sw-gate-on";
   }catch(e){ /* no storage, no gate - never trap a reader behind a thrown error */ }
 })();
@@ -4838,6 +4843,31 @@ html.sw-gate-still #swGate video{display:none}
 html.sw-gate-known #swGate .sw-g-age,
 html.sw-gate-known #swGate .sw-g-under{display:none}
 
+/* A READER WHO HAS BEEN HERE BEFORE.
+   The gate shows on every visit now, so the second time it must not feel like
+   a wall. Three things change and nothing else:
+     the age question goes, because they answered it,
+     Skip stops being quiet grey text and becomes a real bordered control,
+     and the copy arrives in half the time, since they have read it.
+   Skip is deliberately NOT promoted above Enter. Someone returning may still
+   want the reveal; the point is only that leaving is obvious, not that it is
+   the expected choice. */
+html.sw-gate-known #swGate .sw-g-panel{animation-delay:.18s}
+html.sw-gate-known #swGate .sw-g-skip{
+  border:1.5px solid rgba(201,201,206,.42); border-radius:999px;
+  padding:12px 30px; color:#E8E8EC; background:rgba(13,13,15,.35);
+  -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
+  margin-top:2px;
+}
+@media (hover:hover){
+  html.sw-gate-known #swGate .sw-g-skip:hover{
+    border-color:rgba(242,184,75,.7); color:#fff; background:rgba(13,13,15,.55);
+  }
+}
+@media (max-width:560px){
+  html.sw-gate-known #swGate .sw-g-skip{width:100%; padding:14px 24px}
+}
+
 /* THE SAME PILL AS "Add all tips to slip", scaled up to a hero.
    That control is the site's strongest call to action and it is not a gold
    fill - it is a deep red gradient with a GOLD HAIRLINE EDGE, white text and
@@ -5074,8 +5104,10 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       under=document.getElementById("swGateUnder"),
       back=document.getElementById("swGateBack");
   var done=false;
-  /* Paired with the 40fps encode of the loop files - see play() below. */
-  var LOOP_RATE=0.6;
+  /* How gently the hood drifts. The loop files are plain 24fps, so this only
+     holds each real frame longer - it never softens one. Safe to change on
+     its own; see play() for why it is not paired with a frame rate any more. */
+  var LOOP_RATE=0.7;
 
   function today(){
     var d=new Date();
@@ -5189,16 +5221,25 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     var cx=bestCodec();
     try{
       loop.src="/intro-wizard-loop"+hd+cx+".mp4";
-      /* GENTLE, NOT SLOWED-DOWN, and the two are not the same thing.
-         Dropping playbackRate on a 24fps clip holds each frame longer, which
-         reads as judder the moment anything moves. So the loop files are
-         INTERPOLATED TO 40fps and played back at 0.6 - 40 x 0.6 is 24 new
-         frames a second, so the cadence is unchanged and only the hood slows.
-         It also cost nothing: the extra frames are almost perfectly predictable
-         from their neighbours, so every loop came out SMALLER than the 24fps
-         version it replaced.
-         THE TWO NUMBERS ARE A PAIR. Change this rate without re-encoding at a
-         matching frame rate and the judder comes straight back. */
+      /* GENTLE, AND SHARP, AND THOSE TURNED OUT TO CONFLICT.
+         This first interpolated the loop to 40fps and played it at 0.6, so the
+         cadence stayed at 24 new frames a second while the hood slowed. On
+         paper that is the better answer and the file sizes even improved.
+         In practice it broke up badly - reported as "crazy breaking and
+         pixelating" - because motion-compensated interpolation has to invent
+         frames, and the thing it had to invent around was forked lightning:
+         thin, fast, high contrast, and different in every frame. It is close to
+         the worst input such a filter can be given.
+         The measurement missed it. SSIM over a handful of sampled frames showed
+         a drop of about 0.03 and no visible warping in the frames I looked at,
+         because the breakup is intermittent and I did not sample the frames it
+         happened on. The owner's eyes were right and the metric was not.
+         So the files are plain 24fps again and the slowdown is playbackRate
+         alone. Every frame shown is a real one at full quality - the ONLY cost
+         is that frames are held longer, and with a mean frame-to-frame step of
+         3.42 out of 255 there is almost nothing moving far enough for that to
+         read as judder. Sharpness beat cadence, which is the right way round
+         for a still-ish shot of a hood in the wind. */
       loop.playbackRate=LOOP_RATE;
       loop.addEventListener("canplay",function(){
         /* Some browsers reset the rate when a new source finishes loading. */
@@ -5226,6 +5267,18 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
          loaded. Still a landing, just a shorter one. */
       setTimeout(land, 180); return;
     }
+    /* THE SKIP BEFORE THE SITE, and it was a pause rather than a stutter.
+       Landing on "ended" means the video stops on its final frame, THEN the
+       zoom-out transition starts - two motions with a dead beat between them,
+       which reads as a hitch just as the page arrives. Starting the landing a
+       little before the end lets the CSS zoom take over while the video is
+       still moving, so it is one continuous push through the eye.
+       `ended` stays as the backstop for anything that never fires timeupdate. */
+    reveal.addEventListener("timeupdate", function(){
+      if(landed) return;
+      var d=reveal.duration;
+      if(isFinite(d) && d>0 && reveal.currentTime >= d-0.22) land();
+    });
     reveal.addEventListener("ended", land, {once:true});
     reveal.addEventListener("error", land, {once:true});
     var pr=reveal.play();

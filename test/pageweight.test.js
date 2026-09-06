@@ -212,37 +212,42 @@ test("both video sets exist, or the gate half works", () => {
   }
 });
 
-test("the loop's frame rate and playback rate stay a matched pair", () => {
-  /* The hood drifts because the loop files are interpolated to 40fps and played
-     at 0.6 - 40 x 0.6 is 24 new frames a second, so only the speed changes and
-     the cadence does not. Drop the rate without re-encoding at a matching frame
-     rate, or re-encode at 24fps and leave the rate alone, and the judder this
-     was built to avoid comes straight back. Neither half is wrong on its own,
-     which is exactly why it needs pinning.
-     ffprobe is not a dependency of this repo, so the file half is checked only
-     where it happens to exist. The arithmetic is always checked. */
-  const m = /var LOOP_RATE\s*=\s*([0-9.]+)/.exec(index);
+test("the loop is never interpolated, whatever the playback rate", () => {
+  /* This test used to assert the opposite: frame rate times playback rate had
+     to land on 24, because the loops were interpolated to 40fps so the cadence
+     survived being slowed.
+
+     Reverted after the owner reported "crazy breaking and pixelating".
+     Motion-compensated interpolation has to invent frames, and what it had to
+     invent around here is forked lightning: thin, fast, high contrast, wholly
+     different frame to frame. Close to the worst input such a filter can get.
+     SSIM over sampled frames showed only a ~0.03 drop and the frames I opened
+     were clean, because the breakup is intermittent and I did not happen to
+     sample it. The eye caught what the metric missed.
+
+     So the rule is the plain one now: loops stay at the source frame rate and
+     slowing is playbackRate alone, which holds real frames rather than
+     inventing new ones. If anyone reaches for minterpolate on this asset again,
+     this is the note saying it was tried and why it lost. */
+  const src = fs.readFileSync(path.join(PUB, "index.html"), "utf8");
+  const m = /var LOOP_RATE\s*=\s*([0-9.]+)/.exec(src);
   assert.ok(m, "LOOP_RATE is gone from the gate script");
   const rate = Number(m[1]);
   assert.ok(rate > 0.3 && rate <= 1.0, "LOOP_RATE of " + rate + " is out of any sane range");
 
-  let fps = null;
-  try {
-    const out = require("child_process").execFileSync("ffprobe",
-      ["-v", "error", "-select_streams", "v", "-show_entries", "stream=r_frame_rate",
-       "-of", "default=nk=1:nw=1", path.join(PUB, "intro-wizard-loop.mp4")],
-      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
-    const p = out.split("/");
-    if (p.length === 2) fps = Number(p[0]) / Number(p[1]);
-  } catch (e) { /* no ffprobe here; the arithmetic below still holds */ }
-
-  if (fps !== null) {
-    assert.ok(Math.abs(fps * rate - 24) < 1.5,
-      "loop is " + fps + "fps at rate " + rate + ", which shows " +
-      (fps * rate).toFixed(1) + " frames a second. It has to land on 24 or it judders.");
-  } else {
-    /* Without ffprobe, at least hold the intent that was encoded. */
-    assert.ok(Math.abs(40 * rate - 24) < 1.5,
-      "LOOP_RATE " + rate + " no longer pairs with the 40fps encode");
+  for (const f of ["intro-wizard-loop.mp4", "intro-wizard-loop-p.mp4", "intro-wizard-loop-hd.mp4"]) {
+    let fps = null;
+    try {
+      const out = require("child_process").execFileSync("ffprobe",
+        ["-v", "error", "-select_streams", "v", "-show_entries", "stream=r_frame_rate",
+         "-of", "default=nk=1:nw=1", path.join(PUB, f)],
+        { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+      const p = out.split("/");
+      if (p.length === 2) fps = Number(p[0]) / Number(p[1]);
+    } catch (e) { return; }   /* no ffprobe on this machine */
+    if (fps === null) continue;
+    assert.ok(Math.abs(fps - 24) < 0.5,
+      f + " is " + fps + "fps. Loops must stay at the source rate; anything above " +
+      "it means frames were invented, which is what caused the breakup.");
   }
 });
