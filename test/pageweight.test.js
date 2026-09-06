@@ -211,3 +211,38 @@ test("both video sets exist, or the gate half works", () => {
     assert.ok(introKb(f) !== null, f + " is missing");
   }
 });
+
+test("the loop's frame rate and playback rate stay a matched pair", () => {
+  /* The hood drifts because the loop files are interpolated to 40fps and played
+     at 0.6 - 40 x 0.6 is 24 new frames a second, so only the speed changes and
+     the cadence does not. Drop the rate without re-encoding at a matching frame
+     rate, or re-encode at 24fps and leave the rate alone, and the judder this
+     was built to avoid comes straight back. Neither half is wrong on its own,
+     which is exactly why it needs pinning.
+     ffprobe is not a dependency of this repo, so the file half is checked only
+     where it happens to exist. The arithmetic is always checked. */
+  const m = /var LOOP_RATE\s*=\s*([0-9.]+)/.exec(index);
+  assert.ok(m, "LOOP_RATE is gone from the gate script");
+  const rate = Number(m[1]);
+  assert.ok(rate > 0.3 && rate <= 1.0, "LOOP_RATE of " + rate + " is out of any sane range");
+
+  let fps = null;
+  try {
+    const out = require("child_process").execFileSync("ffprobe",
+      ["-v", "error", "-select_streams", "v", "-show_entries", "stream=r_frame_rate",
+       "-of", "default=nk=1:nw=1", path.join(PUB, "intro-wizard-loop.mp4")],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    const p = out.split("/");
+    if (p.length === 2) fps = Number(p[0]) / Number(p[1]);
+  } catch (e) { /* no ffprobe here; the arithmetic below still holds */ }
+
+  if (fps !== null) {
+    assert.ok(Math.abs(fps * rate - 24) < 1.5,
+      "loop is " + fps + "fps at rate " + rate + ", which shows " +
+      (fps * rate).toFixed(1) + " frames a second. It has to land on 24 or it judders.");
+  } else {
+    /* Without ffprobe, at least hold the intent that was encoded. */
+    assert.ok(Math.abs(40 * rate - 24) < 1.5,
+      "LOOP_RATE " + rate + " no longer pairs with the 40fps encode");
+  }
+});

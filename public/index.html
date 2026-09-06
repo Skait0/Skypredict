@@ -5050,6 +5050,8 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       under=document.getElementById("swGateUnder"),
       back=document.getElementById("swGateBack");
   var done=false;
+  /* Paired with the 40fps encode of the loop files - see play() below. */
+  var LOOP_RATE=0.6;
 
   function today(){
     var d=new Date();
@@ -5163,7 +5165,22 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     var cx=bestCodec();
     try{
       loop.src="/intro-wizard-loop"+hd+cx+".mp4";
-      loop.addEventListener("canplay",function(){ loop.className+=" is-in"; },{once:true});
+      /* GENTLE, NOT SLOWED-DOWN, and the two are not the same thing.
+         Dropping playbackRate on a 24fps clip holds each frame longer, which
+         reads as judder the moment anything moves. So the loop files are
+         INTERPOLATED TO 40fps and played back at 0.6 - 40 x 0.6 is 24 new
+         frames a second, so the cadence is unchanged and only the hood slows.
+         It also cost nothing: the extra frames are almost perfectly predictable
+         from their neighbours, so every loop came out SMALLER than the 24fps
+         version it replaced.
+         THE TWO NUMBERS ARE A PAIR. Change this rate without re-encoding at a
+         matching frame rate and the judder comes straight back. */
+      loop.playbackRate=LOOP_RATE;
+      loop.addEventListener("canplay",function(){
+        /* Some browsers reset the rate when a new source finishes loading. */
+        try{ loop.playbackRate=LOOP_RATE; }catch(e){}
+        loop.className+=" is-in";
+      },{once:true});
       var p=loop.play();
       if(p&&p.catch) p.catch(function(){ /* refused - the poster stands */ });
       /* The reveal is fetched only once the loop is going, so the two never
