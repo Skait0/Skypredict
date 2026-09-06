@@ -1,0 +1,138 @@
+{
+  "generated": "2026-09-06",
+  "source": "openfootball/champions-league @ abfaeddc2ee3",
+  "seasons": [
+    "2024-25",
+    "2025-26"
+  ],
+  "shrinkageK": 5,
+  "anchor": "England",
+  "countries": {
+    "England": {
+      "offset": 0,
+      "prior": 0,
+      "matches": 139,
+      "clamped": false
+    },
+    "Italy": {
+      "offset": 0.1741,
+      "prior": 0.0746,
+      "matches": 104,
+      "clamped": false
+    },
+    "Spain": {
+      "offset": 0.1722,
+      "prior": 0.1062,
+      "matches": 117,
+      "clamped": false
+    },
+    "Germany": {
+      "offset": 0.1773,
+      "prior": 0.1191,
+      "matches": 108,
+      "clamped": false
+    },
+    "France": {
+      "offset": 0.0678,
+      "prior": 0.2017,
+      "matches": 79,
+      "clamped": false
+    },
+    "Portugal": {
+      "offset": 0.4931,
+      "prior": 0.2289,
+      "matches": 73,
+      "clamped": false
+    },
+    "Belgium": {
+      "offset": 0.4904,
+      "prior": 0.2734,
+      "matches": 74,
+      "clamped": false
+    },
+    "Netherlands": {
+      "offset": 0.5071,
+      "prior": 0.3332,
+      "matches": 78,
+      "clamped": false
+    },
+    "Turkey": {
+      "offset": 0.3784,
+      "prior": 0.3598,
+      "matches": 67,
+      "clamped": false
+    },
+    "Poland": {
+      "offset": 0.6946,
+      "prior": 0.4079,
+      "matches": 31,
+      "clamped": false
+    },
+    "Greece": {
+      "offset": 0.6294,
+      "prior": 0.4226,
+      "matches": 44,
+      "clamped": false
+    },
+    "Norway": {
+      "offset": 0.6067,
+      "prior": 0.4858,
+      "matches": 63,
+      "clamped": false
+    },
+    "Denmark": {
+      "offset": 0.6143,
+      "prior": 0.4898,
+      "matches": 45,
+      "clamped": false
+    },
+    "Switzerland": {
+      "offset": 0.7,
+      "prior": 0.6087,
+      "matches": 39,
+      "clamped": true
+    },
+    "Austria": {
+      "offset": 0.6972,
+      "prior": 0.6528,
+      "matches": 44,
+      "clamped": false
+    },
+    "Scotland": {
+      "offset": 0.6587,
+      "prior": 0.6787,
+      "matches": 43,
+      "clamped": false
+    },
+    "Sweden": {
+      "offset": 0.5039,
+      "prior": 0.6884,
+      "matches": 40,
+      "clamped": false
+    },
+    "Romania": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 20,
+      "clamped": true
+    },
+    "Russia": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Ireland": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 14,
+      "clamped": true
+    },
+    "Finland": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 14,
+      "clamped": true
+    }
+  }
+}
