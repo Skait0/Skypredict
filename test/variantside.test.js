@@ -27,13 +27,22 @@ const VARIANTS = [
   /* word forms, several languages */
   "Fenerbahce Youth", "Fenerbahce Akademi", "Besiktas Youth",
   "Ajax Academy", "Bayern Akademie", "Sassuolo Primavera",
-  "Arsenal Juniors", "Porto Junior",
+  "Borussia Dortmund Junioren",
   /* women's sides */
   "PSG Women", "Chelsea Ladies", "Arsenal W", "Bayern Frauen",
   "Lyon Feminin", "Barcelona Femenino", "Ajax Dames",
   /* reserve and B sides */
   "Stuttgart II", "Real Madrid B", "Jong Ajax", "Jong PSV",
   "Rosenborg BK 2", "Porto Reserve", "Celta Reserves",
+  /* THE RUSSIAN SHAPE: the marker sits in the MIDDLE, because the city comes
+     after it. normTeam turns the punctuation into a space and tokset drops
+     the short token, so "FC Spartak-2 Moscow" reduced to {spartak, moscow} -
+     an exact token match against the Premier League club. Six of these ten
+     got through before the fix; the reported symptom was a Russian lower-tier
+     fixture priced off a top-flight rating and picked for a slip. */
+  "FC Spartak-2 Moscow", "Arsenal-2 Tula", "Rubin-2 Kazan",
+  "FC Ural-2 Yekaterinburg", "Yenisey 2 Krasnoyarsk", "FK Akron-2 Tolyatti",
+  "FC Orenburg-2", "FC Chelyabinsk 2", "FC Krylia Sovetov Samara-2",
 ];
 
 const FIRST_TEAMS = [
@@ -41,6 +50,15 @@ const FIRST_TEAMS = [
   "Nice", "Le Mans", "Real Madrid", "Barcelona", "Paris Saint-Germain",
   "Brighton", "West Bromwich Albion", "Bayer Leverkusen", "Borussia Dortmund",
   "Sheffield Wednesday", "Bristol City", "Ipswich Town", "Young Boys",
+  /* FIRST TEAMS THAT LOOK LIKE VARIANTS, all found by running the guard over
+     the 2,597 names on the live feed rather than by imagining them.
+     Willem II is an Eredivisie club and the odds matcher already carries a
+     special case for it; Boca Juniors and Argentinos Juniors carry "Juniors"
+     in their real names. An over-eager guard drops these permanently, and a
+     club that can never be predicted is a silent hole in a league we rate. */
+  "Willem II Tilburg", "Juan Pablo II College",
+  "Boca Juniors", "Argentinos Juniors", "Boca Juniors de Cali",
+  "Shenzhen Juniors FC", "B 93",
 ];
 
 test("isVariantSide is exported", () => {
@@ -67,6 +85,19 @@ test("the exact shapes that got through before are covered", () => {
                    "Chelsea Ladies", "Arsenal W"]) {
     assert.equal(M.isVariantSide(n), true, n + " got through again");
   }
+});
+
+test("a bare 'Juniors' is deliberately NOT treated as a variant", () => {
+  /* The honest cost of keeping Boca Juniors and Argentinos Juniors. English
+     and Spanish clubs carry "Juniors" in their real names, so the word cannot
+     decide this on its own - only the unambiguous German "Junioren" does.
+     A youth side written "X Juniors" therefore gets through, and is caught
+     later by the competition guard instead, which is where the DFB-Pokal
+     Junioren case was already handled. Written down so this reads as a
+     decision rather than a gap. */
+  assert.equal(M.isVariantSide("Arsenal Juniors"), false);
+  assert.equal(M.isVariantSide("Boca Juniors"), false);
+  assert.equal(M.isVariantSide("Borussia Dortmund Junioren"), true);
 });
 
 test("empty and junk input is not a variant, and does not throw", () => {
