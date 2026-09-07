@@ -392,3 +392,87 @@ test("a low-scoring fixture may still print 0-0 or 1-0", () => {
   });
   assert.ok(low.length > 0, "a quiet fixture should still be able to print a quiet score");
 });
+
+/* AN UPSET SCORELINE NEEDS A HIGHER BAR THAN A DRAW.
+ *
+ * Reported on the live pick of the day, 7 Sep 2026:
+ *
+ *   Midtjylland v Nordsjaelland   50% / 23% / 26%   published 0-2
+ *
+ * The outcome gate allowed it: away was 52% as likely as home, comfortably
+ * over the 0.35 floor. The floor exists so draws survive on ordinary
+ * favourites, and that reasoning is sound - but it was applied to the losing
+ * SIDE as well, and the two do not read the same way. A draw beside a 50%
+ * favourite reads as "tight game". An away win beside 50/26 reads as the board
+ * disagreeing with itself, and it was the most prominent fixture on the site.
+ *
+ * So the floor splits: a draw stays at 0.35, an upset needs 0.70 - the two
+ * sides have to be genuinely close before the underdog's scoreline is printed.
+ * Checked against the fixtures that shaped the original rule, so the draw
+ * behaviour it was protecting does not regress. */
+
+test("an underdog scoreline needs the sides to be genuinely close", () => {
+  /* Built from the reported fixture's own expected goals, not a shape invented
+     to fail: Midtjylland v Nordsjaelland, 1.95 v 1.36, which reproduces
+     50.4/23.2/26.3 exactly. Before this rule, 19.5% of seeds printed an away
+     win here - 0-2 and 1-2 - and one of them was the pick of the day. */
+  const M = require("../lib/model.js");
+  const B = require("../lib/build.js");
+  const k = M.markets({ lh: 1.95, la: 1.36, total: 3.31,
+                        matrix: M.scoreMatrix(1.95, 1.36, 200), k: 200 }, {});
+  const away = [];
+  for (let i = 0; i < 400; i++) {
+    const s = B.scoreForTip(k, "Over 1.5", "seed" + i);
+    const [h, a] = s.split("-").map(Number);
+    if (a > h) away.push(s);
+  }
+  assert.equal(away.length, 0,
+    "away is 52% as likely as home - too far back to print its scoreline; got " +
+    [...new Set(away)].join(" "));
+});
+
+test("a genuinely close fixture may still print the underdog winning", () => {
+  /* The Napoli case the original rule was written around: 41/28/31, where the
+     away side is 76% as likely as the home one. Suppressing that would be the
+     same mistake in the other direction. */
+  const B = require("../lib/build.js");
+  const k = { home: 0.41, draw: 0.28, away: 0.31,
+              scores: [ { s: "0-1", p: 0.09 }, { s: "1-1", p: 0.11 },
+                        { s: "1-0", p: 0.10 }, { s: "0-2", p: 0.05 } ] };
+  const seen = new Set();
+  for (let i = 0; i < 60; i++) seen.add(B.scoreForTip(k, null, "n" + i));
+  const anyAway = [...seen].some((s) => { const [h, a] = s.split("-").map(Number); return a > h; });
+  assert.ok(anyAway, "an even fixture must keep the underdog reachable; saw " + [...seen].join(" "));
+});
+
+test("the draw floor is untouched by the upset rule", () => {
+  /* 58/23/19: the draw is 0.40 of the favourite and was deliberately kept.
+     Raising one floor must not quietly raise the other. */
+  const B = require("../lib/build.js");
+  const k = { home: 0.58, draw: 0.23, away: 0.19,
+              scores: [ { s: "1-1", p: 0.11 }, { s: "1-0", p: 0.12 },
+                        { s: "2-1", p: 0.09 }, { s: "2-0", p: 0.08 } ] };
+  const seen = new Set();
+  for (let i = 0; i < 60; i++) seen.add(B.scoreForTip(k, null, "d" + i));
+  assert.ok([...seen].some((s) => { const [h, a] = s.split("-").map(Number); return h === a; }),
+    "a 0.40 draw must stay reachable; saw " + [...seen].join(" "));
+});
+
+test("a close pair of sides stays reachable even when the draw leads", () => {
+  /* The reason a side is judged against the OTHER SIDE rather than against the
+     best of all three. On a draw-heavy fixture - 30/45/25 - the two teams are
+     83% of each other, which is as close as football gets, and the underdog's
+     scoreline belongs on the board. Measuring it against the 45% draw instead
+     would exclude it for being unlike a result nobody is claiming.
+     Caught by mutation: swapping sideBest for best changed nothing on the
+     reported fixture, because there the favourite WAS the best of three. */
+  const B = require("../lib/build.js");
+  const k = { home: 0.30, draw: 0.45, away: 0.25,
+              scores: [ { s: "1-1", p: 0.14 }, { s: "0-0", p: 0.11 },
+                        { s: "1-0", p: 0.09 }, { s: "0-1", p: 0.08 },
+                        { s: "2-1", p: 0.06 }, { s: "1-2", p: 0.05 } ] };
+  const seen = new Set();
+  for (let i = 0; i < 80; i++) seen.add(B.scoreForTip(k, null, "c" + i));
+  assert.ok([...seen].some((s) => { const [h, a] = s.split("-").map(Number); return a > h; }),
+    "the weaker of two close sides must keep its scoreline; saw " + [...seen].join(" "));
+});
