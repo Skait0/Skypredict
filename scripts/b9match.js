@@ -83,9 +83,13 @@ function grab(name) {
   throw new Error("could not find the end of " + name);
 }
 
+/* simTeams reaches for containsWords, and a missing name here is not a silent
+   degradation - the lifted function throws on the first fuzzy comparison. It
+   only started throwing when an alias change moved a pair off the exact path
+   and into the fuzzy one, which is exactly when this script matters most. */
 const NAMES = ["TEAM_ALIASES", "MATCH_WINDOW_MS", "normTeam", "normTeamRaw",
-               "tokset", "teamMarkers", "sameVariant", "simTeams", "evStart",
-               "sameSlot"];
+               "tokset", "teamMarkers", "sameVariant", "containsWords",
+               "simTeams", "evStart", "sameSlot"];
 const pieces = NAMES.map(grab).join("\n");
 const M = new Function(
   pieces +

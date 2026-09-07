@@ -1,0 +1,69 @@
+name: Mint the day's booking code
+
+# One slip a day, booked on both bookmakers, committed so every build after it
+# can print the code without booking anything itself.
+#
+# WHY IT IS NOT IN THE BUILD. api/book.js is explicit about what a booking call
+# costs: Railway CPU on a $5 plan, and bookmaker goodwill that has been spent
+# once already. The site builds five or six times a day off the sweep hook, so
+# minting there would be eighteen booking calls to publish one code.
+#
+# 06:00 UTC, which is 07:00 in Lagos. Early enough that the whole day's card is
+# still ahead of kick-off - the script refuses any fixture inside fifteen
+# minutes of starting - and before the 06:30 build, so the morning's deploy
+# already carries the code.
+#
+# Needs no secrets. It books through the public route, the same one the site
+# uses, and writes to the repository - which is why the job asks for
+# `contents: write`.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      legs:
+        description: "How many games in the slip"
+        type: string
+        default: "5"
+      date:
+        description: "Which day (YYYY-MM-DD). Blank means today in Lagos."
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  mint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # A refusal is not a failure - the script drops the legs the bookmaker
+      # will not take and rebuilds the slip, up to four rounds. What it will not
+      # do is publish two codes for two different slips, so if it exits non-zero
+      # the right answer is no code today rather than a code we cannot stand
+      # behind tomorrow.
+      - name: Mint
+        run: |
+          node scripts/mkcode.js \
+            --legs=${{ inputs.legs || '5' }} \
+            ${{ inputs.date && format('--date={0}', inputs.date) || '' }}
+
+      - name: Commit, if a code was minted
+        run: |
+          if git diff --quiet -- data/daily-codes.json; then
+            echo "no new code - leaving the file as it is"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/daily-codes.json
+          git commit -m "Booking code for $(date -u +%Y-%m-%d)"
+          git push
