@@ -8199,6 +8199,27 @@ const BOOK_URL="/api/book?book=sporty";
    booking. Server side: lib/quota.js, which wants 8-64 of [A-Za-z0-9_-]. */
 function swDeviceId(){
   try{
+    /* PROVISIONING A DEVICE FROM A LINK. Reading this id off a phone means a
+       USB cable and chrome://inspect; setting it means opening one URL. So
+       ?swdev=<token> claims this browser as a named device - visit it once on
+       each handset that should skip the daily cap, with the same token in
+       SW_QUOTA_EXEMPT.
+       THE TOKEN IS A BYPASS KEY, so it is stripped from the address bar
+       immediately rather than riding along in a screenshot or a shared link.
+       Shape-checked against the same rule the server enforces
+       ([A-Za-z0-9_-]{8,64}); a malformed one is ignored rather than stored,
+       because storing it would silently drop this device into the shared
+       address bucket instead of failing where anyone would notice. */
+    var _m=/[?&]swdev=([^&#]+)/.exec(location.search||"");
+    if(_m){
+      var _t=decodeURIComponent(_m[1]);
+      if(/^[A-Za-z0-9_-]{8,64}$/.test(_t)) localStorage.setItem("sw.device",_t);
+      try{
+        var _clean=(location.search||"").replace(/([?&])swdev=[^&#]*&?/,"$1")
+          .replace(/[?&]$/,"");
+        history.replaceState(null,"",location.pathname+_clean+(location.hash||""));
+      }catch(e){}
+    }
     var v=localStorage.getItem("sw.device");
     if(v&&/^[A-Za-z0-9_-]{8,64}$/.test(v)) return v;
     var r;

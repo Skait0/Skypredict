@@ -24,6 +24,10 @@ const opts = {
      person. */
   ipLimit: Number(process.env.SW_IP_BOOK_LIMIT || 0),
   pepper: process.env.SW_QUOTA_PEPPER || "",
+  /* Our own devices, comma separated. A bypass key rather than a convenience:
+     anyone holding one of these ids books without limit, so keep them long,
+     random and unpublished, and rotate by changing this variable. */
+  exempt: String(process.env.SW_QUOTA_EXEMPT || "").split(","),
   /* Temporary, for diagnosing a quota that reports "open". Unset it again
      once the answer is known - it puts database errors in a response header. */
   debug: process.env.SW_QUOTA_DEBUG === "1",

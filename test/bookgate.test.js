@@ -194,3 +194,71 @@ test("a healthy count carries no reason at all", async () => {
   const v = await G.makeGate({ db: store({ "device-abc123": 1 }), deviceLimit: 10, now: () => at, debug: true })(req());
   assert.equal(v.why, undefined);
 });
+
+/* ------------------------------------------------------------- exemption */
+
+/* Our own devices. Demos, screenshots and a phone being tested against the
+   real site should not eat the allowance we are trying to measure - the first
+   usage report was already polluted by them.
+ *
+ * The list is a shared secret: anyone holding an exempt id books without limit,
+ * which is why the ids are long random tokens rather than "tobi-phone", and
+ * why rotating them is a matter of changing one environment variable. */
+
+test("an exempt device is never counted", async () => {
+  const db = store({ "device-abc123": 99 });
+  const gate = G.makeGate({ db, deviceLimit: 10, exempt: ["device-abc123"], now: () => at });
+  const v = await gate(req());
+  assert.equal(v.allow, true, "ninety-nine bookings and still allowed");
+  assert.equal(db.asked.length, 0, "and the database is never even asked");
+});
+
+test("an exempt device writes no rows", async () => {
+  /* Otherwise our own testing shows up in the usage report as real demand. */
+  const db = store({});
+  await G.makeRecorder({ db, deviceLimit: 10, exempt: ["device-abc123"], now: () => at })(req());
+  assert.equal(db.wrote.length, 0);
+});
+
+test("exemption is an exact match, not a prefix", async () => {
+  const db = store({ "device-abc123": 99 });
+  const gate = G.makeGate({ db, deviceLimit: 10, exempt: ["device-abc"], now: () => at });
+  const v = await gate(req());
+  assert.equal(v.allow, false, "a near-miss id must be capped like anyone else");
+});
+
+test("an empty list exempts nobody", async () => {
+  /* The variable being unset must not read as "everyone is exempt". */
+  for (const list of [[], null, undefined, [""], ["  "]]) {
+    const db = store({ "device-abc123": 99 });
+    const v = await G.makeGate({ db, deviceLimit: 10, exempt: list, now: () => at })(req());
+    assert.equal(v.allow, false, "exempt=" + JSON.stringify(list) + " must not open the gate");
+  }
+});
+
+test("spacing in the list is forgiven", async () => {
+  /* It is typed into a Vercel form by a human. */
+  const db = store({ "device-abc123": 99 });
+  const v = await G.makeGate({ db, deviceLimit: 10, exempt: [" device-abc123 "], now: () => at })(req());
+  assert.equal(v.allow, true);
+});
+
+test("an address bucket can never be exempted, whatever the list says", async () => {
+  /* The exemption is for one device we own, not for every reader sharing a
+     carrier NAT - exempting a bucket would hand a whole cell tower unlimited
+     booking. Earlier this test listed a DEVICE id and sent a request with no
+     device header, so the entry could never have matched and removing the
+     tier guard changed nothing: it passed while proving nothing. Caught by
+     mutation. It now learns the real bucket key and tries to exempt that. */
+  const noDevice = { headers: { "x-forwarded-for": "105.112.4.9" } };
+  const first = store({});
+  await G.makeGate({ db: first, deviceLimit: 10, ipLimit: 200, pepper: "p", now: () => at })(noDevice);
+  const bucket = first.asked[0].subject;
+  assert.match(bucket, /^ip-/, "the subject a shared address lands on");
+
+  const db = store({ [bucket]: 999 });
+  const v = await G.makeGate({ db, deviceLimit: 10, ipLimit: 200, exempt: [bucket],
+                              pepper: "p", now: () => at })(noDevice);
+  assert.equal(v.allow, false,
+    "an address over its ceiling stays capped even when its bucket is listed");
+});
