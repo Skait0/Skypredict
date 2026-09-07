@@ -407,6 +407,18 @@ body{background:var(--bg);color:var(--text);
   overflow-x:hidden;overflow-x:clip}
 @media(max-width:720px){body{padding-bottom:96px}}
 img,svg{max-width:100%}
+/* THE BOARD IS FOCUSED WHEN THE GATE CLOSES, AND MUST NOT LOOK LIKE IT.
+   dismiss() in the intro gate moves focus here on its way out - without
+   that, the next Tab starts from the top of the document with no cue and a
+   screen reader is left where the removed dialog used to be. Keeping the
+   hand-off is right; the browser drawing its own ring around the container
+   is not, because the container is the entire predictions column. Reported
+   as "white selection box over the whole prediction section till i click on
+   something".
+   Scoped to this one element on purpose. A blanket :focus{outline:none} is
+   the classic accessibility own-goal, and every real control here keeps its
+   own ring - see the :focus-visible rules further down. */
+main[tabindex="-1"]:focus{outline:none}
 .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
 .num{font-variant-numeric:tabular-nums}
 .eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
