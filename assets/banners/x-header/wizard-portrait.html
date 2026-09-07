@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Soccerwizard X header — wizard portrait</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* X header, 1500x500. Uses the one piece of real art the brand owns - the
+     intro poster every visitor already meets at the gate - so the profile and
+     the site look like the same place. The portrait is pushed right and faded
+     into the ground colour rather than cropped hard, because the source is
+     1024x588 and stretching it across 1500 would soften the face.
+     Type sits left of centre, clear of the avatar's corner and of the fade. */
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#17171a}
+  .banner{width:1500px;height:500px;position:relative;overflow:hidden;background:#0D0D0F;
+    font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#F2F1F0}
+  .art{position:absolute;top:0;right:0;width:820px;height:100%;
+    background-image:url('../../../public/intro-wizard-poster.jpg');
+    background-size:cover;background-position:58% 32%}
+  /* Two fades: one horizontal into the type side, one from the bottom so the
+     avatar and the profile name below never sit on busy pixels. */
+  .fade-x{position:absolute;top:0;right:0;width:900px;height:100%;
+    background:linear-gradient(90deg,#0D0D0F 0%,rgba(13,13,15,.92) 22%,rgba(13,13,15,.35) 58%,rgba(13,13,15,.12) 100%)}
+  .fade-y{position:absolute;left:0;right:0;bottom:0;height:190px;
+    background:linear-gradient(180deg,rgba(13,13,15,0),rgba(13,13,15,.86))}
+  .in{position:absolute;left:300px;top:0;bottom:0;width:820px;
+    display:flex;flex-direction:column;justify-content:center;gap:18px;
+    padding-bottom:96px}
+  .eyebrow{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;
+    letter-spacing:.14em;text-transform:uppercase;color:#F2B84B}
+  .eyebrow i{width:7px;height:7px;border-radius:50%;background:#E63946;font-style:normal}
+  h1{font-size:52px;line-height:1.06;font-weight:800;letter-spacing:-.032em;white-space:nowrap}
+  h1 em{font-style:normal;color:#E63946}
+  /* 30px, not 22: at phone scale this is the difference between a readable
+     line and grey noise under the headline. */
+  .sub{font-size:30px;font-weight:600;color:#C6C3CB;max-width:42ch;line-height:1.36}
+  /* Bottom-left, inside the type column. X's avatar covers roughly the left
+     230px of a 1500px header, and this column starts at 300 - so it clears the
+     avatar without climbing onto the portrait, where a white wordmark would
+     have no ground to sit on. */
+  .foot{position:absolute;left:300px;bottom:46px;display:flex;align-items:center;gap:14px}
+  .mark{display:flex;align-items:center;gap:13px;font-size:30px;font-weight:800;letter-spacing:-.02em}
+  .mark span{color:#E63946}
+  .mark img{height:52px;width:auto;display:block}
+  .books{font-size:15px;font-weight:600;color:#8A868F;padding-left:14px;border-left:1px solid #2A2A30}
+</style>
+</head>
+<body>
+  <div class="banner">
+    <div class="art"></div>
+    <div class="fade-x"></div>
+    <div class="fade-y"></div>
+    <div class="in">
+      <div class="eyebrow"><i></i>soccerwizard.live</div>
+      <h1>We build the slip.<br>You get the <em>booking code</em>.</h1>
+      <p class="sub">Every game priced.<br>Every tip checked against the score.</p>
+    </div>
+    <div class="foot">
+      <div class="mark"><img src="../../../public/wiz-logo.png" alt="">Soccer<span>wizard</span></div>
+    </div>
+  </div>
+</body>
+</html>

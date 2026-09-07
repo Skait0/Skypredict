@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Soccerwizard X header — bold type</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* X header, 1500x500. The avatar sits over the bottom-left corner and the
+     profile name sits under the banner, so nothing that must be read goes in
+     the left 300px or the bottom 130px. Type is the hero here: one sentence,
+     said once, at a size that survives the timeline's own downscaling. */
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#17171a}
+  .banner{
+    width:1500px;height:500px;position:relative;overflow:hidden;
+    background:#0D0D0F;
+    font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+    color:#F2F1F0;
+  }
+  /* The pitch, drawn rather than photographed - the site does the same thing
+     in its own hero, and it costs no image request. */
+  .pitch{position:absolute;inset:0;opacity:.16;
+    background:
+      radial-gradient(120% 90% at 78% 50%, rgba(230,57,70,.30), transparent 62%),
+      linear-gradient(90deg, transparent 0 49.6%, #6d6d76 49.6% 50.4%, transparent 50.4%),
+      radial-gradient(circle at 50% 50%, transparent 118px, #6d6d76 118px 120px, transparent 121px);
+  }
+  .grain{position:absolute;inset:0;opacity:.05;pointer-events:none;
+    background-image:radial-gradient(#fff 1px, transparent 1px);background-size:3px 3px}
+  .in{position:absolute;left:300px;right:90px;top:0;bottom:0;
+    display:flex;flex-direction:column;justify-content:center;gap:26px}
+  .eyebrow{display:flex;align-items:center;gap:10px;
+    font-size:17px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#F2B84B}
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:#E63946}
+  h1{font-size:92px;line-height:.94;font-weight:800;letter-spacing:-.035em;max-width:15ch}
+  h1 em{font-style:normal;color:#E63946}
+  .sub{font-size:25px;font-weight:500;color:#A3A0A6;max-width:44ch;line-height:1.35}
+  .rule{height:1px;background:linear-gradient(90deg,#F2B84B,rgba(242,184,75,0));width:340px}
+  .mark{position:absolute;right:88px;top:62px;display:flex;align-items:center;gap:13px;
+    font-size:23px;font-weight:800;letter-spacing:-.02em}
+  .mark span{color:#E63946}
+  .mark img{height:44px;width:auto;display:block}
+</style>
+</head>
+<body>
+  <div class="banner">
+    <div class="pitch"></div>
+    <div class="grain"></div>
+    <div class="in">
+      <div class="eyebrow"><i class="dot"></i>SportyBet &middot; Bet9ja &middot; football.com</div>
+      <h1>One tap.<br>One <em>booking code</em>.</h1>
+      <div class="rule"></div>
+      <p class="sub">We build the slip. You get the code.</p>
+    </div>
+    <div class="mark"><img src="../../../public/wiz-logo.png" alt="">Soccer<span>wizard</span></div>
+  </div>
+</body>
+</html>

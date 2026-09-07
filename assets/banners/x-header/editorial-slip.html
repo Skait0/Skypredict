@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Soccerwizard X header — editorial slip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* X header, 1500x500. Shows the thing rather than describing it: the right
+     half is the artefact the product hands you - three legs and a booking code
+     - drawn with the board's own rules. Rows are separated by hairlines rather
+     than boxed in cards, which is how the site itself renders a fixture list.
+     Nothing readable in the left 300px (avatar) or the bottom 130px. */
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#17171a}
+  .banner{width:1500px;height:500px;position:relative;overflow:hidden;background:#0D0D0F;
+    font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#F2F1F0;display:flex}
+  .glow{position:absolute;inset:0;
+    background:radial-gradient(90% 120% at 88% 40%, rgba(79,227,158,.10), transparent 60%)}
+  .left{position:relative;padding:0 0 0 300px;width:790px;
+    display:flex;flex-direction:column;justify-content:center;gap:22px}
+  .eyebrow{font-size:16px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#F2B84B}
+  h1{font-size:52px;line-height:1.06;font-weight:800;letter-spacing:-.03em;white-space:nowrap}
+  h1 em{font-style:normal;color:#E63946}
+  .sub{font-size:21px;font-weight:500;color:#A3A0A6;max-width:34ch;line-height:1.4}
+  .mark{display:flex;align-items:center;gap:11px;font-size:21px;font-weight:800;letter-spacing:-.02em;margin-top:6px}
+  .mark span{color:#E63946}
+  .mark img{height:38px;width:auto;display:block}
+
+  /* The slip. Deliberately quiet: hairlines, tabular numbers, one green. */
+  .right{position:relative;flex:1;display:flex;align-items:center;padding-right:86px}
+  .slip{width:100%;border:1px solid #2A2A30;border-radius:20px;background:#141417;
+    padding:24px 26px 22px}
+  .slip-h{display:flex;align-items:baseline;justify-content:space-between;
+    padding-bottom:14px;border-bottom:1px solid #212126}
+  .slip-h b{font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8A868F}
+  .slip-h i{font-style:normal;font-size:14px;color:#6E6B74}
+  .leg{display:flex;align-items:center;justify-content:space-between;gap:18px;
+    padding:15px 0;border-bottom:1px solid #1C1C21}
+  .leg .tm{font-size:19px;font-weight:700;letter-spacing:-.01em}
+  .leg .tm u{text-decoration:none;color:#6E6B74;font-weight:600;margin:0 7px}
+  .leg .pick{display:flex;align-items:center;gap:12px}
+  .leg .pk{font-size:16px;font-weight:600;color:#C9C6CE}
+  .leg .pc{font-size:16px;font-weight:800;color:#4FE39E;font-variant-numeric:tabular-nums}
+  .code{display:flex;align-items:center;justify-content:space-between;padding-top:18px}
+  .code .lab{font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8A868F}
+  .code .val{font-size:30px;font-weight:800;letter-spacing:.06em;font-variant-numeric:tabular-nums}
+  .code .cta{background:#E63946;color:#fff;font-size:15px;font-weight:800;
+    padding:11px 20px;border-radius:999px;letter-spacing:.01em}
+</style>
+</head>
+<body>
+  <div class="banner">
+    <div class="glow"></div>
+    <div class="left">
+      <div class="eyebrow">One tap to a booking code</div>
+      <h1>We build the slip.<br>You get the <em>code</em>.</h1>
+      <p class="sub">Every game priced, every tip checked against the final score.</p>
+      <div class="mark"><img src="../../../public/wiz-logo.png" alt="">Soccer<span>wizard</span></div>
+    </div>
+    <div class="right">
+      <div class="slip">
+        <div class="slip-h"><b>Today's slip</b><i>3 games</i></div>
+        <div class="leg">
+          <div class="tm">Midtjylland <u>v</u> Nordsjaelland</div>
+          <div class="pick"><span class="pk">Over 1.5</span><span class="pc">84%</span></div>
+        </div>
+        <div class="leg">
+          <div class="tm">Getafe <u>v</u> Celta</div>
+          <div class="pick"><span class="pk">Getafe or Draw</span><span class="pc">68%</span></div>
+        </div>
+        <div class="leg">
+          <div class="tm">Cagliari <u>v</u> Lecce</div>
+          <div class="pick"><span class="pk">Cagliari or Draw</span><span class="pc">74%</span></div>
+        </div>
+        <div class="code">
+          <div>
+            <div class="lab">Booking code</div>
+            <div class="val">MS0LJY</div>
+          </div>
+          <div class="cta">Ready to play</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
