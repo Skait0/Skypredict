@@ -116,3 +116,28 @@ test("a failed write is reported, not swallowed", async () => {
   assert.equal(out.ok, false);
   assert.ok(out.why, "the caller gets a reason it can log");
 });
+
+/* -------------------------------------------------------------- the key */
+
+test("the count query is authenticated", async () => {
+  /* SHIPPED BROKEN WITHOUT THIS. call() adds no headers of its own - every
+     caller supplies them - and countBookings passed none, so the GET went out
+     with no apikey and PostgREST answered:
+       http 401 No API key found in request
+     The gate failed open exactly as designed, which is why nothing looked
+     wrong from the outside. The first version of this file asserted the URL
+     and never the headers. */
+  const { seen } = await withFetch(okJson([]),
+    () => DB.countBookings("dev-abc", "2026-09-08", 10));
+  const h = (seen[0].init && seen[0].init.headers) || {};
+  assert.ok(h.apikey, "PostgREST needs an apikey header");
+  assert.match(String(h.Authorization || ""), /^Bearer /, "and a bearer token");
+});
+
+test("the write is authenticated too", async () => {
+  const { seen } = await withFetch(okJson(null),
+    () => DB.recordBooking("dev-abc", "2026-09-08"));
+  const h = (seen[0].init && seen[0].init.headers) || {};
+  assert.ok(h.apikey);
+  assert.match(String(h.Authorization || ""), /^Bearer /);
+});
