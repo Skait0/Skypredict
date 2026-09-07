@@ -922,7 +922,11 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 
 .brand-img{height:46px;width:auto;display:block}
 .sig{height:42px;width:auto;flex-shrink:0}
-@media(min-width:720px){.sig{height:48px}}
+/* 36, not 48. At 48 the mark stood 2.5x the cap height of the 19px wordmark
+   beside it and was the tallest thing in a 66px bar by a distance - the
+   picture shouting over its own name. 36 sits it in proportion to the word and
+   gives the bar back some air. */
+@media(min-width:720px){.sig{height:36px}}
 @media(min-width:720px){.brand-img{height:54px}}
 .bar{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r-md);padding:12px}
 .bld-approx{font-size:11px;color:var(--faint);margin-top:8px;text-align:center}
