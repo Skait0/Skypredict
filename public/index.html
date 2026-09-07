@@ -8179,6 +8179,32 @@ function setScope(s){
    lib/bookproxy.js - the 400 a refused slip returns passes through intact,
    which dropUnbookable below depends on. */
 const BOOK_URL="/api/book?book=sporty";
+/* WHO THIS BROWSER IS, FOR COUNTING BOOKINGS AND NOTHING ELSE.
+   A random opaque token, minted once and kept, sent only to our own booking
+   route. It is NOT a fingerprint and must never become one: nothing about the
+   device, the screen or the user agent goes into it, so it identifies a
+   browser that has been here before and says nothing about who is holding it.
+   Clearing site data clears it, which is the honest bargain - the limit exists
+   to control cost, and the address ceiling on the server is what remains for
+   anyone who clears it deliberately.
+   Storage can throw (private mode, site data blocked). Then there is no id and
+   the booking goes through uncounted; a quota must never be a precondition for
+   booking. Server side: lib/quota.js, which wants 8-64 of [A-Za-z0-9_-]. */
+function swDeviceId(){
+  try{
+    var v=localStorage.getItem("sw.device");
+    if(v&&/^[A-Za-z0-9_-]{8,64}$/.test(v)) return v;
+    var r;
+    if(window.crypto&&crypto.randomUUID) r=crypto.randomUUID().replace(/-/g,"");
+    else if(window.crypto&&crypto.getRandomValues){
+      var a=new Uint8Array(16); crypto.getRandomValues(a);
+      r=Array.prototype.map.call(a,function(b){return ("0"+b.toString(16)).slice(-2);}).join("");
+    } else r=String(Math.random()).slice(2)+String(Date.now());
+    r=r.slice(0,32);
+    localStorage.setItem("sw.device",r);
+    return r;
+  }catch(e){ return null; }
+}
 /* SportyBet's share endpoint is intermittently flaky - it rejects or times out
    on a first hit and works on retry. Retry up to 3x with backoff so the user
    never has to. Only retries on network/5xx/no-code, never on a clean rejection. */
@@ -8196,7 +8222,13 @@ function bookFetch(sel,B){
   function attempt(){
     tries++;
     var to=withTimeout(15000);
-    return fetch(B.book,{method:"POST",headers:{"Content-Type":"application/json"},
+    /* The device header is what lets this reader be counted as themselves.
+       Without it the request falls into the shared address bucket, which on a
+       carrier NAT is a whole cell tower - see lib/bookgate.js. Omitted rather
+       than sent empty when storage refused us an id. */
+    var _hdrs={"Content-Type":"application/json"};
+    var _dev=swDeviceId(); if(_dev) _hdrs["X-SW-Device"]=_dev;
+    return fetch(B.book,{method:"POST",headers:_hdrs,
       signal:to.signal,
       body:JSON.stringify({selections:sel})})
       .then(function(r){to.done();
