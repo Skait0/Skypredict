@@ -4859,13 +4859,15 @@ html.sw-gate-known #swGate .sw-g-under{display:none}
    The gate shows on every visit now, so the second time it must not feel like
    a wall. Three things change and nothing else:
      the age question goes, because they answered it,
-     Skip stops being quiet grey text and becomes a real bordered control,
+     Skip APPEARS - it is display:none on a first visit - as a real bordered
+     control rather than the quiet grey text it used to be,
      and the copy arrives in half the time, since they have read it.
    Skip is deliberately NOT promoted above Enter. Someone returning may still
    want the reveal; the point is only that leaving is obvious, not that it is
    the expected choice. */
 html.sw-gate-known #swGate .sw-g-panel{animation-delay:.18s}
 html.sw-gate-known #swGate .sw-g-skip{
+  display:inline-flex; align-items:center; justify-content:center;
   border:1.5px solid rgba(201,201,206,.42); border-radius:999px;
   padding:10px 26px; color:#E8E8EC; background:rgba(13,13,15,.35);
   -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
@@ -4920,8 +4922,18 @@ html.sw-gate-known #swGate .sw-g-skip{
 
 /* 44px minimum on both, measured rather than assumed: Skip came out 60x35 at
    390px wide, under the tap target every mobile guideline asks for, and it is
-   the control someone in a hurry reaches for. */
+   the control someone in a hurry reaches for.
+
+   NOT ON A FIRST VISIT AT ALL. Skip is hidden until localStorage says this
+   reader has met the gate before - html.sw-gate-known below is the only thing
+   that brings it back. A first-timer is being shown the one thing the site
+   opens with; offering them an exit from it in the same breath undersells it,
+   and they are not trapped either way: Enter dismisses the gate, and "I am
+   under 18" is untouched, so the age question still has both its answers.
+   Returning readers keep the visible bordered control - see the block above,
+   which is where the reasoning for that lives. */
 #swGate .sw-g-skip{
+  display:none;
   appearance:none; background:none; border:0; cursor:pointer;
   color:#C9C9CE; font-family:inherit; font-size:15px; font-weight:600;
   min-height:44px; padding:9px 24px; font-size:14.5px; transition:color .15s ease;
