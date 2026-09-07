@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Avatar A — hat crop</title>
+<style>
+  /* 400x400 X avatar. The existing app icon, cropped hard to the hat and the
+     brow and set on the brand's own ground instead of white.
+     Why crop rather than use it whole: X shows this at 32px in replies, and a
+     full bust at 32px is a smudge. The hat is one silhouette with two colours
+     in it, which is the most that survives at that size - and it is the half of
+     the character the photographic header does NOT show, so the profile reads
+     as one brand rather than the same face twice. */
+  *{margin:0;padding:0}
+  .a{width:400px;height:400px;position:relative;overflow:hidden;background:#0D0D0F}
+  .art{position:absolute;inset:0;
+    background-image:url('../../../public/app-icon.png');
+    background-repeat:no-repeat;
+    /* pushed up and scaled so the hat fills the frame and the beard falls out */
+    background-size:150%;
+    background-position:44% 18%}
+  /* The source sits on white. A soft vignette in the brand ground pulls the
+     corners back so the circle crop has dark edges instead of a white rind. */
+  .vig{position:absolute;inset:0;
+    background:radial-gradient(circle at 50% 42%, rgba(13,13,15,0) 44%, rgba(13,13,15,.55) 72%, #0D0D0F 100%)}
+</style>
+</head>
+<body>
+  <div class="a"><div class="art"></div><div class="vig"></div></div>
+</body>
+</html>

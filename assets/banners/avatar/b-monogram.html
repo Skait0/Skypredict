@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Avatar B — monogram</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@800&display=swap" rel="stylesheet">
+<style>
+  /* 400x400 X avatar. One letter, brand red, nothing else.
+     The safest thing at 32px: a single glyph cannot smudge. It also does the
+     opposite job to the header - flat where the header is photographic - so
+     the two read as separate objects rather than merging into one dark blur
+     where the avatar overlaps the banner.
+     The cost, stated: it says nothing about football. It is a wordmark, not a
+     character, and it gives up the wizard entirely. */
+  *{margin:0;padding:0}
+  .a{width:400px;height:400px;display:grid;place-items:center;background:#E63946;
+     font-family:'Plus Jakarta Sans',system-ui,sans-serif}
+  b{font-size:250px;font-weight:800;color:#fff;letter-spacing:-.06em;line-height:1;
+    transform:translateY(-6px)}
+</style>
+</head>
+<body>
+  <div class="a"><b>S</b></div>
+</body>
+</html>
