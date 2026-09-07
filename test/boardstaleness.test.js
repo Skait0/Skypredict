@@ -41,17 +41,25 @@ const header = (name) => {
   return h ? h.value : null;
 };
 
-/* How long a cache may serve a given response before a reader is guaranteed
-   to see a newer one: the fresh window plus the stale-while-revalidate grace,
-   because a hit inside the grace still returns the old body. */
+/* How long a cache may serve a given response before a reader is guaranteed to
+   see a newer one. Imported rather than redefined: lib/cachepolicy.js owns this
+   arithmetic for every route that calls applyCache, and the static board is the
+   one cacheable surface that never does - it is served straight from
+   vercel.json. Keeping a private copy here is how the two drift, and the drift
+   is the bug this file exists for.
+
+   A browser-only header (max-age, no s-maxage) is still counted, because
+   vercel.json can set one and a browser copy is no more purgeable than a CDN's. */
+const { servedAgeOf } = require("../lib/cachepolicy.js");
+
 function worstCase(value) {
   if (!value) return null;
   if (/no-store/.test(value)) return 0;
-  const s = /s-maxage=(\d+)/.exec(value);
+  const shared = servedAgeOf(value);
+  if (shared > 0) return shared;
   const m = /(?:^|[,\s])max-age=(\d+)/.exec(value);
   const swr = /stale-while-revalidate=(\d+)/.exec(value);
-  const fresh = s ? Number(s[1]) : (m ? Number(m[1]) : 0);
-  return fresh + (swr ? Number(swr[1]) : 0);
+  return (m ? Number(m[1]) : 0) + (swr ? Number(swr[1]) : 0);
 }
 
 const HOUR = 3600;

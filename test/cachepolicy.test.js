@@ -22,6 +22,7 @@ const assert = require("node:assert");
 const {
   BROWSER_REVALIDATE, NO_STORE,
   cacheHeaders, applyCache, windowOf, worstCaseStaleness,
+  graceOf, servedAgeOf, worstServedAge,
 } = require("../lib/cachepolicy.js");
 const { FEEDS, feedResponse } = require("../lib/upstream.js");
 const predictions = require("../api/predictions.js");
@@ -186,4 +187,41 @@ test("no cacheable route may set Cache-Control alone", () => {
   }
   assert.deepEqual(offenders, [],
     "these set a CDN window on Cache-Control, which Vercel strips: " + offenders.join(", "));
+});
+
+/* THE TWO STALENESS QUESTIONS ARE NOT THE SAME QUESTION.
+ *
+ * windowOf/worstCaseStaleness measure the FRESH window - how long until a
+ * cache revalidates. servedAgeOf/worstServedAge measure what a reader can
+ * actually be handed, which includes stale-while-revalidate, because a hit
+ * inside the grace returns the old body and refreshes behind them.
+ *
+ * The difference cost a day of Champions League fixtures on 7 Sep 2026:
+ * /predictions.json shipped s-maxage=3600 with stale-while-revalidate=86400,
+ * every staleness test scored it 3600 and passed, and Vercel served the
+ * previous day's board for hours after the deploy that added those ties.
+ *
+ * These assertions exist so nobody collapses the pair back into one function.
+ */
+test("the fresh window and the age a reader is served are measured separately", () => {
+  const broken = "public, s-maxage=3600, stale-while-revalidate=86400";
+  assert.equal(windowOf(broken), 3600, "the fresh window is one hour");
+  assert.equal(servedAgeOf(broken), 90000, "but a reader can be handed a 25-hour-old body");
+});
+
+test("the grace window is counted on both caches, not just one", () => {
+  const policy = { cdn: "public, s-maxage=10, stale-while-revalidate=60",
+                   vercel: "public, s-maxage=10, stale-while-revalidate=120" };
+  assert.equal(worstCaseStaleness(policy), 20, "fresh windows only");
+  assert.equal(worstServedAge(policy), 200, "what the reader can actually see");
+  assert.ok(worstServedAge(policy) > worstCaseStaleness(policy),
+    "the honest number is never the smaller one");
+});
+
+test("a refusal to store is zero on both measures", () => {
+  assert.equal(servedAgeOf("no-store"), 0);
+  assert.equal(worstServedAge(NO_STORE), 0);
+  assert.equal(graceOf("no-store"), 0);
+  assert.equal(graceOf("public, s-maxage=300"), 0, "no grace asked for, none counted");
+  assert.equal(graceOf(undefined), 0);
 });
