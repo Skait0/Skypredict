@@ -177,3 +177,20 @@ test("a device with a limit is still recorded", async () => {
   await G.makeRecorder({ db, deviceLimit: 10, now: () => at })(req());
   assert.equal(db.wrote.length, 1);
 });
+
+test("the reason a count failed is available for diagnosis, off by default", async () => {
+  /* A limiter that fails open is invisible without this: the header says
+     "open" and the logs deliberately say nothing. Off unless asked for,
+     because a PostgREST error names our tables and columns. */
+  const db = store({}, { fails: true });
+  const quiet = await G.makeGate({ db, deviceLimit: 10, now: () => at })(req());
+  assert.equal(quiet.why, undefined, "nothing leaks by default");
+
+  const loud = await G.makeGate({ db, deviceLimit: 10, now: () => at, debug: true })(req());
+  assert.match(String(loud.why), /http 500/, "the database's own words, when asked");
+});
+
+test("a healthy count carries no reason at all", async () => {
+  const v = await G.makeGate({ db: store({ "device-abc123": 1 }), deviceLimit: 10, now: () => at, debug: true })(req());
+  assert.equal(v.why, undefined);
+});
