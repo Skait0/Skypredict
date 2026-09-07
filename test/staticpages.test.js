@@ -169,10 +169,16 @@ test("the terms say the things that protect the site", () => {
   assert.match(h, /begambleaware/i);
 });
 
-test("the matches hub links each fixture to its own page", () => {
-  assert.match(PAGES.matches, /href="\/m\/arsenal-vs-chelsea-2026-09-01"/);
-  assert.match(PAGES.matches, /href="\/m\/barcelona-vs-vallecano-2026-09-02"/);
-  assert.match(PAGES.matches, /2 matches with a page of their own/);
+test("the matches hub reaches each fixture, now through its day", () => {
+  /* It used to link every match directly. The hub is an index of days now -
+     see renderMatchesIndex for why - so what has to hold is that the day
+     exists and the day page carries the match. */
+  assert.match(PAGES.matches, /href="\/matches\/2026-09-01"/);
+  assert.match(PAGES.matches, /href="\/matches\/2026-09-02"/);
+  assert.match(PAGES.matches, /2 matches across 2 days/);
+  const day = P.renderMatchesDay("2026-09-01",
+    [{ date: "2026-09-01", league: "L", home: "Arsenal", away: "Chelsea" }]);
+  assert.match(day, /href="\/m\/arsenal-vs-chelsea-2026-09-01"/);
 });
 
 test("an empty card does not produce an empty page", () => {
@@ -228,4 +234,56 @@ test("one handle, used everywhere", () => {
     "more than one X handle on the site: " + [...new Set(links)].join(", "));
   assert.strictEqual(links.length, 2,
     "expected the footer link and the contact dialog's, found " + links.length);
+});
+
+/* --------------------------------------------------------- the split hub */
+
+test("the hub links days, not nine hundred matches", () => {
+  /* It was one page carrying every link - 929 of them, 88 KB - and itself
+     linked once from the home page. Everything the site wants indexed hung off
+     a single wall of near-identical anchors, and Search Console reported 1,080
+     pages "Discovered - currently not indexed". */
+  const P = require("../lib/pages.js");
+  const fx = [];
+  for (let i = 0; i < 40; i++) fx.push({ date: "2026-09-12", league: "L", home: "A" + i, away: "B" + i });
+  for (let i = 0; i < 40; i++) fx.push({ date: "2026-09-05", league: "L", home: "C" + i, away: "D" + i });
+  const hub = P.renderMatchesIndex(fx);
+  const dayLinks = (hub.match(/href="\/matches\/[^"]+"/g) || []).length;
+  const matchLinks = (hub.match(/href="\/m\/[^"]+"/g) || []).length;
+  assert.strictEqual(dayLinks, 2, "the hub should link one page per day");
+  assert.strictEqual(matchLinks, 0, "the hub must not carry the match links any more");
+  assert.match(hub, /80 matches across 2 days/);
+});
+
+test("a day page names its own day, or thirty pages look identical", () => {
+  const P = require("../lib/pages.js");
+  const list = [{ date: "2026-09-12", league: "L", home: "Arsenal", away: "Chelsea" }];
+  const day = P.renderMatchesDay("2026-09-12", list);
+  assert.match(day, /<title>Football predictions for Saturday 12 September 2026/);
+  assert.match(day, /href="\/m\/arsenal-vs-chelsea-2026-09-12"/);
+  assert.match(day, /href="\/matches"/, "a day page must link back to the hub");
+  assert.strictEqual(P.matchesDayPath("2026-09-12"), "/matches/2026-09-12");
+});
+
+test("the hub and the day pages are built from the same rows", () => {
+  /* Two builders over one list. If they ever diverge the hub advertises days
+     that have no page, which is the 404 problem again in a new place. */
+  const P = require("../lib/pages.js");
+  const fx = [{ date: "2026-09-12", league: "L", home: "A", away: "B" },
+              { date: "2026-09-05", league: "L", home: "C", away: "D" }];
+  const grouped = P.groupByDate(fx);
+  const hub = P.renderMatchesIndex(fx);
+  for (const d of Object.keys(grouped)) {
+    assert.ok(hub.includes('href="' + P.matchesDayPath(d) + '"'),
+      "the hub does not link " + d + ", which has a page");
+  }
+});
+
+test("a past day is dated by its day and /matches resolves either way", () => {
+  const pre = fs.readFileSync(path.join(ROOT, "scripts", "prebuild.js"), "utf8");
+  assert.match(pre, /paths\.push\(d < today \? \{ path: rel, lastmod: d \} : rel\)/,
+    "a finished day still claims to change on every build");
+  assert.match(pre, /copyFileSync\(path\.join\(PUB, "matches\.html"\)/,
+    "matches.html and matches/ both exist; without the copy, which one /matches " +
+    "serves is Vercel's decision rather than ours");
 });

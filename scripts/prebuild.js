@@ -353,6 +353,23 @@ async function writePages(payload) {
     ["/how-it-works", () => P.renderHowItWorks(stats)],
     ["/matches", () => P.renderMatchesIndex(pages.map((pg) => pg.f))],
   ];
+
+  /* One page per day, written before the standing pages so `paths` carries
+     them into the sitemap. A day page is dated by its own day rather than by
+     the build: a past day stops changing once its last match is graded, which
+     is the whole reason for splitting the hub - see renderMatchesIndex. */
+  const byDay = P.groupByDate(pages.map((pg) => pg.f));
+  const today = new Date().toISOString().slice(0, 10);
+  let dayPages = 0;
+  try {
+    fs.mkdirSync(path.join(PUB, "matches"), { recursive: true });
+    for (const d of Object.keys(byDay)) {
+      const rel = P.matchesDayPath(d);
+      fs.writeFileSync(path.join(PUB, rel.slice(1) + ".html"), P.renderMatchesDay(d, byDay[d]));
+      paths.push(d < today ? { path: rel, lastmod: d } : rel);
+      dayPages++;
+    }
+  } catch (e) { warn("day pages failed: " + e.message); }
   let standingWritten = 0;
   for (const [rel, render] of standing) {
     try {
@@ -361,6 +378,16 @@ async function writePages(payload) {
       standingWritten++;
     } catch (e) { warn("standing page " + rel + " failed: " + e.message); }
   }
+
+  /* /matches now has both a FILE (matches.html) and a DIRECTORY (matches/),
+     and which one cleanUrls serves for the bare path is a detail of Vercel's
+     router rather than something this build controls. Writing the hub to both
+     costs one file and removes the question - whichever it picks, it is the
+     same page. The path goes into the sitemap once, above. */
+  try {
+    fs.copyFileSync(path.join(PUB, "matches.html"),
+                    path.join(PUB, "matches", "index.html"));
+  } catch (e) { warn("matches/index.html failed: " + e.message); }
 
   /* The 404 is written like the standing pages but is NOT one of them: it
      never goes in `paths`, because a sitemap is a list of pages that exist and
@@ -374,7 +401,7 @@ async function writePages(payload) {
 
   fs.writeFileSync(path.join(PUB, "sitemap.xml"), P.renderSitemap(paths));
   fs.writeFileSync(path.join(PUB, "robots.txt"), P.renderRobots());
-  log("pages: " + written + " match pages" + (failed ? " (" + failed + " failed)" : "") +
+  log("pages: " + written + " match pages + " + dayPages + " day pages" + (failed ? " (" + failed + " failed)" : "") +
       " + " + standingWritten + " standing + " + (notFound ? "404 + " : "") +
       "sitemap.xml + robots.txt -> " + P.ORIGIN +
       (swept ? " (cleared " + swept + " stale)" : ""));

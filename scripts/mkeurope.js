@@ -105,10 +105,25 @@ function get(url) {
   if (dropped / Math.max(1, lines) > 0.02)
     throw new Error(`dropped ${dropped} of ${lines} lines - the format has probably changed`);
 
-  /* 2. Era-correct ratings: one fit per season, from the committed floor. */
-  const floor = B.loadFloorMatches();
+  /* 2. Era-correct ratings: one fit per season, from the committed floor.
+   *
+   * ERA-CORRECT INCLUDES THE INDEX, not just the fit. buildIndex gives a club
+   * the league of its NEWEST match, and loadFloorMatches now carries the
+   * harvested current season alongside the floor - so with the whole thing
+   * passed in, Schalke reads as Bundesliga 1 while 2024-25 is being fitted, a
+   * season it spent in the second division. Every promoted and relegated club
+   * lands in the wrong pool, each league is centred on the wrong members, and
+   * the offsets move with it: re-running with 2026-27 rows in the index halved
+   * Germany, 0.179 to 0.087, on an unchanged corpus of 108 matches.
+   *
+   * So the index stops at the last reference date the fits actually use.
+   * Nothing after it can describe what a club was worth at the time. */
+  const horizon = midpoint(SEASONS[SEASONS.length - 1]);
+  const floor = B.loadFloorMatches().filter((m) => m.date <= horizon);
   if (floor.length < 400) throw new Error("the committed floor is too thin to fit on");
   const index = M.buildIndex(floor);
+  console.log(`index built from ${floor.length} matches up to ` +
+    `${horizon.toISOString().slice(0, 10)}`);
   const models = {};
   for (const season of SEASONS) {
     const ref = midpoint(season);

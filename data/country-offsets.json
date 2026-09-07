@@ -5,9 +5,13 @@
     "2024-25",
     "2025-26"
   ],
+  "gaps": [
+    "2025-26/el",
+    "2025-26/conf"
+  ],
   "shrinkageK": 5,
   "anchor": "England",
-  "homeEdge": 0.0573,
+  "homeEdge": 0.0575,
   "countries": {
     "England": {
       "offset": 0,
@@ -16,73 +20,73 @@
       "clamped": false
     },
     "Italy": {
-      "offset": 0.1686,
+      "offset": 0.1417,
       "prior": 0.0746,
       "matches": 104,
       "clamped": false
     },
     "Spain": {
-      "offset": 0.1734,
+      "offset": 0.1812,
       "prior": 0.1062,
       "matches": 117,
       "clamped": false
     },
     "Germany": {
-      "offset": 0.179,
+      "offset": 0.1742,
       "prior": 0.1191,
       "matches": 108,
       "clamped": false
     },
     "France": {
-      "offset": 0.0723,
+      "offset": 0.082,
       "prior": 0.2017,
       "matches": 79,
       "clamped": false
     },
     "Portugal": {
-      "offset": 0.4898,
+      "offset": 0.4849,
       "prior": 0.2289,
       "matches": 73,
       "clamped": false
     },
     "Belgium": {
-      "offset": 0.4908,
+      "offset": 0.488,
       "prior": 0.2734,
       "matches": 74,
       "clamped": false
     },
     "Netherlands": {
-      "offset": 0.5098,
+      "offset": 0.5085,
       "prior": 0.3332,
       "matches": 78,
       "clamped": false
     },
     "Turkey": {
-      "offset": 0.3784,
+      "offset": 0.3746,
       "prior": 0.3598,
       "matches": 67,
       "clamped": false
     },
     "Poland": {
-      "offset": 0.6953,
+      "offset": 0.6911,
       "prior": 0.4079,
       "matches": 31,
       "clamped": false
     },
     "Greece": {
-      "offset": 0.6258,
+      "offset": 0.6223,
       "prior": 0.4226,
       "matches": 44,
       "clamped": false
     },
     "Norway": {
-      "offset": 0.6035,
+      "offset": 0.5997,
       "prior": 0.4858,
       "matches": 63,
       "clamped": false
     },
     "Denmark": {
-      "offset": 0.6194,
+      "offset": 0.6148,
       "prior": 0.4898,
       "matches": 45,
       "clamped": false
@@ -94,19 +98,19 @@
       "clamped": true
     },
     "Austria": {
-      "offset": 0.6978,
+      "offset": 0.6935,
       "prior": 0.6528,
       "matches": 44,
       "clamped": false
     },
     "Scotland": {
-      "offset": 0.6567,
+      "offset": 0.6141,
       "prior": 0.6787,
       "matches": 43,
       "clamped": false
     },
     "Sweden": {
-      "offset": 0.5094,
+      "offset": 0.5092,
       "prior": 0.6884,
       "matches": 40,
       "clamped": false
