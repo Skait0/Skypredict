@@ -369,3 +369,35 @@ test("the home page has exactly one h1", () => {
     "found " + n + " h1s; the board, the builder and live scores are three views " +
     "of one page and only one of them is the page's subject");
 });
+
+test("a static page uses the app's typeface, not the browser's default", () => {
+  /* index.html has been in Plus Jakarta Sans since it was built and every
+     static page was in the system stack, so a reader arriving on a match page
+     met different letterforms from the board they came for. */
+  const P = require("../lib/pages.js");
+  const idx = fs.readFileSync(path.join(ROOT, "public", "index.html"), "utf8");
+  const wanted = "family=Plus+Jakarta+Sans";
+  assert.ok(idx.includes(wanted), "the app no longer loads the font this is matched to");
+  for (const [what, html] of [
+    ["match", P.renderMatchPage({ date: "2026-09-12", league: "L", home: "A", away: "B" }, null)],
+    ["how-to", P.renderHowToCode()],
+    ["codes", P.renderCodesHub([{ date: "2026-09-08", legs: [], codes: {} }], null)],
+  ]) {
+    assert.ok(html.includes(wanted), what + " page does not load the app's font");
+    assert.match(html, /font:16px\/1\.55 'Plus Jakarta Sans'/, what + " page does not use it");
+  }
+});
+
+test("no static page reaches for a token the shell does not define", () => {
+  /* --r-md, --raise and --line-soft are the app's. A var() that resolves to
+     nothing draws a square-cornered box beside rounded ones and looks like a
+     bug nobody can find. */
+  const src = fs.readFileSync(path.join(ROOT, "lib", "pages.js"), "utf8");
+  const i = src.indexOf("const CSS");
+  const j = src.indexOf("`;", i);
+  const css = src.slice(i, j);
+  const defined = new Set((css.match(/--[a-z0-9-]+(?=:)/g) || []));
+  const used = new Set((css.match(/var\((--[a-z0-9-]+)/g) || []).map((v) => v.slice(4)));
+  const missing = [...used].filter((v) => !defined.has(v));
+  assert.deepStrictEqual(missing, [], "undefined CSS variables in the static shell");
+});
