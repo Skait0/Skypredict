@@ -2086,6 +2086,18 @@ html.locked{overflow:hidden}
   padding:44px 22px;text-align:center;margin-top:22px}
 .none b{display:block;font-weight:800;font-size:19px;margin-bottom:9px}
 .none p{color:var(--soft);font-size:14px;max-width:44ch;margin:0 auto}
+/* The way out of an empty board. Quiet rather than loud: the reader is not
+   being sold anything here, they are being un-stuck, so it reads as a control
+   and not as a call to action. Tactile on press, like every other button on
+   the site. */
+.none-reset{margin-top:16px;background:var(--raise);color:var(--text);
+  border:1px solid var(--line);border-radius:999px;padding:9px 18px;
+  font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
+  transition:border-color .15s ease,background .15s ease,transform .06s ease}
+.none-reset:active{transform:scale(.98)}
+@media (hover:hover){
+  .none-reset:hover{border-color:var(--line-strong,var(--line));background:var(--card)}
+}
 .note{margin-top:40px;background:var(--card);border-radius:var(--r-md);padding:22px;
   border:1px solid var(--line-soft)}
 .note h3{font-weight:800;font-size:17px;margin-bottom:12px;color:var(--red-ink)}
@@ -5511,7 +5523,9 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       <span class="trust-i t-sporty"><span class="bk-line"><b class="bkc" id="bkCycle" aria-label="SportyBet, Bet9ja or football.com"><i class="bkc-i on" data-bk="sporty">SportyBet</i><i class="bkc-i" data-bk="b9"><span class="b9r">bet</span><span class="b9g">9ja</span></i><i class="bkc-i" data-bk="fb">football<span class="fb-dot">.</span>com</i></b> code in one tap</span></span>
       <span class="trust-i"><b id="when2">-</b> last updated</span>
       <span class="trust-i" id="streak" hidden></span>
-      <span class="trust-i t-static">Rebuilt daily from results</span>
+      <!-- "Rebuilt daily from results" lived here and said the same thing as
+           the dated "last updated" item forty pixels to its left. Six items on
+           one row is a wall; five that each say something is a row. -->
       <span class="trust-i t-static">Estimates, not certainties</span>
       <a class="trust-i link" href="#how">How accurate?</a>
     </div>
@@ -7774,6 +7788,14 @@ function renderResults(){
         "</div>";}).join("")+"</div></section>";}).join("");
   setBoard(html);
 }
+/* Clears everything that can hide a fixture, and nothing that cannot. The day
+   is deliberately left alone: someone who stepped to Wednesday meant it, and
+   throwing them back to today would undo the one choice they made on purpose. */
+function resetBoardFilters(){
+  V.q=""; V.cat="all"; V.country=""; V.league="";
+  var box=document.getElementById("q"); if(box) box.value="";
+  render();
+}
 function render(){
   document.documentElement.classList.toggle("list",!!V.list);
   formIndexInvalidate();
@@ -7791,8 +7813,25 @@ function render(){
   const list=shown();
   renderBoardHead(list);
   if(!list.length){
-    setBoard("<div class='none'><b>No games in this filter</b>"+
-      "<p>Try another category or day. New fixtures arrive Friday for the weekend.</p></div>");
+    /* A DEAD END WITH A WAY OUT. Four controls can empty this board - the
+       search box, a category chip, a country and a league - and a reader does
+       not necessarily remember which one they touched, so the button clears
+       all four rather than making them guess. The old copy also promised
+       "new fixtures arrive Friday for the weekend" on every day of the week,
+       which was untrue most days it was shown. Name what emptied the board
+       instead, since we know which control did it. */
+    var _term = V.q.trim();
+    var _why = _term ? "Nothing matches \u201c" + esc(_term) + "\u201d"
+             : V.league ? "No games in " + esc(V.league) + " on this day"
+             : V.country ? "No games in " + esc(V.country) + " on this day"
+             : V.cat !== "all" ? "No games in this category on this day"
+             : "No games on this day";
+    setBoard("<div class='none'><b>" + _why + "</b>" +
+      "<p>The rest of the board is still there.</p>" +
+      "<button class='none-reset' id='boardReset' type='button'>Show all games</button>" +
+      "</div>");
+    var _rst = document.getElementById("boardReset");
+    if (_rst) _rst.addEventListener("click", resetBoardFilters);
     return;
   }
   var _thin = list.length<=4 ? "<div class='thin-note'>Only "+list.length+" fixture"+(list.length===1?"":"s")+" available right now - more arrive as the weekend nears.</div>" : "";
@@ -10653,7 +10692,10 @@ function renderStreak(){
      one item with a glyph where its neighbours have a dot, which beside the
      real dot next to it read as two marks in a row. */
   if(streak>=2){el.hidden=false;el.className="trust-i streak";
-    el.innerHTML="<b>\ud83d\udd25 "+streak+"-day streak</b>";}
+    /* The flame was an emoji, which renders as a different picture on every
+       platform and is the clearest tell of a generated interface. The words
+       carry it on their own. */
+    el.innerHTML="<b>"+streak+"-day streak</b>";}
   else el.hidden=true;
 }
 /* ---- Board header ----
