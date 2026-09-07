@@ -69,8 +69,16 @@
       "source": "/predictions.json",
       "headers": [
         {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "public, s-maxage=1800, stale-while-revalidate=1800"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "public, s-maxage=300, stale-while-revalidate=600"
+        },
+        {
           "key": "Cache-Control",
-          "value": "public, s-maxage=3600, stale-while-revalidate=86400"
+          "value": "public, max-age=0, must-revalidate"
         }
       ]
     },
