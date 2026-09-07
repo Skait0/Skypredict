@@ -438,8 +438,27 @@ img,svg{max-width:100%}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
   .top{background:var(--bg)}
 }
+/* THE HEADER, ARRANGED IN THREE ZONES.
+   Measured at 1920 before this: logo 379-553, nav 583-825, then 668px of
+   nothing, then a 32px date and a 34px toggle at 1451-1527. Everything of
+   substance in the left 40% and two small islands with an ocean between them.
+   The nav is centred on the COLUMN below rather than on the space left over,
+   because auto margins would centre it between a 175px logo and a 34px toggle
+   - 70px off true centre, and off-centre-but-trying reads worse than
+   deliberately left. `position:relative` is what that centring is measured
+   against; without it the nav would centre on the viewport, which is a
+   different place once there is a scrollbar. */
 .top-in{max-width:1180px;margin:0 auto;padding:12px 16px;display:flex;
-  align-items:center;gap:11px}
+  align-items:center;gap:11px;position:relative}
+.top-in .nav{position:absolute;left:50%;transform:translateX(-50%);margin-left:0}
+/* The date went with it. It duplicated "Sep 7 last updated" in the eyebrow row
+   forty pixels below, and alone up there it was too small to balance anything.
+   Hidden rather than removed: something still writes to #when. */
+.top-in .when{display:none}
+/* And the toggle takes over what the date was doing. The auto margin lived on
+   #when, not on the toggle, so hiding the date collapsed the whole right
+   cluster back against the logo - measured at x=563 before this line. */
+.top-in .tgl{margin-left:auto}
 .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:19px;
   letter-spacing:-.025em;white-space:nowrap}
 .logo .word{letter-spacing:-.025em}
