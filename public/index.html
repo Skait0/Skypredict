@@ -4890,7 +4890,13 @@ html.sw-gate-still #swGate video{display:none}
   margin:0; font-size:clamp(23px,5.4vw,38px); line-height:1.18; font-weight:800;
   letter-spacing:-.02em; color:#F7F7F8; text-wrap:balance;
 }
-#swGate .sw-g-sub{margin:0; font-size:clamp(14px,3.4vw,17px); color:#C9C9CE; font-weight:500}
+/* text-wrap:balance because naming both bookmakers made this long enough to
+   wrap on a 360px phone, and it wrapped badly - "code." alone on line two.
+   Balance splits the two lines evenly instead of filling the first and
+   orphaning whatever is left. Ignored by browsers that do not have it, and
+   what they get is the wrap we had before. */
+#swGate .sw-g-sub{margin:0; font-size:clamp(14px,3.4vw,17px); color:#C9C9CE;
+  font-weight:500; text-wrap:balance}
 /* THREE GREYS, NOT FIVE.
    The panel had #C9C9CE, #A9A9B2, #9A9AA2, #8B8B94 and white. Four greys inside
    one small block, and the middle two were 8.33:1 and 6.95:1 - close enough that
@@ -5217,7 +5223,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   <div class="sw-g-brand" aria-hidden="true"><span>Soccer</span>wizard</div>
   <div class="sw-g-panel">
     <h2 id="swGateQ">Are you tired of picking games one by one?</h2>
-    <p class="sw-g-sub">We build the slip. You get the code.</p>
+    <p class="sw-g-sub">We build the slip. You get a SportyBet or Bet9ja code.</p>
     <p class="sw-g-age">You must be 18 or over to continue.</p>
     <button type="button" class="sw-g-enter" id="swGateEnter"><span class="sw-g-spark" aria-hidden="true"></span>Enter</button>
     <button type="button" class="sw-g-skip" id="swGateSkip">Skip</button>
