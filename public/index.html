@@ -990,6 +990,9 @@ html:not(.reduce) .m:nth-child(n+7),html:not(.reduce) .lrow:nth-child(n+7){anima
 .btabs.hide{transform:translateY(110%)}
 html.mode-live .btabs{transform:none!important}
 @media(max-width:720px){
+  /* ONE NAVIGATION ON A PHONE, AND IT IS THIS ONE. The header's tabs are
+     hidden further down, where the rule that used to exempt Home and Build
+     lives; see the note there for the measurements. */
   .btabs{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:120;
     background:var(--card);border-top:1px solid var(--line);
     padding:6px 8px calc(6px + env(safe-area-inset-bottom));align-items:flex-end;justify-content:space-around}
@@ -2171,11 +2174,17 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
    we expose just the Live scores tab so the user can jump straight to live action
    without opening the bottom bar. It sits on the same line as the logo + theme. */
 @media(max-width:720px){
+  /* NOTHING IN THE HEADER NAVIGATES ON A PHONE.
+     Home and Build used to keep a tab or two up here so Live was reachable
+     "without opening the bottom bar" - written when that bar could hide
+     itself. It cannot any more, so the reason is gone and what was left was
+     the same destinations twice: measured on the builder at 390px, a 60px
+     header and a 77px bar took 136px, 17.5% of the screen, with the header's
+     buttons 34px tall against the 44x44 minimum and sitting in the corner of
+     a phone that is hardest to reach one-handed. The bar keeps all three
+     destinations at 77px under the thumb; the header keeps the brand, the
+     date and the theme toggle, which are not navigation. */
   .nav{display:none}
-  /* Home and Build both keep the header nav so Live is reachable from the top.
-     Without Build listed here the container stays hidden and the per-page tab
-     rules below never apply. */
-  html.mode-pred .nav,html.mode-build .nav{display:flex}
 }
 /* THE VIEW TABS, WHICH WERE NOT DESIGNED AT ALL.
    `background:none;border:0` with a flat grey fill on the selected one - no
@@ -14247,15 +14256,16 @@ async function load(){
 function hideLoader(){var l=$("loader"); if(!l) return; l.classList.add("hide");
   setTimeout(function(){if(l&&l.parentNode) l.parentNode.removeChild(l);},500);}
 setTimeout(hideLoader,8000);
-/* The bar appears once the main call to action has scrolled away - while the
-   CTA is on screen there is already a way into the slip builder, so a second
-   one underneath it is just clutter. Falls back to the header if the CTA is
-   absent (Live and Build pages). */
-(function(){var cta=document.querySelector(".slip-cta")||document.querySelector(".top"),
-    bt=document.querySelector(".btabs");
-  if(!cta||!bt||!("IntersectionObserver" in window))return;
-  new IntersectionObserver(function(es){bt.classList.toggle("hide",es[0].isIntersecting);},
-    {rootMargin:"-4px 0px 0px 0px"}).observe(cta);})();
+/* THE BOTTOM BAR NO LONGER HIDES, AND THE OBSERVER THAT HID IT IS GONE.
+   It used to disappear while the slip CTA was on screen, on the reasoning that
+   two ways into the builder at once is clutter. That reasoning died when the
+   masthead's nav was dropped on phones: this bar is now the only way to reach
+   Home, Build or Live, and navigation that hides itself is not navigation.
+   It was also broken. The element it watched was resolved once at load -
+   `.slip-cta || .top` - so on the builder, where .slip-cta is display:none, a
+   zero-box element never intersected and the bar was pinned open; the .top
+   fallback could never fire either, since a position:sticky header always
+   intersects. Both facts were measured on the live site before this went. */
 /* Desktop: the offer follows you down. Same observer, same rule - it shows
    only once the real button has left the screen, so the two are never both
    on it. Hidden outright on the builder and the live page, where it would be
