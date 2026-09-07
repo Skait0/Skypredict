@@ -6704,14 +6704,25 @@ function catTest(k){
   const c=CATS.filter(function(x){return x.k===k;})[0];
   return c?c.test:function(){return true;};
 }
-function shown(){
-  const q=V.q.trim().toLowerCase(), t=catTest(V.cat);
+/* EVERYTHING THE BOARD FILTERS ON EXCEPT THE CATEGORY.
+ *
+ * The number on a chip has to be what the chip gives you, which is the same
+ * rule the day buckets already follow - see test/counts.test.js. renderCats
+ * had its own copy of this filter and that copy was missing the search box, so
+ * typing a club that plays nowhere today left the chips reading "All games 14"
+ * over an empty board. Two copies of a filter is how the counts drift from the
+ * thing they count; there is one now, and shown() is it plus the category. */
+function baseFiltered(){
+  const q=V.q.trim().toLowerCase();
   return onDay().filter(function(f){
     if(V.country&&countryOf(f.league)!==V.country) return false;
     if(V.league&&f.league!==V.league) return false;
-    if(!t(f)) return false;
     if(q&&(f.league+" "+f.home+" "+f.away).toLowerCase().indexOf(q)<0) return false;
     return true;});
+}
+function shown(){
+  const t=catTest(V.cat);
+  return baseFiltered().filter(t);
 }
 
 function plainTip(f){
@@ -7457,10 +7468,7 @@ function renderPotd(){
 }
 
 function renderCats(){
-  const base=onDay().filter(function(f){
-    if(V.country&&countryOf(f.league)!==V.country) return false;
-    if(V.league&&f.league!==V.league) return false;
-    return true;});
+  const base=baseFiltered();
   $("cats").innerHTML=CATS.map(function(c){
     const n=base.filter(c.test).length;
     if(!n && c.k!=="all" && c.k!=="fav") return "";

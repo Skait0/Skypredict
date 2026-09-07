@@ -177,3 +177,72 @@ test("toggling Top flight repaints the counts", () => {
   assert.match(grab("paintScope"), /paintTod\(\);/,
     "paintScope must carry on into the time buckets");
 });
+
+/* ------------------------------------------------- the category chips ----
+ * Same rule as the day buckets above, reported the same way: the chips read
+ * "All games 14" while the board underneath showed nothing, because a search
+ * for a club playing elsewhere emptied the list and the counts never heard
+ * about it. renderCats carried its own copy of the board's filter and that
+ * copy had no search box in it.
+ *
+ * These drive the REAL baseFiltered and shown out of index.html rather than a
+ * transcription of them, because a test that re-implements the filter agrees
+ * with itself forever. */
+
+function board(view, fixtures) {
+  const fn = new Function("V", "FIX", "CATS",
+    "function onDay(){return FIX;}" +
+    "function countryOf(l){return String(l).split(' ')[0];}" +
+    "function catTest(k){var c=CATS.filter(function(x){return x.k===k;})[0];" +
+      "return c?c.test:function(){return true;};}" +
+    grab("baseFiltered") + grab("shown") +
+    "return {base:baseFiltered(),shown:shown()};");
+  const CATS = [
+    { k: "all", label: "All games", test: () => true },
+    { k: "over", label: "Over 2.5", test: (f) => f.o25 >= 0.60 },
+  ];
+  return fn(view, fixtures, CATS);
+}
+
+const FIX = [
+  { league: "England Premier League", home: "Arsenal", away: "Chelsea", o25: 0.7 },
+  { league: "Spain La Liga 1", home: "Real Madrid", away: "Sevilla", o25: 0.4 },
+  { league: "Italy Serie A", home: "Napoli", away: "Roma", o25: 0.8 },
+];
+const view = (over) => Object.assign({ q: "", cat: "all", country: "", league: "" }, over);
+
+test("the chip counts are taken after the search box, not before it", () => {
+  const r = board(view({ q: "Bayern" }), FIX);
+  assert.strictEqual(r.base.length, 0,
+    "a search matching nothing must leave the chips nothing to count; " +
+    "this is the 'All games 14' over an empty board");
+  assert.strictEqual(r.shown.length, 0);
+});
+
+test("a search that matches narrows the chips to what it matched", () => {
+  const r = board(view({ q: "arsenal" }), FIX);
+  assert.strictEqual(r.base.length, 1);
+  assert.strictEqual(r.base[0].home, "Arsenal");
+});
+
+test("the number on a chip is what the chip hands over", () => {
+  /* The invariant, stated once: counting with a category applied must equal
+     selecting that category. If these ever disagree the counts have grown a
+     second copy of the filter again. */
+  for (const q of ["", "a", "napoli", "serie"]) {
+    const counted = board(view({ q }), FIX).base.filter((f) => f.o25 >= 0.60).length;
+    const got = board(view({ q, cat: "over" }), FIX).shown.length;
+    assert.strictEqual(counted, got, "Over 2.5 disagrees with its own count on q=" + JSON.stringify(q));
+  }
+});
+
+test("country and league still narrow the counts", () => {
+  assert.strictEqual(board(view({ country: "Italy" }), FIX).base.length, 1);
+  assert.strictEqual(board(view({ league: "Spain La Liga 1" }), FIX).base.length, 1);
+  assert.strictEqual(board(view({ country: "Italy", q: "arsenal" }), FIX).base.length, 0);
+});
+
+test("renderCats counts the board's own filter rather than a copy of it", () => {
+  assert.match(grab("renderCats"), /const base=baseFiltered\(\);/,
+    "renderCats has its own filter again, which is how the search box got lost");
+});
