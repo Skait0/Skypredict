@@ -22,6 +22,12 @@ const path = require("path");
 const SW = path.join(__dirname, "..", "public", "sw.js");
 const SRC = fs.readFileSync(SW, "utf8");
 
+/* The cache name, read from the worker rather than typed here. Bumping VERSION
+   is a normal part of changing sw.js - the activate handler deletes every
+   cache that does not match, which is how a stale shell is cleared - so a test
+   suite that hardcodes it fails on the bump and teaches you to ignore it. */
+const VERSION = (SRC.match(/const VERSION = "([^"]+)"/) || [])[1];
+
 /* ------------------------------------------------------------- the stubs */
 
 class Res {
@@ -154,7 +160,7 @@ test("the page is network-first", async () => {
 
 test("the page falls back to cache when the network is gone", async () => {
   const w = load({ net: () => Promise.reject(new Error("offline")) });
-  const c = await w.caches.api.open("sw-v7");
+  const c = await w.caches.api.open(VERSION);
   await c.put(req("/"), new Res("cached page"));
   const res = await fire(w.on, req("/", { mode: "navigate" }));
   assert.strictEqual(res.body, "cached page");
@@ -164,7 +170,7 @@ test("an uncached page falls back to the shell, but the manifest does not", asyn
   /* Handing Chrome an HTML document where it expects JSON is how a broken
      manifest stays broken. */
   const w = load({ net: () => Promise.reject(new Error("offline")) });
-  const c = await w.caches.api.open("sw-v7");
+  const c = await w.caches.api.open(VERSION);
   await c.put(req("/index.html"), new Res("shell"));
 
   const page = await fire(w.on, req("/some/deep/link", { mode: "navigate" }));
@@ -184,7 +190,7 @@ test("an html accept header counts as a page even without navigate mode", async 
 
 test("assets are served from cache first", async () => {
   const w = load();
-  const c = await w.caches.api.open("sw-v7");
+  const c = await w.caches.api.open(VERSION);
   await c.put(req("/app.abc123.js"), new Res("cached bundle"));
   const res = await fire(w.on, req("/app.abc123.js"));
   assert.strictEqual(res.body, "cached bundle");
@@ -203,7 +209,7 @@ test("hashed bundles are capped, oldest dropped first", async () => {
      for again. The cache name only changes when sw.js changes, so without a
      trim a phone accumulates one copy of the app per deploy, forever. */
   const w = load();
-  const c = await w.caches.api.open("sw-v7");
+  const c = await w.caches.api.open(VERSION);
   for (let i = 0; i < 30; i++) await c.put(req("/app.h" + i + ".js"), new Res("b" + i));
 
   await fire(w.on, req("/app.h30.js"));
@@ -222,7 +228,7 @@ test("the trim leaves the shell alone", async () => {
   /* index.html and the logo are not hashed and must not be counted or evicted;
      they are the offline fallback. */
   const w = load();
-  const c = await w.caches.api.open("sw-v7");
+  const c = await w.caches.api.open(VERSION);
   await c.put(req("/index.html"), new Res("shell"));
   await c.put(req("/wiz-logo.png"), new Res("logo"));
   for (let i = 0; i < 30; i++) await c.put(req("/app.k" + i + ".css"), new Res("c" + i));
@@ -248,11 +254,11 @@ test("non-GET and non-http requests are left alone", async () => {
 test("activate drops caches from older versions", async () => {
   const w = load();
   await w.caches.api.open("sw-v6");
-  await w.caches.api.open("sw-v7");
+  await w.caches.api.open(VERSION);
   const waits = [];
   await w.on.activate({ waitUntil: (p) => waits.push(p) });
   await Promise.all(waits);
-  assert.deepStrictEqual([...w.caches.stores.keys()], ["sw-v7"]);
+  assert.deepStrictEqual([...w.caches.stores.keys()], [VERSION]);
 });
 
 /* ------------------------------------------------------------ the kill switch */
@@ -267,7 +273,7 @@ test("KILL makes the worker stand aside on every request", async () => {
 test("KILL deletes every cache, unregisters, and reloads open tabs", async () => {
   const w = load({ kill: true });
   await w.caches.api.open("sw-v6");
-  await w.caches.api.open("sw-v7");
+  await w.caches.api.open(VERSION);
   const navigated = [];
   w.state.windows = [{ url: "https://www.soccerwizard.live/", navigate: (u) => navigated.push(u) }];
 
@@ -303,4 +309,77 @@ test("the version and the cache name cannot drift apart", () => {
   assert.strictEqual((SRC.match(/const VERSION = "sw-v\d+";/g) || []).length, 1);
   assert.doesNotMatch(SRC, /caches\.open\((?!VERSION)/,
     "every cache open must go through VERSION");
+});
+
+/* ------------------------------------------------------------- the board */
+
+/* THE BOARD IS NOT AN ASSET.
+ *
+ * predictions.json was served cache-first with a background refresh, which
+ * meant every returning reader saw the PREVIOUS deploy's board on arrival and
+ * the current one only on their next visit. Reported: "the midtjylland is
+ * still showing the old prediction" - the fix for an incoherent scoreline had
+ * shipped, the server was returning it, and the reader's own device was not.
+ *
+ * The comment in sw.js justified that on the grounds that the page re-fetches
+ * when the payload is stale. It does not, and has not for some time - see the
+ * note at index.html around PAYLOAD_MAX_AGE_MS: "Nothing re-fetches it now".
+ * So the compensation the trade depended on was gone, and the trade was just
+ * a permanently stale board.
+ *
+ * Network-first with a deadline. A hashed bundle is immutable and worth having
+ * instantly; the board changes on every deploy and is the entire product, so
+ * it is worth waiting a beat for - but only a beat, because most of this
+ * audience is on mobile data and a blank card is worse than yesterday's
+ * numbers. Cache answers when the network does not, inside the timeout.
+ */
+
+test("the board comes from the network when the network answers", async () => {
+  const w = load();
+  const c = await w.caches.api.open(VERSION);
+  await c.put(req("/predictions.json"), new Res("yesterday"));
+  const res = await fire(w.on, req("/predictions.json"));
+  assert.strictEqual(res.body, "net", "a cached board must not win while the network works");
+});
+
+test("the board falls back to cache when the network fails", async () => {
+  /* Offline, or a phone that lost signal. Yesterday's board beats no board. */
+  const w = load({ net: () => Promise.reject(new Error("offline")) });
+  const c = await w.caches.api.open(VERSION);
+  await c.put(req("/predictions.json"), new Res("yesterday"));
+  const res = await fire(w.on, req("/predictions.json"));
+  assert.strictEqual(res.body, "yesterday");
+});
+
+test("a slow network does not hold the board hostage", async () => {
+  /* The property that made cache-first attractive, kept. A network that never
+     answers must not leave the card blank while a usable copy is on disk. */
+  const w = load({ net: () => new Promise(() => {}) });
+  const c = await w.caches.api.open(VERSION);
+  await c.put(req("/predictions.json"), new Res("yesterday"));
+  const res = await Promise.race([
+    fire(w.on, req("/predictions.json")),
+    new Promise((r) => setTimeout(() => r({ body: "TIMED OUT" }), 4000)),
+  ]);
+  assert.strictEqual(res.body, "yesterday",
+    "a hung network must fall back to cache rather than wait forever");
+});
+
+test("a fresh board is kept for the next offline visit", async () => {
+  const w = load();
+  await fire(w.on, req("/predictions.json"));
+  await new Promise((r) => setTimeout(r, 10));
+  const hit = await w.caches.api.match(req("/predictions.json"));
+  assert.ok(hit, "the network copy must be written to the cache");
+});
+
+test("hashed bundles are still cache-first", async () => {
+  /* The change is for the board alone. A bundle is immutable and arrives under
+     a new name when it changes, so waiting on the network for one buys
+     nothing and costs a paint. */
+  const w = load();
+  const c = await w.caches.api.open(VERSION);
+  await c.put(req("/app.abc123.js"), new Res("cached bundle"));
+  const res = await fire(w.on, req("/app.abc123.js"));
+  assert.strictEqual(res.body, "cached bundle");
 });

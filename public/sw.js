@@ -9,7 +9,7 @@
  * exist. Static assets stay cache-first, since those are the ones worth having
  * instantly and they change under a new name when they change at all.
  */
-const VERSION = "sw-v7";
+const VERSION = "sw-v8";
 const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/wiz-logo.png"];
 
 /* THE KILL SWITCH. Set to true, deploy, and every installed worker deletes its
@@ -146,13 +146,44 @@ self.addEventListener("fetch", function (e) {
     return;
   }
 
-  /* Assets, and predictions.json: cache-first, refreshed in the background.
-     A stale payload is deliberately allowed to paint. The board carries its
-     own build time and the page compares it - anything older than
-     PAYLOAD_MAX_AGE_MS makes fetchPayload call refreshPayload(), which asks
-     /api/predictions and so goes to the network above, not to this cache.
-     Painting instantly and correcting beats a blank screen on a slow phone,
-     which is the whole reason this file exists. */
+  /* THE BOARD IS NOT AN ASSET, and it used to be treated as one.
+     Cache-first meant every returning reader saw the PREVIOUS deploy's board
+     on arrival and the current one only on their next visit. Reported as "the
+     midtjylland is still showing the old prediction" - the fix had shipped,
+     the server was serving it, and the reader's own device was not.
+     The old comment here justified that by saying the page re-fetches a stale
+     payload. It does not, and has not for some time: see the note around
+     PAYLOAD_MAX_AGE_MS in index.html - "Nothing re-fetches it now". The
+     compensation the trade depended on was gone, leaving a permanently
+     one-deploy-behind board.
+     So: network-first, with a deadline. The board changes on every deploy and
+     is the entire product, so it is worth waiting a beat for - but only a
+     beat, because most of this audience is on mobile data and a blank card is
+     worse than yesterday's numbers. */
+  var isBoard = url.pathname === "/predictions.json";
+  if (isBoard) {
+    var BOARD_TIMEOUT_MS = 1500;
+    e.respondWith(
+      caches.match(req).then(function (hit) {
+        var net = fetch(req).then(function (res) { keep(req, res); return res; });
+        if (!hit) return net;            /* nothing to fall back to - wait */
+        /* Whichever answers first: the network, or the clock handing back the
+           copy on disk. The network keeps running either way, so a slow reply
+           still refreshes the cache for next time. */
+        return Promise.race([
+          net.catch(function () { return hit; }),
+          new Promise(function (resolve) {
+            setTimeout(function () { resolve(hit); }, BOARD_TIMEOUT_MS);
+          }),
+        ]);
+      })
+    );
+    return;
+  }
+
+  /* Assets: cache-first, refreshed in the background. A hashed bundle is
+     immutable and arrives under a new name when it changes, so waiting on the
+     network for one buys nothing and costs a paint. */
   e.respondWith(
     caches.match(req).then(function (hit) {
       var net = fetch(req).then(function (res) {
