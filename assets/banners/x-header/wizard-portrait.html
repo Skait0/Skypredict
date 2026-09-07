@@ -27,8 +27,7 @@
   .fade-y{position:absolute;left:0;right:0;bottom:0;height:190px;
     background:linear-gradient(180deg,rgba(13,13,15,0),rgba(13,13,15,.86))}
   .in{position:absolute;left:300px;top:0;bottom:0;width:820px;
-    display:flex;flex-direction:column;justify-content:center;gap:18px;
-    padding-bottom:96px}
+    display:flex;flex-direction:column;justify-content:center;gap:20px}
   .eyebrow{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;
     letter-spacing:.14em;text-transform:uppercase;color:#F2B84B}
   .eyebrow i{width:7px;height:7px;border-radius:50%;background:#E63946;font-style:normal}
@@ -58,9 +57,10 @@
       <h1>We build the slip.<br>You get the <em>booking code</em>.</h1>
       <p class="sub">Every game priced.<br>Every tip checked against the score.</p>
     </div>
-    <div class="foot">
-      <div class="mark"><img src="../../../public/wiz-logo.png" alt="">Soccer<span>wizard</span></div>
-    </div>
+    <!-- The wordmark lived here and X's avatar sat on top of it: the circle
+         covers about 26% of the banner's width, not the 15% I had assumed.
+         Removed rather than moved - the profile name prints in large type
+         directly under the banner, so it was saying the same thing twice. -->
   </div>
 </body>
 </html>
