@@ -160,3 +160,20 @@ test("a request with nothing to key on writes no row", async () => {
   await G.makeRecorder({ db, deviceLimit: 10, now: () => at })({ headers: {} });
   assert.equal(db.wrote.length, 0);
 });
+
+test("with the quota switched off, nothing is written either", async () => {
+  /* DORMANT HAS TO MEAN DORMANT. The gate already opens when no limit is set,
+     but the recorder was still filing a row on every successful booking - and
+     before sql/book_quota.sql is applied that is a PostgREST error per
+     booking: swallowed, invisible to the reader, and pure noise against the
+     database. A feature that is off must touch nothing. */
+  const db = store({});
+  await G.makeRecorder({ db, deviceLimit: 0, ipLimit: 0, now: () => at })(req());
+  assert.equal(db.wrote.length, 0, "no limit configured means no bookkeeping");
+});
+
+test("a device with a limit is still recorded", async () => {
+  const db = store({});
+  await G.makeRecorder({ db, deviceLimit: 10, now: () => at })(req());
+  assert.equal(db.wrote.length, 1);
+});
