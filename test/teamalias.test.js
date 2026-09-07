@@ -106,7 +106,10 @@ const MUST_REFUSE = [
   "CA Huracan Las Heras",         /* Mendoza - not Huracan of Buenos Aires */
   "CAS Defensores de Belgrano",   /* not Belgrano de Cordoba */
   "Club Leon",                    /* Mexico - fuzzy reaches Lyon */
-  "Riga FC",                      /* Latvia - fuzzy reaches Wigan */
+  /* "Riga FC" was here because a fuzzy match reached Wigan. It has been removed
+     rather than fixed: Latvia Virsliga is harvested now, so Riga FC is a club we
+     rate and resolving it to itself is the correct answer. A name leaves this
+     list when we start carrying the club, not when the matcher gets better. */
 ];
 
 test("clubs that merely share a name with ours are still refused", () => {

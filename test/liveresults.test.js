@@ -246,3 +246,36 @@ test("the senior-league exclusion lets go once we actually rate the league", () 
   assert.strictEqual(B.isUnratedCompetition("Germany Amateur Frauen Bundesliga", rated), true,
     "the youth and women's rule is not a data statement and never releases");
 });
+
+test("every UEFA top flight we harvest has a rung, or its ties are refused", () => {
+  /* A cross-border tie needs a rung on both sides; tierEdge returns null
+     without one and the fixture drops as "tiers not comparable". Listing a
+     league without laddering it would leave it collecting results for two
+     months and then still refusing to price. */
+  for (const league of L.HARVEST_EXTRA) {
+    assert.notStrictEqual(B.rungOf(league), null, league + " has no rung");
+  }
+});
+
+test("no warming league is filed under half a country's name", () => {
+  /* countryOf() reads the first word. "Czech Republic Chance Liga" files under
+     "Czech" and "Bosnia and Herzegovina ..." under "Bosnia", which puts them in
+     a country the coefficient table will never match. */
+  const twoWord = ["Czech Republic", "Bosnia and", "Faroe Islands", "North Macedonia",
+                   "Northern Ireland", "San Marino"];
+  for (const league of L.HARVEST_EXTRA) {
+    for (const bad of twoWord) {
+      assert.ok(!league.startsWith(bad),
+        league + " starts with a two-word country, so countryOf() will mis-file it");
+    }
+  }
+});
+
+test("the alias table renames the two-word countries onto one word", () => {
+  const allowed = new Set(L.HARVEST_EXTRA);
+  for (const [theirs, ours] of Object.entries(L.LEAGUE_ALIAS)) {
+    if (!/^(Czech Republic|Bosnia and|Faroe Islands) /.test(theirs)) continue;
+    assert.ok(allowed.has(ours),
+      theirs + " maps to " + ours + ", which is not a league we harvest");
+  }
+});
