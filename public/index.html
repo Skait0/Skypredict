@@ -1304,8 +1304,12 @@ html.orb-ready .orb-mark{animation:orbRoll 8s linear infinite}
    The size does not change. This is the primary action on the page and it was
    already at the floor of what a thumb should be asked to hit. */
 .sc-actions .sc-go-primary,.sc-go-primary{
-  background:linear-gradient(180deg,#1c2026,#0a0c0e)!important;
-  border:1px solid rgba(255,255,255,.16)!important;
+  /* The site's own blacks, not a blue-grey ramp. #1c2026 carried a blue cast
+     the palette has nowhere else, so the pill read as a component from some
+     other kit sitting on the card. --card-2 down to just under --bg keeps the
+     raised-key idea on the neutrals we actually use. */
+  background:linear-gradient(180deg,#1E1E22,#101013)!important;
+  border:1px solid rgba(242,184,75,.28)!important;
   border-radius:999px!important;
   color:#fff!important;
   gap:9px;
@@ -1315,9 +1319,13 @@ html.orb-ready .orb-mark{animation:orbRoll 8s linear infinite}
      halo rather than a fill: enough that the eye knows whose button it is,
      not so much that it becomes another red rectangle on a page that already
      has several. */
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),
+  /* Gold, not red. The card already runs a gold hairline along its top and the
+     wordmark is gold; no other button on the page uses it, so it is the one
+     accent that marks this as the primary without adding a fourth red to a
+     card that already has several. */
+  box-shadow:inset 0 1px 0 rgba(242,184,75,.14),
              0 6px 20px rgba(0,0,0,.5),
-             0 0 0 1px rgba(230,57,70,.22)!important;
+             0 0 0 1px rgba(242,184,75,.20)!important;
   position:relative;overflow:hidden;
   transition:box-shadow .18s ease,transform .12s ease,border-color .18s ease}
 
@@ -1337,7 +1345,7 @@ html.orb-ready .orb-mark{animation:orbRoll 8s linear infinite}
 /* The arrow is the invitation, and it only moves under a pointer - an arrow
    that twitches on its own is a fidget, one that leans when you approach is a
    door opening. */
-.sc-go-arw{flex:0 0 auto;font-size:1.05em;line-height:1;opacity:.55;
+.sc-go-arw{flex:0 0 auto;font-size:1.05em;line-height:1;opacity:.8;color:var(--accent);
   transform:translateX(0);
   transition:transform .22s cubic-bezier(.3,0,.2,1),opacity .22s ease}
 /* Their mark in their red. On the red button this was forced to white to stop
@@ -3870,6 +3878,35 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
    Applies to the installed app too: same file, same stylesheet.
    ========================================================================== */
 body{line-height:1.45;padding-bottom:24px}
+/* THE WIZARD BEHIND THE GLASS.
+   One frame of the intro loop, blurred past recognition and laid under
+   everything at a tenth of its opacity - 4 KB, decoded once. You register that
+   something is back there and you cannot read it, which is the whole idea.
+
+   NOT THE VIDEO, deliberately. The loop is 195 KB, and behind every page it
+   would play on every view, forever, on mobile data - against once per visitor
+   per day today. A permanent decode is battery on a cheap Android, and moving
+   luminance under a table of percentages is how a data product loses its
+   contrast. A still costs none of that.
+
+   The motion is a transform, not a repaint: 90 seconds from one end to the
+   other, composited on the GPU, and off entirely under reduced motion. It is
+   slower than anything else on the page on purpose - fast enough to notice
+   only if you stop and look for it.
+
+   Top-weighted, and gone by 70% of the viewport, so it lives where the hero
+   glow already lives and never sits under the board. */
+body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:url(/wiz-veil.webp) no-repeat center top/cover;
+  opacity:.38;
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.42) 26%,transparent 46%);
+  mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.42) 26%,transparent 46%);
+  transform:scale(1.06);
+  animation:wizVeil 90s ease-in-out infinite alternate;
+  will-change:transform}
+@keyframes wizVeil{from{transform:scale(1.06) translate3d(0,0,0)}
+  to{transform:scale(1.12) translate3d(-14px,10px,0)}}
+@media(prefers-reduced-motion:reduce){body::before{animation:none}}
 @media(max-width:720px){body{padding-bottom:82px}}
 
 /* --- header + hero --- */
