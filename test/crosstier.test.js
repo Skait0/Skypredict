@@ -31,6 +31,12 @@ let EUROFF_COUNTRIES = {};
 try { EUROFF_COUNTRIES = require("../data/country-offsets.json").countries || {}; }
 catch (e) { EUROFF_COUNTRIES = {}; }
 
+/* Countries the fit could not place because it ran into COUNTRY_CAP. These
+   are refused rather than priced, so they are the one legitimate null in a
+   table that otherwise has a number for every UEFA country. */
+const PINNED = Object.keys(EUROFF_COUNTRIES)
+  .filter((c) => EUROFF_COUNTRIES[c].clamped && EUROFF_COUNTRIES[c].matches > 0);
+
 test("the divisions are not evenly spaced", () => {
   /* The whole reason this table exists rather than a flat step per division.
      The Premier League to Championship gap is the widest in English football;
@@ -100,7 +106,16 @@ test("the cross-country edge is bounded, however lopsided the coefficients", () 
   const WIDEST_DOMESTIC = TIER_HANDICAP["England Conference National"];
   for (const a of Object.keys(UEFA_COEFFICIENT)) {
     const h = countryHandicap(a);
-    assert.ok(h !== null && h >= 0 && h <= COUNTRY_CAP,
+    /* Null is a real answer here since Sep 2026, and only for one reason: the
+       fit pushed this country ONTO the cap, so what we hold is a bound rather
+       than a placement and the board refuses the tie. Anything else returning
+       null is a bug - see test/cappedrefusal.test.js. */
+    if (h === null) {
+      assert.ok(PINNED.includes(a),
+        a + " has no handicap and is not pinned at the cap - it should be priced");
+      continue;
+    }
+    assert.ok(h >= 0 && h <= COUNTRY_CAP,
       a + " has a handicap of " + h + ", outside [0, " + COUNTRY_CAP + "]");
     assert.ok(h < WIDEST_DOMESTIC,
       a + " is handicapped " + h + ", wider than Premier League to Conference");
@@ -138,6 +153,7 @@ test("a stronger coefficient never yields a bigger handicap, where the coefficie
 test("a fitted country is still bound by the range every handicap obeys", () => {
   for (const c of Object.keys(EUROFF_COUNTRIES)) {
     if (UEFA_COEFFICIENT[c] === undefined) continue;
+    if (PINNED.includes(c)) continue;          /* refused outright, not priced */
     const h = countryHandicap(c);
     assert.ok(h !== null && h >= 0 && h <= COUNTRY_CAP,
       c + " is fitted to " + h + ", outside [0, " + COUNTRY_CAP + "]");
