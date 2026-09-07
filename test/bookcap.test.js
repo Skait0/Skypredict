@@ -46,7 +46,9 @@ function client(reply) {
     "function esc(s){ return String(s); }" +
     grab("swDeviceId") + "\n" + grab("bookFetch") + "\n" +
     grab("bookReason") + "\n" + grab("bookErrHTML") + "\n" +
-    "return {bookFetch:bookFetch, bookErrHTML:bookErrHTML, bookReason:bookReason};"
+    "var SW_QUOTA_LEFT=null;\n" + grab("quotaNoteHTML") + "\n" +
+    "return {bookFetch:bookFetch, bookErrHTML:bookErrHTML, bookReason:bookReason," +
+    " quotaNoteHTML:quotaNoteHTML};"
   )(reply, calls);
   return { api, calls };
 }
@@ -123,4 +125,95 @@ test("a genuine bookmaker refusal still names the bookmaker", () => {
   const { api } = client(respond(200, {}));
   const html = api.bookErrHTML({ _kind: "refused", message: "odds changed" }, BOOK);
   assert.match(html, /SportyBet wouldn't take this slip/);
+});
+
+/* ------------------------------------------------- warning before the wall */
+
+/* A wall with no warning is the complaint people actually make. The server
+   already returns X-Sw-Quota-Remaining on every booking, so the page can say
+   "3 codes left today" while it still means something. Quiet until it is
+   nearly gone: a counter shown at nine of ten is noise, and noise trains
+   people to ignore the one at two. */
+
+function withHeaders(status, body, headers) {
+  return () => ({
+    ok: status >= 200 && status < 300,
+    status,
+    /* A FRESH BODY EVERY TIME. bookFetch writes _left and _capped onto the
+       parsed object, so handing out one shared fixture let an earlier test's
+       result leak into a later one - this file briefly "proved" that a
+       response with no quota header still reported 3 left. */
+    json: () => Promise.resolve(JSON.parse(JSON.stringify(body))),
+    headers: { get: (k) => (headers || {})[String(k).toLowerCase()] || null },
+  });
+}
+
+const OK_BODY = { success: true, code: "MS0LJY" };
+
+test("what is left is read off the booking response", async () => {
+  const { api } = client(withHeaders(200, OK_BODY, { "x-sw-quota-remaining": "3" }));
+  const d = await api.bookFetch([{ eventId: "1" }], BOOK);
+  assert.equal(d._left, 3);
+});
+
+test("a response with no quota header claims nothing", async () => {
+  /* The quota can be switched off, or the counter can be unavailable. Neither
+     may produce a made-up number on screen. */
+  const { api } = client(withHeaders(200, OK_BODY, {}));
+  const d = await api.bookFetch([{ eventId: "1" }], BOOK);
+  assert.equal(d._left, undefined);
+});
+
+test("the note is silent while there is plenty left", () => {
+  const { api } = client(withHeaders(200, OK_BODY, {}));
+  for (const n of [9, 8, 5, 4]) {
+    assert.equal(api.quotaNoteHTML(n), "", n + " left should say nothing");
+  }
+});
+
+test("the note appears as the cap gets close", () => {
+  const { api } = client(withHeaders(200, OK_BODY, {}));
+  for (const n of [3, 2, 1]) {
+    const html = api.quotaNoteHTML(n);
+    assert.ok(html.length > 0, n + " left should warn");
+    assert.ok(html.indexOf(String(n)) >= 0, "and name the number: " + html);
+    assert.match(html, /today/i);
+  }
+});
+
+test("one left is singular", () => {
+  /* "1 codes left" is the kind of thing that makes a site look unfinished. */
+  const { api } = client(withHeaders(200, OK_BODY, {}));
+  const html = api.quotaNoteHTML(1);
+  assert.ok(!/1 codes/.test(html), "got: " + html);
+});
+
+test("the last code of the day says so plainly", () => {
+  const { api } = client(withHeaders(200, OK_BODY, {}));
+  const html = api.quotaNoteHTML(0);
+  assert.ok(html.length > 0);
+  assert.match(html, /last|midnight|tomorrow/i, "got: " + html);
+});
+
+test("nothing known means nothing shown", () => {
+  const { api } = client(withHeaders(200, OK_BODY, {}));
+  for (const n of [null, undefined, NaN, "lots"]) {
+    assert.equal(api.quotaNoteHTML(n), "", JSON.stringify(n));
+  }
+});
+
+test("the code modal carries the note", () => {
+  /* The caller is the point, again: a note nothing renders is not a warning. */
+  const src2 = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  const i = src2.indexOf("function showCode(");
+  assert.ok(i > 0);
+  assert.match(src2.slice(i, i + 4000), /quotaNoteHTML\(/,
+    "showCode must render the remaining-codes note");
+});
+
+test("the note is styled, not dropped into the card raw", () => {
+  /* It renders inside the code modal, which is a designed surface - an
+     unstyled div there reads as a bug rather than a warning. */
+  const src2 = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  assert.match(src2, /\.code-quota\s*\{/, "no CSS rule for .code-quota");
 });

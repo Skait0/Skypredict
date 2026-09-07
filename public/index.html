@@ -2959,6 +2959,13 @@ html.mode-live #live{display:block}
   text-transform:uppercase;color:var(--green-ink)}
 .code-card b{display:block;font-size:32px;font-weight:800;letter-spacing:.08em;
   color:var(--text);margin:6px 0 14px;font-variant-numeric:tabular-nums}
+/* How many codes are left today, on the one screen every booking ends on.
+   Deliberately quiet: it sits under the code as a line of small print, not as
+   a warning bar. It only appears at three or fewer - a counter that shows at
+   nine of ten is noise, and noise is what teaches people to ignore the one at
+   two. */
+.code-quota{margin:-6px 0 12px;font-size:12.5px;font-weight:600;color:var(--soft);
+  letter-spacing:.01em}
 .code-acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 /* Copy and Share are what you do with the code once you have it - secondary to
    opening the slip, so they are the small pair. Sized to their own labels
@@ -8208,6 +8215,23 @@ function swDeviceId(){
 /* SportyBet's share endpoint is intermittently flaky - it rejects or times out
    on a first hit and works on retry. Retry up to 3x with backoff so the user
    never has to. Only retries on network/5xx/no-code, never on a clean rejection. */
+/* What the last booking said was left, so the code modal can warn without
+   asking again. Null until a booking answers, and left null when the quota is
+   switched off - see lib/bookgate.js. */
+var SW_QUOTA_LEFT=null;
+/* QUIET UNTIL IT IS NEARLY GONE. A counter shown at nine of ten is noise, and
+   noise is what teaches people to ignore the one at two. Nothing at all when
+   the number is unknown: a made-up allowance is worse than none. */
+function quotaNoteHTML(n){
+  if(n===null||n===undefined||!isFinite(+n)) return "";
+  n=+n;
+  if(n>3) return "";
+  if(n<=0)
+    return "<div class='code-quota'>That was your last booking code today. "+
+      "More after midnight.</div>";
+  return "<div class='code-quota'>"+n+(n===1?" booking code":" booking codes")+
+    " left today.</div>";
+}
 function bookFetch(sel,B){
   B=B||curBook();
   var tries=0;
@@ -8241,6 +8265,16 @@ function bookFetch(sel,B){
           /* The free-period cap. Carried through as a flag because the status
              is gone by the next link in the chain. */
           if(r.status===429) d._capped=1;
+          /* HOW MANY ARE LEFT AFTER THIS ONE. The server counts the code it is
+             about to issue, so this is what remains going forward. Absent when
+             the quota is off or the counter was unreachable - and then nothing
+             is claimed rather than a number invented. */
+          try{
+            var _q=r.headers&&r.headers.get?r.headers.get("X-Sw-Quota-Remaining"):null;
+            if(_q!==null&&_q!==undefined&&_q!==""&&isFinite(+_q)){
+              d._left=+_q; SW_QUOTA_LEFT=+_q;
+            }
+          }catch(e){}
           return d;
         });},function(e){to.done();throw e;})
       .then(function(d){
@@ -10008,6 +10042,9 @@ function showCode(code,hostId,save,B,picks){
       "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' aria-hidden='true'><path d='M6 6l12 12M18 6L6 18'/></svg></button>"+
     "<i>Your "+B.mark+" booking code</i>"+
     "<b>"+esc(code)+"</b>"+
+    /* The warning belongs here, on the one screen a reader always sees after
+       booking, rather than somewhere they may never look. */
+    quotaNoteHTML(SW_QUOTA_LEFT)+
     /* Three rows, narrowing to a point. What you do with the code sits at the
        top as a small pair; the one thing most people are here to do sits alone
        under it, with nothing beside it to share the attention; and the other
