@@ -194,7 +194,7 @@ async function bakePayload() {
  * had. A link shared before kick-off keeps working, and the archive of what we
  * tipped against what happened builds itself.
  */
-function writePages(payload) {
+async function writePages(payload) {
   let P;
   try {
     P = require("../lib/pages.js");
@@ -216,6 +216,7 @@ function writePages(payload) {
   }
 
   const K = require("../lib/key.js");
+  const DB = require("../lib/supabase.js");
   const fixtures = Array.isArray(payload.fixtures) ? payload.fixtures : [];
   const results = Array.isArray(payload.results) ? payload.results : [];
 
@@ -242,6 +243,58 @@ function writePages(payload) {
     pages.push({ f: r, r: r });
   }
 
+  /* THE ARCHIVE, SO A PAGE STOPS BEING TEMPORARY.
+   *
+   * The two loops above see only what is on the board: 21 days of fixtures and
+   * 14 of results. Everything older simply stopped being written, and its URL
+   * 404ed - /m/liverpool-vs-bournemouth-2026-08-15 was gone within a month of
+   * the match. Search Console reported 84 pages indexed against 1,157 not,
+   * 1,080 of them "Discovered - currently not indexed", which is what a crawler
+   * does after it queues URLs that are not there when it arrives.
+   *
+   * So every result we have ever VERIFIED gets a page, permanently. Not every
+   * result: verifiedResults refuses the sweep's own guesses, because a page is
+   * forever and a wrong score on one is forever too.
+   *
+   * Non-fatal by construction, like every other enrichment in this build. With
+   * no Supabase configured, or on any failure, the page set is exactly what it
+   * was and the deploy carries on. */
+  let archived = 0;
+  try {
+    const got = await DB.verifiedResults();
+    if (got.ok) {
+      for (const r of got.rows) {
+        if (!r || !r.match_date || !r.home || !r.away) continue;
+        if (r.hg == null || r.ag == null) continue;
+        const key = K.fixtureKey(r.match_date, r.home, r.away);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        /* r.model carries the probabilities the page prints - written down
+           when the match was still a fixture, which is the only moment they
+           were true.
+
+           SPREAD FIRST, IDENTITY SECOND. The other way round, any key in the
+           model JSON overwrites the field of the same name: a model carrying
+           `home` renames the club to a probability, and the page ships titled
+           "0.61 vs 0.19". Today the keys are home_p/away_p so it cannot happen,
+           but that is a naming convention holding up a page title, and this
+           order means it does not have to. */
+        const row = Object.assign({},
+          (r.model && typeof r.model === "object") ? r.model : {}, {
+            date: r.match_date, league: r.league || "", home: r.home, away: r.away,
+            hg: r.hg, ag: r.ag, tip: r.tip, hit: r.hit, tip_p: r.tip_p,
+            recorded: true,
+          });
+        pages.push({ f: row, r: row });
+        archived++;
+      }
+    } else if (got.why !== "not configured") {
+      warn("archive unavailable, pages are board-only this build: " + got.why);
+    }
+  } catch (e) {
+    warn("archive failed, pages are board-only this build: " + e.message);
+  }
+
   const dir = path.join(PUB, "m");
   fs.mkdirSync(dir, { recursive: true });
   /* Clear the directory first. On Vercel this is a no-op - every build starts
@@ -262,7 +315,13 @@ function writePages(payload) {
     try {
       const rel = P.pagePath(pg.f);
       fs.writeFileSync(path.join(PUB, rel + ".html"), P.renderMatchPage(pg.f, pg.r));
-      paths.push(rel);
+      /* A played match is dated by the day it was played, not by this build.
+         Its page is the score and how our tip did against it, and neither
+         changes again - see renderSitemap for what claiming otherwise cost us.
+         An upcoming fixture keeps the build date, because its prediction
+         genuinely is rebaked every deploy. */
+      const played = pg.r && pg.r.hg != null && pg.r.ag != null;
+      paths.push(played ? { path: rel, lastmod: pg.r.date || pg.f.date } : rel);
       written++;
     } catch (e) {
       failed++;
@@ -492,7 +551,7 @@ function writeCard(payload) {
 /* ------------------------------------------------------------------- run */
 (async () => {
   const payload = await bakePayload();
-  writePages(payload);
+  await writePages(payload);
   writeCard(payload);
   /* Before the split, so the hostname inside the big inline script - the
      share-image canvas - is rewritten while it is still in the page. */

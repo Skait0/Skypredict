@@ -229,3 +229,42 @@ test("the image url is absolute - a crawler has no page to resolve it against", 
   const m = /property="og:image" content="([^"]+)"/.exec(html);
   assert.ok(m && /^https?:\/\//.test(m[1]), "og:image must be absolute, got " + (m && m[1]));
 });
+
+/* --------------------------------------------------------------- lastmod */
+
+test("a played match is dated by the day it was played, not by the build", () => {
+  /* All 933 URLs carried the build date and the build runs daily, so the
+     sitemap claimed the entire site changed every day - including results from
+     three weeks earlier. Google's answer to an unreliable lastmod is to ignore
+     the field, which spends the only "come and look" signal we have. */
+  const xml = P.renderSitemap([
+    { path: "/m/a-vs-b-2026-08-15", lastmod: "2026-08-15" },
+    "/m/c-vs-d-2026-09-12",
+  ], "2026-09-07");
+  assert.match(xml, /a-vs-b-2026-08-15<\/loc><lastmod>2026-08-15</,
+    "a played match must keep its own date");
+  assert.match(xml, /c-vs-d-2026-09-12<\/loc><lastmod>2026-09-07</,
+    "an upcoming fixture is rebaked every deploy, so it takes the build date");
+});
+
+test("a malformed lastmod costs one line's accuracy, never the whole file", () => {
+  /* An invalid date in a sitemap can invalidate the document. Falling back to
+     the build stamp is wrong by a few days; emitting "junk" is wrong by the
+     entire file. */
+  for (const bad of ["junk", "", null, undefined, "2026-13-45", 20260815]) {
+    const xml = P.renderSitemap([{ path: "/m/x-vs-y-2026-09-01", lastmod: bad }], "2026-09-07");
+    assert.match(xml, /x-vs-y-2026-09-01<\/loc><lastmod>2026-09-07</,
+      "lastmod " + JSON.stringify(bad) + " should have fallen back to the build date");
+  }
+});
+
+test("prebuild dates a page from its result rather than from the clock", () => {
+  /* The date has to come from the payload. Reading it off `new Date()` here
+     would put every page back on the build stamp with extra steps. */
+  const pre = require("fs").readFileSync(
+    require("path").join(__dirname, "..", "scripts", "prebuild.js"), "utf8");
+  const i = pre.indexOf("paths.push(played");
+  assert.ok(i > 0, "prebuild no longer dates match pages individually");
+  assert.match(pre.slice(i, i + 140), /lastmod: pg\.r\.date \|\| pg\.f\.date/,
+    "the date must come from the result, not from the build clock");
+});
