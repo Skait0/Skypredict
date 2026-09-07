@@ -8238,10 +8238,17 @@ function bookFetch(sel,B){
              say what the status was rather than nothing at all. */
           if(!r.ok&&!d.detail&&!d.message&&!d.error)
             d.message="the booking service returned "+r.status;
+          /* The free-period cap. Carried through as a flag because the status
+             is gone by the next link in the chain. */
+          if(r.status===429) d._capped=1;
           return d;
         });},function(e){to.done();throw e;})
       .then(function(d){
         if(d&&d.success&&B.codeOf(d)) return d;
+        /* A cap is a definitive answer, like a named refusal - retrying it
+           spends two more round trips and 1.8 seconds to be told the same
+           thing, and the reader watches "Booking..." the whole time. */
+        if(d&&d._capped){ d._kind="capped"; return d; }
         /* A named refusal is an answer, not a blip. Retrying it spends two
            more round trips to be told the same thing, and delays the retry
            that actually helps - the one without those legs. */
@@ -8281,6 +8288,15 @@ function bookErrHTML(d,B){
   if(kind==="net")
     return "<div class='code-err'><b>Couldn't reach the booking service.</b>"+
       "<span>Check your connection and try again. Your slip is saved either way.</span></div>";
+  /* OUR LIMIT, NOT THE BOOKMAKER'S. The generic branch below would put
+     SportyBet's name on a decision we made and then tell the reader to remove
+     a leg - when nothing is wrong with their slip and nothing they do to it
+     will help. Say whose rule it is and when it lifts. */
+  if(kind==="capped")
+    return "<div class='code-err'><b>That's today's ten booking codes.</b>"+
+      "<span>The free run gives every device ten a day. Your slip is saved - "+
+      "the code will be here after midnight. Everything else on the board "+
+      "still works.</span></div>";
   return "<div class='code-err'><b>"+B.mark+" wouldn't take this slip.</b>"+
     (why?"<span>"+esc(why)+"</span>"
        :"<span>One of the picks may have just closed. Remove a leg and try again.</span>")+
