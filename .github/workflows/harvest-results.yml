@@ -1,0 +1,72 @@
+name: Harvest the current season's results
+
+# WHY THIS RUNS AT ALL
+#
+# The model is fitted on football-data.co.uk, which has answered 503 to
+# everyone since 5 September 2026. The committed floor under data/results keeps
+# the site building - see cachedResultsFor in lib/build.js - but a floor holds
+# only finished seasons, so through an outage the board is fitted on form that
+# ages a day per day while looking entirely normal. On 7 Sep the live board
+# reported formStaleDays 7.
+#
+# scripts/mkresults.js closes that gap from SoccerVista, which is up, and
+# commits the result. A commit to main is a deploy, so the next build fits on
+# it without anything else being wired.
+#
+# ONCE A DAY, NOT EVERY TEN MINUTES
+#
+# This is history, not scores: a match already recorded does not change, and
+# the sweep in record-sweep.yml is what puts today's finished games on the
+# board. Their feed reaches about a week back, so a day the job misses is
+# picked up by the next run at no cost.
+#
+# 05:30 UTC, an hour before Vercel's daily build at 06:30, so the day's build
+# fits on a file written this morning rather than yesterday's.
+#
+# Needs no secrets. It writes to the repository, which is why the job asks for
+# `contents: write` - the default token is read-only.
+
+on:
+  schedule:
+    - cron: "30 5 * * *"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "How many days back to ask for"
+        type: string
+        default: "8"
+
+permissions:
+  contents: write
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # The script refuses to write when too few clubs resolve, which is the
+      # signal that their naming has moved - see MIN_RESOLVED in the script.
+      # That refusal must go red here: a silent skip would leave the board
+      # ageing again, which is the exact failure this workflow exists to end.
+      - name: Harvest
+        run: node scripts/mkresults.js --days=${{ inputs.days || '8' }}
+
+      # A run that finds nothing new is the normal case on a quiet day, so it
+      # is not a failure and must not be an empty commit.
+      - name: Commit, if anything changed
+        run: |
+          if git diff --quiet -- data/results; then
+            echo "no new results - leaving the committed harvest as it is"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/results
+          git commit -m "Harvest the current season's results"
+          git push

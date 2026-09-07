@@ -71,12 +71,17 @@ test("every file gunzips to a parseable football-data CSV", () => {
       const rows = text.split(/\r?\n/).filter((r) => r.trim()).length;
       const looksMain = head.startsWith("Div,");
       const looksExtra = /Country/i.test(head) && /League/i.test(head);
+      /* The harvested current season, written by scripts/mkresults.js in the
+         generic layout normalise() also reads. It is not football-data's shape
+         and never will be - it does not come from football-data. */
+      const looksLive = head.startsWith("date,league,");
       /* A finished season is thousands of rows. The CURRENT season is not: it
          is three weeks old, so a division holding ten rows is a correct file,
          not a truncated one, and demanding twenty flagged every one of them. */
-      const finished = /^(2425|2526)_/.test(name) || name.startsWith("extra_");
+      const finished = (/^(2425|2526)_/.test(name) || name.startsWith("extra_")) &&
+        !name.startsWith("live_");
       const floor = finished ? 20 : 2;
-      if (!looksMain && !looksExtra) bad.push(name + " (header: " + head.slice(0, 60) + ")");
+      if (!looksMain && !looksExtra && !looksLive) bad.push(name + " (header: " + head.slice(0, 60) + ")");
       else if (rows < floor) bad.push(name + " (only " + rows + " rows)");
     } catch (e) {
       bad.push(name + " (" + e.message + ")");

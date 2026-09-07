@@ -62,11 +62,12 @@ function get(url) {
   /* 1. Fetch and store the source text verbatim. */
   const parsed = [];
   let dropped = 0, lines = 0;
+  const missing = [];
   for (const season of SEASONS) {
     for (const comp of COMPS) {
       let text;
       try { text = await get(`${RAW}/${season}/${comp}.txt`); }
-      catch (e) { continue; }                    /* not every season has every comp */
+      catch (e) { missing.push(`${season}/${comp}`); continue; }
       fs.writeFileSync(path.join(DIR, `${season}-${comp}.txt.gz`), zlib.gzipSync(text));
       const o = OF.parse(text);
       lines += o.rows.length + o.dropped.length;
@@ -76,6 +77,28 @@ function get(url) {
     }
   }
   if (!parsed.length) throw new Error("no matches parsed - refusing to write an empty corpus");
+
+  /* WHAT THE SOURCE DID NOT HAVE, SAID OUT LOUD.
+   *
+   * This loop used to `continue` past a 404 with the comment "not every season
+   * has every comp", which is true of the qualifying rounds and quietly untrue
+   * of everything else. openfootball never published el.txt or conf.txt for
+   * 2025-26, so the corpus behind the offsets committed on 7 Sep 2026 was
+   * missing the whole Europa and Conference league phase - about 317 matches
+   * of roughly 1,700, and concentrated in exactly the mid-table countries the
+   * offsets are least sure about. Nothing anywhere said so.
+   *
+   * A qualifying round is genuinely optional. A main stage is not: if one is
+   * missing the fit is being asked to describe European football from a
+   * fraction of it, and that is a decision for whoever is running this, not a
+   * line of log to scroll past. --allow-gaps is how they say yes. */
+  const mainMissing = missing.filter((x) => /\/(cl|el|conf)$/.test(x));
+  if (missing.length) console.log("NOT PUBLISHED BY THE SOURCE: " + missing.join(", "));
+  if (mainMissing.length && !process.argv.includes("--allow-gaps")) {
+    throw new Error(`${mainMissing.join(", ")} missing from openfootball - the fit would ` +
+      `describe European football without them. Re-run with --allow-gaps to accept that, ` +
+      `or wait for the source to publish them.`);
+  }
   /* A parser that has quietly stopped understanding the format shows up here
      as a drop rate, not as an error. Fail loudly rather than fit on a thinned
      corpus. */
@@ -131,6 +154,9 @@ function get(url) {
     generated: new Date().toISOString().slice(0, 10),
     source: "openfootball/champions-league @ " + sha,
     seasons: SEASONS,
+    /* Competitions the source had not published when this was fitted. An
+       artefact that does not state its own coverage cannot be argued with. */
+    gaps: missing,
     shrinkageK: picked.K,
     anchor: "England",
     /* The extra home advantage a European tie carries over the domestic

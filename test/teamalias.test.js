@@ -55,14 +55,19 @@ const RESOLVES = [
   ["Eintracht Frankfurt",     "Ein Frankfurt",   "Germany Bundesliga 1"],
   ["Cologne",                 "FC Koln",         "Germany Bundesliga 1"],
   ["Hamburger SV",            "Hamburg",         "Germany Bundesliga 1"],
-  ["Schalke",                 "Schalke 04",      "Germany Bundesliga 2"],
-  ["SV 07 Elversberg",        "Elversberg",      "Germany Bundesliga 2"],
+  /* Both promoted for 2026-27. The index takes a club's league from its
+     newest match, and the harvest in data/results/live_*.csv.gz is now the
+     newest thing in it - which is the point of harvesting at all. Before it
+     existed these two read as second-tier all season, because the floor
+     stops at May 2026. */
+  ["Schalke",                 "Schalke 04",      "Germany Bundesliga 1"],
+  ["SV 07 Elversberg",        "Elversberg",      "Germany Bundesliga 1"],
   ["Atletico Madrid",         "Ath Madrid",      "Spain La Liga 1"],
   ["Athletic Bilbao",         "Ath Bilbao",      "Spain La Liga 1"],
   ["Real Sociedad",           "Sociedad",        "Spain La Liga 1"],
   ["Rayo Vallecano",          "Vallecano",       "Spain La Liga 1"],
   ["Peterborough United",     "Peterboro",       "England League 1"],
-  ["Sheffield Wednesday",     "Sheffield Weds",  "England Championship"],
+  ["Sheffield Wednesday",     "Sheffield Weds",  "England League 1"],   /* relegated, and the harvest knows */
   ["Bristol Rovers",          "Bristol Rvs",     "England League 2"],
   ["Argentinos Juniors",      "Argentinos Jrs",  "Argentina Liga Profesional"],
   ["SE Palmeiras SP",         "Palmeiras",       "Brazil Serie A"],
