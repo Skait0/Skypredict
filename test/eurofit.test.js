@@ -109,3 +109,73 @@ test("chooseK scores every K on the grid and picks by held-out deviance", () => 
   assert.notEqual(got.K, 10000,
     "with 600 consistent matches the fit should not be dragged back to a badly wrong prior");
 });
+
+/* ---------------------------------------------- the European venue effect */
+
+/* WHY THIS IS A SEPARATE PARAMETER AND NOT MORE COUNTRY STRENGTH.
+ *
+ * Measured over the 618 cross-border matches in the committed corpus: home
+ * sides scored 7.0% ABOVE what the model expected and away sides 4.8% BELOW,
+ * under the imported priors and again after the offsets were fitted. The
+ * offsets could not absorb it and did not, because the two enter the mean
+ * differently:
+ *
+ *   a country offset FLIPS SIGN when the same pair swap venues
+ *   a venue effect does NOT
+ *
+ * so with each country playing about as often at home as away - every country
+ * in the corpus is within 0.14 of an even split - the two are separable. Fit
+ * them together or the offsets carry a share of a venue effect that has
+ * nothing to do with how strong anyone is. */
+
+test("a venue effect is recovered rather than pushed into the offsets", () => {
+  /* Two evenly matched countries, no real strength gap, but every home side
+     scores more than the model expects and every away side fewer. */
+  const ms = [];
+  for (let i = 0; i < 300; i++) { ms.push(tie("A1", "B1", 3, 1)); ms.push(tie("B2", "A2", 3, 1)); }
+  const out = F.fitOffsets({ matches: ms, modelOf, rungOf,
+    priors: { Aland: 0, Bland: 0 }, K: 1, fitHomeEdge: true });
+  assert.ok(out._homeEdge > 0.05,
+    "the venue effect must be found; got " + out._homeEdge);
+  assert.ok(Math.abs(out.Bland.offset - 0) < 0.05,
+    "and must not be paid for out of Bland's strength; got " + out.Bland.offset);
+});
+
+test("a real strength gap still lands on the country, not the venue", () => {
+  /* Aland win by the same margin home and away - strength, not venue. */
+  const ms = [];
+  for (let i = 0; i < 300; i++) { ms.push(tie("A1", "B1", 4, 0)); ms.push(tie("B2", "A2", 0, 4)); }
+  const out = F.fitOffsets({ matches: ms, modelOf, rungOf,
+    priors: { Aland: 0, Bland: 0 }, K: 1, fitHomeEdge: true });
+  assert.ok(out.Bland.offset > 0.2,
+    "Bland is genuinely weaker; got " + out.Bland.offset);
+  assert.ok(Math.abs(out._homeEdge) < 0.06,
+    "nothing here is about playing at home; got " + out._homeEdge);
+});
+
+test("asking for no venue fit leaves the old behaviour exactly", () => {
+  const ms = [];
+  for (let i = 0; i < 50; i++) { ms.push(tie("A1", "B1", 2, 1)); ms.push(tie("B2", "A2", 2, 1)); }
+  const shared = { matches: ms, modelOf, rungOf, priors: { Aland: 0, Bland: 0.2 }, K: 40 };
+  const off = F.fitOffsets(shared);
+  const on = F.fitOffsets(Object.assign({}, shared, { fitHomeEdge: true }));
+  assert.equal(off._homeEdge, 0, "no venue term unless it was asked for");
+  assert.notEqual(on._homeEdge, 0);
+});
+
+test("the venue effect is reported on the artefact's own scale", () => {
+  /* It reaches the board as an addition to tierEdge's edge, so it has to come
+     out in log goal-rate like the offsets - not a ratio, not a percentage. */
+  /* A believable bump, not the lopsided one the tests above use: 2-1 to the
+     home side against a model expecting 1.3 apiece. Feeding it 3-1 pins the
+     fit against its own +-0.5 guard, which tests the guard rather than the
+     scale. */
+  const ms = [];
+  for (let i = 0; i < 200; i++) { ms.push(tie("A1", "B1", 2, 1)); ms.push(tie("B2", "A2", 2, 1)); }
+  const out = F.fitOffsets({ matches: ms, modelOf, rungOf,
+    priors: { Aland: 0, Bland: 0 }, K: 1, fitHomeEdge: true });
+  assert.ok(out._homeEdge > 0 && out._homeEdge < 0.5,
+    "a plausible log-scale number; got " + out._homeEdge);
+  assert.equal(out._homeEdge, Math.round(out._homeEdge * 1e4) / 1e4,
+    "rounded like every other number in the artefact");
+});

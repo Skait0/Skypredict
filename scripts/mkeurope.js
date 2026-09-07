@@ -118,7 +118,13 @@ function get(url) {
                    priors, cap: B.COUNTRY_CAP };
   const picked = F.chooseK(shared);
   console.log("K chosen by five-fold held-out deviance:", picked.K);
-  const offsets = F.fitOffsets(Object.assign({}, shared, { K: picked.K }));
+  const offsets = F.fitOffsets(Object.assign({}, shared,
+    { K: picked.K, fitHomeEdge: true }));
+  const homeEdge = offsets._homeEdge;
+  delete offsets._homeEdge;
+  console.log("European venue effect:", homeEdge.toFixed(4),
+    "log goals (home x" + Math.exp(homeEdge).toFixed(3) +
+    ", away x" + Math.exp(-homeEdge).toFixed(3) + ")");
 
   /* 5. Write. */
   fs.writeFileSync(OUT, JSON.stringify({
@@ -127,6 +133,10 @@ function get(url) {
     seasons: SEASONS,
     shrinkageK: picked.K,
     anchor: "England",
+    /* The extra home advantage a European tie carries over the domestic
+       model, in log goal-rate. Added to the edge for cross-border fixtures
+       only - see countryHandicap's neighbours in lib/build.js. */
+    homeEdge: homeEdge,
     countries: offsets,
   }, null, 2) + "\n");
 
