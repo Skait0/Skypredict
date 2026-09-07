@@ -340,6 +340,22 @@ async function writePages(payload) {
     }
   }
 
+  /* THE DAY CODES, AND THE GRADING THEY ARE RENDERED WITH.
+     scripts/mkcode.js mints one slip a day and writes it down; nothing here
+     books anything - see that file for why a booking call must not happen five
+     times a day. `resultOf` reads the results the build already holds, keyed
+     the same way as everything else, so a day page grades itself as scores
+     arrive rather than needing a job of its own. */
+  let codeDays = [];
+  try {
+    const raw = fs.readFileSync(path.join(__dirname, "..", "data", "daily-codes.json"), "utf8");
+    codeDays = Object.values(JSON.parse(raw)).filter((e) => e && e.date && e.legs);
+  } catch (e) { /* none minted yet - the hub says so */ }
+  const byFixture = new Map();
+  for (const pg of pages) {
+    if (pg.r && pg.r.hg != null) byFixture.set(K.fixtureKey(pg.f.date, pg.f.home, pg.f.away), pg.r);
+  }
+  const resultOf = (leg) => byFixture.get(K.fixtureKey(leg.date || "", leg.home, leg.away)) || null;
   /* The standing pages: contact, privacy, terms, method, and the hub that
      makes every match page reachable by a link rather than only by sitemap.
      They go into the sitemap alongside the match pages, and they are written
@@ -364,6 +380,7 @@ async function writePages(payload) {
     ["/how-it-works", () => P.renderHowItWorks(stats)],
     ["/matches", () => P.renderMatchesIndex(pages.map((pg) => pg.f))],
     ["/how-to-load-a-booking-code", () => P.renderHowToCode()],
+    ["/booking-codes", () => P.renderCodesHub(codeDays, resultOf)],
   ];
 
   /* One page per day, written before the standing pages so `paths` carries
@@ -382,6 +399,19 @@ async function writePages(payload) {
       dayPages++;
     }
   } catch (e) { warn("day pages failed: " + e.message); }
+
+  /* One permanent page per day of codes. Dated by its own day, like the match
+     archive: once its games are graded it never changes again. */
+  let codePages = 0;
+  try {
+    if (codeDays.length) fs.mkdirSync(path.join(PUB, "booking-codes"), { recursive: true });
+    for (const e of codeDays) {
+      const rel = P.codesDayPath(e.date);
+      fs.writeFileSync(path.join(PUB, rel.slice(1) + ".html"), P.renderCodesDay(e, resultOf));
+      paths.push(e.date < today ? { path: rel, lastmod: e.date } : rel);
+      codePages++;
+    }
+  } catch (e) { warn("code pages failed: " + e.message); }
   let standingWritten = 0;
   for (const [rel, render] of standing) {
     try {
@@ -399,6 +429,11 @@ async function writePages(payload) {
   try {
     fs.copyFileSync(path.join(PUB, "matches.html"),
                     path.join(PUB, "matches", "index.html"));
+    /* Same file-and-directory collision as /matches, same answer. */
+    if (codeDays.length) {
+      fs.copyFileSync(path.join(PUB, "booking-codes.html"),
+                      path.join(PUB, "booking-codes", "index.html"));
+    }
   } catch (e) { warn("matches/index.html failed: " + e.message); }
 
   /* The 404 is written like the standing pages but is NOT one of them: it
@@ -414,7 +449,7 @@ async function writePages(payload) {
   fs.writeFileSync(path.join(PUB, "sitemap.xml"), P.renderSitemap(paths));
   fs.writeFileSync(path.join(PUB, "robots.txt"), P.renderRobots());
   log("pages: " + written + " match pages (" + (written - skipped) + " submitted, " +
-      skipped + " noindex until played) + " + dayPages + " day pages" + (failed ? " (" + failed + " failed)" : "") +
+      skipped + " noindex until played) + " + dayPages + " day pages + " + codePages + " code pages" + (failed ? " (" + failed + " failed)" : "") +
       " + " + standingWritten + " standing + " + (notFound ? "404 + " : "") +
       "sitemap.xml + robots.txt -> " + P.ORIGIN +
       (swept ? " (cleared " + swept + " stale)" : ""));

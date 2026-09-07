@@ -1,0 +1,58 @@
+{
+  "2026-09-08": {
+    "date": "2026-09-08",
+    "generated": "2026-09-07T22:57:30.807Z",
+    "firstKickoff": "2026-09-08T16:45:00.000Z",
+    "legs": [
+      {
+        "home": "Nijmegen",
+        "away": "Excelsior",
+        "league": "Netherlands Eredivisie",
+        "kickoff": "2026-09-08T16:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9175,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Wrexham",
+        "away": "Burnley",
+        "league": "England Championship",
+        "kickoff": "2026-09-08T18:45:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.7967,
+        "market": "1X"
+      },
+      {
+        "home": "Cardiff",
+        "away": "Stoke",
+        "league": "England Championship",
+        "kickoff": "2026-09-08T18:45:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.7938,
+        "market": "1X"
+      },
+      {
+        "home": "Bolton",
+        "away": "West Ham",
+        "league": "England Championship",
+        "kickoff": "2026-09-08T19:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.769,
+        "market": "1X"
+      },
+      {
+        "home": "Crystal Palace",
+        "away": "Middlesbrough",
+        "league": "England EFL Cup",
+        "kickoff": "2026-09-08T18:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.7627,
+        "market": "OVER_1.5"
+      }
+    ],
+    "codes": {
+      "sporty": "WZDKEL",
+      "bet9ja": "5QP7W7C"
+    }
+  }
+}

@@ -25,6 +25,9 @@ public/terms.html
 public/how-it-works.html
 public/matches.html
 public/matches/
+public/booking-codes.html
+public/how-to-load-a-booking-code.html
+public/booking-codes/
 public/404.html
 
 .vercel

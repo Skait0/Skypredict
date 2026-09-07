@@ -44,11 +44,16 @@ test("the how-to is a page we ask to have indexed", () => {
   assert.match(html, /<title>How to load a booking code on SportyBet and Bet9ja/);
 });
 
-test("it is reachable from every page, or it is a doorway", () => {
+test("it is reachable, or it is a doorway", () => {
   /* A page built for search that no user path reaches is a doorway page, which
-     Google names and penalises. The footer is on every static page and every
-     match page, so this is the link that makes it part of the site. */
-  assert.match(P.pageFooter(), /href="\/how-to-load-a-booking-code"/);
+     Google names and penalises. The footer carries /booking-codes on every page
+     of the site, and the codes hub carries this one - so the path from any page
+     is two clicks, and both links are ones a reader would actually follow. */
+  assert.match(P.pageFooter(), /href="\/booking-codes"/,
+    "the footer no longer reaches the codes hub");
+  const hub = P.renderCodesHub([{ date: "2026-09-08", legs: [], codes: {} }], null);
+  assert.match(hub, /href="\/how-to-load-a-booking-code"/,
+    "the hub no longer links the how-to, which leaves it reachable from nowhere");
 });
 
 test("the build writes it and lists it", () => {
