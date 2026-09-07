@@ -188,3 +188,39 @@ test("the checks that ran before the gate still run first", async () => {
   assert.equal(noSel._o.code, 400);
   assert.equal(seen.length, 0, "neither should have consulted the quota");
 });
+
+/* ---------------------------------------------------------- diagnosis */
+
+test("the response says whether the quota actually counted", async () => {
+  /* Without this the only two observable states are "429" and "everything
+     else", and a quota that silently fails open is indistinguishable from one
+     that is working. Learned the hard way: the first production deploy showed
+     no quota header at all and the logs, which swallow the reason on purpose,
+     could not say why. */
+  const r = res();
+  await withUpstream(200, CODE, () =>
+    BP.makeHandler({ gate: gate({ allow: true, counted: true, remaining: 4 }) })(post(), r));
+  assert.equal(r._o.headers["X-Sw-Quota"], "counted");
+});
+
+test("and says when it could not count, without saying why to the world", async () => {
+  /* "open" and nothing more: a reader gets no detail about our database, and
+     we get a signal we can watch from outside. */
+  const r = res();
+  await withUpstream(200, CODE, () =>
+    BP.makeHandler({ gate: async () => { throw new Error("supabase down"); } })(post(), r));
+  assert.equal(r._o.headers["X-Sw-Quota"], "open");
+});
+
+test("a refusal is labelled too", async () => {
+  const r = res();
+  await BP.makeHandler({ gate: gate({ allow: false, counted: true, remaining: 0 }) })(post(), r);
+  assert.equal(r._o.headers["X-Sw-Quota"], "blocked");
+});
+
+test("with no gate at all the header is absent, not 'open'", async () => {
+  /* Off is not the same as broken, and the two must not look alike. */
+  const r = res();
+  await withUpstream(200, CODE, () => BP.makeHandler()(post(), r));
+  assert.equal(r._o.headers["X-Sw-Quota"], undefined);
+});
