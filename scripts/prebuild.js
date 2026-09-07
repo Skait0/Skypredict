@@ -363,6 +363,7 @@ async function writePages(payload) {
     ["/terms", () => P.renderTerms(updated)],
     ["/how-it-works", () => P.renderHowItWorks(stats)],
     ["/matches", () => P.renderMatchesIndex(pages.map((pg) => pg.f))],
+    ["/how-to-load-a-booking-code", () => P.renderHowToCode()],
   ];
 
   /* One page per day, written before the standing pages so `paths` carries
