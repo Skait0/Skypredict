@@ -116,8 +116,35 @@ test("an outage is not pinned in Cloudflare for longer than in Vercel", () => {
   assert.equal(out.tag, "stale-after-error");
   assert.ok(windowOf(out.cdnCacheControl) <= windowOf(out.cacheControl),
     "the un-purgeable cache must be the one that lets go first");
-  assert.ok(worstCaseStaleness({ cdn: out.cdnCacheControl, vercel: out.cacheControl }) <= 20,
-    "a stale board must clear in seconds");
+  const policy = { cdn: out.cdnCacheControl, vercel: out.cacheControl };
+  /* Measured both ways deliberately. The error path drops
+     stale-while-revalidate altogether - 5s on Cloudflare, 10s on Vercel - so
+     the fresh window and the age a reader is handed are the same number here,
+     and "clears in seconds" is true rather than an artefact of a helper that
+     only counts freshness. The happy path is the one where they diverge; see
+     the test below. */
+  assert.ok(worstCaseStaleness(policy) <= 20, "a stale board must clear in seconds");
+  assert.equal(worstServedAge(policy), worstCaseStaleness(policy),
+    "no grace is offered after an error, so there is nothing extra to serve");
+});
+
+test("the live feed's normal policy trades three minutes of staleness for egress", () => {
+  /* THE NUMBER THAT WAS NEVER WRITTEN DOWN. In normal operation the live feed
+     asks for a 10s fresh window on each cache and then 60s of grace on
+     Cloudflare and 120s on Vercel, so a reader can be handed a score up to
+     200 seconds old - ten times what the error-path test above allows.
+     That is a deliberate trade, not a bug: closing it turns every
+     grace-window hit into an origin fetch on the busiest feed on the site,
+     and egress is exactly what the three-tier split was built to control.
+     Asserted so the budget is a decision on the record rather than a surprise
+     found later in a header. */
+  const policy = { cdn: FEEDS.live.cdn, vercel: FEEDS.live.cache };
+  assert.equal(worstCaseStaleness(policy), 20, "fresh windows are 10s on each cache");
+  const served = worstServedAge(policy);
+  assert.ok(served > worstCaseStaleness(policy),
+    "the grace windows are the whole point of this test");
+  assert.ok(served <= 200,
+    "a live score should not outlive about three minutes; got " + served);
 });
 
 test("a total upstream failure is cached nowhere at all", () => {
