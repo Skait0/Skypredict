@@ -287,3 +287,85 @@ test("a past day is dated by its day and /matches resolves either way", () => {
     "matches.html and matches/ both exist; without the copy, which one /matches " +
     "serves is Vercel's decision rather than ours");
 });
+
+/* ------------------------------------------------------- crawl structure */
+
+test("a match page links its own day and a handful of siblings", () => {
+  /* Every match page linked "/", "/matches" and the standing pages and nothing
+     else - 1,200 leaves with no lateral paths, which is most of what
+     "Discovered - currently not indexed" means. */
+  const P = require("../lib/pages.js");
+  const day = [];
+  for (let i = 0; i < 40; i++) {
+    day.push({ date: "2026-09-12", league: "L", home: "H" + i, away: "A" + i });
+  }
+  const html = P.renderMatchPage(day[0], null, day);
+  const links = (html.match(/href="\/m\/[^"]+"/g) || []);
+  assert.strictEqual(links.length, 8,
+    "eight siblings; the whole day would rebuild the wall of anchors the hub split removed");
+  assert.ok(!links.some((l) => l.includes("/m/h0-vs-a0-")), "a page must not link to itself");
+  assert.match(html, /href="\/matches\/2026-09-12"/, "no link to its own day");
+  assert.match(html, /All 40 matches on/);
+});
+
+test("a match page with no siblings says nothing rather than an empty list", () => {
+  const P = require("../lib/pages.js");
+  const only = { date: "2026-09-12", league: "L", home: "A", away: "B" };
+  const html = P.renderMatchPage(only, null, [only]);
+  assert.doesNotMatch(html, /Also on/, "a lone fixture should not print an empty section");
+});
+
+test("both page types declare where they sit", () => {
+  const P = require("../lib/pages.js");
+  const list = [{ date: "2026-09-12", league: "L", home: "Arsenal", away: "Chelsea" }];
+  for (const [what, html] of [["match", P.renderMatchPage(list[0], null, list)],
+                              ["day", P.renderMatchesDay("2026-09-12", list)]]) {
+    const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+      .map((m) => JSON.parse(m[1]));
+    const types = blocks.map((b) => b["@type"]);
+    assert.ok(types.includes("BreadcrumbList"), what + " page has no BreadcrumbList");
+    const crumb = blocks.find((b) => b["@type"] === "BreadcrumbList");
+    assert.ok(crumb.itemListElement.every((i) => /^https?:\/\//.test(i.item)),
+      "every crumb must be an absolute URL");
+  }
+});
+
+test("a day page lists its matches as an ItemList", () => {
+  const P = require("../lib/pages.js");
+  const list = [{ date: "2026-09-12", league: "L", home: "A", away: "B" },
+                { date: "2026-09-12", league: "L", home: "C", away: "D" }];
+  const html = P.renderMatchesDay("2026-09-12", list);
+  const items = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+    .map((m) => JSON.parse(m[1])).find((b) => b["@type"] === "ItemList");
+  assert.ok(items, "no ItemList on the day page");
+  assert.strictEqual(items.numberOfItems, 2);
+  assert.strictEqual(items.itemListElement[0].url, P.ORIGIN + "/m/a-vs-b-2026-09-12");
+});
+
+test("a club name cannot break out of a JSON-LD block", () => {
+  /* Names arrive from a feed. Without escaping, `A</script><script>` closes
+     the block and opens its own. */
+  const P = require("../lib/pages.js");
+  const nasty = { date: "2026-09-12", league: "L", home: "A</script><script>x", away: "B" };
+  const html = P.renderMatchPage(nasty, null, [nasty]);
+  const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+  assert.strictEqual(blocks.length, 2, "a name closed a JSON-LD block early");
+  blocks.forEach((b) => JSON.parse(b[1]));
+});
+
+test("titles stay inside what a result page shows", () => {
+  const P = require("../lib/pages.js");
+  const f = { date: "2026-09-12", league: "England Premier League",
+              home: "Crystal Palace", away: "Ipswich" };
+  const t = (P.renderMatchPage(f, null, [f]).match(/<title>([^<]*)/) || [])[1];
+  assert.ok(t.length <= 62, "title is " + t.length + " chars: " + t);
+  assert.match(t, /^Crystal Palace vs Ipswich/, "the clubs must lead, not survive the truncation");
+});
+
+test("the home page has exactly one h1", () => {
+  const idx = fs.readFileSync(path.join(ROOT, "public", "index.html"), "utf8");
+  const n = (idx.match(/<h1[\s>]/g) || []).length;
+  assert.strictEqual(n, 1,
+    "found " + n + " h1s; the board, the builder and live scores are three views " +
+    "of one page and only one of them is the page's subject");
+});

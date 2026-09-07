@@ -310,11 +310,15 @@ async function writePages(payload) {
     }
   } catch (e) { warn("could not clear public/m: " + e.message); }
   const paths = [];
+  /* Every page needs the rest of its own day, so the grouping happens once
+     here rather than per page - see sameDayBlock in lib/pages.js. */
+  const sameDay = P.groupByDate(pages.map((pg) => pg.f));
   let written = 0, failed = 0;
   for (const pg of pages) {
     try {
       const rel = P.pagePath(pg.f);
-      fs.writeFileSync(path.join(PUB, rel + ".html"), P.renderMatchPage(pg.f, pg.r));
+      fs.writeFileSync(path.join(PUB, rel + ".html"),
+        P.renderMatchPage(pg.f, pg.r, sameDay[pg.f.date]));
       /* A played match is dated by the day it was played, not by this build.
          Its page is the score and how our tip did against it, and neither
          changes again - see renderSitemap for what claiming otherwise cost us.
