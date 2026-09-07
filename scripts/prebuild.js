@@ -313,7 +313,7 @@ async function writePages(payload) {
   /* Every page needs the rest of its own day, so the grouping happens once
      here rather than per page - see sameDayBlock in lib/pages.js. */
   const sameDay = P.groupByDate(pages.map((pg) => pg.f));
-  let written = 0, failed = 0;
+  let written = 0, failed = 0, skipped = 0;
   for (const pg of pages) {
     try {
       const rel = P.pagePath(pg.f);
@@ -324,8 +324,15 @@ async function writePages(payload) {
          changes again - see renderSitemap for what claiming otherwise cost us.
          An upcoming fixture keeps the build date, because its prediction
          genuinely is rebaked every deploy. */
+      /* Only the graded pages are SUBMITTED. An unplayed fixture is written -
+         it is the page a reader lands on from the board - but it carries
+         noindex, and a sitemap is a list of pages you are asking to have
+         indexed. Listing one we have told Google to skip is a contradiction it
+         reports back as an error. See renderMatchPage for why the two halves
+         are treated differently. */
       const played = pg.r && pg.r.hg != null && pg.r.ag != null;
-      paths.push(played ? { path: rel, lastmod: pg.r.date || pg.f.date } : rel);
+      if (played) paths.push({ path: rel, lastmod: pg.r.date || pg.f.date });
+      else skipped++;
       written++;
     } catch (e) {
       failed++;
@@ -405,7 +412,8 @@ async function writePages(payload) {
 
   fs.writeFileSync(path.join(PUB, "sitemap.xml"), P.renderSitemap(paths));
   fs.writeFileSync(path.join(PUB, "robots.txt"), P.renderRobots());
-  log("pages: " + written + " match pages + " + dayPages + " day pages" + (failed ? " (" + failed + " failed)" : "") +
+  log("pages: " + written + " match pages (" + (written - skipped) + " submitted, " +
+      skipped + " noindex until played) + " + dayPages + " day pages" + (failed ? " (" + failed + " failed)" : "") +
       " + " + standingWritten + " standing + " + (notFound ? "404 + " : "") +
       "sitemap.xml + robots.txt -> " + P.ORIGIN +
       (swept ? " (cleared " + swept + " stale)" : ""));

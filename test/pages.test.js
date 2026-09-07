@@ -96,10 +96,13 @@ test("club names are escaped, not injected", () => {
   assert.match(html, /&lt;script&gt;/);
 });
 
-test("every page states its own canonical url", () => {
+test("a page we ask to have indexed states its own canonical url", () => {
+  /* Only the graded page is submitted now - an unplayed fixture carries
+     noindex instead, and a noindexed page claiming to be canonical is a
+     contradiction. See renderMatchPage. */
   const f = fixture();
-  const html = P.renderMatchPage(f, null);
-  assert.ok(html.includes('rel="canonical" href="' + P.ORIGIN + P.pagePath(f) + '"'));
+  const played = P.renderMatchPage(f, Object.assign({ hg: 1, ag: 0, tip: "Home win" }, f));
+  assert.ok(played.includes('rel="canonical" href="' + P.ORIGIN + P.pagePath(f) + '"'));
 });
 
 test("the structured data parses and names both sides", () => {
@@ -263,8 +266,46 @@ test("prebuild dates a page from its result rather than from the clock", () => {
      would put every page back on the build stamp with extra steps. */
   const pre = require("fs").readFileSync(
     require("path").join(__dirname, "..", "scripts", "prebuild.js"), "utf8");
-  const i = pre.indexOf("paths.push(played");
+  const i = pre.indexOf("if (played) paths.push(");
   assert.ok(i > 0, "prebuild no longer dates match pages individually");
   assert.match(pre.slice(i, i + 140), /lastmod: pg\.r\.date \|\| pg\.f\.date/,
     "the date must come from the result, not from the build clock");
+});
+
+/* ----------------------------------------------- what we ask to be indexed */
+
+test("an unplayed fixture is noindex, a graded one is not", () => {
+  /* 84 pages indexed against 1,157 not is a verdict on the set, not on any
+     page in it. A pre-match tip page is generated for every fixture, rewritten
+     every deploy and stale within days; the graded page is the score plus the
+     tip we published before it, which nobody else has. Only the second is
+     worth asking Google to index on a domain this young. */
+  const f = { date: "2026-09-12", league: "L", home: "Arsenal", away: "Chelsea" };
+  const upcoming = P.renderMatchPage(f, null, [f]);
+  assert.match(upcoming, /<meta name="robots" content="noindex,follow">/);
+  assert.doesNotMatch(upcoming, /rel="canonical"/,
+    "a noindexed page should not also claim to be canonical");
+
+  const played = P.renderMatchPage(f,
+    Object.assign({ hg: 2, ag: 1, tip: "Home win", hit: true }, f), [f]);
+  assert.doesNotMatch(played, /noindex/, "a graded page is the one page we do want indexed");
+  assert.match(played, /rel="canonical"/);
+});
+
+test("noindex says follow, so nothing is orphaned", () => {
+  /* The links still have to carry: the day pages reach every match through
+     them, and "noindex" alone would cut those paths. */
+  const f = { date: "2026-09-12", league: "L", home: "A", away: "B" };
+  assert.match(P.renderMatchPage(f, null, [f]), /content="noindex,follow"/);
+});
+
+test("the sitemap never lists a page we told Google to skip", () => {
+  /* A sitemap is a list of pages you are asking to have indexed. Listing a
+     noindexed one is a contradiction Search Console reports back as an error. */
+  const pre = require("fs").readFileSync(
+    require("path").join(__dirname, "..", "scripts", "prebuild.js"), "utf8");
+  const i = pre.indexOf("const played = pg.r && pg.r.hg != null");
+  assert.ok(i > 0, "prebuild no longer distinguishes played from upcoming");
+  assert.match(pre.slice(i, i + 220), /if \(played\) paths\.push\(/,
+    "unplayed fixtures are being submitted again");
 });

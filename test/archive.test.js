@@ -115,6 +115,6 @@ test("prebuild refuses an archived row with no score", () => {
 
 test("an archived page is dated by its match, not by the build", () => {
   const pre = fs.readFileSync(path.join(__dirname, "..", "scripts", "prebuild.js"), "utf8");
-  assert.match(pre, /paths\.push\(played \? \{ path: rel, lastmod: pg\.r\.date \|\| pg\.f\.date \}/,
+  assert.match(pre, /if \(played\) paths\.push\(\{ path: rel, lastmod: pg\.r\.date \|\| pg\.f\.date \}\)/,
     "the whole point of keeping the page is that its date stops moving");
 });
