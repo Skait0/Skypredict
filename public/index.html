@@ -2848,6 +2848,10 @@ html.mode-live #live{display:block}
 .day-opt.on{background:var(--card-2)}
 .day-opt.on .dy-n{color:var(--red)}
 .day-opt.on .dy-c{background:var(--red);color:#fff}
+/* The multi-day options open the same menu as the days - they answer the same
+   question, how wide is the window. One hairline separates the two kinds; a
+   line between each span would read as a list of sections. */
+.day-opt.day-span+.day-opt:not(.day-span){border-top:1px solid var(--line)}
 
 @media (max-width:640px){
   /* The invisible control already fills the row, so the tap target is the
@@ -8072,7 +8076,7 @@ var SCOPE="day";
    makes, for the same reason. */
 try{ if(!localStorage.getItem("sw.scopedflt2")){ localStorage.removeItem("sw.scope");
   localStorage.setItem("sw.scopedflt2","1"); } }catch(e){}
-try{var sc0=localStorage.getItem("sw.scope"); if(sc0==="day"||sc0==="all") SCOPE=sc0;}catch(e){}
+try{var sc0=localStorage.getItem("sw.scope"); if(sc0==="day"||sc0==="all"||sc0==="span") SCOPE=sc0;}catch(e){}
 /* Which single day the "day" window points at: 0 today, 1 tomorrow, and so on.
    Only meaningful while SCOPE is "day". A saved offset can outlive its
    fixtures - yesterday's "tomorrow" is today - so clampDay() pulls it back to
@@ -8080,6 +8084,16 @@ try{var sc0=localStorage.getItem("sw.scope"); if(sc0==="day"||sc0==="all") SCOPE
 var SDAY=0;
 try{var sd0=parseInt(localStorage.getItem("sw.sday"),10);
   if(!isNaN(sd0)&&sd0>=0&&sd0<=14) SDAY=sd0;}catch(e){}
+/* How wide the "span" window is, in days counted from SDAY. Asked for:
+   "we should be able to choose certain amount of days for the games to span.
+   Not just 1 day or all upcoming." Only meaningful while SCOPE is "span",
+   and a stored width we no longer offer falls back to the narrowest rather
+   than to a number nobody picked. */
+var SPAN_CHOICES=[2,3,7];
+var SPAN=3;
+try{var sp0=parseInt(localStorage.getItem("sw.span"),10);
+  if(SPAN_CHOICES.indexOf(sp0)>=0) SPAN=sp0;}catch(e){}
+function spanName(n){return "Next "+n+" days";}
 /* Time of day, by local kickoff. Someone building a slip at lunchtime does
    not want games that started this morning, and someone who will be watching
    in the evening wants only the evening card. The cuts follow how a day
@@ -8148,11 +8162,21 @@ function clearLeaguePicks(){
   BLD_LEAGUES={};
   try{localStorage.removeItem("sw.bldleagues");}catch(e){}
 }
+/* Is this fixture inside the window - the ONE answer, because the board, the
+   league picker and the counts drift apart the moment there are two copies of
+   it. A second copy of exactly this predicate is what produced the chip-count
+   bug ("Count the chips after the search box"). */
+function inScope(f){
+  var o=dayOff(f.date);
+  if(SCOPE==="day") return o===SDAY;
+  if(SCOPE==="span") return o>=SDAY&&o<SDAY+SPAN;
+  return true;
+}
 function scopeFixtures(){
   return todFixtures(DATA.fixtures.filter(function(f){
     if(!notStarted(f)) return false;
     if(!leagueAllowed(f.league)) return false;
-    return SCOPE!=="day"||dayOff(f.date)===SDAY;
+    return inScope(f);
   }));
 }
 /* The leagues actually available to choose from, with how many games each has
@@ -8163,7 +8187,7 @@ function leaguesOnBoard(){
   var seen={};
   todFixtures(DATA.fixtures.filter(function(f){
     if(!notStarted(f)) return false;
-    return SCOPE!=="day"||dayOff(f.date)===SDAY;
+    return inScope(f);
   })).forEach(function(f){
     if(TOP_ONLY&&isLowerFixture(f)) return;
     seen[f.league]=(seen[f.league]||0)+1;
@@ -8205,6 +8229,20 @@ function buildableAll(){
     return notStarted(f)&&leagueAllowed(f.league)&&!(TOP_ONLY&&isLowerFixture(f));
   });
 }
+/* The same three filters across the whole span, for the pill that is showing
+   one. Built from buildableOn so there is no third copy of the filters. */
+function buildableSpan(){
+  var out=[];
+  for(var i=0;i<SPAN;i++) out=out.concat(buildableOn(SDAY+i));
+  return out;
+}
+/* Structural, like dayBuildable and for the same reason: it decides what the
+   day menu offers, and a league choice must not make the menu rearrange. */
+function spanBuildable(n,start){
+  var t=0;
+  for(var i=0;i<n;i++) t+=dayBuildable(start+i);
+  return t;
+}
 /* Every day from today forward that still has a game to build with, ascending.
    Days whose fixtures have all kicked off drop out, so the picker never offers
    an empty day. */
@@ -8231,19 +8269,23 @@ function paintScope(){
   });
   var dayBtn=$("scopeDayBtn");
   if(dayBtn){
-    var dayOn=SCOPE==="day";
+    /* The pill is the narrow window whichever shape it is in - one day or a
+       run of them. Only "All upcoming" turns it off. */
+    var dayOn=SCOPE!=="all";
     dayBtn.classList.toggle("on",dayOn);
     dayBtn.setAttribute("aria-pressed",dayOn?"true":"false");
   }
   /* "Today only" reads best when the day really is today; any other choice
      shows its own name ("Tomorrow", "Saturday") so the pill says what it does. */
   var lbl=$("scopeDayLbl");
-  if(lbl) lbl.textContent = SDAY===0 ? "Today only" : dayName(SDAY);
+  if(lbl) lbl.textContent = SCOPE==="span" ? spanName(SPAN)
+        : (SDAY===0 ? "Today only" : dayName(SDAY));
   /* Counts make the choice concrete: "12" against "168" says more about what
      the switch does than either label manages on its own. The day pill counts
      against the day it points at. */
   try{
-    var n={day:buildableOn(SDAY).length,all:buildableAll().length};
+    var n={day:SCOPE==="span"?buildableSpan().length:buildableOn(SDAY).length,
+           all:buildableAll().length};
     seg.querySelectorAll("[data-scope-n]").forEach(function(el){
       el.textContent=n[el.getAttribute("data-scope-n")];
     });
@@ -8307,6 +8349,24 @@ function setDay(off){
   if(SCOPE!=="day"){SCOPE="day"; try{localStorage.setItem("sw.scope","day");}catch(e){} changed=true;}
   if(off!==SDAY){SDAY=off; try{localStorage.setItem("sw.sday",off);}catch(e){} changed=true;}
   if(!changed) return false;
+  paintScope(); return true;
+}
+/* Point the window at a run of days. Same shape as setDay: choosing a span is
+   also choosing the narrow window. It starts at the first day that still has
+   games, so "Next 3 days" is the next three rather than three counted from a
+   day already played out - or from a Saturday picked earlier. */
+function setSpan(n){
+  if(SPAN_CHOICES.indexOf(n)<0) return false;
+  var list=dayPickList(), start=list.length?list[0]:0;
+  if(SCOPE==="span"&&SPAN===n&&SDAY===start) return false;
+  SCOPE="span"; SPAN=n; SDAY=start;
+  try{localStorage.setItem("sw.scope","span");
+    localStorage.setItem("sw.span",String(n));
+    localStorage.setItem("sw.sday",String(start));}catch(e){}
+  /* Early / mid / late slice ONE day. A span is not one day, so the bucket
+     retires with the widening - the same rule "All upcoming" follows, and
+     todFixtures already ignores TOD outside a single day. */
+  if(TOD!=="all") TOD="all";
   paintScope(); return true;
 }
 /* Persist and repaint only - callers decide what to re-render, because a change
@@ -11988,7 +12048,21 @@ function openDayMenu(btn){
   if(!list.length) return;
   var m=document.createElement("div");
   m.className="swap-menu day-menu"; m._btn=btn; m.setAttribute("role","listbox");
-  m.innerHTML=list.map(function(o){
+  /* Above the days, not under them: the menu holds every day the payload
+     carries - sixteen of them today - and anything below that list is past
+     the fold of a scrolling menu, which is the same as not being offered.
+     It is also the wider answer, and the pill it drops out of reads as the
+     narrow window, so the choices run narrow-last. */
+  m.innerHTML=SPAN_CHOICES.map(function(n){
+    var cur=(SCOPE==="span"&&SPAN===n);
+    var s0=list[0];
+    return "<button type='button' role='option' class='day-opt day-span"+(cur?" on":"")+"'"+
+      (cur?" aria-selected='true'":"")+" data-span='"+n+"'>"+
+      "<span class='dy-n'>"+esc(spanName(n))+"</span>"+
+      "<span class='dy-d'>"+esc(dayDate(s0))+" - "+esc(dayDate(s0+n-1))+"</span>"+
+      "<span class='dy-c'>"+spanBuildable(n,s0)+"</span></button>";
+  }).join("")+
+  list.map(function(o){
     var cur=(SCOPE==="day"&&o===SDAY);
     return "<button type='button' role='option' class='day-opt"+(cur?" on":"")+"'"+
       (cur?" aria-selected='true'":"")+" data-off='"+o+"'>"+
@@ -12009,6 +12083,17 @@ function openDayMenu(btn){
   m.style.top=top+"px"; m.style.left=left+"px";
   btn.setAttribute("aria-expanded","true");
   DAYMENU=m;
+  m.querySelectorAll("[data-span]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var n=parseInt(b.dataset.span,10); closeDayMenu();
+      /* Same reset as every other window change: the pool moved. */
+      if(setSpan(n)){
+        BUILD.removed={}; BUILD.touched=true;
+        WSP.removed={}; WSP._slip=null; WSP._sig=null;
+        $("bookResult").innerHTML=""; renderBuilder();
+      }
+    });
+  });
   m.querySelectorAll("[data-off]").forEach(function(b){
     b.addEventListener("click",function(){
       var off=parseInt(b.dataset.off,10); closeDayMenu();
@@ -13584,7 +13669,8 @@ function renderLeaguePicker(){
      was looking at a day on which nearly every top flight was playing - all
      of them outside the Early window. The list was right and said nothing
      about why, which is the same thing as being wrong. */
-  var win = (SCOPE!=="day") ? "in all upcoming games"
+  var win = (SCOPE==="all") ? "in all upcoming games"
+          : (SCOPE==="span") ? ("in the next "+SPAN+" days")
           : ("playing "+(TOD==="all" ? "" :
               (TOD==="early"?"in the morning ":TOD==="mid"?"in the afternoon ":"in the evening "))+
              dayName(SDAY).toLowerCase());
@@ -13853,7 +13939,7 @@ function renderWizardPanel(){
   window.askWiderWindow=function(typed,ceil){
     if(!showPrompt("payAsk",
       "<div class='confirm-card'><p><b>\u00d7"+payLbl(typed)+" needs a wider window.</b> "+
-      "A single day rarely holds the games for it, so today tops out at "+
+      "A narrow window rarely holds the games for it, so this one tops out at "+
       "<b>\u00d7"+payLbl(ceil)+"</b>. All upcoming can reach it.</p>"+
       "<div class='ca'><button class='confirm-go' type='button'>Use all upcoming</button>"+
       "<button class='confirm-cancel' type='button'>Keep \u00d7"+payLbl(ceil)+"</button></div></div>")) return;
@@ -13891,7 +13977,7 @@ function renderWizardPanel(){
       var v=Math.max(2,Math.min(_ceil,_typed));
       _cust.value=v;
       /* Clamped, and the wider window would not have clamped it. */
-      var _needsWider=(_typed>_ceil && SCOPE==="day" && _typed<=(WSP._wideMaxTarget||50000));
+      var _needsWider=(_typed>_ceil && SCOPE!=="all" && _typed<=(WSP._wideMaxTarget||50000));
       if(v!==WSP.odds){
         WSP.odds=v; WSP._sig=null;
         try{localStorage.setItem("sw.wspodds",String(v));}catch(e){}
@@ -13986,7 +14072,7 @@ function renderBuilderOutput(){
          answerable left the cached slip from one method sitting under a row
          lit for another. Auto is gone, but the coupling is the point and costs
          a function call. */
-      var _sig=[WSP.odds,WSP.legodd,wspStyleOn(),WSP.seed,JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE,SDAY,TOD,!!WSP.everyGame].join("|");
+      var _sig=[WSP.odds,WSP.legodd,wspStyleOn(),WSP.seed,JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE,SDAY,SPAN,TOD,!!WSP.everyGame].join("|");
       if(WSP._sig!==_sig || !WSP._slip){
         WSP._slip=wspBuild().picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};});
         WSP._sig=_sig;
@@ -14054,10 +14140,11 @@ function renderBuilderOutput(){
     $("slip").innerHTML="<div class='bld-empty'><b>"+picks.length+" game"+(picks.length===1?"":"s")+" ready</b>"+
       "<p>Tap Conjure to reveal your slip.</p></div>";
   } else if(!picks.length){
-    var dry=(SCOPE==="day")&&!scopeFixtures().length;
+    var dry=(SCOPE!=="all")&&!scopeFixtures().length;
     /* Name the day that came up empty rather than always saying "today" - with
        a day picked, the blank board might be tomorrow or Saturday. */
-    var dryDay=SDAY===0?"today":(SDAY===1?"tomorrow":dayName(SDAY));
+    var dryDay=SCOPE==="span"?("in the next "+SPAN+" days")
+      :(SDAY===0?"today":(SDAY===1?"tomorrow":dayName(SDAY)));
     $("slip").innerHTML="<div class='bld-empty'><b>"+(isWiz?(WSP.conjured?"No slip yet":"Ready when you are")+"":"Nothing in your slip")+"</b>"+
       (isWiz?(WSP.conjured?("No games match your wizard settings - try a lower payout"+(leaguesChosen()?", widen the leagues":"")+" or enable more markets."):"Tap a target payout to preview your slip.")
        : (dry?("No fixtures "+(SDAY===0?"left ":"")+dryDay+(TOD!=="all"?" in this time window":"")+(leaguesChosen()?" in the leagues you picked":"")+" - "+(leaguesChosen()?"widen the leagues":"switch to All upcoming")+" to keep building.")

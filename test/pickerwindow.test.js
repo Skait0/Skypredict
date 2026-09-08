@@ -37,7 +37,8 @@ test("the picker names its time window rather than a bare count", () => {
 
   /* The window phrase has to be built from the live scope and bucket, not
      hard-coded, or it will drift the moment either changes. */
-  assert.match(body, /SCOPE!=="day"/, "the wide-window case must be handled");
+  assert.match(body, /SCOPE==="all"/, "the wide-window case must be handled");
+  assert.match(body, /SCOPE==="span"/, "the span window must be named too");
   assert.match(body, /TOD==="all"/, "the all-day case must be handled");
   for (const phrase of ["in the morning", "in the afternoon", "in the evening"]) {
     assert.ok(body.indexOf(phrase) >= 0, "missing wording for " + phrase);

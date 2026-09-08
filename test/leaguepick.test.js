@@ -36,7 +36,7 @@ function harness(fixtures) {
     "var localStorage={getItem:function(k){return STORE[k]===undefined?null:STORE[k];}," +
     "setItem:function(k,v){STORE[k]=String(v);},removeItem:function(k){delete STORE[k];}};" +
     "var DATA={fixtures:FX};" +
-    "var SCOPE='all', SDAY=0, TOD='all', TOP_ONLY=false;" +
+    "var SCOPE='all', SDAY=0, SPAN=3, TOD='all', TOP_ONLY=false;" +
     "function notStarted(){return true;}" +
     "function dayOff(){return 0;}" +
     "function todFixtures(l){return l;}" +
@@ -45,7 +45,7 @@ function harness(fixtures) {
     "var BLD_LEAGUES={};" +
     grab("leaguesChosen") + grab("leagueAllowed") + grab("leagueChosenCount") +
     grab("setLeaguePicked") + grab("clearLeaguePicks") +
-    grab("scopeFixtures") + grab("leaguesOnBoard") + "\n" +
+    grab("inScope") + grab("scopeFixtures") + grab("leaguesOnBoard") + "\n" +
     "return {scopeFixtures:scopeFixtures, leaguesOnBoard:leaguesOnBoard," +
     " setLeaguePicked:setLeaguePicked, clearLeaguePicks:clearLeaguePicks," +
     " leagueAllowed:leagueAllowed, leagueChosenCount:leagueChosenCount," +

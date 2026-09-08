@@ -46,7 +46,9 @@ test("it fires only when the wider window would actually help", () => {
   const m = /var _needsWider=(.*);/.exec(code);
   assert.ok(m, "the trigger must exist");
   assert.match(m[1], /_typed>_ceil/, "only when the number was clamped");
-  assert.match(m[1], /SCOPE==="day"/, "only from the narrow window");
+  /* Narrow is a single day OR a span of days now. Both top out below the
+     jackpot rungs, so the offer stands from either. */
+  assert.match(m[1], /SCOPE!=="all"/, "only from a narrow window");
   assert.match(m[1], /_typed<=\(WSP\._wideMaxTarget\|\|50000\)/,
     "and only when the wide ladder actually reaches it");
 });
