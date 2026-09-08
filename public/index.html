@@ -3574,8 +3574,19 @@ button.wsp-go.waiting{opacity:.55}
 .lgp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
   padding:9px 12px;border-bottom:1px solid var(--line-soft);
   font-size:11.5px;font-weight:700;color:var(--faint)}
-.lgp-clear{background:transparent;border:0;color:var(--red-ink);font:inherit;
-  font-weight:700;font-size:11.5px;cursor:pointer;padding:2px 4px;border-radius:var(--r-sm)}
+/* IT HAS TO LOOK LIKE A CONTROL. Reported as hard to find, and it was: a
+   borderless 11.5px link sitting in an 11.5px bold header row, so it read as
+   part of the label rather than as the way back to every league. It was also
+   about eighteen pixels tall, which is not a target on a phone.
+   A bordered pill at 12.5px on a 34px box - short of the 44px a primary
+   control would get, because this is a secondary reset inside a dense header
+   and a full-height button there would push the list down the screen. */
+.lgp-clear{background:var(--card-2);border:1px solid var(--line);
+  color:var(--red-ink);font:inherit;font-weight:700;font-size:12.5px;
+  cursor:pointer;padding:8px 13px;border-radius:999px;line-height:1;
+  flex:0 0 auto;transition:background .15s,border-color .15s}
+@media(hover:hover){.lgp-clear:hover{background:var(--raise);border-color:var(--faint)}}
+.lgp-clear:active{transform:translateY(1px)}
 .lgp-list{max-height:270px;overflow-y:auto;overscroll-behavior:contain}
 .lgp-row{display:flex;align-items:center;gap:10px;width:100%;background:transparent;
   border:0;border-bottom:1px solid var(--line-soft);color:var(--text);font:inherit;
