@@ -14944,11 +14944,23 @@ setTimeout(hideLoader,8000);
      the manifest lists under related_applications, so the manifest names this
      PWA as one of its own - without that entry this always came back empty and
      the offer stood in front of people who had already taken it. */
+  /* AND THE SAME CALL HAS TO BE ABLE TO SAY NO.
+     Reported: "i have uninstalled it and i try to install and it says
+     installed." The flag above is written when an install is seen and was
+     never cleared by anything except a prompt firing - so a phone the app was
+     removed from kept a stored "1" and kept insisting. An empty answer here is
+     not silence, it is Chrome saying the app is not on this device, and it
+     clears the flag and puts the offer back. */
+  var _relatedSaysNo=false;
   try{
     if(navigator.getInstalledRelatedApps){
       navigator.getInstalledRelatedApps().then(function(apps){
         if(apps&&apps.length){ _installed=true; offerInstall();
-          try{localStorage.setItem('sw.installed','1');}catch(e){} }
+          try{localStorage.setItem('sw.installed','1');}catch(e){} return; }
+        _relatedSaysNo=true;
+        if(_installed){ _installed=false;
+          try{localStorage.removeItem('sw.installed');}catch(e){} }
+        offerInstall();
       }).catch(function(){});
     }
   }catch(e){}
@@ -14962,6 +14974,10 @@ setTimeout(hideLoader,8000);
      is the only route to the Share-sheet instructions. */
   if(/android/i.test(navigator.userAgent)&&!_iOS){
     setTimeout(function(){
+      /* Unless the device has already answered. "No prompt in 2.5s" is a guess
+         that the app is installed; getInstalledRelatedApps coming back empty is
+         the device saying it is not, and a guess must not overrule it. */
+      if(_relatedSaysNo) return;
       if(!_dip&&!window.__swInstallEvent&&!_installed){
         _installed=true; offerInstall();
       }
