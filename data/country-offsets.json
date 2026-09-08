@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-07",
+  "generated": "2026-09-08",
   "source": "openfootball/champions-league @ abfaeddc2ee3",
   "seasons": [
     "2024-25",
@@ -9,9 +9,9 @@
     "2025-26/el",
     "2025-26/conf"
   ],
-  "shrinkageK": 5,
+  "shrinkageK": 40,
   "anchor": "England",
-  "homeEdge": 0.0575,
+  "homeEdge": 0.0585,
   "countries": {
     "England": {
       "offset": 0,
@@ -20,97 +20,97 @@
       "clamped": false
     },
     "Italy": {
-      "offset": 0.1417,
+      "offset": 0.086,
       "prior": 0.0746,
       "matches": 104,
       "clamped": false
     },
     "Spain": {
-      "offset": 0.1812,
+      "offset": 0.1309,
       "prior": 0.1062,
       "matches": 117,
       "clamped": false
     },
     "Germany": {
-      "offset": 0.1742,
+      "offset": 0.1295,
       "prior": 0.1191,
       "matches": 108,
       "clamped": false
     },
     "France": {
-      "offset": 0.082,
+      "offset": 0.0889,
       "prior": 0.2017,
       "matches": 79,
       "clamped": false
     },
     "Portugal": {
-      "offset": 0.4849,
+      "offset": 0.3757,
       "prior": 0.2289,
       "matches": 73,
       "clamped": false
     },
     "Belgium": {
-      "offset": 0.488,
+      "offset": 0.3879,
       "prior": 0.2734,
       "matches": 74,
       "clamped": false
     },
     "Netherlands": {
-      "offset": 0.5085,
+      "offset": 0.4278,
       "prior": 0.3332,
       "matches": 78,
       "clamped": false
     },
     "Turkey": {
-      "offset": 0.3746,
+      "offset": 0.3387,
       "prior": 0.3598,
       "matches": 67,
       "clamped": false
     },
     "Poland": {
-      "offset": 0.6911,
+      "offset": 0.5272,
       "prior": 0.4079,
       "matches": 31,
       "clamped": false
     },
     "Greece": {
-      "offset": 0.6223,
+      "offset": 0.5189,
       "prior": 0.4226,
       "matches": 44,
       "clamped": false
     },
     "Norway": {
-      "offset": 0.5997,
+      "offset": 0.5311,
       "prior": 0.4858,
       "matches": 63,
       "clamped": false
     },
     "Denmark": {
-      "offset": 0.6148,
+      "offset": 0.5374,
       "prior": 0.4898,
       "matches": 45,
       "clamped": false
     },
     "Switzerland": {
-      "offset": 0.7,
+      "offset": 0.6353,
       "prior": 0.6087,
       "matches": 39,
-      "clamped": true
+      "clamped": false
     },
     "Austria": {
-      "offset": 0.6935,
+      "offset": 0.6497,
       "prior": 0.6528,
       "matches": 44,
       "clamped": false
     },
     "Scotland": {
-      "offset": 0.6141,
+      "offset": 0.613,
       "prior": 0.6787,
       "matches": 43,
       "clamped": false
     },
     "Sweden": {
-      "offset": 0.5092,
+      "offset": 0.5583,
       "prior": 0.6884,
       "matches": 40,
       "clamped": false
@@ -138,6 +138,168 @@
       "prior": 0.7,
       "matches": 14,
       "clamped": true
+    },
+    "Czechia": {
+      "offset": 0.4123,
+      "prior": 0.4123,
+      "matches": 0,
+      "clamped": false
+    },
+    "Cyprus": {
+      "offset": 0.5466,
+      "prior": 0.5466,
+      "matches": 0,
+      "clamped": false
+    },
+    "Hungary": {
+      "offset": 0.6589,
+      "prior": 0.6589,
+      "matches": 0,
+      "clamped": false
+    },
+    "Croatia": {
+      "offset": 0.6902,
+      "prior": 0.6902,
+      "matches": 0,
+      "clamped": false
+    },
+    "Ukraine": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Israel": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Azerbaijan": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Slovenia": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Slovakia": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Bulgaria": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Serbia": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Iceland": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Armenia": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Kosovo": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Bosnia": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Latvia": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Kazakhstan": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Moldova": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Albania": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Belarus": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Lithuania": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Malta": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Estonia": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Georgia": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Luxembourg": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Montenegro": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
+    },
+    "Wales": {
+      "offset": 0.7,
+      "prior": 0.7,
+      "matches": 0,
+      "clamped": false
     }
   }
 }
