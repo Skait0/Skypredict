@@ -106,13 +106,16 @@ test("the cross-country edge is bounded, however lopsided the coefficients", () 
   const WIDEST_DOMESTIC = TIER_HANDICAP["England Conference National"];
   for (const a of Object.keys(UEFA_COEFFICIENT)) {
     const h = countryHandicap(a);
-    /* Null is a real answer here since Sep 2026, and only for one reason: the
-       fit pushed this country ONTO the cap, so what we hold is a bound rather
-       than a placement and the board refuses the tie. Anything else returning
-       null is a bug - see test/cappedrefusal.test.js. */
+    /* Null is a real answer here since Sep 2026, and for one reason in two
+       shapes: what we hold is a bound rather than a placement. Either the fit
+       pushed the country ONTO the cap, or the imported arithmetic runs past it -
+       which is where most of the coefficients added for the warming leagues
+       sit. Anything else returning null is a bug - see cappedrefusal.test.js. */
     if (h === null) {
-      assert.ok(PINNED.includes(a),
-        a + " has no handicap and is not pinned at the cap - it should be priced");
+      const raw = 0.5 * (Math.log(UEFA_COEFFICIENT.England) - Math.log(UEFA_COEFFICIENT[a]));
+      assert.ok(PINNED.includes(a) || raw >= COUNTRY_CAP,
+        a + " has no handicap, is not pinned, and its coefficient is inside the cap" +
+        " - it should be priced");
       continue;
     }
     assert.ok(h >= 0 && h <= COUNTRY_CAP,
@@ -144,6 +147,10 @@ test("a stronger coefficient never yields a bigger handicap, where the coefficie
     .sort((a, b) => UEFA_COEFFICIENT[b] - UEFA_COEFFICIENT[a]);
   for (let i = 1; i < byCoef.length; i++) {
     const hi = countryHandicap(byCoef[i - 1]), lo = countryHandicap(byCoef[i]);
+    /* A refused country carries no number to order. The tail below the cap is
+       refused outright, and ordering "cannot say" against a placement is not a
+       comparison the ladder makes. */
+    if (hi === null || lo === null) continue;
     assert.ok(lo >= hi,
       byCoef[i] + " (" + UEFA_COEFFICIENT[byCoef[i]] + ") is handicapped " + lo +
       " but " + byCoef[i - 1] + " (" + UEFA_COEFFICIENT[byCoef[i - 1]] + ") only " + hi);

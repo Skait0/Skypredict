@@ -63,10 +63,16 @@ test("a country absent from the artefact keeps the imported number", () => {
   assert.ok(Math.abs(B.countryHandicap("Norway") - fromCoefficient("Norway")) < 1e-9);
 });
 
-test("Russia, which can never be fitted, is unchanged", () => {
+test("Russia, whose coefficient runs past the cap, is refused rather than clamped", () => {
+  /* 17.332 asks for 0.886, past COUNTRY_CAP. It used to be clamped to 0.70 and
+     is now refused, for the same reason a fitted offset ON the cap is refused:
+     the number is a lower bound wearing an estimate's clothes. Academic for
+     Russia, which has played no UEFA football since 2022, and not academic at
+     all for the countries added alongside the warming leagues. */
   E._loadFrom(null);
-  assert.ok(Math.abs(B.countryHandicap("Russia") - fromCoefficient("Russia")) < 1e-9);
-  assert.equal(B.countryHandicap("Russia"), B.COUNTRY_CAP, "0.886 raw, clamped to the cap");
+  assert.equal(B.countryHandicap("Russia"), null);
+  assert.ok(fromCoefficient("Russia") >= B.COUNTRY_CAP,
+    "the premise of this test is that the arithmetic runs past the cap");
 });
 
 test("a missing, empty or broken file degrades to today's behaviour and never throws", () => {

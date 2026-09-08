@@ -94,14 +94,26 @@ test("a country absent from the artefact still falls back to the coefficient", (
   assert.ok(Math.abs(B.countryHandicap("Norway") - fromCoefficient("Norway")) < 1e-9);
 });
 
-test("a broken artefact refuses nobody - the fallback must stay total", () => {
+test("a broken artefact refuses nobody the coefficient can place", () => {
   /* The failure to avoid: a corrupt file reading as "everything is clamped"
-     and emptying the European board. */
+     and emptying the European board. Poland stands for the countries the
+     imported arithmetic can actually place - it must price with no artefact,
+     with an empty one and with a broken one. */
   for (const p of [null, write("empty2.json", ""), write("bad2.json", "{ nope")]) {
     E._loadFrom(p);
-    assert.ok(Math.abs(B.countryHandicap("Ireland") - fromCoefficient("Ireland")) < 1e-9,
-      "with no artefact, every country prices exactly as it did before");
+    assert.ok(Math.abs(B.countryHandicap("Poland") - fromCoefficient("Poland")) < 1e-9,
+      "with no artefact, a placeable country prices exactly as it did before");
   }
+});
+
+test("the tail is refused by the arithmetic, not by a missing file", () => {
+  /* Ireland's coefficient asks for 0.916, past the cap. With the artefact it is
+     refused for being pinned; without one it is refused for the same reason one
+     step earlier. Either way the answer is "we cannot say", never 0.70. */
+  E._loadFrom(null);
+  assert.equal(B.countryHandicap("Ireland"), null);
+  assert.ok(0.5 * (Math.log(B.UEFA_COEFFICIENT.England) - Math.log(B.UEFA_COEFFICIENT.Ireland))
+    >= B.COUNTRY_CAP);
 });
 
 test("the committed artefact refuses exactly the countries stuck at the cap", () => {
