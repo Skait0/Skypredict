@@ -13376,6 +13376,25 @@ function wspBuild(){
       var take1=fin1||b1;
       if(!take1) break; take(take1);
     }
+    /* THE STYLE ASKED FOR A LENGTH, SO HONOUR IT BEFORE ADDING LEGS.
+       Reported with two screenshots of the same board and the same payout:
+       "More games" returned 17 legs and "Fewer games" returned 20. Reproduced
+       on the live board at x100 - 1.25 gave 20 legs, 1.4 gave 16, and 1.7 gave
+       20, with a geometric mean leg of 1.267 against 1.334 for Balanced. The
+       chips were inverted in fact as well as in name.
+       The mechanism: want is ceil(log T / log per), so "Fewer games" stops
+       phase 1 at nine legs. Nine legs at what this board actually pays reached
+       about x38 of the x100 asked for, and phase 2 then padded the gap with
+       eleven legs averaging 1.05 - a result that has to come in for four per
+       cent of odds, eleven times over. The slip ended longer than the one built
+       to be long, and weaker.
+       Lengthening the legs it already has is what "Fewer games, bigger odds"
+       means, and the loop to do it was already here - it just sat AFTER the
+       padding, as a last resort for a thin card. It runs first now: reach the
+       payout through the legs the style asked for, and only add more when the
+       markets on those legs cannot get there. "More games" is unaffected, since
+       its phase 1 reaches the target before want runs out. */
+    if(picks.length>=want) lengthenToTarget();
     /* Phase 2 - still short of the target, so add legs until it is reached.
        This used to take the BIGGEST remaining odds every time, to "close the
        gap fast". That overshoots by construction, and measurably: across 105
@@ -13416,7 +13435,8 @@ function wspBuild(){
        buys, which is the same measure the fixtures were ranked by. Nothing is
        lengthened unless the target genuinely cannot be reached without it, so
        on an ordinary board this loop never runs at all. */
-    if(!WSP.everyGame && T!=null && prod<T){
+    function lengthenToTarget(){
+      if(WSP.everyGame || T==null || !(prod<T)) return;
       for(var guard=0; guard<200 && prod<T; guard++){
         var bestSwap=null, bestCost=Infinity;
         for(var pi=0; pi<picks.length; pi++){
@@ -13446,6 +13466,7 @@ function wspBuild(){
         bestSwap.leg.od=bestSwap.alt.od;
       }
     }
+    lengthenToTarget();
     /* Whether we got there. The promise used to be "at least the payout you
        asked for", kept by stretching legs until the number was met. That is
        the wrong promise: it buys a figure with games we would not otherwise
