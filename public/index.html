@@ -7829,7 +7829,8 @@ function matchHTML(f){
             "<span class='g num' title='Goals we expect them to score'>"+
               f.la.toFixed(1)+"</span></span>"+
         "</span>"+
-        "<span class='sc'><b class='num'>"+scoreLine(f)+"</b><i>score</i></span>"+
+        "<span class='sc' title='One way this match could end, drawn from our score distribution - not the most likely score'>"+
+          "<b class='num'>"+scoreLine(f)+"</b><i>could end</i></span>"+
       "</span>"+
       "<span class='pbar'>"+
         "<i style='flex:"+(f.home_p*100).toFixed(1)+";background:var(--win)'></i>"+
@@ -7906,7 +7907,7 @@ function listRowHTML(f){
     "<span class='lt-p"+(lead==="a"?" lead":"")+"'>"+_lt100[2]+"<small>%</small></span>"+
     "<span class='lt-tip'><span class='vdot'></span><span class='tx' title=\""+esc(plainTip(f))+"\">"+esc(plainTip(f))+"</span>"+
       "<i class='grade'>"+P0(f.tip_p)+"%</i></span>"+
-    "<span class='lt-score' title='Predicted score'>"+scoreLine(f)+"</span>"+
+    "<span class='lt-score' title='One way this match could end, drawn from our score distribution - not the most likely score'>"+scoreLine(f)+"</span>"+
     "<span class='lt-chev' aria-hidden='true'>\u25be</span>"+
     "<div class='lmore'><button class='lmore-x' type='button' aria-label='Collapse'>▴</button>"+moreHTML(f)+"</div>"+
   "</div>";
