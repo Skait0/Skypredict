@@ -444,7 +444,10 @@ test("style cannot move the leg count in 'every game that qualifies'", () => {
 test("the chip row is not drawn in 'every game that qualifies'", () => {
   assert.match(src, /if\(WSP\.everyGame\)\{[\s\S]{0,700}Every qualifying game goes in/,
     "every-game must explain itself rather than draw chips that do nothing");
-  assert.match(src, /\}\s*else if\(WSP\.odds!=null\)\{[\s\S]{0,900}wspStyleChips/,
+  /* The row's own condition covers a target being typed as well as one chosen
+     - see test/wizardpanel.test.js - but it still sits behind the every-game
+     branch, which is what this is about. */
+  assert.match(src, /\}\s*else if\(WSP\.odds!=null \|\| \(WSP\._typed&&WSP\._typed\.length\)\)\{[\s\S]{0,1400}wspStyleChips/,
     "and the chip row must sit behind that check");
 });
 

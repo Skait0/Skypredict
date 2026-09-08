@@ -102,7 +102,12 @@ test("both builders consult it", () => {
   assert.match(slider, /var _use=slipUse\(\);/, "the slider does not read your slips");
   assert.match(slider, /Math\.pow\(SPREAD_MULT,_use\[a\.id\]\|\|0\)/,
     "and does not apply the penalty to its ranking key");
-  assert.match(src, /\+SPREAD_PEN\*\(_use\[c\.id\]\|\|0\)/,
+  /* The wizard's copy is scaled by the shuffle count now - see
+     test/slipstyle.test.js and the note beside `repeat` - so it reads
+     `repeat*(_use...)` where repeat starts at SPREAD_PEN. */
+  assert.match(src, /var repeat=Math\.min\([0-9.]+,SPREAD_PEN\*\(1\+[0-9.]+\*shuffles\)\);/,
+    "the wizard's repeat penalty no longer starts from SPREAD_PEN");
+  assert.match(src, /\+repeat\*\(_use\[c\.id\]\|\|0\)/,
     "the wizard does not apply the penalty to its cost");
 });
 
@@ -115,7 +120,7 @@ test("the wizard reads it before it uses it", () => {
      it went red the moment a tool rewrote the file as LF, and it would fail for
      anyone on a platform that does not use CRLF. */
   const i = src.search(/var _use=slipUse\(\);\s*chosen\.forEach/);
-  const j = src.indexOf("+SPREAD_PEN*(_use[c.id]||0)");
+  const j = src.indexOf("+repeat*(_use[c.id]||0)");
   assert.ok(i > 0, "the wizard's _use is not defined before its loop");
   assert.ok(j > i, "_use is read before it is assigned");
 });

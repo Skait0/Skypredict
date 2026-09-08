@@ -13294,8 +13294,22 @@ function wspBuild(){
          the same ones. Same escalation the South America and Asia gates use
          a few lines down, and for the same reason. */
       var jit=Math.min(0.50,0.10+0.13*shuffles);
+      /* THE ONE LEG A SHUFFLE COULD NEVER MOVE.
+         Reported: "it took me about 30 shuffles before the biggest odd on my
+         slip was shuffled out." Arithmetic, not luck. The style tilt is
+         1.2 x log(odds), so at "Fewer games" a 1.9 leg sits 0.55 below a 1.2
+         one before anything else is counted - and the jitter spans at most
+         +/-0.25, so no draw of it can span that gap. The only thing that could
+         was SPREAD_PEN, a flat 0.15 for being on the slip already, which needs
+         to stack four deep to matter and only stacks through saved slips.
+         So the penalty for "you are already on this ticket" now escalates the
+         way the jitter does. A first shuffle nudges; the fourth is a reader
+         plainly asking for different games and pushes 0.6, past any tilt a leg
+         on this board can earn. Capped, so a shuffled slip never turns into
+         the worst legs available. */
+      var repeat=Math.min(0.90,SPREAD_PEN*(1+0.9*shuffles));
       c._cost=-(edge(c)+styleTilt*Math.log(c.od))+(h32(c.id+"|s"+seed)-0.5)*jit
-        +SPREAD_PEN*(_use[c.id]||0);
+        +repeat*(_use[c.id]||0);
       /* A fixture SportyBet lists no prices for at all is still allowed - not
          knowing its markets is not the same as knowing it has none - but it
          goes to the back of the queue. Its odds are our estimate rather than a
@@ -14099,7 +14113,7 @@ function renderWizardPanel(){
     html += "<p class='wsp-hint'><b>Every qualifying game goes in.</b> "+
       "The card decides how many, so there is no shorter or longer slip to "+
       "choose - turn this off to trade games against odds.</p>";
-  } else if(WSP.odds!=null){
+  } else if(WSP.odds!=null || (WSP._typed&&WSP._typed.length)){
     /* A chip that cannot answer must not sit there selected. The Slider is
        offered only while it can actually reach the payout; past that the row
        falls back to a style rather than leaving a dead control lit, or worse,
@@ -14206,6 +14220,7 @@ function renderWizardPanel(){
       _cust.value=v;
       /* Clamped, and the wider window would not have clamped it. */
       var _needsWider=(_typed>_ceil && SCOPE!=="all" && _typed<=(WSP._wideMaxTarget||50000));
+      WSP._typed="";
       if(v!==WSP.odds){
         WSP.odds=v; WSP._sig=null;
         try{localStorage.setItem("sw.wspodds",String(v));}catch(e){}
@@ -14236,7 +14251,26 @@ function renderWizardPanel(){
          Only on the first keystroke: re-rendering per character would fight
          the typing. The value and caret are put back afterwards because the
          re-render builds a fresh input. */
-      if(WSP.odds==null && !WSP.conjured) return;
+      /* Typing a target is choosing one, even before it is committed - so the
+         style row comes up with the first digit and goes with the last.
+         Asked for: "when a user types in the xOwn input box, let the slip style
+         show up. when he clear, let it vanish." */
+      var hadTyped=!!(WSP._typed&&WSP._typed.length);
+      WSP._typed=c;
+      if(!c.length && hadTyped){
+        renderBuilder();
+        var back=$("wspCust"); if(back){ back.value=""; back.focus(); }
+        return;
+      }
+      if(WSP.odds==null && !WSP.conjured){
+        if(c.length && !hadTyped){
+          renderBuilder();
+          var first=$("wspCust");
+          if(first){ first.value=c; first.focus();
+            try{first.setSelectionRange(c.length,c.length);}catch(e){} }
+        }
+        return;
+      }
       WSP.odds=null; WSP._sig=null; WSP._slip=null; WSP.conjured=false; WSP.removed={};
       try{localStorage.removeItem("sw.wspodds");}catch(e){}
       var _to=$("totOdds"); if(_to) _to.textContent="-";
@@ -14255,6 +14289,14 @@ function renderWizardPanel(){
     c.addEventListener("click",function(){
       WSP.legodd=+c.dataset.lo;
       WSP._sig=null;renderBuilder();
+      /* renderBuilder rebuilds the input, so a half-typed target would be lost
+         by choosing a style for it - which is the one moment the row is on
+         screen BECAUSE something is being typed. */
+      if(WSP._typed&&WSP._typed.length){
+        var keep=$("wspCust");
+        if(keep){ keep.value=WSP._typed; keep.focus();
+          try{keep.setSelectionRange(WSP._typed.length,WSP._typed.length);}catch(e){} }
+      }
     });
   });
   /* Absent before a payout is chosen, like the chips it sits under. */

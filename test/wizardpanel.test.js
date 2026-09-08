@@ -50,12 +50,17 @@ test("the style chips and the Slider link are only wired when they are drawn", (
     "the Slider link must tolerate being absent");
 });
 
-test("no style chips before a payout is chosen", () => {
-  /* wspBuild returns an empty slip while WSP.odds is null, so every style
-     would build the same nothing - three controls that do nothing, which is
-     the failure this panel keeps having. It also flickered them in for as long
-     as it took to type a custom number, because the first keystroke clears the
-     payout on purpose. The "Pick a payout above" hint already says what to do. */
-  assert.match(src, /if\(WSP\.odds!=null\)\{[\s\S]{0,900}wspStyleChips/,
-    "the chip row must be drawn only once there is a payout to aim at");
+test("no style chips until there is a target, typed or chosen", () => {
+  /* wspBuild returns an empty slip while WSP.odds is null, so every style would
+     build the same nothing - three controls that do nothing, which is the
+     failure this panel keeps having.
+     A target being TYPED counts as a target. The first keystroke clears the
+     chosen payout on purpose, and that used to take the chip row with it, so
+     the row flickered out for as long as it took to type a number. Asked for:
+     "when a user types in the xOwn input box, let the slip style show up. when
+     he clear, let it vanish." */
+  assert.match(src, /if\(WSP\.odds!=null \|\| \(WSP\._typed&&WSP\._typed\.length\)\)\{[\s\S]{0,1400}wspStyleChips/,
+    "the chip row must be drawn once there is a payout, or one being typed");
+  assert.match(src, /if\(!c\.length && hadTyped\)\{/,
+    "emptying the box must take the row away again");
 });

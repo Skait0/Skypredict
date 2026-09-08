@@ -139,11 +139,20 @@ test("the typed digits and the caret survive that redraw", () => {
     "and the caret left after it, not at the start");
 });
 
-test("it only redraws once, not on every keystroke", () => {
+test("it redraws on the first digit and on the last, never in between", () => {
+  /* The early return is still what keeps typing from fighting a re-render. It
+     now has two exceptions, both of them edges rather than keystrokes: the
+     first digit brings the style row up, and emptying the box takes it away.
+     Asked for: "when a user types in the xOwn input box, let the slip style
+     show up. when he clear, let it vanish." */
   const h = custInputHandler();
-  assert.match(h, /if\(WSP\.odds==null && !WSP\.conjured\) return;/,
-    "with nothing selected and nothing built there is nothing to clear, so " +
-    "every keystroke after the first must return early");
+  assert.match(h, /if\(WSP\.odds==null && !WSP\.conjured\)\{/,
+    "with nothing selected and nothing built, a keystroke in the middle of a " +
+    "number must still return early");
+  assert.match(h, /if\(!c\.length && hadTyped\)\{[\s\S]{0,200}renderBuilder\(\);/,
+    "emptying the box must redraw, to take the style row away");
+  assert.match(h, /if\(c\.length && !hadTyped\)\{[\s\S]{0,200}renderBuilder\(\);/,
+    "and the first digit must redraw, to bring it up");
 });
 
 /* ------------------------------------------------- decided once, in the build */
