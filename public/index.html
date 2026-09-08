@@ -5668,7 +5668,6 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
        still moving, so it is one continuous push through the eye.
        `ended` stays as the backstop for anything that never fires timeupdate. */
     reveal.addEventListener("timeupdate", function(){
-      if(landed) return;
       var d=reveal.duration;
       if(isFinite(d) && d>0 && reveal.currentTime >= d-0.22) land();
     });
