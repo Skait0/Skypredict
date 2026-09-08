@@ -806,6 +806,24 @@ select{width:100%;appearance:none;-webkit-appearance:none;min-height:50px;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%23A3A0A6' stroke-width='1.8' fill='none' stroke-linecap='round'/></svg>");
   background-repeat:no-repeat;background-position:right 13px center}
 select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+/* SIXTEEN PIXELS, ON A TOUCHSCREEN, ALWAYS.
+   Reported: "on the mobile app am i supposed to be able to zoom? and also it
+   feels like the pages are running of the screen." The two are one bug. iOS
+   Safari zooms the page into any form control whose text is under 16px the
+   moment it is focused - and it does not zoom back out. Our search box and the
+   two pickers were 15px, the live-scores country select 14px, so tapping the
+   search field left the reader permanently zoomed with the board running off
+   both edges, and nothing on screen explained why.
+   Only on coarse pointers: the desktop block below deliberately runs these at
+   13.5px, where no such rule exists and mouse-scale is the point. Range,
+   checkbox and radio never trigger it.
+   Placed AFTER the base select rule on purpose - same specificity, so the
+   later one wins, and the first attempt at this sat above it and lost. */
+@media (pointer:coarse){
+  .search input,select,textarea,select.lv-sel,
+  input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]){
+    font-size:16px}
+}
 .chosen{display:flex;align-items:center;gap:8px;margin-top:11px;
   background:var(--red-wash);border-radius:var(--r-md);padding:9px 11px}
 .chosen b{font-size:13px;font-weight:700;color:var(--red-ink);flex:1;min-width:0;
