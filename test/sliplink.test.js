@@ -142,7 +142,7 @@ test("a crafted team name cannot inject markup", () => {
   /* The page has a legitimate <img> now - the wizard head - so this checks
      that the INJECTED one was not formed, rather than that no img exists. */
   assert.doesNotMatch(html, /<img src=x/, "the injected img must not be formed");
-  assert.match(html, /<img src="\/icon-192\.png"/, "and ours is untouched");
+  assert.match(html, /<img src="\/wiz-mark\.png"/, "and ours is untouched");
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/,
     "it shows as text");
   assert.match(html, /&quot;&gt;&lt;img src=x onerror=alert\(1\)&gt;/,
