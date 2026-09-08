@@ -3530,10 +3530,22 @@ button.wsp-go.waiting{opacity:.55}
    seconds to catch the eye without ever moving the layout. The sheen is
    `background-position` on a gradient - no transform, no reflow, and it costs
    nothing on a phone. */
-.wsp-slider-link{position:relative;display:inline-flex;align-items:center;gap:6px;
-  margin:10px 0 0;padding:2px 0;border:0;background:none;color:var(--soft);
-  font:inherit;font-size:12px;font-weight:700;letter-spacing:.01em;
-  text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+/* QUIET, BUT OBVIOUSLY A CONTROL.
+   Reported: "'or let the slider pick for you': the way it shows, its too
+   silent." The demotion is deliberate - the Slider loses every rung it was
+   measured on - but a faint underline between three solid chips reads as a
+   stray hyperlink rather than the third way of answering the same question.
+   So it keeps the demotion and gains a shape: chip height, a ghost border,
+   muted text, the arrow on the right. Secondary by every signal a reader uses,
+   and unmistakably something to press. */
+.wsp-slider-link{position:relative;display:flex;align-items:center;gap:8px;
+  width:100%;margin:10px 0 0;padding:10px 14px;
+  border:1px solid var(--line);border-radius:99px;background:var(--card-2);
+  color:var(--soft);font:inherit;font-size:12.5px;font-weight:700;
+  letter-spacing:.01em;text-decoration:none;cursor:pointer;
+  transition:border-color .18s ease,background .18s ease;
+  -webkit-tap-highlight-color:transparent}
+.wsp-slider-link .wsl-a{margin-left:auto}
 .wsp-slider-link .wsl-t{
   background-image:linear-gradient(100deg,
     var(--soft) 0%, var(--soft) 38%, var(--text) 50%, var(--soft) 62%, var(--soft) 100%);
@@ -3545,10 +3557,8 @@ button.wsp-go.waiting{opacity:.55}
   transition:transform .22s cubic-bezier(.2,.7,.3,1)}
 /* The hairline grows from the left rather than fading, so the eye follows it
    to the words instead of the whole thing simply brightening. */
-.wsp-slider-link::after{content:"";position:absolute;left:0;right:0;bottom:-1px;
-  height:1px;background:var(--red-ink);opacity:.5;
-  transform:scaleX(.35);transform-origin:left center;
-  transition:transform .26s cubic-bezier(.2,.7,.3,1),opacity .26s ease}
+/* The underline was the whole affordance when this was a link. The border is
+   now, so the hairline would only be a second one. */
 @keyframes wslSheen{
   0%,72%{background-position:120% 0}
   100%{background-position:-40% 0}
@@ -3556,17 +3566,16 @@ button.wsp-go.waiting{opacity:.55}
 @media(hover:hover){
   .wsp-slider-link:hover .wsl-t{animation-play-state:paused;color:var(--text);
     -webkit-text-fill-color:var(--text)}
+  .wsp-slider-link:hover{border-color:var(--red-ink);background:var(--card)}
   .wsp-slider-link:hover .wsl-a{transform:translateX(4px)}
-  .wsp-slider-link:hover::after{transform:scaleX(1);opacity:.9}
 }
 .wsp-slider-link:active .wsl-a{transform:translateX(2px)}
-.wsp-slider-link:focus-visible{outline:2px solid var(--red-ink);outline-offset:3px;
-  border-radius:3px}
+.wsp-slider-link:focus-visible{outline:2px solid var(--red-ink);outline-offset:3px}
 /* Somebody who has asked for less movement gets none of it. */
 @media(prefers-reduced-motion:reduce){
   .wsp-slider-link .wsl-t{animation:none;color:var(--soft);
     -webkit-text-fill-color:var(--soft)}
-  .wsp-slider-link .wsl-a,.wsp-slider-link::after{transition:none}
+  .wsp-slider-link .wsl-a{transition:none}
 }
 /* THE DRAW LOOKS DIFFERENT BECAUSE IT IS DIFFERENT. Every other chip here
    raises or lowers the odds a little; this one backs the least likely of the
@@ -14113,7 +14122,18 @@ function renderWizardPanel(){
     html += "<p class='wsp-hint'><b>Every qualifying game goes in.</b> "+
       "The card decides how many, so there is no shorter or longer slip to "+
       "choose - turn this off to trade games against odds.</p>";
-  } else if(WSP.odds!=null || (WSP._typed&&WSP._typed.length)){
+  } else {
+    /* THE STYLE IS A PREFERENCE, NOT AN ANSWER TO THIS PAYOUT.
+       It used to appear only once a target existed, on the no-dead-controls
+       rule - three chips that all build the same empty slip are three dead
+       controls. But legodd is not about the payout in front of you: it is
+       remembered across builds and reloads, and setting it before choosing a
+       number is pre-loading an answer rather than pressing a dead button. The
+       "Pick a payout above" hint already says what is still missing, and the
+       row flickering in and out as a custom number was typed was the same
+       fault seen from the other side.
+       Still absent in "every game that qualifies" above, where the count
+       genuinely cannot move - that IS the dead-controls case. */
     /* A chip that cannot answer must not sit there selected. The Slider is
        offered only while it can actually reach the payout; past that the row
        falls back to a style rather than leaving a dead control lit, or worse,
