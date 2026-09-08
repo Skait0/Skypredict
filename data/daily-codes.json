@@ -1,7 +1,7 @@
 {
   "2026-09-08": {
     "date": "2026-09-08",
-    "generated": "2026-09-07T22:57:30.807Z",
+    "generated": "2026-09-08T10:52:31.115Z",
     "firstKickoff": "2026-09-08T16:45:00.000Z",
     "legs": [
       {
@@ -19,7 +19,7 @@
         "league": "England Championship",
         "kickoff": "2026-09-08T18:45:00.000Z",
         "tip": "1X, home or draw",
-        "tip_p": 0.7967,
+        "tip_p": 0.788,
         "market": "1X"
       },
       {
@@ -28,31 +28,31 @@
         "league": "England Championship",
         "kickoff": "2026-09-08T18:45:00.000Z",
         "tip": "1X, home or draw",
-        "tip_p": 0.7938,
+        "tip_p": 0.785,
         "market": "1X"
       },
       {
-        "home": "Bolton",
-        "away": "West Ham",
-        "league": "England Championship",
-        "kickoff": "2026-09-08T19:00:00.000Z",
-        "tip": "1X, home or draw",
-        "tip_p": 0.769,
-        "market": "1X"
-      },
-      {
-        "home": "Crystal Palace",
-        "away": "Middlesbrough",
-        "league": "England EFL Cup",
+        "home": "Edinburgh City",
+        "away": "Queen of Sth",
+        "league": "Scotland Challenge Cup",
         "kickoff": "2026-09-08T18:45:00.000Z",
         "tip": "Over 1.5",
-        "tip_p": 0.7627,
+        "tip_p": 0.7807,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "East Kilbride",
+        "away": "Bonnyrigg Rose",
+        "league": "Scotland Challenge Cup",
+        "kickoff": "2026-09-08T18:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.7747,
         "market": "OVER_1.5"
       }
     ],
     "codes": {
-      "sporty": "WZDKEL",
-      "bet9ja": "5QP7W7C"
+      "sporty": "YZXXWD",
+      "bet9ja": "5QQDB2J"
     }
   }
 }
