@@ -76,7 +76,17 @@ function advanceOf(ctx, font) {
 
   /* ------------------------------------------------------------ background */
   x.fillStyle = "#0e1013"; x.fillRect(0, 0, W, H);
-  x.fillStyle = "#e63946"; x.fillRect(0, 0, W, 10);
+  /* THE TOP RULE, AS A HAIRLINE RATHER THAN A FIELD OF COLOUR.
+     It was a flat 10px red slab across the full width - the one thing on the
+     card with no gradient, no fade and no relationship to anything else on it.
+     The site already has this gesture and does it properly: .slip-cta::after is
+     a 1px gold rule that fades to nothing at both ends. Same idea here, at 4px
+     because the card is seen as a thumbnail and one pixel disappears. */
+  const rule = x.createLinearGradient(0, 0, W, 0);
+  rule.addColorStop(0, "rgba(242,184,75,0)");
+  rule.addColorStop(0.5, "rgba(242,184,75,.75)");
+  rule.addColorStop(1, "rgba(242,184,75,0)");
+  x.fillStyle = rule; x.fillRect(0, 0, W, 4);
 
   const g = x.createRadialGradient(784, 300, 60, 784, 300, 780);
   g.addColorStop(0, "rgba(230,57,70,.13)");

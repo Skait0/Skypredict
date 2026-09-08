@@ -81,7 +81,7 @@ function advanceOf(ctx, font) {
   await document.fonts.ready;
 
   const head = new Image();
-  await new Promise((ok, no) => { head.onload = ok; head.onerror = no; head.src = "/icon-192.png"; });
+  await new Promise((ok, no) => { head.onload = ok; head.onerror = no; head.src = "/head.png"; });
 
   const c = document.getElementById("c"), x = c.getContext("2d");
   const advG = advanceOf(x, STYLES.games.font);
@@ -90,7 +90,17 @@ function advanceOf(ctx, font) {
 
   /* ------------------------------------------------------------ background */
   x.fillStyle = INK; x.fillRect(0, 0, W, H);
-  x.fillStyle = RED; x.fillRect(0, 0, W, 10);
+  /* THE TOP RULE, AS A HAIRLINE RATHER THAN A FIELD OF COLOUR.
+     It was a flat 10px red slab across the full width - the one thing on the
+     card with no gradient, no fade and no relationship to anything else on it.
+     The site already has this gesture and does it properly: .slip-cta::after is
+     a 1px gold rule that fades to nothing at both ends. Same idea here, at 4px
+     because the card is seen as a thumbnail in a chat and one pixel disappears. */
+  const rule = x.createLinearGradient(0, 0, W, 0);
+  rule.addColorStop(0, "rgba(242,184,75,0)");
+  rule.addColorStop(0.5, "rgba(242,184,75,.75)");
+  rule.addColorStop(1, "rgba(242,184,75,0)");
+  x.fillStyle = rule; x.fillRect(0, 0, W, 4);
 
   const g = x.createRadialGradient(784, 330, 60, 784, 330, 820);
   g.addColorStop(0, "rgba(230,57,70,.14)");
@@ -255,9 +265,16 @@ http.createServer(async (req, res) => {
     res.end("ok " + req.url + " " + buf.length);
     return;
   }
-  if (req.url === "/icon-192.png") {
+  /* THE HEAD, AND WHY IT IS NOT THE APP ICON ANY MORE.
+     This was public/icon-192.png - the flat mascot - while the gate, the X
+     profile and the page background all carry the photoreal wizard. Two
+     different characters, and the mascot was on the image most likely to be
+     seen by a stranger: every slip shared into a WhatsApp group.
+     assets/wiz-head.png is a square crop of the same portrait the avatar comes
+     from, cut wide enough that the circle below does not clip the hood. */
+  if (req.url === "/head.png") {
     res.writeHead(200, { "content-type": "image/png" });
-    res.end(fs.readFileSync(path.join(PUB, "icon-192.png")));
+    res.end(fs.readFileSync(path.join(ASSETS, "wiz-head.png")));
     return;
   }
   res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
