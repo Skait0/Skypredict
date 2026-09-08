@@ -14920,17 +14920,61 @@ setTimeout(hideLoader,8000);
       }
     },2500);
   }
-  function doInstall(){
-    if(_dip){ _dip.prompt(); _dip.userChoice&&_dip.userChoice.then(function(c){
+  function fireInstall(e){
+    e.prompt();
+    e.userChoice&&e.userChoice.then(function(c){
       if(c&&c.outcome==='accepted'){
         _installed=true; offerInstall();
-        try{localStorage.setItem('sw.installed','1');}catch(e){}
-      } _dip=null; }); return; }
+        try{localStorage.setItem('sw.installed','1');}catch(e2){}
+      } _dip=null; });
+  }
+  /* WHERE THIS BROWSER KEEPS ITS INSTALL, in that browser's own words.
+     Reported: "why is mobile redirecting me to go click 3 dots on my samsung
+     before i install?" Two faults behind it.
+     Samsung Internet is the default browser on a Samsung phone and it does not
+     fire beforeinstallprompt at all, so the fallback is the only route - and
+     the fallback named Chrome's 3-dot menu, which Samsung Internet does not
+     have. Its install lives behind the hamburger at the BOTTOM of the screen,
+     under "Add page to". Sending someone to a menu their browser does not have
+     is worse than saying nothing.
+     Firefox has its own wording again, and everything else keeps Chrome's. */
+  function installHint(){
+    var ua=navigator.userAgent;
+    if(/SamsungBrowser/i.test(ua))
+      return 'Tap ☰ at the bottom, then "Add page to" → "Home screen"';
+    if(/Firefox|FxiOS/i.test(ua))
+      return 'Open the menu, then "Install" / "Add to Home screen"';
+    if(/android/i.test(ua))
+      return 'Tap the 3-dot menu, then "Install app" / "Add to Home screen"';
+    return 'In Chrome or Edge, click the install icon in the address bar';
+  }
+  /* AND CHROME MAY SIMPLY NOT HAVE FIRED YET. beforeinstallprompt lands a
+     second or two after load, while the bar is shown immediately - so a tap in
+     that window used to fall straight through to the instructions even in the
+     browser that was about to offer the real dialog. Wait once, briefly, and
+     only where the event actually exists. */
+  var _waiting=false;
+  function doInstall(){
+    if(_dip){ fireInstall(_dip); return; }
     if(_iOS){ showIosSteps(); return; }
-    var isAndroid=/android/i.test(navigator.userAgent);
-    window.swToast&&window.swToast(isAndroid
-      ? 'Tap the 3-dot menu, then "Install app" / "Add to Home screen"'
-      : 'In Chrome or Edge, click the install icon in the address bar','ok','ins');
+    var ua=navigator.userAgent;
+    var canPrompt=/android/i.test(ua)&&!/SamsungBrowser|Firefox/i.test(ua);
+    if(canPrompt&&!_waiting){
+      _waiting=true;
+      var done=false;
+      var go=function(){
+        if(done) return; done=true;
+        window.removeEventListener('beforeinstallprompt',onEvt);
+        _waiting=false;
+        if(_dip) fireInstall(_dip);
+        else window.swToast&&window.swToast(installHint(),'ok','ins');
+      };
+      var onEvt=function(e){ e.preventDefault(); _dip=e; offerInstall(); go(); };
+      window.addEventListener('beforeinstallprompt',onEvt);
+      setTimeout(go,1200);
+      return;
+    }
+    window.swToast&&window.swToast(installHint(),'ok','ins');
   }
   /* WHICH iOS BROWSER THIS IS, because the answer changes the instructions and
      one of the three cannot install at all.
