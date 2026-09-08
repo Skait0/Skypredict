@@ -14966,8 +14966,38 @@ setTimeout(hideLoader,8000);
         if(done) return; done=true;
         window.removeEventListener('beforeinstallprompt',onEvt);
         _waiting=false;
-        if(_dip) fireInstall(_dip);
-        else window.swToast&&window.swToast(installHint(),'ok','ins');
+        if(_dip){ fireInstall(_dip); return; }
+        /* CHROME STAYING SILENT MEANS ONE OF TWO THINGS, and they need
+           opposite answers. Either this browser cannot install the site - say
+           where its menu is - or it already has, in which case Chrome
+           deliberately never fires the event and "tap the 3-dot menu" sends
+           somebody to install an app that is on their home screen already.
+           getInstalledRelatedApps answers that, and the manifest names this
+           PWA under related_applications so it can. */
+        var told=false;
+        var fallback=function(){
+          if(told) return; told=true;
+          window.swToast&&window.swToast(installHint(),'ok','ins');
+        };
+        try{
+          if(navigator.getInstalledRelatedApps){
+            var t=setTimeout(fallback,700);
+            navigator.getInstalledRelatedApps().then(function(apps){
+              clearTimeout(t);
+              if(told) return;
+              told=true;
+              if(apps&&apps.length){
+                _installed=true; offerInstall();
+                try{localStorage.setItem('sw.installed','1');}catch(e2){}
+                window.swToast&&window.swToast('Already installed - open Soccerwizard from your home screen','ok','ins');
+              }else{
+                window.swToast&&window.swToast(installHint(),'ok','ins');
+              }
+            }).catch(function(){ clearTimeout(t); fallback(); });
+            return;
+          }
+        }catch(e3){}
+        fallback();
       };
       var onEvt=function(e){ e.preventDefault(); _dip=e; offerInstall(); go(); };
       window.addEventListener('beforeinstallprompt',onEvt);
