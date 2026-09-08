@@ -9351,7 +9351,30 @@ function attachEventIds(sporty,B){
     var k=new Date(m.startTime).toISOString().slice(0,10);
     (byDate[k]=byDate[k]||[]).push(m);
   });
-  var hits=0, nearMisses=0, noMatches=0, goneFromFeed=0;
+  /* WHAT THIS BOOKMAKER HAS PUBLISHED, and it is much less than the board.
+     Checked on Bet9ja's live feed, 8 Sep: 385 events for 12 Sep, 232 for the
+     13th, then 54, then 21 - and on the 15th they carry LaLiga, the EFL Cup
+     and the Scottish Premiership and nothing else. So our Championship,
+     Superettan and Ekstraklasa fixtures for that date are not misspelt, they
+     are not listed yet, and printing them as NO MATCH buried the misses that
+     ARE worth an alias under a pile that no alias can fix.
+     Two questions answer it. Is the fixture past the last event they carry at
+     all, and does the feed carry ANY event in that competition on that date -
+     matching on the country word, which both feeds put first and neither
+     abbreviates. */
+  var feedMax=0, byLeagueDay={};
+  sporty.forEach(function(m){
+    var t=evStart(m);
+    if(isFinite(t)&&t>feedMax) feedMax=t;
+    if(!isFinite(t)) return;
+    var day=new Date(t).toISOString().slice(0,10);
+    /* Bet9ja carries the country in its own field; SportyBet's league string
+       opens with it, as ours does. */
+    var ctry=String(m.country||String(m.league||"").split(" ")[0]).toLowerCase();
+    if(ctry) byLeagueDay[ctry+"|"+day]=1;
+  });
+  var hasCountries=Object.keys(byLeagueDay).length>0;
+  var hits=0, nearMisses=0, noMatches=0, goneFromFeed=0, notListed=0;
   DATA.fixtures.forEach(function(f){
     var cand=[];
     /* Candidate window: ±3 days around our fixture date (SportyBet's UTC start
@@ -9463,7 +9486,13 @@ function attachEventIds(sporty,B){
          is the expected outcome, not a naming failure, and logging it buries
          the ones that are still worth fixing. Counted, not printed. */
       var _started = (typeof notStarted==="function") && !notStarted(f);
+      var _kick = f.kickoff ? Date.parse(f.kickoff) : NaN;
+      var _country = String(f.league||"").split(" ")[0].toLowerCase();
+      var _unpublished = !_started && (
+        (isFinite(_kick) && feedMax && _kick > feedMax) ||
+        (hasCountries && !byLeagueDay[_country+"|"+f.date]));
       if (_started) { goneFromFeed++; }
+      else if (_unpublished) { notListed++; }
       else if (SPORTY_DEBUG) {
         /* Ungated closest event in the WHOLE feed - tells us "not in feed" (closest
            is unrelated, low score) vs "named differently" (closest IS this game). */
@@ -9481,7 +9510,8 @@ function attachEventIds(sporty,B){
   });
   try{console.log("["+B.key+"] matched "+hits+"/"+DATA.fixtures.length+" from "+sporty.length+
     " events (near:"+nearMisses+", none:"+noMatches+", of which "+goneFromFeed+
-    " already kicked off and are no longer listed)");}catch(e){}
+    " already kicked off and "+notListed+" not published by them yet; feed runs to "+
+    (feedMax?new Date(feedMax).toISOString().slice(0,10):"?")+")");}catch(e){}
   return hits;
 }
 
@@ -9681,7 +9711,7 @@ function b9Rows(matches){
               homeTeam:bits[0].trim(),
               awayTeam:bits.slice(1).join(" - ").trim(),
               startTime:Date.parse(m.kickoff),
-              league:m.league,odds:m.odds||{}});
+              league:m.league,country:m.country,odds:m.odds||{}});
   }
   return out;
 }
