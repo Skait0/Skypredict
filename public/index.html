@@ -5605,9 +5605,17 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       if(p&&p.catch) p.catch(function(){ /* refused - the poster stands */ });
       /* The reveal is fetched only once the loop is going, so the two never
          compete for the first seconds of bandwidth. */
-      setTimeout(function(){
-        try{ reveal.src="/intro-wizard-reveal"+hd+cx+".mp4"; reveal.load(); }catch(e){}
-      }, 1200);
+      setTimeout(armReveal, 1200);
+    }catch(e){}
+  }
+
+  /* Attach the reveal and start fetching it. Called on a timer once the loop is
+     running, and again by Enter if that timer has not come round yet. */
+  function armReveal(){
+    if(reveal.getAttribute("src")) return;
+    try{
+      reveal.src="/intro-wizard-reveal"+variant()+bestCodec()+".mp4";
+      reveal.load();
     }catch(e){}
   }
 
@@ -5617,11 +5625,41 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     G.className += " is-revealing";
     var landed=false;
     function land(){ if(landed) return; landed=true; dismiss(true); }
-    if(!wantsVideo()||!reveal.getAttribute("src")){
-      /* No reveal to play: reduced motion, a metered connection, or it never
-         loaded. Still a landing, just a shorter one. */
+    if(!wantsVideo()){
+      /* Reduced motion or a metered connection: still a landing, just a
+         shorter one. */
       setTimeout(land, 180); return;
     }
+    /* PRESSED BEFORE THE REVEAL WAS EVEN ASKED FOR.
+       Reported: "sometimes when i press enter it just skips and the video
+       doesnt play." The reveal is deliberately not fetched until the loop has
+       had 1.2 seconds of the connection to itself - and a tap inside that
+       window found no src on the element and fell straight through to the
+       180ms landing. Which is most taps: the button is the first thing anyone
+       reaches for.
+       So Enter arms it itself, and then waits - briefly, because a reader who
+       has tapped is done waiting. If it cannot start within the budget the
+       short landing still happens, which is the old behaviour, but now it is
+       the exception rather than the rule. */
+    if(!reveal.getAttribute("src")) armReveal();
+    if(reveal.readyState < 2){
+      var went=false;
+      var giveUp=setTimeout(function(){ if(!went){ went=true; land(); } }, 1100);
+      reveal.addEventListener("canplay", function(){
+        if(went) return; went=true; clearTimeout(giveUp);
+        if(!landed) runReveal(land);
+      }, {once:true});
+      reveal.addEventListener("error", function(){
+        if(went) return; went=true; clearTimeout(giveUp); land();
+      }, {once:true});
+      return;
+    }
+    runReveal(land);
+  }
+
+  /* Play it, and land as it finishes. Split out so the wait above can call it
+     the moment the file is ready. */
+  function runReveal(land){
     /* THE SKIP BEFORE THE SITE, and it was a pause rather than a stutter.
        Landing on "ended" means the video stops on its final frame, THEN the
        zoom-out transition starts - two motions with a dead beat between them,
@@ -5638,8 +5676,17 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     reveal.addEventListener("error", land, {once:true});
     var pr=reveal.play();
     if(pr&&pr.catch) pr.catch(land);
-    /* Never longer than the clip plus a moment, whatever the video does. */
-    setTimeout(land, 3200);
+    /* Never longer than the clip plus a moment, whatever the video does. The
+       clip's own length once the browser knows it, because a fixed 3.2s cut a
+       slow start off at the knees - and a ceiling either way, because a stall
+       must not hold the reader at the gate. */
+    var cap=setTimeout(land, 3200);
+    reveal.addEventListener("loadedmetadata", function(){
+      var d=reveal.duration;
+      if(!isFinite(d)||!(d>0)) return;
+      clearTimeout(cap);
+      cap=setTimeout(land, Math.min(6000, d*1000+600));
+    }, {once:true});
   }
 
   /* If any of the wiring below throws, the reader must not be left behind a
