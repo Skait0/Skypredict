@@ -221,8 +221,13 @@ test("a fixture with no scoreline says nothing about one", () => {
 test("a match page gives a crawler the image AND its size", () => {
   const html = P.renderMatchPage(fixture(), {});
   assert.match(html, /property="og:image" content="[^"]+\/og-card\.png"/);
-  assert.match(html, /property="og:image:width" content="1568"/);
-  assert.match(html, /property="og:image:height" content="772"/);
+  /* The size the card SHIPS at, not the size it is baked at - lib/ogcard.js
+     halves it on the way out. This asserted 1568 for as long as the pages
+     declared it, which is how a wrong number survives: the test agreed with
+     the code instead of with the file. */
+  const size = require("../lib/ogcard.js").cardSize();
+  assert.match(html, new RegExp('property="og:image:width" content="' + size.w + '"'));
+  assert.match(html, new RegExp('property="og:image:height" content="' + size.h + '"'));
   assert.match(html, /name="twitter:image" content="[^"]+\/og-card\.png"/);
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
 });
@@ -308,4 +313,30 @@ test("the sitemap never lists a page we told Google to skip", () => {
   assert.ok(i > 0, "prebuild no longer distinguishes played from upcoming");
   assert.match(pre.slice(i, i + 220), /if \(played\) paths\.push\(/,
     "unplayed fixtures are being submitted again");
+});
+
+test("every page declares the size the card actually ships at", () => {
+  /* lib/ogcard.js bakes 1568x772 and halves it on the way out - WhatsApp drops
+     a preview over roughly 300 KB - so cardSize() is 784x386 and that is what
+     a scraper fetches. The match pages declared the BAKED size, twice the real
+     file, and I "fixed" the home page in the wrong direction before checking
+     the live bytes. Both now read the one function that knows. */
+  const size = require("../lib/ogcard.js").cardSize();
+  const built = require("../lib/ogcard.js").buildCard({ leagues: 49, pct: 74 });
+  assert.strictEqual(built.readUInt32BE(16), size.w, "buildCard does not produce cardSize().w");
+  assert.strictEqual(built.readUInt32BE(20), size.h, "buildCard does not produce cardSize().h");
+
+  const pages = [
+    P.renderMatchPage({ date: "2026-09-12", league: "L", home: "A", away: "B" }, null),
+    P.renderHowToCode(),
+    P.renderMatchesDay("2026-09-12", [{ date: "2026-09-12", league: "L", home: "A", away: "B" }]),
+    require("fs").readFileSync(
+      require("path").join(__dirname, "..", "public", "index.html"), "utf8"),
+  ];
+  for (const html of pages) {
+    const w = (html.match(/og:image:width" content="(\d+)"/) || [])[1];
+    const h = (html.match(/og:image:height" content="(\d+)"/) || [])[1];
+    assert.strictEqual(Number(w), size.w, "declared width " + w + " is not " + size.w);
+    assert.strictEqual(Number(h), size.h, "declared height " + h + " is not " + size.h);
+  }
 });
