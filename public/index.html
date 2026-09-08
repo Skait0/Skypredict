@@ -3538,14 +3538,16 @@ button.wsp-go.waiting{opacity:.55}
    So it keeps the demotion and gains a shape: chip height, a ghost border,
    muted text, the arrow on the right. Secondary by every signal a reader uses,
    and unmistakably something to press. */
-.wsp-slider-link{position:relative;display:flex;align-items:center;gap:8px;
-  width:100%;margin:10px 0 0;padding:10px 14px;
+.wsp-slider-link{position:relative;display:inline-flex;align-items:center;gap:8px;
+  max-width:100%;margin:10px 0 0;padding:9px 14px;
   border:1px solid var(--line);border-radius:99px;background:var(--card-2);
   color:var(--soft);font:inherit;font-size:12.5px;font-weight:700;
   letter-spacing:.01em;text-decoration:none;cursor:pointer;
   transition:border-color .18s ease,background .18s ease;
   -webkit-tap-highlight-color:transparent}
-.wsp-slider-link .wsl-a{margin-left:auto}
+/* The arrow sits after the words, not pushed to a far edge - the pill is only
+   as wide as what it says. */
+.wsp-slider-link .wsl-a{margin-left:2px}
 .wsp-slider-link .wsl-t{
   background-image:linear-gradient(100deg,
     var(--soft) 0%, var(--soft) 38%, var(--text) 50%, var(--soft) 62%, var(--soft) 100%);
@@ -5379,6 +5381,62 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   #swGate .sw-g-sub,#swGate .sw-g-mark,#swGate .sw-g-legal{display:none}
   #swGate .sw-g-panel{gap:10px; padding-bottom:calc(16px + env(safe-area-inset-bottom))}
   #swGate h2{font-size:clamp(19px,4.4vw,26px)}
+}
+
+/* THE WIZARD PAGE, TIGHTENED FOR A PHONE.
+   Asked for: "find a way to tighten the page so that more can be seen on
+   mobile on that wizard page." Measured at 390px before this: 2127px of
+   document, with the payout chips - the first thing anyone is here to press -
+   starting 953px down, behind a coach card and an open filter panel.
+   Nothing is removed. Section labels lose half their air, the market palette
+   packs four to a row instead of three, the explainer drops to phone leading,
+   and the segments and stat tiles stop carrying desktop gaps.
+   AT THE END OF THE STYLESHEET ON PURPOSE. Every rule here overrides a base
+   rule of equal specificity, so it only wins on source order - the first
+   attempt sat a thousand lines above .bld-coach and .wsp-slider-link and lost
+   to both silently. */
+@media(max-width:560px){
+  .wsp-lbl{margin:10px 0 5px}
+  .wsp-chips{gap:5px}
+  .wsp-chips.mkt-palette{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+  .mkt-chip{padding:6px 5px;font-size:11px;gap:3px}
+  .scope-seg{margin-bottom:7px}
+  .filters-body{margin-bottom:8px;padding-bottom:2px}
+  .filters-toggle{margin-bottom:8px}
+  .bld-mode-hint{margin:6px 0 8px}
+  .bld-stats{margin:8px 0}
+  .wsp-slider-link{margin-top:8px;padding:8px 12px}
+  .bld-coach{margin:8px 0 0;padding:9px 11px}
+  .bld-coach h4{margin-bottom:5px}
+  .bld-coach ul{gap:5px}
+  .bld-coach li{font-size:11.5px;line-height:1.42;gap:7px}
+  .bld-coach .bc-x{margin-top:7px;padding:6px 12px}
+}
+
+/* THE FILTER PANEL, IN TWO COLUMNS ON A WIDE SCREEN.
+   Asked: "the filter collapse is long asf on web, is that a design flaw?"
+   It is: the panel is a single stacked column whatever the width, so on a
+   desktop it runs about 320px tall down the left while the right half of its
+   own card sits empty. Four stacked sections is a phone layout being shown to
+   a screen with room for two.
+   Window and time and leagues stay together on the left, because they narrow
+   the same thing; the market palette takes the right, where its six-across
+   grid already lives. The children are placed by position rather than by
+   class - they are a fixed sequence built in one place - and the first item
+   of the right column loses its label margin so the two columns start level. */
+@media(min-width:900px){
+  .filters-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    column-gap:22px;align-items:start}
+  .filters-body>*{grid-column:1}
+  .filters-body>:nth-child(n+6){grid-column:2}
+  .filters-body>:nth-child(6){grid-row:1;margin-top:0}
+  /* Grid rows are shared between columns, so a right-hand block left to flow
+     row by row makes every row as tall as the taller of the two - which put
+     the panel back where it started, 262px against the 271 it was replacing.
+     The palette spans the rows the left column defines instead: it is taller
+     than any single one of them and shorter than all of them together, so it
+     costs nothing and the panel collapses to the height of its longer side. */
+  .filters-body>:nth-child(7){grid-row:2/6;align-self:start}
 }
 </style>
 </head>
@@ -14587,7 +14645,22 @@ paintScope();
 (function(){
   var t=document.getElementById("filtersToggle"),b=document.getElementById("filtersBody");
   if(!t||!b) return;
-  var open=true; try{open=localStorage.getItem("sw.filters")!=="0";}catch(e){}
+  /* OPEN ON A DESKTOP, CLOSED ON A PHONE - until the reader says otherwise.
+     The panel is 322px on a 390px screen, sitting between the mode switch and
+     the payout chips, which is most of a phone screen spent on defaults that
+     are already right for nearly everybody. Its summary line says what they
+     are ("All leagues - 4 markets"), and one tap opens it.
+     Only the DEFAULT differs. A stored choice still wins on both, so a reader
+     who opens it on their phone keeps it open. */
+  var open=true;
+  try{
+    var pref=localStorage.getItem("sw.filters");
+    if(pref===null){
+      open=!(window.matchMedia&&window.matchMedia("(max-width:560px)").matches);
+    }else{
+      open=pref!=="0";
+    }
+  }catch(e){}
   function apply(){ b.hidden=!open; t.setAttribute("aria-expanded",open?"true":"false"); }
   apply();
   t.addEventListener("click",function(){ open=!open; try{localStorage.setItem("sw.filters",open?"1":"0");}catch(e){} apply(); });
