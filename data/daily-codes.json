@@ -54,5 +54,61 @@
       "sporty": "YZXXWD",
       "bet9ja": "5QQDB2J"
     }
+  },
+  "2026-09-09": {
+    "date": "2026-09-09",
+    "generated": "2026-09-09T10:57:36.349Z",
+    "firstKickoff": "2026-09-09T16:45:00.000Z",
+    "legs": [
+      {
+        "home": "Philadelphia Union",
+        "away": "FC Cincinnati",
+        "league": "USA MLS",
+        "kickoff": "2026-09-09T23:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9193,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Twente",
+        "away": "Telstar",
+        "league": "Netherlands Eredivisie",
+        "kickoff": "2026-09-09T16:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9068,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Atlanta Utd",
+        "away": "Orlando City",
+        "league": "USA MLS",
+        "kickoff": "2026-09-09T23:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9016,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "DC United",
+        "away": "Columbus Crew",
+        "league": "USA MLS",
+        "kickoff": "2026-09-09T23:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.8882,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Moreirense",
+        "away": "Benfica",
+        "league": "Portugal Primeira Liga",
+        "kickoff": "2026-09-09T19:45:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.8379,
+        "market": "X2"
+      }
+    ],
+    "codes": {
+      "sporty": "XRQRTF",
+      "bet9ja": "5QV7ZT7"
+    }
   }
 }
