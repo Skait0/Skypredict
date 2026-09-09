@@ -1,4 +1,10 @@
-# Soccerwizard — Session Handoff (updated 2026-09-04)
+# Soccerwizard — history and incident log (last state update 2026-09-04)
+
+> **The state lines below are stale.** Checked on 9 Sep 2026: the HEAD and test
+> counts here predate a week of work, and it still calls API-Football suspended
+> when that key was replaced on 7 Sep. Read this file for the incidents and the
+> reasoning, which hold. For current state read `CLAUDE.md` and the newest
+> `session-handoff-*.md`.
 
 ## Deployed state
 - **Live URL:** https://www.soccerwizard.live — **www is canonical**, the bare
