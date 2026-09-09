@@ -41,3 +41,4 @@ ev*.json
 # graphify's knowledge graph. Build output from `graphify .` - regenerated
 # from the source it describes, and the cache alone is megabytes.
 graphify-out/
+supabase/.temp/
