@@ -5748,6 +5748,16 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   function armReveal(){
     if(reveal.getAttribute("src")) return;
     try{
+      /* PRELOAD="NONE" MEANT ARMING IT FETCHED LITTLE OR NOTHING.
+         The element is marked preload="none" so a reader who never presses
+         Enter is not charged for the clip - but that attribute outlives the
+         arming, and under it a browser is free to buffer nothing at all for
+         the load() below. So the tap could still be racing a cold 370-780 KB
+         download, and the 1100ms budget below then either gave up (no reveal)
+         or started on the first frames that had arrived - the reported skip.
+         Flipped here rather than in the markup, because the point of the
+         attribute is that nothing loads until we decide it should. */
+      reveal.preload="auto";
       reveal.src="/intro-wizard-reveal"+variant()+bestCodec()+".mp4";
       reveal.load();
     }catch(e){}
@@ -5776,15 +5786,31 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
        short landing still happens, which is the old behaviour, but now it is
        the exception rather than the rule. */
     if(!reveal.getAttribute("src")) armReveal();
-    if(reveal.readyState < 2){
-      var went=false;
-      var giveUp=setTimeout(function(){ if(!went){ went=true; land(); } }, 1100);
-      reveal.addEventListener("canplay", function(){
-        if(went) return; went=true; clearTimeout(giveUp);
+    /* ENOUGH TO RUN THROUGH, NOT MERELY ENOUGH TO START.
+       `canplay` fires as soon as the next frame exists, which on a cold fetch
+       is a couple of frames - so playback began and then ran out of buffer
+       mid-clip. Reported as "the video is not smooth from the moment i click
+       enter, kinda skips a little".
+       So: `canplaythrough` is what we wait for. `canplay` only starts a short
+       grace - the clip is under a second of video at 370 KB, so if the whole
+       thing is not there a beat after the first frame it is not coming inside
+       the budget, and the clean short landing beats a stuttering one. */
+    if(reveal.readyState < 4){
+      var went=false, grace=null;
+      function go(){
+        if(went) return; went=true;
+        clearTimeout(giveUp); clearTimeout(grace);
         if(!landed) runReveal(land);
+      }
+      var giveUp=setTimeout(function(){
+        if(!went){ went=true; clearTimeout(grace); land(); }
+      }, 1100);
+      reveal.addEventListener("canplaythrough", go, {once:true});
+      reveal.addEventListener("canplay", function(){
+        if(!went && !grace) grace=setTimeout(go, 350);
       }, {once:true});
       reveal.addEventListener("error", function(){
-        if(went) return; went=true; clearTimeout(giveUp); land();
+        if(went) return; went=true; clearTimeout(giveUp); clearTimeout(grace); land();
       }, {once:true});
       return;
     }

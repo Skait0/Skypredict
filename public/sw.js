@@ -9,7 +9,7 @@
  * exist. Static assets stay cache-first, since those are the ones worth having
  * instantly and they change under a new name when they change at all.
  */
-const VERSION = "sw-v8";
+const VERSION = "sw-v9";
 const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/wiz-logo.png"];
 
 /* THE KILL SWITCH. Set to true, deploy, and every installed worker deletes its
@@ -113,6 +113,19 @@ self.addEventListener("fetch", function (e) {
     e.respondWith(fetch(req));
     return;
   }
+
+  /* MEDIA IS THE BROWSER'S OWN BUSINESS.
+     A video element asks for byte ranges. `Cache.match` ignores Range and
+     answers with the whole stored body, so a cached media response comes back
+     as a rangeless 200 - which a media element cannot seek in and can stall
+     on. Verified through this worker: `fetch` for `bytes=0-1023` on the intro
+     clip returned 200 with all 374 KB and no Content-Range.
+     There is nothing to lose by stepping aside. `keep()` cannot store media
+     anyway - a 206 fails its status check - so the worker was adding a hazard
+     and no cache. The browser supports Range and has its own media cache, and
+     the intro files now carry a 30-day Cache-Control (see vercel.json), which
+     is what makes a second visit instant. */
+  if (/\.(mp4|webm|m4v|mov|m4a|mp3|ogg)$/i.test(url.pathname)) return;
 
   /* The manifest goes with the page, not with the assets.
      It was being served cache-first, which is how a fixed manifest stayed

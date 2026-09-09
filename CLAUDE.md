@@ -50,3 +50,8 @@ Bet9ja.
   read the deployment's own commit and timestamp.
 - The reader's day is **Lagos, UTC+1**. `f.date` is a UTC date; the two differ
   for any kickoff from 23:00Z on. `LAGOS_OFFSET_MS` lives in `lib/quota.js`.
+- **A static file with no rule in `vercel.json` is served
+  `max-age=0, must-revalidate`** — it is re-fetched on every visit. The intro
+  videos now have a 30-day rule, and their names are NOT hashed: replacing one
+  needs a new filename or a Cloudflare purge, or readers keep the old clip for
+  up to a month.
