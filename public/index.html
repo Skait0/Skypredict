@@ -5774,46 +5774,28 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
          shorter one. */
       setTimeout(land, 180); return;
     }
-    /* PRESSED BEFORE THE REVEAL WAS EVEN ASKED FOR.
-       Reported: "sometimes when i press enter it just skips and the video
-       doesnt play." The reveal is deliberately not fetched until the loop has
-       had 1.2 seconds of the connection to itself - and a tap inside that
-       window found no src on the element and fell straight through to the
-       180ms landing. Which is most taps: the button is the first thing anyone
-       reaches for.
-       So Enter arms it itself, and then waits - briefly, because a reader who
-       has tapped is done waiting. If it cannot start within the budget the
-       short landing still happens, which is the old behaviour, but now it is
-       the exception rather than the rule. */
-    if(!reveal.getAttribute("src")) armReveal();
-    /* ENOUGH TO RUN THROUGH, NOT MERELY ENOUGH TO START.
-       `canplay` fires as soon as the next frame exists, which on a cold fetch
-       is a couple of frames - so playback began and then ran out of buffer
-       mid-clip. Reported as "the video is not smooth from the moment i click
-       enter, kinda skips a little".
-       So: `canplaythrough` is what we wait for. `canplay` only starts a short
-       grace - the clip is under a second of video at 370 KB, so if the whole
-       thing is not there a beat after the first frame it is not coming inside
-       the budget, and the clean short landing beats a stuttering one. */
-    if(reveal.readyState < 4){
-      var went=false, grace=null;
-      function go(){
-        if(went) return; went=true;
-        clearTimeout(giveUp); clearTimeout(grace);
-        if(!landed) runReveal(land);
-      }
-      var giveUp=setTimeout(function(){
-        if(!went){ went=true; clearTimeout(grace); land(); }
-      }, 1100);
-      reveal.addEventListener("canplaythrough", go, {once:true});
-      reveal.addEventListener("canplay", function(){
-        if(!went && !grace) grace=setTimeout(go, 350);
-      }, {once:true});
-      reveal.addEventListener("error", function(){
-        if(went) return; went=true; clearTimeout(giveUp); clearTimeout(grace); land();
-      }, {once:true});
-      return;
-    }
+    /* PLAY IT IF IT IS READY, OTHERWISE JUST LAND. NO WAITING, NO WATCHING.
+       This is where two reports met, and the machinery between them is now
+       gone.
+       First: "sometimes when i press enter it just skips and the video doesnt
+       play" - a tap before the clip had been armed found no src and fell
+       through to the short landing. The answer was to make Enter arm the clip
+       and then wait for it, on `canplay`.
+       Then: "the video is not smooth from the moment i click enter, kinda
+       skips a little" - because `canplay` means one decodable frame, so on a
+       cold fetch playback started and ran dry. Waiting on `canplaythrough`
+       instead fixed the stutter and left a reader holding a still panel for up
+       to a beat after tapping, which is its own kind of wrong.
+       The real fault was never the wait. It was that the clip was never in
+       cache: it had been served `max-age=0, must-revalidate` since the gate
+       shipped, so EVERY visit re-fetched 370-780 KB. That is fixed in
+       vercel.json, and once the file is local `readyState` is 4 before anyone
+       can reach the button.
+       So the wait comes out. Ready means play; not ready means land, at once,
+       which is what a reader who has already tapped actually wants. Nothing
+       here can stutter, because nothing here starts a clip that cannot finish
+       one. */
+    if(reveal.readyState < 4){ setTimeout(land, 180); return; }
     runReveal(land);
   }
 

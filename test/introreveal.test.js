@@ -47,20 +47,23 @@ test("the markup still asks for nothing until the gate decides", () => {
     "the reveal must start out preload=none");
 });
 
-test("Enter waits for the whole clip, not for the first frame", () => {
-  const from = src.indexOf("if(!reveal.getAttribute(\"src\")) armReveal();");
-  assert.ok(from > 0, "the Enter path has moved");
-  /* To the end of onEnter, which is where runReveal is declared - the earlier
-     `runReveal(land)` calls are inside the very block being tested. */
+test("Enter plays a ready clip and otherwise lands at once", () => {
+  /* The wait is deliberately gone. Waiting on one frame stuttered; waiting on
+     the whole clip held a reader on a still panel after they had tapped. A
+     cached clip is ready before the button can be reached, so readiness is
+     the only question worth asking. */
+  const from = src.indexOf("function onEnter(){");
+  assert.ok(from > 0, "onEnter has moved");
   const body = src.slice(from, src.indexOf("function runReveal", from));
-  assert.match(body, /readyState < 4/,
-    "readyState 4 is 'can play through'; 2 was the stutter");
-  assert.ok(body.indexOf("canplaythrough") > 0, "canplaythrough is what starts it");
-  /* canplay may still start it, but only after a grace - never immediately. */
-  const cp = body.indexOf("\"canplay\"");
-  assert.ok(cp > 0, "canplay is still the fallback");
-  assert.match(body.slice(cp), /grace=setTimeout\(go, \d+\)/,
-    "canplay must schedule the grace rather than play at once");
+  assert.match(body, /if\(reveal\.readyState < 4\)\{ setTimeout\(land, \d+\); return; \}/,
+    "not ready must land immediately, not wait");
+  /* The listener calls, not the words - the comment above the code explains
+     the waits this replaced and says both their names. */
+  for (const ev of ["canplaythrough", "canplay"]) {
+    assert.ok(body.indexOf("addEventListener(\"" + ev + "\"") < 0,
+      "the " + ev + " wait is back in onEnter");
+  }
+  assert.ok(body.indexOf("giveUp") < 0, "the give-up timer is back in onEnter");
 });
 
 test("the intro assets are cached, because they are re-fetched otherwise", () => {
