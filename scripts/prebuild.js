@@ -80,7 +80,7 @@ async function bakePayload() {
       prevPublished = (prev.publishedByDate && typeof prev.publishedByDate === "object")
         ? prev.publishedByDate : null;
     }
-    if (prevPotd) log("carrying forward pick of the day: " + prevPotd.home + " v " + prevPotd.away);
+    if (prevPotd) log("previous pick of the day: " + prevPotd.home + " v " + prevPotd.away);
   } catch (e) { warn("could not read the live board (" + e.message + "), choosing fresh"); }
   /* THE LAST GOOD BOARD, WHEN THIS BUILD CANNOT MAKE ONE.
    *
@@ -128,6 +128,14 @@ async function bakePayload() {
     warn("build failed: " + e.message);
     payload = fallBackToPrevious(e.message);
     if (!payload) return;
+  }
+  /* The OUTCOME, not the input. The old line said "carrying forward X" before
+     choosePotd had run, so it read as a decision it had not made - and once
+     the overnight rule started refusing a carried pick, it read as a wrong
+     one. */
+  if (payload && payload.potd) {
+    log("pick of the day: " + payload.potd.home + " v " + payload.potd.away +
+        (prevPotd && prevPotd.id === payload.potd.id ? " (carried forward)" : " (chosen fresh)"));
   }
   const n = (payload && Array.isArray(payload.fixtures)) ? payload.fixtures.length : 0;
   if (n < MIN) {

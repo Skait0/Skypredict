@@ -291,3 +291,47 @@ test("the app prefers the baked pick over its own localStorage lock", () => {
   const j = potd.indexOf("if(!top&&lock&&lock.id)");
   assert.ok(i > 0 && j > i, "the lock is now only the fallback");
 });
+
+test("a game past the reader's midnight is not today's pick", () => {
+  /* The reported case: Philadelphia Union v FC Cincinnati at 23:45Z was
+     headlined as 9 Sep's pick, and 23:45Z is 00:45 on the 10th in Lagos. It
+     had not kicked off, so the `started` rule let it through. */
+  const p = build.choosePotd([
+    fx({ home: "Philadelphia Union", away: "FC Cincinnati", tip_p: 0.94,
+         kickoff: "2026-08-30T23:45:00.000Z" }),
+    fx({ home: "Viking", away: "Aalesund", tip_p: 0.85,
+         kickoff: "2026-08-30T19:00:00.000Z" }),
+  ], null, FUTURE);
+  assert.strictEqual(p.home, "Viking",
+    "the overnight game loses the headline even at nine points more confidence");
+});
+
+test("but a card that is nothing but overnight games still yields a pick", () => {
+  /* A demerit, not a filter - the headline is never blank. */
+  const p = build.choosePotd([
+    fx({ home: "A", away: "B", tip_p: 0.90, kickoff: "2026-08-30T23:30:00.000Z" }),
+  ], null, FUTURE);
+  assert.ok(p && p.home === "A");
+});
+
+test("the carry-forward does not re-affirm an overnight pick", () => {
+  /* Without this the 06:30 rebake keeps choosing it every day and the rule
+     above never reaches the page. */
+  const board = [
+    fx({ home: "Late", away: "Game", tip_p: 0.94,
+         kickoff: "2026-08-30T23:45:00.000Z" }),
+    fx({ home: "Viking", away: "Aalesund", tip_p: 0.85,
+         kickoff: "2026-08-30T19:00:00.000Z" }),
+  ];
+  const prev = { id: "m20260830LateGame", home: "Late", away: "Game",
+                 date: "2026-08-30" };
+  assert.strictEqual(build.choosePotd(board, prev, FUTURE).home, "Viking");
+});
+
+test("a pick that is still inside the reader's day is kept across rebakes", () => {
+  const board = [fx({ home: "Viking", away: "Aalesund", tip_p: 0.85,
+                      kickoff: "2026-08-30T19:00:00.000Z" })];
+  const prev = { id: "m20260830VikingAalesund", home: "Viking",
+                 away: "Aalesund", date: "2026-08-30" };
+  assert.deepStrictEqual(build.choosePotd(board, prev, FUTURE), prev);
+});

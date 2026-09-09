@@ -13619,7 +13619,17 @@ function wspBuild(){
        asked for", kept by stretching legs until the number was met. That is
        the wrong promise: it buys a figure with games we would not otherwise
        have chosen. Report the shortfall instead and let the slip be honest. */
-    return {picks:picks,odds:prod,short:(!WSP.everyGame&&T!=null&&prod<T*0.995)};
+    /* EVERY STYLE LANDS ON THE SAME SLIP WHEN THE BOARD RUNS OUT.
+       Reported as "I change slip style and it stays on 21 games". It was not
+       the chips: on a one-day window at x2000 the pool holds 21 games we rate,
+       every style asks for more legs than that or cannot reach the payout
+       inside its own leg count, and both phases stop on an empty pool. Three
+       chips over a number none of them can move is the dead-controls failure,
+       so the panel says which it is - and it can only be said from here,
+       because `want` is not what pins it and the pool size is not visible
+       outside this function. */
+    return {picks:picks,odds:prod,short:(!WSP.everyGame&&T!=null&&prod<T*0.995),
+            exhausted:(!WSP.everyGame&&T!=null&&picks.length>=chosen.length)};
   }
   var euro=all.filter(function(c){return !isSouthAmerican(c.f)&&!isAsian(c.f);});
   /* Same policy as the slider builder: Europe alone unless there are too few
@@ -14279,6 +14289,10 @@ function renderWizardPanel(){
        much risk", not "what payout", so it belongs behind its own tab rather
        than inside this row. A link says that honestly and never needs greying,
        because the Slider tab always works. */
+    /* Where "every style builds the same slip" explains itself. Filled by
+       renderBuilderOutput, which is the only place the pool size is known;
+       empty and marginless the rest of the time, like #payAsk above. */
+    html += "<p class='wsp-hint' id='wspExh' hidden></p>";
     html += "<button class='wsp-slider-link' id='wspToSlider' type='button'>"+
       "<span class='wsl-t'>Or let the Slider pick the games</span>"+
       "<span class='wsl-a' aria-hidden='true'>\u2192</span></button>";
@@ -14489,7 +14503,11 @@ function renderBuilderOutput(){
          a function call. */
       var _sig=[WSP.odds,WSP.legodd,wspStyleOn(),WSP.seed,JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE,SDAY,SPAN,TOD,!!WSP.everyGame].join("|");
       if(WSP._sig!==_sig || !WSP._slip){
-        WSP._slip=wspBuild().picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};});
+        var _r=wspBuild();
+        WSP._slip=_r.picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};});
+        /* Cached with the slip, because the note below is drawn on every
+           render and the pool size is only known while a build is running. */
+        WSP._exh=!!_r.exhausted; WSP._short=!!_r.short;
         WSP._sig=_sig;
       }
       picks=WSP._slip.filter(function(c){return !WSP.removed[c.id];});
@@ -14504,13 +14522,33 @@ function renderBuilderOutput(){
          since the preview is what you read while choosing, the jackpot tier
          looked broken when only this line was. A preview that does not agree
          with the thing it previews is worse than no preview. */
-      picks=wspBuild().picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};})
+      var _g=wspBuild();
+      WSP._exh=!!_g.exhausted; WSP._short=!!_g.short;
+      picks=_g.picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};})
         .slice(0,isJackpotOdds(WSP.odds)?JACKPOT_LEG_CAP:40);
     }
   } else {
     picks = firstVisit ? [] : buildPicks();
   }
   BUILD.picks = picks;
+  /* THE STYLE CHIPS, WHEN THE WINDOW HAS NOTHING LEFT TO TRADE.
+     Every style uses the whole pool here, so all three land on the same games
+     and the chips look broken. Say which it is, and name the window as the
+     thing to change - that is the actionable half, exactly as the slider's
+     "all that clear the bar in this window" does. Absent otherwise, so it
+     never comments on a slip the styles CAN move. */
+  var _exhEl=$("wspExh");
+  if(_exhEl){
+    var _sayExh=isWiz && WSP.odds!=null && !WSP.everyGame && WSP._exh && picks.length;
+    _exhEl.hidden=!_sayExh;
+    _exhEl.innerHTML=_sayExh
+      ? "<b>This window holds "+picks.length+" games we rate.</b> Every style "+
+        "uses all of them, so none of them changes the slip"+
+        (WSP._short?" and ×"+WSP.odds+" is out of reach":"")+
+        ". Widen the day span, or turn off top flight only, to trade games "+
+        "against odds."
+      : "";
+  }
   // Risk bubble
   var _rb=$("riskBubble");
   if(_rb){ _rb.style.left="calc("+displayRisk+"% + "+(13-displayRisk*0.26)+"px)";
