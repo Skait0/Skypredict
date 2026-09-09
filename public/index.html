@@ -402,7 +402,14 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
 :root{color-scheme:dark}
 [data-theme="light"]{color-scheme:light}
 select,option{background-color:var(--card);color:var(--text)}
-:root{--r-sm:4px;--r-md:6px;--r-lg:8px}
+:root{--r-sm:4px;--r-md:6px;--r-lg:8px;
+  /* THE curve. Thirty-odd hand-rolled cubic-beziers in this file are all
+     reaching for this one - (.25,.8,.3,1), (.25,.9,.3,1), (.3,.9,.3,1),
+     (.2,.9,.25,1) and so on differ by less than a frame and by nothing the
+     eye can name. New work uses the token instead of adding a thirty-first
+     variant; the existing ones are left where they are, because rewriting
+     them is a large diff with no visible change and every chance of a typo. */
+  --ease-out:cubic-bezier(0.23,1,0.32,1)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 button,a,.m,.lrow,.gl-card,.cat,.vt,.navt,.btab,.opt-add{-webkit-tap-highlight-color:transparent;tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;overflow-x:hidden}
@@ -1511,6 +1518,11 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
 .vt:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .trust{display:flex;flex-wrap:wrap;gap:8px 15px;align-items:center;margin-top:15px;font-size:12.5px;color:var(--soft)}
 .trust-i{display:inline-flex;align-items:center;gap:7px}
+/* Same trap as .mysheet-foot and .inst-bar: the display above beat the
+   browser's [hidden] rule, so hiding the streak badge left its separator dot
+   behind - a 5x5 mark on the row with nothing after it. Measured on the live
+   site before this line existed. */
+.trust-i[hidden]{display:none}
 .trust-i b{color:var(--text);font-weight:700}
 .trust-i::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--faint)}
 .trust-i:first-child::before{display:none}
@@ -2910,7 +2922,13 @@ html.mode-live #live{display:block}
   padding:2px 6px;border-radius:var(--r-sm);margin-left:6px}
 .bld-foot{position:sticky;bottom:0;display:flex;align-items:center;gap:8px;margin-top:16px;
   background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:12px;
-  box-shadow:0 -6px 20px rgba(0,0,0,.25)}
+  box-shadow:0 -6px 20px rgba(0,0,0,.25);
+  /* The bar is shown and hidden by an inline display, and a display change
+     from none is what restarts a CSS animation - so the entrance costs no JS
+     and cannot race a re-render. Setting the same display again changes no
+     computed style, so this does NOT re-fire on every renderBuilderOutput. */
+  animation:barIn 180ms var(--ease-out) both}
+@keyframes barIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 /* Secondary actions become quiet icon-ghost buttons so Book owns the bar. */
 .bld-foot .clear-btn{flex:0 0 auto;width:44px;height:44px;padding:0;display:grid;place-items:center;
   background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);border-radius:var(--r-sm);
@@ -3024,7 +3042,20 @@ html.mode-live #live{display:block}
 #bookResult{margin-top:14px}
 /* Compact centred modal for the booking code */
 .code-modal-scrim{position:fixed;inset:0;z-index:220;background:rgba(10,14,10,.45);
-  backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px}
+  backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px;
+  /* THE CODE USED TO BLINK INTO EXISTENCE. It is the thing this whole product
+     exists to hand over and it arrived with less ceremony than a tooltip.
+     @starting-style is what makes the entrance possible without a class
+     toggle or a timer: the modal is created and appended, so the browser has
+     a state to transition FROM. A browser without it gets exactly what it
+     got before, which is why there is no JS here at all. */
+  transition:opacity 160ms var(--ease-out)}
+@starting-style{.code-modal-scrim{opacity:0}}
+/* Scoped to the modal. .code-card is also rendered inline under the builder,
+   where it is not being inserted and has nothing to animate from. */
+.code-modal-scrim .code-card{
+  transition:opacity 220ms var(--ease-out),transform 220ms var(--ease-out)}
+@starting-style{.code-modal-scrim .code-card{opacity:0;transform:scale(.96)}}
 /* A tinted pane, the way it always was in dark mode - the green wash there
    is half of why a code feels like a result rather than a dialog. What broke
    was only light mode, where a green tint over a dark scrim left dark text
@@ -3694,7 +3725,17 @@ button.wsp-go.waiting{opacity:.55}
    that is switched ON - this one is a door, not a state. */
 .lgp-open.narrowed{border-color:var(--red);color:var(--red-ink);background:var(--red-wash)}
 .lgp-box{margin-top:9px;background:var(--card);border:1px solid var(--line);
-  border-radius:var(--r-md);overflow:hidden}
+  border-radius:var(--r-md);overflow:hidden;
+  /* Unfolds rather than snapping. clip-path rather than height, because the
+     list is as tall as the leagues on the board and a height animation would
+     need a number nobody can know in advance. The box already clips, so the
+     inset has nothing to leak past. Entrance only: `hidden` removes the
+     element from the box tree instantly, so there is no closing frame to
+     animate without moving the state out of the attribute. */
+  animation:lgpUnfold 200ms var(--ease-out) both}
+@keyframes lgpUnfold{
+  from{opacity:0;clip-path:inset(0 0 100% 0);transform:translateY(-4px)}
+  to{opacity:1;clip-path:inset(0 0 0 0);transform:translateY(0)}}
 .lgp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
   padding:9px 12px;border-bottom:1px solid var(--line-soft);
   font-size:11.5px;font-weight:700;color:var(--faint)}
@@ -3873,7 +3914,15 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
    beneath. It is the button everything here exists to reach, and a full-width
    target is better than a stranded one. */
 .mysheet-foot{display:flex;align-items:center;gap:10px 12px;flex-wrap:wrap;
-  padding:16px 16px 6px;border-top:1px solid var(--line-soft);margin-top:14px}
+  padding:16px 16px 6px;border-top:1px solid var(--line-soft);margin-top:14px;
+  animation:barIn 180ms var(--ease-out) both}
+/* THE hidden ATTRIBUTE WAS DOING NOTHING HERE. An author display declaration
+   beats the browser's own [hidden]{display:none} whatever the specificity, so
+   `$("mySheetFoot").hidden=true` left a 72px bar with Total odds and Get code
+   sitting under an empty slip. Measured on the live site. Same trap the
+   install bar hit - see .inst-bar above, which carries the same override for
+   the same reason. */
+.mysheet-foot[hidden]{display:none}
 .mysheet-foot .bld-odds{flex:1 1 auto;min-width:0}
 /* Long totals stop competing for the row and shrink instead. */
 .mysheet-foot .bld-odds b{font-size:clamp(17px,5.2vw,24px);white-space:nowrap}
@@ -3932,6 +3981,24 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
    updated" and nowhere else. Two other comments in this file already describe
    the behaviour this rule was preventing. */
 .trust-i.streak b{color:var(--win)}
+/* The one place on this page that has earned a bounce: a streak reaching two
+   is rare and is the only moment here worth marking. Fires when the badge
+   goes from hidden to shown, and not on a re-render that leaves the class
+   string identical. */
+.trust-i.streak{animation:streakPop 240ms cubic-bezier(0.34,1.56,0.64,1) both}
+@keyframes streakPop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+/* REDUCED MOTION KEEPS THE FADES AND DROPS THE MOVEMENT, for all four of the
+   entrances added here. Gentler, not zero: the fade is what stops a surface
+   appearing out of nowhere, and that is the whole reason these exist. */
+@media(prefers-reduced-motion:reduce){
+  .bld-foot,.mysheet-foot{animation-name:barInFlat}
+  .lgp-box{animation-name:lgpFlat}
+  .trust-i.streak{animation:streakFlat 160ms linear both}
+  .code-modal-scrim .code-card{transition:opacity 200ms linear}
+}
+@keyframes barInFlat{from{opacity:0}to{opacity:1}}
+@keyframes lgpFlat{from{opacity:0}to{opacity:1}}
+@keyframes streakFlat{from{opacity:0}to{opacity:1}}
 .goal-tag{position:absolute;right:calc(100% + 6px);top:50%;transform:translateY(-50%);
   display:inline-flex;align-items:center;font-size:9px;font-weight:800;letter-spacing:.06em;
   color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;white-space:nowrap;
