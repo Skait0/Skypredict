@@ -110,5 +110,61 @@
       "sporty": "XRQRTF",
       "bet9ja": "5QV7ZT7"
     }
+  },
+  "2026-09-11": {
+    "date": "2026-09-11",
+    "generated": "2026-09-11T10:52:04.967Z",
+    "firstKickoff": "2026-09-11T16:30:00.000Z",
+    "legs": [
+      {
+        "home": "FC Copenhagen",
+        "away": "Horsens",
+        "league": "Denmark Superliga",
+        "kickoff": "2026-09-11T17:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9263,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "AZ Alkmaar",
+        "away": "Willem II",
+        "league": "Netherlands Eredivisie",
+        "kickoff": "2026-09-11T18:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9142,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Rennes",
+        "away": "Marseille",
+        "league": "France Ligue 1",
+        "kickoff": "2026-09-11T18:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.8989,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Nurnberg",
+        "away": "Hannover",
+        "league": "Germany Bundesliga 2",
+        "kickoff": "2026-09-11T16:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.8923,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Darmstadt",
+        "away": "Bielefeld",
+        "league": "Germany Bundesliga 2",
+        "kickoff": "2026-09-11T16:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.8874,
+        "market": "OVER_1.5"
+      }
+    ],
+    "codes": {
+      "sporty": "SU2U1Q",
+      "bet9ja": "5R5PBNF"
+    }
   }
 }
