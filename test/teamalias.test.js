@@ -72,6 +72,15 @@ const RESOLVES = [
   ["Argentinos Juniors",      "Argentinos Jrs",  "Argentina Liga Profesional"],
   ["SE Palmeiras SP",         "Palmeiras",       "Brazil Serie A"],
   ["Caykur Rizespor",         "Rizespor",        "Turkey Super Lig"],
+  /* These two are the pair that used to be a refusal. FC Eindhoven sat in
+     MUST_REFUSE while the only Eindhoven in the index was PSV, so resolving it
+     at all meant resolving it wrongly. The harvest of 12 Sep 2026 carried its
+     first Eerste Divisie result, so the club is one we rate now and the right
+     answer changed. Both directions are pinned rather than neither: the
+     original worry was never "FC Eindhoven must not resolve", it was "FC
+     Eindhoven must not become PSV", and that is what these two lines say. */
+  ["FC Eindhoven",            "Eindhoven FC",    "Netherlands Eerste Divisie"],
+  ["PSV Eindhoven",           "PSV Eindhoven",   "Netherlands Eredivisie"],
 ];
 
 test("the clubs the board was dropping now resolve, to the right club", () => {
@@ -99,17 +108,19 @@ const MUST_REFUSE = [
   "Atletico Nacional",            /* Colombia - not Nacional of Madeira */
   "Club Nacional de Football",    /* Uruguay - not Nacional */
   "Central Espanol FC",           /* Uruguay - not Espanyol */
-  "FC Eindhoven",                 /* not PSV Eindhoven */
   "Paris 13 Atletico",            /* not Paris FC */
   "Botafogo FC SP",               /* not Botafogo RJ */
   "Gremio Novorizontino SP",      /* not Gremio */
   "CA Huracan Las Heras",         /* Mendoza - not Huracan of Buenos Aires */
   "CAS Defensores de Belgrano",   /* not Belgrano de Cordoba */
   "Club Leon",                    /* Mexico - fuzzy reaches Lyon */
-  /* "Riga FC" was here because a fuzzy match reached Wigan. It has been removed
-     rather than fixed: Latvia Virsliga is harvested now, so Riga FC is a club we
-     rate and resolving it to itself is the correct answer. A name leaves this
-     list when we start carrying the club, not when the matcher gets better. */
+  /* "Riga FC" was here because a fuzzy match reached Wigan, and "FC Eindhoven"
+     because the only Eindhoven we carried was PSV. Both have been removed
+     rather than fixed: Latvia Virsliga and Netherlands Eerste Divisie are
+     harvested now, so each is a club we rate and resolving it to itself is the
+     correct answer. A name leaves this list when we start carrying the club,
+     not when the matcher gets better - and it moves up to RESOLVES when it
+     goes, so the club it must NOT become stays under test. */
 ];
 
 test("clubs that merely share a name with ours are still refused", () => {
