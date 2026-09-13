@@ -3140,6 +3140,8 @@ html.mode-live #live{display:block}
   border:1px solid var(--line);color:var(--soft);transition:background .15s,color .15s}
 @media (hover:hover){.byo-cancel:hover{background:var(--raise);color:var(--text)}}
 .byo-conv{margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft)}
+.byo-changed{color:var(--win-ink)}
+.byo-changed b{color:var(--win-ink)}
 /* ---- a code somebody else built, at the foot of the builder ---- */
 .byo{margin-top:18px;padding-top:16px;border-top:1px solid var(--line-soft)}
 .byo h3{font-size:14px;font-weight:800;letter-spacing:-.01em;margin:0 0 3px}
@@ -10551,7 +10553,22 @@ function mLabel(f,c){
     case"HOME_OVER_0.5":return esc(f.home)+" over 0.5 goals";
     case"AWAY_OVER_0.5":return esc(f.away)+" over 0.5 goals";
     case"HOME_OVER_1.5":return esc(f.home)+" over 1.5 goals";
-    case"AWAY_OVER_1.5":return esc(f.away)+" over 1.5 goals";}
+    case"AWAY_OVER_1.5":return esc(f.away)+" over 1.5 goals";
+    /* Markets we move but never predict - see PASSTHROUGH_MAP in the API.
+       1UP and 2UP are the early-payout promotion both books run: the bet pays
+       as soon as that side goes one (or two) goals ahead, whatever the final
+       score. The whole Over lines push on the exact number, which is what
+       makes them a different bet from the .5 line beside them. */
+    case"UP1_1":return esc(f.home)+" 1UP";
+    case"UP1_X":return"Draw 1UP";
+    case"UP1_2":return esc(f.away)+" 1UP";
+    case"UP2_1":return esc(f.home)+" 2UP";
+    case"UP2_X":return"Draw 2UP";
+    case"UP2_2":return esc(f.away)+" 2UP";
+    case"OVER_2":return"Over 2 goals";
+    case"OVER_3":return"Over 3 goals";
+    case"UNDER_2":return"Under 2 goals";
+    case"UNDER_3":return"Under 3 goals";}
   return c;
 }
 /* How many of your still-running slips already carry this fixture.
@@ -11362,18 +11379,43 @@ function otherBook(B){ return BOOKS[B.key==="sporty"?"bet9ja":"sporty"]; }
 
 /* Everything the panel needs to say, worked out before anything is drawn:
    what carries over, what does not, and why not - one reason per leg. */
+/* THE LINES ONE BOOK PRICES AND THE OTHER DOES NOT.
+   SportyBet sells Over 2 and Over 3; Bet9ja's card stops at the .5 lines. A
+   whole line and the .5 below it are NOT the same bet - Over 2 returns the
+   stake on exactly two goals where Over 1.5 has already won - so moving one to
+   the other changes what was staked on.
+   Asked for deliberately, and done openly: the leg converts to the nearest
+   line the other book actually sells, and every screen that shows it says it
+   was changed. It is never applied to a leg that could have moved untouched. */
+var NEAREST_LINE={"OVER_2":"OVER_1.5","OVER_3":"OVER_2.5",
+                  "UNDER_2":"UNDER_2.5","UNDER_3":"UNDER_3.5"};
+
 function byoConversion(){
   var from=byoBook(), to=otherBook(from);
-  var picks=[], stuck=[];
+  var picks=[], stuck=[], changed=[];
   (BYO.legs||[]).forEach(function(l){
     var f=l.prediction?fixtureByBookId(l.eventId,from):null;
     var id=f?f[to.id]:null;
     if(!l.prediction) stuck.push({leg:l,why:"a market we don't carry"});
     else if(!f)       stuck.push({leg:l,why:"not a game on our board"});
     else if(id==null) stuck.push({leg:l,why:to.label+" doesn't list this game"});
-    else picks.push({id:fid(f),code:l.prediction,f:f,p:f[l.prediction]});
+    else {
+      /* Only when the line itself cannot travel. A market the other book
+         sells is never substituted. */
+      var code=l.prediction, near=NEAREST_LINE[code];
+      if(near && to.key==="bet9ja"){
+        changed.push({leg:l, from:code, to:near});
+        code=near;
+      }
+      /* mProb, not f[code]: the payload keys probabilities as o15/o25/btts,
+         so indexing it with a market code gave undefined, and undefined
+         reached oddOf and came back NaN - which is what put "about xNaN"
+         on the panel. A pass-through market has no probability at all, and
+         mProb answers null for those rather than guessing. */
+      picks.push({id:fid(f),code:code,f:f,p:mProb(f,code)});
+    }
   });
-  return {from:from,to:to,picks:picks,stuck:stuck};
+  return {from:from,to:to,picks:picks,stuck:stuck,changed:changed};
 }
 /* Their price where the other book has published one, ours only as a last
    resort - a converted slip is worth what the book taking it pays. */
@@ -11381,7 +11423,12 @@ function convOdds(picks){
   var to=otherBook(byoBook());
   return picks.reduce(function(t,c){
     var o=(c.f&&c.f[to.odds]||{})[c.code];
-    return t*((o&&o>1.01)?o:legOdd(c.f,c.code,c.p));},1);
+    if(!(o&&o>1.01)) o=legOdd(c.f,c.code,c.p);
+    /* A leg the other book has not priced, on a market we do not model, has no
+       number either of us can stand behind. It counts as 1 rather than
+       poisoning the whole product - one unknown leg used to make the total
+       read "xNaN". */
+    return t*((isFinite(o)&&o>1)?o:1);},1);
 }
 
 function renderConvert(){
@@ -11396,6 +11443,16 @@ function renderConvert(){
   host.innerHTML="<div class='byo-conv'>"+
     "<div class='byo-head'><b>"+c.picks.length+" of "+(BYO.legs||[]).length+
       " games move to "+esc(c.to.label)+"</b><span>about x"+odds.toFixed(odds>=100?0:2)+"</span></div>"+
+    (c.changed.length
+      ? "<p class='byo-note byo-changed'><b>"+c.changed.length+
+        (c.changed.length===1?" leg was":" legs were")+" changed to a line "+
+        esc(c.to.label)+" sells:</b> "+c.changed.slice(0,3).map(function(x){
+          return esc(mLabel({home:x.leg.home||"Home",away:x.leg.away||"Away"},x.from))+
+            " → "+esc(mLabel({home:x.leg.home||"Home",away:x.leg.away||"Away"},x.to));
+        }).join("; ")+(c.changed.length>3?"; and "+(c.changed.length-3)+" more":"")+
+        ". Not the same bet: a whole line returns the stake on the exact score, "+
+        "the half line does not.</p>"
+      : "")+
     (c.stuck.length
       ? "<p class='byo-note'>Left behind: "+c.stuck.slice(0,4).map(function(x){
           return esc((x.leg.home||"a game")+" v "+(x.leg.away||"")+" - "+x.why);}).join("; ")+
