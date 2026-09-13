@@ -388,6 +388,7 @@ async function writePages(payload) {
     ["/how-it-works", () => P.renderHowItWorks(stats)],
     ["/matches", () => P.renderMatchesIndex(pages.map((pg) => pg.f))],
     ["/how-to-load-a-booking-code", () => P.renderHowToCode()],
+    ["/convert-a-booking-code", () => P.renderConvertPage()],
     ["/booking-codes", () => P.renderCodesHub(codeDays, resultOf)],
   ];
 
