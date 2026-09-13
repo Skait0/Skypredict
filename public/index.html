@@ -11504,10 +11504,14 @@ function byoConversion(){
         if(!BYO.reline){ offer.push({leg:l, from:code, to:mix}); return; }
         changed.push({leg:l, from:code, to:mix});
         code=mix;
-      } else if(/^MIX_/.test(code) && to.key==="bet9ja"){
-        stuck.push({leg:l, why:to.label+" sells this at 1.5 and 3.5, not 2.5"});
-        return;
       }
+      /* NO BRANCH FOR 1X2-or-Over/Under GOING TO BET9JA, and that is the fix
+         rather than an omission. This dropped every such leg with "Bet9ja
+         sells this at 1.5 and 3.5, not 2.5", which was true of the market it
+         was looking at and false of the book: their 2.5 lives under a
+         different key entirely, S_CHANCEMIXGGOU, and bet9ja.py has mapped it
+         since a punter's real code turned it up. Both tables carry MIX_*_2.5,
+         so the leg crosses untouched like any other shared market. */
       /* mProb, not f[code]: the payload keys probabilities as o15/o25/btts,
          so indexing it with a market code gave undefined, and undefined
          reached oddOf and came back NaN - which is what put "about xNaN"
