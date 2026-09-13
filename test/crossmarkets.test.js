@@ -215,3 +215,50 @@ test("a game on the board is found even when the bookmaker's id differs", () => 
     home: "Austin FC II", away: "Colorado Rapids 2",
     kickoff: Date.parse("2026-09-14T01:30:00.000Z") }, B), null);
 });
+
+/* --------------------------------------------- running a ticket past us */
+
+test("a trim ranks on our model first and the bookmaker's price second", () => {
+  const api = new Function(
+    "var DATA={fixtures:[{home:'Torino',away:'Roma',kickoff:'2026-09-14T16:30:00.000Z'," +
+      "eventId:'sr:match:1',o15:0.8,o25:0.55}]};" +
+    "var MATCH_WINDOW_MS=86400000;" +
+    src.slice(src.indexOf("var TEAM_ALIASES = {"), src.indexOf("function simTeams(")) +
+    grab("simTeams") + grab("evStart") + grab("sameSlot") +
+    grab("fixtureByBookId") + grab("fixtureByLeg") + grab("mProb") +
+    grab("legChance") + grab("trimPlan") +
+    "\nreturn {legChance:legChance,trimPlan:trimPlan};")();
+  const B = { key: "sporty", id: "eventId" };
+
+  /* On our board and a market we model: our own number, not theirs. */
+  const known = { eventId: "sr:match:1", home: "Torino", away: "Roma",
+    kickoff: Date.parse("2026-09-14T16:30:00.000Z"), prediction: "OVER_1.5", odds: 1.3 };
+  assert.deepEqual(api.legChance(known, B), { p: 0.8, src: "model" });
+
+  /* A game we do not carry still gets ranked - on the price, which carries
+     their margin and is therefore never shown as a probability. */
+  const foreign = { eventId: "sr:match:999", home: "Austin FC II",
+    away: "Colorado Rapids 2", kickoff: Date.now(), prediction: "OVER_1.5", odds: 2.0 };
+  assert.deepEqual(api.legChance(foreign, B), { p: 0.5, src: "book" });
+
+  /* Nothing to judge it on sorts last rather than reading as a coin flip. */
+  assert.deepEqual(api.legChance({ eventId: "x", odds: 1 }, B), { p: null, src: null });
+
+  const plan = api.trimPlan([foreign, known, { eventId: "y", home: "A", away: "B",
+    kickoff: Date.now(), prediction: "1", odds: 5 }], B, 1);
+  assert.equal(plan.keep.length, 2);
+  assert.equal(plan.cut.length, 1);
+  assert.equal(plan.cut[0].leg.odds, 5, "the longest price goes first");
+  assert.equal(plan.keep[0].leg.prediction, "OVER_1.5");
+  assert.equal(plan.keep[0].src, "model", "our number leads the ranking");
+});
+
+test("a trim never changes a bet, it only removes one", () => {
+  /* Subtraction is the one edit that cannot turn somebody's ticket into a
+     different ticket. No market is swapped and no game is added. */
+  const box = src.slice(src.indexOf("function trimBoxInner("), src.indexOf("function wireTrim("));
+  assert.doesNotMatch(box, /NEAREST_LINE|mixReline/, "a trim must not reline a leg");
+  const wire = src.slice(src.indexOf("function wireTrim("), src.indexOf("/* The inside of the split box"));
+  assert.match(wire, /splitAndBook\(kept,1,/, "it books through the splitter's own path");
+  assert.match(wire, /selOf:byoSel/, "and with the pasted slip's own selections");
+});

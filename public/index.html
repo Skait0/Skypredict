@@ -3323,6 +3323,12 @@ html.mode-live #live{display:block}
 /* The split box here sits on a card, not on the modal's dark glass, so it
    takes the page's own inks rather than the overlays that block uses. */
 .byo-res .code-split{border-top-color:var(--line-soft)}
+/* The trim sits above the split and wears the same clothes: both are "do
+   something with the slip you pasted", and a second visual language for the
+   second one would read as a different feature. */
+.byo-trim{margin-top:14px;padding-top:13px;border-top:1px solid var(--line-soft)}
+.byo-trim .sp-ways{margin-top:8px}
+.byo-trim-n{margin:2px 0 0}
 .byo-res .sp-q{color:var(--soft)}
 .byo-res .sp-way{background:var(--card-2);border-color:var(--line);color:var(--text)}
 .byo-res .code-split .sp-way span{color:var(--faint)}
@@ -11654,6 +11660,39 @@ function byoRead(){
     });
 }
 
+/* HOW LIKELY IS A LEG WE DID NOT CHOOSE?
+ *
+ * Two answers, in order, and the order is the honest part. Where the game is
+ * on our board and the market is one we model, the answer is our own
+ * probability - that is the thing this site exists to produce. Where it is
+ * not, the only number in the room is the price the bookmaker put on it, and
+ * 1/odds is that price read as a chance. It carries their margin, so it reads
+ * a little high on every leg equally; as a way of ordering legs from likeliest
+ * to least it is fine, and as a published probability it would not be, which
+ * is why it is never shown as one.
+ * Nothing at all for a leg with no price and no fixture - and that sorts last
+ * rather than pretending to be a coin flip. */
+function legChance(l,B){
+  var f=(l&&l.prediction)?fixtureByLeg(l,B):null;
+  var p=f?mProb(f,l.prediction):null;
+  if(p!=null&&isFinite(p)) return {p:p,src:"model"};
+  var o=+((l||{}).odds);
+  if(isFinite(o)&&o>1.01) return {p:1/o,src:"book"};
+  return {p:null,src:null};
+}
+/* The legs a trim would keep, likeliest first, and the ones it would drop.
+   Sorted on the chance above; ties break on the bookmaker's price so the order
+   is stable rather than dependent on how the read happened to arrive. */
+function trimPlan(legs,B,drop){
+  var scored=(legs||[]).map(function(l,i){
+    var c=legChance(l,B);
+    return {leg:l,i:i,p:(c.p==null?-1:c.p),src:c.src};
+  });
+  scored.sort(function(a,b){ return (b.p-a.p) || ((+b.leg.odds||0)-(+a.leg.odds||0)); });
+  var keepN=Math.max(1,scored.length-Math.max(0,drop|0));
+  return {keep:scored.slice(0,keepN), cut:scored.slice(keepN)};
+}
+
 function renderByo(){
   var out=$("byoOut"); if(!out) return;
   var legs=BYO.legs||[];
@@ -11722,12 +11761,22 @@ function renderByo(){
       ? "<div class='byo-acts'><button class='byo-conv-btn' id='byoConvBtn' type='button'>"+
         "Convert to "+esc(otherBook(B).label)+"</button></div><div id='byoConv'></div>"
       : "")+
+    /* TRIM IT AGAINST THE MODEL. Asked for: run somebody else's ticket past our
+       numbers and hand back the same ticket minus the legs least likely to
+       land. No market is swapped and no game is added - this is subtraction,
+       which is the one edit that cannot turn their bet into a different one.
+       Three games minimum, because dropping one from a double leaves a single
+       and nobody pasted a code to be told to bet one game. */
+    (usable.length>=3
+      ? "<div class='byo-trim' id='byoTrim'>"+trimBoxInner(usable,B)+"</div>"
+      : "")+
     (usable.length>=4
       ? "<div class='code-split' id='byoSplit'>"+splitBoxInner(usable,byoOdds)+"</div>"
       : (usable.length?"<p class='byo-note'>A split needs at least four games we can re-book.</p>":""))+
   "</div>";
   var cb=$("byoConvBtn");
   if(cb) cb.addEventListener("click",renderConvert);
+  if(usable.length>=3) wireTrim(out,usable,B);
   if(usable.length>=4){
     wireSplit(out,usable,B,{sel:"#byoSplit",selOf:byoSel,oddsOf:byoOdds});
   }
@@ -11969,6 +12018,47 @@ function renderConvert(){
           "booking service.</b><span>Check your connection and try again.</span></div>";
         b.disabled=false; b.textContent="Get the "+c.to.label+" code";
       });
+  });
+}
+
+/* WHAT A TRIM WOULD COST AND WHAT IT WOULD LEAVE.
+   Priced with the bookmaker's own odds, like everything else on a borrowed
+   slip: this ticket will be booked at their prices, not ours. */
+function trimBoxInner(legs,B){
+  var most=Math.min(3,Math.max(0,legs.length-2));
+  if(most<1) return "";
+  var ways=[];
+  for(var n=1;n<=most;n++){
+    var plan=trimPlan(legs,B,n);
+    ways.push("<button class='sp-way' type='button' data-drop='"+n+"'>"+
+      "<b>Drop "+n+"</b><span>"+plan.keep.length+" left, about x"+
+      byoOdds(plan.keep.map(function(k){return k.leg;})).toFixed(2)+"</span></button>");
+  }
+  var worst=trimPlan(legs,B,1).cut[0];
+  return "<p class='sp-q'>Run it past our model?</p>"+
+    "<p class='byo-note byo-trim-n'>The likeliest legs stay exactly as they are - "+
+    "same games, same markets, nothing swapped. "+
+    (worst? "First to go: "+esc((worst.leg.home||"a game")+" v "+(worst.leg.away||""))+
+      (worst.src==="model"?" ("+P0(worst.p)+"% on our model)"
+        :(worst.src==="book"?" (the longest price on the slip)":" (nothing to judge it on)"))+"."
+      :"")+"</p>"+
+    "<div class='sp-ways'>"+ways.join("")+"</div>";
+}
+/* One ticket out the other side, booked exactly the way a split books one of
+   its parts - same path, same quota, same refusal handling. */
+function wireTrim(wrap,legs,B){
+  var box=wrap.querySelector("#byoTrim"); if(!box) return;
+  box.querySelectorAll("[data-drop]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var plan=trimPlan(legs,B,+b.dataset.drop);
+      var kept=plan.keep.map(function(k){return k.leg;});
+      box.innerHTML="<p class='sp-q'>Dropped "+plan.cut.length+", keeping "+kept.length+"</p>"+
+        "<p class='byo-note'>Out: "+plan.cut.map(function(c){
+          return esc((c.leg.home||"a game")+" v "+(c.leg.away||""));}).join("; ")+"</p>"+
+        "<div class='sp-out' aria-live='polite'></div>";
+      splitAndBook(kept,1,box.querySelector(".sp-out"),B,
+        {selOf:byoSel,oddsOf:byoOdds,sel:".sp-out"});
+    });
   });
 }
 
