@@ -134,3 +134,31 @@ test("the slider asks the question before it picks, and booking asks again", () 
   /* Offered as a switch, not a refusal: the leg is bookable, just not here. */
   assert.match(src, /Book the whole slip at "\+need\.label/);
 });
+
+/* ------------------------------------------------------- win either half */
+
+test("win either half is priced from two halves, not from the full-time matrix", () => {
+  const M = require("../lib/model.js");
+  const p = { lh: 1.7, la: 1.0, k: 200, matrix: M.scoreMatrix(1.7, 1.0, 200), total: 2.7 };
+  const k = M.markets(p, { fhShare: 0.447, k: 200 });
+  assert.ok(k.homeWinHalf > 0 && k.homeWinHalf < 1);
+  assert.ok(k.awayWinHalf > 0 && k.awayWinHalf < 1);
+  /* Winning EITHER half is easier than winning the match, and the two sides
+     can both manage it in the same game, so they may sum past one. */
+  assert.ok(k.homeWinHalf > k.home,
+    "winning a half must be likelier than winning the match");
+  assert.ok(k.awayWinHalf > k.away);
+  /* The better side is likelier to take a half, same as everywhere else. */
+  assert.ok(k.homeWinHalf > k.awayWinHalf);
+});
+
+test("a full-time score cannot settle it, and gradeLeg says so", () => {
+  /* 2-1 says nothing about who led at the interval. gradeLeg answers null,
+     which callers treat as ungraded rather than as a loss - the record for
+     this market is built at build time from half-time scores instead. */
+  const gradeLeg = new Function(grab("gradeLeg") + "\nreturn gradeLeg;")();
+  assert.equal(gradeLeg({}, "WINHALF_H_Y", 2, 1), null);
+  assert.equal(gradeLeg({}, "WINHALF_A_Y", 2, 1), null);
+  /* The combinations beside it still settle from the score. */
+  assert.equal(gradeLeg({}, "MIX_X_OV_1.5", 1, 1), true);
+});

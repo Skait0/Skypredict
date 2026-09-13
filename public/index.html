@@ -8940,7 +8940,7 @@ var BUILD_NOSYNC=false;
    last market switched on before it had one took over the wizard's picks for a
    week. They begin earning a record the moment the next card is graded; until
    then they are there for anyone who goes looking. */
-var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false},touched:false,mode:"slider"};
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,weh:false},touched:false,mode:"slider"};
 /* NO `draw` KEY HERE, deliberately. The draw is a Wizard market and lives in
    WSP.mk alone. It was briefly mirrored into BUILD.mk like every other toggle,
    which was inert - "X" is in neither allowedMarkets nor mkOn, so no risk
@@ -10645,7 +10645,12 @@ function allowedMarkets(t){
                        "MIX_1_OV_2.5","MIX_2_OV_2.5",
                        /* Bet9ja only - bookAllows drops it for the other book
                           before a pick is ever made. */
-                       "MIX_X_OV_1.5"]);
+                       "MIX_X_OV_1.5",
+                       /* A full-time score cannot settle these, so they are
+                          graded from half-time data at build time and never by
+                          gradeLeg - which answers null and is treated as
+                          ungraded, not as a loss. */
+                       "WINHALF_H_Y","WINHALF_A_Y"]);
   return m;
 }
 function mProb(f,c){
@@ -10667,7 +10672,11 @@ function mProb(f,c){
     case"MIX_1_OV_2.5":return f.home_o25;case"MIX_2_OV_2.5":return f.away_o25;
     /* Bet9ja sells 1.5 on this family and SportyBet does not. Priced so the
        number exists the day there is somewhere to book it. */
-    case"MIX_X_OV_1.5":return f.draw_o15;}
+    case"MIX_X_OV_1.5":return f.draw_o15;
+    /* Win either half. Both books sell it per side, and neither side can be
+       settled by a full-time score - see gradeLeg, which answers null. */
+    case"WINHALF_H_Y":return f.h_win_half;
+    case"WINHALF_A_Y":return f.a_win_half;}
   return null;
 }
 /* Which markets have actually been graded, and enough times to mean something.
@@ -10723,6 +10732,7 @@ function codeMarket(c){
     case"HOME_OVER_1.5":case"AWAY_OVER_1.5":return"Team over 1.5";
     /* Same names lib/model.js grades them under, so a chip cannot be offered
        by default until its family has a record. */
+    case"WINHALF_H_Y":case"WINHALF_A_Y":return"Win either half";
     case"MIX_X_OV_1.5":return"Draw or over 1.5";
     case"MIX_X_OV_2.5":return"Draw or over 2.5";
     case"MIXGG_X":return"Draw or both score";
@@ -10908,7 +10918,8 @@ function buildPicks(){
     "MIX_X_OV_2.5":BUILD.mk.dro25,"MIXGG_X":BUILD.mk.drgg,
     "MIXGG_1":BUILD.mk.rsgg,"MIXGG_2":BUILD.mk.rsgg,
     "MIX_1_OV_2.5":BUILD.mk.rso25,"MIX_2_OV_2.5":BUILD.mk.rso25,
-    "MIX_X_OV_1.5":BUILD.mk.dro15};
+    "MIX_X_OV_1.5":BUILD.mk.dro15,
+    "WINHALF_H_Y":BUILD.mk.weh,"WINHALF_A_Y":BUILD.mk.weh};
   allowed=allowed.filter(function(c){return mkOn[c]!==false && bookAllows(c,curBook());});
   var f0=BUILD.risk/100;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
@@ -14351,7 +14362,7 @@ const JACKPOT_ODDS=20000;
 const BETSLIP_MAX=50;
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
-var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,draw:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,weh:false,draw:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* `slider:false` - Balanced is what a reader lands on, not Auto.
    Measured 3 Sep over ten seeds on the 386-fixture board, counting how often
    each method gave the highest chance of the slip landing AT THE PAYOUT ASKED
@@ -15294,6 +15305,10 @@ function renderShared(){
        than failing quietly at the booking step. */
     {k:"dro15", label:"Draw or o1.5", tier:1, sub:"X or over 1.5", only:"bet9ja",
      icon:'<path d="M4 12h16"/><path d="M9 8l3-3 3 3"/>'},
+    /* WIN EITHER HALF. Graded on 945 held-out matches before it was offered:
+       60.0% against 58.9% predicted, the closest of any market here bar the
+       match result itself. Both books sell it per side. */
+    {k:"weh", label:"Win a half", tier:1, sub:"Either half", icon:'<path d="M12 4v16"/><path d="M5 8h4"/><path d="M15 16h4"/>'},
     /* WIZARD ONLY. The Slider cannot build a draw - "X" is in neither
        allowedMarkets nor its mkOn map - so drawing this chip in the Slider
        would be a control that turns on and does nothing, which is exactly the
