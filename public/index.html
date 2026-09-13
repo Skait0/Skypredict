@@ -3329,6 +3329,17 @@ html.mode-live #live{display:block}
 .byo-trim{margin-top:14px;padding-top:13px;border-top:1px solid var(--line-soft)}
 .byo-trim .sp-ways{margin-top:8px}
 .byo-trim-n{margin:2px 0 0}
+/* The swaps, one line a game: what it was, what it becomes, and the two
+   numbers that justify the change. */
+.byo-safer:not(:empty){margin-top:14px;padding-top:13px;border-top:1px solid var(--line-soft)}
+.sf-rows{display:flex;flex-direction:column;gap:6px;margin:9px 0 0}
+.sf-row{display:flex;flex-direction:column;gap:2px;background:var(--card-2);
+  border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px}
+.sf-g{font-size:12.5px;font-weight:700;color:var(--text)}
+.sf-m{font-size:12.5px;color:var(--soft)}
+.sf-m b{color:var(--text)}
+.sf-m i{font-style:normal;color:var(--faint);font-variant-numeric:tabular-nums}
+.sf-odds{margin-top:10px}
 .byo-res .sp-q{color:var(--soft)}
 .byo-res .sp-way{background:var(--card-2);border-color:var(--line);color:var(--text)}
 .byo-res .code-split .sp-way span{color:var(--faint)}
@@ -11618,7 +11629,7 @@ function renderSplit(out,done,B,oddsOf){
    there is no way to tell from the response. Every screen here therefore says
    what WE READ, shows the games, and lets the reader judge - it never claims to
    be their slip. */
-var BYO={book:"sporty",legs:null,code:"",reline:false};
+var BYO={book:"sporty",legs:null,code:"",reline:false,saferDrop:false};
 
 function byoSel(leg){
   return BYO.book==="bet9ja"
@@ -11710,6 +11721,79 @@ function trimPlan(legs,B,drop){
   return {keep:scored.slice(0,keepN), cut:scored.slice(keepN)};
 }
 
+/* THE SAFER VERSION OF THE SAME BET, ON THE SAME GAME.
+ *
+ * Asked for: run a pasted ticket past the model and soften it. Every entry
+ * here keeps the fixture and widens the outcome - a win becomes a win-or-draw,
+ * a goals line drops a rung - so the leg still turns on the game they picked.
+ * Nothing crosses to another fixture and nothing is invented: if a market has
+ * no safer sibling we sell, it is left exactly as it was.
+ *
+ * The draw is the one that needs saying. "Draw" softens into whichever double
+ * chance contains it and our model rates higher, which is a real change of
+ * bet - it is shown like every other change, with both numbers, before
+ * anything is booked. */
+var SAFER={"1":"1X","2":"X2",
+  "OVER_2.5":"OVER_1.5","OVER_3.5":"OVER_2.5",
+  "HOME_OVER_1.5":"HOME_OVER_0.5","AWAY_OVER_1.5":"AWAY_OVER_0.5",
+  "MIX_X_OV_2.5":"MIX_X_OV_1.5","MIX_1_OV_2.5":"MIX_1_OV_1.5",
+  "MIX_2_OV_2.5":"MIX_2_OV_1.5"};
+/* How much better it has to get to be worth changing somebody's bet. Eight
+   points: below that the two markets are close enough that the swap is churn,
+   and churn on a stranger's ticket is the thing not to do. */
+var SAFER_MIN_GAIN=0.08;
+
+function saferSwap(l,B){
+  if(!l||!l.prediction) return null;
+  var f=fixtureByLeg(l,B); if(!f) return null;      /* no numbers, no opinion */
+  var from=l.prediction, to=SAFER[from];
+  if(from==="X") to=(mProb(f,"1X")>=mProb(f,"X2"))?"1X":"X2";
+  if(!to) return null;
+  if(!bookAllows(to,B)) return null;                /* this book must sell it */
+  /* SportyBet lists team totals on about half its card and refuses the whole
+     ticket over one leg it cannot take, so a real published price is the proof
+     the market exists - the same test the builder applies. */
+  if(B.key==="sporty"&&!(f[B.odds]&&f[B.odds][to]>1.01)) return null;
+  var pOld=mProb(f,from), pNew=mProb(f,to);
+  if(pOld==null||pNew==null) return null;
+  if((pNew-pOld)<SAFER_MIN_GAIN) return null;
+  return {leg:l,f:f,from:from,to:to,pOld:pOld,pNew:pNew,
+          oddOld:+l.odds||null, oddNew:(f[B.odds]||{})[to]||null};
+}
+/* THE LEGS A SWAP CANNOT HELP, which is a different question from the legs
+   somebody wants gone. A market with no safer sibling on a game the model
+   rates poorly is the weakest thing on the ticket and there is nothing to do
+   with it except leave it or drop it - so that is offered as a choice rather
+   than decided here. Sixty per cent is the line: above it a leg is doing its
+   job, below it and unimprovable it is the one dragging the slip down. */
+var SAFER_DROP_UNDER=0.60;
+function saferDroppable(legs,B,plan){
+  var swapped={}; (plan||[]).forEach(function(p){ swapped[p.leg.eventId+"|"+p.from]=1; });
+  return (legs||[]).filter(function(l){
+    if(swapped[l.eventId+"|"+l.prediction]) return false;
+    var c=legChance(l,B);
+    return c.p==null || c.p<SAFER_DROP_UNDER;
+  });
+}
+function saferPlan(legs,B){
+  var out=[];
+  (legs||[]).forEach(function(l){ var sw=saferSwap(l,B); if(sw) out.push(sw); });
+  return out;
+}
+/* What the ticket pays after the swaps, in the bookmaker's own numbers where
+   they have published them. A leg we cannot price is counted and said rather
+   than folded into a total that looks exact. */
+function saferOdds(legs,plan,B){
+  var byLeg={}; plan.forEach(function(p){ byLeg[p.leg.eventId+"|"+p.from]=p; });
+  var odds=1, known=0, unknown=0;
+  (legs||[]).forEach(function(l){
+    var sw=byLeg[l.eventId+"|"+l.prediction];
+    var o=sw?sw.oddNew:(+l.odds||null);
+    if(o&&isFinite(o)&&o>1){ odds*=o; known++; } else unknown++;
+  });
+  return {odds:odds,known:known,unknown:unknown};
+}
+
 function renderByo(){
   var out=$("byoOut"); if(!out) return;
   var legs=BYO.legs||[];
@@ -11787,6 +11871,7 @@ function renderByo(){
     (usable.length>=3
       ? "<div class='byo-trim' id='byoTrim'>"+trimBoxInner(usable,B)+"</div>"
       : "")+
+    "<div class='byo-safer' id='byoSafer'>"+saferBoxInner(usable,B)+"</div>"+
     (usable.length>=4
       ? "<div class='code-split' id='byoSplit'>"+splitBoxInner(usable,byoOdds)+"</div>"
       : (usable.length?"<p class='byo-note'>A split needs at least four games we can re-book.</p>":""))+
@@ -11794,6 +11879,7 @@ function renderByo(){
   var cb=$("byoConvBtn");
   if(cb) cb.addEventListener("click",renderConvert);
   if(usable.length>=3) wireTrim(out,usable,B);
+  wireSafer(out,usable,B);
   if(usable.length>=4){
     wireSplit(out,usable,B,{sel:"#byoSplit",selOf:byoSel,oddsOf:byoOdds});
   }
@@ -12077,6 +12163,98 @@ function renderConvert(){
           "booking service.</b><span>Check your connection and try again.</span></div>";
         b.disabled=false; b.textContent="Get the "+c.to.label+" code";
       });
+  });
+}
+
+/* THE SWAPS ON OFFER, EVERY ONE OF THEM PRICED BOTH WAYS.
+   Nothing here books anything: this is the sentence a reader needs before they
+   agree to have their bet changed, which is why both probabilities and both
+   payouts are on screen before the button exists. */
+function saferBoxInner(legs,B){
+  var plan=saferPlan(legs,B);
+  if(!plan.length) return "";
+  var drop=BYO.saferDrop?saferDroppable(legs,B,plan):[];
+  var dropKey={}; drop.forEach(function(l){ dropKey[l.eventId+"|"+l.prediction]=1; });
+  var kept=legs.filter(function(l){ return !dropKey[l.eventId+"|"+l.prediction]; });
+  var before=byoOdds(legs), after=saferOdds(kept,plan,B);
+  var rows=plan.map(function(p){
+    var f={home:p.leg.home||"Home",away:p.leg.away||"Away"};
+    return "<div class='sf-row'><span class='sf-g'>"+
+      esc((p.leg.home||"?")+" v "+(p.leg.away||"?"))+"</span>"+
+      "<span class='sf-m'>"+mLabel(f,p.from)+" <i>"+P0(p.pOld)+"%</i>"+
+      " → <b>"+mLabel(f,p.to)+"</b> <i>"+P0(p.pNew)+"%</i></span></div>";
+  }).join("");
+  return "<p class='sp-q'>Make it safer?</p>"+
+    "<p class='byo-note'>"+plan.length+" leg"+(plan.length===1?"":"s")+
+      " can move to an easier bet on the same game. The other "+
+      (legs.length-plan.length)+" stay exactly as they are.</p>"+
+    "<div class='sf-rows'>"+rows+"</div>"+
+    /* THE READER DECIDES WHETHER ANYTHING LEAVES. A swap keeps their ticket
+       the same length; dropping a leg does not, and that is their call to
+       make rather than ours to make quietly. Off unless they ask. */
+    (function(){
+      var could=saferDroppable(legs,B,plan);
+      if(!could.length) return "";
+      return "<div class='byo-offer'><label class='byo-sw'>"+
+        "<input type='checkbox' id='byoSaferDrop'"+(BYO.saferDrop?" checked":"")+">"+
+        "<span>Also drop "+could.length+" leg"+(could.length===1?"":"s")+
+        " we cannot make safer</span></label>"+
+        "<p class='byo-note'>"+could.slice(0,3).map(function(l){
+          return esc((l.home||"a game")+" v "+(l.away||""));}).join("; ")+
+        (could.length>3?"; and "+(could.length-3)+" more":"")+
+        " - under "+Math.round(SAFER_DROP_UNDER*100)+"% with no easier version "+
+        "on the same game. Left in unless you say otherwise.</p></div>";
+    })()+
+    "<p class='byo-note sf-odds'>about x"+before.toFixed(2)+" → <b>x"+
+      after.odds.toFixed(2)+"</b>"+
+      (after.unknown?" on "+after.known+" of "+kept.length+" legs":"")+
+      (drop.length?", "+drop.length+" dropped":"")+
+      ". A safer leg pays less - that is the trade.</p>"+
+    "<div class='byo-acts'><button class='byo-go' id='byoSaferGo' type='button'>"+
+      "Apply and get a code</button></div><div id='byoSaferOut'></div>";
+}
+/* One ticket, booked only when the button is pressed, and only ever at the
+   book the code came from - a swap is not a conversion. */
+function wireSafer(wrap,legs,B){
+  var box=wrap.querySelector("#byoSafer"); if(!box) return;
+  var sw=box.querySelector("#byoSaferDrop");
+  if(sw) sw.addEventListener("change",function(){
+    BYO.saferDrop=sw.checked;
+    box.innerHTML=saferBoxInner(legs,B);
+    wireSafer(wrap,legs,B);              /* the box was redrawn, so rewire it */
+  });
+  var go=box.querySelector("#byoSaferGo"); if(!go) return;
+  go.addEventListener("click",function(){
+    var plan=saferPlan(legs,B);
+    var byLeg={}; plan.forEach(function(p){ byLeg[p.leg.eventId+"|"+p.from]=p.to; });
+    var gone={};
+    if(BYO.saferDrop) saferDroppable(legs,B,plan).forEach(function(l){
+      gone[l.eventId+"|"+l.prediction]=1; });
+    /* The slip's own event ids, with a market changed on some of them - and
+       whatever the reader chose to leave out left out. */
+    var sels=legs.filter(function(l){ return !gone[l.eventId+"|"+l.prediction]; })
+      .map(function(l){
+      var code=byLeg[l.eventId+"|"+l.prediction]||l.prediction;
+      return B.key==="bet9ja"?{eventId:l.eventId,code:code}
+                             :{eventId:l.eventId,prediction:code};
+    });
+    go.disabled=true; go.textContent="Booking…";
+    bookFetch(sels,B).then(function(d){
+      var code=d&&d.success&&B.codeOf(d);
+      if(code){
+        $("byoSaferOut").innerHTML="";
+        showCode(code,"byoSaferOut",null,B,plan.map(function(p){
+          return {id:p.f?fid(p.f):null,code:p.to,f:p.f,p:p.pNew};
+        }));
+      }else{
+        $("byoSaferOut").innerHTML=bookErrHTML(d,B);
+        go.disabled=false; go.textContent="Apply and get a code";
+      }
+    }).catch(function(){
+      $("byoSaferOut").innerHTML="<div class='code-err'><b>Couldn't reach the "+
+        "booking service.</b><span>Check your connection and try again.</span></div>";
+      go.disabled=false; go.textContent="Apply and get a code";
+    });
   });
 }
 

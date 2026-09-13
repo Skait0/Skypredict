@@ -296,3 +296,49 @@ test("a pick with no fixture is priced as unknown, not as nothing", () => {
   assert.equal(mProb(null, "OVER_1.5"), null, "a fixture-less leg must not throw");
   assert.equal(mProb({ o15: 0.8 }, "OVER_1.5"), 0.8);
 });
+
+/* --------------------------------------------- making somebody's bet safer */
+
+test("a swap keeps the game and widens the outcome, never the reverse", () => {
+  const api = new Function(
+    "var DATA={fixtures:[{home:'Arsenal',away:'Chelsea',kickoff:'2026-09-14T16:30:00.000Z'," +
+      "eventId:'sr:match:1',home_p:0.54,draw_p:0.24,away_p:0.22,dc1x:0.78,dcx2:0.46," +
+      "o15:0.79,o25:0.51,sportyOdds:{'1X':1.28,'OVER_1.5':1.22,'OVER_2.5':1.9,'1':1.85}}]};" +
+    "var MATCH_WINDOW_MS=86400000; var BOOK_ONLY=" +
+      src.match(/var BOOK_ONLY=(\{[\s\S]*?\});/)[1] + ";" +
+    "function curBook(){return {key:'sporty'};}" +
+    src.slice(src.indexOf("var TEAM_ALIASES = {"), src.indexOf("function simTeams(")) +
+    grab("simTeams") + grab("evStart") + grab("sameSlot") + grab("fixtureByBookId") +
+    grab("fixtureByLeg") + grab("mProb") + grab("bookAllows") + grab("legChance") +
+    src.slice(src.indexOf("var SAFER={"), src.indexOf("function renderByo(")) +
+    "\nreturn {saferSwap:saferSwap,saferPlan:saferPlan,saferDroppable:saferDroppable,SAFER_MIN_GAIN:SAFER_MIN_GAIN};")();
+  const B = { key: "sporty", id: "eventId", odds: "sportyOdds" };
+  const leg = (code, odds) => ({ eventId: "sr:match:1", home: "Arsenal", away: "Chelsea",
+    kickoff: Date.parse("2026-09-14T16:30:00.000Z"), prediction: code, odds: odds });
+
+  /* A win becomes a win-or-draw on the same fixture. */
+  const win = api.saferSwap(leg("1", 1.85), B);
+  assert.equal(win.to, "1X");
+  assert.ok(win.pNew > win.pOld + api.SAFER_MIN_GAIN);
+
+  /* A goals line drops one rung. */
+  assert.equal(api.saferSwap(leg("OVER_2.5", 1.9), B).to, "OVER_1.5");
+
+  /* Nothing to offer is left alone rather than moved sideways. */
+  assert.equal(api.saferSwap(leg("GG", 1.8), B), null, "GG has no safer sibling");
+  /* And a swap that gains too little is churn on a stranger's ticket. */
+  const tiny = api.saferSwap(Object.assign(leg("1", 1.85), {}), {
+    key: "sporty", id: "eventId", odds: "sportyOdds" });
+  assert.ok(tiny, "sanity");
+});
+
+test("dropping legs is the reader's choice, and off until they make it", () => {
+  const box = src.slice(src.indexOf("function saferBoxInner("), src.indexOf("function wireSafer("));
+  assert.match(box, /BYO\.saferDrop\?saferDroppable/,
+    "the box must only drop when asked");
+  assert.match(box, /Left in unless you say otherwise/);
+  assert.match(src, /saferDrop:false/, "the choice starts off");
+  const wire = src.slice(src.indexOf("function wireSafer("), src.indexOf("/* WHAT A TRIM WOULD COST"));
+  assert.match(wire, /if\(BYO\.saferDrop\) saferDroppable/,
+    "and the booking must honour the same choice");
+});
