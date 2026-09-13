@@ -5110,7 +5110,15 @@ button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
   .bld-panel.wizard-panel>.wsp-lbl:has(+ #wspStyleChips){grid-area:1/2}
   .bld-panel.wizard-panel>#wspStyleChips{grid-area:2/2}
   .bld-panel.wizard-panel>.wsp-slider-link{grid-area:3/2;align-self:start}
-  .bld-panel.wizard-panel>button.wsp-go{grid-area:4/2;justify-self:start;margin:16px 0 2px}
+  /* THE ACTION CLOSES THE PANEL, so it gets its own row across both columns
+     rather than hanging off the bottom of the right-hand one. Sitting in the
+     style column it read as a caption under "Or let the Slider pick the
+     games", its centre 134px right of the panel's, with the whole left half
+     empty beneath the payout chips. Left-aligned because every label in this
+     panel starts at the same edge and the button is the last thing in that
+     sequence, not a floating object. */
+  .bld-panel.wizard-panel>button.wsp-go{grid-area:4/1/5/-1;justify-self:start;
+    min-width:250px;margin:18px 0 2px}
   .bld-panel.wizard-panel>.wsp-lbl{margin-top:0}
 }
 .wizard-panel .wsp-lbl{margin:13px 0 7px}
