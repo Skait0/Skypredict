@@ -10078,6 +10078,29 @@ function attachTo(f,m,B){
  * Keeping the list costs one reference and removes the middle step: a leg can
  * be matched straight against the other book's own events. See feedMatch. */
 var FEED={};
+/* A READ THAT LANDED BEFORE THE PRICES DID.
+ *
+ * byoRead can finish in a few hundred milliseconds while /api/fixtures is
+ * still in flight, and the panel it draws asks questions that need prices: is
+ * there a safer market on this game, does this bookmaker publish one. Asked
+ * too early the answer is no to everything, and the offer never appeared -
+ * measured on a real eleven-leg code, where three legs had a safer version and
+ * the box came back empty.
+ * So the panel is redrawn when the board changes under it. Not while the
+ * reader is in the middle of something: a code on screen, or a conversion or a
+ * swap already answered, means the redraw would take away what they were
+ * looking at. */
+function refreshByoPanels(){
+  try{
+    if(!BYO.legs||!BYO.legs.length) return;
+    var out=$("byoOut"); if(!out||!out.innerHTML) return;
+    if(document.getElementById("codeModal")) return;
+    var busy=["byoConvOut","byoSaferOut"].some(function(id){
+      var el=$(id); return el&&el.innerHTML.trim(); });
+    if(busy) return;
+    renderByo();
+  }catch(e){}
+}
 function attachEventIds(sporty,B){
   B=B||BOOKS.sporty;
   if(!sporty||!sporty.length) return 0;
@@ -10466,7 +10489,9 @@ async function loadBet9ja(){
     if(!r.ok) return 0;                 /* 503 while their sweep is still cold */
     var d=await r.json();
     var rows=b9Rows((d&&d.matches)||{});
-    return rows.length?attachEventIds(rows,BOOKS.bet9ja):0;
+    var n=rows.length?attachEventIds(rows,BOOKS.bet9ja):0;
+    if(n) refreshByoPanels();
+    return n;
   }catch(e){ return 0; }
 }
 /* Bet9ja never blocks the board. SportyBet is awaited because the model wants
@@ -10568,6 +10593,7 @@ async function loadSporty(){
         var d=await r.json();
         if(d&&d.matches&&d.matches.length){
           var n=attachEventIds(d.matches,BOOKS.sporty);
+          if(n) refreshByoPanels();
           /* Only repaint for a rescue - on the first load the caller paints
              straight after us and doing it twice just flashes the board. */
           if(n&&SPORTY_TRIES>0) repaintAfterMatch();

@@ -342,3 +342,20 @@ test("dropping legs is the reader's choice, and off until they make it", () => {
   assert.match(wire, /if\(BYO\.saferDrop\) saferDroppable/,
     "and the booking must honour the same choice");
 });
+
+test("a read that beat the prices is redrawn when they arrive", () => {
+  /* byoRead can finish while /api/fixtures is still in flight. The panel asks
+     questions that need prices - is there a safer market, does this book sell
+     it - and asked too early the answer is no to everything. Measured on a
+     real eleven-leg code: three legs had a safer version and the box was
+     empty. */
+  assert.match(src, /function refreshByoPanels\(\)/);
+  assert.match(src, /if\(n\) refreshByoPanels\(\);/,
+    "nothing calls the redraw when a book finishes attaching");
+  /* And it must not yank the screen out from under somebody mid-flow. */
+  const fn = src.slice(src.indexOf("function refreshByoPanels()"),
+    src.indexOf("function attachEventIds("));
+  assert.match(fn, /getElementById\("codeModal"\)/, "a code on screen stops the redraw");
+  assert.match(fn, /byoConvOut/);
+  assert.match(fn, /byoSaferOut/);
+});
