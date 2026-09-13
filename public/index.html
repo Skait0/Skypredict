@@ -11503,16 +11503,30 @@ function byoConversion(){
 }
 /* Their price where the other book has published one, ours only as a last
    resort - a converted slip is worth what the book taking it pays. */
+/* WHAT A CONVERTED SLIP IS WORTH, AND WHEN TO ADMIT WE DO NOT KNOW.
+   Three sources, in order. The book that will take it, if it has published a
+   price - that is the real answer. Our own estimate, but ONLY for a market we
+   model, because that is the only kind we have an opinion about. Nothing
+   otherwise.
+   Counting "nothing" as 1 was wrong and it showed: a single Le Mans +0.5 at
+   1.55 was projected on the live site as x10.93, because mProb has no answer
+   for a handicap and the estimate fell through to noise. A wrong number beside
+   a booking button is worse than no number, so the unknown legs are counted
+   and said rather than folded into a total that looks precise. */
 function convOdds(picks){
   var to=otherBook(byoBook());
-  return picks.reduce(function(t,c){
+  var odds=1, known=0, unknown=0;
+  picks.forEach(function(c){
     var o=(c.f&&c.f[to.odds]||{})[c.code];
-    if(!(o&&o>1.01)) o=legOdd(c.f,c.code,c.p);
-    /* A leg the other book has not priced, on a market we do not model, has no
-       number either of us can stand behind. It counts as 1 rather than
-       poisoning the whole product - one unknown leg used to make the total
-       read "xNaN". */
-    return t*((isFinite(o)&&o>1)?o:1);},1);
+    if(!(o&&o>1.01)){
+      /* Our estimate is only defensible where we have a probability. */
+      var p=mProb(c.f,c.code);
+      o=(p!=null&&isFinite(p))?legOdd(c.f,c.code,p):null;
+    }
+    if(o&&isFinite(o)&&o>1){ odds*=o; known++; }
+    else unknown++;
+  });
+  return {odds:odds, known:known, unknown:unknown};
 }
 
 function renderConvert(){
@@ -11523,10 +11537,16 @@ function renderConvert(){
       "<span>"+esc(c.stuck.length?c.stuck[0].why:"no legs")+"</span></div>";
     return;
   }
-  var odds=convOdds(c.picks);
+  var od=convOdds(c.picks);
+  /* Silent when nothing can be priced, qualified when only some of it can.
+     "about x8.20" on two of five legs is a number somebody will read as the
+     whole slip. */
+  var oddsTxt = od.known===0 ? "no prices published yet"
+    : ("about x"+od.odds.toFixed(od.odds>=100?0:2)+
+       (od.unknown?" on "+od.known+" of "+c.picks.length+" legs":""));
   host.innerHTML="<div class='byo-conv'>"+
     "<div class='byo-head'><b>"+c.picks.length+" of "+(BYO.legs||[]).length+
-      " games move to "+esc(c.to.label)+"</b><span>about x"+odds.toFixed(odds>=100?0:2)+"</span></div>"+
+      " games move to "+esc(c.to.label)+"</b><span>"+oddsTxt+"</span></div>"+
     /* Drawn whenever the slip HAS legs this governs, ticked or not. Keyed on
        c.offer alone it vanished the moment it was ticked - the legs moved into
        c.changed, the offer emptied, and there was no way to untick it. */
