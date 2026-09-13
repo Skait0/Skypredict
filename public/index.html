@@ -10056,9 +10056,21 @@ function attachTo(f,m,B){
   /* Only the bookmaker we price from moves the model. */
   if(B.blend) blendFixture(f);
 }
+/* THE FEEDS THEMSELVES, KEPT.
+ *
+ * Both bookmakers' event lists used to be consumed here and thrown away: what
+ * survived was the ids attachEventIds managed to pin onto our own fixtures.
+ * That made our board the only route between the two books, so a leg on a game
+ * we do not carry - a reserve league, a country we have no results for - could
+ * be read and split but never converted, because converting went their id ->
+ * our fixture -> the other book's id and the middle step did not exist.
+ * Keeping the list costs one reference and removes the middle step: a leg can
+ * be matched straight against the other book's own events. See feedMatch. */
+var FEED={};
 function attachEventIds(sporty,B){
   B=B||BOOKS.sporty;
   if(!sporty||!sporty.length) return 0;
+  try{ FEED[B.key]=sporty; }catch(e){}
   /* Verbose per-fixture match logging is opt-in: add ?debug=1 (or #debug) to the
      URL. Off by default so visitors get a clean console and we skip the
      full-feed closest-match scan that only exists to diagnose misses. */
@@ -10660,6 +10672,11 @@ function allowedMarkets(t){
   return m;
 }
 function mProb(f,c){
+  /* A CONVERTED LEG CAN HAVE NO FIXTURE AT ALL. Since feedMatch, a game we
+     hold no results for crosses on the other book's own event, and there is
+     nothing of ours behind it to price. Null is the honest answer and every
+     caller already treats it as "we cannot price this one". */
+  if(!f) return null;
   switch(c){case"1":return f.home_p;case"X":return f.draw_p;case"2":return f.away_p;
     case"1X":return f.dc1x;case"X2":return f.dcx2;
     case"12":return f.anybody!=null?f.anybody:f.dc12;
@@ -11811,6 +11828,35 @@ function fixtureByBookId(id,B){
 }
 function otherBook(B){ return BOOKS[B.key==="sporty"?"bet9ja":"sporty"]; }
 
+/* THE OTHER BOOK'S OWN EVENT, FOUND WITHOUT US IN THE MIDDLE.
+ *
+ * For a game on our board the route is their id -> our fixture -> the other
+ * book's id, and that is the better route: it goes through a pairing we ship
+ * and test. This is for the legs that route cannot carry - a game we hold no
+ * results for and therefore never had a fixture for. It matches the leg's own
+ * teams and kickoff against the target book's feed with the SAME rules
+ * attachEventIds uses, one hop instead of two.
+ * The fence matters more here than anywhere, because there is no league to
+ * disagree about: two clubs called Inter, one in Milan and one in Turku, are
+ * separated by kickoff alone. */
+function feedMatch(l,to){
+  var list=FEED[to.key]||[];
+  if(!l||!l.home||!l.away||!list.length) return null;
+  var ev={homeTeam:l.home,awayTeam:l.away,startTime:l.kickoff};
+  var lh=normTeam(l.home),la=normTeam(l.away);
+  var best=null,bestScore=0;
+  for(var i=0;i<list.length;i++){
+    var m=list[i];
+    if(!m||!m.eventId) continue;
+    /* sameSlot wants a fixture-shaped first argument: kickoff as a string. */
+    if(!sameSlot({kickoff:new Date(l.kickoff).toISOString()},m)) continue;
+    if(normTeam(m.homeTeam)===lh&&normTeam(m.awayTeam)===la) return m;
+    var sh=simTeams(l.home,m.homeTeam), sa=simTeams(l.away,m.awayTeam);
+    if(sh>=0.6&&sa>=0.6&&(sh+sa)>bestScore){ bestScore=sh+sa; best=m; }
+  }
+  return bestScore>=1.2?best:null;
+}
+
 /* WHEN THE ID MISSES BUT THE GAME IS RIGHT THERE.
  *
  * Reported on code QER25G: "some of the games are not on our board", and one
@@ -11882,9 +11928,15 @@ function byoConversion(){
   (BYO.legs||[]).forEach(function(l){
     var f=l.prediction?fixtureByLeg(l,from):null;
     var id=f?f[to.id]:null;
+    /* A GAME WE DO NOT CARRY CAN STILL CROSS. If the board cannot pair it, the
+       other book's own feed is asked directly - see feedMatch. The pick then
+       carries that id rather than a fixture, which bookIdOf already prefers
+       when a fixture has nothing to say. */
+    var direct=(!l.prediction||legStarted(l))?null:((!f||id==null)?feedMatch(l,to):null);
+    if(direct) id=direct.eventId;
     if(legStarted(l)) stuck.push({leg:l,why:"this game has already started"});
     else if(!l.prediction) stuck.push({leg:l,why:"a market we don't carry"});
-    else if(!f)       stuck.push({leg:l,why:"not a game on our board"});
+    else if(id==null&&!f) stuck.push({leg:l,why:to.label+" doesn't list this game"});
     else if(id==null) stuck.push({leg:l,why:to.label+" doesn't list this game"});
     else {
       /* Only when the line itself cannot travel. A market the other book
@@ -11911,7 +11963,14 @@ function byoConversion(){
          reached oddOf and came back NaN - which is what put "about xNaN"
          on the panel. A pass-through market has no probability at all, and
          mProb answers null for those rather than guessing. */
-      picks.push({id:fid(f),code:code,f:f,p:mProb(f,code)});
+      /* WITH NO FIXTURE THERE IS NO PROBABILITY AND NO id() - only the other
+         book's event. mProb answers null for it, which convOdds already reads
+         as "we cannot price this leg", and the booking reads the id off the
+         pick the way it does for a slip restored from storage. */
+      var pick=f?{id:fid(f),code:code,f:f,p:mProb(f,code)}
+               :{id:null,code:code,f:null,p:null,home:l.home,away:l.away};
+      pick[to.id]=id;
+      picks.push(pick);
     }
   });
   return {from:from,to:to,picks:picks,stuck:stuck,changed:changed,offer:offer};

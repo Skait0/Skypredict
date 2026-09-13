@@ -262,3 +262,37 @@ test("a trim never changes a bet, it only removes one", () => {
   assert.match(wire, /splitAndBook\(kept,1,/, "it books through the splitter's own path");
   assert.match(wire, /selOf:byoSel/, "and with the pasted slip's own selections");
 });
+
+test("a game we do not carry can still cross to the other book", () => {
+  /* The route used to be their id -> our fixture -> the other book's id, so a
+     leg on a league we hold no results for could be read and split but never
+     converted. The other book's own feed answers directly now. */
+  const api = new Function(
+    "var DATA={fixtures:[]};" +
+    "var MATCH_WINDOW_MS=86400000;" +
+    "var FEED={bet9ja:[{eventId:832871639,homeTeam:'Austin FC II',awayTeam:'Colorado Rapids 2'," +
+      "startTime:" + Date.parse("2026-09-14T01:30:00.000Z") + "}]};" +
+    src.slice(src.indexOf("var TEAM_ALIASES = {"), src.indexOf("function simTeams(")) +
+    grab("simTeams") + grab("evStart") + grab("sameSlot") + grab("feedMatch") +
+    "\nreturn {feedMatch:feedMatch};")();
+  const to = { key: "bet9ja", id: "b9EventId" };
+  const leg = { home: "Austin FC II", away: "Colorado Rapids 2",
+    kickoff: Date.parse("2026-09-14T01:30:00.000Z") };
+
+  const m = api.feedMatch(leg, to);
+  assert.ok(m, "the other book lists it and it was not found");
+  assert.equal(m.eventId, 832871639);
+
+  /* The fence is the whole safety net here: with no league to disagree about,
+     two clubs with the same name are separated by kickoff alone. */
+  const week = Object.assign({}, leg, { kickoff: Date.parse("2026-09-21T01:30:00.000Z") });
+  assert.equal(api.feedMatch(week, to), null);
+  /* And a book whose feed we never kept answers nothing rather than guessing. */
+  assert.equal(api.feedMatch(leg, { key: "sporty" }), null);
+});
+
+test("a pick with no fixture is priced as unknown, not as nothing", () => {
+  const mProb = new Function(grab("mProb") + "\nreturn mProb;")();
+  assert.equal(mProb(null, "OVER_1.5"), null, "a fixture-less leg must not throw");
+  assert.equal(mProb({ o15: 0.8 }, "OVER_1.5"), 0.8);
+});
