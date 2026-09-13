@@ -47,7 +47,11 @@ test("that state gives every row a muted tick, not a red one", () => {
     "the all-in tick should be muted");
   assert.ok(!/\.lgp-list\.all-in \.lgp-tick\{[^}]*var\(--red\)/.test(src),
     "a red tick on every row makes the first tap look like it unticks that row");
-  assert.match(src, /\.lgp-row\.on \.lgp-tick\{background:var\(--red\)/,
+  /* --red-fill is the same red five percent down, used wherever white sits on
+     it: the tick carries a white check, and --red under white is 4.17:1. The
+     point of this assertion is that the chosen row is RED, not which of the
+     two red tokens paints it. */
+  assert.match(src, /\.lgp-row\.on \.lgp-tick\{background:var\(--red(-fill)?\)/,
     "a deliberately chosen league must keep the red tick");
 });
 

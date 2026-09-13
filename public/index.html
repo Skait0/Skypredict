@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" class="mode-pred">
+<html lang="en" data-theme="dark" class="mode-pred booting">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -73,6 +73,9 @@
      that file is fetched lazily rather than on first paint. icon-32 stays the
      favicon and icon-180 the apple-touch icon. -->
 <link rel="manifest" href="/manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<!-- The Apple-prefixed name is deprecated and Chrome warns on it, but iOS
+     still reads only that one. Both ship until Safari takes the standard. -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Soccerwizard">
@@ -104,6 +107,10 @@
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
 <script>
 (function(){var t=null;try{t=localStorage.getItem("sw.theme");}catch(e){}
+/* Dark is the default whatever the device says. The light theme is built and
+   fitted and one tap away, but this page is read in dark by design, and
+   `prefers-color-scheme` would hand most phones a first impression the brand
+   never chose. A stored choice still wins. */
 document.documentElement.setAttribute("data-theme",t||"dark");})();
 /* THE INTRO GATE, DECIDED BEFORE FIRST PAINT.
  *
@@ -277,9 +284,25 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
 
   --text:#F2F1F0;
   --soft:#A3A0A6;
-  --faint:#6F6C74;
+  /* --faint was fitted to a 3:1 floor, which is the rule for non-text. It is
+     used as TEXT - kickoff times, game counts, the Match/Tip/Pred column
+     headings, the bottom-bar labels - at 10-12.5px, where AA asks 4.5:1, and
+     it was landing at 3.5:1 on a card. Re-fitted to clear 4.5 on --bg, --card
+     and --card-2, the three surfaces it is printed on. On --raise it sits at
+     4.1, which is fine because nothing prints body text there; if something
+     ever does, raise the token again rather than exempting the text. */
+  --faint:#87848B;
 
   --red:#E63946;
+  /* The same red, five percent down, for the three places white text sits
+     ON it. #E63946 under white is 4.17:1 and the text there is 12-14px, so
+     AA asks 4.5. --red itself is untouched: it is the brand, and as INK on
+     a dark surface it is already past AA - darkening that would have cost
+     contrast rather than bought it. */
+  --red-fill:#DB3643;
+  /* What is legible ON --green. The bright green is a fill colour, and white
+     on it is 1.9:1 - the won banner printed its heading that way. */
+  --on-green:#0D0D0F;
   --red-ink:#FF6B75;
   --red-wash:rgba(230,57,70,.13);
   --green:#2FD48A;
@@ -344,13 +367,14 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
 
   /* The muted inks come down with the surfaces. Dropping the page brightness
      by itself would have cost 13% of contrast everywhere - fine for body text,
-     which has it to spare, but it pushed --faint under 3:1 and that is the
-     floor for anything a reader still has to make out. Both are re-fitted to
-     the exact ratios they held before, so the page is calmer to look at
-     without a word on it being harder to read. */
+     which has it to spare, but it pushed the muted inks down with it, so both
+     are fitted against the calmer surfaces rather than inherited from the old
+     near-white. --faint used to sit at 3.31:1, the floor for non-text; it
+     prints real text and now clears the 4.5:1 that text is actually held to,
+     on --bg, --card and --card-2 alike. */
   --text:#1C1A18;     /* unchanged - 13.7:1, still past AAA */
   --soft:#514C46;     /* 6.70:1, matching its old 6.67 */
-  --faint:#817B73;    /* 3.31:1, matching its old 3.30 */
+  --faint:#65605A;    /* 4.91:1 - re-fitted for text, see the dark token */
 
   /* Semantic inks, re-fitted to the calmer surfaces. --green and --win are
      used as text in dozens of places (not only as fills, despite the -ink
@@ -361,6 +385,8 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
      AA on both surfaces, and shifting it to buy half a point is not worth
      repainting every button on the site. */
   --red:#C62330;
+  --red-fill:#C62330;  /* 5.15:1 under white already */
+  --on-green:#FFFFFF;  /* the light theme's green is dark: 4.92:1 */
   --red-ink:#B01D29;
   --red-wash:rgba(198,35,48,.09);
   --green:#0D814F;    /* 4.36:1, holding its old 4.31 */
@@ -502,7 +528,7 @@ main[tabindex="-1"]:focus{outline:none}
 .sigil-img{width:40px;height:40px;flex-shrink:0;object-fit:contain;
   filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
 .sigil{width:40px;height:40px;flex-shrink:0;border-radius:var(--r-md);
-  background:linear-gradient(150deg,var(--red),#7E1018);
+  background:linear-gradient(150deg,var(--red-fill),#7E1018);
   display:flex;align-items:center;justify-content:center;color:#fff;
   position:relative;overflow:hidden}
 /* a slow light sweep across the tile, so the mark has a pulse of its own
@@ -573,7 +599,7 @@ main[tabindex="-1"]:focus{outline:none}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ib-go{flex:0 0 auto;white-space:nowrap;font:inherit;font-size:12.5px;font-weight:800;
   padding:8px 14px;border-radius:99px;border:0;cursor:pointer;
-  background:var(--red);color:#fff}
+  background:var(--red-fill);color:#fff}
 .ib-x{flex:0 0 auto;width:26px;height:26px;padding:0;border:0;background:none;
   color:var(--faint);font-size:13px;cursor:pointer;border-radius:50%}
 .ib-x:hover{color:var(--text);background:var(--raise)}
@@ -705,9 +731,9 @@ main[tabindex="-1"]:focus{outline:none}
   background:linear-gradient(150deg,var(--red-wash),transparent 60%),var(--card);
   overflow:hidden;box-shadow:var(--shadow)}
 .potd-top{display:flex;align-items:center;gap:9px;padding:13px 18px;
-  background:var(--red);color:#fff}
+  background:var(--red-fill);color:#fff}
 .potd-top b{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
-.potd-top .k{margin-left:auto;font-size:12px;font-weight:700;opacity:.9}
+.potd-top .k{margin-left:auto;font-size:12px;font-weight:700}  /* white at .9 on red was 4.1:1 */
 .potd-body{padding:20px 18px}
 .potd-grid{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center}
 .potd h2{font-weight:800;font-size:clamp(20px,3vw,30px);line-height:1.2;
@@ -720,7 +746,7 @@ main[tabindex="-1"]:focus{outline:none}
 .potd-status{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.06em;
   text-transform:uppercase;padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.22);color:#fff;
   display:inline-flex;align-items:center;gap:6px}
-.potd-won .potd-top,.potd.potd-won .potd-top{background:var(--green)}
+.potd-won .potd-top,.potd.potd-won .potd-top{background:var(--green);color:var(--on-green)}
 .potd.potd-won{border-color:var(--green)}
 .potd.potd-live{border-color:var(--red)}
 /* White text on a 22%-white pill, sitting on the red header - the one state
@@ -766,10 +792,16 @@ main[tabindex="-1"]:focus{outline:none}
   padding:10px 15px;border-radius:99px;cursor:pointer;transition:.18s;
   display:flex;align-items:center;gap:7px}
 .cat:hover:not(:disabled){color:var(--text);border-color:var(--faint)}
-.cat[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
+.cat[aria-pressed="true"]{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
 .cat:disabled{opacity:.35;cursor:default}
 .cat:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.cat .n{font-size:11px;opacity:.75;font-weight:600}
+.cat .n{font-size:11px;font-weight:600;color:var(--faint)}
+/* The count used to be the chip's own colour at 75% opacity, which is how an
+   11px number ended up at 3.2:1 on the selected chip. Opacity is the wrong
+   tool for de-emphasis when the result still has to be read: --faint is the
+   colour that means "quieter" and is fitted for text, and on the selected
+   chip white at full strength is the only thing that clears AA on red. */
+.cat[aria-pressed="true"] .n{color:#fff}
 
 .tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .datebar{display:flex;align-items:center;gap:6px;background:var(--card);
@@ -785,7 +817,7 @@ main[tabindex="-1"]:focus{outline:none}
    weight; it was carrying both the accent and a heavy weight, which made it
    look like the button. */
 .dnav{color:var(--red-ink);background:var(--card-2)}
-.dnav:not(:disabled):hover{background:var(--red-wash);color:var(--red)}
+.dnav:not(:disabled):hover{background:var(--red-wash);color:var(--red-ink)}  /* --red on the wash is 4.0:1; every other hover here already uses the ink */
 .dnav:disabled{color:var(--faint)}
 .dlabel b{display:block;font-weight:600;font-size:14px;color:var(--text)}
 .dlabel i{display:block;font-style:normal;font-size:11px;color:var(--faint);font-weight:600}
@@ -830,6 +862,13 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
   .search input,select,textarea,select.lv-sel,
   input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]){
     font-size:16px}
+
+  /* Three text links stood 17-18px tall, under the 24px a finger is held to
+     (WCAG 2.5.8). Every other control on the phone already clears it, so this
+     is padding on three links rather than a scale change to the page: the ink
+     stays where it is, the target grows around it. */
+  .trust-i.link,.daily-back,.foot-legal .rg{
+    min-height:24px;padding-top:3px;padding-bottom:3px}
 }
 .chosen{display:flex;align-items:center;gap:8px;margin-top:11px;
   background:var(--red-wash);border-radius:var(--r-md);padding:9px 11px}
@@ -888,7 +927,7 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .m-add:hover{background:var(--red-wash);border-color:var(--red)}
 .m-add.on{background:var(--green-wash);border-color:var(--green)}
 .m-add .ma-ic{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;
-  border-radius:50%;background:var(--red);color:#fff;font-size:14px;line-height:1}
+  border-radius:50%;background:var(--red-fill);color:#fff;font-size:14px;line-height:1}
 .m-add.on{color:var(--green-ink)}
 .m-add.on .ma-ic{background:var(--green)}
 .m-top{display:flex;align-items:center;gap:7px;margin-bottom:12px;flex-wrap:wrap}
@@ -944,7 +983,7 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
    in play (live score), or settled (score + whether the tip landed). */
 .fx-st{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;
   padding:2px 7px;border-radius:99px;white-space:nowrap;vertical-align:middle}
-.fx-live{background:var(--red);color:#fff}
+.fx-live{background:var(--red-fill);color:#fff}
 /* A solid dot, not a pulsing one. One live badge blinking reads as alive; a
    busy Saturday of twenty blinking on their own timers reads as an emergency,
    and attention does not scale - if every row grabs, none of them rank. The
@@ -1058,7 +1097,7 @@ html:not(.reduce) .m:nth-child(5),html:not(.reduce) .lrow:nth-child(5){animation
 html:not(.reduce) .m:nth-child(6),html:not(.reduce) .lrow:nth-child(6){animation-delay:.15s}
 html:not(.reduce) .m:nth-child(n+7),html:not(.reduce) .lrow:nth-child(n+7){animation-delay:.18s}
 /* fly-to-slip chip */
-.fly-chip{position:fixed;z-index:300;background:var(--red);color:#fff;font-weight:800;font-size:12px;
+.fly-chip{position:fixed;z-index:300;background:var(--red-fill);color:#fff;font-weight:800;font-size:12px;
   padding:6px 12px;border-radius:99px;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.4);
   transition:transform .55s cubic-bezier(.5,.05,.5,1),opacity .55s}
 /* bottom tab bar (mobile only) */
@@ -1081,7 +1120,7 @@ html.mode-live .btabs{transform:none!important}
   .btab svg{width:22px;height:22px}
   .btab.on{color:var(--red-ink)}
   .btab.mid{margin-top:-18px}
-  .btab.mid .bt-ic{width:52px;height:52px;border-radius:50%;background:var(--red);color:#fff;
+  .btab.mid .bt-ic{width:52px;height:52px;border-radius:50%;background:var(--red-fill);color:#fff;
     display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(230,57,70,.5)}
   .btab.mid svg{width:24px;height:24px}
   body{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
@@ -1101,9 +1140,9 @@ html.mode-live .btabs{transform:none!important}
 /* One thing on the page gets to move: the wizard fab. Everything else that used
    to pulse now reads as enchanted rather than flashing - a thin rune-gold edge
    and a warm ember, which is the same language as the runes in the background. */
-.navt.build{background:var(--red);color:#fff;
+.navt.build{background:var(--red-fill);color:#fff;
   box-shadow:inset 0 0 0 1px rgba(242,184,75,.45),0 2px 10px rgba(230,57,70,.28)}
-.navt.build.on{background:var(--red);color:#fff}
+.navt.build.on{background:var(--red-fill);color:#fff}
 @keyframes starpulse{0%{box-shadow:0 0 0 0 rgba(230,57,70,.55)}70%{box-shadow:0 0 0 11px rgba(230,57,70,0)}100%{box-shadow:0 0 0 0 rgba(230,57,70,0)}}
 .lthead,.lrow{column-gap:12px}
 .lmore{padding-top:8px;font-size:13px}
@@ -1450,7 +1489,10 @@ html.mode-build .slip-cta,html.mode-live .slip-cta{display:none}
   transition:transform .35s cubic-bezier(.3,.9,.3,1);padding:0 10px calc(10px + env(safe-area-inset-bottom))}
 .slipbar.show{transform:translateY(0)}
 .slipbar-in{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:12px;
-  background:radial-gradient(circle at 20% 0%,#ff8a93,#e63946 55%,#a51826);color:#fff;
+  /* The pink highlight put white text on 2.3:1 wherever it fell, and the
+     mid stop was the 4.17:1 brand red. Same radial, same deep centre, run
+     from --red-fill instead so every point under the label clears AA. */
+  background:radial-gradient(circle at 20% 0%,#db3643,#c22e3a 55%,#a51826);color:#fff;
   border:1px solid rgba(242,184,75,.55);border-radius:99px;padding:12px 14px 12px 18px;
   box-shadow:0 10px 30px rgba(165,24,38,.5),inset 0 1px 2px rgba(255,255,255,.4);cursor:pointer}
 .slipbar-in .sb-tx{flex:1;min-width:0}
@@ -1509,9 +1551,9 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
 .vt{display:inline-flex;align-items:center;gap:7px;background:none;border:0;color:var(--soft);font:inherit;font-weight:700;font-size:13px;padding:9px 16px;border-radius:var(--r-sm);cursor:pointer;transition:background .16s,color .16s}
 .vt svg{width:15px;height:15px;flex-shrink:0}
 .vt.on{background:#F2B84B;color:#1a1400}
-.navt.build{background:var(--red);color:#fff}
+.navt.build{background:var(--red-fill);color:#fff}
 .navt.build:hover{filter:brightness(1.08)}
-.navt.build.on{background:var(--red);color:#fff}
+.navt.build.on{background:var(--red-fill);color:#fff}
 .mini-load{display:inline-block;width:22px;height:22px;border-radius:50%;
   border:3px solid var(--line);border-top-color:var(--red);
   animation:ldrspin .8s linear infinite;vertical-align:middle;margin-right:9px}
@@ -1597,7 +1639,7 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
    option next to the filters. Back to the crimson pill with the gold rim and
    its ember: the brightest thing in the row, which is what it should be. */
 .bookall{position:relative;overflow:hidden;display:none;align-items:center;gap:8px;
-  background:linear-gradient(135deg,#6d1017,var(--red) 55%,#9c1620);color:#fff;
+  background:linear-gradient(135deg,#6d1017,var(--red-fill) 55%,#9c1620);color:#fff;
   border:1px solid rgba(242,184,75,.55);
   font:inherit;font-weight:800;font-size:12.5px;letter-spacing:.03em;
   padding:8px 15px 8px 27px;border-radius:99px;cursor:pointer;
@@ -1683,7 +1725,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .cap-warn b{color:var(--win-ink);font-weight:800}
 .confirm-card .ca{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .confirm-card button{font:inherit;font-weight:800;font-size:14px;padding:11px 18px;border-radius:var(--r-md);cursor:pointer;border:0}
-.confirm-go{background:var(--red);color:#fff}
+.confirm-go{background:var(--red-fill);color:#fff}
 .confirm-cancel{background:var(--card);color:var(--text);border:1px solid var(--line)!important}
 .lt-ou{font-weight:700}
 /* margin-left:auto is gone. It dates from when this row was a flex line and
@@ -1709,9 +1751,36 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .conf-strong .cring{--rc:var(--green)}.conf-lean .cring{--rc:var(--win)}.conf-slight .cring{--rc:var(--grey)}
 .lt-chev{color:var(--faint);font-size:11px;transition:transform .2s;flex-shrink:0}
 .lrow.open .lt-chev{transform:rotate(180deg)}
+
+/* A LIST ROW IS A DIV THAT OPENS ON CLICK, WHICH LEFT THE KEYBOARD OUT.
+   The chevron is the obvious control, except it is display:none under 720px
+   for layout reasons that still hold, so promoting it would have given phones
+   and narrow windows nothing. Instead every row carries a real button that is
+   off-screen until it takes focus, and the row's existing click handler does
+   the work - a button's Enter and Space arrive as clicks, so there is one code
+   path, not two. Visible on focus rather than permanently hidden, because a
+   focus ring nobody can see is its own bug. */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+/* Stays absolute when it appears. Letting it back into the flow put a button
+   into the row's grid and shoved the fixture sideways; a focus indicator that
+   rearranges the page it is indicating is worse than none. */
+.sr-only:focus-visible{width:auto;height:auto;margin:0;overflow:visible;z-index:40;
+  clip:auto;clip-path:none;white-space:nowrap;left:6px;top:3px;
+  padding:4px 8px;font:inherit;font-size:11.5px;font-weight:700;background:var(--raise);
+  color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);cursor:pointer}
 .lmore{display:block;overflow:hidden;max-height:0;padding-top:0;
   transition:max-height .35s ease,padding-top .35s ease}
 .lrow.open .lmore{max-height:600px;padding-top:10px}
+/* EVERY PANEL ON THE BOARD IS BUILT WHETHER OR NOT ANYONE OPENS IT.
+   Eighty-three rows carrying ten markets each is 830 option tiles laid out and
+   styled behind a max-height of zero: a 326ms layout and a 263ms style
+   recalculation on a desktop, which is most of a second of blocked main thread
+   on the phones this is read on. The browser will skip all of it if told the
+   subtree is not being shown - which it is not - and does the work on the
+   frame the row opens instead. Paired with `inert` in the markup, so the
+   panel is out of the a11y tree and the render tree by the same rule. */
+.lrow:not(.open) .lmore{content-visibility:hidden}
 /* ---- dense table (predictz-style) ---- */
 .lthead,.lrow{display:grid;
   /* was: 46 | 1fr | 44 | 44 | 44 | 120-190 | 62 | 18
@@ -1830,7 +1899,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .more-in{overflow:hidden;min-height:0}
 .more-pad{padding:4px 15px 16px}
 .grp{margin-top:14px}
-.grp h4{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+.grp h3{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
   color:var(--soft);margin-bottom:9px}
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .opt{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
@@ -1907,14 +1976,16 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 /* Quiet link, not a button: it is evidence for a claim, not an action the
    page wants you to take. */
 .daily-back{display:inline-block;margin-top:10px;background:none;border:0;padding:0;
-  font:inherit;font-size:12px;font-weight:800;color:var(--red);cursor:pointer}
+  /* --red as ink on a card is 4.33:1 and this is a 12px control, so it takes
+     --red-ink, which is the token that exists for exactly this. */
+  font:inherit;font-size:12px;font-weight:800;color:var(--red-ink);cursor:pointer}
 .daily-back:hover{text-decoration:underline}
 .daily-back:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:4px}
 .mr-coach{display:flex;align-items:flex-start;gap:9px;margin-top:10px;
   padding:9px 10px;background:var(--card-2);border:1px solid var(--line);
   border-radius:var(--r-md)}
 .mr-coach span{flex:1;min-width:0;font-size:11.5px;line-height:1.45;color:var(--soft)}
-.mr-coach-x{flex-shrink:0;align-self:center;background:var(--red);color:#fff;border:0;
+.mr-coach-x{flex-shrink:0;align-self:center;background:var(--red-fill);color:#fff;border:0;
   font:inherit;font-size:11px;font-weight:800;padding:6px 11px;border-radius:99px;
   cursor:pointer}
 .mr-coach-x:focus-visible{outline:2px solid var(--text);outline-offset:2px}
@@ -2172,7 +2243,7 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
 .badge18 sup{font-size:8px;font-weight:800;margin-left:1px}
 .foot-brand span{display:block;font-size:12px;color:var(--faint);margin-top:2px}
 .foot-cols{display:grid;gap:20px;margin-bottom:22px}
-.foot-cols h5{font-size:11px;font-weight:800;letter-spacing:.09em;
+.foot-cols h4{font-size:11px;font-weight:800;letter-spacing:.09em;
   text-transform:uppercase;color:var(--red-ink);margin-bottom:7px}
 .foot-cols p{font-size:13px;line-height:1.65;max-width:38ch}
 /* Footer link row. Sits between the three columns and the legal line, so the
@@ -2234,7 +2305,7 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
   border-radius:99px;padding:9px 15px;font:inherit;font-size:13px;font-weight:700;
   cursor:pointer;text-decoration:none;border:1px solid var(--line);
   background:var(--card-2);color:var(--soft);transition:background .16s,border-color .16s,color .16s}
-.contact-acts .primary{background:var(--red);border-color:var(--red);color:#fff}
+.contact-acts .primary{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
 @media (hover:hover){
   .contact-acts a:hover,.contact-acts button:hover{border-color:var(--faint);color:var(--text)}
   .contact-acts .primary:hover{filter:brightness(1.08);color:#fff}
@@ -2516,13 +2587,13 @@ html.mode-live #live{display:block}
 .lv-tabs{display:flex;gap:8px;margin:0 0 12px}
 .lv-tab{background:var(--card-2);border:1px solid var(--line);color:var(--soft);font:inherit;
   font-weight:800;font-size:12.5px;padding:7px 14px;border-radius:99px;cursor:pointer}
-.lv-tab.on{background:var(--red);border-color:var(--red);color:#fff}
+.lv-tab.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
 .lv-tab i{font-style:normal;background:rgba(255,255,255,.22);border-radius:99px;
   padding:0 6px;margin-left:4px;font-size:11px}
 .lv-lgs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
 .lv-lg-chip{background:var(--card-2);border:1px solid var(--line-soft);color:var(--soft);font:inherit;
   font-weight:700;font-size:11.5px;padding:5px 11px;border-radius:99px;cursor:pointer}
-.lv-lg-chip.on{background:var(--red);border-color:var(--red);color:#fff}
+.lv-lg-chip.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
 .lv-star{background:none;border:0;padding:0 0 0 8px;cursor:pointer;flex-shrink:0;
   color:var(--faint);font-size:15px;line-height:1}
 .lv-star.on{color:#F2B84B}
@@ -2559,7 +2630,7 @@ html.mode-live #live{display:block}
   padding:8px 13px;border-radius:99px;cursor:pointer;white-space:nowrap}
 .lv-chip .flag{width:18px;height:13px}
 .lv-chip .n{color:var(--faint);font-variant-numeric:tabular-nums}
-.lv-chip.on{background:var(--red);border-color:var(--red);color:#fff}
+.lv-chip.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
 .lv-chip.on .n{color:rgba(255,255,255,.8)}
 .lv-grp{margin-bottom:14px}
 .lv-grp-h{display:flex;align-items:center;gap:9px;padding:4px 2px 10px;font-size:12px;font-weight:800;
@@ -2607,7 +2678,7 @@ html.mode-live #live{display:block}
 .bld-mode-btn svg{flex-shrink:0;opacity:.8;transition:opacity .15s}
 .bld-mode-btn:hover{color:var(--text);background:var(--card)}
 .bld-mode-btn:hover svg{opacity:1}
-.bld-mode-btn.on{background:var(--red);color:#fff;box-shadow:0 2px 8px rgba(230,57,70,.3)}
+.bld-mode-btn.on{background:var(--red-fill);color:#fff;box-shadow:0 2px 8px rgba(230,57,70,.3)}
 /* Each mode wears its own identity when active: Slider = red/gold ember (fast,
    hands-on); Wizard = violet/gold enchantment (let the app decide). */
 .bld-mode-btn.on[data-mode="slider"]{background:linear-gradient(120deg,#c8323d,var(--red));
@@ -2704,7 +2775,7 @@ html.mode-live #live{display:block}
   min-width:0;white-space:nowrap;
   transition:background .15s,border-color .15s,color .15s,opacity .15s,transform .1s,box-shadow .15s}
 .mkt-chip:hover:not(.locked){border-color:var(--faint);transform:translateY(-1px)}
-.mkt-chip.on{background:var(--red);border-color:var(--red);color:#fff;
+.mkt-chip.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff;
   box-shadow:inset 0 0 0 1px rgba(242,184,75,.45),0 2px 8px rgba(230,57,70,.3)}
 .mkt-chip:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .mkt-chip.locked{opacity:.4;cursor:not-allowed;filter:grayscale(.3)}
@@ -2752,7 +2823,7 @@ html.mode-live #live{display:block}
 .tod-seg .scope-opt.tod-empty{opacity:.42}
 .so-n{font-size:11px;font-weight:800;padding:1px 7px;border-radius:99px;
   background:var(--card-2);color:var(--faint);font-variant-numeric:tabular-nums}
-.scope-opt.on .so-n{background:var(--red);color:#fff}
+.scope-opt.on .so-n{background:var(--red-fill);color:#fff}
 .so-n:empty{display:none}
 /* The day pill is a dropdown, so it carries a chevron that leans open when its
    menu is up. */
@@ -2889,7 +2960,7 @@ html.mode-live #live{display:block}
   font-variant-numeric:tabular-nums}
 .day-opt.on{background:var(--card-2)}
 .day-opt.on .dy-n{color:var(--red)}
-.day-opt.on .dy-c{background:var(--red);color:#fff}
+.day-opt.on .dy-c{background:var(--red-fill);color:#fff}
 /* The multi-day options open the same menu as the days - they answer the same
    question, how wide is the window. One hairline separates the two kinds; a
    line between each span would read as a list of sections. */
@@ -2940,7 +3011,7 @@ html.mode-live #live{display:block}
 .bld-odds i{display:block;font-style:normal;font-size:11px;font-weight:700;
   letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
 .bld-odds b{font-size:24px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
-.book-btn{background:var(--red);color:#fff;border:0;font:inherit;font-weight:800;font-size:15px;
+.book-btn{background:var(--red-fill);color:#fff;border:0;font:inherit;font-weight:800;font-size:15px;
   padding:14px 22px;border-radius:var(--r-sm);cursor:pointer;white-space:nowrap;
   box-shadow:inset 0 0 0 1px rgba(242,184,75,.4),0 2px 10px rgba(230,57,70,.3)}
 .book-btn:hover{filter:brightness(1.08)}
@@ -3133,7 +3204,7 @@ html.mode-live #live{display:block}
    this modal is used on most. */
 .code-acts .code-copy{background:var(--card);color:var(--text);
   border:1px solid var(--line)!important;text-align:center}
-.code-open{background:var(--red);color:#fff}
+.code-open{background:var(--red-fill);color:#fff}
 /* A footnote that still has to be read. Bold and shouting was wrong, but so
    was the whisper I replaced it with - it had faded into the card. Body-text
    colour and size, on its own line above the card's edge, so it reads as a
@@ -3200,7 +3271,7 @@ html.mode-live #live{display:block}
 
 .code-card--sb .code-acts .code-copy,
 .code-card--sb .code-acts .share-btn{
-  background:var(--red);color:#fff;border:1px solid transparent!important;
+  background:var(--red-fill);color:#fff;border:1px solid transparent!important;
   box-shadow:0 2px 10px rgba(230,57,70,.32)}
 @media(hover:hover){
   .code-card--sb .code-acts .code-copy:hover,
@@ -3417,13 +3488,15 @@ html.mode-live #live{display:block}
 @keyframes ldreyes{0%,100%{opacity:.45;transform:scale(.94)}50%{opacity:1;transform:scale(1.08)}}
 @keyframes ldrconjure{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
 /* Fewer and gentler, not none: the halo keeps saying "working" without
-   anything travelling across the screen. */
+   anything travelling across the screen. It is the one loop that survives
+   here, because it reports state - the blink that used to sit beside it was
+   character, and character is exactly what this setting asks us to drop. */
 @media(prefers-reduced-motion:reduce){
   .loader-orbit .ring,.loader-runes{animation:none;opacity:.4}
   .loader-sig{animation:none}
   .loader-shine,.loader-embers{display:none}
   .loader-orbit,.loader-word{animation:none}
-  .loader-eyes::after{animation:ldreyes 4.2s ease-in-out infinite}
+  .loader-eyes::after{animation:none}
   .loader-halo{animation:ldrhalo 3.4s ease-in-out infinite}
 }
 /* opt add-to-slip button + floating my-slip */
@@ -3487,7 +3560,7 @@ html.mode-live #live{display:block}
    on top of each other. It appears only once the real button has gone. */
 .ctafab{position:fixed;left:18px;bottom:18px;z-index:124;display:none;
   align-items:center;gap:9px;padding:0 18px 0 12px;height:50px;border-radius:99px;
-  background:var(--red);color:#fff;border:0;cursor:pointer;
+  background:var(--red-fill);color:#fff;border:0;cursor:pointer;
   font:inherit;font-size:13.5px;font-weight:800;letter-spacing:-.01em;
   box-shadow:0 10px 28px rgba(230,57,70,.34);
   opacity:0;transform:translateY(10px) scale(.96);
@@ -3538,7 +3611,7 @@ button.wsp-go.waiting{opacity:.55}
 .wsp-chips{display:flex;flex-wrap:wrap;gap:8px}
 .wsp-chip{background:var(--card-2);border:1px solid var(--line);color:var(--soft);font:inherit;
   font-weight:700;font-size:13px;padding:9px 15px;border-radius:99px;cursor:pointer}
-.wsp-chip.on{background:var(--red);border-color:var(--red);color:#fff}
+.wsp-chip.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
 /* Slip style pills.
    The labels now carry the trade-off ("More games / smaller odds"), which is
    too long for the free-flowing chip row the payout ladder uses - on a phone
@@ -3760,7 +3833,7 @@ button.wsp-go.waiting{opacity:.55}
 .lgp-row .lgp-tick{flex:0 0 16px;width:16px;height:16px;border-radius:4px;
   border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;
   font-size:11px;color:transparent}
-.lgp-row.on .lgp-tick{background:var(--red);border-color:var(--red);color:#fff}
+.lgp-row.on .lgp-tick{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
 .lgp-row .lgp-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lgp-row .lgp-n{flex:0 0 auto;font-size:11.5px;font-weight:700;color:var(--faint)}
 .lgp-row .lgp-ct{color:var(--faint);font-weight:600}
@@ -3965,7 +4038,7 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
 .sotd-odds i{display:block;font-style:normal;font-size:11px;font-weight:700;
   letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
 .sotd-odds b{font-size:22px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
-.sotd-btn{background:var(--red);color:#fff;border:0;font:inherit;font-weight:800;
+.sotd-btn{background:var(--red-fill);color:#fff;border:0;font:inherit;font-weight:800;
   font-size:14px;padding:12px 18px;border-radius:var(--r-md);cursor:pointer}
 .sotd-btn:hover{filter:brightness(1.08)}
 .sotd-btn:disabled{opacity:.5;cursor:not-allowed}
@@ -4213,7 +4286,7 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .mtoggle{margin:10px -12px 0;padding:10px 12px}
 .more-pad{padding:2px 10px 8px}
 .grp{margin-top:7px}
-.grp h4{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+.grp h3{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
 .opts{gap:4px}
 .opt{padding:6px 9px;font-size:12.5px;border-radius:var(--r-sm)}
 .opt .n{font-size:11.5px;font-weight:600}
@@ -4456,7 +4529,7 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
   display:inline-flex;align-items:center;justify-content:center;transition:.15s}
 .bld-help:hover{color:var(--text);border-color:var(--faint)}
 .bld-help:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.bld-help.on{background:var(--red);border-color:var(--red);color:#fff}
+.bld-help.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
 
 /* Each phrase is one flex item, so a narrow screen wraps whole lines rather
    than splitting a label from the words that explain it. */
@@ -4490,7 +4563,7 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
 .bc-num{flex-shrink:0;width:17px;height:17px;border-radius:50%;background:var(--raise);
   color:var(--text);font-size:9.5px;font-weight:800;display:flex;
   align-items:center;justify-content:center;margin-top:1px}
-.bld-coach .bc-x{margin-top:9px;background:var(--red);color:#fff;border:0;
+.bld-coach .bc-x{margin-top:9px;background:var(--red-fill);color:#fff;border:0;
   border-radius:var(--r-sm);font:inherit;font-size:11.5px;font-weight:800;
   padding:7px 13px;cursor:pointer}
 #bldCoach:empty{display:none}
@@ -4604,6 +4677,42 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
    scroll a hundred fixtures. */
 .home-grid{display:flex;flex-direction:column;gap:0}
 .home-main{min-width:0}
+
+/* THE BOARD ARRIVES 1.7 SECONDS IN, AND EVERYTHING BELOW IT USED TO JUMP.
+   The payload is fetched, not baked into the markup, so the pick, the recap,
+   the heading, the filter chips and the board itself all land in one burst
+   after the network settles. On a phone the rail sits above the board, so
+   that burst pushed the main column down by about 470px: measured CLS 0.70
+   locally, 0.87 in the field, on a metric whose "poor" threshold is 0.25.
+   The slots are held open at the height their content actually renders at,
+   measured at both layouts, so the arrival fills a space instead of making
+   one. `:empty` scopes each rule to the slot's pre-render state, and
+   `html.booting` - dropped by hideLoader() on every path, success, failure
+   and the 8s deadline alike - guarantees the reserve cannot outlive the load
+   and leave a hole on a day when a slot has nothing to show. */
+html.booting #potd:empty{min-height:260px}
+html.booting #daily:empty{min-height:110px}
+/* display too: .board-head:empty is display:none so an unfilled header costs
+   no margin, and a min-height on a box that is not laid out reserves nothing. */
+html.booting #boardHead:empty{display:block;min-height:46px}
+html.booting #cats:empty{min-height:36px}
+html.booting #list{min-height:70vh}
+/* The proof line under the offer is [hidden] until the record is counted, and
+   it is 40px of card that appears above everything else on a phone. Held open
+   invisibly rather than shown empty: there is nothing truthful to put in it
+   until the number arrives. */
+html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
+/* The two rail cards are taller once the layout stops being a phone: measured
+   290/140 at 929px and 300/150 at 1440, so one step at 721 covers both within
+   ten pixels. The board itself only pushes the closing note and the footer,
+   both of which are far below the fold at every width, so 70vh is enough for
+   it - matching 6,735px of fixtures would just be a screen of nothing. */
+@media(min-width:721px){
+  html.booting #potd:empty{min-height:292px}
+  html.booting #daily:empty{min-height:142px}
+  html.booting #boardHead:empty{min-height:50px}
+  html.booting .sc-proof[hidden]{min-height:42px}
+}
 .home-rail{display:flex;flex-direction:column;gap:0}
 @media(min-width:1060px){
   .wrap{max-width:1420px}
@@ -4944,7 +5053,7 @@ footer{margin-top:26px;padding-top:18px;
   padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 .foot-brand{margin-bottom:14px;padding-bottom:14px;gap:10px}
 .foot-cols{gap:14px;margin-bottom:14px}
-.foot-cols h5{margin-bottom:5px}
+.foot-cols h4{margin-bottom:5px}
 .foot-cols p{line-height:1.55}
 .foot-legal{padding-top:12px;gap:8px 15px}
 @media(min-width:720px){.foot-cols{gap:20px}}
@@ -5985,7 +6094,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
        "See today's predictions" landed at a position rather than a place, and
        felt like it had fizzled. Naming it makes the same scroll an arrival. -->
   <div class="head-line">
-    <header class="board-head" id="boardHead"></header>
+    <header class="board-head" id="boardHead" aria-live="polite"></header>
     <span class="ba-slot" id="baSlot"></span>
   </div>
 
@@ -6011,7 +6120,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     </div>
   </div>
 
-  <div id="bookAllResult"></div>
+  <div id="bookAllResult" aria-live="polite"></div>
 
   <div class="bar">
     <div class="cats" id="cats"></div>
@@ -6022,7 +6131,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
           <path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.7"
             stroke-linecap="round" opacity=".55"/>
         </svg>
-        <input id="q" type="search" placeholder="Search country, league or team" autocomplete="off">
+        <input id="q" type="search" aria-label="Search country, league or team" placeholder="Search country, league or team" autocomplete="off">
       </div>
       <select id="country" class="pick-sel" aria-label="Country"></select>
       <select id="league" class="pick-sel" aria-label="League"></select>
@@ -6167,7 +6276,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       <button class="live-refresh stage-in stage-in-3" id="liveRefresh" type="button" data-parallax="0.8">Refresh</button>
     </div>
     <p class="live-sub stage-in stage-in-2" id="liveSub">Football matches in play right now, updating automatically.</p>
-    <div class="lv-selwrap stage-in stage-in-3" id="liveSelWrap" hidden><select id="liveCountrySel" class="lv-sel"></select></div>
+    <div class="lv-selwrap stage-in stage-in-3" id="liveSelWrap" hidden><select id="liveCountrySel" class="lv-sel" aria-label="Country"></select></div>
     <div id="liveList" data-parallax="0.3"></div>
   </section>
 
@@ -6198,17 +6307,17 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       </div>
       <div class="foot-cols">
         <div>
-          <h5>What this is</h5>
+          <h4>What this is</h4>
           <p>Statistical football predictions across 38 leagues, rebuilt
           every morning from results.</p>
         </div>
         <div>
-          <h5>What it isn't</h5>
+          <h4>What it isn't</h4>
           <p>A guarantee. The model cannot see injuries, suspensions or team
           news, and no prediction is ever certain.</p>
         </div>
         <div>
-          <h5>Play responsibly</h5>
+          <h4>Play responsibly</h4>
           <p>Only stake what you can afford to lose. If betting stops being
           fun, step away and seek support.</p>
         </div>
@@ -6229,7 +6338,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
              everyone who clicked it. Verified resolving before shipping this
              time - a link is a claim the destination exists. -->
         <a class="fl-x" href="https://x.com/soccerwizardhq" target="_blank" rel="noopener"
-           aria-label="Soccerwizard on X">
+           aria-label="Follow us on X">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.2 2.3h3.4l-7.4 8.5 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9.1L.9 2.3h7l4.8 6.4zm-1.2 17.9h1.9L7.1 4.2H5z"/></svg>
           <span>Follow us</span></a>
         <!-- t.me/soccerwizardTG. Verified resolving before shipping - the X
@@ -6291,14 +6400,14 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   <div class="sheet-body" id="mySheetBody"></div>
   <div class="bookpick" data-bookpick="my" role="group" aria-label="Bookmaker"></div>
   <div class="mysheet-foot" id="mySheetFoot" hidden>
-    <div class="bld-odds"><i>Total odds</i><b id="myTotOdds">-</b></div>
+    <div class="bld-odds" aria-live="polite"><i>Total odds</i><b id="myTotOdds">-</b></div>
     <!-- Only for a conjured slip: reshuffling a slip somebody picked by hand
          would throw their choices away. -->
     <button class="clear-btn" id="mySheetShuffle" type="button" hidden>Shuffle</button>
     <button class="clear-btn" id="myClearBtn" type="button">Clear</button>
     <button class="book-btn" id="myBookBtn" type="button">Get code</button>
   </div>
-  <div id="myBookResult"></div>
+  <div id="myBookResult" aria-live="polite"></div>
 </div>
 
 <script>
@@ -7927,7 +8036,7 @@ function renderControls(){
 function opt(name,v,good,code,id){
   if(v==null||isNaN(v)) return "";
   var on=(code&&id)?myslipHas(id,code):false;
-  var add=(code&&id)?"<button class='opt-add"+(on?" on":"")+"' data-add='"+id+"' data-code='"+code+"' data-label=\""+name+"\" data-p='"+v.toFixed(3)+"' aria-label='Add to slip'>"+(on?"\u2713":"+")+"</button>":"";
+  var add=(code&&id)?"<button class='opt-add"+(on?" on":"")+"' data-add='"+id+"' data-code='"+code+"' data-label=\""+name+"\" data-p='"+v.toFixed(3)+"' aria-pressed='"+(on?"true":"false")+"' aria-label=\""+name+" - add to slip\">"+(on?"\u2713":"+")+"</button>":"";
   return "<div class='opt"+(good?" good":"")+(code?" bk":"")+"' style='--w:"+v.toFixed(3)+"'>"+
     "<span class='n'>"+name+"</span><span class='p num'>"+P0(v)+"%</span>"+add+
     "<span class='fill'></span></div>";
@@ -7941,20 +8050,20 @@ function moreHTML(f){
   const noDraw=(f.anybody!=null)?f.anybody:f.dc12;
   const id=fid(f);
   return "<div class='more-pad'>"+
-    "<div class='grp'><h4>Who wins</h4><div class='opts'>"+
+    "<div class='grp'><h3>Who wins</h3><div class='opts'>"+
       opt(esc(f.home)+" to win",f.home_p,f.home_p>=.6,"1",id)+
       opt(esc(f.away)+" to win",f.away_p,f.away_p>=.6,"2",id)+
       opt("Draw",f.draw_p,f.draw_p>=.4,"X",id)+
       opt(esc(f.home)+" or draw",f.dc1x,f.dc1x>=.75,"1X",id)+
       opt(esc(f.away)+" or draw",f.dcx2,f.dcx2>=.75,"X2",id)+
       opt("Any team to win",noDraw,noDraw>=.75,"12",id)+"</div></div>"+
-    "<div class='grp'><h4>Goals</h4><div class='opts'>"+
+    "<div class='grp'><h3>Goals</h3><div class='opts'>"+
       opt("Over 1.5 goals",f.o15,f.o15>=.75,"OVER_1.5",id)+
       opt("Over 2.5 goals",f.o25,f.o25>=.6,"OVER_2.5",id)+
       opt("Under 2.5 goals",1-f.o25,(1-f.o25)>=.6)+
       opt("Both teams score",f.btts,f.btts>=.6,"GG",id)+
       opt("Goal in 1st half",f.fh_o05,f.fh_o05!=null&&f.fh_o05>=.7,"FH_OVER_0.5",id)+"</div></div>"+
-    "<div class='grp'><h4>Combos</h4><div class='opts'>"+
+    "<div class='grp'><h3>Combos</h3><div class='opts'>"+
       opt("Both score + over 2.5",f.btts_o25,f.btts_o25!=null&&f.btts_o25>=.55)+
       opt("Draw or over 2.5",f.draw_o25,f.draw_o25!=null&&f.draw_o25>=.7)+
       opt("Draw or both score",f.draw_btts,f.draw_btts!=null&&f.draw_btts>=.7)+
@@ -8082,7 +8191,7 @@ function matchHTML(f){
         "<span class='ls'>See "+countMarkets(f)+" more predictions</span>"+
         "<span class='cv'>&rsaquo;</span></span>"+
     "</button>"+
-    (tipCode(f)?"<button class='m-add' data-add='"+fid(f)+"' data-code='"+tipCode(f)+"' data-label=\""+esc(plainTip(f))+"\" data-p='"+f.tip_p.toFixed(3)+"' type='button'><span class='ma-ic'>"+PLUS+"</span> Add to slip</button>":"")+
+    (tipCode(f)?"<button class='m-add' data-add='"+fid(f)+"' data-code='"+tipCode(f)+"' data-label=\""+esc(plainTip(f))+"\" data-p='"+f.tip_p.toFixed(3)+"' type='button' aria-pressed='false'><span class='ma-ic'>"+PLUS+"</span> Add to slip</button>":"")+
   "</article>";
 }
 
@@ -8125,12 +8234,34 @@ function setList(p){V.list=!!p;try{localStorage.setItem("sw.view",p?"list":"card
   if(s)s.classList.toggle("on",!p); if(pr)pr.classList.toggle("on",p);
   render();}
 function blockFor(l,games,withFlag){return V.list?listBlock(l,games,withFlag):leagueBlock(l,games,withFlag);}
+
+/* One place where a row opens or shuts.
+   Four callers used to do it by hand - the row's own click, the two close
+   buttons, and the sheet's escape route - and each of them only ever set the
+   class. The class is now three facts, not one: what is drawn, what the
+   opener announces, and whether the panel's eleven buttons are reachable. Any
+   caller that sets only the first re-introduces the invisible tab stops, so
+   none of them may set it directly. */
+function setRowOpen(r,open){
+  if(!r) return;
+  open=!!open;
+  var id=r.dataset.lf;
+  if(id&&window.LOPEN) LOPEN[id]=open;
+  r.classList.toggle("open",open);
+  var t=r.querySelector(".lrow-toggle");
+  if(t) t.setAttribute("aria-expanded",open?"true":"false");
+  var p=r.querySelector(".lmore");
+  if(p){ if(open) p.removeAttribute("inert"); else p.setAttribute("inert",""); }
+}
 function listRowHTML(f){
   const cf=conf(f.tip_p), id=fid(f), openCls=LOPEN[id]?" open":"";
   const lead=(f.home_p>=f.draw_p&&f.home_p>=f.away_p)?"h":(f.away_p>=f.draw_p?"a":"d");
   /* One split of one certainty - print three numbers that add to a hundred. */
   const _lt100=split100([f.home_p,f.draw_p,f.away_p]);
+  const _open=!!LOPEN[id], _mid="more-"+id;
   return "<div class='lrow conf-"+cf+openCls+"' data-lf='"+id+"'>"+
+    "<button type='button' class='sr-only lrow-toggle' aria-expanded='"+(_open?"true":"false")+
+      "' aria-controls='"+_mid+"'>Options for "+esc(f.home)+" v "+esc(f.away)+"</button>"+
     "<span class='lt-time'>"+esc(kickTime(f))+"</span>"+
     "<span class='lt-match'><span class='tm'>"+esc(f.home)+"</span><span class='vs'>v</span><span class='tm'>"+esc(f.away)+"</span>"+statusSlot(f)+(id===POTD_ID?"<span class='lt-pick' title='Pick of the day' aria-label='Pick of the day'>★</span>":"")+"</span>"+
     "<span class='lt-p"+(lead==="h"?" lead":"")+"'>"+_lt100[0]+"<small>%</small></span>"+
@@ -8140,7 +8271,10 @@ function listRowHTML(f){
       "<i class='grade'>"+P0(f.tip_p)+"%</i></span>"+
     "<span class='lt-score' title='One way this match could end, drawn from our score distribution - not the most likely score'>"+scoreLine(f)+"</span>"+
     "<span class='lt-chev' aria-hidden='true'>\u25be</span>"+
-    "<div class='lmore'><button class='lmore-x' type='button' aria-label='Collapse'>▴</button>"+moreHTML(f)+"</div>"+
+    /* inert while shut: the panel is collapsed with max-height, which hides it
+       from eyes and from nobody else - eleven buttons a row, 83 rows, all of
+       them tab stops pointing at nothing on screen. */
+    "<div class='lmore' id='"+_mid+"'"+(_open?"":" inert")+"><button class='lmore-x' type='button' aria-label='Collapse'>▴</button>"+moreHTML(f)+"</div>"+
   "</div>";
 }
 function listBlock(l,games,withFlag){
@@ -8281,13 +8415,18 @@ function render(){
   document.querySelectorAll(".lrow").forEach(function(r){
     r.addEventListener("click",function(e){
       if(e.target.closest(".opt-add")||e.target.closest(".m-add")) return;
-      var id=r.dataset.lf; var open=!LOPEN[id]; LOPEN[id]=open; r.classList.toggle("open",open);});
+      setRowOpen(r,!LOPEN[r.dataset.lf]);});
     var xb=r.querySelector(".lmore-x");
     if(xb) xb.addEventListener("click",function(e){e.stopPropagation();
-      var id=r.dataset.lf; LOPEN[id]=false; r.classList.remove("open");});
+      setRowOpen(r,false);
+      /* Focus would otherwise sit on a button that just went inert, and the
+         browser drops it to the document - a keyboard reader loses their place
+         in a hundred-row list. Hand it back to the row's own opener. */
+      var t=r.querySelector(".lrow-toggle"); if(t) t.focus();});
     var xc=r.querySelector(".lmore-close");
     if(xc) xc.addEventListener("click",function(e){e.stopPropagation();
-      var id=r.dataset.lf; LOPEN[id]=false; r.classList.remove("open");});});
+      setRowOpen(r,false);
+      var t=r.querySelector(".lrow-toggle"); if(t) t.focus();});});
 
   document.querySelectorAll(".m-btn").forEach(function(b){
     b.addEventListener("click",function(){openSheet(b.dataset.fx);});});
@@ -12279,6 +12418,9 @@ function toggleMy(id,code,label,p,srcEl){
 function syncAddBtn(id,code){
   document.querySelectorAll("[data-add='"+id+"'][data-code='"+code+"']").forEach(function(b){
     var on=myslipHas(id,code); b.classList.toggle("on",on);
+    /* The tick is the only thing that used to change, and a tick is not a
+       state anything but an eye can read. */
+    b.setAttribute("aria-pressed",on?"true":"false");
     if(b.classList.contains("m-add")){var ic=b.querySelector(".ma-ic"); if(ic)ic.innerHTML=on?CHK:PLUS; if(b.lastChild)b.lastChild.textContent=on?" Added":" Add to slip";}
     else b.textContent=on?"\u2713":"+";});
 }
@@ -12942,7 +13084,10 @@ document.addEventListener("click",function(e){
   var b=e.target.closest(".more-collapse"); if(!b) return;
   e.stopPropagation();
   var sh=b.closest(".sheet"); if(sh){var x=sh.querySelector(".sheet-x"); if(x)x.click(); return;}
-  var row=b.closest(".lrow"); if(row){if(window.LOPEN)LOPEN[row.dataset.lf]=false;row.classList.remove("open"); return;}
+  var row=b.closest(".lrow");
+  if(row){ setRowOpen(row,false);
+    var t=row.querySelector(".lrow-toggle"); if(t) t.focus();
+    return;}
   var card=b.closest(".m"); if(card)card.classList.remove("open");
 });
 /* ---- Wizard's Special jackpot builder ---- */
@@ -15081,7 +15226,12 @@ async function load(){
     }
   }
 }
-function hideLoader(){var l=$("loader"); if(!l) return; l.classList.add("hide");
+function hideLoader(){
+  /* Ahead of the early return on purpose: this runs again on a retry, when the
+     loader element is already gone, and the height reserves must come off even
+     then. See the `html.booting` block in the stylesheet. */
+  document.documentElement.classList.remove("booting");
+  var l=$("loader"); if(!l) return; l.classList.add("hide");
   setTimeout(function(){if(l&&l.parentNode) l.parentNode.removeChild(l);},500);}
 setTimeout(hideLoader,8000);
 /* THE BOTTOM BAR NO LONGER HIDES, AND THE OBSERVER THAT HID IT IS GONE.
