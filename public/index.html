@@ -3247,21 +3247,28 @@ html.mode-live #live{display:block}
   background:
     radial-gradient(120% 140% at 50% 0%,rgba(255,255,255,.28) 0%,rgba(255,255,255,0) 60%),
     linear-gradient(180deg,#f4555f 0%,var(--red-fill) 55%,#cc2f3b 100%);
+  /* THE EDGE IS GOLD, which is this site's mark for "this is the one".
+     The hero CTA carries it, the header's Build tab carries it, and the
+     wordmark is gold: a white hairline here would have been a fourth
+     highlight colour on a page that already has three. */
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.42),
+    inset 0 1px 0 rgba(242,184,75,.5),
+    inset 0 0 0 1px rgba(242,184,75,.45),
     inset 0 -2px 5px rgba(120,10,20,.32),
     0 2px 5px rgba(0,0,0,.32),
-    0 6px 16px rgba(230,57,70,.30);
+    0 6px 16px rgba(230,57,70,.28);
   transition:transform .12s ease,box-shadow .18s ease,filter .15s ease}
 .byo-go:active{transform:translateY(1px) scale(.985);
-  box-shadow:inset 0 2px 6px rgba(120,10,20,.45),0 1px 3px rgba(0,0,0,.3)}
+  box-shadow:inset 0 0 0 1px rgba(242,184,75,.35),
+    inset 0 2px 6px rgba(120,10,20,.45),0 1px 3px rgba(0,0,0,.3)}
 @media (hover:hover){
   .byo-go:hover{filter:brightness(1.05);transform:translateY(-1px);
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.5),
+      inset 0 1px 0 rgba(242,184,75,.62),
+      inset 0 0 0 1px rgba(242,184,75,.6),
       inset 0 -2px 5px rgba(120,10,20,.32),
       0 3px 7px rgba(0,0,0,.34),
-      0 10px 22px rgba(230,57,70,.38)}
+      0 10px 22px rgba(230,57,70,.36)}
 }
 @media (prefers-reduced-motion:reduce){.byo-go{transition:none}}
 .byo-wait{display:flex;align-items:center;gap:9px;margin-top:12px;
