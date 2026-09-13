@@ -73,3 +73,54 @@ test("a converted slip is never described as the same bet", () => {
      once already. */
   assert.match(html, /the price is the one the bookmaker taking it publishes/i);
 });
+
+/* -------------------------------------------- the page hands off to the panel */
+
+test("the page carries a working form and no converter of its own", () => {
+  /* One converter on the site. A second implementation would drift from the
+     shipped one, and a drifted converter books a slip against a pairing we do
+     not ship - which is the reason this page posts to the builder instead. */
+  assert.match(html, /<form class="tool" action="\/" method="get">/);
+  assert.match(html, /name="book" value="sporty"/);
+  assert.match(html, /name="book" value="bet9ja"/);
+  /* Two actions, one journey: convert opens the conversion, read stops at the
+     games and the split. Neither books anything on arrival. */
+  assert.match(html, /name="go" value="convert"/);
+  assert.match(html, /name="go" value="read"/);
+  assert.match(html, /name="code"[^>]*pattern="\[A-Za-z0-9\]\{4,16\}"/);
+  assert.doesNotMatch(html, /<script(?![^>]*application\/ld\+json)/,
+    "this page ships no script");
+});
+
+test("the builder reads the pair the form sends", () => {
+  /* The contract is two query parameters and nothing else. Broken, the form
+     submits to a page that ignores it and the reader lands on the board with
+     no idea why. */
+  assert.match(index, /q\.get\("to"\)/, "the builder no longer reads ?to=");
+  assert.match(index, /q\.get\("code"\)/, "the builder no longer reads ?code=");
+  /* `to` names the book they want a code FOR, so the code they hold came from
+     the other one. Inverted, every deep link reads the wrong bookmaker. */
+  assert.match(index, /q\.get\("book"\)/, "the builder no longer reads ?book=");
+  assert.match(index, /to==="sporty"\?"bet9ja":"sporty"/,
+    "the target-to-source flip is gone or reversed");
+  /* ?go=convert opens the panel; it must never mint a code by itself. */
+  assert.match(index, /go==="convert"/);
+  assert.doesNotMatch(index, /go==="convert"[\s\S]{0,200}byoConvGo/,
+    "arriving on a link must not book a code");
+  /* Same shape rule as the box itself, because a crafted link must not be able
+     to send anything the box could not. */
+  assert.match(index, /\/\^\[A-Za-z0-9\]\{4,16\}\$\/\.test\(code\)/);
+  /* The panel lives in the builder view; without this the read runs into a
+     section nobody can see. */
+  assert.match(index, /setView\("build"\);[\s\S]{0,400}byoRead\(\);/);
+});
+
+test("the rules are still on the page, folded rather than dropped", () => {
+  /* Folded into <details>, which keeps them one tap away for a reader and in
+     the HTML for a crawler. Deleting them would have been the easy way to make
+     the page short. */
+  const folds = (html.match(/<details>/g) || []).length;
+  assert.ok(folds >= 4, "only " + folds + " folded sections left");
+  assert.match(html, /What gets left behind, and why/);
+  assert.match(html, /Where each card stops/);
+});

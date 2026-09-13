@@ -11673,6 +11673,47 @@ function splitBoxInner(picks,oddsOf){
       BYO.legs=null; $("byoOut").innerHTML="";
     });
   });
+
+  /* ARRIVING WITH A CODE ALREADY IN HAND.
+     /convert-a-booking-code is a page a search sends people to, and it has no
+     converter of its own on purpose - a second implementation would drift from
+     this one and the drift books somebody's slip against a pairing we do not
+     ship. Its form submits here instead, so the only converter on the site is
+     the one below.
+       ?to=<book>    the book they want a code FOR, which is how the form asks
+       ?book=<book>  the book the code came FROM, for a link built by hand
+     Either one names the pair; `to` wins when both are present. The code is
+     shape-checked with the same rule the input enforces, so a crafted link
+     cannot make this send anything the box could not. */
+  try{
+    var q=new URLSearchParams(location.search||"");
+    var to=(q.get("to")||"").toLowerCase(), from=(q.get("book")||"").toLowerCase();
+    var src=BOOKS[from]?from:(BOOKS[to]?(to==="sporty"?"bet9ja":"sporty"):null);
+    var code=(q.get("code")||"").trim().toUpperCase();
+    if(src&&/^[A-Za-z0-9]{4,16}$/.test(code)){
+      BYO.book=src;
+      sec.querySelectorAll(".byo-b").forEach(function(o){
+        o.classList.toggle("on",o.dataset.book===src);});
+      inp.value=code;
+      /* The panel lives in the builder, which is a different view: without
+         this the read runs into a section nobody can see. */
+      setView("build");
+      byoRead();
+      /* ?go=convert OPENS THE CONVERSION, IT DOES NOT BOOK ONE. The panel it
+         opens only says what would move and what would not; the code is still
+         minted by the reader pressing the button in it. A link that booked on
+         arrival would spend somebody's daily allowance for them. */
+      var go=(q.get("go")||"").toLowerCase();
+      /* After the read, not before - the panel grows by the height of the
+         slip it just drew, and scrolling first lands above it. */
+      setTimeout(function(){
+        try{
+          if(go==="convert"){ var cb=$("byoConvBtn"); if(cb) cb.click(); }
+          sec.scrollIntoView({behavior:"smooth",block:"start"});
+        }catch(e){}
+      },400);
+    }
+  }catch(e){ /* a malformed query string is not a reason to break the page */ }
 })();
 
 function shareText(picks,odds,code){
