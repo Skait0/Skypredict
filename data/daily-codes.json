@@ -225,7 +225,7 @@
   },
   "2026-09-13": {
     "date": "2026-09-13",
-    "generated": "2026-09-13T08:46:56.943Z",
+    "generated": "2026-09-13T09:23:33.185Z",
     "firstKickoff": "2026-09-13T12:00:00.000Z",
     "legs": [
       {
@@ -247,15 +247,6 @@
         "market": "OVER_1.5"
       },
       {
-        "home": "Elversberg",
-        "away": "Bayern Munich",
-        "league": "Germany Bundesliga 1",
-        "kickoff": "2026-09-13T15:30:00.000Z",
-        "tip": "Over 1.5",
-        "tip_p": 0.9027,
-        "market": "OVER_1.5"
-      },
-      {
         "home": "Luzern",
         "away": "Basel",
         "league": "Switzerland Super League",
@@ -272,10 +263,20 @@
         "tip": "Over 1.5",
         "tip_p": 0.8882,
         "market": "OVER_1.5"
+      },
+      {
+        "home": "HamKam",
+        "away": "Molde",
+        "league": "Norway Eliteserien",
+        "kickoff": "2026-09-13T15:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.8827,
+        "market": "OVER_1.5"
       }
     ],
     "codes": {
-      "sporty": "TG4U37"
+      "sporty": "VK4AF8",
+      "bet9ja": "5RG2G8W"
     }
   }
 }
