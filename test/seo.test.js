@@ -118,8 +118,11 @@ test("the sitemap asks for recent match pages, not every one ever played", () =>
   const P = require("../lib/pages.js");
   const today = "2026-09-13";
   assert.equal(P.inSitemapWindow("2026-09-13", today), true, "today");
-  assert.equal(P.inSitemapWindow("2026-09-01", today), true, "twelve days back");
-  assert.equal(P.inSitemapWindow("2026-08-20", today), false, "three weeks back");
+  assert.equal(P.inSitemapWindow("2026-09-11", today), true, "two days back");
+  assert.equal(P.inSitemapWindow("2026-09-08", today), false, "five days back");
+  /* The number is measured, not chosen: the archive grows by about 66 results
+     a day, so every extra day is another 66 thin pages on the ask. */
+  assert.ok(P.SITEMAP_DAYS <= 3, "the window is back to asking for hundreds of pages");
   /* A fixture that has not been played yet is the page with the most demand of
      all, so the window does not close in front of it. */
   assert.equal(P.inSitemapWindow("2026-09-20", today), true, "next week");
