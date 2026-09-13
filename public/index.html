@@ -3126,6 +3126,57 @@ html.mode-live #live{display:block}
 .bld-note{font-size:12px;color:var(--soft);margin-top:10px;text-align:center}
 #bookResult{margin-top:14px}
 /* Compact centred modal for the booking code */
+/* ---- split into several tickets, inside the booking-code modal ---- */
+/* EVERYTHING HERE IS AN ALPHA OVERLAY, not a page token.
+   The card is translucent glass over a darkened scrim in BOTH themes, so its
+   contents are white on a dark wash whichever theme the page is in. Styling
+   these rows with --card-2 flipped them to cream in light mode while the text
+   stayed white: 1.38:1, which is not text. Overlays inherit whatever the card
+   is and cannot come apart from it. */
+.code-split{margin-top:14px;padding-top:13px;border-top:1px solid rgba(255,255,255,.14)}
+.sp-q{margin:0 0 9px;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.82)}
+.sp-short{color:#fff;margin-bottom:9px}
+/* Narrow enough that three ways fit one row inside the modal. */
+.sp-ways{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:7px}
+.sp-way{display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:9px 10px;border-radius:var(--r-md);cursor:pointer;color:#fff;
+  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.20);
+  font:inherit;transition:background .15s,border-color .15s,transform .1s}
+/* Scoped past `.code-card b`, which is the booking code's own 32px style and
+   sits later in this sheet - unscoped, every number in here came out the size
+   of the code itself. */
+.code-split .sp-way b{display:inline;font-size:12.5px;font-weight:800;letter-spacing:0}
+.code-split .sp-way span{font-size:11px;font-weight:600;color:rgba(255,255,255,.78)}
+.sp-way:active{transform:scale(.98)}
+@media (hover:hover){.sp-way:hover{background:rgba(255,255,255,.18);
+  border-color:rgba(255,255,255,.34)}}
+.sp-wait{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;
+  color:rgba(255,255,255,.86);padding:4px 0}
+.sp-head{font-size:12.5px;font-weight:800;color:#fff;margin-bottom:8px}
+.sp-t{display:flex;align-items:center;gap:9px;padding:8px 10px;margin-bottom:6px;
+  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.20);
+  border-radius:var(--r-md);color:#fff;text-align:left}
+.code-split .sp-t b{display:inline;font-size:16px;font-weight:800;letter-spacing:.06em}
+.sp-n{flex:0 0 auto;width:20px;height:20px;border-radius:50%;display:grid;
+  place-items:center;background:rgba(255,255,255,.16);color:#fff;
+  font-size:11px;font-weight:800}
+.sp-m{flex:1;min-width:0;font-size:11.5px;font-weight:600;
+  color:rgba(255,255,255,.80);overflow:hidden;text-overflow:ellipsis}
+.sp-bad{background:rgba(230,57,70,.26);border-color:rgba(255,255,255,.28)}
+.code-split .sp-none{display:inline;font-size:12.5px;font-weight:700;
+  letter-spacing:0;color:#fff}
+.sp-copy,.sp-open{flex:0 0 auto;font:inherit;font-size:11.5px;font-weight:700;
+  padding:5px 10px;border-radius:var(--r-sm);cursor:pointer;text-decoration:none;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);
+  color:#fff;transition:background .15s,border-color .15s}
+@media (hover:hover){.sp-copy:hover,.sp-open:hover{background:rgba(255,255,255,.24);
+  border-color:rgba(255,255,255,.4)}}
+.sp-note{margin:8px 0 0;font-size:11.5px;font-weight:600;color:rgba(255,255,255,.78)}
+@media(max-width:420px){
+  .sp-ways{grid-template-columns:repeat(auto-fit,minmax(88px,1fr))}
+  .sp-t{gap:7px;padding:7px 9px}
+  .code-split .sp-t b{font-size:15px}
+}
 .code-modal-scrim{position:fixed;inset:0;z-index:220;background:rgba(10,14,10,.45);
   backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px;
   /* THE CODE USED TO BLINK INTO EXISTENCE. It is the thing this whole product
@@ -10859,6 +10910,11 @@ function showCode(code,hostId,save,B,picks){
       "<a class='code-open' href='"+B.open+encodeURIComponent(code)+
         "' target='_blank' rel='noopener'>Open in "+B.mark+"</a>"+
     "</div>"+
+    /* Offered after the code, not instead of it: the slip they asked for is
+       booked and above this. Only when there are legs to deal and at least
+       two tickets' worth of them - and the prices are printed on the buttons,
+       because "split it" sounds free and is not. */
+    splitBoxHTML(picks)+
     /* Same code, same slip, other book. This was a footnote saying it "also
        works on football.com", which left anyone who uses that app to copy the
        code and go and find it. The sentence stays - it is what makes the pill
@@ -10883,6 +10939,7 @@ function showCode(code,hostId,save,B,picks){
     setTimeout(function(){s.textContent="Copy";},1600);});
   rememberShortLink(code,picks,B);
   wrap.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code,picks,B);});
+  wireSplit(wrap,picks,B);
   var sv=wrap.querySelector(".code-save");
   if(sv) sv.addEventListener("click",function(){
     try{ save(); }catch(e){}
@@ -10891,6 +10948,157 @@ function showCode(code,hostId,save,B,picks){
     if(n) n.textContent="In Your slips. It will be graded as the games finish.";
   });
 }
+/* ---- splitting one slip into several tickets ---- */
+function splitBoxHTML(picks){
+  if(!picks||!picks.length) return "";
+  var ways=splitWays(picks.length);
+  if(!ways.length) return "";
+  return "<div class='code-split' id='codeSplit'>"+
+    "<p class='sp-q'>Rather have more than one ticket?</p>"+
+    "<div class='sp-ways'>"+ways.map(function(n){
+      var parts=splitPicks(picks,n);
+      var each=parts.map(function(p){return totalOdds(p);});
+      var lo=Math.min.apply(null,each), hi=Math.max.apply(null,each);
+      var pay=lo.toFixed(lo>=100?0:1)+(hi-lo>0.05?"-"+hi.toFixed(hi>=100?0:1):"");
+      return "<button class='sp-way' type='button' data-n='"+n+"'>"+
+        "<b>"+n+" tickets</b><span>about x"+pay+" each</span></button>";}).join("")+
+    "</div></div>";
+}
+
+/* One place where a split is started, so the quota check cannot be skipped by
+   a second call site later. */
+function wireSplit(wrap,picks,B){
+  var box=wrap.querySelector("#codeSplit");
+  if(!box) return;
+  box.querySelectorAll(".sp-way").forEach(function(b){
+    b.addEventListener("click",function(){
+      var n=+b.dataset.n;
+      /* Splitting mints a code per ticket, so it costs what it looks like it
+         costs. Said before the first request rather than after the third one
+         fails with a quota message. */
+      if(SW_QUOTA_LEFT!==null&&isFinite(+SW_QUOTA_LEFT)&&+SW_QUOTA_LEFT<n){
+        /* Said above the buttons, not instead of them: with two codes left
+           and three tickets asked for, two tickets is still affordable and
+           replacing the row would have taken that away as well. */
+        var q=box.querySelector(".sp-q");
+        if(q) q.outerHTML="<p class='sp-q sp-short'>"+n+" tickets needs "+n+
+          " booking codes and you have "+(+SW_QUOTA_LEFT===0?"none":(+SW_QUOTA_LEFT))+
+          " left today. More after midnight.</p>";
+        return;
+      }
+      splitAndBook(picks,n,box,B);
+    });
+  });
+}
+
+
+/* WHY ANYBODY WANTS THIS. An eight-leg slip at x500 is a lottery ticket: one
+   goal in one game and the whole thing is gone. The same eight legs as two
+   tickets of four pay about x22 each, and two tickets lose independently -
+   which is the difference between a bet that can half-win and one that cannot.
+   Nobody is talked into it here; the payout of each ticket is printed before
+   the buttons are pressed, because the honest headline is that splitting
+   LOWERS the maximum return. */
+
+/* Deal the legs out like cards rather than cutting the slip in half.
+   A contiguous chop puts the confident end of the slip in ticket one and the
+   long shots in the last one, so one ticket is nearly certain and another is
+   nearly hopeless - which is not what "split it" means to anybody. Dealing
+   round-robin keeps the counts even to within one leg and spreads the prices,
+   so the tickets are siblings. */
+function splitPicks(picks,n){
+  var out=[],i;
+  for(i=0;i<n;i++) out.push([]);
+  for(i=0;i<picks.length;i++) out[i%n].push(picks[i]);
+  return out;
+}
+
+/* How many ways this slip can be cut. Two legs is the floor for a ticket -
+   a "split" that hands somebody a single is a different bet, not a split. */
+function splitWays(len){
+  var max=Math.min(4,Math.floor(len/2)), out=[];
+  for(var n=2;n<=max;n++) out.push(n);
+  return out;
+}
+
+function splitRowHTML(n,parts,B){
+  return "<div class='sp-row'><b>"+n+" tickets</b>"+
+    "<span>"+parts.map(function(p){return p.length+" games at x"+
+      totalOdds(p).toFixed(p.length>4?0:1);}).join(" &middot; ")+"</span></div>";
+}
+
+/* Books each ticket in turn and writes the codes into the modal.
+   One at a time rather than all at once: the codes come from the bookmaker a
+   request at a time whatever we do, the quota counts them one at a time, and a
+   burst of four is the shape of traffic that got this project block-paged
+   once already. */
+function splitAndBook(picks,n,host,B){
+  var parts=splitPicks(picks,n);
+  host.innerHTML="<div class='sp-out' aria-live='polite'><div class='sp-wait'>"+
+    "<span class='mini-load'></span>Booking "+n+" tickets…</div></div>";
+  var out=host.querySelector(".sp-out");
+  var done=[];
+  function step(i){
+    if(i>=parts.length){ renderSplit(out,done,B); return; }
+    bookFetch(parts[i].map(function(c){return B.sel(c);}),B)
+      .then(function(d){
+        var code=d&&d.success&&B.codeOf(d);
+        done.push({legs:parts[i],code:code||null,
+                   why:code?null:bookErrText(d,B)});
+      })
+      .catch(function(){
+        done.push({legs:parts[i],code:null,why:"Couldn't reach the booking service."});
+      })
+      .then(function(){
+        out.querySelector(".sp-wait").innerHTML="<span class='mini-load'></span>"+
+          "Booking ticket "+(i+2>parts.length?parts.length:i+2)+" of "+parts.length+"…";
+        step(i+1);
+      });
+  }
+  step(0);
+}
+
+/* Plain words for a refusal, reusing the card the booking path already builds
+   so the two never drift into saying different things about one failure. */
+function bookErrText(d,B){
+  var tmp=document.createElement("div");
+  tmp.innerHTML=bookErrHTML(d,B);
+  /* The headline alone. That card is built as a headline plus an explanation,
+     and flattening the whole thing reads as a stutter: "SportyBet wouldn't
+     take this slip. SportyBet rejected the slip." */
+  var b=tmp.querySelector("b");
+  return ((b&&b.textContent)||tmp.textContent||"That ticket was refused.")
+    .trim().slice(0,120);
+}
+
+function renderSplit(out,done,B){
+  var ok=done.filter(function(t){return t.code;});
+  out.innerHTML="<div class='sp-head'>"+
+      (ok.length===done.length
+        ? done.length+" tickets, "+done.length+" codes"
+        : ok.length+" of "+done.length+" tickets booked")+"</div>"+
+    done.map(function(t,i){
+      var odds=totalOdds(t.legs);
+      return "<div class='sp-t"+(t.code?"":" sp-bad")+"'>"+
+        "<span class='sp-n'>"+(i+1)+"</span>"+
+        (t.code
+          ? "<b>"+esc(t.code)+"</b><span class='sp-m'>"+t.legs.length+
+            " games &middot; x"+odds.toFixed(odds>=100?0:2)+"</span>"+
+            "<button class='sp-copy' type='button' data-c='"+esc(t.code)+
+              "' aria-label='Copy ticket "+(i+1)+"'>Copy</button>"+
+            "<a class='sp-open' href='"+B.open+encodeURIComponent(t.code)+
+              "' target='_blank' rel='noopener'>Open</a>"
+          : "<b class='sp-none'>Not booked</b><span class='sp-m'>"+esc(t.why||"")+"</span>")+
+        "</div>";}).join("")+
+    (ok.length?"<p class='sp-note'>Each code is its own ticket. Load them one "+
+      "at a time in "+B.mark+".</p>":"");
+  out.querySelectorAll(".sp-copy").forEach(function(b){
+    b.addEventListener("click",function(){
+      copyText(b.dataset.c);
+      b.textContent="Copied";
+      setTimeout(function(){b.textContent="Copy";},1600);});});
+}
+
 function shareText(picks,odds,code){
   var lines=picks.slice(0,6).map(function(c){return "\u2022 "+c.f.home+" v "+c.f.away+" - "+
     mLabel(c.f,c.code).replace(/<[^>]+>/g,"")+" ("+P0(c.p)+"%)";});
