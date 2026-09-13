@@ -222,5 +222,60 @@
       "sporty": "XPXN3Y",
       "bet9ja": "5R9ZZNB"
     }
+  },
+  "2026-09-13": {
+    "date": "2026-09-13",
+    "generated": "2026-09-13T08:46:56.943Z",
+    "firstKickoff": "2026-09-13T12:00:00.000Z",
+    "legs": [
+      {
+        "home": "PSV Eindhoven",
+        "away": "Sparta Rotterdam",
+        "league": "Netherlands Eredivisie",
+        "kickoff": "2026-09-13T18:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9291,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Zurich",
+        "away": "Vaduz",
+        "league": "Switzerland Super League",
+        "kickoff": "2026-09-13T12:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9158,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Elversberg",
+        "away": "Bayern Munich",
+        "league": "Germany Bundesliga 1",
+        "kickoff": "2026-09-13T15:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9027,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Luzern",
+        "away": "Basel",
+        "league": "Switzerland Super League",
+        "kickoff": "2026-09-13T14:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.897,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Chicago Fire",
+        "away": "New England Revolution",
+        "league": "USA MLS",
+        "kickoff": "2026-09-13T21:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.8882,
+        "market": "OVER_1.5"
+      }
+    ],
+    "codes": {
+      "sporty": "TG4U37"
+    }
   }
 }

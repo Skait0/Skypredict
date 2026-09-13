@@ -629,6 +629,33 @@ function writeCard(payload) {
   fs.writeFileSync(path.join(PUB, "og-card.png"), png);
   log("share card: " + leagues + " leagues, " + pct + "% -> og-card.png (" +
       (png.length / 1024).toFixed(0) + " KB)");
+  stampCard(png);
+}
+
+/* THE CARD IS REDRAWN EVERY DEPLOY AND THE URL NEVER CHANGES, so every cache
+   that ever fetched it keeps the first one it saw. X caches a card per URL and
+   has retired the validator that used to force a refetch, which is why the
+   site preview on X was still showing a card from weeks ago while
+   /og-card.png served the current one to everybody else. The bytes decide the
+   URL now: same card, same address and nothing refetches; new card, new
+   address and every crawler treats it as an image it has never seen.
+   A query rather than a filename so links already in the wild still resolve,
+   and deploy-only for the same reason applyOrigin is - it rewrites a tracked
+   file. */
+function stampCard(png) {
+  if (!process.env.VERCEL && !process.env.SPLIT) return;
+  const v = require("crypto").createHash("sha1").update(png).digest("hex").slice(0, 8);
+  const f = path.join(PUB, "index.html");
+  try {
+    const before = fs.readFileSync(f, "utf8");
+    const after = before.split("/og-card.png\"").join("/og-card.png?v=" + v + "\"");
+    if (after !== before) {
+      fs.writeFileSync(f, after);
+      log("share card stamped: og-card.png?v=" + v);
+    }
+  } catch (e) {
+    warn("share card stamp skipped: " + e.message);
+  }
 }
 
 /* ------------------------------------------------------------------- run */

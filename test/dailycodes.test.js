@@ -100,8 +100,19 @@ test("the committed codes file is readable and shaped as the pages expect", () =
   for (const [date, e] of Object.entries(all)) {
     assert.strictEqual(e.date, date, "the key and the row disagree about the date");
     assert.ok(Array.isArray(e.legs) && e.legs.length >= 2, date + ": too few legs");
-    assert.ok(e.codes && e.codes.sporty && e.codes.bet9ja,
-      date + ": a day must carry a code for both books or neither");
+    /* Both books, or one - but never a row with no code at all.
+       This used to demand both. It cost 13 September entirely: Bet9ja's origin
+       was down for a minute, mkcode.js treated that as a verdict about the
+       slip, and the day published nothing although SportyBet had already
+       accepted the legs. The invariant worth keeping is that the codes on a
+       row describe the SAME slip, and one code cannot disagree with a code
+       that is not there. */
+    const codes = e.codes || {};
+    assert.ok(codes.sporty || codes.bet9ja, date + ": a day must carry a code");
+    for (const [book, code] of Object.entries(codes)) {
+      assert.ok(typeof code === "string" && code.length >= 4,
+        date + ": the " + book + " code is not a code (" + code + ")");
+    }
     for (const l of e.legs) {
       assert.ok(l.home && l.away && l.tip, date + ": a leg is missing its match or tip");
     }

@@ -140,11 +140,39 @@ async function bookSlip(which, selections) {
   const d = got.body || {};
   const code = which === "sporty" ? d.booking_code : d.code;
   if (!got.ok || !code) {
-    return { ok: false,
+    return { ok: false, status: got.status,
       why: d.message || d.detail || d.error || ("http " + got.status),
       unbookable: d.unbookable || [] };
   }
   return { ok: true, code: String(code) };
+}
+
+/* A VERDICT ABOUT THE SLIP, OR THE BOOKMAKER HAVING A BAD MINUTE?
+   A 400 with an `unbookable` list is the first: drop those legs and try again.
+   A 502 from Cloudflare saying the origin is overloaded is the second, and it
+   says nothing about the slip at all - retrying the identical legs a moment
+   later is the right move, and treating it as a verdict is how 13 September
+   ended with no code while SportyBet had already accepted one. */
+function transient(out) {
+  if ((out.unbookable || []).length) return false;
+  if (out.status >= 500 || out.status === 0 || out.status === 429) return true;
+  return /cloudflare|origin|timeout|timed out|temporarily|unavailable|gateway|ECONN|socket/i
+    .test(String(out.why || ""));
+}
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/* Up to three goes at the same legs, spaced out, before the answer counts. */
+async function bookSlipRetrying(which, sel) {
+  let out = null;
+  for (let i = 1; i <= 3; i++) {
+    out = await bookSlip(which, sel);
+    if (out.ok || !transient(out)) return out;
+    if (i < 3) {
+      console.log(`${which}: ${out.why} - retrying in ${i * 4}s (${i}/2)`);
+      await sleep(i * 4000);
+    }
+  }
+  return out;
 }
 
 /* -------------------------------------------------------------------- run */
@@ -212,7 +240,7 @@ async function bookSlip(which, selections) {
       ["sporty", working.map((p) => ({ eventId: p.sporty, prediction: p.market }))],
       ["bet9ja", working.map((p) => ({ eventId: p.bet9ja, code: p.market }))],
     ]) {
-      const out = await bookSlip(which, sel);
+      const out = await bookSlipRetrying(which, sel);
       if (out.ok) { attempt[which] = out.code; continue; }
       why = `${which}: ${out.why}`;
       for (const u of (out.unbookable || [])) {
@@ -224,7 +252,24 @@ async function bookSlip(which, selections) {
     }
     if (attempt.sporty && attempt.bet9ja) { codes = attempt; break; }
 
-    if (!refused.size) throw new Error(`round ${round} failed with nothing to drop - ${why}`);
+    /* ONE BOOK DOWN IS NOT NO CODE.
+       The invariant is that the codes we publish describe the same slip - and
+       one code cannot disagree with a code that does not exist. When a book is
+       still unreachable after its retries and the other one has already
+       accepted these exact legs, publish what we have and say which is
+       missing. The alternative, tested in production on 13 September, is a day
+       with nothing on the page because Bet9ja's origin was down for a minute.
+       Refusals are different and still end the round: those are a verdict
+       about the legs, and the legs can be changed. */
+    if (!refused.size) {
+      const half = attempt.sporty ? "sporty" : (attempt.bet9ja ? "bet9ja" : null);
+      if (half) {
+        console.log(`${why} - publishing the ${half} code alone`);
+        codes = attempt;
+        break;
+      }
+      throw new Error(`round ${round} failed with nothing to drop - ${why}`);
+    }
     console.log(`round ${round}: ${refused.size} leg(s) refused, replacing`);
     working = working.filter((p) => !refused.has(p));
     while (working.length < legs && spare.length) {
@@ -246,7 +291,17 @@ async function bookSlip(which, selections) {
     })),
     codes: codes,
   };
-  console.log(`sporty: ${codes.sporty}   bet9ja: ${codes.bet9ja}`);
+  console.log(`sporty: ${codes.sporty || "-"}   bet9ja: ${codes.bet9ja || "-"}`);
+
+  /* --dry was declared at the top of this file, documented in the usage line,
+     and never read - so a "dry" run booked two real slips and wrote the file
+     like any other. It stops at the write now. It cannot stop before it: the
+     codes ARE the run, and there is nothing to rehearse without asking the
+     bookmakers for them. */
+  if (DRY) {
+    console.log(`dry run - not writing ${path.relative(process.cwd(), OUT)}`);
+    return;
+  }
 
   let all = {};
   try { all = JSON.parse(fs.readFileSync(OUT, "utf8")); } catch (e) { /* first run */ }
