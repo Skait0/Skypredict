@@ -31,7 +31,12 @@ const M = require("../lib/model.js");
 /* A full set of probabilities using the names markets() really emits. */
 const K = { home: .75, draw: .15, away: .10, dc1x: .90, dcx2: .25,
   o15: .80, o25: .60, o35: .35, btts: .50,
-  hO05: .93, aO05: .55, hO15: .75, aO15: .25, fhO05: .70 };
+  hO05: .93, aO05: .55, hO15: .75, aO15: .25, fhO05: .70,
+  /* The combination markets, named as markets() emits them. Absent, pick()
+     throws - which is the behaviour that caught the camelCase bug this file
+     exists for, so the fixture grows rather than the guard loosening. */
+  drawOrO25: .66, drawOrBtts: .59, drawOrO15: .82,
+  homeOrBtts: .82, awayOrBtts: .55, homeOrO25: .85, awayOrO25: .64 };
 
 function grade(k, mm) { const acc = {}; M.gradeEveryMarket(acc, k, mm); return acc; }
 const row = (acc, name) => acc[name] || { total: 0, correct: 0, exp: 0 };
@@ -159,4 +164,27 @@ test("the market families match the names the record is grouped by", () => {
   assert.strictEqual(G.marketOf("Levante over 0.5 goals"), "Team over 0.5");
   assert.ok(named.includes("Team over 0.5"),
     "grade.js maps team goals to 'Team over 0.5'; grading must use the same name");
+});
+
+test("the combinations grade as a result OR a goals line, either half enough", () => {
+  /* Six markets that both bookmakers sell as one selection. Each is settled by
+     the full-time score: the result alone wins it, the goals alone wins it, and
+     only losing both loses it. */
+  const a = grade(K, { hg: 1, ag: 0 });      // home win, one goal, no BTTS
+  assert.equal(row(a, "Result or both score").correct, 1, "the home win alone carries it");
+  assert.equal(row(a, "Result or over 2.5").correct, 1, "same");
+  assert.equal(row(a, "Draw or over 2.5").correct, 0, "no draw and one goal");
+  assert.equal(row(a, "Draw or both score").correct, 0, "no draw and one scorer");
+
+  const b = grade(K, { hg: 2, ag: 2 });      // draw, four goals, BTTS
+  assert.equal(row(b, "Draw or over 2.5").correct, 1);
+  assert.equal(row(b, "Draw or both score").correct, 1);
+  /* The model prefers the home side here, and a 2-2 is not a home win - but
+     both teams scored, so the OR still lands. */
+  assert.equal(row(b, "Result or both score").correct, 1);
+  assert.equal(row(b, "Result or over 2.5").correct, 1);
+
+  const c = grade(K, { hg: 0, ag: 1 });      // away win against the preference
+  assert.equal(row(c, "Result or both score").correct, 0,
+    "the preferred side lost and only one team scored");
 });

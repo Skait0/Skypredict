@@ -8931,7 +8931,12 @@ var BUILD_NOSYNC=false;
    Nothing here is persisted, so this set is what everyone gets on every load;
    the chips stay available for anyone who wants the rest. WSP below carries
    the same set so the two builders start from the same place. */
-var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false},touched:false,mode:"slider"};
+/* THE FOUR COMBINATION CHIPS START OFF, AND OFF ON PURPOSE. They price, they
+   book on both bookmakers, and not one of them has a graded result yet - the
+   last market switched on before it had one took over the wizard's picks for a
+   week. They begin earning a record the moment the next card is graded; until
+   then they are there for anyone who goes looking. */
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false},touched:false,mode:"slider"};
 /* NO `draw` KEY HERE, deliberately. The draw is a Wizard market and lives in
    WSP.mk alone. It was briefly mirrored into BUILD.mk like every other toggle,
    which was inert - "X" is in neither allowedMarkets nor mkOn, so no risk
@@ -10627,6 +10632,13 @@ function allowedMarkets(t){
   if(t>=1) m=m.concat(["12","OVER_2.5"]);
   if(t>=2) m=m.concat(["GG","OVER_3.5","FH_OVER_0.5",
                        "HOME_OVER_1.5","AWAY_OVER_1.5"]);
+  /* THE COMBINATIONS SIT AT TIER 1, not because they are risky - a draw or
+     over 2.5 lands about two times in three - but because they are new here
+     and their chips are off until somebody turns them on. The record decides
+     the rest: isProven holds any market whose family has fewer than ten graded
+     results out of the wizard's reach however this list is set. */
+  if(t>=1) m=m.concat(["MIX_X_OV_2.5","MIXGG_X","MIXGG_1","MIXGG_2",
+                       "MIX_1_OV_2.5","MIX_2_OV_2.5"]);
   return m;
 }
 function mProb(f,c){
@@ -10637,7 +10649,18 @@ function mProb(f,c){
     case"FH_OVER_0.5":return f.fh_o05;
     case"OVER_3.5":return f.o35;
     case"HOME_OVER_0.5":return f.h_o05;case"HOME_OVER_1.5":return f.h_o15;
-    case"AWAY_OVER_0.5":return f.a_o05;case"AWAY_OVER_1.5":return f.a_o15;}
+    case"AWAY_OVER_0.5":return f.a_o05;case"AWAY_OVER_1.5":return f.a_o15;
+    /* A RESULT CROSSED WITH GOALS, which both books sell as one market. Every
+       one of these is a sum over the same scoreline matrix the plain markets
+       come from, so they agree with them by construction rather than by
+       coincidence - see lib/model.js. */
+    case"MIX_X_OV_2.5":return f.draw_o25;
+    case"MIXGG_X":return f.draw_btts;
+    case"MIXGG_1":return f.home_btts;case"MIXGG_2":return f.away_btts;
+    case"MIX_1_OV_2.5":return f.home_o25;case"MIX_2_OV_2.5":return f.away_o25;
+    /* Bet9ja sells 1.5 on this family and SportyBet does not. Priced so the
+       number exists the day there is somewhere to book it. */
+    case"MIX_X_OV_1.5":return f.draw_o15;}
   return null;
 }
 /* Which markets have actually been graded, and enough times to mean something.
@@ -10674,7 +10697,13 @@ function codeMarket(c){
     case"OVER_2.5":return"Over 2.5";
     case"OVER_3.5":return"Over 3.5";
     case"HOME_OVER_0.5":case"AWAY_OVER_0.5":return"Team over 0.5";
-    case"HOME_OVER_1.5":case"AWAY_OVER_1.5":return"Team over 1.5";}
+    case"HOME_OVER_1.5":case"AWAY_OVER_1.5":return"Team over 1.5";
+    /* Same names lib/model.js grades them under, so a chip cannot be offered
+       by default until its family has a record. */
+    case"MIX_X_OV_2.5":return"Draw or over 2.5";
+    case"MIXGG_X":return"Draw or both score";
+    case"MIXGG_1":case"MIXGG_2":return"Result or both score";
+    case"MIX_1_OV_2.5":case"MIX_2_OV_2.5":return"Result or over 2.5";}
   return null;
 }
 /* Same families lib/grade.js groups the record by, so the two agree. */
@@ -10718,6 +10747,15 @@ function gradeLeg(f,c,hg,ag){
     case"HOME_OVER_1.5": return hg>1.5;
     case"AWAY_OVER_0.5": return ag>0.5;
     case"AWAY_OVER_1.5": return ag>1.5;
+    /* The combinations settle on the full-time score like everything above
+       them: a result OR a goals line, either half of which is enough. */
+    case"MIX_X_OV_1.5": return d===0||tot>1.5;
+    case"MIX_X_OV_2.5": return d===0||tot>2.5;
+    case"MIX_1_OV_2.5": return d>0||tot>2.5;
+    case"MIX_2_OV_2.5": return d<0||tot>2.5;
+    case"MIXGG_X": return d===0||both;
+    case"MIXGG_1": return d>0||both;
+    case"MIXGG_2": return d<0||both;
   }
   return null;   /* first-half markets and anything unknown */
 }
@@ -10839,7 +10877,13 @@ function buildPicks(){
     "OVER_1.5":BUILD.mk.o15,"OVER_2.5":BUILD.mk.o25,"OVER_3.5":BUILD.mk.o35,
     "FH_OVER_0.5":BUILD.mk.fh,
     "HOME_OVER_0.5":BUILD.mk.tts,"AWAY_OVER_0.5":BUILD.mk.tts,
-    "HOME_OVER_1.5":BUILD.mk.tts2,"AWAY_OVER_1.5":BUILD.mk.tts2,"GG":BUILD.mk.both};
+    "HOME_OVER_1.5":BUILD.mk.tts2,"AWAY_OVER_1.5":BUILD.mk.tts2,"GG":BUILD.mk.both,
+    /* One chip per family, both sides of it behind the same switch: which of
+       home or away goes on the slip is the model's call, not a second toggle
+       for the reader to get wrong. */
+    "MIX_X_OV_2.5":BUILD.mk.dro25,"MIXGG_X":BUILD.mk.drgg,
+    "MIXGG_1":BUILD.mk.rsgg,"MIXGG_2":BUILD.mk.rsgg,
+    "MIX_1_OV_2.5":BUILD.mk.rso25,"MIX_2_OV_2.5":BUILD.mk.rso25};
   allowed=allowed.filter(function(c){return mkOn[c]!==false;});
   var f0=BUILD.risk/100;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
@@ -14256,7 +14300,7 @@ const JACKPOT_ODDS=20000;
 const BETSLIP_MAX=50;
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
-var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,draw:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,draw:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* `slider:false` - Balanced is what a reader lands on, not Auto.
    Measured 3 Sep over ten seeds on the 386-fixture board, counting how often
    each method gave the highest chance of the slip landing AT THE PAYOUT ASKED
@@ -15186,6 +15230,14 @@ function renderShared(){
     {k:"tts", label:"Team over 0.5", tier:0, sub:"One side's goals", icon:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 7v10"/>'},
     {k:"tts2", label:"Team over 1.5", tier:2, sub:"One side's goals", icon:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M9 9h6M9 15h6"/>'},
     {k:"both", label:"Both score", tier:2, sub:"GG", icon:'<path d="M17 21V5A2 2 0 0015 3H9A2 2 0 007 5V21"/><path d="M7 7H17"/><path d="M9 11H15"/><path d="M9 15H15"/><path d="M9 19H15"/>'},
+    /* A RESULT OR GOALS, ONE MARKET. Both bookmakers sell these as a single
+       selection, so a leg books like any other; the model prices them off the
+       same scoreline matrix as everything above. All four start off - see
+       BUILD.mk - because none of them has a graded result yet. */
+    {k:"dro25", label:"Draw or o2.5", tier:1, sub:"X or over 2.5", icon:'<path d="M4 12h16"/><path d="M12 5v14"/>'},
+    {k:"drgg", label:"Draw or GG", tier:1, sub:"X or both score", icon:'<path d="M4 12h16"/><circle cx="7" cy="7" r="2"/><circle cx="17" cy="17" r="2"/>'},
+    {k:"rsgg", label:"Result or GG", tier:1, sub:"1 or 2, or both score", icon:'<path d="M5 19L12 5l7 14"/><path d="M8 15h8"/>'},
+    {k:"rso25", label:"Result or o2.5", tier:1, sub:"1 or 2, or over 2.5", icon:'<path d="M5 19L12 5l7 14"/><circle cx="12" cy="17" r="1.6"/>'},
     /* WIZARD ONLY. The Slider cannot build a draw - "X" is in neither
        allowedMarkets nor its mkOn map - so drawing this chip in the Slider
        would be a control that turns on and does nothing, which is exactly the
