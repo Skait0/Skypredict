@@ -106,3 +106,31 @@ test("the read says how much of the slip survives, before the list", () => {
   assert.match(src, /" available<\/b> \u00b7 "\+away\+" not available"/,
     "the count no longer reads as available / not available");
 });
+
+/* ------------------------------------- a market only one bookmaker sells */
+
+test("the Bet9ja-only line is never picked for a SportyBet slip", () => {
+  /* Bet9ja sells 1X2-or-Over/Under at 1.5 and SportyBet's card starts at 2.5.
+     One refused selection refuses the whole ticket behind it, so this is
+     caught three times over: the slider will not pick it, the chip locks, and
+     booking offers to switch book rather than sending it. */
+  const bookAllows = new Function(
+    "const BOOK_ONLY=" + (src.match(/var BOOK_ONLY=(\{[^;]+\});/)[1]) + ";" +
+    "function curBook(){return {key:'sporty'};}" +
+    grab("bookAllows") + "\nreturn bookAllows;")();
+  assert.equal(bookAllows("MIX_X_OV_1.5", { key: "sporty" }), false);
+  assert.equal(bookAllows("MIX_X_OV_1.5", { key: "bet9ja" }), true);
+  /* Everything else books at either, and must keep doing so. */
+  assert.equal(bookAllows("MIX_X_OV_2.5", { key: "sporty" }), true);
+  assert.equal(bookAllows("OVER_1.5", { key: "sporty" }), true);
+  assert.equal(bookAllows("MIXGG_1", { key: "sporty" }), true);
+});
+
+test("the slider asks the question before it picks, and booking asks again", () => {
+  assert.match(src, /mkOn\[c\]!==false && bookAllows\(c,curBook\(\)\)/,
+    "the slider no longer filters by bookmaker");
+  assert.match(src, /var wrongBook=picks\.filter\(function\(c\)\{return !bookAllows\(c\.code,B\);\}\)/,
+    "booking no longer checks");
+  /* Offered as a switch, not a refusal: the leg is bookable, just not here. */
+  assert.match(src, /Book the whole slip at "\+need\.label/);
+});

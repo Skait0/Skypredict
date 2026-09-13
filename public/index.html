@@ -2880,6 +2880,10 @@ html.mode-live #live{display:block}
 .mkt-chip .mkt-icon{display:inline-flex}
 .mkt-chip .mkt-icon svg{width:14px;height:14px}
 .mkt-chip .tier-badge{display:none}
+/* The book badge carries a name rather than a tier number, so it is wider
+   and reads as a word. Same shape, no new colour: it is a label, not a
+   warning - the warning is the chip being locked. */
+.mkt-chip .only-badge{letter-spacing:0;font-size:9.5px;padding:2px 6px}
 .mkt-chip.on .tier-badge{background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3)}
 .mkt-chip.unlocking{animation:mktUnlock .35s ease}
 @keyframes mktUnlock{0%{transform:scale(.92);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
@@ -8936,7 +8940,7 @@ var BUILD_NOSYNC=false;
    last market switched on before it had one took over the wizard's picks for a
    week. They begin earning a record the moment the next card is graded; until
    then they are there for anyone who goes looking. */
-var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false},touched:false,mode:"slider"};
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false},touched:false,mode:"slider"};
 /* NO `draw` KEY HERE, deliberately. The draw is a Wizard market and lives in
    WSP.mk alone. It was briefly mirrored into BUILD.mk like every other toggle,
    which was inert - "X" is in neither allowedMarkets nor mkOn, so no risk
@@ -10638,7 +10642,10 @@ function allowedMarkets(t){
      the rest: isProven holds any market whose family has fewer than ten graded
      results out of the wizard's reach however this list is set. */
   if(t>=1) m=m.concat(["MIX_X_OV_2.5","MIXGG_X","MIXGG_1","MIXGG_2",
-                       "MIX_1_OV_2.5","MIX_2_OV_2.5"]);
+                       "MIX_1_OV_2.5","MIX_2_OV_2.5",
+                       /* Bet9ja only - bookAllows drops it for the other book
+                          before a pick is ever made. */
+                       "MIX_X_OV_1.5"]);
   return m;
 }
 function mProb(f,c){
@@ -10684,6 +10691,22 @@ function mProb(f,c){
    events measured 31 Aug). Used only when we have NO prices for a fixture and
    are picking on our own estimated odds - see pickFrom and buildPicks. Team
    goals sit at 70-76% and were booking-rejecting about one leg in four. */
+/* A MARKET ONE BOOKMAKER SELLS AND THE OTHER DOES NOT.
+   Everything else here is book-agnostic: the same code books at either, and
+   the reader's choice of bookmaker changes nothing about what we pick. This
+   family breaks that. Bet9ja sells 1X2-or-Over/Under at 1.5 and SportyBet's
+   card stops at 2.5, so a draw-or-over-1.5 leg is bookable at one of them and
+   nowhere at the other - measured across both catalogues, see PASSTHROUGH_MAP
+   in the API.
+   The rule is one map and one question, asked in three places: the slider does
+   not pick what the current book cannot take, the chip says which book it
+   needs, and booking refuses rather than sending a leg that will be rejected
+   with the whole ticket behind it. */
+var BOOK_ONLY={"MIX_X_OV_1.5":"bet9ja"};
+function bookAllows(code,B){
+  var only=BOOK_ONLY[code];
+  return !only || only===((B&&B.key)||(curBook()&&curBook().key));
+}
 var SAFE_UNPRICED={"1":1,"2":1,"X":1,"1X":1,"X2":1,"12":1};
 function safeUnpriced(code){ return !!SAFE_UNPRICED[code]; }
 var MIN_GRADED=10;
@@ -10700,6 +10723,7 @@ function codeMarket(c){
     case"HOME_OVER_1.5":case"AWAY_OVER_1.5":return"Team over 1.5";
     /* Same names lib/model.js grades them under, so a chip cannot be offered
        by default until its family has a record. */
+    case"MIX_X_OV_1.5":return"Draw or over 1.5";
     case"MIX_X_OV_2.5":return"Draw or over 2.5";
     case"MIXGG_X":return"Draw or both score";
     case"MIXGG_1":case"MIXGG_2":return"Result or both score";
@@ -10883,8 +10907,9 @@ function buildPicks(){
        for the reader to get wrong. */
     "MIX_X_OV_2.5":BUILD.mk.dro25,"MIXGG_X":BUILD.mk.drgg,
     "MIXGG_1":BUILD.mk.rsgg,"MIXGG_2":BUILD.mk.rsgg,
-    "MIX_1_OV_2.5":BUILD.mk.rso25,"MIX_2_OV_2.5":BUILD.mk.rso25};
-  allowed=allowed.filter(function(c){return mkOn[c]!==false;});
+    "MIX_1_OV_2.5":BUILD.mk.rso25,"MIX_2_OV_2.5":BUILD.mk.rso25,
+    "MIX_X_OV_1.5":BUILD.mk.dro15};
+  allowed=allowed.filter(function(c){return mkOn[c]!==false && bookAllows(c,curBook());});
   var f0=BUILD.risk/100;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
   scopeFixtures().forEach(function(f){
@@ -11100,6 +11125,32 @@ function totalOdds(picks){
 async function bookSlip(){
   var B=curBook();
   var picks = BUILD.picks;
+  /* A LEG THIS BOOKMAKER CANNOT TAKE STOPS THE WHOLE TICKET, so it is caught
+     here rather than by the bookmaker. One refused selection refuses the slip
+     behind it, and the reply that comes back names a market rather than a
+     reason anybody can act on. The slider will not pick these - see
+     bookAllows - so this is for a slip built before the book was switched, or
+     one a reader assembled by hand. Offered as a switch rather than a
+     refusal: the leg is perfectly bookable, just not here. */
+  var wrongBook=picks.filter(function(c){return !bookAllows(c.code,B);});
+  if(wrongBook.length){
+    var need=BOOKS[BOOK_ONLY[wrongBook[0].code]]||BOOKS.bet9ja;
+    $("bookResult").innerHTML="<div class='confirm-card'><p><b>"+
+      wrongBook.length+" leg"+(wrongBook.length===1?"":"s")+"</b> on this slip "+
+      (wrongBook.length===1?"is":"are")+" sold by "+need.label+" and not by "+
+      B.label+". Book the whole slip at "+need.label+" instead?</p>"+
+      "<div class='ca'><button class='confirm-go' type='button'>Use "+esc(need.label)+
+      "</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>";
+    $("bookResult").querySelector(".confirm-go").addEventListener("click",function(){
+      setBook(need.key);
+      $("bookResult").innerHTML="";
+      bookSlip();
+    });
+    $("bookResult").querySelector(".confirm-cancel").addEventListener("click",function(){
+      $("bookResult").innerHTML="";
+    });
+    return;
+  }
   var has=function(c){return !!bookIdOf(c,B);};
   var bookable=picks.filter(has);
   var missing=picks.filter(function(c){return !has(c);});
@@ -14300,7 +14351,7 @@ const JACKPOT_ODDS=20000;
 const BETSLIP_MAX=50;
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
-var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,draw:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,draw:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* `slider:false` - Balanced is what a reader lands on, not Auto.
    Measured 3 Sep over ten seeds on the 386-fixture board, counting how often
    each method gave the highest chance of the slip landing AT THE PAYOUT ASKED
@@ -15238,6 +15289,11 @@ function renderShared(){
     {k:"drgg", label:"Draw or GG", tier:1, sub:"X or both score", icon:'<path d="M4 12h16"/><circle cx="7" cy="7" r="2"/><circle cx="17" cy="17" r="2"/>'},
     {k:"rsgg", label:"Result or GG", tier:1, sub:"1 or 2, or both score", icon:'<path d="M5 19L12 5l7 14"/><path d="M8 15h8"/>'},
     {k:"rso25", label:"Result or o2.5", tier:1, sub:"1 or 2, or over 2.5", icon:'<path d="M5 19L12 5l7 14"/><circle cx="12" cy="17" r="1.6"/>'},
+    /* THE ONE MARKET THAT PICKS YOUR BOOKMAKER FOR YOU. Bet9ja sells this
+       family at 1.5; SportyBet's card starts at 2.5. The chip says so rather
+       than failing quietly at the booking step. */
+    {k:"dro15", label:"Draw or o1.5", tier:1, sub:"X or over 1.5", only:"bet9ja",
+     icon:'<path d="M4 12h16"/><path d="M9 8l3-3 3 3"/>'},
     /* WIZARD ONLY. The Slider cannot build a draw - "X" is in neither
        allowedMarkets nor its mkOn map - so drawing this chip in the Slider
        would be a control that turns on and does nothing, which is exactly the
@@ -15259,6 +15315,12 @@ function renderShared(){
       // The wizard has its own market model, so nothing is tier-locked there -
       // otherwise "Both score" (tier 2) shows greyed out and can't be enabled.
       var locked=(BUILD.mode!=="wizard") && (p.tier < m.tier);
+      /* A market the CURRENT bookmaker does not sell is locked for the same
+         reason a tier lock is: it cannot produce a leg, so a chip that lights
+         up is a control that does nothing. It unlocks by switching book, and
+         the badge below says which one. */
+      var wrongBook=!!(m.only && m.only!==curBook().key);
+      if(wrongBook) locked=true;
       var tierLabel=["Safe","Balanced","Risky"][m.tier];
       var subLabel=m.sub;
       if(m.tierMax!==undefined && p.tier >= m.tierMax){
@@ -15270,7 +15332,12 @@ function renderShared(){
         (m.warn?" is-draw":"")+"' data-m='"+m.k+"' "+(locked?"disabled":"")+" type='button'>"+
         "<span class='mkt-icon' aria-hidden='true'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>"+m.icon+"</svg></span>"+
         "<span>"+m.label+"</span>"+
-        "<span class='tier-badge' title='Unlocks at "+tierLabel+" tier'>T"+(m.tier+1)+"</span>"+
+        (m.only
+          ? "<span class='tier-badge only-badge' title='"+
+            (wrongBook ? "Switch to "+BOOKS[m.only].label+" to use this market"
+                       : BOOKS[m.only].label+" sells this line; the other book does not")+
+            "'>"+esc(BOOKS[m.only].label)+" only</span>"
+          : "<span class='tier-badge' title='Unlocks at "+tierLabel+" tier'>T"+(m.tier+1)+"</span>")+
         "</button>";
     }).join("");
     mkw.innerHTML=html;

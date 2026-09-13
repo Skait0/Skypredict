@@ -54,6 +54,9 @@ const FNS = ["countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmer
   /* The slider now restricts an unpriced fixture to markets SportyBet always
      lists, so the harness needs that helper and its table. */
   "safeUnpriced",
+  /* A market one bookmaker sells and the other does not - the slider asks
+     before it picks, so the harness needs the question and its table. */
+  "bookAllows",
   "allowedMarkets", "preferGoalsOverDouble", "buildPicks"];
 
 function engine(fixtures) {
@@ -64,7 +67,9 @@ function engine(fixtures) {
     /* No saved slips in these harnesses, so nothing is already exposed;
        the spread penalty is exercised on its own in spread.test.js. */
     "function slipUse(){return {};}",
-    konst("SAFE_UNPRICED"),
+    konst("SAFE_UNPRICED"), konst("BOOK_ONLY"),
+    /* The harness books at SportyBet, like the default visit. */
+    "function curBook(){return {key:'sporty',label:'SportyBet'};}",
     konst("HIGH_SCORING_O25"), konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
     konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"),
   konst("SPREAD_PEN"), konst("SPREAD_MULT"),

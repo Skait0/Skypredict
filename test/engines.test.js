@@ -68,6 +68,10 @@ const FNS = ["countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmer
   /* Both builders now restrict themselves to markets SportyBet always lists
      when a fixture has no prices at all, so the harness needs that too. */
   "safeUnpriced",
+  /* And which markets the CURRENT bookmaker sells - Bet9ja alone carries the
+     1.5 line on the 1X2-or-Over/Under family, so the slider asks before it
+     picks one. */
+  "bookAllows",
   "buildPicks",
   /* Which chip is lit, derived from the same predicate wspBuild uses. */
   "wspStyleOn",
@@ -80,7 +84,8 @@ const api = new Function([
   /* No saved slips in this harness, so nothing is already exposed; the
      spread penalty is exercised on its own in spread.test.js. */
   "function slipUse(){return {};}",
-  konst("SAFE_UNPRICED"),
+  konst("SAFE_UNPRICED"), konst("BOOK_ONLY"),
+  "function curBook(){return {key:'sporty',label:'SportyBet'};}",
   konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
   konst("HIGH_SCORING_O25"), konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
   konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"),
