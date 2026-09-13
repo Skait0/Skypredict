@@ -15,6 +15,21 @@
  */
 
 const { UPSTREAM } = require("../lib/upstream.js");
+const GATE = require("../lib/bookgate.js");
+const { makeLimiter } = require("../lib/readlimit.js");
+
+/* Reads a minute, per reader. Not a quota - see lib/readlimit.js - a brake on
+   the requests this route makes to a bookmaker in our name. Pasting a code,
+   reading it, converting it and reading the result is four calls, so a person
+   doing the thing this page is for never comes near it. The subject is the one
+   lib/bookgate.js already computes: the device id if the browser sent one, the
+   hashed address otherwise, which keeps a carrier NAT in one bucket rather
+   than making one reader stand for a cell tower.
+   SW_SLIP_READS_PER_MIN=0 switches it off. */
+const READS_PER_MIN = Number(
+  process.env.SW_SLIP_READS_PER_MIN == null ? 20 : process.env.SW_SLIP_READS_PER_MIN);
+const limiter = makeLimiter({ limit: READS_PER_MIN, windowMs: 60000 });
+const PEPPER = process.env.SW_QUOTA_PEPPER || "";
 
 /* Checked here as well as upstream. A malformed code cannot become a useful
    request, so there is no reason to spend a Railway round trip discovering
@@ -35,6 +50,18 @@ module.exports = async function handler(req, res) {
   }
   if (!CODE_RE.test(code)) {
     return res.status(400).json({ success: false, error: "that is not a booking code" });
+  }
+
+  /* Checked after the shape and before the round trip: a malformed code costs
+     nothing upstream, so spending somebody's allowance on one would punish a
+     typo. */
+  const { subject } = GATE.subjectOf(req, PEPPER);
+  const rl = limiter(subject);
+  if (!rl.allow) {
+    res.setHeader("Retry-After", String(rl.retryAfter));
+    res.setHeader("Cache-Control", "no-store");
+    return res.status(429).json({ success: false,
+      error: "that is a lot of codes at once - try again in a moment" });
   }
 
   /* Longer than a feed's, because this one waits on the bookmaker rather than
