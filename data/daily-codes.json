@@ -225,7 +225,7 @@
   },
   "2026-09-13": {
     "date": "2026-09-13",
-    "generated": "2026-09-13T09:23:33.185Z",
+    "generated": "2026-09-13T11:20:20.296Z",
     "firstKickoff": "2026-09-13T12:00:00.000Z",
     "legs": [
       {
@@ -234,7 +234,7 @@
         "league": "Netherlands Eredivisie",
         "kickoff": "2026-09-13T18:00:00.000Z",
         "tip": "Over 1.5",
-        "tip_p": 0.9291,
+        "tip_p": 0.9338,
         "market": "OVER_1.5"
       },
       {
@@ -243,7 +243,7 @@
         "league": "Switzerland Super League",
         "kickoff": "2026-09-13T12:00:00.000Z",
         "tip": "Over 1.5",
-        "tip_p": 0.9158,
+        "tip_p": 0.9215,
         "market": "OVER_1.5"
       },
       {
@@ -252,7 +252,7 @@
         "league": "Switzerland Super League",
         "kickoff": "2026-09-13T14:30:00.000Z",
         "tip": "Over 1.5",
-        "tip_p": 0.897,
+        "tip_p": 0.9043,
         "market": "OVER_1.5"
       },
       {
@@ -261,7 +261,7 @@
         "league": "USA MLS",
         "kickoff": "2026-09-13T21:30:00.000Z",
         "tip": "Over 1.5",
-        "tip_p": 0.8882,
+        "tip_p": 0.8963,
         "market": "OVER_1.5"
       },
       {
@@ -270,13 +270,13 @@
         "league": "Norway Eliteserien",
         "kickoff": "2026-09-13T15:00:00.000Z",
         "tip": "Over 1.5",
-        "tip_p": 0.8827,
+        "tip_p": 0.8903,
         "market": "OVER_1.5"
       }
     ],
     "codes": {
       "sporty": "VK4AF8",
-      "bet9ja": "5RG2G8W"
+      "bet9ja": "5RGQ3V9"
     }
   }
 }
