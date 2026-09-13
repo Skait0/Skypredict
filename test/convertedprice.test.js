@@ -35,9 +35,10 @@ function grab(name) {
    fixture inline, which is what the converter builds. */
 const api = new Function(
   grab("oddOf") + grab("legOdd") + grab("totalOdds") +
+  grab("splitWays") + grab("splitPicks") + grab("splitBoxInner") +
   'const SLIP_FS="\\u001f", SLIP_RS="\\u001e";' +
   "function fixtureById(){return null;}" + grab("slipName") + grab("slipPayload") +
-  "\nreturn {oddOf,legOdd,totalOdds,slipPayload,SLIP_RS};")();
+  "\nreturn {oddOf,legOdd,totalOdds,slipPayload,splitBoxInner,SLIP_RS};")();
 
 const fx = (odds) => ({ home: "Le Mans", away: "Amiens", date: "2026-09-14",
   sportyOdds: odds || {} });
@@ -71,4 +72,21 @@ test("a slip with a leg the link cannot carry shares no slip at all", () => {
   const blind = { f: fx(), code: "AH_1_-0.5", p: null };
   assert.equal(api.slipPayload([priced, blind]), "");
   assert.equal(api.slipPayload([priced]).split(api.SLIP_RS).length, 1);
+});
+
+test("a converted slip can still be split, without a made-up payout", () => {
+  /* The first fix took the whole box away when a leg was unpriced, which
+     removed a working feature to avoid printing one wrong number. The dealing
+     never needed a price; only the label did. */
+  const priced = (i) => ({ f: fx(), code: "OVER_1.5", p: 0.6 + i / 100, id: "p" + i });
+  const legs = [priced(1), priced(2), priced(3),
+    { f: fx(), code: "AH_1_-0.5", p: null, id: "blind" }];
+
+  const blind = api.splitBoxInner(legs);
+  assert.match(blind, /Split it into separate tickets/, "the split is still offered");
+  assert.match(blind, /priced at the bookmaker/);
+  assert.doesNotMatch(blind, /about x/, "no payout is claimed for a slip we cannot price");
+
+  const known = api.splitBoxInner([priced(1), priced(2), priced(3), priced(4)]);
+  assert.match(known, /about x/, "a fully priced slip still quotes the payout");
 });

@@ -11146,15 +11146,6 @@ function showCode(code,hostId,save,B,picks){
 /* ---- splitting one slip into several tickets ---- */
 function splitBoxHTML(picks,oddsOf){
   if(!picks||!picks.length) return "";
-  /* The buttons print what each ticket pays, and on a converted slip we do not
-     know: a pass-through market has no price of ours and no probability to
-     estimate one from. Printing the floor would understate the ticket as
-     confidently as the old estimate overstated it, so the box stays away and
-     the code stands on its own. The panel's own split is unaffected - it
-     prices legs with the bookmaker's numbers, which are real. */
-  if(!oddsOf&&picks.some(function(c){
-      var o=legOdd(c.f||fixtureById(c.id),c.code,c.p);
-      return !(o&&isFinite(o)&&o>1.01);})) return "";
   var inner=splitBoxInner(picks,oddsOf);
   return inner?("<div class='code-split' id='codeSplit'>"+inner+"</div>"):"";
 }
@@ -11635,6 +11626,19 @@ function renderConvert(){
 /* The inside of the split box, so the modal and this panel share one set of
    buttons and one set of prices rather than two that drift. */
 function splitBoxInner(picks,oddsOf){
+  /* A SPLIT IS STILL OFFERED WHEN THE PAYOUT IS NOT KNOWN.
+     A converted slip can carry a market we never price - a handicap, corners -
+     and there is no probability behind it to estimate from. The first fix took
+     the whole box away, which removed a working feature to avoid printing one
+     wrong number. The dealing does not need a price; only the label does. So
+     the tickets are still offered and the button says where the price will
+     come from instead of inventing one.
+     Only on the default path: the BYO panel passes its own oddsOf, which
+     prices legs with the bookmaker's published numbers, and its legs carry no
+     fixture for legOdd to read. */
+  var blind = !oddsOf && picks.some(function(c){
+    var o=legOdd(c.f||fixtureById(c.id),c.code,c.p);
+    return !(o&&isFinite(o)&&o>1.01);});
   oddsOf=oddsOf||totalOdds;
   var ways=splitWays(picks.length);
   if(!ways.length) return "";
@@ -11645,7 +11649,9 @@ function splitBoxInner(picks,oddsOf){
       var lo=Math.min.apply(null,each), hi=Math.max.apply(null,each);
       var pay=lo.toFixed(lo>=100?0:1)+(hi-lo>0.05?"-"+hi.toFixed(hi>=100?0:1):"");
       return "<button class='sp-way' type='button' data-n='"+n+"'>"+
-        "<b>"+n+" tickets</b><span>about x"+pay+" each</span></button>";}).join("")+
+        "<b>"+n+" tickets</b><span>"+
+        (blind?"priced at the bookmaker":"about x"+pay+" each")+
+        "</span></button>";}).join("")+
     "</div>";
 }
 
