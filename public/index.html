@@ -1108,9 +1108,14 @@ html.mode-live .btabs{transform:none!important}
   /* ONE NAVIGATION ON A PHONE, AND IT IS THIS ONE. The header's tabs are
      hidden further down, where the rule that used to exempt Home and Build
      lives; see the note there for the measurements. */
+  /* THE DISC RISES OUT OF THE BAR, so the bar has to have room above the
+     icons for it to rise INTO. With 6px of top padding the top third of a
+     52px circle lifted 20px sat outside the bar's own surface and was read as
+     a circle cut off by the edge. 22px of top padding puts the whole disc on
+     the bar with its shadow, and the labels keep their own spacing below. */
   .btabs{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:120;
-    background:var(--card);border-top:1px solid var(--line);
-    padding:6px 8px calc(6px + env(safe-area-inset-bottom));align-items:flex-end;justify-content:space-around}
+    background:var(--card);border-top:1px solid var(--line);overflow:visible;
+    padding:22px 8px calc(6px + env(safe-area-inset-bottom));align-items:flex-end;justify-content:space-around}
   /* Above the tab bar, not on it. The bar is fixed to the bottom and every
      item in it is a target, so a toast landing there hides what you are
      aiming at even though it cannot intercept the tap. */
@@ -1134,9 +1139,24 @@ html.mode-live .btabs{transform:none!important}
      baseline - the old raised button pushed its own label up with it. */
   .btab .bt-ic{transition:background .2s ease,color .2s ease,width .2s ease,
     height .2s ease,margin .2s ease,box-shadow .2s ease}
+  /* A FLAT DISC OF ONE RED READS AS A STICKER. Three layers give it a body,
+     all of them cheap: a top-lit gradient so the light has a direction, a
+     hairline of white inside the top edge where that light would catch, and
+     two shadows - a tight contact shadow under it and a wide coloured glow
+     that ties it to the bar. The ring in the bar's own colour separates it
+     from the surface it sits on. */
   .btab.on .bt-ic{width:52px;height:52px;margin-top:-20px;border-radius:50%;
-    background:var(--red-fill);color:#fff;
-    box-shadow:0 6px 16px rgba(230,57,70,.5)}
+    background:
+      radial-gradient(120% 100% at 50% 0%,rgba(255,255,255,.34) 0%,rgba(255,255,255,0) 58%),
+      linear-gradient(180deg,#f4555f 0%,var(--red-fill) 52%,#c92c38 100%);
+    color:#fff;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.45),
+      inset 0 -2px 6px rgba(120,10,20,.35),
+      0 0 0 4px var(--card),
+      0 3px 8px rgba(0,0,0,.45),
+      0 10px 22px rgba(230,57,70,.42)}
+  .btab.on svg{filter:drop-shadow(0 1px 1px rgba(110,10,18,.45))}
   .btab.on svg{width:24px;height:24px}
   /* The pulse is a nudge toward live football you are NOT looking at. On the
      red disc it would be a red dot on red, and syncLiveDots already hides it
@@ -2461,6 +2481,25 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
   html.mode-build .navt:not(#tab-pred):not(#tab-live){display:none}
 }
 #builder{display:none;margin-top:8px}
+/* THE CONVERTER PAGE. Same shape as the live rules below: everything the board
+   owns is hidden and one section is shown. Its panel keeps no top rule here -
+   that hairline existed to divide it from the builder it used to sit under. */
+#converter{display:none;margin-top:8px}
+html.mode-convert .intro,html.mode-convert #potd,html.mode-convert #sotd,
+html.mode-convert #record,html.mode-convert .bar,html.mode-convert .key,
+html.mode-convert #list,html.mode-convert .note,html.mode-convert #glance,
+html.mode-convert #liveStrip,html.mode-convert #liveStripWrap,
+html.mode-convert #builder,html.mode-convert #live,
+html.mode-convert .viewtoggle.top,html.mode-convert .home-grid{display:none}
+html.mode-convert #converter{display:block}
+html.mode-convert .byo{margin-top:0;padding-top:0;border-top:0}
+/* The panel introduced itself when it lived under the builder. On its own
+   page the page heading has already done that, and two headings stacked
+   read as a page that was assembled rather than designed. */
+html.mode-convert .byo h3,html.mode-convert .byo-sub{display:none}
+.conv-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.conv-head h2{margin:0;font-size:19px;letter-spacing:-.01em}
+.conv-sub{margin:4px 0 16px;font-size:13px;color:var(--soft);max-width:52ch;line-height:1.55}
 html.mode-build .intro,html.mode-build #potd,html.mode-build .bar,html.mode-build #glance,
 html.mode-build #sotd,html.mode-build #record,html.mode-build #liveStripWrap,html.mode-build .viewtoggle.top,
 html.mode-build .key,html.mode-build #list,html.mode-build .note,
@@ -3193,11 +3232,34 @@ html.mode-live #live{display:block}
   color:var(--text)}
 #byoCode::placeholder{color:var(--faint);letter-spacing:0;text-transform:none;font-weight:600}
 #byoCode:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.byo-go{flex:0 0 auto;font:inherit;font-size:13px;font-weight:800;padding:10px 18px;
-  border-radius:var(--r-md);cursor:pointer;background:var(--red-fill);color:#fff;
-  border:0;transition:filter .15s,transform .1s}
-.byo-go:active{transform:scale(.98)}
-@media (hover:hover){.byo-go:hover{filter:brightness(1.08)}}
+/* THE ONE BUTTON ON THIS PAGE, so it should look like something you press.
+   It was a flat red rectangle beside a flat input and read as a label. Same
+   three layers as the bar's disc - a top-lit gradient, a white hairline inside
+   the top edge, a contact shadow plus a soft coloured glow - so the two
+   surfaces on the site that mean "go" are lit from the same place. It lifts a
+   pixel under a real pointer and presses back in on touch. */
+.byo-go{flex:0 0 auto;font:inherit;font-size:13.5px;font-weight:800;padding:11px 20px;
+  border-radius:var(--r-md);cursor:pointer;color:#fff;border:0;letter-spacing:.01em;
+  background:
+    radial-gradient(120% 140% at 50% 0%,rgba(255,255,255,.28) 0%,rgba(255,255,255,0) 60%),
+    linear-gradient(180deg,#f4555f 0%,var(--red-fill) 55%,#cc2f3b 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.42),
+    inset 0 -2px 5px rgba(120,10,20,.32),
+    0 2px 5px rgba(0,0,0,.32),
+    0 6px 16px rgba(230,57,70,.30);
+  transition:transform .12s ease,box-shadow .18s ease,filter .15s ease}
+.byo-go:active{transform:translateY(1px) scale(.985);
+  box-shadow:inset 0 2px 6px rgba(120,10,20,.45),0 1px 3px rgba(0,0,0,.3)}
+@media (hover:hover){
+  .byo-go:hover{filter:brightness(1.05);transform:translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.5),
+      inset 0 -2px 5px rgba(120,10,20,.32),
+      0 3px 7px rgba(0,0,0,.34),
+      0 10px 22px rgba(230,57,70,.38)}
+}
+@media (prefers-reduced-motion:reduce){.byo-go{transition:none}}
 .byo-wait{display:flex;align-items:center;gap:9px;margin-top:12px;
   font-size:12.5px;font-weight:600;color:var(--soft)}
 .byo-res{margin-top:13px;background:var(--card);border:1px solid var(--line-soft);
@@ -6533,6 +6595,20 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
          from here: people arrive with a code from a friend, a Telegram
          channel, or their own slip built in the app. The legs are readable
          from both books, so the same dealing works on them. -->
+  </section>
+
+  <!-- THE CONVERTER, ON ITS OWN PAGE.
+       It spent its life at the foot of the builder, which is where it was
+       born rather than where it belongs: it has nothing to do with picking
+       games, it is the one thing on this site somebody arrives already
+       wanting, and the bottom bar cannot mark a page that is really a
+       panel two screens down. One converter still, moved not copied. -->
+  <section id="converter">
+    <div class="conv-head stage-in stage-in-1">
+      <h2 class="stage-in stage-in-2">Converter</h2>
+    </div>
+    <p class="conv-sub stage-in stage-in-2">Move a booking code to the other
+      bookmaker, or read what is inside one and cut it into smaller tickets.</p>
     <section class="byo" id="byo" aria-labelledby="byo-h">
       <h3 id="byo-h">Already have a booking code?</h3>
       <p class="byo-sub">Paste it and we'll split it into separate tickets.</p>
@@ -11747,11 +11823,11 @@ function splitBoxInner(picks,oddsOf){
         o.classList.toggle("on",o.dataset.book===src);});
       inp.value=code;
       /* THE READ MUST NOT DEPEND ON THE VIEW SWITCH. This ran as
-         setView("build"); byoRead(); inside one try, and setView throws at
-         boot - it repaints a builder whose payload has not landed - so the
-         whole block was swallowed and the reader arrived at a filled box that
-         had read nothing. The switch is cosmetic; the read is the point. */
-      try{ setView("build"); }catch(e){}
+         setView(...); byoRead(); inside one try, and setView throws at boot -
+         it repaints a view whose payload has not landed - so the whole block
+         was swallowed and the reader arrived at a filled box that had read
+         nothing. The switch is cosmetic; the read is the point. */
+      try{ setView("convert"); }catch(e){}
       byoRead();
       /* ?go=convert OPENS THE CONVERSION, IT DOES NOT BOOK ONE. The panel it
          opens only says what would move and what would not; the code is still
@@ -13871,6 +13947,7 @@ function setView(v){
   }catch(e){}
   root.classList.toggle("mode-build",v==="build");
   root.classList.toggle("mode-live",v==="live");
+  root.classList.toggle("mode-convert",v==="convert");
   /* mode-pred drives the phone-only rule that keeps the Live tab in the header
      on the home page. Without it that CSS never fires and the nav stays hidden. */
   root.classList.toggle("mode-pred",v==="pred");
@@ -13884,16 +13961,19 @@ function setView(v){
   if(tp0) tp0.classList.toggle("on",v==="pred");
   if(tl0) tl0.classList.toggle("on",v==="live");
   if(tb0) tb0.classList.toggle("on",v==="build");
-  var bp=$("bt-pred"),bl=$("bt-live"),bb=$("bt-build");
+  var tc0=$("tab-convert"); if(tc0) tc0.classList.toggle("on",v==="convert");
+  var bp=$("bt-pred"),bl=$("bt-live"),bb=$("bt-build"),bc=$("bt-convert");
   if(bp)bp.classList.toggle("on",v==="pred");
   if(bl)bl.classList.toggle("on",v==="live");
   if(bb)bb.classList.toggle("on",v==="build");
+  /* The circle marks where you are, and the converter is a where now. */
+  if(bc)bc.classList.toggle("on",v==="convert");
   /* A tab for the page you are already on is only ever a way back, so it is
      not drawn at all - that goes for Live scores and Build too, not just
      Predictions, and it is what keeps the header from crowding the wordmark on
      a narrow screen. The bottom bar still carries all three. */
   var tp=$("tab-pred"); if(tp&&tp.childNodes[0]) tp.childNodes[0].nodeValue = (v==="pred") ? "Predictions" : "Home";
-  [["tab-live","live"],["tab-build","build"]].forEach(function(t){
+  [["tab-live","live"],["tab-build","build"],["tab-convert","convert"]].forEach(function(t){
     var el=$(t[0]); if(el) el.classList.toggle("hide-tab",v===t[1]);
   });
   syncLiveDots();
@@ -13920,10 +14000,8 @@ $("bt-build").addEventListener("click",function(){buzzTap();setView("build");});
    After setView, never before: setView ends by scrolling the window to the top,
    so a scroll that ran first was undone the moment the view changed. */
 function goConvert(){
-  setView("build");
-  var sec=$("byo"), box=$("byoCode");
-  if(!sec) return;
-  try{ sec.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){ }
+  setView("convert");
+  var box=$("byoCode");
   /* Not on a phone: focusing raises the keyboard over the panel the reader was
      just sent to look at. */
   try{ if(box&&window.matchMedia("(min-width:721px)").matches) box.focus(); }catch(e){}

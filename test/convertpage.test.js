@@ -112,7 +112,7 @@ test("the builder reads the pair the form sends", () => {
   assert.match(index, /\/\^\[A-Za-z0-9\]\{4,16\}\$\/\.test\(code\)/);
   /* The panel lives in the builder view; without this the read runs into a
      section nobody can see. */
-  assert.match(index, /setView\("build"\);[\s\S]{0,400}byoRead\(\);/);
+  assert.match(index, /setView\("convert"\);[\s\S]{0,400}byoRead\(\);/);
 });
 
 test("the rules are still on the page, folded rather than dropped", () => {
@@ -145,10 +145,13 @@ test("the converter has a way in from the navigation", () => {
   assert.doesNotMatch(icon, /M16 3h5v5/, "that is the shuffle icon");
   /* setView ends by scrolling to the top, so the panel has to be put on screen
      after it, not before. */
-  const fn = index.slice(index.indexOf("function goConvert()"));
-  const body = fn.slice(0, 900);
-  assert.ok(body.indexOf('setView("build")') < body.indexOf("scrollIntoView"),
-    "the scroll runs before the view switch undoes it");
+  /* A page of its own, not a panel at the foot of the builder: the bottom bar
+     cannot mark a place that is really two screens down inside another one. */
+  assert.match(index, /function goConvert\(\)\{\s*setView\("convert"\)/);
+  assert.match(index, /root\.classList\.toggle\("mode-convert",v==="convert"\)/);
+  assert.match(index, /html\.mode-convert #converter\{display:block\}/);
+  assert.match(index, /if\(bc\)bc\.classList\.toggle\("on",v==="convert"\)/,
+    "the bottom bar cannot mark the converter page");
 });
 
 test("the red circle marks the page you are on", () => {
