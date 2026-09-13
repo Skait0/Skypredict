@@ -134,6 +134,13 @@ test("the converter has a way in from the navigation", () => {
   assert.match(index, /id="bt-convert"/, "no bottom-bar entry");
   assert.match(index, /\$\("tab-convert"\)\.addEventListener\("click",goConvert\)/);
   assert.match(index, /\$\("bt-convert"\)\.addEventListener/);
+  /* Two arrows swapping is the shuffle glyph - #shuffleBtn draws it - so the
+     bottom bar names the books in words instead of showing the same picture
+     for two different actions. */
+  assert.match(index, /class="bt-conv"/, "the bottom-bar entry lost its word-mark");
+  const entry = index.slice(index.indexOf('id="bt-convert"'));
+  assert.doesNotMatch(entry.slice(0, entry.indexOf("</button>")), /<svg/,
+    "the convert entry is drawing a glyph again");
   /* setView ends by scrolling to the top, so the panel has to be put on screen
      after it, not before. */
   const fn = index.slice(index.indexOf("function goConvert()"));

@@ -1118,6 +1118,12 @@ html.mode-live .btabs{transform:none!important}
   .btab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;
     color:var(--faint);font:inherit;font-size:10px;font-weight:700;padding:6px 0;cursor:pointer}
   .btab svg{width:22px;height:22px}
+  /* Sized to sit on the same baseline as the icons either side of it: the
+     glyph slot is 22px tall, so this is a 22px box with the words centred in
+     it rather than text pushing the label down. */
+  .bt-conv{display:inline-flex;align-items:center;justify-content:center;gap:2px;
+    height:22px;font-size:10px;font-weight:800;letter-spacing:.02em;line-height:1}
+  .bt-conv i{font-style:normal;font-size:11px;opacity:.65}
   .btab.on{color:var(--red-ink)}
   .btab.mid{margin-top:-18px}
   .btab.mid .bt-ic{width:52px;height:52px;border-radius:50%;background:var(--red-fill);color:#fff;
@@ -6632,7 +6638,12 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
      says the same thing, and nothing else in the bar can be confused with
      it. -->
   <button class="btab mid" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l9.5-9.5"/><path d="M16.5 3.5l1.15 2.85L20.5 7.5l-2.85 1.15L16.5 11.5l-1.15-2.85L12.5 7.5l2.85-1.15z"/><path d="M19.6 14.4l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z"/></svg></span>Build</button>
-  <button class="btab" id="bt-convert" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13M14 5l3 3-3 3M20 16H7M10 13l-3 3 3 3"/></svg></span>Convert</button>
+  <!-- WORDS, BECAUSE THE GLYPH WAS ALREADY TAKEN. Two arrows swapping is
+       the shuffle icon - #shuffleBtn on the builder draws exactly that -
+       so the bar had the same picture meaning two different things. The
+       books name themselves instead, which needs no icon vocabulary at
+       all: anyone holding a code knows which of the two issued it. -->
+  <button class="btab" id="bt-convert" type="button"><span class="bt-ic"><span class="bt-conv" aria-hidden="true">SB<i>⇄</i>9JA</span></span>Convert</button>
   <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg><span class="live-dot btab-dot" id="liveDotB" hidden></span></span>Live</button>
 </nav>
 <div class="sheet slips-sheet" id="slipsSheet" role="dialog" aria-modal="true" aria-labelledby="slipsSheet-title">
