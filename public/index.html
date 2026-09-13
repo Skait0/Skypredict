@@ -11762,6 +11762,42 @@ function fixtureByBookId(id,B){
 }
 function otherBook(B){ return BOOKS[B.key==="sporty"?"bet9ja":"sporty"]; }
 
+/* WHEN THE ID MISSES BUT THE GAME IS RIGHT THERE.
+ *
+ * Reported on code QER25G: "some of the games are not on our board", and one
+ * of the four it named was Gaziantep v Fenerbahce - which the board carries,
+ * with a SportyBet id on it. The ids simply differed. The slip said
+ * sr:match:72723196 and our fixture said sr:match:73436482, and both answer on
+ * SportyBet's own event endpoint with the same two teams and the same kickoff:
+ * they list some fixtures twice, and our matcher bound to one copy while the
+ * punter's slip was built from the other.
+ *
+ * So the id is the fast path, not the only one. A leg that misses is matched
+ * on what the bookmaker's read already gives us - both team names and the
+ * kickoff - using the SAME rules attachEventIds uses, because a second matcher
+ * would pair games this one would not and the failure looks like a slip for
+ * the wrong fixture. Exact on both sides wins outright; otherwise both sides
+ * must clear 0.6 and the pair 1.2, and the kickoff fence applies either way.
+ */
+function fixtureByLeg(l,B){
+  var direct=l?fixtureByBookId(l.eventId,B):null;
+  if(direct) return direct;
+  if(!l||!l.home||!l.away) return null;
+  var list=(typeof DATA!=="undefined"&&DATA.fixtures)||[];
+  /* The shape sameSlot and simTeams expect of a feed event. */
+  var ev={homeTeam:l.home,awayTeam:l.away,startTime:l.kickoff};
+  var lh=normTeam(l.home),la=normTeam(l.away);
+  var best=null,bestScore=0;
+  for(var i=0;i<list.length;i++){
+    var f=list[i];
+    if(!sameSlot(f,ev)) continue;
+    if(normTeam(f.home)===lh&&normTeam(f.away)===la) return f;
+    var sh=simTeams(f.home,l.home), sa=simTeams(f.away,l.away);
+    if(sh>=0.6&&sa>=0.6&&(sh+sa)>bestScore){ bestScore=sh+sa; best=f; }
+  }
+  return bestScore>=1.2?best:null;
+}
+
 /* Everything the panel needs to say, worked out before anything is drawn:
    what carries over, what does not, and why not - one reason per leg. */
 /* THE LINES ONE BOOK PRICES AND THE OTHER DOES NOT.
@@ -11795,7 +11831,7 @@ function byoConversion(){
   var from=byoBook(), to=otherBook(from);
   var picks=[], stuck=[], changed=[], offer=[];
   (BYO.legs||[]).forEach(function(l){
-    var f=l.prediction?fixtureByBookId(l.eventId,from):null;
+    var f=l.prediction?fixtureByLeg(l,from):null;
     var id=f?f[to.id]:null;
     if(legStarted(l)) stuck.push({leg:l,why:"this game has already started"});
     else if(!l.prediction) stuck.push({leg:l,why:"a market we don't carry"});

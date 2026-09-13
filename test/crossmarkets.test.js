@@ -175,3 +175,43 @@ test("the 1.5 rung of the family is Bet9ja's, all three of it", () => {
   /* And the 2.5 rung stays on both, which is what makes it the default. */
   assert.ok(!BOOK_ONLY["MIX_1_OV_2.5"] && !BOOK_ONLY["MIX_X_OV_2.5"]);
 });
+
+/* ------------------------------------ a leg whose id we do not recognise */
+
+test("a game on the board is found even when the bookmaker's id differs", () => {
+  /* Reported on code QER25G. SportyBet lists some fixtures twice: the slip
+     carried sr:match:72723196 for Gaziantep v Fenerbahce and our board had
+     sr:match:73436482 for the same two teams at the same kickoff. The id
+     lookup missed and the converter said "not a game on our board" about a
+     game sitting on it. */
+  const api = new Function(
+    "var DATA={fixtures:[{home:'Gaziantep',away:'Fenerbahce',kickoff:'2026-09-14T17:00:00.000Z'," +
+      "eventId:'sr:match:73436482',b9EventId:832871639}," +
+      "{home:'Torino',away:'Roma',kickoff:'2026-09-14T16:30:00.000Z',eventId:'sr:match:71945262'}]};" +
+    "var MATCH_WINDOW_MS=" + (src.match(/MATCH_WINDOW_MS\s*=\s*([^;]+);/)[1]) + ";" +
+    /* The matcher is one contiguous region of index.html - the alias table,
+       its cache, normTeam and simTeams - so it is lifted whole rather than
+       symbol by symbol. A copy of any part of it would pair games the
+       shipped one would not, which is the failure this test is about. */
+    src.slice(src.indexOf("var TEAM_ALIASES = {"), src.indexOf("function simTeams(")) +
+    grab("simTeams") + grab("evStart") + grab("sameSlot") +
+    grab("fixtureByBookId") + grab("fixtureByLeg") +
+    "\nreturn {fixtureByLeg:fixtureByLeg};")();
+  const B = { key: "sporty", id: "eventId" };
+
+  /* The id the slip carries is not on the board at all. */
+  const leg = { eventId: "sr:match:72723196", home: "Gaziantep FK",
+    away: "Fenerbahce Istanbul", kickoff: Date.parse("2026-09-14T17:00:00.000Z") };
+  const f = api.fixtureByLeg(leg, B);
+  assert.ok(f, "the game is on the board and was not found");
+  assert.equal(f.b9EventId, 832871639, "and it is the right one");
+
+  /* The fence still holds: same names, a different week, no match. */
+  const late = Object.assign({}, leg, { kickoff: Date.parse("2026-09-21T17:00:00.000Z") });
+  assert.equal(api.fixtureByLeg(late, B), null, "a fixture a week away is not this one");
+
+  /* A game we genuinely do not carry stays unmatched. */
+  assert.equal(api.fixtureByLeg({ eventId: "sr:match:68157144",
+    home: "Austin FC II", away: "Colorado Rapids 2",
+    kickoff: Date.parse("2026-09-14T01:30:00.000Z") }, B), null);
+});
