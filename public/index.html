@@ -3126,6 +3126,20 @@ html.mode-live #live{display:block}
 .bld-note{font-size:12px;color:var(--soft);margin-top:10px;text-align:center}
 #bookResult{margin-top:14px}
 /* Compact centred modal for the booking code */
+/* ---- converting a borrowed code to the other book ---- */
+.byo-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.byo-conv-btn{font:inherit;font-size:12.5px;font-weight:800;padding:9px 16px;
+  border-radius:var(--r-md);cursor:pointer;background:var(--win-wash);
+  border:1px solid var(--win);color:var(--win-ink);
+  transition:background .15s,border-color .15s,transform .1s}
+.byo-conv-btn:active{transform:scale(.98)}
+@media (hover:hover){.byo-conv-btn:hover{background:rgba(242,184,75,.2);
+  border-color:var(--win-ink)}}
+.byo-cancel{font:inherit;font-size:12.5px;font-weight:700;padding:9px 14px;
+  border-radius:var(--r-md);cursor:pointer;background:var(--card-2);
+  border:1px solid var(--line);color:var(--soft);transition:background .15s,color .15s}
+@media (hover:hover){.byo-cancel:hover{background:var(--raise);color:var(--text)}}
+.byo-conv{margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft)}
 /* ---- a code somebody else built, at the foot of the builder ---- */
 .byo{margin-top:18px;padding-top:16px;border-top:1px solid var(--line-soft)}
 .byo h3{font-size:14px;font-weight:800;letter-spacing:-.01em;margin:0 0 3px}
@@ -8470,7 +8484,11 @@ function setRowOpen(r,open){
   if(!r) return;
   open=!!open;
   var id=r.dataset.lf;
-  if(id&&window.LOPEN) LOPEN[id]=open;
+  /* Same trap: LOPEN is a `const`, so window.LOPEN is undefined and this
+     guard silently skipped the assignment - a row would open and then shut
+     itself on the next repaint, because nothing had written down that it
+     was open. The old inline callers used the bare name and worked. */
+  if(id) LOPEN[id]=open;
   r.classList.toggle("open",open);
   var t=r.querySelector(".lrow-toggle");
   if(t) t.setAttribute("aria-expanded",open?"true":"false");
@@ -11295,13 +11313,119 @@ function renderByo(){
       (stuck?" We cannot re-book "+stuck+" of these, so "+(stuck===legs.length?
         "there is nothing to split.":"a split would leave "+(legs.length-stuck)+"."):"")+
     "</p>"+
+    /* Two things can be done with a slip somebody hands us: move it to the
+       other book, or cut it into tickets. Both are offered from the same read
+       because both start from the same legs. */
+    (usable.length
+      ? "<div class='byo-acts'><button class='byo-conv-btn' id='byoConvBtn' type='button'>"+
+        "Convert to "+esc(otherBook(B).label)+"</button></div><div id='byoConv'></div>"
+      : "")+
     (usable.length>=4
       ? "<div class='code-split' id='byoSplit'>"+splitBoxInner(usable,byoOdds)+"</div>"
       : (usable.length?"<p class='byo-note'>A split needs at least four games we can re-book.</p>":""))+
   "</div>";
+  var cb=$("byoConvBtn");
+  if(cb) cb.addEventListener("click",renderConvert);
   if(usable.length>=4){
     wireSplit(out,usable,B,{sel:"#byoSplit",selOf:byoSel,oddsOf:byoOdds});
   }
+}
+
+/* ---- converting a code from one book to the other ---- */
+/* WHY THIS NEEDS NO NEW TABLE AND NO NEW MATCHER.
+   The obvious build is a crosswalk of SportyBet selection ids against Bet9ja
+   odds keys, derived by sampling both catalogues. It is not needed for the
+   markets we model, because the board already holds the answer: attachEventIds
+   binds every fixture to BOTH books at boot, so a fixture carries SportyBet's
+   event id and Bet9ja's side by side, and MARKET_MAP already speaks both
+   sides of the 24 markets we price. So a conversion is three lookups - their
+   event id to our fixture, our fixture to the other book's event id, their
+   market to ours - and the slip that comes out is an ordinary slip of ours
+   that the existing booking path can take.
+   The matcher is the shipped one for the same reason mkcode.js lifts it
+   rather than reimplementing: a second copy would book against a pairing we
+   do not ship, and that failure looks like a code for the wrong fixture. */
+function fixtureByBookId(id,B){
+  if(id==null) return null;
+  /* Bare DATA, not window.DATA: it is declared with `let`, which makes a
+     global binding and NOT a property of window - so the guarded form was
+     always undefined and this returned "not a game on our board" for every
+     leg, including ones sitting on the board. */
+  var key=String(id), list=(typeof DATA!=="undefined"&&DATA.fixtures)||[];
+  for(var i=0;i<list.length;i++){
+    var f=list[i];
+    if(f[B.id]!=null&&String(f[B.id])===key) return f;
+  }
+  return null;
+}
+function otherBook(B){ return BOOKS[B.key==="sporty"?"bet9ja":"sporty"]; }
+
+/* Everything the panel needs to say, worked out before anything is drawn:
+   what carries over, what does not, and why not - one reason per leg. */
+function byoConversion(){
+  var from=byoBook(), to=otherBook(from);
+  var picks=[], stuck=[];
+  (BYO.legs||[]).forEach(function(l){
+    var f=l.prediction?fixtureByBookId(l.eventId,from):null;
+    var id=f?f[to.id]:null;
+    if(!l.prediction) stuck.push({leg:l,why:"a market we don't carry"});
+    else if(!f)       stuck.push({leg:l,why:"not a game on our board"});
+    else if(id==null) stuck.push({leg:l,why:to.label+" doesn't list this game"});
+    else picks.push({id:fid(f),code:l.prediction,f:f,p:f[l.prediction]});
+  });
+  return {from:from,to:to,picks:picks,stuck:stuck};
+}
+/* Their price where the other book has published one, ours only as a last
+   resort - a converted slip is worth what the book taking it pays. */
+function convOdds(picks){
+  var to=otherBook(byoBook());
+  return picks.reduce(function(t,c){
+    var o=(c.f&&c.f[to.odds]||{})[c.code];
+    return t*((o&&o>1.01)?o:legOdd(c.f,c.code,c.p));},1);
+}
+
+function renderConvert(){
+  var host=$("byoConv"); if(!host) return;
+  var c=byoConversion();
+  if(!c.picks.length){
+    host.innerHTML="<div class='code-err'><b>Nothing here can move to "+c.to.label+".</b>"+
+      "<span>"+esc(c.stuck.length?c.stuck[0].why:"no legs")+"</span></div>";
+    return;
+  }
+  var odds=convOdds(c.picks);
+  host.innerHTML="<div class='byo-conv'>"+
+    "<div class='byo-head'><b>"+c.picks.length+" of "+(BYO.legs||[]).length+
+      " games move to "+esc(c.to.label)+"</b><span>about x"+odds.toFixed(odds>=100?0:2)+"</span></div>"+
+    (c.stuck.length
+      ? "<p class='byo-note'>Left behind: "+c.stuck.slice(0,4).map(function(x){
+          return esc((x.leg.home||"a game")+" v "+(x.leg.away||"")+" - "+x.why);}).join("; ")+
+        (c.stuck.length>4?"; and "+(c.stuck.length-4)+" more":"")+
+        ". A converted slip is not the same bet as the one you pasted.</p>"
+      : "")+
+    "<div class='byo-acts'>"+
+      "<button class='byo-go' id='byoConvGo' type='button'>Get the "+esc(c.to.label)+" code</button>"+
+      "<button class='byo-cancel' id='byoConvX' type='button'>Cancel</button>"+
+    "</div>"+
+    "<div id='byoConvOut'></div>"+
+  "</div>";
+  $("byoConvX").addEventListener("click",function(){ host.innerHTML=""; });
+  $("byoConvGo").addEventListener("click",function(){
+    var b=$("byoConvGo"); b.disabled=true; b.textContent="Booking…";
+    /* The ordinary booking path, on ordinary picks. Nothing about a converted
+       slip is special once it is expressed in our own shape. */
+    bookFetch(c.picks.map(function(x){return c.to.sel(x);}),c.to)
+      .then(function(d){
+        var code=d&&d.success&&c.to.codeOf(d);
+        if(code){ showCode(code,"byoConvOut",null,c.to,c.picks); }
+        else { $("byoConvOut").innerHTML=bookErrHTML(d,c.to);
+               b.disabled=false; b.textContent="Get the "+c.to.label+" code"; }
+      })
+      .catch(function(){
+        $("byoConvOut").innerHTML="<div class='code-err'><b>Couldn't reach the "+
+          "booking service.</b><span>Check your connection and try again.</span></div>";
+        b.disabled=false; b.textContent="Get the "+c.to.label+" code";
+      });
+  });
 }
 
 /* The inside of the split box, so the modal and this panel share one set of
