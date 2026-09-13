@@ -1116,10 +1116,15 @@ html.mode-live .btabs{transform:none!important}
   .btabs{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:120;
     background:var(--card);border-top:1px solid var(--line);overflow:visible;
     padding:22px 8px calc(6px + env(safe-area-inset-bottom));align-items:flex-end;justify-content:space-around}
+  /* What the bar actually occupies: 22px of rise-room, a 22px icon, 3px gap,
+     a 12px label, 6px under it, and the home indicator. Everything that has to
+     sit above the bar measures from this rather than from a number somebody
+     typed once - which is how the My slip button ended up on the Live tab. */
+  :root{--btabs-h:calc(90px + env(safe-area-inset-bottom))}
   /* Above the tab bar, not on it. The bar is fixed to the bottom and every
      item in it is a target, so a toast landing there hides what you are
      aiming at even though it cannot intercept the tap. */
-  #toasts{bottom:calc(68px + env(safe-area-inset-bottom))}
+  #toasts{bottom:calc(var(--btabs-h) + 10px)}
   .btab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;
     color:var(--faint);font:inherit;font-size:10px;font-weight:700;padding:6px 0;cursor:pointer}
   .btab svg{width:22px;height:22px}
@@ -1164,8 +1169,7 @@ html.mode-live .btabs{transform:none!important}
      same rule. */
   .btab.on .btab-dot{display:none}
   @media (prefers-reduced-motion:reduce){.btab .bt-ic{transition:none}}
-  body{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
-  .myfab{bottom:84px}
+  body{padding-bottom:calc(var(--btabs-h) + 8px)}
 }
 .record-bar i{transition:width 1.05s cubic-bezier(.25,.8,.3,1)}
 .live-alert.on{color:var(--red-ink);border-color:var(--red)}
@@ -1578,7 +1582,7 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
      full wordmark and keeps the live dot away from the theme toggle. */
   html.mode-build #bldNote,html.mode-build .bld-approx{display:none}
   .gl-card.score .gl-pc{flex-shrink:0}
-  .myfab{padding:0;width:54px;height:54px;justify-content:center;border-radius:50%;bottom:92px;
+  .myfab{padding:0;width:54px;height:54px;justify-content:center;border-radius:50%;
     background:radial-gradient(circle at 50% 40%,rgba(230,57,70,.92),rgba(150,20,32,.88));
     border:0;box-shadow:0 6px 20px rgba(230,57,70,.5),0 0 0 1px rgba(255,180,185,.35) inset}
   .myfab .lbl{display:none}
@@ -4186,7 +4190,12 @@ button.wsp-go.waiting{opacity:.55}
 .sheet-head>b{flex:1;min-width:0;font-size:16.5px;font-weight:800;letter-spacing:-.02em}
 .sheet-head .sheet-x{margin-left:auto}
 @keyframes fabpop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
-.myfab{position:fixed;right:16px;bottom:16px;z-index:130;
+/* ABOVE THE TAB BAR WHEREVER THERE IS ONE. This said bottom:16px and won:
+   it is declared after both phone overrides and a media query adds no
+   specificity, so the two rules that tried to lift it never applied and
+   the button has been sitting on the Live tab. --btabs-h is only defined
+   where the bar exists, so the fallback keeps the desktop position. */
+.myfab{position:fixed;right:16px;bottom:calc(var(--btabs-h,0px) + 16px);z-index:130;
   background:radial-gradient(circle at 50% 40%,rgba(230,57,70,.92),rgba(150,20,32,.88));color:#fff;
   border:0;font:inherit;font-weight:800;font-size:15px;padding:14px 20px;border-radius:99px;
   cursor:pointer;display:flex;align-items:center;gap:9px;
