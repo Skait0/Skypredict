@@ -3126,6 +3126,69 @@ html.mode-live #live{display:block}
 .bld-note{font-size:12px;color:var(--soft);margin-top:10px;text-align:center}
 #bookResult{margin-top:14px}
 /* Compact centred modal for the booking code */
+/* ---- a code somebody else built, at the foot of the builder ---- */
+.byo{margin-top:18px;padding-top:16px;border-top:1px solid var(--line-soft)}
+.byo h3{font-size:14px;font-weight:800;letter-spacing:-.01em;margin:0 0 3px}
+.byo-sub{margin:0 0 11px;font-size:12.5px;font-weight:600;color:var(--faint)}
+.byo-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.byo-book{display:inline-flex;background:var(--card-2);border:1px solid var(--line);
+  border-radius:99px;padding:3px;gap:2px;flex:0 0 auto}
+.byo-b{font:inherit;font-size:12px;font-weight:700;padding:6px 12px;border:0;
+  border-radius:99px;background:none;color:var(--soft);cursor:pointer;
+  transition:background .15s,color .15s}
+.byo-b.on{background:var(--red-fill);color:#fff}
+@media (hover:hover){.byo-b:not(.on):hover{color:var(--text)}}
+#byoCode{flex:1 1 150px;min-width:0;font:inherit;font-size:14px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;
+  background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
+  color:var(--text)}
+#byoCode::placeholder{color:var(--faint);letter-spacing:0;text-transform:none;font-weight:600}
+#byoCode:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.byo-go{flex:0 0 auto;font:inherit;font-size:13px;font-weight:800;padding:10px 18px;
+  border-radius:var(--r-md);cursor:pointer;background:var(--red-fill);color:#fff;
+  border:0;transition:filter .15s,transform .1s}
+.byo-go:active{transform:scale(.98)}
+@media (hover:hover){.byo-go:hover{filter:brightness(1.08)}}
+.byo-wait{display:flex;align-items:center;gap:9px;margin-top:12px;
+  font-size:12.5px;font-weight:600;color:var(--soft)}
+.byo-res{margin-top:13px;background:var(--card);border:1px solid var(--line-soft);
+  border-radius:var(--r-md);padding:13px 14px}
+.byo-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;margin-bottom:9px}
+.byo-head b{font-size:13.5px;font-weight:800}
+.byo-head span{font-size:12px;font-weight:600;color:var(--faint)}
+.byo-legs{display:flex;flex-direction:column;gap:1px}
+.byo-l{display:flex;align-items:baseline;gap:10px;padding:7px 0;
+  border-bottom:1px solid var(--line-soft)}
+.byo-l:last-child{border-bottom:0}
+.byo-t{flex:1 1 auto;min-width:0;font-size:12.5px;font-weight:700;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.byo-k{flex:0 1 auto;font-size:11.5px;font-weight:600;color:var(--faint);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.byo-o{flex:0 0 auto;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
+.byo-l-stuck .byo-t,.byo-l-stuck .byo-k{color:var(--faint)}
+.byo-note{margin:10px 0 0;font-size:11.5px;font-weight:600;color:var(--faint);line-height:1.45}
+/* The split box here sits on a card, not on the modal's dark glass, so it
+   takes the page's own inks rather than the overlays that block uses. */
+.byo-res .code-split{border-top-color:var(--line-soft)}
+.byo-res .sp-q{color:var(--soft)}
+.byo-res .sp-way{background:var(--card-2);border-color:var(--line);color:var(--text)}
+.byo-res .code-split .sp-way span{color:var(--faint)}
+.byo-res .sp-t{background:var(--card-2);border-color:var(--line);color:var(--text)}
+.byo-res .sp-n{background:var(--raise);color:var(--soft)}
+.byo-res .sp-m,.byo-res .sp-note,.byo-res .sp-wait{color:var(--faint)}
+.byo-res .sp-head,.byo-res .code-split .sp-none{color:var(--text)}
+.byo-res .sp-copy,.byo-res .sp-open{background:var(--raise);border-color:var(--line);
+  color:var(--text)}
+@media (hover:hover){
+  .byo-res .sp-way:hover{background:var(--raise);border-color:var(--soft)}
+  .byo-res .sp-copy:hover,.byo-res .sp-open:hover{background:var(--card);border-color:var(--soft)}
+}
+@media(max-width:560px){
+  .byo-row{gap:7px}
+  #byoCode{flex:1 1 100%;order:2}
+  .byo-go{order:3;flex:1 1 auto}
+  .byo-k{display:none}
+}
 /* ---- split into several tickets, inside the booking-code modal ---- */
 /* EVERYTHING HERE IS AN ALPHA OVERLAY, not a page token.
    The card is translucent glass over a darkened scrim in BOTH themes, so its
@@ -6386,6 +6449,26 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <div class="bld-note stage-in stage-in-5" id="bldNote" data-parallax="0.1"></div>
     <div class="bld-approx">*Est. odds are a rough model guide - real SportyBet odds are usually lower.</div>
     <div id="bookResult"></div>
+
+    <!-- A CODE SOMEBODY ALREADY HOLDS. Not every slip worth splitting came
+         from here: people arrive with a code from a friend, a Telegram
+         channel, or their own slip built in the app. The legs are readable
+         from both books, so the same dealing works on them. -->
+    <section class="byo" id="byo" aria-labelledby="byo-h">
+      <h3 id="byo-h">Already have a booking code?</h3>
+      <p class="byo-sub">Paste it and we'll split it into separate tickets.</p>
+      <div class="byo-row">
+        <div class="byo-book" role="group" aria-label="Which bookmaker issued it">
+          <button class="byo-b on" type="button" data-book="sporty">SportyBet</button>
+          <button class="byo-b" type="button" data-book="bet9ja">Bet9ja</button>
+        </div>
+        <input id="byoCode" type="text" inputmode="latin" autocomplete="off"
+               spellcheck="false" maxlength="16" placeholder="Booking code"
+               aria-label="Booking code">
+        <button class="byo-go" id="byoGo" type="button">Read it</button>
+      </div>
+      <div id="byoOut" aria-live="polite"></div>
+    </section>
   </section>
 
   <section id="live">
@@ -10949,26 +11032,16 @@ function showCode(code,hostId,save,B,picks){
   });
 }
 /* ---- splitting one slip into several tickets ---- */
-function splitBoxHTML(picks){
+function splitBoxHTML(picks,oddsOf){
   if(!picks||!picks.length) return "";
-  var ways=splitWays(picks.length);
-  if(!ways.length) return "";
-  return "<div class='code-split' id='codeSplit'>"+
-    "<p class='sp-q'>Rather have more than one ticket?</p>"+
-    "<div class='sp-ways'>"+ways.map(function(n){
-      var parts=splitPicks(picks,n);
-      var each=parts.map(function(p){return totalOdds(p);});
-      var lo=Math.min.apply(null,each), hi=Math.max.apply(null,each);
-      var pay=lo.toFixed(lo>=100?0:1)+(hi-lo>0.05?"-"+hi.toFixed(hi>=100?0:1):"");
-      return "<button class='sp-way' type='button' data-n='"+n+"'>"+
-        "<b>"+n+" tickets</b><span>about x"+pay+" each</span></button>";}).join("")+
-    "</div></div>";
+  var inner=splitBoxInner(picks,oddsOf);
+  return inner?("<div class='code-split' id='codeSplit'>"+inner+"</div>"):"";
 }
 
 /* One place where a split is started, so the quota check cannot be skipped by
    a second call site later. */
-function wireSplit(wrap,picks,B){
-  var box=wrap.querySelector("#codeSplit");
+function wireSplit(wrap,picks,B,opt){
+  var box=wrap.querySelector(opt&&opt.sel||"#codeSplit");
   if(!box) return;
   box.querySelectorAll(".sp-way").forEach(function(b){
     b.addEventListener("click",function(){
@@ -10986,7 +11059,7 @@ function wireSplit(wrap,picks,B){
           " left today. More after midnight.</p>";
         return;
       }
-      splitAndBook(picks,n,box,B);
+      splitAndBook(picks,n,box,B,opt);
     });
   });
 }
@@ -11032,15 +11105,22 @@ function splitRowHTML(n,parts,B){
    request at a time whatever we do, the quota counts them one at a time, and a
    burst of four is the shape of traffic that got this project block-paged
    once already. */
-function splitAndBook(picks,n,host,B){
+function splitAndBook(picks,n,host,B,opt){
+  opt=opt||{};
+  /* A leg from somebody else's code is not one of our picks - it has no
+     fixture behind it and no probability, only what the bookmaker said. The
+     dealing and the booking are identical either way, so the two callers
+     differ by these two functions rather than by a second copy of all this. */
+  var selOf=opt.selOf||function(c){return B.sel(c);};
+  var oddsOf=opt.oddsOf||totalOdds;
   var parts=splitPicks(picks,n);
   host.innerHTML="<div class='sp-out' aria-live='polite'><div class='sp-wait'>"+
     "<span class='mini-load'></span>Booking "+n+" tickets…</div></div>";
   var out=host.querySelector(".sp-out");
   var done=[];
   function step(i){
-    if(i>=parts.length){ renderSplit(out,done,B); return; }
-    bookFetch(parts[i].map(function(c){return B.sel(c);}),B)
+    if(i>=parts.length){ renderSplit(out,done,B,oddsOf); return; }
+    bookFetch(parts[i].map(selOf),B)
       .then(function(d){
         var code=d&&d.success&&B.codeOf(d);
         done.push({legs:parts[i],code:code||null,
@@ -11050,7 +11130,8 @@ function splitAndBook(picks,n,host,B){
         done.push({legs:parts[i],code:null,why:"Couldn't reach the booking service."});
       })
       .then(function(){
-        out.querySelector(".sp-wait").innerHTML="<span class='mini-load'></span>"+
+        var w=out.querySelector(".sp-wait");
+        if(w) w.innerHTML="<span class='mini-load'></span>"+
           "Booking ticket "+(i+2>parts.length?parts.length:i+2)+" of "+parts.length+"…";
         step(i+1);
       });
@@ -11071,14 +11152,15 @@ function bookErrText(d,B){
     .trim().slice(0,120);
 }
 
-function renderSplit(out,done,B){
+function renderSplit(out,done,B,oddsOf){
+  oddsOf=oddsOf||totalOdds;
   var ok=done.filter(function(t){return t.code;});
   out.innerHTML="<div class='sp-head'>"+
       (ok.length===done.length
         ? done.length+" tickets, "+done.length+" codes"
         : ok.length+" of "+done.length+" tickets booked")+"</div>"+
     done.map(function(t,i){
-      var odds=totalOdds(t.legs);
+      var odds=oddsOf(t.legs);
       return "<div class='sp-t"+(t.code?"":" sp-bad")+"'>"+
         "<span class='sp-n'>"+(i+1)+"</span>"+
         (t.code
@@ -11098,6 +11180,139 @@ function renderSplit(out,done,B){
       b.textContent="Copied";
       setTimeout(function(){b.textContent="Copy";},1600);});});
 }
+
+/* ---- a code somebody else built ---- */
+/* THE READ IS NOT A TRANSCRIPT, and the panel is built around that. Both books
+   drop events from a coupon on their own schedule and neither says how many
+   legs there were, so what comes back can be shorter than what was booked and
+   there is no way to tell from the response. Every screen here therefore says
+   what WE READ, shows the games, and lets the reader judge - it never claims to
+   be their slip. */
+var BYO={book:"sporty",legs:null,code:""};
+
+function byoSel(leg){
+  return BYO.book==="bet9ja"
+    ? {eventId:leg.eventId, code:leg.prediction}
+    : {eventId:leg.eventId, prediction:leg.prediction};
+}
+/* Their prices, not ours. A borrowed slip has no fixture behind it and no
+   probability - the only honest number is the one the bookmaker printed. */
+function byoOdds(legs){
+  return legs.reduce(function(t,l){
+    var o=+l.odds; return t*(isFinite(o)&&o>1?o:1);},1);
+}
+function byoBook(){ return BOOKS[BYO.book]||BOOKS.sporty; }
+
+function byoRead(){
+  var inp=$("byoCode"), out=$("byoOut");
+  if(!inp||!out) return;
+  var code=(inp.value||"").trim().toUpperCase();
+  if(!/^[A-Za-z0-9]{4,16}$/.test(code)){
+    out.innerHTML="<div class='code-err'><b>That does not look like a booking code.</b>"+
+      "<span>Codes are 4 to 16 letters and numbers, no spaces.</span></div>";
+    return;
+  }
+  BYO.legs=null; BYO.code=code;
+  out.innerHTML="<div class='byo-wait'><span class='mini-load'></span>Reading "+
+    byoBook().label+" code "+esc(code)+"…</div>";
+  fetch("/api/slip?book="+encodeURIComponent(BYO.book)+"&code="+encodeURIComponent(code),
+        {headers:{Accept:"application/json"}})
+    .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
+    .then(function(res){
+      if(!res.ok||!res.d||!res.d.success){
+        var gone=!!(res.d&&res.d.notFound);
+        /* The likeliest cause by far, and one the reader can act on: the two
+           books issue codes that look alike and neither will read the
+           other's. Repeating the server's own sentence under a headline that
+           already said it taught nobody anything. */
+        var why=gone
+          ? "Check the code, and check the bookmaker above - "+byoBook().label+
+            " will not read a code from the other one."
+          : ((res.d&&res.d.error)||"that code could not be read");
+        out.innerHTML="<div class='code-err'><b>"+
+          (gone?"No slip behind that code.":"Couldn't read that code.")+
+          "</b><span>"+esc(String(why))+"</span></div>";
+        return;
+      }
+      BYO.legs=res.d.legs||[];
+      renderByo();
+    })
+    .catch(function(){
+      out.innerHTML="<div class='code-err'><b>Couldn't reach the reader.</b>"+
+        "<span>Check your connection and try again.</span></div>";
+    });
+}
+
+function renderByo(){
+  var out=$("byoOut"); if(!out) return;
+  var legs=BYO.legs||[];
+  /* A market we do not map cannot be re-booked, so it cannot be dealt into a
+     ticket either. Named rather than quietly dropped: a split that returns
+     fewer games than the code held is exactly the failure this panel exists to
+     avoid. */
+  var usable=legs.filter(function(l){return l.prediction;});
+  var stuck=legs.length-usable.length;
+  var B=byoBook();
+  var rows=legs.map(function(l){
+    var name=(l.home||l.away)?(esc(l.home||"?")+" v "+esc(l.away||"?")
+      ):("Game "+esc(String(l.eventId)));
+    return "<div class='byo-l"+(l.prediction?"":" byo-l-stuck")+"'>"+
+      "<span class='byo-t'>"+name+"</span>"+
+      "<span class='byo-k'>"+(l.prediction?mLabel({home:l.home||"Home",away:l.away||"Away"},l.prediction):"Market we don't carry")+"</span>"+
+      "<span class='byo-o'>"+(isFinite(+l.odds)&&+l.odds>1?"x"+(+l.odds).toFixed(2):"-")+"</span>"+
+    "</div>";}).join("");
+  out.innerHTML="<div class='byo-res'>"+
+    "<div class='byo-head'><b>"+legs.length+" game"+(legs.length===1?"":"s")+
+      " read</b><span>from "+B.label+" code "+esc(BYO.code)+"</span></div>"+
+    "<div class='byo-legs'>"+rows+"</div>"+
+    /* Said every time, not only when it bites. The reader is the only one who
+       knows how many games they put in. */
+    "<p class='byo-note'>This is what "+B.label+" gives back for that code today. "+
+      "If a game has already finished, it may no longer be in there."+
+      (stuck?" We cannot re-book "+stuck+" of these, so "+(stuck===legs.length?
+        "there is nothing to split.":"a split would leave "+(legs.length-stuck)+"."):"")+
+    "</p>"+
+    (usable.length>=4
+      ? "<div class='code-split' id='byoSplit'>"+splitBoxInner(usable,byoOdds)+"</div>"
+      : (usable.length?"<p class='byo-note'>A split needs at least four games we can re-book.</p>":""))+
+  "</div>";
+  if(usable.length>=4){
+    wireSplit(out,usable,B,{sel:"#byoSplit",selOf:byoSel,oddsOf:byoOdds});
+  }
+}
+
+/* The inside of the split box, so the modal and this panel share one set of
+   buttons and one set of prices rather than two that drift. */
+function splitBoxInner(picks,oddsOf){
+  oddsOf=oddsOf||totalOdds;
+  var ways=splitWays(picks.length);
+  if(!ways.length) return "";
+  return "<p class='sp-q'>Rather have more than one ticket?</p>"+
+    "<div class='sp-ways'>"+ways.map(function(n){
+      var parts=splitPicks(picks,n);
+      var each=parts.map(function(p){return oddsOf(p);});
+      var lo=Math.min.apply(null,each), hi=Math.max.apply(null,each);
+      var pay=lo.toFixed(lo>=100?0:1)+(hi-lo>0.05?"-"+hi.toFixed(hi>=100?0:1):"");
+      return "<button class='sp-way' type='button' data-n='"+n+"'>"+
+        "<b>"+n+" tickets</b><span>about x"+pay+" each</span></button>";}).join("")+
+    "</div>";
+}
+
+(function(){
+  var go=$("byoGo"), inp=$("byoCode"), sec=$("byo");
+  if(!go||!inp||!sec) return;
+  go.addEventListener("click",byoRead);
+  inp.addEventListener("keydown",function(e){ if(e.key==="Enter") byoRead(); });
+  sec.querySelectorAll(".byo-b").forEach(function(b){
+    b.addEventListener("click",function(){
+      BYO.book=b.dataset.book;
+      sec.querySelectorAll(".byo-b").forEach(function(o){
+        o.classList.toggle("on",o===b);});
+      /* The legs in view came from the other book and mean nothing here. */
+      BYO.legs=null; $("byoOut").innerHTML="";
+    });
+  });
+})();
 
 function shareText(picks,odds,code){
   var lines=picks.slice(0,6).map(function(c){return "\u2022 "+c.f.home+" v "+c.f.away+" - "+
