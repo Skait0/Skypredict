@@ -11272,6 +11272,10 @@ function byoOdds(legs){
     var o=+l.odds; return t*(isFinite(o)&&o>1?o:1);},1);
 }
 function byoBook(){ return BOOKS[BYO.book]||BOOKS.sporty; }
+function legStarted(l){
+  var t=l&&l.kickoff?Date.parse(l.kickoff):NaN;
+  return isFinite(t)&&t<=Date.now();
+}
 
 function byoRead(){
   var inp=$("byoCode"), out=$("byoOut");
@@ -11320,15 +11324,27 @@ function renderByo(){
      ticket either. Named rather than quietly dropped: a split that returns
      fewer games than the code held is exactly the failure this panel exists to
      avoid. */
-  var usable=legs.filter(function(l){return l.prediction;});
-  var stuck=legs.length-usable.length;
+  /* A GAME THAT HAS KICKED OFF COMES OUT OF THE TICKET.
+     Neither book will take it, so a slip built with one in it is refused
+     whole - and the reader is left reading a bookmaker's rejection instead of
+     a sentence from us. Dropped here, once, so the split and the conversion
+     both honour it rather than each deciding for itself.
+     An unknown kickoff is not a started one: SportyBet's read carries no time
+     for a game we do not hold, and refusing on a blank is refusing on nothing.
+     Those go through and the bookmaker answers for them. */
+  var started=legs.filter(legStarted);
+  var usable=legs.filter(function(l){return l.prediction&&!legStarted(l);});
+  var stuck=legs.length-usable.length-started.length;
   var B=byoBook();
   var rows=legs.map(function(l){
     var name=(l.home||l.away)?(esc(l.home||"?")+" v "+esc(l.away||"?")
       ):("Game "+esc(String(l.eventId)));
-    return "<div class='byo-l"+(l.prediction?"":" byo-l-stuck")+"'>"+
+    var gone=legStarted(l);
+    return "<div class='byo-l"+((l.prediction&&!gone)?"":" byo-l-stuck")+"'>"+
       "<span class='byo-t'>"+name+"</span>"+
-      "<span class='byo-k'>"+(l.prediction?mLabel({home:l.home||"Home",away:l.away||"Away"},l.prediction):"Market we don't carry")+"</span>"+
+      "<span class='byo-k'>"+(gone?"Already started"
+        :(l.prediction?mLabel({home:l.home||"Home",away:l.away||"Away"},l.prediction)
+                      :"Market we don't carry"))+"</span>"+
       "<span class='byo-o'>"+(isFinite(+l.odds)&&+l.odds>1?"x"+(+l.odds).toFixed(2):"-")+"</span>"+
     "</div>";}).join("");
   out.innerHTML="<div class='byo-res'>"+
@@ -11339,8 +11355,14 @@ function renderByo(){
        knows how many games they put in. */
     "<p class='byo-note'>This is what "+B.label+" gives back for that code today. "+
       "If a game has already finished, it may no longer be in there."+
-      (stuck?" We cannot re-book "+stuck+" of these, so "+(stuck===legs.length?
-        "there is nothing to split.":"a split would leave "+(legs.length-stuck)+"."):"")+
+      (started.length?" "+started.length+" of these "+(started.length===1?"has":"have")+
+        " kicked off already and cannot go on a new ticket, so "+
+        (started.length===1?"it is":"they are")+" left out.":"")+
+      /* usable, not legs minus stuck: the started ones came out too, and
+         quoting a number that still counted them promised a longer ticket
+         than the split would actually produce. */
+      (stuck?" We cannot re-book "+stuck+" of these, so "+(usable.length?
+        "a split would leave "+usable.length+".":"there is nothing to split."):"")+
     "</p>"+
     /* Two things can be done with a slip somebody hands us: move it to the
        other book, or cut it into tickets. Both are offered from the same read
@@ -11424,7 +11446,8 @@ function byoConversion(){
   (BYO.legs||[]).forEach(function(l){
     var f=l.prediction?fixtureByBookId(l.eventId,from):null;
     var id=f?f[to.id]:null;
-    if(!l.prediction) stuck.push({leg:l,why:"a market we don't carry"});
+    if(legStarted(l)) stuck.push({leg:l,why:"this game has already started"});
+    else if(!l.prediction) stuck.push({leg:l,why:"a market we don't carry"});
     else if(!f)       stuck.push({leg:l,why:"not a game on our board"});
     else if(id==null) stuck.push({leg:l,why:to.label+" doesn't list this game"});
     else {
