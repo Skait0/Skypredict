@@ -11708,11 +11708,17 @@ function splitBoxInner(picks,oddsOf){
          minted by the reader pressing the button in it. A link that booked on
          arrival would spend somebody's daily allowance for them. */
       var go=(q.get("go")||"").toLowerCase(), t0=Date.now();
-      /* Two things have to arrive first and neither is instant: the legs, and
-         the board the conversion matches them against. Clicking before the
-         board lands answers "not a game on our board" for every leg. */
+      /* Three things have to arrive first and none is instant: the legs, the
+         board, and the bookmaker ids ATTACHED to that board. DATA.fixtures
+         lands with the payload and carries no eventId at all until
+         attachEventIds has run against both feeds, so a check for fixtures
+         alone clicked too early and the panel answered "not a game on our
+         board" for every leg of a slip that converts perfectly well by hand. */
       (function arrive(){
-        var ready=BYO.legs&&(typeof DATA!=="undefined")&&DATA.fixtures&&DATA.fixtures.length;
+        var fx=(typeof DATA!=="undefined"&&DATA.fixtures)||[];
+        var bound=fx.some(function(f){return f.eventId!=null;})&&
+                  fx.some(function(f){return f.b9EventId!=null;});
+        var ready=BYO.legs&&bound;
         if(!ready&&Date.now()-t0<20000) return setTimeout(arrive,300);
         try{
           if(go==="convert"&&ready){ var cb=$("byoConvBtn"); if(cb) cb.click(); }
