@@ -3770,24 +3770,30 @@ button.wsp-go.waiting{opacity:.55}
    So it keeps the demotion and gains a shape: chip height, a ghost border,
    muted text, the arrow on the right. Secondary by every signal a reader uses,
    and unmistakably something to press. */
+/* Its own colour, because it is its own route. Red is the do-it button under
+   this one and green is a winning pick, so the Slider takes the amber that is
+   otherwise only used for a confident call - a second accent already in the
+   palette rather than a new one invented for one control. */
 .wsp-slider-link{position:relative;display:inline-flex;align-items:center;gap:8px;
-  max-width:100%;margin:10px 0 0;padding:9px 14px;
-  border:1px solid var(--line);border-radius:99px;background:var(--card-2);
-  color:var(--soft);font:inherit;font-size:12.5px;font-weight:700;
+  max-width:100%;margin:4px 0 0;padding:9px 14px;
+  border:1px solid var(--win);border-radius:99px;background:var(--win-wash);
+  color:var(--win-ink);font:inherit;font-size:12.5px;font-weight:700;
   letter-spacing:.01em;text-decoration:none;cursor:pointer;
   transition:border-color .18s ease,background .18s ease;
   -webkit-tap-highlight-color:transparent}
+/* The heading above it, tight to the pill it labels. */
+.wsp-auto-lbl{margin-top:14px}
 /* The arrow sits after the words, not pushed to a far edge - the pill is only
    as wide as what it says. */
 .wsp-slider-link .wsl-a{margin-left:2px}
 .wsp-slider-link .wsl-t{
   background-image:linear-gradient(100deg,
-    var(--soft) 0%, var(--soft) 38%, var(--text) 50%, var(--soft) 62%, var(--soft) 100%);
+    var(--win-ink) 0%, var(--win-ink) 38%, #fff 50%, var(--win-ink) 62%, var(--win-ink) 100%);
   background-size:280% 100%;
   -webkit-background-clip:text;background-clip:text;color:transparent;
   animation:wslSheen 5.5s ease-in-out infinite}
 /* The arrow is its own element so it can move without dragging the text. */
-.wsp-slider-link .wsl-a{display:inline-block;color:var(--red-ink);font-weight:800;
+.wsp-slider-link .wsl-a{display:inline-block;color:var(--win-ink);font-weight:800;
   transition:transform .22s cubic-bezier(.2,.7,.3,1)}
 /* The hairline grows from the left rather than fading, so the eye follows it
    to the words instead of the whole thing simply brightening. */
@@ -3798,9 +3804,9 @@ button.wsp-go.waiting{opacity:.55}
   100%{background-position:-40% 0}
 }
 @media(hover:hover){
-  .wsp-slider-link:hover .wsl-t{animation-play-state:paused;color:var(--text);
+  .wsp-slider-link:hover .wsl-t{animation-play-state:paused;color:#fff;
     -webkit-text-fill-color:var(--text)}
-  .wsp-slider-link:hover{border-color:var(--red-ink);background:var(--card)}
+  .wsp-slider-link:hover{border-color:var(--win-ink);background:rgba(242,184,75,.2)}
   .wsp-slider-link:hover .wsl-a{transform:translateX(4px)}
 }
 .wsp-slider-link:active .wsl-a{transform:translateX(2px)}
@@ -5109,7 +5115,10 @@ button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
   .bld-panel.wizard-panel>.wsp-hint{grid-area:3/1}
   .bld-panel.wizard-panel>.wsp-lbl:has(+ #wspStyleChips){grid-area:1/2}
   .bld-panel.wizard-panel>#wspStyleChips{grid-area:2/2}
-  .bld-panel.wizard-panel>.wsp-slider-link{grid-area:3/2;align-self:start}
+  /* Only as wide as what it says - as a grid item it was stretching to the
+     full 565px of its column, which is a pill pretending to be a bar. */
+  .bld-panel.wizard-panel>.wsp-auto-lbl{grid-area:3/2}
+  .bld-panel.wizard-panel>.wsp-slider-link{grid-area:4/2;align-self:start;justify-self:start}
   /* THE ACTION CLOSES THE PANEL, so it gets its own row across both columns
      rather than hanging off the bottom of the right-hand one. Sitting in the
      style column it read as a caption under "Or let the Slider pick the
@@ -5117,7 +5126,7 @@ button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
      empty beneath the payout chips. Left-aligned because every label in this
      panel starts at the same edge and the button is the last thing in that
      sequence, not a floating object. */
-  .bld-panel.wizard-panel>button.wsp-go{grid-area:4/1/5/-1;justify-self:start;
+  .bld-panel.wizard-panel>button.wsp-go{grid-area:5/1/6/-1;justify-self:start;
     min-width:250px;margin:18px 0 2px}
   .bld-panel.wizard-panel>.wsp-lbl{margin-top:0}
 }
@@ -5740,7 +5749,13 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 @media(max-width:560px){
   .wsp-lbl{margin:10px 0 5px}
   .wsp-chips{gap:5px}
-  .wsp-chips.mkt-palette{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+  /* FOUR COLUMNS IS TOO MANY ON A SMALL PHONE. At 360px they come out 75px
+     wide and "Team over 0.5" needs 79, so the words ran out of the pill;
+     at 320 four of the eleven labels did. The count follows the width now
+     and drops to three where four will not fit, and the chip gives the
+     text another few pixels from its own padding. */
+  .wsp-chips.mkt-palette{grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:5px}
+  .mkt-palette .mkt-chip{padding:7px 7px;gap:3px;font-size:11.5px}
   .mkt-chip{padding:6px 5px;font-size:11px;gap:3px}
   .scope-seg{margin-bottom:7px}
   .filters-body{margin-bottom:8px;padding-bottom:2px}
@@ -11295,7 +11310,7 @@ function splitBoxInner(picks,oddsOf){
   oddsOf=oddsOf||totalOdds;
   var ways=splitWays(picks.length);
   if(!ways.length) return "";
-  return "<p class='sp-q'>Rather have more than one ticket?</p>"+
+  return "<p class='sp-q'>Split it into separate tickets?</p>"+
     "<div class='sp-ways'>"+ways.map(function(n){
       var parts=splitPicks(picks,n);
       var each=parts.map(function(p){return oddsOf(p);});
@@ -14944,8 +14959,15 @@ function renderWizardPanel(){
        renderBuilderOutput, which is the only place the pool size is known;
        empty and marginless the rest of the time, like #payAsk above. */
     html += "<p class='wsp-hint' id='wspExh' hidden></p>";
+    /* "Or let the Slider pick the games" ran the width of the panel and read
+       as an afterthought to the button under it, which is what "Or" makes
+       anything sound like. It is a second way to build, so it gets a heading
+       of its own and a name rather than a sentence - and its own colour,
+       because it goes somewhere else rather than doing what the red button
+       does. */
+    html += "<div class='wsp-lbl wsp-auto-lbl'>Auto</div>";
     html += "<button class='wsp-slider-link' id='wspToSlider' type='button'>"+
-      "<span class='wsl-t'>Or let the Slider pick the games</span>"+
+      "<span class='wsl-t'>Let the Slider pick</span>"+
       "<span class='wsl-a' aria-hidden='true'>\u2192</span></button>";
   }
   html +=
