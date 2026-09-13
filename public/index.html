@@ -6204,6 +6204,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <nav class="nav" role="tablist" aria-label="View">
       <button id="tab-pred" class="navt on" type="button" role="tab">Predictions</button>
       <button id="tab-live" class="navt" type="button" role="tab">Live<span class="nv-x"> scores</span> <span class="live-dot" id="liveDot" hidden></span></button>
+      <button id="tab-convert" class="navt" type="button" role="tab">Convert a code</button>
       <button id="tab-build" class="navt build" type="button" role="tab">Build me a slip</button>
     </nav>
     <span class="when" id="when"></span>
@@ -6623,7 +6624,15 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 </button>
 <nav class="btabs" aria-label="Sections">
   <button class="btab on" id="bt-pred" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg></span>Home</button>
-  <button class="btab mid" id="bt-build" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>Build</button>
+<!-- A WAND, NOT A PLUS. The centre button mints a booking code, and a "+"
+     is the universal sign for "add one more" - on a bar whose other items
+     are destinations it read as an action on the page you were already on,
+     and people tapped it expecting to add a game. The site already calls
+     this conjuring: the panel it opens says "Conjure ticket". So the icon
+     says the same thing, and nothing else in the bar can be confused with
+     it. -->
+  <button class="btab mid" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l9.5-9.5"/><path d="M16.5 3.5l1.15 2.85L20.5 7.5l-2.85 1.15L16.5 11.5l-1.15-2.85L12.5 7.5l2.85-1.15z"/><path d="M19.6 14.4l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z"/></svg></span>Build</button>
+  <button class="btab" id="bt-convert" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13M14 5l3 3-3 3M20 16H7M10 13l-3 3 3 3"/></svg></span>Convert</button>
   <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg><span class="live-dot btab-dot" id="liveDotB" hidden></span></span>Live</button>
 </nav>
 <div class="sheet slips-sheet" id="slipsSheet" role="dialog" aria-modal="true" aria-labelledby="slipsSheet-title">
@@ -13862,6 +13871,24 @@ $("liveRefresh").addEventListener("click",fetchLive);
 $("bt-pred").addEventListener("click",function(){buzzTap();setView("pred");});
 $("bt-live").addEventListener("click",function(){buzzTap();setView("live");});
 $("bt-build").addEventListener("click",function(){buzzTap();setView("build");});
+/* THE CONVERTER HAS A WAY IN NOW. It sits at the foot of the builder, which is
+   two taps and a scroll from anywhere, and the owner has said twice they could
+   not find it. It is not a view of its own - it is one panel inside the
+   builder - so this is an action rather than a tab: switch to the builder, put
+   the panel on screen, and put the cursor in the box.
+   After setView, never before: setView ends by scrolling the window to the top,
+   so a scroll that ran first was undone the moment the view changed. */
+function goConvert(){
+  setView("build");
+  var sec=$("byo"), box=$("byoCode");
+  if(!sec) return;
+  try{ sec.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){ }
+  /* Not on a phone: focusing raises the keyboard over the panel the reader was
+     just sent to look at. */
+  try{ if(box&&window.matchMedia("(min-width:721px)").matches) box.focus(); }catch(e){}
+}
+$("tab-convert").addEventListener("click",goConvert);
+$("bt-convert").addEventListener("click",function(){buzzTap();goConvert();});
 $("logo").addEventListener("click",function(e){e.preventDefault();setView("pred");});
 (function(){
   var cta=$("slipCta"); if(!cta) return;

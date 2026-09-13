@@ -124,3 +124,20 @@ test("the rules are still on the page, folded rather than dropped", () => {
   assert.match(html, /What gets left behind, and why/);
   assert.match(html, /Where each card stops/);
 });
+
+test("the converter has a way in from the navigation", () => {
+  /* It lives at the foot of the builder, which is two taps and a scroll from
+     anywhere, and it was reported twice as unfindable. Both navigations carry
+     it: the header on a desktop, the bottom bar on a phone, where the header's
+     tabs are hidden entirely. */
+  assert.match(index, /id="tab-convert"/, "no header entry");
+  assert.match(index, /id="bt-convert"/, "no bottom-bar entry");
+  assert.match(index, /\$\("tab-convert"\)\.addEventListener\("click",goConvert\)/);
+  assert.match(index, /\$\("bt-convert"\)\.addEventListener/);
+  /* setView ends by scrolling to the top, so the panel has to be put on screen
+     after it, not before. */
+  const fn = index.slice(index.indexOf("function goConvert()"));
+  const body = fn.slice(0, 900);
+  assert.ok(body.indexOf('setView("build")') < body.indexOf("scrollIntoView"),
+    "the scroll runs before the view switch undoes it");
+});
