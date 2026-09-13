@@ -227,3 +227,13 @@ test("it is in the sitemap and not blocked in robots", () => {
   assert.match(map, /<loc>https?:\/\/[^<]+\/convert-a-booking-code<\/loc>/);
   assert.doesNotMatch(P.renderRobots(), /Disallow: \/convert/);
 });
+
+test("the bottom bar draws its own focus ring, not the browser's", () => {
+  /* Reported as a square whitish shadow on tap: .btab was the one control on
+     the site without a :focus-visible rule, so Chrome drew its default box
+     around a round marker and left it there until something else was touched.
+     The ring must stay for a keyboard - a blanket :focus{outline:none} with no
+     :focus-visible behind it is the classic accessibility own-goal. */
+  assert.match(index, /\.btab:focus\{outline:none\}/);
+  assert.match(index, /\.btab:focus-visible\{outline:2px solid var\(--red\)/);
+});

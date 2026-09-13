@@ -1128,6 +1128,17 @@ html.mode-live .btabs{transform:none!important}
   .btab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;
     color:var(--faint);font:inherit;font-size:10px;font-weight:700;padding:6px 0;cursor:pointer}
   .btab svg{width:22px;height:22px}
+  /* THE SQUARE WHITE BOX ON TAP WAS THE BROWSER'S OWN FOCUS RING.
+     Every other control here defines a :focus-visible ring and this one never
+     did, so Chrome drew its default around the whole button box: a pale
+     rectangle behind a round marker, appearing on tap and staying until
+     something else was touched. The ring is ours now, red like the rest, and
+     :focus-visible means it appears for a keyboard and not for a thumb. The
+     tap itself keeps no ring at all, which is the honest answer for a pointer
+     that can see where it just pressed. */
+  .btab:focus{outline:none}
+  .btab:focus-visible{outline:2px solid var(--red);outline-offset:-2px;
+    border-radius:14px}
   /* Sized to sit on the same baseline as the icons either side of it: the
      glyph slot is 22px tall, so this is a 22px box with the words centred in
      it rather than text pushing the label down. */
