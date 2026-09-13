@@ -11682,9 +11682,10 @@ function splitBoxInner(picks,oddsOf){
      the one below.
        ?to=<book>    the book they want a code FOR, which is how the form asks
        ?book=<book>  the book the code came FROM, for a link built by hand
-     Either one names the pair; `to` wins when both are present. The code is
-     shape-checked with the same rule the input enforces, so a crafted link
-     cannot make this send anything the box could not. */
+       ?go=convert   open the conversion once the read lands
+     Either of the first two names the pair; `book` wins when both are present.
+     The code is shape-checked with the same rule the input enforces, so a
+     crafted link cannot make this send anything the box could not. */
   try{
     var q=new URLSearchParams(location.search||"");
     var to=(q.get("to")||"").toLowerCase(), from=(q.get("book")||"").toLowerCase();
@@ -11695,23 +11696,29 @@ function splitBoxInner(picks,oddsOf){
       sec.querySelectorAll(".byo-b").forEach(function(o){
         o.classList.toggle("on",o.dataset.book===src);});
       inp.value=code;
-      /* The panel lives in the builder, which is a different view: without
-         this the read runs into a section nobody can see. */
-      setView("build");
+      /* THE READ MUST NOT DEPEND ON THE VIEW SWITCH. This ran as
+         setView("build"); byoRead(); inside one try, and setView throws at
+         boot - it repaints a builder whose payload has not landed - so the
+         whole block was swallowed and the reader arrived at a filled box that
+         had read nothing. The switch is cosmetic; the read is the point. */
+      try{ setView("build"); }catch(e){}
       byoRead();
       /* ?go=convert OPENS THE CONVERSION, IT DOES NOT BOOK ONE. The panel it
          opens only says what would move and what would not; the code is still
          minted by the reader pressing the button in it. A link that booked on
          arrival would spend somebody's daily allowance for them. */
-      var go=(q.get("go")||"").toLowerCase();
-      /* After the read, not before - the panel grows by the height of the
-         slip it just drew, and scrolling first lands above it. */
-      setTimeout(function(){
+      var go=(q.get("go")||"").toLowerCase(), t0=Date.now();
+      /* Two things have to arrive first and neither is instant: the legs, and
+         the board the conversion matches them against. Clicking before the
+         board lands answers "not a game on our board" for every leg. */
+      (function arrive(){
+        var ready=BYO.legs&&(typeof DATA!=="undefined")&&DATA.fixtures&&DATA.fixtures.length;
+        if(!ready&&Date.now()-t0<20000) return setTimeout(arrive,300);
         try{
-          if(go==="convert"){ var cb=$("byoConvBtn"); if(cb) cb.click(); }
+          if(go==="convert"&&ready){ var cb=$("byoConvBtn"); if(cb) cb.click(); }
           sec.scrollIntoView({behavior:"smooth",block:"start"});
         }catch(e){}
-      },400);
+      })();
     }
   }catch(e){ /* a malformed query string is not a reason to break the page */ }
 })();
