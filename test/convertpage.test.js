@@ -166,3 +166,64 @@ test("the red circle marks the page you are on", () => {
   assert.match(index, /\.btab\.on \.btab-dot\{display:none\}/);
   assert.match(index, /dB\.hidden=!any\|\|here/, "the live dot no longer knows where you are");
 });
+
+/* ------------------------------------------------------------------ search */
+
+test("the title and description survive being shown in a result", () => {
+  /* Google cuts a title at roughly 60 characters and a description at roughly
+     160. The old title ran to 66 with the brand on it and spent its first
+     three words - "Convert a booking code between" - before the first word
+     anybody searches for. */
+  const title = html.match(/<title>([^<]+)<\/title>/)[1];
+  assert.ok(title.length <= 60, "title is " + title.length + " characters: " + title);
+  assert.ok(title.indexOf("SportyBet") < 40 && /Bet9ja/.test(title),
+    "both book names belong near the front: " + title);
+  const desc = html.match(/name="description" content="([^"]+)"/)[1];
+  assert.ok(desc.length >= 120 && desc.length <= 160,
+    "description is " + desc.length + " characters");
+});
+
+test("one h1, and it carries the search it is for", () => {
+  assert.equal((html.match(/<h1>/g) || []).length, 1);
+  const h1 = html.match(/<h1>([^<]+)<\/h1>/)[1];
+  assert.match(h1, /SportyBet/);
+  assert.match(h1, /Bet9ja/);
+});
+
+test("the structured data describes what is on the page", () => {
+  const blocks = [...html.matchAll(/application\/ld\+json">([\s\S]*?)<\/script>/g)]
+    .map((m) => JSON.parse(m[1]));
+  const types = blocks.map((b) => b["@type"]);
+  assert.ok(types.includes("BreadcrumbList"), "no trail");
+  /* The page IS the tool. WebApplication with a zero-price offer is the honest
+     shape; HowTo and FAQPage would be schema shaped to fit a rich result
+     Google retired in 2023. */
+  const app = blocks.find((b) => b["@type"] === "WebApplication");
+  assert.ok(app, "the tool does not say it is one");
+  assert.equal(app.offers.price, "0");
+  assert.equal(app.isAccessibleForFree, true);
+  assert.ok(types.every((t) => t !== "HowTo" && t !== "FAQPage"),
+    "schema for a rich result that no longer exists");
+});
+
+test("a crawler can reach the page from the home page", () => {
+  /* THE ONE THAT MATTERS. Every navigation entry to the converter is a
+     <button>, because it is a view rather than a URL, and a crawler follows
+     none of them. Without a real anchor on the strongest page on the site, the
+     only paths in are the sitemap and the static pages' own footer. */
+  assert.match(index, /<a href="\/convert-a-booking-code">/,
+    "the home page has no crawlable link to the converter");
+  assert.match(P.renderHowToCode(), /href="\/convert-a-booking-code"/,
+    "the page about loading codes does not link to the one about moving them");
+});
+
+test("the page links on to the two pages a reader wants next", () => {
+  assert.match(html, /href="\/how-to-load-a-booking-code"/);
+  assert.match(html, /href="\/booking-codes"/);
+});
+
+test("it is in the sitemap and not blocked in robots", () => {
+  const map = P.renderSitemap(["/convert-a-booking-code"], "2026-09-13");
+  assert.match(map, /<loc>https?:\/\/[^<]+\/convert-a-booking-code<\/loc>/);
+  assert.doesNotMatch(P.renderRobots(), /Disallow: \/convert/);
+});

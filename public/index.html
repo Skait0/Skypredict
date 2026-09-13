@@ -6694,6 +6694,12 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
            sitemap, and a reader had nowhere to go. -->
       <nav class="foot-links" aria-label="Site">
         <a href="/matches">All match predictions</a>
+        <!-- THE ONLY CRAWLABLE WAY IN. The Converter is a view, so the header
+             tab and the bottom bar are both <button> - a crawler follows
+             neither, and this is the strongest page on the site. The anchor
+             says what the destination is rather than what the button says. -->
+        <a href="/convert-a-booking-code">Convert a booking code</a>
+        <a href="/booking-codes">Free booking codes</a>
         <a href="/how-it-works">How it works</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
