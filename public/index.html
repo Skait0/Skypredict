@@ -3261,11 +3261,17 @@ html.mode-live #live{display:block}
     inset 0 0 0 1px rgba(242,184,75,.45),
     inset 0 -2px 5px rgba(120,10,20,.32),
     0 2px 5px rgba(0,0,0,.32),
-    0 6px 16px rgba(230,57,70,.28);
+    0 4px 12px rgba(230,57,70,.2);
   transition:transform .12s ease,box-shadow .18s ease,filter .15s ease}
-.byo-go:active{transform:translateY(1px) scale(.985);
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.35),
-    inset 0 2px 6px rgba(120,10,20,.45),0 1px 3px rgba(0,0,0,.3)}
+/* A PRESS, NOT A SMUDGE. The inner shade was heavy enough to read as a dark
+   blur across the button, and on Android :active survives the tap until
+   something else is touched - so that blur sat there afterwards looking like a
+   rendering artefact rather than a button being pushed. Lighter, shorter, and
+   the outer glow goes out while it is held, which is what "pressed into the
+   page" actually looks like. */
+.byo-go:active{transform:translateY(1px) scale(.99);
+  box-shadow:inset 0 0 0 1px rgba(242,184,75,.4),
+    inset 0 2px 4px rgba(90,8,16,.28)}
 @media (hover:hover){
   .byo-go:hover{filter:brightness(1.05);transform:translateY(-1px);
     box-shadow:
@@ -3283,6 +3289,11 @@ html.mode-live #live{display:block}
 .byo-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;margin-bottom:9px}
 .byo-head b{font-size:13.5px;font-weight:800}
 .byo-head span{font-size:12px;font-weight:600;color:var(--faint)}
+/* The one line a reader needs before the list: how much of their slip
+   survives. Green on the part that does, because that is the number they
+   are looking for. */
+.byo-count{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--faint)}
+.byo-count b{color:var(--green-ink);font-weight:800}
 .byo-legs{display:flex;flex-direction:column;gap:1px}
 .byo-l{display:flex;align-items:baseline;gap:10px;padding:7px 0;
   border-bottom:1px solid var(--line-soft)}
@@ -11532,8 +11543,13 @@ function renderByo(){
   var stuck=legs.length-usable.length-started.length;
   var B=byoBook();
   var rows=legs.map(function(l){
+    /* NOBODY KNOWS WHAT sr:match:72203052 IS. The bookmaker's read gives us
+       its own event id and, for a game we do not carry, no team names at all -
+       and printing the id was showing the reader our plumbing where a
+       sentence belongs. The leg is still listed, because a slip with a game we
+       cannot name is a fact they have to see; it is named in words. */
     var name=(l.home||l.away)?(esc(l.home||"?")+" v "+esc(l.away||"?")
-      ):("Game "+esc(String(l.eventId)));
+      ):("A game we don't carry");
     var gone=legStarted(l);
     return "<div class='byo-l"+((l.prediction&&!gone)?"":" byo-l-stuck")+"'>"+
       "<span class='byo-t'>"+name+"</span>"+
@@ -11542,9 +11558,18 @@ function renderByo(){
                       :"Market we don't carry"))+"</span>"+
       "<span class='byo-o'>"+(isFinite(+l.odds)&&+l.odds>1?"x"+(+l.odds).toFixed(2):"-")+"</span>"+
     "</div>";}).join("");
+  /* THE COUNT FIRST, THE REASONS AFTER. What a reader wants in the first
+     second is how much of their slip survives, and that was buried in a
+     paragraph under the list. Said once, in words, above the games. */
+  var away=legs.length-usable.length;
   out.innerHTML="<div class='byo-res'>"+
     "<div class='byo-head'><b>"+legs.length+" game"+(legs.length===1?"":"s")+
       " read</b><span>from "+B.label+" code "+esc(BYO.code)+"</span></div>"+
+    "<p class='byo-count'>"+
+      (away
+        ? "<b>"+usable.length+" available</b> · "+away+" not available"
+        : "<b>All "+legs.length+" available</b>")+
+    "</p>"+
     "<div class='byo-legs'>"+rows+"</div>"+
     /* Said every time, not only when it bites. The reader is the only one who
        knows how many games they put in. */

@@ -88,3 +88,21 @@ test("both books map the 2.5 line, which is what makes that legal", () => {
     assert.ok(b.has(code), "Bet9ja no longer maps " + code);
   }
 });
+
+/* ------------------------------------------------- what a read says out loud */
+
+test("a game we do not carry is named in words, not in plumbing", () => {
+  /* The bookmaker's read returns its own event id and, for a fixture we do not
+     hold, no team names at all. "Game sr:match:72203052" was our plumbing on
+     the reader's screen. */
+  assert.doesNotMatch(src, /"Game "\+esc\(String\(l\.eventId\)\)/,
+    "the raw event id is being printed again");
+  assert.match(src, /A game we don't carry/);
+});
+
+test("the read says how much of the slip survives, before the list", () => {
+  const i = src.indexOf("byo-count"), j = src.indexOf("byo-legs");
+  assert.ok(i > 0 && i < j, "the count belongs above the games, not under them");
+  assert.match(src, /" available<\/b> \u00b7 "\+away\+" not available"/,
+    "the count no longer reads as available / not available");
+});

@@ -271,10 +271,11 @@ test("prebuild dates a page from its result rather than from the clock", () => {
      would put every page back on the build stamp with extra steps. */
   const pre = require("fs").readFileSync(
     require("path").join(__dirname, "..", "scripts", "prebuild.js"), "utf8");
-  const i = pre.indexOf("if (played) paths.push(");
+  const i = pre.indexOf("const dated =");
   assert.ok(i > 0, "prebuild no longer dates match pages individually");
-  assert.match(pre.slice(i, i + 140), /lastmod: pg\.r\.date \|\| pg\.f\.date/,
+  assert.match(pre.slice(i, i + 220), /const dated = \(pg\.r && pg\.r\.date\) \|\| pg\.f\.date/,
     "the date must come from the result, not from the build clock");
+  assert.match(pre.slice(i, i + 260), /paths\.push\(\{ path: rel, lastmod: dated \}\)/);
 });
 
 /* ----------------------------------------------- what we ask to be indexed */
@@ -311,7 +312,7 @@ test("the sitemap never lists a page we told Google to skip", () => {
     require("path").join(__dirname, "..", "scripts", "prebuild.js"), "utf8");
   const i = pre.indexOf("const played = pg.r && pg.r.hg != null");
   assert.ok(i > 0, "prebuild no longer distinguishes played from upcoming");
-  assert.match(pre.slice(i, i + 220), /if \(played\) paths\.push\(/,
+  assert.match(pre.slice(i, i + 320), /if \(played && P\.inSitemapWindow\(/,
     "unplayed fixtures are being submitted again");
 });
 

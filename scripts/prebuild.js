@@ -318,6 +318,7 @@ async function writePages(payload) {
     }
   } catch (e) { warn("could not clear public/m: " + e.message); }
   const paths = [];
+  const todayISO = new Date().toISOString().slice(0, 10);
   /* Every page needs the rest of its own day, so the grouping happens once
      here rather than per page - see sameDayBlock in lib/pages.js. */
   const sameDay = P.groupByDate(pages.map((pg) => pg.f));
@@ -338,9 +339,17 @@ async function writePages(payload) {
          indexed. Listing one we have told Google to skip is a contradiction it
          reports back as an error. See renderMatchPage for why the two halves
          are treated differently. */
+      /* Played AND recent. See inSitemapWindow: a thousand thin result pages
+         in the sitemap is how this site spent its crawl budget on the pages it
+         cares least about, and Search Console answered with 1,080 "Discovered
+         - currently not indexed". Older pages stay written, stay linked from
+         their day page, and stay crawlable - they are simply not the thing we
+         ask for. */
       const played = pg.r && pg.r.hg != null && pg.r.ag != null;
-      if (played) paths.push({ path: rel, lastmod: pg.r.date || pg.f.date });
-      else skipped++;
+      const dated = (pg.r && pg.r.date) || pg.f.date;
+      if (played && P.inSitemapWindow(dated, todayISO)) {
+        paths.push({ path: rel, lastmod: dated });
+      } else skipped++;
       written++;
     } catch (e) {
       failed++;
@@ -397,7 +406,7 @@ async function writePages(payload) {
      the build: a past day stops changing once its last match is graded, which
      is the whole reason for splitting the hub - see renderMatchesIndex. */
   const byDay = P.groupByDate(pages.map((pg) => pg.f));
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO;
   let dayPages = 0;
   try {
     fs.mkdirSync(path.join(PUB, "matches"), { recursive: true });
