@@ -10576,10 +10576,35 @@ function mLabel(f,c){
   /* 1X2-or-Over/Under, which is parameterised rather than a fixed list: three
      sides by two directions by whichever line the book sells. Built here so a
      new line needs no new case. */
+  var side3=function(k){return k==="1"?esc(f.home):(k==="2"?esc(f.away):"Draw");};
   var mx=/^MIX_([12X])_(OV|UN)_([\d.]+)$/.exec(c||"");
-  if(mx){
-    var side=mx[1]==="1"?esc(f.home):(mx[1]==="2"?esc(f.away):"Draw");
-    return side+" or "+(mx[2]==="OV"?"over ":"under ")+mx[3]+" goals";
+  if(mx) return side3(mx[1])+" or "+(mx[2]==="OV"?"over ":"under ")+mx[3]+" goals";
+  /* Everything the converter learned to read today. Parameterised rather than
+     a case each, because the lines and thresholds come from whatever the books
+     are selling. Unlabelled, these printed as their own codes on the panel -
+     "CORNERS_OV_8.5" where a sentence belongs. */
+  var mg=/^MIX(GG|NG)_([12X])$/.exec(c||"");
+  if(mg) return side3(mg[2])+" or "+(mg[1]==="GG"?"both teams to score":"no goals");
+  var cd=/^CARD_([HA])_(\d)$/.exec(c||"");
+  if(cd) return (cd[1]==="H"?esc(f.home):esc(f.away))+" "+cd[2]+"+ cards";
+  var cn=/^CORNERS_(OV|UN)_([\d.]+)$/.exec(c||"");
+  if(cn) return (cn[1]==="OV"?"Over ":"Under ")+cn[2]+" corners";
+  var wh=/^WINHALF_([HA])_([YN])$/.exec(c||"");
+  if(wh) return (wh[1]==="H"?esc(f.home):esc(f.away))+
+    (wh[2]==="Y"?" to win a half":" not to win a half");
+  var db=/^DNB_([12])$/.exec(c||"");
+  if(db) return side3(db[1])+", draw no bet";
+  var d2=/^DC2_(1X|12|X2)$/.exec(c||"");
+  if(d2) return "2nd half: "+(d2[1]==="1X"?esc(f.home)+" or draw"
+    :(d2[1]==="12"?esc(f.home)+" or "+esc(f.away):"draw or "+esc(f.away)));
+  /* The line is the HOME team's on both books, so the away side of it is the
+     inverse - printing the raw number against the away name would say the
+     opposite of the bet. */
+  var ah=/^AH_([12])_(-?[\d.]+)$/.exec(c||"");
+  if(ah){
+    var n=parseFloat(ah[2]);
+    var shown=ah[1]==="1"?n:-n;
+    return (ah[1]==="1"?esc(f.home):esc(f.away))+" "+(shown>0?"+":"")+shown;
   }
   return c;
 }
