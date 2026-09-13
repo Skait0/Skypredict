@@ -1115,12 +1115,12 @@ html.mode-live .btabs{transform:none!important}
      the bar with its shadow, and the labels keep their own spacing below. */
   .btabs{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:120;
     background:var(--card);border-top:1px solid var(--line);overflow:visible;
-    padding:22px 8px calc(6px + env(safe-area-inset-bottom));align-items:flex-end;justify-content:space-around}
+    padding:10px 8px calc(8px + env(safe-area-inset-bottom));align-items:flex-end;justify-content:space-around}
   /* What the bar actually occupies: 22px of rise-room, a 22px icon, 3px gap,
      a 12px label, 6px under it, and the home indicator. Everything that has to
      sit above the bar measures from this rather than from a number somebody
      typed once - which is how the My slip button ended up on the Live tab. */
-  :root{--btabs-h:calc(90px + env(safe-area-inset-bottom))}
+  :root{--btabs-h:calc(78px + env(safe-area-inset-bottom))}
   /* Above the tab bar, not on it. The bar is fixed to the bottom and every
      item in it is a target, so a toast landing there hides what you are
      aiming at even though it cannot intercept the tap. */
@@ -1144,25 +1144,30 @@ html.mode-live .btabs{transform:none!important}
      baseline - the old raised button pushed its own label up with it. */
   .btab .bt-ic{transition:background .2s ease,color .2s ease,width .2s ease,
     height .2s ease,margin .2s ease,box-shadow .2s ease}
-  /* A FLAT DISC OF ONE RED READS AS A STICKER. Three layers give it a body,
-     all of them cheap: a top-lit gradient so the light has a direction, a
-     hairline of white inside the top edge where that light would catch, and
-     two shadows - a tight contact shadow under it and a wide coloured glow
-     that ties it to the bar. The ring in the bar's own colour separates it
-     from the surface it sits on. */
-  .btab.on .bt-ic{width:52px;height:52px;margin-top:-20px;border-radius:50%;
+  /* IT DOES NOT LEVITATE ANY MORE, AND THAT IS THE FIX.
+     A disc lifted out of the bar has to break the bar's top edge to do it, so
+     on any screen where that edge lands mid-circle it reads as cut off - and
+     no amount of padding settles that argument, because the shape is fighting
+     the surface it sits on. The lift was borrowed from a floating action
+     button, which is a thing you press; this is a selection marker, which is a
+     thing you read. Markers sit inside the bar. It is round, filled, and
+     entirely within the surface, so there is no edge to cross.
+     It keeps its body - a top-lit gradient, a gold hairline where that light
+     would catch, a soft inner shade at the bottom and a coloured glow beneath -
+     so it still reads as a raised object, just one that stays in its box. */
+  .btab.on .bt-ic{width:44px;height:44px;margin-top:-6px;border-radius:50%;
     background:
       radial-gradient(120% 100% at 50% 0%,rgba(255,255,255,.34) 0%,rgba(255,255,255,0) 58%),
       linear-gradient(180deg,#f4555f 0%,var(--red-fill) 52%,#c92c38 100%);
     color:#fff;
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.45),
+      inset 0 1px 0 rgba(242,184,75,.5),
+      inset 0 0 0 1px rgba(242,184,75,.4),
       inset 0 -2px 6px rgba(120,10,20,.35),
-      0 0 0 4px var(--card),
-      0 3px 8px rgba(0,0,0,.45),
-      0 10px 22px rgba(230,57,70,.42)}
+      0 2px 6px rgba(0,0,0,.4),
+      0 6px 16px rgba(230,57,70,.35)}
   .btab.on svg{filter:drop-shadow(0 1px 1px rgba(110,10,18,.45))}
-  .btab.on svg{width:24px;height:24px}
+  .btab.on svg{width:23px;height:23px}
   /* The pulse is a nudge toward live football you are NOT looking at. On the
      red disc it would be a red dot on red, and syncLiveDots already hides it
      the moment Live is the page you are on - this is the visual half of the
