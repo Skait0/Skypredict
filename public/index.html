@@ -10714,7 +10714,13 @@ function mProb(f,c){
    with the whole ticket behind it. */
 var BOOK_ONLY={"MIX_X_OV_1.5":"bet9ja",
   /* The whole 1.5 rung of the 1X2-or-Over/Under family is Bet9ja's: draw,
-     home and away. SportyBet's card starts at 2.5 on all three. */
+     home and away. SportyBet's card starts at 2.5 on all three.
+     THE UNDER SIDE AND THE 3.5 RUNG ARE NOT MISSING - they are declined. Bet9ja
+     maps MIX_*_UN_1.5 and the whole 3.5 rung as well, and adding them was
+     offered and turned down on 13 Sep: they are low-probability bets, so they
+     would widen the risky end of a board whose seven newest markets have not
+     yet graded a single live result. Revisit when those have a record, not
+     before. */
   "MIX_1_OV_1.5":"bet9ja","MIX_2_OV_1.5":"bet9ja"};
 function bookAllows(code,B){
   var only=BOOK_ONLY[code];
