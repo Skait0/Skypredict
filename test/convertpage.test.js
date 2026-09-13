@@ -134,10 +134,10 @@ test("the converter has a way in from the navigation", () => {
   assert.match(index, /id="bt-convert"/, "no bottom-bar entry");
   assert.match(index, /\$\("tab-convert"\)\.addEventListener\("click",goConvert\)/);
   assert.match(index, /\$\("bt-convert"\)\.addEventListener/);
-  /* Two arrows swapping is the shuffle glyph - #shuffleBtn draws it - so the
-     bottom bar names the books in words instead of showing the same picture
-     for two different actions. */
-  assert.match(index, /class="bt-conv"/, "the bottom-bar entry lost its word-mark");
+  /* No glyph: two arrows swapping is what #shuffleBtn draws, and naming the
+     two books we carry today would be wrong the day a third arrives. */
+  assert.match(index, /id="bt-convert"[^>]*>Converter</, "the bottom-bar entry lost its word");
+  assert.doesNotMatch(index, /SB<i>/, "the entry names individual bookmakers again");
   const entry = index.slice(index.indexOf('id="bt-convert"'));
   assert.doesNotMatch(entry.slice(0, entry.indexOf("</button>")), /<svg/,
     "the convert entry is drawing a glyph again");

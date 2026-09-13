@@ -1121,9 +1121,10 @@ html.mode-live .btabs{transform:none!important}
   /* Sized to sit on the same baseline as the icons either side of it: the
      glyph slot is 22px tall, so this is a 22px box with the words centred in
      it rather than text pushing the label down. */
-  .bt-conv{display:inline-flex;align-items:center;justify-content:center;gap:2px;
-    height:22px;font-size:10px;font-weight:800;letter-spacing:.02em;line-height:1}
-  .bt-conv i{font-style:normal;font-size:11px;opacity:.65}
+  /* The one item with no picture. It centres itself in the bar's height
+     rather than sitting on the label baseline, so the row reads as three
+     icons and a word rather than as an icon that failed to load. */
+  .btab-word{justify-content:center;font-size:12.5px;padding-bottom:10px}
   .btab.on{color:var(--red-ink)}
   .btab.mid{margin-top:-18px}
   .btab.mid .bt-ic{width:52px;height:52px;border-radius:50%;background:var(--red-fill);color:#fff;
@@ -6218,7 +6219,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <nav class="nav" role="tablist" aria-label="View">
       <button id="tab-pred" class="navt on" type="button" role="tab">Predictions</button>
       <button id="tab-live" class="navt" type="button" role="tab">Live<span class="nv-x"> scores</span> <span class="live-dot" id="liveDot" hidden></span></button>
-      <button id="tab-convert" class="navt" type="button" role="tab">Convert a code</button>
+      <button id="tab-convert" class="navt" type="button" role="tab">Converter</button>
       <button id="tab-build" class="navt build" type="button" role="tab">Build me a slip</button>
     </nav>
     <span class="when" id="when"></span>
@@ -6652,12 +6653,13 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
      says the same thing, and nothing else in the bar can be confused with
      it. -->
   <button class="btab mid" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l9.5-9.5"/><path d="M16.5 3.5l1.15 2.85L20.5 7.5l-2.85 1.15L16.5 11.5l-1.15-2.85L12.5 7.5l2.85-1.15z"/><path d="M19.6 14.4l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z"/></svg></span>Build</button>
-  <!-- WORDS, BECAUSE THE GLYPH WAS ALREADY TAKEN. Two arrows swapping is
-       the shuffle icon - #shuffleBtn on the builder draws exactly that -
-       so the bar had the same picture meaning two different things. The
-       books name themselves instead, which needs no icon vocabulary at
-       all: anyone holding a code knows which of the two issued it. -->
-  <button class="btab" id="bt-convert" type="button"><span class="bt-ic"><span class="bt-conv" aria-hidden="true">SB<i>⇄</i>9JA</span></span>Convert</button>
+  <!-- A WORD AND NOTHING ELSE. It was two arrows swapping, which is the
+       shuffle icon (#shuffleBtn draws exactly that), then "SB - 9JA",
+       which named the only two books we carry today. A third bookmaker
+       makes that mark wrong rather than merely cramped, and there is no
+       glyph for "move a slip between books" that anybody reads on sight.
+       The word says it and keeps saying it however many books we add. -->
+  <button class="btab btab-word" id="bt-convert" type="button">Converter</button>
   <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg><span class="live-dot btab-dot" id="liveDotB" hidden></span></span>Live</button>
 </nav>
 <div class="sheet slips-sheet" id="slipsSheet" role="dialog" aria-modal="true" aria-labelledby="slipsSheet-title">
