@@ -134,17 +134,32 @@ test("the converter has a way in from the navigation", () => {
   assert.match(index, /id="bt-convert"/, "no bottom-bar entry");
   assert.match(index, /\$\("tab-convert"\)\.addEventListener\("click",goConvert\)/);
   assert.match(index, /\$\("bt-convert"\)\.addEventListener/);
-  /* No glyph: two arrows swapping is what #shuffleBtn draws, and naming the
-     two books we carry today would be wrong the day a third arrives. */
-  assert.match(index, /id="bt-convert"[^>]*>Converter</, "the bottom-bar entry lost its word");
+  /* The entry keeps its word whatever the icon does: "Converter", never the
+     names of the two books we happen to carry today. */
+  assert.match(index, /id="bt-convert"[\s\S]{0,600}>Converter</, "the entry lost its word");
   assert.doesNotMatch(index, /SB<i>/, "the entry names individual bookmakers again");
-  const entry = index.slice(index.indexOf('id="bt-convert"'));
-  assert.doesNotMatch(entry.slice(0, entry.indexOf("</button>")), /<svg/,
-    "the convert entry is drawing a glyph again");
+  /* And its icon must not be the shuffle glyph, which #shuffleBtn owns. */
+  const conv = index.slice(index.indexOf('id="bt-convert"'));
+  const icon = conv.slice(0, conv.indexOf("</button>"));
+  assert.match(icon, /<svg/, "the entry has no icon");
+  assert.doesNotMatch(icon, /M16 3h5v5/, "that is the shuffle icon");
   /* setView ends by scrolling to the top, so the panel has to be put on screen
      after it, not before. */
   const fn = index.slice(index.indexOf("function goConvert()"));
   const body = fn.slice(0, 900);
   assert.ok(body.indexOf('setView("build")') < body.indexOf("scrollIntoView"),
     "the scroll runs before the view switch undoes it");
+});
+
+test("the red circle marks the page you are on", () => {
+  /* It sat on Build and never moved, which made it a call to action and left
+     the current page marked by red text alone. A bar that does not say where
+     you are is worth less than the emphasis it was buying. */
+  assert.match(index, /\.btab\.on \.bt-ic\{[^}]*border-radius:50%/,
+    "the active tab no longer takes the circle");
+  assert.doesNotMatch(index, /class="btab mid"/, "the circle is pinned to one tab again");
+  /* A red pulse on the red disc is invisible, and syncLiveDots already stops
+     nudging you toward the page you are standing on. */
+  assert.match(index, /\.btab\.on \.btab-dot\{display:none\}/);
+  assert.match(index, /dB\.hidden=!any\|\|here/, "the live dot no longer knows where you are");
 });

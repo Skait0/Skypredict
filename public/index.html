@@ -1121,15 +1121,29 @@ html.mode-live .btabs{transform:none!important}
   /* Sized to sit on the same baseline as the icons either side of it: the
      glyph slot is 22px tall, so this is a 22px box with the words centred in
      it rather than text pushing the label down. */
-  /* The one item with no picture. It centres itself in the bar's height
-     rather than sitting on the label baseline, so the row reads as three
-     icons and a word rather than as an icon that failed to load. */
-  .btab-word{justify-content:center;font-size:12.5px;padding-bottom:10px}
   .btab.on{color:var(--red-ink)}
-  .btab.mid{margin-top:-18px}
-  .btab.mid .bt-ic{width:52px;height:52px;border-radius:50%;background:var(--red-fill);color:#fff;
-    display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(230,57,70,.5)}
-  .btab.mid svg{width:24px;height:24px}
+  /* THE RED CIRCLE IS WHERE YOU ARE.
+     It used to live on Build and never move, which made it the primary action
+     and left the current page marked by nothing but red text. Now it rides the
+     active tab, so the bar answers "where am I" at a glance and every
+     destination gets the same treatment when you are standing on it.
+     What this costs: Build no longer advertises itself as the main thing to
+     press. The hero and the home page both do that work, and a navigation bar
+     that lies about where you are costs more.
+     The lift is on the icon rather than the button, so all four labels keep one
+     baseline - the old raised button pushed its own label up with it. */
+  .btab .bt-ic{transition:background .2s ease,color .2s ease,width .2s ease,
+    height .2s ease,margin .2s ease,box-shadow .2s ease}
+  .btab.on .bt-ic{width:52px;height:52px;margin-top:-20px;border-radius:50%;
+    background:var(--red-fill);color:#fff;
+    box-shadow:0 6px 16px rgba(230,57,70,.5)}
+  .btab.on svg{width:24px;height:24px}
+  /* The pulse is a nudge toward live football you are NOT looking at. On the
+     red disc it would be a red dot on red, and syncLiveDots already hides it
+     the moment Live is the page you are on - this is the visual half of the
+     same rule. */
+  .btab.on .btab-dot{display:none}
+  @media (prefers-reduced-motion:reduce){.btab .bt-ic{transition:none}}
   body{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
   .myfab{bottom:84px}
 }
@@ -6652,14 +6666,14 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
      this conjuring: the panel it opens says "Conjure ticket". So the icon
      says the same thing, and nothing else in the bar can be confused with
      it. -->
-  <button class="btab mid" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l9.5-9.5"/><path d="M16.5 3.5l1.15 2.85L20.5 7.5l-2.85 1.15L16.5 11.5l-1.15-2.85L12.5 7.5l2.85-1.15z"/><path d="M19.6 14.4l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z"/></svg></span>Build</button>
-  <!-- A WORD AND NOTHING ELSE. It was two arrows swapping, which is the
-       shuffle icon (#shuffleBtn draws exactly that), then "SB - 9JA",
-       which named the only two books we carry today. A third bookmaker
-       makes that mark wrong rather than merely cramped, and there is no
-       glyph for "move a slip between books" that anybody reads on sight.
-       The word says it and keeps saying it however many books we add. -->
-  <button class="btab btab-word" id="bt-convert" type="button">Converter</button>
+  <button class="btab" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l9.5-9.5"/><path d="M16.5 3.5l1.15 2.85L20.5 7.5l-2.85 1.15L16.5 11.5l-1.15-2.85L12.5 7.5l2.85-1.15z"/><path d="M19.6 14.4l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z"/></svg></span>Build</button>
+  <!-- A SLIP AND ONE ARROW OUT OF IT. Not two arrows swapping - that is
+       the shuffle icon, #shuffleBtn draws exactly that - and not the two
+       books named, which a third bookmaker would make wrong rather than
+       merely cramped. A card with an arrow leaving it says "this slip,
+       over there" and stays true however many books we add. The word
+       under it carries the rest. -->
+  <button class="btab" id="bt-convert" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M14.5 12h6.5M18 9l3 3-3 3"/></svg></span>Converter</button>
   <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg><span class="live-dot btab-dot" id="liveDotB" hidden></span></span>Live</button>
 </nav>
 <div class="sheet slips-sheet" id="slipsSheet" role="dialog" aria-modal="true" aria-labelledby="slipsSheet-title">
