@@ -2181,6 +2181,10 @@ html.locked{overflow:hidden}
   .book-btn{padding:10px 18px;font-size:14px}
   .bld-foot{padding:10px;gap:8px}
   .bld-foot .clear-btn{width:38px;height:38px}
+  /* The square is for the icon-only ones. Shuffle carries a word, so it
+     is as wide as the word and no wider. */
+  .bld-foot .clear-btn.wordy{width:auto;padding:0 13px;gap:6px}
+  .bld-foot .clear-btn.wordy span{font-size:13px}
   .confirm-go,.confirm-cancel{padding:9px 16px;font-size:13.5px}
   .slip-cta{animation:none;padding:12px 16px}      /* kill the pulsing glow loop on desktop */
   .slip-cta::after{display:none}
@@ -3025,6 +3029,10 @@ html.mode-live #live{display:block}
   background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);border-radius:var(--r-sm);
   cursor:pointer;font-size:0;transition:background .15s,color .15s,border-color .15s,transform .12s}
 .bld-foot .clear-btn svg{display:block;width:17px;height:17px}
+/* An icon button that carries its name. Sized by its contents rather
+   than by the square the icon-only buttons keep. */
+.clear-btn.wordy{display:inline-flex;align-items:center;gap:7px;width:auto}
+.clear-btn.wordy span{font-size:13.5px;letter-spacing:.01em}
 .bld-foot .clear-btn:hover{background:var(--card-2);color:var(--text);border-color:var(--soft)}
 .bld-foot .clear-btn:active{transform:scale(.94)}
 .bld-odds{flex:1}
@@ -6492,7 +6500,13 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <div id="slip" data-parallax="0.3"></div>
     <div class="bookpick" data-bookpick="build" role="group" aria-label="Bookmaker" hidden></div>
     <div class="bld-foot stage-in stage-in-4" id="bldFoot" data-parallax="0.2">
-      <button class="clear-btn" id="shuffleBtn" type="button" aria-label="Shuffle" title="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
+      <!-- THE WORD, NOT JUST THE GLYPH. Crossing arrows mean shuffle to
+           anyone who has used a music player and nothing at all to anyone
+           who has not, and re-dealing the slip is the control people use
+           most on this panel. The icon stays as the picture beside the
+           word; the word is what makes it findable. Clear keeps its bin,
+           which is read the same way everywhere. -->
+      <button class="clear-btn wordy" id="shuffleBtn" type="button" title="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg><span>Shuffle</span></button>
       <button class="clear-btn" id="clearBtn" type="button" aria-label="Clear" title="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg></button>
       <button class="book-btn" id="bookBtn" type="button">Get code</button>
     </div>
