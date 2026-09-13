@@ -162,3 +162,16 @@ test("a full-time score cannot settle it, and gradeLeg says so", () => {
   /* The combinations beside it still settle from the score. */
   assert.equal(gradeLeg({}, "MIX_X_OV_1.5", 1, 1), true);
 });
+
+test("the 1.5 rung of the family is Bet9ja's, all three of it", () => {
+  /* SportyBet's 1X2-or-Over/Under card starts at 2.5 on every sign. Miss one
+     and the slider builds a leg the reader's bookmaker will refuse, taking the
+     whole ticket with it. */
+  const BOOK_ONLY = new Function(
+    "return " + src.match(/var BOOK_ONLY=(\{[\s\S]*?\});/)[1] + ";")();
+  assert.deepEqual(Object.keys(BOOK_ONLY).sort(),
+    ["MIX_1_OV_1.5", "MIX_2_OV_1.5", "MIX_X_OV_1.5"]);
+  Object.values(BOOK_ONLY).forEach((b) => assert.equal(b, "bet9ja"));
+  /* And the 2.5 rung stays on both, which is what makes it the default. */
+  assert.ok(!BOOK_ONLY["MIX_1_OV_2.5"] && !BOOK_ONLY["MIX_X_OV_2.5"]);
+});

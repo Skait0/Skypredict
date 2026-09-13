@@ -36,7 +36,12 @@ const K = { home: .75, draw: .15, away: .10, dc1x: .90, dcx2: .25,
      throws - which is the behaviour that caught the camelCase bug this file
      exists for, so the fixture grows rather than the guard loosening. */
   drawOrO25: .66, drawOrBtts: .59, drawOrO15: .82,
-  homeOrBtts: .82, awayOrBtts: .55, homeOrO25: .85, awayOrO25: .64 };
+  homeOrBtts: .82, awayOrBtts: .55, homeOrO25: .85, awayOrO25: .64,
+  homeOrO15: .92, awayOrO15: .78,
+  /* Win either half comes from two half distributions rather than this
+     matrix - see markets() - and grades only where a half-time score
+     came with the match. */
+  homeWinHalf: .74, awayWinHalf: .41 };
 
 function grade(k, mm) { const acc = {}; M.gradeEveryMarket(acc, k, mm); return acc; }
 const row = (acc, name) => acc[name] || { total: 0, correct: 0, exp: 0 };
