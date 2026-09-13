@@ -3140,6 +3140,10 @@ html.mode-live #live{display:block}
   border:1px solid var(--line);color:var(--soft);transition:background .15s,color .15s}
 @media (hover:hover){.byo-cancel:hover{background:var(--raise);color:var(--text)}}
 .byo-conv{margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft)}
+.byo-offer{margin-top:10px;padding:10px 12px;background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md)}
+.byo-sw{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--text)}
+.byo-sw input{width:16px;height:16px;accent-color:var(--win);cursor:pointer;flex:0 0 auto}
+.byo-offer .byo-note{margin-top:6px}
 .byo-changed{color:var(--win-ink)}
 .byo-changed b{color:var(--win-ink)}
 /* ---- a code somebody else built, at the foot of the builder ---- */
@@ -10569,6 +10573,14 @@ function mLabel(f,c){
     case"OVER_3":return"Over 3 goals";
     case"UNDER_2":return"Under 2 goals";
     case"UNDER_3":return"Under 3 goals";}
+  /* 1X2-or-Over/Under, which is parameterised rather than a fixed list: three
+     sides by two directions by whichever line the book sells. Built here so a
+     new line needs no new case. */
+  var mx=/^MIX_([12X])_(OV|UN)_([\d.]+)$/.exec(c||"");
+  if(mx){
+    var side=mx[1]==="1"?esc(f.home):(mx[1]==="2"?esc(f.away):"Draw");
+    return side+" or "+(mx[2]==="OV"?"over ":"under ")+mx[3]+" goals";
+  }
   return c;
 }
 /* How many of your still-running slips already carry this fixture.
@@ -11246,7 +11258,7 @@ function renderSplit(out,done,B,oddsOf){
    there is no way to tell from the response. Every screen here therefore says
    what WE READ, shows the games, and lets the reader judge - it never claims to
    be their slip. */
-var BYO={book:"sporty",legs:null,code:""};
+var BYO={book:"sporty",legs:null,code:"",reline:false};
 
 function byoSel(leg){
   return BYO.book==="bet9ja"
@@ -11390,9 +11402,25 @@ function otherBook(B){ return BOOKS[B.key==="sporty"?"bet9ja":"sporty"]; }
 var NEAREST_LINE={"OVER_2":"OVER_1.5","OVER_3":"OVER_2.5",
                   "UNDER_2":"UNDER_2.5","UNDER_3":"UNDER_3.5"};
 
+/* THE SECOND TIER, AND WHY IT IS A SWITCH RATHER THAN A DEFAULT.
+   1X2-or-Over/Under is the family these codes lean on hardest - 45 legs of
+   180. SportyBet sells it only at 2.5, Bet9ja only at 1.5 and 3.5, and nothing
+   overlaps, so the leg cannot travel without its line changing. Unlike Over 2
+   to Over 1.5, which differ only on the exact score, this moves a whole goal.
+   That is a different bet by any reading, so it is offered rather than done.
+   ONE DIRECTION ONLY. Bet9ja's 1.5 and 3.5 each have exactly one place to go,
+   so the move is unambiguous. Going the other way 2.5 sits between their two
+   lines with no honest nearest, and picking one would be inventing a
+   preference on somebody else's money - so that direction is refused and says
+   which lines they do sell. */
+function mixReline(code){
+  var m=/^(MIX_[12X]_(?:OV|UN))_(?:1\.5|3\.5)$/.exec(code||"");
+  return m?(m[1]+"_2.5"):null;
+}
+
 function byoConversion(){
   var from=byoBook(), to=otherBook(from);
-  var picks=[], stuck=[], changed=[];
+  var picks=[], stuck=[], changed=[], offer=[];
   (BYO.legs||[]).forEach(function(l){
     var f=l.prediction?fixtureByBookId(l.eventId,from):null;
     var id=f?f[to.id]:null;
@@ -11402,10 +11430,18 @@ function byoConversion(){
     else {
       /* Only when the line itself cannot travel. A market the other book
          sells is never substituted. */
-      var code=l.prediction, near=NEAREST_LINE[code];
+      var code=l.prediction, near=NEAREST_LINE[code], mix=mixReline(code);
       if(near && to.key==="bet9ja"){
         changed.push({leg:l, from:code, to:near});
         code=near;
+      } else if(mix && to.key==="sporty"){
+        /* Offered, never assumed - see mixReline. */
+        if(!BYO.reline){ offer.push({leg:l, from:code, to:mix}); return; }
+        changed.push({leg:l, from:code, to:mix});
+        code=mix;
+      } else if(/^MIX_/.test(code) && to.key==="bet9ja"){
+        stuck.push({leg:l, why:to.label+" sells this at 1.5 and 3.5, not 2.5"});
+        return;
       }
       /* mProb, not f[code]: the payload keys probabilities as o15/o25/btts,
          so indexing it with a market code gave undefined, and undefined
@@ -11415,7 +11451,7 @@ function byoConversion(){
       picks.push({id:fid(f),code:code,f:f,p:mProb(f,code)});
     }
   });
-  return {from:from,to:to,picks:picks,stuck:stuck,changed:changed};
+  return {from:from,to:to,picks:picks,stuck:stuck,changed:changed,offer:offer};
 }
 /* Their price where the other book has published one, ours only as a last
    resort - a converted slip is worth what the book taking it pays. */
@@ -11443,6 +11479,21 @@ function renderConvert(){
   host.innerHTML="<div class='byo-conv'>"+
     "<div class='byo-head'><b>"+c.picks.length+" of "+(BYO.legs||[]).length+
       " games move to "+esc(c.to.label)+"</b><span>about x"+odds.toFixed(odds>=100?0:2)+"</span></div>"+
+    /* Drawn whenever the slip HAS legs this governs, ticked or not. Keyed on
+       c.offer alone it vanished the moment it was ticked - the legs moved into
+       c.changed, the offer emptied, and there was no way to untick it. */
+    (function(){
+      var relinable=c.offer.concat(c.changed.filter(function(x){return mixReline(x.from);}));
+      if(!relinable.length) return "";
+      return "<div class='byo-offer'><label class='byo-sw'>"+
+        "<input type='checkbox' id='byoReline'"+(BYO.reline?" checked":"")+">"+
+        "<span>Also move "+relinable.length+" leg"+(relinable.length===1?"":"s")+
+        " by changing the line</span></label>"+
+        "<p class='byo-note'>"+esc(c.to.label)+" sells "+
+        esc(mLabel({home:"Home",away:"Away"},relinable[0].from))+" only at 2.5. "+
+        "Moving it changes the bet by a whole goal - not the same thing as the "+
+        "half-line above.</p></div>";
+    })()+
     (c.changed.length
       ? "<p class='byo-note byo-changed'><b>"+c.changed.length+
         (c.changed.length===1?" leg was":" legs were")+" changed to a line "+
@@ -11466,6 +11517,8 @@ function renderConvert(){
     "<div id='byoConvOut'></div>"+
   "</div>";
   $("byoConvX").addEventListener("click",function(){ host.innerHTML=""; });
+  var sw=$("byoReline");
+  if(sw) sw.addEventListener("change",function(){ BYO.reline=sw.checked; renderConvert(); });
   $("byoConvGo").addEventListener("click",function(){
     var b=$("byoConvGo"); b.disabled=true; b.textContent="Booking…";
     /* The ordinary booking path, on ordinary picks. Nothing about a converted
