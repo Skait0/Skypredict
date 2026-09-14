@@ -3184,24 +3184,25 @@ html.mode-live #live{display:block}
    than a brand: the name now carries the weight their own logo does, and the
    pill has a soft top light and a shadow under it so it sits on the surface
    instead of being printed on it. */
-.bp[data-book="sporty"]{
-  background:linear-gradient(180deg,#fff,#f0f1f3);
-  color:var(--red);font-weight:900;letter-spacing:-.01em;font-size:13px;
-  box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(0,0,0,.08),
-             0 2px 6px rgba(0,0,0,.32)}
-.bp[data-book="sporty"].on{
-  box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(0,0,0,.08),
-             0 2px 8px rgba(0,0,0,.36),0 0 0 2px var(--red)}
-/* Bet9ja sits a clear step down: smaller type, tighter padding, on black.
-   Their mark is two saturated colours and at equal size it pulled the eye off
-   SportyBet entirely. Small enough to be second, whole enough to be theirs. */
-.bp[data-book="bet9ja"]{
-  background:linear-gradient(180deg,#191c20,#000);
-  padding:5px 10px;font-size:10.5px;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 2px 6px rgba(0,0,0,.4)}
-.bp[data-book="bet9ja"].on{
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 2px 8px rgba(0,0,0,.45),
-             0 0 0 1.5px var(--b9-green)}
+/* THE INK IS THEIRS, THE SURFACE IS OURS - the converter's rule, brought here.
+   These two pills carried the bookmakers' own backgrounds: SportyBet red on a
+   white gradient, Bet9ja on black. Two foreign surfaces inside our own card,
+   and neither follows the theme - on the dark page the white pill glares, and
+   on the light page the black one is a hole. The converter's toggle solved
+   this already (see .byo-b): the picked book sits on the page's own raised
+   surface with a ring in its brand colour, and the wordmark keeps the colours
+   it wears everywhere else. Same rule, same look, both themes. */
+.bp{background:var(--card-2);border-color:var(--line)}
+.bp.on{background:var(--card)}
+.bp[data-book="sporty"]{font-weight:900;letter-spacing:-.01em;font-size:13px}
+.bp[data-book="sporty"].on{box-shadow:0 1px 3px rgba(0,0,0,.25),
+  inset 0 0 0 1.5px var(--red)}
+/* Bet9ja sits a clear step down: smaller type, tighter padding. Their mark is
+   two saturated colours and at equal size it pulled the eye off SportyBet
+   entirely. Small enough to be second, whole enough to be theirs. */
+.bp[data-book="bet9ja"]{padding:5px 10px;font-size:10.5px}
+.bp[data-book="bet9ja"].on{box-shadow:0 1px 3px rgba(0,0,0,.25),
+  inset 0 0 0 1.5px var(--b9-green)}
 .bp[data-book="bet9ja"] small{font-size:9.5px}
 @media(hover:hover){ .bp:not(.on):hover{opacity:.72} }
 /* How many of the slip this book can actually take, so the choice is informed
@@ -3210,7 +3211,9 @@ html.mode-live #live{display:block}
 .bp small{display:inline-flex;align-items:center;margin-left:6px;padding:1px 6px;
   border-radius:99px;font-size:9.5px;font-weight:800;letter-spacing:.01em}
 .bp[data-book="sporty"] small{background:rgba(230,57,70,.13);color:var(--red)}
-.bp[data-book="bet9ja"] small{background:rgba(255,255,255,.15);color:#fff}
+/* Was white on white-15%, which was legible only because the pill behind it
+   was black. On our own surface it needs our own ink. */
+.bp[data-book="bet9ja"] small{background:rgba(20,177,81,.14);color:var(--b9-green)}
 /* The SportyBet wordmark. One colour, so it needs no inner spans - but it does
    need to be a mark rather than a word, so that every place the name appears
    carries it: the code card's title, their own button, the pre-flight when it
@@ -11432,6 +11435,13 @@ function buildPicks(){
     return kb-ka;
   });
   cand=cand.filter(function(c){return !BUILD.removed[c.id];});
+  /* HOW MANY LEGS WERE ACTUALLY AVAILABLE, recorded where it is knowable.
+     The note under a short slip first counted the games clearing the floor
+     itself, which reads high: it cannot see the bookmaker-odds rule, the
+     continent rules or the reader's own removals, all of which have run by
+     here. Counting after them is the difference between "three of thirty-five"
+     with no explanation and the sentence that explains it. */
+  BUILD._pool=cand.length;
   /* League diversity: prefer spreading picks across leagues, softly. `cand` is
      already sorted best-first; we take from the top but add a small rank penalty
      per leg already drawn from the same country, so one league can't dominate the
@@ -17136,12 +17146,15 @@ function renderBuilderOutput(){
   var sh=$("bldShort");
   if(sh){
     var g=(BUILD.mode==="slider"&&picks.length)?floorGap():null;
-    if(g&&picks.length<g.max&&g.over<=picks.length){
+    var pool=(BUILD._pool==null)?(g&&g.over):BUILD._pool;
+    if(g&&picks.length<g.max&&pool<=picks.length){
       sh.textContent=picks.length+" of the "+g.max+" games "+g.word+
-        " allows: only "+(g.over===1?"one game on today's card clears "
-                                    :g.over+" games on today's card clear ")+
-        Math.round(g.need*100)+"% on the markets you have on. "+
-        "Slide right for a lower bar, or switch on more markets.";
+        " allows: only "+(pool===1?"one game on this card clears "
+                                  :pool+" games on this card clear ")+
+        Math.round(g.need*100)+"% on the markets you have on"+
+        /* Slide right is not advice at the right-hand end. */
+        (BUILD.risk>=95 ? " - switch on more markets, or widen the leagues and days."
+                        : " - slide right for a lower bar, or switch on more markets.");
       sh.hidden=false;
     }else{ sh.textContent=""; sh.hidden=true; }
   }
