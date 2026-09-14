@@ -105,9 +105,13 @@ test("the read says how much of the slip survives, before the list", () => {
   assert.ok(i > 0 && i < j, "the count belongs above the games, not under them");
   assert.match(src, /we can use<\/b>/,
     "the count no longer says what it counts");
-  /* "All 11 available" over a row showing a dash was a contradiction. The dash
-     means the bookmaker published no price, which is a different fact. */
-  assert.match(src, /no price from "\+B\.label/);
+  /* THE PRICE COUNT IS GONE from this line, on purpose. It counted legs WE
+     hold no price for - the sweep fetches 24 markets and a pass-through market
+     is not among them - and it read as a warning about the bookmaker. On a real
+     code it was most of the slip: 21 of 26 usable legs on HCVKA1, all of them
+     markets SportyBet quotes. The row still says it where it belongs. */
+  assert.doesNotMatch(src, /with no price from/,
+    "the count is telling readers about prices again");
   const row = src.slice(src.indexOf("var rows=legs.map("), src.indexOf("var away=legs.length"));
   assert.doesNotMatch(row, /:"-"/, "the bare dash is back on a leg row");
 });

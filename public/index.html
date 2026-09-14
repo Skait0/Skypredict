@@ -11258,6 +11258,36 @@ function mLabel(f,c){
   if(cd) return (cd[1]==="H"?esc(f.home):esc(f.away))+" "+cd[2]+"+ cards";
   var cn=/^CORNERS_(OV|UN)_([\d.]+)$/.exec(c||"");
   if(cn) return (cn[1]==="OV"?"Over ":"Under ")+cn[2]+" corners";
+  /* EVERY FAMILY ADDED FROM A READER'S CODE ON 14 SEP. These are pass-through
+     markets - we move them, we never predict them - but the editor and the
+     splitter both draw a leg through this function, so an unnamed one prints
+     its own code on the panel while somebody is deciding what to do with it. */
+  var cs=/^CORNERS_([HA])_(OV|UN)_([\d.]+)$/.exec(c||"");
+  if(cs) return (cs[1]==="H"?esc(f.home):esc(f.away))+" "+
+    (cs[2]==="OV"?"over ":"under ")+cs[3]+" corners";
+  /* Double chance with the 1UP promotion: the same sign, paid early if the
+     side goes a goal up. */
+  var d1=/^DC1UP_(1X|12|X2)$/.exec(c||"");
+  if(d1) return (d1[1]==="1X"?esc(f.home)+" or draw"
+    :(d1[1]==="12"?esc(f.home)+" or "+esc(f.away):"Draw or "+esc(f.away)))+", 1UP";
+  /* Goals inside the opening minutes. Both numbers are the bet. */
+  var eg=/^EARLY_(OV|UN)_(\d+)_([\d.]+)$/.exec(c||"");
+  if(eg) return (eg[1]==="OV"?"Over ":"Under ")+eg[3]+
+    " goals in the first "+eg[2]+" minutes";
+  /* "Excluded number of goals" is a bet that the total is anything BUT this
+     number, which reads backwards unless it is said plainly. */
+  var xg=/^EXGOALS_(FH_)?(\d)$/.exec(c||"");
+  if(xg) return "Not exactly "+xg[2]+(xg[2]==="5"?"+":"")+" goal"+
+    (xg[2]==="1"?"":"s")+(xg[1]?" in the first half":"");
+  /* One side's goals as a range: 12 is one to two, 13 is one to three or more,
+     33 is three or more. */
+  var gb=/^BOUNDS_([HA])_(\d)(\d)?$/.exec(c||"");
+  if(gb){
+    var who=gb[1]==="H"?esc(f.home):esc(f.away);
+    if(gb[3]===undefined) return who+" to score exactly "+gb[2];
+    if(gb[2]===gb[3]) return who+" to score "+gb[2]+"+";
+    return who+" to score "+gb[2]+"-"+gb[3]+(gb[3]==="3"?"+":"");
+  }
   var wh=/^WINHALF_([HA])_([YN])$/.exec(c||"");
   if(wh) return (wh[1]==="H"?esc(f.home):esc(f.away))+
     (wh[2]==="Y"?" to win a half":" not to win a half");
@@ -12366,7 +12396,13 @@ function renderByo(){
      has to resolve for us. The dash means the bookmaker published no price for
      that leg, which has nothing to do with whether we can re-book it - so the
      row says that in words now, and the count says what it actually counts. */
-  var noPrice=usable.filter(function(l){return !(isFinite(+l.odds)&&+l.odds>1);}).length;
+  /* THE PRICE COUNT IS GONE FROM THIS LINE, deliberately. It counted legs we
+     hold no price for, which is a statement about OUR cache - the sweep asks
+     for the 24 markets the model prices and a pass-through market is not among
+     them - and it read as a warning about the bookmaker. On a real code it was
+     also most of the slip: 21 of 26 usable legs on HCVKA1, every one of them a
+     market SportyBet quotes perfectly well. The count now says only what a
+     reader acts on, which is how much of their slip can move. */
   out.innerHTML="<div class='byo-res'>"+
     "<div class='byo-head'><b>"+legs.length+" game"+(legs.length===1?"":"s")+
       " read</b><span>from "+B.label+" code "+esc(BYO.code)+"</span></div>"+
@@ -12375,7 +12411,7 @@ function renderByo(){
       (away
         ? "<b>"+usable.length+" we can use</b> · "+away+" we cannot"
         : "<b>We can use all "+legs.length+"</b>")+
-      (noPrice?" · "+noPrice+" with no price from "+B.label:"")+
+
     "</p>"+
     /* FOLDED, BECAUSE THE JOBS ARE BELOW IT. Eleven rows of games pushed Edit
        for me off the bottom of a phone, and the list is reference material -

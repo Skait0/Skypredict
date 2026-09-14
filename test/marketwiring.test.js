@@ -131,3 +131,33 @@ test("a market added to the table but wired nowhere fails this file", () => {
   assert.deepEqual(dumb, ["MADE_UP_1.5"],
     "mProb answers for a market that does not exist, so this file checks nothing");
 });
+
+/* ------------------------- markets we move but never predict ------------- */
+
+test("every pass-through market SportyBet maps has a name on the panel", () => {
+  /* The editor and the splitter both draw a leg through mLabel, so an unnamed
+     market prints its own code while somebody is deciding what to do with it -
+     which is exactly what a reader saw on HCVKA1 and PV5CLL. The chip table
+     covers the markets we PREDICT; this covers the ones we only move. */
+  const { execSync } = require("node:child_process");
+  const API = path.join(ROOT, "..", "..", "Documents", "soccerwizard-api");
+  let codes;
+  try {
+    const code = "import sys,json;sys.path.insert(0,r'" + API + "');" +
+      "import server;print(json.dumps(sorted(server.PASSTHROUGH_MAP)))";
+    const out = execSync("python -c " + JSON.stringify(code),
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+    codes = JSON.parse(out.slice(out.indexOf("[")));
+  } catch (e) {
+    /* The API lives in a sibling checkout; skip rather than fail if it is not
+       there, the same way the other cross-repo tests do. */
+    return;
+  }
+  assert.ok(codes.length > 100, "read only " + codes.length + " pass-through codes");
+  const f = { home: "Leeds", away: "Newcastle" };
+  const nameless = codes.filter((c) => {
+    const l = api.mLabel(f, c);
+    return !l || l === c || /^[A-Z0-9_.]+$/.test(l);
+  });
+  assert.deepEqual(nameless, [], "these print as raw codes on the edit and split panels");
+});
