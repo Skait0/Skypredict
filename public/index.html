@@ -8153,12 +8153,58 @@ function leagueTag(s){
 /* The team's own marker wins - "Fenerbahce U19" in a league with no marker is
    still a youth side - and the league answers when the team is silent. */
 function ageTag(team,league){ return teamTag(team)||leagueTag(league); }
+/* THE CASE NO MARKER CATCHES: a second string with a plain name, in a
+   competition with a plain name. Both tags come back empty and honestly so -
+   nothing in either string says youth or reserve - and the two names still
+   belong to different teams.
+   The competition itself answers that, and both sides already carry one. Two
+   competitions plainly disagree when neither carries a word the other does:
+   "Turkey Super Lig" and "Turkiye Amateur U19 PAF Ligi" share nothing, while
+   "England Premier League" and "Premier League" share two.
+   Deliberately weak. Sharing ONE word is enough, so the same country's league
+   and cup still agree - those are the same clubs and the same feed, and the
+   clock below is what separates them. This only has to catch a competition
+   from somewhere else entirely, which is what every wrong pairing so far has
+   actually been. An empty string on either side means we cannot tell, which
+   is not the same as a disagreement, so it allows. */
+function compTokens(s){
+  return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim()
+    .split(" ").filter(function(w){ return w.length>=3; });
+}
+function compAgrees(a,b){
+  var ta=compTokens(a), tb=compTokens(b);
+  if(!ta.length||!tb.length) return true;
+  return ta.some(function(x){
+    return tb.some(function(y){
+      /* Same prefix rule the team names use: "Superliga" answers "Superliga",
+         and a four-character stem is long enough not to be a coincidence. */
+      return x===y||(x.length>=4&&y.length>=4&&(x.indexOf(y)===0||y.indexOf(x)===0));
+    });
+  });
+}
+/* AND THE CLOCK, WHICH THIS FUNCTION NEVER ASKED ABOUT.
+   liveForFixture checks it and noteLiveSeen does not, so the one caller that
+   WRITES - it records the last score seen and saves it - was the one with no
+   guard at all. A fixture days from kickoff could be paired with a game in
+   play and have that game's score written against it. The per-side floor and
+   the tags made it unlikely; nothing made it impossible.
+   The check belongs here, where both callers pass. A fixture whose kickoff we
+   cannot read is allowed through: unknown is not a disagreement, and that is
+   the state liveForFixture already refuses on its own. */
+function couldBeOn(f){
+  var t=kickMs(f);
+  if(t==null) return true;
+  var age=Date.now()-t;
+  return age>=0&&age<=LIVE_WINDOW_MS;
+}
 function liveMatchFor(f){
   if(!f||typeof LIVE==="undefined"||!LIVE||!LIVE.matches) return null;
+  if(!couldBeOn(f)) return null;
   var best=null,bs=0;
   LIVE.matches.forEach(function(m){
     if(ageTag(m.home,m.league)!==ageTag(f.home,f.league)||
        ageTag(m.away,m.league)!==ageTag(f.away,f.league)) return;
+    if(!compAgrees(f.league,m.league)) return;
     var sh=simTeams(f.home,m.home), sa=simTeams(f.away,m.away);
     if(sh<0.6||sa<0.6) return;
     var s=sh+sa; if(s>bs){bs=s;best=m;}
@@ -11279,6 +11325,45 @@ function mLabel(f,c){
   var xg=/^EXGOALS_(FH_)?(\d)$/.exec(c||"");
   if(xg) return "Not exactly "+xg[2]+(xg[2]==="5"?"+":"")+" goal"+
     (xg[2]==="1"?"":"s")+(xg[1]?" in the first half":"");
+  /* THE TRANCHE TAKEN FROM THEIR CATALOGUE, not from a complaint. Same rule as
+     everything above: the editor and the splitter draw each leg through here,
+     so a market with no sentence prints its own code. */
+  var fg=/^FIRSTGOAL(_FH|_SH)?_(1|N|2)$/.exec(c||"");
+  if(fg){
+    var half=fg[1]==="_FH"?" in the first half":(fg[1]==="_SH"?" in the second half":"");
+    if(fg[2]==="N") return "No goal"+(half||" at all");
+    return (fg[2]==="1"?esc(f.home):esc(f.away))+" to score first"+half;
+  }
+  var ex=/^EXACT(_FH|_SH)?_(\d)$/.exec(c||"");
+  if(ex){
+    var top=ex[1]==="_FH"?3:(ex[1]==="_SH"?2:6);
+    var w=ex[1]==="_FH"?" in the first half":(ex[1]==="_SH"?" in the second half":"");
+    return "Exactly "+ex[2]+(+ex[2]===top?"+":"")+" goal"+(ex[2]==="1"?"":"s")+w;
+  }
+  var tg=/^TEAMGOALS_([HA])_(\d)$/.exec(c||"");
+  if(tg) return (tg[1]==="H"?esc(f.home):esc(f.away))+
+    (tg[2]==="3"?" to score 3+":" to score exactly "+tg[2]);
+  var gr=/^GOALRANGE_(\d)(?:_(\d))?$/.exec(c||"");
+  if(gr) return gr[2]?(gr[1]+"-"+gr[2]+" goals"):(gr[1]+"+ goals");
+  var wm=/^MARGIN_(?:([HA])(\d)|DRAW)$/.exec(c||"");
+  if(wm) return wm[1]===undefined?"Draw, any score"
+    :((wm[1]==="H"?esc(f.home):esc(f.away))+" by "+wm[2]+(wm[2]==="3"?"+":"")+
+      " goal"+(wm[2]==="1"?"":"s"));
+  /* Two markets, each a Yes/No, so "No" to the over one is NOT the under one -
+     it is "at least one half stayed under", which is why the negative is
+     spelled out rather than swapped for the opposite market. */
+  var bh=/^BOTHHALVES_(OV|UN)_([YN])$/.exec(c||"");
+  if(bh){
+    var side=bh[1]==="OV"?"over":"under";
+    return bh[2]==="Y" ? ("Both halves "+side+" 1.5 goals")
+                       : ("Not both halves "+side+" 1.5 goals");
+  }
+  var hs=/^(FH|SH)_(HOME|AWAY)_(OVER|UNDER)_([\d.]+)$/.exec(c||"");
+  if(hs) return (hs[2]==="HOME"?esc(f.home):esc(f.away))+" "+
+    (hs[3]==="OVER"?"over ":"under ")+hs[4]+" goals in the "+
+    (hs[1]==="FH"?"first":"second")+" half";
+  var sh=/^SH_(OVER|UNDER)_([\d.]+)$/.exec(c||"");
+  if(sh) return (sh[1]==="OVER"?"Over ":"Under ")+sh[2]+" goals in the second half";
   /* One side's goals as a range: 12 is one to two, 13 is one to three or more,
      33 is three or more. */
   var gb=/^BOUNDS_([HA])_(\d)(\d)?$/.exec(c||"");
