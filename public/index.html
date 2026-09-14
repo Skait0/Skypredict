@@ -6938,10 +6938,16 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
      is the universal sign for "add one more" - on a bar whose other items
      are destinations it read as an action on the page you were already on,
      and people tapped it expecting to add a game. The site already calls
-     this conjuring: the panel it opens says "Conjure ticket". So the icon
-     says the same thing, and nothing else in the bar can be confused with
-     it. -->
-  <button class="btab" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l9.5-9.5"/><path d="M16.5 3.5l1.15 2.85L20.5 7.5l-2.85 1.15L16.5 11.5l-1.15-2.85L12.5 7.5l2.85-1.15z"/><path d="M19.6 14.4l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z"/></svg></span>Build</button>
+     this conjuring: the panel it opens says "Conjure ticket".
+     THE DRAWING CHANGED, THE MEANING DID NOT. The first wand was a thin
+     diagonal stroke with two four-point diamonds, and at the size this
+     actually renders - 22px, measured, not the 24 in the viewBox - the
+     diamonds read as blobs and the shaft as a stray line: three marks, no
+     object. One five-point star with a shaft under it has a silhouette,
+     which is the only thing that survives being that small. Wizard hats
+     were tried first and every one of them read as a traffic cone: a narrow
+     cone over a brim that curves the same way is a road sign, not a hat. -->
+  <button class="btab" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 19.5L12.3 11.7"/><path d="M16.9 3.3l1.65 3.55 3.85.5-2.9 2.6.77 3.85-3.37-2.02-3.37 2.02.77-3.85-2.9-2.6 3.85-.5z"/></svg></span>Build</button>
   <!-- A SLIP AND ONE ARROW OUT OF IT. Not two arrows swapping - that is
        the shuffle icon, #shuffleBtn draws exactly that - and not the two
        books named, which a third bookmaker would make wrong rather than
@@ -11099,6 +11105,28 @@ function mLabel(f,c){
   var wh=/^WINHALF_([HA])_([YN])$/.exec(c||"");
   if(wh) return (wh[1]==="H"?esc(f.home):esc(f.away))+
     (wh[2]==="Y"?" to win a half":" not to win a half");
+  /* Which half carried more of something. One shape for four families: goals
+     for the match, goals for one side, bookings and corners. The tie outcome
+     is a real selection on all of them, not a fallback, so it gets a sentence
+     of its own rather than reading as a missing case. */
+  var hh=/^HIGHHALF_(?:([HA])_)?([12E])$/.exec(c||"");
+  if(hh){
+    var who=hh[1]==="H"?esc(f.home):(hh[1]==="A"?esc(f.away):"");
+    if(hh[2]==="E") return who?who+" score the same in both halves"
+      :"Both halves score the same";
+    return (who?who+" score more":"More goals")+
+      " in the "+(hh[2]==="1"?"1st":"2nd")+" half";
+  }
+  var hc=/^(HMC|HALFCORNER)_([12E])$/.exec(c||"");
+  if(hc){
+    var what=hc[1]==="HMC"?"bookings":"corners";
+    if(hc[2]==="E") return "Both halves have the same "+what;
+    return "More "+what+" in the "+(hc[2]==="1"?"1st":"2nd")+" half";
+  }
+  /* AWARDED, not scored. The distinction is the reason this leg can never be
+     converted to SportyBet, so the label must not blur it. */
+  var pn=/^PEN_([YN])$/.exec(c||"");
+  if(pn) return pn[1]==="Y"?"A penalty is awarded":"No penalty awarded";
   var db=/^DNB_([12])$/.exec(c||"");
   if(db) return side3(db[1])+", draw no bet";
   var d2=/^DC2_(1X|12|X2)$/.exec(c||"");
