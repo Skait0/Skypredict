@@ -37,6 +37,9 @@ const api = new Function(
   grab("oddOf") + grab("legOdd") + grab("totalOdds") +
   grab("splitWays") + grab("splitPicks") + grab("splitBoxInner") +
   'const SLIP_FS="\\u001f", SLIP_RS="\\u001e";' +
+  /* slipPayload reads the link's vocabulary, so the page's own copy comes
+     with it - inventing one here would test the invention. */
+  (/var LINK_MARKETS=\{[\s\S]*?\};/.exec(src) || [""])[0] +
   "function fixtureById(){return null;}" + grab("slipName") + grab("slipPayload") +
   "\nreturn {oddOf,legOdd,totalOdds,slipPayload,splitBoxInner,SLIP_RS};")();
 

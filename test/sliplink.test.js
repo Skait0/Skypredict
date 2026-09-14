@@ -276,8 +276,14 @@ function grab(name) {
   return SRC.slice(i, k + 1);
 }
 
+/* The vocabulary comes out of the page too - slipPayload reads it, and a copy
+   written here would pass while the real one was wrong. */
+const LINK_MARKETS_SRC = (/var LINK_MARKETS=\{[\s\S]*?\};/.exec(SRC) || [""])[0];
+assert.ok(LINK_MARKETS_SRC, "LINK_MARKETS is gone from index.html");
+
 const clientPayload = new Function("fixtureById", "legOdd", "SLIP_FS", "SLIP_RS",
-  grab("slipName") + "\n" + grab("slipPayload") + "\nreturn slipPayload;")(
+  LINK_MARKETS_SRC + "\n" + grab("slipName") + "\n" + grab("slipPayload") +
+  "\nreturn slipPayload;")(
   () => null, (f, code, p) => (f.sportyOdds && f.sportyOdds[code]) || 2, FS, RS);
 
 test("what the browser encodes, the server decodes", () => {
@@ -361,5 +367,66 @@ test("the rendered page puts that path in every place a crawler reads", () => {
   for (const re of [/<link rel="canonical" href="[^"]*\/s\/ABC123"/,
                     /<meta property="og:url" content="[^"]*\/s\/ABC123"/]) {
     assert.match(html, re, String(re));
+  }
+});
+
+/* ------------------------------------- every market a slip can actually hold */
+
+test("the link carries every code the builders can put on a slip", () => {
+  /* THE BUG THIS PINS. The seven markets added on 14 Sep never reached this
+     table, so a slip carrying one could not travel: decode refused the code,
+     POST /api/share was rejected, no short link was stored, and the Share
+     button fell back to the long URL - which then opened on "that slip has a
+     bet we do not offer". Reported as "the url is insanely long" and "no card
+     or preview", which were the same missing rows.
+     Read out of the page's own chip table rather than listed here, so a chip
+     added tomorrow fails this instead of shipping a dead link. */
+  const fs = require("fs"), path = require("path");
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  const tbl = /var MKT_BY_CHIP=\{([\s\S]*?)\};/.exec(src);
+  assert.ok(tbl, "MKT_BY_CHIP is gone from index.html");
+  const codes = [...tbl[1].matchAll(/"([A-Z0-9_.]+)"/g)].map((m) => m[1]);
+  assert.ok(codes.length >= 20, "read only " + codes.length + " codes");
+  const missing = [...new Set(codes)].filter((c) => !(c in SL.MARKETS));
+  assert.deepEqual(missing, [], "codes a shared slip cannot carry");
+});
+
+test("the page refuses to encode what the link cannot carry", () => {
+  /* The other half: a converted slip is full of pass-through markets nobody
+     predicts, and encoding one produces a link that is long and dead. The
+     browser's own list has to match this one exactly. */
+  const fs = require("fs"), path = require("path");
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  const m = /var LINK_MARKETS=\{([\s\S]*?)\};/.exec(src);
+  assert.ok(m, "LINK_MARKETS is gone from index.html");
+  const client = [...m[1].matchAll(/"([A-Z0-9_.]+)"\s*:/g)].map((x) => x[1]).sort();
+  assert.deepEqual(client, Object.keys(SL.MARKETS).sort(),
+    "the browser's list and the link's list have drifted");
+});
+
+test("a combination market names the side it belongs to", () => {
+  /* "{H} or over 1.5 goals" with no substitution is what a reader would have
+     seen, and the teams are attacker-controlled, so the escaping has to happen
+     before they go in. */
+  const legs = [{ home: "Leeds & Sons", away: "Newcastle", date: "2026-09-16",
+                  code: "MIX_1_OV_1.5", od: 1.35, p: 0.8 }];
+  const html = SL.renderPage(legs, null, "/s/ABC123", { code: "ABC123" });
+  assert.match(html, /Leeds &amp; Sons or over 1\.5 goals/);
+  assert.doesNotMatch(html, /\{H\}|\{A\}/, "a placeholder reached the page");
+});
+
+test("only the combinations the grader settles are given a grade label", () => {
+  /* Adding a label gradeLabel cannot read would be a second grader by the back
+     door - the thing this file has a paragraph about. Draw-or-X it knows; the
+     side-specific ones and win-either-half it does not, and those stay
+     ungraded rather than guessed. */
+  const { gradeLabel } = require("../lib/grade.js");
+  for (const code of ["MIX_X_OV_1.5", "MIX_X_OV_2.5", "MIXGG_X"]) {
+    const label = SL.GRADE_LABEL[code];
+    assert.ok(label, code + " has no grade label");
+    assert.notEqual(gradeLabel(label, 1, 1), null, label + " is not settled by the grader");
+  }
+  for (const code of ["MIX_1_OV_1.5", "MIX_2_OV_2.5", "MIXGG_1", "WINHALF_H_Y"]) {
+    assert.equal(SL.GRADE_LABEL[code], undefined, code + " must stay ungraded");
   }
 });

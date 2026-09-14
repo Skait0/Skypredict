@@ -7172,7 +7172,15 @@ function rememberSlip(legs, odds, code){
   if(!legs||legs.length<1) return null;
   var snap=legs.map(function(x){
     var f=fixtureById(x.id)||{};
-    return {id:x.id, code:x.code, label:x.label||"",
+    /* THE LABEL IS WRITTEN HERE OR IT IS NEVER WRITTEN. Your slips renders
+       `l.label||l.code`, and this took whatever the caller happened to pass -
+       so the paths that hand over a raw pick ({id,code,p}) saved no label and
+       the card showed the plumbing: "MIX_2_OV_1.5" where "Newcastle or over
+       1.5 goals" belongs. Reported on exactly that market. Computed once, at
+       the one place every caller goes through, because a label per caller is
+       how this went wrong the first time. */
+    return {id:x.id, code:x.code,
+            label:x.label||(f.home?mLabel(f,x.code).replace(/<[^>]+>/g,""):""),
             home:f.home||"", away:f.away||"", date:f.date||"",
             kickoff:f.kickoff||null,
             p:+x.p||0, odd:legOdd(f,x.code,x.p)};
@@ -12941,9 +12949,23 @@ function slipName(s){
    reason at the other end. A converted slip is the case that makes this bite:
    its markets are pass-through ones the link does not carry, so the honest
    answer is no slip link at all and the booking code shared on its own. */
+/* WHAT A SHARE LINK CAN CARRY, which is not everything a slip can hold.
+   lib/sliplink.js refuses a code it does not know, so encoding one produces a
+   link that is long AND dead: the short-link post is rejected, the fallback URL
+   goes out, and it opens on "that slip has a bet we do not offer". A converted
+   slip is full of pass-through markets nobody here predicts, so this is not a
+   corner case. Mirrors sliplink's MARKETS keys and test/sliplink.test.js fails
+   if the two ever drift. */
+var LINK_MARKETS={"1":1,"2":1,"X":1,"1X":1,"X2":1,"12":1,
+  "OVER_1.5":1,"OVER_2.5":1,"OVER_3.5":1,"GG":1,"FH_OVER_0.5":1,
+  "HOME_OVER_0.5":1,"AWAY_OVER_0.5":1,"HOME_OVER_1.5":1,"AWAY_OVER_1.5":1,
+  "MIX_1_OV_1.5":1,"MIX_2_OV_1.5":1,"MIX_X_OV_1.5":1,
+  "MIX_1_OV_2.5":1,"MIX_2_OV_2.5":1,"MIX_X_OV_2.5":1,
+  "MIXGG_1":1,"MIXGG_2":1,"MIXGG_X":1,"WINHALF_H_Y":1,"WINHALF_A_Y":1};
 function slipPayload(items){
   var rows=[], bad=false;
   (items||[]).slice(0,40).forEach(function(c){
+    if(c&&!LINK_MARKETS[c.code]){ bad=true; return; }
     var f=c.f||fixtureById(c.id);
     /* A fixture that has left the board is still dropped and the rest of the
        slip still travels - that is a decision of its own, pinned in
