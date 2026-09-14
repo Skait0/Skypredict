@@ -6783,7 +6783,9 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       <button class="book-btn" id="bookBtn" type="button">Get code</button>
     </div>
     <div class="bld-note stage-in stage-in-5" id="bldNote" data-parallax="0.1"></div>
-    <div class="bld-approx">*Est. odds are a rough model guide - real SportyBet odds are usually lower.</div>
+    <!-- Names whichever book is selected - see paintBookPickers. Hardcoded, it
+         told a Bet9ja slip what SportyBet's odds do. -->
+    <div class="bld-approx" id="bldApprox">*Est. odds are a rough model guide - real SportyBet odds are usually lower.</div>
     <div id="bookResult"></div>
 
     <!-- A CODE SOMEBODY ALREADY HOLDS. Not every slip worth splitting came
@@ -10621,6 +10623,9 @@ function paintBookPickers(){
   try{
     var sub=$("mySheetSub");
     if(sub) sub.innerHTML="Predictions you picked - book them to "+curBook().mark+".";
+    var ap=$("bldApprox");
+    if(ap) ap.textContent="*Est. odds are a rough model guide - real "+
+      curBook().label+" odds are usually lower.";
   }catch(e){}
   paintMyNote();
 }
@@ -17355,7 +17360,13 @@ function renderBuilderOutput(){
   else if(bookable<picks.length) note.textContent=bookable+" of "+picks.length+
     " can be booked on "+curBook().label+
     (lostMk.length?" - it does not offer "+lostMk.join(" or ")+".":".");
-  else note.textContent="Booking "+bookable+" selection"+(bookable===1?"":"s")+" to SportyBet.";
+  /* THE BOOK THIS SLIP IS ACTUALLY GOING TO, not the one we started life
+     selling. Every other branch of this note already asks curBook(); the happy
+     path named SportyBet outright, so switching to Bet9ja - which the 1.5-rung
+     chips now do for you - left "Booking 24 selections to SportyBet" over a
+     slip that was about to produce a Bet9ja code. */
+  else note.textContent="Booking "+bookable+" selection"+(bookable===1?"":"s")+
+    " to "+curBook().label+".";
 }
 
 renderFab();

@@ -522,3 +522,16 @@ test("the ripple stays off controls that answer the tap themselves", () => {
   /* And it must still fire everywhere else - the effect is not being deleted. */
   assert.match(h, /rip-ink/);
 });
+
+test("the builder's notes name the book the slip is going to", () => {
+  /* Reported on the Bet9ja-only chips, which now switch the book for you:
+     "Booking 24 selections to SportyBet" over a slip about to produce a Bet9ja
+     code, and an odds footnote describing SportyBet's prices underneath it.
+     Every other branch of that note already asked curBook(); these two were
+     written out by hand. */
+  assert.doesNotMatch(src, /" to SportyBet\."/,
+    "the booking note names SportyBet whatever book is selected");
+  assert.match(src, /" to "\+curBook\(\)\.label/);
+  assert.match(src, /real "\+\s*curBook\(\)\.label\+" odds are usually lower/,
+    "the estimate footnote still hardcodes a bookmaker");
+});
