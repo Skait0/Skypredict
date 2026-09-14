@@ -272,9 +272,17 @@ http.createServer(async (req, res) => {
      seen by a stranger: every slip shared into a WhatsApp group.
      assets/wiz-head.png is a square crop of the same portrait the avatar comes
      from, cut wide enough that the circle below does not clip the hood. */
+  /* AND NOW IT IS THE LOGO, which is the third answer to the same question.
+     The app icon was wrong because it was a different character from the one
+     the gate and the profile carry; the photoreal portrait was right about the
+     character and wrong about the job. This image is the site's signature on
+     somebody else's WhatsApp group, so it should be the mark the site signs
+     everything else with - the same one in the masthead and on the slip page
+     header - rather than a picture of a face. It is drawn on transparency, so
+     the circle below shows through instead of being filled by a photograph. */
   if (req.url === "/head.png") {
     res.writeHead(200, { "content-type": "image/png" });
-    res.end(fs.readFileSync(path.join(ASSETS, "wiz-head.png")));
+    res.end(fs.readFileSync(path.join(PUB, "wiz-mark.png")));
     return;
   }
   res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
