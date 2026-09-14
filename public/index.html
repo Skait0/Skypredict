@@ -11362,6 +11362,40 @@ function mLabel(f,c){
   if(hs) return (hs[2]==="HOME"?esc(f.home):esc(f.away))+" "+
     (hs[3]==="OVER"?"over ":"under ")+hs[4]+" goals in the "+
     (hs[1]==="FH"?"first":"second")+" half";
+  /* THE SIBLING FAMILIES: half-versions and per-team versions of markets
+     already named above. Each reads the same way its twin does, with the half
+     or the side said out loud. */
+  var eh=/^(FH_|SH_)?EH_(\d)_(\d)_(1|X|2)$/.exec(c||"");
+  if(eh){
+    /* A scoreline head start, so the side NOT named is the one carrying it:
+       "0:1" means the away team begins a goal up. Said plainly, because
+       "Home (0:1)" on its own has sent people the wrong way. */
+    var ehWhen=eh[1]==="FH_"?" in the first half":(eh[1]==="SH_"?" in the second half":"");
+    var homeLeads=+eh[2]>0, amt=Math.max(+eh[2],+eh[3]);
+    var lead=(homeLeads?esc(f.home):esc(f.away))+" +"+amt;
+    if(eh[4]==="X") return "Draw with "+lead+ehWhen;
+    var picksLeader=(eh[4]==="1")===homeLeads;
+    /* Naming the same club twice - "Newcastle to win with Newcastle +1" - is
+       how the first version read. Say the head start once, on whichever side
+       is carrying it. */
+    if(picksLeader) return lead+" to win"+ehWhen;
+    return (eh[4]==="1"?esc(f.home):esc(f.away))+" to beat "+lead+ehWhen;
+  }
+  var hah=/^(FH|SH)_AH_(1|2)_(-?[\d.]+)$/.exec(c||"");
+  if(hah) return (hah[2]==="1"?esc(f.home):esc(f.away))+" "+
+    (+hah[3]>0?"+":"")+hah[3]+" in the "+(hah[1]==="FH"?"first":"second")+" half";
+  var fm=/^FH_MIX_(1|X|2)_(OV|UN)_([\d.]+)$/.exec(c||"");
+  if(fm) return (fm[1]==="1"?esc(f.home):(fm[1]==="2"?esc(f.away):"Draw"))+
+    " and "+(fm[2]==="OV"?"over ":"under ")+fm[3]+" goals in the first half";
+  var cr=/^CORNRANGE_(?:([HA])_)?(\d+)(?:_(\d+))?$/.exec(c||"");
+  if(cr){
+    var who=cr[1]?((cr[1]==="H"?esc(f.home):esc(f.away))+" "):"";
+    return who+(cr[3]?(cr[2]+"-"+cr[3]):(cr[2]+"+"))+" corners";
+  }
+  var fc=/^FH_CARD(UN)?_([HA])_(\d)$/.exec(c||"");
+  if(fc) return (fc[2]==="H"?esc(f.home):esc(f.away))+
+    (fc[1]?" under ":" ")+fc[3]+(fc[1]?"":"+")+" booking"+(fc[3]==="1"&&!fc[1]?"":"s")+
+    " in the first half";
   var sh=/^SH_(OVER|UNDER)_([\d.]+)$/.exec(c||"");
   if(sh) return (sh[1]==="OVER"?"Over ":"Under ")+sh[2]+" goals in the second half";
   /* One side's goals as a range: 12 is one to two, 13 is one to three or more,
