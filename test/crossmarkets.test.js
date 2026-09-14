@@ -103,8 +103,13 @@ test("a game we do not carry is named in words, not in plumbing", () => {
 test("the read says how much of the slip survives, before the list", () => {
   const i = src.indexOf("byo-count"), j = src.indexOf("byo-legs");
   assert.ok(i > 0 && i < j, "the count belongs above the games, not under them");
-  assert.match(src, /" available<\/b> \u00b7 "\+away\+" not available"/,
-    "the count no longer reads as available / not available");
+  assert.match(src, /we can use<\/b>/,
+    "the count no longer says what it counts");
+  /* "All 11 available" over a row showing a dash was a contradiction. The dash
+     means the bookmaker published no price, which is a different fact. */
+  assert.match(src, /no price from "\+B\.label/);
+  const row = src.slice(src.indexOf("var rows=legs.map("), src.indexOf("var away=legs.length"));
+  assert.doesNotMatch(row, /:"-"/, "the bare dash is back on a leg row");
 });
 
 /* ------------------------------------- a market only one bookmaker sells */
@@ -335,15 +340,20 @@ test("a swap keeps the game and widens the outcome, never the reverse", () => {
 
 test("dropping legs is the reader's choice, and off until they make it", () => {
   const box = src.slice(src.indexOf("function saferBoxInner("), src.indexOf("function wireSafer("));
-  assert.match(box, /BYO\.saferDrop\?saferDroppable/,
+  assert.match(box, /dropOn\?saferDroppable/,
     "the box must only drop when asked");
+  /* Asked means one of two things: the switch, or Auto - which is a decision
+     the reader made by pressing Auto, shown ticked and locked rather than
+     hidden. */
+  assert.match(box, /var dropOn=dial0\.drop\|\|BYO\.saferDrop;/);
+  assert.match(src, /auto:\{gain:0\.05,under:0\.55/, "Auto is not a setting any more");
   assert.match(box, /Take out legs we cannot fix/, "the choice must be on screen");
   assert.match(src, /saferDrop:false/, "the choice starts off");
   /* Three strengths behind three words, and the words are the interface. */
   assert.match(src, /var SAFER_STRENGTH=\{/);
   assert.match(box, /data-how=/, "no way to change how hard it pushes");
   const wire = src.slice(src.indexOf("function wireSafer("), src.indexOf("/* WHAT A TRIM WOULD COST"));
-  assert.match(wire, /if\(BYO\.saferDrop\) saferDroppable/,
+  assert.match(wire, /if\(saferDial\(\)\.drop\|\|BYO\.saferDrop\) saferDroppable/,
     "and the booking must honour the same choice");
 });
 
@@ -387,4 +397,19 @@ test("a long edit lists the first few and counts the rest", () => {
   const box = src.slice(src.indexOf("function saferBoxInner("), src.indexOf("function wireSafer("));
   assert.match(box, /var SHOW=6;/);
   assert.match(box, /plan\.length>SHOW/, "forty rows would bury the price and the button");
+});
+
+test("every job can be left, and the panel can be emptied", () => {
+  /* Reported: nothing cancels and nothing resets. Opening a job books nothing,
+     so leaving one must cost nothing either. */
+  assert.match(src, /function byoReset\(\)/);
+  const stage = src.slice(src.indexOf("function renderStage("), src.indexOf("function byoReset("));
+  assert.match(stage, /byo-cancel/, "a job with no way out");
+  assert.match(stage, /byo-reset/);
+  assert.match(stage, /byo-working/, "no sign it is working");
+  /* The reset must not reload: the board behind it took seconds to arrive. */
+  const reset = src.slice(src.indexOf("function byoReset()"), src.indexOf("function byoReset()") + 900);
+  assert.doesNotMatch(reset, /location\.reload|location\.href/);
+  assert.match(reset, /BYO\.legs=null/);
+  assert.match(reset, /b\.disabled=true/, "the three jobs must go back to sleep");
 });

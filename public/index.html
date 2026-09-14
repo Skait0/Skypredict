@@ -3258,14 +3258,16 @@ html.mode-live #live{display:block}
   transition:background .15s,box-shadow .15s,opacity .15s}
 .byo-b .sbm,.byo-b .b9m{font-size:12.5px;letter-spacing:-.01em}
 .byo-b:not(.on){opacity:.5}
-.byo-b.on[data-book="sporty"]{background:linear-gradient(180deg,#fff,#f0f1f3);
-  box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.28)}
-.byo-b.on[data-book="bet9ja"]{background:linear-gradient(180deg,#191c20,#000);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 1px 4px rgba(0,0,0,.35)}
-/* Their red has to hold against white in both themes, so it is the brand token
-   rather than ours, which the light theme darkens for contrast on our own
-   surfaces. */
-.byo-b.on[data-book="sporty"] .sbm{color:#E3000F}
+/* THE INK IS THEIRS, THE SURFACE IS OURS. A white pill and a black pill put
+   two foreign backgrounds inside our own rail: on the dark theme the black one
+   had no visible edge at all, and on the light theme the white one had none.
+   So the picked book sits on the page's own raised surface with a ring in its
+   brand colour, and the wordmark keeps the colours it has everywhere else. */
+.byo-b.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.byo-b.on[data-book="sporty"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
+  inset 0 0 0 1.5px var(--red)}
+.byo-b.on[data-book="bet9ja"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
+  inset 0 0 0 1.5px var(--b9-green)}
 @media (hover:hover){.byo-b:not(.on):hover{opacity:.8}}
 #byoCode{flex:1 1 150px;min-width:0;font:inherit;font-size:14px;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;
@@ -3326,6 +3328,16 @@ html.mode-live #live{display:block}
    are looking for. */
 .byo-count{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--faint)}
 .byo-count b{color:var(--green-ink);font-weight:800}
+.byo-np{font-style:normal;font-size:11px;color:var(--faint)}
+/* The list is reference, so it reads as a drawer rather than as the page. */
+.byo-legs-fold{margin:2px 0 4px}
+.byo-legs-fold summary{cursor:pointer;font-size:12.5px;font-weight:700;
+  color:var(--soft);list-style:none;padding:6px 0}
+.byo-legs-fold summary::-webkit-details-marker{display:none}
+.byo-legs-fold summary::after{content:" \203A";display:inline-block;
+  transform:rotate(90deg);margin-left:6px;color:var(--faint)}
+.byo-legs-fold[open] summary::after{transform:rotate(-90deg)}
+@media (hover:hover){.byo-legs-fold summary:hover{color:var(--text)}}
 .byo-legs{display:flex;flex-direction:column;gap:1px}
 .byo-l{display:flex;align-items:baseline;gap:10px;padding:7px 0;
   border-bottom:1px solid var(--line-soft)}
@@ -3397,6 +3409,22 @@ html.mode-live #live{display:block}
 .sf-how-n{font-style:normal;font-size:11.5px;color:var(--faint);flex:1 1 100%}
 .sf-cut{margin-top:8px}
 .sf-more{margin:6px 0 0;text-align:center}
+/* Working, cancelling, and going back to an empty box. */
+.byo-working{display:flex;align-items:center;gap:9px;margin-top:13px;
+  font-size:12.5px;font-weight:600;color:var(--soft)}
+.byo-stage-foot{display:flex;gap:8px;margin-top:12px}
+.byo-cancel,.byo-reset{flex:1 1 auto;font:inherit;font-size:12.5px;font-weight:700;
+  padding:9px 12px;border-radius:var(--r-md);cursor:pointer;
+  background:transparent;border:1px solid var(--line);color:var(--soft)}
+@media (hover:hover){.byo-cancel:hover,.byo-reset:hover{color:var(--text);
+  border-color:var(--soft)}}
+.byo-clear{float:right;font:inherit;font-size:11.5px;font-weight:700;
+  padding:3px 9px;border-radius:99px;background:transparent;cursor:pointer;
+  border:1px solid var(--line);color:var(--faint)}
+@media (hover:hover){.byo-clear:hover{color:var(--text);border-color:var(--soft)}}
+/* A switch Auto is holding down: still readable, clearly not yours to move. */
+.byo-sw.is-auto{opacity:.85}
+.byo-sw.is-auto input{cursor:not-allowed}
 .byo-res .sp-q{color:var(--soft)}
 .byo-res .sp-way{background:var(--card-2);border-color:var(--line);color:var(--text)}
 .byo-res .code-split .sp-way span{color:var(--faint)}
@@ -11857,6 +11885,13 @@ var SAFER_MIN_GAIN=0.08;
    anything that gains at all and offers to drop more. Nobody has to know that
    is what the words mean. */
 var SAFER_STRENGTH={
+  /* AUTO IS A DECISION, NOT A SETTING. Both switches on, and numbers between
+     Normal and Strong: swap anything that gains five points, drop anything
+     under 55% we cannot improve. It is the answer for somebody who does not
+     want to weigh two switches and three words - "you decide" - and it is
+     still shown in full before it books anything. */
+  auto:{gain:0.05,under:0.55,label:"Auto",note:"We decide: fix what we can, drop what we cannot",
+        swap:true,drop:true},
   light:{gain:0.14,under:0.50,label:"Light",note:"Only the legs that clearly need it"},
   normal:{gain:0.08,under:0.60,label:"Normal",note:"Our usual call"},
   strong:{gain:0.03,under:0.70,label:"Strong",note:"Change anything that helps"}
@@ -11896,7 +11931,7 @@ function saferDroppable(legs,B,plan){
   });
 }
 function saferPlan(legs,B){
-  if(!BYO.saferSwapOn) return [];
+  if(!saferDial().swap&&!BYO.saferSwapOn) return [];
   var out=[];
   (legs||[]).forEach(function(l){ var sw=saferSwap(l,B); if(sw) out.push(sw); });
   return out;
@@ -11948,21 +11983,35 @@ function renderByo(){
       "<span class='byo-k'>"+(gone?"Already started"
         :(l.prediction?mLabel({home:l.home||"Home",away:l.away||"Away"},l.prediction)
                       :"Market we don't carry"))+"</span>"+
-      "<span class='byo-o'>"+(isFinite(+l.odds)&&+l.odds>1?"x"+(+l.odds).toFixed(2):"-")+"</span>"+
+      "<span class='byo-o'>"+(isFinite(+l.odds)&&+l.odds>1?"x"+(+l.odds).toFixed(2)
+        :"<i class='byo-np'>no price</i>")+"</span>"+
     "</div>";}).join("");
   /* THE COUNT FIRST, THE REASONS AFTER. What a reader wants in the first
      second is how much of their slip survives, and that was buried in a
      paragraph under the list. Said once, in words, above the games. */
   var away=legs.length-usable.length;
+  /* "All 11 available" over a row showing a dash is a contradiction the reader
+     has to resolve for us. The dash means the bookmaker published no price for
+     that leg, which has nothing to do with whether we can re-book it - so the
+     row says that in words now, and the count says what it actually counts. */
+  var noPrice=usable.filter(function(l){return !(isFinite(+l.odds)&&+l.odds>1);}).length;
   out.innerHTML="<div class='byo-res'>"+
     "<div class='byo-head'><b>"+legs.length+" game"+(legs.length===1?"":"s")+
       " read</b><span>from "+B.label+" code "+esc(BYO.code)+"</span></div>"+
+    "<button class='byo-clear' type='button' aria-label='Clear this code'>Clear</button>"+
     "<p class='byo-count'>"+
       (away
-        ? "<b>"+usable.length+" available</b> · "+away+" not available"
-        : "<b>All "+legs.length+" available</b>")+
+        ? "<b>"+usable.length+" we can use</b> · "+away+" we cannot"
+        : "<b>We can use all "+legs.length+"</b>")+
+      (noPrice?" · "+noPrice+" with no price from "+B.label:"")+
     "</p>"+
-    "<div class='byo-legs'>"+rows+"</div>"+
+    /* FOLDED, BECAUSE THE JOBS ARE BELOW IT. Eleven rows of games pushed Edit
+       for me off the bottom of a phone, and the list is reference material -
+       what matters first is how many survived and what can be done with them.
+       Open is one tap and the count above it already says the important part. */
+    "<details class='byo-legs-fold'><summary>See the "+legs.length+" game"+
+      (legs.length===1?"":"s")+"</summary>"+
+      "<div class='byo-legs'>"+rows+"</div></details>"+
     /* Said every time, not only when it bites. The reader is the only one who
        knows how many games they put in. */
     "<p class='byo-note'>This is what "+B.label+" gives back for that code today. "+
@@ -11981,6 +12030,8 @@ function renderByo(){
        so a reader learns the page can do three things without having to read a
        slip first and scroll past two of them. */
   "</div>";
+  var clr=out.querySelector('.byo-clear');
+  if(clr) clr.addEventListener('click',byoReset);
   paintJobs(usable,B);
 }
 
@@ -12011,18 +12062,65 @@ function paintJobs(usable,B){
   });
 }
 
-/* One job on screen at a time, in the same place every time. */
+/* One job on screen at a time, in the same place every time.
+ *
+ * WORKING, THEN THE ANSWER. Reading a slip of forty legs against a board of
+ * five hundred fixtures is thousands of comparisons, and on a cheap phone that
+ * is a visible pause with nothing on screen to explain it. The stage says what
+ * it is doing first and computes on the next frame, so the page never looks
+ * like it swallowed the tap. It also means the work happens once per press
+ * rather than on every keystroke, which is the only scaling this needs: every
+ * one of these jobs is arithmetic in the reader's own browser, and the server
+ * sees nothing until a booking button is pressed.
+ *
+ * AND A WAY BACK. Every job can be left - the button that opened it closes it,
+ * and each stage carries its own Cancel - so nobody is stuck looking at an
+ * offer they did not want. Nothing is booked by opening one. */
 function renderStage(usable,B){
   var st=$("byoStage"); if(!st) return;
   if(!BYO.job||!usable.length){ st.innerHTML=""; return; }
-  if(BYO.job==="split"){
-    st.innerHTML="<div class='code-split' id='byoSplit'>"+splitBoxInner(usable,byoOdds)+"</div>";
-    wireSplit(st,usable,B,{sel:"#byoSplit",selOf:byoSel,oddsOf:byoOdds});
-    return;
-  }
-  if(BYO.job==="convert"){ st.innerHTML="<div id='byoConv'></div>"; renderConvert(); return; }
-  st.innerHTML="<div class='byo-safer' id='byoSafer'>"+saferBoxInner(usable,B)+"</div>";
-  wireSafer(st,usable,B);
+  st.innerHTML="<div class='byo-working'><span class='mini-load'></span>"+
+    "Checking "+usable.length+" game"+(usable.length===1?"":"s")+"…</div>";
+  var job=BYO.job;
+  /* Two frames: one to paint the message, one to do the work. */
+  requestAnimationFrame(function(){ setTimeout(function(){
+    if(BYO.job!==job) return;            /* they moved on while we were busy */
+    if(job==="split"){
+      st.innerHTML="<div class='code-split' id='byoSplit'>"+splitBoxInner(usable,byoOdds)+"</div>";
+      wireSplit(st,usable,B,{sel:"#byoSplit",selOf:byoSel,oddsOf:byoOdds});
+    }else if(job==="convert"){
+      st.innerHTML="<div id='byoConv'></div>"; renderConvert();
+    }else{
+      st.innerHTML="<div class='byo-safer' id='byoSafer'>"+saferBoxInner(usable,B)+"</div>";
+      wireSafer(st,usable,B);
+    }
+    var foot=document.createElement("div");
+    foot.className="byo-stage-foot";
+    foot.innerHTML="<button class='byo-cancel' type='button'>Cancel</button>"+
+      "<button class='byo-reset' type='button'>Start over</button>";
+    st.appendChild(foot);
+    foot.querySelector(".byo-cancel").addEventListener("click",function(){
+      BYO.job=null; paintJobs(usable,B); renderStage(usable,B);
+      try{ $("byo").scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){}
+    });
+    foot.querySelector(".byo-reset").addEventListener("click",byoReset);
+  },0); });
+}
+
+/* BACK TO AN EMPTY BOX. Not a page reload: the board behind this took seconds
+   to arrive and throwing it away to clear a text field would be rude on a
+   connection that paid for it. */
+function byoReset(){
+  BYO.legs=null; BYO.code=""; BYO.job=null;
+  BYO.saferDrop=false; BYO.saferSwapOn=true; BYO.saferHow="normal"; BYO.reline=false;
+  var inp=$("byoCode"); if(inp) inp.value="";
+  var out=$("byoOut"); if(out) out.innerHTML="";
+  var st=$("byoStage"); if(st) st.innerHTML="";
+  var jobs=$("byoJobs");
+  if(jobs) jobs.querySelectorAll("[data-job]").forEach(function(b){
+    b.disabled=true; b.classList.remove("on"); });
+  try{ $("byo").scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){}
+  if(inp) try{ inp.focus(); }catch(e){}
 }
 
 /* ---- converting a code from one book to the other ---- */
@@ -12312,7 +12410,9 @@ function renderConvert(){
    payouts are on screen before the button exists. */
 function saferBoxInner(legs,B){
   var plan=saferPlan(legs,B);
-  var drop=BYO.saferDrop?saferDroppable(legs,B,plan):[];
+  var dial0=saferDial();
+  var dropOn=dial0.drop||BYO.saferDrop;
+  var drop=dropOn?saferDroppable(legs,B,plan):[];
   var could=saferDroppable(legs,B,plan);
   var dropKey={}; drop.forEach(function(l){ dropKey[l.eventId+"|"+l.prediction]=1; });
   var kept=legs.filter(function(l){ return !dropKey[l.eventId+"|"+l.prediction]; });
@@ -12347,10 +12447,15 @@ function saferBoxInner(legs,B){
   var nothing = !plan.length && !drop.length;
   return "<p class='sp-q'>Edit for me</p>"+
     "<div class='sf-opts'>"+
-      "<label class='byo-sw'><input type='checkbox' id='sfSwap'"+
-        (BYO.saferSwapOn?" checked":"")+"><span>Make hard legs easier</span></label>"+
-      "<label class='byo-sw'><input type='checkbox' id='sfDrop'"+
-        (BYO.saferDrop?" checked":"")+"><span>Take out legs we cannot fix"+
+      /* On Auto the two switches are what Auto means, so they are shown
+         ticked and locked rather than hidden - the reader can see exactly what
+         it decided, and one tap on another word gives them back. */
+      "<label class='byo-sw"+(dial0.swap?" is-auto":"")+"'><input type='checkbox' id='sfSwap'"+
+        ((dial0.swap||BYO.saferSwapOn)?" checked":"")+(dial0.swap?" disabled":"")+
+        "><span>Make hard legs easier</span></label>"+
+      "<label class='byo-sw"+(dial0.drop?" is-auto":"")+"'><input type='checkbox' id='sfDrop'"+
+        (dropOn?" checked":"")+(dial0.drop?" disabled":"")+
+        "><span>Take out legs we cannot fix"+
         (could.length?" ("+could.length+")":"")+"</span></label>"+
       "<div class='sf-how'><span class='sf-how-l'>How much?</span>"+chips+
         "<i class='sf-how-n'>"+esc(dial.note)+"</i></div>"+
@@ -12396,7 +12501,7 @@ function wireSafer(wrap,legs,B){
     var plan=saferPlan(legs,B);
     var byLeg={}; plan.forEach(function(p){ byLeg[p.leg.eventId+"|"+p.from]=p.to; });
     var gone={};
-    if(BYO.saferDrop) saferDroppable(legs,B,plan).forEach(function(l){
+    if(saferDial().drop||BYO.saferDrop) saferDroppable(legs,B,plan).forEach(function(l){
       gone[l.eventId+"|"+l.prediction]=1; });
     /* The slip's own event ids, with a market changed on some of them - and
        whatever the reader chose to leave out left out. */
