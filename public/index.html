@@ -8132,11 +8132,33 @@ function teamTag(s){
    "Paris Saint-Germain W" while the home side matched nothing, which cleared
    1.3 and put a LIVE badge on a fixture two days out. attachEventIds has
    required a per-side floor all along - this is the same rule. */
+/* THE SAME MARKER, WHEN IT IS ON THE COMPETITION RATHER THAN THE CLUB.
+   Reported twice: a Galatasaray U19 game in September, and Gaziantep FK v
+   Fenerbahce today - the live feed carried
+   `league: "Turkiye Amateur U19 PAF Ligi"` with team names written plainly as
+   "Gaziantep FK" and "Fenerbahce". teamTag reads the TEAM, so both sides
+   tagged senior, both cleared 0.6, and a youth match's score was bound to the
+   Super Lig fixture.
+   A youth or reserve league says so in its own name, so read that too and make
+   the two sides agree. Our own board would carry the same marker if we ever
+   listed such a competition, so a genuine U19 fixture still pairs with its own
+   live entry. */
+function leagueTag(s){
+  var t=" "+(s||"").toLowerCase().replace(/[^a-z0-9]+/g," ")+" ";
+  if(/ (w|women|womens|feminin|feminine|femenino|ladies) /.test(t)) return "w";
+  var u=t.match(/ u(15|16|17|18|19|20|21|23) /); if(u) return "u"+u[1];
+  if(/ (paf|youth|junior|juniors|academy|reserve|reserves|primavera) /.test(t)) return "res";
+  return "";
+}
+/* The team's own marker wins - "Fenerbahce U19" in a league with no marker is
+   still a youth side - and the league answers when the team is silent. */
+function ageTag(team,league){ return teamTag(team)||leagueTag(league); }
 function liveMatchFor(f){
   if(!f||typeof LIVE==="undefined"||!LIVE||!LIVE.matches) return null;
   var best=null,bs=0;
   LIVE.matches.forEach(function(m){
-    if(teamTag(m.home)!==teamTag(f.home)||teamTag(m.away)!==teamTag(f.away)) return;
+    if(ageTag(m.home,m.league)!==ageTag(f.home,f.league)||
+       ageTag(m.away,m.league)!==ageTag(f.away,f.league)) return;
     var sh=simTeams(f.home,m.home), sa=simTeams(f.away,m.away);
     if(sh<0.6||sa<0.6) return;
     var s=sh+sa; if(s>bs){bs=s;best=m;}
