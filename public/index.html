@@ -10526,9 +10526,12 @@ function bookWire(){
      cannot take rejects the whole ticket, so a real price in the listing is
      the proof the market exists. */
   BOOKS.sporty.priced=function(c){
+    /* The sixth copy of "read the cache and decide", found by
+       test/bookability.test.js the day the other five were collapsed. Asked
+       through bookVerdict now, so a market the sweep never fetches is "unknown"
+       here too rather than silently unpriced. */
     var f=(c&&c.f)||fixtureById(c&&c.id);
-    var o=f&&f.sportyOdds&&f.sportyOdds[c.code];
-    return !!(o&&o>1.01);
+    return bookIsPriced(f,c&&c.code,BOOKS.sporty);
   };
 
   /* `label` is the name in a sentence; `mark` is the brand drawn in its own
@@ -10578,36 +10581,61 @@ function clearPrompts(){ clearPrompt("bookResult"); clearPrompt("myBookResult");
    If we hold no prices for this book at all we know nothing, and the id is
    the honest guess - reporting nought of twenty-two because a feed has not
    finished loading is worse than being optimistic. */
+/* WILL THIS BOOK TAKE THIS LEG? ONE FUNCTION, THREE ANSWERS.
+ *
+ * This question was being answered in five places and got the same thing wrong
+ * three times: the slider, the API's pre-flight, and bookTakes each read "no
+ * price in our cache" as "this book has not got it". The cache holds what the
+ * SWEEP fetches - 24 markets - so anything outside that list is absent from it
+ * on every fixture, and judging those against it refuses them everywhere.
+ * Reported last as Inter v Udinese: 28 priced keys on the fixture and every new
+ * market refused.
+ *
+ * A boolean cannot say the thing that matters, which is why the mistake kept
+ * coming back. There are three states:
+ *
+ *   "priced"     we hold this book's own price for this market. Proof it exists.
+ *   "not-priced" we hold this book's prices for this fixture and this market is
+ *                not among them. Proof it does NOT exist - only ever said about
+ *                a market the sweep actually fetches.
+ *   "unknown"    we cannot tell from here: a market the sweep never asks for, a
+ *                fixture we hold no prices for, or a book whose cache is not its
+ *                whole book. The booking route reads the event itself and
+ *                refuses by name, so "unknown" is sent and answered honestly.
+ *
+ * Everything else asks THIS. Nothing else may index an odds cache to decide
+ * whether a leg can be booked - test/bookability.test.js enforces that.
+ */
+/* TWO QUESTIONS, NOT ONE, and keeping them apart is the point. "Does this book
+   list the GAME" is answered by an event id, which arrives asynchronously -
+   attachEventIds runs after boot - so a missing id means "not yet", never "no".
+   Folding it in here would empty both builders every time the id feed was slow,
+   which the original comment on this code warned about in as many words. So
+   bookVerdict answers only about the MARKET, and the callers that are about to
+   send something to a bookmaker add the id check themselves. */
+function bookVerdict(f,code,B){
+  B=B||curBook();
+  /* Bet9ja's bulk endpoint returns a handful of markets whatever you ask it
+     for, out of the hundreds it sells, so its cache proves nothing either way. */
+  if(!B.full) return "unknown";
+  if(!fetchedMarket(code)) return "unknown";
+  var o=f&&f[B.odds];
+  if(!o||!Object.keys(o).length) return "unknown";
+  var v=o[code];
+  return (v&&v>1.01)?"priced":"not-priced";
+}
+/* The two questions the callers actually ask, both in terms of the one above. */
+function bookMayTake(f,code,B){ return bookVerdict(f,code,B)!=="not-priced"; }
+function bookIsPriced(f,code,B){ return bookVerdict(f,code,B)==="priced"; }
+/* The old body of this function is now bookVerdict above, which says WHY
+   rather than only yes or no. Kept as the name every call site already uses. */
 function bookTakes(c,B){
   B=B||curBook();
+  /* Booking needs both: the book must list the game AND must not be known to
+     refuse the market. */
   if(!bookIdOf(c,B)) return false;
-  /* Only where the prices we hold are the book's whole book. For Bet9ja they
-     are the handful the bulk endpoint returns whatever you ask it for, out of
-     hundreds it actually offers, so reading a missing price as "not offered"
-     would report legs unbookable that book perfectly well. That is the same
-     mistake this function was written to stop, made in the other direction -
-     and it is the one that produced a wrong "Bet9ja does not carry these"
-     conclusion in the first place. Booking asks the event endpoint, which sees
-     everything, so the id is the honest answer here. */
-  if(!B.full) return true;
-  /* A MARKET THE SWEEP NEVER FETCHES IS ABSENT FROM THIS CACHE ON EVERY
-     FIXTURE, so judging it against the cache refuses it everywhere. Reported
-     on Inter v Udinese: "when i pick any option that is not Inter to win, it
-     says sportybet cant pick that game even when the markets are available on
-     the sportybet website" - and measured, that fixture carries 28 priced keys
-     while Win a half, Result or GG and the rest of the 14 Sep markets carry
-     none, because the sweep asks for 24 markets and these are not among them.
-     Same mistake, third place: the slider had it (fixed by fetchedMarket), the
-     API's _unbookable had it, and this - the count on the book picker, the note
-     under the slip and the pre-flight in the sheet - still had it. The id is
-     the honest answer for these: the booking route reads the event itself,
-     where the market either exists or is refused by name. */
-  if(!fetchedMarket(c&&c.code)) return true;
   var f=(c&&c.f)||fixtureById(c&&c.id);
-  var o=f&&f[B.odds];
-  if(!o||!Object.keys(o).length) return true;
-  var v=o[c&&c.code];
-  return !!(v&&v>1.01);
+  return bookMayTake(f,c&&c.code,B);
 }
 function bookIdOf(c,B){
   B=B||curBook();
@@ -11322,6 +11350,10 @@ function slipUse(){
 var SPREAD_PEN=0.15;    /* wizard: added to _cost, where the whole spread is ~0.9 */
 var SPREAD_MULT=0.85;   /* slider: multiplies the ranking key */
 function buildPicks(){
+  /* The book being built for, read once. Every price question below is
+     asked of THIS book - the peeks it replaced all read sportyOdds, so a
+     Bet9ja slip was being judged against SportyBet's prices. */
+  var B=curBook();
   var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier), cand=[];
   var mkOn={"1X":BUILD.mk.wd,"X2":BUILD.mk.wd,"12":BUILD.mk.any,"1":BUILD.mk.out,"2":BUILD.mk.out,
     "OVER_1.5":BUILD.mk.o15,"OVER_2.5":BUILD.mk.o25,"OVER_3.5":BUILD.mk.o35,
@@ -11367,16 +11399,23 @@ function buildPicks(){
        best guess, exactly as before. Conflating those two cases would empty
        the builder whenever the feed is down, which is a far worse failure than
        the one being fixed. */
+    /* THE ONE QUESTION, ASKED ONCE - see bookVerdict. This used to be three
+       separate peeks into sportyOdds, which is also how it judged prices at
+       SportyBet while the reader was booking to Bet9ja. */
     var usable=allowed.filter(sane);
-    var realCodes=usable.filter(function(c){return hasRealOdd(f,c);});
-    /* A market the sweep never fetches is absent from the cache on every
-       fixture, so it can never be in realCodes and must not be judged against
-       it - see fetchedMarket. */
-    var offSweep=usable.filter(function(c){ return !fetchedMarket(c); });
-    if(realCodes.length||offSweep.length) usable=realCodes.concat(offSweep);
-    else if(pricedFixture(f)) return;
+    var byVerdict={priced:[],unknown:[]};
+    usable.forEach(function(c){
+      var v=bookVerdict(f,c,B);
+      if(byVerdict[v]) byVerdict[v].push(c);
+    });
+    /* A quote first, then anything the cache cannot speak for. "not-priced" is
+       the only refusal, and it is only ever said about a market the sweep
+       actually fetches. */
+    if(byVerdict.priced.length||byVerdict.unknown.length){
+      usable=byVerdict.priced.concat(byVerdict.unknown);
+    } else if(pricedFixture(f,B)) return;
     /* Same rule as the wizard: with no prices for this fixture we are guessing,
-       so guess only among markets SportyBet always lists. */
+       so guess only among markets this book always lists. */
     else { usable=usable.filter(function(c){ return safeUnpriced(c); });
            if(!usable.length) return; }
 
@@ -11554,14 +11593,23 @@ function legOdd(f,code,p){
 /* Does SportyBet price this exact market on this fixture? A real odd in
    sportyOdds came FROM SportyBet, so its presence is proof the market
    exists and its absence is proof it does not. */
-function hasRealOdd(f,c){var o=f&&f.sportyOdds&&f.sportyOdds[c];return !!(o&&o>1.01);}
+/* Kept as a name, delegated as a rule: one definition of "we hold this
+   book's own price", in bookVerdict. */
+function hasRealOdd(f,c,B){ return bookIsPriced(f,c,B||curBook()); }
 /* Do we know anything at all about this fixture's prices? Having no prices
    is not the same as having prices that exclude our market. */
-function pricedFixture(f){
-  try{ return !!(f&&f.sportyOdds&&Object.keys(f.sportyOdds).length); }
+function pricedFixture(f,B){
+  B=B||curBook();
+  try{ var o=f&&f[B.odds]; return !!(o&&Object.keys(o).length); }
   catch(e){ return false; }
 }
-function oddsAreReal(picks){return picks.length&&picks.every(function(c){var o=c.f&&c.f.sportyOdds&&c.f.sportyOdds[c.code];return o&&o>1.01;});}
+/* Every leg carries this book's own quote, not an estimate of ours. Asked
+   through bookVerdict so there is one definition of "a real price". */
+function oddsAreReal(picks,B){
+  B=B||curBook();
+  return !!picks.length&&picks.every(function(c){
+    return bookIsPriced(c.f||fixtureById(c.id),c.code,B); });
+}
 function notStarted(f){if(f&&f.kickoff){return new Date(f.kickoff).getTime()>Date.now();}return isUpcoming(f);}
 /* A leg with no price multiplies by nothing rather than by noise. Every pick
    the builders make carries a probability, so this is the converted-slip case
@@ -12216,10 +12264,12 @@ function saferSwap(l,B){
   if(from==="X") to=(mProb(f,"1X")>=mProb(f,"X2"))?"1X":"X2";
   if(!to) return null;
   if(!bookAllows(to,B)) return null;                /* this book must sell it */
-  /* SportyBet lists team totals on about half its card and refuses the whole
-     ticket over one leg it cannot take, so a real published price is the proof
-     the market exists - the same test the builder applies. */
-  if(B.key==="sporty"&&!(f[B.odds]&&f[B.odds][to]>1.01)) return null;
+  /* A published price is the proof the market exists on this game, and a swap
+     must not put a leg on a ticket the book will refuse - one bad leg takes the
+     whole slip down. Asked through bookVerdict rather than by reading the cache
+     here, so the editor cannot drift from the builders: "not-priced" is the
+     only refusal, and it is only ever said about a market the sweep fetches. */
+  if(bookVerdict(f,to,B)==="not-priced") return null;
   var pOld=mProb(f,from), pNew=mProb(f,to);
   if(pOld==null||pNew==null) return null;
   if((pNew-pOld)<saferDial().gain) return null;

@@ -311,10 +311,15 @@ test("a swap keeps the game and widens the outcome, never the reverse", () => {
       "o15:0.79,o25:0.51,sportyOdds:{'1X':1.28,'OVER_1.5':1.22,'OVER_2.5':1.9,'1':1.85}}]};" +
     "var MATCH_WINDOW_MS=86400000; var BOOK_ONLY=" +
       src.match(/var BOOK_ONLY=(\{[\s\S]*?\});/)[1] + ";" +
-    "function curBook(){return {key:'sporty'};}" +
+    "function curBook(){return {key:'sporty',full:true,odds:'sportyOdds',id:'eventId'};}" +
     src.slice(src.indexOf("var TEAM_ALIASES = {"), src.indexOf("function simTeams(")) +
     grab("simTeams") + grab("evStart") + grab("sameSlot") + grab("fixtureByBookId") +
     grab("fixtureByLeg") + grab("mProb") + grab("bookAllows") + grab("legChance") +
+    /* The editor asks the shared verdict before it swaps a leg onto a market -
+       see bookVerdict. Lifted rather than stubbed, so this test exercises the
+       real rule. */
+    "const SAFE_UNPRICED={'1':1,'2':1,'X':1,'1X':1,'X2':1,'12':1};" +
+    grab("fetchedMarket") + grab("bookVerdict") +
     "var BYO={saferHow:'normal',saferSwapOn:true,saferDrop:false};" +
     src.slice(src.indexOf("var SAFER={"), src.indexOf("function renderByo(")) +
     "\nreturn {saferSwap:saferSwap,saferPlan:saferPlan,saferDroppable:saferDroppable,SAFER_MIN_GAIN:SAFER_MIN_GAIN};")();
@@ -579,7 +584,8 @@ test("a market the sweep never fetches is not refused for having no price", () =
     "function fixtureById(){return null;}" +
     "function curBook(){return {key:'sporty',full:true,odds:'sportyOdds'};}" +
     "function bookIdOf(c){return (c&&c.f&&c.f.eventId)||null;}" +
-    grab("fetchedMarket") + grab("bookTakes") + "\nreturn {bookTakes};")();
+    grab("fetchedMarket") + grab("bookVerdict") + grab("bookMayTake") +
+    grab("bookIsPriced") + grab("bookTakes") + "\nreturn {bookTakes};")();
   const B = { key: "sporty", full: true, odds: "sportyOdds" };
   /* The real shape: a fixture SportyBet lists, priced on the swept markets. */
   const f = { eventId: "sr:match:71945252",

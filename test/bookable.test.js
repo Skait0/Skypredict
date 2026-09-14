@@ -50,6 +50,10 @@ function konst(name) {
 
 const FNS = ["countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmerican",
   "saWeight", "isLowerLeague", "isLowerFixture", "fid", "oddOf", "legOdd",
+  /* ONE FUNCTION ANSWERS "will this book take this leg" - see bookVerdict in
+     index.html. The harness lifts the real thing rather than a stub, because
+     stubbing it is how three copies of the same bug survived. */
+  "bookVerdict", "bookMayTake", "bookIsPriced", "bookIdOf",
   "hasRealOdd", "pricedFixture", "mProb", "riskParams",
   /* The slider now restricts an unpriced fixture to markets SportyBet always
      lists, so the harness needs that helper and its table. */
@@ -72,7 +76,9 @@ function engine(fixtures) {
     "function slipUse(){return {};}",
     konst("SAFE_UNPRICED"), konst("BOOK_ONLY"),
     /* The harness books at SportyBet, like the default visit. */
-    "function curBook(){return {key:'sporty',label:'SportyBet'};}",
+    /* full: the cache for this book IS its whole book, which is what makes a
+       missing price meaningful. odds: where that cache lives on a fixture. */
+    "function curBook(){return {key:'sporty',label:'SportyBet',full:true,odds:'sportyOdds',id:'eventId'};}",
     konst("HIGH_SCORING_O25"), konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
     konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"),
   konst("SPREAD_PEN"), konst("SPREAD_MULT"),

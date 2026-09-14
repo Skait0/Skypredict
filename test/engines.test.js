@@ -60,6 +60,10 @@ function konst(name) {
 
 const FNS = ["countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmerican",
   "saWeight", "isLowerLeague", "isLowerFixture", "fid", "oddOf", "legOdd",
+  /* ONE FUNCTION ANSWERS "will this book take this leg" - see bookVerdict in
+     index.html. Lifted, not stubbed: stubbing it is how three copies of the
+     same bug survived. */
+  "bookVerdict", "bookMayTake", "bookIsPriced", "bookIdOf",
   "hasRealOdd", "pricedFixture", "mProb", "riskParams",
   "allowedMarkets", "preferGoalsOverDouble", "isJackpotOdds", "wspMarkets",
   /* The wizard now asks which markets have a published record before it
@@ -88,7 +92,7 @@ const api = new Function([
      spread penalty is exercised on its own in spread.test.js. */
   "function slipUse(){return {};}",
   konst("SAFE_UNPRICED"), konst("BOOK_ONLY"),
-  "function curBook(){return {key:'sporty',label:'SportyBet'};}",
+  "function curBook(){return {key:'sporty',label:'SportyBet',full:true,odds:'sportyOdds',id:'eventId'};}",
   konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
   konst("HIGH_SCORING_O25"), konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
   konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"),

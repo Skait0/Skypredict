@@ -73,11 +73,15 @@ test("both builders apply it, and only on the unpriced path", () => {
   assert.match(wiz, /if\(cs\.length&&priced\(cs\[0\]\.f\)\) return null;[\s\S]*safeUnpriced/,
     "the safe set must be applied AFTER the priced-but-unlisted drop, not before");
 
-  const i = src.indexOf("var realCodes=usable.filter(function(c){return hasRealOdd(f,c);});");
+  /* Re-anchored when the three peeks into sportyOdds were collapsed onto
+     bookVerdict. The ORDER is what these assertions protect, and it is
+     unchanged: a quote, then what the cache cannot speak for, then the
+     priced-but-unlisted drop, then the safe set. */
+  const i = src.indexOf("var byVerdict={priced:[],unknown:[]};");
   const sl = src.slice(i, i + 1100);
-  assert.match(sl, /if\(realCodes\.length\|\|offSweep\.length\) usable=realCodes\.concat\(offSweep\);/,
-    "the slider must still prefer real prices, and keep the off-sweep markets");
-  assert.match(sl, /else if\(pricedFixture\(f\)\) return;/,
+  assert.match(sl, /usable=byVerdict\.priced\.concat\(byVerdict\.unknown\);/,
+    "the slider must still prefer real prices, and keep what the cache cannot judge");
+  assert.match(sl, /else if\(pricedFixture\(f,B\)\) return;/,
     "and still drop a priced fixture with none of our markets");
   assert.match(sl, /else \{ usable=usable\.filter\(function\(c\)\{ return safeUnpriced\(c\); \}\);/,
     "the slider does not narrow its guess to the safe set");
@@ -87,7 +91,11 @@ test("a fixture with nothing safe left is dropped, not forced", () => {
   /* If the only markets switched on are ones we cannot guess at, the honest
      answer is to skip the fixture. Forcing one through is what produced a
      booking code that would not load. */
-  const i = src.indexOf("var realCodes=usable.filter(function(c){return hasRealOdd(f,c);});");
+  /* Re-anchored when the three peeks into sportyOdds were collapsed onto
+     bookVerdict. The ORDER is what these assertions protect, and it is
+     unchanged: a quote, then what the cache cannot speak for, then the
+     priced-but-unlisted drop, then the safe set. */
+  const i = src.indexOf("var byVerdict={priced:[],unknown:[]};");
   assert.match(src.slice(i, i + 1100), /if\(!usable\.length\) return; \}/,
     "the slider must skip a fixture left with no guessable market");
   const wiz = src.slice(src.indexOf("function pickFrom(cs){"), src.indexOf("function pickFrom(cs){") + 1400);

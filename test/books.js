@@ -60,7 +60,12 @@ function prelude(book) {
     decl("BOOKS") + "\n" +
     'var BOOK_KEY="sw.book";\n' +
     "var BOOKMAKER=" + JSON.stringify(book || "sporty") + ";\n" +
-    fn("curBook") + "\n" + fn("bookIdOf") + "\n" + fn("bookWire") + "\n" +
+    fn("curBook") + "\n" + fn("bookIdOf") + "\n" +
+    /* BOOKS.sporty.priced asks the shared verdict now - see bookVerdict in
+       index.html - so bookWire cannot be lifted without it. */
+    decl("SAFE_UNPRICED") + "\n" + fn("fetchedMarket") + "\n" +
+    fn("bookVerdict") + "\n" + fn("bookMayTake") + "\n" + fn("bookIsPriced") + "\n" +
+    fn("bookWire") + "\n" +
     /* A confirmation hides the Get code button beside it while it is up, so
        anything that raises one needs these three as well. */
     fn("promptFoot") + "\n" + fn("showPrompt") + "\n" + fn("clearPrompt") + "\n" +
