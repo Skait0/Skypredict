@@ -68,6 +68,9 @@ const FNS = ["countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmer
   /* Both builders now restrict themselves to markets SportyBet always lists
      when a fixture has no prices at all, so the harness needs that too. */
   "safeUnpriced",
+  /* And which markets the odds cache can even contain: absence proves
+     nothing for a market the sweep never fetches. */
+  "fetchedMarket",
   /* And which markets the CURRENT bookmaker sells - Bet9ja alone carries the
      1.5 line on the 1X2-or-Over/Under family, so the slider asks before it
      picks one. */

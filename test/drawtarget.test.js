@@ -42,7 +42,11 @@ function liftReachable() {
   let d = 0, k = src.indexOf("{", i);
   for (; k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) break; } }
   const body = src.slice(i, k + 1);
-  return new Function("list", "hasReal", "priced", "safeUnpriced",
+  /* fetchedMarket joined the pair above when the combination markets shipped:
+     the odds cache only ever holds the markets the sweep fetches, so absence
+     proves nothing about the rest. Passed in rather than stubbed inside the
+     body, like the three before it. */
+  return new Function("list", "hasReal", "priced", "safeUnpriced", "fetchedMarket",
     body + "\nreturn reachablePerLeg();");
 }
 const reachable = liftReachable();
@@ -50,6 +54,9 @@ const reachable = liftReachable();
 const hasReal      = (c) => !!(c.f && c.f.sportyOdds && c.f.sportyOdds[c.code] > 1.01);
 const priced       = (f) => !!(f && f.sportyOdds && Object.keys(f.sportyOdds).length);
 const safeUnpriced = (c) => ["1", "2", "X", "1X", "X2", "12"].indexOf(c) >= 0;
+/* Every market these fixtures carry is one the sweep fetches, so the cache can
+   speak for all of them here - see fetchedMarket in index.html. */
+const fetchedMarket = () => true;
 
 /* A fixture whose candidates carry real bookmaker prices. */
 function fx(id, prices) {
@@ -68,7 +75,7 @@ const inBand = (od, g) => od >= g * LO && od <= g * OVERSHOOT;
 
 test("a draw-only board reports what a draw really costs", () => {
   const list = [fx("a", { X: 3.10 }), fx("b", { X: 3.30 }), fx("c", { X: 2.95 })];
-  assert.strictEqual(reachable(list, hasReal, priced, safeUnpriced), 3.10,
+  assert.strictEqual(reachable(list, hasReal, priced, safeUnpriced, fetchedMarket), 3.10,
     "the median of each fixture's cheapest bookable leg");
 });
 
@@ -78,7 +85,7 @@ test("a normal board still reports the short markets, so the style stays in char
     fx("b", { "1X": 1.08, "OVER_1.5": 1.20, X: 3.40 }),
     fx("c", { "1X": 1.06, "OVER_1.5": 1.15, X: 3.05 })
   ];
-  const r = reachable(list, hasReal, priced, safeUnpriced);
+  const r = reachable(list, hasReal, priced, safeUnpriced, fetchedMarket);
   assert.ok(r < 1.4,
     "with cheap markets on the board this must stay UNDER the Slip style " +
     "figure, or max() would raise the target and change every existing slip");
@@ -92,7 +99,7 @@ test("the median is a numeric one", () => {
      Sorted as text, "11.00" files between "1.50" and "2.00" and the median
      becomes the longest leg on the board rather than the middle one. */
   const list = [fx("a", { "2": 11.00 }), fx("b", { "1X": 1.50 }), fx("c", { "1X": 2.00 })];
-  assert.strictEqual(reachable(list, hasReal, priced, safeUnpriced), 2.00,
+  assert.strictEqual(reachable(list, hasReal, priced, safeUnpriced, fetchedMarket), 2.00,
     "1.50, 2.00 and 11.00 have a median of 2.00");
 });
 

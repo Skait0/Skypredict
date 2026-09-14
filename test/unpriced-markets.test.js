@@ -62,16 +62,21 @@ test("both builders apply it, and only on the unpriced path", () => {
   /* The rule must not touch a fixture we DO have prices for - there the real
      odds already tell us exactly what is listed, and narrowing to 1X2 would
      throw away most of the board for no reason. */
-  const wiz = src.slice(src.indexOf("function pickFrom(cs){"), src.indexOf("function pickFrom(cs){") + 900);
+  const wiz = src.slice(src.indexOf("function pickFrom(cs){"), src.indexOf("function pickFrom(cs){") + 1400);
   assert.match(wiz, /var real=cs\.filter\(hasReal\);[\s\S]*if\(real\.length\) return bestOf\(real\);/,
     "the wizard must still prefer real prices before anything else");
+  /* A market the sweep never fetches sits between those two: the cache cannot
+     speak for it either way, so it is neither a real price nor a guess the
+     safe set governs. See fetchedMarket. */
+  assert.match(wiz, /if\(offSweep\.length\) return bestOf\(offSweep\);[\s\S]*if\(cs\.length&&priced\(cs\[0\]\.f\)\) return null;/,
+    "an off-sweep market must be judged before the priced-but-unlisted drop");
   assert.match(wiz, /if\(cs\.length&&priced\(cs\[0\]\.f\)\) return null;[\s\S]*safeUnpriced/,
     "the safe set must be applied AFTER the priced-but-unlisted drop, not before");
 
   const i = src.indexOf("var realCodes=usable.filter(function(c){return hasRealOdd(f,c);});");
-  const sl = src.slice(i, i + 700);
-  assert.match(sl, /if\(realCodes\.length\) usable=realCodes;/,
-    "the slider must still prefer real prices");
+  const sl = src.slice(i, i + 1100);
+  assert.match(sl, /if\(realCodes\.length\|\|offSweep\.length\) usable=realCodes\.concat\(offSweep\);/,
+    "the slider must still prefer real prices, and keep the off-sweep markets");
   assert.match(sl, /else if\(pricedFixture\(f\)\) return;/,
     "and still drop a priced fixture with none of our markets");
   assert.match(sl, /else \{ usable=usable\.filter\(function\(c\)\{ return safeUnpriced\(c\); \}\);/,
@@ -83,9 +88,9 @@ test("a fixture with nothing safe left is dropped, not forced", () => {
      answer is to skip the fixture. Forcing one through is what produced a
      booking code that would not load. */
   const i = src.indexOf("var realCodes=usable.filter(function(c){return hasRealOdd(f,c);});");
-  assert.match(src.slice(i, i + 700), /if\(!usable\.length\) return; \}/,
+  assert.match(src.slice(i, i + 1100), /if\(!usable\.length\) return; \}/,
     "the slider must skip a fixture left with no guessable market");
-  const wiz = src.slice(src.indexOf("function pickFrom(cs){"), src.indexOf("function pickFrom(cs){") + 900);
+  const wiz = src.slice(src.indexOf("function pickFrom(cs){"), src.indexOf("function pickFrom(cs){") + 1400);
   assert.match(wiz, /return guessable\.length\?bestOf\(guessable\):null;/,
     "the wizard must return null rather than pick something unlistable");
 });
@@ -103,7 +108,7 @@ test("the safe set is a plain lookup, not a scan", () => {
  * two failures came from.
  */
 test("an unpriced fixture is still usable, just narrowed", () => {
-  const wiz = src.slice(src.indexOf("function pickFrom(cs){"), src.indexOf("function pickFrom(cs){") + 900);
+  const wiz = src.slice(src.indexOf("function pickFrom(cs){"), src.indexOf("function pickFrom(cs){") + 1400);
   assert.ok(!/if\(!priced\(cs\[0\]\.f\)\) return null;/.test(wiz),
     "an unpriced fixture must not be dropped outright - that shrinks the board " +
     "whenever the name matcher misses, which is most common on small leagues");

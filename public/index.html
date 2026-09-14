@@ -10903,6 +10903,26 @@ function bookAllows(code,B){
 }
 var SAFE_UNPRICED={"1":1,"2":1,"X":1,"1X":1,"X2":1,"12":1};
 function safeUnpriced(code){ return !!SAFE_UNPRICED[code]; }
+/* WHICH MARKETS THE ODDS CACHE CAN EVEN CONTAIN.
+ *
+ * sportyOdds holds what the sweep fetches, and the sweep fetches the markets
+ * we model - nothing else. So for a combination like "home or both score" the
+ * cache is silent whether SportyBet sells it or not, and "no price here" is
+ * not evidence of anything.
+ *
+ * Both builders read that silence as "this leg cannot be placed, drop the
+ * fixture", which is right for a team-total (listed on about 70% of the card,
+ * and booking one that is missing takes the whole slip down) and wrong for
+ * every market outside the sweep. Reported as chips that turn on and produce
+ * "no games to conjure": every candidate was being dropped before it could be
+ * scored. Same mistake the API pre-flight made on the same markets, for the
+ * same reason - see _unbookable in server.py. */
+function fetchedMarket(code){
+  return !!SAFE_UNPRICED[code] ||
+    /^(OVER|UNDER)_[13]\.5$/.test(code) || code==="OVER_2.5" || code==="UNDER_2.5" ||
+    code==="GG" || code==="NG" || code==="FH_OVER_0.5" ||
+    /^(HOME|AWAY)_OVER_[01]\.5$/.test(code);
+}
 var MIN_GRADED=10;
 function codeMarket(c){
   switch(c){
@@ -11141,7 +11161,11 @@ function buildPicks(){
        the one being fixed. */
     var usable=allowed.filter(sane);
     var realCodes=usable.filter(function(c){return hasRealOdd(f,c);});
-    if(realCodes.length) usable=realCodes;
+    /* A market the sweep never fetches is absent from the cache on every
+       fixture, so it can never be in realCodes and must not be judged against
+       it - see fetchedMarket. */
+    var offSweep=usable.filter(function(c){ return !fetchedMarket(c); });
+    if(realCodes.length||offSweep.length) usable=realCodes.concat(offSweep);
     else if(pricedFixture(f)) return;
     /* Same rule as the wizard: with no prices for this fixture we are guessing,
        so guess only among markets SportyBet always lists. */
@@ -15313,7 +15337,8 @@ function wspBuild(){
       var mins=[];
       list.forEach(function(c){
         var cs=c.cands||[{f:c.f,id:c.id,code:c.code,p:c.p,od:c.od}];
-        var usable=cs.filter(hasReal);
+        var usable=cs.filter(hasReal).concat(
+          cs.filter(function(x){ return !fetchedMarket(x.code); }));
         if(!usable.length){
           if(cs.length&&priced(cs[0].f)) return;   // unbookable, dropped anyway
           usable=cs.filter(function(x){ return safeUnpriced(x.code); });
@@ -15430,6 +15455,11 @@ function wspBuild(){
       /* Prices exist for this fixture and none of our markets is among them,
          so the leg cannot be placed - drop the fixture. With no prices at all
          we know nothing, and an estimated odd is the honest best guess. */
+      /* Off-sweep markets first: the cache has nothing to say about them, so
+         a fixture that carries prices for other markets must not take them
+         down with it. */
+      var offSweep=cs.filter(function(c){ return !fetchedMarket(c.code); });
+      if(offSweep.length) return bestOf(offSweep);
       if(cs.length&&priced(cs[0].f)) return null;
       /* No prices at all for this fixture, so these are our own estimates.
          Stay inside the markets SportyBet always carries: a guessed team-goals

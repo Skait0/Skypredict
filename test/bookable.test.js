@@ -54,6 +54,9 @@ const FNS = ["countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmer
   /* The slider now restricts an unpriced fixture to markets SportyBet always
      lists, so the harness needs that helper and its table. */
   "safeUnpriced",
+  /* And which markets the odds cache can even contain: absence proves
+     nothing for a market the sweep never fetches. */
+  "fetchedMarket",
   /* A market one bookmaker sells and the other does not - the slider asks
      before it picks, so the harness needs the question and its table. */
   "bookAllows",

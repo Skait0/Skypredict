@@ -300,7 +300,7 @@ test("a declined fixture is skipped, not crashed on", () => {
      If either stopped checking, a null pick would throw inside the build and
      the wizard would silently produce nothing. */
   const i = src.indexOf("function pickFrom(cs){");
-  const fn = src.slice(i, i + 900);
+  const fn = src.slice(i, i + 1400);   /* the off-sweep branch made it longer */
   assert.match(fn, /return guessable\.length\?bestOf\(guessable\):null;/,
     "pickFrom must be able to pass a null through");
   /* With no prices for a fixture we are guessing, so the guess is confined to
