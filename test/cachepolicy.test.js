@@ -30,7 +30,10 @@ const predictions = require("../api/predictions.js");
 /* The windows each feed allowed when one header carried the whole policy.
    Copied from git history deliberately: if someone widens a window later, the
    staleness test should fail and make them say so out loud. */
-const BEFORE = { live: 20, fixtures: 600, bet9ja: 600 };
+/* What each feed's worst-case staleness was before the CDN/Vercel split, so
+   a later tweak cannot quietly make a feed older than it used to be.
+   BetKing was added at the same numbers as Bet9ja and is held to them. */
+const BEFORE = { live: 20, fixtures: 600, bet9ja: 600, betking: 600 };
 
 /* A deploy must be visible within this. The board is baked at build time and
    Cloudflare has no idea a build happened, so its window IS the delay. */

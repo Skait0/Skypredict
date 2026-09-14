@@ -3158,6 +3158,16 @@ html.mode-live #live{display:block}
    setting rather than an action, so it reads better as a quiet line above
    the thing it governs. */
 :root{--b9-red:#D42127;--b9-green:#14B151}
+/* BetKing. Sampled from their own brand-logo.svg rather than eyeballed: the
+   crown is #ffc400 and the wordmark is white, on the near-black their site
+   runs on. White has nowhere to go on our light theme, so the mark takes our
+   ink for "Bet" and their gold for "King" - one brand colour, legible on both
+   grounds, and unmistakably theirs.
+   The gold flips on light: #ffc400 on white is about 1.8:1, which is a
+   decoration rather than a word. --bk-deep is the same hue taken down to
+   where it can be read. */
+:root{--bk-gold:#FFC400;--bk-ink:#12100B}
+[data-theme="light"]{--bk-gold:#A97400}
 .bookpick{display:flex;align-items:center;gap:7px;margin-top:12px;flex-wrap:wrap;
   padding:0 2px}
 /* Nothing to book, nothing to choose between. Hidden rather than emptied so
@@ -3211,6 +3221,13 @@ html.mode-live #live{display:block}
 .bp[data-book="bet9ja"].on{box-shadow:0 1px 3px rgba(0,0,0,.25),
   inset 0 0 0 1.5px var(--b9-green)}
 .bp[data-book="bet9ja"] small{font-size:9.5px}
+/* BetKing sits level with Bet9ja - both are the second thing on the row, and
+   making the newest one the loudest would say something about it that is not
+   true. Condensed type buys back the width its longer name costs. */
+.bp[data-book="betking"]{padding:5px 10px;font-size:11px}
+.bp[data-book="betking"].on{box-shadow:0 1px 3px rgba(0,0,0,.25),
+  inset 0 0 0 1.5px var(--bk-gold)}
+.bp[data-book="betking"] small{font-size:9.5px}
 @media(hover:hover){ .bp:not(.on):hover{opacity:.72} }
 /* How many of the slip this book can actually take, so the choice is informed
    rather than a coin toss. A chip rather than loose type, so it reads as a
@@ -3221,6 +3238,7 @@ html.mode-live #live{display:block}
 /* Was white on white-15%, which was legible only because the pill behind it
    was black. On our own surface it needs our own ink. */
 .bp[data-book="bet9ja"] small{background:rgba(20,177,81,.14);color:var(--b9-green)}
+.bp[data-book="betking"] small{background:rgba(255,196,0,.16);color:var(--bk-gold)}
 /* The SportyBet wordmark. One colour, so it needs no inner spans - but it does
    need to be a mark rather than a word, so that every place the name appears
    carries it: the code card's title, their own button, the pre-flight when it
@@ -3244,6 +3262,25 @@ html.mode-live #live{display:block}
   display:inline;letter-spacing:inherit;line-height:inherit;margin:0}
 .b9m .b9r{color:var(--b9-red)}
 .b9m .b9g{color:var(--b9-green)}
+/* The BetKing wordmark. Their site sets the name in Roboto Condensed, which
+   is the half of their brand that is not the gold - so the mark asks for a
+   condensed face and falls back through what phones actually ship.
+   NO WEBFONT LINK. A third-party stylesheet on the critical path held the
+   first paint once already and there is a test forbidding one, so this is a
+   local stack: whatever condensed face the device has, or the page's own
+   font narrowed. */
+.bkm{font-weight:800;letter-spacing:-.005em;white-space:nowrap;
+  font-family:"Roboto Condensed","Arial Narrow",
+    "Helvetica Neue Condensed","Liberation Sans Narrow",inherit;
+  font-stretch:condensed}
+.bkm .bkk,.bkm .bkg{font-style:normal;font-weight:800;font-size:inherit;
+  display:inline;letter-spacing:inherit;line-height:inherit;margin:0}
+.bkm .bkk{color:inherit}
+.bkm .bkg{color:var(--bk-gold)}
+/* On their own gold ground the whole mark goes dark, the same rule the
+   SportyBet mark follows on red. */
+.code-open .bkm .bkg,.book-btn .bkm .bkg,.wsp-go .bkm .bkg,
+  .slipbar .bkm .bkg{color:inherit}
 .bld-note{font-size:12px;color:var(--soft);margin-top:10px;text-align:center}
 /* In the sheet this line sits outside the scrolling body, level with the book
    picker, so it needs the sheet's own gutter rather than the panel's. */
@@ -3288,7 +3325,7 @@ html.mode-live #live{display:block}
 .byo-b{font:inherit;font-size:12px;font-weight:700;padding:6px 12px;border:0;
   border-radius:99px;background:none;cursor:pointer;line-height:1;
   transition:background .15s,box-shadow .15s,opacity .15s}
-.byo-b .sbm,.byo-b .b9m{font-size:12.5px;letter-spacing:-.01em}
+.byo-b .sbm,.byo-b .b9m,.byo-b .bkm{font-size:12.5px;letter-spacing:-.01em}
 .byo-b:not(.on){opacity:.5}
 /* THE INK IS THEIRS, THE SURFACE IS OURS. A white pill and a black pill put
    two foreign backgrounds inside our own rail: on the dark theme the black one
@@ -3300,6 +3337,8 @@ html.mode-live #live{display:block}
   inset 0 0 0 1.5px var(--red)}
 .byo-b.on[data-book="bet9ja"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
   inset 0 0 0 1.5px var(--b9-green)}
+.byo-b.on[data-book="betking"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
+  inset 0 0 0 1.5px var(--bk-gold)}
 @media (hover:hover){.byo-b:not(.on):hover{opacity:.8}}
 #byoCode{flex:1 1 150px;min-width:0;font:inherit;font-size:14px;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;
@@ -3778,7 +3817,53 @@ html.mode-live #live{display:block}
    "Open in" and the mark two flex items with nothing between them:
    "Open inbet9ja". A space in the string cannot survive that, so it is a
    margin. Both books, because both had it - only Bet9ja's was noticed. */
-.code-open .sbm,.code-open .b9m{margin-left:.3em}
+.code-open .sbm,.code-open .b9m,.code-open .bkm{margin-left:.3em}
+
+/* --- the BetKing code card -------------------------------------------------
+   Same construction as the Bet9ja one above and for the same reasons: their
+   ground, not ours, set on the two-class selector so the light theme's own
+   red wash cannot outrank it. BetKing's site is near-black with the gold
+   doing all the work, so the card is darker than Bet9ja's and carries one
+   colour instead of two. */
+.code-card--bk,[data-theme="light"] .code-card--bk{
+  background:linear-gradient(180deg,#17150E,#08080A);
+  border-color:rgba(255,196,0,.42);
+  box-shadow:0 22px 58px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.07)}
+.code-card--bk i,[data-theme="light"] .code-card--bk i{color:rgba(255,255,255,.8)}
+.code-card--bk b,[data-theme="light"] .code-card--bk b{color:#fff}
+/* On their own dark card the wordmark is white with the gold half, exactly as
+   their logo file has it - the --bk-gold light-theme override must not follow
+   the mark onto a ground that is dark whatever the theme says. */
+.code-card--bk .bkm{color:#fff}
+.code-card--bk .bkm .bkg{color:#FFC400}
+.code-card--bk i{display:block;text-transform:none}
+.code-card--bk i::after{content:"";display:block;width:42px;height:2px;
+  margin:8px auto 2px;border-radius:2px;background:#FFC400}
+.code-card--bk .code-keep-n{color:rgba(255,255,255,.6)}
+.code-card--bk .code-save{background:rgba(255,255,255,.08);color:#fff;
+  border-color:rgba(255,255,255,.24)!important}
+.code-card--bk .code-save.done{border-color:#FFC400!important;color:#FFC400}
+.code-card--bk .code-x{background:rgba(255,255,255,.08);color:#fff;
+  border-color:rgba(255,255,255,.2)}
+@media(hover:hover){
+  .code-card--bk .code-x:hover{border-color:#FFC400;color:#fff}
+}
+/* Gold is a light colour: white on it is unreadable, so their buttons take
+   the dark ink their own site uses on gold. */
+.code-card--bk .code-acts .code-copy,
+.code-card--bk .code-acts .share-btn{
+  background:#FFC400;color:var(--bk-ink);border:1px solid transparent!important;
+  box-shadow:0 2px 10px rgba(255,196,0,.28)}
+@media(hover:hover){
+  .code-card--bk .code-acts .code-copy:hover,
+  .code-card--bk .code-acts .share-btn:hover{filter:brightness(1.08)}
+}
+/* BetKing has no deep link, so this card ends in a sentence rather than their
+   button - see BK_URL. It is still the last thing read, so it is set like an
+   instruction and not like a footnote. */
+.code-card--bk .code-paste{display:block;font-size:12.5px;
+  font-weight:600;line-height:1.45;color:rgba(255,255,255,.72);
+  text-align:center;padding:2px 6px}
 .code-err{background:var(--red-wash);border:1px solid var(--red);border-radius:var(--r-md);
   padding:15px;color:var(--red-ink);font-weight:600;font-size:14px}
 /* What went wrong, then what to do about it - the second line is the useful
@@ -4819,6 +4904,14 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .bkc-i[data-bk="sporty"]{color:var(--red)}
 .bkc-i[data-bk="b9"] .b9r{color:var(--b9-red)}
 .bkc-i[data-bk="b9"] .b9g{color:var(--b9-green)}
+/* BetKing: the wordmark in the line's own ink with their gold on "King", and
+   the condensed face their site sets it in. The cycle measures each name and
+   scales anything wider than the resting one, so the condensed face also buys
+   back most of what the longer name would have cost. */
+.bkc-i[data-bk="bk"]{font-family:"Roboto Condensed","Arial Narrow",
+  "Helvetica Neue Condensed","Liberation Sans Narrow",inherit;
+  font-stretch:condensed;letter-spacing:-.005em}
+.bkc-i[data-bk="bk"] .bkg{color:var(--bk-gold)}
 /* football.com's own purple, and their lime on the dot - the same pair the
    code card uses for them. On a dark ground the purple is too close to black
    to read as a colour, so it is lifted rather than taken literally. */
@@ -6515,7 +6608,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <h1 class="parallax-forward stage-in stage-in-1" data-parallax="1.2">Who's winning <span>today?</span></h1>
     <div class="trust parallax-shallow stage-in stage-in-2" data-parallax="0.8">
       <!-- The thing most people come for, said plainly and said first. -->
-      <span class="trust-i t-sporty"><span class="bk-line"><b class="bkc" id="bkCycle" aria-label="SportyBet, Bet9ja or football.com"><i class="bkc-i on" data-bk="sporty">SportyBet</i><i class="bkc-i" data-bk="b9"><span class="b9r">bet</span><span class="b9g">9ja</span></i><i class="bkc-i" data-bk="fb">football<span class="fb-dot">.</span>com</i></b> code in one tap</span></span>
+      <span class="trust-i t-sporty"><span class="bk-line"><b class="bkc" id="bkCycle" aria-label="SportyBet, Bet9ja, BetKing or football.com"><i class="bkc-i on" data-bk="sporty">SportyBet</i><i class="bkc-i" data-bk="b9"><span class="b9r">bet</span><span class="b9g">9ja</span></i><i class="bkc-i" data-bk="bk"><span class="bkk">Bet</span><span class="bkg">King</span></i><i class="bkc-i" data-bk="fb">football<span class="fb-dot">.</span>com</i></b> code in one tap</span></span>
       <span class="trust-i"><b id="when2">-</b> last updated</span>
       <span class="trust-i" id="streak" hidden></span>
       <!-- "Rebuilt daily from results" lived here and said the same thing as
@@ -9787,10 +9880,23 @@ function footballLink(code){
     "#Intent;scheme=https;package="+FOOTBALL_PKG+
     ";S.browser_fallback_url="+encodeURIComponent(web)+";end", blank:false};
 }
+const BK_BOOK_URL="/api/book?book=betking";
+/* BetKing has NO deep link for a booking code, and that is a finding rather
+   than a gap we have not filled yet: their desktop bundle reads exactly one
+   code from the URL (`couponCode`, for a coupon already placed) and nothing
+   anywhere loads a BOOKED code from a query string. SportyBet has
+   ?shareCode= and Bet9ja ?bookABetCode=; BetKing's booking code is typed into
+   the betslip's own box.
+   So `open` is null here on purpose, and the two places that draw "Open in X"
+   say what to do instead. Appending the code to their home page would look
+   like a working link and quietly drop the slip. */
+const BK_URL=null;
 /* Same-origin so Vercel's CDN can cache it - see lib/upstream.js. */
 const SPORTY_FIXTURES="/api/fixtures";
 /* Bet9ja. Same-origin for the same reason - see lib/upstream.js. */
 const BET9JA_FIXTURES="/api/bet9ja";
+/* BetKing, same again. */
+const BETKING_FIXTURES="/api/betking";
 
 /* The two bookmakers differ in what they are FOR, not just in their
    field names, and the matcher needs to know which it is filling in.
@@ -9827,8 +9933,23 @@ var BOOKS={
      would run the SportyBet blend TWICE - market weight 30% becomes about 51%
      - and never read a Bet9ja price at all. Make blendFixture book-aware
      first, and only if those numbers ever start to diverge. */
-  sporty:{key:"sporty",label:"SportyBet",id:"eventId",odds:"sportyOdds",blend:true, full:true},
-  bet9ja:{key:"bet9ja",label:"Bet9ja",  id:"b9EventId",odds:"b9Odds",  blend:false,full:false}
+  /* `arg` is what the upstream route calls the market on a selection -
+     SportyBet's takes `prediction`, both others take `code` - and `skin` is
+     the class suffix the branded surfaces use. Both are here rather than
+     compared by name at the call site, because a name comparison is a place a
+     new book gets silently left out. */
+  sporty:{key:"sporty",label:"SportyBet",id:"eventId",odds:"sportyOdds",blend:true, full:true, arg:"prediction",skin:"sb",readable:true},
+  bet9ja:{key:"bet9ja",label:"Bet9ja",  id:"b9EventId",odds:"b9Odds",  blend:false,full:false,arg:"code",      skin:"b9",readable:true},
+  /* BetKing, on the same terms as Bet9ja and for the same reason: a booking
+     code is only any use to somebody who banks with the firm that issued it.
+     `full` is false because their day feed carries the default markets only -
+     no team goals, no first-half line - while the book itself prices 206 on a
+     Premier League tie, which the booking route reads per event. So a missing
+     price here means "we did not fetch it", never "they do not offer it".
+     `blend` is false for the same modelling reason it is false for Bet9ja,
+     not because the unders are missing: betking.py maps every under line, and
+     blendFixture still reads f.sportyOdds whatever book it was called for. */
+  betking:{key:"betking",label:"BetKing",id:"bkEventId",odds:"bkOdds",blend:false,full:false,arg:"code",skin:"bk",readable:false}
 };
 
 /* Common team name aliases that SportyBet uses but our data doesn't (or vice versa).
@@ -10597,6 +10718,19 @@ function bookWire(){
      a listed price here would refuse legs the bookmaker will take. If it turns
      out not to price one, it now says so by name and the retry drops it. */
   BOOKS.bet9ja.priced=function(c){ return !!bookIdOf(c,BOOKS.bet9ja); };
+
+  BOOKS.betking.mark="<span class='bkm'><span class='bkk'>Bet</span>"+
+    "<span class='bkg'>King</span></span>";
+  BOOKS.betking.book=BK_BOOK_URL;
+  BOOKS.betking.open=BK_URL;
+  BOOKS.betking.sel=function(c){return {eventId:bookIdOf(c,BOOKS.betking),code:c.code};};
+  BOOKS.betking.codeOf=function(d){return d&&d.code;};
+  /* Judged on the event, not on the listed price - the same call as Bet9ja
+     and for the same reason. Their day feed has no team-goals price on any
+     fixture, while the booking route reads the event's own card and books it.
+     A leg they turn out not to price comes back named, and the retry drops
+     exactly that one. */
+  BOOKS.betking.priced=function(c){ return !!bookIdOf(c,BOOKS.betking); };
 }
 /* A question on screen and a Get code button beside it are two ways to do the
    same thing, and the button knows nothing about the choice being offered -
@@ -10718,7 +10852,9 @@ function paintBookPickerWith(el,picks){
 
   var n=picks.length;
   var html="<span class='bookpick-l'>Book with</span>";
-  ["sporty","bet9ja"].forEach(function(k){
+  /* Derived from the table rather than listed again. A third book added to
+     BOOKS and forgotten here is a book nobody can choose. */
+  Object.keys(BOOKS).forEach(function(k){
     var B=BOOKS[k];
     var got=picks.filter(function(c){return bookTakes(c,B);}).length;
     /* Only worth showing when it is not the whole slip - "12/12" on both pills
@@ -10794,13 +10930,18 @@ function b9Rows(matches){
 /* Failing here costs the Bet9ja button on a leg and nothing else: the board,
    the model and the SportyBet code are all untouched. So one quiet attempt,
    no retry ladder, and never a thrown error. */
-async function loadBet9ja(){
+async function loadBet9ja(){ return loadSecondBook(BET9JA_FIXTURES,BOOKS.bet9ja); }
+/* BetKing's feed is the same shape - one object keyed by event id, the two
+   sides in a single "Home - Away" string - so it goes through b9Rows rather
+   than a second reshaper that would drift from it. */
+async function loadBetKing(){ return loadSecondBook(BETKING_FIXTURES,BOOKS.betking); }
+async function loadSecondBook(url,B){
   try{
-    var r=await fetch(BET9JA_FIXTURES,{headers:{Accept:"application/json"}});
+    var r=await fetch(url,{headers:{Accept:"application/json"}});
     if(!r.ok) return 0;                 /* 503 while their sweep is still cold */
     var d=await r.json();
     var rows=b9Rows((d&&d.matches)||{});
-    var n=rows.length?attachEventIds(rows,BOOKS.bet9ja):0;
+    var n=rows.length?attachEventIds(rows,B):0;
     if(n) refreshByoPanels();
     return n;
   }catch(e){ return 0; }
@@ -10892,6 +11033,9 @@ try{ startBookCycle(); }catch(e){}
 
 function loadBet9jaSoon(){
   try{ loadBet9ja().then(function(n){ if(n) repaintAfterMatch(); }); }catch(e){}
+  /* Alongside, not after: neither second book blocks the board, and each one
+     only decides whether its own button appears on a leg. */
+  try{ loadBetKing().then(function(n){ if(n) repaintAfterMatch(); }); }catch(e){}
 }
 var SPORTY_TRIES=0;
 async function loadSporty(){
@@ -11884,16 +12028,19 @@ function confirmDropUnpriced(picks,target,go,B){
   var un=picks.length-priced.length;
   if(!un) return false;
   var el=$(target); if(!el) return false;
-  /* Bet9ja is judged on whether it carries the GAME, so the honest sentence
-     is about the game and not about the market - saying it "isn't offering
-     that market" would be a guess, and usually a wrong one. */
-  var byEvent=(B.key==="bet9ja");
+  /* A book whose feed is not the whole book is judged on whether it carries
+     the GAME, so the honest sentence is about the game and not about the
+     market - saying it "isn't offering that market" would be a guess, and
+     usually a wrong one. Read off `full` rather than named, or the third book
+     inherits SportyBet's sentence and tells people something untrue. */
+  var byEvent=!B.full;
   if(!priced.length){
     clearPrompt(target);
     el.innerHTML="<div class='code-err'><b>"+B.mark+
       (byEvent?" doesn't have "+(picks.length===1?"this game.":"any of these games."):
                " isn't offering "+(picks.length===1?"this market.":"any of these markets."))+"</b>"+
-      "<span>"+(byEvent?"Try the other bookmaker.":
+      /* "the other bookmaker" was true while there were two of them. */
+      "<span>"+(byEvent?"Try another bookmaker.":
         "Swap for another market, or try again nearer kickoff.")+"</span></div>";
     return true;
   }
@@ -11985,6 +12132,13 @@ function clearSlip(){
    does not hold. */
 function reconcileCode(code,picks,B){
   B=B||curBook();
+  /* Only a book whose codes we can READ can be reconciled. /api/slip refuses
+     an unknown bookmaker with a 400, which this would have handled correctly
+     and silently - one wasted round trip per booking, for an answer known
+     before it was asked. BetKing's read endpoint is open and mapped in
+     betking.py; what is missing is the market table on the way back, so this
+     flips to true in the same change that adds it. */
+  if(!B.readable) return Promise.resolve(null);
   return fetch("/api/slip?book="+encodeURIComponent(B.key)+"&code="+encodeURIComponent(code),
                {headers:{Accept:"application/json"}})
     .then(function(r){return r.json();})
@@ -12014,7 +12168,7 @@ function showCode(code,hostId,save,B,picks){
   wrap.className="code-modal-scrim";
   var _fb=footballLink(code);
   wrap.innerHTML="<div class='code-card code-card--modal code-card--"+
-    (B.key==="bet9ja"?"b9":"sb")+
+    (B.skin||"sb")+
     "' role='dialog' aria-modal='true' aria-label='Booking code'>"+
     "<button class='code-x' type='button' aria-label='Close'>"+
       "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' aria-hidden='true'><path d='M6 6l12 12M18 6L6 18'/></svg></button>"+
@@ -12045,9 +12199,16 @@ function showCode(code,hostId,save,B,picks){
       "<button class='code-save' type='button'>Save to Your slips</button>"+
       "<span class='code-keep-n'>Only saved slips count towards your record.</span>"+
     "</div>":"")+
+    /* A book with no deep link gets a sentence, not a link that looks like
+       one. BetKing reads a booking code from the betslip's own box and from
+       nowhere in the URL, so "Open in BetKing" with the code appended would
+       land the reader on their board with an empty slip and no idea why. */
     "<div class='code-opens'>"+
-      "<a class='code-open' href='"+B.open+encodeURIComponent(code)+
-        "' target='_blank' rel='noopener'>Open in "+B.mark+"</a>"+
+      (B.open
+        ? "<a class='code-open' href='"+B.open+encodeURIComponent(code)+
+            "' target='_blank' rel='noopener'>Open in "+B.mark+"</a>"
+        : "<span class='code-paste'>Paste this code into the booking code box "+
+            "on your "+B.mark+" betslip.</span>")+
     "</div>"+
     /* Offered after the code, not instead of it: the slip they asked for is
        booked and above this. Only when there are legs to deal and at least
@@ -12253,8 +12414,10 @@ function renderSplit(out,done,B,oddsOf){
             " games &middot; x"+odds.toFixed(odds>=100?0:2)+"</span>"+
             "<button class='sp-copy' type='button' data-c='"+esc(t.code)+
               "' aria-label='Copy ticket "+(i+1)+"'>Copy</button>"+
-            "<a class='sp-open' href='"+B.open+encodeURIComponent(t.code)+
-              "' target='_blank' rel='noopener'>Open</a>"
+            (B.open
+              ? "<a class='sp-open' href='"+B.open+encodeURIComponent(t.code)+
+                  "' target='_blank' rel='noopener'>Open</a>"
+              : "")
           : "<b class='sp-none'>Not booked</b><span class='sp-m'>"+esc(t.why||"")+"</span>")+
         "</div>";}).join("")+
     (ok.length?"<p class='sp-note'>Each code is its own ticket. Load them one "+
@@ -12276,9 +12439,12 @@ function renderSplit(out,done,B,oddsOf){
 var BYO={book:"sporty",legs:null,code:"",reline:false,saferDrop:false,saferHow:"normal",saferSwapOn:true,job:null};
 
 function byoSel(leg){
-  return BYO.book==="bet9ja"
-    ? {eventId:leg.eventId, code:leg.prediction}
-    : {eventId:leg.eventId, prediction:leg.prediction};
+  /* SportyBet's route takes `prediction`; both other books take `code`. Read
+     off the table (BOOKS[k].arg) rather than named here, so a fourth book is
+     one table row and not a hunt for every string comparison. */
+  var B=BOOKS[BYO.book]||BOOKS.sporty, o={eventId:leg.eventId};
+  o[B.arg||"prediction"]=leg.prediction;
+  return o;
 }
 /* Their prices, not ours. A borrowed slip has no fixture behind it and no
    probability - the only honest number is the one the bookmaker printed. */
@@ -13035,8 +13201,7 @@ function wireSafer(wrap,legs,B){
     var sels=legs.filter(function(l){ return !gone[l.eventId+"|"+l.prediction]; })
       .map(function(l){
       var code=byLeg[l.eventId+"|"+l.prediction]||l.prediction;
-      return B.key==="bet9ja"?{eventId:l.eventId,code:code}
-                             :{eventId:l.eventId,prediction:code};
+      var o={eventId:l.eventId}; o[B.arg||"prediction"]=code; return o;
     });
     go.disabled=true; go.textContent="Booking…";
     bookFetch(sels,B).then(function(d){

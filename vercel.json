@@ -26,6 +26,10 @@
       "maxDuration": 15,
       "memory": 256
     },
+    "api/betking.js": {
+      "maxDuration": 15,
+      "memory": 256
+    },
     "api/s.js": {
       "maxDuration": 10,
       "memory": 256

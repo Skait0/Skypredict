@@ -375,8 +375,14 @@ test("the mark keeps a space from the word before it inside a flex button", () =
      this - so the rule is worth stating: a flex row is not a place to put a
      sentence, and where one ends up there, the spaces have to be margins. */
   const idx = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
-  assert.match(idx, /\.code-open \.sbm,\.code-open \.b9m\{margin-left:/,
-    "both books, not just the one that was noticed");
+  /* Every mark, not just the two that existed when this was written: a book
+     added to the table and left out of this rule reads "Open inBetKing". */
+  const rule = /\.code-open (\.[a-z0-9]+m(?:,\.code-open \.[a-z0-9]+m)*)\{margin-left:/.exec(idx);
+  assert.ok(rule, "the margin rule is gone, so every mark has lost its space");
+  for (const mark of ["sbm", "b9m", "bkm"]) {
+    assert.ok(rule[1].includes("." + mark),
+      mark + " is missing from the rule, so its name runs into the word before it");
+  }
 });
 
 test("bet9ja keeps its small b wherever it is set", () => {

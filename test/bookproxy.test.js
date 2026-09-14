@@ -82,12 +82,16 @@ test("a 502 is not dressed up as a rejection", () => {
 
 /* ------------------------------------------------------- the routing */
 
-test("only the two known bookmakers can be reached", () => {
+test("only the known bookmakers can be reached", () => {
   /* Named paths, so a query string cannot point this at an arbitrary path on
-     the upstream host. */
-  assert.deepStrictEqual(Object.keys(P.BOOKS).sort(), ["bet9ja", "sporty"]);
+     the upstream host. The list is asserted whole rather than per entry: the
+     point of this test is that nothing ELSE is reachable, and a per-entry
+     check would pass with an extra book quietly added. */
+  assert.deepStrictEqual(Object.keys(P.BOOKS).sort(),
+    ["bet9ja", "betking", "sporty"]);
   assert.strictEqual(P.BOOKS.sporty, "/api/generate-booking-code");
   assert.strictEqual(P.BOOKS.bet9ja, "/api/bet9ja/booking-code");
+  assert.strictEqual(P.BOOKS.betking, "/api/betking/booking-code");
 });
 
 test("the timeout is longer than the feeds but still bounded", () => {

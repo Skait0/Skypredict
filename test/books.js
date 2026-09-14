@@ -56,7 +56,13 @@ function decl(name) {
    the thing most of these tests want to vary. */
 function prelude(book) {
   return (
-    'var BOOK_URL="/book", SPORTY_URL="/sporty?c=", B9_URL="/b9?c=", B9_BOOK_URL="/b9book";\n' +
+    /* BK_URL is null in the page and null here, because that is the thing
+       about BetKing worth carrying into a harness: they have no deep link, so
+       every surface that draws "Open in X" has to cope with a book that
+       cannot be opened. A stand-in URL would test the one case that does not
+       exist. */
+    'var BOOK_URL="/book", SPORTY_URL="/sporty?c=", B9_URL="/b9?c=", B9_BOOK_URL="/b9book",' +
+      ' BK_URL=null, BK_BOOK_URL="/bkbook";\n' +
     decl("BOOKS") + "\n" +
     'var BOOK_KEY="sw.book";\n' +
     "var BOOKMAKER=" + JSON.stringify(book || "sporty") + ";\n" +
