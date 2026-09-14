@@ -15915,12 +15915,47 @@ function wspConjure(shuffle){
      handing them a smaller number. Reported: "you shouldnt pick a less
      favoured game because you want to hit the target." So we no longer do, and
      the honest consequence is that some targets are not reachable today. */
+  /* WHEN THE NUMBER IS NOT THE NUMBER THEY ASKED FOR, SAY SO.
+     Reported: "Result or over 1.5" at Balanced returns forty games at about
+     x2,000 against a much smaller target. Nothing is broken - those legs pay
+     about x1.2 each and the builder stops at the leg that first clears the
+     target, so with cheap legs it walks past it and with the leg cap it walks
+     a long way past. But a reader who typed a number and got twenty times it
+     is owed the reason, not left to work out which setting did it.
+     Two directions, one sentence each, and both name the lever that fixes it:
+     short is a market problem, far over is a price-per-game problem. */
+  var T=WSP.odds, per=(r.picks.length?Math.pow(r.odds,1/r.picks.length):0);
+  var missNote="";
   if(r.short){
+    missNote="We could not reach ×"+(+T).toFixed(0)+" today. Best from the markets "+
+      "you picked is ×"+r.odds.toFixed(0)+" on "+r.picks.length+" games. "+
+      "Switch on more markets, or ask for less.";
     window.swToast&&window.swToast("Best we can build today is ×"+r.odds.toFixed(0)+
       " from "+r.picks.length+" games we rate","info","wspshort");
+  } else if(T!=null&&r.odds>T*1.5&&r.picks.length>1){
+    missNote="You asked for ×"+(+T).toFixed(0)+" and this pays ×"+r.odds.toFixed(0)+
+      ". The markets you picked pay about ×"+per.toFixed(2)+" a game, so the slip "+
+      "has to be long and it jumps past your number. Fewer, riskier markets "+
+      "get closer.";
+    window.swToast&&window.swToast("Closest we can get is ×"+r.odds.toFixed(0)+
+      " - see the note on the slip","info","wspover");
   } else {
-    window.swToast&&window.swToast((shuffle?"Reshuffled - ":"Conjured ")+r.picks.length+" games \u00b7 ~\u00d7"+r.odds.toFixed(0),"ok");
+    window.swToast&&window.swToast((shuffle?"Reshuffled - ":"Conjured ")+r.picks.length+" games · ~×"+r.odds.toFixed(0),"ok");
   }
+  /* On the slip, not only in a toast: a toast is gone in two seconds and this
+     explains the number they are looking at. */
+  try{
+    var body=$("mySheetBody");
+    if(body){
+      var oldNote=body.querySelector(".wsp-miss"); if(oldNote) oldNote.remove();
+      if(missNote){
+        var el=document.createElement("p");
+        el.className="byo-note wsp-miss";
+        el.textContent=missNote;
+        body.appendChild(el);
+      }
+    }
+  }catch(e){}
 }
 
 // --- Mode toggle + renderBuilder dispatcher ---

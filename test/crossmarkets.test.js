@@ -454,3 +454,19 @@ test("the combinations sit at the tier their record earned", () => {
   assert.ok(!safe.includes("MIXGG_X"), "draw or both score lands 64%");
   assert.ok(allowed(2).includes("WINHALF_H_Y"));
 });
+
+test("a target that cannot be hit is explained, in both directions", () => {
+  /* Reported: "Result or over 1.5" at Balanced returns forty games at about
+     x2,000 against a much smaller target. Nothing is broken - those legs pay
+     about x1.2 each - but a reader who typed a number and got twenty times it
+     is owed the reason. */
+  const fn = src.slice(src.indexOf("var T=WSP.odds, per="), src.indexOf("// --- Mode toggle"));
+  assert.match(fn, /We could not reach/, "no message when the target is out of reach");
+  assert.match(fn, /You asked for/, "no message when it walks past the target");
+  assert.match(fn, /r\.odds>T\*1\.5/, "the overshoot has no threshold");
+  /* Both name the lever that fixes it rather than just stating the number. */
+  assert.match(fn, /Switch on more markets, or ask for less/);
+  assert.match(fn, /Fewer, riskier markets/);
+  /* And it lands on the slip, not only in a toast that is gone in two seconds. */
+  assert.match(fn, /className="byo-note wsp-miss"/);
+});
