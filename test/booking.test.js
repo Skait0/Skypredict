@@ -304,9 +304,12 @@ test("no user-facing sentence prints the bare label any more", () => {
      markup cannot go. It is wrong in a sentence the reader sees. */
   const idx = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
   const bare = idx.match(/esc\(B\.label\)/g) || [];
-  assert.strictEqual(bare.length, 1,
-    "one left, and it is the picker's aria-label; found " + bare.length);
-  /* The ones that remain must be attributes, not body copy. */
+  assert.ok(bare.length >= 1, "the picker's aria-label has gone");
+  /* Counted exactly once, until the converter's target picker made a second
+     aria-label that is just as correct. The rule was never the number - it is
+     that every one of them sits in an attribute, which is what the loop below
+     actually checks. A count is a proxy that fails the first time someone does
+     the right thing. */
   const re = /(.{40})esc\(B\.label\)/g;
   let m;
   while ((m = re.exec(idx))) {

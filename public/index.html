@@ -3339,6 +3339,20 @@ html.mode-live #live{display:block}
   inset 0 0 0 1.5px var(--b9-green)}
 .byo-b.on[data-book="betking"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
   inset 0 0 0 1.5px var(--bk-gold)}
+/* The conversion's TARGET, in the same pills as its source. Two books could
+   leave this implicit - there was only ever one answer - and three cannot.
+   The ring colours are keyed off the same attribute either row uses, so a
+   target pill wears its brand exactly as the source pill does. */
+.byo-to{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.byo-to-l{font-size:11px;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--faint)}
+.byo-to .byo-book{display:flex;gap:2px}
+.byo-b.on[data-conv-to="sporty"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
+  inset 0 0 0 1.5px var(--red)}
+.byo-b.on[data-conv-to="bet9ja"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
+  inset 0 0 0 1.5px var(--b9-green)}
+.byo-b.on[data-conv-to="betking"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
+  inset 0 0 0 1.5px var(--bk-gold)}
 @media (hover:hover){.byo-b:not(.on):hover{opacity:.8}}
 #byoCode{flex:1 1 150px;min-width:0;font:inherit;font-size:14px;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;
@@ -6921,6 +6935,8 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
             aria-label="SportyBet"><span class="sbm">SportyBet</span></button>
           <button class="byo-b" type="button" data-book="bet9ja"
             aria-label="Bet9ja"><span class="b9m"><span class="b9r">bet</span><span class="b9g">9ja</span></span></button>
+          <button class="byo-b" type="button" data-book="betking"
+            aria-label="BetKing"><span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span></button>
         </div>
         <input id="byoCode" type="text" inputmode="latin" autocomplete="off"
                spellcheck="false" maxlength="16" placeholder="Booking code"
@@ -9949,7 +9965,7 @@ var BOOKS={
      `blend` is false for the same modelling reason it is false for Bet9ja,
      not because the unders are missing: betking.py maps every under line, and
      blendFixture still reads f.sportyOdds whatever book it was called for. */
-  betking:{key:"betking",label:"BetKing",id:"bkEventId",odds:"bkOdds",blend:false,full:false,arg:"code",skin:"bk",readable:false}
+  betking:{key:"betking",label:"BetKing",id:"bkEventId",odds:"bkOdds",blend:false,full:false,arg:"code",skin:"bk",readable:true}
 };
 
 /* Common team name aliases that SportyBet uses but our data doesn't (or vice versa).
@@ -12461,7 +12477,7 @@ function renderSplit(out,done,B,oddsOf){
    there is no way to tell from the response. Every screen here therefore says
    what WE READ, shows the games, and lets the reader judge - it never claims to
    be their slip. */
-var BYO={book:"sporty",legs:null,code:"",reline:false,saferDrop:false,saferHow:"normal",saferSwapOn:true,job:null};
+var BYO={book:"sporty",to:null,legs:null,code:"",reline:false,saferDrop:false,saferHow:"normal",saferSwapOn:true,job:null};
 
 function byoSel(leg){
   /* SportyBet's route takes `prediction`; both other books take `code`. Read
@@ -12760,7 +12776,7 @@ function renderByo(){
 function paintJobs(usable,B){
   var jobs=$("byoJobs"); if(!jobs) return;
   var conv=$("byoJobConv");
-  if(conv) conv.textContent="Convert to "+otherBook(B).label;
+  if(conv) conv.textContent="Convert to "+convTarget(B).label;
   var can={edit:usable.length>=1,convert:usable.length>=1,split:usable.length>=4};
   jobs.querySelectorAll("[data-job]").forEach(function(b){
     var k=b.dataset.job;
@@ -12868,7 +12884,41 @@ function fixtureByBookId(id,B){
   }
   return null;
 }
-function otherBook(B){ return BOOKS[B.key==="sporty"?"bet9ja":"sporty"]; }
+/* WITH THREE BOOKS THERE IS NO "THE OTHER ONE".
+   This was BOOKS[B.key==="sporty"?"bet9ja":"sporty"], which answered the only
+   question two books can ask. A third makes the target a choice, so the
+   conversion carries one: BYO.to names it and these two functions are the only
+   things that resolve it. Order is the table's order, so the default target is
+   stable rather than whichever key the object happened to yield first. */
+function otherBooks(B){
+  return Object.keys(BOOKS).filter(function(k){ return k!==B.key; })
+    .map(function(k){ return BOOKS[k]; });
+}
+/* The book a conversion is heading FOR. Falls back to the first other book
+   rather than to a fixed name, so removing a book from the table cannot leave
+   this pointing at one that is gone. A stored choice that equals the source -
+   which happens the moment somebody switches the source to the book they were
+   converting to - is ignored rather than allowed to convert a slip to itself. */
+function convTarget(from){
+  from=from||byoBook();
+  var alt=otherBooks(from);
+  var pick=BYO.to&&BOOKS[BYO.to];
+  return (pick&&pick.key!==from.key)?pick:alt[0];
+}
+/* The target, as the same pills the source uses - the reader has already
+   learned what those mean six inches higher up, and a second control with its
+   own look would read as a different kind of choice. */
+function convTargetPicker(from){
+  from=from||byoBook();
+  var to=convTarget(from);
+  return "<div class='byo-to'><span class='byo-to-l'>Convert to</span>"+
+    "<div class='byo-book' role='group' aria-label='Which bookmaker to convert to'>"+
+    otherBooks(from).map(function(B){
+      return "<button class='byo-b"+(B.key===to.key?" on":"")+"' type='button'"+
+        " data-conv-to='"+B.key+"' aria-pressed='"+(B.key===to.key)+"'"+
+        " aria-label='"+esc(B.label)+"'>"+B.mark+"</button>";
+    }).join("")+"</div></div>";
+}
 
 /* THE OTHER BOOK'S OWN EVENT, FOUND WITHOUT US IN THE MIDDLE.
  *
@@ -12965,7 +13015,7 @@ function mixReline(code){
 }
 
 function byoConversion(){
-  var from=byoBook(), to=otherBook(from);
+  var from=byoBook(), to=convTarget(from);
   var picks=[], stuck=[], changed=[], offer=[];
   (BYO.legs||[]).forEach(function(l){
     var f=l.prediction?fixtureByLeg(l,from):null;
@@ -13030,7 +13080,7 @@ function byoConversion(){
    a booking button is worse than no number, so the unknown legs are counted
    and said rather than folded into a total that looks precise. */
 function convOdds(picks){
-  var to=otherBook(byoBook());
+  var to=convTarget();
   var odds=1, known=0, unknown=0;
   picks.forEach(function(c){
     var o=(c.f&&c.f[to.odds]||{})[c.code];
@@ -13061,6 +13111,10 @@ function renderConvert(){
     : ("about x"+od.odds.toFixed(od.odds>=100?0:2)+
        (od.unknown?" on "+od.known+" of "+c.picks.length+" legs":""));
   host.innerHTML="<div class='byo-conv'>"+
+    /* WHICH BOOK IT IS HEADING FOR, since there is more than one answer now.
+       Drawn above the count because the count is ABOUT the target - "3 of 5
+       games move to Bet9ja" says nothing until you know why Bet9ja. */
+    convTargetPicker(c.from)+
     "<div class='byo-head'><b>"+c.picks.length+" of "+(BYO.legs||[]).length+
       " games move to "+esc(c.to.label)+"</b><span>"+oddsTxt+"</span></div>"+
     /* Drawn whenever the slip HAS legs this governs, ticked or not. Keyed on
@@ -13101,6 +13155,18 @@ function renderConvert(){
     "<div id='byoConvOut'></div>"+
   "</div>";
   $("byoConvX").addEventListener("click",function(){ host.innerHTML=""; });
+  /* Switching the target rebuilds the whole panel, because every number in it
+     is about that book: which legs cross, what they are priced at, which lines
+     had to change. Repainting only the pills would leave the count and the
+     odds describing the book they used to point at. */
+  host.querySelectorAll("[data-conv-to]").forEach(function(b){
+    b.addEventListener("click",function(){
+      if(BYO.to===b.dataset.convTo) return;
+      BYO.to=b.dataset.convTo;
+      renderConvert();
+      paintJobs((BYO.legs||[]).filter(function(l){return l.prediction;}),byoBook());
+    });
+  });
   var sw=$("byoReline");
   if(sw) sw.addEventListener("change",function(){ BYO.reline=sw.checked; renderConvert(); });
   $("byoConvGo").addEventListener("click",function(){
@@ -13349,10 +13415,18 @@ function splitBoxInner(picks,oddsOf){
   sec.querySelectorAll(".byo-b").forEach(function(b){
     b.addEventListener("click",function(){
       BYO.book=b.dataset.book;
-      sec.querySelectorAll(".byo-b").forEach(function(o){
-        o.classList.toggle("on",o===b);});
-      /* The legs in view came from the other book and mean nothing here. */
+      /* Only the SOURCE row, or this would light a target pill too - both
+         rows are .byo-b on purpose, and the target pills live inside the
+         conversion panel that is about to be thrown away anyway. */
+      sec.querySelectorAll(".byo-book:not(.byo-to .byo-book) .byo-b")
+        .forEach(function(o){ o.classList.toggle("on",o===b); });
+      /* The legs in view came from another book and mean nothing here. */
       BYO.legs=null; $("byoOut").innerHTML="";
+      /* A target chosen against the old source may BE the new source, and a
+         slip cannot be converted to the book it came from. convTarget ignores
+         that case anyway; clearing it here means the pills show the real
+         default rather than a choice that is being quietly overridden. */
+      BYO.to=null;
     });
   });
 
@@ -13371,6 +13445,13 @@ function splitBoxInner(picks,oddsOf){
   try{
     var q=new URLSearchParams(location.search||"");
     var to=(q.get("to")||"").toLowerCase(), from=(q.get("book")||"").toLowerCase();
+    /* ?to= NAMES THE TARGET, NOT THE SOURCE. With two books, "they want a
+       Bet9ja code" implied "from SportyBet" and this guessed it. With three it
+       implies nothing, so the guess is gone: ?to= sets the target and the
+       source stays whatever ?book= said, or the default. A link carrying only
+       ?to= still opens the converter on the right target with the code in the
+       box, which is all that page's form was ever asking for. */
+    if(BOOKS[to]) BYO.to=to;
     var src=BOOKS[from]?from:(BOOKS[to]?(to==="sporty"?"bet9ja":"sporty"):null);
     var code=(q.get("code")||"").trim().toUpperCase();
     if(src&&/^[A-Za-z0-9]{4,16}$/.test(code)){

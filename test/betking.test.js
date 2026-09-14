@@ -17,6 +17,17 @@ const test = require("node:test");
 const assert = require("node:assert");
 const { src, fn, decl, prelude } = require("./books.js");
 
+/* From a point inside a function body out to the brace that closes it. */
+function block(text, from) {
+  let depth = 0;
+  for (let k = from; k < text.length; k++) {
+    const c = text[k];
+    if (c === "{") depth++;
+    else if (c === "}") { if (!depth) return text.slice(from, k); depth--; }
+  }
+  return text.slice(from);
+}
+
 function books() {
   return new Function(prelude("sporty") + "\nreturn BOOKS;")();
 }
@@ -114,11 +125,16 @@ test("the selection each book is sent carries the field that book's route reads"
 test("a book whose codes we cannot read is not asked to reconcile one", () => {
   /* /api/slip refuses an unknown bookmaker with a 400, which reconcileCode
      would have handled silently - one wasted round trip per booking for an
-     answer known before it was asked. */
+     answer known before it was asked. BetKing was false here until its read
+     path shipped; the guard is the point, not which books it currently
+     spares. */
   const B = books();
-  assert.strictEqual(B.betking.readable, false);
+  for (const k of Object.keys(B)) {
+    assert.strictEqual(typeof B[k].readable, "boolean", k + " must declare it");
+  }
   assert.strictEqual(B.sporty.readable, true);
   assert.strictEqual(B.bet9ja.readable, true);
+  assert.strictEqual(B.betking.readable, true);
   assert.match(fn("reconcileCode"), /if\(!B\.readable\)/);
 });
 
@@ -192,4 +208,105 @@ test("the marks in the cycle are the same marks as everywhere else", () => {
   assert.ok(cycle.includes('<span class="bkk">Bet</span>'));
   assert.ok(cycle.includes('<span class="bkg">King</span>'));
   assert.match(decl("BOOKS").length ? src : src, /class='bkm'/);
+});
+
+/* ------------------------------------------- the converter, three ways now */
+
+test("there is no 'the other book' any more", () => {
+  /* otherBook(B) answered the only question two books can ask. A third makes
+     the target a choice, and a binary helper left behind is a place BetKing
+     can never be either a source or a destination. */
+  assert.ok(!/function otherBook\b/.test(src), "the binary helper is still here");
+  assert.match(src, /function otherBooks\(/);
+  assert.match(src, /function convTarget\(/);
+});
+
+test("every book can convert to every other one", () => {
+  const api = new Function(
+    prelude("sporty") + "\n" +
+    "var BYO={book:'sporty',to:null};\n" +
+    fn("byoBook") + fn("otherBooks") + fn("convTarget") + "\n" +
+    "return {otherBooks,convTarget,BYO,BOOKS};")();
+  const keys = Object.keys(api.BOOKS);
+  for (const from of keys) {
+    api.BYO.book = from;
+    const alt = api.otherBooks(api.BOOKS[from]).map((b) => b.key);
+    assert.strictEqual(alt.length, keys.length - 1, from + " has no targets");
+    assert.ok(!alt.includes(from), from + " offers itself as a target");
+    for (const to of alt) {
+      api.BYO.to = to;
+      assert.strictEqual(api.convTarget().key, to, from + " -> " + to);
+    }
+  }
+});
+
+test("a target that has become the source is ignored, not obeyed", () => {
+  /* Switch the source to the book you were converting TO and the stored
+     choice now names the source. Converting a slip to the book it came from
+     is not a conversion. */
+  const api = new Function(
+    prelude("sporty") + "\n" +
+    "var BYO={book:'sporty',to:null};\n" +
+    fn("byoBook") + fn("otherBooks") + fn("convTarget") + "\n" +
+    "return {convTarget,BYO};")();
+  api.BYO.book = "betking";
+  api.BYO.to = "betking";
+  assert.notStrictEqual(api.convTarget().key, "betking");
+});
+
+test("the default target is the table's order, not an accident", () => {
+  const api = new Function(
+    prelude("sporty") + "\n" +
+    "var BYO={book:'bet9ja',to:null};\n" +
+    fn("byoBook") + fn("otherBooks") + fn("convTarget") + "\n" +
+    "return {convTarget};")();
+  assert.strictEqual(api.convTarget().key, "sporty",
+    "sporty is first in BOOKS, so it is the default target for bet9ja");
+});
+
+test("?to= names the target and stops guessing the source", () => {
+  /* With two books "they want a Bet9ja code" implied "from SportyBet". With
+     three it implies nothing, and a guess would open the converter on the
+     wrong source with somebody's code already in the box. */
+  const link = src.slice(src.indexOf('q.get("to")'), src.indexOf('q.get("to")') + 900);
+  assert.match(link, /if\(BOOKS\[to\]\) BYO\.to=to;/,
+    "?to= must set the target");
+});
+
+test("the source row and the target row cannot light each other up", () => {
+  /* Both rows are .byo-b on purpose - same control, same meaning - which makes
+     a bare .byo-b selector light a pill in the other row. */
+  /* Brace-matched, not src.slice(i, i + 600). A fixed window made this fail
+     the first time a comment inside the handler grew - a test failing for a
+     reason unrelated to the behaviour it guards is worse than no test. */
+  const handler = block(src, src.indexOf('BYO.book=b.dataset.book;'));
+  assert.ok(!/sec\.querySelectorAll\("\.byo-b"\)/.test(handler),
+    "the source handler still selects every .byo-b on the page");
+  assert.match(handler, /BYO\.to=null;/,
+    "switching source must clear a target that may now BE the source");
+});
+
+test("switching the target repaints the numbers, not just the pills", () => {
+  /* Every figure in that panel is about the target: which legs cross, what
+     they cost, which lines had to change. Repainting the pills alone leaves
+     the count describing the book it used to point at. */
+  /* Brace-matched to the listener body. A 420-char window passed even with
+     renderConvert() deleted, because the NEXT listener calls it too - the
+     mutation was caught by nothing and the test read green. */
+  const at = src.indexOf('b.addEventListener("click",function(){',
+                         src.indexOf("data-conv-to]"));
+  const wire = block(src, at);
+  assert.match(wire, /BYO\.to=b\.dataset\.convTo/);
+  assert.match(wire, /renderConvert\(\)/,
+    "switching target must rebuild the panel, not just the pills");
+});
+
+test("each book's target pill wears its own brand", () => {
+  for (const [k, v] of [["sporty", "--red"], ["bet9ja", "--b9-green"],
+                        ["betking", "--bk-gold"]]) {
+    assert.ok(src.includes('.byo-b.on[data-conv-to="' + k + '"]'),
+      k + " has no target-pill ring");
+    assert.match(src.slice(src.indexOf('.byo-b.on[data-conv-to="' + k + '"]'),
+      src.indexOf('.byo-b.on[data-conv-to="' + k + '"]') + 140), new RegExp(v));
+  }
 });
