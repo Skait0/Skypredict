@@ -216,3 +216,34 @@ test("the card image is served from outside /api", () => {
     r.source === "/slipcard.png" && r.destination === "/api/slipcard");
   assert.ok(hit, "nothing rewrites /slipcard.png to the function that draws it");
 });
+
+test("a preview crawler is not served the noindex that stops it drawing", async () => {
+  /* PROVEN ON X ITSELF. Same account, same composer, thirty seconds apart:
+     /how-it-works drew a full card, /s/<code> drew nothing. The only thing a
+     slip page carries that the static pages do not is noindex, and X honours
+     it by refusing to build a preview at all.
+     A shared slip still must not be indexed - it is somebody's private ticket,
+     thin, and duplicated a thousand times over - so the tag stays for search
+     engines and goes for the crawlers whose whole job is the preview. They
+     index nothing, so no ranking is being gamed. */
+  const bot = await call({ query: { p: good() }, url: "/s?p=x",
+    headers: { host: "x.test", "user-agent": "Twitterbot/1.0" } }, null);
+  assert.doesNotMatch(bot.body, /name="robots"/,
+    "Twitterbot is still told noindex, which is why it drew nothing");
+  assert.match(bot.body, /twitter:card" content="summary_large_image"/,
+    "and it still has to get the card tags");
+
+  const reader = await call({ query: { p: good() }, url: "/s?p=x",
+    headers: { host: "x.test", "user-agent": "Mozilla/5.0 (iPhone)" } }, null);
+  assert.match(reader.body, /name="robots" content="noindex,follow"/,
+    "a reader's copy must keep it, or these pages start ranking");
+
+  const google = await call({ query: { p: good() }, url: "/s?p=x",
+    headers: { host: "x.test", "user-agent": "Googlebot/2.1" } }, null);
+  assert.match(google.body, /name="robots" content="noindex,follow"/,
+    "a search engine must still be told not to index a stranger's ticket");
+
+  /* The body now depends on who asked, so the caches have to know. */
+  assert.match(String(bot.headers["Vary"] || ""), /User-Agent/,
+    "without Vary a crawler's copy gets served to readers");
+});

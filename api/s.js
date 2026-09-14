@@ -108,6 +108,17 @@ module.exports = async function handler(req, res) {
     vercel: "public, s-maxage=150, stale-while-revalidate=3600",
   });
   res.statusCode = 200;
+  /* A PREVIEW CRAWLER IS NOT A SEARCH ENGINE. Proven on X itself, same account
+     and same composer: /how-it-works drew a card and /s/<code> drew nothing,
+     and the only difference between those two pages is this page's noindex.
+     X reads it and declines to build a preview.
+     These four index nothing - they fetch a page to draw a card and throw it
+     away - so dropping the tag for them hides nothing from any ranking, while
+     every search engine still gets the noindex a stranger's private ticket
+     needs. Matched loosely on purpose: a crawler renaming itself should get a
+     preview, not a silent blank. */
+  const ua = String(req.headers["user-agent"] || "");
+  const preview = /twitterbot|facebookexternalhit|whatsapp|linkedinbot|slackbot|discordbot|telegrambot|skypeuripreview|embedly|pinterest/i.test(ua);
   /* The slip's OWN url, not the bare route.
      Every shared slip used to declare og:url as "/s", so X and WhatsApp saw
      one resource shared over and over: they collapse on the canonical url,
@@ -126,5 +137,8 @@ module.exports = async function handler(req, res) {
     : "/s?p=" + encodeURIComponent(p || "") +
       (code ? "&c=" + encodeURIComponent(code) : "") +
       (book ? "&b=" + encodeURIComponent(book) : "");
-  res.end(SL.renderPage(legs, rec, selfPath, { code, book }));
+  /* The response now differs by user agent, so the caches must key on it or a
+     crawler's copy would be served to a reader and the other way round. */
+  res.setHeader("Vary", "User-Agent");
+  res.end(SL.renderPage(legs, rec, selfPath, { code, book, noindex: !preview }));
 };
