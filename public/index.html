@@ -1191,6 +1191,14 @@ html.mode-live .btabs{transform:none!important}
      the moment Live is the page you are on - this is the visual half of the
      same rule. */
   .btab.on .btab-dot{display:none}
+  /* THE DOT BELONGS TO THE ICON, NOT TO THE SLOT.
+     It is pinned to .bt-ic, which used to be 22px - the icon's own size - and
+     is now 44px on every tab so the marker can be painted without changing the
+     layout. The dot stayed at the corner of the box and drifted eleven pixels
+     away from the thing it marks. The icon is centred in that box, so its own
+     top-right corner is 11px in from each side: 9 and 7 put the dot back where
+     it was against the glyph. */
+  .btab .btab-dot{top:9px;right:7px}
   @media (prefers-reduced-motion:reduce){.btab .bt-ic{transition:none}}
   body{padding-bottom:calc(var(--btabs-h) + 8px)}
 }
