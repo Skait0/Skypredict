@@ -2891,7 +2891,14 @@ html.mode-live #live{display:block}
 .mkt-chip.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff;
   box-shadow:inset 0 0 0 1px rgba(242,184,75,.45),0 2px 8px rgba(230,57,70,.3)}
 .mkt-chip:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.mkt-chip.locked{opacity:.4;cursor:not-allowed;filter:grayscale(.3)}
+/* Dimmed because it cannot fill HERE, not because it does nothing: tapping it
+   moves the dial to where it can. So it keeps a pointer and answers to hover
+   like any other control - `cursor:not-allowed` on something that acts is a
+   lie the reader only finds out by not trying it. */
+.mkt-chip.locked{opacity:.45;filter:grayscale(.3)}
+@media (hover:hover){
+  .mkt-chip.locked:hover{opacity:.75;border-color:var(--faint);transform:translateY(-1px)}
+}
 .mkt-chip .mkt-icon{display:inline-flex}
 .mkt-chip .mkt-icon svg{width:14px;height:14px}
 .mkt-chip .tier-badge{display:none}
@@ -14455,8 +14462,29 @@ function swapOptions(f){
     {code:"HOME_OVER_0.5",label:f.home+" over 0.5 goals",p:f.h_o05},
     {code:"AWAY_OVER_0.5",label:f.away+" over 0.5 goals",p:f.a_o05},
     {code:"HOME_OVER_1.5",label:f.home+" over 1.5 goals",p:f.h_o15},
-    {code:"AWAY_OVER_1.5",label:f.away+" over 1.5 goals",p:f.a_o15}
-  ].filter(function(o){return o.p!=null&&!isNaN(o.p);});
+    {code:"AWAY_OVER_1.5",label:f.away+" over 1.5 goals",p:f.a_o15},
+    /* THE COMBINATION MARKETS, WHICH THIS LIST NEVER LEARNED. They have been
+       on the board since 14 Sep and a leg could be built on one from either
+       builder, but the swap menu still offered the original fifteen - so a
+       reader could hold a Result-or-GG leg and have no way to reach the same
+       market on another game.
+       Two deliberate omissions: the DRAW, which is not a shade of the bet
+       beside it but a different bet (the builders make it ask first - see
+       askDrawOn), and the 1.5 rung of the 1X2-or-over family, which only
+       Bet9ja sells. A swap that silently moved somebody onto a market their
+       chosen book cannot price is the thing this menu must never do; the
+       bookAllows filter below is the belt to that braces. */
+    /* Priced through mProb rather than by naming the payload field, so this
+       list cannot drift from the one the builders and the odds cell read. */
+    {code:"MIXGG_1",label:f.home+" or both score",p:mProb(f,"MIXGG_1")},
+    {code:"MIXGG_2",label:f.away+" or both score",p:mProb(f,"MIXGG_2")},
+    {code:"MIXGG_X",label:"Draw or both score",p:mProb(f,"MIXGG_X")},
+    {code:"MIX_1_OV_2.5",label:f.home+" or over 2.5",p:mProb(f,"MIX_1_OV_2.5")},
+    {code:"MIX_2_OV_2.5",label:f.away+" or over 2.5",p:mProb(f,"MIX_2_OV_2.5")},
+    {code:"MIX_X_OV_2.5",label:"Draw or over 2.5",p:mProb(f,"MIX_X_OV_2.5")},
+    {code:"WINHALF_H_Y",label:f.home+" to win a half",p:mProb(f,"WINHALF_H_Y")},
+    {code:"WINHALF_A_Y",label:f.away+" to win a half",p:mProb(f,"WINHALF_A_Y")}
+  ].filter(function(o){return o.p!=null&&!isNaN(o.p)&&bookAllows(o.code);});
 }
 function renderFab(){var fab=$("myFab"); if(!fab) return; fab.hidden=MYSLIP.length===0;
   var c=$("myFabC"); if(c) c.textContent=MYSLIP.length;}
@@ -16296,6 +16324,59 @@ function floorGap(){
   return {best:best, name:bestName, need:p.minConf, over:over,
           word:riskWord(BUILD.risk), max:p.maxGames};
 }
+/* How many games on the card this chip could actually put on a slip at a given
+   setting. The floor, the tier and the bookmaker all get a say - the three
+   things that can make a chip look switched on and do nothing. */
+function chipGames(k,r){
+  var p=riskParams(r), allowed=allowedMarkets(p.tier);
+  var codes=(MKT_BY_CHIP[k]||[]).filter(function(c){
+    return allowed.indexOf(c)>=0 && bookAllows(c,curBook()); });
+  if(!codes.length) return 0;
+  var fx=scopeFixtures()||[], n=0;
+  fx.forEach(function(f){
+    for(var i=0;i<codes.length;i++){
+      var v=mProb(f,codes[i]);
+      if(v!=null&&!isNaN(v)&&v>=p.minConf){ n++; return; }
+    }
+  });
+  return n;
+}
+/* THE DIAL IS THE ANSWER TO A TIER LOCK, SO THE CHIP MAY AS WELL TURN IT.
+   The bookmaker lock has offered the switch for a while - "A CHIP LOCKED BY
+   THE BOOKMAKER IS A QUESTION, NOT A WALL" - and the tier lock still just
+   refused, on the reasoning that the slider is sitting right there. It is, and
+   a reader who taps Over 2.5 at Safe has just said what they want; being told
+   nothing and shown nothing is not an answer.
+   Finds the LOWEST setting where the chip can fill, so the dial moves as
+   little as it has to. Three games rather than one: sliding the whole dial to
+   produce a single leg is a worse trade than staying put. */
+function riskThatFills(k){
+  if(BUILD.mode!=="slider") return null;
+  var first=null;
+  for(var r=0;r<=100;r+=5){
+    var n=chipGames(k,r);
+    if(n>=3) return r;
+    if(n>=1&&first==null) first=r;
+  }
+  return first;
+}
+/* Moved through the input itself, so the fill, the zone colour, the ticks and
+   the haptic all happen exactly as they do under a finger - one code path for
+   the dial rather than two that can drift. */
+function slideRisk(r){
+  var el=$("risk");
+  BUILD.risk=r; BUILD.touched=true;
+  try{localStorage.setItem("sw.risk",String(r));}catch(e){}
+  if(el){
+    el.value=r;
+    try{
+      el.dispatchEvent(new Event("input",{bubbles:true}));
+      el.dispatchEvent(new Event("change",{bubbles:true}));
+      return;
+    }catch(e){}
+  }
+  renderBuilder();
+}
 function emptyWhy(){
   try{
     var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier);
@@ -16424,7 +16505,15 @@ function renderShared(){
          cannot be tapped and this one has something to say. */
       return "<button class='mkt-chip"+(enabled?" on":"")+(locked?" locked":"")+unlockClass+
         (wrongBook?" wrong-book":"")+(m.warn?" is-draw":"")+"' data-m='"+m.k+"'"+
-        (m.only?" data-only='"+m.only+"'":"")+" "+((locked&&!wrongBook)?"disabled":"")+" type='button'>"+
+        /* NOT DISABLED ANY MORE, AND THAT IS THE WHOLE FIX. A disabled button
+           fires no click at all, so the tier-locked chips never reached the
+           handler below - the dial-moving branch would have been dead code.
+           The wrong-book chips were already left enabled for exactly this
+           reason; the tier lock now works the same way and keeps only the
+           dimmed `locked` look. */
+        (m.only?" data-only='"+m.only+"'":"")+
+        (locked&&!wrongBook?" title='Tap to move the dial to where this can fill'":"")+
+        " type='button'>"+
         "<span class='mkt-icon' aria-hidden='true'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>"+m.icon+"</svg></span>"+
         "<span>"+m.label+"</span>"+
         (m.only
@@ -16445,8 +16534,11 @@ function renderShared(){
            offers the switch instead: one tap moves the whole builder to the
            book that sells it, which is the only thing that could have made the
            chip work anyway.
-           A TIER lock still just refuses - that one is answered by the risk
-           slider sitting right there. */
+           A TIER LOCK IS THE SAME QUESTION and now gets the same answer: the
+           dial moves to the lowest setting where this market can actually
+           fill, and says so. It used to refuse silently, on the reasoning that
+           the slider was right there - which assumed the reader knew that a
+           greyed chip meant "slide right", and nothing on screen said it. */
         var only=c.dataset.only;
         if(only&&only!==curBook().key){
           var want=BOOKS[only];
@@ -16455,8 +16547,22 @@ function renderShared(){
           setBook(only);
           return;
         }
-        if (c.classList.contains("locked")) return; // respect tier lock
         var k=c.dataset.m;
+        if(c.classList.contains("locked")){
+          var toR=riskThatFills(k);
+          var lbl=(MKT_CFG.filter(function(x){return x.k===k;})[0]||{}).label||"this market";
+          if(toR==null){
+            /* Honest refusal beats a dial that moves and still builds nothing:
+               the market is unreachable on TODAY's card, not at this setting. */
+            try{ window.swToast&&window.swToast(lbl+" doesn't reach any setting on today's games","","tierfill"); }catch(e){}
+            return;
+          }
+          BUILD.mk[k]=true; WSP.mk[k]=true;
+          try{ window.swToast&&window.swToast("Moved to "+riskWord(toR)+" - that's where "+
+            lbl+" can fill","","tierfill"); }catch(e){}
+          slideRisk(toR);
+          return;
+        }
         /* "DON'T TURN OFF THE LAST MARKET" HAS TO COUNT THE SET THAT IS
            GOVERNING. It counted BUILD.mk alone, which stopped being the whole
            picture the moment the draw moved into WSP.mk on its own: in wizard
@@ -16486,6 +16592,23 @@ function renderShared(){
           WSP.mk[k]=!WSP.mk[k]; WSP._sig=null; renderBuilder(); return;
         }
         BUILD.mk[k]=!BUILD.mk[k];
+        /* UNLOCKED AND STILL EMPTY IS THE SAME DEAD CONTROL. A tier lock is
+           visible; a market that is simply over the floor on every game today
+           is not, and switching it on at Safe changed the slip by nothing at
+           all. Only when it reaches NOTHING here - a thin-but-real market
+           keeps the setting the reader chose, and the note under the slip
+           explains the shortfall. */
+        if(BUILD.mk[k]&&BUILD.mode==="slider"&&chipGames(k,BUILD.risk)===0){
+          var toFill=riskThatFills(k);
+          if(toFill!=null&&toFill!==BUILD.risk){
+            var mkLbl=(MKT_CFG.filter(function(x){return x.k===k;})[0]||{}).label||"that market";
+            try{ window.swToast&&window.swToast("Moved to "+riskWord(toFill)+" - "+mkLbl+
+              " reaches nothing at "+riskWord(BUILD.risk),"","tierfill"); }catch(e){}
+            WSP.mk[k]=BUILD.mk[k];
+            slideRisk(toFill);
+            return;
+          }
+        }
         /* One chip, both builders. The two market sets now use the same keys,
            so this is a straight copy - no renaming, and nothing silently
            dropped. It used to translate "wd" to the wizard's "doubles" and

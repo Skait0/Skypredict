@@ -432,11 +432,17 @@ test("every market chip reaches a builder that knows the market", () => {
 test("a chip the other bookmaker owns offers the switch instead of nothing", () => {
   /* Bet9ja sells the 1.5 rung; on a SportyBet slip those chips were dead and
      tapping one did nothing at all. */
-  const click = src.slice(src.indexOf("c.addEventListener(\"click\",function(){"), src.indexOf("// respect tier lock"));
+  const click = src.slice(src.indexOf("c.addEventListener(\"click\",function(){"),
+    src.indexOf("var k=c.dataset.m;"));
   assert.match(click, /only!==curBook\(\)\.key/);
   assert.match(click, /setBook\(only\)/, "the tap must move the builder to that book");
-  /* And it must still be tappable: a disabled button cannot say anything. */
-  assert.match(src, /\(\(locked&&!wrongBook\)\?"disabled":""\)/);
+  /* And it must still be tappable: a disabled button cannot say anything.
+     NO CHIP IS DISABLED ANY MORE - the tier lock got the same treatment, so
+     the rule is now "locked is a look, never an off switch". A disabled button
+     fires no click, which is what made the dial-moving branch dead code on its
+     first cut. */
+  assert.doesNotMatch(src, /\?"disabled":""/, "a chip has been disabled again");
+  assert.match(src, /class='mkt-chip/, "the chip markup moved; check this test still reads it");
 });
 
 test("the combinations sit at the tier their record earned", () => {
