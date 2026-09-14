@@ -14598,54 +14598,52 @@ function myOdds(){return MYSLIP.reduce(function(t,x){return t*legOdd(fixtureById
    combos have no code - so offering those here would quietly build a leg
    that fails when the code is generated. Order follows the expanded card,
    so the same match reads the same way in both places. */
+/* WHAT A LEG CAN BE CHANGED TO - DERIVED, NOT MAINTAINED.
+ *
+ * This was a hand-written list of fifteen markets, and it stayed at fifteen
+ * for the month after seven more were added: a reader could hold a Result-or-GG
+ * leg with no way to reach that market on another game. Adding a market touched
+ * four places and only two of them complained, so this was one of the silent
+ * ones.
+ *
+ * It now reads the chip table - MKT_BY_CHIP, the same table the builders and
+ * emptyWhy use - so a market the builders can pick is a market this menu can
+ * offer, automatically. A new chip needs no edit here at all.
+ *
+ * Two things are still decided rather than derived:
+ *   the DRAW is left out. Every other option is a shade of the same bet; the
+ *     draw is the outcome the model ranks third on most fixtures, and the
+ *     builders stop and ask before switching it on (askDrawOn). A dropdown
+ *     cannot ask, and a one-tap swap onto the least likely result is not a
+ *     swap anybody meant to make. It stays buildable in the wizard.
+ *   the ORDER is the expanded card's, so the same match reads the same way in
+ *     both places. Anything the chip table adds later lands after the fifteen
+ *     that have an order, in the table's own order.
+ */
+var SWAP_ORDER=["1","2","1X","X2","12","OVER_1.5","OVER_2.5","GG",
+  "FH_OVER_0.5","OVER_3.5","HOME_OVER_0.5","AWAY_OVER_0.5",
+  "HOME_OVER_1.5","AWAY_OVER_1.5"];
+var SWAP_NEVER={"X":1};
 function swapOptions(f){
   if(!f) return [];
-  var noDraw=(f.anybody!=null)?f.anybody:f.dc12;
-  return [
-    {code:"1",label:f.home+" to win",p:f.home_p},
-    {code:"2",label:f.away+" to win",p:f.away_p},
-    /* THE DRAW IS NOT ON THIS MENU. Every other option here is a shade of the
-       same bet - a wider result, a lower goal line, the same game read a
-       little more safely. The draw is a different bet: the outcome the model
-       ranks third on most fixtures, and the one place the builders stop and
-       ask before switching it on (see askDrawOn). A dropdown cannot ask, and
-       a one-tap swap onto the least likely result is not a swap the reader
-       meant to make. It stays buildable in the wizard, where the question
-       gets asked. A leg already on X can still be swapped AWAY from here. */
-    {code:"1X",label:f.home+" or draw",p:f.dc1x},
-    {code:"X2",label:f.away+" or draw",p:f.dcx2},
-    {code:"12",label:"Any team to win",p:noDraw},
-    {code:"OVER_1.5",label:"Over 1.5 goals",p:f.o15},
-    {code:"OVER_2.5",label:"Over 2.5 goals",p:f.o25},
-    {code:"GG",label:"Both teams score",p:f.btts},
-    {code:"FH_OVER_0.5",label:"Goal in 1st half",p:f.fh_o05},
-    {code:"OVER_3.5",label:"Over 3.5 goals",p:f.o35},
-    {code:"HOME_OVER_0.5",label:f.home+" over 0.5 goals",p:f.h_o05},
-    {code:"AWAY_OVER_0.5",label:f.away+" over 0.5 goals",p:f.a_o05},
-    {code:"HOME_OVER_1.5",label:f.home+" over 1.5 goals",p:f.h_o15},
-    {code:"AWAY_OVER_1.5",label:f.away+" over 1.5 goals",p:f.a_o15},
-    /* THE COMBINATION MARKETS, WHICH THIS LIST NEVER LEARNED. They have been
-       on the board since 14 Sep and a leg could be built on one from either
-       builder, but the swap menu still offered the original fifteen - so a
-       reader could hold a Result-or-GG leg and have no way to reach the same
-       market on another game.
-       Two deliberate omissions: the DRAW, which is not a shade of the bet
-       beside it but a different bet (the builders make it ask first - see
-       askDrawOn), and the 1.5 rung of the 1X2-or-over family, which only
-       Bet9ja sells. A swap that silently moved somebody onto a market their
-       chosen book cannot price is the thing this menu must never do; the
-       bookAllows filter below is the belt to that braces. */
-    /* Priced through mProb rather than by naming the payload field, so this
-       list cannot drift from the one the builders and the odds cell read. */
-    {code:"MIXGG_1",label:f.home+" or both score",p:mProb(f,"MIXGG_1")},
-    {code:"MIXGG_2",label:f.away+" or both score",p:mProb(f,"MIXGG_2")},
-    {code:"MIXGG_X",label:"Draw or both score",p:mProb(f,"MIXGG_X")},
-    {code:"MIX_1_OV_2.5",label:f.home+" or over 2.5",p:mProb(f,"MIX_1_OV_2.5")},
-    {code:"MIX_2_OV_2.5",label:f.away+" or over 2.5",p:mProb(f,"MIX_2_OV_2.5")},
-    {code:"MIX_X_OV_2.5",label:"Draw or over 2.5",p:mProb(f,"MIX_X_OV_2.5")},
-    {code:"WINHALF_H_Y",label:f.home+" to win a half",p:mProb(f,"WINHALF_H_Y")},
-    {code:"WINHALF_A_Y",label:f.away+" to win a half",p:mProb(f,"WINHALF_A_Y")}
-  ].filter(function(o){return o.p!=null&&!isNaN(o.p)&&bookAllows(o.code);});
+  var seen={}, out=[];
+  Object.keys(MKT_BY_CHIP).forEach(function(k){
+    (MKT_BY_CHIP[k]||[]).forEach(function(code){
+      if(seen[code]||SWAP_NEVER[code]) return;
+      seen[code]=1;
+      /* The label the rest of the page prints for this leg, stripped of the
+         markup mLabel puts round a team name - a menu row is plain text. */
+      var label=mLabel(f,code).replace(/<[^>]+>/g,"");
+      out.push({code:code,label:label,p:mProb(f,code)});
+    });
+  });
+  out.sort(function(a,b){
+    var ia=SWAP_ORDER.indexOf(a.code), ib=SWAP_ORDER.indexOf(b.code);
+    return (ia<0?99:ia)-(ib<0?99:ib);
+  });
+  /* No probability means no opinion, and a market this book will not sell is
+     not an option however well we rate it. */
+  return out.filter(function(o){return o.p!=null&&!isNaN(o.p)&&bookAllows(o.code);});
 }
 function renderFab(){var fab=$("myFab"); if(!fab) return; fab.hidden=MYSLIP.length===0;
   var c=$("myFabC"); if(c) c.textContent=MYSLIP.length;}

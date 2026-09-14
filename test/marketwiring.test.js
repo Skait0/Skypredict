@@ -1,0 +1,133 @@
+"use strict";
+/* ADDING A MARKET TOUCHES FOUR PLACES. THIS IS THE ONE THAT NOTICES.
+ *
+ * The seven markets added on 14 Sep needed: a probability in the model, a chip
+ * in the table, a row in the share link's vocabulary, and an entry in the swap
+ * menu. Two of those complained when they were missed and two did not, so the
+ * link shipped unable to carry them (a slip with one produced a long, dead URL)
+ * and the swap menu sat at fifteen markets for a month.
+ *
+ * The chip table is the source of truth: if the builders can pick it, it is a
+ * market, and everything else must know about it. This walks every code in
+ * MKT_BY_CHIP and checks each wiring point in turn, so the next market that is
+ * half-added fails here rather than in somebody's WhatsApp.
+ */
+const test = require("node:test");
+const assert = require("node:assert");
+const fs = require("fs");
+const path = require("path");
+const SL = require("../lib/sliplink.js");
+
+const ROOT = path.join(__dirname, "..");
+const src = fs.readFileSync(path.join(ROOT, "public", "index.html"), "utf8");
+
+function grab(name) {
+  const i = src.indexOf("\nfunction " + name + "(");
+  assert.ok(i > 0, "not found in index.html: " + name);
+  let d = 0, k = src.indexOf("{", i);
+  for (; k < src.length; k++) {
+    if (src[k] === "{") d++;
+    else if (src[k] === "}") { d--; if (!d) break; }
+  }
+  return src.slice(i, k + 1);
+}
+function decl(re, what) {
+  const m = re.exec(src);
+  assert.ok(m, what + " is gone from index.html");
+  return m[1];
+}
+
+/* Every code either builder can put on a slip. */
+const CHIP_TABLE = decl(/var MKT_BY_CHIP=(\{[\s\S]*?\});/, "MKT_BY_CHIP");
+const CODES = [...new Set([...CHIP_TABLE.matchAll(/"([A-Z0-9_.]+)"/g)].map((m) => m[1]))];
+
+/* A fixture carrying every probability the model publishes, so mProb has
+   something to answer with for each market. Values are plausible rather than
+   real - what is being tested is the WIRING, not the numbers. */
+const FIXTURE = {
+  home: "Arsenal", away: "Chelsea", date: "2026-09-16", league: "England Premier League",
+  home_p: 0.52, draw_p: 0.24, away_p: 0.24, dc1x: 0.76, dcx2: 0.48, dc12: 0.76,
+  anybody: 0.76, o15: 0.80, o25: 0.56, o35: 0.30, btts: 0.54, fh_o05: 0.70,
+  h_o05: 0.74, h_o15: 0.40, a_o05: 0.70, a_o15: 0.36,
+  draw_o25: 0.14, draw_o15: 0.19, draw_btts: 0.17,
+  home_o25: 0.63, home_o15: 0.70, home_btts: 0.62,
+  away_o25: 0.60, away_o15: 0.66, away_btts: 0.59,
+  h_win_half: 0.62, a_win_half: 0.41,
+};
+
+const api = new Function(
+  "var MKT_BY_CHIP=" + CHIP_TABLE + ";" +
+  /* The menu's own two decisions, lifted rather than re-stated: which market is
+     never offered, and the order the rows come out in. */
+  decl(/(var SWAP_NEVER=\{[^;]*\};)/, "SWAP_NEVER") +
+  decl(/(var SWAP_ORDER=\[[^\]]*\];)/, "SWAP_ORDER") +
+  "function esc(s){return String(s);}" +
+  "function bookAllows(){return true;}" +
+  grab("mProb") + grab("mLabel") + grab("swapOptions") +
+  "\nreturn {mProb:mProb,mLabel:mLabel,swapOptions:swapOptions,MKT_BY_CHIP:MKT_BY_CHIP};"
+)();
+
+test("the chip table is not empty, or the rest of this file proves nothing", () => {
+  assert.ok(CODES.length >= 20, "read only " + CODES.length + " codes from MKT_BY_CHIP");
+});
+
+test("every market has a probability the model can answer with", () => {
+  /* Without one the builders silently never pick it: mProb returns null, the
+     confidence floor rejects it, and the chip looks switched on and does
+     nothing. */
+  const dumb = CODES.filter((c) => {
+    const v = api.mProb(FIXTURE, c);
+    return v == null || isNaN(v);
+  });
+  assert.deepEqual(dumb, [], "mProb has no case for these, so no slip can carry them");
+});
+
+test("every market has a sentence, never its own code", () => {
+  /* Unlabelled, a leg prints "MIX_2_OV_1.5" on the panel - which is how a
+     reader finds out we shipped something half-finished. */
+  const nameless = CODES.filter((c) => {
+    const l = api.mLabel(FIXTURE, c);
+    return !l || l === c || /^[A-Z0-9_.]+$/.test(l);
+  });
+  assert.deepEqual(nameless, [], "these print as raw codes");
+});
+
+test("every market can travel in a shared link", () => {
+  /* lib/sliplink.js refuses a code it does not know, and the refusal is not
+     quiet: the short link is never stored, the fallback long URL goes out
+     instead, and it opens on "that slip has a bet we do not offer". */
+  const cannot = CODES.filter((c) => !(c in SL.MARKETS));
+  assert.deepEqual(cannot, [], "a slip carrying these cannot be shared");
+});
+
+test("the browser's copy of that vocabulary matches it exactly", () => {
+  /* Two lists, one rule - the page refuses to encode what the server would
+     refuse to decode. */
+  const m = /var LINK_MARKETS=\{([\s\S]*?)\};/.exec(src);
+  assert.ok(m, "LINK_MARKETS is gone from index.html");
+  const client = [...m[1].matchAll(/"([A-Z0-9_.]+)"\s*:/g)].map((x) => x[1]).sort();
+  assert.deepEqual(client, Object.keys(SL.MARKETS).sort(),
+    "the browser's list and the link's list have drifted");
+});
+
+test("every market is reachable from the swap menu, bar the draw", () => {
+  /* The menu is derived from this same table now, so this is really a check
+     that nothing silently drops out of it - and that the one deliberate
+     exclusion is still the only one. */
+  const offered = new Set(api.swapOptions(FIXTURE).map((o) => o.code));
+  const missing = CODES.filter((c) => c !== "X" && !offered.has(c));
+  assert.deepEqual(missing, [], "these cannot be swapped onto another game");
+  assert.ok(!offered.has("X"), "the draw is back on the swap menu");
+});
+
+test("a market added to the table but wired nowhere fails this file", () => {
+  /* The guard on the guard: if the checks above stop reading the real table,
+     they would pass for ever. */
+  const fake = CODES.concat(["MADE_UP_1.5"]);
+  const dumb = fake.filter((c) => {
+    const v = api.mProb(FIXTURE, c);
+    return v == null || isNaN(v);
+  });
+  assert.deepEqual(dumb, ["MADE_UP_1.5"],
+    "mProb answers for a market that does not exist, so this file checks nothing");
+});

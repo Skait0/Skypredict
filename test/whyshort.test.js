@@ -125,19 +125,22 @@ test("the wizard has no dial, so nothing is moved there", () => {
   assert.equal(api.riskThatFills("o25"), null);
 });
 
-test("the swap menu does not offer the draw", () => {
-  /* Every other option in that menu is a shade of the same bet; the draw is a
-     different one, and the builders stop and ask before switching it on. A
-     dropdown cannot ask. */
+test("the swap menu is derived from the chip table, minus the draw", () => {
+  /* It used to be a hand-written list, and it stayed at fifteen markets for the
+     month after seven more were added. It reads MKT_BY_CHIP now - the same
+     table the builders use - so a market the builders can pick is one this menu
+     offers, with no edit here at all. */
   const i = src.indexOf("function swapOptions(");
   assert.ok(i > 0);
   const body = src.slice(i, src.indexOf("function renderFab(", i));
+  assert.match(body, /Object\.keys\(MKT_BY_CHIP\)/,
+    "the swap menu is hand-written again");
   assert.doesNotMatch(body, /\{code:"X"/, "the draw is back in the swap list");
-  /* And the markets that only one book sells never belonged here either. */
-  assert.doesNotMatch(body, /_OV_1\.5/, "a Bet9ja-only line is offered to every reader");
+  /* Declared just above the function, so this one is checked against the file. */
+  assert.match(src, /var SWAP_NEVER=\{"X":1\};/,
+    "the draw must be excluded by name, not by being forgotten");
+  /* A market only one book sells is still filtered per book. */
   assert.match(body, /bookAllows\(o\.code\)/, "nothing filters by what the chosen book takes");
-  /* The eight both books sell are the point of the change. */
-  ["MIXGG_1", "MIXGG_2", "MIXGG_X", "MIX_1_OV_2.5", "MIX_2_OV_2.5", "MIX_X_OV_2.5",
-   "WINHALF_H_Y", "WINHALF_A_Y"].forEach((c) =>
-    assert.ok(body.includes(c), c + " is missing from the swap menu"));
+  /* And the label is the page's own, so a new market cannot print as its code. */
+  assert.match(body, /mLabel\(f,code\)/, "the menu invented its own labels again");
 });
