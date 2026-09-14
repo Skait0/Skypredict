@@ -3245,11 +3245,28 @@ html.mode-live #live{display:block}
 .byo-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .byo-book{display:inline-flex;background:var(--card-2);border:1px solid var(--line);
   border-radius:99px;padding:3px;gap:2px;flex:0 0 auto}
+/* THE TOGGLE WEARS THEIR COLOURS.
+   A booking code belongs to one bookmaker and picking the wrong one is the
+   commonest way a read fails, so the choice should look like the logo on the
+   app the code came from rather than like two words in our grey. The surfaces
+   are theirs too: SportyBet's red on white, Bet9ja's red and green on black -
+   the same pair the slip picker uses elsewhere on this page.
+   Unpicked, a mark is dimmed rather than recoloured: greying out a brand makes
+   it somebody else's brand. */
 .byo-b{font:inherit;font-size:12px;font-weight:700;padding:6px 12px;border:0;
-  border-radius:99px;background:none;color:var(--soft);cursor:pointer;
-  transition:background .15s,color .15s}
-.byo-b.on{background:var(--red-fill);color:#fff}
-@media (hover:hover){.byo-b:not(.on):hover{color:var(--text)}}
+  border-radius:99px;background:none;cursor:pointer;line-height:1;
+  transition:background .15s,box-shadow .15s,opacity .15s}
+.byo-b .sbm,.byo-b .b9m{font-size:12.5px;letter-spacing:-.01em}
+.byo-b:not(.on){opacity:.5}
+.byo-b.on[data-book="sporty"]{background:linear-gradient(180deg,#fff,#f0f1f3);
+  box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.28)}
+.byo-b.on[data-book="bet9ja"]{background:linear-gradient(180deg,#191c20,#000);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 1px 4px rgba(0,0,0,.35)}
+/* Their red has to hold against white in both themes, so it is the brand token
+   rather than ours, which the light theme darkens for contrast on our own
+   surfaces. */
+.byo-b.on[data-book="sporty"] .sbm{color:#E3000F}
+@media (hover:hover){.byo-b:not(.on):hover{opacity:.8}}
 #byoCode{flex:1 1 150px;min-width:0;font:inherit;font-size:14px;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;
   background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
@@ -6718,8 +6735,14 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       <p class="byo-sub">Paste it. Then pick what we should do with it.</p>
       <div class="byo-row">
         <div class="byo-book" role="group" aria-label="Which bookmaker issued it">
-          <button class="byo-b on" type="button" data-book="sporty">SportyBet</button>
-          <button class="byo-b" type="button" data-book="bet9ja">Bet9ja</button>
+          <!-- Their own wordmarks, not two grey words. The marks and their
+               colours are the ones already shipped elsewhere on this page -
+               .sbm and .b9m, sampled from the logo files - so the toggle reads
+               as the two brands rather than as our styling of them. -->
+          <button class="byo-b on" type="button" data-book="sporty"
+            aria-label="SportyBet"><span class="sbm">SportyBet</span></button>
+          <button class="byo-b" type="button" data-book="bet9ja"
+            aria-label="Bet9ja"><span class="b9m"><span class="b9r">bet</span><span class="b9g">9ja</span></span></button>
         </div>
         <input id="byoCode" type="text" inputmode="latin" autocomplete="off"
                spellcheck="false" maxlength="16" placeholder="Booking code"
