@@ -12139,6 +12139,13 @@ function byoOdds(legs){
 }
 function byoBook(){ return BOOKS[BYO.book]||BOOKS.sporty; }
 function legStarted(l){
+  /* THE BOOKMAKER'S OWN VERDICT FIRST, when we have it. A leg the board has
+     let go is named by asking SportyBet for that event, and the answer carries
+     the match status: H1, HT, H2 or ENDED all mean the game is on or over.
+     That is a fact, where a kickoff time compared against this device's clock
+     is a guess - and the clock was all this had until now. */
+  var st=String((l&&l.status)||"").toUpperCase();
+  if(st&&st!=="NOT_STARTED") return true;
   var t=l&&l.kickoff?Date.parse(l.kickoff):NaN;
   return isFinite(t)&&t<=Date.now();
 }
@@ -12336,6 +12343,10 @@ function renderByo(){
        and printing the id was showing the reader our plumbing where a
        sentence belongs. The leg is still listed, because a slip with a game we
        cannot name is a fact they have to see; it is named in words. */
+    /* Named from our board where we still hold it, and from the bookmaker's own
+       event where we do not - which is most often a game that has kicked off,
+       since the board drops a fixture at the whistle. "A game we don't carry"
+       is now said only when neither could name it. */
     var name=(l.home||l.away)?(esc(l.home||"?")+" v "+esc(l.away||"?")
       ):("A game we don't carry");
     var gone=legStarted(l);

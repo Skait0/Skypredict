@@ -604,3 +604,22 @@ test("a market the sweep never fetches is not refused for having no price", () =
   /* No game at this book is still no. */
   assert.equal(api.bookTakes({ f: { sportyOdds: {} }, code: "WINHALF_H_Y" }, B), false);
 });
+
+test("a leg the bookmaker says is in play is not called a game we don't carry", () => {
+  /* HCVKA1, from a reader: "we carry some games but the converter says we
+     dont". Five of its thirty-one legs were games that had KICKED OFF - the
+     board drops a fixture at the whistle and the cache went with it. The read
+     asks SportyBet for those events now, which answers for a match in play and
+     carries its status. */
+  const api = new Function(grab("legStarted") + "\nreturn legStarted;")();
+  const future = new Date(Date.now() + 3600e3).toISOString();
+  /* The bookmaker's word beats our clock. */
+  assert.equal(api({ kickoff: future, status: "H1" }), true, "in play is started");
+  assert.equal(api({ kickoff: future, status: "HT" }), true, "half time is started");
+  assert.equal(api({ kickoff: future, status: "ENDED" }), true, "ended is started");
+  assert.equal(api({ kickoff: future, status: "NOT_STARTED" }), false,
+    "a game they say has not started must not be greyed out");
+  /* And with no status at all, the clock still answers as it always did. */
+  assert.equal(api({ kickoff: future }), false);
+  assert.equal(api({ kickoff: new Date(Date.now() - 60e3).toISOString() }), true);
+});
