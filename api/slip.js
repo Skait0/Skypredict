@@ -1,6 +1,6 @@
 "use strict";
 
-/* GET /api/slip?book=sporty|bet9ja&code=XXXX - the legs behind a booking code.
+/* GET /api/slip?book=sporty|bet9ja|betking&code=XXXX - the legs behind a code.
  *
  * Reading, not booking. The distinction is the whole reason this is a separate
  * route rather than another mode of /api/book: booking mints something at the
@@ -35,7 +35,11 @@ const PEPPER = process.env.SW_QUOTA_PEPPER || "";
    request, so there is no reason to spend a Railway round trip discovering
    that - and this route takes a string straight off the address bar. */
 const CODE_RE = /^[A-Za-z0-9]{4,16}$/;
-const BOOKS = ["sporty", "bet9ja"];
+/* Every book whose codes we can read. A book missing here is a book the
+   converter cannot use as a SOURCE, however well the upstream reads it -
+   BetKing shipped able to read a code on Railway and was refused at this
+   edge for it, with "unknown bookmaker" on a book we plainly know. */
+const BOOKS = ["sporty", "bet9ja", "betking"];
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {

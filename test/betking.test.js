@@ -15,6 +15,8 @@
  */
 const test = require("node:test");
 const assert = require("node:assert");
+const fs = require("node:fs");
+const path = require("node:path");
 const { src, fn, decl, prelude } = require("./books.js");
 
 /* From a point inside a function body out to the brace that closes it. */
@@ -308,5 +310,40 @@ test("each book's target pill wears its own brand", () => {
       k + " has no target-pill ring");
     assert.match(src.slice(src.indexOf('.byo-b.on[data-conv-to="' + k + '"]'),
       src.indexOf('.byo-b.on[data-conv-to="' + k + '"]') + 140), new RegExp(v));
+  }
+});
+
+/* ------------------------------------------------- one book, four allowlists */
+
+test("every book in the table is reachable through every proxy that serves it", () => {
+  /* THE BOOK EXISTS IN FOUR PLACES AND EACH ONE CAN FORGET IT.
+     BetKing shipped able to read a code on Railway and was refused at our own
+     edge with "unknown bookmaker" - a book we plainly know - because
+     api/slip.js keeps its own list and only the booking and feed proxies had
+     been updated. Nothing failed; the converter just could not use it as a
+     source. */
+  const B = books();
+  const keys = Object.keys(B);
+  const proxy = require("../lib/bookproxy.js");
+  const slip = fs.readFileSync(path.join(__dirname, "..", "api", "slip.js"), "utf8");
+  const up = fs.readFileSync(path.join(__dirname, "..", "lib", "upstream.js"), "utf8");
+  const list = /const BOOKS = \[([^\]]*)\]/.exec(slip);
+  assert.ok(list, "api/slip.js no longer declares its books");
+  const readable = list[1].split(",").map((s) => s.trim().replace(/['"]/g, ""));
+
+  for (const k of keys) {
+    assert.ok(proxy.BOOKS[k], k + " cannot be booked: no route in lib/bookproxy.js");
+    if (B[k].readable) {
+      assert.ok(readable.includes(k),
+        k + " is readable but api/slip.js refuses it as an unknown bookmaker");
+    }
+    /* Its feed has to be proxied too, or the board never learns its event ids
+       and every leg reads as a game it does not carry. */
+    if (k !== "sporty") {
+      assert.ok(new RegExp("(^|\\s)" + k + ":\\s*\\{", "m").test(up),
+        k + " has no feed entry in lib/upstream.js");
+      assert.ok(fs.existsSync(path.join(__dirname, "..", "api", k + ".js")),
+        "api/" + k + ".js is missing, so its feed has no edge route");
+    }
   }
 });
