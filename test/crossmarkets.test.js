@@ -502,3 +502,17 @@ test("an empty slip says which control to move", () => {
   [...cfg.matchAll(/\{k:"([a-z0-9]+)"/g)].map((m) => m[1]).forEach((k) =>
     assert.ok(table.includes(k + ":["), "MKT_BY_CHIP has no codes for the " + k + " chip"));
 });
+
+test("the ripple stays off controls that answer the tap themselves", () => {
+  /* The ink is a circle scaled 2.6x inside overflow:hidden. On a short wide
+     button it is clipped to the box and reads as a pale rectangle flashing
+     behind what you pressed - reported as "a white boxy shadow when clicked"
+     on the bottom bar. Those controls already answer: the bar moves its disc,
+     the toggle swaps its ring. */
+  const h = src.slice(src.indexOf("document.addEventListener('click',function(e){"),
+    src.indexOf("document.addEventListener('click',function(e){") + 1400);
+  assert.match(h, /el\.closest\('\.btabs,\.byo-book,\.byo-jobs'\)\) return;/,
+    "the ripple is back on the navigation");
+  /* And it must still fire everywhere else - the effect is not being deleted. */
+  assert.match(h, /rip-ink/);
+});

@@ -17420,6 +17420,15 @@ setTimeout(hideLoader,8000);
   document.addEventListener('click',function(e){
     var el=e.target.closest('button,.lrow,.m,.gl-card,.ls-card,.vt,.navt,.mkt,.cat');
     if(!el)return;
+    /* NOT ON A CONTROL THAT ALREADY ANSWERS THE TAP.
+       The ink is a circle scaled 2.6 times inside overflow:hidden, so on a
+       short wide box it is CLIPPED TO THE BOX and reads as a pale rectangle
+       flashing behind the thing you pressed - reported on the bottom bar as
+       "a white boxy shadow when clicked", and visible on the book toggle for
+       the same reason. Those controls answer instantly on their own: the bar
+       moves its red disc, the toggle swaps its brand ring. A ripple on top of
+       an answer is noise wearing the shape of a bug. */
+    if(el.closest('.btabs,.byo-book,.byo-jobs')) return;
     var r=el.getBoundingClientRect(),d=Math.max(r.width,r.height);
     if(getComputedStyle(el).position==='static')el.style.position='relative';
     el.classList.add('rip');
