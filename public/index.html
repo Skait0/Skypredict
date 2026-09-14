@@ -3327,6 +3327,31 @@ html.mode-live #live{display:block}
    something with the slip you pasted", and a second visual language for the
    second one would read as a different feature. */
 .byo-trim{margin-top:14px;padding-top:13px;border-top:1px solid var(--line-soft)}
+/* THE THREE JOBS. Cards rather than a segmented control: each one has a name
+   and a line saying what it does, which is the part that teaches. Dead
+   until a code is read, and dead means visibly dead - dimmed, no pointer,
+   and a reason on hover - rather than hidden, because a button you cannot
+   press yet still tells you the page can do it. */
+.byo-jobs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}
+.byo-job{display:flex;flex-direction:column;align-items:flex-start;gap:3px;
+  padding:11px 12px;border:1px solid var(--line);border-radius:var(--r-md);
+  background:var(--card-2);color:var(--text);font:inherit;cursor:pointer;
+  text-align:left;transition:border-color .16s,background .16s,transform .1s}
+.byo-job b{font-size:13px;font-weight:800;letter-spacing:-.01em}
+.byo-job i{font-style:normal;font-size:11.5px;font-weight:600;color:var(--faint);line-height:1.35}
+.byo-job .bj-i{display:inline-flex;color:var(--accent)}
+.byo-job .bj-i svg{width:17px;height:17px}
+.byo-job[disabled]{opacity:.42;cursor:not-allowed}
+.byo-job.on{border-color:var(--accent);background:var(--card);
+  box-shadow:inset 0 0 0 1px rgba(242,184,75,.35)}
+.byo-job.on .bj-i{color:var(--accent)}
+@media (hover:hover){.byo-job:not([disabled]):hover{border-color:var(--soft);
+  background:var(--card);transform:translateY(-1px)}}
+.byo-job:not([disabled]):active{transform:translateY(0) scale(.99)}
+@media(max-width:560px){.byo-jobs{grid-template-columns:1fr}
+  .byo-job{flex-direction:row;align-items:center;gap:9px}
+  .byo-job b{flex:0 0 auto}
+  .byo-job i{flex:1 1 auto;text-align:right}}
 .byo-trim .sp-ways{margin-top:8px}
 .byo-trim-n{margin:2px 0 0}
 /* The swaps, one line a game: what it was, what it becomes, and the two
@@ -3340,6 +3365,20 @@ html.mode-live #live{display:block}
 .sf-m b{color:var(--text)}
 .sf-m i{font-style:normal;color:var(--faint);font-variant-numeric:tabular-nums}
 .sf-odds{margin-top:10px}
+/* The fix-it controls. Switches first, then the strength, then what it did -
+   reading order is the order somebody touches them in. */
+.sf-opts{display:flex;flex-direction:column;gap:7px;margin:9px 0 11px;
+  padding:10px 12px;background:var(--card-2);border:1px solid var(--line);
+  border-radius:var(--r-md)}
+.sf-how{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:2px}
+.sf-how-l{font-size:12px;font-weight:700;color:var(--soft);margin-right:2px}
+.sf-chip{font:inherit;font-size:12px;font-weight:700;padding:5px 11px;
+  border-radius:99px;border:1px solid var(--line);background:var(--card);
+  color:var(--soft);cursor:pointer;transition:color .15s,border-color .15s}
+.sf-chip.on{color:var(--on-accent,#14120E);background:var(--accent);border-color:var(--accent)}
+@media (hover:hover){.sf-chip:not(.on):hover{color:var(--text);border-color:var(--soft)}}
+.sf-how-n{font-style:normal;font-size:11.5px;color:var(--faint);flex:1 1 100%}
+.sf-cut{margin-top:8px}
 .byo-res .sp-q{color:var(--soft)}
 .byo-res .sp-way{background:var(--card-2);border-color:var(--line);color:var(--text)}
 .byo-res .code-split .sp-way span{color:var(--faint)}
@@ -6675,7 +6714,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       bookmaker, or read what is inside one and cut it into smaller tickets.</p>
     <section class="byo" id="byo" aria-labelledby="byo-h">
       <h3 id="byo-h">Already have a booking code?</h3>
-      <p class="byo-sub">Paste it and we'll split it into separate tickets.</p>
+      <p class="byo-sub">Paste it. Then pick what we should do with it.</p>
       <div class="byo-row">
         <div class="byo-book" role="group" aria-label="Which bookmaker issued it">
           <button class="byo-b on" type="button" data-book="sporty">SportyBet</button>
@@ -6686,7 +6725,26 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
                aria-label="Booking code">
         <button class="byo-go" id="byoGo" type="button">Read it</button>
       </div>
+      <!-- THE THREE JOBS, ON SCREEN BEFORE THERE IS A CODE.
+           The panel used to be one box that read a code and then grew three
+           different offers underneath it, so nobody knew the other two
+           existed until they scrolled past the first. These say what the page
+           can do while it is still empty, and they are dead until there is a
+           slip to do it to - a button you cannot press yet still teaches you
+           it is there. -->
+      <div class="byo-jobs" id="byoJobs" role="group" aria-label="What to do with the code">
+        <button class="byo-job" type="button" data-job="edit" disabled>
+          <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"/></svg></span>
+          <b>Fix it for me</b><i>Make the hard legs easier</i></button>
+        <button class="byo-job" type="button" data-job="convert" disabled>
+          <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M14.5 12h6.5M18 9l3 3-3 3"/></svg></span>
+          <b id="byoJobConv">Move it</b><i>Same games, other bookie</i></button>
+        <button class="byo-job" type="button" data-job="split" disabled>
+          <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v7a3 3 0 003 3h6a3 3 0 013 3v5"/><path d="M6 21v-5a3 3 0 013-3"/></svg></span>
+          <b>Split it</b><i>Two or more smaller tickets</i></button>
+      </div>
       <div id="byoOut" aria-live="polite"></div>
+      <div id="byoStage" aria-live="polite"></div>
     </section>
   </section>
 
@@ -11655,7 +11713,7 @@ function renderSplit(out,done,B,oddsOf){
    there is no way to tell from the response. Every screen here therefore says
    what WE READ, shows the games, and lets the reader judge - it never claims to
    be their slip. */
-var BYO={book:"sporty",legs:null,code:"",reline:false,saferDrop:false};
+var BYO={book:"sporty",legs:null,code:"",reline:false,saferDrop:false,saferHow:"normal",saferSwapOn:true,job:null};
 
 function byoSel(leg){
   return BYO.book==="bet9ja"
@@ -11768,6 +11826,18 @@ var SAFER={"1":"1X","2":"X2",
    points: below that the two markets are close enough that the swap is churn,
    and churn on a stranger's ticket is the thing not to do. */
 var SAFER_MIN_GAIN=0.08;
+/* HOW HARD TO PUSH, AS THREE WORDS INSTEAD OF A NUMBER.
+   The same two dials sit behind all three: how much better a bet has to get
+   before we touch it, and how weak a leg has to be before we offer to take it
+   out. "Light" only moves what is clearly worth moving; "Strong" moves
+   anything that gains at all and offers to drop more. Nobody has to know that
+   is what the words mean. */
+var SAFER_STRENGTH={
+  light:{gain:0.14,under:0.50,label:"Light",note:"Only the legs that clearly need it"},
+  normal:{gain:0.08,under:0.60,label:"Normal",note:"Our usual call"},
+  strong:{gain:0.03,under:0.70,label:"Strong",note:"Change anything that helps"}
+};
+function saferDial(){ return SAFER_STRENGTH[BYO.saferHow]||SAFER_STRENGTH.normal; }
 
 function saferSwap(l,B){
   if(!l||!l.prediction) return null;
@@ -11782,7 +11852,7 @@ function saferSwap(l,B){
   if(B.key==="sporty"&&!(f[B.odds]&&f[B.odds][to]>1.01)) return null;
   var pOld=mProb(f,from), pNew=mProb(f,to);
   if(pOld==null||pNew==null) return null;
-  if((pNew-pOld)<SAFER_MIN_GAIN) return null;
+  if((pNew-pOld)<saferDial().gain) return null;
   return {leg:l,f:f,from:from,to:to,pOld:pOld,pNew:pNew,
           oddOld:+l.odds||null, oddNew:(f[B.odds]||{})[to]||null};
 }
@@ -11792,16 +11862,17 @@ function saferSwap(l,B){
    with it except leave it or drop it - so that is offered as a choice rather
    than decided here. Sixty per cent is the line: above it a leg is doing its
    job, below it and unimprovable it is the one dragging the slip down. */
-var SAFER_DROP_UNDER=0.60;
+var SAFER_DROP_UNDER=0.60;   /* the default; saferDial() moves it */
 function saferDroppable(legs,B,plan){
   var swapped={}; (plan||[]).forEach(function(p){ swapped[p.leg.eventId+"|"+p.from]=1; });
   return (legs||[]).filter(function(l){
     if(swapped[l.eventId+"|"+l.prediction]) return false;
     var c=legChance(l,B);
-    return c.p==null || c.p<SAFER_DROP_UNDER;
+    return c.p==null || c.p<saferDial().under;
   });
 }
 function saferPlan(legs,B){
+  if(!BYO.saferSwapOn) return [];
   var out=[];
   (legs||[]).forEach(function(l){ var sw=saferSwap(l,B); if(sw) out.push(sw); });
   return out;
@@ -11881,34 +11952,53 @@ function renderByo(){
       (stuck?" We cannot re-book "+stuck+" of these, so "+(usable.length?
         "a split would leave "+usable.length+".":"there is nothing to split."):"")+
     "</p>"+
-    /* Two things can be done with a slip somebody hands us: move it to the
-       other book, or cut it into tickets. Both are offered from the same read
-       because both start from the same legs. */
-    (usable.length
-      ? "<div class='byo-acts'><button class='byo-conv-btn' id='byoConvBtn' type='button'>"+
-        "Convert to "+esc(otherBook(B).label)+"</button></div><div id='byoConv'></div>"
-      : "")+
-    /* TRIM IT AGAINST THE MODEL. Asked for: run somebody else's ticket past our
-       numbers and hand back the same ticket minus the legs least likely to
-       land. No market is swapped and no game is added - this is subtraction,
-       which is the one edit that cannot turn their bet into a different one.
-       Three games minimum, because dropping one from a double leaves a single
-       and nobody pasted a code to be told to bet one game. */
-    (usable.length>=3
-      ? "<div class='byo-trim' id='byoTrim'>"+trimBoxInner(usable,B)+"</div>"
-      : "")+
-    "<div class='byo-safer' id='byoSafer'>"+saferBoxInner(usable,B)+"</div>"+
-    (usable.length>=4
-      ? "<div class='code-split' id='byoSplit'>"+splitBoxInner(usable,byoOdds)+"</div>"
-      : (usable.length?"<p class='byo-note'>A split needs at least four games we can re-book.</p>":""))+
+    /* WHAT CAN BE DONE WITH IT IS NOT LISTED HERE ANY MORE. The three jobs sit
+       above this box, on screen before a code is even typed - see #byoJobs -
+       so a reader learns the page can do three things without having to read a
+       slip first and scroll past two of them. */
   "</div>";
-  var cb=$("byoConvBtn");
-  if(cb) cb.addEventListener("click",renderConvert);
-  if(usable.length>=3) wireTrim(out,usable,B);
-  wireSafer(out,usable,B);
-  if(usable.length>=4){
-    wireSplit(out,usable,B,{sel:"#byoSplit",selOf:byoSel,oddsOf:byoOdds});
+  paintJobs(usable,B);
+}
+
+/* WHICH JOBS THIS SLIP CAN ACTUALLY TAKE.
+   A dead button with a reason beats a live one that fails: splitting four
+   games is a split, splitting two is not, and a slip with nothing we can
+   re-book cannot be moved anywhere. */
+function paintJobs(usable,B){
+  var jobs=$("byoJobs"); if(!jobs) return;
+  var conv=$("byoJobConv");
+  if(conv) conv.textContent="Move to "+otherBook(B).label;
+  var can={edit:usable.length>=1,convert:usable.length>=1,split:usable.length>=4};
+  jobs.querySelectorAll("[data-job]").forEach(function(b){
+    var k=b.dataset.job;
+    b.disabled=!can[k];
+    b.classList.toggle("on",BYO.job===k&&!!can[k]);
+    b.title=can[k]?"":(k==="split"?"A split needs at least four games we can re-book"
+                                  :"Nothing on this code we can re-book");
+    if(!b._w){
+      b._w=1;
+      b.addEventListener("click",function(){
+        if(b.disabled) return;
+        BYO.job=(BYO.job===b.dataset.job)?null:b.dataset.job;
+        paintJobs(usable,B);
+        renderStage(usable,B);
+      });
+    }
+  });
+}
+
+/* One job on screen at a time, in the same place every time. */
+function renderStage(usable,B){
+  var st=$("byoStage"); if(!st) return;
+  if(!BYO.job||!usable.length){ st.innerHTML=""; return; }
+  if(BYO.job==="split"){
+    st.innerHTML="<div class='code-split' id='byoSplit'>"+splitBoxInner(usable,byoOdds)+"</div>";
+    wireSplit(st,usable,B,{sel:"#byoSplit",selOf:byoSel,oddsOf:byoOdds});
+    return;
   }
+  if(BYO.job==="convert"){ st.innerHTML="<div id='byoConv'></div>"; renderConvert(); return; }
+  st.innerHTML="<div class='byo-safer' id='byoSafer'>"+saferBoxInner(usable,B)+"</div>";
+  wireSafer(st,usable,B);
 }
 
 /* ---- converting a code from one book to the other ---- */
@@ -12198,11 +12288,22 @@ function renderConvert(){
    payouts are on screen before the button exists. */
 function saferBoxInner(legs,B){
   var plan=saferPlan(legs,B);
-  if(!plan.length) return "";
   var drop=BYO.saferDrop?saferDroppable(legs,B,plan):[];
+  var could=saferDroppable(legs,B,plan);
   var dropKey={}; drop.forEach(function(l){ dropKey[l.eventId+"|"+l.prediction]=1; });
   var kept=legs.filter(function(l){ return !dropKey[l.eventId+"|"+l.prediction]; });
   var before=byoOdds(legs), after=saferOdds(kept,plan,B);
+
+  /* THE CONTROLS FIRST, THEN WHAT THEY DID. A reader who changes a switch
+     wants to see the answer change, so the switches sit above the answer and
+     the numbers redraw under them. */
+  var dial=saferDial();
+  var chips=Object.keys(SAFER_STRENGTH).map(function(k){
+    var d=SAFER_STRENGTH[k];
+    return "<button class='sf-chip"+(BYO.saferHow===k?" on":"")+"' type='button' data-how='"+
+      k+"'>"+d.label+"</button>";
+  }).join("");
+
   var rows=plan.map(function(p){
     var f={home:p.leg.home||"Home",away:p.leg.away||"Away"};
     return "<div class='sf-row'><span class='sf-g'>"+
@@ -12210,44 +12311,53 @@ function saferBoxInner(legs,B){
       "<span class='sf-m'>"+mLabel(f,p.from)+" <i>"+P0(p.pOld)+"%</i>"+
       " → <b>"+mLabel(f,p.to)+"</b> <i>"+P0(p.pNew)+"%</i></span></div>";
   }).join("");
-  return "<p class='sp-q'>Make it safer?</p>"+
-    "<p class='byo-note'>"+plan.length+" leg"+(plan.length===1?"":"s")+
-      " can move to an easier bet on the same game. The other "+
-      (legs.length-plan.length)+" stay exactly as they are.</p>"+
-    "<div class='sf-rows'>"+rows+"</div>"+
-    /* THE READER DECIDES WHETHER ANYTHING LEAVES. A swap keeps their ticket
-       the same length; dropping a leg does not, and that is their call to
-       make rather than ours to make quietly. Off unless they ask. */
-    (function(){
-      var could=saferDroppable(legs,B,plan);
-      if(!could.length) return "";
-      return "<div class='byo-offer'><label class='byo-sw'>"+
-        "<input type='checkbox' id='byoSaferDrop'"+(BYO.saferDrop?" checked":"")+">"+
-        "<span>Also drop "+could.length+" leg"+(could.length===1?"":"s")+
-        " we cannot make safer</span></label>"+
-        "<p class='byo-note'>"+could.slice(0,3).map(function(l){
-          return esc((l.home||"a game")+" v "+(l.away||""));}).join("; ")+
-        (could.length>3?"; and "+(could.length-3)+" more":"")+
-        " - under "+Math.round(SAFER_DROP_UNDER*100)+"% with no easier version "+
-        "on the same game. Left in unless you say otherwise.</p></div>";
-    })()+
-    "<p class='byo-note sf-odds'>about x"+before.toFixed(2)+" → <b>x"+
-      after.odds.toFixed(2)+"</b>"+
-      (after.unknown?" on "+after.known+" of "+kept.length+" legs":"")+
-      (drop.length?", "+drop.length+" dropped":"")+
-      ". A safer leg pays less - that is the trade.</p>"+
-    "<div class='byo-acts'><button class='byo-go' id='byoSaferGo' type='button'>"+
-      "Apply and get a code</button></div><div id='byoSaferOut'></div>";
+
+  var nothing = !plan.length && !drop.length;
+  return "<p class='sp-q'>Fix it for me</p>"+
+    "<div class='sf-opts'>"+
+      "<label class='byo-sw'><input type='checkbox' id='sfSwap'"+
+        (BYO.saferSwapOn?" checked":"")+"><span>Make hard legs easier</span></label>"+
+      "<label class='byo-sw'><input type='checkbox' id='sfDrop'"+
+        (BYO.saferDrop?" checked":"")+"><span>Take out legs we cannot fix"+
+        (could.length?" ("+could.length+")":"")+"</span></label>"+
+      "<div class='sf-how'><span class='sf-how-l'>How much?</span>"+chips+
+        "<i class='sf-how-n'>"+esc(dial.note)+"</i></div>"+
+    "</div>"+
+    (nothing
+      ? "<p class='byo-note'>Nothing to change at this setting. Try <b>Strong</b>, "+
+        "or keep the slip as it is - it may already be fine.</p>"
+      : (plan.length
+          ? "<p class='byo-note'>"+plan.length+" leg"+(plan.length===1?"":"s")+
+            " move to an easier bet on the same game. The rest stay as they are.</p>"+
+            "<div class='sf-rows'>"+rows+"</div>"
+          : "")+
+        (drop.length
+          ? "<p class='byo-note sf-cut'>Taking out "+drop.length+": "+
+            drop.slice(0,3).map(function(l){
+              return esc((l.home||"a game")+" v "+(l.away||""));}).join("; ")+
+            (drop.length>3?"; and "+(drop.length-3)+" more":"")+"</p>"
+          : "")+
+        "<p class='byo-note sf-odds'>about x"+before.toFixed(2)+" → <b>x"+
+          after.odds.toFixed(2)+"</b>"+
+          (after.unknown?" on "+after.known+" of "+kept.length+" games":"")+
+          ". Safer legs pay less. That is the swap.</p>"+
+        "<div class='byo-acts'><button class='byo-go' id='byoSaferGo' type='button'>"+
+          "Do it and give me a code</button></div><div id='byoSaferOut'></div>");
 }
 /* One ticket, booked only when the button is pressed, and only ever at the
    book the code came from - a swap is not a conversion. */
 function wireSafer(wrap,legs,B){
   var box=wrap.querySelector("#byoSafer"); if(!box) return;
-  var sw=box.querySelector("#byoSaferDrop");
-  if(sw) sw.addEventListener("change",function(){
-    BYO.saferDrop=sw.checked;
+  function redraw(){
     box.innerHTML=saferBoxInner(legs,B);
     wireSafer(wrap,legs,B);              /* the box was redrawn, so rewire it */
+  }
+  var dr=box.querySelector("#sfDrop");
+  if(dr) dr.addEventListener("change",function(){ BYO.saferDrop=dr.checked; redraw(); });
+  var sp=box.querySelector("#sfSwap");
+  if(sp) sp.addEventListener("change",function(){ BYO.saferSwapOn=sp.checked; redraw(); });
+  box.querySelectorAll("[data-how]").forEach(function(c){
+    c.addEventListener("click",function(){ BYO.saferHow=c.dataset.how; redraw(); });
   });
   var go=box.querySelector("#byoSaferGo"); if(!go) return;
   go.addEventListener("click",function(){

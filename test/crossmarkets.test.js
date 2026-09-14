@@ -310,6 +310,7 @@ test("a swap keeps the game and widens the outcome, never the reverse", () => {
     src.slice(src.indexOf("var TEAM_ALIASES = {"), src.indexOf("function simTeams(")) +
     grab("simTeams") + grab("evStart") + grab("sameSlot") + grab("fixtureByBookId") +
     grab("fixtureByLeg") + grab("mProb") + grab("bookAllows") + grab("legChance") +
+    "var BYO={saferHow:'normal',saferSwapOn:true,saferDrop:false};" +
     src.slice(src.indexOf("var SAFER={"), src.indexOf("function renderByo(")) +
     "\nreturn {saferSwap:saferSwap,saferPlan:saferPlan,saferDroppable:saferDroppable,SAFER_MIN_GAIN:SAFER_MIN_GAIN};")();
   const B = { key: "sporty", id: "eventId", odds: "sportyOdds" };
@@ -336,8 +337,11 @@ test("dropping legs is the reader's choice, and off until they make it", () => {
   const box = src.slice(src.indexOf("function saferBoxInner("), src.indexOf("function wireSafer("));
   assert.match(box, /BYO\.saferDrop\?saferDroppable/,
     "the box must only drop when asked");
-  assert.match(box, /Left in unless you say otherwise/);
+  assert.match(box, /Take out legs we cannot fix/, "the choice must be on screen");
   assert.match(src, /saferDrop:false/, "the choice starts off");
+  /* Three strengths behind three words, and the words are the interface. */
+  assert.match(src, /var SAFER_STRENGTH=\{/);
+  assert.match(box, /data-how=/, "no way to change how hard it pushes");
   const wire = src.slice(src.indexOf("function wireSafer("), src.indexOf("/* WHAT A TRIM WOULD COST"));
   assert.match(wire, /if\(BYO\.saferDrop\) saferDroppable/,
     "and the booking must honour the same choice");
