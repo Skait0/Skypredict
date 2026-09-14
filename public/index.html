@@ -3577,6 +3577,15 @@ html.mode-live #live{display:block}
 .code-quota{margin:-6px 0 12px;font-size:12.5px;font-weight:600;color:var(--soft);
   letter-spacing:.01em}
 .code-acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+/* Empty until the read-back finds legs missing, and it must take no space
+   while empty - :empty rather than [hidden], because nothing sets a property
+   here, the box is simply filled or not. */
+.code-kept:empty{display:none}
+.code-kept{margin:12px 0 0;padding:10px 12px;border-radius:12px;
+  background:rgba(242,184,75,.12);border:1px solid rgba(242,184,75,.34);
+  font-size:12.5px;line-height:1.45;text-align:left}
+.code-kept b{display:block;font-size:13px;font-weight:800;margin-bottom:2px}
+.code-kept span{color:var(--soft)}
 /* Copy and Share are what you do with the code once you have it - secondary to
    opening the slip, so they are the small pair. Sized to their own labels
    rather than stretched across the row; the reserve on Copy is only there to
@@ -11736,6 +11745,28 @@ function clearSlip(){
 /* `save` is a function that files this slip in Your slips, or null when
    there is nothing to file. Passing it makes saving an offer rather than
    something that already happened. */
+/* Read a freshly minted code back and return the picks it actually contains.
+   Matched on the book's own event id plus our market code, because that pair is
+   what was sent and what comes back - team names do not survive the round trip
+   on either book. A leg we cannot match is treated as dropped, which is the
+   safe direction: it understates the slip rather than claiming a game the code
+   does not hold. */
+function reconcileCode(code,picks,B){
+  B=B||curBook();
+  return fetch("/api/slip?book="+encodeURIComponent(B.key)+"&code="+encodeURIComponent(code),
+               {headers:{Accept:"application/json"}})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d||!d.success||!Array.isArray(d.legs)) return null;
+      var held={};
+      d.legs.forEach(function(l){ held[String(l.eventId)+"|"+String(l.prediction)]=1; });
+      var kept=picks.filter(function(c){
+        return held[String(bookIdOf(c,B))+"|"+String(c.code)]; });
+      /* Nothing matched at all means the shapes disagree, not that the slip is
+         empty - say nothing rather than tell somebody their code is void. */
+      return kept.length?kept:null;
+    });
+}
 function showCode(code,hostId,save,B,picks){
   B=B||curBook();
   /* The host still holds whatever was last written there, and after a partial
@@ -11768,6 +11799,10 @@ function showCode(code,hostId,save,B,picks){
       "<button class='code-copy' type='button'>Copy</button>"+
       "<button class='share-btn' type='button' data-sh='1'>↗ Share</button>"+
     "</div>"+
+    /* Filled only when the read-back says the bookmaker kept fewer legs than
+       we sent - see reconcileCode. Empty and marginless otherwise, so a slip
+       that went through whole says nothing about it. */
+    "<div class='code-kept' aria-live='polite'></div>"+
     /* Every booked slip used to be filed in Your slips automatically,
        so a code pulled to compare odds, or to see what a x50k looks
        like, landed in the record beside the ones actually staked - and
@@ -11809,9 +11844,38 @@ function showCode(code,hostId,save,B,picks){
     copyText(code);
     this.textContent="Copied"; var s=this;
     setTimeout(function(){s.textContent="Copy";},1600);});
+  /* WHAT THE BOOKMAKER KEPT, WHICH IS NOT ALWAYS WHAT WE SENT.
+     A booking route refuses a leg it cannot map, but the BOOKMAKER is under no
+     such obligation: send twenty-four selections and a code can come back
+     carrying twenty-one, with the three it would not take dropped silently and
+     a code returned as a success. Everything downstream then described the
+     slip we asked for rather than the one the code contains - the odds on the
+     share card were the total of all twenty-four, which is a number the reader
+     cannot win.
+     So the code is read back, once, and anything that quotes a total waits for
+     that answer: the share link's stored payload, the split box, and the line
+     under the code. Read, not re-derived - the only authority on what a code
+     holds is the book that issued it. Best effort: a read that fails leaves
+     what we sent on screen, which is exactly today's behaviour. */
+  var _live=picks;
+  function _useKept(kept){
+    _live=kept;
+    rememberShortLink(code,kept,B);
+    try{ wireSplit(wrap,kept,B); }catch(e){}
+  }
   rememberShortLink(code,picks,B);
-  wrap.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code,picks,B);});
+  wrap.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code,_live,B);});
   wireSplit(wrap,picks,B);
+  reconcileCode(code,picks,B).then(function(kept){
+    if(!kept||kept.length>=picks.length) return;
+    _useKept(kept);
+    var lost=picks.length-kept.length;
+    var box=wrap.querySelector(".code-kept");
+    if(box) box.innerHTML="<b>"+B.mark+" kept "+kept.length+" of "+picks.length+
+      "</b><span>"+lost+" game"+(lost===1?"":"s")+" "+(lost===1?"was":"were")+
+      " dropped at their end, so this code pays about ×"+
+      totalOdds(kept).toFixed(2)+" - not the total the builder showed.</span>";
+  }).catch(function(){});
   var sv=wrap.querySelector(".code-save");
   if(sv) sv.addEventListener("click",function(){
     try{ save(); }catch(e){}

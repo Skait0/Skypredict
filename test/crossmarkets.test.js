@@ -535,3 +535,32 @@ test("the builder's notes name the book the slip is going to", () => {
   assert.match(src, /real "\+\s*curBook\(\)\.label\+" odds are usually lower/,
     "the estimate footnote still hardcodes a bookmaker");
 });
+
+test("a minted code is read back before anything quotes its odds", () => {
+  /* Reported: "after games are taken out, the initial odds still remains...
+     on the share card the initial odds show instead of the actual odds after
+     the unavailable games have been taken out."
+     Our booking route refuses a leg it cannot map; the BOOKMAKER is under no
+     such obligation and can return a code carrying fewer selections than were
+     sent. Everything downstream then describes the slip we asked for rather
+     than the one the code holds - and the odds on the card become a number the
+     reader cannot win. */
+  assert.match(src, /function reconcileCode\(code,picks,B\)/,
+    "nothing reads a minted code back");
+  /* Matched on the book's own event id plus our market code: team names do not
+     survive the round trip on either book. */
+  assert.match(src, /held\[String\(l\.eventId\)\+"\|"\+String\(l\.prediction\)\]/);
+  assert.match(src, /held\[String\(bookIdOf\(c,B\)\)\+"\|"\+String\(c\.code\)\]/);
+  /* The three things that quote a total have to follow the answer. */
+  const modal = src.slice(src.indexOf("function showCode("),
+                          src.indexOf("function bookList("));
+  assert.match(modal, /reconcileCode\(code,picks,B\)/);
+  assert.match(modal, /rememberShortLink\(code,kept,B\)/,
+    "the shared link still stores the legs we sent, not the ones booked");
+  assert.match(modal, /shareCode\(code,_live,B\)/,
+    "Share still sends the pre-drop slip");
+  assert.match(modal, /wireSplit\(wrap,kept,B\)/, "the split box still deals the old slip");
+  /* And it must never turn a good slip into a warning: no match at all means
+     the shapes disagree, not that the code is empty. */
+  assert.match(src, /return kept\.length\?kept:null;/);
+});
