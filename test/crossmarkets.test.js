@@ -363,3 +363,28 @@ test("a read that beat the prices is redrawn when they arrive", () => {
   assert.match(fn, /byoConvOut/);
   assert.match(fn, /byoSaferOut/);
 });
+
+test("the trim scales with the slip instead of always offering one two three", () => {
+  /* Drop 1, 2 or 3 is right for the six-leg slip it was written against and
+     meaningless on forty: dropping three of forty changes nothing anybody can
+     feel. The options are a share of the ticket now. */
+  const trimWays = new Function(grab("trimWays") + String.fromCharCode(10) +
+    "return trimWays;")();
+  assert.deepEqual(trimWays(2), [], "a double cannot be trimmed");
+  assert.deepEqual(trimWays(3), [1]);
+  assert.deepEqual(trimWays(6), [1, 2]);
+  assert.deepEqual(trimWays(40), [4, 10, 14], "a big ticket gets big options");
+  /* Never enough to leave fewer than two legs, whatever the share says. */
+  trimWays(5).forEach((k) => assert.ok(5 - k >= 2));
+  /* And no duplicate buttons when two shares round to the same number. */
+  [3, 4, 5, 8, 11, 20, 40].forEach((n) => {
+    const w = trimWays(n);
+    assert.equal(new Set(w).size, w.length, n + " legs offered a duplicate");
+  });
+});
+
+test("a long edit lists the first few and counts the rest", () => {
+  const box = src.slice(src.indexOf("function saferBoxInner("), src.indexOf("function wireSafer("));
+  assert.match(box, /var SHOW=6;/);
+  assert.match(box, /plan\.length>SHOW/, "forty rows would bury the price and the button");
+});

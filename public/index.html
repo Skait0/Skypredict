@@ -3379,6 +3379,7 @@ html.mode-live #live{display:block}
 @media (hover:hover){.sf-chip:not(.on):hover{color:var(--text);border-color:var(--soft)}}
 .sf-how-n{font-style:normal;font-size:11.5px;color:var(--faint);flex:1 1 100%}
 .sf-cut{margin-top:8px}
+.sf-more{margin:6px 0 0;text-align:center}
 .byo-res .sp-q{color:var(--soft)}
 .byo-res .sp-way{background:var(--card-2);border-color:var(--line);color:var(--text)}
 .byo-res .code-split .sp-way span{color:var(--faint)}
@@ -6735,10 +6736,10 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       <div class="byo-jobs" id="byoJobs" role="group" aria-label="What to do with the code">
         <button class="byo-job" type="button" data-job="edit" disabled>
           <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"/></svg></span>
-          <b>Fix it for me</b><i>Make the hard legs easier</i></button>
+          <b>Edit for me</b><i>Make the hard legs easier</i></button>
         <button class="byo-job" type="button" data-job="convert" disabled>
           <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M14.5 12h6.5M18 9l3 3-3 3"/></svg></span>
-          <b id="byoJobConv">Move it</b><i>Same games, other bookie</i></button>
+          <b id="byoJobConv">Convert</b><i>Same games, other bookie</i></button>
         <button class="byo-job" type="button" data-job="split" disabled>
           <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v7a3 3 0 003 3h6a3 3 0 013 3v5"/><path d="M6 21v-5a3 3 0 013-3"/></svg></span>
           <b>Split it</b><i>Two or more smaller tickets</i></button>
@@ -11967,7 +11968,7 @@ function renderByo(){
 function paintJobs(usable,B){
   var jobs=$("byoJobs"); if(!jobs) return;
   var conv=$("byoJobConv");
-  if(conv) conv.textContent="Move to "+otherBook(B).label;
+  if(conv) conv.textContent="Convert to "+otherBook(B).label;
   var can={edit:usable.length>=1,convert:usable.length>=1,split:usable.length>=4};
   jobs.querySelectorAll("[data-job]").forEach(function(b){
     var k=b.dataset.job;
@@ -12304,16 +12305,24 @@ function saferBoxInner(legs,B){
       k+"'>"+d.label+"</button>";
   }).join("");
 
-  var rows=plan.map(function(p){
+  /* A LONG SLIP IS A LIST, NOT A WALL. Twelve changes on a forty-leg ticket
+     printed twelve rows and pushed the price and the button off the screen, so
+     the first six are shown and the rest are counted. The count is the part
+     that matters; the rows are there to prove it is not doing anything
+     strange. */
+  var SHOW=6;
+  var rows=plan.slice(0,SHOW).map(function(p){
     var f={home:p.leg.home||"Home",away:p.leg.away||"Away"};
     return "<div class='sf-row'><span class='sf-g'>"+
       esc((p.leg.home||"?")+" v "+(p.leg.away||"?"))+"</span>"+
       "<span class='sf-m'>"+mLabel(f,p.from)+" <i>"+P0(p.pOld)+"%</i>"+
       " → <b>"+mLabel(f,p.to)+"</b> <i>"+P0(p.pNew)+"%</i></span></div>";
-  }).join("");
+  }).join("")+
+  (plan.length>SHOW?"<p class='byo-note sf-more'>and "+(plan.length-SHOW)+
+    " more like these</p>":"");
 
   var nothing = !plan.length && !drop.length;
-  return "<p class='sp-q'>Fix it for me</p>"+
+  return "<p class='sp-q'>Edit for me</p>"+
     "<div class='sf-opts'>"+
       "<label class='byo-sw'><input type='checkbox' id='sfSwap'"+
         (BYO.saferSwapOn?" checked":"")+"><span>Make hard legs easier</span></label>"+
@@ -12397,16 +12406,36 @@ function wireSafer(wrap,legs,B){
 /* WHAT A TRIM WOULD COST AND WHAT IT WOULD LEAVE.
    Priced with the bookmaker's own odds, like everything else on a borrowed
    slip: this ticket will be booked at their prices, not ours. */
+/* HOW MANY LEGS A TRIM SHOULD OFFER TO CUT.
+ *
+ * It offered one, two or three, which is right for the six-leg slip it was
+ * written against and meaningless for a forty-leg one: dropping three of forty
+ * changes nothing anybody can feel. The choices are a share of the slip now -
+ * roughly a tenth, a quarter and a third - so a big ticket gets big options
+ * and a small one still gets "drop one".
+ * Never below one, never enough to leave fewer than two legs, and duplicates
+ * collapse: on a five-leg slip a tenth and a quarter are both one.
+ */
+function trimWays(n){
+  if(n<3) return [];
+  var out=[];
+  [0.1,0.25,0.34].forEach(function(share){
+    var k=Math.max(1,Math.round(n*share));
+    if(k>n-2) k=n-2;                       /* two legs is the floor of a slip */
+    if(k>=1&&out.indexOf(k)<0) out.push(k);
+  });
+  return out;
+}
 function trimBoxInner(legs,B){
-  var most=Math.min(3,Math.max(0,legs.length-2));
-  if(most<1) return "";
+  var ways0=trimWays(legs.length);
+  if(!ways0.length) return "";
   var ways=[];
-  for(var n=1;n<=most;n++){
+  ways0.forEach(function(n){
     var plan=trimPlan(legs,B,n);
     ways.push("<button class='sp-way' type='button' data-drop='"+n+"'>"+
       "<b>Drop "+n+"</b><span>"+plan.keep.length+" left, about x"+
       byoOdds(plan.keep.map(function(k){return k.leg;})).toFixed(2)+"</span></button>");
-  }
+  });
   var worst=trimPlan(legs,B,1).cut[0];
   return "<p class='sp-q'>Run it past our model?</p>"+
     "<p class='byo-note byo-trim-n'>The likeliest legs stay exactly as they are - "+
