@@ -278,5 +278,61 @@
       "sporty": "VK4AF8",
       "bet9ja": "5RGQ3V9"
     }
+  },
+  "2026-09-14": {
+    "date": "2026-09-14",
+    "generated": "2026-09-14T12:12:15.994Z",
+    "firstKickoff": "2026-09-14T16:30:00.000Z",
+    "legs": [
+      {
+        "home": "Sirius",
+        "away": "Degerfors",
+        "league": "Sweden Allsvenskan",
+        "kickoff": "2026-09-14T17:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.8794,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Sp Braga",
+        "away": "Estoril",
+        "league": "Portugal Primeira Liga",
+        "kickoff": "2026-09-14T19:45:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.8035,
+        "market": "1X"
+      },
+      {
+        "home": "Torino",
+        "away": "Roma",
+        "league": "Italy Serie A",
+        "kickoff": "2026-09-14T16:30:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.8003,
+        "market": "X2"
+      },
+      {
+        "home": "Djurgarden",
+        "away": "GAIS",
+        "league": "Sweden Allsvenskan",
+        "kickoff": "2026-09-14T17:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.7955,
+        "market": "1X"
+      },
+      {
+        "home": "FCSB",
+        "away": "Petrolul",
+        "league": "Romania Superliga",
+        "kickoff": "2026-09-14T18:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.7951,
+        "market": "1X"
+      }
+    ],
+    "codes": {
+      "sporty": "VBT3UP",
+      "bet9ja": "5RKV2B6"
+    }
   }
 }
