@@ -143,6 +143,23 @@ test("robots points at the sitemap and keeps crawlers out of the api", () => {
   assert.match(txt, /Disallow: \/api\//);
 });
 
+test("the card image is the one thing under /api a crawler may read", () => {
+  /* THE REASON A SHARED SLIP HAD NO PICTURE ON X. Its og:image points at
+     /api/slipcard, Disallow: /api/ told Twitterbot not to fetch it, and a card
+     with no image is not a card - which survived every fix to the meta tags
+     because the tags were never the problem. Allow is matched by specificity
+     rather than by order, so the longer rule wins for this path alone. */
+  const txt = P.renderRobots();
+  assert.match(txt, /Allow: \/api\/slipcard/);
+  assert.ok(txt.indexOf("Allow: /api/slipcard") < txt.indexOf("Disallow: /api/"),
+    "keep the Allow above the Disallow: some crawlers are still first-match");
+  /* And the file that ships is the one this renders - prebuild writes it, but
+     the copy in public/ is what a local run serves. */
+  const onDisk = require("fs").readFileSync(
+    require("path").join(__dirname, "..", "public", "robots.txt"), "utf8");
+  assert.match(onDisk, /Allow: \/api\/slipcard/, "public/robots.txt is stale");
+});
+
 /* The note explains the percentage tables. On a result page there are none,
    and a disclaimer about numbers that are not there reads as a template
    showing through. */
