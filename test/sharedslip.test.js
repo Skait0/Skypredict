@@ -192,3 +192,27 @@ test("a grading failure renders the slip anyway", async () => {
   assert.equal(r._o.statusCode, 200, "the page still renders");
   assert.ok(r._o.body.includes("Thun"), "with the slip on it");
 });
+
+test("the card image is served from outside /api", () => {
+  /* robots.txt must keep crawlers out of /api - the booking routes live there -
+     so the one URL under it that strangers are meant to fetch does not live
+     there any more. `Allow: /api/slipcard` works, but only once a crawler
+     re-reads robots.txt, and X caches that file for about a day: the Allow
+     lands, the cards stay blank, and nothing on our side shows why.
+     The rewrite in vercel.json is what makes /slipcard.png the same function. */
+  const fs = require("fs"), path = require("path");
+  const root = path.join(__dirname, "..");
+  const html = SL.renderPage([LEG], null, "/s/ABC123", { code: "ABC123" });
+  const img = (html.match(/property="og:image" content="([^"]*)"/) || [null, ""])[1];
+  assert.match(img, /\/slipcard\.png\?/, "og:image is back under /api");
+  assert.doesNotMatch(img, /\/api\//, "a crawler that obeys robots.txt cannot fetch this");
+  /* twitter:image has to agree with it, or the two crawlers see different
+     pictures and only one of them draws. */
+  const tw = (html.match(/name="twitter:image" content="([^"]*)"/) || [null, ""])[1];
+  assert.equal(tw, img);
+  /* And the path has to actually route somewhere. */
+  const vercel = JSON.parse(fs.readFileSync(path.join(root, "vercel.json"), "utf8"));
+  const hit = (vercel.rewrites || []).some((r) =>
+    r.source === "/slipcard.png" && r.destination === "/api/slipcard");
+  assert.ok(hit, "nothing rewrites /slipcard.png to the function that draws it");
+});

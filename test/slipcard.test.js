@@ -178,9 +178,15 @@ test("a shared slip points at its own card, not the site's", () => {
     { home: "Orenburg", away: "Rubin Kazan", date: "2026-09-02", code: "1X", od: 1.44, p: 0.77 },
   ];
   const html = SL.renderPage(legs, null, "/s/ABC123", { code: "ABC123" });
-  assert.match(html, /og:image" content="[^"]*\/api\/slipcard\?g=2&amp;o=1\.80"/,
+  /* /slipcard.png, not /api/slipcard: robots.txt has to keep crawlers out of
+     /api, and an Allow exception only helps once the crawler re-reads that
+     file - X caches it for about a day. A path outside /api needs no
+     exception. vercel.json rewrites it to the same function. */
+  assert.match(html, /og:image" content="[^"]*\/slipcard\.png\?g=2&amp;o=1\.80"/,
     "og:image must carry this slip's own figures");
-  assert.match(html, /twitter:image" content="[^"]*\/api\/slipcard\?/,
+  assert.doesNotMatch(html, /og:image" content="[^"]*\/api\//,
+    "a crawler obeying robots.txt cannot fetch an image under /api");
+  assert.match(html, /twitter:image" content="[^"]*\/slipcard\.png\?/,
     "X reads twitter:image when it is present");
   assert.match(html, /twitter:card" content="summary_large_image"/);
   assert.match(html, /og:image:width" content="1568"/,

@@ -113,6 +113,10 @@
     {
       "source": "/s/:code",
       "destination": "/api/s"
+    },
+    {
+      "source": "/slipcard.png",
+      "destination": "/api/slipcard"
     }
   ],
   "cleanUrls": true
