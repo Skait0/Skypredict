@@ -470,3 +470,32 @@ test("a target that cannot be hit is explained, in both directions", () => {
   /* And it lands on the slip, not only in a toast that is gone in two seconds. */
   assert.match(fn, /className="byo-note wsp-miss"/);
 });
+
+test("an estimated price is marked as one", () => {
+  /* A leg at 1.02 is SportyBet's own number for a near-certainty on a market
+     the sweep fetches. A leg on a market it does not fetch shows oddOf(p) - our
+     arithmetic - and 53-64% cannot look like 1.02 however it is derived. Both
+     sat in the same column looking equally authoritative. */
+  const fn = src.slice(src.indexOf("function oddCell("), src.indexOf("function mProb("));
+  assert.match(fn, /estimatedOdd\(f,c\)/);
+  assert.ok(fn.includes('~"+v.toFixed(2)'), "an estimate must be marked");
+  assert.match(fn, /Our estimate/, "and say so when asked");
+  /* Both slip rows must use it, or one of them still lies. */
+  assert.ok(src.split("oddCell(").length - 1 >= 3, "a slip row still prints a bare odd");
+});
+
+test("an empty slip says which control to move", () => {
+  /* "No games match. Adjust risk or markets" is true of every empty slip and
+     useful for none. Reported on Win a half: on, nothing built at Safe or
+     Balanced, no reason given - and the board was never the problem. */
+  const fn = src.slice(src.indexOf("function emptyWhy()"), src.indexOf("function renderBuilder("));
+  assert.ok(fn.includes("unlocks") && fn.includes("further right on the dial"),
+    "a market above the dial must say so");
+  assert.match(fn, /tops out at/, "a market under the floor must say so");
+  assert.match(fn, /Slide right, or switch on a safer market/);
+  /* Every chip must be mappable to its codes, or the sentence names nothing. */
+  const table = src.slice(src.indexOf("var MKT_BY_CHIP="), src.indexOf("/* WHY THE SLIP IS EMPTY"));
+  const cfg = src.slice(src.indexOf("var MKT_CFG"), src.indexOf("var html=MKT_CFG.filter"));
+  [...cfg.matchAll(/\{k:"([a-z0-9]+)"/g)].map((m) => m[1]).forEach((k) =>
+    assert.ok(table.includes(k + ":["), "MKT_BY_CHIP has no codes for the " + k + " chip"));
+});

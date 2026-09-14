@@ -10823,6 +10823,25 @@ function allowedMarkets(t){
   if(t>=2) m=m.concat(["WINHALF_H_Y","WINHALF_A_Y"]);  /* 60% */
   return m;
 }
+/* IS THAT PRICE THEIRS OR OURS?
+ *
+ * A leg at 1.02 is a real SportyBet price on a market the sweep fetches -
+ * their own number for a near-certainty. A leg on a market the sweep does not
+ * fetch has no price of ours to show, so what appears is oddOf(p): an estimate
+ * derived from our probability, and 53-64% cannot look like 1.02 however it is
+ * derived. Both numbers sat in the same column looking equally authoritative.
+ * The estimate is marked now, so a reader can tell which is a quote and which
+ * is arithmetic. */
+function estimatedOdd(f,c){ return !hasRealOdd(f,c); }
+function oddCell(f,c,p){
+  var v=legOdd(f,c,p);
+  if(!(v&&isFinite(v)&&v>1)) return "-";
+  return estimatedOdd(f,c)
+    ? "<span title='Our estimate - "+esc((curBook()&&curBook().label)||"the bookmaker")+
+      " prices this market at the till'>~"+v.toFixed(2)+"</span>"
+    : v.toFixed(2);
+}
+
 function mProb(f,c){
   /* A CONVERTED LEG CAN HAVE NO FIXTURE AT ALL. Since feedMatch, a game we
      hold no results for crosses on the other book's own event, and there is
@@ -14632,7 +14651,7 @@ function renderMySheet(){
       /* This leg's price. The duplicate was the copy printed inside the pick
          control itself - this column was never the problem, and without it a
          slip shows a total with nothing to add up to it. */
-      "<span class='sp-odd'>"+(x.p>0?legOdd(f,x.code,x.p).toFixed(2):"-")+"</span>"+
+      "<span class='sp-odd'>"+(x.p>0?oddCell(f,x.code,x.p):"-")+"</span>"+
       "<button class='sp-x' data-myrm='"+x.id+"|"+x.code+"' aria-label='Remove'>"+XSVG+"</button>"+
     "</div>";
   }).join("");
@@ -16011,6 +16030,64 @@ function renderBldDock(){
     },{threshold:0}).observe(head);
   }
 }
+/* WHICH CODES EACH CHIP GOVERNS. The slider's mkOn map already knows this
+   pairing, but backwards - code to switch - and emptyWhy has to go the other
+   way to name the chip that fell short. One table, read twice, beats two
+   tables that can disagree. */
+var MKT_BY_CHIP={wd:["1X","X2"],any:["12"],out:["1","2"],
+  o15:["OVER_1.5"],o25:["OVER_2.5"],o35:["OVER_3.5"],fh:["FH_OVER_0.5"],
+  tts:["HOME_OVER_0.5","AWAY_OVER_0.5"],tts2:["HOME_OVER_1.5","AWAY_OVER_1.5"],
+  both:["GG"],
+  dro25:["MIX_X_OV_2.5"],drgg:["MIXGG_X"],rsgg:["MIXGG_1","MIXGG_2"],
+  rso25:["MIX_1_OV_2.5","MIX_2_OV_2.5"],dro15:["MIX_X_OV_1.5"],
+  rso15:["MIX_1_OV_1.5","MIX_2_OV_1.5"],weh:["WINHALF_H_Y","WINHALF_A_Y"],
+  draw:["X"]};
+
+/* WHY THE SLIP IS EMPTY, NAMED.
+ *
+ * "No games match. Adjust risk or markets" is true of every empty slip and
+ * useful for none of them. Reported on Win a half: switched on, nothing built
+ * at Safe or Balanced, no explanation - and the reason was never the board. A
+ * market can be missing for exactly two reasons and the reader can act on
+ * both:
+ *   the risk dial has not unlocked it yet - it is a tier above where the
+ *   slider sits, so no fixture was ever offered to it;
+ *   or it is unlocked and the confidence floor is above anything it reaches
+ *   today - Win a half tops out near 64% on a normal card and Safe asks 75%.
+ * Both are answered by moving one control, so the sentence names which. */
+function emptyWhy(){
+  try{
+    var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier);
+    var on=[];
+    MKT_CFG.forEach(function(m){
+      if(m.wizardOnly||BUILD.mk[m.k]===false) return;
+      on.push(m);
+    });
+    if(!on.length) return "Switch a market on to build anything.";
+    var locked=on.filter(function(m){ return p.tier<m.tier; });
+    if(locked.length===on.length){
+      return locked.map(function(m){return m.label;}).join(" and ")+
+        (locked.length===1?" unlocks":" unlock")+" further right on the dial.";
+    }
+    /* Unlocked, so ask what they actually reach on today's card. */
+    var fx=scopeFixtures()||[], best=0, bestName="";
+    on.forEach(function(m){
+      var codes=allowed.filter(function(c){ return (MKT_BY_CHIP[m.k]||[]).indexOf(c)>=0; });
+      codes.forEach(function(c){
+        fx.forEach(function(f){
+          var v=mProb(f,c);
+          if(v!=null&&v>best){ best=v; bestName=m.label; }
+        });
+      });
+    });
+    if(best&&best<p.minConf){
+      return bestName+" tops out at "+Math.round(best*100)+"% on today's games and "+
+        riskWord(BUILD.risk)+" asks for "+Math.round(p.minConf*100)+
+        "%. Slide right, or switch on a safer market.";
+    }
+  }catch(e){}
+  return "";
+}
 function renderBuilder(){
   paintBookPickers();
   /* The wizard shows the numbers and keeps the slip itself for the sheet. */
@@ -16797,7 +16874,8 @@ function renderBuilderOutput(){
     $("slip").innerHTML="<div class='bld-empty'><b>"+(isWiz?(WSP.conjured?"No slip yet":"Ready when you are")+"":"Nothing in your slip")+"</b>"+
       (isWiz?(WSP.conjured?("No games match your wizard settings - try a lower payout"+(leaguesChosen()?", widen the leagues":"")+" or enable more markets."):"Tap a target payout to preview your slip.")
        : (dry?("No fixtures "+(SDAY===0?"left ":"")+dryDay+(TOD!=="all"?" in this time window":"")+(leaguesChosen()?" in the leagues you picked":"")+" - "+(leaguesChosen()?"widen the leagues":"switch to All upcoming")+" to keep building.")
-         : (firstVisit ? "Move the slider to build a fresh set of games." : "No games match. Adjust risk or markets.")))+"</div>";
+         : (firstVisit ? "Move the slider to build a fresh set of games."
+             : (emptyWhy()||"No games match. Adjust risk or markets."))))+"</div>";
   } else {
     $("slip").innerHTML=picks.map(function(c){
       var f=c.f, cf=conf(c.p);
@@ -16806,7 +16884,7 @@ function renderBuilderOutput(){
           (c.eventId?"":"<span class='sp-noid' title='Not on SportyBet yet - can&apos;t auto-book'>no ID</span>")+"</div>"+
           "<div class='sp-meta'>"+compOf(f.league)+" \u00b7 "+dayName(dayOff(f.date))+" "+kickTime(f)+"</div></div>"+
         "<div class='sp-pick'><b>"+mLabel(f,c.code)+"</b><i>"+P0(c.p)+"%</i></div>"+
-        "<span class='sp-odd'>"+legOdd(c.f,c.code,c.p).toFixed(2)+"</span>"+
+        "<span class='sp-odd'>"+oddCell(c.f,c.code,c.p)+"</span>"+
         "<button class='sp-x' data-rm='"+c.id+"' aria-label='Remove'>"+XSVG+"</button>"+
       "</div>";
     }).join("");
