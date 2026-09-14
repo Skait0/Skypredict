@@ -52,11 +52,12 @@ module.exports = async function handler(req, res) {
      name for the slip, so it is the key: the stored payload is looked up and
      everything below runs exactly as it does for the long form. `?p=` still
      works, so every link already shared keeps opening. */
+  let viaShort = false;
   if (!p) {
     const m = /\/s\/([A-Za-z0-9-]{4,24})\/?$/.exec(String(req.url || "").split("?")[0]);
     if (m) {
       const hit = await DB.getSharedSlip(m[1]);
-      if (hit.ok && hit.row) { p = hit.row.payload; code = hit.row.code; book = hit.row.book; }
+      if (hit.ok && hit.row) { p = hit.row.payload; code = hit.row.code; book = hit.row.book; viaShort = true; }
       else {
         res.setHeader("Content-Type", "text/html; charset=utf-8");
         applyCache(res, NO_STORE);
@@ -111,8 +112,19 @@ module.exports = async function handler(req, res) {
      Every shared slip used to declare og:url as "/s", so X and WhatsApp saw
      one resource shared over and over: they collapse on the canonical url,
      which means the first slip crawled supplies the preview for every slip
-     after it. A short code has a real address and has to say so. */
-  const selfPath = code ? "/s/" + encodeURIComponent(code)
-                        : "/s?p=" + encodeURIComponent(p || "");
+     after it. A short code has a real address and has to say so.
+     ONLY A CODE WE ACTUALLY SERVED FROM, THOUGH. This read `code ? "/s/"+code`
+     for any code at all, including the `&c=` a long link carries - and a long
+     link is only ever shared BECAUSE the short row is missing, so it named a
+     canonical that 404s. Both X and Facebook resolve og:url before drawing a
+     card, so they fetched "That slip could not be opened" and drew nothing.
+     The long URL and the dead preview were the same bug: the link is long
+     precisely when the canonical it claims does not exist. A link served from
+     ?p= now declares itself, which is always true and always fetchable. */
+  const selfPath = viaShort
+    ? "/s/" + encodeURIComponent(code)
+    : "/s?p=" + encodeURIComponent(p || "") +
+      (code ? "&c=" + encodeURIComponent(code) : "") +
+      (book ? "&b=" + encodeURIComponent(book) : "");
   res.end(SL.renderPage(legs, rec, selfPath, { code, book }));
 };

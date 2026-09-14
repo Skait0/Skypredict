@@ -13002,10 +13002,44 @@ function rememberShortLink(code,items,B){
       .catch(function(){});
   }catch(e){}
 }
+/* THE SAME SHORT LINK FOR A SLIP THAT HAS NO BOOKING CODE.
+   rememberShortLink above is keyed on the code, which slip-of-the-day does not
+   have until somebody books it - so its Share button fell through to
+   `/s?p=...` and put 401 characters of base64 into a WhatsApp message. The key
+   here is the payload's own SHA-256, first six bytes, behind an `S-` prefix:
+   deterministic, so sharing the same slip twice reuses one row, and prefixed
+   because a bookmaker's code is alphanumeric and can therefore never collide
+   with it.
+   Registered when the section renders, never on the tap: navigator.share has
+   to be reachable from the gesture, and a share that waits on a round trip is
+   a share that silently does nothing. If the round trip has not landed the
+   long link still goes, which is what happens today. */
+var SHORT_SLIP=null;   // {raw, url} - raw pins the url to the slip it came from
+function rememberSlipLink(items,book){
+  try{
+    var raw=slipPayload(items);
+    if(!raw||!(window.crypto&&crypto.subtle)) return;
+    var bytes=new TextEncoder().encode(raw),bin="";
+    for(var i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+    var p=btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+    crypto.subtle.digest("SHA-256",bytes).then(function(h){
+      var key="S-"+Array.prototype.map.call(new Uint8Array(h).slice(0,6),function(b){
+        return ("0"+b.toString(16)).slice(-2);}).join("").toUpperCase();
+      return fetch("/api/share",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({code:key,book:book||"sporty",p:p})})
+        .then(function(r){return r.json();})
+        .then(function(d){ if(d&&d.ok) SHORT_SLIP={raw:raw,url:location.origin+"/s/"+key}; });
+    }).catch(function(){});
+  }catch(e){}
+}
 function shareSlip(picks,odds){
   const txt=shareText(picks,odds,null);
+  /* Pinned to the payload: a cached link from a slip that has since been
+     rebuilt would send somebody else's games. */
+  var short=null;
+  try{ if(SHORT_SLIP&&SHORT_SLIP.raw===slipPayload(picks)) short=SHORT_SLIP.url; }catch(e){}
   shareSlipImage(picks,odds,null,txt).then(function(ok){
-    if(!ok) doShare(txt,slipUrl(picks)||location.href);
+    if(!ok) doShare(txt,short||slipUrl(picks)||location.href);
   });
 }
 /* The link points at the slip on our own site rather than straight into
@@ -13299,6 +13333,7 @@ function renderSlipOfDay(){
     "</section>";
   $("sotdBook").addEventListener("click",function(){bookList(SOTD,"sotdResult","sotdBook","Book this slip");});
   $("sotdShare").addEventListener("click",function(){shareSlip(SOTD,odds);});
+  rememberSlipLink(SOTD,(curBook()&&curBook().key)||"sporty");
   wireNotif();
   var note=$("sotdNote");
   if(started>=SOTD.length)

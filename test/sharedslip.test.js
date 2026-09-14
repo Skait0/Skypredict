@@ -143,15 +143,39 @@ test("a slip declares its own address, not the bare route", async () => {
   assert.ok(!/og:url" content="\/s"/.test(o.body), "and never the bare route");
 });
 
-test("a slip opened by its short code says so in og:url", async () => {
-  /* The branch the test above does not reach. Caught by mutation: collapsing
-     `code ? "/s/" + code : ...` back to a bare "/s" left every assertion
-     passing, because nothing here had ever passed a code. */
+test("a long link never claims a short address that may not exist", async () => {
+  /* THIS TEST USED TO ASSERT THE BUG. It required `?p=...&c=MS0LJY` to
+     declare og:url as "/s/MS0LJY", on the reasoning that a code is a real
+     address - but the code in a query string is only the BOOKING code the
+     browser tacked on, and the short row exists only if POST /api/share
+     landed. A long link is shared precisely when it did not, so the canonical
+     pointed at a 404. X and Facebook both resolve og:url before drawing a
+     card, fetched "That slip could not be opened", and drew nothing: the
+     enormous URL and the missing preview were one bug, not two. */
   const o = await call({ query: { p: good(), c: "MS0LJY" }, url: "/s?p=x&c=MS0LJY",
                          headers: { host: "x.test" } }, null);
-  assert.ok(o.body.includes("/s/MS0LJY"),
-    "a short code has a real address and the preview must use it");
+  assert.ok(!o.body.includes("/s/MS0LJY"),
+    "a code we did not serve from is not an address we can promise");
+  assert.ok(o.body.includes("c=MS0LJY"),
+    "the canonical is the link as shared, code and all");
   assert.ok(!o.body.includes('content="/s"'), "never the bare route");
+});
+
+test("a slip opened by its short code says so in og:url", async () => {
+  /* The branch the test above does not reach, and the only one where the short
+     address is known to resolve: we just read the row. */
+  const DB = require("../lib/supabase.js");
+  const real = DB.getSharedSlip;
+  DB.getSharedSlip = async () => ({ ok: true, row: { code: "MS0LJY", book: "sporty", payload: good() } });
+  try {
+    const o = await call({ query: {}, url: "/s/MS0LJY", headers: { host: "x.test" } }, null);
+    assert.equal(o.statusCode, 200);
+    assert.ok(o.body.includes("/s/MS0LJY"),
+      "a stored slip has a real address and the preview must use it");
+    assert.ok(!o.body.includes("/s?p="), "and not the long form it came from");
+  } finally {
+    DB.getSharedSlip = real;
+  }
 });
 
 test("a grading failure renders the slip anyway", async () => {
