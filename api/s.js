@@ -140,5 +140,8 @@ module.exports = async function handler(req, res) {
   /* The response now differs by user agent, so the caches must key on it or a
      crawler's copy would be served to a reader and the other way round. */
   res.setHeader("Vary", "User-Agent");
-  res.end(SL.renderPage(legs, rec, selfPath, { code, book, noindex: !preview }));
+  /* ?card=static - see lib/sliplink.js. A diagnostic, not a feature. */
+  const staticCard = /[?&]card=static/.test(String(req.url || ""));
+  res.end(SL.renderPage(legs, rec, selfPath,
+    { code, book, noindex: !preview, staticCard }));
 };
