@@ -2884,6 +2884,10 @@ html.mode-live #live{display:block}
    and reads as a word. Same shape, no new colour: it is a label, not a
    warning - the warning is the chip being locked. */
 .mkt-chip .only-badge{letter-spacing:0;font-size:9.5px;padding:2px 6px}
+/* A chip the other bookmaker owns. Dimmed like a tier lock, but it is still a
+   button: tapping it moves the builder to the book that sells it. */
+.mkt-chip.wrong-book{opacity:.5;cursor:pointer}
+@media (hover:hover){.mkt-chip.wrong-book:hover{opacity:.75}}
 .mkt-chip.on .tier-badge{background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3)}
 .mkt-chip.unlocking{animation:mktUnlock .35s ease}
 @keyframes mktUnlock{0%{transform:scale(.92);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
@@ -10801,21 +10805,22 @@ function allowedMarkets(t){
   if(t>=1) m=m.concat(["12","OVER_2.5"]);
   if(t>=2) m=m.concat(["GG","OVER_3.5","FH_OVER_0.5",
                        "HOME_OVER_1.5","AWAY_OVER_1.5"]);
-  /* THE COMBINATIONS SIT AT TIER 1, not because they are risky - a draw or
-     over 2.5 lands about two times in three - but because they are new here
-     and their chips are off until somebody turns them on. The record decides
-     the rest: isProven holds any market whose family has fewer than ten graded
-     results out of the wizard's reach however this list is set. */
-  if(t>=1) m=m.concat(["MIX_X_OV_2.5","MIXGG_X","MIXGG_1","MIXGG_2",
-                       "MIX_1_OV_2.5","MIX_2_OV_2.5",
-                       /* Bet9ja only - bookAllows drops it for the other book
-                          before a pick is ever made. */
-                       "MIX_X_OV_1.5","MIX_1_OV_1.5","MIX_2_OV_1.5",
-                       /* A full-time score cannot settle these, so they are
-                          graded from half-time data at build time and never by
-                          gradeLeg - which answers null and is treated as
-                          ungraded, not as a loss. */
-                       "WINHALF_H_Y","WINHALF_A_Y"]);
+  /* THE COMBINATIONS SIT WHERE THEIR RECORD PUTS THEM, not where they felt
+     they belonged. Measured over 2,377 held-out matches: result or over 1.5
+     lands 87%, draw or over 1.5 84%, result or both score 81% - all of them
+     safer than Over 1.5 at 78%, which has been tier 0 since the beginning. So
+     those three are tier 0 and the rest sit a rung up, at the level of the
+     markets they actually resemble.
+     Putting them all at tier 1 was why a reader on the default risk setting
+     could switch a chip on and get nothing: the chip was allowed and the
+     market was not. */
+  m=m.concat(["MIX_1_OV_1.5","MIX_2_OV_1.5",   /* 87% - Bet9ja only */
+              "MIX_X_OV_1.5",                  /* 84% - Bet9ja only */
+              "MIXGG_1","MIXGG_2"]);           /* 81% */
+  if(t>=1) m=m.concat(["MIX_X_OV_2.5",         /* 74% */
+                       "MIX_1_OV_2.5","MIX_2_OV_2.5",  /* 72% */
+                       "MIXGG_X"]);            /* 64% */
+  if(t>=2) m=m.concat(["WINHALF_H_Y","WINHALF_A_Y"]);  /* 60% */
   return m;
 }
 function mProb(f,c){
@@ -15081,7 +15086,22 @@ function wspMarkets(){var m=[];
      floor, and a draw never clears a confidence floor worth having. Somebody
      who wants draws is making a different bet, and has to say so. */
   if(WSP.mk.draw)m.push("X");
-  return m;}
+  /* THE COMBINATIONS. Left out when they shipped, which made their chips
+     controls that turn on and do nothing: the Slider knew them through
+     allowedMarkets and the wizard did not, so a reader who switched the old
+     chips off and these on was told there were no games to conjure. Both sides
+     of a two-sided family go in the pool; which one is used is the model's
+     call, the same as team goals above. */
+  if(WSP.mk.dro25)m.push("MIX_X_OV_2.5");
+  if(WSP.mk.drgg)m.push("MIXGG_X");
+  if(WSP.mk.rsgg)m=m.concat(["MIXGG_1","MIXGG_2"]);
+  if(WSP.mk.rso25)m=m.concat(["MIX_1_OV_2.5","MIX_2_OV_2.5"]);
+  if(WSP.mk.weh)m=m.concat(["WINHALF_H_Y","WINHALF_A_Y"]);
+  /* Bet9ja's own lines. bookAllows keeps them out of a SportyBet slip, and the
+     filter below is what stops the wizard building one it cannot book. */
+  if(WSP.mk.dro15)m.push("MIX_X_OV_1.5");
+  if(WSP.mk.rso15)m=m.concat(["MIX_1_OV_1.5","MIX_2_OV_1.5"]);
+  return m.filter(function(c){ return bookAllows(c,curBook()); });}
 
 /* WHICH CHIP IS LIT. One line, and kept as a function rather than reading
    WSP.legodd in both places: the chip row and the preview cache key both ask
@@ -15968,19 +15988,19 @@ function renderShared(){
        BUILD.mk - because none of them has a graded result yet. */
     {k:"dro25", label:"Draw or o2.5", tier:1, sub:"X or over 2.5", icon:'<path d="M4 12h16"/><path d="M12 5v14"/>'},
     {k:"drgg", label:"Draw or GG", tier:1, sub:"X or both score", icon:'<path d="M4 12h16"/><circle cx="7" cy="7" r="2"/><circle cx="17" cy="17" r="2"/>'},
-    {k:"rsgg", label:"Result or GG", tier:1, sub:"1 or 2, or both score", icon:'<path d="M5 19L12 5l7 14"/><path d="M8 15h8"/>'},
+    {k:"rsgg", label:"Result or GG", tier:0, sub:"1 or 2, or both score", icon:'<path d="M5 19L12 5l7 14"/><path d="M8 15h8"/>'},
     {k:"rso25", label:"Result or o2.5", tier:1, sub:"1 or 2, or over 2.5", icon:'<path d="M5 19L12 5l7 14"/><circle cx="12" cy="17" r="1.6"/>'},
     /* THE ONE MARKET THAT PICKS YOUR BOOKMAKER FOR YOU. Bet9ja sells this
        family at 1.5; SportyBet's card starts at 2.5. The chip says so rather
        than failing quietly at the booking step. */
-    {k:"dro15", label:"Draw or o1.5", tier:1, sub:"X or over 1.5", only:"bet9ja",
+    {k:"dro15", label:"Draw or o1.5", tier:0, sub:"X or over 1.5", only:"bet9ja",
      icon:'<path d="M4 12h16"/><path d="M9 8l3-3 3 3"/>'},
     /* WIN EITHER HALF. Graded on 945 held-out matches before it was offered:
        60.0% against 58.9% predicted, the closest of any market here bar the
        match result itself. Both books sell it per side. */
-    {k:"rso15", label:"Result or o1.5", tier:1, sub:"1 or 2, or over 1.5", only:"bet9ja",
+    {k:"rso15", label:"Result or o1.5", tier:0, sub:"1 or 2, or over 1.5", only:"bet9ja",
      icon:'<path d="M5 19L12 5l7 14"/><path d="M9 9l3-3 3 3"/>'},
-    {k:"weh", label:"Win a half", tier:1, sub:"Either half", icon:'<path d="M12 4v16"/><path d="M5 8h4"/><path d="M15 16h4"/>'},
+    {k:"weh", label:"Win a half", tier:2, sub:"Either half", icon:'<path d="M12 4v16"/><path d="M5 8h4"/><path d="M15 16h4"/>'},
     /* WIZARD ONLY. The Slider cannot build a draw - "X" is in neither
        allowedMarkets nor its mkOn map - so drawing this chip in the Slider
        would be a control that turns on and does nothing, which is exactly the
@@ -16015,8 +16035,11 @@ function renderShared(){
         subLabel=m.subMax;
       }
       var unlockClass=(window._prevTier!==undefined && p.tier > window._prevTier && p.tier >= m.tier && window._prevTier < m.tier) ? " unlocking" : "";
+      /* Not `disabled` when the lock is the bookmaker's: a disabled button
+         cannot be tapped and this one has something to say. */
       return "<button class='mkt-chip"+(enabled?" on":"")+(locked?" locked":"")+unlockClass+
-        (m.warn?" is-draw":"")+"' data-m='"+m.k+"' "+(locked?"disabled":"")+" type='button'>"+
+        (wrongBook?" wrong-book":"")+(m.warn?" is-draw":"")+"' data-m='"+m.k+"'"+
+        (m.only?" data-only='"+m.only+"'":"")+" "+((locked&&!wrongBook)?"disabled":"")+" type='button'>"+
         "<span class='mkt-icon' aria-hidden='true'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>"+m.icon+"</svg></span>"+
         "<span>"+m.label+"</span>"+
         (m.only
@@ -16030,6 +16053,23 @@ function renderShared(){
     mkw.innerHTML=html;
     mkw.querySelectorAll("[data-m]").forEach(function(c){
       c.addEventListener("click",function(){
+        /* A CHIP LOCKED BY THE BOOKMAKER IS A QUESTION, NOT A WALL. Bet9ja
+           sells the 1.5 rung and SportyBet does not, so on a SportyBet slip
+           these chips were dead and tapping one did nothing at all - reported
+           as "greyed out and doesn't work", which is exactly what it was. It
+           offers the switch instead: one tap moves the whole builder to the
+           book that sells it, which is the only thing that could have made the
+           chip work anyway.
+           A TIER lock still just refuses - that one is answered by the risk
+           slider sitting right there. */
+        var only=c.dataset.only;
+        if(only&&only!==curBook().key){
+          var want=BOOKS[only];
+          try{ window.swToast&&window.swToast("Switched to "+want.label+
+            " - only they sell this bet","","bookswap"); }catch(e){}
+          setBook(only);
+          return;
+        }
         if (c.classList.contains("locked")) return; // respect tier lock
         var k=c.dataset.m;
         /* "DON'T TURN OFF THE LAST MARKET" HAS TO COUNT THE SET THAT IS

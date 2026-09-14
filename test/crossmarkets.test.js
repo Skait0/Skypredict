@@ -413,3 +413,44 @@ test("every job can be left, and the panel can be emptied", () => {
   assert.match(reset, /BYO\.legs=null/);
   assert.match(reset, /b\.disabled=true/, "the three jobs must go back to sleep");
 });
+
+test("every market chip reaches a builder that knows the market", () => {
+  /* Reported as "the new options don't work - no games to conjure". The
+     Slider knew them through allowedMarkets and the wizard did not, so a chip
+     the wizard drew was a control that turned on and did nothing. A chip must
+     be answered by BOTH builders or it is a lie. */
+  const cfg = src.slice(src.indexOf("var MKT_CFG"), src.indexOf("var html=MKT_CFG.filter"));
+  const keys = [...cfg.matchAll(/\{k:"([a-z0-9]+)"/g)].map((m) => m[1]);
+  assert.ok(keys.length >= 10, "only found " + keys.length + " chips");
+  keys.forEach((k) => {
+    assert.ok(src.includes("WSP.mk." + k), "the wizard ignores the " + k + " chip");
+    if (k === "draw") return;                 /* wizard-only, and deliberately */
+    assert.ok(src.includes("BUILD.mk." + k), "the slider ignores the " + k + " chip");
+  });
+});
+
+test("a chip the other bookmaker owns offers the switch instead of nothing", () => {
+  /* Bet9ja sells the 1.5 rung; on a SportyBet slip those chips were dead and
+     tapping one did nothing at all. */
+  const click = src.slice(src.indexOf("c.addEventListener(\"click\",function(){"), src.indexOf("// respect tier lock"));
+  assert.match(click, /only!==curBook\(\)\.key/);
+  assert.match(click, /setBook\(only\)/, "the tap must move the builder to that book");
+  /* And it must still be tappable: a disabled button cannot say anything. */
+  assert.match(src, /\(\(locked&&!wrongBook\)\?"disabled":""\)/);
+});
+
+test("the combinations sit at the tier their record earned", () => {
+  /* All at tier 1 meant a reader on the default risk could switch a chip on
+     and get nothing: the chip was allowed and the market was not. Run the
+     function rather than read it - that is the only way to know what a tier
+     actually returns. */
+  const allowed = new Function(grab("allowedMarkets") + String.fromCharCode(10) +
+    "return allowedMarkets;")();
+  const safe = allowed(0);
+  ["MIX_1_OV_1.5", "MIX_2_OV_1.5", "MIX_X_OV_1.5", "MIXGG_1", "MIXGG_2"].forEach((c) =>
+    assert.ok(safe.includes(c), c + " lands more often than Over 1.5 and should be tier 0"));
+  /* And the ones that do not: 60% is not a safe market. */
+  assert.ok(!safe.includes("WINHALF_H_Y"));
+  assert.ok(!safe.includes("MIXGG_X"), "draw or both score lands 64%");
+  assert.ok(allowed(2).includes("WINHALF_H_Y"));
+});
