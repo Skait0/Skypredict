@@ -450,9 +450,13 @@ test("the combinations sit at the tier their record earned", () => {
   ["MIX_1_OV_1.5", "MIX_2_OV_1.5", "MIX_X_OV_1.5", "MIXGG_1", "MIXGG_2"].forEach((c) =>
     assert.ok(safe.includes(c), c + " lands more often than Over 1.5 and should be tier 0"));
   /* And the ones that do not: 60% is not a safe market. */
-  assert.ok(!safe.includes("WINHALF_H_Y"));
+  assert.ok(!safe.includes("WINHALF_H_Y"), "60% on average is not a tier 0 market");
   assert.ok(!safe.includes("MIXGG_X"), "draw or both score lands 64%");
-  assert.ok(allowed(2).includes("WINHALF_H_Y"));
+  /* But it is a tier 1 market, not tier 2: on a mismatch it reads 78-80%, and
+     a tier gate fires before any probability is read - so gating it by average
+     hid the very legs it is good at. The floor filters the rest. */
+  assert.ok(allowed(1).includes("WINHALF_H_Y"));
+  assert.ok(allowed(1).includes("WINHALF_A_Y"), "both sides, or the away favourite is lost");
 });
 
 test("a target that cannot be hit is explained, in both directions", () => {

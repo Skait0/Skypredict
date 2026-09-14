@@ -10820,7 +10820,17 @@ function allowedMarkets(t){
   if(t>=1) m=m.concat(["MIX_X_OV_2.5",         /* 74% */
                        "MIX_1_OV_2.5","MIX_2_OV_2.5",  /* 72% */
                        "MIXGG_X"]);            /* 64% */
-  if(t>=2) m=m.concat(["WINHALF_H_Y","WINHALF_A_Y"]);  /* 60% */
+  /* WIN A HALF SITS AT TIER 1, not 2. It was put a rung above the rest on its
+     average - 60.0% across 945 graded matches - and an average across every
+     fixture is the wrong number to gate a market with. On a mismatch it is an
+     80% call: Bayern at home to Union Berlin reads 80% and Man City against
+     Norwich 78%, both above the floor Safe asks for. A tier gate fires before
+     any probability is read, so those legs were never offered while 63% ones
+     were being taken at Risky.
+     The confidence floor is the right filter and it already exists: at Safe
+     only a leg clearing 75% gets in, at Balanced 72%, and a 53% Madrid derby
+     falls out on its own merits rather than because of the market it is in. */
+  if(t>=1) m=m.concat(["WINHALF_H_Y","WINHALF_A_Y"]);
   return m;
 }
 /* IS THAT PRICE THEIRS OR OURS?
@@ -16142,7 +16152,7 @@ function renderShared(){
        match result itself. Both books sell it per side. */
     {k:"rso15", label:"Result or o1.5", tier:0, sub:"1 or 2, or over 1.5", only:"bet9ja",
      icon:'<path d="M5 19L12 5l7 14"/><path d="M9 9l3-3 3 3"/>'},
-    {k:"weh", label:"Win a half", tier:2, sub:"Either half", icon:'<path d="M12 4v16"/><path d="M5 8h4"/><path d="M15 16h4"/>'},
+    {k:"weh", label:"Win a half", tier:1, sub:"Either half", icon:'<path d="M12 4v16"/><path d="M5 8h4"/><path d="M15 16h4"/>'},
     /* WIZARD ONLY. The Slider cannot build a draw - "X" is in neither
        allowedMarkets nor its mkOn map - so drawing this chip in the Slider
        would be a control that turns on and does nothing, which is exactly the
