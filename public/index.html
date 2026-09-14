@@ -10590,6 +10590,19 @@ function bookTakes(c,B){
      conclusion in the first place. Booking asks the event endpoint, which sees
      everything, so the id is the honest answer here. */
   if(!B.full) return true;
+  /* A MARKET THE SWEEP NEVER FETCHES IS ABSENT FROM THIS CACHE ON EVERY
+     FIXTURE, so judging it against the cache refuses it everywhere. Reported
+     on Inter v Udinese: "when i pick any option that is not Inter to win, it
+     says sportybet cant pick that game even when the markets are available on
+     the sportybet website" - and measured, that fixture carries 28 priced keys
+     while Win a half, Result or GG and the rest of the 14 Sep markets carry
+     none, because the sweep asks for 24 markets and these are not among them.
+     Same mistake, third place: the slider had it (fixed by fetchedMarket), the
+     API's _unbookable had it, and this - the count on the book picker, the note
+     under the slip and the pre-flight in the sheet - still had it. The id is
+     the honest answer for these: the booking route reads the event itself,
+     where the market either exists or is refused by name. */
+  if(!fetchedMarket(c&&c.code)) return true;
   var f=(c&&c.f)||fixtureById(c&&c.id);
   var o=f&&f[B.odds];
   if(!o||!Object.keys(o).length) return true;

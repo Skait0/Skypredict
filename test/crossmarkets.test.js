@@ -564,3 +564,37 @@ test("a minted code is read back before anything quotes its odds", () => {
      the shapes disagree, not that the code is empty. */
   assert.match(src, /return kept\.length\?kept:null;/);
 });
+
+test("a market the sweep never fetches is not refused for having no price", () => {
+  /* Reported on Inter v Udinese: "when i pick any option that is not Inter to
+     win, it says sportybet cant pick that game even when the markets are
+     available on the sportybet website". Measured on the live board: that
+     fixture carries 28 priced keys, and Win a half, Result or GG and the rest
+     of the 14 Sep markets carry none - the sweep asks for 24 markets and these
+     are not among them. bookTakes read "no price" as "not on this book".
+     Third time for this exact mistake: the slider had it, the API's
+     _unbookable had it, and the count on the picker had it. */
+  const api = new Function(
+    "const SAFE_UNPRICED={'1':1,'2':1,'X':1,'1X':1,'X2':1,'12':1};" +
+    "function fixtureById(){return null;}" +
+    "function curBook(){return {key:'sporty',full:true,odds:'sportyOdds'};}" +
+    "function bookIdOf(c){return (c&&c.f&&c.f.eventId)||null;}" +
+    grab("fetchedMarket") + grab("bookTakes") + "\nreturn {bookTakes};")();
+  const B = { key: "sporty", full: true, odds: "sportyOdds" };
+  /* The real shape: a fixture SportyBet lists, priced on the swept markets. */
+  const f = { eventId: "sr:match:71945252",
+              sportyOdds: { "1": 1.25, "1X": 1.08, "OVER_1.5": 1.18, "GG": 1.75 } };
+  assert.equal(api.bookTakes({ f, code: "1" }, B), true);
+  assert.equal(api.bookTakes({ f, code: "OVER_1.5" }, B), true);
+  /* These are the ones that were being refused. */
+  for (const code of ["WINHALF_H_Y", "WINHALF_A_Y", "MIXGG_1", "MIXGG_X",
+                      "MIX_1_OV_2.5", "MIX_X_OV_2.5"]) {
+    assert.equal(api.bookTakes({ f, code }, B), true, code + " is still refused");
+  }
+  /* And a SWEPT market with no price is still refused - that check is the
+     reason this function exists. */
+  assert.equal(api.bookTakes({ f, code: "OVER_3.5" }, B), false,
+    "a market the sweep does fetch must still be judged by its price");
+  /* No game at this book is still no. */
+  assert.equal(api.bookTakes({ f: { sportyOdds: {} }, code: "WINHALF_H_Y" }, B), false);
+});
