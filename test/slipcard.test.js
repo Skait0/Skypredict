@@ -182,7 +182,7 @@ test("a shared slip points at its own card, not the site's", () => {
      /api, and an Allow exception only helps once the crawler re-reads that
      file - X caches it for about a day. A path outside /api needs no
      exception. vercel.json rewrites it to the same function. */
-  assert.match(html, /og:image" content="[^"]*\/slipcard\.png\?g=2&amp;o=1\.80"/,
+  assert.match(html, /og:image" content="[^"]*\/slipcard\.png\?g=2&amp;o=1\.80&amp;v=/,
     "og:image must carry this slip's own figures");
   assert.doesNotMatch(html, /og:image" content="[^"]*\/api\//,
     "a crawler obeying robots.txt cannot fetch an image under /api");
@@ -191,4 +191,25 @@ test("a shared slip points at its own card, not the site's", () => {
   assert.match(html, /twitter:card" content="summary_large_image"/);
   assert.match(html, /og:image:width" content="1568"/,
     "declaring the size stops a crawler guessing wrong while it fetches");
+});
+
+test("the card url carries a version, because it is served immutable", () => {
+  /* The art is composited per request but the BASE is baked, so a redesign
+     changes what a given URL should return while the URL stays the same - and
+     the response says `immutable, max-age=31536000`. Measured after the logo
+     rebake: ?g=21&o=34.32 came back 134400 bytes from a Cloudflare HIT while
+     the freshly built card was 135189. A year of that. The static og-card.png
+     has carried a ?v= since September; this one had nothing. */
+  const SL = require("../lib/sliplink.js");
+  const legs = [{ home: "Thun", away: "Lausanne", date: "2026-09-02",
+                  code: "OVER_1.5", od: 1.25, p: 0.91 }];
+  const html = SL.renderPage(legs, null, "/s/ABC123", { code: "ABC123" });
+  const img = (html.match(/og:image" content="([^"]*)"/) || [null, ""])[1];
+  assert.match(img, /&amp;v=[0-9a-f]{8}$/, "no version on the card url: " + img);
+  /* Derived from the baked base, so a rebake moves it and nothing else does. */
+  const crypto = require("crypto"), fs = require("fs"), path = require("path");
+  const want = crypto.createHash("sha1")
+    .update(fs.readFileSync(path.join(__dirname, "..", "assets", "slip-base.z")))
+    .digest("hex").slice(0, 8);
+  assert.ok(img.endsWith("v=" + want), "the version is not the baked card's own hash");
 });
