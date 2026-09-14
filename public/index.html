@@ -1153,8 +1153,15 @@ html.mode-live .btabs{transform:none!important}
      that lies about where you are costs more.
      The lift is on the icon rather than the button, so all four labels keep one
      baseline - the old raised button pushed its own label up with it. */
-  .btab .bt-ic{transition:background .2s ease,color .2s ease,width .2s ease,
-    height .2s ease,margin .2s ease,box-shadow .2s ease}
+  /* THE SLOT NEVER CHANGES SIZE, ONLY WHAT IS PAINTED IN IT.
+     The marker used to grow the icon box from 22px to 44px, which changed the
+     item's height, which changed the bar's height, which moved every label -
+     reported as the bar jumping when you switch pages. The box is 44px on all
+     four tabs now and always was, as far as layout is concerned: the inactive
+     ones simply paint nothing. Only colour and shadow animate, and neither
+     reflows anything. */
+  .btab .bt-ic{width:44px;height:44px;margin-top:-6px;border-radius:50%;
+    transition:background .2s ease,color .2s ease,box-shadow .2s ease}
   /* IT DOES NOT LEVITATE ANY MORE, AND THAT IS THE FIX.
      A disc lifted out of the bar has to break the bar's top edge to do it, so
      on any screen where that edge lands mid-circle it reads as cut off - and
@@ -1166,7 +1173,7 @@ html.mode-live .btabs{transform:none!important}
      It keeps its body - a top-lit gradient, a gold hairline where that light
      would catch, a soft inner shade at the bottom and a coloured glow beneath -
      so it still reads as a raised object, just one that stays in its box. */
-  .btab.on .bt-ic{width:44px;height:44px;margin-top:-6px;border-radius:50%;
+  .btab.on .bt-ic{
     background:
       radial-gradient(120% 100% at 50% 0%,rgba(255,255,255,.34) 0%,rgba(255,255,255,0) 58%),
       linear-gradient(180deg,#f4555f 0%,var(--red-fill) 52%,#c92c38 100%);
@@ -10934,6 +10941,12 @@ function bookAllows(code,B){
 }
 var SAFE_UNPRICED={"1":1,"2":1,"X":1,"1X":1,"X2":1,"12":1};
 function safeUnpriced(code){ return !!SAFE_UNPRICED[code]; }
+/* How much of an estimated price we are willing to believe when it is
+   competing against a published one. 0.85 was picked to be felt rather than
+   argued: at the risky end it costs an off-sweep leg about a sixth of its
+   odds advantage, which is enough that a real quote wins a close call and
+   not so much that a genuinely better market can never get in. */
+var ESTIMATE_SHRINK=0.85;
 /* WHICH MARKETS THE ODDS CACHE CAN EVEN CONTAIN.
  *
  * sportyOdds holds what the sweep fetches, and the sweep fetches the markets
@@ -11208,6 +11221,18 @@ function buildPicks(){
       var v=mProb(f,c);
       if(v==null||isNaN(v)||v<p.minConf) return;
       var score=(1-f0)*v + f0*(oddOf(v)/12);
+      /* A QUOTE OUTRANKS AN ESTIMATE ON A CLOSE CALL.
+         The old rule was blunter - "when real odds exist for any candidate,
+         only those are considered" - and it existed because a market picked off
+         an estimate might not be listed at all, which takes the whole ticket
+         down. That reason does not apply to a market we map on both books and
+         book every day; what remains is that the number itself is ours rather
+         than theirs, and ours reads high.
+         So an off-sweep leg competes, and pays for the privilege: its odds are
+         shrunk before scoring, which leaves it winning only where it is
+         clearly the better bet and never on a tie. A real 1.02 leg keeps its
+         place in the mix exactly as it always has. */
+      if(!fetchedMarket(c)) score-=f0*(oddOf(v)/12)*(1-ESTIMATE_SHRINK);
       /* Goals lean: in a high-scoring game, nudge the over markets up so they can
          beat the safe double-chance picks. Driven by the model's own Over-2.5
          probability, so it favours high-scoring leagues (Eliteserien, Eredivisie,

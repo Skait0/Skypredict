@@ -158,8 +158,13 @@ test("the red circle marks the page you are on", () => {
   /* It sat on Build and never moved, which made it a call to action and left
      the current page marked by red text alone. A bar that does not say where
      you are is worth less than the emphasis it was buying. */
-  assert.match(index, /\.btab\.on \.bt-ic\{[^}]*border-radius:50%/,
-    "the active tab no longer takes the circle");
+  /* The slot is 44px on every tab so nothing reflows when the marker moves -
+     the bar jumping between pages was the icon box growing. Only the paint
+     changes. */
+  assert.match(index, /\.btab \.bt-ic\{width:44px;height:44px;margin-top:-6px;border-radius:50%/,
+    "the icon slot must be the same size on every tab");
+  assert.match(index, /\.btab\.on \.bt-ic\{[\s\S]{0,200}background:/,
+    "the active tab no longer paints the disc");
   assert.doesNotMatch(index, /class="btab mid"/, "the circle is pinned to one tab again");
   /* A red pulse on the red disc is invisible, and syncLiveDots already stops
      nudging you toward the page you are standing on. */
