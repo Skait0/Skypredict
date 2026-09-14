@@ -3235,6 +3235,9 @@ html.mode-live #live{display:block}
 .b9m .b9r{color:var(--b9-red)}
 .b9m .b9g{color:var(--b9-green)}
 .bld-note{font-size:12px;color:var(--soft);margin-top:10px;text-align:center}
+/* In the sheet this line sits outside the scrolling body, level with the book
+   picker, so it needs the sheet's own gutter rather than the panel's. */
+#myNote{padding:0 16px;margin-top:8px}
 #bookResult{margin-top:14px}
 /* Compact centred modal for the booking code */
 /* ---- converting a borrowed code to the other book ---- */
@@ -5405,9 +5408,18 @@ button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
      empty beneath the payout chips. Left-aligned because every label in this
      panel starts at the same edge and the button is the last thing in that
      sequence, not a floating object. */
-  .bld-panel.wizard-panel>button.wsp-go{grid-area:5/1/6/-1;justify-self:start;
+  /* CENTRED ACROSS BOTH COLUMNS, not parked on the left edge. Left-aligned it
+     sat under the payout chips with the whole right half of the panel empty
+     beside it, and the panel's own centre is where the eye goes after the last
+     chip. Reported as wanting it "more to the right, centralised". */
+  .bld-panel.wizard-panel>button.wsp-go{grid-area:5/1/6/-1;justify-self:center;
     min-width:250px;margin:18px 0 2px}
   .bld-panel.wizard-panel>.wsp-lbl{margin-top:0}
+  /* ...except this one, which follows a row of chips rather than starting a
+     column. The rule above zeroes every label's top margin so the two columns
+     start level, and that left "Auto" sitting hard against the style chips
+     above it - the only label in the panel with something directly over it. */
+  .bld-panel.wizard-panel>.wsp-auto-lbl{margin-top:20px}
 }
 .wizard-panel .wsp-lbl{margin:13px 0 7px}
 .wizard-panel .wsp-chips{gap:7px}
@@ -6743,6 +6755,11 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <!-- UNIFIED OUTPUT -->
     <div class="bld-stats stage-in stage-in-3" id="bldStats" data-parallax="0.5"></div>
     <div id="slip" data-parallax="0.3"></div>
+    <!-- WHY THE SLIP IS SHORTER THAN THE DIAL ALLOWS. The empty case has had a
+         sentence for a while; a slip of two when the dial allows eleven had
+         nothing, and the reason is the same one - the markets that are on do
+         not reach the confidence floor on today's card. -->
+    <p class="bld-note" id="bldShort" hidden></p>
     <div class="bookpick" data-bookpick="build" role="group" aria-label="Bookmaker" hidden></div>
     <div class="bld-foot stage-in stage-in-4" id="bldFoot" data-parallax="0.2">
       <!-- THE WORD, NOT JUST THE GLYPH. Crossing arrows mean shuffle to
@@ -6974,6 +6991,12 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   </div>
   <div class="sheet-body" id="mySheetBody"></div>
   <div class="bookpick" data-bookpick="my" role="group" aria-label="Bookmaker"></div>
+  <!-- WHY GET CODE IS NOT GOING TO WORK, SAID BEFORE IT IS PRESSED. The panel
+       has had this line since the beginning; this sheet never did, and the
+       sheet is where the wizard's slip lives - so a slip carrying a bet only
+       one book sells sat here with a live button and no explanation, and the
+       only way to find out was to press it. -->
+  <div class="bld-note" id="myNote" aria-live="polite"></div>
   <div class="mysheet-foot" id="mySheetFoot" hidden>
     <div class="bld-odds" aria-live="polite"><i>Total odds</i><b id="myTotOdds">-</b></div>
     <!-- Only for a conjured slip: reshuffling a slip somebody picked by hand
@@ -10589,6 +10612,18 @@ function paintBookPickers(){
     var sub=$("mySheetSub");
     if(sub) sub.innerHTML="Predictions you picked - book them to "+curBook().mark+".";
   }catch(e){}
+  paintMyNote();
+}
+/* Repainted with the picker, not only with the sheet: switching book is
+   exactly when this sentence stops or starts being true. */
+function paintMyNote(){
+  var n=$("myNote"); if(!n) return;
+  try{
+    var picks=pickerPicks();
+    var hint=picks.length?bookOnlyHint(picks):"";
+    n.textContent=hint;
+    n.hidden=!hint;
+  }catch(e){ n.textContent=""; n.hidden=true; }
 }
 document.addEventListener("click",function(e){
   var b=e.target&&e.target.closest&&e.target.closest("[data-book]");
@@ -10960,6 +10995,32 @@ var BOOK_ONLY={"MIX_X_OV_1.5":"bet9ja",
 function bookAllows(code,B){
   var only=BOOK_ONLY[code];
   return !only || only===((B&&B.key)||(curBook()&&curBook().key));
+}
+/* THE FOURTH PLACE THE QUESTION HAS TO BE ASKED: out loud, to the reader.
+   The three above are all refusals - the slider will not pick it, the chip
+   will not turn on, booking will not send it - and a refusal the reader cannot
+   see reads as the button being broken. Reported as: edit a game and "it
+   doesnt show me get code until i choose a bookie", with nothing on screen
+   saying which bookie or why.
+   Names the market in the reader's own words and the book that sells it, and
+   the picker is on screen directly above wherever this is printed. */
+function bookOnlyHint(picks,B){
+  B=B||curBook();
+  var want=null, names=[];
+  (picks||[]).forEach(function(c){
+    if(!c) return;
+    var only=BOOK_ONLY[c.code];
+    if(!only||only===B.key) return;
+    want=only;
+    var f=c.f||fixtureById(c.id);
+    var l=f?mLabel(f,c.code).replace(/<[^>]+>/g,""):c.code;
+    if(names.indexOf(l)<0) names.push(l);
+  });
+  if(!want||!BOOKS[want]) return "";
+  var lbl=BOOKS[want].label;
+  return "Only "+lbl+" sells "+
+    (names.length>2?names.length+" of these bets":names.join(" and "))+
+    ", so tap "+lbl+" above to get a code for this slip.";
 }
 var SAFE_UNPRICED={"1":1,"2":1,"X":1,"1X":1,"X2":1,"12":1};
 function safeUnpriced(code){ return !!SAFE_UNPRICED[code]; }
@@ -16185,6 +16246,46 @@ var MKT_BY_CHIP={wd:["1X","X2"],any:["12"],out:["1","2"],
  *   or it is unlocked and the confidence floor is above anything it reaches
  *   today - Win a half tops out near 64% on a normal card and Safe asks 75%.
  * Both are answered by moving one control, so the sentence names which. */
+/* THE CHIP TABLE, HOISTED OUT OF renderShared - AND THAT WAS A BUG, NOT A
+   TIDY-UP. `var MKT_CFG` was declared inside renderShared, so emptyWhy below
+   referenced a name that did not exist at its own scope: every call threw
+   ReferenceError into its own try/catch and returned "". The whole function
+   was dead from the day it was written, and every reader got the generic
+   "No games match. Adjust risk or markets." it exists to replace.
+   Declared here and filled by renderShared, which always runs first. */
+var MKT_CFG=[];
+/* Which market on the card falls short of the floor, and by how much - the one
+   fact behind both an empty slip and a short one. */
+function floorGap(){
+  var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier);
+  var on=MKT_CFG.filter(function(m){
+    return !(m.wizardOnly||BUILD.mk[m.k]===false); });
+  if(!on.length) return null;
+  var fx=scopeFixtures()||[], best=0, bestName="", over=0;
+  var codes=[];
+  on.forEach(function(m){
+    allowed.forEach(function(c){
+      if((MKT_BY_CHIP[m.k]||[]).indexOf(c)>=0) codes.push({c:c,label:m.label});
+    });
+  });
+  /* GAMES, not game-market pairs. A fixture where both Over 2.5 and Both to
+     score clear is still one leg - the builder takes the best market per
+     match - so counting pairs would report a pool twice the size of the slip
+     it can build and the sentence would never fire. */
+  fx.forEach(function(f){
+    var hit=false;
+    codes.forEach(function(x){
+      var v=mProb(f,x.c);
+      if(v==null||isNaN(v)) return;
+      if(v>best){ best=v; bestName=x.label; }
+      if(v>=p.minConf) hit=true;
+    });
+    if(hit) over++;
+  });
+  if(!best) return null;
+  return {best:best, name:bestName, need:p.minConf, over:over,
+          word:riskWord(BUILD.risk), max:p.maxGames};
+}
 function emptyWhy(){
   try{
     var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier);
@@ -16236,7 +16337,9 @@ function renderBuilder(){
 }
 function renderShared(){
   var p = BUILD.risk===null ? {tier:1, minConf:0.65, maxGames:18} : riskParams(BUILD.risk);
-  var MKT_CFG=[
+  /* Assigned, not declared: the `var` that used to be here made this array
+     local and left emptyWhy reading a name from a scope that had none. */
+  MKT_CFG=[
     {k:"wd", label:"Win or draw", tier:0, sub:"1X, X2", icon:'<path d="M20 6L10 17L6 13"/>'},
     {k:"any", label:"Any winner", tier:1, sub:"12", icon:'<path d="M2 12h20M6 8l-4 4 4 4M18 8l4 4-4 4"/>'},
     {k:"out", label:"Outright win", tier:1, sub:"1, 2", icon:'<path d="M5 12H19M19 12L12 5M19 12L12 19"/>'},
@@ -17021,6 +17124,27 @@ function renderBuilderOutput(){
     $("slip").querySelectorAll("[data-rm]").forEach(function(b){
       b.addEventListener("click",function(){if(BUILD.mode==="wizard"){WSP.removed[b.dataset.rm]=1;}else{BUILD.removed[b.dataset.rm]=1;}renderBuilder();});});
   }
+  /* A SHORT SLIP IS NOT A BROKEN ONE, AND IT HAS TO SAY SO.
+     Reported: with Over 2.5 and Both to score on, the Slider "doesn't pick
+     more than 2 odds while the wizard hits it". Both are working as built -
+     the Slider picks on confidence and will not go below the floor the dial
+     sets, while the wizard is aiming at a payout and takes what reaches it.
+     Measured on a 404-game board with those two markets alone: 0 games clear
+     Safe's 75%, 4 clear Balanced's 71%, 80 clear Risky's 60% - the best
+     Over-2.5 read on the whole card was 73.7%. Nothing was failing; nothing
+     said so either. */
+  var sh=$("bldShort");
+  if(sh){
+    var g=(BUILD.mode==="slider"&&picks.length)?floorGap():null;
+    if(g&&picks.length<g.max&&g.over<=picks.length){
+      sh.textContent=picks.length+" of the "+g.max+" games "+g.word+
+        " allows: only "+(g.over===1?"one game on today's card clears "
+                                    :g.over+" games on today's card clear ")+
+        Math.round(g.need*100)+"% on the markets you have on. "+
+        "Slide right for a lower bar, or switch on more markets.";
+      sh.hidden=false;
+    }else{ sh.textContent=""; sh.hidden=true; }
+  }
   // Sync to MYSLIP (slider once touched; wizard always reflects its preview)
   /* Never sync the ghost.
      Before Conjure is pressed the wizard renders a preview of what it would
@@ -17078,7 +17202,11 @@ function renderBuilderOutput(){
   }) : []); }catch(e){}
 
   var note=$("bldNote");
+  var onlyHint=bookOnlyHint(picks);
   if(!picks.length) note.textContent="";
+  /* A market only the other book sells is a different fact from a market
+     neither offers on this fixture, and only one of them can be acted on. */
+  else if(onlyHint) note.textContent=onlyHint;
   else if(!bookable) note.textContent=curBook().label+" does not offer "+
     (lostMk.length?lostMk.join(" or "):"these markets")+" on this slip, so none of it can be booked there.";
   else if(bookable<picks.length) note.textContent=bookable+" of "+picks.length+
