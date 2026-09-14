@@ -14450,7 +14450,14 @@ function swapOptions(f){
   return [
     {code:"1",label:f.home+" to win",p:f.home_p},
     {code:"2",label:f.away+" to win",p:f.away_p},
-    {code:"X",label:"Draw",p:f.draw_p},
+    /* THE DRAW IS NOT ON THIS MENU. Every other option here is a shade of the
+       same bet - a wider result, a lower goal line, the same game read a
+       little more safely. The draw is a different bet: the outcome the model
+       ranks third on most fixtures, and the one place the builders stop and
+       ask before switching it on (see askDrawOn). A dropdown cannot ask, and
+       a one-tap swap onto the least likely result is not a swap the reader
+       meant to make. It stays buildable in the wizard, where the question
+       gets asked. A leg already on X can still be swapped AWAY from here. */
     {code:"1X",label:f.home+" or draw",p:f.dc1x},
     {code:"X2",label:f.away+" or draw",p:f.dcx2},
     {code:"12",label:"Any team to win",p:noDraw},
