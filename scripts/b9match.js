@@ -47,6 +47,11 @@ const HOST = process.env.SW_API || "https://web-production-798c0.up.railway.app"
 /* --sporty measures the same matcher against SportyBet, which is the only
    way to tell a shared improvement from a Bet9ja-shaped one. */
 const SPORTY = process.argv.includes("--sporty");
+/* --betking measures the third book through the same matcher. Their feed is
+   shaped exactly like Bet9ja's - one object keyed by event id, the two sides
+   in a single "Home - Away" string - which is why index.html reshapes both
+   with the same function rather than two that can drift apart. */
+const BETKING = process.argv.includes("--betking");
 /* The exact-name clock relaxation is not an experiment any more - index.html
    applies it on every match. It used to be behind --wide here, which meant
    this script measured a matcher the site had stopped using and reported 97.6%
@@ -99,7 +104,8 @@ const M = new Function(
 /* ------------------------------------------------------------------ data */
 
 async function bookmaker() {
-  const url = HOST + (SPORTY ? "/api/fixtures" : "/api/bet9ja/fixtures");
+  const url = HOST + (SPORTY ? "/api/fixtures"
+    : BETKING ? "/api/betking/fixtures" : "/api/bet9ja/fixtures");
   const r = await fetch(url, { headers: { Accept: "application/json" } });
   const d = await r.json();
   if (!d.success) throw new Error("fixtures: " + (d.error || r.status));
@@ -207,8 +213,25 @@ function closest(f, cand, ignoreClock) {
   const pct = (n) => (100 * n / Math.max(1, fixtures.length)).toFixed(1) + "%";
   console.log("our fixtures    %d upcoming (of %d on the board)",
               fixtures.length, (data.fixtures || []).length);
-  console.log("%s %d", pad((SPORTY ? "sportybet" : "bet9ja") + " events", 15),
-              events.length);
+  const BOOK = SPORTY ? "sportybet" : BETKING ? "betking" : "bet9ja";
+  console.log("%s %d", pad(BOOK + " events", 15), events.length);
+  /* WHERE A MISS ACTUALLY IS. A book that publishes a shorter horizon than our
+     board misses whole DAYS, not individual fixtures, and a headline
+     percentage hides that completely: BetKing on a three-day sweep paired 100%
+     of what it carried and nothing at all from the fourth day on, which on a
+     Saturday board is most of it. Counting per day is what made that visible.
+  */
+  const perDay = {};
+  fixtures.forEach((f) => {
+    const d = f.date || String(f.kickoff || "").slice(0, 10);
+    (perDay[d] = perDay[d] || { n: 0, hit: 0 }).n++;
+  });
+  hits.forEach((h) => {
+    const d = h.f.date || String(h.f.kickoff || "").slice(0, 10);
+    if (perDay[d]) perDay[d].hit++;
+  });
+  console.log("per day         " + Object.keys(perDay).sort()
+    .map((d) => d.slice(5) + " " + perDay[d].hit + "/" + perDay[d].n).join("  "));
   console.log("paired          %d  (%s)", hits.length, pct(hits.length));
   console.log("  exact name    %d", hits.filter((h) => h.exact).length);
   console.log("  fuzzy         %d", hits.filter((h) => !h.exact).length);

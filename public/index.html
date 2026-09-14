@@ -11878,7 +11878,32 @@ function oddOf(p){var q=Math.max(0.06,Math.min(0.97,p));return Math.pow(1/q,0.85
    A pass-through market has no probability at all, so there is nothing to
    estimate from, and 0 is the answer every caller here already treats as
    "not priced" (they all test >1.01 or skip it). */
-function legOdd(f,code,p){
+/* THE PRICE WE SHOW IS THE SELECTED BOOK'S, WHEN WE HOLD IT.
+ *
+ * This read f.sportyOdds whatever book was chosen, so a Bet9ja or BetKing slip
+ * displayed SportyBet's numbers - every leg, every total, the shared payload
+ * and the record. Reported as "the odds are a little off" on a BetKing slip,
+ * and measured on 701 fixtures both books carry, 9,683 comparisons: median
+ * -0.72% per leg, 7.5% of legs more than 5% apart, worst 43%. Per leg that is
+ * noise; a slip total is a product, so 22 legs at the median compounds to about
+ * 8-15% - and the sign is the bad one, since BetKing is mostly SHORTER than
+ * SportyBet, so we were overstating what the punter would be paid.
+ *
+ * The fallback deliberately stays as it was. "Their price, else our estimate"
+ * was the tempting rule and it buys a regression: measured 14 Sep, BetKing's
+ * feed carries no team-goals and no first-half line at all (0%), Bet9ja's
+ * carries neither those nor GG/NG (0%), and team-over-0.5 is a default chip.
+ * So that rule would replace a real published price with a model estimate on a
+ * large share of legs. This way is never worse than before and better wherever
+ * we actually hold the book's own quote - which for BetKing is 97-100% of the
+ * core markets, better than our own SportyBet sweep manages.
+ *
+ * `B` is explicit only where a caller must NOT follow the reader's choice -
+ * see the slip of the day. */
+function legOdd(f,code,p,B){
+  B=B||curBook();
+  var own=f&&f[B.odds]&&f[B.odds][code];
+  if(own&&own>1.01) return own;
   var o=f&&f.sportyOdds&&f.sportyOdds[code];
   if(o&&o>1.01) return o;
   return (p!=null&&isFinite(p))?oddOf(p):0;
@@ -13763,10 +13788,17 @@ const SOTD_TARGET_ODDS=2.0;
    this never quietly becomes a long-odds accumulator. */
 const SOTD_HARD_MAX=2.4;
 const SOTD_MAX_LEGS=8;
+/* THE SLIP OF THE DAY IS PRICED ON SPORTYBET, WHATEVER THE READER PICKED.
+   It is locked for the day (saveSotdLock) and it is the same slip for
+   everyone. Letting legOdd follow the reader's book would compose a different
+   slip per reader against a target of 2.0, and whichever reader loaded the
+   page first would write THEIR book's version into the lock. Same failure as
+   pick-of-the-day being recomputed in the browser: anything that must stay
+   put has to be decided against one fixed input. */
 function sotdUnderCap(cand){
   var pick=[],prod=1;
   for(var i=0;i<cand.length && pick.length<SOTD_MAX_LEGS;i++){
-    var o=legOdd(cand[i].f,cand[i].code,cand[i].p);
+    var o=legOdd(cand[i].f,cand[i].code,cand[i].p,BOOKS.sporty);
     if(!(o>1)) continue;
     var next=prod*o;
     if(next<=SOTD_TARGET_ODDS){ pick.push(cand[i]); prod=next; continue; }
@@ -13880,7 +13912,8 @@ function renderSlipOfDay(){
     if(SOTD.length>=2&&_sdDate) saveSotdLock(_sdDate,SOTD);
   }
   if(SOTD.length<2){host.innerHTML="";return;}
-  var odds=SOTD.reduce(function(t,c){return t*legOdd(c.f,c.code,c.p);},1);
+  /* Priced on SportyBet like the legs it is a total of - see sotdUnderCap. */
+  var odds=SOTD.reduce(function(t,c){return t*legOdd(c.f,c.code,c.p,BOOKS.sporty);},1);
   /* A leg that has kicked off cannot be booked, whatever SportyBet still lists,
      so the button goes by what is actually still open rather than by whether an
      event id exists. */
@@ -15972,6 +16005,18 @@ function wspBuild(){
        odd may not exist for that event at SportyBet, and the booking call then
        fails with "Sporty rejected the slip" (the "no market" error). When real
        odds exist for any candidate, only those are considered. */
+    /* SPORTYBET'S PRICES ON PURPOSE, EVEN FOR ANOTHER BOOK'S SLIP, and this is
+       not the legOdd bug repeated. These three - hasReal, priced, overpriced -
+       ask "does this market exist on this fixture at all", and only SportyBet's
+       feed can answer it: our sweep of the other two carries a handful of
+       markets whatever we ask for, so bookVerdict returns "unknown" for them by
+       design. Reading f[B.odds] here would treat BetKing's missing team-goals
+       line as proof they do not sell it, when their own event card lists it -
+       the builder would simply stop offering a default chip. Markets track each
+       other across books (median 0.72% apart on the 9,683 prices compared on
+       14 Sep), so SportyBet's listing is a sound proxy for all three, and
+       overpriced's 5-point bar was fitted to SportyBet's board mean of -3.5
+       and would mean something different against another distribution. */
     function hasReal(c){var o=c.f&&c.f.sportyOdds&&c.f.sportyOdds[c.code];return !!(o&&o>1.01);}
     /* Only markets SportyBet actually lists for this event.
        It used to fall back to the estimated-odds candidates when none of a

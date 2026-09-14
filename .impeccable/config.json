@@ -8,6 +8,12 @@
         "value": "plus jakarta sans",
         "createdAt": "2026-09-13T17:59:22.321Z",
         "reason": "Site typeface since launch: public/index.html ships Plus Jakarta Sans and test/staticpages.test.js asserts the static pages load the same face, so a different one here would split the site in two."
+      },
+      {
+        "rule": "overused-font",
+        "value": "roboto",
+        "createdAt": "2026-09-14T20:27:51.583Z",
+        "reason": "BetKing's own brand face, used only inside their wordmark (.bkm) to match sports.betking.com; not a typeface choice for our interface, and asked for locally with no webfont link"
       }
     ]
   }
