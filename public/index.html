@@ -12973,7 +12973,27 @@ var SAFER={"1":"1X","2":"X2",
   "OVER_2.5":"OVER_1.5","OVER_3.5":"OVER_2.5",
   "HOME_OVER_1.5":"HOME_OVER_0.5","AWAY_OVER_1.5":"AWAY_OVER_0.5",
   "MIX_X_OV_2.5":"MIX_X_OV_1.5","MIX_1_OV_2.5":"MIX_1_OV_1.5",
-  "MIX_2_OV_2.5":"MIX_2_OV_1.5"};
+  "MIX_2_OV_2.5":"MIX_2_OV_1.5",
+  /* BOTH TEAMS TO SCORE, SOFTENED INTO ANY TWO GOALS. The same game and the
+     same idea - goals - with one condition dropped: over 1.5 does not care who
+     scores them, and on a card where one side is much stronger that is where
+     both-score tickets die. A real change of bet, shown with both numbers like
+     the draw is. */
+  "GG":"OVER_1.5"};
+/* WHERE THE TABLE ALONE CANNOT DECIDE, because the safer version depends on
+   which side the model likes. Same shape as the draw's rule, which has always
+   picked between 1X and X2 rather than hard-coding one. */
+function saferPick(f,from){
+  if(from==="X"||from==="UP1_X"||from==="UP2_X")
+    return (mProb(f,"1X")>=mProb(f,"X2"))?"1X":"X2";
+  /* Two goals from anybody, softened to one goal from whoever is likelier to
+     get it. Fewer goals asked for, and the side chosen on the model rather
+     than on the fixture's home advantage. */
+  if(from==="OVER_1.5")
+    return (mProb(f,"HOME_OVER_0.5")>=mProb(f,"AWAY_OVER_0.5"))
+      ? "HOME_OVER_0.5" : "AWAY_OVER_0.5";
+  return SAFER[from]||null;
+}
 /* How much better it has to get to be worth changing somebody's bet. Eight
    points: below that the two markets are close enough that the swap is churn,
    and churn on a stranger's ticket is the thing not to do. */
@@ -12990,33 +13010,47 @@ var SAFER_STRENGTH={
      under 55% we cannot improve. It is the answer for somebody who does not
      want to weigh two switches and three words - "you decide" - and it is
      still shown in full before it books anything. */
-  auto:{gain:0.05,under:0.55,label:"Auto",note:"We decide: fix what we can, drop what we cannot",
+  /* `steps` is how many rungs down the ladder a leg may travel. One is the
+     neighbouring market - over 2.5 to over 1.5. Two lets a leg keep going
+     while it keeps helping, so over 3.5 can reach over 1.5 and both-score can
+     land on one team's goal. That is what makes the three levels change the
+     BET rather than only how keen we are to touch it. */
+  auto:{gain:0.05,under:0.55,steps:2,label:"Auto",note:"We decide: fix what we can, drop what we cannot",
         swap:true,drop:true},
-  light:{gain:0.14,under:0.50,label:"Light",note:"Only the legs that clearly need it"},
-  normal:{gain:0.08,under:0.60,label:"Normal",note:"Our usual call"},
-  strong:{gain:0.03,under:0.70,label:"Strong",note:"Change anything that helps"}
+  light:{gain:0.14,under:0.50,steps:1,label:"Light",note:"Only the legs that clearly need it"},
+  normal:{gain:0.08,under:0.60,steps:1,label:"Normal",note:"Our usual call"},
+  strong:{gain:0.03,under:0.70,steps:3,label:"Strong",note:"Change anything that helps"}
 };
 function saferDial(){ return SAFER_STRENGTH[BYO.saferHow]||SAFER_STRENGTH.normal; }
 
 function saferSwap(l,B){
   if(!l||!l.prediction) return null;
   var f=fixtureByLeg(l,B); if(!f) return null;      /* no numbers, no opinion */
-  var from=l.prediction, to=SAFER[from];
-  if(from==="X"||from==="UP1_X"||from==="UP2_X")
-    to=(mProb(f,"1X")>=mProb(f,"X2"))?"1X":"X2";
-  if(!to) return null;
-  if(!bookAllows(to,B)) return null;                /* this book must sell it */
-  /* A published price is the proof the market exists on this game, and a swap
-     must not put a leg on a ticket the book will refuse - one bad leg takes the
-     whole slip down. Asked through bookVerdict rather than by reading the cache
-     here, so the editor cannot drift from the builders: "not-priced" is the
-     only refusal, and it is only ever said about a market the sweep fetches. */
-  if(bookVerdict(f,to,B)==="not-priced") return null;
-  var pOld=mProb(f,from), pNew=mProb(f,to);
-  if(pOld==null||pNew==null) return null;
-  if((pNew-pOld)<saferDial().gain) return null;
-  return {leg:l,f:f,from:from,to:to,pOld:pOld,pNew:pNew,
-          oddOld:+l.odds||null, oddNew:(f[B.odds]||{})[to]||null};
+  var from=l.prediction;
+  var pOld=mProb(f,from);
+  if(pOld==null) return null;                       /* nothing to measure from */
+  /* DOWN THE LADDER WHILE IT KEEPS HELPING, as far as the dial allows. A rung
+     the book will not take is stepped OVER rather than stopping the walk:
+     over 3.5 can still reach over 1.5 on a book that does not sell 2.5. The
+     furthest usable rung wins, because that is the safest one. */
+  var cur=from, best=null, steps=saferDial().steps||1;
+  for(var i=0;i<steps;i++){
+    var to=saferPick(f,cur);
+    if(!to||to===from) break;
+    var pNew=mProb(f,to);
+    if(pNew==null) break;
+    /* This book must sell it, and a published price is the proof the market
+       exists on this game - one leg the book refuses takes the whole slip
+       down. Asked through bookVerdict rather than by reading the cache here,
+       so the editor cannot drift from the builders: "not-priced" is the only
+       refusal, and only ever about a market the sweep fetches. */
+    if(bookAllows(to,B)&&bookVerdict(f,to,B)!=="not-priced"&&(pNew-pOld)>=saferDial().gain)
+      best={to:to,pNew:pNew};
+    cur=to;
+  }
+  if(!best) return null;
+  return {leg:l,f:f,from:from,to:best.to,pOld:pOld,pNew:best.pNew,
+          oddOld:+l.odds||null, oddNew:(f[B.odds]||{})[best.to]||null};
 }
 /* THE LEGS A SWAP CANNOT HELP, which is a different question from the legs
    somebody wants gone. A market with no safer sibling on a game the model

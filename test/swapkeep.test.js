@@ -266,3 +266,67 @@ test("a promotion is priced at the bet underneath it, and widens like one", () =
   assert.ok(src.includes('if(from==="X"||from==="UP1_X"||from==="UP2_X")'),
     "the draw promotions no longer follow the draw's own rule");
 });
+
+/* ---------------------------- the three levels change the bet, not just the mood */
+
+/* Reported: "the three levels of editing shouldn't just remove legs, they
+ * should change options". They were right. The table had seven entries, so on
+ * most tickets saferSwap found nothing and the only thing left to offer was
+ * dropping legs - and the levels moved two thresholds, never the destination.
+ * Now `steps` says how far down the ladder a leg may travel, so Strong can
+ * keep going while it keeps helping. Run against the shipped functions. */
+function ladder(fixture) {
+  const decl = (n) => {
+    const i = src.indexOf("var " + n + "=");
+    let d = 0, k = src.indexOf("{", i);
+    for (; k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) break; } }
+    return src.slice(i, k + 1) + ";";
+  };
+  const api = new Function("BYO", "B", "f",
+    decl("SAFER") + decl("SAFER_STRENGTH") +
+    grab("saferPick") + grab("saferDial") + grab("mProb") + grab("saferSwap") +
+    "function fixtureByLeg(){return f;}function bookAllows(){return true;}" +
+    "function bookVerdict(){return 'unknown';}" +
+    "return function(code,how){BYO.saferHow=how;return saferSwap({prediction:code},B);};");
+  return api({}, { key: "sporty", odds: "sportyOdds" }, fixture);
+}
+/* A lopsided game: strong home side, goals likely. */
+const LOPSIDED = { home_p: .62, draw_p: .22, away_p: .16, dc1x: .84, dcx2: .38, dc12: .78,
+  o15: .80, o25: .55, o35: .30, btts: .52, h_o05: .88, h_o15: .62, a_o05: .55, a_o15: .24 };
+
+test("Strong walks further down the ladder than Light", () => {
+  const run = ladder(LOPSIDED);
+  assert.equal(run("OVER_3.5", "light").to, "OVER_2.5", "one rung at Light");
+  assert.equal(run("OVER_3.5", "normal").to, "OVER_2.5", "one rung at Normal");
+  const strong = run("OVER_3.5", "strong");
+  assert.notEqual(strong.to, "OVER_2.5", "Strong must go past the neighbour");
+  assert.ok(strong.pNew > run("OVER_3.5", "light").pNew,
+    "and the whole point is that it lands somewhere likelier");
+});
+
+test("both teams to score softens into any two goals", () => {
+  /* The same game and the same idea, with one condition dropped: over 1.5 does
+     not care who scores them, which is where both-score tickets die on a
+     lopsided card. */
+  assert.equal(ladder(LOPSIDED)("GG", "light").to, "OVER_1.5");
+});
+
+test("a goals line softens to whichever side the model likes, not the home one", () => {
+  const home = ladder(LOPSIDED)("OVER_1.5", "strong");
+  assert.equal(home.to, "HOME_OVER_0.5");
+  /* Mirror the fixture and the answer must mirror with it, or this is a
+     hard-coded guess wearing a model's clothes. */
+  const away = ladder({ ...LOPSIDED, h_o05: .55, a_o05: .88 })("OVER_1.5", "strong");
+  assert.equal(away.to, "AWAY_OVER_0.5");
+});
+
+test("every level still declares how far it may go", () => {
+  const dial = src.slice(src.indexOf("var SAFER_STRENGTH={"), src.indexOf("function saferDial"));
+  ["auto", "light", "normal", "strong"].forEach((k) => {
+    const from = dial.indexOf(k + ":{");
+    assert.ok(from > 0, k + " is gone from the dial");
+    const entry = dial.slice(from, dial.indexOf("}", from));
+    assert.match(entry, /steps:\d/,
+      k + " has no steps, so it cannot say how far a leg may travel");
+  });
+});
