@@ -798,6 +798,14 @@ main[tabindex="-1"]:focus{outline:none}
 
 /* ============================================================== filters */
 .bar{margin-top:24px;display:grid;gap:10px}
+/* The chips take the room and the Filters button keeps its own, so a long chip
+   list scrolls under a control that never moves. min-width:0 or the scroller
+   refuses to shrink and pushes the button off the row. */
+.cats-row{display:flex;align-items:center;gap:8px;min-width:0}
+.cats-row>.cats{flex:1 1 auto;min-width:0}
+/* A DESKTOP HAS THE ROOM AND NO REASON TO HIDE ANYTHING. The button exists
+   only where the search and the two selects cost a fifth of the screen. */
+.fbtn{display:none}
 .cats{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
 .cats::-webkit-scrollbar{display:none}
 .cat{flex-shrink:0;background:var(--card);border:1px solid var(--line);
@@ -4828,6 +4836,38 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 }
 
 /* --- filters + finder --- */
+/* THE SEARCH AND THE TWO SELECTS WERE A FIFTH OF THE FIRST SCREEN.
+   Measured on a 390x844 phone: the heading, the view toggle, the date bar and
+   the chips left the first fixture below the fold, and about 110px of what
+   stood in its way was a search box and two dropdowns that almost nobody opens
+   on arrival - the chips answer "what kind of bet" faster than either.
+   Folded behind a button that rides the chip row, so the disclosure itself
+   costs nothing: the row was already there. The chips stay put - they are the
+   fast path and hiding them would trade one hunt for another - and #chosen
+   stays visible whether the panel is open or shut, because a board that is
+   filtered must say so even when the control that filtered it is closed. */
+/* EXPLICITLY SCOPED, because the section it sits in is not. Everything around
+   here reads as a phone block and none of it is inside a media query - which is
+   harmless for the density tweaks that follow (a smaller margin at every width
+   is a choice, not a bug) and would have been a disaster for this one: the
+   first cut hid the search and both selects on a 1920px desktop, where there
+   is no button to get them back. Caught by asking the browser rather than
+   reading the file. */
+@media(max-width:720px){
+  .fbtn{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
+    background:var(--card-2);border:1px solid var(--line);color:var(--soft);
+    font:inherit;font-weight:700;font-size:12px;padding:8px 12px;border-radius:99px;
+    cursor:pointer;position:relative;min-height:36px;
+    transition:color .15s,border-color .15s,background .15s}
+  .fbtn svg{width:14px;height:14px;flex:none}
+  .fbtn[aria-expanded="true"]{color:var(--text);border-color:var(--faint);background:var(--card)}
+  .fbtn:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+  /* A filter left on behind a closed panel is the one state this control has
+     to confess to. A dot, not a count: the number is already in #chosen. */
+  .fbtn-on{width:7px;height:7px;border-radius:50%;background:var(--red);flex:none}
+  .bar>.tools{display:none}
+  .bar.f-open>.tools{display:flex}
+}
 .bar{margin-top:14px;padding:9px;gap:8px}
 .cats{gap:6px}
 .cat{padding:8px 13px}
@@ -6821,8 +6861,19 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   <div id="bookAllResult" aria-live="polite"></div>
 
   <div class="bar">
-    <div class="cats" id="cats"></div>
-    <div class="tools">
+    <!-- THE CHIPS AND THE WAY IN TO EVERYTHING ELSE, ON ONE ROW. The button
+         rides the chip scroller rather than sitting above or below it, so
+         collapsing the search and the two selects costs no height at all -
+         see .fbtn in the stylesheet. Outside #cats on purpose: that element is
+         rebuilt from the payload on every render and would wipe it. -->
+    <div class="cats-row">
+      <div class="cats" id="cats"></div>
+      <button class="fbtn" id="fbtn" type="button" aria-expanded="false" aria-controls="tools">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
+        <span>Filters</span><span class="fbtn-on" id="fbtnOn" hidden aria-hidden="true"></span>
+      </button>
+    </div>
+    <div class="tools" id="tools">
       <div class="search">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
           <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.7" opacity=".55"/>
@@ -9231,10 +9282,33 @@ function resetBoardFilters(){
   var box=document.getElementById("q"); if(box) box.value="";
   render();
 }
+/* WHAT THE CLOSED BUTTON HAS TO ADMIT. The search and the two selects fold
+   away on a phone, and a reader who left one set and came back to a short
+   board would otherwise have no way to see why - the control that did it is
+   shut. The dot says a filter is on; #chosen, which stays visible either way,
+   says which. Called from render() so it cannot drift from the state it
+   describes, whatever changed it. */
+function syncFilterBtn(){
+  var dot=$("fbtnOn"); if(!dot) return;
+  dot.hidden=!(V.q&&V.q.trim())&&!V.country&&!V.league;
+}
+/* Opened by the reader, so it stays open until they shut it: a panel that
+   closed itself on the next render would eat the tap that opened it. */
+(function(){
+  var b=$("fbtn"), bar=b&&b.closest(".bar"); if(!b||!bar) return;
+  b.addEventListener("click",function(){
+    var open=!bar.classList.contains("f-open");
+    bar.classList.toggle("f-open",open);
+    b.setAttribute("aria-expanded",open?"true":"false");
+    /* Straight into the box they came for. Not on the way out - moving focus
+       to something that has just been hidden strands a keyboard. */
+    if(open){ var q=$("q"); if(q) try{q.focus({preventScroll:true});}catch(e){q.focus();} }
+  });
+})();
 function render(){
   document.documentElement.classList.toggle("list",!!V.list);
   formIndexInvalidate();
-  renderControls(); renderCats();
+  renderControls(); renderCats(); syncFilterBtn();
   /* Rail content, so it survives the results-view early return below.
      renderProof stands on its own: the hero must carry its proof even on a
      day the recap has nothing to say. */
