@@ -1203,6 +1203,30 @@ html.mode-live .btabs{transform:none!important}
      than a lit object. */
   .btab.on svg{filter:drop-shadow(0 0 3px var(--red-glow))}
   .btab.on svg{width:23px;height:23px}
+  /* THE STAFF IS ARTWORK, AND IT IS STILL PAINTED IN currentColor.
+     Drawn properly rather than traced into paths - a football's panels and a
+     star cut out of them is more shape than a hand-written path survives - but
+     used as a MASK, not as an image. The PNG supplies only its alpha; the
+     colour comes from `background:currentColor`, so this tab behaves exactly
+     like the three line icons beside it: grey at rest, red and glowing when
+     it is the page you are on, and correct in both themes from one file. A
+     coloured PNG could only ever be desaturated, never recoloured.
+     The hand-drawn SVG stays in the markup underneath as the fallback and is
+     hidden only where masks actually work - a browser without them would
+     otherwise paint a solid red lozenge, which is the worst of both. */
+  .btab .bt-staff{display:none}
+  @supports ((-webkit-mask-image:url("")) or (mask-image:url(""))){
+    #bt-build .bt-ic svg{display:none}
+    #bt-build .bt-staff{display:block;width:22px;height:22px;background:currentColor;
+      -webkit-mask:url(/app.staff-d9a208a7.png) center/contain no-repeat;
+      mask:url(/app.staff-d9a208a7.png) center/contain no-repeat}
+    /* Same 22 -> 23 step the svg takes, so the marker does not change size
+       when the artwork does. The filename is content-hashed because
+       vercel.json serves /app.* immutable for a year: new art, new name, no
+       purge to remember. */
+    #bt-build.on .bt-staff{width:23px;height:23px;
+      filter:drop-shadow(0 0 3px var(--red-glow))}
+  }
   /* The pulse is a nudge toward live football you are NOT looking at. On the
      red disc it would be a red dot on red, and syncLiveDots already hides it
      the moment Live is the page you are on - this is the visual half of the
@@ -7138,7 +7162,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
      Wizard hats were tried before any of this and every one of them read as
      a traffic cone: a narrow cone over a brim that curves the same way is a
      road sign, not a hat. -->
-  <button class="btab" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5.6" r="3.4"/><path d="M12 3.6l.62 1.28 1.4.2-1.01.98.24 1.4L12 6.78l-1.25.66.24-1.4-1.01-.98 1.4-.2z" fill="currentColor" stroke="none"/><path d="M12 9v10.4"/><path d="M10.6 11.4h2.8"/><path d="M10.4 19.4h3.2"/></svg></span>Build</button>
+  <button class="btab" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><i class="bt-staff" aria-hidden="true"></i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5.6" r="3.4"/><path d="M12 3.6l.62 1.28 1.4.2-1.01.98.24 1.4L12 6.78l-1.25.66.24-1.4-1.01-.98 1.4-.2z" fill="currentColor" stroke="none"/><path d="M12 9v10.4"/><path d="M10.6 11.4h2.8"/><path d="M10.4 19.4h3.2"/></svg></span>Build</button>
   <!-- A SLIP AND ONE ARROW OUT OF IT. Not two arrows swapping - that is
        the shuffle icon, #shuffleBtn draws exactly that - and not the two
        books named, which a third bookmaker would make wrong rather than

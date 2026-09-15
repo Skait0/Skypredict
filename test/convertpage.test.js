@@ -192,6 +192,37 @@ test("the red circle marks the page you are on", () => {
      light bar. */
   ["--red-glow:rgba\\(230,57,70", "--red-glow:rgba\\(198,35,48"].forEach((v) =>
     assert.match(index, new RegExp(v), "a theme is missing its own " + v.split(":")[0]));
+});
+
+test("the Build staff is a mask, so it still paints in currentColor", () => {
+  /* The artwork is a PNG because a football's panels with a star cut out of
+     them is more shape than a hand-written path carries. Used as a mask, the
+     file supplies only its alpha and the colour comes from currentColor - so
+     Build greys out at rest and lights red when active, exactly like the three
+     line icons beside it. A coloured PNG could only be desaturated. */
+  const m = index.match(/mask:url\(\/(app\.staff-[0-9a-f]{8}\.png)\)/);
+  assert.ok(m, "the Build tab no longer masks its artwork");
+  assert.match(index, /#bt-build \.bt-staff\{[\s\S]{0,140}background:currentColor/,
+    "the staff is painted with something other than currentColor");
+  /* THE FILE HAS TO BE THERE. A mask that 404s renders nothing at all, and the
+     tab would go silently blank rather than fall back. */
+  assert.ok(fs.existsSync(path.join(ROOT, "public", m[1])),
+    "public/" + m[1] + " is referenced but missing");
+  /* Hashed on purpose, and only worth hashing because of this rule: /app.* is
+     served immutable for a year, so new artwork needs a new name or readers
+     keep the old one until the cache expires - the trap the intro videos are
+     still in. If the rule ever goes, the hash in the filename is a lie. */
+  const vercel = JSON.parse(fs.readFileSync(path.join(ROOT, "vercel.json"), "utf8"));
+  const rule = (vercel.headers || []).find((r) => r.source === "/app.(.*)");
+  assert.ok(rule, "/app.(.*) has no header rule, so the hashed name buys nothing");
+  assert.ok(rule.headers.some((h) => /immutable/.test(h.value)),
+    "/app.(.*) is no longer immutable");
+  /* The hand-drawn SVG stays underneath, hidden only where masks work. Without
+     that guard a browser with no mask support paints a solid lozenge. */
+  assert.match(index, /@supports \(\(-webkit-mask-image:url\(""\)\) or \(mask-image:url\(""\)\)\)/,
+    "the mask is applied unconditionally");
+  assert.match(index, /<i class="bt-staff"[^>]*><\/i><svg/,
+    "the fallback svg is gone from the Build tab");
   assert.doesNotMatch(index, /class="btab mid"/, "the circle is pinned to one tab again");
   /* A red pulse on the red disc is invisible, and syncLiveDots already stops
      nudging you toward the page you are standing on. */
