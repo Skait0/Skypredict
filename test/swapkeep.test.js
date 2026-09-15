@@ -237,8 +237,32 @@ test("a slip of 1UP legs is told why, not offered nothing", () => {
     "it has to say WHY it cannot help");
   assert.match(box, /<b>Convert<\/b> and <b>Split it<\/b> both still work/,
     "and where the reader should go instead");
-  /* The swap table must never learn these codes. */
+});
+
+test("a promotion is priced at the bet underneath it, and widens like one", () => {
+  /* THE CALL CHANGED, AND THIS IS THE REASONING IT CHANGED TO. We do not model
+     when a side goes a goal up, so 1UP had no number and the editor was blind
+     to 42 of the 45 legs on 8B9WJU. Read at the market underneath it instead:
+     p(1UP) is at least p(that market), so the number can only understate the
+     leg. A leg is never sold as stronger than it is, and the gain a swap is
+     judged on is conservative.
+     In the switch, not a table beside it, because the harnesses lift mProb out
+     on its own to run the shipped code. */
+  const m = src.slice(src.indexOf("function mProb(f,c){"), src.indexOf("var MIN_GRADED"));
+  assert.match(m, /case"UP1_1":case"UP2_1":return mProb\(f,"1"\);/);
+  assert.match(m, /case"UP1_X":case"UP2_X":return mProb\(f,"X"\);/);
+  assert.match(m, /case"DC1UP_1X":return mProb\(f,"1X"\);/);
+  /* A promotion on a straight result widens into the double chance holding it,
+     exactly as the plain result does. */
   const safer = src.slice(src.indexOf("var SAFER={"), src.indexOf("var SAFER_MIN_GAIN"));
-  assert.doesNotMatch(safer, /UP1_|UP2_|DC1UP_/,
-    "a promotion has no safer sibling - taking the early payout off makes it worse");
+  assert.match(safer, /"UP1_1":"1X","UP2_1":"1X","UP1_2":"X2","UP2_2":"X2"/);
+  /* But one already on a double chance has nothing wider to go to, and must
+     never be given a swap - moving it could only narrow the bet. */
+  const entries = safer.replace(/\/\*[\s\S]*?\*\//g, "");   /* the table, not the prose */
+  assert.doesNotMatch(entries, /DC1UP_/,
+    "DC1UP is already a double chance; there is nothing safer to swap it to");
+  /* The draw promotions follow the draw's own rule: whichever double chance
+     holding it the model rates higher. */
+  assert.ok(src.includes('if(from==="X"||from==="UP1_X"||from==="UP2_X")'),
+    "the draw promotions no longer follow the draw's own rule");
 });

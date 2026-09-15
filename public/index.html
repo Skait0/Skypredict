@@ -11519,13 +11519,34 @@ function oddCell(f,c,p){
     : v.toFixed(2);
 }
 
+/* THE BET UNDER AN EARLY PAYOUT. 1UP and 2UP settle exactly like the market
+   they sit on, with one extra way to win: the side goes a goal (or two) up at
+   some point and it pays there and then. We do not model when a team goes
+   ahead - that is a path through the match, not a final score - so the market
+   underneath is what we price it at.
+   THAT IS A FLOOR, NOT A GUESS. p(1UP) is at least p(the bet under it), so
+   reading a promotion at its base can only ever understate the leg. Every
+   caller is safe in that direction: a leg is never sold as stronger than it
+   is, and a ticket of them is never flattered.
+   Asked for after a 45-leg code, 8B9WJU, came back 42 legs of these with no
+   number on any of them - which left the whole editor blind. */
 function mProb(f,c){
   /* A CONVERTED LEG CAN HAVE NO FIXTURE AT ALL. Since feedMatch, a game we
      hold no results for crosses on the other book's own event, and there is
      nothing of ours behind it to price. Null is the honest answer and every
      caller already treats it as "we cannot price this one". */
   if(!f) return null;
-  switch(c){case"1":return f.home_p;case"X":return f.draw_p;case"2":return f.away_p;
+  switch(c){
+    /* The promotions, read at the bet underneath them. In the switch rather
+       than a table beside it so anything that lifts this function out - the
+       test harnesses do, to run the shipped code - carries the rule with it. */
+    case"UP1_1":case"UP2_1":return mProb(f,"1");
+    case"UP1_X":case"UP2_X":return mProb(f,"X");
+    case"UP1_2":case"UP2_2":return mProb(f,"2");
+    case"DC1UP_1X":return mProb(f,"1X");
+    case"DC1UP_12":return mProb(f,"12");
+    case"DC1UP_X2":return mProb(f,"X2");
+    case"1":return f.home_p;case"X":return f.draw_p;case"2":return f.away_p;
     case"1X":return f.dc1x;case"X2":return f.dcx2;
     case"12":return f.anybody!=null?f.anybody:f.dc12;
     case"OVER_1.5":return f.o15;case"OVER_2.5":return f.o25;case"GG":return f.btts;
@@ -12942,6 +12963,13 @@ function trimPlan(legs,B,drop){
  * bet - it is shown like every other change, with both numbers, before
  * anything is booked. */
 var SAFER={"1":"1X","2":"X2",
+  /* The promotion rides along: the leg stays on the same game and the same
+     side, and widens the outcome exactly as a plain result would. Priced at
+     the market underneath (see mProb), so the gain this is judged on is a
+     conservative one - the real 1UP is worth a little more than the number.
+     DC1UP_* is deliberately absent: it is already a double chance and there is
+     nothing wider to move it to. */
+  "UP1_1":"1X","UP2_1":"1X","UP1_2":"X2","UP2_2":"X2",
   "OVER_2.5":"OVER_1.5","OVER_3.5":"OVER_2.5",
   "HOME_OVER_1.5":"HOME_OVER_0.5","AWAY_OVER_1.5":"AWAY_OVER_0.5",
   "MIX_X_OV_2.5":"MIX_X_OV_1.5","MIX_1_OV_2.5":"MIX_1_OV_1.5",
@@ -12974,7 +13002,8 @@ function saferSwap(l,B){
   if(!l||!l.prediction) return null;
   var f=fixtureByLeg(l,B); if(!f) return null;      /* no numbers, no opinion */
   var from=l.prediction, to=SAFER[from];
-  if(from==="X") to=(mProb(f,"1X")>=mProb(f,"X2"))?"1X":"X2";
+  if(from==="X"||from==="UP1_X"||from==="UP2_X")
+    to=(mProb(f,"1X")>=mProb(f,"X2"))?"1X":"X2";
   if(!to) return null;
   if(!bookAllows(to,B)) return null;                /* this book must sell it */
   /* A published price is the proof the market exists on this game, and a swap
