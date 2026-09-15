@@ -116,20 +116,28 @@ test("the read says how much of the slip survives, before the list", () => {
   assert.doesNotMatch(row, /:"-"/, "the bare dash is back on a leg row");
 });
 
-/* ------------------------------------- a market only one bookmaker sells */
+/* --------------------------------- a market only some bookmakers sell */
 
-test("the Bet9ja-only line is never picked for a SportyBet slip", () => {
-  /* Bet9ja sells 1X2-or-Over/Under at 1.5 and SportyBet's card starts at 2.5.
-     One refused selection refuses the whole ticket behind it, so this is
-     caught three times over: the slider will not pick it, the chip locks, and
-     booking offers to switch book rather than sending it. */
+test("the 1.5-rung line is never picked for a SportyBet slip, and is picked for both books that sell it", () => {
+  /* Bet9ja and BetKing sell 1X2-or-Over/Under at 1.5 and SportyBet's card
+     starts at 2.5. One refused selection refuses the whole ticket behind it,
+     so this is caught three times over: the slider will not pick it, the chip
+     asks, and booking offers to switch book rather than sending it. */
   const bookAllows = new Function(
     "const BOOK_ONLY=" + (src.match(/var BOOK_ONLY=(\{[^;]+\});/)[1]) + ";" +
     "function curBook(){return {key:'sporty'};}" +
     grab("bookAllows") + "\nreturn bookAllows;")();
   assert.equal(bookAllows("MIX_X_OV_1.5", { key: "sporty" }), false);
   assert.equal(bookAllows("MIX_X_OV_1.5", { key: "bet9ja" }), true);
-  /* Everything else books at either, and must keep doing so. */
+  /* THE BOOK THIS TEST EXISTS FOR. BetKing's catalogue carries the whole rung
+     and the map claimed it did not, so every BetKing reader was told to go and
+     open a Bet9ja account to book a bet BetKing was already selling them.
+     Verified on the wire, not read off a table: code D12WXN came back holding
+     the draw and away signs, and MQ29ZR was booked for the home sign. */
+  assert.equal(bookAllows("MIX_X_OV_1.5", { key: "betking" }), true);
+  assert.equal(bookAllows("MIX_1_OV_1.5", { key: "betking" }), true);
+  assert.equal(bookAllows("MIX_2_OV_1.5", { key: "betking" }), true);
+  /* Everything else books at any of them, and must keep doing so. */
   assert.equal(bookAllows("MIX_X_OV_2.5", { key: "sporty" }), true);
   assert.equal(bookAllows("OVER_1.5", { key: "sporty" }), true);
   assert.equal(bookAllows("MIXGG_1", { key: "sporty" }), true);
@@ -140,8 +148,12 @@ test("the slider asks the question before it picks, and booking asks again", () 
     "the slider no longer filters by bookmaker");
   assert.match(src, /var wrongBook=picks\.filter\(function\(c\)\{return !bookAllows\(c\.code,B\);\}\)/,
     "booking no longer checks");
-  /* Offered as a switch, not a refusal: the leg is bookable, just not here. */
-  assert.match(src, /Book the whole slip at "\+need\.label/);
+  /* Offered as a switch, not a refusal: the leg is bookable, just not here.
+     One button per book that sells it - picking a favourite for the reader
+     would move their whole slip to a bookmaker they may not bank with. */
+  assert.match(src, /Book the whole slip at "\+bookNames\(need\)/);
+  assert.match(src, /need\.map\(function\(k\)\{[\s\S]*?data-use='/,
+    "the switch offer is back to a single hard-coded book");
 });
 
 /* ------------------------------------------------------- win either half */
@@ -172,17 +184,121 @@ test("a full-time score cannot settle it, and gradeLeg says so", () => {
   assert.equal(gradeLeg({}, "MIX_X_OV_1.5", 1, 1), true);
 });
 
-test("the 1.5 rung of the family is Bet9ja's, all three of it", () => {
+test("the 1.5 rung of the family belongs to both half-line books, all three signs of it", () => {
   /* SportyBet's 1X2-or-Over/Under card starts at 2.5 on every sign. Miss one
      and the slider builds a leg the reader's bookmaker will refuse, taking the
-     whole ticket with it. */
+     whole ticket with it. Name a book too few and the opposite happens: the
+     chip sends a reader who could book it to a bookmaker they do not use. */
   const BOOK_ONLY = new Function(
     "return " + src.match(/var BOOK_ONLY=(\{[\s\S]*?\});/)[1] + ";")();
   assert.deepEqual(Object.keys(BOOK_ONLY).sort(),
     ["MIX_1_OV_1.5", "MIX_2_OV_1.5", "MIX_X_OV_1.5"]);
-  Object.values(BOOK_ONLY).forEach((b) => assert.equal(b, "bet9ja"));
-  /* And the 2.5 rung stays on both, which is what makes it the default. */
+  Object.values(BOOK_ONLY).forEach((b) =>
+    assert.deepEqual([].concat(b).sort(), ["bet9ja", "betking"]));
+  /* And the 2.5 rung stays on all three, which is what makes it the default. */
   assert.ok(!BOOK_ONLY["MIX_1_OV_2.5"] && !BOOK_ONLY["MIX_X_OV_2.5"]);
+});
+
+test("the chip's book list and the market map cannot drift apart", () => {
+  /* Two declarations of one fact: MKT_CFG carries it per chip, BOOK_ONLY per
+     market code, and the chip is what a reader taps. They were consistent
+     while both said "bet9ja" and would have gone quietly out of step the
+     moment one of them learned about BetKing. */
+  const BOOK_ONLY = new Function(
+    "return " + src.match(/var BOOK_ONLY=(\{[\s\S]*?\});/)[1] + ";")();
+  const books = [...new Set(Object.values(BOOK_ONLY).flat())].sort();
+  const onlys = [...src.matchAll(/only:\[([^\]]+)\]/g)]
+    .map((m) => m[1].replace(/["']/g, "").split(",").map((s) => s.trim()).sort());
+  assert.ok(onlys.length >= 2, "the 1.5-rung chips no longer declare a book list");
+  onlys.forEach((o) => assert.deepEqual(o, books));
+});
+
+test("the chip asks before it narrows which bookmakers the slip can go to", () => {
+  /* Switching this market on decides the reader's bookmaker for them: the
+     slip can no longer be booked at SportyBet afterwards. It used to happen
+     silently in both directions - a tap on a SportyBet slip moved the whole
+     builder behind a toast, and a tap on a Bet9ja slip said nothing at all. */
+  assert.match(src,
+    /if\(only&&\(!c\.classList\.contains\("on"\)\|\|only\.indexOf\(curBook\(\)\.key\)<0\)\)\{\s*askBookOnly/,
+    "the chip no longer asks on the way on");
+  const i = src.indexOf("window.askBookOnly=");
+  assert.ok(i > 0, "askBookOnly is gone");
+  const fn = src.slice(i, src.indexOf("// Scope segment", i));
+  /* It has to name the books - that is the whole request - and it has to name
+     the one that cannot take it, because that is what the reader is giving
+     up. Both come off the chip's own list, never a hard-coded name. */
+  assert.match(fn, /bookNames\(have,"and"\)/, "the prompt no longer names the books that sell it");
+  assert.match(fn, /bookNames\(lose,"and"\)/, "the prompt no longer names what it costs");
+  assert.doesNotMatch(fn, /Bet9ja|BetKing|SportyBet/,
+    "a book is named in the prompt's own text rather than read off the list");
+  /* A button per book, and turning the market on is part of the same tap:
+     switching book and leaving the chip off is how it used to take two. */
+  assert.match(fn, /have\.filter\(function\(x\)\{return !here\|\|x!==curBook\(\)\.key;\}\)\.map/);
+  assert.match(fn, /BUILD\.mk\[k\]=true; WSP\.mk\[k\]=true;/);
+  /* Turning it OFF stays a plain tap. */
+  assert.match(src, /ON THE WAY ON ONLY/);
+});
+
+/* The sentence a reader actually gets, run rather than grepped. The string
+   assertions above pin the wiring; this pins the words, which is the part that
+   was asked for and the part a refactor can quietly hollow out. */
+function runAskBookOnly(curKey) {
+  const i = src.indexOf("window.askBookOnly=function");
+  const end = src.indexOf("\n  };", i);
+  assert.ok(i > 0 && end > i, "askBookOnly is gone");
+  const body = src.slice(i, end + 5);
+  const host = { innerHTML: "", _wired: [] };
+  host.querySelectorAll = () => [];
+  host.querySelector = () => ({ addEventListener() {} });
+  const env = {
+    BOOKS: { sporty: { key: "sporty", label: "SportyBet" },
+             bet9ja: { key: "bet9ja", label: "Bet9ja" },
+             betking: { key: "betking", label: "BetKing" } },
+    MKT_CFG: [{ k: "dro15", label: "Draw or o1.5", only: ["bet9ja", "betking"] }],
+    BUILD: { mk: {} }, WSP: { mk: {} },
+    curBook() { return env.BOOKS[curKey]; },
+    $: () => host,
+    showPrompt: (t, html) => { host.innerHTML = html; return true; },
+    clearPrompt() {}, setBook() {}, renderBuilder() {},
+    esc: (s) => String(s),
+    window: {},
+  };
+  new Function(...Object.keys(env), grab("bookNames") + body + "\nreturn window.askBookOnly;")
+    (...Object.values(env))("dro15", ["bet9ja", "betking"]);
+  return host.innerHTML;
+}
+
+test("the prompt tells the reader which bookmakers can take the bet", () => {
+  /* Asked for in exactly these terms: once the option is picked, say that it
+     is only available to BetKing and Bet9ja users. */
+  const onSporty = runAskBookOnly("sporty");
+  assert.match(onSporty, /Bet9ja and BetKing/, "the prompt must name both books");
+  assert.match(onSporty, /SportyBet/, "the prompt must name the book that cannot take it");
+  assert.match(onSporty, /data-use='bet9ja'/);
+  assert.match(onSporty, /data-use='betking'/);
+  assert.match(onSporty, /Switch to Bet9ja/);
+  /* On a book that already sells it there is nothing to switch, and the
+     prompt has to say so rather than offer a move to where the reader is. */
+  const onB9 = runAskBookOnly("bet9ja");
+  assert.match(onB9, /You are on Bet9ja, which sells it/);
+  assert.match(onB9, /Turn it on/);
+  assert.doesNotMatch(onB9, /Switch to Bet9ja/);
+  assert.match(onB9, /data-use='betking'/, "the other book that sells it is still offered");
+});
+
+test("both books the chip names really map the family, all three signs", () => {
+  /* The panel's list is a claim about two catalogues. If it outruns them the
+     reader gets a code with a leg the bookmaker never took. */
+  const bk = fs.readFileSync(path.join(API, "betking.py"), "utf8");
+  const b9 = fs.readFileSync(path.join(API, "bet9ja.py"), "utf8");
+  ["MIX_1_OV_1.5", "MIX_X_OV_1.5", "MIX_2_OV_1.5"].forEach((c) => {
+    assert.ok(bk.includes('"' + c + '"'), "betking.py does not map " + c);
+  });
+  /* Bet9ja builds the rung from a sign table rather than listing the keys. */
+  assert.match(b9, /for _line in \("1\.5", "3\.5"\):/);
+  ["MIX_1_OV", "MIX_X_OV", "MIX_2_OV"].forEach((c) => {
+    assert.ok(b9.includes('("' + c + '"'), "bet9ja.py dropped " + c);
+  });
 });
 
 /* ------------------------------------ a leg whose id we do not recognise */
@@ -439,12 +555,17 @@ test("every market chip reaches a builder that knows the market", () => {
 });
 
 test("a chip the other bookmaker owns offers the switch instead of nothing", () => {
-  /* Bet9ja sells the 1.5 rung; on a SportyBet slip those chips were dead and
-     tapping one did nothing at all. */
+  /* Bet9ja and BetKing sell the 1.5 rung; on a SportyBet slip those chips were
+     dead and tapping one did nothing at all. The tap now raises a prompt that
+     names the books and moves the builder to whichever one is chosen - it
+     cannot choose for the reader any more, because there are two. */
   const click = src.slice(src.indexOf("c.addEventListener(\"click\",function(){"),
     src.indexOf("var k=c.dataset.m;"));
-  assert.match(click, /only!==curBook\(\)\.key/);
-  assert.match(click, /setBook\(only\)/, "the tap must move the builder to that book");
+  assert.match(click, /only\.indexOf\(curBook\(\)\.key\)<0/);
+  assert.match(click, /askBookOnly\(c\.dataset\.m,only\)/,
+    "the tap must reach the prompt that can move the builder");
+  assert.match(src, /if\(book&&book!==curBook\(\)\.key\) setBook\(book\)/,
+    "the prompt must move the builder to the book that was picked");
   /* And it must still be tappable: a disabled button cannot say anything.
      NO CHIP IS DISABLED ANY MORE - the tier lock got the same treatment, so
      the rule is now "locked is a look, never an off switch". A disabled button

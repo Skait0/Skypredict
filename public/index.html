@@ -11285,30 +11285,47 @@ function mProb(f,c){
    events measured 31 Aug). Used only when we have NO prices for a fixture and
    are picking on our own estimated odds - see pickFrom and buildPicks. Team
    goals sit at 70-76% and were booking-rejecting about one leg in four. */
-/* A MARKET ONE BOOKMAKER SELLS AND THE OTHER DOES NOT.
-   Everything else here is book-agnostic: the same code books at either, and
-   the reader's choice of bookmaker changes nothing about what we pick. This
-   family breaks that. Bet9ja sells 1X2-or-Over/Under at 1.5 and SportyBet's
-   card stops at 2.5, so a draw-or-over-1.5 leg is bookable at one of them and
-   nowhere at the other - measured across both catalogues, see PASSTHROUGH_MAP
-   in the API.
+/* A MARKET SOME BOOKMAKERS SELL AND OTHERS DO NOT.
+   Everything else here is book-agnostic: the same code books anywhere, and the
+   reader's choice of bookmaker changes nothing about what we pick. This family
+   breaks that. Bet9ja and BetKing both sell 1X2-or-Over/Under at 1.5 and
+   SportyBet's card stops at 2.5, so a draw-or-over-1.5 leg is bookable at two
+   of the three and nowhere at the third - measured across all three
+   catalogues, see PASSTHROUGH_MAP in the API.
    The rule is one map and one question, asked in three places: the slider does
-   not pick what the current book cannot take, the chip says which book it
+   not pick what the current book cannot take, the chip says which books it
    needs, and booking refuses rather than sending a leg that will be rejected
-   with the whole ticket behind it. */
-var BOOK_ONLY={"MIX_X_OV_1.5":"bet9ja",
-  /* The whole 1.5 rung of the 1X2-or-Over/Under family is Bet9ja's: draw,
-     home and away. SportyBet's card starts at 2.5 on all three.
-     THE UNDER SIDE AND THE 3.5 RUNG ARE NOT MISSING - they are declined. Bet9ja
-     maps MIX_*_UN_1.5 and the whole 3.5 rung as well, and adding them was
+   with the whole ticket behind it.
+   A LIST, NOT A NAME, and it became one the day BetKing was read back. This
+   held the string "bet9ja" from the day the family was added, which was true
+   of two books and was then asserted about a third that nobody had asked.
+   BetKing's catalogue carries the whole rung - betking.py maps all three signs
+   against market 9648 - and a reader's own BetKing code, D12WXN, came back
+   holding "Chance Mix Total Goals 1.5/X or Over" and the away sign beside it.
+   The home sign was booked to confirm it rather than inferred from the other
+   two: MQ29ZR, Liverpool v Tottenham, read back intact. So the chip had been
+   sending BetKing readers to Bet9ja to book a bet BetKing was selling them. */
+var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking"],
+  /* The whole 1.5 rung of the 1X2-or-Over/Under family: draw, home and away.
+     SportyBet's card starts at 2.5 on all three.
+     THE UNDER SIDE AND THE 3.5 RUNG ARE NOT MISSING - they are declined. Both
+     books map MIX_*_UN_1.5 and the whole 3.5 rung as well, and adding them was
      offered and turned down on 13 Sep: they are low-probability bets, so they
      would widen the risky end of a board whose seven newest markets have not
      yet graded a single live result. Revisit when those have a record, not
      before. */
-  "MIX_1_OV_1.5":"bet9ja","MIX_2_OV_1.5":"bet9ja"};
+  "MIX_1_OV_1.5":["bet9ja","betking"],"MIX_2_OV_1.5":["bet9ja","betking"]};
 function bookAllows(code,B){
   var only=BOOK_ONLY[code];
-  return !only || only===((B&&B.key)||(curBook()&&curBook().key));
+  return !only || only.indexOf((B&&B.key)||(curBook()&&curBook().key))>=0;
+}
+/* "Bet9ja", "Bet9ja or BetKing", "Bet9ja, BetKing or X" - in one place, because
+   four sentences on screen name these books and a list joined by hand in each
+   of them drifts the first time a book is added. */
+function bookNames(keys,join){
+  var l=(keys||[]).map(function(k){return BOOKS[k]?BOOKS[k].label:k;});
+  if(l.length<2) return l[0]||"";
+  return l.slice(0,-1).join(", ")+" "+(join||"or")+" "+l[l.length-1];
 }
 /* THE FOURTH PLACE THE QUESTION HAS TO BE ASKED: out loud, to the reader.
    The three above are all refusals - the slider will not pick it, the chip
@@ -11316,7 +11333,7 @@ function bookAllows(code,B){
    see reads as the button being broken. Reported as: edit a game and "it
    doesnt show me get code until i choose a bookie", with nothing on screen
    saying which bookie or why.
-   Names the market in the reader's own words and the book that sells it, and
+   Names the market in the reader's own words and the books that sell it, and
    the picker is on screen directly above wherever this is printed. */
 function bookOnlyHint(picks,B){
   B=B||curBook();
@@ -11324,17 +11341,19 @@ function bookOnlyHint(picks,B){
   (picks||[]).forEach(function(c){
     if(!c) return;
     var only=BOOK_ONLY[c.code];
-    if(!only||only===B.key) return;
+    if(!only||only.indexOf(B.key)>=0) return;
     want=only;
     var f=c.f||fixtureById(c.id);
     var l=f?mLabel(f,c.code).replace(/<[^>]+>/g,""):c.code;
     if(names.indexOf(l)<0) names.push(l);
   });
-  if(!want||!BOOKS[want]) return "";
-  var lbl=BOOKS[want].label;
-  return "Only "+lbl+" sells "+
+  if(!want) return "";
+  var have=want.filter(function(k){return !!BOOKS[k];});
+  if(!have.length) return "";
+  var lbl=bookNames(have);
+  return "Only "+lbl+" sell"+(have.length>1?"":"s")+" "+
     (names.length>2?names.length+" of these bets":names.join(" and "))+
-    ", so tap "+lbl+" above to get a code for this slip.";
+    ", so tap "+(have.length>1?"one of them":lbl)+" above to get a code for this slip.";
 }
 var SAFE_UNPRICED={"1":1,"2":1,"X":1,"1X":1,"X2":1,"12":1};
 function safeUnpriced(code){ return !!SAFE_UNPRICED[code]; }
@@ -11988,17 +12007,26 @@ async function bookSlip(){
      refusal: the leg is perfectly bookable, just not here. */
   var wrongBook=picks.filter(function(c){return !bookAllows(c.code,B);});
   if(wrongBook.length){
-    var need=BOOKS[BOOK_ONLY[wrongBook[0].code]]||BOOKS.bet9ja;
+    /* ONE BUTTON PER BOOK THAT SELLS IT, rather than a favourite picked off
+       the front of the list. Two books sell the 1.5 rung and choosing between
+       them for the reader would move their whole slip to a bookmaker they may
+       not hold an account with, on a tap that said only "Use". */
+    var need=(BOOK_ONLY[wrongBook[0].code]||["bet9ja"]).filter(function(k){return !!BOOKS[k];});
+    if(!need.length) need=["bet9ja"];
     $("bookResult").innerHTML="<div class='confirm-card'><p><b>"+
       wrongBook.length+" leg"+(wrongBook.length===1?"":"s")+"</b> on this slip "+
-      (wrongBook.length===1?"is":"are")+" sold by "+need.label+" and not by "+
-      B.label+". Book the whole slip at "+need.label+" instead?</p>"+
-      "<div class='ca'><button class='confirm-go' type='button'>Use "+esc(need.label)+
-      "</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>";
-    $("bookResult").querySelector(".confirm-go").addEventListener("click",function(){
-      setBook(need.key);
-      $("bookResult").innerHTML="";
-      bookSlip();
+      (wrongBook.length===1?"is":"are")+" sold by "+bookNames(need)+" and not by "+
+      B.label+". Book the whole slip at "+bookNames(need)+" instead?</p>"+
+      "<div class='ca'>"+need.map(function(k){
+        return "<button class='confirm-go' type='button' data-use='"+esc(k)+"'>Use "+
+          esc(BOOKS[k].label)+"</button>";}).join("")+
+      "<button class='confirm-cancel' type='button'>Cancel</button></div></div>";
+    $("bookResult").querySelectorAll(".confirm-go").forEach(function(btn){
+      btn.addEventListener("click",function(){
+        setBook(btn.dataset.use);
+        $("bookResult").innerHTML="";
+        bookSlip();
+      });
     });
     $("bookResult").querySelector(".confirm-cancel").addEventListener("click",function(){
       $("bookResult").innerHTML="";
@@ -17158,15 +17186,17 @@ function renderShared(){
     {k:"drgg", label:"Draw or GG", tier:1, sub:"X or both score", icon:'<path d="M4 12h16"/><circle cx="7" cy="7" r="2"/><circle cx="17" cy="17" r="2"/>'},
     {k:"rsgg", label:"Result or GG", tier:0, sub:"1 or 2, or both score", icon:'<path d="M5 19L12 5l7 14"/><path d="M8 15h8"/>'},
     {k:"rso25", label:"Result or o2.5", tier:1, sub:"1 or 2, or over 2.5", icon:'<path d="M5 19L12 5l7 14"/><circle cx="12" cy="17" r="1.6"/>'},
-    /* THE ONE MARKET THAT PICKS YOUR BOOKMAKER FOR YOU. Bet9ja sells this
-       family at 1.5; SportyBet's card starts at 2.5. The chip says so rather
-       than failing quietly at the booking step. */
-    {k:"dro15", label:"Draw or o1.5", tier:0, sub:"X or over 1.5", only:"bet9ja",
+    /* THE ONE MARKET THAT NARROWS YOUR CHOICE OF BOOKMAKER. Bet9ja and BetKing
+       sell this family at 1.5; SportyBet's card starts at 2.5. The chip says
+       so, and asks before it turns on, rather than failing quietly at the
+       booking step. `only` is a list - see BOOK_ONLY, which is the same fact
+       keyed by market code. */
+    {k:"dro15", label:"Draw or o1.5", tier:0, sub:"X or over 1.5", only:["bet9ja","betking"],
      icon:'<path d="M4 12h16"/><path d="M9 8l3-3 3 3"/>'},
     /* WIN EITHER HALF. Graded on 945 held-out matches before it was offered:
        60.0% against 58.9% predicted, the closest of any market here bar the
        match result itself. Both books sell it per side. */
-    {k:"rso15", label:"Result or o1.5", tier:0, sub:"1 or 2, or over 1.5", only:"bet9ja",
+    {k:"rso15", label:"Result or o1.5", tier:0, sub:"1 or 2, or over 1.5", only:["bet9ja","betking"],
      icon:'<path d="M5 19L12 5l7 14"/><path d="M9 9l3-3 3 3"/>'},
     {k:"weh", label:"Win a half", tier:0, sub:"Either half", icon:'<path d="M12 4v16"/><path d="M5 8h4"/><path d="M15 16h4"/>'},
     /* WIZARD ONLY. The Slider cannot build a draw - "X" is in neither
@@ -17194,7 +17224,7 @@ function renderShared(){
          reason a tier lock is: it cannot produce a leg, so a chip that lights
          up is a control that does nothing. It unlocks by switching book, and
          the badge below says which one. */
-      var wrongBook=!!(m.only && m.only!==curBook().key);
+      var wrongBook=!!(m.only && m.only.indexOf(curBook().key)<0);
       if(wrongBook) locked=true;
       var tierLabel=["Safe","Balanced","Risky"][m.tier];
       var subLabel=m.sub;
@@ -17213,40 +17243,55 @@ function renderShared(){
            The wrong-book chips were already left enabled for exactly this
            reason; the tier lock now works the same way and keeps only the
            dimmed `locked` look. */
-        (m.only?" data-only='"+m.only+"'":"")+
+        (m.only?" data-only='"+m.only.join(",")+"'":"")+
         (locked&&!wrongBook?" title='Tap to move the dial to where this can fill'":"")+
         " type='button'>"+
         "<span class='mkt-icon' aria-hidden='true'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>"+m.icon+"</svg></span>"+
         "<span>"+m.label+"</span>"+
         (m.only
           ? "<span class='tier-badge only-badge' title='"+
-            (wrongBook ? "Switch to "+BOOKS[m.only].label+" to use this market"
-                       : BOOKS[m.only].label+" sells this line; the other book does not")+
-            "'>"+esc(BOOKS[m.only].label)+" only</span>"
+            (wrongBook ? "Switch to "+bookNames(m.only)+" to use this market"
+                       : bookNames(m.only,"and")+" sell this line; SportyBet does not")+
+            /* ONE BOOK GETS ITS NAME, TWO GET A COUNT. The chip is a nowrap
+               grid cell 113px wide at the six-column breakpoint and narrower
+               on a phone, and "Bet9ja or BetKing only" does not fit beside a
+               label - it would push the palette out of its column. The names
+               are in the tooltip and in the prompt the chip now raises, both
+               of which have room to say them. */
+            "'>"+esc(m.only.length>1 ? m.only.length+" books" : bookNames(m.only))+" only</span>"
           : "<span class='tier-badge' title='Unlocks at "+tierLabel+" tier'>T"+(m.tier+1)+"</span>")+
         "</button>";
     }).join("");
     mkw.innerHTML=html;
     mkw.querySelectorAll("[data-m]").forEach(function(c){
       c.addEventListener("click",function(){
-        /* A CHIP LOCKED BY THE BOOKMAKER IS A QUESTION, NOT A WALL. Bet9ja
-           sells the 1.5 rung and SportyBet does not, so on a SportyBet slip
-           these chips were dead and tapping one did nothing at all - reported
-           as "greyed out and doesn't work", which is exactly what it was. It
-           offers the switch instead: one tap moves the whole builder to the
-           book that sells it, which is the only thing that could have made the
-           chip work anyway.
+        /* A CHIP LOCKED BY THE BOOKMAKER IS A QUESTION, NOT A WALL. Bet9ja and
+           BetKing sell the 1.5 rung and SportyBet does not, so on a SportyBet
+           slip these chips were dead and tapping one did nothing at all -
+           reported as "greyed out and doesn't work", which is exactly what it
+           was. It asks instead: the prompt names the books that sell it and
+           moves the whole builder to whichever one the reader picks, which is
+           the only thing that could have made the chip work anyway.
+           IT ASKS EVEN WHEN THE CURRENT BOOK IS ONE OF THEM. Turning this on
+           quietly on a Bet9ja slip builds a ticket that no longer travels: the
+           reader can no longer switch to SportyBet without losing legs, and
+           nothing said so at the moment they chose it. The market itself is
+           fine - it is the narrowing that has to be consented to, and it is
+           the same sentence either way.
            A TIER LOCK IS THE SAME QUESTION and now gets the same answer: the
            dial moves to the lowest setting where this market can actually
            fill, and says so. It used to refuse silently, on the reasoning that
            the slider was right there - which assumed the reader knew that a
            greyed chip meant "slide right", and nothing on screen said it. */
-        var only=c.dataset.only;
-        if(only&&only!==curBook().key){
-          var want=BOOKS[only];
-          try{ window.swToast&&window.swToast("Switched to "+want.label+
-            " - only they sell this bet","","bookswap"); }catch(e){}
-          setBook(only);
+        var only=c.dataset.only?c.dataset.only.split(","):null;
+        /* ON THE WAY ON ONLY - turning it off costs the reader nothing and
+           needs no ceremony, the same rule the draw chip follows. The second
+           half of the test is the chip that is already on and has been
+           stranded: switch book with this market lit and it stays lit while
+           the new book cannot sell it, so tapping it is a request to fix that
+           and not a request to turn it off. */
+        if(only&&(!c.classList.contains("on")||only.indexOf(curBook().key)<0)){
+          askBookOnly(c.dataset.m,only);
           return;
         }
         var k=c.dataset.m;
@@ -17347,6 +17392,55 @@ function renderShared(){
       WSP._sig=null; renderBuilder();
     });
     host.querySelector(".confirm-cancel").addEventListener("click",function(){
+      clearPrompt("mkAsk");
+    });
+  };
+  /* WHICH APP THE CODE WILL OPEN IN, said before the slip is built rather than
+     at the booking step. Two books sell the 1.5 rung and SportyBet does not,
+     so switching this market on decides the reader's bookmaker for them - and
+     it used to decide it silently: a tap on a SportyBet slip moved the whole
+     builder to Bet9ja behind a toast, and a tap on a Bet9ja slip said nothing
+     at all while quietly making the slip unbookable anywhere else.
+     Asked for as: let the reader know this option is only available to BetKing
+     and Bet9ja users. The books come from the chip's own `only` list, so a
+     third book selling the family changes this sentence by being added to
+     MKT_CFG and nowhere else. */
+  window.askBookOnly=function(k,keys){
+    var have=(keys||[]).filter(function(x){return !!BOOKS[x];});
+    var cfg=MKT_CFG.filter(function(x){return x.k===k;})[0]||{};
+    var lbl=cfg.label||"this market";
+    var turnOn=function(book){
+      clearPrompt("mkAsk");
+      BUILD.mk[k]=true; WSP.mk[k]=true; WSP._sig=null;
+      /* setBook renders the builder itself; only the same-book path has to. */
+      if(book&&book!==curBook().key) setBook(book); else renderBuilder();
+    };
+    /* A chip that cannot raise its prompt must still work. Falling through to
+       the plain toggle is the lesser failure: an unasked question beats a
+       control that does nothing, which is the bug this chip already had. */
+    if(!have.length||!$("mkAsk")){ turnOn(have[0]); return; }
+    var here=have.indexOf(curBook().key)>=0;
+    var lose=Object.keys(BOOKS).filter(function(x){return have.indexOf(x)<0;});
+    showPrompt("mkAsk",
+      "<div class='confirm-card'><p><b>"+esc(lbl)+" is a "+esc(bookNames(have,"and"))+
+      " bet.</b> "+esc(bookNames(lose,"and"))+" "+(lose.length>1?"do":"does")+
+      " not sell this line, so a slip carrying it can only be booked with "+
+      (have.length>1?"one of those two":esc(bookNames(have)))+".</p>"+
+      "<p>"+(here
+        ? "You are on "+esc(curBook().label)+", which sells it. Switch it on?"
+        : "Switch to the book you use and turn it on?")+"</p>"+
+      "<div class='ca'>"+
+      (here ? "<button class='confirm-go' type='button' data-use='"+esc(curBook().key)+
+              "'>Turn it on</button>" : "")+
+      have.filter(function(x){return !here||x!==curBook().key;}).map(function(x){
+        return "<button class='confirm-go' type='button' data-use='"+esc(x)+"'>"+
+          (here?"Use ":"Switch to ")+esc(BOOKS[x].label)+"</button>";}).join("")+
+      "<button class='confirm-cancel' type='button'>Cancel</button></div></div>");
+    var h=$("mkAsk");
+    h.querySelectorAll(".confirm-go").forEach(function(btn){
+      btn.addEventListener("click",function(){ turnOn(btn.dataset.use); });
+    });
+    h.querySelector(".confirm-cancel").addEventListener("click",function(){
       clearPrompt("mkAsk");
     });
   };

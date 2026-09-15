@@ -53,7 +53,12 @@ test("the 1X2-or-Over/Under move is described as one direction and a switch", ()
     "the reline is no longer SportyBet-only");
   assert.match(index, /if\(!BYO\.reline\)\{ offer\.push/,
     "the reline is no longer offered rather than assumed");
-  assert.match(html, /only from Bet9ja to SportyBet/);
+  /* NAMED BY DIRECTION, NOT BY SOURCE BOOK. The reline fires on
+     `to.key==="sporty"` and never asked where the leg came from, so once
+     BetKing turned out to sell the 1.5 rung as well, "only from Bet9ja"
+     described one of the two books it actually moves. */
+  assert.match(html, /only towards SportyBet/);
+  assert.match(html, /Bet9ja and BetKing also sell 1\.5 and 3\.5/);
   assert.match(html, /offered with a\s+switch rather than done for you/);
 });
 
