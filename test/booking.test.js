@@ -123,7 +123,12 @@ test("an unplaceable leg is named and the choice is offered", () => {
 test("cancelling sends nothing", () => {
   const H = harness();
   let booked = null;
-  H.confirmDropUnpriced([pick("A", "B", "1X", { "1X": 1.3 }), pick("C", "D", "GG", {})],
+  /* A fixture we hold SOME prices for, so the missing market is SportyBet
+     saying no rather than our cache saying nothing. An empty odds map used
+     to read as a refusal here; it is "unknown" now - see bookVerdict - and
+     unknown is sent rather than refused. */
+  H.confirmDropUnpriced([pick("A", "B", "1X", { "1X": 1.3 }),
+                         pick("C", "D", "GG", { "1X": 1.6 })],
     "bookResult", (p) => { booked = p; });
   H.el._handlers["confirm-cancel"]();
   assert.strictEqual(booked, null);
@@ -134,7 +139,8 @@ test("when nothing at all is placeable, say so instead of offering to book none"
   const H = harness();
   let booked = null;
   const r = H.confirmDropUnpriced(
-    [pick("A", "B", "HOME_OVER_1.5", {}), pick("C", "D", "AWAY_OVER_1.5", {})],
+    [pick("A", "B", "HOME_OVER_1.5", { "1X": 1.6 }),
+     pick("C", "D", "AWAY_OVER_1.5", { "1X": 1.6 })],
     "bookResult", (p) => { booked = p; });
   assert.strictEqual(r, true);
   assert.match(H.el.innerHTML, /isn't offering/);
@@ -147,7 +153,8 @@ test("one placeable leg is still a slip worth offering", () => {
      single placeable leg just failed. */
   const H = harness();
   let booked = null;
-  H.confirmDropUnpriced([pick("A", "B", "1X", { "1X": 1.3 }), pick("C", "D", "GG", {})],
+  H.confirmDropUnpriced([pick("A", "B", "1X", { "1X": 1.3 }),
+                         pick("C", "D", "GG", { "1X": 1.6 })],
     "bookResult", (p) => { booked = p; });
   H.el._handlers["confirm-go"]();
   assert.strictEqual(booked.length, 1);
@@ -192,11 +199,18 @@ test("a leg shaped like My slip's is resolvable", () => {
   const byId = { "mu-ips": f };
   const api = new Function("BY",
     "function fixtureById(id){return BY[id]||null;}" + BOOKCTX.prelude("sporty") +
-    grab("hasSportyMarket") + "\nreturn hasSportyMarket;")(byId);
-  assert.strictEqual(api({ id: "mu-ips", code: "OVER_1.5" }), true,
+    grab("hasSportyMarket") +
+    "\nreturn {has:hasSportyMarket,idOf:bookIdOf,B:BOOKS.sporty};")(byId);
+  assert.strictEqual(api.has({ id: "mu-ips", code: "OVER_1.5" }), true,
     "a leg with only an id must still resolve through fixtureById");
-  assert.strictEqual(api({ code: "OVER_1.5" }), false,
-    "and one carrying neither id nor fixture cannot resolve - which is the bug");
+  /* A pick carrying neither id nor fixture is dropped for having no EVENT
+     rather than for its market, and that is the honest place to drop it. The
+     market gate answers "unknown" about a fixture it cannot find - it has no
+     grounds to say more - so the id check is what stands between an
+     unresolvable leg and the bookmaker. Both booking paths apply it before the
+     pre-flight runs: `var has=function(c){return !!bookIdOf(c,B);}`. */
+  assert.strictEqual(api.idOf({ code: "OVER_1.5" }, api.B), null,
+    "a leg with neither id nor fixture must fail the event check");
 });
 
 /* ------------------------------------------------- the second bookmaker */
@@ -220,7 +234,12 @@ test("Bet9ja judges a leg on the game, not on a listed price", () => {
      here would refuse legs the bookmaker will accept, which is the whole
      reason the two books do not share one rule. */
   const H = harness("bet9ja");
-  const leg = b9pick("HOME_OVER_0.5", { b9Odds: { "1X": 2.4 } });
+  /* SportyBet's side of the fixture carries prices, so its silence about team
+     goals is that book saying no. It used to be enough for the fixture to hold
+     no SportyBet prices at all - which is our cache being empty, not the book
+     refusing, and is "unknown" now. */
+  const leg = b9pick("HOME_OVER_0.5",
+    { b9Odds: { "1X": 2.4 }, sportyOdds: { "1X": 1.9, "OVER_1.5": 1.3 } });
   assert.strictEqual(H.BOOKS.bet9ja.priced(leg), true,
     "an unlisted market on a game Bet9ja carries is still bookable");
   assert.strictEqual(H.BOOKS.sporty.priced(leg), false,

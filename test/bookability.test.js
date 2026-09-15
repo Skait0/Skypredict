@@ -114,3 +114,70 @@ test("both builders ask it rather than answering it themselves", () => {
     "the slider must build for the CHOSEN book - it used to read sportyOdds " +
     "whatever the reader had picked");
 });
+
+/* ------------------------------ the fourth copy, which asked the wrong half */
+
+/* Reported: eight games picked on the slider with "Result or both score" on
+ * every one of them, and Get code answered "SportyBet can't take 8 picks".
+ * SportyBet takes them - booked as Z6503X the same afternoon, four MIXGG_1
+ * legs read back intact as 860/74.
+ *
+ * bookVerdict was not bypassed this time, which is why the test above stayed
+ * green. The pre-flight asked it the wrong QUESTION: `bookIsPriced` is
+ * verdict === "priced", so "unknown" - the answer for every market the sweep
+ * does not fetch - counted as a refusal. The verdict's own doc says
+ * "not-priced" is the only refusal, and `bookMayTake` is the function that
+ * says so.
+ *
+ * It was never only this market. MIXGG_*, MIX_*_OV_2.5, the handicaps, corners
+ * and win-either-half are all outside `fetchedMarket`, so every one of them
+ * was unbookable on a SportyBet slip from either builder.
+ */
+function pricedFn(odds) {
+  const i = code.indexOf("BOOKS.sporty.priced=function(c){");
+  assert.ok(i > 0, "BOOKS.sporty.priced is gone - has the table been rewritten?");
+  let d = 0, k = code.indexOf("{", code.indexOf("function(c)", i));
+  for (; k < code.length; k++) {
+    if (code[k] === "{") d++;
+    else if (code[k] === "}") { d--; if (!d) break; }
+  }
+  const body = code.slice(i, k + 1) + ";";
+  const SAFE = code.match(/var SAFE_UNPRICED=(\{[^;]+\});/)[1];
+  return new Function([
+    "var BOOKS={sporty:{key:'sporty',odds:'sportyOdds',id:'eventId',full:true}};",
+    "function curBook(){return BOOKS.sporty;}",
+    "function fixtureById(){return null;}",
+    "var SAFE_UNPRICED=" + SAFE + ";",
+    "function safeUnpriced(c){return !!SAFE_UNPRICED[c];}",
+    grab("fetchedMarket"), grab("bookVerdict"), grab("bookMayTake"), grab("bookIsPriced"),
+    body,
+    "return BOOKS.sporty.priced;",
+  ].join("\n"))();
+}
+
+test("a market the sweep never fetches is not called unbookable on SportyBet", () => {
+  /* A real fixture: priced on the markets we model, silent on the one picked,
+     because the sweep never asked for it. The cache saying nothing about
+     MIXGG_1 is not SportyBet saying no. */
+  const f = { eventId: "sr:match:1", sportyOdds: { "1": 1.8, "OVER_1.5": 1.3, "GG": 1.9 } };
+  const priced = pricedFn();
+  assert.equal(priced({ id: "sr:match:1", f: f, code: "MIXGG_1" }), true,
+    "the pre-flight refuses Result-or-both-score, which SportyBet books (Z6503X)");
+  /* The rest of the same family, and the other pass-through markets with it. */
+  ["MIXGG_X", "MIXGG_2", "MIX_1_OV_2.5", "MIX_X_OV_2.5", "WINHALF_H_Y"].forEach((c) => {
+    assert.equal(priced({ id: "sr:match:1", f: f, code: c }), true,
+      "the pre-flight refuses " + c + ", a market the sweep does not fetch");
+  });
+});
+
+test("a market the sweep DOES fetch is still refused when SportyBet has not listed it", () => {
+  /* The reason this gate exists at all: team totals sit on about half the
+     card, the sweep asks for them on every fixture, so their absence from a
+     priced fixture is SportyBet saying no - and one refused leg takes the
+     whole ticket. Widening the gate must not cost this. */
+  const f = { eventId: "sr:match:1", sportyOdds: { "1": 1.8, "OVER_1.5": 1.3 } };
+  const priced = pricedFn();
+  assert.equal(priced({ id: "sr:match:1", f: f, code: "HOME_OVER_1.5" }), false,
+    "a fetched market missing from a priced fixture must still be refused");
+  assert.equal(priced({ id: "sr:match:1", f: f, code: "OVER_1.5" }), true);
+});

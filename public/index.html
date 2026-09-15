@@ -10725,9 +10725,17 @@ function bookWire(){
     /* The sixth copy of "read the cache and decide", found by
        test/bookability.test.js the day the other five were collapsed. Asked
        through bookVerdict now, so a market the sweep never fetches is "unknown"
-       here too rather than silently unpriced. */
+       here too rather than silently unpriced.
+       AND IT ASKED THE WRONG HALF OF THAT VERDICT UNTIL 15 SEP. bookIsPriced is
+       verdict === "priced", so "unknown" - every market outside the sweep's 24 -
+       counted as a refusal, and the pre-flight said "SportyBet can't take 8
+       picks" about a slip SportyBet books: eight games with Result-or-both-score
+       on each, a market it sells as 860/74 and took as Z6503X while this was
+       being read. bookMayTake is the question a booking gate is actually
+       asking. "not-priced" stays a refusal - that is what keeps a team-total
+       missing from a priced fixture out of the slip. */
     var f=(c&&c.f)||fixtureById(c&&c.id);
-    return bookIsPriced(f,c&&c.code,BOOKS.sporty);
+    return bookMayTake(f,c&&c.code,BOOKS.sporty);
   };
 
   /* `label` is the name in a sentence; `mark` is the brand drawn in its own
