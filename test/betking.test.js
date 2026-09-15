@@ -428,3 +428,38 @@ test("the canary fails loudly rather than logging", () => {
      because this exits non-zero. */
   assert.match(canarySrc(), /process\.exit\(1\)/);
 });
+
+/* ------------------------------------------- a code that has thinned out */
+
+test("a shortened code says what it lost, when the book will say", () => {
+  /* A leg leaves the coupon the moment its fixture kicks off, so an afternoon
+     read is shorter than the slip somebody was handed that morning - four legs
+     to one in four hours on a real BetKing code. Showing the remainder with
+     only a hedge underneath reads as "your code had one game in it", which is
+     a different and worse claim than "three have started". */
+  const render = src.slice(src.indexOf("byo-gone"));
+  assert.match(src, /BYO\.booked&&BYO\.booked>legs\.length/,
+    "the line must be drawn from what the book reported, not from a guess");
+  assert.match(render, /already kicked off/);
+  /* Only when the book actually reports it. BetKing does; the other two thin
+     out just as quietly and say nothing, and writing the sentence for them
+     would be guessing at somebody's slip. */
+  assert.match(src, /BYO\.booked=res\.d\.booked\|\|null/);
+  assert.match(src, /BYO\.dropped=res\.d\.removed\|\|null/);
+});
+
+test("the thinned-out state is cleared with the code", () => {
+  /* Left behind, it describes the PREVIOUS code - the worst kind of stale,
+     because it is a specific and plausible claim about the wrong slip. */
+  const reset = fn("byoReset");
+  assert.match(reset, /BYO\.booked=null/);
+  assert.match(reset, /BYO\.dropped=null/);
+});
+
+test("the names are escaped and capped", () => {
+  /* Team names come from the bookmaker, and the list can be long. */
+  const at = src.indexOf("BYO.dropped&&BYO.dropped.length");
+  const chunk = src.slice(at, at + 400);
+  assert.match(chunk, /\.map\(esc\)/, "a bookmaker's string goes through esc");
+  assert.match(chunk, /slice\(0,\s*4\)/, "and the list is capped");
+});

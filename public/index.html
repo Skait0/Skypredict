@@ -3343,6 +3343,14 @@ html.mode-live #live{display:block}
    leave this implicit - there was only ever one answer - and three cannot.
    The ring colours are keyed off the same attribute either row uses, so a
    target pill wears its brand exactly as the source pill does. */
+/* What the code held before its games started. A statement about the reader's
+   slip rather than a warning about ours, so it takes the card's own ink with a
+   rule beside it - loud enough to be read before the list, quiet enough not to
+   look like an error. */
+.byo-gone{border-left:3px solid var(--line);padding-left:10px;
+  color:var(--soft)}
+.byo-gone b{color:var(--text);font-weight:700}
+.byo-gone-n{display:block;margin-top:3px;font-size:12px;color:var(--faint)}
 .byo-to{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .byo-to-l{font-size:11px;font-weight:700;letter-spacing:.05em;
   text-transform:uppercase;color:var(--faint)}
@@ -12477,7 +12485,7 @@ function renderSplit(out,done,B,oddsOf){
    there is no way to tell from the response. Every screen here therefore says
    what WE READ, shows the games, and lets the reader judge - it never claims to
    be their slip. */
-var BYO={book:"sporty",to:null,legs:null,code:"",reline:false,saferDrop:false,saferHow:"normal",saferSwapOn:true,job:null};
+var BYO={book:"sporty",to:null,legs:null,booked:null,dropped:null,code:"",reline:false,saferDrop:false,saferHow:"normal",saferSwapOn:true,job:null};
 
 function byoSel(leg){
   /* SportyBet's route takes `prediction`; both other books take `code`. Read
@@ -12538,6 +12546,14 @@ function byoRead(){
         return;
       }
       BYO.legs=res.d.legs||[];
+      /* WHAT THE CODE HELD BEFORE ITS GAMES STARTED. A leg leaves the coupon
+         the moment its fixture kicks off, so an afternoon read is shorter than
+         the slip somebody was handed that morning - measured on a BetKing code
+         booked with four legs and reading back with one four hours later.
+         Only BetKing tells us; the other two thin out just as quietly and say
+         nothing, so these stay null and the line is simply not drawn. */
+      BYO.booked=res.d.booked||null;
+      BYO.dropped=res.d.removed||null;
       renderByo();
     })
     .catch(function(){
@@ -12748,6 +12764,32 @@ function renderByo(){
       "<div class='byo-legs'>"+rows+"</div></details>"+
     /* Said every time, not only when it bites. The reader is the only one who
        knows how many games they put in. */
+    /* WHAT THE CODE HELD THIS MORNING, WHEN THE BOOK WILL SAY.
+       A leg leaves the coupon the moment its fixture kicks off, so an
+       afternoon read is shorter than the slip somebody was handed - four legs
+       down to one in four hours on a real BetKing code. Showing the remainder
+       with only a hedge underneath reads as "your code had one game in it",
+       which is a different and worse claim than "three have started".
+       Drawn only when the book actually reports it. BetKing does; the other
+       two thin out just as quietly and tell us nothing, and inventing the
+       sentence for them would be guessing at somebody's slip. */
+    (BYO.booked&&BYO.booked>legs.length
+      ? "<p class='byo-note byo-gone'><b>This code was booked with "+
+          BYO.booked+" games.</b> "+(BYO.booked-legs.length)+
+          " already kicked off, so "+B.label+" no longer "+
+          ((BYO.booked-legs.length)===1?"returns it":"returns them")+"."+
+          /* Named where they are named. Their list carries a null for a leg
+             they will not name even to themselves, which is dropped upstream -
+             so the count above can exceed the names below, and the sentence is
+             written not to promise otherwise. */
+          ((BYO.dropped&&BYO.dropped.length)
+            ? " <span class='byo-gone-n'>"+
+                BYO.dropped.slice(0,4).map(esc).join(" · ")+
+                (BYO.dropped.length>4?" and "+(BYO.dropped.length-4)+" more":"")+
+              "</span>"
+            : "")+
+        "</p>"
+      : "")+
     "<p class='byo-note'>This is what "+B.label+" gives back for that code today. "+
       "If a game has already finished, it may no longer be in there."+
       (started.length?" "+started.length+" of these "+(started.length===1?"has":"have")+
@@ -12845,7 +12887,7 @@ function renderStage(usable,B){
    to arrive and throwing it away to clear a text field would be rude on a
    connection that paid for it. */
 function byoReset(){
-  BYO.legs=null; BYO.code=""; BYO.job=null;
+  BYO.legs=null; BYO.booked=null; BYO.dropped=null; BYO.code=""; BYO.job=null;
   BYO.saferDrop=false; BYO.saferSwapOn=true; BYO.saferHow="normal"; BYO.reline=false;
   var inp=$("byoCode"); if(inp) inp.value="";
   var out=$("byoOut"); if(out) out.innerHTML="";
