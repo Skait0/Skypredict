@@ -13599,8 +13599,35 @@ function renderConvert(){
    Nothing here books anything: this is the sentence a reader needs before they
    agree to have their bet changed, which is why both probabilities and both
    payouts are on screen before the button exists. */
+/* A MARKET WE CANNOT PRICE, WHICH IS MOST OF SOME TICKETS.
+   1UP and 2UP pay early the moment a side goes a goal ahead. That is a path
+   through the match, not a final score, and the model prices final scores - so
+   mProb answers null and every rule in this editor is blind to them.
+   Reported on a real 45-leg SportyBet code, 8B9WJU: 42 of its legs were
+   UP1_*, UP2_* or DC1UP_*, and "Edit for me" could do nothing with any of
+   them. It is not going to pretend otherwise - stripping the promotion is
+   NOT a softer bet, it is the same bet with the early payout taken away, and
+   DC1UP_1X would become a strictly worse 1X. So the honest move is to say
+   which legs cannot be judged and why, and leave the ticket alone. */
+function promoLegs(legs){
+  return (legs||[]).filter(function(l){
+    return /^(UP[12]_|DC1UP_)/.test(String(l&&l.prediction||""));
+  });
+}
 function saferBoxInner(legs,B){
   var plan=saferPlan(legs,B);
+  var promo=promoLegs(legs);
+  /* Only when it is the whole story. A couple of promotion legs among twenty
+     ordinary ones is a footnote; forty-two of forty-five is the answer. */
+  if(!plan.length&&promo.length&&promo.length>=Math.ceil(legs.length*0.6)){
+    return "<p class='byo-note'><b>"+promo.length+" of these "+legs.length+
+      " legs are 1UP or 2UP.</b> Those pay early the moment a side goes a goal "+
+      "up, which is not something our model can price - it works on final "+
+      "scores. Taking the promotion off would not make them safer either: it "+
+      "is the same bet without the early payout.</p>"+
+      "<p class='byo-note'>So there is nothing here we can honestly improve. "+
+      "<b>Convert</b> and <b>Split it</b> both still work on this code.</p>";
+  }
   var dial0=saferDial();
   var dropOn=dial0.drop||BYO.saferDrop;
   var drop=dropOn?saferDroppable(legs,B,plan):[];

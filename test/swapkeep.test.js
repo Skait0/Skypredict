@@ -212,3 +212,33 @@ test("a leg carries its own kickoff, because the board only speaks for today", (
   assert.match(src, /auto:true,\s*\n\s*k:kickoffOf\(c\.id,c\.f\)/,
     "a conjured leg records no kickoff");
 });
+
+/* ------------------------------ the ticket the editor cannot honestly touch */
+
+test("a slip of 1UP legs is told why, not offered nothing", () => {
+  /* Reported on a real 45-leg SportyBet code, 8B9WJU: UP1_1 x16, UP2_1 x11,
+     UP1_2 x6, DC1UP_1X x6, UP2_2 x2, DC1UP_X2 x1 - 42 of 45 legs paying early
+     the moment a side goes a goal up. The model prices final scores, so mProb
+     is null for every one of them: no swap can be judged, and legChance being
+     null drops them all into the "could be removed" list. The panel offered to
+     bin the ticket and nothing else.
+     Stripping the promotion is not the answer and must never become one: 1UP
+     settles exactly like the underlying bet plus an extra way to win early, so
+     DC1UP_1X -> 1X would be a strictly worse bet sold as a safer one. */
+  assert.match(src, /function promoLegs\(legs\)\{[\s\S]{0,200}\/\^\(UP\[12\]_\|DC1UP_\)\//,
+    "the editor no longer recognises the promotion markets");
+  const box = src.slice(src.indexOf("function saferBoxInner("),
+    src.indexOf("var dial0=saferDial();", src.indexOf("function saferBoxInner(")));
+  assert.match(box, /if\(!plan\.length&&promo\.length/,
+    "the message must only appear when there is genuinely nothing to swap");
+  assert.match(box, /promo\.length>=Math\.ceil\(legs\.length\*0\.6\)/,
+    "a couple of promotion legs among many is a footnote, not the answer");
+  assert.match(box, /pay early the moment a side goes a goal /,
+    "it has to say WHY it cannot help");
+  assert.match(box, /<b>Convert<\/b> and <b>Split it<\/b> both still work/,
+    "and where the reader should go instead");
+  /* The swap table must never learn these codes. */
+  const safer = src.slice(src.indexOf("var SAFER={"), src.indexOf("var SAFER_MIN_GAIN"));
+  assert.doesNotMatch(safer, /UP1_|UP2_|DC1UP_/,
+    "a promotion has no safer sibling - taking the early payout off makes it worse");
+});
