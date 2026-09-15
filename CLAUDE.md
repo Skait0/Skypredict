@@ -36,6 +36,14 @@ Bet9ja.
 
 - **Verify a fix by reading the code that changed**, not by grepping the file —
   the same words appear in guards that were never the bug.
+- **graphify cannot read `public/index.html`** — it classes `.html` as prose, so
+  the biggest file in the repo contributed zero of 2,003 nodes and a graph miss
+  proved nothing. Run `node scripts/graphify-inline.js` before
+  `graphify update .`: it copies the inline script to an untracked
+  `graphify-src/index.inline.js`, newline-padded so graph line numbers still
+  point at `index.html` (508 callables, 507 landing on the right line). Never
+  gitignore that file — graphify skips everything git ignores, `.gitignore`,
+  `.graphifyignore` and `.git/info/exclude` alike.
 - **A plain `npm run build` is safe**; only `VERCEL`/`SPLIT=1` rewrites
   `public/index.html`. It does regenerate `public/og-card.png` and
   `public/predictions.json` — revert those before committing unless the data
