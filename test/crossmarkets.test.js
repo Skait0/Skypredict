@@ -463,7 +463,7 @@ test("a swap keeps the game and widens the outcome, never the reverse", () => {
   assert.ok(tiny, "sanity");
 });
 
-test("dropping legs is the reader's choice, and off until they make it", () => {
+test("dropping legs is the reader's choice, and starts on", () => {
   const box = src.slice(src.indexOf("function saferBoxInner("), src.indexOf("function wireSafer("));
   assert.match(box, /dropOn\?saferDroppable/,
     "the box must only drop when asked");
@@ -473,7 +473,16 @@ test("dropping legs is the reader's choice, and off until they make it", () => {
   assert.match(box, /var dropOn=dial0\.drop\|\|BYO\.saferDrop;/);
   assert.match(src, /auto:\{gain:0\.05,under:0\.55/, "Auto is not a setting any more");
   assert.match(box, /Take out legs we cannot fix/, "the choice must be on screen");
-  assert.match(src, /saferDrop:false/, "the choice starts off");
+  /* IT STARTS ON NOW, and the reasoning is the reader's own words: "when we
+     gamblers say we want a ticket edited, we want to remove picks that are not
+     likely, and some options changed to safer ones." Removal is half of what
+     the feature means, and it was off on three of the four levels - so Safest
+     cleaned nothing unless the switch was found. Still a choice: the switch is
+     on screen and turns it off, and nothing is booked until the button is
+     pressed. */
+  assert.match(src, /saferDrop:true,saferHow:"normal"/, "the choice starts on");
+  assert.match(src, /BYO\.saferDrop=true; BYO\.saferSwapOn=true;/,
+    "and a reset must not quietly put it back to off");
   /* Three strengths behind three words, and the words are the interface. */
   assert.match(src, /var SAFER_STRENGTH=\{/);
   assert.match(box, /data-how=/, "no way to change how hard it pushes");

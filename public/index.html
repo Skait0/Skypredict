@@ -12834,7 +12834,16 @@ function renderSplit(out,done,B,oddsOf){
    there is no way to tell from the response. Every screen here therefore says
    what WE READ, shows the games, and lets the reader judge - it never claims to
    be their slip. */
-var BYO={book:"sporty",to:null,legs:null,booked:null,dropped:null,code:"",reline:false,saferDrop:false,saferHow:"normal",saferSwapOn:true,job:null};
+/* DROPPING STARTS ON, because it is half of what "edit my ticket" means.
+   Asked plainly: "when we gamblers say we want a ticket edited, we want to
+   remove picks that are not likely, and some options changed to safer ones."
+   It shipped with saferDrop false, so three of the four levels only ever
+   swapped markets - a reader who chose Safest expecting a cleaned ticket got
+   no removals at all, and had to notice a switch to find the other half.
+   Nothing is destructive: the panel lists every leg it would take out, with
+   the price before and after, and books nothing until the button is pressed.
+   The switch is still there to turn it off. */
+var BYO={book:"sporty",to:null,legs:null,booked:null,dropped:null,code:"",reline:false,saferDrop:true,saferHow:"normal",saferSwapOn:true,job:null};
 
 function byoSel(leg){
   /* SportyBet's route takes `prediction`; both other books take `code`. Read
@@ -13294,7 +13303,7 @@ function renderStage(usable,B){
    connection that paid for it. */
 function byoReset(){
   BYO.legs=null; BYO.booked=null; BYO.dropped=null; BYO.code=""; BYO.job=null;
-  BYO.saferDrop=false; BYO.saferSwapOn=true; BYO.saferHow="normal"; BYO.reline=false;
+  BYO.saferDrop=true; BYO.saferSwapOn=true; BYO.saferHow="normal"; BYO.reline=false;
   var inp=$("byoCode"); if(inp) inp.value="";
   var out=$("byoOut"); if(out) out.innerHTML="";
   var st=$("byoStage"); if(st) st.innerHTML="";
