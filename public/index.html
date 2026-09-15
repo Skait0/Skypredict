@@ -305,6 +305,13 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
   --on-green:#0D0D0F;
   --red-ink:#FF6B75;
   --red-wash:rgba(230,57,70,.13);
+  /* The neon bloom under the tab bar's active ring. A glow is the brand red at
+     low alpha stacked three deep, so it has to be an rgba of THIS theme's red
+     rather than `--red` itself - a box-shadow cannot take a colour and thin it.
+     The light theme sets its own below; without that, a dark-theme glow leaks
+     onto a parchment bar and reads as a smudge. */
+  --red-glow:rgba(230,57,70,.55);
+  --red-glow-soft:rgba(230,57,70,.28);
   --green:#2FD48A;
   --green-ink:#4FE39E;
   --green-wash:rgba(47,212,138,.13);
@@ -389,6 +396,12 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
   --on-green:#FFFFFF;  /* the light theme's green is dark: 4.92:1 */
   --red-ink:#B01D29;
   --red-wash:rgba(198,35,48,.09);
+  /* Weaker than the dark theme's, and deliberately. Neon is light emitted into
+     a dark room; the same alphas on a pale bar read as a dirty halo rather
+     than a glow, so the ring carries the meaning here and the bloom only
+     softens its edge. */
+  --red-glow:rgba(198,35,48,.34);
+  --red-glow-soft:rgba(198,35,48,.16);
   --green:#0D814F;    /* 4.36:1, holding its old 4.31 */
   --green-ink:#0B7047;
   --green-wash:rgba(14,138,85,.10);
@@ -1160,31 +1173,35 @@ html.mode-live .btabs{transform:none!important}
      four tabs now and always was, as far as layout is concerned: the inactive
      ones simply paint nothing. Only colour and shadow animate, and neither
      reflows anything. */
+  /* EVERY TAB WEARS A RING, ONLY ONE OF THEM IS LIT. The ring is what makes
+     the lit one legible as the same object rather than a badge that appeared
+     out of nowhere: four outlines, one of which is switched on. Hairline and
+     --line, so an unlit ring is furniture and the eye goes straight past it. */
   .btab .bt-ic{width:44px;height:44px;margin-top:-6px;border-radius:50%;
-    transition:background .2s ease,color .2s ease,box-shadow .2s ease}
-  /* IT DOES NOT LEVITATE ANY MORE, AND THAT IS THE FIX.
-     A disc lifted out of the bar has to break the bar's top edge to do it, so
-     on any screen where that edge lands mid-circle it reads as cut off - and
-     no amount of padding settles that argument, because the shape is fighting
-     the surface it sits on. The lift was borrowed from a floating action
-     button, which is a thing you press; this is a selection marker, which is a
-     thing you read. Markers sit inside the bar. It is round, filled, and
-     entirely within the surface, so there is no edge to cross.
-     It keeps its body - a top-lit gradient, a gold hairline where that light
-     would catch, a soft inner shade at the bottom and a coloured glow beneath -
-     so it still reads as a raised object, just one that stays in its box. */
+    box-shadow:inset 0 0 0 1px var(--line);
+    transition:color .2s ease,box-shadow .2s ease,filter .2s ease}
+  /* LIT, NOT FILLED. The marker was a solid red disc with a white glyph
+     punched out of it, which is a button's language - and it made the icon
+     underneath disappear: four tabs, and the one you were standing on was the
+     only one whose picture you could not read. A ring that lights up keeps the
+     glyph visible and still answers "where am I" from across the room.
+     Neon is three shadows and no fill: the tube itself (a solid inset ring),
+     the bloom it throws outward, and the light it spills back inside the
+     circle. The glyph is lit rather than reversed, so it glows in the same red
+     instead of turning white. Borrowed from the reference the owner sent - a
+     gold staff inside a red neon ring - with the colour moved to the site's
+     own red rather than the reference's hotter pink. */
   .btab.on .bt-ic{
-    background:
-      radial-gradient(120% 100% at 50% 0%,rgba(255,255,255,.34) 0%,rgba(255,255,255,0) 58%),
-      linear-gradient(180deg,#f4555f 0%,var(--red-fill) 52%,#c92c38 100%);
-    color:#fff;
+    color:var(--red-ink);
     box-shadow:
-      inset 0 1px 0 rgba(242,184,75,.5),
-      inset 0 0 0 1px rgba(242,184,75,.4),
-      inset 0 -2px 6px rgba(120,10,20,.35),
-      0 2px 6px rgba(0,0,0,.4),
-      0 6px 16px rgba(230,57,70,.35)}
-  .btab.on svg{filter:drop-shadow(0 1px 1px rgba(110,10,18,.45))}
+      inset 0 0 0 1.5px var(--red),
+      inset 0 0 9px var(--red-glow-soft),
+      0 0 0 1px var(--red-glow-soft),
+      0 0 14px 1px var(--red-glow)}
+  /* The glyph carries its own small halo. Without it the ring glows and the
+     picture inside it stays flat, which reads as a sticker on a light rather
+     than a lit object. */
+  .btab.on svg{filter:drop-shadow(0 0 3px var(--red-glow))}
   .btab.on svg{width:23px;height:23px}
   /* The pulse is a nudge toward live football you are NOT looking at. On the
      red disc it would be a red dot on red, and syncLiveDots already hides it
@@ -7089,20 +7106,39 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 </button>
 <nav class="btabs" aria-label="Sections">
   <button class="btab on" id="bt-pred" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg></span>Home</button>
-<!-- A WAND, NOT A PLUS. The centre button mints a booking code, and a "+"
+<!-- A STAFF, NOT A PLUS. The centre button mints a booking code, and a "+"
      is the universal sign for "add one more" - on a bar whose other items
      are destinations it read as an action on the page you were already on,
      and people tapped it expecting to add a game. The site already calls
      this conjuring: the panel it opens says "Conjure ticket".
-     THE DRAWING CHANGED, THE MEANING DID NOT. The first wand was a thin
-     diagonal stroke with two four-point diamonds, and at the size this
+     THE DRAWING CHANGED TWICE, THE MEANING NEVER DID. The first wand was a
+     thin diagonal stroke with two four-point diamonds, and at the size this
      actually renders - 22px, measured, not the 24 in the viewBox - the
      diamonds read as blobs and the shaft as a stray line: three marks, no
-     object. One five-point star with a shaft under it has a silhouette,
-     which is the only thing that survives being that small. Wizard hats
-     were tried first and every one of them read as a traffic cone: a narrow
-     cone over a brim that curves the same way is a road sign, not a hat. -->
-  <button class="btab" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 19.5L12.3 11.7"/><path d="M16.9 3.3l1.65 3.55 3.85.5-2.9 2.6.77 3.85-3.37-2.02-3.37 2.02.77-3.85-2.9-2.6 3.85-.5z"/></svg></span>Build</button>
+     object. The star-and-shaft that replaced it had a silhouette, which is
+     the only thing that survives being that small. This is the owner's own
+     reference drawn to that same rule: a ball-topped staff, upright, with a
+     collar under the ball and a banded pommel at the foot.
+     UPRIGHT, AND THAT IS THE WHOLE DIFFERENCE. The old wand lay on a
+     diagonal, which at 22px is a slash with something on the end of it. A
+     vertical shaft under a round head is a silhouette a thumbnail can hold,
+     and it is the one the reference has.
+     THE STAR IS LOAD-BEARING, NOT DECORATION. An outlined circle on a
+     vertical stroke is a KEYHOLE - drawn plain, with a centre dot, and with a
+     seam, and every version read as one. Filling the head with the star the
+     reference puts on its ball is what stops it: a star on a stick is a
+     staff, and nothing else. The collar under the head and the band at the
+     foot do the rest. Checked at 23px and again at 2x, which is what a phone
+     actually renders this at - the bar is under a 720px media query, so no
+     1x screen ever sees it.
+     The reference's gold rendering - facets, highlights, the whole
+     illustration - is not drawn here on purpose: every one of those details
+     is sub-pixel at this size and would mud the ball into a grey circle. The
+     neon ring around it carries the colour instead.
+     Wizard hats were tried before any of this and every one of them read as
+     a traffic cone: a narrow cone over a brim that curves the same way is a
+     road sign, not a hat. -->
+  <button class="btab" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5.6" r="3.4"/><path d="M12 3.6l.62 1.28 1.4.2-1.01.98.24 1.4L12 6.78l-1.25.66.24-1.4-1.01-.98 1.4-.2z" fill="currentColor" stroke="none"/><path d="M12 9v10.4"/><path d="M10.6 11.4h2.8"/><path d="M10.4 19.4h3.2"/></svg></span>Build</button>
   <!-- A SLIP AND ONE ARROW OUT OF IT. Not two arrows swapping - that is
        the shuffle icon, #shuffleBtn draws exactly that - and not the two
        books named, which a third bookmaker would make wrong rather than
