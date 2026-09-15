@@ -347,3 +347,84 @@ test("every book in the table is reachable through every proxy that serves it", 
     }
   }
 });
+
+/* ------------------------------------------------------------- the canary */
+
+/* The canary's own BOOKS table, PARSED rather than grepped. Commenting a book
+   out left its text in the file, so a regex over the source still found it and
+   the "every book is covered" test passed with BetKing switched off. Caught by
+   mutation; a structural read cannot be fooled that way. */
+function canarySrc() {
+  return fs.readFileSync(path.join(__dirname, "..", "scripts", "canary.js"), "utf8");
+}
+function canaryBooks() {
+  const s = canarySrc();
+  const at = s.indexOf("const BOOKS = {");
+  assert.ok(at > 0, "the canary no longer declares a BOOKS table");
+  const open = s.indexOf("{", at);
+  return new Function("return " + s.slice(open, open + block(s, open).length + 1))();
+}
+
+test("the canary reads each book's code out of the field that book uses", () => {
+  /* The three do not agree - SportyBet answers booking_code where the other
+     two answer code - and the first draft of the canary guessed. It read
+     `code` off a SportyBet reply that had booked perfectly well and reported
+     the book as down. A canary that is wrong about success gets switched off,
+     which costs more than never having written it. */
+  const C = canaryBooks();
+  for (const k of Object.keys(books())) {
+    assert.ok(C[k], k + " is missing from the canary");
+    /* The page is the authority: whatever BOOKS[k].codeOf reads is what the
+       canary must read. Found by string search rather than a regex - every
+       escape in this file has been through a shell heredoc at least once, and
+       a collapsed backslash turns a guard into a test that matches nothing. */
+    const at = src.indexOf("BOOKS." + k + ".codeOf");
+    assert.ok(at > 0, k + " has no codeOf in index.html");
+    const line = src.slice(at, src.indexOf(";", at));
+    const field = line.slice(line.lastIndexOf("d&&d.") + 5).trim();
+    assert.ok(field, k + ": could not read which field codeOf returns");
+    assert.strictEqual(C[k].field, field,
+      k + ": the canary reads " + C[k].field + " where the page reads " + field);
+  }
+});
+
+test("the canary covers every book the site can book with", () => {
+  const C = canaryBooks();
+  for (const k of Object.keys(books())) {
+    assert.ok(C[k], k + " can be booked but is never checked");
+  }
+});
+
+test("the canary sends each book the argument its route reads", () => {
+  /* Same table, same trap as byoSel: SportyBet's route takes `prediction` and
+     the other two take `code`, and sending the wrong one is not an error
+     upstream - the field is simply absent and every leg reads as unmapped. */
+  const C = canaryBooks(), B = books();
+  for (const k of Object.keys(B)) {
+    assert.strictEqual(C[k].arg, B[k].arg,
+      k + ": canary sends " + C[k].arg + ", the table says " + B[k].arg);
+  }
+});
+
+test("the canary compares what came back to what it sent", () => {
+  /* THE CHECK THE WHOLE THING EXISTS FOR. A booking code that resolves to
+     nothing is what a wrong selection id looks like, and it is
+     indistinguishable from success at every other layer - the POST returns a
+     code, the read returns 200. Only the count differs.
+     Asserted on the source because the script is a top-level IIFE that books
+     against production the moment it is required; the alternative is a canary
+     for the canary. */
+  const c = canarySrc();
+  assert.match(c, /read\.length\s*!==\s*sels\.length/,
+    "the leg-count comparison has gone, and with it the only check that "
+    + "notices an empty code");
+  assert.match(c, /l\.prediction\s*!==\s*MARKET/,
+    "the market check has gone: a code with the right number of wrong legs "
+    + "would pass");
+});
+
+test("the canary fails loudly rather than logging", () => {
+  /* A canary nobody is told about is a log line. The workflow goes red only
+     because this exits non-zero. */
+  assert.match(canarySrc(), /process\.exit\(1\)/);
+});

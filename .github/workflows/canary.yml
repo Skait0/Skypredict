@@ -1,0 +1,60 @@
+name: Can each bookmaker still take a slip
+
+# A two-leg slip booked on every book, every morning, and read back.
+#
+# WHY A CANARY AND NOT A TEST. Every failure this integration has had was
+# silent. A datacentre block page arrives as HTTP 200 with an empty list. A
+# bookmaker accepts a selection id it does not recognise and hands back a
+# perfectly ordinary booking code containing nothing. An id field changes under
+# us and every booking keeps reporting success. None of it errors, so the first
+# thing that notices is a reader whose code opens an empty betslip - and the
+# first thing we hear is a complaint, days later.
+#
+# The unit suites prove the logic. Only this proves the wire: our edge, the
+# proxy, Railway, the bookmaker, and the mapping in between, on real fixtures.
+#
+# 05:30 UTC, half an hour before the daily code is minted. If a book is down or
+# a mapping has rotted, the failure lands BEFORE the job that would publish a
+# code against it, rather than after.
+#
+# COST. Two selections per book per day. api/book.js is explicit about what a
+# booking call costs - Railway CPU on a $5 plan and bookmaker goodwill already
+# spent once - which is why this is two legs rather than five, and daily rather
+# than hourly.
+#
+# Needs no secrets: it books through the public route the site itself uses.
+
+on:
+  schedule:
+    - cron: "30 5 * * *"
+  workflow_dispatch:
+    inputs:
+      books:
+        description: "Which books (comma separated). Blank means all."
+        type: string
+        default: ""
+      dry:
+        description: "Check the feeds without booking anything"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # Exits non-zero if any book fails, so the run goes red and GitHub mails
+      # it. A canary nobody is told about is a log line.
+      - name: Book and read back
+        run: |
+          node scripts/canary.js \
+            ${{ inputs.books && format('--books={0}', inputs.books) || '' }} \
+            ${{ inputs.dry && '--dry' || '' }}
