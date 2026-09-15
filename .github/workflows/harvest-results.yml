@@ -20,8 +20,20 @@ name: Harvest the current season's results
 # board. Their feed reaches about a week back, so a day the job misses is
 # picked up by the next run at no cost.
 #
-# 05:30 UTC, an hour before Vercel's daily build at 06:30, so the day's build
-# fits on a file written this morning rather than yesterday's.
+# IT ASKS FOR 05:30 UTC AND LANDS MID-MORNING. Measured over the week to
+# 15 Sep: 09:58, 10:01, 09:57, 09:56, 09:31, 10:30, 10:54 - four to five and a
+# half hours behind the cron, the same free-tier delay daily-code.yml records
+# in more detail. The line that used to sit here said "an hour before Vercel's
+# daily build at 06:30, so the day's build fits on a file written this
+# morning", and that has been backwards for as long as anyone has looked: the
+# build runs first and carries YESTERDAY's harvest.
+#
+# It costs less than it sounds. This is history rather than scores - a match
+# already recorded does not change - so the board is at worst a day behind on
+# games nobody is watching any more, and record-sweep.yml is what puts today's
+# finished matches up. The cron stays at 05:30 for the same reason
+# daily-code's stays at 06:00: tuning a number against somebody else's queue is
+# a guess, and the honest fix is a trigger we control.
 #
 # Needs no secrets. It writes to the repository, which is why the job asks for
 # `contents: write` - the default token is read-only.

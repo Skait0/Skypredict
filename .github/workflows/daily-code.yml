@@ -8,10 +8,24 @@ name: Mint the day's booking code
 # once already. The site builds five or six times a day off the sweep hook, so
 # minting there would be eighteen booking calls to publish one code.
 #
-# 06:00 UTC, which is 07:00 in Lagos. Early enough that the whole day's card is
-# still ahead of kick-off - the script refuses any fixture inside fifteen
-# minutes of starting - and before the 06:30 build, so the morning's deploy
-# already carries the code.
+# IT ASKS FOR 06:00 UTC AND GITHUB DELIVERS IT AT MIDDAY. Measured over the
+# week to 15 Sep, every run late and none of them close: 10:52, 10:57, 10:54,
+# 10:51, 10:19, 11:19, 12:12 - between four and six hours behind the cron. That
+# is free-tier scheduling, not a misconfiguration, and the paragraph that used
+# to sit here said "07:00 in Lagos, before the 06:30 build" as though the
+# number in the cron were a promise.
+#
+# What is actually true: the code is minted around midday UTC, so a reader
+# looking for it at breakfast in Lagos finds yesterday's until roughly 12:00
+# local. Nothing breaks - mkcode.js refuses any fixture inside fifteen minutes
+# of kick-off, so a late run picks later games rather than dead ones - and the
+# build that follows carries the code from then on.
+#
+# The cron is LEFT AT 06:00 on purpose. Moving it earlier to compensate is a
+# guess about somebody else's queue: the delay is theirs to vary, and a 03:00
+# cron that lands at 09:00 today can land at 05:00 tomorrow. If the morning
+# actually matters, the fix is an external trigger - a scheduler outside GitHub
+# calling workflow_dispatch - not a number chosen to cancel out a queue.
 #
 # Needs no secrets. It books through the public route, the same one the site
 # uses, and writes to the repository - which is why the job asks for

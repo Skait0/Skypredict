@@ -22,9 +22,18 @@ name: Can each bookmaker still take a slip
 # green by being absent, which is the exact shape of failure it was written to
 # catch.
 #
-# So daily-code.yml calls it. That workflow's 06:00 schedule demonstrably
-# fires, and the code it mints is the thing that would be wrong if a mapping
-# had rotted, so the canary now rides the trigger it exists to protect.
+# So daily-code.yml calls it. That workflow's schedule does fire - which is the
+# whole difference - and the code it mints is the thing that would be wrong if
+# a mapping had rotted, so the canary now rides the trigger it exists to
+# protect.
+#
+# IT FIRES LATE, AND THAT IS WORTH KNOWING RATHER THAN PRETENDING. daily-code
+# asks for 06:00 UTC and lands between 10:19 and 12:12, measured across the
+# week to 15 Sep. So this runs at midday rather than at dawn, and the books are
+# checked after the day's code is minted rather than before. That is still the
+# right trade: a check that happens four hours late tells you the wire broke,
+# and one scheduled for 05:30 that never fires tells you nothing at all. See
+# daily-code.yml for why the cron is not being tuned to cancel the delay out.
 #
 # IT DOES NOT GATE THE MINT. It is a sibling job, not a step in front of one,
 # and a red canary does not stop a code being published. mkcode.js already

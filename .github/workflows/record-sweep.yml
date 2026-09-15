@@ -6,7 +6,30 @@ name: Record full-time results
 # near enough, so the schedule lives here instead. GitHub Actions is free for
 # this and the repo is already on GitHub.
 #
-# Every 10 minutes, around the clock.
+# IT ASKS FOR EVERY 10 MINUTES AND GETS ABOUT SEVEN RUNS A DAY. Measured
+# 15 Sep across 123 scheduled runs since 29 Aug: 7.2 runs/day against the 144
+# the cron asks for - 5% of them - with a median gap of 199 minutes, p90 of
+# 307, and a worst gap of 471. Gaps at or under 15 minutes: ZERO of 122.
+#
+# Read that against the paragraph below on why the interval is ten minutes. The
+# argument is sound and its premise is missing: the gap between polls is the
+# window in which a late goal is missed, and that window is three hours, not
+# ten minutes. A match is recorded at the last score seen before it left the
+# feed, so on these gaps most matches are last seen long before the 80th
+# minute the sweep requires - which is the same failure the 10:00-23:59 window
+# was widened to fix, arriving by another road.
+#
+# Grading does not appear to rest on this any more: prebuild reports its
+# full-time scores as "20 dated, 0 live, 182 from the score sources", so
+# soccervista/footballdata/oracle are carrying it and the live sweep
+# contributed nothing that day. One observation, not a measurement - written
+# down so the next person starts from it rather than from the cadence this file
+# used to claim.
+#
+# NOT FIXED HERE, deliberately. A cron that fires 5% of the time cannot be
+# tuned into one that fires reliably; the answer is an external scheduler
+# calling workflow_dispatch, or accepting that the score sources own grading
+# and this job is a supplement. Both are decisions rather than edits.
 #
 # It used to run 10:00-23:59 UTC, described as "the football day". That is the
 # European football day. We publish 81 fixtures across MLS, Liga MX, Brazil
