@@ -10711,6 +10711,10 @@ function refreshByoPanels(){
     if(!BYO.legs||!BYO.legs.length) return;
     var out=$("byoOut"); if(!out||!out.innerHTML) return;
     if(document.getElementById("codeModal")) return;
+    /* In flight counts as busy. The boxes are EMPTY between the tap and the
+       reply, so content alone said "not busy" and the redraw took the panel
+       out from under a booking that was already paid for. */
+    if(BYO._booking) return;
     var busy=["byoConvOut","byoSaferOut"].some(function(id){
       var el=$(id); return el&&el.innerHTML.trim(); });
     if(busy) return;
@@ -13624,21 +13628,41 @@ function wireSafer(wrap,legs,B){
       var o={eventId:l.eventId}; o[B.arg||"prediction"]=code; return o;
     });
     go.disabled=true; go.textContent="Booking…";
+    /* THE PANEL CAN LEAVE WHILE THE REQUEST IS STILL IN THE AIR.
+       #byoSaferOut is drawn inside the safer panel, and refreshByoPanels
+       redraws that panel whenever ids land - loadSporty retries for seconds
+       after boot. Its `busy` guard checks whether these boxes have CONTENT,
+       and between the tap and the reply this one is empty, so the guard waves
+       the redraw through and the node the reply is addressed to is gone.
+       Reported from Sentry on a Twitter in-app browser on an iPhone, where a
+       slow network holds that window open long enough to hit every time:
+       "TypeError: null is not an object (evaluating $("byoSaferOut").innerHTML=)".
+       Two halves: the panel is marked busy for the whole flight, and every
+       write checks the box is still there. The flag alone would not do - the
+       reader can switch view or read another code - and the guard alone would
+       lose the answer silently. */
+    BYO._booking=true;
+    var done=function(){ BYO._booking=false;
+      go.disabled=false; go.textContent="Apply and get a code"; };
     bookFetch(sels,B).then(function(d){
+      var out=$("byoSaferOut");
       var code=d&&d.success&&B.codeOf(d);
       if(code){
-        $("byoSaferOut").innerHTML="";
+        BYO._booking=false;
+        if(!out) return;            /* the code is minted; nowhere left to draw it */
+        out.innerHTML="";
         showCode(code,"byoSaferOut",null,B,plan.map(function(p){
           return {id:p.f?fid(p.f):null,code:p.to,f:p.f,p:p.pNew};
         }));
       }else{
-        $("byoSaferOut").innerHTML=bookErrHTML(d,B);
-        go.disabled=false; go.textContent="Apply and get a code";
+        if(out) out.innerHTML=bookErrHTML(d,B);
+        done();
       }
     }).catch(function(){
-      $("byoSaferOut").innerHTML="<div class='code-err'><b>Couldn't reach the "+
+      var out=$("byoSaferOut");
+      if(out) out.innerHTML="<div class='code-err'><b>Couldn't reach the "+
         "booking service.</b><span>Check your connection and try again.</span></div>";
-      go.disabled=false; go.textContent="Apply and get a code";
+      done();
     });
   });
 }
