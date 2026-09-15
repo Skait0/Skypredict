@@ -300,3 +300,28 @@ test("the bottom bar draws its own focus ring, not the browser's", () => {
   assert.match(index, /\.btab:focus\{outline:none\}/);
   assert.match(index, /\.btab:focus-visible\{outline:2px solid var\(--red\)/);
 });
+
+test("the jobs and their panel ride beside the games, not under forty of them", () => {
+  /* Reported: a 40-leg code buries the panel you are working in. The legs are
+     folded by default, but the fold exists to be opened, and then #byoStage is
+     off the bottom with nothing to do but scroll back.
+     One wrapper, two rules. The wrapper is not decoration: placing the two by
+     grid maths put the panel in the middle of the leg list, because a spanning
+     left column splits its height across the rows it covers. Measured before
+     and after - stage at y=1764, then beside the jobs at the top. */
+  assert.match(index, /<div class="byo-side">/, "the side column is gone");
+  const side = index.slice(index.indexOf('<div class="byo-side">'),
+    index.indexOf("<!-- /.byo-side -->"));
+  assert.ok(side.includes('id="byoJobs"') && side.includes('id="byoStage"'),
+    "the jobs and the panel they open must travel together");
+  assert.ok(index.indexOf("<!-- /.byo-side -->") < index.indexOf('id="byoOut"'),
+    "the side column must come before the games, or mobile order has nothing to swap");
+  /* Desktop: two columns, the side one sticky so it survives a long list. */
+  assert.match(index, /\.byo\{display:grid;grid-template-columns:minmax\(0,1fr\) 380px/);
+  assert.match(index, /\.byo>\.byo-side\{grid-column:2;position:sticky/);
+  assert.match(index, /grid-auto-flow:row dense/,
+    "without dense the games start a row below the side column");
+  /* Phone: no second column, so the panel rides above the games instead. */
+  assert.match(index, /\.byo>\.byo-side\{order:1\}/);
+  assert.match(index, /\.byo>#byoOut\{order:2\}/);
+});

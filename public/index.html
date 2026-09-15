@@ -3362,6 +3362,43 @@ html.mode-live #live{display:block}
 .byo-changed b{color:var(--win-ink)}
 /* ---- a code somebody else built, at the foot of the builder ---- */
 .byo{margin-top:18px;padding-top:16px;border-top:1px solid var(--line-soft)}
+/* THE PANEL YOU ARE WORKING IN MUST NOT SIT UNDER FORTY GAMES.
+   Reading a code draws three things in DOM order: #byoJobs (the three jobs),
+   #byoOut (the count and the folded leg list) and #byoStage (the panel for
+   whichever job was chosen). Folded, that is compact - but the fold is there
+   to be opened, and forty legs then push the stage off the bottom with nothing
+   to do but scroll back.
+   Two answers, because a phone and a desktop want different ones. */
+@media(min-width:1060px){
+  /* Games on the left, the jobs and the live panel stacked on the right, and
+     the right column stays put while the left one scrolls. Same breakpoint and
+     the same sticky shape as .home-rail; 380 against its 372 because the
+     convert and split boxes carry two columns of buttons. */
+  .byo{display:grid;grid-template-columns:minmax(0,1fr) 380px;
+    column-gap:26px;align-items:start;
+    /* dense, or the games start a row below the side column: .byo-side is
+       earlier in the DOM and auto-placement never walks backwards. Same reason
+       the wizard panel needs it. */
+    grid-auto-flow:row dense}
+  .byo>h3,.byo>.byo-sub,.byo>.byo-row{grid-column:1/-1}
+  .byo>#byoOut{grid-column:1}
+  .byo>.byo-side{grid-column:2;position:sticky;top:10px;
+    /* A cap and its own scrollbar, or a long convert box makes this column
+       taller than the screen and its bottom can never be reached. */
+    max-height:calc(100vh - 20px);overflow-y:auto;scrollbar-width:thin}
+  /* The jobs sit in a row of three across the page; in a 380px column they are
+     a stack, which is also the order somebody reads them in. */
+  .byo>.byo-side>.byo-jobs{grid-template-columns:1fr}
+}
+@media(max-width:720px){
+  /* No room for a second column, so it is order instead: the jobs and whatever
+     panel they opened ride above the games, which stay below as the reference
+     material they already are. */
+  .byo{display:flex;flex-direction:column}
+  .byo>.byo-side{order:1}
+  .byo>#byoOut{order:2}
+}
+}
 .byo h3{font-size:14px;font-weight:800;letter-spacing:-.01em;margin:0 0 3px}
 .byo-sub{margin:0 0 11px;font-size:12.5px;font-weight:600;color:var(--faint)}
 .byo-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -7090,6 +7127,12 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
            can do while it is still empty, and they are dead until there is a
            slip to do it to - a button you cannot press yet still teaches you
            it is there. -->
+      <!-- The jobs and the panel they open are one column on a desktop and one
+           block on a phone, so they are one element - see .byo-side. Wrapped
+           rather than placed by grid maths: a spanning left column splits its
+           height across the rows it covers, which dropped the panel into the
+           middle of a forty-leg list. -->
+      <div class="byo-side">
       <div class="byo-jobs" id="byoJobs" role="group" aria-label="What to do with the code">
         <button class="byo-job" type="button" data-job="edit" disabled>
           <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"/></svg></span>
@@ -7101,8 +7144,9 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
           <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v7a3 3 0 003 3h6a3 3 0 013 3v5"/><path d="M6 21v-5a3 3 0 013-3"/></svg></span>
           <b>Split it</b><i>Two or more smaller tickets</i></button>
       </div>
-      <div id="byoOut" aria-live="polite"></div>
       <div id="byoStage" aria-live="polite"></div>
+      </div><!-- /.byo-side -->
+      <div id="byoOut" aria-live="polite"></div>
     </section>
   </section>
 
