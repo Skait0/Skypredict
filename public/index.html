@@ -5570,12 +5570,22 @@ button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
   .bld-panel.wizard-panel>.wsp-lbl:first-child{grid-area:1/1}
   .bld-panel.wizard-panel>#wspOddsChips{grid-area:2/1}
   .bld-panel.wizard-panel>.wsp-hint{grid-area:3/1}
-  .bld-panel.wizard-panel>.wsp-lbl:has(+ #wspStyleChips){grid-area:1/2}
-  .bld-panel.wizard-panel>#wspStyleChips{grid-area:2/2}
-  /* Only as wide as what it says - as a grid item it was stretching to the
-     full 565px of its column, which is a pill pretending to be a bar. */
-  .bld-panel.wizard-panel>.wsp-auto-lbl{grid-area:3/2}
-  .bld-panel.wizard-panel>.wsp-slider-link{grid-area:4/2;align-self:start;justify-self:start}
+  /* ONE CELL, NOT FOUR, and that is the fix for the hole under the style
+     chips. While these were separate grid items they sat in rows shared with
+     the left column, and the payout chips - which wrap to two lines - made row
+     2 twice the height of the style chips beside them. The 42px of air that
+     left under those chips could not be closed from this side: the row was
+     sized by the other column. As a single item the column stacks on its own
+     margins, so "Auto" sits where it looks like it should.
+     It spans rows 1-4 so the button below keeps its own row across the panel. */
+  .bld-panel.wizard-panel>.wsp-right{grid-area:1/2/5/3;
+    display:flex;flex-direction:column;align-items:flex-start}
+  /* The two columns still have to start level, and the rule that zeroed the
+     labels' top margin only reaches direct children. */
+  .bld-panel.wizard-panel>.wsp-right>.wsp-lbl:first-child{margin-top:0}
+  /* Only as wide as what it says - stretched to the column it was a pill
+     pretending to be a bar. */
+  .bld-panel.wizard-panel .wsp-slider-link{align-self:flex-start}
   /* THE ACTION CLOSES THE PANEL, so it gets its own row across both columns
      rather than hanging off the bottom of the right-hand one. Sitting in the
      style column it read as a caption under "Or let the Slider pick the
@@ -5591,10 +5601,11 @@ button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
     min-width:250px;margin:18px 0 2px}
   .bld-panel.wizard-panel>.wsp-lbl{margin-top:0}
   /* ...except this one, which follows a row of chips rather than starting a
-     column. The rule above zeroes every label's top margin so the two columns
-     start level, and that left "Auto" sitting hard against the style chips
-     above it - the only label in the panel with something directly over it. */
-  .bld-panel.wizard-panel>.wsp-auto-lbl{margin-top:20px}
+     column, and would otherwise sit hard against the style chips above it -
+     the only label in the panel with something directly over it. 14px, not
+     the old 20: that number was chosen while a 42px hole sat above it and was
+     doing nothing to close it. */
+  .bld-panel.wizard-panel .wsp-auto-lbl{margin-top:14px}
 }
 .wizard-panel .wsp-lbl{margin:13px 0 7px}
 .wizard-panel .wsp-chips{gap:7px}
@@ -17763,6 +17774,8 @@ function renderWizardPanel(){
        nothing lit at all. wspStyleOn decides, so this cannot disagree with what
        wspBuild does. */
     var _on=wspStyleOn();
+    /* Wrapped: see .wsp-right - the columns must not share rows. */
+    html += "<div class='wsp-right'>";
     html += "<div class='wsp-lbl'>Slip style</div><div class='wsp-chips' id='wspStyleChips'>"+
       styles.map(function(st){return "<button class='wsp-chip wsp-style"+(_on===st[0]?" on":"")+"' data-lo='"+st[0]+"'><b>"+st[1]+"</b>"+(st[2]?"<i>"+st[2]+"</i>":"")+"</button>";}).join("")+"</div>";
     /* AUTO WAS A CHIP HERE AND IS NOW A LINK OUT.
@@ -17791,6 +17804,7 @@ function renderWizardPanel(){
     html += "<button class='wsp-slider-link' id='wspToSlider' type='button'>"+
       "<span class='wsl-t'>Let the Slider pick</span>"+
       "<span class='wsl-a' aria-hidden='true'>\u2192</span></button>";
+    html += "</div>";
   }
   html +=
     "<button class='book-btn wsp-go"+(WSP.odds==null?" waiting":"")+
