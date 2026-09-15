@@ -13,9 +13,25 @@ name: Can each bookmaker still take a slip
 # The unit suites prove the logic. Only this proves the wire: our edge, the
 # proxy, Railway, the bookmaker, and the mapping in between, on real fixtures.
 #
-# 05:30 UTC, half an hour before the daily code is minted. If a book is down or
-# a mapping has rotted, the failure lands BEFORE the job that would publish a
-# code against it, rather than after.
+# IT HAS NO SCHEDULE OF ITS OWN, ON PURPOSE. It used to ask for 05:30 UTC, half
+# an hour before the daily code is minted, and in the fourteen hours that cron
+# existed GitHub fired it zero times. That is not a misconfiguration: scheduled
+# runs on a free-tier repository are dropped silently under load, and this repo
+# drops most of them - record-sweep.yml asks for every ten minutes and lands
+# about five times a day. A canary whose own trigger is unreliable reports
+# green by being absent, which is the exact shape of failure it was written to
+# catch.
+#
+# So daily-code.yml calls it. That workflow's 06:00 schedule demonstrably
+# fires, and the code it mints is the thing that would be wrong if a mapping
+# had rotted, so the canary now rides the trigger it exists to protect.
+#
+# IT DOES NOT GATE THE MINT. It is a sibling job, not a step in front of one,
+# and a red canary does not stop a code being published. mkcode.js already
+# handles a book being down better than a blanket refusal would: it publishes
+# the other book's code and says which is missing, which was written after a
+# day with nothing on the page because Bet9ja's origin blipped for a minute.
+# This says the wire broke. It does not decide what to do about it.
 #
 # COST. Two selections per book per day. api/book.js is explicit about what a
 # booking call costs - Railway CPU on a $5 plan and bookmaker goodwill already
@@ -25,8 +41,9 @@ name: Can each bookmaker still take a slip
 # Needs no secrets: it books through the public route the site itself uses.
 
 on:
-  schedule:
-    - cron: "30 5 * * *"
+  # Called by daily-code.yml. No inputs: the defaults are what the morning run
+  # wants - every book, really booked.
+  workflow_call:
   workflow_dispatch:
     inputs:
       books:

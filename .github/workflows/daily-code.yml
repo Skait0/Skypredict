@@ -35,6 +35,13 @@ permissions:
   contents: write
 
 jobs:
+  # Can each book still take a slip at all? Beside the mint rather than in
+  # front of it - it reports, it does not gate. canary.yml owns that reasoning,
+  # along with why it no longer carries a schedule of its own: it asked for
+  # 05:30 and GitHub fired it zero times.
+  canary:
+    uses: ./.github/workflows/canary.yml
+
   mint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
