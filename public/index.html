@@ -10063,7 +10063,15 @@ function dropUnbookable(picks,d,B){
       if(f&&f[B.odds]) delete f[B.odds][c.code];});
     return kept;
   }
-  return picks.filter(function(c){return B.priced(c);});
+  /* NO LIST, NO GUESS. This used to fall back to our own odds and drop
+     whatever we held no price for - the same false evidence that made the
+     pre-flight refuse legs SportyBet was happy to take (see `full` on the
+     BOOKS table and JTEJA5). A book's own named refusal is information; our
+     cache's silence is not, and dropping a leg on it means resending a slip
+     the reader never agreed to shorten. When the server names nothing the
+     slip stands as it is and the error is shown. The book must still list the
+     game - that check never lied. */
+  return picks.filter(function(c){return !!bookIdOf(c,B);});
 }
 const SPORTY_URL="https://www.sportybet.com/ng/?shareCode=";
 /* Their own bundle matches /[?&]bookABetCode=([\da-zA-Z]+)/ against
@@ -10156,7 +10164,21 @@ var BOOKS={
      the class suffix the branded surfaces use. Both are here rather than
      compared by name at the call site, because a name comparison is a place a
      new book gets silently left out. */
-  sporty:{key:"sporty",label:"SportyBet",id:"eventId",odds:"sportyOdds",blend:true, full:true, arg:"prediction",skin:"sb",readable:true, wholeLines:true},
+  /* `full` WAS TRUE AND IT WAS NOT. It claimed SportyBet's feed lists every
+     market they offer on an event, which made "missing from our cache" read as
+     "they do not sell it" - and that refusal happened in the browser, before
+     any request. Their feed is partial per event: measured 15 Sep on the next
+     day's card, Russian Premier League events carried 1/X/2, double chance, GG
+     and the first-half lines with no Over/Under at all, and Swiss Super League
+     events carried every Over/Under line with no 1X2 at all. Both book.
+     A reader's own code, JTEJA5, held four legs we were refusing on the very
+     event ids we match - Lugano 1X, Thun 1X, Baltika OVER_1.5, Lokomotiv
+     OVER_2.5 - so the market was there and the "no" was ours.
+     False now, which puts SportyBet on the same footing as the other two: the
+     book is judged on whether it lists the GAME, and the market is answered by
+     the bookmaker, who names what it will not take. server.py's _unbookable
+     carries the same correction on the other side of the wire. */
+  sporty:{key:"sporty",label:"SportyBet",id:"eventId",odds:"sportyOdds",blend:true, full:false, arg:"prediction",skin:"sb",readable:true, wholeLines:true},
   bet9ja:{key:"bet9ja",label:"Bet9ja",  id:"b9EventId",odds:"b9Odds",  blend:false,full:false,arg:"code",      skin:"b9",readable:true, wholeLines:false},
   /* BetKing, on the same terms as Bet9ja and for the same reason: a booking
      code is only any use to somebody who banks with the firm that issued it.
@@ -10910,22 +10932,14 @@ function bookWire(){
   /* SportyBet lists team totals on roughly half its card and one leg it
      cannot take rejects the whole ticket, so a real price in the listing is
      the proof the market exists. */
-  BOOKS.sporty.priced=function(c){
-    /* The sixth copy of "read the cache and decide", found by
-       test/bookability.test.js the day the other five were collapsed. Asked
-       through bookVerdict now, so a market the sweep never fetches is "unknown"
-       here too rather than silently unpriced.
-       AND IT ASKED THE WRONG HALF OF THAT VERDICT UNTIL 15 SEP. bookIsPriced is
-       verdict === "priced", so "unknown" - every market outside the sweep's 24 -
-       counted as a refusal, and the pre-flight said "SportyBet can't take 8
-       picks" about a slip SportyBet books: eight games with Result-or-both-score
-       on each, a market it sells as 860/74 and took as Z6503X while this was
-       being read. bookMayTake is the question a booking gate is actually
-       asking. "not-priced" stays a refusal - that is what keeps a team-total
-       missing from a priced fixture out of the slip. */
-    var f=(c&&c.f)||fixtureById(c&&c.id);
-    return bookMayTake(f,c&&c.code,BOOKS.sporty);
-  };
+  /* JUDGED ON THE GAME NOW, LIKE THE OTHER TWO, and for the reason their own
+     comments give: a feed that does not list every market cannot be used to
+     prove a market absent. SportyBet's does not - see `full` on the table
+     above and JTEJA5, four legs refused here that the bookmaker took. What
+     stays is the check that matters and never lied: does this book list the
+     game. A market they turn out not to price comes back named, and the retry
+     drops exactly that leg. */
+  BOOKS.sporty.priced=function(c){ return !!bookIdOf(c,BOOKS.sporty); };
 
   /* `label` is the name in a sentence; `mark` is the brand drawn in its own
      colours, for the places that show a logo rather than say a word. */

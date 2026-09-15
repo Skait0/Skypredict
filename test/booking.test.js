@@ -70,24 +70,40 @@ function harness(book) {
 }
 
 /* A pick as the booking code sees one: the fixture is carried on `.f`. */
+/* PLACEABLE NOW MEANS "THIS BOOK LISTS THE GAME", not "our cache holds a price
+   for this market". SportyBet's fixtures feed turned out to be partial per
+   event - Russian games with no Over/Under, Swiss games with no 1X2, both
+   bookable - and a reader's code, JTEJA5, held four legs this pre-flight was
+   refusing. So a missing price proves nothing and the book answers for its own
+   card. These helpers keep their old shape: an `odds` map stands for a fixture
+   the book carries, and omitting it stands for one it does not. */
 function pick(home, away, code, odds) {
+  const carried = odds && Object.keys(odds).length;
   return { id: home + away, code: code,
-           f: { home: home, away: away, sportyOdds: odds || {} } };
+           f: { home: home, away: away, sportyOdds: odds || {},
+                eventId: carried ? "sr:match:" + home + away : undefined } };
 }
 
-test("a market SportyBet prices is placeable, one it does not is not", () => {
+test("a game SportyBet lists is placeable, one it does not carry is not", () => {
   const H = harness();
   assert.strictEqual(H.hasSportyMarket(pick("A", "B", "1X", { "1X": 1.35 })), true);
-  assert.strictEqual(H.hasSportyMarket(pick("A", "B", "HOME_OVER_1.5", { "1X": 1.35 })), false,
-    "no odd for that market means SportyBet does not list it");
+  assert.strictEqual(H.hasSportyMarket(pick("A", "B", "1X")), false,
+    "a game this book does not list cannot be booked there");
 });
 
-test("a placeholder odd is not a market", () => {
+test("a market our cache cannot price is sent, not refused", () => {
+  /* THIS IS THE RULE THAT CHANGED, and JTEJA5 is why. SportyBet's fixtures
+     feed carries a partial market set per event - measured 15 Sep, Russian
+     Premier League events with no Over/Under at all and Swiss Super League
+     events with no 1X2 at all - and the bookmaker takes both. A reader's code
+     held four such legs on the same event ids we match, every one of which
+     this pre-flight was refusing under a message naming SportyBet, who had
+     never been asked. So absence from our cache is not evidence any more. */
   const H = harness();
-  /* 1.00 and 1.01 are what an unpriced slot looks like, not a real price. */
-  assert.strictEqual(H.hasSportyMarket(pick("A", "B", "GG", { GG: 1.0 })), false);
-  assert.strictEqual(H.hasSportyMarket(pick("A", "B", "GG", { GG: 1.01 })), false);
-  assert.strictEqual(H.hasSportyMarket(pick("A", "B", "GG", { GG: 1.02 })), true);
+  assert.strictEqual(H.hasSportyMarket(pick("A", "B", "HOME_OVER_1.5", { "1X": 1.35 })), true,
+    "a market missing from our odds must no longer block the leg");
+  assert.strictEqual(H.hasSportyMarket(pick("A", "B", "GG", { GG: 1.0 })), true,
+    "nor must a placeholder price, which says nothing about their card");
 });
 
 test("a slip that is entirely placeable is not interrupted", () => {
@@ -102,7 +118,7 @@ test("an unplaceable leg is named and the choice is offered", () => {
   const H = harness();
   const picks = [
     pick("Arsenal", "Chelsea", "1X", { "1X": 1.3 }),
-    pick("Leeds", "Everton", "HOME_OVER_1.5", { "1X": 1.6 }),   // no market
+    pick("Leeds", "Everton", "HOME_OVER_1.5"),   // a game SportyBet does not list
   ];
   let booked = null;
   assert.strictEqual(H.confirmDropUnpriced(picks, "bookResult", (p) => { booked = p; }), true,
@@ -127,8 +143,7 @@ test("cancelling sends nothing", () => {
      saying no rather than our cache saying nothing. An empty odds map used
      to read as a refusal here; it is "unknown" now - see bookVerdict - and
      unknown is sent rather than refused. */
-  H.confirmDropUnpriced([pick("A", "B", "1X", { "1X": 1.3 }),
-                         pick("C", "D", "GG", { "1X": 1.6 })],
+  H.confirmDropUnpriced([pick("A", "B", "1X", { "1X": 1.3 }), pick("C", "D", "GG")],
     "bookResult", (p) => { booked = p; });
   H.el._handlers["confirm-cancel"]();
   assert.strictEqual(booked, null);
@@ -139,11 +154,16 @@ test("when nothing at all is placeable, say so instead of offering to book none"
   const H = harness();
   let booked = null;
   const r = H.confirmDropUnpriced(
-    [pick("A", "B", "HOME_OVER_1.5", { "1X": 1.6 }),
-     pick("C", "D", "AWAY_OVER_1.5", { "1X": 1.6 })],
+    [pick("A", "B", "HOME_OVER_1.5"), pick("C", "D", "AWAY_OVER_1.5")],
     "bookResult", (p) => { booked = p; });
   assert.strictEqual(r, true);
-  assert.match(H.el.innerHTML, /isn't offering/);
+  /* AND THE SENTENCE CHANGED WITH THE RULE. `byEvent` reads !B.full, so now
+     that SportyBet no longer claims a complete card the honest line is about
+     the GAME, not the market: saying "isn't offering that market" would be a
+     guess about their card, and usually a wrong one. */
+  assert.match(H.el.innerHTML, /doesn't have (this game|any of these games)/);
+  assert.doesNotMatch(H.el.innerHTML, /isn't offering/,
+    "a book whose feed is partial must not claim a market is absent");
   assert.doesNotMatch(H.el.innerHTML, /Book 0/, "offering to book nothing is not a choice");
   assert.strictEqual(booked, null);
 });
@@ -153,8 +173,7 @@ test("one placeable leg is still a slip worth offering", () => {
      single placeable leg just failed. */
   const H = harness();
   let booked = null;
-  H.confirmDropUnpriced([pick("A", "B", "1X", { "1X": 1.3 }),
-                         pick("C", "D", "GG", { "1X": 1.6 })],
+  H.confirmDropUnpriced([pick("A", "B", "1X", { "1X": 1.3 }), pick("C", "D", "GG")],
     "bookResult", (p) => { booked = p; });
   H.el._handlers["confirm-go"]();
   assert.strictEqual(booked.length, 1);
@@ -195,7 +214,8 @@ test("every list handed to the pre-flight carries the fixture", () => {
 test("a leg shaped like My slip's is resolvable", () => {
   /* The exact failure: a pick with no `.f`, relying on `id` alone. */
   const H = harness();
-  const f = { home: "Man United", away: "Ipswich", sportyOdds: { "OVER_1.5": 1.17 } };
+  const f = { home: "Man United", away: "Ipswich", eventId: "sr:match:muips",
+              sportyOdds: { "OVER_1.5": 1.17 } };
   const byId = { "mu-ips": f };
   const api = new Function("BY",
     "function fixtureById(id){return BY[id]||null;}" + BOOKCTX.prelude("sporty") +
@@ -242,8 +262,13 @@ test("Bet9ja judges a leg on the game, not on a listed price", () => {
     { b9Odds: { "1X": 2.4 }, sportyOdds: { "1X": 1.9, "OVER_1.5": 1.3 } });
   assert.strictEqual(H.BOOKS.bet9ja.priced(leg), true,
     "an unlisted market on a game Bet9ja carries is still bookable");
-  assert.strictEqual(H.BOOKS.sporty.priced(leg), false,
-    "SportyBet still needs a real price, because one bad leg loses the ticket");
+  /* SportyBet is judged the same way now. Its feed does not list every market
+     it sells either - JTEJA5 proved that - so the only question either book
+     can answer from a feed is whether it carries the GAME. */
+  assert.strictEqual(H.BOOKS.sporty.priced(leg), true,
+    "a market missing from our SportyBet odds no longer condemns the leg");
+  assert.strictEqual(H.BOOKS.sporty.priced(b9pick("1X", { sporty: false })), false,
+    "a game SportyBet does not list is still not bookable there");
 });
 
 test("a game Bet9ja does not carry is not bookable there", () => {

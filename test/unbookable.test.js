@@ -103,12 +103,18 @@ test("the price we were wrong about is forgotten", () => {
     "and nothing else touched");
 });
 
-test("with no list from the server it falls back to our own odds", () => {
-  /* An older server build, or a network error shaped like a rejection. Better
-     than nothing, and it is what the code did before. */
+test("with no list from the server it drops nothing on our own odds", () => {
+  /* IT USED TO FALL BACK TO OUR PRICES, and that was the same false evidence
+     that had the pre-flight refusing legs SportyBet takes: their fixtures feed
+     carries a partial market set per event, so a leg we hold no price for is
+     not a leg they will not take. JTEJA5 held four of them.
+     A named refusal from the book is information. Our cache's silence is not,
+     and dropping a leg on it means resending a slip the reader never agreed to
+     shorten - so when the server names nothing, the slip stands and the error
+     is shown instead. */
   const picks = [leg("e1", "OVER_1.5", 1.2), leg("e2", "1X", 1.0)];
-  assert.deepStrictEqual(dropUnbookable(picks, {}).map(c => c.eventId), ["e1"]);
-  assert.deepStrictEqual(dropUnbookable(picks, null).map(c => c.eventId), ["e1"]);
+  assert.deepStrictEqual(dropUnbookable(picks, {}).map(c => c.eventId), ["e1", "e2"]);
+  assert.deepStrictEqual(dropUnbookable(picks, null).map(c => c.eventId), ["e1", "e2"]);
 });
 
 test("an empty list is not treated as 'drop everything'", () => {

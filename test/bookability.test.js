@@ -147,6 +147,8 @@ function pricedFn(odds) {
     "var BOOKS={sporty:{key:'sporty',odds:'sportyOdds',id:'eventId',full:true}};",
     "function curBook(){return BOOKS.sporty;}",
     "function fixtureById(){return null;}",
+    /* sporty.priced asks this now, the same question the other two books ask. */
+    grab("bookIdOf"),
     "var SAFE_UNPRICED=" + SAFE + ";",
     "function safeUnpriced(c){return !!SAFE_UNPRICED[c];}",
     grab("fetchedMarket"), grab("bookVerdict"), grab("bookMayTake"), grab("bookIsPriced"),
@@ -163,21 +165,42 @@ test("a market the sweep never fetches is not called unbookable on SportyBet", (
   const priced = pricedFn();
   assert.equal(priced({ id: "sr:match:1", f: f, code: "MIXGG_1" }), true,
     "the pre-flight refuses Result-or-both-score, which SportyBet books (Z6503X)");
-  /* The rest of the same family, and the other pass-through markets with it. */
   ["MIXGG_X", "MIXGG_2", "MIX_1_OV_2.5", "MIX_X_OV_2.5", "WINHALF_H_Y"].forEach((c) => {
     assert.equal(priced({ id: "sr:match:1", f: f, code: c }), true,
       "the pre-flight refuses " + c + ", a market the sweep does not fetch");
   });
 });
 
-test("a market the sweep DOES fetch is still refused when SportyBet has not listed it", () => {
-  /* The reason this gate exists at all: team totals sit on about half the
-     card, the sweep asks for them on every fixture, so their absence from a
-     priced fixture is SportyBet saying no - and one refused leg takes the
-     whole ticket. Widening the gate must not cost this. */
+test("a market the sweep DOES fetch is sent too, because the feed is partial", () => {
+  /* THIS IS THE RULE THAT REVERSED, and it is worth saying why in full.
+   *
+   * It used to read: the sweep asks for team totals on every fixture, so their
+   * absence from a priced fixture is SportyBet saying no, and one refused leg
+   * takes the whole ticket. The first half is true. The conclusion was not.
+   *
+   * SportyBet's fixtures feed carries a PARTIAL market set per event. Measured
+   * 15 Sep on the next day's card: Russian Premier League events carried
+   * 1/X/2, double chance, GG and the first-half lines and NO Over/Under at
+   * all; Swiss Super League events carried every Over/Under line and NO 1X2 at
+   * all. Both book perfectly well.
+   *
+   * A reader's own code settled it. JTEJA5 holds four legs this gate was
+   * refusing, on the very event ids we match:
+   *
+   *     sr:match:74374472  1X        Lugano v FC St. Gallen 1879
+   *     sr:match:74374468  1X        FC Thun v Servette Geneva
+   *     sr:match:72334336  OVER_1.5  FC Baltika Kaliningrad v FK Zenit
+   *     sr:match:72334340  OVER_2.5  Lokomotiv Moscow v PFK Krylia Sovetov
+   *
+   * So a missing price is not proof of anything, and the book answers for its
+   * own card: it names what it will not take and the retry drops exactly that.
+   */
   const f = { eventId: "sr:match:1", sportyOdds: { "1": 1.8, "OVER_1.5": 1.3 } };
   const priced = pricedFn();
-  assert.equal(priced({ id: "sr:match:1", f: f, code: "HOME_OVER_1.5" }), false,
-    "a fetched market missing from a priced fixture must still be refused");
+  assert.equal(priced({ id: "sr:match:1", f: f, code: "HOME_OVER_1.5" }), true,
+    "a fetched market missing from a priced fixture must now be sent, not refused");
   assert.equal(priced({ id: "sr:match:1", f: f, code: "OVER_1.5" }), true);
+  /* What still stands: a game this book does not list cannot be booked there. */
+  assert.equal(priced({ id: "sr:match:2", f: { sportyOdds: {} }, code: "1" }), false,
+    "a fixture with no SportyBet id is still unplaceable");
 });
