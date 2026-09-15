@@ -9957,13 +9957,18 @@ var BOOKS={
      would run the SportyBet blend TWICE - market weight 30% becomes about 51%
      - and never read a Bet9ja price at all. Make blendFixture book-aware
      first, and only if those numbers ever start to diverge. */
-  /* `arg` is what the upstream route calls the market on a selection -
+  /* `wholeLines` says whether the book sells a whole-number line - Over 3.0,
+     Asian -1.0 - the kind that pushes when the score lands exactly on it.
+     SportyBet does; neither other book does, and a leg on one cannot travel to
+     them without moving half a goal (see nearestLine). Read from here so the
+     rule is about the book's catalogue rather than about its name.
+     `arg` is what the upstream route calls the market on a selection -
      SportyBet's takes `prediction`, both others take `code` - and `skin` is
      the class suffix the branded surfaces use. Both are here rather than
      compared by name at the call site, because a name comparison is a place a
      new book gets silently left out. */
-  sporty:{key:"sporty",label:"SportyBet",id:"eventId",odds:"sportyOdds",blend:true, full:true, arg:"prediction",skin:"sb",readable:true},
-  bet9ja:{key:"bet9ja",label:"Bet9ja",  id:"b9EventId",odds:"b9Odds",  blend:false,full:false,arg:"code",      skin:"b9",readable:true},
+  sporty:{key:"sporty",label:"SportyBet",id:"eventId",odds:"sportyOdds",blend:true, full:true, arg:"prediction",skin:"sb",readable:true, wholeLines:true},
+  bet9ja:{key:"bet9ja",label:"Bet9ja",  id:"b9EventId",odds:"b9Odds",  blend:false,full:false,arg:"code",      skin:"b9",readable:true, wholeLines:false},
   /* BetKing, on the same terms as Bet9ja and for the same reason: a booking
      code is only any use to somebody who banks with the firm that issued it.
      `full` is false because their day feed carries the default markets only -
@@ -9973,7 +9978,7 @@ var BOOKS={
      `blend` is false for the same modelling reason it is false for Bet9ja,
      not because the unders are missing: betking.py maps every under line, and
      blendFixture still reads f.sportyOdds whatever book it was called for. */
-  betking:{key:"betking",label:"BetKing",id:"bkEventId",odds:"bkOdds",blend:false,full:false,arg:"code",skin:"bk",readable:true}
+  betking:{key:"betking",label:"BetKing",id:"bkEventId",odds:"bkOdds",blend:false,full:false,arg:"code",skin:"bk",readable:true,wholeLines:false}
 };
 
 /* Common team name aliases that SportyBet uses but our data doesn't (or vice versa).
@@ -13037,8 +13042,35 @@ function fixtureByLeg(l,B){
    Asked for deliberately, and done openly: the leg converts to the nearest
    line the other book actually sells, and every screen that shows it says it
    was changed. It is never applied to a leg that could have moved untouched. */
+/* A WHOLE LINE THAT HAS TO BECOME A HALF LINE, AND WHICH WAY IT MOVES.
+   Over 3.0 pays on four, pushes on exactly three; Over 2.5 pays on three. So
+   the half-line neighbour is not "the next one along", it is the one that is
+   NEVER WORSE for the punter - down for an over, UP for an under. Getting that
+   backwards turns a stake-back into a loss on the one scoreline the whole
+   substitution is about, and it would look identical on the slip.
+   The price moves with it. This is a real change to somebody's bet, which is
+   why every leg it touches is counted and named on screen rather than done
+   quietly. */
 var NEAREST_LINE={"OVER_2":"OVER_1.5","OVER_3":"OVER_2.5",
                   "UNDER_2":"UNDER_2.5","UNDER_3":"UNDER_3.5"};
+/* The same rule on a handicap, where it is arithmetic rather than a table -
+   there are 64 Asian codes and listing them would be 64 chances to fumble a
+   sign. A whole-ball line pushes when the margin lands exactly on it, so the
+   generous neighbour is always half a goal FURTHER IN THE PUNTER'S FAVOUR:
+   -1 becomes -0.5 (a one-goal win stops being a push and becomes a win), +1
+   becomes +1.5. In our own notation, where AH_2_-1 means the AWAY side giving
+   one, that is the same +0.5 either side - so one line of arithmetic covers
+   both.
+   Quarter balls are left alone. They do not push, so they have nothing to fix,
+   and their neighbour is a quarter of a goal away rather than a half. */
+function ahReline(code){
+  var m=/^(AH_[12])_(-?\d+)$/.exec(code||"");
+  if(!m) return null;
+  return m[1]+"_"+(Number(m[2])+0.5);
+}
+/* Both, in the order a caller wants them: the table first because it is exact,
+   the arithmetic second. */
+function nearestLine(code){ return NEAREST_LINE[code]||ahReline(code); }
 
 /* THE SECOND TIER, AND WHY IT IS A SWITCH RATHER THAN A DEFAULT.
    1X2-or-Over/Under is the family these codes lean on hardest - 45 legs of
@@ -13075,8 +13107,12 @@ function byoConversion(){
     else {
       /* Only when the line itself cannot travel. A market the other book
          sells is never substituted. */
-      var code=l.prediction, near=NEAREST_LINE[code], mix=mixReline(code);
-      if(near && to.key==="bet9ja"){
+      var code=l.prediction, near=nearestLine(code), mix=mixReline(code);
+      /* Read off the table, not off the name. This was `to.key==="bet9ja"`,
+         which is true of exactly the book it was written for - BetKing does
+         not sell a whole line either and got none of this, so nine legs of a
+         real 39-leg ticket stuck for want of a rule that already existed. */
+      if(near && !to.wholeLines){
         changed.push({leg:l, from:code, to:near});
         code=near;
       } else if(mix && to.key==="sporty"){

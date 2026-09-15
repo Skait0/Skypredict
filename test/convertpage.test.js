@@ -32,15 +32,20 @@ test("the build writes it", () => {
 });
 
 test("the whole-line substitution is described in the direction the code does it", () => {
-  /* NEAREST_LINE is applied only when the slip is going TO Bet9ja - SportyBet
-     sells the whole lines, so nothing has to move on the way in. */
+  /* Applied to any book that does not sell a whole line - SportyBet does, so
+     nothing moves on the way in. It was Bet9ja-only until BetKing arrived and
+     turned out not to sell them either; the page said "Bet9ja" and would have
+     been describing behaviour the converter no longer had. */
   assert.match(index, /var NEAREST_LINE=\{"OVER_2":"OVER_1\.5"/,
     "the substitution table has changed shape");
-  assert.match(index, /if\(near && to\.key==="bet9ja"\)/,
-    "the substitution is no longer Bet9ja-only");
-  assert.match(html, /SportyBet sells Over 2 and Over 3; Bet9ja\s+stops at the half lines/);
+  assert.match(index, /if\(near && !to\.wholeLines\)/,
+    "the substitution is named to one book again");
+  assert.match(html, /Bet9ja and BetKing stop\s+at the half lines/,
+    "the page must name every book the rule applies to");
   assert.match(html, /returns your stake on exactly two goals/,
     "the page must say why it is a different bet, not just that it changed");
+  assert.match(html, /an over moves down and an under moves up/,
+    "the direction is the part that can be got backwards, so it is stated");
 });
 
 test("the 1X2-or-Over/Under move is described as one direction and a switch", () => {

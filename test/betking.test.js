@@ -463,3 +463,79 @@ test("the names are escaped and capped", () => {
   assert.match(chunk, /\.map\(esc\)/, "a bookmaker's string goes through esc");
   assert.match(chunk, /slice\(0,\s*4\)/, "and the list is capped");
 });
+
+/* ------------------------------ a whole line that has to become a half one */
+
+function lineApi() {
+  const decl = /var NEAREST_LINE=\{[\s\S]*?\};/.exec(src)[0];
+  return new Function(decl + fn("ahReline") + fn("nearestLine") +
+    "return {nearestLine};")();
+}
+
+test("a whole line moves the way that never hurts the punter", () => {
+  /* Over 3.0 pays on four and PUSHES on exactly three; Over 2.5 pays on three.
+     So the neighbour is not "the next one along", it is the one that is never
+     worse - down for an over, UP for an under. Backwards, a stake-back becomes
+     a loss on the one scoreline the whole substitution is about, and the slip
+     looks identical either way. */
+  const { nearestLine } = lineApi();
+  assert.strictEqual(nearestLine("OVER_3"), "OVER_2.5");
+  assert.strictEqual(nearestLine("OVER_2"), "OVER_1.5");
+  assert.strictEqual(nearestLine("UNDER_3"), "UNDER_3.5");
+  assert.strictEqual(nearestLine("UNDER_2"), "UNDER_2.5");
+});
+
+test("a whole-ball handicap moves half a goal in the punter's favour", () => {
+  /* Same rule, arithmetic instead of a table - 64 Asian codes would be 64
+     chances to fumble a sign. -1 becomes -0.5, so a one-goal win stops being a
+     push and becomes a win; +1 becomes +1.5. In our notation AH_2_-1 is the
+     AWAY side giving one, so it is +0.5 either side. */
+  const { nearestLine } = lineApi();
+  assert.strictEqual(nearestLine("AH_1_-1"), "AH_1_-0.5");
+  assert.strictEqual(nearestLine("AH_2_-1"), "AH_2_-0.5");
+  assert.strictEqual(nearestLine("AH_1_1"), "AH_1_1.5");
+  assert.strictEqual(nearestLine("AH_1_0"), "AH_1_0.5");
+  assert.strictEqual(nearestLine("AH_1_-2"), "AH_1_-1.5");
+});
+
+test("a line with nothing to fix is left alone", () => {
+  /* A quarter ball does not push, so it has nothing to fix and its neighbour
+     is a quarter of a goal away rather than a half. A half line is already
+     where we would move it to. */
+  const { nearestLine } = lineApi();
+  for (const c of ["AH_1_-0.25", "AH_1_-0.75", "AH_1_-0.5", "OVER_2.5",
+                   "UNDER_3.5", "GG", "1X"]) {
+    assert.ok(!nearestLine(c), c + " was relined and should not have been");
+  }
+});
+
+test("the substitution is chosen by the book's catalogue, not its name", () => {
+  /* This was to.key === "bet9ja", true of exactly the book it was written for.
+     BetKing does not sell a whole line either and got none of it, so nine legs
+     of a real 39-leg ticket stuck for want of a rule that already existed. */
+  const B = books();
+  assert.strictEqual(B.sporty.wholeLines, true);
+  assert.strictEqual(B.bet9ja.wholeLines, false);
+  assert.strictEqual(B.betking.wholeLines, false);
+  const conv = fn("byoConversion");
+  assert.match(conv, /near\s*&&\s*!to\.wholeLines/);
+  /* COMMENTS STRIPPED FIRST. This matched the explanation sitting directly
+     above the line it was guarding - my own comment quotes the old
+     `to.key==="bet9ja"` to say what changed - so the test failed while the
+     code was right. Same trap as asserting against a comment that contains the
+     phrase you are searching for. */
+  const code = conv.replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.ok(!/to\.key\s*===\s*"bet9ja"/.test(code),
+    "the whole-line rule is named again, so a third book gets none of it");
+  /* to.key === "sporty" survives on the mixReline branch and belongs there:
+     that offer exists because SportyBet alone sells 1x2-or-total at 2.5, which
+     is a fact about one book rather than a property others might share. It is
+     the reason this assertion names the branch instead of banning the shape. */
+});
+
+test("a changed leg is named, with what changed about it", () => {
+  /* It is a real change to somebody's bet at a real change in price, so it is
+     counted and shown rather than done quietly. */
+  assert.match(src, /legs were.{0,20}changed to a line/);
+  assert.match(src, /a whole line returns the stake on the exact score/);
+});
