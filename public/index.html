@@ -9,14 +9,14 @@
      markets, which is a feature list and answers a question nobody arrives
      with. Kept identical to og:description so a search result and a shared
      link make the same promise. -->
-<meta name="description" content="Stop picking games one by one. Type how much you want to win. It finds the games for you and gives you the SportyBet or Bet9ja code.">
+<meta name="description" content="Stop picking games one by one. Type how much you want to win. It finds the games and gives you the code for SportyBet, Bet9ja or BetKing.">
 <meta name="theme-color" content="#0D0D0F">
 <meta property="og:title" content="Soccerwizard">
 <!-- No league count here on purpose. It said 38 while the payload carried 45
      and the share card said 45, and a number baked into a tag nobody
      rebuilds goes stale the first time a league starts or ends its season.
      The claim that does not rot is what the site does. -->
-<meta property="og:description" content="Stop picking games one by one. Type how much you want to win. It finds the games for you and gives you the SportyBet or Bet9ja code.">
+<meta property="og:description" content="Stop picking games one by one. Type how much you want to win. It finds the games and gives you the code for SportyBet, Bet9ja or BetKing.">
 <meta property="og:type" content="website">
 <!-- The share card. wiz-logo.png was pointed at here and it is 473x544 -
      portrait. summary_large_image wants roughly 1.91:1, so platforms had
@@ -35,7 +35,7 @@
      thing that should ever be quoted here. -->
 <meta property="og:image:width" content="784">
 <meta property="og:image:height" content="386">
-<meta property="og:image:alt" content="Soccerwizard - type a payout and get a SportyBet or Bet9ja booking code">
+<meta property="og:image:alt" content="Soccerwizard - type a payout and get a SportyBet, Bet9ja or BetKing booking code">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://skypredict-theta.vercel.app/og-card.png">
 <!-- X FALLS BACK TO THE og: TAGS WHEN THESE ARE ABSENT, so their absence was
@@ -44,8 +44,8 @@
      explicitly, there is one less variable. Same for og:site_name, which is
      what puts the name above the card rather than the bare hostname. -->
 <meta name="twitter:title" content="Soccerwizard">
-<meta name="twitter:description" content="Stop picking games one by one. Type how much you want to win. It finds the games for you and gives you the SportyBet or Bet9ja code.">
-<meta name="twitter:image:alt" content="Soccerwizard - type a payout and get a SportyBet or Bet9ja booking code">
+<meta name="twitter:description" content="Stop picking games one by one. Type how much you want to win. It finds the games and gives you the code for SportyBet, Bet9ja or BetKing.">
+<meta name="twitter:image:alt" content="Soccerwizard - type a payout and get a SportyBet, Bet9ja or BetKing booking code">
 <meta property="og:site_name" content="Soccerwizard">
 <meta property="og:locale" content="en_GB">
 <!-- Every view of this site is one URL with different state - the board, the
@@ -59,7 +59,7 @@
 <meta property="og:url" content="https://skypredict-theta.vercel.app/">
 <!-- Names the site itself for search results. The per-match pages carry their
      own SportsEvent schema; this is the one that can win a sitelinks box. -->
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Soccerwizard","url":"https://skypredict-theta.vercel.app/","description":"Football predictions from 38 leagues, plus a ready-made SportyBet slip.","publisher":{"@type":"Organization","name":"Soccerwizard","logo":{"@type":"ImageObject","url":"https://skypredict-theta.vercel.app/wiz-logo.png"}}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Soccerwizard","url":"https://skypredict-theta.vercel.app/","description":"Football predictions from 38 leagues, plus a ready-made slip for SportyBet, Bet9ja or BetKing.","publisher":{"@type":"Organization","name":"Soccerwizard","logo":{"@type":"ImageObject","url":"https://skypredict-theta.vercel.app/wiz-logo.png"}}}</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
 <!-- The 512 icon is deliberately NOT linked here.
      Browsers fetch every rel=icon during first paint, and this one is 297 KB,
@@ -5305,6 +5305,31 @@ html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
   html.booting .sc-proof[hidden]{min-height:42px}
 }
 .home-rail{display:flex;flex-direction:column;gap:0}
+/* THE PAGE ASKS "WHO'S WINNING TODAY?" AND THEN DOES NOT ANSWER IT.
+   On a 390x844 phone the first screen was masthead, install banner, offer card
+   and Pick of the day - four blocks of pitch before a single fixture, so the
+   headline's question was answered below the fold and the board had to be
+   hunted for. The rail leading is right for the OFFER, which is what the page
+   is for; it is wrong for the two proof cards behind it, which answer "is this
+   any good" - a question nobody asks before they have seen anything.
+   `display:contents` dissolves the rail on a phone so its cards become items of
+   the same column as the board and can be ordered around it. The offer and the
+   reader's own slips stay on top; the day's pick and the recap move under the
+   first fixtures, where they are read as evidence rather than as a queue to get
+   through. Desktop is untouched - at 1060 the rail becomes a sticky column and
+   this whole block is out of scope. */
+@media(max-width:720px){
+  .home-grid>.home-rail{display:contents}
+  .home-grid>.home-rail>.slip-cta{order:1}
+  .home-grid>.home-rail>#myres{order:2}
+  .home-grid>.home-main{order:3}
+  .home-grid>.home-rail>#potd{order:4;margin-top:14px}
+  .home-grid>.home-rail>#daily{order:5}
+  /* A button that scrolls to the thing directly beneath it. It was a second
+     door into the room you are standing in - and with the board now one card
+     away, the scroll it performs is the one the thumb was already making. */
+  .sc-actions #scBrowse{display:none}
+}
 @media(min-width:1060px){
   .wrap{max-width:1420px}
   .home-grid{flex-direction:row;align-items:flex-start;gap:26px}
@@ -6319,7 +6344,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   <div class="sw-g-brand" aria-hidden="true"><span>Soccer</span>wizard</div>
   <div class="sw-g-panel">
     <h2 id="swGateQ">Are you tired of picking games one by one?</h2>
-    <p class="sw-g-sub">We build the slip. You get a SportyBet or Bet9ja code.</p>
+    <p class="sw-g-sub">We build the slip. You get a SportyBet, Bet9ja or BetKing code.</p>
     <p class="sw-g-age">You must be 18 or over to continue.</p>
     <button type="button" class="sw-g-enter" id="swGateEnter"><span class="sw-g-spark" aria-hidden="true"></span>Enter</button>
     <button type="button" class="sw-g-skip" id="swGateSkip">Skip</button>
@@ -10988,6 +11013,18 @@ function paintBookPickers(){
     var ap=$("bldApprox");
     if(ap) ap.textContent="*Est. odds are a rough model guide - real "+
       curBook().label+" odds are usually lower.";
+    /* THE OFFER CARD PROMISED ONE BOOKMAKER OUT OF THREE. It is the first
+       thing a reader meets and it said "Build me a SportyBet slip" whatever
+       book they had chosen - so a BetKing reader was invited to build a slip
+       for somebody else's app, and the card's own sub-line promised a
+       SportyBet code above a button that would produce a BetKing one. Same
+       rule as the two lines above it: name the book the reader is actually on,
+       and let the picker change it. */
+    var cl=document.querySelector(".sc-go-primary .sc-lbl");
+    if(cl) cl.innerHTML="Build me a "+curBook().mark+" slip";
+    var tz=$("scTease");
+    if(tz) tz.textContent="We pick the games. You get a "+curBook().label+
+      " code to play them.";
   }catch(e){}
   paintMyNote();
 }
@@ -14427,9 +14464,12 @@ function renderBldCoach(open){
         "<li class='bc-slide'><span class='bc-num'>2</span><span><b>Slider</b> - "+
           "you set how much risk you are happy with and we pick to match. Best if "+
           "you care more about the odds of landing than the size of the return.</span></li>"+
+        /* The reader's book, not a book. This named SportyBet outright while
+           the reader may be on any of three, and it is the line that says what
+           they walk away with. */
         "<li><span class='bc-num'>3</span><span>Either way you get a booking code "+
-          "for SportyBet, and you can drop any game you do not fancy before you "+
-          "take it.</span></li>"+
+          "for "+curBook().label+", and you can drop any game you do not fancy "+
+          "before you take it.</span></li>"+
       "</ul>"+
       "<button class='bc-x' type='button'>Got it</button>"+
     "</div>";
@@ -15348,7 +15388,9 @@ function flyToSlip(srcEl){
 function toggleMy(id,code,label,p,srcEl){
   var i=-1; for(var k=0;k<MYSLIP.length;k++){if(MYSLIP[k].id===id&&MYSLIP[k].code===code){i=k;break;}}
   if(i>=0) MYSLIP.splice(i,1); else {
-    MYSLIP.push({id:id,code:code,label:label,p:+p}); flyToSlip(srcEl);
+    /* `k` is the kickoff, written down at the moment the leg is added - see
+       pruneMy for why a leg has to carry its own clock. */
+    MYSLIP.push({id:id,code:code,label:label,p:+p,k:kickoffOf(id)}); flyToSlip(srcEl);
     /* Heads-up if this game isn't on SportyBet yet - it can still be added, and
        we'll retry matching at book time, but the user should know up front. */
     var _f=fixtureById(id);
@@ -15608,6 +15650,54 @@ function wireSlipsSheet(){
 function closeMySheet(){$("scrim").classList.remove("on");$("mySheet").classList.remove("on");
   /* Only release the page if no other sheet is still up. */
   if(!$("sheet")||!$("sheet").classList.contains("on")) lockBody(false);}
+/* DROP THE LEGS WHOSE MATCHES HAVE BEEN AND GONE, and write that down.
+ *
+ * ONE rule, because there used to be two and they disagreed. The first kept a
+ * leg whose fixture could not be found; the second, immediately after, dropped
+ * it. The second won and saveMy() wrote it down, so a leg was deleted from
+ * somebody's slip for good. A leg goes only when we can SEE that its match is
+ * past: not finding the fixture is not evidence of anything, because the board
+ * drops a match at kick-off and carries cup ties only while the bookmaker
+ * lists them. This list is saved, so a wrong drop cannot be taken back.
+ *
+ * IT USED TO PRUNE AND THEN THROW THE RESULT AWAY. The length was read AFTER
+ * the filter and compared with itself, so `MYSLIP.length!==_b` was false on
+ * every run and neither saveMy() nor renderFab() ever fired. The slip was
+ * tidied for as long as the sheet was open and the old legs were back on the
+ * next reload - which is why a reader who conjured a slip yesterday came back
+ * to "My slip 28" with most of those games already played. Conjured legs are
+ * written to localStorage with auto:true, so they persist by design; nothing
+ * was persisting their removal.
+ *
+ * Called from the sheet AND once the board lands, because the badge is on
+ * screen long before anybody opens the sheet, and a count of dead legs is a
+ * worse lie than no count. Returns true when it changed something.
+ *
+ * AND A LEG NOW CARRIES ITS OWN CLOCK, which is what actually empties a stale
+ * slip. Keeping a leg whose fixture we cannot find is the right rule and it is
+ * also why a slip grew forever: yesterday's games are not on today's board, so
+ * every one of them was unfindable, and unfindable meant kept. The board can
+ * only speak for today. A kickoff recorded when the leg was added speaks for
+ * itself, so a leg that names a time in the past goes whether the board
+ * remembers the game or not - and one from before this shipped, with no time
+ * on it, still falls back to the old rule and is never dropped on a guess. */
+function kickoffOf(id,f){
+  f=f||fixtureById(id);
+  var t=f&&f.kickoff?Date.parse(f.kickoff):NaN;
+  return isFinite(t)?t:null;
+}
+function pruneMy(){
+  var before=MYSLIP.length;
+  MYSLIP=MYSLIP.filter(function(x){
+    if(x.k&&x.k<=Date.now()) return false;
+    var f=fixtureById(x.id);
+    if(!f) return true;
+    return notStarted(f)&&isUpcoming(f);
+  });
+  if(MYSLIP.length===before) return false;
+  saveMy(); renderFab();
+  return true;
+}
 function renderMySheet(){
   paintBookPickers();
   var body=$("mySheetBody"); if(!body) return;
@@ -15620,14 +15710,7 @@ function renderMySheet(){
      kick-off and carries cup ties only while the bookmaker lists them, so
      "gone from the board" happens to games that are still being played.
      This list is saved, so a wrong drop cannot be taken back. */
-  MYSLIP=MYSLIP.filter(function(x){
-    var f=fixtureById(x.id);
-    if(!f) return true;
-    return notStarted(f)&&isUpcoming(f);
-  });
-  var _b=MYSLIP.length;
-
-  if(MYSLIP.length!==_b){saveMy();renderFab();}
+  pruneMy();
   if(!MYSLIP.length){
     body.innerHTML="<div class='bld-empty'><b>Your slip is empty</b>Tap + on any prediction to add it here.</div>";
     $("mySheetFoot").hidden=true; $("myBookResult").innerHTML=""; return;
@@ -16951,7 +17034,8 @@ function wspConjure(shuffle){
      replaces them and leaves anything hand-picked alone. */
   MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
     .concat(r.picks.map(function(c){
-      return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true};}));
+      return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true,
+              k:kickoffOf(c.id,c.f)};}));
   var seen={}; MYSLIP=MYSLIP.filter(function(x){
     if(seen[x.id])return false;seen[x.id]=1;return true;});
   saveMy(); renderFab(); openMySheet();
@@ -18578,6 +18662,10 @@ async function load(){
     await loadSporty();
     loadBet9jaSoon();
     LOAD_RETRY=0;
+    /* The first moment fixtureById can answer, so the first moment the saved
+       slip can be judged. Before this the badge is drawn from whatever was in
+       localStorage, including yesterday's conjured legs. */
+    try{ pruneMy(); }catch(e){}
     settleSlips();   /* first pass on load: results are already old news */
     startLive();
     paint();

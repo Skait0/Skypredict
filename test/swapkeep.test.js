@@ -154,3 +154,61 @@ test("the de-dupe keeps the first leg for each fixture", () => {
   assert.ok(dedupes.length >= 2,
     "the de-dupe that protects the kept leg is missing from a refill path");
 });
+
+/* ------------------------------------ a slip that tidies itself and says so */
+
+/* Reported as arriving at "My slip 28" with most of those games already
+ * played. Conjured legs carry auto:true and are written to localStorage on
+ * purpose, so they outlive the session by design - what did not outlive it was
+ * their REMOVAL. renderMySheet pruned the started matches and then:
+ *
+ *   MYSLIP = MYSLIP.filter(...);
+ *   var _b = MYSLIP.length;                  // read AFTER the filter
+ *   if (MYSLIP.length !== _b) { saveMy(); renderFab(); }
+ *
+ * The length was compared with itself, so the branch never ran: nothing was
+ * saved and the badge was never repainted. The slip looked tidy for as long as
+ * the sheet was open and the dead legs were back on the next reload.
+ */
+test("the prune reads the length before it filters, not after", () => {
+  const fn = src.slice(src.indexOf("function pruneMy()"),
+    src.indexOf("function renderMySheet()"));
+  assert.ok(fn.length > 40, "pruneMy is gone");
+  const before = fn.indexOf("var before=MYSLIP.length");
+  const filter = fn.indexOf("MYSLIP=MYSLIP.filter");
+  assert.ok(before >= 0 && filter > before,
+    "the count must be taken before the filter, or the comparison is with itself");
+  assert.match(fn, /if\(MYSLIP\.length===before\) return false;\s*saveMy\(\); renderFab\(\);/,
+    "a prune that changed something must be written down and repainted");
+});
+
+test("the badge is judged once the board can answer, not only when the sheet opens", () => {
+  /* The count is on screen long before anybody opens the slip, and it is drawn
+     from localStorage - including yesterday's conjured legs. fixtureById cannot
+     answer until the payload lands, so that is where the first prune belongs. */
+  const load = src.slice(src.indexOf("async function load()"),
+    src.indexOf("}catch(err){", src.indexOf("async function load()")));
+  assert.match(load, /pruneMy\(\)/, "the saved slip is never judged on load");
+  assert.ok(load.indexOf("DATA=got.payload") < load.indexOf("pruneMy()"),
+    "the prune must run after the payload lands, or every leg looks unknown");
+});
+
+test("a leg carries its own kickoff, because the board only speaks for today", () => {
+  /* Keeping a leg whose fixture cannot be found is the right rule - the board
+     drops a match at kick-off and carries cup ties only while the bookmaker
+     lists them - and it is also why a slip grew without limit: yesterday's
+     games are not on today's board, so every one of them was unfindable, and
+     unfindable meant kept. A time written down when the leg was added is
+     evidence the board cannot contradict. */
+  const fn = src.slice(src.indexOf("function pruneMy()"),
+    src.indexOf("function renderMySheet()"));
+  assert.match(fn, /if\(x\.k&&x\.k<=Date\.now\(\)\) return false;/,
+    "a leg that names a past kickoff must go");
+  assert.match(fn, /if\(!f\) return true;/,
+    "a leg with no recorded time must still never be dropped on a guess");
+  /* Both writers have to record it or the rule only covers half the slip. */
+  assert.match(src, /MYSLIP\.push\(\{id:id,code:code,label:label,p:\+p,k:kickoffOf\(id\)\}\)/,
+    "a hand-added leg records no kickoff");
+  assert.match(src, /auto:true,\s*\n\s*k:kickoffOf\(c\.id,c\.f\)/,
+    "a conjured leg records no kickoff");
+});
