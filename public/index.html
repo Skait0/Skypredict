@@ -10914,6 +10914,9 @@ function curBook(){ return BOOKS[BOOKMAKER]||BOOKS.sporty; }
 function setBook(k){
   if(!BOOKS[k]||k===BOOKMAKER) return;
   BOOKMAKER=k;
+  /* Its ids are what every badge, count and booking on the next repaint will
+     ask about, and repaintAfterMatch runs again when they land. */
+  try{ ensureBookFeed(k); }catch(e){}
   try{ localStorage.setItem(BOOK_KEY,k); }catch(e){}
   /* Whatever the last book said about this slip is now about the wrong book.
      "bet9ja doesn't have 2 of these games" is not true of SportyBet, and
@@ -11113,6 +11116,10 @@ function paintBookPickerWith(el,picks){
    the builder - the builder passes its own picks in. */
 function paintBookPicker(el){ paintBookPickerWith(el,pickerPicks()); }
 function paintBookPickers(){
+  /* The pills carry how much of the slip each book can take, and that count is
+     the whole reason this is a choice. So a picker on screen is the other
+     signal that the other feeds are wanted. */
+  try{ Object.keys(BOOKS).forEach(ensureBookFeed); }catch(e){}
   try{ document.querySelectorAll('[data-bookpick]:not([data-bookpick="build"])')
     .forEach(paintBookPicker); }catch(e){}
   /* "book them to SportyBet" is a promise about which app the code opens in,
@@ -11287,11 +11294,28 @@ function startBookCycle(){
 }
 try{ startBookCycle(); }catch(e){}
 
+/* ONE BOOK'S FEED, FETCHED WHEN THAT BOOK IS ACTUALLY WANTED.
+   Both second books used to load on every page view: 186 KB of Bet9ja and
+   606 KB of BetKing over the wire, brotli'd, for readers who mostly use one
+   book and often never open a slip at all. BetKing alone is the largest thing
+   the site sends.
+   Fetched once each, on the first moment the answer is needed - the reader
+   picks that book, or a picker is drawn that has to count what each book can
+   take. Memoised on the promise, not a boolean, so two callers in the same
+   frame share one request instead of racing two. */
+var BOOK_FEED={};
+function ensureBookFeed(k){
+  /* SportyBet is the board's own prices, loaded before this ever runs. */
+  if(!k||k==="sporty"||BOOK_FEED[k]) return BOOK_FEED[k]||Promise.resolve(0);
+  var load=k==="bet9ja"?loadBet9ja:k==="betking"?loadBetKing:null;
+  if(!load) return Promise.resolve(0);
+  BOOK_FEED[k]=load().then(function(n){ if(n) repaintAfterMatch(); return n; })
+    .catch(function(){ return 0; });
+  return BOOK_FEED[k];
+}
 function loadBet9jaSoon(){
-  try{ loadBet9ja().then(function(n){ if(n) repaintAfterMatch(); }); }catch(e){}
-  /* Alongside, not after: neither second book blocks the board, and each one
-     only decides whether its own button appears on a leg. */
-  try{ loadBetKing().then(function(n){ if(n) repaintAfterMatch(); }); }catch(e){}
+  /* Only the book the reader is already on. The others wait to be asked. */
+  try{ ensureBookFeed(BOOKMAKER); }catch(e){}
 }
 var SPORTY_TRIES=0;
 async function loadSporty(){
@@ -12784,6 +12808,12 @@ function byoRead(){
     return;
   }
   BYO.legs=null; BYO.code=code;
+  /* EVERY BOOK MATTERS HERE, so this is the third place that asks for the
+     feeds. A conversion pairs the code's book with the target's, and feedMatch
+     reads the target's own events for games our board does not carry - with no
+     feed that answer is silently "they do not list this game". refreshByoPanels
+     redraws the panel when they land. */
+  try{ Object.keys(BOOKS).forEach(ensureBookFeed); }catch(e){}
   out.innerHTML="<div class='byo-wait'><span class='mini-load'></span>Reading "+
     byoBook().label+" code "+esc(code)+"…</div>";
   fetch("/api/slip?book="+encodeURIComponent(BYO.book)+"&code="+encodeURIComponent(code),
