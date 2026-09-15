@@ -1313,6 +1313,10 @@ html.mode-live .btabs{transform:none!important}
 .rrow.miss .rr-badge{background:var(--red-wash);color:var(--red-ink)}
 html.is-results .slip-cta,html.is-results #glance,html.is-results .thin-note{display:none}
 html.mode-build .list-hint,html.mode-live .list-hint{display:none}
+/* Learned, so no longer said. See retireTapHint: set the first time any row is
+   opened and remembered after that, which is also what gives a returning
+   reader the 43px this line was costing on a phone. */
+html.tapped .list-hint{display:none}
 .lt-tip{padding-right:10px}
 .lt-score{padding-left:10px}
 @keyframes litPulse{0%,100%{text-shadow:0 0 8px rgba(43,199,120,.7);transform:scale(1)}50%{text-shadow:0 0 20px rgba(43,199,120,1);transform:scale(1.22)}}
@@ -9201,9 +9205,24 @@ function blockFor(l,games,withFlag){return V.list?listBlock(l,games,withFlag):le
    opener announces, and whether the panel's eleven buttons are reachable. Any
    caller that sets only the first re-introduces the invisible tab stops, so
    none of them may set it directly. */
+/* THE HINT TEACHES ONE THING AND THEN STOPS EARNING ITS PLACE.
+ * "Tap any match for every option we predict" is worth 43px to somebody who
+ * has never opened a row, and worth nothing to somebody who just did - and on
+ * a 390x844 phone those 43px are the difference between the first match line
+ * clearing the fold and sitting on it. So it retires itself the first time a
+ * row is opened, by any route, and stays retired: `sw.tapped` in localStorage.
+ * Remembered rather than counted per session, because the lesson does not need
+ * teaching twice and a returning reader has already had it. */
+var TAP_KEY="sw.tapped";
+function retireTapHint(){
+  try{ if(localStorage.getItem(TAP_KEY)) return; localStorage.setItem(TAP_KEY,"1"); }catch(e){}
+  document.documentElement.classList.add("tapped");
+}
+try{ if(localStorage.getItem(TAP_KEY)) document.documentElement.classList.add("tapped"); }catch(e){}
 function setRowOpen(r,open){
   if(!r) return;
   open=!!open;
+  if(open) retireTapHint();
   var id=r.dataset.lf;
   /* Same trap: LOPEN is a `const`, so window.LOPEN is undefined and this
      guard silently skipped the assignment - a row would open and then shut
