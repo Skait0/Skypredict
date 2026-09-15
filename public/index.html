@@ -12843,7 +12843,7 @@ function renderSplit(out,done,B,oddsOf){
    Nothing is destructive: the panel lists every leg it would take out, with
    the price before and after, and books nothing until the button is pressed.
    The switch is still there to turn it off. */
-var BYO={book:"sporty",to:null,legs:null,booked:null,dropped:null,code:"",reline:false,saferDrop:true,saferHow:"normal",saferSwapOn:true,job:null};
+var BYO={book:"sporty",to:null,legs:null,booked:null,dropped:null,code:"",reline:false,saferDrop:true,saferHow:"normal",saferSwapOn:true,saferShuffle:0,job:null};
 
 function byoSel(leg){
   /* SportyBet's route takes `prediction`; both other books take `code`. Read
@@ -13051,7 +13051,7 @@ function saferSwap(l,B){
      the book will not take is stepped OVER rather than stopping the walk:
      over 3.5 can still reach over 1.5 on a book that does not sell 2.5. The
      furthest usable rung wins, because that is the safest one. */
-  var cur=from, best=null, steps=saferDial().steps||1;
+  var cur=from, opts=[], steps=saferDial().steps||1;
   for(var i=0;i<steps;i++){
     var to=saferPick(f,cur);
     if(!to||to===from) break;
@@ -13063,10 +13063,20 @@ function saferSwap(l,B){
        so the editor cannot drift from the builders: "not-priced" is the only
        refusal, and only ever about a market the sweep fetches. */
     if(bookAllows(to,B)&&bookVerdict(f,to,B)!=="not-priced"&&(pNew-pOld)>=saferDial().gain)
-      best={to:to,pNew:pNew};
+      opts.push({to:to,pNew:pNew});
     cur=to;
   }
-  if(!best) return null;
+  if(!opts.length) return null;
+  /* THE FURTHEST RUNG BY DEFAULT, AND THE NEXT ONE ALONG ON A SHUFFLE.
+     Every rung in here already passed the same tests - the book sells it, it
+     is priced, and it gains more than the dial asks - so any of them is an
+     honest answer and the safest is simply the last one. Shuffle walks back up
+     the ladder one rung at a time and wraps, which is what gives a reader a
+     different edit without loosening a single rule. Legs with one option are
+     unmoved by it, which is why the button only appears when some leg has
+     two. */
+  var n=BYO.saferShuffle||0;
+  var best=opts[(opts.length-1-(n%opts.length)+opts.length)%opts.length];
   return {leg:l,f:f,from:from,to:best.to,pOld:pOld,pNew:best.pNew,
           oddOld:+l.odds||null, oddNew:(f[B.odds]||{})[best.to]||null};
 }
@@ -13303,7 +13313,7 @@ function renderStage(usable,B){
    connection that paid for it. */
 function byoReset(){
   BYO.legs=null; BYO.booked=null; BYO.dropped=null; BYO.code=""; BYO.job=null;
-  BYO.saferDrop=true; BYO.saferSwapOn=true; BYO.saferHow="normal"; BYO.reline=false;
+  BYO.saferDrop=true; BYO.saferSwapOn=true; BYO.saferHow="normal"; BYO.saferShuffle=0; BYO.reline=false;
   var inp=$("byoCode"); if(inp) inp.value="";
   var out=$("byoOut"); if(out) out.innerHTML="";
   var st=$("byoStage"); if(st) st.innerHTML="";
@@ -13743,6 +13753,21 @@ function saferBoxInner(legs,B){
   (plan.length>SHOW?"<p class='byo-note sf-more'>and "+(plan.length-SHOW)+
     " more like these</p>":"");
 
+  /* A SHUFFLE THAT CHANGES NOTHING IS A LIE, so the button only exists when a
+     leg actually has a second rung to offer. Counted by asking the ladder for
+     this leg at the next shuffle and seeing whether any answer moves. */
+  var alt=0;
+  (function(){
+    var was=BYO.saferShuffle||0;
+    try{
+      BYO.saferShuffle=was+1;
+      var other=saferPlan(legs,B);
+      var by={}; plan.forEach(function(p){ by[p.leg.eventId+"|"+p.from]=p.to; });
+      other.forEach(function(p){
+        if(by[p.leg.eventId+"|"+p.from]&&by[p.leg.eventId+"|"+p.from]!==p.to) alt++;
+      });
+    }finally{ BYO.saferShuffle=was; }
+  })();
   var nothing = !plan.length && !drop.length;
   return "<p class='sp-q'>Edit for me</p>"+
     "<div class='sf-opts'>"+
@@ -13758,6 +13783,10 @@ function saferBoxInner(legs,B){
         (could.length?" ("+could.length+")":"")+"</span></label>"+
       "<div class='sf-how'><span class='sf-how-l'>How much?</span>"+chips+
         "<i class='sf-how-n'>"+esc(dial.note)+"</i></div>"+
+      /* Offered beside the strength rather than inside it: the strength says
+         how far we may go, this says show me another way of going there. */
+      (alt?"<button class='sf-chip sf-shuffle' id='sfShuffle' type='button'>"+
+        "Shuffle <i>"+alt+" leg"+(alt===1?"":"s")+" could go another way</i></button>":"")+
     "</div>"+
     (nothing
       ? "<p class='byo-note'>Nothing to change at this setting. Try <b>Strong</b>, "+
@@ -13793,8 +13822,14 @@ function wireSafer(wrap,legs,B){
   var sp=box.querySelector("#sfSwap");
   if(sp) sp.addEventListener("change",function(){ BYO.saferSwapOn=sp.checked; redraw(); });
   box.querySelectorAll("[data-how]").forEach(function(c){
-    c.addEventListener("click",function(){ BYO.saferHow=c.dataset.how; redraw(); });
+    /* A different strength is a different ladder, so the shuffle starts over
+       rather than carrying an offset into a set of rungs it was never counted
+       against. */
+    c.addEventListener("click",function(){ BYO.saferHow=c.dataset.how; BYO.saferShuffle=0; redraw(); });
   });
+  var sh=box.querySelector("#sfShuffle");
+  if(sh) sh.addEventListener("click",function(){
+    BYO.saferShuffle=(BYO.saferShuffle||0)+1; redraw(); });
   var go=box.querySelector("#byoSaferGo"); if(!go) return;
   go.addEventListener("click",function(){
     var plan=saferPlan(legs,B);

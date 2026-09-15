@@ -287,7 +287,8 @@ function ladder(fixture) {
     grab("saferPick") + grab("saferDial") + grab("mProb") + grab("saferSwap") +
     "function fixtureByLeg(){return f;}function bookAllows(){return true;}" +
     "function bookVerdict(){return 'unknown';}" +
-    "return function(code,how){BYO.saferHow=how;return saferSwap({prediction:code},B);};");
+    "return function(code,how,n){BYO.saferHow=how;BYO.saferShuffle=n||0;" +
+    "return saferSwap({prediction:code},B);};");
   return api({}, { key: "sporty", odds: "sportyOdds" }, fixture);
 }
 /* A lopsided game: strong home side, goals likely. */
@@ -329,4 +330,38 @@ test("every level still declares how far it may go", () => {
     assert.match(entry, /steps:\d/,
       k + " has no steps, so it cannot say how far a leg may travel");
   });
+});
+
+test("shuffle offers a different rung, and comes back round", () => {
+  /* Asked for: "the edit for me should have a shuffle option, that way the
+     user has more variety". It only became possible once the levels walked a
+     ladder - with one target per market a re-roll produced the identical plan.
+     Every rung offered here already passed the same tests as the default one:
+     the book sells it, it is priced, and it gains more than the dial asks. So
+     shuffle loosens nothing; it walks back up the ladder a rung at a time. */
+  const run = ladder(LOPSIDED);
+  const at = (n) => { const r = run("OVER_3.5", "strong", n); return r && r.to; };
+  assert.equal(at(0), "HOME_OVER_0.5", "the safest rung is still what it offers first");
+  assert.notEqual(at(1), at(0), "a shuffle has to actually change something");
+  assert.notEqual(at(2), at(1));
+  assert.equal(at(3), at(0), "and it wraps rather than running out");
+  /* A leg with one honest option is simply unmoved. */
+  const one = ["UP1_1"].map((c) => [0, 1, 2].map((n) => run(c, "strong", n).to));
+  assert.equal(new Set(one[0]).size, 1, "a leg with one rung must not be shuffled into a worse one");
+});
+
+test("the shuffle button only appears when it would change something", () => {
+  /* A control that does nothing is worse than no control. The box counts how
+     many legs answer differently at the next offset and draws the button only
+     if any do. */
+  const box = src.slice(src.indexOf("function saferBoxInner("), src.indexOf("function wireSafer("));
+  assert.match(box, /BYO\.saferShuffle=was\+1;/, "it must ask the ladder, not guess");
+  assert.match(box, /finally\{ BYO\.saferShuffle=was; \}/,
+    "and put the counter back, or counting it would change the plan it counted");
+  assert.match(box, /\(alt\?"<button class='sf-chip sf-shuffle' id='sfShuffle'/,
+    "the button must be conditional on there being an alternative");
+  const wire = src.slice(src.indexOf("function wireSafer("), src.indexOf("/* WHAT A TRIM WOULD COST"));
+  assert.match(wire, /BYO\.saferShuffle=\(BYO\.saferShuffle\|\|0\)\+1; redraw\(\);/);
+  assert.match(wire, /BYO\.saferHow=c\.dataset\.how; BYO\.saferShuffle=0;/,
+    "a new strength is a new ladder, so the offset must start over");
 });
