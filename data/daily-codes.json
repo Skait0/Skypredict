@@ -334,5 +334,61 @@
       "sporty": "VBT3UP",
       "bet9ja": "5RKV2B6"
     }
+  },
+  "2026-09-15": {
+    "date": "2026-09-15",
+    "generated": "2026-09-15T11:22:00.380Z",
+    "firstKickoff": "2026-09-15T18:00:00.000Z",
+    "legs": [
+      {
+        "home": "Ajax",
+        "away": "Willem II",
+        "league": "Netherlands Eredivisie",
+        "kickoff": "2026-09-15T18:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9053,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Southend",
+        "away": "Tamworth",
+        "league": "England National League",
+        "kickoff": "2026-09-15T18:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.8976,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Worthing",
+        "away": "Hornchurch",
+        "league": "England National League",
+        "kickoff": "2026-09-15T18:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.8897,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Solihull",
+        "away": "Barrow",
+        "league": "England National League",
+        "kickoff": "2026-09-15T18:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.8874,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Harrogate",
+        "away": "Fylde",
+        "league": "England National League",
+        "kickoff": "2026-09-15T18:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.8832,
+        "market": "OVER_1.5"
+      }
+    ],
+    "codes": {
+      "sporty": "NUWM4K",
+      "bet9ja": "5RNTSZ8"
+    }
   }
 }
