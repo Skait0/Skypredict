@@ -13015,11 +13015,20 @@ var SAFER_STRENGTH={
      while it keeps helping, so over 3.5 can reach over 1.5 and both-score can
      land on one team's goal. That is what makes the three levels change the
      BET rather than only how keen we are to touch it. */
-  auto:{gain:0.05,under:0.55,steps:2,label:"Auto",note:"We decide: fix what we can, drop what we cannot",
+  /* THE WORDS NAME WHAT THE READER GETS, NOT HOW HARD WE PUSH. They used to
+     read Light / Normal / Strong, and "Strong" is the wrong word twice over on
+     a betting page: it sounds like a bolder bet when it means the opposite -
+     the lowest bar to change a leg, the furthest a leg may travel, and the
+     most legs offered up for removal. Every one of these dials moves in one
+     direction, safety, so the labels say so and the scale reads in order. */
+  auto:{gain:0.05,under:0.55,steps:2,label:"Let us decide",
+        note:"We fix what we can and drop what we cannot",
         swap:true,drop:true},
-  light:{gain:0.14,under:0.50,steps:1,label:"Light",note:"Only the legs that clearly need it"},
-  normal:{gain:0.08,under:0.60,steps:1,label:"Normal",note:"Our usual call"},
-  strong:{gain:0.03,under:0.70,steps:3,label:"Strong",note:"Change anything that helps"}
+  light:{gain:0.14,under:0.50,steps:1,label:"Light touch",
+         note:"Only the legs that clearly need it"},
+  normal:{gain:0.08,under:0.60,steps:1,label:"Balanced",note:"Our usual call"},
+  strong:{gain:0.03,under:0.70,steps:3,label:"Safest",
+          note:"Change anything that helps, as far as it helps"}
 };
 function saferDial(){ return SAFER_STRENGTH[BYO.saferHow]||SAFER_STRENGTH.normal; }
 
