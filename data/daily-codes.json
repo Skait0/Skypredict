@@ -390,5 +390,61 @@
       "sporty": "NUWM4K",
       "bet9ja": "5RNTSZ8"
     }
+  },
+  "2026-09-16": {
+    "date": "2026-09-16",
+    "generated": "2026-09-16T11:05:54.602Z",
+    "firstKickoff": "2026-09-16T17:00:00.000Z",
+    "legs": [
+      {
+        "home": "Thun",
+        "away": "Servette",
+        "league": "Switzerland Super League",
+        "kickoff": "2026-09-16T17:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9121,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Columbus Crew",
+        "away": "Orlando City",
+        "league": "USA US Open Cup",
+        "kickoff": "2026-09-16T23:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.911,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Scunthorpe",
+        "away": "Boreham Wood",
+        "league": "England Conference National",
+        "kickoff": "2026-09-16T18:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9048,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "CF Montreal",
+        "away": "Vancouver Whitecaps",
+        "league": "Canada Canadian Championship",
+        "kickoff": "2026-09-16T23:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.8874,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Kidderminster",
+        "away": "Gateshead",
+        "league": "England Conference National",
+        "kickoff": "2026-09-16T18:45:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.7976,
+        "market": "1X"
+      }
+    ],
+    "codes": {
+      "sporty": "XT1CXP",
+      "bet9ja": "5RS8F97"
+    }
   }
 }
