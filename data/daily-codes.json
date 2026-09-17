@@ -446,5 +446,61 @@
       "sporty": "XT1CXP",
       "bet9ja": "5RS8F97"
     }
+  },
+  "2026-09-17": {
+    "date": "2026-09-17",
+    "generated": "2026-09-17T11:16:07.818Z",
+    "firstKickoff": "2026-09-17T13:15:00.000Z",
+    "legs": [
+      {
+        "home": "Vejle",
+        "away": "Brondby",
+        "league": "Denmark DBU Pokalen",
+        "kickoff": "2026-09-17T16:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9101,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Malaga",
+        "away": "Villarreal",
+        "league": "Spain La Liga 1",
+        "kickoff": "2026-09-17T19:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9011,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Orenburg",
+        "away": "Krasnodar",
+        "league": "Russia Premier League",
+        "kickoff": "2026-09-17T13:15:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.7925,
+        "market": "X2"
+      },
+      {
+        "home": "Man City",
+        "away": "Norwich",
+        "league": "England EFL Cup",
+        "kickoff": "2026-09-17T18:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.7843,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Betis",
+        "away": "Getafe",
+        "league": "Spain La Liga 1",
+        "kickoff": "2026-09-17T17:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.7803,
+        "market": "1X"
+      }
+    ],
+    "codes": {
+      "sporty": "XLXPS4",
+      "bet9ja": "5RWRGYD"
+    }
   }
 }
