@@ -502,5 +502,61 @@
       "sporty": "XLXPS4",
       "bet9ja": "5RWRGYD"
     }
+  },
+  "2026-09-18": {
+    "date": "2026-09-18",
+    "generated": "2026-09-18T10:48:36.700Z",
+    "firstKickoff": "2026-09-18T15:00:00.000Z",
+    "legs": [
+      {
+        "home": "Greuther Furth",
+        "away": "Magdeburg",
+        "league": "Germany Bundesliga 2",
+        "kickoff": "2026-09-18T16:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9094,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Groningen",
+        "away": "Zwolle",
+        "league": "Netherlands Eredivisie",
+        "kickoff": "2026-09-18T18:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9084,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Gnistan",
+        "away": "HJK",
+        "league": "Finland Veikkausliiga",
+        "kickoff": "2026-09-18T16:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.8983,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Wolfsburg",
+        "away": "Darmstadt",
+        "league": "Germany Bundesliga 2",
+        "kickoff": "2026-09-18T16:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.8903,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Lahti",
+        "away": "Jaro",
+        "league": "Finland Veikkausliiga",
+        "kickoff": "2026-09-18T15:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.8244,
+        "market": "1X"
+      }
+    ],
+    "codes": {
+      "sporty": "KHQTHB",
+      "bet9ja": "5S28PFD"
+    }
   }
 }
