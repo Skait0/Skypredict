@@ -558,5 +558,61 @@
       "sporty": "KHQTHB",
       "bet9ja": "5S28PFD"
     }
+  },
+  "2026-09-19": {
+    "date": "2026-09-19",
+    "generated": "2026-09-19T10:32:25.577Z",
+    "firstKickoff": "2026-09-19T14:00:00.000Z",
+    "legs": [
+      {
+        "home": "Molde",
+        "away": "Aalesund",
+        "league": "Norway Eliteserien",
+        "kickoff": "2026-09-19T16:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9408,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Young Boys",
+        "away": "Servette",
+        "league": "Switzerland Super League",
+        "kickoff": "2026-09-19T16:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9348,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Luzern",
+        "away": "Grasshoppers",
+        "league": "Switzerland Super League",
+        "kickoff": "2026-09-19T16:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9223,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Orgryte",
+        "away": "Sirius",
+        "league": "Sweden Allsvenskan",
+        "kickoff": "2026-09-19T15:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.9166,
+        "market": "OVER_1.5"
+      },
+      {
+        "home": "Boreham Wood",
+        "away": "Harrogate",
+        "league": "England Conference National",
+        "kickoff": "2026-09-19T14:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.911,
+        "market": "OVER_1.5"
+      }
+    ],
+    "codes": {
+      "sporty": "HT01MG",
+      "bet9ja": "5S7MBZW"
+    }
   }
 }
