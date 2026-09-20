@@ -9,7 +9,7 @@
  * exist. Static assets stay cache-first, since those are the ones worth having
  * instantly and they change under a new name when they change at all.
  */
-const VERSION = "sw-v10";
+const VERSION = "sw-v11";
 const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/wiz-logo.png"];
 
 /* THE KILL SWITCH. Set to true, deploy, and every installed worker deletes its
@@ -246,6 +246,16 @@ self.addEventListener("push", function (e) {
           icon: "/icon-192.png",
           badge: "/icon-192.png",
           data: { url: "/booking-codes" },
+        }).catch(function () {
+          /* showNotification itself can reject - permission state, a
+             browser-specific TypeError on the options object, throttling.
+             That must not escape into waitUntil: a rejected push promise is a
+             silent-push strike, the exact thing userVisibleOnly promises will
+             not happen. Retry with the bare minimum - a plain title is more
+             likely to be accepted than the full options object - and if even
+             that rejects, swallow it. A shown notification beats a silent one,
+             and a silent failure beats a strike. */
+          return self.registration.showNotification(PUSH_TITLE).catch(function () {});
         });
       })
   );

@@ -445,6 +445,15 @@ test("tapping the notification focuses an open tab before opening a new one", as
   assert.strictEqual(w.state.navigated.length, 0);
 });
 
+test("a rejecting showNotification must not reject the push's waitUntil", async () => {
+  /* userVisibleOnly is a promise to the browser: nothing may escape waitUntil
+     as a rejection, or a shown notification never happens and we take a
+     silent-push strike. */
+  const w = loadPush();
+  w.self.registration.showNotification = () => Promise.reject(new Error("no permission"));
+  await assert.doesNotReject(() => firePush(w.on));
+});
+
 test("with no tab open it opens the codes page", async () => {
   const w = loadPush();
   w.state.windows = [];
