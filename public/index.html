@@ -3702,6 +3702,23 @@ html{interpolate-size:allow-keywords}
 /* The picker is padded to line up with the slip sheet's own gutter, which is
    an indent this card does not have. */
 #bookAllResult .bookpick,.confirm-card .bookpick{padding:0;margin:10px 0 2px}
+/* THE WHOLE PROMPT HAS TO FIT WITHOUT A SCROLL. Five stacked blocks - question,
+   picker, cap warning, buttons, ticket splits - ran 519px on a 390px phone and
+   pushed its last offer under the fold, which is the offer to keep every game.
+   Scoped to this card: the same blocks elsewhere sit alone and can breathe. */
+#bookAllResult .confirm-card{padding:13px 12px}
+#bookAllResult .confirm-card p{margin:0;font-size:13.5px;line-height:1.35}
+#bookAllResult .bookpick{margin:9px 0 0;gap:6px;justify-content:center}
+#bookAllResult .bookpick-l{display:none}
+#bookAllResult .bp{padding:6px 11px;min-height:26px;font-size:12px}
+#bookAllResult .cap-warn{margin:9px 0 0;padding:8px 10px;font-size:12px;line-height:1.35}
+#bookAllResult .confirm-card .ca{margin-top:9px;gap:7px}
+#bookAllResult .confirm-card button{padding:9px 13px;font-size:13px}
+#bookAllResult .confirm-card .sp-ways{margin-top:9px;gap:6px;
+  grid-template-columns:repeat(auto-fit,minmax(96px,1fr))}
+#bookAllResult .confirm-card .sp-way{flex-direction:column;gap:1px;padding:8px 6px}
+#bookAllResult .confirm-card .sp-way b{font-size:13px}
+#bookAllResult .confirm-card .sp-way span{font-size:10.5px}
 @media(max-width:420px){
   .sp-ways{grid-template-columns:repeat(auto-fit,minmax(88px,1fr))}
   .sp-t{gap:7px;padding:7px 9px}
@@ -11178,8 +11195,10 @@ function paintBookPickerWith(el,picks){
     var B=BOOKS[k];
     var got=picks.filter(function(c){return bookTakes(c,B);}).length;
     /* Only worth showing when it is not the whole slip - "12/12" on both pills
-       is noise that makes the row look like a warning. */
-    var cnt=(got<n)?("<small>"+got+"/"+n+"</small>"):"";
+       is noise that makes the row look like a warning. A book whose feed has
+       not arrived has no count to show: 0/94 is a claim, and the wrong one. */
+    var cnt=bookFeedPending(k)?"<small>…</small>":
+      (got<n)?("<small>"+got+"/"+n+"</small>"):"";
     html+="<button type='button' class='bp"+(BOOKMAKER===k?" on":"")+"' data-book='"+k+"'"+
       " aria-label='"+esc(B.label)+"' aria-pressed='"+(BOOKMAKER===k)+"'>"+B.mark+cnt+"</button>";
   });
@@ -11380,15 +11399,24 @@ try{ startBookCycle(); }catch(e){}
    picks that book, or a picker is drawn that has to count what each book can
    take. Memoised on the promise, not a boolean, so two callers in the same
    frame share one request instead of racing two. */
-var BOOK_FEED={};
+var BOOK_FEED={},BOOK_FEED_DONE={};
 function ensureBookFeed(k){
   /* SportyBet is the board's own prices, loaded before this ever runs. */
   if(!k||k==="sporty"||BOOK_FEED[k]) return BOOK_FEED[k]||Promise.resolve(0);
   var load=k==="bet9ja"?loadBet9ja:k==="betking"?loadBetKing:null;
   if(!load) return Promise.resolve(0);
-  BOOK_FEED[k]=load().then(function(n){ if(n) repaintAfterMatch(); return n; })
-    .catch(function(){ return 0; });
+  BOOK_FEED[k]=load().then(function(n){ BOOK_FEED_DONE[k]=1; if(n) repaintAfterMatch(); return n; })
+    .catch(function(){ BOOK_FEED_DONE[k]=1; return 0; });
   return BOOK_FEED[k];
+}
+/* A COUNT OF NOUGHT AND "WE HAVE NOT ASKED YET" LOOK THE SAME ON SCREEN, and
+   the second is what a reader meets: only the book they are on is fetched at
+   load, so the other pills read 0/94 and the prompt said none of these games
+   are on Bet9ja - about a feed nobody had requested. These two say which. */
+function bookFeedPending(k){ return k!=="sporty"&&!BOOK_FEED_DONE[k]; }
+function allBookFeeds(){
+  var pend=Object.keys(BOOKS).filter(bookFeedPending);
+  return pend.length?Promise.all(pend.map(ensureBookFeed)):null;
 }
 function loadBet9jaSoon(){
   /* Only the book the reader is already on. The others wait to be asked. */
@@ -14427,10 +14455,19 @@ function confirmBookAll(){
     if(el) el.addEventListener("click",function(e){
       if(e.target.closest("[data-book]")) setTimeout(confirmBookAll,0);
     });
+    /* Only the book the reader is on is fetched at load, so opening this card
+       is the moment the other two are wanted - and the card is redrawn once
+       they land, because every number on it was counted without them. Asked
+       once: allBookFeeds is null when nothing is outstanding, so the redraw
+       cannot call itself. */
+    var wait=allBookFeeds();
+    if(wait) wait.then(function(){ if(host.querySelector(".bookpick")) confirmBookAll(); });
   }
   if(!bookable.length){
-    host.innerHTML="<div class='code-err'>None of these games are on "+
-      B.mark+" right now.</div><div class='bookpick'></div>";
+    host.innerHTML="<div class='code-err'>"+
+      (bookFeedPending(BOOKMAKER)?"Checking which of these games are on "+B.mark+"…":
+        "None of these games are on "+B.mark+" right now.")+
+      "</div><div class='bookpick'></div>";
     wirePicker();
     return;
   }
@@ -14447,9 +14484,9 @@ function confirmBookAll(){
     (skipped?" \u00b7 "+skipped+" not on "+B.mark+" yet, skipped":"")+
     "</span></p>"+
     "<div class='bookpick'></div>"+
-    (over?"<div class='cap-warn'><b>"+B.mark+" only takes "+CAP+" games per slip.</b>"+
-      "Book the first "+CAP+" and the last "+(bookable.length-CAP)+
-      " are left off, or keep them all across several tickets.</div>":"")+
+    (over?"<div class='cap-warn'><b>"+B.mark+" takes "+CAP+" games per slip.</b>"+
+      "Book the first "+CAP+", or keep all "+bookable.length+
+      " across the tickets below.</div>":"")+
     "<div class='ca'>"+
     "<button class='confirm-go' type='button'>"+(over?"Book first "+CAP:"Book all "+bookable.length)+"</button>"+
     "<button class='confirm-trim' type='button'>Review &amp; trim</button>"+

@@ -207,6 +207,43 @@ test("the board's book-all asks the selected book, and lets it be changed", () =
     "the refusal must offer the books that do have them");
 });
 
+test("a book nobody has asked about shows no count, and the card waits for it", () => {
+  /* Only the selected book's feed loads at startup, so the other pills read
+     "0/94" and the prompt said "none of these games are on Bet9ja" - both
+     about a feed that had never been requested. A count of nought and "we have
+     not looked" are different facts and must not print the same. */
+  assert.match(src, /function bookFeedPending\(k\)\{ return k!=="sporty"&&!BOOK_FEED_DONE\[k\]; \}/,
+    "there must be one answer to whether a book has been asked yet");
+  assert.match(body("ensureBookFeed"), /BOOK_FEED_DONE\[k\]=1/,
+    "and it must be set when the feed settles, success or failure");
+  assert.match(body("paintBookPickerWith"), /bookFeedPending\(k\)\?/,
+    "the pill must withhold the count until the feed is in");
+  const fn = body("confirmBookAll");
+  assert.match(fn, /var wait=allBookFeeds\(\)/,
+    "opening the card is when the other books are wanted");
+  assert.match(fn, /wait\.then\(/, "and it must redraw once they land");
+  assert.match(fn, /bookFeedPending\(BOOKMAKER\)\?"Checking/,
+    "and must not claim the games are missing before it has looked");
+  /* The redraw calls confirmBookAll again, so the second pass must find
+     nothing outstanding or the card loops forever. */
+  assert.match(body("allBookFeeds"), /pend\.length\?/,
+    "allBookFeeds must return nothing when every feed is already in");
+});
+
+test("the board's prompt fits a phone without scrolling", () => {
+  /* Question, picker, cap warning, buttons and ticket splits stacked to 519px
+     at 390px wide - the last block, which is the offer to keep every game,
+     sat under the fold. Scoped to this card, because the same blocks elsewhere
+     are alone on screen. Measured at 311px after. */
+  for (const sel of ["#bookAllResult .confirm-card p",
+                     "#bookAllResult .bookpick-l",
+                     "#bookAllResult .confirm-card .ca",
+                     "#bookAllResult .confirm-card .sp-ways"])
+    assert.ok(src.includes(sel + "{"), "must tighten " + sel);
+  assert.match(src, /#bookAllResult \.confirm-card \.sp-ways\{[^}]*repeat\(auto-fit/,
+    "the ticket offers must sit side by side, not three stacked rows");
+});
+
 test("the add-all path uses the same constant, not its own copy", () => {
   /* It had a local CAP=50. Two copies of a bookmaker's limit drift, and the
      one that drifts is the one nobody is looking at. */
