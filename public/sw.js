@@ -9,7 +9,7 @@
  * exist. Static assets stay cache-first, since those are the ones worth having
  * instantly and they change under a new name when they change at all.
  */
-const VERSION = "sw-v9";
+const VERSION = "sw-v11";
 const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/wiz-logo.png"];
 
 /* THE KILL SWITCH. Set to true, deploy, and every installed worker deletes its
@@ -204,6 +204,73 @@ self.addEventListener("fetch", function (e) {
         return res;
       }).catch(function () { return hit; });
       return hit || net;
+    })
+  );
+});
+
+/* ------------------------------------------------------------------ push
+ *
+ * The push carries NO PAYLOAD. That is deliberate: an encrypted payload needs
+ * AES128-GCM at the sender and would have made this the first dependency in
+ * the repo. The worker fetches the same 200-byte file the home page card reads
+ * and writes the notification itself.
+ *
+ * If that fetch fails it still shows a line. userVisibleOnly is a promise to
+ * the browser, and a push that shows nothing earns the "this site was updated
+ * in the background" notice - which is worse than a plain message, and after a
+ * few of them the browser stops delivering to us at all.
+ */
+var PUSH_TITLE = "Today's booking code is up";
+
+function pushBody(d) {
+  var books = [];
+  if (d && d.codes) {
+    if (d.codes.sporty) books.push("SportyBet");
+    if (d.codes.bet9ja) books.push("Bet9ja");
+    if (d.codes.betking) books.push("BetKing");
+  }
+  var n = d && d.n ? d.n : 0;
+  var games = n ? n + " game" + (n === 1 ? "" : "s") : "One slip";
+  return books.length ? games + " · " + books.join(", ") : games + ", free to load";
+}
+
+self.addEventListener("push", function (e) {
+  e.waitUntil(
+    fetch("/code-today.json?t=" + Date.now())
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; })
+      .then(function (d) {
+        return self.registration.showNotification(PUSH_TITLE, {
+          body: d ? pushBody(d) : "Tap to see today's free code",
+          tag: "code-" + ((d && d.date) || "today"),
+          icon: "/icon-192.png",
+          badge: "/icon-192.png",
+          data: { url: "/booking-codes" },
+        }).catch(function () {
+          /* showNotification itself can reject - permission state, a
+             browser-specific TypeError on the options object, throttling.
+             That must not escape into waitUntil: a rejected push promise is a
+             silent-push strike, the exact thing userVisibleOnly promises will
+             not happen. Retry with the bare minimum - a plain title is more
+             likely to be accepted than the full options object - and if even
+             that rejects, swallow it. A shown notification beats a silent one,
+             and a silent failure beats a strike. */
+          return self.registration.showNotification(PUSH_TITLE).catch(function () {});
+        });
+      })
+  );
+});
+
+self.addEventListener("notificationclick", function (e) {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
+      /* Focus what is already open. Opening a second tab on a phone that is
+         already showing the site is how a notification earns an uninstall. */
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].focus) return list[i].focus();
+      }
+      return self.clients.openWindow((e.notification.data && e.notification.data.url) || "/booking-codes");
     })
   );
 });
