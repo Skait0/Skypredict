@@ -46,3 +46,7 @@ ev*.json
 # from the source it describes, and the cache alone is megabytes.
 graphify-out/
 supabase/.temp/
+
+# The VAPID pair, generated locally. The private half is a signing key for
+# push notifications - it never belongs in the repo.
+.vapid.local.json
