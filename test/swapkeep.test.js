@@ -365,3 +365,56 @@ test("the shuffle button only appears when it would change something", () => {
   assert.match(wire, /BYO\.saferHow=c\.dataset\.how; BYO\.saferShuffle=0;/,
     "a new strength is a new ladder, so the offset must start over");
 });
+
+/* ------------------------------- Asian handicaps, which had no number at all */
+
+/* 64 Asian codes crossed between books, booked, and could not be judged: mProb
+ * had no case for them, so saferSwap bailed on the first line and every rule in
+ * the editor was blind to a family that fills whole tickets. They never needed
+ * a model - around nil a handicap IS a market we already publish. These run the
+ * shipped mProb rather than a copy of the identities. */
+function prices(fixture) {
+  return new Function("f", grab("mProb") + "return function(c){return mProb(f,c);};")(fixture);
+}
+
+test("a handicap around nil is priced as the market it already is", () => {
+  const p = prices(LOPSIDED);
+  /* The line is quoted from the home team's point of view on every book, so
+     AH_2_-0.5 is the AWAY side receiving half a goal - draw or away. Reading
+     the number straight off the away name would price the opposite bet. */
+  assert.equal(p("AH_1_-0.5"), LOPSIDED.home_p, "home -0.5 is the home win");
+  assert.equal(p("AH_1_0.5"), LOPSIDED.dc1x, "home +0.5 is home or draw");
+  assert.equal(p("AH_2_0.5"), LOPSIDED.away_p, "away -0.5 is the away win");
+  assert.equal(p("AH_2_-0.5"), LOPSIDED.dcx2, "away +0.5 is draw or away");
+  /* The nil line returns the stake on a draw, so the draw leaves the sample. */
+  const dnb = LOPSIDED.home_p / (LOPSIDED.home_p + LOPSIDED.away_p);
+  assert.ok(Math.abs(p("AH_1_0") - dnb) < 1e-12, "the nil line is draw no bet");
+  assert.equal(p("DNB_1"), p("AH_1_0"), "and draw no bet is the same bet, so the same number");
+  assert.equal(p("DNB_2"), p("AH_2_0"));
+  /* Draw no bet sits between the win and the double chance by construction. */
+  assert.ok(p("AH_1_-0.5") < p("AH_1_0") && p("AH_1_0") < p("AH_1_0.5"));
+});
+
+test("a line we cannot settle from one number stays unpriced", () => {
+  /* A whole ball pushes when the margin lands on it and a quarter splits the
+     stake across two lines. Neither is one probability without a distribution
+     over margins, which the payload does not carry - so null, the same answer
+     1UP gets, rather than a guess on somebody's ticket. */
+  const p = prices(LOPSIDED);
+  for (const c of ["AH_1_-1", "AH_1_1", "AH_2_-2", "AH_1_-0.25", "AH_2_0.75", "AH_1_-1.5"])
+    assert.equal(p(c), null, c + " was given a number it cannot have");
+});
+
+test("a handicap walks the same ladder every other market does", () => {
+  const run = ladder(LOPSIDED);
+  /* Half a goal towards the punter each rung: win, then win-or-stake-back,
+     then win-or-draw. */
+  assert.equal(run("AH_1_-0.5", "light").to, "AH_1_0", "one rung at Light");
+  assert.equal(run("AH_1_-0.5", "strong").to, "AH_1_0.5", "and further at Safest");
+  /* The away side walks DOWN the home-quoted number for the same widening. */
+  assert.equal(run("AH_2_0.5", "strong").to, "AH_2_-0.5");
+  /* Draw no bet widens into the double chance holding it - a smaller gain
+     than the handicap walk, since the stake already came back on a draw, so
+     it takes a dial that moves on small gains. */
+  assert.equal(run("DNB_1", "strong").to, "1X");
+});

@@ -488,14 +488,22 @@ test("a whole line moves the way that never hurts the punter", () => {
 test("a whole-ball handicap moves half a goal in the punter's favour", () => {
   /* Same rule, arithmetic instead of a table - 64 Asian codes would be 64
      chances to fumble a sign. -1 becomes -0.5, so a one-goal win stops being a
-     push and becomes a win; +1 becomes +1.5. In our notation AH_2_-1 is the
-     AWAY side giving one, so it is +0.5 either side. */
+     push and becomes a win; +1 becomes +1.5.
+     AND THE SIGN IS NOT THE SAME ON BOTH SIDES, which this test used to assert
+     it was. The line is quoted from the HOME team's point of view on every
+     book - SportyBet in the specifier, BetKing flipping it itself for outcome
+     1715 above, mLabel inverting it for the reader - so AH_2_-1 is the away
+     side RECEIVING one. Moving it to AH_2_-0.5 hands that backer +0.5 instead
+     of +1: a worse bet, made silently, under a rule that promises never worse.
+     The away side moves DOWN the home-quoted number. */
   const { nearestLine } = lineApi();
   assert.strictEqual(nearestLine("AH_1_-1"), "AH_1_-0.5");
-  assert.strictEqual(nearestLine("AH_2_-1"), "AH_2_-0.5");
   assert.strictEqual(nearestLine("AH_1_1"), "AH_1_1.5");
   assert.strictEqual(nearestLine("AH_1_0"), "AH_1_0.5");
   assert.strictEqual(nearestLine("AH_1_-2"), "AH_1_-1.5");
+  assert.strictEqual(nearestLine("AH_2_-1"), "AH_2_-1.5", "away +1 must not become away +0.5");
+  assert.strictEqual(nearestLine("AH_2_1"), "AH_2_0.5", "away -1 becomes away -0.5");
+  assert.strictEqual(nearestLine("AH_2_0"), "AH_2_-0.5");
 });
 
 test("a line with nothing to fix is left alone", () => {

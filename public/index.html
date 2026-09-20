@@ -11631,6 +11631,40 @@ function mProb(f,c){
        settled by a full-time score - see gradeLeg, which answers null. */
     case"WINHALF_H_Y":return f.h_win_half;
     case"WINHALF_A_Y":return f.a_win_half;}
+  /* ASIAN HANDICAPS AT THE LINES THAT ARE ALREADY A MARKET WE PUBLISH.
+     64 codes came in as pass-through, were read and booked fine, and could not
+     be judged at all - so every rule in this editor was blind to a family that
+     fills whole tickets. They do not need a new model. The line is quoted from
+     the HOME team's point of view on every book (see ahReline), and around nil
+     a handicap is a bet we already price under another name:
+       AH_1_-0.5  home wins                   home_p
+       AH_1_0.5   home wins or draws          dc1x
+       AH_2_0.5   away wins                   away_p
+       AH_2_-0.5  away wins or draws          dcx2
+       AH_*_0     draw no bet - the stake comes back on a draw, so the draw
+                  leaves the sample and the two win chances are renormalised
+     Every other line stays null. A whole ball pushes when the margin lands on
+     it and a quarter splits the stake across two lines, so neither is one
+     probability: they need a distribution over margins, which the payload does
+     not carry. Saying we cannot price those beats guessing on somebody's
+     ticket - which is the same reason 1UP is left alone. */
+  var ah=/^AH_([12])_(-?[\d.]+)$/.exec(c||"");
+  if(ah){
+    var ahHome=ah[1]==="1", ahLine=parseFloat(ah[2]);
+    if(ahLine===0){
+      if(f.home_p==null||f.away_p==null) return null;
+      var ahTot=f.home_p+f.away_p;
+      return ahTot>0?((ahHome?f.home_p:f.away_p)/ahTot):null;
+    }
+    if(ahLine===-0.5) return ahHome?f.home_p:f.dcx2;
+    if(ahLine===0.5) return ahHome?f.dc1x:f.away_p;
+    return null;
+  }
+  /* Draw no bet is the nil handicap under a second name, and both are sold.
+     Answered by the same arithmetic rather than a rule of its own, so the two
+     cannot drift apart. */
+  var dnb=/^DNB_([12])$/.exec(c||"");
+  if(dnb) return mProb(f,"AH_"+dnb[1]+"_0");
   return null;
 }
 /* Which markets have actually been graded, and enough times to mean something.
@@ -13070,7 +13104,17 @@ var SAFER={"1":"1X","2":"X2",
      scores them, and on a card where one side is much stronger that is where
      both-score tickets die. A real change of bet, shown with both numbers like
      the draw is. */
-  "GG":"OVER_1.5"};
+  "GG":"OVER_1.5",
+  /* THE HANDICAP LADDER, NOW THAT THE RUNGS HAVE NUMBERS ON THEM (see mProb).
+     One step is half a goal towards the punter, which on the home side reads
+     -0.5 to 0 to +0.5 and on the away side is the same walk down the
+     home-quoted number. In plain words it is win, then win-or-stake-back, then
+     win-or-draw - the same widening every other entry here does, on the market
+     the reader chose. Deeper lines are absent because they are unpriced: a
+     ladder we cannot measure a rung of is not one we walk. */
+  "AH_1_-0.5":"AH_1_0","AH_1_0":"AH_1_0.5",
+  "AH_2_0.5":"AH_2_0","AH_2_0":"AH_2_-0.5",
+  "DNB_1":"1X","DNB_2":"X2"};
 /* WHERE THE TABLE ALONE CANNOT DECIDE, because the safer version depends on
    which side the model likes. Same shape as the draw's rule, which has always
    picked between 1X and X2 rather than hard-coding one. */
@@ -13560,15 +13604,21 @@ var NEAREST_LINE={"OVER_2":"OVER_1.5","OVER_3":"OVER_2.5",
    sign. A whole-ball line pushes when the margin lands exactly on it, so the
    generous neighbour is always half a goal FURTHER IN THE PUNTER'S FAVOUR:
    -1 becomes -0.5 (a one-goal win stops being a push and becomes a win), +1
-   becomes +1.5. In our own notation, where AH_2_-1 means the AWAY side giving
-   one, that is the same +0.5 either side - so one line of arithmetic covers
-   both.
+   becomes +1.5.
+   THE SIGN IS NOT THE SAME ON BOTH SIDES, which is what this used to get
+   wrong. The line is quoted from the HOME team's point of view on every book
+   we deal with - SportyBet puts it in the specifier, BetKing flips it itself
+   for outcome 1715, and mLabel inverts it before printing - so AH_2_-1 is the
+   away side RECEIVING one, not giving it. Moving that to AH_2_-0.5 leaves the
+   away backer with +0.5 instead of +1: a strictly worse bet, made silently on
+   somebody else's ticket, under a rule that says it is never worse. The away
+   side therefore moves DOWN the home-quoted number, the home side up.
    Quarter balls are left alone. They do not push, so they have nothing to fix,
    and their neighbour is a quarter of a goal away rather than a half. */
 function ahReline(code){
   var m=/^(AH_[12])_(-?\d+)$/.exec(code||"");
   if(!m) return null;
-  return m[1]+"_"+(Number(m[2])+0.5);
+  return m[1]+"_"+(Number(m[2])+(m[1]==="AH_1"?0.5:-0.5));
 }
 /* Both, in the order a caller wants them: the table first because it is exact,
    the arithmetic second. */
