@@ -7184,8 +7184,8 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
             aria-label="BetKing"><span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span></button>
         </div>
         <input id="byoCode" type="text" inputmode="latin" autocomplete="off"
-               spellcheck="false" maxlength="16" placeholder="Booking code"
-               aria-label="Booking code">
+               spellcheck="false" maxlength="110" placeholder="Booking code, or a few to merge"
+               aria-label="Booking code, or several separated by spaces to merge them">
         <button class="byo-go" id="byoGo" type="button">Read it</button>
       </div>
       <!-- THE THREE JOBS, ON SCREEN BEFORE THERE IS A CODE.
@@ -13068,16 +13068,66 @@ function legStarted(l){
   return isFinite(t)&&t<=Date.now();
 }
 
+/* SEVERAL CODES INTO ONE SLIP.
+ *
+ * The box takes more than one code now, separated by anything that is not a
+ * letter or a number. Everything after this point works on a list of legs and
+ * does not care where they came from, so merging is a read that appends rather
+ * than a second machine: the merged slip edits, converts, splits and books
+ * exactly like a slip that arrived as one code - including the cap, which is
+ * what a merge is most likely to hit.
+ *
+ * Two rules, and both are the bookmaker's, not ours. One selection per game,
+ * because no betslip will take two outcomes on the same match in one ticket -
+ * so a game already on the slip is dropped and counted rather than booked into
+ * a certain refusal. And all the codes must be the SAME book: they are read
+ * through that book's own reader, and neither will read the other's code.
+ * BYO_MAX_CODES is about the wait, nothing else - each code is a round trip to
+ * the bookmaker and they are made one at a time, because a burst is the shape
+ * of traffic that got this project block-paged once already. */
+var BYO_MAX_CODES=6;
+function byoCodes(text){
+  var seen={}, out=[];
+  String(text||"").toUpperCase().split(/[^A-Z0-9]+/).forEach(function(c){
+    if(c&&!seen[c]){ seen[c]=1; out.push(c); }
+  });
+  return out;
+}
+/* One leg per game, first code wins. Returns the kept legs and how many were
+   turned away, since "24 games read, 21 on the slip" needs the three
+   explaining or it reads as a bug. */
+function byoMerge(lists){
+  var seen={}, legs=[], clash=0;
+  (lists||[]).forEach(function(part){
+    (part||[]).forEach(function(l){
+      var k=String((l&&(l.eventId||l.event_id))||"")||
+            (String((l&&l.home)||"")+"|"+String((l&&l.away)||""));
+      if(seen[k]){ clash++; return; }
+      seen[k]=1; legs.push(l);
+    });
+  });
+  return {legs:legs,clash:clash};
+}
 function byoRead(){
   var inp=$("byoCode"), out=$("byoOut");
   if(!inp||!out) return;
-  var code=(inp.value||"").trim().toUpperCase();
-  if(!/^[A-Za-z0-9]{4,16}$/.test(code)){
+  var codes=byoCodes(inp.value);
+  if(!codes.length||codes.some(function(c){return !/^[A-Z0-9]{4,16}$/.test(c);})){
     out.innerHTML="<div class='code-err'><b>That does not look like a booking code.</b>"+
-      "<span>Codes are 4 to 16 letters and numbers, no spaces.</span></div>";
+      "<span>Codes are 4 to 16 letters and numbers. To merge slips, put the "+
+      "codes in together with a space between them.</span></div>";
     return;
   }
-  BYO.legs=null; BYO.code=code;
+  if(codes.length>BYO_MAX_CODES){
+    out.innerHTML="<div class='code-err'><b>That is a lot of codes.</b>"+
+      "<span>Up to "+BYO_MAX_CODES+" at a time - each one is a separate read "+
+      "from the bookmaker. Do these "+BYO_MAX_CODES+" first and merge the rest "+
+      "into the result.</span></div>";
+    return;
+  }
+  if(codes.length>1) return byoReadMany(codes,out);
+  var code=codes[0];
+  BYO.legs=null; BYO.code=code; BYO.merged=null;
   /* EVERY BOOK MATTERS HERE, so this is the third place that asks for the
      feeds. A conversion pairs the code's book with the target's, and feedMatch
      reads the target's own events for games our board does not carry - with no
@@ -13120,6 +13170,48 @@ function byoRead(){
       out.innerHTML="<div class='code-err'><b>Couldn't reach the reader.</b>"+
         "<span>Check your connection and try again.</span></div>";
     });
+}
+/* One code, answered rather than thrown: a merge that loses one slip still
+   has the others to offer, so a failure here is a line in the result and not
+   the end of the read. */
+function byoSlipFetch(code){
+  return fetch("/api/slip?book="+encodeURIComponent(BYO.book)+
+               "&code="+encodeURIComponent(code),
+               {headers:{Accept:"application/json"}})
+    .then(function(r){return r.json().then(function(d){
+      return {ok:!!(r.ok&&d&&d.success),d:d};});})
+    .catch(function(){return {ok:false,d:null};});
+}
+function byoReadMany(codes,out){
+  BYO.legs=null; BYO.booked=null; BYO.dropped=null;
+  BYO.code=codes.join(" + "); BYO.merged=null;
+  try{ Object.keys(BOOKS).forEach(ensureBookFeed); }catch(e){}
+  var lists=[], bad=[];
+  function wait(i){
+    out.innerHTML="<div class='byo-wait'><span class='mini-load'></span>Reading "+
+      byoBook().label+" code "+(i+1)+" of "+codes.length+"…</div>";
+  }
+  function step(i){
+    if(i>=codes.length) return done();
+    wait(i);
+    byoSlipFetch(codes[i]).then(function(r){
+      if(r.ok) lists.push(r.d.legs||[]); else bad.push(codes[i]);
+      step(i+1);
+    });
+  }
+  function done(){
+    if(!lists.length){
+      out.innerHTML="<div class='code-err'><b>None of those codes could be read.</b>"+
+        "<span>Check them, and check the bookmaker above - "+byoBook().label+
+        " will not read a code from another one.</span></div>";
+      return;
+    }
+    var m=byoMerge(lists);
+    BYO.legs=m.legs;
+    BYO.merged={read:lists.length,asked:codes.length,clash:m.clash,bad:bad};
+    renderByo();
+  }
+  step(0);
 }
 
 /* HOW LIKELY IS A LEG WE DID NOT CHOOSE?
@@ -13457,15 +13549,22 @@ function renderByo(){
      also most of the slip: 21 of 26 usable legs on HCVKA1, every one of them a
      market SportyBet quotes perfectly well. The count now says only what a
      reader acts on, which is how much of their slip can move. */
+  /* WHAT A MERGE LOST, SAID WHERE THE COUNT IS. Two codes holding the same
+     game, or a code that would not read, both end as a slip shorter than the
+     codes put in - and a number that does not add up reads as a bug unless the
+     page says why. */
+  var mg=BYO.merged;
   out.innerHTML="<div class='byo-res'>"+
     "<div class='byo-head'><b>"+legs.length+" game"+(legs.length===1?"":"s")+
-      " read</b><span>from "+B.label+" code "+esc(BYO.code)+"</span></div>"+
+      " read</b><span>from "+B.label+" code"+(mg?"s ":" ")+esc(BYO.code)+"</span></div>"+
     "<button class='byo-clear' type='button' aria-label='Clear this code'>Clear</button>"+
     "<p class='byo-count'>"+
       (away
         ? "<b>"+usable.length+" we can use</b> · "+away+" we cannot"
         : "<b>We can use all "+legs.length+"</b>")+
-
+      (mg&&mg.clash?" · "+mg.clash+" already on another of these slips":"")+
+      (mg&&mg.bad.length?" · "+mg.bad.length+" code"+(mg.bad.length===1?"":"s")+
+        " would not read ("+esc(mg.bad.join(", "))+")":"")+
     "</p>"+
     /* FOLDED, BECAUSE THE JOBS ARE BELOW IT. Eleven rows of games pushed Edit
        for me off the bottom of a phone, and the list is reference material -
@@ -13600,6 +13699,7 @@ function renderStage(usable,B){
    connection that paid for it. */
 function byoReset(){
   BYO.legs=null; BYO.booked=null; BYO.dropped=null; BYO.code=""; BYO.job=null;
+  BYO.merged=null;
   BYO.saferDrop=true; BYO.saferSwapOn=true; BYO.saferHow="normal"; BYO.saferShuffle=0; BYO.reline=false;
   var inp=$("byoCode"); if(inp) inp.value="";
   var out=$("byoOut"); if(out) out.innerHTML="";
