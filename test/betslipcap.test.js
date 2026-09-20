@@ -180,6 +180,33 @@ test("the board's book-all prompt names the book in play and offers the split", 
   assert.ok(!/splitAndBook\(/.test(fn), "never straight to splitAndBook");
 });
 
+test("the board's book-all asks the selected book, and lets it be changed", () => {
+  /* Naming the book was only half of it. `c.eventId` is SportyBet's id, so the
+     count on the button and the list behind it were SportyBet's answer read
+     out to a reader on BetKing - and the toggle that would fix it lives on the
+     builder and in My slip, nowhere near the board. */
+  for (const name of ["renderBookAll", "confirmBookAll"]) {
+    const fn = body(name).replace(/\/\*[\s\S]*?\*\//g, " ");
+    assert.ok(!/c\.eventId/.test(fn),
+      name + " still filters on one book's id field");
+    assert.match(fn, /bookTakes\(c,/,
+      name + " must ask whether the book in play takes the game");
+  }
+  const fn = body("confirmBookAll");
+  assert.match(fn, /paintBookPickerWith\(el,picks\)/,
+    "the pills must be drawn from every pick on the board, so each book's " +
+    "count is comparable");
+  assert.match(fn, /setTimeout\(confirmBookAll,0\)/,
+    "and changing book must redraw the prompt - its counts, odds and cap " +
+    "wording are all about the old one");
+  /* The empty case is the one that most needs the pills: "none of these are on
+     X" is the moment a reader wants the other two. */
+  const at = fn.indexOf("if(!bookable.length)");
+  assert.ok(at > 0);
+  assert.match(fn.slice(at, at + 400), /bookpick/,
+    "the refusal must offer the books that do have them");
+});
+
 test("the add-all path uses the same constant, not its own copy", () => {
   /* It had a local CAP=50. Two copies of a bookmaker's limit drift, and the
      one that drifts is the one nobody is looking at. */

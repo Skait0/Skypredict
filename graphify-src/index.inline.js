@@ -1,111 +1,111 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark" class="mode-pred booting">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Football predictions and free SportyBet codes | Soccerwizard</title>
-<!-- What the site DOES, in the order somebody discovers it: the annoyance
-     first, then the fix, then what they walk away with. The old line listed
-     markets, which is a feature list and answers a question nobody arrives
-     with. Kept identical to og:description so a search result and a shared
-     link make the same promise. -->
-<meta name="description" content="Stop picking games one by one. Type how much you want to win. It finds the games and gives you the code for SportyBet, Bet9ja or BetKing.">
-<meta name="theme-color" content="#0D0D0F">
-<meta property="og:title" content="Soccerwizard">
-<!-- No league count here on purpose. It said 38 while the payload carried 45
-     and the share card said 45, and a number baked into a tag nobody
-     rebuilds goes stale the first time a league starts or ends its season.
-     The claim that does not rot is what the site does. -->
-<meta property="og:description" content="Stop picking games one by one. Type how much you want to win. It finds the games and gives you the code for SportyBet, Bet9ja or BetKing.">
-<meta property="og:type" content="website">
-<!-- The share card. wiz-logo.png was pointed at here and it is 473x544 -
-     portrait. summary_large_image wants roughly 1.91:1, so platforms had
-     nothing they could render large and fell back to no card at all. Every
-     other asset here is square, so this one is purpose-made at 2.03:1.
-     Width and height are declared because some crawlers will not lay out a
-     card until they know the shape, and that is a fetch they can skip.
-     PNG, and written by scripts/prebuild.js on every deploy rather than drawn
-     by hand: the figures on it come from the payload, so they cannot drift the
-     way the hand-made JPEG did. og-card.jpg is left in place unreferenced so
-     the caches still holding it keep resolving until they expire. -->
-<meta property="og:image" content="https://skypredict-theta.vercel.app/og-card.png">
-<!-- 784x386, which is what SHIPS: lib/ogcard.js bakes at 1568x772 and halves
-     it on the way out (SHRINK = 2), because WhatsApp drops a preview over
-     roughly 300 KB. cardSize() is exported for exactly this and is the only
-     thing that should ever be quoted here. -->
-<meta property="og:image:width" content="784">
-<meta property="og:image:height" content="386">
-<meta property="og:image:alt" content="Soccerwizard - type a payout and get a SportyBet, Bet9ja or BetKing booking code">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://skypredict-theta.vercel.app/og-card.png">
-<!-- X FALLS BACK TO THE og: TAGS WHEN THESE ARE ABSENT, so their absence was
-     never the bug - but "should fall back" is a thing to reason about at two in
-     the morning when a preview will not appear, and these cost nothing. Stated
-     explicitly, there is one less variable. Same for og:site_name, which is
-     what puts the name above the card rather than the bare hostname. -->
-<meta name="twitter:title" content="Soccerwizard">
-<meta name="twitter:description" content="Stop picking games one by one. Type how much you want to win. It finds the games and gives you the code for SportyBet, Bet9ja or BetKing.">
-<meta name="twitter:image:alt" content="Soccerwizard - type a payout and get a SportyBet, Bet9ja or BetKing booking code">
-<meta property="og:site_name" content="Soccerwizard">
-<meta property="og:locale" content="en_GB">
-<!-- Every view of this site is one URL with different state - the board, the
-     builder, live scores and results are all "/" - and the day picker and share
-     links add query strings on top. Without a canonical, a search engine treats
-     each of those as a separate page competing with the others, which splits
-     the ranking of the one page that matters. Absolute, because a relative
-     canonical is ignored by some crawlers, and rewritten at deploy time by
-     applyOrigin() along with the og: tags above. -->
-<link rel="canonical" href="https://skypredict-theta.vercel.app/">
-<meta property="og:url" content="https://skypredict-theta.vercel.app/">
-<!-- Names the site itself for search results. The per-match pages carry their
-     own SportsEvent schema; this is the one that can win a sitelinks box. -->
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Soccerwizard","url":"https://skypredict-theta.vercel.app/","description":"Football predictions from 38 leagues, plus a ready-made slip for SportyBet, Bet9ja or BetKing.","publisher":{"@type":"Organization","name":"Soccerwizard","logo":{"@type":"ImageObject","url":"https://skypredict-theta.vercel.app/wiz-logo.png"}}}</script>
-<link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
-<!-- The 512 icon is deliberately NOT linked here.
-     Browsers fetch every rel=icon during first paint, and this one is 297 KB,
-     roughly a third of the page weight, for an image only needed when somebody
-     installs the app.
-     Reported as "Safari couldn't open the page because the server stopped
-     responding" on a two-bar LTE connection. Nothing was wrong with the server:
-     a first load came to 1.6 MB, about eight seconds of transfer on a weak
-     link, and Safari gives up before that.
-     manifest.webmanifest still lists it, which is where an install looks, and
-     that file is fetched lazily rather than on first paint. icon-32 stays the
-     favicon and icon-180 the apple-touch icon. -->
-<link rel="manifest" href="/manifest.webmanifest">
-<meta name="mobile-web-app-capable" content="yes">
-<!-- The Apple-prefixed name is deprecated and Chrome warns on it, but iOS
-     still reads only that one. Both ship until Safari takes the standard. -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Soccerwizard">
-<link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png">
-<!-- The mark that rides the sphere on the offer card. Fetched with the
-     stylesheet rather than when the CSS background is first needed, because
-     the roll begins the instant the card paints and does not wait for it. -->
-<link rel="preload" as="image" href="/wiz-orb-mark.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- The webfont must not hold up the first paint.
-     Reported: on LTE the page does not load at all, only on wifi. A plain
-     <link rel=stylesheet> to a third-party host is render-blocking - the
-     browser paints nothing until that request resolves - and this document
-     already carries 2,600 characters of real text that could have been on
-     screen. On wifi fonts.googleapis.com answers in milliseconds and the
-     problem is invisible; on a Nigerian mobile network it can be slow,
-     throttled or filtered, and the reader gets a blank screen.
-     media="print" makes it a non-blocking, low-priority fetch; onload flips
-     it back to all and the font swaps in. display=swap was already set, so
-     text has always been readable in the fallback the moment the font file is
-     the only thing outstanding - what was missing is that the STYLESHEET
-     itself was blocking, which display=swap has no say over.
-     If the font never arrives, the fallback stack stands and the site works.
-     That is the right failure. -->
-<link rel="stylesheet" media="print" onload="this.media='all';this.onload=null"
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<noscript><link rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
-<script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (function(){var t=null;try{t=localStorage.getItem("sw.theme");}catch(e){}
 /* Dark is the default whatever the device says. The light theme is built and
    fitted and one tap away, but this page is read in dark by design, and
@@ -211,8 +211,8 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
     try{window.dispatchEvent(new Event("sw-installable"));}catch(_){}
   });
 })();
-</script>
-<script>
+
+
 /* Error tracking (opt-in). Paste your Sentry *browser* DSN below to enable;
    left empty this whole block is a no-op and loads nothing. The DSN is a public
    client key - safe to ship. Also honours ?nosentry to disable ad hoc. */
@@ -267,6210 +267,6210 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
   s.onerror=function(){/* CDN blocked or offline - fail silent, never break the app */};
   document.head.appendChild(s);
 })();
-</script>
-<style>
-/* ==========================================================================
-   Matte black ground, red for signal, green for strength. Red marks the
-   brand and anything the reader should notice; green is reserved for
-   probabilities strong enough to stand out on their own.
-   ========================================================================== */
-:root, [data-theme="dark"]{
-  --bg:#0D0D0F;
-  --card:#161619;
-  --card-2:#1E1E22;
-  --raise:#25252A;
-  --line:#2A2A30;
-  --line-soft:#212126;
-
-  --text:#F2F1F0;
-  --soft:#A3A0A6;
-  /* --faint was fitted to a 3:1 floor, which is the rule for non-text. It is
-     used as TEXT - kickoff times, game counts, the Match/Tip/Pred column
-     headings, the bottom-bar labels - at 10-12.5px, where AA asks 4.5:1, and
-     it was landing at 3.5:1 on a card. Re-fitted to clear 4.5 on --bg, --card
-     and --card-2, the three surfaces it is printed on. On --raise it sits at
-     4.1, which is fine because nothing prints body text there; if something
-     ever does, raise the token again rather than exempting the text. */
-  --faint:#87848B;
-
-  --red:#E63946;
-  /* The same red, five percent down, for the three places white text sits
-     ON it. #E63946 under white is 4.17:1 and the text there is 12-14px, so
-     AA asks 4.5. --red itself is untouched: it is the brand, and as INK on
-     a dark surface it is already past AA - darkening that would have cost
-     contrast rather than bought it. */
-  --red-fill:#DB3643;
-  /* What is legible ON --green. The bright green is a fill colour, and white
-     on it is 1.9:1 - the won banner printed its heading that way. */
-  --on-green:#0D0D0F;
-  --red-ink:#FF6B75;
-  --red-wash:rgba(230,57,70,.13);
-  /* The neon bloom under the tab bar's active ring. A glow is the brand red at
-     low alpha stacked three deep, so it has to be an rgba of THIS theme's red
-     rather than `--red` itself - a box-shadow cannot take a colour and thin it.
-     The light theme sets its own below; without that, a dark-theme glow leaks
-     onto a parchment bar and reads as a smudge. */
-  --red-glow:rgba(230,57,70,.55);
-  --red-glow-soft:rgba(230,57,70,.28);
-  --green:#2FD48A;
-  --green-ink:#4FE39E;
-  --green-wash:rgba(47,212,138,.13);
-  --amber:#F0A93B;
-
-  /* Gold marks the side we favour: it reads as winning and it comes
-     straight out of the logo. Red is kept for the brand and for warnings,
-     green for probabilities strong enough to stand alone. */
-  --win:#F2B84B;
-  --win-ink:#FFC963;
-  --win-wash:rgba(242,184,75,.14);
-  --grey:#5A5762;
-  --cream:#DCD8D2;
-  --shadow:none;
-  --edge:#2A2A30;
-  /* THE HERO BAND. Three values, so the whole band re-themes from here rather
-     than from six numbers buried in a gradient. `top` is the ground the band
-     stands on - a lift off the page, not a colour; `glow` is the brand red at
-     an alpha low enough that it never competes with the headline sitting on
-     it; `line` inks the pitch drawing. */
-  /* THE MASTHEAD, as glass rather than a slab. The bar used to be
-     background:var(--bg) - the page colour exactly - so it was invisible until
-     it was stuck, and then it announced itself with a hard 1px rule and
-     nothing else, because --shadow is `none` on this theme. A line with no
-     falloff is a cut, and that is what it looked like.
-     Translucent, so the board passes under it and you can see that it does;
-     a hairline for definition; and a short gradient below the bar so the edge
-     ends instead of stopping. */
-  --top-bg:rgba(13,13,15,.72);
-  /* A few points lighter at the very top, so the bar has an edge that catches
-     light instead of reading as one flat slab. */
-  --top-bg-lift:rgba(31,29,34,.74);
-  --top-hair:rgba(255,255,255,.07);
-  --top-fade:rgba(0,0,0,.38);
-  --hero-top:rgba(255,255,255,.045);
-  --hero-glow:rgba(230,57,70,.17);
-  --hero-line:.55;
-}
-[data-theme="light"]{
-  /* Toned down a step. This was a warm off-white sitting at 96% lightness
-     with cards at 99% - correct by the book and glaring in practice, because
-     a full screen of near-white is a lamp pointed at the reader. Every surface
-     comes down about six points, which keeps the page unmistakably light while
-     taking the glare out of it.
-     The order is preserved deliberately: cards stay lighter than the page they
-     sit on, so the hierarchy still reads. Text is untouched at #1C1A18, which
-     leaves contrast around 13:1 - well past the 7:1 that AAA asks for, so this
-     is easier to look at without being harder to read. */
-  --bg:#E9E4DA;       /* warm, a shade off the old near-white */
-  --card:#F4F1EA;     /* still lighter than the page beneath it */
-  --card-2:#E1DBCF;   /* subtle contrast, moved with the rest */
-  --raise:#D6CFC1;    /* raised */
-  /* Card edges carry more weight in light mode than they used to. The dark
-     buttons on a near-white card were the only strong edge on the page, so
-     they read as cut out of it; a firmer border gives the card its own
-     outline and settles them back into it. They firm up again here, because
-     a border tuned against near-white would fade into the calmer page. */
-  --line:#B3AA96;
-  --line-soft:#C2BAA9;
-
-  /* The muted inks come down with the surfaces. Dropping the page brightness
-     by itself would have cost 13% of contrast everywhere - fine for body text,
-     which has it to spare, but it pushed the muted inks down with it, so both
-     are fitted against the calmer surfaces rather than inherited from the old
-     near-white. --faint used to sit at 3.31:1, the floor for non-text; it
-     prints real text and now clears the 4.5:1 that text is actually held to,
-     on --bg, --card and --card-2 alike. */
-  --text:#1C1A18;     /* unchanged - 13.7:1, still past AAA */
-  --soft:#514C46;     /* 6.70:1, matching its old 6.67 */
-  --faint:#65605A;    /* 4.91:1 - re-fitted for text, see the dark token */
-
-  /* Semantic inks, re-fitted to the calmer surfaces. --green and --win are
-     used as text in dozens of places (not only as fills, despite the -ink
-     variants existing), so darkening the page underneath them would have cost
-     real legibility: --win fell to 2.98:1, below even the 3:1 floor. Each is
-     nudged just far enough to hold the contrast ratio it had before.
-     --red is deliberately left alone: it is the brand colour, it still clears
-     AA on both surfaces, and shifting it to buy half a point is not worth
-     repainting every button on the site. */
-  --red:#C62330;
-  --red-fill:#C62330;  /* 5.15:1 under white already */
-  --on-green:#FFFFFF;  /* the light theme's green is dark: 4.92:1 */
-  --red-ink:#B01D29;
-  --red-wash:rgba(198,35,48,.09);
-  /* Weaker than the dark theme's, and deliberately. Neon is light emitted into
-     a dark room; the same alphas on a pale bar read as a dirty halo rather
-     than a glow, so the ring carries the meaning here and the bloom only
-     softens its edge. */
-  --red-glow:rgba(198,35,48,.34);
-  --red-glow-soft:rgba(198,35,48,.16);
-  --green:#0D814F;    /* 4.36:1, holding its old 4.31 */
-  --green-ink:#0B7047;
-  --green-wash:rgba(14,138,85,.10);
-  --amber:#AA6F0E;
-
-  --win:#AA6F0E;      /* 3.73:1, holding its old 3.71 */
-  --win-ink:#8E5B08;  /* 4.54:1 on the page, back over AA */
-  --win-wash:rgba(181,118,15,.12);
-  --grey:#A39FAB;     /* muted/disabled, kept at its old relative weight */
-  --cream:#35323C;
-  --shadow:0 1px 3px rgba(30,25,20,.08), 0 1px 2px rgba(30,25,20,.04);
-  /* a full black edge was too hard against the page; this is dark enough to
-     define the card without cutting it out */
-  --edge:#9A8E7A;
-  /* Lighter ground and a weaker glow. A full screen of near-white is already
-     a lamp - see the note at the top of this block - so the band lifts by
-     about half what it does in the dark theme, and the red is pulled back
-     because it saturates far harder against a warm page than a near-black
-     one. The pitch drawing goes the other way and needs MORE ink: a mid grey
-     that reads clearly on #0D0D0F is nearly invisible on #E9E4DA. */
-  /* Same three, warmer and weaker. On a light page a heavy fade under the
-     bar reads as dirt rather than depth, and the hairline only has to be dark
-     enough to separate two surfaces that are already close in value. */
-  --top-bg:rgba(233,228,218,.75);
-  --top-bg-lift:rgba(247,244,238,.80);
-  --top-hair:rgba(30,25,20,.09);
-  --top-fade:rgba(30,25,20,.10);
-  --hero-top:rgba(255,255,255,.55);
-  --hero-glow:rgba(230,57,70,.09);
-  --hero-line:.85;
-}
-/* Native controls - the live-score select in particular - were being drawn in
-   the browser's default scheme for a frame before ours applied, which is the
-   black flash when the list opens. color-scheme tells the engine up front
-   which set of system colours to build them from, so there is nothing to
-   correct afterwards. */
-:root{color-scheme:dark}
-[data-theme="light"]{color-scheme:light}
-select,option{background-color:var(--card);color:var(--text)}
-:root{--r-sm:4px;--r-md:6px;--r-lg:8px;
-  /* THE curve. Thirty-odd hand-rolled cubic-beziers in this file are all
-     reaching for this one - (.25,.8,.3,1), (.25,.9,.3,1), (.3,.9,.3,1),
-     (.2,.9,.25,1) and so on differ by less than a frame and by nothing the
-     eye can name. New work uses the token instead of adding a thirty-first
-     variant; the existing ones are left where they are, because rewriting
-     them is a large diff with no visible change and every chance of a typo. */
-  --ease-out:cubic-bezier(0.23,1,0.32,1)}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-button,a,.m,.lrow,.gl-card,.cat,.vt,.navt,.btab,.opt-add{-webkit-tap-highlight-color:transparent;tap-highlight-color:transparent}
-html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;overflow-x:hidden}
-body{background:var(--bg);color:var(--text);
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='210' viewBox='0 0 210 210'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-linecap='round' opacity='0.014'%3E%3Cpath d='M33 30v26M23 37l10 6 10-6M33 43l-8 10M33 43l8 10'/%3E%3Cpath d='M156 44l11 16-11 16-11-16z'/%3E%3Cpath d='M92 142v22M83 149l9-6 9 6M85 164h14'/%3E%3Cpath d='M172 154l8 8-8 8-8-8z M172 148v28'/%3E%3Ccircle cx='58' cy='126' r='11'/%3E%3Cpath d='M58 115v22M47 126h22'/%3E%3C/g%3E%3C/svg%3E");
-  background-repeat:repeat;
-  font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
-  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:40px;
-  /* overflow-x HIDDEN creates a scroll container, and a scroll container
-     breaks position:sticky for everything inside it - which is why the
-     masthead was declared sticky and scrolled away anyway: measured at 306px
-     of scroll its top sat at -306. CLIP does the same clipping without
-     becoming a scroller, so the header sticks and the full-bleed hero band,
-     which needs 100vw not to add a horizontal scrollbar, still cannot.
-     Both are declared: a browser that does not know `clip` keeps `hidden`
-     and behaves exactly as it did before. */
-  overflow-x:hidden;overflow-x:clip}
-@media(max-width:720px){body{padding-bottom:96px}}
-img,svg{max-width:100%}
-/* THE BOARD IS FOCUSED WHEN THE GATE CLOSES, AND MUST NOT LOOK LIKE IT.
-   dismiss() in the intro gate moves focus here on its way out - without
-   that, the next Tab starts from the top of the document with no cue and a
-   screen reader is left where the removed dialog used to be. Keeping the
-   hand-off is right; the browser drawing its own ring around the container
-   is not, because the container is the entire predictions column. Reported
-   as "white selection box over the whole prediction section till i click on
-   something".
-   Scoped to this one element on purpose. A blanket :focus{outline:none} is
-   the classic accessibility own-goal, and every real control here keeps its
-   own ring - see the :focus-visible rules further down. */
-main[tabindex="-1"]:focus{outline:none}
-.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
-.num{font-variant-numeric:tabular-nums}
-.eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--faint)}
-
-/* ================================================================== top */
-.top{position:sticky;top:0;z-index:60;
-  background:linear-gradient(to bottom,var(--top-bg-lift),var(--top-bg) 62%);
-  -webkit-backdrop-filter:blur(16px) saturate(150%);
-  backdrop-filter:blur(16px) saturate(150%);
-  /* No border. A border is a box edge and it lands as a hard line however
-     faint it is; the hairline below is drawn INTO the surface with an inset
-     shadow, so it belongs to the bar rather than fencing it. */
-  border-bottom:0;
-  transition:box-shadow .28s ease}
-/* Where the edge stops being an edge. Eighteen pixels of falloff under the
-   bar, so content does not meet it at a line - this is the half that was
-   missing, and the reason a 1px rule read as "sharply cut off". Painted below
-   the bar rather than inside it, so it never sits over the header's own
-   contents. */
-.top::after{content:"";position:absolute;left:0;right:0;top:100%;height:18px;
-  pointer-events:none;opacity:.28;transition:opacity .28s ease;
-  background:linear-gradient(to bottom,var(--top-fade),transparent)}
-.top.stuck::after{opacity:1}
-.top.stuck{box-shadow:inset 0 -1px 0 var(--top-hair)}
-/* Backdrop blur is what makes the translucency read as glass rather than as a
-   washed-out colour. Where it is unavailable the bar goes solid instead: a
-   see-through header over unblurred scrolling text is unreadable, which is
-   worse than the slab this replaced. */
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-  .top{background:var(--bg)}
-}
-/* THE HEADER, ARRANGED IN THREE ZONES.
-   Measured at 1920 before this: logo 379-553, nav 583-825, then 668px of
-   nothing, then a 32px date and a 34px toggle at 1451-1527. Everything of
-   substance in the left 40% and two small islands with an ocean between them.
-   The nav is centred on the COLUMN below rather than on the space left over,
-   because auto margins would centre it between a 175px logo and a 34px toggle
-   - 70px off true centre, and off-centre-but-trying reads worse than
-   deliberately left. `position:relative` is what that centring is measured
-   against; without it the nav would centre on the viewport, which is a
-   different place once there is a scrollbar. */
-.top-in{max-width:1180px;margin:0 auto;padding:12px 16px;display:flex;
-  align-items:center;gap:11px;position:relative}
-.top-in .nav{position:absolute;left:50%;transform:translateX(-50%);margin-left:0}
-/* The date went with it. It duplicated "Sep 7 last updated" in the eyebrow row
-   forty pixels below, and alone up there it was too small to balance anything.
-   Hidden rather than removed: something still writes to #when. */
-.top-in .when{display:none}
-/* And the toggle takes over what the date was doing. The auto margin lived on
-   #when, not on the toggle, so hiding the date collapsed the whole right
-   cluster back against the logo - measured at x=563 before this line. */
-.top-in .tgl{margin-left:auto}
-.logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:19px;
-  letter-spacing:-.025em;white-space:nowrap}
-.logo .word{letter-spacing:-.025em}
-.logo em{font-style:normal;color:var(--red)}
-.logo{text-decoration:none;color:inherit}
-.sigil-img{width:40px;height:40px;flex-shrink:0;object-fit:contain;
-  filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
-.sigil{width:40px;height:40px;flex-shrink:0;border-radius:var(--r-md);
-  background:linear-gradient(150deg,var(--red-fill),#7E1018);
-  display:flex;align-items:center;justify-content:center;color:#fff;
-  position:relative;overflow:hidden}
-/* a slow light sweep across the tile, so the mark has a pulse of its own
-   even when nobody is touching it */
-.sigil::after{content:"";position:absolute;inset:0;
-  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.42) 50%,transparent 65%);
-  transform:translateX(-120%);animation:sheen 7s 2.4s ease-in-out infinite}
-@keyframes sheen{0%{transform:translateX(-120%)}18%,100%{transform:translateX(120%)}}
-
-/* Every transform is on fill-box so the SVG parts pivot on themselves
-   rather than the canvas corner. */
-.sigil svg *{transform-box:fill-box;transform-origin:center}
-.hat .cone{fill:#fff}
-.hat .brim{fill:#fff;opacity:.9}
-.sp{fill:#FFD48A}
-
-/* Entrance: the hat drops and settles past its mark, the star arrives after.
-   Idle: a slow tilt, so the mark has a pulse without pulling focus. */
-.hat{animation:hatDrop .8s cubic-bezier(.25,1.5,.4,1) both,
-     hatSway 6s 2s ease-in-out infinite}
-.sp{opacity:0;animation:pop 1.1s .55s cubic-bezier(.2,.9,.25,1) both}
-
-@keyframes hatDrop{
-  0%{transform:translateY(-14px) rotate(-18deg);opacity:0}
-  55%{opacity:1}
-  74%{transform:translateY(1px) rotate(5deg)}
-  100%{transform:translateY(0) rotate(0);opacity:1}}
-@keyframes hatSway{
-  0%,100%{transform:rotate(0)}
-  50%{transform:rotate(-3deg) translateY(-1px)}}
-@keyframes pop{
-  0%{opacity:0;transform:scale(.2) rotate(-50deg)}
-  45%{opacity:1;transform:scale(1.2) rotate(0)}
-  100%{opacity:.9;transform:scale(1)}}
-
-.logo:hover .hat{animation:hatTip .65s cubic-bezier(.3,1.35,.4,1)}
-.logo:hover .sp{animation:pop .8s cubic-bezier(.2,.9,.25,1)}
-@keyframes hatTip{
-  0%{transform:rotate(0)}
-  38%{transform:rotate(-16deg) translateY(-2px)}
-  100%{transform:rotate(0)}}
-.logo:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:var(--r-sm)}
-.when{margin-left:auto;font-size:12px;color:var(--faint)}
-.tgl{width:38px;height:38px;flex-shrink:0;background:var(--card);
-  border:1px solid var(--line);border-radius:var(--r-md);cursor:pointer;display:flex;
-  align-items:center;justify-content:center;color:var(--soft);transition:.18s;padding:0}
-.tgl:hover{color:var(--text);border-color:var(--faint)}
-.tgl:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-/* display:flex above beats the browser's own [hidden] rule, so the install
-   button sat in the header whether or not there was anything to install -
-   and pressing it could only apologise. It is hidden until the browser
-   offers a prompt to fire. */
-.tgl[hidden]{display:none}
-/* The install offer, for phones. The header icon stays for desktop, where the
-   row has the width to hold it; here it would sit off the right edge. */
-.inst-bar{display:none;align-items:center;gap:10px;margin:14px 0 2px;
-  padding:10px 12px;border-radius:var(--r-md);
-  background:var(--card);border:1px solid var(--line)}
-.inst-bar[hidden]{display:none!important}
-@media(max-width:720px){ .inst-bar:not([hidden]){display:flex} }
-.ib-ic{flex-shrink:0;width:32px;height:32px;border-radius:50%;
-  display:inline-flex;align-items:center;justify-content:center;
-  background:var(--red-wash);color:var(--red-ink)}
-.ib-ic svg{width:16px;height:16px}
-.ib-tx{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:1px}
-.ib-tx b{font-size:13.5px;font-weight:800;color:var(--text);line-height:1.2}
-.ib-tx i{font-style:normal;font-size:11.5px;color:var(--soft);line-height:1.25;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ib-go{flex:0 0 auto;white-space:nowrap;font:inherit;font-size:12.5px;font-weight:800;
-  padding:8px 14px;border-radius:99px;border:0;cursor:pointer;
-  background:var(--red-fill);color:#fff}
-.ib-x{flex:0 0 auto;width:26px;height:26px;padding:0;border:0;background:none;
-  color:var(--faint);font-size:13px;cursor:pointer;border-radius:50%}
-.ib-x:hover{color:var(--text);background:var(--raise)}
-/* The iOS steps. Sits under the install bar rather than floating, because it
-   has to survive the reader looking down at the Safari toolbar and back. */
-.ios-steps{position:relative;margin:8px 0 0;padding:12px 34px 12px 14px;
-  border:1px solid var(--line);border-radius:12px;background:var(--card-2)}
-.ios-steps .is-h{font-size:13px;font-weight:800;color:var(--text);margin:0 0 8px}
-.ios-steps .is-l{margin:0;padding:0 0 0 18px;display:flex;flex-direction:column;gap:7px}
-.ios-steps .is-l li{font-size:12.5px;line-height:1.45;color:var(--soft)}
-.ios-steps .is-l b{color:var(--text);font-weight:700}
-/* The glyph is the point: "the Share icon" means nothing until you have seen
-   it, and it is not the same shape as our own install arrow above. */
-.ios-steps .is-ic{display:inline-flex;vertical-align:-4px;margin:0 2px;
-  width:17px;height:17px;color:var(--red-ink)}
-.ios-steps .is-ic svg{width:17px;height:17px}
-.ios-steps .is-note{margin:9px 0 0;font-size:11.5px;line-height:1.4;color:var(--faint)}
-.is-x{position:absolute;top:6px;right:6px;width:26px;height:26px;padding:0;border:0;
-  background:none;color:var(--faint);font-size:13px;line-height:1;cursor:pointer;
-  border-radius:8px}
-@media(hover:hover){ .is-x:hover{color:var(--text);background:var(--raise)} }
-@media(max-width:380px){
-  /* Narrowest phones: the sub-line is the first thing that can go. */
-  .ib-tx i{display:none}
-  .inst-bar{gap:8px;padding:9px 10px}
-}
-
-/* ================================================================ intro */
-/* ==================================================== the hero band
-   The top of the page was the page background and nothing else: the sticky
-   bar is `background:var(--bg)`, the same colour, so the whole masthead read
-   as one flat slab until you scrolled far enough for `.stuck` to draw a
-   border. This gives the headline something to sit on.
-
-   CSS only, deliberately. A photograph would cost a request and 40-150KB,
-   need a second treatment for the light theme, and risk blocking first paint
-   - and page weight is not free here: the WhatsApp preview already failed
-   once on it, and repeat visits re-download nothing only because every asset
-   is immutable. Two gradients and one inline SVG cost about 1KB inside a
-   bundle that is already being fetched.
-
-   Three layers, painted back to front:
-     1. a ground that lifts the band a few points off the page
-     2. a wide, low-alpha glow in the brand red, off to the left where the
-        headline starts
-     3. a pitch, drawn small and far right, as the thing that says football
-        without a stadium photograph saying it loudly
-
-   FULL BLEED WITHOUT BREAKING THE LAYOUT. `.intro` lives inside `.wrap`,
-   which is capped at 1180px, so the band has to escape its own container:
-   `left:50%;width:100vw;margin-left:-50vw`. On a desktop with a visible
-   scrollbar 100vw is a little wider than the content box, which would
-   normally add a horizontal scrollbar - `body` already carries
-   `overflow-x:hidden`, which is what makes this safe.
-
-   AND WITHOUT A RULE THAT TOUCHES A CHILD. `isolation:isolate` makes `.intro`
-   a stacking context, and inside one a negative z-index paints above the
-   element's own background but below its in-flow content. So the band sits
-   behind the headline with no `>*` rule lifting anything - the same mistake
-   that turned the draw chip into a circle, and worth not making twice. The
-   band deliberately overhangs the bottom of `.intro`: that overhang belongs to
-   `.intro`'s stacking context, which is painted before its later siblings, so
-   the Pick of the day card lands cleanly on top of it. */
-.intro{position:relative;isolation:isolate;padding:26px 0 4px}
-.intro::before{
-  content:"";position:absolute;z-index:-1;pointer-events:none;
-  /* RUNS UP BEHIND THE MASTHEAD, which is the point.
-     Making the bar translucent changed nothing at the top of the page, and the
-     arithmetic says why: rgba(13,13,15,.72) composited over a page that is
-     already #0D0D0F is #0D0D0F. Glass over the same colour is a no-op, so the
-     header stayed exactly as black as it was - reported as "the black
-     background is there the same way", which was correct.
-     Glass needs something behind it. The band now starts above the header
-     rather than below it, so the brand glow passes under the bar and the blur
-     picks it up: warm at the top of the page, and plain neutral glass once you
-     scroll and there is only the board behind it. That is the behaviour worth
-     having - colour where the page introduces itself, quiet where it has work
-     to do.
-     -96px clears the masthead, which is about 58px tall plus its own offset.
-     The glow's vertical origin moves with it - it was anchored at -20% of a
-     shorter box, and left alone the whole gradient would have slid down the
-     band by the height just added. */
-  top:-96px;bottom:-58px;left:50%;width:100vw;margin-left:-50vw;
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 300'%3E%3Cg fill='none' stroke='%23888891' stroke-width='2'%3E%3Crect x='10' y='2' width='200' height='296' rx='3'/%3E%3Cpath d='M10 150h200'/%3E%3Ccircle cx='110' cy='150' r='42'/%3E%3Ccircle cx='110' cy='150' r='3' fill='%23888891' stroke='none'/%3E%3Crect x='45' y='2' width='130' height='60'/%3E%3Crect x='82' y='2' width='56' height='24'/%3E%3Ccircle cx='110' cy='42' r='2.5' fill='%23888891' stroke='none'/%3E%3Cpath d='M78 62q32 26 64 0'/%3E%3Crect x='45' y='238' width='130' height='60'/%3E%3Crect x='82' y='274' width='56' height='24'/%3E%3Ccircle cx='110' cy='258' r='2.5' fill='%23888891' stroke='none'/%3E%3Cpath d='M78 238q32 -26 64 0'/%3E%3C/g%3E%3C/svg%3E")
-      no-repeat calc(50% + 200px) 62% / auto 208px,
-    radial-gradient(120% 150% at 14% 6%, var(--hero-glow) 0%, transparent 60%),
-    linear-gradient(180deg, var(--hero-top) 0%, transparent 100%);
-  /* The band has to stop being a band. A hard bottom edge would draw a line
-     across the page exactly where nothing changes; the mask lets it hold its
-     ground for two thirds and then leave. */
-  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 58%,transparent 100%);
-  mask-image:linear-gradient(180deg,#000 0%,#000 58%,transparent 100%);
-  opacity:var(--hero-line);
-}
-/* SOFTEN THE PITCH. Reported: "the football pitch added to header background
-   is too pronounced, blur it out so its not so sharp, its interupting the
-   visuals." At a 2px stroke it read as a diagram sitting behind the headline
-   rather than as texture under it - the eye kept resolving it into lines
-   instead of letting it recede.
-   Blurred rather than faded: fading alone makes a sharp thing faint, the edges
-   stay crisp and the eye still finds them. Two and a half pixels stops a
-   stroke reading as a stroke while the shape of a pitch survives.
-   Scoped to the width where the pitch is actually drawn. Below 860px the
-   background is gradients only, and blurring a gradient is a filter on a
-   full-width element for no visible gain - on a phone that is a cost with no
-   return. */
-@media(min-width:861px){
-  .intro::before{filter:blur(2.5px)}
-}
-/* The pitch is decoration and the headline is not. Below the point where the
-   two would overlap, the drawing goes - a hero graphic that crowds the words
-   it exists to frame has stopped helping. The gradients stay: they cost the
-   headline nothing and they are what makes the band read as a band. */
-@media(max-width:860px){
-  .intro::before{
-    background:
-      radial-gradient(120% 150% at 14% 6%, var(--hero-glow) 0%, transparent 60%),
-      linear-gradient(180deg, var(--hero-top) 0%, transparent 100%);
-  }
-}
-.intro h1{font-weight:800;font-size:clamp(28px,4.4vw,44px);line-height:1.1;
-  letter-spacing:-.035em}
-.intro h1 span{color:var(--red)}
-.intro p{margin-top:10px;color:var(--soft);font-size:15px;max-width:56ch}
-
-/* ======================================================= pick of the day */
-.potd{margin-top:22px;border:1px solid var(--red);border-radius:var(--r-lg);
-  background:linear-gradient(150deg,var(--red-wash),transparent 60%),var(--card);
-  overflow:hidden;box-shadow:var(--shadow)}
-.potd-top{display:flex;align-items:center;gap:9px;padding:13px 18px;
-  background:var(--red-fill);color:#fff}
-.potd-top b{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
-.potd-top .k{margin-left:auto;font-size:12px;font-weight:700}  /* white at .9 on red was 4.1:1 */
-.potd-body{padding:20px 18px}
-.potd-grid{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center}
-.potd h2{font-weight:800;font-size:clamp(20px,3vw,30px);line-height:1.2;
-  letter-spacing:-.025em}
-.potd .meta{margin-top:8px;color:var(--soft);font-size:13.5px}
-.potd .big{font-weight:800;font-size:clamp(40px,7vw,64px);line-height:1;
-  letter-spacing:-.04em;color:var(--green)}
-.potd .big em{font-style:normal;font-size:.45em}
-/* Locked POTD status chip + result states */
-.potd-status{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.06em;
-  text-transform:uppercase;padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.22);color:#fff;
-  display:inline-flex;align-items:center;gap:6px}
-.potd-won .potd-top,.potd.potd-won .potd-top{background:var(--green);color:var(--on-green)}
-.potd.potd-won{border-color:var(--green)}
-.potd.potd-live{border-color:var(--red)}
-/* White text on a 22%-white pill, sitting on the red header - the one state
-   that matters most to read was the hardest. Inverted: a solid white pill with
-   red type reads off the red header at a glance, and the dot goes red so the
-   single pulse we kept has something to be seen against. */
-.potd-status.potd-live{background:#fff;color:var(--red)}
-.potd-status.potd-live .ld{width:7px;height:7px;border-radius:50%;background:var(--red);
-  box-shadow:0 0 0 0 rgba(230,57,70,.7);animation:potdLivePulse 1.4s ease-out infinite}
-@keyframes potdLivePulse{0%{box-shadow:0 0 0 0 rgba(230,57,70,.55)}70%{box-shadow:0 0 0 6px rgba(230,57,70,0)}100%{box-shadow:0 0 0 0 rgba(230,57,70,0)}}
-/* Centre the separator against the digits. As a half-size <em> on the baseline
-   it dropped to the foot of the numbers; a flex row aligns all three on the
-   optical middle so the dash sits between them. */
-.potd .big.potd-score{color:var(--text);display:inline-flex;align-items:center}
-.potd.potd-won .big.potd-score{color:var(--green-ink)}
-.potd.potd-live-good .big.potd-score{color:var(--green-ink)}
-.potd .big.potd-score em{font-size:.5em;color:var(--faint);margin:0 .05em}
-
-/* Market palette icons - transparent green */
-.mkt-chip .mkt-icon{display:inline-flex;align-items:center;justify-content:center;
-  width:20px;height:20px;flex-shrink:0;opacity:.7;transition:opacity .15s,transform .15s}
-.mkt-chip:hover .mkt-icon{opacity:1;transform:scale(1.1)}
-.mkt-chip.on .mkt-icon{opacity:1}
-.mkt-chip .mkt-icon svg{width:18px;height:18px;stroke:var(--green);stroke-width:2}
-.mkt-chip.on .mkt-icon svg{stroke:#fff}
-
-/* Scope segment spacing */
-.scope-seg{margin-bottom:18px}
-.why{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
-.why .eyebrow{display:block;margin-bottom:10px}
-.why ul{list-style:none;display:grid;gap:8px}
-.why li{display:flex;gap:9px;align-items:flex-start;font-size:14px;color:var(--soft)}
-.why li b{color:var(--text);font-weight:700}
-.why .dot{width:6px;height:6px;border-radius:50%;background:var(--red);
-  flex-shrink:0;margin-top:7px}
-
-/* ============================================================== filters */
-.bar{margin-top:24px;display:grid;gap:10px}
-/* The chips take the room and the Filters button keeps its own, so a long chip
-   list scrolls under a control that never moves. min-width:0 or the scroller
-   refuses to shrink and pushes the button off the row. */
-.cats-row{display:flex;align-items:center;gap:8px;min-width:0}
-.cats-row>.cats{flex:1 1 auto;min-width:0}
-/* A DESKTOP HAS THE ROOM AND NO REASON TO HIDE ANYTHING. The button exists
-   only where the search and the two selects cost a fifth of the screen. */
-.fbtn{display:none}
-.cats{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
-.cats::-webkit-scrollbar{display:none}
-.cat{flex-shrink:0;background:var(--card);border:1px solid var(--line);
-  color:var(--soft);font-family:inherit;font-size:13px;font-weight:700;
-  padding:10px 15px;border-radius:99px;cursor:pointer;transition:.18s;
-  display:flex;align-items:center;gap:7px}
-.cat:hover:not(:disabled){color:var(--text);border-color:var(--faint)}
-.cat[aria-pressed="true"]{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
-.cat:disabled{opacity:.35;cursor:default}
-.cat:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.cat .n{font-size:11px;font-weight:600;color:var(--faint)}
-/* The count used to be the chip's own colour at 75% opacity, which is how an
-   11px number ended up at 3.2:1 on the selected chip. Opacity is the wrong
-   tool for de-emphasis when the result still has to be read: --faint is the
-   colour that means "quieter" and is fitted for text, and on the selected
-   chip white at full strength is the only thing that clears AA on red. */
-.cat[aria-pressed="true"] .n{color:#fff}
-
-.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.datebar{display:flex;align-items:center;gap:6px;background:var(--card);
-  border:1px solid var(--line);border-radius:var(--r-md);padding:5px}
-.dnav{width:38px;height:38px;flex-shrink:0;background:var(--card-2);border:0;
-  border-radius:var(--r-sm);color:var(--text);font-size:15px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center}
-.dnav:disabled{opacity:.3;cursor:default}
-.dnav:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.dlabel{min-width:112px;text-align:center}
-/* The colour belongs on the arrows - they are the part you press. The day
-   itself is a label, so it reads in the normal text colour at a normal
-   weight; it was carrying both the accent and a heavy weight, which made it
-   look like the button. */
-.dnav{color:var(--red-ink);background:var(--card-2)}
-.dnav:not(:disabled):hover{background:var(--red-wash);color:var(--red-ink)}  /* --red on the wash is 4.0:1; every other hover here already uses the ink */
-.dnav:disabled{color:var(--faint)}
-.dlabel b{display:block;font-weight:600;font-size:14px;color:var(--text)}
-.dlabel i{display:block;font-style:normal;font-size:11px;color:var(--faint);font-weight:600}
-.search{position:relative;flex:1 1 240px}
-.pick-sel{flex:0 1 148px;min-height:48px;border-radius:var(--r-md)}
-.search input{width:100%;background:var(--card);border:1px solid var(--line);
-  border-radius:var(--r-md);padding:14px 14px 14px 40px;color:var(--text);
-  font-family:inherit;font-size:15px}
-.search input::placeholder{color:var(--faint)}
-.search input:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%)}
-
-.finder{background:var(--card);border:2px solid var(--red);border-radius:var(--r-md);
-  padding:14px;box-shadow:var(--shadow)}
-.finder-h{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-.finder-h b{font-size:15px;font-weight:800}
-.finder-h span{margin-left:auto;font-size:12px;color:var(--soft);font-weight:600}
-.picker{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.field label{display:block;font-size:11px;font-weight:800;letter-spacing:.07em;
-  text-transform:uppercase;color:var(--soft);margin-bottom:6px}
-select{width:100%;appearance:none;-webkit-appearance:none;min-height:50px;
-  text-overflow:ellipsis;background:var(--card-2);color:var(--text);
-  border:1px solid var(--line);border-radius:var(--r-md);padding:13px 34px 13px 13px;
-  font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%23A3A0A6' stroke-width='1.8' fill='none' stroke-linecap='round'/></svg>");
-  background-repeat:no-repeat;background-position:right 13px center}
-select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-/* SIXTEEN PIXELS, ON A TOUCHSCREEN, ALWAYS.
-   Reported: "on the mobile app am i supposed to be able to zoom? and also it
-   feels like the pages are running of the screen." The two are one bug. iOS
-   Safari zooms the page into any form control whose text is under 16px the
-   moment it is focused - and it does not zoom back out. Our search box and the
-   two pickers were 15px, the live-scores country select 14px, so tapping the
-   search field left the reader permanently zoomed with the board running off
-   both edges, and nothing on screen explained why.
-   Only on coarse pointers: the desktop block below deliberately runs these at
-   13.5px, where no such rule exists and mouse-scale is the point. Range,
-   checkbox and radio never trigger it.
-   Placed AFTER the base select rule on purpose - same specificity, so the
-   later one wins, and the first attempt at this sat above it and lost. */
-@media (pointer:coarse){
-  .search input,select,textarea,select.lv-sel,
-  input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]){
-    font-size:16px}
-
-  /* Three text links stood 17-18px tall, under the 24px a finger is held to
-     (WCAG 2.5.8). Every other control on the phone already clears it, so this
-     is padding on three links rather than a scale change to the page: the ink
-     stays where it is, the target grows around it. */
-  .trust-i.link,.daily-back,.foot-legal .rg{
-    min-height:24px;padding-top:3px;padding-bottom:3px}
-}
-.chosen{display:flex;align-items:center;gap:8px;margin-top:11px;
-  background:var(--red-wash);border-radius:var(--r-md);padding:9px 11px}
-.chosen b{font-size:13px;font-weight:700;color:var(--red-ink);flex:1;min-width:0;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.chosen button{background:none;border:0;color:var(--red-ink);font-family:inherit;
-  font-size:12px;font-weight:800;cursor:pointer;padding:4px 6px;border-radius:var(--r-sm)}
-
-/* =============================================================== groups */
-.country{margin-top:38px;padding-top:26px;border-top:1px solid var(--line)}
-.country-h{display:flex;align-items:center;gap:10px;cursor:pointer;padding:2px 0 6px;border-radius:var(--r-sm)}
-.country-h:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.country-h h2{font-weight:800;font-size:20px;letter-spacing:-.02em;flex:1;
-  color:var(--text);display:flex;align-items:center;gap:9px}
-.flag{width:22px;height:16px;border-radius:var(--r-sm);display:inline-block;object-fit:cover;
-  box-shadow:0 0 0 1px rgba(255,255,255,.1)}
-.country-h .chev{color:var(--faint);font-size:12px;transition:transform .25s}
-.country.shut .chev{transform:rotate(-90deg)}
-.country.shut .country-body{display:none}
-.country-h .count{margin-left:auto;font-size:12px;color:var(--faint);
-  background:var(--card);border:1px solid var(--line);border-radius:99px;
-  padding:4px 11px;font-weight:700}
-.comp{margin-top:10px}
-.comp-h{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;
-  letter-spacing:.09em;text-transform:uppercase;color:var(--soft);padding-bottom:5px}
-.comp-h span{flex:1}
-.comp-h .flag{width:18px;height:13px}
-.star{width:34px;height:34px;flex-shrink:0;background:none;border:0;cursor:pointer;
-  color:var(--faint);display:flex;align-items:center;justify-content:center;
-  border-radius:var(--r-sm);font-size:16px}
-.star[aria-pressed="true"]{color:var(--red-ink)}
-.star:focus-visible{outline:2px solid var(--red);outline-offset:1px}
-.faves-h{display:flex;align-items:center;gap:9px;margin:32px 0 6px}
-.faves-h h2{font-weight:800;font-size:18px;color:var(--red-ink)}
-.faves-h span{font-size:12px;color:var(--faint);font-weight:600}
-
-/* the grid is what makes this a desktop layout rather than a stretched phone */
-.grid{display:grid;gap:11px;grid-template-columns:1fr;align-items:start}
-
-/* ================================================================ match */
-.m{background:var(--card);border:1px solid var(--edge);border-radius:var(--r-md);
-  overflow:hidden;box-shadow:var(--shadow);transition:border-color .2s,transform .2s}
-.m:hover{border-color:var(--faint)}
-.m-btn{width:100%;background:none;border:0;color:inherit;font:inherit;
-  text-align:left;cursor:pointer;padding:15px 15px 0;display:block}
-.m-btn:focus-visible{outline:2px solid var(--red);outline-offset:-3px}
-/* Two full-bleed grey slabs stacked at the foot of every card read like a
-   form, not a card. An inset pill with a hairline border sits inside the card
-   instead - lighter, and it still spans nearly the full width, so nothing is
-   lost as a tap target. */
-.m-add{width:calc(100% - 24px);margin:10px 12px 12px;
-  background:transparent;border:1px solid var(--line);border-radius:99px;
-  color:var(--red-ink);font:inherit;font-weight:800;font-size:12.5px;padding:10px 14px;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
-  transition:border-color .18s,background .18s,color .18s}
-.m-add:hover{background:var(--red-wash);border-color:var(--red)}
-.m-add.on{background:var(--green-wash);border-color:var(--green)}
-.m-add .ma-ic{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;
-  border-radius:50%;background:var(--red-fill);color:#fff;font-size:14px;line-height:1}
-.m-add.on{color:var(--green-ink)}
-.m-add.on .ma-ic{background:var(--green)}
-.m-top{display:flex;align-items:center;gap:7px;margin-bottom:12px;flex-wrap:wrap}
-.t{font-size:12px;color:var(--faint);font-weight:700}
-.pill{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
-  padding:4px 9px;border-radius:99px;background:var(--card-2);color:var(--soft)}
-.pill.value{background:var(--green-wash);color:var(--green-ink)}
-/* Ties a board row to the Pick of the day card above it. Amber with the same
-   star the card carries, so the eye pairs them rather than reading two games. */
-.pill.potd-tag{background:var(--win-wash);color:var(--win-ink);letter-spacing:.02em}
-/* The list grid is tight - names already ellipsize - so the pick shows as a
-   bare gold star, not a pill. Same star as the card, enough to pair the row
-   with it without taking a column's worth of width. */
-.lt-pick{flex-shrink:0;margin-left:5px;font-size:12px;line-height:1;color:#F2B84B}
-.pill.draw{background:var(--raise);color:var(--soft)}
-.pill.banker{background:var(--win-wash);color:var(--win-ink)}
-
-.teams{display:flex;justify-content:space-between;align-items:center;gap:14px}
-.tnames{flex:1;min-width:0}
-.tn{display:flex;justify-content:space-between;gap:10px;padding:3px 0;align-items:center}
-/* The club's name is the point of the row; the form chips beside it are
-   decoration and never shrink, so the gap is the only slack there is.
-   At eight pixels "Crystal Palace" missed fitting by one and rendered as
-   "Crystal Pala...". Six gives it back. Names genuinely longer than the row
-   still ellipsize, which is right - the alternative is squeezing the score. */
-.tn .who{display:flex;align-items:center;gap:6px;min-width:0}
-.tn .who>span{font-weight:600;font-size:16px;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap}
-.tn.win .who>span{font-weight:800}
-.tn:not(.win) .who>span{color:var(--soft)}
-.form{display:inline-flex;gap:2px;flex-shrink:0;vertical-align:middle}
-/* Five chips at 14px took 78 of the 227 pixels the name row has, which left
-   111 for the club - enough for most, five short of "Bayern Munich" and one
-   short of "Slask Wroclaw". Twelve gives ten pixels back to the name at no
-   real cost to a chip that carries one letter. Names genuinely longer than
-   the row still ellipsize, which is correct: the club and the score matter
-   more than a full run of form. */
-.form i{width:12px;height:12px;border-radius:var(--r-sm);font-style:normal;font-size:9px;
-  font-weight:800;display:flex;align-items:center;justify-content:center;color:#fff}
-.form i.W{background:var(--green)}
-.form i.D{background:var(--grey)}
-.form i.L{background:var(--red)}
-/* Provisional result from a match still in play: same colour as the settled
-   chips but ringed and breathing, so an unfinished game never reads as final. */
-.form i.prov{box-shadow:0 0 0 1.5px var(--bg),0 0 0 3px currentColor;opacity:.9;
-  animation:formPulse 1.8s ease-in-out infinite}
-.form i.prov.W{color:var(--green)}
-.form i.prov.D{color:var(--grey)}
-.form i.prov.L{color:var(--red)}
-@keyframes formPulse{0%,100%{opacity:.9}50%{opacity:.45}}
-@media (prefers-reduced-motion:reduce){.form i.prov{animation:none}}
-/* Day-board status badge. A game on today's board is still to come (no badge),
-   in play (live score), or settled (score + whether the tip landed). */
-.fx-st{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;
-  padding:2px 7px;border-radius:99px;white-space:nowrap;vertical-align:middle}
-.fx-live{background:var(--red-fill);color:#fff}
-/* A solid dot, not a pulsing one. One live badge blinking reads as alive; a
-   busy Saturday of twenty blinking on their own timers reads as an emergency,
-   and attention does not scale - if every row grabs, none of them rank. The
-   red pill already says "in play"; the single animated pulse is spent on the
-   Pick of the day, where it has something to point at. */
-.fx-live .ld{width:6px;height:6px;border-radius:50%;background:#fff}
-/* Played, but nothing to report yet - neutral, so it never reads as a result. */
-.fx-done{background:var(--card-2);color:var(--faint);border:1px solid var(--line)}
-.fx-hit{background:var(--green-wash);color:var(--green-ink)}
-.fx-miss{background:var(--red-wash);color:var(--red-ink)}
-.fx-push{background:var(--grey);color:#fff}
-.lt-match .fx-st{margin-left:6px}
-.m-top .fx-st{margin-left:2px}
-.tn .g{font-size:13px;color:var(--faint);font-weight:700;flex-shrink:0}
-.tn.win .g{color:var(--win-ink)}
-.sc{text-align:center;flex-shrink:0;padding-left:14px;border-left:1px solid var(--line)}
-.sc b{display:block;font-weight:800;font-size:20px;letter-spacing:-.02em}
-.sc i{display:block;font-style:normal;font-size:9px;color:var(--faint);margin-top:3px;
-  font-weight:700;text-transform:uppercase;letter-spacing:.06em}
-/* one key for the whole page, rather than a note repeated on every card */
-.key{display:inline-flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:12px;
-  max-width:100%;padding:11px 14px;background:var(--card);border:1px solid var(--line-soft);
-  border-radius:var(--r-md);font-size:12px;color:var(--soft)}
-.key b{color:var(--text);font-weight:700}
-.key .k-form i{width:13px;height:13px;border-radius:var(--r-sm);display:inline-block;
-  font-style:normal;font-size:8px;font-weight:800;color:#fff;text-align:center;
-  line-height:13px;margin-right:2px}
-
-.brand-img{height:46px;width:auto;display:block}
-.sig{height:42px;width:auto;flex-shrink:0}
-/* 36, not 48. At 48 the mark stood 2.5x the cap height of the 19px wordmark
-   beside it and was the tallest thing in a 66px bar by a distance - the
-   picture shouting over its own name. 36 sits it in proportion to the word and
-   gives the bar back some air. */
-@media(min-width:720px){.sig{height:36px}}
-@media(min-width:720px){.brand-img{height:54px}}
-.bar{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r-md);padding:12px}
-.bld-approx{font-size:11px;color:var(--faint);margin-top:8px;text-align:center}
-@media(min-width:720px){.bar{position:sticky;top:12px;z-index:40}}
-/* ==================================================== premium enhancements */
-.lrow,.m,.ls-card,.lv,.sp-row{transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
-.m:hover,.ls-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.28)}
-.rip{position:relative;overflow:hidden}
-.rip-ink{position:absolute;border-radius:50%;transform:scale(0);background:rgba(150,150,160,.3);
-  opacity:.6;pointer-events:none;animation:ripple .55s ease-out forwards}
-@keyframes ripple{to{transform:scale(2.6);opacity:0}}
-.sk{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line-soft);
-  border-radius:var(--r-md);height:56px;margin-bottom:8px}
-.sk::after{content:"";position:absolute;inset:0;transform:translateX(-100%);
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
-  animation:shimmer 1.25s infinite}
-@keyframes shimmer{100%{transform:translateX(100%)}}
-/* Clear of the bottom tab bar and the slip bar, both of which are fixed to
-   the bottom and both of which hold things people tap. A toast landing on
-   the controls is in the way even though it cannot be clicked - you still
-   cannot see what you are aiming at. */
-#toasts{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));
-  transform:translateX(-50%);z-index:200;
-  display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
-/* "Installed." "Back online." These say a small thing and then leave, so they
-   should read as a note rather than an alert - and they were dressed as an
-   alert: 14px bold in a bordered card, 12 by 18 of padding, and a 30px shadow
-   under it. A pill at 13px with the state carried by one small dot says the
-   same thing and asks for much less. The coloured border went with the dot:
-   ringing the whole box in green to say "installed" was the heaviest part. */
-.toast{background:var(--card);border:1px solid var(--line);color:var(--text);font-weight:600;
-  font-size:13px;padding:9px 15px;border-radius:99px;box-shadow:0 6px 18px rgba(0,0,0,.26);
-  display:flex;align-items:center;gap:8px;opacity:0;transform:translateY(8px);
-  transition:opacity .22s,transform .22s;max-width:88vw}
-.toast.in{opacity:1;transform:translateY(0)}
-/* The state, as a dot. Neutral unless the message is actually one of the
-   three - a plain toast keeps a quiet grey mark rather than no mark, so the
-   text always starts at the same place. */
-.toast::before{content:"";flex-shrink:0;width:6px;height:6px;border-radius:50%;
-  background:var(--faint)}
-.toast.ok::before{background:var(--green)}
-.toast.err::before{background:var(--red)}
-.toast.info::before{background:var(--win)}
-.glance{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0 4px}
-.gl-card{position:relative;overflow:hidden;background:linear-gradient(150deg,var(--card),var(--card-2));
-  border:1px solid var(--line);border-radius:var(--r-md);padding:14px;cursor:pointer;
-  transition:transform .16s,box-shadow .16s}
-.gl-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.26)}
-.gl-k{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);
-  display:flex;align-items:center;gap:6px;margin-bottom:8px}
-.gl-k .dot{width:6px;height:6px;border-radius:50%;background:var(--red)}
-.gl-card.banker .gl-k .dot{background:var(--green)}
-.gl-card.value .gl-k .dot{background:var(--win)}
-.gl-team{font-weight:800;font-size:15px;letter-spacing:-.01em;line-height:1.25}
-.gl-sub{font-size:12px;color:var(--soft);margin-top:3px}
-.gl-pc{position:absolute;right:12px;bottom:10px;font-size:22px;font-weight:800;
-  font-variant-numeric:tabular-nums;color:var(--text);opacity:.9}
-.gl-card.banker .gl-pc{color:var(--green)}
-@media(max-width:720px){.glance{grid-template-columns:1fr;gap:8px}
-  .gl-card{display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .gl-txt{flex:1;min-width:0}
-  .gl-card .gl-team{white-space:normal;overflow:visible;line-height:1.25}
-  .gl-pc{position:static;flex-shrink:0}.gl-k{margin-bottom:4px}}
-.mono{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
-  border-radius:var(--r-sm);font-size:10px;font-weight:800;color:#fff;flex-shrink:0;letter-spacing:.02em}
-@media(prefers-reduced-motion:reduce){
-  .rip-ink,.sk::after,.m:hover,.ls-card:hover{animation:none!important;transform:none!important}
-}
-/* staggered card/list entrance */
-@keyframes cardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-html:not(.reduce) .m,html:not(.reduce) .lrow{animation:cardIn .34s cubic-bezier(.22,.7,.3,1) both}
-html:not(.reduce) .m:nth-child(2),html:not(.reduce) .lrow:nth-child(2){animation-delay:.03s}
-html:not(.reduce) .m:nth-child(3),html:not(.reduce) .lrow:nth-child(3){animation-delay:.06s}
-html:not(.reduce) .m:nth-child(4),html:not(.reduce) .lrow:nth-child(4){animation-delay:.09s}
-html:not(.reduce) .m:nth-child(5),html:not(.reduce) .lrow:nth-child(5){animation-delay:.12s}
-html:not(.reduce) .m:nth-child(6),html:not(.reduce) .lrow:nth-child(6){animation-delay:.15s}
-html:not(.reduce) .m:nth-child(n+7),html:not(.reduce) .lrow:nth-child(n+7){animation-delay:.18s}
-/* fly-to-slip chip */
-.fly-chip{position:fixed;z-index:300;background:var(--red-fill);color:#fff;font-weight:800;font-size:12px;
-  padding:6px 12px;border-radius:99px;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.4);
-  transition:transform .55s cubic-bezier(.5,.05,.5,1),opacity .55s}
-/* bottom tab bar (mobile only) */
-.btabs{display:none;transition:transform .3s ease}
-.btabs.hide{transform:translateY(110%)}
-html.mode-live .btabs{transform:none!important}
-@media(max-width:720px){
-  /* ONE NAVIGATION ON A PHONE, AND IT IS THIS ONE. The header's tabs are
-     hidden further down, where the rule that used to exempt Home and Build
-     lives; see the note there for the measurements. */
-  /* THE DISC RISES OUT OF THE BAR, so the bar has to have room above the
-     icons for it to rise INTO. With 6px of top padding the top third of a
-     52px circle lifted 20px sat outside the bar's own surface and was read as
-     a circle cut off by the edge. 22px of top padding puts the whole disc on
-     the bar with its shadow, and the labels keep their own spacing below. */
-  .btabs{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:120;
-    background:var(--card);border-top:1px solid var(--line);overflow:visible;
-    padding:10px 8px calc(8px + env(safe-area-inset-bottom));align-items:flex-end;justify-content:space-around}
-  /* What the bar actually occupies: 22px of rise-room, a 22px icon, 3px gap,
-     a 12px label, 6px under it, and the home indicator. Everything that has to
-     sit above the bar measures from this rather than from a number somebody
-     typed once - which is how the My slip button ended up on the Live tab. */
-  :root{--btabs-h:calc(78px + env(safe-area-inset-bottom))}
-  /* Above the tab bar, not on it. The bar is fixed to the bottom and every
-     item in it is a target, so a toast landing there hides what you are
-     aiming at even though it cannot intercept the tap. */
-  #toasts{bottom:calc(var(--btabs-h) + 10px)}
-  .btab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;
-    color:var(--faint);font:inherit;font-size:10px;font-weight:700;padding:6px 0;cursor:pointer}
-  .btab svg{width:22px;height:22px}
-  /* THE SQUARE WHITE BOX ON TAP WAS THE BROWSER'S OWN FOCUS RING.
-     Every other control here defines a :focus-visible ring and this one never
-     did, so Chrome drew its default around the whole button box: a pale
-     rectangle behind a round marker, appearing on tap and staying until
-     something else was touched. The ring is ours now, red like the rest, and
-     :focus-visible means it appears for a keyboard and not for a thumb. The
-     tap itself keeps no ring at all, which is the honest answer for a pointer
-     that can see where it just pressed. */
-  .btab:focus{outline:none}
-  .btab:focus-visible{outline:2px solid var(--red);outline-offset:-2px;
-    border-radius:14px}
-  /* Sized to sit on the same baseline as the icons either side of it: the
-     glyph slot is 22px tall, so this is a 22px box with the words centred in
-     it rather than text pushing the label down. */
-  .btab.on{color:var(--red-ink)}
-  /* THE RED CIRCLE IS WHERE YOU ARE.
-     It used to live on Build and never move, which made it the primary action
-     and left the current page marked by nothing but red text. Now it rides the
-     active tab, so the bar answers "where am I" at a glance and every
-     destination gets the same treatment when you are standing on it.
-     What this costs: Build no longer advertises itself as the main thing to
-     press. The hero and the home page both do that work, and a navigation bar
-     that lies about where you are costs more.
-     The lift is on the icon rather than the button, so all four labels keep one
-     baseline - the old raised button pushed its own label up with it. */
-  /* THE SLOT NEVER CHANGES SIZE, ONLY WHAT IS PAINTED IN IT.
-     The marker used to grow the icon box from 22px to 44px, which changed the
-     item's height, which changed the bar's height, which moved every label -
-     reported as the bar jumping when you switch pages. The box is 44px on all
-     four tabs now and always was, as far as layout is concerned: the inactive
-     ones simply paint nothing. Only colour and shadow animate, and neither
-     reflows anything. */
-  /* EVERY TAB WEARS A RING, ONLY ONE OF THEM IS LIT. The ring is what makes
-     the lit one legible as the same object rather than a badge that appeared
-     out of nowhere: four outlines, one of which is switched on. Hairline and
-     --line, so an unlit ring is furniture and the eye goes straight past it. */
-  .btab .bt-ic{width:44px;height:44px;margin-top:-6px;border-radius:50%;
-    box-shadow:inset 0 0 0 1px var(--line);
-    transition:color .2s ease,box-shadow .2s ease,filter .2s ease}
-  /* LIT, NOT FILLED. The marker was a solid red disc with a white glyph
-     punched out of it, which is a button's language - and it made the icon
-     underneath disappear: four tabs, and the one you were standing on was the
-     only one whose picture you could not read. A ring that lights up keeps the
-     glyph visible and still answers "where am I" from across the room.
-     Neon is three shadows and no fill: the tube itself (a solid inset ring),
-     the bloom it throws outward, and the light it spills back inside the
-     circle. The glyph is lit rather than reversed, so it glows in the same red
-     instead of turning white. Borrowed from the reference the owner sent - a
-     gold staff inside a red neon ring - with the colour moved to the site's
-     own red rather than the reference's hotter pink. */
-  .btab.on .bt-ic{
-    color:var(--red-ink);
-    box-shadow:
-      inset 0 0 0 1.5px var(--red),
-      inset 0 0 9px var(--red-glow-soft),
-      0 0 0 1px var(--red-glow-soft),
-      0 0 14px 1px var(--red-glow)}
-  /* The glyph carries its own small halo. Without it the ring glows and the
-     picture inside it stays flat, which reads as a sticker on a light rather
-     than a lit object. */
-  .btab.on svg{filter:drop-shadow(0 0 3px var(--red-glow))}
-  .btab.on svg{width:23px;height:23px}
-  /* THE STAFF IS ARTWORK, AND IT IS STILL PAINTED IN currentColor.
-     Drawn properly rather than traced into paths - a football's panels and a
-     star cut out of them is more shape than a hand-written path survives - but
-     used as a MASK, not as an image. The PNG supplies only its alpha; the
-     colour comes from `background:currentColor`, so this tab behaves exactly
-     like the three line icons beside it: grey at rest, red and glowing when
-     it is the page you are on, and correct in both themes from one file. A
-     coloured PNG could only ever be desaturated, never recoloured.
-     The hand-drawn SVG stays in the markup underneath as the fallback and is
-     hidden only where masks actually work - a browser without them would
-     otherwise paint a solid red lozenge, which is the worst of both. */
-  .btab .bt-staff{display:none}
-  @supports ((-webkit-mask-image:url("")) or (mask-image:url(""))){
-    #bt-build .bt-ic svg{display:none}
-    #bt-build .bt-staff{display:block;width:22px;height:22px;background:currentColor;
-      -webkit-mask:url(/app.staff-d9a208a7.png) center/contain no-repeat;
-      mask:url(/app.staff-d9a208a7.png) center/contain no-repeat}
-    /* Same 22 -> 23 step the svg takes, so the marker does not change size
-       when the artwork does. The filename is content-hashed because
-       vercel.json serves /app.* immutable for a year: new art, new name, no
-       purge to remember. */
-    #bt-build.on .bt-staff{width:23px;height:23px;
-      filter:drop-shadow(0 0 3px var(--red-glow))}
-  }
-  /* The pulse is a nudge toward live football you are NOT looking at. On the
-     red disc it would be a red dot on red, and syncLiveDots already hides it
-     the moment Live is the page you are on - this is the visual half of the
-     same rule. */
-  .btab.on .btab-dot{display:none}
-  /* THE DOT BELONGS TO THE ICON, NOT TO THE SLOT.
-     It is pinned to .bt-ic, which used to be 22px - the icon's own size - and
-     is now 44px on every tab so the marker can be painted without changing the
-     layout. The dot stayed at the corner of the box and drifted eleven pixels
-     away from the thing it marks. The icon is centred in that box, so its own
-     top-right corner is 11px in from each side: 9 and 7 put the dot back where
-     it was against the glyph. */
-  .btab .btab-dot{top:9px;right:7px}
-  @media (prefers-reduced-motion:reduce){.btab .bt-ic{transition:none}}
-  body{padding-bottom:calc(var(--btabs-h) + 8px)}
-}
-.record-bar i{transition:width 1.05s cubic-bezier(.25,.8,.3,1)}
-.live-alert.on{color:var(--red-ink);border-color:var(--red)}
-.live-bell{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:34px;padding:0 11px;
-  background:var(--card);border:1px solid var(--line);color:var(--soft);border-radius:var(--r-md);cursor:pointer;flex-shrink:0;
-  font:inherit;font-weight:800;font-size:11px}
-.live-bell .bell-lbl{letter-spacing:.04em;text-transform:uppercase}
-.live-bell:hover{color:var(--text)}
-.live-bell.on{color:var(--green-ink);border-color:var(--green);background:var(--green-wash)}
-.mono img{width:100%;height:100%;border-radius:inherit;object-fit:cover;display:block}
-.mono.has-crest{background:transparent!important}
-/* ============================ mobile + star build + goal-stay (batch) */
-/* One thing on the page gets to move: the wizard fab. Everything else that used
-   to pulse now reads as enchanted rather than flashing - a thin rune-gold edge
-   and a warm ember, which is the same language as the runes in the background. */
-.navt.build{background:var(--red-fill);color:#fff;
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.45),0 2px 10px rgba(230,57,70,.28)}
-.navt.build.on{background:var(--red-fill);color:#fff}
-@keyframes starpulse{0%{box-shadow:0 0 0 0 rgba(230,57,70,.55)}70%{box-shadow:0 0 0 11px rgba(230,57,70,0)}100%{box-shadow:0 0 0 0 rgba(230,57,70,0)}}
-.lthead,.lrow{column-gap:12px}
-.lmore{padding-top:8px;font-size:13px}
-.lmore-x{margin-top:8px;width:100%;background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);font:inherit;font-weight:700;font-size:11.5px;padding:8px 12px;border-radius:var(--r-sm);cursor:pointer;transition:background .16s,color .16s,border-color .16s}
-.lmore-x:hover{background:var(--card);color:var(--text);border-color:var(--soft)}
-.lmore .more-collapse{display:none}
-.more-pad{position:relative}
-.more-collapse{margin-top:12px;width:100%;background:var(--raise);border:1px solid var(--line-soft);
-  color:var(--soft);font:inherit;font-weight:700;font-size:12px;padding:9px 12px;border-radius:var(--r-sm);
-  cursor:pointer;letter-spacing:.04em}
-.more-collapse:hover{background:var(--card);color:var(--text);border-color:var(--soft)}
-.lmore-close{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:var(--r-sm);
-  background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);cursor:pointer;
-  display:grid;place-items:center;padding:0;opacity:.7;transition:opacity .16s,background .16s}
-.lmore-close svg{width:11px;height:11px}
-.lmore-close:hover{opacity:1;background:var(--card);color:var(--text)}
-.m .lmore-close{display:none}
-
-/* lmore-x at top of expanded area - compact, inline style */
-.lmore > .lmore-x:first-child{margin:0 0 4px 0;padding:4px 8px;font-size:11px;border-radius:var(--r-sm);
-  width:auto;min-width:32px;background:var(--card-2);border-color:var(--line-soft);color:var(--faint)}
-.lmore > .lmore-x:first-child:hover{background:var(--card);color:var(--text);border-color:var(--soft)}
-.list-hint{font-size:12.5px;color:var(--faint);margin:2px 2px 10px}
-.thin-note{background:var(--card-2);border:1px solid var(--line-soft);border-radius:var(--r-md);
-  padding:11px 14px;margin:0 0 12px;font-size:13px;color:var(--soft);font-weight:600}
-.res-head{display:flex;align-items:baseline;gap:10px;margin:2px 2px 12px}
-.res-head b{font-size:15px;font-weight:800}
-.res-head span{margin-left:auto;font-size:13px;color:var(--soft);font-weight:700}
-.rrow{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r-md);
-  padding:10px 13px;margin-bottom:7px;border-left-width:3px;border-left-style:solid}
-.rrow.hit{border-left-color:var(--green)}
-.rrow.miss{border-left-color:var(--red)}
-.rr-main{display:grid;grid-template-columns:1fr 26px 14px 26px 1fr;align-items:center;gap:8px}
-.rr-tm{font-weight:700;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rr-h{text-align:right}
-.rr-a{text-align:left}
-.rr-sc{font-variant-numeric:tabular-nums;font-weight:800;font-size:17px;text-align:center}
-.rr-v{color:var(--faint);text-align:center;font-size:12px}
-.rr-tip{display:flex;align-items:center;gap:8px;margin-top:7px;padding-top:7px;
-  border-top:1px solid var(--line-soft);font-size:12.5px;color:var(--soft)}
-.rr-badge{margin-left:auto;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;white-space:nowrap}
-.rrow.hit .rr-badge{background:var(--green-wash);color:var(--green-ink)}
-.rrow.miss .rr-badge{background:var(--red-wash);color:var(--red-ink)}
-html.is-results .slip-cta,html.is-results #glance,html.is-results .thin-note{display:none}
-html.mode-build .list-hint,html.mode-live .list-hint{display:none}
-/* Learned, so no longer said. See retireTapHint: set the first time any row is
-   opened and remembered after that, which is also what gives a returning
-   reader the 43px this line was costing on a phone. */
-html.tapped .list-hint{display:none}
-.lt-tip{padding-right:10px}
-.lt-score{padding-left:10px}
-@keyframes litPulse{0%,100%{text-shadow:0 0 8px rgba(43,199,120,.7);transform:scale(1)}50%{text-shadow:0 0 20px rgba(43,199,120,1);transform:scale(1.22)}}
-.lv-sc.lit{color:var(--green)!important;animation:litPulse 1s ease-in-out infinite}
-@keyframes litScale{0%,100%{transform:scale(1)}50%{transform:scale(1.28)}}
-.lv.just-scored{border-color:var(--green);box-shadow:0 0 0 2px rgba(43,199,120,.3)}
-.gl-team{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gl-txt{min-width:0}
-.gl-card.score .gl-pc{font-size:30px;color:var(--text)}
-.gl-pc{white-space:nowrap}
-.myfab .lbl{white-space:nowrap}
-.nav .navt.build{display:none}
-/* Home CTA: unmissable wizard banner - deep amethyst field, gold trim,
-   breathing orb, and an inline Conjure button on its own line. */
-/* Quiet container, loud button. This was the only large violet surface on a
-   page built from near-black, crimson and gold, so it read as something
-   embedded from elsewhere - and an advert is the one thing people are
-   practised at not seeing. It also sat directly above Pick of the Day, which
-   is itself a loud panel, and two shouting blocks in a row means neither
-   wins. The card is now the site's own surface; the contrast comes from the
-   button, which is what we actually want tapped. */
-.slip-cta{display:flex;flex-direction:column;align-items:stretch;gap:12px;width:100%;text-align:left;margin:14px 0 2px;
-  background:linear-gradient(160deg,var(--card) 0%,var(--card-2) 100%);
-  border:1px solid var(--line);
-  box-shadow:0 4px 18px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.04);
-  border-radius:var(--r-lg);padding:15px 16px;cursor:pointer;color:var(--text);font:inherit;
-  position:relative;overflow:hidden}
-/* A thin gold rule along the top - the site's premium accent, as a hairline
-   rather than a field of colour. */
-.slip-cta::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(242,184,75,.55),transparent)}
-.slip-cta::before{content:'';position:absolute;top:-40%;left:-10%;width:55%;height:180%;
-  background:radial-gradient(closest-side,rgba(124,77,255,.10),transparent);
-  animation:wspOrbDrift 5s ease-in-out infinite alternate}
-@keyframes wspOrbDrift{from{transform:translate(0,0)}to{transform:translate(30px,12px)}}
-/* A crimson light running the border. The angle is animated rather than the
-   element, because rotating a wide box would drag the gradient out of round
-   and the light would race the long sides and crawl the short ones.
-   The ring is the border and nothing else: two masks, one clipped to the
-   padding box, composited so only the 1.5px frame between them survives. */
-@property --ctaAng{syntax:'<angle>';initial-value:0deg;inherits:false}
-.cta-run{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:2;
-  padding:1.5px;
-  background:conic-gradient(from var(--ctaAng),
-    transparent 0deg 210deg,
-    rgba(230,57,70,.35) 250deg,
-    var(--red) 292deg,
-    #ff8f97 300deg,
-    var(--red) 308deg,
-    rgba(230,57,70,.35) 340deg,
-    transparent 360deg);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;
-  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  mask-composite:exclude;
-  animation:ctaRun 3.6s linear infinite}
-@keyframes ctaRun{to{--ctaAng:360deg}}
-/* Where @property is unsupported the angle never animates, so the light would
-   sit frozen on one edge. Better to show nothing than a smear. */
-@supports not (background:conic-gradient(from var(--ctaAng),red,blue)){
-  .cta-run{display:none}
-}
-@media(prefers-reduced-motion:reduce){.cta-run{display:none}}
-.slip-cta:hover{border-color:var(--faint)}
-/* Deliberately nothing here: this used to restyle the button whenever the
-   panel was hovered, which meant hovering the button itself did nothing
-   extra. Each button now owns its own hover. */
-/* The orb is a ball turning on its own axis: the SportyBet mark rides the
-   surface, slides off at one edge, and comes round the back to reappear at
-   the other. It rests facing us between turns.
-   CSS cannot wrap a texture onto a sphere, so this is the illusion every
-   rolling-planet effect uses, and it holds up because it obeys the three
-   things the eye actually checks.
-   The mark is squeezed horizontally as it nears an edge. A point on a
-   turning sphere is seen at cos(angle) of its width, so it thins to nothing
-   at the limb instead of walking off at full size like a sticker.
-   Its speed follows sin(angle) - quickest across the middle, slowest at the
-   edges - which is why the timing is set per segment rather than for the
-   whole loop: it eases OUT as it leaves the centre and IN as it returns.
-   A single ease-in-out would have it crawl through the middle, which is the
-   one place a real ball moves fastest.
-   And the shading does not travel with the mark. The light is fixed in the
-   room, so the highlight and the dark limb stay put while the surface turns
-   under them; painting that layer above the mark is what dims the mark as
-   it reaches the edge.
-   The ball itself is drawn rather than fetched - a gradient is a sphere's
-   shading, which is all a plain ball is. */
-.sc-orb{flex-shrink:0;width:44px;height:44px;margin-top:0;border-radius:50%;
-  position:relative;overflow:hidden;
-  background:radial-gradient(circle at 34% 28%,#ffffff 0%,#f4f3f1 46%,#dcd8d2 78%,#bdb7ae 100%);
-  filter:drop-shadow(0 0 5px rgba(255,255,255,.4));
-  animation:orbBreath 3.4s ease-in-out infinite}
-/* Just the S, on transparency - a whole orb image cannot ride a surface. */
-/* Multiplied into the ball rather than laid over it. Drawn normally the mark
-   keeps its own flat brightness wherever it sits, so the sphere darkens
-   toward the edge and the S does not - and the eye reads that as a sticker
-   floating above the surface. Multiplying makes it take the shading beneath
-   it, so it dims into the limb with everything else and looks painted on. */
-/* The roll waits for the mark. It used to start the moment the card painted,
-   while the PNG behind it was still on the wire - so a fresh load showed a
-   blank ball, and by the time the image landed the animation had already
-   carried it off to one side or round the back. That is the "starts on a
-   blank side": nothing was wrong with the timing, the thing being timed had
-   not arrived. The html class is set the moment the image decodes, so the
-   turn always begins with the mark facing forward. */
-.orb-mark{position:absolute;top:15%;bottom:15%;left:0;right:0;display:block;
-  background:url("/wiz-orb-mark.png") center/auto 100% no-repeat;
-  mix-blend-mode:multiply}
-html.orb-ready .orb-mark{animation:orbRoll 8s linear infinite}
-.orb-shade{position:absolute;inset:0;border-radius:50%;display:block;
-  pointer-events:none;
-  background:
-    radial-gradient(circle at 30% 25%,rgba(255,255,255,.55),rgba(255,255,255,0) 46%),
-    /* The dark limb starts sooner and finishes deeper than it did. A gentle
-       edge let the ball read as a lit disc; the mark needs somewhere to dim
-       INTO as it turns away, or no amount of blending saves it. */
-    radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 44%,rgba(0,0,0,.42) 100%)}
-@keyframes orbRoll{
-  /* Timings, on the 8s loop: the mark faces us for about five seconds and is
-     round the back for well under one. It was the other way about - two and a
-     half seconds of blank ball, which is a long time to look at nothing, and
-     only a second and a half of the thing you actually want to see.
-     The blank stretch is the one part that should hurry: nothing happens
-     there, so it is dead time, whereas the pause at the front is the point.
-     Leaves the centre fast and slows into the edge - a point on a turning
-     sphere moves quickest across the middle. The vertical squeeze at the
-     limbs is small but it is what stops the mark reading as a flat decal
-     sliding across glass: a shape near the edge of a sphere is foreshortened
-     in both directions, not only across. */
-  0%,30%   {transform:translateX(0) scale(1,1);opacity:1;
-            animation-timing-function:cubic-bezier(.28,.72,.52,1)}
-  40%      {transform:translateX(44%) scale(.10,.93);opacity:1}
-  /* Gone round the back. Hidden at its thinnest, so nothing pops. */
-  41%,52%  {transform:translateX(44%) scale(.10,.93);opacity:0}
-  53%      {transform:translateX(-44%) scale(.10,.93);opacity:0}
-  54%      {transform:translateX(-44%) scale(.10,.93);opacity:1;
-            animation-timing-function:cubic-bezier(.48,0,.72,.28)}
-  64%,100% {transform:translateX(0) scale(1,1);opacity:1}
-}
-@media(prefers-reduced-motion:reduce){
-  .sc-orb,.orb-mark{animation:none}
-  .orb-mark{transform:none;opacity:1}
-}
-@keyframes orbBreath{
-  0%,100%{filter:drop-shadow(0 0 4px rgba(255,255,255,.3))}
-  50%{filter:drop-shadow(0 0 9px rgba(255,255,255,.6))}}
-/* On a near-white card a white ball loses its edges and the shading is all
-   that is left, which reads as a grey blob. The violet has contrast to
-   spare there, and the red S reads against either. */
-[data-theme="light"] .sc-orb{
-  background:radial-gradient(circle at 34% 28%,#efeaff 0%,#d9cffa 45%,#b9a6ef 100%)}
-[data-theme="light"] .sc-orb{filter:drop-shadow(0 0 4px rgba(90,60,170,.3));
-  animation:orbBreathLight 3.4s ease-in-out infinite}
-@keyframes orbBreathLight{
-  0%,100%{filter:drop-shadow(0 0 3px rgba(90,60,170,.25))}
-  50%{filter:drop-shadow(0 0 8px rgba(90,60,170,.5))}}
-.sc-tx{flex:1;min-width:0}
-.sc-tx b{display:block;font-size:16.5px;font-weight:800;color:var(--text);letter-spacing:.01em}
-.sc-tx i{display:block;font-style:normal;font-size:12.5px;color:var(--soft);margin-top:3px}
-/* SportyBet red. Beyond matching the palette this does real work: it says
-   "this ends in a SportyBet code" before the label is read. Colour as a
-   shortcut to meaning, rather than as decoration. */
-/* Uppercase at .09em tracking in an 800 weight is a shouted label, and in a
-   small button the letters crowd the edges - which is what made it read as a
-   cheap advert. Sentence case, normal tracking, a calmer weight and room
-   around the words: the button can be confident without raising its voice. */
-.sc-go-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;
-  padding:12px 22px;font-size:13.5px;line-height:1.15;border-radius:10px;
-  color:#fff!important;
-  background:linear-gradient(178deg,#e8323f 0%,#d2202c 100%)!important;
-  border:1px solid rgba(255,255,255,.14)!important;
-  box-shadow:0 1px 0 rgba(255,255,255,.16) inset,0 2px 10px rgba(160,20,32,.3)!important;
-  letter-spacing:0;text-transform:none;font-weight:700;position:relative;overflow:hidden;
-  transition:background .18s,box-shadow .18s,transform .12s}
-.sc-go-btn:hover{
-  background:linear-gradient(178deg,#ff6b76 0%,#ef4551 100%)!important;
-  border-color:rgba(255,255,255,.34)!important;
-  box-shadow:0 1px 0 rgba(255,255,255,.3) inset!important}
-.sc-go-btn:active{transform:translateY(1px)}
-/* The label is ONE flex item.
-   .sc-go-btn is inline-flex so its contents centre, which turns bare words
-   either side of a span into three anonymous flex items - and with no gap
-   they butt together: "Build me aSportyBetslip". Wrapping the label puts
-   normal inline layout back inside the button, where sentences belong. */
-.sc-lbl{display:inline}
-
-/* The primary offer, as a black pill.
-   It was another red gradient, and there are a lot of those - the slip bar,
-   Get code, the payout chips when chosen. Black is the one ground on this card
-   that nothing else is using, so the eye finds it first, and it lets their
-   name carry the brand instead of the button shouting it. The card behind is
-   dark, so the pill earns its edge from a lifted rim and a red halo rather
-   than from contrast alone.
-   The size does not change. This is the primary action on the page and it was
-   already at the floor of what a thumb should be asked to hit. */
-.sc-actions .sc-go-primary,.sc-go-primary{
-  /* The site's own blacks, not a blue-grey ramp. #1c2026 carried a blue cast
-     the palette has nowhere else, so the pill read as a component from some
-     other kit sitting on the card. --card-2 down to just under --bg keeps the
-     raised-key idea on the neutrals we actually use. */
-  background:linear-gradient(180deg,#1E1E22,#101013)!important;
-  border:1px solid rgba(242,184,75,.28)!important;
-  border-radius:999px!important;
-  color:#fff!important;
-  gap:9px;
-  /* Depth, not decoration. A light along the top edge and a deep shadow under
-     it make the pill read as something raised off the card - a key to press -
-     and that is most of why a button gets pressed. The red is a hairline of
-     halo rather than a fill: enough that the eye knows whose button it is,
-     not so much that it becomes another red rectangle on a page that already
-     has several. */
-  /* Gold, not red. The card already runs a gold hairline along its top and the
-     wordmark is gold; no other button on the page uses it, so it is the one
-     accent that marks this as the primary without adding a fourth red to a
-     card that already has several. */
-  box-shadow:inset 0 1px 0 rgba(242,184,75,.14),
-             0 6px 20px rgba(0,0,0,.5),
-             0 0 0 1px rgba(242,184,75,.20)!important;
-  position:relative;overflow:hidden;
-  transition:box-shadow .18s ease,transform .12s ease,border-color .18s ease}
-
-/* One slow pass of light, and no other idle motion.
-   The card around this already runs a conic gradient along its border, a gold
-   hairline and a violet drift. A fourth thing competing for the same eye is
-   how a card stops looking designed and starts looking anxious - so this is a
-   single diagonal sheen, seven seconds apart, at an opacity you notice only
-   because it moves. It is the same gesture the SportyBet code card uses, so
-   the two read as one system. */
-.sc-go-primary::after{content:"";position:absolute;inset:0;border-radius:inherit;
-  pointer-events:none;
-  background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.10) 50%,transparent 58%);
-  background-size:280% 100%;animation:scSheen 7s ease-in-out infinite}
-@keyframes scSheen{0%,72%{background-position:140% 0}100%{background-position:-40% 0}}
-
-/* The arrow is the invitation, and it only moves under a pointer - an arrow
-   that twitches on its own is a fidget, one that leans when you approach is a
-   door opening. */
-.sc-go-arw{flex:0 0 auto;font-size:1.05em;line-height:1;opacity:.8;color:var(--accent);
-  transform:translateX(0);
-  transition:transform .22s cubic-bezier(.3,0,.2,1),opacity .22s ease}
-/* Their mark in their red. On the red button this was forced to white to stop
-   it disappearing; on black it can be itself, which is the whole point of
-   putting it here. */
-.sc-go-primary .sbm{color:var(--red)!important}
-@media(hover:hover){
-  .sc-go-primary:hover .sc-go-arw{transform:translateX(3px);opacity:1}
-  .sc-actions .sc-go-primary:hover,.sc-go-primary:hover{
-    background:linear-gradient(180deg,#242932,#101317)!important;
-    border-color:rgba(255,255,255,.26)!important;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.12),
-               0 8px 26px rgba(0,0,0,.55),
-               0 0 0 1px rgba(230,57,70,.5),
-               0 0 22px rgba(230,57,70,.28)!important;
-    transform:translateY(-1px)}
-}
-.sc-actions .sc-go-primary:active,.sc-go-primary:active{transform:translateY(1px)}
-@media(prefers-reduced-motion:reduce){
-  .sc-go-primary::after{animation:none}
-  .sc-go-arw{transition:none}
-}
-/* The pair share a shape.
-   These two sit one above the other at the same width and height, and a 999px
-   pill beside a 10px rounded rectangle reads as two buttons that arrived from
-   different places. Hierarchy is carried by weight - one is a solid black key,
-   the other a hairline outline - which is the difference worth seeing. Shape
-   is not. */
-.sc-actions .slider-btn.sc-go-btn{border-radius:999px!important}
-.sc-logo{height:30px;width:auto;display:inline-block;margin-left:9px;vertical-align:-9px;border-radius:4px}
-.sc-head{display:flex;align-items:flex-start;gap:13px}
-.sc-actions{display:flex;gap:10px;flex-wrap:wrap}
-/* Mobile: two equal buttons that wrap if the row gets too tight */
-.sc-actions .sc-go-btn{flex:1 1 140px;width:auto;margin-top:0}
-@media(min-width:720px){
-  .sc-actions{padding-left:47px}
-  /* One identical box for BOTH buttons - overrides .wsp-go's own padding,
-     uppercase spacing and shadows so neither renders larger. */
-  .sc-actions{align-items:center}
-  .sc-actions .sc-go-btn, .sc-actions button.wsp-go{
-    flex:1 1 0;width:auto;min-width:170px;max-width:240px;height:38px;
-    display:inline-flex;align-items:center;justify-content:center;margin:0;
-    text-align:center;white-space:nowrap;
-    padding:0 10px;font-size:13px;font-weight:800;letter-spacing:.06em;line-height:normal;
-    box-sizing:border-box}
-}
-/* Ghost. Two filled buttons side by side compete and flatten the hierarchy;
-   this one is present and plainly second. */
-.slider-btn{background:transparent!important;
-  border:1px solid var(--line)!important;color:var(--soft)!important;
-  box-shadow:none!important;border-radius:10px;font-weight:700;
-  text-transform:none;letter-spacing:0;font-size:13.5px;padding:12px 22px}
-.slider-btn:hover{border-color:var(--faint)!important;color:var(--text)!important;
-  background:var(--card-2)!important;filter:none;transform:none}
-.sc-logo{height:36px;width:auto;display:inline-block;border-radius:var(--r-sm);vertical-align:-12px;margin-right:8px}
-@media(prefers-reduced-motion:reduce){.slip-cta{animation:none}.slip-cta::after{display:none}}
-html.mode-build .slip-cta,html.mode-live .slip-cta{display:none}
-/* Sticky slip bar: slides up once the hero CTA scrolls away, so the slip
-   builder is always one tap from anywhere in the predictions feed. */
-.slipbar{position:fixed;left:0;right:0;bottom:0;z-index:118;transform:translateY(120%);
-  transition:transform .35s cubic-bezier(.3,.9,.3,1);padding:0 10px calc(10px + env(safe-area-inset-bottom))}
-.slipbar.show{transform:translateY(0)}
-.slipbar-in{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:12px;
-  /* The pink highlight put white text on 2.3:1 wherever it fell, and the
-     mid stop was the 4.17:1 brand red. Same radial, same deep centre, run
-     from --red-fill instead so every point under the label clears AA. */
-  background:radial-gradient(circle at 20% 0%,#db3643,#c22e3a 55%,#a51826);color:#fff;
-  border:1px solid rgba(242,184,75,.55);border-radius:99px;padding:12px 14px 12px 18px;
-  box-shadow:0 10px 30px rgba(165,24,38,.5),inset 0 1px 2px rgba(255,255,255,.4);cursor:pointer}
-.slipbar-in .sb-tx{flex:1;min-width:0}
-.slipbar-in .sb-tx b{display:block;font-size:14px;font-weight:800;line-height:1.2}
-.slipbar-in .sb-tx i{font-style:normal;font-size:11.5px;font-weight:600;opacity:.85}
-.slipbar-in .sb-go{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;
-  width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);font-size:17px}
-@media(min-width:720px){.slipbar{display:none}}
-@media(prefers-reduced-motion:reduce){.slipbar{transition:none}}
-/* Cards/List on the left, the day being shown on the right. Wraps to two lines
-   on a narrow phone rather than crushing the day label. */
-/* The heading names the day and the pill acts on that day, so on a wide
-   screen they belong on one line - above the day arrows rather than beside
-   the view toggle, which changes something else entirely.
-   Desktop only. On a phone the pill has its own place in the row below, tuned
-   across three breakpoints, and none of that should move. */
-.head-line{display:flex;align-items:flex-end;justify-content:space-between;gap:18px}
-.head-line .board-head{flex:1 1 auto;min-width:0}
-.ba-slot{flex:0 0 auto;display:none}
-@media(min-width:721px){ .ba-slot{display:block} }
-.toprow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 2px}
-.toprow .viewtoggle.top{margin:0}
-.toprow .datebar{margin-left:auto}
-/* The stretch between the view toggle and the day pager was dead space on a
-   wide screen. The add-all pill lives in it now - centred, so it reads as its
-   own thing rather than as an appendage of either control.
-   Phones keep it on its own line below: that row is already exactly full with
-   two controls, and a third would put the day pager back onto two lines. */
-.toprow .bookall-row{margin:0;display:flex;justify-content:center;flex:0 0 100%;order:3}
-@media(min-width:561px){
-  .toprow .bookall-row{flex:1 1 auto;order:0;margin:0 auto}
-}
-html.mode-build .toprow,html.mode-live .toprow{display:none}
-.viewtoggle.top{margin:14px 0 2px;width:auto;display:inline-flex}
-.viewtoggle.top .vt{flex:0 0 auto;text-align:center;padding:7px 16px;font-size:13px}
-html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
-@media(max-width:600px){
-  .bld-foot{flex-wrap:wrap;padding:14px}
-  .bld-foot .clear-btn,.bld-foot .book-btn{flex:1 1 auto}
-  /* On a phone the bottom tab bar owns navigation, so the top view-tabs are
-     hidden (see the .nav rule near its definition). That frees the row for the
-     full wordmark and keeps the live dot away from the theme toggle. */
-  html.mode-build #bldNote,html.mode-build .bld-approx{display:none}
-  .gl-card.score .gl-pc{flex-shrink:0}
-  .myfab{padding:0;width:54px;height:54px;justify-content:center;border-radius:50%;
-    background:radial-gradient(circle at 50% 40%,rgba(230,57,70,.92),rgba(150,20,32,.88));
-    border:0;box-shadow:0 6px 20px rgba(230,57,70,.5),0 0 0 1px rgba(255,180,185,.35) inset}
-  .myfab .lbl{display:none}
-  .myfab-tk{position:relative;display:inline-flex;color:#fff}
-  .myfab-tk svg{display:none}
-  .myfab-c{position:static;transform:none;
-    background:none;color:#fff;min-width:auto;height:auto;padding:0;
-    font-size:19px;font-weight:800}
-}
-.viewtoggle{display:inline-flex;background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);padding:3px;gap:2px;flex-shrink:0}
-.vt{display:inline-flex;align-items:center;gap:7px;background:none;border:0;color:var(--soft);font:inherit;font-weight:700;font-size:13px;padding:9px 16px;border-radius:var(--r-sm);cursor:pointer;transition:background .16s,color .16s}
-.vt svg{width:15px;height:15px;flex-shrink:0}
-.vt.on{background:#F2B84B;color:#1a1400}
-.navt.build{background:var(--red-fill);color:#fff}
-.navt.build:hover{filter:brightness(1.08)}
-.navt.build.on{background:var(--red-fill);color:#fff}
-.mini-load{display:inline-block;width:22px;height:22px;border-radius:50%;
-  border:3px solid var(--line);border-top-color:var(--red);
-  animation:ldrspin .8s linear infinite;vertical-align:middle;margin-right:9px}
-.vt:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.trust{display:flex;flex-wrap:wrap;gap:8px 15px;align-items:center;margin-top:15px;font-size:12.5px;color:var(--soft)}
-.trust-i{display:inline-flex;align-items:center;gap:7px}
-/* Same trap as .mysheet-foot and .inst-bar: the display above beat the
-   browser's [hidden] rule, so hiding the streak badge left its separator dot
-   behind - a 5x5 mark on the row with nothing after it. Measured on the live
-   site before this line existed. */
-.trust-i[hidden]{display:none}
-.trust-i b{color:var(--text);font-weight:700}
-.trust-i::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--faint)}
-.trust-i:first-child::before{display:none}
-.trust .link{color:var(--red-ink);font-weight:700;text-decoration:none}
-.trust .link:hover{text-decoration:underline}
-.pill.goals{background:var(--win-wash);color:var(--win-ink)}
-.pill.value{background:linear-gradient(120deg,#F2B84B,#ffd873);color:#1a1400;font-weight:800;animation:valpulse 2s ease-out infinite}
-@keyframes valpulse{0%{box-shadow:0 0 0 0 rgba(242,184,75,.5)}70%{box-shadow:0 0 0 8px rgba(242,184,75,0)}100%{box-shadow:0 0 0 0 rgba(242,184,75,0)}}
-.vmark{flex-shrink:0;font-size:10px;font-weight:800;color:#1a1400;background:#F2B84B;padding:2px 6px;border-radius:99px;margin-left:2px;font-variant-numeric:tabular-nums}
-.m{border-left-width:3px;border-left-style:solid;border-left-color:var(--edge)}
-.m.conf-strong{border-left-color:var(--green)}
-.m.conf-lean{border-left-color:var(--win)}
-.m.conf-slight{border-left-color:var(--grey)}
-.tipbox .grade{margin-left:auto;font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 7px;border-radius:99px;background:var(--raise);color:var(--soft);white-space:nowrap}
-.conf-strong .tipbox .grade{background:var(--green-wash);color:var(--green-ink)}
-.conf-lean .tipbox .grade{background:var(--win-wash);color:var(--win-ink)}
-.tipbox .p{margin-left:9px}
-.conf-strong .tipbox .p{color:var(--green)}
-.conf-lean .tipbox .p{color:var(--win-ink)}
-.tn .g{display:none!important}
-.pbar{display:none!important}
-.legend{display:none!important}
-.ltable{margin-top:2px}
-.lr-1{display:flex;align-items:center;gap:10px}
-.lt-match{flex:1;min-width:0;display:grid;grid-template-columns:1fr auto 1fr;
-  align-items:center;column-gap:12px;row-gap:5px}
-.lt-t{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14.5px;min-width:0}
-.lt-t.th{grid-column:1;justify-content:flex-start}
-.lt-t.ta{grid-column:3;justify-content:flex-end;text-align:right}
-.lt-vs{font-style:normal;color:var(--faint);font-weight:500;font-size:12px;grid-column:2;grid-row:1}
-.lt-p{font-variant-numeric:tabular-nums;font-weight:700;color:var(--soft);font-size:13px;grid-row:2}
-.lt-p small{font-size:9px;font-weight:700;margin-left:1px}
-.lt-p.lead{color:#FFD54A;font-weight:800}
-.lt-p.px{color:var(--faint);font-weight:600}
-.lt-p.px.lead{color:#FFD54A;font-weight:800}
-.lt-p.ph{grid-column:1;text-align:left}
-.lt-p.px{grid-column:2;text-align:center}
-.lt-p.pa{grid-column:3;text-align:right}
-.lr-2{display:flex;align-items:center;gap:8px 16px;margin-top:8px;padding-left:46px;
-  flex-wrap:wrap;font-size:12.5px;color:var(--soft)}
-@media(max-width:520px){.lr-2{padding-left:0}}
-.lrow:last-child{border-bottom:0}
-.lrow.conf-strong{border-left-color:var(--green)}
-.lrow.conf-lean{border-left-color:var(--win)}
-.lrow.conf-slight{border-left-color:var(--grey)}
-.lrow-top{display:none}
-.lt-time{font-size:12px;color:var(--faint);font-weight:700;min-width:38px}
-.lt-score{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  min-width:50px;flex-shrink:0;line-height:1.1}
-.lt-score b{font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;color:var(--text)}
-.lt-score i{font-style:normal;font-size:9px;font-weight:700;letter-spacing:.06em;
-  text-transform:uppercase;color:var(--faint);margin-top:2px}
-.clear-btn{background:var(--raise);color:var(--soft);border:1px solid var(--line);
-  font:inherit;font-weight:800;font-size:14px;padding:13px 16px;border-radius:var(--r-md);cursor:pointer;flex-shrink:0}
-/* Only where there is a pointer that can hover. A phone has none, and Android
-   Chrome leaves :hover applied to the last thing tapped until something else
-   is tapped - so Clear went red on touch and stayed red, which reads as a
-   button that has jammed. Every :hover on a control the thumb reaches wants
-   this guard, and this is the one that turns a colour. */
-@media (hover:hover){
-  .clear-btn:hover{background:var(--red-wash);color:var(--red-ink);border-color:var(--red)}
-}
-/* Touch gets the press instead: it says the tap landed and it ends by itself. */
-.clear-btn:active{transform:scale(.96)}
-.clear-btn{-webkit-tap-highlight-color:transparent}
-.confirm-card{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);padding:16px;text-align:center}
-/* Book-all: a small flashy pill above the board. It only appears when the
-   visible tips are actually bookable, so it never sits there dead. */
-.bookall-row{display:flex;justify-content:flex-end;margin:8px 0 2px}
-/* The outline version of this read as dull - it is the one control on the board
-   that starts a slip, and a grey-rimmed pill made it look like a tertiary
-   option next to the filters. Back to the crimson pill with the gold rim and
-   its ember: the brightest thing in the row, which is what it should be. */
-.bookall{position:relative;overflow:hidden;display:none;align-items:center;gap:8px;
-  background:linear-gradient(135deg,#6d1017,var(--red-fill) 55%,#9c1620);color:#fff;
-  border:1px solid rgba(242,184,75,.55);
-  font:inherit;font-weight:800;font-size:12.5px;letter-spacing:.03em;
-  padding:8px 15px 8px 27px;border-radius:99px;cursor:pointer;
-  text-shadow:0 1px 2px rgba(0,0,0,.55);
-  box-shadow:0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.12);
-  transition:filter .25s,box-shadow .25s,transform .15s}
-.bookall.show{display:inline-flex}
-/* Calm at rest, menacing on approach: the ember flares, a red bloom opens up
-   and the pill gives one small tremor - a spell about to be cast, not a
-   button begging to be pressed. */
-.bookall:hover{filter:brightness(1.1);
-  box-shadow:0 0 0 1px rgba(242,184,75,.85),0 7px 24px rgba(230,57,70,.55),
-             inset 0 1px 0 rgba(255,255,255,.16);
-  animation:baTremor .3s ease-in-out 1}
-.bookall:hover .ba-spark{background:#FFD873;box-shadow:0 0 13px 3px rgba(242,184,75,1)}
-.bookall:active{transform:scale(.97)}
-@keyframes baTremor{0%,100%{transform:translateX(0)}20%{transform:translateX(-1.5px)}
-  60%{transform:translateX(1.5px)}80%{transform:translateX(-1px)}}
-html.reduce .bookall:hover{animation:none}
-.bookall:disabled{opacity:.6;cursor:not-allowed}
-.bookall .ba-n{background:rgba(242,184,75,.92);color:#2a1400;border-radius:99px;padding:1px 7px;
-  font-variant-numeric:tabular-nums;font-size:11.5px;text-shadow:none}
-.ba-spark{position:absolute;top:50%;left:11px;width:5px;height:5px;margin-top:-2.5px;
-  border-radius:50%;background:#F2B84B;pointer-events:none;
-  box-shadow:0 0 7px 1px rgba(242,184,75,.85);animation:baFlicker 2.8s ease-in-out infinite;
-  transition:background .25s,box-shadow .25s}
-@keyframes baFlicker{0%,100%{opacity:.5;transform:scale(.85)}
-  12%{opacity:1;transform:scale(1.2)}22%{opacity:.55;transform:scale(.95)}
-  38%{opacity:1;transform:scale(1.1)}56%{opacity:.45;transform:scale(.88)}
-  74%{opacity:.95;transform:scale(1.15)}}
-.bookall .ba-tx{margin-left:0}
-.bookall{white-space:nowrap}
-/* "Build all 6 tips" fits even on a 320px phone, so nothing is hidden here any
-   more - the old rule dropped the trailing words and left a bare "Build all 6". */
-html.reduce .ba-spark{animation:none;opacity:0}
-html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookall-row{display:none}
-#bookAllResult:not(:empty){margin:10px 0 2px}
-.confirm-card p{margin:0 0 12px;font-size:14px;color:var(--text);font-weight:600}
-/* Naming the games that cannot be booked, so the choice is an informed one
-   rather than a count. Quieter than the question above it. */
-.confirm-card .cf-list{display:block;margin-top:7px;font-size:12.5px;
-  font-weight:500;line-height:1.5;color:var(--soft)}
-/* Keeping a slip is a decision, so it gets a control - quieter than Copy
-   and Open, which are what most people came for. */
-.code-keep{margin-top:12px;display:flex;flex-direction:column;align-items:center;gap:5px}
-/* A pill, not a line of bold text.
-   It was transparent with a 1px --line border, and --line against the code
-   card's own tinted glass is very nearly the same colour - so on the card this
-   button actually lives on, the only button in the modal without a fill read
-   as a caption somebody had emboldened by mistake. It has a surface of its own
-   now, dark enough to sit on the green wash and on the Bet9ja black alike. */
-.code-save{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.22);
-  color:#fff;
-  font:inherit;font-weight:700;font-size:12.5px;padding:8px 16px;border-radius:99px;
-  cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 1px 4px rgba(0,0,0,.28);
-  transition:background .16s ease,border-color .16s ease,color .16s ease}
-[data-theme="light"] .code-save{background:rgba(20,18,18,.82);
-  border-color:rgba(255,255,255,.18);color:#fff}
-@media(hover:hover){ .code-save:hover{background:rgba(0,0,0,.42)} }
-.code-save.done{border-color:var(--green);color:var(--green-ink);cursor:default;
-  background:rgba(0,0,0,.2);box-shadow:none}
-.code-keep-n{font-size:11px;line-height:1.4;color:var(--faint);text-align:center}
-/* The custom payout box, sized and shaped like the chips beside it so it
-   reads as one more option in the row rather than a form. */
-.wsp-cust{display:inline-flex;align-items:center;gap:2px;background:var(--card-2);
-  border:1px dashed var(--line);border-radius:99px;padding:0 12px 0 13px;height:38px}
-.wsp-cust-x{font-size:13px;font-weight:700;color:var(--faint)}
-.wsp-cust-in{width:56px;background:transparent;border:0;outline:0;color:var(--text);
-  font:inherit;font-weight:700;font-size:13px;padding:0}
-.wsp-cust-in::placeholder{color:var(--faint);font-weight:600}
-/* Focus is neutral on purpose. Red is what a chip turns when it is SELECTED,
-   and on a field it reads as either "chosen" or "wrong" - neither of which is
-   what a cursor sitting in a box means. Firming the border and lifting the
-   surface says "you are typing here" without borrowing a meaning. */
-.wsp-cust:focus-within{border-style:solid;border-color:var(--soft);background:var(--raise)}
-@media (hover:hover){ .wsp-cust:hover{border-color:var(--soft)} }
-@media (hover:hover){
-  .code-save:not(.done):hover{background:var(--card-2);border-color:var(--soft)}
-}
-.cap-warn{background:var(--win-wash);border:1px solid var(--win);border-radius:var(--r-md);
-  padding:10px 12px;margin:0 0 12px;font-size:12.5px;line-height:1.5;
-  color:var(--text);text-align:left}
-.cap-warn b{color:var(--win-ink);font-weight:800}
-.confirm-card .ca{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.confirm-card button{font:inherit;font-weight:800;font-size:14px;padding:11px 18px;border-radius:var(--r-md);cursor:pointer;border:0}
-.confirm-go{background:var(--red-fill);color:#fff}
-.confirm-cancel{background:var(--card);color:var(--text);border:1px solid var(--line)!important}
-.lt-ou{font-weight:700}
-/* margin-left:auto is gone. It dates from when this row was a flex line and
-   the tip was meant to sit hard right; the row is a grid now, where the same
-   declaration pushes the cell's contents to the right edge of a 208px column
-   instead. The TIP header stayed at the column start, the tips sat 52px to
-   its right, and the header read as though it belonged to the "2" beside it.
-   Everything else in this rule is already restated by the grid rule further
-   down - this line was the only thing still reaching the page. */
-.lt-tip{display:flex;align-items:center;gap:7px;font-weight:700;color:var(--text)}
-.lt-tip .grade{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
-  padding:3px 8px;border-radius:99px;background:var(--raise);color:var(--soft)}
-.conf-strong .lt-tip .grade{background:var(--green-wash);color:var(--green-ink)}
-.conf-lean .lt-tip .grade{background:var(--win-wash);color:var(--win-ink)}
-.lt-tip .p{font-weight:800}
-.conf-strong .lt-tip .p{color:var(--green)}
-.conf-lean .lt-tip .p{color:var(--win-ink)}
-.cring{--v:0;width:34px;height:34px;border-radius:50%;flex-shrink:0;
-  background:conic-gradient(var(--rc,var(--grey)) calc(var(--v)*1%),var(--line-soft) 0);
-  display:flex;align-items:center;justify-content:center;position:relative}
-.cring::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--card)}
-.cring b{position:relative;z-index:1;font-size:10.5px;font-weight:800;font-variant-numeric:tabular-nums}
-.conf-strong .cring{--rc:var(--green)}.conf-lean .cring{--rc:var(--win)}.conf-slight .cring{--rc:var(--grey)}
-.lt-chev{color:var(--faint);font-size:11px;transition:transform .2s;flex-shrink:0}
-.lrow.open .lt-chev{transform:rotate(180deg)}
-
-/* A LIST ROW IS A DIV THAT OPENS ON CLICK, WHICH LEFT THE KEYBOARD OUT.
-   The chevron is the obvious control, except it is display:none under 720px
-   for layout reasons that still hold, so promoting it would have given phones
-   and narrow windows nothing. Instead every row carries a real button that is
-   off-screen until it takes focus, and the row's existing click handler does
-   the work - a button's Enter and Space arrive as clicks, so there is one code
-   path, not two. Visible on focus rather than permanently hidden, because a
-   focus ring nobody can see is its own bug. */
-.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
-  clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
-/* Stays absolute when it appears. Letting it back into the flow put a button
-   into the row's grid and shoved the fixture sideways; a focus indicator that
-   rearranges the page it is indicating is worse than none. */
-.sr-only:focus-visible{width:auto;height:auto;margin:0;overflow:visible;z-index:40;
-  clip:auto;clip-path:none;white-space:nowrap;left:6px;top:3px;
-  padding:4px 8px;font:inherit;font-size:11.5px;font-weight:700;background:var(--raise);
-  color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);cursor:pointer}
-.lmore{display:block;overflow:hidden;max-height:0;padding-top:0;
-  transition:max-height .35s ease,padding-top .35s ease}
-.lrow.open .lmore{max-height:600px;padding-top:10px}
-/* EVERY PANEL ON THE BOARD IS BUILT WHETHER OR NOT ANYONE OPENS IT.
-   Eighty-three rows carrying ten markets each is 830 option tiles laid out and
-   styled behind a max-height of zero: a 326ms layout and a 263ms style
-   recalculation on a desktop, which is most of a second of blocked main thread
-   on the phones this is read on. The browser will skip all of it if told the
-   subtree is not being shown - which it is not - and does the work on the
-   frame the row opens instead. Paired with `inert` in the markup, so the
-   panel is out of the a11y tree and the render tree by the same rule. */
-.lrow:not(.open) .lmore{content-visibility:hidden}
-/* ---- dense table (predictz-style) ---- */
-.lthead,.lrow{display:grid;
-  /* was: 46 | 1fr | 44 | 44 | 44 | 120-190 | 62 | 18
-     now:  46 | 1fr | 38 | 38 | 38 | 120-208 | 62 | 18
-     1/X/2 only need ~32px; giving 6px each back to Tip prevents
-     long team names from visually crowding the Pred column. */
-  grid-template-columns:46px minmax(0,1fr) 38px 38px 38px minmax(120px,208px) 62px 18px;
-  align-items:center;column-gap:14px}
-.lthead{padding:7px 8px 6px;font-size:10px;font-weight:800;letter-spacing:.06em;
-  text-transform:uppercase;color:var(--faint);border-bottom:1px solid var(--line-soft);
-  border-left:3px solid transparent}
-.lthead .c{text-align:center}
-/* MATCH, TIP, PRED are 10px uppercase, which is the size that needs contrast
-   most and had the least of it: --faint against the light paper is about 3:1,
-   under the 4.5 a body of small text wants. Dark mode is fine - faint on
-   near-black clears it comfortably - so only the light theme is lifted, to
-   --soft, which reads without turning a column label into a heading. */
-[data-theme="light"] .lthead{color:var(--soft)}
-.lrow{padding:5px 8px;border-bottom:1px solid var(--line-soft);cursor:pointer;
-  border-left:3px solid var(--edge);border-radius:0;overflow-anchor:none}
-/* --raise is a solid step lighter than the card and read as a white slab
-   under the cursor. A translucent wash tints instead of covering. */
-.lrow:hover{background:rgba(255,255,255,.035)}
-[data-theme="light"] .lrow:hover{background:rgba(0,0,0,.035)}
-.lt-time{font-size:12px;color:var(--faint);font-weight:700;font-variant-numeric:tabular-nums}
-.lt-match{min-width:0;display:flex;align-items:center;gap:7px;font-weight:700;font-size:13.5px}
-.lt-match .tm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lt-match .vs{color:var(--faint);font-weight:500;font-size:11px;flex-shrink:0}
-.lt-p{font-variant-numeric:tabular-nums;font-weight:700;color:var(--soft);font-size:12.5px;text-align:center;grid-row:auto}
-.lt-p small{font-size:8px;font-weight:700;margin-left:1px;color:var(--faint)}
-.lt-p.lead small{color:inherit}
-.lt-p.lead{color:var(--red-ink);font-weight:800}
-.lt-tip{min-width:0;overflow:hidden;display:flex;align-items:center;gap:6px;font-weight:700;font-size:12.5px;color:var(--text);padding-right:16px}
-.lt-tip .vdot{width:7px;height:7px;flex-shrink:0}
-.lt-tip .tx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* font-style:normal because this is an <i> - italic by default - and Plus
-   Jakarta Sans ships no italic face, so the browser was synthesising one by
-   mechanically slanting the upright digits. That fake oblique is what made
-   the percentage after a tip look wrong: it is not a real italic, it is
-   sheared numbers. The card view uses a span for the same chip, which is why
-   only the list slanted. */
-.lt-tip .grade{flex-shrink:0;font-style:normal;font-size:10px;font-weight:800;
-  font-variant-numeric:tabular-nums;
-  padding:2px 7px;border-radius:99px;background:var(--raise);color:var(--soft)}
-.conf-strong .lt-tip .grade{background:var(--green-wash);color:var(--green-ink)}
-.conf-lean .lt-tip .grade{background:var(--win-wash);color:var(--win-ink)}
-.lt-score{text-align:center;font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;
-  color:var(--text);min-width:0;display:block;border-left:1px solid var(--line-soft);padding-left:12px}
-.lthead .pred{border-left:1px solid var(--line-soft);padding-left:6px}
-.lt-chev{color:var(--faint);font-size:11px;text-align:center;transition:transform .2s}
-.lrow.open .lt-chev{transform:rotate(180deg)}
-.lmore{grid-column:1/-1;padding-top:8px;font-size:13px}
-@media(max-width:640px){
-  .lthead{display:none}
-  .lrow{display:flex;flex-wrap:wrap;align-items:center;gap:3px 10px;padding:6px 8px}
-  .lt-time{order:1}
-  .lt-match{order:2;flex:1 1 55%;font-size:14px}
-  .lt-score{order:3;margin-left:auto;border-left:0;padding-left:0}
-  .lt-p{display:none}
-  .lt-chev{display:none}
-  .lt-tip{order:4;flex-basis:100%}
-  /* Every cell above carries an explicit order, so anything appended to the
-     row without one falls to the flex default of 0 and is laid out BEFORE all
-     of them. That is how the first-run coach came to sit above its own
-     fixture, reading as a note attached to the match before it - and the
-     expanded detail panel had the same fault waiting behind it. Both are
-     full-width blocks that belong under the row, so both are ordered after
-     the last cell and given their own line.
-     The grid-column span they carry is inert here; flex-basis is what makes
-     a full-width child work in this layout. */
-  .lrow .coach{order:5;flex-basis:100%;width:100%}
-  .lrow .lmore{order:6;flex-basis:100%;width:100%}
-}
-.pbar{display:flex;height:7px;gap:3px;margin-top:14px}
-.pbar i{display:block;border-radius:99px;transform:scaleX(0);transform-origin:left;
-  transition:transform .55s cubic-bezier(.25,.8,.3,1)}
-.m.seen .pbar i{transform:scaleX(1)}
-.pbar i:nth-child(2){transition-delay:.06s}
-.pbar i:nth-child(3){transition-delay:.12s}
-.legend{display:flex;gap:12px;margin-top:9px;align-items:center;flex-wrap:wrap}
-.legend b{font-size:12px;font-weight:600;color:var(--soft);display:flex;
-  align-items:center;gap:5px}
-.legend b i{width:8px;height:8px;border-radius:var(--r-sm)}
-
-.tipbox{display:flex;align-items:center;gap:9px;margin-top:13px;
-  background:var(--card-2);border-radius:var(--r-md);padding:11px 13px}
-.vdot{width:9px;height:9px;border-radius:50%;background:var(--grey);flex-shrink:0}
-.why{display:block;margin-top:9px;font-size:12.5px;line-height:1.5;color:var(--soft)}
-.conf-strong .vdot{background:var(--green)}
-.conf-lean .vdot{background:var(--win)}
-.tipbox .k{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--faint)}
-.tipbox .v{font-weight:700;font-size:14px}
-.tipbox .p{margin-left:auto;font-weight:800;font-size:15px}
-.tipbox .p.hi{color:var(--green)}
-.valuebox{display:flex;align-items:center;gap:9px;margin-top:8px;
-  background:var(--green-wash);border-radius:var(--r-md);padding:10px 13px;font-size:13px}
-.valuebox .k{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--green-ink)}
-.valuebox b{font-weight:700}
-.valuebox .odds{margin-left:auto;font-weight:800;color:var(--green-ink)}
-
-/* Quiet type on a hairline rather than a filled bar: this is a disclosure,
-   not a call to action, and it was competing with the one below it. */
-.mtoggle{display:flex;align-items:center;justify-content:center;gap:6px;
-  margin:13px -15px 0;padding:11px 15px;border-top:1px solid var(--line-soft);
-  background:transparent;color:var(--faint);font-size:11.5px;font-weight:700;
-  letter-spacing:.03em;transition:color .18s}
-.m:hover .mtoggle{background:transparent;color:var(--red-ink)}
-.mtoggle .cv{font-size:10px;transition:transform .3s}
-.m:hover .mtoggle .cv{transform:translateX(3px)}
-.mtoggle .cv{font-size:15px}
-
-.more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s cubic-bezier(.25,.8,.3,1)}
-.m.open .more{grid-template-rows:1fr}
-.more-in{overflow:hidden;min-height:0}
-.more-pad{padding:4px 15px 16px}
-.grp{margin-top:14px}
-.grp h3{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
-  color:var(--soft);margin-bottom:9px}
-.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.opt{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
-  padding:12px 13px;position:relative;overflow:hidden}
-.lmore .opt{padding:6px 9px;font-size:12.5px;white-space:nowrap;border-radius:var(--r-sm)}
-.lmore .opt .n{font-size:11.5px;font-weight:600}
-.lmore .opt .p{font-size:14.5px;margin-top:2px;font-weight:800}
-.opt .n{display:block;font-size:13px;color:var(--soft);font-weight:600}
-.opt .p{display:block;margin-top:5px;font-weight:800;font-size:18px;letter-spacing:-.02em}
-.opt.good .p{color:var(--green)}
-.opt .fill{position:absolute;left:0;bottom:0;height:3px;background:var(--grey);
-  transform:scaleX(0);transform-origin:left;transition:transform .5s}
-.sheet-body .opt .fill{transform:scaleX(var(--w,0))}
-.opt.good .fill{background:var(--green)}
-
-/* ============================================================== sheet
-   Expanding a card in place shoves everything below it down the page, and
-   on a grid it shifts neighbouring cards too. A panel over the page keeps
-   the list exactly where it was, and gives the markets more room than a
-   card ever had. Slides from the bottom on a phone, centres on desktop. */
-.scrim{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.62);
-  opacity:0;pointer-events:none;transition:opacity .28s}
-.scrim.on{opacity:1;pointer-events:auto}
-[data-theme="light"] .scrim{background:rgba(28,24,38,.42)}
-
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:151;max-height:88vh;
-  background:var(--card);border-top:1px solid var(--line);
-  border-radius:var(--r-lg) 20px 0 0;display:flex;flex-direction:column;
-  /* hidden rather than merely off-screen: a translated panel still counts
-     toward the page's scrollable area and quietly lengthens it */
-  visibility:hidden;transform:translateY(102%);
-  transition:transform .34s cubic-bezier(.25,.9,.3,1),visibility 0s .34s;
-  box-shadow:0 -18px 50px rgba(0,0,0,.45)}
-.sheet.on{visibility:visible;transform:translateY(0);transition-delay:0s,0s}
-.sheet-grab{padding:10px 0 2px;display:flex;justify-content:center;flex-shrink:0}
-.sheet-grab i{width:38px;height:4px;border-radius:99px;background:var(--line);display:block}
-.sheet-head{display:flex;align-items:flex-start;gap:12px;padding:8px 18px 14px;
-  border-bottom:1px solid var(--line-soft);flex-shrink:0}
-.sheet-head .info{flex:1;min-width:0}
-.sheet-head h3{font-size:18px;font-weight:800;letter-spacing:-.02em;line-height:1.25}
-.sheet-head p{font-size:12.5px;color:var(--soft);margin-top:4px}
-/* "book them to SportyBet" read tight against the name. Not the flex problem
-   above - this is an ordinary paragraph and the space is really there - it
-   just wants a little more air around a word set in a heavier weight. */
-#mySheetSub .sbm,#mySheetSub .b9m{margin-left:.18em}
-/* The cross is a drawn path, not a typed character. A text "x" or &times;
-   carries the font's own side and vertical bearings, so it lands a pixel or two
-   off centre inside a square button and reads as crooked whatever line-height
-   you give it. place-items on a block-level svg is exact. */
-/* The slip does not close, it tucks away - the legs are still there and the
-   button on the bar brings them back. A bare X in the corner said "discard",
-   which is the one thing this does not do, and it is the smallest target on
-   a sheet whose other controls are all full-size. Word and arrow, sized to
-   be found without looking for it. */
-/* ---------------------------------------------------------- your slips
-   Sits directly under the offer, because somebody returning has one question
-   and it is not "what is on today". Same card language as pick of the day so
-   the rail reads as one column rather than a stack of widgets. */
-.myres{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg,14px);
-  padding:13px 14px;margin-bottom:12px}
-.mr-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.mr-ttl{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--faint)}
-.mr-tag{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
-  padding:3px 8px;border-radius:99px}
-.mr-tag.won{background:var(--green-wash);color:var(--green-ink)}
-.mr-tag.lost{background:var(--red-wash);color:var(--red-ink)}
-.mr-tag.live{background:var(--win-wash);color:var(--win-ink)}
-.mr-body b{display:block;font-size:14.5px;font-weight:800;color:var(--text);line-height:1.3}
-.mr-body span{display:block;font-size:12.5px;color:var(--soft);margin-top:3px;line-height:1.4}
-/* The one-time explainer. Inside the card rather than floating over it, so it
-   cannot cover anything and needs no positioning to be right on either
-   screen. */
-/* Quiet link, not a button: it is evidence for a claim, not an action the
-   page wants you to take. */
-.daily-back{display:inline-block;margin-top:10px;background:none;border:0;padding:0;
-  /* --red as ink on a card is 4.33:1 and this is a 12px control, so it takes
-     --red-ink, which is the token that exists for exactly this. */
-  font:inherit;font-size:12px;font-weight:800;color:var(--red-ink);cursor:pointer}
-.daily-back:hover{text-decoration:underline}
-.daily-back:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:4px}
-.mr-coach{display:flex;align-items:flex-start;gap:9px;margin-top:10px;
-  padding:9px 10px;background:var(--card-2);border:1px solid var(--line);
-  border-radius:var(--r-md)}
-.mr-coach span{flex:1;min-width:0;font-size:11.5px;line-height:1.45;color:var(--soft)}
-.mr-coach-x{flex-shrink:0;align-self:center;background:var(--red-fill);color:#fff;border:0;
-  font:inherit;font-size:11px;font-weight:800;padding:6px 11px;border-radius:99px;
-  cursor:pointer}
-.mr-coach-x:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-.mr-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;
-  margin-top:11px;padding-top:10px;border-top:1px solid var(--line)}
-/* This is the line somebody comes back for - their own record - and it was
-   set at caption size in the faintest colour on the card, which put it below
-   the furniture around it. */
-.mr-rec{font-size:12.5px;font-weight:800;color:var(--soft)}
-.mr-rec b{color:var(--text);font-weight:800}
-.mr-all{background:none;border:0;font:inherit;font-size:12px;font-weight:800;
-  color:var(--red);cursor:pointer;padding:2px 0}
-.mr-all:hover{text-decoration:underline}
-.mr-all:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:4px}
-
-/* The history sheet. One card a slip, legs listed under it with a mark each,
-   so the whole thing is readable at a glance without opening anything. */
-.sl-rec{display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:8px;
-  margin:2px 0 14px}
-.sl-rec div{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
-  padding:8px 6px;text-align:center}
-.sl-rec i{display:block;font-style:normal;font-size:10px;font-weight:700;
-  letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
-.sl-rec b{display:block;font-size:16px;font-weight:800;color:var(--text);margin-top:2px;
-  font-variant-numeric:tabular-nums}
-/* Collapsed, a slip is one line; the padding lives on the parts now so a shut
-   card is only as tall as its own line. */
-.sl-card{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r-md);
-  border-left-width:3px;border-left-style:solid;margin-bottom:6px;overflow:hidden}
-.sl-card.won{border-left-color:var(--green)}
-.sl-card.lost{border-left-color:var(--red)}
-.sl-card.open{border-left-color:var(--win)}
-/* The whole line is the control - a real button, so it takes a tab stop and
-   the Enter key without any of it being wired by hand. */
-.sl-head{display:flex;align-items:center;gap:8px;width:100%;
-  padding:9px 12px;background:none;border:0;font:inherit;color:inherit;
-  text-align:left;cursor:pointer}
-.sl-head:hover{background:var(--raise)}
-.sl-head:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
-.sl-chev{flex-shrink:0;color:var(--faint);font-size:11px;transition:transform .18s}
-.sl-card.is-open .sl-chev{transform:rotate(180deg)}
-.sl-body{display:none;padding:0 12px 10px}
-.sl-card.is-open .sl-body{display:block}
-.sl-top{display:flex;align-items:center;gap:8px;margin-bottom:7px}
-.sl-tag{font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
-  padding:2px 7px;border-radius:99px;flex-shrink:0}
-.sl-tag.won{background:var(--green-wash);color:var(--green-ink)}
-.sl-tag.lost{background:var(--red-wash);color:var(--red-ink)}
-.sl-tag.open{background:var(--win-wash);color:var(--win-ink)}
-/* Says why this one is not in the percentages above it. */
-.sl-tag-jack{background:rgba(242,184,75,.16);color:#F2B84B;
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.4)}
-.sl-when{flex:1;min-width:0;font-size:11.5px;color:var(--soft);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sl-odds{font-size:13px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
-/* Quiet until wanted: a record you have to be able to delete, not a delete
-   competing with the result it sits beside. */
-.sl-x{flex-shrink:0;width:24px;height:24px;padding:0;display:inline-flex;
-  align-items:center;justify-content:center;background:none;border:0;
-  border-radius:50%;color:var(--faint);cursor:pointer;opacity:.55;
-  transition:opacity .15s,color .15s,background .15s}
-.sl-x svg{width:13px;height:13px}
-@media (hover:hover){.sl-x:hover{opacity:1;color:var(--red-ink);background:var(--red-wash)}}
-.sl-x:focus-visible{opacity:1;outline:2px solid var(--red);outline-offset:1px}
-.sl-x.arm{opacity:1;width:auto;padding:2px 9px;border-radius:99px;
-  background:var(--red-wash);color:var(--red-ink);font:inherit;font-size:10.5px;
-  font-weight:800;letter-spacing:.03em}
-.sl-foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--line-soft);
-  display:flex;justify-content:center}
-.sl-clear{font:inherit;font-size:12px;font-weight:700;padding:8px 14px;
-  border-radius:99px;background:none;border:1px solid var(--line);
-  color:var(--soft);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
-@media (hover:hover){.sl-clear:hover{color:var(--red-ink);border-color:var(--red)}}
-.sl-clear.arm{background:var(--red-wash);border-color:var(--red);color:var(--red-ink);font-weight:800}
-.sl-leg{display:flex;align-items:center;gap:9px;padding:4px 0;font-size:12px;line-height:1.35}
-/* Green landed, red missed, hollow still to play, grey void. Reading the
-   colour is instant; reading a glyph is not. */
-.sl-m{width:7px;height:7px;flex-shrink:0;border-radius:50%;
-  background:var(--line);box-shadow:none}
-.sl-leg.win .sl-m{background:var(--green)}
-.sl-leg.lose .sl-m{background:var(--red)}
-.sl-leg.void .sl-m{background:var(--faint)}
-.sl-leg.open .sl-m{background:transparent;box-shadow:inset 0 0 0 1.5px var(--faint)}
-.sl-leg.lose .sl-t{color:var(--soft)}
-.sl-t{flex:1;min-width:0;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sl-p{flex-shrink:0;color:var(--faint);font-size:11px;max-width:46%;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* The code and the three things you can do with this slip, on one line under
-   the legs. Kept in the same quiet register as the card - small text buttons,
-   not pills, so the row reads as a footnote and the result above it stays the
-   loudest thing on the card. */
-.sl-acts{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
-  margin-top:7px;padding-top:7px;border-top:1px solid var(--line)}
-.sl-code{flex:1 1 auto;min-width:0;font-size:11px;color:var(--faint);letter-spacing:.02em;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sl-code b{color:var(--soft);font-weight:800;letter-spacing:.08em}
-.sl-code-none{opacity:.6}
-.sl-mini{flex:0 0 auto;font:inherit;font-size:10.5px;font-weight:700;
-  padding:3px 9px;border-radius:99px;cursor:pointer;white-space:nowrap;
-  background:var(--raise);border:1px solid var(--line);color:var(--soft);
-  transition:color .15s,border-color .15s,background .15s}
-.sl-mini:hover{color:var(--text);border-color:var(--faint)}
-.sl-mini:focus-visible{outline:2px solid var(--red);outline-offset:1px}
-.sl-mini.ok{color:var(--green-ink);border-color:var(--green)}
-/* Delete asks before it acts, and only turns red once it has. */
-@media (hover:hover){.sl-mini-x:hover{color:var(--red-ink);border-color:var(--red)}}
-.sl-mini-x.arm{background:var(--red-wash);border-color:var(--red);color:var(--red-ink);font-weight:800}
-@media(max-width:640px){
-  .myres{padding:11px 12px;margin-bottom:10px}
-  .mr-body b{font-size:14px}
-  .sl-card{padding:9px 10px}
-  .sl-p{max-width:40%}
-}
-/* Kickoff countdown. Quiet by default; amber inside the hour, which is when
-   it stops being information and starts being a deadline. */
-/* Reserved width. This repaints every thirty to sixty seconds, and the text
-   narrows as the clock runs down - "in 1h 0m" becomes "in 59m" - so without a
-   floor the row re-flowed on its own every time, which reads as the page
-   twitching for no reason. Tabular figures keep the digits from shuffling;
-   the min-width keeps the box from resizing around them. */
-.fx-soon{display:inline-flex;align-items:center;justify-content:flex-end;
-  min-width:62px;font-size:11px;font-weight:700;
-  color:var(--faint);letter-spacing:.01em;font-variant-numeric:tabular-nums;
-  white-space:nowrap}
-/* Once it is a pill with its own edge, the reserved width from the plain
-   variant just leaves dead space before "in" (the text is flush-right against
-   62px). Let the pill size to its text and centre it - the background makes the
-   little width changes read as intentional rather than as the row twitching. */
-.fx-soon.near{color:var(--win-ink);background:var(--win-wash);
-  padding:2px 8px;border-radius:99px;min-width:0;justify-content:center}
-.sheet-collapse{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;
-  height:36px;padding:0 13px 0 10px;border-radius:99px;
-  border:1px solid var(--line);background:var(--card-2);color:var(--soft);
-  font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;
-  transition:background .16s,color .16s,border-color .16s,transform .12s}
-.sheet-collapse svg{display:block;width:15px;height:15px}
-.sheet-collapse:hover{color:var(--text);background:var(--raise);border-color:var(--soft)}
-.sheet-collapse:active{transform:scale(.95)}
-.sheet-collapse:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-@media(max-width:420px){
-  /* On the narrowest phones the word costs the title its room. */
-  .sheet-collapse span{display:none}
-  .sheet-collapse{padding:0;width:36px;justify-content:center}
-}
-.sheet-x{width:36px;height:36px;flex-shrink:0;border-radius:var(--r-md);border:1px solid var(--line);
-  background:var(--card-2);color:var(--soft);cursor:pointer;padding:0;
-  display:grid;place-items:center;font-family:inherit;
-  transition:background .16s,color .16s,border-color .16s,transform .12s}
-.sheet-x svg{display:block;width:15px;height:15px}
-.sheet-x:hover{color:var(--text);background:var(--raise);border-color:var(--soft)}
-.sheet-x:active{transform:scale(.93)}
-.sheet-x:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px 18px calc(40px + env(safe-area-inset-bottom))}
-/* Lock on the root element rather than pinning the body. Pinning with
-   position:fixed loses the scroll offset and has to be restored by hand,
-   which lands a few dozen pixels out once the layout settles. Locking the
-   root keeps the position untouched. overscroll-behavior stops a flick
-   inside the sheet from scrolling the page behind it. */
-html.locked{overflow:hidden}
-.sheet-body{overscroll-behavior:contain}
-@media(min-width:720px){
-  .sheet{left:50%;right:auto;bottom:auto;top:50%;width:min(620px,92vw);
-    border-radius:var(--r-lg);border:1px solid var(--line);
-    transform:translate(-50%,-46%) scale(.97);opacity:0;
-    transition:transform .3s cubic-bezier(.25,.9,.3,1),opacity .25s,visibility 0s .3s}
-  .sheet.on{visibility:visible;transform:translate(-50%,-50%) scale(1);opacity:1;
-    transition-delay:0s,0s,0s}
-  .sheet-grab{display:none}
-  .sheet-head{padding-top:16px}
-
-  /* ---- Desktop density pass ------------------------------------------
-     The base styles are mobile-first (touch-sized for phones). On a pointer
-     device those read as stretched "extended mobile app" chrome: oversized
-     pills, tall inputs, full-width buttons everywhere. Tighten to mouse-scale
-     without touching phone behaviour. */
-  .navt{padding:6px 12px;font-size:13px}          /* header tabs */
-  .cat{padding:7px 13px;font-size:12.5px}          /* category chips */
-  .dnav{width:32px;height:32px;font-size:14px}     /* date arrows */
-  .tgl{width:34px;height:34px}                     /* theme toggle */
-  .search input{padding:9px 12px 9px 36px;font-size:13.5px}
-  .search svg{left:12px;width:15px;height:15px}
-  select{min-height:38px;padding:8px 30px 8px 11px;font-size:13.5px}
-  .pick-sel{flex-basis:170px;min-height:38px}
-  .finder{padding:12px}
-  /* Buttons: compact heights, no more giant touch slabs */
-  button.m-add{width:auto;padding:7px 12px;font-size:12px;border-top:1px solid var(--line-soft)}
-  .book-btn{padding:10px 18px;font-size:14px}
-  .bld-foot{padding:10px;gap:8px}
-  .bld-foot .clear-btn{width:38px;height:38px}
-  /* The square is for the icon-only ones. Shuffle carries a word, so it
-     is as wide as the word and no wider. */
-  .bld-foot .clear-btn.wordy{width:auto;padding:0 13px;gap:6px}
-  .bld-foot .clear-btn.wordy span{font-size:13px}
-  .confirm-go,.confirm-cancel{padding:9px 16px;font-size:13.5px}
-  .slip-cta{animation:none;padding:12px 16px}      /* kill the pulsing glow loop on desktop */
-  .slip-cta::after{display:none}
-  .lmore-x,.more-collapse{width:auto;display:inline-block;padding:7px 14px}
-  .notif button{padding:6px 12px;font-size:12.5px}
-  .lv-tab,.lv-chip{font-size:12px}
-  .live-refresh{height:32px}
-  /* Match cards breathe less; grid stays as-is */
-  .m-add{border-radius:0 0 var(--r-md) var(--r-md)}
-
-  /* Get code / booking buttons: compact, not full-width slabs.
-     Specificity bumped (button.class) because the mobile-first bases appear
-     LATER in the sheet and would otherwise override these at equal weight. */
-  /* .bld-foot .book-btn{flex:1} at ~line 1431 has higher specificity than any
-     single-class rule, so match and beat it explicitly. */
-  button.book-btn:not(.wsp-go), .bld-foot button.book-btn{width:auto;flex:0 0 auto;margin-left:auto;padding:9px 18px;font-size:13.5px}
-  /* Conjure sits with the slip-style chips row, comfortably spaced - not shoved
-     to the far right of its action row. */
-  .wsp-acts button.wsp-go{margin-left:0;margin-top:0}
-  /* Conjure is a full-width-ish call to action on its own line below style chips */
-  button.wsp-go{display:inline-flex;margin-top:14px}
-  .wizard-panel button.wsp-go{min-width:200px;justify-content:center}
-
-  /* Desktop sizing only. The wizardry look itself is defined globally further
-     down - it used to live in here, which is why the phone never got it. */
-  button.wsp-go{width:auto;min-width:0;flex:0 0 auto;padding:11px 26px;font-size:13.5px}
-}
-@media (prefers-reduced-motion:reduce){
-  .sheet,.scrim{transition:none!important}
-}
-
-/* ================================================================= misc */
-.none{background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);
-  padding:44px 22px;text-align:center;margin-top:22px}
-.none b{display:block;font-weight:800;font-size:19px;margin-bottom:9px}
-.none p{color:var(--soft);font-size:14px;max-width:44ch;margin:0 auto}
-/* The way out of an empty board. Quiet rather than loud: the reader is not
-   being sold anything here, they are being un-stuck, so it reads as a control
-   and not as a call to action. Tactile on press, like every other button on
-   the site. */
-.none-reset{margin-top:16px;background:var(--raise);color:var(--text);
-  border:1px solid var(--line);border-radius:999px;padding:9px 18px;
-  font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
-  transition:border-color .15s ease,background .15s ease,transform .06s ease}
-.none-reset:active{transform:scale(.98)}
-@media (hover:hover){
-  .none-reset:hover{border-color:var(--line-strong,var(--line));background:var(--card)}
-}
-.note{margin-top:40px;background:var(--card);border-radius:var(--r-md);padding:22px;
-  border:1px solid var(--line-soft)}
-.note h3{font-weight:800;font-size:17px;margin-bottom:12px;color:var(--red-ink)}
-.note p{color:var(--soft);font-size:14px;line-height:1.68;margin-bottom:11px;max-width:70ch}
-.note p b{color:var(--red-ink);font-weight:800}
-.note p:last-child{margin-bottom:0}
-.note b{color:var(--text);font-weight:700}
-footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
-  color:var(--soft);font-size:13px}
-.foot-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px;
-  padding-bottom:22px;border-bottom:1px solid var(--line-soft)}
-.foot-brand img{height:46px;width:auto}
-.foot-brand b{display:block;font-size:17px;font-weight:800;color:var(--text)}
-.foot-brand em{font-style:normal;color:var(--red)}
-.badge18{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:22px;
-  padding:0 7px;border:2px solid var(--red);color:var(--red-ink);border-radius:99px;
-  font-weight:800;font-size:12px;letter-spacing:.02em;line-height:1}
-.badge18 sup{font-size:8px;font-weight:800;margin-left:1px}
-.foot-brand span{display:block;font-size:12px;color:var(--faint);margin-top:2px}
-.foot-cols{display:grid;gap:20px;margin-bottom:22px}
-.foot-cols h4{font-size:11px;font-weight:800;letter-spacing:.09em;
-  text-transform:uppercase;color:var(--red-ink);margin-bottom:7px}
-.foot-cols p{font-size:13px;line-height:1.65;max-width:38ch}
-/* Footer link row. Sits between the three columns and the legal line, so the
-   legal line keeps the last word. Wraps rather than scrolls on a phone.
-   Bare underlined text read as an afterthought pasted under the columns -
-   nothing else on the site looks like that. Everything here is a pill, so
-   these are too, just quieter than the ones that do something: no fill until
-   the cursor arrives, and the same lift the market and payout chips use. */
-/* Breathing room on BOTH sides. The pills sat 19px under the rule above and
-   flush against the legal rule below - zero gap, measured - so the row read
-   as crowding the line rather than sitting between two of them. */
-.foot-links{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 0;
-  padding:26px 0 24px;border-top:1px solid var(--line)}
-.foot-links a,.foot-links button{display:inline-flex;align-items:center;gap:7px;
-  background:transparent;border:1px solid var(--line);color:var(--soft);
-  font:inherit;font-size:12.5px;font-weight:600;line-height:1;
-  padding:8px 13px;border-radius:99px;cursor:pointer;text-decoration:none;
-  transition:background .16s ease,border-color .16s ease,color .16s ease,transform .12s ease}
-.foot-links svg{width:14px;height:14px;flex:0 0 auto}
-@media (hover:hover){
-  .foot-links a:hover,.foot-links button:hover{background:var(--card-2);
-    border-color:var(--faint);color:var(--text);transform:translateY(-1px)}
-}
-.foot-links a:focus-visible,.foot-links button:focus-visible{
-  outline:2px solid var(--red);outline-offset:2px}
-/* The two that leave the site sit apart from the four that do not.
-   The auto margin belongs on the FIRST of the outbound pair - X, which comes
-   first in the markup - so the two are pushed over as a group. Put on the
-   second, it pushes Telegram to the far edge and leaves X where it was:
-   measured, 8px between every other chip and 617px between those two. */
-.foot-links .fl-x{margin-left:auto}
-@media(max-width:560px){.foot-links .fl-x{margin-left:0}}
-/* Telegram's blue on hover, the way X's mark takes the site's own ink: enough
-   to say which service without colouring a footer chip at rest. */
-@media (hover:hover){
-  .foot-links .fl-tg:hover{border-color:#2AABEE;color:#2AABEE}
-}
-
-/* Contact dialog. Reuses the booking-code modal shell so there is one kind of
-   centred dialog on the site rather than two that nearly match. */
-.contact-card{background:var(--card);border:1px solid var(--line);
-  border-radius:var(--r-lg,14px);box-shadow:0 18px 50px rgba(0,0,0,.42);
-  padding:24px 26px 22px;position:relative;width:min(420px,92vw);text-align:left}
-.contact-card h3{margin:0 0 6px;font-size:19px;font-weight:800;color:var(--text)}
-.contact-card p{margin:0 0 16px;color:var(--soft);font-size:13.5px;line-height:1.6}
-.contact-mail{display:flex;align-items:center;gap:10px;background:var(--card-2);
-  border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:12px}
-.contact-mail a{flex:1 1 auto;font-size:14px;font-weight:700;color:var(--text);
-  word-break:break-all;text-decoration:none;border-bottom:1px solid var(--line)}
-@media (hover:hover){.contact-mail a:hover{color:var(--red-ink);border-bottom-color:var(--red)}}
-.contact-mail a:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:3px}
-.contact-mail .c-copy{flex:0 0 auto;background:transparent;border:1px solid var(--line);
-  color:var(--soft);font:inherit;font-size:12px;font-weight:700;padding:5px 11px;
-  border-radius:99px;cursor:pointer;transition:border-color .16s,color .16s}
-@media (hover:hover){.contact-mail .c-copy:hover{border-color:var(--faint);color:var(--text)}}
-.contact-mail .c-copy:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.contact-acts{display:flex;gap:9px;flex-wrap:wrap}
-.contact-acts a,.contact-acts button{display:inline-flex;align-items:center;gap:7px;
-  border-radius:99px;padding:9px 15px;font:inherit;font-size:13px;font-weight:700;
-  cursor:pointer;text-decoration:none;border:1px solid var(--line);
-  background:var(--card-2);color:var(--soft);transition:background .16s,border-color .16s,color .16s}
-.contact-acts .primary{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
-@media (hover:hover){
-  .contact-acts a:hover,.contact-acts button:hover{border-color:var(--faint);color:var(--text)}
-  .contact-acts .primary:hover{filter:brightness(1.08);color:#fff}
-}
-.contact-acts a:focus-visible,.contact-acts button:focus-visible{
-  outline:2px solid var(--red);outline-offset:2px}
-.foot-legal{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-top:16px;
-  border-top:1px solid var(--line-soft);font-size:12px;color:var(--faint)}
-.foot-legal .rg{margin-left:auto;color:var(--red-ink);font-weight:700;text-decoration:none}
-.foot-legal .rg:hover{text-decoration:underline}
-@media(min-width:720px){.foot-cols{grid-template-columns:repeat(3,1fr);gap:26px}}
-
-@media (min-width:720px){
-  .wrap{padding:0 24px}
-  .grid{grid-template-columns:1fr 1fr}
-  .tools{grid-template-columns:auto 1fr}
-  .opts{grid-template-columns:repeat(3,1fr)}
-  .bar{grid-template-columns:1fr;gap:12px}
-}
-@media (min-width:1060px){
-  .grid{grid-template-columns:repeat(3,1fr)}
-}
-@media (prefers-reduced-motion:reduce){
-  *{transition:none!important;animation:none!important}
-  /* the mark must still be fully drawn when motion is switched off */
-  .hat{opacity:1!important;transform:none!important}
-  .sp{opacity:.9!important;transform:none!important}
-  .sigil::after{display:none}
-  .pbar i{transform:scaleX(1)!important}
-  .sheet-body .opt .fill{transform:scaleX(var(--w,0))!important}
-}
-/* ===================================================== build a slip */
-.nav{display:flex;gap:4px;margin-left:20px}
-/* Phones navigate from the bottom tab bar, so the top view-tabs are redundant
-   there. Hiding them gives the wordmark its full width and takes the live dot
-   out from beside the theme toggle. The live cue moves to the bottom Live tab. */
-/* On phones the top tabs are hidden by default, BUT on the Home page (mode-pred)
-   we expose just the Live scores tab so the user can jump straight to live action
-   without opening the bottom bar. It sits on the same line as the logo + theme. */
-@media(max-width:720px){
-  /* NOTHING IN THE HEADER NAVIGATES ON A PHONE.
-     Home and Build used to keep a tab or two up here so Live was reachable
-     "without opening the bottom bar" - written when that bar could hide
-     itself. It cannot any more, so the reason is gone and what was left was
-     the same destinations twice: measured on the builder at 390px, a 60px
-     header and a 77px bar took 136px, 17.5% of the screen, with the header's
-     buttons 34px tall against the 44x44 minimum and sitting in the corner of
-     a phone that is hardest to reach one-handed. The bar keeps all three
-     destinations at 77px under the thumb; the header keeps the brand, the
-     date and the theme toggle, which are not navigation. */
-  .nav{display:none}
-}
-/* THE VIEW TABS, WHICH WERE NOT DESIGNED AT ALL.
-   `background:none;border:0` with a flat grey fill on the selected one - no
-   surface, no hover, nothing to say these were controls rather than words.
-   Reported as "no design or buttons".
-
-   Built out of what the page already uses, so it reads as the same product
-   rather than a new idea: a grouped track like the scope segment, pill radius
-   like every chip, and the raise/card/line tokens that carry every other
-   surface here. Nothing new is introduced - no gradients invented for this, no
-   colour outside the palette.
-
-   The group gets a track. Two bare words beside a wordmark read as text; the
-   same two words inside a recessed rail read as a switch, and that is the
-   whole difference between "no buttons" and a segmented control. */
-.nav{background:var(--raise);border:1px solid var(--line);
-  border-radius:999px;padding:3px;gap:2px}
-.navt{background:transparent;border:1px solid transparent;color:var(--soft);
-  font:inherit;font-weight:800;font-size:14px;padding:7px 15px;
-  border-radius:999px;cursor:pointer;white-space:nowrap;position:relative;
-  transition:background .18s ease,color .18s ease,border-color .18s ease,
-             transform .12s ease,box-shadow .18s ease}
-/* The selected tab is LIFTED off the track rather than filled in. A flat
-   darker rectangle said "highlighted"; a raised surface with a hairline and a
-   soft shadow says "this is the one you are on", which is the thing the
-   control exists to answer. */
-.navt.on{background:var(--card);color:var(--text);border-color:var(--line-soft);
-  box-shadow:0 1px 2px rgba(0,0,0,.28),0 0 0 .5px rgba(255,255,255,.03) inset}
-[data-theme="light"] .navt.on{box-shadow:0 1px 2px rgba(30,25,20,.10)}
-/* Hover, behind the guard the whole site uses - a phone keeps :hover on the
-   last thing tapped, and a tab stuck in its hover state is a tab that looks
-   selected when it is not. The lift is one pixel: enough to feel like it
-   answered, small enough that a row of them does not jump about. */
-@media (hover:hover){
-  .navt:hover:not(.on){background:var(--card-2);color:var(--text);
-    transform:translateY(-1px)}
-  .navt.on:hover{transform:translateY(-1px);
-    box-shadow:0 3px 10px rgba(0,0,0,.32),0 0 0 .5px rgba(255,255,255,.04) inset}
-}
-/* Pressed. Without this the lift has no counterpart and the button feels like
-   it floats away from the finger rather than being pushed. */
-.navt:active{transform:translateY(0) scale(.97);transition-duration:.06s}
-.navt:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-@media (prefers-reduced-motion:reduce){
-  .navt{transition:background .18s ease,color .18s ease}
-  .navt:hover,.navt.on:hover,.navt:active{transform:none}
-}
-/* the tab for the page you are already on is only a way back, so it is not
-   drawn at all until you have gone somewhere else */
-.navt.hide-tab{display:none!important}
-.top-in .when{margin-left:auto}
-@media(max-width:560px){
-  .top-in{gap:8px;padding:10px 12px;flex-wrap:nowrap}
-  .top-in .when{display:none}
-  /* the date carried margin-left:auto and did the pushing; with it hidden and
-     the view-tabs gone from phones, the logo has to push instead or the theme
-     toggle ends up parked against the wordmark */
-  .logo{font-size:15px;gap:6px;margin-right:auto}
-  .sig{height:30px}
-  .nav{gap:2px;flex-shrink:1;min-width:0}
-  .navt{padding:7px 9px;font-size:12.5px;white-space:nowrap}
-  /* "Live scores" is the web label; the phone header only has room for "Live",
-     so the second word is dropped rather than shrinking the whole tab. */
-  .nv-x{display:none}
-  /* A BOX INSIDE A PILL. This tab used to carry its own surface - a fill, a
-     border and a small corner radius - because the row around it had no design
-     at all and it needed to look like a button on its own. The row is a
-     segmented control now, so that surface renders as a squared-off box
-     floating inside a rounded rail. Reported as "the live pill still has box
-     pill look inside the new pill on mobile".
-     It follows the row's language instead: transparent at rest, lifted only
-     when it is the view you are on, pill radius like every other tab. The one
-     thing it keeps is the live dot, which is what actually distinguishes it. */
-  #tab-live{padding:6px 11px;font-size:12px}
-  /* Home page shows Live tab; Build page shows Home + Live tabs - both single line */
-  html.mode-pred .navt:not(#tab-live){display:none}
-  html.mode-build .navt:not(#tab-pred):not(#tab-live){display:none}
-}
-#builder{display:none;margin-top:8px}
-/* THE CONVERTER PAGE. Same shape as the live rules below: everything the board
-   owns is hidden and one section is shown. Its panel keeps no top rule here -
-   that hairline existed to divide it from the builder it used to sit under. */
-#converter{display:none;margin-top:8px}
-html.mode-convert .intro,html.mode-convert #potd,html.mode-convert #sotd,
-html.mode-convert #record,html.mode-convert .bar,html.mode-convert .key,
-html.mode-convert #list,html.mode-convert .note,html.mode-convert #glance,
-html.mode-convert #liveStrip,html.mode-convert #liveStripWrap,
-html.mode-convert #builder,html.mode-convert #live,
-html.mode-convert .viewtoggle.top,html.mode-convert .home-grid{display:none}
-html.mode-convert #converter{display:block}
-html.mode-convert .byo{margin-top:0;padding-top:0;border-top:0}
-/* The panel introduced itself when it lived under the builder. On its own
-   page the page heading has already done that, and two headings stacked
-   read as a page that was assembled rather than designed. */
-html.mode-convert .byo h3,html.mode-convert .byo-sub{display:none}
-.conv-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-.conv-head h2{margin:0;font-size:19px;letter-spacing:-.01em}
-.conv-sub{margin:4px 0 16px;font-size:13px;color:var(--soft);max-width:52ch;line-height:1.55}
-html.mode-build .intro,html.mode-build #potd,html.mode-build .bar,html.mode-build #glance,
-html.mode-build #sotd,html.mode-build #record,html.mode-build #liveStripWrap,html.mode-build .viewtoggle.top,
-html.mode-build .key,html.mode-build #list,html.mode-build .note,
-/* Hiding the shell covers everything inside it, so a block added to the rail
-   later cannot leak onto the builder the way #daily otherwise would. */
-html.mode-build .home-grid{display:none}
-html.mode-build #builder{display:block}
-/* live scores */
-#live{display:none;margin-top:8px}
-/* Goal fest and Biggest scoreline read upcoming fixtures, so they have nothing
-   to say on the live page. __buildGlance already skips them in this mode, but
-   it only runs on a render and switching view does not force one - so the pair
-   stayed on screen from the predictions page. Hidden here instead. */
-html.mode-live .intro,html.mode-live #potd,html.mode-live #sotd,html.mode-live #record,
-html.mode-live .bar,html.mode-live .key,html.mode-live #list,html.mode-live .note,
-html.mode-live #glance,
-html.mode-live #liveStrip,html.mode-live #liveStripWrap,html.mode-live #builder,
-html.mode-live .home-grid{display:none}
-html.mode-live #live{display:block}
-.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff3b3b;
-  margin-left:3px;vertical-align:middle;animation:livePulse 1.4s infinite}
-@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
-/* On a phone the live cue rides the bottom Live tab. It used to sit in the top
-   nav, where at narrow widths it drifted into the theme toggle. Absolute so it
-   pins to the icon instead of pushing the label sideways, and ringed in the
-   bar's own background so it still reads as a badge at 8px. */
-.btab .bt-ic{position:relative;display:inline-flex;align-items:center;justify-content:center}
-.btab-dot{position:absolute;top:-2px;right:-4px;margin:0;width:8px;height:8px;
-  box-shadow:0 0 0 2px var(--card)}
-.live-strip{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;margin-bottom:6px;
-  scrollbar-width:none;
-  -webkit-mask-image:linear-gradient(90deg,#000 0,#000 92%,transparent 100%);
-  mask-image:linear-gradient(90deg,#000 0,#000 92%,transparent 100%)}
-#liveStripWrap{margin-top:22px;border-top:1px solid var(--line-soft);padding-top:14px}
-.ls-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 2px 4px}
-.ls-head span{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;
-  letter-spacing:.05em;text-transform:uppercase;color:var(--soft)}
-.ls-head b{color:var(--faint);font-weight:700}
-.ls-head a{font-size:13px;font-weight:800;color:var(--red-ink);text-decoration:none}
-.ls-head a:hover{text-decoration:underline}
-.live-strip::-webkit-scrollbar{display:none}
-.ls-card{flex:0 0 auto;min-width:172px;background:var(--card);border:1px solid var(--line-soft);
-  border-radius:var(--r-md);padding:10px 12px;cursor:pointer}
-.ls-card:hover{border-color:var(--line)}
-.ls-card.goal{border-color:var(--green);box-shadow:0 0 0 2px rgba(43,199,120,.3)}
-.ls-card.goal .ls-top{color:var(--green)}
-.ls-row b.lit{color:var(--green);text-shadow:0 0 10px rgba(43,199,120,.9);animation:litPulse 1.1s ease-in-out infinite}
-.ls-more{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  min-width:120px;background:var(--raise);border-style:dashed}
-.ls-more-n{font-size:20px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
-.ls-more-t{font-size:12px;font-weight:800;color:var(--red-ink)}
-.ls-top{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;
-  letter-spacing:.05em;text-transform:uppercase;color:#ff3b3b;margin-bottom:7px}
-.ls-min{color:var(--faint)}
-.ls-row{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:700;line-height:1.5}
-.ls-row b{font-variant-numeric:tabular-nums}
-.ls-row.lead span,.ls-row.lead b{color:var(--red-ink);font-weight:800}
-/* ---- live event ticker ---- */
-[data-theme="light"] body{
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='210' viewBox='0 0 210 210'%3E%3Cg fill='none' stroke='%23000000' stroke-width='1.6' stroke-linecap='round' opacity='0.04'%3E%3Cpath d='M33 30v26M23 37l10 6 10-6M33 43l-8 10M33 43l8 10'/%3E%3Cpath d='M156 44l11 16-11 16-11-16z'/%3E%3Cpath d='M92 142v22M83 149l9-6 9 6M85 164h14'/%3E%3Cpath d='M172 154l8 8-8 8-8-8z M172 148v28'/%3E%3Ccircle cx='58' cy='126' r='11'/%3E%3Cpath d='M58 115v22M47 126h22'/%3E%3C/g%3E%3C/svg%3E");
-}
-#liveStripWrap{margin-top:20px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);
-  padding:0;background:linear-gradient(180deg,var(--card),var(--card-2))}
-.ticker{position:relative;display:flex;align-items:center;overflow:hidden;height:46px;
-  background:linear-gradient(180deg,var(--card),var(--card-2));
-  -webkit-mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 70px),transparent);
-  mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 70px),transparent)}
-@media(max-width:560px){.ticker-track{animation-duration:38s}}
-.ticker-track{display:flex;align-items:center;gap:0;white-space:nowrap;width:max-content;will-change:transform;
-  animation:tickscroll 55s linear infinite}
-.ticker:hover .ticker-track,.ticker:active .ticker-track{animation-play-state:paused}
-@keyframes tickscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.tk-goaltag{background:var(--green);color:#04210f;animation:tkTagBlink .8s steps(1) infinite;vertical-align:middle}
-@keyframes tkTagBlink{0%,100%{opacity:1;box-shadow:0 0 12px rgba(43,199,120,.95)}50%{opacity:.5;box-shadow:0 0 3px rgba(43,199,120,.4)}}
-.tk-item{display:inline-flex;align-items:center;gap:9px;padding:0 22px;font-size:13.5px;font-weight:700;
-  color:var(--text);border-right:1px solid var(--line-soft);animation:tkEnter .5s ease-out}
-@keyframes tkEnter{from{opacity:0}to{opacity:1}}
-.tk-min{color:var(--faint)!important}
-.ticker .tk-lead{color:var(--red-ink)!important}
-.ticker .tk-item.tk-draw span{color:var(--soft)!important}
-.ticker .tk-item.tk-draw .tk-sc{color:var(--text)!important}
-.tk-ic{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;flex-shrink:0}
-.tk-tag{font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
-  padding:3px 9px;border-radius:99px}
-.tk-goal .tk-tag{background:var(--green-wash);color:var(--green-ink)}
-.tk-ht .tk-tag{background:var(--raise);color:var(--soft)}
-.tk-ft .tk-tag{background:var(--raise);color:var(--faint)}
-.tk-red .tk-tag{background:var(--red-wash);color:var(--red-ink)}
-.tk-sc{font-variant-numeric:tabular-nums;font-weight:800}
-.tk-item.tk-lead-h .tk-sc,.tk-item.tk-lead-a .tk-sc{color:var(--red-ink)}
-.tk-item.tk-draw span{font-weight:500;color:var(--soft)}
-.tk-item.tk-draw .tk-sc{font-weight:900;color:var(--text)}
-.tk-min{color:var(--faint);font-weight:700}
-.tk-lead{color:var(--red-ink);font-weight:800}
-.tk-goal .tk-ic{position:relative;color:var(--green)}
-.tk-red .tk-ic{color:#fff}
-.tk-red .tk-ic svg{fill:var(--red);stroke:var(--red)}
-.tk-ic svg{width:17px;height:17px}
-.tk-ic{position:relative}
-.tk-goal .tk-ic::before,.tk-red .tk-ic::before{content:"";position:absolute;inset:-3px;border-radius:50%;opacity:.16;z-index:-1}
-.tk-goal .tk-ic::before{background:var(--green)}
-.tk-red .tk-ic::before{background:var(--red)}
-.tk-red .tk-ic{color:var(--red)}
-.tk-ht .tk-ic,.tk-ft .tk-ic{color:var(--faint)}
-.tk-ball svg{display:block;animation:tkball 1.4s ease-in-out infinite}
-.tk-ball{position:absolute;font-size:15px;animation:tkball 1.4s ease-in-out infinite}
-@keyframes tkball{0%{transform:translateX(-8px) rotate(0)}55%{transform:translateX(4px) rotate(320deg)}
-  70%{transform:translateX(4px) rotate(320deg)}100%{transform:translateX(-8px) rotate(0)}}
-.tk-goalfx{position:relative;display:inline-block;width:22px;height:16px}
-.tk-goalpost{position:absolute;right:0;top:1px;width:13px;height:14px;color:var(--faint);opacity:.85}
-.tk-ball2{position:absolute;left:0;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#fff,#cfcfd6);box-shadow:0 0 5px rgba(43,199,120,.8);
-  animation:goalshot 1.7s cubic-bezier(.4,0,.5,1) infinite}
-@keyframes goalshot{0%{left:-1px;opacity:0;transform:scale(.8)}15%{opacity:1}55%{left:9px;transform:scale(1)}72%{left:9px}100%{left:-1px;opacity:0;transform:scale(.8)}}
-.tk-net{position:absolute;right:0;width:9px;height:16px;border:1.5px solid var(--faint);border-left:none;
-  border-radius:0 3px 3px 0;opacity:.7}
-.tk-net::before{content:"";position:absolute;inset:0;background:
-  repeating-linear-gradient(90deg,transparent 0 2px,var(--faint) 2px 2.5px),
-  repeating-linear-gradient(0deg,transparent 0 2px,var(--faint) 2px 2.5px);opacity:.5}
-.tk-goal.flash .tk-ic{animation:tkflash 1s ease-out}
-.tk-goal.flash .tk-sc{color:inherit}
-.tk-goal.flash .tk-sc .glow{color:var(--green);animation:tkscglow 1s ease-in-out infinite}
-@keyframes tkscglow{0%,100%{text-shadow:0 0 6px rgba(43,199,120,.7)}50%{text-shadow:0 0 14px rgba(43,199,120,1)}}
-@keyframes tkflash{0%{filter:drop-shadow(0 0 0 var(--green))}30%{filter:drop-shadow(0 0 10px var(--green))}100%{filter:none}}
-.ticker-all{flex-shrink:0;align-self:center;display:inline-flex;align-items:center;gap:3px;position:absolute;right:0;top:0;bottom:0;
-  padding:5px 12px 5px 30px;font-size:11px;font-weight:800;color:#fff;
-  text-decoration:none;background:linear-gradient(90deg,transparent,var(--card) 45%);border:0;z-index:3}
-.ticker-all:hover{color:var(--text)}
-.live-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.live-head h2{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:6px 0}
-.live-refresh{background:var(--card);border:1px solid var(--line);color:var(--text);
-  font:inherit;font-weight:700;font-size:13px;padding:8px 14px;border-radius:var(--r-sm);cursor:pointer}
-.live-refresh:hover{border-color:var(--red);color:var(--red-ink)}
-.live-refresh.spin{opacity:.6;pointer-events:none}
-.live-sub{color:var(--soft);font-size:14px;margin-bottom:16px}
-.lv{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r-md);
-  padding:9px 12px;margin-bottom:6px}
-.lv-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.lv-lg{font-size:11px;color:var(--faint);font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lv-status{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:10.5px;
-  font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#ff3b3b;flex-shrink:0}
-.lv-status.ft{color:var(--faint)}
-.lv-status .live-dot{margin:0}
-.lv-teams{display:grid;grid-template-columns:1fr auto;gap:3px 12px;align-items:center}
-.lv-tm{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;min-width:0;color:var(--soft)}
-.lv-tm.lead{font-weight:800;color:var(--red-ink)}
-.lv-sc.lead{color:var(--red-ink)}
-.lv-selwrap{margin:2px 0 14px}
-.lv-tabs{display:flex;gap:8px;margin:0 0 12px}
-.lv-tab{background:var(--card-2);border:1px solid var(--line);color:var(--soft);font:inherit;
-  font-weight:800;font-size:12.5px;padding:7px 14px;border-radius:99px;cursor:pointer}
-.lv-tab.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
-.lv-tab i{font-style:normal;background:rgba(255,255,255,.22);border-radius:99px;
-  padding:0 6px;margin-left:4px;font-size:11px}
-.lv-lgs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
-.lv-lg-chip{background:var(--card-2);border:1px solid var(--line-soft);color:var(--soft);font:inherit;
-  font-weight:700;font-size:11.5px;padding:5px 11px;border-radius:99px;cursor:pointer}
-.lv-lg-chip.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
-.lv-star{background:none;border:0;padding:0 0 0 8px;cursor:pointer;flex-shrink:0;
-  color:var(--faint);font-size:15px;line-height:1}
-.lv-star.on{color:#F2B84B}
-.lv-star:hover{color:#F2B84B}
-.lv-sel{width:100%;max-width:300px;background:var(--card);border:1px solid var(--line-soft);
-  color:var(--text);font:inherit;font-weight:700;font-size:14px;padding:10px 14px;border-radius:var(--r-md);cursor:pointer}
-.lv-sel:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.lv-sc{font-variant-numeric:tabular-nums;font-weight:800;font-size:16px;text-align:right;color:var(--text)}
-.lv-red{display:inline-block;width:11px;height:14px;border-radius:var(--r-sm);background:#ff3b3b;
-  vertical-align:-2px;margin-left:2px}
-.lv-scorers{margin-top:9px;padding-top:9px;border-top:1px solid var(--line-soft);
-  display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;font-size:12px;color:var(--soft)}
-.lv-scorers .sr{display:flex;gap:5px}
-.lv-scorers .sr.h{grid-column:1}
-.lv-scorers .sr.a{justify-content:flex-end;text-align:right;grid-column:2}
-.lv-scorers .mn{color:var(--faint);font-variant-numeric:tabular-nums}
-.lv-tip{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12.5px;font-weight:700;flex-wrap:wrap}
-.lv-tip .lbl{color:var(--soft);font-weight:600}
-.lv-badge{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
-  padding:4px 9px;border-radius:99px}
-.lv-badge.win{background:var(--green-wash);color:var(--green-ink)}
-.lv-badge.lose{background:var(--red-wash);color:var(--red-ink)}
-.lv-badge.level{background:var(--raise);color:var(--soft)}
-.lv-odds{margin-left:auto;display:flex;gap:6px;flex-shrink:0}
-.lv-odds span{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;
-  background:var(--raise);color:var(--text);padding:4px 8px;border-radius:var(--r-sm)}
-.live-empty{text-align:center;padding:44px 20px;color:var(--soft)}
-.live-empty b{display:block;color:var(--text);font-size:16px;margin-bottom:4px}
-/* live: country/league segments */
-.lv-seg{display:flex;gap:7px;overflow-x:auto;padding:2px 14px 14px 0;margin-bottom:2px;scrollbar-width:none}
-.lv-seg::-webkit-scrollbar{display:none}
-.lv-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;background:var(--card);
-  border:1px solid var(--line-soft);color:var(--soft);font:inherit;font-weight:700;font-size:13px;
-  padding:8px 13px;border-radius:99px;cursor:pointer;white-space:nowrap}
-.lv-chip .flag{width:18px;height:13px}
-.lv-chip .n{color:var(--faint);font-variant-numeric:tabular-nums}
-.lv-chip.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
-.lv-chip.on .n{color:rgba(255,255,255,.8)}
-.lv-grp{margin-bottom:14px}
-.lv-grp-h{display:flex;align-items:center;gap:9px;padding:4px 2px 10px;font-size:12px;font-weight:800;
-  letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
-.lv-grp-h .flag{width:20px;height:14px}
-.lv-grp-h .ct{color:var(--faint);font-weight:700}
-.lv-grp-h .gc{margin-left:auto;background:var(--raise);color:var(--soft);border-radius:99px;padding:2px 9px;font-size:11px}
-/* live: goal animations */
-.lv{position:relative}
-@keyframes goalFlash{0%{box-shadow:0 0 0 0 rgba(43,199,120,0)}
-  12%{box-shadow:0 0 0 3px rgba(43,199,120,.55)}
-  100%{box-shadow:0 0 0 0 rgba(43,199,120,0)}}
-.lv.goal{animation:goalFlash 2.6s ease-out}
-.lv.goal{border-color:var(--green)}
-@keyframes scorePop{0%{transform:scale(1)}28%{transform:scale(1.55);color:var(--green)}100%{transform:scale(1);color:inherit}}
-.lv-sc.pop{animation:scorePop 1.3s ease-out}
-@keyframes goalBadgeIn{0%{opacity:0;transform:translateY(8px) scale(.7)}
-  12%{opacity:1;transform:translateY(0) scale(1)}82%{opacity:1;transform:translateY(0) scale(1)}
-  100%{opacity:0;transform:translateY(-4px) scale(1)}}
-.goal-badge{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:120px;height:auto;
-  border-radius:var(--r-sm);box-shadow:0 4px 14px rgba(0,0,0,.4);
-  animation:goalBadgeIn 3s ease-out forwards;pointer-events:none;z-index:2}
-.goal-tag{display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;
-  letter-spacing:.06em;color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;
-  margin-right:6px;vertical-align:middle;animation:goalTagPop .35s ease-out}
-@keyframes goalTagPop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
-.lv-sc.scored{position:relative;color:var(--red-ink)!important;z-index:1}
-.lv-sc.scored::before{content:"";position:absolute;inset:-2px -6px;border-radius:var(--r-sm);
-   background:var(--red-wash);box-shadow:0 0 0 1px var(--red),0 0 10px rgba(230,57,70,.7);
-   z-index:-1;animation:scoredGlow 1.1s ease-in-out infinite}
-.lv-sc{overflow:visible}
-.lv-sc.scored{margin-left:52px}
-.lv-sc .goal-tag{position:absolute;right:calc(100% + 12px);top:50%;bottom:auto;left:auto;transform:translateY(-50%);margin:0;z-index:3}
-@keyframes scoredGlow{0%,100%{box-shadow:0 0 0 1px var(--red),0 0 8px rgba(230,57,70,.55)}50%{box-shadow:0 0 0 1px var(--red),0 0 16px rgba(230,57,70,.95)}}
-@media(max-width:520px){.lv-scorers{grid-template-columns:1fr}.lv-scorers .sr.a{justify-content:flex-start;text-align:left;grid-column:1}}
-.bld-head{margin-bottom:20px}
-.bld-head h2{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:8px 0 4px}
-.bld-head p{color:var(--soft);font-size:14px;max-width:52ch;margin-bottom:16px}
-
-/* Mode toggle - premium segmented control */
-.bld-mode{display:inline-flex;background:var(--card-2);border:1px solid var(--line);border-radius:99px;padding:3px;gap:2px}
-.bld-mode-btn{display:inline-flex;align-items:center;gap:8px;background:none;border:0;font:inherit;font-weight:700;font-size:13px;color:var(--soft);
-  padding:8px 16px;border-radius:99px;cursor:pointer;white-space:nowrap;
-  transition:background .15s,color .15s,box-shadow .15s}
-.bld-mode-btn svg{flex-shrink:0;opacity:.8;transition:opacity .15s}
-.bld-mode-btn:hover{color:var(--text);background:var(--card)}
-.bld-mode-btn:hover svg{opacity:1}
-.bld-mode-btn.on{background:var(--red-fill);color:#fff;box-shadow:0 2px 8px rgba(230,57,70,.3)}
-/* Each mode wears its own identity when active: Slider = red/gold ember (fast,
-   hands-on); Wizard = violet/gold enchantment (let the app decide). */
-.bld-mode-btn.on[data-mode="slider"]{background:linear-gradient(120deg,#c8323d,var(--red));
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.5),0 2px 10px rgba(230,57,70,.4)}
-.bld-mode-btn.on[data-mode="wizard"]{background:linear-gradient(120deg,#6d3bd4,#8b5cf6);
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.55),0 2px 12px rgba(139,92,246,.5)}
-.bld-mode-btn.on[data-mode="wizard"] svg{filter:drop-shadow(0 0 4px rgba(242,184,75,.8))}
-.bld-mode-btn.on svg{opacity:1}
-.bld-mode-btn:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-/* The filters bar and the copy button were the two remaining controls that
-   answered a cursor with nothing. */
-@media (hover:hover){
-  .filters-toggle:hover{border-color:var(--faint);background:var(--raise)}
-  .code-acts .code-copy:hover{background:var(--raise);border-color:var(--faint)}
-}
-.filters-toggle,.code-acts .code-copy{
-  transition:background .16s ease,border-color .16s ease}
-.filters-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;
-  background:var(--card-2);border:1px solid var(--line);color:var(--text);font:inherit;
-  font-weight:800;font-size:13px;padding:11px 14px;border-radius:var(--r-md);cursor:pointer;margin-bottom:12px}
-.filters-toggle .ft-l{display:inline-flex;align-items:center;gap:9px;letter-spacing:.02em}
-.filters-toggle .ft-l svg{width:16px;height:16px;color:var(--faint)}
-.filters-toggle .ft-r{display:inline-flex;align-items:center;gap:9px}
-.filters-toggle .ft-sum{font-size:12px;font-weight:700;color:var(--faint)}
-.filters-toggle .ft-chev{width:16px;height:16px;color:var(--soft);transition:transform .2s ease}
-.filters-toggle[aria-expanded="false"] .ft-chev{transform:rotate(-90deg)}
-/* THE OPEN STATE HAS NO CEILING. It was max-height:600px, which is a number
-   somebody measured once on a panel that has grown since: at 390px the filters
-   stand 572px tall, so the market prompt that opens under the chips had 28px
-   to live in and was cut off at the panel's edge. Anything that appears in
-   here - the prompt, the idle note, the league list - has to be able to make
-   the panel taller, and no fixed number can promise that.
-   max-content is the height of the content, so nothing inside it can overflow.
-   The collapse still animates where interpolate-size is supported and snaps
-   where it is not, which is the right way round: a browser without it shows
-   the whole panel and loses the transition, rather than keeping the
-   transition and hiding what the reader was told to read. */
-html{interpolate-size:allow-keywords}
-.filters-body{overflow:hidden;transition:max-height .25s ease,opacity .2s ease;max-height:max-content;opacity:1;padding-bottom:4px;margin-bottom:12px}
-.filters-body[hidden]{display:block;max-height:0;opacity:0;pointer-events:none;margin:0}
-
-.bld-panel{background:var(--card);border:1px solid var(--line-soft);
-  border-radius:var(--r-lg);padding:18px 18px 16px}
-.risk-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
-.risk-name{font-size:20px;font-weight:800;letter-spacing:-.01em}
-.risk-sub{font-size:13px;color:var(--soft);font-weight:600;text-align:right}
-.risk-wrap{position:relative;padding-top:8px}
-.risk{-webkit-appearance:none;appearance:none;width:100%;height:10px;border-radius:99px;
-  background:var(--raise);outline:none;cursor:pointer;
-  background-image:linear-gradient(90deg,var(--green),var(--win) 55%,var(--red));
-  background-repeat:no-repeat;background-size:var(--fill,45%) 100%}
-.risk::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;
-  border-radius:50%;background:radial-gradient(circle at 38% 32%,#fff,#e6e6ea);border:3px solid var(--bg);
-  box-shadow:0 2px 8px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.15),0 0 0 0 var(--rz,rgba(230,57,70,0));
-  transition:box-shadow .18s ease,transform .12s ease;cursor:grab}
-.risk::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#fff,#e6e6ea);
-  border:3px solid var(--bg);box-shadow:0 2px 8px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.15);transition:box-shadow .18s ease;cursor:grab}
-.risk:focus-visible::-webkit-slider-thumb{box-shadow:0 2px 8px rgba(0,0,0,.45),0 0 0 4px rgba(230,57,70,.5)}
-.risk:focus-visible{outline:2px solid var(--red);outline-offset:4px}
-.risk:active::-webkit-slider-thumb{transform:scale(1.14);box-shadow:0 4px 16px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.15),0 0 0 8px var(--rz,rgba(230,57,70,.25))}
-/* Zone-tinted panel accent: green in safe, gold in balanced, red in risky. */
-.slider-panel[data-zone="safe"]{--rz:rgba(43,199,120,.35);border-color:rgba(43,199,120,.4)}
-.slider-panel[data-zone="mid"]{--rz:rgba(242,184,75,.4);border-color:rgba(242,184,75,.4)}
-.slider-panel[data-zone="risky"]{--rz:rgba(230,57,70,.4);border-color:rgba(230,57,70,.45)}
-.slider-panel[data-zone="safe"] .risk-name{color:var(--green)}
-.slider-panel[data-zone="mid"] .risk-name{color:var(--win-ink)}
-.slider-panel[data-zone="risky"] .risk-name{color:var(--red-ink)}
-.risk-ticks span{transition:color .18s ease,transform .18s ease}
-.risk-ticks span.zone-live{color:var(--text);transform:scale(1.08)}
-.risk-ticks{display:flex;justify-content:space-between;margin-top:8px;
-  font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
-/* Slider fill effect - webkit only but progressive enhancement */
-.risk{background-size:0% 100%;background-repeat:no-repeat;background-image:linear-gradient(90deg,var(--green),var(--win) 55%,var(--red))}
-.risk::-webkit-slider-runnable-track{background:transparent}
-.risk::-moz-range-track{background:transparent}
-.risk::-ms-fill-lower{background:linear-gradient(90deg,var(--green),var(--win) 55%,var(--red));border-radius:99px}
-.risk-bubble{position:absolute;top:-24px;left:45%;transform:translateX(-50%);background:var(--text);
-  color:var(--bg);font-size:11px;font-weight:800;padding:4px 9px;border-radius:var(--r-sm);white-space:nowrap;
-  pointer-events:none;transition:left .08s ease-out;box-shadow:0 4px 12px rgba(0,0,0,.35)}
-.risk-bubble::after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);
-  border:5px solid transparent;border-top-color:var(--text)}
-.risk:active~.risk-bubble{transform:translateX(-50%) scale(1.08)}
-.mkts{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px;padding-top:15px;border-top:1px solid var(--line-soft)}
-.mkt{font-size:12px;font-weight:700;padding:6px 11px;border-radius:99px;
-  background:var(--raise);color:var(--faint);border:1px solid transparent;transition:all .15s}
-.mkt.on{background:var(--green-wash);color:var(--green-ink);border-color:var(--green)}
-
-/* Unified market palette - replaces both "Include markets" and #mkts */
-/* A grid rather than a wrapping row: chips of different widths wrapped into
-   ragged rows with holes in them, which reads as longer than it is.
-   Fixed column counts rather than auto-fill, because auto-fill sized the
-   columns to the panel and left the eleventh market sitting alone on a row
-   of its own - which reads as an afterthought rather than a switch. Counts
-   that divide eleven into even-looking rows at each width. */
-/* Written against both classes on purpose: this element is also .wsp-chips,
-   which sets display:flex further down the sheet, and a single-class rule
-   here lost to it - the grid was never applying at all. */
-.wsp-chips.mkt-palette{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:6px;overflow:visible;margin-bottom:2px}
-@media(min-width:700px){ .wsp-chips.mkt-palette{grid-template-columns:repeat(4,minmax(0,1fr))} }
-/* THE TWO LONGEST LABELS DID NOT FIT THEIR PILL. Four columns of the filter
-   panel's right half is 101px a chip, and "Team over 0.5" wants 105 at the
-   shared chip padding - so the words ran out through the border. The cells
-   cannot grow without dropping to three columns and making the palette a row
-   taller, so the chip gives the text the room instead: two pixels off each
-   side, one off the gap after the icon, and a half-step down in size, which
-   is enough for the widest label with a pixel to spare. Scoped to the palette
-   so the chips elsewhere keep the size they were drawn at. */
-.mkt-palette .mkt-chip{padding:7px 9px;gap:4px;font-size:12px}
-/* 1100 was measured against a full-width palette. It sits in the right half
-   of a two-column panel now, so at 1100 the six cells are 93px and three
-   labels run out of them. Six columns wait until that half is wide enough
-   to hold the longest label: 1360 gives 113px a chip, 1280 stays on four
-   at 140. */
-@media(min-width:1360px){ .wsp-chips.mkt-palette{grid-template-columns:repeat(6,minmax(0,1fr))} }
-.mkt-chip{display:inline-flex;align-items:center;justify-content:center;
-  gap:5px;background:var(--card-2);
-  border:1px solid var(--line);color:var(--soft);font:inherit;font-weight:700;
-  font-size:12.5px;padding:7px 11px;border-radius:99px;cursor:pointer;
-  min-width:0;white-space:nowrap;
-  transition:background .15s,border-color .15s,color .15s,opacity .15s,transform .1s,box-shadow .15s}
-.mkt-chip:hover:not(.locked){border-color:var(--faint);transform:translateY(-1px)}
-.mkt-chip.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff;
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.45),0 2px 8px rgba(230,57,70,.3)}
-.mkt-chip:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-/* Dimmed because it cannot fill HERE, not because it does nothing: tapping it
-   moves the dial to where it can. So it keeps a pointer and answers to hover
-   like any other control - `cursor:not-allowed` on something that acts is a
-   lie the reader only finds out by not trying it. */
-.mkt-chip.locked{opacity:.45;filter:grayscale(.3)}
-@media (hover:hover){
-  .mkt-chip.locked:hover{opacity:.75;border-color:var(--faint);transform:translateY(-1px)}
-}
-.mkt-chip .mkt-icon{display:inline-flex}
-.mkt-chip .mkt-icon svg{width:14px;height:14px}
-.mkt-chip .tier-badge{display:none}
-/* The book badge carries a name rather than a tier number, so it is wider
-   and reads as a word. Same shape, no new colour: it is a label, not a
-   warning - the warning is the chip being locked. */
-.mkt-chip .only-badge{letter-spacing:0;font-size:9.5px;padding:2px 6px}
-/* A chip the other bookmaker owns. Dimmed like a tier lock, but it is still a
-   button: tapping it moves the builder to the book that sells it. */
-.mkt-chip.wrong-book{opacity:.5;cursor:pointer}
-@media (hover:hover){.mkt-chip.wrong-book:hover{opacity:.75}}
-.mkt-chip.on .tier-badge{background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3)}
-.mkt-chip.unlocking{animation:mktUnlock .35s ease}
-@keyframes mktUnlock{0%{transform:scale(.92);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
-@media(max-width:560px){
-  .mkt-chip{padding:6px 7px;font-size:11.5px;gap:4px}
-  /* At three columns the icon is the first thing to go: the word is what
-     identifies the market, the glyph only decorates it. */
-  .mkt-chip .mkt-icon{display:none}
-}
-/* This decides how much of the card the builder may draw from, which is one of
-   the more consequential switches on the page, and it was styled like a quiet
-   preference nobody would notice. Bigger type, a real border, an accent on the
-   live side, and the count of games each option actually covers. */
-.scope-seg{display:flex;gap:4px;background:var(--raise);border:1px solid var(--line);
-  border-radius:var(--r-md);padding:4px;margin-bottom:13px}
-.scope-opt{flex:1;background:none;border:0;font:inherit;font-size:13px;font-weight:800;
-  color:var(--soft);padding:9px 8px;border-radius:var(--r-sm);cursor:pointer;
-  white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;
-  gap:7px;transition:background .16s,color .16s,box-shadow .16s}
-.scope-opt:hover{color:var(--text)}
-.scope-opt:focus-visible{outline:2px solid var(--red);outline-offset:1px}
-.scope-opt.on{background:var(--card);color:var(--text);
-  box-shadow:0 1px 3px rgba(0,0,0,.28),inset 0 0 0 1px var(--red)}
-/* Four buckets rather than two. On a desktop panel there is room to read
-   them the way the window switch above reads - label and count on one line,
-   at a size that matches it. Left as-is these were 32 to 50px wide inside a
-   1266px panel, smaller targets on the big screen than on the small one,
-   which is the wrong way round. */
-.tod-seg{margin-top:-7px;margin-bottom:13px}
-.tod-seg .scope-opt{flex-direction:row;gap:6px;font-size:12.5px;padding:8px 10px}
-@media(max-width:640px){
-  /* Four label-and-count pairs side by side do not survive a phone, so the
-     count tucks under the label there. */
-  .tod-seg .scope-opt{flex-direction:column;gap:1px;font-size:12px;padding:6px 4px}
-}
-.tod-seg .so-n{font-size:10.5px;font-weight:700;opacity:.75}
-/* Nothing kicks off in this window today. Still tappable - it says something
-   true about the day - but it should not look like a live choice. */
-.tod-seg .scope-opt.tod-empty{opacity:.42}
-.so-n{font-size:11px;font-weight:800;padding:1px 7px;border-radius:99px;
-  background:var(--card-2);color:var(--faint);font-variant-numeric:tabular-nums}
-.scope-opt.on .so-n{background:var(--red-fill);color:#fff}
-.so-n:empty{display:none}
-/* The day pill is a dropdown, so it carries a chevron that leans open when its
-   menu is up. */
-.so-chev{width:13px;height:13px;flex-shrink:0;opacity:.65;margin-left:-2px;
-  transition:transform .16s,opacity .16s}
-.scope-day:hover .so-chev{opacity:.9}
-.scope-day[aria-expanded="true"] .so-chev{transform:rotate(180deg);opacity:1}
-@media(max-width:560px){
-  .scope-opt{font-size:12px;padding:8px 6px;gap:5px}
-  .so-n{font-size:10.5px;padding:1px 6px}
-}
-/* flex:1 on each half is right on a phone, where the pair should fill the
-   width. On a desktop the builder is over a thousand pixels wide, so the same
-   rule stretched two words and two counts across the whole of it - a segmented
-   control the size of a banner. Sized to its own content here, sitting inline
-   with the chip rows above and below it. */
-@media(min-width:721px){
-  .scope-seg{display:inline-flex;width:auto;max-width:100%}
-  .scope-opt{flex:0 0 auto;padding:9px 20px}
-}
-.scope-opt:focus-visible{outline:2px solid var(--red);outline-offset:1px}
-.bld-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
-.stat{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r-md);padding:14px 14px 12px;position:relative}
-.stat .stat-ic{position:absolute;top:12px;right:12px;color:var(--faint);opacity:.5}
-.stat .stat-ic svg{display:block;width:15px;height:15px}
-.stat b{display:block;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
-/* "Average confidence" is longer than "Games" and much longer than the number
-   above it, and these tiles are a third of the row each. Rather than let the
-   longest label decide the height of all three - or ellipsise a label nobody
-   can then read - it wraps to a second line and the tracking eases off, so the
-   words fit the box instead of the box straining round the words. */
-.stat i{display:block;font-style:normal;font-size:11px;font-weight:700;letter-spacing:.03em;
-  text-transform:uppercase;color:var(--faint);margin-top:3px;
-  line-height:1.25;overflow-wrap:anywhere;hyphens:none}
-/* Two tiles, not three, when the confidence one is dropped for a jackpot. */
-.bld-stats.stats-2{grid-template-columns:repeat(2,1fr)}
-.stat.odds b{color:var(--win)}
-#slip{display:flex;flex-direction:column;gap:8px}
-/* Shared by the slip sheet and the builder's preview. In the sheet this is
-   down to two columns - the fixture and the remove button. The confidence
-   and the price used to sit on every row there, repeating per leg what the
-   total at the foot already says and squeezing the fixture onto two lines to
-   do it. Both numbers are on every line of the dropdown, which is where you
-   compare them anyway. Giving that width back to the name is what fits more
-   games on a phone screen at once. */
-.sp-row{display:flex;align-items:center;gap:10px;background:var(--card);
-  border:1px solid var(--line-soft);border-radius:var(--r-md);padding:9px 12px;
-  border-left-width:3px;border-left-style:solid}
-.sp-row.conf-strong{border-left-color:var(--green)}
-.sp-row.conf-lean{border-left-color:var(--win)}
-.sp-row.conf-slight{border-left-color:var(--grey)}
-.sp-main{flex:1;min-width:0}
-/* A fixture name that does not fit was hidden behind an ellipsis, in the one
-   place you are deciding whether to keep the leg. Both rows use this class,
-   but the builder's is tighter - its pick column carries the market label as
-   well as the percentage, where the sheet's carries only the percentage - so
-   the name is squeezed out there first. Let it wrap instead: a second line
-   costs a few pixels, a hidden team name costs the decision. */
-.sp-teams{font-weight:700;font-size:14px;white-space:normal;overflow:visible;
-  overflow-wrap:break-word;line-height:1.25}
-/* The builder's preview row still carries a pick column, so its name is the
-   one that gets squeezed and still needs the guard. The sheet's rows no
-   longer render this at all. */
-.sp-pick{max-width:44%}
-.sp-meta{font-size:12px;color:var(--faint);margin-top:2px}
-/* The pick, as a control rather than a caption. It has to read as the label
-   it replaced until you notice you can change it, so it keeps that size and
-   colour and carries a chevron as the only hint - a full form-control border
-   on every row would turn a slip into a settings page. */
-/* The row shows the pick and nothing else; the confidence and the price live
-   on each line of the menu, which is where you compare them. Repeating them
-   on every row said again what the total at the foot already says, and cost
-   the fixture the width it needed. */
-.sp-swap{position:relative;display:inline-block;margin-top:2px;max-width:100%}
-.sp-swap-lbl{display:block;max-width:100%;
-  font-size:12.5px;font-weight:700;color:var(--win);
-  text-overflow:ellipsis;white-space:nowrap;overflow:hidden;
-  transition:color .14s ease}
-/* The chevron. It is the only thing telling anyone this line can be changed
-   at all, so without it the control is invisible - which is exactly what
-   happened when this rule was lost in an edit. */
-.sp-swap::after{content:"";position:absolute;right:7px;top:50%;
-  width:5px;height:5px;margin-top:-4px;pointer-events:none;
-  border-right:1.6px solid var(--win);border-bottom:1.6px solid var(--win);
-  transform:rotate(45deg);opacity:.9;transition:border-color .14s ease,opacity .14s ease}
-.sp-swap:hover::after{border-color:var(--text);opacity:1}
-.sp-swap:hover .sp-swap-lbl{color:var(--text)}
-/* The trigger: the pick, plus that chevron. Styled as text, not as a form
-   control - a bordered box on every row would turn a slip into a settings
-   page. The right padding is the chevron's room. */
-.sp-swap-btn{display:block;max-width:100%;margin:0;padding:2px 23px 2px 0;
-  background:none;border:0;font:inherit;text-align:left;cursor:pointer;
-  color:inherit}
-.sp-swap-btn:focus-visible{outline:2px solid var(--win);outline-offset:2px;
-  border-radius:var(--r-sm,8px)}
-/* The menu. Fixed, so the scrolling list of legs cannot clip it, and capped
-   so a long market list scrolls inside itself instead of covering the page -
-   which is the whole complaint with the native picker. */
-.swap-menu{position:fixed;z-index:300;min-width:212px;max-width:min(300px,92vw);
-  max-height:min(272px,52vh);overflow-y:auto;overscroll-behavior:contain;
-  background:var(--card);border:1px solid var(--line);
-  border-radius:var(--r-md);padding:5px;
-  box-shadow:0 14px 38px rgba(0,0,0,.42);
-  animation:swapIn .12s ease}
-@keyframes swapIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
-.swap-opt{display:flex;align-items:center;gap:8px;width:100%;
-  background:none;border:0;font:inherit;font-size:12.5px;font-weight:600;
-  color:var(--text);text-align:left;padding:8px 9px;border-radius:var(--r-sm);
-  cursor:pointer}
-.swap-opt:hover{background:var(--card-2)}
-.swap-opt:focus-visible{outline:2px solid var(--win);outline-offset:-2px}
-.swap-opt .sw-n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis}
-.swap-opt .sw-p{flex-shrink:0;font-size:11.5px;font-weight:700;color:var(--soft);
-  font-variant-numeric:tabular-nums}
-.swap-opt .sw-o{flex-shrink:0;font-size:12px;font-weight:800;color:var(--win);
-  font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
-/* The leg as it stands. */
-.swap-opt.on{background:var(--card-2)}
-.swap-opt.on .sw-n{color:var(--win);font-weight:800}
-/* Day picker rows - same menu shell, crimson accent to match the window switch
-   it drops out of rather than the green of the swap menu. */
-.day-menu{min-width:200px}
-.day-opt{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;
-  font:inherit;font-size:13px;font-weight:700;color:var(--text);text-align:left;
-  padding:9px 10px;border-radius:var(--r-sm);cursor:pointer}
-.day-opt:hover{background:var(--card-2)}
-.day-opt:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
-.day-opt .dy-n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.day-opt .dy-d{flex-shrink:0;font-size:11.5px;font-weight:700;color:var(--soft);
-  font-variant-numeric:tabular-nums}
-.day-opt .dy-c{flex-shrink:0;font-size:11px;font-weight:800;min-width:24px;text-align:center;
-  padding:1px 7px;border-radius:99px;background:var(--card-2);color:var(--faint);
-  font-variant-numeric:tabular-nums}
-.day-opt.on{background:var(--card-2)}
-.day-opt.on .dy-n{color:var(--red)}
-.day-opt.on .dy-c{background:var(--red-fill);color:#fff}
-/* The multi-day options open the same menu as the days - they answer the same
-   question, how wide is the window. One hairline separates the two kinds; a
-   line between each span would read as a list of sections. */
-.day-opt.day-span+.day-opt:not(.day-span){border-top:1px solid var(--line)}
-
-@media (max-width:640px){
-  /* The invisible control already fills the row, so the tap target is the
-     whole label area - no extra padding needed to make it reachable. */
-  /* Tighter still inside the slip sheet, where the whole point is seeing as
-     many of your legs at once as will fit. */
-  .myslip-sheet .sp-row{padding:7px 10px;gap:8px}
-  .myslip-sheet .sp-teams{font-size:13px;line-height:1.18}
-  .myslip-sheet .sp-swap-btn{padding-top:1px;padding-bottom:1px}
-  .myslip-sheet .sp-swap-lbl{font-size:12px}
-  .myslip-sheet .sp-swap{margin-top:1px}
-}
-.sp-pick{text-align:right;flex-shrink:0}
-.sp-pick b{display:block;font-size:13px;font-weight:800;color:var(--text)}
-.sp-pick i{font-style:normal;font-size:11.5px;font-weight:700;color:var(--soft)}
-.sp-odd{font-variant-numeric:tabular-nums;font-weight:800;font-size:14px;color:var(--win);
-  min-width:44px;text-align:right;flex-shrink:0}
-.sp-x{background:var(--raise);border:1px solid transparent;color:var(--soft);
-  width:28px;height:28px;border-radius:var(--r-sm);cursor:pointer;flex-shrink:0;padding:0;
-  display:grid;place-items:center;
-  transition:background .16s,color .16s,border-color .16s,transform .12s}
-.sp-x svg{display:block;width:12px;height:12px}
-.sp-x:hover{background:var(--red-wash);color:var(--red-ink);border-color:var(--red)}
-.sp-x:active{transform:scale(.93)}
-.sp-noid{font-size:10px;font-weight:800;color:var(--red-ink);background:var(--red-wash);
-  padding:2px 6px;border-radius:var(--r-sm);margin-left:6px}
-.bld-foot{position:sticky;bottom:0;display:flex;align-items:center;gap:8px;margin-top:16px;
-  background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:12px;
-  box-shadow:0 -6px 20px rgba(0,0,0,.25);
-  /* The bar is shown and hidden by an inline display, and a display change
-     from none is what restarts a CSS animation - so the entrance costs no JS
-     and cannot race a re-render. Setting the same display again changes no
-     computed style, so this does NOT re-fire on every renderBuilderOutput. */
-  animation:barIn 180ms var(--ease-out) both}
-@keyframes barIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-/* Secondary actions become quiet icon-ghost buttons so Book owns the bar. */
-.bld-foot .clear-btn{flex:0 0 auto;width:44px;height:44px;padding:0;display:grid;place-items:center;
-  background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);border-radius:var(--r-sm);
-  cursor:pointer;font-size:0;transition:background .15s,color .15s,border-color .15s,transform .12s}
-.bld-foot .clear-btn svg{display:block;width:17px;height:17px}
-/* An icon button that carries its name. Sized by its contents rather
-   than by the square the icon-only buttons keep. */
-.clear-btn.wordy{display:inline-flex;align-items:center;gap:7px;width:auto}
-.clear-btn.wordy span{font-size:13.5px;letter-spacing:.01em}
-.bld-foot .clear-btn:hover{background:var(--card-2);color:var(--text);border-color:var(--soft)}
-.bld-foot .clear-btn:active{transform:scale(.94)}
-.bld-odds{flex:1}
-.bld-odds i{display:block;font-style:normal;font-size:11px;font-weight:700;
-  letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
-.bld-odds b{font-size:24px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
-.book-btn{background:var(--red-fill);color:#fff;border:0;font:inherit;font-weight:800;font-size:15px;
-  padding:14px 22px;border-radius:var(--r-sm);cursor:pointer;white-space:nowrap;
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.4),0 2px 10px rgba(230,57,70,.3)}
-.book-btn:hover{filter:brightness(1.08)}
-.book-btn:disabled{opacity:.5;cursor:not-allowed}
-/* Book is the hero of the bar: it takes all remaining width beside the two
-   compact icon actions. */
-.bld-foot .book-btn{flex:1 1 auto}
-/* Which bookmaker the code is for.
-   Above the foot rather than in it: that bar is sticky and budgeted to a
-   320px phone - two icon buttons and a Get code that takes the rest - and a
-   third control in there pushed Book onto its own line. This is also a
-   setting rather than an action, so it reads better as a quiet line above
-   the thing it governs. */
-:root{--b9-red:#D42127;--b9-green:#14B151}
-/* BetKing. Sampled from their own brand-logo.svg rather than eyeballed: the
-   crown is #ffc400 and the wordmark is white, on the near-black their site
-   runs on. White has nowhere to go on our light theme, so the mark takes our
-   ink for "Bet" and their gold for "King" - one brand colour, legible on both
-   grounds, and unmistakably theirs.
-   The gold flips on light: #ffc400 on white is about 1.8:1, which is a
-   decoration rather than a word. --bk-deep is the same hue taken down to
-   where it can be read. */
-:root{--bk-gold:#FFC400;--bk-ink:#12100B}
-[data-theme="light"]{--bk-gold:#A97400}
-.bookpick{display:flex;align-items:center;gap:7px;margin-top:12px;flex-wrap:wrap;
-  padding:0 2px}
-/* Nothing to book, nothing to choose between. Hidden rather than emptied so
-   the row takes no space at all - it was showing on the wizard page above a
-   slip of nought games. */
-.bookpick[hidden]{display:none}
-/* See showPrompt: while a confirmation is on screen, the button that raised it
-   is a second way to do the same thing and knows nothing about the choice
-   being offered. The card carries its own Book and Cancel. */
-.prompting .book-btn{display:none}
-.bookpick-l{font-size:11px;font-weight:700;letter-spacing:.05em;
-  text-transform:uppercase;color:var(--faint);margin-right:1px}
-.bp{font:inherit;font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:99px;
-  border:1px solid transparent;cursor:pointer;white-space:nowrap;line-height:1.15;
-  display:inline-flex;align-items:center;min-height:30px;
-  box-shadow:0 1px 3px rgba(0,0,0,.28);
-  transition:opacity .16s,box-shadow .16s,transform .12s}
-.bp:active{transform:scale(.96)}
-/* Each book wears its own colours, always - it is a logo, not a label, and a
-   Nigerian reader knows both of these on sight long before they read the word.
-   Selection is a ring and full opacity rather than a colour swap, because
-   there is no colour left to swap to that would not be somebody's brand. */
-.bp:not(.on){opacity:.62}
-.bp.on{opacity:1}
-/* The two are not equals and the row should not pretend they are. This site
-   is a SportyBet site - the hero button says so, the sample codes say so, and
-   most people arriving have a SportyBet account. Bet9ja is the alternative for
-   the people who bank there, so it is offered rather than advertised.
-   SportyBet keeps the full-size pill in their red on white. */
-/* Weight and a little dimension. Flat white read as a disabled chip rather
-   than a brand: the name now carries the weight their own logo does, and the
-   pill has a soft top light and a shadow under it so it sits on the surface
-   instead of being printed on it. */
-/* THE INK IS THEIRS, THE SURFACE IS OURS - the converter's rule, brought here.
-   These two pills carried the bookmakers' own backgrounds: SportyBet red on a
-   white gradient, Bet9ja on black. Two foreign surfaces inside our own card,
-   and neither follows the theme - on the dark page the white pill glares, and
-   on the light page the black one is a hole. The converter's toggle solved
-   this already (see .byo-b): the picked book sits on the page's own raised
-   surface with a ring in its brand colour, and the wordmark keeps the colours
-   it wears everywhere else. Same rule, same look, both themes. */
-.bp{background:var(--card-2);border-color:var(--line)}
-.bp.on{background:var(--card)}
-.bp[data-book="sporty"]{font-weight:900;letter-spacing:-.01em;font-size:13px}
-.bp[data-book="sporty"].on{box-shadow:0 1px 3px rgba(0,0,0,.25),
-  inset 0 0 0 1.5px var(--red)}
-/* Bet9ja sits a clear step down: smaller type, tighter padding. Their mark is
-   two saturated colours and at equal size it pulled the eye off SportyBet
-   entirely. Small enough to be second, whole enough to be theirs. */
-.bp[data-book="bet9ja"]{padding:5px 10px;font-size:10.5px}
-.bp[data-book="bet9ja"].on{box-shadow:0 1px 3px rgba(0,0,0,.25),
-  inset 0 0 0 1.5px var(--b9-green)}
-.bp[data-book="bet9ja"] small{font-size:9.5px}
-/* BetKing sits level with Bet9ja - both are the second thing on the row, and
-   making the newest one the loudest would say something about it that is not
-   true. Condensed type buys back the width its longer name costs. */
-.bp[data-book="betking"]{padding:5px 10px;font-size:11px}
-.bp[data-book="betking"].on{box-shadow:0 1px 3px rgba(0,0,0,.25),
-  inset 0 0 0 1.5px var(--bk-gold)}
-.bp[data-book="betking"] small{font-size:9.5px}
-@media(hover:hover){ .bp:not(.on):hover{opacity:.72} }
-/* How many of the slip this book can actually take, so the choice is informed
-   rather than a coin toss. A chip rather than loose type, so it reads as a
-   count attached to the name and not as part of the brand. */
-.bp small{display:inline-flex;align-items:center;margin-left:6px;padding:1px 6px;
-  border-radius:99px;font-size:9.5px;font-weight:800;letter-spacing:.01em}
-.bp[data-book="sporty"] small{background:rgba(230,57,70,.13);color:var(--red)}
-/* Was white on white-15%, which was legible only because the pill behind it
-   was black. On our own surface it needs our own ink. */
-.bp[data-book="bet9ja"] small{background:rgba(20,177,81,.14);color:var(--b9-green)}
-.bp[data-book="betking"] small{background:rgba(255,196,0,.16);color:var(--bk-gold)}
-/* The SportyBet wordmark. One colour, so it needs no inner spans - but it does
-   need to be a mark rather than a word, so that every place the name appears
-   carries it: the code card's title, their own button, the pre-flight when it
-   says what they cannot take.
-   `currentColor` on a red ground rather than red-on-red. The name sits on
-   white and on near-black in different places, and on their own red button it
-   has to stay white or it disappears - so the mark takes the brand red only
-   where the ground is not already it. */
-.sbm{color:var(--red);font-weight:800;white-space:nowrap}
-.code-open .sbm,.book-btn .sbm,.wsp-go .sbm,.slipbar .sbm{color:inherit}
-/* ...except the sphere card's pill, which is black - see .sc-go-primary. */
-.code-card--sb .code-open .sbm{color:var(--red)}
-/* The Bet9ja wordmark: "bet" in their red, "9ja" in their green. Sampled from
-   the logo file rather than eyeballed. */
-/* Spans rather than <i>/<b>: ".code-card b" is the booking code's own style -
-   display:block, 32px - and it matches any b inside the card, so a <b> here
-   rendered "9ja" as a giant line of its own. Two earlier fixes in this file
-   were caught by the same rule. */
-.b9m{font-weight:800;letter-spacing:-.01em;white-space:nowrap}
-.b9m .b9r,.b9m .b9g{font-style:normal;font-weight:800;font-size:inherit;
-  display:inline;letter-spacing:inherit;line-height:inherit;margin:0}
-.b9m .b9r{color:var(--b9-red)}
-.b9m .b9g{color:var(--b9-green)}
-/* The BetKing wordmark. Their site sets the name in Roboto Condensed, which
-   is the half of their brand that is not the gold - so the mark asks for a
-   condensed face and falls back through what phones actually ship.
-   NO WEBFONT LINK. A third-party stylesheet on the critical path held the
-   first paint once already and there is a test forbidding one, so this is a
-   local stack: whatever condensed face the device has, or the page's own
-   font narrowed. */
-.bkm{font-weight:800;letter-spacing:-.005em;white-space:nowrap;
-  font-family:"Roboto Condensed","Arial Narrow",
-    "Helvetica Neue Condensed","Liberation Sans Narrow",inherit;
-  font-stretch:condensed}
-.bkm .bkk,.bkm .bkg{font-style:normal;font-weight:800;font-size:inherit;
-  display:inline;letter-spacing:inherit;line-height:inherit;margin:0}
-.bkm .bkk{color:inherit}
-.bkm .bkg{color:var(--bk-gold)}
-/* On their own gold ground the whole mark goes dark, the same rule the
-   SportyBet mark follows on red. */
-.code-open .bkm .bkg,.book-btn .bkm .bkg,.wsp-go .bkm .bkg,
-  .slipbar .bkm .bkg{color:inherit}
-.bld-note{font-size:12px;color:var(--soft);margin-top:10px;text-align:center}
-/* In the sheet this line sits outside the scrolling body, level with the book
-   picker, so it needs the sheet's own gutter rather than the panel's. */
-#myNote{padding:0 16px;margin-top:8px}
-#bookResult{margin-top:14px}
-/* Compact centred modal for the booking code */
-/* ---- converting a borrowed code to the other book ---- */
-.byo-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.byo-conv-btn{font:inherit;font-size:12.5px;font-weight:800;padding:9px 16px;
-  border-radius:var(--r-md);cursor:pointer;background:var(--win-wash);
-  border:1px solid var(--win);color:var(--win-ink);
-  transition:background .15s,border-color .15s,transform .1s}
-.byo-conv-btn:active{transform:scale(.98)}
-@media (hover:hover){.byo-conv-btn:hover{background:rgba(242,184,75,.2);
-  border-color:var(--win-ink)}}
-.byo-cancel{font:inherit;font-size:12.5px;font-weight:700;padding:9px 14px;
-  border-radius:var(--r-md);cursor:pointer;background:var(--card-2);
-  border:1px solid var(--line);color:var(--soft);transition:background .15s,color .15s}
-@media (hover:hover){.byo-cancel:hover{background:var(--raise);color:var(--text)}}
-.byo-conv{margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft)}
-.byo-offer{margin-top:10px;padding:10px 12px;background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md)}
-.byo-sw{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--text)}
-.byo-sw input{width:16px;height:16px;accent-color:var(--win);cursor:pointer;flex:0 0 auto}
-.byo-offer .byo-note{margin-top:6px}
-.byo-changed{color:var(--win-ink)}
-.byo-changed b{color:var(--win-ink)}
-/* ---- a code somebody else built, at the foot of the builder ---- */
-.byo{margin-top:18px;padding-top:16px;border-top:1px solid var(--line-soft)}
-/* THE PANEL YOU ARE WORKING IN MUST NOT SIT UNDER FORTY GAMES.
-   Reading a code draws three things in DOM order: #byoJobs (the three jobs),
-   #byoOut (the count and the folded leg list) and #byoStage (the panel for
-   whichever job was chosen). Folded, that is compact - but the fold is there
-   to be opened, and forty legs then push the stage off the bottom with nothing
-   to do but scroll back.
-   Two answers, because a phone and a desktop want different ones. */
-@media(min-width:1060px){
-  /* Games on the left, the jobs and the live panel stacked on the right, and
-     the right column stays put while the left one scrolls. Same breakpoint and
-     the same sticky shape as .home-rail; 380 against its 372 because the
-     convert and split boxes carry two columns of buttons. */
-  .byo{display:grid;grid-template-columns:minmax(0,1fr) 380px;
-    column-gap:26px;align-items:start;
-    /* dense, or the games start a row below the side column: .byo-side is
-       earlier in the DOM and auto-placement never walks backwards. Same reason
-       the wizard panel needs it. */
-    grid-auto-flow:row dense}
-  .byo>h3,.byo>.byo-sub,.byo>.byo-row{grid-column:1/-1}
-  .byo>#byoOut{grid-column:1}
-  .byo>.byo-side{grid-column:2;position:sticky;top:10px;
-    /* A cap and its own scrollbar, or a long convert box makes this column
-       taller than the screen and its bottom can never be reached. */
-    max-height:calc(100vh - 20px);overflow-y:auto;scrollbar-width:thin}
-  /* The jobs sit in a row of three across the page; in a 380px column they are
-     a stack, which is also the order somebody reads them in. */
-  .byo>.byo-side>.byo-jobs{grid-template-columns:1fr}
-}
-@media(max-width:720px){
-  /* No room for a second column, so it is order instead: the jobs and whatever
-     panel they opened ride above the games, which stay below as the reference
-     material they already are. */
-  .byo{display:flex;flex-direction:column}
-  .byo>.byo-side{order:1}
-  .byo>#byoOut{order:2}
-}
-}
-.byo h3{font-size:14px;font-weight:800;letter-spacing:-.01em;margin:0 0 3px}
-.byo-sub{margin:0 0 11px;font-size:12.5px;font-weight:600;color:var(--faint)}
-.byo-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.byo-book{display:inline-flex;background:var(--card-2);border:1px solid var(--line);
-  border-radius:99px;padding:3px;gap:2px;flex:0 0 auto}
-/* THE TOGGLE WEARS THEIR COLOURS.
-   A booking code belongs to one bookmaker and picking the wrong one is the
-   commonest way a read fails, so the choice should look like the logo on the
-   app the code came from rather than like two words in our grey. The surfaces
-   are theirs too: SportyBet's red on white, Bet9ja's red and green on black -
-   the same pair the slip picker uses elsewhere on this page.
-   Unpicked, a mark is dimmed rather than recoloured: greying out a brand makes
-   it somebody else's brand. */
-.byo-b{font:inherit;font-size:12px;font-weight:700;padding:6px 12px;border:0;
-  border-radius:99px;background:none;cursor:pointer;line-height:1;
-  transition:background .15s,box-shadow .15s,opacity .15s}
-.byo-b .sbm,.byo-b .b9m,.byo-b .bkm{font-size:12.5px;letter-spacing:-.01em}
-.byo-b:not(.on){opacity:.5}
-/* THE INK IS THEIRS, THE SURFACE IS OURS. A white pill and a black pill put
-   two foreign backgrounds inside our own rail: on the dark theme the black one
-   had no visible edge at all, and on the light theme the white one had none.
-   So the picked book sits on the page's own raised surface with a ring in its
-   brand colour, and the wordmark keeps the colours it has everywhere else. */
-.byo-b.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.25)}
-.byo-b.on[data-book="sporty"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
-  inset 0 0 0 1.5px var(--red)}
-.byo-b.on[data-book="bet9ja"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
-  inset 0 0 0 1.5px var(--b9-green)}
-.byo-b.on[data-book="betking"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
-  inset 0 0 0 1.5px var(--bk-gold)}
-/* The conversion's TARGET, in the same pills as its source. Two books could
-   leave this implicit - there was only ever one answer - and three cannot.
-   The ring colours are keyed off the same attribute either row uses, so a
-   target pill wears its brand exactly as the source pill does. */
-/* What the code held before its games started. A statement about the reader's
-   slip rather than a warning about ours, so it takes the card's own ink with a
-   rule beside it - loud enough to be read before the list, quiet enough not to
-   look like an error. */
-.byo-gone{border-left:3px solid var(--line);padding-left:10px;
-  color:var(--soft)}
-.byo-gone b{color:var(--text);font-weight:700}
-.byo-gone-n{display:block;margin-top:3px;font-size:12px;color:var(--faint)}
-.byo-to{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.byo-to-l{font-size:11px;font-weight:700;letter-spacing:.05em;
-  text-transform:uppercase;color:var(--faint)}
-.byo-to .byo-book{display:flex;gap:2px}
-.byo-b.on[data-conv-to="sporty"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
-  inset 0 0 0 1.5px var(--red)}
-.byo-b.on[data-conv-to="bet9ja"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
-  inset 0 0 0 1.5px var(--b9-green)}
-.byo-b.on[data-conv-to="betking"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
-  inset 0 0 0 1.5px var(--bk-gold)}
-@media (hover:hover){.byo-b:not(.on):hover{opacity:.8}}
-#byoCode{flex:1 1 150px;min-width:0;font:inherit;font-size:14px;font-weight:700;
-  letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;
-  background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
-  color:var(--text)}
-#byoCode::placeholder{color:var(--faint);letter-spacing:0;text-transform:none;font-weight:600}
-#byoCode:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-/* THE ONE BUTTON ON THIS PAGE, so it should look like something you press.
-   It was a flat red rectangle beside a flat input and read as a label. Same
-   three layers as the bar's disc - a top-lit gradient, a white hairline inside
-   the top edge, a contact shadow plus a soft coloured glow - so the two
-   surfaces on the site that mean "go" are lit from the same place. It lifts a
-   pixel under a real pointer and presses back in on touch. */
-.byo-go{flex:0 0 auto;font:inherit;font-size:13.5px;font-weight:800;padding:11px 20px;
-  border-radius:var(--r-md);cursor:pointer;color:#fff;border:0;letter-spacing:.01em;
-  background:
-    radial-gradient(120% 140% at 50% 0%,rgba(255,255,255,.28) 0%,rgba(255,255,255,0) 60%),
-    linear-gradient(180deg,#f4555f 0%,var(--red-fill) 55%,#cc2f3b 100%);
-  /* THE EDGE IS GOLD, which is this site's mark for "this is the one".
-     The hero CTA carries it, the header's Build tab carries it, and the
-     wordmark is gold: a white hairline here would have been a fourth
-     highlight colour on a page that already has three. */
-  box-shadow:
-    inset 0 1px 0 rgba(242,184,75,.5),
-    inset 0 0 0 1px rgba(242,184,75,.45),
-    inset 0 -2px 5px rgba(120,10,20,.32),
-    0 2px 5px rgba(0,0,0,.32),
-    0 4px 12px rgba(230,57,70,.2);
-  transition:transform .12s ease,box-shadow .18s ease,filter .15s ease}
-/* A PRESS, NOT A SMUDGE. The inner shade was heavy enough to read as a dark
-   blur across the button, and on Android :active survives the tap until
-   something else is touched - so that blur sat there afterwards looking like a
-   rendering artefact rather than a button being pushed. Lighter, shorter, and
-   the outer glow goes out while it is held, which is what "pressed into the
-   page" actually looks like. */
-.byo-go:active{transform:translateY(1px) scale(.99);
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.4),
-    inset 0 2px 4px rgba(90,8,16,.28)}
-@media (hover:hover){
-  .byo-go:hover{filter:brightness(1.05);transform:translateY(-1px);
-    box-shadow:
-      inset 0 1px 0 rgba(242,184,75,.62),
-      inset 0 0 0 1px rgba(242,184,75,.6),
-      inset 0 -2px 5px rgba(120,10,20,.32),
-      0 3px 7px rgba(0,0,0,.34),
-      0 10px 22px rgba(230,57,70,.36)}
-}
-@media (prefers-reduced-motion:reduce){.byo-go{transition:none}}
-.byo-wait{display:flex;align-items:center;gap:9px;margin-top:12px;
-  font-size:12.5px;font-weight:600;color:var(--soft)}
-.byo-res{margin-top:13px;background:var(--card);border:1px solid var(--line-soft);
-  border-radius:var(--r-md);padding:13px 14px}
-.byo-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;margin-bottom:9px}
-.byo-head b{font-size:13.5px;font-weight:800}
-.byo-head span{font-size:12px;font-weight:600;color:var(--faint)}
-/* The one line a reader needs before the list: how much of their slip
-   survives. Green on the part that does, because that is the number they
-   are looking for. */
-.byo-count{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--faint)}
-.byo-count b{color:var(--green-ink);font-weight:800}
-.byo-np{font-style:normal;font-size:11px;color:var(--faint)}
-/* The list is reference, so it reads as a drawer rather than as the page. */
-.byo-legs-fold{margin:2px 0 4px}
-.byo-legs-fold summary{cursor:pointer;font-size:12.5px;font-weight:700;
-  color:var(--soft);list-style:none;padding:6px 0}
-.byo-legs-fold summary::-webkit-details-marker{display:none}
-.byo-legs-fold summary::after{content:" \203A";display:inline-block;
-  transform:rotate(90deg);margin-left:6px;color:var(--faint)}
-.byo-legs-fold[open] summary::after{transform:rotate(-90deg)}
-@media (hover:hover){.byo-legs-fold summary:hover{color:var(--text)}}
-.byo-legs{display:flex;flex-direction:column;gap:1px}
-.byo-l{display:flex;align-items:baseline;gap:10px;padding:7px 0;
-  border-bottom:1px solid var(--line-soft)}
-.byo-l:last-child{border-bottom:0}
-.byo-t{flex:1 1 auto;min-width:0;font-size:12.5px;font-weight:700;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.byo-k{flex:0 1 auto;font-size:11.5px;font-weight:600;color:var(--faint);
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.byo-o{flex:0 0 auto;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
-.byo-l-stuck .byo-t,.byo-l-stuck .byo-k{color:var(--faint)}
-.byo-note{margin:10px 0 0;font-size:11.5px;font-weight:600;color:var(--faint);line-height:1.45}
-/* The split box here sits on a card, not on the modal's dark glass, so it
-   takes the page's own inks rather than the overlays that block uses. */
-.byo-res .code-split{border-top-color:var(--line-soft)}
-/* The trim sits above the split and wears the same clothes: both are "do
-   something with the slip you pasted", and a second visual language for the
-   second one would read as a different feature. */
-.byo-trim{margin-top:14px;padding-top:13px;border-top:1px solid var(--line-soft)}
-/* THE THREE JOBS. Cards rather than a segmented control: each one has a name
-   and a line saying what it does, which is the part that teaches. Dead
-   until a code is read, and dead means visibly dead - dimmed, no pointer,
-   and a reason on hover - rather than hidden, because a button you cannot
-   press yet still tells you the page can do it. */
-.byo-jobs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}
-.byo-job{display:flex;flex-direction:column;align-items:flex-start;gap:3px;
-  padding:11px 12px;border:1px solid var(--line);border-radius:var(--r-md);
-  background:var(--card-2);color:var(--text);font:inherit;cursor:pointer;
-  text-align:left;transition:border-color .16s,background .16s,transform .1s}
-.byo-job b{font-size:13px;font-weight:800;letter-spacing:-.01em}
-.byo-job i{font-style:normal;font-size:11.5px;font-weight:600;color:var(--faint);line-height:1.35}
-.byo-job .bj-i{display:inline-flex;color:var(--accent)}
-.byo-job .bj-i svg{width:17px;height:17px}
-.byo-job[disabled]{opacity:.42;cursor:not-allowed}
-.byo-job.on{border-color:var(--accent);background:var(--card);
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.35)}
-.byo-job.on .bj-i{color:var(--accent)}
-@media (hover:hover){.byo-job:not([disabled]):hover{border-color:var(--soft);
-  background:var(--card);transform:translateY(-1px)}}
-.byo-job:not([disabled]):active{transform:translateY(0) scale(.99)}
-@media(max-width:560px){.byo-jobs{grid-template-columns:1fr}
-  .byo-job{flex-direction:row;align-items:center;gap:9px}
-  .byo-job b{flex:0 0 auto}
-  .byo-job i{flex:1 1 auto;text-align:right}}
-.byo-trim .sp-ways{margin-top:8px}
-.byo-trim-n{margin:2px 0 0}
-/* The swaps, one line a game: what it was, what it becomes, and the two
-   numbers that justify the change. */
-.byo-safer:not(:empty){margin-top:14px;padding-top:13px;border-top:1px solid var(--line-soft)}
-.sf-rows{display:flex;flex-direction:column;gap:6px;margin:9px 0 0}
-.sf-row{display:flex;flex-direction:column;gap:2px;background:var(--card-2);
-  border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px}
-.sf-g{font-size:12.5px;font-weight:700;color:var(--text)}
-.sf-m{font-size:12.5px;color:var(--soft)}
-.sf-m b{color:var(--text)}
-.sf-m i{font-style:normal;color:var(--faint);font-variant-numeric:tabular-nums}
-.sf-odds{margin-top:10px}
-/* The fix-it controls. Switches first, then the strength, then what it did -
-   reading order is the order somebody touches them in. */
-.sf-opts{display:flex;flex-direction:column;gap:7px;margin:9px 0 11px;
-  padding:10px 12px;background:var(--card-2);border:1px solid var(--line);
-  border-radius:var(--r-md)}
-.sf-how{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:2px}
-.sf-how-l{font-size:12px;font-weight:700;color:var(--soft);margin-right:2px}
-.sf-chip{font:inherit;font-size:12px;font-weight:700;padding:5px 11px;
-  border-radius:99px;border:1px solid var(--line);background:var(--card);
-  color:var(--soft);cursor:pointer;transition:color .15s,border-color .15s}
-.sf-chip.on{color:var(--on-accent,#14120E);background:var(--accent);border-color:var(--accent)}
-@media (hover:hover){.sf-chip:not(.on):hover{color:var(--text);border-color:var(--soft)}}
-.sf-how-n{font-style:normal;font-size:11.5px;color:var(--faint);flex:1 1 100%}
-.sf-cut{margin-top:8px}
-.sf-more{margin:6px 0 0;text-align:center}
-/* Working, cancelling, and going back to an empty box. */
-.byo-working{display:flex;align-items:center;gap:9px;margin-top:13px;
-  font-size:12.5px;font-weight:600;color:var(--soft)}
-.byo-stage-foot{display:flex;gap:8px;margin-top:12px}
-.byo-cancel,.byo-reset{flex:1 1 auto;font:inherit;font-size:12.5px;font-weight:700;
-  padding:9px 12px;border-radius:var(--r-md);cursor:pointer;
-  background:transparent;border:1px solid var(--line);color:var(--soft)}
-@media (hover:hover){.byo-cancel:hover,.byo-reset:hover{color:var(--text);
-  border-color:var(--soft)}}
-.byo-clear{float:right;font:inherit;font-size:11.5px;font-weight:700;
-  padding:3px 9px;border-radius:99px;background:transparent;cursor:pointer;
-  border:1px solid var(--line);color:var(--faint)}
-@media (hover:hover){.byo-clear:hover{color:var(--text);border-color:var(--soft)}}
-/* A switch Auto is holding down: still readable, clearly not yours to move. */
-.byo-sw.is-auto{opacity:.85}
-.byo-sw.is-auto input{cursor:not-allowed}
-.byo-res .sp-q{color:var(--soft)}
-.byo-res .sp-way{background:var(--card-2);border-color:var(--line);color:var(--text)}
-.byo-res .code-split .sp-way span{color:var(--faint)}
-.byo-res .sp-t{background:var(--card-2);border-color:var(--line);color:var(--text)}
-.byo-res .sp-n{background:var(--raise);color:var(--soft)}
-.byo-res .sp-m,.byo-res .sp-note,.byo-res .sp-wait{color:var(--faint)}
-.byo-res .sp-head,.byo-res .code-split .sp-none{color:var(--text)}
-.byo-res .sp-copy,.byo-res .sp-open{background:var(--raise);border-color:var(--line);
-  color:var(--text)}
-@media (hover:hover){
-  .byo-res .sp-way:hover{background:var(--raise);border-color:var(--soft)}
-  .byo-res .sp-copy:hover,.byo-res .sp-open:hover{background:var(--card);border-color:var(--soft)}
-}
-@media(max-width:560px){
-  .byo-row{gap:7px}
-  #byoCode{flex:1 1 100%;order:2}
-  .byo-go{order:3;flex:1 1 auto}
-  .byo-k{display:none}
-}
-/* ---- split into several tickets, inside the booking-code modal ---- */
-/* EVERYTHING HERE IS AN ALPHA OVERLAY, not a page token.
-   The card is translucent glass over a darkened scrim in BOTH themes, so its
-   contents are white on a dark wash whichever theme the page is in. Styling
-   these rows with --card-2 flipped them to cream in light mode while the text
-   stayed white: 1.38:1, which is not text. Overlays inherit whatever the card
-   is and cannot come apart from it. */
-.code-split{margin-top:14px;padding-top:13px;border-top:1px solid rgba(255,255,255,.14)}
-.sp-q{margin:0 0 9px;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.82)}
-.sp-short{color:#fff;margin-bottom:9px}
-/* Narrow enough that three ways fit one row inside the modal. */
-.sp-ways{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:7px}
-.sp-way{display:flex;flex-direction:column;align-items:center;gap:2px;
-  padding:9px 10px;border-radius:var(--r-md);cursor:pointer;color:#fff;
-  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.20);
-  font:inherit;transition:background .15s,border-color .15s,transform .1s}
-/* Scoped past `.code-card b`, which is the booking code's own 32px style and
-   sits later in this sheet - unscoped, every number in here came out the size
-   of the code itself. */
-.code-split .sp-way b{display:inline;font-size:12.5px;font-weight:800;letter-spacing:0}
-.code-split .sp-way span{font-size:11px;font-weight:600;color:rgba(255,255,255,.78)}
-.sp-way:active{transform:scale(.98)}
-@media (hover:hover){.sp-way:hover{background:rgba(255,255,255,.18);
-  border-color:rgba(255,255,255,.34)}}
-.sp-wait{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;
-  color:rgba(255,255,255,.86);padding:4px 0}
-.sp-head{font-size:12.5px;font-weight:800;color:#fff;margin-bottom:8px}
-.sp-t{display:flex;align-items:center;gap:9px;padding:8px 10px;margin-bottom:6px;
-  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.20);
-  border-radius:var(--r-md);color:#fff;text-align:left}
-.code-split .sp-t b{display:inline;font-size:16px;font-weight:800;letter-spacing:.06em}
-.sp-n{flex:0 0 auto;width:20px;height:20px;border-radius:50%;display:grid;
-  place-items:center;background:rgba(255,255,255,.16);color:#fff;
-  font-size:11px;font-weight:800}
-.sp-m{flex:1;min-width:0;font-size:11.5px;font-weight:600;
-  color:rgba(255,255,255,.80);overflow:hidden;text-overflow:ellipsis}
-.sp-bad{background:rgba(230,57,70,.26);border-color:rgba(255,255,255,.28)}
-.code-split .sp-none{display:inline;font-size:12.5px;font-weight:700;
-  letter-spacing:0;color:#fff}
-.sp-copy,.sp-open{flex:0 0 auto;font:inherit;font-size:11.5px;font-weight:700;
-  padding:5px 10px;border-radius:var(--r-sm);cursor:pointer;text-decoration:none;
-  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);
-  color:#fff;transition:background .15s,border-color .15s}
-@media (hover:hover){.sp-copy:hover,.sp-open:hover{background:rgba(255,255,255,.24);
-  border-color:rgba(255,255,255,.4)}}
-.sp-note{margin:8px 0 0;font-size:11.5px;font-weight:600;color:rgba(255,255,255,.78)}
-/* THE SAME ROW ON A PAGE CARD. Everything above is an alpha overlay for the
-   glass modal, and the betslip-cap prompt is not that: it is a .confirm-card
-   on --card-2, where white-on-white-alpha reads as a grey slab in dark mode
-   and prints white text on cream in light. Page tokens here, like .byo-res
-   does for the same rows inside the editor.
-   One column, because there is one offer - the tickets are already counted
-   from the limit, so a row of alternatives would be a choice nobody has. */
-.confirm-card .sp-ways{margin-top:12px;grid-template-columns:1fr}
-.confirm-card .sp-way{flex-direction:row;justify-content:center;gap:8px;
-  padding:11px 14px;background:var(--card);border-color:var(--line);color:var(--text)}
-.confirm-card .sp-way b{font-size:14px;font-weight:800}
-.confirm-card .sp-way span{font-size:12px;font-weight:600;color:var(--faint)}
-@media (hover:hover){.confirm-card .sp-way:hover{background:var(--raise);
-  border-color:var(--green)}}
-/* The picker is padded to line up with the slip sheet's own gutter, which is
-   an indent this card does not have. */
-#bookAllResult .bookpick,.confirm-card .bookpick{padding:0;margin:10px 0 2px}
-@media(max-width:420px){
-  .sp-ways{grid-template-columns:repeat(auto-fit,minmax(88px,1fr))}
-  .sp-t{gap:7px;padding:7px 9px}
-  .code-split .sp-t b{font-size:15px}
-}
-.code-modal-scrim{position:fixed;inset:0;z-index:220;background:rgba(10,14,10,.45);
-  backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px;
-  /* THE CODE USED TO BLINK INTO EXISTENCE. It is the thing this whole product
-     exists to hand over and it arrived with less ceremony than a tooltip.
-     @starting-style is what makes the entrance possible without a class
-     toggle or a timer: the modal is created and appended, so the browser has
-     a state to transition FROM. A browser without it gets exactly what it
-     got before, which is why there is no JS here at all. */
-  transition:opacity 160ms var(--ease-out)}
-@starting-style{.code-modal-scrim{opacity:0}}
-/* Scoped to the modal. .code-card is also rendered inline under the builder,
-   where it is not being inserted and has nothing to animate from. */
-.code-modal-scrim .code-card{
-  transition:opacity 220ms var(--ease-out),transform 220ms var(--ease-out)}
-@starting-style{.code-modal-scrim .code-card{opacity:0;transform:scale(.96)}}
-/* A tinted pane, the way it always was in dark mode - the green wash there
-   is half of why a code feels like a result rather than a dialog. What broke
-   was only light mode, where a green tint over a dark scrim left dark text
-   on a dark surface. So light mode gets its own wash instead of losing the
-   effect: the brand red, kept pale enough that black text clears contrast on
-   it, over a light scrim. */
-.code-card{background:rgba(46,204,113,.16);
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  border:1px solid rgba(46,204,113,.55);border-radius:14px;
-  box-shadow:0 18px 50px rgba(0,20,8,.45),inset 0 1px 0 rgba(255,255,255,.12);
-  padding:22px 26px;text-align:center;position:relative;width:min(340px,92vw)}
-[data-theme="light"] .code-modal-scrim{background:rgba(28,20,22,.34)}
-[data-theme="light"] .code-card{
-  background:rgba(230,57,70,.10);
-  border-color:rgba(230,57,70,.42);
-  box-shadow:0 18px 50px rgba(60,10,16,.22),inset 0 1px 0 rgba(255,255,255,.6)}
-[data-theme="light"] .code-card i{color:var(--red)}
-.code-x{position:absolute;top:8px;right:8px;width:30px;height:30px;padding:0;
-  display:flex;align-items:center;justify-content:center;
-  background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);
-  color:var(--soft);cursor:pointer}
-.code-x svg{width:15px;height:15px}
-.code-x:hover{color:var(--text);border-color:var(--red)}
-.code-card i{font-style:normal;font-size:12px;font-weight:700;letter-spacing:.05em;
-  text-transform:uppercase;color:var(--green-ink)}
-.code-card b{display:block;font-size:32px;font-weight:800;letter-spacing:.08em;
-  color:var(--text);margin:6px 0 14px;font-variant-numeric:tabular-nums}
-/* How many codes are left today, on the one screen every booking ends on.
-   Deliberately quiet: it sits under the code as a line of small print, not as
-   a warning bar. It only appears at three or fewer - a counter that shows at
-   nine of ten is noise, and noise is what teaches people to ignore the one at
-   two. */
-.code-quota{margin:-6px 0 12px;font-size:12.5px;font-weight:600;color:var(--soft);
-  letter-spacing:.01em}
-.code-acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-/* Empty until the read-back finds legs missing, and it must take no space
-   while empty - :empty rather than [hidden], because nothing sets a property
-   here, the box is simply filled or not. */
-.code-kept:empty{display:none}
-.code-kept{margin:12px 0 0;padding:10px 12px;border-radius:12px;
-  background:rgba(242,184,75,.12);border:1px solid rgba(242,184,75,.34);
-  font-size:12.5px;line-height:1.45;text-align:left}
-.code-kept b{display:block;font-size:13px;font-weight:800;margin-bottom:2px}
-.code-kept span{color:var(--soft)}
-/* Copy and Share are what you do with the code once you have it - secondary to
-   opening the slip, so they are the small pair. Sized to their own labels
-   rather than stretched across the row; the reserve on Copy is only there to
-   hold "Copied" without the button changing width mid-press. */
-.code-acts .code-copy,.code-acts .share-btn{flex:0 0 auto;font-size:12.5px;
-  padding:8px 15px;min-width:0}
-.code-acts .code-copy{min-width:78px}
-/* Where to open it. SportyBet keeps the weight it always had - it is what
-   most people are here to do. */
-.code-opens{display:flex;gap:9px;justify-content:center;align-items:center;
-  margin-top:11px;flex-wrap:wrap}
-.code-opens .code-open{flex:0 0 auto;font:inherit;font-weight:800;font-size:14px;
-  padding:11px 18px;border-radius:var(--r-md);text-decoration:none;
-  display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
-/* The other book, on its own line and said as a sentence. Quiet enough that it
-   cannot be mistaken for a second call to action, but the name is a pill you
-   can press rather than a fact you have to act on yourself. */
-.code-also{display:flex;align-items:center;justify-content:center;gap:7px;
-  margin:9px 0 0;font-size:11px;font-weight:600;color:var(--soft)}
-/* football.com's own colour, #282450, which is the theme colour their site
-   declares - so the pill reads as their badge rather than as another of our
-   buttons. Dark enough for white type at any weight. */
-.code-also .code-open-alt{font-size:10.5px;font-weight:700;padding:5px 11px;
-  border-radius:99px;letter-spacing:.01em;text-decoration:none;white-space:nowrap;
-  background:#282450;color:#fff;border:0;transition:filter .16s}
-.code-also .code-open-alt:hover{filter:brightness(1.35)}
-/* The dot in "football.com" takes their lime, #9FF611 - the accent that runs
-   against this purple on their own site. It is the one spot of it here, which
-   is as much as it can take next to our crimson. */
-.code-also .code-open-alt .fb-dot{color:#9FF611;font-weight:800}
-.code-acts button,.code-acts a{font:inherit;font-weight:800;font-size:14px;padding:11px 18px;
-  border-radius:var(--r-md);cursor:pointer;text-decoration:none;border:0}
-/* "Copy" becomes "Copied" and back. Auto width meant the button - and the
-   modal around it - resized twice on every copy, so the wider label's width is
-   reserved and only the text changes. The reserve lives with the size a few
-   lines above now; here it is only the colours.
-   Written as ".code-acts .code-copy" deliberately: the phone block below sets
-   "min-width:0" on ".code-acts button", which at 0-1-1 outranks a lone
-   ".code-copy" and was quietly dropping the reserve on exactly the screens
-   this modal is used on most. */
-.code-acts .code-copy{background:var(--card);color:var(--text);
-  border:1px solid var(--line)!important;text-align:center}
-.code-open{background:var(--red-fill);color:#fff}
-/* A footnote that still has to be read. Bold and shouting was wrong, but so
-   was the whisper I replaced it with - it had faded into the card. Body-text
-   colour and size, on its own line above the card's edge, so it reads as a
-   useful aside rather than either an advert or a disclaimer. */
-/* Small, but not the whisper it was before. The code above it is 32px - this
-   only has to be legible next to that, not compete with it, and at 12px it
-   was doing the competing. The rule above does the separating so the type
-   does not have to. */
-.code-alt{margin:11px 0 0;padding-top:9px;border-top:1px solid var(--line);
-  font-size:10.5px;line-height:1.4;color:var(--soft);text-align:center;
-  font-weight:600;letter-spacing:.01em}
-/* Every one of these is needed. ".code-card b" is the booking code itself -
-   display:block, 32px, wide letter-spacing - and it matches ANY b inside the
-   card, so the brand name in this footnote was inheriting all of it and
-   rendering as a 32px block on its own line. Shrinking the paragraph did
-   nothing to the word inside it, which is why this looked unfixed twice. */
-/* Written against both classes deliberately. ".code-card b" is declared
-   twice - once here and once in the phone block far below - and a single-class
-   rule ties with those on specificity, so the LAST one wins and the later
-   declaration put this back to 26px. Two classes beats both wherever they
-   sit in the file, which is what the previous two attempts at this were
-   missing. */
-.code-card .code-alt b{display:inline;font-size:inherit;line-height:inherit;
-  letter-spacing:normal;margin:0;color:var(--text);font-weight:800}
-/* ---- the code card in SportyBet's colours -----------------------------
-
-   Siblings, not strangers. Bet9ja's card is black with their red and green;
-   this one is black with SportyBet's red, so the pair read as one product that
-   books both rather than two skins bolted together. The accent is what tells
-   them apart, and it is the accent a reader already associates with the button
-   they pressed.
-
-   The green success wash this replaced was the site's own colour, not
-   SportyBet's - it said "it worked" where the card should say whose code this
-   is. "It worked" is already carried by there being a code at all. */
-.code-card--sb,[data-theme="light"] .code-card--sb{
-  background:
-    radial-gradient(120% 80% at 50% -10%, rgba(230,57,70,.22), transparent 60%),
-    linear-gradient(180deg,#1a1113,#0b0809);
-  border-color:rgba(230,57,70,.42);
-  box-shadow:0 22px 58px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.07)}
-.code-card--sb i,[data-theme="light"] .code-card--sb i{
-  color:rgba(255,255,255,.78);display:block}
-.code-card--sb i::after{content:"";display:block;width:42px;height:2px;
-  margin:8px auto 2px;border-radius:2px;
-  background:linear-gradient(90deg,transparent,var(--red),transparent)}
-
-/* The code itself, which is the only thing on this card anybody came for.
-   Wide tracking, tabular figures so it cannot re-space itself, and a red bloom
-   behind rather than on the glyphs - a glow applied to the letters costs
-   legibility, and this is a string somebody is about to read out loud. */
-.code-card--sb b,[data-theme="light"] .code-card--sb b{
-  color:#fff;text-shadow:0 0 24px rgba(230,57,70,.55)}
-
-/* A slow sweep, once every few seconds. The card is on screen for as long as
-   it takes to copy a code, so this is the one place a little motion reads as
-   alive rather than restless. Off entirely for anyone who has asked for less. */
-.code-card--sb::after{content:"";position:absolute;inset:0;border-radius:inherit;
-  pointer-events:none;overflow:hidden;
-  background:linear-gradient(100deg,transparent 40%,rgba(255,255,255,.06) 50%,transparent 60%);
-  background-size:260% 100%;animation:sbSweep 5.5s ease-in-out infinite}
-@keyframes sbSweep{0%,70%{background-position:130% 0}100%{background-position:-30% 0}}
-@media (prefers-reduced-motion: reduce){ .code-card--sb::after{animation:none} }
-
-.code-card--sb .code-acts .code-copy,
-.code-card--sb .code-acts .share-btn{
-  background:var(--red-fill);color:#fff;border:1px solid transparent!important;
-  box-shadow:0 2px 10px rgba(230,57,70,.32)}
-@media(hover:hover){
-  .code-card--sb .code-acts .code-copy:hover,
-  .code-card--sb .code-acts .share-btn:hover{filter:brightness(1.1)}
-}
-/* Their button is the white one, weighted heaviest, for the same reason it is
-   on the Bet9ja card: opening the slip is what the reader came to do. */
-.code-card--sb .code-open{background:#fff;color:#14161a;
-  box-shadow:0 3px 16px rgba(0,0,0,.45)}
-@media(hover:hover){ .code-card--sb .code-open:hover{filter:brightness(.96)} }
-.code-card--sb .code-keep-n{color:rgba(255,255,255,.6)}
-.code-card--sb .code-x{background:rgba(255,255,255,.08);color:#fff;
-  border-color:rgba(255,255,255,.2)}
-@media(hover:hover){ .code-card--sb .code-x:hover{border-color:var(--red);color:#fff} }
-/* The footnote sits on black now, so its own colours have to come up with it. */
-.code-card--sb .code-also{color:rgba(255,255,255,.62)}
-
-/* ---- the code card in Bet9ja's colours --------------------------------
-
-   Same card, their palette. A reader should know which app the code belongs
-   to before reading a word of it, and the two must not be mistakable for one
-   another: SportyBet's keeps the green success wash it has always had, so
-   Bet9ja's is black. That is their own ground - their site is dark with the
-   red and the green carried as accents - and it is as far from a green wash
-   as the brand allows. */
-/* Its own ground, the same in both themes.
-   The light theme paints the standard card with a wash of OUR red and its
-   title in our red too - the wrong brand on a Bet9ja code - and both of those
-   are two-class rules that outrank anything single-class here. So this sets
-   the surface rather than trying to patch over them, which also means the
-   white type below is legible whichever theme the reader is in. */
-.code-card--b9,[data-theme="light"] .code-card--b9{
-  background:linear-gradient(180deg,#16191d,#0a0c0e);
-  border-color:rgba(20,177,81,.42);
-  box-shadow:0 22px 58px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.07)}
-.code-card--b9 i,[data-theme="light"] .code-card--b9 i{color:rgba(255,255,255,.8)}
-.code-card--b9 b,[data-theme="light"] .code-card--b9 b{color:#fff}
-/* Their two colours as a rule under the title - the logo said quietly, so the
-   card is theirs even at a glance with the words out of focus.
-   The title has to be a block for this: `.code-card i` is inline, and auto
-   margins cannot centre anything inside an inline formatting context, so the
-   rule rendered at 42x2 exactly as specified and sat invisibly off to one
-   side. Nothing about it looked wrong in the CSS. */
-.code-card--b9 i{display:block}
-.code-card--b9 i::after{content:"";display:block;width:42px;height:2px;
-  margin:8px auto 2px;border-radius:2px;
-  background:linear-gradient(90deg,var(--b9-red) 0 50%,var(--b9-green) 50%)}
-.code-card--b9 .code-keep-n{color:rgba(255,255,255,.6)}
-.code-card--b9 .code-save{background:rgba(255,255,255,.08);color:#fff;
-  border-color:rgba(255,255,255,.24)!important}
-.code-card--b9 .code-save.done{border-color:var(--b9-green)!important;
-  color:var(--b9-green)}
-.code-card--b9 .code-x{background:rgba(255,255,255,.08);color:#fff;
-  border-color:rgba(255,255,255,.2)}
-@media(hover:hover){
-  .code-card--b9 .code-x:hover{border-color:var(--b9-green);color:#fff}
-}
-/* "Your bet9ja booking code", with the small b.
-   The heading is uppercased, which made their mark shout BET9JA. It went to
-   lowercase, then to capitalised because it read like a sentence that had
-   forgotten its capital - and that was wrong: the logo file is lowercase, so
-   "bet9ja" IS the name, not an informal spelling of it. A brand is not
-   sentence case. Back to lowercase, everywhere it appears. */
-.code-card--b9 i .b9m{text-transform:none}
-.code-card--b9 .code-acts .code-copy,
-.code-card--b9 .code-acts .share-btn{
-  background:var(--b9-green);color:#fff;border:1px solid transparent!important;
-  box-shadow:0 2px 10px rgba(20,177,81,.3)}
-@media(hover:hover){
-  .code-card--b9 .code-acts .code-copy:hover,
-  .code-card--b9 .code-acts .share-btn:hover{filter:brightness(1.1)}
-}
-/* Their own button is white with the wordmark on it, the way it appears on
-   their site - a green button here would collide with the two green ones
-   above it and stop being the obvious next step. */
-.code-card--b9 .code-open{background:#fff;color:#14161a;
-  box-shadow:0 3px 16px rgba(0,0,0,.45)}
-@media(hover:hover){ .code-card--b9 .code-open:hover{filter:brightness(.96)} }
-/* .code-opens .code-open is inline-flex so its contents centre, which makes
-   "Open in" and the mark two flex items with nothing between them:
-   "Open inbet9ja". A space in the string cannot survive that, so it is a
-   margin. Both books, because both had it - only Bet9ja's was noticed. */
-.code-open .sbm,.code-open .b9m,.code-open .bkm{margin-left:.3em}
-
-/* --- the BetKing code card -------------------------------------------------
-   Same construction as the Bet9ja one above and for the same reasons: their
-   ground, not ours, set on the two-class selector so the light theme's own
-   red wash cannot outrank it. BetKing's site is near-black with the gold
-   doing all the work, so the card is darker than Bet9ja's and carries one
-   colour instead of two. */
-.code-card--bk,[data-theme="light"] .code-card--bk{
-  background:linear-gradient(180deg,#17150E,#08080A);
-  border-color:rgba(255,196,0,.42);
-  box-shadow:0 22px 58px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.07)}
-.code-card--bk i,[data-theme="light"] .code-card--bk i{color:rgba(255,255,255,.8)}
-.code-card--bk b,[data-theme="light"] .code-card--bk b{color:#fff}
-/* On their own dark card the wordmark is white with the gold half, exactly as
-   their logo file has it - the --bk-gold light-theme override must not follow
-   the mark onto a ground that is dark whatever the theme says. */
-.code-card--bk .bkm{color:#fff}
-.code-card--bk .bkm .bkg{color:#FFC400}
-.code-card--bk i{display:block;text-transform:none}
-.code-card--bk i::after{content:"";display:block;width:42px;height:2px;
-  margin:8px auto 2px;border-radius:2px;background:#FFC400}
-.code-card--bk .code-keep-n{color:rgba(255,255,255,.6)}
-.code-card--bk .code-save{background:rgba(255,255,255,.08);color:#fff;
-  border-color:rgba(255,255,255,.24)!important}
-.code-card--bk .code-save.done{border-color:#FFC400!important;color:#FFC400}
-.code-card--bk .code-x{background:rgba(255,255,255,.08);color:#fff;
-  border-color:rgba(255,255,255,.2)}
-@media(hover:hover){
-  .code-card--bk .code-x:hover{border-color:#FFC400;color:#fff}
-}
-/* Gold is a light colour: white on it is unreadable, so their buttons take
-   the dark ink their own site uses on gold. */
-.code-card--bk .code-acts .code-copy,
-.code-card--bk .code-acts .share-btn{
-  background:#FFC400;color:var(--bk-ink);border:1px solid transparent!important;
-  box-shadow:0 2px 10px rgba(255,196,0,.28)}
-@media(hover:hover){
-  .code-card--bk .code-acts .code-copy:hover,
-  .code-card--bk .code-acts .share-btn:hover{filter:brightness(1.08)}
-}
-/* BetKing has no deep link, so this card ends in a sentence rather than their
-   button - see BK_URL. It is still the last thing read, so it is set like an
-   instruction and not like a footnote. */
-.code-card--bk .code-paste{display:block;font-size:12.5px;
-  font-weight:600;line-height:1.45;color:rgba(255,255,255,.72);
-  text-align:center;padding:2px 6px}
-.code-err{background:var(--red-wash);border:1px solid var(--red);border-radius:var(--r-md);
-  padding:15px;color:var(--red-ink);font-weight:600;font-size:14px}
-/* What went wrong, then what to do about it - the second line is the useful
-   half, so it gets its own line rather than trailing the first as a clause. */
-.code-err b{display:block;font-weight:800;margin-bottom:3px}
-.code-err span{display:block;font-weight:600;font-size:12.5px;line-height:1.45;opacity:.9}
-.code-info{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
-  padding:15px;color:var(--soft);font-weight:600;font-size:14px;
-  display:flex;align-items:center;gap:10px}
-.code-info::before{content:"";width:14px;height:14px;flex-shrink:0;border-radius:50%;
-  border:2px solid var(--line);border-top-color:var(--win);animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.bld-empty{text-align:center;padding:40px 20px;color:var(--soft)}
-.bld-empty b{display:block;color:var(--text);font-size:16px;margin-bottom:4px}
-@media(max-width:560px){
-  /* Three across rather than two-plus-one. They are short numbers with short
-     labels; the row only needed the padding and the type to come down a
-     little to stop the wrap. */
-  .bld-stats{grid-template-columns:repeat(3,1fr);gap:6px}
-  .stat.odds{grid-column:auto}
-  .stat{padding:9px 8px 8px}
-  .stat b{font-size:18px}
-  .stat i{font-size:9.5px;letter-spacing:.02em}
-  .stat .stat-ic{display:none}
-  .book-btn{padding:14px 16px;font-size:14px}
-}
-/* brand loader */
-.netpill{position:fixed;left:50%;top:14px;transform:translateX(-50%) translateY(-140%);
-  z-index:400;display:inline-flex;align-items:center;gap:8px;
-  background:var(--card);border:1px solid var(--line);border-radius:99px;
-  padding:8px 15px;font-size:12.5px;font-weight:800;color:var(--text);
-  box-shadow:0 8px 24px rgba(0,0,0,.4);transition:transform .35s cubic-bezier(.3,.9,.3,1),opacity .3s;opacity:0}
-.netpill.show{transform:translateX(-50%) translateY(0);opacity:1}
-.netpill .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.netpill.off .dot{background:var(--faint)}
-.netpill.on .dot{background:var(--green);box-shadow:0 0 8px 1px rgba(43,199,120,.8)}
-.netpill.off{border-color:var(--line)}
-.netpill.on{border-color:var(--green)}
-.loader{position:fixed;inset:0;z-index:999;background-color:var(--bg);
-  background-image:inherit;background-repeat:repeat;display:flex;
-  align-items:center;justify-content:center;flex-direction:column;gap:14px;transition:opacity .45s ease}
-.loader.hide{opacity:0;pointer-events:none}
-/* Depth under the mark: the red the hero glows with, and a colder pool at
-   the bottom so the ground does not end flat. */
-.loader::before{content:'';position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(115% 62% at 50% 34%,rgba(230,57,70,.13),transparent 62%),
-    radial-gradient(80% 46% at 50% 104%,rgba(242,184,75,.07),transparent 72%)}
-.loader>*{position:relative}
-/* One stage, 132px, holding four layers that share a clock: the halo behind,
-   the ring that sweeps, the wizard, and the highlight that crosses him. The
-   badge is the WHOLE badge - hood point to shoulders - so nothing is cut, and
-   it is sized to sit inside the ring rather than to fill it. */
-.loader-orbit{position:relative;width:196px;height:196px;display:flex;align-items:center;justify-content:center}
-/* The ring is a conic sweep behind a hole, not a border with two coloured
-   sides: a border can only be lit a quarter at a time, and this fades red into
-   gold the whole way round. */
-.loader-orbit .ring{position:absolute;border-radius:50%;
-  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));
-  mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px))}
-.loader-orbit .r1{inset:19px;
-  background:conic-gradient(from 0deg,transparent 0deg,rgba(230,57,70,.12) 90deg,var(--red) 250deg,var(--win) 330deg,transparent 360deg);
-  animation:ldrsweep 2.4s linear infinite}
-/* A second, tighter ring going the other way at a different period. Two is a
-   dial; three was a fairground. */
-.loader-orbit .r2{inset:33px;opacity:.7;
-  background:conic-gradient(from 180deg,transparent 0deg,rgba(242,184,75,.5) 120deg,transparent 260deg);
-  animation:ldrsweep 3.6s linear infinite reverse}
-/* A summoning circle: forty ticks cut out of a gold ring, turning slowly
-   enough that you notice it only after the sweep has already told you the
-   page is working. */
-.loader-runes{position:absolute;inset:0;border-radius:50%;opacity:.6;
-  background:repeating-conic-gradient(from 0deg,rgba(242,184,75,.9) 0deg 1.6deg,transparent 1.6deg 12deg);
-  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 5px));
-  mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 5px));
-  animation:ldrsweep 18s linear infinite reverse}
-/* Embers off the robe. Four, on one clock, offset - a handful of sparks reads
-   as heat coming off him; a dozen reads as a screensaver. */
-.loader-embers{position:absolute;inset:0;pointer-events:none}
-.loader-embers i{position:absolute;bottom:22%;left:50%;width:5px;height:5px;border-radius:50%;
-  background:#ffe9b8;box-shadow:0 0 10px 3px rgba(242,184,75,.9);opacity:0;
-  animation:ldrember 4.6s ease-out infinite}
-.loader-embers i:nth-child(1){margin-left:-46px;animation-delay:0s}
-.loader-embers i:nth-child(2){margin-left:-33px;animation-delay:1.15s;width:4px;height:4px}
-.loader-embers i:nth-child(3){margin-left:34px;animation-delay:2.3s}
-.loader-embers i:nth-child(4){margin-left:48px;animation-delay:3.45s;width:4px;height:4px;
-  background:#fff;box-shadow:0 0 9px 3px rgba(255,255,255,.7)}
-.loader-halo{position:absolute;inset:6px;border-radius:50%;
-  background:radial-gradient(circle,rgba(242,184,75,.34),rgba(230,57,70,.14) 46%,transparent 72%);
-  animation:ldrhalo 2.6s ease-in-out infinite}
-/* Under the wizard, not around him: a dark lens that lifts the artwork off a
-   background it otherwise shares a value with. */
-.loader-well{position:absolute;width:120px;height:120px;border-radius:50%;
-  background:radial-gradient(circle,rgba(0,0,0,.55),rgba(0,0,0,.25) 60%,transparent 72%)}
-/* The badge and the highlight are the same picture: one is drawn, the other is
-   used as a mask, so the shine is confined to the wizard's own shape. The
-   bytes travel once, in --sig on the loader element, because this paints
-   before any fetch can land. */
-.loader-sig{position:absolute;width:96px;height:96px;
-  background:var(--sig) center/contain no-repeat;
-  filter:drop-shadow(0 6px 18px rgba(0,0,0,.55)) drop-shadow(0 0 16px rgba(242,184,75,.35));
-  animation:ldrbreathe 2.6s ease-in-out infinite}
-/* The eyes are painted into the artwork, so this only adds the glow around
-   them - one blurred dot over the pair, screened so it lights the pixels that
-   are already there instead of covering them. The 62%/31% is measured off the
-   badge, not guessed. */
-.loader-eyes{position:absolute;width:96px;height:96px;pointer-events:none;mix-blend-mode:screen}
-.loader-eyes::after{content:"";position:absolute;left:62%;top:31%;width:26px;height:12px;
-  margin:-6px 0 0 -13px;border-radius:50%;
-  background:radial-gradient(closest-side,rgba(180,245,255,.95),rgba(80,190,255,.5) 55%,transparent 80%);
-  filter:blur(2.2px);animation:ldreyes 2.6s ease-in-out infinite}
-.loader-shine{position:absolute;width:96px;height:96px;pointer-events:none;
-  -webkit-mask:var(--sig) center/contain no-repeat;mask:var(--sig) center/contain no-repeat;
-  background:linear-gradient(105deg,transparent 45%,rgba(255,255,255,.34) 50%,transparent 55%);
-  background-size:260% 100%;animation:ldrshine 2.6s ease-in-out infinite}
-.loader-orbit{animation:ldrconjure .62s cubic-bezier(0.23,1,0.32,1) both}
-.loader-word{font-weight:800;font-size:19px;letter-spacing:-.01em;color:var(--text);
-  animation:ldrconjure .62s cubic-bezier(0.23,1,0.32,1) .08s both}
-.loader-word em{color:var(--red);font-style:normal}
-@keyframes ldrsweep{to{transform:rotate(360deg)}}
-@keyframes ldrhalo{0%,100%{opacity:.55;transform:scale(.94)}50%{opacity:1;transform:scale(1.06)}}
-@keyframes ldrbreathe{0%,100%{transform:scale(1) translateY(0)}50%{transform:scale(1.04) translateY(-3px)}}
-/* One pass per breath, and it rests for the second half rather than sawing
-   back and forth across his face. */
-@keyframes ldrshine{0%{background-position:170% 0}45%,100%{background-position:-70% 0}}
-/* Up and out: an ember never falls back, and it fades before it reaches the
-   ring so nothing appears to cross the circle. */
-@keyframes ldrember{0%{opacity:0;transform:translateY(0) scale(.6)}
-  12%{opacity:1;transform:translateY(-10px) scale(1)}
-  70%{opacity:.55}
-  100%{opacity:0;transform:translateY(-58px) scale(.4)}}
-@keyframes ldreyes{0%,100%{opacity:.45;transform:scale(.94)}50%{opacity:1;transform:scale(1.08)}}
-@keyframes ldrconjure{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
-/* Fewer and gentler, not none: the halo keeps saying "working" without
-   anything travelling across the screen. It is the one loop that survives
-   here, because it reports state - the blink that used to sit beside it was
-   character, and character is exactly what this setting asks us to drop. */
-@media(prefers-reduced-motion:reduce){
-  .loader-orbit .ring,.loader-runes{animation:none;opacity:.4}
-  .loader-sig{animation:none}
-  .loader-shine,.loader-embers{display:none}
-  .loader-orbit,.loader-word{animation:none}
-  .loader-eyes::after{animation:none}
-  .loader-halo{animation:ldrhalo 3.4s ease-in-out infinite}
-}
-/* opt add-to-slip button + floating my-slip */
-.opt.bk .n{padding-right:26px}
-.opt.bk{cursor:pointer;transition:border-color .15s,background .15s}
-.opt:has(.opt-add.on){background:var(--red-wash);border-color:var(--red)}
-/* The click target stays an invisible full-tile overlay - it just no longer
-   has to double as the affordance. */
-.opt-add{position:absolute;inset:0;z-index:2;width:100%;height:100%;border-radius:inherit;
-  border:0;background:transparent;color:transparent;cursor:pointer;padding:0;font-size:0}
-
-/* Which of these can I actually put in a slip? Every tile looked the same,
-   because the only marker was that overlay - rendered with a "+" in it and
-   then set to transparent at font-size 0. So a bookable market and a
-   prediction we simply price were indistinguishable until you clicked one.
-   The badge says it positively, rather than dimming the rest into looking
-   broken: a market we can book carries a +, and turns to a tick once it is
-   in your slip. */
-/* Drawn rather than typed. A "+" glyph sits off-centre in a circle because
-   its optical centre is not the em box's centre, and no amount of flex
-   centring fixes that - two bars are geometry, so they land dead centre. */
-.opt.bk::after{content:'';position:absolute;top:8px;right:8px;
-  width:18px;height:18px;border-radius:50%;background-color:var(--red);
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.2' stroke-linecap='round'%3E%3Cpath d='M12 6v12M6 12h12'/%3E%3C/svg%3E");
-  background-size:11px 11px;background-position:center;background-repeat:no-repeat;
-  z-index:1;pointer-events:none;transition:transform .15s,background-color .15s}
-.opt.bk:hover{border-color:var(--red)}
-.opt.bk:hover::after{transform:scale(1.14)}
-/* Added: the same circle, carrying a check. */
-.opt:has(.opt-add.on)::after{background-color:var(--green);
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 13l4.5 4.5L19 8'/%3E%3C/svg%3E");
-  background-size:12px 12px}
-/* Priced but not bookable: still worth reading, so it is quietened rather
-   than greyed out - the label softens and there is no affordance to chase. */
-.opt:not(.bk) .n{color:var(--faint)}
-.opt:not(.bk){cursor:default}
-/* The list view's compact tiles need a smaller badge. */
-.lmore .opt.bk::after{width:15px;height:15px;font-size:11px;top:5px;right:5px}
-.lmore .opt.bk .n{padding-right:20px}
-.myfab.pop{animation:fabpop .4s ease-out}
-.myfab[hidden]{display:none!important}
-@media(max-width:720px){
-  .potd-top{padding:9px 14px}.potd-body{padding:14px}
-  .potd h2{font-size:19px}.potd .big{font-size:40px}.potd .meta{margin-top:5px;font-size:12.5px}
-  .potd .why{margin-top:12px;padding-top:11px}
-  .glance{gap:7px;margin:10px 0 2px}
-  .gl-card{padding:10px 12px}
-  .gl-k{font-size:9px;margin-bottom:2px}.gl-team{font-size:13.5px}.gl-sub{font-size:11px}
-  .gl-pc{font-size:19px}.gl-card.score .gl-pc{font-size:20px}
-  .sotd{padding:13px;margin-top:12px}.sotd h2{font-size:17px}
-  .record{padding:9px 13px}
-  .intro{margin-top:8px}.intro h1{font-size:26px}
-  .lt-tip .tx{max-width:40vw}
-}
-/* The offer follows you down the page.
-   On a phone the bottom bar already carries a Build tab, so this is desktop
-   only - a second permanent control there would be clutter, and the bar is
-   what that screen uses. On a wide screen there was nothing: scroll past the
-   card and the one thing the site is for went with it.
-   Bottom left, because My slip owns bottom right and the two must never sit
-   on top of each other. It appears only once the real button has gone. */
-.ctafab{position:fixed;left:18px;bottom:18px;z-index:124;display:none;
-  align-items:center;gap:9px;padding:0 18px 0 12px;height:50px;border-radius:99px;
-  background:var(--red-fill);color:#fff;border:0;cursor:pointer;
-  font:inherit;font-size:13.5px;font-weight:800;letter-spacing:-.01em;
-  box-shadow:0 10px 28px rgba(230,57,70,.34);
-  opacity:0;transform:translateY(10px) scale(.96);
-  transition:opacity .22s ease,transform .22s cubic-bezier(.2,.8,.3,1)}
-.ctafab.on{opacity:1;transform:none}
-.ctafab:hover{filter:brightness(1.06)}
-.ctafab:active{transform:scale(.97)}
-.ctafab:focus-visible{outline:2px solid var(--text);outline-offset:3px}
-.ctafab-orb{width:26px;height:26px;border-radius:50%;flex-shrink:0;
-  background:radial-gradient(circle at 34% 28%,#fff 0%,#f4f3f1 46%,#dcd8d2 78%,#bdb7ae 100%)
-    ,url("/wiz-orb-mark.png") center/72% auto no-repeat;
-  background-blend-mode:multiply}
-@media(min-width:721px){ .ctafab{display:inline-flex} }
-@media(prefers-reduced-motion:reduce){
-  .ctafab{transition:opacity .2s ease}
-  .ctafab.on{transform:none}
-}
-.wspfab{position:fixed;left:16px;bottom:16px;z-index:125;width:56px;height:56px;border-radius:50%;
-  border:0;padding:0;cursor:pointer;background:radial-gradient(circle at 50% 40%,#3a2a63,#1a1230);
-  box-shadow:0 6px 20px rgba(120,80,220,.5),0 0 0 1px rgba(180,150,255,.35) inset;
-  display:flex;align-items:center;justify-content:center;animation:wspFloat 3.2s ease-in-out infinite}
-.wspfab img{width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(180,150,255,.7))}
-.wspfab::after{content:"\26a1";position:absolute;right:-2px;top:-2px;font-size:16px;
-  filter:drop-shadow(0 0 5px rgba(255,225,120,.95));animation:wspBolt 2.6s ease-in-out infinite}
-@keyframes wspBolt{0%,72%,100%{opacity:.35;transform:scale(.9) rotate(0)}80%{opacity:1;transform:scale(1.25) rotate(-8deg)}88%{opacity:.6;transform:scale(1.05)}}
-.wspfab-spark{position:absolute;inset:-3px;border-radius:50%;pointer-events:none;
-  box-shadow:0 0 14px 2px rgba(242,184,75,.5);animation:wspGlow 2.4s ease-in-out infinite}
-@keyframes wspFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-@keyframes wspGlow{0%,100%{opacity:.5}50%{opacity:1}}
-@media(max-width:720px){.wspfab{bottom:92px;width:52px;height:52px}.wspfab img{width:34px;height:34px}}
-.wsp-lead{font-size:13.5px;color:var(--soft);margin-bottom:16px;line-height:1.5}
-.wsp-lbl{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin:16px 0 8px}
-.wsp-hint{margin:9px 0 2px;font-size:12px;line-height:1.5;color:var(--faint)}
-/* The jackpot note is the one hint that has to be read rather than glanced at,
-   so it gets an edge and a little weight - still a note, not a warning box. */
-.wsp-hint-jack{color:var(--soft);background:var(--win-wash);
-  border-left:2px solid var(--win);border-radius:0 var(--r-sm) var(--r-sm) 0;
-  padding:8px 11px;margin:10px 0 2px}
-.wsp-hint-jack b{color:var(--win-ink);font-weight:800}
-/* The jackpot pair is styled further down, with the rest of the payout row. */
-/* Waiting on a payout: dimmed enough to read as not-yet-ready, but still
-   pressable, because being told what is missing beats a dead button. */
-button.wsp-go.waiting{opacity:.55}
-.wsp-nudge{animation:wspNudge .5s ease-in-out}
-@keyframes wspNudge{0%,100%{transform:translateX(0)}
-  25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
-@media(prefers-reduced-motion:reduce){.wsp-nudge{animation:none}}
-.wsp-chips{display:flex;flex-wrap:wrap;gap:8px}
-.wsp-chip{background:var(--card-2);border:1px solid var(--line);color:var(--soft);font:inherit;
-  font-weight:700;font-size:13px;padding:9px 15px;border-radius:99px;cursor:pointer}
-.wsp-chip.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
-/* Slip style pills.
-   The labels now carry the trade-off ("More games / smaller odds"), which is
-   too long for the free-flowing chip row the payout ladder uses - on a phone
-   the three would wrap to three full-width rows. An equal-width grid with the
-   qualifier on a second line keeps each pill sized to its own text and the
-   three of them on one line, which is what makes them comparable at a
-   glance. Scoped to .wsp-style so the payout ladder keeps its own size. */
-/* Three chips again - Auto became a link out to the Slider. Wrap is kept
-   anyway: it costs nothing at three and stops a longer label ever clipping. */
-#wspStyleChips{display:flex;flex-wrap:wrap;gap:6px}
-/* The way out to the other builder. Deliberately a link and not a fourth
-   pill: it does not set a style, it leaves. */
-/* THE WAY OUT TO THE OTHER BUILDER.
-   Still a link and not a fourth pill - it does not set a style, it leaves, and
-   a pill in that row would read as a fourth thing to choose. But a plain grey
-   underline beside three lit chips is the quietest thing on the panel, and a
-   reader who wants "pick it for me" never sees it.
-   So it gets a rule of its own: a hairline that draws itself under the words,
-   an arrow that slides, and one slow sheen that passes across every few
-   seconds to catch the eye without ever moving the layout. The sheen is
-   `background-position` on a gradient - no transform, no reflow, and it costs
-   nothing on a phone. */
-/* QUIET, BUT OBVIOUSLY A CONTROL.
-   Reported: "'or let the slider pick for you': the way it shows, its too
-   silent." The demotion is deliberate - the Slider loses every rung it was
-   measured on - but a faint underline between three solid chips reads as a
-   stray hyperlink rather than the third way of answering the same question.
-   So it keeps the demotion and gains a shape: chip height, a ghost border,
-   muted text, the arrow on the right. Secondary by every signal a reader uses,
-   and unmistakably something to press. */
-/* Its own colour, because it is its own route. Red is the do-it button under
-   this one and green is a winning pick, so the Slider takes the amber that is
-   otherwise only used for a confident call - a second accent already in the
-   palette rather than a new one invented for one control. */
-.wsp-slider-link{position:relative;display:inline-flex;align-items:center;gap:8px;
-  max-width:100%;margin:4px 0 0;padding:9px 14px;
-  border:1px solid var(--win);border-radius:99px;background:var(--win-wash);
-  color:var(--win-ink);font:inherit;font-size:12.5px;font-weight:700;
-  letter-spacing:.01em;text-decoration:none;cursor:pointer;
-  transition:border-color .18s ease,background .18s ease;
-  -webkit-tap-highlight-color:transparent}
-/* The heading above it, tight to the pill it labels. */
-.wsp-auto-lbl{margin-top:14px}
-/* The arrow sits after the words, not pushed to a far edge - the pill is only
-   as wide as what it says. */
-.wsp-slider-link .wsl-a{margin-left:2px}
-.wsp-slider-link .wsl-t{
-  background-image:linear-gradient(100deg,
-    var(--win-ink) 0%, var(--win-ink) 38%, #fff 50%, var(--win-ink) 62%, var(--win-ink) 100%);
-  background-size:280% 100%;
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  animation:wslSheen 5.5s ease-in-out infinite}
-/* The arrow is its own element so it can move without dragging the text. */
-.wsp-slider-link .wsl-a{display:inline-block;color:var(--win-ink);font-weight:800;
-  transition:transform .22s cubic-bezier(.2,.7,.3,1)}
-/* The hairline grows from the left rather than fading, so the eye follows it
-   to the words instead of the whole thing simply brightening. */
-/* The underline was the whole affordance when this was a link. The border is
-   now, so the hairline would only be a second one. */
-@keyframes wslSheen{
-  0%,72%{background-position:120% 0}
-  100%{background-position:-40% 0}
-}
-@media(hover:hover){
-  .wsp-slider-link:hover .wsl-t{animation-play-state:paused;color:#fff;
-    -webkit-text-fill-color:var(--text)}
-  .wsp-slider-link:hover{border-color:var(--win-ink);background:rgba(242,184,75,.2)}
-  .wsp-slider-link:hover .wsl-a{transform:translateX(4px)}
-}
-.wsp-slider-link:active .wsl-a{transform:translateX(2px)}
-.wsp-slider-link:focus-visible{outline:2px solid var(--red-ink);outline-offset:3px}
-/* Somebody who has asked for less movement gets none of it. */
-@media(prefers-reduced-motion:reduce){
-  .wsp-slider-link .wsl-t{animation:none;color:var(--soft);
-    -webkit-text-fill-color:var(--soft)}
-  .wsp-slider-link .wsl-a{transition:none}
-}
-/* THE DRAW LOOKS DIFFERENT BECAUSE IT IS DIFFERENT. Every other chip here
-   raises or lowers the odds a little; this one backs the least likely of the
-   three results, at roughly 0.28 on a typical fixture.
-   It was a gold gradient when switched on, and gold is the one thing it must
-   not say. Reported as: "the gold pill colour for draw makes it look like a
-   goldmine" - a solid fill in the colour every betting app reserves for a
-   jackpot, sitting on the least likely bet the site will build. It read as a
-   reward for finding it.
-   The jackpot chips on the payout row hit this same wall and the answer is
-   already written above: hazard stripes, because everybody can read diagonal
-   warning tape and nobody mistakes it for treasure. Same device here, so the
-   two warnings on this sheet look like each other rather than like prizes.
-   Off, it is outlined rather than filled - a warning, not a state. On, it
-   takes the same red ground as every other chosen chip and only the rim and
-   the stripes carry the amber, so choosing it reads as chosen rather than as
-   a prize won. */
-.mkt-chip.is-draw{position:relative;overflow:hidden;isolation:isolate;
-  border-color:rgba(242,184,75,.5)}
-/* The icon carried `color:#F2B84B` and showed green anyway: the svg is drawn
-   with `stroke:var(--green)` from the rule above, which beats a presentation
-   attribute of currentColor, so the one thing meant to mark this chip out
-   never did. Set the stroke, and only while the chip is off - amber on the
-   red chosen ground is the worse of the two contrasts, and white is what
-   every other chosen chip uses. */
-.mkt-chip.is-draw:not(.on) .mkt-icon svg{stroke:#F2B84B}
-.mkt-chip.is-draw::before{content:"";position:absolute;inset:0;pointer-events:none;
-  border-radius:inherit;
-  background:repeating-linear-gradient(135deg,
-    rgba(242,184,75,.14) 0 6px, transparent 6px 12px);
-  opacity:.9;transition:opacity .16s ease;
-  /* THE STRIPES GO BEHIND THE LABEL WITHOUT TOUCHING A SINGLE CHILD, and that
-     is the whole point of doing it this way.
-     The obvious version - `.mkt-chip.is-draw>*{position:relative;z-index:1}` to
-     lift the content above an absolutely positioned pseudo-element - shipped
-     and broke the chip on phones. The page has a global ripple handler that
-     APPENDS `<span class="rip-ink">` into whatever was clicked, sized to the
-     element's longest side and positioned absolutely. A `>*` rule outranks
-     `.rip-ink`'s own class rule, so the ink was forced back into flow: a
-     159x159 square landed inside a 31px-tall flex chip, the chip grew to fit,
-     the whole grid row grew with it, and at border-radius:99px both chips in
-     that row rendered as giant circles for the 560ms the ripple lives.
-     Reported as: "when i click on the draw button it shows two big circles",
-     and "it gets big along with both score" - Both score being its row-mate,
-     which is the detail that identified the row as the thing stretching.
-     `isolation:isolate` on the chip makes it a stacking context, and inside
-     one a negative z-index paints above the element's own background but below
-     its in-flow content. So the stripes sit exactly where they should and no
-     rule reaches a child at all - which matters, because the children here are
-     injected by code that knows nothing about this chip. */
-  z-index:-1}
-/* Chosen, the stripes step back so the label stays readable - the warning is
-   for the glance before the tap, not after it. */
-.mkt-chip.is-draw.on{border-color:#F2B84B;
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.85)}
-.mkt-chip.is-draw.on::before{opacity:.32}
-@media(hover:hover){
-  .mkt-chip.is-draw:not(.on):hover{border-color:#F2B84B}
-  .mkt-chip.is-draw:hover::before{opacity:.45}
-}
-@media (prefers-reduced-motion:reduce){
-  .mkt-chip.is-draw::before{transition:none}
-}
-/* The ask. Sits under the row it belongs to and goes when answered. */
-#mkAsk:not(:empty){margin:10px 0 2px}
-/* The payout ask, under the ladder it is about. Same shape as the market ask
-   above it, and the same rule: no margin when empty, so a panel with nothing
-   to say has no gap in it. */
-#payAsk:not(:empty){margin:10px 0 2px}
-/* The idle-market note. One line, muted, and it takes no space at all when
-   there is nothing to say - :not(:empty) rather than a class, so an empty
-   string is genuinely empty and cannot leave a gap in the panel.
-   Deliberately small on a phone: the chip row it explains is already three
-   rows tall at 560px, and a two-line explanation under it would push the
-   payout ladder off the first screen. */
-#mkIdle:not(:empty){margin:8px 0 0}
-.mk-idle{font-size:12px;line-height:1.45;color:var(--faint);margin:0}
-.mk-idle span{color:var(--soft);font-weight:700}
-.mk-idle b{color:var(--text);font-weight:700}
-@media(max-width:560px){ .mk-idle{font-size:11.5px} }
-#mkAsk .confirm-card{border-color:rgba(242,184,75,.45)}
-#mkAsk .confirm-card b{color:#F2B84B}
-.wsp-chip.wsp-style{display:inline-flex;flex:0 1 auto;flex-direction:column;
-  align-items:center;justify-content:center;gap:1px;padding:6px 12px;
-  line-height:1.18;min-width:0}
-.wsp-chip.wsp-style b{font-weight:800;font-size:12.5px;white-space:nowrap}
-.wsp-chip.wsp-style i{font-style:normal;font-weight:600;font-size:10.5px;
-  color:var(--faint);white-space:nowrap}
-.wsp-chip.wsp-style.on i{color:rgba(255,255,255,.82)}
-/* The narrowest phones still in use are 320px wide. Three pills at the
-   desktop size come to 305px plus the page gutter, which does not fit, and
-   wrapping one onto its own line would break the side-by-side comparison
-   these exist for. Trimmed until they do. */
-@media(max-width:380px){
-  #wspStyleChips{gap:5px}
-  .wsp-chip.wsp-style{padding:6px 8px}
-  .wsp-chip.wsp-style b{font-size:11.5px}
-  .wsp-chip.wsp-style i{font-size:9.5px}
-}
-
-/* ---- league picker ----
-   A disclosure rather than another row of chips: there are forty-odd leagues
-   on a busy day and they would bury every control under them. Closed, it
-   states the current choice in words, because "Any league" and "3 leagues" are
-   the only things worth knowing at a glance. */
-.lgp-wrap{position:relative}
-/* Sized to its own text, sitting in the chip row - it was full width, which
-   made a filter look like a heading for the section beneath it. */
-.lgp-open{display:inline-flex;align-items:center;gap:7px;width:auto;
-  color:var(--text);text-align:left}
-.lgp-open .lgp-caret{color:var(--faint);transition:transform .2s ease;font-size:11px}
-.lgp-open[aria-expanded="true"] .lgp-caret{transform:rotate(180deg)}
-/* Narrowed reads as a live filter without borrowing the solid red of a chip
-   that is switched ON - this one is a door, not a state. */
-.lgp-open.narrowed{border-color:var(--red);color:var(--red-ink);background:var(--red-wash)}
-.lgp-box{margin-top:9px;background:var(--card);border:1px solid var(--line);
-  border-radius:var(--r-md);overflow:hidden;
-  /* Unfolds rather than snapping. clip-path rather than height, because the
-     list is as tall as the leagues on the board and a height animation would
-     need a number nobody can know in advance. The box already clips, so the
-     inset has nothing to leak past. Entrance only: `hidden` removes the
-     element from the box tree instantly, so there is no closing frame to
-     animate without moving the state out of the attribute. */
-  animation:lgpUnfold 200ms var(--ease-out) both}
-@keyframes lgpUnfold{
-  from{opacity:0;clip-path:inset(0 0 100% 0);transform:translateY(-4px)}
-  to{opacity:1;clip-path:inset(0 0 0 0);transform:translateY(0)}}
-.lgp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:9px 12px;border-bottom:1px solid var(--line-soft);
-  font-size:11.5px;font-weight:700;color:var(--faint)}
-/* IT HAS TO LOOK LIKE A CONTROL. Reported as hard to find, and it was: a
-   borderless 11.5px link sitting in an 11.5px bold header row, so it read as
-   part of the label rather than as the way back to every league. It was also
-   about eighteen pixels tall, which is not a target on a phone.
-   A bordered pill at 12.5px on a 34px box - short of the 44px a primary
-   control would get, because this is a secondary reset inside a dense header
-   and a full-height button there would push the list down the screen. */
-.lgp-clear{background:var(--card-2);border:1px solid var(--line);
-  color:var(--red-ink);font:inherit;font-weight:700;font-size:12.5px;
-  cursor:pointer;padding:8px 13px;border-radius:999px;line-height:1;
-  flex:0 0 auto;transition:background .15s,border-color .15s}
-@media(hover:hover){.lgp-clear:hover{background:var(--raise);border-color:var(--faint)}}
-.lgp-clear:active{transform:translateY(1px)}
-.lgp-list{max-height:270px;overflow-y:auto;overscroll-behavior:contain}
-.lgp-row{display:flex;align-items:center;gap:10px;width:100%;background:transparent;
-  border:0;border-bottom:1px solid var(--line-soft);color:var(--text);font:inherit;
-  font-size:13px;padding:9px 12px;cursor:pointer;text-align:left}
-.lgp-row:last-child{border-bottom:0}
-.lgp-row .lgp-tick{flex:0 0 16px;width:16px;height:16px;border-radius:4px;
-  border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;
-  font-size:11px;color:transparent}
-.lgp-row.on .lgp-tick{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
-.lgp-row .lgp-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lgp-row .lgp-n{flex:0 0 auto;font-size:11.5px;font-weight:700;color:var(--faint)}
-.lgp-row .lgp-ct{color:var(--faint);font-weight:600}
-/* Nothing picked means every league is in. An empty tick box says the opposite,
-   so in that state each row carries a muted tick: included, but not chosen. The
-   red tick stays for a deliberate choice, which keeps the first tap reading as
-   "narrow to this one" rather than "untick this one". */
-.lgp-list.all-in .lgp-tick{background:var(--card-2);border-color:var(--faint);
-  color:var(--faint)}
-.lgp-allin{padding:9px 12px;font-size:12px;line-height:1.45;color:var(--soft);
-  border-bottom:1px solid var(--line-soft)}
-.lgp-allin b{color:var(--text);font-weight:700}
-.lgp-empty{padding:14px 12px;font-size:12.5px;color:var(--faint);text-align:center}
-.lgp-hint{padding:9px 12px;font-size:12px;line-height:1.45;color:var(--soft);
-  background:var(--card-2);border-bottom:1px solid var(--line-soft)}
-@media (hover:hover){
-  .lgp-open:hover{background:var(--raise);border-color:var(--soft)}
-  .lgp-clear:hover{background:var(--card-2);color:var(--red)}
-  .lgp-row:hover{background:var(--card-2)}
-}
-/* A control that does nothing under a cursor reads as a label, not a choice.
-   The payout row had a hue of its own to lift; these have none, so they take
-   the plain treatment - a step up in surface and ink, and a pixel of rise.
-   Behind hover:hover throughout: a phone leaves :hover on the last thing
-   tapped, and a chip left in its hover colours looks selected when it is not.
-   Same reason the Clear button used to sit there red after a tap. */
-.wsp-chip{transition:background .16s ease,border-color .16s ease,color .16s ease,
-  transform .12s ease,box-shadow .16s ease}
-@media (hover:hover){
-  .wsp-chip:not(.wsp-risk):not(.on):hover{background:var(--raise);
-    border-color:var(--faint);color:var(--text);transform:translateY(-1px);
-    box-shadow:0 3px 10px rgba(0,0,0,.22)}
-  /* Already chosen: it still answers the cursor, but it must not look like a
-     different state - only that it is reachable. */
-  .wsp-chip.on:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
-}
-.wsp-chip:active{transform:translateY(0) scale(.97)}
-@media (prefers-reduced-motion:reduce){
-  .wsp-chip{transition:none}
-  .wsp-chip:hover,.wsp-chip.on:hover{transform:none}
-}
-.wsp-prev{display:flex;align-items:center;justify-content:space-between;margin:18px 0 6px;  padding:14px 16px;background:var(--card-2);border:1px solid var(--line-soft);border-radius:var(--r-md)}
-.wsp-prev span{font-weight:700;color:var(--soft)}
-.wsp-prev b{font-size:22px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
-.wsp-go{width:auto;flex:1;min-width:0;margin-top:0;padding:12px 20px;font-size:14px;position:relative;overflow:hidden}
-/* Shuffle sits beside Conjure; Conjure keeps the width, Shuffle takes only what
-   its label needs. margin-top on .wsp-go is neutralised inside the row. */
-.wsp-acts{display:flex;gap:10px;margin-top:16px;align-items:stretch}
-.wsp-acts .wsp-shuffle{flex:0 0 auto;padding:11px 16px;font-size:14px;white-space:nowrap}
-.book-btn{background:linear-gradient(180deg,#e6414e,var(--red))!important;box-shadow:0 3px 10px rgba(230,57,70,.4),inset 0 1px 0 rgba(255,255,255,.18)}
-.wsp-chip.on{background:var(--red);box-shadow:0 2px 8px rgba(230,57,70,.3)}
-/* Payout chips carry a risk hue (green x50 -> red x6000). Tinted when idle,
-   filled with the same hue when selected; overrides the generic red .on above. */
-.wsp-chip.wsp-risk{border-color:var(--wr);color:var(--wr);
-  transition:background .16s ease,color .16s ease,transform .12s ease,box-shadow .16s ease}
-.wsp-chip.wsp-risk.on{background:var(--wr);border-color:var(--wr);
-  color:var(--wr-ink,#fff);font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.28)}
-/* Nothing happened under a cursor here, so on a desktop the row read as a
-   label rather than a set of choices. Hovering fills the chip with its own
-   risk hue - the same colour it will take once picked - so the pointer is
-   previewing the decision rather than merely highlighting a target.
-   Behind hover:hover because a phone leaves :hover on the last thing tapped,
-   and a chip stuck in its chosen colour would look selected when it is not. */
-@media (hover:hover){
-  .wsp-chip.wsp-risk:hover{background:var(--wr);color:var(--wr-ink,#fff);
-    transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
-  .wsp-chip.wsp-risk.on:hover{transform:none}
-}
-.wsp-chip.wsp-risk:active{transform:translateY(0) scale(.97)}
-
-/* The jackpot pair should not look like more of the same scale.
-   x50 to x6000 is a spectrum; x20k and x50k are a different proposition -
-   forty-odd results in a row, a ticket that will almost certainly lose. The
-   gold rim said "special", which is the wrong word. Hazard stripes say what
-   this actually is, and they cost nothing to read: everybody already knows
-   what diagonal warning tape means. */
-.wsp-chip.wsp-jack{position:relative;overflow:hidden;
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.55)}
-.wsp-chip.wsp-jack::before{content:"";position:absolute;inset:0;pointer-events:none;
-  background:repeating-linear-gradient(135deg,
-    rgba(242,184,75,.16) 0 6px, transparent 6px 12px);
-  opacity:.9;transition:opacity .16s ease}
-.wsp-chip.wsp-jack.on{box-shadow:inset 0 0 0 1px rgba(242,184,75,.9),
-  0 0 14px rgba(242,184,75,.28)}
-/* Chosen or hovered, the stripes step back so the number stays readable -
-   the warning is for the glance before the click, not after it. */
-.wsp-chip.wsp-jack.on::before{opacity:.35}
-@media (hover:hover){
-  .wsp-chip.wsp-jack:hover::before{opacity:.45}
-  /* A harder lift and a red bloom rather than the neutral shadow the others
-     get: the one chip on the row whose hover should feel like a warning. */
-  .wsp-chip.wsp-jack:hover{box-shadow:inset 0 0 0 1px rgba(242,184,75,.95),
-    0 6px 18px rgba(200,16,46,.34)}
-}
-@media (prefers-reduced-motion:reduce){
-  .wsp-chip.wsp-risk{transition:none}
-  .wsp-chip.wsp-risk:hover{transform:none}
-}
-/* The close button was absolutely positioned at right:0, which resolves against
-   the head's padding box - so it sat flush against the sheet's inner edge with
-   none of the gutter the rest of the header respects. Back to a plain flex item
-   pushed over with margin-left:auto: it now clears the edge by the same gutter
-   as the title, and the wsp head needs its <b> to flex for that to hold. */
-.sheet-head{position:relative}
-.sheet-head>b{flex:1;min-width:0;font-size:16.5px;font-weight:800;letter-spacing:-.02em}
-.sheet-head .sheet-x{margin-left:auto}
-@keyframes fabpop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
-/* ABOVE THE TAB BAR WHEREVER THERE IS ONE. This said bottom:16px and won:
-   it is declared after both phone overrides and a media query adds no
-   specificity, so the two rules that tried to lift it never applied and
-   the button has been sitting on the Live tab. --btabs-h is only defined
-   where the bar exists, so the fallback keeps the desktop position. */
-.myfab{position:fixed;right:16px;bottom:calc(var(--btabs-h,0px) + 16px);z-index:130;
-  background:radial-gradient(circle at 50% 40%,rgba(230,57,70,.92),rgba(150,20,32,.88));color:#fff;
-  border:0;font:inherit;font-weight:800;font-size:15px;padding:14px 20px;border-radius:99px;
-  cursor:pointer;display:flex;align-items:center;gap:9px;
-  box-shadow:0 6px 20px rgba(230,57,70,.5),0 0 0 1px rgba(255,180,185,.35) inset;
-  animation:orbGlow 2.8s ease-in-out infinite}
-@keyframes orbGlow{0%,100%{box-shadow:0 6px 20px rgba(230,57,70,.45),0 0 0 1px rgba(255,180,185,.3) inset}
-  50%{box-shadow:0 6px 26px rgba(230,57,70,.7),0 0 0 1px rgba(255,180,185,.45) inset}}
-html.reduce .myfab{animation:none}
-.myfab:hover{filter:brightness(1.07)}
-.myfab-c{background:none;color:#fff;min-width:auto;height:auto;border-radius:0;
-  display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;padding:0}
-.myfab-tk{display:inline-flex;align-items:center;justify-content:center}
-.myfab-tk svg{width:19px;height:19px}
-/* It floats over the board on purpose - it should be reachable from anywhere -
-   but then it is always covering something, and while you are scrolling past
-   it that something is whatever you are trying to read. So it steps back to a
-   whisper while the page is moving and returns as soon as it stops. Hover,
-   focus and a live count always bring it straight back: a button you cannot
-   see is worse than a button in the way. */
-.myfab,.wspfab{transition:opacity .18s ease}
-html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
-.myfab:hover,.myfab:focus-visible,.wspfab:hover,.wspfab:focus-visible{opacity:1}
-.myslip-sheet .sheet-body{max-height:52vh}
-@media(max-width:720px){
-  .sheet-head{padding:6px 14px 10px}
-  .sheet-head .info h3{font-size:16px}.sheet-head .info p{font-size:12px}
-  .sheet-body{padding:2px 14px calc(28px + env(safe-area-inset-bottom))}
-  .sp-row{gap:9px;padding:8px 11px;border-radius:var(--r-md)}
-  .sp-row .sp-teams,.sp-row .lg-t{font-size:12.5px}
-  .stat{padding:9px 11px}.stat b{font-size:18px}
-  .mysheet-foot{padding:12px 14px 4px;gap:9px}
-  .mysheet-foot .book-btn,.mysheet-foot .clear-btn{padding:10px 14px;font-size:13px}
-  .wsp-chip{padding:8px 12px;font-size:12.5px}
-  .wsp-lead{font-size:12.5px}.wsp-go{padding:10px;font-size:13.5px}
-}
-/* Four things across one row only hold while the numbers are small. A jackpot
-   total is "×20,717" where a normal one is "×2.40", and on a phone the row
-   gave up and put the odds on one line, the two icons on the next and Get code
-   alone on a third - a 125px footer that looked like a mistake, because it was
-   one.
-   So the break is chosen rather than left to chance: odds and the two icon
-   actions share the top line, and Get code takes a full-width row of its own
-   beneath. It is the button everything here exists to reach, and a full-width
-   target is better than a stranded one. */
-.mysheet-foot{display:flex;align-items:center;gap:10px 12px;flex-wrap:wrap;
-  padding:16px 16px 6px;border-top:1px solid var(--line-soft);margin-top:14px;
-  animation:barIn 180ms var(--ease-out) both}
-/* THE hidden ATTRIBUTE WAS DOING NOTHING HERE. An author display declaration
-   beats the browser's own [hidden]{display:none} whatever the specificity, so
-   `$("mySheetFoot").hidden=true` left a 72px bar with Total odds and Get code
-   sitting under an empty slip. Measured on the live site. Same trap the
-   install bar hit - see .inst-bar above, which carries the same override for
-   the same reason. */
-.mysheet-foot[hidden]{display:none}
-.mysheet-foot .bld-odds{flex:1 1 auto;min-width:0}
-/* Long totals stop competing for the row and shrink instead. */
-.mysheet-foot .bld-odds b{font-size:clamp(17px,5.2vw,24px);white-space:nowrap}
-.mysheet-foot .clear-btn{flex:0 0 auto}
-.mysheet-foot .book-btn{flex:1 1 100%;order:2}
-@media(min-width:560px){
-  /* With room for all four, the original single row is still the better shape. */
-  .mysheet-foot .book-btn{flex:0 0 auto;order:0}
-}
-#myBookResult{padding:0 16px 20px}
-#myBookResult:not(:empty),#bookResult:not(:empty),#sotdResult:not(:empty){margin-top:12px}
-.code-card,.confirm-card,.code-err{position:relative;z-index:1}
-.myslip-sheet{padding-bottom:14px}
-/* ===================================================== retention features */
-.sotd{background:linear-gradient(150deg,var(--card),var(--card-2));
-  border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;margin-top:16px}
-.sotd-top{display:flex;align-items:center;gap:9px;margin-bottom:4px}
-.sotd-top svg{color:var(--win)}
-.sotd-top b{font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
-.sotd-top .k{margin-left:auto;font-size:11px;font-weight:700;color:var(--faint)}
-.sotd h2{font-size:20px;font-weight:800;letter-spacing:-.02em;margin:2px 0 2px}
-.sotd .sub{font-size:13px;color:var(--soft);margin-bottom:13px}
-.sotd-legs{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
-.sotd-leg{display:flex;align-items:center;gap:10px;font-size:13px;
-  padding:8px 0;border-bottom:1px solid var(--line-soft)}
-.sotd-leg:last-child{border-bottom:0}
-.sotd-leg .lg-t{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sotd-leg .lg-p{font-weight:800;color:var(--text);white-space:nowrap}
-.sotd-leg .lg-c{font-variant-numeric:tabular-nums;color:var(--win);font-weight:800;min-width:42px;text-align:right}
-/* A leg that has been played shows its score instead of the confidence we had
-   before it, and says which way it went - the slip stays put now, so it has to
-   be readable afterwards. */
-.sotd-leg .lg-c.res{color:var(--text)}
-.sotd-leg.won .lg-c.res{color:var(--green-ink)}
-.sotd-leg.lost .lg-c.res{color:var(--red-ink)}
-.sotd-leg.lost .lg-t,.sotd-leg.lost .lg-p{opacity:.6}
-.sotd-leg.live .lg-c.res{color:var(--red-ink)}
-.sotd-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.sotd-odds{flex:1}
-.sotd-odds i{display:block;font-style:normal;font-size:11px;font-weight:700;
-  letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
-.sotd-odds b{font-size:22px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
-.sotd-btn{background:var(--red-fill);color:#fff;border:0;font:inherit;font-weight:800;
-  font-size:14px;padding:12px 18px;border-radius:var(--r-md);cursor:pointer}
-.sotd-btn:hover{filter:brightness(1.08)}
-.sotd-btn:disabled{opacity:.5;cursor:not-allowed}
-.share-btn{background:var(--card);color:var(--text);border:1px solid var(--line);
-  font:inherit;font-weight:800;font-size:14px;padding:12px 16px;border-radius:var(--r-md);
-  cursor:pointer;display:inline-flex;align-items:center;gap:7px}
-.share-btn:hover{border-color:var(--soft)}
-/* The streak carries its dot, like everything else on the row.
-   A rule blanking the streak's own pseudo-element used to sit above this
-   line, left over from when the item led with a flame INSTEAD of a dot. The
-   flame moved inside the label and the comment was written, but the rule that
-   suppressed the dot was never deleted - so the row had a gap after "last
-   updated" and nowhere else. Two other comments in this file already describe
-   the behaviour this rule was preventing. */
-.trust-i.streak b{color:var(--win)}
-/* The one place on this page that has earned a bounce: a streak reaching two
-   is rare and is the only moment here worth marking. Fires when the badge
-   goes from hidden to shown, and not on a re-render that leaves the class
-   string identical. */
-.trust-i.streak{animation:streakPop 240ms cubic-bezier(0.34,1.56,0.64,1) both}
-@keyframes streakPop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
-/* REDUCED MOTION KEEPS THE FADES AND DROPS THE MOVEMENT, for all four of the
-   entrances added here. Gentler, not zero: the fade is what stops a surface
-   appearing out of nowhere, and that is the whole reason these exist. */
-@media(prefers-reduced-motion:reduce){
-  .bld-foot,.mysheet-foot{animation-name:barInFlat}
-  .lgp-box{animation-name:lgpFlat}
-  .trust-i.streak{animation:streakFlat 160ms linear both}
-  .code-modal-scrim .code-card{transition:opacity 200ms linear}
-}
-@keyframes barInFlat{from{opacity:0}to{opacity:1}}
-@keyframes lgpFlat{from{opacity:0}to{opacity:1}}
-@keyframes streakFlat{from{opacity:0}to{opacity:1}}
-.goal-tag{position:absolute;right:calc(100% + 6px);top:50%;transform:translateY(-50%);
-  display:inline-flex;align-items:center;font-size:9px;font-weight:800;letter-spacing:.06em;
-  color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;white-space:nowrap;
-  box-shadow:0 0 8px rgba(43,199,120,.7);animation:goalTagBlink .9s steps(1) infinite;z-index:2}
-@keyframes goalTagBlink{0%,100%{opacity:1;box-shadow:0 0 12px rgba(43,199,120,.95)}50%{opacity:.45;box-shadow:0 0 4px rgba(43,199,120,.4)}}
-.lv-sc{font-weight:600}
-.lv.ft-row .lv-sc{font-weight:800}
-.streak b{color:var(--win);font-weight:800}
-.record-in{display:flex;align-items:center;gap:12px;
-  background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r-md);padding:9px 14px;margin-top:12px}
-.rec-panel{margin-top:14px;background:linear-gradient(150deg,var(--card),var(--card-2));
-  border:1px solid var(--green);border-radius:var(--r-md);padding:14px 16px}
-.rec-head{display:flex;flex-direction:column;gap:2px;margin-bottom:11px}
-.rec-head b{font-size:14.5px;font-weight:800;letter-spacing:-.01em}
-.rec-head span{font-size:12px;color:var(--faint)}
-.rec-grid{display:flex;flex-wrap:wrap;gap:10px 22px;margin-bottom:11px}
-.rec-cell b{display:block;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
-.rec-cell .pc{color:var(--green)}
-/* A short window running behind the long one is stated, not hidden - amber
-   rather than red, because seven days is a small sample and not a verdict. */
-.rec-cell .pc.cool{color:var(--amber)}
-.rec-cell i{display:block;font-style:normal;font-size:10.5px;font-weight:700;
-  letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-top:2px}
-.rec-bar{height:5px;border-radius:99px;background:var(--raise);overflow:hidden}
-.rec-bar i{display:block;height:100%;border-radius:99px;background:var(--green);
-  transition:width 1.05s cubic-bezier(.25,.8,.3,1)}
-/* Per-market rows. A quiet table under the headline, not a second scoreboard
-   competing with it - the overall figure stays the loud number. */
-.rec-mk{margin-top:12px;padding-top:11px;border-top:1px solid var(--line-soft)}
-.rec-mk-h{font-size:10.5px;font-weight:800;letter-spacing:.08em;
-  text-transform:uppercase;color:var(--faint);margin-bottom:7px}
-.rec-mk-row{display:grid;grid-template-columns:1fr 52px 34px 40px;align-items:center;
-  gap:8px;padding:3px 0;font-size:12px}
-.rec-mk-row .mk-n{color:var(--text);font-weight:700;min-width:0;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rec-mk-row .mk-bar{height:4px;border-radius:99px;background:var(--raise);overflow:hidden}
-.rec-mk-row .mk-bar i{display:block;height:100%;border-radius:99px;background:var(--green)}
-.rec-mk-row .mk-p{font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
-.rec-mk-row .mk-c{font-size:11px;color:var(--faint);text-align:right;
-  font-variant-numeric:tabular-nums}
-/* Called only a handful of times - shown, but not dressed up as evidence. */
-.rec-mk-row.thin{opacity:.62}
-.rec-mk-row.thin .mk-bar i{background:var(--soft)}
-@media(max-width:560px){
-  .rec-mk-row{grid-template-columns:1fr 40px 32px 38px;gap:6px;font-size:11.5px}
-}
-.rec-foot{font-size:11.5px;color:var(--soft);margin-top:9px;line-height:1.45}
-@media(max-width:560px){
-  .rec-panel{padding:12px 13px}
-  .rec-grid{gap:9px 16px}
-  .rec-cell b{font-size:17px}
-}
-.record-in .rl{font-size:13px;color:var(--soft)}
-.record-in .rl b{color:var(--text);font-weight:800;margin-right:2px}
-.record-stat{margin-left:auto}
-.record-stat .pc{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--green)}
-/* Wraps rather than squeezes. The sentence beside the button is long enough to
-   take the whole width of a phone, and with nothing said about it the flex row
-   took the space out of the button instead - so the pill shrank until its own
-   label wrapped inside it, 34px tall becoming 52px with "Reminders" over "on".
-   The button keeps its width and drops to the next line when there is no room
-   for both. */
-.notif{margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-  font-size:13px;color:var(--soft)}
-.notif>span{flex:1 1 180px;min-width:0}
-.notif button{background:var(--raise);border:1px solid var(--line);color:var(--text);
-  font:inherit;font-weight:700;font-size:12.5px;padding:7px 13px;border-radius:99px;
-  cursor:pointer;flex:0 0 auto;white-space:nowrap}
-.notif button.on{background:var(--green-wash);color:var(--green-ink);border-color:var(--green)}
-.powered{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
-.powered i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
-.powered img{height:16px;width:auto;display:block;border-radius:var(--r-sm)}
-@media(max-width:600px){.powered i{display:none}}
-
-/* ==========================================================================
-   DENSITY
-   The page was laid out generously enough that a phone showed barely three
-   matches at once. Everything below tightens the vertical rhythm - section
-   gaps, card padding, the space between one option and the next - without
-   touching type colour, weight or hierarchy. Tap targets stay at or above
-   40px so nothing gets harder to hit. Loaded last so it wins on specificity
-   alone, which also means the whole pass can be lifted out in one piece.
-   Applies to the installed app too: same file, same stylesheet.
-   ========================================================================== */
-body{line-height:1.45;padding-bottom:24px}
-/* THE WIZARD BEHIND THE GLASS.
-   One frame of the intro loop, blurred past recognition and laid under
-   everything at a tenth of its opacity - 4 KB, decoded once. You register that
-   something is back there and you cannot read it, which is the whole idea.
-
-   NOT THE VIDEO, deliberately. The loop is 195 KB, and behind every page it
-   would play on every view, forever, on mobile data - against once per visitor
-   per day today. A permanent decode is battery on a cheap Android, and moving
-   luminance under a table of percentages is how a data product loses its
-   contrast. A still costs none of that.
-
-   The motion is a transform, not a repaint: 90 seconds from one end to the
-   other, composited on the GPU, and off entirely under reduced motion. It is
-   slower than anything else on the page on purpose - fast enough to notice
-   only if you stop and look for it.
-
-   Top-weighted, and gone by 70% of the viewport, so it lives where the hero
-   glow already lives and never sits under the board. */
-body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background:url(/wiz-veil.webp) no-repeat center top/cover;
-  opacity:.38;
-  -webkit-mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.42) 26%,transparent 46%);
-  mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.42) 26%,transparent 46%);
-  transform:scale(1.06);
-  animation:wizVeil 90s ease-in-out infinite alternate;
-  will-change:transform}
-@keyframes wizVeil{from{transform:scale(1.06) translate3d(0,0,0)}
-  to{transform:scale(1.12) translate3d(-14px,10px,0)}}
-@media(prefers-reduced-motion:reduce){body::before{animation:none}}
-@media(max-width:720px){body{padding-bottom:82px}}
-
-/* --- header + hero --- */
-.top-in{padding:9px 16px;gap:10px}
-.intro{padding:14px 0 2px}
-.intro p{margin-top:6px}
-.trust{margin-top:10px;gap:6px 13px}
-
-/* --- pick of the day --- */
-.potd{margin-top:14px}
-.potd-top{padding:9px 15px}
-.potd-body{padding:13px 15px}
-.potd-grid{gap:14px}
-.potd .meta{margin-top:5px}
-.why{margin-top:11px;padding-top:11px}
-.why .eyebrow{margin-bottom:7px}
-.why ul{gap:6px}
-
-/* --- the right-hand rail ---
-   These cards were laid out to stand on their own in the page flow, then
-   stacked into a 372px column, and the spacing that reads as generous at full
-   width reads as slack in a narrow one. This is the same density pass applied
-   to the rail only: gaps, padding, and the doubled margins where a card's own
-   margin sat on top of the column's gap. Type, colour and hierarchy are
-   untouched apart from the reasons list, which drops half a point.
-   The offer card is deliberately left exactly as it is - it is the one thing
-   in the column that is meant to take up room.
-   Together these take the column back under a full screen, which is what
-   stops it needing a scrollbar of its own. */
-@media(min-width:1060px){
-  /* The column gap is set on the rail's own rule further down - this section
-     is earlier in the file, so a second .home-rail{gap} here would lose the
-     tie rather than win it. */
-  /* Cards carry their own top/bottom margins for the flow layout; in here the
-     column's gap already does that job, and the two were stacking. */
-  .home-rail>*{margin-top:0;margin-bottom:0}
-  .home-rail .myres,.home-rail .daily,
-  .home-rail .potd,.home-rail .slip-cta{margin-top:0;margin-bottom:0}
-
-  .home-rail .myres{padding:11px 13px}
-  .home-rail .mr-top{margin-bottom:7px}
-  .home-rail .mr-coach{margin-top:7px;padding:7px 10px}
-  .home-rail .mr-foot{margin-top:9px;padding-top:8px}
-
-  .home-rail .potd-top{padding:8px 15px}
-  .home-rail .potd-body{padding:10px 14px}
-  .home-rail .potd .meta{margin-top:4px;font-size:13px;line-height:1.38}
-  .home-rail .why{margin-top:9px;padding-top:9px}
-  .home-rail .why .eyebrow{margin-bottom:6px}
-  .home-rail .why ul{gap:4px}
-  .home-rail .why ul li{font-size:13.5px;line-height:1.42}
-
-  .home-rail .daily{padding:10px 12px}
-  .home-rail .daily-h{margin-bottom:7px}
-  .home-rail .daily-foot{margin-top:7px}
-  .home-rail .daily-back{margin-top:6px}
-}
-
-/* --- filters + finder --- */
-/* THE SEARCH AND THE TWO SELECTS WERE A FIFTH OF THE FIRST SCREEN.
-   Measured on a 390x844 phone: the heading, the view toggle, the date bar and
-   the chips left the first fixture below the fold, and about 110px of what
-   stood in its way was a search box and two dropdowns that almost nobody opens
-   on arrival - the chips answer "what kind of bet" faster than either.
-   Folded behind a button that rides the chip row, so the disclosure itself
-   costs nothing: the row was already there. The chips stay put - they are the
-   fast path and hiding them would trade one hunt for another - and #chosen
-   stays visible whether the panel is open or shut, because a board that is
-   filtered must say so even when the control that filtered it is closed. */
-/* EXPLICITLY SCOPED, because the section it sits in is not. Everything around
-   here reads as a phone block and none of it is inside a media query - which is
-   harmless for the density tweaks that follow (a smaller margin at every width
-   is a choice, not a bug) and would have been a disaster for this one: the
-   first cut hid the search and both selects on a 1920px desktop, where there
-   is no button to get them back. Caught by asking the browser rather than
-   reading the file. */
-@media(max-width:720px){
-  .fbtn{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
-    background:var(--card-2);border:1px solid var(--line);color:var(--soft);
-    font:inherit;font-weight:700;font-size:12px;padding:8px 12px;border-radius:99px;
-    cursor:pointer;position:relative;min-height:36px;
-    transition:color .15s,border-color .15s,background .15s}
-  .fbtn svg{width:14px;height:14px;flex:none}
-  .fbtn[aria-expanded="true"]{color:var(--text);border-color:var(--faint);background:var(--card)}
-  .fbtn:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-  /* A filter left on behind a closed panel is the one state this control has
-     to confess to. A dot, not a count: the number is already in #chosen. */
-  .fbtn-on{width:7px;height:7px;border-radius:50%;background:var(--red);flex:none}
-  .bar>.tools{display:none}
-  .bar.f-open>.tools{display:flex}
-}
-.bar{margin-top:14px;padding:9px;gap:8px}
-.cats{gap:6px}
-.cat{padding:8px 13px}
-.tools{gap:8px}
-.search input{padding:11px 12px 11px 38px}
-.search svg{left:12px}
-select{min-height:44px;padding:10px 32px 10px 12px}
-.finder{padding:11px}
-.finder-h{margin-bottom:9px}
-.picker{gap:7px}
-.field label{margin-bottom:4px}
-.chosen{margin-top:8px;padding:7px 10px}
-.datebar{padding:4px}
-.dnav{width:34px;height:34px}
-
-/* --- section groups --- */
-.country{margin-top:22px;padding-top:15px}
-.country-h{padding:1px 0 4px}
-.country-h h2{font-size:18px}
-.comp{margin-top:7px}
-.comp-h{padding-bottom:3px}
-.faves-h{margin:20px 0 5px}
-.grid{gap:8px}
-/* The legend explained the expected-goals figure and the W/D/L chips. Both
-   read fine without it - the number carries a title tooltip and W/D/L are
-   letters - and it was a whole card of scroll before the first tip. Gone at
-   every width now, not just on phones. */
-.key{display:none}
-.list-hint{margin:2px 2px 7px}
-.thin-note{padding:9px 12px;margin:0 0 8px}
-
-/* --- match cards --- */
-.m-btn{padding:11px 12px 0}
-.m-top{margin-bottom:8px;gap:6px}
-.m-add{padding:10px}
-.tn{padding:2px 0}
-.tipbox{margin-top:9px;padding:9px 11px;gap:8px}
-.valuebox{margin-top:6px;padding:8px 11px}
-.mtoggle{margin:10px -12px 0;padding:10px 12px}
-.more-pad{padding:2px 10px 8px}
-.grp{margin-top:7px}
-.grp h3{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
-.opts{gap:4px}
-.opt{padding:6px 9px;font-size:12.5px;border-radius:var(--r-sm)}
-.opt .n{font-size:11.5px;font-weight:600}
-.opt .p{font-size:15px;margin-top:2px;font-weight:800}
-.glance{gap:7px;margin:8px 0 2px}
-.gl-card{padding:10px 12px}
-.gl-k{margin-bottom:5px}
-@media(max-width:720px){.glance{gap:6px}}
-
-/* --- dense list rows --- */
-.ltable{margin-top:1px}
-.lthead{padding:5px 8px 4px}
-.lrow{padding:4px 8px}
-.lrow.open .lmore{max-height:2000px;padding-top:0}
-.lmore{font-size:12.5px}
-.lmore-x{margin-top:0;padding:6px 10px;font-size:11px;border-radius:var(--r-sm);width:auto;min-width:36px;align-self:flex-start}
-@media(max-width:640px){.lrow{padding:5px 8px;gap:2px 9px}}
-
-/* --- results rows --- */
-.res-head{margin:2px 2px 8px}
-.rrow{padding:8px 11px;margin-bottom:5px}
-.rr-tip{margin-top:5px;padding-top:5px}
-
-/* --- call to action / toggles --- */
-.slip-cta{margin:8px 0 2px;padding:9px 12px;gap:8px}
-.viewtoggle.top{margin:10px 0 2px}
-.toprow{margin:9px 0 2px;gap:8px}
-.viewtoggle.top .vt{padding:6px 14px}
-.vt{padding:8px 14px}
-
-/* "Tap" or "Click", chosen by how the device is actually driven rather than
-   by how wide it is - a touch laptop is tapped, a 1200px desktop is clicked,
-   and a narrow window on a mouse-driven machine is still clicked. */
-.v-click{display:none}
-@media (hover:hover) and (pointer:fine){
-  .v-tap{display:none}
-  .v-click{display:inline}
-}
-
-/* Most people arrive wanting a SportyBet code, so it is said in the first
-   thing under the headline, in gold so the eye finds it. */
-/* "SportyBet code in one tap", where the name cycles.
-   The line opened with "Free" until 3 Sep. Dropped on the owner's call -
-   it may not be free later, and a promise that has to be withdrawn is worth
-   less than never having made it.
-   The sentence is true of all three books - football.com takes a SportyBet
-   code and Bet9ja issues its own - and saying so in one line is worth more
-   than saying it in a paragraph nobody reads. */
-.trust-i.t-sporty{color:var(--text)}
-[data-theme="light"] .trust-i.t-sporty{color:#14161a}
-.trust-i.t-sporty::before{background:var(--red)}
-
-/* The slot is SportyBet's width and never changes.
-   Two attempts got here. A slot sized to the LONGEST name left SportyBet - the
-   name showing almost all the time - floating in dead air with a hole before
-   "code". Morphing the width to each name closed the hole but moved the rest
-   of the sentence on every flicker. Both were solving for three equals, and
-   they are not: this is a SportyBet site and the other two are glimpses.
-   So the box is sized to the name that rests in it, and a visitor too wide for
-   that is scaled down to fit. Nothing on the line ever moves, and a name that
-   arrives smaller reads as the aside it is. */
-/* The whole sentence is one flex item. .trust-i is an inline-flex row with a
-   7px gap - that gap is there to space the dotted separators between trust
-   items, and with the words as bare children it was being applied between
-   the name and "code in one tap" as well. */
-.bk-line{display:inline}
-/* min-width:0 because a grid container's automatic minimum is its content, so
-   the width set below was being floored at the widest name and ignored - the
-   morph did nothing until this was here. */
-/* Two declarations here that look like boilerplate and are not.
- *
- * min-width:0 - a grid container's automatic minimum is its content, so
- *   without it the box is floored at the widest name and the width set in
- *   startBookCycle is ignored. A transform does not shrink a layout box, so
- *   this holds even though nothing here animates.
- *
- * grid-template-columns:minmax(0,1fr) - and this is the one that took a
- *   measurement to find. Setting a width on the CONTAINER does not constrain
- *   the automatic TRACK inside it: the column stayed as wide as
- *   "football.com" while the box was 63px, so every name was centred in an
- *   81px column that overflowed the box by 18px and SportyBet sat 9px on top
- *   of the word "code". Reported on a phone as the name running into it; it
- *   was doing the same thing on every width. Pinning the column to the
- *   container is what makes the slot mean anything. */
-.bkc{display:inline-grid;grid-template-columns:minmax(0,1fr);
-  vertical-align:baseline;font-weight:800;min-width:0;
-  /* One more space either side. As a margin rather than a character: the slot
-     is a measured box, so an &nbsp; in the markup would sit INSIDE it and eat
-     the width the name needs. .25em is a space in this face, and in em so it
-     holds at any size. */
-  margin:0 .25em}
-.bkc-i{grid-area:1/1;font-style:normal;white-space:nowrap;opacity:0;
-  justify-self:center;transition:opacity .16s linear}
-.bkc-i.on{opacity:1}
-.bkc-i[data-bk="sporty"]{color:var(--red)}
-.bkc-i[data-bk="b9"] .b9r{color:var(--b9-red)}
-.bkc-i[data-bk="b9"] .b9g{color:var(--b9-green)}
-/* BetKing: the wordmark in the line's own ink with their gold on "King", and
-   the condensed face their site sets it in. The cycle measures each name and
-   scales anything wider than the resting one, so the condensed face also buys
-   back most of what the longer name would have cost. */
-.bkc-i[data-bk="bk"]{font-family:"Roboto Condensed","Arial Narrow",
-  "Helvetica Neue Condensed","Liberation Sans Narrow",inherit;
-  font-stretch:condensed;letter-spacing:-.005em}
-.bkc-i[data-bk="bk"] .bkg{color:var(--bk-gold)}
-/* football.com's own purple, and their lime on the dot - the same pair the
-   code card uses for them. On a dark ground the purple is too close to black
-   to read as a colour, so it is lifted rather than taken literally. */
-.bkc-i[data-bk="fb"]{color:#8B84E8}
-[data-theme="light"] .bkc-i[data-bk="fb"]{color:#282450}
-.bkc-i[data-bk="fb"] .fb-dot{color:#9FF611;font-weight:900}
-
-/* The switch.
- *
- * Three things do the work, and it is the combination rather than any one of
- * them that stops this reading as a cheap CSS trick:
- *
- *   channel split   a red and a cyan copy pulled a couple of pixels apart, the
- *                   chromatic aberration of a signal losing sync. This is the
- *                   part the eye recognises as "glitch" and it is done with
- *                   text-shadow, so there is no second element to keep aligned.
- *   torn bands      horizontal slices displaced in opposite directions, and the
- *                   outgoing name's bands are the complement of the incoming
- *                   one's - so for about a tenth of a second both names are on
- *                   screen in alternating strips and the eye sees one becoming
- *                   the other rather than a crossfade.
- *   hard cuts       steps(1) between keyframes. Interpolating turns tearing
- *                   into sliding, which reads as motion graphics; digital
- *                   failure does not ease.
- *
- * The bands are irregular on purpose. Evenly spaced ones look like a venetian
- * blind, and real signal loss has no rhythm.
- */
-.bkc-i.glx-out{animation:bkOut .22s steps(1,end) both}
-.bkc-i.glx-in{animation:bkIn .3s steps(1,end) both}
-@keyframes bkOut{
-  0%  {clip-path:inset(0 0 0 0);     transform:translate(0);      text-shadow:none}
-  22% {clip-path:inset(0 0 62% 0);   transform:translate(-3px,0);
-       text-shadow:2px 0 rgba(255,26,72,.95),-2px 0 rgba(0,229,255,.8)}
-  48% {clip-path:inset(46% 0 22% 0); transform:translate(4px,0);
-       text-shadow:-3px 0 rgba(255,26,72,.9),3px 0 rgba(0,229,255,.75)}
-  72% {clip-path:inset(76% 0 0 0);   transform:translate(-2px,0);
-       text-shadow:1px 0 rgba(255,26,72,.7),-1px 0 rgba(0,229,255,.6)}
-  100%{clip-path:inset(0 0 100% 0);  transform:translate(0);      text-shadow:none}
-}
-@keyframes bkIn{
-  0%  {clip-path:inset(0 0 100% 0);  transform:translate(0);      text-shadow:none}
-  18% {clip-path:inset(58% 0 0 0);   transform:translate(3px,0);
-       text-shadow:-2px 0 rgba(255,26,72,.9),2px 0 rgba(0,229,255,.8)}
-  40% {clip-path:inset(14% 0 54% 0); transform:translate(-4px,0);
-       text-shadow:3px 0 rgba(255,26,72,.85),-3px 0 rgba(0,229,255,.7)}
-  62% {clip-path:inset(0 0 12% 0);   transform:translate(2px,0);
-       text-shadow:-1px 0 rgba(255,26,72,.6),1px 0 rgba(0,229,255,.5)}
-  /* One clean frame before it settles, so the name arrives rather than fades. */
-  78% {clip-path:inset(0 0 0 0);     transform:translate(-1px,0);
-       text-shadow:1px 0 rgba(255,26,72,.3),-1px 0 rgba(0,229,255,.25)}
-  100%{clip-path:inset(0 0 0 0);     transform:translate(0);      text-shadow:none}
-}
-/* The line itself twitches once, a single pixel. Without it the name tears
-   while the words around it sit perfectly still, and the effect reads as
-   something happening TO the text rather than to the signal carrying it. */
-.bkc.tw{animation:bkTwitch .22s steps(1,end)}
-@keyframes bkTwitch{
-  0%,100%{transform:translateX(0)}
-  30%    {transform:translateX(1px)}
-  65%    {transform:translateX(-1px)}
-}
-/* A glitch in the first screenful is exactly the motion that hurts people who
-   have told their machine they do not want it. They get SportyBet, still. */
-@media (prefers-reduced-motion: reduce){
-  .bkc-i.glx-out,.bkc-i.glx-in,.bkc.tw{animation:none}
-}
-
-/* The board announces itself. scroll-margin keeps the heading clear of the
-   sticky filter bar when the CTA jumps to it. */
-.board-head{margin:18px 0 10px;scroll-margin-top:14px}
-.board-head h2{font-size:20px;font-weight:800;letter-spacing:-.025em}
-.board-head p{margin-top:3px;font-size:12.5px;color:var(--faint);font-weight:600}
-.board-head:empty{display:none}
-@media(max-width:560px){
-  .board-head{margin:14px 0 8px}
-  .board-head h2{font-size:17.5px}
-  .board-head p{font-size:12px}
-}
-
-/* ============================================== builder settings dock
-   The builder runs long on a desktop - filters, scope, leagues, markets, the
-   panel, the stats, the slip - so by the time you are judging the output,
-   every control that shaped it is off screen. This is not really about the
-   mode toggle: it carries the settings, so the pixels it occupies do more
-   than one job. Tapping the summary returns you to the controls.
-   Top right, under the header, clear of the My slip button at bottom right.
-   Phones never see it - they have a bottom nav, a My slip button, and their
-   slip is in a sheet, so a fourth floating thing is the clutter we removed. */
-.bld-dock{position:fixed;top:74px;right:22px;z-index:115;
-  display:flex;align-items:center;gap:8px;padding:6px;
-  background:var(--card);border:1px solid var(--line);border-radius:99px;
-  box-shadow:0 8px 26px rgba(0,0,0,.34);
-  opacity:0;transform:translateY(-8px);pointer-events:none;
-  transition:opacity .22s ease,transform .22s ease}
-.bld-dock.on{opacity:1;transform:translateY(0);pointer-events:auto}
-.bld-dock[hidden]{display:none}
-html:not(.mode-build) .bld-dock{display:none}
-.bd-mode{display:flex;gap:2px;background:var(--card-2);border-radius:99px;padding:2px}
-.bd-m{background:none;border:0;font:inherit;font-weight:700;font-size:12px;
-  color:var(--soft);padding:6px 12px;border-radius:99px;cursor:pointer;
-  transition:background .15s,color .15s}
-.bd-m:hover{color:var(--text)}
-.bd-m.on{color:#fff}
-.bd-m.on[data-bdmode="slider"]{background:linear-gradient(120deg,#c8323d,var(--red))}
-.bd-m.on[data-bdmode="wizard"]{background:linear-gradient(120deg,#6d3bd4,#8b5cf6)}
-.bd-sum{display:inline-flex;align-items:center;gap:8px;background:none;border:0;
-  font:inherit;font-size:12px;font-weight:700;color:var(--faint);
-  padding:6px 10px 6px 4px;cursor:pointer;white-space:nowrap;
-  transition:color .15s}
-.bd-sum:hover{color:var(--text)}
-.bd-sum:focus-visible,.bd-m:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.bd-up{font-size:13px;opacity:.7}
-@media(max-width:720px){.bld-dock{display:none!important}}
-@media(prefers-reduced-motion:reduce){.bld-dock{transition:none}}
-
-/* Wizard: the panel carries the numbers, the slip is read in the sheet that
-   comes up on Conjure. Two copies of the same legs, one of them with no way to
-   book them, was the thing to lose. The sheet's own footer holds Shuffle,
-   Clear and Get code, so nothing is out of reach - and the My slip button
-   brings it back after it is dismissed. */
-html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
-
-/* Explains the two builders where the choice is made, rather than in front of
-   it. Both produce a slip; the only difference is what you hand over. */
-/* The heading was the page's plainest type on the page with the most
-   personality. Same treatment the home hero uses - tight tracking, the accent
-   carried by the second half - so the builder reads as part of the site. */
-.bld-title{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.03em;
-  line-height:1.05;margin:6px 0 12px}
-.bld-title em{font-style:normal;
-  background:linear-gradient(100deg,#8b5cf6 0%,#c084fc 45%,var(--win) 100%);
-  -webkit-background-clip:text;background-clip:text;color:transparent}
-/* A gradient that fails to clip leaves invisible text, so keep a real colour
-   underneath for anything that does not support it. */
-@supports not ((-webkit-background-clip:text) or (background-clip:text)){
-  .bld-title em{color:#a78bfa;background:none}
-}
-.bld-mode-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.bld-help{width:26px;height:26px;flex-shrink:0;border-radius:50%;cursor:pointer;
-  background:var(--card-2);border:1px solid var(--line);color:var(--soft);
-  font:inherit;font-weight:800;font-size:13px;line-height:1;
-  display:inline-flex;align-items:center;justify-content:center;transition:.15s}
-.bld-help:hover{color:var(--text);border-color:var(--faint)}
-.bld-help:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.bld-help.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
-
-/* Each phrase is one flex item, so a narrow screen wraps whole lines rather
-   than splitting a label from the words that explain it. */
-.bld-mode-hint{display:flex;flex-wrap:wrap;gap:3px 18px;margin:10px 0 0;
-  font-size:11.5px;line-height:1.5;color:var(--faint)}
-.bmh{display:inline-block}
-.bmh b{font-weight:800;margin-right:4px}
-.bmh-wiz b{color:#a78bfa}
-.bmh-slide b{color:var(--red-ink)}
-[data-theme="light"] .bmh-wiz b{color:#5b21b6}
-@media(max-width:560px){
-  /* One phrase per line, each kept whole. The old rule made the second label
-     a block on its own, which stranded "Slider" above its own explanation. */
-  .bld-mode-hint{font-size:11px;margin-top:8px;flex-direction:column;gap:3px}
-  .bld-title{margin:4px 0 10px}
-}
-
-/* The builder's own coach: opened by the ? beside the toggle, and shown once
-   unprompted to anyone who has not seen it. Same bargain as the board's -
-   dismissible, remembered, and never covering anything. */
-.bld-coach{margin:11px 0 0;padding:11px 13px;border:1px solid var(--line);
-  border-radius:var(--r-md);background:var(--card-2)}
-.bld-coach h4{font-size:12.5px;font-weight:800;margin-bottom:7px}
-.bld-coach ul{list-style:none;display:flex;flex-direction:column;gap:7px}
-.bld-coach li{font-size:12px;line-height:1.5;color:var(--soft);
-  display:flex;gap:8px;align-items:flex-start}
-.bld-coach li b{font-weight:800}
-.bld-coach li.bc-wiz b{color:#a78bfa}
-.bld-coach li.bc-slide b{color:var(--red-ink)}
-[data-theme="light"] .bld-coach li.bc-wiz b{color:#5b21b6}
-.bc-num{flex-shrink:0;width:17px;height:17px;border-radius:50%;background:var(--raise);
-  color:var(--text);font-size:9.5px;font-weight:800;display:flex;
-  align-items:center;justify-content:center;margin-top:1px}
-.bld-coach .bc-x{margin-top:9px;background:var(--red-fill);color:#fff;border:0;
-  border-radius:var(--r-sm);font:inherit;font-size:11.5px;font-weight:800;
-  padding:7px 13px;cursor:pointer}
-#bldCoach:empty{display:none}
-
-/* ============================================== first-run coach
-   Anchored to the card it is talking about, inside it, so there is no
-   positioning to go wrong on a narrow screen and nothing covering content. */
-.coach{display:flex;align-items:center;gap:10px;margin:0 10px 10px;
-  padding:10px 12px;border:1px solid var(--red);border-radius:var(--r-md);
-  background:var(--red-wash);position:relative}
-/* A list row is an eight-column grid, so appending the coach to it auto-placed
-   it into a cell: on desktop that rendered as a 26px-wide, 572px-tall column of
-   single words. It has to span the row. Written against any grid parent, not
-   just .lrow, so adding a column or a new row layout cannot bring this back. */
-.coach{grid-column:1/-1}
-.lrow .coach{margin:8px 0 2px}
-.coach-tx{flex:1;min-width:0;font-size:12px;line-height:1.45;color:var(--soft)}
-.coach-tx b{display:block;color:var(--text);font-size:13px;font-weight:800;
-  margin-bottom:2px}
-/* Dismissing a tip is the quietest action on the page; it does not need a
-   filled red block. */
-.coach-x{flex-shrink:0;background:transparent;color:var(--soft);
-  border:1px solid var(--line);border-radius:99px;font:inherit;font-size:11.5px;
-  font-weight:700;padding:6px 14px;cursor:pointer;
-  transition:color .15s,border-color .15s,background .15s}
-.coach-x:hover{color:var(--text);border-color:var(--faint);background:var(--card-2)}
-.coach-x:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-/* The tip does the pointing, not an arrow. An arrow drawn at a fixed offset
-   from the card's edge aims at whatever happens to sit above it - which was
-   the "see more predictions" row, not the call, and read as pointing at
-   nothing on a phone. A ring on the call itself cannot aim at the wrong
-   thing, and it works the same in both views and at every width.
-   The ring persists while the coach is up; the pulse is just the arrival. */
-/* Ringed with room around it. A box-shadow at 2px traces the tip's own edge
-   so tightly that it reads as a border on the element rather than a marker
-   pointing at it; an outline with an offset stands clear of it. */
-.coach-look{border-radius:var(--r-sm);outline:2px solid var(--red);outline-offset:5px;
-  animation:coachLook 1.7s ease-in-out 3}
-@keyframes coachLook{0%,100%{outline-color:var(--red)}
-  50%{outline-color:rgba(230,57,70,.35)}}
-@media(prefers-reduced-motion:reduce){.coach-look{animation:none}}
-@media(max-width:560px){
-  .coach{margin:0 8px 8px;padding:9px 10px;gap:8px;flex-wrap:wrap}
-  .coach-tx{font-size:11.5px;flex:1 1 100%}
-  .coach-x{margin-left:auto}
-}
-
-/* ============================================== the hero offer
-   Proof inside the pitch. A claim made on the same card as the buttons is
-   worth more than the same claim a scroll away, and it costs no extra height
-   worth speaking of. */
-.sc-proof{display:flex;align-items:flex-start;gap:7px;margin-top:10px;
-  padding-top:9px;border-top:1px solid var(--line);
-  font-size:11.5px;line-height:1.4;color:var(--soft)}
-.sc-proof b{color:var(--text);font-weight:800}
-.sc-tick{color:var(--green-ink);font-weight:900;flex-shrink:0;line-height:1.35}
-.sc-proof[hidden]{display:none}
-
-/* ============================================== board cap (phones only)
-   Caps the opening height of the board and fades it out, so the first screen
-   is the pick and a taste of the card rather than a hundred fixtures. */
-@media(max-width:720px){
-  html.board-cap #list{max-height:78vh;overflow:hidden;position:relative}
-  html.board-cap #list::after{content:'';position:absolute;left:0;right:0;bottom:0;
-    height:110px;pointer-events:none;
-    background:linear-gradient(to bottom,transparent,var(--bg) 82%)}
-}
-#listMore:empty{display:none}
-.list-more{display:block;width:100%;margin:10px 0 2px;padding:12px 16px;
-  background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);
-  color:var(--text);font:inherit;font-weight:800;font-size:13.5px;cursor:pointer}
-.list-more:hover{border-color:var(--faint)}
-.list-more:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-@media(min-width:721px){#listMore{display:none}}
-
-/* ==================================================== daily recap
-   The one thing a first-time visitor needs before anything else: did this
-   thing get yesterday right. It was a chip in the trust row, which nobody
-   reads. Plain sentence, real numbers, top of the page. */
-.daily{margin-top:14px;border:1px solid var(--line);border-radius:var(--r-md);
-  background:var(--card);padding:12px 14px}
-.daily-h{display:flex;align-items:center;gap:8px;margin-bottom:9px}
-.daily-h b{font-size:13px;font-weight:800}
-.daily-h .dl-when{margin-left:auto;font-size:11px;color:var(--faint);font-weight:700}
-.daily-score{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.daily-score .dl-big{font-size:26px;font-weight:800;letter-spacing:-.02em;
-  line-height:1;font-variant-numeric:tabular-nums}
-.daily-score .dl-of{font-size:13px;color:var(--soft);font-weight:700}
-.daily-pending{margin-top:8px;font-size:12.5px;line-height:1.45;color:var(--faint)}
-/* Deliberately the same weight as .daily-pending above, not a warning strip.
-   It is a caveat a reader should be able to find and weigh, not an alarm - the
-   picks are still the best the model can make, they are just made on older
-   form. Anything louder would train people to ignore it. */
-.board-stale{margin-top:6px;font-size:12.5px;line-height:1.45;color:var(--faint)}
-.daily-bar{display:flex;height:6px;border-radius:99px;overflow:hidden;
-  background:var(--card-2);margin-top:10px}
-.daily-bar i{display:block;background:var(--green)}
-.daily-foot{margin-top:9px;font-size:12px;color:var(--soft);line-height:1.45}
-.daily-foot b{color:var(--text);font-weight:800}
-.dl-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;
-  font-weight:800;padding:2px 8px;border-radius:99px}
-.dl-pill.good{background:var(--green-wash);color:var(--green-ink)}
-.dl-pill.bad{background:var(--red-wash);color:var(--red-ink)}
-.daily-empty{font-size:12.5px;color:var(--soft)}
-
-/* ==================================================== home layout
-   Phone: one column, rail first - the recap and the day's pick answer "is this
-   any good" and "what do I do" before the board asks anyone to browse.
-   Desktop: the board takes the width it has always wanted and the rail becomes
-   a sticky companion, so the pick and the record stay on screen while you
-   scroll a hundred fixtures. */
-.home-grid{display:flex;flex-direction:column;gap:0}
-.home-main{min-width:0}
-
-/* THE BOARD ARRIVES 1.7 SECONDS IN, AND EVERYTHING BELOW IT USED TO JUMP.
-   The payload is fetched, not baked into the markup, so the pick, the recap,
-   the heading, the filter chips and the board itself all land in one burst
-   after the network settles. On a phone the rail sits above the board, so
-   that burst pushed the main column down by about 470px: measured CLS 0.70
-   locally, 0.87 in the field, on a metric whose "poor" threshold is 0.25.
-   The slots are held open at the height their content actually renders at,
-   measured at both layouts, so the arrival fills a space instead of making
-   one. `:empty` scopes each rule to the slot's pre-render state, and
-   `html.booting` - dropped by hideLoader() on every path, success, failure
-   and the 8s deadline alike - guarantees the reserve cannot outlive the load
-   and leave a hole on a day when a slot has nothing to show. */
-html.booting #potd:empty{min-height:260px}
-html.booting #daily:empty{min-height:110px}
-/* display too: .board-head:empty is display:none so an unfilled header costs
-   no margin, and a min-height on a box that is not laid out reserves nothing. */
-html.booting #boardHead:empty{display:block;min-height:46px}
-html.booting #cats:empty{min-height:36px}
-html.booting #list{min-height:70vh}
-/* The proof line under the offer is [hidden] until the record is counted, and
-   it is 40px of card that appears above everything else on a phone. Held open
-   invisibly rather than shown empty: there is nothing truthful to put in it
-   until the number arrives. */
-html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
-/* The two rail cards are taller once the layout stops being a phone: measured
-   290/140 at 929px and 300/150 at 1440, so one step at 721 covers both within
-   ten pixels. The board itself only pushes the closing note and the footer,
-   both of which are far below the fold at every width, so 70vh is enough for
-   it - matching 6,735px of fixtures would just be a screen of nothing. */
-@media(min-width:721px){
-  html.booting #potd:empty{min-height:292px}
-  html.booting #daily:empty{min-height:142px}
-  html.booting #boardHead:empty{min-height:50px}
-  html.booting .sc-proof[hidden]{min-height:42px}
-}
-.home-rail{display:flex;flex-direction:column;gap:0}
-/* THE PAGE ASKS "WHO'S WINNING TODAY?" AND THEN DOES NOT ANSWER IT.
-   On a 390x844 phone the first screen was masthead, install banner, offer card
-   and Pick of the day - four blocks of pitch before a single fixture, so the
-   headline's question was answered below the fold and the board had to be
-   hunted for. The rail leading is right for the OFFER, which is what the page
-   is for; it is wrong for the two proof cards behind it, which answer "is this
-   any good" - a question nobody asks before they have seen anything.
-   `display:contents` dissolves the rail on a phone so its cards become items of
-   the same column as the board and can be ordered around it. The offer and the
-   reader's own slips stay on top; the day's pick and the recap move under the
-   first fixtures, where they are read as evidence rather than as a queue to get
-   through. Desktop is untouched - at 1060 the rail becomes a sticky column and
-   this whole block is out of scope. */
-@media(max-width:720px){
-  .home-grid>.home-rail{display:contents}
-  .home-grid>.home-rail>.slip-cta{order:1}
-  .home-grid>.home-rail>#myres{order:2}
-  .home-grid>.home-main{order:3}
-  .home-grid>.home-rail>#potd{order:4;margin-top:14px}
-  .home-grid>.home-rail>#daily{order:5}
-  /* A button that scrolls to the thing directly beneath it. It was a second
-     door into the room you are standing in - and with the board now one card
-     away, the scroll it performs is the one the thumb was already making. */
-  .sc-actions #scBrowse{display:none}
-}
-@media(min-width:1060px){
-  .wrap{max-width:1420px}
-  .home-grid{flex-direction:row;align-items:flex-start;gap:26px}
-  .home-main{flex:1 1 auto}
-  /* Its own top gap, matching the board's. The margin-reset below is what the
-     rail needs to space its children by gap alone, and it was also eating the
-     first child's margin - which left the panel butted flat against the live
-     ticker above it with no gap at all. */
-  .home-rail{flex:0 0 372px;order:2;gap:9px;margin-top:14px}
-  .home-rail>*{margin-top:0}
-  .home-rail .potd,.home-rail .slip-cta{margin-top:0}
-  /* The filter bar sticks in its own column; without a matching offset the two
-     sticky things fight over the same strip of screen. */
-  .home-main .bar{top:12px}
-}
-@media(min-width:1240px){
-  .home-rail{margin-top:-66px}
-}
-/* Sticky only when there is room to be sticky. Pinning a rail taller than the
-   window caps it at the viewport height and gives it an inner scrollbar, which
-   on a short laptop reads as the panel being cut off. Below this height it
-   simply flows with the page, where all of it can be reached. The number is
-   the rail's own content plus its offsets, not a guess at a device.
-
-   The height gate is now a floor, not the decision. A fixed number cannot
-   know how long today's reasons list or record card runs, so between 820px
-   and whatever the content happens to need, the rail still pinned and still
-   grew a scrollbar of its own. rail-fits is set by script from the rail's
-   measured content against the room it actually has: it pins only when the
-   whole column fits, and otherwise flows with the page, where all of it can
-   be reached by scrolling the page itself. Either way there is never an
-   inner scrollbar to find. */
-@media(min-width:1060px) and (min-height:820px){
-  /* overscroll-behavior:contain was wrong here and it broke the page.
-     It means "do not pass scrolling on to whatever is behind me", which is
-     right for a sheet floating over the board and wrong for a column that IS
-     the page. On a tall screen the rail's content fits, so it has nothing of
-     its own to scroll - and contain then swallowed the wheel entirely.
-     Scrolling anywhere over the right-hand side did nothing at all.
-     Without it the wheel scrolls the rail while the rail has somewhere to go
-     and hands over to the page when it does not, which is what a column
-     inside a page should do. */
-  html.rail-fits .home-rail{position:sticky;top:10px;
-    max-height:calc(100vh - 20px);overflow-y:auto;
-    scrollbar-width:thin}
-  /* Cards in here must never be squashed to fit.
-     The rail is a flex column with a height cap, and flex children shrink by
-     default - so once the contents grew past the cap, every card gave up
-     height to make room. The offer card lost a hundred pixels, and because it
-     clips its own overflow that took "See today's predictions" and the proof
-     line clean off it: the button appeared cut out of its box for no reason
-     visible on the card itself.
-     Adding the slips card is what pushed the column past the cap, so this
-     appeared without any of these cards changing. The rail already scrolls;
-     it should do that instead of compressing what is in it. */
-  .home-rail>*{flex-shrink:0}
-}
-
-/* Card columns follow the space the board actually has, not the viewport. The
-   fixed 2- and 3-column rules were written before the rail existed and would
-   now squeeze three cards into a 630px column on a 1060px screen. auto-fill
-   lets the board use every bit of a wide monitor and step down on its own. */
-@media(min-width:720px){
-  .home-main .grid{grid-template-columns:repeat(auto-fill,minmax(290px,1fr))}
-}
-
-/* ------------------------------------------------------------------ phones
-   Everything between the header and the first tip is on trial here. The goal
-   is fewer scrolls to reach a tip, so each block below gives up width or
-   padding - never type size that carries meaning, and never tap-target
-   height. Kept in one place so the whole pass can be read at once. */
-@media(max-width:560px){
-  /* Cards/List and the day picker share one line. Wrapping cost a whole row
-     of vertical space for two controls that are each mostly padding. Trimmed
-     on width only: the row still stands ~36px tall, so both stay easy to hit. */
-  /* Wrap, not nowrap. The Cards/List switch and the day pager still share
-     line one - they were measured to fit - but the add-all pill is a
-     full-width third child, and with nowrap it had nowhere to go except off
-     the side of the screen. */
-  .toprow{gap:6px;flex-wrap:wrap}
-  .toprow .bookall-row{margin-top:8px;justify-content:flex-start}
-  .toprow .viewtoggle{padding:2px}
-  .toprow .viewtoggle.top .vt{padding:7px 9px;font-size:12px;gap:5px}
-  .toprow .viewtoggle.top .vt svg{width:14px;height:14px}
-  .toprow .datebar{padding:2px;gap:1px;flex-shrink:0}
-  .toprow .dnav{width:32px;height:32px;font-size:14px}
-  /* It sat almost against the arrows. A little breathing room either side,
-     which the row has space for now the pill has its own line. */
-  .toprow .dlabel{min-width:0;padding:0 10px}
-  .toprow .dlabel b{font-size:12.5px;line-height:1.15;white-space:nowrap}
-  .toprow .dlabel i{font-size:10px;white-space:nowrap}
-  .toprow .viewtoggle{min-width:0}
-
-  /* Two of the trust chips ("Rebuilt daily from results", "Estimates, not
-     certainties") are claims the hero's proof line now makes better, with a
-     number attached. Dropping them on a phone lifts the offer up the screen
-     without losing anything a visitor was relying on - "How accurate?" and the
-     last-updated stamp stay. */
-  .trust-i.t-static{display:none}
-  .intro h1{font-size:clamp(23px,7vw,30px)}
-
-  /* This IS the hero on a phone - it is the reason the page exists and the
-     first thing in the column. It was trimmed to banner size when it sat
-     third; as the opening card it earns its presence back. Still tight: the
-     height goes into the headline and the buttons, not into padding. */
-  .slip-cta{padding:13px 13px;gap:10px;margin-top:12px}
-  .slip-cta .sc-head{gap:11px;align-items:center}
-  .slip-cta .sc-orb{width:44px;height:44px}
-  .slip-cta .sc-tx b{font-size:17px;line-height:1.2;letter-spacing:-.01em}
-  .slip-cta .sc-tx i{font-size:12px;margin-top:4px}
-  /* Side by side, "Build me a SportyBet slip" broke over three lines in a
-     160px column. Stacked, each button gets the full width and one line, and
-     the thing most people came for is the biggest target on the screen. */
-  .slip-cta .sc-actions{gap:8px;flex-direction:column}
-  /* Bigger here than on desktop, not smaller. These were 12.5px against a
-     13.5px base, which had it backwards: stacked they own the full width of
-     the screen, so there is room, and this is the one thing most people came
-     to tap. */
-  .slip-cta .sc-go-btn{width:100%;flex:0 0 auto;padding:14px 12px;
-    font-size:15px;letter-spacing:.01em}
-  .sc-proof{font-size:11px;margin-top:9px;padding-top:8px}
-
-  /* Pick of the day: the number was the tallest thing on the page. */
-  .potd{margin-top:10px}
-  .potd-top{padding:6px 11px}
-  .potd-body{padding:10px 11px}
-  .potd-grid{gap:10px}
-  .potd .big{font-size:clamp(32px,9vw,44px)}
-  /* All four reasons here too, as on a wide screen. Two of them were hidden to
-     save height, but the two that went were the ones doing the arguing - the
-     form line and the goals line - leaving the card asserting a number with
-     barely a case for it. The height comes back out of the spacing instead:
-     tighter rows, a smaller eyebrow and less air above the list, which costs
-     nothing anyone reads. */
-  .potd .why{margin-top:6px;padding-top:6px}
-  .potd .why .eyebrow{margin-bottom:4px;font-size:9.5px}
-  .potd .why ul{gap:3px}
-  .potd .why li{font-size:12.5px;line-height:1.34;gap:7px}
-  .potd .why li .dot{margin-top:5px}
-  .potd .meta{font-size:12px;line-height:1.3}
-
-  /* The recap's headline is yesterday. The running record underneath is the
-     same sentence the hero already makes, and the full panel further down
-     says it properly - so on a phone the box keeps only what is new.
-     What was left was still carrying desktop spacing around it: padding, a
-     gap under the title, and ten pixels above a one-line link. This box sits
-     directly under the Pick of the day, which now runs to four reasons, so
-     every row of it is a row of scroll before the board. Tightened to the
-     text and no further - the type is untouched, only the air around it. */
-  .daily{padding:9px 11px;margin-top:10px}
-  .daily-foot{display:none}
-  .daily-h{margin-bottom:5px}
-  .daily-h b{font-size:12.5px}
-  .daily-empty{font-size:12px;line-height:1.4}
-  .daily-bar{margin-top:6px;height:5px}
-  .daily-score{gap:6px}
-  .daily-score .dl-big{font-size:22px}
-  .daily-back{margin-top:6px}
-
-  /* Slip of the day: 18px of padding all round, and a lot of air between the
-     legs, for a card that is really a short list. */
-  .sotd{padding:12px;margin-top:10px}
-  .sotd h2{font-size:17px}
-  .sotd .sub{font-size:12.5px;margin-bottom:9px}
-  .sotd-legs{gap:4px;margin-bottom:10px}
-  .sotd-leg{font-size:12.5px}
-
-  /* The pill says what it builds and how many, so it needs the room - but the
-     ember still needs its corner, so the left inset stays. */
-  .bookall{padding:9px 13px 9px 25px}
-  .bookall .ba-tx{font-size:12px}
-
-  /* The card's job on a phone is: who is playing, what we call it, how sure we
-     are. The expected-goals figures and the 1/X/2 percentage row are the two
-     things that make a newcomer feel unqualified, and both are already spelled
-     out inside the expander - so on a phone the face keeps the probability bar
-     (same information, no arithmetic) and drops the rest. Desktop has the room
-     and keeps everything. */
-  .m .tn .g{display:none}
-  .m .legend{display:none}
-  .m .pbar{margin-top:2px}
-
-  /* The slip bar is a persistent call to action for once the hero has scrolled
-     away - which is a job the bottom nav already does here, and its middle
-     button is the same red and goes to the same builder. Three red controls in
-     eighty pixels, two of them the same button. The bar belongs to desktop,
-     where nothing else follows you down the page; the nav is phone-only, so
-     the two are exact complements. Also ends the pink bleed at the source:
-     with no bar behind the nav, its glow has nothing to spill over. */
-  .slipbar{display:none}
-
-  /* The legend card ("1.6 = goals we expect", and the W/D/L key) is a whole
-     card of scroll sitting between the filters and the first tip. Both things
-     it explains read fine without it - the xG number carries a title tooltip
-     on the card itself, and W/D/L are letters. display:none takes the card's
-     margin with it, so the list closes straight up under the filters. */
-
-  /* The Live pill was sitting flush against the theme toggle. The logo holds
-     margin-right:auto, so this gap comes out of the logo's slack and the row
-     stays on one line. */
-  .top-in .nav{margin-right:7px}
-}
-/* Smallest phones: a long day name ("Wednesday") plus two labelled buttons is
-   more than 320px holds, and nowrap would push the row into a sideways scroll.
-   The Cards/List icons go rather than the words - the words are the label. */
-@media(max-width:400px){
-  .toprow .viewtoggle.top .vt svg{display:none}
-  .toprow .viewtoggle.top .vt{padding:7px 12px}
-}
-
-/* ------------------------------------------------------- Conjure, any width
-   The wizardry look - violet glass, gold lining, slow rune pulse - used to be
-   declared inside a min-width:720px block, so phones fell back to a plain
-   button. Defined once here for every screen; the breakpoints above and below
-   only set its size. */
-/* :not(.sc-go-btn) keeps the home banner out of this. Its two path buttons are
-   a matched pair - violet Conjure beside crimson slider - and restyling one
-   half of it here would break a deliberate arrangement. */
-button.wsp-go:not(.sc-go-btn){font-weight:800;letter-spacing:.09em;text-transform:uppercase;
-  color:#EDE7FF!important;
-  background:linear-gradient(165deg,#2b1a5e 0%,#1d1142 60%,#140a30 100%)!important;
-  border:1px solid rgba(212,175,55,.6)!important;
-  box-shadow:0 4px 18px rgba(90,46,210,.35),inset 0 0 12px rgba(124,77,255,.22),
-    inset 0 1px 0 rgba(255,255,255,.14)!important;
-  position:relative;overflow:hidden}
-button.wsp-go:not(.sc-go-btn):hover{color:#fff!important;
-  border-color:rgba(232,199,95,.9)!important;
-  box-shadow:0 6px 26px rgba(112,66,240,.55),inset 0 0 18px rgba(140,96,255,.35),
-    inset 0 1px 0 rgba(255,255,255,.2)!important}
-button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
-  border-radius:inherit;pointer-events:none;
-  box-shadow:inset 0 0 0 1px rgba(212,175,55,.25);
-  animation:runePulse 3.2s ease-in-out infinite}
-@keyframes runePulse{0%,100%{opacity:.35}50%{opacity:.85}}
-@media(prefers-reduced-motion:reduce){
-  button.wsp-go:not(.sc-go-btn)::after{animation:none;opacity:.5}}
-
-/* Slip style -> Conjure reads as one step: the chips choose the style, the
-   button acts on it. Tighten the label above the chips and let Conjure sit
-   centred just under them with air of its own, rather than hard against the
-   last chip or stretched across the panel. */
-/* THE WIZARD PANEL, ON A WIDE SCREEN.
-   Seven stacked rows in a 1,217px card, none of them wider than about 600:
-   more than half the panel was empty, and the Conjure button sat centred in
-   the middle of that emptiness with every control above it left-aligned. The
-   two decisions are independent - how much you want to win, and how you want
-   the slip shaped - so they sit side by side and the button closes its own
-   column. Placed by id and class rather than by position: the hint and the
-   Slider link are inserted by the builder, so nth-child would renumber under
-   it. Phones keep the stack. */
-@media(min-width:900px){
-  .bld-panel.wizard-panel{display:grid;
-    grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);
-    column-gap:30px;align-items:start;grid-auto-rows:min-content;
-    /* dense, or the right column starts three rows down: auto-placement
-       never moves an item to a row above the cursor, and the cursor has
-       already walked past row 1 placing the left column. */
-    grid-auto-flow:row dense}
-  /* Every cell named, because auto-placement will not move an item to a row
-     above its cursor and the two columns then start at different heights.
-     The two labels are told apart by what follows them - the builder inserts
-     the hint and the Slider link, so counting children is not safe. */
-  .bld-panel.wizard-panel>.wsp-lbl:first-child{grid-area:1/1}
-  .bld-panel.wizard-panel>#wspOddsChips{grid-area:2/1}
-  .bld-panel.wizard-panel>.wsp-hint{grid-area:3/1}
-  /* ONE CELL, NOT FOUR, and that is the fix for the hole under the style
-     chips. While these were separate grid items they sat in rows shared with
-     the left column, and the payout chips - which wrap to two lines - made row
-     2 twice the height of the style chips beside them. The 42px of air that
-     left under those chips could not be closed from this side: the row was
-     sized by the other column. As a single item the column stacks on its own
-     margins, so "Auto" sits where it looks like it should.
-     It spans rows 1-4 so the button below keeps its own row across the panel. */
-  .bld-panel.wizard-panel>.wsp-right{grid-area:1/2/5/3;
-    display:flex;flex-direction:column;align-items:flex-start}
-  /* The two columns still have to start level, and the rule that zeroed the
-     labels' top margin only reaches direct children. */
-  .bld-panel.wizard-panel>.wsp-right>.wsp-lbl:first-child{margin-top:0}
-  /* Only as wide as what it says - stretched to the column it was a pill
-     pretending to be a bar. */
-  .bld-panel.wizard-panel .wsp-slider-link{align-self:flex-start}
-  /* THE ACTION CLOSES THE PANEL, so it gets its own row across both columns
-     rather than hanging off the bottom of the right-hand one. Sitting in the
-     style column it read as a caption under "Or let the Slider pick the
-     games", its centre 134px right of the panel's, with the whole left half
-     empty beneath the payout chips. Left-aligned because every label in this
-     panel starts at the same edge and the button is the last thing in that
-     sequence, not a floating object. */
-  /* CENTRED ACROSS BOTH COLUMNS, not parked on the left edge. Left-aligned it
-     sat under the payout chips with the whole right half of the panel empty
-     beside it, and the panel's own centre is where the eye goes after the last
-     chip. Reported as wanting it "more to the right, centralised". */
-  .bld-panel.wizard-panel>button.wsp-go{grid-area:5/1/6/-1;justify-self:center;
-    min-width:250px;margin:18px 0 2px}
-  .bld-panel.wizard-panel>.wsp-lbl{margin-top:0}
-  /* ...except this one, which follows a row of chips rather than starting a
-     column, and would otherwise sit hard against the style chips above it -
-     the only label in the panel with something directly over it. 14px, not
-     the old 20: that number was chosen while a 42px hole sat above it and was
-     doing nothing to close it. */
-  .bld-panel.wizard-panel .wsp-auto-lbl{margin-top:14px}
-}
-.wizard-panel .wsp-lbl{margin:13px 0 7px}
-.wizard-panel .wsp-chips{gap:7px}
-.wizard-panel button.wsp-go{display:block;margin:15px auto 2px;min-width:210px;
-  justify-content:center;padding:12px 26px}
-@media(max-width:560px){
-  .wizard-panel .wsp-lbl{margin:11px 0 6px}
-  .wizard-panel button.wsp-go{margin:13px auto 2px;min-width:0;width:100%;
-    padding:12px 18px;font-size:13.5px}
-}
-
-/* --- live --- */
-#liveStripWrap{margin-top:12px}
-.ticker{height:40px}
-.tk-item{padding:0 16px;gap:8px}
-.live-head h2{font-size:22px;margin:4px 0}
-.live-sub{margin-bottom:10px}
-.live-strip{gap:8px;padding:3px 2px 7px}
-.ls-head{margin:2px 2px 3px}
-.ls-card{padding:8px 11px}
-.ls-top{margin-bottom:5px}
-.lv-selwrap{margin:2px 0 9px}
-.lv-sel{padding:9px 12px}
-.lv-seg{gap:6px;padding:2px 14px 9px 0}
-.lv-chip{padding:7px 12px}
-.lv-grp{margin-bottom:9px}
-.lv-grp-h{padding:3px 2px 6px}
-.lv{padding:7px 11px;margin-bottom:5px}
-.lv-top{margin-bottom:4px}
-.lv-scorers{margin-top:7px;padding-top:7px}
-.lv-tip{margin-top:7px}
-.live-empty{padding:30px 18px}
-
-/* --- slip builder --- */
-#builder,#live{margin-top:5px}
-.bld-head{margin-bottom:16px}
-.bld-head h2{font-size:22px;margin:4px 0 3px}
-.bld-head p{margin-bottom:11px}
-.bld-shared{gap:16px}
-.bld-panel{padding:13px 13px 12px}
-.risk-top{margin-bottom:10px}
-.risk-ticks{margin-top:6px}
-.mkts{margin-top:11px;padding-top:11px;gap:6px}
-.scope-seg{margin-bottom:10px}
-.scope-opt{padding:7px 6px;font-size:11.5px}
-.bld-stats{gap:7px;margin:11px 0}
-.stat{padding:10px 11px}
-#slip{gap:6px}
-/* On a phone the row is ~343px and the pick column was taking 90 of it for a
-   market label, leaving the fixture 125px - which is what forced a long name
-   onto three lines once it stopped being truncated. Trim the pick column and
-   the type so the name gets the width. */
-.sp-row{padding:9px 11px;gap:9px}
-.sp-teams{font-size:13.5px}
-.sp-pick{max-width:32%}
-.sp-pick b{font-size:12px}
-.sp-pick i{font-size:11px}
-.bld-foot{margin-top:11px;padding:12px 14px;gap:11px}
-/* "Book with" was touching the edge of the screen while the bar under it is
-   inset by 14. Row-gap as well, because two brand pills and a label wrap on a
-   320px phone and the wrapped line was landing on top of the first. */
-.bookpick{margin-top:10px;padding:0 14px;gap:6px 7px}
-  /* The sheet insets its body by 18, and the picker is a sibling of it
-     rather than a child, so it has to match by hand or it sits proud of
-     every row above it. */
-  .myslip-sheet .bookpick{padding:0 18px}
-.bookpick-l{font-size:10.5px}
-.bld-note{margin-top:7px}
-#bookResult{margin-top:10px}
-.code-card{padding:14px}
-.code-card b{margin:5px 0 10px;font-size:26px;letter-spacing:.06em;word-break:break-all}
-.code-acts{gap:7px}
-.code-acts button,.code-acts a{min-width:0;text-align:center}
-.code-opens{gap:7px}
-/* Note these rules are not inside a media query - the phone block closes above
-   them - so they apply everywhere, and they sit after the sizes set further up.
-   Anything that sets a size here would undo that hierarchy, so the sizes stay
-   where they are declared and only the gap is adjusted. */
-.code-x{top:6px;right:6px;width:28px;height:28px}
-.confirm-card{padding:13px}
-
-/* --- sheets --- */
-.sheet-grab{padding:7px 0 2px}
-.sheet-head{padding:6px 15px 10px;gap:10px}
-.sheet-head p{margin-top:3px}
-.sheet-body{padding:2px 15px calc(28px + env(safe-area-inset-bottom))}
-@media(min-width:720px){.sheet-head{padding-top:13px}}
-
-/* --- notes + footer --- */
-.note{margin-top:22px;padding:15px}
-.note h3{margin-bottom:9px}
-.note p{line-height:1.6;margin-bottom:8px}
-/* The floating slip button rests over this corner, so the last line of the page
-   needs room to clear it - at 20px the footer's final row sat underneath it
-   with nowhere left to scroll. */
-footer{margin-top:26px;padding-top:18px;
-  padding-bottom:calc(84px + env(safe-area-inset-bottom))}
-.foot-brand{margin-bottom:14px;padding-bottom:14px;gap:10px}
-.foot-cols{gap:14px;margin-bottom:14px}
-.foot-cols h4{margin-bottom:5px}
-.foot-cols p{line-height:1.55}
-.foot-legal{padding-top:12px;gap:8px 15px}
-@media(min-width:720px){.foot-cols{gap:20px}}
-.record-in{padding:8px 12px;margin-top:9px}
-.notif{margin-top:9px}
-.none{padding:30px 18px;margin-top:14px}
-.none b{margin-bottom:6px}
-
-/* A drag has to own the gesture or the page scrolls underneath the finger
-   instead of the button following it. */
-.myfab,.wspfab{touch-action:none}
-
-/* ==========================================================================
-   INSANE WEB UNIQUENESS - Desktop 3D Atmosphere
-   Only activates on desktop (min-width: 1060px) with hover capability
-   and no reduced-motion preference.
-   ========================================================================== */
-@media (min-width: 1060px) and (hover: hover) and (prefers-reduced-motion: no-preference) {
-  /* Global 3D context */
-  /* The perspective is gone, and with it the whole 3D scene.
-     It existed for a mouse-following parallax that is switched off - there is
-     a return statement at the top of that controller saying it moved the page
-     on hover. What was left was the cost with none of the effect.
-     Under a perspective, translateZ changes APPARENT SIZE while the layout box
-     stays put: .intro h1 at translateZ(40px) painted about 3% larger than the
-     box meant to contain it, so content overflowed and was clipped by it. The
-     entrance ran from translateZ(-100px) to 0, which is an element starting
-     small and growing into place - the button being cut off and then expanding
-     on its own.
-     Without perspective every translateZ below is inert, so they can stay
-     where they are; only the explicit scales had to go. */
-  .wrap { }
-  .intro { transform-style: preserve-3d; }
-  #builder { transform-style: preserve-3d; }
-  #live { transform-style: preserve-3d; }
-
-  /* Parallax depth layers - apply data-parallax="0.5|1|1.5|2" to elements */
-  /* These scaled up to compensate for being pushed back. With nothing pushing
-     them back, the scale is just everything rendered 15% too big. */
-  .parallax-deep   { transform: none; }
-  .parallax-mid    { transform: none; }
-  .parallax-shallow{ transform: translateZ(20px); }
-  .parallax-forward{ transform: translateZ(60px); }
-  .parallax-front  { transform: translateZ(100px); }
-
-  /* Entrance choreography */
-  /* A fade and a short rise. No Z, so nothing changes size on the way in and
-     nothing can spill out of the box holding it. */
-  @keyframes stageIn {
-    from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .stage-in { animation: stageIn 0.7s cubic-bezier(0.25, 0.9, 0.3, 1) both; }
-  .stage-in-1 { animation-delay: 0.05s; }
-  .stage-in-2 { animation-delay: 0.10s; }
-  .stage-in-3 { animation-delay: 0.15s; }
-  .stage-in-4 { animation-delay: 0.20s; }
-  .stage-in-5 { animation-delay: 0.25s; }
-
-  /* Intro / Hero depth layers */
-  .intro h1 { transform: translateZ(40px); }
-  .intro p  { transform: translateZ(20px); }
-  .potd { transform: translateZ(0); }
-
-  /* Build page - Control Room depth */
-  .bld-shared { transform: translateZ(0); display:flex; flex-direction:column; gap:18px; }
-  .bld-shared > * { margin:0 } /* labels and chip rows use internal gap */
-  .bld-mode { transform: translateZ(40px); }
-  .bld-mode-btn { transition: transform 0.15s ease, box-shadow 0.15s ease; }
-  .bld-mode-btn:hover { transform: scale(1.02); }
-  .bld-mode-btn.on { transform: translateZ(50px); box-shadow: 0 4px 16px rgba(230,57,70,.4); }
-  .bld-mode-btn.on[data-mode="wizard"] { box-shadow: 0 4px 18px rgba(139,92,246,.5); }
-  .bld-panel { transform: translateZ(30px); }
-  .bld-panel .risk-wrap { transform: translateZ(10px); }
-  .risk { transform: translateZ(20px); }
-  .risk:active, .risk:focus { transform: translateZ(40px); }
-  .mkt-palette { transform: translateZ(10px); }
-  .mkt-chip { transition: transform 0.15s ease, box-shadow 0.15s ease; }
-  .mkt-chip:hover { transform: translateZ(35px) scale(1.02); }
-  .mkt-chip.unlocking { animation: mktUnlock 0.35s ease; }
-  @keyframes mktUnlock {
-    0%   { transform: translateZ(10px) scale(0.92); opacity: 0; }
-    60%  { transform: translateZ(40px) scale(1.04); }
-    100% { transform: translateZ(10px) scale(1); opacity: 1; }
-  }
-  #slip { transform: translateZ(-20px); }
-  .sp-row { animation: stageIn 0.4s cubic-bezier(0.25, 0.9, 0.3, 1) both; }
-  .bld-foot { transform: translateZ(0); }
-  .bld-note { transform: translateZ(-10px); }
-
-  /* Live page - Pitch atmosphere */
-  #live { background-image:
-    radial-gradient(ellipse at 50% 0%, rgba(47,212,138,0.03) 0%, transparent 60%),
-    var(--bg); }
-  .ls-card, .lv { transform: translateZ(0); transition: transform 0.2s cubic-bezier(0.25, 0.9, 0.3, 1), box-shadow 0.2s; }
-  .ls-card:hover, .lv:hover {
-    transform: translateZ(50px) rotateX(-3deg) scale(1.01);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px var(--green);
-    z-index: 10;
-  }
-  .ls-card:active, .lv:active { transform: translateZ(30px) rotateX(-1deg) scale(0.99); }
-  .live-bell { transform: translateZ(20px); }
-  .live-refresh { transform: translateZ(20px); }
-  .btab-dot { transform: translateZ(15px); animation: pulseRing 1.5s ease-in-out infinite; }
-  @keyframes pulseRing {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(230,57,70,0.6); }
-    50% { box-shadow: 0 0 0 8px rgba(230,57,70,0); }
-  }
-
-  /* FAB depth */
-  .myfab { transform: translateZ(60px); transition: transform 0.2s; }
-  .myfab:hover { transform: translateZ(80px) scale(1.05); }
-  .myfab:active { transform: translateZ(40px) scale(0.98); }
-
-  /* Sheet depth when open */
-  .sheet { transform: translateZ(100px); }
-  .sheet-head { transform: translateZ(20px); }
-  .sheet-body { transform: translateZ(10px); }
-
-  /* Reduced motion fallback - disable all 3D transforms */
-}
-@media (prefers-reduced-motion: reduce) {
-  .wrap, .intro, #builder, #live { perspective: none; transform-style: flat; }
-  .parallax-deep, .parallax-mid, .parallax-shallow, .parallax-forward, .parallax-front,
-  .intro h1, .intro p, .potd,
-  .bld-shared, .bld-mode, .bld-panel, .bld-panel .risk-wrap, .risk, .mkt-palette, #slip, .bld-foot, .bld-note,
-  .ls-card, .lv, .live-bell, .live-refresh, .btab-dot, .myfab, .sheet, .sheet-head, .sheet-body {
-    transform: none !important;
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
-/* ================= INTRO GATE =================================================
-   Isolated on purpose: every selector is inside #swGate or on the two html
-   classes the head bootstrap sets, so nothing here can reach the board, the
-   slip builder or the nav. Removing the block and the markup removes the
-   feature whole.
-
-   HIDDEN BY DEFAULT, shown only by html.sw-gate-on. That direction matters -
-   a reader who has already seen it today, or who arrived from a search engine,
-   never gets a frame of it. The other way round flashes the splash on every
-   repeat visit, which is the thing the head script exists to prevent. */
-#swGate{display:none}
-html.sw-gate-on #swGate:not([hidden]){
-  display:flex; position:fixed; inset:0; z-index:99999;
-  align-items:flex-end; justify-content:center; text-align:center;
-  background:#0D0D0F; opacity:1; transition:opacity .3s ease;
-}
-/* The poster arrives a beat after the gate paints, however early it is asked
-   for. Fading it in over the ground above turns that beat into an entrance
-   instead of a flash of black. */
-#swGate .sw-g-poster{animation:swgPoster .5s ease both}
-@keyframes swgPoster{from{opacity:0;transform:scale(1.03)}to{opacity:1;transform:scale(1)}}
-@media(prefers-reduced-motion:reduce){
-  #swGate .sw-g-poster{animation:swgPosterFade .3s ease both}
-  @keyframes swgPosterFade{from{opacity:0}to{opacity:1}}
-}
-/* Covers the mobile bottom nav too, until dismissed. */
-html.sw-gate-on, html.sw-gate-on body{overflow:hidden; overscroll-behavior:none}
-html.sw-gate-on #swGate.is-out:not([hidden]){opacity:0; pointer-events:none}
-
-/* The poster is underneath and always painted, so there is something on screen
-   the instant the HTML lands. The video fades in over it only once it can
-   actually play - if autoplay is refused, which iOS Low Power Mode does
-   outright, the poster simply stays and nothing looks broken. */
-#swGate .sw-g-media{position:absolute; inset:0; overflow:hidden;
-  background:
-    radial-gradient(120% 70% at 50% 22%,rgba(176,48,48,.20),transparent 62%),
-    radial-gradient(90% 50% at 50% 100%,rgba(242,184,75,.08),transparent 70%),
-    #0D0D0F}
-#swGate .sw-g-poster,#swGate video{
-  position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
-  background:#0D0D0F;
-}
-#swGate video{opacity:0; transition:opacity .45s ease}
-#swGate video.is-in{opacity:1}
-html.sw-gate-still #swGate video{display:none}
-
-/* Legibility over a moving picture, weighted to the bottom where the copy is. */
-/* Weighted hard to the bottom because that is where the copy lives, and the
-   wizard's face fills the upper left of the frame. A flat scrim either
-   washes him out or leaves the text sitting on his eye - the first thing
-   this looked like. */
-#swGate .sw-g-scrim{
-  position:absolute; inset:0;
-  background:linear-gradient(180deg,rgba(13,13,15,.30) 0%,rgba(13,13,15,.10) 26%,rgba(13,13,15,.72) 62%,rgba(13,13,15,.96) 100%);
-}
-#swGate .sw-g-panel{
-  position:relative; z-index:2; width:100%; max-width:620px;
-  padding:0 22px calc(46px + env(safe-area-inset-bottom)) 22px;
-  display:flex; flex-direction:column; align-items:center; gap:14px;
-  opacity:0; transform:translateY(10px);
-  animation:swGateIn .5s ease .4s forwards;
-}
-/* On a timer, never on a video event. The copy has to arrive whether or not
-   the file ever loads. */
-@keyframes swGateIn{to{opacity:1;transform:none}}
-
-#swGate .sw-g-mark{height:34px;width:auto;opacity:.92;margin-bottom:2px}
-#swGate h2{
-  margin:0; font-size:clamp(23px,5.4vw,38px); line-height:1.18; font-weight:800;
-  letter-spacing:-.02em; color:#F7F7F8; text-wrap:balance;
-}
-/* text-wrap:balance because naming both bookmakers made this long enough to
-   wrap on a 360px phone, and it wrapped badly - "code." alone on line two.
-   Balance splits the two lines evenly instead of filling the first and
-   orphaning whatever is left. Ignored by browsers that do not have it, and
-   what they get is the wrap we had before. */
-#swGate .sw-g-sub{margin:0; font-size:clamp(14px,3.4vw,17px); color:#C9C9CE;
-  font-weight:500; text-wrap:balance}
-/* THREE GREYS, NOT FIVE.
-   The panel had #C9C9CE, #A9A9B2, #9A9AA2, #8B8B94 and white. Four greys inside
-   one small block, and the middle two were 8.33:1 and 6.95:1 - close enough that
-   the eye cannot rank them, so they read as one tier pretending to be two.
-   A panel this size can express three levels and no more:
-
-     #F7F7F8  the question              18.14:1
-     #C9C9CE  the promise, and Skip     11.77:1
-     #9A9AA2  under 18, and fine print   6.95:1
-     #F2555F  the age line, off the ladder entirely
-
-   Skip moving UP to the second tier is deliberate. It is a real choice, not a
-   footnote, and it does not compete with Enter because Enter is a filled red
-   pill - the hierarchy there is carried by FORM, which is what frees the colour
-   ladder to be this short. */
-/* The compliance line, in red - and NOT the brand red.
-   #E63946 measures 4.66:1 on this background, which scrapes AA against a
-   FLAT colour and the background here is video. #F2555F is the same hue
-   lifted to 5.77:1, so it still reads as the brand and survives a bright
-   frame of lightning behind it.  */
-#swGate .sw-g-age{
-  margin:4px 0 0; font-size:13px; color:#F2555F; font-weight:700;
-  letter-spacing:.015em;
-}
-html.sw-gate-known #swGate .sw-g-age,
-html.sw-gate-known #swGate .sw-g-under{display:none}
-
-/* A READER WHO HAS BEEN HERE BEFORE.
-   The gate shows on every visit now, so the second time it must not feel like
-   a wall. Three things change and nothing else:
-     the age question goes, because they answered it,
-     Skip APPEARS - it is display:none on a first visit - as a real bordered
-     control rather than the quiet grey text it used to be,
-     and the copy arrives in half the time, since they have read it.
-   Skip is deliberately NOT promoted above Enter. Someone returning may still
-   want the reveal; the point is only that leaving is obvious, not that it is
-   the expected choice. */
-html.sw-gate-known #swGate .sw-g-panel{animation-delay:.18s}
-html.sw-gate-known #swGate .sw-g-skip{
-  display:inline-flex; align-items:center; justify-content:center;
-  border:1.5px solid rgba(201,201,206,.42); border-radius:999px;
-  padding:10px 26px; color:#E8E8EC; background:rgba(13,13,15,.35);
-  -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
-  margin-top:2px;
-}
-@media (hover:hover){
-  html.sw-gate-known #swGate .sw-g-skip:hover{
-    border-color:rgba(242,184,75,.7); color:#fff; background:rgba(13,13,15,.55);
-  }
-}
-@media (max-width:560px){
-  html.sw-gate-known #swGate .sw-g-skip{width:auto; min-width:min(200px,54vw); padding:11px 24px}
-}
-
-/* THE SAME PILL AS "Add all tips to slip", scaled up to a hero.
-   That control is the site's strongest call to action and it is not a gold
-   fill - it is a deep red gradient with a GOLD HAIRLINE EDGE, white text and
-   an ember on the left. Borrowing it means Enter already looks like this site
-   before the reader has seen any of it, and the first thing they meet is the
-   same shape as the thing we actually want them to press later. */
-#swGate .sw-g-enter{
-  position:relative; overflow:hidden; appearance:none; cursor:pointer; margin-top:4px;
-  display:inline-flex; align-items:center; justify-content:center; gap:8px;
-  min-width:min(268px,74vw); padding:13px 30px 13px 40px; border-radius:999px;
-  background:linear-gradient(135deg,#6d1017,#E63946 55%,#9c1620); color:#fff;
-  border:1.5px solid rgba(242,184,75,.62);
-  font:inherit; font-weight:800; font-size:15.5px; letter-spacing:.03em;
-  text-shadow:0 1px 2px rgba(0,0,0,.55);
-  box-shadow:0 2px 12px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.13);
-  transition:filter .25s, box-shadow .25s, transform .15s;
-}
-/* The ember, same as the one on the slip pill. */
-#swGate .sw-g-enter .sw-g-spark{
-  position:absolute; top:50%; left:18px; width:5px; height:5px; margin-top:-2.5px;
-  border-radius:50%; background:#F2B84B; pointer-events:none;
-  box-shadow:0 0 9px 2px rgba(242,184,75,.75);
-  transition:background .25s, box-shadow .25s;
-}
-@media (hover:hover){
-  #swGate .sw-g-enter:hover{filter:brightness(1.1);
-    box-shadow:0 0 0 1px rgba(242,184,75,.85), 0 8px 28px rgba(230,57,70,.55),
-               inset 0 1px 0 rgba(255,255,255,.16)}
-  #swGate .sw-g-enter:hover .sw-g-spark{background:#FFD873;
-    box-shadow:0 0 14px 3px rgba(242,184,75,1)}
-  #swGate .sw-g-skip:hover{color:#E8E8EC}
-  #swGate .sw-g-under:hover{color:#C9C9CE}
-}
-#swGate .sw-g-enter:active{transform:scale(.97)}
-#swGate .sw-g-enter:focus-visible,
-#swGate .sw-g-skip:focus-visible,
-#swGate .sw-g-under:focus-visible{outline:2px solid #F2B84B; outline-offset:3px}
-
-/* 44px minimum on both, measured rather than assumed: Skip came out 60x35 at
-   390px wide, under the tap target every mobile guideline asks for, and it is
-   the control someone in a hurry reaches for.
-
-   NOT ON A FIRST VISIT AT ALL. Skip is hidden until localStorage says this
-   reader has met the gate before - html.sw-gate-known below is the only thing
-   that brings it back. A first-timer is being shown the one thing the site
-   opens with; offering them an exit from it in the same breath undersells it,
-   and they are not trapped either way: Enter dismisses the gate, and "I am
-   under 18" is untouched, so the age question still has both its answers.
-   Returning readers keep the visible bordered control - see the block above,
-   which is where the reasoning for that lives. */
-#swGate .sw-g-skip{
-  display:none;
-  appearance:none; background:none; border:0; cursor:pointer;
-  color:#C9C9CE; font-family:inherit; font-size:15px; font-weight:600;
-  min-height:44px; padding:9px 24px; font-size:14.5px; transition:color .15s ease;
-}
-#swGate .sw-g-under{
-  appearance:none; background:none; border:0; cursor:pointer;
-  color:#9A9AA2; font-family:inherit; font-size:12.5px; font-weight:500;
-  min-height:44px; padding:12px 18px; text-decoration:underline; text-underline-offset:3px;
-  transition:color .15s ease;
-}
-/* Was #6E6E77 at 3.85:1, which fails AA outright - and it is the line that
-   says play responsibly, so it is the last one that should be decorative.
-   #8B8B94 is 5.42:1 and still reads as fine print. */
-#swGate .sw-g-legal{margin:8px 0 0; font-size:11.5px; color:#9A9AA2; letter-spacing:.02em}
-
-/* The under-18 answer. Not a dismissal - the panel is replaced and the gate
-   stays up, because the one thing this must not do is let the answer through. */
-#swGate .sw-g-stop{display:none; max-width:440px}
-#swGate.is-stopped .sw-g-panel{display:none}
-#swGate.is-stopped .sw-g-stop{display:flex; flex-direction:column; gap:10px;
-  position:relative; z-index:2; padding:0 24px; align-items:center}
-#swGate .sw-g-stop h2{font-size:clamp(20px,4.6vw,28px)}
-#swGate .sw-g-stop p{margin:0; color:#C9C9CE; font-size:15px; line-height:1.5}
-#swGate .sw-g-stop .sw-g-back{color:#F2B84B; background:none; border:0; cursor:pointer;
-  font-family:inherit; font-size:14px; font-weight:700; padding:8px; text-decoration:underline}
-
-/* The reveal is hidden until it is asked for, so the loop is the only thing
-   competing for bandwidth while the reader is deciding. */
-#swGate video.sw-g-reveal{opacity:0}
-#swGate.is-revealing .sw-g-panel{opacity:0; transform:none; transition:opacity .15s ease; animation:none}
-#swGate.is-revealing video.sw-g-loop{opacity:0}
-#swGate.is-revealing video.sw-g-reveal{opacity:1}
-
-@media (prefers-reduced-motion: reduce){
-  #swGate .sw-g-panel{animation:none; opacity:1; transform:none}
-  #swGate,#swGate video{transition:none}
-}
-
-/* The wordmark, as text. No logo mark: on this frame the mark sat on the
-   wizard's eye and read as a blob rather than a brand. */
-#swGate .sw-g-brand{
-  position:absolute; z-index:4; top:calc(18px + env(safe-area-inset-top));
-  left:calc(20px + env(safe-area-inset-left));
-  font-size:17px; font-weight:800; letter-spacing:-.01em; color:#F2B84B;
-  text-shadow:0 2px 14px rgba(0,0,0,.6); pointer-events:none;
-}
-#swGate .sw-g-brand span{color:#F7F7F8}
-@media (max-width:560px){
-  #swGate .sw-g-brand{font-size:15px; top:calc(14px + env(safe-area-inset-top)); left:16px}
-}
-
-/* ---- landing: the zoom does not stop, it arrives -----------------------------
-   Measured on the asset: the reveal ends at mean brightness 75 with a bright
-   spot at 229, so it finishes ON the glowing eye rather than whiting out. A
-   plain cross-fade there reads as the video giving up. Pushing the frame past
-   the viewport while a short gold flash carries the eye's light makes the last
-   thing the reader sees continue into the page underneath, which is already
-   rendered and waiting. */
-/* NOTHING OF THE WIZARD MAY SURVIVE THE LANDING.
-   Scaling only the reveal left the poster and the loop sitting behind it,
-   still at scale 1, so as the gate faded you saw a moment of static wizard
-   underneath the zoom. The whole media layer moves together now, and the
-   scrim goes with it - one thing travelling through the eye, not a video
-   leaving a photograph behind.
-   The media clears BEFORE the gate does: opacity is gone by .30s while the
-   gate finishes at .40s, so the last tenth of the fade is flat #0D0D0F,
-   which is what makes the arrival read as the page rather than a dissolve. */
-#swGate .sw-g-media,#swGate .sw-g-scrim{
-  transform:scale(1); transform-origin:50% 46%;
-  transition:transform .44s cubic-bezier(.4,0,.7,.2), opacity .30s ease-in;
-}
-#swGate.is-landing .sw-g-media{transform:scale(2.4); opacity:0}
-#swGate.is-landing .sw-g-scrim{transform:scale(2.4); opacity:0}
-/* Specificity, not style: the base rule is `html.sw-gate-on #swGate:not([hidden])`
-   at (1,2,1), which outranks a plain `#swGate.is-landing` at (1,1,0) - so the
-   gate never faded and the tail of the landing was a black screen that cut to
-   the site. Measured: media opacity reached 0 while gate opacity stayed 1.
-   Matching the base selector fixes it without !important. */
-html.sw-gate-on #swGate.is-landing:not([hidden]){opacity:0; transition:opacity .40s ease-in .04s}
-#swGate .sw-g-flash{
-  position:absolute; inset:0; z-index:3; pointer-events:none; opacity:0;
-  background:radial-gradient(circle at 50% 46%,rgba(255,225,160,.85) 0%,rgba(242,184,75,.35) 34%,rgba(13,13,15,0) 68%);
-}
-#swGate.is-landing .sw-g-flash{animation:swGateFlash .42s ease-out forwards}
-@keyframes swGateFlash{0%{opacity:0}38%{opacity:.55}100%{opacity:0}}
-
-/* ---- mobile ----------------------------------------------------------------
-   dvh because the address bar makes vh lie on iOS and Android: with vh the
-   gate is taller than the screen and the button sits under the browser chrome,
-   which is exactly where the one thing the reader has to press must not be.
-   The panel is bottom-weighted so Enter lands in the thumb arc rather than the
-   middle of a phone screen. */
-html.sw-gate-on #swGate{height:100vh; height:100dvh}
-/* THE PORTRAIT CUT IS EXTENDED BELOW, not padded.
-   A phone sees 496 x its aspect of source width - about 229px - however wide the
-   crop is, so widening the crop could never move the nose off the edge. Making
-   the source taller is the only real zoom-out, which is why there is anything
-   below the picture at all.
-   It used to be 211px of flat #0D0D0F, and the scrim had to go fully solid at
-   78% to hide the seam where the bright beard met it. Between them they killed
-   the bottom quarter of the screen: "im not sure i like ... the black filling ..
-   i kinda liked the fullscreen we had".
-   So the file now carries 90px of picture there instead - the frame itself,
-   scaled up, blurred and feathered in over 70px, so the beard falls out of focus
-   rather than stopping. Measured on the shipped frame: zero flat rows (was 211),
-   largest row-to-row step below y=600 is 2.6, and the bottom row still has real
-   variance. There is no seam left to hide, so the scrim goes back to a gradient
-   that never reaches solid and the picture runs to the bottom edge.
-   90px is the "tiny zoom out" and not more: it keeps the nose off the edge while
-   the synthesised part stays under the heaviest part of the scrim. */
-@media (max-aspect-ratio: 3/4){
-  #swGate .sw-g-scrim{
-    background:linear-gradient(180deg,
-      rgba(13,13,15,.30) 0%,
-      rgba(13,13,15,.10) 26%,
-      rgba(13,13,15,.58) 56%,
-      rgba(13,13,15,.88) 78%,
-      rgba(13,13,15,.97) 100%);
-  }
-}
-@media (max-width:560px){
-  #swGate .sw-g-panel{
-    justify-content:flex-end; gap:12px;
-    padding:0 18px calc(34px + env(safe-area-inset-bottom)) 18px;
-  }
-  /* NOT width:100%. A pill stretched to both margins stops reading as a pill
-     and starts reading as a bar, which is what made these look oversized. */
-  #swGate .sw-g-enter{width:auto; min-width:min(252px,68vw); padding:14px 26px 14px 34px; font-size:15.5px}
-  #swGate .sw-g-mark{height:28px}
-  #swGate .sw-g-sub{font-size:14px}
-  /* This block comes AFTER the max-aspect-ratio one above and would otherwise
-     win, putting the flat-bottomed gradient back. Same stops as up there, kept
-     in sync deliberately rather than by luck. */
-  #swGate .sw-g-scrim{
-    background:linear-gradient(180deg,
-      rgba(13,13,15,.30) 0%,
-      rgba(13,13,15,.10) 26%,
-      rgba(13,13,15,.58) 56%,
-      rgba(13,13,15,.88) 78%,
-      rgba(13,13,15,.97) 100%);
-  }
-}
-/* A 13-INCH LAPTOP IS A SHORT SCREEN, and this is where the copy landed on his
-   eyes: "on a 13 inch laptop screen, the are you tired text covers the wizard's
-   face".
-   Nothing was wrong with the rules - the panel is bottom-weighted and already
-   sitting as low as it goes. The problem is that its content is a fixed ~390px
-   tall while the viewport is not: on a 1080-tall desktop that is 36% of the
-   screen and clears him easily, on a 1280x640 laptop it is 61% and reaches the
-   brow. So the panel has to get shorter when the screen does, and the picture
-   has to give a little ground.
-
-   Two moves, and both are needed - either alone leaves text on his face:
-
-   THE PANEL LOSES ABOUT 90px. Smaller question, tighter stack, less floor. The
-   legal line stays: it is the responsible-gambling notice and a laptop is far
-   too common a screen to drop it from, which is why the height comes from
-   spacing instead. The under-18 route and the red age line stay for the same
-   reason.
-
-   THE PICTURE IS LEFT ALONE. The obvious second move was object-position: at
-   this shape the video fills the width and has ~95px of height it cannot show,
-   so shifting toward the bottom would carry him ~30px higher. Tried, measured,
-   REVERTED - the source has an "AI generated" watermark baked into its bottom
-   right corner, and centring is what keeps it cropped off. Shifting down put it
-   on screen. The smaller panel clears his eyes by itself, so the shift bought
-   about 30px at the price of a watermark, which is no trade at all.
-   (The watermark is visible on a 16:9 desktop as it is, where there is almost
-   no vertical crop to hide it. That is a separate asset problem, not a layout
-   one, and nothing here should make it worse.)
-
-   Bounded above at 800px so a normal desktop keeps the full-size treatment, and
-   below by the 460px rule that follows, which is a phone on its side. */
-@media (min-width:900px) and (max-height:800px){
-  #swGate h2{font-size:clamp(21px,2.2vw,28px)}
-  #swGate .sw-g-sub{font-size:15px}
-  #swGate .sw-g-panel{gap:8px; padding-bottom:calc(24px + env(safe-area-inset-bottom))}
-  #swGate .sw-g-enter{padding:12px 28px 12px 36px; font-size:15px}
-  #swGate .sw-g-age{margin-top:2px}
-}
-/* A short landscape phone has no room for the sub line; the question and the
-   button are what matter. */
-@media (max-height:460px){
-  #swGate .sw-g-sub,#swGate .sw-g-mark,#swGate .sw-g-legal{display:none}
-  #swGate .sw-g-panel{gap:10px; padding-bottom:calc(16px + env(safe-area-inset-bottom))}
-  #swGate h2{font-size:clamp(19px,4.4vw,26px)}
-}
-
-/* THE WIZARD PAGE, TIGHTENED FOR A PHONE.
-   Asked for: "find a way to tighten the page so that more can be seen on
-   mobile on that wizard page." Measured at 390px before this: 2127px of
-   document, with the payout chips - the first thing anyone is here to press -
-   starting 953px down, behind a coach card and an open filter panel.
-   Nothing is removed. Section labels lose half their air, the market palette
-   packs four to a row instead of three, the explainer drops to phone leading,
-   and the segments and stat tiles stop carrying desktop gaps.
-   AT THE END OF THE STYLESHEET ON PURPOSE. Every rule here overrides a base
-   rule of equal specificity, so it only wins on source order - the first
-   attempt sat a thousand lines above .bld-coach and .wsp-slider-link and lost
-   to both silently. */
-@media(max-width:560px){
-  .wsp-lbl{margin:10px 0 5px}
-  .wsp-chips{gap:5px}
-  /* FOUR COLUMNS IS TOO MANY ON A SMALL PHONE. At 360px they come out 75px
-     wide and "Team over 0.5" needs 79, so the words ran out of the pill;
-     at 320 four of the eleven labels did. The count follows the width now
-     and drops to three where four will not fit, and the chip gives the
-     text another few pixels from its own padding. */
-  .wsp-chips.mkt-palette{grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:5px}
-  .mkt-palette .mkt-chip{padding:7px 7px;gap:3px;font-size:11.5px}
-  .mkt-chip{padding:6px 5px;font-size:11px;gap:3px}
-  .scope-seg{margin-bottom:7px}
-  .filters-body{margin-bottom:8px;padding-bottom:2px}
-  .filters-toggle{margin-bottom:8px}
-  .bld-mode-hint{margin:6px 0 8px}
-  .bld-stats{margin:8px 0}
-  .wsp-slider-link{margin-top:8px;padding:8px 12px}
-  .bld-coach{margin:8px 0 0;padding:9px 11px}
-  .bld-coach h4{margin-bottom:5px}
-  .bld-coach ul{gap:5px}
-  .bld-coach li{font-size:11.5px;line-height:1.42;gap:7px}
-  .bld-coach .bc-x{margin-top:7px;padding:6px 12px}
-}
-
-/* THE FILTER PANEL, IN TWO COLUMNS ON A WIDE SCREEN.
-   Asked: "the filter collapse is long asf on web, is that a design flaw?"
-   It is: the panel is a single stacked column whatever the width, so on a
-   desktop it runs about 320px tall down the left while the right half of its
-   own card sits empty. Four stacked sections is a phone layout being shown to
-   a screen with room for two.
-   Window and time and leagues stay together on the left, because they narrow
-   the same thing; the market palette takes the right, where its six-across
-   grid already lives. The children are placed by position rather than by
-   class - they are a fixed sequence built in one place - and the first item
-   of the right column loses its label margin so the two columns start level. */
-@media(min-width:900px){
-  /* TWO COLUMNS THAT DO NOT SHARE ROWS.
-     This was a grid whose children were placed by position, which meant the
-     two halves shared row tracks: every row grew to the taller of its two
-     sides, so "Include markets" sat in a row sized by the scope buttons
-     opposite it and floated 36px above its own chips, and pinning the palette
-     across a row span instead just moved the slack into the left column.
-     Each half is one box now and each lays itself out, which is what the
-     panel wanted all along. */
-  .filters-body{display:flex;align-items:flex-start;gap:22px}
-  /* NOT A HALF EACH. The left side is three fixed-width controls - a window,
-     a time of day, three league chips - and none of them get better with more
-     room, so an even split spent hundreds of pixels on slack beside them and
-     then squeezed eleven market chips into four narrow columns opposite.
-     The left takes what it needs and the palette takes the rest. */
-  .filters-col1{flex:0 0 340px}
-  .filters-col2{flex:1 1 auto;min-width:0}
-  .filters-col2>.wsp-lbl:first-child{margin-top:0}
-  /* Sized by the space it is given rather than by a breakpoint guess, now
-     that the space is no longer half the panel: 108px is the widest label
-     ("Team over 0.5") plus its icon, its tier badge and the padding. */
-  /* Six columns is the ceiling, because eleven markets fall 6+5 there and
-     land ragged anywhere wider - seven columns leaves three empty cells
-     staring out of the second row. The max() sets each column's floor to a
-     sixth of the space, so auto-fit cannot fit a seventh, and drops back to
-     the 108px label floor when the panel is too narrow for six. */
-  .wsp-chips.mkt-palette{grid-template-columns:repeat(auto-fit,minmax(max(108px,calc((100% - 5 * 6px) / 6)),1fr))}
-}
-</style>
-</head>
-<body>
-
-<!-- ===== INTRO GATE =========================================================
-     First in the body so it paints before anything under it. Hidden unless the
-     head bootstrap turned it on. `preload="none"` on both videos is deliberate:
-     the script decides what to fetch after it has checked the connection, so a
-     reader on a metered phone is never charged for a file they will not see.
-     The poster is the only image that always loads, and it is 37 KB. -->
-<div id="swGate" role="dialog" aria-modal="true" aria-labelledby="swGateQ" hidden>
-  <div class="sw-g-media">
-    <!-- Two crops, and the reason is continuity rather than sharpness. The
-         portrait video is cut from source x211-459, centred on 335; a landscape
-         poster cover-cropped on a phone centres on 432. Ship one poster for
-         both and the picture JUMPS SIDEWAYS the moment the video fades in.
-         A <picture> resolves at parse time, so this still paints immediately -
-         and only ONE of the two is ever fetched. -->
-    <picture>
-      <source media="(max-aspect-ratio: 3/4)" srcset="/intro-wizard-poster-p.jpg">
-      <img class="sw-g-poster" src="/intro-wizard-poster.jpg" alt="" aria-hidden="true" fetchpriority="high">
-    </picture>
-    <video class="sw-g-loop" muted playsinline autoplay loop preload="none"
-           poster="/intro-wizard-poster.jpg" aria-hidden="true" tabindex="-1"></video>
-    <video class="sw-g-reveal" muted playsinline preload="none"
-           aria-hidden="true" tabindex="-1"></video>
-  </div>
-  <div class="sw-g-scrim" aria-hidden="true"></div>
-  <div class="sw-g-flash" aria-hidden="true"></div>
-
-  <div class="sw-g-brand" aria-hidden="true"><span>Soccer</span>wizard</div>
-  <div class="sw-g-panel">
-    <h2 id="swGateQ">Are you tired of picking games one by one?</h2>
-    <p class="sw-g-sub">We build the slip. You get a SportyBet, Bet9ja or BetKing code.</p>
-    <p class="sw-g-age">You must be 18 or over to continue.</p>
-    <button type="button" class="sw-g-enter" id="swGateEnter"><span class="sw-g-spark" aria-hidden="true"></span>Enter</button>
-    <button type="button" class="sw-g-skip" id="swGateSkip">Skip</button>
-    <button type="button" class="sw-g-under" id="swGateUnder">I am under 18</button>
-    <p class="sw-g-legal">18+ only. Play responsibly.</p>
-  </div>
-
-  <div class="sw-g-stop">
-    <h2>Soccerwizard is for adults only.</h2>
-    <p>You need to be 18 or over to use this site. Please close this page.</p>
-    <button type="button" class="sw-g-back" id="swGateBack">I entered that by mistake</button>
-  </div>
-</div>
-
-
-<script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* THE INTRO GATE, WIRED HERE RATHER THAN IN THE BUNDLE.
  *
  * Inline and next to its own markup on purpose. The bundle is a deferred
@@ -6773,604 +6773,604 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
      wiring below dismisses outright if anything in setup threw. Escape is
      registered before any of it and always works. */
 })();
-</script>
 
-<!-- The wizard travels inline: this paints before any request can come
-     back, and a src the browser has to fetch would leave a hole in the
-     middle of the ring for the first second of every cold visit. One copy
-     of the bytes, in a custom property, used by the badge and by the mask
-     the shine runs through. -->
-<div class="loader" id="loader" style="--sig:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALAAAACwCAMAAACYaRRsAAABIFBMVEWeXSRfXl8lJCPKbChsSx/bkCbklVtgX182NTWamJpgMhlNTEsiJCX9y1WrcEq4hCahoaDAvsI6Oj7Y1tXFsqrZ5uqdJTAySFH/woKxiWgQiawRb4bCNzZj4fAPOUKWx9N/foFAPkCGfX1qAABBPjxFQz5UsMRMiZaFu8bFublIRD///wD/0Td/AH89PUAGmcPGxrgA//8AAACsLi4EAgKwMTBUFRX18/Pq5+n9tira1tn0qSWPKSnKx8vLhhC2tLisqq8uFg0XFBD5qm3+snS6egx1IiIpDAxoHBzi3eHZlBk1JA4YFxZQNhH////g295tSBDVlynomibYhlCxZzrkmReIholVVVV+fn6SZhpKKgzIeEb/wjG9vMHplVo3Nzj/dHAZAAAAYHRSTlP+/qL//v7+L2n//0z4/v/+Ff8JDv//////////////////GwJdUf///xY8Af8CX/8SAQD+/v7+//////7+//7//v75///+/v7+///+0P4E//7+/v////8DBP7+//7///4Q97ufAAAgvUlEQVR42u1diXbaWrI9YrLBXA8Zuvu9Ht88T0ECDQghOUzGGIwNtvHA///F21V1jhC2k0ASbm6vddU3TuJkpTdFnV27hlOoD39lj/oV8K+AfwbAtzc3b25ubv8KAN9s9K1fCGCD7OJ4b2/v4OBgb+/24pdu4eOD/Vzu3E6f5Dy3v3fxfe2svpdtjw9yuRRpjx6DOndwzJb/hQDmo3W8n0sEab3bbDr6qTWb/VhjvvgFWfjiQEwLrClUeQR1nWx9vv/2FwJ4b/+cLds0SFO4K9TNOpl5//gXAHiPjctoBVst81P6S3zt9gjyxQ8EfGPg9ro1A9BJEdOXvPEK+q1APt//kRZm142bWYzGH/g3gZLXkLpGF38/t/ejADNc4wsvPbdWU9605jzzZvLl3MWPAJzCTZE+x1bLe16+5qh8Xq3+gtMEzZ0ffPjwXz8b4Nt16zorC2fojJ7f5L0gKAYBoc5831HfaOTtLXzBPKatK0+z9oyAceLyAQB7bGX6vn5ZSk2Lo2/yZPVVtFtvZs5Srbtma2DLT4E04GfNvo6j6E9g5OTgZwGsY1o/AwJw+83U1vpbTr4YMGCvWHNqmb+LJ4/vklvs7xTwbSamdTWvisma/WdRw3BEUUys1k8j/g7+YPobcHJutxbWxk0jMNMDqLVeb2qmaDq1rITAmfO8Ips4y3r0B/l8nggOR+9iB4DFuKxy466zClwOVBnMC4PLe91tppZ3BJdXhJk9tYYYP6nrfqVe78ZfiXgDC7/dzxpXzjyw9qFp6nZdR+W+cQxjSBgXvwYp1LKHTqSbeXK7sPAeK10x7oq9yBXww44Fb7PeXwkf+TmYiquo9NQ5HDbsoTq6DILLo7vhVyFWG0Q0O2s+QgSodbgD/FDzcL2ecpoGrIri5ZnzRnDju0vPO2u1Zq3WWXA0/IqT9znAx0wLcZZlGR6g1ruMVwitWZcwUnNWp0vp39ccE5TrZFzQ8zR/FgStlhecnZ3F27Pb5wC/5QjsZB/Keur6scWBCW9f4K0zWJbLSKklygPQVufM86b4+azVmXVse++7ugQL3rjeT5/66gElM172D+eF/sl+h2XaJHiYdhDoWp1OvsVxxZvNJvb5xfc9dOIV9XqvV19/8G1mNMLbzSRxtZeP0+zZyZE3a3UCsjGQBsW7Ah4VzLZ2CvWltEJrnW6ds/dY0Pbpd8QQ5A/1evbNrzkv8cJ7i0EHTpAnhwiOJrHmtWFRbWtitak86/6mmyk70Fc6cYy3aQ6cPmXr4oHcd+J58IYgH8w8j+jMlCxiuzi0D7Yqs6jNFWWX3trVUzd4+46O0898QseYim0XPKYFOm5Hw8w/YV/CLbakNrWdCF5ZmQ3cr5sTh1icr2UlprFv37aVR+RA3nA5YrOmj/Im8IndyMuLA4Fczxi4ywY2sXi6yjlT2OQPdx6gnrW0rKxcHxZSwCPvspjYFzvSw9rKdWNgcQhNaTVn6qkXB47xPszIHUANABqr++vr+2vjFzHIzbb/bRsNtJ2A32ddYQtFiEMYAyOI5X9DSada5wflnYEfyB2AsnB/eH14eH1/P9KnDi/Dto93BhjR2lQouxkDkxtwzpmfcs6ZxTuB/wLx1DuiUHd/eH9Fz/39Qp86AE7e7hAw5JCUKQFSKFknl6ucM5M/9eCkrTNEDM7jhrDs1VXpCU+pdGgAX9rVi91mzXvnojD4xFGQQwY3lRRuPad3YnsIPoP/TglvBXBLpdPTjx8/np4+PQ1TwOc7BsyIm8bA5BGUJKd4V6xWJxcVtXNH7nt/BcuWTgEXP54qAvjhaFe0lnlykD3ag/sS1+C864CF0I4QK6B7yb7A+wTz0sMWvipowDsKHGtccU4krA2sJbsDn/Aoq1/VhIkgQGZ5wUveQM5A/zHsQw34bteAbz/skUc061nEIDXC6wWrvCOWA3fW8YoIENfXhcO/OSx9FLDsFMnPZuF94gitjPuOyd29vJPP+ATSvQARDooySOy4ULCi6H0ZmD+KC+MH+0TgTbbUl+prXDjOGpgBT4nPak7RlCGa5MCtPMkd0IEVuW6jQf9ZsLIxcsKBY7RzwHDh/h+E01Ll7kjNb5Uj96DQOlNwGiyYWO/GLh7fFcgfT+n0lX73N3YV78IQgN/stNzKLqwNbEgsn6+lxSBxiKHXmj2cteCituWH5fncsqLQH7gNd354+gTIVx+vKvOEAP/799fDL1y4mTlxHOiMFJYvXYoILW/WCS5t+7eHVpUPWFKdhzBzY354Xzo8PTwt+FFMHr63Y8A5kFo/dYi1eoXJPMFoDxAQSDUhlCqLuHKNiHylhnBmPwwbZasAuFbYiAoBa5/bXQJ+m0D4aIdwMr0tXRlKHQIPObCtrtX9E3jhUClVsZN5GIZulJRKy9ANowregmTHgPeMR/SaTu21JJkY4vKsBclOEQP6F3hLhTTNWFrl8rLyUVnj9nwZg6STi92yxD7iMnlEr+7U1uuVJtPoUYhD1hkEMRTP9fU1LGtXf//Pf/7X32vQi6vSwrLwGoYAfL5bwBfkwoS3l+kZ1AwdO9ohZi3KOid2DLwFlr7/88dGo/H+byW5P+TAjO8vvG21z5aA/+/DMUiNPIJzUAOz2dRWdiRkoLqTb5Fkh2InA8eVYfL7P75//0cCHB9eIdwN//a3hBleU90l4H/48I9w4b7UhdMMudk3XXGHRDAnGZDBQ5LAJUow1OL+elT905+qSK/i+JBE8eGf/4WT0M62BUy1PanV6n3Sl6lLNKWnJNXCLsJtS5+4GIT7RPrsCgfvqQT3UAVQ3DW+eXpqVRmw2jFgxOUuVdGbqzI1HKS2qm7a5sRdkkNAVH6k55QyoxIk/FCRzcnEik+fd7dTwDccl/vSKHBSvM1V4NAnrtOCqFncH16RgfkhwKVSRbGOeMK3S3z8dgyYkw2UUnpphVuKw2aug05ckeqpZ0zB8IiSANZphjr8aFKO049DBrxjl6Bko8tFFGps6eLayj1EpJ1R4QQiuHJ4WLp6ErinlCpfGWnJ3zpkwDs9dOIRsWYIB21ZXWw1PS0+cVSWepjQiTqEhLgqcV4kRk3x8msgigP37ZTWEOa6uvCOrChfYQm0qkTQiTuistQlF4cQ5K7ExvqhVOPj1RW5sKQcyY4jHXkEM4TMQ0zr9UqlkrYLcOIWqAFTWWpkV5PEvtaItR/Ll0NF6h2I+diR+NkZYNbuPWEIPChGqPpEFYtm4IdET5CnvgCpdsvCqQNiojFxWkZcWhDRnRITkxdf7lZe7tu6E8MTMlycegjSEE0xrjPzWiR6IMnmtiqQje/JyE+G34aFU0MclNUdecmWfSS1nUdwzQdoZb4AtbSpaDZHTtzZmTfNewU7idr+3F6QF4tbXBmHsNXTE7y4xAWKIXx+aP/TjgDffDiQOrbMb8g8xNTRo1SOw5X2QE6cFUbu3E6G10oj1vYtVYbxPbRxXLi/YicuPOwya6ZSq8zHmNpfkLYTOcYhwqGwihMXhieNQ9saqgXgoh78pI8dYokuLyvEaejL0e4KKbcfbo1DMGR5TJNAChGdaWtGJ64chn7Dsh6TmJzi/v5QW7ikSENYc8seFlSFi+Oe2l0xMKd7tUQJlWtvvfoXU4xDsXJKJw543YblR3AKSulK11fEEacf709LFeudOw4tSqKluDbdWQUe2adt8rZ+/dLjQzdd9TKmM0rsoWaS9gnwumFjbpfBFMOrEjksyKGklFVuoKLij8vLdsiAO0ist2rUqW04rWsUWqUC/1U0IqWbicjjHqg3QHUGqpgAMGxshciDRiXNxOQNDfq+647Hkd9oE+AConhuJy5xnOhpDlI8FbAwFU9UwD6BZlwczDqdTsCVqXboUlWqMXcju2pVoCfYJUqxJQU2PIMTFIHYMSiru9gF4H1z4kihVfL6uEnNh2rB4LNpi0qr9hwGHgCvS0aMrIpiwIgZwEvfJsR+GW9CRG5cDOytaj9qcwObNA4pXWWqapkMv07JWUDl4BFxMBek+M0vW43lIhbAlaXLeKkq6IdWOGj4BLjgLbZiYrU5Rei6DvD2lUp7A0ZEtKh2DUpbhihHCeBG48QdI0pQ7+hjwdJw3dAPIytu+wP2iXjLpENtXO/pStmhq7vhmVIPUdqMS2lDUET0CBM35N33GyHCB+WiFYvh+lSgKi9B0MsTfexI//z95vpHbV7ElrID482OMpKBceLAEOhXUFCOIt8ARqnSaiMOPy2qfNoGIBBrmSwqhQL+psvMVuASsb4SBAVwc/HNgFlFNJ0s3qyBexIz8kRpS8CNwnHD1U6M8FG245KyQ/x2PAjn7yy7cvXxdx9/V7GjsVtd+cTthveB1MZ9I376ejrCyfa/OS+akUpDUG5HCBvwBXHicQhHXVzbEX4z9v35shpzm6N0quyy65IT28VL8gkKTXsH+/sHe8ff7hL7Ou+EA/ezQzKO5EV3D63pGau0ZThvR+HA9ZnW3jcacI7lMo4JL74ZVe3K0+nTvSoUDq+rbfdkzjzxQBJzbz+9aHOeO+Aq01cDfptoAzdXNWyGSzVAahcFOmbYZTQGIh8PeYSEu9CyknJExnYHFuE9LV2Vo8d3h8mj7yeJ9okqj2+NJvDtIcm584NvsfC+ngCs6S6XgUvwpX84RWmKDPx31agdDsKQDcxc4UbhcrkMmdDCZUxFn6d3YTiGa7fH7lIEEOWsmBks/fTTTw9D9XDJU47HXwn4gmKGDNL1+xlnoIE7HkiLuX9IpR48ZRg4ZJZw0RsgYnPbCXswLB79VlF3vBSOcSrHVlmCs/CEesDzU7EwTOIj4D6KPzXErTYysClSpsFCT1ORSkOekWb2VtgO8R85g//oM1GE7cRqjNniUeWqjZJV22UB9K7tN3yZS8FxxbTS0dEIw45F/BqISxMa4r7ZHvAFebCctH7GGWQWheY/Y0wYzDiztylqRFE7wpFzfTYwzBpaVXfMBg7LFnz3qRRq0qP40pYGLiRIoTC0C5eA+tNlMqKf1OsaQ21kYJ7A1g2YWtd0QXkAVEktrSgGJsAh0Zov0Q5xuFpm7YZflcsn/rvSu/cSVRqUlpTZKe6QO7eCwuQ/f+LHG448OMjdq/0atVnvfjWxbODSAcRtOa4Gi+qx7TbZN/LHruYJeKpbXkL9kovAOeDf7VJoYgp4WYIzssGJXWnFR95PBrE9nBxdvjon/0XAEuRq6Yh++jTByhzkqBrMBobumUftk4HhNaYGa87aDZBhe9d/987XQRsmRnyRYxcoe6RipOIGsFKjOBm+loyoTVSE7hZl4aJLRxPl9iUSo5amCCu05o+gNSAGr7EmHoTWiT9m8IP2o490DoDpzPGJHIOrmdmOMKo0xPxgwHgfVFJUdyoevZZRqy9zWlPLnjW4deou0hDSJWSaxxRht63qIx25UGiC7Oo/zn0xcMPHS5GTRubltwCArTIduwnpvAJNXIiBJ2pSmUxszD2+OHdq06DhdNfHcXkEnlL7VqtIQQ6tuLJtnbSjQdhmvIzTjaKBKxDDR05N8WXAL0Ucw+LseQhim2Bil6dEvE5yNymqioonr5hYbdBHrGmlljVxHw4BTkOx0mtRlkMeUcWpYx4eEE0Iojb5M6MjUhDAJh9hz05SJ54MdXlmOFKV1lS18BJe5ntqk2GDfr9pxHAKmJqLdiHAfB2l9rotG/FDKZB2BD9CGB5I5NNfB65mEEEtPEGvWUFFefjfkQ2HwFEOJrYawSdutz90pIKbejx/bUgbR45sbBrJCHSgiWgAmJoniMqEM1zz1RctJ4jxZW6YWE2SCZ47GFh1aLS0Ek8K9j8+G/9QGyRHTfFfugtTy7gFR7lOh1ue8vzlxCqT+mHFJkldqoUaBjDIbGAyEj54dOwmKApORklhhAcMh0EATAxVhq/whNosO6rH4rhO5uxJB+bsjBsamiaWJ+22D8xj0ZYNnDmwgyuA5etJytINiYCk4xc4tyMoIInJajLpwJ9x6opfAfhApr7snobcXHmEAgmfiUfQ7HYyty3w2mObTxqfLaRLbZ3ivWfAY/8kGmuiE6p2y3+XcMPOHtHEueeV4oWq3HlgYltdvujZqA0HAWlMX6xca65cGIlyq8gkzFetlza5cJv8NhRqiLR4M+hIFbXZwZkl2DcoUSIRn1ye0ehbABPDk1ton9hHXwH4RlJ8Dmu2hAyNmHO5Fo9x4PaPOEWZ1AT7rbhA6JO20BUqLd/o9QwkdBBhUKYKwB27UGx58sSLiVITUARC/vlXZBw5fe74SjsZWU6e1NNaTGo9vTWgHc0ZcIQcfkA0G6KUORBn1fLCJwHq6+g8oECN8BFDmxVmZxowTKwmo5hfRu4rAEuZql/nq2WrCyjU02hB+3QYcF0AQ/PChSl4+Kwq/XYaKkxxJWSfkdjdkCDuJp07OhGBRjyMoQMLKg7uvgbwmwvEZ44UdTZj/ZkPFwUwX5mIUGJtt0P0ZHCy+E1vc6RbAWYT80HUsZBrAWVwxN0MQV66J6Nh4Qg3rJLLyYsxvM3qEom5caKXSBiWAEXIrJctl33sLE8I8UbPAUPBtVnla7XByVMDJRWoEvaJYKbs4MErtvJJcbh9pDO3C9ae3oqHO3LqtPmrBJge1mwDPnYa2op5/RP8ndAdmJIhpgXR1SPAMHFQbM3igleki2Hx3bZagp7/PpdtF/CJeHVTJhafoIlmVsO9urg46u/tMiyIqkk4oFyOgPtCBqnkQZOp/ThYvYyGXwW1jWZ0ae2sNbuz+ZIVAC+2V2t76dVgfTmxG6dGpoiKtpEkSLF2imo74vhM8nfMDgpLg9kMR+hMj53GaArQRJIsyInpmSV3nvwK/9zBdnr4IrcOly4Ads091Jj1MHJ8uHFBbCxUvJxrlclcEHFSKkg1NYDNHvUfi9Wpjjmp2K0ZnuIkFrwz/KMvuwnqi+btplOgGUHc05e+4qBFbgwBlNAroG+jPQcdT0Qx8EMiYuE1X7/5fhrv3PEKMKpYSsWLO8w7quSoyHjlfvmbTQHfSi+8bmYqn2VIxsxDcHFnijnWgI1M3y0ny0fKn30q/gxO2izcfL+RNbFPkkjb3aXAQoCHmoVaGu/otXaN+iRedoeuFFebz/Ijc2eREVOdCireU7Fc+1lW4RbEXKirub5onxSwRGRooCgF3CCXmZNLjBajygI/zfItXL5Urzb61ecu8fRM3wjLe6QwARd+5he4dUhDB/AL9mSt5B85QAMz1a5Y9pqKMWkglOL9x5AKsBLtkISU7UWyWEwWi0plgZjXGcbFxau9D/UJxXN7zu5QW7utrImiv5LwHI+BGO8hVVQu9aUoe35SLjNRRO3HMOWzhs5HqZNEpSxTl/UbURmvfBGrjuosFvEQaj4Yvd6/U58+bvVXb6SuFygEHmjojNpecueIX8QjYvQJkVs7GmcACyG7CNyUkmoqdrlkRQbuzGZqMVqgyEZ4Xx1VUa837oG372Ru0q7fWc7kHfoiX/DAjkxXasXIlogK+uG6q8BMyk0yO8qb3BVghOZFReEfyENVFoqzhX2+t2m59fbD8XnaVzZXO/Ora2dOett2hTjha3Pgik7RUwkPvC8jVkEgi0EamI3g8cl7XZ3nwa3R40VXGg7cqixg32InJrw3m9aHiR+6mR0ABHiar2UWOznriMmXC8QWZOWZp41MVEHa1/V1mANanWtQvdB1U5LDGYSSQtkdqhI3bFojLsDfbFzQlsGI9M6A3mLxfBWHuSxDiGlPQKIe+PInjQ7fCVWQmD8xAQ350qAxFuXu60qL67KLIFVCHjpUd3eqMKJB6M+sUFEvCWLfNm3l1RKLwNyBydxPNYh7dOGSruOOLmVWv9V6oMCXtC0mt0fplUPLuwx4IIBDX06h0AZ8YoiixGjIm8P+d/O2lwynpYs6lLgAhHWx5qzfAqatHSnirmz8uvOCS+6SPwR0o6c6ZxU0kOz4RAPGwQNW/yQ0zWf2bmvV87rYrk+X03MGHJKL3nRazEOlmtmTZxcKUqfQq6hAF+zILbpklFBxMCRdxm97O6L44RpqiyJhCKPuBfEX9+moV7q0fX1Jh+xpkpYgAHCscXKeb1JbbW6gpjMtDaA711PRnMvHKLIiXfNphwTYyGAYXILfYMyxD1W2Cqc0ubefvZukXmZDvXQZmRw3PUDFyPPO+kYGjRhnrslzE3wbPDiT4YkhtXLnli4Mhm2JbUa3h2lFiJkDf27RBQb7UwT8CcC5dNTLPBnExZeLtDRiPZKp224euwW3GtEIhYIfc+rJiadvZBBk0XuJfj4X5QcV5lLanLH3GRurlwXs+rOIPNVlW0yhrDNFFrGYuKvjHjkxrAx2wy2vx5CFPDGymwHsttnEuvZN8qLKWrbJecbmhy6dTjPLF7SF6b6n47yyWk0Qx2LiWF+5h67v8JBgAnF8QoBDA1hqmUTL7bacPzExKbbmCvHNZoBvP7zVYTntHE35smcgvPbaKjhBTFeUatR6trlnAR+Gjak0X4040w/Rk4GMHIvaZJHWRlSRDo1PEWQesYn58CafnFt6hYeTrJDgFU5T5jVnbfVQdj2SICbR7Bj99oBDF0gFgFp3gwEBpoQ/CtOyFTGeqyUFKzZLrocQ4vPjzSPdXmbGku7/QkawX2Tu8mhLq3wtnQyj20l9Hp/g/R6X5MM8BWRTKyz0dS1eqsVav0VtKXJSiRteUa3GZmXXp3cWvQwcbziX07ED28byjgyQB87zNXuI2IY2unw9qdvl8FHnvtAMZBxQdX4Z/eXRAB5TMm1Kr1TvHnMq4nP4sMx1AOcP3U+0xj8h4A1iusbuGH35Yn2ESKIV4h46S00aAepxlH6gdkKAqTSMfZQjVsZo1nKRiuSEMIX0FvB70qBzckWse5AbLPbeFuMHGrGRbI5ZKfLsuBVXCoOVkEMTQWTiHl9ZbiGCsImXyxOqt0UvAFMvTDQQOmVum/4/i6Jj8bpz28xL5DJeYX682L/Ic/upeOtzs7FJd8apxCKjVjL4kWhtjNpJmxq4jVUdkClNeALju7DwdJpeld/fZsDDINY7wGrPly7Kxi8Mf9GiyDxPNgJwk4coYGLi40DS/yOtjSPSxlwbHmjA3IzmpIkBhydUVcA/qYp5h0bUc1tNpDDiZytw1tAqJSHFk9WLssOMrg7DxHUxMbhYiIIiHk8m6GL2WIorOucYSNmiHSUVR/G/qD7txOqzE+8rdltfL6Om0yAwixdlMSAjdngQqCmVQtougWmrB06kl0ue/QjbrDYH/qp9TsTGv5zP7euALy/k+W3KbTvzk/Fj4xvd1Qx8ipYmifXBa9Lty65jTHwHE095BlraH23mCpy6MQMesJnJvAKYrqo86JgKOj9/ux3gi6wfG33cNEtysjcNVGYFLkUQMg/H6qGet5KC0BzTHxFVhE6oKAEBNzYZKQEecPeLlkwy4Ponh4rVl27GdFdqnhPP1dUjWRQpOyXS6MeTFE6dfYKHdOXyYo8q3RZ1ztmJiX5dIytkWIEAxw4nDEG+Qg7x5ivGwAhxf3XnfnU/0cg4L1hblCN0TPvKONMrkKLgY0e1+/KyjARkTj5BzfOBBjzgMQpu4HZJahWn5PWfHDNXX+zbZktW5sJfKov45D3X8102NLVOqXwll6nwu2VCU1cWTZNy0BuEj1z9oS8hRqOXGCXhHcBF9Lxuv3aUkdb6xJkV032zBYOWYEDBwZXXTCxXAkUN6bVaPGHDLgKl+YjyfETtUejix0jGrXDyovL7MIlJujgU5DbXw6+XBXtNs0gtXbBGYYNTJgeGzvKzzAOJGqLrX3o0vtfn6vxJVNXleQwlRI+65+gO2tagzUoizwfuMzsy1GbbnlJyqKULtZTJQVQxI4ukuiJ/z5bJ4oBn4+ucU0ePNGfDjEz93bGe/fHLFlwYYV0iRu5b5odvpBSf1jL7BnG+WFvbE5kRmtrEPR5iCiQdlV1tmBQjMwNwRNLYjHJjEjpMeD6O9rPlvm3gedXsyNZOmmYdyrOdDfrPjYknVCEEt43IrbgBYpEnk425Id3Qmb5FjTq5ef6F3VVq441aun9Qyyz4ebGKOq1qyugKd0CIJ4ioulJomVMKwmysh/u5HE/TYD3Be/75K5dqi7Vl4hb9dJRxtTs7i9osCWuyT+CWKF2pumQ+Z6ZIaJYJcxUhC03O80PMmidJz+D9DtcitCPHzezAXaY+n/38gvTl8LJU5ZkqEGXE0sapPpYtPQbL1WwM6lJ5uPeH+pfxbmphvEkH59m9cGaX3TPVmZaN+zxlbMv+J9RfC/yO6yoADylEkUhhCGF4RMFjqv4i3m0uAB5rI9czA7kvyyrmHWiS82CjaMAbwUjGNx1TBWhXLRbGlOPTVB7Gni95uhCFwNvveU2Yt9l1u5mB0VdW1jdT+/N25CJq8rRONJFiBytNUNsjqTYuogzIwEOemN5kHbH6ipWB9TXEzusVWDExi+Ip1ShGUsvi6ltC1EYjmpQsoU+e2HfYJvnivsx32eBxcL4299N0PlXkpjv7VJUvkFw7o7YHV0l09Y3HSjnbYAPbhY0XravtF+3bWchN51OAiUUgIGJdey3qZKCZNndpRRGJ4rK0CvZ2tzMwl4XcdJ4vSK6vfIKWvV6mGye6+oY553gAXCbAJyHPaOeOd/lpEVnI/Uw/T+ou/QztMRPzRKl24tQpUAzCBTXk/Tzdur/LBXG3xpX12F024q3kkZi4S06Mva28hCR2TIlErlBY4djFfKm4w3/s0sIryDTq083u8XVWsZuDB4cOU1DRK9nqOilNsOgOqfJ2y9W/9SNa+KOQ1pmtn+EQqlvxAEieitt6HZdE6AR3fmh0hvoDtz/Tp/bs6Y9vWn1SyzpgvJI+n7oZKYqhHh8yTFGtVl1cvM39rB8zdKyH8Hr1Zrp7ODNuo1dXyakrSPmXBnLM5Mrct7dcGfgdPnlqz3z8WE9/9FQze5umyf1cuuKK0NHjYafYfORXQm7xYlbxZ/gwsou91UemxfXMUBCVizHw+FBs4T9O7OL0A8ouOL+t/gDAt/qjW3JrE5r8+Wlk8x7uyClq08eZK5/H0ptgkf0DLKxrCBd7B7nci7nStWf9A+tu+dj+CMAfVsR0IR+qd548R3qeA9bjl9eWD24+XPyoTwC8XQG54A8ufHNAzxt8eOHxxYuX9vI3P+ZTLG8/fev7zc2Hb//QyB1+Tiig37x5g8/fvPlw++sHm/4K+FfA5vl/ZPODkKHlLm8AAAAASUVORK5CYII=)">
-  <div class="loader-orbit"><span class="loader-halo"></span><span class="loader-well"></span><span class="loader-runes"></span><span class="ring r1"></span><span class="ring r2"></span><span class="loader-sig"></span><span class="loader-eyes"></span><span class="loader-shine"></span><span class="loader-embers"><i></i><i></i><i></i><i></i></span></div>
-  <div class="loader-word">Soccer<em>wizard</em></div>
-</div>
 
-<div class="top" id="top">
-  <div class="top-in">
-    <a class="logo" href="#" id="logo" aria-label="Soccerwizard, reload">
-      <img class="sig" src="/wiz-mark.png" alt="">
-      <span class="word">Soccer<em>wizard</em></span>
-      
-      
-    </a>
-    <nav class="nav" role="tablist" aria-label="View">
-      <button id="tab-pred" class="navt on" type="button" role="tab">Predictions</button>
-      <button id="tab-live" class="navt" type="button" role="tab">Live<span class="nv-x"> scores</span> <span class="live-dot" id="liveDot" hidden></span></button>
-      <button id="tab-convert" class="navt" type="button" role="tab">Converter</button>
-      <button id="tab-build" class="navt build" type="button" role="tab">Build me a slip</button>
-    </nav>
-    <span class="when" id="when"></span>
-    <button class="tgl" id="tgl" aria-label="Switch theme">
-      <svg id="tglicon" width="17" height="17" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2" stroke-linecap="round"></svg>
-    </button>
-    <!-- The install icon lived here. It could not be reached on a phone - that
-         row needs more width than a phone has, so it sat off the right edge -
-         and the labelled bar under the hero says what it is and does the same
-         job on every screen. One offer, in one place. -->
-  </div>
-</div>
 
-<div class="wrap">
 
-  <section class="intro">
-    <h1 class="parallax-forward stage-in stage-in-1" data-parallax="1.2">Who's winning <span>today?</span></h1>
-    <div class="trust parallax-shallow stage-in stage-in-2" data-parallax="0.8">
-      <!-- The thing most people come for, said plainly and said first. -->
-      <span class="trust-i t-sporty"><span class="bk-line"><b class="bkc" id="bkCycle" aria-label="SportyBet, Bet9ja, BetKing or football.com"><i class="bkc-i on" data-bk="sporty">SportyBet</i><i class="bkc-i" data-bk="b9"><span class="b9r">bet</span><span class="b9g">9ja</span></i><i class="bkc-i" data-bk="bk"><span class="bkk">Bet</span><span class="bkg">King</span></i><i class="bkc-i" data-bk="fb">football<span class="fb-dot">.</span>com</i></b> code in one tap</span></span>
-      <span class="trust-i"><b id="when2">-</b> last updated</span>
-      <span class="trust-i" id="streak" hidden></span>
-      <!-- "Rebuilt daily from results" lived here and said the same thing as
-           the dated "last updated" item forty pixels to its left. Six items on
-           one row is a wall; five that each say something is a row. -->
-      <span class="trust-i t-static">Estimates, not certainties</span>
-      <a class="trust-i link" href="#how">How accurate?</a>
-    </div>
-    <!-- The header's install icon cannot be reached on a phone: that row needs
-         527px of content and a phone gives it 320-390, so the last item sits
-         off the right edge whether or not it is unhidden. A wider labelled
-         button would only push it further out, so on a phone the offer lives
-         here instead, where there is room to say what it is. Shown only when
-         the browser has actually offered a prompt, and dismissible - an
-         install nag that will not go away is worse than no install button. -->
-    <div class="inst-bar" id="instBar" hidden>
-      <span class="ib-ic" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
-      </span>
-      <span class="ib-tx"><b>Install Soccerwizard</b><i>Straight to today's card, no browser</i></span>
-      <button class="ib-go" id="instGo" type="button">Install</button>
-      <button class="ib-x" id="instX" type="button" aria-label="Not now">✕</button>
-    </div>
-    <!-- iOS HAS NO INSTALL PROMPT, so tapping Install cannot install anything -
-         it can only say where Safari keeps the control. That used to be a
-         toast, which is the wrong shape for it: the Share button is at the
-         BOTTOM of Safari, the toast is at the top, and it has gone by the time
-         anyone has looked away and back. Steps that stay put until dismissed,
-         with the actual glyph to look for, are the whole fix. -->
-    <div class="ios-steps" id="iosSteps" hidden>
-      <button class="is-x" id="iosStepsX" type="button" aria-label="Close">✕</button>
-      <div class="is-h" id="iosStepsH">Add Soccerwizard to your Home Screen</div>
-      <ol class="is-l" id="iosStepsL"></ol>
-      <p class="is-note" id="iosStepsN" hidden></p>
-    </div>
-  </section>
 
-  <div id="liveStripWrap" hidden>
-    <div class="ticker">
-      <div class="ticker-track" id="liveStrip"></div>
-      <a href="#" id="liveStripAll" class="ticker-all">See all &rarr;</a>
-    </div>
-  </div>
 
-  <!-- Two columns on a desktop: the board gets the room it needs on the left,
-       and the three things that answer "should I trust this / what do I do"
-       ride along in a sticky rail on the right. On a phone the rail stacks
-       first, so the answer arrives before the 167-row board does. -->
-  <div class="home-grid">
-    <aside class="home-rail">
-      <!-- The offer leads. It is the reason the page exists, so it is the first
-           thing on a phone - with its own proof line inside it, so being
-           convincing costs no scroll. Everything else supports it. -->
-      <div class="slip-cta slip-cta--wizard slip-cta--hero" id="slipCta">
-        <!-- A light running the card's edge. This is the one thing on the page
-             the site exists to get tapped, and it sat in the same still box as
-             everything around it. Its own element because both pseudo-elements
-             here are spoken for - the gold hairline and the violet drift. -->
-        <span class="cta-run" aria-hidden="true"></span>
-        <div class="sc-head">
-          <span class="sc-orb" aria-hidden="true"><span class="orb-mark"></span><span class="orb-shade"></span></span>
-          <span class="sc-tx">
-            <b>Don't pick. Let it be built for you.</b>
-            <i id="scTease">We pick the games. You get a SportyBet code to play them.</i>
-          </span>
-        </div>
-        <div class="sc-actions">
-          <button class="wsp-go sc-go-btn sc-go-primary" data-scmode="wizard" type="button"><span class="sc-lbl">Build me a <span class="sbm">SportyBet</span> slip</span><span class="sc-go-arw" aria-hidden="true">→</span></button>
-          <button class="slider-btn sc-go-btn" id="scBrowse" type="button">See today's predictions</button>
-        </div>
-        <div class="sc-proof" id="scProof" hidden></div>
-      </div>
 
-      <div id="myres"></div>
-      <div id="potd"></div>
-      <div id="daily"></div>
-    </aside>
 
-    <div class="home-main">
-  <!-- The board used to just begin - controls, filters, cards - so a tap on
-       "See today's predictions" landed at a position rather than a place, and
-       felt like it had fizzled. Naming it makes the same scroll an arrival. -->
-  <div class="head-line">
-    <header class="board-head" id="boardHead" aria-live="polite"></header>
-    <span class="ba-slot" id="baSlot"></span>
-  </div>
 
-  <!-- The two controls that change what you are looking at - how it is drawn,
-       and which day - sit together on one row above the board. -->
-  <div class="toprow">
-    <div class="viewtoggle top" role="group" aria-label="Detail level">
-      <button type="button" id="v-cards" class="vt on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/></svg>Cards</button>
-      <button type="button" id="v-list" class="vt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>List</button>
-    </div>
-  <div class="bookall-row">
-        <button class="bookall" id="bookAll" type="button">
-          <span class="ba-spark" aria-hidden="true"></span>
-          <span class="ba-tx">Add all</span>
-          <span class="ba-n" id="bookAllN"></span>
-          <span class="ba-tx ba-tx2">tips to slip</span>
-        </button>
-      </div>
-    <div class="datebar">
-      <button class="dnav" id="prev" aria-label="Previous day">&#8249;</button>
-      <div class="dlabel"><b id="dname">Today</b><i id="ddate"></i></div>
-      <button class="dnav" id="next" aria-label="Next day">&#8250;</button>
-    </div>
-  </div>
 
-  <div id="bookAllResult" aria-live="polite"></div>
 
-  <div class="bar">
-    <!-- THE CHIPS AND THE WAY IN TO EVERYTHING ELSE, ON ONE ROW. The button
-         rides the chip scroller rather than sitting above or below it, so
-         collapsing the search and the two selects costs no height at all -
-         see .fbtn in the stylesheet. Outside #cats on purpose: that element is
-         rebuilt from the payload on every render and would wipe it. -->
-    <div class="cats-row">
-      <div class="cats" id="cats"></div>
-      <button class="fbtn" id="fbtn" type="button" aria-expanded="false" aria-controls="tools">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
-        <span>Filters</span><span class="fbtn-on" id="fbtnOn" hidden aria-hidden="true"></span>
-      </button>
-    </div>
-    <div class="tools" id="tools">
-      <div class="search">
-        <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-          <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.7" opacity=".55"/>
-          <path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.7"
-            stroke-linecap="round" opacity=".55"/>
-        </svg>
-        <input id="q" type="search" aria-label="Search country, league or team" placeholder="Search country, league or team" autocomplete="off">
-      </div>
-      <select id="country" class="pick-sel" aria-label="Country"></select>
-      <select id="league" class="pick-sel" aria-label="League"></select>
-      <span id="finder-count" hidden></span>
-    </div>
-    <div id="chosen"></div>
-  </div>
 
-  <div class="key">
-    <span><b>1.6</b> = goals we expect that team to score</span>
-    <span class="k-form"><i style="background:var(--green)">W</i>
-      <i style="background:var(--green)">W</i>
-      <i style="background:var(--grey)">D</i>
-      <i style="background:var(--red)">L</i>
-      <i style="background:var(--green)">W</i> last 5 games</span>
-  </div>
 
-  <p class="list-hint">▾ <span class="v-tap">Tap</span><span class="v-click">Click</span>
-    any match for every option we predict, and add any of them to your slip.</p>
-  <main id="list"></main>
-  <div id="listMore"></div>
-    </div><!-- /.home-main -->
-  </div><!-- /.home-grid -->
 
-  <div id="sotd"></div>
-  <div id="record"></div>
 
-  <section id="builder">
-    <div class="bld-head">
-      <h2 class="bld-title">Build <em>a slip</em></h2>
-      <div class="bld-mode-row">
-      <div class="bld-mode stage-in stage-in-1" role="tablist" aria-label="Build mode" data-parallax="1.2">
-        <button class="bld-mode-btn on" role="tab" data-mode="slider" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><line x1="4" y1="4" x2="4" y2="20" stroke-width="3"/><line x1="12" y1="4" x2="12" y2="20" stroke-width="3"/><line x1="20" y1="4" x2="20" y2="20" stroke-width="3"/><circle cx="4" cy="12" r="3" fill="currentColor"/><circle cx="12" cy="8" r="3" fill="currentColor"/><circle cx="20" cy="16" r="3" fill="currentColor"/></svg><span>Slider</span></button>
-        <button class="bld-mode-btn" role="tab" data-mode="wizard" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><path d="M12 2L15 8H22M12 2L9 8H2M12 2V22M5 14H19M12 22L9 16H2M12 22L15 16H22"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg><span>Wizard</span></button>
-      </div>
-        <button class="bld-help" id="bldHelp" type="button"
-          aria-label="How the two builders differ" title="How these work">?</button>
-      </div>
-      <!-- Both build a slip for you; the difference is what you tell us. Each
-           phrase is one element, so a narrow screen wraps whole lines instead
-           of stranding "Slider" above its own explanation. Colours follow the
-           toggle: violet for the wizard, crimson for the slider. -->
-      <p class="bld-mode-hint">
-        <span class="bmh bmh-wiz"><b>Wizard</b> name a payout, we hit it.</span>
-        <span class="bmh bmh-slide"><b>Slider</b> set how risky, we pick.</span>
-      </p>
-      <div id="bldCoach"></div>
-    </div>
 
-    <!-- SHARED CONTROLS (always visible) -->
-    <div class="bld-shared stage-in stage-in-1" id="bldShared" data-parallax="0.8">
-      <button class="filters-toggle" id="filtersToggle" type="button" aria-expanded="true" aria-controls="filtersBody">
-        <span class="ft-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16M7 12h10M10 19h4"/></svg>Filters</span>
-        <span class="ft-r"><span class="ft-sum" id="filtersSum"></span><svg class="ft-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
-      </button>
-      <div class="filters-body" id="filtersBody">
-      <div class="filters-col1">
-      <div class="scope-seg stage-in stage-in-2" id="scopeSeg" role="group" aria-label="Fixture window">
-        <button class="scope-opt scope-day stage-in stage-in-3" type="button" id="scopeDayBtn"
-          aria-haspopup="listbox" aria-expanded="false" aria-label="Choose a day">
-          <span class="so-t" id="scopeDayLbl">Today only</span><span class="so-n" data-scope-n="day"></span>
-          <svg class="so-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
-        <button class="scope-opt stage-in stage-in-3" type="button" data-scope="all">
-          <span class="so-t">All upcoming</span><span class="so-n" data-scope-n="all"></span></button>
-      </div>
-      <div class="scope-seg tod-seg stage-in stage-in-2" id="todSeg" role="group" aria-label="Kick-off time, today only">
-        <button class="scope-opt stage-in stage-in-3" type="button" data-tod="all"><span class="so-t">All day</span><span class="so-n" data-tod-n="all"></span></button>
-        <button class="scope-opt stage-in stage-in-3" type="button" data-tod="early"><span class="so-t">Early</span><span class="so-n" data-tod-n="early"></span></button>
-        <button class="scope-opt stage-in stage-in-3" type="button" data-tod="mid"><span class="so-t">Mid day</span><span class="so-n" data-tod-n="mid"></span></button>
-        <button class="scope-opt stage-in stage-in-3" type="button" data-tod="late"><span class="so-t">Late</span><span class="so-n" data-tod-n="late"></span></button>
-      </div>
-      <div class="wsp-lbl stage-in stage-in-2">Leagues</div>
-      <div class="wsp-chips stage-in stage-in-3" id="bldLeagues">
-        <button class="wsp-chip stage-in stage-in-4" type="button" data-btp="false">All leagues</button>
-        <button class="wsp-chip stage-in stage-in-4" type="button" data-btp="true">Top flight only</button>
-        <!-- Third control in the same row rather than a bar of its own: it is
-             one more way to narrow the same thing, and full width made it read
-             as a section heading over the markets below it. -->
-        <button class="wsp-chip lgp-open stage-in stage-in-4" type="button" id="lgpOpen"
-                aria-expanded="false" aria-controls="lgpBox">
-          <span id="lgpSum">Any league</span>
-          <span class="lgp-caret" aria-hidden="true">&#9662;</span>
-        </button>
-      </div>
-      <div class="lgp-wrap stage-in stage-in-3">
-        <div class="lgp-box" id="lgpBox" hidden>
-          <div class="lgp-head">
-            <span id="lgpCount"></span>
-            <button class="lgp-clear" type="button" id="lgpClear">Any league</button>
-          </div>
-          <div class="lgp-list" id="lgpList"></div>
-        </div>
-      </div>
-      </div><!-- /.filters-col1 -->
-      <!-- One box, because the two columns of this panel are one grid and its
-           rows are shared: left on its own, this label sat in a row sized by
-           the scope buttons opposite it and floated 36px above its own chips.
-           Wrapped, the right column is a single grid item and the label is
-           spaced by its own margin again. -->
-      <div class="filters-col2">
-        <div class="wsp-lbl stage-in stage-in-2">Include markets</div>
-        <div class="wsp-chips mkt-palette stage-in stage-in-3" id="bldMk"></div>
-        <!-- Where the draw asks before it turns on. Empty until then. -->
-        <div id="mkAsk"></div>
-        <!-- Where a market that was switched on and then contributed nothing
-             explains itself. Empty the rest of the time, and it carries no
-             margin when empty so it cannot push the panel around. -->
-        <div id="mkIdle"></div>
-      </div>
-      </div>
-    </div>
 
-    <!-- SLIDER MODE PANEL -->
-    <div class="bld-panel slider-panel stage-in stage-in-2" id="sliderPanel" data-parallax="1">
-      <div class="risk-top stage-in stage-in-3">
-        <span class="risk-name" id="riskName">-</span>
-        <span class="risk-sub" id="riskSub"></span>
-      </div>
-      <div class="risk-wrap stage-in stage-in-4"><input type="range" id="risk" class="risk" min="0" max="100" value="45"
-        aria-label="Risk level"><span class="risk-bubble" id="riskBubble">-</span></div>
-      <div class="risk-ticks stage-in stage-in-5"><span>Safe</span><span>Balanced</span><span>Risky</span></div>
-    </div>
 
-    <!-- WIZARD MODE PANEL -->
-    <div class="bld-panel wizard-panel stage-in stage-in-2" id="wizardPanel" hidden data-parallax="1">
-      <div class="wsp-lbl stage-in stage-in-3">Pick a target payout</div>
-      <div class="wsp-chips stage-in stage-in-4" id="wspOddsChips"></div>
-      <div class="wsp-lbl stage-in stage-in-4">Slip style</div>
-      <div class="wsp-chips stage-in stage-in-5" id="wspStyleChips"></div>
-      <button class="book-btn wsp-go stage-in stage-in-5" id="wspGo" type="button">Conjure ticket</button>
 
-    </div>
 
-    <!-- UNIFIED OUTPUT -->
-    <div class="bld-stats stage-in stage-in-3" id="bldStats" data-parallax="0.5"></div>
-    <div id="slip" data-parallax="0.3"></div>
-    <!-- WHY THE SLIP IS SHORTER THAN THE DIAL ALLOWS. The empty case has had a
-         sentence for a while; a slip of two when the dial allows eleven had
-         nothing, and the reason is the same one - the markets that are on do
-         not reach the confidence floor on today's card. -->
-    <p class="bld-note" id="bldShort" hidden></p>
-    <div class="bookpick" data-bookpick="build" role="group" aria-label="Bookmaker" hidden></div>
-    <div class="bld-foot stage-in stage-in-4" id="bldFoot" data-parallax="0.2">
-      <!-- THE WORD, NOT JUST THE GLYPH. Crossing arrows mean shuffle to
-           anyone who has used a music player and nothing at all to anyone
-           who has not, and re-dealing the slip is the control people use
-           most on this panel. The icon stays as the picture beside the
-           word; the word is what makes it findable. Clear keeps its bin,
-           which is read the same way everywhere. -->
-      <button class="clear-btn wordy" id="shuffleBtn" type="button" title="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg><span>Shuffle</span></button>
-      <button class="clear-btn" id="clearBtn" type="button" aria-label="Clear" title="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg></button>
-      <button class="book-btn" id="bookBtn" type="button">Get code</button>
-    </div>
-    <div class="bld-note stage-in stage-in-5" id="bldNote" data-parallax="0.1"></div>
-    <!-- Names whichever book is selected - see paintBookPickers. Hardcoded, it
-         told a Bet9ja slip what SportyBet's odds do. -->
-    <div class="bld-approx" id="bldApprox">*Est. odds are a rough model guide - real SportyBet odds are usually lower.</div>
-    <div id="bookResult"></div>
 
-    <!-- A CODE SOMEBODY ALREADY HOLDS. Not every slip worth splitting came
-         from here: people arrive with a code from a friend, a Telegram
-         channel, or their own slip built in the app. The legs are readable
-         from both books, so the same dealing works on them. -->
-  </section>
 
-  <!-- THE CONVERTER, ON ITS OWN PAGE.
-       It spent its life at the foot of the builder, which is where it was
-       born rather than where it belongs: it has nothing to do with picking
-       games, it is the one thing on this site somebody arrives already
-       wanting, and the bottom bar cannot mark a page that is really a
-       panel two screens down. One converter still, moved not copied. -->
-  <section id="converter">
-    <div class="conv-head stage-in stage-in-1">
-      <h2 class="stage-in stage-in-2">Converter</h2>
-    </div>
-    <p class="conv-sub stage-in stage-in-2">Move a booking code to the other
-      bookmaker, or read what is inside one and cut it into smaller tickets.</p>
-    <section class="byo" id="byo" aria-labelledby="byo-h">
-      <h3 id="byo-h">Already have a booking code?</h3>
-      <p class="byo-sub">Paste it. Then pick what we should do with it.</p>
-      <div class="byo-row">
-        <div class="byo-book" role="group" aria-label="Which bookmaker issued it">
-          <!-- Their own wordmarks, not two grey words. The marks and their
-               colours are the ones already shipped elsewhere on this page -
-               .sbm and .b9m, sampled from the logo files - so the toggle reads
-               as the two brands rather than as our styling of them. -->
-          <button class="byo-b on" type="button" data-book="sporty"
-            aria-label="SportyBet"><span class="sbm">SportyBet</span></button>
-          <button class="byo-b" type="button" data-book="bet9ja"
-            aria-label="Bet9ja"><span class="b9m"><span class="b9r">bet</span><span class="b9g">9ja</span></span></button>
-          <button class="byo-b" type="button" data-book="betking"
-            aria-label="BetKing"><span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span></button>
-        </div>
-        <input id="byoCode" type="text" inputmode="latin" autocomplete="off"
-               spellcheck="false" maxlength="16" placeholder="Booking code"
-               aria-label="Booking code">
-        <button class="byo-go" id="byoGo" type="button">Read it</button>
-      </div>
-      <!-- THE THREE JOBS, ON SCREEN BEFORE THERE IS A CODE.
-           The panel used to be one box that read a code and then grew three
-           different offers underneath it, so nobody knew the other two
-           existed until they scrolled past the first. These say what the page
-           can do while it is still empty, and they are dead until there is a
-           slip to do it to - a button you cannot press yet still teaches you
-           it is there. -->
-      <!-- The jobs and the panel they open are one column on a desktop and one
-           block on a phone, so they are one element - see .byo-side. Wrapped
-           rather than placed by grid maths: a spanning left column splits its
-           height across the rows it covers, which dropped the panel into the
-           middle of a forty-leg list. -->
-      <div class="byo-side">
-      <div class="byo-jobs" id="byoJobs" role="group" aria-label="What to do with the code">
-        <button class="byo-job" type="button" data-job="edit" disabled>
-          <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"/></svg></span>
-          <b>Edit for me</b><i>Make the hard legs easier</i></button>
-        <button class="byo-job" type="button" data-job="convert" disabled>
-          <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M14.5 12h6.5M18 9l3 3-3 3"/></svg></span>
-          <b id="byoJobConv">Convert</b><i>Same games, other bookie</i></button>
-        <button class="byo-job" type="button" data-job="split" disabled>
-          <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v7a3 3 0 003 3h6a3 3 0 013 3v5"/><path d="M6 21v-5a3 3 0 013-3"/></svg></span>
-          <b>Split it</b><i>Two or more smaller tickets</i></button>
-      </div>
-      <div id="byoStage" aria-live="polite"></div>
-      </div><!-- /.byo-side -->
-      <div id="byoOut" aria-live="polite"></div>
-    </section>
-  </section>
 
-  <section id="live">
-    <div class="live-head stage-in stage-in-1">
-      <h2 class="stage-in stage-in-2">Live scores</h2>
-      <button class="live-refresh stage-in stage-in-3" id="liveRefresh" type="button" data-parallax="0.8">Refresh</button>
-    </div>
-    <p class="live-sub stage-in stage-in-2" id="liveSub">Football matches in play right now, updating automatically.</p>
-    <div class="lv-selwrap stage-in stage-in-3" id="liveSelWrap" hidden><select id="liveCountrySel" class="lv-sel" aria-label="Country"></select></div>
-    <div id="liveList" data-parallax="0.3"></div>
-  </section>
 
-  <section class="note" id="how">
-    <h3>How to read this</h3>
-    <p><b>Goals expected</b> is the small number beside each team: how many
-    goals the model thinks they'll score. Add them together and you have the
-    predicted score.</p>
-    <p><b>Form</b> is the last five results, newest first. Green is a win,
-    grey a draw, red a loss.</p>
-    <p><b>Good price</b> means the bookies are offering better odds on that
-    pick than we think it deserves. It is our opinion against theirs, not a
-    promise. We tested this model against real prices across 22 leagues and
-    the bookies usually turned out to be right, so treat these as worth a
-    second look rather than a sure thing.</p>
-    <p>The model only knows results. No injuries, no suspensions, no manager
-    change, no team resting players. <b>One opinion, not a guarantee.</b></p>
-  </section>
 
-  <footer>
-    <div class="foot-in">
-      <div class="foot-brand">
-        <img class="foot-sig" src="/wiz-mark.png" alt="Soccerwizard">
-        <div>
-          <b>Soccer<em>wizard</em></b>
-          <span id="foot"></span>
-        </div>
-      </div>
-      <div class="foot-cols">
-        <div>
-          <h4>What this is</h4>
-          <p>Statistical football predictions across 38 leagues, rebuilt
-          every morning from results.</p>
-        </div>
-        <div>
-          <h4>What it isn't</h4>
-          <p>A guarantee. The model cannot see injuries, suspensions or team
-          news, and no prediction is ever certain.</p>
-        </div>
-        <div>
-          <h4>Play responsibly</h4>
-          <p>Only stake what you can afford to lose. If betting stops being
-          fun, step away and seek support.</p>
-        </div>
-      </div>
-      <!-- The footer used to end at BeGambleAware, so the only link out of it
-           was that one - no contact route, no privacy policy, no terms, and
-           the match pages the build generates were reachable only from the
-           sitemap. Search engines weight real internal links well above a
-           sitemap, and a reader had nowhere to go. -->
-      <nav class="foot-links" aria-label="Site">
-        <a href="/matches">All match predictions</a>
-        <!-- THE ONLY CRAWLABLE WAY IN. The Converter is a view, so the header
-             tab and the bottom bar are both <button> - a crawler follows
-             neither, and this is the strongest page on the site. The anchor
-             says what the destination is rather than what the button says. -->
-        <a href="/convert-a-booking-code">Convert a booking code</a>
-        <a href="/booking-codes">Free booking codes</a>
-        <a href="/how-it-works">How it works</a>
-        <a href="/privacy">Privacy</a>
-        <a href="/terms">Terms</a>
-        <button type="button" id="contactBtn">Contact us</button>
-        <!-- @soccerwizardhq. The first version of this link pointed at a
-             sixteen-character handle, which X cannot issue, so it 404d for
-             everyone who clicked it. Verified resolving before shipping this
-             time - a link is a claim the destination exists. -->
-        <a class="fl-x" href="https://x.com/soccerwizardhq" target="_blank" rel="noopener"
-           aria-label="Follow us on X">
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.2 2.3h3.4l-7.4 8.5 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9.1L.9 2.3h7l4.8 6.4zm-1.2 17.9h1.9L7.1 4.2H5z"/></svg>
-          <span>Follow us</span></a>
-        <!-- t.me/soccerwizardTG. Verified resolving before shipping - the X
-             link above 404d for everyone who clicked it because the handle was
-             a character too long for X to issue, and the rule that came out of
-             it applies to every outbound link on this site: a link is a claim
-             the destination exists, so check it. This one answers 200 as
-             "Soccerwizard Channel". -->
-        <a class="fl-tg" href="https://t.me/soccerwizardTG" target="_blank" rel="noopener"
-           aria-label="Soccerwizard community on Telegram">
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.1 3.8 19.6 20.3c-.3 1.2-1 1.5-2 .9l-5.5-4-2.7 2.6c-.3.3-.6.6-1.2.6l.4-5.6L18.8 6c.4-.4-.1-.6-.7-.2L5.5 13.7 0 12c-1.2-.4-1.2-1.2.3-1.8L21.5 2c1-.4 1.9.2 1.6 1.8z"/></svg>
-          <span>Community</span></a>
-      </nav>
-      <div class="foot-legal">
-        <span>&copy; <span id="yr"></span> Soccerwizard</span>
-        <span class="badge18" aria-label="Eighteen plus only">18<sup>+</sup></span>
-        <span>Predictions are estimates, not certainties</span>
-        <a class="rg" href="https://www.begambleaware.org" target="_blank" rel="noopener">BeGambleAware.org</a>
-      </div>
-    </div>
-  </footer>
-</div>
 
-<div class="scrim" id="scrim"></div>
-<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-  <div class="sheet-grab"><i></i></div>
-  <div class="sheet-head">
-    <div class="info"><h3 id="sheet-title"></h3><p id="sheet-sub"></p></div>
-    <button class="sheet-x" id="sheet-x" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  </div>
-  <div class="sheet-body" id="sheet-body"></div>
-</div>
 
-<button class="myfab" id="myFab" type="button" hidden><span class="myfab-tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10a1 1 0 0 1 1 1v16l-2.2-1.5L13.6 20 12 18.6 10.4 20 8.2 18.5 6 20V4a1 1 0 0 1 1-1z"/></svg><span class="myfab-c" id="myFabC">0</span></span><span class="lbl">My slip</span></button>
-<button class="ctafab" id="ctaFab" type="button" hidden>
-  <span class="ctafab-orb" aria-hidden="true"></span>
-  <span>Build me a slip</span>
-</button>
-<nav class="btabs" aria-label="Sections">
-  <button class="btab on" id="bt-pred" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg></span>Home</button>
-<!-- A STAFF, NOT A PLUS. The centre button mints a booking code, and a "+"
-     is the universal sign for "add one more" - on a bar whose other items
-     are destinations it read as an action on the page you were already on,
-     and people tapped it expecting to add a game. The site already calls
-     this conjuring: the panel it opens says "Conjure ticket".
-     THE DRAWING CHANGED TWICE, THE MEANING NEVER DID. The first wand was a
-     thin diagonal stroke with two four-point diamonds, and at the size this
-     actually renders - 22px, measured, not the 24 in the viewBox - the
-     diamonds read as blobs and the shaft as a stray line: three marks, no
-     object. The star-and-shaft that replaced it had a silhouette, which is
-     the only thing that survives being that small. This is the owner's own
-     reference drawn to that same rule: a ball-topped staff, upright, with a
-     collar under the ball and a banded pommel at the foot.
-     UPRIGHT, AND THAT IS THE WHOLE DIFFERENCE. The old wand lay on a
-     diagonal, which at 22px is a slash with something on the end of it. A
-     vertical shaft under a round head is a silhouette a thumbnail can hold,
-     and it is the one the reference has.
-     THE STAR IS LOAD-BEARING, NOT DECORATION. An outlined circle on a
-     vertical stroke is a KEYHOLE - drawn plain, with a centre dot, and with a
-     seam, and every version read as one. Filling the head with the star the
-     reference puts on its ball is what stops it: a star on a stick is a
-     staff, and nothing else. The collar under the head and the band at the
-     foot do the rest. Checked at 23px and again at 2x, which is what a phone
-     actually renders this at - the bar is under a 720px media query, so no
-     1x screen ever sees it.
-     The reference's gold rendering - facets, highlights, the whole
-     illustration - is not drawn here on purpose: every one of those details
-     is sub-pixel at this size and would mud the ball into a grey circle. The
-     neon ring around it carries the colour instead.
-     Wizard hats were tried before any of this and every one of them read as
-     a traffic cone: a narrow cone over a brim that curves the same way is a
-     road sign, not a hat. -->
-  <button class="btab" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><i class="bt-staff" aria-hidden="true"></i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5.6" r="3.4"/><path d="M12 3.6l.62 1.28 1.4.2-1.01.98.24 1.4L12 6.78l-1.25.66.24-1.4-1.01-.98 1.4-.2z" fill="currentColor" stroke="none"/><path d="M12 9v10.4"/><path d="M10.6 11.4h2.8"/><path d="M10.4 19.4h3.2"/></svg></span>Build</button>
-  <!-- A SLIP AND ONE ARROW OUT OF IT. Not two arrows swapping - that is
-       the shuffle icon, #shuffleBtn draws exactly that - and not the two
-       books named, which a third bookmaker would make wrong rather than
-       merely cramped. A card with an arrow leaving it says "this slip,
-       over there" and stays true however many books we add. The word
-       under it carries the rest. -->
-  <button class="btab" id="bt-convert" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M14.5 12h6.5M18 9l3 3-3 3"/></svg></span>Converter</button>
-  <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg><span class="live-dot btab-dot" id="liveDotB" hidden></span></span>Live</button>
-</nav>
-<div class="sheet slips-sheet" id="slipsSheet" role="dialog" aria-modal="true" aria-labelledby="slipsSheet-title">
-  <div class="sheet-grab"><i></i></div>
-  <div class="sheet-head">
-    <div class="info"><h3 id="slipsSheet-title">My slips</h3><p>Every slip you booked, and how it finished.</p></div>
-    <button class="sheet-collapse" id="slipsSheet-x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>Close</span></button>
-  </div>
-  <div class="sheet-body" id="slipsBody"></div>
-</div>
 
-<div class="sheet myslip-sheet" id="mySheet" role="dialog" aria-modal="true" aria-labelledby="mySheet-title">
-  <div class="sheet-grab"><i></i></div>
-  <div class="sheet-head">
-    <div class="info"><h3 id="mySheet-title">My slip</h3><p id="mySheetSub">Predictions you picked - book them to <span class="sbm">SportyBet</span>.</p></div>
-    <button class="sheet-collapse" id="mySheet-x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>Collapse</span></button>
-  </div>
-  <div class="sheet-body" id="mySheetBody"></div>
-  <div class="bookpick" data-bookpick="my" role="group" aria-label="Bookmaker"></div>
-  <!-- WHY GET CODE IS NOT GOING TO WORK, SAID BEFORE IT IS PRESSED. The panel
-       has had this line since the beginning; this sheet never did, and the
-       sheet is where the wizard's slip lives - so a slip carrying a bet only
-       one book sells sat here with a live button and no explanation, and the
-       only way to find out was to press it. -->
-  <div class="bld-note" id="myNote" aria-live="polite"></div>
-  <div class="mysheet-foot" id="mySheetFoot" hidden>
-    <div class="bld-odds" aria-live="polite"><i>Total odds</i><b id="myTotOdds">-</b></div>
-    <!-- Only for a conjured slip: reshuffling a slip somebody picked by hand
-         would throw their choices away. -->
-    <button class="clear-btn" id="mySheetShuffle" type="button" hidden>Shuffle</button>
-    <button class="clear-btn" id="myClearBtn" type="button">Clear</button>
-    <button class="book-btn" id="myBookBtn" type="button">Get code</button>
-  </div>
-  <div id="myBookResult" aria-live="polite"></div>
-</div>
 
-<script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 "use strict";
 const $=function(id){return document.getElementById(id);};
 /* the same drawn cross the static close buttons use - see .sheet-x in the css */
@@ -19636,24 +19636,24 @@ setTimeout(hideLoader,8000);
 })();
 
 load().catch(function(){});
-</script>
-<!-- Builder settings dock. Appears once the real controls have scrolled away,
-     so the things that shape the slip stay reachable while you are looking at
-     it. Desktop only: a phone already carries the bottom nav and the My slip
-     button, and its slip lives in a sheet anyway. -->
-<div class="bld-dock" id="bldDock" hidden>
-  <div class="bd-mode" id="bdMode" role="group" aria-label="Build mode">
-    <button class="bd-m" type="button" data-bdmode="slider">Slider</button>
-    <button class="bd-m" type="button" data-bdmode="wizard">Wizard</button>
-  </div>
-  <button class="bd-sum" id="bdSum" type="button" aria-label="Back to the build settings">
-    <span id="bdSumTx"></span><span class="bd-up" aria-hidden="true">&#8593;</span>
-  </button>
-</div>
 
-<div class="slipbar" id="slipbar"><div class="slipbar-in" id="slipbarBtn"><span class="sb-tx"><b id="sbHead">Build me a <span class="sbm">SportyBet</span> slip</b><i id="sbSub">We pick the games, you get the code</i></span><span class="sb-go">&rarr;</span></div></div>
-<div class="netpill off" id="netpill"><span class="dot"></span><span id="netpillTxt">Offline</span></div>
-<script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (function(){
   var pill=document.getElementById('netpill'),txt=document.getElementById('netpillTxt'),t=null;
   function show(on){
@@ -19667,7 +19667,7 @@ load().catch(function(){});
   window.addEventListener('online',function(){show(true);});
   if(!navigator.onLine) show(false);
 })();
-</script>
-<script defer src="/_vercel/insights/script.js"></script>
-</body>
-</html>
+
+
+
+
