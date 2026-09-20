@@ -21,6 +21,27 @@ const DB = require("../lib/supabase.js");
 
 const MAX_ENDPOINT = 1024;      /* real ones are ~200 chars */
 const MAX_KEY = 256;
+const MAX_BODY = 12000;         /* same cap and shape as api/share.js's readBody */
+
+/* Same pattern as api/share.js: stream and cap the raw body BEFORE JSON.parse,
+   because per-field length checks in parse() run only after the whole body is
+   already in memory - too late to bound an unauthenticated route. */
+function readBody(req) {
+  if (req.body && typeof req.body === "object") return Promise.resolve(req.body);
+  if (typeof req.body === "string") {
+    if (req.body.length > MAX_BODY) return Promise.resolve(null);
+    return Promise.resolve(req.body);
+  }
+  return new Promise((resolve) => {
+    let s = "", over = false;
+    req.on("data", (d) => {
+      s += d;
+      if (s.length > MAX_BODY) { over = true; req.destroy(); }
+    });
+    req.on("end", () => resolve(over ? null : s));
+    req.on("error", () => resolve(null));
+  });
+}
 
 function parse(body, opts) {
   let o = body;
@@ -46,7 +67,9 @@ module.exports = async function handler(req, res) {
   applyCache(res, NO_STORE);
 
   if (req.method === "DELETE") {
-    const got = parse(req.body, { keysNeeded: false });
+    const body = await readBody(req);
+    if (body === null) return res.status(400).json({ ok: false, why: "body too large" });
+    const got = parse(body, { keysNeeded: false });
     /* An unsubscribe with a rubbish endpoint deletes nothing, and saying so is
        more useful than pretending it worked. */
     if (!got.ok) return res.status(400).json({ ok: false, why: got.why });
@@ -56,8 +79,12 @@ module.exports = async function handler(req, res) {
 
   if (req.method !== "POST") return res.status(405).json({ ok: false, why: "method" });
 
-  const got = parse(req.body);
+  const body = await readBody(req);
+  if (body === null) return res.status(400).json({ ok: false, why: "body too large" });
+  const got = parse(body);
   if (!got.ok) return res.status(400).json({ ok: false, why: got.why });
+  /* The real cap on ua is downstream, in lib/supabase.js's putPushSub
+     (`String(row.ua).slice(0, 200)`) - not touched by this route. */
   got.row.ua = req.headers && req.headers["user-agent"];
   const out = await DB.putPushSub(got.row);
   return res.status(out.ok ? 200 : 503).json({ ok: !!out.ok });

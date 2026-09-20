@@ -70,3 +70,14 @@ test("a malformed body is 400, never 500", async () => {
   await route({ method: "POST", headers: {}, body: "{not json" }, r);
   assert.strictEqual(r.code, 400);
 });
+
+test("an oversized body is rejected before it is parsed, not just once decoded", async () => {
+  /* Every field here is within its own limit - only the whole body is huge -
+     so this only fails if there is a cap on the raw body itself. A per-field
+     check reached after JSON.parse would let this straight through. */
+  const huge = JSON.stringify({ ...GOOD, junk: "x".repeat(20000) });
+  const r = res();
+  await route({ method: "POST", headers: {}, body: huge }, r);
+  assert.strictEqual(r.code, 400);
+  assert.strictEqual(r.body.ok, false);
+});

@@ -42,6 +42,10 @@
     "api/share.js": {
       "maxDuration": 10,
       "memory": 256
+    },
+    "api/push.js": {
+      "maxDuration": 10,
+      "memory": 256
     }
   },
   "crons": [
