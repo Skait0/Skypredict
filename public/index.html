@@ -5421,8 +5421,15 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
 html.is-results #codeCard{display:none}
 .ck-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .ck-tag{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
-  color:var(--accent)}
+  color:var(--accent);text-decoration:none}
 .ck-when{margin-left:auto;font-size:11.5px;color:var(--faint);font-weight:700}
+/* What the slip pays, in the colour this site uses for what it favours. */
+.ck-tot{font-size:12px;font-weight:800;color:var(--accent);
+  font-variant-numeric:tabular-nums;padding:1px 7px;border-radius:99px;
+  background:rgba(242,184,75,.12)}
+/* The chip names are the bookmakers' own wordmarks, which carry their own
+   colours - only the size is ours. */
+.ck-chip b .sbm,.ck-chip b .b9m,.ck-chip b .bkm{font-size:12px}
 .ck-codes{display:flex;flex-wrap:wrap;gap:8px}
 /* Tabular numerals and wide tracking: these are read out loud and typed in. */
 .ck-chip{display:inline-flex;align-items:center;gap:8px;cursor:pointer;
@@ -5439,6 +5446,7 @@ html.is-results #codeCard{display:none}
 @media (hover:hover){
   .ck-chip:hover{border-color:var(--accent);transform:translateY(-1px)}
   .ck-chip:hover .ck-cp{color:var(--text)}
+  .ck-tag:hover{text-decoration:underline}
   .ck-foot a:hover{text-decoration:underline}
 }
 .ck-chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -15367,12 +15375,14 @@ function applyBoardCap(n){
   fetch("/code-today.json").then(function(r){ return r.ok?r.json():null; })
   .then(function(d){
     if(!d||!d.codes) return;
-    var chips=[["SportyBet",d.codes.sporty],["Bet9ja",d.codes.bet9ja],
-               ["BetKing",d.codes.betking]]
+    /* The bookmaker's own wordmark rather than its name in our type: the
+       reader picks the chip by the colours they already bank with. */
+    var chips=[["sporty",d.codes.sporty],["bet9ja",d.codes.bet9ja],
+               ["betking",d.codes.betking]]
       .filter(function(b){return !!b[1];})
       .map(function(b){
         return "<button class='ck-chip' type='button' data-code='"+esc(b[1])+"'>"+
-          "<b>"+esc(b[0])+"</b><code>"+esc(b[1])+"</code>"+
+          "<b>"+(BOOKS[b[0]].mark||esc(BOOKS[b[0]].label))+"</b><code>"+esc(b[1])+"</code>"+
           "<span class='ck-cp'>Copy</span></button>";
       }).join("");
     if(!chips) return;
@@ -15386,8 +15396,13 @@ function applyBoardCap(n){
       ? "<a href='/booking-codes'>"+(dayOff(d.prev.date)===-1?"Yesterday's":"The last")+
         " code: <b>"+d.prev.hit+" of "+d.prev.of+"</b> landed &rsaquo;</a>"
       : "<a href='/booking-codes'>Every code we have published, graded &rsaquo;</a>";
-    host.innerHTML="<div class='ck-top'><span class='ck-tag'>Free booking code</span>"+
-      "<span class='ck-when'>"+esc(when)+"</span></div>"+
+    /* What the slip pays. Null when mkcode could not price every leg, and
+       then nothing is drawn - a total missing a leg is worse than none. */
+    var odds=(typeof d.odds==="number"&&d.odds>1)
+      ? "<span class='ck-tot'>×"+d.odds.toFixed(2)+"</span>" : "";
+    host.innerHTML="<div class='ck-top'><a class='ck-tag' href='/booking-codes'>"+
+      "Free booking codes</a>"+
+      "<span class='ck-when'>"+esc(when)+"</span>"+odds+"</div>"+
       "<div class='ck-codes'>"+chips+"</div>"+
       "<div class='ck-foot'>"+foot+"</div>";
     host.hidden=false;

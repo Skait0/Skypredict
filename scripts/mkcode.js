@@ -103,9 +103,14 @@ async function events(which) {
   const d = got.body;
   if (!got.ok || !d || !d.success) throw new Error(which + " fixtures: http " + got.status);
   if (which === "sporty") {
+    /* SportyBet's own prices come down with the fixture, keyed by the same
+       market code tipCode produces - so the slip's total odds can be recorded
+       at the moment it is booked rather than guessed from our probabilities
+       afterwards. Nobody re-prices an expired code, which is exactly why the
+       number has to be captured here or not at all. */
     return (d.matches || []).map((m) => ({
       eventId: m.eventId, homeTeam: m.homeTeam, awayTeam: m.awayTeam,
-      startTime: m.startTime, league: m.league,
+      startTime: m.startTime, league: m.league, odds: m.odds || null,
     }));
   }
   return Object.values(d.matches || {}).map((m) => {
@@ -135,6 +140,28 @@ function findEvent(f, list) {
     if (sh >= 0.6 && sa >= 0.6 && sh + sa > score) { score = sh + sa; best = m; }
   }
   return score >= 1.2 ? best : null;
+}
+
+/* One leg's price, or nothing. A missing market is normal - the feed prices
+   what it lists - and a missing price has to stay missing rather than become
+   1.00, which would quietly shrink the slip's total instead of voiding it. */
+function legOdd(ev, market) {
+  const o = ev && ev.odds && ev.odds[market];
+  const n = typeof o === "number" ? o : parseFloat(o);
+  return isFinite(n) && n > 1 ? n : null;
+}
+
+/* The whole slip, at the prices it was booked at. Null unless every leg is
+   priced: an accumulator missing a leg is not a smaller accumulator, it is an
+   unknown one, and a number on the page has to be the number a reader would
+   have seen on the betslip. */
+function slipOdds(legs) {
+  let t = 1;
+  for (const l of legs) {
+    if (!l.odd) return null;
+    t *= l.odd;
+  }
+  return Math.round(t * 100) / 100;
 }
 
 async function bookSlip(which, selections) {
@@ -221,8 +248,10 @@ async function bookSlipRetrying(which, sel) {
     const s = findEvent(f, sporty), b = findEvent(f, b9);
     if (!s || !b) continue;
     const k = findEvent(f, bk);
+    const market = M.tipCode(f);
     picked.push({ f: f, sporty: s.eventId, bet9ja: b.eventId,
-                  betking: k ? k.eventId : null, market: M.tipCode(f) });
+                  betking: k ? k.eventId : null, market: market,
+                  odd: legOdd(s, market) });
   }
   if (picked.length < legs) {
     throw new Error(`only ${picked.length} of ${legs} legs are carried by both books`);
@@ -291,8 +320,10 @@ async function bookSlipRetrying(which, sel) {
       const f = spare.shift();
       const sp = findEvent(f, sporty), bb = findEvent(f, b9), kk = findEvent(f, bk);
       if (sp && bb) {
+        const market = M.tipCode(f);
         working.push({ f: f, sporty: sp.eventId, bet9ja: bb.eventId,
-                       betking: kk ? kk.eventId : null, market: M.tipCode(f) });
+                       betking: kk ? kk.eventId : null, market: market,
+                       odd: legOdd(sp, market) });
       }
     }
     if (working.length < 2) throw new Error("nothing bookable left after refusals");
@@ -332,8 +363,13 @@ async function bookSlipRetrying(which, sel) {
       date: p.f.date || date,
       home: p.f.home, away: p.f.away, league: p.f.league || "",
       kickoff: p.f.kickoff || null, tip: p.f.tip, tip_p: p.f.tip_p, market: p.market,
+      odd: p.odd || null,
     })),
     codes: codes,
+    /* SportyBet's price for the slip at the minute it was booked. The books
+       re-price a code when it is loaded, so this is what it paid then, not a
+       promise about now - both pages say so beside it. */
+    odds: slipOdds(working.map((p) => ({ odd: p.odd }))),
   };
   console.log(`sporty: ${codes.sporty || "-"}   bet9ja: ${codes.bet9ja || "-"}   ` +
               `betking: ${codes.betking || "-"}`);

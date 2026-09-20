@@ -417,6 +417,9 @@ async function writePages(payload) {
       n: (newest.legs || []).length,
       codes: newest.codes || {},
       firstKickoff: newest.firstKickoff || null,
+      /* What the slip pays, or null when any leg went unpriced - the card
+         says nothing rather than a total that quietly dropped a leg. */
+      odds: P.slipOdds(newest),
       /* The proof, and the only reason the card is worth a tap: yesterday's
          code, graded. A code with no record beside it is what every other
          site in this corner of the internet posts. */

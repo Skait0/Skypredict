@@ -31,6 +31,7 @@ Bet9ja.
 | Long-lived project facts | the other `*.md` in that same memory directory |
 | History and incident write-ups | `HANDOFF.md` — **history only, its state lines are stale** |
 | Plans and specs | `docs/plans/`, `docs/specs/` |
+| Palette, type, components, motion | `DESIGN.md` — **read it before changing anything a reader sees** |
 
 ## Rules learned the hard way
 
