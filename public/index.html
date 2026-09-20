@@ -16177,12 +16177,28 @@ async function bookMy(){
      path refuses: they chose these games and they should choose which go. */
   if(bookable.length>BETSLIP_MAX){
     var _fit=bookable.slice(0,BETSLIP_MAX), _cut=bookable.length-BETSLIP_MAX;
-    showPrompt("myBookResult","<div class='confirm-card'><p>"+B.mark+" takes "+
+    /* THE THIRD ANSWER: KEEP THEM ALL, ACROSS SEVERAL TICKETS. Book 50 throws
+       the rest away and Let me trim asks the reader to do it by hand - both
+       lose games they chose. Reported by a reader with 170 on the slip. The
+       splitter already deals legs round-robin and books a ticket at a time, so
+       this is the same machinery the code modal offers, aimed at the cap:
+       enough tickets that every one of them fits. */
+    var _ways=Math.ceil(bookable.length/BETSLIP_MAX);
+    var _each=splitPicks(bookable,_ways);
+    showPrompt("myBookResult","<div class='confirm-card' id='myCapCard'><p>"+B.mark+" takes "+
       BETSLIP_MAX+" picks on one slip and you have "+bookable.length+
-      ". Book the first "+BETSLIP_MAX+", or close this and remove "+_cut+
+      ". Book the first "+BETSLIP_MAX+", split them across "+_ways+
+      " tickets, or close this and remove "+_cut+
       "?</p><div class='ca'><button class='confirm-go' type='button'>Book "+
       BETSLIP_MAX+"</button><button class='confirm-cancel' type='button'>"+
-      "Let me trim</button></div></div>");
+      "Let me trim</button></div>"+
+      "<div class='sp-ways'><button class='sp-way' type='button' data-n='"+_ways+"'>"+
+      "<b>"+_ways+" tickets</b><span>"+_each.map(function(p){return p.length;}).join(" + ")+
+      " games</span></button></div></div>");
+    /* Through wireSplit, never straight to splitAndBook: the quota check that
+       stops a four-ticket split costing codes the reader does not have lives
+       there, and a second call site would skip it. */
+    wireSplit($("myBookResult"),bookable,B,{sel:"#myCapCard"});
     $("myBookResult").querySelector(".confirm-go").addEventListener("click",function(){
       clearPrompt("myBookResult");
       if(!confirmDropUnpriced(_fit,"myBookResult",doBookMy,B)) doBookMy(_fit);});
@@ -17260,6 +17276,41 @@ function wspBuild(){
                   asiaMode==="mix"?1:0.8);
   return accumulate(pool);
 }
+/* THE HIGHEST PAYOUT THIS BOARD CAN ACTUALLY BUILD, asked of the builder.
+   Reported: on a card full of games, typing anything over x6,000 answered "that
+   needs a wider window" - while the Slider, on that same day at its riskiest,
+   built over x100,000. Both are true of the same fixtures, so one of them was
+   lying about the board, and it was this one: the jackpot rungs were gated on
+   SCOPE==="all" and nothing else. The window is not the question. A thin
+   Tuesday with eleven games cannot reach x20,000 on any scope and a full
+   Saturday reaches it on Today alone, and only the pool knows which is in front
+   of the reader.
+   Measured by asking for more than any board holds and reading what comes back
+   short - wspBuild already returns its best effort and says it fell short, so
+   there is no second estimator here to disagree with the first.
+   Cached on everything the pool depends on EXCEPT the payout, which is the one
+   thing it must not depend on: renderWizardPanel runs on every chip tap. */
+var WSP_REACH={sig:null,max:0};
+function wspMaxReach(){
+  var sig=[wspStyleOn(),JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE,SDAY,SPAN,TOD,
+           !!WSP.everyGame,WSP.seed,WSP.shuffles,
+           Object.keys(WSP.removed||{}).length].join("|");
+  if(WSP_REACH.sig===sig) return WSP_REACH.max;
+  var was=WSP.odds;
+  try{
+    WSP.odds=1e12;
+    var r=wspBuild();
+    WSP_REACH.max=(r&&isFinite(r.odds))?r.odds:0;
+  }catch(e){
+    /* Never let a probe decide nothing can be built: on an error the ladder
+       falls back to offering the jackpot rungs, which is what it did before
+       this existed. */
+    WSP_REACH.max=Infinity;
+  }
+  WSP.odds=was;
+  WSP_REACH.sig=sig;
+  return WSP_REACH.max;
+}
 // --- Wizard panel rendering (replaces renderWsp) ---
 /* WHICH TOGGLE PRODUCES WHICH LEG. Kept beside the chips rather than derived,
    because the mapping is the one thing that would silently rot: a market added
@@ -18082,11 +18133,15 @@ function renderWizardPanel(){
      style, x50000 about twenty-one. */
   /* The jackpot tier needs the whole card - nineteen legs at the bigger style,
      forty-five at the smaller - and a single fixture day rarely holds that
-     many games worth backing. So it is offered only on "All upcoming", and a
-     target already chosen is dropped if the window narrows, rather than left
-     selected against a pool that cannot reach it. */
+     many games worth backing. Which was read as "so offer it only on All
+     upcoming", and that is a guess about the board dressed as a rule: on a
+     full Saturday the Slider reached x100,000 on Today while these chips
+     refused x6,000 and asked for a wider window. Ask the pool instead - it
+     knows how many games are in front of this reader and the scope does not.
+     A target already chosen is still dropped when the pool can no longer
+     reach it, rather than left selected against a board that cannot pay it. */
   var JACKPOT_FROM=JACKPOT_ODDS;
-  var jackOK=(SCOPE==="all");
+  var jackOK=(wspMaxReach()>=JACKPOT_FROM);
   if(!jackOK && isJackpotOdds(WSP.odds)){
     WSP.odds=null; WSP._sig=null; WSP._slip=null;
     try{localStorage.removeItem("sw.wspodds");}catch(e){}
@@ -18102,9 +18157,8 @@ function renderWizardPanel(){
   var odds=jackOK?WIDE_ODDS:WIDE_ODDS.filter(function(o){return o<JACKPOT_FROM;});
   WSP._wideMaxTarget=WIDE_ODDS[WIDE_ODDS.length-1];
   /* The ceiling the chips currently express, so the custom box can clamp to
-     the same limit. It moves with the window: the jackpot rungs are only
-     offered on All upcoming, because a single day rarely holds the twenty
-     games one needs. */
+     the same limit. It moves with the board: the jackpot rungs appear
+     whenever the pool in front of the reader can actually build them. */
   WSP._maxTarget=odds[odds.length-1];
   /* Named for what they change, not for a promise they cannot keep.
      "Safer, more games" was the reported-worst of the three and measurably

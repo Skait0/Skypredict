@@ -118,6 +118,38 @@ test("the day ladder still holds exactly what it used to", () => {
   assert.strictEqual(WIDE[WIDE.length - 1], 50000);
 });
 
+/* ------------------------------------------------ the ceiling is the board */
+
+test("the jackpot rungs are gated on what the pool can build, not on SCOPE", () => {
+  /* Reported: on a card full of games, typing over x6,000 answered "that needs
+     a wider window", while the Slider on that same day at its riskiest built
+     over x100,000. Both read the same fixtures, so the ceiling that refused
+     was not reading them at all - it was `SCOPE==="all"`, a policy about the
+     window standing in for a fact about the board. */
+  const m = /var jackOK=(.*);/.exec(code);
+  assert.ok(m, "the gate must still exist");
+  assert.match(m[1], /wspMaxReach\(\)>=JACKPOT_FROM/,
+    "the gate must ask the builder what this board reaches");
+  assert.ok(!/SCOPE==="all"/.test(m[1]),
+    "the scope is not evidence about the pool");
+});
+
+test("the probe asks the real builder and leaves the target as it found it", () => {
+  /* It runs inside renderWizardPanel, which runs on every chip tap, so it
+     caches - and the cache key must not include WSP.odds, which is the one
+     thing the answer must not depend on. WSP.odds is borrowed for the probe;
+     leaving it borrowed would build every later slip at 1e12. */
+  const fn = /function wspMaxReach\(\)\{[\s\S]*?\n\}/.exec(code)[0];
+  assert.match(fn, /wspBuild\(\)/, "it must measure with the builder itself");
+  assert.match(fn, /WSP\.odds=was/, "and must put the target back");
+  const sig = /var sig=\[([\s\S]*?)\]\.join/.exec(fn);
+  assert.ok(sig, "the cache key must be explicit");
+  assert.ok(!/WSP\.odds/.test(sig[1]),
+    "the target must not be part of the key that decides the ceiling");
+  for (const dep of ["SCOPE", "SDAY", "SPAN", "TOD", "WSP.mk"])
+    assert.ok(sig[1].includes(dep), "the key must move with " + dep);
+});
+
 /* --------------------------------------------------------------- the copy */
 
 test("it names both numbers the way the chips do", () => {

@@ -78,7 +78,7 @@ test("it asks rather than trimming behind the reader's back", () => {
   const fn = body("bookMy");
   const at = fn.indexOf("bookable.length>BETSLIP_MAX");
   assert.ok(at >= 0);
-  const guard = fn.slice(at, at + 1400);
+  const guard = fn.slice(at, at + 2600);
   assert.match(guard, /showPrompt\("myBookResult"/,
     "the reader must be asked");
   /* ASKED FIRST, not merely asked somewhere. Mutation-tested: inserting
@@ -94,6 +94,41 @@ test("it asks rather than trimming behind the reader's back", () => {
     "and must be able to decline and trim it themselves");
   assert.match(guard, /doBookMy\(_fit\)/,
     "and the confirmed path books the trimmed list, not the original");
+});
+
+/* KEEPING ALL THE GAMES IS THE THIRD ANSWER. Book 50 throws the rest away and
+   "let me trim" asks the reader to do it by hand; a reader with 170 picks
+   wanted neither, and said so. The offer is only honest if every ticket it
+   deals actually fits the betslip - which is arithmetic, not copy, so it is
+   tested as arithmetic on the real splitPicks. */
+test("the split offered at the cap deals tickets that all fit", () => {
+  const run = new Function(body("splitPicks") + "\nreturn splitPicks;")();
+  const MAX = konstNum("BETSLIP_MAX");
+  for (const n of [51, 100, 170, 249, 400]) {
+    const picks = Array.from({ length: n }, (_, i) => i);
+    const ways = Math.ceil(n / MAX);
+    const parts = run(picks, ways);
+    assert.strictEqual(parts.length, ways);
+    for (const p of parts)
+      assert.ok(p.length <= MAX,
+        n + " picks over " + ways + " tickets leaves one of " + p.length);
+    assert.strictEqual(parts.reduce((t, p) => t + p.length, 0), n,
+      "every pick must land on exactly one ticket");
+  }
+});
+
+test("the cap prompt offers the split through the quota-checked path", () => {
+  /* splitAndBook direct would skip the check in wireSplit that stops four
+     tickets being started with two codes left. Same reason the code modal
+     goes through wireSplit and not around it. */
+  const fn = body("bookMy");
+  const at = fn.indexOf("bookable.length>BETSLIP_MAX");
+  const guard = fn.slice(at, at + 2600);
+  assert.match(guard, /Math\.ceil\(bookable\.length\/BETSLIP_MAX\)/,
+    "the number of tickets must come from the limit, not a guess");
+  assert.match(guard, /wireSplit\(/, "the split must be wired, and wired here");
+  assert.ok(!/splitAndBook\(/.test(guard),
+    "never straight to splitAndBook - that is the path with no quota check");
 });
 
 test("the add-all path uses the same constant, not its own copy", () => {
@@ -123,7 +158,7 @@ test("the guard names whichever book is selected, not SportyBet", () => {
      copy was written. */
   const fn = body("bookMy");
   const at = fn.indexOf("bookable.length>BETSLIP_MAX");
-  const guard = fn.slice(at, at + 1400);
+  const guard = fn.slice(at, at + 2600);
   assert.match(guard, /\+B\.mark\+/,
     "the prompt must name the book in play");
   assert.ok(!/SportyBet|Bet9ja/.test(guard),
