@@ -396,6 +396,34 @@ async function writePages(payload) {
      same day by construction - a fixture's date IS its kickoff in UTC. */
   const legDay = (leg) => leg.date || String(leg.kickoff || "").slice(0, 10);
   const resultOf = (leg) => byFixture.get(K.fixtureKey(legDay(leg), leg.home, leg.away)) || null;
+
+  /* THE CODE, WHERE THE READERS ACTUALLY ARE.
+     /booking-codes had exactly one link into it, in the footer, which is to
+     say it had none - the reader who wants a code is on the board, and nothing
+     on the board said a code existed. The home page card is fed from this file
+     rather than from predictions.json, which is 300KB and parsed late: the
+     card is four numbers and two strings and should be on screen before the
+     board is.
+     The NEWEST day rather than today's: mkcode runs at midday UTC, so between
+     midnight and then there is no entry for today and a card that said nothing
+     would be worse than one that says which day it is showing. */
+  const newest = codeDays.slice().sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+  if (newest) {
+    const before = codeDays.filter((e) => e.date < newest.date)
+      .sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+    const prev = before ? P.codeSummary(before.legs, resultOf) : null;
+    fs.writeFileSync(path.join(PUB, "code-today.json"), JSON.stringify({
+      date: newest.date,
+      n: (newest.legs || []).length,
+      codes: newest.codes || {},
+      firstKickoff: newest.firstKickoff || null,
+      /* The proof, and the only reason the card is worth a tap: yesterday's
+         code, graded. A code with no record beside it is what every other
+         site in this corner of the internet posts. */
+      prev: prev ? { date: before.date, hit: prev.hit, of: prev.of } : null,
+    }));
+  }
+
   /* The standing pages: contact, privacy, terms, method, and the hub that
      makes every match page reachable by a link rather than only by sitemap.
      They go into the sitemap alongside the match pages, and they are written

@@ -30,6 +30,9 @@ public/how-to-load-a-booking-code.html
 public/convert-a-booking-code.html
 public/booking-codes/
 public/404.html
+# The home page's code card is fed from this. Written by the same build that
+# writes the pages above and stale within a day, so it is output, not source.
+public/code-today.json
 
 .vercel
 .env*
