@@ -11619,6 +11619,14 @@ function mProb(f,c){
      nothing of ours behind it to price. Null is the honest answer and every
      caller already treats it as "we cannot price this one". */
   if(!f) return null;
+  /* Inside the function, not beside it, for the same reason the promotions are:
+     the test harnesses lift mProb out on its own and have to carry its rules.
+     Both answer null on a field the payload does not hold, so a missing number
+     never turns into a confident 1. */
+  function cpl(v){ return v==null?null:clamp01(1-v); }
+  function mixFlip(either,alone){
+    return (either==null||alone==null)?null:clamp01(1-either+alone); }
+  function clamp01(v){ return v<0?0:v>1?1:v; }
   switch(c){
     /* The promotions, read at the bet underneath them. In the switch rather
        than a table beside it so anything that lifts this function out - the
@@ -11652,7 +11660,38 @@ function mProb(f,c){
     /* Win either half. Both books sell it per side, and neither side can be
        settled by a full-time score - see gradeLeg, which answers null. */
     case"WINHALF_H_Y":return f.h_win_half;
-    case"WINHALF_A_Y":return f.a_win_half;}
+    case"WINHALF_A_Y":return f.a_win_half;
+    /* THE OTHER SIDE OF EVERY MARKET ABOVE. A book sells both ends of a line
+       and a pasted slip uses both, but only the Yes end was ever priced - so
+       Under 2.5, No goal and the rest came back null and no rule in the editor
+       could touch them. They need no model: the two ends are exhaustive and
+       exclusive, so one is one minus the other. Arithmetic on numbers we
+       already publish, nothing new in the payload.
+       WHOLE NUMBERS ARE LEFT OUT ON PURPOSE. Under 2 and Under 3 push when the
+       total lands on the line, so the stake comes back and the bet is not two
+       outcomes - same reason a whole-ball handicap stays null below. */
+    case"UNDER_1.5":return cpl(f.o15);
+    case"UNDER_2.5":return cpl(f.o25);
+    case"UNDER_3.5":return cpl(f.o35);
+    case"NG":return cpl(f.btts);
+    case"FH_UNDER_0.5":return cpl(f.fh_o05);
+    case"HOME_UNDER_0.5":return cpl(f.h_o05);case"HOME_UNDER_1.5":return cpl(f.h_o15);
+    case"AWAY_UNDER_0.5":return cpl(f.a_o05);case"AWAY_UNDER_1.5":return cpl(f.a_o15);
+    case"WINHALF_H_N":return cpl(f.h_win_half);
+    case"WINHALF_A_N":return cpl(f.a_win_half);
+    /* THE COMBINATIONS' OTHER END IS NOT ONE MINUS ANYTHING WE HOLD. These are
+       "result OR goals", so the opposite of "home or over 2.5" is not "home or
+       under 2.5" - both can win on the same score. What we publish is
+       P(A or B); what is wanted is P(A or not B), and
+         P(A or not B) = 1 - P(not A and B) = 1 - (P(A or B) - P(A))
+       because A and B are the same two events either way. So the under end is
+       one minus the over end plus the result on its own. */
+    case"MIX_1_UN_2.5":return mixFlip(f.home_o25,f.home_p);
+    case"MIX_2_UN_2.5":return mixFlip(f.away_o25,f.away_p);
+    case"MIX_X_UN_2.5":return mixFlip(f.draw_o25,f.draw_p);
+    case"MIXNG_1":return mixFlip(f.home_btts,f.home_p);
+    case"MIXNG_2":return mixFlip(f.away_btts,f.away_p);
+    case"MIXNG_X":return mixFlip(f.draw_btts,f.draw_p);}
   /* ASIAN HANDICAPS AT THE LINES THAT ARE ALREADY A MARKET WE PUBLISH.
      64 codes came in as pass-through, were read and booked fine, and could not
      be judged at all - so every rule in this editor was blind to a family that
@@ -11883,6 +11922,25 @@ function gradeLeg(f,c,hg,ag){
     case"MIXGG_X": return d===0||both;
     case"MIXGG_1": return d>0||both;
     case"MIXGG_2": return d<0||both;
+    /* The other end of each line, settled on the same score. A pasted slip
+       uses both ends and only one of them could be judged, so an Under 2.5 leg
+       counted as ungraded next to an Over 2.5 leg it is the mirror of. Whole
+       numbers are absent for the same reason mProb will not price them: the
+       stake comes back when the total lands on the line. */
+    case"UNDER_1.5": return tot<1.5;
+    case"UNDER_2.5": return tot<2.5;
+    case"UNDER_3.5": return tot<3.5;
+    case"NG": return !both;
+    case"HOME_UNDER_0.5": return hg<0.5;
+    case"HOME_UNDER_1.5": return hg<1.5;
+    case"AWAY_UNDER_0.5": return ag<0.5;
+    case"AWAY_UNDER_1.5": return ag<1.5;
+    case"MIX_1_UN_2.5": return d>0||tot<2.5;
+    case"MIX_2_UN_2.5": return d<0||tot<2.5;
+    case"MIX_X_UN_2.5": return d===0||tot<2.5;
+    case"MIXNG_1": return d>0||!both;
+    case"MIXNG_2": return d<0||!both;
+    case"MIXNG_X": return d===0||!both;
   }
   return null;   /* first-half markets and anything unknown */
 }
@@ -13109,47 +13167,130 @@ function trimPlan(legs,B,drop){
  * chance contains it and our model rates higher, which is a real change of
  * bet - it is shown like every other change, with both numbers, before
  * anything is booked. */
-var SAFER={"1":"1X","2":"X2",
-  /* The promotion rides along: the leg stays on the same game and the same
-     side, and widens the outcome exactly as a plain result would. Priced at
-     the market underneath (see mProb), so the gain this is judged on is a
-     conservative one - the real 1UP is worth a little more than the number.
-     DC1UP_* is deliberately absent: it is already a double chance and there is
-     nothing wider to move it to. */
-  "UP1_1":"1X","UP2_1":"1X","UP1_2":"X2","UP2_2":"X2",
-  "OVER_2.5":"OVER_1.5","OVER_3.5":"OVER_2.5",
-  "HOME_OVER_1.5":"HOME_OVER_0.5","AWAY_OVER_1.5":"AWAY_OVER_0.5",
-  "MIX_X_OV_2.5":"MIX_X_OV_1.5","MIX_1_OV_2.5":"MIX_1_OV_1.5",
-  "MIX_2_OV_2.5":"MIX_2_OV_1.5",
-  /* BOTH TEAMS TO SCORE, SOFTENED INTO ANY TWO GOALS. The same game and the
-     same idea - goals - with one condition dropped: over 1.5 does not care who
-     scores them, and on a card where one side is much stronger that is where
-     both-score tickets die. A real change of bet, shown with both numbers like
-     the draw is. */
-  "GG":"OVER_1.5",
-  /* THE HANDICAP LADDER, NOW THAT THE RUNGS HAVE NUMBERS ON THEM (see mProb).
-     One step is half a goal towards the punter, which on the home side reads
-     -0.5 to 0 to +0.5 and on the away side is the same walk down the
-     home-quoted number. In plain words it is win, then win-or-stake-back, then
-     win-or-draw - the same widening every other entry here does, on the market
-     the reader chose. Deeper lines are absent because they are unpriced: a
-     ladder we cannot measure a rung of is not one we walk. */
-  "AH_1_-0.5":"AH_1_0","AH_1_0":"AH_1_0.5",
-  "AH_2_0.5":"AH_2_0","AH_2_0":"AH_2_-0.5",
-  "DNB_1":"1X","DNB_2":"X2"};
-/* WHERE THE TABLE ALONE CANNOT DECIDE, because the safer version depends on
-   which side the model likes. Same shape as the draw's rule, which has always
-   picked between 1X and X2 rather than hard-coding one. */
-function saferPick(f,from){
-  if(from==="X"||from==="UP1_X"||from==="UP2_X")
-    return (mProb(f,"1X")>=mProb(f,"X2"))?"1X":"X2";
-  /* Two goals from anybody, softened to one goal from whoever is likelier to
-     get it. Fewer goals asked for, and the side chosen on the model rather
-     than on the fixture's home advantage. */
-  if(from==="OVER_1.5")
-    return (mProb(f,"HOME_OVER_0.5")>=mProb(f,"AWAY_OVER_0.5"))
-      ? "HOME_OVER_0.5" : "AWAY_OVER_0.5";
-  return SAFER[from]||null;
+/* THE RUNGS ARE NOT LISTED ANY MORE, THEY ARE PROVEN.
+ *
+ * This used to be a table of from-market to to-market, written by hand. Every
+ * market added since had to be remembered here or it silently had no safer
+ * sibling - which is how the whole handicap family, and then both ends of
+ * every goals line, arrived with nothing to soften into. A pair also carried
+ * no proof: nothing in the code said 1X was actually wider than 1, so a typo
+ * would have sold somebody a DIFFERENT bet under a promise of a safer one.
+ *
+ * So the relation is computed instead. A market is a safer version of another
+ * when it wins on every score the first one wins on, never does worse, and
+ * does better somewhere - which is decided by running both through the page's
+ * own grader over every score from 0-0 to 6-6. gradeLeg is the same function
+ * that settles the record, so the ladder cannot disagree with the results.
+ *
+ * SAFER_TO is not the ladder. It is the list of markets we are willing to move
+ * a reader ONTO - the ones both books sell and we price - and every pairing
+ * between them is derived. Markets we price but will not move anyone onto stay
+ * out of it: the unders are graded below so a pasted leg can be judged, but
+ * nobody's ticket gets swapped into one until they are a chip like the rest. */
+var SAFER_TO=["1X","X2","12","GG",
+  "OVER_1.5","OVER_2.5",
+  "HOME_OVER_0.5","AWAY_OVER_0.5",
+  "MIX_1_OV_1.5","MIX_2_OV_1.5","MIX_X_OV_1.5",
+  "MIX_1_OV_2.5","MIX_2_OV_2.5","MIX_X_OV_2.5",
+  "MIXGG_1","MIXGG_2","MIXGG_X",
+  /* The handicap rungs. Half a goal towards the punter reads -0.5, 0, +0.5 on
+     the home side and the same walk down the home-quoted number on the away
+     one - win, then win-or-stake-back, then win-or-draw. The nil line and draw
+     no bet are the same bet under two names, so both are offered and the
+     grader below knows the stake comes back on a level game. */
+  "AH_1_0","AH_1_0.5","AH_2_0","AH_2_-0.5","DNB_1","DNB_2"];
+/* What a market reduces to once the things a final score cannot see are
+   stripped off it. A promotion settles as the bet underneath it (the early
+   payout is extra, never less - see mProb), and a handicap around nil is a
+   market we already sell under another name. */
+function saferAtom(c){
+  switch(c){
+    case"UP1_1":case"UP2_1":case"AH_1_-0.5":return"1";
+    case"UP1_X":case"UP2_X":return"X";
+    case"UP1_2":case"UP2_2":case"AH_2_0.5":return"2";
+    case"DC1UP_1X":case"AH_1_0.5":return"1X";
+    case"DC1UP_X2":case"AH_2_-0.5":return"X2";
+    case"DC1UP_12":return"12";
+    /* Draw no bet and the nil handicap are one bet sold under two names, and
+       both are offered - so they reduce to the same atom or the ladder would
+       count a rename as a rung. */
+    case"DNB_1":return"AH_1_0";
+    case"DNB_2":return"AH_2_0";
+  }
+  return c;
+}
+/* One leg on one score, as 1 won, 0 lost, 0.5 stake back, null cannot say.
+   Draw no bet is the only market here that pushes, and it is the reason this
+   is not simply gradeLeg: on a level game the money comes back, which is
+   better than losing and worse than winning, and a ladder that could not see
+   that could not tell a win from a win-with-the-stake-returned. */
+function saferGrade(c,hg,ag){
+  var a=saferAtom(c);
+  if(a==="AH_1_0") return hg>ag?1:hg===ag?0.5:0;
+  if(a==="AH_2_0") return hg<ag?1:hg===ag?0.5:0;
+  var r=gradeLeg(null,a,hg,ag);
+  return r==null?null:(r?1:0);
+}
+/* Is `to` a safer version of `from`? Proven over every score to 6-6, which
+   covers every line either market turns on. Answered once per pair and kept,
+   since it is a fact about the two markets and not about any fixture. */
+var SAFER_WIDER={};
+function saferWider(to,from){
+  var k=from+">"+to;
+  if(SAFER_WIDER[k]!=null) return SAFER_WIDER[k];
+  var better=false, ok=true;
+  for(var h=0;h<=6&&ok;h++)for(var a=0;a<=6&&ok;a++){
+    var x=saferGrade(from,h,a), y=saferGrade(to,h,a);
+    if(x==null||y==null){ ok=false; break; }   /* one of them cannot be settled */
+    if(y<x) ok=false; else if(y>x) better=true;
+  }
+  return (SAFER_WIDER[k]=ok&&better);
+}
+/* EVERY RUNG ABOVE THIS LEG, NEAREST FIRST.
+ *
+ * The ladder used to be a chain: one market pointed at one other, and a walk
+ * went from rung to rung. A derived relation is not a chain - a market has
+ * several markets above it - so the rungs are listed and sorted instead, and
+ * "nearest" means the smallest improvement that is still an improvement. That
+ * is the conservative read on a stranger's ticket, and it cannot dead-end the
+ * way a chain could when a nearby rung had nothing above IT.
+ *
+ * A market this book will not take is not a rung at all, so it is dropped here
+ * rather than counted as a step and then refused. saferSwap asks the same
+ * questions again before it offers anything. */
+function saferRungs(f,from,B){
+  var pOld=mProb(f,from);
+  if(pOld==null) return [];
+  var out=[];
+  /* THE ONE MOVE THAT IS NOT A WIDENING, and is offered anyway. Two goals from
+     anybody, softened to one goal from whoever is likelier to get it: fewer
+     goals asked for, but 0-2 wins the first and loses the second, so no proof
+     of safety exists and none is claimed. It is a real change of bet, shown
+     with both numbers before anything is booked, and the side is chosen on the
+     model rather than on the fixture's home advantage. */
+  var extra=(from==="OVER_1.5")
+    ? [(mProb(f,"HOME_OVER_0.5")>=mProb(f,"AWAY_OVER_0.5"))?"HOME_OVER_0.5":"AWAY_OVER_0.5"]
+    : [];
+  /* ONE RUNG PER BET, NOT PER NAME. Draw no bet and the nil handicap are the
+     same bet, and so are 1X and the half-ball handicap above it - offering
+     both would fill the ladder with renames and let a shuffle hand somebody
+     the identical bet under a different market. The first name wins, and
+     SAFER_TO lists the plain market before its handicap spelling, so what a
+     reader is offered is the one they recognise. A book that sells only the
+     handicap still gets it: the refused name never reaches here. */
+  var seen={};
+  SAFER_TO.concat(extra).forEach(function(to){
+    if(to===from||saferAtom(to)===saferAtom(from)) return;
+    if(seen[saferAtom(to)]) return;
+    if(extra.indexOf(to)<0&&!saferWider(to,from)) return;
+    if(B&&(!bookAllows(to,B)||bookVerdict(f,to,B)==="not-priced")) return;
+    var p=mProb(f,to);
+    if(p==null||!(p>pOld)) return;
+    seen[saferAtom(to)]=1;
+    out.push({to:to,p:p});
+  });
+  out.sort(function(a,b){ return a.p-b.p; });
+  return out;
 }
 /* How much better it has to get to be worth changing somebody's bet. Eight
    points: below that the two markets are close enough that the swap is churn,
@@ -13195,25 +13336,23 @@ function saferSwap(l,B){
   var from=l.prediction;
   var pOld=mProb(f,from);
   if(pOld==null) return null;                       /* nothing to measure from */
-  /* DOWN THE LADDER WHILE IT KEEPS HELPING, as far as the dial allows. A rung
-     the book will not take is stepped OVER rather than stopping the walk:
-     over 3.5 can still reach over 1.5 on a book that does not sell 2.5. The
-     furthest usable rung wins, because that is the safest one. */
-  var cur=from, opts=[], steps=saferDial().steps||1;
-  for(var i=0;i<steps;i++){
-    var to=saferPick(f,cur);
-    if(!to||to===from) break;
-    var pNew=mProb(f,to);
-    if(pNew==null) break;
-    /* This book must sell it, and a published price is the proof the market
-       exists on this game - one leg the book refuses takes the whole slip
-       down. Asked through bookVerdict rather than by reading the cache here,
-       so the editor cannot drift from the builders: "not-priced" is the only
-       refusal, and only ever about a market the sweep fetches. */
-    if(bookAllows(to,B)&&bookVerdict(f,to,B)!=="not-priced"&&(pNew-pOld)>=saferDial().gain)
-      opts.push({to:to,pNew:pNew});
-    cur=to;
-  }
+  /* UP THE LADDER WHILE IT KEEPS HELPING, as far as the dial allows. `steps`
+     is how many rungs of the ladder this leg may travel, counted from the
+     nearest: one is the neighbouring market, three lets a leg keep going while
+     it keeps helping. Rungs the book will not take were never rungs, so they
+     cost no step - over 3.5 still reaches over 1.5 on a book that does not
+     sell 2.5. The furthest usable rung wins, because that is the safest one. */
+  /* The book must sell each rung, and a published price is the proof the
+     market exists on this game - one leg the book refuses takes the whole slip
+     down. Asked through bookVerdict rather than by reading the cache here, so
+     the editor cannot drift from the builders: "not-priced" is the only
+     refusal, and only ever about a market the sweep fetches. saferRungs has
+     already applied it; asked again so a rung can never arrive unchecked. */
+  var steps=saferDial().steps||1;
+  var opts=saferRungs(f,from,B).filter(function(r){
+    return bookAllows(r.to,B)&&bookVerdict(f,r.to,B)!=="not-priced"&&
+           (r.p-pOld)>=saferDial().gain;
+  }).slice(0,steps).map(function(r){ return {to:r.to,pNew:r.p}; });
   if(!opts.length) return null;
   /* THE FURTHEST RUNG BY DEFAULT, AND THE NEXT ONE ALONG ON A SHUFFLE.
      Every rung in here already passed the same tests - the book sells it, it

@@ -457,15 +457,20 @@ test("a swap keeps the game and widens the outcome, never the reverse", () => {
     "const SAFE_UNPRICED={'1':1,'2':1,'X':1,'1X':1,'X2':1,'12':1};" +
     grab("fetchedMarket") + grab("bookVerdict") +
     "var BYO={saferHow:'normal',saferSwapOn:true,saferDrop:false};" +
-    src.slice(src.indexOf("var SAFER={"), src.indexOf("function renderByo(")) +
+    grab("gradeLeg") +
+    src.slice(src.indexOf("var SAFER_TO=["), src.indexOf("function renderByo(")) +
     "\nreturn {saferSwap:saferSwap,saferPlan:saferPlan,saferDroppable:saferDroppable,SAFER_MIN_GAIN:SAFER_MIN_GAIN};")();
   const B = { key: "sporty", id: "eventId", odds: "sportyOdds" };
   const leg = (code, odds) => ({ eventId: "sr:match:1", home: "Arsenal", away: "Chelsea",
     kickoff: Date.parse("2026-09-14T16:30:00.000Z"), prediction: code, odds: odds });
 
-  /* A win becomes a win-or-draw on the same fixture. */
+  /* A win becomes the nearest bet that is proven safer on the same fixture -
+     here draw no bet, which wins everywhere the win does and hands the stake
+     back on a draw instead of losing it. It used to be the double chance every
+     time, because a table said so; the table is gone and the rungs are derived
+     from the grader, so the nearest honest one is what gets offered. */
   const win = api.saferSwap(leg("1", 1.85), B);
-  assert.equal(win.to, "1X");
+  assert.equal(win.to, "AH_1_0");
   assert.ok(win.pNew > win.pOld + api.SAFER_MIN_GAIN);
 
   /* A goals line drops one rung. */

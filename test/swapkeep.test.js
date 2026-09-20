@@ -252,19 +252,16 @@ test("a promotion is priced at the bet underneath it, and widens like one", () =
   assert.match(m, /case"UP1_1":case"UP2_1":return mProb\(f,"1"\);/);
   assert.match(m, /case"UP1_X":case"UP2_X":return mProb\(f,"X"\);/);
   assert.match(m, /case"DC1UP_1X":return mProb\(f,"1X"\);/);
-  /* A promotion on a straight result widens into the double chance holding it,
-     exactly as the plain result does. */
-  const safer = src.slice(src.indexOf("var SAFER={"), src.indexOf("var SAFER_MIN_GAIN"));
-  assert.match(safer, /"UP1_1":"1X","UP2_1":"1X","UP1_2":"X2","UP2_2":"X2"/);
+  /* A promotion widens exactly as the bet underneath it does - which is now a
+     consequence of reducing it to that bet rather than four rows in a table. */
+  assert.equal(wider("1X", "UP1_1"), wider("1X", "1"));
+  assert.equal(wider("X2", "UP2_2"), wider("X2", "2"));
   /* But one already on a double chance has nothing wider to go to, and must
      never be given a swap - moving it could only narrow the bet. */
-  const entries = safer.replace(/\/\*[\s\S]*?\*\//g, "");   /* the table, not the prose */
-  assert.doesNotMatch(entries, /DC1UP_/,
-    "DC1UP is already a double chance; there is nothing safer to swap it to");
-  /* The draw promotions follow the draw's own rule: whichever double chance
-     holding it the model rates higher. */
-  assert.ok(src.includes('if(from==="X"||from==="UP1_X"||from==="UP2_X")'),
-    "the draw promotions no longer follow the draw's own rule");
+  ["DC1UP_1X", "DC1UP_X2", "DC1UP_12"].forEach((c) => {
+    assert.equal(ladder(LOPSIDED)(c, "strong"), null,
+      c + " is already a double chance; there is nothing safer to swap it to");
+  });
 });
 
 /* ---------------------------- the three levels change the bet, not just the mood */
@@ -275,6 +272,23 @@ test("a promotion is priced at the bet underneath it, and widens like one", () =
  * dropping legs - and the levels moved two thresholds, never the destination.
  * Now `steps` says how far down the ladder a leg may travel, so Strong can
  * keep going while it keeps helping. Run against the shipped functions. */
+const arr = (n) => {
+  const i = src.indexOf("var " + n + "=");
+  return src.slice(i, src.indexOf("];", i) + 2);
+};
+/* The widening relation on its own, with no fixture and no prices in it - the
+   shipped functions, so a pairing this proves is a pairing the page walks. */
+const wider = (() => {
+  const decl = (n) => {
+    const i = src.indexOf("var " + n + "=");
+    let d = 0, k = src.indexOf("{", i);
+    for (; k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) break; } }
+    return src.slice(i, k + 1) + ";";
+  };
+  return new Function(decl("SAFER_WIDER") + grab("saferAtom") + grab("saferGrade") +
+    grab("saferWider") + grab("gradeLeg") + "return saferWider;")();
+})();
+
 function ladder(fixture) {
   const decl = (n) => {
     const i = src.indexOf("var " + n + "=");
@@ -283,8 +297,9 @@ function ladder(fixture) {
     return src.slice(i, k + 1) + ";";
   };
   const api = new Function("BYO", "B", "f",
-    decl("SAFER") + decl("SAFER_STRENGTH") +
-    grab("saferPick") + grab("saferDial") + grab("mProb") + grab("saferSwap") +
+    arr("SAFER_TO") + decl("SAFER_WIDER") + decl("SAFER_STRENGTH") +
+    grab("saferAtom") + grab("saferGrade") + grab("saferWider") + grab("gradeLeg") +
+    grab("saferRungs") + grab("saferDial") + grab("mProb") + grab("saferSwap") +
     "function fixtureByLeg(){return f;}function bookAllows(){return true;}" +
     "function bookVerdict(){return 'unknown';}" +
     "return function(code,how,n){BYO.saferHow=how;BYO.saferShuffle=n||0;" +
@@ -308,8 +323,11 @@ test("Strong walks further down the ladder than Light", () => {
 test("both teams to score softens into any two goals", () => {
   /* The same game and the same idea, with one condition dropped: over 1.5 does
      not care who scores them, which is where both-score tickets die on a
-     lopsided card. */
+     lopsided card. Nobody wrote that pairing down - both teams scoring means
+     at least two goals on every score there is, so the grader proves it. */
   assert.equal(ladder(LOPSIDED)("GG", "light").to, "OVER_1.5");
+  assert.ok(wider("OVER_1.5", "GG"), "and it is proven, not asserted");
+  assert.ok(!wider("GG", "OVER_1.5"), "the other way round is not safer, and must not be offered");
 });
 
 test("a goals line softens to whichever side the model likes, not the home one", () => {
@@ -341,13 +359,12 @@ test("shuffle offers a different rung, and comes back round", () => {
      shuffle loosens nothing; it walks back up the ladder a rung at a time. */
   const run = ladder(LOPSIDED);
   const at = (n) => { const r = run("OVER_3.5", "strong", n); return r && r.to; };
-  assert.equal(at(0), "HOME_OVER_0.5", "the safest rung is still what it offers first");
-  assert.notEqual(at(1), at(0), "a shuffle has to actually change something");
-  assert.notEqual(at(2), at(1));
-  assert.equal(at(3), at(0), "and it wraps rather than running out");
+  assert.equal(at(0), "OVER_1.5", "the safest rung is still what it offers first");
+  assert.equal(at(1), "OVER_2.5", "a shuffle walks back down a rung");
+  assert.equal(at(2), at(0), "and it wraps rather than running out");
   /* A leg with one honest option is simply unmoved. */
-  const one = ["UP1_1"].map((c) => [0, 1, 2].map((n) => run(c, "strong", n).to));
-  assert.equal(new Set(one[0]).size, 1, "a leg with one rung must not be shuffled into a worse one");
+  const one = [0, 1, 2].map((n) => run("AH_1_0", "strong", n).to);
+  assert.equal(new Set(one).size, 1, "a leg with one rung must not be shuffled into a worse one");
 });
 
 test("the shuffle button only appears when it would change something", () => {
@@ -407,14 +424,27 @@ test("a line we cannot settle from one number stays unpriced", () => {
 
 test("a handicap walks the same ladder every other market does", () => {
   const run = ladder(LOPSIDED);
-  /* Half a goal towards the punter each rung: win, then win-or-stake-back,
-     then win-or-draw. */
-  assert.equal(run("AH_1_-0.5", "light").to, "AH_1_0", "one rung at Light");
-  assert.equal(run("AH_1_-0.5", "strong").to, "AH_1_0.5", "and further at Safest");
-  /* The away side walks DOWN the home-quoted number for the same widening. */
-  assert.equal(run("AH_2_0.5", "strong").to, "AH_2_-0.5");
-  /* Draw no bet widens into the double chance holding it - a smaller gain
-     than the handicap walk, since the stake already came back on a draw, so
-     it takes a dial that moves on small gains. */
-  assert.equal(run("DNB_1", "strong").to, "1X");
+  /* Nothing in the code pairs a handicap with anything. The grader knows the
+     stake comes back on a level game, so the nil line scores half where the
+     -0.5 line scores nothing and never scores less - which is what makes it a
+     rung, and the only reason one exists. */
+  assert.ok(wider("AH_1_0", "AH_1_-0.5"), "stake back beats losing, on every score");
+  assert.ok(!wider("AH_1_-0.5", "AH_1_0"), "and it does not work backwards");
+  /* The away side is quoted from the home team's point of view, so its rung is
+     DOWN the number, and that falls out of the grader rather than being
+     spelled anywhere. */
+  assert.ok(wider("AH_2_-0.5", "AH_2_0"));
+  assert.ok(!wider("AH_2_0.5", "AH_2_0"));
+  /* Draw no bet and the nil line are one bet under two names: neither can be
+     the other's rung, or a shuffle would offer a rename as a change. */
+  assert.ok(!wider("DNB_1", "AH_1_0") && !wider("AH_1_0", "DNB_1"));
+  assert.equal(run("AH_1_0", "strong").to, "1X",
+    "and it widens into the double chance holding it");
+  /* Whatever a handicap leg is offered, it is a market it is proven safer
+     than and a better number - the same two tests every other leg passes. */
+  ["AH_1_-0.5", "AH_2_0.5", "DNB_1", "DNB_2"].forEach((c) => {
+    const r = run(c, "strong");
+    assert.ok(r, c + " is stranded with nothing to offer");
+    assert.ok(r.pNew > r.pOld, c + " was moved to a worse bet");
+  });
 });
