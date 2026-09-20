@@ -43,7 +43,7 @@ async function awaitDeploy(date, deps) {
         if (d && d.date === date) return true;
       }
     } catch (e) { /* a build in flight serves whatever it likes - just retry */ }
-    if (waitMs) await new Promise((res) => setTimeout(res, waitMs));
+    if (waitMs && i < tries - 1) await new Promise((res) => setTimeout(res, waitMs));
   }
   return false;
 }
@@ -76,7 +76,18 @@ async function sendAll(subs, deps) {
 }
 
 async function main() {
-  const entry = newestEntry(JSON.parse(fs.readFileSync(CODES, "utf8")));
+  /* A missing or half-written codes file must not throw here: the read/parse
+     is the one spot in this file that isn't already an answer-object, and an
+     unguarded throw inside an async function becomes an unhandled rejection
+     that reds out the workflow the moment the code has already published. */
+  let raw;
+  try {
+    raw = JSON.parse(fs.readFileSync(CODES, "utf8"));
+  } catch (e) {
+    console.log("cannot read " + CODES + ": " + (e && e.message));
+    return;
+  }
+  const entry = newestEntry(raw);
   if (!entry) { console.log("no code to announce"); return; }
 
   if (quietHours(Date.now())) { console.log("quiet hours in Lagos - not sending"); return; }
@@ -115,6 +126,11 @@ async function main() {
   if (!out.sent && !out.dead.length && out.failed) process.exitCode = 1;
 }
 
-if (require.main === module) main();
+/* Structural, not spot-patched: whatever guard above gets missed by a future
+   edit, this still stops it going red. A push that failed to send is not
+   worth the workflow's own signal. */
+if (require.main === module) {
+  main().catch((e) => { console.log("pushcode failed: " + (e && e.message)); });
+}
 
-module.exports = { newestEntry, awaitDeploy, sendAll };
+module.exports = { newestEntry, awaitDeploy, sendAll, main };

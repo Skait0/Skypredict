@@ -172,3 +172,22 @@ test("a dead subscription is dropped, a busy push service is left alone", async 
   assert.strictEqual(one.headers.Authorization, "vapid t=tok, k=PUB");
   assert.strictEqual(one.headers.TTL, "3600");
 });
+
+test("a missing or broken codes file does not crash the sender", async () => {
+  /* The read/parse in main() is the one place a workflow could go red for
+     free after the code has already published. Break the read the same way
+     an absent or half-written file would, and assert the behaviour: no
+     rejection, no non-zero exit code - not a source string. */
+  const fs = require("fs");
+  const realRead = fs.readFileSync;
+  fs.readFileSync = () => { throw new Error("ENOENT: no such file or directory"); };
+  const before = process.exitCode;
+  process.exitCode = undefined;
+  try {
+    await assert.doesNotReject(() => S.main());
+    assert.notStrictEqual(process.exitCode, 1);
+  } finally {
+    fs.readFileSync = realRead;
+    process.exitCode = before;
+  }
+});
