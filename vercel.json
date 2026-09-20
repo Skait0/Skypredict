@@ -107,6 +107,21 @@
           "value": "public, s-maxage=3600, stale-while-revalidate=86400"
         }
       ]
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "skypredict-theta.vercel.app"
+        }
+      ],
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
+      ]
     }
   ],
   "rewrites": [
@@ -123,5 +138,6 @@
       "destination": "/api/slipcard"
     }
   ],
-  "cleanUrls": true
+  "cleanUrls": true,
+  "trailingSlash": false
 }
