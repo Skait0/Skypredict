@@ -15,6 +15,30 @@ const test = require("node:test");
 const assert = require("node:assert");
 const P = require("../lib/pages.js");
 
+/* pushControl() reads VAPID_PUBLIC_KEY at call time, not at module load, and
+ * returns "" with no control at all when it is unset - that's a real branch
+ * (Fix round 2, test below), not a missing fixture. Every other test in this
+ * file needs a key present to exercise the control itself, so one is set here
+ * and restored after the file runs, rather than relying on whatever a shell
+ * happens to export - a suite that only passes because VAPID_PUBLIC_KEY leaked
+ * in from outside is red for everyone else.
+ *
+ * Shaped like the real thing (base64url of a 65-byte uncompressed P-256
+ * point starting 0x04) so key()'s decode path is exercised honestly instead
+ * of short-circuiting on a short dummy string. Not a real key. */
+const DUMMY_KEY = (() => {
+  const buf = Buffer.alloc(65);
+  buf[0] = 4;
+  for (let i = 1; i < 65; i++) buf[i] = i;
+  return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+})();
+const REAL_KEY = process.env.VAPID_PUBLIC_KEY;
+test.before(() => { process.env.VAPID_PUBLIC_KEY = DUMMY_KEY; });
+test.after(() => {
+  if (REAL_KEY === undefined) delete process.env.VAPID_PUBLIC_KEY;
+  else process.env.VAPID_PUBLIC_KEY = REAL_KEY;
+});
+
 test("the ask only ever happens on a tap", () => {
   const html = P.pushControl();
   const clickAt = html.indexOf('addEventListener("click"');
@@ -114,4 +138,15 @@ test("a subscribe the server accepts does draw as subscribed", async () => {
   host._click({ target: { closest: () => true } });
   await flush();
   assert.match(host.innerHTML, /Notifications on/);
+});
+
+test("with no VAPID_PUBLIC_KEY, pushControl ships no control at all", () => {
+  const saved = process.env.VAPID_PUBLIC_KEY;
+  delete process.env.VAPID_PUBLIC_KEY;
+  try {
+    assert.strictEqual(P.pushControl(), "",
+      "a button that can never work is worse than no button");
+  } finally {
+    process.env.VAPID_PUBLIC_KEY = saved;
+  }
 });
