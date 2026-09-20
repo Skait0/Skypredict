@@ -292,7 +292,7 @@ test("prebuild dates a page from its result rather than from the clock", () => {
   assert.ok(i > 0, "prebuild no longer dates match pages individually");
   assert.match(pre.slice(i, i + 220), /const dated = \(pg\.r && pg\.r\.date\) \|\| pg\.f\.date/,
     "the date must come from the result, not from the build clock");
-  assert.match(pre.slice(i, i + 260), /paths\.push\(\{ path: rel, lastmod: dated \}\)/);
+  assert.match(pre.slice(i, i + 800), /paths\.push\(\{ path: rel, lastmod: dated \}\)/);
 });
 
 /* ----------------------------------------------- what we ask to be indexed */
@@ -329,8 +329,19 @@ test("the sitemap never lists a page we told Google to skip", () => {
     require("path").join(__dirname, "..", "scripts", "prebuild.js"), "utf8");
   const i = pre.indexOf("const played = pg.r && pg.r.hg != null");
   assert.ok(i > 0, "prebuild no longer distinguishes played from upcoming");
-  assert.match(pre.slice(i, i + 320), /if \(played && P\.inSitemapWindow\(/,
+  const gate = pre.slice(i, i + 1200);
+  assert.match(gate, /if \(played && P\.inSitemapWindow\(/,
     "unplayed fixtures are being submitted again");
+  /* THE TWO GATES HAVE TO AGREE. The page decides noindex from
+     `played || indexableUpcoming(f)`; the sitemap must submit exactly that set
+     and no wider. Both are one condition in two files, which is precisely the
+     pair that drifts - so they are pinned together here rather than apart. */
+  assert.match(gate, /!played && P\.indexableUpcoming\(pg\.f\)/,
+    "the sitemap submits unplayed pages on some other rule than the page's own");
+  const pages = require("fs").readFileSync(
+    require("path").join(__dirname, "..", "lib", "pages.js"), "utf8");
+  assert.match(pages, /\$\{played \|\| indexableUpcoming\(f\)/,
+    "the page is noindexed on a rule the sitemap does not share");
 });
 
 test("every page declares the size the card actually ships at", () => {

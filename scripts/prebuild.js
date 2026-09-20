@@ -347,8 +347,23 @@ async function writePages(payload) {
          ask for. */
       const played = pg.r && pg.r.hg != null && pg.r.ag != null;
       const dated = (pg.r && pg.r.date) || pg.f.date;
+      /* The seven leagues of the unplayed-page experiment are submitted before
+         kickoff too - see INDEXED_UPCOMING in lib/pages.js. Their lastmod is
+         today's stamp, not the fixture's date: that date is in the FUTURE, and
+         a lastmod we have not reached yet is a claim about a page that does not
+         exist. renderSitemap stamps a plain string for us. */
       if (played && P.inSitemapWindow(dated, todayISO)) {
         paths.push({ path: rel, lastmod: dated });
+      } else if (!played && P.indexableUpcoming(pg.f) &&
+                 P.inSitemapWindow(todayISO, dated)) {
+        /* ARGUMENTS REVERSED ON PURPOSE - this is the window pointed FORWARD.
+           inSitemapWindow lets any future date through by design, so asking it
+           the usual way submitted every upcoming fixture in these leagues the
+           board carries: 182 extra URLs at the first measurement, which is the
+           thousand-thin-pages mistake again with a smaller number on it. Asked
+           this way it means "kicks off within SITEMAP_DAYS", which is the two
+           days where the pre-match search demand actually is. */
+        paths.push(rel);
       } else skipped++;
       written++;
     } catch (e) {

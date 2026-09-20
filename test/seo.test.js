@@ -141,3 +141,51 @@ test("the build applies the window to match pages and to nothing else", () => {
   assert.doesNotMatch(day, /inSitemapWindow/,
     "the day pages have been put behind the window too");
 });
+
+test("seven leagues are indexed before kickoff, and the other thirty-three are not", () => {
+  /* The narrow experiment opened 20 Sep 2026 - see INDEXED_UPCOMING in
+     lib/pages.js for what it asks and when it is judged. The point of pinning
+     it is that a league name here is matched EXACTLY against the payload's own
+     string: a rename or a typo fails silently, indexing nothing, and looks
+     exactly like an experiment that did not work. */
+  const P = require("../lib/pages.js");
+  const f = (league) => ({ date: "2026-09-25", league,
+    home: "Arsenal", away: "Chelsea" });
+
+  const top = P.renderMatchPage(f("England Premier League"), null, []);
+  assert.doesNotMatch(top, /noindex/, "a top-league fixture is still noindexed before kickoff");
+  assert.match(top, /rel="canonical"/, "an indexable page must state its canonical");
+
+  const rest = P.renderMatchPage(f("Denmark Superliga"), null, []);
+  assert.match(rest, /<meta name="robots" content="noindex,follow">/,
+    "the experiment has leaked to leagues it was never about");
+  assert.doesNotMatch(rest, /rel="canonical"/);
+
+  /* Every name is one the live payload actually publishes. */
+  for (const l of P.INDEXED_UPCOMING) {
+    assert.ok(P.indexableUpcoming({ league: l }), l + " does not match itself");
+  }
+  assert.equal(P.indexableUpcoming({ league: "England Premier league" }), false,
+    "the match is case-insensitive, so a payload rename would pass unnoticed");
+  assert.equal(P.indexableUpcoming({}), false);
+  assert.equal(P.indexableUpcoming(null), false);
+});
+
+test("an indexable unplayed page is submitted, and dated today rather than by its kickoff", () => {
+  const P = require("../lib/pages.js");
+  const src = require("fs").readFileSync(
+    require("path").join(__dirname, "..", "scripts", "prebuild.js"), "utf8");
+  assert.match(src, /P\.indexableUpcoming\(pg\.f\) &&\s*\n?\s*P\.inSitemapWindow\(todayISO, dated\)/,
+    "the forward window is gone, so every upcoming fixture in these leagues is submitted");
+  /* Measured, not assumed: asked the usual way round it was 182 extra URLs,
+     because inSitemapWindow lets ANY future date through. */
+  assert.equal(P.inSitemapWindow("2026-09-20", "2026-09-21"), true, "tomorrow");
+  assert.equal(P.inSitemapWindow("2026-09-20", "2026-09-27"), false, "next week");
+  /* `dated` is the fixture's date and it is in the FUTURE. A lastmod we have
+     not reached yet is a claim about a page that does not exist; renderSitemap
+     stamps a bare string with the build date instead. */
+  assert.match(src, /paths\.push\(rel\);/,
+    "an unplayed page carries a lastmod, which would be a future date");
+  const xml = P.renderSitemap(["/m/arsenal-vs-chelsea-2026-09-25"], "2026-09-20");
+  assert.match(xml, /2026-09-25<\/loc><lastmod>2026-09-20</);
+});
