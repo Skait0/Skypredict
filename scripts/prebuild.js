@@ -372,7 +372,15 @@ async function writePages(payload) {
   for (const pg of pages) {
     if (pg.r && pg.r.hg != null) byFixture.set(K.fixtureKey(pg.f.date, pg.f.home, pg.f.away), pg.r);
   }
-  const resultOf = (leg) => byFixture.get(K.fixtureKey(leg.date || "", leg.home, leg.away)) || null;
+  /* A LEG HAS NEVER CARRIED A DATE, SO NO CODE DAY HAS EVER BEEN GRADED.
+     mkcode wrote home, away, league, kickoff, tip, tip_p and market - not
+     date - so this keyed every leg on "" and missed every result. Twelve days
+     of codes, every one of them reading "pending" under a page whose whole
+     claim is that we say what happened next. mkcode writes the date now; the
+     kickoff fallback is what grades the twelve already on disk, and it is the
+     same day by construction - a fixture's date IS its kickoff in UTC. */
+  const legDay = (leg) => leg.date || String(leg.kickoff || "").slice(0, 10);
+  const resultOf = (leg) => byFixture.get(K.fixtureKey(legDay(leg), leg.home, leg.away)) || null;
   /* The standing pages: contact, privacy, terms, method, and the hub that
      makes every match page reachable by a link rather than only by sitemap.
      They go into the sitemap alongside the match pages, and they are written

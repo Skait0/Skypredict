@@ -286,6 +286,9 @@ async function bookSlipRetrying(which, sel) {
     generated: new Date().toISOString(),
     firstKickoff: working.map((p) => p.f.kickoff).filter(Boolean).sort()[0] || null,
     legs: working.map((p) => ({
+      /* The date is what the build grades a leg by - without it every code day
+         stays "pending" for ever. It was missing for the first twelve. */
+      date: p.f.date || date,
       home: p.f.home, away: p.f.away, league: p.f.league || "",
       kickoff: p.f.kickoff || null, tip: p.f.tip, tip_p: p.f.tip_p, market: p.market,
     })),
