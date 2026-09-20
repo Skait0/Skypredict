@@ -108,3 +108,67 @@ test("nobody is woken up at half past eleven", () => {
   assert.strictEqual(V.quietHours(Date.UTC(2026, 8, 20, 20, 59)), false, "21:59 Lagos");
   assert.strictEqual(V.quietHours(Date.UTC(2026, 8, 20, 21, 0)), true, "22:00 Lagos exactly");
 });
+
+const S = require("../scripts/pushcode.js");
+
+test("the sender announces the newest code, not today's", () => {
+  /* mkcode runs at midday UTC, so for half the clock there is no entry dated
+     today. code-today.json follows the same rule and the two must agree, or
+     the notification names a day the site is not showing. */
+  const got = S.newestEntry({
+    "2026-09-19": { date: "2026-09-19", codes: { sporty: "A" }, legs: [1] },
+    "2026-09-20": { date: "2026-09-20", codes: { sporty: "B" }, legs: [1, 2] },
+  });
+  assert.strictEqual(got.date, "2026-09-20");
+  assert.strictEqual(S.newestEntry({}), null);
+  assert.strictEqual(
+    S.newestEntry({ "2026-09-20": { date: "2026-09-20", codes: {}, legs: [] } }), null,
+    "an entry with no bookmaker code is nothing to announce");
+});
+
+test("the sender waits for the deploy rather than pointing at yesterday", async () => {
+  /* The mint commits, Vercel builds, and a push sent immediately arrives
+     before the site serves the new code. The reader taps and lands on
+     yesterday's - which is exactly the complaint this feature exists to fix. */
+  let n = 0;
+  const fetchImpl = async () => ({
+    ok: true,
+    json: async () => ({ date: ++n < 3 ? "2026-09-19" : "2026-09-20" }),
+  });
+  const ok = await S.awaitDeploy("2026-09-20", { fetchImpl, tries: 5, waitMs: 0 });
+  assert.strictEqual(ok, true);
+  assert.strictEqual(n, 3, "it must keep asking until the date matches");
+});
+
+test("a deploy that never lands sends nothing at all", async () => {
+  const fetchImpl = async () => ({ ok: true, json: async () => ({ date: "2026-09-19" }) });
+  const ok = await S.awaitDeploy("2026-09-20", { fetchImpl, tries: 3, waitMs: 0 });
+  assert.strictEqual(ok, false);
+});
+
+test("a dead subscription is dropped, a busy push service is left alone", async () => {
+  const seen = [];
+  const fetchImpl = async (url, init) => {
+    seen.push({ url, init });
+    if (url.endsWith("gone")) return { status: 410, ok: false };
+    if (url.endsWith("busy")) return { status: 429, ok: false };
+    return { status: 201, ok: true };
+  };
+  const out = await S.sendAll(
+    [{ endpoint: "https://fcm.googleapis.com/fcm/send/ok" },
+     { endpoint: "https://fcm.googleapis.com/fcm/send/gone" },
+     { endpoint: "https://fcm.googleapis.com/fcm/send/busy" }],
+    { fetchImpl, jwt: () => "tok", publicKey: "PUB" });
+
+  assert.strictEqual(out.sent, 1);
+  assert.strictEqual(out.failed, 1, "429 is tomorrow's problem, not a dead row");
+  assert.deepStrictEqual(out.dead, ["https://fcm.googleapis.com/fcm/send/gone"]);
+
+  /* The push itself: no body at all, which is the whole reason there is no
+     encryption in this repo. */
+  const one = seen[0].init;
+  assert.strictEqual(one.method, "POST");
+  assert.strictEqual(one.body, undefined);
+  assert.strictEqual(one.headers.Authorization, "vapid t=tok, k=PUB");
+  assert.strictEqual(one.headers.TTL, "3600");
+});
