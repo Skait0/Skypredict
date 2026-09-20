@@ -280,10 +280,26 @@ test("the prompt tells the reader which bookmakers can take the bet", () => {
   /* On a book that already sells it there is nothing to switch, and the
      prompt has to say so rather than offer a move to where the reader is. */
   const onB9 = runAskBookOnly("bet9ja");
-  assert.match(onB9, /You are on Bet9ja, which sells it/);
+  assert.match(onB9, /You are on Bet9ja\. Turn it on\?/);
   assert.match(onB9, /Turn it on/);
   assert.doesNotMatch(onB9, /Switch to Bet9ja/);
   assert.match(onB9, /data-use='betking'/, "the other book that sells it is still offered");
+});
+
+test("the panel the prompt opens in has no fixed ceiling to be cut off at", () => {
+  /* The prompt was reported cut off on a phone, and it was not the prompt:
+     .filters-body was capped at 600px with overflow hidden, and the filters
+     stand 572px tall at 390px wide. Anything that opens in there - this
+     prompt, the idle note, the league list - has to be able to make the panel
+     taller. A bigger number would only move the edge. */
+  const open = /\n\.filters-body\{([^}]*)\}/.exec(src);
+  assert.ok(open, "the open state must still be declared");
+  assert.match(open[1], /max-height:max-content/,
+    "the open height must come from the content");
+  assert.ok(!/max-height:\d+px/.test(open[1]),
+    "no fixed ceiling: " + open[1]);
+  /* The collapsed state still clips - that is the whole point of it. */
+  assert.match(src, /\.filters-body\[hidden\]\{[^}]*max-height:0/);
 });
 
 test("both books the chip names really map the family, all three signs", () => {

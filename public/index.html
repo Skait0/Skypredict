@@ -2857,7 +2857,19 @@ html.mode-live #live{display:block}
 .filters-toggle .ft-sum{font-size:12px;font-weight:700;color:var(--faint)}
 .filters-toggle .ft-chev{width:16px;height:16px;color:var(--soft);transition:transform .2s ease}
 .filters-toggle[aria-expanded="false"] .ft-chev{transform:rotate(-90deg)}
-.filters-body{overflow:hidden;transition:max-height .25s ease,opacity .2s ease;max-height:600px;opacity:1;padding-bottom:4px;margin-bottom:12px}
+/* THE OPEN STATE HAS NO CEILING. It was max-height:600px, which is a number
+   somebody measured once on a panel that has grown since: at 390px the filters
+   stand 572px tall, so the market prompt that opens under the chips had 28px
+   to live in and was cut off at the panel's edge. Anything that appears in
+   here - the prompt, the idle note, the league list - has to be able to make
+   the panel taller, and no fixed number can promise that.
+   max-content is the height of the content, so nothing inside it can overflow.
+   The collapse still animates where interpolate-size is supported and snaps
+   where it is not, which is the right way round: a browser without it shows
+   the whole panel and loses the transition, rather than keeping the
+   transition and hiding what the reader was told to read. */
+html{interpolate-size:allow-keywords}
+.filters-body{overflow:hidden;transition:max-height .25s ease,opacity .2s ease;max-height:max-content;opacity:1;padding-bottom:4px;margin-bottom:12px}
 .filters-body[hidden]{display:block;max-height:0;opacity:0;pointer-events:none;margin:0}
 
 .bld-panel{background:var(--card);border:1px solid var(--line-soft);
@@ -3673,6 +3685,20 @@ html.mode-live #live{display:block}
 @media (hover:hover){.sp-copy:hover,.sp-open:hover{background:rgba(255,255,255,.24);
   border-color:rgba(255,255,255,.4)}}
 .sp-note{margin:8px 0 0;font-size:11.5px;font-weight:600;color:rgba(255,255,255,.78)}
+/* THE SAME ROW ON A PAGE CARD. Everything above is an alpha overlay for the
+   glass modal, and the betslip-cap prompt is not that: it is a .confirm-card
+   on --card-2, where white-on-white-alpha reads as a grey slab in dark mode
+   and prints white text on cream in light. Page tokens here, like .byo-res
+   does for the same rows inside the editor.
+   One column, because there is one offer - the tickets are already counted
+   from the limit, so a row of alternatives would be a choice nobody has. */
+.confirm-card .sp-ways{margin-top:12px;grid-template-columns:1fr}
+.confirm-card .sp-way{flex-direction:row;justify-content:center;gap:8px;
+  padding:11px 14px;background:var(--card);border-color:var(--line);color:var(--text)}
+.confirm-card .sp-way b{font-size:14px;font-weight:800}
+.confirm-card .sp-way span{font-size:12px;font-weight:600;color:var(--faint)}
+@media (hover:hover){.confirm-card .sp-way:hover{background:var(--raise);
+  border-color:var(--green)}}
 @media(max-width:420px){
   .sp-ways{grid-template-columns:repeat(auto-fit,minmax(88px,1fr))}
   .sp-t{gap:7px;padding:7px 9px}
@@ -12738,6 +12764,27 @@ function splitWays(len){
   return out;
 }
 
+/* THE WAYS THAT FIT A BETSLIP. splitWays offers two, three and four, which is
+   the right offer for a slip that is already bookable. At the cap it is not:
+   170 picks in two tickets is 85 on a ticket and no betslip takes that. So the
+   ways over the limit are dropped and the rest stand - the reader still gets a
+   choice up to four, it is only the ones that cannot be placed that go.
+   When nothing up to four fits, the limit itself names the number, which is
+   the only honest offer left. */
+function capWays(len){
+  var fits=splitWays(len).filter(function(n){return Math.ceil(len/n)<=BETSLIP_MAX;});
+  return fits.length?fits:[Math.ceil(len/BETSLIP_MAX)];
+}
+/* The row of ticket counts, priced by leg count rather than payout: at the cap
+   the question is "will this fit", and the odds of each part are already on
+   screen above. */
+function capWaysHTML(picks){
+  return "<div class='sp-ways'>"+capWays(picks.length).map(function(n){
+    var parts=splitPicks(picks,n);
+    return "<button class='sp-way' type='button' data-n='"+n+"'><b>"+n+
+      " tickets</b><span>"+parts.map(function(p){return p.length;}).join(" + ")+
+      " games</span></button>";}).join("")+"</div>";
+}
 function splitRowHTML(n,parts,B){
   return "<div class='sp-row'><b>"+n+" tickets</b>"+
     "<span>"+parts.map(function(p){return p.length+" games at x"+
@@ -14326,9 +14373,10 @@ function bookList(picks,resultId,btnId,label){
   }
   doBookList(bookable,resultId,btnId,label);
 }
-/* Book-all: turns every tip currently on the board into one SportyBet slip.
-   It reuses the same picks the cards show, so what you see is what gets booked,
-   and it asks first because a 20-leg acca is not something to fire by accident. */
+/* Book-all: turns every tip currently on the board into one slip at whichever
+   book is selected. It reuses the same picks the cards show, so what you see is
+   what gets booked, and it asks first because a 20-leg acca is not something to
+   fire by accident. */
 function bookAllPicks(){
   var out=[];
   shown().forEach(function(f){
@@ -14349,8 +14397,15 @@ function confirmBookAll(){
   var picks=bookAllPicks();
   var bookable=picks.filter(function(c){return c.eventId;});
   var host=$("bookAllResult"); if(!host) return;
+  /* THREE BOOKS, ONE OF THEM NAMED. Every sentence here said SportyBet, which
+     was true when it was the only book and has been wrong since Bet9ja and
+     BetKing shipped: the reader on BetKing was told their own games were not
+     on a bookmaker they are not using. The toggle already knows which book is
+     in play, and the cap is the same 50 at all three. */
+  var B=curBook();
   if(!bookable.length){
-    host.innerHTML="<div class='code-err'>None of these games are on SportyBet right now.</div>";
+    host.innerHTML="<div class='code-err'>None of these games are on "+
+      B.mark+" right now.</div>";
     return;
   }
   var odds=bookable.reduce(function(t,c){return t*legOdd(c.f,c.code,c.p);},1);
@@ -14360,24 +14415,38 @@ function confirmBookAll(){
   var CAP=BETSLIP_MAX, over=bookable.length>CAP;
   var going=over?bookable.slice(0,CAP):bookable;
   var goingOdds=going.reduce(function(t,c){return t*legOdd(c.f,c.code,c.p);},1);
-  host.innerHTML="<div class='confirm-card'><p>Book all <b>"+bookable.length+
+  host.innerHTML="<div class='confirm-card' id='bookAllCard'><p>Book all <b>"+bookable.length+
     "</b> Soccerwizard tips on this page as one slip?<br><span style='font-weight:600;color:var(--soft)'>"+
     "Estimated odds \u00d7"+(over?goingOdds:odds).toFixed(2)+
-    (skipped?" \u00b7 "+skipped+" not on SportyBet yet, skipped":"")+
+    (skipped?" \u00b7 "+skipped+" not on "+B.mark+" yet, skipped":"")+
     "</span></p>"+
-    (over?"<div class='cap-warn'><b>SportyBet only takes 50 games per slip.</b>"+
-      "The first "+CAP+" will be loaded and the last "+(bookable.length-CAP)+
-      " left off. To choose which ones make it, open <b>My slip</b> and remove a few first.</div>":"")+
+    (over?"<div class='cap-warn'><b>"+B.mark+" only takes "+CAP+" games per slip.</b>"+
+      "Book the first "+CAP+" and the last "+(bookable.length-CAP)+
+      " are left off, or keep them all across several tickets.</div>":"")+
     "<div class='ca'>"+
     "<button class='confirm-go' type='button'>"+(over?"Book first "+CAP:"Book all "+bookable.length)+"</button>"+
     "<button class='confirm-trim' type='button'>Review &amp; trim</button>"+
-    "<button class='confirm-cancel' type='button'>Cancel</button></div></div>";
+    "<button class='confirm-cancel' type='button'>Cancel</button></div>"+
+    /* THE SAME THIRD ANSWER THE SLIP SHEET GIVES. This prompt sent the reader
+       to My slip to delete games by hand, which is the one outcome nobody
+       wants; the splitter keeps every tip on the board and deals it across
+       tickets that fit. Offered whether or not the board is over the cap -
+       twenty tips as two tickets of ten is a different bet, not a workaround. */
+    (bookable.length>=4?capWaysHTML(bookable):"")+"</div>";
   function fillSlip(){
     MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
       .concat(bookable.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true};}));
     var seen={}; MYSLIP=MYSLIP.filter(function(x){if(seen[x.id])return false;seen[x.id]=1;return true;});
     saveMy(); renderFab();
   }
+  /* The picks go into My slip on the way out whichever answer is taken, so the
+     sheet still shows what was booked. Through wireSplit for the same reason
+     the slip sheet is: the quota check lives there and a second call site
+     would walk past it. */
+  host.querySelectorAll(".sp-way").forEach(function(b){
+    b.addEventListener("click",fillSlip);
+  });
+  wireSplit(host,bookable,B,{sel:"#bookAllCard"});
   host.querySelector(".confirm-go").addEventListener("click",function(){
     fillSlip();
     window.__wizChime&&window.__wizChime();
@@ -16182,19 +16251,16 @@ async function bookMy(){
        lose games they chose. Reported by a reader with 170 on the slip. The
        splitter already deals legs round-robin and books a ticket at a time, so
        this is the same machinery the code modal offers, aimed at the cap:
-       enough tickets that every one of them fits. */
-    var _ways=Math.ceil(bookable.length/BETSLIP_MAX);
-    var _each=splitPicks(bookable,_ways);
+       every way on offer leaves each ticket inside the limit. Up to four, like
+       everywhere else a split is offered - one forced number is a fact, not a
+       choice, and two, three and four tickets are different bets. */
     showPrompt("myBookResult","<div class='confirm-card' id='myCapCard'><p>"+B.mark+" takes "+
       BETSLIP_MAX+" picks on one slip and you have "+bookable.length+
-      ". Book the first "+BETSLIP_MAX+", split them across "+_ways+
-      " tickets, or close this and remove "+_cut+
+      ". Book the first "+BETSLIP_MAX+", split them across several tickets, "+
+      "or close this and remove "+_cut+
       "?</p><div class='ca'><button class='confirm-go' type='button'>Book "+
       BETSLIP_MAX+"</button><button class='confirm-cancel' type='button'>"+
-      "Let me trim</button></div>"+
-      "<div class='sp-ways'><button class='sp-way' type='button' data-n='"+_ways+"'>"+
-      "<b>"+_ways+" tickets</b><span>"+_each.map(function(p){return p.length;}).join(" + ")+
-      " games</span></button></div></div>");
+      "Let me trim</button></div>"+capWaysHTML(bookable)+"</div>");
     /* Through wireSplit, never straight to splitAndBook: the quota check that
        stops a four-ticket split costing codes the reader does not have lives
        there, and a second call site would skip it. */
@@ -17975,14 +18041,18 @@ function renderShared(){
     if(!have.length||!$("mkAsk")){ turnOn(have[0]); return; }
     var here=have.indexOf(curBook().key)>=0;
     var lose=Object.keys(BOOKS).filter(function(x){return have.indexOf(x)<0;});
+    /* TWO SHORT LINES, because this one is read on a phone inside the filters
+       panel rather than in a modal with the screen to itself. The long version
+       ran to five lines at 390px and the last of them sat on the panel's own
+       bottom edge - reported as cut off. Same two facts, said once each: who
+       sells it, and what the tap will do. */
     showPrompt("mkAsk",
-      "<div class='confirm-card'><p><b>"+esc(lbl)+" is a "+esc(bookNames(have,"and"))+
-      " bet.</b> "+esc(bookNames(lose,"and"))+" "+(lose.length>1?"do":"does")+
-      " not sell this line, so a slip carrying it can only be booked with "+
-      (have.length>1?"one of those two":esc(bookNames(have)))+".</p>"+
+      "<div class='confirm-card'><p><b>"+esc(lbl)+": "+esc(bookNames(have,"and"))+
+      " only.</b> "+esc(bookNames(lose,"and"))+" "+(lose.length>1?"do":"does")+
+      " not sell this line.</p>"+
       "<p>"+(here
-        ? "You are on "+esc(curBook().label)+", which sells it. Switch it on?"
-        : "Switch to the book you use and turn it on?")+"</p>"+
+        ? "You are on "+esc(curBook().label)+". Turn it on?"
+        : "Switch book and turn it on?")+"</p>"+
       "<div class='ca'>"+
       (here ? "<button class='confirm-go' type='button' data-use='"+esc(curBook().key)+
               "'>Turn it on</button>" : "")+

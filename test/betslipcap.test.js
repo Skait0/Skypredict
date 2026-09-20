@@ -102,19 +102,31 @@ test("it asks rather than trimming behind the reader's back", () => {
    deals actually fits the betslip - which is arithmetic, not copy, so it is
    tested as arithmetic on the real splitPicks. */
 test("the split offered at the cap deals tickets that all fit", () => {
-  const run = new Function(body("splitPicks") + "\nreturn splitPicks;")();
   const MAX = konstNum("BETSLIP_MAX");
+  const env = new Function("BETSLIP_MAX",
+    body("splitPicks") + body("splitWays") + body("capWays") +
+    "\nreturn {splitPicks:splitPicks, capWays:capWays};")(MAX);
   for (const n of [51, 100, 170, 249, 400]) {
     const picks = Array.from({ length: n }, (_, i) => i);
-    const ways = Math.ceil(n / MAX);
-    const parts = run(picks, ways);
-    assert.strictEqual(parts.length, ways);
-    for (const p of parts)
-      assert.ok(p.length <= MAX,
-        n + " picks over " + ways + " tickets leaves one of " + p.length);
-    assert.strictEqual(parts.reduce((t, p) => t + p.length, 0), n,
-      "every pick must land on exactly one ticket");
+    const ways = env.capWays(n);
+    assert.ok(ways.length, n + " picks are offered no way to split at all");
+    for (const w of ways) {
+      const parts = env.splitPicks(picks, w);
+      assert.strictEqual(parts.length, w);
+      for (const p of parts)
+        assert.ok(p.length <= MAX,
+          n + " picks over " + w + " tickets leaves one of " + p.length);
+      assert.strictEqual(parts.reduce((t, p) => t + p.length, 0), n,
+        "every pick must land on exactly one ticket");
+    }
   }
+  /* UP TO FOUR, like every other split on the site - a single forced number
+     is a fact, not a choice. Only the ways that cannot be placed are dropped:
+     170 in two tickets is 85 on a slip that takes 50. */
+  assert.deepStrictEqual(env.capWays(60), [2, 3, 4]);
+  assert.deepStrictEqual(env.capWays(170), [4]);
+  assert.deepStrictEqual(env.capWays(400), [8],
+    "when nothing up to four fits, the limit names the number");
 });
 
 test("the cap prompt offers the split through the quota-checked path", () => {
@@ -124,11 +136,48 @@ test("the cap prompt offers the split through the quota-checked path", () => {
   const fn = body("bookMy");
   const at = fn.indexOf("bookable.length>BETSLIP_MAX");
   const guard = fn.slice(at, at + 2600);
-  assert.match(guard, /Math\.ceil\(bookable\.length\/BETSLIP_MAX\)/,
-    "the number of tickets must come from the limit, not a guess");
+  assert.match(guard, /capWaysHTML\(bookable\)/,
+    "the ticket counts must come from the limit, not a guess");
+  assert.match(body("capWays"), /BETSLIP_MAX/,
+    "and capWays must be the thing that reads the limit");
   assert.match(guard, /wireSplit\(/, "the split must be wired, and wired here");
   assert.ok(!/splitAndBook\(/.test(guard),
     "never straight to splitAndBook - that is the path with no quota check");
+});
+
+test("the split row on a page card is drawn in page colours", () => {
+  /* .sp-way was written for the booking-code modal, where every surface is a
+     white alpha over a dark scrim. The cap prompt is a .confirm-card on
+     --card-2, so the inherited rules print white text on cream in light mode
+     and a grey slab in dark. Same fix .byo-res already carries. */
+  const m = /\.confirm-card \.sp-way\{([^}]*)\}/.exec(src);
+  assert.ok(m, "the prompt's own row must be styled");
+  for (const tok of ["var(--card)", "var(--line)", "var(--text)"])
+    assert.ok(m[1].includes(tok), "must use " + tok + ": " + m[1]);
+  assert.ok(!/#fff|rgba\(255,255,255/.test(m[1]),
+    "no modal alpha on a page card");
+  assert.match(src, /@media \(hover:hover\)\{\.confirm-card \.sp-way:hover/,
+    "and it must answer the pointer, behind the hover query");
+});
+
+test("the board's book-all prompt names the book in play and offers the split", () => {
+  /* It hardcoded SportyBet in three sentences - "none of these games are on
+     SportyBet", "not on SportyBet yet, skipped", "SportyBet only takes 50" -
+     so a reader on BetKing was told about a bookmaker they are not using. And
+     its only answer to a board over the cap was "open My slip and delete
+     some", which is the one outcome the splitter exists to avoid. */
+  const fn = body("confirmBookAll");
+  /* Comments off first: the note explaining this fix names the book it took
+     out, and a test that cannot tell copy from commentary fails on its own
+     explanation. */
+  assert.ok(!/SportyBet/.test(fn.replace(/\/\*[\s\S]*?\*\//g, " ")),
+    "a book is still hardcoded in the prompt");
+  assert.match(fn, /var B=curBook\(\)/, "it must read the selected book");
+  assert.match(fn, /B\.mark/, "and name it");
+  assert.match(fn, /capWaysHTML\(bookable\)/, "the split must be offered here too");
+  assert.match(fn, /wireSplit\(host,bookable,B/,
+    "and started through the quota-checked path");
+  assert.ok(!/splitAndBook\(/.test(fn), "never straight to splitAndBook");
 });
 
 test("the add-all path uses the same constant, not its own copy", () => {
