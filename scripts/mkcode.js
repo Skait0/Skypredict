@@ -91,8 +91,14 @@ async function getJson(url, init) {
 
 /* Both feeds in the one shape the matcher speaks. Bet9ja sends "Home - Away" as
    a single string where SportyBet sends the sides apart. */
+const FEEDS = {
+  sporty: "/api/fixtures",
+  bet9ja: "/api/bet9ja/fixtures",
+  betking: "/api/betking/fixtures",
+};
+
 async function events(which) {
-  const url = HOST + (which === "sporty" ? "/api/fixtures" : "/api/bet9ja/fixtures");
+  const url = HOST + FEEDS[which];
   const got = await getJson(url);
   const d = got.body;
   if (!got.ok || !d || !d.success) throw new Error(which + " fixtures: http " + got.status);
@@ -198,7 +204,14 @@ async function bookSlipRetrying(which, sel) {
 
   const sporty = await events("sporty");
   const b9 = await events("bet9ja");
-  console.log(`feeds: ${sporty.length} SportyBet events, ${b9.length} Bet9ja events`);
+  /* BetKing is additive - see the booking block below - so its feed being down
+     costs it the day rather than costing the day its codes. */
+  const bk = await events("betking").catch((e) => {
+    console.log("betking fixtures: " + e.message + " - publishing without it");
+    return [];
+  });
+  console.log(`feeds: ${sporty.length} SportyBet events, ${b9.length} Bet9ja events, ` +
+              `${bk.length} BetKing events`);
 
   /* A leg has to be on BOTH books or it is not a leg. Two codes that are not
      the same slip would make tomorrow's record meaningless. */
@@ -207,7 +220,9 @@ async function bookSlipRetrying(which, sel) {
     if (picked.length >= legs) break;
     const s = findEvent(f, sporty), b = findEvent(f, b9);
     if (!s || !b) continue;
-    picked.push({ f: f, sporty: s.eventId, bet9ja: b.eventId, market: M.tipCode(f) });
+    const k = findEvent(f, bk);
+    picked.push({ f: f, sporty: s.eventId, bet9ja: b.eventId,
+                  betking: k ? k.eventId : null, market: M.tipCode(f) });
   }
   if (picked.length < legs) {
     throw new Error(`only ${picked.length} of ${legs} legs are carried by both books`);
@@ -274,12 +289,38 @@ async function bookSlipRetrying(which, sel) {
     working = working.filter((p) => !refused.has(p));
     while (working.length < legs && spare.length) {
       const f = spare.shift();
-      const sp = findEvent(f, sporty), bb = findEvent(f, b9);
-      if (sp && bb) working.push({ f: f, sporty: sp.eventId, bet9ja: bb.eventId, market: M.tipCode(f) });
+      const sp = findEvent(f, sporty), bb = findEvent(f, b9), kk = findEvent(f, bk);
+      if (sp && bb) {
+        working.push({ f: f, sporty: sp.eventId, bet9ja: bb.eventId,
+                       betking: kk ? kk.eventId : null, market: M.tipCode(f) });
+      }
     }
     if (working.length < 2) throw new Error("nothing bookable left after refusals");
   }
   if (!codes) throw new Error("could not book a slip both books accept - " + why);
+
+  /* BETKING JOINS THE SLIP OR SITS THE DAY OUT. IT NEVER SHAPES IT.
+   *
+   * The two books above negotiate the leg set between them: a refusal drops
+   * that leg and the round starts again. A third book inside that loop would
+   * mean BetKing's refusals deciding which games SportyBet and Bet9ja readers
+   * get - a book that has never minted a daily code quietly degrading the two
+   * that have. So it is asked LAST, for the legs the others already agreed,
+   * and every way of failing costs it the day and nothing else.
+   *
+   * It cost nothing measurable to add: on 20-22 Sep its feed carried and
+   * priced all five picks each day. If that stops being true the log line
+   * below is where it shows. */
+  const bkLegs = working.map((p) => p.betking);
+  if (bkLegs.every(Boolean)) {
+    const out = await bookSlipRetrying("betking",
+      working.map((p) => ({ eventId: p.betking, code: p.market })));
+    if (out.ok) codes.betking = out.code;
+    else console.log(`betking: ${out.why} - publishing without it`);
+  } else {
+    console.log(`betking: ${bkLegs.filter(Boolean).length} of ${bkLegs.length} legs ` +
+                "on its feed - publishing without it");
+  }
 
   const entry = {
     date: date,
@@ -294,7 +335,8 @@ async function bookSlipRetrying(which, sel) {
     })),
     codes: codes,
   };
-  console.log(`sporty: ${codes.sporty || "-"}   bet9ja: ${codes.bet9ja || "-"}`);
+  console.log(`sporty: ${codes.sporty || "-"}   bet9ja: ${codes.bet9ja || "-"}   ` +
+              `betking: ${codes.betking || "-"}`);
 
   /* --dry was declared at the top of this file, documented in the usage line,
      and never read - so a "dry" run booked two real slips and wrote the file

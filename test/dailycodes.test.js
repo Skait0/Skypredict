@@ -82,6 +82,41 @@ test("the minter refuses to publish two codes for two different slips", () => {
     "a round must only count when BOTH books accepted the same set");
 });
 
+test("BetKing joins the slip or sits the day out, and never shapes it", () => {
+  /* The two established books negotiate the leg set between them: a refusal
+     drops that leg and the round restarts. BetKing is asked afterwards, for
+     the legs they already agreed, so a book that has never minted a daily
+     code cannot decide which games a SportyBet reader gets. Every way it can
+     fail - feed down, a leg missing from its feed, a refusal - costs BetKing
+     the day and nothing else. */
+  const mk = fs.readFileSync(path.join(__dirname, "..", "scripts", "mkcode.js"), "utf8");
+  const round = mk.slice(mk.indexOf("for (let round = 1"), mk.indexOf("if (!codes) throw"));
+  /* Attaching its event id in there is fine - that is bookkeeping. BOOKING in
+     there is not, because a refusal would then restart the round and change
+     the legs. */
+  assert.ok(!/bookSlipRetrying\("betking"/.test(round) && !/attempt\.betking/.test(round),
+    "BetKing is booked inside the round loop, so its refusals shape the slip");
+  const after = mk.slice(mk.indexOf("if (!codes) throw"), mk.indexOf("const entry = {"));
+  assert.match(after, /bkLegs\.every\(Boolean\)/, "a leg it does not carry must not be booked");
+  assert.match(after, /codes\.betking = out\.code/);
+  assert.match(after, /publishing without it/, "a refusal has to leave the other codes standing");
+  assert.match(mk, /events\("betking"\)\.catch\(/, "its feed being down must not cost the day");
+});
+
+test("the BetKing code is printed without a link, because there is no link", () => {
+  /* BK_URL is null in index.html: BetKing loads a code from its own betslip
+     box and from no address at all. A link to their home page with the code
+     on the end would look like it worked and quietly drop the slip. */
+  const three = Object.assign({}, entry,
+    { codes: { sporty: "WZDKEL", bet9ja: "5QP7W7C", betking: "BK99XY" } });
+  const day = P.renderCodesDay(three, null);
+  assert.ok(day.includes("BK99XY"), "the BetKing code is not on the page");
+  const row = day.slice(day.indexOf("BK99XY") - 200, day.indexOf("BK99XY") + 200);
+  assert.ok(!/<a\s[^>]*href[^>]*>[^<]*BK99XY/.test(row) && !/BK99XY[^<]*<\/a>/.test(row),
+    "the BetKing code is wrapped in a link, which cannot load it");
+  assert.match(row, /Paste it into the betslip/);
+});
+
 test("the minter uses the shipped matcher, not a copy of it", () => {
   /* Our fixtures carry no bookmaker event ids - predictions.json has none.
      A second matcher would book against rules the site does not use, and the
