@@ -96,3 +96,66 @@ test("the two graders agree wherever both will answer", () => {
     }
   }
 });
+
+/* WIN EITHER HALF WAS PUBLISHED AND NEVER GRADED. The label names a team, so
+   it matched nothing here and fell through to null - the same silence a market
+   we genuinely cannot settle returns, which is why nobody noticed. */
+const WH = (hth, hta) => ({ hth, hta, home: "Arsenal", away: "Spurs" });
+
+test("a side that led at the interval won a half", () => {
+  assert.strictEqual(gradeLabel("Arsenal to win a half", 1, 1, WH(1, 0)), true);
+});
+test("a side that won the second half won a half", () => {
+  /* 1-1 at the break, 3-2 at the end: Arsenal took the second 2-1. */
+  assert.strictEqual(gradeLabel("Arsenal to win a half", 3, 2, WH(1, 1)), true);
+});
+test("two drawn halves is a miss, not a void", () => {
+  assert.strictEqual(gradeLabel("Arsenal to win a half", 1, 1, WH(0, 0)), false);
+});
+test("the away side is graded on the away column", () => {
+  assert.strictEqual(gradeLabel("Spurs to win a half", 1, 2, WH(0, 1)), true);
+  assert.strictEqual(gradeLabel("Spurs to win a half", 2, 1, WH(1, 0)), false);
+});
+test("a 2-0 win whose halves were both 1-0 still lands", () => {
+  assert.strictEqual(gradeLabel("Arsenal to win a half", 2, 0, WH(1, 0)), true);
+});
+test("without the interval, or without the teams, it is unknowable", () => {
+  assert.strictEqual(gradeLabel("Arsenal to win a half", 2, 0, null), null);
+  assert.strictEqual(gradeLabel("Arsenal to win a half", 2, 0, { hth: 1, hta: 0 }), null,
+    "a name the caller cannot place is not a miss");
+  assert.strictEqual(gradeLabel("Chelsea to win a half", 2, 0, WH(1, 0)), null,
+    "a team that is not in this fixture is not a miss either");
+});
+test("the negative is left ungraded rather than guessed at", () => {
+  /* Only the Y side is ever offered, and "Arsenal not to win a half" would
+     otherwise parse as a team called "Arsenal not". */
+  assert.strictEqual(gradeLabel("Arsenal not to win a half", 2, 0, WH(1, 0)), null);
+});
+
+test("both graders settle win-either-half the same way", () => {
+  const { marketOf } = require("../lib/grade.js");
+  assert.strictEqual(marketOf("Arsenal to win a half"), "Win either half",
+    "the live record must land on the name the backtest writes");
+  /* model.js grades it from the same arithmetic in gradeEveryMarket: whichever
+     half the side took. Checked here across every split of a 2-1. */
+  for (const [hth, hta] of [[0,0],[1,0],[0,1],[1,1],[2,0],[2,1]]) {
+    const hg = 2, ag = 1;
+    if (hth > hg || hta > ag) continue;
+    const mine = gradeLabel("Arsenal to win a half", hg, ag, WH(hth, hta));
+    const took = (hth > hta) || ((hg - hth) > (ag - hta));
+    assert.strictEqual(mine, took, `${hth}-${hta} at the break of a ${hg}-${ag}`);
+  }
+});
+
+test("the confirm paths hand the grader the teams, not only the interval", () => {
+  /* Teaching grade.js the market is half the fix: a caller that passes
+     { hth, hta } alone leaves every one of these tips ungraded exactly as
+     before, and silently. */
+  const src = require("fs").readFileSync(
+    require("path").join(__dirname, "..", "lib", "build.js"), "utf8");
+  const calls = src.match(/GRADE\.gradeLabel\([^;]*?\{ hth[^;]*?\}/g) || [];
+  assert.ok(calls.length >= 2, "both score-confirming paths must be here");
+  for (const c of calls)
+    assert.match(c, /home:.*away:/s,
+      "a half-time context without the teams cannot settle win-either-half");
+});

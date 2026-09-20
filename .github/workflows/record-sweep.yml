@@ -11,6 +11,11 @@ name: Record full-time results
 # the cron asks for - 5% of them - with a median gap of 199 minutes, p90 of
 # 307, and a worst gap of 471. Gaps at or under 15 minutes: ZERO of 122.
 #
+# Re-measured 20 Sep over the 37 scheduled runs since 15 Sep, to see whether
+# the first measurement was a bad week: 7.1 runs/day, median gap 194 minutes,
+# p90 300, worst 325, and again ZERO gaps at or under 15 minutes. None failed.
+# The cadence is not noise and is not improving - it is what this schedule is.
+#
 # Read that against the paragraph below on why the interval is ten minutes. The
 # argument is sound and its premise is missing: the gap between polls is the
 # window in which a late goal is missed, and that window is three hours, not
