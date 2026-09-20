@@ -288,6 +288,11 @@ repo; each needs credentials only the owner has. Do them in order.
    - Trigger a send: `gh workflow run "Mint the day's booking code"`, or run
      `node scripts/pushcode.js` locally with all four secrets exported — the
      poll passes immediately since the site is already serving today's code.
+     **Note:** the workflow only announces on a run that actually commits a
+     new code. If you dispatch it by hand on a day it already minted (nothing
+     new to commit), the `Announce the code` step is skipped and nothing
+     sends — that's correct, not a bug; trigger `scripts/pushcode.js` directly
+     instead if you need to test the send itself.
    - You should see a notification titled "Today's booking code is up"
      naming the right number of games and the right books, and tapping it
      should land on `/booking-codes`.
