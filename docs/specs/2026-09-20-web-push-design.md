@@ -1,7 +1,7 @@
 # Web push: telling a reader the day's booking code is up
 
 Date: 2026-09-20
-Status: design approved, not implemented
+Status: code complete 2026-09-20, awaiting owner setup (see Handover below)
 
 ## The problem
 
@@ -237,3 +237,62 @@ then unsubscribe and confirm the row is gone.
 
 Each of these becomes worth revisiting once the first notification shows that
 readers keep it switched on.
+
+## Handover: what the owner still has to do
+
+Everything in the repo is done — `api/push.js`, `scripts/pushcode.js`,
+`public/sw.js`, `lib/pages.js`, and the `Announce the code` step in
+`.github/workflows/daily-code.yml`. Nothing in this list can be done from the
+repo; each needs credentials only the owner has. Do them in order.
+
+1. **Generate the one key pair this site will ever have.**
+
+   ```
+   node scripts/vapidkeys.js
+   ```
+
+   This prints two lines, `VAPID_PUBLIC_KEY=...` and
+   `VAPID_PRIVATE_KEY=...`. Copy both somewhere safe for the next two steps,
+   then don't run it again — rotating the pair silently invalidates every
+   subscription collected so far.
+
+2. **Apply the table.** Open the Supabase SQL editor for this project, paste
+   the contents of `sql/push_subs.sql`, and run it. Confirm afterwards that
+   `push_subs` exists and has RLS enabled (the same check already used for
+   `book_quota` and `shared_slips`).
+
+3. **Set the public key in Vercel.** Project settings → Environment
+   Variables → add `VAPID_PUBLIC_KEY` (the value from step 1) for both
+   Production and Preview. This is read at build time and baked into the
+   page; without it `pushControl()` returns an empty string and the control
+   simply never renders — a safe failure, not a broken one.
+
+4. **Set the four secrets in GitHub.** Repo → Settings → Secrets and
+   variables → Actions → New repository secret:
+   - `VAPID_PUBLIC_KEY` — same value as step 3.
+   - `VAPID_PRIVATE_KEY` — from step 1. Never put this in Vercel; only the
+     workflow's sender step reads it.
+   - `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` — skip these two if the
+     repo's Actions secrets already carry them for another workflow.
+
+5. **Redeploy** (push anything to `main`, or use Vercel's redeploy button)
+   so the new `VAPID_PUBLIC_KEY` is actually baked into the page. The push
+   control will not appear until this happens even if step 3 is done.
+
+6. **The live check, on a real phone.**
+   - Open `https://www.soccerwizard.live/booking-codes`. On iOS, install it
+     to the home screen first — the control only renders for an installed
+     PWA there.
+   - Tap the control, accept the permission prompt, and confirm a new row
+     appears in `push_subs`.
+   - Trigger a send: `gh workflow run "Mint the day's booking code"`, or run
+     `node scripts/pushcode.js` locally with all four secrets exported — the
+     poll passes immediately since the site is already serving today's code.
+   - You should see a notification titled "Today's booking code is up"
+     naming the right number of games and the right books, and tapping it
+     should land on `/booking-codes`.
+   - Tap the control again to turn it off. Confirm the row is gone from
+     `push_subs`, and that a second send reaches nobody.
+
+7. **Close it out.** Once step 6 passes, change this file's `Status:` line
+   to `implemented <date>` and commit.

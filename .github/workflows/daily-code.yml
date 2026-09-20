@@ -88,3 +88,21 @@ jobs:
           git add data/daily-codes.json
           git commit -m "Booking code for $(date -u +%Y-%m-%d)"
           git push
+
+      # Tell the readers who asked. Deliberately after the commit and never in
+      # front of it: the code is published either way, and a notification that
+      # did not go out costs one day's re-engagement, while a workflow that
+      # goes red over it trains everybody to ignore a red workflow.
+      #
+      # The script waits for Vercel to actually serve the new code before it
+      # sends, so this step can sit here for several minutes on a slow build.
+      - name: Announce the code
+        if: success()
+        continue-on-error: true
+        timeout-minutes: 8
+        env:
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/pushcode.js
