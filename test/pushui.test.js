@@ -50,3 +50,68 @@ test("turning it off deletes the row and the subscription", () => {
   assert.match(html, /method:"DELETE"/);
   assert.match(html, /unsubscribe\(\)/);
 });
+
+/* fetch() resolves on a 503 same as on a 200 - only a network failure rejects.
+ * If the script does not read r.ok, a reader who taps subscribe while
+ * Supabase is down ends up with a browser subscription, a button that says
+ * "Notifications on", and a server that never heard about it: no notification
+ * ever arrives and nothing tells them why. Run the actual emitted script
+ * against a fetch stub that returns {ok:false, status:503} and check it does
+ * not draw the "on" state. */
+function extractScript(html) {
+  return html.match(/<script>([\s\S]*)<\/script>/)[1];
+}
+
+function runPushScript(html, opts) {
+  const host = { innerHTML: "", hidden: true, _click: null,
+    addEventListener(type, cb) { if (type === "click") this._click = cb; } };
+  const sub = { endpoint: "https://push.example/ep",
+    toJSON: () => ({ endpoint: "https://push.example/ep", keys: { p256dh: "a", auth: "b" } }) };
+  const reg = { pushManager: {
+    getSubscription: () => Promise.resolve(opts.existingSub ? sub : null),
+    subscribe: () => Promise.resolve(sub),
+  } };
+  const document = { getElementById: () => host };
+  const Notification = { permission: "default",
+    requestPermission: () => Promise.resolve("granted") };
+  /* The script gates on `"Notification" in window`, not `in navigator` - the
+     stub has to put it there or every run returns on the first line. */
+  const window = { PushManager: function () {}, Notification,
+    matchMedia: () => ({ matches: false }) };
+  const navigator = { userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    serviceWorker: { getRegistration: () => Promise.resolve(null),
+      register: () => Promise.resolve(reg) } };
+  const fetch = opts.fetch || (() => Promise.resolve({ ok: true, status: 200 }));
+  const atob = (s) => Buffer.from(s, "base64").toString("binary");
+  const run = new Function("document", "navigator", "window", "Notification", "fetch", "atob",
+    extractScript(html));
+  run(document, navigator, window, Notification, fetch, atob);
+  return host;
+}
+
+async function flush(n) {
+  for (let i = 0; i < (n || 8); i++) await Promise.resolve();
+}
+
+test("a subscribe that Supabase never stored does not draw as subscribed", async () => {
+  const html = P.pushControl();
+  const host = runPushScript(html, {
+    fetch: () => Promise.resolve({ ok: false, status: 503 }),
+  });
+  await flush();
+  host._click({ target: { closest: () => true } });
+  await flush();
+  assert.doesNotMatch(host.innerHTML, /Notifications on/,
+    "must not claim success when the server rejected the subscription");
+});
+
+test("a subscribe the server accepts does draw as subscribed", async () => {
+  const html = P.pushControl();
+  const host = runPushScript(html, {
+    fetch: () => Promise.resolve({ ok: true, status: 200 }),
+  });
+  await flush();
+  host._click({ target: { closest: () => true } });
+  await flush();
+  assert.match(host.innerHTML, /Notifications on/);
+});
