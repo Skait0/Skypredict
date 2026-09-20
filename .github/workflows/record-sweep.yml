@@ -31,10 +31,26 @@ name: Record full-time results
 # down so the next person starts from it rather than from the cadence this file
 # used to claim.
 #
-# NOT FIXED HERE, deliberately. A cron that fires 5% of the time cannot be
-# tuned into one that fires reliably; the answer is an external scheduler
-# calling workflow_dispatch, or accepting that the score sources own grading
-# and this job is a supplement. Both are decisions rather than edits.
+# DECIDED 20 Sep 2026, and the decision is: leave it. A cron that fires 5% of
+# the time cannot be tuned into one that fires reliably, so the two answers
+# were an external scheduler calling workflow_dispatch, or accepting that the
+# score sources own grading and this job is a supplement. The supplement was
+# chosen.
+#
+# The reasoning, so nobody re-opens it from the cadence alone. An external
+# scheduler needs a service to run and watch, holding a GitHub PAT - a leak
+# there is write access to this repo - and 144 sweeps a day drives the rebuild
+# step below, which fires on `observed`, not on `finalised`. That is dozens of
+# full rebuilds a day rather than the handful it was sized for: build minutes,
+# CDN churn, and a rebaked board every time. Against that, the sweep is
+# currently contributing nothing measurable - the score sources filled every
+# result in the build that was checked.
+#
+# THE CONDITION TO REVISIT. Not the cadence, which is known and is not going
+# to improve: it is grading going short. If prebuild starts reporting results
+# it cannot fill from the score sources, this job is the second source and
+# buying it back is worth the rebuilds. If it is built then, throttle the
+# rebuild step to `finalised` only first, or the 15x multiplier lands anyway.
 #
 # It used to run 10:00-23:59 UTC, described as "the football day". That is the
 # European football day. We publish 81 fixtures across MLS, Liga MX, Brazil
