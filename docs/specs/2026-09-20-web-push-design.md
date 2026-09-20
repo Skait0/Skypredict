@@ -56,13 +56,26 @@ create table if not exists public.push_subs (
   endpoint   text primary key,
   p256dh     text not null,
   auth       text not null,
-  ua         text,
   created_at timestamptz not null default now()
 );
 ```
 
-No user id, no IP address. The `keys` are stored because a later payload-bearing
-notification would need them; the first version never reads them.
+No user id, no IP address, and no user agent: alongside a stable per-device
+endpoint and a `created_at`, a user agent is a device fingerprint with a
+timestamp, and nothing reads it. The `keys` are stored because a later
+payload-bearing notification would need them; the first version never reads
+them, and `listPushSubs` does not even select them.
+
+The file also carries a `BEFORE INSERT` trigger that refuses once the table
+holds 5000 rows. The route is unauthenticated — there are no accounts — so the
+allowlist bounds *where* we will POST but not *how many* rows a stranger can
+create. 5000 is a safety ceiling, not a product limit.
+
+Accounts are coming to this site, and when they do this table gets a nullable
+`user_id` and the ceiling becomes per account instead of per table. Nothing
+here blocks that: the row is keyed on `endpoint`, which is what a browser hands
+us whether or not anybody is logged in, so a later migration adds a column and
+backfills nothing.
 
 **`scripts/pushcode.js`** — the sender. Signs an ES256 JWT with `node:crypto`
 and POSTs **no payload**. An empty push needs no AES128-GCM encryption, which is
@@ -163,12 +176,18 @@ on is a notification that gets switched off.
    origin, `exp` = now + 12h, `sub` = a `mailto:`), header
    `Authorization: vapid t=<jwt>, k=<public key>`, `TTL: 3600`,
    `Urgency: normal`, and an empty body. One JWT is signed per endpoint host,
-   not per row.
-5. `404` or `410` means the subscription is dead: collect them and issue one
-   `dropPushSubs(endpoints)` at the end of the run. `429` and `5xx` are left
-   alone — tomorrow's run retries. Concurrency 10.
-6. Log `sent N, dropped M, failed K`. Exit non-zero only if every send failed,
-   which means the keys are wrong rather than the weather.
+   not per row. Each push aborts after 10 seconds — a timeout counts as failed,
+   never as dead.
+5. `404` or `410` means the subscription is dead: collect them and hand them to
+   `dropPushSubs(endpoints)` at the end of the run, which deletes them 20 at a
+   time. Not one request: PostgREST takes the `in.()` list in the query string,
+   and a few dozen percent-encoded endpoints overrun the 8 KB header buffer
+   Kong and nginx default to — a 414 on precisely the morning a push service
+   expires hundreds of subscriptions at once. `429` and `5xx` are left alone —
+   tomorrow's run retries. Concurrency 10.
+6. Log `sent N, dropped M, failed K`, where M is the count the database
+   confirmed, not the length of the list handed over. Exit non-zero only if
+   every send failed, which means the keys are wrong rather than the weather.
 
 ## Keys and secrets
 
@@ -216,10 +235,21 @@ will never accept another message.
   today's — assert the sender waits rather than sending early, and that an
   exhausted cap exits 0 having sent nothing.
 - **Dead subscriptions**: stubbed `410` responses — assert exactly those
-  endpoints, and no others, reach `dropPushSubs`.
+  endpoints, and no others, reach `dropPushSubs`, and that `main()` is what
+  hands them over. A stubbed timeout asserts the opposite: failed, not dead.
+
+`test/pushdrop.test.js` is separate because `lib/supabase.js` reads its
+environment once at module load, and the chunking can only be exercised on a
+configured client: 60 real-length endpoints, three requests, every request line
+measured and asserted small, and a sweep that fails halfway reporting what
+actually went.
+
+`test/pushui.test.js` drives the emitted page script against stubs rather than
+matching its source — including that `subscribe()` is called with
+`userVisibleOnly: true`, and that a declined prompt takes the button away.
 
 `test/sw.test.js` exists already and is extended: the `push` handler is present,
-`userVisibleOnly` is set, the tag is `"code-" + date`, a thrown fetch still
+the tag is `"code-" + date`, a thrown fetch still
 shows a generic notification, and `notificationclick` tries to focus an open tab
 before opening a new window.
 

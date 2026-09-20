@@ -83,9 +83,6 @@ module.exports = async function handler(req, res) {
   if (body === null) return res.status(400).json({ ok: false, why: "body too large" });
   const got = parse(body);
   if (!got.ok) return res.status(400).json({ ok: false, why: got.why });
-  /* The real cap on ua is downstream, in lib/supabase.js's putPushSub
-     (`String(row.ua).slice(0, 200)`) - not touched by this route. */
-  got.row.ua = req.headers && req.headers["user-agent"];
   const out = await DB.putPushSub(got.row);
   return res.status(out.ok ? 200 : 503).json({ ok: !!out.ok });
 };

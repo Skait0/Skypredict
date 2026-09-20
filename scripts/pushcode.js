@@ -64,11 +64,23 @@ async function sendAll(subs, deps) {
             TTL: "3600",
             Urgency: "normal",
           },
+          /* Every other outbound call in this repo gives up after 8s
+             (lib/supabase.js's call()); this one had nothing, so a single
+             push service holding the socket open could eat the whole
+             workflow step. Ten, because a push service under load is slower
+             than PostgREST and a needless abort costs a reader their
+             notification. */
+          signal: AbortSignal.timeout(10000),
         });
         if (r.status === 404 || r.status === 410) out.dead.push(s.endpoint);
         else if (r.ok) out.sent++;
         else out.failed++;                 /* 429 and 5xx: tomorrow retries */
-      } catch (e) { out.failed++; }
+      } catch (e) {
+        /* Including the abort. A timeout says nothing about the subscription
+           - dropping a row because their server was slow unsubscribes a
+           reader who never asked to be. Failed, so tomorrow retries. */
+        out.failed++;
+      }
     }
   }
   await Promise.all([0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(worker));
@@ -118,8 +130,16 @@ async function main() {
   };
 
   const out = await sendAll(list.rows, { jwt, publicKey: pub });
-  if (out.dead.length) await DB.dropPushSubs(out.dead);
-  console.log("sent " + out.sent + ", dropped " + out.dead.length + ", failed " + out.failed);
+  /* The number the database confirmed, not the number we handed it. The drop
+     is chunked and can fail halfway, and the old log printed out.dead.length
+     regardless - so a delete that 414'd every morning read as a clean sweep. */
+  let dropped = 0;
+  if (out.dead.length) {
+    const gone = await DB.dropPushSubs(out.dead);
+    dropped = gone.dropped;
+    if (!gone.ok) console.log("could not drop every dead subscription: " + gone.why);
+  }
+  console.log("sent " + out.sent + ", dropped " + dropped + ", failed " + out.failed);
 
   /* The one case that is worth a red workflow: nothing got through at all.
      That is the keys being wrong, not the weather. */

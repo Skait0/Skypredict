@@ -57,22 +57,10 @@ test("a browser that cannot do this is shown nothing", () => {
   assert.match(html, /Notification\.permission==="denied"/);
 });
 
-test("an iPhone that has not installed the site is told why", () => {
-  const html = P.pushControl();
-  assert.match(html, /standalone/);
-  assert.match(html, /home screen/i);
-});
-
 test("the control is on the hub and on a day page", () => {
   const day = { date: "2026-09-20", codes: { sporty: "QZ5TFX" }, legs: [] };
   assert.match(P.renderCodesHub([day], () => null), /id="pushAsk"/);
   assert.match(P.renderCodesDay(day, () => null), /id="pushAsk"/);
-});
-
-test("turning it off deletes the row and the subscription", () => {
-  const html = P.pushControl();
-  assert.match(html, /method:"DELETE"/);
-  assert.match(html, /unsubscribe\(\)/);
 });
 
 /* fetch() resolves on a 503 same as on a 200 - only a network failure rejects.
@@ -87,25 +75,30 @@ function extractScript(html) {
 }
 
 function runPushScript(html, opts) {
-  const host = { innerHTML: "", hidden: true, _click: null,
+  opts = opts || {};
+  /* What the run did, as opposed to what its source says it would do. */
+  const calls = { fetch: [], unsubscribed: 0, subscribeOpts: null };
+  const host = { innerHTML: "", hidden: true, _click: null, _calls: calls,
     addEventListener(type, cb) { if (type === "click") this._click = cb; } };
   const sub = { endpoint: "https://push.example/ep",
-    toJSON: () => ({ endpoint: "https://push.example/ep", keys: { p256dh: "a", auth: "b" } }) };
+    toJSON: () => ({ endpoint: "https://push.example/ep", keys: { p256dh: "a", auth: "b" } }),
+    unsubscribe: () => { calls.unsubscribed++; return Promise.resolve(true); } };
   const reg = { pushManager: {
     getSubscription: () => Promise.resolve(opts.existingSub ? sub : null),
-    subscribe: () => Promise.resolve(sub),
+    subscribe: (o) => { calls.subscribeOpts = o; return Promise.resolve(sub); },
   } };
   const document = { getElementById: () => host };
   const Notification = { permission: "default",
-    requestPermission: () => Promise.resolve("granted") };
+    requestPermission: () => Promise.resolve(opts.permission || "granted") };
   /* The script gates on `"Notification" in window`, not `in navigator` - the
      stub has to put it there or every run returns on the first line. */
   const window = { PushManager: function () {}, Notification,
-    matchMedia: () => ({ matches: false }) };
-  const navigator = { userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    matchMedia: () => ({ matches: !!opts.standalone }) };
+  const navigator = { userAgent: opts.userAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
     serviceWorker: { getRegistration: () => Promise.resolve(null),
       register: () => Promise.resolve(reg) } };
-  const fetch = opts.fetch || (() => Promise.resolve({ ok: true, status: 200 }));
+  const answer = opts.fetch || (() => Promise.resolve({ ok: true, status: 200 }));
+  const fetch = (url, init) => { calls.fetch.push({ url, init }); return answer(url, init); };
   const atob = (s) => Buffer.from(s, "base64").toString("binary");
   const run = new Function("document", "navigator", "window", "Notification", "fetch", "atob",
     extractScript(html));
@@ -138,6 +131,72 @@ test("a subscribe the server accepts does draw as subscribed", async () => {
   host._click({ target: { closest: () => true } });
   await flush();
   assert.match(host.innerHTML, /Notifications on/);
+});
+
+test("an iPhone that has not installed the site is told why, not given a button", () => {
+  /* Apple requires the PWA installed before web push works at all, so the
+     button would ask for permission and then fail. Drive the real script with
+     an iPhone user agent outside a standalone window and read what it drew. */
+  const host = runPushScript(P.pushControl(), {
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Safari/605.1.15",
+    standalone: false,
+  });
+  assert.match(host.innerHTML, /home screen/i);
+  assert.doesNotMatch(host.innerHTML, /ck-askb/, "a button here can never work");
+  assert.strictEqual(host.hidden, false, "the explanation is the whole point - show it");
+});
+
+test("turning it off deletes the row and the subscription", async () => {
+  const host = runPushScript(P.pushControl(), { existingSub: true });
+  await flush();
+  assert.match(host.innerHTML, /Notifications on/, "starts in the subscribed state");
+  host._click({ target: { closest: () => true } });
+  await flush();
+
+  const del = host._calls.fetch.filter((c) => c.init && c.init.method === "DELETE");
+  assert.strictEqual(del.length, 1, "the row has to go, or the daily send keeps trying");
+  assert.strictEqual(JSON.parse(del[0].init.body).endpoint, "https://push.example/ep");
+  assert.strictEqual(host._calls.unsubscribed, 1,
+    "the browser subscription has to go too, or the push still arrives");
+  assert.doesNotMatch(host.innerHTML, /Notifications on/);
+});
+
+test("the subscription is userVisibleOnly, which is not optional", async () => {
+  /* Chrome refuses a subscribe() without it outright, and a push that shows
+     nothing earns the browser's own "this site was updated in the
+     background" notice, which is worse than any message we could write. */
+  const host = runPushScript(P.pushControl(), {});
+  await flush();
+  host._click({ target: { closest: () => true } });
+  await flush();
+  assert.ok(host._calls.subscribeOpts, "subscribe() was never called");
+  assert.strictEqual(host._calls.subscribeOpts.userVisibleOnly, true);
+});
+
+test("declining the prompt takes the button away", async () => {
+  /* Otherwise the control sits there looking live, and the next tap re-asks a
+     browser that has already made up its mind. */
+  const host = runPushScript(P.pushControl(), { permission: "denied" });
+  await flush();
+  assert.strictEqual(host.hidden, false, "drawn before the tap");
+  host._click({ target: { closest: () => true } });
+  await flush();
+  assert.strictEqual(host.hidden, true);
+  assert.strictEqual(host._calls.fetch.length, 0, "nothing to tell the server about");
+});
+
+test("a VAPID_PUBLIC_KEY that is not a key ships no control either", () => {
+  /* It is interpolated into inline JS: an unquoted paste or a truncated copy
+     is a syntax error on the page, or a button that throws inside subscribe()
+     after asking for permission. Neither is better than no button. */
+  const saved = process.env.VAPID_PUBLIC_KEY;
+  try {
+    for (const bad of ["not a key", DUMMY_KEY.slice(0, 40), '";alert(1);var x="',
+                       Buffer.alloc(65).toString("base64url")]) {
+      process.env.VAPID_PUBLIC_KEY = bad;
+      assert.strictEqual(P.pushControl(), "", "shipped a control for: " + bad);
+    }
+  } finally { process.env.VAPID_PUBLIC_KEY = saved; }
 });
 
 test("with no VAPID_PUBLIC_KEY, pushControl ships no control at all", () => {

@@ -11,12 +11,39 @@
 const test = require("node:test");
 const assert = require("node:assert");
 
+/* UNCONFIGURED BY CONSTRUCTION, NOT BY LUCK.
+ *
+ * The tests below assert the not-configured branch of the push helpers. They
+ * used to pass only because the shell happened to export no Supabase
+ * credentials - and the spec's handover tells the owner to export exactly
+ * those before running the live check. In that shell the same assertions made
+ * a real request and inserted a row into the live push_subs table.
+ *
+ * Deleted here rather than in a test.before, because lib/supabase.js reads
+ * SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY once at module load: unsetting
+ * them after the require would change nothing at all. */
+const REAL_SUPABASE = {
+  url: process.env.SUPABASE_URL,
+  key: process.env.SUPABASE_SERVICE_ROLE_KEY,
+};
+function restoreSupabaseEnv() {
+  for (const [name, v] of [["SUPABASE_URL", REAL_SUPABASE.url],
+                           ["SUPABASE_SERVICE_ROLE_KEY", REAL_SUPABASE.key]]) {
+    if (v === undefined) delete process.env[name];
+    else process.env[name] = v;
+  }
+}
+delete process.env.SUPABASE_URL;
+delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+test.after(restoreSupabaseEnv);
+
 const DB = require("../lib/supabase.js");
 
 test("the push helpers refuse to run unconfigured rather than throwing", async () => {
-  /* No SUPABASE_URL in the test environment, so every call takes the guard
-     path. It must be the same shape as every other helper in the file: an
-     answer, not an exception, because the caller is a daily workflow. */
+  /* The guard path, which the env deletion above makes unreachable-by-accident
+     rather than merely unlikely. It must be the same shape as every other
+     helper in the file: an answer, not an exception, because the caller is a
+     daily workflow. */
   const put = await DB.putPushSub({ endpoint: "https://fcm.googleapis.com/x", p256dh: "k", auth: "a" });
   assert.strictEqual(put.ok, false);
   const list = await DB.listPushSubs();
@@ -171,6 +198,70 @@ test("a dead subscription is dropped, a busy push service is left alone", async 
   assert.strictEqual(one.body, undefined);
   assert.strictEqual(one.headers.Authorization, "vapid t=tok, k=PUB");
   assert.strictEqual(one.headers.TTL, "3600");
+});
+
+test("a push service that never answers costs a retry, not a subscriber", async () => {
+  /* Each push now aborts at 10s. An abort says the push service was slow, not
+     that the subscription is gone - dropping the row would unsubscribe a
+     reader who never asked to be, permanently, over one bad morning. */
+  const fetchImpl = async () => {
+    const e = new Error("The operation was aborted due to timeout");
+    e.name = "TimeoutError";
+    throw e;
+  };
+  const out = await S.sendAll([{ endpoint: "https://fcm.googleapis.com/fcm/send/slow" }],
+    { fetchImpl, jwt: () => "tok", publicKey: "PUB" });
+
+  assert.strictEqual(out.failed, 1);
+  assert.deepStrictEqual(out.dead, []);
+  assert.strictEqual(out.sent, 0);
+});
+
+test("the daily run hands its dead subscriptions to dropPushSubs", async () => {
+  /* The wiring, not the pieces: sendAll collecting endpoints into out.dead is
+     worth nothing if main() never passes them on, and the branch that does is
+     one `if` deep in a function no other test enters. */
+  const fs = require("fs");
+  const realRead = fs.readFileSync;
+  const realFetch = globalThis.fetch;
+  const realNow = Date.now;
+  const realList = DB.listPushSubs;
+  const realDrop = DB.dropPushSubs;
+  const keys = pair();
+
+  let handed = null;
+  fs.readFileSync = () => JSON.stringify({
+    "2026-09-20": { date: "2026-09-20", codes: { sporty: "QZ5TFX" }, legs: [1] },
+  });
+  Date.now = () => Date.UTC(2026, 8, 20, 12, 0);      /* 13:00 Lagos: not quiet */
+  globalThis.fetch = async (url) => {
+    if (String(url).indexOf("code-today.json") >= 0) {
+      return { ok: true, json: async () => ({ date: "2026-09-20" }) };
+    }
+    return String(url).endsWith("gone") ? { ok: false, status: 410 } : { ok: true, status: 201 };
+  };
+  DB.listPushSubs = async () => ({ ok: true, rows: [
+    { endpoint: "https://fcm.googleapis.com/fcm/send/ok" },
+    { endpoint: "https://fcm.googleapis.com/fcm/send/gone" },
+  ] });
+  DB.dropPushSubs = async (list) => { handed = list; return { ok: true, dropped: list.length }; };
+  process.env.VAPID_PRIVATE_KEY = keys.privateKeyB64;
+  process.env.VAPID_PUBLIC_KEY = "PUB";
+
+  try {
+    await S.main();
+  } finally {
+    fs.readFileSync = realRead;
+    globalThis.fetch = realFetch;
+    Date.now = realNow;
+    DB.listPushSubs = realList;
+    DB.dropPushSubs = realDrop;
+    delete process.env.VAPID_PRIVATE_KEY;
+    delete process.env.VAPID_PUBLIC_KEY;
+  }
+
+  assert.deepStrictEqual(handed, ["https://fcm.googleapis.com/fcm/send/gone"],
+    "the 410 must reach the database, or tomorrow pushes to it again");
 });
 
 test("a missing or broken codes file does not crash the sender", async () => {

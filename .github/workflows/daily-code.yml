@@ -94,8 +94,14 @@ jobs:
 
       # Tell the readers who asked. Deliberately after the commit and never in
       # front of it: the code is published either way, and a notification that
-      # did not go out costs one day's re-engagement, while a workflow that
-      # goes red over it trains everybody to ignore a red workflow.
+      # did not go out costs one day's re-engagement.
+      #
+      # continue-on-error means this step can never fail the run. The script
+      # already exits 0 on every ordinary failure - no keys, quiet hours, a
+      # deploy that never landed - and exits 1 only when every single send
+      # failed, which is the keys being wrong. That one case is worth seeing,
+      # so it shows as a failed step in the run, annotated, with the job and
+      # the mint it follows still green.
       #
       # Gated on the commit step's own output, not bare success(): the commit
       # step exits 0 on a day it commits nothing, and pushcode.js has no way to
@@ -106,10 +112,13 @@ jobs:
       #
       # The script waits for Vercel to actually serve the new code before it
       # sends, so this step can sit here for several minutes on a slow build.
+      # 20 minutes, not 8: the deploy poll alone is 20 tries at 15s - five
+      # minutes - before a single push goes out, and each push now has its own
+      # 10s timeout. A step killed at 8 minutes is a send that half happened.
       - name: Announce the code
         if: steps.commit.outputs.minted == 'true'
         continue-on-error: true
-        timeout-minutes: 8
+        timeout-minutes: 20
         env:
           VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}

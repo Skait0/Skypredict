@@ -58,7 +58,7 @@ test("a good subscription parses into exactly the row we store", () => {
   assert.strictEqual(out.row.endpoint, GOOD.endpoint);
 });
 
-test("any method other than POST or DELETE is 405, and nothing is cached", async () => {
+test("a GET is 405, and nothing is cached", async () => {
   const r = res();
   await route({ method: "GET", headers: {}, body: null }, r);
   assert.strictEqual(r.code, 405);
