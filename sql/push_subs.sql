@@ -30,10 +30,18 @@ alter table public.push_subs enable row level security;
 -- it is far above any plausible subscriber count this site will reach before
 -- somebody is watching, and if it is ever hit in earnest the answer is to
 -- raise it deliberately, not to remove it.
+--
+-- The endpoint check is not belt and braces. putPushSub upserts
+-- (`Prefer: resolution=merge-duplicates`, so `on conflict do update`), and a
+-- BEFORE INSERT trigger fires before Postgres resolves the conflict: without
+-- this, a table sitting at the ceiling would also refuse an existing
+-- subscriber re-registering, which adds no row at all. Only genuine growth is
+-- refused.
 create or replace function public.push_subs_ceiling() returns trigger
 language plpgsql as $$
 begin
-  if (select count(*) from public.push_subs) >= 5000 then
+  if not exists (select 1 from public.push_subs where endpoint = new.endpoint)
+     and (select count(*) from public.push_subs) >= 5000 then
     raise exception 'push_subs is at its 5000-row safety ceiling';
   end if;
   return new;
