@@ -100,10 +100,14 @@ function load(opts) {
   const self = {
     addEventListener: (t, f) => { on[t] = f; },
     skipWaiting: () => {},
-    registration: { unregister: () => { state.unregistered = true; return Promise.resolve(true); } },
+    registration: {
+      unregister: () => { state.unregistered = true; return Promise.resolve(true); },
+      showNotification: () => Promise.resolve(),
+    },
     clients: {
       claim: () => Promise.resolve(),
       matchAll: () => Promise.resolve(state.windows || []),
+      openWindow: (u) => { state.navigated.push(u); return Promise.resolve(); },
     },
   };
 
@@ -382,4 +386,71 @@ test("hashed bundles are still cache-first", async () => {
   await c.put(req("/app.abc123.js"), new Res("cached bundle"));
   const res = await fire(w.on, req("/app.abc123.js"));
   assert.strictEqual(res.body, "cached bundle");
+});
+
+/* ------------------------------------------------------------ the push */
+
+function loadPush(opts) {
+  opts = opts || {};
+  const w = load(opts);
+  const shown = [];
+  w.self.registration.showNotification = (title, o) => { shown.push({ title, o }); return Promise.resolve(); };
+  w.state.shown = shown;
+  return w;
+}
+
+/* Drives a push event and waits for whatever the worker promised to finish. */
+function firePush(on) {
+  let held = null;
+  on.push({ waitUntil: (p) => { held = p; } });
+  return held || Promise.resolve();
+}
+
+test("a push becomes a notification naming the day's code", async () => {
+  const w = loadPush({ net: () => Promise.resolve(Object.assign(
+    new Res(null), { ok: true, json: () => Promise.resolve({
+      date: "2026-09-20", n: 5, codes: { sporty: "QZ5TFX", bet9ja: "5SCZZ2W" } }) })) });
+  await firePush(w.on);
+  assert.strictEqual(w.state.shown.length, 1);
+  const { title, o } = w.state.shown[0];
+  assert.match(title, /code/i);
+  assert.match(o.body, /5 games/);
+  assert.match(o.body, /SportyBet/);
+  assert.doesNotMatch(o.body, /BetKing/, "it must only name books that have a code");
+  /* A resend collapses onto the same notification rather than stacking. */
+  assert.strictEqual(o.tag, "code-2026-09-20");
+  assert.notStrictEqual(o.renotify, true);
+});
+
+test("a push whose fetch fails still shows something", async () => {
+  /* userVisibleOnly is a promise to the browser. A push that shows nothing
+     earns the "this site was updated in the background" notice, which is
+     worse than a plain line. */
+  const w = loadPush({ net: () => Promise.reject(new Error("offline")) });
+  await firePush(w.on);
+  assert.strictEqual(w.state.shown.length, 1);
+  assert.ok(w.state.shown[0].title.length > 0);
+});
+
+test("tapping the notification focuses an open tab before opening a new one", async () => {
+  const w = loadPush();
+  const focused = [];
+  w.state.windows = [{ url: "https://www.soccerwizard.live/", focus: () => { focused.push(1); return Promise.resolve(); } }];
+  w.self.clients.openWindow = (u) => { w.state.navigated.push(u); return Promise.resolve(); };
+
+  let held = null;
+  w.on.notificationclick({ notification: { close: () => {} }, waitUntil: (p) => { held = p; } });
+  await held;
+  assert.strictEqual(focused.length, 1);
+  assert.strictEqual(w.state.navigated.length, 0);
+});
+
+test("with no tab open it opens the codes page", async () => {
+  const w = loadPush();
+  w.state.windows = [];
+  w.self.clients.openWindow = (u) => { w.state.navigated.push(u); return Promise.resolve(); };
+  let held = null;
+  w.on.notificationclick({ notification: { close: () => {} }, waitUntil: (p) => { held = p; } });
+  await held;
+  assert.deepStrictEqual(w.state.navigated, ["/booking-codes"]);
 });
