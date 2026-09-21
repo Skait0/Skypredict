@@ -33,7 +33,8 @@ const predictions = require("../api/predictions.js");
 /* What each feed's worst-case staleness was before the CDN/Vercel split, so
    a later tweak cannot quietly make a feed older than it used to be.
    BetKing was added at the same numbers as Bet9ja and is held to them. */
-const BEFORE = { live: 20, fixtures: 600, bet9ja: 600, betking: 600 };
+const BEFORE = { live: 20, fixtures: 600, bet9ja: 600, betking: 600,
+                 betpawa: 600 };
 
 /* A deploy must be visible within this. The board is baked at build time and
    Cloudflare has no idea a build happened, so its window IS the delay. */

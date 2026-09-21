@@ -3250,6 +3250,12 @@ html{interpolate-size:allow-keywords}
    where it can be read. */
 :root{--bk-gold:#FFC400;--bk-ink:#12100B}
 [data-theme="light"]{--bk-gold:#A97400}
+/* Betpawa: lime on near-black, sampled from their own stylesheet (#9CE800 is
+   the most-used accent in it after the greys). Lime on white is about 1.5:1,
+   so the light theme takes the same hue down to where a word can be read -
+   the same problem BetKing's gold has and the same answer. */
+:root{--bw-lime:#9CE800;--bw-ink:#171A1C}
+[data-theme="light"]{--bw-lime:#4F7300}
 .bookpick{display:flex;align-items:center;gap:7px;margin-top:12px;flex-wrap:wrap;
   padding:0 2px}
 /* Nothing to book, nothing to choose between. Hidden rather than emptied so
@@ -3310,6 +3316,12 @@ html{interpolate-size:allow-keywords}
 .bp[data-book="betking"].on{box-shadow:0 1px 3px rgba(0,0,0,.25),
   inset 0 0 0 1.5px var(--bk-gold)}
 .bp[data-book="betking"] small{font-size:9.5px}
+/* The fourth book sits level with the second and third for the same reason
+   they sit level with each other: newest is not loudest. */
+.bp[data-book="betpawa"]{padding:5px 10px;font-size:11px}
+.bp[data-book="betpawa"].on{box-shadow:0 1px 3px rgba(0,0,0,.25),
+  inset 0 0 0 1.5px var(--bw-lime)}
+.bp[data-book="betpawa"] small{font-size:9.5px}
 @media(hover:hover){ .bp:not(.on):hover{opacity:.72} }
 /* How many of the slip this book can actually take, so the choice is informed
    rather than a coin toss. A chip rather than loose type, so it reads as a
@@ -3321,6 +3333,7 @@ html{interpolate-size:allow-keywords}
    was black. On our own surface it needs our own ink. */
 .bp[data-book="bet9ja"] small{background:rgba(20,177,81,.14);color:var(--b9-green)}
 .bp[data-book="betking"] small{background:rgba(255,196,0,.16);color:var(--bk-gold)}
+.bp[data-book="betpawa"] small{background:rgba(156,232,0,.16);color:var(--bw-lime)}
 /* The SportyBet wordmark. One colour, so it needs no inner spans - but it does
    need to be a mark rather than a word, so that every place the name appears
    carries it: the code card's title, their own button, the pre-flight when it
@@ -3363,6 +3376,17 @@ html{interpolate-size:allow-keywords}
    SportyBet mark follows on red. */
 .code-open .bkm .bkg,.book-btn .bkm .bkg,.wsp-go .bkm .bkg,
   .slipbar .bkm .bkg{color:inherit}
+/* Betpawa write it as one word with the second half carrying the colour -
+   "bet" in the surrounding ink, "Pawa" in their lime. Same construction as
+   the other two marks, so every place that already draws a wordmark draws
+   this one without a special case. */
+.bwm{font-weight:800;letter-spacing:-.01em;white-space:nowrap}
+.bwm .bwb,.bwm .bwp{font-style:normal;font-weight:800;font-size:inherit;
+  display:inline;letter-spacing:inherit;line-height:inherit;margin:0}
+.bwm .bwb{color:inherit}
+.bwm .bwp{color:var(--bw-lime)}
+.code-open .bwm .bwp,.book-btn .bwm .bwp,.wsp-go .bwm .bwp,
+  .slipbar .bwm .bwp{color:inherit}
 .bld-note{font-size:12px;color:var(--soft);margin-top:10px;text-align:center}
 /* In the sheet this line sits outside the scrolling body, level with the book
    picker, so it needs the sheet's own gutter rather than the panel's. */
@@ -3445,7 +3469,7 @@ html{interpolate-size:allow-keywords}
 .byo-b{font:inherit;font-size:12px;font-weight:700;padding:6px 12px;border:0;
   border-radius:99px;background:none;cursor:pointer;line-height:1;
   transition:background .15s,box-shadow .15s,opacity .15s}
-.byo-b .sbm,.byo-b .b9m,.byo-b .bkm{font-size:12.5px;letter-spacing:-.01em}
+.byo-b .sbm,.byo-b .b9m,.byo-b .bkm,.byo-b .bwm{font-size:12.5px;letter-spacing:-.01em}
 .byo-b:not(.on){opacity:.5}
 /* THE INK IS THEIRS, THE SURFACE IS OURS. A white pill and a black pill put
    two foreign backgrounds inside our own rail: on the dark theme the black one
@@ -3459,6 +3483,8 @@ html{interpolate-size:allow-keywords}
   inset 0 0 0 1.5px var(--b9-green)}
 .byo-b.on[data-book="betking"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
   inset 0 0 0 1.5px var(--bk-gold)}
+.byo-b.on[data-book="betpawa"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
+  inset 0 0 0 1.5px var(--bw-lime)}
 /* The conversion's TARGET, in the same pills as its source. Two books could
    leave this implicit - there was only ever one answer - and three cannot.
    The ring colours are keyed off the same attribute either row uses, so a
@@ -3481,6 +3507,8 @@ html{interpolate-size:allow-keywords}
   inset 0 0 0 1.5px var(--b9-green)}
 .byo-b.on[data-conv-to="betking"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
   inset 0 0 0 1.5px var(--bk-gold)}
+.byo-b.on[data-conv-to="betpawa"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
+  inset 0 0 0 1.5px var(--bw-lime)}
 @media (hover:hover){.byo-b:not(.on):hover{opacity:.8}}
 #byoCode{flex:1 1 150px;min-width:0;font:inherit;font-size:14px;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;
@@ -4024,7 +4052,7 @@ html{interpolate-size:allow-keywords}
    "Open in" and the mark two flex items with nothing between them:
    "Open inbet9ja". A space in the string cannot survive that, so it is a
    margin. Both books, because both had it - only Bet9ja's was noticed. */
-.code-open .sbm,.code-open .b9m,.code-open .bkm{margin-left:.3em}
+.code-open .sbm,.code-open .b9m,.code-open .bkm,.code-open .bwm{margin-left:.3em}
 
 /* --- the BetKing code card -------------------------------------------------
    Same construction as the Bet9ja one above and for the same reasons: their
@@ -4054,6 +4082,32 @@ html{interpolate-size:allow-keywords}
   border-color:rgba(255,255,255,.2)}
 @media(hover:hover){
   .code-card--bk .code-x:hover{border-color:#FFC400;color:#fff}
+}
+/* Betpawa's card, built the same way BetKing's is: their own dark ground in
+   both themes, their accent on the rule and the edge, the wordmark carrying
+   its lime half. The lime is the raw #9CE800 rather than --bw-lime, for the
+   same reason the gold here is raw #FFC400 - this ground is dark whatever
+   the theme says, so the light-theme override must not follow the mark onto
+   it. */
+.code-card--bw,[data-theme="light"] .code-card--bw{
+  background:linear-gradient(180deg,#171A1C,#0A0C0D);
+  border-color:rgba(156,232,0,.42);
+  box-shadow:0 22px 58px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.07)}
+.code-card--bw i,[data-theme="light"] .code-card--bw i{color:rgba(255,255,255,.8)}
+.code-card--bw b,[data-theme="light"] .code-card--bw b{color:#fff}
+.code-card--bw .bwm{color:#fff}
+.code-card--bw .bwm .bwp{color:#9CE800}
+.code-card--bw i{display:block;text-transform:none}
+.code-card--bw i::after{content:"";display:block;width:42px;height:2px;
+  margin:8px auto 2px;border-radius:2px;background:#9CE800}
+.code-card--bw .code-keep-n{color:rgba(255,255,255,.6)}
+.code-card--bw .code-save{background:rgba(255,255,255,.08);color:#fff;
+  border-color:rgba(255,255,255,.24)!important}
+.code-card--bw .code-save.done{border-color:#9CE800!important;color:#9CE800}
+.code-card--bw .code-x{background:rgba(255,255,255,.08);color:#fff;
+  border-color:rgba(255,255,255,.2)}
+@media(hover:hover){
+  .code-card--bw .code-x:hover{border-color:#9CE800;color:#fff}
 }
 /* Gold is a light colour: white on it is unreadable, so their buttons take
    the dark ink their own site uses on gold. */
@@ -5456,7 +5510,7 @@ html.is-results #codeCard{display:none}
   background:rgba(242,184,75,.12)}
 /* The chip names are the bookmakers' own wordmarks, which carry their own
    colours - only the size is ours. */
-.ck-chip b .sbm,.ck-chip b .b9m,.ck-chip b .bkm{font-size:12px}
+.ck-chip b .sbm,.ck-chip b .b9m,.ck-chip b .bkm,.ck-chip b .bwm{font-size:12px}
 .ck-codes{display:flex;flex-wrap:wrap;gap:8px}
 /* Tabular numerals and wide tracking: these are read out loud and typed in. */
 .ck-chip{display:inline-flex;align-items:center;gap:8px;cursor:pointer;
@@ -7272,6 +7326,8 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
             aria-label="Bet9ja"><span class="b9m"><span class="b9r">bet</span><span class="b9g">9ja</span></span></button>
           <button class="byo-b" type="button" data-book="betking"
             aria-label="BetKing"><span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span></button>
+          <button class="byo-b" type="button" data-book="betpawa"
+            aria-label="betPawa"><span class="bwm"><span class="bwb">bet</span><span class="bwp">Pawa</span></span></button>
         </div>
         <input id="byoCode" type="text" inputmode="latin" autocomplete="off"
                spellcheck="false" maxlength="110" placeholder="Booking code, or a few to merge"
@@ -10384,6 +10440,15 @@ const SPORTY_FIXTURES="/api/fixtures";
 const BET9JA_FIXTURES="/api/bet9ja";
 /* BetKing, same again. */
 const BETKING_FIXTURES="/api/betking";
+const BP_BOOK_URL="/api/book?book=betpawa";
+/* Betpawa has NO deep link for a booking code either, and it was read rather
+   than assumed: their bundle loads a code through getBetslipsFromBookingCode
+   and nothing anywhere reads one from the address bar - the only query params
+   it touches are `layout`, `marketId` and `t`. So `open` stays null, like
+   BetKing's, and the surfaces that draw "Open in X" say what to do instead. */
+const BP_URL=null;
+/* Betpawa, same again. */
+const BETPAWA_FIXTURES="/api/betpawa";
 
 /* The two bookmakers differ in what they are FOR, not just in their
    field names, and the matcher needs to know which it is filling in.
@@ -10455,7 +10520,17 @@ var BOOKS={
      `blend` is false for the same modelling reason it is false for Bet9ja,
      not because the unders are missing: betking.py maps every under line, and
      blendFixture still reads f.sportyOdds whatever book it was called for. */
-  betking:{key:"betking",label:"BetKing",id:"bkEventId",odds:"bkOdds",blend:false,full:false,arg:"code",skin:"bk",readable:true,wholeLines:false}
+  betking:{key:"betking",label:"BetKing",id:"bkEventId",odds:"bkOdds",blend:false,full:false,arg:"code",skin:"bk",readable:true,wholeLines:false},
+  /* Betpawa, the fourth, on the same terms as the second and third.
+     `full` is false for the usual reason and NOT the usual one: their list
+     endpoint does carry every modelled market - we ask for the market ids we
+     want and it answers them, team goals and the first-half line included -
+     but coverage still thins on small competitions, so a missing price here
+     means "not listed on this fixture", never "they do not sell it". The
+     booking route reads the event's own card either way.
+     `skin` is "bw" rather than "bp" because .bp is already the book pill's
+     own class, and a skin class of the same name would inherit its padding. */
+  betpawa:{key:"betpawa",label:"betPawa",id:"bpEventId",odds:"bpOdds",blend:false,full:false,arg:"code",skin:"bw",readable:true,wholeLines:false}
 };
 
 /* Common team name aliases that SportyBet uses but our data doesn't (or vice versa).
@@ -11244,6 +11319,18 @@ function bookWire(){
      A leg they turn out not to price comes back named, and the retry drops
      exactly that one. */
   BOOKS.betking.priced=function(c){ return !!bookIdOf(c,BOOKS.betking); };
+
+  BOOKS.betpawa.mark="<span class='bwm'><span class='bwb'>bet</span>"+
+    "<span class='bwp'>Pawa</span></span>";
+  BOOKS.betpawa.book=BP_BOOK_URL;
+  BOOKS.betpawa.open=BP_URL;
+  BOOKS.betpawa.sel=function(c){return {eventId:bookIdOf(c,BOOKS.betpawa),code:c.code};};
+  BOOKS.betpawa.codeOf=function(d){return d&&d.code;};
+  /* Judged on the event, like the other two second books. Their sweep does
+     carry the modelled markets, but a market they list on a big card and not
+     on a small one is answered by the booking route naming it - refusing it
+     here would drop legs Betpawa would have taken. */
+  BOOKS.betpawa.priced=function(c){ return !!bookIdOf(c,BOOKS.betpawa); };
 }
 /* A question on screen and a Get code button beside it are two ways to do the
    same thing, and the button knows nothing about the choice being offered -
@@ -11470,6 +11557,9 @@ async function loadBet9ja(){ return loadSecondBook(BET9JA_FIXTURES,BOOKS.bet9ja)
    sides in a single "Home - Away" string - so it goes through b9Rows rather
    than a second reshaper that would drift from it. */
 async function loadBetKing(){ return loadSecondBook(BETKING_FIXTURES,BOOKS.betking); }
+/* Betpawa's feed is the same shape again - one object keyed by event id, both
+   sides in a single "Home - Away" string - so it goes through b9Rows too. */
+async function loadBetpawa(){ return loadSecondBook(BETPAWA_FIXTURES,BOOKS.betpawa); }
 async function loadSecondBook(url,B){
   try{
     var r=await fetch(url,{headers:{Accept:"application/json"}});
@@ -11579,7 +11669,8 @@ var BOOK_FEED={},BOOK_FEED_DONE={};
 function ensureBookFeed(k){
   /* SportyBet is the board's own prices, loaded before this ever runs. */
   if(!k||k==="sporty"||BOOK_FEED[k]) return BOOK_FEED[k]||Promise.resolve(0);
-  var load=k==="bet9ja"?loadBet9ja:k==="betking"?loadBetKing:null;
+  var load=k==="bet9ja"?loadBet9ja:k==="betking"?loadBetKing:
+           k==="betpawa"?loadBetpawa:null;
   if(!load) return Promise.resolve(0);
   BOOK_FEED[k]=load().then(function(n){ BOOK_FEED_DONE[k]=1; if(n) repaintAfterMatch(); return n; })
     .catch(function(){ BOOK_FEED_DONE[k]=1; return 0; });

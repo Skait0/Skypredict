@@ -3,7 +3,7 @@
  * Does each bookmaker still take a slip and hand back the one we asked for?
  * OFFLINE / DAILY.
  *
- *   node scripts/canary.js [--books=sporty,bet9ja,betking] [--dry]
+ *   node scripts/canary.js [--books=sporty,bet9ja,betking,betpawa] [--dry]
  *
  * WHY THIS EXISTS AND WHAT IT IS NOT. Every failure this integration has had
  * was SILENT. A datacentre block page arrives as HTTP 200 with an empty list.
@@ -60,6 +60,7 @@ const BOOKS = {
   sporty: { feed: "/api/fixtures", arg: "prediction", field: "booking_code", readable: true },
   bet9ja: { feed: "/api/bet9ja", arg: "code", field: "code", readable: true },
   betking: { feed: "/api/betking", arg: "code", field: "code", readable: true },
+  betpawa: { feed: "/api/betpawa", arg: "code", field: "code", readable: true },
 };
 
 /* A market every book prices on essentially every fixture. The canary is about

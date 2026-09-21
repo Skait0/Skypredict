@@ -1,6 +1,6 @@
 "use strict";
 
-/* GET /api/slip?book=sporty|bet9ja|betking&code=XXXX - the legs behind a code.
+/* GET /api/slip?book=sporty|bet9ja|betking|betpawa&code=XXXX - the legs behind a code.
  *
  * Reading, not booking. The distinction is the whole reason this is a separate
  * route rather than another mode of /api/book: booking mints something at the
@@ -39,7 +39,7 @@ const CODE_RE = /^[A-Za-z0-9]{4,16}$/;
    converter cannot use as a SOURCE, however well the upstream reads it -
    BetKing shipped able to read a code on Railway and was refused at this
    edge for it, with "unknown bookmaker" on a book we plainly know. */
-const BOOKS = ["sporty", "bet9ja", "betking"];
+const BOOKS = ["sporty", "bet9ja", "betking", "betpawa"];
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
