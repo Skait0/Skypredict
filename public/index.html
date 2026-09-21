@@ -3409,7 +3409,7 @@ html{interpolate-size:allow-keywords}
        earlier in the DOM and auto-placement never walks backwards. Same reason
        the wizard panel needs it. */
     grid-auto-flow:row dense}
-  .byo>h3,.byo>.byo-sub,.byo>.byo-row{grid-column:1/-1}
+  .byo>h3,.byo>.byo-sub,.byo>.byo-row,.byo>.byo-hint{grid-column:1/-1}
   .byo>#byoOut{grid-column:1}
   .byo>.byo-side{grid-column:2;position:sticky;top:10px;
     /* A cap and its own scrollbar, or a long convert box makes this column
@@ -3431,6 +3431,7 @@ html{interpolate-size:allow-keywords}
 .byo h3{font-size:14px;font-weight:800;letter-spacing:-.01em;margin:0 0 3px}
 .byo-sub{margin:0 0 11px;font-size:12.5px;font-weight:600;color:var(--faint)}
 .byo-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.byo-hint{margin:7px 0 0;font-size:12px;font-weight:600;color:var(--faint);line-height:1.45}
 .byo-book{display:inline-flex;background:var(--card-2);border:1px solid var(--line);
   border-radius:99px;padding:3px;gap:2px;flex:0 0 auto}
 /* THE TOGGLE WEARS THEIR COLOURS.
@@ -7228,9 +7229,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       <h2 class="stage-in stage-in-2">Converter</h2>
     </div>
     <p class="conv-sub stage-in stage-in-2">Move a booking code to the other
-      bookmaker, or read what is inside one and cut it into smaller tickets.
-      Paste several codes separated by spaces and we merge them into one
-      slip.</p>
+      bookmaker, or read what is inside one and cut it into smaller tickets.</p>
     <section class="byo" id="byo" aria-labelledby="byo-h">
       <h3 id="byo-h">Already have a booking code?</h3>
       <p class="byo-sub">Paste it, or several separated by spaces and we'll merge
@@ -7253,6 +7252,17 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
                aria-label="Booking code, or several separated by spaces to merge them">
         <button class="byo-go" id="byoGo" type="button">Read it</button>
       </div>
+      <!-- MERGING IS NOT A JOB, SO IT IS NOT A CARD. The three cards below act
+           on a slip that has already been read, and every one of them is dead
+           until there is one - which is exactly when merging is still
+           available and exactly why a fourth card would have been greyed out
+           at the only moment it mattered. It belongs next to the box, where
+           the codes go in.
+           Not in .byo-sub either: the converter hides that line, which is how
+           a placeholder ended up being the only thing on the page that said
+           several codes could go in at once. -->
+      <p class="byo-hint">Got more than one code? Paste them all, separated by
+        spaces, and we'll read them into a single slip.</p>
       <!-- THE THREE JOBS, ON SCREEN BEFORE THERE IS A CODE.
            The panel used to be one box that read a code and then grew three
            different offers underneath it, so nobody knew the other two
