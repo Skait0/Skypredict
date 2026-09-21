@@ -44,7 +44,8 @@ function client(reply) {
     "var fetch=function(){ CALLS.n++; return Promise.resolve(REPLY()); };" +
     "function curBook(){ return null; }" +
     "function esc(s){ return String(s); }" +
-    grab("swDeviceId") + "\n" + grab("bookFetch") + "\n" +
+    grab("swDeviceId") + "\n" + grab("dedupeSelections") + "\n" +
+    grab("bookFetch") + "\n" +
     grab("bookReason") + "\n" + grab("bookErrHTML") + "\n" +
     "var SW_QUOTA_LEFT=null;\n" + grab("quotaNoteHTML") + "\n" +
     "return {bookFetch:bookFetch, bookErrHTML:bookErrHTML, bookReason:bookReason," +

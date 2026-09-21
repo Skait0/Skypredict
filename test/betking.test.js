@@ -548,3 +548,57 @@ test("a changed leg is named, with what changed about it", () => {
   assert.match(src, /legs were.{0,20}changed to a line/);
   assert.match(src, /a whole line returns the stake on the exact score/);
 });
+
+/* ---------------------------------------------------- the same bet twice */
+
+test("an identical leg sent twice is collapsed before it reaches a book", () => {
+  /* Two board fixtures paired to ONE SportyBet event on 21 Sep - "Ind.
+     Rivadavia" and "Independiente" against the same Barracas fixture - so the
+     day's own code SPXK1M went out with five legs and four games. SportyBet
+     and Bet9ja took it silently; BetKing and Betpawa refuse a same-game
+     multiple, so a conversion died with "one selection per game" on a slip
+     whose games all looked different to the reader. */
+  const dedupe = new Function(fn("dedupeSelections") + "\nreturn dedupeSelections;")();
+  const legs = [
+    { eventId: "sr:match:1", prediction: "1X" },
+    { eventId: "sr:match:2", prediction: "1X" },
+    { eventId: "sr:match:1", prediction: "1X" },
+  ];
+  assert.deepStrictEqual(dedupe(legs).map((l) => l.eventId),
+    ["sr:match:1", "sr:match:2"]);
+  /* The other books' shape, which names the market `code` rather than
+     `prediction` - both have to be read or the dedupe silently does nothing
+     on three of the four books. */
+  assert.strictEqual(dedupe([{ eventId: "9", code: "GG" },
+                             { eventId: "9", code: "GG" }]).length, 1);
+  /* AND A REAL SAME-GAME PAIR IS LEFT ALONE. Two markets on one fixture is a
+     bet some books take and the route names it on the ones that do not -
+     collapsing it here would silently shorten a slip somebody meant. */
+  assert.strictEqual(dedupe([{ eventId: "9", code: "GG" },
+                             { eventId: "9", code: "OVER_2.5" }]).length, 2);
+  /* And it is wired into the one call every surface funnels through. */
+  assert.match(fn("bookFetch"), /sel\s*=\s*dedupeSelections\(sel\)/);
+});
+
+test("refusing one of two identical legs leaves the other", () => {
+  /* The server names a leg by event and market, and two identical legs share
+     both - so a set-membership test killed the duplicate AND the leg it
+     duplicated, leaving nothing to retry and the reader a flat refusal. */
+  const harness = new Function(
+    prelude("betpawa") +
+    "function fixtureById(){ return null; }\n" +
+    fn("dropUnbookable") + "\nreturn dropUnbookable;")();
+  const picks = [
+    { id: "a", code: "1X", f: { bpEventId: "11" } },
+    { id: "b", code: "1X", f: { bpEventId: "11" } },
+    { id: "c", code: "1X", f: { bpEventId: "22" } },
+  ];
+  const kept = harness(picks,
+    { unbookable: [{ eventId: "11", prediction: "1X", reason: "same_game" }] },
+    { key: "betpawa", id: "bpEventId", odds: "bpOdds" });
+  assert.strictEqual(kept.length, 2, "one refusal must not drop both copies");
+  /* WHICH copy survives is immaterial - the two are the same bet on the same
+     event - so this asserts the count and the untouched leg, not an order. */
+  assert.ok(kept.includes(picks[2]), "the innocent leg was dropped");
+  assert.strictEqual(kept.filter((p) => p.f.bpEventId === "11").length, 1);
+});
