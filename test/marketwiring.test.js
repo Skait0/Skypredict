@@ -144,7 +144,8 @@ test("every pass-through market SportyBet maps has a name on the panel", () => {
   let codes;
   try {
     const code = "import sys,json;sys.path.insert(0,r'" + API + "');" +
-      "import server;print(json.dumps(sorted(server.PASSTHROUGH_MAP)))";
+      "import server,betpawa;print(json.dumps(sorted(" +
+      "set(server.PASSTHROUGH_MAP)|set(betpawa.PASSTHROUGH_MAP))))";
     const out = execSync("python -c " + JSON.stringify(code),
       { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
     codes = JSON.parse(out.slice(out.indexOf("[")));
