@@ -6995,6 +6995,18 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <span class="ba-slot" id="baSlot"></span>
   </div>
 
+  <!-- THE DAY'S CODE, ON THE BOARD. The page that carries it had one link, in
+       the footer, so nobody found it - including the person who built it. The
+       card is filled from /code-today.json, a 200-byte file the build writes,
+       and stays hidden until that lands: an empty promise of a code is worse
+       than no mention of one.
+       ABOVE THE CONTROL ROW, not under it. It sat between "Add all N tips to
+       slip" and the filters the N is counted from, which split a set of
+       controls with an advert. Here it is the first thing under the board's
+       own heading, and the view toggle, the Add all button and the date bar
+       stay together above the board they act on. -->
+  <section class="ck-card" id="codeCard" hidden></section>
+
   <!-- The two controls that change what you are looking at - how it is drawn,
        and which day - sit together on one row above the board. -->
   <div class="toprow">
@@ -7018,13 +7030,6 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   </div>
 
   <div id="bookAllResult" aria-live="polite"></div>
-
-  <!-- THE DAY'S CODE, ON THE BOARD. The page that carries it had one link, in
-       the footer, so nobody found it - including the person who built it. The
-       card is filled from /code-today.json, a 200-byte file the build writes,
-       and stays hidden until that lands: an empty promise of a code is worse
-       than no mention of one. -->
-  <section class="ck-card" id="codeCard" hidden></section>
 
   <div class="bar">
     <!-- THE CHIPS AND THE WAY IN TO EVERYTHING ELSE, ON ONE ROW. The button
