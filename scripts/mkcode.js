@@ -95,6 +95,7 @@ const FEEDS = {
   sporty: "/api/fixtures",
   bet9ja: "/api/bet9ja/fixtures",
   betking: "/api/betking/fixtures",
+  betpawa: "/api/betpawa/fixtures",
 };
 
 async function events(which) {
@@ -237,8 +238,14 @@ async function bookSlipRetrying(which, sel) {
     console.log("betking fixtures: " + e.message + " - publishing without it");
     return [];
   });
+  /* Betpawa joins on exactly BetKing's terms - additive, asked last, never
+     allowed to shape the slip. See the booking block below. */
+  const bp = await events("betpawa").catch((e) => {
+    console.log("betpawa fixtures: " + e.message + " - publishing without it");
+    return [];
+  });
   console.log(`feeds: ${sporty.length} SportyBet events, ${b9.length} Bet9ja events, ` +
-              `${bk.length} BetKing events`);
+              `${bk.length} BetKing events, ${bp.length} Betpawa events`);
 
   /* A leg has to be on BOTH books or it is not a leg. Two codes that are not
      the same slip would make tomorrow's record meaningless. */
@@ -247,10 +254,11 @@ async function bookSlipRetrying(which, sel) {
     if (picked.length >= legs) break;
     const s = findEvent(f, sporty), b = findEvent(f, b9);
     if (!s || !b) continue;
-    const k = findEvent(f, bk);
+    const k = findEvent(f, bk), w = findEvent(f, bp);
     const market = M.tipCode(f);
     picked.push({ f: f, sporty: s.eventId, bet9ja: b.eventId,
-                  betking: k ? k.eventId : null, market: market,
+                  betking: k ? k.eventId : null,
+                  betpawa: w ? w.eventId : null, market: market,
                   odd: legOdd(s, market) });
   }
   if (picked.length < legs) {
@@ -318,11 +326,13 @@ async function bookSlipRetrying(which, sel) {
     working = working.filter((p) => !refused.has(p));
     while (working.length < legs && spare.length) {
       const f = spare.shift();
-      const sp = findEvent(f, sporty), bb = findEvent(f, b9), kk = findEvent(f, bk);
+      const sp = findEvent(f, sporty), bb = findEvent(f, b9), kk = findEvent(f, bk),
+            ww = findEvent(f, bp);
       if (sp && bb) {
         const market = M.tipCode(f);
         working.push({ f: f, sporty: sp.eventId, bet9ja: bb.eventId,
-                       betking: kk ? kk.eventId : null, market: market,
+                       betking: kk ? kk.eventId : null,
+                       betpawa: ww ? ww.eventId : null, market: market,
                        odd: legOdd(sp, market) });
       }
     }
@@ -353,6 +363,21 @@ async function bookSlipRetrying(which, sel) {
                 "on its feed - publishing without it");
   }
 
+  /* AND BETPAWA, ON THE SAME TERMS AND FOR THE SAME REASON. Asked last, for
+     the legs the first two already agreed, and every way of failing costs it
+     the day and nothing else. A fourth book negotiating the leg set would let
+     the newest book decide which games everybody else gets. */
+  const bpLegs = working.map((p) => p.betpawa);
+  if (bpLegs.every(Boolean)) {
+    const out = await bookSlipRetrying("betpawa",
+      working.map((p) => ({ eventId: p.betpawa, code: p.market })));
+    if (out.ok) codes.betpawa = out.code;
+    else console.log(`betpawa: ${out.why} - publishing without it`);
+  } else {
+    console.log(`betpawa: ${bpLegs.filter(Boolean).length} of ${bpLegs.length} legs ` +
+                "on its feed - publishing without it");
+  }
+
   const entry = {
     date: date,
     generated: new Date().toISOString(),
@@ -372,7 +397,7 @@ async function bookSlipRetrying(which, sel) {
     odds: slipOdds(working.map((p) => ({ odd: p.odd }))),
   };
   console.log(`sporty: ${codes.sporty || "-"}   bet9ja: ${codes.bet9ja || "-"}   ` +
-              `betking: ${codes.betking || "-"}`);
+              `betking: ${codes.betking || "-"}   betpawa: ${codes.betpawa || "-"}`);
 
   /* --dry was declared at the top of this file, documented in the usage line,
      and never read - so a "dry" run booked two real slips and wrote the file

@@ -137,6 +137,12 @@ test("the 1.5-rung line is never picked for a SportyBet slip, and is picked for 
   assert.equal(bookAllows("MIX_X_OV_1.5", { key: "betking" }), true);
   assert.equal(bookAllows("MIX_1_OV_1.5", { key: "betking" }), true);
   assert.equal(bookAllows("MIX_2_OV_1.5", { key: "betking" }), true);
+  /* And the fourth book, whose card was read by tools/bpgen.js rather than
+     assumed from the other three: "1X2 and Totals - FT" carries the 1.5 rung
+     on all three signs. */
+  assert.equal(bookAllows("MIX_X_OV_1.5", { key: "betpawa" }), true);
+  assert.equal(bookAllows("MIX_1_OV_1.5", { key: "betpawa" }), true);
+  assert.equal(bookAllows("MIX_2_OV_1.5", { key: "betpawa" }), true);
   /* Everything else books at any of them, and must keep doing so. */
   assert.equal(bookAllows("MIX_X_OV_2.5", { key: "sporty" }), true);
   assert.equal(bookAllows("OVER_1.5", { key: "sporty" }), true);
@@ -219,7 +225,7 @@ test("gradeLeg settles the Asian lines, and says push rather than nothing", () =
   assert.equal(gradeLeg({}, "AH_1_0", null, null), null);
 });
 
-test("the 1.5 rung of the family belongs to both half-line books, all three signs of it", () => {
+test("the 1.5 rung of the family belongs to every book that sells it, all three signs", () => {
   /* SportyBet's 1X2-or-Over/Under card starts at 2.5 on every sign. Miss one
      and the slider builds a leg the reader's bookmaker will refuse, taking the
      whole ticket with it. Name a book too few and the opposite happens: the
@@ -228,8 +234,12 @@ test("the 1.5 rung of the family belongs to both half-line books, all three sign
     "return " + src.match(/var BOOK_ONLY=(\{[\s\S]*?\});/)[1] + ";")();
   assert.deepEqual(Object.keys(BOOK_ONLY).sort(),
     ["MIX_1_OV_1.5", "MIX_2_OV_1.5", "MIX_X_OV_1.5"]);
+  /* Three books now, and the third was read off Betpawa's own card by
+     tools/bpgen.js rather than assumed from the other two - the same mistake
+     this list held about BetKing for a week, which sent its readers elsewhere
+     to book a bet it was selling them. */
   Object.values(BOOK_ONLY).forEach((b) =>
-    assert.deepEqual([].concat(b).sort(), ["bet9ja", "betking"]));
+    assert.deepEqual([].concat(b).sort(), ["bet9ja", "betking", "betpawa"]));
   /* And the 2.5 rung stays on all three, which is what makes it the default. */
   assert.ok(!BOOK_ONLY["MIX_1_OV_2.5"] && !BOOK_ONLY["MIX_X_OV_2.5"]);
 });

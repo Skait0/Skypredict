@@ -3380,7 +3380,13 @@ html{interpolate-size:allow-keywords}
    "bet" in the surrounding ink, "Pawa" in their lime. Same construction as
    the other two marks, so every place that already draws a wordmark draws
    this one without a special case. */
-.bwm{font-weight:800;letter-spacing:-.01em;white-space:nowrap}
+/* THEIR FACE, READ OFF THEIR OWN STYLESHEET: betpawa.ng asks for Roboto and
+   falls back to the system sans. No webfont link here - a third-party
+   stylesheet on the critical path held the first paint once and there is a
+   test forbidding one - so this is whatever Roboto the device has, or the
+   page's own stack behind it. */
+.bwm{font-weight:800;letter-spacing:-.01em;white-space:nowrap;
+  font-family:Roboto,"Helvetica Neue",Arial,inherit}
 .bwm .bwb,.bwm .bwp{font-style:normal;font-weight:800;font-size:inherit;
   display:inline;letter-spacing:inherit;line-height:inherit;margin:0}
 .bwm .bwb{color:inherit}
@@ -4089,8 +4095,11 @@ html{interpolate-size:allow-keywords}
    same reason the gold here is raw #FFC400 - this ground is dark whatever
    the theme says, so the light-theme override must not follow the mark onto
    it. */
+/* Their own ground, sampled from icon-512x512.png rather than guessed: the
+   icon is #252A2D behind #9CE800, with #E6E7E2 for the light half. The card
+   runs that down to near-black the way BetKing's runs its own ink down. */
 .code-card--bw,[data-theme="light"] .code-card--bw{
-  background:linear-gradient(180deg,#171A1C,#0A0C0D);
+  background:linear-gradient(180deg,#252A2D,#0E1112);
   border-color:rgba(156,232,0,.42);
   box-shadow:0 22px 58px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.07)}
 .code-card--bw i,[data-theme="light"] .code-card--bw i{color:rgba(255,255,255,.8)}
@@ -12068,7 +12077,7 @@ function cLgamma(x){
    The home sign was booked to confirm it rather than inferred from the other
    two: MQ29ZR, Liverpool v Tottenham, read back intact. So the chip had been
    sending BetKing readers to Bet9ja to book a bet BetKing was selling them. */
-var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking"],
+var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking","betpawa"],
   /* The whole 1.5 rung of the 1X2-or-Over/Under family: draw, home and away.
      SportyBet's card starts at 2.5 on all three.
      THE UNDER SIDE AND THE 3.5 RUNG ARE NOT MISSING - they are declined. Both
@@ -12077,7 +12086,13 @@ var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking"],
      would widen the risky end of a board whose seven newest markets have not
      yet graded a single live result. Revisit when those have a record, not
      before. */
-  "MIX_1_OV_1.5":["bet9ja","betking"],"MIX_2_OV_1.5":["bet9ja","betking"]};
+  /* BETPAWA MAKES IT THREE, and the same way it became two: read off their
+     own card rather than assumed. Their "1X2 and Totals - FT" carries the 1.5
+     rung on all three signs, generated and verified by tools/bpgen.js against
+     eight deep cards. A book left out of this list is a book whose readers
+     are sent elsewhere to place a bet it sells them. */
+  "MIX_1_OV_1.5":["bet9ja","betking","betpawa"],
+  "MIX_2_OV_1.5":["bet9ja","betking","betpawa"]};
 function bookAllows(code,B){
   var only=BOOK_ONLY[code];
   return !only || only.indexOf((B&&B.key)||(curBook()&&curBook().key))>=0;
@@ -15748,7 +15763,7 @@ function applyBoardCap(n){
     /* The bookmaker's own wordmark rather than its name in our type: the
        reader picks the chip by the colours they already bank with. */
     var chips=[["sporty",d.codes.sporty],["bet9ja",d.codes.bet9ja],
-               ["betking",d.codes.betking]]
+               ["betking",d.codes.betking],["betpawa",d.codes.betpawa]]
       .filter(function(b){return !!b[1];})
       .map(function(b){
         return "<button class='ck-chip' type='button' data-code='"+esc(b[1])+"'>"+
@@ -18691,12 +18706,12 @@ function renderShared(){
        so, and asks before it turns on, rather than failing quietly at the
        booking step. `only` is a list - see BOOK_ONLY, which is the same fact
        keyed by market code. */
-    {k:"dro15", label:"Draw or o1.5", tier:0, sub:"X or over 1.5", only:["bet9ja","betking"],
+    {k:"dro15", label:"Draw or o1.5", tier:0, sub:"X or over 1.5", only:["bet9ja","betking","betpawa"],
      icon:'<path d="M4 12h16"/><path d="M9 8l3-3 3 3"/>'},
     /* WIN EITHER HALF. Graded on 945 held-out matches before it was offered:
        60.0% against 58.9% predicted, the closest of any market here bar the
        match result itself. Both books sell it per side. */
-    {k:"rso15", label:"Result or o1.5", tier:0, sub:"1 or 2, or over 1.5", only:["bet9ja","betking"],
+    {k:"rso15", label:"Result or o1.5", tier:0, sub:"1 or 2, or over 1.5", only:["bet9ja","betking","betpawa"],
      icon:'<path d="M5 19L12 5l7 14"/><path d="M9 9l3-3 3 3"/>'},
     {k:"weh", label:"Win a half", tier:0, sub:"Either half", icon:'<path d="M12 4v16"/><path d="M5 8h4"/><path d="M15 16h4"/>'},
     /* WIZARD ONLY. The Slider cannot build a draw - "X" is in neither
