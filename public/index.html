@@ -11540,6 +11540,13 @@ function paintBookPickers(){
        and let the picker change it. */
     var cl=document.querySelector(".sc-go-primary .sc-lbl");
     if(cl) cl.innerHTML="Build me a "+curBook().mark+" slip";
+    /* AND THE STICKY BAR, which is the same promise and was missed - it is
+       markup at the end of the document rather than part of the offer card,
+       so it kept SportyBet's name for every reader on every other book. Found
+       on the live site with betPawa selected: the card said betPawa and the
+       bar under it said SportyBet. */
+    var sb=$("sbHead");
+    if(sb) sb.innerHTML="Build me a "+curBook().mark+" slip";
     var tz=$("scTease");
     if(tz) tz.textContent="We pick the games. You get a "+curBook().label+
       " code to play them.";

@@ -602,3 +602,15 @@ test("refusing one of two identical legs leaves the other", () => {
   assert.ok(kept.includes(picks[2]), "the innocent leg was dropped");
   assert.strictEqual(kept.filter((p) => p.f.bpEventId === "11").length, 1);
 });
+
+test("every 'build me a slip' promise names the reader's own book", () => {
+  /* The offer card was fixed when BetKing arrived; the sticky bar under it was
+     not, because it is markup at the end of the document rather than part of
+     the card. Caught on the live site with betPawa selected: the card said
+     betPawa and the bar below it said SportyBet. */
+  const paint = fn("paintBookPickers");
+  for (const id of ["sc-go-primary", "sbHead"]) {
+    assert.ok(paint.includes(id), id + " is not repainted when the book changes");
+  }
+  assert.match(paint, /sbHead[\s\S]{0,120}curBook\(\)\.mark/);
+});
