@@ -7228,10 +7228,13 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       <h2 class="stage-in stage-in-2">Converter</h2>
     </div>
     <p class="conv-sub stage-in stage-in-2">Move a booking code to the other
-      bookmaker, or read what is inside one and cut it into smaller tickets.</p>
+      bookmaker, or read what is inside one and cut it into smaller tickets.
+      Paste several codes separated by spaces and we merge them into one
+      slip.</p>
     <section class="byo" id="byo" aria-labelledby="byo-h">
       <h3 id="byo-h">Already have a booking code?</h3>
-      <p class="byo-sub">Paste it. Then pick what we should do with it.</p>
+      <p class="byo-sub">Paste it, or several separated by spaces and we'll merge
+        them into one slip. Then pick what we should do with it.</p>
       <div class="byo-row">
         <div class="byo-book" role="group" aria-label="Which bookmaker issued it">
           <!-- Their own wordmarks, not two grey words. The marks and their
@@ -13380,8 +13383,24 @@ function saferAtom(c){
    that could not tell a win from a win-with-the-stake-returned. */
 function saferGrade(c,hg,ag){
   var a=saferAtom(c);
-  if(a==="AH_1_0") return hg>ag?1:hg===ag?0.5:0;
-  if(a==="AH_2_0") return hg<ag?1:hg===ag?0.5:0;
+  /* EVERY ASIAN LINE THAT SETTLES, not only the nil one. gradeLeg answers null
+     for any handicap that can push, which is correct for grading a slip - the
+     stake comes back, so the leg neither won nor lost. It is the wrong answer
+     for the ladder, which asks a different question: is this bet contained in
+     that one. A push is half a result, and half is enough to prove containment
+     over every score. The line is the HOME team's on both sides, so the away
+     side takes the same number with the sign turned round.
+     Quarter balls split the stake across two lines and are refused: a quarter
+     of a result is not one of these three answers, and guessing would put an
+     unproven rung on a stranger's ticket. */
+  var ah=/^AH_([12])_(-?[\d.]+)$/.exec(a);
+  if(ah){
+    var n=parseFloat(ah[2]);
+    if(!isFinite(n)||Math.abs(n*2-Math.round(n*2))>1e-9) return null;
+    var m=(hg-ag)+n;
+    if(ah[1]==="2") m=-m;
+    return m>0?1:(m===0?0.5:0);
+  }
   var r=gradeLeg(null,a,hg,ag);
   return r==null?null:(r?1:0);
 }
@@ -13412,9 +13431,31 @@ function saferWider(to,from){
  * A market this book will not take is not a rung at all, so it is dropped here
  * rather than counted as a step and then refused. saferSwap asks the same
  * questions again before it offers anything. */
+/* IS THIS A MARKET THE MODEL PRICES AT ALL? A null from mProb answers two
+   different questions with one word: "we do not publish this market" and "this
+   fixture is missing that field". The first is permanent and is the whole case
+   for a proof-only rung; the second is a hole in one payload, where a swap with
+   no gain floor would be churn on a stranger's ticket.
+   Asked by handing mProb a fixture that answers every field, so the only thing
+   that can still come back null is a market its switch has no case for. A proxy
+   rather than a list of keys: a field added to the model must not need adding
+   here too. Memoised - it is a fact about the market, not about the game. */
+var MODEL_KNOWS={};
+function modelPrices(c){
+  if(MODEL_KNOWS[c]!=null) return MODEL_KNOWS[c];
+  var v=null;
+  try{ v=mProb(new Proxy({},{get:function(){return 0.5;}}),c); }catch(e){ v=null; }
+  return (MODEL_KNOWS[c]=(v!=null));
+}
 function saferRungs(f,from,B){
+  /* A MARKET WE DO NOT PRICE STILL HAS A LADDER ABOVE IT. saferWider settles
+     both markets over every score and asks whether one contains the other, so
+     it needs no probability at all - and a whole-ball handicap, which the
+     model cannot price because it pushes, is exactly the leg a reader most
+     wants softened. With no number the widening proof is the ONLY thing
+     offered: no gain to measure, none claimed. */
   var pOld=mProb(f,from);
-  if(pOld==null) return [];
+  if(pOld==null&&modelPrices(from)) return [];    /* a number we should have and do not */
   var out=[];
   /* THE ONE MOVE THAT IS NOT A WIDENING, and is offered anyway. Two goals from
      anybody, softened to one goal from whoever is likelier to get it: fewer
@@ -13439,11 +13480,19 @@ function saferRungs(f,from,B){
     if(extra.indexOf(to)<0&&!saferWider(to,from)) return;
     if(B&&(!bookAllows(to,B)||bookVerdict(f,to,B)==="not-priced")) return;
     var p=mProb(f,to);
-    if(p==null||!(p>pOld)) return;
+    /* With a number, a rung has to beat it. Without one, the widening proof
+       above has already done the whole job - and the rung travels with p null
+       so nothing downstream can mistake a proof for a percentage. */
+    if(pOld!=null&&(p==null||!(p>pOld))) return;
     seen[saferAtom(to)]=1;
-    out.push({to:to,p:p});
+    out.push({to:to,p:(pOld==null?null:p)});
   });
-  out.sort(function(a,b){ return a.p-b.p; });
+  /* NEAREST FIRST EITHER WAY. With numbers that is the smallest improvement;
+     without them it is the narrowest rung, which the same relation answers -
+     if y is wider than x then x is the nearer one. */
+  if(pOld==null) out.sort(function(x,y){
+    return saferWider(y.to,x.to)?-1:(saferWider(x.to,y.to)?1:0); });
+  else out.sort(function(a,b){ return a.p-b.p; });
   return out;
 }
 /* How much better it has to get to be worth changing somebody's bet. Eight
@@ -13473,7 +13522,7 @@ var SAFER_STRENGTH={
      the lowest bar to change a leg, the furthest a leg may travel, and the
      most legs offered up for removal. Every one of these dials moves in one
      direction, safety, so the labels say so and the scale reads in order. */
-  auto:{gain:0.05,under:0.55,steps:2,label:"Let us decide",
+  auto:{gain:0.05,under:0.55,steps:2,label:"Auto",
         note:"We fix what we can and drop what we cannot",
         swap:true,drop:true},
   light:{gain:0.14,under:0.50,steps:1,label:"Light touch",
@@ -13488,8 +13537,7 @@ function saferSwap(l,B){
   if(!l||!l.prediction) return null;
   var f=fixtureByLeg(l,B); if(!f) return null;      /* no numbers, no opinion */
   var from=l.prediction;
-  var pOld=mProb(f,from);
-  if(pOld==null) return null;                       /* nothing to measure from */
+  var pOld=mProb(f,from);                           /* null is allowed: see saferRungs */
   /* UP THE LADDER WHILE IT KEEPS HELPING, as far as the dial allows. `steps`
      is how many rungs of the ladder this leg may travel, counted from the
      nearest: one is the neighbouring market, three lets a leg keep going while
@@ -13505,7 +13553,7 @@ function saferSwap(l,B){
   var steps=saferDial().steps||1;
   var opts=saferRungs(f,from,B).filter(function(r){
     return bookAllows(r.to,B)&&bookVerdict(f,r.to,B)!=="not-priced"&&
-           (r.p-pOld)>=saferDial().gain;
+           (pOld==null||(r.p-pOld)>=saferDial().gain);
   }).slice(0,steps).map(function(r){ return {to:r.to,pNew:r.p}; });
   if(!opts.length) return null;
   /* THE FURTHEST RUNG BY DEFAULT, AND THE NEXT ONE ALONG ON A SHUFFLE.
@@ -14197,13 +14245,18 @@ function saferBoxInner(legs,B){
      the first six are shown and the rest are counted. The count is the part
      that matters; the rows are there to prove it is not doing anything
      strange. */
+  /* A LEG WE CANNOT PRICE SHOWS NO PERCENTAGE RATHER THAN A ZERO. The swap is
+     offered on a settled proof that the new bet contains the old one, so the
+     row says that in words instead of printing a number nobody computed. */
+  var sfPct=function(x){ return x==null?"":" <i>"+P0(x)+"%</i>"; };
   var SHOW=6;
   var rows=plan.slice(0,SHOW).map(function(p){
     var f={home:p.leg.home||"Home",away:p.leg.away||"Away"};
     return "<div class='sf-row'><span class='sf-g'>"+
       esc((p.leg.home||"?")+" v "+(p.leg.away||"?"))+"</span>"+
-      "<span class='sf-m'>"+mLabel(f,p.from)+" <i>"+P0(p.pOld)+"%</i>"+
-      " → <b>"+mLabel(f,p.to)+"</b> <i>"+P0(p.pNew)+"%</i></span></div>";
+      "<span class='sf-m'>"+mLabel(f,p.from)+sfPct(p.pOld)+
+      " → <b>"+mLabel(f,p.to)+"</b>"+sfPct(p.pNew)+
+      (p.pOld==null?" <i class='sf-proof'>wider bet</i>":"")+"</span></div>";
   }).join("")+
   (plan.length>SHOW?"<p class='byo-note sf-more'>and "+(plan.length-SHOW)+
     " more like these</p>":"");

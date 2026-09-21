@@ -300,6 +300,7 @@ function ladder(fixture) {
     arr("SAFER_TO") + decl("SAFER_WIDER") + decl("SAFER_STRENGTH") +
     grab("saferAtom") + grab("saferGrade") + grab("saferWider") + grab("gradeLeg") +
     grab("saferRungs") + grab("saferDial") + grab("mProb") + grab("saferSwap") +
+    decl("MODEL_KNOWS") + grab("modelPrices") +
     "function fixtureByLeg(){return f;}function bookAllows(){return true;}" +
     "function bookVerdict(){return 'unknown';}" +
     "return function(code,how,n){BYO.saferHow=how;BYO.saferShuffle=n||0;" +
@@ -447,4 +448,56 @@ test("a handicap walks the same ladder every other market does", () => {
     assert.ok(r, c + " is stranded with nothing to offer");
     assert.ok(r.pNew > r.pOld, c + " was moved to a worse bet");
   });
+});
+
+/* ---------------------- the lines the model can never price, softened anyway */
+
+/* A whole-ball handicap pushes on an exact margin, so pricing it needs a goal
+ * margin distribution the payload does not carry - and every one of them came
+ * back from the editor unmoved. It does not need one. saferWider settles both
+ * markets over every score and asks whether one contains the other, which is a
+ * fact about the two markets and needs no probability at all. So the ladder
+ * runs on the proof alone, and says so instead of printing a number. */
+test("a whole ball handicap has no price and still has a ladder", () => {
+  /* The proof first: -1 is contained in -0.5, which is contained in the win. */
+  assert.ok(wider("AH_1_-0.5", "AH_1_-1"), "giving one goal is harder than giving half");
+  assert.ok(wider("1", "AH_1_-1"), "and the plain win holds both");
+  assert.ok(!wider("AH_1_-1", "1"), "never the other way round");
+  /* THE AWAY SIDE OF THE SAME LINE IS ALREADY THE WIDE ONE, and it is worth
+     writing down because it reads backwards. The number is the HOME team's on
+     both books, so AH_2_-1 is the away side RECEIVING a goal: it wins on a draw
+     and an away win and hands the stake back when the home side wins by one,
+     which is X2 and a little more. Nothing in SAFER_TO holds it, so the editor
+     leaves those legs alone - not because it is blind to them, but because
+     there is nowhere safer to go. */
+  assert.ok(wider("AH_2_-1", "AH_2_-0.5"), "receiving a goal beats receiving half");
+  assert.ok(!wider("AH_2_-0.5", "AH_2_-1"));
+  assert.equal(ladder(LOPSIDED)("AH_2_-1", "strong"), null,
+    "the away side of a whole ball has no rung above it and must not be moved");
+  /* A quarter ball splits the stake across two lines, which is not one of the
+     three answers a grader can give, so it proves nothing in either direction. */
+  assert.ok(!wider("AH_1_0", "AH_1_-0.25") && !wider("AH_1_-0.25", "AH_1_0"),
+    "a quarter ball must not be settled as if it were whole");
+
+  /* And the editor acts on it: the leg is offered a rung with no percentage. */
+  const r = ladder(LOPSIDED)("AH_1_-1", "strong");
+  assert.ok(r, "a whole ball handicap is stranded with nothing to offer");
+  assert.equal(r.pOld, null, "there is no number behind it and none must be invented");
+  assert.equal(r.pNew, null, "nor in front of it");
+  assert.ok(wider(r.to, "AH_1_-1"), "whatever it offered is proven wider, not guessed");
+});
+
+/* The other half of that rule, and the one that keeps it honest: a market the
+ * model DOES publish, on a fixture that happens to be missing its field, is a
+ * hole in one payload rather than a market we cannot price. Swapping it with no
+ * gain floor would be churn on a stranger's ticket, so it is left alone. */
+test("a missing field is not the same as a market we do not carry", () => {
+  const thin = { ...LOPSIDED, btts: undefined };   /* GG is ours; this game lacks it */
+  assert.equal(ladder(thin)("GG", "strong"), null,
+    "a fixture with a hole in it must not start swapping legs for nothing");
+  /* Which one it is, asked of the shipped probe rather than asserted here. */
+  const knows = new Function(
+    grab("mProb") + "var MODEL_KNOWS={};" + grab("modelPrices") + "return modelPrices;")();
+  assert.equal(knows("GG"), true, "the model publishes both teams to score");
+  assert.equal(knows("AH_1_-1"), false, "and does not publish a whole ball handicap");
 });
