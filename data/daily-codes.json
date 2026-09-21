@@ -670,5 +670,72 @@
       "sporty": "QZ5TFX",
       "bet9ja": "5SCZZ2W"
     }
+  },
+  "2026-09-21": {
+    "date": "2026-09-21",
+    "generated": "2026-09-21T12:20:41.551Z",
+    "firstKickoff": "2026-09-21T15:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-09-21",
+        "home": "Petrolul",
+        "away": "Csikszereda M. Ciuc",
+        "league": "Romania Superliga",
+        "kickoff": "2026-09-21T18:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.7737,
+        "market": "1X",
+        "odd": 1.15
+      },
+      {
+        "date": "2026-09-21",
+        "home": "Otelul",
+        "away": "Corvinul",
+        "league": "Romania Superliga",
+        "kickoff": "2026-09-21T15:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.7163,
+        "market": "1X",
+        "odd": 1.49
+      },
+      {
+        "date": "2026-09-21",
+        "home": "Barracas Central",
+        "away": "Independiente",
+        "league": "Argentina Liga Profesional",
+        "kickoff": "2026-09-21T22:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.6979,
+        "market": "1X",
+        "odd": 1.52
+      },
+      {
+        "date": "2026-09-21",
+        "home": "Barracas Central",
+        "away": "Ind. Rivadavia",
+        "league": "Argentina Liga Profesional",
+        "kickoff": "2026-09-21T22:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.6908,
+        "market": "1X",
+        "odd": 1.52
+      },
+      {
+        "date": "2026-09-21",
+        "home": "Aldosivi",
+        "away": "Atl. Tucuman",
+        "league": "Argentina Liga Profesional",
+        "kickoff": "2026-09-21T17:30:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.6871,
+        "market": "1X",
+        "odd": 1.48
+      }
+    ],
+    "codes": {
+      "sporty": "SPXK1M",
+      "bet9ja": "5SGYKJN"
+    },
+    "odds": 5.86
   }
 }
