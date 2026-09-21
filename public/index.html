@@ -10134,9 +10134,21 @@ function quotaNoteHTML(n){
   return "<div class='code-quota'>"+n+(n===1?" booking code":" booking codes")+
     " left today.</div>";
 }
-function bookFetch(sel,B){
+/* WHICH SURFACE BOOKED IT. Every builder on this page - the wizard, the
+   slider, the editor, the board's Book all, the converter, the splitter -
+   funnels into this one call, so the logs could prove that people book and
+   never which thing they booked from. Six months of feature work with no way
+   to tell what anybody touched.
+   Carried in the query string rather than a header or an analytics event: the
+   platform's own request log already facets on the path, so this answers the
+   question in the dashboard we already pay for, with no vendor, no client
+   event, no storage, and nothing that changes what the privacy page says.
+   The API reads `book` and ignores the rest, so an unknown src can never
+   refuse a booking - the worst a bad value does is mislabel a row. */
+function bookFetch(sel,B,src){
   B=B||curBook();
   var tries=0;
+  var url=B.book+(src?"&src="+encodeURIComponent(src):"");
   /* Without a deadline a request that never settles - the API restarting, a
      phone that lost signal mid-post - left the button reading "Booking..."
      with no way back except a reload. */
@@ -10154,7 +10166,7 @@ function bookFetch(sel,B){
        than sent empty when storage refused us an id. */
     var _hdrs={"Content-Type":"application/json"};
     var _dev=swDeviceId(); if(_dev) _hdrs["X-SW-Device"]=_dev;
-    return fetch(B.book,{method:"POST",headers:_hdrs,
+    return fetch(url,{method:"POST",headers:_hdrs,
       signal:to.signal,
       body:JSON.stringify({selections:sel})})
       .then(function(r){to.done();
@@ -12796,7 +12808,7 @@ function doBook(picks,retried,B){
      why, and clearing here wiped that within the same tick - so the note
      never reached the screen and the recovery looked like a stall. */
   if(!retried) $("bookResult").innerHTML="";
-  bookFetch(sel,B)
+  bookFetch(sel,B,"builder")
     .then(function(d){
       BUILD.booking=false; renderBuilder();
       var code=B.codeOf(d);
@@ -13115,7 +13127,7 @@ function splitAndBook(picks,n,host,B,opt){
   var done=[];
   function step(i){
     if(i>=parts.length){ renderSplit(out,done,B,oddsOf); return; }
-    bookFetch(parts[i].map(selOf),B)
+    bookFetch(parts[i].map(selOf),B,"split")
       .then(function(d){
         var code=d&&d.success&&B.codeOf(d);
         done.push({legs:parts[i],code:code||null,
@@ -14290,7 +14302,7 @@ function renderConvert(){
     var b=$("byoConvGo"); b.disabled=true; b.textContent="Booking…";
     /* The ordinary booking path, on ordinary picks. Nothing about a converted
        slip is special once it is expressed in our own shape. */
-    bookFetch(c.picks.map(function(x){return c.to.sel(x);}),c.to)
+    bookFetch(c.picks.map(function(x){return c.to.sel(x);}),c.to,"convert")
       .then(function(d){
         var code=d&&d.success&&c.to.codeOf(d);
         if(code){ showCode(code,"byoConvOut",null,c.to,c.picks); }
@@ -14529,7 +14541,7 @@ function wireSafer(wrap,legs,B){
     BYO._booking=true;
     var done=function(){ BYO._booking=false;
       go.disabled=false; go.textContent="Apply and get a code"; };
-    bookFetch(sels,B).then(function(d){
+    bookFetch(sels,B,"editor").then(function(d){
       var out=$("byoSaferOut");
       var code=d&&d.success&&B.codeOf(d);
       if(code){
@@ -15126,7 +15138,7 @@ function doBookList(picks,resultId,btnId,label,B){
   }
   var btn=$(btnId); if(btn){btn.disabled=true;btn.textContent="Booking\u2026";}
   $(resultId).innerHTML="";
-  bookFetch(sel,B)
+  bookFetch(sel,B,"board")
     .then(function(d){
       if(btn){btn.disabled=false;btn.textContent=label;}
       var code=B.codeOf(d);
@@ -16999,7 +17011,7 @@ function doBookMy(bookable,retried,B){
      why, and clearing here wiped that within the same tick - so the note
      never reached the screen and the recovery looked like a stall. */
   if(!retried) $("myBookResult").innerHTML="";
-  bookFetch(sel,B)
+  bookFetch(sel,B,"myslip")
     .then(function(d){
       /* Cleared while we waited: this code is for a slip that is gone, so
          showing it would hand somebody a ticket they no longer hold. */
