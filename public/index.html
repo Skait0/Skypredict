@@ -3626,6 +3626,32 @@ html{interpolate-size:allow-keywords}
 @media (hover:hover){.sf-chip:not(.on):hover{color:var(--text);border-color:var(--accent)}}
 .sf-how-n{font-style:normal;font-size:11.5px;color:var(--faint);flex:1 1 100%}
 .sf-cut{margin-top:8px}
+/* THE KEEP BUTTON SITS INSIDE THE ROW IT OVERRULES, so a reader never has to
+   work out which game a control belongs to. The row was a column of two lines;
+   it is a grid now, with the button in its own track on the right and the two
+   lines stacked in the left one - which keeps the row exactly as tall as it
+   was and leaves long team names room to wrap. */
+.sf-row{display:grid;grid-template-columns:1fr auto;column-gap:10px;align-items:center}
+.sf-row .sf-g,.sf-row .sf-m{grid-column:1}
+.sf-keep{grid-column:2;grid-row:1/3;align-self:center;justify-self:end;
+  font:inherit;font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:99px;
+  border:1px solid var(--line);background:var(--card);color:var(--soft);
+  cursor:pointer;white-space:nowrap;
+  transition:color .15s,border-color .15s,background .15s}
+/* Pinned is a state the reader chose, so it takes the accent the rest of the
+   site uses for "this one" rather than another shade of grey. */
+.sf-keep.on{color:var(--on-accent);background:var(--accent);border-color:var(--accent)}
+@media (hover:hover){
+  .sf-keep:not(.on):hover{color:var(--text);border-color:var(--accent)}
+  .sf-keep.on:hover{filter:brightness(1.08)}
+}
+/* A cut row is a leg on its way off the ticket, so it reads quieter than a
+   swap row - the strike is on the name alone, not on the reason, which is the
+   part worth reading. */
+.sf-row-cut .sf-g{color:var(--soft);text-decoration:line-through;
+  text-decoration-color:var(--line)}
+.sf-pinned{margin-top:9px;display:flex;align-items:center;flex-wrap:wrap;gap:7px}
+.sf-pinned .sf-keep{grid-column:auto;grid-row:auto}
 .sf-more{margin:6px 0 0;text-align:center}
 /* Working, cancelling, and going back to an empty box. */
 .byo-working{display:flex;align-items:center;gap:9px;margin-top:13px;
@@ -13599,6 +13625,7 @@ function saferDial(){ return SAFER_STRENGTH[BYO.saferHow]||SAFER_STRENGTH.normal
 
 function saferSwap(l,B){
   if(!l||!l.prediction) return null;
+  if(isPinned(l)) return null;                    /* pinned means do not touch */
   var f=fixtureByLeg(l,B); if(!f) return null;      /* no numbers, no opinion */
   var from=l.prediction;
   var pOld=mProb(f,from);                           /* null is allowed: see saferRungs */
@@ -13640,9 +13667,34 @@ function saferSwap(l,B){
    than decided here. Sixty per cent is the line: above it a leg is doing its
    job, below it and unimprovable it is the one dragging the slip down. */
 var SAFER_DROP_UNDER=0.60;   /* the default; saferDial() moves it */
+/* A LEG THE READER HAS SAID NOT TO TOUCH. Asked for as "pinned bankers": the
+   one game on the ticket they are sure about, which an edit kept softening
+   into a bet that pays less. Held on BYO rather than in the plan so it
+   survives a strength change, a shuffle and a redraw - all three rebuild the
+   plan from scratch, and a pin that died with the plan would be no pin at all.
+   Keyed the same way every other per-leg lookup in here is, on the event and
+   the market together: the same game can sit on a slip twice under two
+   markets, and pinning one must not pin the other. */
+function pinKey(l){ return (l&&l.eventId)+"|"+(l&&l.prediction); }
+function isPinned(l){ return !!(BYO.saferPin&&BYO.saferPin[pinKey(l)]); }
+/* WHY THIS LEG IS ON THE CUT LIST, which is a different sentence each time and
+   was being thrown away. "We cannot price it" and "we price it at 38% and
+   there is nothing safer on this game" are not the same news: the first is
+   about us, the second is about their pick. Named rather than counted, because
+   a reader deciding whether to overrule us needs the reason, not the total. */
+function saferWhy(l,B){
+  var c=legChance(l,B);
+  if(c.p!=null) return {p:c.p,src:c.src,
+    why:(c.src==="book"?"only the bookmaker's own price says so":"nothing safer on this game")};
+  if(!l||!l.prediction) return {p:null,why:"a market we cannot read"};
+  if(!fixtureByLeg(l,B)) return {p:null,why:"a game we do not carry"};
+  if(!modelPrices(l.prediction)) return {p:null,why:"a market we do not price"};
+  return {p:null,why:"no numbers on this game today"};
+}
 function saferDroppable(legs,B,plan){
   var swapped={}; (plan||[]).forEach(function(p){ swapped[p.leg.eventId+"|"+p.from]=1; });
   return (legs||[]).filter(function(l){
+    if(isPinned(l)) return false;                 /* their banker, their call */
     if(swapped[l.eventId+"|"+l.prediction]) return false;
     var c=legChance(l,B);
     return c.p==null || c.p<saferDial().under;
@@ -14313,6 +14365,16 @@ function saferBoxInner(legs,B){
      offered on a settled proof that the new bet contains the old one, so the
      row says that in words instead of printing a number nobody computed. */
   var sfPct=function(x){ return x==null?"":" <i>"+P0(x)+"%</i>"; };
+  /* One control, two jobs, because there is only ever one thing to say about a
+     leg the edit has touched: leave this one alone. Pressed on a swap row it
+     stops the swap; pressed on a cut row it puts the leg back. Pressed again
+     it releases. */
+  var pinBtn=function(l){
+    return "<button class='sf-keep"+(isPinned(l)?" on":"")+"' type='button' data-pin='"+
+      esc(pinKey(l))+"' aria-pressed='"+(isPinned(l)?"true":"false")+"'>"+
+      (isPinned(l)?"Kept":"Keep")+"</button>";
+  };
+  var pinned=legs.filter(isPinned);
   var SHOW=6;
   var rows=plan.slice(0,SHOW).map(function(p){
     var f={home:p.leg.home||"Home",away:p.leg.away||"Away"};
@@ -14320,7 +14382,8 @@ function saferBoxInner(legs,B){
       esc((p.leg.home||"?")+" v "+(p.leg.away||"?"))+"</span>"+
       "<span class='sf-m'>"+mLabel(f,p.from)+sfPct(p.pOld)+
       " → <b>"+mLabel(f,p.to)+"</b>"+sfPct(p.pNew)+
-      (p.pOld==null?" <i class='sf-proof'>wider bet</i>":"")+"</span></div>";
+      (p.pOld==null?" <i class='sf-proof'>wider bet</i>":"")+"</span>"+
+      pinBtn(p.leg)+"</div>";
   }).join("")+
   (plan.length>SHOW?"<p class='byo-note sf-more'>and "+(plan.length-SHOW)+
     " more like these</p>":"");
@@ -14341,6 +14404,17 @@ function saferBoxInner(legs,B){
     }finally{ BYO.saferShuffle=was; }
   })();
   var nothing = !plan.length && !drop.length;
+  /* WHAT IS PINNED, SAID WHERE IT CAN BE UNDONE. A leg pinned on Strong and
+     then looked at on Light vanishes from both lists - it is neither swapped
+     nor cut any more - so without this line the reader would have a control
+     they cannot find again. */
+  var pinNote = pinned.length
+    ? "<p class='byo-note sf-pinned'><b>Left alone at your request:</b> "+
+      pinned.slice(0,3).map(function(l){
+        return esc((l.home||"a game")+" v "+(l.away||"?"));}).join("; ")+
+      (pinned.length>3?"; and "+(pinned.length-3)+" more":"")+
+      " <button class='sf-keep on' type='button' data-pin='*'>Release all</button></p>"
+    : "";
   return "<p class='sp-q'>Edit for me</p>"+
     "<div class='sf-opts'>"+
       /* On Auto the two switches are what Auto means, so they are shown
@@ -14360,8 +14434,9 @@ function saferBoxInner(legs,B){
       (alt?"<button class='sf-chip sf-shuffle' id='sfShuffle' type='button'>"+
         "Shuffle <i>"+alt+" leg"+(alt===1?"":"s")+" could go another way</i></button>":"")+
     "</div>"+
+    pinNote+
     (nothing
-      ? "<p class='byo-note'>Nothing to change at this setting. Try <b>Strong</b>, "+
+      ? "<p class='byo-note'>Nothing to change at this setting. Try <b>Safest</b>, "+
         "or keep the slip as it is - it may already be fine.</p>"
       : (plan.length
           ? "<p class='byo-note'>"+plan.length+" leg"+(plan.length===1?"":"s")+
@@ -14369,10 +14444,18 @@ function saferBoxInner(legs,B){
             "<div class='sf-rows'>"+rows+"</div>"
           : "")+
         (drop.length
-          ? "<p class='byo-note sf-cut'>Taking out "+drop.length+": "+
-            drop.slice(0,3).map(function(l){
-              return esc((l.home||"a game")+" v "+(l.away||""));}).join("; ")+
-            (drop.length>3?"; and "+(drop.length-3)+" more":"")+"</p>"
+          ? "<p class='byo-note sf-cut'>Taking out "+drop.length+
+            ", and why. <b>Keep</b> puts one back.</p><div class='sf-rows'>"+
+            drop.slice(0,SHOW).map(function(l){
+              var wy=saferWhy(l,B);
+              return "<div class='sf-row sf-row-cut'><span class='sf-g'>"+
+                esc((l.home||"a game")+" v "+(l.away||"?"))+"</span>"+
+                "<span class='sf-m'>"+
+                (wy.p==null?"":"<i>"+P0(wy.p)+"%</i> - ")+
+                esc(wy.why)+"</span>"+pinBtn(l)+"</div>";
+            }).join("")+
+            (drop.length>SHOW?"<p class='byo-note sf-more'>and "+(drop.length-SHOW)+
+              " more like these</p>":"")+"</div>"
           : "")+
         "<p class='byo-note sf-odds'>about x"+before.toFixed(2)+" → <b>x"+
           after.odds.toFixed(2)+"</b>"+
@@ -14402,6 +14485,19 @@ function wireSafer(wrap,legs,B){
   var sh=box.querySelector("#sfShuffle");
   if(sh) sh.addEventListener("click",function(){
     BYO.saferShuffle=(BYO.saferShuffle||0)+1; redraw(); });
+  /* The pins. Delegated off the box rather than bound per row because the box
+     redraws itself on every one of these, and a listener bound to a row that
+     no longer exists is a control that works once. */
+  box.querySelectorAll("[data-pin]").forEach(function(b){
+    b.addEventListener("click",function(){
+      BYO.saferPin=BYO.saferPin||{};
+      var k=b.dataset.pin;
+      if(k==="*") BYO.saferPin={};
+      else if(BYO.saferPin[k]) delete BYO.saferPin[k];
+      else BYO.saferPin[k]=1;
+      redraw();
+    });
+  });
   var go=box.querySelector("#byoSaferGo"); if(!go) return;
   go.addEventListener("click",function(){
     var plan=saferPlan(legs,B);

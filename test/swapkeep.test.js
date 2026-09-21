@@ -272,6 +272,14 @@ test("a promotion is priced at the bet underneath it, and widens like one", () =
  * dropping legs - and the levels moved two thresholds, never the destination.
  * Now `steps` says how far down the ladder a leg may travel, so Strong can
  * keep going while it keeps helping. Run against the shipped functions. */
+/* decl(), hoisted: the two harnesses below need the same whole-declaration
+   grab that ladder() builds for itself. */
+const declOf = (n) => {
+  const i = src.indexOf("var " + n + "=");
+  let d = 0, k = src.indexOf("{", i);
+  for (; k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) break; } }
+  return src.slice(i, k + 1) + ";";
+};
 const arr = (n) => {
   const i = src.indexOf("var " + n + "=");
   return src.slice(i, src.indexOf("];", i) + 2);
@@ -301,6 +309,7 @@ function ladder(fixture) {
     grab("saferAtom") + grab("saferGrade") + grab("saferWider") + grab("gradeLeg") +
     grab("saferRungs") + grab("saferDial") + grab("mProb") + grab("saferSwap") +
     decl("MODEL_KNOWS") + grab("modelPrices") +
+    grab("pinKey") + grab("isPinned") +
     "function fixtureByLeg(){return f;}function bookAllows(){return true;}" +
     "function bookVerdict(){return 'unknown';}" +
     "return function(code,how,n){BYO.saferHow=how;BYO.saferShuffle=n||0;" +
@@ -500,4 +509,68 @@ test("a missing field is not the same as a market we do not carry", () => {
     grab("mProb") + "var MODEL_KNOWS={};" + grab("modelPrices") + "return modelPrices;")();
   assert.equal(knows("GG"), true, "the model publishes both teams to score");
   assert.equal(knows("AH_1_-1"), false, "and does not publish a whole ball handicap");
+});
+
+/* ------------------------------------------- the leg the reader will not sell */
+
+/* Asked for as pinned bankers: the one game on the ticket they are sure about,
+ * which every strength above Light kept softening into a bet that pays less.
+ * A pin has to survive the thing that makes it useful - changing the strength,
+ * shuffling, redrawing - so it lives on BYO rather than inside a plan that is
+ * rebuilt from scratch every time. */
+test("a pinned leg is neither swapped nor dropped", () => {
+  const api = new Function("BYO", "B", "f",
+    arr("SAFER_TO") + declOf("SAFER_WIDER") + declOf("SAFER_STRENGTH") +
+    grab("saferAtom") + grab("saferGrade") + grab("saferWider") + grab("gradeLeg") +
+    grab("saferRungs") + grab("saferDial") + grab("mProb") + grab("saferSwap") +
+    declOf("MODEL_KNOWS") + grab("modelPrices") + grab("pinKey") + grab("isPinned") +
+    grab("legChance") + grab("saferDroppable") + grab("saferPlan") + grab("saferWhy") +
+    "function fixtureByLeg(){return f;}function bookAllows(){return true;}" +
+    "function bookVerdict(){return 'unknown';}" +
+    "return {saferSwap:saferSwap,saferDroppable:saferDroppable,saferPlan:saferPlan," +
+    "saferWhy:saferWhy,pinKey:pinKey};");
+  const BYO = { saferHow: "strong", saferSwapOn: true };
+  const a = api(BYO, { key: "sporty", odds: "sportyOdds" }, LOPSIDED);
+  const leg = { eventId: "sr:match:1", home: "A", away: "B", prediction: "OVER_3.5", odds: 4.2 };
+
+  assert.ok(a.saferSwap(leg, {}), "sanity: this leg is swappable to begin with");
+  BYO.saferPin = { [a.pinKey(leg)]: 1 };
+  assert.equal(a.saferSwap(leg, {}), null, "a pinned leg must not be swapped");
+  assert.equal(a.saferPlan([leg], {}).length, 0, "nor reach the plan by another route");
+  assert.equal(a.saferDroppable([leg], {}, []).length, 0, "nor be offered up for removal");
+
+  /* The same game under a different market is a different bet, and pinning one
+     must not pin the other - the key is the event AND the market. */
+  const other = { ...leg, prediction: "OVER_2.5" };
+  assert.notEqual(a.pinKey(other), a.pinKey(leg));
+  assert.ok(a.saferSwap(other, {}), "pinning one market must not freeze the whole game");
+
+  /* Releasing is the same control again, so an empty table means nothing is
+     held - not that pins are off. */
+  BYO.saferPin = {};
+  assert.ok(a.saferSwap(leg, {}), "released, it moves again");
+});
+
+test("a cut leg says why it is being cut", () => {
+  const api = new Function("BYO", "B", "f",
+    arr("SAFER_TO") + declOf("SAFER_WIDER") + declOf("SAFER_STRENGTH") +
+    grab("saferAtom") + grab("saferGrade") + grab("saferWider") + grab("gradeLeg") +
+    grab("saferRungs") + grab("saferDial") + grab("mProb") + grab("saferSwap") +
+    declOf("MODEL_KNOWS") + grab("modelPrices") + grab("pinKey") + grab("isPinned") +
+    grab("legChance") + grab("saferWhy") +
+    "function fixtureByLeg(l){return l.nofix?null:f;}function bookAllows(){return true;}" +
+    "function bookVerdict(){return 'unknown';}return saferWhy;");
+  const why = api({ saferHow: "normal" }, { key: "sporty", odds: "sportyOdds" }, LOPSIDED);
+  const B = { key: "sporty", odds: "sportyOdds" };
+
+  /* Four different pieces of news, and they were all being thrown away and
+     printed as one count. A reader deciding whether to overrule us needs the
+     reason, not the total. */
+  assert.match(why({ prediction: "OVER_3.5" }, B).why, /nothing safer/);
+  assert.equal(why({ prediction: "OVER_3.5" }, B).p, LOPSIDED.o35);
+  assert.match(why({ prediction: "CORNERS_OV_9.5", nofix: true, odds: 1.9 }, B).why,
+    /bookmaker's own price/, "a leg we cannot price but the book can is not a leg we know nothing about");
+  assert.match(why({ prediction: "OVER_3.5", nofix: true }, B).why, /do not carry/);
+  assert.match(why({ prediction: "AH_1_-1" }, B).why, /do not price/);
+  assert.match(why({ prediction: null }, B).why, /cannot read/);
 });
