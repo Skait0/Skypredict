@@ -3374,8 +3374,7 @@ html{interpolate-size:allow-keywords}
 .bkm .bkg{color:var(--bk-gold)}
 /* On their own gold ground the whole mark goes dark, the same rule the
    SportyBet mark follows on red. */
-.code-open .bkm .bkg,.book-btn .bkm .bkg,.wsp-go .bkm .bkg,
-  .slipbar .bkm .bkg{color:inherit}
+.code-open .bkm .bkg,.book-btn .bkm .bkg{color:inherit}
 /* Betpawa write it as one word with the second half carrying the colour -
    "bet" in the surrounding ink, "Pawa" in their lime. Same construction as
    the other two marks, so every place that already draws a wordmark draws
@@ -3391,8 +3390,16 @@ html{interpolate-size:allow-keywords}
   display:inline;letter-spacing:inherit;line-height:inherit;margin:0}
 .bwm .bwb{color:inherit}
 .bwm .bwp{color:var(--bw-lime)}
-.code-open .bwm .bwp,.book-btn .bwm .bwp,.wsp-go .bwm .bwp,
-  .slipbar .bwm .bwp{color:inherit}
+.code-open .bwm .bwp,.book-btn .bwm .bwp{color:inherit}
+/* BUT NOT ON OUR OWN DARK BUTTONS. The offer card's pill and the sticky bar
+   are near-black and deep red in both themes, and flattening the mark there
+   left "Build me a betPawa slip" in plain body text - the one place a reader
+   is being promised that book's code. SportyBet already keeps its red on that
+   pill for the same reason. The raw brand colours rather than the tokens:
+   those grounds are dark whatever the theme says, so the light-theme
+   readability overrides must not follow the mark onto them. */
+.sc-go-primary .bwm .bwp,.slipbar .bwm .bwp{color:#9CE800}
+.sc-go-primary .bkm .bkg,.slipbar .bkm .bkg{color:#FFC400}
 .bld-note{font-size:12px;color:var(--soft);margin-top:10px;text-align:center}
 /* In the sheet this line sits outside the scrolling body, level with the book
    picker, so it needs the sheet's own gutter rather than the panel's. */
