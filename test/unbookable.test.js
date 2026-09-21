@@ -103,18 +103,37 @@ test("the price we were wrong about is forgotten", () => {
     "and nothing else touched");
 });
 
-test("with no list from the server it drops nothing on our own odds", () => {
-  /* IT USED TO FALL BACK TO OUR PRICES, and that was the same false evidence
-     that had the pre-flight refusing legs SportyBet takes: their fixtures feed
-     carries a partial market set per event, so a leg we hold no price for is
-     not a leg they will not take. JTEJA5 held four of them.
-     A named refusal from the book is information. Our cache's silence is not,
-     and dropping a leg on it means resending a slip the reader never agreed to
-     shorten - so when the server names nothing, the slip stands and the error
-     is shown instead. */
+test("a nameless refusal falls back to the legs this book actually prices", () => {
+  /* THE RULE THAT STILL STANDS: our cache's silence is not evidence about a
+     market, and the pre-flight must never refuse a leg on it. Their fixtures
+     feed carries a partial market set per event, and JTEJA5 held four legs
+     this site was refusing on exactly that false evidence.
+     THE RULE THAT CHANGED: this function runs AFTER the book has refused. We
+     asked, they said no, and the slip is dead as it stands. Measured on the
+     live route on 21 Sep 2026: ten legs their feed prices booked first time,
+     ten legs on events whose feed carries no such market came back 400 with
+     `unbookable: []` and no reason at all. With nothing named, `safe` came
+     back the same length as `picks`, every caller's retry test read false, and
+     the reader got a plain error and no way forward - on about a third of all
+     booking attempts. So a nameless refusal now falls back to the legs
+     carrying this book's own published price, and every caller still puts that
+     behind confirmAfterRefusal. */
   const picks = [leg("e1", "OVER_1.5", 1.2), leg("e2", "1X", 1.0)];
-  assert.deepStrictEqual(dropUnbookable(picks, {}).map(c => c.eventId), ["e1", "e2"]);
-  assert.deepStrictEqual(dropUnbookable(picks, null).map(c => c.eventId), ["e1", "e2"]);
+  /* 1.0 is not a price anyone can back, so e2 is the estimated one. */
+  assert.deepStrictEqual(dropUnbookable(picks, {}).map(c => c.eventId), ["e1"]);
+  assert.deepStrictEqual(dropUnbookable(picks, null).map(c => c.eventId), ["e1"]);
+
+  /* IT IS A NARROWING OR IT IS NOTHING. Every leg unpriced, and there is no
+     shorter slip to offer - the old error is still what the reader sees. */
+  const none = [leg("e1", "OVER_1.5", 1.0), leg("e2", "1X", 1.0)];
+  assert.deepStrictEqual(dropUnbookable(none, {}).map(c => c.eventId), ["e1", "e2"]);
+
+  /* And a NAMED refusal is still obeyed exactly as before, never widened by
+     this fallback. */
+  const named = [leg("e1", "OVER_1.5", 1.2), leg("e2", "1X", 1.3)];
+  assert.deepStrictEqual(
+    dropUnbookable(named, { unbookable: [{ eventId: "e1", prediction: "OVER_1.5" }] })
+      .map(c => c.eventId), ["e2"]);
 });
 
 test("an empty list is not treated as 'drop everything'", () => {

@@ -10288,15 +10288,38 @@ function dropUnbookable(picks,d,B){
       if(f&&f[B.odds]) delete f[B.odds][c.code];});
     return kept;
   }
-  /* NO LIST, NO GUESS. This used to fall back to our own odds and drop
-     whatever we held no price for - the same false evidence that made the
-     pre-flight refuse legs SportyBet was happy to take (see `full` on the
-     BOOKS table and JTEJA5). A book's own named refusal is information; our
-     cache's silence is not, and dropping a leg on it means resending a slip
-     the reader never agreed to shorten. When the server names nothing the
-     slip stands as it is and the error is shown. The book must still list the
-     game - that check never lied. */
-  return picks.filter(function(c){return !!bookIdOf(c,B);});
+  /* NO LIST, NO GUESS - BEFORE THEY ANSWER. This used to fall back to our own
+     odds and drop whatever we held no price for, which is the false evidence
+     that made the pre-flight refuse legs SportyBet was happy to take (see
+     `full` on the BOOKS table and JTEJA5). That rule still stands everywhere a
+     leg is judged BEFORE asking.
+     AFTER a refusal it is a different question. We asked, they said no, and
+     the slip is dead as it stands - so our cache's silence stops being
+     evidence about the market and becomes the only ranking we have for which
+     leg to try without. Measured on the live route on 21 Sep: ten legs the
+     feed prices booked first time, and ten legs on events whose feed carries
+     no such market came back 400 with `unbookable: []` and no reason at all.
+     A refusal that names nothing left `safe` the same length as `picks`, every
+     caller's retry test read false, and the reader hit a plain error with no
+     way forward. That is a third of all booking attempts on this route.
+     So a named refusal is still obeyed exactly as before; a nameless one falls
+     back to the legs carrying this book's own published price. It is still
+     only ever an OFFER - every caller puts it behind confirmAfterRefusal - so
+     nobody's slip is silently shortened. */
+  var listed=picks.filter(function(c){return !!bookIdOf(c,B);});
+  if(listed.length!==picks.length) return listed;
+  var real=listed.filter(function(c){
+    /* This book's own published quote for this exact market, read straight off
+       its odds table rather than through bookVerdict - the question here is
+       only "did their feed carry a price", not the wider verdict the
+       pre-flight asks, and borrowing that one would drag the pre-flight's
+       judgement into a place that must stay narrower than it. */
+    var f=c.f||fixtureById(c.id);
+    var o=f&&f[B.odds]&&f[B.odds][c.code];
+    return !!(o&&isFinite(o)&&o>1);});
+  /* Only when it is a real narrowing and leaves something to book. All of them
+     estimated, or none, and there is nothing this can offer. */
+  return (real.length>=1&&real.length<listed.length)?real:listed;
 }
 const SPORTY_URL="https://www.sportybet.com/ng/?shareCode=";
 /* Their own bundle matches /[?&]bookABetCode=([\da-zA-Z]+)/ against
