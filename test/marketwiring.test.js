@@ -162,3 +162,19 @@ test("every pass-through market SportyBet maps has a name on the panel", () => {
   });
   assert.deepEqual(nameless, [], "these print as raw codes on the edit and split panels");
 });
+
+test("no font stack ends in `inherit`, which throws the whole declaration away", () => {
+  /* `font-family: Roboto, Arial, inherit` is not a fallback chain - `inherit`
+     is not a family name, so the parser discards the DECLARATION and the
+     element silently keeps the page font. BetKing's condensed stack had been
+     dead that way since it shipped, and betPawa's Roboto joined it: the
+     wordmark on the offer card rendered in the page face while the source
+     said otherwise. Caught by reading the SHIPPED stylesheet, not the source.
+     A bare `font-family: inherit` on its own is valid and is left alone. */
+  const src = require("fs").readFileSync(
+    require("path").join(__dirname, "..", "public", "index.html"), "utf8");
+  const bad = [...src.matchAll(/font-family:([^;}]*)/g)]
+    .map((m) => m[1].replace(/\s+/g, " ").trim())
+    .filter((v) => /,\s*inherit\b/.test(v));
+  assert.deepStrictEqual(bad, [], "these stacks are thrown away by the parser");
+});
