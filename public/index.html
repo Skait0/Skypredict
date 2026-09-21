@@ -10245,6 +10245,24 @@ function bookErrHTML(d,B){
       "<span>The free run gives every device ten a day. Your slip is saved - "+
       "the code will be here after midnight. Everything else on the board "+
       "still works.</span></div>";
+  /* EVERY LEG ON A MARKET THEY WILL NOT PRICE TODAY. The server names these
+     separately from `unbookable` and for a good reason: dropping them all
+     leaves no slip, so there is no retry to offer - but "remove a leg and try
+     again" is useless advice when every leg has the same problem, and that is
+     what this branch used to say. Naming the markets turns an error into an
+     instruction the reader can act on: change these bets, not that one. */
+  if(d&&d.suspectAll){
+    var mk=(d.suspectMarkets||[]).map(function(c){return mLabel({home:"Home",away:"Away"},c);});
+    return "<div class='code-err'><b>"+B.mark+" isn't pricing "+
+      (mk.length===1?"this market":"these markets")+" right now.</b>"+
+      (mk.length?"<span>Every leg on this slip is "+
+        (mk.length===1?"a ":"")+esc(mk.slice(0,4).join(", "))+
+        (mk.length>4?" and "+(mk.length-4)+" more":"")+" bet, and their card has "+
+        "no price for "+(mk.length===1?"it":"them")+" today. Swap those legs to "+
+        "another market and it will book.</span>"
+       :"<span>Their card has no price for any of these bets today.</span>")+
+      "</div>";
+  }
   return "<div class='code-err'><b>"+B.mark+" wouldn't take this slip.</b>"+
     (why?"<span>"+esc(why)+"</span>"
        :"<span>One of the picks may have just closed. Remove a leg and try again.</span>")+
