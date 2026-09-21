@@ -209,7 +209,9 @@ test("a leg carries its own kickoff, because the board only speaks for today", (
   /* Both writers have to record it or the rule only covers half the slip. */
   assert.match(src, /MYSLIP\.push\(\{id:id,code:code,label:label,p:\+p,k:kickoffOf\(id\)\}\)/,
     "a hand-added leg records no kickoff");
-  assert.match(src, /auto:true,\s*\n\s*k:kickoffOf\(c\.id,c\.f\)/,
+  /* `via` sits between them now - the builder that made the leg, for the src
+     field - so this matches the kickoff itself rather than its neighbour. */
+  assert.match(src, /via:"wizard",k:kickoffOf\(c\.id,c\.f\)/,
     "a conjured leg records no kickoff");
 });
 

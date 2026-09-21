@@ -22,16 +22,30 @@ test("every booking call site says where it came from", () => {
   const calls = src.split(/\r?\n/)
     .filter((l) => /bookFetch\(/.test(l) && !/function bookFetch\(/.test(l))
     .map((l) => l.trim());
-  /* The definition itself, plus one call per surface. */
+  /* Five carry a literal. The sixth is My slip, which is a DESTINATION rather
+     than a source - the wizard, the slider and the board's Book all empty into
+     it - so it reads the label off the legs it was handed, and falls back to
+     "myslip" when nothing built them. */
   const labelled = calls.filter((c) => /,\s*"[a-z]+"\)/.test(c));
-  assert.equal(labelled.length, 6,
-    "expected six labelled call sites, found " + labelled.length + ": " + calls.join(" | "));
-  ["builder", "split", "convert", "editor", "board", "myslip"].forEach((s) => {
+  const derived = calls.filter((c) => /_via\|\|"myslip"\)/.test(c));
+  assert.equal(labelled.length + derived.length, 6,
+    "expected six attributed call sites, found " + (labelled.length + derived.length) +
+    ": " + calls.join(" | "));
+  assert.equal(derived.length, 1, "only My slip derives its label");
+  ["builder", "split", "convert", "editor", "board"].forEach((s) => {
     assert.ok(labelled.some((c) => c.includes('"' + s + '"')), s + " is not labelled anywhere");
   });
+  /* And the three writers that fill My slip must stamp what they are, or the
+     derivation above has nothing to read. auto:true is NOT that stamp - all
+     three set it, and it only means "machine-picked, replace me on the next
+     conjure". */
+  assert.match(src, /via:"board"/, "the board's Book all stamps nothing");
+  assert.match(src, /via:"wizard",k:kickoffOf/, "a conjured leg stamps nothing");
+  assert.match(src, /via:isWiz\?"wizard":"slider"/,
+    "the builder sync must record which of the two modes it was in");
   /* And no unlabelled one slipped in beside them - an unlabelled booking is a
      row in the log that cannot be attributed, which is the whole problem. */
-  const bare = calls.filter((c) => !/,\s*"[a-z]+"\)/.test(c));
+  const bare = calls.filter((c) => !/,\s*"[a-z]+"\)/.test(c) && !/_via\|\|"myslip"/.test(c));
   assert.deepEqual(bare, [], "unlabelled bookFetch call: " + bare.join(" | "));
 });
 

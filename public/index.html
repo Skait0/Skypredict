@@ -15138,7 +15138,7 @@ function confirmBookAll(){
     (bookable.length>=4?capWaysHTML(bookable):"")+"</div>";
   function fillSlip(){
     MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
-      .concat(bookable.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true};}));
+      .concat(bookable.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true,via:"board"};}));
     var seen={}; MYSLIP=MYSLIP.filter(function(x){if(seen[x.id])return false;seen[x.id]=1;return true;});
     saveMy(); renderFab();
   }
@@ -17052,7 +17052,25 @@ function doBookMy(bookable,retried,B){
      why, and clearing here wiped that within the same tick - so the note
      never reached the screen and the recovery looked like a stall. */
   if(!retried) $("myBookResult").innerHTML="";
-  bookFetch(sel,B,"myslip")
+  /* WHICH BUILDER FILLED THIS SLIP. My slip is a destination, not a source:
+     the wizard, the slider and the board's Book all all empty into it, so
+     booking everything from here as "myslip" was the one label that could not
+     answer the question the src field exists for.
+     `auto:true` is not the discriminator - all three set it, it only means
+     "machine-picked, replace me on the next conjure". `via` is, and the
+     builder sync already knows which of the two modes it is in.
+     The legs being SENT decide, not the whole slip, because a retry sends
+     fewer. Mixed or hand-picked falls back to "myslip", which is the honest
+     answer: nothing built it. */
+  var _via=null;
+  bookable.forEach(function(c){
+    var x=null; for(var i=0;i<MYSLIP.length;i++)
+      if(MYSLIP[i].id===c.id&&MYSLIP[i].code===c.code){x=MYSLIP[i];break;}
+    var v=x&&x.via;
+    if(!v) { _via="myslip"; return; }
+    if(_via===null) _via=v; else if(_via!==v) _via="myslip";
+  });
+  bookFetch(sel,B,_via||"myslip")
     .then(function(d){
       /* Cleared while we waited: this code is for a slip that is gone, so
          showing it would hand somebody a ticket they no longer hold. */
@@ -18263,7 +18281,7 @@ function wspConjure(shuffle){
   MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
     .concat(r.picks.map(function(c){
       return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true,
-              k:kickoffOf(c.id,c.f)};}));
+              via:"wizard",k:kickoffOf(c.id,c.f)};}));
   var seen={}; MYSLIP=MYSLIP.filter(function(x){
     if(seen[x.id])return false;seen[x.id]=1;return true;});
   saveMy(); renderFab(); openMySheet();
@@ -19481,7 +19499,8 @@ function renderBuilderOutput(){
      A preview is a preview until somebody says yes. */
   if(!BUILD_NOSYNC && !wizGhost && (BUILD.touched || isWiz)){
     MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
-      .concat(picks.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true};}));
+      .concat(picks.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true,
+              via:isWiz?"wizard":"slider"};}));
     var _seen={}; MYSLIP=MYSLIP.filter(function(x){if(_seen[x.id])return false;_seen[x.id]=1;return true;});
     saveMy(); renderFab();
   }
