@@ -50,6 +50,15 @@ Bet9ja.
   change is the point.
 - **An author `display` beats `[hidden]`**, so any element JS hides with
   `.hidden = true` needs its own `[hidden]{display:none}` rule.
+- **Adding a bookmaker is a checklist, not a project** - it is section 4 of the
+  `prediction-site` skill, seventeen steps including the seven allowlists, the
+  market lists (`BOOK_ONLY`, the style chips), the daily code, the canary and
+  the brand sampling. Four books in, nothing there is optional.
+- **Two feeds can name one club two ways and publish a match that never
+  happened.** Fix the pair with an alias in `TEAM_ALIAS_SRC`, never by
+  tightening the tail rule (measured: a tighter rule loses Excelsior Rotterdam
+  and Fluminense FC RJ). `slotClash` in lib/build.js is the net under it: one
+  club, one kick-off.
 - **After moving a CSS block, check brace balance** - CSS recovers from a stray
   `}` in silence.
 - **Phone layout needs the user's eyes.** Claude's browser pins the viewport;
