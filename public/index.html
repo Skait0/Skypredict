@@ -11791,7 +11791,61 @@ function mProb(f,c){
      cannot drift apart. */
   var dnb=/^DNB_([12])$/.exec(c||"");
   if(dnb) return mProb(f,"AH_"+dnb[1]+"_0");
+  /* CORNERS, OFF TWO NUMBERS. The fixture carries the expected corners for
+     each side and the board carries the shared spread; every line either book
+     sells - seven totals and twenty per-side - is a tail of that same
+     distribution, so they are computed here rather than baked one by one.
+     `ch`/`ca` are absent on the leagues whose results file has no corners
+     column, which is most of the board, and absent means null all the way out
+     to the reader. See lib/corners.js for where the rates come from and what
+     they deliberately do not cover. */
+  var cor=/^CORNERS_(?:([HA])_)?(OV|UN)_([\d.]+)$/.exec(c||"");
+  if(cor){
+    var lam=cor[1]==="H"?f.ch:(cor[1]==="A"?f.ca:((f.ch==null||f.ca==null)?null:f.ch+f.ca));
+    var cLine=parseFloat(cor[3]);
+    /* Both books quote half lines only, and a whole one would push on the
+       exact count - the same reason a whole-ball handicap stays unpriced. */
+    if(!isFinite(cLine)||Math.abs(cLine*2-Math.round(cLine*2))>1e-9||
+       Math.abs(cLine-Math.round(cLine))<1e-9) return null;
+    var p=cornersOver(lam,cornersK(),cLine);
+    return p==null?null:(cor[2]==="OV"?p:1-p);
+  }
   return null;
+}
+/* The spread, read from the board rather than assumed. A build that fitted no
+   corners at all ships no `cornersK`, and then nothing is priced - which is
+   the honest answer, not a default pulled out of the air. */
+function cornersK(){
+  var k=(typeof DATA!=="undefined"&&DATA)?DATA.cornersK:null;
+  return (k!=null&&isFinite(k)&&k>0)?k:null;
+}
+/* P(X > line) for X ~ Poisson(lambda z), z ~ Gamma(k,k) - a negative binomial,
+   written as the mixture the goals model already uses so the two agree about
+   what over-dispersion means. Corners are badly over-dispersed and a flat
+   Poisson prices the outer lines with a confidence the data does not support.
+   Mirrored from lib/corners.js overProb, and test/corners.test.js runs the two
+   against each other so they cannot drift. */
+function cornersOver(lambda,k,line){
+  if(!(lambda>0)||!(k>0)||!isFinite(line)) return null;
+  var N=48, zMax=Math.min(6,(1+5/Math.sqrt(k))*1.6), step=zMax/N;
+  var logNorm=k*Math.log(k)-cLgamma(k), cap=Math.floor(line);
+  var acc=0, wsum=0;
+  for(var q=0;q<N;q++){
+    var z=(q+0.5)*step;
+    var w=Math.exp(logNorm+(k-1)*Math.log(z)-k*z)*step;
+    var lam=lambda*z, term=Math.exp(-lam), cdf=term;
+    for(var i=1;i<=cap;i++){ term*=lam/i; cdf+=term; }
+    acc+=w*(1-cdf); wsum+=w;
+  }
+  return wsum>0?acc/wsum:null;
+}
+function cLgamma(x){
+  var g=[76.18009172947146,-86.50532032941677,24.01409824083091,
+    -1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+  var xx=x,y=x,tmp=xx+5.5; tmp-=(xx+0.5)*Math.log(tmp);
+  var ser=1.000000000190015;
+  for(var j=0;j<6;j++) ser+=g[j]/++y;
+  return -tmp+Math.log(2.5066282746310005*ser/xx);
 }
 /* Which markets have actually been graded, and enough times to mean something.
  *
