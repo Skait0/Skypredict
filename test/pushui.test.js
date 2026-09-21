@@ -63,6 +63,25 @@ test("the control is on the hub and on a day page", () => {
   assert.match(P.renderCodesDay(day, () => null), /id="pushAsk"/);
 });
 
+test("and it ships with the CSS that makes it a pill", () => {
+  /* PUSH_CSS is a template literal, and a comment inside it once carried a
+     backtick: the literal closed on that line, the rest parsed as one string
+     multiplied by another, and PUSH_CSS became NaN. Both pages kept rendering
+     - CSS ignores a stray "NaN" silently - and the control sat there unstyled
+     for a week. Nothing else in the suite reads the emitted stylesheet, so
+     nothing caught it. This does. */
+  const day = { date: "2026-09-20", codes: { sporty: "QZ5TFX" }, legs: [] };
+  for (const [name, html] of [["hub", P.renderCodesHub([day], () => null)],
+                              ["day", P.renderCodesDay(day, () => null)]]) {
+    assert.ok(html.includes(".ck-askb{"), name + " ships no button CSS");
+    assert.ok(html.includes(".ck-how"), name + " ships no steps CSS");
+    /* Comments ship with the CSS, and the one above this block says "NaN" on
+       purpose - strip them before looking for the real thing. */
+    assert.ok(!/NaN/.test(html.replace(/\/\*[\s\S]*?\*\//g, "")),
+      name + " has a stylesheet that evaluated to NaN");
+  }
+});
+
 /* fetch() resolves on a 503 same as on a 200 - only a network failure rejects.
  * If the script does not read r.ok, a reader who taps subscribe while
  * Supabase is down ends up with a browser subscription, a button that says
@@ -161,6 +180,38 @@ test("and it is told so in Safari, which has no PushManager to gate on", () => {
   });
   assert.match(host.innerHTML, /Home Screen/i, "mobile Safari was shown nothing");
   assert.strictEqual(host.hidden, false);
+});
+
+test("the X in-app browser is not told to tap a Share button it does not have", () => {
+  /* Where this page's readers actually come from: a link in the X app opens
+     in X's own webview on iPhone, and that webview cannot add anything to the
+     Home Screen. "Tap Share and Add to Home Screen" sent them looking for a
+     button that could never work. */
+  const host = runPushScript(P.pushControl(), {
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) " +
+      "AppleWebKit/605.1.15 Twitter for iPhone",
+    standalone: false,
+    noPushManager: true,
+  });
+  assert.match(host.innerHTML, /Open in Safari/,
+    "the only route out of an in-app browser is Safari");
+  assert.doesNotMatch(host.innerHTML.split("<details")[0],
+    /add Soccerwizard to your Home Screen/,
+    "the first line must not instruct something this browser cannot do");
+  assert.strictEqual(host.hidden, false);
+});
+
+test("Safari gets the Share glyph and the steps in order", () => {
+  const host = runPushScript(P.pushControl(), {
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Safari/605.1.15",
+    standalone: false,
+    noPushManager: true,
+  });
+  assert.match(host.innerHTML, /<svg/, "naming a button is weaker than showing it");
+  const steps = host.innerHTML.match(/<li>/g) || [];
+  assert.strictEqual(steps.length, 3, "Share, Add to Home Screen, Add");
+  assert.ok(host.innerHTML.indexOf("Add to Home Screen") > host.innerHTML.indexOf("Share"),
+    "the steps have to be in the order they are tapped");
 });
 
 test("an installed iPhone app is given the button, not the install note", async () => {
