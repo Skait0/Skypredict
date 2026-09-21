@@ -12100,7 +12100,9 @@ function isProven(c,prov){ var m=codeMarket(c); return !m || !!prov[m]; }
 /* Did one leg land? Keyed on the market code rather than the tip label, since a
    slip's legs are chosen by code and need not be the fixture's own tip.
    Returns null for anything a final score cannot settle, and callers treat that
-   as ungraded rather than as a loss - the same rule lib/grade.js follows. */
+   as ungraded rather than as a loss - the same rule lib/grade.js follows.
+   A market that can push answers 0.5: the stake came back, which is neither a
+   win nor a loss and must not be rounded into either. */
 function gradeLeg(f,c,hg,ag){
   if(typeof hg!=="number"||typeof ag!=="number"||isNaN(hg)||isNaN(ag)) return null;
   var d=hg-ag, tot=hg+ag, both=hg>0&&ag>0;
@@ -12149,6 +12151,24 @@ function gradeLeg(f,c,hg,ag){
     case"MIXNG_1": return d>0||!both;
     case"MIXNG_2": return d<0||!both;
     case"MIXNG_X": return d===0||!both;
+  }
+  /* ASIAN HANDICAPS AND DRAW NO BET, which is the same bet as the nil line
+     under another name. Ten of the eighteen legs a real 39-leg punter's code
+     left unsettled were these, and the arithmetic was already written for the
+     safer-leg ladder: a push is half a result, and on a slip that means the
+     stake comes back rather than that nothing is known. The line is the HOME
+     team's on both sides, so the away side takes the same number with its sign
+     turned round. Quarter balls split the stake across two lines and are
+     refused - a quarter of a result is none of these three answers, and
+     guessing would print a verdict on a stranger's ticket that their book
+     would not recognise. FH_AH_ and SH_AH_ do not match here, which is right:
+     a full-time score cannot settle a half. */
+  var ah=/^(?:AH_([12])_(-?[\d.]+)|DNB_([12]))$/.exec(c||"");
+  if(ah){
+    var side=ah[1]||ah[3], n=ah[1]?parseFloat(ah[2]):0;
+    if(!isFinite(n)||Math.abs(n*2-Math.round(n*2))>1e-9) return null;
+    var m=d+n; if(side==="2") m=-m;
+    return m>0?true:(m===0?0.5:false);
   }
   return null;   /* first-half markets and anything unknown */
 }
@@ -13525,27 +13545,15 @@ function saferAtom(c){
    better than losing and worse than winning, and a ladder that could not see
    that could not tell a win from a win-with-the-stake-returned. */
 function saferGrade(c,hg,ag){
-  var a=saferAtom(c);
-  /* EVERY ASIAN LINE THAT SETTLES, not only the nil one. gradeLeg answers null
-     for any handicap that can push, which is correct for grading a slip - the
-     stake comes back, so the leg neither won nor lost. It is the wrong answer
-     for the ladder, which asks a different question: is this bet contained in
-     that one. A push is half a result, and half is enough to prove containment
-     over every score. The line is the HOME team's on both sides, so the away
-     side takes the same number with the sign turned round.
-     Quarter balls split the stake across two lines and are refused: a quarter
-     of a result is not one of these three answers, and guessing would put an
-     unproven rung on a stranger's ticket. */
-  var ah=/^AH_([12])_(-?[\d.]+)$/.exec(a);
-  if(ah){
-    var n=parseFloat(ah[2]);
-    if(!isFinite(n)||Math.abs(n*2-Math.round(n*2))>1e-9) return null;
-    var m=(hg-ag)+n;
-    if(ah[1]==="2") m=-m;
-    return m>0?1:(m===0?0.5:0);
-  }
-  var r=gradeLeg(null,a,hg,ag);
-  return r==null?null:(r?1:0);
+  /* EVERY ASIAN LINE THAT SETTLES, not only the nil one - gradeLeg settles
+     them itself now and answers 0.5 on a push, which is the number this
+     function already wanted. Half a result is enough to prove containment over
+     every score, and quarter balls come back null from there for the same
+     reason they are refused here: a quarter of a result is not one of these
+     three answers, and guessing would put an unproven rung on a stranger's
+     ticket. */
+  var r=gradeLeg(null,saferAtom(c),hg,ag);
+  return r==null?null:(r===true?1:(r===false?0:r));
 }
 /* Is `to` a safer version of `from`? Proven over every score to 6-6, which
    covers every line either market turns on. Answered once per pair and kept,

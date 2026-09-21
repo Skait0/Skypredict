@@ -184,6 +184,41 @@ test("a full-time score cannot settle it, and gradeLeg says so", () => {
   assert.equal(gradeLeg({}, "MIX_X_OV_1.5", 1, 1), true);
 });
 
+test("gradeLeg settles the Asian lines, and says push rather than nothing", () => {
+  /* Ten of the eighteen unsettled legs of a real 39-leg punter's code were
+     these. A push is 0.5 - the stake came back - and NOT true, which would
+     pay a bet the book did not pay, nor null, which would hide a leg that is
+     genuinely finished. */
+  const gradeLeg = new Function(grab("gradeLeg") + "\nreturn gradeLeg;")();
+  /* Half balls cannot push: one side or the other has the leg. */
+  assert.equal(gradeLeg({}, "AH_1_-0.5", 2, 1), true);
+  assert.equal(gradeLeg({}, "AH_1_-1.5", 2, 1), false);
+  /* The line is the HOME team's on both sides, so AH_2_-1.5 is the away side
+     RECEIVING one and a half, not giving it - the sign that ahReline and
+     mLabel both turn round. Losing 2-1 with +1.5 is a win. */
+  assert.equal(gradeLeg({}, "AH_2_0.5", 2, 1), false);
+  assert.equal(gradeLeg({}, "AH_2_-1.5", 2, 1), true);
+  /* Whole balls push when the margin lands exactly on the line. */
+  assert.equal(gradeLeg({}, "AH_1_-1", 2, 1), 0.5);
+  assert.equal(gradeLeg({}, "AH_2_-1", 2, 1), 0.5);
+  assert.equal(gradeLeg({}, "AH_2_1", 2, 1), false);
+  assert.equal(gradeLeg({}, "AH_1_0", 1, 1), 0.5);
+  assert.equal(gradeLeg({}, "AH_1_0", 2, 1), true);
+  assert.equal(gradeLeg({}, "AH_2_0", 2, 1), false);
+  /* Draw no bet is the nil line under another name, so it answers the same. */
+  assert.equal(gradeLeg({}, "DNB_1", 1, 1), 0.5);
+  assert.equal(gradeLeg({}, "DNB_1", 2, 1), true);
+  assert.equal(gradeLeg({}, "DNB_2", 1, 2), true);
+  /* Quarter balls split the stake across two lines: refused, not guessed. */
+  assert.equal(gradeLeg({}, "AH_1_-0.25", 2, 1), null);
+  assert.equal(gradeLeg({}, "AH_2_0.75", 2, 1), null);
+  /* A full-time score still cannot settle half of a match. */
+  assert.equal(gradeLeg({}, "FH_AH_1_-0.5", 2, 1), null);
+  assert.equal(gradeLeg({}, "SH_AH_2_0.5", 2, 1), null);
+  /* And a leg with no score is unknown, handicap or not. */
+  assert.equal(gradeLeg({}, "AH_1_0", null, null), null);
+});
+
 test("the 1.5 rung of the family belongs to both half-line books, all three signs of it", () => {
   /* SportyBet's 1X2-or-Over/Under card starts at 2.5 on every sign. Miss one
      and the slider builds a leg the reader's bookmaker will refuse, taking the
