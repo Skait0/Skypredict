@@ -81,14 +81,14 @@ Fewer leagues means a faster build. All 38 is fine, it just takes longer.
 
 In `lib/build.js`, `DEFAULTS`:
 
-- `seasons` — football-data season codes. **Add the new one each August**
+- `seasons` - football-data season codes. **Add the new one each August**
   (`"2627"`) or the ratings slowly go stale.
-- `halfLife` — days before an old result counts half as much.
-- `shrinkage` — how hard team ratings are pulled toward their league average.
+- `halfLife` - days before an old result counts half as much.
+- `shrinkage` - how hard team ratings are pulled toward their league average.
   35 was tuned against real results; lowering it makes the model louder and
   measurably less accurate.
-- `daysAhead` — how far forward to predict.
-- `concurrency` — parallel downloads. Raise for speed, lower if you see
+- `daysAhead` - how far forward to predict.
+- `concurrency` - parallel downloads. Raise for speed, lower if you see
   timeouts.
 
 Theme lives in `public/index.html` on the `<html data-theme="...">` tag:

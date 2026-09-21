@@ -1,6 +1,6 @@
-# Resume session — Skypredict / Soccerwizard
+# Resume session - Skypredict / Soccerwizard
 
-## Read this first — two checks, one look each
+## Read this first - two checks, one look each
 
 Set 28 Aug 2026, late evening. The results sweep had **never banked a
 result** before that night: the schedule had never fired, and the live feed
@@ -34,7 +34,7 @@ Tests: `npm test` → **786/786** (this file's 143 is from 28 Aug).
 (github Skait0/soccerwizard-api, deploys to Railway at
 `web-production-798c0.up.railway.app`) is the Flask service that scrapes
 SportyBet and serves `/api/livescores`, `/api/fixtures` and booking codes.
-Vercel's `/api/live` and `/api/fixtures` are thin cached mirrors of it — see
+Vercel's `/api/live` and `/api/fixtures` are thin cached mirrors of it - see
 `lib/upstream.js`. When a score looks wrong, that repo is where the bug is;
 `python -m unittest test_server` there, 20 tests. Its HEAD: `0f909ed`.
 
@@ -46,19 +46,19 @@ The Claude session ran with **cwd `C:\Users\DELL`** (not the repo), so:
 cd C:\Users\DELL; claude --continue
 ```
 
-`--continue` resumes the most recent session **for that directory** — running it
+`--continue` resumes the most recent session **for that directory** - running it
 from inside the repo will not find this one. `claude --resume` gives a picker.
 
 ---
 
-## Three traps that cost real time — read before debugging
+## Three traps that cost real time - read before debugging
 
 ### 1. Verifying a deploy
 
 `scripts/prebuild.js` extracts the big inline `<style>` and `<script>` out of
 `public/index.html` into content-hashed `/app.<hash>.css` and `/app.<hash>.js`.
 **Grepping the deployed `index.html` for a CSS rule or JS comment always
-misses** — only HTML (ids, markup) stays behind. This produced ~40 minutes of
+misses** - only HTML (ids, markup) stays behind. This produced ~40 minutes of
 false "the deploy is stuck" alarms and a pointless trip through the Vercel
 dashboard. Deploys land in ~45s.
 
@@ -72,7 +72,7 @@ $js =[regex]::Match($H,'/app\.[0-9a-f]+\.js').Value
 ```
 
 Per-deployment URLs (`soccerwizard-<hash>-skypredict.vercel.app`) sit behind
-Vercel SSO and 302 to a login — unreadable from the CLI. Use the production
+Vercel SSO and 302 to a login - unreadable from the CLI. Use the production
 domain.
 
 `npm run build` outside Vercel **rewrites `public/index.html` in place** and
@@ -81,7 +81,7 @@ drops `app.*.css/js` into `public/`. If it happens:
 
 ### 2. `predictions.json` can legitimately 404
 
-The bake is best-effort by design — `prebuild.js` will not fail a deploy over
+The bake is best-effort by design - `prebuild.js` will not fail a deploy over
 it. On 28 Aug a build logged:
 
 ```
@@ -92,13 +92,13 @@ it. On 28 Aug a build logged:
 football-data returned nothing to Vercel's builder; it built fine locally
 minutes later. The site stayed up on `/api/predictions` throughout, which is
 the fallback working. **Anything that reads the payload must fall back the same
-way** — the sweep did not, and died on `payload: http 404`. Fixed in `7d0b237`.
+way** - the sweep did not, and died on `payload: http 404`. Fixed in `7d0b237`.
 
 ### 3. A CSS group that is not in the media query it looks like it is in
 
 Rules from roughly **line 3026 to 3091** (`#bookResult`, `.code-card`,
 `.code-acts`, `.note`, `footer`, …) sit **outside** the `@media(max-width:560px)`
-block that appears to contain them — the block closes above. So those "phone"
+block that appears to contain them - the block closes above. So those "phone"
 rules apply at **every** width and outrank the base rules further up. Verified
 in-browser: `matchMedia('(max-width:560px)').matches === false` at 1920px while
 those rules still won. It bit twice in one session (the copy button's reserved
@@ -121,20 +121,20 @@ Related: watch specificity. `.code-acts button` (0-1-1) beats `.code-copy`
 | `91fba41` | Live-row dots solid; the one pulse kept for POTD |
 | `acd14a1` | ★ Pick tag on the POTD's board row |
 | `bac4765` | Sticky day, POTD follows the day, booking errors say what failed, copy-button width, POTD live pill contrast, slips clear, FAB fade |
-| `f708283` | Full-time ledger — records FT scores from the live feed |
+| `f708283` | Full-time ledger - records FT scores from the live feed |
 | `85bb31f` | "Add all N tips" restored to the crimson pill |
-| `30c6c9c` | **One grader** — `lib/grade.js`; stop guessing at goal lines |
+| `30c6c9c` | **One grader** - `lib/grade.js`; stop guessing at goal lines |
 | `e2834ed` | **The sweep** + per-market record breakdown |
 | `7d0b237` | Sweep falls back to `/api/predictions` |
 
 ### The two that carry the most meaning
 
-**`30c6c9c` — the grader.** The page's `tipEval` ended on
+**`30c6c9c` - the grader.** The page's `tipEval` ended on
 `return res(tot>=2)`, a guess for any label it did not recognise. "Over 2.5"
 landed on a 1-1; "Under 2.5" was inverted outright (0-0 read as a miss, 3-0 as
 a hit); a draw was called a void rather than a miss on a home-win tip; "First
 half goal" was graded off the full-time total. Harmless while it only coloured
-a badge — **not** harmless once the ledger began writing that verdict down as a
+a badge - **not** harmless once the ledger began writing that verdict down as a
 permanent result. `lib/grade.js` is now the single grader and never guesses: an
 unknown label, or a first-half market with no half-time score, comes back
 ungraded and callers treat that as "not graded", never as a miss. The page
@@ -142,18 +142,18 @@ keeps its own copy (it is one standalone file) and `test/grade.test.js` holds
 the two to the same answers and to `lib/model.js` wherever both will answer.
 The ledger key moved to `sw.ft.v2`; v1 rows were dropped rather than trusted.
 
-Unifying the graders also added `Over 1.5` to the graded set — published all
+Unifying the graders also added `Over 1.5` to the graded set - published all
 along but never measured, because `model.js` returned null for it. The headline
 went **69% → 73%** with no change to the model, which is why the record now
 reports **by market**: Double chance 69% (173/249), Over 1.5 85% (67/79), Match
 result 60% (6/10). Markets called fewer than ten times are dimmed with their
 count so a 6/10 does not read as evidence.
 
-**`e2834ed` — the sweep.** See below.
+**`e2834ed` - the sweep.** See below.
 
 ---
 
-## Supabase — phase 1 is live
+## Supabase - phase 1 is live
 
 Project **SoccerWizard.Com** (`utwtcvfliljydnhedpdw`), AWS **eu-west-2**, org
 SoccerWizard, **free plan**. Schema in
@@ -171,19 +171,19 @@ Verified working end to end on 28 Aug:
 
 Zero policies is the intended state, not an omission: RLS on with no policies
 denies anon and authenticated outright, and the service-role key bypasses RLS.
-**The browser never talks to Supabase** — clients never hold a key, egress does
+**The browser never talks to Supabase** - clients never hold a key, egress does
 not scale with traffic, and the CDN fast path is untouched.
 
 Env vars only reach a deployment built **after** they were saved. If the sweep
 reports `dry:true` when you did not ask for it, that means Supabase is not
-visible to the function — redeploy.
+visible to the function - redeploy.
 
 ### How the sweep works, and why
 
 `api/record-sweep.js` records the final score of every fixture we published a
 tip for, not just the ones a visitor happened to watch.
 
-Neither feed reports a finished match — **both were checked**:
+Neither feed reports a finished match - **both were checked**:
 
 - the live feed carries only games in play (`HT`, `H1`, `H2`) and a match
   **vanishes** when it ends. There is no FT status.
@@ -191,13 +191,13 @@ Neither feed reports a finished match — **both were checked**:
 - football-data publishes in batches days later, and has no cup football.
 
 So a final score can only be caught by watching a match while it is on and
-noticing when it goes — which needs memory between polls, which a serverless
+noticing when it goes - which needs memory between polls, which a serverless
 function does not have. Hence `live_seen`: working memory, not a record.
 Each call **observes** (writes current scores) then **finalises** (grades rows
 that have gone and are old enough).
 
 **The guard is the point.** A match that vanishes at 62 minutes vanished for
-some other reason — a feed hiccup, a restart, an abandonment — and for a cup
+some other reason - a feed hiccup, a restart, an abandonment - and for a cup
 tie nothing downstream will ever correct a wrong row. So a score is only taken
 as final if the match was last seen **past the 80th minute**; anything else
 expires unrecorded. A missing result is recoverable, a wrong one is not.
@@ -219,7 +219,7 @@ curl -s -H "x-sweep-key: <SWEEP_KEY>" \
 `results` was empty until 28 Aug evening. Three causes, found in this order:
 
 1. **The schedule never fired.** The GitHub Actions workflow's entire history
-   was one manual run. Actions were enabled and permissions open — GitHub's
+   was one manual run. Actions were enabled and permissions open - GitHub's
    scheduler is best-effort and drops high-frequency crons. **Replaced by
    cron-job.org** (job 8344846, every 10 min, `x-sweep-key` header, response
    saving on). First run 28 Aug 18:30 WAT returned 200, `ok:true`, `dry:false`,
@@ -229,23 +229,23 @@ curl -s -H "x-sweep-key: <SWEEP_KEY>" \
    *European* football day. 66 of our 81 MLS / Liga MX / Brazil / Argentina
    fixtures kick off 22:00–10:00 UTC. Worse than missing them: the 23:50 poll
    saw them in the first half, the window shut, and by 10:00 they were gone and
-   last seen at ~45' — below the 80th-minute bar, so each was discarded as
+   last seen at ~45' - below the 80th-minute bar, so each was discarded as
    "vanished mid-game". Now `*/10 * * * *`.
 3. **A held row said nothing.** `held: {notLate: 2}` could only be explained by
-   opening Postgres. The response now carries `heldWhy` — a line per held row
+   opening Postgres. The response now carries `heldWhy` - a line per held row
    with match, score, minute, status, ages and the rule that held it. It shows
    up directly in the cron-job execution history.
 
 **A trap avoided, worth remembering:** seeing `notLate` the instinct is to lower
 the 80-minute bar. That would have been wrong. Those rows were stuck because
-*nothing was polling*, not because the rule is too strict — with a working cron
+*nothing was polling*, not because the rule is too strict - with a working cron
 they'd have been seen at 85'. Loosening it would have started writing
 half-finished scores into the one record meant to be trustworthy.
 
 - **Name matching is only partly exercised.** Measured 28 Aug: of 3 fixtures
   actually in play, 1 paired, 1 was absent from the live feed entirely, and 1
   was a real normaliser miss (`Braunschweig` vs the feed's `Eintracht
-  Braunschweig`). **Deliberately not fixed yet** — the sweep had just started
+  Braunschweig`). **Deliberately not fixed yet** - the sweep had just started
   working and a fuzzy matcher writes to the permanent record. Let a few nights
   of `observed` counts and `heldWhy` accumulate, then fix with evidence. Any
   fallback wants one-side-exact + unique candidate + kick-off agreement.
@@ -260,21 +260,21 @@ half-finished scores into the one record meant to be trustworthy.
 
 - **Clear was undoing itself.** `clearMy` emptied the slip then called
   `renderBuilder`, which syncs the builder's picks into `MYSLIP` on every
-  render — refilling it in the same click. `BUILD.touched` arms that sync the
+  render - refilling it in the same click. `BUILD.touched` arms that sync the
   moment the slider moves and was never lowered. Fixed with `BUILD_NOSYNC` plus
   lowering `touched`. Second cause, same complaint: the sheet's Clear left the
   builder preview and its total odds on screen, so closing the sheet looked
-  like Clear had been ignored — both buttons now share `clearSlipState()`.
+  like Clear had been ignored - both buttons now share `clearSlipState()`.
   Third: `.clear-btn:hover` paints it red and a phone leaves `:hover` on the
   last thing tapped, so it *stayed* red. Now behind `@media (hover:hover)`.
-- **A page per match** — `lib/pages.js` + `writePages` in prebuild. 591 static
+- **A page per match** - `lib/pages.js` + `writePages` in prebuild. 591 static
   pages, `robots.txt`, `sitemap.xml`, JSON-LD, `cleanUrls`. A fixture page
   becomes a result page at the same URL once played. Gitignored build output.
 - **Results keep the model's numbers** so a page never goes thin once played.
   Free for build-graded results (predictTotals had just run); cup ties need the
   snapshot the sweep stores, hence `model jsonb` on `live_seen` and `results`
   (migration applied 28 Aug). The store drops the column and writes the row
-  anyway if the migration has not run — losing a snapshot costs a page some
+  anyway if the migration has not run - losing a snapshot costs a page some
   numbers, losing the row costs a result nothing can recover. Stripped from
   `predictions.json` by `leanResults` (it added 70KB).
 - **"Any winner" was a dead chip in wizard mode.** The chip sync renamed `wd`
@@ -289,7 +289,7 @@ half-finished scores into the one record meant to be trustworthy.
 The worst bug of the day, and it was in the **other** repo.
 
 SportyBet sends `setScore` as the running total and `gameScore` as the same
-thing split by period — Crystal Palace v Man City at 73 minutes carried
+thing split by period - Crystal Palace v Man City at 73 minutes carried
 `setScore "1:3"` and `gameScore ["0:1","1:2"]`, which sums to it.
 `fetch_live_scores` read `gameScore[0]` first, so it published the **first
 half**, and the correct `setScore` branch below never ran because `hs`/`aw`
@@ -299,7 +299,7 @@ Every match that scored after the break was wrong: **45 of the 71** live games
 on the board when it was found. Bayern Munich showed 1-0 at the 90th minute
 of a game that finished 5-1. We were tipping Over 1.5 on it at 90%.
 
-Not cosmetic — the sweep banks these as final scores, so a tip that landed is
+Not cosmetic - the sweep banks these as final scores, so a tip that landed is
 recorded as a loss. It only escaped corrupting the record because the schedule
 had never fired, so `results` was still empty. Both were fixed the same
 evening; had only the cron been fixed, that night would have written wrong
@@ -309,20 +309,19 @@ Fixed by reading `setScore` first and, in fallback, **summing** the periods
 rather than taking one. Verified against the live payload: 71 of 71 correct,
 up from 26, and the periods sum to `setScore` in all 71.
 
-Alongside it: `liveOrPrematchEvents` **ignores `pageNum`** — pages 1 to 5 come
+Alongside it: `liveOrPrematchEvents` **ignores `pageNum`** - pages 1 to 5 come
 back byte-identical, so the loop appended the same 71 events five times and the
 feed served 400 entries for 80 matches. Fixed in the scraper (stop when a page
 adds nothing new) and defensively in `lib/upstream.js` (`dedupeMatches`).
 
 **The lesson worth keeping:** a field whose *type or meaning* depends on the
 outcome is where these hide. `gameScore` is a list whose first element equals
-the whole score only before half time. API-Sports has the same shape of trap —
-`errors` is `[]` on success and an **object** on failure, so `data.errors.length`
+the whole score only before half time. API-Sports has the same shape of trap - `errors` is `[]` on success and an **object** on failure, so `data.errors.length`
 reads fine on success and silently misses every error.
 
 ---
 
-## API-Football evaluated 28 Aug — verified, do not re-derive
+## API-Football evaluated 28 Aug - verified, do not re-derive
 
 Free plan, key at `~/.apisports.key` (outside both repos). Host is
 `v3.football.api-sports.io`; the docs that surface first are the NFL ones on
@@ -330,14 +329,13 @@ Free plan, key at `~/.apisports.key` (outside both repos). Host is
 
 - **100 requests/day**, resets 00:00 UTC. `/status` is **free** and reports
   `requests.current / limit_day`.
-- `season=2026` is refused — "Free plans do not have access to this season,
+- `season=2026` is refused - "Free plans do not have access to this season,
   try from 2022 to 2024". **Omitting `season` bypasses it entirely**:
   `fixtures?date=2026-08-28` returned 443 fixtures, 324 already `FT`, across
   208 competitions. One request covers a whole day of results.
 - Gives what SportyBet structurally cannot: an explicit `FT` status, the exact
   final score, and the halftime split. That is precisely why `live_seen`, the
-  80-minute guard, `ABSENT_MS`/`MATCH_LEN_MS` and the 10-minute cron exist —
-  all of it infers what this states outright.
+  80-minute guard, `ABSENT_MS`/`MATCH_LEN_MS` and the 10-minute cron exist - all of it infers what this states outright.
 - Coverage passed the deal-breaker: every league on our card including
   Conference National, Liga MX, China, Japan J1/J2, plus **455 cup
   competitions**. Cups are what football-data never publishes.
@@ -349,13 +347,13 @@ Free plan, key at `~/.apisports.key` (outside both repos). Host is
 exact `normName`: theirs is "Bayern München", "Eintracht Braunschweig",
 "Manchester City". A *third* convention after SportyBet and football-data.
 They return stable team and fixture **ids**, so the answer is a one-time stored
-mapping rather than per-fixture fuzzy matching — and it must not be rushed,
+mapping rather than per-fixture fuzzy matching - and it must not be rushed,
 because a wrong mapping writes wrong scores into the record.
 
 **Agreed plan, not started:** build the team-id mapping first (self-contained,
 touches nothing live), then run both sources in **shadow for a week** logging
-disagreements without acting on them — that measures how wrong the sweep's
-approximation really is *and* validates the mapping — then switch, keeping
+disagreements without acting on them - that measures how wrong the sweep's
+approximation really is *and* validates the mapping - then switch, keeping
 `live_seen` and its guards as fallback rather than deleting them.
 
 ---
@@ -363,24 +361,22 @@ approximation really is *and* validates the mapping — then switch, keeping
 ## Still open
 
 - **Submit the sitemap to Google Search Console.** The 591 pages exist and are
-  crawlable; nothing has told Google they are there. Owner action — needs the
+  crawlable; nothing has told Google they are there. Owner action - needs the
   owner's Google account. Highest-leverage remaining item for traffic.
-- **Sweep name matching** — see the measured miss above. Evidence first.
+- **Sweep name matching** - see the measured miss above. Evidence first.
 - **Collapse slider + wizard onto one engine.** They are one builder with two
-  ways of stating the goal ("how risky" vs "what payout"); everything else —
-  fixture pool, league filter, home/away sanity, `h32`, goals lean, seed jitter
-  — is written twice. `clearSlipState` was one symptom. Neither engine has a
+  ways of stating the goal ("how risky" vs "what payout"); everything else - fixture pool, league filter, home/away sanity, `h32`, goals lean, seed jitter - is written twice. `clearSlipState` was one symptom. Neither engine has a
   single test: write characterisation tests *first*.
 - **Weight**: 207KB CSS + 287KB JS for one page, on Nigerian mobile data.
-- **Booking errors** — now *diagnosable*, not fixed. `bookFetch` used to return
+- **Booking errors** - now *diagnosable*, not fixed. `bookFetch` used to return
   a bare `{}` for everything, so a dead network, a 15s timeout against the
   sleeping Railway host and a flat refusal all printed the same thing. They now
   say which. Get a real user-facing message before changing anything.
-- **Ticker vs live pills** — decided they layer rather than compete
+- **Ticker vs live pills** - decided they layer rather than compete
   (`tickerEvents` only emits goal / red / HT / FT). Never delivered: the offered
   busy-slate simulation (~10 live games with goals, a red, an HT).
 - **Rescoping the unscoped CSS group** (trap 3).
-- **Supabase phase 2+**: share images and short links (`/s/<id>`) — the growth
+- **Supabase phase 2+**: share images and short links (`/s/<id>`) - the growth
   lever for a WhatsApp audience; then auth + slip sync; then push. Never gate
   the board: anonymous visitors keep getting instant predictions.
 - **`fixtures_seen`** (server-side sticky day) and **`booking_codes`** from the
@@ -397,8 +393,7 @@ approximation really is *and* validates the mapping — then switch, keeping
 - Render the real board locally:
   `curl -s https://skypredict-theta.vercel.app/predictions.json -o public/predictions.json`
   (gitignored), serve `public/` with `python -m http.server 8899`, delete after.
-- Restoring an old design: pull it from git rather than redrawing —
-  `git log -S'<selector>' -- public/index.html`, then
+- Restoring an old design: pull it from git rather than redrawing - `git log -S'<selector>' -- public/index.html`, then
   `git show <sha>^:public/index.html`.
 - Secrets are the owner's to paste. A service-role key bypasses RLS and is a
   write handle on the record; it does not belong in a transcript.

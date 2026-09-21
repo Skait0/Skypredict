@@ -14,7 +14,7 @@
  * different games.
  *
  * Across your OWN tickets there was. Measured on a live board, building eight
- * tickets the way a person does — conjure, not shuffle — four games appeared in
+ * tickets the way a person does - conjure, not shuffle - four games appeared in
  * all eight and eight games appeared in six or more. Neither builder had ever
  * looked at SLIPS, so every build was independent and the best legs went into
  * every one of them.
@@ -28,7 +28,7 @@
  * still running is pushed down the ranking in both builders, bounded so a
  * clearly better leg still wins. Same shape as the league and market spreads it
  * sits beside. On a thin board, or when the game really is the best thing
- * available, it can still come through — you just stop stacking it by accident.
+ * available, it can still come through - you just stop stacking it by accident.
  */
 
 const test = require("node:test");

@@ -5,8 +5,8 @@
  *
  * The results matcher (lib/oracle.js) got this guard when the bug bit there.
  * The odds matcher in index.html never had it, and it had the same hole:
- * `tokset` drops tokens under three characters — which is exactly what "II"
- * and "B" are — and `simTeams` then scores a containing name at 1.8, the same
+ * `tokset` drops tokens under three characters - which is exactly what "II"
+ * and "B" are - and `simTeams` then scores a containing name at 1.8, the same
  * score it gives a genuine match.
  *
  * Measured before the fix, every one of these collided at 1.80: Stuttgart II,
@@ -14,15 +14,14 @@
  * Women.
  *
  * Not hypothetical. Run against the live card, 30 name pairs changed verdict
- * and every single one was a variant being separated from its first team —
- * Chelsea U21, Jong PSV Eindhoven, Portland Timbers II, Rosenborg BK 2,
+ * and every single one was a variant being separated from its first team - * Chelsea U21, Jong PSV Eindhoven, Portland Timbers II, Rosenborg BK 2,
  * Sarpsborg 08 2, and the whole MLS Next Pro shadow league. The consequence
  * was hanging a reserve fixture's odds on a first-team pick, and the
  * kick-off fallback would have accepted it, because that fallback only asks
  * for ONE side to score 1.8.
  *
  * One of the 30 ran the other way: our own "Sociedad B" fixture was matching
- * SportyBet's "Real Sociedad" — the first team's odds on a B-team prediction.
+ * SportyBet's "Real Sociedad" - the first team's odds on a B-team prediction.
  *
  * Nothing else changed across 560,348 pairs, which is the check that matters:
  * a matcher fix that quietly stops matching correct pairs is worse than the
@@ -99,7 +98,7 @@ test("but a variant still matches its own variant", () => {
 });
 
 test("the reserve marker is a suffix, not any stray letter", () => {
-  /* B 93 is a Copenhagen club and B36/B68 are Faroese — their names simply
+  /* B 93 is a Copenhagen club and B36/B68 are Faroese - their names simply
      begin with a B. Matching the marker anywhere would flag them as reserve
      sides, and then one feed writing "B93" against another writing "B 93"
      would disagree about the marker and refuse a good match. */
@@ -121,7 +120,7 @@ test("an ordinary pair of names is untouched by the guard", () => {
 
 /**
  * Both of these were matching, but only on kick-off time with the name scoring
- * 0.00 — the clock carrying a pairing the names could not:
+ * 0.00 - the clock carrying a pairing the names could not:
  *
  *   [sporty] BY KICK-OFF: Levadeiakos v Panathinaikos -> APO Levadiakos FC ...
  *   [sporty] BY KICK-OFF: Buyuksehyr v Kasimpasa -> Istanbul BB v Kasimpasa ...
@@ -141,7 +140,7 @@ test("names the clock was carrying now match on the name", () => {
 
 test("the Istanbul alias does not swallow the other Istanbul clubs", () => {
   /* Aliasing Buyuksehyr to plain "istanbul" would have matched Kasimpasa
-     Istanbul too — which is why it goes to "basaksehir" instead. */
+     Istanbul too - which is why it goes to "basaksehir" instead. */
   assert.ok(api.simTeams("Buyuksehyr", "Kasimpasa Istanbul") < SIDE,
     "Basaksehir must not match Kasimpasa");
   assert.ok(api.simTeams("Buyuksehyr", "Galatasaray Istanbul") < SIDE);

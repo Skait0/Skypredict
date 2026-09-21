@@ -1,4 +1,4 @@
-# Soccerwizard — the design, written down
+# Soccerwizard - the design, written down
 
 Read this before changing anything a reader sees. Everything here is taken
 from what already ships, not from taste: `public/index.html`'s stylesheet is
@@ -57,11 +57,11 @@ Light: `--bg #E9E4DA`, `--card #F4F1EA`, `--text #1C1A18`, `--accent #9A6B00`,
 ## Type
 
 One family: Plus Jakarta Sans (400-800), loaded from Google Fonts in both
-sheets. No second webfont — a test forbids adding one, because BetKing's
+sheets. No second webfont - a test forbids adding one, because BetKing's
 wordmark is drawn with a condensed system stack
 (`"Roboto Condensed","Arial Narrow",…`) rather than a download.
 
-- h1 17-26px/800, `h1 em` is gold — that is how a headline gets colour.
+- h1 17-26px/800, `h1 em` is gold - that is how a headline gets colour.
 - Body 13px/1.65 in the shell, `--soft`.
 - Section labels: 11px/800, `letter-spacing:.09em`, uppercase.
 - Anything read aloud or typed in (codes, odds, scores) is
@@ -78,8 +78,8 @@ wordmark is drawn with a condensed system stack
   `.sbm` (SportyBet, brand red), `.b9m > .b9r + .b9g` (bet9ja, `#D42127` +
   `#14B151`), `.bkm > .bkk + .bkg` (BetKing, gold `#FFC400`, `#A97400` in
   light). In the app they are on `BOOKS.<key>.mark`; in `lib/pages.js` they
-  are in the `MARK` map. Reuse those — do not retype the markup.
-- **Footer**: identical blocks and order in both sheets — `.foot-brand`
+  are in the `MARK` map. Reuse those - do not retype the markup.
+- **Footer**: identical blocks and order in both sheets - `.foot-brand`
   (wordmark + one line), `.foot-cols` (What this is / What it isn't / Play
   responsibly), `.foot-links` (pill row, the two outbound links pushed right
   by `.fl-x{margin-left:auto}`), `.foot-legal` (©, `.badge18`, the estimates
@@ -88,7 +88,7 @@ wordmark is drawn with a condensed system stack
 ## Motion and state
 
 - Transitions are 140ms with `var(--ease-out)`. Hover lifts by 1px, never more.
-- **Every hover rule lives inside `@media (hover:hover)`** — a phone holds the
+- **Every hover rule lives inside `@media (hover:hover)`** - a phone holds the
   hover state after a tap otherwise.
 - Focus is `outline:2px solid` the local accent, `outline-offset:2px`. Never
   remove it.
@@ -99,8 +99,7 @@ wordmark is drawn with a condensed system stack
 
 Breakpoints in use: 560px (footer outbound links stop floating, legs table
 tightens), 720px (footer becomes three columns; the app's desktop layout),
-1180px (max column). Phones are the default case, not the exception —
-measure at 320/360/390/414/430 before calling a layout done, and remember
+1180px (max column). Phones are the default case, not the exception - measure at 320/360/390/414/430 before calling a layout done, and remember
 Claude's browser pins the viewport, so a 390px iframe measures boxes but is
 not a phone.
 

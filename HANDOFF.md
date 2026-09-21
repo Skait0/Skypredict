@@ -1,4 +1,4 @@
-# Soccerwizard — history and incident log (last state update 2026-09-04)
+# Soccerwizard - history and incident log (last state update 2026-09-04)
 
 > **The state lines below are stale.** Checked on 9 Sep 2026: the HEAD and test
 > counts here predate a week of work, and it still calls API-Football suspended
@@ -7,12 +7,12 @@
 > `session-handoff-*.md`.
 
 ## Deployed state
-- **Live URL:** https://www.soccerwizard.live — **www is canonical**, the bare
+- **Live URL:** https://www.soccerwizard.live - **www is canonical**, the bare
   domain 308s to it. `SITE_ORIGIN` must be the www form.
 - **In front of it:** Cloudflare (free plan, account `Sowizardsb@gmail.com`),
   added 1 Sep. Apex + www proxied; every mail record DNS-only.
 - **Deploy model:** push to `main` → Vercel GitHub integration → prod (~30s)
-- **Repo:** https://github.com/Skait0/Skypredict.git — `main` synced with origin
+- **Repo:** https://github.com/Skait0/Skypredict.git - `main` synced with origin
 - **Working tree:** clean · **HEAD:** `a32416c` "Bring the handoff up to date for a fresh session"
 - **Tests:** `npm test` → **978/978** · API `python -m unittest test_server` → **59/59**
 - **API:** `C:\Users\DELL\Documents\soccerwizard-api` on Railway.
@@ -608,8 +608,7 @@ survived: 32% draws, 0g=6 1g=17 2g=110 3g=84 4+=63.
 - Whether outrights should be preferred when close to the best in-band option.
   Taste, not correctness - ask before changing.
 - The Sun 6 Sep 10:00 Sentry reminder is still a scheduled Windows task
-  (`cache_age_s` on booking refusals). The Fri 4 Sep CPU reminder is **answered**
-  — see below — but the task is still armed and will fire.
+  (`cache_age_s` on booking refusals). The Fri 4 Sep CPU reminder is **answered** - see below - but the task is still armed and will fire.
 
 ### CPU: verified fixed, 4 Sep 09:15 (the reminder's answer)
 
@@ -627,10 +626,10 @@ football-data.co.uk     ~47,000 / 12h         85 / 6h, in two build-shaped spike
 ```
 
 It is now the **second-smallest** CPU consumer on the board; the top row is
-`/api/cron`, the 06:30 rebuild, at 1m — which is what should be there. Billing
+`/api/cron`, the 06:30 rebuild, at 1m - which is what should be there. Billing
 agrees: the cycle that opened 3 Sep 08:00 has used **$2.16 of the $20 credit**,
 almost all of it in the 3 Sep bar; the 4 Sep bar is a sliver. Confirmed from
-outside too — a cache-busted cold hit returns 200 in ~1.0s carrying
+outside too - a cache-busted cold hit returns 200 in ~1.0s carrying
 `x-formline-cache: baked`, so the route serves the payload rather than
 rebuilding it.
 

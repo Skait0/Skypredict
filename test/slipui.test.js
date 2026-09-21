@@ -7,8 +7,8 @@
  * home page till i refresh. also, in the your slip, when i delete the last
  * ticket, it still shows that i have a slip till i refresh."
  *
- * One omission behind both. `renderMyResults()` draws the home-page card — the
- * one that answers "did mine come in?" — and it was called exactly once, at
+ * One omission behind both. `renderMyResults()` draws the home-page card - the
+ * one that answers "did mine come in?" - and it was called exactly once, at
  * startup, plus once more when the coach note is dismissed. Nothing called it
  * again.
  *

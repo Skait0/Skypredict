@@ -6,7 +6,7 @@
  * Reported: "i think our model mixes barcelona sc in ecuador for Barcelona of
  * spain because i just got a game from equador 1x."
  *
- * Right about the symptom, and it was worse than a mixed-up rating — the wrong
+ * Right about the symptom, and it was worse than a mixed-up rating - the wrong
  * event id was attached, so the booking code put an Ecuadorian match on the
  * slip. Our "Barcelona v Vallecano" (La Liga, 31 Aug, kick-off 19:30) carried
  * `sr:match:68687872`, which is "Barcelona SC v CSD Independiente del Valle"
@@ -15,13 +15,13 @@
  *
  * Two faults compounded, and neither alone would have done it:
  *
- * 1. "Barcelona SC" — Barcelona Sporting Club of Guayaquil — normalises to
+ * 1. "Barcelona SC" - Barcelona Sporting Club of Guayaquil - normalises to
  *    exactly "barcelona". The "SC" is stripped by the Brazilian state-code rule
  *    (SC = Santa Catarina). So both home sides scored a perfect 2.0 and the
  *    away side decided the match.
  *
  * 2. On the away side our feed writes "Vallecano" where SportyBet writes "Rayo
- *    Vallecano", which an alias folds to "rayo" — so the CORRECT pairing scored
+ *    Vallecano", which an alias folds to "rayo" - so the CORRECT pairing scored
  *    0.0. Meanwhile "Vallecano" matched "Independiente del VALLE" at 1.0,
  *    because the token prefix rule accepts "valle" as a prefix of "vallecano".
  *
@@ -29,7 +29,7 @@
  *
  * The fix is two-part, and the choice of lever was measured rather than
  * guessed. Tightening the prefix rule with a length-ratio guard also killed the
- * bug — and took "Univ. Craiova" -> "CS Universitatea Craiova" with it at every
+ * bug - and took "Univ. Craiova" -> "CS Universitatea Craiova" with it at every
  * threshold from 0.6 to 0.8, a correct match lost. So the prefix rule is left
  * alone and the two real causes are addressed instead:
  *

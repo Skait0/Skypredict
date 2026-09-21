@@ -1,4 +1,4 @@
-# Soccerwizard — read this first
+# Soccerwizard - read this first
 
 This file is loaded automatically whenever Claude Code runs with this directory
 in scope. It exists because session memory is keyed to the directory Claude was
@@ -29,38 +29,36 @@ Bet9ja.
 |---|---|
 | Current state and open items | newest `session-handoff-*.md` in `~/.claude/projects/C--Users-DELL/memory/` |
 | Long-lived project facts | the other `*.md` in that same memory directory |
-| History and incident write-ups | `HANDOFF.md` — **history only, its state lines are stale** |
+| History and incident write-ups | `HANDOFF.md` - **history only, its state lines are stale** |
 | Plans and specs | `docs/plans/`, `docs/specs/` |
-| Palette, type, components, motion | `DESIGN.md` — **read it before changing anything a reader sees** |
+| Palette, type, components, motion | `DESIGN.md` - **read it before changing anything a reader sees** |
 
 ## Rules learned the hard way
 
-- **Verify a fix by reading the code that changed**, not by grepping the file —
-  the same words appear in guards that were never the bug.
-- **graphify cannot read `public/index.html`** — it classes `.html` as prose, so
+- **Verify a fix by reading the code that changed**, not by grepping the file - the same words appear in guards that were never the bug.
+- **graphify cannot read `public/index.html`** - it classes `.html` as prose, so
   the biggest file in the repo contributed zero of 2,003 nodes and a graph miss
   proved nothing. Run `node scripts/graphify-inline.js` before
   `graphify update .`: it copies the inline script to an untracked
   `graphify-src/index.inline.js`, newline-padded so graph line numbers still
   point at `index.html` (508 callables, 507 landing on the right line). Never
-  gitignore that file — graphify skips everything git ignores, `.gitignore`,
+  gitignore that file - graphify skips everything git ignores, `.gitignore`,
   `.graphifyignore` and `.git/info/exclude` alike.
 - **A plain `npm run build` is safe**; only `VERCEL`/`SPLIT=1` rewrites
   `public/index.html`. It does regenerate `public/og-card.png` and
-  `public/predictions.json` — revert those before committing unless the data
+  `public/predictions.json` - revert those before committing unless the data
   change is the point.
 - **An author `display` beats `[hidden]`**, so any element JS hides with
   `.hidden = true` needs its own `[hidden]{display:none}` rule.
-- **After moving a CSS block, check brace balance** — CSS recovers from a stray
+- **After moving a CSS block, check brace balance** - CSS recovers from a stray
   `}` in silence.
 - **Phone layout needs the user's eyes.** Claude's browser pins the viewport;
   a 390px iframe measures boxes honestly but is not a phone.
-- **Don't build before committing** and don't trust a stopwatch for a deploy —
-  read the deployment's own commit and timestamp.
+- **Don't build before committing** and don't trust a stopwatch for a deploy - read the deployment's own commit and timestamp.
 - The reader's day is **Lagos, UTC+1**. `f.date` is a UTC date; the two differ
   for any kickoff from 23:00Z on. `LAGOS_OFFSET_MS` lives in `lib/quota.js`.
 - **A static file with no rule in `vercel.json` is served
-  `max-age=0, must-revalidate`** — it is re-fetched on every visit. The intro
+  `max-age=0, must-revalidate`** - it is re-fetched on every visit. The intro
   videos now have a 30-day rule, and their names are NOT hashed: replacing one
   needs a new filename or a Cloudflare purge, or readers keep the old clip for
   up to a month.

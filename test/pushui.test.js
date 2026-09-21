@@ -92,8 +92,11 @@ function runPushScript(html, opts) {
     requestPermission: () => Promise.resolve(opts.permission || "granted") };
   /* The script gates on `"Notification" in window`, not `in navigator` - the
      stub has to put it there or every run returns on the first line. */
-  const window = { PushManager: function () {}, Notification,
+  const window = { Notification,
     matchMedia: () => ({ matches: !!opts.standalone }) };
+  /* Safari on iOS exposes PushManager ONLY inside an installed app, so a stub
+     that always has it cannot see the bug this file's iPhone test exists for. */
+  if (!opts.noPushManager) window.PushManager = function () {};
   const navigator = { userAgent: opts.userAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
     serviceWorker: { getRegistration: () => Promise.resolve(null),
       register: () => Promise.resolve(reg) } };
@@ -144,6 +147,29 @@ test("an iPhone that has not installed the site is told why, not given a button"
   assert.match(host.innerHTML, /home screen/i);
   assert.doesNotMatch(host.innerHTML, /ck-askb/, "a button here can never work");
   assert.strictEqual(host.hidden, false, "the explanation is the whole point - show it");
+});
+
+test("and it is told so in Safari, which has no PushManager to gate on", () => {
+  /* The bug this was written for. The capability guard ran first, and mobile
+     Safari fails it: PushManager exists only inside an installed app. So the
+     page that was supposed to explain the install showed nothing at all, and
+     the button appeared only where it was already working. */
+  const host = runPushScript(P.pushControl(), {
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Safari/605.1.15",
+    standalone: false,
+    noPushManager: true,
+  });
+  assert.match(host.innerHTML, /Home Screen/i, "mobile Safari was shown nothing");
+  assert.strictEqual(host.hidden, false);
+});
+
+test("an installed iPhone app is given the button, not the install note", async () => {
+  const host = runPushScript(P.pushControl(), {
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Safari/605.1.15",
+    standalone: true,
+  });
+  await flush();
+  assert.match(host.innerHTML, /ck-askb/, "an installed app can do this");
 });
 
 test("turning it off deletes the row and the subscription", async () => {

@@ -8,26 +8,26 @@
  *
  * Two separate faults, measured on the live board before touching anything.
  *
- * 1. STUCK. The slip size is capped by riskParams().maxGames — 3 at the safe
- *    end, 35 at the risky end — but it is also capped by how many fixtures in
+ * 1. STUCK. The slip size is capped by riskParams().maxGames - 3 at the safe
+ *    end, 35 at the risky end - but it is also capped by how many fixtures in
  *    the current window carry a market clearing minConf. On the whole card
  *    (222 fixtures in scope) the dial always binds and the count tracks it
  *    exactly: 0->3, 20->9, 40->16, 60->22, 80->29, 100->35.
  *
- *    Narrow the window to Today + Late — 16 fixtures — and it becomes:
+ *    Narrow the window to Today + Late - 16 fixtures - and it becomes:
  *    0->3, 20->6, 40->7, 60->9, 80->9, 100->9. Stuck at 9 from about 60 up,
  *    because only 9 of those 16 fixtures produce a qualifying pick at all.
  *
  *    The slider was working. Nothing on screen said the pool had run out, and
  *    a control that keeps moving while its output does not is indistinguishable
  *    from a broken one. So the sub-line now says when the slip is everything
- *    the window has, which points at the fix — widen the window — instead of
+ *    the window has, which points at the fix - widen the window - instead of
  *    inviting more dragging.
  *
  * 2. STICKY. The input handler ran renderBuilder() synchronously on every
  *    `input` event. Measured here: renderBuilder 20.8ms, of which buildPicks
  *    is 11.8ms over the whole card. A range input fires `input` on every pixel
- *    of a drag, so several of those land inside one 16.7ms frame — on a phone,
+ *    of a drag, so several of those land inside one 16.7ms frame - on a phone,
  *    several times slower again. The thumb lags the finger. Now coalesced to
  *    one rebuild per animation frame, with the cheap visuals still immediate.
  */
@@ -142,7 +142,7 @@ test("the reader is told when the window, not the dial, is the limit", () => {
 /**
  * More risk must never mean fewer games.
  *
- * On Today + Late (14 fixtures) the sweep read 40->11, 50->7, 60->7 — the slip
+ * On Today + Late (14 fixtures) the sweep read 40->11, 50->7, 60->7 - the slip
  * got SMALLER as the dial moved toward risky, and then sat at 7 against a cap
  * of 19 and then 35.
  *
@@ -150,7 +150,7 @@ test("the reader is told when the window, not the dial, is the limit", () => {
  *
  *     saMode = (euroN < Math.min(cap, SA_MIN_EURO)) ? "fill" : ... "exclude"
  *
- * With a cap of six or more, `Math.min(cap, SA_MIN_EURO)` is just 6 — an
+ * With a cap of six or more, `Math.min(cap, SA_MIN_EURO)` is just 6 - an
  * absolute floor that ignores how many games were actually asked for. As risk
  * rose, the lower confidence bar pushed European candidates past six, South
  * America was excluded outright, and the six legs it lost outnumbered the two
@@ -161,8 +161,7 @@ test("the reader is told when the window, not the dial, is the limit", () => {
  *
  * The older note warned that a relative test would call Europe scarce almost
  * every day. Measured, it does not: on a full card (219 in scope) Europe alone
- * fills every cap up to 35, so the test is false there and nothing changes —
- * zero South American legs at every risk setting, before and after. In the thin
+ * fills every cap up to 35, so the test is false there and nothing changes - * zero South American legs at every risk setting, before and after. In the thin
  * window the ceiling went from 7 games to 14, and both sweeps became monotonic.
  */
 test("the South America gate asks whether Europe can fill THIS slip", () => {

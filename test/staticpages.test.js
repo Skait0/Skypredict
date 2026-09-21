@@ -4,7 +4,7 @@
  * The pages a site needs before it has a domain.
  *
  * The footer used to end at BeGambleAware, which meant the only link out of the
- * whole site was that one. No contact route, no privacy policy, no terms — and
+ * whole site was that one. No contact route, no privacy policy, no terms - and
  * the 534 match pages the build generates were reachable only through the
  * sitemap, which is a far weaker signal to a crawler than real internal links,
  * and no use at all to a reader.
@@ -13,9 +13,9 @@
  * every page links to all of them.
  *
  * The privacy text is the part most worth guarding. It was written from an
- * inventory of what this site actually does — the Sentry init with replay and
+ * inventory of what this site actually does - the Sentry init with replay and
  * tracing switched off, the Vercel analytics script, the sixteen localStorage
- * keys, the booking call — rather than from a template. A privacy policy that
+ * keys, the booking call - rather than from a template. A privacy policy that
  * describes some other site is worse than not having one, so these tests check
  * it still describes this one.
  */
@@ -68,6 +68,34 @@ test("match pages carry the same footer", () => {
   const html = P.renderMatchPage(f, null);
   ["/matches", "/how-it-works", "/privacy", "/terms", "mailto:" + P.CONTACT]
     .forEach((w) => assert.ok(html.includes(w), "match page does not link " + w));
+});
+
+test("every standing page carries the masthead nav", () => {
+  /* The footer used to be the only way off a standing page, which put the
+     way out below everything the page had to say. The bar is sticky, so
+     these four are reachable from any scroll position. */
+  Object.entries(PAGES).forEach(([name, html]) => {
+    assert.match(html, /class="top-nav"/, name + " has no masthead nav");
+    ["/booking-codes", "/convert-a-booking-code", "/matches"].forEach((w) =>
+      assert.ok(html.includes('href="' + w + '"') || html.includes('aria-current="page"'),
+        name + " does not offer " + w + " in the bar"));
+  });
+  /* The page a link points at does not link to itself: it is marked instead. */
+  const codes = P.renderCodesHub([], () => null);
+  assert.match(codes, /<span class="tn-on[^"]*" aria-current="page">Free codes<\/span>/,
+    "the booking codes page should mark itself current, not link to itself");
+  assert.ok(!/<a class="tn[^"]*" href="\/booking-codes">/.test(codes),
+    "and it should not also carry a link to itself");
+});
+
+test("no em dashes in anything a reader sees", () => {
+  /* House style, and it is the one thing a reader can spot as machine-written
+     at a glance. Both forms: the character and the entity. */
+  const pages = { ...PAGES, index, codes: P.renderCodesHub([], () => null) };
+  Object.entries(pages).forEach(([name, html]) => {
+    assert.ok(!html.includes("—"), name + " has an em dash in it");
+    assert.ok(!/&mdash;|&#8212;/.test(html), name + " has an em dash entity in it");
+  });
 });
 
 test("the app's own footer links them too", () => {
@@ -126,7 +154,7 @@ test("and it does not claim protections the site does not have", () => {
   /* Sentry is initialised with replaysSessionSampleRate and
      replaysOnErrorSampleRate at 0 and tracesSampleRate at 0, so the claim that
      behaviour is not recorded is true. If someone turns replay on, this page
-     becomes a false statement — hence the check on the source below. */
+     becomes a false statement - hence the check on the source below. */
   assert.match(h, /replay/i, "the page makes a claim about session replay");
   /* Anchored so a rate of 0 is required, not merely a leading zero. Written
      first as /replaysSessionSampleRate:0/, which matches "0.1" perfectly well

@@ -12,13 +12,11 @@
  * game appeared in even half the slips. The wizard added a flat +/-0.05 to a
  * cost built from log(p)/log(odds). Measured on a x100 target: 24 candidates
  * for a 12-leg slip, costs running 0.55 to 1.43. Around the cutoff the gaps
- * between adjacent legs are 0.003 to 0.046, so +/-0.05 swapped those freely —
- * eight of twelve slots did rotate. But the best leg sat at 0.55 with a 0.22
+ * between adjacent legs are 0.003 to 0.046, so +/-0.05 swapped those freely - * eight of twelve slots did rotate. But the best leg sat at 0.55 with a 0.22
  * gap to the next, and the twelfth at about 1.06. Nothing that jitter could
  * reach would move the top six. Those were the six that never left.
  *
- * Widening it flat would mean routinely trading a 0.55 leg for a 1.0 one —
- * buying variety with the quality that makes the slip worth taking. So it
+ * Widening it flat would mean routinely trading a 0.55 leg for a 1.0 one - * buying variety with the quality that makes the slip worth taking. So it
  * escalates, the same way the South America and Asia gates already do: the
  * first shuffle varies the margins, and somebody still shuffling on the fourth
  * is asking for different games rather than a rearrangement of the same ones.

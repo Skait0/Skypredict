@@ -1,4 +1,4 @@
-# Supabase phase 1 — shared results, sticky fixtures, booking-code cache
+# Supabase phase 1 - shared results, sticky fixtures, booking-code cache
 
 Spec, not yet built. Written 2026-08-28 against `main` @ `30b6d89`.
 Companion to [RESUME-SESSION.md](./RESUME-SESSION.md).
@@ -17,7 +17,7 @@ Three things fall out of that, and they are why phase 1 is shaped this way:
 1. **No Supabase key ever reaches the page.** No anon key to lift, no RLS
    surface exposed to the public. The only writer is a route we control.
 2. **Egress stays near zero.** Reads happen once per build and once per
-   `/api/predictions` refresh, not once per visitor — so the free tier's 5 GB
+   `/api/predictions` refresh, not once per visitor - so the free tier's 5 GB
    is never in play regardless of traffic.
 3. **The fast path is untouched.** Visitors still get `predictions.json` from
    the CDN with no serverless invocation. Supabase enriches what gets baked; it
@@ -29,7 +29,7 @@ global `fetch`, and Supabase's PostgREST is a plain REST API. Use `fetch`, not
 
 ## Environment
 
-Set in Vercel (all environments), server-side only — never `NEXT_PUBLIC_*`:
+Set in Vercel (all environments), server-side only - never `NEXT_PUBLIC_*`:
 
 ```
 SUPABASE_URL=https://<project>.supabase.co
@@ -42,11 +42,11 @@ this is an enrichment, and it must never fail a build.
 
 ---
 
-## 1. `results` — the shared full-time ledger
+## 1. `results` - the shared full-time ledger
 
 Replaces the per-browser `sw.ft.v1` ledger with one every visitor sees. Fixes
 the "results stop at Tuesday" gap (the feed runs ~3 days behind) and grades cup
-ties, which `lib/build.js:636` structurally cannot — it only grades leagues the
+ties, which `lib/build.js:636` structurally cannot - it only grades leagues the
 model was fitted on.
 
 ```sql
@@ -84,16 +84,16 @@ so **the database enforces dedupe** rather than trusting clients to agree.
 Two visitors can report the same match; a feed glitch could make one of them
 wrong. **First write wins.** A matching repeat bumps `confirmations`; a
 *conflicting* score is rejected and logged, never overwritten. A result already
-graded by the build is never touched by this table at all — see the merge order
+graded by the build is never touched by this table at all - see the merge order
 below. Do not add "latest wins": a wrong score that overwrites a right one is
 the one failure mode this record cannot afford.
 
-### Write route — `api/record-result.js`
+### Write route - `api/record-result.js`
 
 `POST` with one result. Add to `vercel.json` under `functions` with
 `maxDuration: 15, memory: 256` (matching `live.js`/`fixtures.js`).
 
-Validation, in order — reject with 400 on any failure:
+Validation, in order - reject with 400 on any failure:
 
 1. Shape and ranges: `match_date` is `YYYY-MM-DD` and within the last 21 days;
    `hg`/`ag` are integers 0–30; `home`/`away`/`tip` non-empty strings under
@@ -106,8 +106,7 @@ Validation, in order — reject with 400 on any failure:
    client's `tipEval`. **Never store a client-supplied `hit`.**
 
 Step 2 is the important one. It means the table can only ever contain results
-for fixtures we actually published, carrying the tip we actually published —
-so the "69% of tips landed" claim cannot be poisoned by anyone posting to the
+for fixtures we actually published, carrying the tip we actually published - so the "69% of tips landed" claim cannot be poisoned by anyone posting to the
 endpoint. Without it, a public write route is an open door into the number the
 whole site rests on.
 
@@ -115,8 +114,8 @@ Then `POST` to PostgREST with `Prefer: resolution=ignore-duplicates` (or
 `on conflict do nothing` semantics) so a repeat is a cheap no-op.
 
 `tipEval` currently lives only in the page (`public/index.html`). Lift it into
-`lib/grade.js`, `require` it from the route, and — because the page is a single
-standalone file — keep the page's copy but add a test asserting the two agree
+`lib/grade.js`, `require` it from the route, and - because the page is a single
+standalone file - keep the page's copy but add a test asserting the two agree
 on a table of cases. Do not let them drift silently.
 
 ### Client change
@@ -124,7 +123,7 @@ on a table of cases. Do not let them drift silently.
 In `recordFinishedFixtures()`, after `saveFTLog()`, `POST` each newly recorded
 result to `/api/record-result`. Fire-and-forget with `keepalive: true`; ignore
 failures entirely. The local ledger stays exactly as it is and remains the
-source for *today* — it already works offline, and it means a failed POST costs
+source for *today* - it already works offline, and it means a failed POST costs
 the user nothing.
 
 ### Read / merge
@@ -147,11 +146,11 @@ Guard it exactly like the bake step: wrapped in try/catch, logged into
 The existing daily cron (`/api/cron`, 06:30 UTC, already in `vercel.json`)
 rebuilds and will pick up overnight results. Between rebuilds, `/api/predictions`
 serves the merged copy, and each visitor's own ledger covers today. That is
-enough for phase 1 — no extra cron needed.
+enough for phase 1 - no extra cron needed.
 
 ---
 
-## 2. `fixtures_seen` — sticky day, server-side
+## 2. `fixtures_seen` - sticky day, server-side
 
 The client-side `sw.day.<date>` fix only helps someone whose browser saw the
 fixture before the SportyBet feed dropped it. This makes it hold for first-time
@@ -169,7 +168,7 @@ create table public.fixtures_seen (
 alter table public.fixtures_seen enable row level security;
 ```
 
-**Written by the build, not by clients** — no new public write path. At the end
+**Written by the build, not by clients** - no new public write path. At the end
 of `buildPayload`, upsert every fixture for today and the next two days. On the
 next build, restore any fixture for a still-future or in-progress day that the
 feeds no longer return.
@@ -177,13 +176,13 @@ feeds no longer return.
 Prune rows older than 3 days in the same pass.
 
 One judgement call inherited from the client version: a genuinely postponed
-match will linger until its day passes. That is the right side to err on — the
+match will linger until its day passes. That is the right side to err on - the
 board briefly listing a called-off game is recoverable; silently dropping a tip
 people are tracking is not.
 
 ---
 
-## 3. `booking_codes` — cache
+## 3. `booking_codes` - cache
 
 ```sql
 create table public.booking_codes (
@@ -200,8 +199,7 @@ the cache before calling `BOOK_URL`; store on success.
 
 Two wins: identical slips (the Slip of the Day, "Add all N tips") stop hitting
 the Railway service, and that service is the cold-start-prone one behind the
-booking errors users have reported. Cache entries expire with the fixtures —
-prune anything older than 3 days, since a code for a played match is useless.
+booking errors users have reported. Cache entries expire with the fixtures - prune anything older than 3 days, since a code for a played match is useless.
 
 This needs the booking call to move server-side to be worthwhile, since the page
 currently calls `BOOK_URL` directly. Treat it as the last of the three.
@@ -210,12 +208,12 @@ currently calls `BOOK_URL` directly. Treat it as the last of the three.
 
 ## Order to build
 
-1. **`results`** end to end — table, `lib/grade.js` + agreement test, write
+1. **`results`** end to end - table, `lib/grade.js` + agreement test, write
    route, client POST, merge in prebuild and `api/predictions`. This is the one
    that fixes a bug users can see, and it exercises the whole pattern on public
    data where a mistake cannot leak anything.
-2. **`fixtures_seen`** — small, build-only, no new public surface.
-3. **`booking_codes`** — only alongside moving the booking call server-side.
+2. **`fixtures_seen`** - small, build-only, no new public surface.
+3. **`booking_codes`** - only alongside moving the booking call server-side.
 
 ## Checks before calling phase 1 done
 
