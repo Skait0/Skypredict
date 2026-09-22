@@ -154,7 +154,12 @@ function risk(idx, feedName, club) {
          index holds in different COUNTRIES is either a cup tie - real and
          common - or a name that crossed a border, which is how Bet9ja's
          "Rapid 1923" became SK Rapid of Vienna rather than Rapid Bucuresti. */
-      if (h && a && !INTERNATIONAL.test(f.league || "")) {
+      /* And skip what the build itself refuses - youth, reserve and women's
+         competitions never reach the board, so a collapse inside one is not a
+         fixture anybody can be shown. Asked of the build rather than repeated
+         here, or the two would drift. */
+      if (h && a && !INTERNATIONAL.test(f.league || "") &&
+          !B.isUnratedCompetition(f.league || "", idx)) {
         const hl = idx.leagues[idx.tIdx[h] != null ? idx.teamLeague[idx.tIdx[h]] : -1] || "";
         const al = idx.leagues[idx.tIdx[a] != null ? idx.teamLeague[idx.tIdx[a]] : -1] || "";
         if (hl && al && hl.split(" ")[0] !== al.split(" ")[0]) {
