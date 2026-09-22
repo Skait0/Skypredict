@@ -218,3 +218,16 @@ test("the note is styled, not dropped into the card raw", () => {
   const src2 = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
   assert.match(src2, /\.code-quota\s*\{/, "no CSS rule for .code-quota");
 });
+
+test("a refusal about the combination is not advice to remove a leg", () => {
+  /* The server halves a refused slip back at the bookmaker. When every leg
+     books alone and the slip does not, there is no culprit to name - it is the
+     combination, and the old copy told the reader to remove a leg they did not
+     have a problem with. */
+  const { api } = client(respond(200, {}));
+  const html = api.bookErrHTML(
+    { combination: true, message: "SportyBet rejected the slip" }, BOOK);
+  assert.match(html, /together/);
+  assert.match(html, /same match/);
+  assert.doesNotMatch(html, /Remove a leg/i);
+});

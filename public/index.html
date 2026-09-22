@@ -10347,6 +10347,16 @@ function bookErrHTML(d,B){
      again" is useless advice when every leg has the same problem, and that is
      what this branch used to say. Naming the markets turns an error into an
      instruction the reader can act on: change these bets, not that one. */
+  /* EVERY LEG BOOKS ALONE AND THE SLIP DOES NOT. The server halves the slip
+     back at the bookmaker to find the offender; when it finds none, the
+     refusal is about the COMBINATION - two picks on one game is the usual
+     one - and "remove a leg and try again" would be advice about a problem
+     this reader does not have. */
+  if(d&&d.combination)
+    return "<div class='code-err'><b>"+B.mark+" won't take these picks together.</b>"+
+      "<span>Every game on the slip books on its own, so it is the combination "+
+      "they are refusing - two picks on the same match is the usual reason. "+
+      "Drop one of a pair and it will go through.</span></div>";
   if(d&&d.suspectAll){
     var mk=(d.suspectMarkets||[]).map(function(c){return mLabel({home:"Home",away:"Away"},c);});
     return "<div class='code-err'><b>"+B.mark+" isn't pricing "+
