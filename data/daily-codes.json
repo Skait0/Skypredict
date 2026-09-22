@@ -737,5 +737,74 @@
       "bet9ja": "5SGYKJN"
     },
     "odds": 5.86
+  },
+  "2026-09-22": {
+    "date": "2026-09-22",
+    "generated": "2026-09-22T11:12:04.554Z",
+    "firstKickoff": "2026-09-22T18:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-09-22",
+        "home": "Chesterfield",
+        "away": "Port Vale",
+        "league": "England EFL Trophy",
+        "kickoff": "2026-09-22T18:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.7876,
+        "market": "1X",
+        "odd": 1.39
+      },
+      {
+        "date": "2026-09-22",
+        "home": "Milton Keynes Dons",
+        "away": "Crawley Town",
+        "league": "England EFL Trophy",
+        "kickoff": "2026-09-22T18:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.7661,
+        "market": "OVER_1.5",
+        "odd": null
+      },
+      {
+        "date": "2026-09-22",
+        "home": "Swindon",
+        "away": "Newport County",
+        "league": "England EFL Trophy",
+        "kickoff": "2026-09-22T18:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.7659,
+        "market": "1X",
+        "odd": 1.24
+      },
+      {
+        "date": "2026-09-22",
+        "home": "Queen of Sth",
+        "away": "Annan Athletic",
+        "league": "Scotland Challenge Cup",
+        "kickoff": "2026-09-22T18:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.7539,
+        "market": "OVER_1.5",
+        "odd": 1.2
+      },
+      {
+        "date": "2026-09-22",
+        "home": "Bonnyrigg Rose",
+        "away": "Airdrie Utd",
+        "league": "Scotland Challenge Cup",
+        "kickoff": "2026-09-22T18:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.7526,
+        "market": "OVER_1.5",
+        "odd": 1.14
+      }
+    ],
+    "codes": {
+      "sporty": "LJ1KCL",
+      "bet9ja": "5SK79T8",
+      "betking": "MY1V4Y",
+      "betpawa": "9W89HNW"
+    },
+    "odds": null
   }
 }
