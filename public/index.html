@@ -9177,12 +9177,18 @@ function renderPotd(){
   reasons.push("Our model puts this at <b>"+P0(top.tip_p)+"%</b>"+
     (_stillTop?", the strongest call on the day's card":""));
 
+  /* A day with no card of its own falls forward to the next one that has games
+     (see choosePotd). Say so on the card: an unlabelled pick reads as today's
+     call, and readers reported exactly that - the pick "changed" overnight when
+     what changed was the day it belongs to. */
+  var _potdOff=dayOff(top.date);
+  var potdDayChip=_potdOff===0?"":"<span class='k'>"+dayName(_potdOff)+"</span>";
   $("potd").innerHTML=
     "<section class='potd "+stateClass+"'>"+
       "<div class='potd-top'>"+
         "<svg width='15' height='15' viewBox='0 0 24 24' fill='currentColor'>"+
           "<path d='M12 2l2.4 6.9 7.1.4-5.5 4.6 1.8 7-5.8-4-5.8 4 1.8-7L2.5 9.3l7.1-.4z'/></svg>"+
-        "<b>Pick of the day</b>"+statusChip+
+        "<b>Pick of the day</b>"+potdDayChip+statusChip+
       "</div>"+
       "<div class='potd-body'>"+
         "<div class='potd-grid'>"+
@@ -15493,6 +15499,10 @@ function renderSlipOfDay(){
      today's kicks off - the same rule the Pick of the day follows. */
   var _sdDay=allOnDay(0).length?allOnDay(0):allOnDay(V.off);
   var _sdDate=_sdDay.length?_sdDay[0].date:null;
+  /* Which day that turned out to be. On a Tuesday of nothing but cup ties we
+     cannot rate, today has no card at all and the slip is tomorrow's - the
+     heading has to say so rather than calling it today's. */
+  var _sdOff=_sdDate?dayOff(_sdDate):0;
   var lock=_sdDate?loadSotdLock(_sdDate):null;
   if(lock){
     /* Read the locked legs back as they stand now - kicked off, finished or
@@ -15522,8 +15532,9 @@ function renderSlipOfDay(){
       "<div class='sotd-top'><svg width='15' height='15' viewBox='0 0 24 24' fill='currentColor'>"+
         "<path d='M12 2l2.4 6.9 7.1.4-5.5 4.6 1.8 7-5.8-4-5.8 4 1.8-7L2.5 9.3l7.1-.4z'/></svg>"+
         "<b>Slip of the day</b><span class='k'>"+SOTD.length+" bankers</span></div>"+
-      "<h2>The safest slip today</h2>"+
-      "<p class='sub'>Our highest-confidence picks, combined into one bet - no building needed.</p>"+
+      "<h2>The safest slip "+(_sdOff===0?"today":_sdOff===1?"tomorrow":"on "+dayName(_sdOff))+"</h2>"+
+      "<p class='sub'>"+(_sdOff===0?"":"No games we can price today. ")+
+        "Our highest-confidence picks, combined into one bet - no building needed.</p>"+
       /* Once a leg has been played it shows how it went rather than the
          confidence we had beforehand - the slip stays put now, so it has to be
          readable after the fact as well as before it. */

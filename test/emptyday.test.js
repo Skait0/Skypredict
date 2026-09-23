@@ -1,0 +1,84 @@
+"use strict";
+
+/**
+ * A day with no card of its own must say so.
+ *
+ * Reported: "the slip of the day changed from the slip of that day to that of
+ * upcoming games! also the pick of the day also changed".
+ *
+ * Nothing had changed in the choosing. Tuesday 23 September carried cup ties
+ * only - Copa Chile, the Czech Cup, the KNVB beker - in competitions the model
+ * has no ratings for, so the board held zero fixtures for the day and both
+ * cards fell forward to the next day that had one. That fall-forward is the
+ * behaviour we want; showing tomorrow's games under the word "today" is not.
+ *
+ * So the headings carry the day whenever it is not today. These tests take the
+ * shipped expressions out of index.html and evaluate them, rather than
+ * asserting that a phrase appears somewhere in the file - a source-string
+ * match passes just as happily when the branch is never reached.
+ */
+
+const test = require("node:test");
+const assert = require("node:assert");
+const fs = require("fs");
+const path = require("path");
+
+const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+
+function grab(name) {
+  const i = src.search(new RegExp("(?:^|\\n)function " + name + "\\s*\\(", "m"));
+  assert.ok(i >= 0, "not found in index.html: " + name);
+  let d = 0, k = src.indexOf("{", i);
+  for (; k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) break; } }
+  return src.slice(i, k + 1);
+}
+
+/* dayName is the thing both headings lean on, so it comes from the file too. */
+const dayName = new Function(grab("dayName") + "; return dayName;")();
+
+/** Pull one shipped expression out and evaluate it at a given day offset. */
+function evalAt(expr, off) {
+  return new Function("dayName", "_sdOff", "_potdOff", "return (" + expr + ");")(dayName, off, off);
+}
+
+const slipHeading = (() => {
+  const m = src.match(/"<h2>The safest slip "\+\(([^\n]*?)\)\+"<\/h2>"/);
+  assert.ok(m, "the slip heading no longer carries a day");
+  return '"The safest slip "+(' + m[1] + ")";
+})();
+
+const slipSub = (() => {
+  const m = src.match(/"<p class='sub'>"\+\(([^\n]*?)\)\+\n?/);
+  assert.ok(m, "the slip subtitle no longer branches on the day");
+  return "(" + m[1] + ")";
+})();
+
+const potdChip = (() => {
+  const m = src.match(/var potdDayChip=(.*?);\r?\n/);
+  assert.ok(m, "the pick card no longer computes a day chip");
+  return m[1];
+})();
+
+test("today's card is still called today's", () => {
+  assert.equal(evalAt(slipHeading, 0), "The safest slip today");
+  assert.equal(evalAt(slipSub, 0), "", "nothing is explained away on a normal day");
+  assert.equal(evalAt(potdChip, 0), "", "no day chip when the pick is today's");
+});
+
+test("a slip that belongs to tomorrow says tomorrow", () => {
+  assert.equal(evalAt(slipHeading, 1), "The safest slip tomorrow");
+  assert.match(evalAt(slipSub, 1), /No games we can price today/);
+});
+
+test("further out than tomorrow names the weekday", () => {
+  const heading = evalAt(slipHeading, 3);
+  assert.match(heading, /^The safest slip on [A-Z][a-z]+$/,
+    "a weekday, and it reads as a sentence: 'on Saturday', not 'saturday'");
+  assert.ok(!/today|tomorrow/.test(heading), "not today and not tomorrow");
+});
+
+test("the pick card chips the day whenever it is not today's", () => {
+  const chip = evalAt(potdChip, 1);
+  assert.match(chip, /Tomorrow/);
+  assert.match(chip, /class='k'/, "the chip reuses the card's own key style");
+});
