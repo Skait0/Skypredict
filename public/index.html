@@ -15042,6 +15042,14 @@ function splitBoxInner(picks,oddsOf){
         var bound=fx.some(function(f){return f.eventId!=null;})&&
                   fx.some(function(f){return f.b9EventId!=null;});
         var ready=BYO.legs&&bound;
+        /* Making a slip safer stays on the book it came from, so it waits for
+           THAT book's ids only. Waiting on both, as the conversion must, held
+           the safer panel back the full twenty seconds whenever Bet9ja's feed
+           was slow - measured on the first live run of ?go=safer. */
+        if(go==="safer"){
+          var sid=(BOOKS[src]||BOOKS.sporty).id;
+          ready=BYO.legs&&fx.some(function(f){return f[sid]!=null;});
+        }
         if(!ready&&Date.now()-t0<20000) return setTimeout(arrive,300);
         try{
           if(go==="convert"&&ready){ var cb=$("byoConvBtn"); if(cb) cb.click(); }
