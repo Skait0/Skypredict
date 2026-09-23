@@ -15399,7 +15399,10 @@ function winCardBlob(sp){
       x.fillStyle="#A3A0A6"; x.font="600 42px "+F;
       x.fillText(n+" of "+n+" landed",W/2,560);
       x.textAlign="left";
-      var shown=legs.slice(0,8), y=660;
+      var shown=legs.slice(0,8);
+      /* Centred in the space between the headline and the footer, so a
+         three-leg ticket does not leave a hole under it. */
+      var y=Math.max(660, 620+((H-190-620)-(shown.length+(n>shown.length?1:0))*72)/2+36);
       shown.forEach(function(l){
         x.fillStyle="#2FD48A"; x.beginPath(); x.arc(98,y,11,0,Math.PI*2); x.fill();
         x.fillStyle="#F2F1F0"; x.font="700 34px "+F;
@@ -15407,9 +15410,12 @@ function winCardBlob(sp){
         while(x.measureText(t).width>600&&t.length>8) t=t.slice(0,-2);
         x.fillText(t,130,y);
         x.fillStyle="#A3A0A6"; x.font="600 30px "+F; x.textAlign="right";
-        var lab=(l.label||l.code||"")+((l.hg!=null&&l.ag!=null)?"  "+l.hg+"-"+l.ag:"");
-        while(x.measureText(lab).width>300&&lab.length>6) lab=lab.slice(0,-2);
-        x.fillText(lab,W-72,y); x.textAlign="left";
+        /* The score is the proof, so it is never the part that gets cut:
+           measured first, and only the market label gives up width. */
+        var sc=(l.hg!=null&&l.ag!=null)?"  "+l.hg+"-"+l.ag:"";
+        var scW=sc?x.measureText(sc).width:0, lab=(l.label||l.code||"");
+        while(x.measureText(lab).width>300-scW&&lab.length>6) lab=lab.slice(0,-2);
+        x.fillText(lab+sc,W-72,y); x.textAlign="left";
         y+=72;
       });
       if(n>shown.length){ x.fillStyle="#87848B"; x.font="600 30px "+F;
