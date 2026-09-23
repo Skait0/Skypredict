@@ -88,9 +88,19 @@ test("a match that has not kicked off is left to the feeds", () => {
   assert.strictEqual(B.carryInPlay(fixtures, [later], NOW), 0);
 });
 
-test("a match long finished is not dragged along forever", () => {
+test("a match finished earlier today stays on today's board", () => {
+  /* It used to fall off 4.5 hours after kick-off, which took the row the Pick
+     and the Slip of the day read back through fixtureById with it - both cards
+     then re-picked in the middle of the afternoon, onto whatever day still had
+     games to come. A day is over at Lagos midnight, not at the last whistle. */
   const fixtures = [];
-  const old = published({ kickoff: new Date(NOW - 6 * 3600 * 1000).toISOString() });
+  const earlier = published({ kickoff: new Date(NOW - 6 * 3600 * 1000).toISOString() });
+  assert.strictEqual(B.carryInPlay(fixtures, [earlier], NOW), 1);
+});
+
+test("yesterday's match is not dragged along forever", () => {
+  const fixtures = [];
+  const old = published({ kickoff: new Date(NOW - 30 * 3600 * 1000).toISOString() });
   assert.strictEqual(B.carryInPlay(fixtures, [old], NOW), 0);
 });
 
@@ -103,10 +113,21 @@ test("extra time and penalties still count as in play", () => {
   assert.strictEqual(B.carryInPlay(fixtures, [et], NOW), 1);
 });
 
-test("a fixture that already has a score is left alone", () => {
-  /* Settled: the results path owns it now. */
+test("a settled game from today is carried with its score", () => {
+  /* The cards above the board show a result once the whistle has gone, and
+     the fixture row is the only place they can read one. */
   const fixtures = [];
-  assert.strictEqual(B.carryInPlay(fixtures, [published({ hg: 1, ag: 0 })], NOW), 0);
+  assert.strictEqual(B.carryInPlay(fixtures, [published({ hg: 1, ag: 0 })], NOW), 1);
+  assert.strictEqual(fixtures[0].hg, 1);
+  assert.strictEqual(fixtures[0].ag, 0);
+});
+
+test("a settled game from a previous day is left to the results path", () => {
+  const fixtures = [];
+  const old = published({
+    hg: 1, ag: 0, kickoff: new Date(NOW - 30 * 3600 * 1000).toISOString(),
+  });
+  assert.strictEqual(B.carryInPlay(fixtures, [old], NOW), 0);
 });
 
 test("junk on the previous board cannot break a build", () => {

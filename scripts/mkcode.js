@@ -211,23 +211,62 @@ async function bookSlipRetrying(which, sel) {
 
 /* -------------------------------------------------------------------- run */
 
-(async () => {
-  const date = arg("date", lagosToday());
+/* A DAY CAN HAVE NO CARD OF ITS OWN.
+ *
+ * 23 September 2026 carried cup ties only - Copa Chile, the Czech Cup, the
+ * KNVB beker - in competitions the model has no ratings for, so the board held
+ * one fixture for the whole day and the mint died on it. That failure cost
+ * more than the code: no commit means no deploy, and the board sat twenty
+ * hours stale behind it while the Pick and the Slip of the day quietly moved
+ * on to games nobody had been shown.
+ *
+ * So a date nobody asked for walks forward to the next day that can fill a
+ * slip - the same fall-forward those two cards already make. The entry carries
+ * the day it is actually for, so the page dates it honestly.
+ *
+ * An explicit --date is taken literally: a human asking for a day means it.
+ */
+function chooseDay(fixtures, opts) {
+  const legs = opts.legs, now = opts.now;
+  const on = (d) => fixtures.filter((f) => f && f.date === d);
+  /* Not started, priceable, most confident first. A tip we cannot turn into a
+     market code cannot be booked, so it is not a candidate. */
+  const poolFor = (d) => on(d)
+    .filter((f) => M.tipCode(f))
+    .filter((f) => !f.kickoff || Date.parse(f.kickoff) > now + 15 * 60000)
+    .sort((a, b) => (b.tip_p || 0) - (a.tip_p || 0));
+
+  let date = opts.from, pool = poolFor(date);
+  const log = [];
+  if (opts.walk) {
+    for (let i = 0; i < 7 && pool.length < legs; i++) {
+      const next = new Date(Date.parse(date + "T00:00:00Z") + 86400000)
+        .toISOString().slice(0, 10);
+      log.push(`${on(date).length} fixtures on ${date}, ${pool.length} bookable` +
+        ` and not started - looking at ${next}`);
+      date = next;
+      pool = poolFor(date);
+    }
+  }
+  log.push(`${on(date).length} fixtures on ${date}, ${pool.length} bookable and not started`);
+  return { date, pool, log };
+}
+
+/* Required by the tests for chooseDay alone, so the mint itself only runs
+   when this file is the program. Without the guard a `require` fires a live
+   booking run - and its failure path calls process.exit(1). */
+if (require.main === module) (async () => {
+  const asked = arg("date", null);
   const legs = Math.max(2, Math.min(12, Number(arg("legs", 5)) || 5));
 
   const got = await getJson(ORIGIN + "/predictions.json");
   if (!got.ok || !got.body) throw new Error("predictions.json: http " + got.status);
-  const onDay = (got.body.fixtures || []).filter((f) => f && f.date === date);
-  if (!onDay.length) throw new Error("no fixtures on " + date);
 
-  /* Not started, priceable, most confident first. A tip we cannot turn into a
-     market code cannot be booked, so it is not a candidate. */
-  const now = Date.now();
-  const pool = onDay
-    .filter((f) => M.tipCode(f))
-    .filter((f) => !f.kickoff || Date.parse(f.kickoff) > now + 15 * 60000)
-    .sort((a, b) => (b.tip_p || 0) - (a.tip_p || 0));
-  console.log(`${onDay.length} fixtures on ${date}, ${pool.length} bookable and not started`);
+  const chosen = chooseDay(got.body.fixtures || [], {
+    from: asked || lagosToday(), legs, walk: !asked, now: Date.now(),
+  });
+  const date = chosen.date, pool = chosen.pool;
+  chosen.log.forEach((l) => console.log(l));
   if (pool.length < legs) throw new Error(`only ${pool.length} bookable fixtures left on ${date}`);
 
   const sporty = await events("sporty");
@@ -416,3 +455,7 @@ async function bookSlipRetrying(which, sel) {
   fs.writeFileSync(OUT, JSON.stringify(all, null, 2) + "\n");
   console.log(`wrote ${path.relative(process.cwd(), OUT)}: ${entry.legs.length} legs`);
 })().catch((e) => { console.error(String(e.message || e)); process.exit(1); });
+
+/* Exported so the day walk can be tested on its own, without a network call
+   and without minting anything. */
+module.exports = { chooseDay };
