@@ -655,7 +655,9 @@ test("the combinations sit at the tier their record earned", () => {
      and get nothing: the chip was allowed and the market was not. Run the
      function rather than read it - that is the only way to know what a tier
      actually returns. */
-  const allowed = new Function(grab("allowedMarkets") + String.fromCharCode(10) +
+  const allowed = new Function(
+    (src.match(/var CORNER_CODES=\[[^\]]*\];/) || [""])[0] +
+    grab("allowedMarkets") + String.fromCharCode(10) +
     "return allowedMarkets;")();
   const safe = allowed(0);
   ["MIX_1_OV_1.5", "MIX_2_OV_1.5", "MIX_X_OV_1.5", "MIXGG_1", "MIXGG_2"].forEach((c) =>

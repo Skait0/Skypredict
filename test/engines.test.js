@@ -58,7 +58,7 @@ function konst(name) {
   return "const " + name + "=" + m[1].trim() + ";";
 }
 
-const FNS = ["countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmerican",
+const FNS = ["cornersK", "cornersOver", "countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmerican",
   "saWeight", "isLowerLeague", "isLowerFixture", "fid", "oddOf", "legOdd",
   /* ONE FUNCTION ANSWERS "will this book take this leg" - see bookVerdict in
      index.html. Lifted, not stubbed: stubbing it is how three copies of the
@@ -91,7 +91,7 @@ const api = new Function([
   /* No saved slips in this harness, so nothing is already exposed; the
      spread penalty is exercised on its own in spread.test.js. */
   "function slipUse(){return {};}",
-  konst("SAFE_UNPRICED"), konst("BOOK_ONLY"),
+  konst("SAFE_UNPRICED"), konst("BOOK_ONLY"), konst("CORNER_CODES"),
   "function curBook(){return {key:'sporty',label:'SportyBet',full:true,odds:'sportyOdds',id:'eventId'};}",
   konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
   konst("HIGH_SCORING_O25"), konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
