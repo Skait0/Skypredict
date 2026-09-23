@@ -82,3 +82,39 @@ test("the pick card chips the day whenever it is not today's", () => {
   assert.match(chip, /Tomorrow/);
   assert.match(chip, /class='k'/, "the chip reuses the card's own key style");
 });
+
+/* The slip's day is taken from its own candidates: today while today can fill
+   a slip, otherwise the earliest day that can. The legs then come from that
+   day alone - a heading dated today over legs spread across the week is the
+   bug this replaced. */
+const slipDayRule = (() => {
+  const a = src.indexOf("var _byDay={};");
+  const b = src.indexOf("if(_sdDate) cand=_byDay[_sdDate];");
+  assert.ok(a > 0 && b > a, "the slip no longer groups its candidates by day");
+  return src.slice(a, b + "if(_sdDate) cand=_byDay[_sdDate];".length);
+})();
+
+function slipDay(cand) {
+  const run = new Function("cand", slipDayRule + "; return {date:_sdDate, cand:cand};");
+  return run(cand);
+}
+const leg = (date) => ({ f: { date: date } });
+
+test("today keeps the slip while today can fill one", () => {
+  const got = slipDay([leg("2026-09-23"), leg("2026-09-23"), leg("2026-09-26")]);
+  assert.equal(got.date, "2026-09-23");
+  assert.equal(got.cand.length, 2, "and the legs are that day's only");
+});
+
+test("a day that cannot fill a slip hands it to the next that can", () => {
+  const got = slipDay([leg("2026-09-23"), leg("2026-09-25"), leg("2026-09-25")]);
+  assert.equal(got.date, "2026-09-25");
+  assert.equal(got.cand.length, 2);
+});
+
+test("the legs never span more than one day", () => {
+  const got = slipDay([leg("2026-09-25"), leg("2026-09-25"), leg("2026-09-26"),
+                       leg("2026-09-26"), leg("2026-09-27")]);
+  assert.ok(got.cand.every((c) => c.f.date === got.date),
+    "a slip of the day is one day's slip");
+});

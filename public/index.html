@@ -15494,11 +15494,18 @@ function renderSlipOfDay(){
       (tierScore(b.p,b.f)-tierScore(a.p,a.f));
   });
 
-  /* The day this slip belongs to. Held to today while today still has a card,
-     so the slip does not jump to tomorrow's games the moment the last of
-     today's kicks off - the same rule the Pick of the day follows. */
-  var _sdDay=allOnDay(0).length?allOnDay(0):allOnDay(V.off);
-  var _sdDate=_sdDay.length?_sdDay[0].date:null;
+  /* THE SLIP IS ONE DAY'S SLIP.
+     The day is taken from the candidates rather than from the board: today
+     keeps it while today can still fill a slip, and otherwise the earliest day
+     that can. Before this the day was read off the board while the legs came
+     from ahead(), so on a day with one game the two disagreed - a heading
+     dated today over legs spread across the rest of the week. Which is what a
+     reader saw on 23 September. */
+  var _byDay={};
+  cand.forEach(function(c){ (_byDay[c.f.date]=_byDay[c.f.date]||[]).push(c); });
+  var _days=Object.keys(_byDay).sort();
+  var _sdDate=_days.filter(function(d){ return _byDay[d].length>=2; })[0]||_days[0]||null;
+  if(_sdDate) cand=_byDay[_sdDate];
   /* Which day that turned out to be. On a Tuesday of nothing but cup ties we
      cannot rate, today has no card at all and the slip is tomorrow's - the
      heading has to say so rather than calling it today's. */
