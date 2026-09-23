@@ -66,6 +66,40 @@ jobs:
         with:
           node-version: "20"
 
+      # REBUILD THE BOARD BEFORE READING IT.
+      #
+      # mkcode reads the LIVE predictions.json, and the board is baked at
+      # deploy - so what it reads is as old as the last deploy. Deploys are
+      # driven by commits and by the sweep's hook, and on 23 Sep neither fired:
+      # the mint threw on a one-fixture Tuesday, its non-zero exit committed
+      # nothing, and the board sat twenty hours stale while both day-locked
+      # cards moved on to games nobody had been shown.
+      #
+      # So the day starts with a deploy, whatever else happens afterwards. It
+      # costs one build a day, it uses the hook the sweep already holds, and it
+      # is the only scheduled rebuild that does not depend on something else
+      # having changed first.
+      #
+      # Never fatal: a stale board still mints a usable code, and failing here
+      # would cost the day its code for the sake of its freshness.
+      - name: Rebuild the board first
+        continue-on-error: true
+        env:
+          REBUILD_HOOK: ${{ secrets.REBUILD_HOOK }}
+        run: |
+          if [ -z "$REBUILD_HOOK" ]; then
+            echo "REBUILD_HOOK is not set - minting off whatever the last deploy baked."
+            exit 0
+          fi
+          code=$(curl -sS -X POST -o hook.json -w '%{http_code}' --max-time 30 "$REBUILD_HOOK")
+          echo "deploy hook: HTTP $code"
+          cat hook.json 2>/dev/null || true
+          echo
+          # Long enough for a build that takes about 50 seconds, plus room.
+          sleep 150
+          curl -sS "https://www.soccerwizard.live/predictions.json" \
+            | head -c 400 | tr ',' '\n' | grep -i '"generated' || true
+
       # A refusal is not a failure - the script drops the legs the bookmaker
       # will not take and rebuilds the slip, up to four rounds. What it will not
       # do is publish two codes for two different slips, so if it exits non-zero
