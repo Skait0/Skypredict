@@ -2234,6 +2234,9 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
   background:var(--raise);border:1px solid var(--line);color:var(--soft);
   transition:color .15s,border-color .15s,background .15s}
 .sl-mini:hover{color:var(--text);border-color:var(--faint)}
+/* Make it safer is a link into the converter, not a button, and sits in the
+   same row as the buttons - so it has to look like one of them. */
+a.sl-mini{text-decoration:none;display:inline-flex;align-items:center}
 .sl-mini:focus-visible{outline:2px solid var(--red);outline-offset:1px}
 .sl-mini.ok{color:var(--green-ink);border-color:var(--green)}
 /* Delete asks before it acts, and only turns red once it has. */
@@ -7767,7 +7770,7 @@ function saveSlips(){
 /* Record a slip at the moment it becomes real - when a booking code exists.
    Building and rebuilding in the wizard should not fill the history with
    drafts nobody placed. */
-function rememberSlip(legs, odds, code){
+function rememberSlip(legs, odds, code, book){
   if(!legs||legs.length<1) return null;
   var snap=legs.map(function(x){
     var f=fixtureById(x.id)||{};
@@ -7792,6 +7795,10 @@ function rememberSlip(legs, odds, code){
     sid:"s"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     at:new Date().toISOString(),
     code:code||null,
+    /* Which bookmaker issued the code. A code is only readable back at the
+       book that minted it, and Make it safer reads it - so a slip saved
+       before this field existed simply does not offer that. */
+    book:book||null,
     legs:snap,
     odds:+odds||snap.reduce(function(t,l){return t*(l.odd||1);},1),
     settled:false, won:null, hits:0, graded:0,
@@ -8014,6 +8021,14 @@ function renderSlipsSheet(){
            the legs that are still open into My slip and says what it had to
            leave behind. */
         "<button class='sl-mini' type='button' data-slrb='"+esc(sp.sid||"")+"'>Rebuild</button>"+
+        /* Make it safer, as on the booked-code card: the converter's Edit for
+           me on this code at the book that issued it. Only while the slip is
+           still open - a settled bet cannot be made safer - and only with a
+           book on record, because a guessed one fails to read the code. */
+        ((sp.code&&sp.book&&BOOKS[sp.book]&&!sp.settled)
+          ? "<a class='sl-mini' href=\"/?book="+encodeURIComponent(sp.book)+
+              "&code="+encodeURIComponent(sp.code)+"&go=safer\">Make it safer</a>"
+          : "")+
         "<button class='sl-mini sl-mini-x' type='button' data-slrm='"+esc(sp.sid||"")+"' "+
           "aria-label='Remove this slip'>Delete</button>"+
       "</div>"+
@@ -13110,7 +13125,7 @@ function doBook(picks,retried,B){
       var code=B.codeOf(d);
       if(d&&d.success&&code){
         showCode(code,"bookResult",function(){
-          rememberSlip(picks,totalOdds(picks),code);},B,picks);
+          rememberSlip(picks,totalOdds(picks),code,B&&B.key);},B,picks);
       } else {
         /* SportyBet can reject individual markets ("no market") when our pick
            used an estimated odd for a market it doesn't list. Retry once with
@@ -15472,7 +15487,7 @@ function doBookList(picks,resultId,btnId,label,B){
       var code=B.codeOf(d);
       if(d&&d.success&&code){
         showCode(code,resultId,function(){
-          rememberSlip(going,totalOdds(going),code);},B,going);
+          rememberSlip(going,totalOdds(going),code,B&&B.key);},B,going);
       }
       else{ $(resultId).innerHTML=bookErrHTML(d,B); }
     })
@@ -17395,7 +17410,7 @@ function doBookMy(bookable,retried,B){
         var _od=_legs.reduce(function(t,x){
           return t*legOdd(fixtureById(x.id),x.code,x.p);},1);
         showCode(_code,"myBookResult",function(){
-          rememberSlip(_legs,_od,_code);},B,_legs);
+          rememberSlip(_legs,_od,_code,B&&B.key);},B,_legs);
       }
       else{
         /* The builder no longer offers a market SportyBet does not list, but a
