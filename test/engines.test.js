@@ -58,7 +58,7 @@ function konst(name) {
   return "const " + name + "=" + m[1].trim() + ";";
 }
 
-const FNS = ["cornersK", "cornersOver", "countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmerican",
+const FNS = ["cornersK", "cornersOver", "cornersOpen", "countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmerican",
   "saWeight", "isLowerLeague", "isLowerFixture", "fid", "oddOf", "legOdd",
   /* ONE FUNCTION ANSWERS "will this book take this leg" - see bookVerdict in
      index.html. Lifted, not stubbed: stubbing it is how three copies of the

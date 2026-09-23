@@ -12178,6 +12178,19 @@ var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking","betpawa"],
    average is 0.9% - honest, and small. */
 var CORNER_CODES=["CORNERS_OV_7.5","CORNERS_UN_7.5","CORNERS_OV_8.5","CORNERS_UN_8.5",
                   "CORNERS_OV_9.5","CORNERS_UN_9.5","CORNERS_OV_10.5","CORNERS_UN_10.5"];
+/* IS THIS CORNERS LINE ACTUALLY OPEN? Books open corners a few days before
+   kick-off and some leagues never - measured 23 Sep 2026: Spanish second
+   division open 90 hours out, Scottish Championship closed at 48, and every
+   game in the first ticket the chip built, 17 days out, closed at both
+   SportyBet and Bet9ja: "can't take 6 of these", "no market there for 7 of
+   7". So a corners leg is offered only where SportyBet's own feed quotes that
+   exact line - the sweep asks for market 166 - whichever book the slip goes
+   to. They are all fed from the same place and open together; SportyBet's is
+   the feed we sweep in full. */
+function cornersOpen(f,c){
+  if(!/^CORNERS_/.test(c||"")) return true;
+  try{ var o=f&&f[BOOKS.sporty.odds]; return !!(o&&o[c]); }catch(e){ return false; }
+}
 function bookAllows(code,B){
   var only=BOOK_ONLY[code];
   return !only || only.indexOf((B&&B.key)||(curBook()&&curBook().key))>=0;
@@ -12630,6 +12643,7 @@ function buildPicks(){
     if(TOP_ONLY && isLowerFixture(f)) return;
     var homeFav=f.home_p>f.away_p;
     function sane(c){
+      if(!cornersOpen(f,c)) return false;
       if(c==="1"&&!homeFav) return false;
       if(c==="2"&&homeFav) return false;
       if(c==="1X"&&!homeFav) return false;
@@ -17725,6 +17739,7 @@ function wspBuild(){
     allowed.forEach(function(c){
       if(c==="1"&&!homeFav)return; if(c==="2"&&homeFav)return;
       if(c==="1X"&&!homeFav)return; if(c==="X2"&&homeFav)return;
+      if(!cornersOpen(f,c))return;
       var v=mProb(f,c); if(v==null||isNaN(v))return;
       /* A DRAW NEVER CLEARS A HALF. Three-way probability puts it around 0.28
          on a typical fixture and it tops out near 0.33, so the flat 0.5 floor
