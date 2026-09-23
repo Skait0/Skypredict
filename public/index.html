@@ -2237,6 +2237,8 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 /* Make it safer is a link into the converter, not a button, and sits in the
    same row as the buttons - so it has to look like one of them. */
 a.sl-mini{text-decoration:none;display:inline-flex;align-items:center}
+/* Share your win: gold, because gold is what the site is proud of. */
+.sl-mini.sl-win{color:var(--on-accent);background:var(--accent);border-color:var(--accent)}
 .sl-mini:focus-visible{outline:2px solid var(--red);outline-offset:1px}
 .sl-mini.ok{color:var(--green-ink);border-color:var(--green)}
 /* Delete asks before it acts, and only turns red once it has. */
@@ -8029,6 +8031,10 @@ function renderSlipsSheet(){
           ? "<a class='sl-mini' href=\"/?book="+encodeURIComponent(sp.book)+
               "&code="+encodeURIComponent(sp.code)+"&go=safer\">Make it safer</a>"
           : "")+
+        /* A won ticket gets the celebration - see shareWin. */
+        ((sp.settled&&sp.won)
+          ? "<button class='sl-mini sl-win' type='button' data-slwin='"+esc(sp.sid||"")+"'>Share your win</button>"
+          : "")+
         "<button class='sl-mini sl-mini-x' type='button' data-slrm='"+esc(sp.sid||"")+"' "+
           "aria-label='Remove this slip'>Delete</button>"+
       "</div>"+
@@ -8061,6 +8067,12 @@ function renderSlipsSheet(){
   });
   body.querySelectorAll("[data-slrb]").forEach(function(b){
     b.addEventListener("click",function(){ rebuildSlip(b.dataset.slrb); });
+  });
+  body.querySelectorAll("[data-slwin]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var sp=SLIPS.filter(function(x){return x.sid===b.dataset.slwin;})[0];
+      if(sp) shareWin(sp,b);
+    });
   });
   var ca=$("slipsClear");
   if(ca) ca.addEventListener("click",function(){ askClearSlips(ca); });
@@ -15247,9 +15259,12 @@ function slipPayload(items){
 /* The code and the book travel with the link. Without them the page has no
    code to show and falls back to SportyBet, so a Bet9ja slip arrived saying
    "SportyBet booking code" over a button into the wrong app. */
-function slipUrl(items,code,book){
+function slipUrl(items,code,book){ return slipUrlFrom(slipPayload(items),code,book); }
+/* The encoding, on its own, so a slip built from a saved snapshot - a won
+   ticket whose games have long left the board - travels in exactly the same
+   link as one built from the live board. */
+function slipUrlFrom(raw,code,book){
   try{
-    var raw=slipPayload(items);
     if(!raw) return null;
     var bytes=new TextEncoder().encode(raw),bin="";
     for(var i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
@@ -15338,6 +15353,99 @@ function shareCode(code,picks,B){
   var bk=(B&&B.key)||(curBook()&&curBook().key)||"sporty";
   doShare("\ud83e\uddd9 My Soccerwizard slip. Code: "+code,
           shortSlipUrl(code)||slipUrl(picks,code,bk)||(SPORTY_URL+encodeURIComponent(code)));
+}
+/* SHARE YOUR WIN - a picture to post, and a link that proves it.
+   Asked for by the site's owner, 23 Sep 2026: there was no way to share a won
+   ticket. The picture is for a WhatsApp status or an X post; a picture proves
+   nothing on its own, so the link travels with it, and the page it opens
+   grades every leg from the final scores (lib/sliplink.js verdict) - "Every
+   game landed" is our claim there, not the sharer's.
+   The link is built from the saved slip's own snapshot: a won ticket's games
+   have left the board, so slipPayload - which looks legs up on the board -
+   would send an empty link. */
+function snapSlipUrl(sp){
+  var rows=[];
+  (sp&&sp.legs||[]).forEach(function(l){
+    var od=+l.odd, p=+l.p;
+    if(!LINK_MARKETS[l.code]||!l.home||!l.away||!l.date) return;
+    if(!(od>1.01)||!(p>0)) return;
+    rows.push([slipName(l.home),slipName(l.away),String(l.date),String(l.code),
+      od.toFixed(2),Math.round(p*100)].join(SLIP_FS));
+  });
+  return rows.length ? slipUrlFrom(rows.join(SLIP_RS),sp.code,sp.book) : null;
+}
+/* The card: 1080x1350, the portrait a status or a feed shows whole. House
+   palette from DESIGN.md - gold for what we are proud of (the win, the odds),
+   green for a landed leg - and one sentence of fact, "7 of 7 landed", never
+   a superlative. */
+function winCardBlob(sp){
+  return new Promise(function(done){
+    var W=1080,H=1350,c=document.createElement("canvas"); c.width=W; c.height=H;
+    var x=c.getContext("2d"), F="'Plus Jakarta Sans',system-ui,sans-serif";
+    var legs=(sp.legs||[]), n=legs.length;
+    function draw(img){
+      x.fillStyle="#0D0D0F"; x.fillRect(0,0,W,H);
+      var g=x.createRadialGradient(W/2,330,40,W/2,330,620);
+      g.addColorStop(0,"rgba(242,184,75,.28)"); g.addColorStop(1,"rgba(242,184,75,0)");
+      x.fillStyle=g; x.fillRect(0,0,W,H);
+      if(img){ x.drawImage(img,72,64,96,96); }
+      x.fillStyle="#F2F1F0"; x.font="800 44px "+F; x.textBaseline="middle";
+      x.fillText("Soccerwizard",img?186:72,112);
+      x.textAlign="center";
+      x.fillStyle="#F2B84B"; x.font="800 40px "+F;
+      x.fillText("TICKET WON".split("").join(String.fromCharCode(8202)),W/2,300);
+      x.font="800 176px "+F;
+      x.fillText(String.fromCharCode(215)+(+sp.odds||1).toFixed(2),W/2,440);
+      x.fillStyle="#A3A0A6"; x.font="600 42px "+F;
+      x.fillText(n+" of "+n+" landed",W/2,560);
+      x.textAlign="left";
+      var shown=legs.slice(0,8), y=660;
+      shown.forEach(function(l){
+        x.fillStyle="#2FD48A"; x.beginPath(); x.arc(98,y,11,0,Math.PI*2); x.fill();
+        x.fillStyle="#F2F1F0"; x.font="700 34px "+F;
+        var t=(l.home||"")+" v "+(l.away||"");
+        while(x.measureText(t).width>600&&t.length>8) t=t.slice(0,-2);
+        x.fillText(t,130,y);
+        x.fillStyle="#A3A0A6"; x.font="600 30px "+F; x.textAlign="right";
+        var lab=(l.label||l.code||"")+((l.hg!=null&&l.ag!=null)?"  "+l.hg+"-"+l.ag:"");
+        while(x.measureText(lab).width>300&&lab.length>6) lab=lab.slice(0,-2);
+        x.fillText(lab,W-72,y); x.textAlign="left";
+        y+=72;
+      });
+      if(n>shown.length){ x.fillStyle="#87848B"; x.font="600 30px "+F;
+        x.fillText("+ "+(n-shown.length)+" more, all landed",130,y); }
+      x.fillStyle="#2A2A30"; x.fillRect(72,H-150,W-144,2);
+      x.fillStyle="#F2B84B"; x.font="800 38px "+F; x.fillText("soccerwizard.live",72,H-92);
+      x.fillStyle="#87848B"; x.font="600 28px "+F; x.textAlign="right";
+      x.fillText("Graded from the final scores",W-72,H-92);
+      c.toBlob(function(b){ done(b); },"image/png");
+    }
+    var go=function(){ var im=new Image(); im.onload=function(){draw(im);}; im.onerror=function(){draw(null);}; im.src="/wiz-mark.png"; };
+    try{ document.fonts.load("800 40px 'Plus Jakarta Sans'").then(go,go); }catch(e){ go(); }
+  });
+}
+function shareWin(sp,btn){
+  var url=shortSlipUrl(sp.code)||snapSlipUrl(sp)||"https://www.soccerwizard.live";
+  var n=(sp.legs||[]).length;
+  var text=n+" of "+n+" landed, "+String.fromCharCode(215)+(+sp.odds||1).toFixed(2)+" on Soccerwizard.";
+  if(btn) btn.textContent="Making the card...";
+  winCardBlob(sp).then(function(blob){
+    var done=function(msg){ if(btn) btn.textContent=msg||"Share your win"; };
+    try{
+      var file=new File([blob],"soccerwizard-win.png",{type:"image/png"});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        navigator.share({files:[file],text:text+" "+url}).then(function(){done();},function(){done();});
+        return;
+      }
+    }catch(e){}
+    /* No file sharing here (most desktops): save the picture and put the
+       link on the clipboard, and say that is what happened. */
+    var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+    a.download="soccerwizard-win.png"; document.body.appendChild(a); a.click(); a.remove();
+    try{ copyText(text+" "+url); }catch(e){}
+    done("Card saved, link copied");
+    setTimeout(function(){ done(); },2600);
+  });
 }
 function bookList(picks,resultId,btnId,label){
   var bookable=picks.filter(function(c){return c.eventId;});
