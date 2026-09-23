@@ -11922,8 +11922,8 @@ function allowedMarkets(t){
   m=m.concat(["WINHALF_H_Y","WINHALF_A_Y"]);
   /* Corners on the same terms: no tier, the floor decides, the chip starts
      off. Measured on the board of 23 Sep 2026 (197 fixtures carrying
-     corners), what clears Safe's 75%: Over 7.5 on 83, Over 8.5 on 17,
-     Under 10.5 on 20, and 9.5 either way on one. */
+     corners), what clears Safe's 75%: Over 7.5 on 83, Over 8.5 on 17, Over
+     9.5 on one. Overs only - see CORNER_CODES. */
   m=m.concat(CORNER_CODES);
   m=m.concat(SHOTS_CODES);
   return m;
@@ -12200,16 +12200,18 @@ var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking","betpawa"],
      are sent elsewhere to place a bet it sells them. */
   "MIX_1_OV_1.5":["bet9ja","betking","betpawa"],
   "MIX_2_OV_1.5":["bet9ja","betking","betpawa"]};
-/* CORNERS, AS A CHIP. Eight lines, over and under 7.5 to 10.5, because that
-   is the range every book sells: SportyBet 6.5-12.5, Bet9ja 7.5-14.5, BetKing
+/* CORNERS, AS A CHIP. Lines 7.5 to 10.5, because that is the range every
+   book sells: SportyBet 6.5-12.5, Bet9ja 7.5-14.5, BetKing
    5.5-12.5, Betpawa 6.5-10.5. A line outside it would need BOOK_ONLY entries
    and a chip that narrows the reader's bookmaker - not worth it for the ends
    of a distribution. Priced by mProb off the fixture's ch/ca (lib/corners.js);
    absent on leagues whose results carry no corners column, so the chip simply
    finds nothing there. Off by default: the corners model's edge over a league
    average is 0.9% - honest, and small. */
-var CORNER_CODES=["CORNERS_OV_7.5","CORNERS_UN_7.5","CORNERS_OV_8.5","CORNERS_UN_8.5",
-                  "CORNERS_OV_9.5","CORNERS_UN_9.5","CORNERS_OV_10.5","CORNERS_UN_10.5"];
+/* OVERS ONLY since 23 Sep 2026, at the owner's call - and the model agrees:
+   the corners fit runs about two points LOW on the over side, so an over it
+   prices is conservative and an under is not. Same rule as total shots. */
+var CORNER_CODES=["CORNERS_OV_7.5","CORNERS_OV_8.5","CORNERS_OV_9.5","CORNERS_OV_10.5"];
 /* TOTAL SHOTS, AS A CHIP. SportyBet market 900394 and Bet9ja S_OUSHOTS, the
    same over/under shape as corners, on lines that move with the game -
    Kosovo v Ireland centred near 21.5, Portugal v Wales near 27.5 - so every
@@ -18490,7 +18492,7 @@ function wspMaxReach(){
 var MKT_CODES={wd:["1X","X2"],any:["12"],out:["1","2"],o15:["OVER_1.5"],
   o25:["OVER_2.5"],o35:["OVER_3.5"],fh:["FH_OVER_0.5"],
   tts:["HOME_OVER_0.5","AWAY_OVER_0.5"],tts2:["HOME_OVER_1.5","AWAY_OVER_1.5"],
-  both:["GG"],draw:["X"],corn:["CORNERS_OV_7.5","CORNERS_UN_7.5","CORNERS_OV_8.5","CORNERS_UN_8.5","CORNERS_OV_9.5","CORNERS_UN_9.5","CORNERS_OV_10.5","CORNERS_UN_10.5"],
+  both:["GG"],draw:["X"],corn:["CORNERS_OV_7.5","CORNERS_OV_8.5","CORNERS_OV_9.5","CORNERS_OV_10.5"],
   shots:["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"]};
 
 /* A MARKET YOU SWITCHED ON THAT CHANGED NOTHING LOOKS BROKEN.
@@ -18727,7 +18729,7 @@ var MKT_BY_CHIP={wd:["1X","X2"],any:["12"],out:["1","2"],
   dro25:["MIX_X_OV_2.5"],drgg:["MIXGG_X"],rsgg:["MIXGG_1","MIXGG_2"],
   rso25:["MIX_1_OV_2.5","MIX_2_OV_2.5"],dro15:["MIX_X_OV_1.5"],
   rso15:["MIX_1_OV_1.5","MIX_2_OV_1.5"],weh:["WINHALF_H_Y","WINHALF_A_Y"],
-  draw:["X"],corn:["CORNERS_OV_7.5","CORNERS_UN_7.5","CORNERS_OV_8.5","CORNERS_UN_8.5","CORNERS_OV_9.5","CORNERS_UN_9.5","CORNERS_OV_10.5","CORNERS_UN_10.5"],
+  draw:["X"],corn:["CORNERS_OV_7.5","CORNERS_OV_8.5","CORNERS_OV_9.5","CORNERS_OV_10.5"],
   shots:["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"]};
 
 /* WHY THE SLIP IS EMPTY, NAMED.
@@ -18928,7 +18930,7 @@ function renderShared(){
      icon:'<path d="M5 19L12 5l7 14"/><path d="M9 9l3-3 3 3"/>'},
     {k:"weh", label:"Win a half", tier:0, sub:"Either half", icon:'<path d="M12 4v16"/><path d="M5 8h4"/><path d="M15 16h4"/>'},
     /* Corners, total for the match - see CORNER_CODES. */
-    {k:"corn", label:"Corners", tier:0, sub:"Over/under 7.5-10.5", icon:'<path d="M6 21V3"/><path d="M6 4l11 3-11 4"/>'},
+    {k:"corn", label:"Corners", tier:0, sub:"Over 7.5-10.5", icon:'<path d="M6 21V3"/><path d="M6 4l11 3-11 4"/>'},
     /* Total shots - see SHOTS_CODES. Narrows the book like dro15 does, and
        says so before it turns on. */
     {k:"shots", label:"Total shots", tier:0, sub:"Over, whole match", only:["sporty","bet9ja"],
