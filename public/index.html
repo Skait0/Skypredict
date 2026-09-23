@@ -13251,6 +13251,17 @@ function showCode(code,hostId,save,B,picks){
        two tickets' worth of them - and the prices are printed on the buttons,
        because "split it" sounds free and is not. */
     splitBoxHTML(picks)+
+    /* MAKE IT SAFER - asked for by the site's owner, 23 Sep 2026: once a slip
+       is booked, offer to make it likelier to land even at a lower price. The
+       converter's "Edit for me" already does exactly that, on the proven
+       safer ladder (SAFER_TO, saferPlan): a win becomes win-or-draw, over 2.5
+       becomes over 1.5, never a different game, never the reverse. So this is
+       a way in, not a second copy - the link opens that job on this code at
+       this book, and nothing is booked until the reader asks. */
+    "<p class='code-also code-safer'>Too risky? "+
+      "<a class='code-open-alt' href=\"/?book="+encodeURIComponent(B.key)+
+        "&code="+encodeURIComponent(code)+"&go=safer\">Make it safer</a>"+
+      " - same games, safer bets, lower odds.</p>"+
     /* Same code, same slip, other book. This was a footnote saying it "also
        works on football.com", which left anyone who uses that app to copy the
        code and go and find it. The sentence stays - it is what makes the pill
@@ -15034,6 +15045,14 @@ function splitBoxInner(picks,oddsOf){
         if(!ready&&Date.now()-t0<20000) return setTimeout(arrive,300);
         try{
           if(go==="convert"&&ready){ var cb=$("byoConvBtn"); if(cb) cb.click(); }
+          /* ?go=safer OPENS "EDIT FOR ME" on the code - the Make it safer link
+             under every freshly booked code lands here. Like ?go=convert it
+             opens the panel and books nothing: the reader picks how far to go
+             and presses the button, and the new code is theirs to ask for. */
+          if(go==="safer"&&BYO.legs){
+            var eb=sec.querySelector('.byo-job[data-job="edit"]');
+            if(eb&&!eb.disabled&&BYO.job!=="edit") eb.click();
+          }
           sec.scrollIntoView({behavior:"smooth",block:"start"});
         }catch(e){}
       })();
