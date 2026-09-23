@@ -54,6 +54,7 @@ const FIXTURE = {
   away_o25: 0.60, away_o15: 0.66, away_btts: 0.59,
   h_win_half: 0.62, a_win_half: 0.41,
   ch: 5.4, ca: 4.3,          /* expected corners per side - the corners chip */
+  sh: 14.2, sa: 10.9,        /* expected shots per side - the total-shots chip */
 };
 
 const api = new Function(
@@ -64,7 +65,7 @@ const api = new Function(
   decl(/(var SWAP_ORDER=\[[^\]]*\];)/, "SWAP_ORDER") +
   "function esc(s){return String(s);}" +
   "function bookAllows(){return true;}" +
-  "var DATA={cornersK:52};" + grab("cornersK") + grab("cLgamma") + grab("cornersOver") +
+  "var DATA={cornersK:52,shotsK:41};" + grab("cornersK") + grab("cLgamma") + grab("cornersOver") +
   grab("mProb") + grab("mLabel") + grab("swapOptions") +
   "\nreturn {mProb:mProb,mLabel:mLabel,swapOptions:swapOptions,MKT_BY_CHIP:MKT_BY_CHIP};"
 )();

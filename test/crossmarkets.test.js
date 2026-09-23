@@ -230,8 +230,12 @@ test("the 1.5 rung of the family belongs to every book that sells it, all three 
      and the slider builds a leg the reader's bookmaker will refuse, taking the
      whole ticket with it. Name a book too few and the opposite happens: the
      chip sends a reader who could book it to a bookmaker they do not use. */
-  const BOOK_ONLY = new Function(
+  const ALL = new Function(
     "return " + src.match(/var BOOK_ONLY=(\{[\s\S]*?\});/)[1] + ";")();
+  /* The table holds more than this family since total shots joined it (23 Sep
+     2026, SportyBet and Bet9ja only); this test is about the 1.5 rung. */
+  const BOOK_ONLY = {};
+  Object.keys(ALL).filter((k) => /^MIX/.test(k)).forEach((k) => { BOOK_ONLY[k] = ALL[k]; });
   assert.deepEqual(Object.keys(BOOK_ONLY).sort(),
     ["MIX_1_OV_1.5", "MIX_2_OV_1.5", "MIX_X_OV_1.5"]);
   /* Three books now, and the third was read off Betpawa's own card by
@@ -251,11 +255,20 @@ test("the chip's book list and the market map cannot drift apart", () => {
      moment one of them learned about BetKing. */
   const BOOK_ONLY = new Function(
     "return " + src.match(/var BOOK_ONLY=(\{[\s\S]*?\});/)[1] + ";")();
-  const books = [...new Set(Object.values(BOOK_ONLY).flat())].sort();
-  const onlys = [...src.matchAll(/only:\[([^\]]+)\]/g)]
-    .map((m) => m[1].replace(/["']/g, "").split(",").map((s) => s.trim()).sort());
-  assert.ok(onlys.length >= 2, "the 1.5-rung chips no longer declare a book list");
-  onlys.forEach((o) => assert.deepEqual(o, books));
+  /* Checked chip by chip since a second family narrows the book (total shots,
+     SportyBet and Bet9ja): each chip's `only` must equal BOOK_ONLY for every
+     code behind it, through the same MKT_BY_CHIP table the builders read. */
+  const BY_CHIP = new Function(
+    "return " + src.match(/var MKT_BY_CHIP=(\{[\s\S]*?\});/)[1] + ";")();
+  const chips = [...src.matchAll(/\{k:"([a-z0-9]+)"[^}]*?only:\[([^\]]+)\]/g)]
+    .map((m) => ({ k: m[1], only: m[2].replace(/["']/g, "").split(",").map((s) => s.trim()).sort() }));
+  assert.ok(chips.length >= 3, "the book-narrowing chips no longer declare a book list");
+  chips.forEach((c) => {
+    const codes = BY_CHIP[c.k] || [];
+    assert.ok(codes.length, "chip " + c.k + " has no codes");
+    codes.forEach((code) => assert.deepEqual([].concat(BOOK_ONLY[code] || []).sort(), c.only,
+      "chip " + c.k + " says " + c.only + " but " + code + " is limited to " + BOOK_ONLY[code]));
+  });
 });
 
 test("the chip asks before it narrows which bookmakers the slip can go to", () => {
@@ -657,6 +670,7 @@ test("the combinations sit at the tier their record earned", () => {
      actually returns. */
   const allowed = new Function(
     (src.match(/var CORNER_CODES=\[[^\]]*\];/) || [""])[0] +
+    (src.match(/var SHOTS_CODES=\[[^\]]*\];/) || [""])[0] +
     grab("allowedMarkets") + String.fromCharCode(10) +
     "return allowedMarkets;")();
   const safe = allowed(0);

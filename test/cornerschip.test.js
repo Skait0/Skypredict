@@ -40,3 +40,12 @@ test("every other market is untouched by the gate", () => {
     assert.equal(cornersOpen({}, c), true, c);
   }
 });
+
+test("the same gate holds a total-shots line to what SportyBet quotes", () => {
+  /* Lines move with the game - Kosovo v Ireland centred near 21.5, Portugal v
+     Wales near 27.5 - so a line the feed does not carry is not a leg. */
+  const f = { sportyOdds: { "SHOTS_OV_24.5": 1.41, "SHOTS_OV_25.5": 1.67 } };
+  assert.equal(cornersOpen(f, "SHOTS_OV_24.5"), true);
+  assert.equal(cornersOpen(f, "SHOTS_OV_21.5"), false);
+  assert.equal(cornersOpen({}, "SHOTS_OV_24.5"), false);
+});
