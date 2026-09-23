@@ -90,6 +90,31 @@ const LEAGUES = {
   394: "Moldova Super Liga",
   261: "Luxembourg BGL Ligue",
   110: "Wales Cymru Premier",
+
+  /* The second wave - see the second block of HARVEST_EXTRA. Two ids can
+     name one league of ours: API-Football splits the Primera Federacion into
+     its groups and Uruguay into Apertura and Clausura, while SportyBet files
+     each under one label. */
+  80: "Germany 3. Liga",
+  63: "France Ligue 3",
+  138: "Italy Serie C, Group A",
+  942: "Italy Serie C, Group B",
+  943: "Italy Serie C, Group C",
+  435: "Spain Primera Federacion",
+  436: "Spain Primera Federacion",
+  72: "Brazil Brasileiro Serie B",
+  129: "Argentina Primera Nacional",
+  219: "Austria 2. Liga",
+  494: "Greece Super League 2",
+  506: "Slovakia 2. Liga",
+  173: "Bulgaria Vtora Liga",
+  114: "Sweden Superettan",
+  263: "Mexico Liga de Expansion MX",
+  255: "USA USL Championship",
+  239: "Colombia Liga DIMAYOR",
+  268: "Uruguay Primera Division",
+  270: "Uruguay Primera Division",
+  265: "Chile Primera Division",
 };
 
 function key() {
