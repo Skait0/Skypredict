@@ -15414,7 +15414,9 @@ function winCardBlob(sp){
            measured first, and only the market label gives up width. */
         var sc=(l.hg!=null&&l.ag!=null)?"  "+l.hg+"-"+l.ag:"";
         var scW=sc?x.measureText(sc).width:0, lab=(l.label||l.code||"");
-        while(x.measureText(lab).width>300-scW&&lab.length>6) lab=lab.slice(0,-2);
+        var cut=false;
+        while(x.measureText(lab+(cut?"…":"")).width>300-scW&&lab.length>6){ lab=lab.slice(0,-1); cut=true; }
+        if(cut) lab=lab.replace(/\s+$/,"")+"…";
         x.fillText(lab+sc,W-72,y); x.textAlign="left";
         y+=72;
       });
