@@ -15472,7 +15472,12 @@ function renderSlipOfDay(){
   var host=$("sotd"); if(!host) return;
   /* onDay() now keeps today's kicked-off games for the board; a slip must not
      offer them, so filter back to what can still be booked. */
-  var games=onDay().filter(notStarted); if(!games.length) games=ahead();
+  /* A slip needs two legs, so one game left today is the same as none: the
+     card rendered empty on 23 Sep with a single Rubin Kazan fixture on the
+     board, because the fall-back only fired on a completely empty day. The
+     day is chosen from the candidates below, which keeps the slip on today
+     whenever today can actually fill one. */
+  var games=onDay().filter(notStarted); if(games.length<2) games=ahead();
   /* A cup tie between divisions is priced off an assumed gap between those
      divisions, not off anything measured - see TIER_EDGE in the build. It can
      sit on the board; it has no business in the slip built from the safest

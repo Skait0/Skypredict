@@ -118,3 +118,12 @@ test("the legs never span more than one day", () => {
   assert.ok(got.cand.every((c) => c.f.date === got.date),
     "a slip of the day is one day's slip");
 });
+
+test("one game left today is the same as none", () => {
+  /* The fall-back used to need an entirely empty day, so 23 September - one
+     fixture on the board - rendered an empty slip card instead of falling
+     forward. A slip takes two legs; one is not a slip. */
+  const m = src.match(/var games=onDay\(\)\.filter\(notStarted\); if\(games\.length(<2|!)/);
+  assert.ok(m && m[1] === "<2",
+    "the slip falls back only on a completely empty day again");
+});
