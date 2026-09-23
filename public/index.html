@@ -11141,8 +11141,12 @@ function attachEventIds(sporty,B){
   try{SPORTY_DEBUG=/[?&]debug=1\b/.test(location.search)||/\bdebug\b/.test(location.hash);}catch(e){}
   var byDate={};
   sporty.forEach(function(m){
-    if(!m.eventId||!m.startTime) return;
-    var k=new Date(m.startTime).toISOString().slice(0,10);
+    /* evStart rather than the raw field: a start time the feed sends in a
+       shape Date cannot read throws RangeError here, and this runs inside the
+       render. Same guard as the loop below. */
+    var _t=evStart(m);
+    if(!m.eventId||!isFinite(_t)) return;
+    var k=new Date(_t).toISOString().slice(0,10);
     (byDate[k]=byDate[k]||[]).push(m);
   });
   /* WHAT THIS BOOKMAKER HAS PUBLISHED, and it is much less than the board.
@@ -14249,12 +14253,27 @@ function feedMatch(l,to){
   if(!l||!l.home||!l.away||!list.length) return null;
   var ev={homeTeam:l.home,awayTeam:l.away,startTime:l.kickoff};
   var lh=normTeam(l.home),la=normTeam(l.away);
+  /* sameSlot wants a fixture-shaped first argument: kickoff as a string.
+     A LEG NEED NOT HAVE A KICKOFF. Some books hand one back with the slip and
+     some do not, so `new Date(l.kickoff).toISOString()` threw RangeError:
+     Invalid time value on a real reader's paste this morning - unhandled,
+     inside renderConvert, which took the whole converter down with it rather
+     than the one leg. Built once instead of per candidate, and left null when
+     there is no time to fence with: sameSlot already treats a missing kickoff
+     as "cannot rule it out", the same as fixtureByLeg does. */
+  /* new Date rather than Date.parse: a leg's kickoff arrives as an ISO string
+     from some books and as epoch milliseconds from others, and Date.parse
+     reads only the string. Date.parse(1789349400000) is NaN, which would drop
+     the fence on every numeric leg and let the same two teams a week later
+     match. Invalid input is an Invalid Date here, whose getTime is NaN and
+     which never throws. */
+  var _ko=(l.kickoff==null||l.kickoff==="")?NaN:new Date(l.kickoff).getTime();
+  var slot={kickoff:isFinite(_ko)?new Date(_ko).toISOString():null};
   var best=null,bestScore=0;
   for(var i=0;i<list.length;i++){
     var m=list[i];
     if(!m||!m.eventId) continue;
-    /* sameSlot wants a fixture-shaped first argument: kickoff as a string. */
-    if(!sameSlot({kickoff:new Date(l.kickoff).toISOString()},m)) continue;
+    if(!sameSlot(slot,m)) continue;
     if(normTeam(m.homeTeam)===lh&&normTeam(m.awayTeam)===la) return m;
     var sh=simTeams(l.home,m.homeTeam), sa=simTeams(l.away,m.awayTeam);
     if(sh>=0.6&&sa>=0.6&&(sh+sa)>bestScore){ bestScore=sh+sa; best=m; }
