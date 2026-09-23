@@ -123,7 +123,16 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/daily-codes.json
           git commit -m "Booking code for $(date -u +%Y-%m-%d)"
-          git push
+          # The job takes minutes and anything else pushing to main in that
+          # window rejects this push - which throws away a code that has
+          # already been booked at four bookmakers and cannot be re-minted
+          # without booking it again. Rebase and retry; the file is a map keyed
+          # by date, so a concurrent change to another day merges cleanly.
+          for i in 1 2 3; do
+            git pull --rebase --autostash origin main && git push && break
+            echo "push rejected - retrying ($i/3)"
+            sleep 5
+          done
           echo "minted=true" >> "$GITHUB_OUTPUT"
 
       # Tell the readers who asked. Deliberately after the commit and never in
