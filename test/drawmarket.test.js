@@ -208,8 +208,14 @@ test("draw_watch keys on evenness, and on a league key that resolves", () => {
      `matches`; the model is queried with idx.leagues[...]. Look it up with
      anything else and every fixture gets the default 1, the league term
      quietly does nothing, and nothing anywhere fails. */
-  assert.match(build, /drawLift\.get\(idx\.leagues\[li\]\)/,
+  /* Since 23 Sep the loop names its league once, as lgName, because a
+     national-team fixture is priced off a second fit whose league is
+     "International". For every club fixture lgName IS idx.leagues[li] - so
+     pin both halves: the lookup uses lgName, and lgName is that. */
+  assert.match(build, /drawLift\.get\(lgName\)/,
     "the lift must be looked up in the namespace matches actually use");
+  assert.match(build, /const lgName = isIntl \? INTL\.LEAGUE : idx\.leagues\[li\];/,
+    "lgName must be the model's own league name for every club fixture");
   assert.match(build, /acc\.get\(m\.league\)/,
     "and built in that same namespace");
 });

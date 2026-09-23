@@ -15482,7 +15482,10 @@ function renderSlipOfDay(){
      divisions, not off anything measured - see TIER_EDGE in the build. It can
      sit on the board; it has no business in the slip built from the safest
      numbers on the card. */
-  games=games.filter(function(f){return !f.cross_tier;});
+  /* National teams likewise, for the same reason the pick sorts them last:
+     no graded record of their own yet, and a minnow tie's 90% is the least
+     evidenced number on the board. */
+  games=games.filter(function(f){return !f.cross_tier && !f.intl;});
   var allowed=["1X","X2","OVER_1.5","1","2"], cand=[];
   games.forEach(function(f){
     var best=null;
