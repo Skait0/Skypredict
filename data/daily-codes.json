@@ -806,5 +806,74 @@
       "betpawa": "9W89HNW"
     },
     "odds": null
+  },
+  "2026-09-25": {
+    "date": "2026-09-25",
+    "generated": "2026-09-23T15:22:17.806Z",
+    "firstKickoff": "2026-09-25T18:30:00.000Z",
+    "legs": [
+      {
+        "date": "2026-09-25",
+        "home": "Inverness C",
+        "away": "Morton",
+        "league": "Scotland Championship",
+        "kickoff": "2026-09-25T18:45:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.8194,
+        "market": "1X",
+        "odd": 1.09
+      },
+      {
+        "date": "2026-09-25",
+        "home": "Raith Rvs",
+        "away": "Livingston",
+        "league": "Scotland Championship",
+        "kickoff": "2026-09-25T18:45:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.7768,
+        "market": "1X",
+        "odd": 1.38
+      },
+      {
+        "date": "2026-09-25",
+        "home": "Arbroath",
+        "away": "Queens Park",
+        "league": "Scotland Championship",
+        "kickoff": "2026-09-25T18:45:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.77,
+        "market": "1X",
+        "odd": 1.22
+      },
+      {
+        "date": "2026-09-25",
+        "home": "Ayr",
+        "away": "Stenhousemuir",
+        "league": "Scotland Championship",
+        "kickoff": "2026-09-25T18:45:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.7541,
+        "market": "X2",
+        "odd": 1.59
+      },
+      {
+        "date": "2026-09-25",
+        "home": "Girona",
+        "away": "Albacete",
+        "league": "Spain La Liga 2",
+        "kickoff": "2026-09-25T18:30:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.7186,
+        "market": "1X",
+        "odd": 1.14
+      }
+    ],
+    "codes": {
+      "sporty": "RQWKNC",
+      "bet9ja": "5SNDKD5",
+      "betking": "XG1VP5",
+      "betpawa": "XP8GCRZ"
+    },
+    "odds": 3.33
   }
 }
