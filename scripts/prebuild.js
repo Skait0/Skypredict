@@ -512,6 +512,12 @@ async function writePages(payload) {
      never goes in `paths`, because a sitemap is a list of pages that exist and
      listing a 404 asks a crawler to index the thing telling it to go away.
      Vercel serves public/404.html for any unmatched route on its own. */
+  /* /x drafts the day's posts for X. Like the 404 it stays out of `paths`:
+     it is the owner's desk, noindex and linked from nowhere. */
+  try {
+    fs.writeFileSync(path.join(PUB, "x.html"), P.renderXPosts(codeDays, resultOf));
+  } catch (e) { warn("x page failed: " + e.message); }
+
   let notFound = false;
   try {
     fs.writeFileSync(path.join(PUB, "404.html"), P.renderNotFound());
