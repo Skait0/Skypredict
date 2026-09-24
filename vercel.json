@@ -52,7 +52,7 @@
       "memory": 256
     },
     "api/tg.js": {
-      "maxDuration": 40,
+      "maxDuration": 60,
       "memory": 256
     }
   },

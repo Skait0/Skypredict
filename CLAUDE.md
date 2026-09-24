@@ -10,6 +10,14 @@ not in memory.
 **Start sessions from this directory**: `cd C:\Users\DELL\Desktop\Skypredict`
 then `claude`.
 
+**Two standing rules from the owner (24 Sep 2026):**
+1. **Query graphify first.** Every question about this codebase starts with
+   `graphify query "<question>"` (or `path` / `explain`), before grep or Read.
+2. **Every save-session updates the `prediction-site` skill** (in
+   `~/.claude/skills/prediction-site`) with what the session learned, and
+   refreshes the graph: `node scripts/graphify-inline.js`, then
+   `graphify update .`.
+
 ## What this is
 
 Football predictions and free bookmaker booking codes. One static page

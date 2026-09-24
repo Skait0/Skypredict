@@ -18,7 +18,7 @@ async function tg(method, body) {
 (async () => {
   if (!token) { console.log("no TELEGRAM_BOT_TOKEN"); process.exit(1); }
   await tg("setWebhook", { url: SITE + "/api/tg", secret_token: secretFor(token),
-    allowed_updates: ["message"], drop_pending_updates: true });
+    allowed_updates: ["message", "callback_query"], drop_pending_updates: true });
   await tg("setMyCommands", { commands: [{ command: "start", description: "What I do" }] });
   await tg("setMyShortDescription", { short_description:
     "Send any SportyBet, Bet9ja, BetKing or betPawa code. Get our model's read on every game." });

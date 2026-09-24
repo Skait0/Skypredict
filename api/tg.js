@@ -18,6 +18,9 @@
 const crypto = require("crypto");
 const { UPSTREAM } = require("../lib/upstream.js");
 const D = require("../lib/doctor.js");
+const CONVERT = require("../lib/convert.js");
+const SB = require("../lib/supabase.js");
+const QUOTA = require("../lib/quota.js");
 
 const SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
 const ORDER = ["sporty", "bet9ja", "betking", "betpawa"];
@@ -52,11 +55,76 @@ const HELLO =
   "Paste the code on its own, or a share link. Say which bookie if you know it.\n\n" +
   "Daily codes: @soccerwizardTG · <a href=\"" + SITE + "\">soccerwizard.live</a>\n<i>18+</i>";
 
+/* CONVERSIONS IN THE BOT: FIVE A DAY PER PERSON (owner's call, 24 Sep). The
+   doctor is unlimited; converting books a real code at a bookmaker, so it is
+   counted in book_quota like every site booking, under a hashed Telegram id
+   and src "tgbot". A count we cannot read lets the conversion through, the
+   same fail-open rule the site's gate uses - an outage of ours is not the
+   reader's problem. The cap is the funnel: past it, the site does unlimited. */
+const CONVERT_CAP = 5;
+const subjectOf = (uid) => "tg-" + crypto.createHash("sha256")
+  .update((process.env.SW_QUOTA_PEPPER || "") + ":" + uid).digest("hex").slice(0, 24);
+
+/* One button per other book, under every doctor reply. */
+function convertButtons(from, code) {
+  const row = ORDER.filter((b) => b !== from).map((b) => ({
+    text: "🔁 " + D.BOOK_NAMES[b], callback_data: ["cv", b, from, code].join("|") }));
+  return { inline_keyboard: [row] };
+}
+
+async function onConvert(cq) {
+  const chat = cq.message && cq.message.chat;
+  if (!chat || chat.type !== "private") return;
+  const [tag, to, from, code] = String(cq.data || "").split("|");
+  if (tag !== "cv" || !ORDER.includes(to) || !ORDER.includes(from) || !/^[A-Z0-9]{4,16}$/.test(code || "")) return;
+  const say = (text) => tg("sendMessage", { chat_id: chat.id, text, parse_mode: "HTML",
+    disable_web_page_preview: true, reply_to_message_id: cq.message.message_id });
+  const subject = subjectOf(cq.from && cq.from.id);
+  const day = QUOTA.dayOf(Date.now());
+  const used = await SB.countBookings(subject, day, CONVERT_CAP).catch(() => ({ ok: false, n: null }));
+  if (used.ok && used.n >= CONVERT_CAP) {
+    await say("🔥 That's your " + CONVERT_CAP + " conversions for today.\n\n" +
+      "Want more? The converter on <a href=\"" + SITE + "/?book=" + from + "&code=" + code + "&go=convert\">soccerwizard.live</a> " +
+      "does it with no daily limit, plus the slip builder and every graded code 🧙");
+    return;
+  }
+  tg("sendChatAction", { chat_id: chat.id, action: "typing" }).catch(() => {});
+  const legs = await readCode(from, code);
+  if (!legs) { await say("That code can't be read any more - it may have expired or its games started."); return; }
+  const r = await CONVERT.convert(legs, to);
+  if (!r.code) {
+    await say("😤 " + D.BOOK_NAMES[to] + " couldn't take this one" + (r.error ? " - " + esc(r.error) : "") +
+      ". Try another bookie, or <a href=\"" + SITE + "/?book=" + from + "&code=" + code + "&go=convert\">the full converter</a>.");
+    return;
+  }
+  await SB.recordBooking(subject, day, "tgbot").catch(() => {});
+  const left = used.ok ? Math.max(0, CONVERT_CAP - used.n - 1) : null;
+  const stuck = r.stuck || [];
+  const out = ["🔁 <b>" + D.BOOK_NAMES[to] + ": <code>" + r.code + "</code></b> 🔥",
+    r.booked.length + " of " + legs.length + " games crossed."];
+  if (stuck.length) out.push("Left behind: " + stuck.slice(0, 4).map((s) =>
+    esc((s.leg.home || "") + " v " + (s.leg.away || "")) + " (" + esc(s.why) + ")").join("; ") +
+    (stuck.length > 4 ? "; +" + (stuck.length - 4) + " more" : ""));
+  if ((r.changed || []).length) out.push("Line moved to what " + D.BOOK_NAMES[to] + " sells on " + r.changed.length + " leg" + (r.changed.length === 1 ? "" : "s") + ".");
+  out.push("", (left != null ? "⚡ " + left + " conversion" + (left === 1 ? "" : "s") + " left today. " : "") +
+    "Unlimited, plus the slip builder, on <a href=\"" + SITE + "\">soccerwizard.live</a> 🧙", "<i>18+</i>");
+  await say(out.join("\n"));
+}
+
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ ok: false });
   const token = TOKEN();
   if (!token || req.headers["x-telegram-bot-api-secret-token"] !== secretFor(token)) {
     return res.status(401).json({ ok: false });
+  }
+  const cq = req.body && req.body.callback_query;
+  if (cq) {
+    /* Stop the button's spinner first; the work can take a few seconds. */
+    await tg("answerCallbackQuery", { callback_query_id: cq.id, text: "On it 🧙" }).catch(() => {});
+    try { await onConvert(cq); } catch (e) { /* the reader can tap again */ }
+    return res.status(200).json({ ok: true });
   }
   const msg = req.body && req.body.message;
   if (!msg || !msg.chat || msg.chat.type !== "private" || typeof msg.text !== "string") {
@@ -84,7 +152,9 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
     const pay = await (await fetch(SITE + "/predictions.json")).json().catch(() => ({}));
-    await say(D.reply(used, code, legs, (pay && pay.fixtures) || [], SITE));
+    await tg("sendMessage", { chat_id: chat, text: D.reply(used, code, legs, (pay && pay.fixtures) || [], SITE),
+      parse_mode: "HTML", disable_web_page_preview: true, reply_to_message_id: msg.message_id,
+      reply_markup: convertButtons(used, code) });
   } catch (e) {
     await say("Something went wrong reading that code. Try again in a minute.").catch(() => {});
   }
