@@ -1,8 +1,14 @@
-# Send any Telegram post that is due, on demand - without the mint run.
-# The daily run does the same as its last step; this is for catching up.
+# Telegram channel, on demand, without the mint run.
+#   - no input: send any daily post that is due (the daily run does the same)
+#   - pin_text: post that text and pin it in place of the current pin
 name: Telegram posts
 on:
   workflow_dispatch:
+    inputs:
+      pin_text:
+        description: "Text to post and pin (leave empty to send due posts)"
+        required: false
+        default: ""
 permissions:
   contents: write
 jobs:
@@ -13,7 +19,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Pin
+        if: ${{ inputs.pin_text != '' }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_PIN_TEXT: ${{ inputs.pin_text }}
+        run: node scripts/tgpin.js
       - name: Send
+        if: ${{ inputs.pin_text == '' }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
