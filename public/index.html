@@ -2817,24 +2817,25 @@ html{interpolate-size:allow-keywords}
 .risk-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
 .risk-name{font-size:20px;font-weight:800;letter-spacing:-.01em}
 .risk-sub{font-size:13px;color:var(--soft);font-weight:600;text-align:right}
-.risk-wrap{position:relative;padding-top:8px}
-.risk{-webkit-appearance:none;appearance:none;width:100%;height:10px;border-radius:99px;
-  background:var(--raise);outline:none;cursor:pointer;
+.risk-wrap{position:relative;padding-top:40px;margin-top:-6px}
+.risk{-webkit-appearance:none;appearance:none;width:100%;height:12px;border-radius:99px;
+  background:var(--raise);outline:none;cursor:pointer;touch-action:pan-y;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.45);
   background-image:linear-gradient(90deg,var(--green),var(--win) 55%,var(--red));
   background-repeat:no-repeat;background-size:var(--fill,45%) 100%}
 .risk::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;
-  border-radius:50%;background:radial-gradient(circle at 38% 32%,#fff,#e6e6ea);border:3px solid var(--bg);
+  border-radius:50%;background:radial-gradient(circle at 38% 32%,#fff,#e6e6ea);border:4px solid var(--zc,var(--bg));
   box-shadow:0 2px 8px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.15),0 0 0 0 var(--rz,rgba(230,57,70,0));
-  transition:box-shadow .18s ease,transform .12s ease;cursor:grab}
-.risk::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#fff,#e6e6ea);
-  border:3px solid var(--bg);box-shadow:0 2px 8px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.15);transition:box-shadow .18s ease;cursor:grab}
+  transition:box-shadow .18s ease,transform .22s cubic-bezier(.34,1.56,.64,1),border-color .18s ease;cursor:grab}
+.risk::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#fff,#e6e6ea);
+  border:4px solid var(--zc,var(--bg));box-shadow:0 2px 8px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.15);transition:box-shadow .18s ease;cursor:grab}
 .risk:focus-visible::-webkit-slider-thumb{box-shadow:0 2px 8px rgba(0,0,0,.45),0 0 0 4px rgba(230,57,70,.5)}
 .risk:focus-visible{outline:2px solid var(--red);outline-offset:4px}
 .risk:active::-webkit-slider-thumb{transform:scale(1.14);box-shadow:0 4px 16px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.15),0 0 0 8px var(--rz,rgba(230,57,70,.25))}
 /* Zone-tinted panel accent: green in safe, gold in balanced, red in risky. */
-.slider-panel[data-zone="safe"]{--rz:rgba(43,199,120,.35);border-color:rgba(43,199,120,.4)}
-.slider-panel[data-zone="mid"]{--rz:rgba(242,184,75,.4);border-color:rgba(242,184,75,.4)}
-.slider-panel[data-zone="risky"]{--rz:rgba(230,57,70,.4);border-color:rgba(230,57,70,.45)}
+.slider-panel[data-zone="safe"]{--rz:rgba(43,199,120,.35);--zc:var(--green);border-color:rgba(43,199,120,.4)}
+.slider-panel[data-zone="mid"]{--rz:rgba(242,184,75,.4);--zc:var(--win);border-color:rgba(242,184,75,.4)}
+.slider-panel[data-zone="risky"]{--rz:rgba(230,57,70,.4);--zc:var(--red);border-color:rgba(230,57,70,.45)}
 .slider-panel[data-zone="safe"] .risk-name{color:var(--green)}
 .slider-panel[data-zone="mid"] .risk-name{color:var(--win-ink)}
 .slider-panel[data-zone="risky"] .risk-name{color:var(--red-ink)}
@@ -2847,12 +2848,32 @@ html{interpolate-size:allow-keywords}
 .risk::-webkit-slider-runnable-track{background:transparent}
 .risk::-moz-range-track{background:transparent}
 .risk::-ms-fill-lower{background:linear-gradient(90deg,var(--green),var(--win) 55%,var(--red));border-radius:99px}
-.risk-bubble{position:absolute;top:-24px;left:45%;transform:translateX(-50%);background:var(--text);
-  color:var(--bg);font-size:11px;font-weight:800;padding:4px 9px;border-radius:var(--r-sm);white-space:nowrap;
-  pointer-events:none;transition:left .08s ease-out;box-shadow:0 4px 12px rgba(0,0,0,.35)}
-.risk-bubble::after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);
-  border:5px solid transparent;border-top-color:var(--text)}
-.risk:active~.risk-bubble{transform:translateX(-50%) scale(1.08)}
+/* THE ODDS BUBBLE RIDES THE THUMB. --v (0-100) is written on .risk-wrap on
+   every input event, so the bubble moves in the same frame as the thumb; it
+   used to be placed from renderBuilder, which runs after the slip rebuild and
+   so trailed the finger by a rebuild on a phone. No transition on position -
+   any easing there is lag by definition.
+   left is the thumb's centre (28px thumb: 14px in at 0, 14px short at 100).
+   The body shifts by -v% of its own width and the tail sits at v% inside it,
+   so the tail always points at the thumb while the body slides along to stay
+   inside the track at both ends instead of hanging off the panel. */
+.risk-bubble{position:absolute;top:0;left:calc(var(--v,45)*1% + 14px - var(--v,45)*.28px);
+  --tail:clamp(12px,calc(var(--v,45)*1%),calc(100% - 12px));
+  translate:calc(-1*var(--tail)) 0;transform-origin:var(--tail) 100%;
+  background:var(--text);color:var(--bg);font-size:12px;font-weight:800;padding:5px 10px;
+  border-radius:99px;white-space:nowrap;pointer-events:none;font-variant-numeric:tabular-nums;
+  display:inline-flex;align-items:center;gap:6px;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1);box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.risk-bubble::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--zc,var(--red));
+  transition:background .18s ease}
+.risk-bubble i{font-style:normal;font-weight:700;opacity:.6;font-size:11px}
+.risk-bubble::after{content:"";position:absolute;left:var(--tail);top:100%;
+  transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--text)}
+/* The shift lives in `translate` and is never transitioned; only the lift on
+   press (transform) springs. One transition on both made the body ease behind
+   its own tail. */
+.risk:active~.risk-bubble{transform:translateY(-4px) scale(1.06)}
+@media (prefers-reduced-motion:reduce){.risk-bubble,.risk::-webkit-slider-thumb{transition:none}}
 .mkts{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px;padding-top:15px;border-top:1px solid var(--line-soft)}
 .mkt{font-size:12px;font-weight:700;padding:6px 11px;border-radius:99px;
   background:var(--raise);color:var(--faint);border:1px solid transparent;transition:all .15s}
@@ -7255,7 +7276,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
         <span class="risk-name" id="riskName">-</span>
         <span class="risk-sub" id="riskSub"></span>
       </div>
-      <div class="risk-wrap stage-in stage-in-4"><input type="range" id="risk" class="risk" min="0" max="100" value="45"
+      <div class="risk-wrap stage-in stage-in-4"><input type="range" id="risk" class="risk" min="0" max="100" step="any" value="45"
         aria-label="Risk level"><span class="risk-bubble" id="riskBubble">-</span></div>
       <div class="risk-ticks stage-in stage-in-5"><span>Safe</span><span>Balanced</span><span>Risky</span></div>
     </div>
@@ -19553,7 +19574,7 @@ function renderSliderPanel(){
   var displayRisk = firstVisit ? 45 : BUILD.risk;
   var p = riskParams(displayRisk);
   $("risk").value=displayRisk;
-  (function(){var _r=$("risk");if(_r){_r.style.setProperty("--fill",displayRisk+"%");_r.style.backgroundSize=displayRisk+"% 100%";
+  (function(){var _r=$("risk");if(_r){paintRiskTrack(_r,displayRisk);
     var _z=displayRisk<33?"safe":displayRisk<66?"mid":"risky";var _sp=$("sliderPanel");if(_sp)_sp.setAttribute("data-zone",_z);
     _r.style.setProperty("--rz",_z==="safe"?"rgba(43,199,120,.35)":_z==="mid"?"rgba(242,184,75,.4)":"rgba(230,57,70,.4)");}})();
   $("riskName").textContent=firstVisit ? "-" : riskWord(BUILD.risk);
@@ -19986,12 +20007,6 @@ function renderBuilderOutput(){
         "against odds."
       : "";
   }
-  // Risk bubble
-  var _rb=$("riskBubble");
-  if(_rb){ _rb.style.left="calc("+displayRisk+"% + "+(13-displayRisk*0.26)+"px)";
-    _rb.textContent=firstVisit ? "-" : (picks.length
-      ? picks.length+" game"+(picks.length===1?"":"s")
-      : "No games"); }
   /* Risk sub text.
      When the slip is smaller than the dial asked for, say so and say why.
      Reported as "the slider being stuck at 9 games": on a narrow window - Today
@@ -20007,6 +20022,14 @@ function renderBuilderOutput(){
   // Stats
   var odds=totalOdds(picks);
   var real=oddsAreReal(picks), pre=real?"\u00d7":"~\u00d7";
+  /* The bubble on the thumb previews the odds - the number the reader is
+     dragging for - with the game count beside it. Position is not set here:
+     the input handler owns it, so it never waits for this rebuild. */
+  var _rb=$("riskBubble");
+  if(_rb){ _rb.innerHTML=firstVisit ? "Drag me" : (picks.length
+      ? "<b>"+pre+(odds>=100?Math.round(odds).toLocaleString("en"):odds.toFixed(2))+"</b><i>"+
+        picks.length+" game"+(picks.length===1?"":"s")+"</i>"
+      : "No games"); }
   var avg=picks.length?picks.reduce(function(t,c){return t+c.p;},0)/picks.length:0;
   /* On a jackpot ticket the confidence tile is dropped rather than shown.
      It reads as the chance of the slip and it is nothing of the kind - it is
@@ -20160,13 +20183,26 @@ function renderBuilderOutput(){
 }
 
 renderFab();
-var RISK_RAF=0;
+/* Fill ends under the thumb's centre, not at v% of the track, and --v on the
+   wrap places the odds bubble - both in the same call, so they cannot part. */
+function paintRiskTrack(el,v){
+  el.style.backgroundSize="calc("+v+"% + "+(14-v*0.28)+"px) 100%";
+  if(el.parentNode) el.parentNode.style.setProperty("--v",v);
+}
+/* The rebuild is held to one per ~90ms during a drag. rAF alone still ran it
+   every frame, and on a phone a 50-60ms rebuild every frame keeps the main
+   thread busy enough that the thumb stutters behind the finger. The thumb,
+   fill and bubble do not wait for it; only the slip and the odds text do. */
+var RISK_RAF=0, RISK_LAST=0;
+function riskFrame(t){
+  if(t-RISK_LAST<90){ RISK_RAF=requestAnimationFrame(riskFrame); return; }
+  RISK_RAF=0; RISK_LAST=t; renderBuilder();
+}
 $("risk").addEventListener("input",function(){
   BUILD.risk=+this.value; BUILD.touched=true;
   try{localStorage.setItem("sw.risk",BUILD.risk);}catch(e){}
   var pct=+this.value;
-  this.style.setProperty('--fill',pct+'%');
-  this.style.backgroundSize=pct+'% 100%';
+  paintRiskTrack(this,pct); // backgroundSize and bubble, this frame
   var zone=pct<33?"safe":pct<66?"mid":"risky";
   var sp=$("sliderPanel"); if(sp){var prev=sp.getAttribute("data-zone");sp.setAttribute("data-zone",zone);
     if(prev&&prev!==zone&&navigator.vibrate)navigator.vibrate(8);}
@@ -20184,14 +20220,14 @@ $("risk").addEventListener("input",function(){
      The cheap parts above - fill, zone, ticks, haptic - still run on every
      event, so the track keeps up with the thumb. Only the slip rebuild waits
      for the frame, and a queued one is never stacked. */
-  if(!RISK_RAF) RISK_RAF=requestAnimationFrame(function(){ RISK_RAF=0; renderBuilder(); });
+  if(!RISK_RAF) RISK_RAF=requestAnimationFrame(riskFrame);
 });
 /* And once more when the drag ends, so the slip always settles on the value
    the thumb was finally left at rather than on the last frame that happened to
    render. */
 $("risk").addEventListener("change",function(){
   if(RISK_RAF){ cancelAnimationFrame(RISK_RAF); RISK_RAF=0; }
-  renderBuilder();
+  RISK_LAST=performance.now(); renderBuilder();
 });
 paintScope();
 (function(){

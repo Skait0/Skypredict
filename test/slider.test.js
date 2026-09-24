@@ -184,3 +184,15 @@ test("Asia stays on its own stricter bar", () => {
   assert.match(src.slice(i, i + 160), /ASIA_MIN_EURO/,
     "Asia keeps the absolute floor");
 });
+
+test("the odds bubble follows the thumb without waiting for the rebuild", () => {
+  /* The bubble used to be placed from renderBuilder, so on a phone it trailed
+     the thumb by a whole slip rebuild. Its position now comes from --v, written
+     by paintRiskTrack in the same input event that moves the thumb. */
+  const h = riskHandler();
+  const immediate = h.slice(0, h.indexOf("requestAnimationFrame"));
+  assert.match(immediate, /paintRiskTrack\(this,pct\)/, "track and bubble are painted at once");
+  assert.match(src, /function paintRiskTrack\(el,v\)\{[\s\S]{0,200}setProperty\("--v",v\)/,
+    "paintRiskTrack writes --v for the bubble");
+  assert.match(src, /_rb\.innerHTML=[\s\S]{0,120}odds/, "the bubble previews the odds");
+});
