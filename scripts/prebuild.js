@@ -718,6 +718,7 @@ function writeCard(payload) {
 function stampCard(png) {
   if (!process.env.VERCEL && !process.env.SPLIT) return;
   const v = require("crypto").createHash("sha1").update(png).digest("hex").slice(0, 8);
+  process.env.OG_V = v;   // read by lib/pages.js ogImage()
   const f = path.join(PUB, "index.html");
   try {
     const before = fs.readFileSync(f, "utf8");
@@ -734,8 +735,10 @@ function stampCard(png) {
 /* ------------------------------------------------------------------- run */
 (async () => {
   const payload = await bakePayload();
-  await writePages(payload);
+  /* Card first: stampCard hands its hash to the static pages through
+     OG_V, so every page's preview image changes address with the card. */
   writeCard(payload);
+  await writePages(payload);
   /* Before the split, so the hostname inside the big inline script - the
      share-image canvas - is rewritten while it is still in the page. */
   applyOrigin();

@@ -155,13 +155,31 @@ function advanceOf(ctx, font) {
   lx += 2 * advL;
   x.fillText(post, lx, baseY1);
 
-  x.textAlign = "center";
   /* "Free" came off the card on 3 Sep, with the same line on the page: it
      may not be free later, and a promise that has to be withdrawn is worth
-     less than one never made. Both books are named now because the site
-     books both, and the summary beside this card says so too. */
-  x.fillText("SportyBet or Bet9ja code in one tap", 784, 520);
-  x.textAlign = "left";
+     less than one never made.
+     ALL FOUR BOOKS, IN THEIR OWN COLOURS (24 Sep). It said "SportyBet or
+     Bet9ja" long after BetKing and betPawa went live, and it is the picture on
+     every shared link. The names take the same wordmark colours the site and
+     the entry screen use; the joining words stay in the line's grey. */
+  {
+    const NAME = "800 36px 'Plus Jakarta Sans', system-ui, sans-serif";
+    const segs = [
+      ["SportyBet", "#e63946", NAME], [", ", null],
+      ["bet", "#d42127", NAME], ["9ja", "#14b151", NAME], [", ", null],
+      ["Bet", "#f2f1f0", NAME], ["King", "#ffc400", NAME], [" or ", null],
+      ["bet", "#f2f1f0", NAME], ["Pawa", "#9ce800", NAME], [" code in one tap", null],
+    ];
+    const fontOf = (s) => s[2] || STYLES.leagues.font;
+    let total = 0;
+    for (const s of segs) { x.font = fontOf(s); total += x.measureText(s[0]).width; }
+    let sx = (W - total) / 2;
+    x.textAlign = "left";
+    for (const s of segs) {
+      x.font = fontOf(s); x.fillStyle = s[1] || STYLES.leagues.color;
+      x.fillText(s[0], sx, 520); sx += x.measureText(s[0]).width;
+    }
+  }
 
   /* ------------------------------------------------------------- the chip
      Same trick: the pill is sized around a two-cell gap, so it never has to
