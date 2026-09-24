@@ -34,8 +34,8 @@ function store(counts, opts) {
       if (o.fails) return { ok: false, why: "http 500", n: null };
       return { ok: true, n: counts[subject] == null ? 0 : counts[subject] };
     },
-    async recordBooking(subject, day) {
-      wrote.push({ subject, day });
+    async recordBooking(subject, day, src) {
+      wrote.push(src == null ? { subject, day } : { subject, day, src });
       return { ok: true };
     },
   };
@@ -146,6 +146,13 @@ test("recording files the same subject the gate counted", async () => {
   await G.makeGate(opts)(req());
   await G.makeRecorder(opts)(req());
   assert.deepEqual(db.wrote, [{ subject: "device-abc123", day: DAY }]);
+});
+
+test("recording files which surface booked it", async () => {
+  /* Attribution lives here because Vercel's log export drops query strings. */
+  const db = store({});
+  await G.makeRecorder({ db, deviceLimit: 10, now: () => at })(req({ query: { book: "sporty", src: "safer" } }));
+  assert.deepEqual(db.wrote, [{ subject: "device-abc123", day: DAY, src: "safer" }]);
 });
 
 test("recording an address-only request files the address bucket", async () => {

@@ -110,6 +110,36 @@ test("a booking is recorded as one row", async () => {
   assert.equal(body[0].day, "2026-09-08");
 });
 
+test("the booking's source rides along as its own column", async () => {
+  const { seen } = await withFetch(okJson(null),
+    () => DB.recordBooking("dev-abc", "2026-09-08", "safer"));
+  assert.equal(JSON.parse(seen[0].init.body)[0].src, "safer");
+  /* Anything that is not a short lowercase word never reaches the database. */
+  const { seen: s2 } = await withFetch(okJson(null),
+    () => DB.recordBooking("dev-abc", "2026-09-08", "x'; drop table"));
+  assert.equal("src" in JSON.parse(s2[0].init.body)[0], false);
+});
+
+test("a database without the src column still counts the booking", async () => {
+  /* Before the column is added PostgREST refuses the row with a 400. Losing it
+     would quietly switch the daily limit off, so it is written again without. */
+  let n = 0;
+  const reply = async () => (++n === 1
+    ? { ok: false, status: 400, text: async () => JSON.stringify({ code: "PGRST204", message: "Could not find the 'src' column" }) }
+    : { ok: true, status: 201, text: async () => "" });
+  const { out, seen } = await withFetch(reply, () => DB.recordBooking("dev-abc", "2026-09-08", "board"));
+  assert.equal(out.ok, true);
+  assert.equal(seen.length, 2);
+  assert.equal("src" in JSON.parse(seen[1].init.body)[0], false);
+});
+
+test("an outage is not retried - the reader is waiting", async () => {
+  const fail = async () => ({ ok: false, status: 503, text: async () => "down" });
+  const { out, seen } = await withFetch(fail, () => DB.recordBooking("dev-abc", "2026-09-08", "board"));
+  assert.equal(out.ok, false);
+  assert.equal(seen.length, 1);
+});
+
 test("a failed write is reported, not swallowed", async () => {
   const fail = async () => ({ ok: false, status: 500, text: async () => "boom" });
   const { out } = await withFetch(fail, () => DB.recordBooking("dev-abc", "2026-09-08"));

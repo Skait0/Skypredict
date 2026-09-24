@@ -45,3 +45,18 @@ alter table public.book_quota enable row level security;
 -- Run it from the Supabase SQL editor, or schedule it with pg_cron if this
 -- table ever grows fast enough to matter.
 create index if not exists book_quota_day_idx on public.book_quota (day);
+
+-- WHICH SURFACE BOOKED IT (added 24 Sep 2026). bookFetch sends &src= -
+-- board, builder, wizard, slider, split, convert, editor, safer, myslip - and
+-- Vercel's log export drops query strings, so this column is the only place
+-- attribution can be counted. Null on rows from before it existed, and on any
+-- booking that sent none. Exempt devices (ours) are never recorded here, so
+-- our own testing stays out of it. Safe to run on a live table: the code
+-- writes src only when the column accepts it and retries without otherwise.
+alter table public.book_quota add column if not exists src text;
+
+-- Reading it:
+--   select day, coalesce(src, 'unknown') as src, count(*) as bookings
+--   from public.book_quota
+--   where day >= current_date - 7
+--   group by 1, 2 order by 1 desc, 3 desc;
