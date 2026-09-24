@@ -83,7 +83,6 @@
 <!-- The mark that rides the sphere on the offer card. Fetched with the
      stylesheet rather than when the CSS background is first needed, because
      the roll begins the instant the card paints and does not wait for it. -->
-<link rel="preload" as="image" href="/wiz-orb-ball.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- The webfont must not hold up the first paint.
@@ -186,22 +185,6 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
   window.addEventListener("unhandledrejection",function(ev){
     try{window.__swErr.push({m:"unhandled: "+String((ev.reason&&ev.reason.message)||ev.reason)});}catch(_){}
   });
-})();
-/* Hold the sphere still until its mark has arrived, so the first thing anyone
-   sees is the S facing them rather than the blank back of the ball turning
-   into view. Decode rather than load, so the class lands when it can actually
-   be painted. Fails open: if the image never arrives the class is set anyway
-   after a moment, and a still ball beats a permanently frozen one. */
-(function(){
-  var go=function(){ document.documentElement.classList.add("orb-ready"); };
-  try{
-    var im=new Image();
-    im.onload=function(){ (im.decode?im.decode():Promise.resolve()).then(go,go); };
-    im.onerror=go;
-    im.src="/wiz-orb-ball.png";
-    if(im.complete) go();
-  }catch(e){ go(); }
-  setTimeout(go,4000);
 })();
 (function(){
   window.__swInstallEvent=null;
@@ -1401,97 +1384,25 @@ html.tapped .list-hint{display:none}
 /* Deliberately nothing here: this used to restyle the button whenever the
    panel was hovered, which meant hovering the button itself did nothing
    extra. Each button now owns its own hover. */
-/* The orb is a ball turning on its own axis: the SportyBet mark rides the
-   surface, slides off at one edge, and comes round the back to reappear at
-   the other. It rests facing us between turns.
-   CSS cannot wrap a texture onto a sphere, so this is the illusion every
-   rolling-planet effect uses, and it holds up because it obeys the three
-   things the eye actually checks.
-   The mark is squeezed horizontally as it nears an edge. A point on a
-   turning sphere is seen at cos(angle) of its width, so it thins to nothing
-   at the limb instead of walking off at full size like a sticker.
-   Its speed follows sin(angle) - quickest across the middle, slowest at the
-   edges - which is why the timing is set per segment rather than for the
-   whole loop: it eases OUT as it leaves the centre and IN as it returns.
-   A single ease-in-out would have it crawl through the middle, which is the
-   one place a real ball moves fastest.
-   And the shading does not travel with the mark. The light is fixed in the
-   room, so the highlight and the dark limb stay put while the surface turns
-   under them; painting that layer above the mark is what dims the mark as
-   it reaches the edge.
-   The ball itself is drawn rather than fetched - a gradient is a sphere's
-   shading, which is all a plain ball is. */
-.sc-orb{flex-shrink:0;width:44px;height:44px;margin-top:0;border-radius:50%;
-  position:relative;overflow:hidden;
-  background:radial-gradient(circle at 34% 28%,#ffffff 0%,#f4f3f1 46%,#dcd8d2 78%,#bdb7ae 100%);
-  filter:drop-shadow(0 0 5px rgba(255,255,255,.4));
+/* THE ORB IS A FOOTBALL, DRAWN LIVE (24 Sep 2026). It used to be SportyBet's
+   "S" sliding across a white gradient - a flat picture faking a turn, blank
+   for part of every loop, and a bookmaker's badge above a button that already
+   names whichever of the four books the reader is on. Now it is a real
+   truncated icosahedron - 12 pentagons, 20 hexagons - rolling on a tilted
+   axis in a canvas, lit and shaded per pixel (drawOrbBall, near the end of
+   the page). The owner picked the look from three: white panels, the
+   wizard's robe red on the pentagons, gold seams. All the ball's own light
+   and shading is in the drawing; this box only sizes it and breathes the
+   glow around it. */
+.sc-orb{flex-shrink:0;width:44px;height:44px;margin-top:0;border-radius:50%;display:block;
+  filter:drop-shadow(0 0 5px rgba(255,255,255,.35));
   animation:orbBreath 3.4s ease-in-out infinite}
-/* Just the panels and seams, on transparency - a whole orb image cannot ride
-   a surface. */
-/* Multiplied into the ball rather than laid over it. Drawn normally the mark
-   keeps its own flat brightness wherever it sits, so the sphere darkens
-   toward the edge and the S does not - and the eye reads that as a sticker
-   floating above the surface. Multiplying makes it take the shading beneath
-   it, so it dims into the limb with everything else and looks painted on. */
-/* The roll waits for the mark. It used to start the moment the card painted,
-   while the PNG behind it was still on the wire - so a fresh load showed a
-   blank ball, and by the time the image landed the animation had already
-   carried it off to one side or round the back. That is the "starts on a
-   blank side": nothing was wrong with the timing, the thing being timed had
-   not arrived. The html class is set the moment the image decodes, so the
-   turn always begins with the mark facing forward. */
-/* OUR BALL, NOT A BOOKMAKER'S BADGE (24 Sep 2026). It carried SportyBet's
-   "S" while the button under it already named whichever of the four books
-   the reader is on - a betPawa reader watched SportyBet's logo spin above a
-   betPawa slip. Now the ball is a football, red panels on gold seams, filling
-   the whole sphere so the shading wraps it; the book is named where it
-   always was, in the button's own wordmark. */
-.orb-mark{position:absolute;top:0;bottom:0;left:0;right:0;display:block;
-  background:url("/wiz-orb-ball.png") center/auto 100% no-repeat;
-  mix-blend-mode:multiply}
-html.orb-ready .orb-mark{animation:orbRoll 8s linear infinite}
-.orb-shade{position:absolute;inset:0;border-radius:50%;display:block;
-  pointer-events:none;
-  background:
-    radial-gradient(circle at 30% 25%,rgba(255,255,255,.55),rgba(255,255,255,0) 46%),
-    /* The dark limb starts sooner and finishes deeper than it did. A gentle
-       edge let the ball read as a lit disc; the mark needs somewhere to dim
-       INTO as it turns away, or no amount of blending saves it. */
-    radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 44%,rgba(0,0,0,.42) 100%)}
-@keyframes orbRoll{
-  /* Timings, on the 8s loop: the mark faces us for about five seconds and is
-     round the back for well under one. It was the other way about - two and a
-     half seconds of blank ball, which is a long time to look at nothing, and
-     only a second and a half of the thing you actually want to see.
-     The blank stretch is the one part that should hurry: nothing happens
-     there, so it is dead time, whereas the pause at the front is the point.
-     Leaves the centre fast and slows into the edge - a point on a turning
-     sphere moves quickest across the middle. The vertical squeeze at the
-     limbs is small but it is what stops the mark reading as a flat decal
-     sliding across glass: a shape near the edge of a sphere is foreshortened
-     in both directions, not only across. */
-  0%,30%   {transform:translateX(0) scale(1,1);opacity:1;
-            animation-timing-function:cubic-bezier(.28,.72,.52,1)}
-  40%      {transform:translateX(44%) scale(.10,.93);opacity:1}
-  /* Gone round the back. Hidden at its thinnest, so nothing pops. */
-  41%,52%  {transform:translateX(44%) scale(.10,.93);opacity:0}
-  53%      {transform:translateX(-44%) scale(.10,.93);opacity:0}
-  54%      {transform:translateX(-44%) scale(.10,.93);opacity:1;
-            animation-timing-function:cubic-bezier(.48,0,.72,.28)}
-  64%,100% {transform:translateX(0) scale(1,1);opacity:1}
-}
-@media(prefers-reduced-motion:reduce){
-  .sc-orb,.orb-mark{animation:none}
-  .orb-mark{transform:none;opacity:1}
-}
+.sc-orb canvas,.ctafab-orb canvas{display:block;width:100%;height:100%}
+@media(prefers-reduced-motion:reduce){ .sc-orb{animation:none} }
 @keyframes orbBreath{
-  0%,100%{filter:drop-shadow(0 0 4px rgba(255,255,255,.3))}
-  50%{filter:drop-shadow(0 0 9px rgba(255,255,255,.6))}}
-/* On a near-white card a white ball loses its edges and the shading is all
-   that is left, which reads as a grey blob. The violet has contrast to
-   spare there, and the red S reads against either. */
-[data-theme="light"] .sc-orb{
-  background:radial-gradient(circle at 34% 28%,#efeaff 0%,#d9cffa 45%,#b9a6ef 100%)}
+  0%,100%{filter:drop-shadow(0 0 4px rgba(255,255,255,.25))}
+  50%{filter:drop-shadow(0 0 9px rgba(255,255,255,.5))}}
+/* On a near-white card a white glow disappears; the violet one does not. */
 [data-theme="light"] .sc-orb{filter:drop-shadow(0 0 4px rgba(90,60,170,.3));
   animation:orbBreathLight 3.4s ease-in-out infinite}
 @keyframes orbBreathLight{
@@ -4430,10 +4341,7 @@ html{interpolate-size:allow-keywords}
 .ctafab:hover{filter:brightness(1.06)}
 .ctafab:active{transform:scale(.97)}
 .ctafab:focus-visible{outline:2px solid var(--text);outline-offset:3px}
-.ctafab-orb{width:26px;height:26px;border-radius:50%;flex-shrink:0;
-  background:radial-gradient(circle at 34% 28%,#fff 0%,#f4f3f1 46%,#dcd8d2 78%,#bdb7ae 100%)
-    ,url("/wiz-orb-ball.png") center/100% auto no-repeat;
-  background-blend-mode:multiply}
+.ctafab-orb{width:26px;height:26px;border-radius:50%;flex-shrink:0}
 @media(min-width:721px){ .ctafab{display:inline-flex} }
 @media(prefers-reduced-motion:reduce){
   .ctafab{transition:opacity .2s ease}
@@ -7146,7 +7054,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
              here are spoken for - the gold hairline and the violet drift. -->
         <span class="cta-run" aria-hidden="true"></span>
         <div class="sc-head">
-          <span class="sc-orb" aria-hidden="true"><span class="orb-mark"></span><span class="orb-shade"></span></span>
+          <span class="sc-orb" aria-hidden="true"><canvas class="orb-ball" data-size="44"></canvas></span>
           <span class="sc-tx">
             <b>Don't pick. Let it be built for you.</b>
             <i id="scTease">We pick the games. You get a SportyBet code to play them.</i>
@@ -7582,7 +7490,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 
 <button class="myfab" id="myFab" type="button" hidden><span class="myfab-tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10a1 1 0 0 1 1 1v16l-2.2-1.5L13.6 20 12 18.6 10.4 20 8.2 18.5 6 20V4a1 1 0 0 1 1-1z"/></svg><span class="myfab-c" id="myFabC">0</span></span><span class="lbl">My slip</span></button>
 <button class="ctafab" id="ctaFab" type="button" hidden>
-  <span class="ctafab-orb" aria-hidden="true"></span>
+  <span class="ctafab-orb" aria-hidden="true"><canvas class="orb-ball" data-size="26"></canvas></span>
   <span>Build me a slip</span>
 </button>
 <nav class="btabs" aria-label="Sections">
@@ -21095,5 +21003,98 @@ load().catch(function(){});
 })();
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
+<script>
+/* THE ORB: a football rolling in a canvas. See the .sc-orb note in the styles.
+   Every one of the ball's 32 faces is a sign variant of seven expressions in
+   |x|,|y|,|z|, so a pixel's face is the best of seven and the face beside it
+   the runner-up - which is what finds the seams, with no geometry tables.
+   Pentagon scores are weighted so pentagon and hexagon tie exactly at the
+   polyhedron's corners, which makes every seam the true projected edge. */
+(function(){
+  function start(){
+    var cvs=document.querySelectorAll("canvas.orb-ball");
+    if(!cvs.length) return;
+    var HEX=[244,241,234], PEN=[163,32,43], SEAM=[201,150,46], SPEC=.5;
+    var PHI=(1+Math.sqrt(5))/2, KP=1/Math.sqrt(1+PHI*PHI), KH=1/Math.sqrt(3), IP=1/PHI;
+    var WP=(function(){
+      var v=[0,1,3*PHI],n=Math.hypot(v[0],v[1],v[2]),ax=0,ay=v[1]/n,az=v[2]/n;
+      var p=Math.max(ay+PHI*az,ax+PHI*ay,PHI*ax+az)*KP;
+      var h=Math.max((ax+ay+az)*KH,(PHI*ay+az*IP)*KH,(PHI*ax+ay*IP)*KH,(ax*IP+PHI*az)*KH);
+      return KP*h/p;
+    })();
+    var b1,b2,pent;
+    function put(v,p){ if(v>b1){ b2=b1; b1=v; pent=p; } else if(v>b2){ b2=v; } }
+    function face(x,y,z){
+      var ax=x<0?-x:x, ay=y<0?-y:y, az=z<0?-z:z, v, s;
+      b1=-9; b2=-9; pent=false;
+      v=ay+PHI*az; put(v*WP,true); s=ay-PHI*az; put((s<0?-s:s)*WP,true);
+      v=ax+PHI*ay; put(v*WP,true); s=ax-PHI*ay; put((s<0?-s:s)*WP,true);
+      v=PHI*ax+az; put(v*WP,true); s=PHI*ax-az; put((s<0?-s:s)*WP,true);
+      v=ax+ay+az; put(v*KH,false); put((v-2*Math.min(ax,ay,az))*KH,false);
+      v=PHI*ay+az*IP; put(v*KH,false); s=PHI*ay-az*IP; put((s<0?-s:s)*KH,false);
+      v=PHI*ax+ay*IP; put(v*KH,false); s=PHI*ax-ay*IP; put((s<0?-s:s)*KH,false);
+      v=ax*IP+PHI*az; put(v*KH,false); s=ax*IP-PHI*az; put((s<0?-s:s)*KH,false);
+    }
+    var L=[-.45,.55,.7], ln=Math.hypot(L[0],L[1],L[2]); L=[L[0]/ln,L[1]/ln,L[2]/ln];
+    var H=[L[0],L[1],L[2]+1], hn=Math.hypot(H[0],H[1],H[2]); H=[H[0]/hn,H[1]/hn,H[2]/hn];
+    var ct=Math.cos(.42), st=Math.sin(.42);
+    var balls=[].map.call(cvs,function(cv){
+      var css=cv.parentNode.getBoundingClientRect().width||+cv.getAttribute("data-size")||44;
+      var N=Math.max(24,Math.round(css*Math.min(window.devicePixelRatio||1,3)));
+      cv.width=N; cv.height=N;
+      var ctx=cv.getContext("2d"); if(!ctx) return null;
+      var img=ctx.createImageData(N,N), d=img.data, M=N*N;
+      var nx=new Float32Array(M), ny=new Float32Array(M), nz=new Float32Array(M),
+          al=new Float32Array(M), lit=new Float32Array(M), sp=new Float32Array(M);
+      for(var j=0;j<N;j++) for(var i=0;i<N;i++){
+        var k=j*N+i, x=(i+.5)/N*2-1, y=-((j+.5)/N*2-1), r2=x*x+y*y;
+        if(r2>=1) continue;
+        var z=Math.sqrt(1-r2);
+        nx[k]=x; ny[k]=y; nz[k]=z; al[k]=Math.min(1,(1-Math.sqrt(r2))*N*.5);
+        lit[k]=(.38+.62*Math.max(0,x*L[0]+y*L[1]+z*L[2]))*(.8+.2*z);
+        sp[k]=Math.pow(Math.max(0,x*H[0]+y*H[1]+z*H[2]),48)*SPEC*255;
+      }
+      var seamW=Math.max(.018,2.4/N);
+      return {cv:cv, on:true, draw:function(a){
+        var ca=Math.cos(a), sa=Math.sin(a);
+        for(var k=0,p=0;k<M;k++,p+=4){
+          if(al[k]===0){ d[p+3]=0; continue; }
+          var y1=ny[k]*ct+nz[k]*st, z1=-ny[k]*st+nz[k]*ct;
+          face(nx[k]*ca-z1*sa, y1, nx[k]*sa+z1*ca);
+          var base=pent?PEN:HEX, t=(b1-b2)/seamW;
+          var m=t>=1?1:(t<=.35?0:(t-.35)/.65); m=m*m*(3-2*m);
+          var li=lit[k], s=sp[k];
+          d[p]  =(SEAM[0]+(base[0]-SEAM[0])*m)*li+s;
+          d[p+1]=(SEAM[1]+(base[1]-SEAM[1])*m)*li+s;
+          d[p+2]=(SEAM[2]+(base[2]-SEAM[2])*m)*li+s;
+          d[p+3]=al[k]*255;
+        }
+        ctx.putImageData(img,0,0);
+      }};
+    }).filter(Boolean);
+    var a0=.6;
+    balls.forEach(function(b){ b.draw(a0); });
+    if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    /* Only while it can be seen: off screen, or with the tab in the
+       background, nothing is drawn at all. */
+    if("IntersectionObserver" in window){
+      var io=new IntersectionObserver(function(es){ es.forEach(function(e){
+        balls.forEach(function(b){ if(b.cv===e.target) b.on=e.isIntersecting; }); }); });
+      balls.forEach(function(b){ io.observe(b.cv); });
+    }
+    /* One turn every six seconds, at 30 frames a second: a ball rolling
+       steadily, not a spinner. */
+    var t0=performance.now(), last=0;
+    (function tick(now){
+      requestAnimationFrame(tick);
+      if(document.hidden||now-last<33) return;
+      last=now;
+      var a=a0+((now-t0)/6000)*Math.PI*2;
+      for(var i=0;i<balls.length;i++) if(balls[i].on) balls[i].draw(a);
+    })(t0);
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start); else start();
+})();
+</script>
 </body>
 </html>
