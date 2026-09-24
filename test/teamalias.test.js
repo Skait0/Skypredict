@@ -89,6 +89,9 @@ const RESOLVES = [
   ["Atletico Nacional",       "Atletico Nacional", "Colombia Liga DIMAYOR"],
   ["Botafogo FC SP",          "Botafogo SP",     "Brazil Brasileiro Serie B"],
   ["CAS Defensores de Belgrano", "Defensores De Belgrano", "Argentina Primera Nacional"],
+  /* The harvest of 24 Sep brought France Ligue 3, so Paris 13 Atletico is
+     rated as itself now - and still never as Paris FC. */
+  ["Paris 13 Atletico",       "Paris 13 Atletico", "France Ligue 3"],
 ];
 
 test("the clubs the board was dropping now resolve, to the right club", () => {
@@ -114,7 +117,6 @@ const MUST_REFUSE = [
   "CSD Independiente del Valle",  /* Ecuador - not Independiente */
   "Club Nacional de Football",    /* Uruguay - not Nacional */
   "Central Espanol FC",           /* Uruguay - not Espanyol */
-  "Paris 13 Atletico",            /* not Paris FC */
   "Gremio Novorizontino SP",      /* not Gremio */
   "CA Huracan Las Heras",         /* Mendoza - not Huracan of Buenos Aires */
   "Club Leon",                    /* Mexico - fuzzy reaches Lyon */
