@@ -1402,12 +1402,22 @@ html.tapped .list-hint{display:none}
 @keyframes orbBreath{
   0%,100%{filter:drop-shadow(0 0 4px rgba(255,255,255,.25))}
   50%{filter:drop-shadow(0 0 9px rgba(255,255,255,.5))}}
-/* On a near-white card a white glow disappears; the violet one does not. */
-[data-theme="light"] .sc-orb{filter:drop-shadow(0 0 4px rgba(90,60,170,.3));
+/* ON A CREAM CARD THE BALL NEEDS AN EDGE, NOT A GLOW. Its white panels and
+   top-left highlight are the card's own colour, so a glow of any hue left the
+   upper rim undrawn and the ball read as a smudge (reported 24 Sep, light
+   mode). A hairline of dark drop-shadow draws the silhouette all the way
+   round, and a soft warm shadow below seats it on the card; the breath moves
+   that shadow instead of a halo. The violet it replaces was off-palette next
+   to red pentagons and gold seams. */
+[data-theme="light"] .sc-orb{
+  filter:drop-shadow(0 0 .6px rgba(40,18,22,.7)) drop-shadow(0 3px 5px rgba(70,25,30,.28));
   animation:orbBreathLight 3.4s ease-in-out infinite}
 @keyframes orbBreathLight{
-  0%,100%{filter:drop-shadow(0 0 3px rgba(90,60,170,.25))}
-  50%{filter:drop-shadow(0 0 8px rgba(90,60,170,.5))}}
+  0%,100%{filter:drop-shadow(0 0 .6px rgba(40,18,22,.7)) drop-shadow(0 3px 5px rgba(70,25,30,.24))}
+  50%{filter:drop-shadow(0 0 .6px rgba(40,18,22,.7)) drop-shadow(0 5px 9px rgba(70,25,30,.36))}}
+/* The light rule outranks the plain reduced-motion one above, so it must say
+   it again or the breath comes back for readers who asked for stillness. */
+@media(prefers-reduced-motion:reduce){ [data-theme="light"] .sc-orb{animation:none} }
 .sc-tx{flex:1;min-width:0}
 .sc-tx b{display:block;font-size:16.5px;font-weight:800;color:var(--text);letter-spacing:.01em}
 .sc-tx i{display:block;font-style:normal;font-size:12.5px;color:var(--soft);margin-top:3px}
@@ -4361,7 +4371,15 @@ html{interpolate-size:allow-keywords}
 .ctafab:hover{filter:brightness(1.06)}
 .ctafab:active{transform:scale(.97)}
 .ctafab:focus-visible{outline:2px solid var(--text);outline-offset:3px}
-.ctafab-orb{width:26px;height:26px;border-radius:50%;flex-shrink:0}
+/* THE BALL SITS IN A DARK WELL. Straight on the red fill it vanished: the
+   pentagons are the wizard's robe red, the same family as --red-fill, and the
+   ball's own shaded rim darkens into it, so the outline and half the pattern
+   were gone (reported 24 Sep, "the contrast is shit"). A near-black disc
+   behind it separates both - white panels and red pentagons each read against
+   dark - and the thin light rim draws the edge the red was eating. */
+.ctafab-orb{width:34px;height:34px;padding:4px;box-sizing:border-box;border-radius:50%;flex-shrink:0;
+  background:radial-gradient(circle at 50% 40%,#2a1a1d,#0d0809);
+  box-shadow:0 0 0 1.5px rgba(255,255,255,.7),0 2px 6px rgba(0,0,0,.4);margin-left:-3px}
 @media(min-width:721px){ .ctafab{display:inline-flex} }
 @media(prefers-reduced-motion:reduce){
   .ctafab{transition:opacity .2s ease}
@@ -10454,6 +10472,14 @@ function bookErrHTML(d,B){
    the local filter only when it says nothing. Clearing the odd as we go keeps
    the board from advertising a price that cannot be booked, and stops the same
    slip failing the same way on the next tap. */
+/* HOW MANY TIMES A REFUSED SLIP MAY BE NARROWED AND RE-ASKED. It was once,
+   and once is not enough: a nameless refusal falls back to the legs carrying
+   a real price, and when one of THOSE is refused too the second answer - now
+   naming the leg - hit a flat "wouldn't take this slip" because the retry had
+   been spent. Reported 24 Sep on a 23-leg slider slip. Every round must drop
+   at least one leg (the callers test safe.length<picks.length), so this cannot
+   loop; the cap only bounds how many questions one tap can raise. */
+var REFUSAL_ROUNDS=4;
 function dropUnbookable(picks,d,B){
   B=B||curBook();
   var bad=(d&&d.unbookable)||[];
@@ -13179,13 +13205,13 @@ function doBook(picks,retried,B){
            exist. Toggling slider/wizard used to be the manual workaround. */
         var rejected=!d||!d.success;
         var safe=dropUnbookable(picks,d,B);
-        if(rejected&&!retried&&safe.length>=1&&safe.length<picks.length){
+        if(rejected&&(retried||0)<REFUSAL_ROUNDS&&safe.length>=1&&safe.length<picks.length){
           var _kept={}; safe.forEach(function(c){_kept[c.id+"|"+c.code]=1;});
           var _out=picks.filter(function(c){return !_kept[c.id+"|"+c.code];})
             .map(function(c){var f=c.f||fixtureById(c.id);
               return f?(f.home+" v "+f.away):"One pick";});
           confirmAfterRefusal("bookResult",_out,safe.length,B,function(){
-            doBook(safe,true,B);});
+            doBook(safe,(retried||0)+1,B);});
         } else {
           $("bookResult").innerHTML=bookErrHTML(d,B);
         }
@@ -17699,7 +17725,7 @@ function doBookMy(bookable,retried,B){
            never verified and try once more. The board's own Get code has done
            this for a while; My slip had nothing and simply failed. */
         var safe=dropUnbookable(bookable,d,B);
-        if(!retried&&safe.length>=1&&safe.length<bookable.length){
+        if((retried||0)<REFUSAL_ROUNDS&&safe.length>=1&&safe.length<bookable.length){
           var _keep={}; safe.forEach(function(c){_keep[c.id+"|"+c.code]=1;});
           var _dropped=MYSLIP.filter(function(x){return !_keep[x.id+"|"+x.code];});
           /* Name the match, not just the market. "Over 1.5 goals isn't on
@@ -17718,7 +17744,7 @@ function doBookMy(bookable,retried,B){
             MYSLIP=MYSLIP.filter(function(x){return _keep[x.id+"|"+x.code];});
             saveMy(); renderFab();
             if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
-            doBookMy(safe,true,B);
+            doBookMy(safe,(retried||0)+1,B);
           });
           return;
         }
@@ -17994,6 +18020,47 @@ const BETSLIP_MAX=50;
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
 var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,shots:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+/* THE MARKET CHIPS ARE REMEMBERED. They never were: every load rebuilt both
+   sets from the literals above, so a reader who switched Over 1.5 off and
+   Both score on found Win or draw, Outright win, Over 1.5 and Team over 0.5
+   lit again after a refresh. Reported 24 Sep as "the options I choose go back
+   to my previous selection".
+   Unlike the payout target and the time-of-day filter (both deliberately
+   forgotten - a narrowing made days ago with nothing on screen saying so),
+   the chips are on screen, lit, every time the builder is open, so a
+   remembered set cannot hide.
+   Restored key by key onto the defaults: a market added later keeps its
+   default instead of reading as off, a retired key is ignored, and only real
+   booleans are taken. A set with nothing on is refused - the builder cannot
+   build from it and the chip guard would not let the reader get there. */
+var MK_STORE="sw.mk";
+(function(){
+  try{
+    var s=JSON.parse(localStorage.getItem(MK_STORE)||"null");
+    if(!s||typeof s!=="object") return;
+    [[BUILD.mk,s.b],[WSP.mk,s.w]].forEach(function(p){
+      var into=p[0], from=p[1];
+      if(!from||typeof from!=="object") return;
+      var next={}, any=false;
+      Object.keys(into).forEach(function(k){
+        next[k]=(typeof from[k]==="boolean")?from[k]:into[k];
+        if(next[k]) any=true; });
+      if(any) Object.keys(next).forEach(function(k){ into[k]=next[k]; });
+    });
+  }catch(e){}
+})();
+/* Saved from renderBuilder, which every toggle path ends in (the chip, the
+   draw prompt, the book-only prompt, the tier jump via slideRisk), so a new
+   path cannot forget to. Written only when the set changed - renderBuilder
+   also runs on every frame of a slider drag. */
+var MK_SAVED=null;
+function saveMarkets(){
+  try{
+    var s=JSON.stringify({b:BUILD.mk,w:WSP.mk});
+    if(s===MK_SAVED) return;
+    MK_SAVED=s; localStorage.setItem(MK_STORE,s);
+  }catch(e){}
+}
 /* `slider:false` - Balanced is what a reader lands on, not Auto.
    Measured 3 Sep over ten seeds on the 386-fixture board, counting how often
    each method gave the highest chance of the slip landing AT THE PAYOUT ASKED
@@ -19148,6 +19215,7 @@ function emptyWhy(){
   return "";
 }
 function renderBuilder(){
+  saveMarkets();
   paintBookPickers();
   /* The wizard shows the numbers and keeps the slip itself for the sheet. */
   document.documentElement.classList.toggle("wiz-mode",BUILD.mode==="wizard");

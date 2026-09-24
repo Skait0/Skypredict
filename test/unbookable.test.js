@@ -178,7 +178,7 @@ test("a refused leg is dropped only after the reader agrees", () => {
   /* Everything that changes the slip must sit INSIDE the callback, which only
      runs on confirm. */
   const goAt = branch.indexOf("confirmAfterRefusal(");
-  for (const step of ["MYSLIP=MYSLIP.filter", "saveMy()", "doBookMy(safe,true,B)"]) {
+  for (const step of ["MYSLIP=MYSLIP.filter", "saveMy()", "doBookMy(safe,(retried||0)+1,B)"]) {
     const at = branch.indexOf(step);
     assert.ok(at > goAt, step + " must not run before the reader has agreed");
   }
