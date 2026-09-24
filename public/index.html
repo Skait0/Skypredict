@@ -15677,7 +15677,11 @@ function winCardBlob(sp){
       x.fillStyle="#A3A0A6"; x.font="600 42px "+F;
       x.fillText(n+" of "+n+" landed",W/2,560);
       x.textAlign="left";
-      var shown=legs.slice(0,8);
+      /* Eight lines fit above the footer rule. Eight legs AND a "+N more"
+         line did not: the ninth line was drawn over "soccerwizard.live" on
+         every 10+ leg win card (seen on the 24 Sep wins). With more than
+         eight, show seven and let the "+N more" line take the eighth. */
+      var shown=legs.slice(0, n>8 ? 7 : 8);
       /* Centred in the space between the headline and the footer, so a
          three-leg ticket does not leave a hole under it. */
       var y=Math.max(660, 620+((H-190-620)-(shown.length+(n>shown.length?1:0))*72)/2+36);
