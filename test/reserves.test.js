@@ -52,6 +52,20 @@ test("the first team is untouched by its reserve side", () => {
   assert.equal(M.matchTeam(idx, "Willem II Tilburg", li(EER)), "Willem II");
 });
 
+test("a third team never lands on the reserve side or the first team", () => {
+  /* Measured on the live card, 24 Sep 2026: "Atletico Madrid C v Real Madrid
+     C" (Segunda Federacion, fourth tier) scored 0.89 against the B teams by
+     plain resemblance and was about to be published as a Primera Federacion
+     game. No league, no pool, no alias makes either one a club we rate. */
+  for (const l of [null, li(PF), li(LL)]) {
+    assert.equal(M.matchTeam(idx, "Atletico Madrid C", l), null, String(l));
+    assert.equal(M.matchTeam(idx, "Real Madrid C", l), null, String(l));
+  }
+  /* And a plain name never reaches a reserve side by resemblance. */
+  assert.equal(M.matchTeam(idx, "Atletico Madrid", li(PF)), null);
+  assert.equal(M.isVariantSide("Inverness C"), false, "Inverness Caledonian Thistle");
+});
+
 test("youth and women's sides are still refused", () => {
   for (const n of ["Ajax U19", "Jong Ajax U19", "Ajax Women", "Ajax W", "Ajax Youth"]) {
     assert.equal(M.matchTeam(idx, n, li(EER)), null, n);

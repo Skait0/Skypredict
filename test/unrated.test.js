@@ -91,9 +91,15 @@ test("nothing and nonsense are safe to ask about", () => {
 test("no unrated competition survives into the built payload", () => {
   let payload;
   try { payload = require("../public/predictions.json"); } catch (e) { return; }
+  /* Asked against the index the build fits, as the build asks it: a listed
+     senior league is released once it holds ratings (Norway 1st Division and
+     Denmark 1. Division, backfilled 23 Sep 2026). Asked without one, this
+     called 34 correctly published fixtures unrated. */
+  const B = require("../lib/build.js"), M = require("../lib/model.js");
+  const idx = M.buildIndex(B.loadFloorMatches());
   const bad = [];
   for (const f of (payload.fixtures || []).concat(payload.results || [])) {
-    if (f && isUnratedCompetition(f.league)) {
+    if (f && isUnratedCompetition(f.league, idx)) {
       bad.push(f.league + ": " + f.home + " v " + f.away);
     }
   }
