@@ -21,13 +21,7 @@ const F = require("../lib/follow.js");
 
 const SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
 
-function allowed(req) {
-  const h = req.headers || {};
-  const cron = process.env.CRON_SECRET || "";
-  if (cron) return h.authorization === "Bearer " + cron || (process.env.SWEEP_KEY && h["x-sweep-key"] === process.env.SWEEP_KEY);
-  if (process.env.SWEEP_KEY && h["x-sweep-key"] === process.env.SWEEP_KEY) return true;
-  return /^vercel-cron\//.test(String(h["user-agent"] || ""));
-}
+const { allowed } = require("../lib/cronauth.js");
 
 async function send(chatId, text) {
   const r = await fetch("https://api.telegram.org/bot" + (process.env.TELEGRAM_BOT_TOKEN || "").trim() + "/sendMessage", {

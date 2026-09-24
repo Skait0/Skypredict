@@ -16,12 +16,7 @@ const BIG = require("../lib/bigodds.js");
 const SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
 const CHANNEL = process.env.TELEGRAM_CHAT || "@soccerwizardTG";
 
-function allowed(req) {
-  const h = req.headers || {};
-  const cron = process.env.CRON_SECRET || "";
-  if (cron) return h.authorization === "Bearer " + cron;
-  return /^vercel-cron\//.test(String(h["user-agent"] || ""));
-}
+const { allowed } = require("../lib/cronauth.js");
 
 async function gql(k, query) {
   const r = await fetch("https://api.buffer.com", { method: "POST",
@@ -72,11 +67,21 @@ module.exports = async function handler(req, res) {
 
   const items = S.due(pay, now, posted, lastPost);
   /* Big odds of the day: 11:00 Lagos, only on a day with enough bankers. */
-  if (S.hourOf(now) === 11 && !posted.has("bigodds|" + S.dayOf(now) + "|x")) {
-    const slip = await BIG.mint(pay, now);
-    /* Stored for the site's daily codes card (/api/bigodds) before posting. */
-    if (slip) await SB.putBigOdds(slip.row);
-    if (slip) for (const ch of ["x", "tg"]) items.push({ key: "bigodds|" + S.dayOf(now) + "|" + ch, kind: "bigodds", channel: ch, text: slip[ch] });
+  /* ONE MINTING A DAY, EVER (code review, 24 Sep). Each channel is gated on
+     its own key, and once today's slip is stored any retry re-posts THOSE
+     codes - it never books a second set that disagrees with what one channel
+     already showed. */
+  const bigKey = (ch) => "bigodds|" + S.dayOf(now) + "|" + ch;
+  const bigDue = ["x", "tg"].filter((ch) => !posted.has(bigKey(ch)));
+  if (S.hourOf(now) === 11 && bigDue.length) {
+    const stored = await SB.getBigOdds(S.dayOf(now));
+    let slip = stored.ok && stored.row ? BIG.fromRow(stored.row) : null;
+    if (!slip && stored.ok && !stored.row) {
+      slip = await BIG.mint(pay, now);
+      /* Stored for the site's daily codes card (/api/bigodds) before posting. */
+      if (slip) await SB.putBigOdds(slip.row);
+    }
+    if (slip) for (const ch of bigDue) items.push({ key: bigKey(ch), kind: "bigodds", channel: ch, text: slip[ch] });
   }
 
   const sent = [];

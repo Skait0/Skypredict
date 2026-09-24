@@ -60,3 +60,30 @@ test("the follow job refuses strangers", async () => {
   process.env.CRON_SECRET = saved.cron || ""; if (!saved.cron) delete process.env.CRON_SECRET;
   process.env.SWEEP_KEY = saved.key || ""; if (!saved.key) delete process.env.SWEEP_KEY;
 });
+
+test("names with & or < reach Telegram escaped, and the board's own &amp; is not doubled", () => {
+  const f = { code: "BIH", seen: {}, legs: [{ date: "2026-09-25", home: "Bosnia &amp; Herzegovina", away: "A<B",
+    code: "1X", grade: "1X", name: "Bosnia &amp; Herzegovina or draw" }] };
+  const s = F.step(f, [{ date: "2026-09-25", home: "Bosnia &amp; Herzegovina", away: "A<B", hg: 1, ag: 0 }]);
+  assert.strictEqual(s.lines[0], "✅ Bosnia &amp; Herzegovina or draw · Bosnia &amp; Herzegovina 1-0 A&lt;B");
+});
+
+test("whole goal lines are not tracked - a push must not be called a loss", () => {
+  assert.strictEqual(F.labelFor("OVER_2"), null);
+  assert.strictEqual(F.labelFor("UNDER_3"), null);
+  assert.strictEqual(F.labelFor("OVER_2.5"), "Over 2.5");
+});
+
+test("the timed jobs share one door, and a faked user agent is refused once CRON_SECRET is set", () => {
+  const { allowed } = require("../lib/cronauth.js");
+  const saved = { c: process.env.CRON_SECRET, k: process.env.SWEEP_KEY };
+  process.env.CRON_SECRET = "c1"; process.env.SWEEP_KEY = "k1";
+  try {
+    assert.ok(allowed({ headers: { authorization: "Bearer c1" } }));
+    assert.ok(allowed({ headers: { "x-sweep-key": "k1" } }), "the sweep key still works by hand");
+    assert.ok(!allowed({ headers: { "user-agent": "vercel-cron/1.0" } }));
+  } finally {
+    if (saved.c == null) delete process.env.CRON_SECRET; else process.env.CRON_SECRET = saved.c;
+    if (saved.k == null) delete process.env.SWEEP_KEY; else process.env.SWEEP_KEY = saved.k;
+  }
+});

@@ -104,6 +104,10 @@ async function onFollow(cq) {
   const put = await SB.putFollow({ chat_id: chat.id, book: from, code, legs: tracked, seen: {}, done: false,
     last_kickoff: last ? new Date(last).toISOString() : null });
   if (!put.ok) { await say("I can't follow slips right now. Try again in a few minutes."); return; }
+  if (!put.added) {
+    await say("🔔 You're already following <b>" + code + "</b> - I'll keep the updates coming 🧙");
+    return;
+  }
   await say("🔔 <b>Following " + code + "</b> 🧙\n\nI'll message you as each game lands, and when the whole slip is in." +
     (tracked.length < legs.length ? "\nTracking " + tracked.length + " of " + legs.length + " games (the rest aren't on our board or settle on a half-time score)." : "") +
     "\n\nWhile you wait: the slip builder and tomorrow's code are on <a href=\"" + SITE + "\">soccerwizard.live</a> 🔥");
@@ -148,7 +152,8 @@ async function onConvert(cq) {
   await say(out.join("\n"));
 }
 
-const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const esc = (s) => String(s).replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ ok: false });
