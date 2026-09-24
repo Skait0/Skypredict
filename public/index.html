@@ -7866,12 +7866,23 @@ function renderMyResults(){
       "<span>"+(done?done+" of "+open.legs.length+" settled so far":"None of these have finished yet")+
       (open.hits?" · "+open.hits+" landed":"")+"</span>";
   } else if(last){
-    var when=slipWhen(last.at);
+    /* THE WORDS HAVE TO MATCH THE NUMBERS. This said "One got away" under
+       every losing slip, whatever the count - "3 of 35 landed. One got away."
+       reached a reader (24 Sep 2026). And "Your Saturday's slip" read oddly;
+       it names the day the slip is from instead. */
+    var w=slipWhen(last.at).replace(/'s$/,"");
+    var whose=w==="last"?"Your last slip":"Your slip from "+w;
+    var miss=last.legs.filter(function(l){return l.res==="lose";}).length;
     head="<span class='mr-tag "+(last.won?"won":"lost")+"'>"+(last.won?"Won":"Lost")+"</span>";
-    body="<b>Your "+when+" slip: "+last.hits+" of "+last.legs.length+" landed</b>"+
+    var allIn=last.hits===last.legs.length;
+    body="<b>"+whose+(last.won
+        ? (allIn?" won: all "+last.legs.length+" landed":" won: "+last.hits+" of "+last.legs.length+" landed, the rest void")
+        : " lost: "+last.hits+" of "+last.legs.length+" landed")+"</b>"+
       "<span>"+(last.won
-        ? "All of them. That paid ×"+last.odds.toFixed(2)+"."
-        : "One got away. That is how accumulators go.")+"</span>";
+        ? "That paid ×"+last.odds.toFixed(2)+"."
+        : (miss===1
+            ? "One game missed. On an accumulator, one is all it takes."
+            : miss+" games missed."))+"</span>";
   }
   /* The numbers carry the weight, the words explain them - reading "1 of 3"
      at a glance is the point, not the sentence around it. */
@@ -16226,7 +16237,11 @@ function applyBoardCap(n){
        midday run is yesterday's. Saying which day it is for costs six words
        and stops the card lying on a fifth of the clock. */
     var off=dayOff(d.date);
-    var when=(off===0?"Today":off===-1?"Yesterday":dayDate(off))+
+    /* "For", because the date is when the games are played - and on a thin
+       day the mint walks forward, so the newest code is often tomorrow's.
+       "Sep 25 · 5 games" on the 24th read as a mistake (24 Sep 2026). */
+    var when=(off===0?"For today":off===-1?"Yesterday's":off===1?"For tomorrow":
+        (off>1?"For "+dayDate(off):dayDate(off)))+
       " · "+d.n+" game"+(d.n===1?"":"s");
     var foot=(d.prev&&d.prev.of)
       ? "<a href='/booking-codes'>"+(dayOff(d.prev.date)===-1?"Yesterday's":"The last")+
