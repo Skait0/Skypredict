@@ -72,6 +72,13 @@ wordmark is drawn with a condensed system stack
 - **Cards**: `background:var(--card)`, `1px solid var(--line)`, 12px radius.
 - **Pills and chips**: `border-radius:99px`, `1px solid var(--line)`,
   12-12.5px/600-800, 8/13px padding. A chip that acts uses `--card2` on hover.
+- **A pill that does something is filled**: solid `--red-fill` (Install, All
+  games) or solid `--accent` gold (Share your win, Make it safer), 12.5px/800,
+  8/14px. A translucent or outlined pill reads as a label, not a button, and
+  another brand's colour reads as their badge (the owner, 24 Sep 2026).
+- **An action happens where it is pressed.** Make it safer used to send the
+  reader to the converter; it now does the job in the modal and shows what
+  changed. Link out only when the destination is the point.
 - **A favoured panel** (total odds, pick of the day) keeps the card
   background and swaps the border for `--accent-rim`.
 - **Bookmaker names** are drawn as their own wordmarks, never in our type:
