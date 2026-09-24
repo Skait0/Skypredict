@@ -7443,7 +7443,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
              neither, and this is the strongest page on the site. The anchor
              says what the destination is rather than what the button says. -->
         <a href="/convert-a-booking-code">Convert a booking code</a>
-        <a href="/booking-codes">Free booking codes</a>
+        <a href="/booking-codes">Daily booking codes</a>
         <a href="/how-it-works">How it works</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
@@ -10378,7 +10378,7 @@ function bookErrHTML(d,B){
      will help. Say whose rule it is and when it lifts. */
   if(kind==="capped")
     return "<div class='code-err'><b>That's today's ten booking codes.</b>"+
-      "<span>The free run gives every device ten a day. Your slip is saved - "+
+      "<span>Every device gets ten a day for now. Your slip is saved - "+
       "the code will be here after midnight. Everything else on the board "+
       "still works.</span></div>";
   /* EVERY LEG ON A MARKET THEY WILL NOT PRICE TODAY. The server names these
@@ -16252,7 +16252,7 @@ function applyBoardCap(n){
     var odds=(typeof d.odds==="number"&&d.odds>1)
       ? "<span class='ck-tot'>×"+d.odds.toFixed(2)+"</span>" : "";
     host.innerHTML="<div class='ck-top'><a class='ck-tag' href='/booking-codes'>"+
-      "Free booking codes</a>"+
+      "Daily booking codes</a>"+
       "<span class='ck-when'>"+esc(when)+"</span>"+odds+"</div>"+
       "<div class='ck-codes'>"+chips+"</div>"+
       "<div class='ck-foot'>"+foot+"</div>";

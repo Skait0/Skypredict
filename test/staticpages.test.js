@@ -82,7 +82,7 @@ test("every standing page carries the masthead nav", () => {
   });
   /* The page a link points at does not link to itself: it is marked instead. */
   const codes = P.renderCodesHub([], () => null);
-  assert.match(codes, /<span class="tn-on[^"]*" aria-current="page">Free codes<\/span>/,
+  assert.match(codes, /<span class="tn-on[^"]*" aria-current="page">Daily codes<\/span>/,
     "the booking codes page should mark itself current, not link to itself");
   assert.ok(!/<a class="tn[^"]*" href="\/booking-codes">/.test(codes),
     "and it should not also carry a link to itself");
