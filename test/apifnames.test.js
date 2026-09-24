@@ -59,6 +59,12 @@ test("Puskas Akademia is a first team, not an academy side", () => {
   assert.equal(M.isVariantSide("Puskas Akademia"), false);
 });
 
+test("Willem II is a first team, not a reserve side", () => {
+  assert.equal(M.isVariantSide("Willem II"), false);
+  assert.equal(M.isVariantSide("Jong Ajax"), true);
+  assert.equal(M.isVariantSide("Willem II U21"), true);
+});
+
 test("the exemption does not open the guard it sits in", () => {
   /* The whole reason the guard exists: a youth game booked off a first-team
      prediction. The exemption matches the full normalised name, so a youth

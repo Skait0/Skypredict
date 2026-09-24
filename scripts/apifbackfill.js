@@ -162,6 +162,19 @@ async function season(id, yr, k) {
    ninety minutes, AET and PEN are cup shapes these leagues do not use but
    their API still reports, and a postponed or abandoned game carries nulls. */
 const DONE = new Set(["FT", "AET", "PEN"]);
+/* Minted names that would collide in the index. normName strips "Club", so
+   Uruguay's "Club Nacional" folds to "nacional" - the same key as Madeira's
+   Nacional - and matchTeam, which needs a unique hit, then answers neither.
+   Renamed here, at the one feed that spells it that way. The same table joins
+   one club spelled two ways across their seasons (Aue, Viktoria Koln), which
+   would otherwise mint two clubs with half a history each. */
+const RENAME = {
+  "Uruguay Primera Division|Club Nacional": "Nacional Montevideo",
+  "Colombia Liga DIMAYOR|Fortaleza FC": "Fortaleza CEIF",    // not Brazil's Fortaleza
+  "Germany 3. Liga|Erzgebirge AUE": "Erzgebirge Aue",
+  "Germany 3. Liga|FC Viktoria Koln": "FC Viktoria Köln",
+};
+const named = (league, t) => RENAME[league + "|" + t] || t;
 function rowsOf(body, league) {
   const out = [];
   for (const f of (body.response || [])) {
@@ -173,8 +186,8 @@ function rowsOf(body, league) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
     out.push({
       date, league,
-      home: (f.teams && f.teams.home && f.teams.home.name) || "",
-      away: (f.teams && f.teams.away && f.teams.away.name) || "",
+      home: named(league, (f.teams && f.teams.home && f.teams.home.name) || ""),
+      away: named(league, (f.teams && f.teams.away && f.teams.away.name) || ""),
       hg, ag,
     });
   }

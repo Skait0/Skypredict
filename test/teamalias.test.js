@@ -81,6 +81,14 @@ const RESOLVES = [
      Eindhoven must not become PSV", and that is what these two lines say. */
   ["FC Eindhoven",            "Eindhoven FC",    "Netherlands Eerste Divisie"],
   ["PSV Eindhoven",           "PSV Eindhoven",   "Netherlands Eredivisie"],
+  /* The same move, 24 Sep 2026: the API-Football backfill brought Colombia
+     Liga DIMAYOR, Brazil Serie B and Argentina Primera Nacional, so these are
+     clubs we rate. What each must not become (Brazil's Internacional, Madeira's
+     Nacional, Botafogo RJ, Belgrano de Cordoba) the league pins. */
+  ["Internacional de Bogota.", "Internacional de Bogota", "Colombia Liga DIMAYOR"],
+  ["Atletico Nacional",       "Atletico Nacional", "Colombia Liga DIMAYOR"],
+  ["Botafogo FC SP",          "Botafogo SP",     "Brazil Brasileiro Serie B"],
+  ["CAS Defensores de Belgrano", "Defensores De Belgrano", "Argentina Primera Nacional"],
 ];
 
 test("the clubs the board was dropping now resolve, to the right club", () => {
@@ -104,17 +112,15 @@ const MUST_REFUSE = [
   "Boca Juniors de Cali",         /* Colombia - not Boca Juniors */
   "Independiente Santa Fe",       /* Colombia - not Independiente */
   "CSD Independiente del Valle",  /* Ecuador - not Independiente */
-  "Internacional de Bogota.",     /* Colombia - not Internacional */
-  "Atletico Nacional",            /* Colombia - not Nacional of Madeira */
   "Club Nacional de Football",    /* Uruguay - not Nacional */
   "Central Espanol FC",           /* Uruguay - not Espanyol */
   "Paris 13 Atletico",            /* not Paris FC */
-  "Botafogo FC SP",               /* not Botafogo RJ */
   "Gremio Novorizontino SP",      /* not Gremio */
   "CA Huracan Las Heras",         /* Mendoza - not Huracan of Buenos Aires */
-  "CAS Defensores de Belgrano",   /* not Belgrano de Cordoba */
   "Club Leon",                    /* Mexico - fuzzy reaches Lyon */
-  /* "Riga FC" was here because a fuzzy match reached Wigan, and "FC Eindhoven"
+  /* "Internacional de Bogota.", "Atletico Nacional", "Botafogo FC SP" and
+     "CAS Defensores de Belgrano" left on 24 Sep 2026 the same way.
+     "Riga FC" was here because a fuzzy match reached Wigan, and "FC Eindhoven"
      because the only Eindhoven we carried was PSV. Both have been removed
      rather than fixed: Latvia Virsliga and Netherlands Eerste Divisie are
      harvested now, so each is a club we rate and resolving it to itself is the
