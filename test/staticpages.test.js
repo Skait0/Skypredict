@@ -260,8 +260,9 @@ test("one handle, used everywhere", () => {
   const links = [...index.matchAll(/https:\/\/x\.com\/([A-Za-z0-9_]+)/g)].map((m) => m[1]);
   assert.deepStrictEqual([...new Set(links)], ["soccerwizardhq"],
     "more than one X handle on the site: " + [...new Set(links)].join(", "));
-  assert.strictEqual(links.length, 2,
-    "expected the footer link and the contact dialog's, found " + links.length);
+  /* Three since 24 Sep: the header carries the socials too. */
+  assert.strictEqual(links.length, 3,
+    "expected the header's, the footer's and the contact dialog's, found " + links.length);
 });
 
 /* --------------------------------------------------------- the split hub */
