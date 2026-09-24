@@ -28,11 +28,13 @@ test("every booking call site says where it came from", () => {
      "myslip" when nothing built them. */
   const labelled = calls.filter((c) => /,\s*"[a-z]+"\)/.test(c));
   const derived = calls.filter((c) => /_via\|\|"myslip"\)/.test(c));
-  assert.equal(labelled.length + derived.length, 6,
-    "expected six attributed call sites, found " + (labelled.length + derived.length) +
+  /* Seven since 24 Sep 2026: Make it safer books from the code modal itself
+     now, as "safer", apart from the converter's "editor" it used to hand to. */
+  assert.equal(labelled.length + derived.length, 7,
+    "expected seven attributed call sites, found " + (labelled.length + derived.length) +
     ": " + calls.join(" | "));
   assert.equal(derived.length, 1, "only My slip derives its label");
-  ["builder", "split", "convert", "editor", "board"].forEach((s) => {
+  ["builder", "split", "convert", "editor", "board", "safer"].forEach((s) => {
     assert.ok(labelled.some((c) => c.includes('"' + s + '"')), s + " is not labelled anywhere");
   });
   /* And the three writers that fill My slip must stamp what they are, or the

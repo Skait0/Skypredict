@@ -3716,8 +3716,7 @@ html{interpolate-size:allow-keywords}
 .byo-sw.is-auto{opacity:.85}
 .byo-sw.is-auto input{cursor:not-allowed}
 .byo-res .sp-q{color:var(--soft)}
-.byo-res .sp-way{background:var(--card-2);border-color:var(--line);color:var(--text)}
-.byo-res .code-split .sp-way span{color:var(--faint)}
+.byo-res .sp-way{background:var(--card-2);border-color:var(--line);color:var(--text)}.byo-res .code-split .sp-way span{color:var(--faint)}
 .byo-res .sp-t{background:var(--card-2);border-color:var(--line);color:var(--text)}
 .byo-res .sp-n{background:var(--raise);color:var(--soft)}
 .byo-res .sp-m,.byo-res .sp-note,.byo-res .sp-wait{color:var(--faint)}
@@ -3908,6 +3907,66 @@ html{interpolate-size:allow-keywords}
    against this purple on their own site. It is the one spot of it here, which
    is as much as it can take next to our crimson. */
 .code-also .code-open-alt .fb-dot{color:#9FF611;font-weight:800}
+/* Make it safer. It was a sentence with football.com's purple pill in the
+   middle of it, so it read as their badge and not as ours. Now it is its own
+   section, ruled off and drawn like the split buttons above it: the same
+   white-on-wash surface works on every book's card colour. The label says
+   what it is, the button is what you press. */
+.code-safer{display:flex;align-items:center;gap:12px;margin-top:14px;
+  padding-top:13px;border-top:1px solid rgba(255,255,255,.14);text-align:left}
+.cs-txt{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+/* Scoped past `.code-card b`, the booking code's own 32px style. */
+.code-safer .cs-txt b{display:block;margin:0;font-size:13px;font-weight:800;
+  letter-spacing:0;word-break:normal;color:#fff}
+.cs-txt span{font-size:11.5px;font-weight:600;line-height:1.4;text-wrap:balance;
+  color:rgba(255,255,255,.78)}
+/* The site's own pill (Install, All games): solid fill, 12.5/800, 8/14. Gold,
+   not red - the card's Copy and Share are already red, and gold is the pill
+   the site uses for what it recommends (Share your win). Reads on every
+   book's card colour. */
+.cs-go{flex:0 0 auto;display:inline-flex;align-items:center;gap:3px;font:inherit;
+  font-size:12.5px;font-weight:800;padding:8px 11px 8px 14px;border:0;
+  border-radius:99px;text-decoration:none;white-space:nowrap;
+  background:var(--accent);color:var(--on-accent);
+  box-shadow:0 2px 10px rgba(0,0,0,.3);
+  transition:transform .14s var(--ease-out),filter .14s var(--ease-out)}
+.cs-go svg{width:12px;height:12px;flex:0 0 auto}
+.cs-go:active{transform:scale(.97)}
+.cs-go:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (hover:hover){.cs-go:hover{transform:translateY(-1px);filter:brightness(1.06)}}
+.cs-spin{width:11px;height:11px;margin-right:4px;border-radius:50%;
+  border:2px solid currentColor;border-right-color:transparent;
+  animation:csSpin .7s linear infinite}
+@keyframes csSpin{to{transform:rotate(360deg)}}
+.cs-go[aria-busy]{cursor:progress;filter:saturate(.8)}
+.cs-msg{flex:1 1 100%;margin:0;font-size:11.5px;font-weight:600;line-height:1.45;
+  color:rgba(255,255,255,.86)}
+.code-safer .code-err{flex:1 1 100%;margin:0}
+/* What was done, in the slot the offer was in: the odds it pays now beside
+   the heading, then one row per game that moved - old bet struck through,
+   the new one after it. */
+.code-safer--done{display:block}
+.cs-head{display:flex;align-items:flex-start;gap:12px}
+.cs-odds{flex:0 0 auto;font-size:12px;font-weight:700;white-space:nowrap;
+  font-variant-numeric:tabular-nums;color:rgba(255,255,255,.7)}
+.cs-odds em{font-style:normal;font-size:15px;font-weight:800;color:var(--accent)}
+.cs-list{list-style:none;margin:10px 0 0;padding:0;display:flex;
+  flex-direction:column;gap:5px}
+.cs-list li{display:flex;flex-direction:column;gap:1px;padding:7px 10px;
+  border-radius:var(--r-md);background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.14)}
+.cs-g{font-size:11.5px;font-weight:700;color:#fff;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.cs-m{font-size:11.5px;font-weight:600;color:rgba(255,255,255,.86)}
+.cs-m s{color:rgba(255,255,255,.5)}
+.cs-px{font-weight:700;font-variant-numeric:tabular-nums;
+  color:rgba(255,255,255,.7)}
+.cs-foot{margin:8px 0 0;font-size:11px;font-weight:600;line-height:1.45;
+  color:rgba(255,255,255,.62)}
+/* Too narrow for label and button side by side: the button takes its own
+   full-width row rather than squeezing the label to one word a line. */
+@media(max-width:359px){.code-safer{flex-wrap:wrap}
+  .cs-go{flex:1 1 100%;justify-content:center}}
 .code-acts button,.code-acts a{font:inherit;font-weight:800;font-size:14px;padding:11px 18px;
   border-radius:var(--r-md);cursor:pointer;text-decoration:none;border:0}
 /* "Copy" becomes "Copied" and back. Auto width meant the button - and the
@@ -8028,7 +8087,8 @@ function renderSlipsSheet(){
            still open - a settled bet cannot be made safer - and only with a
            book on record, because a guessed one fails to read the code. */
         ((sp.code&&sp.book&&BOOKS[sp.book]&&!sp.settled)
-          ? "<a class='sl-mini' href=\"/?book="+encodeURIComponent(sp.book)+
+          ? "<a class='sl-mini' data-slsafe=\""+esc(sp.code)+"\" data-slbook=\""+esc(sp.book)+"\" "+
+              "href=\"/?book="+encodeURIComponent(sp.book)+
               "&code="+encodeURIComponent(sp.code)+"&go=safer\">Make it safer</a>"
           : "")+
         /* A won ticket gets the celebration - see shareWin. */
@@ -8063,6 +8123,17 @@ function renderSlipsSheet(){
       copyText(code);
       var was=b.textContent; b.textContent="Copied"; b.classList.add("ok");
       setTimeout(function(){ b.textContent=was; b.classList.remove("ok"); },1500);
+    });
+  });
+  /* Make it safer happens in the code modal, as it does under a fresh code:
+     open the code, then press its pill. The href stays for a new tab. */
+  body.querySelectorAll("[data-slsafe]").forEach(function(a){
+    a.addEventListener("click",function(e){
+      if(e.metaKey||e.ctrlKey||e.shiftKey||e.button===1) return;
+      var B=BOOKS[a.dataset.slbook]; if(!B) return;
+      e.preventDefault();
+      showCode(a.dataset.slsafe,"codeSaferHost",null,B,[]);
+      var go=document.querySelector("#codeModal .cs-go"); if(go) go.click();
     });
   });
   body.querySelectorAll("[data-slrb]").forEach(function(b){
@@ -12614,7 +12685,11 @@ function mLabel(f,c){
   if(ah){
     var n=parseFloat(ah[2]);
     var shown=ah[1]==="1"?n:-n;
-    return (ah[1]==="1"?esc(f.home):esc(f.away))+" "+(shown>0?"+":"")+shown;
+    var side=ah[1]==="1"?esc(f.home):esc(f.away);
+    /* Handicap 0 is draw no bet, and "Aston Villa 0" said nothing to anyone
+       who does not already read handicap lines. */
+    if(shown===0) return side+" win, draw no bet";
+    return side+" "+(shown>0?"+":"")+shown;
   }
   return c;
 }
@@ -13287,10 +13362,15 @@ function showCode(code,hostId,save,B,picks){
        becomes over 1.5, never a different game, never the reverse. So this is
        a way in, not a second copy - the link opens that job on this code at
        this book, and nothing is booked until the reader asks. */
-    "<p class='code-also code-safer'>Too risky? "+
-      "<a class='code-open-alt' href=\"/?book="+encodeURIComponent(B.key)+
-        "&code="+encodeURIComponent(code)+"&go=safer\">Make it safer</a>"+
-      " - same games, safer bets, lower odds.</p>"+
+    "<div class='code-safer'>"+
+      "<div class='cs-txt'><b>Too risky?</b>"+
+        "<span>Same games, safer bets, lower odds.</span></div>"+
+      "<a class='cs-go' href=\"/?book="+encodeURIComponent(B.key)+
+        "&code="+encodeURIComponent(code)+"&go=safer\">Make it safer"+
+        "<svg viewBox='0 0 16 16' aria-hidden='true'><path d='M6 3.5 10.5 8 6 12.5' "+
+          "fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' "+
+          "stroke-linejoin='round'/></svg></a>"+
+    "</div>"+
     /* Same code, same slip, other book. This was a footnote saying it "also
        works on football.com", which left anyone who uses that app to copy the
        code and go and find it. The sentence stays - it is what makes the pill
@@ -13335,6 +13415,7 @@ function showCode(code,hostId,save,B,picks){
   rememberShortLink(code,picks,B);
   wrap.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code,_live,B);});
   wireSplit(wrap,picks,B);
+  saferHere(wrap,code,B);
   reconcileCode(code,picks,B).then(function(kept){
     if(!kept||kept.length>=picks.length) return;
     _useKept(kept);
@@ -13351,6 +13432,114 @@ function showCode(code,hostId,save,B,picks){
     sv.textContent="Saved"; sv.disabled=true; sv.classList.add("done");
     var n=wrap.querySelector(".code-keep-n");
     if(n) n.textContent="In Your slips. It will be graded as the games finish.";
+  });
+}
+/* MAKE IT SAFER, DONE WHERE IT WAS ASKED.
+   The pill used to open the converter's Edit for me on this code, and the
+   site's owner put it plainly (24 Sep 2026): nobody who presses it wants to be
+   sent to another page. So it is done here, with the converter's own parts -
+   the code is read back, saferPlan moves each leg it can to a safer bet on the
+   same game, bookFetch books that ticket, and the new code opens in this
+   modal with what changed and what it now pays. Swaps only, no legs taken
+   out: the promise on the pill is "same games".
+   Balanced first, the converter's usual call; Safest only when Balanced finds
+   nothing, because a press that answers "nothing to do" when there was
+   something is worse than one that goes a step further. The converter's own
+   dials live on BYO, so they are set for the run and put back after it - a
+   reader half way through an edit there keeps it.
+   The href stays, so a middle-click or a new tab still gets the full editor. */
+function saferRun(legs,B){
+  var keep={how:BYO.saferHow,on:BYO.saferSwapOn,sh:BYO.saferShuffle,pin:BYO.saferPin};
+  try{
+    BYO.saferSwapOn=true; BYO.saferShuffle=0; BYO.saferPin={};
+    BYO.saferHow="normal";
+    var plan=saferPlan(legs,B);
+    if(!plan.length){ BYO.saferHow="strong"; plan=saferPlan(legs,B); }
+    return plan;
+  }finally{
+    BYO.saferHow=keep.how; BYO.saferSwapOn=keep.on;
+    BYO.saferShuffle=keep.sh; BYO.saferPin=keep.pin;
+  }
+}
+function saferDoneHTML(plan,before,after,n,started,oldCode,B){
+  var px=function(o){ return (o&&isFinite(o)&&o>1)?" <span class='cs-px'>x"+(+o).toFixed(2)+"</span>":""; };
+  var rows=plan.map(function(p){
+    return "<li><span class='cs-g'>"+esc(p.f.home+" v "+p.f.away)+"</span>"+
+      "<span class='cs-m'><s>"+mLabel(p.f,p.from)+px(p.oddOld)+"</s> → "+
+        mLabel(p.f,p.to)+px(p.oddNew)+"</span></li>";
+  }).join("");
+  /* A total only when every leg has a price. With one missing, the product
+     of the rest is a number the ticket does not pay - lower than the truth
+     and printed as if exact. Then it is only what the slip paid before, and
+     the book's own total is one tap away. */
+  var was=before.known&&!before.unknown?"x"+before.odds.toFixed(2):"";
+  var odds=after.unknown
+    ? (was?"was "+was:"")
+    : (was?was+" → ":"")+"<em>x"+after.odds.toFixed(2)+"</em>";
+  return "<div class='code-safer code-safer--done'>"+
+    "<div class='cs-head'><div class='cs-txt'><b>Made safer</b>"+
+      "<span>"+plan.length+" of "+n+" game"+(n===1?"":"s")+" moved to a safer bet. "+
+        (plan.length<n?"The rest are unchanged.":"")+"</span></div>"+
+      "<span class='cs-odds'>"+odds+"</span></div>"+
+    "<ul class='cs-list'>"+rows+"</ul>"+
+    "<p class='cs-foot'>"+
+      (after.unknown?"The new total is on your "+B.mark+" betslip; we have no price on "+
+        after.unknown+" of these bets. ":"")+
+      (started?started+" game"+(started===1?" had":"s had")+" already started and "+
+        (started===1?"is":"are")+" left out. ":"")+
+      "Your old code, "+esc(oldCode)+", still works.</p>"+
+  "</div>";
+}
+function saferHere(wrap,code,B){
+  var box=wrap.querySelector(".code-safer"), go=box&&box.querySelector(".cs-go");
+  if(!go) return;
+  var label=go.innerHTML;
+  function say(msg){
+    go.innerHTML=label; go.removeAttribute("aria-busy");
+    var m=box.querySelector(".cs-msg")||document.createElement("p");
+    m.className="cs-msg"; m.textContent=msg;
+    if(!m.parentNode) box.appendChild(m);
+  }
+  go.addEventListener("click",function(e){
+    if(e.metaKey||e.ctrlKey||e.shiftKey||e.button===1) return;
+    e.preventDefault();
+    if(go.getAttribute("aria-busy")) return;
+    if(SW_QUOTA_LEFT!==null&&isFinite(+SW_QUOTA_LEFT)&&+SW_QUOTA_LEFT<1)
+      return say("A safer slip needs a new booking code and you have none left today. More after midnight.");
+    go.setAttribute("aria-busy","true");
+    go.innerHTML="<span class='cs-spin' aria-hidden='true'></span>Working…";
+    try{ ensureBookFeed(B.key); }catch(_){}
+    fetch("/api/slip?book="+encodeURIComponent(B.key)+"&code="+encodeURIComponent(code),
+          {headers:{Accept:"application/json"}})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d||!d.success||!Array.isArray(d.legs)) return say("Couldn't read this code back. Try again in a moment.");
+        var legs=d.legs.filter(function(l){ return l.prediction&&!legStarted(l); });
+        var started=d.legs.length-legs.length;
+        if(!legs.length) return say("Every game on this slip has started, so there is nothing left to change.");
+        var plan=saferRun(legs,B);
+        if(!plan.length) return say("Already as safe as we can make it: no game here has a safer bet we trust.");
+        var byLeg={}; plan.forEach(function(p){ byLeg[p.leg.eventId+"|"+p.from]=p; });
+        var sels=legs.map(function(l){
+          var p=byLeg[l.eventId+"|"+l.prediction];
+          var o={eventId:l.eventId}; o[B.arg||"prediction"]=p?p.to:l.prediction; return o;
+        });
+        var before=saferOdds(legs,[],B), after=saferOdds(legs,plan,B);
+        return bookFetch(sels,B,"safer").then(function(r){
+          var nc=r&&r.success&&B.codeOf(r);
+          if(!nc){ go.innerHTML=label; go.removeAttribute("aria-busy");
+            box.insertAdjacentHTML("beforeend",bookErrHTML(r,B)); return; }
+          var picks=legs.map(function(l){
+            var f=fixtureByLeg(l,B); if(!f) return null;
+            var p=byLeg[l.eventId+"|"+l.prediction], c=p?p.to:l.prediction;
+            return {id:fid(f),code:c,f:f,p:p?p.pNew:mProb(f,c)};
+          }).filter(Boolean);
+          showCode(nc,"codeSaferHost",null,B,picks);
+          var slot=document.querySelector("#codeModal .code-safer");
+          if(slot) slot.outerHTML=saferDoneHTML(plan,before,after,legs.length,started,code,B);
+        });
+      })
+      .catch(function(){ say("Couldn't reach the bookmaker. Check your connection and try again."); });
   });
 }
 /* ---- splitting one slip into several tickets ---- */
@@ -15060,6 +15249,16 @@ function splitBoxInner(picks,oddsOf){
          minted by the reader pressing the button in it. A link that booked on
          arrival would spend somebody's daily allowance for them. */
       var go=(q.get("go")||"").toLowerCase(), t0=Date.now();
+      /* READ ONCE, THEN GONE FROM THE ADDRESS BAR. Left in place, the query
+         rode along on every view change - setView pushes history entries on
+         the current URL - so a refresh from ANY page re-ran it and dropped the
+         reader back on the converter. Reported from the installed app, 24 Sep
+         2026, the day after Make it safer started linking here. */
+      try{
+        ["book","code","go","to"].forEach(function(k){ q.delete(k); });
+        var _qs=q.toString();
+        history.replaceState(history.state,"",location.pathname+(_qs?"?"+_qs:"")+(location.hash||""));
+      }catch(e){}
       /* Three things have to arrive first and none is instant: the legs, the
          board, and the bookmaker ids ATTACHED to that board. DATA.fixtures
          lands with the payload and carries no eventId at all until
