@@ -39,20 +39,31 @@ test("unders and no-goal markets are the complement, and unknowns are not guesse
   assert.strictEqual(ex.all, null);
 });
 
-test("the whole-slip chance is only claimed when every leg is priced", () => {
+test("the verdict and the payout, and no win-chance line (owner's call, 24 Sep)", () => {
   const text = D.reply("sporty", "ABC123", [leg("Morocco", "Gabon", "HOME_OVER_1.5", 1.35),
     leg("Nowhere", "FC", "1", 1.5)], fx, "https://x.test");
-  assert.doesNotMatch(text, /Chance all/, "one unread leg makes that number a lie");
+  assert.doesNotMatch(text, /Chance all/);
+  assert.match(text, /Wizard's verdict: a banker 🔥/);
+  assert.match(text, /Pays <b>×2\.03<\/b> · ₦1,000 → <b>₦2,025<\/b>/, "every leg's odds, read or not");
   assert.match(text, /1 we can't read/);
   assert.match(text, /go=convert/);
   assert.match(text, /18\+/);
+  const noPrice = D.reply("sporty", "ABC123", [leg("Morocco", "Gabon", "HOME_OVER_1.5", null)], fx, "https://x.test");
+  assert.doesNotMatch(noPrice, /Pays/, "a leg without a price means no total");
 });
 
 test("the reply flags a leg the odds rate well above our model", () => {
   const text = D.reply("sporty", "ABC123", [leg("England", "Spain", "AWAY_OVER_1.5", 1.6),
     leg("Morocco", "Gabon", "HOME_OVER_1.5", 1.35), leg("Morocco", "Gabon", "1X", 1.05),
     leg("Turkiye", "France", "AWAY_OVER_1.5", 1.4)], fx, "https://x.test");
-  assert.match(text, /Spain over 1\.5 · <b>37%<\/b> - the odds price it at 63%/);
+  assert.match(text, /Spain over 1\.5 · <b>37%<\/b> \(odds say 63%\)/);
+  assert.match(text, /Wizard's verdict: 2 bankers, 2 to tighten/);
+  /* Never more verdict legs than slip legs, and "Bankers" only over bankers. */
+  const weak = D.reply("sporty", "ABC123", [leg("England", "Spain", "AWAY_OVER_1.5", 1.6),
+    leg("Turkiye", "France", "AWAY_OVER_1.5", 1.4)], fx, "https://x.test");
+  assert.match(weak, /Wizard's verdict: 0 bankers, 2 to tighten/);
+  assert.match(weak, /💪 <b>Strongest<\/b>/);
+  assert.doesNotMatch(weak, /🔥 <b>Bankers<\/b>/);
 });
 
 test("the webhook refuses anyone who is not Telegram", async () => {

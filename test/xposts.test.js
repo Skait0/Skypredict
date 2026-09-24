@@ -19,9 +19,19 @@ test("a long result post is trimmed to fit, and says how many it left out", () =
   const e = { date: "2026-09-22", legs: Array.from({ length: 12 }, (_, i) => leg(i, i !== 3)) };
   const t = P.xResultPost(e, resultOf);
   assert.ok(P.xLen(t) <= 280, P.xLen(t) + " characters");
-  assert.match(t, /^❌ Tue 22 Sep's code: 11 of 12 landed\./);
+  assert.match(t, /^😤 So close\. Tue 22 Sep's code: 11 of 12 landed, one leg off\./);
   assert.match(t, /\+\d+ more/);
   assert.match(t, /booking-codes\/2026-09-22$/);
+});
+
+test("the result head is upbeat and still tells the real count", () => {
+  /* Owner's call, 24 Sep: no red ❌ opener. Never untrue: the count is always there. */
+  const won = P.xResultPost({ date: "2026-09-22", legs: [leg(0, true), leg(1, true)] }, resultOf);
+  assert.match(won, /^✅ Tue 22 Sep's code WON 🔥 2 of 2 landed\./);
+  const rough = P.xResultPost({ date: "2026-09-22", legs: [leg(0, true), leg(1, false), leg(2, false)] }, resultOf);
+  assert.match(rough, /^📊 Tue 22 Sep's code: 1 of 3 landed\. New code is up, we go again 💪/);
+  assert.match(rough, /❌/, "the per-leg misses are still shown");
+  assert.ok(!/^❌/.test(rough));
 });
 
 test("the code post names every book's code and fits", () => {
