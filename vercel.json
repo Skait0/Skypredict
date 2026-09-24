@@ -54,12 +54,20 @@
     "api/tg.js": {
       "maxDuration": 60,
       "memory": 256
+    },
+    "api/tgfollow.js": {
+      "maxDuration": 60,
+      "memory": 256
     }
   },
   "crons": [
     {
       "path": "/api/cron",
       "schedule": "30 6 * * *"
+    },
+    {
+      "path": "/api/tgfollow",
+      "schedule": "*/10 * * * *"
     }
   ],
   "headers": [

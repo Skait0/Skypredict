@@ -21,6 +21,7 @@ const D = require("../lib/doctor.js");
 const CONVERT = require("../lib/convert.js");
 const SB = require("../lib/supabase.js");
 const QUOTA = require("../lib/quota.js");
+const FOLLOW = require("../lib/follow.js");
 
 const SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
 const ORDER = ["sporty", "bet9ja", "betking", "betpawa"];
@@ -65,11 +66,46 @@ const CONVERT_CAP = 5;
 const subjectOf = (uid) => "tg-" + crypto.createHash("sha256")
   .update((process.env.SW_QUOTA_PEPPER || "") + ":" + uid).digest("hex").slice(0, 24);
 
-/* One button per other book, under every doctor reply. */
+/* One button per other book, and Follow my slip, under every doctor reply. */
 function convertButtons(from, code) {
   const row = ORDER.filter((b) => b !== from).map((b) => ({
     text: "🔁 " + D.BOOK_NAMES[b], callback_data: ["cv", b, from, code].join("|") }));
-  return { inline_keyboard: [row] };
+  return { inline_keyboard: [row, [{ text: "🔔 Follow my slip", callback_data: ["fw", from, code].join("|") }]] };
+}
+
+/* FOLLOW MY SLIP (lib/follow.js, api/tgfollow.js). Up to FOLLOW_CAP open at
+   once per person, so the ten-minute job stays small; a slip settles within a
+   day or two and frees its place. */
+const FOLLOW_CAP = 5;
+async function onFollow(cq) {
+  const chat = cq.message && cq.message.chat;
+  if (!chat || chat.type !== "private") return;
+  const [tag, from, code] = String(cq.data || "").split("|");
+  if (tag !== "fw" || !ORDER.includes(from) || !/^[A-Z0-9]{4,16}$/.test(code || "")) return;
+  const say = (text) => tg("sendMessage", { chat_id: chat.id, text, parse_mode: "HTML",
+    disable_web_page_preview: true, reply_to_message_id: cq.message.message_id });
+  const open = await SB.openFollows(chat.id);
+  if (!open.ok) { await say("I can't follow slips right now. Try again in a few minutes."); return; }
+  if (!open.rows.some((r) => r.code === code) && open.rows.length >= FOLLOW_CAP) {
+    await say("🔔 You're already following " + FOLLOW_CAP + " slips - that's the most at once. " +
+      "One frees up as soon as it settles. Every graded code lives on <a href=\"" + SITE + "/booking-codes\">soccerwizard.live</a> 🧙");
+    return;
+  }
+  const legs = await readCode(from, code);
+  if (!legs) { await say("That code can't be read any more - it may have expired or its games started."); return; }
+  const pay = await (await fetch(SITE + "/predictions.json")).json().catch(() => ({}));
+  const tracked = FOLLOW.track(legs, (pay && pay.fixtures) || []);
+  if (!tracked.length) {
+    await say("😤 I can't follow any game on this slip - they're not on our board, or the markets can't be settled from a final score.");
+    return;
+  }
+  const last = tracked.map((l) => Date.parse(l.ko || "")).filter(isFinite).sort((a, b) => b - a)[0];
+  const put = await SB.putFollow({ chat_id: chat.id, book: from, code, legs: tracked, seen: {}, done: false,
+    last_kickoff: last ? new Date(last).toISOString() : null });
+  if (!put.ok) { await say("I can't follow slips right now. Try again in a few minutes."); return; }
+  await say("🔔 <b>Following " + code + "</b> 🧙\n\nI'll message you as each game lands, and when the whole slip is in." +
+    (tracked.length < legs.length ? "\nTracking " + tracked.length + " of " + legs.length + " games (the rest aren't on our board or settle on a half-time score)." : "") +
+    "\n\nWhile you wait: the slip builder and tomorrow's code are on <a href=\"" + SITE + "\">soccerwizard.live</a> 🔥");
 }
 
 async function onConvert(cq) {
@@ -101,7 +137,7 @@ async function onConvert(cq) {
   const left = used.ok ? Math.max(0, CONVERT_CAP - used.n - 1) : null;
   const stuck = r.stuck || [];
   const out = ["🔁 <b>" + D.BOOK_NAMES[to] + ": <code>" + r.code + "</code></b> 🔥",
-    r.booked.length + " of " + legs.length + " games crossed."];
+    r.booked.length + " of " + legs.length + " games converted."];
   if (stuck.length) out.push("Left behind: " + stuck.slice(0, 4).map((s) =>
     esc((s.leg.home || "") + " v " + (s.leg.away || "")) + " (" + esc(s.why) + ")").join("; ") +
     (stuck.length > 4 ? "; +" + (stuck.length - 4) + " more" : ""));
@@ -123,7 +159,7 @@ module.exports = async function handler(req, res) {
   if (cq) {
     /* Stop the button's spinner first; the work can take a few seconds. */
     await tg("answerCallbackQuery", { callback_query_id: cq.id, text: "On it 🧙" }).catch(() => {});
-    try { await onConvert(cq); } catch (e) { /* the reader can tap again */ }
+    try { await (String(cq.data || "").startsWith("fw|") ? onFollow(cq) : onConvert(cq)); } catch (e) { /* the reader can tap again */ }
     return res.status(200).json({ ok: true });
   }
   const msg = req.body && req.body.message;
