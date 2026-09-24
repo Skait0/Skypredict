@@ -61,10 +61,17 @@ function sandbox(payloadOf) {
   return { api: made, posted, shared };
 }
 
+/* Wait for the async hash-and-post to land, not a fixed 30ms: under the full
+   suite's load 30ms was sometimes too short and the test failed on timing. */
+async function until(ok, ms = 2000) {
+  const t = Date.now();
+  while (!ok() && Date.now() - t < ms) await new Promise((r) => setTimeout(r, 5));
+}
+
 test("the key is a shape no bookmaker code can collide with", async () => {
   const { api, posted } = sandbox(() => "ThunLausanne2026-09-02OVER_1.51.2591");
   api.rememberSlipLink([{}], "sporty");
-  await new Promise((r) => setTimeout(r, 30));
+  await until(() => posted.length >= 1);
   assert.equal(posted.length, 1, "nothing was registered");
   const key = posted[0].code;
   assert.match(key, /^S-[0-9A-F]{12}$/, "key is " + key);
@@ -82,7 +89,7 @@ test("the same slip registers under the same key twice", async () => {
   const { api, posted } = sandbox(() => raw);
   api.rememberSlipLink([{}], "sporty");
   api.rememberSlipLink([{}], "sporty");
-  await new Promise((r) => setTimeout(r, 30));
+  await until(() => posted.length >= 2);
   assert.equal(posted[0].code, posted[1].code, "one slip, two rows");
 });
 
@@ -90,9 +97,9 @@ test("the tap shares the short link once it has landed", async () => {
   const raw = "ThunLausanne2026-09-02OVER_1.51.2591";
   const { api, shared } = sandbox(() => raw);
   api.rememberSlipLink([{}], "sporty");
-  await new Promise((r) => setTimeout(r, 30));
+  await until(() => api.SHORT_SLIP);
   api.shareSlip([{}], 1.25);
-  await new Promise((r) => setTimeout(r, 10));
+  await until(() => shared.length >= 1);
   assert.equal(shared.length, 1);
   assert.match(shared[0], /^https:\/\/x\.test\/s\/S-[0-9A-F]{12}$/);
   assert.ok(shared[0].length < 60, "still " + shared[0].length + " characters");
@@ -102,17 +109,17 @@ test("a link from a different slip is never reused", async () => {
   let raw = "ThunLausanne2026-09-02OVER_1.51.2591";
   const { api, shared } = sandbox(() => raw);
   api.rememberSlipLink([{}], "sporty");
-  await new Promise((r) => setTimeout(r, 30));
+  await until(() => api.SHORT_SLIP);
   raw = "BayernUnion2026-09-03OVER_1.51.1883";  // rebuilt
   api.shareSlip([{}], 1.18);
-  await new Promise((r) => setTimeout(r, 10));
+  await until(() => shared.length >= 1);
   assert.match(shared[0], /\/s\?p=/, "shared a cached link for a slip that changed");
 });
 
 test("nothing registered still shares, on the long link", async () => {
   const { api, shared, posted } = sandbox(() => "ThunLausanne2026-09-02OVER_1.51.2591");
   api.shareSlip([{}], 1.25);
-  await new Promise((r) => setTimeout(r, 10));
+  await until(() => shared.length >= 1);
   assert.equal(posted.length, 0);
   assert.match(shared[0], /\/s\?p=/);
 });
