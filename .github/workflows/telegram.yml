@@ -9,6 +9,10 @@ on:
         description: "Text to post and pin (leave empty to send due posts)"
         required: false
         default: ""
+      set_webhook:
+        description: "Point the bot at /api/tg (code doctor)"
+        type: boolean
+        default: false
 permissions:
   contents: write
 jobs:
@@ -19,6 +23,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Webhook
+        if: ${{ inputs.set_webhook }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: node scripts/tgwebhook.js
       - name: Pin
         if: ${{ inputs.pin_text != '' }}
         env:
@@ -26,7 +35,7 @@ jobs:
           TG_PIN_TEXT: ${{ inputs.pin_text }}
         run: node scripts/tgpin.js
       - name: Send
-        if: ${{ inputs.pin_text == '' }}
+        if: ${{ inputs.pin_text == '' && !inputs.set_webhook }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
