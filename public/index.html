@@ -83,7 +83,7 @@
 <!-- The mark that rides the sphere on the offer card. Fetched with the
      stylesheet rather than when the CSS background is first needed, because
      the roll begins the instant the card paints and does not wait for it. -->
-<link rel="preload" as="image" href="/wiz-orb-mark.png">
+<link rel="preload" as="image" href="/wiz-orb-ball.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- The webfont must not hold up the first paint.
@@ -198,7 +198,7 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
     var im=new Image();
     im.onload=function(){ (im.decode?im.decode():Promise.resolve()).then(go,go); };
     im.onerror=go;
-    im.src="/wiz-orb-mark.png";
+    im.src="/wiz-orb-ball.png";
     if(im.complete) go();
   }catch(e){ go(); }
   setTimeout(go,4000);
@@ -1426,7 +1426,8 @@ html.tapped .list-hint{display:none}
   background:radial-gradient(circle at 34% 28%,#ffffff 0%,#f4f3f1 46%,#dcd8d2 78%,#bdb7ae 100%);
   filter:drop-shadow(0 0 5px rgba(255,255,255,.4));
   animation:orbBreath 3.4s ease-in-out infinite}
-/* Just the S, on transparency - a whole orb image cannot ride a surface. */
+/* Just the panels and seams, on transparency - a whole orb image cannot ride
+   a surface. */
 /* Multiplied into the ball rather than laid over it. Drawn normally the mark
    keeps its own flat brightness wherever it sits, so the sphere darkens
    toward the edge and the S does not - and the eye reads that as a sticker
@@ -1439,8 +1440,14 @@ html.tapped .list-hint{display:none}
    blank side": nothing was wrong with the timing, the thing being timed had
    not arrived. The html class is set the moment the image decodes, so the
    turn always begins with the mark facing forward. */
-.orb-mark{position:absolute;top:15%;bottom:15%;left:0;right:0;display:block;
-  background:url("/wiz-orb-mark.png") center/auto 100% no-repeat;
+/* OUR BALL, NOT A BOOKMAKER'S BADGE (24 Sep 2026). It carried SportyBet's
+   "S" while the button under it already named whichever of the four books
+   the reader is on - a betPawa reader watched SportyBet's logo spin above a
+   betPawa slip. Now the ball is a football, red panels on gold seams, filling
+   the whole sphere so the shading wraps it; the book is named where it
+   always was, in the button's own wordmark. */
+.orb-mark{position:absolute;top:0;bottom:0;left:0;right:0;display:block;
+  background:url("/wiz-orb-ball.png") center/auto 100% no-repeat;
   mix-blend-mode:multiply}
 html.orb-ready .orb-mark{animation:orbRoll 8s linear infinite}
 .orb-shade{position:absolute;inset:0;border-radius:50%;display:block;
@@ -4425,7 +4432,7 @@ html{interpolate-size:allow-keywords}
 .ctafab:focus-visible{outline:2px solid var(--text);outline-offset:3px}
 .ctafab-orb{width:26px;height:26px;border-radius:50%;flex-shrink:0;
   background:radial-gradient(circle at 34% 28%,#fff 0%,#f4f3f1 46%,#dcd8d2 78%,#bdb7ae 100%)
-    ,url("/wiz-orb-mark.png") center/72% auto no-repeat;
+    ,url("/wiz-orb-ball.png") center/100% auto no-repeat;
   background-blend-mode:multiply}
 @media(min-width:721px){ .ctafab{display:inline-flex} }
 @media(prefers-reduced-motion:reduce){
