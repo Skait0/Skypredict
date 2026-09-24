@@ -4815,6 +4815,10 @@ button.wsp-go.waiting{opacity:.55}
 @keyframes orbGlow{0%,100%{box-shadow:0 6px 20px rgba(230,57,70,.45),0 0 0 1px rgba(255,180,185,.3) inset}
   50%{box-shadow:0 6px 26px rgba(230,57,70,.7),0 0 0 1px rgba(255,180,185,.45) inset}}
 html.reduce .myfab{animation:none}
+/* On the Build view with its Shuffle / Clear / Get code bar showing, the bubble
+   sat on the end of Get code. It rises clear of the bar (about 74px tall)
+   while the bar is there, and drops back when it is not. */
+html.mode-build.bld-foot-on .myfab{bottom:calc(var(--btabs-h,0px) + 92px)}
 .myfab:hover{filter:brightness(1.07)}
 .myfab-c{background:none;color:#fff;min-width:auto;height:auto;border-radius:0;
   display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;padding:0}
@@ -20192,6 +20196,9 @@ function renderBuilderOutput(){
   var showFoot = (!isWiz && picks.length && !wizGhost && !firstVisit);
   if(foot) foot.style.display =
     showFoot ? "flex" : "none";
+  /* The My slip bubble floats bottom-right, which is where Get code ends -
+     so while the bar shows, the bubble lifts above it (see .bld-foot-on). */
+  document.documentElement.classList.toggle("bld-foot-on", !!showFoot);
   /* The picker rides the same rule. Until now the slider had none at all,
      so Get code silently used whatever the My slip sheet was set to - and
      the wizard looked fine because its slip opens in that very sheet. */
