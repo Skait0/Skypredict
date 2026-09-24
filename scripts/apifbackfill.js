@@ -3,6 +3,11 @@
  * History for the thirty leagues that have none. OFFLINE / ONE-OFF-ISH.
  *
  *   node scripts/apifbackfill.js [--seasons=2023,2024,2025,2026] [--only=Croatia] [--dry]
+ *                                [--stats] [--plan] [--gap=ms]
+ *
+ * --plan spends nothing and prints what a run would cost. --stats adds corners,
+ * shots and shots on target, twenty fixtures a request. --gap is the pause
+ * between requests: 6500 on the free plan, ~250 on a paid one.
  *
  * WHY THIS EXISTS. lib/liveresults.js HARVEST_EXTRA lists thirty leagues we
  * want to rate and football-data.co.uk does not publish. They were left to
@@ -117,6 +122,41 @@ const LEAGUES = {
   265: "Chile Primera Division",
 };
 
+/* --plan asks nothing: it counts what a run would spend from what is already
+   cached, so the paid day can be sized before it is bought. */
+const PLAN = process.argv.includes("--plan");
+/* --stats adds corners, shots and shots on target to every finished fixture,
+   twenty fixtures a request (/fixtures?ids= returns statistics inline). */
+const STATS = process.argv.includes("--stats");
+const BATCH = 20;
+/* Never spend the last of the day: the build's score oracle shares this key
+   and stops at its own floor of 10 (lib/build.js ORACLE_FLOOR). */
+const RESERVE = 15;
+const GAP = Number(arg("gap", GAP_MS));
+let left = null;   // what the plan says is left today, from the last answer
+
+async function apiGet(url, k) {
+  if (left != null && left < RESERVE) {
+    throw new Error(`stopping: ${left} requests left today, reserve is ${RESERVE}`);
+  }
+  const r = await fetch(HOST + url, { headers: { "x-apisports-key": k, Accept: "application/json" } });
+  const n = Number(r.headers.get("x-ratelimit-requests-remaining"));
+  if (Number.isFinite(n) && r.headers.get("x-ratelimit-requests-remaining") != null) left = n;
+  const body = await r.json().catch(() => null);
+  if (!r.ok || !body) throw new Error(`http ${r.status} for ${url}`);
+  const errs = body.errors;
+  const bad = Array.isArray(errs) ? errs.length : (errs && Object.keys(errs).length);
+  /* Their errors arrive inside a 200. A refusal on the minute is a wait, not
+     data we do not have: wait it out and ask once more. Anything else - a
+     season the plan does not cover, a bad id - is final. */
+  if (bad && errs && errs.rateLimit) {
+    await new Promise((r2) => setTimeout(r2, 65000));
+    return apiGet(url, k);
+  }
+  if (bad) throw new Error(`API-Football refused ${url}: ${JSON.stringify(errs)}`);
+  return body;
+}
+
 function key() {
   const p = path.join(process.env.USERPROFILE || process.env.HOME || "", ".apisports.key");
   const k = (process.env.APISPORTS_KEY || "").trim() ||
@@ -135,27 +175,65 @@ async function season(id, yr, k) {
     try { return { cached: true, body: JSON.parse(fs.readFileSync(f, "utf8")) }; }
     catch (e) { /* fall through and refetch */ }
   }
-  const r = await fetch(`${HOST}/fixtures?league=${id}&season=${yr}`,
-    { headers: { "x-apisports-key": k, Accept: "application/json" } });
-  const body = await r.json().catch(() => null);
-  if (!r.ok || !body) throw new Error(`http ${r.status} for league ${id} season ${yr}`);
-  /* Their errors arrive inside a 200. An object with a `requests` key is the
-     quota talking; anything else is a bad request, and both should stop the
-     run rather than write an empty season to the cache. */
-  const errs = body.errors;
-  const bad = Array.isArray(errs) ? errs.length : (errs && Object.keys(errs).length);
-  /* Their minute limit is ten and the gap below assumes this script is the
-     only thing holding the key - it is not, the build's score oracle uses the
-     same one. A refusal on the minute is a wait, not a season we do not have,
-     so it waits out the minute and asks once more. Anything else - a season
-     the plan does not cover, a bad league id - is final. */
-  if (bad && errs && errs.rateLimit) {
-    await new Promise((r2) => setTimeout(r2, 65000));
-    return season(id, yr, k);
-  }
-  if (bad) throw new Error(`API-Football refused league ${id} ${yr}: ${JSON.stringify(errs)}`);
+  if (PLAN) return { cached: false, body: null };
+  const body = await apiGet(`/fixtures?league=${id}&season=${yr}`, k);
   fs.writeFileSync(f, JSON.stringify(body));
   return { cached: false, body };
+}
+
+/* Statistics for finished fixtures, cached per batch file as {fixtureId:
+   stats|null}. A null is an answer - their coverage has no stats for that
+   game - and is never asked for again. */
+const STATS_DIR = path.join(CACHE, "stats");
+function loadStats() {
+  const all = {};
+  if (!fs.existsSync(STATS_DIR)) return all;
+  for (const f of fs.readdirSync(STATS_DIR)) {
+    try { Object.assign(all, JSON.parse(fs.readFileSync(path.join(STATS_DIR, f), "utf8"))); }
+    catch (e) { /* a torn file is re-asked */ }
+  }
+  return all;
+}
+
+/* One fixture's statistics block, as our columns. API-Football lists each
+   side under its team id, with types named in English; a missing or "null"
+   value is a column we do not have, not a zero. */
+function statsOf(f) {
+  const blocks = f && f.statistics;
+  if (!Array.isArray(blocks) || blocks.length < 2) return null;
+  const hid = f.teams && f.teams.home && f.teams.home.id;
+  const side = (b) => {
+    const v = (t) => {
+      const s = (b.statistics || []).find((x) => x.type === t);
+      const n = s && s.value != null ? parseInt(s.value, 10) : NaN;
+      return Number.isFinite(n) ? n : null;
+    };
+    return { c: v("Corner Kicks"), s: v("Total Shots"), t: v("Shots on Goal") };
+  };
+  const h = blocks.find((b) => b.team && b.team.id === hid);
+  const a = blocks.find((b) => b.team && b.team.id !== hid);
+  if (!h || !a) return null;
+  const H = side(h), A = side(a);
+  const out = { hc: H.c, ac: A.c, hs: H.s, as: A.s, hst: H.t, ast: A.t };
+  return Object.values(out).some((x) => x != null) ? out : null;
+}
+
+async function fetchStats(ids, k, have) {
+  fs.mkdirSync(STATS_DIR, { recursive: true });
+  let asked = 0;
+  for (let i = 0; i < ids.length; i += BATCH) {
+    const chunk = ids.slice(i, i + BATCH);
+    const body = await apiGet(`/fixtures?ids=${chunk.join("-")}`, k);
+    const got = {};
+    for (const id of chunk) got[id] = null;
+    for (const f of (body.response || [])) got[f.fixture.id] = statsOf(f);
+    fs.writeFileSync(path.join(STATS_DIR, `${chunk[0]}.json`), JSON.stringify(got));
+    Object.assign(have, got);
+    asked++;
+    if (asked % 25 === 0) console.log(`stats: ${i + chunk.length}/${ids.length} fixtures, ${left} left today`);
+    await new Promise((r2) => setTimeout(r2, GAP));
+  }
+  return asked;
 }
 
 /* Their fixture, as one of our feed rows. Only a finished match counts: FT is
@@ -165,7 +243,12 @@ const DONE = new Set(["FT", "AET", "PEN"]);
 /* Names that would collide in the index, renamed at source - see
    LEAGUE_RENAME in lib/liveresults.js, which every feed now shares. */
 const named = (league, t) => L.renamed(league, t);
-function rowsOf(body, league) {
+function finishedIds(body) {
+  return (body.response || [])
+    .filter((f) => DONE.has(f && f.fixture && f.fixture.status && f.fixture.status.short))
+    .map((f) => f.fixture.id);
+}
+function rowsOf(body, league, stats) {
   const out = [];
   for (const f of (body.response || [])) {
     const st = f && f.fixture && f.fixture.status && f.fixture.status.short;
@@ -179,6 +262,7 @@ function rowsOf(body, league) {
       home: named(league, (f.teams && f.teams.home && f.teams.home.name) || ""),
       away: named(league, (f.teams && f.teams.away && f.teams.away.name) || ""),
       hg, ag,
+      ...((stats && stats[f.fixture.id]) || {}),
     });
   }
   return out;
@@ -201,18 +285,49 @@ function rowsOf(body, league) {
     L.HARVEST_EXTRA));
   const boot = new Set(L.HARVEST_EXTRA);
 
-  const k = key();
+  const k = PLAN ? "" : key();
   let kept = [], asked = 0;
   const per = {};
+  /* Pass one: every league-season, fetched or (under --plan) only counted. */
+  const bodies = [];   // [league, yr, body, cached]
+  let uncached = 0;
   for (const id of ids) {
-    const league = LEAGUES[id];
-    per[league] = { rows: 0, resolved: 0, club: 0 };
     for (const yr of seasons) {
       let got;
       try { got = await season(id, yr, k); }
-      catch (e) { console.log(`${league} ${yr}: ${e.message}`); continue; }
-      if (!got.cached) { asked++; }
-      const rows = rowsOf(got.body, league);
+      catch (e) { console.log(`${LEAGUES[id]} ${yr}: ${e.message}`); continue; }
+      if (!got.cached) {
+        if (PLAN) { uncached++; continue; }
+        asked++;
+        await new Promise((r2) => setTimeout(r2, GAP));
+      }
+      bodies.push([LEAGUES[id], yr, got.body, got.cached]);
+    }
+  }
+
+  /* Pass two: statistics for every finished fixture not already cached. */
+  const stats = loadStats();
+  if (STATS || PLAN) {
+    const need = [];
+    for (const [, , body] of bodies) for (const id of finishedIds(body)) if (!(id in stats)) need.push(id);
+    const perSeason = bodies.length ? Math.round(bodies.reduce((n, b) => n + finishedIds(b[2]).length, 0) / bodies.length) : 300;
+    if (PLAN) {
+      const guess = Math.ceil(uncached * perSeason / BATCH);
+      console.log(`PLAN: ${uncached} league-season request(s) not cached`);
+      console.log(`PLAN: ${need.length} cached fixtures lack stats = ${Math.ceil(need.length / BATCH)} request(s)`);
+      console.log(`PLAN: + about ${guess} for the uncached seasons (~${perSeason} fixtures each)`);
+      console.log(`PLAN: total about ${uncached + Math.ceil(need.length / BATCH) + guess} requests`);
+      return;
+    }
+    try { asked += await fetchStats(need, k, stats); }
+    catch (e) { console.log(`stats pass stopped: ${e.message} (cached so far is kept; rerun resumes)`); }
+  }
+
+  for (const [league, yr, body, cached] of bodies) {
+    const got = { body, cached };
+    per[league] = per[league] || { rows: 0, resolved: 0, club: 0 };
+    {
+      const rows = rowsOf(got.body, league, stats);
       /* resolve() stamps one date on everything it is given, so the rows are
          handed over a day at a time - a season is not one date. */
       const byDate = {};
@@ -228,11 +343,10 @@ function rowsOf(body, league) {
       per[league].resolved += res;
       console.log(`${league} ${yr}: ${rows.length} finished, ${res} resolved` +
         (got.cached ? " (cached)" : ""));
-      if (!got.cached) await new Promise((r2) => setTimeout(r2, GAP_MS));
     }
   }
 
-  console.log(`\n${asked} request(s) spent`);
+  console.log(`\n${asked} request(s) spent` + (left == null ? "" : `, ${left} left today`));
   const weak = Object.entries(per).filter(([, v]) => v.rows && v.resolved / v.rows < 0.9);
   if (weak.length) {
     console.log("leagues resolving under 90% - check TEAM_ALIAS before trusting these:");
@@ -246,7 +360,9 @@ function rowsOf(body, league) {
   try {
     if (fs.existsSync(OUT)) prior = L.fromCSV(zlib.gunzipSync(fs.readFileSync(OUT)).toString("utf8"));
   } catch (e) { console.log("could not read the existing file, starting fresh: " + e.message); }
-  const merged = L.dedupe(prior.concat(kept));
+  /* This run's rows first: dedupe keeps the first of a pair, and a row
+     re-derived now may carry statistics the stored one lacks. */
+  const merged = L.dedupe(kept.concat(prior));
 
   const byLeague = {};
   for (const m of merged) byLeague[m.league] = (byLeague[m.league] || 0) + 1;
