@@ -13,6 +13,10 @@ on:
         description: "Point the bot at /api/tg (code doctor)"
         type: boolean
         default: false
+      post_text:
+        description: "Text to post to the channel without pinning (an announcement)"
+        required: false
+        default: ""
 permissions:
   contents: write
 jobs:
@@ -34,8 +38,15 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TG_PIN_TEXT: ${{ inputs.pin_text }}
         run: node scripts/tgpin.js
+      - name: Announce
+        if: ${{ inputs.post_text != '' }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_PIN_TEXT: ${{ inputs.post_text }}
+          TG_PIN: "0"
+        run: node scripts/tgpin.js
       - name: Send
-        if: ${{ inputs.pin_text == '' && !inputs.set_webhook }}
+        if: ${{ inputs.pin_text == '' && inputs.post_text == '' && !inputs.set_webhook }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |

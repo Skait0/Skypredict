@@ -21,6 +21,12 @@ async function tg(method, body) {
 
 (async () => {
   if (!token || !text.trim()) { console.log("need TELEGRAM_BOT_TOKEN and TG_PIN_TEXT"); process.exit(1); }
+  /* TG_PIN=0 posts without touching the pin - an announcement, not a welcome. */
+  if (process.env.TG_PIN === "0") {
+    const m = await tg("sendMessage", { chat_id: chat, text: text, disable_web_page_preview: false });
+    console.log("posted message " + m.message_id);
+    return;
+  }
   const chatInfo = await tg("getChat", { chat_id: chat });
   const old = chatInfo.pinned_message && chatInfo.pinned_message.message_id;
   const msg = await tg("sendMessage", { chat_id: chat, text: text, disable_web_page_preview: true });
