@@ -207,3 +207,18 @@ test("the oracle reports the allowance it has left", async () => {
   assert.match(src, /rows: parseFixtures\(body\), quota \}/,
     "and it must travel back with a successful answer");
 });
+
+test("once the plan reports it is nearly spent, the oracle is not asked again", async () => {
+  /* The per-build budget bounds a build, not the day: fifty deploys at three
+     each overrun 100. The plan says what is left on every answer, and below
+     the floor no further build or pass may spend it. */
+  const LOW = () => ({ ok: true, rows: [{ home: "A", away: "B", hg: 1, ag: 0 }], quota: 7 });
+  const o = stub("oracle", LOW);
+  const budget = B.makeScoreBudget();
+  const log = [];
+  const yesterday = iso(Date.now() - DAY);
+  await B.firstScoreSource(today, log, budget, [o.src]);
+  await B.firstScoreSource(yesterday, log, budget, [o.src]);
+  assert.deepStrictEqual(o.calls, [today], "7 left is under the floor: the second date is not asked");
+  assert.ok(log.some((l) => /not asked again today \(7 left/.test(l)), "and the build log says why");
+});
