@@ -17,6 +17,10 @@ on:
         description: "Text to post to the channel without pinning (an announcement)"
         required: false
         default: ""
+      photos:
+        description: "Comma-separated public image URLs to post as an album with post_text as caption"
+        required: false
+        default: ""
 permissions:
   contents: write
 jobs:
@@ -43,6 +47,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TG_PIN_TEXT: ${{ inputs.post_text }}
+          TG_PHOTOS: ${{ inputs.photos }}
           TG_PIN: "0"
         run: node scripts/tgpin.js
       - name: Send

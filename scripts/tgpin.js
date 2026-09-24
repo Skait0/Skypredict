@@ -23,6 +23,15 @@ async function tg(method, body) {
   if (!token || !text.trim()) { console.log("need TELEGRAM_BOT_TOKEN and TG_PIN_TEXT"); process.exit(1); }
   /* TG_PIN=0 posts without touching the pin - an announcement, not a welcome. */
   if (process.env.TG_PIN === "0") {
+    /* TG_PHOTOS (comma-separated public URLs) posts an album, the text as its
+       caption - how the owner's win screenshots go out. */
+    const photos = String(process.env.TG_PHOTOS || "").split(",").map((s) => s.trim()).filter(Boolean).slice(0, 10);
+    if (photos.length) {
+      const r = await tg("sendMediaGroup", { chat_id: chat,
+        media: photos.map((u, i) => Object.assign({ type: "photo", media: u }, i === 0 ? { caption: text.slice(0, 1024) } : {})) });
+      console.log("posted album of " + r.length);
+      return;
+    }
     const m = await tg("sendMessage", { chat_id: chat, text: text, disable_web_page_preview: false });
     console.log("posted message " + m.message_id);
     return;
