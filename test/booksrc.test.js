@@ -19,14 +19,17 @@ const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), 
 test("every booking call site says where it came from", () => {
   /* To end of line, not to the first ")" - two of these call sites nest a
      .map() inside the argument list and a lazy match stops inside it. */
+  /* bookRounds (24 Sep) books for the converter and the board, so its callers
+     carry the label and its own internal bookFetch passes `src` through. */
   const calls = src.split(/\r?\n/)
-    .filter((l) => /bookFetch\(/.test(l) && !/function bookFetch\(/.test(l))
+    .filter((l) => (/bookFetch\(/.test(l) && !/function bookFetch\(/.test(l) && !/,B,src\)/.test(l)) ||
+                   (/bookRounds\(/.test(l) && !/function bookRounds\(/.test(l) && !/bookRounds\(safe,B,src/.test(l)))
     .map((l) => l.trim());
   /* Five carry a literal. The sixth is My slip, which is a DESTINATION rather
      than a source - the wizard, the slider and the board's Book all empty into
      it - so it reads the label off the legs it was handed, and falls back to
      "myslip" when nothing built them. */
-  const labelled = calls.filter((c) => /,\s*"[a-z]+"\)/.test(c));
+  const labelled = calls.filter((c) => /,\s*"[a-z]+"\)/.test(c) || /bookRounds\([^,]+,[^,]+,"[a-z]+"/.test(c));
   const derived = calls.filter((c) => /_via\|\|"myslip"\)/.test(c));
   /* Seven since 24 Sep 2026: Make it safer books from the code modal itself
      now, as "safer", apart from the converter's "editor" it used to hand to. */
@@ -47,7 +50,7 @@ test("every booking call site says where it came from", () => {
     "the builder sync must record which of the two modes it was in");
   /* And no unlabelled one slipped in beside them - an unlabelled booking is a
      row in the log that cannot be attributed, which is the whole problem. */
-  const bare = calls.filter((c) => !/,\s*"[a-z]+"\)/.test(c) && !/_via\|\|"myslip"/.test(c));
+  const bare = calls.filter((c) => !labelled.includes(c) && !/_via\|\|"myslip"/.test(c));
   assert.deepEqual(bare, [], "unlabelled bookFetch call: " + bare.join(" | "));
 });
 

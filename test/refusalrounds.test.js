@@ -150,3 +150,39 @@ test("My slip narrows the same way, and the slip itself follows each round", asy
   assert.deepStrictEqual(api.slip().map((x) => x.id).sort(),
     ["id0", "id1", "id3", "id4", "id5", "id7"], "the refused legs leave the slip, the rest stay");
 });
+
+test("the converter and the board share the loop: betPawa refuses one of 16, the other 15 book", async () => {
+  /* 24 Sep: converting HUW6YC to betPawa ended on "no market there for 1 of
+     16 picks" with no way forward, and the button stuck on "Booking…". */
+  const picks = [];
+  for (let i = 0; i < 16; i++) picks.push(leg(i, true));
+  const log = { sent: [], prompts: 0, code: null, sentPicks: null, fail: null, busy: 0, idle: 0 };
+  let finish; const done = new Promise((r) => { finish = r; });
+  const stubs = {
+    $: () => ({ innerHTML: "" }),
+    bookFetch(sel) {
+      const ids = sel.map((s) => s.eventId); log.sent.push(ids);
+      if (!ids.includes("e9")) return Promise.resolve({ success: true, booking_code: "PAWA1" });
+      return Promise.resolve(refuse({ detail: "no market there for 1 of 16 picks",
+        unbookable: [{ eventId: "e9", prediction: "1X", reason: "refused_alone" }] }));
+    },
+    confirmAfterRefusal(t, names, keep, B, go) { log.prompts++; log.names = names; setImmediate(go); },
+  };
+  const names = Object.keys(stubs);
+  const body = "function fixtureById(){return null;}\n" + BOOKS.prelude("sporty") +
+    "\nvar REFUSAL_ROUNDS=" + ROUNDS + ";\n" + fn("dropUnbookable") + "\n" + fn("bookRounds") +
+    "\nreturn function(p,src,t,h){ return bookRounds(p,BOOKS.sporty,src,t,h); };";
+  const bookRounds = new Function(...names, body)(...names.map((k) => stubs[k]));
+  bookRounds(picks, "convert", "byoConvOut", {
+    busy() { log.busy++; }, idle() { log.idle++; },
+    code(code, sent) { log.code = code; log.sentPicks = sent; finish(); },
+    fail(d) { log.fail = d; finish(); },
+  });
+  await done;
+  assert.strictEqual(log.fail, null, "must not end on the refusal");
+  assert.strictEqual(log.code, "PAWA1");
+  assert.strictEqual(log.prompts, 1);
+  assert.deepStrictEqual(log.names, ["H9 v A9"], "the refused game is named");
+  assert.strictEqual(log.sentPicks.length, 15, "the code is filed as what was booked");
+  assert.strictEqual(log.busy, log.idle, "every Booking… is undone, success included");
+});

@@ -6662,7 +6662,10 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   <div class="sw-g-brand" aria-hidden="true"><span>Soccer</span>wizard</div>
   <div class="sw-g-panel">
     <h2 id="swGateQ">Are you tired of picking games one by one?</h2>
-    <p class="sw-g-sub">We build the slip. You get a SportyBet, Bet9ja, BetKing or betPawa code.</p>
+    <!-- The four names in their own colours, the same wordmark spans the rest of
+         the site uses, so the first screen already looks like the four apps a
+         reader has on their phone (asked for 24 Sep). -->
+    <p class="sw-g-sub">We build the slip. You get a <span class="sbm">SportyBet</span>, <span class="b9m"><span class="b9r">bet</span><span class="b9g">9ja</span></span>, <span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span> or <span class="bwm"><span class="bwb">bet</span><span class="bwp">Pawa</span></span> code.</p>
     <p class="sw-g-age">You must be 18 or over to continue.</p>
     <button type="button" class="sw-g-enter" id="swGateEnter"><span class="sw-g-spark" aria-hidden="true"></span>Enter</button>
     <button type="button" class="sw-g-skip" id="swGateSkip">Skip</button>
@@ -13188,6 +13191,35 @@ function confirmDropUnpriced(picks,target,go,B){
   el.querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt(target);});
   return true;
 }
+/* THE REFUSAL LOOP, FOR EVERY PATH THAT BOOKS ORDINARY PICKS. doBook and
+   doBookMy grew their own copies; the converter and the board's Book had
+   none, so a refused leg there was a flat "wouldn't take this slip" - found
+   24 Sep converting a 16-leg code to betPawa, refused over one game with no
+   way to drop it. Same rule as the other two: ask, drop only what they
+   refused, re-book, at most REFUSAL_ROUNDS times, each round shorter.
+   h = {busy(), idle(), code(code, sentPicks, d), fail(d)}. */
+function bookRounds(picks,B,src,target,h,round){
+  round=round||0;
+  h.busy();
+  bookFetch(picks.map(function(c){return B.sel(c);}),B,src)
+    .then(function(d){
+      h.idle();
+      var code=d&&d.success&&B.codeOf(d);
+      if(code){ h.code(code,picks,d); return; }
+      var safe=dropUnbookable(picks,d,B);
+      if(round<REFUSAL_ROUNDS&&safe.length>=1&&safe.length<picks.length){
+        var keep={}; safe.forEach(function(c){keep[c.id+"|"+c.code]=1;});
+        var out=picks.filter(function(c){return !keep[c.id+"|"+c.code];})
+          .map(function(c){var f=c.f||fixtureById(c.id);
+            return f?(f.home+" v "+f.away):"One pick";});
+        confirmAfterRefusal(target,out,safe.length,B,function(){
+          bookRounds(safe,B,src,target,h,round+1);});
+        return;
+      }
+      h.fail(d);
+    })
+    .catch(function(){ h.idle(); h.fail({_kind:"net"}); });
+}
 function doBook(picks,retried,B){
   B=B||curBook();
   var sel=picks.map(function(c){return B.sel(c);});
@@ -14817,21 +14849,23 @@ function renderConvert(){
   var sw=$("byoReline");
   if(sw) sw.addEventListener("change",function(){ BYO.reline=sw.checked; renderConvert(); });
   $("byoConvGo").addEventListener("click",function(){
-    var b=$("byoConvGo"); b.disabled=true; b.textContent="Booking…";
+    var b=$("byoConvGo"), lbl="Get the "+c.to.label+" code";
+    $("byoConvOut").innerHTML="";
     /* The ordinary booking path, on ordinary picks. Nothing about a converted
-       slip is special once it is expressed in our own shape. */
-    bookFetch(c.picks.map(function(x){return c.to.sel(x);}),c.to,"convert")
-      .then(function(d){
-        var code=d&&d.success&&c.to.codeOf(d);
-        if(code){ showCode(code,"byoConvOut",null,c.to,c.picks); }
-        else { $("byoConvOut").innerHTML=bookErrHTML(d,c.to);
-               b.disabled=false; b.textContent="Get the "+c.to.label+" code"; }
-      })
-      .catch(function(){
-        $("byoConvOut").innerHTML="<div class='code-err'><b>Couldn't reach the "+
-          "booking service.</b><span>Check your connection and try again.</span></div>";
-        b.disabled=false; b.textContent="Get the "+c.to.label+" code";
-      });
+       slip is special once it is expressed in our own shape - including a
+       refusal, which now asks to drop the named legs instead of dead-ending.
+       idle() runs on success too: the button used to stay on "Booking…"
+       after the code dialog was closed. */
+    bookRounds(c.picks,c.to,"convert","byoConvOut",{
+      busy:function(){ b.disabled=true; b.textContent="Booking…"; },
+      idle:function(){ b.disabled=false; b.textContent=lbl; },
+      code:function(code,sent){ showCode(code,"byoConvOut",null,c.to,sent); },
+      fail:function(d){
+        $("byoConvOut").innerHTML=(d&&d._kind==="net")
+          ? "<div class='code-err'><b>Couldn't reach the booking service.</b>"+
+            "<span>Check your connection and try again.</span></div>"
+          : bookErrHTML(d,c.to); }
+    });
   });
 }
 
@@ -15786,20 +15820,17 @@ function doBookList(picks,resultId,btnId,label,B){
       B.mark+" right now, so a code can't be created.</div>";
     return;
   }
-  var btn=$(btnId); if(btn){btn.disabled=true;btn.textContent="Booking\u2026";}
+  var btn=$(btnId);
   $(resultId).innerHTML="";
-  bookFetch(sel,B,"board")
-    .then(function(d){
-      if(btn){btn.disabled=false;btn.textContent=label;}
-      var code=B.codeOf(d);
-      if(d&&d.success&&code){
-        showCode(code,resultId,function(){
-          rememberSlip(going,totalOdds(going),code,B&&B.key);},B,going);
-      }
-      else{ $(resultId).innerHTML=bookErrHTML(d,B); }
-    })
-    .catch(function(){ if(btn){btn.disabled=false;btn.textContent=label;}
-      $(resultId).innerHTML=bookErrHTML({_kind:"net"},B); });
+  bookRounds(going,B,"board",resultId,{
+    busy:function(){ if(btn){btn.disabled=true;btn.textContent="Booking\u2026";} },
+    idle:function(){ if(btn){btn.disabled=false;btn.textContent=label;} },
+    /* What was BOOKED, which after a narrowing is not every game shown. */
+    code:function(code,sent){
+      showCode(code,resultId,function(){
+        rememberSlip(sent,totalOdds(sent),code,B&&B.key);},B,sent); },
+    fail:function(d){ $(resultId).innerHTML=bookErrHTML(d,B); }
+  });
 }
 /* ---- Slip of the Day: safe pre-built acca ---- */
 var SOTD=[];

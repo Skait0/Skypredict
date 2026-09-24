@@ -145,8 +145,10 @@ test("an empty list is not treated as 'drop everything'", () => {
 
 test("both retries ask the server, not our stale copy", () => {
   const calls = src.match(/safe\s*=\s*dropUnbookable\(/g) || [];
-  assert.strictEqual(calls.length, 2,
-    "the board's Get code and My slip's must both use it");
+  /* Three since 24 Sep: doBook, doBookMy, and bookRounds - which the converter
+     and the board's Book all go through. */
+  assert.strictEqual(calls.length, 3,
+    "every refusal path must use it");
   assert.doesNotMatch(src, /safe\s*=\s*picks\.filter\(/,
     "the board's dead local filter should be gone");
   assert.doesNotMatch(src, /safe\s*=\s*bookable\.filter\(/,
@@ -187,7 +189,7 @@ test("a refused leg is dropped only after the reader agrees", () => {
 });
 
 test("the board's refusal asks too, rather than quietly re-sending", () => {
-  const i = src.indexOf("var safe=dropUnbookable(picks,d,B);");
+  const i = src.indexOf("var safe=dropUnbookable(picks,d,B);", src.indexOf("function doBook("));
   assert.ok(i > 0, "the board's refusal branch not found");
   const branch = src.slice(i, i + 1400);
   assert.match(branch, /confirmAfterRefusal\("bookResult"/);
