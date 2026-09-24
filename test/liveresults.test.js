@@ -180,16 +180,18 @@ test("a club relegated into a warming league is recognised, not minted twice", (
   assert.strictEqual(out.matches[0].league, "Netherlands Eerste Divisie");
 });
 
-test("minting never invents a youth or reserve side", () => {
+test("minting never invents a youth side, and a reserve side only as itself", () => {
   /* This is the one path that skips matchTeam, and matchTeam is what normally
      refuses these. A youth game priced off the first team is the worst thing
-     this codebase can publish. */
+     this codebase can publish. Since 24 Sep 2026 Jong Ajax is minted - it is
+     an Eerste Divisie member, rated as Jong Ajax and never as Ajax (see
+     test/reserves.test.js) - while a youth side still never is. */
   const out = L.resolve([
     row("Netherlands Eerste Divisie", "Jong Ajax", "Helmond Sport"),
     row("Netherlands Eerste Divisie", "FC Emmen U21", "Helmond Sport"),
   ], idx, allowed, "2026-09-05", warming);
-  assert.strictEqual(out.matches.length, 0);
-  assert.strictEqual(out.dropped.club, 2);
+  assert.deepStrictEqual(out.matches.map((x) => x.home), ["Jong Ajax"]);
+  assert.strictEqual(out.dropped.club, 1);
 });
 
 test("without the warming set, an unknown league is still refused", () => {
