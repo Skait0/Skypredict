@@ -59,7 +59,7 @@
 <meta property="og:url" content="https://skypredict-theta.vercel.app/">
 <!-- Names the site itself for search results. The per-match pages carry their
      own SportsEvent schema; this is the one that can win a sitelinks box. -->
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Soccerwizard","url":"https://skypredict-theta.vercel.app/","description":"Football predictions from 38 leagues, plus a ready-made slip for SportyBet, Bet9ja, BetKing or betPawa.","publisher":{"@type":"Organization","name":"Soccerwizard","logo":{"@type":"ImageObject","url":"https://skypredict-theta.vercel.app/wiz-logo.png"}}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Soccerwizard","url":"https://skypredict-theta.vercel.app/","description":"Football predictions from dozens of leagues, plus a ready-made slip for SportyBet, Bet9ja, BetKing or betPawa.","publisher":{"@type":"Organization","name":"Soccerwizard","logo":{"@type":"ImageObject","url":"https://skypredict-theta.vercel.app/wiz-logo.png"}}}</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
 <!-- The 512 icon is deliberately NOT linked here.
      Browsers fetch every rel=icon during first paint, and this one is 297 KB,
@@ -7495,7 +7495,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       <div class="foot-cols">
         <div>
           <h4>What this is</h4>
-          <p>Statistical football predictions across 38 leagues, rebuilt
+          <p>Statistical football predictions across dozens of leagues, rebuilt
           every morning from results.</p>
         </div>
         <div>
@@ -14810,11 +14810,12 @@ function renderConvert(){
       : "")+
     "<div class='byo-acts'>"+
       "<button class='byo-go' id='byoConvGo' type='button'>Get the "+esc(c.to.label)+" code</button>"+
-      "<button class='byo-cancel' id='byoConvX' type='button'>Cancel</button>"+
     "</div>"+
     "<div id='byoConvOut'></div>"+
   "</div>";
-  $("byoConvX").addEventListener("click",function(){ host.innerHTML=""; });
+  /* No Cancel of its own: the stage footer under every job already has one,
+     and a second beside it blanked this panel while leaving that footer
+     behind - two Cancels on screen, doing different things (24 Sep 2026). */
   /* Switching the target rebuilds the whole panel, because every number in it
      is about that book: which legs cross, what they are priced at, which lines
      had to change. Repainting only the pills would leave the count and the
