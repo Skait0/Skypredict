@@ -69,3 +69,32 @@ test("the webhook refuses anyone who is not Telegram", async () => {
   assert.strictEqual(res.code, 200);
   delete process.env.TELEGRAM_BOT_TOKEN;
 });
+
+test("a book's long club names still find our short ones, inside the kickoff window", () => {
+  /* 24 Sep: our own daily code, RQWKNC, read as "0 we can read" - SportyBet
+     spells Scottish clubs the long way. */
+  const board = [
+    { home: "Inverness C", away: "Morton", kickoff: KO, dc1x: 0.81 },
+    { home: "Raith Rvs", away: "Livingston", kickoff: KO, dc1x: 0.76 },
+    { home: "Stuttgart", away: "Mainz", kickoff: KO, dc1x: 0.7 },
+  ];
+  const f1 = D.findFixture(board, leg("Inverness Caledonian Thistle FC", "Greenock Morton FC", "1X", 1.2));
+  assert.strictEqual(f1 && f1.home, "Inverness C");
+  const f2 = D.findFixture(board, leg("Raith Rovers FC", "Livingston FC", "1X", 1.3));
+  assert.strictEqual(f2 && f2.home, "Raith Rvs");
+  assert.strictEqual(D.findFixture(board, leg("Stuttgart II", "Mainz II", "1X", 1.3)), null,
+    "a reserve side never takes the first team's number");
+  const late = Object.assign(leg("Inverness Caledonian Thistle FC", "Greenock Morton FC", "1X", 1.2),
+    { kickoff: Date.parse(KO) + 2 * 864e5 });
+  assert.strictEqual(D.findFixture(board, late), null, "a different day is a different game");
+  assert.match(D.examine([leg("Inverness Caledonian Thistle FC", "Greenock Morton FC", "1X", 1.2)], board).rows[0].name,
+    /^Inverness C or draw$/, "and the reply uses our names");
+});
+
+test("no leg is both strongest and weakest", () => {
+  const board = ["A", "B", "C", "D", "E"].map((t, i) => ({ home: t, away: t + "2", kickoff: KO, dc1x: 0.9 - i * 0.05 }));
+  const text = D.reply("sporty", "ABC123", board.map((f) => leg(f.home, f.away, "1X", 1.1)), board, "https://x.test");
+  for (const t of ["A", "B", "C", "D", "E"]) {
+    assert.strictEqual(text.split("\n").filter((l) => l.startsWith(t + " or draw")).length, 1, t + " listed twice");
+  }
+});
