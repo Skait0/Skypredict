@@ -10267,6 +10267,12 @@ function swDeviceId(){
     return r;
   }catch(e){ return null; }
 }
+/* CLAIMED ON ARRIVAL, not at the first booking. swDeviceId used to run only
+   inside bookFetch, so a ?swdev= link did nothing until the reader booked on
+   that same page view: refresh or tap away first and the token was gone and
+   the device never exempted (found 24 Sep, the owner's own link had not
+   stuck). It also left the bypass key sitting in the address bar until then. */
+if(/[?&]swdev=/.test(location.search||"")) swDeviceId();
 /* SportyBet's share endpoint is intermittently flaky - it rejects or times out
    on a first hit and works on retry. Retry up to 3x with backoff so the user
    never has to. Only retries on network/5xx/no-code, never on a clean rejection. */

@@ -147,3 +147,9 @@ test("an ordinary visit is untouched by any of this", () => {
   assert.equal(got.id, "existingid12345678");
   assert.equal(got.replaced.length, 0, "no URL rewriting when there is nothing to strip");
 });
+
+test("a ?swdev= link is claimed on page load, not at the first booking", () => {
+  /* Only bookFetch called swDeviceId, so opening the link and leaving without
+     booking lost the token - and left it in the address bar meanwhile. */
+  assert.match(src, /if\(\/\[\?&\]swdev=\/\.test\(location\.search\|\|""\)\) swDeviceId\(\);/);
+});
