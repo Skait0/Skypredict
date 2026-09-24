@@ -8719,7 +8719,6 @@ function bestTipFrom(k){
     {label:"Away win", p:k.away}
   ];
   var o15Bar=k.crossTier?0.72:0.75;
-  if(k.o15>=o15Bar) cands.push({label:"Over 1.5", p:k.o15});
   /* Across a border: goals or nothing. See the long note in lib/model.js -
      the country gap is imported rather than fitted, and it moves who wins far
      more than it moves how many goals get scored. */
@@ -8732,6 +8731,10 @@ function bestTipFrom(k){
     {label:"X2, draw or away", p:k.dcx2}
   ].sort(function(a,b){return b.p-a.p;})[0];
   if(dc.p-outright>0.14) cands.push(dc);
+  /* Over 1.5 must beat what it would replace by 8 points - see lib/model.js. */
+  var bestOther=cands.reduce(function(m,c){return c.p>m?c.p:m;},0);
+  if(k.o15>=o15Bar && (k.crossTier || k.o15>=bestOther+0.08))
+    cands.push({label:"Over 1.5", p:k.o15});
   var top=cands.sort(function(a,b){return b.p-a.p;})[0];
   if(k.home>=0.55 && top.label==="1X, home or draw") top={label:"Home win", p:k.home};
   if(k.crossTier && k.o15>=o15Bar &&

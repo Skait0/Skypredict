@@ -204,7 +204,17 @@ test("an ordinary fixture keeps the 75% bar on Over 1.5", () => {
      bar was 80 until 24 Sep 2026 - see bestTip for the walk-forward. */
   const tip = M.bestTip(mk({ home: 0.52, draw: 0.25, away: 0.23, o15: 0.74 }));
   assert.notEqual(tip.label, "Over 1.5");
-  assert.equal(M.bestTip(mk({ home: 0.52, draw: 0.25, away: 0.23, o15: 0.76 })).label, "Over 1.5");
+  assert.equal(M.bestTip(mk({ home: 0.52, draw: 0.25, away: 0.23, o15: 0.80 })).label, "Over 1.5");
+});
+
+test("over the bar, Over 1.5 still has to beat the other tip by 8 points", () => {
+  /* The variety rule: at 75% with no margin it took nearly half the board.
+     Double chance here is 68%, so 75% is not enough and 77% against a 60%
+     alternative is. */
+  assert.equal(M.bestTip(mk({ home: 0.52, draw: 0.25, away: 0.23, o15: 0.75 })).label,
+    "1X, home or draw");
+  assert.equal(M.bestTip(mk({ home: 0.45, draw: 0.28, away: 0.27, dc1x: 0.60, o15: 0.77 })).label,
+    "Over 1.5");
 });
 
 test("a cup tie across divisions relaxes that bar", () => {
