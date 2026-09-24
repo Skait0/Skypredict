@@ -3206,7 +3206,11 @@ html{interpolate-size:allow-keywords}
 .sp-x:active{transform:scale(.93)}
 .sp-noid{font-size:10px;font-weight:800;color:var(--red-ink);background:var(--red-wash);
   padding:2px 6px;border-radius:var(--r-sm);margin-left:6px}
-.bld-foot{position:sticky;bottom:0;display:flex;align-items:center;gap:8px;margin-top:16px;
+/* Sticks ABOVE the phone's bottom tab bar, not under it: at bottom:0 the
+   fixed tabs (z 120) covered Shuffle, Clear and Get code on every phone -
+   found 24 Sep 2026 when Shuffle turned out to be nowhere anyone could see
+   it. --btabs-h is 0 wherever there is no tab bar. */
+.bld-foot{position:sticky;bottom:var(--btabs-h,0px);display:flex;align-items:center;gap:8px;margin-top:16px;
   background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:12px;
   box-shadow:0 -6px 20px rgba(0,0,0,.25);
   /* The bar is shown and hidden by an inline display, and a display change
