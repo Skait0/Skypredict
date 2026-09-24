@@ -15635,7 +15635,9 @@ function shareCode(code,picks,B){
    The link is built from the saved slip's own snapshot: a won ticket's games
    have left the board, so slipPayload - which looks legs up on the board -
    would send an empty link. */
-function snapSlipUrl(sp){
+/* The saved slip as the link payload - shared by the long link and by the
+   short one shortWinUrl registers, so both describe exactly the same games. */
+function snapSlipRaw(sp){
   var rows=[];
   (sp&&sp.legs||[]).forEach(function(l){
     var od=+l.odd, p=+l.p;
@@ -15644,7 +15646,11 @@ function snapSlipUrl(sp){
     rows.push([slipName(l.home),slipName(l.away),String(l.date),String(l.code),
       od.toFixed(2),Math.round(p*100)].join(SLIP_FS));
   });
-  return rows.length ? slipUrlFrom(rows.join(SLIP_RS),sp.code,sp.book) : null;
+  return rows.length ? rows.join(SLIP_RS) : null;
+}
+function snapSlipUrl(sp){
+  var raw=snapSlipRaw(sp);
+  return raw ? slipUrlFrom(raw,sp.code,sp.book) : null;
 }
 /* The card: 1080x1350, the portrait a status or a feed shows whole. House
    palette from DESIGN.md - gold for what we are proud of (the win, the odds),
@@ -15704,12 +15710,43 @@ function winCardBlob(sp){
     try{ document.fonts.load("800 40px 'Plus Jakarta Sans'").then(go,go); }catch(e){ go(); }
   });
 }
+/* A SHORT LINK FOR A SAVED WIN (24 Sep: "the links under the winning card are
+   too long"). SHORT_LINKS lives in memory and is gone after a reload, so a win
+   shared days later fell through to /s?p=... with the whole slip in base64.
+   This registers the saved slip's own payload at /api/share - under its
+   booking code when it has one, else the same S-hash key rememberSlipLink
+   uses - and answers /s/<key>. Four seconds at most; null means "use the
+   long link", which still works. */
+function shortWinUrl(sp){
+  return new Promise(function(done){
+    var t=setTimeout(function(){ done(null); },4000);
+    try{
+      var raw=snapSlipRaw(sp);
+      if(!raw) { clearTimeout(t); return done(null); }
+      var bytes=new TextEncoder().encode(raw),bin="";
+      for(var i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+      var p=btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+      var keyP=(sp.code&&/^[A-Za-z0-9]{4,16}$/.test(sp.code))
+        ? Promise.resolve(String(sp.code).toUpperCase())
+        : crypto.subtle.digest("SHA-256",bytes).then(function(h){
+            return "S-"+Array.prototype.map.call(new Uint8Array(h).slice(0,6),function(b){
+              return ("0"+b.toString(16)).slice(-2);}).join("").toUpperCase(); });
+      keyP.then(function(key){
+        return fetch("/api/share",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({code:key,book:sp.book||"sporty",p:p})})
+          .then(function(r){return r.json();})
+          .then(function(d){ clearTimeout(t); done(d&&d.ok ? location.origin+"/s/"+encodeURIComponent(key) : null); });
+      }).catch(function(){ clearTimeout(t); done(null); });
+    }catch(e){ clearTimeout(t); done(null); }
+  });
+}
 function shareWin(sp,btn){
-  var url=shortSlipUrl(sp.code)||snapSlipUrl(sp)||"https://www.soccerwizard.live";
   var n=(sp.legs||[]).length;
   var text=n+" of "+n+" landed, "+String.fromCharCode(215)+(+sp.odds||1).toFixed(2)+" on Soccerwizard.";
   if(btn) btn.textContent="Making the card...";
-  winCardBlob(sp).then(function(blob){
+  Promise.all([winCardBlob(sp), shortSlipUrl(sp.code) ? Promise.resolve(shortSlipUrl(sp.code)) : shortWinUrl(sp)]).then(function(got){
+    var blob=got[0];
+    var url=got[1]||snapSlipUrl(sp)||"https://www.soccerwizard.live";
     var done=function(msg){ if(btn) btn.textContent=msg||"Share your win"; };
     try{
       var file=new File([blob],"soccerwizard-win.png",{type:"image/png"});

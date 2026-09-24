@@ -30,3 +30,15 @@ test("My slips reads it while a slip is open, and never overwrites a score it ha
   assert.match(fn, /if\(have\[k\]\) return;/);
   assert.match(src, /pullServerResults\(\); setInterval\(pullServerResults, 5\*60\*1000\)/);
 });
+
+test("a shared win gets a short /s/ link, and the long one only as a fallback", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  const i = src.indexOf("function shareWin(sp,btn){");
+  const fn = src.slice(i, i + 900);
+  assert.match(fn, /shortWinUrl\(sp\)/, "registers a short link for the saved slip");
+  assert.match(fn, /var url=got\[1\]\|\|snapSlipUrl\(sp\)/, "the long link only when that fails");
+  const w = src.slice(src.indexOf("function shortWinUrl(sp){"), i);
+  assert.match(w, /"\/api\/share"/);
+  assert.match(w, /location\.origin\+"\/s\/"/);
+  assert.match(w, /setTimeout\(function\(\)\{ done\(null\); \},4000\)/, "never hangs the share button");
+});
