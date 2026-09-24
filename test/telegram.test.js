@@ -44,9 +44,11 @@ test("index.html and lib/pages.js agree", () => {
      one. */
   assert.ok(index.includes(P.TELEGRAM),
     "index.html does not carry the address lib/pages.js exports");
+  /* Two on purpose since 24 Sep: the community channel and the code-reading
+     bot. Anything else is the accident this test exists for. */
   const inIndex = index.match(/https:\/\/t\.me\/[A-Za-z0-9_]+/g) || [];
-  assert.deepStrictEqual([...new Set(inIndex)], [P.TELEGRAM],
-    "more than one Telegram address in index.html");
+  assert.deepStrictEqual([...new Set(inIndex)].sort(), [P.TELEGRAM, "https://t.me/Soccerwizardhqbot"].sort(),
+    "an unexpected Telegram address in index.html");
 });
 
 test("every generated page carries it", () => {

@@ -109,3 +109,24 @@ test("no leg is both strongest and weakest", () => {
     assert.strictEqual(text.split("\n").filter((l) => l.startsWith(t + " or draw")).length, 1, t + " listed twice");
   }
 });
+
+test("the site's start link opens the bot on the reader's code", async () => {
+  /* ?start=sporty_RQWKNC arrives as "/start sporty_RQWKNC": the bot must read
+     that code on that book, not answer with the welcome. */
+  process.env.TELEGRAM_BOT_TOKEN = "123:abc";
+  const asked = [];
+  const real = global.fetch;
+  global.fetch = async (url) => {
+    const u = String(url);
+    if (u.includes("/api/slip?")) { asked.push(u); return { json: async () => ({ success: false }) }; }
+    return { json: async () => ({ ok: true, result: {} }) };
+  };
+  try {
+    delete require.cache[require.resolve("../api/tg.js")];
+    const tg = require("../api/tg.js");
+    await tg({ method: "POST", headers: { "x-telegram-bot-api-secret-token": tg.secretFor("123:abc") },
+      body: { message: { message_id: 1, chat: { id: 5, type: "private" }, text: "/start sporty_RQWKNC" } } },
+      { status() { return this; }, json() { return this; } });
+    assert.deepStrictEqual(asked.map((u) => /book=(\w+)&code=(\w+)/.exec(u).slice(1).join(":")), ["sporty:RQWKNC"]);
+  } finally { global.fetch = real; delete process.env.TELEGRAM_BOT_TOKEN; }
+});

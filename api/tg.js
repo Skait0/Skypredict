@@ -171,8 +171,11 @@ module.exports = async function handler(req, res) {
     disable_web_page_preview: true, reply_to_message_id: msg.message_id });
 
   try {
-    if (/^\/(start|help)\b/i.test(msg.text)) { await say(HELLO); return res.status(200).json({ ok: true }); }
-    const { code, book } = D.parse(msg.text);
+    /* t.me/<bot>?start=book_CODE arrives as "/start book_CODE" - the site's
+       code dialog opens the bot on the code the reader just got. */
+    const deep = /^\/start\s+(sporty|bet9ja|betking|betpawa)_([A-Za-z0-9]{4,16})\s*$/i.exec(msg.text);
+    if (!deep && /^\/(start|help)\b/i.test(msg.text)) { await say(HELLO); return res.status(200).json({ ok: true }); }
+    const { code, book } = deep ? { code: deep[2].toUpperCase(), book: deep[1].toLowerCase() } : D.parse(msg.text);
     if (!code) { await say("Send me a booking code, like <code>HUW6YC</code>."); return res.status(200).json({ ok: true }); }
     tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
 
