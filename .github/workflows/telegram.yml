@@ -1,0 +1,29 @@
+# Send any Telegram post that is due, on demand - without the mint run.
+# The daily run does the same as its last step; this is for catching up.
+name: Telegram posts
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Send
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          node scripts/tgpost.js
+          if [ -z "$(git status --porcelain -- data/tg-posts.json)" ]; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/tg-posts.json
+          git commit -m "Telegram posts for $(date -u +%Y-%m-%d)"
+          for i in 1 2 3; do
+            git pull --rebase --autostash origin main && git push && break
+            sleep 5
+          done

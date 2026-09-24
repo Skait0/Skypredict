@@ -191,3 +191,23 @@ jobs:
             echo "push rejected - retrying ($i/3)"
             sleep 5
           done
+
+      # The same two posts to the Telegram channel, sent by the bot (Telegram
+      # has no queue, so they go now). data/tg-posts.json stops a rerun sending
+      # twice. See scripts/tgpost.js.
+      - name: Send the Telegram posts
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          node scripts/tgpost.js
+          if [ -z "$(git status --porcelain -- data/tg-posts.json)" ]; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/tg-posts.json
+          git commit -m "Telegram posts for $(date -u +%Y-%m-%d)"
+          for i in 1 2 3; do
+            git pull --rebase --autostash origin main && git push && break
+            echo "push rejected - retrying ($i/3)"
+            sleep 5
+          done
