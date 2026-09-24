@@ -22,6 +22,8 @@ async function tg(method, body) {
   await tg("setMyCommands", { commands: [{ command: "start", description: "What I do" }] });
   await tg("setMyShortDescription", { short_description:
     "Send any SportyBet, Bet9ja, BetKing or betPawa code. Get our model's read on every game." });
+  const me = await tg("getMe", {});
+  console.log("bot @" + me.username);
   const info = await tg("getWebhookInfo", {});
   console.log("webhook " + info.url + " pending=" + info.pending_update_count +
     (info.last_error_message ? " last error: " + info.last_error_message : ""));
