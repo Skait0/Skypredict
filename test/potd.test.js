@@ -328,6 +328,51 @@ test("the carry-forward does not re-affirm an overnight pick", () => {
   assert.strictEqual(build.choosePotd(board, prev, FUTURE).home, "Viking");
 });
 
+/* ---- 24 Sep 2026: the pick changed twice in one morning ---- */
+const seattle = { date: "2026-09-24", kickoff: "2026-09-24T01:30:00.000Z", home: "Seattle Sounders",
+  away: "Real Salt Lake", league: "USA MLS", tip: "1X", tip_p: 0.75, tier: 1 };
+const inverness = { date: "2026-09-25", kickoff: "2026-09-25T18:45:00.000Z", home: "Inverness C",
+  away: "Morton", league: "Scotland Championship", tip: "1X", tip_p: 0.83, tier: 2 };
+const caen = { date: "2026-09-24", kickoff: "2026-09-24T18:45:00.000Z", home: "Caen",
+  away: "Rouen", league: "France Ligue 2", tip: "1X", tip_p: 0.68, tier: 3 };
+
+test("replayed: a small-hours pick gives way once, to the day's real card, and never to tomorrow", () => {
+  /* 00:53Z - 01:53 in Lagos. The only club game dated the 24th is Seattle at
+     02:30 Lagos, and today's evening games are not in the feeds yet. */
+  const p1 = build.choosePotd([seattle, inverness], null, Date.parse("2026-09-24T00:53:00Z"));
+  assert.equal(p1.home, "Seattle Sounders");
+  /* 01:54Z - Seattle has kicked off. It used to jump to Inverness, tomorrow. */
+  const p2 = build.choosePotd([seattle, inverness], p1, Date.parse("2026-09-24T01:54:00Z"));
+  assert.deepStrictEqual(p2, p1, "the pick must not leave the reader's day");
+  /* 10:25Z - Caen v Rouen tonight is on the board now: the provisional
+     small-hours pick gives way to the day's real card. */
+  const p3 = build.choosePotd([seattle, caen, inverness], p2, Date.parse("2026-09-24T10:25:00Z"));
+  assert.equal(p3.home, "Caen");
+  /* And from then on it holds - through kickoff, to Lagos midnight. */
+  const p4 = build.choosePotd([seattle, caen, inverness], p3, Date.parse("2026-09-24T21:30:00Z"));
+  assert.deepStrictEqual(p4, p3, "a daytime pick stays after kickoff");
+  const p5 = build.choosePotd([seattle, caen, inverness], p4, Date.parse("2026-09-24T22:59:00Z"));
+  assert.deepStrictEqual(p5, p4, "until the last minute of the Lagos day");
+});
+
+test("a daytime pick that has kicked off stays, even with other games still to come", () => {
+  const board = [caen, { ...caen, home: "Paris FC", away: "Metz", kickoff: "2026-09-24T20:00:00.000Z", tip_p: 0.9 }];
+  const prev = build.choosePotd([caen], null, Date.parse("2026-09-24T09:00:00Z"));
+  assert.deepStrictEqual(build.choosePotd(board, prev, Date.parse("2026-09-24T19:00:00Z")), prev);
+});
+
+test("a small-hours game ranks behind the day's daytime games when choosing fresh", () => {
+  const p = build.choosePotd([{ ...seattle, tip_p: 0.95 }, caen], null, Date.parse("2026-09-24T00:10:00Z"));
+  assert.equal(p.home, "Caen", "02:30 Lagos is not the headline when an evening game exists");
+});
+
+test("a new Lagos day gets a new pick", () => {
+  const next = { ...inverness };
+  const prev = build.choosePotd([caen], null, Date.parse("2026-09-24T09:00:00Z"));
+  const p = build.choosePotd([caen, next], prev, Date.parse("2026-09-24T23:30:00Z"));
+  assert.equal(p.home, "Inverness C", "after Lagos midnight the 24th's pick is done");
+});
+
 test("a pick that is still inside the reader's day is kept across rebakes", () => {
   const board = [fx({ home: "Viking", away: "Aalesund", tip_p: 0.85,
                       kickoff: "2026-08-30T19:00:00.000Z" })];
