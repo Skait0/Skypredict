@@ -8718,7 +8718,7 @@ function bestTipFrom(k){
     {label:"Draw", p:k.draw},
     {label:"Away win", p:k.away}
   ];
-  var o15Bar=k.crossTier?0.72:0.80;
+  var o15Bar=k.crossTier?0.72:0.75;
   if(k.o15>=o15Bar) cands.push({label:"Over 1.5", p:k.o15});
   /* Across a border: goals or nothing. See the long note in lib/model.js -
      the country gap is imported rather than fitted, and it moves who wins far

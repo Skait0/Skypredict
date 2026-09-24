@@ -199,16 +199,18 @@ test("a lower division is never rated above a higher one", () => {
 const mk = (o) => Object.assign(
   { home: 0.4, draw: 0.28, away: 0.32, dc1x: 0.68, dcx2: 0.60, o15: 0.6 }, o);
 
-test("an ordinary fixture keeps the 80% bar on Over 1.5", () => {
-  /* 78% is a strong goals call but not a headline one in a league game. */
-  const tip = M.bestTip(mk({ home: 0.52, draw: 0.25, away: 0.23, o15: 0.78 }));
+test("an ordinary fixture keeps the 75% bar on Over 1.5", () => {
+  /* 74% is a strong goals call but not a headline one in a league game. The
+     bar was 80 until 24 Sep 2026 - see bestTip for the walk-forward. */
+  const tip = M.bestTip(mk({ home: 0.52, draw: 0.25, away: 0.23, o15: 0.74 }));
   assert.notEqual(tip.label, "Over 1.5");
+  assert.equal(M.bestTip(mk({ home: 0.52, draw: 0.25, away: 0.23, o15: 0.76 })).label, "Over 1.5");
 });
 
 test("a cup tie across divisions relaxes that bar", () => {
   /* Same numbers, cup tie: the goals market is the part least disturbed by
      the division assumption, so it is allowed to headline sooner. */
-  const tip = M.bestTip(mk({ home: 0.52, draw: 0.25, away: 0.23, o15: 0.78 }),
+  const tip = M.bestTip(mk({ home: 0.52, draw: 0.25, away: 0.23, o15: 0.74 }),
                         { crossTier: true });
   assert.equal(tip.label, "Over 1.5");
 });
