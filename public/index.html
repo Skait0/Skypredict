@@ -16889,6 +16889,33 @@ function saveFTLog(){
     localStorage.setItem(FT_KEY,JSON.stringify(FTLOG));
   }catch(e){}
 }
+/* MY SLIPS SETTLE WITHIN MINUTES, NOT AT THE NEXT BUILD (24 Sep: "I won some
+   tickets and they haven't updated"). DATA.results is baked at build, and
+   builds used to follow a GitHub sweep that ran every 4-5 hours. The sweep now
+   banks final scores every ten minutes (api/tgfollow.js -> Supabase); this
+   reads them from /api/results and fills the gaps in DATA.results the same
+   way mergeFTLog does - a score already there is never replaced. Only runs
+   while one of the reader's slips is still open. */
+function pullServerResults(){
+  var open=(SLIPS||[]).filter(function(s){return !s.settled;});
+  if(!open.length) return;
+  var since=null;
+  open.forEach(function(s){(s.legs||[]).forEach(function(l){ if(l.date&&(!since||l.date<since)) since=l.date; });});
+  fetch("/api/results"+(since?"?since="+encodeURIComponent(since):""),{headers:{Accept:"application/json"}})
+    .then(function(r){return r.json();})
+    .then(function(j){
+      if(!j||!Array.isArray(j.results)||!j.results.length) return;
+      if(!Array.isArray(DATA.results)) DATA.results=[];
+      var have={}, added=0;
+      DATA.results.forEach(function(x){have[ftKey(x.date,x.home,x.away)]=1;});
+      j.results.forEach(function(r){
+        var k=ftKey(r.date,r.home,r.away);
+        if(have[k]) return;
+        DATA.results.push(r); have[k]=1; added++;
+      });
+      if(added) paint();   /* paint settles slips and tells the reader first */
+    }).catch(function(){});
+}
 /* Fill the gaps in DATA.results with what we wrote down, leaving the server's
    own grading exactly as it is. */
 function mergeFTLog(){
@@ -20728,6 +20755,9 @@ async function load(){
     settleSlips();   /* first pass on load: results are already old news */
     startLive();
     paint();
+    /* Fresh final scores for My slips, without waiting for a rebuild - see
+       pullServerResults. Only while a slip is still open. */
+    try{ pullServerResults(); setInterval(pullServerResults, 5*60*1000); }catch(e){}
     hideLoader();
     /* THE FRESHNESS FETCH IS GONE, and this is the note for whoever wonders
        where it went. It called /api/predictions whenever the baked payload was

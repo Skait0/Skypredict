@@ -66,6 +66,10 @@
     "api/bigodds.js": {
       "maxDuration": 10,
       "memory": 128
+    },
+    "api/results.js": {
+      "maxDuration": 10,
+      "memory": 128
     }
   },
   "crons": [
