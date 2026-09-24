@@ -50,9 +50,10 @@ async function readCode(book, code) {
 }
 
 const HELLO =
-  "🧙 <b>Soccerwizard code doctor</b>\n\n" +
-  "Send me any booking code - SportyBet, Bet9ja, BetKing or betPawa - and I'll tell you " +
-  "which games our model rates, which ones are weak, and the chance the whole slip lands.\n\n" +
+  "🔮 <b>The Wizard's Eye</b> 🧙\n<i>Drop any code. The Wizard's Eye sees it all.</i>\n\n" +
+  "Send me any booking code - SportyBet, Bet9ja, BetKing or betPawa - and you get:\n" +
+  "🔥 your bankers\n👀 the legs to tighten\n💰 what it pays\n" +
+  "🔁 the same slip on another bookie, one tap\n🔔 live updates as each game lands\n\n" +
   "Paste the code on its own, or a share link. Say which bookie if you know it.\n\n" +
   "Daily codes: @soccerwizardTG · <a href=\"" + SITE + "\">soccerwizard.live</a>\n<i>18+</i>";
 

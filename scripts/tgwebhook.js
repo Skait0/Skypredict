@@ -21,7 +21,7 @@ async function tg(method, body) {
     allowed_updates: ["message", "callback_query"], drop_pending_updates: true });
   await tg("setMyCommands", { commands: [{ command: "start", description: "What I do" }] });
   await tg("setMyShortDescription", { short_description:
-    "Send any SportyBet, Bet9ja, BetKing or betPawa code. Get our model's read on every game." });
+    "🔮 The Wizard's Eye: drop any SportyBet, Bet9ja, BetKing or betPawa code. It sees it all." });
   const me = await tg("getMe", {});
   console.log("bot @" + me.username);
   const info = await tg("getWebhookInfo", {});
