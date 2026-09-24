@@ -515,7 +515,10 @@ async function writePages(payload) {
   /* /x drafts the day's posts for X. Like the 404 it stays out of `paths`:
      it is the owner's desk, noindex and linked from nowhere. */
   try {
-    fs.writeFileSync(path.join(PUB, "x.html"), P.renderXPosts(codeDays, resultOf));
+    let xlog = {};
+    try { xlog = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "x-posts.json"), "utf8")); }
+    catch (e) { /* nothing posted yet */ }
+    fs.writeFileSync(path.join(PUB, "x.html"), P.renderXPosts(codeDays, resultOf, xlog));
   } catch (e) { warn("x page failed: " + e.message); }
 
   let notFound = false;

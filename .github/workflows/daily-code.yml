@@ -168,3 +168,26 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/pushcode.js
+
+      # The day's posts for @SoccerWizardhq, queued in Buffer (free plan; X's
+      # own API charges per post). After the announcement on purpose: that step
+      # waits for Vercel to serve the new code, so the link in the post works
+      # when it goes out. Runs on a day with no new code too - yesterday's
+      # result still wants posting. data/x-posts.json is the record that stops
+      # a rerun posting twice, so it is committed like the codes are.
+      - name: Queue the X posts
+        continue-on-error: true
+        env:
+          BUFFER_KEY: ${{ secrets.BUFFER_KEY }}
+        run: |
+          node scripts/xqueue.js
+          if [ -z "$(git status --porcelain -- data/x-posts.json)" ]; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/x-posts.json
+          git commit -m "X posts for $(date -u +%Y-%m-%d)"
+          for i in 1 2 3; do
+            git pull --rebase --autostash origin main && git push && break
+            echo "push rejected - retrying ($i/3)"
+            sleep 5
+          done
