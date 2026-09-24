@@ -5592,6 +5592,11 @@ html.is-results #codeCard{display:none}
 }
 .ck-chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .ck-foot{margin-top:10px;font-size:12px;color:var(--soft);line-height:1.45}
+/* Big odds of the day, under the daily code: a gold rule marks it as the
+   bolder of the two. */
+.ck-big{margin-top:12px;padding-top:10px;border-top:1px dashed rgba(242,184,75,.45)}
+.ck-bighead{font-size:12px;font-weight:800;letter-spacing:.02em;color:var(--win-ink);margin-bottom:8px;
+  display:flex;align-items:center;gap:8px}
 .ck-foot a{color:var(--red-ink);font-weight:800;text-decoration:none}
 .ck-foot b{color:var(--text);font-weight:800}
 .ck-soc{margin-top:6px;font-size:11.5px;color:var(--faint)}
@@ -16390,6 +16395,22 @@ function applyBoardCap(n){
         "<a href='https://x.com/soccerwizardhq' target='_blank' rel='noopener'>X</a> and "+
         "<a href='https://t.me/soccerwizardTG' target='_blank' rel='noopener'>Telegram</a></div>";
     host.hidden=false;
+    /* BIG ODDS OF THE DAY, when there is one (api/bigodds.js, minted at 11:00
+       Lagos on a good day). Same chips as the daily code, so the card's own
+       click handler copies them. Nothing is drawn on a day without one. */
+    fetch("/api/bigodds").then(function(r){return r.json();}).then(function(j){
+      var b=j&&j.big; if(!b||!b.codes) return;
+      var bchips=["sporty","bet9ja","betking","betpawa"].filter(function(k){return b.codes[k]&&BOOKS[k];}).map(function(k){
+        return "<button class='ck-chip' type='button' data-code='"+esc(b.codes[k].code)+"'>"+
+          "<b>"+(BOOKS[k].mark||esc(BOOKS[k].label))+"</b><code>"+esc(b.codes[k].code)+"</code>"+
+          "<span class='ck-cp'>Copy</span></button>";}).join("");
+      if(!bchips) return;
+      var foot=host.querySelector(".ck-foot");
+      var box=document.createElement("div"); box.className="ck-big";
+      box.innerHTML="<div class='ck-bighead'>🔥 Big odds of the day <span class='ck-tot'>×"+
+        Number(b.odds).toFixed(2)+"</span></div><div class='ck-codes'>"+bchips+"</div>";
+      if(foot) host.insertBefore(box,foot); else host.appendChild(box);
+    }).catch(function(){});
     host.addEventListener("click",function(e){
       var b=e.target&&e.target.closest?e.target.closest(".ck-chip"):null;
       if(!b) return;

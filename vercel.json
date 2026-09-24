@@ -58,6 +58,14 @@
     "api/tgfollow.js": {
       "maxDuration": 60,
       "memory": 256
+    },
+    "api/social.js": {
+      "maxDuration": 120,
+      "memory": 256
+    },
+    "api/bigodds.js": {
+      "maxDuration": 10,
+      "memory": 128
     }
   },
   "crons": [
@@ -68,6 +76,10 @@
     {
       "path": "/api/tgfollow",
       "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/social",
+      "schedule": "5 * * * *"
     }
   ],
   "headers": [

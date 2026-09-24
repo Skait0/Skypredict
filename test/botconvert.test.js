@@ -20,9 +20,9 @@ test("the bot's matcher is the site's matcher, byte for byte", () => {
 
 test("four feeds read into one shape", () => {
   const sporty = C.events("sporty", { matches: [{ eventId: "sr:1", homeTeam: "Arsenal", awayTeam: "Leeds United", startTime: KO }] });
-  assert.deepStrictEqual(sporty[0], { id: "sr:1", home: "Arsenal", away: "Leeds United", ko: KO });
+  assert.deepStrictEqual(sporty[0], { id: "sr:1", home: "Arsenal", away: "Leeds United", ko: KO, odds: {} });
   const b9 = C.events("bet9ja", { matches: { 7: { eventId: 7, teams: "Italy - Belgium", kickoff: "2026-09-25T18:45:00Z" } } });
-  assert.deepStrictEqual(b9[0], { id: 7, home: "Italy", away: "Belgium", ko: KO });
+  assert.deepStrictEqual(b9[0], { id: 7, home: "Italy", away: "Belgium", ko: KO, odds: {} });
 });
 
 test("a long bookmaker name pairs with the target book's short one, at the same kickoff only", () => {
