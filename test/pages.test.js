@@ -62,7 +62,7 @@ test("a played match becomes a result page at the same url", () => {
               tip: "1X, home or draw", hit: false };
   const html = P.renderMatchPage(f, r);
   assert.match(html, /RAAL La Louviere 2-3 Mechelen/);
-  assert.match(html, /Tip missed/);
+  assert.match(html, /Not this time/);
   assert.match(html, /<h1>RAAL La Louviere vs Mechelen result<\/h1>/);
   assert.ok(!html.includes("Tip landed"));
 });
@@ -71,7 +71,7 @@ test("a tip that landed says so", () => {
   const f = fixture();
   const html = P.renderMatchPage(f, { hg: 1, ag: 1, tip: f.tip, hit: true });
   assert.match(html, /Tip landed/);
-  assert.ok(!html.includes("Tip missed"));
+  assert.ok(!html.includes("Not this time"));
 });
 
 /* A result row carries no probabilities. Those sections must disappear rather

@@ -147,7 +147,7 @@ test("turning the draw ON asks first", () => {
     "the on-tap must be intercepted before the toggle flips");
   const ask = src.slice(src.indexOf("window.askDrawOn="),
                         src.indexOf("window.askDrawOn=") + 1600);
-  assert.match(ask, /least likely result/i, "the warning must say what it is");
+  assert.match(ask, /big-odds call/i, "the prompt must say what a draw is");
   assert.match(ask, /confirm-cancel/, "and be refusable");
   /* THE COPY MUST QUOTE THE FLOOR THE BUILDER ACTUALLY USES. It said "reaches
      30%" for a while after the floor moved to 26% - a warning describing a

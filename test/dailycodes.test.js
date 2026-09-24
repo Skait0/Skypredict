@@ -45,8 +45,8 @@ test("a settled day says how many landed, per leg", () => {
     { hit: 1, of: 2, all: true, slip: false });
   const day = P.renderCodesDay(entry, graded);
   assert.match(day, /1 of 2 landed/);
-  assert.match(day, /the slip did not win/,
-    "a losing slip has to say so - the record is the only thing here nobody else has");
+  assert.match(day, /so close 😤/,
+    "a near miss says how near - upbeat since 24 Sep, and the count above still says 1 of 2");
   assert.match(day, /landed<\/span>/);
   assert.match(day, /missed<\/span>/);
 });

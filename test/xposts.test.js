@@ -27,7 +27,7 @@ test("a long result post is trimmed to fit, and says how many it left out", () =
 test("the result head is upbeat and still tells the real count", () => {
   /* Owner's call, 24 Sep: no red ❌ opener. Never untrue: the count is always there. */
   const won = P.xResultPost({ date: "2026-09-22", legs: [leg(0, true), leg(1, true)] }, resultOf);
-  assert.match(won, /^✅ Tue 22 Sep's code WON 🔥 2 of 2 landed\./);
+  assert.match(won, /^✅ Tue 22 Sep's code WON 🔥🧙 2 of 2 landed\./);
   const rough = P.xResultPost({ date: "2026-09-22", legs: [leg(0, true), leg(1, false), leg(2, false)] }, resultOf);
   assert.match(rough, /^📊 Tue 22 Sep's code: 1 of 3 landed\. New code is up, we go again 💪/);
   assert.match(rough, /❌/, "the per-leg misses are still shown");
