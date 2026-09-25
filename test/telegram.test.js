@@ -115,3 +115,19 @@ test("it collapses to the normal row on a phone", () => {
   assert.match(css, /@media\(max-width:560px\)\{\.foot-links \.fl-x\{margin-left:0\}\}/,
     "the auto margin must be cancelled at the phone breakpoint");
 });
+
+test("every channel post ends with the bot's handle and what it does", () => {
+  /* Owner, 25 Sep 2026. Once, however many times it is applied, and never
+     past Telegram's limit - a caption is 1024, not 4096. */
+  const { withBot, LINE } = require("../lib/tgbot.js");
+  const post = withBot("Today's code: RQWKNC");
+  assert.ok(post.endsWith(LINE));
+  assert.ok(/@Soccerwizardhqbot/.test(post));
+  assert.strictEqual(withBot(post), post, "never twice");
+  const long = "x".repeat(1000);
+  assert.strictEqual(withBot(long, 1024), long, "a caption near the limit goes out as it was");
+  for (const f of ["api/social.js", "scripts/tgpost.js", "scripts/tgpin.js"]) {
+    const src = require("fs").readFileSync(require("path").join(__dirname, "..", f), "utf8");
+    assert.ok(/withBot\(/.test(src), f + " sends to the channel without the bot line");
+  }
+});

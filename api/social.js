@@ -17,6 +17,7 @@ const SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
 const CHANNEL = process.env.TELEGRAM_CHAT || "@soccerwizardTG";
 
 const { allowed } = require("../lib/cronauth.js");
+const { withBot } = require("../lib/tgbot.js");
 
 async function gql(k, query) {
   const r = await fetch("https://api.buffer.com", { method: "POST",
@@ -46,7 +47,7 @@ async function postTG(text) {
   const t = (process.env.TELEGRAM_BOT_TOKEN || "").trim();
   if (!t) return false;
   const r = await fetch("https://api.telegram.org/bot" + t + "/sendMessage", { method: "POST",
-    headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: CHANNEL, text }) });
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: CHANNEL, text: withBot(text) }) });
   const b = await r.json().catch(() => null);
   return !!(b && b.ok);
 }

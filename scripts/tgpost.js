@@ -18,6 +18,7 @@ const path = require("path");
 process.env.SITE_ORIGIN = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
 const K = require("../lib/key.js");
 const { plan } = require("./xqueue.js");
+const { withBot } = require("../lib/tgbot.js");
 
 const ROOT = path.join(__dirname, "..");
 const LOG = path.join(ROOT, "data", "tg-posts.json");
@@ -47,7 +48,7 @@ async function main() {
   for (const j of jobs) {
     const r = await fetch("https://api.telegram.org/bot" + token + "/sendMessage", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: CHAT, text: j.text }),
+      body: JSON.stringify({ chat_id: CHAT, text: withBot(j.text) }),
     });
     const b = await r.json().catch(() => null);
     /* The token is in the URL, so only Telegram's own description is echoed. */

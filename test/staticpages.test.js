@@ -260,9 +260,10 @@ test("one handle, used everywhere", () => {
   const links = [...index.matchAll(/https:\/\/x\.com\/([A-Za-z0-9_]+)/g)].map((m) => m[1]);
   assert.deepStrictEqual([...new Set(links)], ["soccerwizardhq"],
     "more than one X handle on the site: " + [...new Set(links)].join(", "));
-  /* Four since 24 Sep: the header and the daily code card carry it too. */
-  assert.strictEqual(links.length, 4,
-    "expected the header's, the daily card's, the footer's and the contact dialog's, found " + links.length);
+  /* Four since 24 Sep: the header and the daily code card carry it too.
+     Five since 25 Sep: the booked-code modal, under the Telegram button. */
+  assert.strictEqual(links.length, 5,
+    "expected the header's, the daily card's, the footer's, the contact dialog's and the code modal's, found " + links.length);
 });
 
 /* --------------------------------------------------------- the split hub */
