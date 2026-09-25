@@ -55,6 +55,7 @@ const M = require("../lib/model.js");
 const DB = require("../lib/supabase.js");
 const ORACLE = require("../lib/oracle.js");
 const SF = require("../lib/statsfill.js");
+const AR = require("../lib/apifresults.js");
 
 /* A full match plus stoppage and half time. Below this, nothing is over. */
 const MATCH_LEN_MS = 2.25 * 3600 * 1000;
@@ -176,6 +177,25 @@ module.exports = async (req, res) => {
     const served = new Set();
     for (const r of ((payload.body && payload.body.results) || []))
       served.add(K.fixtureKey(r.date, r.home, r.away));
+
+    /* ------------------------------------------- final scores, stated (25 Sep)
+       API-Football first - lib/apifresults.js. It runs BEFORE the watched
+       finalise below, and results are first-write-wins, so a stated score
+       lands ahead of a watched guess; a guess already banked is corrected in
+       place. Bounded to leave the rest of this sweep its time inside the
+       30-second limit, and never allowed to fail it. */
+    let stated = null;
+    if (!dry) {
+      const alog = [];
+      try {
+        stated = await AR.finalScores({
+          fixtures: (payload.body && payload.body.fixtures) || [], served, oracle: ORACLE, db: DB,
+          grade: G.gradeLabel, key: K.fixtureKey, slug: K.slug, modelOf, log: alog,
+          deadline: started + 14000,
+        }, Date.now());
+      } catch (e) { stated = { error: String((e && e.message) || e) }; }
+      stated.log = alog.slice(-6);
+    }
 
     /* ---------------------------------------------------------- observe */
     const seenRows = [], notYet = [];
@@ -321,6 +341,7 @@ module.exports = async (req, res) => {
       heldWhy: heldWhy,
       observeError: observeErr,
       storeError: storeErr,
+      stated: stated,
       stats: stats,
       sample: rows.slice(0, 5).map(r =>
         r.match_date + " " + r.home + " " + r.hg + "-" + r.ag + " " + r.away +
