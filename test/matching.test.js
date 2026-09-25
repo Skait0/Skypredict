@@ -213,3 +213,19 @@ test("a Bet9ja event pairs by Sportradar id even when the names never would", ()
     awayTeam: "Www Vvv", startTime: TS + 7 * 864e5, odds: {} }], a2.BOOKS.bet9ja);
   assert.equal(D2.fixtures[0].b9EventId, undefined, "a week out is not this game, whatever the id says");
 });
+
+test("a simulated SRL game with the same names is never paired", () => {
+  /* 25 Sep 2026, exactly as the feeds had it: Bet9ja's "Poland Srl - Bosnia &
+     Herzegovina Srl" at 09:00 outscored the real "Poland - Bosnia and
+     Herzegovina" at 18:45 - the SRL names are ours plus one word, the real one
+     spells "and" out - and took the pairing. */
+  const { DATA, api: a } = makeApi([{ home: "Poland", away: "Bosnia & Herzegovina",
+    date: "2026-09-25", time: "18:45", kickoff: "2026-09-25T18:45:00.000Z" }]);
+  a.attachEventIds([
+    { eventId: 841127672, homeTeam: "Poland Srl", awayTeam: "Bosnia & Herzegovina Srl",
+      league: "UEFA Nations League SRL", startTime: Date.parse("2026-09-25T09:00:00Z"), odds: {} },
+    { eventId: 826047074, homeTeam: "Poland", awayTeam: "Bosnia and Herzegovina",
+      league: "UEFA Nations League, League B", startTime: Date.parse("2026-09-25T18:45:00Z"), odds: {} },
+  ], a.BOOKS.bet9ja);
+  assert.equal(DATA.fixtures[0].b9EventId, 826047074);
+});

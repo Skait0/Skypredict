@@ -11228,6 +11228,17 @@ function srOf(x){
   var m=/^sr:match:(\d+)$/.exec(String(x.eventId||""));
   return m?m[1]:null;
 }
+/* SIMULATED GAMES ARE NOT FIXTURES. The books list SRL ("Simulated Reality
+   League") and eSoccer games beside the real ones, under the same team names:
+   "Poland Srl - Bosnia & Herzegovina Srl" normalises to exactly our Poland v
+   Bosnia, and an exact pair is allowed past the kick-off fence - so on 25 Sep
+   2026 our 18:45 Nations League game was paired with Bet9ja's 09:00 virtual
+   one, and a Bet9ja code for it would have booked the virtual game. Same test
+   the live-score feed has always used. */
+function isSimEvent(m){
+  var s=((m&&m.league||"")+" "+(m&&m.homeTeam||"")+" "+(m&&m.awayTeam||"")).toLowerCase();
+  return /\bsrl\b|esoccer|e-?football|cyber|simulat|virtual/.test(s);
+}
 function attachTo(f,m,B){
   f[B.id]=m.eventId;
   f[B.odds]=m.odds||{};
@@ -11275,6 +11286,7 @@ function refreshByoPanels(){
 function attachEventIds(sporty,B){
   B=B||BOOKS.sporty;
   if(!sporty||!sporty.length) return 0;
+  sporty=sporty.filter(function(m){ return !isSimEvent(m); });
   try{ FEED[B.key]=sporty; }catch(e){}
   /* Verbose per-fixture match logging is opt-in: add ?debug=1 (or #debug) to the
      URL. Off by default so visitors get a clean console and we skip the
