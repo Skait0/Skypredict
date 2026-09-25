@@ -136,7 +136,7 @@ test("the build hands its own results to the source", () => {
      it did not. */
   const fs = require("fs"), path = require("path");
   const src = fs.readFileSync(path.join(__dirname, "..", "lib", "build.js"), "utf8");
-  assert.match(src, /cfg\._sources = scoreSources\(matches\)/,
+  assert.match(src, /cfg\._sources = scoreSources\(matches[,)]/,
     "built from the results the model was just fitted on");
   assert.match(src, /confirmScores\(pending, log, scoreBudget, cfg\._sources\)/);
   assert.match(src, /recordPublishedTips\(cfg\.prevFixtures, log, scoreBudget, cfg\._sources\)/);
