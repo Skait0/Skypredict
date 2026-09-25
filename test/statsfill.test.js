@@ -66,9 +66,9 @@ test("below the quota floor it stops after the first answer", async () => {
   assert.equal(out.asked, 1, "one date asked, then the floor stops it");
 });
 
-test("it runs every other hour, in the first ten minutes", () => {
+test("it runs every hour, in the first ten minutes", () => {
   assert.equal(SF.dueNow(Date.parse("2026-09-27T08:05:00Z")), true);
-  assert.equal(SF.dueNow(Date.parse("2026-09-27T09:05:00Z")), false);
+  assert.equal(SF.dueNow(Date.parse("2026-09-27T09:05:00Z")), true);
   assert.equal(SF.dueNow(Date.parse("2026-09-27T08:15:00Z")), false);
 });
 

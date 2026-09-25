@@ -290,7 +290,7 @@ module.exports = async (req, res) => {
     if (!dry && expired.length) await DB.deleteLiveSeen(expired);
 
     /* Corners and shots onto results already held - see lib/statsfill.js.
-       Every other hour, and never allowed to fail the sweep: a missing count
+       Every hour, and never allowed to fail the sweep: a missing count
        costs a corners leg its verdict for an hour, a thrown error here would
        cost every result above. */
     let stats = null;

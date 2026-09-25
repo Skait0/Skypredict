@@ -1,9 +1,10 @@
-# Refresh the current season from API-Football while the paid plan runs.
+# Refresh the current season from API-Football while a paid plan is active.
 #
-# The paid month (25 Sep - 24 Oct 2026) serves the 2026 season; the free plan
-# does not (it stops at 2024), so after the plan ends every request would be
-# refused. The date guard below stops the job then rather than letting it
-# spend a week of refusals. Renew the plan and move the date to keep it going.
+# The owner keeps the paid plan (25 Sep 2026: "we are no longer on the free
+# plan"), so this no longer stops on a date. It asks API-Football's /status -
+# which does not count against the allowance - and runs whenever the plan is
+# active with a paid-size daily limit. If the plan ever lapses to free (100 a
+# day, seasons up to 2024), the 2026 season would be refused, so it skips.
 #
 # About 630 requests a run: 81 league-seasons plus statistics for the season's
 # finished fixtures, twenty a request. There is no tmp/apif cache on a runner,
@@ -24,14 +25,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Only while the paid plan runs
+      - name: Only while a paid plan is active
         id: plan
+        env:
+          APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
         run: |
-          if [ "$(date -u +%Y%m%d)" -gt 20261024 ]; then
-            echo "the paid API-Football plan ended 24 Oct 2026 - nothing to refresh"
-            echo "live=0" >> "$GITHUB_OUTPUT"
-          else
+          s=$(curl -s -H "x-apisports-key: $APISPORTS_KEY" https://v3.football.api-sports.io/status)
+          active=$(echo "$s" | jq -r '.response.subscription.active // false')
+          limit=$(echo "$s" | jq -r '.response.requests.limit_day // 0')
+          echo "plan: $(echo "$s" | jq -r '.response.subscription.plan // "?"') active=$active limit_day=$limit"
+          if [ "$active" = "true" ] && [ "$limit" -gt 100 ]; then
             echo "live=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "no paid API-Football plan active - nothing to refresh"
+            echo "live=0" >> "$GITHUB_OUTPUT"
           fi
       - uses: actions/checkout@v4
         if: steps.plan.outputs.live == '1'
