@@ -8408,6 +8408,19 @@ function flagFor(c){
 }
 function compOf(l){const p=l.split(" ");return p.slice(1).join(" ")||l;}
 
+/* THE READER'S DAY FOR A FIXTURE, NOT UTC'S. f.date is the UTC date, but every
+   kick-off on the page is shown in the reader's own time (kickTime). An MLS
+   game at 23:30 UTC is 00:30 in Lagos - tomorrow - and filing it by f.date put
+   a "00:30" game under today's board (reported 25 Sep 2026). So a fixture's
+   day is the local date of its kick-off, the same clock its time is shown on.
+   No kick-off, and it falls back to f.date as before. */
+function fDay(f){
+  if(!f) return "";
+  var t=f.kickoff?new Date(f.kickoff).getTime():NaN;
+  if(!isFinite(t)) return f.date;
+  var d=new Date(t);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
 function dayOff(iso){
   const d=new Date(iso+"T00:00:00Z"),n=new Date();
   return Math.round((Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())
@@ -8433,7 +8446,7 @@ function isUpcoming(f){
   if(f.kickoff){t=new Date(f.kickoff).getTime();}
   else if(f.time&&/^\d{1,2}:\d{2}/.test(f.time)){t=new Date(f.date+"T"+f.time+":00Z").getTime();}
   if(t!=null&&!isNaN(t)) return t>Date.now();
-  return dayOff(f.date)>=0;
+  return dayOff(fDay(f))>=0;
 }
 function ahead(){return DATA.fixtures.filter(function(f){return isUpcoming(f);});}
 /* The day's board keeps every game for that day, including ones already kicked
@@ -8442,14 +8455,14 @@ function ahead(){return DATA.fixtures.filter(function(f){return isUpcoming(f);})
    that. Past days stay with the results view, which grades them properly. */
 function onDay(){
   if(V.off<0) return [];
-  return (DATA.fixtures||[]).filter(function(f){return dayOff(f.date)===V.off;});
+  return (DATA.fixtures||[]).filter(function(f){return dayOff(fDay(f))===V.off;});
 }
 function activeDays(){
   const s={};
   /* Any day from today forward that has fixtures at all. Keyed off the fixture
      list rather than ahead(), so today does not drop off the strip the moment
      its last game kicks off. */
-  (DATA.fixtures||[]).forEach(function(f){var o=dayOff(f.date); if(o>=0) s[o]=1;});
+  (DATA.fixtures||[]).forEach(function(f){var o=dayOff(fDay(f)); if(o>=0) s[o]=1;});
   (DATA.results||[]).forEach(function(r){s[dayOff(r.date)]=1;});
   return Object.keys(s).map(Number).sort(function(a,b){return a-b;});
 }
@@ -8463,7 +8476,7 @@ function fixturePlayed(f){
 function dayHasUnplayed(off){
   var all=DATA.fixtures||[];
   for(var i=0;i<all.length;i++){
-    if(dayOff(all[i].date)===off && !fixturePlayed(all[i])) return true;
+    if(dayOff(fDay(all[i]))===off && !fixturePlayed(all[i])) return true;
   }
   return false;
 }
@@ -8766,7 +8779,7 @@ function valMark(f){return isValue(f)?"<span class='vmark' title='Better price -
 /* -------------------------------------------------------- pick of the day
    Chosen by confidence, then explained. A pick with no reasoning is just a
    number, and numbers without reasons are what every tipster site sells. */
-function allOnDay(off){return (DATA.fixtures||[]).filter(function(f){return dayOff(f.date)===off;});}
+function allOnDay(off){return (DATA.fixtures||[]).filter(function(f){return dayOff(fDay(f))===off;});}
 /* Locked Pick of the Day: one game chosen per 24h fixture day. Once set it does
    not change - not when odds blend, not when the game kicks off. It stays shown
    with its result (won/lost) until the next day's fixtures take over. Stored per
@@ -9089,7 +9102,7 @@ function statusBadge(f){
      it and the whole day's results appear together. A reader comes back the
      next morning to a page that is either silent or right, which is the only
      pair of states worth offering. */
-  if(dayOff(f.date)>=0) return kickCountdown(f);
+  if(dayOff(fDay(f))>=0) return kickCountdown(f);
   var r=potdResult(f,f);
   if(!r || r.hg==null) return "";
   return "<span class='fx-st "+(r.push?"fx-push":(r.won?"fx-hit":"fx-miss"))+"'>"+
@@ -9290,7 +9303,7 @@ function renderPotd(){
      a rank it no longer holds. Say the number either way; claim the rank only
      when it is still earned. */
   var _stillTop=!(DATA.fixtures||[]).some(function(f){
-    return dayOff(f.date)===dayOff(top.date) && !f.cross_tier && f.tip_p>top.tip_p;});
+    return dayOff(fDay(f))===dayOff(fDay(top)) && !f.cross_tier && f.tip_p>top.tip_p;});
   reasons.push("Our model puts this at <b>"+P0(top.tip_p)+"%</b>"+
     (_stillTop?", the strongest call on the day's card":""));
 
@@ -9298,7 +9311,7 @@ function renderPotd(){
      (see choosePotd). Say so on the card: an unlabelled pick reads as today's
      call, and readers reported exactly that - the pick "changed" overnight when
      what changed was the day it belongs to. */
-  var _potdOff=dayOff(top.date);
+  var _potdOff=dayOff(fDay(top));
   var potdDayChip=_potdOff===0?"":"<span class='k'>"+dayName(_potdOff)+"</span>";
   $("potd").innerHTML=
     "<section class='potd "+stateClass+"'>"+
@@ -9311,7 +9324,7 @@ function renderPotd(){
         "<div class='potd-grid'>"+
           "<div><h2>"+esc(plainTip(top))+"</h2>"+
             "<p class='meta'>"+esc(top.home)+" v "+esc(top.away)+" &middot; "+
-              dayName(dayOff(top.date))+" "+esc(kickTime(top))+
+              dayName(dayOff(fDay(top)))+" "+esc(kickTime(top))+
               metaExtra+"</p></div>"+
           bigHTML+
         "</div>"+
@@ -9875,7 +9888,7 @@ function openSheet(id){
   SHEET_RETURN=document.querySelector("[data-fx='"+id+"']");
   $("sheet-title").textContent=f.home+" v "+f.away;
   $("sheet-sub").textContent=compOf(f.league)+" \u00b7 "+
-    dayName(dayOff(f.date))+" "+kickTime(f)+" \u00b7 "+plainTip(f)+" "+
+    dayName(dayOff(fDay(f)))+" "+kickTime(f)+" \u00b7 "+plainTip(f)+" "+
     P0(f.tip_p)+"%";
   $("sheet-body").innerHTML=moreHTML(f);
   SHEET_SCROLL=window.scrollY||document.documentElement.scrollTop||0;
@@ -10045,7 +10058,7 @@ function clearLeaguePicks(){
    it. A second copy of exactly this predicate is what produced the chip-count
    bug ("Count the chips after the search box"). */
 function inScope(f){
-  var o=dayOff(f.date);
+  var o=dayOff(fDay(f));
   if(SCOPE==="day") return o===SDAY;
   if(SCOPE==="span") return o>=SDAY&&o<SDAY+SPAN;
   return true;
@@ -10080,7 +10093,7 @@ function leaguesOnBoard(){
 function dayBuildable(off){
   var n=0,all=DATA.fixtures||[];
   for(var i=0;i<all.length;i++){var f=all[i];
-    if(dayOff(f.date)===off&&notStarted(f)) n++;}
+    if(dayOff(fDay(f))===off&&notStarted(f)) n++;}
   return n;
 }
 /* What a tap actually hands you: the three filters both builders apply before
@@ -10095,7 +10108,7 @@ function buildableOn(off){
   var out=[],all=DATA.fixtures||[];
   for(var i=0;i<all.length;i++){var f=all[i];
     if(!notStarted(f)) continue;
-    if(dayOff(f.date)!==off) continue;
+    if(dayOff(fDay(f))!==off) continue;
     if(!leagueAllowed(f.league)) continue;
     if(TOP_ONLY&&isLowerFixture(f)) continue;
     out.push(f);}
@@ -16864,7 +16877,7 @@ function tipEval(f){
 function matchPrediction(lm){
   var best=null,bs=0;
   DATA.fixtures.forEach(function(f){
-    var o=dayOff(f.date); if(o< -1||o>1) return;
+    var o=dayOff(fDay(f)); if(o< -1||o>1) return;
     /* Same per-side floor and tag check as liveMatchFor - a combined score
        alone let a women's side carry a match against the men's fixture. */
     if(teamTag(lm.home)!==teamTag(f.home)||teamTag(lm.away)!==teamTag(f.away)) return;
@@ -19807,7 +19820,7 @@ function renderLeaguePicker(){
   var hint="";
   if(SCOPE==="day"&&TOD!=="all"){
     var allDay=DATA.fixtures.filter(function(f){
-      return notStarted(f)&&dayOff(f.date)===SDAY;
+      return notStarted(f)&&dayOff(fDay(f))===SDAY;
     }).length;
     var here=scopeFixtures().length;
     if(allDay>here) hint="<div class='lgp-hint'>"+(allDay-here)+
@@ -20356,7 +20369,7 @@ function renderBuilderOutput(){
       return "<div class='sp-row conf-"+cf+"'>"+
         "<div class='sp-main'><div class='sp-teams'>"+esc(f.home)+" v "+esc(f.away)+
           (c.eventId?"":"<span class='sp-noid' title='Not on SportyBet yet - can&apos;t auto-book'>no ID</span>")+"</div>"+
-          "<div class='sp-meta'>"+compOf(f.league)+" \u00b7 "+dayName(dayOff(f.date))+" "+kickTime(f)+"</div></div>"+
+          "<div class='sp-meta'>"+compOf(f.league)+" \u00b7 "+dayName(dayOff(fDay(f)))+" "+kickTime(f)+"</div></div>"+
         "<div class='sp-pick'><b>"+mLabel(f,c.code)+"</b><i>"+P0(c.p)+"%</i></div>"+
         "<span class='sp-odd'>"+oddCell(c.f,c.code,c.p)+"</span>"+
         "<button class='sp-x' data-rm='"+c.id+"' aria-label='Remove'>"+XSVG+"</button>"+
@@ -20744,7 +20757,7 @@ function pruneStickyDays(){
 }
 function saveStickyDay(){
   try{
-    var today=(DATA.fixtures||[]).filter(function(f){return dayOff(f.date)===0;});
+    var today=(DATA.fixtures||[]).filter(function(f){return dayOff(fDay(f))===0;});
     if(!today.length) return;
     localStorage.setItem(STICKY_PFX+localTodayISO(),JSON.stringify(today));
   }catch(e){}
@@ -20755,7 +20768,7 @@ function mergeStickyDay(){
     var saved=JSON.parse(raw); if(!Array.isArray(saved)||!saved.length) return 0;
     var have={}; (DATA.fixtures||[]).forEach(function(f){have[fid(f)]=1;});
     var back=saved.filter(function(f){
-      return f&&f.date&&dayOff(f.date)===0&&!have[fid(f)];});
+      return f&&f.date&&dayOff(fDay(f))===0&&!have[fid(f)];});
     if(back.length) DATA.fixtures=(DATA.fixtures||[]).concat(back);
     return back.length;
   }catch(e){ return 0; }

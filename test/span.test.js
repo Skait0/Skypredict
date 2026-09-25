@@ -35,7 +35,7 @@ function grab(name) {
 /* The real inScope, with the window it reads handed in. */
 function windowed(scope, sday, span) {
   return new Function("SCOPE", "SDAY", "SPAN",
-    "function dayOff(d){return d;}" + grab("inScope") +
+    "function dayOff(d){return d;}" + "function fDay(f){return f.date;}" + grab("inScope") +
     "\nreturn inScope;")(scope, sday, span);
 }
 

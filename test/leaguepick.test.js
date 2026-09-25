@@ -38,7 +38,7 @@ function harness(fixtures) {
     "var DATA={fixtures:FX};" +
     "var SCOPE='all', SDAY=0, SPAN=3, TOD='all', TOP_ONLY=false;" +
     "function notStarted(){return true;}" +
-    "function dayOff(){return 0;}" +
+    "function dayOff(){return 0;}" + "function fDay(f){return f.date;}" +
     "function todFixtures(l){return l;}" +
     "function isLowerFixture(f){return !!(f.tier&&f.tier>1);}" +
     "function leagueRank(){return 1;}" +

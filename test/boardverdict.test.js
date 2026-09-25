@@ -41,7 +41,7 @@ function konst(name) {
   return "const " + name + "=" + m[1].trim() + ";";
 }
 
-const FNS = ["dayOff", "kickMs", "kickCountdown", "normTeam", "normTeamRaw",
+const FNS = ["fDay", "dayOff", "kickMs", "kickCountdown", "normTeam", "normTeamRaw",
   "tipEval", "potdResult", "statusBadge"];
 
 function board(results) {

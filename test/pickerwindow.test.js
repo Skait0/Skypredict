@@ -62,7 +62,7 @@ test("the hint counts games in the day, not in the filtered pool", () => {
   const fn = /function renderLeaguePicker\(\)\{[\s\S]*?\n\}/.exec(src)[0];
   /* It has to compare the whole day against the narrowed pool. Counting
      within the pool would always give zero and the hint would never show. */
-  assert.match(fn, /notStarted\(f\)&&dayOff\(f\.date\)===SDAY/,
+  assert.match(fn, /notStarted\(f\)&&dayOff\(fDay\(f\)\)===SDAY/,
     "the day total must ignore the time filter");
   assert.match(fn, /scopeFixtures\(\)\.length/,
     "and be compared against what the filters actually left");

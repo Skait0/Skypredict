@@ -36,6 +36,7 @@ function counters(opts) {
   const fn = new Function("DATA", "TOP_ONLY", "CHOSEN",
     "function notStarted(f){return !f.started;}" +
     "function dayOff(d){return d;}" +
+    "function fDay(f){return f.date;}" +
     "function leagueAllowed(l){return !Object.keys(CHOSEN).length||!!CHOSEN[l];}" +
     "function isLowerFixture(f){return !!f.lower;}" +
     grab("buildableOn") + "\n" + grab("buildableAll") +

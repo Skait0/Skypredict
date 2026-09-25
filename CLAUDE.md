@@ -17,6 +17,10 @@ then `claude`.
    `~/.claude/skills/prediction-site`) with what the session learned, and
    refreshes the graph: `node scripts/graphify-inline.js`, then
    `graphify update .`.
+3. **(25 Sep 2026) Every issue to fix starts with graphify AND memory.** Grep
+   `~/.claude/projects/C--Users-DELL/memory/` for the symptom and its likely
+   cause, and query graphify, before reading or editing code - "chances are,
+   we have done it before." Say in the reply what each turned up.
 
 ## What this is
 
