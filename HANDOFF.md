@@ -103,6 +103,11 @@ setting. It will bite on a Saturday.
 
 ### Sentry, and why "no market at SportyBet" is not what it looks like
 
+> **Superseded 25 Sep 2026.** The "no single-event endpoint" below was wrong:
+> `factsCenter/event` returns one game's whole live card. The API reads it after
+> every SportyBet refusal and names each dead leg with a reason (API `5fb3c4b`,
+> site `72ee9fd`). Corners and shots were the main cause: SportyBet re-lines them.
+
 54 events over FOURTEEN DAYS - about two a day, not the daily plague the raw
 total suggests, and the 24h view is where to read it. Also **not a dead end**:
 `_unbookable` refuses the slip,
