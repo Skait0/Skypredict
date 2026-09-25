@@ -123,6 +123,8 @@ const LEAGUES = {
   /* The third wave (25 Sep, paid month) - see HARVEST_EXTRA. Paraguay splits
      like Uruguay. Ykkosliiga is the second tier only from 2024; the older
      Ykkonen (245) became the third, so it is not mapped here. */
+  408: "Northern Ireland Premiership",
+  407: "Northern Ireland Championship",
   242: "Ecuador LigaPro Primera A",
   250: "Paraguay Division de Honor",
   252: "Paraguay Division de Honor",

@@ -138,7 +138,10 @@ test("the exact pass needs BOTH sides, which is what keeps Barcelona out", () =>
      because what matters is that this fixture is still refused. */
   const start = src.indexOf("var BOOKS={");
   const anchor = src.indexOf("return hits;", start);
-  const slice = src.slice(start, src.indexOf("}", anchor) + 1);
+  /* attachEventIds calls the page's countryOf, which sits above the slice. */
+  const cof = src.indexOf("function countryOf(l)");
+  const slice = src.slice(cof, src.indexOf("\n", cof)) + "\n" +
+    src.slice(start, src.indexOf("}", anchor) + 1);
   const DATA = { fixtures: [{ home: "Barcelona", away: "Vallecano",
                               date: "2026-08-31",
                               kickoff: "2026-08-31T19:30:00.000Z" }] };

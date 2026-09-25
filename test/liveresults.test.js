@@ -260,17 +260,16 @@ test("every UEFA top flight we harvest has a rung, or its ties are refused", () 
 });
 
 test("no warming league is filed under half a country's name", () => {
-  /* countryOf() reads the first word. "Czech Republic Chance Liga" files under
-     "Czech" and "Bosnia and Herzegovina ..." under "Bosnia", which puts them in
-     a country the coefficient table will never match. */
-  const twoWord = ["Czech Republic", "Bosnia and", "Faroe Islands", "North Macedonia",
-                   "Northern Ireland", "San Marino"];
+  /* "Czech Republic Chance Liga" would file under "Czech", which the
+     coefficient table never matches - those two are aliased to one word.
+     Northern Ireland and the other two-word countries are read whole by
+     model.js countryOf instead. */
   for (const league of L.HARVEST_EXTRA) {
-    for (const bad of twoWord) {
-      assert.ok(!league.startsWith(bad),
-        league + " starts with a two-word country, so countryOf() will mis-file it");
-    }
+    assert.ok(!/^(Czech Republic|Bosnia and) /.test(league), league + " should be aliased to one word");
   }
+  assert.strictEqual(M.countryOf("Northern Ireland Premiership"), "Northern Ireland");
+  assert.strictEqual(M.countryOf("Ireland First Division"), "Ireland",
+    "and Ireland stays Ireland - the two are different leagues' clubs");
 });
 
 test("the alias table renames the two-word countries onto one word", () => {

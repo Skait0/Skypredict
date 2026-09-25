@@ -8243,7 +8243,8 @@ function myRecord(){
           jack:jack.length, jackWon:jack.filter(function(s){return s.settled&&s.won;}).length,
           pending:real.filter(function(s){return !s.settled;}).length};
 }
-function countryOf(l){return l.split(" ")[0];}
+/* Same rule as lib/model.js countryOf: "Northern Ireland Premiership" is not in "Northern". */
+function countryOf(l){var two=["Northern Ireland","Faroe Islands","North Macedonia","San Marino"];for(var i=0;i<two.length;i++)if(l.indexOf(two[i]+" ")===0)return two[i];return l.split(" ")[0];}
 /* CONMEBOL countries. Only Argentina and Brazil are in the feeds today, but
    the whole set is listed so a new South American league is handled the moment
    it appears rather than slipping through as if it were European. The builders
@@ -11298,7 +11299,7 @@ function attachEventIds(sporty,B){
     var day=new Date(t).toISOString().slice(0,10);
     /* Bet9ja carries the country in its own field; SportyBet's league string
        opens with it, as ours does. */
-    var ctry=String(m.country||String(m.league||"").split(" ")[0]).toLowerCase();
+    var ctry=String(m.country||countryOf(String(m.league||""))).toLowerCase();
     if(ctry) byLeagueDay[ctry+"|"+day]=1;
   });
   var hasCountries=Object.keys(byLeagueDay).length>0;
@@ -11415,7 +11416,7 @@ function attachEventIds(sporty,B){
          the ones that are still worth fixing. Counted, not printed. */
       var _started = (typeof notStarted==="function") && !notStarted(f);
       var _kick = f.kickoff ? Date.parse(f.kickoff) : NaN;
-      var _country = String(f.league||"").split(" ")[0].toLowerCase();
+      var _country = countryOf(String(f.league||"")).toLowerCase();
       var _unpublished = !_started && (
         (isFinite(_kick) && feedMax && _kick > feedMax) ||
         (hasCountries && !byLeagueDay[_country+"|"+f.date]));
@@ -16770,7 +16771,7 @@ function liveCountry(l){
     var n=COUNTRY_NAMES[i];
     if(s===n||s.indexOf(n+" ")===0) return (l||"").slice(0,n.length);
   }
-  return (l||"").split(" ")[0];
+  return countryOf(l||"");
 }
 function liveComp(l){var c=liveCountry(l);return (l||"").slice(c.length).trim()||l;}
 function liveFlag(c){

@@ -23,7 +23,11 @@ const start = html.indexOf("var BOOKS={");
 const anchor = html.indexOf("return hits;", start);
 const end = html.indexOf("}", anchor) + 1;
 if (start < 0 || anchor < 0) throw new Error("could not locate matching code in index.html");
-const slice = html.slice(start, end);
+// attachEventIds reads a fixture's country through the page's own countryOf,
+// which lives above the slice - lifted the same way, not rewritten.
+const cof = html.indexOf("function countryOf(l)");
+if (cof < 0) throw new Error("could not locate countryOf in index.html");
+const slice = html.slice(cof, html.indexOf("\n", cof)) + "\n" + html.slice(start, end);
 
 // Build a factory that closes over injected DATA + blendFixture stub and returns
 // the real functions. attachEventIds reads DATA.fixtures and calls blendFixture.
