@@ -38,6 +38,9 @@ const api = new Function([
     ((/const\s+JACKPOT_ODDS\s*=\s*(\d+)/.exec(src) || [, "20000"])[1]) + ";",
   grab("isJackpotOdds"), grab("isJackpotSlip"),
   grab("gradeCode"), grab("finalScoreFor"), grab("countVoid"),
+  /* settleSlips falls back to the page's full grader for any code gradeCode
+     does not know (25 Sep 2026), so the harness carries it and its helpers. */
+  grab("gradeLeg"), grab("awaitsStats"), grab("statsGivenUp"), grab("legVerdict"),
   grab("settleSlips"), grab("myRecord"),
 ].join("\n") + `
   return { gradeCode, finalScoreFor, settleSlips, myRecord,
@@ -284,4 +287,77 @@ test("an empty history is safe", () => {
   assert.equal(r.built, 0);
   assert.equal(r.streak, 0);
   assert.equal(r.best, null);
+});
+
+/* ------------------------------------------ corners, shots and the void rule
+   25 Sep 2026: gradeCode knows sixteen codes and every other one went VOID at
+   full time - a refund - so a slip whose corners leg lost read as won. */
+const today = new Date().toISOString().slice(0, 10);
+const oldDay = new Date(Date.now() - 5 * 864e5).toISOString().slice(0, 10);
+
+test("a corners leg that lost settles the slip as lost, not as a refund", () => {
+  api.setData({ fixtures: [], results: [
+    { date: today, home: "Celta", away: "Osasuna", hg: 2, ag: 0, hc: 3, ac: 4 },
+    { date: today, home: "Vejle", away: "Silkeborg", hg: 1, ag: 1, hc: 6, ac: 5 },
+  ]});
+  api.setSlips(fresh([
+    leg({ code: "1", date: today }),
+    leg({ id: "g2", code: "CORNERS_OV_8.5", home: "Vejle", away: "Silkeborg", date: today }),
+    leg({ id: "g3", code: "CORNERS_H_OV_3.5", date: today }),
+  ]));
+  api.settleSlips();
+  const s = api.slips()[0];
+  assert.equal(s.legs[1].res, "win", "6+5 = 11 corners, over 8.5");
+  assert.equal(s.legs[2].res, "lose", "Celta took 3, not over 3.5");
+  assert.equal(s.settled, true);
+  assert.equal(s.won, false, "the lost corners leg sinks the slip");
+});
+
+test("a corners leg with no counts yet keeps the slip open, then voids after three days", () => {
+  api.setData({ fixtures: [], results: [
+    { date: today, home: "Celta", away: "Osasuna", hg: 2, ag: 0 },
+  ]});
+  api.setSlips(fresh([leg({ code: "1", date: today }), leg({ id: "g2", code: "CORNERS_A_OV_2.5", date: today })]));
+  api.settleSlips();
+  assert.equal(api.slips()[0].settled, false, "waiting for lib/statsfill.js, not void");
+  assert.equal(api.slips()[0].legs[1].res, undefined);
+
+  api.setData({ fixtures: [], results: [
+    { date: oldDay, home: "Celta", away: "Osasuna", hg: 2, ag: 0 },
+  ]});
+  api.setSlips(fresh([leg({ code: "1", date: oldDay }), leg({ id: "g2", code: "CORNERS_A_OV_2.5", date: oldDay })]));
+  api.settleSlips();
+  assert.equal(api.slips()[0].legs[1].res, "void", "none will come after three days - it voids as before");
+  assert.equal(api.slips()[0].won, true);
+});
+
+test("a market gradeCode does not know is settled by the full grader, not voided", () => {
+  api.setData({ fixtures: [], results: [
+    { date: today, home: "Celta", away: "Osasuna", hg: 0, ag: 1 },
+  ]});
+  api.setSlips(fresh([leg({ code: "MIX_X_OV_1.5", date: today })]));
+  api.settleSlips();
+  assert.equal(api.slips()[0].legs[0].res, "lose", "0-1: not a draw, not over 1.5");
+  assert.equal(api.slips()[0].won, false);
+});
+
+test("a leg voided by the old rule is put right, and the slip is not announced twice", () => {
+  api.setData({ fixtures: [], results: [
+    { date: today, home: "Celta", away: "Osasuna", hg: 0, ag: 1 },
+  ]});
+  const s = fresh([leg({ code: "MIX_X_OV_1.5", date: today, res: "void", hg: 0, ag: 1 })])[0];
+  s.settled = true; s.won = true;
+  api.setSlips([s]);
+  const told = api.settleSlips();
+  assert.equal(api.slips()[0].legs[0].res, "lose");
+  assert.equal(api.slips()[0].won, false, "the old 'won' was wrong and is corrected");
+  assert.equal(told.length, 0, "a correction is not a new result to announce");
+});
+
+test("a whole corners line and a -1 count are never settled", () => {
+  const g = new Function(src.slice(src.indexOf("function gradeLeg("), src.indexOf("\nfunction mLabel(")) + "\nreturn gradeLeg;")();
+  assert.equal(g(null, "CORNERS_OV_9", 1, 0, { hc: 5, ac: 4 }), null, "a whole line pushes");
+  assert.equal(g(null, "CORNERS_OV_8.5", 1, 0, { hc: -1, ac: -1 }), null, "-1 is 'none to be had'");
+  assert.equal(g(null, "SHOTS_OV_24.5", 1, 0, { hc: 5, ac: 4, hsh: 14, ash: 11 }), true);
+  assert.equal(g(null, "CORNERS_OV_8.5", 1, 0), null, "an older caller with no stats answers as before");
 });

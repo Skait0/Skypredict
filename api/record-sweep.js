@@ -53,6 +53,8 @@ const G = require("../lib/grade.js");
 const K = require("../lib/key.js");
 const M = require("../lib/model.js");
 const DB = require("../lib/supabase.js");
+const ORACLE = require("../lib/oracle.js");
+const SF = require("../lib/statsfill.js");
 
 /* A full match plus stoppage and half time. Below this, nothing is over. */
 const MATCH_LEN_MS = 2.25 * 3600 * 1000;
@@ -287,6 +289,18 @@ module.exports = async (req, res) => {
     }
     if (!dry && expired.length) await DB.deleteLiveSeen(expired);
 
+    /* Corners and shots onto results already held - see lib/statsfill.js.
+       Every other hour, and never allowed to fail the sweep: a missing count
+       costs a corners leg its verdict for an hour, a thrown error here would
+       cost every result above. */
+    let stats = null;
+    if (!dry && SF.dueNow(Date.now())) {
+      const slog = [];
+      try { stats = await SF.fillStats({ db: DB, oracle: ORACLE, log: slog, deadline: started + 24000 }, Date.now()); }
+      catch (e) { stats = { error: String((e && e.message) || e) }; }
+      stats.log = slog.slice(-6);
+    }
+
     return res.status(200).json({
       ok: true,
       dry: dry,
@@ -307,6 +321,7 @@ module.exports = async (req, res) => {
       heldWhy: heldWhy,
       observeError: observeErr,
       storeError: storeErr,
+      stats: stats,
       sample: rows.slice(0, 5).map(r =>
         r.match_date + " " + r.home + " " + r.hg + "-" + r.ag + " " + r.away +
         " · " + r.tip + " · " + (r.hit ? "hit" : "miss")),

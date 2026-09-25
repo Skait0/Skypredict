@@ -22,6 +22,13 @@ module.exports = async function handler(req, res) {
   if (!got.ok) { res.setHeader("Cache-Control", "no-store"); return res.status(200).json({ ok: false, results: [] }); }
   applyCache(res, POLICY);
   const results = got.rows.filter((r) => r.hg != null && r.ag != null)
-    .map((r) => ({ date: r.match_date, home: r.home, away: r.away, hg: r.hg, ag: r.ag }));
+    .map((r) => {
+      const o = { date: r.match_date, home: r.home, away: r.away, hg: r.hg, ag: r.ag };
+      /* Corners and shots (lib/statsfill.js), only when they are real counts:
+         null is "not filled yet" and -1 "none to be had", and both mean the
+         page must not settle a corners or shots leg on them. */
+      for (const k of ["hc", "ac", "hsh", "ash"]) if (Number.isFinite(r[k]) && r[k] >= 0) o[k] = r[k];
+      return o;
+    });
   return res.status(200).json({ ok: true, results });
 };

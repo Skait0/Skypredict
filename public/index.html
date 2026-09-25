@@ -7766,7 +7766,15 @@ function finalScoreFor(leg){
   for(var i=0;i<rs.length;i++){
     var r=rs[i];
     if(r.date===leg.date && normTeam(r.home)===nh && normTeam(r.away)===na)
-      return {hg:r.hg, ag:r.ag};
+    {
+      /* Corners and shots ride along when the result has them (lib/
+         statsfill.js); gradeLeg settles those legs on them. Absent keys stay
+         absent rather than arriving as undefined. */
+      var out={hg:r.hg, ag:r.ag};
+      if(r.hc!=null&&r.ac!=null){ out.hc=r.hc; out.ac=r.ac; }
+      if(r.hsh!=null&&r.ash!=null){ out.hsh=r.hsh; out.ash=r.ash; }
+      return out;
+    }
   }
   var f=fixtureById(leg.id);
   if(f && f.hg!=null && f.ag!=null) return {hg:f.hg, ag:f.ag};
@@ -7896,25 +7904,63 @@ function refreshSlipUI(){
 
 /* Grade everything that can be graded. Cheap, idempotent, and safe to call on
    every payload refresh - a slip already settled is skipped. */
+/* A VOID LEG IS A REFUNDED LEG, so a leg must never go void just because this
+   code could not read its market. Until 25 Sep 2026 it did: gradeCode knows
+   sixteen codes, and every other one - Draw or over 1.5, handicaps, draw no
+   bet, corners, total shots - was marked void at full time, so a slip whose
+   corners leg LOST read as won. Now a code gradeCode does not know is settled
+   by gradeLeg, the page's full grader, and a corners or shots leg with no
+   counts yet waits for lib/statsfill.js instead of voiding - for three days,
+   after which there will be none and it voids as before. A push (0.5) is a
+   refund and stays void. */
+function awaitsStats(code){ return /^(CORNERS|SHOTS)_/.test(code||""); }
+function statsGivenUp(l){
+  var t=Date.parse((l.date||"")+"T00:00:00Z");
+  return !isFinite(t) || Date.now()-t > 3*864e5;
+}
+function legVerdict(l, sc){
+  var g=gradeCode(l.code, sc.hg, sc.ag);
+  if(g!=null) return g;
+  var v=null; try{ v=gradeLeg(null, l.code, sc.hg, sc.ag, sc); }catch(e){}
+  if(v===true) return "win";
+  if(v===false) return "lose";
+  if(v==null && awaitsStats(l.code) && !statsGivenUp(l)) return "wait";
+  return null;
+}
 function settleSlips(){
-  var changed=false, newlySettled=[];
+  var changed=false, newlySettled=[], reopened={};
+  /* Legs voided by the old rule, put right where the score is still to hand
+     and the full grader now has an answer. A slip reopened this way is
+     re-settled below but never announced again - the reader heard about it
+     once already. */
+  SLIPS.forEach(function(s){
+    (s.legs||[]).forEach(function(l){
+      if(l.res!=="void") return;
+      var sc=finalScoreFor(l); if(!sc) return;
+      var g=legVerdict(l, sc);
+      if(g==="win"||g==="lose"){ l.res=g; if(s.settled){ s.settled=false; reopened[s.sid||s.at]=1; } changed=true; }
+    });
+  });
   SLIPS.forEach(function(s){
     if(s.settled) return;
     var hits=0, graded=0, lost=0, unknown=0;
     s.legs.forEach(function(l){
       if(l.res==="win"||l.res==="lose"){ graded++; if(l.res==="win")hits++; else lost++; return; }
+      if(l.res==="void") return;
       var sc=finalScoreFor(l);
       if(!sc){ unknown++; return; }
-      var g=gradeCode(l.code, sc.hg, sc.ag);
+      var g=legVerdict(l, sc);
+      if(g==="wait"){ unknown++; return; }
       if(g==null){ l.res="void"; l.hg=sc.hg; l.ag=sc.ag; changed=true; return; }
       l.res=g; l.hg=sc.hg; l.ag=sc.ag; graded++; changed=true;
       if(g==="win") hits++; else lost++;
     });
     s.hits=hits; s.graded=graded;
+    var announce=!reopened[s.sid||s.at];
     /* One lost leg settles an accumulator - the rest cannot rescue it. */
-    if(lost>0){ s.settled=true; s.won=false; changed=true; newlySettled.push(s); }
+    if(lost>0){ s.settled=true; s.won=false; changed=true; if(announce) newlySettled.push(s); }
     else if(unknown===0 && graded+countVoid(s)===s.legs.length && graded>0){
-      s.settled=true; s.won=true; changed=true; newlySettled.push(s);
+      s.settled=true; s.won=true; changed=true; if(announce) newlySettled.push(s);
     }
   });
   if(changed) saveSlips();
@@ -12530,7 +12576,7 @@ function isProven(c,prov){ var m=codeMarket(c); return !m || !!prov[m]; }
    as ungraded rather than as a loss - the same rule lib/grade.js follows.
    A market that can push answers 0.5: the stake came back, which is neither a
    win nor a loss and must not be rounded into either. */
-function gradeLeg(f,c,hg,ag){
+function gradeLeg(f,c,hg,ag,st){
   if(typeof hg!=="number"||typeof ag!=="number"||isNaN(hg)||isNaN(ag)) return null;
   var d=hg-ag, tot=hg+ag, both=hg>0&&ag>0;
   switch(c){
@@ -12596,6 +12642,29 @@ function gradeLeg(f,c,hg,ag){
     if(!isFinite(n)||Math.abs(n*2-Math.round(n*2))>1e-9) return null;
     var m=d+n; if(side==="2") m=-m;
     return m>0?true:(m===0?0.5:false);
+  }
+  /* CORNERS AND TOTAL SHOTS, settled on the counts a result carries once
+     lib/statsfill.js has filled them (25 Sep 2026) - passed as `st`, which
+     every older caller leaves out, so they answer null exactly as before.
+     A count that is missing or negative (-1 is "API-Football had none") is not
+     known, and neither is a whole line: it pushes, the same reason mProb will
+     not price one. */
+  var ck=/^CORNERS_(?:([HA])_)?(OV|UN)_([\d.]+)$/.exec(c||""), sk=/^SHOTS_(OV|UN)_([\d.]+)$/.exec(c||"");
+  if(ck||sk){
+    if(!st) return null;
+    var cnt=function(v){ return typeof v==="number"&&isFinite(v)&&v>=0?v:null; };
+    var n, ln, ov;
+    if(ck){
+      var chn=cnt(st.hc), can=cnt(st.ac);
+      if(chn==null||can==null) return null;
+      n=ck[1]==="H"?chn:(ck[1]==="A"?can:chn+can); ln=parseFloat(ck[3]); ov=ck[2]==="OV";
+    } else {
+      var shn=cnt(st.hsh), san=cnt(st.ash);
+      if(shn==null||san==null) return null;
+      n=shn+san; ln=parseFloat(sk[2]); ov=sk[1]==="OV";
+    }
+    if(!isFinite(ln)||Math.abs(ln-Math.round(ln))<1e-9) return null;
+    return ov?n>ln:n<ln;
   }
   return null;   /* first-half markets and anything unknown */
 }
@@ -17035,11 +17104,20 @@ function pullServerResults(){
       if(!j||!Array.isArray(j.results)||!j.results.length) return;
       if(!Array.isArray(DATA.results)) DATA.results=[];
       var have={}, added=0;
-      DATA.results.forEach(function(x){have[ftKey(x.date,x.home,x.away)]=1;});
+      DATA.results.forEach(function(x){have[ftKey(x.date,x.home,x.away)]=x;});
       j.results.forEach(function(r){
-        var k=ftKey(r.date,r.home,r.away);
-        if(have[k]) return;
-        DATA.results.push(r); have[k]=1; added++;
+        var k=ftKey(r.date,r.home,r.away), x=have[k];
+        if(x){
+          /* The score is never replaced, but corners and shots arrive hours
+             after it (lib/statsfill.js), so a result baked without them takes
+             them when the server has them - nothing else on it moves. */
+          if(x.hc==null&&r.hc!=null){
+            ["hc","ac","hsh","ash"].forEach(function(q){ if(r[q]!=null) x[q]=r[q]; });
+            added++;
+          }
+          return;
+        }
+        DATA.results.push(r); have[k]=r; added++;
       });
       if(added) paint();   /* paint settles slips and tells the reader first */
     }).catch(function(){});
