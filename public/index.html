@@ -11217,6 +11217,17 @@ function sameSlot(f,m){
   var k=Date.parse(f.kickoff); if(!isFinite(k)) return true;
   return Math.abs(t-k)<=MATCH_WINDOW_MS;
 }
+/* SPORTRADAR'S MATCH ID, where a book shares it. SportyBet's event id is
+   "sr:match:NNN"; Bet9ja and BetKing carry the same NNN, and the API hands it
+   over as srId (see the API's srid.py: 503/506 and 1,248/1,256 matched). Only
+   those two shapes count. Bet9ja's OWN event ids are nine digits too, so a
+   bare number is never read as Sportradar's. */
+function srOf(x){
+  if(!x) return null;
+  if(x.srId) return String(x.srId);
+  var m=/^sr:match:(\d+)$/.exec(String(x.eventId||""));
+  return m?m[1]:null;
+}
 function attachTo(f,m,B){
   f[B.id]=m.eventId;
   f[B.odds]=m.odds||{};
@@ -11326,6 +11337,14 @@ function attachEventIds(sporty,B){
        (scripts/b9match.js --wide): Bet9ja 230 -> 232 of 238, SportyBet
        unchanged at 238. */
     var fh=normTeam(f.home),fa=normTeam(f.away);
+    /* The id before any name. Our fixture holds SportyBet's sr:match id once
+       SportyBet has attached; a book carrying the same number is the same game.
+       The kick-off fence still applies - one wrong number must not pair two
+       games - and a miss falls through to the names exactly as before. */
+    var fsr=B.key!=="sporty"?srOf(f):null;
+    if(fsr) for(var j=0;j<cand.length;j++){
+      if(srOf(cand[j])===fsr&&sameSlot(f,cand[j])){ attachTo(f,cand[j],B); hits++; return; }
+    }
     for(var i=0;i<cand.length;i++){
       if(normTeam(cand[i].homeTeam)===fh && normTeam(cand[i].awayTeam)===fa){best=cand[i];bestScore=99;break;}
     }
@@ -11755,7 +11774,7 @@ function b9Rows(matches){
               homeTeam:bits[0].trim(),
               awayTeam:bits.slice(1).join(" - ").trim(),
               startTime:Date.parse(m.kickoff),
-              league:m.league,country:m.country,odds:m.odds||{}});
+              league:m.league,country:m.country,odds:m.odds||{},srId:m.srId||null});
   }
   return out;
 }
@@ -14629,6 +14648,11 @@ function feedMatch(l,to){
   var _ko=(l.kickoff==null||l.kickoff==="")?NaN:new Date(l.kickoff).getTime();
   var slot={kickoff:isFinite(_ko)?new Date(_ko).toISOString():null};
   var best=null,bestScore=0;
+  /* Same id first, as in attachEventIds. */
+  var lsr=srOf(l);
+  if(lsr) for(var j=0;j<list.length;j++){
+    if(list[j]&&srOf(list[j])===lsr&&sameSlot(slot,list[j])) return list[j];
+  }
   for(var i=0;i<list.length;i++){
     var m=list[i];
     if(!m||!m.eventId) continue;
@@ -14660,8 +14684,15 @@ function feedMatch(l,to){
 function fixtureByLeg(l,B){
   var direct=l?fixtureByBookId(l.eventId,B):null;
   if(direct) return direct;
-  if(!l||!l.home||!l.away) return null;
+  if(!l) return null;
   var list=(typeof DATA!=="undefined"&&DATA.fixtures)||[];
+  /* A Bet9ja or BetKing leg carries Sportradar's id; our fixture carries
+     SportyBet's, which is the same number. */
+  var lsr=srOf(l);
+  if(lsr) for(var j=0;j<list.length;j++){
+    if(srOf(list[j])===lsr) return list[j];
+  }
+  if(!l.home||!l.away) return null;
   /* The shape sameSlot and simTeams expect of a feed event. */
   var ev={homeTeam:l.home,awayTeam:l.away,startTime:l.kickoff};
   var lh=normTeam(l.home),la=normTeam(l.away);

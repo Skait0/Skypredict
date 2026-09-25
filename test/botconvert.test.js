@@ -98,3 +98,20 @@ test("a tap that is not a conversion is ignored", async () => {
     assert.deepStrictEqual(b.sent.filter((s) => s.method === "sendMessage"), []);
   } finally { b.done(); }
 });
+
+test("a leg pairs by Sportradar id before names, and a bare number is never taken for one", () => {
+  /* 25 Sep 2026: SportyBet, Bet9ja and BetKing carry the same sr:match number.
+     The names here disagree on purpose - only the id can pair them. */
+  const C = require("../lib/convert.js");
+  const ko = Date.parse("2026-09-25T18:45:00Z");
+  const evs = C.events("bet9ja", { matches: {
+    a: { eventId: 838256035, srId: "72202662", teams: "Ayr Utd - Stenhousemuir", kickoff: "2026-09-25T18:45:00Z" },
+    b: { eventId: 72202660, teams: "Somebody - Else", kickoff: "2026-09-25T18:45:00Z" },
+  } });
+  const leg = { eventId: "sr:match:72202662", home: "Totally", away: "Different", kickoff: ko };
+  assert.strictEqual(C.pair(evs, leg).id, 838256035);
+  /* Bet9ja's own nine-digit id must not be read as Sportradar's: a leg whose
+     sr number happens to equal a Bet9ja event id still does not pair on it. */
+  const trap = { eventId: "sr:match:72202660", home: "Nobody", away: "Here", kickoff: ko };
+  assert.strictEqual(C.pair(evs, trap), null);
+});

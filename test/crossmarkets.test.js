@@ -394,7 +394,7 @@ test("a game on the board is found even when the bookmaker's id differs", () => 
        shipped one would not, which is the failure this test is about. */
     src.slice(src.indexOf("var TEAM_ALIASES = {"), src.indexOf("function simTeams(")) +
     grab("simTeams") + grab("evStart") + grab("sameSlot") +
-    grab("fixtureByBookId") + grab("fixtureByLeg") +
+    grab("srOf") + grab("fixtureByBookId") + grab("fixtureByLeg") +
     "\nreturn {fixtureByLeg:fixtureByLeg};")();
   const B = { key: "sporty", id: "eventId" };
 
@@ -424,7 +424,7 @@ test("a trim ranks on our model first and the bookmaker's price second", () => {
     "var MATCH_WINDOW_MS=86400000;" +
     src.slice(src.indexOf("var TEAM_ALIASES = {"), src.indexOf("function simTeams(")) +
     grab("simTeams") + grab("evStart") + grab("sameSlot") +
-    grab("fixtureByBookId") + grab("fixtureByLeg") + grab("mProb") +
+    grab("srOf") + grab("fixtureByBookId") + grab("fixtureByLeg") + grab("mProb") +
     grab("legChance") + grab("trimPlan") +
     "\nreturn {legChance:legChance,trimPlan:trimPlan};")();
   const B = { key: "sporty", id: "eventId" };
@@ -472,7 +472,7 @@ test("a game we do not carry can still cross to the other book", () => {
     "var FEED={bet9ja:[{eventId:832871639,homeTeam:'Austin FC II',awayTeam:'Colorado Rapids 2'," +
       "startTime:" + Date.parse("2026-09-14T01:30:00.000Z") + "}]};" +
     src.slice(src.indexOf("var TEAM_ALIASES = {"), src.indexOf("function simTeams(")) +
-    grab("simTeams") + grab("evStart") + grab("sameSlot") + grab("feedMatch") +
+    grab("simTeams") + grab("evStart") + grab("sameSlot") + grab("srOf") + grab("feedMatch") +
     "\nreturn {feedMatch:feedMatch};")();
   const to = { key: "bet9ja", id: "b9EventId" };
   const leg = { home: "Austin FC II", away: "Colorado Rapids 2",
@@ -508,7 +508,7 @@ test("a swap keeps the game and widens the outcome, never the reverse", () => {
     "function curBook(){return {key:'sporty',full:true,odds:'sportyOdds',id:'eventId'};}" +
     src.slice(src.indexOf("var TEAM_ALIASES = {"), src.indexOf("function simTeams(")) +
     grab("simTeams") + grab("evStart") + grab("sameSlot") + grab("fixtureByBookId") +
-    grab("fixtureByLeg") + grab("mProb") + grab("bookAllows") + grab("legChance") +
+    grab("srOf") + grab("fixtureByLeg") + grab("mProb") + grab("bookAllows") + grab("legChance") +
     /* The editor asks the shared verdict before it swaps a leg onto a market -
        see bookVerdict. Lifted rather than stubbed, so this test exercises the
        real rule. */

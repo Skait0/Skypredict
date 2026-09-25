@@ -50,7 +50,7 @@ function grab(name) {
 
 const NAMES = ["TEAM_ALIASES", "MATCH_WINDOW_MS", "normTeam", "normTeamRaw",
                "tokset", "teamMarkers", "sameVariant", "containsWords",
-               "simTeams", "evStart", "sameSlot", "feedMatch"];
+               "simTeams", "evStart", "sameSlot", "srOf", "feedMatch"];
 
 /* feedMatch reads the page's FEED table; the harness supplies it. */
 const build = (feed) => new Function("FEED",

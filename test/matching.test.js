@@ -194,3 +194,22 @@ test("that alias does not swallow the other Atleticos", () => {
       `Atletico Rosario must not match ${other}`);
   }
 });
+
+test("a Bet9ja event pairs by Sportradar id even when the names never would", () => {
+  /* 25 Sep 2026: Bet9ja's EXTID is SportyBet's sr:match number. Names that
+     score nothing against each other still pair on the id - and only inside
+     the kickoff fence, and only when the SportyBet id is on the fixture. */
+  const { DATA, api: a } = makeApi(ONE());
+  a.attachEventIds([{ eventId: "sr:match:72202662", homeTeam: "Broendby IF",
+    awayTeam: "Silkeborg IF", startTime: TS, odds: {} }], a.BOOKS.sporty);
+  a.attachEventIds([{ eventId: 838256035, srId: "72202662", homeTeam: "Zzz Qqq",
+    awayTeam: "Www Vvv", startTime: TS, odds: { "1": 2.4 } }], a.BOOKS.bet9ja);
+  assert.equal(DATA.fixtures[0].b9EventId, 838256035);
+
+  const { DATA: D2, api: a2 } = makeApi(ONE());
+  a2.attachEventIds([{ eventId: "sr:match:72202662", homeTeam: "Broendby IF",
+    awayTeam: "Silkeborg IF", startTime: TS, odds: {} }], a2.BOOKS.sporty);
+  a2.attachEventIds([{ eventId: 838256035, srId: "72202662", homeTeam: "Zzz Qqq",
+    awayTeam: "Www Vvv", startTime: TS + 7 * 864e5, odds: {} }], a2.BOOKS.bet9ja);
+  assert.equal(D2.fixtures[0].b9EventId, undefined, "a week out is not this game, whatever the id says");
+});
