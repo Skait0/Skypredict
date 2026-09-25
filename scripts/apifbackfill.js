@@ -120,6 +120,22 @@ const LEAGUES = {
   268: "Uruguay Primera Division",
   270: "Uruguay Primera Division",
   265: "Chile Primera Division",
+  /* The third wave (25 Sep, paid month) - see HARVEST_EXTRA. Paraguay splits
+     like Uruguay. Ykkosliiga is the second tier only from 2024; the older
+     Ykkonen (245) became the third, so it is not mapped here. */
+  242: "Ecuador LigaPro Primera A",
+  250: "Paraguay Division de Honor",
+  252: "Paraguay Division de Honor",
+  479: "Canada Canadian Premier League",
+  339: "Guatemala Liga Nacional",
+  99: "Japan J2 League",
+  358: "Ireland First Division",
+  1087: "Finland Ykkosliiga",
+  236: "Russia 1. Liga",
+  887: "Egypt 2. Division A",
+  75: "Brazil Brasileiro Serie C",
+  131: "Argentina Primera B",
+  122: "Denmark 2nd Division",
 };
 
 /* --plan asks nothing: it counts what a run would spend from what is already
