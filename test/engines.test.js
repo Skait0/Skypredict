@@ -58,7 +58,7 @@ function konst(name) {
   return "const " + name + "=" + m[1].trim() + ";";
 }
 
-const FNS = ["cornersK", "cornersOver", "cornersOpen", "countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmerican",
+const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmerican",
   "saWeight", "isLowerLeague", "isLowerFixture", "fid", "oddOf", "legOdd",
   /* ONE FUNCTION ANSWERS "will this book take this leg" - see bookVerdict in
      index.html. Lifted, not stubbed: stubbing it is how three copies of the
@@ -87,11 +87,18 @@ const FNS = ["cornersK", "cornersOver", "cornersOpen", "countryOf", "isSAleague"
 const api = new Function([
   "var TOP_ONLY=false;",
   "var FIXTURES=[];",
+  /* null reads exactly like absent to every function that looks at it
+     (they all ask typeof DATA and then DATA); a test sets cornersK through it. */
+  "var DATA=null;",
+  /* cornersOpen asks which field holds SportyBet's prices, and nothing else
+     lifted here reads BOOKS. Without it every corners leg was closed and no
+     test could build one (found 25 Sep 2026, adding Team corners). */
+  "var BOOKS={sporty:{key:'sporty',odds:'sportyOdds',id:'eventId'}};",
   "function scopeFixtures(){return FIXTURES;}",
   /* No saved slips in this harness, so nothing is already exposed; the
      spread penalty is exercised on its own in spread.test.js. */
   "function slipUse(){return {};}",
-  konst("SAFE_UNPRICED"), konst("BOOK_ONLY"), konst("CORNER_CODES"), konst("SHOTS_CODES"),
+  konst("SAFE_UNPRICED"), konst("BOOK_ONLY"), konst("CORNER_CODES"), konst("TEAM_CORNER_CODES"), konst("SHOTS_CODES"), konst("ESTIMATE_SHRINK"),
   "function curBook(){return {key:'sporty',label:'SportyBet',full:true,odds:'sportyOdds',id:'eventId'};}",
   konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
   konst("HIGH_SCORING_O25"), konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
@@ -104,6 +111,7 @@ const api = new Function([
            wspStyleOn,
            JACKPOT_ODDS, JACKPOT_LEG_CAP,
            setFixtures(f){ FIXTURES = f; },
+           setData(d){ DATA = d; },
            setTopOnly(v){ TOP_ONLY = v; } };
 `)();
 
@@ -621,4 +629,47 @@ test("building a Wizard slip leaves the Slider's own dial alone", () => {
   });
   assert.strictEqual(after, before,
     "the Wizard moved the Slider's state. before=" + before + " after=" + after);
+});
+
+
+/* ---------------------------------------------------- team corners (25 Sep) */
+
+test("Team corners: off by default, built by both engines when on, only where SportyBet quotes the line", () => {
+  reset();
+  /* Two Bundesliga-shaped fixtures carrying per-side corners and SportyBet's
+     prices. The second quotes no team corners at all - closed, as most are
+     more than four days out - and must never get one. */
+  const open = Object.assign({}, api.setFixtures && BOARD[1], { ch: 7.2, ca: 5.1 });
+  const shut = Object.assign({}, BOARD[2], { ch: 7.0, ca: 5.0 });
+  const withOdds = (f, extra) => { const x = priced(f); x.sportyOdds = Object.assign({}, x.sportyOdds, extra); return x; };
+  api.setData({ cornersK: 52 });
+  api.setFixtures([
+    withOdds(open, { "CORNERS_H_OV_3.5": 1.12, "CORNERS_H_OV_4.5": 1.3, "CORNERS_H_OV_5.5": 1.55,
+                     "CORNERS_A_OV_3.5": 1.32, "CORNERS_A_OV_4.5": 1.62 }),
+    withOdds(shut, {}),
+  ].concat(BOARD.slice(3).map(priced)));
+  const team = (picks) => picks.filter((c) => /^CORNERS_[HA]_/.test(c.code));
+
+  assert.strictEqual(api.BUILD.mk.tcorn, undefined, "reset() leaves it unset - which must still mean off");
+  /* Every other market off too: otherwise a broken gate hides behind the
+     markets that outscore team corners, and "off" passes by luck. */
+  for (const k of Object.keys(api.BUILD.mk)) api.BUILD.mk[k] = false;
+  assert.strictEqual(team(api.buildPicks()).length, 0, "the slider never builds team corners unasked");
+  api.WSP.slider = false;
+  assert.strictEqual(team(api.wspBuild().picks || []).length, 0, "nor does the wizard");
+
+  /* Only Team corners on, so the test asks whether the chip WORKS, not
+     whether it beats every other market on the day. */
+  for (const k of Object.keys(api.BUILD.mk)) api.BUILD.mk[k] = false;
+  api.BUILD.mk.tcorn = true;
+  api.WSP.mk.tcorn = true;
+  const slider = team(api.buildPicks());
+  assert.ok(slider.length >= 1, "switched on, the slider picks a team corners leg");
+  const wiz = team(api.wspMarkets().map((c) => ({ code: c })));
+  assert.ok(wiz.length === 6, "the wizard offers all six lines, got " + wiz.length);
+  for (const c of slider) {
+    assert.ok(/^CORNERS_(H_OV_(3|4|5)|A_OV_(2|3|4))\.5$/.test(c.code), "only the chip's own lines: " + c.code);
+    assert.notStrictEqual(c.f.home, shut.home, "never on a fixture where SportyBet quotes no team corners");
+  }
+  api.setData(null);
 });

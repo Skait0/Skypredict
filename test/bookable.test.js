@@ -74,7 +74,7 @@ function engine(fixtures) {
     /* No saved slips in these harnesses, so nothing is already exposed;
        the spread penalty is exercised on its own in spread.test.js. */
     "function slipUse(){return {};}",
-    konst("SAFE_UNPRICED"), konst("BOOK_ONLY"), konst("CORNER_CODES"), konst("SHOTS_CODES"),
+    konst("SAFE_UNPRICED"), konst("BOOK_ONLY"), konst("CORNER_CODES"), konst("TEAM_CORNER_CODES"), konst("SHOTS_CODES"),
     /* The harness books at SportyBet, like the default visit. */
     /* full: the cache for this book IS its whole book, which is what makes a
        missing price meaningful. odds: where that cache lives on a fixture. */

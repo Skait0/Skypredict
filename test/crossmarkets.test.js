@@ -670,6 +670,7 @@ test("the combinations sit at the tier their record earned", () => {
      actually returns. */
   const allowed = new Function(
     (src.match(/var CORNER_CODES=\[[^\]]*\];/) || [""])[0] +
+    (src.match(/var TEAM_CORNER_CODES=\[[^\]]*\];/) || [""])[0] +
     (src.match(/var SHOTS_CODES=\[[^\]]*\];/) || [""])[0] +
     grab("allowedMarkets") + String.fromCharCode(10) +
     "return allowedMarkets;")();

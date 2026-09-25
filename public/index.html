@@ -9942,7 +9942,7 @@ var BUILD_NOSYNC=false;
    last market switched on before it had one took over the wizard's picks for a
    week. They begin earning a record the moment the next card is graded; until
    then they are there for anyone who goes looking. */
-var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,corn:false,shots:false},touched:false,mode:"slider"};
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,corn:false,tcorn:false,shots:false},touched:false,mode:"slider"};
 /* NO `draw` KEY HERE, deliberately. The draw is a Wizard market and lives in
    WSP.mk alone. It was briefly mirrored into BUILD.mk like every other toggle,
    which was inert - "X" is in neither allowedMarkets nor mkOn, so no risk
@@ -12086,6 +12086,7 @@ function allowedMarkets(t){
      corners), what clears Safe's 75%: Over 7.5 on 83, Over 8.5 on 17, Over
      9.5 on one. Overs only - see CORNER_CODES. */
   m=m.concat(CORNER_CODES);
+  m=m.concat(TEAM_CORNER_CODES);
   m=m.concat(SHOTS_CODES);
   return m;
 }
@@ -12344,6 +12345,12 @@ function cLgamma(x){
    two: MQ29ZR, Liverpool v Tottenham, read back intact. So the chip had been
    sending BetKing readers to Bet9ja to book a bet BetKing was selling them. */
 var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking","betpawa"],
+  /* Corners per team (25 Sep 2026): Betpawa sells none, verified absent in
+     betpawa.py. BetKing sells one main line per side, not the ladder, and
+     refused the tested ones - see TEAM_CORNER_CODES. */
+  "CORNERS_H_OV_3.5":["sporty","bet9ja"],"CORNERS_H_OV_4.5":["sporty","bet9ja"],
+  "CORNERS_H_OV_5.5":["sporty","bet9ja"],"CORNERS_A_OV_2.5":["sporty","bet9ja"],
+  "CORNERS_A_OV_3.5":["sporty","bet9ja"],"CORNERS_A_OV_4.5":["sporty","bet9ja"],
   /* Total shots: SportyBet and Bet9ja sell it, BetKing and Betpawa do not. */
   "SHOTS_OV_19.5":["sporty","bet9ja"],"SHOTS_OV_20.5":["sporty","bet9ja"],"SHOTS_OV_21.5":["sporty","bet9ja"],"SHOTS_OV_22.5":["sporty","bet9ja"],"SHOTS_OV_23.5":["sporty","bet9ja"],"SHOTS_OV_24.5":["sporty","bet9ja"],"SHOTS_OV_25.5":["sporty","bet9ja"],"SHOTS_OV_26.5":["sporty","bet9ja"],"SHOTS_OV_27.5":["sporty","bet9ja"],"SHOTS_OV_28.5":["sporty","bet9ja"],"SHOTS_OV_29.5":["sporty","bet9ja"],"SHOTS_OV_30.5":["sporty","bet9ja"],"SHOTS_OV_31.5":["sporty","bet9ja"],
   /* The whole 1.5 rung of the 1X2-or-Over/Under family: draw, home and away.
@@ -12373,6 +12380,20 @@ var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking","betpawa"],
    the corners fit runs about two points LOW on the over side, so an over it
    prices is conservative and an under is not. Same rule as total shots. */
 var CORNER_CODES=["CORNERS_OV_7.5","CORNERS_OV_8.5","CORNERS_OV_9.5","CORNERS_OV_10.5"];
+/* CORNERS PER TEAM, AS A CHIP (25 Sep 2026). SportyBet 900300/900301, Bet9ja
+   S_CORNERSHOMEOU/S_CORNERSAWAYOU. NOT BetKing, though it maps 10332/10333:
+   its card carries one main line per side (San Jose home 5.5 only, 25 Sep),
+   not the ladder, so a line chosen off SportyBet's ladder was refused there
+   ("not_priced", tested). Betpawa sells none.
+   They stay open where the match total has closed - English League 1 and 2,
+   the Scottish Championship - so on one measured board 34 of 59 corner-priced
+   games had these against 19 with the total. Priced by mProb off ch/ca alone,
+   the numbers the total is built from. Overs only, for the corners reason
+   above. The lines are the ones people back: a side's corners sit around 3 to
+   7, so 3.5-5.5 at home and 2.5-4.5 away. cornersOpen gates each line on
+   SportyBet quoting it; Bet9ja booked the same lines (5SSF27D, tested). */
+var TEAM_CORNER_CODES=["CORNERS_H_OV_3.5","CORNERS_H_OV_4.5","CORNERS_H_OV_5.5",
+  "CORNERS_A_OV_2.5","CORNERS_A_OV_3.5","CORNERS_A_OV_4.5"];
 /* TOTAL SHOTS, AS A CHIP. SportyBet market 900394 and Bet9ja S_OUSHOTS, the
    same over/under shape as corners, on lines that move with the game -
    Kosovo v Ireland centred near 21.5, Portugal v Wales near 27.5 - so every
@@ -12844,6 +12865,8 @@ function buildPicks(){
   /* Every corners line behind the one chip. Set explicitly: a code missing
      from this map reads as undefined, which the filter below lets through. */
   CORNER_CODES.forEach(function(c){ mkOn[c]=BUILD.mk.corn; });
+  /* === true, not the bare value: an undefined here would read as "on". */
+  TEAM_CORNER_CODES.forEach(function(c){ mkOn[c]=BUILD.mk.tcorn===true; });
   SHOTS_CODES.forEach(function(c){ mkOn[c]=BUILD.mk.shots; });
   allowed=allowed.filter(function(c){return mkOn[c]!==false && bookAllows(c,curBook());});
   var f0=BUILD.risk/100;
@@ -15572,6 +15595,7 @@ var LINK_MARKETS={"1":1,"2":1,"X":1,"1X":1,"X2":1,"12":1,
   "MIX_1_OV_2.5":1,"MIX_2_OV_2.5":1,"MIX_X_OV_2.5":1,
   "MIXGG_1":1,"MIXGG_2":1,"MIXGG_X":1,"WINHALF_H_Y":1,"WINHALF_A_Y":1,
   "CORNERS_OV_7.5":1,"CORNERS_UN_7.5":1,"CORNERS_OV_8.5":1,"CORNERS_UN_8.5":1,"CORNERS_OV_9.5":1,"CORNERS_UN_9.5":1,"CORNERS_OV_10.5":1,"CORNERS_UN_10.5":1,
+  "CORNERS_H_OV_3.5":1,"CORNERS_H_OV_4.5":1,"CORNERS_H_OV_5.5":1,"CORNERS_A_OV_2.5":1,"CORNERS_A_OV_3.5":1,"CORNERS_A_OV_4.5":1,
   "SHOTS_OV_19.5":1,"SHOTS_OV_20.5":1,"SHOTS_OV_21.5":1,"SHOTS_OV_22.5":1,"SHOTS_OV_23.5":1,"SHOTS_OV_24.5":1,"SHOTS_OV_25.5":1,"SHOTS_OV_26.5":1,"SHOTS_OV_27.5":1,"SHOTS_OV_28.5":1,"SHOTS_OV_29.5":1,"SHOTS_OV_30.5":1,"SHOTS_OV_31.5":1};
 function slipPayload(items){
   var rows=[], bad=false;
@@ -18257,7 +18281,7 @@ const JACKPOT_ODDS=20000;
 const BETSLIP_MAX=50;
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
-var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,shots:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,tcorn:false,shots:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* THE MARKET CHIPS ARE REMEMBERED. They never were: every load rebuilt both
    sets from the literals above, so a reader who switched Over 1.5 off and
    Both score on found Win or draw, Outright win, Over 1.5 and Team over 0.5
@@ -18359,6 +18383,7 @@ function wspMarkets(){var m=[];
   if(WSP.mk.rso25)m=m.concat(["MIX_1_OV_2.5","MIX_2_OV_2.5"]);
   if(WSP.mk.weh)m=m.concat(["WINHALF_H_Y","WINHALF_A_Y"]);
   if(WSP.mk.corn)m=m.concat(CORNER_CODES);
+  if(WSP.mk.tcorn)m=m.concat(TEAM_CORNER_CODES);
   if(WSP.mk.shots)m=m.concat(SHOTS_CODES);
   /* Bet9ja's own lines. bookAllows keeps them out of a SportyBet slip, and the
      filter below is what stops the wizard building one it cannot book. */
@@ -19075,6 +19100,7 @@ var MKT_CODES={wd:["1X","X2"],any:["12"],out:["1","2"],o15:["OVER_1.5"],
   o25:["OVER_2.5"],o35:["OVER_3.5"],fh:["FH_OVER_0.5"],
   tts:["HOME_OVER_0.5","AWAY_OVER_0.5"],tts2:["HOME_OVER_1.5","AWAY_OVER_1.5"],
   both:["GG"],draw:["X"],corn:["CORNERS_OV_7.5","CORNERS_OV_8.5","CORNERS_OV_9.5","CORNERS_OV_10.5"],
+  tcorn:["CORNERS_H_OV_3.5","CORNERS_H_OV_4.5","CORNERS_H_OV_5.5","CORNERS_A_OV_2.5","CORNERS_A_OV_3.5","CORNERS_A_OV_4.5"],
   shots:["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"]};
 
 /* A MARKET YOU SWITCHED ON THAT CHANGED NOTHING LOOKS BROKEN.
@@ -19312,6 +19338,7 @@ var MKT_BY_CHIP={wd:["1X","X2"],any:["12"],out:["1","2"],
   rso25:["MIX_1_OV_2.5","MIX_2_OV_2.5"],dro15:["MIX_X_OV_1.5"],
   rso15:["MIX_1_OV_1.5","MIX_2_OV_1.5"],weh:["WINHALF_H_Y","WINHALF_A_Y"],
   draw:["X"],corn:["CORNERS_OV_7.5","CORNERS_OV_8.5","CORNERS_OV_9.5","CORNERS_OV_10.5"],
+  tcorn:["CORNERS_H_OV_3.5","CORNERS_H_OV_4.5","CORNERS_H_OV_5.5","CORNERS_A_OV_2.5","CORNERS_A_OV_3.5","CORNERS_A_OV_4.5"],
   shots:["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"]};
 
 /* WHY THE SLIP IS EMPTY, NAMED.
@@ -19514,6 +19541,10 @@ function renderShared(){
     {k:"weh", label:"Win a half", tier:0, sub:"Either half", icon:'<path d="M12 4v16"/><path d="M5 8h4"/><path d="M15 16h4"/>'},
     /* Corners, total for the match - see CORNER_CODES. */
     {k:"corn", label:"Corners", tier:0, sub:"Over 7.5-10.5", icon:'<path d="M6 21V3"/><path d="M6 4l11 3-11 4"/>'},
+    /* Corners per team - see TEAM_CORNER_CODES. SportyBet and Bet9ja only, so
+       the chip narrows the book the way Total shots does. */
+    {k:"tcorn", label:"Team corners", tier:0, sub:"Home or away, over", only:["sporty","bet9ja"],
+     icon:'<path d="M6 21V3"/><path d="M6 4l11 3-11 4"/><path d="M15 15h5M15 19h5"/>'},
     /* Total shots - see SHOTS_CODES. Narrows the book like dro15 does, and
        says so before it turns on. */
     {k:"shots", label:"Total shots", tier:0, sub:"Over, whole match", only:["sporty","bet9ja"],
