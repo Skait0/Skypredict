@@ -43,7 +43,14 @@ const zlib = require("zlib");
 const ROOT = path.join(__dirname, "..");
 const DIR = path.join(ROOT, "data", "results");
 const CACHE = path.join(ROOT, "tmp", "apif");
-const OUT = path.join(DIR, "live_apif.csv.gz");
+/* --overlay: corners and shots for leagues whose GOALS already come from
+   football-data's extra files, which carry no statistics. Written to its own
+   file, which the build reads only to attach statistics to matches it already
+   has (applyStatsOverlay in lib/build.js) - never as results, because the two
+   feeds date a late kick-off differently and the same game would be fitted
+   twice. Not a live_ file, so loadLiveMatches never sees it. */
+const OVERLAY = process.argv.includes("--overlay");
+const OUT = path.join(DIR, OVERLAY ? "stats_apif.csv.gz" : "live_apif.csv.gz");
 const HOST = "https://v3.football.api-sports.io";
 /* Ten a minute on the free plan; six seconds plus the response time keeps us
    under it without needing a token bucket. */
@@ -64,6 +71,15 @@ function arg(name, dflt) {
    not fall out of a name match (Iceland is Úrvalsdeild, Azerbaijan is Premyer
    Liqa, Bosnia's country is "Bosnia", and Georgia lists Erovnuli Liga 2 ahead
    of Erovnuli Liga), which is exactly why this is a table and not a search. */
+/* The football-data extra top flights - lib/build.js EXTRA, under our names. */
+const OVERLAY_LEAGUES = {
+  128: "Argentina Liga Profesional", 218: "Austria Bundesliga", 71: "Brazil Serie A",
+  169: "China Super League", 119: "Denmark Superliga", 244: "Finland Veikkausliiga",
+  357: "Ireland Premier Division", 98: "Japan J1 League", 262: "Mexico Liga MX",
+  103: "Norway Eliteserien", 106: "Poland Ekstraklasa", 283: "Romania Superliga",
+  235: "Russia Premier League", 113: "Sweden Allsvenskan", 207: "Switzerland Super League",
+  253: "USA MLS",
+};
 const LEAGUES = {
   345: "Czechia Chance Liga",
   210: "Croatia HNL",
@@ -290,12 +306,25 @@ function rowsOf(body, league, stats) {
   const seasons = String(arg("seasons", "2023,2024,2025,2026"))
     .split(",").map((s) => Number(s.trim())).filter((n) => n >= 2015 && n <= 2030);
   const only = String(arg("only", "")).toLowerCase();
-  const ids = Object.keys(LEAGUES)
-    .filter((id) => !only || LEAGUES[id].toLowerCase().includes(only));
+  const TABLE = OVERLAY ? OVERLAY_LEAGUES : LEAGUES;
+  const ids = Object.keys(TABLE)
+    .filter((id) => !only || TABLE[id].toLowerCase().includes(only));
   if (!ids.length) throw new Error("--only matched no league");
 
-  const floor = B.loadFloorMatches();
+  let floor = B.loadFloorMatches();
   if (floor.length < 400) throw new Error("the committed floor is too thin to resolve against");
+  /* The overlay's leagues are football-data's extra files, which the build
+     downloads every time and the floor does not hold - resolved against the
+     floor alone, Liga MX matched nothing. Read them the way the build does, so
+     a club's name here is the name the build will look it up by. */
+  if (OVERLAY) {
+    const cfg = Object.assign({}, B.DEFAULTS, { main: {}, seasons: [], extra: B.EXTRA });
+    for (const src of B.buildSourceList(cfg).filter((s) => s.kind === "extra")) {
+      const r = await B.fetchText(src.url, cfg.fetchTimeoutMs);
+      if (r.error) { console.log(`extra file ${src.url}: ${r.error}`); continue; }
+      floor = floor.concat(B.rowsToMatches(r.text, src, cfg));
+    }
+  }
   const index = M.buildIndex(floor);
   const allowed = new Set([].concat(
     Object.values(B.MAIN),
@@ -313,13 +342,13 @@ function rowsOf(body, league, stats) {
     for (const yr of seasons) {
       let got;
       try { got = await season(id, yr, k); }
-      catch (e) { console.log(`${LEAGUES[id]} ${yr}: ${e.message}`); continue; }
+      catch (e) { console.log(`${TABLE[id]} ${yr}: ${e.message}`); continue; }
       if (!got.cached) {
         if (PLAN) { uncached++; continue; }
         asked++;
         await new Promise((r2) => setTimeout(r2, GAP));
       }
-      bodies.push([LEAGUES[id], yr, got.body, got.cached]);
+      bodies.push([TABLE[id], yr, got.body, got.cached]);
     }
   }
 
@@ -353,7 +382,7 @@ function rowsOf(body, league, stats) {
       let res = 0;
       for (const date of Object.keys(byDate).sort()) {
         const out = L.resolve(byDate[date], index, allowed, date, boot);
-        kept = kept.concat(out.matches);
+        kept = kept.concat(OVERLAY ? out.matches.filter((m) => m.hc != null || m.hs != null) : out.matches);
         res += out.matches.length;
         per[league].club += out.dropped.club;
       }

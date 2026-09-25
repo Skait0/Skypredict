@@ -26,9 +26,13 @@ const B = require("../lib/build.js");
 const L = require("../lib/liveresults.js");
 
 const apif = (() => {
-  const src = fs.readFileSync(path.join(__dirname, "..", "scripts", "apifbackfill.js"), "utf8");
+  const all = fs.readFileSync(path.join(__dirname, "..", "scripts", "apifbackfill.js"), "utf8");
+  /* LEAGUES only: OVERLAY_LEAGUES are rated leagues whose statistics are
+     overlaid, not harvested, and are not meant to be in HARVEST_EXTRA. */
+  const at = all.indexOf("const LEAGUES = {");
+  const src = all.slice(at, all.indexOf("};", at));
   const out = {};
-  for (const m of src.matchAll(/^\s*(\d+):\s*"([^"]+)",$/gm)) out[m[1]] = m[2];
+  for (const m of src.matchAll(/^\s*(\d+):\s*"([^"]+)",\r?$/gm)) out[m[1]] = m[2];
   return out;
 })();
 

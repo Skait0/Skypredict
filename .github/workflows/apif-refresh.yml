@@ -1,0 +1,63 @@
+# Refresh the current season from API-Football while the paid plan runs.
+#
+# The paid month (25 Sep - 24 Oct 2026) serves the 2026 season; the free plan
+# does not (it stops at 2024), so after the plan ends every request would be
+# refused. The date guard below stops the job then rather than letting it
+# spend a week of refusals. Renew the plan and move the date to keep it going.
+#
+# About 630 requests a run: 81 league-seasons plus statistics for the season's
+# finished fixtures, twenty a request. There is no tmp/apif cache on a runner,
+# so each run asks afresh - which is what a current season needs. The script
+# stops at 15 left on the day, below the build oracle's own floor.
+name: Refresh the current season from API-Football
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"   # Mondays 04:17 UTC, after the weekend's games
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Only while the paid plan runs
+        id: plan
+        run: |
+          if [ "$(date -u +%Y%m%d)" -gt 20261024 ]; then
+            echo "the paid API-Football plan ended 24 Oct 2026 - nothing to refresh"
+            echo "live=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "live=1" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.plan.outputs.live == '1'
+      - uses: actions/setup-node@v4
+        if: steps.plan.outputs.live == '1'
+        with:
+          node-version: "20"
+      - name: Harvested leagues, with statistics
+        if: steps.plan.outputs.live == '1'
+        env:
+          APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
+        run: node scripts/apifbackfill.js --seasons=2026 --stats --gap=300
+      - name: Statistics overlay for the extra top flights
+        if: steps.plan.outputs.live == '1'
+        env:
+          APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
+        run: node scripts/apifbackfill.js --overlay --seasons=2026 --stats --gap=300
+      - name: Commit, if anything changed
+        if: steps.plan.outputs.live == '1'
+        run: |
+          if git diff --quiet -- data/results; then
+            echo "nothing new"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/results
+          git commit -m "Refresh the current season from API-Football"
+          git push

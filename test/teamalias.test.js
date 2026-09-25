@@ -32,6 +32,9 @@ function index() {
   let matches = [];
   for (const f of fs.readdirSync(DIR)) {
     if (!f.endsWith(".gz")) continue;
+    /* stats_*.gz is an overlay of corners and shots, never results - the
+       build does not index it (lib/build.js applyStatsOverlay) and nor may we. */
+    if (f.startsWith("stats_")) continue;
     const text = zlib.gunzipSync(fs.readFileSync(path.join(DIR, f))).toString("utf8");
     const n = M.normalise(M.parseCSV(text));
     if (n && n.matches) matches = matches.concat(n.matches);
