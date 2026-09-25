@@ -9,6 +9,10 @@ on:
         description: "Text to post and pin (leave empty to send due posts)"
         required: false
         default: ""
+      keep_pin:
+        description: "With pin_text: pin beside the current pin instead of replacing it"
+        type: boolean
+        default: false
       set_webhook:
         description: "Point the bot at /api/tg (code doctor)"
         type: boolean
@@ -41,6 +45,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TG_PIN_TEXT: ${{ inputs.pin_text }}
+          TG_KEEP_PIN: ${{ inputs.keep_pin && '1' || '0' }}
         run: node scripts/tgpin.js
       - name: Announce
         if: ${{ inputs.post_text != '' }}

@@ -41,6 +41,9 @@ async function tg(method, body) {
   const old = chatInfo.pinned_message && chatInfo.pinned_message.message_id;
   const msg = await tg("sendMessage", { chat_id: chat, text: withBot(text), disable_web_page_preview: true });
   await tg("pinChatMessage", { chat_id: chat, message_id: msg.message_id, disable_notification: true });
-  if (old) await tg("unpinChatMessage", { chat_id: chat, message_id: old });
-  console.log("pinned message " + msg.message_id + (old ? ", unpinned " + old : ""));
+  /* TG_KEEP_PIN=1 pins beside the current pin (a channel can hold several)
+     rather than in its place - how the bot post joined the owner's welcome. */
+  const drop = old && process.env.TG_KEEP_PIN !== "1";
+  if (drop) await tg("unpinChatMessage", { chat_id: chat, message_id: old });
+  console.log("pinned message " + msg.message_id + (drop ? ", unpinned " + old : old ? ", kept " + old + " pinned" : ""));
 })().catch((e) => { console.log("pin failed: " + e.message); process.exit(1); });
