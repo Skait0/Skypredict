@@ -584,10 +584,7 @@ test("refusing one of two identical legs leaves the other", () => {
   /* The server names a leg by event and market, and two identical legs share
      both - so a set-membership test killed the duplicate AND the leg it
      duplicated, leaving nothing to retry and the reader a flat refusal. */
-  const harness = new Function(
-    prelude("betpawa") +
-    "function fixtureById(){ return null; }\n" +
-    fn("dropUnbookable") + "\nreturn dropUnbookable;")();
+  const harness = dropHarness();
   const picks = [
     { id: "a", code: "1X", f: { bpEventId: "11" } },
     { id: "b", code: "1X", f: { bpEventId: "11" } },
@@ -601,6 +598,39 @@ test("refusing one of two identical legs leaves the other", () => {
      event - so this asserts the count and the untouched leg, not an order. */
   assert.ok(kept.includes(picks[2]), "the innocent leg was dropped");
   assert.strictEqual(kept.filter((p) => p.f.bpEventId === "11").length, 1);
+});
+
+/* dropUnbookable with what it now calls: the reason lookup and a stub label. */
+function dropHarness() {
+  return new Function(
+    prelude("betpawa") +
+    "function fixtureById(){ return null; }\n" +
+    "function mLabel(f,c){ return c === 'SHOTS_OV_27.5' ? 'Over 27.5 shots' : null; }\n" +
+    "var REFUSAL_WHY={};\n" + fn("refusalWhy") + "\n" + fn("whyOf") + "\n" +
+    fn("dropUnbookable") + "\nreturn Object.assign(dropUnbookable, {whyOf: whyOf});")();
+}
+
+test("a refused leg carries SportyBet's reason into the list the reader sees", () => {
+  /* "Can't take 2 of these" over bare team names read as our fault. The API
+     now reads their live card (_live_verdicts) and says why: kicked off,
+     market closed, or the line moved - and to what. 25 Sep 2026. */
+  const drop = dropHarness();
+  const picks = [
+    { id: "a", code: "SHOTS_OV_25.5", f: { bpEventId: "11" } },
+    { id: "b", code: "OVER_2.5", f: { bpEventId: "22" } },
+    { id: "c", code: "GG", f: { bpEventId: "33" } },
+    { id: "d", code: "1X", f: { bpEventId: "44" } },
+  ];
+  const kept = drop(picks, { unbookable: [
+    { eventId: "11", prediction: "SHOTS_OV_25.5", reason: "line_moved", now: "SHOTS_OV_27.5" },
+    { eventId: "22", prediction: "OVER_2.5", reason: "started" },
+    { eventId: "33", prediction: "GG", reason: "closed" },
+  ] }, { key: "betpawa", id: "bpEventId", odds: "bpOdds" });
+  assert.deepStrictEqual(kept, [picks[3]]);
+  assert.strictEqual(drop.whyOf(picks[0]), " (line moved, now Over 27.5 shots)");
+  assert.strictEqual(drop.whyOf(picks[1]), " (kicked off)");
+  assert.strictEqual(drop.whyOf(picks[2]), " (market closed)");
+  assert.strictEqual(drop.whyOf(picks[3]), "", "a leg that booked has no reason");
 });
 
 test("every 'build me a slip' promise names the reader's own book", () => {

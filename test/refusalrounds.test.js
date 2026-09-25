@@ -20,6 +20,8 @@ const BOOKS = require("./books.js");
 const { src, fn } = BOOKS;
 
 const ROUNDS = +src.match(/var REFUSAL_ROUNDS=(\d+);/)[1];
+/* What dropUnbookable and the name lists call to say why a leg was refused. */
+const WHY = () => "var REFUSAL_WHY={};\n" + fn("refusalWhy") + "\n" + fn("whyOf") + "\n";
 
 /* `answer(sel)` plays the bookmaker: return a response body for the legs sent. */
 function harness(answer) {
@@ -43,7 +45,7 @@ function harness(answer) {
   const names = Object.keys(stubs);
   const body =
     "function fixtureById(){return null;}\n" + BOOKS.prelude("sporty") +
-    "\nvar REFUSAL_ROUNDS=" + ROUNDS + ";\n" + fn("dropUnbookable") + "\n" + fn("doBook") +
+    "\nvar REFUSAL_ROUNDS=" + ROUNDS + ";\n" + WHY() + fn("dropUnbookable") + "\n" + fn("doBook") +
     "\nreturn doBook;";
   const doBook = new Function(...names, body)(...names.map((k) => stubs[k]));
   return { doBook, log, done };
@@ -139,7 +141,7 @@ test("My slip narrows the same way, and the slip itself follows each round", asy
     BOOKS.prelude("sporty") +
     "\nvar REFUSAL_ROUNDS=" + ROUNDS + ";var MYBOOK_GEN=0;" +
     "var MYSLIP=PICKS.map(function(c){return {id:c.id,code:c.code,via:'slider'};});\n" +
-    fn("dropUnbookable") + "\n" + fn("doBookMy") +
+    WHY() + fn("dropUnbookable") + "\n" + fn("doBookMy") +
     "\nreturn {go:doBookMy, slip:function(){return MYSLIP;}};";
   const api = new Function(...names, body)(...names.map((k) => stubs[k]), picks);
   api.go(picks);
@@ -170,7 +172,7 @@ test("the converter and the board share the loop: betPawa refuses one of 16, the
   };
   const names = Object.keys(stubs);
   const body = "function fixtureById(){return null;}\n" + BOOKS.prelude("sporty") +
-    "\nvar REFUSAL_ROUNDS=" + ROUNDS + ";\n" + fn("dropUnbookable") + "\n" + fn("bookRounds") +
+    "\nvar REFUSAL_ROUNDS=" + ROUNDS + ";\n" + WHY() + fn("dropUnbookable") + "\n" + fn("bookRounds") +
     "\nreturn function(p,src,t,h){ return bookRounds(p,BOOKS.sporty,src,t,h); };";
   const bookRounds = new Function(...names, body)(...names.map((k) => stubs[k]));
   bookRounds(picks, "convert", "byoConvOut", {

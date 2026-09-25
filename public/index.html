@@ -10611,6 +10611,26 @@ function bookErrHTML(d,B){
    at least one leg (the callers test safe.length<picks.length), so this cannot
    loop; the cap only bounds how many questions one tap can raise. */
 var REFUSAL_ROUNDS=4;
+/* WHY EACH REFUSED LEG WAS REFUSED, read off SportyBet's live card by the API
+   (_live_verdicts, 25 Sep 2026): the game kicked off, the market closed, or
+   the line moved - corners and shots are re-lined as the price moves and the
+   old line deleted. "Can't take 2 of these" over bare team names read as our
+   fault; the reason says it is theirs, and a moved line says what to pick
+   instead. Keyed like the callers' own lists, id|code. */
+var REFUSAL_WHY={};
+function refusalWhy(b,c){
+  if(b.reason==="started") return "kicked off";
+  if(b.reason==="closed") return "market closed";
+  if(b.reason==="line_moved"&&b.now){
+    var f=c.f||fixtureById(c.id);
+    return "line moved, now "+((f&&mLabel(f,b.now))||b.now);
+  }
+  return "";
+}
+function whyOf(c){
+  var w=REFUSAL_WHY[c.id+"|"+c.code];
+  return w?" ("+w+")":"";
+}
 function dropUnbookable(picks,d,B){
   B=B||curBook();
   var bad=(d&&d.unbookable)||[];
@@ -10622,13 +10642,15 @@ function dropUnbookable(picks,d,B){
        two identical legs share both - so a set-membership test killed the
        duplicate AND the leg it duplicated, leaving nothing to retry and the
        reader a flat refusal. Refusing one of a pair must leave the other. */
-    var kill={};
+    var kill={}, byKey={};
     bad.forEach(function(b){
-      var k=b.eventId+"|"+b.prediction; kill[k]=(kill[k]||0)+1; });
+      var k=b.eventId+"|"+b.prediction; kill[k]=(kill[k]||0)+1; byKey[k]=b; });
     var key=function(c){return bookIdOf(c,B)+"|"+c.code;};
     var kept=picks.filter(function(c){
       var k=key(c);
       if(!kill[k]) return true;
+      var w=refusalWhy(byKey[k],c);
+      if(w) REFUSAL_WHY[c.id+"|"+c.code]=w;
       kill[k]--; return false; });
     /* Our price for that market was wrong. Forget it rather than keep showing
        it - the pre-flight and the board both read this. */
@@ -13410,7 +13432,7 @@ function bookRounds(picks,B,src,target,h,round){
         var keep={}; safe.forEach(function(c){keep[c.id+"|"+c.code]=1;});
         var out=picks.filter(function(c){return !keep[c.id+"|"+c.code];})
           .map(function(c){var f=c.f||fixtureById(c.id);
-            return f?(f.home+" v "+f.away):"One pick";});
+            return (f?(f.home+" v "+f.away):"One pick")+whyOf(c);});
         confirmAfterRefusal(target,out,safe.length,B,function(){
           bookRounds(safe,B,src,target,h,round+1);});
         return;
@@ -13446,7 +13468,7 @@ function doBook(picks,retried,B){
           var _kept={}; safe.forEach(function(c){_kept[c.id+"|"+c.code]=1;});
           var _out=picks.filter(function(c){return !_kept[c.id+"|"+c.code];})
             .map(function(c){var f=c.f||fixtureById(c.id);
-              return f?(f.home+" v "+f.away):"One pick";});
+              return (f?(f.home+" v "+f.away):"One pick")+whyOf(c);});
           confirmAfterRefusal("bookResult",_out,safe.length,B,function(){
             doBook(safe,(retried||0)+1,B);});
         } else {
@@ -18107,7 +18129,7 @@ function doBookMy(bookable,retried,B){
              which game it means - the same complaint that put the team names
              into the booking pre-flight. */
           var _who=function(x){var f=fixtureById(x.id);
-            return f?(f.home+" v "+f.away+(x.label?" - "+x.label:"")):(x.label||"One pick");};
+            return (f?(f.home+" v "+f.away+(x.label?" - "+x.label:"")):(x.label||"One pick"))+whyOf(x);};
           confirmAfterRefusal("myBookResult",_dropped.map(_who),safe.length,B,function(){
             /* Only now. Taking the refused legs out of the slip itself, not
                just out of the request: left in, the code says three games
