@@ -60,6 +60,11 @@ const RESOLVES = [
      newest thing in it - which is the point of harvesting at all. Before it
      existed these two read as second-tier all season, because the floor
      stops at May 2026. */
+  /* Moved up from MUST_REFUSE on 25 Sep 2026, when Ecuador's LigaPro joined
+     the harvest: it resolves to itself, and never to Argentina's Independiente. */
+  ["CSD Independiente del Valle", "Independiente del Valle", "Ecuador LigaPro Primera A"],
+  /* Same day, same reason: Uruguay's 2025 season brought Central Espanol in. */
+  ["Central Espanol FC",      "Central Espanol", "Uruguay Primera Division"],
   ["Schalke",                 "Schalke 04",      "Germany Bundesliga 1"],
   ["SV 07 Elversberg",        "Elversberg",      "Germany Bundesliga 1"],
   ["Atletico Madrid",         "Ath Madrid",      "Spain La Liga 1"],
@@ -114,9 +119,7 @@ const MUST_REFUSE = [
   "CD Everton Vina del Mar",      /* Chile - not Everton */
   "Boca Juniors de Cali",         /* Colombia - not Boca Juniors */
   "Independiente Santa Fe",       /* Colombia - not Independiente */
-  "CSD Independiente del Valle",  /* Ecuador - not Independiente */
   "Club Nacional de Football",    /* Uruguay - not Nacional */
-  "Central Espanol FC",           /* Uruguay - not Espanyol */
   "Gremio Novorizontino SP",      /* not Gremio */
   "CA Huracan Las Heras",         /* Mendoza - not Huracan of Buenos Aires */
   "Club Leon",                    /* Mexico - fuzzy reaches Lyon */

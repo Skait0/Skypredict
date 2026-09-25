@@ -105,3 +105,15 @@ test("no unrated competition survives into the built payload", () => {
   }
   assert.deepStrictEqual(bad, [], bad.length + " unrated fixture(s) published");
 });
+
+test("women's leagues with no 'women' in the name, and Wales's second tier, are refused", () => {
+  /* Both were live on 25 Sep 2026, priced off senior men's clubs that share
+     the names: Brommapojkarna v Malmo FF, and a Swansea read as Swansea City. */
+  for (const l of ["Sweden Damallsvenskan", "Sweden Amateur Elitettan", "Denmark Kvindeliga",
+                   "Norway Toppserien", "Spain Liga F", "USA NWSL",
+                   "Wales Cymru Championship South", "Wales Cymru Championship North"]) {
+    assert.strictEqual(isUnratedCompetition(l), true, l);
+  }
+  assert.strictEqual(isUnratedCompetition("Sweden Allsvenskan"), false, "the men's top flight is untouched");
+  assert.strictEqual(isUnratedCompetition("Wales Cymru Premier"), false);
+});

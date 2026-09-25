@@ -74,3 +74,11 @@ test("the exemption does not open the guard it sits in", () => {
     assert.equal(M.isVariantSide(bad), true, `${bad} is being taken for a first team`);
   }
 });
+
+test("2 de Mayo and Newington Youth are first teams, and their youth sides are not", () => {
+  /* Found on the paid backfill, 25 Sep: each one's games were dropped whole -
+     22 a season in Paraguay, 38 in the NI Championship. */
+  assert.equal(M.isVariantSide("2 de Mayo"), false);
+  assert.equal(M.isVariantSide("Newington Youth"), false);
+  assert.equal(M.isVariantSide("Newington Youth U19"), true, "the exemption is the whole name, not a hole");
+});
