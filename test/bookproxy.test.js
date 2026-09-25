@@ -200,3 +200,31 @@ test("no test in this file reached the network", () => {
   assert.deepStrictEqual(fetchCalls, [],
     "a unit test called the live booking API: " + fetchCalls.join(", "));
 });
+
+/* ------------------------------------------------ ?check=lines (25 Sep 2026) */
+
+test("the line check books nothing and spends no quota", async () => {
+  let gated = 0, recorded = 0;
+  const h = P.makeHandler({ gate: async () => { gated++; return { allow: false, counted: true }; },
+                            record: async () => { recorded++; } });
+  const res = fakeRes();
+  const req = fakeReq({ selections: [{ eventId: "sr:match:1", prediction: "SHOTS_OV_25.5" }] });
+  req.query.check = "lines";
+  const before = fetchCalls.length;
+  await h(req, res);
+  assert.strictEqual(gated + recorded, 0, "a reader out of codes can still be told a line moved");
+  assert.ok(/\/api\/sporty\/live-check$/.test(fetchCalls[before]), "asks the live-check route, not the booking one");
+  assert.strictEqual(res.code, 200);
+  assert.deepStrictEqual(res.sent, { verdicts: [] }, "an unreachable upstream is 'nothing found', so the page books as before");
+});
+
+test("the line check is SportyBet's only", async () => {
+  const h = P.makeHandler();
+  const res = fakeRes();
+  const req = fakeReq({ selections: [{ eventId: "1", code: "CORNERS_OV_9.5" }] }, "POST", "bet9ja");
+  req.query.check = "lines";
+  const before = fetchCalls.length;
+  await h(req, res);
+  assert.strictEqual(fetchCalls.length, before, "no request for a book the API cannot check");
+  assert.deepStrictEqual(res.sent, { verdicts: [] });
+});

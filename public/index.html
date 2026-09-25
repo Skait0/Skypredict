@@ -13412,6 +13412,76 @@ function confirmDropUnpriced(picks,target,go,B){
   el.querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt(target);});
   return true;
 }
+/* CORNERS AND SHOTS, CHECKED ON SPORTYBET'S LIVE CARD BEFORE BOOKING.
+   They re-line these as the price moves and delete the old line: 15% of the
+   shots lines and 10% of the corners lines in our 45-minute copy were gone
+   (25 Sep 2026), so a slip carrying three or four came back "can't take 2 of
+   these" about half the time. Only those legs are asked about - goals legs
+   are 1.4% stale and not worth SportyBet's patience - through the proxy's
+   ?check=lines, which books nothing and spends no quota.
+   A moved line is OFFERED, never swapped quietly: the card shows old line,
+   new line and SportyBet's live price, and one tap takes it. A closed one is
+   named before anything is booked. No answer in 9s, or any failure, and the
+   slip books exactly as before - the refusal path still stands behind this.
+   go(picks, swaps, dropped): swaps are {id, from, to}, dropped the picks left
+   out, so My slip can bring its own list into line. Returns true when it has
+   taken over. */
+var LINE_CODE=/^(CORNERS|SHOTS)_/;
+function lineCheck(picks,B,target,go){
+  if(!B||B.key!=="sporty"||picks._lined) return false;
+  var lined=picks.filter(function(c){return LINE_CODE.test(c.code)&&bookIdOf(c,B);});
+  if(!lined.length) return false;
+  var _el=$(target);
+  if(_el) _el.innerHTML="<div class='code-info'>Checking SportyBet's latest corners and shots lines…</div>";
+  var done=false;
+  var plain=function(){ picks._lined=1; go(picks,[],[]); };
+  var t=setTimeout(function(){ if(!done){done=true; if(_el) _el.innerHTML=""; plain();} },9000);
+  fetch(B.book+"&check=lines",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({selections:lined.map(function(c){return B.sel(c);})})})
+    .then(function(r){return r.json();}).catch(function(){return {};})
+    .then(function(d){
+      if(done) return; done=true; clearTimeout(t);
+      if(_el) _el.innerHTML="";
+      var byKey={};
+      ((d&&d.verdicts)||[]).forEach(function(v){byKey[v.eventId+"|"+v.prediction]=v;});
+      var next=[], swaps=[], dropped=[], lines=[];
+      picks.forEach(function(c){
+        var v=byKey[bookIdOf(c,B)+"|"+c.code];
+        if(!v){ next.push(c); return; }
+        var f=c.f||fixtureById(c.id);
+        var who=f?(f.home+" v "+f.away):"One pick";
+        if(v.reason==="line_moved"&&v.now){
+          /* SportyBet's own live price for the new line, so the slip's total
+             is theirs and not our estimate for a line we never cached. */
+          if(f&&v.odds){ f[B.odds]=f[B.odds]||{}; f[B.odds][v.now]=v.odds; }
+          var n=Object.assign({},c,{code:v.now});
+          var q=f?mProb(f,v.now):null; if(q!=null) n.p=q;
+          if(c.label!=null&&f) n.label=mLabel(f,v.now);
+          next.push(n); swaps.push({id:c.id,from:c.code,to:v.now});
+          lines.push(who+": "+(f?mLabel(f,c.code):c.code)+" → "+
+            (f?mLabel(f,v.now):v.now)+(v.odds?" @ "+Number(v.odds).toFixed(2):""));
+        } else {
+          dropped.push(c);
+          lines.push(who+" ("+(v.reason==="started"?"kicked off":"market closed")+")");
+        }
+      });
+      if(!lines.length||!next.length){ plain(); return; }
+      next._lined=1;
+      showPrompt(target,"<div class='confirm-card'><p><b>SportyBet has moved "+
+        (lines.length===1?"a line":lines.length+" lines")+" since you picked</b>"+
+        "<span class='cf-list'>"+lines.slice(0,5).map(esc).join("<br>")+
+        (lines.length>5?"<br>and "+(lines.length-5)+" more":"")+"</span></p>"+
+        "<div class='ca'><button class='confirm-go' type='button'>"+
+        (swaps.length?"Update and book":"Book the other "+(next.length===1?"one":next.length))+
+        "</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>");
+      var el=$(target); if(!el) return;
+      el.querySelector(".confirm-go").addEventListener("click",function(){
+        clearPrompt(target); go(next,swaps,dropped);});
+      el.querySelector(".confirm-cancel").addEventListener("click",function(){
+        clearPrompt(target);});
+    });
+  return true;
+}
 /* THE REFUSAL LOOP, FOR EVERY PATH THAT BOOKS ORDINARY PICKS. doBook and
    doBookMy grew their own copies; the converter and the board's Book had
    none, so a refused leg there was a flat "wouldn't take this slip" - found
@@ -13421,6 +13491,7 @@ function confirmDropUnpriced(picks,target,go,B){
    h = {busy(), idle(), code(code, sentPicks, d), fail(d)}. */
 function bookRounds(picks,B,src,target,h,round){
   round=round||0;
+  if(!round&&lineCheck(picks,B,target,function(safe){bookRounds(safe,B,src,target,h,0);})) return;
   h.busy();
   bookFetch(picks.map(function(c){return B.sel(c);}),B,src)
     .then(function(d){
@@ -13445,6 +13516,7 @@ function doBook(picks,retried,B){
   B=B||curBook();
   var sel=picks.map(function(c){return B.sel(c);});
   if(!sel.length) return;
+  if(!retried&&lineCheck(picks,B,"bookResult",function(p){doBook(p,0,B);})) return;
   BUILD.booking=true; renderBuilder();
   /* Not on a retry: the caller has just written which pick it dropped and
      why, and clearing here wiped that within the same tick - so the note
@@ -18068,6 +18140,21 @@ function resetMyBookBtn(){
 }
 function doBookMy(bookable,retried,B){
   B=B||curBook();
+  /* A line SportyBet moved is updated in My slip too, and a closed one taken
+     out, once the reader has said yes - the same rule as a refusal below. */
+  if(!retried&&lineCheck(bookable,B,"myBookResult",function(p,swaps,dropped){
+    if(swaps.length||dropped.length){
+      var gone={}; dropped.forEach(function(c){gone[c.id+"|"+c.code]=1;});
+      MYSLIP=MYSLIP.filter(function(x){return !gone[x.id+"|"+x.code];});
+      swaps.forEach(function(w){MYSLIP.forEach(function(x){
+        if(x.id!==w.id||x.code!==w.from) return;
+        var f=fixtureById(x.id); x.code=w.to;
+        if(f){ x.label=mLabel(f,w.to); var q=mProb(f,w.to); if(q!=null) x.p=q; }
+      });});
+      saveMy(); renderFab();
+      if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
+    }
+    doBookMy(p,0,B);})) return;
   var sel=bookable.map(function(c){return B.sel(c);});
   var gen=MYBOOK_GEN;
   var btn=$("myBookBtn"); if(btn){btn.disabled=true;btn.textContent="Booking…";}

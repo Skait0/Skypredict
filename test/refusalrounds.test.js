@@ -21,7 +21,10 @@ const { src, fn } = BOOKS;
 
 const ROUNDS = +src.match(/var REFUSAL_ROUNDS=(\d+);/)[1];
 /* What dropUnbookable and the name lists call to say why a leg was refused. */
-const WHY = () => "var REFUSAL_WHY={};\n" + fn("refusalWhy") + "\n" + fn("whyOf") + "\n";
+const WHY = () => "var REFUSAL_WHY={};\n" + fn("refusalWhy") + "\n" + fn("whyOf") + "\n" +
+  /* The live line check runs before the first send. These slips carry no
+     corners or shots; it is tested on its own in linecheck.test.js. */
+  "function lineCheck(){ return false; }\n";
 
 /* `answer(sel)` plays the bookmaker: return a response body for the legs sent. */
 function harness(answer) {

@@ -65,6 +65,9 @@ test("only bookVerdict reads an odds cache to judge a market", () => {
                       attachEventIds fills it, and dropUnbookable forgets a
                       price the bookmaker has just refused. */
                    "attachEventIds", "dropUnbookable",
+                   /* Writes SportyBet's live price for a line they moved, read
+                      off their card just now (25 Sep 2026). */
+                   "lineCheck",
                    /* Display: how far our number is from the book's, drawn on
                       the card. Not a decision about booking anything. */
                    "edgeOf"];
