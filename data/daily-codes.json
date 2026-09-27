@@ -1011,5 +1011,73 @@
       "betpawa": "SG7F7QE"
     },
     "odds": 1.81
+  },
+  "2026-09-27": {
+    "date": "2026-09-27",
+    "generated": "2026-09-27T11:43:29.910Z",
+    "firstKickoff": "2026-09-27T12:30:00.000Z",
+    "legs": [
+      {
+        "date": "2026-09-27",
+        "home": "Guyana",
+        "away": "Cayman Islands",
+        "league": "International CONCACAF Nations League",
+        "kickoff": "2026-09-27T19:00:00.000Z",
+        "tip": "Home win",
+        "tip_p": 0.917,
+        "market": "1",
+        "odd": 1.06
+      },
+      {
+        "date": "2026-09-27",
+        "home": "De Graafschap",
+        "away": "Den Bosch",
+        "league": "Netherlands Eerste Divisie",
+        "kickoff": "2026-09-27T12:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.909,
+        "market": "OVER_1.5",
+        "odd": 1.06
+      },
+      {
+        "date": "2026-09-27",
+        "home": "Columbus Crew",
+        "away": "Inter Miami",
+        "league": "USA MLS",
+        "kickoff": "2026-09-27T23:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.901,
+        "market": "OVER_1.5",
+        "odd": 1.11
+      },
+      {
+        "date": "2026-09-27",
+        "home": "Union Brescia",
+        "away": "Dolomiti Bellunesi",
+        "league": "Italy Serie C, Group A",
+        "kickoff": "2026-09-27T12:30:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.851,
+        "market": "1X",
+        "odd": 1.08
+      },
+      {
+        "date": "2026-09-27",
+        "home": "Villa Dalmine",
+        "away": "UAI Urquiza",
+        "league": "Argentina Primera B",
+        "kickoff": "2026-09-27T18:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.84,
+        "market": "1X",
+        "odd": 1.14
+      }
+    ],
+    "codes": {
+      "sporty": "J7S2K6",
+      "bet9ja": "5SZQKRS",
+      "betpawa": "NQMF77U"
+    },
+    "odds": 1.54
   }
 }
