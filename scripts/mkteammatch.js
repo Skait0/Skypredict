@@ -47,7 +47,9 @@ function build(src) {
 }
 
 if (require.main === module) {
-  const src = fs.readFileSync(path.join(ROOT, "public", "index.html"), "utf8");
+  /* LF whatever the checkout did to index.html, so the output does not depend
+     on how git wrote the page to disk (.gitattributes pins this file to LF). */
+  const src = fs.readFileSync(path.join(ROOT, "public", "index.html"), "utf8").replace(/\r\n/g, "\n");
   fs.writeFileSync(path.join(ROOT, "lib", "teammatch.js"), build(src));
   console.log("lib/teammatch.js written");
 }

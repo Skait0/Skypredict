@@ -13,8 +13,12 @@ test("the bot's matcher is the site's matcher, byte for byte", () => {
   /* lib/teammatch.js is generated from index.html; this fails the moment the
      page's matcher changes and `node scripts/mkteammatch.js` was not re-run. */
   const { build } = require("../scripts/mkteammatch.js");
-  const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
-  assert.strictEqual(fs.readFileSync(path.join(__dirname, "..", "lib", "teammatch.js"), "utf8"), build(src),
+  /* Line endings aside: a Windows checkout writes either file with CRLF, and
+     that is the checkout, not a stale matcher (red for no reason on 24 and
+     28 Sep 2026). */
+  const lf = (s) => s.replace(/\r\n/g, "\n");
+  const src = lf(fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8"));
+  assert.strictEqual(lf(fs.readFileSync(path.join(__dirname, "..", "lib", "teammatch.js"), "utf8")), build(src),
     "lib/teammatch.js is stale - run: node scripts/mkteammatch.js");
 });
 
