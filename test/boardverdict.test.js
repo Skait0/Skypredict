@@ -63,6 +63,16 @@ function isoDay(off) {
   return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
 }
 
+/* A kickoff already played AND on today's calendar. "Three hours ago" was
+   yesterday for the first three hours after local midnight, so the page
+   rightly showed yesterday's verdict and these tests failed every night -
+   between 00:00 and 01:00 in Lagos, where the site's readers are (found 29
+   Sep 2026). Never earlier than local midnight, never later than now. */
+function playedToday() {
+  const now = Date.now(), midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+  return new Date(Math.max(now - 3 * 3600e3, midnight.getTime())).toISOString();
+}
+
 /* A fixture shaped like the payload's, tipped on something gradeable. */
 function fx(off, extra) {
   return Object.assign({
@@ -81,13 +91,13 @@ test("a match on today's board shows no verdict, however it finished", () => {
   /* The reported bug, in the state that produced it: the match is over and the
      backend even agrees it was a hit. The board still says nothing today. */
   const b = board(graded(0, 2, 1, true));
-  const out = b.statusBadge(fx(0, { kickoff: new Date(Date.now() - 3 * 3600e3).toISOString() }));
+  const out = b.statusBadge(fx(0, { kickoff: playedToday() }));
   assert.ok(!/Hit|Miss|Void/.test(out), "today must carry no verdict, got: " + out);
 });
 
 test("nor does it leak the score on its own", () => {
   const b = board(graded(0, 2, 1, true));
-  const out = b.statusBadge(fx(0, { kickoff: new Date(Date.now() - 3 * 3600e3).toISOString() }));
+  const out = b.statusBadge(fx(0, { kickoff: playedToday() }));
   assert.ok(!/2-1/.test(out), "today must carry no score, got: " + out);
 });
 
@@ -95,7 +105,7 @@ test("a 0-0 the backend graded as a miss is still silent today", () => {
   /* The exact shape reported: 0-0, and whatever anything else believed, the
      board does not get to call it. */
   const b = board(graded(0, 0, 0, false));
-  const out = b.statusBadge(fx(0, { kickoff: new Date(Date.now() - 3 * 3600e3).toISOString() }));
+  const out = b.statusBadge(fx(0, { kickoff: playedToday() }));
   assert.strictEqual(out, "", "a played match on today's board says nothing");
 });
 
