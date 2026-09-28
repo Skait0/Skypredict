@@ -50,3 +50,6 @@ supabase/.temp/
 # The VAPID pair, generated locally. The private half is a signing key for
 # push notifications - it never belongs in the repo.
 .vapid.local.json
+
+# graphify hook config: absolute path to this machine's graphify.EXE
+.claude/settings.json
