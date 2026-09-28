@@ -1,13 +1,15 @@
-import io, sys
+import sys
+from pathlib import Path
+
 p = r'C:\Users\DELL\Desktop\Skypredict\public\index.html'
-s = io.open(p, encoding='utf-8').read()
+s = Path(p).read_text(encoding='utf-8')
 n = 0
 
 def rep(old, new, label, count=1):
     global s, n
     c = s.count(old)
     if c != count:
-        print('MISS[%s] expected %d got %d' % (label, count, c))
+        print(f'MISS[{label}] expected {count} got {c}')
         sys.exit(1)
     s = s.replace(old, new); n += 1
     print('ok   ' + label)
@@ -82,5 +84,6 @@ rep(
 '5 tighten lmore .opt buttons'
 )
 
-io.open(p, 'w', encoding='utf-8', newline='').write(s)
-print('\n%d edits applied' % n)
+with open(p, 'w', encoding='utf-8', newline='') as f:
+    f.write(s)
+print(f'\n{n} edits applied')
