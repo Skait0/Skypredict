@@ -1079,5 +1079,74 @@
       "betpawa": "NQMF77U"
     },
     "odds": 1.54
+  },
+  "2026-09-28": {
+    "date": "2026-09-28",
+    "generated": "2026-09-28T13:19:48.402Z",
+    "firstKickoff": "2026-09-28T16:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-09-28",
+        "home": "Guadeloupe",
+        "away": "Barbados",
+        "league": "International CONCACAF Nations League",
+        "kickoff": "2026-09-28T19:00:00.000Z",
+        "tip": "Home win",
+        "tip_p": 0.863,
+        "market": "1",
+        "odd": 2.3
+      },
+      {
+        "date": "2026-09-28",
+        "home": "Central African Republic",
+        "away": "Burkina Faso",
+        "league": "International Africa Cup of Nations Qualification",
+        "kickoff": "2026-09-28T16:00:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.859,
+        "market": "X2",
+        "odd": 1.08
+      },
+      {
+        "date": "2026-09-28",
+        "home": "Sweden",
+        "away": "Poland",
+        "league": "International UEFA Nations League",
+        "kickoff": "2026-09-28T18:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.852,
+        "market": "OVER_1.5",
+        "odd": 1.2
+      },
+      {
+        "date": "2026-09-28",
+        "home": "Zimbabwe",
+        "away": "Congo DR",
+        "league": "International Africa Cup of Nations Qualification",
+        "kickoff": "2026-09-28T16:00:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.837,
+        "market": "X2",
+        "odd": 1.19
+      },
+      {
+        "date": "2026-09-28",
+        "home": "Leganes",
+        "away": "Castellon",
+        "league": "Spain La Liga 2",
+        "kickoff": "2026-09-28T18:30:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.815,
+        "market": "X2",
+        "odd": 1.35
+      }
+    ],
+    "codes": {
+      "sporty": "GPS1ZQ",
+      "bet9ja": "5T59VYM",
+      "betking": "TR1WVF",
+      "betpawa": "9BPM43V"
+    },
+    "odds": 4.79
   }
 }
