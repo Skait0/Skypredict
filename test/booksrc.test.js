@@ -23,7 +23,9 @@ test("every booking call site says where it came from", () => {
      carry the label and its own internal bookFetch passes `src` through. */
   const calls = src.split(/\r?\n/)
     .filter((l) => (/bookFetch\(/.test(l) && !/function bookFetch\(/.test(l) && !/,B,src\)/.test(l)) ||
-                   (/bookRounds\(/.test(l) && !/function bookRounds\(/.test(l) && !/bookRounds\(safe,B,src/.test(l)))
+                   (/bookRounds\(/.test(l) && !/function bookRounds\(/.test(l) &&
+                    /* its own next round, with any swaps the reader took (28 Sep) */
+                    !/bookRounds\(safe(\.concat\(swapIn\))?,B,src/.test(l)))
     .map((l) => l.trim());
   /* Five carry a literal. The sixth is My slip, which is a DESTINATION rather
      than a source - the wizard, the slider and the board's Book all empty into

@@ -64,7 +64,7 @@ const FNS = ["cornersK", "cornersOver", "cornersOpen", "countryOf", "isSAleague"
   /* A market one bookmaker sells and the other does not - the slider asks
      before it picks, so the harness needs the question and its table. */
   "bookAllows",
-  "allowedMarkets", "preferGoalsOverDouble", "buildPicks"];
+  "allowedMarkets", "preferGoalsOverDouble", "sliderStyle", "styleFit", "buildPicks"];
 
 function engine(fixtures) {
   return new Function("FX", [
@@ -74,6 +74,8 @@ function engine(fixtures) {
     /* No saved slips in these harnesses, so nothing is already exposed;
        the spread penalty is exercised on its own in spread.test.js. */
     "function slipUse(){return {};}",
+    /* Balanced, the default: the slip style leaves the slider as it was. */
+    "var WSP={legodd:1.4};",
     konst("SAFE_UNPRICED"), konst("BOOK_ONLY"), konst("CORNER_CODES"), konst("TEAM_CORNER_CODES"), konst("SHOTS_CODES"),
     /* The harness books at SportyBet, like the default visit. */
     /* full: the cache for this book IS its whole book, which is what makes a

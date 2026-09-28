@@ -41,8 +41,9 @@ function harness(answer) {
     bookFetch(sel) { log.sent.push(sel.map((s) => s.eventId)); return Promise.resolve(answer(sel)); },
     showCode(code) { log.code = code; finish(); },
     bookErrHTML(d) { log.error = (d && d.detail) || "error"; finish(); return "err"; },
+    showBookErr() {}, wspTakeSwaps() {},
     confirmAfterRefusal(target, names, keep, B, go) {
-      log.prompts.push(names.slice()); setImmediate(go);           // the reader taps "Book the other"
+      log.prompts.push(names.slice()); setImmediate(() => go([]));           // the reader taps "Book the other"
     },
   };
   const names = Object.keys(stubs);
@@ -135,7 +136,8 @@ test("My slip narrows the same way, and the slip itself follows each round", asy
     },
     showCode(code) { log.code = code; finish(); },
     bookErrHTML(d) { log.error = (d && d.detail) || "error"; finish(); return "err"; },
-    confirmAfterRefusal(t, names, keep, B, go) { log.prompts++; setImmediate(go); },
+    showBookErr() {},
+    confirmAfterRefusal(t, names, keep, B, go) { log.prompts++; setImmediate(() => go([])); },
   };
   const names = Object.keys(stubs);
   const body =
@@ -171,7 +173,7 @@ test("the converter and the board share the loop: betPawa refuses one of 16, the
       return Promise.resolve(refuse({ detail: "no market there for 1 of 16 picks",
         unbookable: [{ eventId: "e9", prediction: "1X", reason: "refused_alone" }] }));
     },
-    confirmAfterRefusal(t, names, keep, B, go) { log.prompts++; log.names = names; setImmediate(go); },
+    confirmAfterRefusal(t, names, keep, B, go) { log.prompts++; log.names = names; setImmediate(() => go([])); },
   };
   const names = Object.keys(stubs);
   const body = "function fixtureById(){return null;}\n" + BOOKS.prelude("sporty") +

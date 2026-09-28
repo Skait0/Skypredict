@@ -175,13 +175,13 @@ test("a refused leg is dropped only after the reader agrees", () => {
      refusing part of it is a reason to ask, not a licence to edit. */
   const i = src.indexOf("var safe=dropUnbookable(bookable,d,B);");
   assert.ok(i > 0, "My slip's refusal branch not found");
-  const branch = src.slice(i, i + 2200);
+  const branch = src.slice(i, i + 3200);
   assert.match(branch, /confirmAfterRefusal\("myBookResult"/,
     "it has to ask");
   /* Everything that changes the slip must sit INSIDE the callback, which only
      runs on confirm. */
   const goAt = branch.indexOf("confirmAfterRefusal(");
-  for (const step of ["MYSLIP=MYSLIP.filter", "saveMy()", "doBookMy(safe,(retried||0)+1,B)"]) {
+  for (const step of ["MYSLIP=MYSLIP.filter", "saveMy()", "doBookMy(safe.concat(swapIn),(retried||0)+1,B)"]) {
     const at = branch.indexOf(step);
     assert.ok(at > goAt, step + " must not run before the reader has agreed");
   }
@@ -203,9 +203,9 @@ test("the question names the games, and offers a way out", () => {
                        src.indexOf("function confirmDropUnpriced"));
   assert.match(fn, /confirm-go/, "a way forward");
   assert.match(fn, /confirm-cancel/, "and a way out - it is a choice or it is not");
-  assert.match(fn, /cf-list/, "the games are named, not counted");
+  assert.match(fn, /ask-g/, "the games are named, one row each, not counted");
   assert.match(fn, /showPrompt\(target/,
-    "raised as a prompt, so the Get code button stands down while it is up");
+    "raised through showPrompt, which puts it in the pop-up");
   assert.match(fn, /B\.mark/, "and it says which bookmaker refused");
 });
 test("the retry does not wipe the note explaining itself", () => {

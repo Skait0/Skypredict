@@ -79,6 +79,8 @@ const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "
      1.5 line on the 1X2-or-Over/Under family, so the slider asks before it
      picks one. */
   "bookAllows",
+  /* The slip style reaches the slider too (28 Sep 2026). */
+  "sliderStyle", "styleFit",
   "buildPicks",
   /* Which chip is lit, derived from the same predicate wspBuild uses. */
   "wspStyleOn",
@@ -672,4 +674,26 @@ test("Team corners: off by default, built by both engines when on, only where Sp
     assert.notStrictEqual(c.f.home, shut.home, "never on a fixture where SportyBet quotes no team corners");
   }
   api.setData(null);
+});
+
+/* THE SLIP STYLE REACHES THE SLIDER (owner, 28 Sep 2026: "i think the slip
+   style should apply to the slider and when more games smaller odds is
+   clicked, it should apply"). More games at smaller odds each, or fewer at
+   bigger; Balanced leaves the Slider exactly as it was. */
+test("the slip style moves the slider's count and its leg odds, and Balanced moves nothing", () => {
+  reset();
+  api.BUILD.risk = 20;
+  const run = (lo) => { api.WSP.legodd = lo; const p = api.buildPicks();
+    return { n: p.length, odd: p.reduce((a, c) => a + api.legOdd(c.f, c.code, c.p), 0) / (p.length || 1),
+             shape: shape(p) }; };
+  const neutral = run(1.35), bal = run(1.4), more = run(1.25), fewer = run(1.7);
+  assert.strictEqual(bal.shape, neutral.shape, "Balanced is the Slider as it was");
+  assert.ok(more.n > bal.n, `More games: ${more.n} v ${bal.n}`);
+  assert.ok(fewer.n < bal.n, `Fewer games: ${fewer.n} v ${bal.n}`);
+  /* Leg odds where the dial leaves room for them - at a safe setting every
+     leg that qualifies is priced about 1.2 to 1.3 whatever the style. */
+  api.BUILD.risk = 60;
+  const more60 = run(1.25), fewer60 = run(1.7);
+  assert.ok(fewer60.odd > more60.odd,
+    `bigger odds each: ${fewer60.odd.toFixed(2)} v ${more60.odd.toFixed(2)}`);
 });

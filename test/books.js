@@ -75,9 +75,11 @@ function prelude(book) {
     decl("SAFE_UNPRICED") + "\n" + fn("fetchedMarket") + "\n" +
     fn("bookVerdict") + "\n" + fn("bookMayTake") + "\n" + fn("bookIsPriced") + "\n" +
     fn("bookWire") + "\n" +
-    /* A confirmation hides the Get code button beside it while it is up, so
-       anything that raises one needs these three as well. */
-    fn("promptFoot") + "\n" + fn("showPrompt") + "\n" + fn("clearPrompt") + "\n" +
+    /* A booking question comes up as a pop-up (showPrompt), so anything that
+       raises one needs its host and the lookup that finds the card again. */
+    decl("INLINE_ASK") + "\n" + decl("ASK_FOR") + "\n" + fn("askHost") + "\n" +
+    fn("promptEl") + "\n" + fn("askLock") + "\n" +
+    fn("showPrompt") + "\n" + fn("clearPrompt") + "\n" + fn("showBookErr") + "\n" +
     "bookWire();\n"
   );
 }

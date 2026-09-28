@@ -52,7 +52,7 @@ test("the slip styles are not named for a promise they cannot keep", () => {
   /* Scoped to the styles array on purpose. The old label still appears in the
      comment that explains why it went, and a whole-file search would fail on
      the explanation rather than on the thing being explained. */
-  const line = /var styles=\[\[[\s\S]*?\]\];/.exec(src);
+  const line = /var SLIP_STYLES=\[\[[\s\S]*?\]\];/.exec(src);
   assert.ok(line, "styles array not found");
   assert.doesNotMatch(line[0], /Safer/,
     'the "Safer" label told people the opposite of the truth');
@@ -75,7 +75,7 @@ test("each style says which way its odds go", () => {
      qualifier is per-leg odds, not the payout - the payout is the target you
      already chose, and it is the same whichever style you pick. More legs at
      lower odds each, or fewer at higher; that is the entire choice. */
-  const line = /var styles=\[\[[\s\S]*?\]\];/.exec(src)[0];
+  const line = /var SLIP_STYLES=\[\[[\s\S]*?\]\];/.exec(src)[0];
   const lo = /\[([\d.]+),"More games"/.exec(line)[1];
   const hi = /\[([\d.]+),"Fewer games"/.exec(line)[1];
   assert.ok(+lo < +hi,

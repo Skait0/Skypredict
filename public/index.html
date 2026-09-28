@@ -1809,6 +1809,44 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .confirm-card button{font:inherit;font-weight:800;font-size:14px;padding:11px 18px;border-radius:var(--r-md);cursor:pointer;border:0}
 .confirm-go{background:var(--red-fill);color:#fff}
 .confirm-cancel{background:var(--card);color:var(--text);border:1px solid var(--line)!important}
+/* THE BOOKING POP-UP - see showPrompt. Above the code dialog (220), because
+   Make it safer asks from inside it. */
+.ask-scrim{position:fixed;inset:0;z-index:240;background:rgba(10,14,10,.5);
+  backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:16px}
+.ask-scrim[hidden]{display:none}
+.ask-card{position:relative;width:min(440px,100%);max-height:min(82vh,680px);overflow:auto;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:18px 16px 16px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.ask-x{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;border:0;
+  background:var(--raise);color:var(--soft);display:grid;place-items:center;cursor:pointer}
+.ask-x svg{width:15px;height:15px}
+.ask-card .confirm-card{background:none;border:0;padding:0;text-align:left}
+.ask-card .confirm-card>p:first-child,.ask-card .code-err{padding-right:36px}
+.ask-card .code-err{margin:0 0 14px}
+.ask-card .confirm-card .ca{justify-content:stretch}
+.ask-card .confirm-card .ca button{flex:1 1 auto}
+.ask-rows{display:flex;flex-direction:column;gap:8px;margin:0 0 14px}
+.ask-row{display:flex;flex-direction:column;gap:7px;padding:10px;border:1px solid var(--line-soft);
+  border-radius:var(--r-md);background:var(--raise)}
+.ask-g{font-size:13.5px;font-weight:700;color:var(--text);line-height:1.3}
+.ask-none{font-size:12.5px;color:var(--soft)}
+.ask-more{margin:0;font-size:12.5px;color:var(--soft)}
+.confirm-card .ask-alt{display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  padding:9px 10px;border-radius:var(--r-md);border:1px solid var(--line)!important;
+  background:var(--card);color:var(--text);font-size:13px;font-weight:600;line-height:1.3}
+.confirm-card .ask-alt b{font-weight:800}
+.ask-alt i{margin-left:auto;font-style:normal;font-size:12px;color:var(--soft);white-space:nowrap}
+.ask-alt-k{flex:0 0 18px;height:18px;border-radius:5px;border:2px solid var(--line);
+  display:grid;place-items:center;font-size:12px;font-weight:900;color:var(--on-green,#fff)}
+.confirm-card .ask-alt.on{border-color:var(--win)!important;background:var(--win-wash)}
+.ask-alt.on .ask-alt-k{background:var(--win);border-color:var(--win)}
+.ask-alt.on .ask-alt-k::after{content:"\2713"}
+/* What the code pays, under the code - see codeTotHTML. No <b>: .code-card b
+   is the 32px booking-code style. */
+.code-tot{display:flex;align-items:baseline;justify-content:center;gap:8px;flex-wrap:wrap;
+  margin:4px 0 12px;font-size:13px;color:var(--soft)}
+.code-tot .ct-o{font-size:18px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
+.code-tot .ct-by{font-size:11.5px}
 .lt-ou{font-weight:700}
 /* margin-left:auto is gone. It dates from when this row was a flex line and
    the tip was meant to sit hard right; the row is a grid now, where the same
@@ -3177,6 +3215,10 @@ html{interpolate-size:allow-keywords}
      computed style, so this does NOT re-fire on every renderBuilderOutput. */
   animation:barIn 180ms var(--ease-out) both}
 @keyframes barIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.bf-odds{display:flex;flex-direction:column;line-height:1.1;min-width:0}
+.bf-odds b{font-size:17px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
+.bf-odds i{font-style:normal;font-size:11.5px;color:var(--soft)}
+.bf-odds:empty{display:none}
 /* Secondary actions become quiet icon-ghost buttons so Book owns the bar. */
 .bld-foot .clear-btn{flex:0 0 auto;width:44px;height:44px;padding:0;display:grid;place-items:center;
   background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);border-radius:var(--r-sm);
@@ -3229,10 +3271,6 @@ html{interpolate-size:allow-keywords}
    the row takes no space at all - it was showing on the wizard page above a
    slip of nought games. */
 .bookpick[hidden]{display:none}
-/* See showPrompt: while a confirmation is on screen, the button that raised it
-   is a second way to do the same thing and knows nothing about the choice
-   being offered. The card carries its own Book and Cancel. */
-.prompting .book-btn{display:none}
 .bookpick-l{font-size:11px;font-weight:700;letter-spacing:.05em;
   text-transform:uppercase;color:var(--faint);margin-right:1px}
 .bp{font:inherit;font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:99px;
@@ -4471,6 +4509,10 @@ button.wsp-go.waiting{opacity:.55}
    this one and green is a winning pick, so the Slider takes the amber that is
    otherwise only used for a confident call - a second accent already in the
    palette rather than a new one invented for one control. */
+/* The Slider's copy of the style row and its way back - see renderSliderPanel. */
+#sldStyleChips{display:flex;flex-wrap:wrap;gap:6px}
+.sld-back{margin-top:14px}
+.sld-back[hidden]{display:none}
 .wsp-slider-link{position:relative;display:inline-flex;align-items:center;gap:8px;
   max-width:100%;margin:4px 0 0;padding:9px 14px;
   border:1px solid var(--win);border-radius:99px;background:var(--win-wash);
@@ -5945,6 +5987,14 @@ button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
    column. Placed by id and class rather than by position: the hint and the
    Slider link are inserted by the builder, so nth-child would renumber under
    it. Phones keep the stack. */
+/* A HIDDEN PANEL STAYS HIDDEN AT EVERY WIDTH. The grid below outranks the
+   browser's own [hidden]{display:none}, so from 900px up the Wizard stayed on
+   screen in Slider mode: its chips set the Wizard's style while the page
+   redrew the Slider, nothing lit, the leg count never moved and Conjure did
+   nothing. Reported twice by the owner, 28 Sep 2026 ("when Let the slider
+   pick button is clicked, the wizard buttons dont work anymore"), and never
+   seen at phone width, which is where it was being tested. */
+.bld-panel[hidden]{display:none!important}
 @media(min-width:900px){
   .bld-panel.wizard-panel{display:grid;
     grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);
@@ -7355,6 +7405,17 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       <div class="risk-wrap stage-in stage-in-4"><input type="range" id="risk" class="risk" min="0" max="100" step="any" value="45"
         aria-label="Risk level"><span class="risk-bubble" id="riskBubble">-</span></div>
       <div class="risk-ticks stage-in stage-in-5"><span>Safe</span><span>Balanced</span><span>Risky</span></div>
+      <!-- The Wizard's slip style, for the Slider too (owner, 28 Sep 2026: "i
+           think the slip style should apply to the slider and when more games
+           smaller odds is clicked, it should apply"). One value, WSP.legodd,
+           read by both builders - see sliderStyle. -->
+      <div class="wsp-lbl sld-style-lbl">Slip style</div>
+      <div class="wsp-chips" id="sldStyleChips"></div>
+      <!-- Only after "Let the Slider pick", which used to leave the reader
+           half way down the page with the Wizard gone and no way back that
+           they could see. -->
+      <button class="wsp-slider-link sld-back" id="sldToWizard" type="button" hidden>
+        <span class="wsl-a" aria-hidden="true">←</span><span class="wsl-t">Back to the Wizard</span></button>
     </div>
 
     <!-- WIZARD MODE PANEL -->
@@ -7385,6 +7446,12 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
            which is read the same way everywhere. -->
       <button class="clear-btn wordy" id="shuffleBtn" type="button" title="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg><span>Shuffle</span></button>
       <button class="clear-btn" id="clearBtn" type="button" aria-label="Clear" title="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg></button>
+      <!-- The slip's total, on the bar that follows the reader down the list.
+           Asked for (owner, 28 Sep 2026): "when i scroll to the bottom there
+           should be odds preview" - the tiles holding it sit at the top of a
+           list that can run to forty games. Filled with them in
+           renderBuilderOutput. -->
+      <span class="bf-odds" id="bfOdds" aria-live="polite"></span>
       <button class="book-btn" id="bookBtn" type="button">Get code</button>
     </div>
     <div class="bld-note stage-in stage-in-5" id="bldNote" data-parallax="0.1"></div>
@@ -11669,22 +11736,69 @@ function bookWire(){
      here would drop legs Betpawa would have taken. */
   BOOKS.betpawa.priced=function(c){ return !!bookIdOf(c,BOOKS.betpawa); };
 }
-/* A question on screen and a Get code button beside it are two ways to do the
-   same thing, and the button knows nothing about the choice being offered -
-   press it and you are asked again. So while a confirmation is up, the button
-   that raised it stands down. The card carries its own Book and Cancel. */
-function promptFoot(target){
-  return $(target==="myBookResult"?"mySheetFoot":"bldFoot");
+/* BOOKING QUESTIONS COME UP AS A POP-UP, NOT AT THE FOOT OF THE PAGE.
+   Owner, 28 Sep 2026: "when sportybet cant take games, i hate to have to
+   scroll all the way down to see the message, MAKE IT A POP UP MODAL ... apply
+   this to all the available bookies." The card used to be written into the
+   slip's result box, under a list that can run to forty games.
+   It also retires the rule that hid Get code while a card was up (the
+   `.prompting` class). Only clearPrompt ever took that class off, and
+   seventeen places empty the result box directly - a shuffle, a scope change,
+   renderBuilder redrawing the payout ask - so the class outlived its card and
+   Get code stayed hidden until a bookie toggle happened to call clearPrompts.
+   Reported as "the get code button disappears till i toggle between the
+   bookies". A pop-up covers the button while it asks, so nothing is hidden.
+   The two asks about the build itself (payAsk, mkAsk) stay in the panel:
+   they are about the chips they sit under, not about a booking. */
+var INLINE_ASK={payAsk:1,mkAsk:1};
+var ASK_FOR=null, ASK_OVF="";
+function askHost(){
+  var m=$("askModal"); if(m) return m;
+  m=document.createElement("div");
+  m.id="askModal"; m.className="ask-scrim"; m.hidden=true;
+  m.innerHTML="<div class='ask-card' role='dialog' aria-modal='true' aria-label='Before we book'>"+
+    "<button class='ask-x' type='button' aria-label='Close'>"+
+      "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' aria-hidden='true'><path d='M6 6l12 12M18 6L6 18'/></svg></button>"+
+    "<div class='ask-body' id='askBody'></div></div>";
+  document.body.appendChild(m);
+  /* Closing is the card's own Cancel, so whatever that caller does on cancel
+     still happens. */
+  var cancel=function(){
+    var c=$("askBody").querySelector(".confirm-cancel");
+    if(c) c.click(); else if(ASK_FOR) clearPrompt(ASK_FOR);
+  };
+  m.addEventListener("click",function(e){ if(e.target===m) cancel(); });
+  m.querySelector(".ask-x").addEventListener("click",cancel);
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape"&&!m.hidden) cancel(); });
+  return m;
+}
+/* Where a caller finds the card it just raised: the pop-up for a booking
+   ask, the slot itself for the two asks that stay in the panel. */
+function promptEl(target){
+  return (!INLINE_ASK[target]&&ASK_FOR===target)?$("askBody"):$(target);
+}
+function askLock(on){
+  if(typeof document==="undefined"||!document.body) return;
+  if(on){ ASK_OVF=document.body.style.overflow; document.body.style.overflow="hidden"; }
+  else document.body.style.overflow=ASK_OVF;
 }
 function showPrompt(target,html){
-  var el=$(target); if(!el) return false;
-  el.innerHTML=html;
-  var f=promptFoot(target); if(f) f.classList.add("prompting");
+  if(INLINE_ASK[target]){ var el=$(target); if(!el) return false; el.innerHTML=html; return true; }
+  var m=askHost();
+  if(ASK_FOR===null) askLock(true);
+  $("askBody").innerHTML=html;
+  ASK_FOR=target; m.hidden=false;
+  var go=$("askBody").querySelector(".confirm-go");
+  if(go&&go.focus) try{ go.focus({preventScroll:true}); }catch(e){}
   return true;
 }
 function clearPrompt(target){
-  var el=$(target); if(el) el.innerHTML="";
-  var f=promptFoot(target); if(f) f.classList.remove("prompting");
+  if(INLINE_ASK[target]){ var el=$(target); if(el) el.innerHTML=""; return; }
+  if(ASK_FOR!==target) return;
+  var m=$("askModal"); if(m) m.hidden=true;
+  var b=$("askBody"); if(b) b.innerHTML="";
+  ASK_FOR=null; askLock(false);
 }
 /* Every prompt on the page, whichever slip raised it. */
 function clearPrompts(){ clearPrompt("bookResult"); clearPrompt("myBookResult"); }
@@ -12960,6 +13074,7 @@ function buildPicks(){
      Bet9ja slip was being judged against SportyBet's prices. */
   var B=curBook();
   var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier), cand=[];
+  var sty=sliderStyle();
   var mkOn={"1X":BUILD.mk.wd,"X2":BUILD.mk.wd,"12":BUILD.mk.any,"1":BUILD.mk.out,"2":BUILD.mk.out,
     "OVER_1.5":BUILD.mk.o15,"OVER_2.5":BUILD.mk.o25,"OVER_3.5":BUILD.mk.o35,
     "FH_OVER_0.5":BUILD.mk.fh,
@@ -13053,6 +13168,8 @@ function buildPicks(){
          probability, so it favours high-scoring leagues (Eliteserien, Eredivisie,
          Swiss) automatically - no hardcoded league list. */
       if((c==="OVER_1.5"||c==="OVER_2.5") && f.o25!=null) score*=1+Math.max(0,f.o25-0.5)*0.8;
+      /* The slip style's pull toward its leg odds - see sliderStyle. */
+      if(sty.pull) score*=1-sty.pull/2+sty.pull*styleFit(legOdd(f,c,v,B),sty.per);
       score*=1+(h32(fid(f)+"|"+c+"|"+(BUILD.seed||0))-0.5)*(0.9+0.8*f0);
       if(score>bestScore){bestScore=score;best={code:c,p:v};}
     });
@@ -13076,6 +13193,7 @@ function buildPicks(){
            the odds stopped rising with the slider. */
         var sc=(1-f0)*v + f0*(oddOf(v)/12);
         if((c==="OVER_1.5"||c==="OVER_2.5") && f.o25!=null) sc*=1+Math.max(0,f.o25-0.5)*0.8;
+        if(sty.pull) sc*=1-sty.pull/2+sty.pull*styleFit(legOdd(f,c,v,B),sty.per);
         alts.push({code:c,p:v,score:sc});
       });
       cand.push({f:f,id:fid(f),code:best.code,p:best.p,eventId:f.eventId||null,_alts:alts});
@@ -13083,7 +13201,7 @@ function buildPicks(){
   });
   var _use=slipUse();
   var removedCount=Object.keys(BUILD.removed).length;
-  var cap=Math.max(0,p.maxGames-removedCount);
+  var cap=Math.max(0,Math.round(p.maxGames*sty.games)-removedCount);
   /* Europe first. South American games are held back unless Europe can't fill
      the slip, or the user has reshuffled a couple of times and clearly wants a
      different mix. Once allowed in they're penalised rather than cut, so Europe
@@ -13135,6 +13253,10 @@ function buildPicks(){
     if(isSouthAmerican(a.f))ka*=saWeight(a.f,saPenalty);
     if(isSouthAmerican(b.f))kb*=saWeight(b.f,saPenalty);
     if(isAsian(a.f))ka*=asiaPenalty; if(isAsian(b.f))kb*=asiaPenalty;
+    /* Which games make the cut leans the same way as which market each game
+       plays - otherwise "Fewer games, bigger odds" kept the safest few. */
+    if(sty.pull){ ka*=1-sty.pull/2+sty.pull*styleFit(legOdd(a.f,a.code,a.p,B),sty.per);
+                  kb*=1-sty.pull/2+sty.pull*styleFit(legOdd(b.f,b.code,b.p,B),sty.per); }
     ka*=1+(h32(a.id+"|s"+(BUILD.seed||0))-0.5)*(0.9+f0); kb*=1+(h32(b.id+"|s"+(BUILD.seed||0))-0.5)*(0.9+f0);
     /* Push down what your open slips already hold, so a second ticket is a
        second bet rather than the same one again. */
@@ -13291,7 +13413,7 @@ async function bookSlip(){
         bookSlip();
       });
     });
-    $("bookResult").querySelector(".confirm-cancel").addEventListener("click",function(){
+    promptEl("bookResult").querySelector(".confirm-cancel").addEventListener("click",function(){
       $("bookResult").innerHTML="";
     });
     return;
@@ -13327,10 +13449,10 @@ async function bookSlip(){
       "<div class='ca'><button class='confirm-go' type='button'>Book the other "+
       (bookable.length===1?"one":bookable.length)+"</button>"+
       "<button class='confirm-cancel' type='button'>Cancel</button></div></div>");
-    $("bookResult").querySelector(".confirm-go").addEventListener("click",function(){
+    promptEl("bookResult").querySelector(".confirm-go").addEventListener("click",function(){
       clearPrompt("bookResult");
       if(!confirmDropUnpriced(bookable,"bookResult",doBook,B)) doBook(bookable);});
-    $("bookResult").querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt("bookResult");});
+    promptEl("bookResult").querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt("bookResult");});
     return;
   }
   if(confirmDropUnpriced(bookable,"bookResult",doBook,B)) return;
@@ -13360,20 +13482,78 @@ function hasSportyMarket(c){ return BOOKS.sporty.priced(c); }
    The same card as the pre-flight, because it is the same question arriving a
    moment later - the only difference is that this one had to be sent to find
    out. */
-function confirmAfterRefusal(target,names,keep,B,go){
-  var n=names.length, list=names.slice(0,4);
-  showPrompt(target,"<div class='confirm-card'><p><b>"+B.mark+" can't take "+n+
-    " of these</b>"+
-    (list.length?"<span class='cf-list'>"+list.map(esc).join("<br>")+
-      (n>list.length?"<br>and "+(n-list.length)+" more":"")+"</span>":"")+
-    "</p><div class='ca'><button class='confirm-go' type='button'>Book the other "+
-    (keep===1?"one":keep)+"</button>"+
+/* THE NEXT SAFE PICK ON A GAME THE BOOK TURNED A LEG DOWN ON.
+   Owner, 28 Sep 2026: "when sportybet cant take some games, quickly offer the
+   next safe pick to users in front of the games". Same game, a different
+   market, and only one the book PUBLISHES A PRICE FOR on this game - their own
+   quote is the one proof they sell it, and an offer that is refused in turn
+   is worse than no offer. The likeliest such market we rate at SAFE_ALT_MIN
+   or better; never the market just refused, never a game that has started.
+   Null when there is nothing honest to offer, and the row then says only why. */
+var SAFE_ALT_MIN=0.60;
+function nextSafePick(c,B){
+  B=B||curBook();
+  var f=c&&(c.f||fixtureById(c.id)); if(!f) return null;
+  var ko=kickMs(f); if(ko!=null&&ko<=Date.now()) return null;
+  if(/kicked off|started/.test(REFUSAL_WHY[c.id+"|"+c.code]||"")) return null;
+  var own=f[B.odds]||{}, best=null;
+  swapOptions(f).forEach(function(o){
+    if(o.code===c.code||!(o.p>=SAFE_ALT_MIN)) return;
+    if(!(own[o.code]>1.01)||!bookAllows(o.code,B)) return;
+    if(!best||o.p>best.p) best=o;
+  });
+  if(!best) return null;
+  return Object.assign({},c,{code:best.code,p:+best.p,label:best.label,
+    f:c.f||f,auto:false});
+}
+function confirmAfterRefusal(target,names,keep,B,go,refused){
+  var n=names.length;
+  /* One row per refused game, each with its swap when there is one - on by
+     default, because the reader asked to have it offered, and one tap turns
+     it off. The price is the book's own. */
+  var alts=(refused||[]).map(function(c){ return nextSafePick(c,B); });
+  var on=alts.map(function(a){ return !!a; });
+  var rows=names.slice(0,8).map(function(nm,i){
+    var a=alts[i], o=a&&((a.f||{})[B.odds]||{})[a.code];
+    return "<div class='ask-row'><span class='ask-g'>"+esc(nm)+"</span>"+
+      (a?"<button class='ask-alt on' type='button' data-i='"+i+"' aria-pressed='true'>"+
+        "<span class='ask-alt-k' aria-hidden='true'></span>"+
+        "<span>Swap to <b>"+esc(a.label)+"</b></span>"+
+        "<i>"+P0(a.p)+"%"+(o?" · @"+(+o).toFixed(2):"")+"</i></button>"
+       :"<span class='ask-none'>No safer bet on this game here</span>")+"</div>";
+  }).join("")+(n>8?"<p class='ask-more'>and "+(n-8)+" more</p>":"");
+  var label=function(){
+    var k=keep+on.filter(Boolean).length;
+    return k===keep?"Book the other "+(keep===1?"one":keep):"Book "+k+" games";
+  };
+  showPrompt(target,"<div class='confirm-card ask-refusal'><p><b>"+B.mark+" can't take "+n+
+    " of these</b></p>"+
+    "<div class='ask-rows'>"+rows+"</div>"+
+    "<div class='ca'><button class='confirm-go' type='button'>"+label()+"</button>"+
     "<button class='confirm-cancel' type='button'>Cancel</button></div></div>");
-  var el=$(target); if(!el) return;
-  el.querySelector(".confirm-go").addEventListener("click",function(){
-    clearPrompt(target); go();});
+  var el=promptEl(target); if(!el) return;
+  var goBtn=el.querySelector(".confirm-go");
+  el.querySelectorAll(".ask-alt").forEach(function(b){
+    b.addEventListener("click",function(){
+      var i=+b.dataset.i; on[i]=!on[i];
+      b.classList.toggle("on",on[i]); b.setAttribute("aria-pressed",on[i]?"true":"false");
+      goBtn.textContent=label();
+    });
+  });
+  goBtn.addEventListener("click",function(){
+    clearPrompt(target);
+    go(alts.filter(function(a,i){ return a&&on[i]; }));});
   el.querySelector(".confirm-cancel").addEventListener("click",function(){
     clearPrompt(target);});
+}
+/* A BOOKING THAT FAILED OUTRIGHT, SAID WHERE THE READER IS LOOKING.
+   The same pop-up as the questions above, for the same reason: the error used
+   to be written under the slip, off the bottom of the screen. */
+function showBookErr(target,html){
+  if(!showPrompt(target,"<div class='confirm-card ask-err'>"+html+
+    "<div class='ca'><button class='confirm-cancel' type='button'>OK</button></div></div>")) return;
+  var el=promptEl(target);
+  el.querySelector(".confirm-cancel").addEventListener("click",function(){ clearPrompt(target); });
 }
 function confirmDropUnpriced(picks,target,go,B){
   B=B||curBook();
@@ -13389,12 +13569,12 @@ function confirmDropUnpriced(picks,target,go,B){
   var byEvent=!B.full;
   if(!priced.length){
     clearPrompt(target);
-    el.innerHTML="<div class='code-err'><b>"+B.mark+
+    showBookErr(target,"<div class='code-err'><b>"+B.mark+
       (byEvent?" doesn't have "+(picks.length===1?"this game.":"any of these games."):
                " isn't offering "+(picks.length===1?"this market.":"any of these markets."))+"</b>"+
       /* "the other bookmaker" was true while there were two of them. */
       "<span>"+(byEvent?"Try another bookmaker.":
-        "Swap for another market, or try again nearer kickoff.")+"</span></div>";
+        "Swap for another market, or try again nearer kickoff.")+"</span></div>");
     return true;
   }
   var names=picks.filter(function(c){return !B.priced(c);})
@@ -13407,9 +13587,10 @@ function confirmDropUnpriced(picks,target,go,B){
     "</p><div class='ca'><button class='confirm-go' type='button'>Book the other "+
     (priced.length===1?"one":priced.length)+"</button>"+
     "<button class='confirm-cancel' type='button'>Cancel</button></div></div>");
-  el.querySelector(".confirm-go").addEventListener("click",function(){
+  var ask=promptEl(target);
+  ask.querySelector(".confirm-go").addEventListener("click",function(){
     clearPrompt(target); go(priced);});
-  el.querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt(target);});
+  ask.querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt(target);});
   return true;
 }
 /* CORNERS AND SHOTS, CHECKED ON SPORTYBET'S LIVE CARD BEFORE BOOKING.
@@ -13474,7 +13655,7 @@ function lineCheck(picks,B,target,go){
         "<div class='ca'><button class='confirm-go' type='button'>"+
         (swaps.length?"Update and book":"Book the other "+(next.length===1?"one":next.length))+
         "</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>");
-      var el=$(target); if(!el) return;
+      var el=promptEl(target); if(!el) return;
       el.querySelector(".confirm-go").addEventListener("click",function(){
         clearPrompt(target); go(next,swaps,dropped);});
       el.querySelector(".confirm-cancel").addEventListener("click",function(){
@@ -13501,16 +13682,24 @@ function bookRounds(picks,B,src,target,h,round){
       var safe=dropUnbookable(picks,d,B);
       if(round<REFUSAL_ROUNDS&&safe.length>=1&&safe.length<picks.length){
         var keep={}; safe.forEach(function(c){keep[c.id+"|"+c.code]=1;});
-        var out=picks.filter(function(c){return !keep[c.id+"|"+c.code];})
-          .map(function(c){var f=c.f||fixtureById(c.id);
+        var gone=picks.filter(function(c){return !keep[c.id+"|"+c.code];});
+        var out=gone.map(function(c){var f=c.f||fixtureById(c.id);
             return (f?(f.home+" v "+f.away):"One pick")+whyOf(c);});
-        confirmAfterRefusal(target,out,safe.length,B,function(){
-          bookRounds(safe,B,src,target,h,round+1);});
+        confirmAfterRefusal(target,out,safe.length,B,function(swapIn){
+          bookRounds(safe.concat(swapIn),B,src,target,h,round+1);},gone);
         return;
       }
       h.fail(d);
     })
     .catch(function(){ h.idle(); h.fail({_kind:"net"}); });
+}
+/* A swap taken in the refusal pop-up replaces the refused leg in the
+   wizard's cached slip too, or the list on screen goes on showing the market
+   the book turned down under a code that holds the other one. */
+function wspTakeSwaps(sw){
+  if(!sw||!sw.length||!WSP._slip) return;
+  var by={}; sw.forEach(function(a){ by[a.id]=a; });
+  WSP._slip.forEach(function(c){ var a=by[c.id]; if(a){ c.code=a.code; c.p=a.p; } });
 }
 function doBook(picks,retried,B){
   B=B||curBook();
@@ -13528,7 +13717,7 @@ function doBook(picks,retried,B){
       var code=B.codeOf(d);
       if(d&&d.success&&code){
         showCode(code,"bookResult",function(){
-          rememberSlip(picks,totalOdds(picks),code,B&&B.key);},B,picks);
+          rememberSlip(picks,totalOdds(picks),code,B&&B.key);},B,picks,d);
       } else {
         /* SportyBet can reject individual markets ("no market") when our pick
            used an estimated odd for a market it doesn't list. Retry once with
@@ -13538,20 +13727,21 @@ function doBook(picks,retried,B){
         var safe=dropUnbookable(picks,d,B);
         if(rejected&&(retried||0)<REFUSAL_ROUNDS&&safe.length>=1&&safe.length<picks.length){
           var _kept={}; safe.forEach(function(c){_kept[c.id+"|"+c.code]=1;});
-          var _out=picks.filter(function(c){return !_kept[c.id+"|"+c.code];})
-            .map(function(c){var f=c.f||fixtureById(c.id);
+          var _gone=picks.filter(function(c){return !_kept[c.id+"|"+c.code];});
+          var _out=_gone.map(function(c){var f=c.f||fixtureById(c.id);
               return (f?(f.home+" v "+f.away):"One pick")+whyOf(c);});
-          confirmAfterRefusal("bookResult",_out,safe.length,B,function(){
-            doBook(safe,(retried||0)+1,B);});
+          confirmAfterRefusal("bookResult",_out,safe.length,B,function(swapIn){
+            wspTakeSwaps(swapIn);
+            doBook(safe.concat(swapIn),(retried||0)+1,B);},_gone);
         } else {
-          $("bookResult").innerHTML=bookErrHTML(d,B);
+          showBookErr("bookResult",bookErrHTML(d,B));
         }
       }
     })
     .catch(function(){
       BUILD.booking=false; renderBuilder();
-      $("bookResult").innerHTML="<div class='code-err'>Couldn't reach the booking "+
-        "service. Check your connection and try again.</div>";
+      showBookErr("bookResult","<div class='code-err'>Couldn't reach the booking "+
+        "service. Check your connection and try again.</div>");
     });
 }
 /* The state half of Clear, without the repaint. Both Clear buttons run this -
@@ -13607,7 +13797,20 @@ function reconcileCode(code,picks,B){
       return kept.length?kept:null;
     });
 }
-function showCode(code,hostId,save,B,picks){
+/* WHAT THE CODE PAYS, ON THE CODE.
+   Owner, 28 Sep 2026: "after the ticket has been booked, the total booked
+   accepted odds should show". Bet9ja, BetKing and betPawa answer a booking
+   with their own total for the slip they accepted, and SportyBet's read-back
+   does too (API, 28 Sep) - that figure is theirs, so it is printed as theirs.
+   Without it, the total of the legs we sent, marked as an estimate. */
+function codeTotHTML(picks,d,B){
+  var n=(picks&&picks.length)||0; if(!n) return "";
+  var own=d&&+d.odds>1?+d.odds:null, est=own?null:totalOdds(picks);
+  return "<p class='code-tot'><span class='ct-n'>"+n+" game"+(n===1?"":"s")+"</span>"+
+    "<span class='ct-o'>"+(own?"×"+own.toFixed(2):(est>1?"about ×"+est.toFixed(2):""))+"</span>"+
+    (own?"<span class='ct-by'>total on "+B.mark+"</span>":"")+"</p>";
+}
+function showCode(code,hostId,save,B,picks,d){
   B=B||curBook();
   /* The host still holds whatever was last written there, and after a partial
      booking that is "...booking the other 2..." - a progress note with a
@@ -13628,6 +13831,7 @@ function showCode(code,hostId,save,B,picks){
       "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' aria-hidden='true'><path d='M6 6l12 12M18 6L6 18'/></svg></button>"+
     "<i>Your "+B.mark+" booking code</i>"+
     "<b>"+esc(code)+"</b>"+
+    "<div class='code-tot-w'>"+codeTotHTML(picks,d,B)+"</div>"+
     /* The warning belongs here, on the one screen a reader always sees after
        booking, rather than somewhere they may never look. */
     quotaNoteHTML(SW_QUOTA_LEFT)+
@@ -13737,6 +13941,10 @@ function showCode(code,hostId,save,B,picks){
   var _live=picks;
   function _useKept(kept){
     _live=kept;
+    /* Their read-back holds fewer legs than we sent, so their total from the
+       booking reply may be for the full slip - the estimate on what they
+       kept is the honest figure now. */
+    var tw=wrap.querySelector(".code-tot-w"); if(tw) tw.innerHTML=codeTotHTML(kept,null,B);
     rememberShortLink(code,kept,B);
     try{ wireSplit(wrap,kept,B); }catch(e){}
   }
@@ -13848,23 +14056,30 @@ function saferHere(wrap,code,B){
         var plan=saferRun(legs,B);
         if(!plan.length) return say("Already as safe as we can make it: no game here has a safer bet we trust.");
         var byLeg={}; plan.forEach(function(p){ byLeg[p.leg.eventId+"|"+p.from]=p; });
-        var sels=legs.map(function(l){
-          var p=byLeg[l.eventId+"|"+l.prediction];
-          var o={eventId:l.eventId}; o[B.arg||"prediction"]=p?p.to:l.prediction; return o;
-        });
         var before=saferOdds(legs,[],B), after=saferOdds(legs,plan,B);
-        return bookFetch(sels,B,"safer").then(function(r){
-          var nc=r&&r.success&&B.codeOf(r);
-          if(!nc){ go.innerHTML=label; go.removeAttribute("aria-busy");
-            box.insertAdjacentHTML("beforeend",bookErrHTML(r,B)); return; }
-          var picks=legs.map(function(l){
-            var f=fixtureByLeg(l,B); if(!f) return null;
-            var p=byLeg[l.eventId+"|"+l.prediction], c=p?p.to:l.prediction;
-            return {id:fid(f),code:c,f:f,p:p?p.pNew:mProb(f,c)};
-          }).filter(Boolean);
-          showCode(nc,"codeSaferHost",null,B,picks);
-          var slot=document.querySelector("#codeModal .code-safer");
-          if(slot) slot.outerHTML=saferDoneHTML(plan,before,after,legs.length,started,code,B);
+        /* THROUGH THE SAME REFUSAL LOOP AS EVERY OTHER BOOKING. A refusal here
+           was written INTO the pill - the error card took the pill's own
+           flex row and padding and blew it up to three times its height.
+           Reported by the owner, 28 Sep 2026: "that particular message
+           disfigures the modal and the pill is too big". Now it is the pop-up
+           every other path asks in, naming the games and offering the next
+           safe pick on each. A leg our board does not carry still goes in,
+           under this book's own id. */
+        var picks=legs.map(function(l){
+          var f=fixtureByLeg(l,B), p=byLeg[l.eventId+"|"+l.prediction], c=p?p.to:l.prediction;
+          var o={id:f?fid(f):"leg:"+l.eventId,code:c,f:f||null,p:p?p.pNew:(f?mProb(f,c):null)};
+          o[B.id]=l.eventId;
+          return o;
+        });
+        bookRounds(picks,B,"safer","codeSaferHost",{
+          busy:function(){},
+          idle:function(){ go.innerHTML=label; go.removeAttribute("aria-busy"); },
+          code:function(nc,sent,r){
+            showCode(nc,"codeSaferHost",null,B,sent,r);
+            var slot=document.querySelector("#codeModal .code-safer");
+            if(slot) slot.outerHTML=saferDoneHTML(plan,before,after,legs.length,started,code,B);
+          },
+          fail:function(r){ showBookErr("codeSaferHost",bookErrHTML(r,B)); }
         });
       })
       .catch(function(){ say("Couldn't reach the bookmaker. Check your connection and try again."); });
@@ -15178,12 +15393,12 @@ function renderConvert(){
     bookRounds(c.picks,c.to,"convert","byoConvOut",{
       busy:function(){ b.disabled=true; b.textContent="Booking…"; },
       idle:function(){ b.disabled=false; b.textContent=lbl; },
-      code:function(code,sent){ showCode(code,"byoConvOut",null,c.to,sent); },
+      code:function(code,sent,d){ showCode(code,"byoConvOut",null,c.to,sent,d); },
       fail:function(d){
-        $("byoConvOut").innerHTML=(d&&d._kind==="net")
+        showBookErr("byoConvOut",(d&&d._kind==="net")
           ? "<div class='code-err'><b>Couldn't reach the booking service.</b>"+
             "<span>Check your connection and try again.</span></div>"
-          : bookErrHTML(d,c.to); }
+          : bookErrHTML(d,c.to)); }
     });
   });
 }
@@ -15390,10 +15605,24 @@ function wireSafer(wrap,legs,B){
       gone[l.eventId+"|"+l.prediction]=1; });
     /* The slip's own event ids, with a market changed on some of them - and
        whatever the reader chose to leave out left out. */
-    var sels=legs.filter(function(l){ return !gone[l.eventId+"|"+l.prediction]; })
-      .map(function(l){
+    var kept=legs.filter(function(l){ return !gone[l.eventId+"|"+l.prediction]; });
+    var sels=kept.map(function(l){
       var code=byLeg[l.eventId+"|"+l.prediction]||l.prediction;
       var o={eventId:l.eventId}; o[B.arg||"prediction"]=code; return o;
+    });
+    /* EVERY LEG THAT WAS BOOKED, NOT ONLY THE ONES THAT MOVED.
+       The code dialog was handed `plan` - the swaps - so a fourteen-leg code
+       edited down to thirteen came back described as five games, which is
+       how many had been swapped. Reported by the owner, 28 Sep 2026: "i put
+       a long ticket of 14, said it can use 13 but when it gave me the code
+       back after editting it gave me five games". A leg our board does not
+       carry still goes in, under this book's own id, so the count and the
+       read-back check both see the whole ticket. */
+    var booked=kept.map(function(l){
+      var f=fixtureByLeg(l,B), code=byLeg[l.eventId+"|"+l.prediction]||l.prediction;
+      var o={id:f?fid(f):null,code:code,f:f||null,p:f?mProb(f,code):null};
+      o[B.id]=l.eventId;
+      return o;
     });
     go.disabled=true; go.textContent="Booking…";
     /* THE PANEL CAN LEAVE WHILE THE REQUEST IS STILL IN THE AIR.
@@ -15419,17 +15648,15 @@ function wireSafer(wrap,legs,B){
         BYO._booking=false;
         if(!out) return;            /* the code is minted; nowhere left to draw it */
         out.innerHTML="";
-        showCode(code,"byoSaferOut",null,B,plan.map(function(p){
-          return {id:p.f?fid(p.f):null,code:p.to,f:p.f,p:p.pNew};
-        }));
+        showCode(code,"byoSaferOut",null,B,booked,d);
       }else{
-        if(out) out.innerHTML=bookErrHTML(d,B);
+        if(out) showBookErr("byoSaferOut",bookErrHTML(d,B));
         done();
       }
     }).catch(function(){
       var out=$("byoSaferOut");
-      if(out) out.innerHTML="<div class='code-err'><b>Couldn't reach the "+
-        "booking service.</b><span>Check your connection and try again.</span></div>";
+      if(out) showBookErr("byoSaferOut","<div class='code-err'><b>Couldn't reach the "+
+        "booking service.</b><span>Check your connection and try again.</span></div>");
       done();
     });
   });
@@ -16187,10 +16414,10 @@ function doBookList(picks,resultId,btnId,label,B){
     busy:function(){ if(btn){btn.disabled=true;btn.textContent="Booking\u2026";} },
     idle:function(){ if(btn){btn.disabled=false;btn.textContent=label;} },
     /* What was BOOKED, which after a narrowing is not every game shown. */
-    code:function(code,sent){
+    code:function(code,sent,d){
       showCode(code,resultId,function(){
-        rememberSlip(sent,totalOdds(sent),code,B&&B.key);},B,sent); },
-    fail:function(d){ $(resultId).innerHTML=bookErrHTML(d,B); }
+        rememberSlip(sent,totalOdds(sent),code,B&&B.key);},B,sent,d); },
+    fail:function(d){ showBookErr(resultId,bookErrHTML(d,B)); }
   });
 }
 /* ---- Slip of the Day: safe pre-built acca ---- */
@@ -18076,10 +18303,10 @@ async function bookMy(){
     var uniq=[],seenEv={};
     bookable.forEach(function(c){var k=bookIdOf(c,B);if(!seenEv[k]){seenEv[k]=1;uniq.push(c);}});
     showPrompt("myBookResult","<div class='confirm-card'><p>You have the same match picked more than once. "+B.mark+" takes one pick per match - book "+uniq.length+" unique game"+(uniq.length===1?"":"s")+"?</p><div class='ca'><button class='confirm-go' type='button'>Book "+uniq.length+"</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>");
-    $("myBookResult").querySelector(".confirm-go").addEventListener("click",function(){
+    promptEl("myBookResult").querySelector(".confirm-go").addEventListener("click",function(){
       clearPrompt("myBookResult");
       if(!confirmDropUnpriced(uniq,"myBookResult",doBookMy,B)) doBookMy(uniq);});
-    $("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt("myBookResult");});
+    promptEl("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt("myBookResult");});
     return;
   }
   if(missing.length){
@@ -18088,10 +18315,10 @@ async function bookMy(){
       "<div class='ca'><button class='confirm-go' type='button'>Book the other "+
       (bookable.length===1?"one":bookable.length)+"</button>"+
       "<button class='confirm-cancel' type='button'>Cancel</button></div></div>");
-    $("myBookResult").querySelector(".confirm-go").addEventListener("click",function(){
+    promptEl("myBookResult").querySelector(".confirm-go").addEventListener("click",function(){
       clearPrompt("myBookResult");
       if(!confirmDropUnpriced(bookable,"myBookResult",doBookMy,B)) doBookMy(bookable);});
-    $("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt("myBookResult");});
+    promptEl("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt("myBookResult");});
     return;
   }
   /* MORE SELECTIONS THAN THE BETSLIP TAKES.
@@ -18123,10 +18350,10 @@ async function bookMy(){
        stops a four-ticket split costing codes the reader does not have lives
        there, and a second call site would skip it. */
     wireSplit($("myBookResult"),bookable,B,{sel:"#myCapCard"});
-    $("myBookResult").querySelector(".confirm-go").addEventListener("click",function(){
+    promptEl("myBookResult").querySelector(".confirm-go").addEventListener("click",function(){
       clearPrompt("myBookResult");
       if(!confirmDropUnpriced(_fit,"myBookResult",doBookMy,B)) doBookMy(_fit);});
-    $("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt("myBookResult");});
+    promptEl("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt("myBookResult");});
     return;
   }
   if(confirmDropUnpriced(bookable,"myBookResult",doBookMy,B)) return;
@@ -18198,7 +18425,7 @@ function doBookMy(bookable,retried,B){
         var _od=_legs.reduce(function(t,x){
           return t*legOdd(fixtureById(x.id),x.code,x.p);},1);
         showCode(_code,"myBookResult",function(){
-          rememberSlip(_legs,_od,_code,B&&B.key);},B,_legs);
+          rememberSlip(_legs,_od,_code,B&&B.key);},B,_legs,d);
       }
       else{
         /* The builder no longer offers a market SportyBet does not list, but a
@@ -18217,26 +18444,32 @@ function doBookMy(bookable,retried,B){
              into the booking pre-flight. */
           var _who=function(x){var f=fixtureById(x.id);
             return (f?(f.home+" v "+f.away+(x.label?" - "+x.label:"")):(x.label||"One pick"))+whyOf(x);};
-          confirmAfterRefusal("myBookResult",_dropped.map(_who),safe.length,B,function(){
+          confirmAfterRefusal("myBookResult",_dropped.map(_who),safe.length,B,function(swapIn){
             /* Only now. Taking the refused legs out of the slip itself, not
                just out of the request: left in, the code says three games
                while the sheet above it lists four and totals odds for all of
                them, and the odd we had for the refused one is gone by now so
                its price would fall back to our own estimate. Correct - but it
                is an edit to somebody's slip, so it waits for them to agree. */
-            MYSLIP=MYSLIP.filter(function(x){return _keep[x.id+"|"+x.code];});
+            /* A swap taken is kept in the slip as the new market, in the
+               refused leg's place, so the sheet shows what the code holds. */
+            var _sw={}; swapIn.forEach(function(a){ _sw[a.id]=a; });
+            MYSLIP=MYSLIP.filter(function(x){
+              if(_keep[x.id+"|"+x.code]) return true;
+              var a=_sw[x.id]; if(!a) return false;
+              x.code=a.code; x.label=a.label; x.p=a.p; x.auto=false; return true;});
             saveMy(); renderFab();
             if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
-            doBookMy(safe,(retried||0)+1,B);
-          });
+            doBookMy(safe.concat(swapIn),(retried||0)+1,B);
+          },_dropped);
           return;
         }
-        $("myBookResult").innerHTML=bookErrHTML(d,B);
+        showBookErr("myBookResult",bookErrHTML(d,B));
       }
     }).catch(function(){
       if(gen!==MYBOOK_GEN) return;
       resetMyBookBtn();
-      $("myBookResult").innerHTML=bookErrHTML({_kind:"net"},B);});
+      showBookErr("myBookResult",bookErrHTML({_kind:"net"},B));});
 }
 document.addEventListener("click",function(e){
   var a=e.target.closest&&e.target.closest("[data-add]");
@@ -18616,6 +18849,27 @@ function wspMarkets(){var m=[];
    WSP.legodd in both places: the chip row and the preview cache key both ask
    this, so what the row shows cannot drift from what gets built. It briefly had
    a fourth answer, "slider", when Auto was a chip in this row. */
+/* The three slip styles, shared by both builders. */
+var SLIP_STYLES=[[1.25,"More games","smaller odds"],[1.4,"Balanced",""],[1.7,"Fewer games","bigger odds"]];
+/* WHAT THE STYLE MEANS TO THE SLIDER, which has no payout to divide.
+   The Wizard reads legodd as "reach the target with legs priced near this",
+   so the leg count falls out of the arithmetic. The Slider's count comes from
+   the risk dial instead, so the style says the same thing two ways: prefer
+   markets priced near the style's leg odds, and take more or fewer games.
+   Balanced is neutral - no pull, no change of count - so a reader who never
+   touches the row gets exactly the Slider they had. */
+function sliderStyle(){
+  var per=WSP.legodd||1.4;
+  if(per<=1.3) return {per:per,games:1.3,pull:1};
+  if(per>=1.6) return {per:per,games:0.7,pull:1};
+  return {per:per,games:1,pull:0};
+}
+/* 1 at the style's leg odds, 0 at double or half of them - scored in log
+   space, because 1.25 against 1.5 is the same step as 1.5 against 1.8. */
+function styleFit(odd,per){
+  if(!(odd>1)) return 0.5;
+  return Math.max(0,1-Math.abs(Math.log(odd/per))/Math.log(2));
+}
 function wspStyleOn(){
   return WSP.legodd;
 }
@@ -20136,6 +20390,28 @@ function renderSliderPanel(){
     var _z=displayRisk<33?"safe":displayRisk<66?"mid":"risky";var _sp=$("sliderPanel");if(_sp)_sp.setAttribute("data-zone",_z);
     _r.style.setProperty("--rz",_z==="safe"?"rgba(43,199,120,.35)":_z==="mid"?"rgba(242,184,75,.4)":"rgba(230,57,70,.4)");}})();
   $("riskName").textContent=firstVisit ? "-" : riskWord(BUILD.risk);
+  var _ss=$("sldStyleChips");
+  if(_ss){
+    _ss.innerHTML=SLIP_STYLES.map(function(st){
+      return "<button class='wsp-chip wsp-style"+(WSP.legodd===st[0]?" on":"")+"' type='button' data-lo='"+st[0]+"'><b>"+
+        st[1]+"</b>"+(st[2]?"<i>"+st[2]+"</i>":"")+"</button>"; }).join("");
+    _ss.querySelectorAll("[data-lo]").forEach(function(c){
+      c.addEventListener("click",function(){
+        WSP.legodd=+c.dataset.lo; WSP._sig=null;
+        BUILD.touched=true; BUILD.removed={};
+        renderBuilder();
+      });
+    });
+  }
+  var _back=$("sldToWizard");
+  if(_back){
+    _back.hidden=!BUILD.fromWiz;
+    if(!_back._w){ _back._w=1; _back.addEventListener("click",function(){
+      BUILD.mode="wizard"; BUILD.fromWiz=false;
+      try{localStorage.setItem("sw.mode","wizard");}catch(e){}
+      renderBuilder(); bldToTop();
+    }); }
+  }
   // Slider panel visibility
   $("sliderPanel").hidden=false;
   $("wizardPanel").hidden=true;
@@ -20188,7 +20464,7 @@ function renderWizardPanel(){
      shorter one. Calling it "safer" told people the opposite of the truth
      and the confidence figure beside it agreed with the lie. These say what
      you get and let the chance figure say what it costs. */
-  var styles=[[1.25,"More games","smaller odds"],[1.4,"Balanced",""],[1.7,"Fewer games","bigger odds"]];
+  var styles=SLIP_STYLES;
   var html="";
   html += "<div class='wsp-lbl'>Pick a target payout</div><div class='wsp-chips' id='wspOddsChips'>"+
     odds.map(function(o,i){
@@ -20477,9 +20753,9 @@ function renderWizardPanel(){
   /* Absent before a payout is chosen, like the chips it sits under. */
   var _toSlider=$("wspToSlider");
   if(_toSlider) _toSlider.addEventListener("click",function(){
-    BUILD.mode="slider";
+    BUILD.mode="slider"; BUILD.fromWiz=true;
     try{localStorage.setItem("sw.mode","slider");}catch(e){}
-    renderBuilder();
+    renderBuilder(); bldToTop();
   });
   $("wspGo").addEventListener("click",function(){
     /* Disabled would have been silent about why. It stays pressable and says
@@ -20604,6 +20880,9 @@ function renderBuilderOutput(){
     (_jackSlip?"":"<div class='stat'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z'/></svg></span><b>"+(picks.length?P0(avg)+"%":"-")+"</b><i>Average confidence</i></div>")+
     "<div class='stat odds'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='8'/><path d='M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3H10a1.5 1.5 0 0 0 0 3h4'/></svg></span><b id='totOdds'>"+(picks.length?pre+odds.toFixed(2):"-")+"</b>"+
       "<i>Total odds"+(picks.length&&!real?" (est.)":"")+"</i></div>";
+  var _bf=$("bfOdds");
+  if(_bf) _bf.innerHTML=picks.length?"<b>"+pre+odds.toFixed(2)+"</b><i>"+
+    picks.length+" game"+(picks.length===1?"":"s")+"</i>":"";
   // Slip rows
   if(wizGhost){
     /* Ghost mode: numbers above are real, games hidden. Foot visibility is
@@ -20836,12 +21115,20 @@ paintScope();
   apply();
   t.addEventListener("click",function(){ open=!open; try{localStorage.setItem("sw.filters",open?"1":"0");}catch(e){} apply(); });
 })();
+/* The builder's own top - the Slider/Wizard tabs - brought into view after a
+   switch made from further down the page. The switch changes the whole panel
+   under the reader, and staying at the old scroll position showed them the
+   middle of a different panel with the tabs that explain it off screen. */
+function bldToTop(){
+  var t=document.querySelector(".bld-mode-btn"); if(!t) return;
+  try{ t.scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"center"}); }catch(e){}
+}
 // Mode toggle
 document.querySelectorAll(".bld-mode-btn").forEach(function(btn){
   btn.addEventListener("click",function(){
     var mode=btn.dataset.mode;
     if(mode===BUILD.mode) return;
-    BUILD.mode=mode;
+    BUILD.mode=mode; BUILD.fromWiz=false;
     try{localStorage.setItem("sw.mode",mode);}catch(e){}
     renderBuilder();
   });
