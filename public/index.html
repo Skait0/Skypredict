@@ -1814,7 +1814,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .ask-scrim{position:fixed;inset:0;z-index:240;background:rgba(10,14,10,.5);
   backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:16px}
 .ask-scrim[hidden]{display:none}
-.ask-card{position:relative;width:min(440px,100%);max-height:min(82vh,680px);overflow:auto;
+.ask-card{position:relative;width:min(440px,100%);max-height:min(82vh,680px);overflow:auto;overscroll-behavior:contain;
   background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
   padding:18px 16px 16px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
 .ask-x{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;border:0;
@@ -1825,22 +1825,22 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .ask-card .code-err{margin:0 0 14px}
 .ask-card .confirm-card .ca{justify-content:stretch}
 .ask-card .confirm-card .ca button{flex:1 1 auto}
-.ask-rows{display:flex;flex-direction:column;gap:8px;margin:0 0 14px}
-.ask-row{display:flex;flex-direction:column;gap:7px;padding:10px;border:1px solid var(--line-soft);
+.ask-rows{display:flex;flex-direction:column;gap:6px;margin:0 0 12px}
+.ask-row{display:flex;flex-direction:column;gap:5px;padding:9px 10px;border:1px solid var(--line-soft);
   border-radius:var(--r-md);background:var(--raise)}
 .ask-g{font-size:13.5px;font-weight:700;color:var(--text);line-height:1.3}
 .ask-none{font-size:12.5px;color:var(--soft)}
 .ask-more{margin:0;font-size:12.5px;color:var(--soft)}
-.confirm-card .ask-alt{display:flex;align-items:center;gap:9px;width:100%;text-align:left;
-  padding:9px 10px;border-radius:var(--r-md);border:1px solid var(--line)!important;
-  background:var(--card);color:var(--text);font-size:13px;font-weight:600;line-height:1.3}
-.confirm-card .ask-alt b{font-weight:800}
-.ask-alt i{margin-left:auto;font-style:normal;font-size:12px;color:var(--soft);white-space:nowrap}
-.ask-alt-k{flex:0 0 18px;height:18px;border-radius:5px;border:2px solid var(--line);
-  display:grid;place-items:center;font-size:12px;font-weight:900;color:var(--on-green,#fff)}
-.confirm-card .ask-alt.on{border-color:var(--win)!important;background:var(--win-wash)}
-.ask-alt.on .ask-alt-k{background:var(--win);border-color:var(--win)}
-.ask-alt.on .ask-alt-k::after{content:"\2713"}
+.ask-off{font-size:12.5px;color:var(--soft)}
+.ask-off s{color:var(--red-ink,var(--soft))}
+.ask-ch{display:flex;gap:6px}
+.confirm-card .ask-opt{flex:1 1 auto;min-width:0;text-align:left;padding:8px 10px;border-radius:var(--r-md);
+  border:1px solid var(--line)!important;background:var(--card);color:var(--soft);
+  font-size:12.5px;font-weight:600;line-height:1.3}
+.confirm-card .ask-opt[data-v='drop']{flex:0 0 auto;text-align:center}
+.confirm-card .ask-opt b{font-weight:800}
+.ask-opt i{font-style:normal;opacity:.8;white-space:nowrap}
+.confirm-card .ask-opt.on{border-color:var(--win)!important;background:var(--win-wash);color:var(--text)}
 /* What the code pays, under the code - see codeTotHTML. No <b>: .code-card b
    is the 32px booking-code style. */
 .code-tot{display:flex;align-items:baseline;justify-content:center;gap:8px;flex-wrap:wrap;
@@ -3219,6 +3219,16 @@ html{interpolate-size:allow-keywords}
 .bf-odds b{font-size:17px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
 .bf-odds i{font-style:normal;font-size:11.5px;color:var(--soft)}
 .bf-odds:empty{display:none}
+/* GET CODE ON A LINE OF ITS OWN, ON A PHONE, ALWAYS. With the total beside it
+   the row fitted until the odds reached three digits, then Get code wrapped
+   under - and dragging the Slider moved it up and down under the thumb
+   (owner, 29 Sep 2026: "the get code button moves down into its own line.
+   let it stay on its own line"). The id outranks every earlier book-btn rule. */
+@media(max-width:600px){
+  .bld-foot #bookBtn{flex:1 0 100%;margin-left:0;order:9}
+  .bld-foot .bf-odds{margin-left:auto;text-align:right}
+  html.mode-build.bld-foot-on .myfab.myfab{bottom:calc(var(--btabs-h,0px) + 142px)}
+}
 /* Secondary actions become quiet icon-ghost buttons so Book owns the bar. */
 .bld-foot .clear-btn{flex:0 0 auto;width:44px;height:44px;padding:0;display:grid;place-items:center;
   background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);border-radius:var(--r-sm);
@@ -11771,7 +11781,7 @@ function bookWire(){
    The two asks about the build itself (payAsk, mkAsk) stay in the panel:
    they are about the chips they sit under, not about a booking. */
 var INLINE_ASK={payAsk:1,mkAsk:1};
-var ASK_FOR=null, ASK_OVF="";
+var ASK_FOR=null;
 function askHost(){
   var m=$("askModal"); if(m) return m;
   m=document.createElement("div");
@@ -11798,11 +11808,32 @@ function askHost(){
 function promptEl(target){
   return (!INLINE_ASK[target]&&ASK_FOR===target)?$("askBody"):$(target);
 }
-function askLock(on){
+/* ONE SCROLL LOCK FOR EVERY OVERLAY. Owner, 29 Sep 2026: "why does the
+   background still scroll when a modal is up?" Three overlays each set
+   body{overflow:hidden} on their own, which a phone ignores - iOS Safari
+   scrolls the page through it - and each restored the value it had saved,
+   so closing the pop-up over the code dialog unlocked the page under the
+   dialog. Now the page is pinned in place (position:fixed at its own scroll
+   offset, the form iOS respects), every overlay holds the lock by name, and
+   the page is released - back where it was - only when the last one lets go. */
+var SCROLL_HELD={}, SCROLL_Y=0;
+function scrollLock(who,on){
   if(typeof document==="undefined"||!document.body) return;
-  if(on){ ASK_OVF=document.body.style.overflow; document.body.style.overflow="hidden"; }
-  else document.body.style.overflow=ASK_OVF;
+  var was=Object.keys(SCROLL_HELD).length>0;
+  if(on) SCROLL_HELD[who]=1; else delete SCROLL_HELD[who];
+  var now=Object.keys(SCROLL_HELD).length>0;
+  if(was===now) return;
+  var b=document.body.style, h=document.documentElement.style;
+  if(now){
+    SCROLL_Y=window.scrollY||0;
+    h.overflow="hidden"; b.overflow="hidden";
+    b.position="fixed"; b.top=(-SCROLL_Y)+"px"; b.left="0"; b.right="0"; b.width="100%";
+  }else{
+    h.overflow=""; b.overflow=""; b.position=""; b.top=""; b.left=""; b.right=""; b.width="";
+    try{ window.scrollTo({top:SCROLL_Y,behavior:"instant"}); }catch(e){ window.scrollTo(0,SCROLL_Y); }
+  }
 }
+function askLock(on){ scrollLock("ask",on); }
 function showPrompt(target,html){
   if(INLINE_ASK[target]){ var el=$(target); if(!el) return false; el.innerHTML=html; return true; }
   var m=askHost();
@@ -13528,41 +13559,50 @@ function nextSafePick(c,B){
 }
 function confirmAfterRefusal(target,names,keep,B,go,refused){
   var n=names.length;
-  /* One row per refused game, each with its swap when there is one - on by
-     default, because the reader asked to have it offered, and one tap turns
-     it off. The price is the book's own. */
+  /* ONE ROW PER REFUSED GAME: the game, the market they refused and why,
+     then Swap or Remove. Owner, 29 Sep 2026: "it just says the market that
+     users want to swap to but it doesnt say the unavailable market ... have a
+     swap or remove button ... tighten all new windows". Swap is chosen by
+     default when there is one to offer; a game with nothing safer on sale
+     says so and is simply left out. The price is the book's own. */
   var alts=(refused||[]).map(function(c){ return nextSafePick(c,B); });
-  var on=alts.map(function(a){ return !!a; });
+  var swap=alts.map(function(a){ return !!a; });
+  var plain=function(s){ return String(s||"").replace(/<[^>]+>/g,""); };
   var rows=names.slice(0,8).map(function(nm,i){
-    var a=alts[i], o=a&&((a.f||{})[B.odds]||{})[a.code];
-    return "<div class='ask-row'><span class='ask-g'>"+esc(nm)+"</span>"+
-      (a?"<button class='ask-alt on' type='button' data-i='"+i+"' aria-pressed='true'>"+
-        "<span class='ask-alt-k' aria-hidden='true'></span>"+
-        "<span>Swap to <b>"+esc(a.label)+"</b></span>"+
-        "<i>"+P0(a.p)+"%"+(o?" · @"+(+o).toFixed(2):"")+"</i></button>"
-       :"<span class='ask-none'>No safer bet on this game here</span>")+"</div>";
-  }).join("")+(n>8?"<p class='ask-more'>and "+(n-8)+" more</p>":"");
-  var label=function(){
-    var k=keep+on.filter(Boolean).length;
-    return k===keep?"Book the other "+(keep===1?"one":keep):"Book "+k+" games";
-  };
-  showPrompt(target,"<div class='confirm-card ask-refusal'><p><b>"+B.mark+" can't take "+n+
-    " of these</b></p>"+
+    var c=(refused||[])[i], f=c&&(c.f||fixtureById(c.id)), a=alts[i];
+    var game=f?f.home+" v "+f.away:nm;
+    var mkt=c?plain(c.label||(f?mLabel(f,c.code):c.code)):"";
+    var why=c?(REFUSAL_WHY[c.id+"|"+c.code]||""):"";
+    var o=a&&((a.f||{})[B.odds]||{})[a.code];
+    return "<div class='ask-row'><span class='ask-g'>"+esc(game)+"</span>"+
+      (mkt?"<span class='ask-off'><s>"+esc(mkt)+"</s>"+(why?" · "+esc(why):"")+"</span>":"")+
+      (a?"<div class='ask-ch' role='group' aria-label='"+esc(game)+"'>"+
+          "<button class='ask-opt on' type='button' data-i='"+i+"' data-v='swap' aria-pressed='true'>"+
+            "Swap to <b>"+esc(plain(a.label))+"</b> <i>"+P0(a.p)+"%"+(o?" · "+(+o).toFixed(2):"")+"</i></button>"+
+          "<button class='ask-opt' type='button' data-i='"+i+"' data-v='drop' aria-pressed='false'>Remove</button>"+
+        "</div>"
+       :"<span class='ask-none'>Removed - nothing safer on sale</span>")+"</div>";
+  }).join("")+(n>8?"<p class='ask-more'>+"+(n-8)+" more removed</p>":"");
+  var label=function(){ return "Book "+(keep+swap.filter(Boolean).length); };
+  showPrompt(target,"<div class='confirm-card ask-refusal'><p><b>"+B.mark+" can't take "+n+"</b></p>"+
     "<div class='ask-rows'>"+rows+"</div>"+
     "<div class='ca'><button class='confirm-go' type='button'>"+label()+"</button>"+
     "<button class='confirm-cancel' type='button'>Cancel</button></div></div>");
   var el=promptEl(target); if(!el) return;
   var goBtn=el.querySelector(".confirm-go");
-  el.querySelectorAll(".ask-alt").forEach(function(b){
+  el.querySelectorAll(".ask-opt").forEach(function(b){
     b.addEventListener("click",function(){
-      var i=+b.dataset.i; on[i]=!on[i];
-      b.classList.toggle("on",on[i]); b.setAttribute("aria-pressed",on[i]?"true":"false");
+      var i=+b.dataset.i; swap[i]=b.dataset.v==="swap";
+      el.querySelectorAll(".ask-opt[data-i='"+i+"']").forEach(function(x){
+        var on=(x.dataset.v==="swap")===swap[i];
+        x.classList.toggle("on",on); x.setAttribute("aria-pressed",on?"true":"false");
+      });
       goBtn.textContent=label();
     });
   });
   goBtn.addEventListener("click",function(){
     clearPrompt(target);
-    go(alts.filter(function(a,i){ return a&&on[i]; }));});
+    go(alts.filter(function(a,i){ return a&&swap[i]; }));});
   el.querySelector(".confirm-cancel").addEventListener("click",function(){
     clearPrompt(target);});
 }
@@ -13682,6 +13722,72 @@ function lineCheck(picks,B,target,go){
         clearPrompt(target);});
     });
   return true;
+}
+/* OUR OWN SLIPS, CHECKED BEFORE THEY ARE SHOWN (step 3 of the refusal work,
+   owed since 25 Sep; built 29 Sep 2026 at the owner's request).
+   lineCheck asks at booking time, which is the right moment for a slip the
+   reader chose - but a slip the builder chose was being shown off our
+   45-minute copy of SportyBet's card, where 15% of shots lines and 10% of
+   corners lines had already gone, and the reader found out only by pressing
+   Get code. So the builders' corners and shots legs are asked about as soon
+   as a slip is on screen, quietly, and the answer is written where the
+   builders already look: a closed line loses its price, a moved line gains
+   SportyBet's new line at their live price. cornersOpen reads exactly that
+   price, so both builders stop offering the dead line and the rebuild picks
+   from what is really on sale. Nothing the reader chose is touched - a leg
+   is only ever replaced by the builder that put it there.
+   Bounded: SportyBet only, corners and shots only, eight games a call, one
+   call at a time, nothing asked twice in five minutes, a pause after the
+   last redraw so a slider being dragged is not a stream of calls, and any
+   failure leaves the slip exactly as the cache had it. */
+var PRECHECK={seen:{},busy:false,timer:null};
+var PRECHECK_TTL=5*60e3;
+function precheckLines(picks,B,changed){
+  if(!B||B.key!=="sporty"||PRECHECK.busy) return false;
+  var now=Date.now(), key=function(c){ return bookIdOf(c,B)+"|"+c.code; };
+  var todo=(picks||[]).filter(function(c){
+    if(!c||!LINE_CODE.test(c.code)||!bookIdOf(c,B)) return false;
+    var t=PRECHECK.seen[key(c)];
+    return !(t&&now-t<PRECHECK_TTL);
+  }).slice(0,8);
+  if(!todo.length) return false;
+  PRECHECK.busy=true;
+  todo.forEach(function(c){ PRECHECK.seen[key(c)]=now; });
+  var by={}; todo.forEach(function(c){ by[key(c)]=c; });
+  var t=setTimeout(function(){ PRECHECK.busy=false; },12000);
+  fetch(B.book+"&check=lines",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({selections:todo.map(function(c){ return B.sel(c); })})})
+    .then(function(r){ return r.json(); }).catch(function(){ return {}; })
+    .then(function(d){
+      clearTimeout(t); PRECHECK.busy=false;
+      var n=0;
+      ((d&&d.verdicts)||[]).forEach(function(v){
+        var c=by[v.eventId+"|"+v.prediction]; if(!c) return;
+        var f=c.f||fixtureById(c.id); if(!f) return;
+        var o=f[B.odds]=f[B.odds]||{};
+        if(o[c.code]){ delete o[c.code]; n++; }
+        if(v.reason==="line_moved"&&v.now&&+v.odds>1){
+          o[v.now]=+v.odds;
+          PRECHECK.seen[v.eventId+"|"+v.now]=Date.now();
+        }
+      });
+      if(n&&changed) changed(n);
+    });
+  return true;
+}
+/* After the builder has drawn a slip, and not while it is still moving. */
+function schedulePrecheck(picks){
+  clearTimeout(PRECHECK.timer);
+  PRECHECK.timer=setTimeout(function(){
+    precheckLines(picks,curBook(),function(n){
+      /* The wizard caches its slip against a signature; the price it was
+         built from has changed, so it is rebuilt from the same seed. */
+      WSP._sig=null;
+      renderBuilder();
+      window.swToast&&window.swToast("Slip updated: SportyBet moved "+n+" line"+(n===1?"":"s"),
+        "info","precheck");
+    });
+  },900);
 }
 /* THE REFUSAL LOOP, FOR EVERY PATH THAT BOOKS ORDINARY PICKS. doBook and
    doBookMy grew their own copies; the converter and the board's Book had
@@ -13936,9 +14042,8 @@ function showCode(code,hostId,save,B,picks,d){
   /* A fixed scrim stops clicks, not the wheel: the board went on scrolling
      behind the code, and on a phone the modal appeared to drift off. Locked
      while it is open, and only while it is open. */
-  var _ovf=document.body.style.overflow;
-  document.body.style.overflow="hidden";
-  function close(){wrap.remove();document.body.style.overflow=_ovf;}
+  scrollLock("code",true);
+  function close(){wrap.remove();scrollLock("code",false);}
   wrap.addEventListener("click",function(e){if(e.target===wrap)close();});
   wrap.querySelector(".code-x").addEventListener("click",close);
   wrap.querySelector(".code-copy").addEventListener("click",function(){
@@ -15851,9 +15956,8 @@ function legName(l){ return (l.home||"a game")+" v "+(l.away||""); }
    legs that reach it. The old "drop the weakest N" buttons sit under it. */
 function trimJobHTML(legs,B){
   return "<div class='byo-trim-to'>"+
-    "<p class='sp-q'>Trim it to the odds you want</p>"+
-    "<p class='byo-note'>We keep the games our model rates likeliest, exactly as they are, "+
-      "until the total reaches your number.</p>"+
+    "<p class='sp-q'>Trim to your odds</p>"+
+    "<p class='byo-note'>Keeps our likeliest games, unchanged.</p>"+
     "<div class='tt-row'><span class='tt-x' aria-hidden='true'>\u00d7</span>"+
       "<input id='ttOdds' class='tt-in' inputmode='decimal' autocomplete='off' "+
         "placeholder='e.g. 150' aria-label='The odds you want'>"+
@@ -15871,20 +15975,18 @@ function wireTrimTo(wrap,legs,B){
     var rows=legs.map(function(l){ var c=legChance(l,B); return {leg:l,p:c.p,src:c.src,odds:+l.odds}; });
     var r=trimToOdds(rows,t);
     if(r.short){
-      plan.innerHTML="<p class='byo-note'>Every priced game together pays about x"+r.odds.toFixed(2)+
-        ", under x"+t+" - there is nothing to trim.</p>";
+      plan.innerHTML="<p class='byo-note'>The whole slip is only x"+r.odds.toFixed(2)+".</p>";
       return;
     }
     var kept=r.keep.map(function(k){ return k.leg; }), n=kept.length;
     var mod=r.keep.filter(function(k){ return k.src==="model"; });
     var avg=mod.length?mod.reduce(function(s,k){ return s+k.p; },0)/mod.length:null;
-    var label="Book these "+n;
-    plan.innerHTML="<p class='sp-q'>Keep "+n+" of "+legs.length+", about x"+r.odds.toFixed(2)+"</p>"+
-      (avg!=null?"<p class='byo-note'>"+(mod.length===n?"They":mod.length+" of them")+
-        " average "+P0(avg)+"% on our model.</p>":"")+
-      (r.cut.length?"<p class='byo-note'>Out: "+r.cut.slice(0,8).map(function(c){
-        return esc(legName(c.leg))+(c.odds>1.01?"":" (no price)"); }).join("; ")+
-        (r.cut.length>8?"; and "+(r.cut.length-8)+" more":"")+"</p>":"")+
+    var label="Book "+n;
+    plan.innerHTML="<p class='sp-q'>Keep "+n+" of "+legs.length+" · x"+r.odds.toFixed(2)+
+        (avg!=null?" · avg "+P0(avg)+"%":"")+"</p>"+
+      (r.cut.length?"<p class='byo-note'>Out: "+r.cut.slice(0,4).map(function(c){
+        return esc(legName(c.leg)); }).join(", ")+
+        (r.cut.length>4?" +"+(r.cut.length-4):"")+"</p>":"")+
       "<div class='byo-acts'><button class='byo-go' id='ttBook' type='button'>"+label+"</button></div>";
     var b=plan.querySelector("#ttBook");
     b.addEventListener("click",function(){ bookLegs(kept,B,"trim","ttOut",b,label); });
@@ -15897,7 +15999,7 @@ function wireTrimTo(wrap,legs,B){
 function changeJobHTML(legs){
   var opts=changeOptions(legs);
   if(!opts.length) return "<p class='byo-note'>Nothing on this slip that one change can move.</p>";
-  return "<p class='sp-q'>Change a market on every game</p>"+
+  return "<p class='sp-q'>Change a market</p>"+
     "<div class='cg-row'><label class='cg-l'>Change<select id='cgFrom'>"+
       opts.map(function(o){ return "<option value='"+o.from+"'>"+CHANGE_FROM[o.from].label+" ("+o.n+")</option>"; }).join("")+
     "</select></label><label class='cg-l'>to<select id='cgTo'></select></label></div>"+
@@ -15926,12 +16028,11 @@ function wireChange(wrap,legs,B){
         (a!=null&&z!=null?" <i>"+P0(a)+"% \u2192 "+P0(z)+"%</i>":"")+"</span></div>";
     });
     var mean=function(xs){ return xs.reduce(function(s,x){ return s+x; },0)/xs.length; };
-    var n=r.changed.length, label="Book with "+n+" changed";
-    plan.innerHTML="<p class='byo-note'>"+n+" of "+legs.length+" games change"+
-      (before.length?"; on our model they go from "+P0(mean(before))+"% to "+P0(mean(after))+"% on average":"")+
-      ". The new prices are the bookmaker's, on the code.</p>"+
-      "<div class='sf-rows'>"+rows.slice(0,8).join("")+"</div>"+
-      (rows.length>8?"<p class='byo-note'>and "+(rows.length-8)+" more</p>":"")+
+    var n=r.changed.length, label="Book";
+    plan.innerHTML="<p class='byo-note'>"+n+" game"+(n===1?"":"s")+
+      (before.length?" · avg "+P0(mean(before))+"% \u2192 "+P0(mean(after))+"%":"")+"</p>"+
+      "<div class='sf-rows'>"+rows.slice(0,5).join("")+"</div>"+
+      (rows.length>5?"<p class='byo-note'>+"+(rows.length-5)+" more</p>":"")+
       "<div class='byo-acts'><button class='byo-go' id='cgBook' type='button'>"+label+"</button></div>";
     var b=plan.querySelector("#cgBook");
     b.addEventListener("click",function(){ bookLegs(r.legs,B,"change","cgOut",b,label); });
@@ -18366,18 +18467,7 @@ function swapMy(id,oldCode,newCode){
    that starts on the sheet's own chrome would otherwise pan the board behind
    it. Locking the body is the ordinary way to do that, and unlike
    touch-action on the bar it leaves every button in the sheet alone. */
-function lockBody(on){
-  try{
-    var b=document.body;
-    if(on){
-      if(!b.dataset.lockY){ b.dataset.lockY=String(window.scrollY||0); }
-      b.style.overflow="hidden";
-    }else{
-      b.style.overflow="";
-      delete b.dataset.lockY;
-    }
-  }catch(e){}
-}
+function lockBody(on){ try{ scrollLock("sheet",on); }catch(e){} }
 function openMySheet(){renderMySheet();$("scrim").classList.add("on");$("mySheet").classList.add("on");lockBody(true);pushOverlay();}
 function wireSlipsSheet(){
   var x=$("slipsSheet-x"); if(x&&!x._w){x._w=1;x.addEventListener("click",closeSlipsSheet);}
@@ -21056,6 +21146,9 @@ function renderBuilderOutput(){
     picks = firstVisit ? [] : buildPicks();
   }
   BUILD.picks = picks;
+  /* The builder's own slip, checked at SportyBet before anyone books it -
+     see precheckLines. Not the ghost preview: nothing is on screen yet. */
+  if(!wizGhost&&picks.length) schedulePrecheck(picks);
   /* THE STYLE CHIPS, WHEN THE WINDOW HAS NOTHING LEFT TO TRADE.
      Every style uses the whole pool here, so all three land on the same games
      and the chips look broken. Say which it is, and name the window as the

@@ -24,7 +24,8 @@ test("booking questions are asked in the pop-up, the build's own two stay in the
     querySelector() { return null; } });
   const api = new Function("$",
     decl("INLINE_ASK") + "\n" + decl("ASK_FOR") + "\n" + fn("askHost") + "\n" +
-    fn("promptEl") + "\n" + fn("askLock") + "\n" + fn("showPrompt") + "\n" + fn("clearPrompt") +
+    fn("promptEl") + "\n" + decl("SCROLL_HELD") + "\n" + fn("scrollLock") + "\n" + fn("askLock") + "\n" +
+    fn("showPrompt") + "\n" + fn("clearPrompt") +
     "\nreturn {showPrompt:showPrompt, clearPrompt:clearPrompt, promptEl:promptEl};")($);
   for (const t of ["bookResult", "myBookResult", "byoConvOut", "codeSaferHost"]) {
     assert.ok(api.showPrompt(t, "<div class='confirm-card'>ask</div>"), t);
@@ -85,8 +86,11 @@ test("a refused leg is offered the safest priced bet on the same game", () => {
 test("the pop-up puts a swap in front of each refused game, and books what was ticked", () => {
   const fnSrc = body("confirmAfterRefusal");
   assert.match(fnSrc, /nextSafePick\(c,B\)/, "each refused game gets its offer");
-  assert.match(fnSrc, /ask-alt/, "as a button in its row");
-  assert.match(fnSrc, /go\(alts\.filter\(function\(a,i\)\{ return a&&on\[i\]; \}\)\)/,
+  /* Owner, 29 Sep 2026: show the market they refused, and a Swap or Remove
+     choice rather than a tick box. */
+  assert.match(fnSrc, /class='ask-off'><s>/, "the refused market is named, struck through");
+  assert.match(fnSrc, /data-v='swap'[\s\S]*data-v='drop'[\s\S]*>Remove</, "Swap or Remove, per game");
+  assert.match(fnSrc, /go\(alts\.filter\(function\(a,i\)\{ return a&&swap\[i\]; \}\)\)/,
     "only the swaps left ticked are booked");
   /* And every caller books them. */
   assert.match(src, /bookRounds\(safe\.concat\(swapIn\),B,src,target,h,round\+1\);\},gone\);/);
@@ -132,4 +136,25 @@ test("a hidden builder panel is hidden at every width", () => {
   /* The 900px grid on the Wizard panel beat [hidden], so on a laptop both
      panels showed in Slider mode and the Wizard's buttons acted on the Slider. */
   assert.match(src, /\.bld-panel\[hidden\]\{display:none!important\}/);
+});
+
+test("one scroll lock, held by name, released only when the last overlay closes", () => {
+  /* Owner, 29 Sep 2026: "why does the background still scroll when a modal
+     is up?" body{overflow:hidden} alone is ignored by iOS, and three overlays
+     each restored their own saved value, unlocking the page under each other. */
+  const style = () => ({});
+  const doc = { body: { style: style() }, documentElement: { style: style() } };
+  const win = { scrollY: 640, scrollTo(a, y) { this.to = typeof a === "object" ? a.top : y; } };
+  const lock = new Function("document", "window", decl("SCROLL_HELD") + "\n" + fn("scrollLock") +
+    "\nreturn scrollLock;")(doc, win);
+  lock("code", true);
+  assert.strictEqual(doc.body.style.position, "fixed", "pinned, the form iOS respects");
+  assert.strictEqual(doc.body.style.top, "-640px", "at its own scroll offset");
+  lock("ask", true); lock("ask", false);
+  assert.strictEqual(doc.body.style.position, "fixed", "the pop-up closing does not free the page under the code dialog");
+  lock("code", false);
+  assert.strictEqual(doc.body.style.position, "");
+  assert.strictEqual(win.to, 640, "and the page is back where it was");
+  const src = require("./books.js").src;
+  assert.doesNotMatch(src, /document\.body\.style\.overflow="hidden"/, "no overlay locks on its own any more");
 });
