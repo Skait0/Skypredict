@@ -25,21 +25,26 @@ test("every booking call site says where it came from", () => {
     .filter((l) => (/bookFetch\(/.test(l) && !/function bookFetch\(/.test(l) && !/,B,src\)/.test(l)) ||
                    (/bookRounds\(/.test(l) && !/function bookRounds\(/.test(l) &&
                     /* its own next round, with any swaps the reader took (28 Sep) */
-                    !/bookRounds\(safe(\.concat\(swapIn\))?,B,src/.test(l)))
+                    !/bookRounds\(safe(\.concat\(swapIn\))?,B,src/.test(l) &&
+                    /* bookLegs (28 Sep) passes its caller's label through */
+                    !/bookRounds\(picks,B,src,outId,/.test(l)) ||
+                   (/bookLegs\(/.test(l) && !/function bookLegs\(/.test(l)))
     .map((l) => l.trim());
   /* Five carry a literal. The sixth is My slip, which is a DESTINATION rather
      than a source - the wizard, the slider and the board's Book all empty into
      it - so it reads the label off the legs it was handed, and falls back to
      "myslip" when nothing built them. */
-  const labelled = calls.filter((c) => /,\s*"[a-z]+"\)/.test(c) || /bookRounds\([^,]+,[^,]+,"[a-z]+"/.test(c));
+  const labelled = calls.filter((c) => /,\s*"[a-z]+"\)/.test(c) ||
+    /book(?:Rounds|Legs)\([^,]+,[^,]+,"[a-z]+"/.test(c));
   const derived = calls.filter((c) => /_via\|\|"myslip"\)/.test(c));
   /* Seven since 24 Sep 2026: Make it safer books from the code modal itself
-     now, as "safer", apart from the converter's "editor" it used to hand to. */
-  assert.equal(labelled.length + derived.length, 7,
-    "expected seven attributed call sites, found " + (labelled.length + derived.length) +
+     now, as "safer", apart from the converter's "editor" it used to hand to.
+     Nine since 28 Sep: the converter's Trim to odds and Change markets. */
+  assert.equal(labelled.length + derived.length, 9,
+    "expected nine attributed call sites, found " + (labelled.length + derived.length) +
     ": " + calls.join(" | "));
   assert.equal(derived.length, 1, "only My slip derives its label");
-  ["builder", "split", "convert", "editor", "board", "safer"].forEach((s) => {
+  ["builder", "split", "convert", "editor", "board", "safer", "trim", "change"].forEach((s) => {
     assert.ok(labelled.some((c) => c.includes('"' + s + '"')), s + " is not labelled anywhere");
   });
   /* And the three writers that fill My slip must stamp what they are, or the

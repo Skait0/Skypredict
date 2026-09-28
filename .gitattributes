@@ -2,3 +2,4 @@
 # test/botconvert.test.js. Pinned to LF so a Windows checkout, stash or rebase
 # does not rewrite it as CRLF and fail that test for no real change.
 lib/teammatch.js text eol=lf
+lib/slipedit.js text eol=lf

@@ -3640,6 +3640,15 @@ html{interpolate-size:allow-keywords}
   .byo-job b{flex:0 0 auto}
   .byo-job i{flex:1 1 auto;text-align:right}}
 .byo-trim .sp-ways{margin-top:8px}
+/* Trim to odds and Change markets - see trimJobHTML, changeJobHTML. */
+.tt-row{display:flex;align-items:center;gap:8px;margin:10px 0 4px}
+.tt-x{font-size:20px;font-weight:800;color:var(--soft)}
+.tt-in{flex:1 1 auto;min-width:0;max-width:180px;font:inherit;font-size:16px;font-weight:700;
+  padding:10px 12px;border-radius:var(--r-md);border:1px solid var(--line);background:var(--raise);color:var(--text)}
+.cg-row{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 6px}
+.cg-l{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:var(--soft)}
+.cg-l select{font:inherit;font-size:14px;font-weight:700;padding:9px 10px;border-radius:var(--r-md);
+  border:1px solid var(--line);background:var(--raise);color:var(--text);max-width:220px}
 .byo-trim-n{margin:2px 0 0}
 /* The swaps, one line a game: what it was, what it becomes, and the two
    numbers that justify the change. */
@@ -4512,6 +4521,8 @@ button.wsp-go.waiting{opacity:.55}
 /* The Slider's copy of the style row and its way back - see renderSliderPanel. */
 #sldStyleChips{display:flex;flex-wrap:wrap;gap:6px}
 .sld-back{margin-top:14px}
+/* Clear of the sticky header when bldToPanel scrolls a panel up to the top. */
+.bld-panel{scroll-margin-top:84px}
 .sld-back[hidden]{display:none}
 .wsp-slider-link{position:relative;display:inline-flex;align-items:center;gap:8px;
   max-width:100%;margin:4px 0 0;padding:9px 14px;
@@ -7538,6 +7549,15 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
         <button class="byo-job" type="button" data-job="split" disabled>
           <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v7a3 3 0 003 3h6a3 3 0 013 3v5"/><path d="M6 21v-5a3 3 0 013-3"/></svg></span>
           <b>Split it</b><i>Two or more smaller tickets</i></button>
+        <!-- Trim and Change, asked for by the owner on 28 Sep 2026 ("you can
+             add the trim to user odds to the converter also"; "change market
+             also can be incorporated into the converter"). -->
+        <button class="byo-job" type="button" data-job="trim" disabled>
+          <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.1 15.9M14.5 14.5L20 20M8.1 8.1L12 12"/></svg></span>
+          <b>Trim to odds</b><i>Keep the likeliest games</i></button>
+        <button class="byo-job" type="button" data-job="change" disabled>
+          <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h13l-3-3M20 17H7l3 3"/></svg></span>
+          <b>Change markets</b><i>One change, every game</i></button>
       </div>
       <div id="byoStage" aria-live="polite"></div>
       </div><!-- /.byo-side -->
@@ -14482,6 +14502,97 @@ function trimPlan(legs,B,drop){
   return {keep:scored.slice(0,keepN), cut:scored.slice(keepN)};
 }
 
+/* ---- SLIP EDITS THE SITE AND THE TELEGRAM BOT SHARE ----
+   Pure: no page state, no DOM, no globals beyond these. scripts/mkslipedit.js
+   lifts this block into lib/slipedit.js, so the converter's Trim and Change
+   tabs and the bot's "trim to 150" / "change all draws to under 2.5" run the
+   same code (asked for by the owner, 28 Sep 2026, after SportyClaw showed
+   what people ask a slip tool for). */
+
+/* TRIM TO THE ODDS YOU WANT.
+   rows: [{p, odds, ...}] - p our chance of the leg (null when we have none),
+   odds the bookmaker's price. The likeliest legs are kept, exactly as they
+   are, until the total reaches the target; the leg that crosses it is taken
+   only when that lands nearer the target than stopping short (in log terms,
+   so x160 against x140 is judged as a ratio, not a difference). A leg with no
+   price cannot count towards a total and is never kept. `short` says the
+   whole slip does not reach the target, which is an answer, not an error. */
+function trimToOdds(rows,target){
+  var priced=[],unpriced=[];
+  (rows||[]).forEach(function(r){ (r&&+r.odds>1.01?priced:unpriced).push(r); });
+  priced.sort(function(a,b){
+    var pa=a.p==null?-1:a.p, pb=b.p==null?-1:b.p;
+    return (pb-pa)||(a.odds-b.odds);
+  });
+  var keep=[],prod=1;
+  for(var i=0;i<priced.length&&prod<target;i++){
+    var next=prod*priced[i].odds;
+    if(next>target&&keep.length&&Math.log(next/target)>Math.log(target/prod)) break;
+    keep.push(priced[i]); prod=next;
+  }
+  return {keep:keep,cut:priced.slice(keep.length).concat(unpriced),odds:prod,
+          short:prod<target&&keep.length===priced.length};
+}
+/* THE SAME CHANGE ACROSS THE WHOLE SLIP: "every draw to under 2.5".
+   CHANGE_FROM names a group of markets; CHANGE_TO either one market, or a
+   map for a change that depends on the side ("each win to win-or-draw" is
+   1X for a home win and X2 for an away one). A leg outside the group, or one
+   the change has no answer for, is left exactly as it was. */
+var CHANGE_FROM={
+  draw:{label:"Draws",codes:["X"]},
+  home:{label:"Home wins",codes:["1"]},
+  away:{label:"Away wins",codes:["2"]},
+  win:{label:"Wins",codes:["1","2"]},
+  dc:{label:"Double chance",codes:["1X","X2"]},
+  o15:{label:"Over 1.5",codes:["OVER_1.5"]},
+  o25:{label:"Over 2.5",codes:["OVER_2.5"]},
+  o35:{label:"Over 3.5",codes:["OVER_3.5"]},
+  u15:{label:"Under 1.5",codes:["UNDER_1.5"]},
+  u25:{label:"Under 2.5",codes:["UNDER_2.5"]},
+  u35:{label:"Under 3.5",codes:["UNDER_3.5"]},
+  gg:{label:"Both teams to score",codes:["GG"]},
+  ng:{label:"Not both to score",codes:["NG"]}
+};
+var CHANGE_TO={
+  dc:{label:"Win or draw (same side)",map:{"1":"1X","2":"X2"}},
+  "12":{label:"Any team to win",code:"12"},
+  o15:{label:"Over 1.5",code:"OVER_1.5"},
+  o25:{label:"Over 2.5",code:"OVER_2.5"},
+  u25:{label:"Under 2.5",code:"UNDER_2.5"},
+  u35:{label:"Under 3.5",code:"UNDER_3.5"},
+  gg:{label:"Both teams to score",code:"GG"},
+  ng:{label:"Not both to score",code:"NG"}
+};
+/* legs: [{prediction, ...}]. Returns every leg - changed ones copied with the
+   new market and their old price dropped, since the book's price for the new
+   market is not known until it is booked - plus the list of what moved. */
+function changeAllPlan(legs,from,to){
+  var F=CHANGE_FROM[from], T=CHANGE_TO[to], changed=[];
+  if(!F||!T) return {legs:(legs||[]).slice(),changed:changed};
+  var out=(legs||[]).map(function(l){
+    if(!l||F.codes.indexOf(l.prediction)<0) return l;
+    var nc=T.map?T.map[l.prediction]:T.code;
+    if(!nc||nc===l.prediction) return l;
+    var n={}; for(var k in l) n[k]=l[k];
+    n.prediction=nc; n.odds=null;
+    changed.push({leg:l,from:l.prediction,to:nc});
+    return n;
+  });
+  return {legs:out,changed:changed};
+}
+/* The changes that would move at least one leg of this slip, for the pickers:
+   a menu of changes that do nothing is a menu of dead buttons. */
+function changeOptions(legs){
+  var out=[];
+  Object.keys(CHANGE_FROM).forEach(function(f){
+    var n=(legs||[]).filter(function(l){ return l&&CHANGE_FROM[f].codes.indexOf(l.prediction)>=0; }).length;
+    if(!n) return;
+    var tos=Object.keys(CHANGE_TO).filter(function(t){ return changeAllPlan(legs,f,t).changed.length>0; });
+    if(tos.length) out.push({from:f,n:n,to:tos});
+  });
+  return out;
+}
+
 /* THE SAFER VERSION OF THE SAME BET, ON THE SAME GAME.
  *
  * Asked for: run a pasted ticket past the model and soften it. Every entry
@@ -14924,12 +15035,15 @@ function paintJobs(usable,B){
   var jobs=$("byoJobs"); if(!jobs) return;
   var conv=$("byoJobConv");
   if(conv) conv.textContent="Convert to "+convTarget(B).label;
-  var can={edit:usable.length>=1,convert:usable.length>=1,split:usable.length>=4};
+  var can={edit:usable.length>=1,convert:usable.length>=1,split:usable.length>=4,
+    trim:usable.length>=3,change:changeOptions(usable).length>0};
   jobs.querySelectorAll("[data-job]").forEach(function(b){
     var k=b.dataset.job;
     b.disabled=!can[k];
     b.classList.toggle("on",BYO.job===k&&!!can[k]);
     b.title=can[k]?"":(k==="split"?"A split needs at least four games we can re-book"
+                      :k==="trim"?"A trim needs at least three games we can re-book"
+                      :k==="change"?"Nothing on this code one change can move"
                                   :"Nothing on this code we can re-book");
     if(!b._w){
       b._w=1;
@@ -14969,6 +15083,12 @@ function renderStage(usable,B){
     if(job==="split"){
       st.innerHTML="<div class='code-split' id='byoSplit'>"+splitBoxInner(usable,byoOdds)+"</div>";
       wireSplit(st,usable,B,{sel:"#byoSplit",selOf:byoSel,oddsOf:byoOdds});
+    }else if(job==="trim"){
+      st.innerHTML=trimJobHTML(usable,B);
+      wireTrimTo(st,usable,B); wireTrim(st,usable,B);
+    }else if(job==="change"){
+      st.innerHTML="<div class='byo-change' id='byoChange'>"+changeJobHTML(usable)+"</div>";
+      wireChange(st,usable,B);
     }else if(job==="convert"){
       st.innerHTML="<div id='byoConv'></div>"; renderConvert();
     }else{
@@ -15707,6 +15827,119 @@ function trimBoxInner(legs,B){
 }
 /* One ticket out the other side, booked exactly the way a split books one of
    its parts - same path, same quota, same refusal handling. */
+/* A converter leg as one of our picks, so a trimmed or changed slip books
+   through bookRounds - the refusal pop-up and the next safe pick come with
+   it. A game our board does not carry still goes in, under this book's id. */
+function legPick(l,B){
+  var f=fixtureByLeg(l,B);
+  var o={id:f?fid(f):"leg:"+l.eventId,code:l.prediction,f:f||null,
+         p:f?mProb(f,l.prediction):null};
+  o[B.id]=l.eventId;
+  return o;
+}
+function bookLegs(legs,B,src,outId,btn,label){
+  var picks=legs.map(function(l){ return legPick(l,B); });
+  bookRounds(picks,B,src,outId,{
+    busy:function(){ if(btn){ btn.disabled=true; btn.textContent="Booking\u2026"; } },
+    idle:function(){ if(btn){ btn.disabled=false; btn.textContent=label; } },
+    code:function(code,sent,d){ showCode(code,outId,null,B,sent,d); },
+    fail:function(d){ showBookErr(outId,bookErrHTML(d,B)); }
+  });
+}
+function legName(l){ return (l.home||"a game")+" v "+(l.away||""); }
+/* TRIM TO ODDS: the reader names a payout, trimToOdds keeps the likeliest
+   legs that reach it. The old "drop the weakest N" buttons sit under it. */
+function trimJobHTML(legs,B){
+  return "<div class='byo-trim-to'>"+
+    "<p class='sp-q'>Trim it to the odds you want</p>"+
+    "<p class='byo-note'>We keep the games our model rates likeliest, exactly as they are, "+
+      "until the total reaches your number.</p>"+
+    "<div class='tt-row'><span class='tt-x' aria-hidden='true'>\u00d7</span>"+
+      "<input id='ttOdds' class='tt-in' inputmode='decimal' autocomplete='off' "+
+        "placeholder='e.g. 150' aria-label='The odds you want'>"+
+      "<button class='byo-go tt-go' id='ttGo' type='button'>Trim</button></div>"+
+    "<div id='ttPlan' aria-live='polite'></div><div id='ttOut'></div></div>"+
+    "<div class='byo-trim' id='byoTrim'>"+trimBoxInner(legs,B)+"</div>";
+}
+function wireTrimTo(wrap,legs,B){
+  var inp=wrap.querySelector("#ttOdds"), go=wrap.querySelector("#ttGo"),
+      plan=wrap.querySelector("#ttPlan");
+  if(!inp||!go||!plan) return;
+  function run(){
+    var t=parseFloat(String(inp.value).replace(/[^0-9.]/g,""));
+    if(!(t>1)){ plan.innerHTML="<p class='byo-note'>Type the odds you want, like 150.</p>"; return; }
+    var rows=legs.map(function(l){ var c=legChance(l,B); return {leg:l,p:c.p,src:c.src,odds:+l.odds}; });
+    var r=trimToOdds(rows,t);
+    if(r.short){
+      plan.innerHTML="<p class='byo-note'>Every priced game together pays about x"+r.odds.toFixed(2)+
+        ", under x"+t+" - there is nothing to trim.</p>";
+      return;
+    }
+    var kept=r.keep.map(function(k){ return k.leg; }), n=kept.length;
+    var mod=r.keep.filter(function(k){ return k.src==="model"; });
+    var avg=mod.length?mod.reduce(function(s,k){ return s+k.p; },0)/mod.length:null;
+    var label="Book these "+n;
+    plan.innerHTML="<p class='sp-q'>Keep "+n+" of "+legs.length+", about x"+r.odds.toFixed(2)+"</p>"+
+      (avg!=null?"<p class='byo-note'>"+(mod.length===n?"They":mod.length+" of them")+
+        " average "+P0(avg)+"% on our model.</p>":"")+
+      (r.cut.length?"<p class='byo-note'>Out: "+r.cut.slice(0,8).map(function(c){
+        return esc(legName(c.leg))+(c.odds>1.01?"":" (no price)"); }).join("; ")+
+        (r.cut.length>8?"; and "+(r.cut.length-8)+" more":"")+"</p>":"")+
+      "<div class='byo-acts'><button class='byo-go' id='ttBook' type='button'>"+label+"</button></div>";
+    var b=plan.querySelector("#ttBook");
+    b.addEventListener("click",function(){ bookLegs(kept,B,"trim","ttOut",b,label); });
+  }
+  go.addEventListener("click",run);
+  inp.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); run(); } });
+}
+/* CHANGE MARKETS: one change across every game it applies to. The pickers
+   only ever offer changes that move something on this slip. */
+function changeJobHTML(legs){
+  var opts=changeOptions(legs);
+  if(!opts.length) return "<p class='byo-note'>Nothing on this slip that one change can move.</p>";
+  return "<p class='sp-q'>Change a market on every game</p>"+
+    "<div class='cg-row'><label class='cg-l'>Change<select id='cgFrom'>"+
+      opts.map(function(o){ return "<option value='"+o.from+"'>"+CHANGE_FROM[o.from].label+" ("+o.n+")</option>"; }).join("")+
+    "</select></label><label class='cg-l'>to<select id='cgTo'></select></label></div>"+
+    "<div id='cgPlan' aria-live='polite'></div><div id='cgOut'></div>";
+}
+function wireChange(wrap,legs,B){
+  var from=wrap.querySelector("#cgFrom"), to=wrap.querySelector("#cgTo"),
+      plan=wrap.querySelector("#cgPlan");
+  if(!from||!to||!plan) return;
+  var opts=changeOptions(legs);
+  function fillTo(){
+    var o=opts.filter(function(x){ return x.from===from.value; })[0];
+    to.innerHTML=(o?o.to:[]).map(function(k){ return "<option value='"+k+"'>"+CHANGE_TO[k].label+"</option>"; }).join("");
+    show();
+  }
+  function show(){
+    var r=changeAllPlan(legs,from.value,to.value);
+    var before=[],after=[];
+    var rows=r.changed.map(function(c){
+      var f=fixtureByLeg(c.leg,B);
+      var a=f?mProb(f,c.from):null, z=f?mProb(f,c.to):null;
+      if(a!=null&&z!=null){ before.push(a); after.push(z); }
+      var lab=function(code){ return f?mLabel(f,code).replace(/<[^>]+>/g,""):code; };
+      return "<div class='sf-row'><span class='sf-g'>"+esc(legName(c.leg))+"</span>"+
+        "<span class='sf-m'>"+esc(lab(c.from))+" \u2192 "+esc(lab(c.to))+
+        (a!=null&&z!=null?" <i>"+P0(a)+"% \u2192 "+P0(z)+"%</i>":"")+"</span></div>";
+    });
+    var mean=function(xs){ return xs.reduce(function(s,x){ return s+x; },0)/xs.length; };
+    var n=r.changed.length, label="Book with "+n+" changed";
+    plan.innerHTML="<p class='byo-note'>"+n+" of "+legs.length+" games change"+
+      (before.length?"; on our model they go from "+P0(mean(before))+"% to "+P0(mean(after))+"% on average":"")+
+      ". The new prices are the bookmaker's, on the code.</p>"+
+      "<div class='sf-rows'>"+rows.slice(0,8).join("")+"</div>"+
+      (rows.length>8?"<p class='byo-note'>and "+(rows.length-8)+" more</p>":"")+
+      "<div class='byo-acts'><button class='byo-go' id='cgBook' type='button'>"+label+"</button></div>";
+    var b=plan.querySelector("#cgBook");
+    b.addEventListener("click",function(){ bookLegs(r.legs,B,"change","cgOut",b,label); });
+  }
+  from.addEventListener("change",fillTo);
+  to.addEventListener("change",show);
+  fillTo();
+}
 function wireTrim(wrap,legs,B){
   var box=wrap.querySelector("#byoTrim"); if(!box) return;
   box.querySelectorAll("[data-drop]").forEach(function(b){
@@ -20409,7 +20642,7 @@ function renderSliderPanel(){
     if(!_back._w){ _back._w=1; _back.addEventListener("click",function(){
       BUILD.mode="wizard"; BUILD.fromWiz=false;
       try{localStorage.setItem("sw.mode","wizard");}catch(e){}
-      renderBuilder(); bldToTop();
+      renderBuilder(); bldToPanel();
     }); }
   }
   // Slider panel visibility
@@ -20755,7 +20988,7 @@ function renderWizardPanel(){
   if(_toSlider) _toSlider.addEventListener("click",function(){
     BUILD.mode="slider"; BUILD.fromWiz=true;
     try{localStorage.setItem("sw.mode","slider");}catch(e){}
-    renderBuilder(); bldToTop();
+    renderBuilder(); bldToPanel();
   });
   $("wspGo").addEventListener("click",function(){
     /* Disabled would have been silent about why. It stays pressable and says
@@ -21115,13 +21348,15 @@ paintScope();
   apply();
   t.addEventListener("click",function(){ open=!open; try{localStorage.setItem("sw.filters",open?"1":"0");}catch(e){} apply(); });
 })();
-/* The builder's own top - the Slider/Wizard tabs - brought into view after a
-   switch made from further down the page. The switch changes the whole panel
-   under the reader, and staying at the old scroll position showed them the
-   middle of a different panel with the tabs that explain it off screen. */
-function bldToTop(){
-  var t=document.querySelector(".bld-mode-btn"); if(!t) return;
-  try{ t.scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"center"}); }catch(e){}
+/* The panel just switched to, brought into view - and only as far as it
+   takes. The Wizard is taller than the Slider, so a switch made from the
+   bottom of it left the reader below the Slider looking at the footer. The
+   first fix centred the Slider/Wizard tabs, which sit above the whole
+   filters block, and read as the page jumping to the top (owner, 28 Sep
+   2026). "nearest" does not move at all when the panel is already on screen. */
+function bldToPanel(){
+  var p=$(BUILD.mode==="slider"?"sliderPanel":"wizardPanel"); if(!p) return;
+  try{ p.scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"nearest"}); }catch(e){}
 }
 // Mode toggle
 document.querySelectorAll(".bld-mode-btn").forEach(function(btn){

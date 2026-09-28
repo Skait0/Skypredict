@@ -53,4 +53,4 @@ if (require.main === module) {
   fs.writeFileSync(path.join(ROOT, "lib", "teammatch.js"), build(src));
   console.log("lib/teammatch.js written");
 }
-module.exports = { build };
+module.exports = { build, grab };

@@ -22,6 +22,8 @@ const CONVERT = require("../lib/convert.js");
 const SB = require("../lib/supabase.js");
 const QUOTA = require("../lib/quota.js");
 const FOLLOW = require("../lib/follow.js");
+const ASK = require("../lib/ask.js");
+const S = require("../lib/slipedit.js");
 
 const SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
 const ORDER = ["sporty", "bet9ja", "betking", "betpawa"];
@@ -55,6 +57,10 @@ const HELLO =
   "🔥 your bankers\n👀 the legs to tighten\n💰 what it pays\n" +
   "🔁 the same slip on another bookie, one tap\n🔔 live updates as each game lands\n\n" +
   "Paste the code on its own, or a share link. Say which bookie if you know it.\n\n" +
+  "✍️ <b>Or tell me what to do with it</b> - in the same message, or as a reply to my read:\n" +
+  "• <i>HZ6RL7 trim to 150 odds</i>\n• <i>keep the best 10 games</i>\n" +
+  "• <i>split into 3</i>\n• <i>change all draws to under 2.5</i>\n" +
+  "• <i>convert to Bet9ja</i>\n• <i>book me today's 5 safest</i>\n\n" +
   "Daily codes: @soccerwizardTG · <a href=\"" + SITE + "\">soccerwizard.live</a>\n<i>18+</i>";
 
 /* CONVERSIONS IN THE BOT: FIVE A DAY PER PERSON (owner's call, 24 Sep). The
@@ -152,6 +158,175 @@ async function onConvert(cq) {
   await say(out.join("\n"));
 }
 
+/* INSTRUCTIONS (28 Sep 2026): trim, keep, split, change, today. Each books
+   real codes, so each counts against the same five a day as a conversion -
+   a split into three costs three. Same fail-open rule on a count we cannot
+   read. */
+async function quota(uid, cost) {
+  const subject = subjectOf(uid), day = QUOTA.dayOf(Date.now());
+  const used = await SB.countBookings(subject, day, CONVERT_CAP).catch(() => ({ ok: false, n: null }));
+  return { subject, day, used, ok: !(used.ok && used.n + cost > CONVERT_CAP),
+           left: (k) => (used.ok ? Math.max(0, CONVERT_CAP - used.n - k) : null) };
+}
+const xOdds = (o) => "×" + (o >= 100 ? Math.round(o).toLocaleString("en") : o.toFixed(2));
+const legNames = (ls, n) => ls.slice(0, n).map((l) => esc((l.home || "?") + " v " + (l.away || "?"))).join("; ") +
+  (ls.length > n ? "; +" + (ls.length - n) + " more" : "");
+const pc = (p) => Math.round(p * 100) + "%";
+const TO_SITE = (book, code, go) => SITE + "/?book=" + book + "&code=" + code + (go ? "&go=" + go : "");
+async function fixtures() {
+  const pay = await (await fetch(SITE + "/predictions.json")).json().catch(() => ({}));
+  return (pay && pay.fixtures) || [];
+}
+/* Re-book legs of a code at its own bookie: their own event ids, the market
+   on each leg (changed or not). */
+const picksOf = (legs) => legs.map((l) => ({ leg: l, eventId: l.eventId, code: l.prediction }));
+
+async function onAsk(msg, ask, book, code, legs) {
+  const chat = msg.chat.id;
+  const say = (text, markup) => tg("sendMessage", { chat_id: chat, text, parse_mode: "HTML",
+    disable_web_page_preview: true, reply_to_message_id: msg.message_id, reply_markup: markup });
+  const B = D.BOOK_NAMES[book];
+  if (ask.kind === "convert") {
+    /* The button's own path, so a typed "convert to Bet9ja" and a tap on
+       🔁 Bet9ja cannot answer differently. */
+    if (ask.to === book) { await say("That code is already on " + B + " 🙂"); return; }
+    await onConvert({ message: { chat: msg.chat, message_id: msg.message_id }, from: msg.from,
+      data: ["cv", ask.to, book, code].join("|") });
+    return;
+  }
+  const cost = ask.kind === "split" ? ask.n : 1;
+  const q = await quota(msg.from && msg.from.id, cost);
+  if (!q.ok) {
+    await say("🔥 That needs " + cost + " new code" + (cost === 1 ? "" : "s") + " and you've used your " + CONVERT_CAP +
+      " for today.\n\nThe converter on <a href=\"" + TO_SITE(book, code, "convert") + "\">soccerwizard.live</a> " +
+      "trims, splits and changes with no daily limit 🧙");
+    return;
+  }
+  const fx = await fixtures();
+  /* One message per code: what was done, the code, what it pays, the rest.
+     `est` is the product of the book's own leg prices from the read, shown
+     as "about" only when the booking reply carries no total. */
+  const prod = (ls) => ls.every((l) => +l.odds > 1) ? ls.reduce((s, l) => s * l.odds, 1) : null;
+  const done = async (r, head, lines, est) => {
+    if (!r.code) {
+      await say("😤 " + B + " wouldn't take it" + (r.error ? " - " + esc(r.error) : "") +
+        ". Try again, or do it on <a href=\"" + TO_SITE(book, code, "convert") + "\">the converter</a>.");
+      return false;
+    }
+    await SB.recordBooking(q.subject, q.day, "tgbot").catch(() => {});
+    const odds = r.odds ? xOdds(r.odds) : (est > 1 && !(r.stuck || []).length
+      ? "about " + xOdds(est) : null);
+    const out = [head, "<code>" + r.code + "</code> · " + r.booked.length + " game" + (r.booked.length === 1 ? "" : "s") +
+      (odds ? " · <b>" + odds + "</b>" : "")].concat(lines || []);
+    if ((r.stuck || []).length) out.push("⚠️ " + B + " refused " + legNames(r.stuck.map((s) => s.leg), 3));
+    await say(out.join("\n"), convertButtons(book, r.code));
+    return true;
+  };
+  const tail = (k) => { const l = q.left(k); return (l != null ? "⚡ " + l + " code" + (l === 1 ? "" : "s") + " left today. " : "") +
+    "Unlimited on <a href=\"" + SITE + "\">soccerwizard.live</a> 🧙\n<i>18+</i>"; };
+
+  if (ask.kind === "trim" || ask.kind === "keep") {
+    const plan = ask.kind === "trim" ? ASK.planTrim(legs, fx, ask.odds) : ASK.planKeep(legs, fx, ask.games);
+    if (ask.kind === "trim" && plan.short) {
+      await say("Your " + legs.length + " games only reach about <b>" + xOdds(plan.odds) + "</b> together - " +
+        "under " + xOdds(ask.odds) + ", so there's nothing to trim. Ask for less, or build a bigger slip on " +
+        "<a href=\"" + SITE + "\">soccerwizard.live</a> 🧙");
+      return;
+    }
+    if (!plan.keep.length || plan.keep.length >= legs.length) {
+      await say("Nothing to trim - that already keeps every game."); return;
+    }
+    tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
+    const kept = plan.keep.map((r) => r.leg);
+    const mod = plan.keep.filter((r) => r.src === "model");
+    const r = await CONVERT.bookPicks(book, picksOf(kept));
+    const head = "✂️ <b>" + (ask.kind === "trim" ? "Trimmed toward " + xOdds(ask.odds) : "Kept the best " + ask.games) +
+      "</b> - " + kept.length + " of " + legs.length + " games 🔥";
+    await done(r, head, [
+      "Kept the " + kept.length + " our model rates likeliest" +
+        (mod.length ? " (" + (mod.length < kept.length ? mod.length + " of them " : "") + "avg " +
+          pc(mod.reduce((s, x) => s + x.p, 0) / mod.length) + ")" : "") + ", exactly as they were.",
+      "Dropped: " + legNames(plan.cut.map((c) => c.leg), 4), "", tail(1)], prod(kept));
+    return;
+  }
+  if (ask.kind === "change") {
+    const plan = S.changeAllPlan(legs, ask.from, ask.to);
+    if (!plan.changed.length) {
+      await say("There are no " + S.CHANGE_FROM[ask.from].label.toLowerCase() + " on this slip to change."); return;
+    }
+    tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
+    const r = await CONVERT.bookPicks(book, picksOf(plan.legs));
+    await done(r, "🔁 <b>" + plan.changed.length + " " + S.CHANGE_FROM[ask.from].label.toLowerCase() +
+      " → " + S.CHANGE_TO[ask.to].label.toLowerCase() + "</b>, the rest as they were 🔥", ["", tail(1)], null);
+    return;
+  }
+  if (ask.kind === "split") {
+    const parts = ASK.planSplit(legs, fx, ask.n);
+    if (parts.length < 2 || parts.some((p) => p.length < 2)) {
+      await say("That slip is too short to split into " + ask.n + " - each ticket needs at least two games."); return;
+    }
+    tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
+    await say("✂️ <b>Split into " + parts.length + " tickets</b>, dealt so each gets a fair share of the strong games 🔥");
+    /* One at a time, inside the function's minute: a part not reached in time
+       is said, never silently dropped. */
+    const t0 = Date.now();
+    let made = 0;
+    for (let i = 0; i < parts.length; i++) {
+      if (Date.now() - t0 > 40e3) {
+        await say("⏳ Ran out of time before ticket " + (i + 1) + ". Split it on the " +
+          "<a href=\"" + TO_SITE(book, code, "convert") + "\">converter</a> instead.");
+        break;
+      }
+      const r = await CONVERT.bookPicks(book, picksOf(parts[i]));
+      if (await done(r, "🎟 <b>Ticket " + (i + 1) + " of " + parts.length + "</b>", [], prod(parts[i]))) made++;
+    }
+    if (made) await say(tail(made));
+    return;
+  }
+}
+
+/* "Book me today's 5 safest" - no code, straight off our board: the tips we
+   rate highest among games still to come today, paired to the bookie's own
+   events and booked by the converter's path. With a target ("10 odds") the
+   likeliest are kept until our fair price for them reaches it; the code's
+   own total is the book's. */
+async function onToday(msg, ask) {
+  const chat = msg.chat.id;
+  const say = (text, markup) => tg("sendMessage", { chat_id: chat, text, parse_mode: "HTML",
+    disable_web_page_preview: true, reply_to_message_id: msg.message_id, reply_markup: markup });
+  const book = ask.book || "sporty", B = D.BOOK_NAMES[book];
+  const q = await quota(msg.from && msg.from.id, 1);
+  if (!q.ok) {
+    await say("🔥 You've used your " + CONVERT_CAP + " codes for today. The slip builder on " +
+      "<a href=\"" + SITE + "\">soccerwizard.live</a> has no daily limit 🧙");
+    return;
+  }
+  tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
+  let rows = ASK.planToday(await fixtures(), ask);
+  if (ask.odds) rows = S.trimToOdds(rows.map((r) => ({ leg: r.leg, p: r.p, odds: 0.94 / r.p })), ask.odds).keep;
+  if (rows.length < 2) {
+    await say("Not enough games left " + ask.when + " that we rate highly. Try tomorrow, or the builder on " +
+      "<a href=\"" + SITE + "\">soccerwizard.live</a> 🧙");
+    return;
+  }
+  const r = await CONVERT.convert(rows.map((x) => x.leg), book);
+  if (!r.code) {
+    await say("😤 " + B + " wouldn't take it" + (r.error ? " - " + esc(r.error) : "") + ". Try another bookie."); return;
+  }
+  await SB.recordBooking(q.subject, q.day, "tgbot").catch(() => {});
+  const byLeg = new Map(rows.map((x) => [x.leg, x.p]));
+  const lines = ["🧙 <b>" + (ask.when === "tomorrow" ? "Tomorrow's" : "Today's") + " safest on " + B + "</b> 🔥",
+    "<code>" + r.code + "</code> · " + r.booked.length + " games" + (r.odds ? " · <b>" + xOdds(r.odds) + "</b>" : ""), ""];
+  for (const x of r.booked) {
+    const p = byLeg.get(x.leg);
+    lines.push(esc(D.label(x.leg)) + (p ? " · <b>" + pc(p) + "</b>" : ""));
+  }
+  const l = q.left(1);
+  lines.push("", (l != null ? "⚡ " + l + " code" + (l === 1 ? "" : "s") + " left today. " : "") +
+    "Every graded code on <a href=\"" + SITE + "/booking-codes\">soccerwizard.live</a>", "<i>Estimates, not certainties. 18+</i>");
+  await say(lines.join("\n"), convertButtons(book, r.code));
+}
+
 const esc = (s) => String(s).replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -181,8 +356,18 @@ module.exports = async function handler(req, res) {
        code dialog opens the bot on the code the reader just got. */
     const deep = /^\/start\s+(sporty|bet9ja|betking|betpawa)_([A-Za-z0-9]{4,16})\s*$/i.exec(msg.text);
     if (!deep && /^\/(start|help)\b/i.test(msg.text)) { await say(HELLO); return res.status(200).json({ ok: true }); }
-    const { code, book } = deep ? { code: deep[2].toUpperCase(), book: deep[1].toLowerCase() } : D.parse(msg.text);
-    if (!code) { await say("Send me a booking code, like <code>HUW6YC</code>."); return res.status(200).json({ ok: true }); }
+    let { code, book } = deep ? { code: deep[2].toUpperCase(), book: deep[1].toLowerCase() } : D.parse(msg.text);
+    /* "trim to 150" sent as a reply to the bot's read of a code acts on that
+       code - the reply carries it, so nothing has to be remembered. */
+    const rt = msg.reply_to_message && (msg.reply_to_message.text || msg.reply_to_message.caption);
+    if (!code && !deep && rt) { const r = D.parse(rt); code = r.code; book = book || r.book; }
+    const ask = deep ? null : ASK.parseAsk(msg.text, code);
+    if (!code && ask && ask.kind === "today") { await onToday(msg, ask); return res.status(200).json({ ok: true }); }
+    if (!code) {
+      await say("Send me a booking code, like <code>HUW6YC</code> - add what to do with it if you like " +
+        "(<i>trim to 150 odds</i>, <i>split into 2</i>). Or ask for <i>today's 5 safest</i> 🧙");
+      return res.status(200).json({ ok: true });
+    }
     tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
 
     /* The book named, or each in turn: one code rarely means something on two. */
@@ -194,6 +379,12 @@ module.exports = async function handler(req, res) {
     if (!legs) {
       await say("I couldn't read <code>" + code + "</code>" + (book ? " on " + D.BOOK_NAMES[book] : " on any of the four bookies") +
         ". Check the code - or it may have expired, or every game may have started.");
+      return res.status(200).json({ ok: true });
+    }
+    /* An instruction goes straight to its answer; "safer" and a bare
+       "convert" are what the read already offers, so they get the read. */
+    if (ask && ask.kind !== "safer" && !(ask.kind === "convert" && !ask.to)) {
+      await onAsk(msg, ask, used, code, legs);
       return res.status(200).json({ ok: true });
     }
     const pay = await (await fetch(SITE + "/predictions.json")).json().catch(() => ({}));
