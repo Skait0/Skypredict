@@ -37,7 +37,7 @@ function books() {
 test("the four books are all there, and each one is complete", () => {
   const B = books();
   assert.deepStrictEqual(Object.keys(B).sort(),
-    ["bet9ja", "betking", "betpawa", "sporty"]);
+    ["bet9ja", "betking", "betpawa", "onexbet", "sporty"]);
   /* Every field a call site reads off the table. A book missing one of these
      does not throw - it takes `undefined` and books nothing, or books it
      against the wrong route, which is worse. */
