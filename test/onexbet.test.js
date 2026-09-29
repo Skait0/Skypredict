@@ -33,3 +33,38 @@ test("the xb class names are 1xBet's own", () => {
   const rules = [...new Set(src.match(/\.xb[a-z-]*\b/g) || [])];
   assert.ok(rules.every((r) => /^\.xb(m|b)?$|^\.xb-/.test(r)), rules.join(" "));
 });
+
+/* Brand read off their own icon (#276BA6 on white, 256px webp) and logo SVG
+   (#14A0FF) on 29 Sep 2026. Pinned so a "tidy-up" cannot drift it. */
+test("1xBet colours are theirs", () => {
+  assert.match(src, /--xb-blue:\s*#276BA6/i);
+  assert.match(src, /\.xbm \.xbb\{[^}]*color:\s*#14A0FF/i);
+});
+
+function lum(hex) {
+  const c = hex.match(/\w\w/g).map((h) => parseInt(h, 16) / 255)
+    .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+
+test("the blue is readable on white", () => {
+  assert.ok(ratio("276BA6", "FFFFFF") >= 4.5, String(ratio("276BA6", "FFFFFF")));
+});
+
+test("every sentence that lists the books names 1xBet", () => {
+  const lists = src.match(/SportyBet, Bet9ja, BetKing(?: or|,) betPawa[^"<]{0,20}/g) || [];
+  assert.ok(lists.length > 0);
+  for (const l of lists) assert.match(l, /1xBet/, l);
+});
+
+test("every wordmark selector list that names betPawa names 1xBet", () => {
+  const lists = src.match(/[^{}\n]*\.bwm[^{}\n]*\{/g) || [];
+  for (const l of lists.filter((x) => /\.sbm/.test(x))) assert.match(l, /\.xbm/, l);
+});
+
+test("the header cycle, the builder and the code card carry 1xBet", () => {
+  assert.match(src, /<i class="bkc-i[^"]*" data-bk="xb"/);
+  assert.match(src, /<button class="byo-b" type="button" data-book="onexbet"/);
+  assert.match(src, /\.code-card--xb /);
+});

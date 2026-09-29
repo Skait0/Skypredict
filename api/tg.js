@@ -53,7 +53,7 @@ async function readCode(book, code) {
 
 const HELLO =
   "🔮 <b>The Wizard's Eye</b> 🧙\n<i>Drop any code. The Wizard's Eye sees it all.</i>\n\n" +
-  "Send me any booking code - SportyBet, Bet9ja, BetKing or betPawa - and you get:\n" +
+  "Send me any booking code - SportyBet, Bet9ja, BetKing, betPawa or 1xBet - and you get:\n" +
   "🔥 your bankers\n👀 the legs to tighten\n💰 what it pays\n" +
   "🔁 the same slip on another bookie, one tap\n🔔 live updates as each game lands\n\n" +
   "Paste the code on its own, or a share link. Say which bookie if you know it.\n\n" +
