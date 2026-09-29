@@ -30,7 +30,13 @@ function make(deps) {
   const signedOut = (res, s) => H.sendJson(res, 401, { error: "signed_out", reason: s.reason || null },
     s.state === "ended" ? [S.clearCookie(S.COOKIE)] : null);
 
-  async function signIn(user, existed, ua, t) {
+  async function signIn(req, user, existed, ua, t) {
+    /* Signing in again in the same browser must end that browser's own old
+       session first - otherwise it sits alongside the new one, eating a
+       device slot until the 4-device cap displaces someone else's session
+       to make room for a duplicate of this one. */
+    const old = await S.readSession(db, req, t);
+    if (old.state === "ok") await db.endSessions([old.session.id], "replaced", iso(t));
     const s = await S.startSession(db, user.id, ua, t);
     if (!s) throw new Error("session insert failed");
     await db.touchUser(user.id, iso(t));
@@ -104,7 +110,7 @@ function make(deps) {
         user = r.user; existed = r.existed;
         if (!user.google_sub) await db.linkGoogle(user.id, claims.sub);
       }
-      const s = await signIn(user, existed, uaOf(req), t);
+      const s = await signIn(req, user, existed, uaOf(req), t);
       return H.redirect(res, H.safeReturn(a.return_to), [s.cookie, S.clearCookie(S.OAUTH_COOKIE)]);
     },
 
@@ -146,7 +152,7 @@ function make(deps) {
       if (!(await db.consumeCode(row.id, iso(t)))) return H.sendJson(res, 400, { error: "used" });
       const r = await findOrCreateByEmail(email);
       if (!r) throw new Error("user create failed");
-      const s = await signIn(r.user, r.existed, uaOf(req), t);
+      const s = await signIn(req, r.user, r.existed, uaOf(req), t);
       return H.sendJson(res, 200, { ok: true }, [s.cookie]);
     },
 

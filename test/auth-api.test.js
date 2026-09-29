@@ -29,10 +29,11 @@ function world() {
 }
 process.env.AUTH_ENABLED = "1";
 
-async function emailSignIn(w, addr, ua) {
+async function emailSignIn(w, addr, ua, cookie) {
   await w.call(postReq("email/send", { email: addr, turnstile: "ok" }));
   const code = w.sent[w.sent.length - 1].c;
-  return w.call(postReq("email/verify", { email: addr, code }, ua ? { "user-agent": ua } : null));
+  const h = Object.assign({}, ua ? { "user-agent": ua } : null, cookie ? { cookie } : null);
+  return w.call(postReq("email/verify", { email: addr, code }, Object.keys(h).length ? h : null));
 }
 async function googleStart(w, ip) {
   const h = ip ? { "x-forwarded-for": ip } : null;
@@ -209,6 +210,23 @@ test("a fourth device signs out the oldest, which then sees why", async () => {
   const r = await w.call(getReq("devices", {}, { cookie: first }));
   assert.strictEqual(r.code, 401);
   assert.deepStrictEqual(r.json(), { error: "signed_out", reason: "displaced" });
+});
+
+test("signing in again in the same browser replaces that browser's session, not another device's", async () => {
+  const w = world();
+  const a = sessionCookie(await emailSignIn(w, "a@b.com"));
+  w.advance(1000); w.db.t.rl = {};
+  const b = sessionCookie(await emailSignIn(w, "a@b.com"));
+  w.advance(1000); w.db.t.rl = {};
+  const c = sessionCookie(await emailSignIn(w, "a@b.com"));
+  w.advance(1000); w.db.t.rl = {};
+  const again = sessionCookie(await emailSignIn(w, "a@b.com", null, a));
+  assert.notStrictEqual(again, a, "device A gets a fresh session token");
+  assert.strictEqual((await w.call(getReq("devices", {}, { cookie: b }))).code, 200, "B still signed in");
+  assert.strictEqual((await w.call(getReq("devices", {}, { cookie: c }))).code, 200, "C still signed in");
+  const aToken = a.split("=")[1];
+  const aSession = w.db.t.sessions.find((s) => s.token_hash === require("../lib/auth/crypto.js").sha256hex(aToken));
+  assert.strictEqual(aSession.end_reason, "replaced");
 });
 
 test("sign out everywhere ends every session", async () => {
