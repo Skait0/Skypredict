@@ -78,3 +78,9 @@ test("claims are conditional: only the request that changed the row wins", async
   assert.match(calls[0].url, new RegExp("auth_attempts\\?id=eq\\." + U1 + "&user_id=eq\\." + U1));
   assert.strictEqual(await DB.startAttempt("nope", "x"), false);
 });
+
+test("a database blip on a lookup throws, rather than reading as signed out", async () => {
+  capture({ status: 500, body: { message: "down" } });
+  await assert.rejects(DB.sessionByHash("a".repeat(64)), /db read failed/);
+  await assert.rejects(DB.userById(U1), /db read failed/);
+});

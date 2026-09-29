@@ -101,6 +101,19 @@ test("Review Focus 3: a displaced or deleted account's cookie gets a clear signe
   assert.strictEqual(gone.json().error, "signed_out");
 });
 
+test("a database blip is a 500, not a 401 that clears the cookie", async () => {
+  const w = world();
+  const a = await w.user("a@b.com");
+  const broken = Object.assign({}, w.db, {
+    async sessionByHash() { throw new Error("db read failed: http 500"); },
+  });
+  const hMe = me.make({ db: broken, now: w.clock });
+  const res = fakeRes();
+  await hMe(meGet(a.cookie), res);
+  assert.strictEqual(res.code, 500);
+  assert.deepStrictEqual(res.cookies(), []);
+});
+
 test("writes are limited to 60 a minute per reader", async () => {
   const w = world();
   const a = await w.user("a@b.com");
