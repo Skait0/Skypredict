@@ -115,14 +115,21 @@ test("the editor's code is described by every leg booked, not by the swaps", () 
 });
 
 test("the code shows what it pays, in the book's own figure when it gave one", () => {
-  const html = new Function("totalOdds", fn("codeTotHTML") + "\nreturn codeTotHTML;")(() => 3.05);
-  const B = { mark: "SportyBet" };
+  const html = new Function("totalOdds", "esc", fn("codeTotHTML") + "\nreturn codeTotHTML;")(() => 3.05, String);
+  const B = { mark: "<span>SportyBet</span>", label: "SportyBet" };
   const own = html([{}, {}, {}], { odds: 4.12 }, B);
   assert.match(own, /3 games/);
   assert.match(own, /×4\.12/);
-  assert.match(own, /total on SportyBet/);
+  /* Owner, 29 Sep 2026: words, not a tick - "booked at" for the book's own
+     total, "about" for ours. */
+  assert.match(own, /booked at<\/span><span class='ct-o'[^>]*>×4\.12/, "the book's own total reads 'booked at'");
+  assert.doesNotMatch(own, /&#10003;|✓/, "no tick");
+  /* The dialog's heading already names the bookie; saying it again after
+     the odds was noise (owner, 29 Sep 2026). */
+  assert.doesNotMatch(own, /<span>SportyBet<\/span>/, "the bookie is not named a second time");
   const est = html([{}, {}], null, B);
-  assert.match(est, /about ×3\.05/, "ours is marked as an estimate");
+  assert.match(est, /×3\.05/);
+  assert.match(est, />about<\/span>/, "ours is marked as an estimate");
   assert.strictEqual(html([], null, B), "");
   assert.match(fn("showCode"), /codeTotHTML\(picks,d,B\)/, "and the dialog carries it");
 });

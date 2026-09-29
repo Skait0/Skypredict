@@ -1825,28 +1825,35 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .ask-card .code-err{margin:0 0 14px}
 .ask-card .confirm-card .ca{justify-content:stretch}
 .ask-card .confirm-card .ca button{flex:1 1 auto}
-.ask-rows{display:flex;flex-direction:column;gap:6px;margin:0 0 12px}
-.ask-row{display:flex;flex-direction:column;gap:5px;padding:9px 10px;border:1px solid var(--line-soft);
+/* Compact on purpose (owner, 29 Sep 2026: "reduce the font size and tighten
+   the swap pills, make it small but readable"). 12px is the floor. */
+.ask-refusal>p:first-child{font-size:15px;margin-bottom:10px}
+.ask-rows{display:flex;flex-direction:column;gap:5px;margin:0 0 12px}
+.ask-row{display:flex;flex-direction:column;gap:4px;padding:8px 9px;border:1px solid var(--line-soft);
   border-radius:var(--r-md);background:var(--raise)}
-.ask-g{font-size:13.5px;font-weight:700;color:var(--text);line-height:1.3}
-.ask-none{font-size:12.5px;color:var(--soft)}
-.ask-more{margin:0;font-size:12.5px;color:var(--soft)}
-.ask-off{font-size:12.5px;color:var(--soft)}
+.ask-g{font-size:12.5px;font-weight:700;color:var(--text);line-height:1.25}
+.ask-none{font-size:12px;color:var(--soft)}
+.ask-more{margin:0;font-size:12px;color:var(--soft)}
+.ask-off{font-size:12px;color:var(--soft);line-height:1.25}
 .ask-off s{color:var(--red-ink,var(--soft))}
-.ask-ch{display:flex;gap:6px}
-.confirm-card .ask-opt{flex:1 1 auto;min-width:0;text-align:left;padding:8px 10px;border-radius:var(--r-md);
-  border:1px solid var(--line)!important;background:var(--card);color:var(--soft);
-  font-size:12.5px;font-weight:600;line-height:1.3}
-.confirm-card .ask-opt[data-v='drop']{flex:0 0 auto;text-align:center}
-.confirm-card .ask-opt b{font-weight:800}
-.ask-opt i{font-style:normal;opacity:.8;white-space:nowrap}
+.ask-ch{display:flex;gap:5px;align-items:stretch}
+.confirm-card .ask-opt{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:6px;text-align:left;
+  padding:5px 9px;border-radius:12px;border:1px solid var(--line)!important;background:var(--card);
+  color:var(--soft);font-size:12px;font-weight:600;line-height:1.25}
+/* Wraps rather than cuts: "Belgium over 0.5 go..." hid the very bet being
+   offered. A second small line is still tight. */
+.confirm-card .ask-opt b{font-weight:800;min-width:0}
+.ask-opt i{margin-left:auto;font-style:normal;opacity:.75;white-space:nowrap;font-size:11.5px}
+.confirm-card .ask-opt[data-v='drop']{flex:0 0 auto;justify-content:center;padding:5px 11px}
 .confirm-card .ask-opt.on{border-color:var(--win)!important;background:var(--win-wash);color:var(--text)}
 /* What the code pays, under the code - see codeTotHTML. No <b>: .code-card b
    is the 32px booking-code style. */
 .code-tot{display:flex;align-items:baseline;justify-content:center;gap:8px;flex-wrap:wrap;
   margin:4px 0 12px;font-size:13px;color:var(--soft)}
 .code-tot .ct-o{font-size:18px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
-.code-tot .ct-by{font-size:11.5px}
+/* Whose number it is, in words - see codeTotHTML. */
+.code-tot{gap:6px}
+.code-tot .ct-w{font-size:13px;color:var(--soft)}
 .lt-ou{font-weight:700}
 /* margin-left:auto is gone. It dates from when this row was a flex line and
    the tip was meant to sit hard right; the row is a grid now, where the same
@@ -13578,7 +13585,8 @@ function confirmAfterRefusal(target,names,keep,B,go,refused){
       (mkt?"<span class='ask-off'><s>"+esc(mkt)+"</s>"+(why?" · "+esc(why):"")+"</span>":"")+
       (a?"<div class='ask-ch' role='group' aria-label='"+esc(game)+"'>"+
           "<button class='ask-opt on' type='button' data-i='"+i+"' data-v='swap' aria-pressed='true'>"+
-            "Swap to <b>"+esc(plain(a.label))+"</b> <i>"+P0(a.p)+"%"+(o?" · "+(+o).toFixed(2):"")+"</i></button>"+
+            "<span aria-hidden='true'>&#8644;</span><b title='"+esc(plain(a.label))+"'>"+esc(plain(a.label))+"</b>"+
+            "<i>"+P0(a.p)+"%"+(o?" · "+(+o).toFixed(2):"")+"</i></button>"+
           "<button class='ask-opt' type='button' data-i='"+i+"' data-v='drop' aria-pressed='false'>Remove</button>"+
         "</div>"
        :"<span class='ask-none'>Removed - nothing safer on sale</span>")+"</div>";
@@ -13932,9 +13940,15 @@ function reconcileCode(code,picks,B){
 function codeTotHTML(picks,d,B){
   var n=(picks&&picks.length)||0; if(!n) return "";
   var own=d&&+d.odds>1?+d.odds:null, est=own?null:totalOdds(picks);
-  return "<p class='code-tot'><span class='ct-n'>"+n+" game"+(n===1?"":"s")+"</span>"+
-    "<span class='ct-o'>"+(own?"×"+own.toFixed(2):(est>1?"about ×"+est.toFixed(2):""))+"</span>"+
-    (own?"<span class='ct-by'>total on "+B.mark+"</span>":"")+"</p>";
+  if(!own&&!(est>1)) return "<p class='code-tot'><span class='ct-n'>"+n+" game"+(n===1?"":"s")+"</span></p>";
+  /* The heading above already names the bookie, so the words say whose number
+     it is - no second bookie name, no icon (owner, 29 Sep 2026, chose this
+     over a tick, a dot, a tag or a lock): "booked at" is their own total,
+     "about" is our estimate. */
+  return "<p class='code-tot'><span class='ct-n'>"+n+" game"+(n===1?"":"s")+" ·</span>"+
+    "<span class='ct-w'>"+(own?"booked at":"about")+"</span>"+
+    "<span class='ct-o' title='"+(own?esc(B.label)+"&#39;s own total":"Our estimate - the bookie prices it again")+"'>×"+
+      (own||est).toFixed(2)+"</span></p>";
 }
 function showCode(code,hostId,save,B,picks,d){
   B=B||curBook();
