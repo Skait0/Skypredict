@@ -36,8 +36,13 @@ function make(deps) {
 
       if (!post) {
         const row = await db.getUserData(s.userId);
+        /* An entitlements outage must not hide the reader's own data: send
+           none (nothing paid unlocked) and report it. Paid routes re-check. */
+        let entitlements = {};
+        try { entitlements = await A.entitlements(db, s.userId, A.FEATURES, t); }
+        catch (e) { await report(e, { route: "me/entitlements" }); }
         return H.sendJson(res, 200, { signedIn: true, email: user.email, version: row ? row.version : 0,
-          data: row ? row.data : Y.empty(), entitlements: await A.entitlements(db, s.userId, A.FEATURES, t) }, cookies);
+          data: row ? row.data : Y.empty(), entitlements }, cookies);
       }
 
       if (!(await db.rlHit("me:" + s.userId, 60, 60))) return H.sendJson(res, 429, { error: "slow_down", minutes: 1 });

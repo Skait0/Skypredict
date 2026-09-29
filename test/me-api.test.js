@@ -163,3 +163,17 @@ test("a session row with no created_at fails the reauth check closed, not open",
   assert.deepStrictEqual(r.json(), { error: "reauth" });
   assert.strictEqual(w.db.t.users.some((u) => u.id === a.id), true);
 });
+
+test("a feature-table outage does not take a reader's data away", async () => {
+  const A = require("../lib/access.js");
+  const w = world();
+  const a = await w.user("a@b.com");
+  A._reset(); A.FEATURES.push("wizard");
+  w.db.featureTiers = async () => null;
+  try {
+    const r = await w.me(meGet(a.cookie));
+    assert.strictEqual(r.code, 200);
+    assert.strictEqual(r.json().email, "a@b.com");
+    assert.deepStrictEqual(r.json().entitlements, {});
+  } finally { A.FEATURES.pop(); A._reset(); }
+});

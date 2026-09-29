@@ -44,3 +44,13 @@ test("entitlements answer for every feature asked", async () => {
   assert.deepStrictEqual(await A.entitlements(db({ x: "paid" }, null), U, ["x", "y"], NOW), { x: false, y: true });
   assert.deepStrictEqual(A.FEATURES, []);
 });
+
+test("a failed read of the feature table never makes a paid feature free", async () => {
+  A._reset();
+  const down = { async featureTiers() { return null; }, async subscription() { return null; } };
+  await assert.rejects(A.access(down, U, "wizard", NOW), /feature tiers unavailable/);
+  A._reset();
+  const flaky = { n: 0, async featureTiers() { return this.n++ ? null : { wizard: "paid" }; }, async subscription() { return null; } };
+  assert.strictEqual(await A.access(flaky, U, "wizard", NOW), false);
+  assert.strictEqual(await A.access(flaky, U, "wizard", NOW + 61e3), false, "keeps the last good copy, stays paid");
+});

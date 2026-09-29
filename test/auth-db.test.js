@@ -82,3 +82,12 @@ test("a database blip on a lookup throws, rather than reading as signed out", as
   await assert.rejects(DB.sessionByHash("a".repeat(64)), /db read failed/);
   await assert.rejects(DB.userById(U1), /db read failed/);
 });
+
+test("the feature table read tells failure apart from an empty table", async () => {
+  capture({ status: 500, body: { message: "down" } });
+  assert.strictEqual(await DB.featureTiers(), null);
+  capture({ status: 200, body: [] });
+  assert.deepStrictEqual(await DB.featureTiers(), {});
+  capture({ status: 200, body: [{ feature: "wizard", tier: "paid" }] });
+  assert.deepStrictEqual(await DB.featureTiers(), { wizard: "paid" });
+});
