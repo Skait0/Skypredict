@@ -7146,6 +7146,10 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
          shown inside the app itself. Unlike the install bar, "Not now" does
          not hide it: this is the way back to /install for later. -->
     <a class="tgl hsoc hsoc-inst" id="hdInstall" href="/install" aria-label="Install the app" title="Install the app" hidden><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 7.5v6.5M9.3 11.4 12 14l2.7-2.6M10.5 18.5h3"/></svg></a>
+    <!-- Account (spec section 9). Stays hidden unless /api/me answers, so
+         with AUTH_ENABLED off the header is exactly as before. Filled by the
+         swAccount script at the end of the page. -->
+    <button class="tgl hsoc" id="hdAccount" type="button" aria-label="Sign in" hidden></button>
     <a class="tgl hsoc hsoc-x" href="https://x.com/soccerwizardhq" target="_blank" rel="noopener"
        aria-label="Soccerwizard on X"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.2 2.3h3.4l-7.4 8.5 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9.1L.9 2.3h7l4.8 6.4zm-1.2 17.9h1.9L7.1 4.2H5z"/></svg></a>
     <a class="tgl hsoc hsoc-tg" href="https://t.me/soccerwizardTG" target="_blank" rel="noopener"
@@ -18117,6 +18121,20 @@ function startLive(){
 var MYSLIP=[];
 try{MYSLIP=JSON.parse(localStorage.getItem("sw.myslip")||"[]");}catch(e){MYSLIP=[];}
 function saveMy(){try{localStorage.setItem("sw.myslip",JSON.stringify(MYSLIP));}catch(e){}}
+/* Sync (the swAccount script) rewrote the stored copies: read them back and
+   redraw. Prefs are not re-read here; they take effect on the next load,
+   which is enough for settings and far simpler than re-running every init. */
+window.swReloadSynced=function(){
+  try{SLIPS=JSON.parse(localStorage.getItem("sw.slips.v1")||"[]");}catch(e){SLIPS=[];}
+  if(!Array.isArray(SLIPS)) SLIPS=[];
+  try{MYSLIP=JSON.parse(localStorage.getItem("sw.myslip")||"[]");}catch(e){MYSLIP=[];}
+  if(!Array.isArray(MYSLIP)) MYSLIP=[];
+  try{LIVEFAV=JSON.parse(localStorage.getItem("sw.livefav")||"{}")||{};}catch(e){LIVEFAV={};}
+  try{FAVS=JSON.parse(localStorage.getItem(FAV_KEY)||"{}")||{};}catch(e){FAVS={};}
+  try{refreshSlipUI();}catch(e){}
+  try{renderFab();}catch(e){}
+  try{render();}catch(e){}
+};
 function myslipHas(id,code){return MYSLIP.some(function(x){return x.id===id&&x.code===code;});}
 function myOdds(){return MYSLIP.reduce(function(t,x){return t*legOdd(fixtureById(x.id),x.code,x.p);},1);}
 /* The markets a leg can be changed to. Only ones carrying a SportyBet code:
@@ -19079,6 +19097,8 @@ const BETSLIP_MAX=50;
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
 var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,tcorn:false,shots:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+/* The slip style is remembered (and synced) since accounts, 29 Sep 2026. */
+try{var _lo=+localStorage.getItem("sw.legodd"); if(_lo>1&&_lo<10) WSP.legodd=_lo;}catch(e){}
 /* THE MARKET CHIPS ARE REMEMBERED. They never were: every load rebuilt both
    sets from the literals above, so a reader who switched Over 1.5 off and
    Both score on found Win or draw, Outright win, Over 1.5 and Team over 0.5
@@ -20740,7 +20760,7 @@ function renderSliderPanel(){
         st[1]+"</b>"+(st[2]?"<i>"+st[2]+"</i>":"")+"</button>"; }).join("");
     _ss.querySelectorAll("[data-lo]").forEach(function(c){
       c.addEventListener("click",function(){
-        WSP.legodd=+c.dataset.lo; WSP._sig=null;
+        WSP.legodd=+c.dataset.lo; WSP._sig=null; try{localStorage.setItem("sw.legodd",String(WSP.legodd));}catch(e){}
         BUILD.touched=true; BUILD.removed={};
         renderBuilder();
       });
@@ -21082,6 +21102,7 @@ function renderWizardPanel(){
   if(_sty) _sty.querySelectorAll("[data-lo]").forEach(function(c){
     c.addEventListener("click",function(){
       WSP.legodd=+c.dataset.lo;
+      try{localStorage.setItem("sw.legodd",String(WSP.legodd));}catch(e){}
       WSP._sig=null;renderBuilder();
       /* renderBuilder rebuilds the input, so a half-typed target would be lost
          by choosing a style for it - which is the one moment the row is on
@@ -22351,6 +22372,273 @@ load().catch(function(){});
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start); else start();
 })();
+</script>
+<script id="swAccount">
+/* Accounts on the page: the top-bar button, the account sheet, and sync.
+   Nothing here shows or sends anything unless GET /api/me answers (404 =
+   accounts switched off). Sync compares storage with what the last sync left
+   (sw.sync.meta) to stamp changes and spot deletions, so no save site in the
+   app needs to know it exists. Plain ES5. Spec sections 6 and 9. The pure
+   parts are exported for test/account-client.test.js when loaded in Node. */
+(function(root){
+  "use strict";
+  var KEYS={slips:"sw.slips.v1",myslip:"sw.myslip",livefav:"sw.livefav",leaguefav:"formline.favs.v1"};
+  var PREFS={book:"sw.book",mk:"sw.mk",risk:"sw.risk",mode:"sw.mode",wspodds:"sw.wspodds",
+    bldleagues:"sw.bldleagues",toponly:"sw.toponly",scope:"sw.scope",legodd:"sw.legodd"};
+  var META="sw.sync.meta", SLIPS_KEEP=60;
+
+  function own(o,k){ return Object.prototype.hasOwnProperty.call(o,k); }
+  function jget(ls,k,d){ try{ var v=JSON.parse(ls.getItem(k)); return v==null?d:v; }catch(e){ return d; } }
+  function jset(ls,k,v){ try{ ls.setItem(k,JSON.stringify(v)); }catch(e){} }
+  function blank(){ return {v:1,slips:{items:{},tomb:{}},myslip:{items:[],at:0},livefav:{items:{},tomb:{}},
+    leaguefav:{items:{},tomb:{}},prefs:{},record:{n:0,won:0}}; }
+  function readMeta(ls){ var m=jget(ls,META,null); return m&&m.last?m:null; }
+  function atMs(s){ return Date.parse((s&&s.at)||"")||0; }
+  function slipTs(s){ return Date.parse((s&&(s.updatedAt||s.at))||"")||0; }
+  function bare(s){ var c={},k; for(k in s) if(own(s,k)&&k!=="updatedAt") c[k]=s[k]; return JSON.stringify(c); }
+
+  function collect(ls,nowMs){
+    var meta=readMeta(ls), first=!meta, last=meta?meta.last:blank(), d=blank();
+    var nowIso=new Date(nowMs).toISOString(), i, k;
+    var list=jget(ls,KEYS.slips,[]); if(!(list instanceof Array)) list=[];
+    var here={}, oldest=Infinity;
+    for(i=0;i<list.length;i++){
+      var s=list[i]; if(!s||!s.sid) continue;
+      var prev=last.slips.items[s.sid], c=JSON.parse(JSON.stringify(s));
+      if(!prev) c.updatedAt=c.updatedAt||c.at||nowIso;
+      else if(bare(prev)!==bare(s)) c.updatedAt=nowIso;
+      else c.updatedAt=prev.updatedAt||c.updatedAt||c.at;
+      d.slips.items[s.sid]=c; here[s.sid]=1;
+      if(atMs(s)<oldest) oldest=atMs(s);
+    }
+    for(k in last.slips.tomb) if(own(last.slips.tomb,k)) d.slips.tomb[k]=last.slips.tomb[k];
+    for(k in last.slips.items) if(own(last.slips.items,k)&&!here[k]){
+      /* Gone because the app keeps only 60 is not gone because it was deleted. */
+      var trimmed=list.length>=SLIPS_KEEP&&atMs(last.slips.items[k])<=oldest;
+      if(!trimmed) d.slips.tomb[k]=nowMs;
+    }
+    var my=jget(ls,KEYS.myslip,[]); if(!(my instanceof Array)) my=[];
+    d.myslip={items:my, at:first?(my.length?1:0):(JSON.stringify(my)===JSON.stringify(last.myslip.items)?last.myslip.at:nowMs)};
+    function set(name){
+      var cur=jget(ls,KEYS[name],{}), L=last[name], out={items:{},tomb:{}}, x;
+      if(!cur||typeof cur!=="object") cur={};
+      for(x in cur) if(own(cur,x)&&cur[x]) out.items[x]=own(L.items,x)?L.items[x]:nowMs;
+      for(x in L.tomb) if(own(L.tomb,x)&&!own(out.items,x)) out.tomb[x]=L.tomb[x];
+      for(x in L.items) if(own(L.items,x)&&!own(out.items,x)) out.tomb[x]=nowMs;
+      return out;
+    }
+    d.livefav=set("livefav"); d.leaguefav=set("leaguefav");
+    for(k in PREFS) if(own(PREFS,k)){
+      var v=null; try{ v=ls.getItem(PREFS[k]); }catch(e){}
+      var p=last.prefs[k];
+      if(v==null&&!p) continue;
+      /* On a first sign-in the account's choices beat this device's, which
+         may only be defaults; a pref the account lacks is still kept. */
+      d.prefs[k]={v:v, at:first?1:(p&&p.v===v?p.at:nowMs)};
+    }
+    d.record=last.record||{n:0,won:0};
+    return d;
+  }
+
+  function apply(ls,data,version){
+    var d=data||blank(), sl=[], k, lf={}, lg={}, kept={};
+    for(k in d.slips.items) if(own(d.slips.items,k)) sl.push(d.slips.items[k]);
+    sl.sort(function(a,b){ return atMs(b)-atMs(a); });
+    sl=sl.slice(0,SLIPS_KEEP);
+    jset(ls,KEYS.slips,sl);
+    jset(ls,KEYS.myslip,(d.myslip&&d.myslip.items)||[]);
+    for(k in d.livefav.items) if(own(d.livefav.items,k)) lf[k]=1;
+    for(k in d.leaguefav.items) if(own(d.leaguefav.items,k)) lg[k]=1;
+    jset(ls,KEYS.livefav,lf); jset(ls,KEYS.leaguefav,lg);
+    for(k in PREFS) if(own(PREFS,k)&&d.prefs[k]){
+      try{ if(d.prefs[k].v==null) ls.removeItem(PREFS[k]); else ls.setItem(PREFS[k],d.prefs[k].v); }catch(e){}
+    }
+    for(k=0;k<sl.length;k++) kept[sl[k].sid]=sl[k];
+    var last=JSON.parse(JSON.stringify(d)); last.slips.items=kept;
+    jset(ls,META,{v:1,version:version|0,last:last});
+  }
+
+  function clearSynced(ls){
+    var k;
+    for(k in KEYS) if(own(KEYS,k)) try{ ls.removeItem(KEYS[k]); }catch(e){}
+    for(k in PREFS) if(own(PREFS,k)) try{ ls.removeItem(PREFS[k]); }catch(e){}
+    try{ ls.removeItem(META); }catch(e){}
+  }
+
+  var api={collect:collect,apply:apply,clearSynced:clearSynced,KEYS:KEYS,PREFS:PREFS,META:META,SLIPS_KEEP:SLIPS_KEEP};
+  if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
+  if(!root.document||!root.localStorage) return;
+
+  /* ------------------------------------------------------------ browser */
+  var d=root.document, ls=root.localStorage;
+  var st={on:false,email:"",timer:null,backoff:0,busy:false,raw:""};
+  function $(id){ return d.getElementById(id); }
+  function rawNow(){ var s="",k; for(k in KEYS) s+=ls.getItem(KEYS[k])+"\u0001"; for(k in PREFS) s+=ls.getItem(PREFS[k])+"\u0001"; return s; }
+  function reload(){ try{ if(root.swReloadSynced) root.swReloadSynced(); }catch(e){} }
+  function req(method,url,body,cb){
+    var x=new XMLHttpRequest();
+    x.open(method,url,true);
+    if(method==="POST"){ x.setRequestHeader("Content-Type","application/json"); x.setRequestHeader("X-SW-Request","1"); }
+    x.timeout=20000;
+    x.onload=function(){ var j={}; try{ j=JSON.parse(x.responseText); }catch(e){} cb(x.status,j); };
+    x.onerror=x.ontimeout=function(){ cb(0,{}); };
+    x.send(body==null?null:(typeof body==="string"?body:JSON.stringify(body)));
+  }
+
+  var css=d.createElement("style");
+  css.textContent="#hdAccount .ac-i{font-weight:800;font-size:14px;line-height:1}"+
+    "#acctNote{position:fixed;left:12px;right:12px;top:12px;z-index:9999;background:var(--card);color:var(--text);"+
+    "border:1px solid var(--line);border-radius:12px;padding:12px 44px 12px 14px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.35)}"+
+    "#acctNote button{position:absolute;right:6px;top:6px;background:none;border:0;color:var(--soft);font-size:20px;width:32px;height:32px;cursor:pointer}"+
+    "#acctSheet .ac-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}"+
+    "#acctSheet .ac-row small{display:block;color:var(--soft)}"+
+    "#acctSheet .ac-btn{display:block;width:100%;margin:10px 0 0;padding:12px;border-radius:12px;border:1px solid var(--line);"+
+    "background:var(--card);color:var(--text);font:inherit;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;box-sizing:border-box}"+
+    "#acctSheet .ac-danger{color:#ff6b6b}"+
+    "#acctSheet input{width:100%;box-sizing:border-box;margin:10px 0 0;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit}"+
+    "#acctSheet .ac-msg{min-height:1.3em;margin:10px 0 0;font-weight:600}";
+  d.head.appendChild(css);
+
+  function notice(text){
+    var n=$("acctNote"); if(n) n.parentNode.removeChild(n);
+    n=d.createElement("div"); n.id="acctNote"; n.setAttribute("role","status");
+    var t=d.createElement("span"); t.textContent=text; n.appendChild(t);
+    var x=d.createElement("button"); x.type="button"; x.setAttribute("aria-label","Close"); x.textContent="×";
+    x.onclick=function(){ n.parentNode.removeChild(n); }; n.appendChild(x);
+    d.body.appendChild(n);
+  }
+
+  var PERSON='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>';
+  function paintButton(){
+    var b=$("hdAccount"); if(!b) return;
+    b.hidden=false;
+    if(st.on){
+      b.innerHTML=""; var i=d.createElement("span"); i.className="ac-i"; i.textContent=(st.email.charAt(0)||"?").toUpperCase();
+      b.appendChild(i); b.setAttribute("aria-label","Your account");
+    } else { b.innerHTML=PERSON; b.setAttribute("aria-label","Sign in"); }
+  }
+
+  function signedOutHere(reason){
+    var had=!!readMeta(ls);
+    st.on=false; clearSynced(ls); reload(); paintButton(); closeSheet();
+    if(had) notice(reason==="displaced"?"Signed out: this account was used on a newer device.":"You were signed out. Sign in again to sync.");
+  }
+
+  function schedule(ms){ if(st.timer) clearTimeout(st.timer); st.timer=setTimeout(function(){ sync(false); },ms); }
+  function sync(keepalive){
+    if(!st.on||st.busy) return;
+    var meta=readMeta(ls), body=JSON.stringify({base_version:meta?meta.version:0,data:collect(ls,Date.now())});
+    if(keepalive){
+      /* A page being hidden may never get the answer; the next load reconciles. */
+      if(root.fetch&&body.length<60000) try{ root.fetch("/api/me",{method:"POST",keepalive:true,credentials:"same-origin",
+        headers:{"Content-Type":"application/json","X-SW-Request":"1"},body:body}); }catch(e){}
+      return;
+    }
+    st.busy=true;
+    req("POST","/api/me",body,function(code,j){
+      st.busy=false;
+      if(code===200&&j.data){
+        var before=rawNow(); apply(ls,j.data,j.version); st.raw=rawNow(); st.backoff=0;
+        if(before!==st.raw) reload();
+        return;
+      }
+      if(code===401) return signedOutHere(j.reason);
+      st.backoff=Math.min((st.backoff||1000)*2,300000); schedule(st.backoff);
+    });
+  }
+  function watch(){ if(st.on&&rawNow()!==st.raw) schedule(2000); }
+
+  /* ---------------------------------------------------------- the sheet */
+  var sheet=null;
+  function el(tag,cls,text){ var e=d.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+  function say(text){ var m=$("acctMsg"); if(m) m.textContent=text; }
+  function fail(code,j){
+    if(code===0) return say("No connection. Check your data and try again.");
+    if(j&&j.error==="reauth") return say("For your safety, sign in again, then delete within 10 minutes.");
+    say("Something went wrong. Try again.");
+  }
+  function build(){
+    sheet=el("div","sheet"); sheet.id="acctSheet"; sheet.setAttribute("role","dialog"); sheet.setAttribute("aria-modal","true");
+    sheet.setAttribute("aria-labelledby","acctTitle");
+    sheet.innerHTML='<div class="sheet-grab"><i></i></div><div class="sheet-head"><div class="info"><h3 id="acctTitle">Your account</h3><p id="acctEmail"></p></div>'+
+      '<button class="sheet-x" id="acctX" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'+
+      '<div class="sheet-body"><h4>Your devices</h4><div id="acctDevs"></div>'+
+      '<a class="ac-btn" href="/api/account/export" download>Download my data</a>'+
+      '<button class="ac-btn" id="acctOut" type="button">Sign out</button>'+
+      '<button class="ac-btn" id="acctOutAll" type="button">Sign out everywhere</button>'+
+      '<button class="ac-btn ac-danger" id="acctDel" type="button">Delete account</button>'+
+      '<div id="acctDelBox" hidden><p>This deletes your account and everything synced to it. It cannot be undone. Type DELETE to confirm.</p>'+
+      '<input id="acctDelIn" autocomplete="off" autocapitalize="characters"><button class="ac-btn ac-danger" id="acctDelGo" type="button">Delete for good</button></div>'+
+      '<p class="ac-msg" id="acctMsg" role="status" aria-live="polite"></p></div>';
+    d.body.appendChild(sheet);
+    $("acctX").onclick=closeSheet;
+    $("scrim").addEventListener("click",closeSheet);
+    d.addEventListener("keydown",function(e){ if(e.key==="Escape") closeSheet(); });
+    $("acctOut").onclick=function(){ req("POST","/api/auth/logout",{},function(){ signedOutHere(null); }); };
+    $("acctOutAll").onclick=function(){ req("POST","/api/auth/logout-all",{},function(code,j){ if(code===200||code===401) signedOutHere(null); else fail(code,j); }); };
+    $("acctDel").onclick=function(){ $("acctDelBox").hidden=false; $("acctDelIn").focus(); };
+    $("acctDelGo").onclick=function(){
+      if($("acctDelIn").value.replace(/\s/g,"").toUpperCase()!=="DELETE") return say("Type DELETE to confirm.");
+      req("POST","/api/account/delete",{},function(code,j){
+        if(code===200){ st.on=false; clearSynced(ls); reload(); paintButton(); closeSheet(); notice("Your account is deleted."); return; }
+        if(j&&j.error==="reauth"){ fail(code,j); var a=el("a",null,"Sign in again"); a.href="/login?return="+encodeURIComponent("/?account=1"); $("acctMsg").appendChild(d.createTextNode(" ")); $("acctMsg").appendChild(a); return; }
+        fail(code,j);
+      });
+    };
+  }
+  function when(iso){ try{ return new Date(iso).toLocaleDateString(undefined,{day:"numeric",month:"short"}); }catch(e){ return ""; } }
+  function loadDevices(){
+    var box=$("acctDevs"); box.textContent="Loading…";
+    req("GET","/api/auth/devices",null,function(code,j){
+      if(code===401) return signedOutHere(j.reason);
+      if(code!==200) { box.textContent=""; return fail(code,j); }
+      box.textContent="";
+      (j.devices||[]).forEach(function(v){
+        var row=el("div","ac-row"), info=el("div");
+        info.appendChild(el("span",null,v.label||"Device"));
+        info.appendChild(el("small",null,v.current?"This device":"Last used "+when(v.last_used_at)));
+        row.appendChild(info);
+        if(!v.current){
+          var b=el("button","ac-btn","Sign out"); b.type="button"; b.style.width="auto"; b.style.margin="0";
+          b.onclick=function(){ req("POST","/api/auth/devices/end",{id:v.id},function(c2,j2){ if(c2===200) loadDevices(); else fail(c2,j2); }); };
+          row.appendChild(b);
+        }
+        box.appendChild(row);
+      });
+    });
+  }
+  function openSheet(){
+    if(!sheet) build();
+    $("acctEmail").textContent=st.email; say(""); $("acctDelBox").hidden=true; $("acctDelIn").value="";
+    $("scrim").classList.add("on"); sheet.classList.add("on"); d.documentElement.classList.add("locked");
+    loadDevices(); $("acctX").focus();
+  }
+  function closeSheet(){
+    if(!sheet||!sheet.classList.contains("on")) return;
+    sheet.classList.remove("on"); $("scrim").classList.remove("on"); d.documentElement.classList.remove("locked");
+  }
+
+  /* ----------------------------------------------------------- start up */
+  function boot(){
+    var b=$("hdAccount"); if(!b) return;
+    b.addEventListener("click",function(){
+      if(st.on) return openSheet();
+      location.href="/login?return="+encodeURIComponent(location.pathname+location.search);
+    });
+    req("GET","/api/me",null,function(code,j){
+      if(code===404||code===0||code>=500) return;            // off, offline or down: stay invisible, keep local
+      if(code===401){ paintButton(); if(readMeta(ls)) signedOutHere(j.reason); return; }
+      if(code!==200) return;
+      st.on=true; st.email=j.email||""; paintButton();
+      sync(false);
+      setInterval(watch,5000);
+      root.addEventListener("storage",function(){ schedule(2000); });
+      d.addEventListener("visibilitychange",function(){ if(d.visibilityState==="hidden"&&rawNow()!==st.raw) sync(true); });
+      if(/[?&]account=1/.test(location.search)) openSheet();
+    });
+  }
+  if(d.readyState==="loading") d.addEventListener("DOMContentLoaded",boot); else boot();
+})(typeof window!=="undefined"?window:this);
 </script>
 </body>
 </html>
