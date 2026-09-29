@@ -16385,11 +16385,17 @@ function slipImage(picks, odds, code){
 
   const barTop=y+20;
   if(code){
-    g.fillStyle="#e63946";
+    /* THE BOOK THAT BOOKED IT, not SportyBet for everyone (29 Sep 2026: the
+       card named SportyBet under a Bet9ja, BetKing, betPawa or 1xBet code).
+       Each ground is that book's own dark or brand colour, with white on it -
+       SportyBet's red is the one it always had. */
+    const B=curBook()||BOOKS.sporty;
+    const GROUND={sporty:"#e63946",bet9ja:"#0E7A3C",betking:"#1E1E1E",betpawa:"#252A2D",onexbet:"#276BA6"};
+    g.fillStyle=GROUND[B.key]||"#e63946";
     g.fillRect(PAD,barTop,W-PAD*2,BAR);
     g.fillStyle="#fff";
     g.font="800 32px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
-    g.fillText("SportyBet code",PAD+24,barTop+58);
+    g.fillText(B.label+" code",PAD+24,barTop+58);
     g.font="800 50px ui-monospace,SFMono-Regular,Menlo,monospace";
     const cw=g.measureText(code).width;
     g.fillText(code,W-PAD-24-cw,barTop+62);
@@ -16397,7 +16403,7 @@ function slipImage(picks, odds, code){
   /* Below the bar, never over it. */
   g.fillStyle="#6b6b70";
   g.font="600 22px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
-  g.fillText("skypredict-theta.vercel.app",PAD,barTop+BAR+40);
+  g.fillText("soccerwizard.live",PAD,barTop+BAR+40);
   return c;
 }
 async function shareSlipImage(picks, odds, code, fallbackText){

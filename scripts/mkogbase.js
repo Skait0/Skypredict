@@ -158,7 +158,7 @@ function advanceOf(ctx, font) {
   /* "Free" came off the card on 3 Sep, with the same line on the page: it
      may not be free later, and a promise that has to be withdrawn is worth
      less than one never made.
-     ALL FOUR BOOKS, IN THEIR OWN COLOURS (24 Sep). It said "SportyBet or
+     ALL THE BOOKS, IN THEIR OWN COLOURS (24 Sep; 1xBet 29 Sep). It said "SportyBet or
      Bet9ja" long after BetKing and betPawa went live, and it is the picture on
      every shared link. The names take the same wordmark colours the site and
      the entry screen use; the joining words stay in the line's grey. */
@@ -167,8 +167,10 @@ function advanceOf(ctx, font) {
     const segs = [
       ["SportyBet", "#e63946", NAME], [", ", null],
       ["bet", "#d42127", NAME], ["9ja", "#14b151", NAME], [", ", null],
-      ["Bet", "#f2f1f0", NAME], ["King", "#ffc400", NAME], [" or ", null],
-      ["bet", "#f2f1f0", NAME], ["Pawa", "#9ce800", NAME], [" code in one tap", null],
+      ["Bet", "#f2f1f0", NAME], ["King", "#ffc400", NAME], [", ", null],
+      ["bet", "#f2f1f0", NAME], ["Pawa", "#9ce800", NAME], [" or ", null],
+      /* 1xBet, 29 Sep 2026: white "1X" and "BET" in the accent off their logo. */
+      ["1X", "#f2f1f0", NAME], ["BET", "#14a0ff", NAME], [" code in one tap", null],
     ];
     const fontOf = (s) => s[2] || STYLES.leagues.font;
     let total = 0;
