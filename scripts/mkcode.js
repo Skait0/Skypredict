@@ -96,6 +96,7 @@ const FEEDS = {
   bet9ja: "/api/bet9ja/fixtures",
   betking: "/api/betking/fixtures",
   betpawa: "/api/betpawa/fixtures",
+  onexbet: "/api/onexbet/fixtures",
 };
 
 async function events(which) {
@@ -283,8 +284,13 @@ if (require.main === module) (async () => {
     console.log("betpawa fixtures: " + e.message + " - publishing without it");
     return [];
   });
+  /* 1xBet joins on the same terms - additive, asked last. */
+  const xb = await events("onexbet").catch((e) => {
+    console.log("onexbet fixtures: " + e.message + " - publishing without it");
+    return [];
+  });
   console.log(`feeds: ${sporty.length} SportyBet events, ${b9.length} Bet9ja events, ` +
-              `${bk.length} BetKing events, ${bp.length} Betpawa events`);
+              `${bk.length} BetKing events, ${bp.length} Betpawa events, ${xb.length} 1xBet events`);
 
   /* A leg has to be on BOTH books or it is not a leg. Two codes that are not
      the same slip would make tomorrow's record meaningless. */
@@ -293,11 +299,12 @@ if (require.main === module) (async () => {
     if (picked.length >= legs) break;
     const s = findEvent(f, sporty), b = findEvent(f, b9);
     if (!s || !b) continue;
-    const k = findEvent(f, bk), w = findEvent(f, bp);
+    const k = findEvent(f, bk), w = findEvent(f, bp), x = findEvent(f, xb);
     const market = M.tipCode(f);
     picked.push({ f: f, sporty: s.eventId, bet9ja: b.eventId,
                   betking: k ? k.eventId : null,
-                  betpawa: w ? w.eventId : null, market: market,
+                  betpawa: w ? w.eventId : null,
+                  onexbet: x ? x.eventId : null, market: market,
                   odd: legOdd(s, market) });
   }
   if (picked.length < legs) {
@@ -366,12 +373,13 @@ if (require.main === module) (async () => {
     while (working.length < legs && spare.length) {
       const f = spare.shift();
       const sp = findEvent(f, sporty), bb = findEvent(f, b9), kk = findEvent(f, bk),
-            ww = findEvent(f, bp);
+            ww = findEvent(f, bp), xx = findEvent(f, xb);
       if (sp && bb) {
         const market = M.tipCode(f);
         working.push({ f: f, sporty: sp.eventId, bet9ja: bb.eventId,
                        betking: kk ? kk.eventId : null,
-                       betpawa: ww ? ww.eventId : null, market: market,
+                       betpawa: ww ? ww.eventId : null,
+                       onexbet: xx ? xx.eventId : null, market: market,
                        odd: legOdd(sp, market) });
       }
     }
@@ -417,6 +425,20 @@ if (require.main === module) (async () => {
                 "on its feed - publishing without it");
   }
 
+  /* AND 1XBET, LAST, ON THE SAME ADDITIVE TERMS: asked only for the legs the
+     established books already agreed, and any failure costs 1xBet the day and
+     nothing else. It must never decide which games everybody else is given. */
+  const xbLegs = working.map((p) => p.onexbet);
+  if (xbLegs.every(Boolean)) {
+    const out = await bookSlipRetrying("onexbet",
+      working.map((p) => ({ eventId: p.onexbet, code: p.market })));
+    if (out.ok) codes.onexbet = out.code;
+    else console.log(`onexbet: ${out.why} - publishing without it`);
+  } else {
+    console.log(`onexbet: ${xbLegs.filter(Boolean).length} of ${xbLegs.length} legs ` +
+                "on its feed - publishing without it");
+  }
+
   const entry = {
     date: date,
     generated: new Date().toISOString(),
@@ -436,7 +458,8 @@ if (require.main === module) (async () => {
     odds: slipOdds(working.map((p) => ({ odd: p.odd }))),
   };
   console.log(`sporty: ${codes.sporty || "-"}   bet9ja: ${codes.bet9ja || "-"}   ` +
-              `betking: ${codes.betking || "-"}   betpawa: ${codes.betpawa || "-"}`);
+              `betking: ${codes.betking || "-"}   betpawa: ${codes.betpawa || "-"}   ` +
+              `onexbet: ${codes.onexbet || "-"}`);
 
   /* --dry was declared at the top of this file, documented in the usage line,
      and never read - so a "dry" run booked two real slips and wrote the file

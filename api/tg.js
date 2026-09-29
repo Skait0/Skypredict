@@ -26,7 +26,7 @@ const ASK = require("../lib/ask.js");
 const S = require("../lib/slipedit.js");
 
 const SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
-const ORDER = ["sporty", "bet9ja", "betking", "betpawa"];
+const ORDER = ["sporty", "bet9ja", "betking", "betpawa", "onexbet"];
 
 const TOKEN = () => (process.env.TELEGRAM_BOT_TOKEN || "").trim();
 function secretFor(token) {
@@ -53,7 +53,7 @@ async function readCode(book, code) {
 
 const HELLO =
   "🔮 <b>The Wizard's Eye</b> 🧙\n<i>Drop any code. The Wizard's Eye sees it all.</i>\n\n" +
-  "Send me any booking code - SportyBet, Bet9ja, BetKing or betPawa - and you get:\n" +
+  "Send me any booking code - SportyBet, Bet9ja, BetKing, betPawa or 1xBet - and you get:\n" +
   "🔥 your bankers\n👀 the legs to tighten\n💰 what it pays\n" +
   "🔁 the same slip on another bookie, one tap\n🔔 live updates as each game lands\n\n" +
   "Paste the code on its own, or a share link. Say which bookie if you know it.\n\n" +
@@ -354,7 +354,7 @@ module.exports = async function handler(req, res) {
   try {
     /* t.me/<bot>?start=book_CODE arrives as "/start book_CODE" - the site's
        code dialog opens the bot on the code the reader just got. */
-    const deep = /^\/start\s+(sporty|bet9ja|betking|betpawa)_([A-Za-z0-9]{4,16})\s*$/i.exec(msg.text);
+    const deep = /^\/start\s+(sporty|bet9ja|betking|betpawa|onexbet)_([A-Za-z0-9]{4,16})\s*$/i.exec(msg.text);
     if (!deep && /^\/(start|help)\b/i.test(msg.text)) { await say(HELLO); return res.status(200).json({ ok: true }); }
     let { code, book } = deep ? { code: deep[2].toUpperCase(), book: deep[1].toLowerCase() } : D.parse(msg.text);
     /* "trim to 150" sent as a reply to the bot's read of a code acts on that

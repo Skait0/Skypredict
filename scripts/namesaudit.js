@@ -39,6 +39,7 @@ const FEEDS = {
   bet9ja: "/api/bet9ja",
   betking: "/api/betking",
   betpawa: "/api/betpawa",
+  onexbet: "/api/onexbet",
 };
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
