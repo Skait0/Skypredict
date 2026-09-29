@@ -68,6 +68,14 @@ test("a live session is renewed at most every ten minutes, never past 90 days", 
   assert.deepStrictEqual(await S.readSession(db, reqWith(s.token), T0 + 90 * DAY + 1), { state: "ended", reason: "expired" });
 });
 
+test("a row with a garbage absolute_expires_at fails closed as expired, not open", async () => {
+  const db = memDb();
+  const s = await S.startSession(db, U, "", T0);
+  db.rows[0].absolute_expires_at = "not-a-date";
+  const r = await S.readSession(db, reqWith(s.token), T0 + 20 * 60e3);
+  assert.deepStrictEqual(r, { state: "ended", reason: "expired" });
+});
+
 test("no cookie, a malformed cookie or an unknown token is simply signed out", async () => {
   const db = memDb();
   assert.deepStrictEqual(await S.readSession(db, { headers: {} }, T0), { state: "none" });
