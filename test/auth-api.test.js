@@ -42,7 +42,7 @@ async function googleStart(w, ip) {
   const attempt = w.db.t.attempts[w.db.t.attempts.length - 1];
   w.claims = { iss: "https://accounts.google.com", aud: "cid", sub: "g-1", email: "Ade@Gmail.com", email_verified: true,
     nonce: attempt.nonce, iat: w.clock() / 1000, exp: w.clock() / 1000 + 3600 };
-  return { handoff: prep.json().handoff, state: loc.searchParams.get("state"), start };
+  return { state: loc.searchParams.get("state"), start };
 }
 
 test("switched off, every route is a plain 404", async () => {
@@ -165,28 +165,22 @@ test("Google: a claim that fails (wrong nonce) signs nobody in", async () => {
   assert.strictEqual(w.db.t.users.length, 0);
 });
 
-test("Review Focus 5: Google finished in Safari, the installed app picks the session up once", async () => {
+test("Google finished in another browser signs nobody in, even on the same network", async () => {
   const w = world();
   const g = await googleStart(w, "102.89.9.9");
-  assert.deepStrictEqual((await w.call(postReq("handoff", { handoff: g.handoff }, { "x-forwarded-for": "102.89.9.9" }))).json(), { pending: true });
-  // Safari: same phone, same network, but no oauth cookie.
+  // Same public IP (shared Wi-Fi / carrier NAT), but no oauth cookie: a different browser.
   const cb = await w.call(getReq("google/callback", { code: "c1", state: g.state }, { "x-forwarded-for": "102.89.9.9" }));
-  assert.strictEqual(cb.code, 200);
-  assert.match(cb.body, /Signed in/);
-  assert.strictEqual(sessionCookie(cb), null, "Safari itself is not signed in");
-  const ho = await w.call(postReq("handoff", { handoff: g.handoff }, { "x-forwarded-for": "102.89.9.9" }));
-  assert.deepStrictEqual(ho.json(), { ok: true, return: "/booking-codes" });
-  assert.ok(sessionCookie(ho));
-  const replay = await w.call(postReq("handoff", { handoff: g.handoff }, { "x-forwarded-for": "102.89.9.9" }));
-  assert.strictEqual(replay.code, 410); assert.strictEqual(sessionCookie(replay), null);
+  assert.strictEqual(cb.code, 400);
+  assert.match(cb.body, /Finish in the same browser/);
+  assert.strictEqual(sessionCookie(cb), null);
+  assert.strictEqual(w.db.t.users.length, 0);
+  assert.strictEqual(w.db.t.sessions.length, 0);
 });
 
-test("a Google link finished on another network cannot hand a session to the page that made it", async () => {
+test("prepare hands the page only the start link", async () => {
   const w = world();
-  const g = await googleStart(w, "41.1.1.1");                    // attacker's page
-  const cb = await w.call(getReq("google/callback", { code: "c1", state: g.state }, { "x-forwarded-for": "102.89.9.9" }));  // victim
-  assert.strictEqual(cb.code, 400);
-  assert.deepStrictEqual((await w.call(postReq("handoff", { handoff: g.handoff }, { "x-forwarded-for": "41.1.1.1" }))).json(), { pending: true });
+  const prep = await w.call(postReq("google/prepare", {}));
+  assert.deepStrictEqual(Object.keys(prep.json()), ["start"]);
 });
 
 test("the new-device email goes out from the second sign-in on, not the first", async () => {

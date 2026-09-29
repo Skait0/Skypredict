@@ -4,7 +4,8 @@
    the feature switch, method + CSRF, rate limits, input, then does the work.
    A user id only ever comes from a session or from claims we just verified.
    Spec sections 4 and 5; decisions beyond the spec's letter are listed in the
-   plan's Task 10 (HMAC state, same-network handoff, conditional claims). */
+   plan's Task 10 (HMAC state, conditional claims). Google sign-in must finish
+   in the same browser that started it - there is no cross-browser handoff. */
 const crypto = require("crypto");
 const H = require("../lib/auth/http.js");
 const S = require("../lib/auth/session.js");
@@ -15,7 +16,7 @@ const ATTEMPT_MS = 10 * 60e3;
 const iso = (ms) => new Date(ms).toISOString();
 const firstIp = (req) => String(((req.headers || {})["x-forwarded-for"]) || "").split(",")[0].trim();
 const uaOf = (req) => String(((req.headers || {})["user-agent"]) || "");
-const POST_ROUTES = new Set(["google/prepare", "handoff", "email/send", "email/verify", "logout", "logout-all", "devices/end"]);
+const POST_ROUTES = new Set(["google/prepare", "email/send", "email/verify", "logout", "logout-all", "devices/end"]);
 
 function make(deps) {
   const { db, google, turnstile } = deps;
@@ -63,7 +64,7 @@ function make(deps) {
         expires_at: iso(t + ATTEMPT_MS),
       });
       if (!row) throw new Error("attempt insert failed");
-      return H.sendJson(res, 200, { start: "/api/auth/google/start?a=" + id, handoff });
+      return H.sendJson(res, 200, { start: "/api/auth/google/start?a=" + id });
     },
 
     "google/start": async (req, res, t) => {
@@ -89,7 +90,9 @@ function make(deps) {
       if (!a || !a.started_at || Date.parse(a.expires_at) <= t) return fail("state unknown or expired");
       if (!(await db.consumeAttempt(a.id, iso(t)))) return fail("state replayed");
       const sameBrowser = C.sameHex(S.readCookie(req, S.OAUTH_COOKIE) || "", state);
-      if (!sameBrowser && H.ipKey(req) !== a.ip_hash) return fail("handoff from another network");
+      if (!sameBrowser) return H.sendHtml(res, 400, "Finish in the same browser",
+        "Google sign-in has to finish in the browser where you started it. Go back to Soccerwizard and use Email me a code instead.",
+        [S.clearCookie(S.OAUTH_COOKIE)]);
       const idToken = await google.exchangeCode({ code: String(q.code || ""), verifier: a.code_verifier,
         clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET, redirectUri: redirectUri() });
       const claims = google.checkClaims(google.decodePayload(idToken), { clientId: process.env.GOOGLE_CLIENT_ID, nonce: a.nonce, nowMs: t });
@@ -101,28 +104,8 @@ function make(deps) {
         user = r.user; existed = r.existed;
         if (!user.google_sub) await db.linkGoogle(user.id, claims.sub);
       }
-      if (sameBrowser) {
-        const s = await signIn(user, existed, uaOf(req), t);
-        return H.redirect(res, H.safeReturn(a.return_to), [s.cookie, S.clearCookie(S.OAUTH_COOKIE)]);
-      }
-      await db.updateAttempt(a.id, { user_id: user.id });
-      return H.sendHtml(res, 200, "Signed in", "Go back to Soccerwizard. You can close this tab.");
-    },
-
-    "handoff": async (req, res, t) => {
-      if (!(await db.rlHit("ho:" + H.ipKey(req), 3600, 600))) return H.sendJson(res, 429, { error: "slow_down", minutes: 60 });
-      const body = (await H.readJson(req, 1024)) || {};
-      const h = String(body.handoff || "");
-      if (!C.TOKEN_RE.test(h)) return H.sendJson(res, 400, { error: "bad_request" });
-      const a = await db.attemptByHandoff(C.sha256hex(h));
-      if (!a || Date.parse(a.expires_at) <= t) return H.sendJson(res, 410, { error: "expired" });
-      if (!a.user_id) return H.sendJson(res, 200, { pending: true });
-      if (!(await db.claimHandoff(a.id, a.user_id, C.sha256hex(C.randomToken())))) return H.sendJson(res, 410, { error: "expired" });
-      const user = await db.userById(a.user_id);
-      if (!user) return H.sendJson(res, 410, { error: "expired" });
-      const existed = Date.parse(user.created_at) < Date.parse(a.created_at);
       const s = await signIn(user, existed, uaOf(req), t);
-      return H.sendJson(res, 200, { ok: true, return: H.safeReturn(a.return_to) }, [s.cookie]);
+      return H.redirect(res, H.safeReturn(a.return_to), [s.cookie, S.clearCookie(S.OAUTH_COOKIE)]);
     },
 
     "email/send": async (req, res, t) => {

@@ -15,9 +15,9 @@ function fakeDb(clock) {
   const db = {
     t, onPut: null,
     async rlHit(key, w, limit) { t.rl[key] = (t.rl[key] || 0) + 1; return t.rl[key] <= limit; },
-    async userBySub(sub) { return find(t.users, (u) => u.google_sub === sub); },
-    async userByEmail(e) { return find(t.users, (u) => u.email === e); },
-    async userById(id) { return find(t.users, (u) => u.id === id); },
+    async userBySub(sub) { const u = find(t.users, (x) => x.google_sub === sub); return u ? copy(u) : null; },
+    async userByEmail(e) { const u = find(t.users, (x) => x.email === e); return u ? copy(u) : null; },
+    async userById(id) { const u = find(t.users, (x) => x.id === id); return u ? copy(u) : null; },
     async createUser(u) {
       if (t.users.some((x) => x.email === u.email)) return null;
       const r = { id: uuid(), email: u.email, google_sub: u.google_sub || null, created_at: nowIso(), last_seen_at: nowIso() };
@@ -28,9 +28,10 @@ function fakeDb(clock) {
     async insertSession(r) { const s = Object.assign({ id: uuid(), ended_at: null, end_reason: null }, r); t.sessions.push(s); return s; },
     async liveSessions(uid, iso) {
       return t.sessions.filter((s) => s.user_id === uid && !s.ended_at && s.expires_at > iso)
-        .sort((a, b) => (a.last_used_at < b.last_used_at ? 1 : a.last_used_at > b.last_used_at ? -1 : 0));
+        .sort((a, b) => (a.last_used_at < b.last_used_at ? 1 : a.last_used_at > b.last_used_at ? -1 : 0))
+        .map(copy);
     },
-    async sessionByHash(h) { return find(t.sessions, (s) => s.token_hash === h); },
+    async sessionByHash(h) { const s = find(t.sessions, (x) => x.token_hash === h); return s ? copy(s) : null; },
     async updateSession(id, p) { const s = find(t.sessions, (x) => x.id === id); if (s) Object.assign(s, p); return true; },
     async endSessions(ids, reason, iso) { t.sessions.forEach((s) => { if (ids.includes(s.id) && !s.ended_at) { s.ended_at = iso; s.end_reason = reason; } }); return true; },
     async endAllSessions(uid, reason, iso) { t.sessions.forEach((s) => { if (s.user_id === uid && !s.ended_at) { s.ended_at = iso; s.end_reason = reason; } }); return true; },
