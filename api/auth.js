@@ -63,10 +63,10 @@ function make(deps) {
     "google/prepare": async (req, res, t) => {
       if (!(await db.rlHit("gp:" + H.ipKey(req), 3600, 30))) return H.sendJson(res, 429, { error: "slow_down", minutes: 60 });
       const body = (await H.readJson(req, 2048)) || {};
-      const id = crypto.randomUUID(), nonce = C.randomToken(), handoff = C.randomToken();
+      const id = crypto.randomUUID(), nonce = C.randomToken();
       const row = await db.insertAttempt({
         id, nonce, state_hash: C.sha256hex(stateFor({ id, nonce })), code_verifier: C.randomToken(),
-        return_to: H.safeReturn(body.return), handoff_hash: C.sha256hex(handoff), ip_hash: H.ipKey(req),
+        return_to: H.safeReturn(body.return),
         expires_at: iso(t + ATTEMPT_MS),
       });
       if (!row) throw new Error("attempt insert failed");

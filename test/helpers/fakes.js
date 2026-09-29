@@ -37,18 +37,14 @@ function fakeDb(clock) {
     async endAllSessions(uid, reason, iso) { t.sessions.forEach((s) => { if (s.user_id === uid && !s.ended_at) { s.ended_at = iso; s.end_reason = reason; } }); return true; },
     async insertCode(r) { t.codes.push(Object.assign({ id: uuid(), attempts: 0, consumed_at: null, created_at: nowIso() }, r)); return true; },
     async latestCode(e) { const l = t.codes.filter((c) => c.email === e && !c.consumed_at); return l.length ? copy(l[l.length - 1]) : null; },
-    async updateCode(id, p) { const c = find(t.codes, (x) => x.id === id); if (c) Object.assign(c, p); return true; },
     async killCodes(e, iso) { t.codes.forEach((c) => { if (c.email === e && !c.consumed_at) c.consumed_at = iso; }); return true; },
     async claimTry(id, seen) { const c = find(t.codes, (x) => x.id === id && x.attempts === seen); if (!c) return false; c.attempts++; return true; },
     async consumeCode(id, iso) { const c = find(t.codes, (x) => x.id === id && !x.consumed_at); if (!c) return false; c.consumed_at = iso; return true; },
-    async insertAttempt(r) { const a = Object.assign({ user_id: null, started_at: null, consumed_at: null, created_at: nowIso() }, r); a.id = a.id || uuid(); t.attempts.push(a); return a; },
+    async insertAttempt(r) { const a = Object.assign({ started_at: null, consumed_at: null, created_at: nowIso() }, r); a.id = a.id || uuid(); t.attempts.push(a); return a; },
     async attemptById(id) { const a = find(t.attempts, (x) => x.id === id); return a ? copy(a) : null; },
     async attemptByState(h) { const a = find(t.attempts, (x) => x.state_hash === h); return a ? copy(a) : null; },
-    async attemptByHandoff(h) { const a = find(t.attempts, (x) => x.handoff_hash === h); return a ? copy(a) : null; },
-    async updateAttempt(id, p) { const a = find(t.attempts, (x) => x.id === id); if (a) Object.assign(a, p); return true; },
     async startAttempt(id, iso) { const a = find(t.attempts, (x) => x.id === id && !x.started_at); if (!a) return false; a.started_at = iso; return true; },
     async consumeAttempt(id, iso) { const a = find(t.attempts, (x) => x.id === id && !x.consumed_at); if (!a) return false; a.consumed_at = iso; return true; },
-    async claimHandoff(id, uid, nh) { const a = find(t.attempts, (x) => x.id === id && x.user_id === uid); if (!a) return false; a.user_id = null; a.handoff_hash = nh; return true; },
     async getUserData(uid) { const r = t.data[uid]; return r ? { data: copy(r.data), version: r.version } : null; },
     async putUserData(uid, data, base) {
       if (db.onPut) { const f = db.onPut; db.onPut = null; f(); }          // another device writes first
@@ -61,7 +57,7 @@ function fakeDb(clock) {
     async subscription(uid) { return t.subs[uid] || null; },
     async deleteUser(uid) {
       t.users = t.users.filter((u) => u.id !== uid); t.sessions = t.sessions.filter((s) => s.user_id !== uid);
-      t.attempts = t.attempts.filter((a) => a.user_id !== uid); delete t.data[uid]; delete t.subs[uid]; return true;
+      delete t.data[uid]; delete t.subs[uid]; return true;
     },
     async housekeep() { return true; },
   };

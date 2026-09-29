@@ -22394,7 +22394,6 @@ load().catch(function(){});
     leaguefav:{items:{},tomb:{}},prefs:{},record:{n:0,won:0}}; }
   function readMeta(ls){ var m=jget(ls,META,null); return m&&m.last?m:null; }
   function atMs(s){ return Date.parse((s&&s.at)||"")||0; }
-  function slipTs(s){ return Date.parse((s&&(s.updatedAt||s.at))||"")||0; }
   function bare(s){ var c={},k; for(k in s) if(own(s,k)&&k!=="updatedAt") c[k]=s[k]; return JSON.stringify(c); }
 
   function collect(ls,nowMs){

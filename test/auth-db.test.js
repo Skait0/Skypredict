@@ -74,8 +74,6 @@ test("claims are conditional: only the request that changed the row wins", async
   assert.strictEqual(await DB.consumeCode(U1, "2026-09-29T10:00:00.000Z"), false);
   assert.match(calls[0].url, /consumed_at=is\.null/);
   calls = capture({ status: 200, body: [] });
-  assert.strictEqual(await DB.claimHandoff(U1, U1, "a".repeat(64)), false);
-  assert.match(calls[0].url, new RegExp("auth_attempts\\?id=eq\\." + U1 + "&user_id=eq\\." + U1));
   assert.strictEqual(await DB.startAttempt("nope", "x"), false);
 });
 

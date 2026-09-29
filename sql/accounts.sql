@@ -47,12 +47,6 @@ create table if not exists public.auth_attempts (
   code_verifier text not null,
   nonce text not null,
   return_to text not null default '/',
-  handoff_hash text not null unique,
-  -- Network of the device that started the sign-in (hashed, like the rate
-  -- limiter's). A handoff only completes when Google finishes on the same
-  -- network, so a phished Google link cannot sign an attacker's page in.
-  ip_hash text not null default '',
-  user_id uuid references public.users(id) on delete cascade,
   created_at timestamptz not null default now(),
   expires_at timestamptz not null,
   started_at timestamptz,
