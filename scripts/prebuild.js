@@ -528,6 +528,13 @@ async function writePages(payload) {
     notFound = true;
   } catch (e) { warn("404 page failed: " + e.message); }
 
+  /* The sign-in page. Not in the sitemap and noindex: it is a door, not a
+     destination. The Turnstile site key is public by design; the secret
+     stays in Vercel env and is only read by lib/auth/turnstile.js. */
+  try {
+    fs.writeFileSync(path.join(PUB, "login.html"), P.renderLogin({ siteKey: process.env.TURNSTILE_SITE_KEY || "" }));
+  } catch (e) { warn("login page failed: " + e.message); }
+
   fs.writeFileSync(path.join(PUB, "sitemap.xml"), P.renderSitemap(paths));
   fs.writeFileSync(path.join(PUB, "robots.txt"), P.renderRobots());
   log("pages: " + written + " match pages (" + (written - skipped) + " submitted, " +
