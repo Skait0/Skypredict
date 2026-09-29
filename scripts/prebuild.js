@@ -446,8 +446,8 @@ async function writePages(payload) {
     markets: (payload && payload.record && payload.record.markets) || null,
   };
   const standing = [
-    ["/privacy", () => P.renderPrivacy(updated)],
-    ["/terms", () => P.renderTerms(updated)],
+    ["/privacy", () => P.renderPrivacy(updated, process.env.AUTH_ENABLED === "1")],
+    ["/terms", () => P.renderTerms(updated, process.env.AUTH_ENABLED === "1")],
     ["/how-it-works", () => P.renderHowItWorks(stats)],
     ["/matches", () => P.renderMatchesIndex(pages.map((pg) => pg.f))],
     ["/how-to-load-a-booking-code", () => P.renderHowToCode()],
