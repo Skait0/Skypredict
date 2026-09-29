@@ -452,6 +452,7 @@ async function writePages(payload) {
     ["/matches", () => P.renderMatchesIndex(pages.map((pg) => pg.f))],
     ["/how-to-load-a-booking-code", () => P.renderHowToCode()],
     ["/convert-a-booking-code", () => P.renderConvertPage()],
+    ["/install", () => P.renderInstall()],
     ["/booking-codes", () => P.renderCodesHub(codeDays, resultOf)],
   ];
 

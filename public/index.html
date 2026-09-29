@@ -21993,6 +21993,13 @@ setTimeout(hideLoader,8000);
      under "Add page to". Sending someone to a menu their browser does not have
      is worse than saying nothing.
      Firefox has its own wording again, and everything else keeps Chrome's. */
+  /* Where the browser cannot open the install dialog itself, the step-by-step
+     page rather than one line of toast that is gone in four seconds (owner,
+     29 Sep 2026: a dedicated page for installing, step by step). */
+  function installGuide(){
+    try{ location.href="/install"; }
+    catch(e){ window.swToast&&window.swToast(installHint(),'ok','ins'); }
+  }
   function installHint(){
     var ua=navigator.userAgent;
     if(/SamsungBrowser/i.test(ua))
@@ -22032,7 +22039,7 @@ setTimeout(hideLoader,8000);
         var told=false;
         var fallback=function(){
           if(told) return; told=true;
-          window.swToast&&window.swToast(installHint(),'ok','ins');
+          installGuide();
         };
         try{
           if(navigator.getInstalledRelatedApps){
@@ -22046,7 +22053,7 @@ setTimeout(hideLoader,8000);
                 try{localStorage.setItem('sw.installed','1');}catch(e2){}
                 window.swToast&&window.swToast('Already installed - open Soccerwizard from your home screen','ok','ins');
               }else{
-                window.swToast&&window.swToast(installHint(),'ok','ins');
+                installGuide();
               }
             }).catch(function(){ clearTimeout(t); fallback(); });
             return;
@@ -22059,7 +22066,7 @@ setTimeout(hideLoader,8000);
       setTimeout(go,1200);
       return;
     }
-    window.swToast&&window.swToast(installHint(),'ok','ins');
+    installGuide();
   }
   /* WHICH iOS BROWSER THIS IS, because the answer changes the instructions and
      one of the three cannot install at all.
