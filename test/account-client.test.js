@@ -120,6 +120,13 @@ test("sign-out with no connection says still signed in, rather than claiming suc
   assert.match(m[1], /code===200\|\|code===401/, "only a real 200/401 answer may say signed out; anything else (0, 5xx) must not");
 });
 
+test("boot() never calls /api/me when the page carries no sw-auth meta (AUTH_ENABLED off)", () => {
+  const m = /function boot\(\)\{([\s\S]*?)\n\s*var b=\$\("hdAccount"\)/.exec(block[1]);
+  assert.ok(m, "boot() function body up to its first statement");
+  assert.match(m[1], /if\(!d\.querySelector\('meta\[name="sw-auth"\]'\)\)\s*return;/,
+    "boot() must bail before touching the DOM or the network when the meta guard is absent");
+});
+
 test("the storage listener never schedules a sync itself, so two tabs cannot ping-pong forever", () => {
   const m = /addEventListener\("storage",function\(e\)\{([\s\S]*?)\n\s*\}\);/.exec(block[1]);
   assert.ok(m, "the storage listener");

@@ -531,9 +531,11 @@ async function writePages(payload) {
   /* The sign-in page. Not in the sitemap and noindex: it is a door, not a
      destination. The Turnstile site key is public by design; the secret
      stays in Vercel env and is only read by lib/auth/turnstile.js. */
-  try {
-    fs.writeFileSync(path.join(PUB, "login.html"), P.renderLogin({ siteKey: process.env.TURNSTILE_SITE_KEY || "" }));
-  } catch (e) { warn("login page failed: " + e.message); }
+  if (process.env.AUTH_ENABLED === "1") {
+    try {
+      fs.writeFileSync(path.join(PUB, "login.html"), P.renderLogin({ siteKey: process.env.TURNSTILE_SITE_KEY || "" }));
+    } catch (e) { warn("login page failed: " + e.message); }
+  }
 
   fs.writeFileSync(path.join(PUB, "sitemap.xml"), P.renderSitemap(paths));
   fs.writeFileSync(path.join(PUB, "robots.txt"), P.renderRobots());
@@ -597,6 +599,30 @@ function applyOrigin() {
     }
   }
   log("origin -> " + to + (touched.length ? " (" + touched.join(", ") + ")" : " (nothing to change)"));
+}
+
+/* ------------------------------------------------------------- 1d. AUTH_ENABLED meta
+ * When accounts are switched on, the page needs to know so its own inline
+ * script (swAccount's boot()) can call /api/me; when they are off it must
+ * not, or every page view on a plain-front site pays for a request that can
+ * only ever answer 404. AUTH_ENABLED is a server-side env var, invisible to
+ * a static page, so this meta tag is how the build hands the flag down.
+ * Rewrites the tracked index.html, so - like applyOrigin/stampCard - it may
+ * only run where the checkout is disposable (VERCEL, or SPLIT=1 to force). */
+function injectAuthMeta() {
+  if (!process.env.VERCEL && !process.env.SPLIT) return;
+  if (process.env.AUTH_ENABLED !== "1") return;
+  try {
+    const before = fs.readFileSync(IDX, "utf8");
+    if (before.indexOf('name="sw-auth"') !== -1) return;         // idempotent
+    const after = before.replace("<head>", '<head><meta name="sw-auth" content="1">');
+    if (after !== before) {
+      fs.writeFileSync(IDX, after);
+      log("sw-auth meta injected (AUTH_ENABLED=1)");
+    }
+  } catch (e) {
+    warn("sw-auth meta injection skipped: " + e.message);
+  }
 }
 
 /* --------------------------------------------------------------- 2. split */
@@ -750,6 +776,7 @@ function stampCard(png) {
   /* Before the split, so the hostname inside the big inline script - the
      share-image canvas - is rewritten while it is still in the page. */
   applyOrigin();
+  injectAuthMeta();
   splitAssets();
 })().catch((e) => {
   /* Never fail the deploy over an optimisation. */

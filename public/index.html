@@ -22634,6 +22634,7 @@ load().catch(function(){});
 
   /* ----------------------------------------------------------- start up */
   function boot(){
+    if(!d.querySelector('meta[name="sw-auth"]')) return;
     var b=$("hdAccount"); if(!b) return;
     b.addEventListener("click",function(){
       if(st.on) return openSheet();

@@ -57,7 +57,12 @@ Table editor shows the 8 tables, each with "RLS enabled" and no policies.
 1. Merge the `accounts` branch; let Vercel deploy. Live check:
    `curl -sI https://www.soccerwizard.live/ | grep -iE "strict-transport|x-frame|content-security|referrer|permissions|nosniff"`
    shows all six headers, and `https://www.soccerwizard.live/api/me` is 404.
-2. In Vercel set `AUTH_ENABLED=1` for Production and redeploy.
+2. In Vercel set `AUTH_ENABLED=1` for Production and redeploy. The build
+   reads this flag once, at build time, into the static page (the sign-in
+   button and its /api/me call are only wired up when it was on for that
+   build) - so the sign-in button does not appear until that redeploy has
+   finished, and switching it off again later needs a redeploy too, for the
+   same reason.
 3. Real devices, each item ticked by a person:
    - [ ] Android Chrome: Continue with Google -> back on the page, initial in the top bar.
    - [ ] Android Chrome: Email me a code -> code arrives -> signed in.
