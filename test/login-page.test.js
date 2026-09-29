@@ -40,3 +40,8 @@ test("the script does not contain the cross-browser handoff route", () => {
 test("the installed iPhone app gets its own flag", () => {
   assert.match(html, /id="lgIosApp"/);
 });
+
+test("the return target uses the same allowlist as safeReturn, not just a leading-slash check", () => {
+  assert.ok(script.indexOf('if(ret.length>200||!/^\\/(?![\\/\\\\])[A-Za-z0-9\\-._~\\/?=&]*$/.test(ret)) ret="/";') !== -1,
+    "expected the safeReturn allowlist regex in the login script");
+});

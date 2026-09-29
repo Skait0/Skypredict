@@ -16,7 +16,7 @@ test("state changes need POST, our header and our origin", () => {
 test("only our own paths come back from a sign-in", () => {
   for (const ok of ["/", "/booking-codes", "/?go=convert&code=AB12CD", "/install"]) assert.strictEqual(H.safeReturn(ok), ok);
   for (const bad of ["//evil.com", "/\\evil.com", "https://evil.com", "javascript:alert(1)", "evil.com", "/%2F%2Fevil.com",
-    "/" + "a".repeat(300), null, 5, "/\nSet-Cookie:x"]) assert.strictEqual(H.safeReturn(bad), "/", String(bad));
+    "/" + "a".repeat(300), null, 5, "/\nSet-Cookie:x", "/\t/evil.com", "/\n/evil.com"]) assert.strictEqual(H.safeReturn(bad), "/", String(bad));
 });
 
 test("bodies over the limit or not JSON are refused", async () => {
