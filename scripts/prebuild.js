@@ -609,13 +609,25 @@ function applyOrigin() {
  * a static page, so this meta tag is how the build hands the flag down.
  * Rewrites the tracked index.html, so - like applyOrigin/stampCard - it may
  * only run where the checkout is disposable (VERCEL, or SPLIT=1 to force). */
+/* The pure transform, kept separate from disk I/O so it can be tested
+   directly against the real public/index.html without a build. The
+   idempotency check must match the *tag*, not the bare attribute string -
+   `name="sw-auth"` also appears inside swAccount's boot() guard
+   (`d.querySelector('meta[name="sw-auth"]')`), which is already in every
+   built page, so a check that isn't anchored to `<meta ` found that inline
+   script instead of the tag and returned early every time - the meta was
+   never actually injected. */
+function applyAuthMeta(html, authEnabled) {
+  if (authEnabled !== "1") return html;
+  if (html.indexOf('<meta name="sw-auth"') !== -1) return html;  // idempotent
+  return html.replace("<head>", '<head><meta name="sw-auth" content="1">');
+}
+
 function injectAuthMeta() {
   if (!process.env.VERCEL && !process.env.SPLIT) return;
-  if (process.env.AUTH_ENABLED !== "1") return;
   try {
     const before = fs.readFileSync(IDX, "utf8");
-    if (before.indexOf('name="sw-auth"') !== -1) return;         // idempotent
-    const after = before.replace("<head>", '<head><meta name="sw-auth" content="1">');
+    const after = applyAuthMeta(before, process.env.AUTH_ENABLED);
     if (after !== before) {
       fs.writeFileSync(IDX, after);
       log("sw-auth meta injected (AUTH_ENABLED=1)");
@@ -766,19 +778,27 @@ function stampCard(png) {
   }
 }
 
-/* ------------------------------------------------------------------- run */
-(async () => {
-  const payload = await bakePayload();
-  /* Card first: stampCard hands its hash to the static pages through
-     OG_V, so every page's preview image changes address with the card. */
-  writeCard(payload);
-  await writePages(payload);
-  /* Before the split, so the hostname inside the big inline script - the
-     share-image canvas - is rewritten while it is still in the page. */
-  applyOrigin();
-  injectAuthMeta();
-  splitAssets();
-})().catch((e) => {
-  /* Never fail the deploy over an optimisation. */
-  warn("unexpected error, continuing: " + (e && e.message));
-});
+/* ------------------------------------------------------------------- run
+ * Only when this file is the entry point (`npm run build` -> `node
+ * scripts/prebuild.js`), never on a plain `require("./prebuild.js")` - so a
+ * test can load its pure functions (applyAuthMeta) without also fetching
+ * ~60 CSVs and fitting the model. */
+if (require.main === module) {
+  (async () => {
+    const payload = await bakePayload();
+    /* Card first: stampCard hands its hash to the static pages through
+       OG_V, so every page's preview image changes address with the card. */
+    writeCard(payload);
+    await writePages(payload);
+    /* Before the split, so the hostname inside the big inline script - the
+       share-image canvas - is rewritten while it is still in the page. */
+    applyOrigin();
+    injectAuthMeta();
+    splitAssets();
+  })().catch((e) => {
+    /* Never fail the deploy over an optimisation. */
+    warn("unexpected error, continuing: " + (e && e.message));
+  });
+}
+
+module.exports = { applyAuthMeta };

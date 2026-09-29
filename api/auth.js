@@ -34,9 +34,17 @@ function make(deps) {
     /* Signing in again in the same browser must end that browser's own old
        session first - otherwise it sits alongside the new one, eating a
        device slot until the 4-device cap displaces someone else's session
-       to make room for a duplicate of this one. */
-    const old = await S.readSession(db, req, t);
-    if (old.state === "ok") await db.endSessions([old.session.id], "replaced", iso(t));
+       to make room for a duplicate of this one. Best-effort: the code or
+       Google claim that got us here is already consumed, so a database
+       blip on this lookup must not fail the sign-in itself - it would
+       waste an already-spent one-time credential for nothing worse than an
+       extra live session that the 4-device cap will clean up regardless. */
+    try {
+      const old = await S.readSession(db, req, t);
+      if (old.state === "ok") await db.endSessions([old.session.id], "replaced", iso(t));
+    } catch (e) {
+      await report(e, { route: "signIn-cleanup" });
+    }
     const s = await S.startSession(db, user.id, ua, t);
     if (!s) throw new Error("session insert failed");
     await db.touchUser(user.id, iso(t));
