@@ -22528,7 +22528,7 @@ load().catch(function(){});
   /* nextAt: when a retry is due. watch() polls every 5s and must not step on
      a backoff that is waiting longer than that, or a failing server would be
      hammered at 5s no matter how far the backoff had grown. */
-  function schedule(ms){ if(st.timer) clearTimeout(st.timer); st.nextAt=Date.now()+ms; st.timer=setTimeout(function(){ sync(false); },ms); }
+  function schedule(ms){ if(st.timer) clearTimeout(st.timer); st.nextAt=Date.now()+ms; st.timer=setTimeout(function(){ st.nextAt=0; sync(false); },ms); }
   function sync(keepalive){
     if(!st.on||st.busy) return;
     var meta=readMeta(ls), sent=rawNow(), body=JSON.stringify({base_version:meta?meta.version:0,data:collect(ls,Date.now())});
@@ -22648,8 +22648,17 @@ load().catch(function(){});
       setInterval(watch,5000);
       /* Another tab wrote a synced key: reload this tab's copy before the
          next collect(), or this tab's next save writes over what it never
-         pulled and collect() reads that as a deletion. */
-      root.addEventListener("storage",function(e){ var k=e&&e.key; if(!k||k===META||isSyncedKey(k)) reload(); schedule(2000); });
+         pulled and collect() reads that as a deletion. Never schedule() from
+         here: localStorage is shared between tabs, so whatever the other tab
+         just wrote (its own sync's apply(), or a local save) is already on
+         disk for this tab to read - scheduling a sync here as well is what
+         had two tabs bump st.raw off each other's META write and re-sync
+         forever. watch() alone decides whether THIS tab has something new. */
+      root.addEventListener("storage",function(e){
+        var k=e&&e.key;
+        if(k===META){ reload(); st.raw=rawNow(); return; }   // another tab just synced the shared storage: nothing new to send
+        if(!k||isSyncedKey(k)) reload();                     // another tab saved: watch() will notice rawNow()!==st.raw and sync
+      });
       d.addEventListener("visibilitychange",function(){ if(d.visibilityState==="hidden"&&rawNow()!==st.raw) sync(true); });
       if(/[?&]account=1/.test(location.search)) openSheet();
     });

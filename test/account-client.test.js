@@ -113,3 +113,11 @@ test("the sync client guards against lost in-flight edits, stale tabs and a defe
   assert.match(block[1], /st\.nextAt/, "watch() must respect a pending backoff instead of restarting it every 5s");
   assert.match(block[1], /rawNow\(\)!==sent/, "sync() must not apply a stale server answer over an in-flight local edit");
 });
+
+test("the storage listener never schedules a sync itself, so two tabs cannot ping-pong forever", () => {
+  const m = /addEventListener\("storage",function\(e\)\{([\s\S]*?)\n\s*\}\);/.exec(block[1]);
+  assert.ok(m, "the storage listener");
+  const body = m[1];
+  assert.match(body, /st\.raw=rawNow\(\)/, "a META write from another tab updates st.raw so this tab does not think it has something new");
+  assert.doesNotMatch(body, /schedule\(/, "the listener must never schedule a sync itself - watch() alone decides, or two tabs re-sync each other forever");
+});
