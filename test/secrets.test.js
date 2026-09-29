@@ -34,6 +34,7 @@ function files(dir) {
 
 test("nothing under public/ or in the login page looks like a secret", () => {
   const sources = files(path.join(__dirname, "..", "public")).map((f) => [path.relative(process.cwd(), f), fs.readFileSync(f, "utf8")]);
+  assert.ok(sources.some(([name]) => /public[\\/]index\.html$/.test(name)), "public/index.html must be scanned");
   sources.push(["renderLogin", require("../lib/pages.js").renderLogin({ siteKey: "0x4AAAAAAAsitekey" })]);
   const values = SECRET_ENVS.map((k) => process.env[k]).filter((v) => v && v.length >= 8);
   for (const [name, text] of sources) {
