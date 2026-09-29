@@ -37,7 +37,7 @@ function make(deps) {
         });
       }
 
-      if (t - Date.parse(s.session.created_at) > REAUTH_MS) return H.sendJson(res, 403, { error: "reauth" });
+      if (!(t - Date.parse(s.session.created_at) <= REAUTH_MS)) return H.sendJson(res, 403, { error: "reauth" });
       if (!(await db.deleteUser(s.userId))) throw new Error("delete failed");
       return H.sendJson(res, 200, { ok: true }, [S.clearCookie(S.COOKIE)]);
     } catch (e) {

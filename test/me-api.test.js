@@ -134,6 +134,19 @@ test("delete needs a sign-in from the last 10 minutes, then removes everything",
   assert.strictEqual(ok.code, 200);
   assert.match(ok.cookies()[0], /Max-Age=0$/);
   assert.strictEqual(w.db.t.users.some((u) => u.id === fresh.id), false);
-  const cross = await w.acc(Object.assign(postReq("x", {}, { cookie: a.cookie, origin: "https://evil.example" }), { query: { action: "delete" } }));
+  const d = await w.user("d@b.com");
+  const cross = await w.acc(Object.assign(postReq("x", {}, { cookie: d.cookie, origin: "https://evil.example" }), { query: { action: "delete" } }));
   assert.strictEqual(cross.code, 403);
+  assert.deepStrictEqual(cross.json(), { error: "forbidden" });
+  assert.strictEqual(w.db.t.users.some((u) => u.id === d.id), true);
+});
+
+test("a session row with no created_at fails the reauth check closed, not open", async () => {
+  const w = world();
+  const a = await w.user("a@b.com");
+  const s = w.db.t.sessions.find((x) => x.user_id === a.id);
+  delete s.created_at;
+  const r = await w.acc(Object.assign(postReq("x", {}, { cookie: a.cookie }), { query: { action: "delete" } }));
+  assert.deepStrictEqual(r.json(), { error: "reauth" });
+  assert.strictEqual(w.db.t.users.some((u) => u.id === a.id), true);
 });
