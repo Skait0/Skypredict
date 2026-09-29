@@ -1148,5 +1148,73 @@
       "betpawa": "9BPM43V"
     },
     "odds": 4.79
+  },
+  "2026-09-29": {
+    "date": "2026-09-29",
+    "generated": "2026-09-29T12:26:38.725Z",
+    "firstKickoff": "2026-09-29T13:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-09-29",
+        "home": "Ethiopia",
+        "away": "Senegal",
+        "league": "International Africa Cup of Nations Qualification",
+        "kickoff": "2026-09-29T13:00:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.929,
+        "market": "X2",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-09-29",
+        "home": "Burundi",
+        "away": "Algeria",
+        "league": "International Africa Cup of Nations Qualification",
+        "kickoff": "2026-09-29T13:00:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.926,
+        "market": "X2",
+        "odd": 1.06
+      },
+      {
+        "date": "2026-09-29",
+        "home": "Congo",
+        "away": "Cameroon",
+        "league": "International Africa Cup of Nations Qualification",
+        "kickoff": "2026-09-29T19:00:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.919,
+        "market": "X2",
+        "odd": 1.15
+      },
+      {
+        "date": "2026-09-29",
+        "home": "Liberia",
+        "away": "Mali",
+        "league": "International Africa Cup of Nations Qualification",
+        "kickoff": "2026-09-29T19:00:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.903,
+        "market": "X2",
+        "odd": 1.12
+      },
+      {
+        "date": "2026-09-29",
+        "home": "Guinea-Bissau",
+        "away": "Nigeria",
+        "league": "International Africa Cup of Nations Qualification",
+        "kickoff": "2026-09-29T16:00:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.899,
+        "market": "X2",
+        "odd": 1.12
+      }
+    ],
+    "codes": {
+      "sporty": "WENKXN",
+      "bet9ja": "5T7T7DX",
+      "betpawa": "22CDGSK"
+    },
+    "odds": 1.64
   }
 }
