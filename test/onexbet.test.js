@@ -100,3 +100,21 @@ test("the converter, the bot and the daily code know the fifth book", () => {
   assert.match(read("scripts/pushcode.js"), /c\.onexbet/);
   assert.ok(convert);
 });
+
+test("the corners chip never hands 1xBet a line it does not sell", () => {
+  /* Review I2: 1xBet's total-corners card runs 8.5-11.5 (verified absent at
+     7.5 on eight deep cards), and the corners chip offers 7.5-10.5. */
+  const ONLY = new Function("return " + src.match(/var BOOK_ONLY=(\{[\s\S]*?\});/)[1] + ";")();
+  assert.deepStrictEqual([].concat(ONLY["CORNERS_OV_7.5"]).sort(), ["bet9ja", "betking", "betpawa", "sporty"]);
+});
+
+test("the bot's converter and the page agree on which books sell whole lines", () => {
+  /* Review I3: convert.js said only SportyBet did, so the bot moved OVER_2
+     to OVER_1.5 on the way to 1xBet - and AH_1_-1 to a -0.5 line 1xBet does
+     not sell, which then dropped the leg. */
+  const books = new Function(prelude("sporty") + "\nreturn BOOKS;")();
+  const { WHOLE_LINES } = require("../lib/convert.js");
+  for (const k of Object.keys(books)) {
+    assert.strictEqual(!!WHOLE_LINES[k], !!books[k].wholeLines, k);
+  }
+});
