@@ -22471,9 +22471,10 @@ load().catch(function(){});
 
   /* ------------------------------------------------------------ browser */
   var d=root.document, ls=root.localStorage;
-  var st={on:false,email:"",timer:null,backoff:0,busy:false,raw:""};
+  var st={on:false,email:"",timer:null,backoff:0,busy:false,raw:"",nextAt:0};
   function $(id){ return d.getElementById(id); }
   function rawNow(){ var s="",k; for(k in KEYS) s+=ls.getItem(KEYS[k])+"\u0001"; for(k in PREFS) s+=ls.getItem(PREFS[k])+"\u0001"; return s; }
+  function isSyncedKey(k){ var x; for(x in KEYS) if(own(KEYS,x)&&KEYS[x]===k) return true; return false; }
   function reload(){ try{ if(root.swReloadSynced) root.swReloadSynced(); }catch(e){} }
   function req(method,url,body,cb){
     var x=new XMLHttpRequest();
@@ -22518,16 +22519,19 @@ load().catch(function(){});
     } else { b.innerHTML=PERSON; b.setAttribute("aria-label","Sign in"); }
   }
 
-  function signedOutHere(reason){
+  function signedOutHere(reason,quiet){
     var had=!!readMeta(ls);
     st.on=false; clearSynced(ls); reload(); paintButton(); closeSheet();
-    if(had) notice(reason==="displaced"?"Signed out: this account was used on a newer device.":"You were signed out. Sign in again to sync.");
+    if(had&&!quiet) notice(reason==="displaced"?"Signed out: this account was used on a newer device.":"You were signed out. Sign in again to sync.");
   }
 
-  function schedule(ms){ if(st.timer) clearTimeout(st.timer); st.timer=setTimeout(function(){ sync(false); },ms); }
+  /* nextAt: when a retry is due. watch() polls every 5s and must not step on
+     a backoff that is waiting longer than that, or a failing server would be
+     hammered at 5s no matter how far the backoff had grown. */
+  function schedule(ms){ if(st.timer) clearTimeout(st.timer); st.nextAt=Date.now()+ms; st.timer=setTimeout(function(){ sync(false); },ms); }
   function sync(keepalive){
     if(!st.on||st.busy) return;
-    var meta=readMeta(ls), body=JSON.stringify({base_version:meta?meta.version:0,data:collect(ls,Date.now())});
+    var meta=readMeta(ls), sent=rawNow(), body=JSON.stringify({base_version:meta?meta.version:0,data:collect(ls,Date.now())});
     if(keepalive){
       /* A page being hidden may never get the answer; the next load reconciles. */
       if(root.fetch&&body.length<60000) try{ root.fetch("/api/me",{method:"POST",keepalive:true,credentials:"same-origin",
@@ -22538,6 +22542,12 @@ load().catch(function(){});
     req("POST","/api/me",body,function(code,j){
       st.busy=false;
       if(code===200&&j.data){
+        /* Storage changed while this request was in flight (a save mid
+           round-trip): applying the server's answer now would overwrite
+           that edit, and reload() would then drop it from memory too. Skip
+           apply and resend instead - collect() picks up the new edit and
+           merge is idempotent, so nothing is lost or duplicated. */
+        if(rawNow()!==sent){ schedule(0); return; }
         var before=rawNow(); apply(ls,j.data,j.version); st.raw=rawNow(); st.backoff=0;
         if(before!==st.raw) reload();
         return;
@@ -22546,7 +22556,11 @@ load().catch(function(){});
       st.backoff=Math.min((st.backoff||1000)*2,300000); schedule(st.backoff);
     });
   }
-  function watch(){ if(st.on&&rawNow()!==st.raw) schedule(2000); }
+  function watch(){
+    if(!st.on) return;
+    if(Date.now()<st.nextAt) return;              // a backoff is still pending; don't cut it short
+    if(rawNow()!==st.raw) schedule(2000);
+  }
 
   /* ---------------------------------------------------------- the sheet */
   var sheet=null;
@@ -22574,8 +22588,8 @@ load().catch(function(){});
     $("acctX").onclick=closeSheet;
     $("scrim").addEventListener("click",closeSheet);
     d.addEventListener("keydown",function(e){ if(e.key==="Escape") closeSheet(); });
-    $("acctOut").onclick=function(){ req("POST","/api/auth/logout",{},function(){ signedOutHere(null); }); };
-    $("acctOutAll").onclick=function(){ req("POST","/api/auth/logout-all",{},function(code,j){ if(code===200||code===401) signedOutHere(null); else fail(code,j); }); };
+    $("acctOut").onclick=function(){ req("POST","/api/auth/logout",{},function(){ signedOutHere(null,true); }); };
+    $("acctOutAll").onclick=function(){ req("POST","/api/auth/logout-all",{},function(code,j){ if(code===200||code===401) signedOutHere(null,true); else fail(code,j); }); };
     $("acctDel").onclick=function(){ $("acctDelBox").hidden=false; $("acctDelIn").focus(); };
     $("acctDelGo").onclick=function(){
       if($("acctDelIn").value.replace(/\s/g,"").toUpperCase()!=="DELETE") return say("Type DELETE to confirm.");
@@ -22628,11 +22642,14 @@ load().catch(function(){});
     req("GET","/api/me",null,function(code,j){
       if(code===404||code===0||code>=500) return;            // off, offline or down: stay invisible, keep local
       if(code===401){ paintButton(); if(readMeta(ls)) signedOutHere(j.reason); return; }
-      if(code!==200) return;
+      if(!(code===200&&j&&j.signedIn===true)) return;        // any other 200 is not a signed-in answer: stay invisible
       st.on=true; st.email=j.email||""; paintButton();
       sync(false);
       setInterval(watch,5000);
-      root.addEventListener("storage",function(){ schedule(2000); });
+      /* Another tab wrote a synced key: reload this tab's copy before the
+         next collect(), or this tab's next save writes over what it never
+         pulled and collect() reads that as a deletion. */
+      root.addEventListener("storage",function(e){ var k=e&&e.key; if(!k||k===META||isSyncedKey(k)) reload(); schedule(2000); });
       d.addEventListener("visibilitychange",function(){ if(d.visibilityState==="hidden"&&rawNow()!==st.raw) sync(true); });
       if(/[?&]account=1/.test(location.search)) openSheet();
     });

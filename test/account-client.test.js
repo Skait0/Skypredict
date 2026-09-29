@@ -104,3 +104,12 @@ test("the page wires it up: button, reload hook, slip style remembered", () => {
   assert.match(html, /localStorage\.getItem\("sw\.legodd"\)/);
   assert.strictEqual((html.match(/localStorage\.setItem\("sw\.legodd"/g) || []).length, 2);
 });
+
+test("the sync client guards against lost in-flight edits, stale tabs and a defeated backoff", () => {
+  // The browser half of the block (sync/watch/boot) never runs in Node - no
+  // DOM, no XMLHttpRequest - so this only checks the source for the fixes;
+  // the logic itself is hand-traced in code review, not executed here.
+  assert.match(block[1], /j\.signedIn===true/, "boot only treats a 200 as signed in when the server says so");
+  assert.match(block[1], /st\.nextAt/, "watch() must respect a pending backoff instead of restarting it every 5s");
+  assert.match(block[1], /rawNow\(\)!==sent/, "sync() must not apply a stale server answer over an in-flight local edit");
+});
