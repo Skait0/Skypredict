@@ -7140,6 +7140,12 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
          A phone already carries the tab bar, My slip and the Get code bar; a
          third floating thing would compete with the one that earns. The top
          bar is on every screen and has room for two icons. -->
+    <!-- Install, in the bar that is on every screen (owner, 29 Sep 2026: "can
+         we put an icon at the top where its more visible?"). Hidden until the
+         page knows the app is not installed - see offerInstall - and never
+         shown inside the app itself. Unlike the install bar, "Not now" does
+         not hide it: this is the way back to /install for later. -->
+    <a class="tgl hsoc hsoc-inst" id="hdInstall" href="/install" aria-label="Install the app" title="Install the app" hidden><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 7.5v6.5M9.3 11.4 12 14l2.7-2.6M10.5 18.5h3"/></svg></a>
     <a class="tgl hsoc hsoc-x" href="https://x.com/soccerwizardhq" target="_blank" rel="noopener"
        aria-label="Soccerwizard on X"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.2 2.3h3.4l-7.4 8.5 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9.1L.9 2.3h7l4.8 6.4zm-1.2 17.9h1.9L7.1 4.2H5z"/></svg></a>
     <a class="tgl hsoc hsoc-tg" href="https://t.me/soccerwizardTG" target="_blank" rel="noopener"
@@ -21922,6 +21928,9 @@ setTimeout(hideLoader,8000);
      stray tap retires it permanently. */
   var _hidNow=false;
   function offerInstall(){
+    /* The header's install icon follows the same answer, minus "Not now". */
+    var hd=document.getElementById('hdInstall');
+    if(hd) hd.hidden = _standalone || _installed;
     if(!bar) return;
     bar.hidden = _standalone || _installed || _hidNow;
   }
