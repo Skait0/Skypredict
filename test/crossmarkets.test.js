@@ -137,12 +137,17 @@ test("the 1.5-rung line is never picked for a SportyBet slip, and is picked for 
   assert.equal(bookAllows("MIX_X_OV_1.5", { key: "betking" }), true);
   assert.equal(bookAllows("MIX_1_OV_1.5", { key: "betking" }), true);
   assert.equal(bookAllows("MIX_2_OV_1.5", { key: "betking" }), true);
-  /* And the fourth book, whose card was read by tools/bpgen.js rather than
-     assumed from the other three: "1X2 and Totals - FT" carries the 1.5 rung
-     on all three signs. */
-  assert.equal(bookAllows("MIX_X_OV_1.5", { key: "betpawa" }), true);
-  assert.equal(bookAllows("MIX_1_OV_1.5", { key: "betpawa" }), true);
-  assert.equal(bookAllows("MIX_2_OV_1.5", { key: "betpawa" }), true);
+  /* OR IS NOT AND (29 Sep 2026). Betpawa's "1X2 and Totals" and 1xBet's
+     "Team 1 To Win And Total >" are AND bets - priced ABOVE both parts - while
+     every MIX code here is an OR bet ("home OR over 1.5"). Neither book may be
+     handed one, at any line, or a reader asking for the safer bet is booked
+     the narrower one. */
+  for (const key of ["betpawa", "onexbet"]) {
+    for (const code of ["MIX_X_OV_1.5", "MIX_1_OV_1.5", "MIX_2_OV_1.5", "MIX_1_OV_2.5",
+                        "MIX_X_OV_2.5", "MIX_2_OV_2.5", "MIXGG_1", "MIXGG_X", "MIXGG_2"]) {
+      assert.equal(bookAllows(code, { key }), false, key + " " + code);
+    }
+  }
   /* Everything else books at any of them, and must keep doing so. */
   assert.equal(bookAllows("MIX_X_OV_2.5", { key: "sporty" }), true);
   assert.equal(bookAllows("OVER_1.5", { key: "sporty" }), true);
@@ -235,17 +240,20 @@ test("the 1.5 rung of the family belongs to every book that sells it, all three 
   /* The table holds more than this family since total shots joined it (23 Sep
      2026, SportyBet and Bet9ja only); this test is about the 1.5 rung. */
   const BOOK_ONLY = {};
-  Object.keys(ALL).filter((k) => /^MIX/.test(k)).forEach((k) => { BOOK_ONLY[k] = ALL[k]; });
+  Object.keys(ALL).filter((k) => /^MIX_[12X]_OV_1\.5$/.test(k)).forEach((k) => { BOOK_ONLY[k] = ALL[k]; });
   assert.deepEqual(Object.keys(BOOK_ONLY).sort(),
     ["MIX_1_OV_1.5", "MIX_2_OV_1.5", "MIX_X_OV_1.5"]);
   /* Three books now, and the third was read off Betpawa's own card by
      tools/bpgen.js rather than assumed from the other two - the same mistake
      this list held about BetKing for a week, which sent its readers elsewhere
      to book a bet it was selling them. */
+  /* Betpawa left this list on 29 Sep 2026: its market is the AND bet. */
   Object.values(BOOK_ONLY).forEach((b) =>
-    assert.deepEqual([].concat(b).sort(), ["bet9ja", "betking", "betpawa"]));
-  /* And the 2.5 rung stays on all three, which is what makes it the default. */
-  assert.ok(!BOOK_ONLY["MIX_1_OV_2.5"] && !BOOK_ONLY["MIX_X_OV_2.5"]);
+    assert.deepEqual([].concat(b).sort(), ["bet9ja", "betking"]));
+  /* And the 2.5 rung stays on every book that sells the OR bet - the three
+     that always had it - which is what makes it the default there. */
+  assert.deepEqual([].concat(ALL["MIX_1_OV_2.5"]).sort(), ["bet9ja", "betking", "sporty"]);
+  assert.deepEqual([].concat(ALL["MIXGG_X"]).sort(), ["bet9ja", "betking", "sporty"]);
 });
 
 test("the chip's book list and the market map cannot drift apart", () => {

@@ -12687,10 +12687,11 @@ function cLgamma(x){
    sending BetKing readers to Bet9ja to book a bet BetKing was selling them. */
 /* 1xBet is absent from every list below on purpose (29 Sep 2026). Its
    result+total markets are AND bets ("W1 And Total >") where our MIX_ is an
-   OR bet, so onexbet.py leaves MIX_ unmapped; its team-corner lines (4.5-5.5)
+   OR bet, so onexbet.py leaves MIX_ unmapped (and the OR-family entries below
+   leave it out for that reason); its team-corner lines (4.5-5.5)
    were not priced on either fixture the verifier booked; and it sells no
    shots. Add it to an entry only after booking one real code of that market. */
-var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking","betpawa"],
+var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking"],
   /* Corners per team (25 Sep 2026): Betpawa sells none, verified absent in
      betpawa.py. BetKing sells one main line per side, not the ladder, and
      refused the tested ones - see TEAM_CORNER_CODES. */
@@ -12707,13 +12708,22 @@ var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking","betpawa"],
      would widen the risky end of a board whose seven newest markets have not
      yet graded a single live result. Revisit when those have a record, not
      before. */
-  /* BETPAWA MAKES IT THREE, and the same way it became two: read off their
-     own card rather than assumed. Their "1X2 and Totals - FT" carries the 1.5
-     rung on all three signs, generated and verified by tools/bpgen.js against
-     eight deep cards. A book left out of this list is a book whose readers
-     are sent elsewhere to place a bet it sells them. */
-  "MIX_1_OV_1.5":["bet9ja","betking","betpawa"],
-  "MIX_2_OV_1.5":["bet9ja","betking","betpawa"]};
+  /* BETPAWA WAS HERE UNTIL 29 SEP 2026, AND SHOULD NOT HAVE BEEN. Their
+     "1X2 and Totals - FT" is an AND bet - priced above both of its parts on
+     every event checked (home 1.19, over 1.5 1.10, their "1 - Over" 1.28) -
+     while this family is an OR bet. Betpawa readers asking for "home or over
+     1.5" were being booked "home AND over 1.5". Found while adding 1xBet,
+     whose result+total market is the same AND bet. */
+  "MIX_1_OV_1.5":["bet9ja","betking"],
+  "MIX_2_OV_1.5":["bet9ja","betking"],
+  /* AND THE REST OF THE OR FAMILY, for the same reason: every line of it, and
+     "or both score", is sold as an OR bet by SportyBet, Bet9ja and BetKing
+     only. Betpawa and 1xBet sell the AND bet under a similar name, so the
+     builders must never pick these for them (bookAllows). */
+  "MIX_1_OV_2.5":["sporty","bet9ja","betking"],"MIX_X_OV_2.5":["sporty","bet9ja","betking"],
+  "MIX_2_OV_2.5":["sporty","bet9ja","betking"],
+  "MIXGG_1":["sporty","bet9ja","betking"],"MIXGG_X":["sporty","bet9ja","betking"],
+  "MIXGG_2":["sporty","bet9ja","betking"]};
 /* CORNERS, AS A CHIP. Lines 7.5 to 10.5, because that is the range every
    book sells: SportyBet 6.5-12.5, Bet9ja 7.5-14.5, BetKing
    5.5-12.5, Betpawa 6.5-10.5. A line outside it would need BOOK_ONLY entries
@@ -20428,12 +20438,12 @@ function renderShared(){
        so, and asks before it turns on, rather than failing quietly at the
        booking step. `only` is a list - see BOOK_ONLY, which is the same fact
        keyed by market code. */
-    {k:"dro15", label:"Draw or o1.5", tier:0, sub:"X or over 1.5", only:["bet9ja","betking","betpawa"],
+    {k:"dro15", label:"Draw or o1.5", tier:0, sub:"X or over 1.5", only:["bet9ja","betking"],
      icon:'<path d="M4 12h16"/><path d="M9 8l3-3 3 3"/>'},
     /* WIN EITHER HALF. Graded on 945 held-out matches before it was offered:
        60.0% against 58.9% predicted, the closest of any market here bar the
        match result itself. Both books sell it per side. */
-    {k:"rso15", label:"Result or o1.5", tier:0, sub:"1 or 2, or over 1.5", only:["bet9ja","betking","betpawa"],
+    {k:"rso15", label:"Result or o1.5", tier:0, sub:"1 or 2, or over 1.5", only:["bet9ja","betking"],
      icon:'<path d="M5 19L12 5l7 14"/><path d="M9 9l3-3 3 3"/>'},
     {k:"weh", label:"Win a half", tier:0, sub:"Either half", icon:'<path d="M12 4v16"/><path d="M5 8h4"/><path d="M15 16h4"/>'},
     /* Corners, total for the match - see CORNER_CODES. */
