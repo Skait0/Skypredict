@@ -9,7 +9,7 @@
  * exist. Static assets stay cache-first, since those are the ones worth having
  * instantly and they change under a new name when they change at all.
  */
-const VERSION = "sw-v11";
+const VERSION = "sw-v12";
 const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/wiz-logo.png"];
 
 /* THE KILL SWITCH. Set to true, deploy, and every installed worker deletes its
@@ -228,6 +228,11 @@ function pushBody(d) {
     if (d.codes.sporty) books.push("SportyBet");
     if (d.codes.bet9ja) books.push("Bet9ja");
     if (d.codes.betking) books.push("BetKing");
+    /* betPawa was missing from this list for its whole first week, and 1xBet
+       joined 29 Sep 2026 - test/everybook.test.js now walks the page's BOOKS
+       against it, so the next book fails there instead of here. */
+    if (d.codes.betpawa) books.push("betPawa");
+    if (d.codes.onexbet) books.push("1xBet");
   }
   var n = d && d.n ? d.n : 0;
   var games = n ? n + " game" + (n === 1 ? "" : "s") : "One slip";
