@@ -22588,7 +22588,7 @@ load().catch(function(){});
     $("acctX").onclick=closeSheet;
     $("scrim").addEventListener("click",closeSheet);
     d.addEventListener("keydown",function(e){ if(e.key==="Escape") closeSheet(); });
-    $("acctOut").onclick=function(){ req("POST","/api/auth/logout",{},function(){ signedOutHere(null,true); }); };
+    $("acctOut").onclick=function(){ req("POST","/api/auth/logout",{},function(code,j){ if(code===200||code===401) signedOutHere(null,true); else say("No connection. You are still signed in. Try again."); }); };
     $("acctOutAll").onclick=function(){ req("POST","/api/auth/logout-all",{},function(code,j){ if(code===200||code===401) signedOutHere(null,true); else fail(code,j); }); };
     $("acctDel").onclick=function(){ $("acctDelBox").hidden=false; $("acctDelIn").focus(); };
     $("acctDelGo").onclick=function(){

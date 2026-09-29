@@ -114,6 +114,12 @@ test("the sync client guards against lost in-flight edits, stale tabs and a defe
   assert.match(block[1], /rawNow\(\)!==sent/, "sync() must not apply a stale server answer over an in-flight local edit");
 });
 
+test("sign-out with no connection says still signed in, rather than claiming success", () => {
+  const m = /\$\("acctOut"\)\.onclick=function\(\)\{([\s\S]*?)\};/.exec(block[1]);
+  assert.ok(m, "the acctOut click handler");
+  assert.match(m[1], /code===200\|\|code===401/, "only a real 200/401 answer may say signed out; anything else (0, 5xx) must not");
+});
+
 test("the storage listener never schedules a sync itself, so two tabs cannot ping-pong forever", () => {
   const m = /addEventListener\("storage",function\(e\)\{([\s\S]*?)\n\s*\}\);/.exec(block[1]);
   assert.ok(m, "the storage listener");
