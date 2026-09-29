@@ -35,6 +35,8 @@ test("what people type is read as what they mean", () => {
     ["RQWKNC", "RQWKNC", null],
     ["book me today's safest 5 games", null, { kind: "today", games: 5, odds: null, when: "today", book: null }],
     ["tomorrow 10 odds on betpawa", null, { kind: "today", games: null, odds: 10, when: "tomorrow", book: "betpawa" }],
+    ["tomorrow 10 odds on 1xbet", null, { kind: "today", games: null, odds: 10, when: "tomorrow", book: "onexbet" }],
+    ["convert 881WZC to 1xbet", "881WZC", { kind: "convert", to: "onexbet" }],
   ];
   for (const [text, code, want] of cases) {
     const p = D.parse(text);

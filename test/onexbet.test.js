@@ -68,3 +68,35 @@ test("the header cycle, the builder and the code card carry 1xBet", () => {
   assert.match(src, /<button class="byo-b" type="button" data-book="onexbet"/);
   assert.match(src, /\.code-card--xb /);
 });
+
+test("the bot's start link opens a 1xBet code on 1xBet", async () => {
+  process.env.TELEGRAM_BOT_TOKEN = "123:abc";
+  const asked = [];
+  const real = global.fetch;
+  global.fetch = async (url) => {
+    const u = String(url);
+    if (u.includes("/api/slip?")) { asked.push(u); return { json: async () => ({ success: false }) }; }
+    return { json: async () => ({ ok: true, result: {} }) };
+  };
+  try {
+    delete require.cache[require.resolve("../api/tg.js")];
+    const tg = require("../api/tg.js");
+    await tg({ method: "POST", headers: { "x-telegram-bot-api-secret-token": tg.secretFor("123:abc") },
+      body: { message: { message_id: 1, chat: { id: 5, type: "private" }, text: "/start onexbet_ABCDE" } } },
+      { status() { return this; }, json() { return this; } });
+    assert.deepStrictEqual(asked.map((u) => /book=(\w+)&code=(\w+)/.exec(u).slice(1).join(":")), ["onexbet:ABCDE"]);
+  } finally { global.fetch = real; delete process.env.TELEGRAM_BOT_TOKEN; }
+});
+
+test("the converter, the bot and the daily code know the fifth book", () => {
+  const convert = require("../lib/convert.js");
+  const fs = require("node:fs");
+  const read = (p) => fs.readFileSync(require("node:path").join(__dirname, "..", p), "utf8");
+  assert.match(read("lib/convert.js"), /onexbet: "\/api\/onexbet"/);
+  assert.match(read("lib/doctor.js"), /onexbet: "1xBet"/);
+  assert.match(read("lib/bigodds.js"), /\["onexbet", "1xBet"\]/);
+  assert.match(read("scripts/mkcode.js"), /codes\.onexbet = /);
+  assert.match(read("scripts/namesaudit.js"), /onexbet: "\/api\/onexbet"/);
+  assert.match(read("scripts/pushcode.js"), /c\.onexbet/);
+  assert.ok(convert);
+});
