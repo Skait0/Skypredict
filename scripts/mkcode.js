@@ -313,6 +313,9 @@ if (require.main === module) (async () => {
   console.log(`feeds: ${sporty.length} SportyBet events, ${b9.length} Bet9ja events, ` +
               `${bk.length} BetKing events, ${bp.length} Betpawa events, ${xb.length} 1xBet events`);
 
+  /* Most confident FIRST BY THE MARKET-LED NUMBER, the one the site shows. */
+  pool.sort((a, b) => blendedConf(b, findEvent(b, sporty)) - blendedConf(a, findEvent(a, sporty)));
+
   /* A leg has to be on BOTH books or it is not a leg. Two codes that are not
      the same slip would make tomorrow's record meaningless. */
   const picked = [];
@@ -502,4 +505,28 @@ if (require.main === module) (async () => {
 
 /* Exported so the day walk can be tested on its own, without a network call
    and without minting anything. */
-module.exports = { chooseDay, findEvent, srOf };
+/* THE MARKET'S CHANCE FOR ONE TIP, de-vigged, or null when the book does not
+   price it. Owner, 30 Sep 2026: the site went market-led (index.html
+   BLEND_MIN, 0.90 - scripts/scorecard.js has the numbers), and the day's
+   code ranked legs on the model's own confidence, which is the number that
+   lost to the market in every tier. */
+function marketP(odds, code) {
+  const o = (k) => { const n = odds && parseFloat(odds[k]); return n > 1 ? 1 / n : null; };
+  const h = o("1"), d = o("X"), a = o("2");
+  if (h && d && a) {
+    const s = h + d + a, x = { "1": h / s, "X": d / s, "2": a / s };
+    x["1X"] = x["1"] + x.X; x.X2 = x.X + x["2"]; x["12"] = x["1"] + x["2"];
+    if (x[code] != null) return x[code];
+  }
+  const pair = code === "GG" ? "NG" : /^OVER_/.test(code) ? code.replace("OVER_", "UNDER_") : null;
+  const y = o(code), n = pair && o(pair);
+  return y && n ? y / (y + n) : null;
+}
+const MARKET_W = 0.90;
+function blendedConf(f, ev) {
+  const m = ev ? marketP(ev.odds, M.tipCode(f)) : null;
+  const p = f.tip_p || 0;
+  return m == null ? p : p * (1 - MARKET_W) + m * MARKET_W;
+}
+
+module.exports = { chooseDay, findEvent, srOf, marketP, blendedConf };
