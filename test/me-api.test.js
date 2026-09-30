@@ -177,3 +177,21 @@ test("a feature-table outage does not take a reader's data away", async () => {
     assert.deepStrictEqual(r.json().entitlements, {});
   } finally { A.FEATURES.pop(); A._reset(); }
 });
+
+test("consent: read, turn on, turn off; export shows it; signed out gets 401", async () => {
+  const w = world(), db = w.db;
+  const { id: uid, cookie } = await w.user("a@b.com");
+  const accGet = (action, headers) => Object.assign(getReq("x", {}, headers), { query: { action } });
+  const accPost = (action, body) => Object.assign(postReq("x", body, { cookie }), { query: { action } });
+  const get1 = await w.acc(accGet("consent", { cookie }));
+  assert.deepStrictEqual(get1.json(), { on: false });
+  const on = await w.acc(accPost("consent", { on: true }));
+  assert.deepStrictEqual(on.json(), { on: true });
+  assert.strictEqual(db.t.consent[uid].source, "account");
+  const ex = await w.acc(accGet("export", { cookie }));
+  assert.strictEqual(ex.json().email_consent.source, "account");
+  const off = await w.acc(accPost("consent", { on: false }));
+  assert.deepStrictEqual(off.json(), { on: false });
+  assert.ok(db.t.consent[uid].revoked_at);
+  assert.strictEqual((await w.acc(accGet("consent", {}))).code, 401);
+});

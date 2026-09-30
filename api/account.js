@@ -5,6 +5,7 @@
    wipe an account. Spec section 8. */
 const H = require("../lib/auth/http.js");
 const S = require("../lib/auth/session.js");
+const K = require("../lib/auth/consent.js");
 const { report } = require("../lib/report.js");
 
 const REAUTH_MS = 10 * 60e3;
@@ -16,6 +17,7 @@ function make(deps) {
     if (!H.enabled()) return H.notFound(res);
     const action = String((req.query || {}).action || "");
     if (action === "delete") { const g = H.guardPost(req); if (g) return H.sendJson(res, g.status, { error: g.error }); }
+    else if (action === "consent") { if (req.method === "POST") { const g = H.guardPost(req); if (g) return H.sendJson(res, g.status, { error: g.error }); } else if (req.method !== "GET") return H.sendJson(res, 405, { error: "method" }); }
     else if (action === "export") { if (req.method !== "GET") return H.sendJson(res, 405, { error: "method" }); }
     else return H.notFound(res);
     const t = now();
@@ -23,6 +25,16 @@ function make(deps) {
       const s = await S.readSession(db, req, t);
       if (s.state !== "ok") return H.sendJson(res, 401, { error: "signed_out", reason: s.reason || null },
         s.state === "ended" ? [S.clearCookie(S.COOKIE)] : null);
+
+      if (action === "consent") {
+        if (req.method === "POST") {
+          const body = (await H.readJson(req, 256)) || {};
+          if (body.on === true) await K.record(db, s.userId, true, "account", t);
+          else await db.revokeConsent(s.userId, new Date(t).toISOString());
+        }
+        const c = await db.consentFor(s.userId);
+        return H.sendJson(res, 200, { on: !!(c && !c.revoked_at) });
+      }
 
       if (action === "export") {
         const user = await db.userById(s.userId);
@@ -34,6 +46,7 @@ function make(deps) {
         return H.sendJson(res, 200, {
           profile: { email: user.email, google_linked: !!user.google_sub, created_at: user.created_at },
           data: row ? row.data : null, devices,
+          email_consent: await db.consentFor(s.userId),
         });
       }
 

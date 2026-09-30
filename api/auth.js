@@ -81,6 +81,7 @@ function make(deps) {
   }
 
   const routes = {
+    "unsub": null, // handled in the handler, before the POST guard
     "google/prepare": async (req, res, t) => {
       if (!(await db.rlHit("gp:" + H.ipKey(req), 3600, 30))) return H.sendJson(res, 429, { error: "slow_down", minutes: 60 });
       const body = (await H.readJson(req, 2048)) || {};
@@ -238,6 +239,20 @@ function make(deps) {
     let route = (req.query || {}).route;
     route = Array.isArray(route) ? route.join("/") : String(route || "");
     if (!Object.prototype.hasOwnProperty.call(routes, route)) return H.notFound(res);
+    if (route === "unsub") {
+      if (req.method !== "GET" && req.method !== "POST") return H.sendJson(res, 405, { error: "method" });
+      if (pepper().length < 32) return H.sendJson(res, 503, { error: "not_configured" });
+      /* A mail client's one-click POST has no X-SW-Request header and no
+         cookie; the HMAC token is the whole check, so no guardPost here. */
+      try {
+        const q = req.query || {}, u = String(q.u || ""), tok = String(q.t || "");
+        const good = /^[0-9a-f-]{36}$/.test(u) && tok.length === 22 && C.sameHex(
+          Buffer.from(tok).toString("hex"), Buffer.from(K.unsubToken(pepper(), u)).toString("hex"));
+        if (!good) return H.sendHtml(res, 400, "Link not valid", "This unsubscribe link is not valid. Open the latest email from us and try its link.");
+        await db.revokeConsent(u, iso(now()));
+        return H.sendHtml(res, 200, "You're unsubscribed", "No more picks by email. You can turn them back on from your account.");
+      } catch (e) { await report(e, { route }); return H.sendJson(res, 500, { error: "server" }); }
+    }
     if (POST_ROUTES.has(route)) {
       const g = H.guardPost(req);
       if (g) return H.sendJson(res, g.status, { error: g.error });

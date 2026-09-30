@@ -340,3 +340,21 @@ test("email/verify now says whether the account is new", async () => {
   assert.deepStrictEqual((await emailSignIn(w, "e@x.com")).json(), { ok: true, first: true, name: "" });
   assert.deepStrictEqual((await emailSignIn(w, "e@x.com")).json(), { ok: true, first: false, name: "" });
 });
+
+const K = require("../lib/auth/consent.js");
+test("Review Focus 5: unsubscribe works by GET or by a bare POST, and only with the right token", async () => {
+  const w = world();
+  await oneTap(w, { optin: true });
+  const uid = w.db.t.users[0].id, tok = K.unsubToken(process.env.AUTH_PEPPER, uid);
+  const bad = await w.call({ method: "GET", query: { route: "unsub", u: uid, t: "x".repeat(22) }, headers: {} });
+  assert.strictEqual(bad.code, 400);
+  assert.strictEqual(w.db.t.consent[uid].revoked_at, null);
+  const ok = await w.call({ method: "GET", query: { route: "unsub", u: uid, t: tok }, headers: {} });
+  assert.strictEqual(ok.code, 200);
+  assert.match(ok.body, /You're unsubscribed/);
+  assert.ok(w.db.t.consent[uid].revoked_at);
+  w.db.t.consent[uid].revoked_at = null;
+  const post = await w.call({ method: "POST", query: { route: "unsub", u: uid, t: tok }, headers: {}, body: "List-Unsubscribe=One-Click" });
+  assert.strictEqual(post.code, 200, "one-click POST from a mail client carries no X-SW-Request");
+  assert.ok(w.db.t.consent[uid].revoked_at);
+});
