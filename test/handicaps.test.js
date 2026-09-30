@@ -138,3 +138,19 @@ test("a whole line says what happens on the exact margin", () => {
   assert.strictEqual(mLabel(f, "AH_1_-1"), "Arsenal -1 (stake back if they win by 1)");
   assert.strictEqual(mLabel(f, "AH_1_2"), "Arsenal +2 (stake back if they lose by 2)");
 });
+
+/* ONLY LINES THE BOOK QUOTES (owner, 30 Sep 2026: "a lot of markets are
+   closed when I try to book"). Books sell a few handicap lines per game,
+   around its own handicap, so the Handicap chip goes through the same line
+   gate as corners and shots: offered only where SportyBet's feed quotes that
+   exact line. Other handicap codes (draw no bet, +-0.5) are untouched. */
+test("a handicap line is offered only where SportyBet quotes it", () => {
+  const open = new Function('var BOOKS={sporty:{odds:"sportyOdds"}};' + fn("cornersOpen") + "\nreturn cornersOpen;")();
+  const f = { sportyOdds: { "AH_2_-1.5": 1.35, "AH_1_1": 1.2 } };
+  assert.strictEqual(open(f, "AH_2_-1.5"), true);
+  assert.strictEqual(open(f, "AH_1_1"), true);
+  assert.strictEqual(open(f, "AH_2_-2.5"), false, "not quoted on this game");
+  assert.strictEqual(open({}, "AH_1_1.5"), false, "no feed, no handicap");
+  assert.strictEqual(open({}, "AH_1_0"), true, "draw no bet is not gated");
+  assert.strictEqual(open({}, "AH_2_0.5"), true, "the 0.5 lines are the result, not gated");
+});
