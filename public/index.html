@@ -15387,7 +15387,12 @@ function renderByo(){
 function paintJobs(usable,B){
   var jobs=$("byoJobs"); if(!jobs) return;
   var conv=$("byoJobConv");
-  if(conv) conv.textContent="Convert to "+convTarget(B).label;
+  /* EVERY BOOK IT CAN GO TO, NOT JUST THE FIRST. This read "Convert to Bet9ja"
+     - the default target - and on a phone the card is all a reader sees, so
+     five books looked like one (owner, 30 Sep 2026). The target is still
+     picked inside. */
+  if(conv){ conv.textContent="Convert";
+    if(conv.nextElementSibling) conv.nextElementSibling.textContent=convTargetsLine(B); }
   var can={edit:usable.length>=1,convert:usable.length>=1,split:usable.length>=4,
     trim:usable.length>=3,change:changeOptions(usable).length>0};
   jobs.querySelectorAll("[data-job]").forEach(function(b){
@@ -15514,6 +15519,11 @@ function fixtureByBookId(id,B){
 function otherBooks(B){
   return Object.keys(BOOKS).filter(function(k){ return k!==B.key; })
     .map(function(k){ return BOOKS[k]; });
+}
+/* "To Bet9ja, BetKing, betPawa or 1xBet" - the Convert card's second line. */
+function convTargetsLine(B){
+  var n=otherBooks(B).map(function(o){ return o.label; });
+  return "To "+(n.length>1?n.slice(0,-1).join(", ")+" or "+n[n.length-1]:n.join(""));
 }
 /* The book a conversion is heading FOR. Falls back to the first other book
    rather than to a fixed name, so removing a book from the table cannot leave
@@ -15895,6 +15905,26 @@ function promoLegs(legs){
     return /^(UP[12]_|DC1UP_)/.test(String(l&&l.prediction||""));
   });
 }
+/* THE GAMES WE HAVE NO NUMBERS FOR, SAID BEFORE ANYTHING ELSE.
+   Owner, 30 Sep 2026, on SportyBet code T74M6R: Edit "could only edit 3 games
+   tops". 32 of its 36 open legs were women's cups, reserves and lower leagues
+   the board does not carry, so there was nothing to judge them on - but the
+   panel only showed the few it could touch, and read as broken. Counted and
+   named by the league the bookmaker gave us, biggest first. */
+function offBoardNote(legs,B){
+  var open=(legs||[]).filter(function(l){ return l&&l.prediction&&!legStarted(l); });
+  var off=open.filter(function(l){ return !fixtureByLeg(l,B); });
+  if(!off.length) return "";
+  var by={};
+  off.forEach(function(l){ var k=l.league||"leagues we do not carry"; by[k]=(by[k]||0)+1; });
+  var top=Object.keys(by).sort(function(a,b){ return by[b]-by[a]; });
+  return "<p class='byo-note sf-off'><b>"+off.length+" of these "+open.length+
+    " games are ones we don't cover</b>, so we have no numbers to judge them and "+
+    "Edit leaves them as they are: "+
+    top.slice(0,3).map(function(k){ return esc(k)+" ("+by[k]+")"; }).join(", ")+
+    (top.length>3?" and "+(top.length-3)+" other league"+(top.length===4?"":"s"):"")+
+    ". It can only work on the other "+(open.length-off.length)+".</p>";
+}
 function saferBoxInner(legs,B){
   var plan=saferPlan(legs,B);
   var promo=promoLegs(legs);
@@ -16005,6 +16035,7 @@ function saferBoxInner(legs,B){
       (alt?"<button class='sf-chip sf-shuffle' id='sfShuffle' type='button'>"+
         "Shuffle <i>"+alt+" leg"+(alt===1?"":"s")+" could go another way</i></button>":"")+
     "</div>"+
+    offBoardNote(legs,B)+
     pinNote+
     (nothing
       ? "<p class='byo-note'>Nothing to change at this setting. Try <b>Safest</b>, "+

@@ -46,3 +46,34 @@ test("switching builder moves only as far as the new panel, never to the top", (
   assert.match(b, /BUILD\.mode==="slider"\?"sliderPanel":"wizardPanel"/);
   assert.match(src, /\.bld-panel\{scroll-margin-top:\d+px\}/, "clear of the sticky header");
 });
+
+/* Owner, 30 Sep 2026, on SportyBet code T74M6R: "the edit function ... could
+ * only edit 3 games tops". 32 of its 36 open legs were women's, reserves and
+ * lower-league games the board does not carry, so Edit had no numbers for
+ * them - true, but the panel never said so and it read as broken. */
+test("Edit for me says how many games it cannot judge, and names the leagues", () => {
+  const note = new Function("fixtureByLeg", "legStarted", "esc",
+    fn("offBoardNote") + "\nreturn offBoardNote;")(
+    (l) => (l.on ? {} : null), () => false, (s) => String(s));
+  const legs = [
+    { prediction: "1X", on: true },
+    { prediction: "OVER_1.5", league: "UEFA Champions League Women" },
+    { prediction: "GG", league: "UEFA Champions League Women" },
+    { prediction: "1", league: "Swiss 1. Liga" },
+  ];
+  const h = note(legs, {});
+  assert.match(h, /3 of these 4 games/);
+  assert.match(h, /UEFA Champions League Women \(2\)/, "the biggest league first, counted");
+  assert.match(h, /the other 1/);
+  assert.strictEqual(note([{ prediction: "1X", on: true }], {}), "", "nothing to say when we cover them all");
+  assert.match(fn("saferBoxInner"), /offBoardNote\(legs,B\)/);
+});
+
+test("the Convert card names every bookie it can convert to, not just the first", () => {
+  const line = new Function("otherBooks", fn("convTargetsLine") + "\nreturn convTargetsLine;")(
+    () => [{ label: "Bet9ja" }, { label: "BetKing" }, { label: "betPawa" }, { label: "1xBet" }]);
+  assert.strictEqual(line({}), "To Bet9ja, BetKing, betPawa or 1xBet");
+  const pj = fn("paintJobs");
+  assert.doesNotMatch(pj, /"Convert to "\+convTarget/, "the card named only the default target");
+  assert.match(pj, /convTargetsLine\(B\)/);
+});
