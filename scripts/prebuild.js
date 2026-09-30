@@ -617,17 +617,25 @@ function applyOrigin() {
    built page, so a check that isn't anchored to `<meta ` found that inline
    script instead of the tag and returned early every time - the meta was
    never actually injected. */
-function applyAuthMeta(html, authEnabled) {
+function applyAuthMeta(html, authEnabled, keys) {
   if (authEnabled !== "1") return html;
   if (html.indexOf('<meta name="sw-auth"') !== -1) return html;  // idempotent
-  return html.replace("<head>", '<head><meta name="sw-auth" content="1">');
+  const k = keys || {};
+  /* Both are public by design (Google's client id and Turnstile's site key
+     are meant for the browser); the shape checks only keep markup out. */
+  const gcid = /^[0-9A-Za-z._-]{1,200}.apps.googleusercontent.com$/.test(String(k.gcid || "")) ? k.gcid : "";
+  const ts = /^[0-9A-Za-z_-]{1,100}$/.test(String(k.ts || "")) ? k.ts : "";
+  return html.replace("<head>", '<head><meta name="sw-auth" content="1">' +
+    (gcid ? '<meta name="sw-gcid" content="' + gcid + '">' : "") +
+    (ts ? '<meta name="sw-ts" content="' + ts + '">' : ""));
 }
 
 function injectAuthMeta() {
   if (!process.env.VERCEL && !process.env.SPLIT) return;
   try {
     const before = fs.readFileSync(IDX, "utf8");
-    const after = applyAuthMeta(before, process.env.AUTH_ENABLED);
+    const after = applyAuthMeta(before, process.env.AUTH_ENABLED,
+      { gcid: process.env.GOOGLE_CLIENT_ID, ts: process.env.TURNSTILE_SITE_KEY });
     if (after !== before) {
       fs.writeFileSync(IDX, after);
       log("sw-auth meta injected (AUTH_ENABLED=1)");

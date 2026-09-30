@@ -45,3 +45,19 @@ test("the account routes are wired and never open to other origins", () => {
   for (const f of ["api/auth.js", "api/me.js", "api/account.js"]) assert.ok(cfg.functions[f], f);
   assert.doesNotMatch(JSON.stringify(cfg), /Access-Control-Allow-Origin/i);
 });
+
+function allCspValues() {
+  const out = [];
+  for (const h of cfg.headers || []) for (const x of h.headers || []) if (x.key.startsWith("Content-Security-Policy")) out.push(x.value);
+  return out;
+}
+
+test("CSP lets Google Identity Services load its script, frame, style and calls", () => {
+  assert.ok(allCspValues().length);
+  for (const csp of allCspValues()) {
+    assert.match(csp, /script-src[^;]*https:\/\/accounts\.google\.com\/gsi\/client/);
+    assert.match(csp, /frame-src[^;]*https:\/\/accounts\.google\.com\/gsi\//);
+    assert.match(csp, /connect-src[^;]*https:\/\/accounts\.google\.com\/gsi\//);
+    assert.match(csp, /style-src[^;]*https:\/\/accounts\.google\.com\/gsi\/style/);
+  }
+});

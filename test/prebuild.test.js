@@ -34,3 +34,12 @@ test("applyAuthMeta adds nothing when AUTH_ENABLED is unset", () => {
   assert.strictEqual(off, realHtml);
   assert.doesNotMatch(off, /<meta name="sw-auth"/);
 });
+
+test("applyAuthMeta adds the Google client id and Turnstile site key metas, and drops unsafe values", () => {
+  const out = applyAuthMeta("<html><head></head></html>", "1", { gcid: "123-abc.apps.googleusercontent.com", ts: "0x4AAAAAAAtest_Key-1" });
+  assert.match(out, /<meta name="sw-gcid" content="123-abc\.apps\.googleusercontent\.com">/);
+  assert.match(out, /<meta name="sw-ts" content="0x4AAAAAAAtest_Key-1">/);
+  const bad = applyAuthMeta("<html><head></head></html>", "1", { gcid: '"><script>', ts: "a b" });
+  assert.doesNotMatch(bad, /sw-gcid|sw-ts/);
+  assert.doesNotMatch(applyAuthMeta("<html><head></head></html>", "0", { gcid: "x.apps.googleusercontent.com" }), /sw-gcid/);
+});
