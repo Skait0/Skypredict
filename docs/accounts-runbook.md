@@ -23,7 +23,9 @@ Turn on 2FA for: Supabase, Vercel, Google Cloud, Cloudflare, Resend, GitHub.
 
 ## 3. Resend (owner)
 
-1. https://resend.com -> add domain `soccerwizard.live`.
+1. https://resend.com -> add domain `mail.soccerwizard.live` (a subdomain, so
+   login mail cannot hurt the main domain's reputation; the code sends from
+   `login@mail.soccerwizard.live`).
 2. Add the DNS records Resend shows (SPF, DKIM, and the MX for the bounce
    subdomain) in Cloudflare DNS, "DNS only" (grey cloud).
 3. Wait for "Verified". Create an API key with "Sending access" only.

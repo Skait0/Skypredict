@@ -39,7 +39,7 @@ test("the code email goes to Resend, from our domain, and says nothing else", as
   assert.strictEqual(sent.url, "https://api.resend.com/emails");
   assert.strictEqual(sent.init.headers.Authorization, "Bearer re_test");
   assert.deepStrictEqual(body.to, ["a@b.com"]);
-  assert.match(body.from, /@soccerwizard\.live>$/);
+  assert.match(body.from, /@mail\.soccerwizard\.live>$/, "the subdomain Resend verifies, not the main domain");
   assert.match(body.text, /048213/);
   assert.match(body.text, /10 minutes/);
   delete process.env.RESEND_API_KEY;
