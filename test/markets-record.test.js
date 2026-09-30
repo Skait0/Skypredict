@@ -41,7 +41,9 @@ const K = { home: .75, draw: .15, away: .10, dc1x: .90, dcx2: .25,
   /* Win either half comes from two half distributions rather than this
      matrix - see markets() - and grades only where a half-time score
      came with the match. */
-  homeWinHalf: .74, awayWinHalf: .41 };
+  homeWinHalf: .74, awayWinHalf: .41,
+  /* Win by 2+ and 3+ per side - the handicap rows (30 Sep 2026). */
+  hBy2: .45, hBy3: .22, aBy2: .03, aBy3: .01 };
 
 function grade(k, mm) { const acc = {}; M.gradeEveryMarket(acc, k, mm); return acc; }
 const row = (acc, name) => acc[name] || { total: 0, correct: 0, exp: 0 };
@@ -192,4 +194,17 @@ test("the combinations grade as a result OR a goals line, either half enough", (
   const c = grade(K, { hg: 0, ag: 1 });      // away win against the preference
   assert.equal(row(c, "Result or both score").correct, 0,
     "the preferred side lost and only one team scored");
+});
+
+test("the handicap rows grade a 3-0 the way a person would", () => {
+  /* Home is the favourite in K. 3-0: the favourite -1.5 and +1.5 both win,
+     the underdog +1.5 and +2.5 both lose (beaten by three). */
+  const a = grade(K, { hg: 3, ag: 0 });
+  assert.equal(row(a, "Handicap -1.5 (favourite)").correct, 1);
+  assert.equal(row(a, "Handicap +1.5 (favourite)").correct, 1);
+  assert.equal(row(a, "Handicap +1.5 (underdog)").correct, 0);
+  assert.equal(row(a, "Handicap +2.5 (underdog)").correct, 0);
+  const b = grade(K, { hg: 0, ag: 1 });   // the favourite loses by one
+  assert.equal(row(b, "Handicap +1.5 (favourite)").correct, 1, "(2:0) survives a one-goal defeat");
+  assert.equal(row(b, "Handicap +1.5 (underdog)").correct, 1);
 });

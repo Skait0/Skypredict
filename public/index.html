@@ -10205,7 +10205,7 @@ var BUILD_NOSYNC=false;
    last market switched on before it had one took over the wizard's picks for a
    week. They begin earning a record the moment the next card is graded; until
    then they are there for anyone who goes looking. */
-var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,corn:false,tcorn:false,shots:false,tshots:false},touched:false,mode:"slider"};
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,corn:false,tcorn:false,shots:false,tshots:false,hcap:false},touched:false,mode:"slider"};
 /* NO `draw` KEY HERE, deliberately. The draw is a Wizard market and lives in
    WSP.mk alone. It was briefly mirrored into BUILD.mk like every other toggle,
    which was inert - "X" is in neither allowedMarkets nor mkOn, so no risk
@@ -12465,6 +12465,7 @@ function allowedMarkets(t){
   m=m.concat(TEAM_CORNER_CODES);
   m=m.concat(SHOTS_CODES);
   m=m.concat(TEAM_SHOTS_CODES);
+  m=m.concat(HCAP_CODES);
   return m;
 }
 /* IS THAT PRICE THEIRS OR OURS?
@@ -12498,6 +12499,16 @@ function oddCell(f,c,p){
    Asked for after a 45-leg code, 8B9WJU, came back 42 legs of these with no
    number on any of them - which left the whole editor blind. */
 function mProb(f,c){
+/* P(margin >= k) for k in -2..3, from the result and the four margin tails
+   the build ships in `mg` (home by 2+, 3+, away by 2+, 3+). Null when the
+   fixture has no tails - a handicap is never guessed. */
+function marginGe(f){
+  var mg=f&&f.mg;
+  if(!mg||mg.length!==4||f.home_p==null||f.away_p==null) return null;
+  var t={"-2":1-mg[3],"-1":1-mg[2],"0":1-f.away_p,"1":f.home_p,"2":mg[0],"3":mg[1]};
+  return function(k){ return k<=-3?1:(k>=4?null:t[String(k)]); };
+}
+
   /* A CONVERTED LEG CAN HAVE NO FIXTURE AT ALL. Since feedMatch, a game we
      hold no results for crosses on the other book's own event, and there is
      nothing of ours behind it to price. Null is the honest answer and every
@@ -12603,7 +12614,32 @@ function mProb(f,c){
     }
     if(ahLine===-0.5) return ahHome?f.home_p:f.dcx2;
     if(ahLine===0.5) return ahHome?f.dc1x:f.away_p;
+    /* 1.5 AND 2.5, off the margin tails the build ships in `mg` (30 Sep 2026).
+       The line is the home team's, so the away side's own is its negative. A
+       half line has no push: the side wins or it does not. */
+    var hge=marginGe(f);
+    if(hge&&Math.abs(ahLine)!==0.5&&Math.abs(ahLine*2-Math.round(ahLine*2))<1e-9&&
+       Math.abs(ahLine-Math.round(ahLine))>1e-9){
+      /* home wins at line L when the margin D > -L; away wins when D < -L. */
+      var cut=-ahLine;
+      var up=hge(Math.floor(cut)+1);
+      if(up==null) return null;
+      return ahHome?up:1-up;
+    }
     return null;
+  }
+  /* THE 3-WAY HANDICAP at one and two goals - the owner's dad's market.
+     EH_a_b is a scoreline head start (home a, away b); with d = a-b the home
+     side wins when the margin D >= 1-d, the handicap draw is D = -d, and the
+     away side wins below that. Every value is a tail of `mg`. */
+  var ehf=/^EH_(\d)_(\d)_(1|X|2)$/.exec(c||"");
+  if(ehf){
+    var ege=marginGe(f);
+    if(!ege) return null;
+    var d=+ehf[1]-(+ehf[2]);
+    var a1=ege(1-d), a0=ege(-d);
+    if(a1==null||a0==null) return null;
+    return ehf[3]==="1"?a1:(ehf[3]==="X"?Math.max(0,a0-a1):1-a0);
   }
   /* Draw no bet is the nil handicap under a second name, and both are sold.
      Answered by the same arithmetic rather than a rule of its own, so the two
@@ -12816,6 +12852,11 @@ var SHOTS_CODES=["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5"
    SportyBet was seen selling across 20 fixtures on 29 Sep 2026; the line gate
    offers only the ones a fixture actually carries. */
 var TEAM_SHOTS_CODES=["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_H_OV_10.5","SHOTS_H_OV_11.5","SHOTS_H_OV_12.5","SHOTS_H_OV_13.5","SHOTS_H_OV_14.5","SHOTS_H_OV_15.5","SHOTS_H_OV_16.5","SHOTS_H_OV_17.5","SHOTS_H_OV_18.5","SHOTS_A_OV_7.5","SHOTS_A_OV_8.5","SHOTS_A_OV_9.5","SHOTS_A_OV_10.5","SHOTS_A_OV_11.5","SHOTS_A_OV_12.5","SHOTS_A_OV_13.5","SHOTS_A_OV_14.5","SHOTS_A_OV_15.5","SHOTS_A_OV_16.5","SHOTS_A_OV_17.5","SHOTS_A_OV_18.5"];
+/* HANDICAPS, the safe side (30 Sep 2026) - see mProb. A head start of 1.5 or
+   2.5 for either team, and the favourite at -1.5: the 3-way (0:2) and (0:1)
+   in the Asian half-line form every book sells, so the chip needs no BOOK_ONLY
+   entry. The floor decides which ones clear - the chip itself starts off. */
+var HCAP_CODES=["AH_1_1.5","AH_1_2.5","AH_2_-1.5","AH_2_-2.5","AH_1_-1.5","AH_2_1.5"];
 /* IS THIS CORNERS LINE ACTUALLY OPEN? Books open corners a few days before
    kick-off and some leagues never - measured 23 Sep 2026: Spanish second
    division open 90 hours out, Scottish Championship closed at 48, and every
@@ -13229,7 +13270,16 @@ function mLabel(f,c){
     /* Handicap 0 is draw no bet, and "Aston Villa 0" said nothing to anyone
        who does not already read handicap lines. */
     if(shown===0) return side+" win, draw no bet";
-    return side+" "+(shown>0?"+":"")+shown;
+    /* At 1.5 and 2.5 the same bet has a 3-way handicap name, which is what
+       most readers here know it by - "Leeds +1.5" IS Leeds (0:2). */
+    var eq="";
+    if(Math.abs(shown)===1.5||Math.abs(shown)===2.5){
+      var a=Math.abs(shown);
+      var homeSide=ah[1]==="1";
+      eq=shown>0?(homeSide?" (handicap "+(a+0.5)+":0)":" (handicap 0:"+(a+0.5)+")")
+                :(homeSide?" (handicap 0:"+(a-0.5)+")":" (handicap "+(a-0.5)+":0)");
+    }
+    return side+" "+(shown>0?"+":"")+shown+eq;
   }
   return c;
 }
@@ -13311,6 +13361,7 @@ function buildPicks(){
   TEAM_CORNER_CODES.forEach(function(c){ mkOn[c]=BUILD.mk.tcorn===true; });
   SHOTS_CODES.forEach(function(c){ mkOn[c]=BUILD.mk.shots; });
   TEAM_SHOTS_CODES.forEach(function(c){ mkOn[c]=BUILD.mk.tshots===true; });
+  HCAP_CODES.forEach(function(c){ mkOn[c]=BUILD.mk.hcap===true; });
   allowed=allowed.filter(function(c){return mkOn[c]!==false && bookAllows(c,curBook());});
   var f0=BUILD.risk/100;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
@@ -16519,7 +16570,7 @@ var LINK_MARKETS={"1":1,"2":1,"X":1,"1X":1,"X2":1,"12":1,
   "MIXGG_1":1,"MIXGG_2":1,"MIXGG_X":1,"WINHALF_H_Y":1,"WINHALF_A_Y":1,
   "CORNERS_OV_7.5":1,"CORNERS_UN_7.5":1,"CORNERS_OV_8.5":1,"CORNERS_UN_8.5":1,"CORNERS_OV_9.5":1,"CORNERS_UN_9.5":1,"CORNERS_OV_10.5":1,"CORNERS_UN_10.5":1,
   "CORNERS_H_OV_3.5":1,"CORNERS_H_OV_4.5":1,"CORNERS_H_OV_5.5":1,"CORNERS_A_OV_2.5":1,"CORNERS_A_OV_3.5":1,"CORNERS_A_OV_4.5":1,
-  "SHOTS_OV_19.5":1,"SHOTS_OV_20.5":1,"SHOTS_OV_21.5":1,"SHOTS_OV_22.5":1,"SHOTS_OV_23.5":1,"SHOTS_OV_24.5":1,"SHOTS_OV_25.5":1,"SHOTS_OV_26.5":1,"SHOTS_OV_27.5":1,"SHOTS_OV_28.5":1,"SHOTS_OV_29.5":1,"SHOTS_H_OV_7.5":1,"SHOTS_H_OV_8.5":1,"SHOTS_H_OV_9.5":1,"SHOTS_H_OV_10.5":1,"SHOTS_H_OV_11.5":1,"SHOTS_H_OV_12.5":1,"SHOTS_H_OV_13.5":1,"SHOTS_H_OV_14.5":1,"SHOTS_H_OV_15.5":1,"SHOTS_H_OV_16.5":1,"SHOTS_H_OV_17.5":1,"SHOTS_H_OV_18.5":1,"SHOTS_A_OV_7.5":1,"SHOTS_A_OV_8.5":1,"SHOTS_A_OV_9.5":1,"SHOTS_A_OV_10.5":1,"SHOTS_A_OV_11.5":1,"SHOTS_A_OV_12.5":1,"SHOTS_A_OV_13.5":1,"SHOTS_A_OV_14.5":1,"SHOTS_A_OV_15.5":1,"SHOTS_A_OV_16.5":1,"SHOTS_A_OV_17.5":1,"SHOTS_A_OV_18.5":1,"SHOTS_OV_30.5":1,"SHOTS_OV_31.5":1};
+  "SHOTS_OV_19.5":1,"SHOTS_OV_20.5":1,"SHOTS_OV_21.5":1,"SHOTS_OV_22.5":1,"SHOTS_OV_23.5":1,"SHOTS_OV_24.5":1,"SHOTS_OV_25.5":1,"SHOTS_OV_26.5":1,"SHOTS_OV_27.5":1,"SHOTS_OV_28.5":1,"SHOTS_OV_29.5":1,"AH_1_1.5":1,"AH_1_2.5":1,"AH_2_-1.5":1,"AH_2_-2.5":1,"AH_1_-1.5":1,"AH_2_1.5":1,"SHOTS_H_OV_7.5":1,"SHOTS_H_OV_8.5":1,"SHOTS_H_OV_9.5":1,"SHOTS_H_OV_10.5":1,"SHOTS_H_OV_11.5":1,"SHOTS_H_OV_12.5":1,"SHOTS_H_OV_13.5":1,"SHOTS_H_OV_14.5":1,"SHOTS_H_OV_15.5":1,"SHOTS_H_OV_16.5":1,"SHOTS_H_OV_17.5":1,"SHOTS_H_OV_18.5":1,"SHOTS_A_OV_7.5":1,"SHOTS_A_OV_8.5":1,"SHOTS_A_OV_9.5":1,"SHOTS_A_OV_10.5":1,"SHOTS_A_OV_11.5":1,"SHOTS_A_OV_12.5":1,"SHOTS_A_OV_13.5":1,"SHOTS_A_OV_14.5":1,"SHOTS_A_OV_15.5":1,"SHOTS_A_OV_16.5":1,"SHOTS_A_OV_17.5":1,"SHOTS_A_OV_18.5":1,"SHOTS_OV_30.5":1,"SHOTS_OV_31.5":1};
 function slipPayload(items){
   var rows=[], bad=false;
   (items||[]).slice(0,40).forEach(function(c){
@@ -19236,7 +19287,7 @@ const JACKPOT_ODDS=20000;
 const BETSLIP_MAX=50;
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
-var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,tcorn:false,shots:false,tshots:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,tcorn:false,shots:false,tshots:false,hcap:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* THE MARKET CHIPS ARE REMEMBERED. They never were: every load rebuilt both
    sets from the literals above, so a reader who switched Over 1.5 off and
    Both score on found Win or draw, Outright win, Over 1.5 and Team over 0.5
@@ -19341,6 +19392,7 @@ function wspMarkets(){var m=[];
   if(WSP.mk.tcorn)m=m.concat(TEAM_CORNER_CODES);
   if(WSP.mk.shots)m=m.concat(SHOTS_CODES);
   if(WSP.mk.tshots)m=m.concat(TEAM_SHOTS_CODES);
+  if(WSP.mk.hcap)m=m.concat(HCAP_CODES);
   /* Bet9ja's own lines. bookAllows keeps them out of a SportyBet slip, and the
      filter below is what stops the wizard building one it cannot book. */
   if(WSP.mk.dro15)m.push("MIX_X_OV_1.5");
@@ -20079,7 +20131,8 @@ var MKT_CODES={wd:["1X","X2"],any:["12"],out:["1","2"],o15:["OVER_1.5"],
   both:["GG"],draw:["X"],corn:["CORNERS_OV_7.5","CORNERS_OV_8.5","CORNERS_OV_9.5","CORNERS_OV_10.5"],
   tcorn:["CORNERS_H_OV_3.5","CORNERS_H_OV_4.5","CORNERS_H_OV_5.5","CORNERS_A_OV_2.5","CORNERS_A_OV_3.5","CORNERS_A_OV_4.5"],
   shots:["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"],
-  tshots:["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_H_OV_10.5","SHOTS_H_OV_11.5","SHOTS_H_OV_12.5","SHOTS_H_OV_13.5","SHOTS_H_OV_14.5","SHOTS_H_OV_15.5","SHOTS_H_OV_16.5","SHOTS_H_OV_17.5","SHOTS_H_OV_18.5","SHOTS_A_OV_7.5","SHOTS_A_OV_8.5","SHOTS_A_OV_9.5","SHOTS_A_OV_10.5","SHOTS_A_OV_11.5","SHOTS_A_OV_12.5","SHOTS_A_OV_13.5","SHOTS_A_OV_14.5","SHOTS_A_OV_15.5","SHOTS_A_OV_16.5","SHOTS_A_OV_17.5","SHOTS_A_OV_18.5"]};
+  tshots:["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_H_OV_10.5","SHOTS_H_OV_11.5","SHOTS_H_OV_12.5","SHOTS_H_OV_13.5","SHOTS_H_OV_14.5","SHOTS_H_OV_15.5","SHOTS_H_OV_16.5","SHOTS_H_OV_17.5","SHOTS_H_OV_18.5","SHOTS_A_OV_7.5","SHOTS_A_OV_8.5","SHOTS_A_OV_9.5","SHOTS_A_OV_10.5","SHOTS_A_OV_11.5","SHOTS_A_OV_12.5","SHOTS_A_OV_13.5","SHOTS_A_OV_14.5","SHOTS_A_OV_15.5","SHOTS_A_OV_16.5","SHOTS_A_OV_17.5","SHOTS_A_OV_18.5"],
+  hcap:["AH_1_1.5","AH_1_2.5","AH_2_-1.5","AH_2_-2.5","AH_1_-1.5","AH_2_1.5"]};
 
 /* A MARKET YOU SWITCHED ON THAT CHANGED NOTHING LOOKS BROKEN.
    Measured on a 394-fixture board: turning "Team over 1.5" on at Balanced
@@ -20318,7 +20371,8 @@ var MKT_BY_CHIP={wd:["1X","X2"],any:["12"],out:["1","2"],
   draw:["X"],corn:["CORNERS_OV_7.5","CORNERS_OV_8.5","CORNERS_OV_9.5","CORNERS_OV_10.5"],
   tcorn:["CORNERS_H_OV_3.5","CORNERS_H_OV_4.5","CORNERS_H_OV_5.5","CORNERS_A_OV_2.5","CORNERS_A_OV_3.5","CORNERS_A_OV_4.5"],
   shots:["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"],
-  tshots:["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_H_OV_10.5","SHOTS_H_OV_11.5","SHOTS_H_OV_12.5","SHOTS_H_OV_13.5","SHOTS_H_OV_14.5","SHOTS_H_OV_15.5","SHOTS_H_OV_16.5","SHOTS_H_OV_17.5","SHOTS_H_OV_18.5","SHOTS_A_OV_7.5","SHOTS_A_OV_8.5","SHOTS_A_OV_9.5","SHOTS_A_OV_10.5","SHOTS_A_OV_11.5","SHOTS_A_OV_12.5","SHOTS_A_OV_13.5","SHOTS_A_OV_14.5","SHOTS_A_OV_15.5","SHOTS_A_OV_16.5","SHOTS_A_OV_17.5","SHOTS_A_OV_18.5"]};
+  tshots:["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_H_OV_10.5","SHOTS_H_OV_11.5","SHOTS_H_OV_12.5","SHOTS_H_OV_13.5","SHOTS_H_OV_14.5","SHOTS_H_OV_15.5","SHOTS_H_OV_16.5","SHOTS_H_OV_17.5","SHOTS_H_OV_18.5","SHOTS_A_OV_7.5","SHOTS_A_OV_8.5","SHOTS_A_OV_9.5","SHOTS_A_OV_10.5","SHOTS_A_OV_11.5","SHOTS_A_OV_12.5","SHOTS_A_OV_13.5","SHOTS_A_OV_14.5","SHOTS_A_OV_15.5","SHOTS_A_OV_16.5","SHOTS_A_OV_17.5","SHOTS_A_OV_18.5"],
+  hcap:["AH_1_1.5","AH_1_2.5","AH_2_-1.5","AH_2_-2.5","AH_1_-1.5","AH_2_1.5"]};
 
 /* WHY THE SLIP IS EMPTY, NAMED.
  *
@@ -20530,6 +20584,9 @@ function renderShared(){
      icon:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>'},
     /* Team shots - see TEAM_SHOTS_CODES. SportyBet alone, so it narrows the
        book and says so before it turns on, like Total shots. */
+    /* Handicap - see HCAP_CODES. Every book sells these lines. */
+    {k:"hcap", label:"Handicap", tier:0, sub:"(0:1) / (0:2), the safe side",
+     icon:'<path d="M4 18h16"/><path d="M8 18V9"/><path d="M16 18V6"/>'},
     {k:"tshots", label:"Team shots", tier:0, sub:"Home or away, over", only:["sporty"],
      icon:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M5 5l4 4"/>'},
     /* WIZARD ONLY. The Slider cannot build a draw - "X" is in neither

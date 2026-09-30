@@ -681,6 +681,7 @@ test("the combinations sit at the tier their record earned", () => {
     (src.match(/var TEAM_CORNER_CODES=\[[^\]]*\];/) || [""])[0] +
     (src.match(/var SHOTS_CODES=\[[^\]]*\];/) || [""])[0] +
     (src.match(/var TEAM_SHOTS_CODES=\[[^\]]*\];/) || [""])[0] +
+    (src.match(/var HCAP_CODES=\[[^\]]*\];/) || [""])[0] +
     grab("allowedMarkets") + String.fromCharCode(10) +
     "return allowedMarkets;")();
   const safe = allowed(0);
