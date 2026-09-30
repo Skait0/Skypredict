@@ -12883,7 +12883,11 @@ var HCAP_CODES=["AH_1_1.5","AH_1_2.5","AH_2_-1.5","AH_2_-2.5","AH_1_-1.5","AH_2_
    to. They are all fed from the same place and open together; SportyBet's is
    the feed we sweep in full. */
 function cornersOpen(f,c){
-  if(!/^(CORNERS|SHOTS)_/.test(c||"")) return true;
+  /* Handicaps at 1 to 2.5 go through the same gate (30 Sep 2026): books sell
+     a few lines per game around its own handicap, and a line the feed does
+     not quote came back "closed" at booking. Draw no bet and +-0.5 are the
+     result under another name, sold everywhere, and stay ungated. */
+  if(!/^(CORNERS|SHOTS)_/.test(c||"")&&!/^AH_[12]_-?(1|1\.5|2|2\.5)$/.test(c||"")) return true;
   try{ var o=f&&f[BOOKS.sporty.odds]; return !!(o&&o[c]); }catch(e){ return false; }
 }
 function bookAllows(code,B){
