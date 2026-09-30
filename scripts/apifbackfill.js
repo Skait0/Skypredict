@@ -154,6 +154,10 @@ const LEAGUES = {
   75: "Brazil Brasileiro Serie C",
   131: "Argentina Primera B",
   122: "Denmark 2nd Division",
+  /* 30 Sep 2026: the NPFL. SportyBet code T74M6R carried Sporting Lagos v
+     Ikorodu City and we could say nothing about it - a Nigerian site with no
+     Nigerian league. API-Football's seasons are named by the year they end. */
+  399: "Nigeria Premier League",
 };
 
 /* --plan asks nothing: it counts what a run would spend from what is already
