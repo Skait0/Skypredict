@@ -9,14 +9,14 @@
      markets, which is a feature list and answers a question nobody arrives
      with. Kept identical to og:description so a search result and a shared
      link make the same promise. -->
-<meta name="description" content="Stop picking games one by one. Type how much you want to win. It finds the games and gives you the code for SportyBet, Bet9ja, BetKing or betPawa.">
+<meta name="description" content="Stop picking games one by one. Type how much you want to win. It finds the games and gives you the code for SportyBet, Bet9ja, BetKing, betPawa or 1xBet.">
 <meta name="theme-color" content="#0D0D0F">
 <meta property="og:title" content="Soccerwizard">
 <!-- No league count here on purpose. It said 38 while the payload carried 45
      and the share card said 45, and a number baked into a tag nobody
      rebuilds goes stale the first time a league starts or ends its season.
      The claim that does not rot is what the site does. -->
-<meta property="og:description" content="Stop picking games one by one. Type how much you want to win. It finds the games and gives you the code for SportyBet, Bet9ja, BetKing or betPawa.">
+<meta property="og:description" content="Stop picking games one by one. Type how much you want to win. It finds the games and gives you the code for SportyBet, Bet9ja, BetKing, betPawa or 1xBet.">
 <meta property="og:type" content="website">
 <!-- The share card. wiz-logo.png was pointed at here and it is 473x544 -
      portrait. summary_large_image wants roughly 1.91:1, so platforms had
@@ -35,7 +35,7 @@
      thing that should ever be quoted here. -->
 <meta property="og:image:width" content="784">
 <meta property="og:image:height" content="386">
-<meta property="og:image:alt" content="Soccerwizard - type a payout and get a SportyBet, Bet9ja, BetKing or betPawa booking code">
+<meta property="og:image:alt" content="Soccerwizard - type a payout and get a SportyBet, Bet9ja, BetKing, betPawa or 1xBet booking code">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://skypredict-theta.vercel.app/og-card.png">
 <!-- X FALLS BACK TO THE og: TAGS WHEN THESE ARE ABSENT, so their absence was
@@ -44,8 +44,8 @@
      explicitly, there is one less variable. Same for og:site_name, which is
      what puts the name above the card rather than the bare hostname. -->
 <meta name="twitter:title" content="Soccerwizard">
-<meta name="twitter:description" content="Stop picking games one by one. Type how much you want to win. It finds the games and gives you the code for SportyBet, Bet9ja, BetKing or betPawa.">
-<meta name="twitter:image:alt" content="Soccerwizard - type a payout and get a SportyBet, Bet9ja, BetKing or betPawa booking code">
+<meta name="twitter:description" content="Stop picking games one by one. Type how much you want to win. It finds the games and gives you the code for SportyBet, Bet9ja, BetKing, betPawa or 1xBet.">
+<meta name="twitter:image:alt" content="Soccerwizard - type a payout and get a SportyBet, Bet9ja, BetKing, betPawa or 1xBet booking code">
 <meta property="og:site_name" content="Soccerwizard">
 <meta property="og:locale" content="en_GB">
 <!-- Every view of this site is one URL with different state - the board, the
@@ -59,7 +59,7 @@
 <meta property="og:url" content="https://skypredict-theta.vercel.app/">
 <!-- Names the site itself for search results. The per-match pages carry their
      own SportsEvent schema; this is the one that can win a sitelinks box. -->
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Soccerwizard","url":"https://skypredict-theta.vercel.app/","description":"Football predictions from dozens of leagues, plus a ready-made slip for SportyBet, Bet9ja, BetKing or betPawa.","publisher":{"@type":"Organization","name":"Soccerwizard","logo":{"@type":"ImageObject","url":"https://skypredict-theta.vercel.app/wiz-logo.png"}}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Soccerwizard","url":"https://skypredict-theta.vercel.app/","description":"Football predictions from dozens of leagues, plus a ready-made slip for SportyBet, Bet9ja, BetKing, betPawa or 1xBet.","publisher":{"@type":"Organization","name":"Soccerwizard","logo":{"@type":"ImageObject","url":"https://skypredict-theta.vercel.app/wiz-logo.png"}}}</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
 <!-- The 512 icon is deliberately NOT linked here.
      Browsers fetch every rel=icon during first paint, and this one is 297 KB,
@@ -1287,6 +1287,10 @@ html.mode-live .btabs{transform:none!important}
   color:var(--soft);font:inherit;font-weight:700;font-size:12px;padding:9px 12px;border-radius:var(--r-sm);
   cursor:pointer;letter-spacing:.04em}
 .more-collapse:hover{background:var(--card);color:var(--text);border-color:var(--soft)}
+.bp-l{margin:0;font-size:12.5px;line-height:1.6;color:var(--soft)}
+.bp-l b{color:var(--text)}
+.bp-more{margin-left:6px;background:var(--raise);border:1px solid var(--line-soft);color:var(--text);
+  font:inherit;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:var(--r-sm);cursor:pointer}
 .lmore-close{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:var(--r-sm);
   background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);cursor:pointer;
   display:grid;place-items:center;padding:0;opacity:.7;transition:opacity .16s,background .16s}
@@ -3282,6 +3286,12 @@ html{interpolate-size:allow-keywords}
    the same problem BetKing's gold has and the same answer. */
 :root{--bw-lime:#9CE800;--bw-ink:#171A1C}
 [data-theme="light"]{--bw-lime:#4F7300}
+/* 1XBET, READ OFF THEIR OWN ASSETS (29 Sep 2026): the 256px icon is #276BA6
+   behind white, the logo SVG's accent is #14A0FF. --xb-blue is the ground;
+   --xb-hi is the one used as TEXT, taken down to the ground blue in the light
+   theme because #14A0FF on white is under 3:1. */
+:root{--xb-blue:#276BA6;--xb-hi:#14A0FF}
+[data-theme="light"]{--xb-hi:#276BA6}
 .bookpick{display:flex;align-items:center;gap:7px;margin-top:12px;flex-wrap:wrap;
   padding:0 2px}
 /* Nothing to book, nothing to choose between. Hidden rather than emptied so
@@ -3344,6 +3354,10 @@ html{interpolate-size:allow-keywords}
 .bp[data-book="betpawa"].on{box-shadow:0 1px 3px rgba(0,0,0,.25),
   inset 0 0 0 1.5px var(--bw-lime)}
 .bp[data-book="betpawa"] small{font-size:9.5px}
+.bp[data-book="onexbet"]{padding:5px 10px;font-size:11px}
+.bp[data-book="onexbet"].on{box-shadow:0 1px 3px rgba(0,0,0,.25),
+  inset 0 0 0 1.5px var(--xb-hi)}
+.bp[data-book="onexbet"] small{font-size:9.5px}
 @media(hover:hover){ .bp:not(.on):hover{opacity:.72} }
 /* How many of the slip this book can actually take, so the choice is informed
    rather than a coin toss. A chip rather than loose type, so it reads as a
@@ -3356,6 +3370,7 @@ html{interpolate-size:allow-keywords}
 .bp[data-book="bet9ja"] small{background:rgba(20,177,81,.14);color:var(--b9-green)}
 .bp[data-book="betking"] small{background:rgba(255,196,0,.16);color:var(--bk-gold)}
 .bp[data-book="betpawa"] small{background:rgba(156,232,0,.16);color:var(--bw-lime)}
+.bp[data-book="onexbet"] small{background:rgba(20,160,255,.16);color:var(--xb-hi)}
 /* The SportyBet wordmark. One colour, so it needs no inner spans - but it does
    need to be a mark rather than a word, so that every place the name appears
    carries it: the code card's title, their own button, the pre-flight when it
@@ -3421,6 +3436,16 @@ html{interpolate-size:allow-keywords}
    those grounds are dark whatever the theme says, so the light-theme
    readability overrides must not follow the mark onto them. */
 .sc-go-primary .bwm .bwp,.slipbar .bwm .bwp{color:#9CE800}
+/* 1XBET'S FACE: their stylesheets ask for Roboto and Roboto Condensed; the
+   wordmark is a bold italic condensed "1XBET" with BET in their accent. Local
+   stack only, like betPawa's - no third-party font on the critical path. */
+.xbm{font-family:"Roboto Condensed",Roboto,"Arial Narrow",Arial,sans-serif;font-weight:800;
+  font-style:italic;letter-spacing:-.01em;white-space:nowrap}
+.xbm .xbb{font-style:italic;font-weight:800;font-size:inherit;display:inline;
+  letter-spacing:inherit;line-height:inherit;margin:0;color:#14A0FF}
+[data-theme="light"] .xbm .xbb{color:var(--xb-hi)}
+.code-open .xbm .xbb,.book-btn .xbm .xbb{color:inherit}
+.sc-go-primary .xbm .xbb,.slipbar .xbm .xbb{color:#14A0FF}
 .sc-go-primary .bkm .bkg,.slipbar .bkm .bkg{color:#FFC400}
 .bld-note{font-size:12px;color:var(--soft);margin-top:10px;text-align:center}
 /* In the sheet this line sits outside the scrolling body, level with the book
@@ -3503,7 +3528,7 @@ html{interpolate-size:allow-keywords}
 .byo-b{font:inherit;font-size:12px;font-weight:700;padding:6px 12px;border:0;
   border-radius:99px;background:none;cursor:pointer;line-height:1;
   transition:background .15s,box-shadow .15s,opacity .15s}
-.byo-b .sbm,.byo-b .b9m,.byo-b .bkm,.byo-b .bwm{font-size:12.5px;letter-spacing:-.01em}
+.byo-b .sbm,.byo-b .b9m,.byo-b .bkm,.byo-b .bwm,.byo-b .xbm{font-size:12.5px;letter-spacing:-.01em}
 .byo-b:not(.on){opacity:.5}
 /* THE INK IS THEIRS, THE SURFACE IS OURS. A white pill and a black pill put
    two foreign backgrounds inside our own rail: on the dark theme the black one
@@ -3519,6 +3544,8 @@ html{interpolate-size:allow-keywords}
   inset 0 0 0 1.5px var(--bk-gold)}
 .byo-b.on[data-book="betpawa"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
   inset 0 0 0 1.5px var(--bw-lime)}
+.byo-b.on[data-book="onexbet"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
+  inset 0 0 0 1.5px var(--xb-hi)}
 /* The conversion's TARGET, in the same pills as its source. Two books could
    leave this implicit - there was only ever one answer - and three cannot.
    The ring colours are keyed off the same attribute either row uses, so a
@@ -3543,6 +3570,8 @@ html{interpolate-size:allow-keywords}
   inset 0 0 0 1.5px var(--bk-gold)}
 .byo-b.on[data-conv-to="betpawa"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
   inset 0 0 0 1.5px var(--bw-lime)}
+.byo-b.on[data-conv-to="onexbet"]{box-shadow:0 1px 3px rgba(0,0,0,.25),
+  inset 0 0 0 1.5px var(--xb-hi)}
 @media (hover:hover){.byo-b:not(.on):hover{opacity:.8}}
 #byoCode{flex:1 1 150px;min-width:0;font:inherit;font-size:14px;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;
@@ -4163,7 +4192,7 @@ html{interpolate-size:allow-keywords}
    "Open in" and the mark two flex items with nothing between them:
    "Open inbet9ja". A space in the string cannot survive that, so it is a
    margin. Both books, because both had it - only Bet9ja's was noticed. */
-.code-open .sbm,.code-open .b9m,.code-open .bkm,.code-open .bwm{margin-left:.3em}
+.code-open .sbm,.code-open .b9m,.code-open .bkm,.code-open .bwm,.code-open .xbm{margin-left:.3em}
 
 /* --- the BetKing code card -------------------------------------------------
    Same construction as the Bet9ja one above and for the same reasons: their
@@ -4223,6 +4252,63 @@ html{interpolate-size:allow-keywords}
 @media(hover:hover){
   .code-card--bw .code-x:hover{border-color:#9CE800;color:#fff}
 }
+/* 1xBet's card, built exactly like the other four (owner, 30 Sep 2026: the
+   first one "looked flat" and its Open pill was red). A near-black ground
+   tinted toward their navy, with their blue as the ACCENT - a bloom at the
+   top as SportyBet's red has, the edge, the rule, the glow behind the code.
+   The first version flooded the whole ground with #276BA6, so the card had
+   one value from edge to edge and nothing to lift the code off it.
+   Colours are 1xBet's own: #276BA6 from their 256px icon, #14A0FF the accent
+   in their logo SVG, and a navy run down from their site's header. */
+.code-card--xb,[data-theme="light"] .code-card--xb{
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(20,160,255,.24), transparent 60%),
+    linear-gradient(180deg,#0F1D2B,#070B11);
+  border-color:rgba(20,160,255,.42);
+  box-shadow:0 22px 58px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.07)}
+.code-card--xb i,[data-theme="light"] .code-card--xb i{color:rgba(255,255,255,.8)}
+/* The code, lifted off the ground by a blue bloom behind it - on the glow,
+   not on the glyphs, for the same legibility reason as SportyBet's. */
+.code-card--xb b,[data-theme="light"] .code-card--xb b{
+  color:#fff;text-shadow:0 0 24px rgba(20,160,255,.5)}
+/* The wordmark in the title: white "1X", "BET" in their logo's accent, which
+   reads on this dark ground whatever the theme says. */
+.code-card--xb .xbm{color:#fff}
+.code-card--xb .xbm .xbb{color:#14A0FF}
+.code-card--xb i{display:block;text-transform:none}
+.code-card--xb i::after{content:"";display:block;width:42px;height:2px;
+  margin:8px auto 2px;border-radius:2px;background:#14A0FF}
+/* Copy and Share in their blue - the icon's #276BA6, not the logo accent:
+   white on #14A0FF is under 3:1, on #276BA6 it is 5.4:1. */
+.code-card--xb .code-acts .code-copy,
+.code-card--xb .code-acts .share-btn{
+  background:#276BA6;color:#fff;border:1px solid transparent!important;
+  box-shadow:0 2px 10px rgba(20,160,255,.32)}
+@media(hover:hover){
+  .code-card--xb .code-acts .code-copy:hover,
+  .code-card--xb .code-acts .share-btn:hover{filter:brightness(1.1)}
+}
+/* Their button is the white pill with the wordmark on it, weighted heaviest,
+   as on the SportyBet and Bet9ja cards: opening the slip is what the reader
+   came to do. Left to the site default it was Soccerwizard red - the wrong
+   brand on the one button that is theirs. */
+.code-card--xb .code-open{background:#fff;color:#14161a;
+  box-shadow:0 3px 16px rgba(0,0,0,.45)}
+@media(hover:hover){ .code-card--xb .code-open:hover{filter:brightness(.96)} }
+/* On white, "BET" takes the icon blue (5.4:1) - the logo accent would be too
+   pale - and outranks the rule that flattens the mark on coloured buttons. */
+.code-card--xb .code-open .xbm{color:#14161a}
+.code-card--xb .code-open .xbm .xbb{color:#276BA6}
+.code-card--xb .code-keep-n{color:rgba(255,255,255,.6)}
+.code-card--xb .code-save{background:rgba(255,255,255,.08);color:#fff;
+  border-color:rgba(255,255,255,.24)!important}
+.code-card--xb .code-save.done{border-color:#14A0FF!important;color:#14A0FF}
+.code-card--xb .code-x{background:rgba(255,255,255,.08);color:#fff;
+  border-color:rgba(255,255,255,.2)}
+@media(hover:hover){
+  .code-card--xb .code-x:hover{border-color:#14A0FF;color:#fff}
+}
+.code-card--xb .code-also{color:rgba(255,255,255,.62)}
 /* Gold is a light colour: white on it is unreadable, so their buttons take
    the dark ink their own site uses on gold. */
 .code-card--bk .code-acts .code-copy,
@@ -5339,6 +5425,8 @@ select{min-height:44px;padding:10px 32px 10px 12px}
    to read as a colour, so it is lifted rather than taken literally. */
 .bkc-i[data-bk="bw"]{font-family:Roboto,"Helvetica Neue",Arial,sans-serif}
 .bkc-i[data-bk="bw"] .bwp{color:var(--bw-lime)}
+.bkc-i[data-bk="xb"]{font-family:"Roboto Condensed",Roboto,"Arial Narrow",Arial,sans-serif;font-style:italic;font-weight:800}
+.bkc-i[data-bk="xb"] .xbb{color:var(--xb-hi)}
 .bkc-i[data-bk="fb"]{color:#8B84E8}
 [data-theme="light"] .bkc-i[data-bk="fb"]{color:#282450}
 .bkc-i[data-bk="fb"] .fb-dot{color:#9FF611;font-weight:900}
@@ -5641,7 +5729,7 @@ html.is-results #codeCard{display:none}
   background:rgba(242,184,75,.12)}
 /* The chip names are the bookmakers' own wordmarks, which carry their own
    colours - only the size is ours. */
-.ck-chip b .sbm,.ck-chip b .b9m,.ck-chip b .bkm,.ck-chip b .bwm{font-size:12px}
+.ck-chip b .sbm,.ck-chip b .b9m,.ck-chip b .bkm,.ck-chip b .bwm,.ck-chip b .xbm{font-size:12px}
 .ck-codes{display:flex;flex-wrap:wrap;gap:8px}
 /* Tabular numerals and wide tracking: these are read out loud and typed in. */
 .ck-chip{display:inline-flex;align-items:center;gap:8px;cursor:pointer;
@@ -5679,7 +5767,7 @@ html.is-results #codeCard{display:none}
 .ck-tab{font:inherit;font-size:11.5px;font-weight:700;cursor:pointer;color:var(--soft);
   background:transparent;border:1px solid var(--line);border-radius:99px;padding:4px 10px;
   transition:border-color 140ms var(--ease-out),background 140ms var(--ease-out)}
-.ck-tab .sbm,.ck-tab .b9m,.ck-tab .bkm,.ck-tab .bwm{font-size:11.5px}
+.ck-tab .sbm,.ck-tab .b9m,.ck-tab .bkm,.ck-tab .bwm,.ck-tab .xbm{font-size:11.5px}
 .ck-tab[aria-selected="true"]{border-color:var(--accent);background:rgba(242,184,75,.12);color:var(--text)}
 .ck-tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media (hover:hover){ .ck-tab:hover{border-color:var(--accent)} }
@@ -6790,7 +6878,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <!-- The four names in their own colours, the same wordmark spans the rest of
          the site uses, so the first screen already looks like the four apps a
          reader has on their phone (asked for 24 Sep). -->
-    <p class="sw-g-sub">We build the slip. You get a <span class="sbm">SportyBet</span>, <span class="b9m"><span class="b9r">bet</span><span class="b9g">9ja</span></span>, <span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span> or <span class="bwm"><span class="bwb">bet</span><span class="bwp">Pawa</span></span> code.</p>
+    <p class="sw-g-sub">We build the slip. You get a <span class="sbm">SportyBet</span>, <span class="b9m"><span class="b9r">bet</span><span class="b9g">9ja</span></span>, <span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span>, <span class="bwm"><span class="bwb">bet</span><span class="bwp">Pawa</span></span> or <span class="xbm">1X<span class="xbb">BET</span></span> code.</p>
     <p class="sw-g-age">You must be 18 or over to continue.</p>
     <button type="button" class="sw-g-enter" id="swGateEnter"><span class="sw-g-spark" aria-hidden="true"></span>Enter</button>
     <button type="button" class="sw-g-skip" id="swGateSkip">Skip</button>
@@ -7171,7 +7259,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <h1 class="parallax-forward stage-in stage-in-1" data-parallax="1.2">Who's winning <span>today?</span></h1>
     <div class="trust parallax-shallow stage-in stage-in-2" data-parallax="0.8">
       <!-- The thing most people come for, said plainly and said first. -->
-      <span class="trust-i t-sporty"><span class="bk-line"><b class="bkc" id="bkCycle" aria-label="SportyBet, Bet9ja, BetKing, betPawa or football.com"><i class="bkc-i on" data-bk="sporty">SportyBet</i><i class="bkc-i" data-bk="b9"><span class="b9r">bet</span><span class="b9g">9ja</span></i><i class="bkc-i" data-bk="bk"><span class="bkk">Bet</span><span class="bkg">King</span></i><i class="bkc-i" data-bk="bw"><span class="bwb">bet</span><span class="bwp">Pawa</span></i><i class="bkc-i" data-bk="fb">football<span class="fb-dot">.</span>com</i></b> code in one tap</span></span>
+      <span class="trust-i t-sporty"><span class="bk-line"><b class="bkc" id="bkCycle" aria-label="SportyBet, Bet9ja, BetKing, betPawa, 1xBet or football.com"><i class="bkc-i on" data-bk="sporty">SportyBet</i><i class="bkc-i" data-bk="b9"><span class="b9r">bet</span><span class="b9g">9ja</span></i><i class="bkc-i" data-bk="bk"><span class="bkk">Bet</span><span class="bkg">King</span></i><i class="bkc-i" data-bk="bw"><span class="bwb">bet</span><span class="bwp">Pawa</span></i><i class="bkc-i" data-bk="xb">1X<span class="xbb">BET</span></i><i class="bkc-i" data-bk="fb">football<span class="fb-dot">.</span>com</i></b> code in one tap</span></span>
       <span class="trust-i"><b id="when2">-</b> last updated</span>
       <span class="trust-i" id="streak" hidden></span>
       <!-- "Rebuilt daily from results" lived here and said the same thing as
@@ -7536,6 +7624,8 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
             aria-label="BetKing"><span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span></button>
           <button class="byo-b" type="button" data-book="betpawa"
             aria-label="betPawa"><span class="bwm"><span class="bwb">bet</span><span class="bwp">Pawa</span></span></button>
+          <button class="byo-b" type="button" data-book="onexbet"
+            aria-label="1xBet"><span class="xbm">1X<span class="xbb">BET</span></span></button>
         </div>
         <input id="byoCode" type="text" inputmode="latin" autocomplete="off"
                spellcheck="false" maxlength="110" placeholder="Booking code, or a few to merge"
@@ -8786,7 +8876,16 @@ function refineTip(f){
    0.30 to 0.75 over a 20-point gap. Both ends are measured rather than
    chosen: 0.30 is what the flat rule already used and leaves the small-gap
    behaviour unchanged, and 20 points is where the observed error tops out. */
-var BLEND_MIN=0.30, BLEND_MAX=0.75, BLEND_FULL_GAP=0.20;
+/* MARKET-LED SINCE 30 SEP 2026, AND THE RAMP ABOVE IS FLAT AT 0.90.
+   scripts/scorecard.js --exp=blend, 24 walk-forward folds, 7,373 matches with
+   odds, 1X2 log loss: model alone 1.0451, the 0.30-0.75 ramp 1.0137, flat 0.90
+   about 1.004, market alone 1.0028 - better with more market at every weight
+   and in every tier, so keeping 30% of our own view on the games where we
+   agree was keeping noise, and that noise was what "Better price" flagged.
+   Owner: "we are after the best results for our users". 0.90 rather than 1:
+   SportyBet's single book is a little softer than the average price the test
+   used. Where the book prices nothing, the model still answers alone. */
+var BLEND_MIN=0.90, BLEND_MAX=0.90, BLEND_FULL_GAP=0.20;
 function blendWeight(gap){
   var t=Math.min(1, Math.abs(gap)/BLEND_FULL_GAP);
   return BLEND_MIN + (BLEND_MAX-BLEND_MIN)*t;
@@ -9614,6 +9713,28 @@ function countMarkets(f){
     (f.o25!=null?1-f.o25:null),f.btts,f.fh_o05,f.btts_o25,f.draw_o25,f.draw_btts]
     .filter(function(v){return v!=null&&!isNaN(v);}).length;
 }
+/* THE SAME BET, PRICED AT EVERY BOOK WE READ, BEST FIRST.
+   Owner, 30 Sep 2026: the site is market-led now, so the edge we can honestly
+   hand a reader is not "our number beats the book" but "this book pays more
+   for the same pick" - line shopping, the one habit every professional has.
+   The headline tip only. The four other feeds are big (BetKing alone is
+   606 KB), so they are fetched when a reader asks, not on every page view. */
+function bestPriceHTML(f){
+  var c=tipCode(f); if(!c||!f.tip) return "";
+  var got=Object.keys(BOOKS).map(function(k){
+    var B=BOOKS[k], o=B.odds&&f[B.odds]?+f[B.odds][c]:NaN;
+    return {B:B,o:(o>1?o:null)};
+  }).filter(function(r){ return r.o; }).sort(function(a,b){ return b.o-a.o; });
+  var pend=Object.keys(BOOKS).some(bookFeedPending);
+  if(!got.length&&!pend) return "";
+  var n=Object.keys(BOOKS).length;
+  return "<div class='grp bp'><h3>Best price for "+esc(f.tip)+"</h3><p class='bp-l'>"+
+    (got.length?"<b>x"+got[0].o.toFixed(2)+" on "+esc(got[0].B.label)+"</b>"+
+      (got.length>1?" &middot; "+got.slice(1).map(function(r){
+        return esc(r.B.label)+" "+r.o.toFixed(2); }).join(" &middot; "):""):"")+
+    (pend?"<button class='bp-more' type='button' data-fid='"+esc(fid(f))+"'>Compare all "+n+" bookies</button>":"")+
+    "</p></div>";
+}
 function moreHTML(f){
   const noDraw=(f.anybody!=null)?f.anybody:f.dc12;
   const id=fid(f);
@@ -9636,6 +9757,7 @@ function moreHTML(f){
       opt("Draw or over 2.5",f.draw_o25,f.draw_o25!=null&&f.draw_o25>=.7)+
       opt("Draw or both score",f.draw_btts,f.draw_btts!=null&&f.draw_btts>=.7)+
     "</div></div>"+
+    bestPriceHTML(f)+
     "<button class='more-collapse' type='button'>Collapse \u25b4</button></div>";
 }
 /* form_home / form_away are baked by the nightly build, so a game played today
@@ -10123,7 +10245,7 @@ var BUILD_NOSYNC=false;
    last market switched on before it had one took over the wizard's picks for a
    week. They begin earning a record the moment the next card is graded; until
    then they are there for anyone who goes looking. */
-var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,corn:false,tcorn:false,shots:false},touched:false,mode:"slider"};
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,corn:false,tcorn:false,shots:false,tshots:false,hcap:false},touched:false,mode:"slider"};
 /* NO `draw` KEY HERE, deliberately. The draw is a Wizard market and lives in
    WSP.mk alone. It was briefly mirrored into BUILD.mk like every other toggle,
    which was inert - "X" is in neither allowedMarkets nor mkOn, so no risk
@@ -10865,6 +10987,14 @@ const BP_BOOK_URL="/api/book?book=betpawa";
 const BP_URL=null;
 /* Betpawa, same again. */
 const BETPAWA_FIXTURES="/api/betpawa";
+const XB_BOOK_URL="/api/book?book=onexbet";
+/* 1xBet HAS a deep link, which two of the four earlier books do not: their
+   betting app's restoreSharedCoupon reads `coupon-code` from the address bar
+   and loads that slip (read out of their bundle, then confirmed in a browser
+   29 Sep 2026). A reader who already holds bets there is asked "OK to clear
+   the bet slip and add new bets?" first - their dialog, not ours. */
+const XB_URL="https://1xbet.ng/en?coupon-code=";
+const ONEXBET_FIXTURES="/api/onexbet";
 
 /* The two bookmakers differ in what they are FOR, not just in their
    field names, and the matcher needs to know which it is filling in.
@@ -10946,7 +11076,12 @@ var BOOKS={
      booking route reads the event's own card either way.
      `skin` is "bw" rather than "bp" because .bp is already the book pill's
      own class, and a skin class of the same name would inherit its padding. */
-  betpawa:{key:"betpawa",label:"betPawa",id:"bpEventId",odds:"bpOdds",blend:false,full:false,arg:"code",skin:"bw",readable:true,wholeLines:false}
+  betpawa:{key:"betpawa",label:"betPawa",id:"bpEventId",odds:"bpOdds",blend:false,full:false,arg:"code",skin:"bw",readable:true,wholeLines:false},
+  /* THE FIFTH BOOK, 1xBet (29 Sep 2026). It sells whole goal lines (Total 2,
+     Total 3 on their card, and pushes on them), so wholeLines is true as on
+     SportyBet. `xb` was checked free before it was taken - see the skill's
+     note on bp/bw. */
+  onexbet:{key:"onexbet",label:"1xBet",id:"xbEventId",odds:"xbOdds",blend:false,full:false,arg:"code",skin:"xb",readable:true,wholeLines:true}
 };
 
 /* Common team name aliases that SportyBet uses but our data doesn't (or vice versa).
@@ -11782,6 +11917,15 @@ function bookWire(){
      on a small one is answered by the booking route naming it - refusing it
      here would drop legs Betpawa would have taken. */
   BOOKS.betpawa.priced=function(c){ return !!bookIdOf(c,BOOKS.betpawa); };
+
+  BOOKS.onexbet.mark="<span class='xbm'>1X<span class='xbb'>BET</span></span>";
+  BOOKS.onexbet.book=XB_BOOK_URL;
+  BOOKS.onexbet.open=XB_URL;
+  BOOKS.onexbet.sel=function(c){return {eventId:bookIdOf(c,BOOKS.onexbet),code:c.code};};
+  BOOKS.onexbet.codeOf=function(d){return d&&d.code;};
+  /* Judged on the event, like the other second books: their booking route
+     reads the card fresh and names any leg it will not take. */
+  BOOKS.onexbet.priced=function(c){ return !!bookIdOf(c,BOOKS.onexbet); };
 }
 /* BOOKING QUESTIONS COME UP AS A POP-UP, NOT AT THE FOOT OF THE PAGE.
    Owner, 28 Sep 2026: "when sportybet cant take games, i hate to have to
@@ -12086,6 +12230,7 @@ async function loadBetKing(){ return loadSecondBook(BETKING_FIXTURES,BOOKS.betki
 /* Betpawa's feed is the same shape again - one object keyed by event id, both
    sides in a single "Home - Away" string - so it goes through b9Rows too. */
 async function loadBetpawa(){ return loadSecondBook(BETPAWA_FIXTURES,BOOKS.betpawa); }
+async function loadOnexbet(){ return loadSecondBook(ONEXBET_FIXTURES,BOOKS.onexbet); }
 async function loadSecondBook(url,B){
   try{
     var r=await fetch(url,{headers:{Accept:"application/json"}});
@@ -12196,7 +12341,7 @@ function ensureBookFeed(k){
   /* SportyBet is the board's own prices, loaded before this ever runs. */
   if(!k||k==="sporty"||BOOK_FEED[k]) return BOOK_FEED[k]||Promise.resolve(0);
   var load=k==="bet9ja"?loadBet9ja:k==="betking"?loadBetKing:
-           k==="betpawa"?loadBetpawa:null;
+           k==="betpawa"?loadBetpawa:k==="onexbet"?loadOnexbet:null;
   if(!load) return Promise.resolve(0);
   BOOK_FEED[k]=load().then(function(n){ BOOK_FEED_DONE[k]=1; if(n) repaintAfterMatch(); return n; })
     .catch(function(){ BOOK_FEED_DONE[k]=1; return 0; });
@@ -12359,6 +12504,8 @@ function allowedMarkets(t){
   m=m.concat(CORNER_CODES);
   m=m.concat(TEAM_CORNER_CODES);
   m=m.concat(SHOTS_CODES);
+  m=m.concat(TEAM_SHOTS_CODES);
+  m=m.concat(HCAP_CODES);
   return m;
 }
 /* IS THAT PRICE THEIRS OR OURS?
@@ -12392,6 +12539,16 @@ function oddCell(f,c,p){
    Asked for after a 45-leg code, 8B9WJU, came back 42 legs of these with no
    number on any of them - which left the whole editor blind. */
 function mProb(f,c){
+/* P(margin >= k) for k in -2..3, from the result and the four margin tails
+   the build ships in `mg` (home by 2+, 3+, away by 2+, 3+). Null when the
+   fixture has no tails - a handicap is never guessed. */
+function marginGe(f){
+  var mg=f&&f.mg;
+  if(!mg||mg.length!==4||f.home_p==null||f.away_p==null) return null;
+  var t={"-2":1-mg[3],"-1":1-mg[2],"0":1-f.away_p,"1":f.home_p,"2":mg[0],"3":mg[1]};
+  return function(k){ return k<=-3?1:(k>=4?null:t[String(k)]); };
+}
+
   /* A CONVERTED LEG CAN HAVE NO FIXTURE AT ALL. Since feedMatch, a game we
      hold no results for crosses on the other book's own event, and there is
      nothing of ours behind it to price. Null is the honest answer and every
@@ -12497,7 +12654,43 @@ function mProb(f,c){
     }
     if(ahLine===-0.5) return ahHome?f.home_p:f.dcx2;
     if(ahLine===0.5) return ahHome?f.dc1x:f.away_p;
+    /* 1.5 AND 2.5, off the margin tails the build ships in `mg` (30 Sep 2026).
+       The line is the home team's, so the away side's own is its negative. A
+       half line has no push: the side wins or it does not. */
+    var hge=marginGe(f);
+    if(hge&&Math.abs(ahLine)!==0.5&&Math.abs(ahLine*2-Math.round(ahLine*2))<1e-9&&
+       Math.abs(ahLine-Math.round(ahLine))>1e-9){
+      /* home wins at line L when the margin D > -L; away wins when D < -L. */
+      var cut=-ahLine;
+      var up=hge(Math.floor(cut)+1);
+      if(up==null) return null;
+      return ahHome?up:1-up;
+    }
+    /* WHOLE LINES, +-1 and +-2: the stake comes back when the margin lands
+       on the line, which in an accumulator drops the leg and keeps the slip
+       alive. So this is the chance the leg SURVIVES - wins or comes back -
+       the number a builder ranking on "will it come through" needs. Home
+       survives at line L when D >= -L; away when D <= -L. */
+    if(hge&&ahLine!==0&&Math.abs(ahLine)<=2&&Math.abs(ahLine-Math.round(ahLine))<1e-9){
+      var wc=-ahLine;
+      if(ahHome) return hge(wc);
+      var s2=hge(wc+1);
+      return s2==null?null:1-s2;
+    }
     return null;
+  }
+  /* THE 3-WAY HANDICAP at one and two goals - the owner's dad's market.
+     EH_a_b is a scoreline head start (home a, away b); with d = a-b the home
+     side wins when the margin D >= 1-d, the handicap draw is D = -d, and the
+     away side wins below that. Every value is a tail of `mg`. */
+  var ehf=/^EH_(\d)_(\d)_(1|X|2)$/.exec(c||"");
+  if(ehf){
+    var ege=marginGe(f);
+    if(!ege) return null;
+    var d=+ehf[1]-(+ehf[2]);
+    var a1=ege(1-d), a0=ege(-d);
+    if(a1==null||a0==null) return null;
+    return ehf[3]==="1"?a1:(ehf[3]==="X"?Math.max(0,a0-a1):1-a0);
   }
   /* Draw no bet is the nil handicap under a second name, and both are sold.
      Answered by the same arithmetic rather than a rule of its own, so the two
@@ -12536,6 +12729,19 @@ function mProb(f,c){
     if(f.sh==null||f.sa==null) return null;
     var sk=(typeof DATA!=="undefined"&&DATA&&DATA.shotsK>0)?DATA.shotsK:null;
     return cornersOver(f.sh+f.sa,sk,sl);
+  }
+  /* TEAM SHOTS (30 Sep 2026): one side's own rate against its own line, on
+     total shots' spread. SportyBet sets each team's line near that team's
+     average, so the line gate (cornersOpen) is what keeps an offered leg to
+     a line they actually sell. Overs only, for total shots' reason. */
+  var tsh=/^SHOTS_([HA])_OV_([\d.]+)$/.exec(c||"");
+  if(tsh){
+    var tl=parseFloat(tsh[2]);
+    if(!isFinite(tl)||Math.abs(tl-Math.round(tl))<1e-9) return null;
+    var lamS=tsh[1]==="H"?f.sh:f.sa;
+    if(lamS==null) return null;
+    var tk=(typeof DATA!=="undefined"&&DATA&&DATA.shotsK>0)?DATA.shotsK:null;
+    return cornersOver(lamS,tk,tl);
   }
   return null;
 }
@@ -12615,7 +12821,13 @@ function cLgamma(x){
    The home sign was booked to confirm it rather than inferred from the other
    two: MQ29ZR, Liverpool v Tottenham, read back intact. So the chip had been
    sending BetKing readers to Bet9ja to book a bet BetKing was selling them. */
-var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking","betpawa"],
+/* 1xBet is absent from every list below on purpose (29 Sep 2026). Its
+   result+total markets are AND bets ("W1 And Total >") where our MIX_ is an
+   OR bet, so onexbet.py leaves MIX_ unmapped (and the OR-family entries below
+   leave it out for that reason); its team-corner lines (4.5-5.5)
+   were not priced on either fixture the verifier booked; and it sells no
+   shots. Add it to an entry only after booking one real code of that market. */
+var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking"],
   /* Corners per team (25 Sep 2026): Betpawa sells none, verified absent in
      betpawa.py. BetKing sells one main line per side, not the ladder, and
      refused the tested ones - see TEAM_CORNER_CODES. */
@@ -12632,13 +12844,31 @@ var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking","betpawa"],
      would widen the risky end of a board whose seven newest markets have not
      yet graded a single live result. Revisit when those have a record, not
      before. */
-  /* BETPAWA MAKES IT THREE, and the same way it became two: read off their
-     own card rather than assumed. Their "1X2 and Totals - FT" carries the 1.5
-     rung on all three signs, generated and verified by tools/bpgen.js against
-     eight deep cards. A book left out of this list is a book whose readers
-     are sent elsewhere to place a bet it sells them. */
-  "MIX_1_OV_1.5":["bet9ja","betking","betpawa"],
-  "MIX_2_OV_1.5":["bet9ja","betking","betpawa"]};
+  /* BETPAWA WAS HERE UNTIL 29 SEP 2026, AND SHOULD NOT HAVE BEEN. Their
+     "1X2 and Totals - FT" is an AND bet - priced above both of its parts on
+     every event checked (home 1.19, over 1.5 1.10, their "1 - Over" 1.28) -
+     while this family is an OR bet. Betpawa readers asking for "home or over
+     1.5" were being booked "home AND over 1.5". Found while adding 1xBet,
+     whose result+total market is the same AND bet. */
+  "MIX_1_OV_1.5":["bet9ja","betking"],
+  "MIX_2_OV_1.5":["bet9ja","betking"],
+  /* AND THE REST OF THE OR FAMILY, for the same reason: every line of it, and
+     "or both score", is sold as an OR bet by SportyBet, Bet9ja and BetKing
+     only. Betpawa and 1xBet sell the AND bet under a similar name, so the
+     builders must never pick these for them (bookAllows). */
+  "MIX_1_OV_2.5":["sporty","bet9ja","betking"],"MIX_X_OV_2.5":["sporty","bet9ja","betking"],
+  "MIX_2_OV_2.5":["sporty","bet9ja","betking"],
+  "MIXGG_1":["sporty","bet9ja","betking"],"MIXGG_X":["sporty","bet9ja","betking"],
+  "MIXGG_2":["sporty","bet9ja","betking"],
+  /* 1xBet's total-corners card runs 8.5-11.5 - verified absent at 7.5 on
+     eight deep cards - so the corners chip's bottom rung is the other four's. */
+  "CORNERS_OV_7.5":["sporty","bet9ja","betking","betpawa"],
+  /* Whole-line handicaps (30 Sep 2026): BetKing and Betpawa sell half lines
+     only - the reader there is offered the +1.5 beside it instead. */
+  "AH_1_1":["sporty","bet9ja","onexbet"],"AH_1_2":["sporty","bet9ja","onexbet"],"AH_2_-1":["sporty","bet9ja","onexbet"],"AH_2_-2":["sporty","bet9ja","onexbet"],"AH_1_-1":["sporty","bet9ja","onexbet"],"AH_2_1":["sporty","bet9ja","onexbet"],
+  /* Team shots (30 Sep 2026): SportyBet's 900552/900553. No other book's card
+     has been read for a per-team shots market yet. */
+  "SHOTS_H_OV_7.5":["sporty"],"SHOTS_H_OV_8.5":["sporty"],"SHOTS_H_OV_9.5":["sporty"],"SHOTS_H_OV_10.5":["sporty"],"SHOTS_H_OV_11.5":["sporty"],"SHOTS_H_OV_12.5":["sporty"],"SHOTS_H_OV_13.5":["sporty"],"SHOTS_H_OV_14.5":["sporty"],"SHOTS_H_OV_15.5":["sporty"],"SHOTS_H_OV_16.5":["sporty"],"SHOTS_H_OV_17.5":["sporty"],"SHOTS_H_OV_18.5":["sporty"],"SHOTS_A_OV_7.5":["sporty"],"SHOTS_A_OV_8.5":["sporty"],"SHOTS_A_OV_9.5":["sporty"],"SHOTS_A_OV_10.5":["sporty"],"SHOTS_A_OV_11.5":["sporty"],"SHOTS_A_OV_12.5":["sporty"],"SHOTS_A_OV_13.5":["sporty"],"SHOTS_A_OV_14.5":["sporty"],"SHOTS_A_OV_15.5":["sporty"],"SHOTS_A_OV_16.5":["sporty"],"SHOTS_A_OV_17.5":["sporty"],"SHOTS_A_OV_18.5":["sporty"]};
 /* CORNERS, AS A CHIP. Lines 7.5 to 10.5, because that is the range every
    book sells: SportyBet 6.5-12.5, Bet9ja 7.5-14.5, BetKing
    5.5-12.5, Betpawa 6.5-10.5. A line outside it would need BOOK_ONLY entries
@@ -12672,6 +12902,17 @@ var TEAM_CORNER_CODES=["CORNERS_H_OV_3.5","CORNERS_H_OV_4.5","CORNERS_H_OV_5.5",
    actually quotes. Overs only: see mProb. Sold on marquee games about a day
    out, not on League D and not in MLS; BetKing and Betpawa not at all. */
 var SHOTS_CODES=["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"];
+/* TEAM SHOTS, one side over a line - see mProb. 7.5 to 18.5 is the span
+   SportyBet was seen selling across 20 fixtures on 29 Sep 2026; the line gate
+   offers only the ones a fixture actually carries. */
+var TEAM_SHOTS_CODES=["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_H_OV_10.5","SHOTS_H_OV_11.5","SHOTS_H_OV_12.5","SHOTS_H_OV_13.5","SHOTS_H_OV_14.5","SHOTS_H_OV_15.5","SHOTS_H_OV_16.5","SHOTS_H_OV_17.5","SHOTS_H_OV_18.5","SHOTS_A_OV_7.5","SHOTS_A_OV_8.5","SHOTS_A_OV_9.5","SHOTS_A_OV_10.5","SHOTS_A_OV_11.5","SHOTS_A_OV_12.5","SHOTS_A_OV_13.5","SHOTS_A_OV_14.5","SHOTS_A_OV_15.5","SHOTS_A_OV_16.5","SHOTS_A_OV_17.5","SHOTS_A_OV_18.5"];
+/* HANDICAPS, the safe side (30 Sep 2026) - see mProb. A head start of 1.5 or
+   2.5 for either team, and the favourite at -1.5: the 3-way (0:2) and (0:1)
+   in the Asian half-line form every book sells, so the chip needs no BOOK_ONLY
+   entry. The floor decides which ones clear - the chip itself starts off. */
+/* Whole lines (+-1, +-2) joined 30 Sep 2026: SportyBet, Bet9ja and 1xBet
+   sell them, BetKing and Betpawa do not (see BOOK_ONLY). */
+var HCAP_CODES=["AH_1_1.5","AH_1_2.5","AH_2_-1.5","AH_2_-2.5","AH_1_-1.5","AH_2_1.5","AH_1_1","AH_1_2","AH_2_-1","AH_2_-2","AH_1_-1","AH_2_1"];
 /* IS THIS CORNERS LINE ACTUALLY OPEN? Books open corners a few days before
    kick-off and some leagues never - measured 23 Sep 2026: Spanish second
    division open 90 hours out, Scottish Championship closed at 48, and every
@@ -12682,7 +12923,11 @@ var SHOTS_CODES=["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5"
    to. They are all fed from the same place and open together; SportyBet's is
    the feed we sweep in full. */
 function cornersOpen(f,c){
-  if(!/^(CORNERS|SHOTS)_/.test(c||"")) return true;
+  /* Handicaps at 1 to 2.5 go through the same gate (30 Sep 2026): books sell
+     a few lines per game around its own handicap, and a line the feed does
+     not quote came back "closed" at booking. Draw no bet and +-0.5 are the
+     result under another name, sold everywhere, and stay ungated. */
+  if(!/^(CORNERS|SHOTS)_/.test(c||"")&&!/^AH_[12]_-?(1|1\.5|2|2\.5)$/.test(c||"")) return true;
   try{ var o=f&&f[BOOKS.sporty.odds]; return !!(o&&o[c]); }catch(e){ return false; }
 }
 function bookAllows(code,B){
@@ -12874,7 +13119,7 @@ function gradeLeg(f,c,hg,ag,st){
      A count that is missing or negative (-1 is "API-Football had none") is not
      known, and neither is a whole line: it pushes, the same reason mProb will
      not price one. */
-  var ck=/^CORNERS_(?:([HA])_)?(OV|UN)_([\d.]+)$/.exec(c||""), sk=/^SHOTS_(OV|UN)_([\d.]+)$/.exec(c||"");
+  var ck=/^CORNERS_(?:([HA])_)?(OV|UN)_([\d.]+)$/.exec(c||""), sk=/^SHOTS_(?:([HA])_)?(OV|UN)_([\d.]+)$/.exec(c||"");
   if(ck||sk){
     if(!st) return null;
     var cnt=function(v){ return typeof v==="number"&&isFinite(v)&&v>=0?v:null; };
@@ -12886,7 +13131,8 @@ function gradeLeg(f,c,hg,ag,st){
     } else {
       var shn=cnt(st.hsh), san=cnt(st.ash);
       if(shn==null||san==null) return null;
-      n=shn+san; ln=parseFloat(sk[2]); ov=sk[1]==="OV";
+      /* Per team since 30 Sep 2026 - the same counts, one side of them. */
+      n=sk[1]==="H"?shn:(sk[1]==="A"?san:shn+san); ln=parseFloat(sk[3]); ov=sk[2]==="OV";
     }
     if(!isFinite(ln)||Math.abs(ln-Math.round(ln))<1e-9) return null;
     return ov?n>ln:n<ln;
@@ -12938,6 +13184,8 @@ function mLabel(f,c){
   if(cn) return (cn[1]==="OV"?"Over ":"Under ")+cn[2]+" corners";
   var sn=/^SHOTS_(OV|UN)_([\d.]+)$/.exec(c||"");
   if(sn) return (sn[1]==="OV"?"Over ":"Under ")+sn[2]+" shots";
+  var tsn=/^SHOTS_([HA])_(OV|UN)_([\d.]+)$/.exec(c||"");
+  if(tsn) return (tsn[1]==="H"?esc(f.home):esc(f.away))+(tsn[2]==="OV"?" over ":" under ")+tsn[3]+" shots";
   /* EVERY FAMILY ADDED FROM A READER'S CODE ON 14 SEP. These are pass-through
      markets - we move them, we never predict them - but the editor and the
      splitter both draw a leg through this function, so an unnamed one prints
@@ -13082,7 +13330,20 @@ function mLabel(f,c){
     /* Handicap 0 is draw no bet, and "Aston Villa 0" said nothing to anyone
        who does not already read handicap lines. */
     if(shown===0) return side+" win, draw no bet";
-    return side+" "+(shown>0?"+":"")+shown;
+    /* At 1.5 and 2.5 the same bet has a 3-way handicap name, which is what
+       most readers here know it by - "Leeds +1.5" IS Leeds (0:2). */
+    var eq="";
+    if(Math.abs(shown)===1.5||Math.abs(shown)===2.5){
+      var a=Math.abs(shown);
+      var homeSide=ah[1]==="1";
+      eq=shown>0?(homeSide?" (handicap "+(a+0.5)+":0)":" (handicap 0:"+(a+0.5)+")")
+                :(homeSide?" (handicap 0:"+(a-0.5)+")":" (handicap "+(a-0.5)+":0)");
+    }
+    /* A whole line says what its refund is, because that is the whole point
+       of choosing it over the half line beside it. */
+    if(shown===Math.round(shown)&&shown!==0)
+      eq=" (stake back if they "+(shown>0?"lose":"win")+" by "+Math.abs(shown)+")";
+    return side+" "+(shown>0?"+":"")+shown+eq;
   }
   return c;
 }
@@ -13163,6 +13424,8 @@ function buildPicks(){
   /* === true, not the bare value: an undefined here would read as "on". */
   TEAM_CORNER_CODES.forEach(function(c){ mkOn[c]=BUILD.mk.tcorn===true; });
   SHOTS_CODES.forEach(function(c){ mkOn[c]=BUILD.mk.shots; });
+  TEAM_SHOTS_CODES.forEach(function(c){ mkOn[c]=BUILD.mk.tshots===true; });
+  HCAP_CODES.forEach(function(c){ mkOn[c]=BUILD.mk.hcap===true; });
   allowed=allowed.filter(function(c){return mkOn[c]!==false && bookAllows(c,curBook());});
   var f0=BUILD.risk/100;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
@@ -13685,7 +13948,8 @@ function confirmDropUnpriced(picks,target,go,B){
    go(picks, swaps, dropped): swaps are {id, from, to}, dropped the picks left
    out, so My slip can bring its own list into line. Returns true when it has
    taken over. */
-var LINE_CODE=/^(CORNERS|SHOTS)_/;
+/* Handicaps joined 30 Sep 2026: lines that close and move like corners. */
+var LINE_CODE=/^(CORNERS|SHOTS|AH)_/;
 function lineCheck(picks,B,target,go){
   if(!B||B.key!=="sporty"||picks._lined) return false;
   var lined=picks.filter(function(c){return LINE_CODE.test(c.code)&&bookIdOf(c,B);});
@@ -15163,7 +15427,12 @@ function renderByo(){
 function paintJobs(usable,B){
   var jobs=$("byoJobs"); if(!jobs) return;
   var conv=$("byoJobConv");
-  if(conv) conv.textContent="Convert to "+convTarget(B).label;
+  /* EVERY BOOK IT CAN GO TO, NOT JUST THE FIRST. This read "Convert to Bet9ja"
+     - the default target - and on a phone the card is all a reader sees, so
+     five books looked like one (owner, 30 Sep 2026). The target is still
+     picked inside. */
+  if(conv){ conv.textContent="Convert";
+    if(conv.nextElementSibling) conv.nextElementSibling.textContent=convTargetsLine(B); }
   var can={edit:usable.length>=1,convert:usable.length>=1,split:usable.length>=4,
     trim:usable.length>=3,change:changeOptions(usable).length>0};
   jobs.querySelectorAll("[data-job]").forEach(function(b){
@@ -15290,6 +15559,11 @@ function fixtureByBookId(id,B){
 function otherBooks(B){
   return Object.keys(BOOKS).filter(function(k){ return k!==B.key; })
     .map(function(k){ return BOOKS[k]; });
+}
+/* "To Bet9ja, BetKing, betPawa or 1xBet" - the Convert card's second line. */
+function convTargetsLine(B){
+  var n=otherBooks(B).map(function(o){ return o.label; });
+  return "To "+(n.length>1?n.slice(0,-1).join(", ")+" or "+n[n.length-1]:n.join(""));
 }
 /* The book a conversion is heading FOR. Falls back to the first other book
    rather than to a fixed name, so removing a book from the table cannot leave
@@ -15671,6 +15945,26 @@ function promoLegs(legs){
     return /^(UP[12]_|DC1UP_)/.test(String(l&&l.prediction||""));
   });
 }
+/* THE GAMES WE HAVE NO NUMBERS FOR, SAID BEFORE ANYTHING ELSE.
+   Owner, 30 Sep 2026, on SportyBet code T74M6R: Edit "could only edit 3 games
+   tops". 32 of its 36 open legs were women's cups, reserves and lower leagues
+   the board does not carry, so there was nothing to judge them on - but the
+   panel only showed the few it could touch, and read as broken. Counted and
+   named by the league the bookmaker gave us, biggest first. */
+function offBoardNote(legs,B){
+  var open=(legs||[]).filter(function(l){ return l&&l.prediction&&!legStarted(l); });
+  var off=open.filter(function(l){ return !fixtureByLeg(l,B); });
+  if(!off.length) return "";
+  var by={};
+  off.forEach(function(l){ var k=l.league||"leagues we do not carry"; by[k]=(by[k]||0)+1; });
+  var top=Object.keys(by).sort(function(a,b){ return by[b]-by[a]; });
+  return "<p class='byo-note sf-off'><b>"+off.length+" of these "+open.length+
+    " games are ones we don't cover</b>, so we have no numbers to judge them and "+
+    "Edit leaves them as they are: "+
+    top.slice(0,3).map(function(k){ return esc(k)+" ("+by[k]+")"; }).join(", ")+
+    (top.length>3?" and "+(top.length-3)+" other league"+(top.length===4?"":"s"):"")+
+    ". It can only work on the other "+(open.length-off.length)+".</p>";
+}
 function saferBoxInner(legs,B){
   var plan=saferPlan(legs,B);
   var promo=promoLegs(legs);
@@ -15781,6 +16075,7 @@ function saferBoxInner(legs,B){
       (alt?"<button class='sf-chip sf-shuffle' id='sfShuffle' type='button'>"+
         "Shuffle <i>"+alt+" leg"+(alt===1?"":"s")+" could go another way</i></button>":"")+
     "</div>"+
+    offBoardNote(legs,B)+
     pinNote+
     (nothing
       ? "<p class='byo-note'>Nothing to change at this setting. Try <b>Safest</b>, "+
@@ -16297,11 +16592,17 @@ function slipImage(picks, odds, code){
 
   const barTop=y+20;
   if(code){
-    g.fillStyle="#e63946";
+    /* THE BOOK THAT BOOKED IT, not SportyBet for everyone (29 Sep 2026: the
+       card named SportyBet under a Bet9ja, BetKing, betPawa or 1xBet code).
+       Each ground is that book's own dark or brand colour, with white on it -
+       SportyBet's red is the one it always had. */
+    const B=curBook()||BOOKS.sporty;
+    const GROUND={sporty:"#e63946",bet9ja:"#0E7A3C",betking:"#1E1E1E",betpawa:"#252A2D",onexbet:"#276BA6"};
+    g.fillStyle=GROUND[B.key]||"#e63946";
     g.fillRect(PAD,barTop,W-PAD*2,BAR);
     g.fillStyle="#fff";
     g.font="800 32px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
-    g.fillText("SportyBet code",PAD+24,barTop+58);
+    g.fillText(B.label+" code",PAD+24,barTop+58);
     g.font="800 50px ui-monospace,SFMono-Regular,Menlo,monospace";
     const cw=g.measureText(code).width;
     g.fillText(code,W-PAD-24-cw,barTop+62);
@@ -16309,7 +16610,7 @@ function slipImage(picks, odds, code){
   /* Below the bar, never over it. */
   g.fillStyle="#6b6b70";
   g.font="600 22px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
-  g.fillText("skypredict-theta.vercel.app",PAD,barTop+BAR+40);
+  g.fillText("soccerwizard.live",PAD,barTop+BAR+40);
   return c;
 }
 async function shareSlipImage(picks, odds, code, fallbackText){
@@ -16365,7 +16666,7 @@ var LINK_MARKETS={"1":1,"2":1,"X":1,"1X":1,"X2":1,"12":1,
   "MIXGG_1":1,"MIXGG_2":1,"MIXGG_X":1,"WINHALF_H_Y":1,"WINHALF_A_Y":1,
   "CORNERS_OV_7.5":1,"CORNERS_UN_7.5":1,"CORNERS_OV_8.5":1,"CORNERS_UN_8.5":1,"CORNERS_OV_9.5":1,"CORNERS_UN_9.5":1,"CORNERS_OV_10.5":1,"CORNERS_UN_10.5":1,
   "CORNERS_H_OV_3.5":1,"CORNERS_H_OV_4.5":1,"CORNERS_H_OV_5.5":1,"CORNERS_A_OV_2.5":1,"CORNERS_A_OV_3.5":1,"CORNERS_A_OV_4.5":1,
-  "SHOTS_OV_19.5":1,"SHOTS_OV_20.5":1,"SHOTS_OV_21.5":1,"SHOTS_OV_22.5":1,"SHOTS_OV_23.5":1,"SHOTS_OV_24.5":1,"SHOTS_OV_25.5":1,"SHOTS_OV_26.5":1,"SHOTS_OV_27.5":1,"SHOTS_OV_28.5":1,"SHOTS_OV_29.5":1,"SHOTS_OV_30.5":1,"SHOTS_OV_31.5":1};
+  "SHOTS_OV_19.5":1,"SHOTS_OV_20.5":1,"SHOTS_OV_21.5":1,"SHOTS_OV_22.5":1,"SHOTS_OV_23.5":1,"SHOTS_OV_24.5":1,"SHOTS_OV_25.5":1,"SHOTS_OV_26.5":1,"SHOTS_OV_27.5":1,"SHOTS_OV_28.5":1,"SHOTS_OV_29.5":1,"AH_1_1.5":1,"AH_1_2.5":1,"AH_2_-1.5":1,"AH_2_-2.5":1,"AH_1_-1.5":1,"AH_2_1.5":1,"AH_1_1":1,"AH_1_2":1,"AH_2_-1":1,"AH_2_-2":1,"AH_1_-1":1,"AH_2_1":1,"SHOTS_H_OV_7.5":1,"SHOTS_H_OV_8.5":1,"SHOTS_H_OV_9.5":1,"SHOTS_H_OV_10.5":1,"SHOTS_H_OV_11.5":1,"SHOTS_H_OV_12.5":1,"SHOTS_H_OV_13.5":1,"SHOTS_H_OV_14.5":1,"SHOTS_H_OV_15.5":1,"SHOTS_H_OV_16.5":1,"SHOTS_H_OV_17.5":1,"SHOTS_H_OV_18.5":1,"SHOTS_A_OV_7.5":1,"SHOTS_A_OV_8.5":1,"SHOTS_A_OV_9.5":1,"SHOTS_A_OV_10.5":1,"SHOTS_A_OV_11.5":1,"SHOTS_A_OV_12.5":1,"SHOTS_A_OV_13.5":1,"SHOTS_A_OV_14.5":1,"SHOTS_A_OV_15.5":1,"SHOTS_A_OV_16.5":1,"SHOTS_A_OV_17.5":1,"SHOTS_A_OV_18.5":1,"SHOTS_OV_30.5":1,"SHOTS_OV_31.5":1};
 function slipPayload(items){
   var rows=[], bad=false;
   (items||[]).slice(0,40).forEach(function(c){
@@ -17258,7 +17559,7 @@ function applyBoardCap(n){
        for the board - so most people never touch a tab. /booking-codes keeps
        every book and every day. The chips are the same .ck-chip the click
        handler below copies from. */
-    var ORDER=["sporty","bet9ja","betking","betpawa"];
+    var ORDER=["sporty","bet9ja","betking","betpawa","onexbet"];
     var daily={}; ORDER.forEach(function(k){ if(d.codes[k]&&BOOKS[k]) daily[k]=d.codes[k]; });
     if(!Object.keys(daily).length) return;
     var big=null;
@@ -19045,6 +19346,17 @@ $("myClearBtn").addEventListener("click",clearMy);
     wspConjure(true);
   });
 })();
+/* Compare all bookies: fetch the feeds not yet loaded. The board repaints
+   itself when a feed lands (ensureBookFeed); a sheet is redrawn here. */
+document.addEventListener("click",function(e){
+  var b=e.target.closest(".bp-more"); if(!b) return;
+  e.stopPropagation(); b.disabled=true; b.textContent="Checking prices…";
+  var id=b.dataset.fid, all=allBookFeeds()||Promise.resolve();
+  all.then(function(){
+    var body=$("sheet-body"), f=(DATA.fixtures||[]).filter(function(x){ return fid(x)===id; })[0];
+    if(f&&body&&body.contains(b)) body.innerHTML=moreHTML(f);
+  });
+});
 document.addEventListener("click",function(e){
   var b=e.target.closest(".more-collapse"); if(!b) return;
   e.stopPropagation();
@@ -19096,7 +19408,7 @@ const JACKPOT_ODDS=20000;
 const BETSLIP_MAX=50;
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
-var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,tcorn:false,shots:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,tcorn:false,shots:false,tshots:false,hcap:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* The slip style is remembered (and synced) since accounts, 29 Sep 2026. */
 try{var _lo=+localStorage.getItem("sw.legodd"); if(_lo>1&&_lo<10) WSP.legodd=_lo;}catch(e){}
 /* THE MARKET CHIPS ARE REMEMBERED. They never were: every load rebuilt both
@@ -19202,6 +19514,8 @@ function wspMarkets(){var m=[];
   if(WSP.mk.corn)m=m.concat(CORNER_CODES);
   if(WSP.mk.tcorn)m=m.concat(TEAM_CORNER_CODES);
   if(WSP.mk.shots)m=m.concat(SHOTS_CODES);
+  if(WSP.mk.tshots)m=m.concat(TEAM_SHOTS_CODES);
+  if(WSP.mk.hcap)m=m.concat(HCAP_CODES);
   /* Bet9ja's own lines. bookAllows keeps them out of a SportyBet slip, and the
      filter below is what stops the wizard building one it cannot book. */
   if(WSP.mk.dro15)m.push("MIX_X_OV_1.5");
@@ -19939,7 +20253,9 @@ var MKT_CODES={wd:["1X","X2"],any:["12"],out:["1","2"],o15:["OVER_1.5"],
   tts:["HOME_OVER_0.5","AWAY_OVER_0.5"],tts2:["HOME_OVER_1.5","AWAY_OVER_1.5"],
   both:["GG"],draw:["X"],corn:["CORNERS_OV_7.5","CORNERS_OV_8.5","CORNERS_OV_9.5","CORNERS_OV_10.5"],
   tcorn:["CORNERS_H_OV_3.5","CORNERS_H_OV_4.5","CORNERS_H_OV_5.5","CORNERS_A_OV_2.5","CORNERS_A_OV_3.5","CORNERS_A_OV_4.5"],
-  shots:["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"]};
+  shots:["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"],
+  tshots:["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_H_OV_10.5","SHOTS_H_OV_11.5","SHOTS_H_OV_12.5","SHOTS_H_OV_13.5","SHOTS_H_OV_14.5","SHOTS_H_OV_15.5","SHOTS_H_OV_16.5","SHOTS_H_OV_17.5","SHOTS_H_OV_18.5","SHOTS_A_OV_7.5","SHOTS_A_OV_8.5","SHOTS_A_OV_9.5","SHOTS_A_OV_10.5","SHOTS_A_OV_11.5","SHOTS_A_OV_12.5","SHOTS_A_OV_13.5","SHOTS_A_OV_14.5","SHOTS_A_OV_15.5","SHOTS_A_OV_16.5","SHOTS_A_OV_17.5","SHOTS_A_OV_18.5"],
+  hcap:["AH_1_1.5","AH_1_2.5","AH_2_-1.5","AH_2_-2.5","AH_1_-1.5","AH_2_1.5","AH_1_1","AH_1_2","AH_2_-1","AH_2_-2","AH_1_-1","AH_2_1"]};
 
 /* A MARKET YOU SWITCHED ON THAT CHANGED NOTHING LOOKS BROKEN.
    Measured on a 394-fixture board: turning "Team over 1.5" on at Balanced
@@ -20177,7 +20493,9 @@ var MKT_BY_CHIP={wd:["1X","X2"],any:["12"],out:["1","2"],
   rso15:["MIX_1_OV_1.5","MIX_2_OV_1.5"],weh:["WINHALF_H_Y","WINHALF_A_Y"],
   draw:["X"],corn:["CORNERS_OV_7.5","CORNERS_OV_8.5","CORNERS_OV_9.5","CORNERS_OV_10.5"],
   tcorn:["CORNERS_H_OV_3.5","CORNERS_H_OV_4.5","CORNERS_H_OV_5.5","CORNERS_A_OV_2.5","CORNERS_A_OV_3.5","CORNERS_A_OV_4.5"],
-  shots:["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"]};
+  shots:["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"],
+  tshots:["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_H_OV_10.5","SHOTS_H_OV_11.5","SHOTS_H_OV_12.5","SHOTS_H_OV_13.5","SHOTS_H_OV_14.5","SHOTS_H_OV_15.5","SHOTS_H_OV_16.5","SHOTS_H_OV_17.5","SHOTS_H_OV_18.5","SHOTS_A_OV_7.5","SHOTS_A_OV_8.5","SHOTS_A_OV_9.5","SHOTS_A_OV_10.5","SHOTS_A_OV_11.5","SHOTS_A_OV_12.5","SHOTS_A_OV_13.5","SHOTS_A_OV_14.5","SHOTS_A_OV_15.5","SHOTS_A_OV_16.5","SHOTS_A_OV_17.5","SHOTS_A_OV_18.5"],
+  hcap:["AH_1_1.5","AH_1_2.5","AH_2_-1.5","AH_2_-2.5","AH_1_-1.5","AH_2_1.5","AH_1_1","AH_1_2","AH_2_-1","AH_2_-2","AH_1_-1","AH_2_1"]};
 
 /* WHY THE SLIP IS EMPTY, NAMED.
  *
@@ -20369,12 +20687,12 @@ function renderShared(){
        so, and asks before it turns on, rather than failing quietly at the
        booking step. `only` is a list - see BOOK_ONLY, which is the same fact
        keyed by market code. */
-    {k:"dro15", label:"Draw or o1.5", tier:0, sub:"X or over 1.5", only:["bet9ja","betking","betpawa"],
+    {k:"dro15", label:"Draw or o1.5", tier:0, sub:"X or over 1.5", only:["bet9ja","betking"],
      icon:'<path d="M4 12h16"/><path d="M9 8l3-3 3 3"/>'},
     /* WIN EITHER HALF. Graded on 945 held-out matches before it was offered:
        60.0% against 58.9% predicted, the closest of any market here bar the
        match result itself. Both books sell it per side. */
-    {k:"rso15", label:"Result or o1.5", tier:0, sub:"1 or 2, or over 1.5", only:["bet9ja","betking","betpawa"],
+    {k:"rso15", label:"Result or o1.5", tier:0, sub:"1 or 2, or over 1.5", only:["bet9ja","betking"],
      icon:'<path d="M5 19L12 5l7 14"/><path d="M9 9l3-3 3 3"/>'},
     {k:"weh", label:"Win a half", tier:0, sub:"Either half", icon:'<path d="M12 4v16"/><path d="M5 8h4"/><path d="M15 16h4"/>'},
     /* Corners, total for the match - see CORNER_CODES. */
@@ -20387,6 +20705,13 @@ function renderShared(){
        says so before it turns on. */
     {k:"shots", label:"Total shots", tier:0, sub:"Over, whole match", only:["sporty","bet9ja"],
      icon:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>'},
+    /* Team shots - see TEAM_SHOTS_CODES. SportyBet alone, so it narrows the
+       book and says so before it turns on, like Total shots. */
+    /* Handicap - see HCAP_CODES. Every book sells these lines. */
+    {k:"hcap", label:"Handicap", tier:0, sub:"(0:1) / (0:2), the safe side",
+     icon:'<path d="M4 18h16"/><path d="M8 18V9"/><path d="M16 18V6"/>'},
+    {k:"tshots", label:"Team shots", tier:0, sub:"Home or away, over", only:["sporty"],
+     icon:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M5 5l4 4"/>'},
     /* WIZARD ONLY. The Slider cannot build a draw - "X" is in neither
        allowedMarkets nor its mkOn map - so drawing this chip in the Slider
        would be a control that turns on and does nothing, which is exactly the

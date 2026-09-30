@@ -34,7 +34,7 @@ const predictions = require("../api/predictions.js");
    a later tweak cannot quietly make a feed older than it used to be.
    BetKing was added at the same numbers as Bet9ja and is held to them. */
 const BEFORE = { live: 20, fixtures: 600, bet9ja: 600, betking: 600,
-                 betpawa: 600 };
+                 betpawa: 600, onexbet: 600 };
 
 /* A deploy must be visible within this. The board is baked at build time and
    Cloudflare has no idea a build happened, so its window IS the delay. */
@@ -255,4 +255,10 @@ test("a refusal to store is zero on both measures", () => {
   assert.equal(graceOf("no-store"), 0);
   assert.equal(graceOf("public, s-maxage=300"), 0, "no grace asked for, none counted");
   assert.equal(graceOf(undefined), 0);
+});
+
+test("every feed has a staleness baseline, and every baseline a feed", () => {
+  /* The loop above walks FEEDS, so a book missing from FEEDS passed it by
+     never being asked about. Found adding 1xBet (29 Sep 2026). */
+  assert.deepStrictEqual(Object.keys(FEEDS).sort(), Object.keys(BEFORE).sort());
 });

@@ -37,7 +37,7 @@ function books() {
 test("the four books are all there, and each one is complete", () => {
   const B = books();
   assert.deepStrictEqual(Object.keys(B).sort(),
-    ["bet9ja", "betking", "betpawa", "sporty"]);
+    ["bet9ja", "betking", "betpawa", "onexbet", "sporty"]);
   /* Every field a call site reads off the table. A book missing one of these
      does not throw - it takes `undefined` and books nothing, or books it
      against the wrong route, which is worse. */
@@ -154,12 +154,12 @@ test("the unbookable sentence is chosen by what the feed holds, not by name", ()
 test("the code card takes its skin from the table", () => {
   const B = books();
   assert.deepStrictEqual(Object.keys(B).map((k) => B[k].skin).sort(),
-    ["b9", "bk", "bw", "sb"]);
+    ["b9", "bk", "bw", "sb", "xb"]);
   assert.match(src, /code-card--"\+\s*\n?\s*\(B\.skin\|\|"sb"\)/,
     "a named skin leaves a new book wearing SportyBet's card");
   /* And each skin has somewhere to land. A skin with no CSS is a card that
      silently falls back to the default one. */
-  for (const skin of ["sb", "b9", "bk", "bw"]) {
+  for (const skin of ["sb", "b9", "bk", "bw", "xb"]) {
     assert.ok(src.includes(".code-card--" + skin),
       skin + " has no styles, so its card is not its own");
   }

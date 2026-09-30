@@ -23,7 +23,7 @@ function newestEntry(codes) {
   if (!date) return null;
   const e = codes[date];
   const c = (e && e.codes) || {};
-  if (!(c.sporty || c.bet9ja || c.betking || c.betpawa)) return null;
+  if (!(c.sporty || c.bet9ja || c.betking || c.betpawa || c.onexbet)) return null;
   return e;
 }
 

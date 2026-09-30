@@ -39,7 +39,9 @@ function decl(re, what) {
 
 /* Every code either builder can put on a slip. */
 const CHIP_TABLE = decl(/var MKT_BY_CHIP=(\{[\s\S]*?\});/, "MKT_BY_CHIP");
-const CODES = [...new Set([...CHIP_TABLE.matchAll(/"([A-Z0-9_.]+)"/g)].map((m) => m[1]))];
+/* "-" is in the class since handicaps joined (30 Sep 2026): AH_2_-1.5 is a
+   real code, and a class without it silently skipped every away handicap. */
+const CODES = [...new Set([...CHIP_TABLE.matchAll(/"([A-Z0-9_.-]+)"/g)].map((m) => m[1]))];
 
 /* A fixture carrying every probability the model publishes, so mProb has
    something to answer with for each market. Values are plausible rather than
@@ -55,6 +57,7 @@ const FIXTURE = {
   h_win_half: 0.62, a_win_half: 0.41,
   ch: 5.4, ca: 4.3,          /* expected corners per side - the corners chip */
   sh: 14.2, sa: 10.9,        /* expected shots per side - the total-shots chip */
+  mg: [0.26, 0.12, 0.09, 0.03], /* home by 2+, 3+, away by 2+, 3+ - the handicap chip */
 };
 
 const api = new Function(
@@ -108,7 +111,7 @@ test("the browser's copy of that vocabulary matches it exactly", () => {
      refuse to decode. */
   const m = /var LINK_MARKETS=\{([\s\S]*?)\};/.exec(src);
   assert.ok(m, "LINK_MARKETS is gone from index.html");
-  const client = [...m[1].matchAll(/"([A-Z0-9_.]+)"\s*:/g)].map((x) => x[1]).sort();
+  const client = [...m[1].matchAll(/"([A-Z0-9_.-]+)"\s*:/g)].map((x) => x[1]).sort();
   assert.deepEqual(client, Object.keys(SL.MARKETS).sort(),
     "the browser's list and the link's list have drifted");
 });
@@ -147,8 +150,8 @@ test("every pass-through market SportyBet maps has a name on the panel", () => {
   let codes;
   try {
     const code = "import sys,json;sys.path.insert(0,r'" + API + "');" +
-      "import server,betpawa;print(json.dumps(sorted(" +
-      "set(server.PASSTHROUGH_MAP)|set(betpawa.PASSTHROUGH_MAP))))";
+      "import server,betpawa,onexbet;print(json.dumps(sorted(" +
+      "set(server.PASSTHROUGH_MAP)|set(betpawa.PASSTHROUGH_MAP)|set(onexbet.PASSTHROUGH_MAP))))";
     const out = execSync("python -c " + JSON.stringify(code),
       { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
     codes = JSON.parse(out.slice(out.indexOf("[")));

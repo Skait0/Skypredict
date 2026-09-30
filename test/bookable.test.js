@@ -76,7 +76,7 @@ function engine(fixtures) {
     "function slipUse(){return {};}",
     /* Balanced, the default: the slip style leaves the slider as it was. */
     "var WSP={legodd:1.4};",
-    konst("SAFE_UNPRICED"), konst("BOOK_ONLY"), konst("CORNER_CODES"), konst("TEAM_CORNER_CODES"), konst("SHOTS_CODES"),
+    konst("SAFE_UNPRICED"), konst("BOOK_ONLY"), konst("CORNER_CODES"), konst("TEAM_CORNER_CODES"), konst("SHOTS_CODES"), konst("TEAM_SHOTS_CODES"), konst("HCAP_CODES"),
     /* The harness books at SportyBet, like the default visit. */
     /* full: the cache for this book IS its whole book, which is what makes a
        missing price meaningful. odds: where that cache lives on a fixture. */

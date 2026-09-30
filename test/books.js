@@ -65,7 +65,10 @@ function prelude(book) {
        Betpawa's bundle loads a booking code from the address bar either. Two
        books that cannot be opened is a shape, not a coincidence. */
     'var BOOK_URL="/book", SPORTY_URL="/sporty?c=", B9_URL="/b9?c=", B9_BOOK_URL="/b9book",' +
-      ' BK_URL=null, BK_BOOK_URL="/bkbook", BP_URL=null, BP_BOOK_URL="/bpbook";\n' +
+      ' BK_URL=null, BK_BOOK_URL="/bkbook", BP_URL=null, BP_BOOK_URL="/bpbook",' +
+    /* 1xBet is the one second book that CAN be opened (?coupon-code=), so its
+       URL is a real prefix here rather than null. */
+      ' XB_URL="https://1xbet.ng/en?coupon-code=", XB_BOOK_URL="/xbbook";\n' +
     decl("BOOKS") + "\n" +
     'var BOOK_KEY="sw.book";\n' +
     "var BOOKMAKER=" + JSON.stringify(book || "sporty") + ";\n" +

@@ -34,6 +34,10 @@
       "maxDuration": 15,
       "memory": 256
     },
+    "api/onexbet.js": {
+      "maxDuration": 15,
+      "memory": 256
+    },
     "api/s.js": {
       "maxDuration": 10,
       "memory": 256
@@ -206,5 +210,10 @@
     }
   ],
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "git": {
+    "deploymentEnabled": {
+      "pricelog": false
+    }
+  }
 }
