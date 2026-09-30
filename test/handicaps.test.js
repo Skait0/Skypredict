@@ -86,7 +86,8 @@ test("the Handicap chip offers the safe side on every book", () => {
   assert.match(src, /var WSP=\{[^\n]*hcap:false/);
   const codes = new Function(decl("HCAP_CODES") + "\nreturn HCAP_CODES;")();
   assert.deepStrictEqual(codes.slice().sort(),
-    ["AH_1_-1.5", "AH_1_1.5", "AH_1_2.5", "AH_2_-1.5", "AH_2_-2.5", "AH_2_1.5"]);
+    ["AH_1_-1", "AH_1_-1.5", "AH_1_1", "AH_1_1.5", "AH_1_2", "AH_1_2.5",
+     "AH_2_-1", "AH_2_-1.5", "AH_2_-2", "AH_2_-2.5", "AH_2_1", "AH_2_1.5"]);
   assert.match(src, /HCAP_CODES\.forEach\(function\(c\)\{ mkOn\[c\]=BUILD\.mk\.hcap===true; \}\);/);
   assert.match(src, /if\(WSP\.mk\.hcap\)m=m\.concat\(HCAP_CODES\);/);
   assert.strictEqual((src.match(/\n  hcap:\[/g) || []).length, 2, "both chip-to-codes maps");
@@ -100,4 +101,40 @@ test("the leg says which handicap it is, in both families' words", () => {
   assert.strictEqual(mLabel(f, "AH_2_-2.5"), "Leeds +2.5 (handicap 0:3)");
   assert.strictEqual(mLabel(f, "AH_1_1.5"), "Arsenal +1.5 (handicap 2:0)");
   assert.strictEqual(mLabel(f, "AH_2_1.5"), "Leeds -1.5 (handicap 1:0)");
+});
+
+/* WHOLE LINES (30 Sep 2026): +1 / +2 either side, and -1 for either side.
+   A whole line gives the stake back when the margin lands on it, which in an
+   accumulator drops the leg and keeps the slip alive. So the number the
+   builder ranks by is the chance the leg SURVIVES - wins or comes back - and
+   +1 survives exactly when +1.5 wins, at a better price. That is why the
+   owner's dad wanted them: same safety, more money. */
+test("a whole line is priced as the chance it does not lose", () => {
+  const p = price(F);
+  const near = (a, b, c) => assert.ok(Math.abs(a - b) < 1e-9, c + ": " + a + " vs " + b);
+  near(p("AH_1_1"), p("AH_1_1.5"), "home +1 survives exactly when home +1.5 wins");
+  near(p("AH_2_-1"), p("AH_2_-1.5"), "away +1 likewise");
+  near(p("AH_1_2"), p("AH_1_2.5"), "home +2");
+  near(p("AH_2_-2"), p("AH_2_-2.5"), "away +2");
+  near(p("AH_1_-1"), F.home_p, "home -1 survives when home wins (by 1: refund)");
+  near(p("AH_2_1"), F.away_p, "away -1 survives when away wins");
+});
+
+test("whole lines are offered only where they are sold", () => {
+  const ONLY = new Function("return " + src.match(/var BOOK_ONLY=(\{[\s\S]*?\});/)[1] + ";")();
+  for (const c of ["AH_1_1", "AH_1_2", "AH_2_-1", "AH_2_-2", "AH_1_-1", "AH_2_1"]) {
+    assert.deepStrictEqual(ONLY[c], ["sporty", "bet9ja", "onexbet"], c);
+  }
+  const codes = new Function(decl("HCAP_CODES") + "\nreturn HCAP_CODES;")();
+  for (const c of ["AH_1_1", "AH_1_2", "AH_2_-1", "AH_2_-2", "AH_1_-1", "AH_2_1"]) {
+    assert.ok(codes.includes(c), c + " not on the Handicap chip");
+  }
+});
+
+test("a whole line says what happens on the exact margin", () => {
+  const mLabel = new Function(fn("esc") + fn("mLabel") + "\nreturn mLabel;")();
+  const f = { home: "Arsenal", away: "Leeds" };
+  assert.strictEqual(mLabel(f, "AH_2_-1"), "Leeds +1 (stake back if they lose by 1)");
+  assert.strictEqual(mLabel(f, "AH_1_-1"), "Arsenal -1 (stake back if they win by 1)");
+  assert.strictEqual(mLabel(f, "AH_1_2"), "Arsenal +2 (stake back if they lose by 2)");
 });

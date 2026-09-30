@@ -12626,6 +12626,17 @@ function marginGe(f){
       if(up==null) return null;
       return ahHome?up:1-up;
     }
+    /* WHOLE LINES, +-1 and +-2: the stake comes back when the margin lands
+       on the line, which in an accumulator drops the leg and keeps the slip
+       alive. So this is the chance the leg SURVIVES - wins or comes back -
+       the number a builder ranking on "will it come through" needs. Home
+       survives at line L when D >= -L; away when D <= -L. */
+    if(hge&&ahLine!==0&&Math.abs(ahLine)<=2&&Math.abs(ahLine-Math.round(ahLine))<1e-9){
+      var wc=-ahLine;
+      if(ahHome) return hge(wc);
+      var s2=hge(wc+1);
+      return s2==null?null:1-s2;
+    }
     return null;
   }
   /* THE 3-WAY HANDICAP at one and two goals - the owner's dad's market.
@@ -12812,6 +12823,9 @@ var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking"],
   /* 1xBet's total-corners card runs 8.5-11.5 - verified absent at 7.5 on
      eight deep cards - so the corners chip's bottom rung is the other four's. */
   "CORNERS_OV_7.5":["sporty","bet9ja","betking","betpawa"],
+  /* Whole-line handicaps (30 Sep 2026): BetKing and Betpawa sell half lines
+     only - the reader there is offered the +1.5 beside it instead. */
+  "AH_1_1":["sporty","bet9ja","onexbet"],"AH_1_2":["sporty","bet9ja","onexbet"],"AH_2_-1":["sporty","bet9ja","onexbet"],"AH_2_-2":["sporty","bet9ja","onexbet"],"AH_1_-1":["sporty","bet9ja","onexbet"],"AH_2_1":["sporty","bet9ja","onexbet"],
   /* Team shots (30 Sep 2026): SportyBet's 900552/900553. No other book's card
      has been read for a per-team shots market yet. */
   "SHOTS_H_OV_7.5":["sporty"],"SHOTS_H_OV_8.5":["sporty"],"SHOTS_H_OV_9.5":["sporty"],"SHOTS_H_OV_10.5":["sporty"],"SHOTS_H_OV_11.5":["sporty"],"SHOTS_H_OV_12.5":["sporty"],"SHOTS_H_OV_13.5":["sporty"],"SHOTS_H_OV_14.5":["sporty"],"SHOTS_H_OV_15.5":["sporty"],"SHOTS_H_OV_16.5":["sporty"],"SHOTS_H_OV_17.5":["sporty"],"SHOTS_H_OV_18.5":["sporty"],"SHOTS_A_OV_7.5":["sporty"],"SHOTS_A_OV_8.5":["sporty"],"SHOTS_A_OV_9.5":["sporty"],"SHOTS_A_OV_10.5":["sporty"],"SHOTS_A_OV_11.5":["sporty"],"SHOTS_A_OV_12.5":["sporty"],"SHOTS_A_OV_13.5":["sporty"],"SHOTS_A_OV_14.5":["sporty"],"SHOTS_A_OV_15.5":["sporty"],"SHOTS_A_OV_16.5":["sporty"],"SHOTS_A_OV_17.5":["sporty"],"SHOTS_A_OV_18.5":["sporty"]};
@@ -12856,7 +12870,9 @@ var TEAM_SHOTS_CODES=["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_
    2.5 for either team, and the favourite at -1.5: the 3-way (0:2) and (0:1)
    in the Asian half-line form every book sells, so the chip needs no BOOK_ONLY
    entry. The floor decides which ones clear - the chip itself starts off. */
-var HCAP_CODES=["AH_1_1.5","AH_1_2.5","AH_2_-1.5","AH_2_-2.5","AH_1_-1.5","AH_2_1.5"];
+/* Whole lines (+-1, +-2) joined 30 Sep 2026: SportyBet, Bet9ja and 1xBet
+   sell them, BetKing and Betpawa do not (see BOOK_ONLY). */
+var HCAP_CODES=["AH_1_1.5","AH_1_2.5","AH_2_-1.5","AH_2_-2.5","AH_1_-1.5","AH_2_1.5","AH_1_1","AH_1_2","AH_2_-1","AH_2_-2","AH_1_-1","AH_2_1"];
 /* IS THIS CORNERS LINE ACTUALLY OPEN? Books open corners a few days before
    kick-off and some leagues never - measured 23 Sep 2026: Spanish second
    division open 90 hours out, Scottish Championship closed at 48, and every
@@ -13279,6 +13295,10 @@ function mLabel(f,c){
       eq=shown>0?(homeSide?" (handicap "+(a+0.5)+":0)":" (handicap 0:"+(a+0.5)+")")
                 :(homeSide?" (handicap 0:"+(a-0.5)+")":" (handicap "+(a-0.5)+":0)");
     }
+    /* A whole line says what its refund is, because that is the whole point
+       of choosing it over the half line beside it. */
+    if(shown===Math.round(shown)&&shown!==0)
+      eq=" (stake back if they "+(shown>0?"lose":"win")+" by "+Math.abs(shown)+")";
     return side+" "+(shown>0?"+":"")+shown+eq;
   }
   return c;
@@ -16570,7 +16590,7 @@ var LINK_MARKETS={"1":1,"2":1,"X":1,"1X":1,"X2":1,"12":1,
   "MIXGG_1":1,"MIXGG_2":1,"MIXGG_X":1,"WINHALF_H_Y":1,"WINHALF_A_Y":1,
   "CORNERS_OV_7.5":1,"CORNERS_UN_7.5":1,"CORNERS_OV_8.5":1,"CORNERS_UN_8.5":1,"CORNERS_OV_9.5":1,"CORNERS_UN_9.5":1,"CORNERS_OV_10.5":1,"CORNERS_UN_10.5":1,
   "CORNERS_H_OV_3.5":1,"CORNERS_H_OV_4.5":1,"CORNERS_H_OV_5.5":1,"CORNERS_A_OV_2.5":1,"CORNERS_A_OV_3.5":1,"CORNERS_A_OV_4.5":1,
-  "SHOTS_OV_19.5":1,"SHOTS_OV_20.5":1,"SHOTS_OV_21.5":1,"SHOTS_OV_22.5":1,"SHOTS_OV_23.5":1,"SHOTS_OV_24.5":1,"SHOTS_OV_25.5":1,"SHOTS_OV_26.5":1,"SHOTS_OV_27.5":1,"SHOTS_OV_28.5":1,"SHOTS_OV_29.5":1,"AH_1_1.5":1,"AH_1_2.5":1,"AH_2_-1.5":1,"AH_2_-2.5":1,"AH_1_-1.5":1,"AH_2_1.5":1,"SHOTS_H_OV_7.5":1,"SHOTS_H_OV_8.5":1,"SHOTS_H_OV_9.5":1,"SHOTS_H_OV_10.5":1,"SHOTS_H_OV_11.5":1,"SHOTS_H_OV_12.5":1,"SHOTS_H_OV_13.5":1,"SHOTS_H_OV_14.5":1,"SHOTS_H_OV_15.5":1,"SHOTS_H_OV_16.5":1,"SHOTS_H_OV_17.5":1,"SHOTS_H_OV_18.5":1,"SHOTS_A_OV_7.5":1,"SHOTS_A_OV_8.5":1,"SHOTS_A_OV_9.5":1,"SHOTS_A_OV_10.5":1,"SHOTS_A_OV_11.5":1,"SHOTS_A_OV_12.5":1,"SHOTS_A_OV_13.5":1,"SHOTS_A_OV_14.5":1,"SHOTS_A_OV_15.5":1,"SHOTS_A_OV_16.5":1,"SHOTS_A_OV_17.5":1,"SHOTS_A_OV_18.5":1,"SHOTS_OV_30.5":1,"SHOTS_OV_31.5":1};
+  "SHOTS_OV_19.5":1,"SHOTS_OV_20.5":1,"SHOTS_OV_21.5":1,"SHOTS_OV_22.5":1,"SHOTS_OV_23.5":1,"SHOTS_OV_24.5":1,"SHOTS_OV_25.5":1,"SHOTS_OV_26.5":1,"SHOTS_OV_27.5":1,"SHOTS_OV_28.5":1,"SHOTS_OV_29.5":1,"AH_1_1.5":1,"AH_1_2.5":1,"AH_2_-1.5":1,"AH_2_-2.5":1,"AH_1_-1.5":1,"AH_2_1.5":1,"AH_1_1":1,"AH_1_2":1,"AH_2_-1":1,"AH_2_-2":1,"AH_1_-1":1,"AH_2_1":1,"SHOTS_H_OV_7.5":1,"SHOTS_H_OV_8.5":1,"SHOTS_H_OV_9.5":1,"SHOTS_H_OV_10.5":1,"SHOTS_H_OV_11.5":1,"SHOTS_H_OV_12.5":1,"SHOTS_H_OV_13.5":1,"SHOTS_H_OV_14.5":1,"SHOTS_H_OV_15.5":1,"SHOTS_H_OV_16.5":1,"SHOTS_H_OV_17.5":1,"SHOTS_H_OV_18.5":1,"SHOTS_A_OV_7.5":1,"SHOTS_A_OV_8.5":1,"SHOTS_A_OV_9.5":1,"SHOTS_A_OV_10.5":1,"SHOTS_A_OV_11.5":1,"SHOTS_A_OV_12.5":1,"SHOTS_A_OV_13.5":1,"SHOTS_A_OV_14.5":1,"SHOTS_A_OV_15.5":1,"SHOTS_A_OV_16.5":1,"SHOTS_A_OV_17.5":1,"SHOTS_A_OV_18.5":1,"SHOTS_OV_30.5":1,"SHOTS_OV_31.5":1};
 function slipPayload(items){
   var rows=[], bad=false;
   (items||[]).slice(0,40).forEach(function(c){
@@ -20132,7 +20152,7 @@ var MKT_CODES={wd:["1X","X2"],any:["12"],out:["1","2"],o15:["OVER_1.5"],
   tcorn:["CORNERS_H_OV_3.5","CORNERS_H_OV_4.5","CORNERS_H_OV_5.5","CORNERS_A_OV_2.5","CORNERS_A_OV_3.5","CORNERS_A_OV_4.5"],
   shots:["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"],
   tshots:["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_H_OV_10.5","SHOTS_H_OV_11.5","SHOTS_H_OV_12.5","SHOTS_H_OV_13.5","SHOTS_H_OV_14.5","SHOTS_H_OV_15.5","SHOTS_H_OV_16.5","SHOTS_H_OV_17.5","SHOTS_H_OV_18.5","SHOTS_A_OV_7.5","SHOTS_A_OV_8.5","SHOTS_A_OV_9.5","SHOTS_A_OV_10.5","SHOTS_A_OV_11.5","SHOTS_A_OV_12.5","SHOTS_A_OV_13.5","SHOTS_A_OV_14.5","SHOTS_A_OV_15.5","SHOTS_A_OV_16.5","SHOTS_A_OV_17.5","SHOTS_A_OV_18.5"],
-  hcap:["AH_1_1.5","AH_1_2.5","AH_2_-1.5","AH_2_-2.5","AH_1_-1.5","AH_2_1.5"]};
+  hcap:["AH_1_1.5","AH_1_2.5","AH_2_-1.5","AH_2_-2.5","AH_1_-1.5","AH_2_1.5","AH_1_1","AH_1_2","AH_2_-1","AH_2_-2","AH_1_-1","AH_2_1"]};
 
 /* A MARKET YOU SWITCHED ON THAT CHANGED NOTHING LOOKS BROKEN.
    Measured on a 394-fixture board: turning "Team over 1.5" on at Balanced
@@ -20372,7 +20392,7 @@ var MKT_BY_CHIP={wd:["1X","X2"],any:["12"],out:["1","2"],
   tcorn:["CORNERS_H_OV_3.5","CORNERS_H_OV_4.5","CORNERS_H_OV_5.5","CORNERS_A_OV_2.5","CORNERS_A_OV_3.5","CORNERS_A_OV_4.5"],
   shots:["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"],
   tshots:["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_H_OV_10.5","SHOTS_H_OV_11.5","SHOTS_H_OV_12.5","SHOTS_H_OV_13.5","SHOTS_H_OV_14.5","SHOTS_H_OV_15.5","SHOTS_H_OV_16.5","SHOTS_H_OV_17.5","SHOTS_H_OV_18.5","SHOTS_A_OV_7.5","SHOTS_A_OV_8.5","SHOTS_A_OV_9.5","SHOTS_A_OV_10.5","SHOTS_A_OV_11.5","SHOTS_A_OV_12.5","SHOTS_A_OV_13.5","SHOTS_A_OV_14.5","SHOTS_A_OV_15.5","SHOTS_A_OV_16.5","SHOTS_A_OV_17.5","SHOTS_A_OV_18.5"],
-  hcap:["AH_1_1.5","AH_1_2.5","AH_2_-1.5","AH_2_-2.5","AH_1_-1.5","AH_2_1.5"]};
+  hcap:["AH_1_1.5","AH_1_2.5","AH_2_-1.5","AH_2_-2.5","AH_1_-1.5","AH_2_1.5","AH_1_1","AH_1_2","AH_2_-1","AH_2_-2","AH_1_-1","AH_2_1"]};
 
 /* WHY THE SLIP IS EMPTY, NAMED.
  *
