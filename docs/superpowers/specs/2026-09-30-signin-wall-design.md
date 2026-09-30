@@ -2,8 +2,8 @@
 
 **Date:** 30 Sep 2026
 **Status:** design approved in conversation, waiting for the owner to review this written spec
-**Theme:** wizardry x soccer: dark #0D0D0F, gold #F2B84B, Plus Jakarta Sans and Roboto Condensed
-**Mockups:** docs/design/signin-loaders/07-tactics-spell-v3.html (loader) and 08-signin-sheet-themed.html (sheet)
+**Theme:** wizardry x soccer, drawn only with the site's own colour tokens (see section 2a), in both dark and light themes
+**Mockups:** docs/design/signin-loaders/09-signin-flow-site-colours.html is the reference: sheet and loader on site colours, dark and light. 07 and 08 show the motion and layout, but their all-gold colouring is superseded.
 
 ## 1. Goal
 
@@ -29,9 +29,27 @@ Turn readers into signed-in accounts without losing search or social traffic.
 - **Email marketing opt-in**: a separate checkbox, unticked by default.
 - **Loader:** Tactics Spell v3 (summon, beam-in, build-up, rainbow flick, bullet-time curler, goal).
 - **Sheet header** is a mix of the two sheet mockups:
-  - When the tapped action has a slip (book a code, save a slip), the header shows that slip under a gold football seal. Matches are blurred; total odds stay visible.
+  - When the tapped action has a slip (book a code, save a slip), the header shows that slip under a red wax seal pressed with a football. Matches are blurred; total odds stay visible.
   - Otherwise (open the builder, view saved slips), the header shows the dormant tactics board.
   - Either way, the Tactics Spell then plays in the same sheet.
+
+## 2a. Colour: one system with the rest of the site
+
+The owner flagged that the all-gold mockups looked like a different site. The site's split is:
+- **red** for brand and action (230+ uses)
+- **gold** for odds and wins
+- **green** for hits
+
+The sheet and loader follow that split. They use only existing tokens from `public/index.html`: no raw colours and no new tokens. The only exceptions are the white ball and Google's own white button. Because everything is a token, the light theme works with no extra work.
+
+| Role | Tokens | Used for |
+| ---- | ------ | -------- |
+| Brand / action | `--red-fill`, `--red`, `--red-ink`, `--red-glow*` | Send button, ticked opt-in box, headline action word, red wax seal on the sealed slip, our players (touched), passes, lightning, comet tail, beams, net on goal, shockwave, goal flash, the reader's name |
+| Odds / win | `--win`, `--win-ink` | odds in the sealed slip, total odds, the reader's real slip odds floating up on each touch, "✦ GOAL ✦", gold stars in the burst |
+| Structure | `--faint`, `--grey`, `--line`, `--card*` | pitch chalk, rune ring, empty player dots, defenders and their shards, dormant board |
+| Hits | `--green*` | not used in sign-in, so it keeps its meaning |
+
+A test asserts that `public/signin.js` and `public/spell.js` contain no hex colour except `#fff` and `#FFFFFF`, and that the ball colours come from a token pair (`--ball`, `--ball-ink`). That pair is the one new token pair, added to both themes.
 
 ## 3. Out of scope
 
