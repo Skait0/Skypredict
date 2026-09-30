@@ -6,7 +6,7 @@ const { ORIGIN } = require("../../lib/auth/http.js");
 const { COOKIE } = require("../../lib/auth/session.js");
 
 function fakeDb(clock) {
-  const t = { users: [], sessions: [], codes: [], attempts: [], data: {}, subs: {}, tiers: {}, rl: {} };
+  const t = { users: [], sessions: [], codes: [], attempts: [], data: {}, subs: {}, tiers: {}, rl: {}, consent: {} };
   let n = 0;
   const uuid = () => "00000000-0000-4000-8000-" + String(++n).padStart(12, "0");
   const nowIso = () => new Date(clock()).toISOString();
@@ -55,9 +55,12 @@ function fakeDb(clock) {
     },
     async featureTiers() { return Object.assign({}, t.tiers); },
     async subscription(uid) { return t.subs[uid] || null; },
+    async consentFor(uid) { return t.consent[uid] ? copy(t.consent[uid]) : null; },
+    async upsertConsent(uid, row) { t.consent[uid] = Object.assign({ revoked_at: null }, row); return true; },
+    async revokeConsent(uid, iso) { if (t.consent[uid]) t.consent[uid].revoked_at = iso; return true; },
     async deleteUser(uid) {
       t.users = t.users.filter((u) => u.id !== uid); t.sessions = t.sessions.filter((s) => s.user_id !== uid);
-      delete t.data[uid]; delete t.subs[uid]; return true;
+      delete t.data[uid]; delete t.subs[uid]; delete t.consent[uid]; return true;
     },
     async housekeep() { return true; },
   };

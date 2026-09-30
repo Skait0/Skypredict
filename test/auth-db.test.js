@@ -91,3 +91,16 @@ test("the feature table read tells failure apart from an empty table", async () 
   capture({ status: 200, body: [{ feature: "wizard", tier: "paid" }] });
   assert.deepStrictEqual(await DB.featureTiers(), { wizard: "paid" });
 });
+
+test("consent: upsert merges on user_id and clears revoked_at; revoke patches only that user", async () => {
+  const calls = capture((url) => ({ status: /on_conflict/ .test(url) || /user_id=eq/ .test(url) ? 200 : 201, body: [] }));
+  const id = "00000000-0000-4000-8000-000000000001";
+  assert.strictEqual(await DB.upsertConsent(id, { granted_at: "2026-09-30T10:00:00.000Z", wording: "W", source: "email-code" }), true);
+  assert.match(calls[0].url, /email_consent\?on_conflict=user_id$/);
+  assert.match(calls[0].headers.Prefer, /resolution=merge-duplicates/);
+  assert.deepStrictEqual(JSON.parse(calls[0].body),
+    { user_id: id, revoked_at: null, granted_at: "2026-09-30T10:00:00.000Z", wording: "W", source: "email-code" });
+  await DB.revokeConsent(id, "2026-10-01T00:00:00.000Z");
+  assert.match(calls[1].url, new RegExp("email_consent\\?user_id=eq\\." + id));
+  assert.strictEqual(await DB.upsertConsent("not-a-uuid", {}), false);
+});

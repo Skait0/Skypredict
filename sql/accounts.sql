@@ -86,6 +86,20 @@ create table if not exists public.subscriptions (
 );
 alter table public.subscriptions enable row level security;
 
+-- Marketing email consent: a row only when the reader ticked the box.
+-- wording is the exact text they saw; revoked_at is set by unsubscribe.
+create table if not exists public.email_consent (
+  user_id uuid primary key references public.users(id) on delete cascade,
+  granted_at timestamptz not null,
+  wording text not null,
+  source text not null,
+  revoked_at timestamptz
+);
+alter table public.email_consent enable row level security;
+
+-- The Google redirect flow carries the opt-in tick across the round trip.
+alter table public.auth_attempts add column if not exists optin boolean not null default false;
+
 -- One hit on a fixed window. True while the count is within the limit.
 -- Atomic: concurrent hits cannot both read the same count.
 create or replace function public.rl_hit(p_key text, p_window int, p_limit int)
