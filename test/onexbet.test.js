@@ -118,3 +118,28 @@ test("the bot's converter and the page agree on which books sell whole lines", (
     assert.strictEqual(!!WHOLE_LINES[k], !!books[k].wholeLines, k);
   }
 });
+
+/* THE CODE CARD FOLLOWS THE SYSTEM, NOT JUST THE BRAND (owner, 30 Sep 2026:
+   "the colors are kinda flat compared to the others and why is the open in
+   1xbet pill red"). Every other book's card is a near-black ground tinted
+   toward the book, with the brand colour as ACCENT - edge, rule, glow - and
+   its "Open in" button is a white pill carrying the wordmark. The first 1xBet
+   card filled the whole ground with mid blue and left its buttons to the
+   site defaults, which made the Open pill Soccerwizard red. */
+test("the 1xBet code card is built like the other books'", () => {
+  const rule = (sel) => {
+    const i = src.indexOf(sel + "{");
+    assert.ok(i >= 0, "missing rule: " + sel);
+    return src.slice(i, src.indexOf("}", i));
+  };
+  const ground = rule(".code-card--xb,[data-theme=\"light\"] .code-card--xb");
+  assert.ok(!/#276BA6/i.test(ground), "the ground is dark, blue is the accent");
+  assert.match(ground, /radial-gradient\([^)]*rgba\(20,160,255/);
+  assert.match(rule(".code-card--xb .code-open"), /background:#fff/);
+  assert.match(rule(".code-card--xb .code-open .xbm .xbb"), /color:#276BA6/);
+  // "1X" on the white pill must be ink - the title's white mark rule reached
+  // it and the button read "Open in BET" (caught rendering it, 30 Sep).
+  assert.match(rule(".code-card--xb .code-open .xbm"), /color:#14161a/);
+  assert.match(src, /\.code-card--xb \.code-acts \.code-copy,\r?\n\.code-card--xb \.code-acts \.share-btn\{\r?\n  background:#276BA6/);
+  assert.match(rule(".code-card--xb b,[data-theme=\"light\"] .code-card--xb b"), /text-shadow:0 0 24px rgba\(20,160,255/);
+});
