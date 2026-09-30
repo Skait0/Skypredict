@@ -41,5 +41,6 @@ test("applyAuthMeta adds the Google client id and Turnstile site key metas, and 
   assert.match(out, /<meta name="sw-ts" content="0x4AAAAAAAtest_Key-1">/);
   const bad = applyAuthMeta("<html><head></head></html>", "1", { gcid: '"><script>', ts: "a b" });
   assert.doesNotMatch(bad, /sw-gcid|sw-ts/);
+  assert.doesNotMatch(applyAuthMeta("<html><head></head></html>", "1", { gcid: "a.appsXgoogleusercontentXcom" }), /sw-gcid/);
   assert.doesNotMatch(applyAuthMeta("<html><head></head></html>", "0", { gcid: "x.apps.googleusercontent.com" }), /sw-gcid/);
 });

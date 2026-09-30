@@ -623,7 +623,7 @@ function applyAuthMeta(html, authEnabled, keys) {
   const k = keys || {};
   /* Both are public by design (Google's client id and Turnstile's site key
      are meant for the browser); the shape checks only keep markup out. */
-  const gcid = /^[0-9A-Za-z._-]{1,200}.apps.googleusercontent.com$/.test(String(k.gcid || "")) ? k.gcid : "";
+  const gcid = /^[0-9A-Za-z._-]{1,200}\.apps\.googleusercontent\.com$/.test(String(k.gcid || "")) ? k.gcid : "";
   const ts = /^[0-9A-Za-z_-]{1,100}$/.test(String(k.ts || "")) ? k.ts : "";
   return html.replace("<head>", '<head><meta name="sw-auth" content="1">' +
     (gcid ? '<meta name="sw-gcid" content="' + gcid + '">' : "") +
