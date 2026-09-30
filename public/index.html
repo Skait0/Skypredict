@@ -13908,7 +13908,8 @@ function confirmDropUnpriced(picks,target,go,B){
    go(picks, swaps, dropped): swaps are {id, from, to}, dropped the picks left
    out, so My slip can bring its own list into line. Returns true when it has
    taken over. */
-var LINE_CODE=/^(CORNERS|SHOTS)_/;
+/* Handicaps joined 30 Sep 2026: lines that close and move like corners. */
+var LINE_CODE=/^(CORNERS|SHOTS|AH)_/;
 function lineCheck(picks,B,target,go){
   if(!B||B.key!=="sporty"||picks._lined) return false;
   var lined=picks.filter(function(c){return LINE_CODE.test(c.code)&&bookIdOf(c,B);});
