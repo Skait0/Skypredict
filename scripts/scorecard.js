@@ -41,8 +41,13 @@ const EXPS = {
     { name: "per league K=400", draw: 400 }, { name: "per league K=1000", draw: 1000 }],
   decay: [{ name: "half-life 200" }, { name: "150", fit: { halfLife: 150 } },
     { name: "300", fit: { halfLife: 300 } }, { name: "450", fit: { halfLife: 450 } }],
+  tips: [{ name: "reg 35", fit: { reg: 35 } }, { name: "reg 20", fit: { reg: 20 } }, { name: "reg 28", fit: { reg: 28 } }, { name: "35, no league hadv", fit: { reg: 35, leagueHadvReg: 0 } }],
   reg: [{ name: "reg 35" }, { name: "20", fit: { reg: 20 } }, { name: "50", fit: { reg: 50 } },
     { name: "80", fit: { reg: 80 } }],
+  combo: [{ name: "reg 35 hl 200" }, { name: "reg 20 hl 200", fit: { reg: 20 } },
+    { name: "reg 12 hl 200", fit: { reg: 12 } }, { name: "reg 20 hl 300", fit: { reg: 20, halfLife: 300 } },
+    { name: "reg 12 hl 300", fit: { reg: 12, halfLife: 300 } }, { name: "reg 20 hl 250", fit: { reg: 20, halfLife: 250 } }],
+  promo: [{ name: "as shipped" }, { name: "moved-team edge", moved: true }],
   xg: [{ name: "xg 0.30" }, { name: "0.15", fit: { xgWeight: 0.15 } }, { name: "0.45", fit: { xgWeight: 0.45 } },
     { name: "0.60", fit: { xgWeight: 0.60 } }],
 };
@@ -91,9 +96,10 @@ function devig(a, b, c) {
 }
 
 const res = VARIANTS.map(() => ({ all: {}, tier: {} }));
-function add(bucket, key, n, x12, o25, btts) {
-  const b = bucket[key] || (bucket[key] = { n: 0, x12: 0, o25: 0, btts: 0 });
+function add(bucket, key, n, x12, o25, btts, tip) {
+  const b = bucket[key] || (bucket[key] = { n: 0, x12: 0, o25: 0, btts: 0, tn: 0, hit: 0, tb: 0 });
   b.n += n; b.x12 += x12; b.o25 += o25; b.btts += btts;
+  if (tip) { b.tn++; b.hit += tip.won ? 1 : 0; b.tb += Math.pow((tip.won ? 1 : 0) - tip.p, 2); }
 }
 
 for (let f = FOLDS; f >= 1; f--) {
@@ -110,7 +116,19 @@ for (let f = FOLDS; f >= 1; f--) {
       Object.assign({ index, reference: cut }, BASE_FIT, v.fit || {})));
     const dl = v.draw ? leagueDraws(model, train, cut, v.draw) : null;
     for (const m of test) {
-      const p = M.predictTotals(model, m.home, m.away, m.league);
+      /* A club whose latest division in training is not this fixture's -
+         promoted or relegated - is still rated against its old division, so
+         carry the gap the way a cup tie does. Same country only: across a
+         border the "move" is two clubs sharing a name. */
+      let e = 0;
+      if (v.moved) {
+        const lh = index.leagues[index.teamLeague[index.tIdx[m.home]]], la = index.leagues[index.teamLeague[index.tIdx[m.away]]];
+        const cc = (l) => M.countryOf(l);
+        if (lh && la && (lh !== m.league || la !== m.league) && cc(lh) === cc(m.league) && cc(la) === cc(m.league)) {
+          e = B.tierEdge(lh, la) || 0;
+        }
+      }
+      const p = M.predictTotals(model, m.home, m.away, m.league, e);
       if (!p) continue;
       const boost = dl && dl[m.league] != null ? dl[m.league] : DRAW;
       const k = M.markets(p, { k: model.k, drawBoost: boost });
@@ -126,8 +144,11 @@ for (let f = FOLDS; f >= 1; f--) {
       const x12 = ll(m.hg > m.ag ? ph : m.hg === m.ag ? pd : pa);
       const o25 = ll(m.hg + m.ag > 2.5 ? po : 1 - po);
       const bt = ll(m.hg > 0 && m.ag > 0 ? k.btts : 1 - k.btts);
-      add(res[vi].all, "all", 1, x12, o25, bt);
-      add(res[vi].tier, tierOf(m.league), 1, x12, o25, bt);
+      /* The headline tip, graded the way the published record grades it. */
+      const bt0 = M.bestTip(k), won = bt0 ? M.gradeTip(bt0.label, m) : null;
+      const tip = won === null ? null : { won, p: bt0.p };
+      add(res[vi].all, "all", 1, x12, o25, bt, tip);
+      add(res[vi].tier, tierOf(m.league), 1, x12, o25, bt, tip);
     }
   });
   process.stdout.write(`fold ${f} ${cut.toISOString().slice(0, 10)} (${test.length})  `);
@@ -136,9 +157,10 @@ console.log("\n");
 
 const fmt = (b) => b ? `${(b.x12 / b.n).toFixed(4)} ${(b.o25 / b.n).toFixed(4)} ${(b.btts / b.n).toFixed(4)}` : "-";
 const tiers = Object.keys(res[0].tier).sort();
-console.log("variant".padEnd(18) + "n".padStart(6) + "   1X2    O2.5   BTTS  | " + tiers.map((t) => `tier ${t} 1X2 (n)`).join(" | "));
+console.log("variant".padEnd(18) + "n".padStart(6) + "   1X2    O2.5   BTTS   tips hit brier | " + tiers.map((t) => `tier ${t} 1X2 (n)`).join(" | "));
 VARIANTS.forEach((v, vi) => {
   const a = res[vi].all.all;
-  console.log(v.name.padEnd(18) + String(a.n).padStart(6) + "  " + fmt(a) + " | " +
+  console.log(v.name.padEnd(18) + String(a.n).padStart(6) + "  " + fmt(a) +
+    `  ${(100 * a.hit / a.tn).toFixed(1)}% ${(a.tb / a.tn).toFixed(4)}` + " | " +
     tiers.map((t) => { const b = res[vi].tier[t]; return b ? `${(b.x12 / b.n).toFixed(4)} (${b.n})` : "-"; }).join(" | "));
 });
