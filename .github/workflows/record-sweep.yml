@@ -79,7 +79,7 @@ name: Record full-time results
 # correctness - a late poll means a match is missed, not mis-scored.
 #
 # Needs two repository secrets:
-#   SWEEP_URL  https://skypredict-theta.vercel.app/api/record-sweep
+#   SWEEP_URL  https://www.soccerwizard.live/api/record-sweep
 #   REBUILD_HOOK  a Vercel deploy hook (Project > Settings > Git > Deploy Hooks).
 #     Optional: without it the sweep still records everything and the results
 #     appear at the next daily build. With it they appear within minutes.

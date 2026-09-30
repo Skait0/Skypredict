@@ -58,7 +58,7 @@ async function bakePayload() {
      what used to happen every time anyway. */
   let prevPotd = null, prevFixtures = null, prevPublished = null, prevPayload = null;
   try {
-    const origin = process.env.SITE_ORIGIN || "https://skypredict-theta.vercel.app";
+    const origin = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
     const r = await fetch(origin + "/predictions.json", { signal: AbortSignal.timeout(8000) });
     if (r.ok) {
       const prev = await r.json();
@@ -571,7 +571,7 @@ async function writePages(payload) {
  * that immediately redirects somewhere else, which is exactly the split this
  * whole mechanism exists to prevent.
  */
-const DEFAULT_ORIGIN = "https://skypredict-theta.vercel.app";
+const DEFAULT_ORIGIN = "https://www.soccerwizard.live";
 function applyOrigin() {
   const raw = process.env.SITE_ORIGIN;
   if (!raw) return;
