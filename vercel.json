@@ -182,8 +182,14 @@
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Content-Security-Policy-Report-Only", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://browser.sentry-cdn.com https://challenges.cloudflare.com https://va.vercel-scripts.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob:; connect-src 'self' https://*.ingest.de.sentry.io https://*.ingest.sentry.io https://cloudflareinsights.com https://flagcdn.com https://fonts.googleapis.com https://fonts.gstatic.com https://browser.sentry-cdn.com https://va.vercel-scripts.com https://static.cloudflareinsights.com https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; form-action 'self' https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; report-uri https://o4511967072026624.ingest.de.sentry.io/api/4511972150673488/security/?sentry_key=ac93e87be549b605d84d8064217ccd7a" }
+        { "key": "X-Frame-Options", "value": "DENY" }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "missing": [{ "type": "host", "value": ".+-soccerwizard\\.vercel\\.app" }],
+      "headers": [
+        { "key": "Content-Security-Policy-Report-Only", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://browser.sentry-cdn.com https://challenges.cloudflare.com https://va.vercel-scripts.com https://static.cloudflareinsights.com https://translate.googleapis.com https://translate-pa.googleapis.com https://translate.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com https://translate.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob:; connect-src 'self' https://*.ingest.de.sentry.io https://*.ingest.sentry.io https://cloudflareinsights.com https://flagcdn.com https://fonts.googleapis.com https://fonts.gstatic.com https://browser.sentry-cdn.com https://va.vercel-scripts.com https://static.cloudflareinsights.com https://challenges.cloudflare.com https://translate.googleapis.com https://translate-pa.googleapis.com https://translate.google.com; frame-src https://challenges.cloudflare.com; form-action 'self' https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; report-uri https://o4511967072026624.ingest.de.sentry.io/api/4511972150673488/security/?sentry_key=ac93e87be549b605d84d8064217ccd7a" }
       ]
     }
   ],

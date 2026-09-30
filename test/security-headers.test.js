@@ -19,9 +19,18 @@ test("every page carries the security headers", () => {
 });
 
 test("the CSP starts in report-only mode, reports to Sentry, and forbids framing", () => {
-  const csp = get("Content-Security-Policy-Report-Only");
+  const all = (cfg.headers || []).filter((h) => h.source === "/(.*)" && !h.has).flatMap((h) => h.headers);
+  const cspBlock = cfg.headers.find((h) => h.headers.some((x) => x.key === "Content-Security-Policy-Report-Only"));
+  const csp = cspBlock && cspBlock.headers.find((x) => x.key === "Content-Security-Policy-Report-Only").value;
   assert.ok(csp);
-  assert.strictEqual(get("Content-Security-Policy"), undefined, "not enforced until reports are clean (spec section 12)");
+  assert.ok(!all.some((x) => x.key === "Content-Security-Policy"), "not enforced until reports are clean (spec section 12)");
+  // Vercel's preview bot is not a visitor; its reports were pure noise.
+  const skip = new RegExp("^(?:" + cspBlock.missing[0].value + ")$");
+  assert.ok(skip.test("soccerwizard-2o5xqgi7q-soccerwizard.vercel.app"));
+  assert.ok(!skip.test("www.soccerwizard.live") && !skip.test("skypredict-theta.vercel.app"));
+  // Google Translate must keep working once the CSP is enforced.
+  assert.match(csp, /connect-src[^;]*https:\/\/translate\.googleapis\.com/);
+  assert.match(csp, /script-src[^;]*https:\/\/translate\.googleapis\.com/);
   assert.match(csp, /frame-ancestors 'none'/);
   assert.match(csp, /object-src 'none'/);
   assert.match(csp, /https:\/\/challenges\.cloudflare\.com/);
