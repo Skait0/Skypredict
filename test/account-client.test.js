@@ -114,6 +114,20 @@ test("the sync client guards against lost in-flight edits, stale tabs and a defe
   assert.match(block[1], /rawNow\(\)!==sent/, "sync() must not apply a stale server answer over an in-flight local edit");
 });
 
+test("a device that never changes anything still pulls what other devices did", () => {
+  // A phone app resumed from memory never reloads, so boot()'s one sync is
+  // the last it hears: a slip deleted on the desktop stayed on the phone.
+  const vis = /addEventListener\("visibilitychange",function\(\)\{([\s\S]*?)\}\);/.exec(block[1]);
+  assert.ok(vis, "the visibilitychange listener");
+  assert.match(vis[1], /visibilityState==="visible"\)\s*pullNow\(\)/, "coming back to the page must pull at once");
+  assert.match(block[1], /function pullNow\(\)\{[^}]*st\.nextAt\)\s*sync\(false\)/, "pullNow() pulls unless a backoff is pending");
+  assert.match(block[1], /addEventListener\("pageshow",function\(e\)\{[^}]*persisted\)\s*pullNow\(\)/, "a page restored from the back/forward cache must pull too");
+  const w = /function watch\(\)\{([\s\S]*?)\n\s*\}/.exec(block[1]);
+  assert.ok(w, "watch()");
+  assert.match(w[1], /PULL_MS/, "an open, visible page must pull on a timer even with no local change");
+  assert.match(w[1], /visibilityState/, "a hidden page must not pull on the timer");
+});
+
 test("sign-out with no connection says still signed in, rather than claiming success", () => {
   const m = /\$\("acctOut"\)\.onclick=function\(\)\{([\s\S]*?)\};/.exec(block[1]);
   assert.ok(m, "the acctOut click handler");

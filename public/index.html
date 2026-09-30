@@ -22795,7 +22795,7 @@ load().catch(function(){});
 
   /* ------------------------------------------------------------ browser */
   var d=root.document, ls=root.localStorage;
-  var st={on:false,email:"",timer:null,backoff:0,busy:false,raw:"",nextAt:0};
+  var st={on:false,email:"",timer:null,backoff:0,busy:false,raw:"",nextAt:0,pulled:0};
   function $(id){ return d.getElementById(id); }
   function rawNow(){ var s="",k; for(k in KEYS) s+=ls.getItem(KEYS[k])+"\u0001"; for(k in PREFS) s+=ls.getItem(PREFS[k])+"\u0001"; return s; }
   function isSyncedKey(k){ var x; for(x in KEYS) if(own(KEYS,x)&&KEYS[x]===k) return true; return false; }
@@ -22872,7 +22872,7 @@ load().catch(function(){});
            apply and resend instead - collect() picks up the new edit and
            merge is idempotent, so nothing is lost or duplicated. */
         if(rawNow()!==sent){ schedule(0); return; }
-        var before=rawNow(); apply(ls,j.data,j.version); st.raw=rawNow(); st.backoff=0;
+        var before=rawNow(); apply(ls,j.data,j.version); st.raw=rawNow(); st.backoff=0; st.pulled=Date.now();
         if(before!==st.raw) reload();
         return;
       }
@@ -22880,11 +22880,17 @@ load().catch(function(){});
       st.backoff=Math.min((st.backoff||1000)*2,300000); schedule(st.backoff);
     });
   }
+  /* Nothing changed here, but another device may have deleted or added
+     something: a page left open (or a phone app resumed from memory, which
+     never reloads) pulls on this timer and whenever it comes back into view. */
+  var PULL_MS=60000;
   function watch(){
     if(!st.on) return;
     if(Date.now()<st.nextAt) return;              // a backoff is still pending; don't cut it short
     if(rawNow()!==st.raw) schedule(2000);
+    else if(d.visibilityState!=="hidden"&&Date.now()-st.pulled>=PULL_MS) sync(false);
   }
+  function pullNow(){ if(st.on&&Date.now()>=st.nextAt) sync(false); }
 
   /* ---------------------------------------------------------- the sheet */
   var sheet=null;
@@ -22981,10 +22987,14 @@ load().catch(function(){});
          forever. watch() alone decides whether THIS tab has something new. */
       root.addEventListener("storage",function(e){
         var k=e&&e.key;
-        if(k===META){ reload(); st.raw=rawNow(); return; }   // another tab just synced the shared storage: nothing new to send
+        if(k===META){ reload(); st.raw=rawNow(); st.pulled=Date.now(); return; }   // another tab just synced the shared storage: nothing new to send or pull
         if(!k||isSyncedKey(k)) reload();                     // another tab saved: watch() will notice rawNow()!==st.raw and sync
       });
-      d.addEventListener("visibilitychange",function(){ if(d.visibilityState==="hidden"&&rawNow()!==st.raw) sync(true); });
+      d.addEventListener("visibilitychange",function(){
+        if(d.visibilityState==="hidden"){ if(rawNow()!==st.raw) sync(true); }
+        else if(d.visibilityState==="visible") pullNow();
+      });
+      root.addEventListener("pageshow",function(e){ if(e&&e.persisted) pullNow(); });
       if(/[?&]account=1/.test(location.search)) openSheet();
     });
   }
