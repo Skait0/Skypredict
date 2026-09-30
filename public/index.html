@@ -10170,7 +10170,7 @@ var BUILD_NOSYNC=false;
    last market switched on before it had one took over the wizard's picks for a
    week. They begin earning a record the moment the next card is graded; until
    then they are there for anyone who goes looking. */
-var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,corn:false,tcorn:false,shots:false},touched:false,mode:"slider"};
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,corn:false,tcorn:false,shots:false,tshots:false},touched:false,mode:"slider"};
 /* NO `draw` KEY HERE, deliberately. The draw is a Wizard market and lives in
    WSP.mk alone. It was briefly mirrored into BUILD.mk like every other toggle,
    which was inert - "X" is in neither allowedMarkets nor mkOn, so no risk
@@ -12429,6 +12429,7 @@ function allowedMarkets(t){
   m=m.concat(CORNER_CODES);
   m=m.concat(TEAM_CORNER_CODES);
   m=m.concat(SHOTS_CODES);
+  m=m.concat(TEAM_SHOTS_CODES);
   return m;
 }
 /* IS THAT PRICE THEIRS OR OURS?
@@ -12607,6 +12608,19 @@ function mProb(f,c){
     var sk=(typeof DATA!=="undefined"&&DATA&&DATA.shotsK>0)?DATA.shotsK:null;
     return cornersOver(f.sh+f.sa,sk,sl);
   }
+  /* TEAM SHOTS (30 Sep 2026): one side's own rate against its own line, on
+     total shots' spread. SportyBet sets each team's line near that team's
+     average, so the line gate (cornersOpen) is what keeps an offered leg to
+     a line they actually sell. Overs only, for total shots' reason. */
+  var tsh=/^SHOTS_([HA])_OV_([\d.]+)$/.exec(c||"");
+  if(tsh){
+    var tl=parseFloat(tsh[2]);
+    if(!isFinite(tl)||Math.abs(tl-Math.round(tl))<1e-9) return null;
+    var lamS=tsh[1]==="H"?f.sh:f.sa;
+    if(lamS==null) return null;
+    var tk=(typeof DATA!=="undefined"&&DATA&&DATA.shotsK>0)?DATA.shotsK:null;
+    return cornersOver(lamS,tk,tl);
+  }
   return null;
 }
 /* The spread, read from the board rather than assumed. A build that fitted no
@@ -12726,7 +12740,10 @@ var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking"],
   "MIXGG_2":["sporty","bet9ja","betking"],
   /* 1xBet's total-corners card runs 8.5-11.5 - verified absent at 7.5 on
      eight deep cards - so the corners chip's bottom rung is the other four's. */
-  "CORNERS_OV_7.5":["sporty","bet9ja","betking","betpawa"]};
+  "CORNERS_OV_7.5":["sporty","bet9ja","betking","betpawa"],
+  /* Team shots (30 Sep 2026): SportyBet's 900552/900553. No other book's card
+     has been read for a per-team shots market yet. */
+  "SHOTS_H_OV_7.5":["sporty"],"SHOTS_H_OV_8.5":["sporty"],"SHOTS_H_OV_9.5":["sporty"],"SHOTS_H_OV_10.5":["sporty"],"SHOTS_H_OV_11.5":["sporty"],"SHOTS_H_OV_12.5":["sporty"],"SHOTS_H_OV_13.5":["sporty"],"SHOTS_H_OV_14.5":["sporty"],"SHOTS_H_OV_15.5":["sporty"],"SHOTS_H_OV_16.5":["sporty"],"SHOTS_H_OV_17.5":["sporty"],"SHOTS_H_OV_18.5":["sporty"],"SHOTS_A_OV_7.5":["sporty"],"SHOTS_A_OV_8.5":["sporty"],"SHOTS_A_OV_9.5":["sporty"],"SHOTS_A_OV_10.5":["sporty"],"SHOTS_A_OV_11.5":["sporty"],"SHOTS_A_OV_12.5":["sporty"],"SHOTS_A_OV_13.5":["sporty"],"SHOTS_A_OV_14.5":["sporty"],"SHOTS_A_OV_15.5":["sporty"],"SHOTS_A_OV_16.5":["sporty"],"SHOTS_A_OV_17.5":["sporty"],"SHOTS_A_OV_18.5":["sporty"]};
 /* CORNERS, AS A CHIP. Lines 7.5 to 10.5, because that is the range every
    book sells: SportyBet 6.5-12.5, Bet9ja 7.5-14.5, BetKing
    5.5-12.5, Betpawa 6.5-10.5. A line outside it would need BOOK_ONLY entries
@@ -12760,6 +12777,10 @@ var TEAM_CORNER_CODES=["CORNERS_H_OV_3.5","CORNERS_H_OV_4.5","CORNERS_H_OV_5.5",
    actually quotes. Overs only: see mProb. Sold on marquee games about a day
    out, not on League D and not in MLS; BetKing and Betpawa not at all. */
 var SHOTS_CODES=["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"];
+/* TEAM SHOTS, one side over a line - see mProb. 7.5 to 18.5 is the span
+   SportyBet was seen selling across 20 fixtures on 29 Sep 2026; the line gate
+   offers only the ones a fixture actually carries. */
+var TEAM_SHOTS_CODES=["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_H_OV_10.5","SHOTS_H_OV_11.5","SHOTS_H_OV_12.5","SHOTS_H_OV_13.5","SHOTS_H_OV_14.5","SHOTS_H_OV_15.5","SHOTS_H_OV_16.5","SHOTS_H_OV_17.5","SHOTS_H_OV_18.5","SHOTS_A_OV_7.5","SHOTS_A_OV_8.5","SHOTS_A_OV_9.5","SHOTS_A_OV_10.5","SHOTS_A_OV_11.5","SHOTS_A_OV_12.5","SHOTS_A_OV_13.5","SHOTS_A_OV_14.5","SHOTS_A_OV_15.5","SHOTS_A_OV_16.5","SHOTS_A_OV_17.5","SHOTS_A_OV_18.5"];
 /* IS THIS CORNERS LINE ACTUALLY OPEN? Books open corners a few days before
    kick-off and some leagues never - measured 23 Sep 2026: Spanish second
    division open 90 hours out, Scottish Championship closed at 48, and every
@@ -12962,7 +12983,7 @@ function gradeLeg(f,c,hg,ag,st){
      A count that is missing or negative (-1 is "API-Football had none") is not
      known, and neither is a whole line: it pushes, the same reason mProb will
      not price one. */
-  var ck=/^CORNERS_(?:([HA])_)?(OV|UN)_([\d.]+)$/.exec(c||""), sk=/^SHOTS_(OV|UN)_([\d.]+)$/.exec(c||"");
+  var ck=/^CORNERS_(?:([HA])_)?(OV|UN)_([\d.]+)$/.exec(c||""), sk=/^SHOTS_(?:([HA])_)?(OV|UN)_([\d.]+)$/.exec(c||"");
   if(ck||sk){
     if(!st) return null;
     var cnt=function(v){ return typeof v==="number"&&isFinite(v)&&v>=0?v:null; };
@@ -12974,7 +12995,8 @@ function gradeLeg(f,c,hg,ag,st){
     } else {
       var shn=cnt(st.hsh), san=cnt(st.ash);
       if(shn==null||san==null) return null;
-      n=shn+san; ln=parseFloat(sk[2]); ov=sk[1]==="OV";
+      /* Per team since 30 Sep 2026 - the same counts, one side of them. */
+      n=sk[1]==="H"?shn:(sk[1]==="A"?san:shn+san); ln=parseFloat(sk[3]); ov=sk[2]==="OV";
     }
     if(!isFinite(ln)||Math.abs(ln-Math.round(ln))<1e-9) return null;
     return ov?n>ln:n<ln;
@@ -13026,6 +13048,8 @@ function mLabel(f,c){
   if(cn) return (cn[1]==="OV"?"Over ":"Under ")+cn[2]+" corners";
   var sn=/^SHOTS_(OV|UN)_([\d.]+)$/.exec(c||"");
   if(sn) return (sn[1]==="OV"?"Over ":"Under ")+sn[2]+" shots";
+  var tsn=/^SHOTS_([HA])_(OV|UN)_([\d.]+)$/.exec(c||"");
+  if(tsn) return (tsn[1]==="H"?esc(f.home):esc(f.away))+(tsn[2]==="OV"?" over ":" under ")+tsn[3]+" shots";
   /* EVERY FAMILY ADDED FROM A READER'S CODE ON 14 SEP. These are pass-through
      markets - we move them, we never predict them - but the editor and the
      splitter both draw a leg through this function, so an unnamed one prints
@@ -13251,6 +13275,7 @@ function buildPicks(){
   /* === true, not the bare value: an undefined here would read as "on". */
   TEAM_CORNER_CODES.forEach(function(c){ mkOn[c]=BUILD.mk.tcorn===true; });
   SHOTS_CODES.forEach(function(c){ mkOn[c]=BUILD.mk.shots; });
+  TEAM_SHOTS_CODES.forEach(function(c){ mkOn[c]=BUILD.mk.tshots===true; });
   allowed=allowed.filter(function(c){return mkOn[c]!==false && bookAllows(c,curBook());});
   var f0=BUILD.risk/100;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
@@ -16459,7 +16484,7 @@ var LINK_MARKETS={"1":1,"2":1,"X":1,"1X":1,"X2":1,"12":1,
   "MIXGG_1":1,"MIXGG_2":1,"MIXGG_X":1,"WINHALF_H_Y":1,"WINHALF_A_Y":1,
   "CORNERS_OV_7.5":1,"CORNERS_UN_7.5":1,"CORNERS_OV_8.5":1,"CORNERS_UN_8.5":1,"CORNERS_OV_9.5":1,"CORNERS_UN_9.5":1,"CORNERS_OV_10.5":1,"CORNERS_UN_10.5":1,
   "CORNERS_H_OV_3.5":1,"CORNERS_H_OV_4.5":1,"CORNERS_H_OV_5.5":1,"CORNERS_A_OV_2.5":1,"CORNERS_A_OV_3.5":1,"CORNERS_A_OV_4.5":1,
-  "SHOTS_OV_19.5":1,"SHOTS_OV_20.5":1,"SHOTS_OV_21.5":1,"SHOTS_OV_22.5":1,"SHOTS_OV_23.5":1,"SHOTS_OV_24.5":1,"SHOTS_OV_25.5":1,"SHOTS_OV_26.5":1,"SHOTS_OV_27.5":1,"SHOTS_OV_28.5":1,"SHOTS_OV_29.5":1,"SHOTS_OV_30.5":1,"SHOTS_OV_31.5":1};
+  "SHOTS_OV_19.5":1,"SHOTS_OV_20.5":1,"SHOTS_OV_21.5":1,"SHOTS_OV_22.5":1,"SHOTS_OV_23.5":1,"SHOTS_OV_24.5":1,"SHOTS_OV_25.5":1,"SHOTS_OV_26.5":1,"SHOTS_OV_27.5":1,"SHOTS_OV_28.5":1,"SHOTS_OV_29.5":1,"SHOTS_H_OV_7.5":1,"SHOTS_H_OV_8.5":1,"SHOTS_H_OV_9.5":1,"SHOTS_H_OV_10.5":1,"SHOTS_H_OV_11.5":1,"SHOTS_H_OV_12.5":1,"SHOTS_H_OV_13.5":1,"SHOTS_H_OV_14.5":1,"SHOTS_H_OV_15.5":1,"SHOTS_H_OV_16.5":1,"SHOTS_H_OV_17.5":1,"SHOTS_H_OV_18.5":1,"SHOTS_A_OV_7.5":1,"SHOTS_A_OV_8.5":1,"SHOTS_A_OV_9.5":1,"SHOTS_A_OV_10.5":1,"SHOTS_A_OV_11.5":1,"SHOTS_A_OV_12.5":1,"SHOTS_A_OV_13.5":1,"SHOTS_A_OV_14.5":1,"SHOTS_A_OV_15.5":1,"SHOTS_A_OV_16.5":1,"SHOTS_A_OV_17.5":1,"SHOTS_A_OV_18.5":1,"SHOTS_OV_30.5":1,"SHOTS_OV_31.5":1};
 function slipPayload(items){
   var rows=[], bad=false;
   (items||[]).slice(0,40).forEach(function(c){
@@ -19176,7 +19201,7 @@ const JACKPOT_ODDS=20000;
 const BETSLIP_MAX=50;
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
-var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,tcorn:false,shots:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,tcorn:false,shots:false,tshots:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* THE MARKET CHIPS ARE REMEMBERED. They never were: every load rebuilt both
    sets from the literals above, so a reader who switched Over 1.5 off and
    Both score on found Win or draw, Outright win, Over 1.5 and Team over 0.5
@@ -19280,6 +19305,7 @@ function wspMarkets(){var m=[];
   if(WSP.mk.corn)m=m.concat(CORNER_CODES);
   if(WSP.mk.tcorn)m=m.concat(TEAM_CORNER_CODES);
   if(WSP.mk.shots)m=m.concat(SHOTS_CODES);
+  if(WSP.mk.tshots)m=m.concat(TEAM_SHOTS_CODES);
   /* Bet9ja's own lines. bookAllows keeps them out of a SportyBet slip, and the
      filter below is what stops the wizard building one it cannot book. */
   if(WSP.mk.dro15)m.push("MIX_X_OV_1.5");
@@ -20017,7 +20043,8 @@ var MKT_CODES={wd:["1X","X2"],any:["12"],out:["1","2"],o15:["OVER_1.5"],
   tts:["HOME_OVER_0.5","AWAY_OVER_0.5"],tts2:["HOME_OVER_1.5","AWAY_OVER_1.5"],
   both:["GG"],draw:["X"],corn:["CORNERS_OV_7.5","CORNERS_OV_8.5","CORNERS_OV_9.5","CORNERS_OV_10.5"],
   tcorn:["CORNERS_H_OV_3.5","CORNERS_H_OV_4.5","CORNERS_H_OV_5.5","CORNERS_A_OV_2.5","CORNERS_A_OV_3.5","CORNERS_A_OV_4.5"],
-  shots:["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"]};
+  shots:["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"],
+  tshots:["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_H_OV_10.5","SHOTS_H_OV_11.5","SHOTS_H_OV_12.5","SHOTS_H_OV_13.5","SHOTS_H_OV_14.5","SHOTS_H_OV_15.5","SHOTS_H_OV_16.5","SHOTS_H_OV_17.5","SHOTS_H_OV_18.5","SHOTS_A_OV_7.5","SHOTS_A_OV_8.5","SHOTS_A_OV_9.5","SHOTS_A_OV_10.5","SHOTS_A_OV_11.5","SHOTS_A_OV_12.5","SHOTS_A_OV_13.5","SHOTS_A_OV_14.5","SHOTS_A_OV_15.5","SHOTS_A_OV_16.5","SHOTS_A_OV_17.5","SHOTS_A_OV_18.5"]};
 
 /* A MARKET YOU SWITCHED ON THAT CHANGED NOTHING LOOKS BROKEN.
    Measured on a 394-fixture board: turning "Team over 1.5" on at Balanced
@@ -20255,7 +20282,8 @@ var MKT_BY_CHIP={wd:["1X","X2"],any:["12"],out:["1","2"],
   rso15:["MIX_1_OV_1.5","MIX_2_OV_1.5"],weh:["WINHALF_H_Y","WINHALF_A_Y"],
   draw:["X"],corn:["CORNERS_OV_7.5","CORNERS_OV_8.5","CORNERS_OV_9.5","CORNERS_OV_10.5"],
   tcorn:["CORNERS_H_OV_3.5","CORNERS_H_OV_4.5","CORNERS_H_OV_5.5","CORNERS_A_OV_2.5","CORNERS_A_OV_3.5","CORNERS_A_OV_4.5"],
-  shots:["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"]};
+  shots:["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5","SHOTS_OV_23.5","SHOTS_OV_24.5","SHOTS_OV_25.5","SHOTS_OV_26.5","SHOTS_OV_27.5","SHOTS_OV_28.5","SHOTS_OV_29.5","SHOTS_OV_30.5","SHOTS_OV_31.5"],
+  tshots:["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_H_OV_10.5","SHOTS_H_OV_11.5","SHOTS_H_OV_12.5","SHOTS_H_OV_13.5","SHOTS_H_OV_14.5","SHOTS_H_OV_15.5","SHOTS_H_OV_16.5","SHOTS_H_OV_17.5","SHOTS_H_OV_18.5","SHOTS_A_OV_7.5","SHOTS_A_OV_8.5","SHOTS_A_OV_9.5","SHOTS_A_OV_10.5","SHOTS_A_OV_11.5","SHOTS_A_OV_12.5","SHOTS_A_OV_13.5","SHOTS_A_OV_14.5","SHOTS_A_OV_15.5","SHOTS_A_OV_16.5","SHOTS_A_OV_17.5","SHOTS_A_OV_18.5"]};
 
 /* WHY THE SLIP IS EMPTY, NAMED.
  *
@@ -20465,6 +20493,10 @@ function renderShared(){
        says so before it turns on. */
     {k:"shots", label:"Total shots", tier:0, sub:"Over, whole match", only:["sporty","bet9ja"],
      icon:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>'},
+    /* Team shots - see TEAM_SHOTS_CODES. SportyBet alone, so it narrows the
+       book and says so before it turns on, like Total shots. */
+    {k:"tshots", label:"Team shots", tier:0, sub:"Home or away, over", only:["sporty"],
+     icon:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M5 5l4 4"/>'},
     /* WIZARD ONLY. The Slider cannot build a draw - "X" is in neither
        allowedMarkets nor its mkOn map - so drawing this chip in the Slider
        would be a control that turns on and does nothing, which is exactly the
