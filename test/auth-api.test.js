@@ -16,8 +16,9 @@ function world() {
   let T = Date.UTC(2026, 8, 29, 10);
   const clock = () => T;
   const db = fakeDb(clock);
-  const w = { db, sent: [], alerts: [], claims: null, advance(ms) { T += ms; }, clock };
+  const w = { db, sent: [], alerts: [], claims: null, verify: async () => ({ ok: false, why: "sig" }), advance(ms) { T += ms; }, clock };
   const google = Object.assign({}, realGoogle, {
+    verifyIdToken: async (jwt, o) => w.verify(jwt, o),
     exchangeCode: async () => "h." + Buffer.from(JSON.stringify(w.claims)).toString("base64url") + ".s" });
   const email = Object.assign({}, realEmail, {
     sendCode: async (e, c) => { w.sent.push({ e, c }); return true; },
@@ -244,4 +245,98 @@ test("a missing or short pepper stops sign-in rather than weakening it", async (
   const saved = process.env.AUTH_PEPPER; process.env.AUTH_PEPPER = "short";
   try { assert.strictEqual((await w.call(postReq("email/send", { email: "a@b.com", turnstile: "ok" }))).code, 503); }
   finally { process.env.AUTH_PEPPER = saved; }
+});
+
+async function oneTap(w, body, h) {
+  const n = (await w.call(postReq("google/nonce", {}, h))).json();
+  w.verify = async (jwt, o) => jwt === "good" && o.nonce === n.nonce && o.clientId === "cid"
+    ? { ok: true, sub: "g-7", email: "tunde.a@gmail.com", name: "Tunde" } : { ok: false, why: "sig" };
+  return w.call(postReq("google/onetap", Object.assign({ credential: "good", nonce_id: n.nonce_id }, body || {}), h));
+}
+
+test("One Tap: a nonce, a verified token, a session, first-time flag and a first name", async () => {
+  const w = world();
+  const r = await oneTap(w);
+  assert.strictEqual(r.code, 200);
+  assert.deepStrictEqual(r.json(), { ok: true, first: true, name: "Tunde" });
+  assert.ok(sessionCookie(r));
+  assert.strictEqual(w.db.t.users[0].google_sub, "g-7");
+  const again = await oneTap(w);
+  assert.strictEqual(again.json().first, false, "second sign-in is not first");
+});
+
+test("Review Focus 3: the same One Tap nonce cannot be used twice", async () => {
+  const w = world();
+  const n = (await w.call(postReq("google/nonce", {}))).json();
+  w.verify = async (jwt, o) => o.nonce === n.nonce ? { ok: true, sub: "g-7", email: "t@x.com", name: "" } : { ok: false, why: "nonce" };
+  const b = { credential: "good", nonce_id: n.nonce_id };
+  assert.strictEqual((await w.call(postReq("google/onetap", b))).code, 200);
+  const second = await w.call(postReq("google/onetap", b));
+  assert.strictEqual(second.code, 401);
+  assert.deepStrictEqual(second.json(), { error: "google_failed" });
+  assert.strictEqual(w.db.t.sessions.length, 1);
+});
+
+test("One Tap refuses a bad token, an unknown or expired nonce, a redirect-flow attempt id, and reports Google down", async () => {
+  const w = world();
+  const n = (await w.call(postReq("google/nonce", {}))).json();
+  w.verify = async () => ({ ok: false, why: "sig" });
+  assert.strictEqual((await w.call(postReq("google/onetap", { credential: "x", nonce_id: n.nonce_id }))).code, 401);
+  assert.strictEqual((await w.call(postReq("google/onetap", { credential: "x", nonce_id: "00000000-0000-4000-8000-999999999999" }))).code, 401);
+  const prep = await w.call(postReq("google/prepare", {}));
+  const aid = new URL("https://x" + prep.json().start).searchParams.get("a");
+  assert.strictEqual((await w.call(postReq("google/onetap", { credential: "x", nonce_id: aid }))).code, 401, "a redirect attempt is not a One Tap nonce");
+  const n2 = (await w.call(postReq("google/nonce", {}))).json();
+  w.advance(11 * 60e3);
+  w.verify = async () => ({ ok: true, sub: "s", email: "a@b.com", name: "" });
+  assert.strictEqual((await w.call(postReq("google/onetap", { credential: "x", nonce_id: n2.nonce_id }))).code, 401, "expired nonce");
+  const n3 = (await w.call(postReq("google/nonce", {}))).json();
+  w.verify = async () => ({ ok: false, why: "keys" });
+  const down = await w.call(postReq("google/onetap", { credential: "x", nonce_id: n3.nonce_id }));
+  assert.strictEqual(down.code, 503);
+  assert.deepStrictEqual(down.json(), { error: "google_down" });
+});
+
+test("One Tap links an existing email account instead of making a second one", async () => {
+  const w = world();
+  await emailSignIn(w, "tunde.a@gmail.com");
+  const r = await oneTap(w);
+  assert.strictEqual(r.json().first, false);
+  assert.strictEqual(w.db.t.users.length, 1);
+  assert.strictEqual(w.db.t.users[0].google_sub, "g-7");
+});
+
+test("Review Focus 4: an unticked box writes no consent on any path; a ticked one does, with its source", async () => {
+  const w = world();
+  await oneTap(w, { optin: false });
+  await emailSignIn(w, "b@x.com");
+  const g = await googleStart(w);
+  await w.call(getReq("google/callback", { state: g.state, code: "c" }, { cookie: S.OAUTH_COOKIE + "=" + g.state }));
+  assert.deepStrictEqual(w.db.t.consent, {});
+
+  const w2 = world();
+  await oneTap(w2, { optin: true });
+  const uid = w2.db.t.users[0].id;
+  assert.strictEqual(w2.db.t.consent[uid].source, "google-onetap");
+
+  const w3 = world();
+  await w3.call(postReq("email/send", { email: "c@x.com", turnstile: "ok" }));
+  await w3.call(postReq("email/verify", { email: "c@x.com", code: w3.sent[0].c, optin: true }));
+  assert.strictEqual(w3.db.t.consent[w3.db.t.users[0].id].source, "email-code");
+
+  const w4 = world();
+  const prep = await w4.call(postReq("google/prepare", { optin: true }));
+  const start = await w4.call(getReq("google/start", { a: new URL("https://x" + prep.json().start).searchParams.get("a") }));
+  const loc = new URL(start.headers.location), a = w4.db.t.attempts[0];
+  w4.claims = { iss: "https://accounts.google.com", aud: "cid", sub: "g-2", email: "d@x.com", email_verified: true,
+    nonce: a.nonce, iat: w4.clock() / 1000, exp: w4.clock() / 1000 + 3600 };
+  const st = loc.searchParams.get("state");
+  await w4.call(getReq("google/callback", { state: st, code: "c" }, { cookie: S.OAUTH_COOKIE + "=" + st }));
+  assert.strictEqual(w4.db.t.consent[w4.db.t.users[0].id].source, "google-redirect");
+});
+
+test("email/verify now says whether the account is new", async () => {
+  const w = world();
+  assert.deepStrictEqual((await emailSignIn(w, "e@x.com")).json(), { ok: true, first: true, name: "" });
+  assert.deepStrictEqual((await emailSignIn(w, "e@x.com")).json(), { ok: true, first: false, name: "" });
 });

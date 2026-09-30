@@ -11,12 +11,14 @@ const H = require("../lib/auth/http.js");
 const S = require("../lib/auth/session.js");
 const C = require("../lib/auth/crypto.js");
 const { report } = require("../lib/report.js");
+const K = require("../lib/auth/consent.js");
 
 const ATTEMPT_MS = 10 * 60e3;
 const iso = (ms) => new Date(ms).toISOString();
 const firstIp = (req) => String(((req.headers || {})["x-forwarded-for"]) || "").split(",")[0].trim();
 const uaOf = (req) => String(((req.headers || {})["user-agent"]) || "");
-const POST_ROUTES = new Set(["google/prepare", "email/send", "email/verify", "logout", "logout-all", "devices/end"]);
+const POST_ROUTES = new Set(["google/prepare", "google/nonce", "google/onetap", "email/send", "email/verify", "logout", "logout-all", "devices/end"]);
+const ONETAP = "onetap";   // code_verifier marker: this attempt row is a One Tap nonce, not a redirect flow
 
 function make(deps) {
   const { db, google, turnstile } = deps;
@@ -61,6 +63,17 @@ function make(deps) {
     return again ? { user: again, existed: true } : null;
   }
 
+  async function userFromClaims(claims) {
+    let user = await db.userBySub(claims.sub), existed = !!user;
+    if (!user) {
+      const r = await findOrCreateByEmail(claims.email);
+      if (!r) throw new Error("user create failed");
+      user = r.user; existed = r.existed;
+      if (!user.google_sub) await db.linkGoogle(user.id, claims.sub);
+    }
+    return { user, existed };
+  }
+
   async function mustSession(req, res, t) {
     const s = await S.readSession(db, req, t);
     if (s.state !== "ok") { signedOut(res, s); return null; }
@@ -74,11 +87,38 @@ function make(deps) {
       const id = crypto.randomUUID(), nonce = C.randomToken();
       const row = await db.insertAttempt({
         id, nonce, state_hash: C.sha256hex(stateFor({ id, nonce })), code_verifier: C.randomToken(),
-        return_to: H.safeReturn(body.return),
+        return_to: H.safeReturn(body.return), optin: body.optin === true,
         expires_at: iso(t + ATTEMPT_MS),
       });
       if (!row) throw new Error("attempt insert failed");
       return H.sendJson(res, 200, { start: "/api/auth/google/start?a=" + id });
+    },
+
+    "google/nonce": async (req, res, t) => {
+      if (!(await db.rlHit("gn:" + H.ipKey(req), 3600, 60))) return H.sendJson(res, 429, { error: "slow_down", minutes: 60 });
+      const id = crypto.randomUUID(), nonce = C.randomToken();
+      const row = await db.insertAttempt({ id, nonce, state_hash: C.sha256hex("onetap:" + id + ":" + nonce),
+        code_verifier: ONETAP, return_to: "/", expires_at: iso(t + ATTEMPT_MS) });
+      if (!row) throw new Error("attempt insert failed");
+      return H.sendJson(res, 200, { nonce_id: id, nonce });
+    },
+
+    "google/onetap": async (req, res, t) => {
+      if (!(await db.rlHit("gp:" + H.ipKey(req), 3600, 30))) return H.sendJson(res, 429, { error: "slow_down", minutes: 60 });
+      const body = (await H.readJson(req, 8192)) || {};
+      const failed = () => H.sendJson(res, 401, { error: "google_failed" });
+      const a = await db.attemptById(String(body.nonce_id || ""));
+      if (!a || a.code_verifier !== ONETAP || a.consumed_at || Date.parse(a.expires_at) <= t) return failed();
+      if (!(await db.consumeAttempt(a.id, iso(t)))) return failed();          // one credential, one use
+      const claims = await google.verifyIdToken(String(body.credential || ""), { clientId: process.env.GOOGLE_CLIENT_ID, nonce: a.nonce, nowMs: t });
+      if (!claims.ok) {
+        if (claims.why === "keys") { await report(new Error("Google certs unreachable"), { route: "google/onetap" }); return H.sendJson(res, 503, { error: "google_down" }); }
+        return failed();
+      }
+      const { user, existed } = await userFromClaims(claims);
+      const s = await signIn(req, user, existed, uaOf(req), t);
+      await K.record(db, user.id, body.optin === true, "google-onetap", t);
+      return H.sendJson(res, 200, { ok: true, first: !existed, name: claims.name || "" }, [s.cookie]);
     },
 
     "google/start": async (req, res, t) => {
@@ -111,14 +151,9 @@ function make(deps) {
         clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET, redirectUri: redirectUri() });
       const claims = google.checkClaims(google.decodePayload(idToken), { clientId: process.env.GOOGLE_CLIENT_ID, nonce: a.nonce, nowMs: t });
       if (!claims.ok) return fail("claims " + claims.why);
-      let user = await db.userBySub(claims.sub), existed = !!user;
-      if (!user) {
-        const r = await findOrCreateByEmail(claims.email);
-        if (!r) throw new Error("user create failed");
-        user = r.user; existed = r.existed;
-        if (!user.google_sub) await db.linkGoogle(user.id, claims.sub);
-      }
+      const { user, existed } = await userFromClaims(claims);
       const s = await signIn(req, user, existed, uaOf(req), t);
+      await K.record(db, user.id, a.optin === true, "google-redirect", t);
       return H.redirect(res, H.safeReturn(a.return_to), [s.cookie, S.clearCookie(S.OAUTH_COOKIE)]);
     },
 
@@ -161,7 +196,8 @@ function make(deps) {
       const r = await findOrCreateByEmail(email);
       if (!r) throw new Error("user create failed");
       const s = await signIn(req, r.user, r.existed, uaOf(req), t);
-      return H.sendJson(res, 200, { ok: true }, [s.cookie]);
+      await K.record(db, r.user.id, body.optin === true, "email-code", t);
+      return H.sendJson(res, 200, { ok: true, first: !r.existed, name: "" }, [s.cookie]);
     },
 
     "logout": async (req, res, t) => {
