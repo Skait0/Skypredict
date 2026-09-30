@@ -1287,6 +1287,10 @@ html.mode-live .btabs{transform:none!important}
   color:var(--soft);font:inherit;font-weight:700;font-size:12px;padding:9px 12px;border-radius:var(--r-sm);
   cursor:pointer;letter-spacing:.04em}
 .more-collapse:hover{background:var(--card);color:var(--text);border-color:var(--soft)}
+.bp-l{margin:0;font-size:12.5px;line-height:1.6;color:var(--soft)}
+.bp-l b{color:var(--text)}
+.bp-more{margin-left:6px;background:var(--raise);border:1px solid var(--line-soft);color:var(--text);
+  font:inherit;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:var(--r-sm);cursor:pointer}
 .lmore-close{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:var(--r-sm);
   background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);cursor:pointer;
   display:grid;place-items:center;padding:0;opacity:.7;transition:opacity .16s,background .16s}
@@ -9705,6 +9709,28 @@ function countMarkets(f){
     (f.o25!=null?1-f.o25:null),f.btts,f.fh_o05,f.btts_o25,f.draw_o25,f.draw_btts]
     .filter(function(v){return v!=null&&!isNaN(v);}).length;
 }
+/* THE SAME BET, PRICED AT EVERY BOOK WE READ, BEST FIRST.
+   Owner, 30 Sep 2026: the site is market-led now, so the edge we can honestly
+   hand a reader is not "our number beats the book" but "this book pays more
+   for the same pick" - line shopping, the one habit every professional has.
+   The headline tip only. The four other feeds are big (BetKing alone is
+   606 KB), so they are fetched when a reader asks, not on every page view. */
+function bestPriceHTML(f){
+  var c=tipCode(f); if(!c||!f.tip) return "";
+  var got=Object.keys(BOOKS).map(function(k){
+    var B=BOOKS[k], o=B.odds&&f[B.odds]?+f[B.odds][c]:NaN;
+    return {B:B,o:(o>1?o:null)};
+  }).filter(function(r){ return r.o; }).sort(function(a,b){ return b.o-a.o; });
+  var pend=Object.keys(BOOKS).some(bookFeedPending);
+  if(!got.length&&!pend) return "";
+  var n=Object.keys(BOOKS).length;
+  return "<div class='grp bp'><h3>Best price for "+esc(f.tip)+"</h3><p class='bp-l'>"+
+    (got.length?"<b>x"+got[0].o.toFixed(2)+" on "+esc(got[0].B.label)+"</b>"+
+      (got.length>1?" &middot; "+got.slice(1).map(function(r){
+        return esc(r.B.label)+" "+r.o.toFixed(2); }).join(" &middot; "):""):"")+
+    (pend?"<button class='bp-more' type='button' data-fid='"+esc(fid(f))+"'>Compare all "+n+" bookies</button>":"")+
+    "</p></div>";
+}
 function moreHTML(f){
   const noDraw=(f.anybody!=null)?f.anybody:f.dc12;
   const id=fid(f);
@@ -9727,6 +9753,7 @@ function moreHTML(f){
       opt("Draw or over 2.5",f.draw_o25,f.draw_o25!=null&&f.draw_o25>=.7)+
       opt("Draw or both score",f.draw_btts,f.draw_btts!=null&&f.draw_btts>=.7)+
     "</div></div>"+
+    bestPriceHTML(f)+
     "<button class='more-collapse' type='button'>Collapse \u25b4</button></div>";
 }
 /* form_home / form_away are baked by the nightly build, so a game played today
@@ -19301,6 +19328,17 @@ $("myClearBtn").addEventListener("click",clearMy);
     wspConjure(true);
   });
 })();
+/* Compare all bookies: fetch the feeds not yet loaded. The board repaints
+   itself when a feed lands (ensureBookFeed); a sheet is redrawn here. */
+document.addEventListener("click",function(e){
+  var b=e.target.closest(".bp-more"); if(!b) return;
+  e.stopPropagation(); b.disabled=true; b.textContent="Checking prices…";
+  var id=b.dataset.fid, all=allBookFeeds()||Promise.resolve();
+  all.then(function(){
+    var body=$("sheet-body"), f=(DATA.fixtures||[]).filter(function(x){ return fid(x)===id; })[0];
+    if(f&&body&&body.contains(b)) body.innerHTML=moreHTML(f);
+  });
+});
 document.addEventListener("click",function(e){
   var b=e.target.closest(".more-collapse"); if(!b) return;
   e.stopPropagation();

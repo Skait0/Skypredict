@@ -33,3 +33,17 @@ test("the day's code uses the site's weight", () => {
   assert.strictEqual(code, site);
   assert.match(js, /pool\.sort\(\(a, b\) => blendedConf\(b,/);
 });
+
+test("the match card shows the tip's price at every book, best first", () => {
+  const { fn } = require("./books.js");
+  const BOOKS = { sporty: { label: "SportyBet", odds: "sportyOdds" }, betking: { label: "BetKing", odds: "bkOdds" },
+                  bet9ja: { label: "Bet9ja", odds: "b9Odds" } };
+  const make = (pending) => new Function("BOOKS", "tipCode", "bookFeedPending", "esc", "fid",
+    fn("bestPriceHTML") + "\nreturn bestPriceHTML;")(BOOKS, () => "1X", pending, (s) => String(s), () => "f1");
+  const f = { tip: "Arsenal or Draw", sportyOdds: { "1X": 1.20 }, bkOdds: { "1X": 1.25 }, b9Odds: {} };
+  const all = make(() => false)(f);
+  assert.match(all, /<b>x1\.25 on BetKing<\/b> &middot; SportyBet 1\.20/);
+  assert.doesNotMatch(all, /bp-more/, "no button once every feed is in");
+  assert.match(make((k) => k === "bet9ja")(f), /Compare all 3 bookies/, "a button while a feed is not loaded");
+  assert.strictEqual(make(() => false)({ tip: "X", sportyOdds: {} }), "", "nothing priced, nothing shown");
+});
