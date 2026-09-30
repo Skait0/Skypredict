@@ -154,3 +154,11 @@ test("a handicap line is offered only where SportyBet quotes it", () => {
   assert.strictEqual(open({}, "AH_1_0"), true, "draw no bet is not gated");
   assert.strictEqual(open({}, "AH_2_0.5"), true, "the 0.5 lines are the result, not gated");
 });
+
+/* The Handicap chip's lines go through the pre-booking live check with
+   corners and shots (30 Sep 2026): they close and move with the price. */
+test("the pre-booking live check reads handicap lines too", () => {
+  const LINE_CODE = new Function(decl("LINE_CODE") + "\nreturn LINE_CODE;")();
+  for (const c of ["AH_2_-1.5", "AH_1_1", "CORNERS_OV_8.5", "SHOTS_OV_24.5"]) assert.ok(LINE_CODE.test(c), c);
+  for (const c of ["OVER_1.5", "1X", "HOME_OVER_0.5"]) assert.ok(!LINE_CODE.test(c), c);
+});
