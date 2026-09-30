@@ -399,7 +399,7 @@ test("the page refuses to encode what the link cannot carry", () => {
   const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
   const m = /var LINK_MARKETS=\{([\s\S]*?)\};/.exec(src);
   assert.ok(m, "LINK_MARKETS is gone from index.html");
-  const client = [...m[1].matchAll(/"([A-Z0-9_.]+)"\s*:/g)].map((x) => x[1]).sort();
+  const client = [...m[1].matchAll(/"([A-Z0-9_.-]+)"\s*:/g)].map((x) => x[1]).sort();
   assert.deepEqual(client, Object.keys(SL.MARKETS).sort(),
     "the browser's list and the link's list have drifted");
 });
