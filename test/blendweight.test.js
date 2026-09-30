@@ -52,9 +52,8 @@ const blendWeight = new Function(consts[0] + lift("blendWeight") + "\nreturn ble
 /* ------------------------------------------------------------ the curve */
 
 test("a small disagreement is left almost alone", () => {
-  /* Where a model is allowed to have an opinion, and where "Better price"
-     lives. Blending these away would turn the site into a mirror of the book
-     and delete its whole reason to exist. */
+  /* The floor sets the weight when we roughly agree with the book. Since
+     30 Sep 2026 it is the market-led 0.90 - see the test below. */
   assert.strictEqual(blendWeight(0), MIN, "no disagreement, no extra pull");
   assert.ok(blendWeight(0.02) < MIN + 0.06,
     "two points should barely move the weight");
@@ -94,14 +93,16 @@ test("direction does not matter, only size", () => {
   assert.strictEqual(blendWeight(-0.15), blendWeight(0.15));
 });
 
-test("the floor is the weight the flat rule already used", () => {
-  /* So nothing about the small-gap behaviour changed, and any regression can
-     only be in the fixtures that were already worst. */
-  assert.strictEqual(MIN, 0.30);
-  assert.ok(MAX > MIN && MAX <= 0.85,
-    "past about 0.85 we are simply republishing the bookmaker");
-  assert.ok(FULL >= 0.15 && FULL <= 0.30,
-    "the observed error tops out around 20 points; " + FULL + " is the wrong scale");
+test("the market leads: 0.90 at every gap (owner, 30 Sep 2026)", () => {
+  /* scripts/scorecard.js --exp=blend, 7,373 held-out matches with odds:
+     1X2 log loss 1.0451 model alone, 1.0137 on the old 0.30-0.75 ramp, 1.0028
+     market alone, better with more market at every weight and in every tier.
+     Kept a hair under 1 because SportyBet is one book, softer than the average
+     price the test used. A lower floor brings back the noise "Better price"
+     used to flag. */
+  assert.strictEqual(MIN, 0.90);
+  assert.strictEqual(MAX, 0.90);
+  assert.ok(FULL >= 0.15 && FULL <= 0.30, "the ramp's scale is kept for a future non-flat rule");
 });
 
 /* ------------------------------------------------------- how it is applied */

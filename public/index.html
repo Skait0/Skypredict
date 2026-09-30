@@ -8868,7 +8868,16 @@ function refineTip(f){
    0.30 to 0.75 over a 20-point gap. Both ends are measured rather than
    chosen: 0.30 is what the flat rule already used and leaves the small-gap
    behaviour unchanged, and 20 points is where the observed error tops out. */
-var BLEND_MIN=0.30, BLEND_MAX=0.75, BLEND_FULL_GAP=0.20;
+/* MARKET-LED SINCE 30 SEP 2026, AND THE RAMP ABOVE IS FLAT AT 0.90.
+   scripts/scorecard.js --exp=blend, 24 walk-forward folds, 7,373 matches with
+   odds, 1X2 log loss: model alone 1.0451, the 0.30-0.75 ramp 1.0137, flat 0.90
+   about 1.004, market alone 1.0028 - better with more market at every weight
+   and in every tier, so keeping 30% of our own view on the games where we
+   agree was keeping noise, and that noise was what "Better price" flagged.
+   Owner: "we are after the best results for our users". 0.90 rather than 1:
+   SportyBet's single book is a little softer than the average price the test
+   used. Where the book prices nothing, the model still answers alone. */
+var BLEND_MIN=0.90, BLEND_MAX=0.90, BLEND_FULL_GAP=0.20;
 function blendWeight(gap){
   var t=Math.min(1, Math.abs(gap)/BLEND_FULL_GAP);
   return BLEND_MIN + (BLEND_MAX-BLEND_MIN)*t;
