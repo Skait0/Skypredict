@@ -1,0 +1,56 @@
+# Our corners and shots numbers beside SportyBet's price, before kick-off -
+# see scripts/pricelog.js. Owner, 30 Sep 2026: grade them in a few weeks and
+# flag "our view differs" only where our number proves better.
+#
+# The log lives on its own branch, `pricelog`, which vercel.json keeps from
+# deploying: a commit to main rebuilds the whole site, and eight snapshots a
+# day would be eight rebuilds for a file the site never reads. Every three
+# hours because GitHub's schedule runs hours late (see daily-code.yml) and a
+# single run could land after the evening kick-offs.
+name: Price log
+
+on:
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pricelog
+  cancel-in-progress: false
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check out the log branch beside the code
+        run: |
+          git fetch origin pricelog || true
+          if git rev-parse --verify origin/pricelog >/dev/null 2>&1; then
+            git worktree add ../pl origin/pricelog
+            cd ../pl && git checkout -B pricelog origin/pricelog
+          else
+            git worktree add --detach ../pl
+            cd ../pl && git checkout --orphan pricelog && git rm -rfq .
+          fi
+      - name: Snapshot
+        run: node scripts/pricelog.js --out=../pl
+      - name: Commit
+        run: |
+          cd ../pl
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "Prices $(date -u +%Y-%m-%dT%H:%M)"
+          for i in 1 2 3; do
+            git push origin pricelog && break
+            git pull --rebase origin pricelog
+            sleep 5
+          done
