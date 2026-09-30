@@ -39,6 +39,10 @@ jobs:
             git worktree add --detach ../pl
             cd ../pl && git checkout --orphan pricelog && git rm -rfq .
           fi
+      - name: Keep Vercel off this branch
+        # Vercel reads the deploy switch from the pushed commit's own
+        # vercel.json, and this branch shares no files with main.
+        run: echo '{"git":{"deploymentEnabled":false}}' > ../pl/vercel.json
       - name: Snapshot
         run: node scripts/pricelog.js --out=../pl
       - name: Commit
