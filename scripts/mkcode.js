@@ -122,14 +122,35 @@ async function events(which) {
       homeTeam: (bits[0] || "").trim(),
       awayTeam: (bits.slice(1).join(" - ") || "").trim(),
       startTime: Date.parse(m.kickoff), league: m.league,
+      /* Sportradar's match id where the book carries one (BetKing on every
+         row, Bet9ja and Betpawa on most, 1xBet never) - findEvent pairs on
+         it before it trusts a name. */
+      srId: m.srId ? String(m.srId) : null,
     };
   });
+}
+
+/* The Sportradar id inside SportyBet's event id ("sr:match:NNN"), or null. A
+   bare number is some book's own id and proves nothing. */
+function srOf(ev) {
+  const m = /^sr:match:(\d{8,9})$/.exec(String((ev && ev.eventId) || ""));
+  return m ? m[1] : null;
 }
 
 /* attachEventIds' rules, and they have to stay attachEventIds' rules: an exact
    match on both normalised names is allowed past the clock fence, and anything
    else needs the same slot and 0.6 a side. */
-function findEvent(f, list) {
+function findEvent(f, list, sr) {
+  /* BY SPORTRADAR ID FIRST (30 Sep 2026). BetKing sat out four daily codes in
+     six days over one leg a day that failed a NAME match - "Club Villa
+     Dalmine", national sides spelled their way - while the book listed the
+     game. The id pairs them whatever the spelling; the clock fence stays,
+     because a book can hand back another provider's number. */
+  if (sr) {
+    for (const m of list) {
+      if (m.eventId && m.srId === sr && M.sameSlot(f, m)) return m;
+    }
+  }
   const fh = M.normTeam(f.home), fa = M.normTeam(f.away);
   for (const m of list) {
     if (!m.eventId) continue;
@@ -297,9 +318,9 @@ if (require.main === module) (async () => {
   const picked = [];
   for (const f of pool) {
     if (picked.length >= legs) break;
-    const s = findEvent(f, sporty), b = findEvent(f, b9);
+    const s = findEvent(f, sporty), sr = srOf(s), b = findEvent(f, b9, sr);
     if (!s || !b) continue;
-    const k = findEvent(f, bk), w = findEvent(f, bp), x = findEvent(f, xb);
+    const k = findEvent(f, bk, sr), w = findEvent(f, bp, sr), x = findEvent(f, xb, sr);
     const market = M.tipCode(f);
     picked.push({ f: f, sporty: s.eventId, bet9ja: b.eventId,
                   betking: k ? k.eventId : null,
@@ -372,8 +393,8 @@ if (require.main === module) (async () => {
     working = working.filter((p) => !refused.has(p));
     while (working.length < legs && spare.length) {
       const f = spare.shift();
-      const sp = findEvent(f, sporty), bb = findEvent(f, b9), kk = findEvent(f, bk),
-            ww = findEvent(f, bp), xx = findEvent(f, xb);
+      const sp = findEvent(f, sporty), spr = srOf(sp), bb = findEvent(f, b9, spr),
+            kk = findEvent(f, bk, spr), ww = findEvent(f, bp, spr), xx = findEvent(f, xb, spr);
       if (sp && bb) {
         const market = M.tipCode(f);
         working.push({ f: f, sporty: sp.eventId, bet9ja: bb.eventId,
@@ -481,4 +502,4 @@ if (require.main === module) (async () => {
 
 /* Exported so the day walk can be tested on its own, without a network call
    and without minting anything. */
-module.exports = { chooseDay };
+module.exports = { chooseDay, findEvent, srOf };
