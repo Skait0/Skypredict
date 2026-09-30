@@ -1216,5 +1216,73 @@
       "betpawa": "22CDGSK"
     },
     "odds": 1.64
+  },
+  "2026-09-30": {
+    "date": "2026-09-30",
+    "generated": "2026-09-30T12:12:00.163Z",
+    "firstKickoff": "2026-09-30T15:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-09-30",
+        "home": "Enyimba",
+        "away": "Shooting Stars",
+        "league": "Nigeria Premier League",
+        "kickoff": "2026-09-30T15:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.84,
+        "market": "1X",
+        "odd": 1.11
+      },
+      {
+        "date": "2026-09-30",
+        "home": "New York Red Bulls",
+        "away": "St. Louis City",
+        "league": "USA MLS",
+        "kickoff": "2026-09-30T23:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.843,
+        "market": "OVER_1.5",
+        "odd": 1.15
+      },
+      {
+        "date": "2026-09-30",
+        "home": "Atlético Ottawa",
+        "away": "Cavalry FC",
+        "league": "Canada Canadian Premier League",
+        "kickoff": "2026-09-30T23:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.829,
+        "market": "OVER_1.5",
+        "odd": 1.16
+      },
+      {
+        "date": "2026-09-30",
+        "home": "Eastleigh",
+        "away": "Southend",
+        "league": "England National League",
+        "kickoff": "2026-09-30T18:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.846,
+        "market": "OVER_1.5",
+        "odd": 1.18
+      },
+      {
+        "date": "2026-09-30",
+        "home": "Defensor Sporting",
+        "away": "Plaza Colonia",
+        "league": "Uruguay Copa Uruguay",
+        "kickoff": "2026-09-30T19:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.75,
+        "market": "1X",
+        "odd": 1.16
+      }
+    ],
+    "codes": {
+      "sporty": "H6X4QZ",
+      "bet9ja": "5TBF89T",
+      "onexbet": "J8KHT"
+    },
+    "odds": 2.03
   }
 }
