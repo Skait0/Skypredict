@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign-in sheet layouts</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Roboto+Condensed:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0D0D0F;--card:#161619;--card2:#1E1E22;--line:#2A2A30;--text:#F2F1F0;--soft:#A3A0A6;--gold:#F2B84B;--gold-ink:#FFC963;--wash:rgba(242,184,75,.14);--rim:rgba(242,184,75,.42)}
+*{box-sizing:border-box}
+body{margin:0;background:#070708;color:var(--text);font-family:'Plus Jakarta Sans',system-ui,sans-serif;padding:28px 16px 60px}
+h1{font-size:22px;margin:0 0 6px;letter-spacing:-.01em}
+.sub{color:var(--soft);margin:0 0 28px;max-width:820px;line-height:1.5}
+.row{display:flex;gap:28px;flex-wrap:wrap;justify-content:center}
+.opt{cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:14px;padding:14px;border-radius:26px;border:1px solid transparent}
+.opt:hover{background:#0f0f12}.opt.selected{border-color:var(--gold);background:#0f0f12}
+.opt h3{margin:0;font-size:16px}
+.opt p{margin:0;color:var(--soft);font-size:13px;max-width:290px;text-align:center;line-height:1.45}
+.tag{font:700 11px 'Roboto Condensed';letter-spacing:.14em;color:var(--gold);text-transform:uppercase}
+.phone{width:300px;height:620px;border-radius:38px;background:var(--bg);border:1px solid #232327;position:relative;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.app{position:absolute;inset:0;padding:54px 16px 0;filter:blur(1.5px);opacity:.35}
+.app .hd{display:flex;justify-content:space-between;font-weight:800;margin-bottom:18px}
+.app .c{height:62px;border-radius:14px;background:var(--card);margin-bottom:10px;border:1px solid var(--line)}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:26px 26px 0 0;border-top:1px solid var(--line);padding:12px 20px 22px}
+.grab{width:38px;height:4px;border-radius:4px;background:#3a3a41;margin:0 auto 16px}
+.x{position:absolute;right:14px;top:14px;width:30px;height:30px;border-radius:50%;background:var(--card2);color:var(--soft);display:flex;align-items:center;justify-content:center;font-size:16px}
+
+/* Google-rendered pieces: we pick theme/shape/text only */
+.g-chip{display:flex;align-items:center;gap:10px;background:#fff;color:#1f1f1f;border-radius:999px;padding:7px 14px 7px 7px;font:600 13.5px Roboto,Arial,sans-serif;position:relative}
+.g-chip .av{width:30px;height:30px;border-radius:50%;background:#5b6cf0;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+.g-chip small{display:block;color:#5f6368;font-weight:400;font-size:11.5px}
+.g-chip .gl{margin-left:auto;width:18px;height:18px}
+.gnote{font:500 10px 'Roboto Condensed';letter-spacing:.1em;color:#6d6b72;text-transform:uppercase;text-align:center;margin:6px 0 0}
+.or{display:flex;align-items:center;gap:10px;color:#6d6b72;font:700 10.5px 'Roboto Condensed';letter-spacing:.16em;margin:16px 0}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.field{display:flex;gap:8px}
+.inp{flex:1;height:46px;border-radius:12px;background:var(--bg);border:1px solid var(--line);color:#6d6b72;display:flex;align-items:center;padding:0 14px;font-size:14px}
+.go{height:46px;padding:0 16px;border-radius:12px;background:var(--card2);border:1px solid var(--line);font-weight:700;font-size:14px;display:flex;align-items:center}
+.opt-in{display:flex;gap:10px;align-items:flex-start;margin:16px 0 0;font-size:12.5px;color:var(--soft);line-height:1.4}
+.box{flex:none;width:18px;height:18px;border-radius:5px;border:1.5px solid #4a4950;margin-top:1px}
+.fine{font-size:11px;color:#6d6b72;margin:14px 0 0;text-align:center}
+.fine a{color:var(--soft)}
+
+/* A: context-led */
+.lockrow{display:flex;align-items:center;gap:12px;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:0 0 18px}
+.lockrow .ic{width:34px;height:34px;border-radius:10px;background:var(--wash);border:1px solid var(--rim);display:flex;align-items:center;justify-content:center;color:var(--gold)}
+.lockrow b{font-size:13.5px;display:block}
+.lockrow small{color:var(--soft);font-size:11.5px}
+.lockrow em{margin-left:auto;font:700 18px 'Roboto Condensed';font-style:normal;color:var(--gold)}
+.a-h{font-size:24px;font-weight:800;letter-spacing:-.025em;line-height:1.1;margin:0 0 6px}
+.a-s{color:var(--soft);font-size:13px;margin:0 0 18px}
+
+/* B: pitch-line hero */
+.hero{position:relative;height:118px;margin:-4px -20px 14px;overflow:hidden;border-bottom:1px solid var(--line)}
+.hero svg{position:absolute;inset:0;width:100%;height:100%}
+.hero .t{position:absolute;left:20px;bottom:14px}
+.hero .t b{display:block;font-size:24px;font-weight:800;letter-spacing:-.025em;line-height:1.05}
+.hero .t b i{font-style:normal;color:var(--gold)}
+.perks{display:flex;gap:6px;margin:0 0 16px}
+.perks span{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 6px;text-align:center;font:700 10px 'Roboto Condensed';letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+.perks span b{display:block;color:var(--gold);font-size:16px;letter-spacing:0;margin-bottom:1px}
+
+.note{max-width:820px;margin:34px auto 0;color:var(--soft);font-size:13px;line-height:1.6;border-top:1px solid #1d1d21;padding-top:18px}
+.note b{color:var(--text)}
+</style>
+</head>
+<body>
+<h1>Which sign-in sheet?</h1>
+<p class="sub">This slides up when a signed-out reader taps a locked feature, here <b>Book this slip</b>. The white Google piece is drawn by Google: we choose only its shape, colour and wording. The opt-in box starts unticked.</p>
+
+<div class="row">
+  <div class="opt" data-choice="context" onclick="toggleSelect(this)">
+    <span class="tag">A · What you tapped</span>
+    <div class="phone"><div class="app"><div class="hd">Soccerwizard</div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div></div><div class="scrim"></div>
+      <div class="sheet"><div class="grab"></div><div class="x">×</div>
+        <p class="a-h">One tap and<br>it's booked.</p>
+        <p class="a-s">Free. Your slips follow you to every device.</p>
+        <div class="lockrow"><div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><div><b>4-leg slip · SportyBet</b><small>Waiting for you</small></div><em>6.24</em></div>
+        <div class="g-chip"><span class="av">T</span><div>Continue as Tunde<small>tunde.a@gmail.com</small></div><svg class="gl" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.8 6C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 7.1-10 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7a14.5 14.5 0 0 1 0-9.4l-7.8-6a24 24 0 0 0 0 21.4z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.2-13.5-10l-7.8 6C6.6 42.6 14.6 48 24 48z"/></svg></div>
+        <div class="or">OR EMAIL ME A CODE</div>
+        <div class="field"><div class="inp">you@email.com</div><div class="go">Send</div></div>
+        <label class="opt-in"><span class="box"></span>Send me the day's best picks by email. Unsubscribe any time.</label>
+        <p class="fine">No password. We never post for you. <a>Privacy</a></p>
+      </div>
+    </div>
+    <h3>Talks about what you tapped</h3>
+    <p>Headline and a card show the exact slip waiting behind the lock. Wording changes per feature: "book", "save", "build".</p>
+  </div>
+
+  <div class="opt" data-choice="pitch" onclick="toggleSelect(this)">
+    <span class="tag">B · Pitch-line hero</span>
+    <div class="phone"><div class="app"><div class="hd">Soccerwizard</div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div></div><div class="scrim"></div>
+      <div class="sheet"><div class="grab"></div><div class="x" style="z-index:2">×</div>
+        <div class="hero">
+          <svg viewBox="0 0 300 118" preserveAspectRatio="xMidYMid slice" fill="none" stroke="#F2B84B" stroke-opacity=".22" stroke-width="1.2">
+            <rect x="-20" y="-40" width="340" height="190"/><line x1="150" y1="-40" x2="150" y2="150"/><circle cx="150" cy="40" r="46"/><circle cx="150" cy="40" r="2.5" fill="#F2B84B" fill-opacity=".5"/>
+            <rect x="228" y="-6" width="80" height="92"/><rect x="266" y="18" width="40" height="44"/><path d="M228 22a26 26 0 0 0 0 36"/>
+            <path d="M70 92 C 110 60, 150 70, 196 40" stroke-opacity=".85" stroke-width="2" stroke-dasharray="1 7" stroke-linecap="round"/>
+            <circle cx="198" cy="39" r="6" fill="#F2F1F0" stroke="none"/>
+          </svg>
+          <div class="t"><b>Your slips.<br><i>Every device.</i></b></div>
+        </div>
+        <div class="perks"><span><b>60</b>slips saved</span><span><b>1 tap</b>booking</span><span><b>Free</b>always</span></div>
+        <div class="g-chip"><span class="av">T</span><div>Continue as Tunde<small>tunde.a@gmail.com</small></div><svg class="gl" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.8 6C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 7.1-10 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7a14.5 14.5 0 0 1 0-9.4l-7.8-6a24 24 0 0 0 0 21.4z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.2-13.5-10l-7.8 6C6.6 42.6 14.6 48 24 48z"/></svg></div>
+        <div class="or">OR EMAIL ME A CODE</div>
+        <div class="field"><div class="inp">you@email.com</div><div class="go">Send</div></div>
+        <label class="opt-in"><span class="box"></span>Send me the day's best picks by email. Unsubscribe any time.</label>
+        <p class="fine">No password. We never post for you. <a>Privacy</a></p>
+      </div>
+    </div>
+    <h3>Same sheet everywhere, strong look</h3>
+    <p>Gold pitch lines with a ball arcing toward goal, which leads straight into your Roll loader. Three short perks. Same wording for every lock.</p>
+  </div>
+</div>
+
+<p class="note"><b>Both keep:</b> Google first, email code second, opt-in box last. In X, Telegram and the installed iPhone app, Google hides and email moves to the top. <b>Can mix:</b> for example, B's pitch hero with A's "what you tapped" card. Say so in the terminal.</p>
+</body>
+</html>

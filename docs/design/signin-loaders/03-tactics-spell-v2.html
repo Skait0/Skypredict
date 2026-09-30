@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tactics Spell v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Roboto+Condensed:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0D0D0F;--card:#161619;--card2:#1E1E22;--line:#2A2A30;--text:#F2F1F0;--soft:#A3A0A6;--gold:#F2B84B;--gold-ink:#FFC963}
+*{box-sizing:border-box}
+body{margin:0;background:#070708;color:var(--text);font-family:'Plus Jakarta Sans',system-ui,sans-serif;padding:28px 16px 60px}
+h1{font-size:22px;margin:0 0 6px;letter-spacing:-.01em}
+.sub{color:var(--soft);margin:0 0 26px;max-width:760px;line-height:1.5}
+.row{display:flex;gap:40px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.phone{width:300px;height:620px;border-radius:38px;background:var(--bg);border:1px solid #232327;position:relative;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.app{position:absolute;inset:0;padding:54px 16px 0;filter:blur(1.5px);opacity:.35}
+.app .hd{font-weight:800;margin-bottom:18px}
+.app .c{height:62px;border-radius:14px;background:var(--card);margin-bottom:10px;border:1px solid var(--line)}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+.sheet{position:absolute;left:0;right:0;bottom:0;height:450px;background:var(--card);border-radius:26px 26px 0 0;border-top:1px solid var(--line);padding:12px 18px 20px;display:flex;flex-direction:column;overflow:hidden}
+.grab{width:38px;height:4px;border-radius:4px;background:#3a3a41;margin:0 auto 4px}
+.hud{display:flex;justify-content:space-between;font:700 10px 'Roboto Condensed';letter-spacing:.16em;color:#6d6b72;text-transform:uppercase;padding:6px 2px 0}
+.hud b{color:var(--gold);font-weight:700}
+.stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;perspective:700px}
+.tilt{transform:rotateX(24deg) translateY(-6px);transform-style:preserve-3d;transition:transform .5s}
+.tilt.shake{animation:shake .38s cubic-bezier(.3,.7,.4,1)}
+@keyframes shake{0%{transform:rotateX(24deg) translate(0,-6px)}25%{transform:rotateX(26deg) translate(-3px,-3px)}50%{transform:rotateX(23deg) translate(3px,-8px)}75%{transform:rotateX(25deg) translate(-2px,-5px)}100%{transform:rotateX(24deg) translate(0,-6px)}}
+svg.board{width:256px;height:280px;overflow:visible}
+.pl{fill:none;stroke:#F2B84B;stroke-opacity:.16;stroke-width:1.2}
+.turf{fill:url(#turf)}
+.dot{fill:#1E1E22;stroke:#57565d;stroke-width:1.6;transition:fill .3s,stroke .3s}
+.dot.on{fill:#F2B84B;stroke:#FFE3A6}
+.ring{fill:none;stroke:#FFC963;stroke-width:1.5;opacity:0;transform-box:fill-box;transform-origin:center}
+.ring.go{animation:ring .6s ease-out}
+@keyframes ring{0%{opacity:1;transform:scale(.6)}100%{opacity:0;transform:scale(2.6)}}
+.rune{font:700 9px 'Roboto Condensed';fill:#FFC963;opacity:0;letter-spacing:.1em;text-anchor:middle}
+.rune.go{animation:rune .9s ease-out forwards}
+@keyframes rune{0%{opacity:0;transform:translateY(4px)}25%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
+.x{stroke:#6d6b72;stroke-width:2.2;stroke-linecap:round;transform-box:fill-box;transform-origin:center;transition:opacity .4s}
+.x.poof{animation:poof .5s ease-in forwards}
+@keyframes poof{40%{transform:scale(1.3) rotate(90deg);stroke:#FFC963}100%{transform:scale(0) rotate(220deg);opacity:0}}
+.pass{fill:none;stroke:#F2B84B;stroke-width:2;stroke-linecap:round;stroke-opacity:.55}
+.shot{stroke:#FFE3A6;stroke-width:2.6;stroke-opacity:.9}
+.tail circle{fill:#FFC963}
+.ballg{filter:url(#gl)}
+.net{stroke:#F2B84B;stroke-opacity:.4;stroke-width:.8;fill:none;transform-box:fill-box;transform-origin:50% 100%}
+.net.go{stroke-opacity:1;animation:bulge .55s cubic-bezier(.3,1.8,.4,1)}
+@keyframes bulge{40%{transform:scaleY(1.7) scaleX(1.08)}100%{transform:none}}
+.bits circle{fill:#FFC963}
+.bits path{fill:#FFE3A6}
+.hello{position:absolute;left:0;right:0;bottom:8px;text-align:center;opacity:0;transform:translateY(10px) scale(.96);transition:all .45s cubic-bezier(.2,1.4,.4,1)}
+.hello.on{opacity:1;transform:none}
+.hello b{font-size:24px;font-weight:800;letter-spacing:-.02em}
+.hello b i{font-style:normal;color:var(--gold)}
+.cap{height:42px;text-align:center}
+.cap b{display:block;font-size:15px}
+.cap small{display:block;color:var(--soft);font-size:12px;margin-top:3px;font-family:'Roboto Condensed';letter-spacing:.06em;text-transform:uppercase}
+.side{max-width:330px;color:var(--soft);font-size:13.5px;line-height:1.6}
+.side h3{color:var(--text);font-size:15px;margin:0 0 8px}
+.side ul{margin:0 0 18px;padding-left:18px}
+.side li{margin:0 0 6px}
+.side b{color:var(--text)}
+.btn{display:inline-block;margin-top:4px;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font:700 13px 'Plus Jakarta Sans';cursor:pointer}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<h1>C · The Tactics Spell, v2</h1>
+<p class="sub">More fun and punchier, still about 4 KB of plain SVG and CSS. It loops, and "Speed" shows it on a fast connection.</p>
+
+<div class="row">
+  <div class="phone"><div class="app"><div class="hd">Soccerwizard</div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div></div><div class="scrim"></div>
+    <div class="sheet"><div class="grab"></div>
+      <div class="hud"><span>Build-up</span><span>Pass <b id="pN">0</b>/6</span></div>
+      <div class="stage">
+        <div class="tilt" id="tilt">
+          <svg class="board" viewBox="0 -16 256 290">
+            <defs>
+              <filter id="gl" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <linearGradient id="turf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F2B84B" stop-opacity=".07"/><stop offset="1" stop-color="#F2B84B" stop-opacity="0"/></linearGradient>
+            </defs>
+            <rect class="turf" x="8" y="8" width="240" height="252" rx="6"/>
+            <rect class="pl" x="8" y="8" width="240" height="252" rx="6"/>
+            <path class="pl" d="M84 8v44h88V8M106 8v16h44V8M102 52a30 30 0 0 0 52 0"/>
+            <line class="pl" x1="8" y1="260" x2="248" y2="260"/><path class="pl" d="M86 260a42 42 0 0 1 84 0"/>
+            <circle class="pl" cx="128" cy="40" r="1.6" fill="#F2B84B" fill-opacity=".3"/>
+            <path class="net" id="net" d="M104 8V-8h48V8M112 -8V8M120 -8V8M128 -8V8M136 -8V8M144 -8V8M104 -2h48M104 4h48"/>
+            <!-- defenders: chalk X's that vanish as the spell passes -->
+            <g id="xs">
+              <path class="x" d="M86 146l8 8m0-8l-8 8"/><path class="x" d="M160 132l8 8m0-8l-8 8"/><path class="x" d="M150 72l8 8m0-8l-8 8"/>
+            </g>
+            <g id="passes"></g>
+            <g id="players"></g>
+            <g class="tail" id="tail"></g>
+            <g class="ballg" id="ball" opacity="0">
+              <circle r="6.5" fill="#F2F1F0"/>
+              <path d="M0 -2.6l2.5 1.8-1 3H-1.5l-1-3z" fill="#161619"/>
+            </g>
+            <g class="bits" id="bits"></g>
+          </svg>
+        </div>
+        <div class="hello" id="hello"><b>You're in, <i>Tunde</i> ✦</b></div>
+      </div>
+      <div class="cap"><b id="cC">Signing you in</b><small id="cC2">Checking with Google</small></div>
+    </div>
+  </div>
+
+  <div class="side">
+    <h3>What's new</h3>
+    <ul>
+      <li><b>Board tilts in 3D</b>, like a tactics table seen from the dugout.</li>
+      <li><b>Spark is a real ball</b> with a gold comet tail.</li>
+      <li><b>Every touch casts</b>: a ring pulses and a rune floats up, e.g. "1-2", "✦", "NUTMEG".</li>
+      <li><b>Defenders vanish</b>: chalk X's spin into sparks as the move goes past them.</li>
+      <li><b>Pass counter</b> in the corner ties to the real loading steps.</li>
+      <li><b>Goal!</b> The shot curls in, the net bulges, the board shakes, gold stars burst, and "You're in, Tunde ✦" pops up. Android phones give a tiny buzz, if allowed.</li>
+    </ul>
+    <h3>When loading is fast</h3>
+    <p>If your account loads before the move ends, the rest speeds up rather than being skipped, so the goal always lands in about a second.</p>
+    <button class="btn" id="fast" type="button">Speed: normal</button>
+    <p style="margin-top:18px">Reply in the terminal: good, or what to change.</p>
+  </div>
+</div>
+
+<script>
+var NS="http://www.w3.org/2000/svg",SPEED=1;
+var STEPS=[["Signing you in","Checking with Google"],["Pulling your slips","3 slips · 2 favourites"],["Ready","Taking you back"]];
+function cap(i){document.getElementById("cC").textContent=STEPS[i][0];document.getElementById("cC2").textContent=STEPS[i][1];}
+function later(ms,f){return setTimeout(f,ms/SPEED);}
+function tween(d,f,done){d/=SPEED;var t0=performance.now();(function s(n){var k=Math.min(1,(n-t0)/d);f(k);if(k<1)requestAnimationFrame(s);else if(done)done();})(t0);}
+function el(tag,attrs,parent){var e=document.createElementNS(NS,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);parent.appendChild(e);return e;}
+
+/* keeper, full-backs, mids, striker; last point is the goal */
+var PTS=[[128,244],[52,196],[98,150],[182,172],[206,100],[126,64],[128,-2]];
+var RUNES=["","1-2","✦","SWITCH","NUTMEG","✦",""];
+var XS_AT={2:0,4:1,5:2};   // which defender vanishes after which touch
+var players=document.getElementById("players");
+PTS.slice(0,6).forEach(function(p){
+  el("circle",{"class":"ring",cx:p[0],cy:p[1],r:7},players);
+  el("circle",{"class":"dot",cx:p[0],cy:p[1],r:6.5},players);
+  var t=el("text",{"class":"rune",x:p[0],y:p[1]-12},players);
+});
+document.getElementById("fast").onclick=function(){SPEED=SPEED===1?2.2:1;this.textContent="Speed: "+(SPEED===1?"normal":"fast connection");};
+
+function run(){
+  var dots=players.querySelectorAll(".dot"),rings=players.querySelectorAll(".ring"),runes=players.querySelectorAll(".rune"),
+      xs=document.querySelectorAll("#xs .x"),P=document.getElementById("passes"),tail=document.getElementById("tail"),
+      ball=document.getElementById("ball"),net=document.getElementById("net"),bits=document.getElementById("bits"),
+      tilt=document.getElementById("tilt"),hello=document.getElementById("hello"),pN=document.getElementById("pN");
+  P.innerHTML="";tail.innerHTML="";bits.innerHTML="";hello.classList.remove("on");net.classList.remove("go");
+  [].forEach.call(dots,function(d){d.classList.remove("on");});
+  [].forEach.call(xs,function(x){x.classList.remove("poof");x.style.opacity=1;});
+  pN.textContent="0";cap(0);
+  var trail=[];for(var t=0;t<7;t++)trail.push(el("circle",{r:4-t*.5,opacity:0},tail));
+  function place(x,y){ball.setAttribute("transform","translate("+x+" "+y+")");
+    trail.unshift(trail.pop());trail[0].setAttribute("cx",x);trail[0].setAttribute("cy",y);
+    trail.forEach(function(c,j){c.setAttribute("opacity",(.55-j*.075).toFixed(2));});}
+  function touch(i){
+    dots[i].classList.add("on");
+    rings[i].classList.remove("go");void rings[i].getBBox();rings[i].classList.add("go");
+    if(RUNES[i]){runes[i].textContent=RUNES[i];runes[i].classList.remove("go");void runes[i].getBBox();runes[i].classList.add("go");}
+    if(XS_AT[i]!=null){var x=xs[XS_AT[i]];x.classList.add("poof");}
+  }
+  var i=0;
+  function next(){
+    var a=PTS[i],b=PTS[i+1],shot=i===PTS.length-2;
+    var bend=shot?-58:(i%2?-30:30),mx=(a[0]+b[0])/2+bend,my=(a[1]+b[1])/2+(shot?10:0);
+    var path=el("path",{"class":"pass"+(shot?" shot":""),d:"M"+a[0]+" "+a[1]+" Q"+mx+" "+my+" "+b[0]+" "+b[1]},P);
+    var L=path.getTotalLength();path.style.strokeDasharray=L;path.style.strokeDashoffset=L;
+    tween(shot?380:520,function(k){var e=shot?k*k*(3-2*k):1-Math.pow(1-k,2.2);path.style.strokeDashoffset=L*(1-e);var p=path.getPointAtLength(L*e);place(p.x,p.y);},
+      function(){
+        i++;
+        if(shot) return goal();
+        pN.textContent=i;touch(i);if(i===2)cap(1);
+        path.style.transition="stroke-opacity .8s";path.style.strokeOpacity=.18;
+        later(i===3?260:110,next);
+      });
+  }
+  function goal(){
+    pN.textContent="6";ball.setAttribute("opacity",0);trail.forEach(function(c){c.setAttribute("opacity",0);});
+    net.classList.add("go");tilt.classList.remove("shake");void tilt.offsetWidth;tilt.classList.add("shake");
+    cap(2);
+    try{if(navigator.vibrate)navigator.vibrate(18);}catch(e){}
+    for(var k=0;k<18;k++)(function(k){
+      var star=k%3===0,ang=Math.PI*(.05+.9*Math.random()),sp=26+Math.random()*52,rot=Math.random()*360;
+      var n=star?el("path",{d:"M0-4L1 -1 4 0 1 1 0 4-1 1-4 0-1-1z"},bits):el("circle",{r:1.4+Math.random()*1.2},bits);
+      tween(900+Math.random()*300,function(t){var x=128+Math.cos(ang)*sp*t,y=0+Math.sin(ang)*sp*t+18*t*t;
+        n.setAttribute("transform","translate("+x+" "+y+") rotate("+(rot+t*200)+")");n.setAttribute("opacity",(1-t).toFixed(2));});
+    })(k);
+    later(260,function(){hello.classList.add("on");});
+    later(3400,run);
+  }
+  ball.setAttribute("opacity",1);place(PTS[0][0],PTS[0][1]);touch(0);
+  later(550,next);
+}
+if(!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches))run();
+else{document.getElementById("hello").classList.add("on");cap(2);}
+</script>
+</body>
+</html>

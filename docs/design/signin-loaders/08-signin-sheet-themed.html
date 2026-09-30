@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign-in sheet, themed</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Roboto+Condensed:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0D0D0F;--card:#161619;--card2:#1E1E22;--line:#2A2A30;--text:#F2F1F0;--soft:#A3A0A6;--gold:#F2B84B;--gold-ink:#FFC963;--wash:rgba(242,184,75,.12);--rim:rgba(242,184,75,.42)}
+*{box-sizing:border-box}
+body{margin:0;background:#070708;color:var(--text);font-family:'Plus Jakarta Sans',system-ui,sans-serif;padding:28px 16px 60px}
+h1{font-size:22px;margin:0 0 6px;letter-spacing:-.01em}
+.sub{color:var(--soft);margin:0 0 28px;max-width:820px;line-height:1.5}
+.row{display:flex;gap:30px;flex-wrap:wrap;justify-content:center}
+.opt{display:flex;flex-direction:column;align-items:center;gap:14px;padding:14px}
+.opt h3{margin:0;font-size:16px}
+.opt p{margin:0;color:var(--soft);font-size:13px;max-width:300px;text-align:center;line-height:1.45}
+.tag{font:700 11px 'Roboto Condensed';letter-spacing:.14em;color:var(--gold);text-transform:uppercase}
+.phone{width:300px;height:640px;border-radius:38px;background:var(--bg);border:1px solid #232327;position:relative;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.app{position:absolute;inset:0;padding:54px 16px 0;filter:blur(1.5px);opacity:.35}
+.app .hd{font-weight:800;margin-bottom:18px}
+.app .c{height:62px;border-radius:14px;background:var(--card);margin-bottom:10px;border:1px solid var(--line)}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:26px 26px 0 0;border-top:1px solid var(--line);padding:12px 20px 20px}
+.grab{width:38px;height:4px;border-radius:4px;background:#3a3a41;margin:0 auto 10px}
+.x{position:absolute;right:14px;top:14px;width:30px;height:30px;border-radius:50%;background:var(--card2);color:var(--soft);display:flex;align-items:center;justify-content:center;font-size:16px;z-index:3}
+.h{font-size:23px;font-weight:800;letter-spacing:-.025em;line-height:1.1;margin:0 0 6px}
+.h i{font-style:normal;color:var(--gold)}
+.s{color:var(--soft);font-size:12.5px;margin:0 0 16px;line-height:1.45}
+.g-chip{display:flex;align-items:center;gap:10px;background:#fff;color:#1f1f1f;border-radius:999px;padding:7px 14px 7px 7px;font:600 13.5px Roboto,Arial,sans-serif}
+.g-chip .av{width:30px;height:30px;border-radius:50%;background:#5b6cf0;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+.g-chip small{display:block;color:#5f6368;font-weight:400;font-size:11.5px}
+.g-chip .gl{margin-left:auto;width:18px;height:18px}
+.or{display:flex;align-items:center;gap:10px;color:#6d6b72;font:700 10.5px 'Roboto Condensed';letter-spacing:.16em;margin:14px 0}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.field{display:flex;gap:8px}
+.inp{flex:1;height:46px;border-radius:12px;background:var(--bg);border:1px solid var(--line);color:#6d6b72;display:flex;align-items:center;padding:0 14px;font-size:14px}
+.go{height:46px;padding:0 16px;border-radius:12px;background:var(--gold);color:#1a1405;font-weight:800;font-size:14px;display:flex;align-items:center}
+.opt-in{display:flex;gap:10px;align-items:flex-start;margin:14px 0 0;font-size:12.5px;color:var(--soft);line-height:1.4}
+.box{flex:none;width:18px;height:18px;border-radius:5px;border:1.5px solid #4a4950;margin-top:1px}
+.fine{font-size:11px;color:#6d6b72;margin:12px 0 0;text-align:center}
+
+/* A: the dormant board */
+.dorm{position:relative;height:132px;margin:-2px -20px 12px;overflow:hidden;perspective:500px;border-bottom:1px solid var(--line)}
+.dorm .tb{position:absolute;left:50%;top:-40px;width:250px;margin-left:-125px;transform:rotateX(52deg);transform-origin:50% 100%}
+.dorm svg{width:250px;height:190px;display:block}
+.dl{fill:none;stroke:#F2B84B;stroke-opacity:.16;stroke-width:1.4}
+.dd{fill:#1E1E22;stroke:#4d4c53;stroke-width:1.6}
+.dx{stroke:#4d4c53;stroke-width:2.2;stroke-linecap:round}
+.dorm .ember{fill:#F2B84B;animation:breath 2.4s ease-in-out infinite}
+@keyframes breath{0%,100%{opacity:.25}50%{opacity:1}}
+.dorm .fadeb{position:absolute;inset:0;background:linear-gradient(180deg,rgba(22,22,25,0) 40%,var(--card))}
+.dorm .lbl{position:absolute;left:0;right:0;bottom:8px;text-align:center;font:700 9.5px 'Roboto Condensed';letter-spacing:.24em;color:#6d6b72}
+.dorm .lbl b{color:var(--gold)}
+
+/* B: sealed slip */
+.sealwrap{position:relative;margin:6px 0 16px}
+.slip{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 14px 10px;filter:blur(.0px)}
+.slip .r{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;color:var(--soft)}
+.slip .r em{font:700 14px 'Roboto Condensed';font-style:normal;color:#5e5d63}
+.slip .r span{filter:blur(2.4px)}
+.slip .t{display:flex;justify-content:space-between;border-top:1px dashed #34343b;margin-top:4px;padding-top:7px;font:700 10px 'Roboto Condensed';letter-spacing:.14em;color:#6d6b72}
+.slip .t em{font:700 18px 'Roboto Condensed';font-style:normal;color:var(--gold)}
+.seal{position:absolute;right:16px;top:50%;margin-top:-34px;width:68px;height:68px;border-radius:50%;
+  background:radial-gradient(circle at 38% 32%,#FFE3A6,#F2B84B 45%,#9a6a1c 100%);box-shadow:0 6px 18px rgba(0,0,0,.6),inset 0 -3px 6px rgba(0,0,0,.35);
+  display:flex;align-items:center;justify-content:center;transform:rotate(-10deg);animation:throb 2.6s ease-in-out infinite}
+@keyframes throb{0%,100%{box-shadow:0 6px 18px rgba(0,0,0,.6),0 0 0 0 rgba(242,184,75,.0),inset 0 -3px 6px rgba(0,0,0,.35)}50%{box-shadow:0 6px 18px rgba(0,0,0,.6),0 0 0 8px rgba(242,184,75,.12),inset 0 -3px 6px rgba(0,0,0,.35)}}
+.seal svg{width:44px;height:44px}
+
+.note{max-width:820px;margin:34px auto 0;color:var(--soft);font-size:13px;line-height:1.6;border-top:1px solid #1d1d21;padding-top:18px}
+.note b{color:var(--text)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<h1>Sign-in sheet, wizardry × soccer</h1>
+<p class="sub">This slides up when a signed-out reader taps a locked feature, here <b>Book this slip</b>. After sign-in, the Tactics Spell plays in this same sheet. The white Google row is drawn by Google, so we pick only its shape and wording. The email box starts unticked. Reply in the terminal with A, B or a mix.</p>
+
+<div class="row">
+  <div class="opt">
+    <span class="tag">A · The dormant board</span>
+    <div class="phone"><div class="app"><div class="hd">Soccerwizard</div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div></div><div class="scrim"></div>
+      <div class="sheet"><div class="grab"></div><div class="x">×</div>
+        <div class="dorm"><div class="tb"><svg viewBox="0 0 250 190">
+          <rect class="dl" x="6" y="6" width="238" height="178" rx="5"/><line class="dl" x1="6" y1="95" x2="244" y2="95"/><circle class="dl" cx="125" cy="95" r="24"/>
+          <path class="dl" d="M85 6v30h80V6"/><path class="dl" d="M85 184v-30h80v30"/>
+          <circle class="dd" cx="125" cy="170" r="6"/><circle class="dd" cx="52" cy="140" r="6"/><circle class="dd" cx="104" cy="112" r="6"/><circle class="dd" cx="190" cy="124" r="6"/><circle class="dd" cx="200" cy="70" r="6"/><circle class="dd" cx="120" cy="60" r="6"/><circle class="dd" cx="140" cy="30" r="6"/>
+          <path class="dx" d="M84 126l7 7m0-7l-7 7M160 100l7 7m0-7l-7 7M160 58l7 7m0-7l-7 7"/>
+          <circle class="ember" cx="125" cy="170" r="3"/>
+        </svg></div><div class="fadeb"></div><div class="lbl">THE MOVE IS SET · <b>YOU TAKE THE KICK-OFF</b></div></div>
+        <p class="h">Sign in to <i>book this slip</i></p>
+        <p class="s">Free. Your slips follow you to every phone and laptop.</p>
+        <div class="g-chip"><span class="av">T</span><div>Continue as Tunde<small>tunde.a@gmail.com</small></div><svg class="gl" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.8 6C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 7.1-10 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7a14.5 14.5 0 0 1 0-9.4l-7.8-6a24 24 0 0 0 0 21.4z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.2-13.5-10l-7.8 6C6.6 42.6 14.6 48 24 48z"/></svg></div>
+        <div class="or">OR EMAIL ME A CODE</div>
+        <div class="field"><div class="inp">you@email.com</div><div class="go">Send</div></div>
+        <label class="opt-in"><span class="box"></span>Email me the wizard's best picks. Unsubscribe any time.</label>
+        <p class="fine">No password. We never post for you. Privacy</p>
+      </div>
+    </div>
+    <h3>The board waits for you</h3>
+    <p>The same tactics board sits at the top, dark and still, with the keeper's dot glowing like an ember. You sign in and it comes alive: the Tactics Spell plays right there. One seamless moment.</p>
+  </div>
+
+  <div class="opt">
+    <span class="tag">B · The sealed slip</span>
+    <div class="phone"><div class="app"><div class="hd">Soccerwizard</div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div></div><div class="scrim"></div>
+      <div class="sheet"><div class="grab"></div><div class="x">×</div>
+        <p class="h" style="margin-top:6px">Break the seal on<br><i>your slip</i></p>
+        <p class="s">Sign in free to book it. Your slips follow you to every device.</p>
+        <div class="sealwrap">
+          <div class="slip">
+            <div class="r"><span>Arsenal v Chelsea · Over 2.5</span><em>1.85</em></div>
+            <div class="r"><span>Real Madrid v Barça · GG</span><em>1.72</em></div>
+            <div class="r"><span>Inter v Milan · 1X</span><em>1.40</em></div>
+            <div class="t"><span>4 LEGS · SPORTYBET</span><em>6.24</em></div>
+          </div>
+          <div class="seal"><svg viewBox="0 0 44 44" fill="none" stroke="#3b2808" stroke-width="1.6" stroke-linecap="round"><circle cx="22" cy="22" r="17" stroke-opacity=".5"/><path d="M22 13l6 4.4-2.3 7h-7.4l-2.3-7z" fill="#3b2808" fill-opacity=".85" stroke="none"/><path d="M22 13V7M28 17.4l5.5-2M25.7 24.4l3.5 4.8M18.3 24.4l-3.5 4.8M16 17.4l-5.5-2"/><path d="M11 33l3-2M33 33l-3-2" stroke-opacity=".6"/></svg></div>
+        </div>
+        <div class="g-chip"><span class="av">T</span><div>Continue as Tunde<small>tunde.a@gmail.com</small></div><svg class="gl" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.8 6C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 7.1-10 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7a14.5 14.5 0 0 1 0-9.4l-7.8-6a24 24 0 0 0 0 21.4z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.2-13.5-10l-7.8 6C6.6 42.6 14.6 48 24 48z"/></svg></div>
+        <div class="or">OR EMAIL ME A CODE</div>
+        <div class="field"><div class="inp">you@email.com</div><div class="go">Send</div></div>
+        <label class="opt-in"><span class="box"></span>Email me the wizard's best picks. Unsubscribe any time.</label>
+        <p class="fine">No password. We never post for you. Privacy</p>
+      </div>
+    </div>
+    <h3>Your slip, under a gold seal</h3>
+    <p>The real slip they built shows with its matches blurred and a gold football seal pressed on it. Total odds stay visible as the hook. Sign-in cracks the seal, then the Tactics Spell plays.</p>
+  </div>
+</div>
+
+<p class="note"><b>Both:</b> the headline names what they tapped ("book this slip", "save this slip", "build a slip"). One Tap sits first. In X, Telegram and the installed iPhone app, Google hides and email moves to the top. <b>My pick: A.</b> The sheet and the loader become one continuous moment: they see the move waiting, then they kick it off. B is a stronger hook when there is a slip to show, so a mix works well: B's sealed slip for "book/save", A's board for everything else.</p>
+</body>
+</html>

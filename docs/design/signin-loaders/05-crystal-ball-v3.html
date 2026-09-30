@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crystal Ball v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Roboto+Condensed:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0D0D0F;--card:#161619;--card2:#1E1E22;--line:#2A2A30;--text:#F2F1F0;--soft:#A3A0A6;--gold:#F2B84B;--gold-ink:#FFC963}
+*{box-sizing:border-box}
+body{margin:0;background:#070708;color:var(--text);font-family:'Plus Jakarta Sans',system-ui,sans-serif;padding:28px 16px 60px}
+h1{font-size:22px;margin:0 0 6px;letter-spacing:-.01em}
+.sub{color:var(--soft);margin:0 0 26px;max-width:760px;line-height:1.5}
+.row{display:flex;gap:40px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.phone{width:300px;height:620px;border-radius:38px;background:var(--bg);border:1px solid #232327;position:relative;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.app{position:absolute;inset:0;padding:54px 16px 0;filter:blur(1.5px);opacity:.35}
+.app .hd{font-weight:800;margin-bottom:18px}
+.app .c{height:62px;border-radius:14px;background:var(--card);margin-bottom:10px;border:1px solid var(--line)}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+.sheet{position:absolute;left:0;right:0;bottom:0;height:450px;background:var(--card);border-radius:26px 26px 0 0;border-top:1px solid var(--line);padding:12px 18px 20px;display:flex;flex-direction:column;overflow:hidden}
+.grab{width:38px;height:4px;border-radius:4px;background:#3a3a41;margin:0 auto 4px}
+.stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center}
+.cap{height:42px;text-align:center}
+.cap b{display:block;font-size:15px}
+.cap small{display:block;color:var(--soft);font-size:12px;margin-top:3px;font-family:'Roboto Condensed';letter-spacing:.06em;text-transform:uppercase}
+
+.scene{position:relative;width:240px;height:300px}
+/* floor glow + shadow breathe with the float */
+.pool{position:absolute;left:50%;top:262px;width:170px;height:26px;margin-left:-85px;border-radius:50%;background:radial-gradient(ellipse,rgba(242,184,75,.45),transparent 70%);opacity:.25;transition:opacity .8s}
+.pool.on{opacity:.9}
+/* trophy plinth */
+.plinth{position:absolute;left:50%;top:196px;width:130px;height:80px;margin-left:-65px}
+/* the floating ball */
+.float{position:absolute;left:25px;top:6px;width:190px;height:190px;animation:bob 3.2s ease-in-out infinite;cursor:pointer;-webkit-tap-highlight-color:transparent}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.float.jolt{animation:jolt .45s cubic-bezier(.3,1.6,.4,1),bob 3.2s ease-in-out .45s infinite}
+@keyframes jolt{30%{transform:translateY(-4px) rotate(-5deg) scale(1.04)}60%{transform:rotate(4deg)}100%{transform:none}}
+.orb{position:absolute;inset:0;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 62%,#1d1910 0,#0a090b 72%);
+  box-shadow:inset 0 0 0 1.2px rgba(242,184,75,.4),inset 0 -22px 44px rgba(242,184,75,.14),0 0 50px rgba(242,184,75,.1);transition:box-shadow .6s}
+.orb.hot{box-shadow:inset 0 0 0 1.5px rgba(255,227,166,.9),inset 0 -22px 60px rgba(242,184,75,.4),0 0 90px rgba(242,184,75,.5)}
+.smoke{position:absolute;inset:-35%;filter:blur(15px);mix-blend-mode:screen;opacity:0;transition:opacity 1.2s}
+.smoke i{position:absolute;border-radius:50%}
+.orb.lit .smoke{opacity:.7}
+.orb.seeing .smoke{opacity:.35}
+.mini{opacity:0}
+.mini,.vis,.vsub{transform-box:fill-box;transform-origin:center}
+.mini .ml{fill:none;stroke:#FFE3A6;stroke-opacity:.7;stroke-width:1.2}
+.mini .md{fill:#FFE3A6}
+.mini .mp{fill:none;stroke:#FFF3D6;stroke-width:2.4;stroke-linecap:round}
+.vsub{font:700 8.5px 'Roboto Condensed';letter-spacing:.24em;fill:#F2B84B;text-anchor:middle;opacity:0}
+.orb svg{position:absolute;inset:0;width:100%;height:100%}
+.seams{opacity:.24;transform-origin:95px 95px;transition:opacity .6s}
+.orb.hot .seams{opacity:.75}
+.vis{font:700 34px 'Roboto Condensed';fill:#FFF3D6;text-anchor:middle;opacity:0;letter-spacing:.02em}
+.gloss{position:absolute;left:28px;top:16px;width:74px;height:40px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(255,255,255,.5),transparent 70%);transform:rotate(-28deg);pointer-events:none}
+.gloss2{position:absolute;right:30px;bottom:26px;width:22px;height:10px;border-radius:50%;background:rgba(255,255,255,.18);transform:rotate(-30deg)}
+.reveal{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transform:scale(.6);filter:blur(10px);transition:all .7s cubic-bezier(.2,1.4,.4,1)}
+.reveal.on{opacity:1;transform:none;filter:blur(0)}
+.reveal b{font:800 62px/1 'Plus Jakarta Sans';color:#FFF0CC;text-shadow:0 0 22px rgba(242,184,75,1),0 0 4px #fff}
+.reveal small{font:700 10px 'Roboto Condensed';letter-spacing:.22em;color:#F2B84B;margin-top:6px}
+/* sparkle orbit: back layer behind the ball, front layer over it */
+.orbit{position:absolute;inset:-30px;pointer-events:none}
+.orbit.back{z-index:0}.orbit.front{z-index:3}
+.float .orb{z-index:1}
+.tapme{position:absolute;left:0;right:0;top:-4px;text-align:center;font:700 9.5px 'Roboto Condensed';letter-spacing:.2em;color:#6d6b72;text-transform:uppercase;transition:opacity .4s}
+.quip{position:absolute;left:0;right:0;top:214px;text-align:center;font:600 12.5px 'Plus Jakarta Sans';color:var(--gold-ink);opacity:0;transform:translateY(6px);transition:all .3s}
+.quip.on{opacity:1;transform:none}
+
+.side{max-width:330px;color:var(--soft);font-size:13.5px;line-height:1.6}
+.side h3{color:var(--text);font-size:15px;margin:0 0 8px}
+.side ul{margin:0 0 18px;padding-left:18px}
+.side li{margin:0 0 6px}
+.side b{color:var(--text)}
+.btn{display:inline-block;margin-top:4px;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font:700 13px 'Plus Jakarta Sans';cursor:pointer}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<h1>B · The Crystal Ball, v3: brighter, more Soccerwizard inside</h1>
+<p class="sub">Doper and more fun, still light: about 4 KB of plain SVG, CSS and a little script, no library. It loops. <b>Tap the ball</b>, it answers back.</p>
+
+<div class="row">
+  <div class="phone"><div class="app"><div class="hd">Soccerwizard</div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div></div><div class="scrim"></div>
+    <div class="sheet"><div class="grab"></div>
+      <div class="stage">
+        <div class="scene">
+          <div class="pool" id="pool"></div>
+          <svg class="plinth" viewBox="0 0 130 80">
+            <defs><linearGradient id="gm" x1="0" x2="1"><stop offset="0" stop-color="#6b4d17"/><stop offset=".45" stop-color="#F2B84B"/><stop offset=".6" stop-color="#FFE3A6"/><stop offset="1" stop-color="#7a5719"/></linearGradient></defs>
+            <!-- trophy cup holding the ball -->
+            <path d="M28 2 Q65 30 102 2 L94 26 Q65 40 36 26Z" fill="url(#gm)"/>
+            <path d="M28 6 Q10 6 12 20 Q14 30 34 28" fill="none" stroke="url(#gm)" stroke-width="3.5"/>
+            <path d="M102 6 Q120 6 118 20 Q116 30 96 28" fill="none" stroke="url(#gm)" stroke-width="3.5"/>
+            <path d="M58 34h14l3 16H55z" fill="url(#gm)"/>
+            <rect x="36" y="50" width="58" height="10" rx="2" fill="url(#gm)"/>
+            <rect x="30" y="60" width="70" height="16" rx="3" fill="#1E1E22" stroke="#F2B84B" stroke-opacity=".6"/>
+            <text x="65" y="71.5" text-anchor="middle" style="font:700 7px 'Roboto Condensed';letter-spacing:2px;fill:#F2B84B">SOCCERWIZARD</text>
+          </svg>
+          <div class="float" id="float" role="img" aria-label="Crystal football">
+            <svg class="orbit back" viewBox="0 0 250 250" id="orbB"></svg>
+            <div class="orb" id="orb">
+              <div class="smoke" id="sm1"><i style="left:18%;top:30%;width:62%;height:34%;background:#F2B84B"></i><i style="left:42%;top:56%;width:40%;height:30%;background:#8a5a12"></i></div>
+              <div class="smoke" id="sm2"><i style="left:26%;top:18%;width:36%;height:46%;background:#FFC963"></i><i style="left:52%;top:40%;width:30%;height:30%;background:#5a3a0c"></i></div>
+              <svg viewBox="0 0 190 190">
+                <g class="seams" id="seams" fill="none" stroke="#FFE3A6" stroke-width="1.3"><path d="M95 64l29 21-11 34H77L66 85z"/><path d="M95 64V22M124 85l40-13M113 119l25 34M77 119l-25 34M66 85L26 72"/><path d="M95 22l42 15M164 72l4 46M138 153l-43 17M52 153l-25-35M26 72l27-35"/></g>
+                <g id="bolts" fill="none" stroke="#FFE3A6" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity=".9"></g>
+                <defs><filter id="vg" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+                <circle cx="95" cy="95" r="7" fill="#FFF3D6" opacity=".0" id="core"/>
+                <!-- a tiny pitch appears in the mist: a passing move ends in a goal -->
+                <g class="mini" id="mini" filter="url(#vg)">
+                  <rect class="ml" x="45" y="52" width="100" height="86" rx="3"/>
+                  <line class="ml" x1="45" y1="95" x2="145" y2="95"/><circle class="ml" cx="95" cy="95" r="13"/>
+                  <path class="ml" d="M78 52v12h34V52"/><path class="ml" d="M86 52v-6h18v6"/>
+                  <circle class="md" cx="72" cy="124" r="3"/><circle class="md" cx="118" cy="108" r="3"/><circle class="md" cx="80" cy="78" r="3"/><circle class="md" cx="104" cy="66" r="3"/>
+                  <path class="mp" id="mpath" d="M72 124 Q100 122 118 108 Q104 86 80 78 Q90 64 104 66 Q100 54 95 47"/>
+                </g>
+                <g filter="url(#vg)"><text class="vis" id="vis" x="95" y="104"></text><text class="vsub" id="vsub" x="95" y="124"></text></g>
+              </svg>
+              <div class="reveal" id="rev"><b>T</b><small id="revS">3 SLIPS FOUND</small></div>
+              <div class="gloss"></div><div class="gloss2"></div>
+            </div>
+            <svg class="orbit front" viewBox="0 0 250 250" id="orbF"></svg>
+          </div>
+          <div class="quip" id="quip"></div>
+        </div>
+      </div>
+      <div class="cap"><b id="cC">Signing you in</b><small id="cC2">Checking with Google</small></div>
+    </div>
+  </div>
+
+  <div class="side">
+    <h3>What's new</h3>
+    <ul>
+      <li><b>Floats on a trophy.</b> The crystal football hovers over a gold cup with SOCCERWIZARD on the base, and the glow below breathes with it.</li>
+      <li><b>Lightning inside,</b> like a plasma ball. Gold bolts crackle from the core to the glass.</li>
+      <li><b>Visions, big and bright:</b> the mist thins and glowing visions from <i>your own</i> slips appear: odds with the match ("1.85 · ARS v CHE"), "GG", your booking code "RU2RZ1", total odds.</li>
+      <li><b>A pitch appears in the ball:</b> a tiny gold pitch, and a passing move draws itself into the goal.</li>
+      <li><b>Sparkles orbit</b> the ball in a ring, passing behind it and in front of it.</li>
+      <li><b>Reveal:</b> the seams flare, the core flashes, and the mist parts to show your initial and "3 slips found".</li>
+      <li><b>Tap it</b> and it wobbles back at you: "The ball has spoken.", "Patience, gaffer.", "I see… an away win."</li>
+    </ul>
+    <button class="btn" id="fast" type="button">Speed: normal</button>
+    <p style="margin-top:18px">Compare with the Tactics Spell (still open in the previous screen), or mix them. Reply in the terminal.</p>
+  </div>
+</div>
+
+<script>
+var NS="http://www.w3.org/2000/svg",SPEED=1;
+var STEPS=[["Signing you in","Checking with Google"],["Reading your slips","The ball is looking…"],["Ready","Taking you back"]];
+var VISIONS=["1.85","GG","OVER 2.5","1X","4.46","BTTS","2.10"];
+var QUIPS=["The ball has spoken.","Patience, gaffer.","I see… an away win.","Don't shake me, I'm working.","VAR is checking…"];
+function $(id){return document.getElementById(id);}
+function cap(i){$("cC").textContent=STEPS[i][0];$("cC2").textContent=STEPS[i][1];}
+function later(ms,f){return setTimeout(f,ms/SPEED);}
+function el(tag,attrs,parent){var e=document.createElementNS(NS,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);parent.appendChild(e);return e;}
+
+/* ---- sparkle orbit: ellipse, split into back/front layers by depth ---- */
+var sparks=[];
+for(var s=0;s<9;s++){sparks.push({a:s/9*Math.PI*2,r:1.2+(s%3)*.7,
+  b:el("path",{d:"M0-3L.8-.8 3 0 .8.8 0 3-.8.8-3 0-.8-.8z",fill:"#FFC963"},$("orbB")),
+  f:el("path",{d:"M0-3L.8-.8 3 0 .8.8 0 3-.8.8-3 0-.8-.8z",fill:"#FFE3A6"},$("orbF"))});}
+var spin=0,lastT=performance.now(),boltsOn=false,boltClock=0;
+function frame(n){
+  var dt=Math.min(50,n-lastT);lastT=n;spin+=dt*.0009*SPEED*(boltsOn?1.6:1);
+  sparks.forEach(function(p){var a=p.a+spin,x=125+Math.cos(a)*112,y=125+Math.sin(a)*26-6,front=Math.sin(a)>0,
+    tr="translate("+x.toFixed(1)+" "+y.toFixed(1)+") scale("+(p.r*(front?1.15:.8)).toFixed(2)+") rotate("+(a*57).toFixed(0)+")";
+    p.f.setAttribute("transform",tr);p.b.setAttribute("transform",tr);p.f.setAttribute("opacity",front?1:0);p.b.setAttribute("opacity",front?0:.55);});
+  $("seams").setAttribute("transform","rotate("+(spin*20).toFixed(1)+" 95 95)");
+  /* lightning: redraw a few jagged bolts ~every 70ms, not every frame */
+  boltClock+=dt;
+  if(boltClock>70){boltClock=0;var g=$("bolts");g.innerHTML="";
+    if(boltsOn){for(var k=0;k<3;k++){var ang=Math.random()*Math.PI*2,pts="95,95",segs=6;
+      for(var j=1;j<=segs;j++){var r=j/segs*84,jit=j<segs?(Math.random()-.5)*16:0,a2=ang+jit/60;
+        pts+=" "+(95+Math.cos(a2)*r+jit*Math.sin(ang)).toFixed(1)+","+(95+Math.sin(a2)*r-jit*Math.cos(ang)).toFixed(1);}
+      el("polyline",{points:pts,"stroke-opacity":(.5+Math.random()*.5).toFixed(2)},g);}}}
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ---- tap to wobble ---- */
+var qi=0,qt;
+$("float").addEventListener("click",function(){
+  var f=$("float");f.classList.remove("jolt");void f.offsetWidth;f.classList.add("jolt");
+  var q=$("quip");q.textContent=QUIPS[qi++%QUIPS.length];q.classList.add("on");clearTimeout(qt);qt=setTimeout(function(){q.classList.remove("on");},1600);
+  try{if(navigator.vibrate)navigator.vibrate(10);}catch(e){}
+});
+$("fast").onclick=function(){SPEED=SPEED===1?2.2:1;this.textContent="Speed: "+(SPEED===1?"normal":"fast connection");};
+
+/* ---- the sequence ---- */
+/* What the ball "sees": the reader's own odds, markets, a booking code, and
+   a little passing move that ends in a goal. */
+var SCENES=[{t:"1.85",s:"ARS v CHE"},{t:"GG",s:"BOTH TEAMS SCORE"},{pitch:1},{t:"RU2RZ1",s:"BOOKING CODE"},{t:"OVER 2.5",s:"GOALS"},{t:"4.46",s:"TOTAL ODDS"}];
+var visTimer;
+function pop(node,ms){if(node.animate)node.animate([{opacity:0,transform:"translateY(10px) scale(.7)",filter:"blur(5px)"},{opacity:1,transform:"none",filter:"blur(0)",offset:.25},{opacity:1,offset:.75},{opacity:0,transform:"translateY(-10px) scale(1.15)",filter:"blur(6px)"}],{duration:ms/SPEED,easing:"ease-out",fill:"forwards"});}
+function visions(){var v=$("vis"),vs=$("vsub"),i=0;
+  (function one(){if(!boltsOn)return;var sc=SCENES[i++%SCENES.length];
+    if(sc.pitch){
+      var m=$("mini"),p=$("mpath"),L=p.getTotalLength();p.style.strokeDasharray=L;p.style.strokeDashoffset=L;pop(m,1500);
+      if(p.animate)p.animate([{strokeDashoffset:L},{strokeDashoffset:0}],{duration:900/SPEED,delay:250/SPEED,easing:"ease-in-out",fill:"forwards"});
+      visTimer=later(1400,one);return;}
+    v.textContent=sc.t;vs.textContent=sc.s;v.style.fontSize=sc.t.length>4?"28px":"38px";pop(v,820);pop(vs,820);
+    visTimer=later(700,one);})();}
+function run(){
+  var orb=$("orb");orb.classList.remove("lit","hot");$("rev").classList.remove("on");$("pool").classList.remove("on");$("core").setAttribute("opacity",0);
+  boltsOn=false;cap(0);
+  later(300,function(){orb.classList.add("lit");$("pool").classList.add("on");});
+  later(1300,function(){cap(1);boltsOn=true;orb.classList.add("seeing");$("core").setAttribute("opacity",.9);visions();});
+  later(6500,function(){
+    boltsOn=false;clearTimeout(visTimer);orb.classList.remove("seeing");$("vis").textContent="";$("vsub").textContent="";$("core").setAttribute("opacity",0);
+    orb.classList.add("hot");later(160,function(){$("rev").classList.add("on");cap(2);});
+    try{if(navigator.vibrate)navigator.vibrate(18);}catch(e){}
+  });
+  later(10400,run);
+}
+if(!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches))run();
+else{$("orb").classList.add("lit","hot");$("rev").classList.add("on");cap(2);}
+</script>
+</body>
+</html>

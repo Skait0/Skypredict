@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wizard loader concepts</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Roboto+Condensed:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0D0D0F;--card:#161619;--card2:#1E1E22;--line:#2A2A30;--text:#F2F1F0;--soft:#A3A0A6;--gold:#F2B84B;--gold-ink:#FFC963}
+*{box-sizing:border-box}
+body{margin:0;background:#070708;color:var(--text);font-family:'Plus Jakarta Sans',system-ui,sans-serif;padding:28px 16px 60px}
+h1{font-size:22px;margin:0 0 6px;letter-spacing:-.01em}
+.sub{color:var(--soft);margin:0 0 28px;max-width:800px;line-height:1.5}
+.row{display:flex;gap:28px;flex-wrap:wrap;justify-content:center}
+.opt{display:flex;flex-direction:column;align-items:center;gap:14px;padding:14px}
+.opt h3{margin:0;font-size:16px}
+.opt p{margin:0;color:var(--soft);font-size:13px;max-width:280px;text-align:center;line-height:1.45}
+.tag{font:700 11px 'Roboto Condensed';letter-spacing:.14em;color:var(--gold);text-transform:uppercase}
+.phone{width:290px;height:590px;border-radius:38px;background:var(--bg);border:1px solid #232327;position:relative;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.app{position:absolute;inset:0;padding:54px 16px 0;filter:blur(1.5px);opacity:.35}
+.app .hd{font-weight:800;margin-bottom:18px}
+.app .c{height:62px;border-radius:14px;background:var(--card);margin-bottom:10px;border:1px solid var(--line)}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+.sheet{position:absolute;left:0;right:0;bottom:0;height:430px;background:var(--card);border-radius:26px 26px 0 0;border-top:1px solid var(--line);padding:12px 20px 22px;display:flex;flex-direction:column;overflow:hidden}
+.grab{width:38px;height:4px;border-radius:4px;background:#3a3a41;margin:0 auto 6px}
+.stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center}
+.cap{height:44px;text-align:center}
+.cap b{display:block;font-size:15px}
+.cap small{display:block;color:var(--soft);font-size:12px;margin-top:3px;font-family:'Roboto Condensed';letter-spacing:.06em;text-transform:uppercase}
+
+/* ===== A. Match-clock spell circle ===== */
+.circ{width:230px;height:230px;overflow:visible}
+.circ .runes{transform-origin:115px 115px;animation:spin 26s linear infinite}
+.circ .runes2{transform-origin:115px 115px;animation:spin 40s linear infinite reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.circ text{font:700 8.5px 'Roboto Condensed';letter-spacing:3.2px;fill:#F2B84B}
+.draw{stroke-dasharray:var(--len);stroke-dashoffset:var(--len)}
+.draw.on{transition:stroke-dashoffset 1.1s cubic-bezier(.6,.1,.3,1);stroke-dashoffset:0}
+.min{font:700 34px 'Roboto Condensed';fill:#F2F1F0;text-anchor:middle;transition:opacity .3s}
+.minl{font:700 7.5px 'Roboto Condensed';letter-spacing:2px;fill:#A3A0A6;text-anchor:middle}
+.aball{transform-origin:115px 115px;transform:scale(0);opacity:0}
+.aball.on{animation:summon .7s cubic-bezier(.2,1.5,.4,1) forwards}
+@keyframes summon{0%{transform:scale(0) rotate(-120deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+.flash{transform-origin:115px 115px;opacity:0}
+.flash.on{animation:flash .9s ease-out}
+@keyframes flash{0%{opacity:.9;transform:scale(.4)}100%{opacity:0;transform:scale(1.5)}}
+
+/* ===== B. Crystal ball ===== */
+.orbwrap{position:relative;width:200px;height:250px}
+.orb{position:absolute;left:10px;top:0;width:180px;height:180px;border-radius:50%;overflow:hidden;
+  background:radial-gradient(circle at 50% 60%,#1b1812 0,#0b0a0c 70%);box-shadow:inset 0 0 0 1px rgba(242,184,75,.35),inset 0 -18px 40px rgba(242,184,75,.12),0 0 60px rgba(242,184,75,.12)}
+.orb .smoke{position:absolute;inset:-30%;animation:spin 7s linear infinite;filter:blur(14px);mix-blend-mode:screen;opacity:.0;transition:opacity 1s}
+.orb .smoke.s2{animation-duration:11s;animation-direction:reverse}
+.orb.lit .smoke{opacity:.95}
+.orb .smoke i{position:absolute;border-radius:50%}
+.orb .seams{position:absolute;inset:0;opacity:.14;animation:spin 30s linear infinite}
+.orb .gloss{position:absolute;left:24px;top:14px;width:70px;height:40px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(255,255,255,.55),transparent 70%);transform:rotate(-28deg)}
+.orb .vision{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;filter:blur(8px);transform:scale(.8);transition:all .9s ease}
+.orb .vision.on{opacity:1;filter:blur(0);transform:none}
+.orb .vision b{font:800 56px 'Plus Jakarta Sans';line-height:1;color:#FFE3A6;text-shadow:0 0 18px rgba(242,184,75,.9)}
+.orb .vision small{font:700 10px 'Roboto Condensed';letter-spacing:.2em;color:#F2B84B;margin-top:4px}
+.stand{position:absolute;left:50%;top:168px;transform:translateX(-50%);width:110px;height:56px}
+.glow{position:absolute;left:50%;top:170px;width:160px;height:30px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,rgba(242,184,75,.35),transparent 70%);opacity:.3;transition:opacity .8s}
+.glow.on{opacity:1}
+
+/* ===== C. Chalkboard to spell ===== */
+.board{width:250px;height:250px}
+.dot{fill:#1E1E22;stroke:#55545b;stroke-width:1.5;transition:all .35s}
+.dot.on{fill:#F2B84B;stroke:#FFE3A6;filter:url(#gl)}
+.pass{fill:none;stroke:url(#trail);stroke-width:2.2;stroke-linecap:round}
+.spark{fill:#FFF3D6;filter:url(#gl)}
+.pl{fill:none;stroke:#F2B84B;stroke-opacity:.18;stroke-width:1.2}
+.net{stroke:#F2B84B;stroke-opacity:.35;stroke-width:.8;fill:none;transition:stroke-opacity .3s}
+.net.on{stroke-opacity:1;filter:url(#gl)}
+.bits circle{fill:#FFC963}
+
+.note{max-width:800px;margin:34px auto 0;color:var(--soft);font-size:13px;line-height:1.6;border-top:1px solid #1d1d21;padding-top:18px}
+.note b{color:var(--text)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<h1>Wizardry × football: which one is Soccerwizard?</h1>
+<p class="sub">Three takes that are magic <i>and</i> football at once. No cartoon hats. Each is built from real pitch shapes, lit in the site's gold. Steps are still real: <b>signing in</b>, then <b>pulling your slips</b>, then <b>ready</b>. Reply in the terminal with A, B or C, plus anything to change. The earlier Ticket, Roll and Board designs are still on the table too.</p>
+
+<div class="row">
+  <!-- A -->
+  <div class="opt">
+    <span class="tag">A · The Summoning Circle</span>
+    <div class="phone"><div class="app"><div class="hd">Soccerwizard</div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div></div><div class="scrim"></div>
+      <div class="sheet"><div class="grab"></div>
+        <div class="stage">
+          <svg class="circ" viewBox="0 0 230 230">
+            <defs>
+              <path id="rp" d="M115 115 m-84 0 a84 84 0 1 1 168 0 a84 84 0 1 1 -168 0"/>
+              <path id="rp2" d="M115 115 m-68 0 a68 68 0 1 1 136 0 a68 68 0 1 1 -136 0"/>
+              <filter id="ga" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <g id="aTicks"></g>
+            <circle class="draw" id="aR1" cx="115" cy="115" r="94" fill="none" stroke="#F2B84B" stroke-opacity=".55" stroke-width="1" style="--len:591"/>
+            <g class="runes"><text><textPath href="#rp">SIGNED IN ✦ YOUR SLIPS ✦ YOUR PICKS ✦ SOCCERWIZARD ✦ </textPath></text></g>
+            <circle class="draw" id="aR2" cx="115" cy="115" r="76" fill="none" stroke="#F2B84B" stroke-opacity=".4" stroke-width="1" style="--len:478"/>
+            <g class="runes2" opacity=".55"><text style="font-size:7px;letter-spacing:5px"><textPath href="#rp2">4-3-3 · 4-4-2 · 3-5-2 · 4-2-3-1 · 5-3-2 · </textPath></text></g>
+            <!-- halfway line + centre circle: the pitch is the spell -->
+            <line class="draw" id="aL" x1="30" y1="115" x2="200" y2="115" stroke="#F2B84B" stroke-opacity=".6" stroke-width="1.2" style="--len:170"/>
+            <circle class="draw" id="aR3" cx="115" cy="115" r="42" fill="none" stroke="#F2B84B" stroke-width="1.6" style="--len:264" filter="url(#ga)"/>
+            <circle class="flash" id="aF" cx="115" cy="115" r="42" fill="none" stroke="#FFE3A6" stroke-width="3"/>
+            <text class="min" id="aM" x="115" y="118">0'</text>
+            <text class="minl" id="aML" x="115" y="132">MINUTE</text>
+            <g class="aball" id="aB" filter="url(#ga)">
+              <circle cx="115" cy="115" r="22" fill="#F2F1F0"/>
+              <g fill="#161619"><path d="M115 106l7 5-2.7 8.3h-8.6L108 111z"/><path d="M96.5 111.5l5 1.8 1.5 6.8-4.5 3.8-3.5-6z"/><path d="M133.5 111.5l1.5 6.4-3.5 6-4.5-3.8 1.5-6.8z"/><path d="M109 133l2-5.8h8l2 5.8-6 3z"/><path d="M108 94.5l7 3 7-3 1.5 3-8.5 4-8.5-4z"/></g>
+            </g>
+          </svg>
+        </div>
+        <div class="cap"><b id="aC">Signing you in</b><small id="aC2">Checking with Google</small></div>
+      </div>
+    </div>
+    <h3>The centre circle is the spell</h3>
+    <p>A match clock of 90 gold ticks lights as your account loads. The pitch markings draw themselves like a summoning circle. At full time the ball appears in the centre.</p>
+  </div>
+
+  <!-- B -->
+  <div class="opt">
+    <span class="tag">B · The Crystal Ball</span>
+    <div class="phone"><div class="app"><div class="hd">Soccerwizard</div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div></div><div class="scrim"></div>
+      <div class="sheet"><div class="grab"></div>
+        <div class="stage">
+          <div class="orbwrap">
+            <div class="glow" id="bG"></div>
+            <svg class="stand" viewBox="0 0 110 56"><path d="M20 6 Q55 22 90 6 L80 40 H30Z" fill="#1E1E22" stroke="#F2B84B" stroke-opacity=".5"/><rect x="18" y="40" width="74" height="9" rx="3" fill="#1E1E22" stroke="#F2B84B" stroke-opacity=".5"/><path d="M40 26h30" stroke="#F2B84B" stroke-opacity=".6"/></svg>
+            <div class="orb" id="bO">
+              <div class="smoke"><i style="left:20%;top:30%;width:60%;height:34%;background:#F2B84B"></i><i style="left:40%;top:55%;width:40%;height:30%;background:#8a5a12"></i></div>
+              <div class="smoke s2"><i style="left:25%;top:20%;width:35%;height:45%;background:#FFC963"></i><i style="left:50%;top:40%;width:30%;height:30%;background:#5a3a0c"></i></div>
+              <svg class="seams" viewBox="0 0 180 180" fill="none" stroke="#FFE3A6" stroke-width="1.2"><path d="M90 60l28 20-11 33H73L62 80z"/><path d="M90 60V20M118 80l38-12M107 113l24 32M73 113l-24 32M62 80L24 68"/><path d="M90 20l40 14M156 68l4 44M131 145l-41 16M49 145l-24-33M24 68l26-34"/></svg>
+              <div class="vision" id="bV"><b>T</b><small id="bVs">3 SLIPS FOUND</small></div>
+              <div class="gloss"></div>
+            </div>
+          </div>
+        </div>
+        <div class="cap"><b id="bC">Signing you in</b><small id="bC2">Checking with Google</small></div>
+      </div>
+    </div>
+    <h3>It's a prediction site. Look into the ball.</h3>
+    <p>The football is a crystal ball, its seams faint through the glass. Gold mist swirls while your account loads, then clears to show your initial and what it found.</p>
+  </div>
+
+  <!-- C -->
+  <div class="opt">
+    <span class="tag">C · The Tactics Spell</span>
+    <div class="phone"><div class="app"><div class="hd">Soccerwizard</div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div></div><div class="scrim"></div>
+      <div class="sheet"><div class="grab"></div>
+        <div class="stage">
+          <svg class="board" viewBox="0 0 250 250">
+            <defs>
+              <filter id="gl" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <linearGradient id="trail" gradientUnits="userSpaceOnUse" x1="0" y1="250" x2="0" y2="0"><stop offset="0" stop-color="#F2B84B" stop-opacity=".25"/><stop offset="1" stop-color="#FFE3A6"/></linearGradient>
+            </defs>
+            <rect class="pl" x="8" y="8" width="234" height="234" rx="4"/>
+            <path class="pl" d="M8 242 a40 40 0 0 1 234 0" transform="translate(0 0) scale(1 .0)"/>
+            <path class="pl" d="M85 8v40h80V8M105 8v14h40V8"/><path class="pl" d="M100 48a28 28 0 0 0 50 0"/>
+            <line class="pl" x1="8" y1="242" x2="242" y2="242"/><path class="pl" d="M85 242a40 40 0 0 1 80 0"/>
+            <g id="cNet"><path class="net" d="M103 8V-4h44V8M110 -4V8M118 -4V8M125 -4V8M132 -4V8M140 -4V8M103 2h44"/></g>
+            <g id="cPass"></g>
+            <circle class="dot" cx="125" cy="222" r="6"/><circle class="dot" cx="60" cy="176" r="6"/><circle class="dot" cx="190" cy="170" r="6"/>
+            <circle class="dot" cx="110" cy="128" r="6"/><circle class="dot" cx="200" cy="92" r="6"/><circle class="dot" cx="118" cy="58" r="6"/>
+            <g class="bits" id="cBits"></g>
+            <circle class="spark" id="cS" r="4" cx="125" cy="222" opacity="0"/>
+          </svg>
+        </div>
+        <div class="cap"><b id="cC">Signing you in</b><small id="cC2">Checking with Google</small></div>
+      </div>
+    </div>
+    <h3>Chalkboard passes become a spell</h3>
+    <p>A tactics board. A spark of light passes player to player, each touch one loading step, and the move ends in the net with a burst of gold.</p>
+  </div>
+</div>
+
+<p class="note"><b>All three:</b> about 3 KB of SVG and CSS, no library, drawn in the site's gold. Reduced-motion users see the last frame straight away. <b>My pick: B.</b> A crystal ball that is a football is the whole brand in one picture: it predicts football. It also works as a small logo mark later. A is the most "designed". C tells the best football story.</p>
+
+<script>
+var STEPS=[["Signing you in","Checking with Google"],["Pulling your slips","3 slips · 2 favourites"],["Ready","Taking you back"]];
+function cap(p,i){document.getElementById(p+"C").textContent=STEPS[i][0];document.getElementById(p+"C2").textContent=STEPS[i][1];}
+function later(ms,f){return setTimeout(f,ms);}
+var NS="http://www.w3.org/2000/svg";
+function tween(d,f,done){var t0=performance.now();(function s(n){var k=Math.min(1,(n-t0)/d);f(k);if(k<1)requestAnimationFrame(s);else if(done)done();})(t0);}
+
+/* A */
+(function(){var g=document.getElementById("aTicks");
+  for(var i=0;i<90;i++){var a=(i/90)*Math.PI*2-Math.PI/2,l=i%15===0?9:4,r=104;
+    var ln=document.createElementNS(NS,"line");
+    ln.setAttribute("x1",115+Math.cos(a)*r);ln.setAttribute("y1",115+Math.sin(a)*r);
+    ln.setAttribute("x2",115+Math.cos(a)*(r+l));ln.setAttribute("y2",115+Math.sin(a)*(r+l));
+    ln.setAttribute("stroke","#34333a");ln.setAttribute("stroke-width",i%15===0?2:1.2);ln.setAttribute("stroke-linecap","round");g.appendChild(ln);}
+})();
+function runA(){
+  var ticks=document.getElementById("aTicks").children,M=document.getElementById("aM"),ML=document.getElementById("aML"),B=document.getElementById("aB"),F=document.getElementById("aF");
+  ["aR1","aR2","aL","aR3"].forEach(function(id){document.getElementById(id).classList.remove("on");});
+  [].forEach.call(ticks,function(t){t.setAttribute("stroke","#34333a");t.removeAttribute("filter");});
+  B.classList.remove("on");F.classList.remove("on");M.style.opacity=1;ML.style.opacity=1;M.textContent="0'";cap("a",0);
+  later(80,function(){document.getElementById("aR1").classList.add("on");});
+  later(350,function(){document.getElementById("aR2").classList.add("on");});
+  later(700,function(){document.getElementById("aL").classList.add("on");});
+  later(1000,function(){document.getElementById("aR3").classList.add("on");});
+  var last=-1;
+  later(400,function(){tween(3200,function(k){var e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2,m=Math.round(e*90);
+    for(var i=last+1;i<m;i++){ticks[i].setAttribute("stroke","#F2B84B");}last=Math.max(last,m-1);
+    M.textContent=m+"'";if(m>=30&&m<88)cap("a",1);},function(){
+      M.style.opacity=0;ML.style.opacity=0;B.classList.add("on");F.classList.add("on");cap("a",2);
+      [].forEach.call(ticks,function(t){t.setAttribute("stroke","#FFC963");});
+      later(3200,runA);});});
+}
+
+/* B */
+function runB(){
+  var O=document.getElementById("bO"),V=document.getElementById("bV"),G=document.getElementById("bG");
+  O.classList.remove("lit");V.classList.remove("on");G.classList.remove("on");cap("b",0);
+  later(300,function(){O.classList.add("lit");G.classList.add("on");});
+  later(1600,function(){cap("b",1);});
+  later(3500,function(){V.classList.add("on");cap("b",2);});
+  later(7200,runB);
+}
+
+/* C */
+var PTS=[[125,222],[60,176],[110,128],[190,170],[200,92],[118,58],[125,4]];
+function runC(){
+  var P=document.getElementById("cPass"),S=document.getElementById("cS"),dots=document.querySelectorAll(".board .dot"),net=document.querySelector(".net"),bits=document.getElementById("cBits");
+  P.innerHTML="";bits.innerHTML="";net.classList.remove("on");[].forEach.call(dots,function(d){d.classList.remove("on");});
+  dots[0].classList.add("on");S.setAttribute("opacity",1);cap("c",0);
+  var i=0;
+  function next(){
+    if(i>=PTS.length-1){S.setAttribute("opacity",0);net.classList.add("on");burst();cap("c",2);later(3000,runC);return;}
+    var a=PTS[i],b=PTS[i+1],mx=(a[0]+b[0])/2+(i%2?-26:26),my=(a[1]+b[1])/2;
+    var path=document.createElementNS(NS,"path");path.setAttribute("class","pass");
+    path.setAttribute("d","M"+a[0]+" "+a[1]+" Q"+mx+" "+my+" "+b[0]+" "+b[1]);P.appendChild(path);
+    var L=path.getTotalLength();path.style.strokeDasharray=L;path.style.strokeDashoffset=L;
+    var shot=i===PTS.length-2;
+    tween(shot?420:560,function(k){var e=1-Math.pow(1-k,2);path.style.strokeDashoffset=L*(1-e);var p=path.getPointAtLength(L*e);S.setAttribute("cx",p.x);S.setAttribute("cy",p.y);},
+      function(){i++;if(dots[i])dots[i].classList.add("on");if(i===2)cap("c",1);later(shot?0:120,next);});
+  }
+  function burst(){for(var k=0;k<14;k++){(function(k){var c=document.createElementNS(NS,"circle");c.setAttribute("r",1.8);bits.appendChild(c);
+    var ang=Math.PI*(.1+.8*Math.random()),sp=20+Math.random()*34;
+    tween(800,function(t){c.setAttribute("cx",125+Math.cos(ang)*sp*t);c.setAttribute("cy",10+Math.sin(ang)*sp*t);c.setAttribute("opacity",1-t);});})(k);}}
+  later(500,next);
+}
+
+if(!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)){runA();runB();runC();}
+</script>
+</body>
+</html>

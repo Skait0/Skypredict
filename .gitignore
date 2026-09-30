@@ -53,3 +53,5 @@ supabase/.temp/
 
 # graphify hook config: absolute path to this machine's graphify.EXE
 .claude/settings.json
+
+.superpowers/
