@@ -1285,5 +1285,73 @@
       "onexbet": "J8KHT"
     },
     "odds": 2.03
+  },
+  "2026-10-01": {
+    "date": "2026-10-01",
+    "generated": "2026-10-01T12:45:58.310Z",
+    "firstKickoff": "2026-10-01T14:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-01",
+        "home": "Azerbaijan",
+        "away": "Liechtenstein",
+        "league": "International UEFA Nations League",
+        "kickoff": "2026-10-01T16:00:00.000Z",
+        "tip": "Home win",
+        "tip_p": 0.784,
+        "market": "1",
+        "odd": 1.11
+      },
+      {
+        "date": "2026-10-01",
+        "home": "Wales",
+        "away": "Norway",
+        "league": "International UEFA Nations League",
+        "kickoff": "2026-10-01T18:45:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.778,
+        "market": "X2",
+        "odd": 1.13
+      },
+      {
+        "date": "2026-10-01",
+        "home": "Curacao",
+        "away": "Trinidad and Tobago",
+        "league": "International CONCACAF Nations League",
+        "kickoff": "2026-10-01T22:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.793,
+        "market": "1X",
+        "odd": 1.14
+      },
+      {
+        "date": "2026-10-01",
+        "home": "Germany",
+        "away": "Serbia",
+        "league": "International UEFA Nations League",
+        "kickoff": "2026-10-01T18:45:00.000Z",
+        "tip": "Home win",
+        "tip_p": 0.676,
+        "market": "1",
+        "odd": 1.22
+      },
+      {
+        "date": "2026-10-01",
+        "home": "Wolfsburg",
+        "away": "Havelse",
+        "league": "International Clubs Club Friendly Games",
+        "kickoff": "2026-10-01T14:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.787,
+        "market": "OVER_1.5",
+        "odd": null
+      }
+    ],
+    "codes": {
+      "sporty": "TEGMGP",
+      "bet9ja": "5TDYY8H",
+      "betpawa": "L9N5UK8"
+    },
+    "odds": null
   }
 }
