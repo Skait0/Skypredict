@@ -1353,5 +1353,75 @@
       "betpawa": "L9N5UK8"
     },
     "odds": null
+  },
+  "2026-10-02": {
+    "date": "2026-10-02",
+    "generated": "2026-10-02T12:10:01.229Z",
+    "firstKickoff": "2026-10-02T17:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-02",
+        "home": "Ranheim",
+        "away": "Egersund",
+        "league": "Norway 1st Division",
+        "kickoff": "2026-10-02T17:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.929,
+        "market": "OVER_1.5",
+        "odd": 1.08
+      },
+      {
+        "date": "2026-10-02",
+        "home": "Faroe Islands",
+        "away": "Slovakia",
+        "league": "International UEFA Nations League",
+        "kickoff": "2026-10-02T18:45:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.808,
+        "market": "X2",
+        "odd": 1.14
+      },
+      {
+        "date": "2026-10-02",
+        "home": "Helmond Sport",
+        "away": "Heracles",
+        "league": "Netherlands Eerste Divisie",
+        "kickoff": "2026-10-02T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.865,
+        "market": "OVER_1.5",
+        "odd": 1.14
+      },
+      {
+        "date": "2026-10-02",
+        "home": "Dundalk",
+        "away": "Bohemians",
+        "league": "Ireland Premier Division",
+        "kickoff": "2026-10-02T18:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.847,
+        "market": "OVER_1.5",
+        "odd": 1.16
+      },
+      {
+        "date": "2026-10-02",
+        "home": "Poland",
+        "away": "Romania",
+        "league": "International UEFA Nations League",
+        "kickoff": "2026-10-02T18:45:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.736,
+        "market": "1X",
+        "odd": 1.19
+      }
+    ],
+    "codes": {
+      "sporty": "QEX6N8",
+      "bet9ja": "5THJCBB",
+      "betking": "VJ2APC",
+      "betpawa": "OH0WU76",
+      "onexbet": "XUMGV"
+    },
+    "odds": 1.94
   }
 }
