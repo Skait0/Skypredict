@@ -1423,5 +1423,73 @@
       "onexbet": "XUMGV"
     },
     "odds": 1.94
+  },
+  "2026-10-03": {
+    "date": "2026-10-03",
+    "generated": "2026-10-03T11:21:10.774Z",
+    "firstKickoff": "2026-10-03T14:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-03",
+        "home": "Spain",
+        "away": "Czechia",
+        "league": "International UEFA Nations League",
+        "kickoff": "2026-10-03T18:45:00.000Z",
+        "tip": "Home win",
+        "tip_p": 0.846,
+        "market": "1",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-03",
+        "home": "Belarus",
+        "away": "San Marino",
+        "league": "International UEFA Nations League",
+        "kickoff": "2026-10-03T16:00:00.000Z",
+        "tip": "Home win",
+        "tip_p": 0.921,
+        "market": "1",
+        "odd": 1.1
+      },
+      {
+        "date": "2026-10-03",
+        "home": "Haugesund",
+        "away": "Stabaek",
+        "league": "Norway 1st Division",
+        "kickoff": "2026-10-03T14:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.941,
+        "market": "OVER_1.5",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-03",
+        "home": "Alcorcon",
+        "away": "Juventud Torremolinos",
+        "league": "Spain Primera Federacion",
+        "kickoff": "2026-10-03T16:45:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.819,
+        "market": "1X",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-03",
+        "home": "Partick",
+        "away": "Arbroath",
+        "league": "Scotland Championship",
+        "kickoff": "2026-10-03T14:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.785,
+        "market": "1X",
+        "odd": 1.09
+      }
+    ],
+    "codes": {
+      "sporty": "Q86MVV",
+      "bet9ja": "5TLBCXF",
+      "betpawa": "78JJU9R"
+    },
+    "odds": 1.47
   }
 }
