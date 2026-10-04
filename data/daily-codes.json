@@ -1491,5 +1491,73 @@
       "betpawa": "78JJU9R"
     },
     "odds": 1.47
+  },
+  "2026-10-04": {
+    "date": "2026-10-04",
+    "generated": "2026-10-04T12:00:46.166Z",
+    "firstKickoff": "2026-10-04T15:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-04",
+        "home": "Aruba",
+        "away": "Anguilla",
+        "league": "International CONCACAF Nations League",
+        "kickoff": "2026-10-04T23:00:00.000Z",
+        "tip": "Home win",
+        "tip_p": 0.929,
+        "market": "1",
+        "odd": 1.03
+      },
+      {
+        "date": "2026-10-04",
+        "home": "Puerto Rico",
+        "away": "Cayman Islands",
+        "league": "International CONCACAF Nations League",
+        "kickoff": "2026-10-04T22:00:00.000Z",
+        "tip": "Home win",
+        "tip_p": 0.882,
+        "market": "1",
+        "odd": 1.05
+      },
+      {
+        "date": "2026-10-04",
+        "home": "Malta",
+        "away": "Andorra",
+        "league": "International UEFA Nations League",
+        "kickoff": "2026-10-04T16:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.837,
+        "market": "1X",
+        "odd": 1.12
+      },
+      {
+        "date": "2026-10-04",
+        "home": "Alvarado",
+        "away": "Defensores De Belgrano",
+        "league": "Argentina Torneo Federal A",
+        "kickoff": "2026-10-04T18:30:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.799,
+        "market": "1X",
+        "odd": 1.1
+      },
+      {
+        "date": "2026-10-04",
+        "home": "Shooting Stars",
+        "away": "Nasarawa United",
+        "league": "Nigeria Premier League",
+        "kickoff": "2026-10-04T15:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.847,
+        "market": "1X",
+        "odd": 1.12
+      }
+    ],
+    "codes": {
+      "sporty": "LDFJWY",
+      "bet9ja": "5TP9VWM",
+      "onexbet": "37ECZ"
+    },
+    "odds": 1.49
   }
 }
