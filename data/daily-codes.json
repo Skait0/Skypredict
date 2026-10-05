@@ -1559,5 +1559,74 @@
       "onexbet": "37ECZ"
     },
     "odds": 1.49
+  },
+  "2026-10-05": {
+    "date": "2026-10-05",
+    "generated": "2026-10-05T14:02:54.981Z",
+    "firstKickoff": "2026-10-05T16:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-05",
+        "home": "Moss",
+        "away": "Kongsvinger",
+        "league": "Norway 1st Division",
+        "kickoff": "2026-10-05T17:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.933,
+        "market": "OVER_1.5",
+        "odd": 1.06
+      },
+      {
+        "date": "2026-10-05",
+        "home": "Italy",
+        "away": "Turkiye",
+        "league": "International UEFA Nations League",
+        "kickoff": "2026-10-05T18:45:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.781,
+        "market": "1X",
+        "odd": 1.11
+      },
+      {
+        "date": "2026-10-05",
+        "home": "Montenegro",
+        "away": "Armenia",
+        "league": "International UEFA Nations League",
+        "kickoff": "2026-10-05T18:45:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.782,
+        "market": "1X",
+        "odd": 1.13
+      },
+      {
+        "date": "2026-10-05",
+        "home": "France",
+        "away": "Belgium",
+        "league": "International UEFA Nations League",
+        "kickoff": "2026-10-05T18:45:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.77,
+        "market": "1X",
+        "odd": 1.14
+      },
+      {
+        "date": "2026-10-05",
+        "home": "Cyprus",
+        "away": "Latvia",
+        "league": "International UEFA Nations League",
+        "kickoff": "2026-10-05T16:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.702,
+        "market": "1X",
+        "odd": 1.14
+      }
+    ],
+    "codes": {
+      "sporty": "R46SQD",
+      "bet9ja": "5TRWPG5",
+      "betking": "6T1367",
+      "betpawa": "ROMRXBR"
+    },
+    "odds": 1.73
   }
 }
