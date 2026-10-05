@@ -86,7 +86,26 @@ Table editor shows the 8 tables, each with "RLS enabled" and no policies.
 4. Any failure: set `AUTH_ENABLED` back to unset and redeploy. That hides
    everything; stored data is untouched.
 
-## 8. After launch
+## 8. Soft wall, One Tap and picks by email (Sep 2026)
+
+Owner, once:
+1. Google Cloud: console.cloud.google.com/auth/clients, project soccerwizard, Web client.
+   Under Authorised JavaScript origins, add https://www.soccerwizard.live and https://soccerwizard.live. Save.
+2. Supabase: SQL Editor, New query. Paste the email_consent block and the auth_attempts optin line from sql/accounts.sql. Run.
+   Then check that Table Editor shows email_consent.
+
+Device pass on the preview link before promoting:
+- Android Chrome: tap Book on a slip, then "Continue as …", then the spell plays, then the code books.
+- Desktop Chrome: tap My slips, then One Tap, then the slips sheet opens.
+- iPhone Safari: tap Build me a slip, then Continue with Google (redirect), then back in the spell, then the builder opens.
+- X and Telegram in-app browsers: Google is hidden and email comes first. The code signs in.
+- Installed Android app: the Google redirect opens in a Chrome tab, then the app signs in by itself.
+- Reduced motion on: the spell shows only its final frame.
+- Tick the box, then check that a row appears in email_consent.
+- Unsubscribe link from the export, then check that revoked_at is set.
+- Light theme: the sheet and the spell are readable. Red means action, gold means odds.
+
+## 9. After launch
 
 - Sentry: watch for `runtime:server` errors and CSP reports for 3 days.
 - When CSP reports are only noise (browser extensions), rename the header key

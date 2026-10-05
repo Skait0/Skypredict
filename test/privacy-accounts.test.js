@@ -22,3 +22,10 @@ test("terms gain an accounts section only when accounts exist", () => {
   assert.match(t, /<h2>Accounts<\/h2>/);
   assert.match(t, /3 devices/);
 });
+
+test("privacy explains marketing email: opt-in only, how to stop, what is kept", () => {
+  const h = P.renderPrivacy("29 September 2026", true);
+  assert.match(h, /Picks by email/);
+  assert.match(h, /only if you tick/i);
+  assert.match(h, /unsubscribe/i);
+});
