@@ -19159,7 +19159,11 @@ document.addEventListener("click",function(e){
   if(a){e.preventDefault();e.stopPropagation();
     toggleMy(a.dataset.add,a.dataset.code,a.dataset.label,a.dataset.p,a);}
 });
-function setView(v){
+/* noGate: only for the unprompted restore of the saved view on load, which
+   may run after /api/me has answered and must never pop the sign-in sheet. */
+function setView(v,noGate){
+  var args=[].slice.call(arguments);
+  if(v==="build"&&!noGate&&window.swGate&&!swGate("build",null,function(){setView.apply(null,args);},"build")) return;
   var root=document.documentElement;
   /* Leaving the board pushes a history entry, so the browser's Back button
      returns here instead of leaving the site. popstate already knew how to
@@ -21949,7 +21953,7 @@ function paint(){
     DATA.fixtures=out;
   })();
   /* Restore saved view tab (pred/live/build) on reload. Default is "pred". */
-  setView(V.view || "pred");
+  setView(V.view || "pred",true);
   let d=DATA.generated||"";
   try{d=new Date(d+"T00:00:00Z").toLocaleDateString(undefined,
     {day:"numeric",month:"short",timeZone:"UTC"});}catch(e){}
