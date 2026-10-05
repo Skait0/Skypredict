@@ -533,7 +533,7 @@ async function writePages(payload) {
      stays in Vercel env and is only read by lib/auth/turnstile.js. */
   if (process.env.AUTH_ENABLED === "1") {
     try {
-      fs.writeFileSync(path.join(PUB, "login.html"), P.renderLogin({ siteKey: process.env.TURNSTILE_SITE_KEY || "" }));
+      fs.writeFileSync(path.join(PUB, "login.html"), P.renderLogin({ siteKey: process.env.TURNSTILE_SITE_KEY || "", gcid: process.env.GOOGLE_CLIENT_ID || "" }));
     } catch (e) { warn("login page failed: " + e.message); }
   }
 
