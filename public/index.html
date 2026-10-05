@@ -319,6 +319,7 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
   --accent-rim:rgba(242,184,75,.42);
   --grey:#5A5762;
   --cream:#DCD8D2;
+  --ball:#F2F1F0; --ball-ink:#161619;
   --shadow:none;
   --edge:#2A2A30;
   /* THE HERO BAND. Three values, so the whole band re-themes from here rather
@@ -412,6 +413,7 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
   --accent-rim:rgba(142,91,8,.45);
   --grey:#A39FAB;     /* muted/disabled, kept at its old relative weight */
   --cream:#35323C;
+  --ball:#FFFFFF; --ball-ink:#1C1A18;
   --shadow:0 1px 3px rgba(30,25,20,.08), 0 1px 2px rgba(30,25,20,.04);
   /* a full black edge was too hard against the page; this is dark enough to
      define the card without cutting it out */
@@ -8282,6 +8284,7 @@ function slipWhen(iso){
 }
 
 function openSlipsSheet(){
+  if(window.swGate&&!swGate("slips",null,openSlipsSheet,"slips")) return;
   renderSlipsSheet();
   $("scrim").classList.add("on");
   $("slipsSheet").classList.add("on");
@@ -11838,6 +11841,20 @@ var BOOK_KEY="sw.book";
 var BOOKMAKER="sporty";
 try{ var _b=localStorage.getItem(BOOK_KEY); if(_b&&BOOKS[_b]) BOOKMAKER=_b; }catch(e){}
 function curBook(){ return BOOKS[BOOKMAKER]||BOOKS.sporty; }
+/* What the sign-in sheet shows under its seal: the reader's own slip. The
+   match names are blurred there, so they only need to look like a slip; the
+   odds and the total are real, because they are the hook. */
+function gateDetail(picks,B){
+  var rows=[], tot=1, n=0;
+  (picks||[]).forEach(function(c){
+    var f=c.f||fixtureById(c.id); if(!f) return;
+    var o=legOdd(f,c.code,c.p,B); if(!(o>1)) return;
+    tot*=o; n++;
+    rows.push({t:(f.home||"")+" v "+(f.away||""),o:o.toFixed(2)});
+  });
+  return n?{rows:rows,odds:tot.toFixed(2),legs:n,book:(B&&B.label)||""}:null;
+}
+window.swResume={bookSlip:function(){bookSlip();},bookMy:function(){bookMy();},build:function(){setView("build");},slips:function(){openSlipsSheet();}};
 function setBook(k){
   if(!BOOKS[k]||k===BOOKMAKER) return;
   BOOKMAKER=k;
@@ -13712,6 +13729,7 @@ function totalOdds(picks){
     return (o&&isFinite(o)&&o>1)?t*o:t;},1);
 }
 async function bookSlip(){
+  if(window.swGate&&!swGate("book",gateDetail(BUILD.picks,curBook()),bookSlip,"bookSlip")) return;
   var B=curBook();
   var picks = BUILD.picks;
   /* A LEG THIS BOOKMAKER CANNOT TAKE STOPS THE WHOLE TICKET, so it is caught
@@ -14594,6 +14612,7 @@ function splitRowHTML(n,parts,B){
    burst of four is the shape of traffic that got this project block-paged
    once already. */
 function splitAndBook(picks,n,host,B,opt){
+  if(window.swGate&&!swGate("book",gateDetail(picks,B),function(){splitAndBook(picks,n,host,B,opt);},"")) return;
   opt=opt||{};
   /* A leg from somebody else's code is not one of our picks - it has no
      fixture behind it and no probability, only what the bookmaker said. The
@@ -16168,7 +16187,6 @@ function wireSafer(wrap,legs,B){
       o[B.id]=l.eventId;
       return o;
     });
-    go.disabled=true; go.textContent="Booking…";
     /* THE PANEL CAN LEAVE WHILE THE REQUEST IS STILL IN THE AIR.
        #byoSaferOut is drawn inside the safer panel, and refreshByoPanels
        redraws that panel whenever ids land - loadSporty retries for seconds
@@ -16182,7 +16200,9 @@ function wireSafer(wrap,legs,B){
        write checks the box is still there. The flag alone would not do - the
        reader can switch view or read another code - and the guard alone would
        lose the answer silently. */
+    if(window.swGate&&!swGate("book",null,function(){go.click();},"")) return;
     BYO._booking=true;
+    go.disabled=true; go.textContent="Booking…";
     var done=function(){ BYO._booking=false;
       go.disabled=false; go.textContent="Apply and get a code"; };
     bookFetch(sels,B,"editor").then(function(d){
@@ -18930,6 +18950,7 @@ function renderMySheet(){
     body.addEventListener("scroll",function(){ closeSwapMenu(); },{passive:true}); }
 }
 async function bookMy(){
+  if(window.swGate&&!swGate("book",gateDetail(MYSLIP,curBook()),bookMy,"bookMy")) return;
   MYSLIP=MYSLIP.filter(function(x){var f=fixtureById(x.id);return !f||notStarted(f);});
   /* Carry `id` and the fixture itself, not just the code and event.
      Without them the booking pre-flight cannot tell whether SportyBet
@@ -19191,7 +19212,7 @@ function setView(v){
 function setMode(build){ setView(build?"build":"pred"); }
 $("tab-pred").addEventListener("click",function(){setView("pred");});
 $("tab-live").addEventListener("click",function(){setView("live");});
-$("tab-build").addEventListener("click",function(){setView("build");});
+$("tab-build").addEventListener("click",function(){if(window.swGate&&!swGate("build",null,function(){setView("build");},"build")) return; setView("build");});
 $("liveRefresh").addEventListener("click",fetchLive);
 $("bt-pred").addEventListener("click",function(){buzzTap();setView("pred");});
 $("bt-live").addEventListener("click",function(){buzzTap();setView("live");});
@@ -22698,6 +22719,8 @@ load().catch(function(){});
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start); else start();
 })();
 </script>
+<script src="/spell.js" defer></script>
+<script src="/signin.js" defer></script>
 <script id="swAccount">
 /* Accounts on the page: the top-bar button, the account sheet, and sync.
    Nothing here shows or sends anything unless GET /api/me answers (404 =
@@ -22795,7 +22818,7 @@ load().catch(function(){});
 
   /* ------------------------------------------------------------ browser */
   var d=root.document, ls=root.localStorage;
-  var st={on:false,email:"",timer:null,backoff:0,busy:false,raw:"",nextAt:0,pulled:0};
+  var st={on:false,known:false,email:"",timer:null,backoff:0,busy:false,raw:"",nextAt:0,pulled:0};
   function $(id){ return d.getElementById(id); }
   function rawNow(){ var s="",k; for(k in KEYS) s+=ls.getItem(KEYS[k])+"\u0001"; for(k in PREFS) s+=ls.getItem(PREFS[k])+"\u0001"; return s; }
   function isSyncedKey(k){ var x; for(x in KEYS) if(own(KEYS,x)&&KEYS[x]===k) return true; return false; }
@@ -22853,18 +22876,20 @@ load().catch(function(){});
      a backoff that is waiting longer than that, or a failing server would be
      hammered at 5s no matter how far the backoff had grown. */
   function schedule(ms){ if(st.timer) clearTimeout(st.timer); st.nextAt=Date.now()+ms; st.timer=setTimeout(function(){ st.nextAt=0; sync(false); },ms); }
-  function sync(keepalive){
-    if(!st.on||st.busy) return;
+  function sync(keepalive,cb){
+    if(!st.on||st.busy){ if(cb) cb(); return; }
     var meta=readMeta(ls), sent=rawNow(), body=JSON.stringify({base_version:meta?meta.version:0,data:collect(ls,Date.now())});
     if(keepalive){
       /* A page being hidden may never get the answer; the next load reconciles. */
       if(root.fetch&&body.length<60000) try{ root.fetch("/api/me",{method:"POST",keepalive:true,credentials:"same-origin",
         headers:{"Content-Type":"application/json","X-SW-Request":"1"},body:body}); }catch(e){}
+      if(cb) cb();
       return;
     }
     st.busy=true;
     req("POST","/api/me",body,function(code,j){
       st.busy=false;
+      if(cb) cb();
       if(code===200&&j.data){
         /* Storage changed while this request was in flight (a save mid
            round-trip): applying the server's answer now would overwrite
@@ -22907,6 +22932,7 @@ load().catch(function(){});
     sheet.innerHTML='<div class="sheet-grab"><i></i></div><div class="sheet-head"><div class="info"><h3 id="acctTitle">Your account</h3><p id="acctEmail"></p></div>'+
       '<button class="sheet-x" id="acctX" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'+
       '<div class="sheet-body"><h4>Your devices</h4><div id="acctDevs"></div>'+
+      '<div class="ac-row"><div><span>Picks by email</span><small>The wizard\'s best picks, now and then</small></div><button class="ac-btn" id="acctMail" type="button" style="width:auto;margin:0">…</button></div>'+
       '<a class="ac-btn" href="/api/account/export" download>Download my data</a>'+
       '<button class="ac-btn" id="acctOut" type="button">Sign out</button>'+
       '<button class="ac-btn" id="acctOutAll" type="button">Sign out everywhere</button>'+
@@ -22929,6 +22955,9 @@ load().catch(function(){});
         fail(code,j);
       });
     };
+    $("acctMail").onclick=function(){ var b=this, on=b.getAttribute("data-on")!=="1";
+      b.disabled=true; req("POST","/api/account/consent",{on:on},function(code,j){ b.disabled=false;
+        if(code===200){ b.setAttribute("data-on",j.on?"1":"0"); b.textContent=j.on?"On":"Off"; } else fail(code,j); }); };
   }
   function when(iso){ try{ return new Date(iso).toLocaleDateString(undefined,{day:"numeric",month:"short"}); }catch(e){ return ""; } }
   function loadDevices(){
@@ -22955,11 +22984,61 @@ load().catch(function(){});
     if(!sheet) build();
     $("acctEmail").textContent=st.email; say(""); $("acctDelBox").hidden=true; $("acctDelIn").value="";
     $("scrim").classList.add("on"); sheet.classList.add("on"); d.documentElement.classList.add("locked");
-    loadDevices(); $("acctX").focus();
+    loadDevices();
+    req("GET","/api/account/consent",null,function(code,j){ var b=$("acctMail"); if(!b) return;
+      if(code===200){ b.setAttribute("data-on",j.on?"1":"0"); b.textContent=j.on?"On":"Off"; } else b.textContent="Off"; });
+    $("acctX").focus();
   }
   function closeSheet(){
     if(!sheet||!sheet.classList.contains("on")) return;
     sheet.classList.remove("on"); $("scrim").classList.remove("on"); d.documentElement.classList.remove("locked");
+  }
+
+  var wired=false;
+  function wire(){
+    if(wired) return; wired=true;
+    setInterval(watch,5000);
+    /* Another tab wrote a synced key: reload this tab's copy before the
+       next collect(), or this tab's next save writes over what it never
+       pulled and collect() reads that as a deletion. Never schedule() from
+       here: localStorage is shared between tabs, so whatever the other tab
+       just wrote (its own sync's apply(), or a local save) is already on
+       disk for this tab to read - scheduling a sync here as well is what
+       had two tabs bump st.raw off each other's META write and re-sync
+       forever. watch() alone decides whether THIS tab has something new. */
+    root.addEventListener("storage",function(e){
+      var k=e&&e.key;
+      if(k===META){ reload(); st.raw=rawNow(); st.pulled=Date.now(); return; }   // another tab just synced the shared storage: nothing new to send or pull
+      if(!k||isSyncedKey(k)) reload();                     // another tab saved: watch() will notice rawNow()!==st.raw and sync
+    });
+    d.addEventListener("visibilitychange",function(){
+      if(d.visibilityState==="hidden"){ if(rawNow()!==st.raw) sync(true); }
+      else if(d.visibilityState==="visible") pullNow();
+    });
+    root.addEventListener("pageshow",function(e){ if(e&&e.persisted) pullNow(); });
+  }
+
+  /* The soft wall. True means go ahead now; false means the sign-in sheet is
+     open and go() runs once the reader is signed in and their first sync is
+     back. Never walls while /api/me has not answered yet, with accounts off,
+     or when signin.js did not load: the site must still book. */
+  function afterAuth(j,done){
+    req("GET","/api/me",null,function(code,me){
+      if(code===200&&me&&me.signedIn===true){ st.on=true; st.known=true; st.email=me.email||""; paintButton(); wire(); return sync(false,done); }
+      done();
+    });
+  }
+  root.swGate=function(action,detail,go,resume){
+    if(!d.querySelector('meta[name="sw-auth"]')||!st.known||st.on||!root.swSignIn) return true;
+    root.swSignIn.open({action:action,detail:detail,resume:resume||"",ret:location.pathname+location.search,afterAuth:afterAuth,onDone:go});
+    return false;
+  };
+  /* Back from the Google redirect: finish the spell here, then run what they tapped. */
+  function readGate(){
+    if(!/[?&]signedin=1/.test(location.search)) return null;
+    try{ if(history.replaceState) history.replaceState(null,"",location.pathname+location.search.replace(/[?&]signedin=1/,"").replace(/^&/,"?")+location.hash); }catch(e){}
+    var g=null; try{ g=JSON.parse(sessionStorage.getItem("sw.gate")||"null"); sessionStorage.removeItem("sw.gate"); }catch(e){}
+    return g&&g.action?g:null;
   }
 
   /* ----------------------------------------------------------- start up */
@@ -22972,29 +23051,16 @@ load().catch(function(){});
     });
     req("GET","/api/me",null,function(code,j){
       if(code===404||code===0||code>=500) return;            // off, offline or down: stay invisible, keep local
+      st.known=true;
       if(code===401){ paintButton(); if(readMeta(ls)) signedOutHere(j.reason); return; }
       if(!(code===200&&j&&j.signedIn===true)) return;        // any other 200 is not a signed-in answer: stay invisible
       st.on=true; st.email=j.email||""; paintButton();
-      sync(false);
-      setInterval(watch,5000);
-      /* Another tab wrote a synced key: reload this tab's copy before the
-         next collect(), or this tab's next save writes over what it never
-         pulled and collect() reads that as a deletion. Never schedule() from
-         here: localStorage is shared between tabs, so whatever the other tab
-         just wrote (its own sync's apply(), or a local save) is already on
-         disk for this tab to read - scheduling a sync here as well is what
-         had two tabs bump st.raw off each other's META write and re-sync
-         forever. watch() alone decides whether THIS tab has something new. */
-      root.addEventListener("storage",function(e){
-        var k=e&&e.key;
-        if(k===META){ reload(); st.raw=rawNow(); st.pulled=Date.now(); return; }   // another tab just synced the shared storage: nothing new to send or pull
-        if(!k||isSyncedKey(k)) reload();                     // another tab saved: watch() will notice rawNow()!==st.raw and sync
-      });
-      d.addEventListener("visibilitychange",function(){
-        if(d.visibilityState==="hidden"){ if(rawNow()!==st.raw) sync(true); }
-        else if(d.visibilityState==="visible") pullNow();
-      });
-      root.addEventListener("pageshow",function(e){ if(e&&e.persisted) pullNow(); });
+      wire();
+      var g=readGate();
+      if(g&&root.swSignIn){
+        root.swSignIn.resume({action:g.action,detail:g.detail,afterAuth:function(j,done){ sync(false,done); },
+          onDone:(root.swResume&&root.swResume[g.resume])||null});
+      } else sync(false);
       if(/[?&]account=1/.test(location.search)) openSheet();
     });
   }
