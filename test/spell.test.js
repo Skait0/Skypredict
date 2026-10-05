@@ -40,3 +40,11 @@ test("timing constants match the spec", () => {
   assert.strictEqual(S.HOLD_MS, 900);
   assert.strictEqual(S.MIN_MS, 1800);
 });
+
+test("the goal and the final frame take the 20s Retry button away", () => {
+  const cap = /function cap\(i\)\{([^\n]*)\}/.exec(src);
+  assert.ok(cap, "cap");
+  assert.match(cap[1], /if\(i===2\)\{ var r=q\("\.sws-retry"\); if\(r\) r\.parentNode\.removeChild\(r\); \}/);
+  assert.match(src, /function goal\(\)\{[\s\S]{0,400}cap\(2\)/);
+  assert.match(src, /function showFinal\(\)\{[^\n]*cap\(2\)/);
+});

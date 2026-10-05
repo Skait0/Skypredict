@@ -156,7 +156,7 @@
     $(".swsi-gbtn").addEventListener("click",redirectGoogle);
     $(".swsi-ef").addEventListener("submit",sendCode);
     $(".swsi-cf").addEventListener("submit",verifyCode);
-    $(".swsi-again").addEventListener("click",function(){ $(".swsi-cf").hidden=true; $(".swsi-ef").hidden=false; say(""); googleShown(true); });
+    $(".swsi-again").addEventListener("click",function(){ titles(); $(".swsi-cf").hidden=true; $(".swsi-ef").hidden=false; say(""); googleShown(true); });
     var ci=$(".swsi-code input");
     ci.addEventListener("input",function(){ var v=ci.value.replace(/\D/g,"").slice(0,6), sp=$(".swsi-code").querySelectorAll("span");
       for(var i=0;i<6;i++){ sp[i].textContent=v.charAt(i); sp[i].className=i===v.length?"cur":""; }
@@ -195,7 +195,7 @@
     var sid=SESS, o=cur; if(!live(sid)) return;
     playSpell();
     req("POST","/api/auth/google/onetap",{credential:resp.credential,nonce_id:NONCE.nonce_id,optin:optin()},function(st,j){
-      if(!live(sid)) return;
+      if(!live(sid)){ if(st===200&&j.ok&&o.afterAuth) o.afterAuth(j,function(){}); return; }
       if(st===200&&j.ok) return authed(j,"",o);
       unplay(); say(errText(st,j)); NONCE=null; startGoogle();
     });
@@ -228,12 +228,13 @@
   }
   function sendCode(ev){
     if(ev) ev.preventDefault();
-    var b=$(".swsi-ef .swsi-go"); EMAIL=$(".swsi-ef input").value.replace(/^\s+|\s+$/g,"");
+    var sid=SESS, b=$(".swsi-ef .swsi-go"); EMAIL=$(".swsi-ef input").value.replace(/^\s+|\s+$/g,"");
     if(!EMAIL) return say(errText(400,{error:"bad_email"}));
     if(!TS&&meta("sw-ts")) return say("Wait for the check to finish, then tap Send.");
     b.disabled=true; say("");
     req("POST","/api/auth/email/send",{email:EMAIL,turnstile:TS},function(st,j){
       b.disabled=false; TS=null; try{ if(root.turnstile&&tsId!=null) root.turnstile.reset(tsId); }catch(e){}
+      if(!live(sid)) return;
       if(st!==200) return say(errText(st,j));
       $(".swsi-ef").hidden=true; googleShown(false); $(".swsi-to").textContent=EMAIL;
       $(".swsi-h").innerHTML="Check your <i>email</i>"; $(".swsi-s").hidden=true; $(".swsi-head").hidden=true;
@@ -246,7 +247,7 @@
     b.disabled=true; say(""); playSpell();
     req("POST","/api/auth/email/verify",{email:EMAIL,code:$(".swsi-code input").value,optin:optin()},function(st,j){
       b.disabled=false;
-      if(!live(sid)) return;
+      if(!live(sid)){ if(st===200&&j.ok&&o.afterAuth) o.afterAuth(j,function(){}); return; }
       if(st===200&&j.ok) return authed(j,EMAIL,o);
       unplay(); say(errText(st,j));
     });
@@ -258,21 +259,30 @@
     spell=root.swSpell?root.swSpell(m,{odds:(cur.detail&&cur.detail.rows||[]).map(function(r){ return r.o; }),onRetry:function(){ unplay(); say("Try again."); }}):null;
   }
   function unplay(){ if(spell){ spell.stop(); spell=null; } $(".swsi-spell").classList.remove("on"); $(".swsi-spell").innerHTML=""; $(".swsi-form").classList.remove("gone"); }
+  /* afterAuth(j,done) answers done() once the account is ready, or
+     done(false) when it is not: then the sheet closes with no goal and no onDone. */
   function authed(j,email,o){
+    var sid=SESS;
     if(spell){ spell.step(1); if(root.swSpell&&root.swSpell.firstName) spell.setName(root.swSpell.firstName(j.name,email)); }
     var fire=once(function(){ if(o.onDone) o.onDone(); });
-    var finish=function(){ if(!spell){ close(); fire(); return; }
+    var finish=function(ok){
+      if(ok===false){ if(!live(sid)) return; pend=null; unplay(); close(); return; }
+      if(!spell){ close(); fire(); return; }
       pend=fire; spell.finish(function(){ pend=null; close(); fire(); }); };
     if(o.afterAuth) o.afterAuth(j,finish); else finish();
   }
 
+  function titles(){
+    $(".swsi-head").hidden=false; $(".swsi-s").hidden=false;
+    $(".swsi-h").innerHTML="Sign in to <i>"+esc(HEAD[cur.action]||HEAD.book)+"</i>";
+  }
   function reset(o){
     SESS++; var p=pend; pend=null; cur=o; TS=null; EMAIL=""; NONCE=null; if(spell){ spell.stop(); spell=null; }
     if(tsId!=null){ try{ root.turnstile.reset(tsId); }catch(e){} }
     $(".swsi-spell").classList.remove("on"); $(".swsi-spell").innerHTML="";
     $(".swsi-form").classList.remove("gone");
-    $(".swsi-head").hidden=false; $(".swsi-head").innerHTML=header(o.action,o.detail);
-    $(".swsi-h").innerHTML="Sign in to <i>"+esc(HEAD[o.action]||HEAD.book)+"</i>"; $(".swsi-s").hidden=false;
+    $(".swsi-head").innerHTML=header(o.action,o.detail);
+    titles();
     $(".swsi-ef").hidden=false; $(".swsi-cf").hidden=true; $(".swsi-gbtn").hidden=true; $(".swsi-gbtn").disabled=false;
     $(".swsi-g").innerHTML=""; say(""); googleShown(true);
     if(p) p();

@@ -55,3 +55,26 @@ test("once() runs its function exactly once", () => {
   f(); f(); f();
   assert.strictEqual(n, 1);
 });
+
+const fn = (name) => { const m = new RegExp("function " + name + "\\([^)]*\\)\\{([\\s\\S]*?)\\r?\\n  \\}\\r?\\n").exec(src); assert.ok(m, name); return m[1]; };
+
+test("the email send reply is dropped once the sheet has closed, but the Send button comes back", () => {
+  const b = fn("sendCode");
+  assert.match(b, /var sid=SESS/);
+  assert.match(b, /b\.disabled=false;[^\n]*\n\s*if\(!live\(sid\)\) return;/);
+});
+
+test("a sign-in that lands after the sheet closed still flips the page to signed in: afterAuth runs, no spell, no onDone", () => {
+  for (const name of ["onCredential", "verifyCode"])
+    assert.match(fn(name), /if\(!live\(sid\)\)\{ if\(st===200&&j\.ok&&o\.afterAuth\) o\.afterAuth\(j,function\(\)\{\}\); return; \}/, name);
+});
+
+test("afterAuth may answer done(false): stop the spell, close, never onDone, never the goal, pend cleared", () => {
+  const a = fn("authed");
+  assert.match(a, /var finish=function\(ok\)\{\s*if\(ok===false\)\{ if\(!live\(sid\)\) return; pend=null; unplay\(\); close\(\); return; \}/);
+});
+
+test("'Use a different email' puts the headline, subline and header back", () => {
+  assert.match(src, /\$\("\.swsi-again"\)\.addEventListener\("click",function\(\)\{[^}]*titles\(\);/);
+  assert.match(fn("reset"), /titles\(\);/);
+});

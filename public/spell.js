@@ -111,7 +111,7 @@
         if(k<1) root.requestAnimationFrame(tick); else if(cb) cb(); })(); }
     function el(tag,a,p){ var e=d.createElementNS(NS,tag),k; for(k in a) e.setAttribute(k,a[k]); p.appendChild(e); return e; }
     function restart(n,c){ n.classList.remove(c); void n.getBoundingClientRect(); n.classList.add(c); }
-    function cap(i){ q(".sws-c1").textContent=CAPS[i][0]; q(".sws-c2").textContent=CAPS[i][1]; }
+    function cap(i){ q(".sws-c1").textContent=CAPS[i][0]; q(".sws-c2").textContent=CAPS[i][1]; if(i===2){ var r=q(".sws-retry"); if(r) r.parentNode.removeChild(r); } }
     function call(t){ var c=q(".sws-call"); c.textContent=t; c.classList.add("on"); later(900,function(){ c.classList.remove("on"); }); }
     function paintName(){ var n=q(".sws-nm"); n.innerHTML=""; if(name){ n.appendChild(d.createTextNode(", ")); var b=d.createElement("br"); n.appendChild(b); var i=d.createElement("i"); i.textContent=name; n.appendChild(i); } }
 
