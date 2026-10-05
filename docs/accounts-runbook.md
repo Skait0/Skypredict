@@ -88,13 +88,21 @@ Table editor shows the 8 tables, each with "RLS enabled" and no policies.
 
 ## 8. Soft wall, One Tap and picks by email (Sep 2026)
 
-Owner, once:
-1. Google Cloud: console.cloud.google.com/auth/clients, project soccerwizard, Web client.
-   Under Authorised JavaScript origins, add https://www.soccerwizard.live and https://soccerwizard.live. Save.
-2. Supabase: SQL Editor, New query. Paste the email_consent block and the auth_attempts optin line from sql/accounts.sql. Run.
-   Then check that Table Editor shows email_consent.
+**Warning: run the SQL before this code reaches production.** The Google
+sign-in code reads the new `optin` column from auth_attempts (ATT_COLS in
+lib/auth/db.js). If the column is missing, every Google sign-in fails.
 
-Device pass on the preview link before promoting:
+Owner, in this order. Every step is required, and all of them come BEFORE the merge:
+1. Supabase: SQL Editor, New query. Paste the email_consent block and the auth_attempts optin line from sql/accounts.sql. Run.
+   Then check the Table Editor: the email_consent table exists, and auth_attempts has an optin column.
+2. Google Cloud: console.cloud.google.com/auth/clients, project soccerwizard, Web client.
+   Under Authorised JavaScript origins, check that both https://www.soccerwizard.live and https://soccerwizard.live are listed. Add any that are missing, then Save.
+3. Push the branch and run the device pass below on the preview link.
+   One Tap does not work on a vercel.app preview unless that origin is added to the Google client.
+   On the preview, test with the email code and the "Continue with Google" redirect instead.
+4. Merge.
+
+Device pass on the preview link (step 3):
 - Android Chrome: tap Book on a slip, then "Continue as …", then the spell plays, then the code books.
 - Desktop Chrome: tap My slips, then One Tap, then the slips sheet opens.
 - iPhone Safari: tap Build me a slip, then Continue with Google (redirect), then back in the spell, then the builder opens.
