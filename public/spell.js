@@ -206,4 +206,5 @@
     };
   }
   root.swSpell=swSpell;
+  root.swSpell.firstName=firstName;
 })(typeof window!=="undefined"?window:this);
