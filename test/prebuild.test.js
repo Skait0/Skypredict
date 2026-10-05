@@ -44,3 +44,12 @@ test("applyAuthMeta adds the Google client id and Turnstile site key metas, and 
   assert.doesNotMatch(applyAuthMeta("<html><head></head></html>", "1", { gcid: "a.appsXgoogleusercontentXcom" }), /sw-gcid/);
   assert.doesNotMatch(applyAuthMeta("<html><head></head></html>", "0", { gcid: "x.apps.googleusercontent.com" }), /sw-gcid/);
 });
+
+test("applyAuthMeta loads spell.js then signin.js, deferred, right before swAccount - only with AUTH_ENABLED=1, and only once", () => {
+  const TAGS = '<script src="/spell.js" defer></script><script src="/signin.js" defer></script>';
+  assert.doesNotMatch(realHtml, /src="\/(spell|signin)\.js"/, "the source page does not hard-code them");
+  const on = applyAuthMeta(realHtml, "1");
+  assert.strictEqual(on.split(TAGS + '<script id="swAccount">').length, 2);
+  assert.strictEqual(applyAuthMeta(on, "1").split(TAGS).length, 2, "idempotent");
+  assert.doesNotMatch(applyAuthMeta(realHtml, undefined), /src="\/(spell|signin)\.js"/);
+});

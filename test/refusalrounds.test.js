@@ -176,7 +176,8 @@ test("the converter and the board share the loop: betPawa refuses one of 16, the
     confirmAfterRefusal(t, names, keep, B, go) { log.prompts++; log.names = names; setImmediate(() => go([])); },
   };
   const names = Object.keys(stubs);
-  const body = "function fixtureById(){return null;}\n" + BOOKS.prelude("sporty") +
+  /* window: the sign-in wall at the top of bookRounds reads window.swGate; none here, as with accounts off. */
+  const body = "var window={};function fixtureById(){return null;}\n" + BOOKS.prelude("sporty") +
     "\nvar REFUSAL_ROUNDS=" + ROUNDS + ";\n" + WHY() + fn("dropUnbookable") + "\n" + fn("bookRounds") +
     "\nreturn function(p,src,t,h){ return bookRounds(p,BOOKS.sporty,src,t,h); };";
   const bookRounds = new Function(...names, body)(...names.map((k) => stubs[k]));

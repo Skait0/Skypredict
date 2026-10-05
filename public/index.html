@@ -14098,6 +14098,7 @@ function schedulePrecheck(picks){
    h = {busy(), idle(), code(code, sentPicks, d), fail(d)}. */
 function bookRounds(picks,B,src,target,h,round){
   round=round||0;
+  if(!round&&window.swGate&&!swGate("book",gateDetail(picks,B),function(){bookRounds(picks,B,src,target,h,0);},"")){ h.idle(); return; }
   if(!round&&lineCheck(picks,B,target,function(safe){bookRounds(safe,B,src,target,h,0);})) return;
   h.busy();
   bookFetch(picks.map(function(c){return B.sel(c);}),B,src)
@@ -17077,6 +17078,7 @@ function confirmBookAll(){
 if($("bookAll")) $("bookAll").addEventListener("click",confirmBookAll);
 
 function doBookList(picks,resultId,btnId,label,B){
+  if(window.swGate&&!swGate("book",gateDetail(picks,B||curBook()),function(){doBookList(picks,resultId,btnId,label,B);},"")) return;
   B=B||curBook();
   /* A pick with no id at this book cannot be sent - the server would be asked
      to price `null` and refuse the whole slip over it. */
@@ -22723,8 +22725,6 @@ load().catch(function(){});
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start); else start();
 })();
 </script>
-<script src="/spell.js" defer></script>
-<script src="/signin.js" defer></script>
 <script id="swAccount">
 /* Accounts on the page: the top-bar button, the account sheet, and sync.
    Nothing here shows or sends anything unless GET /api/me answers (404 =
@@ -23027,10 +23027,17 @@ load().catch(function(){});
      back. Never walls while /api/me has not answered yet, with accounts off,
      or when signin.js did not load: the site must still book. */
   function afterAuth(j,done){
-    req("GET","/api/me",null,function(code,me){
-      if(code===200&&me&&me.signedIn===true){ st.on=true; st.known=true; st.email=me.email||""; paintButton(); wire(); return sync(false,done); }
-      done();
-    });
+    var tries=0;
+    (function ask(){
+      req("GET","/api/me",null,function(code,me){
+        if(code===200&&me&&me.signedIn===true){ st.on=true; st.known=true; st.email=me.email||""; paintButton(); wire(); return sync(false,done); }
+        /* The server said yes but /api/me did not (cookie not stored yet, a
+           blip): once more, then close without the action - running it
+           signed out would only pop the wall again. */
+        if(++tries<2) return setTimeout(ask,1000);
+        notice("Signed in. Reload to sync."); done(false);
+      });
+    })();
   }
   root.swGate=function(action,detail,go,resume){
     if(!d.querySelector('meta[name="sw-auth"]')||!st.known||st.on||!root.swSignIn) return true;
@@ -23056,7 +23063,7 @@ load().catch(function(){});
     req("GET","/api/me",null,function(code,j){
       if(code===404||code===0||code>=500) return;            // off, offline or down: stay invisible, keep local
       st.known=true;
-      if(code===401){ paintButton(); if(readMeta(ls)) signedOutHere(j.reason); return; }
+      if(code===401){ readGate(); paintButton(); if(readMeta(ls)) signedOutHere(j.reason); return; }
       if(!(code===200&&j&&j.signedIn===true)) return;        // any other 200 is not a signed-in answer: stay invisible
       st.on=true; st.email=j.email||""; paintButton();
       wire();

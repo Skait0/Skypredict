@@ -26,6 +26,8 @@ test("every booking call site says where it came from", () => {
                    (/bookRounds\(/.test(l) && !/function bookRounds\(/.test(l) &&
                     /* its own next round, with any swaps the reader took (28 Sep) */
                     !/bookRounds\(safe(\.concat\(swapIn\))?,B,src/.test(l) &&
+                    /* the sign-in wall's resume (Oct 2026) re-calls it with the same src */
+                    !/bookRounds\(picks,B,src,target,h,0\)/.test(l) &&
                     /* bookLegs (28 Sep) passes its caller's label through */
                     !/bookRounds\(picks,B,src,outId,/.test(l)) ||
                    (/bookLegs\(/.test(l) && !/function bookLegs\(/.test(l)))

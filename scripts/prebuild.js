@@ -625,9 +625,12 @@ function applyAuthMeta(html, authEnabled, keys) {
      are meant for the browser); the shape checks only keep markup out. */
   const gcid = /^[0-9A-Za-z._-]{1,200}\.apps\.googleusercontent\.com$/.test(String(k.gcid || "")) ? k.gcid : "";
   const ts = /^[0-9A-Za-z_-]{1,100}$/.test(String(k.ts || "")) ? k.ts : "";
+  /* The sheet and the spell load only with accounts on (spec: with
+     AUTH_ENABLED off, nothing changes), just before swAccount, which uses them. */
   return html.replace("<head>", '<head><meta name="sw-auth" content="1">' +
     (gcid ? '<meta name="sw-gcid" content="' + gcid + '">' : "") +
-    (ts ? '<meta name="sw-ts" content="' + ts + '">' : ""));
+    (ts ? '<meta name="sw-ts" content="' + ts + '">' : ""))
+    .replace('<script id="swAccount">', '<script src="/spell.js" defer></script><script src="/signin.js" defer></script><script id="swAccount">');
 }
 
 function injectAuthMeta() {

@@ -23,7 +23,27 @@ test("Review Focus 1 and 2: never walls before the account state is known, when 
 });
 
 test("the sign-in and spell scripts load only with accounts on, deferred", () => {
-  assert.match(html, /<script src="\/spell\.js" defer><\/script>\s*<script src="\/signin\.js" defer><\/script>/);
+  const { applyAuthMeta } = require("../scripts/prebuild.js");
+  assert.doesNotMatch(html, /src="\/(spell|signin)\.js"/, "not hard-coded: prebuild injects them only with AUTH_ENABLED=1");
+  assert.doesNotMatch(applyAuthMeta(html, "0"), /src="\/(spell|signin)\.js"/);
+  assert.match(applyAuthMeta(html, "1"), /<script src="\/spell\.js" defer><\/script><script src="\/signin\.js" defer><\/script><script id="swAccount">/);
+});
+
+test("every user-tapped code generation is walled: doBookList (Book all, Slip of the day) and the first round of bookRounds (converter, trim/change, make safer)", () => {
+  assert.match(fnBody("doBookList"), /^\s*if\(window\.swGate&&!swGate\("book",gateDetail\(picks,B\|\|curBook\(\)\),function\(\)\{doBookList\(picks,resultId,btnId,label,B\);\},""\)\) return;/);
+  /* Only round 0: a refusal round (round>0) is already past the wall, and the idle() puts the caller's button back if the reader walks away. */
+  assert.match(fnBody("bookRounds"), /^\s*round=round\|\|0;\s*if\(!round&&window\.swGate&&!swGate\("book",gateDetail\(picks,B\),function\(\)\{bookRounds\(picks,B,src,target,h,0\);\},""\)\)\{ h\.idle\(\); return; \}/);
+});
+
+test("afterAuth retries /api/me once, then closes without running the action and says so", () => {
+  const a = /function afterAuth\(j,done\)\{([\s\S]*?)\r?\n  \}\r?\n  root\.swGate/.exec(block);
+  assert.ok(a, "afterAuth");
+  assert.match(a[1], /setTimeout\(ask,1000\)/);
+  assert.match(a[1], /notice\("Signed in\. Reload to sync\."\); done\(false\);/);
+});
+
+test("back from Google but signed out (401): the stale gate and ?signedin=1 are cleared", () => {
+  assert.match(block, /if\(code===401\)\{ readGate\(\);/);
 });
 
 test("the ball has a token pair in both themes", () => {
