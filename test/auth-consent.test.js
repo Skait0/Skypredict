@@ -32,3 +32,14 @@ test("unsubscribe tokens are per user, fixed length, and the URL carries both", 
   assert.strictEqual(K.unsubToken(p, a), K.unsubToken(p, a));
   assert.match(K.unsubUrl(p, a), new RegExp("/api/auth/unsub\\?u=" + a + "&t=" + K.unsubToken(p, a) + "$"));
 });
+
+test("a failed consent write is reported, never thrown: sign-in must not fail over it", async () => {
+  const db = fakeDb(() => Date.UTC(2026, 8, 30, 10));
+  db.upsertConsent = async () => false;
+  const logged = [], was = console.error, dsn = process.env.SENTRY_DSN;
+  delete process.env.SENTRY_DSN;
+  console.error = (...a) => logged.push(a.join(" "));
+  try { await K.record(db, "00000000-0000-4000-8000-000000000001", true, "email-code", Date.now()); }
+  finally { console.error = was; if (dsn !== undefined) process.env.SENTRY_DSN = dsn; }
+  assert.ok(logged.some((l) => /consent write failed/.test(l)), "report() saw it");
+});

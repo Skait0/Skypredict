@@ -249,7 +249,10 @@ function make(deps) {
         const good = /^[0-9a-f-]{36}$/.test(u) && tok.length === 22 && C.sameHex(
           Buffer.from(tok).toString("hex"), Buffer.from(K.unsubToken(pepper(), u)).toString("hex"));
         if (!good) return H.sendHtml(res, 400, "Link not valid", "This unsubscribe link is not valid. Open the latest email from us and try its link.");
-        await db.revokeConsent(u, iso(now()));
+        if (await db.revokeConsent(u, iso(now())) === false) {
+          await report(new Error("unsubscribe write failed"), { route });
+          return H.sendHtml(res, 500, "Something went wrong", "Something went wrong. Try the link again.");
+        }
         return H.sendHtml(res, 200, "You're unsubscribed", "No more picks by email. You can turn them back on from your account.");
       } catch (e) { await report(e, { route }); return H.sendJson(res, 500, { error: "server" }); }
     }
