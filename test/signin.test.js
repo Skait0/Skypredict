@@ -48,3 +48,10 @@ test("tokens fall back to the static pages' names", () => {
   assert.match(S.TOKENS, /--si-odds:var\(--win,var\(--accent\)\)/);
   assert.match(S.TOKENS, /--si-card2:var\(--card-2,var\(--card2\)\)/);
 });
+
+test("once() runs its function exactly once", () => {
+  let n = 0;
+  const f = S.once(() => { n++; });
+  f(); f(); f();
+  assert.strictEqual(n, 1);
+});

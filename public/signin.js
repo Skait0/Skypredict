@@ -37,7 +37,8 @@
     return {inapp:/FBAN|FBAV|Instagram|Twitter|Line\/|Telegram|WhatsApp|Snapchat|; wv\)/i.test(ua),
       iosApp:!!standalone&&/iphone|ipad|ipod/i.test(ua), standalone:!!standalone};
   }
-  var api={errText:errText,env:env,HEAD:HEAD,WORDING:WORDING,TOKENS:TOKENS};
+  function once(fn){ var n=false; return function(){ if(n) return; n=true; return fn.apply(this,arguments); }; }
+  var api={errText:errText,env:env,HEAD:HEAD,WORDING:WORDING,TOKENS:TOKENS,once:once};
   if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
   if(!root.document) return;
 
@@ -90,8 +91,9 @@
     "[hidden]{display:none!important}"+
     "@media (prefers-reduced-motion:reduce){.swsi,.swsi *{animation:none!important;transition:none!important}}";
 
-  var box=null, scrim=null, cur=null, spell=null, TS=null, tsId=null, EMAIL="", NONCE=null, gisLoaded=false, lastFocus=null;
+  var box=null, scrim=null, cur=null, spell=null, TS=null, tsId=null, EMAIL="", NONCE=null, gisLoaded=false, lastFocus=null, SESS=0, pend=null;
   var E=env(root.navigator&&root.navigator.userAgent,(root.matchMedia&&root.matchMedia("(display-mode: standalone)").matches)||(root.navigator&&root.navigator.standalone===true));
+  function live(sid){ return sid===SESS&&!!box&&(box.classList.contains("on")||box.classList.contains("page")); }
   function $(s){ return box.querySelector(s); }
   function meta(n){ var m=d.querySelector('meta[name="'+n+'"]'); return m?m.getAttribute("content")||"":""; }
   function req(method,url,body,cb){
@@ -174,12 +176,13 @@
      Nothing in 2s (blocked, FedCM off, no Google session) -> our own button. */
   function startGoogle(){
     if(E.inapp||E.iosApp) return;
-    var gcid=meta("sw-gcid"), slot=$(".swsi-g"), fallback=setTimeout(function(){ if(!slot.querySelector("iframe")) $(".swsi-gbtn").hidden=false; },2000);
+    var sid=SESS, gcid=meta("sw-gcid"), slot=$(".swsi-g"), fallback=setTimeout(function(){ if(live(sid)&&!slot.querySelector("iframe")) $(".swsi-gbtn").hidden=false; },2000);
     if(!gcid){ clearTimeout(fallback); $(".swsi-gbtn").hidden=false; return; }
     req("POST","/api/auth/google/nonce",{},function(st,j){
+      if(!live(sid)){ clearTimeout(fallback); return; }
       if(st!==200||!j.nonce){ clearTimeout(fallback); $(".swsi-gbtn").hidden=false; return; }
       NONCE=j;
-      function go(){ var g=root.google&&root.google.accounts&&root.google.accounts.id; if(!g) return;
+      function go(){ if(!live(sid)) return; var g=root.google&&root.google.accounts&&root.google.accounts.id; if(!g) return;
         g.initialize({client_id:gcid,nonce:j.nonce,callback:onCredential,use_fedcm_for_prompt:true,auto_select:false,itp_support:true,context:"signin",cancel_on_tap_outside:false});
         g.renderButton(slot,{theme:"filled_black",shape:"pill",text:"continue_with",size:"large",width:Math.min(400,slot.offsetWidth||320)});
         try{ g.prompt(); }catch(e){} }
@@ -189,27 +192,32 @@
   }
   function onCredential(resp){
     if(!resp||!resp.credential||!NONCE) return;
+    var sid=SESS, o=cur; if(!live(sid)) return;
     playSpell();
     req("POST","/api/auth/google/onetap",{credential:resp.credential,nonce_id:NONCE.nonce_id,optin:optin()},function(st,j){
-      if(st===200&&j.ok) return authed(j,"");
+      if(!live(sid)) return;
+      if(st===200&&j.ok) return authed(j,"",o);
       unplay(); say(errText(st,j)); NONCE=null; startGoogle();
     });
   }
   function redirectGoogle(){
-    var b=$(".swsi-gbtn"); b.disabled=true; say("");
+    var sid=SESS, o=cur, b=$(".swsi-gbtn"); b.disabled=true; say("");
     try{ if(ls) ls.setItem("sw.gate",JSON.stringify({action:cur.action,detail:cur.detail||null,resume:cur.resume||""})); }catch(e){}
     var ret=cur.ret||"/"; ret+=(ret.indexOf("?")<0?"?":"&")+"signedin=1";
     req("POST","/api/auth/google/prepare",{"return":ret,optin:optin()},function(st,j){
+      if(!live(sid)) return;
       if(st!==200||!j.start){ b.disabled=false; return say(errText(st,j)); }
-      if(E.standalone){ root.open(j.start,"_blank"); say("Finish in the Google window, then come back here."); pollMe(0); }
+      if(E.standalone){ root.open(j.start,"_blank"); say("Finish in the Google window, then come back here."); pollMe(0,sid,o); }
       else root.location.href=j.start;
     });
   }
   /* The installed Android app opens Google in a Chrome tab that shares the cookie jar. */
-  function pollMe(n){
+  function pollMe(n,sid,o){
+    if(!live(sid)) return;
     if(n>300){ $(".swsi-gbtn").disabled=false; return say(errText(400,{error:"expired"})); }
-    req("GET","/api/me",null,function(st,j){ if(st===200&&j.signedIn){ playSpell(); return authed({ok:true,name:""},j.email||""); }
-      setTimeout(function(){ if(box&&(box.classList.contains("on")||box.classList.contains("page"))) pollMe(n+1); },2000); });
+    req("GET","/api/me",null,function(st,j){ if(!live(sid)) return;
+      if(st===200&&j.signedIn){ playSpell(); return authed({ok:true,name:""},j.email||"",o); }
+      setTimeout(function(){ pollMe(n+1,sid,o); },2000); });
   }
 
   function startTurnstile(){
@@ -234,11 +242,12 @@
   }
   function verifyCode(ev){
     if(ev) ev.preventDefault();
-    var b=$(".swsi-cf .swsi-go"); if(b.disabled) return;
+    var sid=SESS, o=cur, b=$(".swsi-cf .swsi-go"); if(b.disabled) return;
     b.disabled=true; say(""); playSpell();
     req("POST","/api/auth/email/verify",{email:EMAIL,code:$(".swsi-code input").value,optin:optin()},function(st,j){
       b.disabled=false;
-      if(st===200&&j.ok) return authed(j,EMAIL);
+      if(!live(sid)) return;
+      if(st===200&&j.ok) return authed(j,EMAIL,o);
       unplay(); say(errText(st,j));
     });
   }
@@ -249,22 +258,24 @@
     spell=root.swSpell?root.swSpell(m,{odds:(cur.detail&&cur.detail.rows||[]).map(function(r){ return r.o; }),onRetry:function(){ unplay(); say("Try again."); }}):null;
   }
   function unplay(){ if(spell){ spell.stop(); spell=null; } $(".swsi-spell").classList.remove("on"); $(".swsi-spell").innerHTML=""; $(".swsi-form").classList.remove("gone"); }
-  function authed(j,email){
-    var o=cur;
+  function authed(j,email,o){
     if(spell){ spell.step(1); if(root.swSpell&&root.swSpell.firstName) spell.setName(root.swSpell.firstName(j.name,email)); }
-    var finish=function(){ if(!spell){ close(); if(o.onDone) o.onDone(); return; }
-      spell.finish(function(){ close(); if(o.onDone) o.onDone(); }); };
+    var fire=once(function(){ if(o.onDone) o.onDone(); });
+    var finish=function(){ if(!spell){ close(); fire(); return; }
+      pend=fire; spell.finish(function(){ pend=null; close(); fire(); }); };
     if(o.afterAuth) o.afterAuth(j,finish); else finish();
   }
 
   function reset(o){
-    cur=o; TS=null; EMAIL=""; NONCE=null; if(spell){ spell.stop(); spell=null; }
+    SESS++; var p=pend; pend=null; cur=o; TS=null; EMAIL=""; NONCE=null; if(spell){ spell.stop(); spell=null; }
+    if(tsId!=null){ try{ root.turnstile.reset(tsId); }catch(e){} }
     $(".swsi-spell").classList.remove("on"); $(".swsi-spell").innerHTML="";
     $(".swsi-form").classList.remove("gone");
     $(".swsi-head").hidden=false; $(".swsi-head").innerHTML=header(o.action,o.detail);
     $(".swsi-h").innerHTML="Sign in to <i>"+esc(HEAD[o.action]||HEAD.book)+"</i>"; $(".swsi-s").hidden=false;
     $(".swsi-ef").hidden=false; $(".swsi-cf").hidden=true; $(".swsi-gbtn").hidden=true; $(".swsi-gbtn").disabled=false;
     $(".swsi-g").innerHTML=""; say(""); googleShown(true);
+    if(p) p();
   }
   function open(o){
     o=o||{};
@@ -276,15 +287,18 @@
   function resume(o){
     o=o||{}; if(!box) build(false); reset(o);
     scrim.classList.add("on"); box.classList.add("on");
-    playSpell(); authed({ok:true,name:""},"");
+    playSpell(); authed({ok:true,name:""},"",cur);
   }
   function close(){
     if(!box) return;
+    SESS++; var p=pend; pend=null;
     if(spell){ spell.stop(); spell=null; }
     try{ if(root.google&&root.google.accounts) root.google.accounts.id.cancel(); }catch(e){}
-    if(box.classList.contains("page")) return;
-    box.classList.remove("on"); if(scrim) scrim.classList.remove("on");
-    if(lastFocus&&lastFocus.focus) try{ lastFocus.focus(); }catch(e){}
+    if(!box.classList.contains("page")){
+      box.classList.remove("on"); if(scrim) scrim.classList.remove("on");
+      if(lastFocus&&lastFocus.focus) try{ lastFocus.focus(); }catch(e){}
+    }
+    if(p) p();
   }
   root.swSignIn={open:open,resume:resume,close:close};
 })(typeof window!=="undefined"?window:this);
