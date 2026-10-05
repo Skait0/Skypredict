@@ -93,7 +93,7 @@ test("the pop-up puts a swap in front of each refused game, and books what was t
   assert.match(fnSrc, /go\(alts\.filter\(function\(a,i\)\{ return a&&swap\[i\]; \}\)\)/,
     "only the swaps left ticked are booked");
   /* And every caller books them. */
-  assert.match(src, /bookRounds\(safe\.concat\(swapIn\),B,src,target,h,round\+1\);\},gone\);/);
+  assert.match(src, /bookRounds\(safe\.concat\(swapIn\),B,src,target,h,round\+1\);\},gone,h\);/);
   assert.match(src, /doBook\(safe\.concat\(swapIn\),\(retried\|\|0\)\+1,B\);\},_gone\);/);
   assert.match(src, /doBookMy\(safe\.concat\(swapIn\),\(retried\|\|0\)\+1,B\);\s*\},_dropped\);/);
 });
@@ -106,12 +106,15 @@ test("Make it safer asks in the pop-up, never inside its own pill", () => {
 });
 
 test("the editor's code is described by every leg booked, not by the swaps", () => {
-  const i = src.indexOf('bookFetch(sels,B,"editor")');
-  const block = src.slice(i, i + 900);
-  assert.match(block, /showCode\(code,"byoSaferOut",null,B,booked,d\)/);
-  assert.doesNotMatch(block, /plan\.map\(function\(p\)/, "plan is only the legs that moved");
+  /* Since 5 Oct 2026 Apply books through bookLegs, whose code dialog is
+     handed the picks actually SENT - every kept leg, fewer after a refusal. */
+  const i = src.indexOf('bookLegs(sent,B,"editor","byoSaferOut"');
+  assert.ok(i > 0, "Apply books through bookLegs");
+  assert.match(src.slice(src.indexOf("function bookLegs("), src.indexOf("function legName(")),
+    /showCode\(code,outId,null,B,sent,d\)/);
   const pre = src.slice(src.lastIndexOf("var kept=legs.filter", i), i);
-  assert.match(pre, /var booked=kept\.map/, "one pick per leg sent");
+  assert.doesNotMatch(pre, /plan\.map\(function\(p\)/, "plan is only the legs that moved");
+  assert.match(pre, /var sent=kept\.map/, "one pick per leg sent");
 });
 
 test("the code shows what it pays, in the book's own figure when it gave one", () => {
