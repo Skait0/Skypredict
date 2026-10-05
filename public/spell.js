@@ -172,8 +172,9 @@
         n=star?el("path",{"class":"g",d:"M0-4.5L1.1-1.1 4.5 0 1.1 1.1 0 4.5-1.1 1.1-4.5 0-1.1-1.1z"},bits):el("circle",{"class":k%2?"r":"g",r:(1.3+Math.random()*1.4).toFixed(1)},bits);
         tween(1000+Math.random()*400,function(t){ n.setAttribute("transform","translate("+(128+Math.cos(ang)*sp*t)+" "+(4+Math.sin(ang)*sp*t+30*t*t)+") rotate("+(rot+t*260)+")"); n.setAttribute("opacity",(1-t).toFixed(2)); }); })(k);
       tilt.classList.add("shake");
-      later(380,function(){ tilt.classList.remove("up"); tilt.classList.remove("shake"); tilt.classList.add("flat"); q(".sws-pitch").classList.add("out"); paintName(); q(".sws-hello").classList.add("on"); });
-      later(380+HOLD_MS,function(){ clearTimeout(maxT); if(doneCb){ var f=doneCb; doneCb=null; f(); } });
+      later(380,function(){ tilt.classList.remove("up"); tilt.classList.remove("shake"); tilt.classList.add("flat"); q(".sws-pitch").classList.add("out"); paintName(); q(".sws-hello").classList.add("on");
+        // the hold is real time, not scaled by speed: the spec says 900ms
+        timers.push(setTimeout(function(){ if(stopped) return; clearTimeout(maxT); if(doneCb){ var f=doneCb; doneCb=null; f(); } },HOLD_MS)); });
     }
     function showFinal(){ scored=true; cap(2); q(".sws-pitch").classList.add("out"); paintName(); q(".sws-hello").classList.add("on");
       setTimeout(function(){ if(!stopped&&doneCb){ var f=doneCb; doneCb=null; f(); } },HOLD_MS); }
