@@ -8521,6 +8521,7 @@ function myRecord(){
           jack:jack.length, jackWon:jack.filter(function(s){return s.settled&&s.won;}).length,
           pending:real.filter(function(s){return !s.settled;}).length};
 }
+window.swRecord=function(){var r=myRecord();return {built:r.built,won:r.won,settled:SLIPS.filter(function(s){return s.settled&&!isJackpotSlip(s);}).length};};
 /* Same rule as lib/model.js countryOf: "Northern Ireland Premiership" is not in "Northern". */
 function countryOf(l){var two=["Northern Ireland","Faroe Islands","North Macedonia","San Marino"];for(var i=0;i<two.length;i++)if(l.indexOf(two[i]+" ")===0)return two[i];return l.split(" ")[0];}
 /* CONMEBOL countries. Only Argentina and Brazil are in the feeds today, but
@@ -22947,7 +22948,7 @@ load().catch(function(){});
   var st={on:false,known:false,email:"",timer:null,backoff:0,busy:false,raw:"",nextAt:0,pulled:0};
   function $(id){ return d.getElementById(id); }
   function rawNow(){ var s="",k; for(k in KEYS) s+=ls.getItem(KEYS[k])+"\u0001"; for(k in PREFS) s+=ls.getItem(PREFS[k])+"\u0001"; return s; }
-  function isSyncedKey(k){ var x; for(x in KEYS) if(own(KEYS,x)&&KEYS[x]===k) return true; return false; }
+  function isSyncedKey(k){ var x; for(x in KEYS) if(own(KEYS,x)&&KEYS[x]===k) return true; for(x in PREFS) if(own(PREFS,x)&&PREFS[x]===k) return true; return false; }
   function reload(){ try{ if(root.swReloadSynced) root.swReloadSynced(); }catch(e){} }
   function req(method,url,body,cb){
     var x=new XMLHttpRequest();

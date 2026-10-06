@@ -69,3 +69,29 @@ test("the page loads it and the old sheet is gone", () => {
   assert.match(html, /<script src="\/account-ui\.js" defer><\/script>/);
   assert.doesNotMatch(html, /acctSheet|Download my data/);
 });
+
+test("picker: six free in one row, eight locked skins, chosen one ringed", () => {
+  assert.deepStrictEqual(UI.AV_FREE, ["fire", "8bit", "2bit", "lino", "glass", "halo"]);
+  assert.strictEqual(UI.AV_LOCKED.length, 8);
+  const h = UI.pickerHtml("glass");
+  assert.strictEqual((h.match(/data-av=/g) || []).length, 6);
+  assert.strictEqual((h.match(/disabled/g) || []).length, 8);
+  assert.match(h, /data-av="glass" aria-pressed="true"/);
+  assert.match(h, /Skins/); assert.match(h, /Unlock with plans/);
+});
+
+test("record: one card, won big, the rate only over settled slips", () => {
+  const h = UI.recordHtml({ built: 24, won: 6, settled: 21 });
+  assert.match(h, />6</); assert.match(h, /of 21 settled, 29%/); assert.match(h, />24</);
+  assert.doesNotMatch(UI.recordHtml({ built: 0, won: 0, settled: 0 }), /NaN|Infinity/);
+});
+
+test("profile has no second avatar besides the picker tiles", () => {
+  const h = UI.profileHtml({ name: "Kayode", avatar: "fire", record: { built: 1, won: 0, settled: 0 }, quota: null });
+  assert.strictEqual((h.match(/\/av\//g) || []).length, 14, "only the 14 picker tiles");
+  assert.match(h, /Subscription/); assert.match(h, /Free plan/); assert.doesNotMatch(h, /Codes today/);
+});
+
+test("isSyncedKey also covers PREFS keys, so a name saved in another tab reloads", () => {
+  assert.match(html, /function isSyncedKey\([^)]*\)\{[^\n]*PREFS/);
+});
