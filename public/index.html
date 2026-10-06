@@ -22016,10 +22016,12 @@ function setTheme(t){
 /* Settings (account-ui.js) and a synced pref both land here. */
 window.swSetTheme=function(t){ setTheme(t==="light"?"light":"dark"); };
 /* SWAVATAR */
+/* Lists match lib/roles.js. The role is display-only; the server checks. */
 window.swAvatarKey=function(){
-  var FREE=["fire","8bit","2bit","lino","glass","halo"], v=null;
-  try{ v=localStorage.getItem("sw.avatar"); }catch(e){}
-  return FREE.indexOf(v)>=0?v:"fire";
+  var FREE=["fire","8bit","2bit","lino","glass","halo"], FF=["gold","holo","graffiti","lowpoly","clay"], OWNER=["storm","lich","afro"], v=null, r=null;
+  try{ v=localStorage.getItem("sw.avatar"); r=localStorage.getItem("sw.role"); }catch(e){}
+  var ok=r==="admin"?FREE.concat(FF,OWNER):r==="ff"?FREE.concat(FF):FREE;
+  return ok.indexOf(v)>=0?v:"fire";
 };
 /* /SWAVATAR */
 var _scrollIdle=null;
@@ -22969,9 +22971,14 @@ load().catch(function(){});
     } else { b.innerHTML=PERSON; b.setAttribute("aria-label","Sign in"); b.classList.remove("ac-on"); }
   }
 
+  /* Plan from GET /api/me, for the menu and the avatar picker. Display only. */
+  function saveRole(me){
+    var v={"sw.role":me&&me.role,"sw.plan":me&&me.plan,"sw.codeLimit":me&&me.codeLimit};
+    for(var k in v) if(own(v,k)) try{ if(v[k]==null) ls.removeItem(k); else ls.setItem(k,String(v[k])); }catch(e){}
+  }
   function signedOutHere(reason,quiet){
     var had=!!readMeta(ls);
-    st.on=false; clearSynced(ls); reload(); paintButton(); if(root.swAccountUI){ root.swAccountUI.close(); root.swAccountUI.closeView(); }
+    st.on=false; clearSynced(ls); saveRole(null); reload(); paintButton(); if(root.swAccountUI){ root.swAccountUI.close(); root.swAccountUI.closeView(); }
     if(had&&!quiet) notice(reason==="displaced"?"Signed out: this account was used on a newer device.":"You were signed out. Sign in again to sync.");
   }
 
@@ -23053,7 +23060,7 @@ load().catch(function(){});
     var tries=0;
     (function ask(){
       req("GET","/api/me",null,function(code,me){
-        if(code===200&&me&&me.signedIn===true){ st.on=true; st.known=true; st.email=me.email||""; paintButton(); wire(); return sync(false,done); }
+        if(code===200&&me&&me.signedIn===true){ st.on=true; st.known=true; st.email=me.email||""; saveRole(me); paintButton(); wire(); return sync(false,done); }
         /* The server said yes but /api/me did not (cookie not stored yet, a
            blip): once more, then close without the action - running it
            signed out would only pop the wall again. */
@@ -23089,7 +23096,7 @@ load().catch(function(){});
       st.known=true;
       if(code===401){ readGate(); paintButton(); if(readMeta(ls)) signedOutHere(j.reason); return; }
       if(!(code===200&&j&&j.signedIn===true)) return;        // any other 200 is not a signed-in answer: stay invisible
-      st.on=true; st.email=j.email||""; paintButton();
+      st.on=true; st.email=j.email||""; saveRole(j); paintButton();
       wire();
       var g=readGate();
       if(g&&root.swSignIn){
