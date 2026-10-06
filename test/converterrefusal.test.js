@@ -36,7 +36,7 @@ function cleg(i, extra) {
 
 /* `answer(ids)` plays the bookmaker. `ask` plays the reader at the refusal
    pop-up: "go" books the rest, "stop" keeps editing. */
-function harness(answer, ask) {
+function harness(answer, ask, matchFixture) {
   const log = { sent: [], asks: [], codes: [], errs: [], toasts: [], split: null };
   const els = { byoSaferOut: { innerHTML: "" }, ttOut: { innerHTML: "" } };
   const stubs = {
@@ -54,7 +54,7 @@ function harness(answer, ask) {
     swToast(msg) { log.toasts.push(msg); },
     renderSplit(out, done) { log.split = done; },
     bookErrText: null,
-    fixtureByLeg: () => null, fid: () => "f", mProb: () => null,
+    fixtureByLeg: (l) => (matchFixture ? matchFixture(l) : null), fid: () => "f", mProb: () => null,
     esc: (s) => String(s), mLabel: (f, c) => c, isUpcoming: () => true,
   };
   const names = Object.keys(stubs);
@@ -69,7 +69,7 @@ function harness(answer, ask) {
     fn("refusalWhy") + fn("whyOf") + fn("dropUnbookable") + fn("notStarted") + fn("legStarted") +
     opt("pickStarted") + opt("editErrHTML") + fn("bookReason") + fn("bookErrHTML") +
     fn("bookRounds") + fn("legPick") + fn("bookLegs") + fn("splitPicks") + fn("splitAndBook") +
-    "\nreturn {bookLegs:bookLegs, splitAndBook:splitAndBook, legPick:legPick, B:BOOKS.sporty};";
+    "\nreturn {bookLegs:bookLegs, splitAndBook:splitAndBook, legPick:legPick, bookRounds:bookRounds, B:BOOKS.sporty};";
   const api = new Function(...names, body)(...names.map((k) => stubs[k]));
   return { api, log };
 }
@@ -221,3 +221,71 @@ test("a split of started games books nothing either", async () => {
 /* The harness's own BOOKS.sporty and legPick, lifted from the page. */
 function BOOKS_SPORTY(h) { return h.api.B; }
 function legPickOf(h, l, B) { return h.api.legPick(l, B); }
+
+/* ------------------------------------------------------- review fixes */
+
+test("Apply ignores a second tap while the first is still booking", () => {
+  /* lineCheck can hold ~9 s before busy() greys the button; a second tap
+     in that window booked twice. */
+  const w = fn("wireSafer");
+  const i = w.indexOf('go.addEventListener("click",function(){');
+  assert.ok(i > 0);
+  assert.match(w.slice(i, i + 80), /\{\s*if\(BYO\._booking\) return;/, "first thing the handler does");
+  assert.match(w, /BYO\._booking=true; go\.disabled=true;\s*bookLegs\(sent,/, "greyed before bookLegs");
+});
+
+test("a wrongly matched fixture neither changes the id sent nor marks a future leg started", async () => {
+  const h = harness(() => ({ success: true, booking_code: "OK" }), "go",
+    /* Our name match landed on a different game, one that kicked off an hour ago. */
+    () => ({ home: "H0", away: "A0", eventId: "other", kickoff: new Date(PAST).toISOString() }));
+  h.api.bookLegs([cleg(0, { kickoff: SOON }), cleg(1, { kickoff: SOON })],
+    BOOKS_SPORTY(h), "change", "ttOut", btn(), "Book");
+  await tick();
+  assert.deepStrictEqual(h.log.sent, [["e0", "e1"]], "kept, under the pasted eventId");
+  assert.deepStrictEqual(h.log.toasts, []);
+});
+
+test("the leg's own kickoff wins over a matching fixture's clock", async () => {
+  const h = harness(() => ({ success: true, booking_code: "OK" }), "go",
+    (l) => ({ home: l.home, away: l.away, eventId: l.eventId, kickoff: new Date(PAST).toISOString() }));
+  h.api.bookLegs([cleg(0, { kickoff: SOON })], BOOKS_SPORTY(h), "change", "ttOut", btn(), "Book");
+  await tick();
+  assert.deepStrictEqual(h.log.sent, [["e0"]]);
+});
+
+test("a kickoff of 0, false or empty is unknown, and the leg is kept", async () => {
+  const h = harness(() => ({ success: true, booking_code: "OK" }));
+  h.api.bookLegs([cleg(0, { kickoff: 0 }), cleg(1, { kickoff: false }), cleg(2, { kickoff: "" })],
+    BOOKS_SPORTY(h), "change", "ttOut", btn(), "Book");
+  await tick();
+  assert.deepStrictEqual(h.log.sent, [["e0", "e1", "e2"]]);
+});
+
+test("an all-started slip puts the button back", async () => {
+  const h = harness(() => { throw new Error("must not be asked"); });
+  const b = btn(); let idle = 0;
+  const pick = h.api.legPick(cleg(0, { kickoff: PAST }), BOOKS_SPORTY(h));
+  h.api.bookRounds([pick], BOOKS_SPORTY(h), "editor", "byoSaferOut", {
+    dropStarted: true, busy() {}, idle() { idle++; }, code() {}, fail() {} });
+  await tick();
+  assert.strictEqual(idle, 1, "idle() runs, so nothing is left on Working…");
+  assert.strictEqual(h.log.sent.length, 0);
+});
+
+test("paths that did not ask for it book started legs exactly as before", async () => {
+  /* Scope ruling: the board's Book, Book all, Slip of the day, conversion and
+     the code dialog's Make it safer are unchanged. */
+  const h = harness(() => ({ success: true, booking_code: "OK" }));
+  const picks = [cleg(0, { kickoff: PAST }), cleg(1, { kickoff: SOON })]
+    .map((l) => h.api.legPick(l, BOOKS_SPORTY(h)));
+  let code = null;
+  h.api.bookRounds(picks, BOOKS_SPORTY(h), "board", "bookResult", {
+    busy() {}, idle() {}, code(c) { code = c; }, fail() {} });
+  await tick();
+  assert.deepStrictEqual(h.log.sent, [["e0", "e1"]]);
+  assert.strictEqual(code, "OK");
+  assert.deepStrictEqual(h.log.toasts, []);
+  for (const caller of ["bookLegs", "splitAndBook"])
+    assert.match(fn(caller), /dropStarted:true/, caller + " asks for the filter");
+  assert.strictEqual((src.match(/dropStarted:true/g) || []).length, 2, "and nobody else does");
+});

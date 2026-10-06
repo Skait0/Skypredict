@@ -14104,10 +14104,12 @@ function schedulePrecheck(picks){
    without calling the bookmaker at all. */
 function bookRounds(picks,B,src,target,h,round){
   round=round||0;
-  if(!round){
+  /* Only for callers that ask (h.dropStarted: the converter's edit tools).
+     Every other path books exactly as it did before 5 Oct 2026. */
+  if(!round&&h.dropStarted){
     var live=picks.filter(function(c){return !pickStarted(c);}), late=picks.length-live.length;
     if(late){
-      if(!live.length){ h.fail({_kind:"started"}); return; }
+      if(!live.length){ h.idle(); h.fail({_kind:"started"}); return; }
       if(typeof swToast==="function")
         swToast(late+(late===1?" game":" games")+" already started - left out.","info","started");
       picks=live;
@@ -14666,7 +14668,7 @@ function splitAndBook(picks,n,host,B,opt){
       },
       fail:function(d){ next({legs:part,code:null,why:bookErrText(d,B)}); },
       stop:function(){ next({legs:part,code:null,why:"Left out - you kept editing."}); },
-      stopLabel:"Keep editing"
+      stopLabel:"Keep editing", dropStarted:true
     });
   }
   step(0);
@@ -14753,11 +14755,18 @@ function byoOdds(legs){
 function byoBook(){ return BOOKS[BYO.book]||BOOKS.sporty; }
 /* Kicked off, by our fixture's clock or by what the book said of the leg.
    A leg's kickoff can be epoch ms, which legStarted's Date.parse reads as
-   NaN, so it is also read with new Date, as notStarted does. */
+   NaN, so it is also read with new Date, as notStarted does.
+   The leg's own word wins: a name match can land on the wrong fixture, so
+   our fixture's clock is read only when the leg carries neither a status nor
+   a kickoff. A kickoff of 0, false or "" is unknown, and unknown keeps it. */
 function pickStarted(c){
-  var f=c&&(c.f||fixtureById(c.id));
-  var t=(c&&c.kickoff!=null&&c.kickoff!=="")?new Date(c.kickoff).getTime():NaN;
-  return !!(f&&f.kickoff&&!notStarted(f))||(isFinite(t)&&t<=Date.now())||legStarted(c);
+  if(!c) return false;
+  if(c.status||c.kickoff){
+    var t=c.kickoff?new Date(c.kickoff).getTime():NaN;
+    return (isFinite(t)&&t<=Date.now())||legStarted(c);
+  }
+  var f=c.f||fixtureById(c.id);
+  return !!(f&&f.kickoff&&!notStarted(f));
 }
 function legStarted(l){
   /* THE BOOKMAKER'S OWN VERDICT FIRST, when we have it. A leg the board has
@@ -16196,7 +16205,7 @@ function wireSafer(wrap,legs,B){
     });
   });
   var go=box.querySelector("#byoSaferGo"); if(!go) return;
-  go.addEventListener("click",function(){
+  go.addEventListener("click",function(){ if(BYO._booking) return;   /* a second tap while lineCheck holds */
     var plan=saferPlan(legs,B);
     var byLeg={}; plan.forEach(function(p){ byLeg[p.leg.eventId+"|"+p.from]=p.to; });
     var gone={};
@@ -16236,7 +16245,7 @@ function wireSafer(wrap,legs,B){
        under a lone OK, when the API had named the four legs it refused. It
        books through bookLegs now, the same refusal loop as Book, Trim and
        Change. */
-    BYO._booking=true;
+    BYO._booking=true; go.disabled=true;
     bookLegs(sent,B,"editor","byoSaferOut",go,"Apply and get a code",function(){ BYO._booking=false; });
   });
 }
@@ -16291,6 +16300,9 @@ function trimBoxInner(legs,B){
    it. A game our board does not carry still goes in, under this book's id. */
 function legPick(l,B){
   var f=fixtureByLeg(l,B);
+  /* A name match that carries a different id for this book is a different
+     game: trust the pasted leg, or we book (and judge kickoff by) the wrong one. */
+  if(f&&f[B.id]&&String(f[B.id])!==String(l.eventId)) f=null;
   var o={id:f?fid(f):"leg:"+l.eventId,code:l.prediction,f:f||null,
          p:f?mProb(f,l.prediction):null};
   o[B.id]=l.eventId;
@@ -16312,7 +16324,7 @@ function bookLegs(legs,B,src,outId,btn,label,end){
     idle:function(){ if(btn){ btn.disabled=false; btn.textContent=label; } },
     code:function(code,sent,d){ over(); if($(outId)) showCode(code,outId,null,B,sent,d); },
     fail:function(d){ over(); if($(outId)) showBookErr(outId,editErrHTML(d,B),"Keep editing"); },
-    stop:over, stopLabel:"Keep editing"
+    stop:over, stopLabel:"Keep editing", dropStarted:true
   });
 }
 function legName(l){ return (l.home||"a game")+" v "+(l.away||""); }
