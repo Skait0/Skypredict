@@ -2118,22 +2118,6 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    Sits directly under the offer, because somebody returning has one question
    and it is not "what is on today". Same card language as pick of the day so
    the rail reads as one column rather than a stack of widgets. */
-.myres{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg,14px);
-  padding:13px 14px;margin-bottom:12px}
-.mr-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.mr-ttl{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--faint)}
-.mr-tag{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
-  padding:3px 8px;border-radius:99px}
-.mr-tag.won{background:var(--green-wash);color:var(--green-ink)}
-/* Gold, not red: "So close" is a near miss to go again from, not an alarm. */
-.mr-tag.lost{background:rgba(242,184,75,.16);color:var(--win-ink)}
-.mr-tag.live{background:var(--win-wash);color:var(--win-ink)}
-.mr-body b{display:block;font-size:14.5px;font-weight:800;color:var(--text);line-height:1.3}
-.mr-body span{display:block;font-size:12.5px;color:var(--soft);margin-top:3px;line-height:1.4}
-/* The one-time explainer. Inside the card rather than floating over it, so it
-   cannot cover anything and needs no positioning to be right on either
-   screen. */
 /* Quiet link, not a button: it is evidence for a claim, not an action the
    page wants you to take. */
 .daily-back{display:inline-block;margin-top:10px;background:none;border:0;padding:0;
@@ -2142,25 +2126,6 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
   font:inherit;font-size:12px;font-weight:800;color:var(--red-ink);cursor:pointer}
 .daily-back:hover{text-decoration:underline}
 .daily-back:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:4px}
-.mr-coach{display:flex;align-items:flex-start;gap:9px;margin-top:10px;
-  padding:9px 10px;background:var(--card-2);border:1px solid var(--line);
-  border-radius:var(--r-md)}
-.mr-coach span{flex:1;min-width:0;font-size:11.5px;line-height:1.45;color:var(--soft)}
-.mr-coach-x{flex-shrink:0;align-self:center;background:var(--red-fill);color:#fff;border:0;
-  font:inherit;font-size:11px;font-weight:800;padding:6px 11px;border-radius:99px;
-  cursor:pointer}
-.mr-coach-x:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-.mr-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;
-  margin-top:11px;padding-top:10px;border-top:1px solid var(--line)}
-/* This is the line somebody comes back for - their own record - and it was
-   set at caption size in the faintest colour on the card, which put it below
-   the furniture around it. */
-.mr-rec{font-size:12.5px;font-weight:800;color:var(--soft)}
-.mr-rec b{color:var(--text);font-weight:800}
-.mr-all{background:none;border:0;font:inherit;font-size:12px;font-weight:800;
-  color:var(--red);cursor:pointer;padding:2px 0}
-.mr-all:hover{text-decoration:underline}
-.mr-all:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:4px}
 
 /* The history sheet. One card a slip, legs listed under it with a mark each,
    so the whole thing is readable at a glance without opening anything. */
@@ -2260,8 +2225,6 @@ a.sl-mini{text-decoration:none;display:inline-flex;align-items:center}
 @media (hover:hover){.sl-mini-x:hover{color:var(--red-ink);border-color:var(--red)}}
 .sl-mini-x.arm{background:var(--red-wash);border-color:var(--red);color:var(--red-ink);font-weight:800}
 @media(max-width:640px){
-  .myres{padding:11px 12px;margin-bottom:10px}
-  .mr-body b{font-size:14px}
   .sl-card{padding:9px 10px}
   .sl-p{max-width:40%}
 }
@@ -5251,13 +5214,9 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   /* Cards carry their own top/bottom margins for the flow layout; in here the
      column's gap already does that job, and the two were stacking. */
   .home-rail>*{margin-top:0;margin-bottom:0}
-  .home-rail .myres,.home-rail .daily,
+  .home-rail .daily,
   .home-rail .potd,.home-rail .slip-cta{margin-top:0;margin-bottom:0}
 
-  .home-rail .myres{padding:11px 13px}
-  .home-rail .mr-top{margin-bottom:7px}
-  .home-rail .mr-coach{margin-top:7px;padding:7px 10px}
-  .home-rail .mr-foot{margin-top:9px;padding-top:8px}
 
   .home-rail .potd-top{padding:8px 15px}
   .home-rail .potd-body{padding:10px 14px}
@@ -8278,7 +8237,7 @@ function renderMyResults(){
       return "<div class='sw-swipe' data-sid='"+esc(s.sid)+"'><div class='sw-bin'>"+BIN_SVG+"</div>"+
         "<div class='sw-card ys-row'><span class='ys-dot "+slipState(s)+"' role='img' aria-label='"+({run:"Running",lost:"Lost",won:"Won"})[slipState(s)]+"'></span>"+
         "<span class='ys-m'><span class='ys-code num'>"+esc(s.code||"No code")+"</span>"+
-        "<small>"+(s.book?bookMark(s.book)+", ":"")+s.legs.length+" games, "+esc(slipWhen(s.at))+"</small></span>"+
+        "<small>"+(s.book?bookMark(s.book)+", ":"")+s.legs.length+(s.legs.length===1?" game":" games")+(slipWhen(s.at)==="last"?"":", "+esc(slipWhen(s.at).replace(/'s$/,"")))+"</small></span>"+
         "<span class='ys-od num'>×"+(s.odds>=1000?Math.round(s.odds).toLocaleString():s.odds.toFixed(2))+"</span></div></div>";
     }).join("");
   host.querySelectorAll("[data-ysf]").forEach(function(b){ b.onclick=function(){ openSlipsSheet(b.getAttribute("data-ysf")); }; });
@@ -8297,13 +8256,6 @@ function clearAllControl(slot){
     var y=slot.querySelector(".ys-yes"); y.onclick=function(){ window.swPend.clearAll(SLIPS.filter(function(s){return !(window.swPend&&window.swPend.hidden(s.sid));}).map(function(s){return s.sid;})); }; y.focus();
   }
   idle();
-}
-const SLIP_COACH_KEY="sw.coached.slips.v1";
-function slipCoachSeen(){
-  try{return localStorage.getItem(SLIP_COACH_KEY)==="1";}catch(e){return true;}
-}
-function slipCoachDone(){
-  try{localStorage.setItem(SLIP_COACH_KEY,"1");}catch(e){}
 }
 /* "Tuesday" rather than a date: people remember the day they placed it. */
 function slipWhen(iso){

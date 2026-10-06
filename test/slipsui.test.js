@@ -34,3 +34,19 @@ test("copy: Lost not Cut, no em dashes in the new slips UI", () => {
   assert.match(r, /Lost/);
   assert.doesNotMatch(r, /-game slip · ×/, "the old one-slip summary is gone");
 });
+
+test("Recent row copy: no possessive, no ', last', singular game", () => {
+  const src = grab("slipState") + grab("slipCounts") + grab("bookMark") + grab("renderMyResults");
+  function row(s, when) {
+    let out = "";
+    const host = { set innerHTML(v) { out = v; }, querySelectorAll() { return []; }, querySelector() { return null; } };
+    const f = new Function("SLIPS", "window", "BOOKS", "esc", "$", "slipWhen", "swSwipe", "clearAllControl", "BIN_SVG", "SL_PEEKED", "openSlipsSheet",
+      src + "; return renderMyResults;");
+    f([s], { swPend: { hidden: () => false } }, { sporty: { label: "SportyBet" } }, (x) => x, () => host, () => when, null, () => {}, "", true, null)();
+    return out;
+  }
+  const base = { sid: "a", settled: false, code: "X1", book: "sporty", odds: 2, at: "x" };
+  assert.match(row({ ...base, legs: [1, 2, 3] }, "today's"), /SportyBet, 3 games, today<\/small>/);
+  assert.match(row({ ...base, legs: [1] }, "Saturday's"), /1 game, Saturday<\/small>/);
+  assert.match(row({ ...base, legs: [1] }, "last"), /SportyBet, 1 game<\/small>/);
+});
