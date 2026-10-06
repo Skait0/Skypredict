@@ -35,7 +35,7 @@ function grab(name) {
   assert.fail("could not find the end of " + name);
 }
 
-const real = ["P0", "esc", "fid", "conf", "verdict", "plainTip", "whyLine", "tipCode", "boardPick",
+const real = ["P0", "esc", "fid", "tipEval", "scoreSurvives", "mirrorScore", "reconcileScore", "conf", "verdict", "plainTip", "whyLine", "tipCode", "boardPick",
   "legOdd", "oddOf", "opt", "bestPriceHTML", "moreHTML", "countMarkets", "matchHTML", "listRowHTML", "CATS"]
   .map(grab).join("\n");
 const stubs = `
@@ -45,7 +45,7 @@ const stubs = `
   function bookFeedPending(){return false;}
   function myslipHas(){return false;}
   function isFav(){return false;} function countryOf(){return "";} function isValue(){return false;}
-  function scoreLine(){return "1-1";}
+  function scoreLine(f){return f.score;}
   function split100(v){return v.map(function(x){return Math.round(x*100);});}
   function formHTML(){return "";} function statusSlot(){return "";} function valPill(){return "";}
   function kickTime(){return "18:00";}
@@ -57,7 +57,7 @@ const fx = (o) => Object.assign({
   lh: 1.3, la: 1.25, home_p: 0.36, draw_p: 0.31, away_p: 0.33,
   dc1x: 0.67, dcx2: 0.64, dc12: 0.69, o15: 0.7, o25: 0.45, btts: 0.55, fh_o05: 0.68,
   form_home: [], form_away: [],
-  tip: "1X, home or draw", tip_p: 0.67, draw_watch: true,
+  tip: "1X, home or draw", tip_p: 0.67, draw_watch: true, score: "2-1",
   sportyOdds: { "1": 2.6, "X": 3.25, "2": 2.8, "1X": 1.42 },
 }, o);
 
@@ -127,4 +127,43 @@ test("Add all tips to slip in the Draw picks view adds the draws", () => {
   assert.deepStrictEqual(draw.map((c) => [c.code, c.p]), [["X", 0.31]]);
   const all = run("all")(list);
   assert.deepStrictEqual(all.map((c) => c.code), ["1X", "1"]);
+});
+
+test("in the Draw picks view the score beside Draw is a draw", () => {
+  /* The published score is sampled for the usual tip - 2-1 for a 1X - so it
+     sat beside "Draw" as "2-1 could end". reconcileScore gives the likeliest
+     draw from the same lh/la; a score that already is a draw is kept. */
+  H.V.cat = drawKey();
+  const sc = (html) => (/<b class='num'>(\d+-\d+)<\/b><i>could end/.exec(html) || [])[1];
+  assert.strictEqual(sc(H.matchHTML(fx())), "1-1", "card");
+  assert.match(H.listRowHTML(fx()), /not the most likely score'>1-1<\/span>/, "list row");
+  assert.strictEqual(sc(H.matchHTML(fx({ score: "2-2" }))), "2-2", "a published draw is kept");
+  assert.strictEqual(sc(H.matchHTML(fx({ score: "0-1", lh: 0.6, la: 0.6 }))), "0-0", "low-scoring sides draw 0-0");
+  for (const k of H.CATS.map((c) => c.k).filter((k) => k !== drawKey())) {
+    H.V.cat = k;
+    assert.strictEqual(sc(H.matchHTML(fx())), "2-1", k + " keeps the published score");
+  }
+});
+
+test("the Add all button says draws in the Draw picks view, tips elsewhere", () => {
+  const btn = () => {
+    const tx2 = { textContent: "tips to slip" }, n = { textContent: "" };
+    const b = { classList: { toggle() {} }, querySelector: (q) => (q === ".ba-tx2" ? tx2 : null) };
+    return { b, tx2, n };
+  };
+  const run = (cat) => {
+    const d = btn();
+    new Function("D", stubs + real + grab("bookAllPicks") + grab("renderBookAll") +
+      "\nfunction notStarted(){return true;} function shown(){return [D.f];}" +
+      "\nfunction bookTakes(){return true;}" +
+      "\nfunction $(id){return id==='bookAll'?D.b:id==='bookAllN'?D.n:null;}" +
+      "\nV.cat=" + JSON.stringify(cat) + "; renderBookAll();")(Object.assign(d, { f: fx() }));
+    return d;
+  };
+  const d = run(drawKey());
+  assert.strictEqual(d.tx2.textContent, "draws to slip");
+  assert.strictEqual(d.n.textContent, 1);
+  for (const k of H.CATS.map((c) => c.k).filter((k) => k !== drawKey())) {
+    assert.strictEqual(run(k).tx2.textContent, "tips to slip", k);
+  }
 });

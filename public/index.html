@@ -8805,10 +8805,13 @@ function tipCode(f){var t=f.tip||"";if(t==="Home win")return"1";if(t==="Away win
    filter it is the draw itself (owner, 6 Oct 2026): the filter promised draws
    while every card still led with its usual tip, so "Add to slip" from there
    booked a 1X or an away win. `o` is the book's own draw price, 0 when we
-   hold none - never a model estimate passed off as the bookmaker's. */
+   hold none - never a model estimate passed off as the bookmaker's. `sc` is
+   the scoreline beside the call: for the draw, reconcileScore picks the
+   likeliest score the draw survives (the published one if it already is a
+   draw, else from the same lh/la), so "Draw" never sits beside "2-1". */
 function boardPick(f){
-  if(V.cat==="draw"&&f.draw_watch) return {code:"X",label:"Draw",p:f.draw_p,o:legOdd(f,"X")};
-  return {code:tipCode(f),label:plainTip(f),p:f.tip_p,o:0};
+  if(V.cat==="draw"&&f.draw_watch) return {code:"X",label:"Draw",p:f.draw_p,o:legOdd(f,"X"),sc:reconcileScore(f,"Draw")};
+  return {code:tipCode(f),label:plainTip(f),p:f.tip_p,o:0,sc:scoreLine(f)};
 }
 function edgeOf(f){var c=tipCode(f);if(!c)return null;var o=f.sportyOdds&&f.sportyOdds[c];if(!o||o<=1.01)return null;return f.tip_p-1/o;}
 function isValue(f){var e=edgeOf(f);return e!=null&&e>=0.05;}
@@ -9816,14 +9819,14 @@ function refreshFormStrips(){
 
 function matchHTML(f){
   var pk=boardPick(f);
-  var _s0=scoreLine(f).split("-"); var _h0=+_s0[0], _a0=+_s0[1];
+  var _s0=pk.sc.split("-"); var _h0=+_s0[0], _a0=+_s0[1];
   /* One split of one certainty - print three numbers that add to a hundred. */
   var _s100=split100([f.home_p,f.draw_p,f.away_p]);
   const hw=_h0>_a0;
   const aw=_a0>_h0;
   const cf=conf(pk.p);
   const pills=[];
-  var _sc=scoreLine(f).split("-"); var _mgn=Math.abs((+_sc[0])-(+_sc[1]));
+  var _sc=pk.sc.split("-"); var _mgn=Math.abs((+_sc[0])-(+_sc[1]));
   if(f.draw_watch && _mgn<=1) pills.push("<span class='pill draw'>Could be a draw</span>");
   if(f.o25>=0.66) pills.push("<span class='pill goals'>Goals likely</span>");
   var _vb=valPill(f); if(_vb) pills.unshift(_vb);
@@ -9846,7 +9849,7 @@ function matchHTML(f){
               f.la.toFixed(1)+"</span></span>"+
         "</span>"+
         "<span class='sc' title='One way this match could end, drawn from our score distribution - not the most likely score'>"+
-          "<b class='num'>"+scoreLine(f)+"</b><i>could end</i></span>"+
+          "<b class='num'>"+pk.sc+"</b><i>could end</i></span>"+
       "</span>"+
       "<span class='pbar'>"+
         "<i style='flex:"+(f.home_p*100).toFixed(1)+";background:var(--win)'></i>"+
@@ -9966,7 +9969,7 @@ function listRowHTML(f){
     "<span class='lt-tip'><span class='vdot'></span><span class='tx' title=\""+esc(pk.label)+"\">"+esc(pk.label)+"</span>"+
       (pk.o?"<i class='todd num'>x"+pk.o.toFixed(2)+"</i>":"")+
       "<i class='grade'>"+P0(pk.p)+"%</i></span>"+
-    "<span class='lt-score' title='One way this match could end, drawn from our score distribution - not the most likely score'>"+scoreLine(f)+"</span>"+
+    "<span class='lt-score' title='One way this match could end, drawn from our score distribution - not the most likely score'>"+pk.sc+"</span>"+
     "<span class='lt-chev' aria-hidden='true'>\u25be</span>"+
     /* inert while shut: the panel is collapsed with max-height, which hides it
        from eyes and from nobody else - eleven buttons a row, 83 rows, all of
@@ -17080,6 +17083,8 @@ function renderBookAll(){
   var bookable=picks.filter(function(c){return bookTakes(c,curBook());});
   btn.classList.toggle("show",bookable.length>=2);
   var n=$("bookAllN"); if(n) n.textContent=bookable.length;
+  /* In the Draw picks view bookAllPicks adds draws, so the button says so. */
+  var t=btn.querySelector(".ba-tx2"); if(t) t.textContent=V.cat==="draw"?"draws to slip":"tips to slip";
 }
 function confirmBookAll(){
   var picks=bookAllPicks();
