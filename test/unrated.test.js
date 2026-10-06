@@ -117,3 +117,24 @@ test("women's leagues with no 'women' in the name, and Wales's second tier, are 
   assert.strictEqual(isUnratedCompetition("Sweden Allsvenskan"), false, "the men's top flight is untouched");
   assert.strictEqual(isUnratedCompetition("Wales Cymru Premier"), false);
 });
+
+test("women's cups and leagues named in other languages are refused, the men's are not", () => {
+  /* "Spain Copa de SM La Reina" - the Queen's Cup, Spain's women's cup - was on
+     the board on 30 Sep 2026 (CE Europa v Villarreal, priced off the men's
+     Villarreal) after the owner had ruled women's football out that day. */
+  for (const l of ["Spain Copa de SM La Reina", "Spain Liga F", "Spain Primera Femenina",
+                   "Italy Serie A Femminile", "Netherlands Eredivisie Vrouwen",
+                   "Norway Toppserien Kvinner", "Poland Ekstraliga Kobiet",
+                   "England WSL", "England Women's Super League", "Scotland SWPL Ladies Cup",
+                   "France Division 1 Feminine", "Germany Frauen Bundesliga",
+                   "Sweden Damallsvenskan", "USA National Womens Soccer League"]) {
+    assert.strictEqual(isUnratedCompetition(l), true, l + " should be refused");
+  }
+  for (const l of ["Spain Copa del Rey", "Spain La Liga 1", "Spain Segunda Division",
+                   "Italy Serie A", "Italy Coppa Italia", "Netherlands Eredivisie",
+                   "Norway Eliteserien", "Poland Ekstraklasa", "England Premier League",
+                   "England FA Cup", "Germany DFB-Pokal", "France Coupe de France",
+                   "Spain Supercopa de Espana"]) {
+    assert.strictEqual(isUnratedCompetition(l), false, l + " must NOT be refused");
+  }
+});
