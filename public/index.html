@@ -4762,12 +4762,9 @@ button.wsp-go.waiting{opacity:.55}
 .lgp-row .lgp-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lgp-row .lgp-n{flex:0 0 auto;font-size:11.5px;font-weight:700;color:var(--faint)}
 .lgp-row .lgp-ct{color:var(--faint);font-weight:600}
-/* Nothing picked means every league is in. An empty tick box says the opposite,
-   so in that state each row carries a muted tick: included, but not chosen. The
-   red tick stays for a deliberate choice, which keeps the first tap reading as
-   "narrow to this one" rather than "untick this one". */
-.lgp-list.all-in .lgp-tick{background:var(--card-2);border-color:var(--faint);
-  color:var(--faint)}
+/* A third-division-and-below league: listed, unticked until asked for. */
+.lgp-row .lgp-vol{flex:0 0 auto;padding:1px 6px;border-radius:4px;background:var(--raise);
+  color:var(--soft);font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
 .lgp-allin{padding:9px 12px;font-size:12px;line-height:1.45;color:var(--soft);
   border-bottom:1px solid var(--line-soft)}
 .lgp-allin b{color:var(--text);font-weight:700}
@@ -7447,7 +7444,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
         <div class="lgp-box" id="lgpBox" hidden>
           <div class="lgp-head">
             <span id="lgpCount"></span>
-            <button class="lgp-clear" type="button" id="lgpClear">Any league</button>
+            <button class="lgp-clear" type="button" id="lgpClear">All leagues</button>
           </div>
           <div class="lgp-list" id="lgpList"></div>
         </div>
@@ -10247,7 +10244,7 @@ var SCOPE="day";
    makes, for the same reason. */
 try{ if(!localStorage.getItem("sw.scopedflt2")){ localStorage.removeItem("sw.scope");
   localStorage.setItem("sw.scopedflt2","1"); } }catch(e){}
-try{var sc0=localStorage.getItem("sw.scope"); if(sc0==="day"||sc0==="all"||sc0==="span") SCOPE=sc0;}catch(e){}
+try{var sc0=localStorage.getItem("sw.scope"); if(sc0==="day"||sc0==="all"||sc0==="span"||sc0==="wknd") SCOPE=sc0;}catch(e){}
 /* Which single day the "day" window points at: 0 today, 1 tomorrow, and so on.
    Only meaningful while SCOPE is "day". A saved offset can outlive its
    fixtures - yesterday's "tomorrow" is today - so clampDay() pulls it back to
@@ -10265,6 +10262,15 @@ var SPAN=3;
 try{var sp0=parseInt(localStorage.getItem("sw.span"),10);
   if(SPAN_CHOICES.indexOf(sp0)>=0) SPAN=sp0;}catch(e){}
 function spanName(n){return "Next "+n+" days";}
+/* The weekend window ("wknd"), as [first, last] day offsets from today.
+   Worked out from today's date every time it is asked, never stored, so a
+   Weekend chosen on Friday still means this weekend after Monday's reload.
+   Sunday: just Sunday. Saturday: Sat + Sun. Mon-Fri: the coming Sat + Sun. */
+function weekendOffs(){
+  var d=new Date().getDay();
+  if(d===0) return [0,0];
+  return [6-d,7-d];
+}
 /* Time of day, by local kickoff. Someone building a slip at lunchtime does
    not want games that started this morning, and someone who will be watching
    in the evening wants only the evening card. The cuts follow how a day
@@ -10314,24 +10320,60 @@ function todFixtures(list){
      still there under "All day". */
   return list.filter(function(f){ return todOf(f)===TOD; });
 }
-/* Which leagues a slip may draw from.
-   Empty means every league, which is both the default and what "clear" returns
-   to - a stored set that had emptied itself would otherwise build nothing and
-   look broken. Kept as a plain object so it survives JSON round-tripping into
-   localStorage. */
-var BLD_LEAGUES={};
-try{var _bl0=JSON.parse(localStorage.getItem("sw.bldleagues")||"{}");
-  if(_bl0&&typeof _bl0==="object"&&!Array.isArray(_bl0)) BLD_LEAGUES=_bl0;}catch(e){}
-function leaguesChosen(){for(var k in BLD_LEAGUES){if(BLD_LEAGUES[k])return true;}return false;}
-function leagueAllowed(l){return !leaguesChosen()||!!BLD_LEAGUES[l];}
-function leagueChosenCount(){var n=0;for(var k in BLD_LEAGUES){if(BLD_LEAGUES[k])n++;}return n;}
+/* Which leagues a slip may draw from. Untick to remove: every league starts
+   in, and a tap takes out (or puts back) just that one. BLD_PICK holds only
+   the taps that differ from the default, {league: 1|0}. The default is "in",
+   except a volatile league, which sits out until VOL_IN says otherwise.
+   The old include-set (sw.bldleagues) meant the opposite and is dropped on
+   load, so everyone starts with every league ticked. Unticking every league
+   is an empty pool, not "all" - the empty state says to widen the leagues. */
+var BLD_PICK={}, VOL_IN=false;
+function loadLeaguePicks(){
+  BLD_PICK={}; VOL_IN=false;
+  try{localStorage.removeItem("sw.bldleagues");}catch(e){}
+  try{var p=JSON.parse(localStorage.getItem("sw.bldpick")||"{}");
+    if(p&&typeof p==="object"&&!Array.isArray(p)) BLD_PICK=p;}catch(e){}
+  try{VOL_IN=localStorage.getItem("sw.volin")==="1";}catch(e){}
+}
+loadLeaguePicks();
+/* Volatile = third division and below: every fixture the league has on the
+   board is tier 3-5. Results there swing a lot, so they are opt-in. An
+   unranked fixture (no tier stamped) does not count, or an old payload with
+   no tiers would bench every league. Cached per fixture list, because
+   leagueAllowed runs once per fixture. */
+var VOL_SRC=null, VOL_MAP={};
+function isVolatile(l){
+  var all=(DATA&&DATA.fixtures)||[];
+  if(VOL_SRC!==all){
+    VOL_SRC=all; VOL_MAP={};
+    for(var i=0;i<all.length;i++){
+      var t=tierOf(all[i]), lg=all[i].league;
+      VOL_MAP[lg]=(VOL_MAP[lg]!==false)&&t>=3&&t<TIER_UNRANKED;
+    }
+  }
+  return !!VOL_MAP[l];
+}
+function leagueDefault(l){return !isVolatile(l)||VOL_IN;}
+function leagueAllowed(l){
+  if(Object.prototype.hasOwnProperty.call(BLD_PICK,l)) return !!BLD_PICK[l];
+  return leagueDefault(l);
+}
+/* Has the reader narrowed the pool - taken out a league that would be in? */
+function leaguesChosen(){for(var k in BLD_PICK){if(BLD_PICK[k]===0)return true;}return false;}
+function leaguePicksTouched(){for(var k in BLD_PICK){return true;}return false;}
 function setLeaguePicked(l,on){
-  if(on) BLD_LEAGUES[l]=1; else delete BLD_LEAGUES[l];
-  try{localStorage.setItem("sw.bldleagues",JSON.stringify(BLD_LEAGUES));}catch(e){}
+  /* Only a difference from the default is stored, so ticking a league back
+     returns the picker to "Any league" rather than leaving a no-op override. */
+  if(!!on===leagueDefault(l)) delete BLD_PICK[l]; else BLD_PICK[l]=on?1:0;
+  try{localStorage.setItem("sw.bldpick",JSON.stringify(BLD_PICK));}catch(e){}
 }
 function clearLeaguePicks(){
-  BLD_LEAGUES={};
-  try{localStorage.removeItem("sw.bldleagues");}catch(e){}
+  BLD_PICK={};
+  try{localStorage.removeItem("sw.bldpick");}catch(e){}
+}
+function setVolIn(v){
+  VOL_IN=!!v;
+  try{localStorage.setItem("sw.volin",VOL_IN?"1":"0");}catch(e){}
 }
 /* Is this fixture inside the window - the ONE answer, because the board, the
    league picker and the counts drift apart the moment there are two copies of
@@ -10341,6 +10383,7 @@ function inScope(f){
   var o=dayOff(fDay(f));
   if(SCOPE==="day") return o===SDAY;
   if(SCOPE==="span") return o>=SDAY&&o<SDAY+SPAN;
+  if(SCOPE==="wknd"){var w=weekendOffs(); return o>=w[0]&&o<=w[1];}
   return true;
 }
 function scopeFixtures(){
@@ -10401,10 +10444,11 @@ function buildableAll(){
   });
 }
 /* The same three filters across the whole span, for the pill that is showing
-   one. Built from buildableOn so there is no third copy of the filters. */
+   one. Built from buildableOn so there is no third copy of the filters. The
+   weekend is a span too, just one whose days come from the calendar. */
 function buildableSpan(){
-  var out=[];
-  for(var i=0;i<SPAN;i++) out=out.concat(buildableOn(SDAY+i));
+  var w=SCOPE==="wknd"?weekendOffs():[SDAY,SDAY+SPAN-1], out=[];
+  for(var i=w[0];i<=w[1];i++) out=out.concat(buildableOn(i));
   return out;
 }
 /* Structural, like dayBuildable and for the same reason: it decides what the
@@ -10450,12 +10494,13 @@ function paintScope(){
      shows its own name ("Tomorrow", "Saturday") so the pill says what it does. */
   var lbl=$("scopeDayLbl");
   if(lbl) lbl.textContent = SCOPE==="span" ? spanName(SPAN)
+        : SCOPE==="wknd" ? "Weekend"
         : (SDAY===0 ? "Today only" : dayName(SDAY));
   /* Counts make the choice concrete: "12" against "168" says more about what
      the switch does than either label manages on its own. The day pill counts
      against the day it points at. */
   try{
-    var n={day:SCOPE==="span"?buildableSpan().length:buildableOn(SDAY).length,
+    var n={day:(SCOPE==="span"||SCOPE==="wknd")?buildableSpan().length:buildableOn(SDAY).length,
            all:buildableAll().length};
     seg.querySelectorAll("[data-scope-n]").forEach(function(el){
       el.textContent=n[el.getAttribute("data-scope-n")];
@@ -10537,6 +10582,16 @@ function setSpan(n){
   /* Early / mid / late slice ONE day. A span is not one day, so the bucket
      retires with the widening - the same rule "All upcoming" follows, and
      todFixtures already ignores TOD outside a single day. */
+  if(TOD!=="all") TOD="all";
+  paintScope(); return true;
+}
+/* The weekend window. Only the choice is stored ("wknd"); which days it
+   covers comes from weekendOffs() each time, so it never goes stale. Like a
+   span it is not one day, so the time bucket retires with it. */
+function setWeekend(){
+  if(SCOPE==="wknd") return false;
+  SCOPE="wknd";
+  try{localStorage.setItem("sw.scope","wknd");}catch(e){}
   if(TOD!=="all") TOD="all";
   paintScope(); return true;
 }
@@ -18803,6 +18858,19 @@ function dayAway(e){
   closeDayMenu();
 }
 function dayKey(e){ if(e.key==="Escape"){ e.preventDefault(); closeDayMenu(); } }
+/* The Weekend row of the day menu, after the spans: Sat - Sun (Sunday alone
+   on a Sunday) with its count. Left out when the weekend has nothing left to
+   build with, the same way an empty day is never offered. */
+function weekendOpt(){
+  var w=weekendOffs(), n=spanBuildable(w[1]-w[0]+1,w[0]);
+  if(!n) return "";
+  var cur=(SCOPE==="wknd");
+  return "<button type='button' role='option' class='day-opt day-span"+(cur?" on":"")+"'"+
+    (cur?" aria-selected='true'":"")+" data-wknd='1'>"+
+    "<span class='dy-n'>Weekend</span>"+
+    "<span class='dy-d'>"+esc(dayDate(w[0]))+(w[1]>w[0]?" - "+esc(dayDate(w[1])):"")+"</span>"+
+    "<span class='dy-c'>"+n+"</span></button>";
+}
 function openDayMenu(btn){
   var wasOpen=DAYMENU&&DAYMENU._btn===btn;
   closeDayMenu();
@@ -18824,7 +18892,7 @@ function openDayMenu(btn){
       "<span class='dy-n'>"+esc(spanName(n))+"</span>"+
       "<span class='dy-d'>"+esc(dayDate(s0))+" - "+esc(dayDate(s0+n-1))+"</span>"+
       "<span class='dy-c'>"+spanBuildable(n,s0)+"</span></button>";
-  }).join("")+
+  }).join("")+weekendOpt()+
   list.map(function(o){
     var cur=(SCOPE==="day"&&o===SDAY);
     return "<button type='button' role='option' class='day-opt"+(cur?" on":"")+"'"+
@@ -18851,6 +18919,16 @@ function openDayMenu(btn){
       var n=parseInt(b.dataset.span,10); closeDayMenu();
       /* Same reset as every other window change: the pool moved. */
       if(setSpan(n)){
+        BUILD.removed={}; BUILD.touched=true;
+        WSP.removed={}; WSP._slip=null; WSP._sig=null;
+        $("bookResult").innerHTML=""; renderBuilder();
+      }
+    });
+  });
+  m.querySelectorAll("[data-wknd]").forEach(function(b){
+    b.addEventListener("click",function(){
+      closeDayMenu();
+      if(setWeekend()){
         BUILD.removed={}; BUILD.touched=true;
         WSP.removed={}; WSP._slip=null; WSP._sig=null;
         $("bookResult").innerHTML=""; renderBuilder();
@@ -21086,13 +21164,45 @@ function renderShared(){
       lg._wired=1;
       lg.querySelectorAll("[data-btp]").forEach(function(c){
         c.addEventListener("click",function(){
-          setTopOnly(c.dataset.btp==="true");
-          renderBuilder();
+          if(c.dataset.btp==="true"){ setTopOnly(true); renderBuilder(); }
+          else resetLeagues();
         });
       });
     }
   }
   renderLeaguePicker();
+}
+/* "All leagues", from the chip or the picker's own reset: every tap undone,
+   Top flight off, and - when the window holds any - a quick ask about the
+   volatile leagues, every time, since they are the one group left out. */
+function resetLeagues(){
+  clearLeaguePicks();
+  setTopOnly(false);
+  WSP._sig=null;
+  renderBuilder();
+  askVolatile();
+}
+function askVolatile(){
+  var vol=leaguesOnBoard().filter(function(x){return isVolatile(x.league);});
+  if(!vol.length) return;
+  var done=function(add){
+    setVolIn(add); clearPrompt("volAsk");
+    WSP._sig=null; renderBuilder();
+  };
+  showPrompt("volAsk","<div class='confirm-card'><p>Want the volatile leagues in too?"+
+    "<span class='cf-list'>These are third divisions and below, where results swing a lot, "+
+    "so they sit on the bench unless you call them up: "+
+    vol.map(function(x){return esc(compOf(x.league))+" ("+esc(countryOf(x.league))+")";}).join(", ")+
+    ".</span></p><div class='ca'>"+
+    "<button class='confirm-go' type='button'>Add them</button>"+
+    "<button class='confirm-cancel' type='button'>Keep them out</button></div></div>");
+  var h=promptEl("volAsk");
+  h.querySelector(".confirm-go").addEventListener("click",function(){ done(true); });
+  var keep=h.querySelector(".confirm-cancel");
+  /* The backdrop, the X and Escape all press this one, so closing the ask
+     any way at all keeps them out. It is also where focus starts. */
+  keep.addEventListener("click",function(){ done(false); });
+  try{ keep.focus({preventScroll:true}); }catch(e){}
 }
 /* The league picker.
    Repainted with the rest of the builder because its contents depend on the
@@ -21106,7 +21216,7 @@ function renderLeaguePicker(){
   if(!open||!box||!list) return;
 
   var avail=leaguesOnBoard();
-  var n=leagueChosenCount();
+  var touched=leaguePicksTouched();
   /* Name the window this list describes.
      Without it, "5 available" reads as a broken picker. It was reported as
      one: with Early selected the list held five leagues while the reporter
@@ -21115,17 +21225,18 @@ function renderLeaguePicker(){
      about why, which is the same thing as being wrong. */
   var win = (SCOPE==="all") ? "in all upcoming games"
           : (SCOPE==="span") ? ("in the next "+SPAN+" days")
+          : (SCOPE==="wknd") ? "this weekend"
           : ("playing "+(TOD==="all" ? "" :
               (TOD==="early"?"in the morning ":TOD==="mid"?"in the afternoon ":"in the evening "))+
              dayName(SDAY).toLowerCase());
-  /* A stored pick for a league that is not playing today would otherwise show
-     "2 leagues" over an empty board with nothing to un-tick. */
-  var live=avail.filter(function(x){return BLD_LEAGUES[x.league];}).length;
-  sum.textContent = !n ? "Any league"
-    : (live ? live+" league"+(live===1?"":"s") : n+" picked, none playing");
-  open.classList.toggle("narrowed",!!n);
+  /* Counted over what is on the board, so a stored tap for a league not
+     playing in this window does not skew the numbers. */
+  var live=avail.filter(function(x){return leagueAllowed(x.league);}).length;
+  var vol=avail.filter(function(x){return isVolatile(x.league);}).length;
+  sum.textContent = !touched ? "Any league" : live+" of "+avail.length+" leagues";
+  open.classList.toggle("narrowed",touched);
   if(cnt) cnt.textContent=avail.length+" league"+(avail.length===1?"":"s")+" "+win;
-  if(clr) clr.hidden=!n;
+  if(clr) clr.hidden=!touched;
 
   /* A time window narrow enough to hide most of the card should say so here,
      beside the short list it caused, rather than leaving the reader to connect
@@ -21143,15 +21254,19 @@ function renderLeaguePicker(){
 
   /* Said once, where the doubt actually is, rather than only in the summary
      button above the open panel. */
-  var allIn = n ? "" : "<div class='lgp-allin'><b>All " + avail.length +
-    " leagues are in.</b> Tap any to build from that one only.</div>";
-  list.classList.toggle("all-in", !n);
+  var volOut = vol && !VOL_IN;
+  var allIn = (touched || !avail.length) ? "" : "<div class='lgp-allin'><b>" +
+    (volOut ? (avail.length-vol) + " of " + avail.length + " leagues are in.</b> " +
+      "The volatile ones wait on the bench until you tick them. "
+    : "All " + avail.length + " leagues are in.</b> ") + "Tap any to leave it out.</div>";
   list.innerHTML = allIn + hint + (avail.length
     ? avail.map(function(x){
-        return "<button class='lgp-row"+(BLD_LEAGUES[x.league]?" on":"")+"' type='button' "+
-          "data-lg=\""+esc(x.league)+"\" aria-pressed='"+(!!BLD_LEAGUES[x.league])+"'>"+
+        var on=leagueAllowed(x.league);
+        return "<button class='lgp-row"+(on?" on":"")+"' type='button' "+
+          "data-lg=\""+esc(x.league)+"\" aria-pressed='"+on+"'>"+
           "<span class='lgp-tick' aria-hidden='true'>✓</span>"+
           "<span class='lgp-nm'>"+esc(compOf(x.league))+"<span class='lgp-ct'> · "+esc(countryOf(x.league))+"</span></span>"+
+          (isVolatile(x.league)?"<span class='lgp-vol'>Volatile</span>":"")+
           "<span class='lgp-n'>"+x.n+"</span></button>";
       }).join("")
     : "<div class='lgp-empty'>No games in this window.</div>");
@@ -21159,7 +21274,7 @@ function renderLeaguePicker(){
   list.querySelectorAll("[data-lg]").forEach(function(b){
     b.addEventListener("click",function(){
       var l=b.dataset.lg;
-      setLeaguePicked(l,!BLD_LEAGUES[l]);
+      setLeaguePicked(l,!leagueAllowed(l));
       /* The slip is built from a pool that just changed, so any conjured slip
          is stale. Drop it rather than leave legs from a league now excluded. */
       WSP._sig=null;
@@ -21176,9 +21291,7 @@ function renderLeaguePicker(){
     });
     clr.addEventListener("click",function(e){
       e.stopPropagation();
-      clearLeaguePicks();
-      WSP._sig=null;
-      renderBuilder();
+      resetLeagues();
     });
   }
 }
@@ -21699,6 +21812,7 @@ function renderBuilderOutput(){
     /* Name the day that came up empty rather than always saying "today" - with
        a day picked, the blank board might be tomorrow or Saturday. */
     var dryDay=SCOPE==="span"?("in the next "+SPAN+" days")
+      :SCOPE==="wknd"?"this weekend"
       :(SDAY===0?"today":(SDAY===1?"tomorrow":dayName(SDAY)));
     $("slip").innerHTML="<div class='bld-empty'><b>"+(isWiz?(WSP.conjured?"No slip yet":"Ready when you are")+"":"Nothing in your slip")+"</b>"+
       (isWiz?(WSP.conjured?("No games match your wizard settings - try a lower payout"+(leaguesChosen()?", widen the leagues":"")+" or enable more markets."):"Tap a target payout to preview your slip.")
@@ -22826,7 +22940,7 @@ load().catch(function(){});
   "use strict";
   var KEYS={slips:"sw.slips.v1",myslip:"sw.myslip",livefav:"sw.livefav",leaguefav:"formline.favs.v1"};
   var PREFS={book:"sw.book",mk:"sw.mk",risk:"sw.risk",mode:"sw.mode",wspodds:"sw.wspodds",
-    bldleagues:"sw.bldleagues",toponly:"sw.toponly",scope:"sw.scope",legodd:"sw.legodd",
+    bldpick:"sw.bldpick",volin:"sw.volin",toponly:"sw.toponly",scope:"sw.scope",legodd:"sw.legodd",
     avatar:"sw.avatar",name:"sw.name",theme:"sw.theme"};
   var META="sw.sync.meta", SLIPS_KEEP=60;
 

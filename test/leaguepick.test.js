@@ -1,19 +1,15 @@
 "use strict";
 
 /**
- * Choosing which leagues a slip may draw from.
+ * Choosing which leagues a slip may draw from - untick to remove.
  *
- * Asked for: "is there a way we can simply select the legues we want in a
- * ticket?"
+ * Every league starts ticked; a tap takes out (or puts back) just that one.
+ * BLD_PICK stores only the taps that differ from the default. The old
+ * include-set (sw.bldleagues) is dropped on load (ruling R2) and unticking
+ * every league is an empty pool, not "all" (R3).
  *
- * The board already had league pinning and a top-flight toggle, but the slip
- * engines ignored all of it - both drew from scopeFixtures(), which filtered
- * by day and kick-off window only. So this is one filter added at the single
- * point both engines already share, rather than a second selection system.
- *
- * The rule that matters, and the one most likely to be broken by a later
- * change: an EMPTY selection means every league, not no leagues. A stored set
- * that emptied itself would otherwise build nothing and read as a broken site.
+ * Driven through the real callers - scopeFixtures, leaguesOnBoard,
+ * buildableOn/All - grabbed out of index.html, not a transcription of them.
  */
 
 const test = require("node:test");
@@ -30,26 +26,30 @@ function grab(name) {
   return src.slice(i, k + 1);
 }
 
-function harness(fixtures) {
-  const store = {};
+function harness(fixtures, store) {
+  store = store || {};
   return new Function("FX", "STORE",
     "var localStorage={getItem:function(k){return STORE[k]===undefined?null:STORE[k];}," +
     "setItem:function(k,v){STORE[k]=String(v);},removeItem:function(k){delete STORE[k];}};" +
     "var DATA={fixtures:FX};" +
-    "var SCOPE='all', SDAY=0, SPAN=3, TOD='all', TOP_ONLY=false;" +
+    "var SCOPE='all', SDAY=0, SPAN=3, TOD='all', TOP_ONLY=false, TIER_UNRANKED=6;" +
     "function notStarted(){return true;}" +
     "function dayOff(){return 0;}" + "function fDay(f){return f.date;}" +
     "function todFixtures(l){return l;}" +
     "function isLowerFixture(f){return !!(f.tier&&f.tier>1);}" +
     "function leagueRank(){return 1;}" +
-    "var BLD_LEAGUES={};" +
-    grab("leaguesChosen") + grab("leagueAllowed") + grab("leagueChosenCount") +
-    grab("setLeaguePicked") + grab("clearLeaguePicks") +
-    grab("inScope") + grab("scopeFixtures") + grab("leaguesOnBoard") + "\n" +
+    "var BLD_PICK={}, VOL_IN=false, VOL_SRC=null, VOL_MAP={};" +
+    grab("tierOf") + grab("loadLeaguePicks") + grab("isVolatile") + grab("leagueDefault") +
+    grab("leagueAllowed") + grab("leaguesChosen") + grab("leaguePicksTouched") +
+    grab("setLeaguePicked") + grab("clearLeaguePicks") + grab("setVolIn") +
+    grab("inScope") + grab("scopeFixtures") + grab("leaguesOnBoard") +
+    grab("buildableOn") + grab("buildableAll") + "\n" +
+    "loadLeaguePicks();" +
     "return {scopeFixtures:scopeFixtures, leaguesOnBoard:leaguesOnBoard," +
+    " buildableOn:buildableOn, buildableAll:buildableAll," +
     " setLeaguePicked:setLeaguePicked, clearLeaguePicks:clearLeaguePicks," +
-    " leagueAllowed:leagueAllowed, leagueChosenCount:leagueChosenCount," +
-    " leaguesChosen:leaguesChosen, store:STORE," +
+    " leagueAllowed:leagueAllowed, leaguesChosen:leaguesChosen," +
+    " leaguePicksTouched:leaguePicksTouched, setVolIn:setVolIn, store:STORE," +
     " setTopOnly:function(v){TOP_ONLY=v;}};"
   )(fixtures, store);
 }
@@ -61,56 +61,67 @@ const BOARD = [
   { league: "Italy Serie A", home: "Milan", away: "Roma", tier: 1 },
   { league: "Spain La Liga 1", home: "Betis", away: "Cadiz", tier: 1 },
 ];
+const leagues = (list) => [...new Set(list.map(f => f.league))].sort();
 
-test("with nothing chosen, every league is in play", () => {
+test("by default every league is in play", () => {
   const H = harness(BOARD);
   assert.strictEqual(H.leaguesChosen(), false);
-  assert.strictEqual(H.scopeFixtures().length, BOARD.length,
-    "an empty selection must mean ALL leagues, never none");
+  assert.strictEqual(H.leaguePicksTouched(), false);
+  assert.strictEqual(H.scopeFixtures().length, BOARD.length);
+  assert.strictEqual(H.buildableAll().length, BOARD.length);
+  assert.ok(H.leaguesOnBoard().every(x => H.leagueAllowed(x.league)),
+    "every row in the picker starts ticked");
 });
 
-test("choosing leagues narrows the pool to exactly those", () => {
+test("tapping a league takes out that one only", () => {
   const H = harness(BOARD);
-  H.setLeaguePicked("England Premier League", true);
-  H.setLeaguePicked("Italy Serie A", true);
-  const pool = H.scopeFixtures();
-  assert.strictEqual(pool.length, 3);
-  assert.deepStrictEqual([...new Set(pool.map(f => f.league))].sort(),
-    ["England Premier League", "Italy Serie A"]);
-});
-
-test("un-choosing the last league returns to every league, not none", () => {
-  const H = harness(BOARD);
-  H.setLeaguePicked("Italy Serie A", true);
-  assert.strictEqual(H.scopeFixtures().length, 1);
   H.setLeaguePicked("Italy Serie A", false);
-  assert.strictEqual(H.leagueChosenCount(), 0);
-  assert.strictEqual(H.scopeFixtures().length, BOARD.length,
-    "emptying the selection must not empty the board");
+  assert.deepStrictEqual(leagues(H.scopeFixtures()),
+    ["England Championship", "England Premier League", "Spain La Liga 1"]);
+  assert.strictEqual(H.buildableOn(0).length, BOARD.length - 1);
+  assert.strictEqual(H.leaguesChosen(), true, "the reader has narrowed the pool");
 });
 
-test("clearing restores every league and forgets the stored set", () => {
+test("tapping it again puts it back and leaves no stored override", () => {
   const H = harness(BOARD);
-  H.setLeaguePicked("England Premier League", true);
-  assert.ok(H.store["sw.bldleagues"], "precondition: the choice was stored");
+  H.setLeaguePicked("Italy Serie A", false);
+  H.setLeaguePicked("Italy Serie A", true);
+  assert.strictEqual(H.scopeFixtures().length, BOARD.length);
+  assert.strictEqual(H.leaguePicksTouched(), false);
+  assert.deepStrictEqual(JSON.parse(H.store["sw.bldpick"]), {});
+});
+
+test("unticking every league is an empty pool, not all (R3)", () => {
+  const H = harness(BOARD);
+  H.leaguesOnBoard().forEach(x => H.setLeaguePicked(x.league, false));
+  assert.strictEqual(H.scopeFixtures().length, 0);
+  assert.strictEqual(H.buildableAll().length, 0);
+});
+
+test("clearing restores every league and forgets the stored taps", () => {
+  const H = harness(BOARD);
+  H.setLeaguePicked("England Premier League", false);
+  assert.ok(H.store["sw.bldpick"], "precondition: the tap was stored");
   H.clearLeaguePicks();
-  assert.strictEqual(H.store["sw.bldleagues"], undefined);
+  assert.strictEqual(H.store["sw.bldpick"], undefined);
   assert.strictEqual(H.scopeFixtures().length, BOARD.length);
 });
 
-test("a choice survives a reload", () => {
-  const H = harness(BOARD);
-  H.setLeaguePicked("Italy Serie A", true);
-  assert.deepStrictEqual(JSON.parse(H.store["sw.bldleagues"]), { "Italy Serie A": 1 });
+test("a tap survives a reload", () => {
+  const store = {};
+  harness(BOARD, store).setLeaguePicked("Italy Serie A", false);
+  assert.deepStrictEqual(JSON.parse(store["sw.bldpick"]), { "Italy Serie A": 0 });
+  const H2 = harness(BOARD, store);
+  assert.strictEqual(H2.leagueAllowed("Italy Serie A"), false);
+  assert.strictEqual(H2.scopeFixtures().length, BOARD.length - 1);
 });
 
-test("choosing a league that is not playing empties the pool rather than ignoring the choice", () => {
-  /* The honest behaviour: the reader asked for a league with no games, and
-     silently building from other leagues would be a slip they did not ask for.
-     The builder's empty state names the league filter as the cause. */
-  const H = harness(BOARD);
-  H.setLeaguePicked("Germany Bundesliga 1", true);
-  assert.strictEqual(H.scopeFixtures().length, 0);
+test("the old include-set sw.bldleagues is ignored and removed on load (R2)", () => {
+  const store = { "sw.bldleagues": JSON.stringify({ "Italy Serie A": 1 }) };
+  const H = harness(BOARD, store);
+  assert.strictEqual(store["sw.bldleagues"], undefined, "the old key must be removed");
+  assert.strictEqual(H.scopeFixtures().length, BOARD.length,
+    "everyone starts all-ticked, not narrowed to the old picks");
 });
 
 /* -------------------------------------------------------- the picker's list */
@@ -125,21 +136,19 @@ test("the picker offers the leagues actually on the board, with counts", () => {
   ]);
 });
 
-test("the list does not shrink as leagues are chosen", () => {
-  /* Counted before the league filter on purpose: if choosing one league
-     removed the others from the list, there would be no way to add a second. */
+test("the list does not shrink as leagues are unticked", () => {
+  /* Counted before the league filter on purpose: an unticked league that
+     vanished from the list could never be ticked back. */
   const H = harness(BOARD);
   const before = H.leaguesOnBoard().length;
-  H.setLeaguePicked("Italy Serie A", true);
-  assert.strictEqual(H.leaguesOnBoard().length, before,
-    "the picker must still offer every league after one is chosen");
+  H.setLeaguePicked("Italy Serie A", false);
+  assert.strictEqual(H.leaguesOnBoard().length, before);
 });
 
 test("top-flight only also narrows what the picker offers", () => {
   const H = harness(BOARD);
   H.setTopOnly(true);
   const offered = H.leaguesOnBoard().map(x => x.league);
-  assert.ok(!offered.includes("England Championship"),
-    "a second-tier league must not be offered while top flight only is on");
+  assert.ok(!offered.includes("England Championship"));
   assert.ok(offered.includes("England Premier League"));
 });
