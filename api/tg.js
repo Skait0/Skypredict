@@ -1,7 +1,7 @@
 "use strict";
 /* POST /api/tg - the Telegram bot's webhook. The code doctor.
  *
- * Someone sends the bot a booking code (any of the four books, or a share
+ * Someone sends the bot a booking code (any of the five books, or a share
  * link carrying one); it reads the code the same way /api/slip does, lays the
  * legs against today's board and answers with our model's read - strongest,
  * weakest, the chance they all land - plus links to convert or soften it on
@@ -377,7 +377,7 @@ module.exports = async function handler(req, res) {
       if (legs) { used = b; break; }
     }
     if (!legs) {
-      await say("I couldn't read <code>" + code + "</code>" + (book ? " on " + D.BOOK_NAMES[book] : " on any of the four bookies") +
+      await say("I couldn't read <code>" + code + "</code>" + (book ? " on " + D.BOOK_NAMES[book] : " on any of the five bookies") +
         ". Check the code - or it may have expired, or every game may have started.");
       return res.status(200).json({ ok: true });
     }
