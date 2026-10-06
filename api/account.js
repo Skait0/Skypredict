@@ -1,6 +1,7 @@
 "use strict";
-/* /api/account/export and /api/account/delete (vercel.json rewrites
-   /api/account/:action to /api/account?action=:action). Delete needs a
+/* /api/account/export, /delete, /grants, /grant and /revoke (vercel.json
+   rewrites /api/account/:action to /api/account?action=:action). The last
+   three are admin only: list, add and remove Family & friends grants. Delete needs a
    sign-in from the last 10 minutes, so a borrowed, already-open phone cannot
    wipe an account. Spec section 8. */
 const H = require("../lib/auth/http.js");
@@ -40,8 +41,8 @@ function make(deps) {
         }
         const email = C.normEmail(((await H.readJson(req, 512)) || {}).email);
         if (!email) return H.sendJson(res, 400, { error: "bad_email" });
-        if (action === "grant") await db.upsertGrant(email, s.userId);
-        else await db.revokeGrant(email, new Date(t).toISOString());
+        const done = action === "grant" ? await db.upsertGrant(email, s.userId) : await db.revokeGrant(email, new Date(t).toISOString());
+        if (!done) return H.sendJson(res, 503, { error: "unavailable" });
         return H.sendJson(res, 200, { ok: true });
       }
 

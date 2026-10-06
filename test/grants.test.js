@@ -21,7 +21,7 @@ async function world() {
     const u = await db.createUser({ email });
     return S.COOKIE + "=" + (await S.startSession(db, u.id, "Chrome/129 Android", clock())).token;
   };
-  return { rows, call, admin: await user("boss@x.com"), plain: await user("a@b.com") };
+  return { db, rows, call, admin: await user("boss@x.com"), plain: await user("a@b.com") };
 }
 const q = (r, action) => Object.assign(r, { query: { action } });
 const get = (cookie) => q(getReq("account", {}, { cookie }), "grants");
@@ -64,4 +64,16 @@ test("bad email is 400 and a missing CSRF header is rejected", async () => {
 test("signed out is 401", async () => {
   const w = await world();
   assert.strictEqual((await w.call(get(""))).code, 401);
+});
+
+test("a failed grant or revoke write is 503 unavailable, not ok", async () => {
+  const w = await world();
+  const db = { upsertGrant: async () => null, revokeGrant: async () => false };
+  for (const [action, fn] of [["grant", "upsertGrant"], ["revoke", "revokeGrant"]]) {
+    const w2 = await world();
+    w2.db[fn] = db[fn];
+    const r = await w2.call(post(w2.admin, action, { email: "x@y.com" }));
+    assert.strictEqual(r.code, 503);
+    assert.deepStrictEqual(r.json(), { error: "unavailable" });
+  }
 });
