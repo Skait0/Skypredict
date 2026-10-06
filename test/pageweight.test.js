@@ -123,7 +123,13 @@ test("the whole first load stays inside a phone budget", () => {
 
      700 KB is the budget in the honest unit: today's 577 plus room, and a
      tighter margin in proportion than the old number ever had. Quality 5
-     rather than 11 because that is what a CDN actually spends on the fly. */
+     rather than 11 because that is what a CDN actually spends on the fly.
+
+     RAISED TO 720 KB, 6 Oct 2026, owner's call. Normal growth (the board's
+     predictions, the converter's refusal recovery) had brought it to the edge,
+     and the sign-in release added 1.2 KB brotli to index.html - 702 against
+     700. Nothing heavy came back; the guard is for the 394 KB-image kind of
+     regression, and 720 still catches that. */
   const zlib = require("zlib");
   const wire = (f) => {
     const b = fs.readFileSync(path.join(PUB, f));
@@ -148,7 +154,7 @@ test("the whole first load stays inside a phone budget", () => {
       try { sent += Math.round(wire(f) / 1024); } catch (e) {}
     });
 
-  assert.ok(sent <= 700,
+  assert.ok(sent <= 720,
     "a first load sends about " + sent + " KB over the wire (" + total + " KB raw). " +
     "It was 1,600 KB raw when phones on LTE started timing out. Something heavy " +
     "has been added back.");
