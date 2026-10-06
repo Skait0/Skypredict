@@ -60,7 +60,24 @@
       "<input class='swa-in' id='swaName' maxlength='24' autocomplete='nickname' value=\""+esc(o.name)+"\">"+
       pickerHtml(o.avatar)+recordHtml(o.record)+subHtml(o.quota);
   }
-  var api={firstNameOf:firstNameOf,menuHtml:menuHtml,codesHtml:codesHtml,esc:esc,I:I,AV_FREE:AV_FREE,AV_LOCKED:AV_LOCKED,pickerHtml:pickerHtml,recordHtml:recordHtml,profileHtml:profileHtml};
+  var CHEV='<svg class="swa-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  function devWords(n){ return n==null?"":(n<=1?"Just this device":"This phone and "+(n-1)+" other"+(n>2?"s":"")); }
+  function settingsHtml(o){
+    var books=Object.keys(o.marks||{}).map(function(k){
+      return "<button type='button' data-book=\""+esc(k)+"\" aria-pressed=\""+(k===o.book?"true":"false")+"\">"+o.marks[k]+"</button>"; }).join("");
+    return "<p class='swa-h'>Appearance</p><div class='swa-card'><div class='swa-set'><span class='swa-st'><b>Theme</b></span>"+
+        "<div class='swa-seg'><button type='button' data-theme=\"dark\" aria-pressed=\""+(o.theme!=="light")+"\">Dark</button><button type='button' data-theme=\"light\" aria-pressed=\""+(o.theme==="light")+"\">Light</button></div></div></div>"+
+      "<p class='swa-h'>Booking</p><div class='swa-card'><div class='swa-set swa-set0'><span class='swa-st'><b>Default bookmaker</b><small>Codes open here first</small></span></div><div class='swa-books'>"+books+"</div></div>"+
+      "<p class='swa-h'>Notifications</p><div class='swa-card'><div class='swa-set'><span class='swa-st'><b>Picks by email</b><small>The day's picks, each morning</small></span>"+
+        "<button class='swa-sw' id='swaMail' type='button' role=\"switch\" aria-checked=\""+(!!o.mail)+"\" aria-label='Picks by email'></button></div></div>"+
+      "<p class='swa-h'>Account</p><div class='swa-card'><button class='swa-set swa-link' id='swaDevs' type='button'><span class='swa-st'><b>Signed-in devices</b><small>"+devWords(o.devices)+"</small></span>"+CHEV+"</button></div>"+
+      "<button class='swa-outbtn' id='swaOut' type='button'>Sign out</button>"+
+      "<div class='swa-fine'><button class='swa-del' id='swaDel' type='button'>Delete account</button></div>"+
+      "<div id='swaDelBox' hidden><p class='swa-note'>This deletes your account and everything synced to it. It cannot be undone. Type DELETE to confirm.</p>"+
+        "<input class='swa-in' id='swaDelIn' autocomplete='off' autocapitalize='characters'><button class='swa-outbtn swa-danger' id='swaDelGo' type='button'>Delete for good</button></div>"+
+      "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>";
+  }
+  var api={firstNameOf:firstNameOf,menuHtml:menuHtml,codesHtml:codesHtml,esc:esc,I:I,AV_FREE:AV_FREE,AV_LOCKED:AV_LOCKED,pickerHtml:pickerHtml,recordHtml:recordHtml,profileHtml:profileHtml,settingsHtml:settingsHtml};
   if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
   if(!root.document) return;
 
@@ -78,8 +95,8 @@
     ".swa-mi{width:100%;display:flex;align-items:center;gap:11px;padding:10px 9px;border:0;background:none;border-radius:8px;color:var(--text);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;text-align:left}"+
     ".swa-mi svg{width:18px;height:18px;color:var(--soft);flex:none}.swa-r{margin-left:auto;color:var(--faint)}.swa-out{color:var(--soft)}"+
     ".swa-mi:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"+
-    ".swa-view{position:fixed;inset:0;z-index:9982;background:var(--bg);color:var(--text);overflow-y:auto;padding:16px 16px 40px;transform:translateX(100%);transition:transform .28s cubic-bezier(.23,1,.32,1)}"+
-    ".swa-view.on{transform:none}.swa-in-wrap{max-width:520px;margin:0 auto}"+
+    ".swa-view{position:fixed;inset:0;z-index:9982;background:var(--bg);color:var(--text);overflow-y:auto;padding:16px 16px 40px;transform:translateX(100%);visibility:hidden;transition:transform .28s cubic-bezier(.23,1,.32,1),visibility 0s .28s}"+
+    ".swa-view.on{transform:none;visibility:visible;transition:transform .28s cubic-bezier(.23,1,.32,1),visibility 0s}.swa-in-wrap{max-width:520px;margin:0 auto}"+
     ".swa-back{display:flex;align-items:center;gap:4px;border:0;background:none;color:var(--soft);font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:6px 4px 6px 0}.swa-back svg{width:18px;height:18px}"+
     ".swa-t{margin:0 0 16px;font-size:22px;font-weight:800;letter-spacing:-.01em}"+
     ".swa-h{font-size:13px;font-weight:700;color:var(--soft);margin:18px 2px 8px}.swa-h small{font-weight:600;color:var(--faint);margin-left:6px}"+
@@ -98,6 +115,17 @@
     ".swa-subtop{display:flex;align-items:center;gap:12px;padding:12px}.swa-subtop b{display:block;font-size:14px;font-weight:800}"+
     ".swa-subtop small{display:block;font-size:12px;font-weight:600;color:var(--faint);margin-top:2px}.swa-soon{margin-left:auto;font-size:12px;font-weight:700;color:var(--faint);white-space:nowrap}"+
     ".swa-subuse{border-top:1px solid var(--line);padding:11px 12px 12px}.swa-q0{margin:0}.swa-subuse small{display:block;margin-top:6px;font-size:12px;font-weight:600;color:var(--faint)}"+
+    ".swa-set{display:flex;align-items:center;gap:12px;padding:12px;min-height:52px;width:100%;box-sizing:border-box;border:0;background:none;color:inherit;font:inherit;text-align:left}.swa-set0{padding-bottom:8px}"+
+    ".swa-st{flex:1;min-width:0}.swa-st b{display:block;font-size:13.5px;font-weight:700}.swa-st small{display:block;font-size:12px;font-weight:600;color:var(--faint);margin-top:1px}"+
+    ".swa-link{cursor:pointer}.swa-chev{width:16px;height:16px;color:var(--faint)}"+
+    ".swa-seg{display:flex;background:var(--card-2);border-radius:99px;padding:3px;gap:2px}.swa-seg button{border:0;background:none;color:var(--soft);font:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:99px;cursor:pointer}.swa-seg button[aria-pressed=true]{background:var(--card);color:var(--text)}"+
+    ".swa-books{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 12px}.swa-books button{border:1px solid var(--line);background:var(--card-2);border-radius:99px;padding:7px 11px;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer;color:var(--text)}.swa-books button[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}"+
+    ".swa-sw{width:42px;height:26px;border-radius:99px;border:0;background:var(--raise);position:relative;cursor:pointer;flex:none}.swa-sw:after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}.swa-sw[aria-checked=true]{background:var(--green)}.swa-sw[aria-checked=true]:after{transform:translateX(16px)}"+
+    ".swa-outbtn{width:100%;height:44px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:13.5px;font-weight:800;cursor:pointer;margin:18px 0 12px}.swa-danger{color:var(--red-ink)}"+
+    ".swa-fine{text-align:center}.swa-del{border:0;background:none;font:inherit;font-size:12.5px;font-weight:700;color:var(--red-ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}"+
+    ".swa-note,.swa-msg{font-size:13px;color:var(--soft);line-height:1.5}.swa-card+.swa-card{margin-top:0}.swa-card .swa-set+.swa-set{border-top:1px solid var(--line)}"+
+    ".swa-pillbtn{border:1px solid var(--line);background:var(--card-2);color:var(--text);border-radius:99px;padding:6px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}"+
+    ".swa-set:focus-visible,.swa-seg button:focus-visible,.swa-books button:focus-visible,.swa-sw:focus-visible,.swa-outbtn:focus-visible,.swa-del:focus-visible,.swa-pillbtn:focus-visible,.swa-in:focus-visible,.swa-back:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"+
     "@media (hover:hover){.swa-mi:hover{background:var(--card-2)}}"+
     "@media (prefers-reduced-motion:reduce){.swa-menu,.swa-scrim,.swa-view{transition:none}}";
   function ensure(){
@@ -170,6 +198,7 @@
     nm.addEventListener("change",function(){
       var t=nm.value.replace(/^\s+|\s+$/g,"").replace(/[<>]/g,"").slice(0,24);
       if(t){ lsSet("sw.name",t); nm.value=t; }
+      else nm.value=firstNameOf(lsGet("sw.name"),a.st.email);
     });
     v.querySelectorAll("[data-av]").forEach(function(b){
       b.addEventListener("click",function(){
@@ -179,6 +208,56 @@
       });
     });
   }
-  function settings(){ close(); }
+  function settings(){
+    close();
+    var a=acct();
+    var v=view("Settings",settingsHtml({theme:lsGet("sw.theme")==="light"?"light":"dark",
+      book:root.swBookKey?root.swBookKey():"sporty",marks:root.swBookMarks?root.swBookMarks():{},mail:false,devices:null}));
+    function say(t){ v.querySelector("#swaMsg").textContent=t||""; }
+    function fail(code,j){ if(code===0) return say("No connection. Check your data and try again.");
+      if(j&&j.error==="reauth") return say("For your safety, sign in again, then delete within 10 minutes.");
+      say("Something went wrong. Try again."); }
+    v.querySelectorAll("[data-theme]").forEach(function(b){ b.onclick=function(){
+      var t=b.getAttribute("data-theme"); if(root.swSetTheme) root.swSetTheme(t);
+      v.querySelectorAll("[data-theme]").forEach(function(x){ x.setAttribute("aria-pressed",x===b?"true":"false"); }); }; });
+    v.querySelectorAll("[data-book]").forEach(function(b){ b.onclick=function(){
+      if(root.swSetBook) root.swSetBook(b.getAttribute("data-book"));
+      v.querySelectorAll("[data-book]").forEach(function(x){ x.setAttribute("aria-pressed",x===b?"true":"false"); }); }; });
+    var mail=v.querySelector("#swaMail");
+    a.req("GET","/api/account/consent",null,function(code,j){ if(code===200) mail.setAttribute("aria-checked",j.on?"true":"false"); });
+    mail.onclick=function(){ var on=mail.getAttribute("aria-checked")!=="true"; mail.disabled=true;
+      a.req("POST","/api/account/consent",{on:on},function(code,j){ mail.disabled=false;
+        if(code===200) mail.setAttribute("aria-checked",j.on?"true":"false"); else fail(code,j); }); };
+    a.req("GET","/api/auth/devices",null,function(code,j){
+      if(code===200&&j.devices) v.querySelector("#swaDevs small").textContent=devWords(j.devices.length); });
+    v.querySelector("#swaDevs").onclick=function(){ devices(); };
+    v.querySelector("#swaOut").onclick=signOut;
+    v.querySelector("#swaDel").onclick=function(){ v.querySelector("#swaDelBox").hidden=false; v.querySelector("#swaDelIn").focus(); };
+    v.querySelector("#swaDelGo").onclick=function(){
+      if(v.querySelector("#swaDelIn").value.replace(/\s/g,"").toUpperCase()!=="DELETE") return say("Type DELETE to confirm.");
+      a.req("POST","/api/account/delete",{},function(code,j){
+        if(code===200){ closeView(); a.signedOutHere(null,true); a.notice("Your account is deleted."); return; }
+        fail(code,j);
+        if(j&&j.error==="reauth"){ var l=d.createElement("a"); l.textContent=" Sign in again"; l.href="/login?return="+encodeURIComponent("/?account=1"); v.querySelector("#swaMsg").appendChild(l); }
+      });
+    };
+  }
+  function devices(){
+    var a=acct();
+    var v=view("Signed-in devices","<div class='swa-card' id='swaDevList'><div class='swa-set'><span class='swa-st'><small>Loading</small></span></div></div><p class='swa-msg' id='swaMsg' role='status'></p>");
+    function load(){
+      a.req("GET","/api/auth/devices",null,function(code,j){
+        var box=v.querySelector("#swaDevList"); if(code===401) return a.signedOutHere(j.reason);
+        if(code!==200){ box.innerHTML=""; v.querySelector("#swaMsg").textContent="Something went wrong. Try again."; return; }
+        box.innerHTML=(j.devices||[]).map(function(x){
+          var when=""; try{ when=new Date(x.last_used_at).toLocaleDateString(undefined,{day:"numeric",month:"short"}); }catch(e){}
+          return "<div class='swa-set'><span class='swa-st'><b>"+esc(x.label||"Device")+"</b><small>"+(x.current?"This device":"Last used "+esc(when))+"</small></span>"+
+            (x.current?"":"<button class='swa-pillbtn' type='button' data-end=\""+esc(x.id)+"\">Sign out</button>")+"</div>"; }).join("");
+        box.querySelectorAll("[data-end]").forEach(function(b){ b.onclick=function(){
+          a.req("POST","/api/auth/devices/end",{id:b.getAttribute("data-end")},function(c2){ if(c2===200) load(); }); }; });
+      });
+    }
+    load();
+  }
   root.swAccountUI={open:open,close:close,toggle:toggle,profile:profile,settings:settings,closeView:closeView};
 })(typeof window!=="undefined"?window:this);

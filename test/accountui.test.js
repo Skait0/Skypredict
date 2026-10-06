@@ -95,3 +95,36 @@ test("profile has no second avatar besides the picker tiles", () => {
 test("isSyncedKey also covers PREFS keys, so a name saved in another tab reloads", () => {
   assert.match(html, /function isSyncedKey\([^)]*\)\{[^\n]*PREFS/);
 });
+
+test("settings: appearance, booking, notifications, account; nothing that lies", () => {
+  const h = UI.settingsHtml({ theme: "dark", book: "sporty", marks: { sporty: "<span class='sbm'>SportyBet</span>", bet9ja: "bet9ja" }, mail: true, devices: 2 });
+  for (const w of ["Appearance", "Booking", "Notifications", "Account", "Default bookmaker", "Picks by email", "Signed-in devices", "Sign out", "Delete account"])
+    assert.match(h, new RegExp(w), w);
+  assert.match(h, /data-theme="dark" aria-pressed="true"/);
+  assert.doesNotMatch(h, /Auto|Slip results|Download/);
+  assert.match(h, /role="switch" aria-checked="true"/);
+  assert.match(h, /This phone and 1 other/);
+  assert.match(h, /data-book="sporty" aria-pressed="true"/);
+});
+
+test("devices wording", () => {
+  assert.match(UI.settingsHtml({ theme: "dark", book: "sporty", marks: {}, mail: false, devices: 1 }), /Just this device/);
+  assert.match(UI.settingsHtml({ theme: "dark", book: "sporty", marks: {}, mail: false, devices: null }), /Signed-in devices/);
+});
+
+test("account-ui talks to /api/account/consent with GET and POST", () => {
+  const s = fs.readFileSync(path.join(PUB, "account-ui.js"), "utf8");
+  assert.match(s, /req\("GET","\/api\/account\/consent"/);
+  assert.match(s, /req\("POST","\/api\/account\/consent"/);
+});
+
+test("closed full-screen views are hidden from keyboard and screen readers; blank name restores", () => {
+  const s = fs.readFileSync(path.join(PUB, "account-ui.js"), "utf8");
+  assert.match(s, /\.swa-view\{[^}]*visibility:hidden/);
+  assert.match(s, /\.swa-view\.on\{[^}]*visibility:visible/);
+  assert.match(s, /else nm\.value=firstNameOf/);
+});
+
+test("index.html exposes the book helpers", () => {
+  for (const w of ["swSetBook", "swBookKey", "swBookMarks"]) assert.match(html, new RegExp("window\." + w + "="));
+});

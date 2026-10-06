@@ -12011,6 +12011,7 @@ function gateDetail(picks,B){
   return n?{rows:rows,odds:tot.toFixed(2),legs:n,book:(B&&B.label)||""}:null;
 }
 window.swResume={bookSlip:function(){bookSlip();},bookMy:function(){bookMy();},build:function(){setView("build");},slips:function(){openSlipsSheet();}};
+window.swSetBook=function(k){setBook(k);};window.swBookKey=function(){return BOOKMAKER;};window.swBookMarks=function(){var o={};Object.keys(BOOKS).forEach(function(k){o[k]=BOOKS[k].mark||BOOKS[k].label;});return o;};
 function setBook(k){
   if(!BOOKS[k]||k===BOOKMAKER) return;
   BOOKMAKER=k;
