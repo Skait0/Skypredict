@@ -67,3 +67,51 @@ test("progress words", () => {
   assert.strictEqual(f([{ res: "win" }, { res: "lose" }]), "<b>1</b> landed, <b>1</b> lost");
   assert.strictEqual(f([{}, {}]), "<b>0</b> landed, 2 to play");
 });
+
+const SHEET_FNS = ["slipState", "slipCounts", "progressWords", "renderSlipsSheet", "wireSlipButtons", "slipMenuItems", "slipMoreMenu"];
+function sheetEnv(extra) {
+  const names = ["SLIPS", "window", "document", "BOOKS", "esc", "$", "slipWhen", "swSwipe", "clearAllControl", "BIN_SVG", "SHARE_SVG", "SAFE_SVG", "RB_SVG", "MORE_SVG", "COPY_SVG", "CHEV_SVG", "bookMark", "isJackpotSlip", "shareWin", "SLOPEN", "SL_POP_CLOSE"];
+  const src = SHEET_FNS.map(grab).join("\n") + "; return {renderSlipsSheet, wireSlipButtons, slipMoreMenu, slipMenuItems};";
+  return (vals) => new Function(...names, src)(...names.map((n) => vals[n]));
+}
+
+test("the sheet draws without throwing and its helpers are defined", () => {
+  let out = "";
+  const body = { set innerHTML(v) { out = v; }, querySelectorAll() { return []; }, querySelector() { return null; } };
+  const SLIPS = [{ sid: "a", settled: true, won: true, code: "X1", book: "sporty", odds: 2, at: "x", legs: [{ res: "win" }, {}] }];
+  const mk = sheetEnv();
+  const fns = mk({ SLIPS, window: { swPend: { hidden: () => false } }, document: {}, BOOKS: { sporty: { label: "S" } }, esc: (x) => x, $: () => body, slipWhen: () => "today's", swSwipe() {}, clearAllControl() {}, BIN_SVG: "", SHARE_SVG: "", SAFE_SVG: "", RB_SVG: "", MORE_SVG: "", COPY_SVG: "", CHEV_SVG: "", bookMark: () => "", isJackpotSlip: () => false, shareWin() {}, SLOPEN: null, SL_POP_CLOSE: null });
+  assert.doesNotThrow(() => fns.renderSlipsSheet());
+  assert.match(out, /data-slcp/);
+  assert.strictEqual(typeof fns.wireSlipButtons, "function");
+  assert.strictEqual(typeof fns.slipMoreMenu, "function");
+  assert.deepStrictEqual(fns.slipMenuItems({ settled: true, won: true }), ["Share your win", "Delete"]);
+  assert.deepStrictEqual(fns.slipMenuItems({ settled: true, won: false }), ["Delete"]);
+  assert.deepStrictEqual(fns.slipMenuItems({ settled: false }), ["Delete"]);
+});
+
+test("the more menu closes on Escape, on choosing, and leaves no listeners behind", () => {
+  const listeners = {};
+  const doc = {
+    body: { appendChild() {} },
+    addEventListener(t, f) { (listeners[t] = listeners[t] || []).push(f); },
+    removeEventListener(t, f) { listeners[t] = (listeners[t] || []).filter((x) => x !== f); },
+    createElement() {
+      const items = [];
+      return { style: {}, offsetHeight: 40, removed: false, setAttribute() {}, remove() { this.removed = true; }, contains() { return false; },
+        set innerHTML(v) { items.length = 0; (v.match(/<button/g) || []).forEach((_, i) => items.push({ textContent: i ? "Delete" : (/Share your win/.test(v) ? "Share your win" : "Delete"), focus() { items.focused = true; } })); this._items = items; },
+        querySelectorAll() { return items; }, querySelector() { return items[0]; } };
+    },
+  };
+  const calls = [];
+  const mk = sheetEnv();
+  const fns = mk({ SLIPS: [{ sid: "a", settled: true, won: true, legs: [] }], window: { innerHeight: 800, innerWidth: 400, swPend: { del: (s) => calls.push("del " + s) } }, document: doc, BOOKS: {}, esc: (x) => x, $: () => null, slipWhen: () => "", swSwipe() {}, clearAllControl() {}, BIN_SVG: "", SHARE_SVG: "", SAFE_SVG: "", RB_SVG: "", MORE_SVG: "", COPY_SVG: "", CHEV_SVG: "", bookMark: () => "", isJackpotSlip: () => false, shareWin: () => calls.push("win"), SLOPEN: null, SL_POP_CLOSE: null });
+  let focused = false;
+  const btn = { getBoundingClientRect: () => ({ bottom: 10, right: 300 }), focus() { focused = true; } };
+  const count = () => (listeners.pointerdown || []).length + (listeners.keydown || []).length;
+  fns.slipMoreMenu(btn, "a"); assert.strictEqual(count(), 2);
+  listeners.keydown[0]({ key: "Escape", stopPropagation() {} });
+  assert.strictEqual(count(), 0); assert.ok(focused, "focus returns to the button");
+  fns.slipMoreMenu(btn, "a"); fns.slipMoreMenu(btn, "a"); assert.strictEqual(count(), 2, "reopening does not stack listeners");
+  listeners.pointerdown[0]({ target: {} }); assert.strictEqual(count(), 0, "outside tap closes");
+});
