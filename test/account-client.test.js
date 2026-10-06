@@ -91,9 +91,9 @@ test("an unfollowed match and a changed pref carry fresh stamps", () => {
 
 test("signing out clears the synced things and nothing else", () => {
   const A = load();
-  const keep = { "sw.view": "list", "sw.age18": "1" };
+  const keep = { "sw.view": "list", "sw.age18": "1", "sw.theme": "dark" }; // a device's look survives sign-out
   const ls = store(Object.assign({ "sw.slips.v1": "[]", "sw.myslip": "[]", "sw.livefav": "{}", "formline.favs.v1": "{}",
-    "sw.risk": "3", "sw.legodd": "1.4", "sw.theme": "dark", "sw.sync.meta": "{}" }, keep));
+    "sw.risk": "3", "sw.legodd": "1.4", "sw.sync.meta": "{}" }, keep));
   A.clearSynced(ls);
   assert.deepStrictEqual(Object.fromEntries(ls.m), keep);
 });
