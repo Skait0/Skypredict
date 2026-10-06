@@ -489,7 +489,8 @@ main[tabindex="-1"]:focus{outline:none}
 .ys-top{display:flex;align-items:baseline;gap:6px;margin:0 2px 9px}
 .ys-top h3{margin:0;font-size:14px;font-weight:800}
 .ys-ct{font-size:12px;font-weight:600;color:var(--faint)}
-.ys-all{margin-left:auto;border:0;background:none;font:inherit;font-size:12.5px;font-weight:700;color:var(--red-ink);cursor:pointer}
+.ys-all{margin-left:auto;display:flex;align-items:center;gap:2px;border:0;background:none;font:inherit;font-size:12.5px;font-weight:700;color:var(--red-ink);cursor:pointer}
+.ys-all svg{width:14px;height:14px}
 .ys-chips{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .ys-chip{display:flex;align-items:center;justify-content:center;gap:6px;height:34px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);cursor:pointer;color:var(--soft);font:inherit;font-size:12px;font-weight:700}
 .ys-chip .num{font-size:15px}
@@ -507,7 +508,7 @@ main[tabindex="-1"]:focus{outline:none}
 .ys-m small{display:block;font-size:12px;font-weight:600;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .ys-od{font-size:16px;color:var(--accent)}
 .ys-dot{width:8px;height:8px;border-radius:50%;flex:none}
-.ys-dot.run{background:var(--accent);animation:ysLive 1.6s ease-in-out infinite}.ys-dot.lost{background:var(--red)}.ys-dot.won{background:var(--green)}
+.ys-dot.run{background:var(--accent)}.ys-dot.lost{background:var(--red)}.ys-dot.won{background:var(--green)}
 @media (hover:hover){.ys-chip:hover{border-color:var(--grey)}.ys-clrb:hover{color:var(--red-ink)}}
 .ys .num,.ys-row .num{font-weight:800}
 .eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
@@ -2137,6 +2138,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .sl2{background:var(--card);border:1px solid var(--line);border-radius:12px}
 .sl2-top{display:flex;align-items:center;gap:8px;padding:12px 12px 10px}
 .sl2-st{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;padding:4px 8px;border-radius:99px}
+.sl2-st.jack{color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent)}
 .sl2-st.run{color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent)}
 .sl2-st.lost{color:var(--red-ink);background:color-mix(in srgb,var(--red) 13%,transparent)}
 .sl2-st.won{color:var(--green-ink);background:color-mix(in srgb,var(--green) 13%,transparent)}
@@ -2151,12 +2153,13 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .sl2-code{display:flex;align-items:center;gap:10px;margin:0 12px 10px;padding:7px 7px 7px 12px;border-radius:8px;background:var(--card-2)}
 .sl2-code .num{font-size:18px;letter-spacing:.08em;color:var(--accent)}
 .sl2-code button{margin-left:auto;display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:99px;padding:5px 11px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.sl2-code button.ok{color:var(--green-ink)}
 .sl2-code svg{width:13px;height:13px}
 .sl2-mid{display:flex;align-items:center;gap:10px;padding:0 12px 11px;color:var(--soft);font-size:12px;font-weight:600}
 .sl2-mid b{color:var(--text)}
 .sl2-prog{flex:1;display:flex;gap:3px}.sl2-prog i{flex:1;height:4px;border-radius:2px;background:var(--raise)}
 .sl2-prog i.w{background:var(--green)}.sl2-prog i.l{background:var(--red)}
-.sl2-legs{max-height:0;overflow:hidden;transition:max-height 300ms var(--ease-out)}.sl2.open .sl2-legs{max-height:1400px}
+.sl2-legs{max-height:0;overflow:hidden;transition:max-height 300ms var(--ease-out)}.sl2.open .sl2-legs{max-height:2600px}
 .sl2-leg{display:flex;align-items:center;gap:9px;padding:8px 12px;border-top:1px solid var(--line);font-size:12.5px}
 .sl2-leg .d{width:7px;height:7px;border-radius:50%;background:var(--grey);flex:none}
 .sl2-leg.win .d{background:var(--green)}.sl2-leg.lose .d{background:var(--red)}
@@ -6785,14 +6788,14 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 .sw-card.sw-peek{animation:swPeek 1100ms var(--ease-out) 700ms 1}
 @keyframes swPeek{0%{transform:none}35%{transform:translateX(-58px)}100%{transform:none}}
 .sw-swipe.sw-collapse{transition:height 250ms ease,margin 250ms ease;height:0!important;margin:0}
-.sw-undo{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:440px;margin:0 auto;z-index:9970;background:var(--text);color:var(--bg);border-radius:12px;padding:11px 8px 11px 14px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:13px;transform:translateY(160%);transition:transform 300ms cubic-bezier(.2,.9,.25,1);overflow:hidden;visibility:hidden;transition:transform 300ms cubic-bezier(.2,.9,.25,1),visibility 0s 300ms}
+.sw-undo{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:440px;margin:0 auto;z-index:9970;background:var(--text);color:var(--bg);border-radius:12px;padding:11px 8px 11px 14px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:13px;transform:translateY(160%);overflow:hidden;visibility:hidden;transition:transform 300ms cubic-bezier(.2,.9,.25,1),visibility 0s 300ms}
 .sw-undo.on{transform:none;visibility:visible;transition:transform 300ms cubic-bezier(.2,.9,.25,1),visibility 0s}
 .sw-undo button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.sw-undo button{border:0;background:none;color:var(--red);font:inherit;font-weight:800;cursor:pointer;padding:6px 10px}
+.sw-undo button{border:0;background:none;color:var(--bg);font:inherit;font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:6px 10px}
 .sw-undo .u-bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--red);transform-origin:left;transform:scaleX(0)}
 .sw-undo.on .u-bar{animation:swUndoBar 5s linear forwards}
 @keyframes swUndoBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
-@media (prefers-reduced-motion:reduce){.sw-card,.sw-undo,.sw-swipe{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){.sw-card,.sw-undo,.sw-swipe,.ys-live,.ys-dot.run,.sw-undo .u-bar{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -7188,11 +7191,12 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <!-- Account (spec section 9). Stays hidden unless /api/me answers, so
          with AUTH_ENABLED off the header is exactly as before. Filled by the
          swAccount script at the end of the page. -->
-    <button class="tgl hsoc" id="hdAccount" type="button" aria-label="Sign in" hidden></button>
     <a class="tgl hsoc hsoc-x" href="https://x.com/soccerwizardhq" target="_blank" rel="noopener"
        aria-label="Soccerwizard on X"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.2 2.3h3.4l-7.4 8.5 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9.1L.9 2.3h7l4.8 6.4zm-1.2 17.9h1.9L7.1 4.2H5z"/></svg></a>
     <a class="tgl hsoc hsoc-tg" href="https://t.me/soccerwizardTG" target="_blank" rel="noopener"
        aria-label="Soccerwizard on Telegram"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.1 3.8 19.6 20.3c-.3 1.2-1 1.5-2 .9l-5.5-4-2.7 2.6c-.3.3-.6.6-1.2.6l.4-5.6L18.8 6c.4-.4-.1-.6-.7-.2L5.5 13.7 0 12c-1.2-.4-1.2-1.2.3-1.8L21.5 2c1-.4 1.9.2 1.6 1.8z"/></svg></a>
+    <!-- Account is the LAST item: top right, where the menu opens under it. -->
+    <button class="tgl hsoc" id="hdAccount" type="button" aria-label="Sign in" hidden></button>
     <!-- The install icon lived here. It could not be reached on a phone - that
          row needs more width than a phone has, so it sat off the right edge -
          and the labelled bar under the hero says what it is and does the same
@@ -8011,7 +8015,7 @@ function saveSlips(){
     localStorage.setItem("sw.slips.v1",JSON.stringify(SLIPS));
   }catch(e){}
 }
-window.swSlipCount=function(){return SLIPS.length;};
+window.swSlipCount=function(){return slipCounts().all;};
 
 /* Record a slip at the moment it becomes real - when a booking code exists.
    Building and rebuilding in the wizard should not fill the history with
@@ -8167,7 +8171,7 @@ function renderMyResults(){
   var rows=SLIPS.filter(function(s){ return !(window.swPend&&window.swPend.hidden(s.sid)); }).slice(0,5);
   host.innerHTML=
     "<div class='ys'><div class='ys-top'><h3>Your slips</h3><span class='ys-ct'><span class='num'>"+c.all+"</span> saved</span>"+
-      "<button class='ys-all' type='button' data-ysf='all'>See all</button></div>"+
+      "<button class='ys-all' type='button' data-ysf='all'>See all<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></button></div>"+
       "<div class='ys-chips'>"+
         "<button class='ys-chip run' type='button' data-ysf='run'>"+(c.run?"<span class='ys-live'></span>":"")+"<span class='num'>"+c.run+"</span>running</button>"+
         "<button class='ys-chip lost' type='button' data-ysf='lost'><span class='num'>"+c.lost+"</span>lost</button>"+
@@ -8186,15 +8190,16 @@ function renderMyResults(){
   clearAllControl(host.querySelector(".ys-clr"));
   if(!SL_PEEKED){ SL_PEEKED=true; var first=host.querySelector(".sw-card"); if(first) first.classList.add("sw-peek"); }
 }
+function visibleSids(){ return SLIPS.filter(function(s){return !(window.swPend&&window.swPend.hidden(s.sid));}).map(function(s){return s.sid;}); }
 /* Clear all asks in place: "Clear N? Keep / Clear". No confirm(). */
-function clearAllControl(slot){
+function clearAllControl(slot,getSids){
   if(!slot) return;
   function idle(){ slot.innerHTML="<button class='ys-clrb' type='button'>Clear all</button>"; slot.firstChild.onclick=ask; }
   function ask(){
-    var n=slipCounts().all; if(!n) return;
+    var ids=(getSids||visibleSids)(), n=ids.length; if(!n) return;
     slot.innerHTML="<span class='ys-ask'>Clear "+n+"?<button class='ys-no' type='button'>Keep</button><button class='ys-yes' type='button'>Clear</button></span>";
     slot.querySelector(".ys-no").onclick=idle;
-    var y=slot.querySelector(".ys-yes"); y.onclick=function(){ window.swPend.clearAll(SLIPS.filter(function(s){return !(window.swPend&&window.swPend.hidden(s.sid));}).map(function(s){return s.sid;})); }; y.focus();
+    var y=slot.querySelector(".ys-yes"); y.onclick=function(){ window.swPend.clearAll(ids); }; y.focus();
   }
   idle();
 }
@@ -8229,11 +8234,6 @@ function removeSlip(sid,quiet){
   if(i<0) return;
   SLIPS.splice(i,1); saveSlips(); refreshSlipUI();
   if(!quiet) window.swToast&&window.swToast("Slip removed","ok","sliprm");
-}
-function clearSlips(quiet){
-  if(!SLIPS.length) return;
-  SLIPS=[]; saveSlips(); refreshSlipUI();
-  if(!quiet) window.swToast&&window.swToast("Slip history cleared","ok","slipclr");
 }
 /* SWPEND */
 /* DELETE WAITS FOR UNDO. A removed slip gets a sync tombstone that beats every
@@ -8362,7 +8362,7 @@ function renderSlipsSheet(){
     if(sp.code) shareCode(sp.code,sp.legs,BOOKS[sp.book]); else shareSlip(sp.legs,sp.odds); }; });
   body.querySelectorAll("[data-slmore]").forEach(function(b){ b.onclick=function(){ slipMoreMenu(b,b.dataset.slmore); }; });
   body.querySelectorAll(".sw-swipe").forEach(function(r){ swSwipe(r,function(){ window.swPend.del(r.getAttribute("data-sid")); }); });
-  clearAllControl(body.querySelector(".ys-clr"));
+  clearAllControl(body.querySelector(".ys-clr"),function(){ return shown.map(function(s){return s.sid;}); });
   wireSlipButtons(body);
 }
 function slipMenuItems(sp){
@@ -8399,7 +8399,7 @@ function slipMoreMenu(btn,sid){
   var sp=SLIPS.filter(function(x){return x.sid===sid;})[0]; if(!sp) return;
   var pop=document.createElement("div"); pop.className="sl2-pop"; pop.setAttribute("role","menu");
   pop.innerHTML=slipMenuItems(sp).map(function(l){
-    return "<button class='sl2-mi' type='button' role='menuitem'>"+(l==="Delete"?BIN_SVG:SHARE_SVG)+l+"</button>"; }).join("");
+    return "<button class='sl2-mi' type='button' role='menuitem' data-act='"+(l==="Delete"?"del":"win")+"'>"+(l==="Delete"?BIN_SVG:SHARE_SVG)+l+"</button>"; }).join("");
   document.body.appendChild(pop);
   var r=btn.getBoundingClientRect();
   pop.style.top=Math.min(r.bottom+4,window.innerHeight-pop.offsetHeight-8)+"px";
@@ -8412,7 +8412,7 @@ function slipMoreMenu(btn,sid){
   function esk(e){ if(e.key==="Escape"){ e.stopPropagation(); close(); btn.focus(); } }
   pop.querySelectorAll(".sl2-mi").forEach(function(b){
     b.onclick=function(){
-      var del=/Delete/.test(b.textContent); close();
+      var del=b.getAttribute("data-act")==="del"; close();
       if(del) window.swPend.del(sid); else shareWin(sp,btn);
     };
   });
@@ -10189,6 +10189,7 @@ $("scrim").addEventListener("click",function(){closeSheet();closeMySheet();close
 $("sheet-x").addEventListener("click",closeSheet);
 function anyOverlayOpen(){return ($("sheet")&&$("sheet").classList.contains("on"))||($("mySheet")&&$("mySheet").classList.contains("on"));}
 window.addEventListener("popstate",function(){
+  if(window.swAccountUI&&swAccountUI.eatPop()) return;
   if(anyOverlayOpen()){closeSheet();closeMySheet();}
   else if(document.documentElement.classList.contains("mode-build")||document.documentElement.classList.contains("mode-live")){setView("pred");}
 });
@@ -11891,7 +11892,7 @@ function gateDetail(picks,B){
   });
   return n?{rows:rows,odds:tot.toFixed(2),legs:n,book:(B&&B.label)||""}:null;
 }
-window.swResume={bookSlip:function(){bookSlip();},bookMy:function(){bookMy();},build:function(){setView("build");},slips:function(){openSlipsSheet();}};
+window.swResume={bookSlip:function(){bookSlip();},bookMy:function(){bookMy();},build:function(){setView("build");},slips:function(){openSlipsSheet("all");}};
 window.swSetBook=function(k){setBook(k);};window.swBookKey=function(){return BOOKMAKER;};window.swBookMarks=function(){var o={};Object.keys(BOOKS).forEach(function(k){o[k]=BOOKS[k].mark||BOOKS[k].label;});return o;};
 function setBook(k){
   if(!BOOKS[k]||k===BOOKMAKER) return;
@@ -16631,7 +16632,7 @@ function shareText(picks,odds,code){
   return t;
 }
 function doShare(text,url){
-  if(navigator.share){ navigator.share({title:"SoccerWizard slip",text:text,url:url}).catch(function(){}); }
+  if(navigator.share){ navigator.share({title:"Soccerwizard slip",text:text,url:url}).catch(function(){}); }
   else if(copyText(text+(url?"\n"+url:""))){
     alert("Slip copied - paste it anywhere to share."); }
 }
@@ -17998,7 +17999,7 @@ function wireNotif(){
     if(!("Notification" in window)) return;
     Notification.requestPermission().then(function(p){
       paintBtn();
-      if(p==="granted"){try{new Notification("SoccerWizard",
+      if(p==="granted"){try{new Notification("Soccerwizard",
         {body:"Done. We'll tell you as soon as one of your slips finishes.",
          icon:"/icon-192-maskable.png"});}catch(e){}}
     });
@@ -22930,6 +22931,7 @@ load().catch(function(){});
   var css=d.createElement("style");
   css.textContent="#hdAccount.ac-on{width:36px;height:36px;border-radius:50%;padding:0;overflow:hidden;border:1.5px solid var(--accent-rim);background:var(--card-2)}"+
     "#hdAccount .ac-av{width:100%;height:100%;object-fit:cover;display:block}"+
+    "@media(max-width:420px){#hdAccount.ac-on{width:34px;height:34px}}"+
     "#acctNote{position:fixed;left:12px;right:12px;top:12px;z-index:9999;background:var(--card);color:var(--text);"+
     "border:1px solid var(--line);border-radius:12px;padding:12px 44px 12px 14px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.35)}"+
     "#acctNote button{position:absolute;right:6px;top:6px;background:none;border:0;color:var(--soft);font-size:20px;width:32px;height:32px;cursor:pointer}";
@@ -23007,13 +23009,6 @@ load().catch(function(){});
   function pullNow(){ if(st.on&&Date.now()>=st.nextAt) sync(false); }
 
   /* ---------------------------------------------------------- the sheet */
-  function el(tag,cls,text){ var e=d.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
-  function say(text){ var m=$("acctMsg"); if(m) m.textContent=text; }
-  function fail(code,j){
-    if(code===0) return say("No connection. Check your data and try again.");
-    if(j&&j.error==="reauth") return say("For your safety, sign in again, then delete within 10 minutes.");
-    say("Something went wrong. Try again.");
-  }
   var wired=false;
   function wire(){
     if(wired) return; wired=true;

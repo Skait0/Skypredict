@@ -57,7 +57,7 @@ test("each redraw is isolated, so one failure does not strand the others", () =>
 
 test("every function that mutates SLIPS refreshes the UI", () => {
   /* The actual bug: two of these three did not. */
-  ["rememberSlip", "removeSlip", "clearSlips"].forEach((name) => {
+  ["rememberSlip", "removeSlip"].forEach((name) => {
     const fn = grab(name);
     assert.match(fn, /refreshSlipUI\(\)/,
       name + " changes SLIPS and must redraw what reads it");

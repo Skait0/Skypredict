@@ -11,7 +11,6 @@ function load() {
   const calls = [], timers = [];
   const env = {
     removeSlip: (sid, q) => calls.push("rm " + sid + " " + q),
-    clearSlips: () => calls.push("clear"),
     refreshSlipUI: () => calls.push("ui"),
     setTimeout: (f, ms) => { timers.push(f); return timers.length; },
     clearTimeout: () => {},
@@ -19,8 +18,8 @@ function load() {
     hideUndo: () => calls.push("hide"),
   };
   const win = {};
-  new Function("window", "removeSlip", "clearSlips", "refreshSlipUI", "setTimeout", "clearTimeout", "showUndo", "hideUndo", m[1])(
-    win, env.removeSlip, env.clearSlips, env.refreshSlipUI, env.setTimeout, env.clearTimeout, env.showUndo, env.hideUndo);
+  new Function("window", "removeSlip", "refreshSlipUI", "setTimeout", "clearTimeout", "showUndo", "hideUndo", m[1])(
+    win, env.removeSlip, env.refreshSlipUI, env.setTimeout, env.clearTimeout, env.showUndo, env.hideUndo);
   return { P: win.swPend, calls, fire: () => timers.splice(0).forEach((f) => f()) };
 }
 

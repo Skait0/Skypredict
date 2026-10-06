@@ -55,7 +55,7 @@ test("a Google redirect comes back into the spell and resumes only a whitelisted
   assert.match(block, /signedin=1/);
   assert.match(block, /sessionStorage/);
   assert.match(block, /root\.swResume&&root\.swResume\[g\.resume\]/);
-  assert.match(html, /window\.swResume=\{bookSlip:function\(\)\{bookSlip\(\);\},bookMy:function\(\)\{bookMy\(\);\},build:function\(\)\{setView\("build"\);\},slips:function\(\)\{openSlipsSheet\(\);\}\};/);
+  assert.match(html, /window\.swResume=\{bookSlip:function\(\)\{bookSlip\(\);\},bookMy:function\(\)\{bookMy\(\);\},build:function\(\)\{setView\("build"\);\},slips:function\(\)\{openSlipsSheet\("all"\);\}\};/);
 });
 
 test("every way into Build passes the wall: setView gates the build view itself", () => {

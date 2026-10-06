@@ -140,7 +140,7 @@
     menu.addEventListener("click",function(e){
       var b=e.target.closest&&e.target.closest("[data-go]"); if(!b) return;
       var go=b.getAttribute("data-go"); close();
-      if(go==="slips"&&root.openSlipsSheet) root.openSlipsSheet();
+      if(go==="slips"&&root.openSlipsSheet) root.openSlipsSheet("all");
       else if(go==="profile") profile();
       else if(go==="settings") settings();
       else if(go==="out") signOut();
@@ -172,7 +172,10 @@
     });
   }
   var BACK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>';
-  var viewEl=null;
+  /* System Back closes the view: one history entry per open view, as the slips
+     sheet does with pushOverlay. eatPop() is called first by the site popstate
+     handler so a Back that closes the view does not also change the page. */
+  var viewEl=null, pushed=false, ownBack=false;
   function view(title,html){
     ensure();
     if(!viewEl){ viewEl=d.createElement("div"); viewEl.className="swa-view"; viewEl.setAttribute("role","dialog"); viewEl.setAttribute("aria-modal","true"); d.body.appendChild(viewEl);
@@ -180,11 +183,13 @@
     viewEl.setAttribute("aria-label",title);
     viewEl.innerHTML="<div class='swa-in-wrap'><button class='swa-back' type='button'>"+BACK+"Back</button><h2 class='swa-t'>"+esc(title)+"</h2>"+html+"</div>";
     viewEl.querySelector(".swa-back").onclick=closeView;
+    if(!viewEl.classList.contains("on")){ try{ root.history.pushState({sw:1},""); pushed=true; }catch(e){} }
     viewEl.classList.add("on"); d.documentElement.classList.add("locked");
     viewEl.querySelector(".swa-back").focus({preventScroll:true});
     return viewEl;
   }
-  function closeView(){ if(!viewEl) return; viewEl.classList.remove("on"); d.documentElement.classList.remove("locked");
+  function closeView(popped){ if(!viewEl||!viewEl.classList.contains("on")) return; viewEl.classList.remove("on");
+    if(pushed){ pushed=false; if(popped!==true){ ownBack=true; try{ root.history.back(); }catch(e){ ownBack=false; } } } d.documentElement.classList.remove("locked");
     var av=d.getElementById("hdAccount"); if(av) try{ av.focus(); }catch(e){} }
   function lsGet(k){ try{ return root.localStorage.getItem(k); }catch(e){ return null; } }
   function lsSet(k,v){ try{ root.localStorage.setItem(k,v); }catch(e){} }
@@ -264,5 +269,10 @@
     }
     load();
   }
-  root.swAccountUI={open:open,close:close,toggle:toggle,profile:profile,settings:settings,closeView:closeView};
+  function eatPop(){
+    if(ownBack){ ownBack=false; return true; }
+    if(viewEl&&viewEl.classList.contains("on")){ closeView(true); return true; }
+    return false;
+  }
+  root.swAccountUI={eatPop:eatPop,open:open,close:close,toggle:toggle,profile:profile,settings:settings,closeView:closeView};
 })(typeof window!=="undefined"?window:this);
