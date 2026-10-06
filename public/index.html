@@ -6860,8 +6860,9 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 .sw-card.sw-peek{animation:swPeek 1100ms var(--ease-out) 700ms 1}
 @keyframes swPeek{0%{transform:none}35%{transform:translateX(-58px)}100%{transform:none}}
 .sw-swipe.sw-collapse{transition:height 250ms ease,margin 250ms ease;height:0!important;margin:0}
-.sw-undo{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:440px;margin:0 auto;z-index:9970;background:var(--text);color:var(--bg);border-radius:12px;padding:11px 8px 11px 14px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:13px;transform:translateY(160%);transition:transform 300ms cubic-bezier(.2,.9,.25,1);overflow:hidden}
-.sw-undo.on{transform:none}
+.sw-undo{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:440px;margin:0 auto;z-index:9970;background:var(--text);color:var(--bg);border-radius:12px;padding:11px 8px 11px 14px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:13px;transform:translateY(160%);transition:transform 300ms cubic-bezier(.2,.9,.25,1);overflow:hidden;visibility:hidden;transition:transform 300ms cubic-bezier(.2,.9,.25,1),visibility 0s 300ms}
+.sw-undo.on{transform:none;visibility:visible;transition:transform 300ms cubic-bezier(.2,.9,.25,1),visibility 0s}
+.sw-undo button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sw-undo button{border:0;background:none;color:var(--red);font:inherit;font-weight:800;cursor:pointer;padding:6px 10px}
 .sw-undo .u-bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--red);transform-origin:left;transform:scaleX(0)}
 .sw-undo.on .u-bar{animation:swUndoBar 5s linear forwards}
@@ -8334,14 +8335,15 @@ function clearSlips(quiet){
 /* SWPEND */
 /* DELETE WAITS FOR UNDO. A removed slip gets a sync tombstone that beats every
    copy for 60 days, so "delete, then put it back" would be undone by the next
-   sync. Instead a delete only hides the slip; storage is written when the 5s
+   sync. Clear all hides and later removes only the slips present when it was
+   pressed, so a slip that syncs in during the window survives. Instead a delete only hides the slip; storage is written when the 5s
    Undo window ends, when another delete starts, or when the page is hidden. */
 (function(){
   var pend=null, t=null;
   function finish(){
     if(!pend) return;
     var p=pend; pend=null; if(t) clearTimeout(t); t=null; hideUndo();
-    if(p.all) clearSlips(true); else removeSlip(p.sid,true);
+    if(p.all){ for(var k in p.sids) removeSlip(k,true); } else removeSlip(p.sid,true);
   }
   function start(p,msg){
     finish();
@@ -8350,10 +8352,10 @@ function clearSlips(quiet){
   }
   window.swPend={
     del:function(sid){ start({sid:sid},"Slip deleted"); },
-    clearAll:function(){ start({all:true},"All slips cleared"); },
+    clearAll:function(sids){ var m={}; (sids||[]).forEach(function(s){ m[s]=1; }); start({all:true,sids:m},"All slips cleared"); },
     undo:function(){ if(!pend) return; pend=null; if(t) clearTimeout(t); t=null; hideUndo(); refreshSlipUI(); },
     commit:finish,
-    hidden:function(sid){ return !!pend&&(pend.all||pend.sid===sid); },
+    hidden:function(sid){ return !!pend&&(pend.all?!!pend.sids[sid]:pend.sid===sid); },
     active:function(){ return !!pend; }
   };
 })();
