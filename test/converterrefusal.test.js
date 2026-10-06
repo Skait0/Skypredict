@@ -289,3 +289,10 @@ test("paths that did not ask for it book started legs exactly as before", async 
     assert.match(fn(caller), /dropStarted:true/, caller + " asks for the filter");
   assert.strictEqual((src.match(/dropStarted:true/g) || []).length, 2, "and nobody else does");
 });
+
+test("lineCheck ends the attempt when its prompt host was redrawn away, so Apply is not locked", () => {
+  const fs = require("fs"), path = require("path");
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  const m = /function lineCheck\(picks,B,target,go,stop\)\{[\s\S]*?var el=promptEl\(target\); if\(!el\)\{ if\(stop\) stop\(\); return; \}/.exec(src);
+  assert.ok(m, "the late prompt in lineCheck calls stop() when its host is gone");
+});

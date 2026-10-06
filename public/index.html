@@ -14016,7 +14016,9 @@ function lineCheck(picks,B,target,go,stop){
         "<div class='ca'><button class='confirm-go' type='button'>"+
         (swaps.length?"Update and book":"Book the other "+(next.length===1?"one":next.length))+
         "</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>");
-      var el=promptEl(target); if(!el) return;
+      /* The panel was redrawn while we waited: no prompt to answer, so end
+         the attempt rather than leave the caller's busy flag set forever. */
+      var el=promptEl(target); if(!el){ if(stop) stop(); return; }
       el.querySelector(".confirm-go").addEventListener("click",function(){
         clearPrompt(target); go(next,swaps,dropped);});
       el.querySelector(".confirm-cancel").addEventListener("click",function(){
