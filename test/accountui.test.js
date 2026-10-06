@@ -70,14 +70,67 @@ test("the page loads it and the old sheet is gone", () => {
   assert.doesNotMatch(html, /acctSheet|Download my data/);
 });
 
-test("picker: six free in one row, eight locked skins, chosen one ringed", () => {
+test("picker: free gets six, five locked skins, owner three never shown; chosen one ringed", () => {
   assert.deepStrictEqual(UI.AV_FREE, ["fire", "8bit", "2bit", "lino", "glass", "halo"]);
-  assert.strictEqual(UI.AV_LOCKED.length, 8);
-  const h = UI.pickerHtml("glass");
+  const h = UI.pickerHtml("glass", "free");
   assert.strictEqual((h.match(/data-av=/g) || []).length, 6);
-  assert.strictEqual((h.match(/disabled/g) || []).length, 8);
+  assert.strictEqual((h.match(/disabled/g) || []).length, 5);
   assert.match(h, /data-av="glass" aria-pressed="true"/);
   assert.match(h, /Skins/); assert.match(h, /Unlock with plans/);
+  for (const k of UI.AV_OWNER) assert.doesNotMatch(h, new RegExp("/av/" + k + "\."), k);
+  assert.strictEqual(UI.pickerHtml("glass"), h, "no role reads as free");
+});
+
+test("picker: ff picks all 11, admin all 14, no locked row", () => {
+  const ff = UI.pickerHtml("gold", "ff"), ad = UI.pickerHtml("lich", "admin");
+  assert.strictEqual((ff.match(/data-av=/g) || []).length, 11);
+  assert.strictEqual((ad.match(/data-av=/g) || []).length, 14);
+  for (const h of [ff, ad]) { assert.doesNotMatch(h, /disabled|Unlock with plans/); }
+  for (const k of UI.AV_OWNER) assert.doesNotMatch(ff, new RegExp("/av/" + k + "\."), k);
+  assert.match(ad, /data-av="lich" aria-pressed="true"/);
+});
+
+test("client avatar lists match lib/roles.js, in page and in account-ui", () => {
+  const R = require("../lib/roles.js");
+  assert.deepStrictEqual(UI.AV_FF, R.FF_AVATARS);
+  assert.deepStrictEqual(UI.AV_OWNER.slice().sort(), R.OWNER_AVATARS.slice().sort());
+  const m = /\/\* SWAVATAR \*\/([\s\S]*?)\/\* \/SWAVATAR \*\//.exec(html)[1];
+  const allowed = (role) => require("../lib/sync.js").AVATARS.filter((k) => {
+    const w = {}; new Function("window", "localStorage", m)(w, { getItem: (x) => (x === "sw.role" ? role : k) });
+    return w.swAvatarKey() === k;
+  }).sort();
+  assert.deepStrictEqual(allowed(null), R.avatarsFor("free").sort());
+  assert.deepStrictEqual(allowed("ff"), R.avatarsFor("ff").sort());
+  assert.deepStrictEqual(allowed("admin"), R.avatarsFor("admin").sort());
+});
+
+test("menu: plan label from the account, Admin item only for admin, admin codes say no limit", () => {
+  const base = { name: "A", email: "a@b.c", quota: null, slips: 0 };
+  const fr = UI.menuHtml(base);
+  const ff = UI.menuHtml(Object.assign({}, base, { role: "ff", plan: "Family & friends", quota: { used: 4, limit: 100 } }));
+  const ad = UI.menuHtml(Object.assign({}, base, { role: "admin", plan: "Admin" }));
+  assert.doesNotMatch(fr, /data-go='admin'/); assert.doesNotMatch(ff, /data-go='admin'/);
+  assert.match(ad, /data-go='admin'/); assert.match(ad, />Admin</);
+  assert.match(ff, /Family &amp; friends/); assert.match(ff, /4<\/span> of 100/);
+  assert.match(ad, /swa-plan swa-gold'>Admin/); assert.match(ad, /No limit/); assert.doesNotMatch(ad, /swa-bar/);
+});
+
+test("subscription card follows the plan", () => {
+  const p = (role, plan) => UI.profileHtml({ name: "A", avatar: "fire", role, plan, record: { built: 0, won: 0, settled: 0 }, quota: null });
+  assert.match(p("ff", "Family & friends"), /100 codes a day/);
+  assert.doesNotMatch(p("ff", "Family & friends"), /More plans soon/);
+  assert.match(p("admin", "Admin"), /No limit/);
+  assert.match(p(undefined, undefined), /Free plan[\s\S]*10 codes a day[\s\S]*More plans soon/);
+});
+
+test("admin view: form, rows with since and Remove, emails escaped", () => {
+  const h = UI.adminHtml([{ email: "<b>x\"@y.z", created_at: "2026-10-01T10:00:00Z" }]);
+  assert.match(h, /Give Family &amp; friends/);
+  assert.match(h, /since /); assert.match(h, /Remove/);
+  assert.doesNotMatch(h, /<b>x/); assert.match(h, /&lt;b&gt;x&quot;@y\.z/);
+  assert.match(UI.adminHtml([]), /No one yet/);
+  for (const e of ['req("GET","/api/account/grants"', 'req("POST","/api/account/grant"', 'req("POST","/api/account/revoke"'])
+    assert.ok(src.includes(e), e);
 });
 
 test("record: one card, won big, the rate only over settled slips", () => {
@@ -88,7 +141,7 @@ test("record: one card, won big, the rate only over settled slips", () => {
 
 test("profile has no second avatar besides the picker tiles", () => {
   const h = UI.profileHtml({ name: "Kayode", avatar: "fire", record: { built: 1, won: 0, settled: 0 }, quota: null });
-  assert.strictEqual((h.match(/\/av\//g) || []).length, 14, "only the 14 picker tiles");
+  assert.strictEqual((h.match(/\/av\//g) || []).length, 11, "only the 6 free tiles and 5 locked skins");
   assert.match(h, /Subscription/); assert.match(h, /Free plan/); assert.doesNotMatch(h, /Codes today/);
 });
 

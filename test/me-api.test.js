@@ -195,3 +195,27 @@ test("consent: read, turn on, turn off; export shows it; signed out gets 401", a
   assert.ok(db.t.consent[uid].revoked_at);
   assert.strictEqual((await w.acc(accGet("consent", {}))).code, 401);
 });
+
+test("role, plan and code limit ride on GET; avatars are role-aware on POST", async () => {
+  const w = world();
+  const av = (v) => ({ prefs: { avatar: { v, at: 5 } } });
+  const saved = async (u, v) => {
+    await w.me(mePost(u.cookie, { base_version: 0, data: payload({}, av(v)) }));
+    return (await w.me(meGet(u.cookie))).json();
+  };
+  const f = await w.user("free@b.com");
+  let r = await saved(f, "afro");
+  assert.deepStrictEqual([r.role, r.plan, r.codeLimit, r.data.prefs.avatar], ["free", "Free plan", null, undefined]);
+  const ff = await w.user("ff@b.com");
+  w.db.grantFor = async (e) => (e.startsWith("ff") ? { email: e } : null);
+  assert.strictEqual((await saved(ff, "gold")).data.prefs.avatar.v, "gold");
+  const ff2 = await w.user("ff2@b.com");
+  assert.strictEqual((await saved(ff2, "afro")).data.prefs.avatar, undefined);
+  assert.deepStrictEqual([ (await w.me(meGet(ff.cookie))).json().plan, (await w.me(meGet(ff.cookie))).json().codeLimit ], ["Family & friends", 100]);
+  process.env.SW_ADMIN_EMAILS = "Boss@b.com";
+  try {
+    const ad = await w.user("boss@b.com");
+    r = await saved(ad, "afro");
+    assert.deepStrictEqual([r.role, r.codeLimit, r.data.prefs.avatar.v], ["admin", "none", "afro"]);
+  } finally { delete process.env.SW_ADMIN_EMAILS; }
+});

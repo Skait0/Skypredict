@@ -9,6 +9,7 @@ const H = require("../lib/auth/http.js");
 const S = require("../lib/auth/session.js");
 const Y = require("../lib/sync.js");
 const A = require("../lib/access.js");
+const R = require("../lib/roles.js");
 const { report } = require("../lib/report.js");
 
 function bodySize(req) {
@@ -20,6 +21,7 @@ function bodySize(req) {
 function make(deps) {
   const { db } = deps;
   const now = deps.now || Date.now;
+  const env = deps.env || process.env;
   return async function handler(req, res) {
     if (!H.enabled()) return H.notFound(res);
     const post = req.method === "POST";
@@ -34,6 +36,7 @@ function make(deps) {
       const user = await db.userById(s.userId);
       if (!user) return H.sendJson(res, 401, { error: "signed_out", reason: "deleted" }, [S.clearCookie(S.COOKIE)]);
 
+      const role = await R.roleOf(db, user, env);
       if (!post) {
         const row = await db.getUserData(s.userId);
         /* An entitlements outage must not hide the reader's own data: send
@@ -41,7 +44,8 @@ function make(deps) {
         let entitlements = {};
         try { entitlements = await A.entitlements(db, s.userId, A.FEATURES, t); }
         catch (e) { await report(e, { route: "me/entitlements" }); }
-        return H.sendJson(res, 200, { signedIn: true, email: user.email, version: row ? row.version : 0,
+        return H.sendJson(res, 200, { signedIn: true, email: user.email, role, plan: R.planLabel(role),
+          codeLimit: role === "admin" ? "none" : R.codeLimitFor(role), version: row ? row.version : 0,
           data: row ? row.data : Y.empty(), entitlements }, cookies);
       }
 
@@ -49,7 +53,7 @@ function make(deps) {
       if (bodySize(req) > Y.MAX_BYTES + 1024) return H.sendJson(res, 413, { error: "too_big" });
       const body = await H.readJson(req, Y.MAX_BYTES + 1024);
       if (!body) return H.sendJson(res, 400, { error: "bad_shape" });
-      const v = Y.validate(body.data);
+      const v = Y.validate(body.data, { avatars: R.avatarsFor(role) });
       if (!v.ok) return H.sendJson(res, v.error === "too_big" ? 413 : 400, { error: v.error });
       for (let i = 0; i < 3; i++) {
         const row = await db.getUserData(s.userId);
