@@ -6,9 +6,12 @@ const path = require("path");
 const src = fs.readFileSync(path.join(__dirname, "..", "public", "signin.js"), "utf8");
 const S = require("../public/signin.js");
 
-test("signin.js is ES5 and uses no raw colours but white", () => {
+test("signin.js is ES5 and uses no raw colours but white and Google's G", () => {
   assert.doesNotMatch(src, /=>|\blet\s|\bconst\s|`|\bclass\s/);
-  const hex = (src.match(/#[0-9a-fA-F]{3,8}\b/g) || []).filter((h) => !/^#fff$/i.test(h));
+  // The "G" on our own Continue with Google button is drawn in Google's brand
+  // colours, which their button rules require; every other colour is a token.
+  const GOOGLE = /^#(EA4335|4285F4|FBBC05|34A853)$/i;
+  const hex = (src.match(/#[0-9a-fA-F]{3,8}\b/g) || []).filter((h) => !/^#fff$/i.test(h) && !GOOGLE.test(h));
   assert.deepStrictEqual(hex, []);
 });
 
