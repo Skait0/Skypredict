@@ -17066,8 +17066,8 @@ function bookAllPicks(){
   var out=[];
   shown().forEach(function(f){
     if(!notStarted(f)) return;
-    var code=tipCode(f); if(!code) return;
-    out.push({f:f,id:fid(f),code:code,p:f.tip_p,eventId:f.eventId||null});
+    var bp=boardPick(f); if(!bp.code) return;
+    out.push({f:f,id:fid(f),code:bp.code,p:bp.p,eventId:f.eventId||null});
   });
   return out;
 }

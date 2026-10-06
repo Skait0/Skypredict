@@ -115,3 +115,16 @@ test("every other view keeps the usual tip", () => {
     assert.match(H.listRowHTML(fx()), /Best price for 1X, home or draw/, k);
   }
 });
+
+test("Add all tips to slip in the Draw picks view adds the draws", () => {
+  /* The board's book-all button reads bookAllPicks, which "reuses the same
+     picks the cards show" - so it has to follow the card, not tipCode. */
+  const run = (cat) => new Function(stubs + real + grab("bookAllPicks") +
+    "\nfunction notStarted(){return true;} function shown(){return L;}" +
+    "\nreturn function(l){L=l;V.cat=" + JSON.stringify(cat) + ";return bookAllPicks();}; var L;")();
+  const list = [fx(), fx({ home: "Basel", away: "Servette", draw_watch: false, tip: "Home win", tip_p: 0.62, home_p: 0.62 })];
+  const draw = run(drawKey())(list.filter((f) => f.draw_watch));
+  assert.deepStrictEqual(draw.map((c) => [c.code, c.p]), [["X", 0.31]]);
+  const all = run("all")(list);
+  assert.deepStrictEqual(all.map((c) => c.code), ["1X", "1"]);
+});
