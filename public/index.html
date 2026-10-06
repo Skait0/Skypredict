@@ -8222,9 +8222,15 @@ function openSlipsSheet(filter){
   renderSlipsSheet();
   $("scrim").classList.add("on");
   $("slipsSheet").classList.add("on");
-  lockBody(true); pushOverlay();
+  lockBody(true);
+  if(!SLIPS_PUSHED){ SLIPS_PUSHED=true; pushOverlay(); }
 }
+/* True while My slips owns a history entry. Its own close paths pop it (so a
+   later Back is not swallowed); popstate clears it first because the browser
+   has already popped. SKIP_POP makes popstate ignore the pop we cause. */
+var SLIPS_PUSHED=false, SKIP_POP=false;
 function closeSlipsSheet(){
+  if(SLIPS_PUSHED){ SLIPS_PUSHED=false; SKIP_POP=true; try{history.back();}catch(e){SKIP_POP=false;} }
   $("scrim").classList.remove("on");
   $("slipsSheet").classList.remove("on");
   if(!$("mySheet")||!$("mySheet").classList.contains("on")) lockBody(false);
@@ -10191,10 +10197,11 @@ function closeSheet(){
 }
 $("scrim").addEventListener("click",function(){closeSheet();closeMySheet();closeSlipsSheet();});
 $("sheet-x").addEventListener("click",closeSheet);
-function anyOverlayOpen(){return ($("sheet")&&$("sheet").classList.contains("on"))||($("mySheet")&&$("mySheet").classList.contains("on"));}
+function anyOverlayOpen(){return ($("sheet")&&$("sheet").classList.contains("on"))||($("mySheet")&&$("mySheet").classList.contains("on"))||($("slipsSheet")&&$("slipsSheet").classList.contains("on"));}
 window.addEventListener("popstate",function(){
   if(window.swAccountUI&&swAccountUI.eatPop()) return;
-  if(anyOverlayOpen()){closeSheet();closeMySheet();}
+  if(SKIP_POP){SKIP_POP=false;return;}
+  if(anyOverlayOpen()){SLIPS_PUSHED=false;closeSheet();closeMySheet();closeSlipsSheet();}
   else if(document.documentElement.classList.contains("mode-build")||document.documentElement.classList.contains("mode-live")){setView("pred");}
 });
 function pushOverlay(){try{history.pushState({sw:1},"");}catch(e){}}
