@@ -31,7 +31,9 @@ function grab(name) {
 const BOARD = [];
 for (let d = 3; d <= 14; d++) BOARD.push({ date: d, league: "L" }, { date: d, league: "L" });
 
-function harness(today, store) {
+/* board: fixtures (default BOARD); a fixture with started:true has kicked
+   off, and one in league "V" is filtered out as a benched volatile league. */
+function harness(today, store, board) {
   store = store || {};
   const clock = { today };
   function FakeDate() { this.d = clock.today; }
@@ -43,21 +45,24 @@ function harness(today, store) {
     "try{var sc0=localStorage.getItem('sw.scope');" +
     /* The page's own accept-list for a stored window. */
     /if\(sc0==="day"[^)]*\) SCOPE=sc0;/.exec(src)[0] + "}catch(e){}" +
-    "function notStarted(){return true;}" +
+    "function notStarted(f){return !f.started;}" +
     "function dayOff(d){return d-CLOCK.today;}" + "function fDay(f){return f.date;}" +
     "function todFixtures(l){return l;}" +
-    "function leagueAllowed(){return true;}" +
+    "function leagueAllowed(l){return l!=='V';}" +
+    "function activeDays(){var s={};FX.forEach(function(f){var o=dayOff(f.date);if(o>=0)s[o]=1;});" +
+    "return Object.keys(s).map(Number).sort(function(a,b){return a-b;});}" +
     "function isLowerFixture(){return false;}" +
     "function esc(s){return String(s);}" +
     "function dayDate(o){return 'D'+(CLOCK.today+o);}" +
     "var painted=0; function paintScope(){painted++;}" +
     grab("weekendOffs") + grab("inScope") + grab("scopeFixtures") +
-    grab("buildableOn") + grab("buildableSpan") + grab("dayBuildable") +
-    grab("spanBuildable") + grab("setWeekend") + grab("weekendOpt") + "\n" +
+    grab("buildableOn") + grab("buildableSpan") + grab("buildableRange") + grab("dayBuildable") +
+    grab("spanBuildable") + grab("setWeekend") + grab("weekendOpt") +
+    grab("dayPickList") + grab("clampDay") + "\n" +
     "return {weekendOffs:weekendOffs, scopeFixtures:scopeFixtures, buildableSpan:buildableSpan," +
-    " setWeekend:setWeekend, weekendOpt:weekendOpt, store:STORE," +
-    " state:function(){return {SCOPE:SCOPE,TOD:TOD};}};"
-  )(BOARD, store, clock, FakeDate);
+    " setWeekend:setWeekend, weekendOpt:weekendOpt, clampDay:clampDay, store:STORE," +
+    " state:function(){return {SCOPE:SCOPE,TOD:TOD,SDAY:SDAY};}};"
+  )(board || BOARD, store, clock, FakeDate);
   H.clock = clock;
   return H;
 }
@@ -73,7 +78,7 @@ test("the weekend window for a Monday, Friday, Saturday and Sunday (R4)", () => 
 test("choosing Weekend narrows the board to those days and retires the time bucket", () => {
   const H = harness(5);
   assert.strictEqual(H.setWeekend(), true);
-  assert.deepStrictEqual(H.state(), { SCOPE: "wknd", TOD: "all" });
+  assert.deepStrictEqual(H.state(), { SCOPE: "wknd", TOD: "all", SDAY: 0 });
   assert.strictEqual(H.store["sw.scope"], "wknd");
   assert.deepStrictEqual(days(H.scopeFixtures()), [6, 7]);
   assert.strictEqual(H.setWeekend(), false, "choosing it again is a no-op");
@@ -119,4 +124,47 @@ test("the pill, the league picker and the empty state all name the weekend", () 
   assert.match(src, /SCOPE==="wknd"\?"this weekend"/);
   assert.match(grab("openDayMenu"), /\+weekendOpt\(\)\+/, "Weekend sits after the span options");
   assert.match(grab("openDayMenu"), /setWeekend\(\)/);
+});
+
+/* ------------------------------------------------ fix round 1 ------------ */
+
+test("a stored Weekend whose games have all started falls back to the next day with games", () => {
+  /* Sunday night: every Sunday game has kicked off, Monday (day 8) has two. */
+  const board = [{ date: 7, league: "L", started: true }, { date: 7, league: "L", started: true },
+    { date: 8, league: "L" }, { date: 8, league: "L" }];
+  const store = { "sw.scope": "wknd" };
+  const H = harness(7, store, board);
+  assert.strictEqual(H.state().SCOPE, "wknd", "precondition: the stored Weekend loaded");
+  H.clampDay();
+  assert.deepStrictEqual(H.state(), { SCOPE: "day", TOD: "late", SDAY: 1 });
+  assert.strictEqual(store["sw.scope"], "day");
+  assert.strictEqual(store["sw.sday"], "1");
+  assert.strictEqual(H.scopeFixtures().length, 2, "not an empty board");
+});
+
+test("a stored Weekend with games left is kept", () => {
+  const H = harness(5, { "sw.scope": "wknd" });
+  H.clampDay();
+  assert.strictEqual(H.state().SCOPE, "wknd");
+});
+
+test("the Weekend row counts what a tap builds, but exists on structure alone", () => {
+  /* Friday (5); the weekend is days 6 and 7. One game there is in a benched
+     league "V", so the row says 2 - the pill's number - not 3. */
+  const board = [{ date: 6, league: "L" }, { date: 6, league: "V" }, { date: 7, league: "L" }];
+  const H = harness(5, {}, board);
+  assert.match(H.weekendOpt(), /<span class='dy-c'>2<\/span>/);
+  H.setWeekend();
+  assert.strictEqual(H.buildableSpan().length, 2);
+  /* Only benched games: the row stays (a league choice must not rearrange the
+     menu) and honestly says 0. */
+  const onlyV = harness(5, {}, [{ date: 6, league: "V" }]);
+  assert.match(onlyV.weekendOpt(), /<span class='dy-c'>0<\/span>/);
+});
+
+test("day and span rows count through the same filters", () => {
+  const menu = grab("openDayMenu");
+  assert.match(menu, /buildableRange\(s0,s0\+n-1\)\.length/, "span rows");
+  assert.match(menu, /buildableOn\(o\)\.length/, "day rows");
+  assert.match(menu, /var list=dayPickList\(\);/, "which days exist stays structural");
 });

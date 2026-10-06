@@ -7436,7 +7436,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
              as a section heading over the markets below it. -->
         <button class="wsp-chip lgp-open stage-in stage-in-4" type="button" id="lgpOpen"
                 aria-expanded="false" aria-controls="lgpBox">
-          <span id="lgpSum">Any league</span>
+          <span id="lgpSum">Leagues</span>
           <span class="lgp-caret" aria-hidden="true">&#9662;</span>
         </button>
       </div>
@@ -10363,7 +10363,7 @@ function leaguesChosen(){for(var k in BLD_PICK){if(BLD_PICK[k]===0)return true;}
 function leaguePicksTouched(){for(var k in BLD_PICK){return true;}return false;}
 function setLeaguePicked(l,on){
   /* Only a difference from the default is stored, so ticking a league back
-     returns the picker to "Any league" rather than leaving a no-op override. */
+     returns the picker to its untouched state rather than leaving a no-op override. */
   if(!!on===leagueDefault(l)) delete BLD_PICK[l]; else BLD_PICK[l]=on?1:0;
   try{localStorage.setItem("sw.bldpick",JSON.stringify(BLD_PICK));}catch(e){}
 }
@@ -10447,8 +10447,14 @@ function buildableAll(){
    one. Built from buildableOn so there is no third copy of the filters. The
    weekend is a span too, just one whose days come from the calendar. */
 function buildableSpan(){
-  var w=SCOPE==="wknd"?weekendOffs():[SDAY,SDAY+SPAN-1], out=[];
-  for(var i=w[0];i<=w[1];i++) out=out.concat(buildableOn(i));
+  var w=SCOPE==="wknd"?weekendOffs():[SDAY,SDAY+SPAN-1];
+  return buildableRange(w[0],w[1]);
+}
+/* Days a..b inclusive, filtered. Also the day menu's span and Weekend counts,
+   so a row says what the tap will actually hand you. */
+function buildableRange(a,b){
+  var out=[];
+  for(var i=a;i<=b;i++) out=out.concat(buildableOn(i));
   return out;
 }
 /* Structural, like dayBuildable and for the same reason: it decides what the
@@ -10465,10 +10471,16 @@ function dayPickList(){
   return activeDays().filter(function(o){return o>=0&&dayBuildable(o)>0;});
 }
 /* A stored day can point at a day with nothing left on it - keep it if it still
-   has games, otherwise fall to the earliest day that does. */
+   has games, otherwise fall to the earliest day that does. A stored Weekend
+   whose games have all started (Sunday night) falls back the same way, onto
+   that day as a single-day window. */
 function clampDay(){
-  if(SCOPE!=="day"||dayBuildable(SDAY)>0) return;
+  if(SCOPE==="wknd"){
+    var w=weekendOffs();
+    if(spanBuildable(w[1]-w[0]+1,w[0])>0) return;
+  }else if(SCOPE!=="day"||dayBuildable(SDAY)>0) return;
   var list=dayPickList();
+  if(SCOPE==="wknd"){SCOPE="day"; try{localStorage.setItem("sw.scope","day");}catch(e){}}
   if(list.length){SDAY=list[0]; try{localStorage.setItem("sw.sday",SDAY);}catch(e){}}
 }
 function paintScope(){
@@ -12060,7 +12072,8 @@ function askHost(){
   var m=$("askModal"); if(m) return m;
   m=document.createElement("div");
   m.id="askModal"; m.className="ask-scrim"; m.hidden=true;
-  m.innerHTML="<div class='ask-card' role='dialog' aria-modal='true' aria-label='Before we book'>"+
+  m.innerHTML="<div class='ask-card' role='dialog' aria-modal='true' aria-labelledby='askLbl'>"+
+    "<span class='sr-only' id='askLbl'>Before we book</span>"+
     "<button class='ask-x' type='button' aria-label='Close'>"+
       "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' aria-hidden='true'><path d='M6 6l12 12M18 6L6 18'/></svg></button>"+
     "<div class='ask-body' id='askBody'></div></div>";
@@ -12108,9 +12121,11 @@ function scrollLock(who,on){
   }
 }
 function askLock(on){ scrollLock("ask",on); }
-function showPrompt(target,html){
+/* label names the dialog for a screen reader; booking asks keep the default. */
+function showPrompt(target,html,label){
   if(INLINE_ASK[target]){ var el=$(target); if(!el) return false; el.innerHTML=html; return true; }
   var m=askHost();
+  var lb=$("askLbl"); if(lb) lb.textContent=label||"Before we book";
   if(ASK_FOR===null) askLock(true);
   $("askBody").innerHTML=html;
   ASK_FOR=target; m.hidden=false;
@@ -18862,8 +18877,11 @@ function dayKey(e){ if(e.key==="Escape"){ e.preventDefault(); closeDayMenu(); } 
    on a Sunday) with its count. Left out when the weekend has nothing left to
    build with, the same way an empty day is never offered. */
 function weekendOpt(){
-  var w=weekendOffs(), n=spanBuildable(w[1]-w[0]+1,w[0]);
-  if(!n) return "";
+  /* Whether the row exists is structural, like the days below it; the number
+     on it is what a tap builds from, after the league and Top flight filters. */
+  var w=weekendOffs();
+  if(!spanBuildable(w[1]-w[0]+1,w[0])) return "";
+  var n=buildableRange(w[0],w[1]).length;
   var cur=(SCOPE==="wknd");
   return "<button type='button' role='option' class='day-opt day-span"+(cur?" on":"")+"'"+
     (cur?" aria-selected='true'":"")+" data-wknd='1'>"+
@@ -18891,7 +18909,7 @@ function openDayMenu(btn){
       (cur?" aria-selected='true'":"")+" data-span='"+n+"'>"+
       "<span class='dy-n'>"+esc(spanName(n))+"</span>"+
       "<span class='dy-d'>"+esc(dayDate(s0))+" - "+esc(dayDate(s0+n-1))+"</span>"+
-      "<span class='dy-c'>"+spanBuildable(n,s0)+"</span></button>";
+      "<span class='dy-c'>"+buildableRange(s0,s0+n-1).length+"</span></button>";
   }).join("")+weekendOpt()+
   list.map(function(o){
     var cur=(SCOPE==="day"&&o===SDAY);
@@ -18899,7 +18917,7 @@ function openDayMenu(btn){
       (cur?" aria-selected='true'":"")+" data-off='"+o+"'>"+
       "<span class='dy-n'>"+esc(dayName(o))+"</span>"+
       "<span class='dy-d'>"+esc(dayDate(o))+"</span>"+
-      "<span class='dy-c'>"+dayBuildable(o)+"</span></button>";
+      "<span class='dy-c'>"+buildableOn(o).length+"</span></button>";
   }).join("");
   document.body.appendChild(m);
   var r=btn.getBoundingClientRect(), mw=m.offsetWidth;
@@ -21195,7 +21213,8 @@ function askVolatile(){
     vol.map(function(x){return esc(compOf(x.league))+" ("+esc(countryOf(x.league))+")";}).join(", ")+
     ".</span></p><div class='ca'>"+
     "<button class='confirm-go' type='button'>Add them</button>"+
-    "<button class='confirm-cancel' type='button'>Keep them out</button></div></div>");
+    "<button class='confirm-cancel' type='button'>Keep them out</button></div></div>",
+    "Add volatile leagues?");
   var h=promptEl("volAsk");
   h.querySelector(".confirm-go").addEventListener("click",function(){ done(true); });
   var keep=h.querySelector(".confirm-cancel");
@@ -21233,7 +21252,7 @@ function renderLeaguePicker(){
      playing in this window does not skew the numbers. */
   var live=avail.filter(function(x){return leagueAllowed(x.league);}).length;
   var vol=avail.filter(function(x){return isVolatile(x.league);}).length;
-  sum.textContent = !touched ? "Any league" : live+" of "+avail.length+" leagues";
+  sum.textContent = !touched ? live+" league"+(live===1?"":"s") : live+" of "+avail.length+" leagues";
   open.classList.toggle("narrowed",touched);
   if(cnt) cnt.textContent=avail.length+" league"+(avail.length===1?"":"s")+" "+win;
   if(clr) clr.hidden=!touched;

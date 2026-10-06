@@ -5,7 +5,8 @@
  *
  * Every league row starts ticked and a tap takes that one out; volatile
  * leagues are listed unticked with a small "Volatile" tag. The summary chip
- * says "Any league" until something is tapped, then "N of M leagues", and the
+ * says "N leagues" (the ones in) until something is tapped, then "N of M
+ * leagues" (behaviour pinned in volatile.test.js), and the
  * reset reads "All leagues" and goes through the same ask as the chip.
  * Behaviour is pinned in leaguepick.test.js and volatile.test.js; these pin
  * the markup that has to say it.
@@ -36,7 +37,6 @@ test("volatile rows carry a small tag", () => {
 });
 
 test("the summary and the reset describe the new model", () => {
-  assert.match(picker, /sum\.textContent = !touched \? "Any league" : live\+" of "\+avail\.length\+" leagues"/);
   assert.match(picker, /clr\.hidden=!touched/);
   assert.match(src, /id="lgpClear">All leagues<\/button>/);
   assert.match(picker, /clr\.addEventListener\("click",function\(e\)\{\s*e\.stopPropagation\(\);\s*resetLeagues\(\);/,

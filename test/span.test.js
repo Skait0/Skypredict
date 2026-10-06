@@ -78,7 +78,7 @@ test("the span's count is the filtered day count, summed", () => {
      hands you. */
   const fn = new Function("SDAY", "SPAN", "DAYS",
     "var SCOPE='span';" +
-    "function buildableOn(o){return DAYS[o]||[];}" + grab("buildableSpan") +
+    "function buildableOn(o){return DAYS[o]||[];}" + grab("buildableSpan") + grab("buildableRange") +
     "\nreturn buildableSpan;");
   const days = { 0: ["a", "b"], 1: ["c"], 2: [], 3: ["d"] };
   assert.deepStrictEqual(fn(0, 3, days)(), ["a", "b", "c"]);

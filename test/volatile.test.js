@@ -28,7 +28,11 @@ function harness(fixtures, store) {
   const ui = { html: null, cleared: 0, focused: null, renders: 0 };
   const btn = (cls) => ({ cls, h: null, addEventListener(ev, fn) { this.h = fn; },
     focus() { ui.focused = cls; }, click() { this.h(); } });
-  const H = new Function("FX", "STORE", "UI", "BTN",
+  /* Just enough of the picker's elements for renderLeaguePicker to paint. */
+  const el = () => ({ textContent: "", innerHTML: "", hidden: false, _wired: 1,
+    classList: { toggle() {} }, querySelectorAll() { return []; } });
+  const EL = { lgpOpen: el(), lgpBox: el(), lgpList: el(), lgpSum: el(), lgpCount: el(), lgpClear: el() };
+  const H = new Function("FX", "STORE", "UI", "BTN", "EL",
     "var localStorage={getItem:function(k){return STORE[k]===undefined?null:STORE[k];}," +
     "setItem:function(k,v){STORE[k]=String(v);},removeItem:function(k){delete STORE[k];}};" +
     "var DATA={fixtures:FX};" +
@@ -42,7 +46,8 @@ function harness(fixtures, store) {
     "function setTopOnly(v){TOP_ONLY=!!v;}" +
     "function renderBuilder(){UI.renders++;}" +
     "var ASK={go:null,keep:null};" +
-    "function showPrompt(t,h){UI.html=h; UI.target=t; ASK.go=BTN('confirm-go'); ASK.keep=BTN('confirm-cancel'); return true;}" +
+    "function $(id){return EL[id];}" + "function dayName(){return 'Today';}" +
+    "function showPrompt(t,h,l){UI.html=h; UI.target=t; UI.label=l; ASK.go=BTN('confirm-go'); ASK.keep=BTN('confirm-cancel'); return true;}" +
     "function promptEl(){return {querySelector:function(s){return s==='.confirm-go'?ASK.go:ASK.keep;}};}" +
     "function clearPrompt(t){UI.cleared++;}" +
     "var BLD_PICK={}, VOL_IN=false, VOL_SRC=null, VOL_MAP={};" +
@@ -51,13 +56,14 @@ function harness(fixtures, store) {
     grab("leagueAllowed") + grab("leaguesChosen") + grab("leaguePicksTouched") +
     grab("setLeaguePicked") + grab("clearLeaguePicks") + grab("setVolIn") +
     grab("inScope") + grab("scopeFixtures") + grab("leaguesOnBoard") +
-    grab("resetLeagues") + grab("askVolatile") + "\n" +
+    grab("resetLeagues") + grab("askVolatile") + grab("renderLeaguePicker") + "\n" +
     "loadLeaguePicks();" +
     "return {scopeFixtures:scopeFixtures, leaguesOnBoard:leaguesOnBoard," +
     " setLeaguePicked:setLeaguePicked, leagueAllowed:leagueAllowed, isVolatile:isVolatile," +
-    " resetLeagues:resetLeagues, ask:ASK, store:STORE, topOnly:function(){return TOP_ONLY;}};"
-  )(fixtures, store, ui, btn);
+    " resetLeagues:resetLeagues, renderLeaguePicker:renderLeaguePicker, ask:ASK, store:STORE, topOnly:function(){return TOP_ONLY;}};"
+  )(fixtures, store, ui, btn, EL);
   H.ui = ui;
+  H.summary = () => { H.renderLeaguePicker(); return EL.lgpSum.textContent; };
   return H;
 }
 
@@ -155,4 +161,41 @@ test("the backdrop and Escape route through the card's cancel button", () => {
   const host = grab("askHost");
   assert.match(host, /querySelector\("\.confirm-cancel"\)/);
   assert.match(host, /e\.key==="Escape"/);
+});
+
+/* ------------------------------------------------ fix round 1 ------------ */
+
+test("the volatile ask names itself, not as a booking step", () => {
+  const H = harness(BOARD);
+  H.resetLeagues();
+  assert.strictEqual(H.ui.label, "Add volatile leagues?");
+});
+
+test("showPrompt labels the dialog, defaulting to the booking label", () => {
+  /* The card is aria-labelledby a hidden span; showPrompt writes the label. */
+  assert.match(grab("askHost"), /aria-labelledby='askLbl'/);
+  assert.match(grab("askHost"), /<span class='sr-only' id='askLbl'>/);
+  const lbl = { textContent: "" };
+  const body = { innerHTML: "", querySelector() { return null; } };
+  const show = new Function("M", "BODY", "LBL",
+    "var INLINE_ASK={}, ASK_FOR=null;" +
+    "function askHost(){return M;} function askLock(){}" +
+    "function $(id){return id==='askBody'?BODY:id==='askLbl'?LBL:null;}" +
+    grab("showPrompt") + ";return showPrompt;")({ hidden: true }, body, lbl);
+  show("bookResult", "<p>x</p>");
+  assert.strictEqual(lbl.textContent, "Before we book");
+  show("volAsk", "<p>x</p>", "Add volatile leagues?");
+  assert.strictEqual(lbl.textContent, "Add volatile leagues?");
+  show("bookResult", "<p>x</p>");
+  assert.strictEqual(lbl.textContent, "Before we book", "a later booking ask resets it");
+});
+
+test("the summary counts the leagues in, never 'Any league' while volatile ones sit out", () => {
+  const H = harness(BOARD);
+  H.resetLeagues(); H.ask.keep.click();             // Top flight off, volatile out
+  assert.strictEqual(H.summary(), "3 leagues");
+  H.setLeaguePicked("Spain La Liga 1", false);
+  assert.strictEqual(H.summary(), "2 of 6 leagues");
+  H.resetLeagues(); H.ask.go.click();
+  assert.strictEqual(H.summary(), "6 leagues", "every league in once they are added");
 });
