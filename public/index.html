@@ -485,7 +485,7 @@ img,svg{max-width:100%}
 main[tabindex="-1"]:focus{outline:none}
 .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
 .num{font-variant-numeric:tabular-nums}
-.ys{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 10px 10px;margin:0 0 16px}
+.ys{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;margin:0 0 10px}
 .ys-top{display:flex;align-items:baseline;gap:6px;margin:0 2px 9px}
 .ys-top h3{margin:0;font-size:14px;font-weight:800}
 .ys-ct{font-size:12px;font-weight:600;color:var(--faint)}
@@ -497,16 +497,17 @@ main[tabindex="-1"]:focus{outline:none}
 .ys-chip.run .num{color:var(--accent)}.ys-chip.lost .num{color:var(--red-ink)}.ys-chip.won .num{color:var(--green-ink)}
 .ys-live{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:ysLive 1.6s ease-in-out infinite}
 @keyframes ysLive{50%{opacity:.25}}
-.ys-lh{display:flex;align-items:center;justify-content:space-between;min-height:30px;margin:0 2px 8px}
+.ys-lh{display:flex;align-items:center;justify-content:space-between;min-height:24px;margin:0 2px 4px}
 .ys-lh h4{margin:0;font-size:13px;font-weight:700;color:var(--soft)}
-.ys-clrb{border:0;background:none;color:var(--faint);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:6px 0}
+.ys-clrb{border:0;background:none;color:var(--faint);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:4px 0}
 .ys-ask{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700}
 .ys-no{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:99px;padding:6px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .ys-yes{border:0;background:var(--red-fill);color:#fff;border-radius:99px;padding:7px 13px;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
-.ys-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:12px}
-.ys-m{flex:1;min-width:0}.ys-code{display:block;font-size:14px;letter-spacing:.06em}
-.ys-m small{display:block;font-size:12px;font-weight:600;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-.ys-od{font-size:16px;color:var(--accent)}
+.ys-row{display:flex;align-items:center;gap:9px;padding:7px 11px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.ys-m{flex:1;min-width:0}.ys-code{display:block;font-size:13.5px;line-height:1.25;letter-spacing:.06em}
+.ys-m small{display:block;font-size:12px;font-weight:600;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:0;line-height:1.3}
+#myres .sw-swipe{margin:0 0 6px}
+.ys-od{font-size:15px;color:var(--accent)}
 .ys-dot{width:8px;height:8px;border-radius:50%;flex:none}
 .ys-dot.run{background:var(--accent)}.ys-dot.lost{background:var(--red)}.ys-dot.won{background:var(--green)}
 @media (hover:hover){.ys-chip:hover{border-color:var(--grey)}.ys-clrb:hover{color:var(--red-ink)}}
@@ -8169,7 +8170,7 @@ function renderMyResults(){
   var host=$("myres"); if(!host) return;
   var c=slipCounts();
   if(!c.all){ host.innerHTML=""; return; }
-  var rows=SLIPS.filter(function(s){ return !(window.swPend&&window.swPend.hidden(s.sid)); }).slice(0,5);
+  var rows=SLIPS.filter(function(s){ return !(window.swPend&&window.swPend.hidden(s.sid)); }).slice(0,2);
   host.innerHTML=
     "<div class='ys'><div class='ys-top'><h3>Your slips</h3><span class='ys-ct'><span class='num'>"+c.all+"</span> saved</span>"+
       "<button class='ys-all' type='button' data-ysf='all'>See all<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></button></div>"+
