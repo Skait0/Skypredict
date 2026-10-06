@@ -195,3 +195,30 @@ test("Home Recent row: tap opens My slips with that slip open; a swipe is not a 
 test("swSwipe marks a horizontal drag as swiped for ~300ms", () => {
   assert.match(grab("swSwipe"), /if\(lock==="x"\)\{ card\.dataset\.swiped="1"; setTimeout\(function\(\)\{ delete card\.dataset\.swiped; \},300\); \}/);
 });
+
+test("the red swipe bin is painted only while a card is off its rest", () => {
+  const css = /\.sw-bin\{[^}]*\}/.exec(html)[0];
+  assert.match(css, /visibility:hidden/, "hidden under a resting card: it bled red through the corners on Show/Hide");
+  assert.match(html, /\.sw-swipe\.sw-live \.sw-bin\{visibility:visible\}/);
+  const cls = () => { const s = new Set(); return { add: (...a) => a.forEach((x) => s.add(x)), remove: (...a) => a.forEach((x) => s.delete(x)), toggle: (x, on) => (on ? s.add(x) : s.delete(x)), contains: (x) => s.has(x), s }; };
+  const card = { dataset: {}, style: {}, offsetWidth: 300, classList: cls(), on: {}, addEventListener(t, f) { this.on[t] = f; }, setPointerCapture() {} };
+  const bin = { classList: cls(), style: { setProperty() {} } };
+  const row = { classList: cls(), style: {}, offsetHeight: 80, querySelector: (s) => (s === ".sw-card" ? card : bin) };
+  const timers = [];
+  new Function("setTimeout", "navigator", grab("swSwipe") + "; return swSwipe;")((f) => timers.push(f), {})(row, () => {});
+  const ev = (x, y, tgt) => ({ clientX: x, clientY: y, pointerId: 1, target: { closest: () => tgt || null } });
+  // a tap on Show/Hide games (a button) never shows the bin
+  card.on.pointerdown(ev(100, 10, {})); card.on.pointerup(ev(100, 10));
+  assert.ok(!row.classList.contains("sw-live"));
+  // a vertical drag (scrolling the sheet) never shows it
+  card.on.pointerdown(ev(100, 10)); card.on.pointermove(ev(102, 40)); card.on.pointerup(ev(102, 40));
+  timers.splice(0).forEach((f) => f());
+  assert.ok(!row.classList.contains("sw-live"));
+  // a short horizontal drag shows it, and it goes once the card has snapped back
+  card.on.pointerdown(ev(200, 10)); card.on.pointermove(ev(180, 11));
+  assert.ok(row.classList.contains("sw-live"), "visible while swiping");
+  card.on.pointerup(ev(180, 11));
+  assert.ok(row.classList.contains("sw-live"), "still visible during the snap back");
+  timers.splice(0).forEach((f) => f());
+  assert.ok(!row.classList.contains("sw-live"), "hidden again at rest");
+});

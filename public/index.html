@@ -6774,7 +6774,11 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   .wsp-chips.mkt-palette{grid-template-columns:repeat(auto-fit,minmax(max(108px,calc((100% - 5 * 6px) / 6)),1fr))}
 }
 .sw-swipe{position:relative;margin:0 0 8px;border-radius:12px;overflow:hidden;touch-action:pan-y}
-.sw-bin{position:absolute;inset:0;background:var(--red-fill);display:flex;align-items:center;justify-content:flex-end;padding-right:20px;border-radius:12px;color:#fff}
+/* The red bin is painted only while the card is off its rest. Left on under a
+   resting card, it bled through the anti-aliased corners and showed red each
+   time the card changed size (Show / Hide games, delete, Undo). */
+.sw-bin{position:absolute;inset:0;background:var(--red-fill);display:flex;align-items:center;justify-content:flex-end;padding-right:20px;border-radius:12px;color:#fff;visibility:hidden}
+.sw-swipe.sw-live .sw-bin{visibility:visible}
 .sw-bin svg{width:22px;height:22px;transform:scale(var(--s,.7));transition:transform 120ms var(--ease-out)}
 .sw-bin.armed{background:color-mix(in srgb,var(--red-fill) 70%,black)}
 .sw-card{position:relative;transform:translateX(0);will-change:transform;touch-action:pan-y}
@@ -8194,7 +8198,7 @@ function renderMyResults(){
     card.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openIt(); } });
   });
   clearAllControl(host.querySelector(".ys-clr"));
-  if(!SL_PEEKED){ SL_PEEKED=true; var first=host.querySelector(".sw-card"); if(first) first.classList.add("sw-peek"); }
+  if(!SL_PEEKED){ SL_PEEKED=true; var first=host.querySelector(".sw-card"); if(first){ first.classList.add("sw-peek"); first.parentNode.classList.add("sw-live"); setTimeout(function(){ if(first.classList.contains("sw-peek")){ first.classList.remove("sw-peek"); first.parentNode.classList.remove("sw-live"); } },1900); } }
 }
 function visibleSids(){ return SLIPS.filter(function(s){return !(window.swPend&&window.swPend.hidden(s.sid));}).map(function(s){return s.sid;}); }
 /* Clear all asks in place: "Clear N? Keep / Clear". No confirm(). */
@@ -8290,12 +8294,12 @@ function swSwipe(row,onDelete){
   card.addEventListener("pointerdown",function(e){
     if(e.target.closest("button,a,input")) return;
     drag=true; lock=null; x0=e.clientX; y0=e.clientY; dx=0; t0=Date.now(); W=card.offsetWidth;
-    card.classList.remove("sw-snap","sw-peek");
+    card.classList.remove("sw-snap","sw-peek"); row.classList.remove("sw-live");
   });
   card.addEventListener("pointermove",function(e){
     if(!drag) return;
     var mx=e.clientX-x0, my=e.clientY-y0;
-    if(lock===null&&(Math.abs(mx)>6||Math.abs(my)>6)){ lock=Math.abs(mx)>Math.abs(my)?"x":"y"; if(lock==="x") try{ card.setPointerCapture(e.pointerId); }catch(er){} }
+    if(lock===null&&(Math.abs(mx)>6||Math.abs(my)>6)){ lock=Math.abs(mx)>Math.abs(my)?"x":"y"; if(lock==="x"){ row.classList.add("sw-live"); try{ card.setPointerCapture(e.pointerId); }catch(er){} } }
     if(lock!=="x") return;
     dx=Math.min(0,mx); if(dx<-W*.8) dx=-W*.8+(dx+W*.8)*.5;
     card.style.transform="translateX("+dx+"px)";
@@ -8311,7 +8315,7 @@ function swSwipe(row,onDelete){
       row.style.height=row.offsetHeight+"px";
       setTimeout(function(){ row.classList.add("sw-collapse"); },180);
       setTimeout(onDelete,430);
-    } else { card.classList.add("sw-snap"); card.style.transform="translateX(0)"; bin.classList.remove("armed"); armed=false; }
+    } else { card.classList.add("sw-snap"); card.style.transform="translateX(0)"; bin.classList.remove("armed"); armed=false; setTimeout(function(){ if(!drag) row.classList.remove("sw-live"); },330); }
   }
   card.addEventListener("pointerup",end); card.addEventListener("pointercancel",end);
 }
