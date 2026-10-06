@@ -605,6 +605,7 @@ main[tabindex="-1"]:focus{outline:none}
 .hsoc{text-decoration:none}
 @media (hover:hover){ .hsoc-tg:hover{color:#29a9eb;border-color:rgba(41,169,235,.5)} }
 @media(max-width:560px){ .top-in .hsoc-x{margin-left:0} }
+@media(max-width:420px){ .top-in{gap:6px} .top-in .tgl{width:34px;height:34px} }
 /* The install offer, for phones. The header icon stays for desktop, where the
    row has the width to hold it; here it would sit off the right edge. */
 .inst-bar{display:none;align-items:center;gap:10px;margin:14px 0 2px;
@@ -2559,6 +2560,10 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
      toggle ends up parked against the wordmark */
   .logo{font-size:15px;gap:6px;margin-right:auto}
   .sig{height:30px}
+  /* The wordmark never gives way: it was shrinking to "Soccerwizarc" once the
+     account, install and two social icons all showed. The icons tighten below. */
+  .logo{flex-shrink:0}
+  .logo .word{white-space:nowrap}
   .nav{gap:2px;flex-shrink:1;min-width:0}
   .navt{padding:7px 9px;font-size:12.5px;white-space:nowrap}
   /* "Live scores" is the web label; the phone header only has room for "Live",
