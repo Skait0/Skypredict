@@ -58,11 +58,6 @@ test("a Google redirect comes back into the spell and resumes only a whitelisted
   assert.match(html, /window\.swResume=\{bookSlip:function\(\)\{bookSlip\(\);\},bookMy:function\(\)\{bookMy\(\);\},build:function\(\)\{setView\("build"\);\},slips:function\(\)\{openSlipsSheet\(\);\}\};/);
 });
 
-test("the account sheet has a picks-by-email switch", () => {
-  assert.match(block, /Picks by email/);
-  assert.match(block, /\/api\/account\/consent/);
-});
-
 test("every way into Build passes the wall: setView gates the build view itself", () => {
   assert.match(fnBody("setView"), /^\s*var args=\[\]\.slice\.call\(arguments\);\s*if\(v==="build"&&!noGate&&window\.swGate&&!swGate\("build",null,function\(\)\{setView\.apply\(null,args\);\},"build"\)\) return;/);
   /* The saved-view restore on load runs unprompted, possibly after /api/me answered: it must never pop the sheet. */

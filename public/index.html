@@ -73,6 +73,7 @@
      that file is fetched lazily rather than on first paint. icon-32 stays the
      favicon and icon-180 the apple-touch icon. -->
 <link rel="manifest" href="/manifest.webmanifest">
+<script src="/account-ui.js" defer></script>
 <meta name="mobile-web-app-capable" content="yes">
 <!-- The Apple-prefixed name is deprecated and Chrome warns on it, but iOS
      still reads only that one. Both ship until Safari takes the standard. -->
@@ -8066,6 +8067,7 @@ function saveSlips(){
     localStorage.setItem("sw.slips.v1",JSON.stringify(SLIPS));
   }catch(e){}
 }
+window.swSlipCount=function(){return SLIPS.length;};
 
 /* Record a slip at the moment it becomes real - when a booking code exists.
    Building and rebuilding in the wizard should not fill the history with
@@ -22020,8 +22022,6 @@ function openContact(){
 }
 (function(){ var b=$("contactBtn"); if(b) b.addEventListener("click",openContact); })();
 /* ------------------------------------------------------------- theming */
-const SUN='<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
-const MOON='<path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/>';
 function setTheme(t){
   document.documentElement.setAttribute("data-theme",t);
   try{localStorage.setItem("sw.theme",t);}catch(e){}
@@ -22964,14 +22964,7 @@ load().catch(function(){});
     "#hdAccount .ac-av{width:100%;height:100%;object-fit:cover;display:block}"+
     "#acctNote{position:fixed;left:12px;right:12px;top:12px;z-index:9999;background:var(--card);color:var(--text);"+
     "border:1px solid var(--line);border-radius:12px;padding:12px 44px 12px 14px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.35)}"+
-    "#acctNote button{position:absolute;right:6px;top:6px;background:none;border:0;color:var(--soft);font-size:20px;width:32px;height:32px;cursor:pointer}"+
-    "#acctSheet .ac-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}"+
-    "#acctSheet .ac-row small{display:block;color:var(--soft)}"+
-    "#acctSheet .ac-btn{display:block;width:100%;margin:10px 0 0;padding:12px;border-radius:12px;border:1px solid var(--line);"+
-    "background:var(--card);color:var(--text);font:inherit;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;box-sizing:border-box}"+
-    "#acctSheet .ac-danger{color:#ff6b6b}"+
-    "#acctSheet input{width:100%;box-sizing:border-box;margin:10px 0 0;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit}"+
-    "#acctSheet .ac-msg{min-height:1.3em;margin:10px 0 0;font-weight:600}";
+    "#acctNote button{position:absolute;right:6px;top:6px;background:none;border:0;color:var(--soft);font-size:20px;width:32px;height:32px;cursor:pointer}";
   d.head.appendChild(css);
 
   function notice(text){
@@ -22996,7 +22989,7 @@ load().catch(function(){});
 
   function signedOutHere(reason,quiet){
     var had=!!readMeta(ls);
-    st.on=false; clearSynced(ls); reload(); paintButton(); closeSheet();
+    st.on=false; clearSynced(ls); reload(); paintButton(); if(root.swAccountUI) root.swAccountUI.close();
     if(had&&!quiet) notice(reason==="displaced"?"Signed out: this account was used on a newer device.":"You were signed out. Sign in again to sync.");
   }
 
@@ -23046,7 +23039,6 @@ load().catch(function(){});
   function pullNow(){ if(st.on&&Date.now()>=st.nextAt) sync(false); }
 
   /* ---------------------------------------------------------- the sheet */
-  var sheet=null;
   function el(tag,cls,text){ var e=d.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
   function say(text){ var m=$("acctMsg"); if(m) m.textContent=text; }
   function fail(code,j){
@@ -23054,74 +23046,6 @@ load().catch(function(){});
     if(j&&j.error==="reauth") return say("For your safety, sign in again, then delete within 10 minutes.");
     say("Something went wrong. Try again.");
   }
-  function build(){
-    sheet=el("div","sheet"); sheet.id="acctSheet"; sheet.setAttribute("role","dialog"); sheet.setAttribute("aria-modal","true");
-    sheet.setAttribute("aria-labelledby","acctTitle");
-    sheet.innerHTML='<div class="sheet-grab"><i></i></div><div class="sheet-head"><div class="info"><h3 id="acctTitle">Your account</h3><p id="acctEmail"></p></div>'+
-      '<button class="sheet-x" id="acctX" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'+
-      '<div class="sheet-body"><h4>Your devices</h4><div id="acctDevs"></div>'+
-      '<div class="ac-row"><div><span>Picks by email</span><small>The wizard\'s best picks, now and then</small></div><button class="ac-btn" id="acctMail" type="button" style="width:auto;margin:0">…</button></div>'+
-      '<a class="ac-btn" href="/api/account/export" download>Download my data</a>'+
-      '<button class="ac-btn" id="acctOut" type="button">Sign out</button>'+
-      '<button class="ac-btn" id="acctOutAll" type="button">Sign out everywhere</button>'+
-      '<button class="ac-btn ac-danger" id="acctDel" type="button">Delete account</button>'+
-      '<div id="acctDelBox" hidden><p>This deletes your account and everything synced to it. It cannot be undone. Type DELETE to confirm.</p>'+
-      '<input id="acctDelIn" autocomplete="off" autocapitalize="characters"><button class="ac-btn ac-danger" id="acctDelGo" type="button">Delete for good</button></div>'+
-      '<p class="ac-msg" id="acctMsg" role="status" aria-live="polite"></p></div>';
-    d.body.appendChild(sheet);
-    $("acctX").onclick=closeSheet;
-    $("scrim").addEventListener("click",closeSheet);
-    d.addEventListener("keydown",function(e){ if(e.key==="Escape") closeSheet(); });
-    $("acctOut").onclick=function(){ req("POST","/api/auth/logout",{},function(code,j){ if(code===200||code===401) signedOutHere(null,true); else say("No connection. You are still signed in. Try again."); }); };
-    $("acctOutAll").onclick=function(){ req("POST","/api/auth/logout-all",{},function(code,j){ if(code===200||code===401) signedOutHere(null,true); else fail(code,j); }); };
-    $("acctDel").onclick=function(){ $("acctDelBox").hidden=false; $("acctDelIn").focus(); };
-    $("acctDelGo").onclick=function(){
-      if($("acctDelIn").value.replace(/\s/g,"").toUpperCase()!=="DELETE") return say("Type DELETE to confirm.");
-      req("POST","/api/account/delete",{},function(code,j){
-        if(code===200){ st.on=false; clearSynced(ls); reload(); paintButton(); closeSheet(); notice("Your account is deleted."); return; }
-        if(j&&j.error==="reauth"){ fail(code,j); var a=el("a",null,"Sign in again"); a.href="/login?return="+encodeURIComponent("/?account=1"); $("acctMsg").appendChild(d.createTextNode(" ")); $("acctMsg").appendChild(a); return; }
-        fail(code,j);
-      });
-    };
-    $("acctMail").onclick=function(){ var b=this, on=b.getAttribute("data-on")!=="1";
-      b.disabled=true; req("POST","/api/account/consent",{on:on},function(code,j){ b.disabled=false;
-        if(code===200){ b.setAttribute("data-on",j.on?"1":"0"); b.textContent=j.on?"On":"Off"; } else fail(code,j); }); };
-  }
-  function when(iso){ try{ return new Date(iso).toLocaleDateString(undefined,{day:"numeric",month:"short"}); }catch(e){ return ""; } }
-  function loadDevices(){
-    var box=$("acctDevs"); box.textContent="Loading…";
-    req("GET","/api/auth/devices",null,function(code,j){
-      if(code===401) return signedOutHere(j.reason);
-      if(code!==200) { box.textContent=""; return fail(code,j); }
-      box.textContent="";
-      (j.devices||[]).forEach(function(v){
-        var row=el("div","ac-row"), info=el("div");
-        info.appendChild(el("span",null,v.label||"Device"));
-        info.appendChild(el("small",null,v.current?"This device":"Last used "+when(v.last_used_at)));
-        row.appendChild(info);
-        if(!v.current){
-          var b=el("button","ac-btn","Sign out"); b.type="button"; b.style.width="auto"; b.style.margin="0";
-          b.onclick=function(){ req("POST","/api/auth/devices/end",{id:v.id},function(c2,j2){ if(c2===200) loadDevices(); else fail(c2,j2); }); };
-          row.appendChild(b);
-        }
-        box.appendChild(row);
-      });
-    });
-  }
-  function openSheet(){
-    if(!sheet) build();
-    $("acctEmail").textContent=st.email; say(""); $("acctDelBox").hidden=true; $("acctDelIn").value="";
-    $("scrim").classList.add("on"); sheet.classList.add("on"); d.documentElement.classList.add("locked");
-    loadDevices();
-    req("GET","/api/account/consent",null,function(code,j){ var b=$("acctMail"); if(!b) return;
-      if(code===200){ b.setAttribute("data-on",j.on?"1":"0"); b.textContent=j.on?"On":"Off"; } else b.textContent="Off"; });
-    $("acctX").focus();
-  }
-  function closeSheet(){
-    if(!sheet||!sheet.classList.contains("on")) return;
-    sheet.classList.remove("on"); $("scrim").classList.remove("on"); d.documentElement.classList.remove("locked");
-  }
-
   var wired=false;
   function wire(){
     if(wired) return; wired=true;
@@ -23177,11 +23101,12 @@ load().catch(function(){});
   }
 
   /* ----------------------------------------------------------- start up */
+  root.swAcct={st:st,req:req,signedOutHere:signedOutHere,notice:notice,sync:sync,paintButton:paintButton};
   function boot(){
     if(!d.querySelector('meta[name="sw-auth"]')) return;
     var b=$("hdAccount"); if(!b) return;
     b.addEventListener("click",function(){
-      if(st.on) return openSheet();
+      if(st.on&&root.swAccountUI) return root.swAccountUI.toggle();
       location.href="/login?return="+encodeURIComponent(location.pathname+location.search);
     });
     req("GET","/api/me",null,function(code,j){
@@ -23196,7 +23121,9 @@ load().catch(function(){});
         root.swSignIn.resume({action:g.action,detail:g.detail,afterAuth:function(j,done){ sync(false,done); },
           onDone:(root.swResume&&root.swResume[g.resume])||null});
       } else sync(false);
-      if(/[?&]account=1/.test(location.search)) openSheet();
+      if(/[?&]account=1/.test(location.search)){
+        if(root.swAccountUI) root.swAccountUI.settings(); else root.addEventListener("load",function(){ if(root.swAccountUI) root.swAccountUI.settings(); });
+      }
     });
   }
   if(d.readyState==="loading") d.addEventListener("DOMContentLoaded",boot); else boot();
