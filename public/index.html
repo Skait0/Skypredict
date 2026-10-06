@@ -10694,6 +10694,56 @@ function dedupeSelections(sel){
   });
   return out;
 }
+/* SWQUOTA */
+/* Today's free codes on this device, as the booking proxy last reported them.
+   Unknown is null, never a guess: no line beats a wrong number. */
+(function(){
+  function lagosDay(ms){
+    var lagosMs=ms+3600000;
+    var daysSinceEpoch=Math.floor(lagosMs/86400000);
+    var y=1970,m=1,d=1;
+    var remaining=daysSinceEpoch;
+    var daysInMonth=[31,28,31,30,31,30,31,31,30,31,30,31];
+    while(true){
+      var isLeap=(y%400===0)||(y%100!==0&&y%4===0);
+      var daysInYear=isLeap?366:365;
+      if(remaining>=daysInYear){
+        remaining-=daysInYear;
+        y++;
+      }else{
+        break;
+      }
+    }
+    while(remaining>0){
+      var isLeap=(y%400===0)||(y%100!==0&&y%4===0);
+      var daysThisMonth=daysInMonth[m-1];
+      if(m===2&&isLeap)daysThisMonth=29;
+      if(remaining>=daysThisMonth){
+        remaining-=daysThisMonth;
+        m++;
+      }else{
+        break;
+      }
+    }
+    d=remaining+1;
+    var yy=String(y);
+    var mm=String(m<10?"0"+m:m);
+    var dd=String(d<10?"0"+d:d);
+    return yy+"-"+mm+"-"+dd;
+  }
+  window.swNoteQuota=function(h){
+    var left=Number(h&&h.get("X-Sw-Quota-Remaining")),limit=Number(h&&h.get("X-Sw-Quota-Limit"));
+    if(!(h&&h.get("X-Sw-Quota-Remaining")!=null&&h.get("X-Sw-Quota-Limit")!=null))return;
+    if(!isFinite(left)||!isFinite(limit)||limit<=0||left<0)return;
+    try{localStorage.setItem("sw.quota",JSON.stringify({day:lagosDay(Date.now()),left:left,limit:limit}));}catch(e){}
+  };
+  window.swQuotaToday=function(){
+    var q=null;try{q=JSON.parse(localStorage.getItem("sw.quota")||"null");}catch(e){}
+    if(!q||q.day!==lagosDay(Date.now())||!(q.limit>0))return null;
+    return {used:Math.max(0,Math.min(q.limit,q.limit-q.left)),limit:q.limit};
+  };
+})();
+/* /SWQUOTA */
 function bookFetch(sel,B,src){
   B=B||curBook();
   sel=dedupeSelections(sel);
@@ -10719,7 +10769,7 @@ function bookFetch(sel,B,src){
     return fetch(url,{method:"POST",headers:_hdrs,
       signal:to.signal,
       body:JSON.stringify({selections:sel})})
-      .then(function(r){to.done();
+      .then(function(r){to.done(); try{ window.swNoteQuota(r.headers); }catch(e){}
         return r.json().catch(function(){return {};}).then(function(d){
           d=d||{};
           /* A non-JSON 500 or a gateway page carries no reason of its own -
