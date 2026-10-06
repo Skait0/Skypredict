@@ -467,7 +467,9 @@ test("a trim never changes a bet, it only removes one", () => {
   assert.doesNotMatch(box, /NEAREST_LINE|mixReline/, "a trim must not reline a leg");
   const wire = src.slice(src.indexOf("function wireTrim("), src.indexOf("/* The inside of the split box"));
   assert.match(wire, /splitAndBook\(kept,1,/, "it books through the splitter's own path");
-  assert.match(wire, /selOf:byoSel/, "and with the pasted slip's own selections");
+  /* The pasted legs go in as picks under the book's own id (legPick), so the
+     split's refusal loop - bookRounds - can name and drop them (5 Oct 2026). */
+  assert.match(wire, /pickOf:legPick/, "and with the pasted slip's own selections");
 });
 
 test("a game we do not carry can still cross to the other book", () => {
