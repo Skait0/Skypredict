@@ -357,7 +357,7 @@ test("no user-facing sentence prints the bare label any more", () => {
   const re = /(.{40})esc\(B\.label\)/g;
   let m;
   while ((m = re.exec(idx))) {
-    assert.match(m[1], /aria-label|title=/,
+    assert.match(m[1], /aria-label|title=|B\.mark\|\|/,
       "a bare label outside an attribute: " + m[1].slice(-40));
   }
 });

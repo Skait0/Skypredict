@@ -73,6 +73,7 @@
      that file is fetched lazily rather than on first paint. icon-32 stays the
      favicon and icon-180 the apple-touch icon. -->
 <link rel="manifest" href="/manifest.webmanifest">
+<script src="/account-ui.js" defer></script>
 <meta name="mobile-web-app-capable" content="yes">
 <!-- The Apple-prefixed name is deprecated and Chrome warns on it, but iOS
      still reads only that one. Both ship until Safari takes the standard. -->
@@ -484,6 +485,32 @@ img,svg{max-width:100%}
 main[tabindex="-1"]:focus{outline:none}
 .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
 .num{font-variant-numeric:tabular-nums}
+.ys{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 10px 10px;margin:0 0 16px}
+.ys-top{display:flex;align-items:baseline;gap:6px;margin:0 2px 9px}
+.ys-top h3{margin:0;font-size:14px;font-weight:800}
+.ys-ct{font-size:12px;font-weight:600;color:var(--faint)}
+.ys-all{margin-left:auto;display:flex;align-items:center;gap:2px;border:0;background:none;font:inherit;font-size:12.5px;font-weight:700;color:var(--red-ink);cursor:pointer}
+.ys-all svg{width:14px;height:14px}
+.ys-chips{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ys-chip{display:flex;align-items:center;justify-content:center;gap:6px;height:34px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);cursor:pointer;color:var(--soft);font:inherit;font-size:12px;font-weight:700}
+.ys-chip .num{font-size:15px}
+.ys-chip.run .num{color:var(--accent)}.ys-chip.lost .num{color:var(--red-ink)}.ys-chip.won .num{color:var(--green-ink)}
+.ys-live{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:ysLive 1.6s ease-in-out infinite}
+@keyframes ysLive{50%{opacity:.25}}
+.ys-lh{display:flex;align-items:center;justify-content:space-between;min-height:30px;margin:0 2px 8px}
+.ys-lh h4{margin:0;font-size:13px;font-weight:700;color:var(--soft)}
+.ys-clrb{border:0;background:none;color:var(--faint);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:6px 0}
+.ys-ask{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700}
+.ys-no{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:99px;padding:6px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.ys-yes{border:0;background:var(--red-fill);color:#fff;border-radius:99px;padding:7px 13px;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.ys-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.ys-m{flex:1;min-width:0}.ys-code{display:block;font-size:14px;letter-spacing:.06em}
+.ys-m small{display:block;font-size:12px;font-weight:600;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.ys-od{font-size:16px;color:var(--accent)}
+.ys-dot{width:8px;height:8px;border-radius:50%;flex:none}
+.ys-dot.run{background:var(--accent)}.ys-dot.lost{background:var(--red)}.ys-dot.won{background:var(--green)}
+@media (hover:hover){.ys-chip:hover{border-color:var(--grey)}.ys-clrb:hover{color:var(--red-ink)}}
+.ys .num,.ys-row .num{font-weight:800}
 .eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
   color:var(--faint)}
 
@@ -2092,22 +2119,6 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    Sits directly under the offer, because somebody returning has one question
    and it is not "what is on today". Same card language as pick of the day so
    the rail reads as one column rather than a stack of widgets. */
-.myres{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg,14px);
-  padding:13px 14px;margin-bottom:12px}
-.mr-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.mr-ttl{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--faint)}
-.mr-tag{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
-  padding:3px 8px;border-radius:99px}
-.mr-tag.won{background:var(--green-wash);color:var(--green-ink)}
-/* Gold, not red: "So close" is a near miss to go again from, not an alarm. */
-.mr-tag.lost{background:rgba(242,184,75,.16);color:var(--win-ink)}
-.mr-tag.live{background:var(--win-wash);color:var(--win-ink)}
-.mr-body b{display:block;font-size:14.5px;font-weight:800;color:var(--text);line-height:1.3}
-.mr-body span{display:block;font-size:12.5px;color:var(--soft);margin-top:3px;line-height:1.4}
-/* The one-time explainer. Inside the card rather than floating over it, so it
-   cannot cover anything and needs no positioning to be right on either
-   screen. */
 /* Quiet link, not a button: it is evidence for a claim, not an action the
    page wants you to take. */
 .daily-back{display:inline-block;margin-top:10px;background:none;border:0;padding:0;
@@ -2116,129 +2127,52 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
   font:inherit;font-size:12px;font-weight:800;color:var(--red-ink);cursor:pointer}
 .daily-back:hover{text-decoration:underline}
 .daily-back:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:4px}
-.mr-coach{display:flex;align-items:flex-start;gap:9px;margin-top:10px;
-  padding:9px 10px;background:var(--card-2);border:1px solid var(--line);
-  border-radius:var(--r-md)}
-.mr-coach span{flex:1;min-width:0;font-size:11.5px;line-height:1.45;color:var(--soft)}
-.mr-coach-x{flex-shrink:0;align-self:center;background:var(--red-fill);color:#fff;border:0;
-  font:inherit;font-size:11px;font-weight:800;padding:6px 11px;border-radius:99px;
-  cursor:pointer}
-.mr-coach-x:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-.mr-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;
-  margin-top:11px;padding-top:10px;border-top:1px solid var(--line)}
-/* This is the line somebody comes back for - their own record - and it was
-   set at caption size in the faintest colour on the card, which put it below
-   the furniture around it. */
-.mr-rec{font-size:12.5px;font-weight:800;color:var(--soft)}
-.mr-rec b{color:var(--text);font-weight:800}
-.mr-all{background:none;border:0;font:inherit;font-size:12px;font-weight:800;
-  color:var(--red);cursor:pointer;padding:2px 0}
-.mr-all:hover{text-decoration:underline}
-.mr-all:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:4px}
 
-/* The history sheet. One card a slip, legs listed under it with a mark each,
-   so the whole thing is readable at a glance without opening anything. */
-.sl-rec{display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:8px;
-  margin:2px 0 14px}
-.sl-rec div{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
-  padding:8px 6px;text-align:center}
-.sl-rec i{display:block;font-style:normal;font-size:10px;font-weight:700;
-  letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
-.sl-rec b{display:block;font-size:16px;font-weight:800;color:var(--text);margin-top:2px;
-  font-variant-numeric:tabular-nums}
-/* Collapsed, a slip is one line; the padding lives on the parts now so a shut
-   card is only as tall as its own line. */
-.sl-card{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r-md);
-  border-left-width:3px;border-left-style:solid;margin-bottom:6px;overflow:hidden}
-.sl-card.won{border-left-color:var(--green)}
-.sl-card.lost{border-left-color:var(--red)}
-.sl-card.open{border-left-color:var(--win)}
-/* The whole line is the control - a real button, so it takes a tab stop and
-   the Enter key without any of it being wired by hand. */
-.sl-head{display:flex;align-items:center;gap:8px;width:100%;
-  padding:9px 12px;background:none;border:0;font:inherit;color:inherit;
-  text-align:left;cursor:pointer}
-.sl-head:hover{background:var(--raise)}
-.sl-head:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
-.sl-chev{flex-shrink:0;color:var(--faint);font-size:11px;transition:transform .18s}
-.sl-card.is-open .sl-chev{transform:rotate(180deg)}
-.sl-body{display:none;padding:0 12px 10px}
-.sl-card.is-open .sl-body{display:block}
-.sl-top{display:flex;align-items:center;gap:8px;margin-bottom:7px}
-.sl-tag{font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
-  padding:2px 7px;border-radius:99px;flex-shrink:0}
-.sl-tag.won{background:var(--green-wash);color:var(--green-ink)}
-.sl-tag.lost{background:var(--red-wash);color:var(--red-ink)}
-.sl-tag.open{background:var(--win-wash);color:var(--win-ink)}
-/* Says why this one is not in the percentages above it. */
-.sl-tag-jack{background:rgba(242,184,75,.16);color:#F2B84B;
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.4)}
-.sl-when{flex:1;min-width:0;font-size:11.5px;color:var(--soft);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sl-odds{font-size:13px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
-/* Quiet until wanted: a record you have to be able to delete, not a delete
-   competing with the result it sits beside. */
-.sl-x{flex-shrink:0;width:24px;height:24px;padding:0;display:inline-flex;
-  align-items:center;justify-content:center;background:none;border:0;
-  border-radius:50%;color:var(--faint);cursor:pointer;opacity:.55;
-  transition:opacity .15s,color .15s,background .15s}
-.sl-x svg{width:13px;height:13px}
-@media (hover:hover){.sl-x:hover{opacity:1;color:var(--red-ink);background:var(--red-wash)}}
-.sl-x:focus-visible{opacity:1;outline:2px solid var(--red);outline-offset:1px}
-.sl-x.arm{opacity:1;width:auto;padding:2px 9px;border-radius:99px;
-  background:var(--red-wash);color:var(--red-ink);font:inherit;font-size:10.5px;
-  font-weight:800;letter-spacing:.03em}
-.sl-foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--line-soft);
-  display:flex;justify-content:center}
-.sl-clear{font:inherit;font-size:12px;font-weight:700;padding:8px 14px;
-  border-radius:99px;background:none;border:1px solid var(--line);
-  color:var(--soft);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
-@media (hover:hover){.sl-clear:hover{color:var(--red-ink);border-color:var(--red)}}
-.sl-clear.arm{background:var(--red-wash);border-color:var(--red);color:var(--red-ink);font-weight:800}
-.sl-leg{display:flex;align-items:center;gap:9px;padding:4px 0;font-size:12px;line-height:1.35}
-/* Green landed, red missed, hollow still to play, grey void. Reading the
-   colour is instant; reading a glyph is not. */
-.sl-m{width:7px;height:7px;flex-shrink:0;border-radius:50%;
-  background:var(--line);box-shadow:none}
-.sl-leg.win .sl-m{background:var(--green)}
-.sl-leg.lose .sl-m{background:var(--red)}
-.sl-leg.void .sl-m{background:var(--faint)}
-.sl-leg.open .sl-m{background:transparent;box-shadow:inset 0 0 0 1.5px var(--faint)}
-.sl-leg.lose .sl-t{color:var(--soft)}
-.sl-t{flex:1;min-width:0;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sl-p{flex-shrink:0;color:var(--faint);font-size:11px;max-width:46%;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* The code and the three things you can do with this slip, on one line under
-   the legs. Kept in the same quiet register as the card - small text buttons,
-   not pills, so the row reads as a footnote and the result above it stays the
-   loudest thing on the card. */
-.sl-acts{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
-  margin-top:7px;padding-top:7px;border-top:1px solid var(--line)}
-.sl-code{flex:1 1 auto;min-width:0;font-size:11px;color:var(--faint);letter-spacing:.02em;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sl-code b{color:var(--soft);font-weight:800;letter-spacing:.08em}
-.sl-code-none{opacity:.6}
-.sl-mini{flex:0 0 auto;font:inherit;font-size:10.5px;font-weight:700;
-  padding:3px 9px;border-radius:99px;cursor:pointer;white-space:nowrap;
-  background:var(--raise);border:1px solid var(--line);color:var(--soft);
-  transition:color .15s,border-color .15s,background .15s}
-.sl-mini:hover{color:var(--text);border-color:var(--faint)}
-/* Make it safer is a link into the converter, not a button, and sits in the
-   same row as the buttons - so it has to look like one of them. */
-a.sl-mini{text-decoration:none;display:inline-flex;align-items:center}
-/* Share your win: gold, because gold is what the site is proud of. */
-.sl-mini.sl-win{color:var(--on-accent);background:var(--accent);border-color:var(--accent)}
-.sl-mini:focus-visible{outline:2px solid var(--red);outline-offset:1px}
-.sl-mini.ok{color:var(--green-ink);border-color:var(--green)}
-/* Delete asks before it acts, and only turns red once it has. */
-@media (hover:hover){.sl-mini-x:hover{color:var(--red-ink);border-color:var(--red)}}
-.sl-mini-x.arm{background:var(--red-wash);border-color:var(--red);color:var(--red-ink);font-weight:800}
-@media(max-width:640px){
-  .myres{padding:11px 12px;margin-bottom:10px}
-  .mr-body b{font-size:14px}
-  .sl-card{padding:9px 10px}
-  .sl-p{max-width:40%}
-}
+/* My slips sheet. Filter pills, then one card a slip: status and odds on top,
+   Share / Safer / Rebuild / more, the booking code, a progress bar, and the
+   legs behind a Show games toggle. */
+.sl2-filt{display:flex;gap:6px;margin:0 0 6px;overflow-x:auto;scrollbar-width:none}
+.sl2-filt button{flex:none;padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--soft);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.sl2-filt button.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
+.sl2-filt .num{font-weight:700;opacity:.75;margin-left:4px}
+.sl2{background:var(--card);border:1px solid var(--line);border-radius:12px}
+.sl2-top{display:flex;align-items:center;gap:8px;padding:12px 12px 10px}
+.sl2-st{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;padding:4px 8px;border-radius:99px}
+.sl2-st.jack{color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent)}
+.sl2-st.run{color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent)}
+.sl2-st.lost{color:var(--red-ink);background:color-mix(in srgb,var(--red) 13%,transparent)}
+.sl2-st.won{color:var(--green-ink);background:color-mix(in srgb,var(--green) 13%,transparent)}
+.sl2-meta{font-size:12px;font-weight:600;color:var(--faint);display:flex;gap:5px;align-items:baseline;min-width:0;white-space:nowrap;overflow:hidden}
+.sl2-od{margin-left:auto;font-size:20px;color:var(--accent)}
+.sl2 .num{font-weight:800}
+.sl2-acts{display:flex;gap:4px;padding:0 12px 10px}
+.sl2-a{display:flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 10px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);color:var(--text);font:inherit;font-size:12px;font-weight:800;cursor:pointer;flex:none;text-decoration:none}
+.sl2-a svg{width:15px;height:15px}
+.sl2-a.share{background:var(--red-fill);border-color:var(--red-fill);color:#fff;flex:1 1 0;min-width:74px}
+.sl2-a.safer{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.sl2-a.more{width:34px;padding:0}
+.sl2-code{display:flex;align-items:center;gap:10px;margin:0 12px 10px;padding:7px 7px 7px 12px;border-radius:8px;background:var(--card-2)}
+.sl2-code .num{font-size:18px;letter-spacing:.08em;color:var(--accent)}
+.sl2-code button{margin-left:auto;display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:99px;padding:5px 11px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.sl2-code button.ok{color:var(--green-ink)}
+.sl2-code svg{width:13px;height:13px}
+.sl2-mid{display:flex;align-items:center;gap:10px;padding:0 12px 11px;color:var(--soft);font-size:12px;font-weight:600}
+.sl2-mid b{color:var(--text)}
+.sl2-prog{flex:1;display:flex;gap:3px}.sl2-prog i{flex:1;height:4px;border-radius:2px;background:var(--raise)}
+.sl2-prog i.w{background:var(--green)}.sl2-prog i.l{background:var(--red)}
+.sl2-legs{max-height:0;overflow:hidden;transition:max-height 300ms var(--ease-out)}.sl2.open .sl2-legs{max-height:2600px}
+.sl2-leg{display:flex;align-items:center;gap:9px;padding:8px 12px;border-top:1px solid var(--line);font-size:12.5px}
+.sl2-leg .d{width:7px;height:7px;border-radius:50%;background:var(--grey);flex:none}
+.sl2-leg.win .d{background:var(--green)}.sl2-leg.lose .d{background:var(--red)}
+.sl2-leg .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sl2-leg .p{color:var(--soft);font-size:12px;font-weight:600}
+.sl2-tog{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;height:38px;border:0;border-top:1px solid var(--line);background:none;color:var(--soft);font:inherit;font-size:12.5px;font-weight:700;border-radius:0 0 12px 12px;cursor:pointer}
+.sl2-tog svg{width:15px;height:15px;transition:transform 250ms var(--ease-out)}.sl2.open .sl2-tog svg{transform:rotate(180deg)}
+@media (hover:hover){.sl2-a:not(.share):not(.safer):hover{background:var(--raise)}.sl2-tog:hover{color:var(--text)}}
+.sl2-pop{position:fixed;z-index:9990;min-width:170px;padding:6px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.sl2-mi{width:100%;display:flex;align-items:center;gap:11px;padding:10px 9px;border:0;background:none;border-radius:8px;color:var(--text);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;text-align:left}
+.sl2-mi svg{width:18px;height:18px;color:var(--soft);flex:none}
+.sl2-mi:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (hover:hover){.sl2-mi:hover{background:var(--raise)}}
 /* Kickoff countdown. Quiet by default; amber inside the hour, which is when
    it stops being information and starts being a deadline. */
 /* Reserved width. This repaints every thirty to sixty seconds, and the text
@@ -5225,13 +5159,9 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   /* Cards carry their own top/bottom margins for the flow layout; in here the
      column's gap already does that job, and the two were stacking. */
   .home-rail>*{margin-top:0;margin-bottom:0}
-  .home-rail .myres,.home-rail .daily,
+  .home-rail .daily,
   .home-rail .potd,.home-rail .slip-cta{margin-top:0;margin-bottom:0}
 
-  .home-rail .myres{padding:11px 13px}
-  .home-rail .mr-top{margin-bottom:7px}
-  .home-rail .mr-coach{margin-top:7px;padding:7px 10px}
-  .home-rail .mr-foot{margin-top:9px;padding-top:8px}
 
   .home-rail .potd-top{padding:8px 15px}
   .home-rail .potd-body{padding:10px 14px}
@@ -6849,6 +6779,24 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
      the 108px label floor when the panel is too narrow for six. */
   .wsp-chips.mkt-palette{grid-template-columns:repeat(auto-fit,minmax(max(108px,calc((100% - 5 * 6px) / 6)),1fr))}
 }
+.sw-swipe{position:relative;margin:0 0 8px;border-radius:12px;overflow:hidden;touch-action:pan-y}
+.sw-bin{position:absolute;inset:0;background:var(--red-fill);display:flex;align-items:center;justify-content:flex-end;padding-right:20px;border-radius:12px;color:#fff}
+.sw-bin svg{width:22px;height:22px;transform:scale(var(--s,.7));transition:transform 120ms var(--ease-out)}
+.sw-bin.armed{background:color-mix(in srgb,var(--red-fill) 70%,black)}
+.sw-card{position:relative;transform:translateX(0);will-change:transform;touch-action:pan-y}
+.sw-card.sw-snap{transition:transform 320ms cubic-bezier(.2,.9,.25,1)}
+.sw-card.sw-gone{transition:transform 220ms ease-in,opacity 220ms;opacity:0}
+.sw-card.sw-peek{animation:swPeek 1100ms var(--ease-out) 700ms 1}
+@keyframes swPeek{0%{transform:none}35%{transform:translateX(-58px)}100%{transform:none}}
+.sw-swipe.sw-collapse{transition:height 250ms ease,margin 250ms ease;height:0!important;margin:0}
+.sw-undo{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:440px;margin:0 auto;z-index:9970;background:var(--text);color:var(--bg);border-radius:12px;padding:11px 8px 11px 14px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:13px;transform:translateY(160%);overflow:hidden;visibility:hidden;transition:transform 300ms cubic-bezier(.2,.9,.25,1),visibility 0s 300ms}
+.sw-undo.on{transform:none;visibility:visible;transition:transform 300ms cubic-bezier(.2,.9,.25,1),visibility 0s}
+.sw-undo button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sw-undo button{border:0;background:none;color:var(--bg);font:inherit;font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:6px 10px}
+.sw-undo .u-bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--red);transform-origin:left;transform:scaleX(0)}
+.sw-undo.on .u-bar{animation:swUndoBar 5s linear forwards}
+@keyframes swUndoBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.sw-card,.sw-undo,.sw-swipe,.ys-live,.ys-dot.run,.sw-undo .u-bar{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -7244,15 +7192,12 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <!-- Account (spec section 9). Stays hidden unless /api/me answers, so
          with AUTH_ENABLED off the header is exactly as before. Filled by the
          swAccount script at the end of the page. -->
-    <button class="tgl hsoc" id="hdAccount" type="button" aria-label="Sign in" hidden></button>
     <a class="tgl hsoc hsoc-x" href="https://x.com/soccerwizardhq" target="_blank" rel="noopener"
        aria-label="Soccerwizard on X"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.2 2.3h3.4l-7.4 8.5 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9.1L.9 2.3h7l4.8 6.4zm-1.2 17.9h1.9L7.1 4.2H5z"/></svg></a>
     <a class="tgl hsoc hsoc-tg" href="https://t.me/soccerwizardTG" target="_blank" rel="noopener"
        aria-label="Soccerwizard on Telegram"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.1 3.8 19.6 20.3c-.3 1.2-1 1.5-2 .9l-5.5-4-2.7 2.6c-.3.3-.6.6-1.2.6l.4-5.6L18.8 6c.4-.4-.1-.6-.7-.2L5.5 13.7 0 12c-1.2-.4-1.2-1.2.3-1.8L21.5 2c1-.4 1.9.2 1.6 1.8z"/></svg></a>
-    <button class="tgl" id="tgl" aria-label="Switch theme">
-      <svg id="tglicon" width="17" height="17" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2" stroke-linecap="round"></svg>
-    </button>
+    <!-- Account is the LAST item: top right, where the menu opens under it. -->
+    <button class="tgl hsoc" id="hdAccount" type="button" aria-label="Sign in" hidden></button>
     <!-- The install icon lived here. It could not be reached on a phone - that
          row needs more width than a phone has, so it sat off the right edge -
          and the labelled bar under the hero says what it is and does the same
@@ -7854,6 +7799,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   </div>
   <div class="sheet-body" id="slipsBody"></div>
 </div>
+<div class="sw-undo" id="swUndo" role="status" aria-live="polite"><span class="u-msg"></span><button type="button" id="swUndoBtn">Undo</button><i class="u-bar"></i></div>
 
 <div class="sheet myslip-sheet" id="mySheet" role="dialog" aria-modal="true" aria-labelledby="mySheet-title">
   <div class="sheet-grab"><i></i></div>
@@ -8070,6 +8016,7 @@ function saveSlips(){
     localStorage.setItem("sw.slips.v1",JSON.stringify(SLIPS));
   }catch(e){}
 }
+window.swSlipCount=function(){return slipCounts().all;};
 
 /* Record a slip at the moment it becomes real - when a booking code exists.
    Building and rebuilding in the wizard should not fill the history with
@@ -8209,75 +8156,53 @@ function countVoid(s){
    to be opened twice.
    It only appears once there is something to say. A first-time visitor sees
    the offer and the board, exactly as before. */
+function slipState(s){ return !s.settled?"run":(s.won?"won":"lost"); }
+function slipCounts(){
+  var c={all:0,run:0,lost:0,won:0};
+  SLIPS.forEach(function(s){ if(window.swPend&&window.swPend.hidden(s.sid)) return; c.all++; c[slipState(s)]++; });
+  return c;
+}
+function bookMark(k){ var B=BOOKS[k]; return B?(B.mark||esc(B.label)):""; }
+var SL_PEEKED=false;
+var BIN_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>';
 function renderMyResults(){
   var host=$("myres"); if(!host) return;
-  if(!SLIPS.length){ host.innerHTML=""; return; }
-  var r=myRecord();
-  var last=SLIPS.filter(function(x){return x.settled;})[0];
-  var open=SLIPS.filter(function(x){return !x.settled;})[0];
-
-  var head, body;
-  if(open){
-    /* A slip still running beats a finished one: it is the live thing. */
-    var done=open.legs.filter(function(l){return l.res==="win"||l.res==="lose";}).length;
-    head="<span class='mr-tag live'>Running</span>";
-    body="<b>"+open.legs.length+"-game slip · ×"+open.odds.toFixed(2)+"</b>"+
-      "<span>"+(done?done+" of "+open.legs.length+" settled so far":"None of these have finished yet")+
-      (open.hits?" · "+open.hits+" landed":"")+"</span>";
-  } else if(last){
-    /* THE WORDS HAVE TO MATCH THE NUMBERS. This said "One got away" under
-       every losing slip, whatever the count - "3 of 35 landed. One got away."
-       reached a reader (24 Sep 2026). And "Your Saturday's slip" read oddly;
-       it names the day the slip is from instead. */
-    var w=slipWhen(last.at).replace(/'s$/,"");
-    var whose=w==="last"?"Your last slip":"Your slip from "+w;
-    var miss=last.legs.filter(function(l){return l.res==="lose";}).length;
-    /* NO DOWNERS (24 Sep, the owner's call). A slip that did not come in says
-       how close it got and points at the next one; the count stays exact. */
-    head="<span class='mr-tag "+(last.won?"won":"lost")+"'>"+(last.won?"Won 🔥":(miss===1?"So close 😤":"Next one 😤"))+"</span>";
-    var allIn=last.hits===last.legs.length;
-    body="<b>"+whose+(last.won
-        ? (allIn?" won: all "+last.legs.length+" landed":" won: "+last.hits+" of "+last.legs.length+" landed, the rest void")
-        : ": "+last.hits+" of "+last.legs.length+" landed")+"</b>"+
-      "<span>"+(last.won
-        ? "That paid ×"+last.odds.toFixed(2)+"."
-        : (miss===1
-            ? "One leg off. Today's code is ready, we go again 💪"
-            : "We go again. Today's code is ready 💪"))+"</span>";
-  }
-  /* The numbers carry the weight, the words explain them - reading "1 of 3"
-     at a glance is the point, not the sentence around it. */
-  var rec=r.settled
-    ? "<b>"+r.won+" of "+r.settled+"</b> slips landed"+
-      (r.streak>1?" · <b>"+r.streak+"</b> in a row":"")
-    : "<b>"+r.built+"</b> slip"+(r.built===1?"":"s")+" so far";
-
-  /* Shown once, the first time there is anything here. Nobody expects a site
-     to have kept their slip, so without a word about it the card reads as
-     another panel rather than as their own record. */
-  var coach=slipCoachSeen()?"":
-    "<div class='mr-coach'><span>We keep every slip you book and check it "+
-    "against the final scores. Come back and see how it finished.</span>"+
-    "<button class='mr-coach-x' type='button'>Got it</button></div>";
-
+  var c=slipCounts();
+  if(!c.all){ host.innerHTML=""; return; }
+  var rows=SLIPS.filter(function(s){ return !(window.swPend&&window.swPend.hidden(s.sid)); }).slice(0,5);
   host.innerHTML=
-    "<section class='myres'>"+
-      "<div class='mr-top'>"+head+"<span class='mr-ttl'>Your slips</span></div>"+
-      "<div class='mr-body'>"+body+"</div>"+
-      coach+
-      "<div class='mr-foot'><span class='mr-rec'>"+rec+"</span>"+
-        "<button class='mr-all' id='mrAll' type='button'>See all</button></div>"+
-    "</section>";
-  $("mrAll").addEventListener("click",openSlipsSheet);
-  var cx=host.querySelector(".mr-coach-x");
-  if(cx) cx.addEventListener("click",function(){ slipCoachDone(); renderMyResults(); });
+    "<div class='ys'><div class='ys-top'><h3>Your slips</h3><span class='ys-ct'><span class='num'>"+c.all+"</span> saved</span>"+
+      "<button class='ys-all' type='button' data-ysf='all'>See all<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></button></div>"+
+      "<div class='ys-chips'>"+
+        "<button class='ys-chip run' type='button' data-ysf='run'>"+(c.run?"<span class='ys-live'></span>":"")+"<span class='num'>"+c.run+"</span>running</button>"+
+        "<button class='ys-chip lost' type='button' data-ysf='lost'><span class='num'>"+c.lost+"</span>lost</button>"+
+        "<button class='ys-chip won' type='button' data-ysf='won'><span class='num'>"+c.won+"</span>won</button>"+
+      "</div></div>"+
+    "<div class='ys-lh'><h4>Recent</h4><span class='ys-clr'></span></div>"+
+    rows.map(function(s){
+      return "<div class='sw-swipe' data-sid='"+esc(s.sid)+"'><div class='sw-bin'>"+BIN_SVG+"</div>"+
+        "<div class='sw-card ys-row'><span class='ys-dot "+slipState(s)+"' role='img' aria-label='"+({run:"Running",lost:"Lost",won:"Won"})[slipState(s)]+"'></span>"+
+        "<span class='ys-m'><span class='ys-code num'>"+esc(s.code||"No code")+"</span>"+
+        "<small>"+(s.book?bookMark(s.book)+", ":"")+s.legs.length+(s.legs.length===1?" game":" games")+(slipWhenPlain(s.at)?", "+esc(slipWhenPlain(s.at)):"")+"</small></span>"+
+        "<span class='ys-od num'>×"+(s.odds>=1000?Math.round(s.odds).toLocaleString():s.odds.toFixed(2))+"</span></div></div>";
+    }).join("");
+  host.querySelectorAll("[data-ysf]").forEach(function(b){ b.onclick=function(){ openSlipsSheet(b.getAttribute("data-ysf")); }; });
+  host.querySelectorAll(".sw-swipe").forEach(function(r){ swSwipe(r,function(){ window.swPend.del(r.getAttribute("data-sid")); }); });
+  clearAllControl(host.querySelector(".ys-clr"));
+  if(!SL_PEEKED){ SL_PEEKED=true; var first=host.querySelector(".sw-card"); if(first) first.classList.add("sw-peek"); }
 }
-const SLIP_COACH_KEY="sw.coached.slips.v1";
-function slipCoachSeen(){
-  try{return localStorage.getItem(SLIP_COACH_KEY)==="1";}catch(e){return true;}
-}
-function slipCoachDone(){
-  try{localStorage.setItem(SLIP_COACH_KEY,"1");}catch(e){}
+function visibleSids(){ return SLIPS.filter(function(s){return !(window.swPend&&window.swPend.hidden(s.sid));}).map(function(s){return s.sid;}); }
+/* Clear all asks in place: "Clear N? Keep / Clear". No confirm(). */
+function clearAllControl(slot,getSids){
+  if(!slot) return;
+  function idle(){ slot.innerHTML="<button class='ys-clrb' type='button'>Clear all</button>"; slot.firstChild.onclick=ask; }
+  function ask(){
+    var ids=(getSids||visibleSids)(), n=ids.length; if(!n) return;
+    slot.innerHTML="<span class='ys-ask'>Clear "+n+"?<button class='ys-no' type='button'>Keep</button><button class='ys-yes' type='button'>Clear</button></span>";
+    slot.querySelector(".ys-no").onclick=idle;
+    var y=slot.querySelector(".ys-yes"); y.onclick=function(){ window.swPend.clearAll(ids); }; y.focus();
+  }
+  idle();
 }
 /* "Tuesday" rather than a date: people remember the day they placed it. */
 function slipWhen(iso){
@@ -8287,15 +8212,25 @@ function slipWhen(iso){
   if(off===-1) return "yesterday's";
   return dayName(off)+"'s";
 }
+function slipWhenPlain(iso){
+  var w=slipWhen(iso); return w==="last"?"":w.replace(/'s$/,"");
+}
 
-function openSlipsSheet(){
-  if(window.swGate&&!swGate("slips",null,openSlipsSheet,"slips")) return;
+function openSlipsSheet(filter){
+  if(window.swGate&&!swGate("slips",null,function(){openSlipsSheet(filter);},"slips")) return;
+  if(filter) window.SLFILTER=filter;
   renderSlipsSheet();
   $("scrim").classList.add("on");
   $("slipsSheet").classList.add("on");
-  lockBody(true); pushOverlay();
+  lockBody(true);
+  if(!SLIPS_PUSHED){ SLIPS_PUSHED=true; pushOverlay(); }
 }
+/* True while My slips owns a history entry. Its own close paths pop it (so a
+   later Back is not swallowed); popstate clears it first because the browser
+   has already popped. SKIP_POP makes popstate ignore the pop we cause. */
+var SLIPS_PUSHED=false, SKIP_POP=false;
 function closeSlipsSheet(){
+  if(SLIPS_PUSHED){ SLIPS_PUSHED=false; SKIP_POP=true; try{history.back();}catch(e){SKIP_POP=false;} }
   $("scrim").classList.remove("on");
   $("slipsSheet").classList.remove("on");
   if(!$("mySheet")||!$("mySheet").classList.contains("on")) lockBody(false);
@@ -8303,121 +8238,153 @@ function closeSlipsSheet(){
 /* A booked slip is a record, not a draft, so removing one asks first - and the
    ask lives in the sheet rather than in a browser confirm(), which on a phone
    is a jarring system dialog over a sheet the user is already inside. */
-function removeSlip(sid){
+function removeSlip(sid,quiet){
   var i=SLIPS.findIndex?SLIPS.findIndex(function(s){return s.sid===sid;}):-1;
   if(i<0){ for(var j=0;j<SLIPS.length;j++) if(SLIPS[j].sid===sid){i=j;break;} }
   if(i<0) return;
   SLIPS.splice(i,1); saveSlips(); refreshSlipUI();
-  window.swToast&&window.swToast("Slip removed","ok","sliprm");
+  if(!quiet) window.swToast&&window.swToast("Slip removed","ok","sliprm");
 }
-function clearSlips(){
-  if(!SLIPS.length) return;
-  SLIPS=[]; saveSlips(); refreshSlipUI();
-  window.swToast&&window.swToast("Slip history cleared","ok","slipclr");
+/* SWPEND */
+/* DELETE WAITS FOR UNDO. A removed slip gets a sync tombstone that beats every
+   copy for 60 days, so "delete, then put it back" would be undone by the next
+   sync. Clear all hides and later removes only the slips present when it was
+   pressed, so a slip that syncs in during the window survives. Instead a delete only hides the slip; storage is written when the 5s
+   Undo window ends, when another delete starts, or when the page is hidden. */
+(function(){
+  var pend=null, t=null;
+  function finish(){
+    if(!pend) return;
+    var p=pend; pend=null; if(t) clearTimeout(t); t=null; hideUndo();
+    if(p.all){ for(var k in p.sids) removeSlip(k,true); } else removeSlip(p.sid,true);
+  }
+  function start(p,msg){
+    finish();
+    pend=p; refreshSlipUI(); showUndo(msg);
+    t=setTimeout(finish,5000);
+  }
+  window.swPend={
+    del:function(sid){ start({sid:sid},"Slip deleted"); },
+    clearAll:function(sids){ var m={}; (sids||[]).forEach(function(s){ m[s]=1; }); start({all:true,sids:m},"All slips cleared"); },
+    undo:function(){ if(!pend) return; pend=null; if(t) clearTimeout(t); t=null; hideUndo(); refreshSlipUI(); },
+    commit:finish,
+    hidden:function(sid){ return !!pend&&(pend.all?!!pend.sids[sid]:pend.sid===sid); },
+    active:function(){ return !!pend; }
+  };
+})();
+/* /SWPEND */
+function showUndo(msg){
+  var u=$("swUndo"); if(!u) return;
+  u.querySelector(".u-msg").textContent=msg;
+  u.classList.remove("on"); void u.offsetWidth; u.classList.add("on");
 }
+function hideUndo(){ var u=$("swUndo"); if(u) u.classList.remove("on"); }
+function swSwipe(row,onDelete){
+  var card=row.querySelector(".sw-card"), bin=row.querySelector(".sw-bin");
+  var x0=0,y0=0,dx=0,drag=false,lock=null,t0=0,W=0,armed=false;
+  card.addEventListener("pointerdown",function(e){
+    if(e.target.closest("button,a,input")) return;
+    drag=true; lock=null; x0=e.clientX; y0=e.clientY; dx=0; t0=Date.now(); W=card.offsetWidth;
+    card.classList.remove("sw-snap","sw-peek");
+  });
+  card.addEventListener("pointermove",function(e){
+    if(!drag) return;
+    var mx=e.clientX-x0, my=e.clientY-y0;
+    if(lock===null&&(Math.abs(mx)>6||Math.abs(my)>6)){ lock=Math.abs(mx)>Math.abs(my)?"x":"y"; if(lock==="x") try{ card.setPointerCapture(e.pointerId); }catch(er){} }
+    if(lock!=="x") return;
+    dx=Math.min(0,mx); if(dx<-W*.8) dx=-W*.8+(dx+W*.8)*.5;
+    card.style.transform="translateX("+dx+"px)";
+    var p=Math.min(1,-dx/(W*.45)); bin.style.setProperty("--s",(.7+.4*p).toFixed(2));
+    var now=p>=1; if(now!==armed){ armed=now; bin.classList.toggle("armed",armed); if(armed&&navigator.vibrate) try{ navigator.vibrate(12); }catch(er){} }
+  });
+  function end(){
+    if(!drag) return; drag=false;
+    var v=-dx/Math.max(1,Date.now()-t0);
+    if(lock==="x"&&(armed||(v>1.1&&-dx>40))){
+      card.style.transform="translateX(-110%)"; card.classList.add("sw-gone");
+      row.style.height=row.offsetHeight+"px";
+      setTimeout(function(){ row.classList.add("sw-collapse"); },180);
+      setTimeout(onDelete,430);
+    } else { card.classList.add("sw-snap"); card.style.transform="translateX(0)"; bin.classList.remove("armed"); armed=false; }
+  }
+  card.addEventListener("pointerup",end); card.addEventListener("pointercancel",end);
+}
+document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="hidden"&&window.swPend) window.swPend.commit(); });
+$("swUndoBtn").addEventListener("click",function(){ window.swPend.undo(); });
 /* Which slip is expanded. null until the sheet has been drawn once, so the
    first draw can choose the newest without overriding a later choice. */
 var SLOPEN=null;
+function progressWords(legs){
+  var w=0,l=0; legs.forEach(function(x){ if(x.res==="win") w++; else if(x.res==="lose") l++; });
+  var left=legs.filter(function(x){ return x.res!=="win"&&x.res!=="lose"&&x.res!=="void"; }).length;
+  return "<b>"+w+"</b> landed"+(l?", <b>"+l+"</b> lost":"")+(left?", "+left+" to play":"");
+}
+if(!window.SLFILTER) window.SLFILTER="all";
+var SHARE_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>';
+var SAFE_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>';
+var RB_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.3L3 16M3 21v-5h5"/></svg>';
+var MORE_SVG='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
+var COPY_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+var CHEV_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 function renderSlipsSheet(){
   var body=$("slipsBody"); if(!body) return;
-  if(!SLIPS.length){
-    body.innerHTML="<div class='bld-empty'><b>No slips yet</b>"+
-      "Book one and it will be kept here, with its result once the games finish.</div>";
+  var c=slipCounts();
+  if(!c.all){
+    body.innerHTML="<div class='bld-empty'><b>No slips yet</b>Book one and it will be kept here, with its result once the games finish.</div>";
     return;
   }
-  var r=myRecord();
-  var head="<div class='sl-rec'>"+
-    "<div><i>Slips</i><b>"+r.built+"</b></div>"+
-    "<div><i>Landed</i><b>"+r.won+"</b></div>"+
-    "<div><i>Legs</i><b>"+(r.legs?Math.round(100*r.legHits/r.legs)+"%":"-")+"</b></div>"+
-    (r.best?"<div><i>Best</i><b>×"+r.best.odds.toFixed(2)+"</b></div>":"")+
-    "</div>";
-  /* Nothing chosen yet means the newest is the one to show. Once anything has
-     been opened or closed by hand, that choice is what holds. */
-  if(SLOPEN===null) SLOPEN=(SLIPS[0]&&SLIPS[0].sid)||"";
-  body.innerHTML=head+SLIPS.map(function(sp){
-    var state=sp.settled?(sp.won?"won":"lost"):"open";
-    var label=sp.settled?(sp.won?"Won":"Lost"):"Running";
-    var open=(sp.sid===SLOPEN);
-    return "<div class='sl-card "+state+(open?" is-open":"")+"'>"+
-      /* One line each, opened on demand. A booked slip is mostly answered by
-         its first line - did it land, when, for how much - and sixty of them
-         stacked open meant scrolling past hundreds of legs to find the one you
-         were looking for. The legs are the detail behind the answer, so they
-         wait until asked for. The newest is open, because that is the one
-         anyone arriving here is almost always checking. */
-      "<button class='sl-head' type='button' data-slop='"+esc(sp.sid||"")+"' "+
-        "aria-expanded='"+(open?"true":"false")+"'>"+
-        "<span class='sl-tag "+state+"'>"+label+"</span>"+
-        (isJackpotSlip(sp)?"<span class='sl-tag sl-tag-jack'>Jackpot</span>":"")+
-        "<span class='sl-when'>"+esc(slipWhen(sp.at))+" · "+sp.legs.length+" games</span>"+
-        "<span class='sl-odds'>×"+(sp.odds>=1000?Math.round(sp.odds).toLocaleString():sp.odds.toFixed(2))+"</span>"+
-        "<span class='sl-chev' aria-hidden='true'>▾</span></button>"+
-      "<div class='sl-body'>"+
-      "<div class='sl-legs'>"+sp.legs.map(function(l){
-        /* A dot, not a tick. Ticks and crosses read as a checklist somebody
-           is working through; these are results, and the site already says
-           status with a coloured dot everywhere else. The score does the
-           explaining - the dot only has to say which way it went. */
-        var sc=(l.hg!=null&&l.ag!=null)?(" "+l.hg+"-"+l.ag):"";
-        return "<div class='sl-leg "+(l.res||"open")+"'><span class='sl-m'></span>"+
-          "<span class='sl-t'>"+esc(l.home)+" v "+esc(l.away)+"</span>"+
-          "<span class='sl-p'>"+esc(l.label||l.code)+esc(sc)+"</span></div>";
-      }).join("")+"</div>"+
-      /* The code was printed as plain text, which is the one thing on this card
-         somebody actually needs to use - and it could not be copied. */
-      "<div class='sl-acts'>"+
-        (sp.code
-          ? "<span class='sl-code'>Code <b>"+esc(sp.code)+"</b></span>"+
-            "<button class='sl-mini' type='button' data-slcp=\""+esc(sp.code)+"\" "+
-              "aria-label='Copy booking code'>Copy</button>"
-          : "<span class='sl-code sl-code-none'>No code</span>")+
-        /* Not "edit": this slip is a bet that was placed, and nothing here can
-           change it. What is useful is starting a new one from it, so it loads
-           the legs that are still open into My slip and says what it had to
-           leave behind. */
-        "<button class='sl-mini' type='button' data-slrb='"+esc(sp.sid||"")+"'>Rebuild</button>"+
-        /* Make it safer, as on the booked-code card: the converter's Edit for
-           me on this code at the book that issued it. Only while the slip is
-           still open - a settled bet cannot be made safer - and only with a
-           book on record, because a guessed one fails to read the code. */
-        ((sp.code&&sp.book&&BOOKS[sp.book]&&!sp.settled)
-          ? "<a class='sl-mini' data-slsafe=\""+esc(sp.code)+"\" data-slbook=\""+esc(sp.book)+"\" "+
-              "href=\"/?book="+encodeURIComponent(sp.book)+
-              "&code="+encodeURIComponent(sp.code)+"&go=safer\">Make it safer</a>"
-          : "")+
-        /* A won ticket gets the celebration - see shareWin. */
-        ((sp.settled&&sp.won)
-          ? "<button class='sl-mini sl-win' type='button' data-slwin='"+esc(sp.sid||"")+"'>Share your win</button>"
-          : "")+
-        "<button class='sl-mini sl-mini-x' type='button' data-slrm='"+esc(sp.sid||"")+"' "+
-          "aria-label='Remove this slip'>Delete</button>"+
-      "</div>"+
-      "</div>"+
-    "</div>";
-  }).join("")+
-  /* Under the list, not in the header: clearing the lot is the last thing
-     anyone wants here, so it should be the last thing they reach. */
-  "<div class='sl-foot'><button class='sl-clear' id='slipsClear' type='button'>"+
-    "Clear slip history</button></div>";
-  /* One open at a time. Two or three expanded and the density this is for is
-     gone again; and with one, opening the next always closes the last without
-     anyone having to tidy up. */
-  body.querySelectorAll("[data-slop]").forEach(function(b){
-    b.addEventListener("click",function(){
-      SLOPEN=(SLOPEN===b.dataset.slop)?"":b.dataset.slop;
-      renderSlipsSheet();
-    });
-  });
-  body.querySelectorAll("[data-slrm]").forEach(function(b){
-    b.addEventListener("click",function(){ askRemoveSlip(b,b.dataset.slrm); });
-  });
+  var F=window.SLFILTER||"all";
+  var shown=SLIPS.filter(function(s){ return !(window.swPend&&window.swPend.hidden(s.sid))&&(F==="all"||slipState(s)===F); });
+  if(SLOPEN===null) SLOPEN=(shown[0]&&shown[0].sid)||"";
+  var LBL={run:"Running",lost:"Lost",won:"Won"};
+  body.innerHTML=
+    "<div class='sl2-filt'>"+[["all","All"],["run","Running"],["lost","Lost"],["won","Won"]].map(function(f){
+      return "<button type='button' data-slf='"+f[0]+"' class='"+(F===f[0]?"on":"")+"'>"+f[1]+"<span class='num'>"+c[f[0]]+"</span></button>"; }).join("")+"</div>"+
+    "<div class='ys-lh'><h4>"+shown.length+(shown.length===1?" slip":" slips")+"</h4><span class='ys-clr'></span></div>"+
+    (shown.length?"":"<div class='bld-empty'><b>Nothing here</b>No "+LBL[F].toLowerCase()+" slips right now.</div>")+
+    shown.map(function(sp){
+      var st=slipState(sp), open=sp.sid===SLOPEN;
+      var safe=sp.code&&sp.book&&BOOKS[sp.book]&&!sp.settled;
+      return "<div class='sw-swipe' data-sid='"+esc(sp.sid)+"'><div class='sw-bin'>"+BIN_SVG+"</div>"+
+        "<div class='sw-card sl2"+(open?" open":"")+"'>"+
+        "<div class='sl2-top'><span class='sl2-st "+st+"'>"+LBL[st]+"</span>"+
+          (isJackpotSlip(sp)?"<span class='sl2-st jack'>Jackpot</span>":"")+
+          "<span class='sl2-meta'>"+(sp.book?bookMark(sp.book):"")+(slipWhenPlain(sp.at)?"<span>"+esc(slipWhenPlain(sp.at))+"</span>":"")+"</span>"+
+          "<span class='sl2-od num'>×"+(sp.odds>=1000?Math.round(sp.odds).toLocaleString():sp.odds.toFixed(2))+"</span></div>"+
+        "<div class='sl2-acts'>"+
+          "<button class='sl2-a share' type='button' data-slsh='"+esc(sp.sid)+"'>"+SHARE_SVG+"Share</button>"+
+          (safe?"<a class='sl2-a safer' data-slsafe=\""+esc(sp.code)+"\" data-slbook=\""+esc(sp.book)+"\" href=\"/?book="+encodeURIComponent(sp.book)+"&code="+encodeURIComponent(sp.code)+"&go=safer\" aria-label='Make it safer'>"+SAFE_SVG+"Safer</a>":"")+
+          "<button class='sl2-a' type='button' data-slrb='"+esc(sp.sid)+"'>"+RB_SVG+"Rebuild</button>"+
+          "<button class='sl2-a more' type='button' data-slmore='"+esc(sp.sid)+"' aria-label='More'>"+MORE_SVG+"</button></div>"+
+        (sp.code?"<div class='sl2-code'><span class='num'>"+esc(sp.code)+"</span><button type='button' data-slcp=\""+esc(sp.code)+"\" aria-label='Copy booking code'>"+COPY_SVG+"Copy</button></div>":"")+
+        "<div class='sl2-mid'><span>"+progressWords(sp.legs)+"</span><div class='sl2-prog'>"+sp.legs.map(function(l){
+          return "<i class='"+(l.res==="win"?"w":l.res==="lose"?"l":"")+"'></i>"; }).join("")+"</div></div>"+
+        "<div class='sl2-legs'>"+sp.legs.map(function(l){
+          var sc=(l.hg!=null&&l.ag!=null)?(" "+l.hg+"-"+l.ag):"";
+          return "<div class='sl2-leg "+(l.res||"open")+"'><span class='d'></span><span class='t'>"+esc(l.home)+" v "+esc(l.away)+"</span><span class='p'>"+esc(l.label||l.code)+esc(sc)+"</span></div>"; }).join("")+"</div>"+
+        "<button class='sl2-tog' type='button' data-slop='"+esc(sp.sid)+"' aria-expanded='"+open+"'><span>"+(open?"Hide games":"Show "+sp.legs.length+" games")+"</span>"+CHEV_SVG+"</button>"+
+        "</div></div>";
+    }).join("");
+  body.querySelectorAll("[data-slf]").forEach(function(b){ b.onclick=function(){ window.SLFILTER=b.getAttribute("data-slf"); SLOPEN=null; renderSlipsSheet(); }; });
+  body.querySelectorAll("[data-slop]").forEach(function(b){ b.onclick=function(){ SLOPEN=(SLOPEN===b.dataset.slop)?"":b.dataset.slop; renderSlipsSheet(); }; });
+  body.querySelectorAll("[data-slsh]").forEach(function(b){ b.onclick=function(){
+    var sp=SLIPS.filter(function(s){return s.sid===b.dataset.slsh;})[0]; if(!sp) return;
+    if(sp.code) shareCode(sp.code,sp.legs,BOOKS[sp.book]); else shareSlip(sp.legs,sp.odds); }; });
+  body.querySelectorAll("[data-slmore]").forEach(function(b){ b.onclick=function(){ slipMoreMenu(b,b.dataset.slmore); }; });
+  body.querySelectorAll(".sw-swipe").forEach(function(r){ swSwipe(r,function(){ window.swPend.del(r.getAttribute("data-sid")); }); });
+  clearAllControl(body.querySelector(".ys-clr"),function(){ return shown.map(function(s){return s.sid;}); });
+  wireSlipButtons(body);
+}
+function slipMenuItems(sp){
+  var a=[]; if(sp.settled&&sp.won) a.push("Share your win"); a.push("Delete"); return a;
+}
+function wireSlipButtons(body){
   body.querySelectorAll("[data-slcp]").forEach(function(b){
     b.addEventListener("click",function(){
       var code=b.dataset.slcp;
       copyText(code);
-      var was=b.textContent; b.textContent="Copied"; b.classList.add("ok");
-      setTimeout(function(){ b.textContent=was; b.classList.remove("ok"); },1500);
+      var was=b.innerHTML; b.textContent="Copied"; b.classList.add("ok");
+      setTimeout(function(){ b.innerHTML=was; b.classList.remove("ok"); },1500);
     });
   });
   /* Make it safer happens in the code modal, as it does under a fresh code:
@@ -8434,14 +8401,34 @@ function renderSlipsSheet(){
   body.querySelectorAll("[data-slrb]").forEach(function(b){
     b.addEventListener("click",function(){ rebuildSlip(b.dataset.slrb); });
   });
-  body.querySelectorAll("[data-slwin]").forEach(function(b){
-    b.addEventListener("click",function(){
-      var sp=SLIPS.filter(function(x){return x.sid===b.dataset.slwin;})[0];
-      if(sp) shareWin(sp,b);
-    });
+}
+/* The "..." on a slip card: Delete, and Share your win once it has won. */
+var SL_POP_CLOSE=null;
+function slipMoreMenu(btn,sid){
+  if(SL_POP_CLOSE) SL_POP_CLOSE();
+  var sp=SLIPS.filter(function(x){return x.sid===sid;})[0]; if(!sp) return;
+  var pop=document.createElement("div"); pop.className="sl2-pop"; pop.setAttribute("role","menu");
+  pop.innerHTML=slipMenuItems(sp).map(function(l){
+    return "<button class='sl2-mi' type='button' role='menuitem' data-act='"+(l==="Delete"?"del":"win")+"'>"+(l==="Delete"?BIN_SVG:SHARE_SVG)+l+"</button>"; }).join("");
+  document.body.appendChild(pop);
+  var r=btn.getBoundingClientRect();
+  pop.style.top=Math.min(r.bottom+4,window.innerHeight-pop.offsetHeight-8)+"px";
+  pop.style.right=Math.max(8,window.innerWidth-r.right)+"px";
+  function close(){
+    pop.remove(); SL_POP_CLOSE=null;
+    document.removeEventListener("pointerdown",away,true); document.removeEventListener("keydown",esk,true);
+  }
+  function away(e){ if(!pop.contains(e.target)) close(); }
+  function esk(e){ if(e.key==="Escape"){ e.stopPropagation(); close(); btn.focus(); } }
+  pop.querySelectorAll(".sl2-mi").forEach(function(b){
+    b.onclick=function(){
+      var del=b.getAttribute("data-act")==="del"; close();
+      if(del) window.swPend.del(sid); else shareWin(sp,btn);
+    };
   });
-  var ca=$("slipsClear");
-  if(ca) ca.addEventListener("click",function(){ askClearSlips(ca); });
+  SL_POP_CLOSE=close;
+  document.addEventListener("pointerdown",away,true); document.addEventListener("keydown",esk,true);
+  pop.querySelector(".sl2-mi").focus();
 }
 /* Start a new slip from an old one.
    Deliberately not called "edit": the slip in this list is a bet that was
@@ -8481,19 +8468,6 @@ function rebuildSlip(sid){
   if(had) msg+=had===1?" (replaced 1)":(" (replaced "+had+")");
   window.swToast&&window.swToast(msg,"ok","rb");
 }
-/* Two-tap confirm in place: the button becomes "Sure?" and reverts if it is
-   not taken up, so nothing is lost to a stray tap and no dialog interrupts. */
-function armConfirm(btn,label,go){
-  if(btn._armed){ clearTimeout(btn._armed); btn._armed=null; go(); return; }
-  var was=btn.innerHTML;
-  btn.innerHTML=label; btn.classList.add("arm");
-  btn._armed=setTimeout(function(){
-    btn._armed=null; btn.innerHTML=was; btn.classList.remove("arm");
-  },2600);
-}
-function askRemoveSlip(btn,sid){ armConfirm(btn,"Sure?",function(){removeSlip(sid);}); }
-function askClearSlips(btn){ armConfirm(btn,"Tap again to clear everything",function(){clearSlips();}); }
-
 /* A slip priced at jackpot odds is a lottery ticket, and it is counted as one:
    kept out of the record entirely rather than allowed to drag a genuine run of
    form down with it. Judged by odds rather than by how it was built, so a
@@ -8523,6 +8497,7 @@ function myRecord(){
           jack:jack.length, jackWon:jack.filter(function(s){return s.settled&&s.won;}).length,
           pending:real.filter(function(s){return !s.settled;}).length};
 }
+window.swRecord=function(){var r=myRecord();return {built:r.built,won:r.won,settled:SLIPS.filter(function(s){return s.settled&&!isJackpotSlip(s);}).length};};
 /* Same rule as lib/model.js countryOf: "Northern Ireland Premiership" is not in "Northern". */
 function countryOf(l){var two=["Northern Ireland","Faroe Islands","North Macedonia","San Marino"];for(var i=0;i<two.length;i++)if(l.indexOf(two[i]+" ")===0)return two[i];return l.split(" ")[0];}
 /* CONMEBOL countries. Only Argentina and Brazil are in the feeds today, but
@@ -10222,9 +10197,11 @@ function closeSheet(){
 }
 $("scrim").addEventListener("click",function(){closeSheet();closeMySheet();closeSlipsSheet();});
 $("sheet-x").addEventListener("click",closeSheet);
-function anyOverlayOpen(){return ($("sheet")&&$("sheet").classList.contains("on"))||($("mySheet")&&$("mySheet").classList.contains("on"));}
+function anyOverlayOpen(){return ($("sheet")&&$("sheet").classList.contains("on"))||($("mySheet")&&$("mySheet").classList.contains("on"))||($("slipsSheet")&&$("slipsSheet").classList.contains("on"));}
 window.addEventListener("popstate",function(){
-  if(anyOverlayOpen()){closeSheet();closeMySheet();}
+  if(window.swAccountUI&&swAccountUI.eatPop()) return;
+  if(SKIP_POP){SKIP_POP=false;return;}
+  if(anyOverlayOpen()){SLIPS_PUSHED=false;closeSheet();closeMySheet();closeSlipsSheet();}
   else if(document.documentElement.classList.contains("mode-build")||document.documentElement.classList.contains("mode-live")){setView("pred");}
 });
 function pushOverlay(){try{history.pushState({sw:1},"");}catch(e){}}
@@ -10694,6 +10671,56 @@ function dedupeSelections(sel){
   });
   return out;
 }
+/* SWQUOTA */
+/* Today's free codes on this device, as the booking proxy last reported them.
+   Unknown is null, never a guess: no line beats a wrong number. */
+(function(){
+  function lagosDay(ms){
+    var lagosMs=ms+3600000;
+    var daysSinceEpoch=Math.floor(lagosMs/86400000);
+    var y=1970,m=1,d=1;
+    var remaining=daysSinceEpoch;
+    var daysInMonth=[31,28,31,30,31,30,31,31,30,31,30,31];
+    while(true){
+      var isLeap=(y%400===0)||(y%100!==0&&y%4===0);
+      var daysInYear=isLeap?366:365;
+      if(remaining>=daysInYear){
+        remaining-=daysInYear;
+        y++;
+      }else{
+        break;
+      }
+    }
+    while(remaining>0){
+      var isLeap=(y%400===0)||(y%100!==0&&y%4===0);
+      var daysThisMonth=daysInMonth[m-1];
+      if(m===2&&isLeap)daysThisMonth=29;
+      if(remaining>=daysThisMonth){
+        remaining-=daysThisMonth;
+        m++;
+      }else{
+        break;
+      }
+    }
+    d=remaining+1;
+    var yy=String(y);
+    var mm=String(m<10?"0"+m:m);
+    var dd=String(d<10?"0"+d:d);
+    return yy+"-"+mm+"-"+dd;
+  }
+  window.swNoteQuota=function(h){
+    var left=Number(h&&h.get("X-Sw-Quota-Remaining")),limit=Number(h&&h.get("X-Sw-Quota-Limit"));
+    if(!(h&&h.get("X-Sw-Quota-Remaining")!=null&&h.get("X-Sw-Quota-Limit")!=null))return;
+    if(!isFinite(left)||!isFinite(limit)||limit<=0||left<0)return;
+    try{localStorage.setItem("sw.quota",JSON.stringify({day:lagosDay(Date.now()),left:left,limit:limit}));}catch(e){}
+  };
+  window.swQuotaToday=function(){
+    var q=null;try{q=JSON.parse(localStorage.getItem("sw.quota")||"null");}catch(e){}
+    if(!q||q.day!==lagosDay(Date.now())||!(q.limit>0))return null;
+    return {used:Math.max(0,Math.min(q.limit,q.limit-q.left)),limit:q.limit};
+  };
+})();
+/* /SWQUOTA */
 function bookFetch(sel,B,src){
   B=B||curBook();
   sel=dedupeSelections(sel);
@@ -10719,7 +10746,7 @@ function bookFetch(sel,B,src){
     return fetch(url,{method:"POST",headers:_hdrs,
       signal:to.signal,
       body:JSON.stringify({selections:sel})})
-      .then(function(r){to.done();
+      .then(function(r){to.done(); try{ window.swNoteQuota(r.headers); }catch(e){}
         return r.json().catch(function(){return {};}).then(function(d){
           d=d||{};
           /* A non-JSON 500 or a gateway page carries no reason of its own -
@@ -11876,7 +11903,8 @@ function gateDetail(picks,B){
   });
   return n?{rows:rows,odds:tot.toFixed(2),legs:n,book:(B&&B.label)||""}:null;
 }
-window.swResume={bookSlip:function(){bookSlip();},bookMy:function(){bookMy();},build:function(){setView("build");},slips:function(){openSlipsSheet();}};
+window.swResume={bookSlip:function(){bookSlip();},bookMy:function(){bookMy();},build:function(){setView("build");},slips:function(){openSlipsSheet("all");}};
+window.swSetBook=function(k){setBook(k);};window.swBookKey=function(){return BOOKMAKER;};window.swBookMarks=function(){var o={};Object.keys(BOOKS).forEach(function(k){o[k]=BOOKS[k].mark||BOOKS[k].label;});return o;};
 function setBook(k){
   if(!BOOKS[k]||k===BOOKMAKER) return;
   BOOKMAKER=k;
@@ -16615,7 +16643,7 @@ function shareText(picks,odds,code){
   return t;
 }
 function doShare(text,url){
-  if(navigator.share){ navigator.share({title:"SoccerWizard slip",text:text,url:url}).catch(function(){}); }
+  if(navigator.share){ navigator.share({title:"Soccerwizard slip",text:text,url:url}).catch(function(){}); }
   else if(copyText(text+(url?"\n"+url:""))){
     alert("Slip copied - paste it anywhere to share."); }
 }
@@ -17982,7 +18010,7 @@ function wireNotif(){
     if(!("Notification" in window)) return;
     Notification.requestPermission().then(function(p){
       paintBtn();
-      if(p==="granted"){try{new Notification("SoccerWizard",
+      if(p==="granted"){try{new Notification("Soccerwizard",
         {body:"Done. We'll tell you as soon as one of your slips finishes.",
          icon:"/icon-192-maskable.png"});}catch(e){}}
     });
@@ -21974,21 +22002,25 @@ function openContact(){
 }
 (function(){ var b=$("contactBtn"); if(b) b.addEventListener("click",openContact); })();
 /* ------------------------------------------------------------- theming */
-const SUN='<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
-const MOON='<path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/>';
 function setTheme(t){
   document.documentElement.setAttribute("data-theme",t);
   try{localStorage.setItem("sw.theme",t);}catch(e){}
-  const i=$("tglicon"); if(i) i.innerHTML=(t==="dark")?SUN:MOON;
   const m=document.querySelector('meta[name="theme-color"]');
   if(m) m.setAttribute("content",t==="dark"?"#0D0D0F":"#D9D7DE");
 }
 (function(){
   let t=null; try{t=localStorage.getItem("sw.theme");}catch(e){}
-  setTheme(t||"dark");
-  $("tgl").addEventListener("click",function(){
-    setTheme(document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark");});
+  setTheme(t==="light"?"light":"dark");
 })();
+/* Settings (account-ui.js) and a synced pref both land here. */
+window.swSetTheme=function(t){ setTheme(t==="light"?"light":"dark"); };
+/* SWAVATAR */
+window.swAvatarKey=function(){
+  var FREE=["fire","8bit","2bit","lino","glass","halo"], v=null;
+  try{ v=localStorage.getItem("sw.avatar"); }catch(e){}
+  return FREE.indexOf(v)>=0?v:"fire";
+};
+/* /SWAVATAR */
 var _scrollIdle=null;
 addEventListener("scroll",function(){
   /* A scroll handler is the worst place to assume an element is there:
@@ -22803,7 +22835,8 @@ load().catch(function(){});
   "use strict";
   var KEYS={slips:"sw.slips.v1",myslip:"sw.myslip",livefav:"sw.livefav",leaguefav:"formline.favs.v1"};
   var PREFS={book:"sw.book",mk:"sw.mk",risk:"sw.risk",mode:"sw.mode",wspodds:"sw.wspodds",
-    bldleagues:"sw.bldleagues",toponly:"sw.toponly",scope:"sw.scope",legodd:"sw.legodd"};
+    bldleagues:"sw.bldleagues",toponly:"sw.toponly",scope:"sw.scope",legodd:"sw.legodd",
+    avatar:"sw.avatar",name:"sw.name",theme:"sw.theme"};
   var META="sw.sync.meta", SLIPS_KEEP=60;
 
   function own(o,k){ return Object.prototype.hasOwnProperty.call(o,k); }
@@ -22874,12 +22907,14 @@ load().catch(function(){});
     for(k=0;k<sl.length;k++) kept[sl[k].sid]=sl[k];
     var last=JSON.parse(JSON.stringify(d)); last.slips.items=kept;
     jset(ls,META,{v:1,version:version|0,last:last});
+    if(root.swSetTheme){ try{ var th=ls.getItem("sw.theme"); if(th) root.swSetTheme(th); }catch(e){} paintButton(); }
   }
 
   function clearSynced(ls){
     var k;
     for(k in KEYS) if(own(KEYS,k)) try{ ls.removeItem(KEYS[k]); }catch(e){}
-    for(k in PREFS) if(own(PREFS,k)) try{ ls.removeItem(PREFS[k]); }catch(e){}
+    /* a device's look (theme) belongs to the reader, not the account: it survives sign-out */
+    for(k in PREFS) if(own(PREFS,k)&&k!=="theme") try{ ls.removeItem(PREFS[k]); }catch(e){}
     try{ ls.removeItem(META); }catch(e){}
   }
 
@@ -22892,7 +22927,7 @@ load().catch(function(){});
   var st={on:false,known:false,email:"",timer:null,backoff:0,busy:false,raw:"",nextAt:0,pulled:0};
   function $(id){ return d.getElementById(id); }
   function rawNow(){ var s="",k; for(k in KEYS) s+=ls.getItem(KEYS[k])+"\u0001"; for(k in PREFS) s+=ls.getItem(PREFS[k])+"\u0001"; return s; }
-  function isSyncedKey(k){ var x; for(x in KEYS) if(own(KEYS,x)&&KEYS[x]===k) return true; return false; }
+  function isSyncedKey(k){ var x; for(x in KEYS) if(own(KEYS,x)&&KEYS[x]===k) return true; for(x in PREFS) if(own(PREFS,x)&&PREFS[x]===k) return true; return false; }
   function reload(){ try{ if(root.swReloadSynced) root.swReloadSynced(); }catch(e){} }
   function req(method,url,body,cb){
     var x=new XMLHttpRequest();
@@ -22905,17 +22940,12 @@ load().catch(function(){});
   }
 
   var css=d.createElement("style");
-  css.textContent="#hdAccount .ac-i{font-weight:800;font-size:14px;line-height:1}"+
+  css.textContent="#hdAccount.ac-on{width:36px;height:36px;border-radius:50%;padding:0;overflow:hidden;border:1.5px solid var(--accent-rim);background:var(--card-2)}"+
+    "#hdAccount .ac-av{width:100%;height:100%;object-fit:cover;display:block}"+
+    "@media(max-width:420px){#hdAccount.ac-on{width:34px;height:34px}}"+
     "#acctNote{position:fixed;left:12px;right:12px;top:12px;z-index:9999;background:var(--card);color:var(--text);"+
     "border:1px solid var(--line);border-radius:12px;padding:12px 44px 12px 14px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.35)}"+
-    "#acctNote button{position:absolute;right:6px;top:6px;background:none;border:0;color:var(--soft);font-size:20px;width:32px;height:32px;cursor:pointer}"+
-    "#acctSheet .ac-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}"+
-    "#acctSheet .ac-row small{display:block;color:var(--soft)}"+
-    "#acctSheet .ac-btn{display:block;width:100%;margin:10px 0 0;padding:12px;border-radius:12px;border:1px solid var(--line);"+
-    "background:var(--card);color:var(--text);font:inherit;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;box-sizing:border-box}"+
-    "#acctSheet .ac-danger{color:#ff6b6b}"+
-    "#acctSheet input{width:100%;box-sizing:border-box;margin:10px 0 0;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit}"+
-    "#acctSheet .ac-msg{min-height:1.3em;margin:10px 0 0;font-weight:600}";
+    "#acctNote button{position:absolute;right:6px;top:6px;background:none;border:0;color:var(--soft);font-size:20px;width:32px;height:32px;cursor:pointer}";
   d.head.appendChild(css);
 
   function notice(text){
@@ -22932,14 +22962,15 @@ load().catch(function(){});
     var b=$("hdAccount"); if(!b) return;
     b.hidden=false;
     if(st.on){
-      b.innerHTML=""; var i=d.createElement("span"); i.className="ac-i"; i.textContent=(st.email.charAt(0)||"?").toUpperCase();
-      b.appendChild(i); b.setAttribute("aria-label","Your account");
-    } else { b.innerHTML=PERSON; b.setAttribute("aria-label","Sign in"); }
+      b.innerHTML='<img class="ac-av" src="/av/'+(root.swAvatarKey?root.swAvatarKey():"fire")+'.webp" alt="" width="36" height="36">';
+      b.setAttribute("aria-label","Your account"); b.setAttribute("aria-haspopup","menu");
+      b.classList.add("ac-on");
+    } else { b.innerHTML=PERSON; b.setAttribute("aria-label","Sign in"); b.classList.remove("ac-on"); }
   }
 
   function signedOutHere(reason,quiet){
     var had=!!readMeta(ls);
-    st.on=false; clearSynced(ls); reload(); paintButton(); closeSheet();
+    st.on=false; clearSynced(ls); reload(); paintButton(); if(root.swAccountUI){ root.swAccountUI.close(); root.swAccountUI.closeView(); }
     if(had&&!quiet) notice(reason==="displaced"?"Signed out: this account was used on a newer device.":"You were signed out. Sign in again to sync.");
   }
 
@@ -22989,82 +23020,6 @@ load().catch(function(){});
   function pullNow(){ if(st.on&&Date.now()>=st.nextAt) sync(false); }
 
   /* ---------------------------------------------------------- the sheet */
-  var sheet=null;
-  function el(tag,cls,text){ var e=d.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
-  function say(text){ var m=$("acctMsg"); if(m) m.textContent=text; }
-  function fail(code,j){
-    if(code===0) return say("No connection. Check your data and try again.");
-    if(j&&j.error==="reauth") return say("For your safety, sign in again, then delete within 10 minutes.");
-    say("Something went wrong. Try again.");
-  }
-  function build(){
-    sheet=el("div","sheet"); sheet.id="acctSheet"; sheet.setAttribute("role","dialog"); sheet.setAttribute("aria-modal","true");
-    sheet.setAttribute("aria-labelledby","acctTitle");
-    sheet.innerHTML='<div class="sheet-grab"><i></i></div><div class="sheet-head"><div class="info"><h3 id="acctTitle">Your account</h3><p id="acctEmail"></p></div>'+
-      '<button class="sheet-x" id="acctX" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'+
-      '<div class="sheet-body"><h4>Your devices</h4><div id="acctDevs"></div>'+
-      '<div class="ac-row"><div><span>Picks by email</span><small>The wizard\'s best picks, now and then</small></div><button class="ac-btn" id="acctMail" type="button" style="width:auto;margin:0">…</button></div>'+
-      '<a class="ac-btn" href="/api/account/export" download>Download my data</a>'+
-      '<button class="ac-btn" id="acctOut" type="button">Sign out</button>'+
-      '<button class="ac-btn" id="acctOutAll" type="button">Sign out everywhere</button>'+
-      '<button class="ac-btn ac-danger" id="acctDel" type="button">Delete account</button>'+
-      '<div id="acctDelBox" hidden><p>This deletes your account and everything synced to it. It cannot be undone. Type DELETE to confirm.</p>'+
-      '<input id="acctDelIn" autocomplete="off" autocapitalize="characters"><button class="ac-btn ac-danger" id="acctDelGo" type="button">Delete for good</button></div>'+
-      '<p class="ac-msg" id="acctMsg" role="status" aria-live="polite"></p></div>';
-    d.body.appendChild(sheet);
-    $("acctX").onclick=closeSheet;
-    $("scrim").addEventListener("click",closeSheet);
-    d.addEventListener("keydown",function(e){ if(e.key==="Escape") closeSheet(); });
-    $("acctOut").onclick=function(){ req("POST","/api/auth/logout",{},function(code,j){ if(code===200||code===401) signedOutHere(null,true); else say("No connection. You are still signed in. Try again."); }); };
-    $("acctOutAll").onclick=function(){ req("POST","/api/auth/logout-all",{},function(code,j){ if(code===200||code===401) signedOutHere(null,true); else fail(code,j); }); };
-    $("acctDel").onclick=function(){ $("acctDelBox").hidden=false; $("acctDelIn").focus(); };
-    $("acctDelGo").onclick=function(){
-      if($("acctDelIn").value.replace(/\s/g,"").toUpperCase()!=="DELETE") return say("Type DELETE to confirm.");
-      req("POST","/api/account/delete",{},function(code,j){
-        if(code===200){ st.on=false; clearSynced(ls); reload(); paintButton(); closeSheet(); notice("Your account is deleted."); return; }
-        if(j&&j.error==="reauth"){ fail(code,j); var a=el("a",null,"Sign in again"); a.href="/login?return="+encodeURIComponent("/?account=1"); $("acctMsg").appendChild(d.createTextNode(" ")); $("acctMsg").appendChild(a); return; }
-        fail(code,j);
-      });
-    };
-    $("acctMail").onclick=function(){ var b=this, on=b.getAttribute("data-on")!=="1";
-      b.disabled=true; req("POST","/api/account/consent",{on:on},function(code,j){ b.disabled=false;
-        if(code===200){ b.setAttribute("data-on",j.on?"1":"0"); b.textContent=j.on?"On":"Off"; } else fail(code,j); }); };
-  }
-  function when(iso){ try{ return new Date(iso).toLocaleDateString(undefined,{day:"numeric",month:"short"}); }catch(e){ return ""; } }
-  function loadDevices(){
-    var box=$("acctDevs"); box.textContent="Loading…";
-    req("GET","/api/auth/devices",null,function(code,j){
-      if(code===401) return signedOutHere(j.reason);
-      if(code!==200) { box.textContent=""; return fail(code,j); }
-      box.textContent="";
-      (j.devices||[]).forEach(function(v){
-        var row=el("div","ac-row"), info=el("div");
-        info.appendChild(el("span",null,v.label||"Device"));
-        info.appendChild(el("small",null,v.current?"This device":"Last used "+when(v.last_used_at)));
-        row.appendChild(info);
-        if(!v.current){
-          var b=el("button","ac-btn","Sign out"); b.type="button"; b.style.width="auto"; b.style.margin="0";
-          b.onclick=function(){ req("POST","/api/auth/devices/end",{id:v.id},function(c2,j2){ if(c2===200) loadDevices(); else fail(c2,j2); }); };
-          row.appendChild(b);
-        }
-        box.appendChild(row);
-      });
-    });
-  }
-  function openSheet(){
-    if(!sheet) build();
-    $("acctEmail").textContent=st.email; say(""); $("acctDelBox").hidden=true; $("acctDelIn").value="";
-    $("scrim").classList.add("on"); sheet.classList.add("on"); d.documentElement.classList.add("locked");
-    loadDevices();
-    req("GET","/api/account/consent",null,function(code,j){ var b=$("acctMail"); if(!b) return;
-      if(code===200){ b.setAttribute("data-on",j.on?"1":"0"); b.textContent=j.on?"On":"Off"; } else b.textContent="Off"; });
-    $("acctX").focus();
-  }
-  function closeSheet(){
-    if(!sheet||!sheet.classList.contains("on")) return;
-    sheet.classList.remove("on"); $("scrim").classList.remove("on"); d.documentElement.classList.remove("locked");
-  }
-
   var wired=false;
   function wire(){
     if(wired) return; wired=true;
@@ -23120,11 +23075,12 @@ load().catch(function(){});
   }
 
   /* ----------------------------------------------------------- start up */
+  root.swAcct={st:st,req:req,signedOutHere:signedOutHere,notice:notice,sync:sync,paintButton:paintButton};
   function boot(){
     if(!d.querySelector('meta[name="sw-auth"]')) return;
     var b=$("hdAccount"); if(!b) return;
     b.addEventListener("click",function(){
-      if(st.on) return openSheet();
+      if(st.on&&root.swAccountUI) return root.swAccountUI.toggle();
       location.href="/login?return="+encodeURIComponent(location.pathname+location.search);
     });
     req("GET","/api/me",null,function(code,j){
@@ -23139,7 +23095,9 @@ load().catch(function(){});
         root.swSignIn.resume({action:g.action,detail:g.detail,afterAuth:function(j,done){ sync(false,done); },
           onDone:(root.swResume&&root.swResume[g.resume])||null});
       } else sync(false);
-      if(/[?&]account=1/.test(location.search)) openSheet();
+      if(/[?&]account=1/.test(location.search)){
+        if(root.swAccountUI) root.swAccountUI.settings(); else root.addEventListener("load",function(){ if(root.swAccountUI) root.swAccountUI.settings(); });
+      }
     });
   }
   if(d.readyState==="loading") d.addEventListener("DOMContentLoaded",boot); else boot();

@@ -92,13 +92,12 @@ test("the bottom bar is never hidden by scrolling any more", () => {
 });
 
 test("the top bar keeps the things that are not navigation", () => {
-  /* It stays as orientation: brand, the date, the theme toggle. Hiding the
+  /* It stays as orientation: brand, the date (the theme toggle moved to Settings). Hiding the
      whole masthead would take the theme control with it. */
   for (const sel of [".logo", ".tgl"]) {
     const r = rule(sel);
     if (r) assert.doesNotMatch(r, /display:\s*none/, sel + " must not be hidden");
   }
-  assert.ok(src.includes('id="tgl"'), "the theme toggle must stay reachable");
   assert.ok(src.includes('id="logo"'), "the logo must stay");
 });
 

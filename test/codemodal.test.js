@@ -27,6 +27,6 @@ test("the button says Make it safer, not Make it stronger", () => {
   /* "Stronger" read as bigger odds; the job is likelier to land at a lower
      price (owner, 25 Sep 2026). */
   assert.ok(!/>Make it stronger/.test(html), "Make it stronger is back somewhere");
-  assert.ok((html.match(/&go=safer\\">Make it safer/g) || []).length >= 2,
-    "both the booked-code modal and Your slips offer it");
+  assert.ok((html.match(/&go=safer\\">Make it safer/g) || []).length >= 1, "the booked-code modal offers it");
+  assert.match(html, /data-slsafe=[^>]*aria-label='Make it safer'/, "My slips offers it (short label Safer, full name for screen readers)");
 });

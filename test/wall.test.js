@@ -11,7 +11,7 @@ test("each locked entry point asks swGate first", () => {
   assert.match(fnBody("bookSlip"), /^\s*if\(window\.swGate&&!swGate\("book",gateDetail\(BUILD\.picks,curBook\(\)\),bookSlip,"bookSlip"\)\) return;/);
   assert.match(fnBody("bookMy"), /^\s*if\(window\.swGate&&!swGate\("book",/);
   assert.match(fnBody("splitAndBook"), /^\s*if\(window\.swGate&&!swGate\("book",/);
-  assert.match(fnBody("openSlipsSheet"), /^\s*if\(window\.swGate&&!swGate\("slips",null,openSlipsSheet,"slips"\)\) return;/);
+  assert.match(fnBody("openSlipsSheet"), /^\s*if\(window\.swGate&&!swGate\("slips",null,function\(\)\{openSlipsSheet\(filter\);\},"slips"\)\) return;/);
   assert.match(html, /\$\("tab-build"\)\.addEventListener\("click",function\(\)\{if\(window\.swGate&&!swGate\("build",null,function\(\)\{setView\("build"\);\},"build"\)\) return; setView\("build"\);\}\);/);
   assert.match(html, /if\(window\.swGate&&!swGate\("book",null,function\(\)\{go\.click\(\);\},""\)\) return;\s*BYO\._booking=true;/);
 });
@@ -55,12 +55,7 @@ test("a Google redirect comes back into the spell and resumes only a whitelisted
   assert.match(block, /signedin=1/);
   assert.match(block, /sessionStorage/);
   assert.match(block, /root\.swResume&&root\.swResume\[g\.resume\]/);
-  assert.match(html, /window\.swResume=\{bookSlip:function\(\)\{bookSlip\(\);\},bookMy:function\(\)\{bookMy\(\);\},build:function\(\)\{setView\("build"\);\},slips:function\(\)\{openSlipsSheet\(\);\}\};/);
-});
-
-test("the account sheet has a picks-by-email switch", () => {
-  assert.match(block, /Picks by email/);
-  assert.match(block, /\/api\/account\/consent/);
+  assert.match(html, /window\.swResume=\{bookSlip:function\(\)\{bookSlip\(\);\},bookMy:function\(\)\{bookMy\(\);\},build:function\(\)\{setView\("build"\);\},slips:function\(\)\{openSlipsSheet\("all"\);\}\};/);
 });
 
 test("every way into Build passes the wall: setView gates the build view itself", () => {

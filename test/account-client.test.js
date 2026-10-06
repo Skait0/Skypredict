@@ -91,7 +91,7 @@ test("an unfollowed match and a changed pref carry fresh stamps", () => {
 
 test("signing out clears the synced things and nothing else", () => {
   const A = load();
-  const keep = { "sw.view": "list", "sw.age18": "1", "sw.theme": "dark" };
+  const keep = { "sw.view": "list", "sw.age18": "1", "sw.theme": "dark" }; // a device's look survives sign-out
   const ls = store(Object.assign({ "sw.slips.v1": "[]", "sw.myslip": "[]", "sw.livefav": "{}", "formline.favs.v1": "{}",
     "sw.risk": "3", "sw.legodd": "1.4", "sw.sync.meta": "{}" }, keep));
   A.clearSynced(ls);
@@ -129,9 +129,10 @@ test("a device that never changes anything still pulls what other devices did", 
 });
 
 test("sign-out with no connection says still signed in, rather than claiming success", () => {
-  const m = /\$\("acctOut"\)\.onclick=function\(\)\{([\s\S]*?)\};/.exec(block[1]);
-  assert.ok(m, "the acctOut click handler");
-  assert.match(m[1], /code===200\|\|code===401/, "only a real 200/401 answer may say signed out; anything else (0, 5xx) must not");
+  const ui = fs.readFileSync(require("path").join(__dirname, "..", "public", "account-ui.js"), "utf8");
+  const i = ui.indexOf("function signOut()");
+  assert.ok(i > 0, "signOut in account-ui.js");
+  assert.ok(ui.slice(i, i + 300).indexOf("code===200||code===401") > 0, "only a real 200/401 answer may say signed out; anything else (0, 5xx) must not");
 });
 
 test("boot() never calls /api/me when the page carries no sw-auth meta (AUTH_ENABLED off)", () => {
