@@ -178,10 +178,18 @@
       NONCE=j;
       function go(){ if(!live(sid)) return; var g=root.google&&root.google.accounts&&root.google.accounts.id; if(!g) return;
         g.initialize({client_id:gcid,nonce:j.nonce,callback:onCredential,use_fedcm_for_prompt:true,auto_select:false,itp_support:true,context:"signin",cancel_on_tap_outside:false});
+        /* Google's button wins whenever it arrives: if ours stood in while the
+           script was slow, swap back in the same 44px (no jump). */
+        slot.hidden=false; $(".swsi-gbtn").hidden=true;
         g.renderButton(slot,{theme:"filled_black",shape:"pill",text:"continue_with",size:"large",width:Math.min(400,slot.offsetWidth||320)});
         try{ g.prompt(); }catch(e){} }
       if(root.google&&root.google.accounts) go();
-      else { root.swGisLoad=go; script("https://accounts.google.com/gsi/client?onload=swGisLoad","swsi-gis"); }
+      else {
+        /* Google's script has no ?onload= callback (that is Turnstile's API);
+           it calls window.onGoogleLibraryLoad. With the query param the first
+           open never drew Google's button or One Tap, only a second open did. */
+        root.swGisLoad=go; root.onGoogleLibraryLoad=function(){ if(root.swGisLoad) root.swGisLoad(); };
+        script("https://accounts.google.com/gsi/client","swsi-gis"); }
     });
   }
   function ownButton(){ $(".swsi-g").hidden=true; $(".swsi-gbtn").hidden=false; }
@@ -232,7 +240,7 @@
       if(!live(sid)) return;
       if(st!==200) return say(errText(st,j));
       $(".swsi-ef").hidden=true; googleShown(false); $(".swsi-to").textContent=EMAIL;
-      $(".swsi-h").innerHTML="Check your <i>email</i>"; $(".swsi-s").hidden=true; $(".swsi-head").hidden=true;
+      $(".swsi-h").innerHTML="Check your <i>email</i>"; $(".swsi-h").hidden=false; $(".swsi-s").hidden=true; $(".swsi-head").hidden=true;
       $(".swsi-cf").hidden=false; $(".swsi-code input").value=""; $(".swsi-code input").focus();
     });
   }
@@ -268,7 +276,10 @@
   }
 
   function titles(){
-    $(".swsi-head").hidden=false; $(".swsi-s").hidden=false;
+    /* /login already says "Sign in" and why above the card; the card repeating
+       it read as two headlines. The page form starts at the buttons. */
+    var pg=box.classList.contains("page");
+    $(".swsi-head").hidden=false; $(".swsi-s").hidden=pg; $(".swsi-h").hidden=pg;
     $(".swsi-h").innerHTML="Sign in to <i>"+esc(HEAD[cur.action]||HEAD.book)+"</i>";
   }
   function reset(o){
