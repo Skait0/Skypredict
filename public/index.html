@@ -2129,6 +2129,45 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 
 /* The history sheet. One card a slip, legs listed under it with a mark each,
    so the whole thing is readable at a glance without opening anything. */
+.sl2-filt{display:flex;gap:6px;margin:0 0 6px;overflow-x:auto;scrollbar-width:none}
+.sl2-filt button{flex:none;padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--soft);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.sl2-filt button.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
+.sl2-filt .num{font-weight:700;opacity:.75;margin-left:4px}
+.sl2{background:var(--card);border:1px solid var(--line);border-radius:12px}
+.sl2-top{display:flex;align-items:center;gap:8px;padding:12px 12px 10px}
+.sl2-st{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;padding:4px 8px;border-radius:99px}
+.sl2-st.run{color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent)}
+.sl2-st.lost{color:var(--red-ink);background:color-mix(in srgb,var(--red) 13%,transparent)}
+.sl2-st.won{color:var(--green-ink);background:color-mix(in srgb,var(--green) 13%,transparent)}
+.sl2-meta{font-size:12px;font-weight:600;color:var(--faint);display:flex;gap:5px;align-items:baseline;min-width:0;white-space:nowrap;overflow:hidden}
+.sl2-od{margin-left:auto;font-size:20px;color:var(--accent)}
+.sl2-acts{display:flex;gap:4px;padding:0 12px 10px}
+.sl2-a{display:flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 10px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);color:var(--text);font:inherit;font-size:12px;font-weight:800;cursor:pointer;flex:none;text-decoration:none}
+.sl2-a svg{width:15px;height:15px}
+.sl2-a.share{background:var(--red-fill);border-color:var(--red-fill);color:#fff;flex:1 1 0;min-width:74px}
+.sl2-a.safer{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.sl2-a.more{width:34px;padding:0}
+.sl2-code{display:flex;align-items:center;gap:10px;margin:0 12px 10px;padding:7px 7px 7px 12px;border-radius:8px;background:var(--card-2)}
+.sl2-code .num{font-size:18px;letter-spacing:.08em;color:var(--accent)}
+.sl2-code button{margin-left:auto;display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:99px;padding:5px 11px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.sl2-code svg{width:13px;height:13px}
+.sl2-mid{display:flex;align-items:center;gap:10px;padding:0 12px 11px;color:var(--soft);font-size:12px;font-weight:600}
+.sl2-mid b{color:var(--text)}
+.sl2-prog{flex:1;display:flex;gap:3px}.sl2-prog i{flex:1;height:4px;border-radius:2px;background:var(--raise)}
+.sl2-prog i.w{background:var(--green)}.sl2-prog i.l{background:var(--red)}
+.sl2-legs{max-height:0;overflow:hidden;transition:max-height 300ms var(--ease-out)}.sl2.open .sl2-legs{max-height:1400px}
+.sl2-leg{display:flex;align-items:center;gap:9px;padding:8px 12px;border-top:1px solid var(--line);font-size:12.5px}
+.sl2-leg .d{width:7px;height:7px;border-radius:50%;background:var(--grey);flex:none}
+.sl2-leg.win .d{background:var(--green)}.sl2-leg.lose .d{background:var(--red)}
+.sl2-leg .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sl2-leg .p{color:var(--soft);font-size:12px;font-weight:600}
+.sl2-tog{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;height:38px;border:0;border-top:1px solid var(--line);background:none;color:var(--soft);font:inherit;font-size:12.5px;font-weight:700;border-radius:0 0 12px 12px;cursor:pointer}
+.sl2-tog svg{width:15px;height:15px;transition:transform 250ms var(--ease-out)}.sl2.open .sl2-tog svg{transform:rotate(180deg)}
+@media (hover:hover){.sl2-a:not(.share):not(.safer):hover{background:var(--raise)}.sl2-tog:hover{color:var(--text)}}
+.sl2-pop{position:fixed;z-index:9990;min-width:170px;padding:6px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.sl2-mi{width:100%;display:flex;align-items:center;gap:11px;padding:10px 9px;border:0;background:none;border-radius:8px;color:var(--text);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;text-align:left}
+.sl2-mi svg{width:18px;height:18px;color:var(--soft);flex:none}
+.sl2-mi:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (hover:hover){.sl2-mi:hover{background:var(--raise)}}
 .sl-rec{display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:8px;
   margin:2px 0 14px}
 .sl-rec div{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
@@ -8363,130 +8402,66 @@ $("swUndoBtn").addEventListener("click",function(){ window.swPend.undo(); });
 /* Which slip is expanded. null until the sheet has been drawn once, so the
    first draw can choose the newest without overriding a later choice. */
 var SLOPEN=null;
+function progressWords(legs){
+  var w=0,l=0; legs.forEach(function(x){ if(x.res==="win") w++; else if(x.res==="lose") l++; });
+  var left=legs.filter(function(x){ return x.res!=="win"&&x.res!=="lose"&&x.res!=="void"; }).length;
+  return "<b>"+w+"</b> landed"+(l?", <b>"+l+"</b> lost":"")+(left?", "+left+" to play":"");
+}
+if(!window.SLFILTER) window.SLFILTER="all";
+var SHARE_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>';
+var SAFE_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>';
+var RB_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.3L3 16M3 21v-5h5"/></svg>';
+var MORE_SVG='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
+var COPY_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+var CHEV_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 function renderSlipsSheet(){
   var body=$("slipsBody"); if(!body) return;
-  if(!SLIPS.length){
-    body.innerHTML="<div class='bld-empty'><b>No slips yet</b>"+
-      "Book one and it will be kept here, with its result once the games finish.</div>";
+  var c=slipCounts();
+  if(!c.all){
+    body.innerHTML="<div class='bld-empty'><b>No slips yet</b>Book one and it will be kept here, with its result once the games finish.</div>";
     return;
   }
-  var r=myRecord();
-  var head="<div class='sl-rec'>"+
-    "<div><i>Slips</i><b>"+r.built+"</b></div>"+
-    "<div><i>Landed</i><b>"+r.won+"</b></div>"+
-    "<div><i>Legs</i><b>"+(r.legs?Math.round(100*r.legHits/r.legs)+"%":"-")+"</b></div>"+
-    (r.best?"<div><i>Best</i><b>×"+r.best.odds.toFixed(2)+"</b></div>":"")+
-    "</div>";
-  /* Nothing chosen yet means the newest is the one to show. Once anything has
-     been opened or closed by hand, that choice is what holds. */
-  if(SLOPEN===null) SLOPEN=(SLIPS[0]&&SLIPS[0].sid)||"";
-  body.innerHTML=head+SLIPS.map(function(sp){
-    var state=sp.settled?(sp.won?"won":"lost"):"open";
-    var label=sp.settled?(sp.won?"Won":"Lost"):"Running";
-    var open=(sp.sid===SLOPEN);
-    return "<div class='sl-card "+state+(open?" is-open":"")+"'>"+
-      /* One line each, opened on demand. A booked slip is mostly answered by
-         its first line - did it land, when, for how much - and sixty of them
-         stacked open meant scrolling past hundreds of legs to find the one you
-         were looking for. The legs are the detail behind the answer, so they
-         wait until asked for. The newest is open, because that is the one
-         anyone arriving here is almost always checking. */
-      "<button class='sl-head' type='button' data-slop='"+esc(sp.sid||"")+"' "+
-        "aria-expanded='"+(open?"true":"false")+"'>"+
-        "<span class='sl-tag "+state+"'>"+label+"</span>"+
-        (isJackpotSlip(sp)?"<span class='sl-tag sl-tag-jack'>Jackpot</span>":"")+
-        "<span class='sl-when'>"+esc(slipWhen(sp.at))+" · "+sp.legs.length+" games</span>"+
-        "<span class='sl-odds'>×"+(sp.odds>=1000?Math.round(sp.odds).toLocaleString():sp.odds.toFixed(2))+"</span>"+
-        "<span class='sl-chev' aria-hidden='true'>▾</span></button>"+
-      "<div class='sl-body'>"+
-      "<div class='sl-legs'>"+sp.legs.map(function(l){
-        /* A dot, not a tick. Ticks and crosses read as a checklist somebody
-           is working through; these are results, and the site already says
-           status with a coloured dot everywhere else. The score does the
-           explaining - the dot only has to say which way it went. */
-        var sc=(l.hg!=null&&l.ag!=null)?(" "+l.hg+"-"+l.ag):"";
-        return "<div class='sl-leg "+(l.res||"open")+"'><span class='sl-m'></span>"+
-          "<span class='sl-t'>"+esc(l.home)+" v "+esc(l.away)+"</span>"+
-          "<span class='sl-p'>"+esc(l.label||l.code)+esc(sc)+"</span></div>";
-      }).join("")+"</div>"+
-      /* The code was printed as plain text, which is the one thing on this card
-         somebody actually needs to use - and it could not be copied. */
-      "<div class='sl-acts'>"+
-        (sp.code
-          ? "<span class='sl-code'>Code <b>"+esc(sp.code)+"</b></span>"+
-            "<button class='sl-mini' type='button' data-slcp=\""+esc(sp.code)+"\" "+
-              "aria-label='Copy booking code'>Copy</button>"
-          : "<span class='sl-code sl-code-none'>No code</span>")+
-        /* Not "edit": this slip is a bet that was placed, and nothing here can
-           change it. What is useful is starting a new one from it, so it loads
-           the legs that are still open into My slip and says what it had to
-           leave behind. */
-        "<button class='sl-mini' type='button' data-slrb='"+esc(sp.sid||"")+"'>Rebuild</button>"+
-        /* Make it safer, as on the booked-code card: the converter's Edit for
-           me on this code at the book that issued it. Only while the slip is
-           still open - a settled bet cannot be made safer - and only with a
-           book on record, because a guessed one fails to read the code. */
-        ((sp.code&&sp.book&&BOOKS[sp.book]&&!sp.settled)
-          ? "<a class='sl-mini' data-slsafe=\""+esc(sp.code)+"\" data-slbook=\""+esc(sp.book)+"\" "+
-              "href=\"/?book="+encodeURIComponent(sp.book)+
-              "&code="+encodeURIComponent(sp.code)+"&go=safer\">Make it safer</a>"
-          : "")+
-        /* A won ticket gets the celebration - see shareWin. */
-        ((sp.settled&&sp.won)
-          ? "<button class='sl-mini sl-win' type='button' data-slwin='"+esc(sp.sid||"")+"'>Share your win</button>"
-          : "")+
-        "<button class='sl-mini sl-mini-x' type='button' data-slrm='"+esc(sp.sid||"")+"' "+
-          "aria-label='Remove this slip'>Delete</button>"+
-      "</div>"+
-      "</div>"+
-    "</div>";
-  }).join("")+
-  /* Under the list, not in the header: clearing the lot is the last thing
-     anyone wants here, so it should be the last thing they reach. */
-  "<div class='sl-foot'><button class='sl-clear' id='slipsClear' type='button'>"+
-    "Clear slip history</button></div>";
-  /* One open at a time. Two or three expanded and the density this is for is
-     gone again; and with one, opening the next always closes the last without
-     anyone having to tidy up. */
-  body.querySelectorAll("[data-slop]").forEach(function(b){
-    b.addEventListener("click",function(){
-      SLOPEN=(SLOPEN===b.dataset.slop)?"":b.dataset.slop;
-      renderSlipsSheet();
-    });
-  });
-  body.querySelectorAll("[data-slrm]").forEach(function(b){
-    b.addEventListener("click",function(){ askRemoveSlip(b,b.dataset.slrm); });
-  });
-  body.querySelectorAll("[data-slcp]").forEach(function(b){
-    b.addEventListener("click",function(){
-      var code=b.dataset.slcp;
-      copyText(code);
-      var was=b.textContent; b.textContent="Copied"; b.classList.add("ok");
-      setTimeout(function(){ b.textContent=was; b.classList.remove("ok"); },1500);
-    });
-  });
-  /* Make it safer happens in the code modal, as it does under a fresh code:
-     open the code, then press its pill. The href stays for a new tab. */
-  body.querySelectorAll("[data-slsafe]").forEach(function(a){
-    a.addEventListener("click",function(e){
-      if(e.metaKey||e.ctrlKey||e.shiftKey||e.button===1) return;
-      var B=BOOKS[a.dataset.slbook]; if(!B) return;
-      e.preventDefault();
-      showCode(a.dataset.slsafe,"codeSaferHost",null,B,[]);
-      var go=document.querySelector("#codeModal .cs-go"); if(go) go.click();
-    });
-  });
-  body.querySelectorAll("[data-slrb]").forEach(function(b){
-    b.addEventListener("click",function(){ rebuildSlip(b.dataset.slrb); });
-  });
-  body.querySelectorAll("[data-slwin]").forEach(function(b){
-    b.addEventListener("click",function(){
-      var sp=SLIPS.filter(function(x){return x.sid===b.dataset.slwin;})[0];
-      if(sp) shareWin(sp,b);
-    });
-  });
-  var ca=$("slipsClear");
-  if(ca) ca.addEventListener("click",function(){ askClearSlips(ca); });
+  var F=window.SLFILTER||"all";
+  var shown=SLIPS.filter(function(s){ return !(window.swPend&&window.swPend.hidden(s.sid))&&(F==="all"||slipState(s)===F); });
+  if(SLOPEN===null) SLOPEN=(shown[0]&&shown[0].sid)||"";
+  var LBL={run:"Running",lost:"Lost",won:"Won"};
+  body.innerHTML=
+    "<div class='sl2-filt'>"+[["all","All"],["run","Running"],["lost","Lost"],["won","Won"]].map(function(f){
+      return "<button type='button' data-slf='"+f[0]+"' class='"+(F===f[0]?"on":"")+"'>"+f[1]+"<span class='num'>"+c[f[0]]+"</span></button>"; }).join("")+"</div>"+
+    "<div class='ys-lh'><h4>"+shown.length+(shown.length===1?" slip":" slips")+"</h4><span class='ys-clr'></span></div>"+
+    (shown.length?"":"<div class='bld-empty'><b>Nothing here</b>No "+LBL[F].toLowerCase()+" slips right now.</div>")+
+    shown.map(function(sp){
+      var st=slipState(sp), open=sp.sid===SLOPEN;
+      var safe=sp.code&&sp.book&&BOOKS[sp.book]&&!sp.settled;
+      return "<div class='sw-swipe' data-sid='"+esc(sp.sid)+"'><div class='sw-bin'>"+BIN_SVG+"</div>"+
+        "<div class='sw-card sl2"+(open?" open":"")+"'>"+
+        "<div class='sl2-top'><span class='sl2-st "+st+"'>"+LBL[st]+"</span>"+
+          (isJackpotSlip(sp)?"<span class='sl2-st jack'>Jackpot</span>":"")+
+          "<span class='sl2-meta'>"+(sp.book?bookMark(sp.book):"")+"<span>"+esc(slipWhen(sp.at))+"</span></span>"+
+          "<span class='sl2-od num'>×"+(sp.odds>=1000?Math.round(sp.odds).toLocaleString():sp.odds.toFixed(2))+"</span></div>"+
+        "<div class='sl2-acts'>"+
+          "<button class='sl2-a share' type='button' data-slsh='"+esc(sp.sid)+"'>"+SHARE_SVG+"Share</button>"+
+          (safe?"<a class='sl2-a safer' data-slsafe=\""+esc(sp.code)+"\" data-slbook=\""+esc(sp.book)+"\" href=\"/?book="+encodeURIComponent(sp.book)+"&code="+encodeURIComponent(sp.code)+"&go=safer\" aria-label='Make it safer'>"+SAFE_SVG+"Safer</a>":"")+
+          "<button class='sl2-a' type='button' data-slrb='"+esc(sp.sid)+"'>"+RB_SVG+"Rebuild</button>"+
+          "<button class='sl2-a more' type='button' data-slmore='"+esc(sp.sid)+"' aria-label='More'>"+MORE_SVG+"</button></div>"+
+        (sp.code?"<div class='sl2-code'><span class='num'>"+esc(sp.code)+"</span><button type='button' data-slcp=\""+esc(sp.code)+"\" aria-label='Copy booking code'>"+COPY_SVG+"Copy</button></div>":"")+
+        "<div class='sl2-mid'><span>"+progressWords(sp.legs)+"</span><div class='sl2-prog'>"+sp.legs.map(function(l){
+          return "<i class='"+(l.res==="win"?"w":l.res==="lose"?"l":"")+"'></i>"; }).join("")+"</div></div>"+
+        "<div class='sl2-legs'>"+sp.legs.map(function(l){
+          var sc=(l.hg!=null&&l.ag!=null)?(" "+l.hg+"-"+l.ag):"";
+          return "<div class='sl2-leg "+(l.res||"open")+"'><span class='d'></span><span class='t'>"+esc(l.home)+" v "+esc(l.away)+"</span><span class='p'>"+esc(l.label||l.code)+esc(sc)+"</span></div>"; }).join("")+"</div>"+
+        "<button class='sl2-tog' type='button' data-slop='"+esc(sp.sid)+"' aria-expanded='"+open+"'><span>"+(open?"Hide games":"Show "+sp.legs.length+" games")+"</span>"+CHEV_SVG+"</button>"+
+        "</div></div>";
+    }).join("");
+  body.querySelectorAll("[data-slf]").forEach(function(b){ b.onclick=function(){ window.SLFILTER=b.getAttribute("data-slf"); SLOPEN=null; renderSlipsSheet(); }; });
+  body.querySelectorAll("[data-slop]").forEach(function(b){ b.onclick=function(){ SLOPEN=(SLOPEN===b.dataset.slop)?"":b.dataset.slop; renderSlipsSheet(); }; });
+  body.querySelectorAll("[data-slsh]").forEach(function(b){ b.onclick=function(){
+    var sp=SLIPS.filter(function(s){return s.sid===b.dataset.slsh;})[0]; if(!sp) return;
+    if(sp.code) shareCode(sp.code,sp.legs,BOOKS[sp.book]); else shareSlip(sp.legs,sp.odds); }; });
+  body.querySelectorAll("[data-slmore]").forEach(function(b){ b.onclick=function(){ slipMoreMenu(b,b.dataset.slmore); }; });
+  body.querySelectorAll(".sw-swipe").forEach(function(r){ swSwipe(r,function(){ window.swPend.del(r.getAttribute("data-sid")); }); });
+  clearAllControl(body.querySelector(".ys-clr"));
+  wireSlipButtons(body);
 }
 /* Start a new slip from an old one.
    Deliberately not called "edit": the slip in this list is a bet that was
@@ -8526,19 +8501,6 @@ function rebuildSlip(sid){
   if(had) msg+=had===1?" (replaced 1)":(" (replaced "+had+")");
   window.swToast&&window.swToast(msg,"ok","rb");
 }
-/* Two-tap confirm in place: the button becomes "Sure?" and reverts if it is
-   not taken up, so nothing is lost to a stray tap and no dialog interrupts. */
-function armConfirm(btn,label,go){
-  if(btn._armed){ clearTimeout(btn._armed); btn._armed=null; go(); return; }
-  var was=btn.innerHTML;
-  btn.innerHTML=label; btn.classList.add("arm");
-  btn._armed=setTimeout(function(){
-    btn._armed=null; btn.innerHTML=was; btn.classList.remove("arm");
-  },2600);
-}
-function askRemoveSlip(btn,sid){ armConfirm(btn,"Sure?",function(){removeSlip(sid);}); }
-function askClearSlips(btn){ armConfirm(btn,"Tap again to clear everything",function(){clearSlips();}); }
-
 /* A slip priced at jackpot odds is a lottery ticket, and it is counted as one:
    kept out of the record entirely rather than allowed to drag a genuine run of
    form down with it. Judged by odds rather than by how it was built, so a

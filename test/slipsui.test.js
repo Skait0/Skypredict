@@ -50,3 +50,20 @@ test("Recent row copy: no possessive, no ', last', singular game", () => {
   assert.match(row({ ...base, legs: [1] }, "Saturday's"), /1 game, Saturday<\/small>/);
   assert.match(row({ ...base, legs: [1] }, "last"), /SportyBet, 1 game<\/small>/);
 });
+
+test("the sheet: filters with counts, top actions, gold code, progress, no avatar", () => {
+  const r = grab("renderSlipsSheet") + grab("progressWords");
+  for (const w of ["All", "Running", "Lost", "Won", "Share", "Rebuild", "Copy", "Show ", "landed", "to play"]) assert.match(r, new RegExp(w), w);
+  assert.match(r, /data-slsafe/, "Make it safer stays, only when running");
+  assert.match(r, /swSwipe\(/); assert.match(r, /clearAllControl\(/);
+  const sheet = /<div class="sheet slips-sheet" id="slipsSheet"[\s\S]*?id="slipsBody"/.exec(html)[0];
+  assert.doesNotMatch(sheet, /\/av\//);
+  assert.doesNotMatch(r, /Clear slip history|askRemoveSlip/);
+});
+
+test("progress words", () => {
+  const f = new Function(grab("progressWords") + "; return progressWords;")();
+  assert.strictEqual(f([{ res: "win" }, { res: "win" }, {}, {}]), "<b>2</b> landed, 2 to play");
+  assert.strictEqual(f([{ res: "win" }, { res: "lose" }]), "<b>1</b> landed, <b>1</b> lost");
+  assert.strictEqual(f([{}, {}]), "<b>0</b> landed, 2 to play");
+});
