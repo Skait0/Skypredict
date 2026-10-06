@@ -2144,6 +2144,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .sl2-st.won{color:var(--green-ink);background:color-mix(in srgb,var(--green) 13%,transparent)}
 .sl2-meta{font-size:12px;font-weight:600;color:var(--faint);display:flex;gap:5px;align-items:baseline;min-width:0;white-space:nowrap;overflow:hidden}
 .sl2-od{margin-left:auto;font-size:20px;color:var(--accent)}
+.sl2 .num{font-weight:800}
 .sl2-acts{display:flex;gap:4px;padding:0 12px 10px}
 .sl2-a{display:flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 10px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);color:var(--text);font:inherit;font-size:12px;font-weight:800;cursor:pointer;flex:none;text-decoration:none}
 .sl2-a svg{width:15px;height:15px}
@@ -8182,7 +8183,7 @@ function renderMyResults(){
       return "<div class='sw-swipe' data-sid='"+esc(s.sid)+"'><div class='sw-bin'>"+BIN_SVG+"</div>"+
         "<div class='sw-card ys-row'><span class='ys-dot "+slipState(s)+"' role='img' aria-label='"+({run:"Running",lost:"Lost",won:"Won"})[slipState(s)]+"'></span>"+
         "<span class='ys-m'><span class='ys-code num'>"+esc(s.code||"No code")+"</span>"+
-        "<small>"+(s.book?bookMark(s.book)+", ":"")+s.legs.length+(s.legs.length===1?" game":" games")+(slipWhen(s.at)==="last"?"":", "+esc(slipWhen(s.at).replace(/'s$/,"")))+"</small></span>"+
+        "<small>"+(s.book?bookMark(s.book)+", ":"")+s.legs.length+(s.legs.length===1?" game":" games")+(slipWhenPlain(s.at)?", "+esc(slipWhenPlain(s.at)):"")+"</small></span>"+
         "<span class='ys-od num'>×"+(s.odds>=1000?Math.round(s.odds).toLocaleString():s.odds.toFixed(2))+"</span></div></div>";
     }).join("");
   host.querySelectorAll("[data-ysf]").forEach(function(b){ b.onclick=function(){ openSlipsSheet(b.getAttribute("data-ysf")); }; });
@@ -8210,6 +8211,9 @@ function slipWhen(iso){
   if(off===0) return "today's";
   if(off===-1) return "yesterday's";
   return dayName(off)+"'s";
+}
+function slipWhenPlain(iso){
+  var w=slipWhen(iso); return w==="last"?"":w.replace(/'s$/,"");
 }
 
 function openSlipsSheet(filter){
@@ -8339,7 +8343,7 @@ function renderSlipsSheet(){
         "<div class='sw-card sl2"+(open?" open":"")+"'>"+
         "<div class='sl2-top'><span class='sl2-st "+st+"'>"+LBL[st]+"</span>"+
           (isJackpotSlip(sp)?"<span class='sl2-st jack'>Jackpot</span>":"")+
-          "<span class='sl2-meta'>"+(sp.book?bookMark(sp.book):"")+"<span>"+esc(slipWhen(sp.at))+"</span></span>"+
+          "<span class='sl2-meta'>"+(sp.book?bookMark(sp.book):"")+(slipWhenPlain(sp.at)?"<span>"+esc(slipWhenPlain(sp.at))+"</span>":"")+"</span>"+
           "<span class='sl2-od num'>×"+(sp.odds>=1000?Math.round(sp.odds).toLocaleString():sp.odds.toFixed(2))+"</span></div>"+
         "<div class='sl2-acts'>"+
           "<button class='sl2-a share' type='button' data-slsh='"+esc(sp.sid)+"'>"+SHARE_SVG+"Share</button>"+

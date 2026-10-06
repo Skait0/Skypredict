@@ -40,15 +40,23 @@ test("Recent row copy: no possessive, no ', last', singular game", () => {
   function row(s, when) {
     let out = "";
     const host = { set innerHTML(v) { out = v; }, querySelectorAll() { return []; }, querySelector() { return null; } };
-    const f = new Function("SLIPS", "window", "BOOKS", "esc", "$", "slipWhen", "swSwipe", "clearAllControl", "BIN_SVG", "SL_PEEKED", "openSlipsSheet",
+    const f = new Function("SLIPS", "window", "BOOKS", "esc", "$", "slipWhen", "swSwipe", "clearAllControl", "BIN_SVG", "SL_PEEKED", "openSlipsSheet", "slipWhenPlain",
       src + "; return renderMyResults;");
-    f([s], { swPend: { hidden: () => false } }, { sporty: { label: "SportyBet" } }, (x) => x, () => host, () => when, null, () => {}, "", true, null)();
+    const mockSlipWhenPlain = (iso) => when === "last" ? "" : when.replace(/'s$/, "");
+    f([s], { swPend: { hidden: () => false } }, { sporty: { label: "SportyBet" } }, (x) => x, () => host, () => when, null, () => {}, "", true, null, mockSlipWhenPlain)();
     return out;
   }
   const base = { sid: "a", settled: false, code: "X1", book: "sporty", odds: 2, at: "x" };
   assert.match(row({ ...base, legs: [1, 2, 3] }, "today's"), /SportyBet, 3 games, today<\/small>/);
   assert.match(row({ ...base, legs: [1] }, "Saturday's"), /1 game, Saturday<\/small>/);
   assert.match(row({ ...base, legs: [1] }, "last"), /SportyBet, 1 game<\/small>/);
+});
+
+test("sheet meta copy: no possessive, no ', last'", () => {
+  const src = grab("dayOff") + grab("dayName") + grab("slipWhen") + grab("slipWhenPlain");
+  const f = new Function(src + "; return slipWhenPlain;")();
+  const badIso = "baddate";
+  assert.strictEqual(f(badIso), "", "slipWhenPlain returns empty for invalid dates (slipWhen returns last)");
 });
 
 test("the sheet: filters with counts, top actions, gold code, progress, no avatar", () => {
@@ -68,7 +76,7 @@ test("progress words", () => {
   assert.strictEqual(f([{}, {}]), "<b>0</b> landed, 2 to play");
 });
 
-const SHEET_FNS = ["slipState", "slipCounts", "progressWords", "renderSlipsSheet", "wireSlipButtons", "slipMenuItems", "slipMoreMenu"];
+const SHEET_FNS = ["slipWhen", "slipWhenPlain", "slipState", "slipCounts", "progressWords", "renderSlipsSheet", "wireSlipButtons", "slipMenuItems", "slipMoreMenu"];
 function sheetEnv(extra) {
   const names = ["SLIPS", "window", "document", "BOOKS", "esc", "$", "slipWhen", "swSwipe", "clearAllControl", "BIN_SVG", "SHARE_SVG", "SAFE_SVG", "RB_SVG", "MORE_SVG", "COPY_SVG", "CHEV_SVG", "bookMark", "isJackpotSlip", "shareWin", "SLOPEN", "SL_POP_CLOSE"];
   const src = SHEET_FNS.map(grab).join("\n") + "; return {renderSlipsSheet, wireSlipButtons, slipMoreMenu, slipMenuItems};";
@@ -80,7 +88,8 @@ test("the sheet draws without throwing and its helpers are defined", () => {
   const body = { set innerHTML(v) { out = v; }, querySelectorAll() { return []; }, querySelector() { return null; } };
   const SLIPS = [{ sid: "a", settled: true, won: true, code: "X1", book: "sporty", odds: 2, at: "x", legs: [{ res: "win" }, {}] }];
   const mk = sheetEnv();
-  const fns = mk({ SLIPS, window: { swPend: { hidden: () => false } }, document: {}, BOOKS: { sporty: { label: "S" } }, esc: (x) => x, $: () => body, slipWhen: () => "today's", swSwipe() {}, clearAllControl() {}, BIN_SVG: "", SHARE_SVG: "", SAFE_SVG: "", RB_SVG: "", MORE_SVG: "", COPY_SVG: "", CHEV_SVG: "", bookMark: () => "", isJackpotSlip: () => false, shareWin() {}, SLOPEN: null, SL_POP_CLOSE: null });
+  const slipWhenFn = () => "today's";
+  const fns = mk({ SLIPS, window: { swPend: { hidden: () => false } }, document: {}, BOOKS: { sporty: { label: "S" } }, esc: (x) => x, $: () => body, slipWhen: slipWhenFn, swSwipe() {}, clearAllControl() {}, BIN_SVG: "", SHARE_SVG: "", SAFE_SVG: "", RB_SVG: "", MORE_SVG: "", COPY_SVG: "", CHEV_SVG: "", bookMark: () => "", isJackpotSlip: () => false, shareWin() {}, SLOPEN: null, SL_POP_CLOSE: null });
   assert.doesNotThrow(() => fns.renderSlipsSheet());
   assert.match(out, /data-slcp/);
   assert.strictEqual(typeof fns.wireSlipButtons, "function");
