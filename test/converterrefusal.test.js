@@ -73,7 +73,10 @@ function harness(answer, ask, matchFixture) {
   const api = new Function(...names, body)(...names.map((k) => stubs[k]));
   return { api, log };
 }
-const tick = () => new Promise((r) => setTimeout(r, 20));
+/* Drain, don't sleep: the stubs resolve with plain promises, so a run of
+   macrotask turns settles every chain however loaded the machine is. A fixed
+   20ms sleep failed under the full suite. */
+const tick = async () => { for (let i = 0; i < 50; i++) await new Promise((r) => setImmediate(r)); };
 const btn = () => ({ disabled: false, textContent: "Apply and get a code" });
 
 /* ------------------------------------------------------------- Apply */
