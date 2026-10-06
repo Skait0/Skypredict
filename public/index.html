@@ -10787,6 +10787,10 @@ function bookErrHTML(d,B){
       "<span>Every device gets ten a day for now. Your slip is saved - "+
       "the code will be here after midnight. Everything else on the board "+
       "still works.</span></div>";
+  /* Every leg had kicked off by the time Book was pressed, so nothing was
+     sent (bookRounds, 5 Oct 2026). */
+  if(kind==="started")
+    return "<div class='code-err'><b>Every game on this code has started - nothing left to book.</b></div>";
   /* EVERY LEG ON A MARKET THEY WILL NOT PRICE TODAY. The server names these
      separately from `unbookable` and for a good reason: dropping them all
      leaves no slip, so there is no retry to offer - but "remove a leg and try
@@ -10819,6 +10823,19 @@ function bookErrHTML(d,B){
     (why?"<span>"+esc(why)+"</span>"
        :"<span>One of the picks may have just closed. Remove a leg and try again.</span>")+
     "</div>";
+}
+/* THE CONVERTER'S DEAD END, SAID PLAINLY. By the time a refusal reaches an
+   edit tool's fail(), bookRounds has already offered to drop every leg the
+   book named - so what is left is a slip it will not take at all, and the
+   bookmaker's raw words ("invalid event data, no market there") told the
+   reader nothing they could act on. Reported 5 Oct 2026. The combination and
+   all-suspect cards already say what to change, so they stand. */
+function editErrHTML(d,B){
+  B=B||curBook();
+  if(d&&d._kind==="refused"&&!d.combination&&!d.suspectAll)
+    return "<div class='code-err'><b>"+B.mark+" won't take this slip as it is - usually a "+
+      "market they don't offer on one of these games.</b></div>";
+  return bookErrHTML(d,B);
 }
 /* Which legs to drop after SportyBet has refused the slip.
 
@@ -13837,7 +13854,7 @@ function nextSafePick(c,B){
   return Object.assign({},c,{code:best.code,p:+best.p,label:best.label,
     f:c.f||f,auto:false});
 }
-function confirmAfterRefusal(target,names,keep,B,go,refused){
+function confirmAfterRefusal(target,names,keep,B,go,refused,h){
   var n=names.length;
   /* ONE ROW PER REFUSED GAME: the game, the market they refused and why,
      then Swap or Remove. Owner, 29 Sep 2026: "it just says the market that
@@ -13868,7 +13885,7 @@ function confirmAfterRefusal(target,names,keep,B,go,refused){
   showPrompt(target,"<div class='confirm-card ask-refusal'><p><b>"+B.mark+" can't take "+n+"</b></p>"+
     "<div class='ask-rows'>"+rows+"</div>"+
     "<div class='ca'><button class='confirm-go' type='button'>"+label()+"</button>"+
-    "<button class='confirm-cancel' type='button'>Cancel</button></div></div>");
+    "<button class='confirm-cancel' type='button'>"+((h&&h.stopLabel)||"Cancel")+"</button></div></div>");
   var el=promptEl(target); if(!el) return;
   var goBtn=el.querySelector(".confirm-go");
   el.querySelectorAll(".ask-opt").forEach(function(b){
@@ -13884,15 +13901,17 @@ function confirmAfterRefusal(target,names,keep,B,go,refused){
   goBtn.addEventListener("click",function(){
     clearPrompt(target);
     go(alts.filter(function(a,i){ return a&&swap[i]; }));});
+  /* h.stop: a caller that is waiting on this answer - the converter's busy
+     flag, the next ticket of a split - hears that the reader walked away. */
   el.querySelector(".confirm-cancel").addEventListener("click",function(){
-    clearPrompt(target);});
+    clearPrompt(target); if(h&&h.stop) h.stop();});
 }
 /* A BOOKING THAT FAILED OUTRIGHT, SAID WHERE THE READER IS LOOKING.
    The same pop-up as the questions above, for the same reason: the error used
    to be written under the slip, off the bottom of the screen. */
-function showBookErr(target,html){
+function showBookErr(target,html,label){
   if(!showPrompt(target,"<div class='confirm-card ask-err'>"+html+
-    "<div class='ca'><button class='confirm-cancel' type='button'>OK</button></div></div>")) return;
+    "<div class='ca'><button class='confirm-cancel' type='button'>"+(label||"OK")+"</button></div></div>")) return;
   var el=promptEl(target);
   el.querySelector(".confirm-cancel").addEventListener("click",function(){ clearPrompt(target); });
 }
@@ -13950,7 +13969,7 @@ function confirmDropUnpriced(picks,target,go,B){
    taken over. */
 /* Handicaps joined 30 Sep 2026: lines that close and move like corners. */
 var LINE_CODE=/^(CORNERS|SHOTS|AH)_/;
-function lineCheck(picks,B,target,go){
+function lineCheck(picks,B,target,go,stop){
   if(!B||B.key!=="sporty"||picks._lined) return false;
   var lined=picks.filter(function(c){return LINE_CODE.test(c.code)&&bookIdOf(c,B);});
   if(!lined.length) return false;
@@ -13997,11 +14016,13 @@ function lineCheck(picks,B,target,go){
         "<div class='ca'><button class='confirm-go' type='button'>"+
         (swaps.length?"Update and book":"Book the other "+(next.length===1?"one":next.length))+
         "</button><button class='confirm-cancel' type='button'>Cancel</button></div></div>");
-      var el=promptEl(target); if(!el) return;
+      /* The panel was redrawn while we waited: no prompt to answer, so end
+         the attempt rather than leave the caller's busy flag set forever. */
+      var el=promptEl(target); if(!el){ if(stop) stop(); return; }
       el.querySelector(".confirm-go").addEventListener("click",function(){
         clearPrompt(target); go(next,swaps,dropped);});
       el.querySelector(".confirm-cancel").addEventListener("click",function(){
-        clearPrompt(target);});
+        clearPrompt(target); if(stop) stop();});
     });
   return true;
 }
@@ -14077,10 +14098,26 @@ function schedulePrecheck(picks){
    24 Sep converting a 16-leg code to betPawa, refused over one game with no
    way to drop it. Same rule as the other two: ask, drop only what they
    refused, re-book, at most REFUSAL_ROUNDS times, each round shorter.
-   h = {busy(), idle(), code(code, sentPicks, d), fail(d)}. */
+   h = {busy(), idle(), code(code, sentPicks, d), fail(d)}, and optionally
+   stop() when the reader cancels a question, with stopLabel on that button.
+   GAMES ALREADY UNDER WAY are left out before anything is asked (5 Oct 2026):
+   an edited code can sit on screen past kickoff, and the book refuses a
+   started game - so say so in one line, and when nothing is left, say that
+   without calling the bookmaker at all. */
 function bookRounds(picks,B,src,target,h,round){
   round=round||0;
-  if(!round&&lineCheck(picks,B,target,function(safe){bookRounds(safe,B,src,target,h,0);})) return;
+  /* Only for callers that ask (h.dropStarted: the converter's edit tools).
+     Every other path books exactly as it did before 5 Oct 2026. */
+  if(!round&&h.dropStarted){
+    var live=picks.filter(function(c){return !pickStarted(c);}), late=picks.length-live.length;
+    if(late){
+      if(!live.length){ h.idle(); h.fail({_kind:"started"}); return; }
+      if(typeof swToast==="function")
+        swToast(late+(late===1?" game":" games")+" already started - left out.","info","started");
+      picks=live;
+    }
+  }
+  if(!round&&lineCheck(picks,B,target,function(safe){bookRounds(safe,B,src,target,h,0);},h.stop)) return;
   h.busy();
   bookFetch(picks.map(function(c){return B.sel(c);}),B,src)
     .then(function(d){
@@ -14094,7 +14131,7 @@ function bookRounds(picks,B,src,target,h,round){
         var out=gone.map(function(c){var f=c.f||fixtureById(c.id);
             return (f?(f.home+" v "+f.away):"One pick")+whyOf(c);});
         confirmAfterRefusal(target,out,safe.length,B,function(swapIn){
-          bookRounds(safe.concat(swapIn),B,src,target,h,round+1);},gone);
+          bookRounds(safe.concat(swapIn),B,src,target,h,round+1);},gone,h);
         return;
       }
       h.fail(d);
@@ -14598,40 +14635,54 @@ function splitAndBook(picks,n,host,B,opt){
   /* A leg from somebody else's code is not one of our picks - it has no
      fixture behind it and no probability, only what the bookmaker said. The
      dealing and the booking are identical either way, so the two callers
-     differ by these two functions rather than by a second copy of all this. */
-  var selOf=opt.selOf||function(c){return B.sel(c);};
+     differ by these two functions rather than by a second copy of all this.
+     pickOf turns a pasted leg into one of our picks (legPick) so it can book
+     through bookRounds like everything else. */
+  var pickOf=opt.pickOf||function(c){return c;};
   var oddsOf=opt.oddsOf||totalOdds;
   var parts=splitPicks(picks,n);
   host.innerHTML="<div class='sp-out' aria-live='polite'><div class='sp-wait'>"+
     "<span class='mini-load'></span>Booking "+n+" tickets…</div></div>";
   var out=host.querySelector(".sp-out");
   var done=[];
+  /* EACH TICKET THROUGH THE SHARED REFUSAL LOOP (5 Oct 2026). A refused
+     ticket used to print the book's raw words and move on; now it asks to
+     drop the legs they named, like Book does, and Keep editing leaves that
+     ticket unbooked and carries on with the rest - so the other tickets'
+     codes always show. The question comes up in the ask pop-up. */
   function step(i){
     if(i>=parts.length){ renderSplit(out,done,B,oddsOf); return; }
-    bookFetch(parts[i].map(selOf),B,"split")
-      .then(function(d){
-        var code=d&&d.success&&B.codeOf(d);
-        done.push({legs:parts[i],code:code||null,
-                   why:code?null:bookErrText(d,B)});
-      })
-      .catch(function(){
-        done.push({legs:parts[i],code:null,why:"Couldn't reach the booking service."});
-      })
-      .then(function(){
-        var w=out.querySelector(".sp-wait");
-        if(w) w.innerHTML="<span class='mini-load'></span>"+
-          "Booking ticket "+(i+2>parts.length?parts.length:i+2)+" of "+parts.length+"…";
-        step(i+1);
-      });
+    var part=parts[i], mine=part.map(function(x){ return pickOf(x,B); });
+    var next=function(t){
+      done.push(t);
+      var w=out.querySelector(".sp-wait");
+      if(w) w.innerHTML="<span class='mini-load'></span>"+
+        "Booking ticket "+(i+2>parts.length?parts.length:i+2)+" of "+parts.length+"…";
+      step(i+1);
+    };
+    bookRounds(mine,B,"split","splitAsk",{
+      busy:function(){}, idle:function(){},
+      /* The ticket as booked. Matched back by game, so a swapped market keeps
+         its leg. ponytail: two legs on one game stay or go together here. */
+      code:function(code,sent){
+        var ids={}; sent.forEach(function(c){ ids[c.id]=1; });
+        next({legs:part.filter(function(x,j){ return ids[mine[j].id]; }),code:code});
+      },
+      fail:function(d){ next({legs:part,code:null,why:bookErrText(d,B)}); },
+      stop:function(){ next({legs:part,code:null,why:"Left out - you kept editing."}); },
+      stopLabel:"Keep editing", dropStarted:true
+    });
   }
   step(0);
 }
 
 /* Plain words for a refusal, reusing the card the booking path already builds
-   so the two never drift into saying different things about one failure. */
+   so the two never drift into saying different things about one failure.
+   The converter's card (editErrHTML): the loop has already asked about every
+   leg the book named, so what reaches here is a ticket it will not take. */
 function bookErrText(d,B){
   var tmp=document.createElement("div");
-  tmp.innerHTML=bookErrHTML(d,B);
+  tmp.innerHTML=editErrHTML(d,B);
   /* The headline alone. That card is built as a headline plus an explanation,
      and flattening the whole thing reads as a stutter: "SportyBet wouldn't
      take this slip. SportyBet rejected the slip." */
@@ -14704,6 +14755,21 @@ function byoOdds(legs){
     var o=+l.odds; return t*(isFinite(o)&&o>1?o:1);},1);
 }
 function byoBook(){ return BOOKS[BYO.book]||BOOKS.sporty; }
+/* Kicked off, by our fixture's clock or by what the book said of the leg.
+   A leg's kickoff can be epoch ms, which legStarted's Date.parse reads as
+   NaN, so it is also read with new Date, as notStarted does.
+   The leg's own word wins: a name match can land on the wrong fixture, so
+   our fixture's clock is read only when the leg carries neither a status nor
+   a kickoff. A kickoff of 0, false or "" is unknown, and unknown keeps it. */
+function pickStarted(c){
+  if(!c) return false;
+  if(c.status||c.kickoff){
+    var t=c.kickoff?new Date(c.kickoff).getTime():NaN;
+    return (isFinite(t)&&t<=Date.now())||legStarted(c);
+  }
+  var f=c.f||fixtureById(c.id);
+  return !!(f&&f.kickoff&&!notStarted(f));
+}
 function legStarted(l){
   /* THE BOOKMAKER'S OWN VERDICT FIRST, when we have it. A leg the board has
      let go is named by asking SportyBet for that event, and the answer carries
@@ -15480,7 +15546,7 @@ function renderStage(usable,B){
     if(BYO.job!==job) return;            /* they moved on while we were busy */
     if(job==="split"){
       st.innerHTML="<div class='code-split' id='byoSplit'>"+splitBoxInner(usable,byoOdds)+"</div>";
-      wireSplit(st,usable,B,{sel:"#byoSplit",selOf:byoSel,oddsOf:byoOdds});
+      wireSplit(st,usable,B,{sel:"#byoSplit",pickOf:legPick,oddsOf:byoOdds});
     }else if(job==="trim"){
       st.innerHTML=trimJobHTML(usable,B);
       wireTrimTo(st,usable,B); wireTrim(st,usable,B);
@@ -16141,7 +16207,7 @@ function wireSafer(wrap,legs,B){
     });
   });
   var go=box.querySelector("#byoSaferGo"); if(!go) return;
-  go.addEventListener("click",function(){
+  go.addEventListener("click",function(){ if(BYO._booking) return;   /* a second tap while lineCheck holds */
     var plan=saferPlan(legs,B);
     var byLeg={}; plan.forEach(function(p){ byLeg[p.leg.eventId+"|"+p.from]=p.to; });
     var gone={};
@@ -16150,10 +16216,6 @@ function wireSafer(wrap,legs,B){
     /* The slip's own event ids, with a market changed on some of them - and
        whatever the reader chose to leave out left out. */
     var kept=legs.filter(function(l){ return !gone[l.eventId+"|"+l.prediction]; });
-    var sels=kept.map(function(l){
-      var code=byLeg[l.eventId+"|"+l.prediction]||l.prediction;
-      var o={eventId:l.eventId}; o[B.arg||"prediction"]=code; return o;
-    });
     /* EVERY LEG THAT WAS BOOKED, NOT ONLY THE ONES THAT MOVED.
        The code dialog was handed `plan` - the swaps - so a fourteen-leg code
        edited down to thirteen came back described as five games, which is
@@ -16161,14 +16223,11 @@ function wireSafer(wrap,legs,B){
        a long ticket of 14, said it can use 13 but when it gave me the code
        back after editting it gave me five games". A leg our board does not
        carry still goes in, under this book's own id, so the count and the
-       read-back check both see the whole ticket. */
-    var booked=kept.map(function(l){
-      var f=fixtureByLeg(l,B), code=byLeg[l.eventId+"|"+l.prediction]||l.prediction;
-      var o={id:f?fid(f):null,code:code,f:f||null,p:f?mProb(f,code):null};
-      o[B.id]=l.eventId;
-      return o;
+       read-back check both see the whole ticket. bookLegs hands the code
+       dialog what was SENT, which after a refusal round is fewer. */
+    var sent=kept.map(function(l){
+      return Object.assign({},l,{prediction:byLeg[l.eventId+"|"+l.prediction]||l.prediction});
     });
-    go.disabled=true; go.textContent="Booking…";
     /* THE PANEL CAN LEAVE WHILE THE REQUEST IS STILL IN THE AIR.
        #byoSaferOut is drawn inside the safer panel, and refreshByoPanels
        redraws that panel whenever ids land - loadSporty retries for seconds
@@ -16181,28 +16240,15 @@ function wireSafer(wrap,legs,B){
        Two halves: the panel is marked busy for the whole flight, and every
        write checks the box is still there. The flag alone would not do - the
        reader can switch view or read another code - and the guard alone would
-       lose the answer silently. */
-    BYO._booking=true;
-    var done=function(){ BYO._booking=false;
-      go.disabled=false; go.textContent="Apply and get a code"; };
-    bookFetch(sels,B,"editor").then(function(d){
-      var out=$("byoSaferOut");
-      var code=d&&d.success&&B.codeOf(d);
-      if(code){
-        BYO._booking=false;
-        if(!out) return;            /* the code is minted; nowhere left to draw it */
-        out.innerHTML="";
-        showCode(code,"byoSaferOut",null,B,booked,d);
-      }else{
-        if(out) showBookErr("byoSaferOut",bookErrHTML(d,B));
-        done();
-      }
-    }).catch(function(){
-      var out=$("byoSaferOut");
-      if(out) showBookErr("byoSaferOut","<div class='code-err'><b>Couldn't reach the "+
-        "booking service.</b><span>Check your connection and try again.</span></div>");
-      done();
-    });
+       lose the answer silently. bookLegs does the guarding; the flag is held
+       until the booking is over, a refusal question included.
+       A REFUSAL ASKS, IT DOES NOT DEAD-END (5 Oct 2026): this used to call
+       bookFetch and show the book's raw "invalid event data, no market there"
+       under a lone OK, when the API had named the four legs it refused. It
+       books through bookLegs now, the same refusal loop as Book, Trim and
+       Change. */
+    BYO._booking=true; go.disabled=true;
+    bookLegs(sent,B,"editor","byoSaferOut",go,"Apply and get a code",function(){ BYO._booking=false; });
   });
 }
 
@@ -16256,18 +16302,31 @@ function trimBoxInner(legs,B){
    it. A game our board does not carry still goes in, under this book's id. */
 function legPick(l,B){
   var f=fixtureByLeg(l,B);
+  /* A name match that carries a different id for this book is a different
+     game: trust the pasted leg, or we book (and judge kickoff by) the wrong one. */
+  if(f&&f[B.id]&&String(f[B.id])!==String(l.eventId)) f=null;
   var o={id:f?fid(f):"leg:"+l.eventId,code:l.prediction,f:f||null,
          p:f?mProb(f,l.prediction):null};
   o[B.id]=l.eventId;
+  /* What the book said of the game, so bookRounds can leave out one that has
+     kicked off even when our board does not carry it (legStarted). */
+  if(l.kickoff!=null) o.kickoff=l.kickoff;
+  if(l.status) o.status=l.status;
   return o;
 }
-function bookLegs(legs,B,src,outId,btn,label){
+/* end(): the booking is over one way or another - a code, a dead end, or the
+   reader chose Keep editing. Make it safer clears its busy flag here. Every
+   write checks the box is still on screen: the panel can be redrawn while
+   the request is in the air (see wireSafer). */
+function bookLegs(legs,B,src,outId,btn,label,end){
   var picks=legs.map(function(l){ return legPick(l,B); });
+  var over=function(){ if(end) end(); };
   bookRounds(picks,B,src,outId,{
     busy:function(){ if(btn){ btn.disabled=true; btn.textContent="Booking\u2026"; } },
     idle:function(){ if(btn){ btn.disabled=false; btn.textContent=label; } },
-    code:function(code,sent,d){ showCode(code,outId,null,B,sent,d); },
-    fail:function(d){ showBookErr(outId,bookErrHTML(d,B)); }
+    code:function(code,sent,d){ over(); if($(outId)) showCode(code,outId,null,B,sent,d); },
+    fail:function(d){ over(); if($(outId)) showBookErr(outId,editErrHTML(d,B),"Keep editing"); },
+    stop:over, stopLabel:"Keep editing", dropStarted:true
   });
 }
 function legName(l){ return (l.home||"a game")+" v "+(l.away||""); }
@@ -16371,7 +16430,7 @@ function wireTrim(wrap,legs,B){
           return esc((c.leg.home||"a game")+" v "+(c.leg.away||""));}).join("; ")+"</p>"+
         "<div class='sp-out' aria-live='polite'></div>";
       splitAndBook(kept,1,box.querySelector(".sp-out"),B,
-        {selOf:byoSel,oddsOf:byoOdds,sel:".sp-out"});
+        {pickOf:legPick,oddsOf:byoOdds,sel:".sp-out"});
     });
   });
 }

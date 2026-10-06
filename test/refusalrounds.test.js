@@ -24,7 +24,9 @@ const ROUNDS = +src.match(/var REFUSAL_ROUNDS=(\d+);/)[1];
 const WHY = () => "var REFUSAL_WHY={};\n" + fn("refusalWhy") + "\n" + fn("whyOf") + "\n" +
   /* The live line check runs before the first send. These slips carry no
      corners or shots; it is tested on its own in linecheck.test.js. */
-  "function lineCheck(){ return false; }\n";
+  "function lineCheck(){ return false; }\n" +
+  /* bookRounds leaves out games already under way first (5 Oct 2026). */
+  fn("notStarted") + "\n" + fn("legStarted") + "\n" + fn("pickStarted") + "\n";
 
 /* `answer(sel)` plays the bookmaker: return a response body for the legs sent. */
 function harness(answer) {
