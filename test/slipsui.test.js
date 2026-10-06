@@ -76,51 +76,122 @@ test("progress words", () => {
   assert.strictEqual(f([{}, {}]), "<b>0</b> landed, 2 to play");
 });
 
-const SHEET_FNS = ["slipWhen", "slipWhenPlain", "slipState", "slipCounts", "progressWords", "renderSlipsSheet", "wireSlipButtons", "slipMenuItems", "slipMoreMenu"];
-function sheetEnv(extra) {
-  const names = ["SLIPS", "window", "document", "BOOKS", "esc", "$", "slipWhen", "swSwipe", "clearAllControl", "BIN_SVG", "SHARE_SVG", "SAFE_SVG", "RB_SVG", "MORE_SVG", "COPY_SVG", "CHEV_SVG", "bookMark", "isJackpotSlip", "shareWin", "SLOPEN", "SL_POP_CLOSE"];
-  const src = SHEET_FNS.map(grab).join("\n") + "; return {renderSlipsSheet, wireSlipButtons, slipMoreMenu, slipMenuItems};";
-  return (vals) => new Function(...names, src)(...names.map((n) => vals[n]));
+const SHEET_FNS = ["slipWhen", "slipWhenPlain", "slipState", "slipCounts", "progressWords", "renderSlipsSheet", "wireSlipButtons", "slipToggle"];
+const NAMES = ["SLIPS", "window", "document", "BOOKS", "esc", "$", "slipWhen", "swSwipe", "clearAllControl", "BIN_SVG", "SHARE_SVG", "SAFE_SVG", "RB_SVG", "COPY_SVG", "CHEV_SVG", "bookMark", "isJackpotSlip", "shareWin", "SLOPEN"];
+const SHEET_SRC = SHEET_FNS.map(grab).join("\n") + "; return {renderSlipsSheet, wireSlipButtons, slipToggle, slopen: function () { return SLOPEN; }};";
+function mkSheet(vals) {
+  return new Function(...NAMES, SHEET_SRC)(...NAMES.map((n) => vals[n]));
 }
+const baseVals = (o) => Object.assign({ SLIPS: [], window: { swPend: { hidden: () => false } }, document: {}, BOOKS: { sporty: { label: "S" } }, esc: (x) => x, $: () => null, slipWhen: () => "today's", swSwipe() {}, clearAllControl() {}, BIN_SVG: "", SHARE_SVG: "", SAFE_SVG: "", RB_SVG: "", COPY_SVG: "", CHEV_SVG: "", bookMark: () => "", isJackpotSlip: () => false, shareWin() {}, SLOPEN: null }, o);
 
-test("the sheet draws without throwing and its helpers are defined", () => {
+function drawSheet(slip) {
   let out = "";
   const body = { set innerHTML(v) { out = v; }, querySelectorAll() { return []; }, querySelector() { return null; } };
-  const SLIPS = [{ sid: "a", settled: true, won: true, code: "X1", book: "sporty", odds: 2, at: "x", legs: [{ res: "win" }, {}] }];
-  const mk = sheetEnv();
-  const slipWhenFn = () => "today's";
-  const fns = mk({ SLIPS, window: { swPend: { hidden: () => false } }, document: {}, BOOKS: { sporty: { label: "S" } }, esc: (x) => x, $: () => body, slipWhen: slipWhenFn, swSwipe() {}, clearAllControl() {}, BIN_SVG: "", SHARE_SVG: "", SAFE_SVG: "", RB_SVG: "", MORE_SVG: "", COPY_SVG: "", CHEV_SVG: "", bookMark: () => "", isJackpotSlip: () => false, shareWin() {}, SLOPEN: null, SL_POP_CLOSE: null });
-  assert.doesNotThrow(() => fns.renderSlipsSheet());
-  assert.match(out, /data-slcp/);
-  assert.strictEqual(typeof fns.wireSlipButtons, "function");
-  assert.strictEqual(typeof fns.slipMoreMenu, "function");
-  assert.deepStrictEqual(fns.slipMenuItems({ settled: true, won: true }), ["Share your win", "Delete"]);
-  assert.deepStrictEqual(fns.slipMenuItems({ settled: true, won: false }), ["Delete"]);
-  assert.deepStrictEqual(fns.slipMenuItems({ settled: false }), ["Delete"]);
+  mkSheet(baseVals({ SLIPS: [slip], $: () => body })).renderSlipsSheet();
+  return out;
+}
+
+test("the sheet draws; no more menu; delete is a round icon button; Share win for a won slip", () => {
+  const won = drawSheet({ sid: "a", settled: true, won: true, code: "X1", book: "sporty", odds: 2, at: "x", legs: [{ res: "win" }, {}] });
+  assert.match(won, /data-slcp/);
+  assert.match(won, /class='sl2-a del'[^>]*data-sldel='a'[^>]*aria-label='Delete slip'/);
+  assert.match(won, /Share win/);
+  assert.doesNotMatch(won, /data-slmore|sl2-pop|sl2-mib/);
+  const run = drawSheet({ sid: "b", settled: false, code: "X1", book: "sporty", odds: 2, at: "x", legs: [{}] });
+  assert.doesNotMatch(run, /Share win/);
+  assert.match(run, /sl2-a safer/);
+  for (const n of ["slipMoreMenu", "slipMenuItems", "SL_POP_CLOSE", "sl2-pop", "sl2-mi"]) assert.ok(!new RegExp(n + "\b").test(html), n + " removed");
 });
 
-test("the more menu closes on Escape, on choosing, and leaves no listeners behind", () => {
-  const listeners = {};
-  const doc = {
-    body: { appendChild() {} },
-    addEventListener(t, f) { (listeners[t] = listeners[t] || []).push(f); },
-    removeEventListener(t, f) { listeners[t] = (listeners[t] || []).filter((x) => x !== f); },
-    createElement() {
-      const items = [];
-      return { style: {}, offsetHeight: 40, removed: false, setAttribute() {}, remove() { this.removed = true; }, contains() { return false; },
-        set innerHTML(v) { items.length = 0; (v.match(/<button/g) || []).forEach((_, i) => items.push({ textContent: i ? "Delete" : (/Share your win/.test(v) ? "Share your win" : "Delete"), focus() { items.focused = true; } })); this._items = items; },
-        querySelectorAll() { return items; }, querySelector() { return items[0]; } };
+test("Safer is the neutral pill, the sheet code is not gold, games show instantly", () => {
+  assert.doesNotMatch(html, /\.sl2-a\.safer\{[^}]*--accent/);
+  assert.match(html, /\.sl2-a\.safer svg\{color:var\(--green-ink\)\}/);
+  assert.match(html, /\.sl2-code \.num\{[^}]*color:var\(--text\)/);
+  assert.match(html, /\.sl2-od\{[^}]*color:var\(--accent\)/, "odds stay gold");
+  assert.match(html, /\.sl2-legs\{display:none\}\.sl2\.open \.sl2-legs\{display:block\}/);
+  assert.match(html, /\.sl2-a\{[^}]*gap:5px;height:32px;padding:0 9px/);
+});
+
+test("Delete icon calls swPend.del; Share on a won slip calls shareWin", () => {
+  const handlers = {};
+  const body = {
+    set innerHTML(v) {}, querySelector() { return null; },
+    querySelectorAll(sel) {
+      const m = /^\[data-(sldel|slsh)\]$/.exec(sel);
+      return m ? [{ dataset: { [m[1]]: "a" }, set onclick(f) { handlers[m[1]] = f; } }] : [];
     },
   };
   const calls = [];
-  const mk = sheetEnv();
-  const fns = mk({ SLIPS: [{ sid: "a", settled: true, won: true, legs: [] }], window: { innerHeight: 800, innerWidth: 400, swPend: { del: (s) => calls.push("del " + s) } }, document: doc, BOOKS: {}, esc: (x) => x, $: () => null, slipWhen: () => "", swSwipe() {}, clearAllControl() {}, BIN_SVG: "", SHARE_SVG: "", SAFE_SVG: "", RB_SVG: "", MORE_SVG: "", COPY_SVG: "", CHEV_SVG: "", bookMark: () => "", isJackpotSlip: () => false, shareWin: () => calls.push("win"), SLOPEN: null, SL_POP_CLOSE: null });
-  let focused = false;
-  const btn = { getBoundingClientRect: () => ({ bottom: 10, right: 300 }), focus() { focused = true; } };
-  const count = () => (listeners.pointerdown || []).length + (listeners.keydown || []).length;
-  fns.slipMoreMenu(btn, "a"); assert.strictEqual(count(), 2);
-  listeners.keydown[0]({ key: "Escape", stopPropagation() {} });
-  assert.strictEqual(count(), 0); assert.ok(focused, "focus returns to the button");
-  fns.slipMoreMenu(btn, "a"); fns.slipMoreMenu(btn, "a"); assert.strictEqual(count(), 2, "reopening does not stack listeners");
-  listeners.pointerdown[0]({ target: {} }); assert.strictEqual(count(), 0, "outside tap closes");
+  const slip = { sid: "a", settled: true, won: true, code: "X1", book: "sporty", odds: 2, at: "x", legs: [{}] };
+  mkSheet(baseVals({ SLIPS: [slip], $: () => body, window: { swPend: { hidden: () => false, del: (s) => calls.push("del " + s) } }, shareWin: (sp) => calls.push("win " + sp.sid) })).renderSlipsSheet();
+  handlers.sldel(); handlers.slsh();
+  assert.deepStrictEqual(calls, ["del a", "win a"]);
+});
+
+test("Show/Hide games toggles in place: no re-render, one card open, SLOPEN synced", () => {
+  const mkCard = (sid, open) => {
+    const cls = new Set(open ? ["open"] : []);
+    const tog = { firstChild: { textContent: "" }, attrs: {}, setAttribute(k, v) { this.attrs[k] = v; } };
+    return { sid, cls, tog, top: 0, scrolled: 0,
+      classList: { toggle: (c, on) => (on ? cls.add(c) : cls.delete(c)), contains: (c) => cls.has(c) },
+      querySelector: () => tog, querySelectorAll: () => [1, 2, 3], getBoundingClientRect() { return { top: this.top }; }, scrollIntoView(o) { this.scrolled = o; } };
+  };
+  const a = mkCard("a", true), b = mkCard("b", false);
+  const toggles = {};
+  const btn = (card) => ({ dataset: { slop: card.sid }, closest: () => card, set onclick(f) { toggles[card.sid] = f; } });
+  let draws = 0;
+  const body = {
+    set innerHTML(v) { draws++; }, getBoundingClientRect: () => ({ top: 100 }), querySelector: () => null,
+    querySelectorAll(sel) {
+      if (sel === "[data-slop]") return [btn(a), btn(b)];
+      if (sel === ".sl2.open") return [a, b].filter((c) => c.cls.has("open"));
+      return [];
+    },
+  };
+  const f = mkSheet(baseVals({ SLIPS: [{ sid: "a", odds: 2, legs: [] }, { sid: "b", odds: 2, legs: [] }], $: () => body, SLOPEN: "a" }));
+  f.renderSlipsSheet(); const drawn = draws;
+  toggles.b();
+  assert.strictEqual(draws, drawn, "no full re-render");
+  assert.ok(!a.cls.has("open") && b.cls.has("open"), "other card closed, this one open");
+  assert.strictEqual(b.tog.firstChild.textContent, "Hide games");
+  assert.strictEqual(b.tog.attrs["aria-expanded"], "true");
+  assert.strictEqual(a.tog.firstChild.textContent, "Show 3 games");
+  assert.strictEqual(f.slopen(), "b");
+  b.top = 20; toggles.b();
+  assert.ok(!b.cls.has("open")); assert.strictEqual(f.slopen(), "");
+  assert.deepStrictEqual(b.scrolled, { block: "nearest" }, "scrolls into view when its top is above the sheet");
+  toggles.b(); b.scrolled = 0; b.top = 150; toggles.b();
+  assert.strictEqual(b.scrolled, 0, "no scroll when it is still in view");
+});
+
+test("Home Recent row: tap opens My slips with that slip open; a swipe is not a tap", () => {
+  const card = { dataset: {}, listeners: {}, addEventListener(t, fn) { this.listeners[t] = fn; } };
+  const row = { getAttribute: () => "a", querySelector: (s) => (s === ".sw-card" ? card : null) };
+  const scrolled = [];
+  const slipsBody = { querySelector: () => ({ scrollIntoView: (o) => scrolled.push(o) }) };
+  const host = { set innerHTML(v) { this.html = v; }, querySelectorAll: (s) => (s === ".sw-swipe" ? [row] : []), querySelector: () => null };
+  const src = ["slipState", "slipCounts", "bookMark", "renderMyResults"].map(grab).join("\n") + "; return {run: renderMyResults, slopen: function () { return SLOPEN; }};";
+  const opened = []; let seen = null, fns;
+  const slip = { sid: "a", settled: false, code: "X1", book: "sporty", odds: 2, at: "x", legs: [1] };
+  fns = new Function("SLIPS", "window", "BOOKS", "esc", "$", "swSwipe", "clearAllControl", "BIN_SVG", "SL_PEEKED", "openSlipsSheet", "slipWhenPlain", "SLOPEN", src)(
+    [slip], { swPend: { hidden: () => false } }, { sporty: { label: "S" } }, (x) => x,
+    (id) => (id === "myres" ? host : id === "slipsBody" ? slipsBody : null), () => {}, () => {}, "", true,
+    (flt) => { opened.push(flt); seen = fns.slopen(); }, () => "", null);
+  fns.run();
+  assert.match(host.html, /sw-card ys-row' role='button' tabindex='0'/);
+  card.listeners.click();
+  assert.deepStrictEqual(opened, ["all"]);
+  assert.strictEqual(seen, "a", "SLOPEN set before the sheet draws");
+  assert.deepStrictEqual(scrolled, [{ block: "nearest" }]);
+  card.dataset.swiped = "1"; card.listeners.click();
+  assert.strictEqual(opened.length, 1, "ignored after a swipe");
+  delete card.dataset.swiped;
+  card.listeners.keydown({ key: "Enter", preventDefault() {} });
+  assert.strictEqual(opened.length, 2, "Enter opens");
+  card.listeners.keydown({ key: "x", preventDefault() {} });
+  assert.strictEqual(opened.length, 2);
+});
+
+test("swSwipe marks a horizontal drag as swiped for ~300ms", () => {
+  assert.match(grab("swSwipe"), /if\(lock==="x"\)\{ card\.dataset\.swiped="1"; setTimeout\(function\(\)\{ delete card\.dataset\.swiped; \},300\); \}/);
 });

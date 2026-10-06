@@ -70,12 +70,6 @@ test("6 Clear all clears and counts only the supplied slips", () => {
   assert.match(html, /clearAllControl\(body\.querySelector\("\.ys-clr"\),function\(\)\{ return shown\.map/);
 });
 
-test("12 slip menu dispatches on data-act, not label text", () => {
-  assert.match(html, /data-act='"\+\(l==="Delete"\?"del":"win"\)/);
-  assert.match(html, /getAttribute\("data-act"\)==="del"/);
-  assert.doesNotMatch(html, /\/Delete\/\.test\(b\.textContent\)/);
-});
-
 test("14 brand is one word in user-visible strings", () => {
   assert.doesNotMatch(html, /title:"SoccerWizard|Notification\("SoccerWizard/);
 });
