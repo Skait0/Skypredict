@@ -17818,8 +17818,10 @@ function applyBoardCap(n){
 /* ---- Yesterday, in one sentence ----
    The first question a newcomer has is whether any of this works, and the
    honest answer is a number we already compute. It used to be a chip in the
-   trust row that nobody reads. Graded from the results feed rather than
-   recordYest, which is a one-day backtest and is often null. */
+   trust row that nobody reads. Graded from the results feed through
+   windowRecord(1), the same call the record panel's "yesterday" cell makes,
+   so the two can never print different numbers (they did on 6 Oct: 26/39
+   here, 16/21 there, from the build's old one-day backtest). */
 /* HOW MANY OF YESTERDAY'S TIPS ARE STILL OUT, and how many there were.
    Three sources, best first, because each knows something the next does not:
 
@@ -17864,7 +17866,7 @@ function yestCounts(graded){
 }
 function renderDaily(){
   var host=$("daily"); if(!host) return;
-  var res=(DATA.results||[]).filter(function(r){return dayOff(r.date)===-1;});
+  var yd=windowRecord(1), res=yd?yd.rows:[];
   var rec=DATA.record;
   if(!res.length&&(!rec||!rec.total)){host.innerHTML="";return;}
 
@@ -17967,7 +17969,7 @@ function windowRecord(days){
   });
   if(!res.length) return null;
   var hit=res.filter(function(r){return r.hit;}).length;
-  return {correct:hit,total:res.length,pct:Math.round(100*hit/res.length),days:days};
+  return {correct:hit,total:res.length,pct:Math.round(100*hit/res.length),days:days,rows:res};
 }
 /* The headline percentage is a blend, and a blend moves with its mix rather
    than with the model: folding Over 1.5 into the graded set lifted the overall
@@ -18010,7 +18012,7 @@ function renderRecord(){
      reads as a poor week next to the longer record it sits inside. */
   var b=rec.brier;
   var cal=(b==null)?null:(b<=0.18?"Excellent":b<=0.21?"Good":b<=0.24?"Fair":"Rough");
-  var yest=DATA.recordYest;
+  var yest=windowRecord(1);
   var wk=windowRecord(7);
   var cold=wk&&wk.pct<pct-5;
   host.innerHTML=
@@ -18023,7 +18025,7 @@ function renderRecord(){
         "<div class='rec-cell'><b class='pc'>"+pct+"%</b><i>last "+
           (rec.days||21)+" days \u00b7 "+rec.correct+"/"+rec.total+"</i></div>"+
         (cal?"<div class='rec-cell'><b>"+cal+"</b><i>calibration</i></div>":"")+
-        (yest&&yest.total?"<div class='rec-cell'><b>"+yest.correct+"/"+yest.total+
+        (yest?"<div class='rec-cell'><b>"+yest.correct+"/"+yest.total+
           "</b><i>yesterday</i></div>":"")+
       "</div>"+
       "<div class='rec-bar'><i style='width:"+pct+"%'></i></div>"+
