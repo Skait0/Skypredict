@@ -6850,6 +6850,23 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
      the 108px label floor when the panel is too narrow for six. */
   .wsp-chips.mkt-palette{grid-template-columns:repeat(auto-fit,minmax(max(108px,calc((100% - 5 * 6px) / 6)),1fr))}
 }
+.sw-swipe{position:relative;margin:0 0 8px;border-radius:12px;overflow:hidden;touch-action:pan-y}
+.sw-bin{position:absolute;inset:0;background:var(--red-fill);display:flex;align-items:center;justify-content:flex-end;padding-right:20px;border-radius:12px;color:#fff}
+.sw-bin svg{width:22px;height:22px;transform:scale(var(--s,.7));transition:transform 120ms var(--ease-out)}
+.sw-bin.armed{background:color-mix(in srgb,var(--red-fill) 70%,black)}
+.sw-card{position:relative;transform:translateX(0);will-change:transform;touch-action:pan-y}
+.sw-card.sw-snap{transition:transform 320ms cubic-bezier(.2,.9,.25,1)}
+.sw-card.sw-gone{transition:transform 220ms ease-in,opacity 220ms;opacity:0}
+.sw-card.sw-peek{animation:swPeek 1100ms var(--ease-out) 700ms 1}
+@keyframes swPeek{0%{transform:none}35%{transform:translateX(-58px)}100%{transform:none}}
+.sw-swipe.sw-collapse{transition:height 250ms ease,margin 250ms ease;height:0!important;margin:0}
+.sw-undo{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:440px;margin:0 auto;z-index:9970;background:var(--text);color:var(--bg);border-radius:12px;padding:11px 8px 11px 14px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:13px;transform:translateY(160%);transition:transform 300ms cubic-bezier(.2,.9,.25,1);overflow:hidden}
+.sw-undo.on{transform:none}
+.sw-undo button{border:0;background:none;color:var(--red);font:inherit;font-weight:800;cursor:pointer;padding:6px 10px}
+.sw-undo .u-bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--red);transform-origin:left;transform:scaleX(0)}
+.sw-undo.on .u-bar{animation:swUndoBar 5s linear forwards}
+@keyframes swUndoBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.sw-card,.sw-undo,.sw-swipe{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -7851,6 +7868,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   </div>
   <div class="sheet-body" id="slipsBody"></div>
 </div>
+<div class="sw-undo" id="swUndo" role="status" aria-live="polite"><span class="u-msg"></span><button type="button" id="swUndoBtn">Undo</button><i class="u-bar"></i></div>
 
 <div class="sheet myslip-sheet" id="mySheet" role="dialog" aria-modal="true" aria-labelledby="mySheet-title">
   <div class="sheet-grab"><i></i></div>
@@ -8301,18 +8319,83 @@ function closeSlipsSheet(){
 /* A booked slip is a record, not a draft, so removing one asks first - and the
    ask lives in the sheet rather than in a browser confirm(), which on a phone
    is a jarring system dialog over a sheet the user is already inside. */
-function removeSlip(sid){
+function removeSlip(sid,quiet){
   var i=SLIPS.findIndex?SLIPS.findIndex(function(s){return s.sid===sid;}):-1;
   if(i<0){ for(var j=0;j<SLIPS.length;j++) if(SLIPS[j].sid===sid){i=j;break;} }
   if(i<0) return;
   SLIPS.splice(i,1); saveSlips(); refreshSlipUI();
-  window.swToast&&window.swToast("Slip removed","ok","sliprm");
+  if(!quiet) window.swToast&&window.swToast("Slip removed","ok","sliprm");
 }
-function clearSlips(){
+function clearSlips(quiet){
   if(!SLIPS.length) return;
   SLIPS=[]; saveSlips(); refreshSlipUI();
-  window.swToast&&window.swToast("Slip history cleared","ok","slipclr");
+  if(!quiet) window.swToast&&window.swToast("Slip history cleared","ok","slipclr");
 }
+/* SWPEND */
+/* DELETE WAITS FOR UNDO. A removed slip gets a sync tombstone that beats every
+   copy for 60 days, so "delete, then put it back" would be undone by the next
+   sync. Instead a delete only hides the slip; storage is written when the 5s
+   Undo window ends, when another delete starts, or when the page is hidden. */
+(function(){
+  var pend=null, t=null;
+  function finish(){
+    if(!pend) return;
+    var p=pend; pend=null; if(t) clearTimeout(t); t=null; hideUndo();
+    if(p.all) clearSlips(true); else removeSlip(p.sid,true);
+  }
+  function start(p,msg){
+    finish();
+    pend=p; refreshSlipUI(); showUndo(msg);
+    t=setTimeout(finish,5000);
+  }
+  window.swPend={
+    del:function(sid){ start({sid:sid},"Slip deleted"); },
+    clearAll:function(){ start({all:true},"All slips cleared"); },
+    undo:function(){ if(!pend) return; pend=null; if(t) clearTimeout(t); t=null; hideUndo(); refreshSlipUI(); },
+    commit:finish,
+    hidden:function(sid){ return !!pend&&(pend.all||pend.sid===sid); },
+    active:function(){ return !!pend; }
+  };
+})();
+/* /SWPEND */
+function showUndo(msg){
+  var u=$("swUndo"); if(!u) return;
+  u.querySelector(".u-msg").textContent=msg;
+  u.classList.remove("on"); void u.offsetWidth; u.classList.add("on");
+}
+function hideUndo(){ var u=$("swUndo"); if(u) u.classList.remove("on"); }
+function swSwipe(row,onDelete){
+  var card=row.querySelector(".sw-card"), bin=row.querySelector(".sw-bin");
+  var x0=0,y0=0,dx=0,drag=false,lock=null,t0=0,W=0,armed=false;
+  card.addEventListener("pointerdown",function(e){
+    if(e.target.closest("button,a,input")) return;
+    drag=true; lock=null; x0=e.clientX; y0=e.clientY; dx=0; t0=Date.now(); W=card.offsetWidth;
+    card.classList.remove("sw-snap","sw-peek");
+  });
+  card.addEventListener("pointermove",function(e){
+    if(!drag) return;
+    var mx=e.clientX-x0, my=e.clientY-y0;
+    if(lock===null&&(Math.abs(mx)>6||Math.abs(my)>6)){ lock=Math.abs(mx)>Math.abs(my)?"x":"y"; if(lock==="x") try{ card.setPointerCapture(e.pointerId); }catch(er){} }
+    if(lock!=="x") return;
+    dx=Math.min(0,mx); if(dx<-W*.8) dx=-W*.8+(dx+W*.8)*.5;
+    card.style.transform="translateX("+dx+"px)";
+    var p=Math.min(1,-dx/(W*.45)); bin.style.setProperty("--s",(.7+.4*p).toFixed(2));
+    var now=p>=1; if(now!==armed){ armed=now; bin.classList.toggle("armed",armed); if(armed&&navigator.vibrate) try{ navigator.vibrate(12); }catch(er){} }
+  });
+  function end(){
+    if(!drag) return; drag=false;
+    var v=-dx/Math.max(1,Date.now()-t0);
+    if(lock==="x"&&(armed||(v>1.1&&-dx>40))){
+      card.style.transform="translateX(-110%)"; card.classList.add("sw-gone");
+      row.style.height=row.offsetHeight+"px";
+      setTimeout(function(){ row.classList.add("sw-collapse"); },180);
+      setTimeout(onDelete,430);
+    } else { card.classList.add("sw-snap"); card.style.transform="translateX(0)"; bin.classList.remove("armed"); armed=false; }
+  }
+  card.addEventListener("pointerup",end); card.addEventListener("pointercancel",end);
+}
+document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="hidden"&&window.swPend) window.swPend.commit(); });
+$("swUndoBtn").addEventListener("click",function(){ window.swPend.undo(); });
 /* Which slip is expanded. null until the sheet has been drawn once, so the
    first draw can choose the newest without overriding a later choice. */
 var SLOPEN=null;
