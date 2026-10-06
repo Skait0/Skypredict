@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My slips redesign</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Tokens copied from public/index.html (DESIGN.md). Nothing new invented. */
+.th[data-theme="dark"]{--bg:#0D0D0F;--card:#161619;--card-2:#1E1E22;--raise:#25252A;--line:#2A2A30;--text:#F2F1F0;--soft:#A3A0A6;--faint:#87848B;--grey:#5A5762;
+  --red:#E63946;--red-fill:#DB3643;--red-ink:#FF6B75;--red-wash:rgba(230,57,70,.13);
+  --green:#2FD48A;--green-ink:#4FE39E;--green-wash:rgba(47,212,138,.13);
+  --accent:#F2B84B;--on-accent:#14120E;--accent-rim:rgba(242,184,75,.42);--accent-wash:rgba(242,184,75,.13);
+  --b9-red:#D42127;--b9-green:#14B151;--xb-hi:#14A0FF;--toast:#F2F1F0;--toast-ink:#0D0D0F}
+.th[data-theme="light"]{--bg:#E9E4DA;--card:#F4F1EA;--card-2:#E1DBCF;--raise:#D6CFC1;--line:#B3AA96;--text:#1C1A18;--soft:#514C46;--faint:#65605A;--grey:#A39FAB;
+  --red:#C62330;--red-fill:#C62330;--red-ink:#B01D29;--red-wash:rgba(198,35,48,.09);
+  --green:#0D814F;--green-ink:#0B7047;--green-wash:rgba(14,138,85,.10);
+  --accent:#9A6B00;--on-accent:#FFFFFF;--accent-rim:rgba(154,107,0,.45);--accent-wash:rgba(154,107,0,.11);
+  --b9-red:#D42127;--b9-green:#14B151;--xb-hi:#276BA6;--toast:#1C1A18;--toast-ink:#F4F1EA}
+.th{--ease-out:cubic-bezier(0.23,1,0.32,1)}
+*{box-sizing:border-box}
+body{margin:0;background:#070708;color:#F2F1F0;font-family:'Plus Jakarta Sans',system-ui,sans-serif;padding:26px 16px 60px}
+h1{font-size:22px;margin:0 0 6px}
+.sub{color:#A3A0A6;margin:0 0 16px;max-width:760px;line-height:1.55;font-size:14px}
+.bar{display:flex;gap:8px;margin:0 0 22px}
+.bar button{padding:8px 14px;border-radius:99px;border:1px solid #2A2A30;background:#161619;color:#F2F1F0;font:700 12.5px 'Plus Jakarta Sans';cursor:pointer}
+.bar button.on{border-color:#E63946}
+.row{display:flex;gap:34px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.col{display:flex;flex-direction:column;align-items:center;gap:12px}
+.col h2{margin:0;font-size:13px;font-weight:700;color:#A3A0A6}
+.col p.cap{margin:0;color:#A3A0A6;font-size:12.5px;max-width:320px;text-align:center;line-height:1.5}
+
+.phone{width:340px;height:720px;border-radius:40px;background:var(--bg);border:1px solid var(--line);position:relative;overflow:hidden;box-shadow:0 30px 70px rgba(0,0,0,.55);color:var(--text)}
+.phone ::selection{background:var(--accent);color:var(--on-accent)}
+.scroll{position:absolute;inset:0;overflow-y:auto;padding:16px 14px 90px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.num{font-variant-numeric:tabular-nums;font-weight:800}
+button{font-family:inherit}
+.phone button:focus-visible,.phone a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* top bar */
+.hh{display:flex;align-items:center;justify-content:space-between;margin:2px 2px 14px}
+.logo{display:flex;align-items:center;gap:6px;font-weight:800;font-size:15px;color:var(--text);text-decoration:none}
+.logo img{height:30px;width:auto}
+.logo em{font-style:normal;color:var(--red-ink)}
+.sheet-t{margin:0;font-size:20px;font-weight:800;letter-spacing:-.01em}
+.av{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--accent-rim);background:var(--card-2);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;overflow:hidden}.av img{width:100%;height:100%;object-fit:cover}
+
+/* home summary */
+.mine{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 11px 10px;margin:0 0 18px}
+.mine-top{display:flex;align-items:baseline;gap:6px;margin:0 2px 9px}
+.mine-top h3{margin:0;font-size:14px;font-weight:800}
+.mine-top .ct{font-size:12px;font-weight:600;color:var(--faint)}
+.mine-top a{margin-left:auto;display:flex;align-items:center;gap:2px;font-size:12.5px;font-weight:700;color:var(--red-ink);text-decoration:none}
+.mine-top a svg{width:14px;height:14px}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.chip{display:flex;align-items:center;justify-content:center;gap:6px;height:34px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);cursor:pointer;color:var(--soft);font-size:12px;font-weight:700;transition:transform 140ms var(--ease-out),border-color 140ms var(--ease-out)}
+.chip:active{transform:scale(.97)}
+.chip .num{font-size:15px}
+.chip.run .num{color:var(--accent)}
+.chip.cut .num{color:var(--red-ink)}
+.chip.won .num{color:var(--green-ink)}
+.live{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:live 1.6s ease-in-out infinite}
+@keyframes live{50%{opacity:.25}}
+@media (hover:hover){.chip:hover{border-color:var(--grey)}}
+
+/* list header with clear-all */
+.lh{display:flex;align-items:center;justify-content:space-between;min-height:30px;margin:0 2px 8px}
+.lh h4{margin:0;font-size:13px;font-weight:700;color:var(--soft)}
+.clr{border:0;background:none;color:var(--faint);font-size:12.5px;font-weight:700;cursor:pointer;padding:6px 0}
+@media (hover:hover){.clr:hover{color:var(--red-ink)}}
+.ask{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--text)}
+.ask .no{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:99px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer}
+.ask .yes{border:0;background:var(--red-fill);color:#fff;border-radius:99px;padding:7px 13px;font-size:12px;font-weight:800;cursor:pointer}
+
+/* filters */
+.filt{display:flex;gap:6px;margin:0 0 6px;overflow-x:auto;scrollbar-width:none}
+.filt button{flex:none;padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--soft);font-size:12px;font-weight:700;cursor:pointer}
+.filt button.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
+.filt button .num{font-weight:700;opacity:.75;margin-left:4px}
+
+/* swipe shell, shared by rows and cards */
+.swipe{position:relative;margin:0 0 8px;border-radius:12px;overflow:hidden;touch-action:pan-y}
+.bin{position:absolute;inset:0;background:var(--red-fill);display:flex;align-items:center;justify-content:flex-end;padding-right:20px;border-radius:12px;color:#fff}
+.bin svg{width:22px;height:22px;transform:scale(var(--s,.7));transition:transform 120ms var(--ease-out)}
+.bin.armed{background:#9e1c27}
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;transform:translateX(0);will-change:transform;touch-action:pan-y}
+.card.snap{transition:transform 320ms cubic-bezier(.2,.9,.25,1)}
+.card.gone{transition:transform 220ms ease-in,opacity 220ms;opacity:0}
+.card.peek{animation:peek 1100ms var(--ease-out) 700ms 1}
+@keyframes peek{0%{transform:none}35%{transform:translateX(-58px)}100%{transform:none}}
+.swipe.collapse{transition:height 250ms ease,margin 250ms ease;height:0!important;margin:0}
+
+/* home row */
+.hrow{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.hrow .m{flex:1;min-width:0}
+.hrow .code{display:block;font-size:14px;letter-spacing:.06em}
+.hrow small{display:block;font-size:11.5px;font-weight:600;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.hrow .od{font-size:16px;color:var(--accent)}
+.sdot{width:8px;height:8px;border-radius:50%;flex:none}
+.sdot.run{background:var(--accent);animation:live 1.6s ease-in-out infinite}.sdot.cut{background:var(--red)}.sdot.won{background:var(--green)}
+
+/* bookmaker wordmarks, as the site draws them */
+.bm{font-weight:800;letter-spacing:-.01em;white-space:nowrap}
+.sbm{color:var(--red)}
+.b9r{color:var(--b9-red)}.b9g{color:var(--b9-green)}
+.xbm{color:var(--text)}.xbm .xbb{color:var(--xb-hi)}
+
+/* slip card */
+.c-top{display:flex;align-items:center;gap:8px;padding:12px 12px 10px}
+.st{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;padding:4px 8px;border-radius:99px;display:inline-flex;align-items:center;gap:5px}
+.st.run{color:var(--accent);background:var(--accent-wash)}
+.st.cut{color:var(--red-ink);background:var(--red-wash)}
+.st.won{color:var(--green-ink);background:var(--green-wash)}
+.c-top .meta{font-size:12px;font-weight:600;color:var(--faint);display:flex;gap:5px;align-items:baseline;min-width:0;white-space:nowrap;overflow:hidden}
+.c-top .od{margin-left:auto;font-size:20px;color:var(--accent)}
+.acts{display:flex;gap:4px;padding:0 12px 10px}
+.act{display:flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 10px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);color:var(--text);font-size:12px;flex:none;font-weight:800;cursor:pointer;transition:transform 140ms var(--ease-out)}
+.act:active{transform:scale(.97)}
+.act svg{width:15px;height:15px}
+.act.share{background:var(--red-fill);border-color:var(--red-fill);color:#fff;flex:1 1 0;min-width:74px}
+.act.safer{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.act.more{width:34px;padding:0}
+@media (hover:hover){.act:not(.share):not(.safer):hover{background:var(--raise)}}
+.codebox{display:flex;align-items:center;gap:10px;margin:0 12px 10px;padding:7px 7px 7px 12px;border-radius:8px;background:var(--card-2)}
+.codebox .num{font-size:18px;letter-spacing:.08em;color:var(--accent)}
+.codebox button{margin-left:auto;display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:99px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer}
+.codebox button svg{width:13px;height:13px}
+.c-mid{display:flex;align-items:center;gap:10px;padding:0 12px 11px;color:var(--soft);font-size:12px;font-weight:600}
+.c-mid b{color:var(--text)}
+.prog{flex:1;display:flex;gap:3px}
+.prog i{flex:1;height:4px;border-radius:2px;background:var(--raise)}
+.prog i.w{background:var(--green)}
+.prog i.l{background:var(--red)}
+.legs{max-height:0;overflow:hidden;transition:max-height 300ms var(--ease-out)}
+.card.open .legs{max-height:420px}
+.leg{display:flex;align-items:center;gap:9px;padding:8px 12px;border-top:1px solid var(--line);font-size:12.5px}
+.leg .d{width:7px;height:7px;border-radius:50%;background:var(--grey);flex:none}
+.leg.w .d{background:var(--green)}
+.leg.l .d{background:var(--red)}
+.leg .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.leg .p{color:var(--soft);font-size:12px;font-weight:600}
+.tog{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;height:38px;border:0;border-top:1px solid var(--line);background:none;color:var(--soft);font-size:12.5px;font-weight:700;border-radius:0 0 12px 12px;cursor:pointer}
+.tog svg{width:15px;height:15px;transition:transform 250ms var(--ease-out)}
+.card.open .tog svg{transform:rotate(180deg)}
+@media (hover:hover){.tog:hover{color:var(--text)}}
+.empty{text-align:center;color:var(--faint);font-size:13px;font-weight:600;padding:28px 0}
+
+.toast{position:absolute;left:12px;right:12px;bottom:16px;background:var(--toast);color:var(--toast-ink);border-radius:12px;padding:11px 8px 11px 14px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:13px;transform:translateY(140%);transition:transform 300ms cubic-bezier(.2,.9,.25,1);z-index:5;overflow:hidden}
+.toast.on{transform:none}
+.toast button{border:0;background:none;color:var(--red);font-size:13px;font-weight:800;cursor:pointer;padding:6px 10px}
+.toast .tbar{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--red);transform-origin:left;transform:scaleX(0)}
+.toast.on .tbar{animation:tb 5s linear forwards}
+@keyframes tb{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+
+.note{max-width:760px;margin:30px auto 0;color:#A3A0A6;font-size:13px;line-height:1.65;border-top:1px solid #1d1d21;padding-top:18px}
+.note b{color:#F2F1F0}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<h1>My slips: summary, rows and cards</h1>
+<p class="sub">Both phones work. Drag any slip to the left to delete it, then tap Undo to bring it back. Clear all asks before it empties the list. Tap a count to filter, or Show games to open a card.</p>
+<div class="bar"><button id="tD" class="on" type="button">Dark</button><button id="tL" type="button">Light</button></div>
+
+<div class="th" id="th" data-theme="dark">
+<div class="row">
+  <div class="col"><h2>Home</h2>
+    <div class="phone home"><div class="scroll">
+      <div class="hh"><a class="logo" href="#"><img src="wiz-mark.png" alt="">Soccer<em>wizard</em></a><button class="av" type="button" aria-label="Account"><img src="av/fire.webp" alt=""></button></div>
+      <div class="mine">
+        <div class="mine-top"><h3>Your slips</h3><span class="ct"><span class="num" id="hTotal">24</span> saved</span><a href="#">See all<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></a></div>
+        <div class="chips">
+          <button class="chip run" type="button"><span class="live"></span><span class="num" data-c="run">3</span>running</button>
+          <button class="chip cut" type="button"><span class="num" data-c="cut">15</span>lost</button>
+          <button class="chip won" type="button"><span class="num" data-c="won">6</span>won</button>
+        </div>
+      </div>
+      <div class="lh" data-list="h"><h4>Recent</h4><button class="clr" type="button">Clear all</button></div>
+      <div id="hcards"></div>
+    </div>
+    <div class="toast" id="htoast" role="status"><span class="tmsg">Slip deleted</span><button class="undo" type="button">Undo</button><i class="tbar"></i></div>
+    </div>
+    <p class="cap">Counts sit in one slim row. Every saved slip is its own row and swipes left to delete. The first row nudges once on arrival to show that it moves.</p>
+  </div>
+
+  <div class="col"><h2>My slips</h2>
+    <div class="phone"><div class="scroll" id="list">
+      <div class="hh"><h3 class="sheet-t">My slips</h3></div>
+      <div class="filt" id="filt">
+        <button class="on" data-f="all" type="button">All<span class="num">24</span></button><button data-f="run" type="button">Running<span class="num">3</span></button><button data-f="cut" type="button">Lost<span class="num">15</span></button><button data-f="won" type="button">Won<span class="num">6</span></button>
+      </div>
+      <div class="lh" data-list="s"><h4 id="sCount">4 slips</h4><button class="clr" type="button">Clear all</button></div>
+      <div id="cards"></div>
+    </div>
+    <div class="toast" id="toast" role="status"><span class="tmsg">Slip deleted</span><button class="undo" type="button">Undo</button><i class="tbar"></i></div>
+    </div>
+    <p class="cap">Share is the red action. Make it safer is gold and shows only on running slips. The code is gold, the way the site shows every booking code.</p>
+  </div>
+</div>
+</div>
+
+<p class="note"><b>Following the site's own rules:</b> one typeface (Plus Jakarta Sans), 12px cards and fully rounded pills, gold for codes and odds, red for the brand action, and bookmakers shown in their own wordmarks. <b>Deleting:</b> the slip follows your finger and the bin grows. Past the halfway point it arms and buzzes once on phones; letting go sooner springs it back. ⋯ also has Delete, and a long press opens the same menu. <b>Clear all</b> asks on the spot, not in a pop-up, and can be undone for 5 seconds.</p>
+
+<script>
+var SLIPS=[
+  {id:1,st:"run",bk:"sb",od:"4.46",code:"V8Y5X3",when:"Today, 14:02",legs:[["Arsenal v Leeds","Over 1.5",""],["Inter v Parma","1X","w"],["Moss v Kongsvinger","Over 1.5",""],["Napoli v Roma","GG",""],["Ajax v PSV","1X","w"],["Celtic v Hearts","Over 1.5",""],["Porto v Braga","1X",""],["Lille v Lens","Over 1.5",""]]},
+  {id:2,st:"won",bk:"b9",od:"3.12",code:"5TP9VWM",when:"Yesterday",legs:[["Malta v Andorra","1X","w"],["Aruba v Anguilla","Home","w"],["Puerto Rico v Cayman","Home","w"],["Shooting Stars v Nasarawa","1X","w"]]},
+  {id:3,st:"cut",bk:"sb",od:"844.28",code:"LDFJWY",when:"Sat 4 Oct",legs:[["Real Madrid v Barça","GG","w"],["Bayern v Dortmund","Over 2.5","l"],["PSG v Marseille","Home","w"],["Juve v Milan","1X","w"]]},
+  {id:4,st:"run",bk:"xb",od:"6.24",code:"37ECZ",when:"Today, 10:15",legs:[["Celtic v Hearts","Over 1.5",""],["Porto v Braga","1X","w"],["Lille v Lens","Over 1.5",""]]}
+];
+var LBL={run:"Running",cut:"Lost",won:"Won"};
+var BK={sb:'<span class="bm sbm">SportyBet</span>',b9:'<span class="bm"><span class="b9r">bet</span><span class="b9g">9ja</span></span>',xb:'<span class="bm xbm">1X<span class="xbb">BET</span></span>'};
+var I={share:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>',
+ copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>',
+ shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>',
+ rb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.3L3 16M3 21v-5h5"/></svg>',
+ more:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>',
+ chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
+ bin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>'};
+var filter="all",openId=1,last=null,timer=null,peeked=false;
+function $(id){return document.getElementById(id);}
+function shell(inner){return '<div class="bin">'+I.bin+'</div><div class="card">'+inner+'</div>';}
+function render(){
+  var hh=$("hcards");hh.innerHTML="";
+  if(!SLIPS.length)hh.innerHTML='<div class="empty">No saved slips</div>';
+  SLIPS.forEach(function(s){
+    var wrap=document.createElement("div");wrap.className="swipe";
+    wrap.innerHTML=shell('<div class="hrow"><span class="sdot '+s.st+'" role="img" aria-label="'+LBL[s.st]+'"></span><span class="m"><span class="code num">'+s.code+'</span><small>'+BK[s.bk]+', '+s.legs.length+' games, '+s.when+'</small></span><span class="od num">×'+s.od+'</span></div>');
+    hh.appendChild(wrap);swipe(wrap,s,"htoast");
+  });
+  var host=$("cards");host.innerHTML="";
+  var shown=SLIPS.filter(function(s){return filter==="all"||s.st===filter;});
+  if(!shown.length)host.innerHTML='<div class="empty">No saved slips</div>';
+  $("sCount").textContent=shown.length+(shown.length===1?" slip":" slips");
+  shown.forEach(function(s){
+    var w=s.legs.filter(function(l){return l[2]==="w";}).length,l=s.legs.filter(function(l){return l[2]==="l";}).length,left=s.legs.length-w-l;
+    var wrap=document.createElement("div");wrap.className="swipe";
+    wrap.innerHTML=shell(
+      '<div class="c-top"><span class="st '+s.st+'">'+LBL[s.st]+'</span><span class="meta">'+BK[s.bk]+'<span>'+s.when+'</span></span><span class="od num">×'+s.od+'</span></div>'+
+      '<div class="acts"><button class="act share" type="button">'+I.share+'Share</button>'+(s.st==="run"?'<button class="act safer" type="button">'+I.shield+'Safer</button>':'')+'<button class="act" type="button">'+I.rb+'Rebuild</button><button class="act more" type="button" aria-label="More">'+I.more+'</button></div>'+
+      '<div class="codebox"><span class="num" aria-label="Booking code">'+s.code+'</span><button type="button">'+I.copy+'Copy</button></div>'+
+      '<div class="c-mid"><span><b>'+w+'</b> landed'+(l?', <b>'+l+'</b> lost':'')+(left?', '+left+' to play':'')+'</span><div class="prog">'+s.legs.map(function(x){return '<i class="'+x[2]+'"></i>';}).join("")+'</div></div>'+
+      '<div class="legs">'+s.legs.map(function(x){return '<div class="leg '+x[2]+'"><span class="d"></span><span class="t">'+x[0]+'</span><span class="p">'+x[1]+'</span></div>';}).join("")+'</div>'+
+      '<button class="tog" type="button"><span>'+(openId===s.id?"Hide games":"Show "+s.legs.length+" games")+'</span>'+I.chev+'</button>');
+    if(openId===s.id)wrap.querySelector(".card").classList.add("open");
+    host.appendChild(wrap);
+    var card=wrap.querySelector(".card");
+    card.querySelector(".tog").onclick=function(){openId=openId===s.id?null:s.id;render();};
+    card.querySelector(".more").onclick=function(){del(wrap,s,"toast");};
+    swipe(wrap,s,"toast");
+  });
+  if(!peeked){peeked=true;[hh,host].forEach(function(h){var c=h.querySelector(".card");if(c)c.classList.add("peek");});}
+}
+function swipe(wrap,s,tid){
+  var card=wrap.querySelector(".card"),bin=wrap.querySelector(".bin");
+  var x0=0,y0=0,dx=0,drag=false,lock=null,t0=0,W=0,armed=false;
+  card.addEventListener("pointerdown",function(e){if(e.target.closest("button"))return;drag=true;lock=null;x0=e.clientX;y0=e.clientY;dx=0;t0=performance.now();W=card.offsetWidth;card.classList.remove("snap","peek");card.setPointerCapture(e.pointerId);});
+  card.addEventListener("pointermove",function(e){if(!drag)return;var mx=e.clientX-x0,my=e.clientY-y0;
+    if(lock===null&&(Math.abs(mx)>6||Math.abs(my)>6))lock=Math.abs(mx)>Math.abs(my)?"x":"y";
+    if(lock!=="x")return;dx=Math.min(0,mx);if(dx<-W*.8)dx=-W*.8+(dx+W*.8)*.5;
+    card.style.transform="translateX("+dx+"px)";var p=Math.min(1,-dx/(W*.45));
+    bin.style.setProperty("--s",(.7+.4*p).toFixed(2));
+    var now=p>=1;if(now!==armed){armed=now;bin.classList.toggle("armed",armed);if(armed&&navigator.vibrate)try{navigator.vibrate(12);}catch(e){}}});
+  function end(){if(!drag)return;drag=false;var v=-dx/Math.max(1,performance.now()-t0);
+    if(lock==="x"&&(armed||v>1.1&&-dx>40)){del(wrap,s,tid);}else{card.classList.add("snap");card.style.transform="translateX(0)";bin.classList.remove("armed");armed=false;}}
+  card.addEventListener("pointerup",end);card.addEventListener("pointercancel",end);
+}
+function del(wrap,s,tid){
+  var card=wrap.querySelector(".card");card.classList.add("gone");card.style.transform="translateX(-110%)";
+  wrap.style.height=wrap.offsetHeight+"px";
+  setTimeout(function(){wrap.classList.add("collapse");},180);
+  setTimeout(function(){var i=SLIPS.indexOf(s);last={s:s,i:i};SLIPS.splice(i,1);counts();render();toast(tid);},430);
+}
+function hideToasts(){$("toast").classList.remove("on");$("htoast").classList.remove("on");}
+function toast(tid,msg){var t=$(tid);t.querySelector(".tmsg").textContent=msg||"Slip deleted";hideToasts();void t.offsetWidth;t.classList.add("on");clearTimeout(timer);timer=setTimeout(function(){t.classList.remove("on");last=null;},5000);}
+[].forEach.call(document.querySelectorAll(".undo"),function(b){b.onclick=function(){if(!last)return;if(last.all)SLIPS=last.all;else SLIPS.splice(last.i,0,last.s);last=null;hideToasts();counts();render();};});
+/* Clear all: confirm in place, not in a pop-up */
+[].forEach.call(document.querySelectorAll(".lh"),function(lh){
+  var tid=lh.dataset.list==="h"?"htoast":"toast";
+  function idle(){var b=document.createElement("button");b.className="clr";b.type="button";b.textContent="Clear all";b.onclick=ask;lh.replaceChild(b,lh.lastElementChild);}
+  function ask(){if(!SLIPS.length)return;var a=document.createElement("span");a.className="ask";
+    a.innerHTML='Clear '+SLIPS.length+'?<button class="no" type="button">Keep</button><button class="yes" type="button">Clear</button>';
+    lh.replaceChild(a,lh.lastElementChild);a.querySelector(".no").onclick=idle;
+    a.querySelector(".yes").onclick=function(){last={all:SLIPS.slice()};SLIPS=[];idle();counts();render();toast(tid,"All slips cleared");};
+    a.querySelector(".yes").focus();}
+  lh.querySelector(".clr").onclick=ask;
+});
+function counts(){var c={all:SLIPS.length,run:0,cut:0,won:0};SLIPS.forEach(function(s){c[s.st]++;});
+  [].forEach.call($("filt").children,function(b){b.querySelector(".num").textContent=c[b.dataset.f];});
+  [].forEach.call(document.querySelectorAll(".chip .num"),function(n){n.textContent=c[n.dataset.c];});
+  $("hTotal").textContent=c.all;}
+[].forEach.call($("filt").children,function(b){b.onclick=function(){filter=b.dataset.f;[].forEach.call($("filt").children,function(x){x.classList.toggle("on",x===b);});render();};});
+function theme(t){$("th").setAttribute("data-theme",t);$("tD").classList.toggle("on",t==="dark");$("tL").classList.toggle("on",t==="light");}
+$("tD").onclick=function(){theme("dark");};$("tL").onclick=function(){theme("light");};
+counts();render();
+</script>
+</body>
+</html>
