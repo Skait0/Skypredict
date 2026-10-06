@@ -485,6 +485,31 @@ img,svg{max-width:100%}
 main[tabindex="-1"]:focus{outline:none}
 .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
 .num{font-variant-numeric:tabular-nums}
+.ys{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 10px 10px;margin:0 0 16px}
+.ys-top{display:flex;align-items:baseline;gap:6px;margin:0 2px 9px}
+.ys-top h3{margin:0;font-size:14px;font-weight:800}
+.ys-ct{font-size:12px;font-weight:600;color:var(--faint)}
+.ys-all{margin-left:auto;border:0;background:none;font:inherit;font-size:12.5px;font-weight:700;color:var(--red-ink);cursor:pointer}
+.ys-chips{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ys-chip{display:flex;align-items:center;justify-content:center;gap:6px;height:34px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);cursor:pointer;color:var(--soft);font:inherit;font-size:12px;font-weight:700}
+.ys-chip .num{font-size:15px}
+.ys-chip.run .num{color:var(--accent)}.ys-chip.lost .num{color:var(--red-ink)}.ys-chip.won .num{color:var(--green-ink)}
+.ys-live{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:ysLive 1.6s ease-in-out infinite}
+@keyframes ysLive{50%{opacity:.25}}
+.ys-lh{display:flex;align-items:center;justify-content:space-between;min-height:30px;margin:0 2px 8px}
+.ys-lh h4{margin:0;font-size:13px;font-weight:700;color:var(--soft)}
+.ys-clrb{border:0;background:none;color:var(--faint);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:6px 0}
+.ys-ask{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700}
+.ys-no{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:99px;padding:6px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.ys-yes{border:0;background:var(--red-fill);color:#fff;border-radius:99px;padding:7px 13px;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.ys-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.ys-m{flex:1;min-width:0}.ys-code{display:block;font-size:14px;letter-spacing:.06em}
+.ys-m small{display:block;font-size:12px;font-weight:600;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.ys-od{font-size:16px;color:var(--accent)}
+.ys-dot{width:8px;height:8px;border-radius:50%;flex:none}
+.ys-dot.run{background:var(--accent);animation:ysLive 1.6s ease-in-out infinite}.ys-dot.lost{background:var(--red)}.ys-dot.won{background:var(--green)}
+@media (hover:hover){.ys-chip:hover{border-color:var(--grey)}.ys-clrb:hover{color:var(--red-ink)}}
+.ys .num,.ys-row .num{font-weight:800}
 .eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
   color:var(--faint)}
 
@@ -8226,68 +8251,52 @@ function countVoid(s){
    to be opened twice.
    It only appears once there is something to say. A first-time visitor sees
    the offer and the board, exactly as before. */
+function slipState(s){ return !s.settled?"run":(s.won?"won":"lost"); }
+function slipCounts(){
+  var c={all:0,run:0,lost:0,won:0};
+  SLIPS.forEach(function(s){ if(window.swPend&&window.swPend.hidden(s.sid)) return; c.all++; c[slipState(s)]++; });
+  return c;
+}
+function bookMark(k){ var B=BOOKS[k]; return B?(B.mark||esc(B.label)):""; }
+var SL_PEEKED=false;
+var BIN_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>';
 function renderMyResults(){
   var host=$("myres"); if(!host) return;
-  if(!SLIPS.length){ host.innerHTML=""; return; }
-  var r=myRecord();
-  var last=SLIPS.filter(function(x){return x.settled;})[0];
-  var open=SLIPS.filter(function(x){return !x.settled;})[0];
-
-  var head, body;
-  if(open){
-    /* A slip still running beats a finished one: it is the live thing. */
-    var done=open.legs.filter(function(l){return l.res==="win"||l.res==="lose";}).length;
-    head="<span class='mr-tag live'>Running</span>";
-    body="<b>"+open.legs.length+"-game slip · ×"+open.odds.toFixed(2)+"</b>"+
-      "<span>"+(done?done+" of "+open.legs.length+" settled so far":"None of these have finished yet")+
-      (open.hits?" · "+open.hits+" landed":"")+"</span>";
-  } else if(last){
-    /* THE WORDS HAVE TO MATCH THE NUMBERS. This said "One got away" under
-       every losing slip, whatever the count - "3 of 35 landed. One got away."
-       reached a reader (24 Sep 2026). And "Your Saturday's slip" read oddly;
-       it names the day the slip is from instead. */
-    var w=slipWhen(last.at).replace(/'s$/,"");
-    var whose=w==="last"?"Your last slip":"Your slip from "+w;
-    var miss=last.legs.filter(function(l){return l.res==="lose";}).length;
-    /* NO DOWNERS (24 Sep, the owner's call). A slip that did not come in says
-       how close it got and points at the next one; the count stays exact. */
-    head="<span class='mr-tag "+(last.won?"won":"lost")+"'>"+(last.won?"Won 🔥":(miss===1?"So close 😤":"Next one 😤"))+"</span>";
-    var allIn=last.hits===last.legs.length;
-    body="<b>"+whose+(last.won
-        ? (allIn?" won: all "+last.legs.length+" landed":" won: "+last.hits+" of "+last.legs.length+" landed, the rest void")
-        : ": "+last.hits+" of "+last.legs.length+" landed")+"</b>"+
-      "<span>"+(last.won
-        ? "That paid ×"+last.odds.toFixed(2)+"."
-        : (miss===1
-            ? "One leg off. Today's code is ready, we go again 💪"
-            : "We go again. Today's code is ready 💪"))+"</span>";
-  }
-  /* The numbers carry the weight, the words explain them - reading "1 of 3"
-     at a glance is the point, not the sentence around it. */
-  var rec=r.settled
-    ? "<b>"+r.won+" of "+r.settled+"</b> slips landed"+
-      (r.streak>1?" · <b>"+r.streak+"</b> in a row":"")
-    : "<b>"+r.built+"</b> slip"+(r.built===1?"":"s")+" so far";
-
-  /* Shown once, the first time there is anything here. Nobody expects a site
-     to have kept their slip, so without a word about it the card reads as
-     another panel rather than as their own record. */
-  var coach=slipCoachSeen()?"":
-    "<div class='mr-coach'><span>We keep every slip you book and check it "+
-    "against the final scores. Come back and see how it finished.</span>"+
-    "<button class='mr-coach-x' type='button'>Got it</button></div>";
-
+  var c=slipCounts();
+  if(!c.all){ host.innerHTML=""; return; }
+  var rows=SLIPS.filter(function(s){ return !(window.swPend&&window.swPend.hidden(s.sid)); }).slice(0,5);
   host.innerHTML=
-    "<section class='myres'>"+
-      "<div class='mr-top'>"+head+"<span class='mr-ttl'>Your slips</span></div>"+
-      "<div class='mr-body'>"+body+"</div>"+
-      coach+
-      "<div class='mr-foot'><span class='mr-rec'>"+rec+"</span>"+
-        "<button class='mr-all' id='mrAll' type='button'>See all</button></div>"+
-    "</section>";
-  $("mrAll").addEventListener("click",openSlipsSheet);
-  var cx=host.querySelector(".mr-coach-x");
-  if(cx) cx.addEventListener("click",function(){ slipCoachDone(); renderMyResults(); });
+    "<div class='ys'><div class='ys-top'><h3>Your slips</h3><span class='ys-ct'><span class='num'>"+c.all+"</span> saved</span>"+
+      "<button class='ys-all' type='button' data-ysf='all'>See all</button></div>"+
+      "<div class='ys-chips'>"+
+        "<button class='ys-chip run' type='button' data-ysf='run'>"+(c.run?"<span class='ys-live'></span>":"")+"<span class='num'>"+c.run+"</span>running</button>"+
+        "<button class='ys-chip lost' type='button' data-ysf='lost'><span class='num'>"+c.lost+"</span>lost</button>"+
+        "<button class='ys-chip won' type='button' data-ysf='won'><span class='num'>"+c.won+"</span>won</button>"+
+      "</div></div>"+
+    "<div class='ys-lh'><h4>Recent</h4><span class='ys-clr'></span></div>"+
+    rows.map(function(s){
+      return "<div class='sw-swipe' data-sid='"+esc(s.sid)+"'><div class='sw-bin'>"+BIN_SVG+"</div>"+
+        "<div class='sw-card ys-row'><span class='ys-dot "+slipState(s)+"' role='img' aria-label='"+({run:"Running",lost:"Lost",won:"Won"})[slipState(s)]+"'></span>"+
+        "<span class='ys-m'><span class='ys-code num'>"+esc(s.code||"No code")+"</span>"+
+        "<small>"+(s.book?bookMark(s.book)+", ":"")+s.legs.length+" games, "+esc(slipWhen(s.at))+"</small></span>"+
+        "<span class='ys-od num'>×"+(s.odds>=1000?Math.round(s.odds).toLocaleString():s.odds.toFixed(2))+"</span></div></div>";
+    }).join("");
+  host.querySelectorAll("[data-ysf]").forEach(function(b){ b.onclick=function(){ openSlipsSheet(b.getAttribute("data-ysf")); }; });
+  host.querySelectorAll(".sw-swipe").forEach(function(r){ swSwipe(r,function(){ window.swPend.del(r.getAttribute("data-sid")); }); });
+  clearAllControl(host.querySelector(".ys-clr"));
+  if(!SL_PEEKED){ SL_PEEKED=true; var first=host.querySelector(".sw-card"); if(first) first.classList.add("sw-peek"); }
+}
+/* Clear all asks in place: "Clear N? Keep / Clear". No confirm(). */
+function clearAllControl(slot){
+  if(!slot) return;
+  function idle(){ slot.innerHTML="<button class='ys-clrb' type='button'>Clear all</button>"; slot.firstChild.onclick=ask; }
+  function ask(){
+    var n=slipCounts().all; if(!n) return;
+    slot.innerHTML="<span class='ys-ask'>Clear "+n+"?<button class='ys-no' type='button'>Keep</button><button class='ys-yes' type='button'>Clear</button></span>";
+    slot.querySelector(".ys-no").onclick=idle;
+    var y=slot.querySelector(".ys-yes"); y.onclick=function(){ window.swPend.clearAll(SLIPS.filter(function(s){return !(window.swPend&&window.swPend.hidden(s.sid));}).map(function(s){return s.sid;})); }; y.focus();
+  }
+  idle();
 }
 const SLIP_COACH_KEY="sw.coached.slips.v1";
 function slipCoachSeen(){
@@ -8305,8 +8314,9 @@ function slipWhen(iso){
   return dayName(off)+"'s";
 }
 
-function openSlipsSheet(){
-  if(window.swGate&&!swGate("slips",null,openSlipsSheet,"slips")) return;
+function openSlipsSheet(filter){
+  if(window.swGate&&!swGate("slips",null,function(){openSlipsSheet(filter);},"slips")) return;
+  if(filter) window.SLFILTER=filter;
   renderSlipsSheet();
   $("scrim").classList.add("on");
   $("slipsSheet").classList.add("on");

@@ -85,6 +85,6 @@ test("the home card still clears itself when the last slip goes", () => {
   /* Redrawing is only half of it - renderMyResults has to empty the host when
      there is nothing left, or the card keeps its last contents forever. */
   const fn = grab("renderMyResults");
-  assert.match(fn, /if\(!SLIPS\.length\)\{\s*host\.innerHTML="";\s*return;\s*\}/,
+  assert.match(fn, /if\(!c\.all\)\{\s*host\.innerHTML="";\s*return;\s*\}/,
     "an empty SLIPS must blank the card, not leave the previous render");
 });
