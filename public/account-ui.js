@@ -63,6 +63,7 @@
   var CHEV='<svg class="swa-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
   function devWords(n){ return n==null?"":(n<=1?"Just this device":"This phone and "+(n-1)+" other"+(n>2?"s":"")); }
   function settingsHtml(o){
+    /* o.marks values are trusted HTML from our own BOOKS, not user input. */
     var books=Object.keys(o.marks||{}).map(function(k){
       return "<button type='button' data-book=\""+esc(k)+"\" aria-pressed=\""+(k===o.book?"true":"false")+"\">"+o.marks[k]+"</button>"; }).join("");
     return "<p class='swa-h'>Appearance</p><div class='swa-card'><div class='swa-set'><span class='swa-st'><b>Theme</b></span>"+
@@ -229,7 +230,7 @@
       a.req("POST","/api/account/consent",{on:on},function(code,j){ mail.disabled=false;
         if(code===200) mail.setAttribute("aria-checked",j.on?"true":"false"); else fail(code,j); }); };
     a.req("GET","/api/auth/devices",null,function(code,j){
-      if(code===200&&j.devices) v.querySelector("#swaDevs small").textContent=devWords(j.devices.length); });
+      var sm=v.querySelector("#swaDevs small"); if(code===200&&j.devices&&sm) sm.textContent=devWords(j.devices.length); });
     v.querySelector("#swaDevs").onclick=function(){ devices(); };
     v.querySelector("#swaOut").onclick=signOut;
     v.querySelector("#swaDel").onclick=function(){ v.querySelector("#swaDelBox").hidden=false; v.querySelector("#swaDelIn").focus(); };
@@ -237,6 +238,7 @@
       if(v.querySelector("#swaDelIn").value.replace(/\s/g,"").toUpperCase()!=="DELETE") return say("Type DELETE to confirm.");
       a.req("POST","/api/account/delete",{},function(code,j){
         if(code===200){ closeView(); a.signedOutHere(null,true); a.notice("Your account is deleted."); return; }
+        if(code===401) return a.signedOutHere(j&&j.reason);
         fail(code,j);
         if(j&&j.error==="reauth"){ var l=d.createElement("a"); l.textContent=" Sign in again"; l.href="/login?return="+encodeURIComponent("/?account=1"); v.querySelector("#swaMsg").appendChild(l); }
       });
@@ -244,7 +246,10 @@
   }
   function devices(){
     var a=acct();
-    var v=view("Signed-in devices","<div class='swa-card' id='swaDevList'><div class='swa-set'><span class='swa-st'><small>Loading</small></span></div></div><p class='swa-msg' id='swaMsg' role='status'></p>");
+    var v=view("Signed-in devices","<div class='swa-card' id='swaDevList'><div class='swa-set'><span class='swa-st'><small>Loading</small></span></div></div><button class='swa-outbtn' id='swaAll' type='button'>Sign out everywhere</button><p class='swa-msg' id='swaMsg' role='status'></p>");
+    v.querySelector("#swaAll").onclick=function(){ a.req("POST","/api/auth/logout-all",{},function(code){
+      if(code===200||code===401) a.signedOutHere(null,true);
+      else v.querySelector("#swaMsg").textContent=code===0?"No connection. You are still signed in.":"Something went wrong. Try again."; }); };
     function load(){
       a.req("GET","/api/auth/devices",null,function(code,j){
         var box=v.querySelector("#swaDevList"); if(code===401) return a.signedOutHere(j.reason);

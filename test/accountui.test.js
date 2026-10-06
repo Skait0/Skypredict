@@ -128,3 +128,10 @@ test("closed full-screen views are hidden from keyboard and screen readers; blan
 test("index.html exposes the book helpers", () => {
   for (const w of ["swSetBook", "swBookKey", "swBookMarks"]) assert.match(html, new RegExp("window\." + w + "="));
 });
+
+test("signing out closes the full-screen view too; delete 401 signs out; sign out everywhere exists", () => {
+  const f = html.slice(html.indexOf("function signedOutHere("));
+  assert.ok(f.slice(0, f.indexOf("function schedule")).includes("swAccountUI.closeView()"));
+  assert.ok(src.includes("\"/api/auth/logout-all\""));
+  assert.ok(src.includes("if(code===401) return a.signedOutHere(j&&j.reason)"));
+});

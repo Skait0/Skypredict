@@ -23076,7 +23076,7 @@ load().catch(function(){});
 
   function signedOutHere(reason,quiet){
     var had=!!readMeta(ls);
-    st.on=false; clearSynced(ls); reload(); paintButton(); if(root.swAccountUI) root.swAccountUI.close();
+    st.on=false; clearSynced(ls); reload(); paintButton(); if(root.swAccountUI){ root.swAccountUI.close(); root.swAccountUI.closeView(); }
     if(had&&!quiet) notice(reason==="displaced"?"Signed out: this account was used on a newer device.":"You were signed out. Sign in again to sync.");
   }
 
