@@ -95,6 +95,8 @@ test("picker: ff picks all 25, admin all 28, a future paid role gets the skins, 
 
 test("client avatar lists match lib/roles.js, in page and in account-ui", () => {
   const R = require("../lib/roles.js");
+  assert.deepStrictEqual(UI.AV_PERSONAL, R.PERSONAL_AVATARS);
+  assert.deepStrictEqual(JSON.parse(/PERSONAL=(\[[^\]]*\])/.exec(html)[1]), R.PERSONAL_AVATARS);
   assert.deepStrictEqual(UI.AV_FF, R.FF_AVATARS);
   assert.deepStrictEqual(UI.AV_OWNER.slice().sort(), R.OWNER_AVATARS.slice().sort());
   const m = /\/\* SWAVATAR \*\/([\s\S]*?)\/\* \/SWAVATAR \*\//.exec(html)[1];
@@ -130,7 +132,9 @@ test("picker rows: no portrait alone on the last row", () => {
     const h = UI.pickerHtml("fire", role, p), n = (h.match(/data-av=/g) || []).length;
     assert.notStrictEqual(n % cols(h), 1, role + " " + n);
   }
-  assert.notStrictEqual(UI.AV_FF.length - UI.AV_FREE.length, 5 * 4 + 1); // locked row is 5 a row
+  /* The locked grid (free plan) is a fixed 5 a row in CSS, so its count of skins
+     must not be one more than a multiple of 5, or the last skin sits alone. */
+  assert.notStrictEqual((UI.AV_FF.length - UI.AV_FREE.length) % 5, 1);
 });
 
 test("menu: plan label from the account, Admin item only for admin, admin codes say no limit", () => {
