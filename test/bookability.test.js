@@ -74,7 +74,11 @@ test("only bookVerdict reads an odds cache to judge a market", () => {
                    /* Display: the tip's price at every book, best first
                       (30 Sep 2026). Reads each book's own cache exactly,
                       which legOdd cannot - it falls back to SportyBet. */
-                   "bestPriceHTML"];
+                   "bestPriceHTML",
+                   /* Display: the reader's own book's draw price on a Draw
+                      picks card (7 Oct 2026). Same reason as above - legOdd
+                      would show SportyBet's price unnamed. */
+                   "boardPick"];
   const bodies = allowed.map(grab).join("\n");
 
   for (const re of patterns) {

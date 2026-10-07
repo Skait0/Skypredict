@@ -269,3 +269,54 @@ test("an address bucket can never be exempted, whatever the list says", async ()
   assert.equal(v.allow, false,
     "an address over its ceiling stays capped even when its bucket is listed");
 });
+
+/* ---- role-aware booking: admin open, Family & friends under u:<id> ---- */
+const withCookie = (device) => ({ headers: { cookie: "sess=t", "x-sw-device": device, "x-forwarded-for": "105.112.4.9" } });
+const roleOpts = (db, roleOf) => ({ db, deviceLimit: 10, ipLimit: 200, userLimit: 100, pepper: "p",
+  sessionCookie: "sess", roleOf, now: () => at });
+
+test("admin books open and nothing is counted or recorded", async () => {
+  const db = store({});
+  const o = roleOpts(db, async () => ({ role: "admin", userId: "a1" }));
+  assert.deepEqual(await G.makeGate(o)(withCookie("device-abc121")), { allow: true, counted: false, remaining: null });
+  await G.makeRecorder(o)(withCookie("device-abc121"));
+  assert.equal(db.asked.length, 0);
+  assert.equal(db.wrote.length, 0);
+});
+
+test("family and friends are counted under u:<id> with a limit of 100 across devices", async () => {
+  const db = store({ "u:f1": 99 });
+  const o = roleOpts(db, async () => ({ role: "ff", userId: "f1" }));
+  const a = await G.makeGate(o)(withCookie("device-abc121"));
+  const b = await G.makeGate(o)(withCookie("device-abc122"));
+  assert.equal(a.limit, 100);
+  assert.equal(a.allow, true);
+  assert.deepEqual(db.asked.map((x) => x.subject), ["u:f1", "u:f1"]);
+  await G.makeRecorder(o)(withCookie("device-abc122"));
+  assert.equal(db.wrote[0].subject, "u:f1");
+  const full = await G.makeGate(roleOpts(store({ "u:f1": 100 }), async () => ({ role: "ff", userId: "f1" })))(withCookie("device-abc123"));
+  assert.equal(full.allow, false);
+  assert.equal(b.counted, true);
+});
+
+test("roleOf throwing or hanging falls back to the device path", async () => {
+  for (const roleOf of [async () => { throw new Error("db down"); }, () => new Promise(() => {})]) {
+    const db = store({});
+    const o = Object.assign(roleOpts(db, roleOf), { roleTimeoutMs: 20 });
+    const v = await G.makeGate(o)(withCookie("device-abc121"));
+    assert.equal(v.limit, 10);
+    assert.equal(db.asked[0].subject, "device-abc121");
+  }
+});
+
+test("free or null role takes the device path; no cookie never calls roleOf", async () => {
+  let calls = 0;
+  const db = store({});
+  const o = roleOpts(db, async () => { calls++; return { role: "free", userId: "x" }; });
+  await G.makeGate(o)(withCookie("device-abc121"));
+  assert.equal(db.asked[0].subject, "device-abc121");
+  assert.equal(calls, 1);
+  await G.makeGate(o)(req());
+  assert.equal(calls, 1, "no session cookie, no lookup");
+  assert.equal(db.asked[1].subject, "device-abc123");
+});
