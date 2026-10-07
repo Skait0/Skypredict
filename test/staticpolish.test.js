@@ -27,7 +27,8 @@ test("a played page says the tip in words and keeps the bottom button", () => {
 
 test("an upcoming page has a next step where the tip is", () => {
   const h = P.renderMatchPage(UP, null, []);
-  assert.match(h, /<div class='card tip'>[\s\S]*?<p class='tip-go'><a href='\/'>Build a slip on the board<\/a><\/p>/);
+  /* Task 6b: the pill now carries the game into the app (test/addlink.test.js). */
+  assert.match(h, /<div class='card tip'>[\s\S]*?<p class='tip-go'><a href='\/\?add=m20261007AmericaMGFortaleza'>Add this game to my slip<\/a><\/p>/);
   assert.ok(!/one tap to add/.test(h), "promises the game is on the board, which it may not be yet");
   assert.ok(!/class="cta" href="\/">See today/.test(h), "two buttons to the same place");
 });

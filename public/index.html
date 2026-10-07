@@ -18829,6 +18829,36 @@ function toggleMy(id,code,label,p,srcEl){
   saveMy(); renderFab(); syncAddBtn(id,code);
   if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
 }
+/* ?add=<fid> FROM A MATCH PAGE. lib/pages.js links an upcoming match page
+   here with the same fid() the card's Add to slip carries, so this adds that
+   card's tip through toggleMy - no second add path - and opens My slip so the
+   reader sees it land. Read once and dropped from the address bar, so a reload
+   does not add it twice. Waits out the entry gate (it never touches it): the
+   add happens when the board is what the reader is looking at. One leg per
+   game - a game already on the slip, whatever its market, is not added again.
+   The leg is tagged via:"match" so a booking of it reports src=match. */
+function addFromLink(){
+  var q, id;
+  try{ q=new URLSearchParams(location.search||""); id=q.get("add"); }catch(e){ return; }
+  if(!id) return;
+  try{
+    q.delete("add"); var _qs=q.toString();
+    history.replaceState(history.state,"",location.pathname+(_qs?"?"+_qs:"")+(location.hash||""));
+  }catch(e){}
+  (function whenBoard(){
+    if(document.documentElement.classList.contains("sw-gate-on")){ setTimeout(whenBoard,250); return; }
+    var f=fixtureById(id), code=f&&tipCode(f);
+    if(!f||!code||f.tip_p==null){
+      window.swToast&&window.swToast("That game is off the board now. Plenty more to pick from!","info","addlink"); return; }
+    if(!(notStarted(f)&&isUpcoming(f))){
+      window.swToast&&window.swToast("That one has kicked off. Plenty more on the board!","info","addlink"); return; }
+    if(!MYSLIP.some(function(x){return x.id===id;})){
+      toggleMy(id,code,plainTip(f),f.tip_p.toFixed(3),null);
+      MYSLIP[MYSLIP.length-1].via="match"; saveMy();
+    }
+    openMySheet();
+  })();
+}
 /* Repaint the add buttons for one match+market wherever they sit on the
    board, so the tick agrees with the slip. Shared by adding and by changing
    a pick - a change has to repaint two markets, the one being left and the
@@ -22524,6 +22554,7 @@ async function load(){
        pullServerResults. Only while a slip is still open. */
     try{ pullServerResults(); setInterval(pullServerResults, 5*60*1000); }catch(e){}
     hideLoader();
+    try{ addFromLink(); }catch(e){}
     /* THE FRESHNESS FETCH IS GONE, and this is the note for whoever wonders
        where it went. It called /api/predictions whenever the baked payload was
        over six hours old - which is most of the day - and repainted only if the
