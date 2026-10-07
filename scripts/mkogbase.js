@@ -28,8 +28,9 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-const PUB = "C:/Users/DELL/Desktop/skypredict/public";
-const ASSETS = "C:/Users/DELL/Desktop/skypredict/assets";
+/* This checkout, not a fixed path: a worktree must not write another tree's assets. */
+const PUB = path.join(__dirname, "..", "public");
+const ASSETS = path.join(__dirname, "..", "assets");
 const PORT = 8093;
 
 const W = 1568, H = 772;
@@ -190,7 +191,10 @@ function advanceOf(ctx, font) {
   const chipPost = "% of tips landed";
   const chipW = 2 * advP + x.measureText(chipPost).width;
   x.font = "600 26px 'Plus Jakarta Sans', system-ui, sans-serif";
-  const note = "last 21 days · every one checked";
+  /* No window in the bake. The percentage is the graded record, whose window
+     is however far graded history reaches (14 days or less, 7 Oct 2026), and
+     baked words cannot follow it. */
+  const note = "every one checked against the final score";
   const noteW = x.measureText(note).width;
 
   const padX = 26, inner = 22, boxH = 60;

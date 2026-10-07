@@ -118,6 +118,51 @@ test("no graded results: the record surfaces stay empty rather than borrow the b
   assert.strictEqual(h.scProof.hidden, true);
 });
 
+test("calibration grades the rows that carry tip_p and ignores the rest", () => {
+  /* Rows replaced by results enrichment used to arrive without tip_p. */
+  const mixed = RESULTS.map((r, i) => (i % 2 ? Object.assign({}, r, { tip_p: undefined }) : r));
+  const withP = mixed.filter((r) => typeof r.tip_p === "number" && r.date >= isoDaysAgo(21));
+  const want = Math.round(withP.reduce((s, r) => s + Math.pow((r.hit ? 1 : 0) - r.tip_p, 2), 0) / withP.length * 1000) / 1000;
+  assert.strictEqual(G.windowRecord(mixed, 21, isoDaysAgo(0)).brier, want);
+  const h = render({ results: mixed, record: G.windowRecord(mixed, 21, isoDaysAgo(0)) });
+  assert.strictEqual(h.w21.brier, want, "page and build agree on mixed rows");
+  assert.match(h.record.innerHTML, /<i>calibration<\/i>/, "the cell must not vanish when some rows lack tip_p");
+  const b = fs.readFileSync(path.join(__dirname, "..", "lib", "build.js"), "utf8");
+  const enrich = b.slice(b.indexOf("enrichedResults.push("), b.indexOf("enrichedResults.sort("));
+  assert.match(enrich, /tip_p:/, "enriched result rows must carry tip_p");
+});
+
+test("one day of history reads 'yesterday', never 'last 1 days'", () => {
+  const one = [row(1, true), row(1, false)];
+  const h = render({ results: one, record: G.windowRecord(one, 21, isoDaysAgo(0)) });
+  assert.match(h.daily.innerHTML, /Yesterday, <b>1 of 2<\/b> tips landed/);
+  assert.match(h.scProof.innerHTML, /50% of our tips landed<\/b> yesterday/);
+  assert.match(h.record.innerHTML, /<i>yesterday \u00b7 1\/2<\/i>/);
+  const record = G.windowRecord(one, 21, isoDaysAgo(0));
+  const S = require("../lib/social.js");
+  const posts = [0, 1, 2, 3].map((n) => S.promo({ record }, Date.now(), n).x).join("\n");
+  assert.match(posts, /1 of 2 tips landed yesterday \(50%\)/);
+  const page = require("../lib/sliplink.js").renderPage([], record, "/s/x", {});
+  assert.match(page, /<b>1 of 2<\/b>\s*yesterday\./);
+  const all = [h.daily.innerHTML, h.scProof.innerHTML, h.record.innerHTML, posts, page].join("\n");
+  assert.doesNotMatch(all, /\b1 days\b/);
+});
+
+test("no card generator bakes a fixed window into its picture", () => {
+  /* The share card prints the graded % into a baked base; words baked beside
+     it cannot follow the window. Comments may mention days, drawn text may not. */
+  for (const f of ["mkogbase.js", "mkslipcard.js"]) {
+    const code = fs.readFileSync(path.join(__dirname, "..", "scripts", f), "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    assert.doesNotMatch(code, /\b\d+\s*days?\b/i, f + " bakes a fixed window");
+  }
+});
+
+test("the build counts the window from the Lagos day", () => {
+  const b = fs.readFileSync(path.join(__dirname, "..", "lib", "build.js"), "utf8");
+  assert.match(b, /GRADE\.windowRecord\(results, cfg\.recordDays,\s*new Date\(Date\.now\(\) \+ LAGOS_OFFSET_MS\)/);
+});
+
 test("the build publishes payload.record from graded results, with no 21-day backtest", () => {
   const b = fs.readFileSync(path.join(__dirname, "..", "lib", "build.js"), "utf8");
   assert.match(b, /GRADE\.windowRecord\(results, cfg\.recordDays/,

@@ -17967,7 +17967,7 @@ function renderDaily(){
 
   var foot="";
   if(rec&&rec.total){
-    foot="<div class='daily-foot'>Over the last "+(rec.days||0)+" days, <b>"+
+    foot="<div class='daily-foot'>"+(rec.days===1?"Yesterday":"Over the last "+rec.days+" days")+", <b>"+
       rec.correct+" of "+rec.total+"</b> tips landed ("+
       Math.round(100*rec.correct/rec.total)+"%). Every tip is checked against "+
       "the final score.</div>";
@@ -18000,8 +18000,8 @@ function renderProof(){
   var rec=windowRecord(21);
   if(!rec){el.hidden=true;el.innerHTML="";return;}
   el.hidden=false;
-  el.innerHTML="<span><b>"+rec.pct+"% of our tips landed</b> over the last "+
-    rec.days+" days · every one checked against the final score</span>";
+  el.innerHTML="<span><b>"+rec.pct+"% of our tips landed</b> "+
+    (rec.days===1?"yesterday":"over the last "+rec.days+" days")+" · every one checked against the final score</span>";
 }
 
 /* ---- Accuracy record (renders only with real data) ---- */
@@ -18069,7 +18069,8 @@ function renderRecord(){
      reads as a poor week next to the longer record it sits inside. */
   var b=rec.brier;
   var cal=(b==null)?null:(b<=0.18?"Excellent":b<=0.21?"Good":b<=0.24?"Fair":"Rough");
-  var yest=windowRecord(1);
+  /* With one day of history the headline cell already is yesterday. */
+  var yest=rec.days>1?windowRecord(1):null;
   /* Under eight days of history the two windows are the same rows. */
   var wk=rec.days>7?windowRecord(7):null;
   var cold=wk&&wk.pct<pct-5;
@@ -18080,8 +18081,8 @@ function renderRecord(){
       "<div class='rec-grid'>"+
         (wk?"<div class='rec-cell'><b class='pc"+(cold?" cool":"")+"'>"+wk.pct+"%</b>"+
           "<i>last 7 days \u00b7 "+wk.correct+"/"+wk.total+"</i></div>":"")+
-        "<div class='rec-cell'><b class='pc'>"+pct+"%</b><i>last "+
-          rec.days+" days \u00b7 "+rec.correct+"/"+rec.total+"</i></div>"+
+        "<div class='rec-cell'><b class='pc'>"+pct+"%</b><i>"+
+          (rec.days===1?"yesterday":"last "+rec.days+" days")+" \u00b7 "+rec.correct+"/"+rec.total+"</i></div>"+
         (cal?"<div class='rec-cell'><b>"+cal+"</b><i>calibration</i></div>":"")+
         (yest?"<div class='rec-cell'><b>"+yest.correct+"/"+yest.total+
           "</b><i>yesterday</i></div>":"")+
