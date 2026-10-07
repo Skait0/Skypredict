@@ -1696,5 +1696,74 @@
       "onexbet": "TLVRA"
     },
     "odds": 1.36
+  },
+  "2026-10-07": {
+    "date": "2026-10-07",
+    "generated": "2026-10-07T12:57:15.246Z",
+    "firstKickoff": "2026-10-07T15:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-07",
+        "home": "Shooting Stars",
+        "away": "Kano Pillars",
+        "league": "Nigeria Premier League",
+        "kickoff": "2026-10-07T15:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.831,
+        "market": "1X",
+        "odd": 1.08
+      },
+      {
+        "date": "2026-10-07",
+        "home": "Vitoria",
+        "away": "Chapecoense-SC",
+        "league": "Brazil Serie A",
+        "kickoff": "2026-10-07T23:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.749,
+        "market": "1X",
+        "odd": 1.15
+      },
+      {
+        "date": "2026-10-07",
+        "home": "Inter Toronto",
+        "away": "Supra du Quebec",
+        "league": "Canada Canadian Premier League",
+        "kickoff": "2026-10-07T15:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.76,
+        "market": "OVER_1.5",
+        "odd": 1.15
+      },
+      {
+        "date": "2026-10-07",
+        "home": "Bragantino",
+        "away": "Mirassol",
+        "league": "Brazil Serie A",
+        "kickoff": "2026-10-07T22:30:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.743,
+        "market": "1X",
+        "odd": 1.18
+      },
+      {
+        "date": "2026-10-07",
+        "home": "Gnistan",
+        "away": "Inter Turku",
+        "league": "Finland Veikkausliiga",
+        "kickoff": "2026-10-07T16:00:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.724,
+        "market": "X2",
+        "odd": 1.19
+      }
+    ],
+    "codes": {
+      "sporty": "WK7JPK",
+      "bet9ja": "5TXS7Y3",
+      "betking": "YN1TZ2",
+      "onexbet": "7G43C"
+    },
+    "odds": 2.01
   }
 }
