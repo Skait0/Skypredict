@@ -39,8 +39,9 @@ Dark is the default; light comes from `prefers-color-scheme`. App values:
 --r-sm 4px  --r-md 6px  --r-lg 8px   (pills use 99px)
 ```
 
-Light: `--bg #E9E4DA`, `--card #F4F1EA`, `--text #1C1A18`, `--accent #9A6B00`,
-`--on-accent #FFFFFF`.
+Light: `--bg #E9E4DA`, `--card #F4F1EA`, `--text #1C1A18`, `--faint #65605A`,
+`--accent #8E5B08`, `--on-accent #FFFFFF` (app and shell; both pass AA on the
+card and the ground).
 
 ### What the colours mean
 
@@ -63,7 +64,10 @@ wordmark is drawn with a condensed system stack
 
 - h1 17-26px/800, `h1 em` is gold - that is how a headline gets colour.
 - Body 13px/1.65 in the shell, `--soft`.
-- Section labels: 11px/800, `letter-spacing:.09em`, uppercase.
+- Section labels: 11px/800, `letter-spacing:.09em`, uppercase - the one
+  uppercase label style (app: `.potd-top b`, `.sotd-top b`, `.ck-tag` and the
+  footer heads; static pages: the footer heads only). Static section headings
+  are 15px/800 sentence case.
 - Anything read aloud or typed in (codes, odds, scores) is
   `font-variant-numeric:tabular-nums` and 800.
 
@@ -87,10 +91,12 @@ wordmark is drawn with a condensed system stack
   light). In the app they are on `BOOKS.<key>.mark`; in `lib/pages.js` they
   are in the `MARK` map. Reuse those - do not retype the markup.
 - **Footer**: identical blocks and order in both sheets - `.foot-brand`
-  (wordmark + one line), `.foot-cols` (What this is / What it isn't / Play
-  responsibly), `.foot-links` (pill row, the two outbound links pushed right
-  by `.fl-x{margin-left:auto}`), `.foot-legal` (©, `.badge18`, the estimates
-  line, `.rg` BeGambleAware pushed right). Changing one means changing both.
+  (wordmark + one line), `.foot-cols` (h3 heads: What this is / What it isn't / Play
+  responsibly), `.foot-links` (the essential few: Daily booking codes, All
+  match predictions, Convert a booking code, How it works, Install the app,
+  Contact us, then the two outbound links pushed right by
+  `.fl-x{margin-left:auto}`), `.foot-legal` (©, `.badge18`, the estimates
+  line, Privacy and Terms as plain links, `.rg` BeGambleAware pushed right). Changing one means changing both.
 
 ## Motion and state
 

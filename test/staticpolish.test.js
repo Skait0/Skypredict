@@ -27,15 +27,56 @@ test("a played page says the tip in words and keeps the bottom button", () => {
 
 test("an upcoming page has a next step where the tip is", () => {
   const h = P.renderMatchPage(UP, null, []);
-  assert.match(h, /<div class='card tip'>[\s\S]*?<p class='tip-go'><a href='\/'>Build a slip<\/a>/);
+  assert.match(h, /<div class='card tip'>[\s\S]*?<p class='tip-go'><a href='\/'>Build a slip on the board<\/a><\/p>/);
+  assert.ok(!/one tap to add/.test(h), "promises the game is on the board, which it may not be yet");
   assert.ok(!/class="cta" href="\/">See today/.test(h), "two buttons to the same place");
+});
+
+test("home, draw and away still add to 100 when the tipped one is calibrated", () => {
+  const rowsOf = (h) => [...h.matchAll(/<tr(?: class='tp')?><th>([^<]+)(?:<small>Our tip<\/small>)?<\/th><td>(\d+)%<\/td>/g)]
+    .slice(0, 3).map((m) => +m[2]);
+  for (const [tip, p] of [["Home win", 0.47], ["Draw", 0.255], ["Away win", 0.33], ["Home win", 0.585]]) {
+    const v = rowsOf(P.renderMatchPage(Object.assign({}, UP, { tip, tip_p: p }), null, []));
+    assert.strictEqual(v.reduce((a, b) => a + b, 0), 100, tip + " " + v);
+    const at = { "Home win": 0, "Draw": 1, "Away win": 2 }[tip];
+    assert.strictEqual(v[at], Math.round(p * 100), "the tipped row is the card's number");
+  }
+  /* Home 41 / away 30 raw, tip Draw at 25: the 75 left keeps their ratio. */
+  assert.deepStrictEqual(rowsOf(P.renderMatchPage(Object.assign({}, UP, { tip: "Draw", tip_p: 0.25 }), null, [])), [43, 25, 32]);
+});
+
+test("a graded tip that is not the fixture's tip does not borrow its tip_p", () => {
+  const h = P.renderMatchPage(UP, { hg: 1, ag: 0, tip: "Home win", hit: true }, []);
+  assert.ok(!/<td>63%<\/td>/.test(h), "63% belongs to 1X, not to the graded Home win");
+  assert.match(h, /<tr class='tp'><th>America MG win<small>Our tip<\/small><\/th><td>41%<\/td>/);
+});
+
+test("the search and share description says the tip in words", () => {
+  assert.match(P.renderMatchPage(UP, null, []), /<meta name="description" content="[^"]*: America MG or draw \(1X\) at 63% confidence\."/);
+  assert.match(P.renderMatchPage(UP, { hg: 2, ag: 0, tip: "1X, home or draw", hit: true }, []),
+    /<meta property="og:description" content="[^"]*We tipped America MG or draw \(1X\) - see how/);
+});
+
+test("the tipped row reads at AA in light mode", () => {
+  const h = P.renderNotFound();
+  assert.match(h, /--tp-ink:#7A4E06/, "#8E5B08 on the 8% wash measured 4.11:1");
+  assert.match(P.renderMatchPage(UP, null, []), /tr\.tp th,tr\.tp td\{[^}]*color:var\(--tp-ink\)/);
 });
 
 test("same-day games are match rows with a kick-off or a score", () => {
   const h = P.renderMatchPage(UP, null, [UP,
     { date: "2026-10-07", kickoff: "2026-10-07T18:45:00Z", home: "Arsenal", away: "Chelsea" },
     { date: "2026-10-07", home: "Porto", away: "Benfica", hg: 2, ag: 0 }]);
-  assert.match(h, /<ul class="mx-rows"><li><a href="[^"]+"><span>Arsenal v Chelsea<\/span><span class="mx-n">18:45 UTC<\/span>/);
+  assert.match(h, /<ul class="mx-rows"><li><a href="[^"]+"><span>Arsenal v Chelsea<\/span><time class="mx-n mx-t" datetime="2026-10-07T18:45:00Z">18:45 UTC<\/time>/);
+  /* The page script turns every <time datetime> into the reader's clock, rows
+     included, so a row never says UTC beside a local header. Run it. */
+  const js = h.match(/<script>\s*\/\* Show the kick-off[\s\S]*?<\/script>/)[0].replace(/<\/?script>/g, "");
+  const els = [{ getAttribute: () => UP.kickoff, className: "", textContent: "" },
+    { getAttribute: () => "2026-10-07T18:45:00Z", className: "mx-n mx-t", textContent: "18:45 UTC" }];
+  new Function("document", js)({ querySelectorAll: () => els });
+  assert.ok(!/UTC/.test(els[1].textContent), "row kept its UTC text: " + els[1].textContent);
+  assert.strictEqual(els[1].textContent, new Date("2026-10-07T18:45:00Z").toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+  assert.match(els[0].textContent, /2026/, "the header still gets the long form");
   assert.match(h, /<span>Porto v Benfica<\/span><span class="mx-n">2-0<\/span>/);
   assert.match(h, /\.mx-rows\{/, "the row style ships on the match page itself");
 });

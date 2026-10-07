@@ -94,7 +94,7 @@ test("the static pages name 1xBet where they list the books", () => {
   assert.match(P, /<h2>By hand, on BetKing or betPawa<\/h2>/);
   /* The <title>s stay short on purpose - 60 characters with the brand, pinned in
      convertpage/bookinglinks tests - so the five names live in h1, sub and body. */
-  assert.match(P, /sub: "Or any of the five to any other\."/);
+  assert.match(require("../lib/pages.js").renderConvertPage(), /<p class="meta">Or any of the five to any other\.<\/p>/);
 });
 
 /* ONE LIST OF LIVE BOOKS, AND EVERY COUNT OR LIST READS IT (7 Oct 2026).
@@ -129,12 +129,25 @@ test("the static pages and the social copy count and list the same books", () =>
   assert.match(day, /booked as one slip on SportyBet, Bet9ja and 1xBet\./, "a day names the books that day had");
   /* Any surface that says how many: a count word must be the live count. */
   const WORDS = ["two", "three", "four", "five", "six", "seven"];
-  const counted = /\b(both|two|three|four|five|six|seven) (?:bookmakers|bookies|books)\b/g;
-  const surfaces = { hub, day, social: read("lib/social.js").replace(/BOOKS\.COUNT_WORD/g, B.COUNT_WORD) };
+  const counted = /\b(?:any of the )?(both|two|three|four|five|six|seven)(?= (?:bookmakers|bookies|books)\b| to any other|\. What the code)/g;
+  const S0 = require("../lib/social.js");
+  const promos = [0, 1, 2, 3, 4, 5].map((i) => S0.promo({}, 0, i).x).join("\n");
+  const surfaces = { hub, day, social: promos,
+    howto: P.renderHowToCode(), convert: P.renderConvertPage(),
+    bot: require("../api/tg.js").HELLO,
+    botMiss: read("api/tg.js").replace(/BOOKS\.COUNT_WORD/g, B.COUNT_WORD) };
+  assert.ok(surfaces.howto.includes(B.KEYS.map((k) => B.NAMES[k]).join(", ") + " and football.com"),
+    "how-to-load lists the live books, plus football.com on top");
+  assert.ok(surfaces.bot.includes(B.list("or")), "the bot's hello lists the live books");
+  assert.match(surfaces.howto, new RegExp("any of the " + B.COUNT_WORD + "\\."));
+  /* Not a count of live books: the converter's market note says which books
+     sell a line ("All three books sell this at 2.5" - SportyBet, Bet9ja and
+     BetKing, the ones it then names). */
+  const MARKET_FACT = /All three books sell this at 2\.5/g;
   for (const [name, text] of Object.entries(surfaces)) {
-    for (const m of text.match(counted) || []) {
-      const w = m.split(" ")[0];
-      assert.ok(w === B.COUNT_WORD || !WORDS.includes(w) && w !== "both", name + " says \"" + m + "\"");
+    for (const m of text.replace(MARKET_FACT, "").matchAll(counted)) {
+      const w = m[1];
+      assert.ok(w === B.COUNT_WORD || !WORDS.includes(w) && w !== "both", name + " says \"" + m[0] + "\"");
     }
   }
   const S = require("../lib/social.js");
@@ -142,4 +155,48 @@ test("the static pages and the social copy count and list the same books", () =>
   for (let i = 0; i < 8; i++) seen.add(S.promo({}, 0, i).x);
   assert.ok([...seen].some((t) => t.includes("all " + B.COUNT_WORD + " bookies")));
   assert.ok([...seen].some((t) => t.includes(B.list("or"))));
+});
+
+test("no surface keeps its own copy of the book list", () => {
+  /* The list lives in lib/books.js. A hand-typed run of names in any of these
+     drifts the day a sixth book arrives. football.com is not a book (it loads
+     SportyBet codes), so it may be named on top of the list. */
+  for (const f of ["api/tg.js", "scripts/tgwebhook.js", "lib/convert.js", "lib/doctor.js", "lib/social.js"]) {
+    const s = read(f);
+    assert.ok(!/SportyBet, Bet9ja, BetKing, betPawa|"sporty", "bet9ja", "betking", "betpawa", "onexbet"|betpawa: "betPawa"/.test(s),
+      f + " carries its own book list");
+  }
+  assert.strictEqual(require("../lib/convert.js").LABEL, B.NAMES);
+});
+
+test("the bot's words did not change when they moved onto the list", () => {
+  /* Owner's voice rules: the read-out is pinned byte for byte to what it said
+     before lib/books.js existed (7 Oct 2026). */
+  const tg = require("../api/tg.js");
+  assert.ok(tg.HELLO.startsWith("🔮 <b>The Wizard's Eye</b> 🧙\n<i>Drop any code. The Wizard's Eye sees it all.</i>\n\n" +
+    "Send me any booking code - SportyBet, Bet9ja, BetKing, betPawa or 1xBet - and you get:\n"));
+  const w = read("scripts/tgwebhook.js");
+  const expr = /short_description:\s*([\s\S]*?) \}\);/.exec(w)[1];
+  assert.strictEqual(new Function("require", "return " + expr)((p) => require(require("node:path").join(ROOT, "scripts", p))),
+    "🔮 The Wizard's Eye: drop any SportyBet, Bet9ja, BetKing, betPawa or 1xBet code. It sees it all.");
+  const miss = /" on any of the " \+ BOOKS\.COUNT_WORD \+ " bookies"/;
+  assert.match(read("api/tg.js"), miss);
+  assert.strictEqual(B.COUNT_WORD, "five");
+});
+
+test("the app footer is the static footer: same pills, legal links, h3 heads", () => {
+  const index = read("public/index.html");
+  const foot = index.slice(index.indexOf('<div class="foot-cols">'), index.indexOf("</footer>"));
+  const P = require("../lib/pages.js").pageFooter();
+  const hrefs = (s) => [...s.slice(s.indexOf('class="foot-links"'), s.indexOf("</nav>")).matchAll(/<a [^>]*href="([^"]+)"/g)].map((m) => m[1].replace(/^mailto:.*/, "contact"));
+  const app = hrefs(foot), stat = hrefs(P);
+  /* The app's Contact is a dialog button, the static one a mailto. */
+  assert.deepStrictEqual(app, stat.filter((h) => h !== "contact"));
+  assert.match(foot, /id="contactBtn">Contact us</);
+  for (const s of [foot, P]) {
+    const legal = s.slice(s.indexOf('class="foot-legal"'));
+    assert.match(legal, /href="\/privacy">Privacy<\/a><a href="\/terms">Terms<\/a>/);
+    assert.ok(!/<h4>/.test(s.slice(0, s.indexOf("foot-links"))), "footer heads are h3");
+    assert.match(s, /<h3>What this is<\/h3>/);
+  }
 });

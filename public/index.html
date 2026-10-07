@@ -2244,8 +2244,10 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
 .badge18 sup{font-size:8px;font-weight:800;margin-left:1px}
 .foot-brand span{display:block;font-size:12px;color:var(--faint);margin-top:2px}
 .foot-cols{display:grid;gap:20px;margin-bottom:22px}
-.foot-cols h4{font-size:11px;font-weight:800;letter-spacing:.09em;
-  text-transform:uppercase;color:var(--red-ink);margin-bottom:7px}
+/* h3, not h4: straight after a page's h2 an h4 skips a level (7 Oct 2026,
+   same change as lib/pages.js - the two footers move together). */
+.foot-cols h3{font-size:11px;font-weight:800;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--red-ink);margin:0 0 7px}
 .foot-cols p{font-size:13px;line-height:1.65;max-width:38ch}
 /* Footer link row. Sits between the three columns and the legal line, so the
    legal line keeps the last word. Wraps rather than scrolls on a phone.
@@ -2315,6 +2317,8 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
   outline:2px solid var(--red);outline-offset:2px}
 .foot-legal{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-top:16px;
   border-top:1px solid var(--line-soft);font-size:12px;color:var(--faint)}
+.foot-legal a{color:var(--soft);text-underline-offset:3px}
+@media (display-mode: standalone){.foot-links .fl-inst{display:none}}
 .foot-legal .rg{margin-left:auto;color:var(--red-ink);font-weight:700;text-decoration:none}
 .foot-legal .rg:hover{text-decoration:underline}
 @media(min-width:720px){.foot-cols{grid-template-columns:repeat(3,1fr);gap:26px}}
@@ -6136,7 +6140,7 @@ footer{margin-top:26px;padding-top:18px;
   padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 .foot-brand{margin-bottom:14px;padding-bottom:14px;gap:10px}
 .foot-cols{gap:14px;margin-bottom:14px}
-.foot-cols h4{margin-bottom:5px}
+.foot-cols h3{margin-bottom:5px}
 .foot-cols p{line-height:1.55}
 .foot-legal{padding-top:12px;gap:8px 15px}
 @media(min-width:720px){.foot-cols{gap:20px}}
@@ -7611,17 +7615,17 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       </div>
       <div class="foot-cols">
         <div>
-          <h4>What this is</h4>
+          <h3>What this is</h3>
           <p>Statistical football predictions across dozens of leagues, rebuilt
           every morning from results.</p>
         </div>
         <div>
-          <h4>What it isn't</h4>
+          <h3>What it isn't</h3>
           <p>A guarantee. The model cannot see injuries, suspensions or team
           news, and no prediction is ever certain.</p>
         </div>
         <div>
-          <h4>Play responsibly</h4>
+          <h3>Play responsibly</h3>
           <p>Only stake what you can afford to lose. If betting stops being
           fun, step away and seek support.</p>
         </div>
@@ -7632,16 +7636,17 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
            sitemap. Search engines weight real internal links well above a
            sitemap, and a reader had nowhere to go. -->
       <nav class="foot-links" aria-label="Site">
+        <!-- The essential few, in the static footer's order (lib/pages.js
+             pageFooter; 7 Oct 2026). Privacy and terms are in the legal row. -->
+        <a href="/booking-codes">Daily booking codes</a>
         <a href="/matches">All match predictions</a>
         <!-- THE ONLY CRAWLABLE WAY IN. The Converter is a view, so the header
              tab and the bottom bar are both <button> - a crawler follows
              neither, and this is the strongest page on the site. The anchor
              says what the destination is rather than what the button says. -->
         <a href="/convert-a-booking-code">Convert a booking code</a>
-        <a href="/booking-codes">Daily booking codes</a>
         <a href="/how-it-works">How it works</a>
-        <a href="/privacy">Privacy</a>
-        <a href="/terms">Terms</a>
+        <a class="fl-inst" href="/install">Install the app</a>
         <button type="button" id="contactBtn">Contact us</button>
         <!-- @soccerwizardhq. The first version of this link pointed at a
              sixteen-character handle, which X cannot issue, so it 404d for
@@ -7666,6 +7671,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
         <span>&copy; <span id="yr"></span> Soccerwizard</span>
         <span class="badge18" aria-label="Eighteen plus only">18<sup>+</sup></span>
         <span>Predictions are estimates, not certainties</span>
+        <a href="/privacy">Privacy</a><a href="/terms">Terms</a>
         <a class="rg" href="https://www.begambleaware.org" target="_blank" rel="noopener">BeGambleAware.org</a>
       </div>
     </div>
