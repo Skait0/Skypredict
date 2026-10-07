@@ -35,7 +35,7 @@ function grab(name) {
   assert.fail("could not find the end of " + name);
 }
 
-const real = ["P0", "esc", "fid", "tipEval", "scoreSurvives", "mirrorScore", "reconcileScore", "conf", "verdict", "plainTip", "whyLine", "tipCode", "boardPick",
+const real = ["P0", "esc", "fid", "tipEval", "scoreSurvives", "mirrorScore", "reconcileScore", "edgeOf", "isValue", "valPill", "conf", "verdict", "plainTip", "whyLine", "tipCode", "boardPick",
   "legOdd", "oddOf", "opt", "bestPriceHTML", "moreHTML", "countMarkets", "matchHTML", "listRowHTML", "CATS"]
   .map(grab).join("\n");
 const stubs = `
@@ -44,13 +44,30 @@ const stubs = `
   function curBook(){return BOOKS.sporty;}
   function bookFeedPending(){return false;}
   function myslipHas(){return false;}
-  function isFav(){return false;} function countryOf(){return "";} function isValue(){return false;}
+  function isFav(){return false;} function countryOf(){return "";}
   function scoreLine(f){return f.score;}
   function split100(v){return v.map(function(x){return Math.round(x*100);});}
-  function formHTML(){return "";} function statusSlot(){return "";} function valPill(){return "";}
+  function formHTML(){return "";} function statusSlot(){return "";}
   function kickTime(){return "18:00";}
 `;
-const H = new Function(stubs + real + "\nreturn {V:V,CATS:CATS,matchHTML:matchHTML,listRowHTML:listRowHTML,moreHTML:moreHTML};")();
+/* openSheet and confirmBookAll write into the page; these are the smallest
+   stand-ins for it, and they keep what was written so the tests can read it. */
+const page = `
+  var EL={}; function $(id){return EL[id]||(EL[id]={id:id,textContent:"",innerHTML:"",
+    classList:{add:function(){},remove:function(){},toggle:function(){}},focus:function(){},scrollIntoView:function(){},
+    querySelector:function(){return {addEventListener:function(){},textContent:""};},
+    querySelectorAll:function(){return [];},addEventListener:function(){}});}
+  var document={querySelector:function(){return null;},documentElement:{scrollTop:0,classList:{add:function(){}}}}, window={scrollY:0};
+  var FX=[]; function fixtureById(id){return FX.filter(function(f){return fid(f)===id;})[0];}
+  function compOf(l){return l;} function dayName(){return "Today";} function dayOff(){return 0;} function fDay(){return "";}
+  function pushOverlay(){} function notStarted(){return true;} function shown(){return FX;}
+  function bookTakes(){return true;} var BETSLIP_MAX=50; function capWaysHTML(){return "";}
+  function paintBookPickerWith(){} function allBookFeeds(){return null;} function wireSplit(){}
+  var BOOKMAKER="sporty";
+`;
+const H = new Function(stubs + page + real + ["openSheet", "bookAllPicks", "confirmBookAll"].map(grab).join("\n") +
+  "\nreturn {V:V,CATS:CATS,matchHTML:matchHTML,listRowHTML:listRowHTML,moreHTML:moreHTML," +
+  "openSheet:openSheet,confirmBookAll:confirmBookAll,EL:EL,FX:FX,fid:fid,BOOKS:BOOKS};")();
 
 const fx = (o) => Object.assign({
   date: "2026-10-08", home: "Lugano", away: "Thun", league: "Switzerland Super League",
@@ -166,4 +183,48 @@ test("the Add all button says draws in the Draw picks view, tips elsewhere", () 
   for (const k of H.CATS.map((c) => c.k).filter((k) => k !== drawKey())) {
     assert.strictEqual(run(k).tx2.textContent, "tips to slip", k);
   }
+});
+
+test("the sheet a Draw card opens is headed by the draw", () => {
+  const f = fx(); H.FX.length = 0; H.FX.push(f);
+  H.V.cat = drawKey(); H.openSheet(H.fid(f));
+  assert.match(H.EL["sheet-sub"].textContent, /\u00b7 Draw 31%$/, H.EL["sheet-sub"].textContent);
+  H.V.cat = "all"; H.openSheet(H.fid(f));
+  assert.match(H.EL["sheet-sub"].textContent, /\u00b7 Lugano or Draw 67%$/);
+});
+
+test("a Draw card's Better price badge is about the draw, never the 1X", () => {
+  /* 1X at 1.80 is a 67% call priced at 56% - a "Better price". The draw at
+     3.25 (31% against 31%) is not, so a Draw card must not wear that badge. */
+  const f = fx({ sportyOdds: { "1X": 1.80, "X": 3.25 } });
+  H.V.cat = "all";
+  assert.match(H.matchHTML(f), /Better price/, "the 1X card keeps its badge");
+  H.V.cat = drawKey();
+  assert.doesNotMatch(H.matchHTML(f), /Better price/, "a 1X badge beside a draw price");
+  assert.match(H.matchHTML(fx({ sportyOdds: { "1X": 1.20, "X": 4.0 } })), /Better price/,
+    "a draw priced above its chance does get the badge");
+});
+
+test("the Add all confirm prompt in the Draw picks view books draws", () => {
+  H.FX.length = 0; H.FX.push(fx(), fx({ home: "Basel", away: "Servette" }));
+  H.V.cat = drawKey(); H.confirmBookAll();
+  const html = H.EL.bookAllResult.innerHTML;
+  assert.match(html, /Soccerwizard draws on this page/, html.slice(0, 200));
+  assert.match(html, />Book all 2 draws<\/button>/);
+  assert.doesNotMatch(html, /tips/);
+  H.V.cat = "all"; H.confirmBookAll();
+  assert.match(H.EL.bookAllResult.innerHTML, /Soccerwizard tips on this page/);
+  assert.match(H.EL.bookAllResult.innerHTML, />Book all 2<\/button>/);
+});
+
+test("no draw price from another bookmaker is shown unnamed", () => {
+  /* The reader is on Bet9ja, which has no X price; SportyBet's 3.25 must not
+     appear on the card as though it were theirs. */
+  H.V.cat = drawKey();
+  const was = H.BOOKS.sporty;
+  H.BOOKS.sporty = { key: "bet9ja", label: "Bet9ja", odds: "b9Odds" };
+  try {
+    assert.doesNotMatch(H.matchHTML(fx({ b9Odds: { "1X": 1.4 } })), /todd/, "SportyBet's draw price shown on Bet9ja");
+    assert.match(H.matchHTML(fx({ b9Odds: { "X": 3.4 } })), /x3\.40/, "Bet9ja's own draw price is shown");
+  } finally { H.BOOKS.sporty = was; }
 });
