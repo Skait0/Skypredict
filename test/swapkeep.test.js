@@ -128,12 +128,14 @@ test("swapping a leg to the market it already has is a no-op", () => {
 /* ------------------------------------------------------------ the callers */
 
 test("every refill drops machine legs and keeps the rest", () => {
-  /* Three places rebuild My slip: the slider's sync, the wizard's conjure, and
-     Book all. All three have to honour the flag, or an edited leg survives one
-     path and is overwritten by another. */
+  /* Two places rebuild My slip on their own: the sheet's Shuffle (wspConjure
+     with fill) and Book all. Both have to honour the flag, or an edited leg
+     survives one path and is overwritten by another. The slider's sync is
+     gone (owner, 7 Oct 2026): a built slip arrives through addBuiltToSlip,
+     which asks before replacing anything - see test/addtoslip.test.js. */
   const refills = [...src.matchAll(/MYSLIP=MYSLIP\.filter\(function\(x\)\{return !x\.auto;\}\)/g)];
-  assert.strictEqual(refills.length, 3,
-    "expected the slider sync, the conjure and Book all, found " + refills.length);
+  assert.strictEqual(refills.length, 2,
+    "expected the sheet's Shuffle and Book all, found " + refills.length);
 });
 
 test("retained legs are concatenated before the fresh ones", () => {
@@ -141,7 +143,7 @@ test("retained legs are concatenated before the fresh ones", () => {
      fresh picks came first, a re-picked fixture would win and the edit would be
      silently discarded even though the flag was cleared. */
   const parts = src.split("MYSLIP=MYSLIP.filter(function(x){return !x.auto;})");
-  assert.strictEqual(parts.length, 4);
+  assert.strictEqual(parts.length, 3);
   parts.slice(1).forEach((p, i) => {
     const head = p.slice(0, 200);
     assert.match(head, /^\s*\r?\n?\s*\.concat\(/,

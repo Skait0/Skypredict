@@ -55,8 +55,11 @@ test("every booking call site says where it came from", () => {
      conjure". */
   assert.match(src, /via:"board"/, "the board's Book all stamps nothing");
   assert.match(src, /via:"wizard",k:kickoffOf/, "a conjured leg stamps nothing");
-  assert.match(src, /via:isWiz\?"wizard":"slider"/,
-    "the builder sync must record which of the two modes it was in");
+  /* The builders hand over through addBuiltToSlip, which stamps what each
+     caller names (owner, 7 Oct 2026 - the sync that stamped isWiz is gone). */
+  assert.match(src, /via:via,k:kickoffOf/, "addBuiltToSlip stamps nothing");
+  assert.match(src, /addBuiltToSlip\(BUILD\.picks,"slider"\)/, "the Slider's add does not say slider");
+  assert.match(src, /addBuiltToSlip\(BUILD\.picks,"wizard"\)/, "the Wizard's add does not say wizard");
   /* And no unlabelled one slipped in beside them - an unlabelled booking is a
      row in the log that cannot be attributed, which is the whole problem. */
   const bare = calls.filter((c) => !labelled.includes(c) && !/_via\|\|"myslip"/.test(c));
