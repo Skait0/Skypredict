@@ -79,6 +79,19 @@ test("adding the slip that is already there just opens it", () => {
   assert.strictEqual(h.opened(), 1);
 });
 
+test("the pop-up's X sits above the card body, so a tap reaches it", () => {
+  /* Owner, 7 Oct 2026: "the close button here doesnt work". The question's
+     first line ran under the X and, coming later in the DOM, took the tap. */
+  assert.match(src, /\.ask-x\{position:absolute;[^}]*z-index:2/);
+});
+
+test("Conjure becomes Add once a slip exists - no Conjure again", () => {
+  /* "why is there a conjure again? there is no preview" - the panel shows no
+     games, so a reroll there changes a slip nobody can see. */
+  assert.doesNotMatch(src, /Conjure again/);
+  assert.match(src, /html \+= WSP\.conjured\s*\? "<button class='book-btn wsp-go' id='wspAdd'/);
+});
+
 test("both builders end on Add selections to slip, not on booking", () => {
   assert.match(src, /\$\("bookBtn"\)\.addEventListener\("click",function\(\)\{ addBuiltToSlip\(BUILD\.picks,"slider"\); \}\);/);
   assert.match(src, /id='wspAdd' type='button'>Add selections to slip<\/button>/);

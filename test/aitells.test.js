@@ -10,6 +10,22 @@ const path = require("path");
 
 const html = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
 
+/* Owner reversed Task 4 for one button, 7 Oct 2026: "i want the conjure button
+   back to the wizardry purple". The block that does it - violet glass and the
+   rune pulse on #wspGo - is cut out once; violet and loops anywhere else still
+   fail below. */
+const CONJ_A = "/* CONJURE KEEPS ITS WIZARDRY";
+const CONJ_B = "@media(prefers-reduced-motion:reduce){ button#wspGo::after{animation:none;opacity:.5} }";
+function withoutConjure(src) {
+  const a = src.indexOf(CONJ_A), b = src.indexOf(CONJ_B);
+  assert.ok(a > 0 && b > a, "the Conjure wizardry block is present");
+  assert.strictEqual(src.split(CONJ_A).length, 2, "and present once");
+  const block = src.slice(a, b + CONJ_B.length);
+  assert.doesNotMatch(block.replace(/button#wspGo/g, ""), /button[.#]|\.[a-z-]+\{/,
+    "the block styles #wspGo and nothing else");
+  return src.slice(0, a) + src.slice(b + CONJ_B.length);
+}
+
 function fnSrc(name) {
   const i = html.indexOf("function " + name + "(");
   assert.ok(i >= 0, name + " exists");
@@ -26,7 +42,7 @@ test("no violet: the builder speaks in the site's own tokens", () => {
       '  box-shadow:inset 0 0 0 1px rgba(242,184,75,.55),0 2px 12px rgba(139,92,246,.5)}',
     '.bld-mode-btn.on[data-mode="wizard"] { box-shadow: 0 4px 18px rgba(139,92,246,.5); }',
   ];
-  let rest = html.replace(/\r\n/g, "\n");
+  let rest = withoutConjure(html.replace(/\r\n/g, "\n"));
   for (const r of ALLOWED) {
     assert.strictEqual(rest.split(r).length, 2, "toggle rule present once: " + r.slice(0, 60));
     rest = rest.replace(r, "");
@@ -46,13 +62,14 @@ test("the Wizard mode label is house red, not gold (gold is for odds, codes, tot
 });
 
 test("the decorative loops are gone, not just paused", () => {
+  const rest = withoutConjure(html.replace(/\r\n/g, "\n"));
   for (const k of ["tickscroll", "tkTagBlink", "goalTagBlink", "ctaRun", "orbBreath", "baFlicker",
     "wslSheen", "runePulse", "livePulse", "potdLivePulse", "scSheen", "sbSweep", "wspOrbDrift",
     "litPulse", "scoredGlow", "valpulse", "orbGlow", "tkscglow", "goalshot"]) {
-    assert.doesNotMatch(html, new RegExp("@keyframes " + k + "\\b"), k + " keyframes");
-    assert.doesNotMatch(html, new RegExp("animation:\\s*" + k + "\\b"), k + " in use");
+    assert.doesNotMatch(rest, new RegExp("@keyframes " + k + "\\b"), k + " keyframes");
+    assert.doesNotMatch(rest, new RegExp("animation:\\s*" + k + "\\b"), k + " in use");
   }
-  assert.doesNotMatch(html, /class="cta-run"|class="ba-spark"/);
+  assert.doesNotMatch(rest, /class="cta-run"|class="ba-spark"/);
 });
 
 test("the live dot stays, calm, and stands still under reduced motion", () => {
