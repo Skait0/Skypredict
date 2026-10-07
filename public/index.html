@@ -318,6 +318,10 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
   --accent:#F2B84B;
   --on-accent:#14120E;
   --accent-rim:rgba(242,184,75,.42);
+  /* The same gold on a surface that stays dark in both themes - the booked
+     code's card wears its bookmaker's dark colours either way, so the light
+     theme's deep --accent would sink into it. Not redefined for light. */
+  --accent-on-dark:#F2B84B;
   --grey:#5A5762;
   --cream:#DCD8D2;
   --ball:#F2F1F0; --ball-ink:#161619;
@@ -3084,6 +3088,12 @@ html{interpolate-size:allow-keywords}
   .bld-foot .bf-odds{margin-left:auto;text-align:right}
   html.mode-build.bld-foot-on .myfab.myfab{bottom:calc(var(--btabs-h,0px) + 142px)}
 }
+/* Lifted clear of the bar it still landed on the slip itself: on a 360px
+   phone the red count sat on a leg's price and its remove button, so a
+   mis-tap dropped a game (critique, 6 Oct 2026). While the builder's bar is
+   up it already says how many games and what they pay, so the bubble steps
+   aside there and comes back on every other screen. */
+@media(max-width:720px){ html.mode-build.bld-foot-on .myfab.myfab{display:none} }
 /* Secondary actions become quiet icon-ghost buttons so Book owns the bar. */
 .bld-foot .clear-btn{flex:0 0 auto;width:44px;height:44px;padding:0;display:grid;place-items:center;
   background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);border-radius:var(--r-sm);
@@ -4383,7 +4393,14 @@ html{interpolate-size:allow-keywords}
 .ctafab-orb{width:34px;height:34px;padding:4px;box-sizing:border-box;border-radius:50%;flex-shrink:0;
   background:radial-gradient(circle at 50% 40%,#2a1a1d,#0d0809);
   box-shadow:0 0 0 1.5px rgba(255,255,255,.7),0 2px 6px rgba(0,0,0,.4);margin-left:-3px}
-@media(min-width:721px){ .ctafab{display:inline-flex} }
+/* IN THE RAIL'S COLUMN, NOT ON THE BOARD (7 Oct 2026). Bottom left, it sat on
+   the team names of whatever row was passing ("Stevenage" in the critique).
+   It now appears only once the whole rail has scrolled away, and lines up
+   with the rail's left edge (set by script), so it stands in that column's
+   empty space beside My slip and never over a fixture. Below 1060 there is no
+   rail column for it to stand in; the header's "Build me a slip" tab does the
+   same job there and is on screen at every scroll. */
+@media(min-width:1060px){ .ctafab{display:inline-flex} }
 @media(prefers-reduced-motion:reduce){
   .ctafab{transition:opacity .2s ease}
   .ctafab.on{transform:none}
@@ -5639,12 +5656,34 @@ html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
   .home-grid>.home-rail>.slip-cta{order:1}
   .home-grid>.home-rail>#myres{order:2}
   .home-grid>.home-main{order:3}
-  .home-grid>.home-rail>#potd{order:4;margin-top:14px}
-  .home-grid>.home-rail>#daily{order:5}
+  /* Everything below the first screen of games (the board is capped at 78vh
+     on a phone, see "board cap"), in the order a reader acts on it: the
+     live row, the ready-made slip, the record that says why to trust it,
+     then the pick, the recap and the install offer. The live row moved down
+     here with the rest: it lands a second after the board, and above it its
+     arrival shoved the first game down the screen (CLS). */
+  .home-grid>.home-rail>#liveStripWrap{order:4}
+  .home-grid>.home-rail>#sotd{order:5}
+  .home-grid>.home-rail>#record{order:6}
+  .home-grid>.home-rail>#potd{order:7;margin-top:14px}
+  .home-grid>.home-rail>#daily{order:8}
+  .home-grid>.home-rail>#instBar{order:9}
+  .home-grid>.home-rail>#iosSteps{order:10}
   /* A button that scrolls to the thing directly beneath it. It was a second
      door into the room you are standing in - and with the board now one card
      away, the scroll it performs is the one the thumb was already making. */
   .sc-actions #scBrowse{display:none}
+}
+/* Between a phone and the two-column layout the rail still stacks above the
+   board, as it always has. Slip of the day and the record now live in the
+   rail for the desktop column, so here they are lifted out of that stack and
+   kept after the board, where they were - not 750px of cards in front of it. */
+@media(min-width:721px) and (max-width:1059px){
+  .home-grid>.home-rail{display:contents}
+  .home-grid>.home-rail>*{order:1}
+  .home-grid>.home-main{order:2}
+  .home-grid>.home-rail>#sotd{order:3}
+  .home-grid>.home-rail>#record{order:4}
 }
 @media(min-width:1060px){
   .wrap{max-width:1420px}
@@ -5657,6 +5696,9 @@ html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
   .home-rail{flex:0 0 372px;order:2;gap:9px;margin-top:14px}
   .home-rail>*{margin-top:0}
   .home-rail .potd,.home-rail .slip-cta{margin-top:0}
+  /* Slip of the day and the record carry their own top margin from when they
+     ran full width under the board; in the rail the gap does the spacing. */
+  .home-rail .sotd,.home-rail #record>*{margin-top:0}
   /* The filter bar sticks in its own column; without a matching offset the two
      sticky things fight over the same strip of screen. */
   .home-main .bar{top:12px}
@@ -5747,10 +5789,33 @@ html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
   .trust-i.t-static{display:none}
   .intro h1{font-size:clamp(23px,7vw,30px)}
 
-  /* This IS the hero on a phone - it is the reason the page exists and the
-     first thing in the column. It was trimmed to banner size when it sat
-     third; as the opening card it earns its presence back. Still tight: the
-     height goes into the headline and the buttons, not into padding. */
+  /* THE OFFER, CUT TO ITS BUTTON (7 Oct 2026). As a card - orb, headline,
+     teaser line, button, proof line - it stood 224px tall between the
+     headline and the board, and with the install bar and the live row above
+     it the first game landed at 1,143px on a 780px phone: the page asked
+     "Who's winning today?" and answered two scrolls later. The button says
+     everything the card did ("Build me a SportyBet slip"), the sticky slip bar
+     carries the teaser once it scrolls away, and the proof line's number is
+     in the record card under the first screen of games. */
+  .slip-cta.slip-cta--hero{padding:0;margin-top:12px;background:none;border:0;box-shadow:none;overflow:visible}
+  .slip-cta.slip-cta--hero::after,.slip-cta--hero .sc-head{display:none}
+  html.booting .slip-cta .sc-proof[hidden],.slip-cta .sc-proof{display:none}
+  /* "Today's code" points at the codes card, which is now on the same first
+     screen with its own link to every code. */
+  .trust .trust-i.tc{display:none}
+  /* "SportyBet code in one tap" says what the button under it says, and it
+     cost the trust row a second line. */
+  .trust .trust-i.t-sporty{display:none}
+  /* X and Telegram are in the header on every screen; "All books & past
+     codes" is the same page as the card's own heading and the line beside
+     it, and on a phone it wrapped the foot to a second line. */
+  .ck-soc,.ck-all{display:none}
+  /* The hint keeps its instruction and drops its second clause, which the
+     open panel says itself, so it stays on one line. */
+  .list-hint .lh-more{display:none}
+  /* The count sits beside the heading rather than under it. */
+  .board-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 10px}
+  .board-head p{margin-top:0}
   .slip-cta{padding:13px 13px;gap:10px;margin-top:12px}
   .slip-cta .sc-head{gap:11px;align-items:center}
   .slip-cta .sc-orb{width:44px;height:44px}
@@ -6011,6 +6076,34 @@ html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
    where they are declared and only the gap is adjusted. */
 .code-x{top:6px;right:6px;width:28px;height:28px}
 .confirm-card{padding:13px}
+
+/* ---- the booked code, in tiers (7 Oct 2026; see showCode) ----
+   Declared after every bookmaker's skin so it wins at equal weight. The code
+   is the hero: gold, the largest type on the card (--accent-on-dark, because
+   these cards stay dark in the light theme too). Copy is the one primary, full
+   width in the book's own button colour; "Open in" is the outlined second
+   under it, no longer the white slab that outshouted the code. */
+.code-card.code-card--modal>b{font-size:34px;color:var(--accent-on-dark);
+  text-shadow:none;margin:8px 0 8px}
+.code-card--modal .code-acts .code-copy{flex:1 1 100%;font-size:15px;padding:13px 18px}
+.code-card--modal .code-opens{margin-top:8px}
+.code-card.code-card--modal .code-opens .code-open{flex:1 1 100%;padding:11px 18px;
+  background:transparent;color:#fff;border:1px solid rgba(255,255,255,.34);box-shadow:none}
+@media(hover:hover){
+  .code-card.code-card--modal .code-opens .code-open:hover{background:rgba(255,255,255,.08);filter:none}
+}
+/* Save and Share: what you might do next, as one quiet pair. */
+.code-next{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.code-card--modal .code-next .share-btn{font-size:12.5px;font-weight:700;padding:8px 16px;
+  border-radius:99px;color:#fff;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.22);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 1px 4px rgba(0,0,0,.28)}
+@media(hover:hover){ .code-card--modal .code-next .share-btn:hover{background:rgba(0,0,0,.42)} }
+/* Telegram and X: small print at the foot, after the moment. */
+.code-card--modal .code-follow{display:flex;justify-content:center;flex-wrap:wrap;gap:2px 14px;
+  margin-top:14px;padding-top:10px;border-top:1px solid rgba(255,255,255,.14)}
+.code-card--modal .code-follow .code-tg{display:inline-flex;width:auto;margin:0;padding:4px 2px;
+  background:none;box-shadow:none;color:rgba(255,255,255,.66);font-size:11.5px;font-weight:700}
+@media(hover:hover){ .code-card--modal .code-follow .code-tg:hover{color:#fff;filter:none} }
 
 /* --- sheets --- */
 .sheet-grab{padding:7px 0 2px}
@@ -7060,34 +7153,6 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       <a class="trust-i link tc" href="/booking-codes">Today's code</a>
       <a class="trust-i link" href="#how">How accurate?</a>
     </div>
-    <!-- The header's install icon cannot be reached on a phone: that row needs
-         527px of content and a phone gives it 320-390, so the last item sits
-         off the right edge whether or not it is unhidden. A wider labelled
-         button would only push it further out, so on a phone the offer lives
-         here instead, where there is room to say what it is. Shown only when
-         the browser has actually offered a prompt, and dismissible - an
-         install nag that will not go away is worse than no install button. -->
-    <div class="inst-bar" id="instBar" hidden>
-      <span class="ib-ic" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
-      </span>
-      <span class="ib-tx"><b>Install Soccerwizard</b><i>Straight to today's card, no browser</i></span>
-      <button class="ib-go" id="instGo" type="button">Install</button>
-      <button class="ib-x" id="instX" type="button" aria-label="Not now">✕</button>
-    </div>
-    <!-- iOS HAS NO INSTALL PROMPT, so tapping Install cannot install anything -
-         it can only say where Safari keeps the control. That used to be a
-         toast, which is the wrong shape for it: the Share button is at the
-         BOTTOM of Safari, the toast is at the top, and it has gone by the time
-         anyone has looked away and back. Steps that stay put until dismissed,
-         with the actual glyph to look for, are the whole fix. -->
-    <div class="ios-steps" id="iosSteps" hidden>
-      <button class="is-x" id="iosStepsX" type="button" aria-label="Close">✕</button>
-      <div class="is-h" id="iosStepsH">Add Soccerwizard to your Home Screen</div>
-      <ol class="is-l" id="iosStepsL"></ol>
-      <p class="is-note" id="iosStepsN" hidden></p>
-    </div>
   </section>
 
   <div id="liveStripWrap" hidden>
@@ -7124,6 +7189,42 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       <div id="myres"></div>
       <div id="potd"></div>
       <div id="daily"></div>
+      <!-- SLIP OF THE DAY AND THE RECORD, IN THE RAIL (7 Oct 2026). They sat
+           full width under every game while the desktop rail stood empty for
+           2,700px, so the most actionable thing on the page and the reason to
+           trust the rest were the last things anybody reached. On a phone the
+           rail dissolves (see home layout) and these two come straight after
+           the capped first screen of games, ahead of the full list. -->
+      <div id="sotd"></div>
+      <div id="record"></div>
+      <!-- The phone's install offer. It used to sit between the headline and
+           the first game, a 54px nag in the most expensive space on the page,
+           while the header already carries an install icon on every screen.
+           Here it waits under the day's cards; desktop never shows it (the
+           header icon has the room there). Shown only when the app is not
+           installed, and dismissible - an install nag that will not go away
+           is worse than no install button. -->
+      <div class="inst-bar" id="instBar" hidden>
+        <span class="ib-ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        </span>
+        <span class="ib-tx"><b>Install Soccerwizard</b><i>Straight to today's card, no browser</i></span>
+        <button class="ib-go" id="instGo" type="button">Install</button>
+        <button class="ib-x" id="instX" type="button" aria-label="Not now">✕</button>
+      </div>
+      <!-- iOS HAS NO INSTALL PROMPT, so tapping Install cannot install anything -
+           it can only say where Safari keeps the control. That used to be a
+           toast, which is the wrong shape for it: the Share button is at the
+           BOTTOM of Safari, the toast is at the top, and it has gone by the time
+           anyone has looked away and back. Steps that stay put until dismissed,
+           with the actual glyph to look for, are the whole fix. -->
+      <div class="ios-steps" id="iosSteps" hidden>
+        <button class="is-x" id="iosStepsX" type="button" aria-label="Close">✕</button>
+        <div class="is-h" id="iosStepsH">Add Soccerwizard to your Home Screen</div>
+        <ol class="is-l" id="iosStepsL"></ol>
+        <p class="is-note" id="iosStepsN" hidden></p>
+      </div>
     </aside>
 
     <div class="home-main">
@@ -7209,14 +7310,11 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   </div>
 
   <p class="list-hint">▾ <span class="v-tap">Tap</span><span class="v-click">Click</span>
-    any match for every option we predict, and add any of them to your slip.</p>
+    any match for every option we predict<span class="lh-more">, and add any of them to your slip</span>.</p>
   <main id="list"></main>
   <div id="listMore"></div>
     </div><!-- /.home-main -->
   </div><!-- /.home-grid -->
-
-  <div id="sotd"></div>
-  <div id="record"></div>
 
   <section id="builder">
     <div class="bld-head">
@@ -14268,13 +14366,28 @@ function showCode(code,hostId,save,B,picks,d){
     /* The warning belongs here, on the one screen a reader always sees after
        booking, rather than somewhere they may never look. */
     quotaNoteHTML(SW_QUOTA_LEFT)+
-    /* Three rows, narrowing to a point. What you do with the code sits at the
-       top as a small pair; the one thing most people are here to do sits alone
-       under it, with nothing beside it to share the attention; and the other
-       book that takes the same code sits last, said as a sentence. */
+    /* THE CODE IS THE PEAK, AND ONE BUTTON SERVES IT (7 Oct 2026). Ten
+       actions used to share this card with equal voices - a white "Open in"
+       louder than the code itself, red Copy and Share beside it, then Save,
+       Split, Safer, football.com and two social pills - and on a 780px phone
+       it filled the screen. Now in tiers: Copy, full width, is the one
+       primary; "Open in" sits under it as the outlined second; Save and Share
+       are a quiet pair of next steps; then split and safer; and the follow
+       links are a line of small print at the foot, after the moment rather
+       than in it. */
     "<div class='code-acts'>"+
       "<button class='code-copy' type='button'>Copy</button>"+
-      "<button class='share-btn' type='button' data-sh='1'>↗ Share</button>"+
+    "</div>"+
+    /* A book with no deep link gets a sentence, not a link that looks like
+       one. BetKing reads a booking code from the betslip's own box and from
+       nowhere in the URL, so "Open in BetKing" with the code appended would
+       land the reader on their board with an empty slip and no idea why. */
+    "<div class='code-opens'>"+
+      (B.open
+        ? "<a class='code-open' href='"+B.open+encodeURIComponent(code)+
+            "' target='_blank' rel='noopener'>Open in "+B.mark+"</a>"
+        : "<span class='code-paste'>Paste this code into the booking code box "+
+            "on your "+B.mark+" betslip.</span>")+
     "</div>"+
     /* Filled only when the read-back says the bookmaker kept fewer legs than
        we sent - see reconcileCode. Empty and marginless otherwise, so a slip
@@ -14286,20 +14399,11 @@ function showCode(code,hostId,save,B,picks,d){
        the running tally counted it. Keeping a slip is now a decision.
        The code is still yours either way: this saves the record, not
        the bet. */
-    (save?"<div class='code-keep'>"+
-      "<button class='code-save' type='button'>Save to Your slips</button>"+
-      "<span class='code-keep-n'>Only saved slips count towards your record.</span>"+
-    "</div>":"")+
-    /* A book with no deep link gets a sentence, not a link that looks like
-       one. BetKing reads a booking code from the betslip's own box and from
-       nowhere in the URL, so "Open in BetKing" with the code appended would
-       land the reader on their board with an empty slip and no idea why. */
-    "<div class='code-opens'>"+
-      (B.open
-        ? "<a class='code-open' href='"+B.open+encodeURIComponent(code)+
-            "' target='_blank' rel='noopener'>Open in "+B.mark+"</a>"
-        : "<span class='code-paste'>Paste this code into the booking code box "+
-            "on your "+B.mark+" betslip.</span>")+
+    "<div class='code-keep'><div class='code-next'>"+
+      (save?"<button class='code-save' type='button'>Save to Your slips</button>":"")+
+      "<button class='share-btn' type='button' data-sh='1'>↗ Share</button>"+
+    "</div>"+
+      (save?"<span class='code-keep-n'>Only saved slips count towards your record.</span>":"")+
     "</div>"+
     /* Offered after the code, not instead of it: the slip they asked for is
        booked and above this. Only when there are legs to deal and at least
@@ -14336,6 +14440,7 @@ function showCode(code,hostId,save,B,picks,d){
        <b> - `.code-card b` is the 32px booking-code style. */
     /* The bot, opened ON THIS CODE (?start=book_CODE, read by api/tg.js): one
        tap gets the doctor's read and the Follow my slip button. */
+    "<div class='code-follow'>"+
     "<a class='code-tg' href='https://t.me/Soccerwizardhqbot?start="+encodeURIComponent(B.key+"_"+code)+"' target='_blank' rel='noopener'>"+
       "<svg viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'><path d='M23.1 3.8 19.6 20.3c-.3 1.2-1 1.5-2 .9l-5.5-4-2.7 2.6c-.3.3-.6.6-1.2.6l.4-5.6L18.8 6c.4-.4-.1-.6-.7-.2L5.5 13.7 0 12c-1.2-.4-1.2-1.2.3-1.8L21.5 2c1-.4 1.9.2 1.6 1.8z'/></svg>"+
       "<span>Follow this slip live on Telegram</span></a>"+
@@ -14344,6 +14449,7 @@ function showCode(code,hostId,save,B,picks,d){
     "<a class='code-tg code-tw' href='https://x.com/soccerwizardhq' target='_blank' rel='noopener'>"+
       "<svg viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'><path d='M18.2 2.3h3.4l-7.4 8.5 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9.1L.9 2.3h7l4.8 6.4zm-1.2 17.9h1.9L7.1 4.2H5z'/></svg>"+
       "<span>Follow us on X</span></a>"+
+    "</div>"+
     "</div>";
   document.body.appendChild(wrap);
   /* A fixed scrim stops clicks, not the wheel: the board went on scrolling
@@ -17647,7 +17753,7 @@ function applyBoardCap(n){
       host.innerHTML="<div class='ck-top'><a class='ck-tag' href='/booking-codes'>Daily booking codes</a></div>"+
         "<div class='ck-tabs' role='tablist' aria-label='Bookmaker'>"+tabs+"</div>"+
         "<div class='ck-tiles'>"+tiles+"</div>"+
-        "<div class='ck-foot'>"+foot+" · <a href='/booking-codes'>All books &amp; past codes &rsaquo;</a></div>"+
+        "<div class='ck-foot'>"+foot+"<span class='ck-all'> · <a href='/booking-codes'>All books &amp; past codes &rsaquo;</a></span></div>"+
         /* True since 24 Sep: the mint run posts the code to both, every morning
            (xqueue.js, tgpost.js). Said only once the channel really gets it. */
         "<div class='ck-soc'>Posted every morning on "+
@@ -18459,6 +18565,24 @@ function syncLiveDots(){
   var d=$("liveDot"); if(d) d.hidden=!any;
   var dB=$("liveDotB"); if(dB) dB.hidden=!any||here;
 }
+/* WHERE THE LIVE ROW STANDS. On a phone it joins the rail's cards under the
+   first screen of games (the rail dissolves there and orders its cards around
+   the board, see home layout): above the board it arrived a second after the
+   games and pushed the first one down the screen. On a wider screen it keeps
+   its full-width place above the board. Moved before /api/live can answer, so
+   the move itself shifts nothing. */
+(function(){
+  var w=$("liveStripWrap"),g=document.querySelector(".home-grid"),
+      r=document.querySelector(".home-rail");
+  if(!w||!g||!r||!window.matchMedia) return;
+  var mq=window.matchMedia("(max-width:720px)");
+  function place(){
+    if(mq.matches){ if(w.parentNode!==r) r.insertBefore(w,$("sotd")); }
+    else if(w.nextElementSibling!==g) g.parentNode.insertBefore(w,g);
+  }
+  place();
+  if(mq.addEventListener) mq.addEventListener("change",place); else if(mq.addListener) mq.addListener(place);
+})();
 function renderLiveStrip(){
   var wrap=$("liveStripWrap"),host=$("liveStrip"); if(!wrap||!host) return;
   var root=document.documentElement;
@@ -20615,11 +20739,19 @@ function renderBldDock(){
   });
   /* Watches the real toggle: while it is on screen the dock stays out of the
      way, because two copies of the same control at once is just noise. */
+  /* And while the Slider or Wizard panel is on screen: the dock is pinned top
+     right, which is exactly where the panel prints its subtitle ("11 games ·
+     69%+ confidence"), and the panel is the control the dock stands in for
+     (critique, 6 Oct 2026). A panel that is display:none never intersects,
+     so only the one in use counts. */
   var head=document.querySelector(".bld-mode-row");
   if(head&&"IntersectionObserver" in window){
-    new IntersectionObserver(function(es){
-      dock.classList.toggle("on",!es[0].isIntersecting);
-    },{threshold:0}).observe(head);
+    var seen={};
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){ seen[e.target.id||"head"]=e.isIntersecting; });
+      dock.classList.toggle("on",!seen.head&&!seen.sliderPanel&&!seen.wizardPanel);
+    },{threshold:0});
+    [head,$("sliderPanel"),$("wizardPanel")].forEach(function(el){ if(el) io.observe(el); });
   }
 }
 /* WHICH CODES EACH CHIP GOVERNS. The slider's mkOn map already knows this
@@ -22011,17 +22143,18 @@ paintScope();
 (function(){
   var t=document.getElementById("filtersToggle"),b=document.getElementById("filtersBody");
   if(!t||!b) return;
-  /* OPEN, EVERYWHERE, UNTIL THE READER SAYS OTHERWISE.
-     It used to start closed under 560px, on the reasoning that the panel is
-     322px of a 390px screen and the defaults are already right for nearly
-     everybody. The counter-argument won: a first-time visitor who cannot see
-     the controls does not know the slip can be narrowed at all, and a panel
-     they have to discover is worth less than the scroll it costs. One tap
-     still shuts it, and a stored choice still wins on both sizes. */
-  var open=true;
+  /* SHUT ON A PHONE, OPEN ON A WIDE SCREEN, UNTIL THE READER SAYS OTHERWISE.
+     Open everywhere put the 22 market chips between a phone and the dial or
+     the payout chips: the slider sat at 1,087px on a 780px screen, so "give
+     me a slip" took two scrolls past settings whose defaults are right for
+     nearly everybody (critique, 6 Oct 2026). Shut, the bar still says what is
+     set - "All leagues · 4 markets" - so nobody is left not knowing the slip
+     can be narrowed, and one tap opens it. A stored choice wins on both
+     sizes. */
+  var open=!(window.matchMedia&&window.matchMedia("(max-width:560px)").matches);
   try{
     var pref=localStorage.getItem("sw.filters");
-    open=(pref===null) ? true : pref!=="0";
+    if(pref!==null) open=pref!=="0";
   }catch(e){}
   function apply(){ b.hidden=!open; t.setAttribute("aria-expanded",open?"true":"false"); }
   apply();
@@ -22379,8 +22512,12 @@ setTimeout(hideLoader,8000);
    offering you the thing you are already looking at. */
 (function(){
   var fab=document.getElementById("ctaFab");
-  var cta=document.querySelector(".slip-cta");
+  /* The whole rail, not just the offer card: the button stands in the rail's
+     column, so it may only appear once nothing of the rail is left there. */
+  var cta=document.querySelector(".home-rail");
   if(!fab||!cta||!("IntersectionObserver" in window)) return;
+  function line(){ var l=cta.getBoundingClientRect().left; if(l>0) fab.style.left=Math.round(l)+"px"; }
+  window.addEventListener("resize",line);
   function allowed(){
     var c=document.documentElement.classList;
     return !c.contains("mode-build") && !c.contains("mode-live");
@@ -22388,6 +22525,7 @@ setTimeout(hideLoader,8000);
   var out=false;
   function apply(){
     var show=out&&allowed();
+    if(show) line();
     fab.hidden=!show;
     /* Flipped on the next frame so the transition has a state to move from -
        set together with hidden it would simply appear. */
