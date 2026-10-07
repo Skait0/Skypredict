@@ -76,15 +76,26 @@ test("a low-scoring fixture never gets a high-scoring line", () => {
     loud.length + " quiet fixture(s) printed as a goal glut");
 });
 
+/* A 7+ goal scoreline is only a rout where the fixture expects under 4.5
+   goals. Iceland average 3.54 goals a game and 12.5% of their 2026 games ran
+   to 7+, so a blanket 6-goal cap rejects real, expected results. The picker
+   allows expectation + 2.5 (MAX_OVER in lib/build.js), so a 4.5+ fixture can
+   legitimately reach 7. */
+const routs = (fx) => fx.filter(f => (f.lh + f.la) < 4.5 && goals(f.score) >= 7);
+
 test("nothing on the board is a rout", () => {
   const p = payload();
   if (!p) return;
   const fx = scored(p);
   if (fx.length < 50) return;
-  const worst = Math.max(...fx.map(f => goals(f.score)));
-  assert.ok(worst <= 6,
-    `the biggest scoreline on the board totals ${worst} goals; the bulk of a ` +
-    `distribution does not reach there and a reader would not accept it`);
+  const bad = routs(fx).map(f => `${f.home} v ${f.away}: ${f.score} on ${(f.lh + f.la).toFixed(2)} expected`);
+  assert.deepStrictEqual(bad, [],
+    "a 7+ goal scoreline on a fixture expecting under 4.5 goals: " + bad.join("; "));
+});
+
+test("rout check still flags 7 goals on a low-expectation fixture", () => {
+  assert.strictEqual(routs([{ lh: 1.2, la: 1.0, score: "5-2" }]).length, 1);
+  assert.strictEqual(routs([{ lh: 3.0, la: 1.8, score: "5-2" }]).length, 0);
 });
 
 /* The other half. Cutting the tail must not collapse the board back onto a
@@ -163,4 +174,15 @@ test("but a genuinely close fixture can still be drawn", () => {
   assert.ok(draws.length / fx.length > 0.12,
     `draws are ${Math.round(draws.length / fx.length * 100)}% of the board; ` +
     `the outcome gate has gone from filtering to censoring`);
+});
+
+/* The fixture seed must not depend on the machine timezone (local +0100 vs
+   Vercel UTC): a Date coerced to a string embeds the local zone. */
+test("scoreline seed is timezone independent", () => {
+  const { execFileSync } = require("node:child_process");
+  const code = 'const d=new Date(Date.UTC(2026,5,1,23,30));console.log(d.toISOString().slice(0,10)+"|a|b")';
+  const key = (tz) => execFileSync(process.execPath, ["-e", code], { env: { ...process.env, TZ: tz } }).toString();
+  assert.strictEqual(key("UTC"), key("Africa/Lagos"));
+  assert.ok(!/f\.date \+ "\|"/.test(require("node:fs").readFileSync(require("node:path").join(__dirname, "../lib/build.js"), "utf8")),
+    "fixture seed must use f.date.toISOString().slice(0, 10), not the raw Date");
 });
