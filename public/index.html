@@ -1025,9 +1025,9 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
    more than a full run of form. */
 .form i{width:12px;height:12px;border-radius:var(--r-sm);font-style:normal;font-size:9px;
   font-weight:800;display:flex;align-items:center;justify-content:center;color:#fff}
-.form i.W{background:var(--green)}
+.form i.W{background:var(--green);color:var(--on-green)}
 .form i.D{background:var(--grey)}
-.form i.L{background:var(--red)}
+.form i.L{background:var(--red-fill)}
 /* Provisional result from a match still in play: same colour as the settled
    chips but ringed and breathing, so an unfinished game never reads as final. */
 .form i.prov{box-shadow:0 0 0 1.5px var(--bg),0 0 0 3px currentColor;opacity:.9;
@@ -1430,13 +1430,13 @@ html.tapped .list-hint{display:none}
 .sc-go-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;
   padding:12px 22px;font-size:13.5px;line-height:1.15;border-radius:10px;
   color:#fff!important;
-  background:linear-gradient(178deg,#e8323f 0%,#d2202c 100%)!important;
+  background:linear-gradient(178deg,#D33140 0%,#BE1F2B 100%)!important;
   border:1px solid rgba(255,255,255,.14)!important;
   box-shadow:0 1px 0 rgba(255,255,255,.16) inset,0 2px 10px rgba(160,20,32,.3)!important;
   letter-spacing:0;text-transform:none;font-weight:700;position:relative;overflow:hidden;
   transition:background .18s,box-shadow .18s,transform .12s}
 .sc-go-btn:hover{
-  background:linear-gradient(178deg,#ff6b76 0%,#ef4551 100%)!important;
+  background:linear-gradient(178deg,var(--red-fill) 0%,#C8222F 100%)!important;
   border-color:rgba(255,255,255,.34)!important;
   box-shadow:0 1px 0 rgba(255,255,255,.3) inset!important}
 .sc-go-btn:active{transform:translateY(1px)}
@@ -3451,8 +3451,8 @@ html{interpolate-size:allow-keywords}
 .byo-go{flex:0 0 auto;font:inherit;font-size:13.5px;font-weight:800;padding:11px 20px;
   border-radius:var(--r-md);cursor:pointer;color:#fff;border:0;letter-spacing:.01em;
   background:
-    radial-gradient(120% 140% at 50% 0%,rgba(255,255,255,.28) 0%,rgba(255,255,255,0) 60%),
-    linear-gradient(180deg,#f4555f 0%,var(--red-fill) 55%,#cc2f3b 100%);
+    radial-gradient(120% 140% at 50% 0%,rgba(255,255,255,.14) 0%,rgba(255,255,255,0) 60%),
+    linear-gradient(180deg,var(--red-fill) 0%,#CC2F3B 55%,#B82733 100%);
   /* THE EDGE IS GOLD, which is this site's mark for "this is the one".
      The hero CTA carries it, the header's Build tab carries it, and the
      wordmark is gold: a white hairline here would have been a fourth
@@ -4669,7 +4669,7 @@ button.wsp-go.waiting{opacity:.55}
   background:var(--card-2);border-bottom:1px solid var(--line-soft)}
 @media (hover:hover){
   .lgp-open:hover{background:var(--raise);border-color:var(--soft)}
-  .lgp-clear:hover{background:var(--card-2);color:var(--red)}
+  .lgp-clear:hover{background:var(--card-2);color:var(--red-ink)}
   .lgp-row:hover{background:var(--card-2)}
 }
 /* A control that does nothing under a cursor reads as a label, not a choice.
@@ -4701,8 +4701,8 @@ button.wsp-go.waiting{opacity:.55}
    its label needs. margin-top on .wsp-go is neutralised inside the row. */
 .wsp-acts{display:flex;gap:10px;margin-top:16px;align-items:stretch}
 .wsp-acts .wsp-shuffle{flex:0 0 auto;padding:11px 16px;font-size:14px;white-space:nowrap}
-.book-btn{background:linear-gradient(180deg,#e6414e,var(--red))!important;box-shadow:0 3px 10px rgba(230,57,70,.4),inset 0 1px 0 rgba(255,255,255,.18)}
-.wsp-chip.on{background:var(--red);box-shadow:0 2px 8px rgba(230,57,70,.3)}
+.book-btn{background:linear-gradient(180deg,var(--red-fill),#C62F3B)!important;box-shadow:0 3px 10px rgba(230,57,70,.4),inset 0 1px 0 rgba(255,255,255,.18)}
+.wsp-chip.on{background:var(--red-fill);box-shadow:0 2px 8px rgba(230,57,70,.3)}
 /* Payout chips carry a risk hue (green x50 -> red x6000). Tinted when idle,
    filled with the same hue when selected; overrides the generic red .on above. */
 .wsp-chip.wsp-risk{border-color:var(--wr);color:var(--wr);
@@ -4773,7 +4773,7 @@ button.wsp-go.waiting{opacity:.55}
    the button has been sitting on the Live tab. --btabs-h is only defined
    where the bar exists, so the fallback keeps the desktop position. */
 .myfab{position:fixed;right:16px;bottom:calc(var(--btabs-h,0px) + 16px);z-index:130;
-  background:radial-gradient(circle at 50% 40%,rgba(230,57,70,.92),rgba(150,20,32,.88));color:#fff;
+  background:radial-gradient(circle at 50% 40%,rgba(219,54,67,.96),rgba(150,20,32,.9));color:#fff;
   border:0;font:inherit;font-weight:800;font-size:15px;padding:14px 20px;border-radius:99px;
   cursor:pointer;display:flex;align-items:center;gap:9px;
   box-shadow:0 4px 12px rgba(0,0,0,.35),0 0 0 1px rgba(255,180,185,.35) inset}
@@ -5410,9 +5410,13 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
 /* The builder's own coach: opened by the ? beside the toggle, and shown once
    unprompted to anyone who has not seen it. Same bargain as the board's -
    dismissible, remembered, and never covering anything. */
-.bld-coach{margin:11px 0 0;padding:11px 13px;border:1px solid var(--line);
+.bld-coach{position:relative;margin:11px 0 0;padding:11px 13px;border:1px solid var(--line);
   border-radius:var(--r-md);background:var(--card-2)}
-.bld-coach h4{font-size:12.5px;font-weight:800;margin-bottom:7px}
+.bld-coach h4{font-size:12.5px;font-weight:800;margin-bottom:7px;padding-right:76px}
+/* First visit used to stack hint + coach + its own button row ~470px above
+   the control. The coach says everything the two hint lines say, so the hint
+   steps aside while it is open, and "Got it" sits beside the heading. */
+.bld-mode-hint:has(~ #bldCoach:not(:empty)){display:none}
 .bld-coach ul{list-style:none;display:flex;flex-direction:column;gap:7px}
 .bld-coach li{font-size:12px;line-height:1.5;color:var(--soft);
   display:flex;gap:8px;align-items:flex-start}
@@ -5422,7 +5426,7 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
 .bc-num{flex-shrink:0;width:17px;height:17px;border-radius:50%;background:var(--raise);
   color:var(--text);font-size:9.5px;font-weight:800;display:flex;
   align-items:center;justify-content:center;margin-top:1px}
-.bld-coach .bc-x{margin-top:9px;background:var(--red-fill);color:#fff;border:0;
+.bld-coach .bc-x{position:absolute;top:8px;right:9px;margin:0;background:var(--red-fill);color:#fff;border:0;
   border-radius:var(--r-sm);font:inherit;font-size:11.5px;font-weight:800;
   padding:7px 13px;cursor:pointer}
 #bldCoach:empty{display:none}
@@ -6683,7 +6687,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   .bld-coach h4{margin-bottom:5px}
   .bld-coach ul{gap:5px}
   .bld-coach li{font-size:11.5px;line-height:1.42;gap:7px}
-  .bld-coach .bc-x{margin-top:7px;padding:6px 12px}
+  .bld-coach .bc-x{top:6px;right:8px;padding:6px 12px}
 }
 
 /* THE FILTER PANEL, IN TWO COLUMNS ON A WIDE SCREEN.
@@ -7324,11 +7328,11 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 
   <div class="key">
     <span><b>1.6</b> = goals we expect that team to score</span>
-    <span class="k-form"><i style="background:var(--green)">W</i>
-      <i style="background:var(--green)">W</i>
+    <span class="k-form"><i style="background:var(--green);color:var(--on-green)">W</i>
+      <i style="background:var(--green);color:var(--on-green)">W</i>
       <i style="background:var(--grey)">D</i>
-      <i style="background:var(--red)">L</i>
-      <i style="background:var(--green)">W</i> last 5 games</span>
+      <i style="background:var(--red-fill)">L</i>
+      <i style="background:var(--green);color:var(--on-green)">W</i> last 5 games</span>
   </div>
 
   <p class="list-hint">▾ <span class="v-tap">Tap</span><span class="v-click">Click</span>
@@ -16814,11 +16818,13 @@ function slipImage(picks, odds, code){
     g.fillStyle="#17171a"; g.fillRect(PAD,y-40,W-PAD*2,64);
     g.fillStyle="#f2f1f0";
     g.font="700 28px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
-    const teams=((f.home||"")+" v "+(f.away||"")).slice(0,38);
+    /* Cut with an ellipsis, never mid-word bare ("over 0.5 goa"). */
+    const clip=function(t,n){return t.length>n?t.slice(0,n-1).replace(/\s+$/,"")+"…":t;};
+    const teams=clip((f.home||"")+" v "+(f.away||""),38);
     g.fillText(teams,PAD+20,y);
     g.fillStyle="#f2b84b";
     g.font="800 26px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
-    const lab=(typeof mLabel==="function"&&f.home?mLabel(f,pk.code):pk.code||"").slice(0,26);
+    const lab=clip(typeof mLabel==="function"&&f.home?mLabel(f,pk.code):pk.code||"",26);
     const lw=g.measureText(lab).width;
     g.fillText(lab,W-PAD-20-lw,y);
     y+=ROW;
