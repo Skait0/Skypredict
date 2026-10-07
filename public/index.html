@@ -495,8 +495,11 @@ main[tabindex="-1"]:focus{outline:none}
 .ys-chip{display:flex;align-items:center;justify-content:center;gap:6px;height:34px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);cursor:pointer;color:var(--soft);font:inherit;font-size:12px;font-weight:700}
 .ys-chip .num{font-size:15px}
 .ys-chip.run .num{color:var(--accent)}.ys-chip.lost .num{color:var(--red-ink)}.ys-chip.won .num{color:var(--green-ink)}
-.ys-live{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:ysLive 1.6s ease-in-out infinite}
-@keyframes ysLive{50%{opacity:.25}}
+/* LIVE DOTS: the one loop that carries information - something is in play.
+   All of them share one slow fade (no scale, no ring), and stand still for
+   anyone who asked for less motion - see the rule after .live-dot (Task 4). */
+@keyframes liveCalm{50%{opacity:.4}}
+.ys-live{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:liveCalm 2.4s ease-in-out infinite}
 .ys-lh{display:flex;align-items:center;justify-content:space-between;min-height:24px;margin:0 2px 4px}
 .ys-lh h4{margin:0;font-size:13px;font-weight:700;color:var(--soft)}
 .ys-clrb{border:0;background:none;color:var(--faint);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:4px 0}
@@ -512,7 +515,7 @@ main[tabindex="-1"]:focus{outline:none}
 .ys-dot.run{background:var(--accent)}.ys-dot.lost{background:var(--red)}.ys-dot.won{background:var(--green)}
 @media (hover:hover){.ys-chip:hover{border-color:var(--grey)}.ys-clrb:hover{color:var(--red-ink)}}
 .ys .num,.ys-row .num{font-weight:800}
-.eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+.eyebrow{font-size:11px;font-weight:800;
   color:var(--faint)}
 
 /* ================================================================== top */
@@ -574,12 +577,6 @@ main[tabindex="-1"]:focus{outline:none}
   background:linear-gradient(150deg,var(--red-fill),#7E1018);
   display:flex;align-items:center;justify-content:center;color:#fff;
   position:relative;overflow:hidden}
-/* a slow light sweep across the tile, so the mark has a pulse of its own
-   even when nobody is touching it */
-.sigil::after{content:"";position:absolute;inset:0;
-  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.42) 50%,transparent 65%);
-  transform:translateX(-120%);animation:sheen 7s 2.4s ease-in-out infinite}
-@keyframes sheen{0%{transform:translateX(-120%)}18%,100%{transform:translateX(120%)}}
 
 /* Every transform is on fill-box so the SVG parts pivot on themselves
    rather than the canvas corner. */
@@ -795,8 +792,8 @@ main[tabindex="-1"]:focus{outline:none}
   letter-spacing:-.04em;color:var(--green)}
 .potd .big em{font-style:normal;font-size:.45em}
 /* Locked POTD status chip + result states */
-.potd-status{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.06em;
-  text-transform:uppercase;padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.22);color:#fff;
+.potd-status{margin-left:auto;font-size:11px;font-weight:800;
+  padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.22);color:#fff;
   display:inline-flex;align-items:center;gap:6px}
 .potd-won .potd-top,.potd.potd-won .potd-top{background:var(--green);color:var(--on-green)}
 .potd.potd-won{border-color:var(--green)}
@@ -807,8 +804,7 @@ main[tabindex="-1"]:focus{outline:none}
    single pulse we kept has something to be seen against. */
 .potd-status.potd-live{background:#fff;color:var(--red)}
 .potd-status.potd-live .ld{width:7px;height:7px;border-radius:50%;background:var(--red);
-  box-shadow:0 0 0 0 rgba(230,57,70,.7);animation:potdLivePulse 1.4s ease-out infinite}
-@keyframes potdLivePulse{0%{box-shadow:0 0 0 0 rgba(230,57,70,.55)}70%{box-shadow:0 0 0 6px rgba(230,57,70,0)}100%{box-shadow:0 0 0 0 rgba(230,57,70,0)}}
+  animation:liveCalm 2.4s ease-in-out infinite}
 /* Centre the separator against the digits. As a half-size <em> on the baseline
    it dropped to the foot of the numbers; a flex row aligns all three on the
    optical middle so the dash sits between them. */
@@ -953,7 +949,7 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
   padding:4px 11px;font-weight:700}
 .comp{margin-top:10px}
 .comp-h{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;
-  letter-spacing:.09em;text-transform:uppercase;color:var(--soft);padding-bottom:5px}
+  color:var(--soft);padding-bottom:5px}
 .comp-h span{flex:1}
 .comp-h .flag{width:18px;height:13px}
 .star{width:34px;height:34px;flex-shrink:0;background:none;border:0;cursor:pointer;
@@ -992,7 +988,7 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .m-add.on .ma-ic{background:var(--green)}
 .m-top{display:flex;align-items:center;gap:7px;margin-bottom:12px;flex-wrap:wrap}
 .t{font-size:12px;color:var(--faint);font-weight:700}
-.pill{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+.pill{font-size:10px;font-weight:800;
   padding:4px 9px;border-radius:99px;background:var(--card-2);color:var(--soft)}
 .pill.value{background:var(--green-wash);color:var(--green-ink)}
 /* Ties a board row to the Pick of the day card above it. Amber with the same
@@ -1062,7 +1058,7 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .sc{text-align:center;flex-shrink:0;padding-left:14px;border-left:1px solid var(--line)}
 .sc b{display:block;font-weight:800;font-size:20px;letter-spacing:-.02em}
 .sc i{display:block;font-style:normal;font-size:9px;color:var(--faint);margin-top:3px;
-  font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+  font-weight:700}
 /* one key for the whole page, rather than a note repeated on every card */
 .key{display:inline-flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:12px;
   max-width:100%;padding:11px 14px;background:var(--card);border:1px solid var(--line-soft);
@@ -1127,7 +1123,7 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
   border:1px solid var(--line);border-radius:var(--r-md);padding:14px;cursor:pointer;
   transition:transform .16s,box-shadow .16s}
 .gl-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.26)}
-.gl-k{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);
+.gl-k{font-size:10px;font-weight:800;color:var(--faint);
   display:flex;align-items:center;gap:6px;margin-bottom:8px}
 .gl-k .dot{width:6px;height:6px;border-radius:50%;background:var(--red)}
 .gl-card.banker .gl-k .dot{background:var(--green)}
@@ -1186,7 +1182,7 @@ html.mode-live .btabs{transform:none!important}
      aiming at even though it cannot intercept the tap. */
   #toasts{bottom:calc(var(--btabs-h) + 10px)}
   .btab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;
-    color:var(--faint);font:inherit;font-size:10px;font-weight:700;padding:6px 0;cursor:pointer}
+    color:var(--faint);font:inherit;font-size:11px;font-weight:700;padding:6px 0;cursor:pointer}
   .btab svg{width:22px;height:22px}
   /* THE SQUARE WHITE BOX ON TAP WAS THE BROWSER'S OWN FOCUS RING.
      Every other control here defines a :focus-visible ring and this one never
@@ -1295,7 +1291,7 @@ html.mode-live .btabs{transform:none!important}
 .live-bell{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:34px;padding:0 11px;
   background:var(--card);border:1px solid var(--line);color:var(--soft);border-radius:var(--r-md);cursor:pointer;flex-shrink:0;
   font:inherit;font-weight:800;font-size:11px}
-.live-bell .bell-lbl{letter-spacing:.04em;text-transform:uppercase}
+.live-bell .bell-lbl{}
 .live-bell:hover{color:var(--text)}
 .live-bell.on{color:var(--green-ink);border-color:var(--green);background:var(--green-wash)}
 .mono img{width:100%;height:100%;border-radius:inherit;object-fit:cover;display:block}
@@ -1305,7 +1301,7 @@ html.mode-live .btabs{transform:none!important}
    to pulse now reads as enchanted rather than flashing - a thin rune-gold edge
    and a warm ember, which is the same language as the runes in the background. */
 .navt.build{background:var(--red-fill);color:#fff;
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.45),0 2px 10px rgba(230,57,70,.28)}
+  box-shadow:inset 0 0 0 1px rgba(242,184,75,.45)}
 .navt.build.on{background:var(--red-fill);color:#fff}
 @keyframes starpulse{0%{box-shadow:0 0 0 0 rgba(230,57,70,.55)}70%{box-shadow:0 0 0 11px rgba(230,57,70,0)}100%{box-shadow:0 0 0 0 rgba(230,57,70,0)}}
 .lthead,.lrow{column-gap:12px}
@@ -1362,8 +1358,7 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
 html.tapped .list-hint{display:none}
 .lt-tip{padding-right:10px}
 .lt-score{padding-left:10px}
-@keyframes litPulse{0%,100%{text-shadow:0 0 8px rgba(43,199,120,.7);transform:scale(1)}50%{text-shadow:0 0 20px rgba(43,199,120,1);transform:scale(1.22)}}
-.lv-sc.lit{color:var(--green)!important;animation:litPulse 1s ease-in-out infinite}
+.lv-sc.lit{color:var(--green)!important}
 @keyframes litScale{0%,100%{transform:scale(1)}50%{transform:scale(1.28)}}
 .lv.just-scored{border-color:var(--green);box-shadow:0 0 0 2px rgba(43,199,120,.3)}
 .gl-team{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1384,45 +1379,16 @@ html.tapped .list-hint{display:none}
 .slip-cta{display:flex;flex-direction:column;align-items:stretch;gap:12px;width:100%;text-align:left;margin:14px 0 2px;
   background:linear-gradient(160deg,var(--card) 0%,var(--card-2) 100%);
   border:1px solid var(--line);
-  box-shadow:0 4px 18px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.04);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
   border-radius:var(--r-lg);padding:15px 16px;cursor:pointer;color:var(--text);font:inherit;
   position:relative;overflow:hidden}
 /* A thin gold rule along the top - the site's premium accent, as a hairline
    rather than a field of colour. */
 .slip-cta::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;
   background:linear-gradient(90deg,transparent,rgba(242,184,75,.55),transparent)}
-.slip-cta::before{content:'';position:absolute;top:-40%;left:-10%;width:55%;height:180%;
-  background:radial-gradient(closest-side,rgba(124,77,255,.10),transparent);
-  animation:wspOrbDrift 5s ease-in-out infinite alternate}
-@keyframes wspOrbDrift{from{transform:translate(0,0)}to{transform:translate(30px,12px)}}
-/* A crimson light running the border. The angle is animated rather than the
-   element, because rotating a wide box would drag the gradient out of round
-   and the light would race the long sides and crawl the short ones.
-   The ring is the border and nothing else: two masks, one clipped to the
-   padding box, composited so only the 1.5px frame between them survives. */
-@property --ctaAng{syntax:'<angle>';initial-value:0deg;inherits:false}
-.cta-run{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:2;
-  padding:1.5px;
-  background:conic-gradient(from var(--ctaAng),
-    transparent 0deg 210deg,
-    rgba(230,57,70,.35) 250deg,
-    var(--red) 292deg,
-    #ff8f97 300deg,
-    var(--red) 308deg,
-    rgba(230,57,70,.35) 340deg,
-    transparent 360deg);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;
-  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  mask-composite:exclude;
-  animation:ctaRun 3.6s linear infinite}
-@keyframes ctaRun{to{--ctaAng:360deg}}
-/* Where @property is unsupported the angle never animates, so the light would
-   sit frozen on one edge. Better to show nothing than a smear. */
-@supports not (background:conic-gradient(from var(--ctaAng),red,blue)){
-  .cta-run{display:none}
-}
-@media(prefers-reduced-motion:reduce){.cta-run{display:none}}
+/* The violet drift and the crimson light running the border are gone (Task 4,
+   7 Oct): four effects on one card made it read as an advert. The gold
+   keyline above and the button are the emphasis. */
 .slip-cta:hover{border-color:var(--faint)}
 /* Deliberately nothing here: this used to restyle the button whenever the
    panel was hovered, which meant hovering the button itself did nothing
@@ -1437,14 +1403,10 @@ html.tapped .list-hint{display:none}
    wizard's robe red on the pentagons, gold seams. All the ball's own light
    and shading is in the drawing; this box only sizes it and breathes the
    glow around it. */
-.sc-orb{flex-shrink:0;width:44px;height:44px;margin-top:0;border-radius:50%;display:block;
-  filter:drop-shadow(0 0 5px rgba(255,255,255,.35));
-  animation:orbBreath 3.4s ease-in-out infinite}
+/* No breathing halo (Task 4): the ball turning is the motion; a pulsing
+   white glow round it was decoration on decoration. */
+.sc-orb{flex-shrink:0;width:44px;height:44px;margin-top:0;border-radius:50%;display:block}
 .sc-orb canvas,.ctafab-orb canvas{display:block;width:100%;height:100%}
-@media(prefers-reduced-motion:reduce){ .sc-orb{animation:none} }
-@keyframes orbBreath{
-  0%,100%{filter:drop-shadow(0 0 4px rgba(255,255,255,.25))}
-  50%{filter:drop-shadow(0 0 9px rgba(255,255,255,.5))}}
 /* ON A CREAM CARD THE BALL NEEDS AN EDGE, NOT A GLOW. Its white panels and
    top-left highlight are the card's own colour, so a glow of any hue left the
    upper rim undrawn and the ball read as a smudge (reported 24 Sep, light
@@ -1453,14 +1415,7 @@ html.tapped .list-hint{display:none}
    that shadow instead of a halo. The violet it replaces was off-palette next
    to red pentagons and gold seams. */
 [data-theme="light"] .sc-orb{
-  filter:drop-shadow(0 0 .6px rgba(40,18,22,.7)) drop-shadow(0 3px 5px rgba(70,25,30,.28));
-  animation:orbBreathLight 3.4s ease-in-out infinite}
-@keyframes orbBreathLight{
-  0%,100%{filter:drop-shadow(0 0 .6px rgba(40,18,22,.7)) drop-shadow(0 3px 5px rgba(70,25,30,.24))}
-  50%{filter:drop-shadow(0 0 .6px rgba(40,18,22,.7)) drop-shadow(0 5px 9px rgba(70,25,30,.36))}}
-/* The light rule outranks the plain reduced-motion one above, so it must say
-   it again or the breath comes back for readers who asked for stillness. */
-@media(prefers-reduced-motion:reduce){ [data-theme="light"] .sc-orb{animation:none} }
+  filter:drop-shadow(0 0 .6px rgba(40,18,22,.7)) drop-shadow(0 3px 5px rgba(70,25,30,.28))}
 .sc-tx{flex:1;min-width:0}
 .sc-tx b{display:block;font-size:16.5px;font-weight:800;color:var(--text);letter-spacing:.01em}
 .sc-tx i{display:block;font-style:normal;font-size:12.5px;color:var(--soft);margin-top:3px}
@@ -1526,18 +1481,7 @@ html.tapped .list-hint{display:none}
   position:relative;overflow:hidden;
   transition:box-shadow .18s ease,transform .12s ease,border-color .18s ease}
 
-/* One slow pass of light, and no other idle motion.
-   The card around this already runs a conic gradient along its border, a gold
-   hairline and a violet drift. A fourth thing competing for the same eye is
-   how a card stops looking designed and starts looking anxious - so this is a
-   single diagonal sheen, seven seconds apart, at an opacity you notice only
-   because it moves. It is the same gesture the SportyBet code card uses, so
-   the two read as one system. */
-.sc-go-primary::after{content:"";position:absolute;inset:0;border-radius:inherit;
-  pointer-events:none;
-  background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.10) 50%,transparent 58%);
-  background-size:280% 100%;animation:scSheen 7s ease-in-out infinite}
-@keyframes scSheen{0%,72%{background-position:140% 0}100%{background-position:-40% 0}}
+/* No idle sheen (Task 4): the pill is still until a pointer reaches it. */
 
 /* The arrow is the invitation, and it only moves under a pointer - an arrow
    that twitches on its own is a fidget, one that leans when you approach is a
@@ -1556,13 +1500,11 @@ html.tapped .list-hint{display:none}
     border-color:rgba(255,255,255,.26)!important;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.12),
                0 8px 26px rgba(0,0,0,.55),
-               0 0 0 1px rgba(230,57,70,.5),
-               0 0 22px rgba(230,57,70,.28)!important;
+               0 0 0 1px rgba(230,57,70,.5)!important;
     transform:translateY(-1px)}
 }
 .sc-actions .sc-go-primary:active,.sc-go-primary:active{transform:translateY(1px)}
 @media(prefers-reduced-motion:reduce){
-  .sc-go-primary::after{animation:none}
   .sc-go-arw{transition:none}
 }
 /* The pair share a shape.
@@ -1586,7 +1528,7 @@ html.tapped .list-hint{display:none}
     flex:1 1 0;width:auto;min-width:170px;max-width:240px;height:38px;
     display:inline-flex;align-items:center;justify-content:center;margin:0;
     text-align:center;white-space:nowrap;
-    padding:0 10px;font-size:13px;font-weight:800;letter-spacing:.06em;line-height:normal;
+    padding:0 10px;font-size:13px;font-weight:800;letter-spacing:0;line-height:normal;
     box-sizing:border-box}
 }
 /* Ghost. Two filled buttons side by side compete and flatten the hierarchy;
@@ -1611,7 +1553,7 @@ html.mode-build .slip-cta,html.mode-live .slip-cta{display:none}
      from --red-fill instead so every point under the label clears AA. */
   background:radial-gradient(circle at 20% 0%,#db3643,#c22e3a 55%,#a51826);color:#fff;
   border:1px solid rgba(242,184,75,.55);border-radius:99px;padding:12px 14px 12px 18px;
-  box-shadow:0 10px 30px rgba(165,24,38,.5),inset 0 1px 2px rgba(255,255,255,.4);cursor:pointer}
+  box-shadow:0 6px 16px rgba(0,0,0,.4),inset 0 1px 2px rgba(255,255,255,.4);cursor:pointer}
 .slipbar-in .sb-tx{flex:1;min-width:0}
 .slipbar-in .sb-tx b{display:block;font-size:14px;font-weight:800;line-height:1.2}
 .slipbar-in .sb-tx i{font-style:normal;font-size:11.5px;font-weight:600;opacity:.85}
@@ -1656,7 +1598,7 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
   .gl-card.score .gl-pc{flex-shrink:0}
   .myfab{padding:0;width:54px;height:54px;justify-content:center;border-radius:50%;
     background:radial-gradient(circle at 50% 40%,rgba(230,57,70,.92),rgba(150,20,32,.88));
-    border:0;box-shadow:0 6px 20px rgba(230,57,70,.5),0 0 0 1px rgba(255,180,185,.35) inset}
+    border:0;box-shadow:0 4px 12px rgba(0,0,0,.35),0 0 0 1px rgba(255,180,185,.35) inset}
   .myfab .lbl{display:none}
   .myfab-tk{position:relative;display:inline-flex;color:#fff}
   .myfab-tk svg{display:none}
@@ -1688,14 +1630,13 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
 .trust .link{color:var(--red-ink);font-weight:700;text-decoration:none}
 .trust .link:hover{text-decoration:underline}
 .pill.goals{background:var(--win-wash);color:var(--win-ink)}
-.pill.value{background:linear-gradient(120deg,#F2B84B,#ffd873);color:#1a1400;font-weight:800;animation:valpulse 2s ease-out infinite}
-@keyframes valpulse{0%{box-shadow:0 0 0 0 rgba(242,184,75,.5)}70%{box-shadow:0 0 0 8px rgba(242,184,75,0)}100%{box-shadow:0 0 0 0 rgba(242,184,75,0)}}
+.pill.value{background:var(--accent);color:var(--on-accent);font-weight:800}
 .vmark{flex-shrink:0;font-size:10px;font-weight:800;color:#1a1400;background:#F2B84B;padding:2px 6px;border-radius:99px;margin-left:2px;font-variant-numeric:tabular-nums}
 .m{border-left-width:3px;border-left-style:solid;border-left-color:var(--edge)}
 .m.conf-strong{border-left-color:var(--green)}
 .m.conf-lean{border-left-color:var(--win)}
 .m.conf-slight{border-left-color:var(--grey)}
-.tipbox .grade{margin-left:auto;font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 7px;border-radius:99px;background:var(--raise);color:var(--soft);white-space:nowrap}
+.tipbox .grade{margin-left:auto;font-size:9px;font-weight:800;padding:3px 7px;border-radius:99px;background:var(--raise);color:var(--soft);white-space:nowrap}
 .conf-strong .tipbox .grade{background:var(--green-wash);color:var(--green-ink)}
 .conf-lean .tipbox .grade{background:var(--win-wash);color:var(--win-ink)}
 .tipbox .p{margin-left:9px}
@@ -1732,8 +1673,8 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
 .lt-score{display:flex;flex-direction:column;align-items:center;justify-content:center;
   min-width:50px;flex-shrink:0;line-height:1.1}
 .lt-score b{font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;color:var(--text)}
-.lt-score i{font-style:normal;font-size:9px;font-weight:700;letter-spacing:.06em;
-  text-transform:uppercase;color:var(--faint);margin-top:2px}
+.lt-score i{font-style:normal;font-size:9px;font-weight:700;
+  color:var(--faint);margin-top:2px}
 .clear-btn{background:var(--raise);color:var(--soft);border:1px solid var(--line);
   font:inherit;font-weight:800;font-size:14px;padding:13px 16px;border-radius:var(--r-md);cursor:pointer;flex-shrink:0}
 /* Only where there is a pointer that can hover. A phone has none, and Android
@@ -1751,47 +1692,27 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
 /* Book-all: a small flashy pill above the board. It only appears when the
    visible tips are actually bookable, so it never sits there dead. */
 .bookall-row{display:flex;justify-content:flex-end;margin:8px 0 2px}
-/* The outline version of this read as dull - it is the one control on the board
-   that starts a slip, and a grey-rimmed pill made it look like a tertiary
-   option next to the filters. Back to the crimson pill with the gold rim and
-   its ember: the brightest thing in the row, which is what it should be. */
+/* The one control on the board that starts a slip, so it is DESIGN.md's filled
+   action pill: solid red, the gold count chip, nothing glowing or flickering
+   (Task 4, 7 Oct - the ember spark and the hover tremor are gone). */
 .bookall{position:relative;overflow:hidden;display:none;align-items:center;gap:8px;
-  background:linear-gradient(135deg,#6d1017,var(--red-fill) 55%,#9c1620);color:#fff;
-  border:1px solid rgba(242,184,75,.55);
-  font:inherit;font-weight:800;font-size:12.5px;letter-spacing:.03em;
-  padding:8px 15px 8px 27px;border-radius:99px;cursor:pointer;
-  text-shadow:0 1px 2px rgba(0,0,0,.55);
-  box-shadow:0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.12);
-  transition:filter .25s,box-shadow .25s,transform .15s}
+  background:var(--red-fill);color:#fff;border:0;
+  font:inherit;font-weight:800;font-size:12.5px;
+  padding:8px 14px;border-radius:99px;cursor:pointer;
+  transition:filter .14s var(--ease-out),transform .14s var(--ease-out)}
 .bookall.show{display:inline-flex}
-/* Calm at rest, menacing on approach: the ember flares, a red bloom opens up
-   and the pill gives one small tremor - a spell about to be cast, not a
-   button begging to be pressed. */
-.bookall:hover{filter:brightness(1.1);
-  box-shadow:0 0 0 1px rgba(242,184,75,.85),0 7px 24px rgba(230,57,70,.55),
-             inset 0 1px 0 rgba(255,255,255,.16);
-  animation:baTremor .3s ease-in-out 1}
-.bookall:hover .ba-spark{background:#FFD873;box-shadow:0 0 13px 3px rgba(242,184,75,1)}
+@media(hover:hover){
+  .bookall:hover{filter:brightness(1.1);transform:translateY(-1px)}
+}
 .bookall:active{transform:scale(.97)}
-@keyframes baTremor{0%,100%{transform:translateX(0)}20%{transform:translateX(-1.5px)}
-  60%{transform:translateX(1.5px)}80%{transform:translateX(-1px)}}
-html.reduce .bookall:hover{animation:none}
+@media(prefers-reduced-motion:reduce){.bookall{transition:none}.bookall:hover{transform:none}}
 .bookall:disabled{opacity:.6;cursor:not-allowed}
-.bookall .ba-n{background:rgba(242,184,75,.92);color:#2a1400;border-radius:99px;padding:1px 7px;
-  font-variant-numeric:tabular-nums;font-size:11.5px;text-shadow:none}
-.ba-spark{position:absolute;top:50%;left:11px;width:5px;height:5px;margin-top:-2.5px;
-  border-radius:50%;background:#F2B84B;pointer-events:none;
-  box-shadow:0 0 7px 1px rgba(242,184,75,.85);animation:baFlicker 2.8s ease-in-out infinite;
-  transition:background .25s,box-shadow .25s}
-@keyframes baFlicker{0%,100%{opacity:.5;transform:scale(.85)}
-  12%{opacity:1;transform:scale(1.2)}22%{opacity:.55;transform:scale(.95)}
-  38%{opacity:1;transform:scale(1.1)}56%{opacity:.45;transform:scale(.88)}
-  74%{opacity:.95;transform:scale(1.15)}}
+.bookall .ba-n{background:var(--accent);color:var(--on-accent);border-radius:99px;padding:1px 7px;
+  font-variant-numeric:tabular-nums;font-size:11.5px}
 .bookall .ba-tx{margin-left:0}
 .bookall{white-space:nowrap}
 /* "Build all 6 tips" fits even on a 320px phone, so nothing is hidden here any
    more - the old rule dropped the trailing words and left a bare "Build all 6". */
-html.reduce .ba-spark{animation:none;opacity:0}
 html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookall-row{display:none}
 #bookAllResult:not(:empty){margin:10px 0 2px}
 .confirm-card p{margin:0 0 12px;font-size:14px;color:var(--text);font-weight:600}
@@ -1898,7 +1819,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    Everything else in this rule is already restated by the grid rule further
    down - this line was the only thing still reaching the page. */
 .lt-tip{display:flex;align-items:center;gap:7px;font-weight:700;color:var(--text)}
-.lt-tip .grade{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+.lt-tip .grade{font-size:10px;font-weight:800;
   padding:3px 8px;border-radius:99px;background:var(--raise);color:var(--soft)}
 .conf-strong .lt-tip .grade{background:var(--green-wash);color:var(--green-ink)}
 .conf-lean .lt-tip .grade{background:var(--win-wash);color:var(--win-ink)}
@@ -1951,8 +1872,8 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
      long team names from visually crowding the Pred column. */
   grid-template-columns:46px minmax(0,1fr) 38px 38px 38px minmax(120px,208px) 62px 18px;
   align-items:center;column-gap:14px}
-.lthead{padding:7px 8px 6px;font-size:10px;font-weight:800;letter-spacing:.06em;
-  text-transform:uppercase;color:var(--faint);border-bottom:1px solid var(--line-soft);
+.lthead{padding:7px 8px 6px;font-size:10px;font-weight:800;
+  color:var(--faint);border-bottom:1px solid var(--line-soft);
   border-left:3px solid transparent}
 .lthead .c{text-align:center}
 /* MATCH, TIP, PRED are 10px uppercase, which is the size that needs contrast
@@ -2033,14 +1954,14 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .why{display:block;margin-top:9px;font-size:12.5px;line-height:1.5;color:var(--soft)}
 .conf-strong .vdot{background:var(--green)}
 .conf-lean .vdot{background:var(--win)}
-.tipbox .k{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+.tipbox .k{font-size:10px;font-weight:800;
   color:var(--faint)}
 .tipbox .v{font-weight:700;font-size:14px}
 .tipbox .p{margin-left:auto;font-weight:800;font-size:15px}
 .tipbox .p.hi{color:var(--green)}
 .valuebox{display:flex;align-items:center;gap:9px;margin-top:8px;
   background:var(--green-wash);border-radius:var(--r-md);padding:10px 13px;font-size:13px}
-.valuebox .k{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+.valuebox .k{font-size:10px;font-weight:800;
   color:var(--green-ink)}
 .valuebox b{font-weight:700}
 .valuebox .odds{margin-left:auto;font-weight:800;color:var(--green-ink)}
@@ -2061,7 +1982,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .more-in{overflow:hidden;min-height:0}
 .more-pad{padding:4px 15px 16px}
 .grp{margin-top:14px}
-.grp h3{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+.grp h3{font-size:11px;font-weight:800;
   color:var(--soft);margin-bottom:9px}
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .opt{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
@@ -2142,7 +2063,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .sl2-filt .num{font-weight:700;opacity:.75;margin-left:4px}
 .sl2{background:var(--card);border:1px solid var(--line);border-radius:12px}
 .sl2-top{display:flex;align-items:center;gap:8px;padding:12px 12px 10px}
-.sl2-st{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;padding:4px 8px;border-radius:99px}
+.sl2-st{font-size:10.5px;font-weight:800;padding:4px 8px;border-radius:99px}
 .sl2-st.jack{color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent)}
 .sl2-st.run{color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent)}
 .sl2-st.lost{color:var(--red-ink);background:color-mix(in srgb,var(--red) 13%,transparent)}
@@ -2558,8 +2479,9 @@ html.mode-live #liveStrip,html.mode-live #liveStripWrap,html.mode-live #builder,
 html.mode-live .home-grid{display:none}
 html.mode-live #live{display:block}
 .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff3b3b;
-  margin-left:3px;vertical-align:middle;animation:livePulse 1.4s infinite}
-@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+  margin-left:3px;vertical-align:middle;animation:liveCalm 2.4s ease-in-out infinite}
+/* After every live-dot rule, so it wins the cascade. */
+@media(prefers-reduced-motion:reduce){.ys-live,.potd-status.potd-live .ld,.live-dot{animation:none}}
 /* On a phone the live cue rides the bottom Live tab. It used to sit in the top
    nav, where at narrow widths it drifted into the theme toggle. Absolute so it
    pins to the icon instead of pushing the label sideways, and ringed in the
@@ -2574,7 +2496,7 @@ html.mode-live #live{display:block}
 #liveStripWrap{margin-top:22px;border-top:1px solid var(--line-soft);padding-top:14px}
 .ls-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 2px 4px}
 .ls-head span{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;
-  letter-spacing:.05em;text-transform:uppercase;color:var(--soft)}
+  color:var(--soft)}
 .ls-head b{color:var(--faint);font-weight:700}
 .ls-head a{font-size:13px;font-weight:800;color:var(--red-ink);text-decoration:none}
 .ls-head a:hover{text-decoration:underline}
@@ -2584,13 +2506,13 @@ html.mode-live #live{display:block}
 .ls-card:hover{border-color:var(--line)}
 .ls-card.goal{border-color:var(--green);box-shadow:0 0 0 2px rgba(43,199,120,.3)}
 .ls-card.goal .ls-top{color:var(--green)}
-.ls-row b.lit{color:var(--green);text-shadow:0 0 10px rgba(43,199,120,.9);animation:litPulse 1.1s ease-in-out infinite}
+.ls-row b.lit{color:var(--green)}
 .ls-more{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
   min-width:120px;background:var(--raise);border-style:dashed}
 .ls-more-n{font-size:20px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
 .ls-more-t{font-size:12px;font-weight:800;color:var(--red-ink)}
 .ls-top{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;
-  letter-spacing:.05em;text-transform:uppercase;color:#ff3b3b;margin-bottom:7px}
+  color:#ff3b3b;margin-bottom:7px}
 .ls-min{color:var(--faint)}
 .ls-row{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:700;line-height:1.5}
 .ls-row b{font-variant-numeric:tabular-nums}
@@ -2601,17 +2523,19 @@ html.mode-live #live{display:block}
 }
 #liveStripWrap{margin-top:20px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);
   padding:0;background:linear-gradient(180deg,var(--card),var(--card-2))}
+/* A row you swipe, not a marquee (Task 4, 7 Oct). The 55s scroll could not be
+   paused on a phone and read badly at speed; events now sit still, newest
+   first, and the reader moves them. */
 .ticker{position:relative;display:flex;align-items:center;overflow:hidden;height:46px;
   background:linear-gradient(180deg,var(--card),var(--card-2));
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 70px),transparent);
   mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 70px),transparent)}
-@media(max-width:560px){.ticker-track{animation-duration:38s}}
-.ticker-track{display:flex;align-items:center;gap:0;white-space:nowrap;width:max-content;will-change:transform;
-  animation:tickscroll 55s linear infinite}
-.ticker:hover .ticker-track,.ticker:active .ticker-track{animation-play-state:paused}
-@keyframes tickscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.tk-goaltag{background:var(--green);color:#04210f;animation:tkTagBlink .8s steps(1) infinite;vertical-align:middle}
-@keyframes tkTagBlink{0%,100%{opacity:1;box-shadow:0 0 12px rgba(43,199,120,.95)}50%{opacity:.5;box-shadow:0 0 3px rgba(43,199,120,.4)}}
+.ticker-track{display:flex;align-items:center;gap:0;white-space:nowrap;height:100%;
+  overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;padding-right:70px;
+  overscroll-behavior-x:contain}
+.ticker-track::-webkit-scrollbar{display:none}
+.tk-item{scroll-snap-align:start}
+.tk-goaltag{background:var(--green);color:#04210f;vertical-align:middle}
 .tk-item{display:inline-flex;align-items:center;gap:9px;padding:0 22px;font-size:13.5px;font-weight:700;
   color:var(--text);border-right:1px solid var(--line-soft);animation:tkEnter .5s ease-out}
 @keyframes tkEnter{from{opacity:0}to{opacity:1}}
@@ -2620,7 +2544,7 @@ html.mode-live #live{display:block}
 .ticker .tk-item.tk-draw span{color:var(--soft)!important}
 .ticker .tk-item.tk-draw .tk-sc{color:var(--text)!important}
 .tk-ic{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;flex-shrink:0}
-.tk-tag{font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+.tk-tag{font-size:9.5px;font-weight:800;
   padding:3px 9px;border-radius:99px}
 .tk-goal .tk-tag{background:var(--green-wash);color:var(--green-ink)}
 .tk-ht .tk-tag{background:var(--raise);color:var(--soft)}
@@ -2642,25 +2566,9 @@ html.mode-live #live{display:block}
 .tk-red .tk-ic::before{background:var(--red)}
 .tk-red .tk-ic{color:var(--red)}
 .tk-ht .tk-ic,.tk-ft .tk-ic{color:var(--faint)}
-.tk-ball svg{display:block;animation:tkball 1.4s ease-in-out infinite}
-.tk-ball{position:absolute;font-size:15px;animation:tkball 1.4s ease-in-out infinite}
-@keyframes tkball{0%{transform:translateX(-8px) rotate(0)}55%{transform:translateX(4px) rotate(320deg)}
-  70%{transform:translateX(4px) rotate(320deg)}100%{transform:translateX(-8px) rotate(0)}}
-.tk-goalfx{position:relative;display:inline-block;width:22px;height:16px}
-.tk-goalpost{position:absolute;right:0;top:1px;width:13px;height:14px;color:var(--faint);opacity:.85}
-.tk-ball2{position:absolute;left:0;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#fff,#cfcfd6);box-shadow:0 0 5px rgba(43,199,120,.8);
-  animation:goalshot 1.7s cubic-bezier(.4,0,.5,1) infinite}
-@keyframes goalshot{0%{left:-1px;opacity:0;transform:scale(.8)}15%{opacity:1}55%{left:9px;transform:scale(1)}72%{left:9px}100%{left:-1px;opacity:0;transform:scale(.8)}}
-.tk-net{position:absolute;right:0;width:9px;height:16px;border:1.5px solid var(--faint);border-left:none;
-  border-radius:0 3px 3px 0;opacity:.7}
-.tk-net::before{content:"";position:absolute;inset:0;background:
-  repeating-linear-gradient(90deg,transparent 0 2px,var(--faint) 2px 2.5px),
-  repeating-linear-gradient(0deg,transparent 0 2px,var(--faint) 2px 2.5px);opacity:.5}
 .tk-goal.flash .tk-ic{animation:tkflash 1s ease-out}
 .tk-goal.flash .tk-sc{color:inherit}
-.tk-goal.flash .tk-sc .glow{color:var(--green);animation:tkscglow 1s ease-in-out infinite}
-@keyframes tkscglow{0%,100%{text-shadow:0 0 6px rgba(43,199,120,.7)}50%{text-shadow:0 0 14px rgba(43,199,120,1)}}
+.tk-goal.flash .tk-sc .glow{color:var(--green)}
 @keyframes tkflash{0%{filter:drop-shadow(0 0 0 var(--green))}30%{filter:drop-shadow(0 0 10px var(--green))}100%{filter:none}}
 .ticker-all{flex-shrink:0;align-self:center;display:inline-flex;align-items:center;gap:3px;position:absolute;right:0;top:0;bottom:0;
   padding:5px 12px 5px 30px;font-size:11px;font-weight:800;color:#fff;
@@ -2678,7 +2586,7 @@ html.mode-live #live{display:block}
 .lv-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .lv-lg{font-size:11px;color:var(--faint);font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lv-status{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:10.5px;
-  font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#ff3b3b;flex-shrink:0}
+  font-weight:800;color:#ff3b3b;flex-shrink:0}
 .lv-status.ft{color:var(--faint)}
 .lv-status .live-dot{margin:0}
 .lv-teams{display:grid;grid-template-columns:1fr auto;gap:3px 12px;align-items:center}
@@ -2714,7 +2622,7 @@ html.mode-live #live{display:block}
 .lv-scorers .mn{color:var(--faint);font-variant-numeric:tabular-nums}
 .lv-tip{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12.5px;font-weight:700;flex-wrap:wrap}
 .lv-tip .lbl{color:var(--soft);font-weight:600}
-.lv-badge{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+.lv-badge{font-size:11px;font-weight:800;
   padding:4px 9px;border-radius:99px}
 .lv-badge.win{background:var(--green-wash);color:var(--green-ink)}
 .lv-badge.lose{background:var(--red-wash);color:var(--red-ink)}
@@ -2736,7 +2644,7 @@ html.mode-live #live{display:block}
 .lv-chip.on .n{color:rgba(255,255,255,.8)}
 .lv-grp{margin-bottom:14px}
 .lv-grp-h{display:flex;align-items:center;gap:9px;padding:4px 2px 10px;font-size:12px;font-weight:800;
-  letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
+  color:var(--soft)}
 .lv-grp-h .flag{width:20px;height:14px}
 .lv-grp-h .ct{color:var(--faint);font-weight:700}
 .lv-grp-h .gc{margin-left:auto;background:var(--raise);color:var(--soft);border-radius:99px;padding:2px 9px;font-size:11px}
@@ -2755,18 +2663,17 @@ html.mode-live #live{display:block}
 .goal-badge{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:120px;height:auto;
   border-radius:var(--r-sm);box-shadow:0 4px 14px rgba(0,0,0,.4);
   animation:goalBadgeIn 3s ease-out forwards;pointer-events:none;z-index:2}
-.goal-tag{display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;
-  letter-spacing:.06em;color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;
+.goal-tag{display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;
+  color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;
   margin-right:6px;vertical-align:middle;animation:goalTagPop .35s ease-out}
 @keyframes goalTagPop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
 .lv-sc.scored{position:relative;color:var(--red-ink)!important;z-index:1}
 .lv-sc.scored::before{content:"";position:absolute;inset:-2px -6px;border-radius:var(--r-sm);
-   background:var(--red-wash);box-shadow:0 0 0 1px var(--red),0 0 10px rgba(230,57,70,.7);
-   z-index:-1;animation:scoredGlow 1.1s ease-in-out infinite}
+   background:var(--red-wash);box-shadow:0 0 0 1px var(--red);
+   z-index:-1}
 .lv-sc{overflow:visible}
 .lv-sc.scored{margin-left:52px}
 .lv-sc .goal-tag{position:absolute;right:calc(100% + 12px);top:50%;bottom:auto;left:auto;transform:translateY(-50%);margin:0;z-index:3}
-@keyframes scoredGlow{0%,100%{box-shadow:0 0 0 1px var(--red),0 0 8px rgba(230,57,70,.55)}50%{box-shadow:0 0 0 1px var(--red),0 0 16px rgba(230,57,70,.95)}}
 @media(max-width:520px){.lv-scorers{grid-template-columns:1fr}.lv-scorers .sr.a{justify-content:flex-start;text-align:left;grid-column:1}}
 .bld-head{margin-bottom:20px}
 .bld-head h2{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:8px 0 4px}
@@ -2781,13 +2688,9 @@ html.mode-live #live{display:block}
 .bld-mode-btn:hover{color:var(--text);background:var(--card)}
 .bld-mode-btn:hover svg{opacity:1}
 .bld-mode-btn.on{background:var(--red-fill);color:#fff;box-shadow:0 2px 8px rgba(230,57,70,.3)}
-/* Each mode wears its own identity when active: Slider = red/gold ember (fast,
-   hands-on); Wizard = violet/gold enchantment (let the app decide). */
-.bld-mode-btn.on[data-mode="slider"]{background:linear-gradient(120deg,#c8323d,var(--red));
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.5),0 2px 10px rgba(230,57,70,.4)}
-.bld-mode-btn.on[data-mode="wizard"]{background:linear-gradient(120deg,#6d3bd4,#8b5cf6);
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.55),0 2px 12px rgba(139,92,246,.5)}
-.bld-mode-btn.on[data-mode="wizard"] svg{filter:drop-shadow(0 0 4px rgba(242,184,75,.8))}
+/* Both modes wear the same selected fill. The Wizard used to turn violet, a
+   fourth brand hue DESIGN.md never had; selected is red here like every
+   other chosen chip on the page. */
 .bld-mode-btn.on svg{opacity:1}
 .bld-mode-btn:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 /* The filters bar and the copy button were the two remaining controls that
@@ -3019,8 +2922,8 @@ html{interpolate-size:allow-keywords}
    longest label decide the height of all three - or ellipsise a label nobody
    can then read - it wraps to a second line and the tracking eases off, so the
    words fit the box instead of the box straining round the words. */
-.stat i{display:block;font-style:normal;font-size:11px;font-weight:700;letter-spacing:.03em;
-  text-transform:uppercase;color:var(--faint);margin-top:3px;
+.stat i{display:block;font-style:normal;font-size:11px;font-weight:700;
+  color:var(--faint);margin-top:3px;
   line-height:1.25;overflow-wrap:anywhere;hyphens:none}
 /* Two tiles, not three, when the confidence one is dropped for a jackpot. */
 .bld-stats.stats-2{grid-template-columns:repeat(2,1fr)}
@@ -3195,7 +3098,7 @@ html{interpolate-size:allow-keywords}
 .bld-foot .clear-btn:active{transform:scale(.94)}
 .bld-odds{flex:1}
 .bld-odds i{display:block;font-style:normal;font-size:11px;font-weight:700;
-  letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+  color:var(--faint)}
 .bld-odds b{font-size:24px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
 .book-btn{background:var(--red-fill);color:#fff;border:0;font:inherit;font-weight:800;font-size:15px;
   padding:14px 22px;border-radius:var(--r-sm);cursor:pointer;white-space:nowrap;
@@ -3240,8 +3143,8 @@ html{interpolate-size:allow-keywords}
    the row takes no space at all - it was showing on the wizard page above a
    slip of nought games. */
 .bookpick[hidden]{display:none}
-.bookpick-l{font-size:11px;font-weight:700;letter-spacing:.05em;
-  text-transform:uppercase;color:var(--faint);margin-right:1px}
+.bookpick-l{font-size:11px;font-weight:700;
+  color:var(--faint);margin-right:1px}
 .bp{font:inherit;font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:99px;
   border:1px solid transparent;cursor:pointer;white-space:nowrap;line-height:1.15;
   display:inline-flex;align-items:center;min-height:30px;
@@ -3852,8 +3755,8 @@ html{interpolate-size:allow-keywords}
   color:var(--soft);cursor:pointer}
 .code-x svg{width:15px;height:15px}
 .code-x:hover{color:var(--text);border-color:var(--red)}
-.code-card i{font-style:normal;font-size:12px;font-weight:700;letter-spacing:.05em;
-  text-transform:uppercase;color:var(--green-ink)}
+.code-card i{font-style:normal;font-size:12px;font-weight:700;
+  color:var(--green-ink)}
 .code-card b{display:block;font-size:32px;font-weight:800;letter-spacing:.08em;
   color:var(--text);margin:6px 0 14px;font-variant-numeric:tabular-nums}
 /* How many codes are left today, on the one screen every booking ends on.
@@ -4039,15 +3942,6 @@ html{interpolate-size:allow-keywords}
 .code-card--sb b,[data-theme="light"] .code-card--sb b{
   color:#fff;text-shadow:0 0 24px rgba(230,57,70,.55)}
 
-/* A slow sweep, once every few seconds. The card is on screen for as long as
-   it takes to copy a code, so this is the one place a little motion reads as
-   alive rather than restless. Off entirely for anyone who has asked for less. */
-.code-card--sb::after{content:"";position:absolute;inset:0;border-radius:inherit;
-  pointer-events:none;overflow:hidden;
-  background:linear-gradient(100deg,transparent 40%,rgba(255,255,255,.06) 50%,transparent 60%);
-  background-size:260% 100%;animation:sbSweep 5.5s ease-in-out infinite}
-@keyframes sbSweep{0%,70%{background-position:130% 0}100%{background-position:-30% 0}}
-@media (prefers-reduced-motion: reduce){ .code-card--sb::after{animation:none} }
 
 .code-card--sb .code-acts .code-copy,
 .code-card--sb .code-acts .share-btn{
@@ -4474,7 +4368,7 @@ html{interpolate-size:allow-keywords}
   align-items:center;gap:9px;padding:0 18px 0 12px;height:50px;border-radius:99px;
   background:var(--red-fill);color:#fff;border:0;cursor:pointer;
   font:inherit;font-size:13.5px;font-weight:800;letter-spacing:-.01em;
-  box-shadow:0 10px 28px rgba(230,57,70,.34);
+  box-shadow:0 6px 16px rgba(0,0,0,.35);
   opacity:0;transform:translateY(10px) scale(.96);
   transition:opacity .22s ease,transform .22s cubic-bezier(.2,.8,.3,1)}
 .ctafab.on{opacity:1;transform:none}
@@ -4495,21 +4389,8 @@ html{interpolate-size:allow-keywords}
   .ctafab{transition:opacity .2s ease}
   .ctafab.on{transform:none}
 }
-.wspfab{position:fixed;left:16px;bottom:16px;z-index:125;width:56px;height:56px;border-radius:50%;
-  border:0;padding:0;cursor:pointer;background:radial-gradient(circle at 50% 40%,#3a2a63,#1a1230);
-  box-shadow:0 6px 20px rgba(120,80,220,.5),0 0 0 1px rgba(180,150,255,.35) inset;
-  display:flex;align-items:center;justify-content:center;animation:wspFloat 3.2s ease-in-out infinite}
-.wspfab img{width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(180,150,255,.7))}
-.wspfab::after{content:"\26a1";position:absolute;right:-2px;top:-2px;font-size:16px;
-  filter:drop-shadow(0 0 5px rgba(255,225,120,.95));animation:wspBolt 2.6s ease-in-out infinite}
-@keyframes wspBolt{0%,72%,100%{opacity:.35;transform:scale(.9) rotate(0)}80%{opacity:1;transform:scale(1.25) rotate(-8deg)}88%{opacity:.6;transform:scale(1.05)}}
-.wspfab-spark{position:absolute;inset:-3px;border-radius:50%;pointer-events:none;
-  box-shadow:0 0 14px 2px rgba(242,184,75,.5);animation:wspGlow 2.4s ease-in-out infinite}
-@keyframes wspFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-@keyframes wspGlow{0%,100%{opacity:.5}50%{opacity:1}}
-@media(max-width:720px){.wspfab{bottom:92px;width:52px;height:52px}.wspfab img{width:34px;height:34px}}
 .wsp-lead{font-size:13.5px;color:var(--soft);margin-bottom:16px;line-height:1.5}
-.wsp-lbl{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin:16px 0 8px}
+.wsp-lbl{font-size:11px;font-weight:800;color:var(--faint);margin:16px 0 8px}
 .wsp-hint{margin:9px 0 2px;font-size:12px;line-height:1.5;color:var(--faint)}
 /* The jackpot note is the one hint that has to be read rather than glanced at,
    so it gets an edge and a little weight - still a note, not a warning box. */
@@ -4581,35 +4462,21 @@ button.wsp-go.waiting{opacity:.55}
 /* The arrow sits after the words, not pushed to a far edge - the pill is only
    as wide as what it says. */
 .wsp-slider-link .wsl-a{margin-left:2px}
-.wsp-slider-link .wsl-t{
-  background-image:linear-gradient(100deg,
-    var(--win-ink) 0%, var(--win-ink) 38%, #fff 50%, var(--win-ink) 62%, var(--win-ink) 100%);
-  background-size:280% 100%;
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  animation:wslSheen 5.5s ease-in-out infinite}
+/* Plain text in the pill's own ink. The looping white sheen across the words
+   was gradient text (Task 4, 7 Oct); the border and the arrow already say
+   "press me". */
+.wsp-slider-link .wsl-t{color:var(--win-ink)}
 /* The arrow is its own element so it can move without dragging the text. */
 .wsp-slider-link .wsl-a{display:inline-block;color:var(--win-ink);font-weight:800;
   transition:transform .22s cubic-bezier(.2,.7,.3,1)}
-/* The hairline grows from the left rather than fading, so the eye follows it
-   to the words instead of the whole thing simply brightening. */
-/* The underline was the whole affordance when this was a link. The border is
-   now, so the hairline would only be a second one. */
-@keyframes wslSheen{
-  0%,72%{background-position:120% 0}
-  100%{background-position:-40% 0}
-}
 @media(hover:hover){
-  .wsp-slider-link:hover .wsl-t{animation-play-state:paused;color:#fff;
-    -webkit-text-fill-color:var(--text)}
+  .wsp-slider-link:hover .wsl-t{color:var(--text)}
   .wsp-slider-link:hover{border-color:var(--win-ink);background:rgba(242,184,75,.2)}
   .wsp-slider-link:hover .wsl-a{transform:translateX(4px)}
 }
 .wsp-slider-link:active .wsl-a{transform:translateX(2px)}
 .wsp-slider-link:focus-visible{outline:2px solid var(--red-ink);outline-offset:3px}
-/* Somebody who has asked for less movement gets none of it. */
 @media(prefers-reduced-motion:reduce){
-  .wsp-slider-link .wsl-t{animation:none;color:var(--soft);
-    -webkit-text-fill-color:var(--soft)}
   .wsp-slider-link .wsl-a{transition:none}
 }
 /* THE DRAW LOOKS DIFFERENT BECAUSE IT IS DIFFERENT. Every other chip here
@@ -4884,10 +4751,7 @@ button.wsp-go.waiting{opacity:.55}
   background:radial-gradient(circle at 50% 40%,rgba(230,57,70,.92),rgba(150,20,32,.88));color:#fff;
   border:0;font:inherit;font-weight:800;font-size:15px;padding:14px 20px;border-radius:99px;
   cursor:pointer;display:flex;align-items:center;gap:9px;
-  box-shadow:0 6px 20px rgba(230,57,70,.5),0 0 0 1px rgba(255,180,185,.35) inset;
-  animation:orbGlow 2.8s ease-in-out infinite}
-@keyframes orbGlow{0%,100%{box-shadow:0 6px 20px rgba(230,57,70,.45),0 0 0 1px rgba(255,180,185,.3) inset}
-  50%{box-shadow:0 6px 26px rgba(230,57,70,.7),0 0 0 1px rgba(255,180,185,.45) inset}}
+  box-shadow:0 4px 12px rgba(0,0,0,.35),0 0 0 1px rgba(255,180,185,.35) inset}
 html.reduce .myfab{animation:none}
 /* On the Build view with its Shuffle / Clear / Get code bar showing, the bubble
    sat on the end of Get code. It rises clear of the bar (about 74px tall)
@@ -4979,7 +4843,7 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
 .sotd-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .sotd-odds{flex:1}
 .sotd-odds i{display:block;font-style:normal;font-size:11px;font-weight:700;
-  letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+  color:var(--faint)}
 .sotd-odds b{font-size:22px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
 .sotd-btn{background:var(--red-fill);color:#fff;border:0;font:inherit;font-weight:800;
   font-size:14px;padding:12px 18px;border-radius:var(--r-md);cursor:pointer}
@@ -5016,10 +4880,8 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
 @keyframes lgpFlat{from{opacity:0}to{opacity:1}}
 @keyframes streakFlat{from{opacity:0}to{opacity:1}}
 .goal-tag{position:absolute;right:calc(100% + 6px);top:50%;transform:translateY(-50%);
-  display:inline-flex;align-items:center;font-size:9px;font-weight:800;letter-spacing:.06em;
-  color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;white-space:nowrap;
-  box-shadow:0 0 8px rgba(43,199,120,.7);animation:goalTagBlink .9s steps(1) infinite;z-index:2}
-@keyframes goalTagBlink{0%,100%{opacity:1;box-shadow:0 0 12px rgba(43,199,120,.95)}50%{opacity:.45;box-shadow:0 0 4px rgba(43,199,120,.4)}}
+  display:inline-flex;align-items:center;font-size:10.5px;font-weight:800;
+  color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;white-space:nowrap;z-index:2}
 .lv-sc{font-weight:600}
 .lv.ft-row .lv-sc{font-weight:800}
 .streak b{color:var(--win);font-weight:800}
@@ -5037,15 +4899,15 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
    rather than red, because seven days is a small sample and not a verdict. */
 .rec-cell .pc.cool{color:var(--amber)}
 .rec-cell i{display:block;font-style:normal;font-size:10.5px;font-weight:700;
-  letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-top:2px}
+  color:var(--faint);margin-top:2px}
 .rec-bar{height:5px;border-radius:99px;background:var(--raise);overflow:hidden}
 .rec-bar i{display:block;height:100%;border-radius:99px;background:var(--green);
   transition:width 1.05s cubic-bezier(.25,.8,.3,1)}
 /* Per-market rows. A quiet table under the headline, not a second scoreboard
    competing with it - the overall figure stays the loud number. */
 .rec-mk{margin-top:12px;padding-top:11px;border-top:1px solid var(--line-soft)}
-.rec-mk-h{font-size:10.5px;font-weight:800;letter-spacing:.08em;
-  text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+.rec-mk-h{font-size:10.5px;font-weight:800;
+  color:var(--faint);margin-bottom:7px}
 .rec-mk-row{display:grid;grid-template-columns:1fr 52px 34px 40px;align-items:center;
   gap:8px;padding:3px 0;font-size:12px}
 .rec-mk-row .mk-n{color:var(--text);font-weight:700;min-width:0;
@@ -5085,7 +4947,7 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
   cursor:pointer;flex:0 0 auto;white-space:nowrap}
 .notif button.on{background:var(--green-wash);color:var(--green-ink);border-color:var(--green)}
 .powered{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
-.powered i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.powered i{font-style:normal;font-size:10px;font-weight:700;color:var(--faint)}
 .powered img{height:16px;width:auto;display:block;border-radius:var(--r-sm)}
 @media(max-width:600px){.powered i{display:none}}
 
@@ -5257,7 +5119,7 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .mtoggle{margin:10px -12px 0;padding:10px 12px}
 .more-pad{padding:2px 10px 8px}
 .grp{margin-top:7px}
-.grp h3{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+.grp h3{font-size:10.5px;font-weight:800;color:var(--faint);margin-bottom:4px}
 .opts{gap:4px}
 .opt{padding:6px 9px;font-size:12.5px;border-radius:var(--r-sm)}
 .opt .n{font-size:11.5px;font-weight:600}
@@ -5470,9 +5332,7 @@ html:not(.mode-build) .bld-dock{display:none}
   color:var(--soft);padding:6px 12px;border-radius:99px;cursor:pointer;
   transition:background .15s,color .15s}
 .bd-m:hover{color:var(--text)}
-.bd-m.on{color:#fff}
-.bd-m.on[data-bdmode="slider"]{background:linear-gradient(120deg,#c8323d,var(--red))}
-.bd-m.on[data-bdmode="wizard"]{background:linear-gradient(120deg,#6d3bd4,#8b5cf6)}
+.bd-m.on{color:#fff;background:var(--red-fill)}
 .bd-sum{display:inline-flex;align-items:center;gap:8px;background:none;border:0;
   font:inherit;font-size:12px;font-weight:700;color:var(--faint);
   padding:6px 10px 6px 4px;cursor:pointer;white-space:nowrap;
@@ -5497,14 +5357,8 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
    carried by the second half - so the builder reads as part of the site. */
 .bld-title{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.03em;
   line-height:1.05;margin:6px 0 12px}
-.bld-title em{font-style:normal;
-  background:linear-gradient(100deg,#8b5cf6 0%,#c084fc 45%,var(--win) 100%);
-  -webkit-background-clip:text;background-clip:text;color:transparent}
-/* A gradient that fails to clip leaves invisible text, so keep a real colour
-   underneath for anything that does not support it. */
-@supports not ((-webkit-background-clip:text) or (background-clip:text)){
-  .bld-title em{color:#a78bfa;background:none}
-}
+/* Gold, flat - the way h1 em carries colour everywhere else (DESIGN.md). */
+.bld-title em{font-style:normal;color:var(--accent)}
 .bld-mode-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .bld-help{width:26px;height:26px;flex-shrink:0;border-radius:50%;cursor:pointer;
   background:var(--card-2);border:1px solid var(--line);color:var(--soft);
@@ -5520,9 +5374,8 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
   font-size:11.5px;line-height:1.5;color:var(--faint)}
 .bmh{display:inline-block}
 .bmh b{font-weight:800;margin-right:4px}
-.bmh-wiz b{color:#a78bfa}
+.bmh-wiz b{color:var(--accent)}
 .bmh-slide b{color:var(--red-ink)}
-[data-theme="light"] .bmh-wiz b{color:#5b21b6}
 @media(max-width:560px){
   /* One phrase per line, each kept whole. The old rule made the second label
      a block on its own, which stranded "Slider" above its own explanation. */
@@ -5540,9 +5393,8 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
 .bld-coach li{font-size:12px;line-height:1.5;color:var(--soft);
   display:flex;gap:8px;align-items:flex-start}
 .bld-coach li b{font-weight:800}
-.bld-coach li.bc-wiz b{color:#a78bfa}
+.bld-coach li.bc-wiz b{color:var(--accent)}
 .bld-coach li.bc-slide b{color:var(--red-ink)}
-[data-theme="light"] .bld-coach li.bc-wiz b{color:#5b21b6}
 .bc-num{flex-shrink:0;width:17px;height:17px;border-radius:50%;background:var(--raise);
   color:var(--text);font-size:9.5px;font-weight:800;display:flex;
   align-items:center;justify-content:center;margin-top:1px}
@@ -5682,8 +5534,8 @@ html.is-results #codeCard{display:none}
 .ck-chip b{font-weight:700;color:var(--soft);font-size:11.5px}
 .ck-chip code{font-size:14px;font-weight:800;letter-spacing:.07em;
   font-variant-numeric:tabular-nums;color:var(--accent)}
-.ck-chip .ck-cp{font-size:10.5px;font-weight:800;text-transform:uppercase;
-  letter-spacing:.04em;color:var(--faint)}
+.ck-chip .ck-cp{font-size:10.5px;font-weight:800;
+  color:var(--faint)}
 .ck-chip.done .ck-cp{color:var(--green-ink)}
 .ck-chip.done{border-color:var(--green)}
 @media (hover:hover){
@@ -6006,32 +5858,8 @@ html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
   .toprow .viewtoggle.top .vt{padding:7px 12px}
 }
 
-/* ------------------------------------------------------- Conjure, any width
-   The wizardry look - violet glass, gold lining, slow rune pulse - used to be
-   declared inside a min-width:720px block, so phones fell back to a plain
-   button. Defined once here for every screen; the breakpoints above and below
-   only set its size. */
-/* :not(.sc-go-btn) keeps the home banner out of this. Its two path buttons are
-   a matched pair - violet Conjure beside crimson slider - and restyling one
-   half of it here would break a deliberate arrangement. */
-button.wsp-go:not(.sc-go-btn){font-weight:800;letter-spacing:.09em;text-transform:uppercase;
-  color:#EDE7FF!important;
-  background:linear-gradient(165deg,#2b1a5e 0%,#1d1142 60%,#140a30 100%)!important;
-  border:1px solid rgba(212,175,55,.6)!important;
-  box-shadow:0 4px 18px rgba(90,46,210,.35),inset 0 0 12px rgba(124,77,255,.22),
-    inset 0 1px 0 rgba(255,255,255,.14)!important;
-  position:relative;overflow:hidden}
-button.wsp-go:not(.sc-go-btn):hover{color:#fff!important;
-  border-color:rgba(232,199,95,.9)!important;
-  box-shadow:0 6px 26px rgba(112,66,240,.55),inset 0 0 18px rgba(140,96,255,.35),
-    inset 0 1px 0 rgba(255,255,255,.2)!important}
-button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
-  border-radius:inherit;pointer-events:none;
-  box-shadow:inset 0 0 0 1px rgba(212,175,55,.25);
-  animation:runePulse 3.2s ease-in-out infinite}
-@keyframes runePulse{0%,100%{opacity:.35}50%{opacity:.85}}
-@media(prefers-reduced-motion:reduce){
-  button.wsp-go:not(.sc-go-btn)::after{animation:none;opacity:.5}}
+/* Conjure is a .book-btn like every other "do it" button: sentence case, the
+   standard fill, no violet glass and no rune pulse (Task 4, 7 Oct). */
 
 /* Slip style -> Conjure reads as one step: the chips choose the style, the
    button acts on it. Tighten the label above the chips and let Conjure sit
@@ -6276,7 +6104,6 @@ footer{margin-top:26px;padding-top:18px;
   .bld-mode-btn { transition: transform 0.15s ease, box-shadow 0.15s ease; }
   .bld-mode-btn:hover { transform: scale(1.02); }
   .bld-mode-btn.on { transform: translateZ(50px); box-shadow: 0 4px 16px rgba(230,57,70,.4); }
-  .bld-mode-btn.on[data-mode="wizard"] { box-shadow: 0 4px 18px rgba(139,92,246,.5); }
   .bld-panel { transform: translateZ(30px); }
   .bld-panel .risk-wrap { transform: translateZ(10px); }
   .risk { transform: translateZ(20px); }
@@ -7282,11 +7109,6 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
            thing on a phone - with its own proof line inside it, so being
            convincing costs no scroll. Everything else supports it. -->
       <div class="slip-cta slip-cta--wizard slip-cta--hero" id="slipCta">
-        <!-- A light running the card's edge. This is the one thing on the page
-             the site exists to get tapped, and it sat in the same still box as
-             everything around it. Its own element because both pseudo-elements
-             here are spoken for - the gold hairline and the violet drift. -->
-        <span class="cta-run" aria-hidden="true"></span>
         <div class="sc-head">
           <span class="sc-orb" aria-hidden="true"><canvas class="orb-ball" data-size="44"></canvas></span>
           <span class="sc-tx">
@@ -7336,7 +7158,6 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     </div>
   <div class="bookall-row">
         <button class="bookall" id="bookAll" type="button">
-          <span class="ba-spark" aria-hidden="true"></span>
           <span class="ba-tx">Add all</span>
           <span class="ba-n" id="bookAllN"></span>
           <span class="ba-tx ba-tx2">tips to slip</span>
@@ -7567,7 +7388,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <p class="conv-sub stage-in stage-in-2">Move a booking code to the other
       bookmaker, or read what is inside one and cut it into smaller tickets.
       On your phone? Send any code to our
-      <a href="https://t.me/Soccerwizardhqbot" target="_blank" rel="noopener">Wizard's Eye on Telegram 🔮</a>.</p>
+      <a href="https://t.me/Soccerwizardhqbot" target="_blank" rel="noopener">Wizard's Eye on Telegram</a>.</p>
     <section class="byo" id="byo" aria-labelledby="byo-h">
       <h3 id="byo-h">Already have a booking code?</h3>
       <p class="byo-sub">Paste it, or several separated by spaces and we'll merge
@@ -14519,7 +14340,7 @@ function showCode(code,hostId,save,B,picks,d){
        tap gets the doctor's read and the Follow my slip button. */
     "<a class='code-tg' href='https://t.me/Soccerwizardhqbot?start="+encodeURIComponent(B.key+"_"+code)+"' target='_blank' rel='noopener'>"+
       "<svg viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'><path d='M23.1 3.8 19.6 20.3c-.3 1.2-1 1.5-2 .9l-5.5-4-2.7 2.6c-.3.3-.6.6-1.2.6l.4-5.6L18.8 6c.4-.4-.1-.6-.7-.2L5.5 13.7 0 12c-1.2-.4-1.2-1.2.3-1.8L21.5 2c1-.4 1.9.2 1.6 1.8z'/></svg>"+
-      "<span>🔔 Follow this slip live on Telegram</span></a>"+
+      "<span>Follow this slip live on Telegram</span></a>"+
     /* And X, beside it (owner, 25 Sep: the modal had Telegram and no X). The
        daily code and results go out there every morning. */
     "<a class='code-tg code-tw' href='https://x.com/soccerwizardhq' target='_blank' rel='noopener'>"+
@@ -17823,7 +17644,7 @@ function applyBoardCap(n){
           (BOOKS[k].mark||esc(BOOKS[k].label))+"</button>";
       }).join("");
       var tiles="<div class='ck-tile'><div class='ck-th'>"+esc(when)+odds+"</div>"+chip(daily[pick])+"</div>";
-      if(big) tiles+="<div class='ck-tile big'><div class='ck-th'>🔥 Big odds of the day<span class='ck-tot'>×"+
+      if(big) tiles+="<div class='ck-tile big'><div class='ck-th'>Big odds of the day<span class='ck-tot'>×"+
         Number(big.odds).toFixed(2)+"</span></div>"+chip(big.codes[pick]&&big.codes[pick].code)+"</div>";
       host.innerHTML="<div class='ck-top'><a class='ck-tag' href='/booking-codes'>Daily booking codes</a></div>"+
         "<div class='ck-tabs' role='tablist' aria-label='Bookmaker'>"+tabs+"</div>"+
@@ -18519,8 +18340,8 @@ function applyGoalFX(host){
     if(!card) return;
     card.classList.add("just-scored");
     var f=LIVE.flash[id];
-    if(f.h){var e=card.querySelector('.lv-sc[data-side="h"]'); if(e){e.classList.add("pop","scored");e.insertAdjacentHTML("afterbegin","<span class='goal-tag'>GOAL</span>");}}
-    if(f.a){var e2=card.querySelector('.lv-sc[data-side="a"]'); if(e2){e2.classList.add("pop","scored");e2.insertAdjacentHTML("afterbegin","<span class='goal-tag'>GOAL</span>");}}
+    if(f.h){var e=card.querySelector('.lv-sc[data-side="h"]'); if(e){e.classList.add("pop","scored");e.insertAdjacentHTML("afterbegin","<span class='goal-tag'>Goal</span>");}}
+    if(f.a){var e2=card.querySelector('.lv-sc[data-side="a"]'); if(e2){e2.classList.add("pop","scored");e2.insertAdjacentHTML("afterbegin","<span class='goal-tag'>Goal</span>");}}
   });
   LIVE.flash={};
   var now3=Date.now();
@@ -18619,7 +18440,7 @@ function tickerItemHTML(e){
   else if(e.kind==="ht"){tag="Half-time";ic="<span class='tk-ic'>"+S+"<circle cx='12' cy='12' r='9'/><path d='M12 8v4l2.5 1.5'/></svg></span>";}
   else{tag="Full-time";ic="<span class='tk-ic'>"+S+"<circle cx='12' cy='12' r='9'/><path d='M8.5 12.5l2.4 2.4 4.6-5'/></svg></span>";}
   var draw=(e.kind==="ft"&&e.lead===""&&/^\d+-\d+$/.test(e.sc));
-  var gtag="<span class='tk-tag tk-goaltag'>GOAL</span>";
+  var gtag="<span class='tk-tag tk-goaltag'>Goal</span>";
   var scHTML;
   if(e.kind==="goal"&&e.fresh){var pr=String(e.sc).split("-");
     scHTML="<b class='tk-sc'><span class='"+(e.gh?"glow":"")+"'>"+pr[0]+"</span>-<span class='"+(e.ga?"glow":"")+"'>"+pr[1]+"</span></b>";}
@@ -18651,10 +18472,9 @@ function renderLiveStrip(){
   if(sig===LIVE._tksig) return;
   LIVE._tksig=sig;
   var items=evs.map(tickerItemHTML).join("");
-  if(evs.length<=2){ host.innerHTML=items; host.style.animation="none"; host.style.justifyContent="center"; }
-  else { var reps=evs.length<4?3:2; var big=""; for(var r=0;r<reps;r++) big+=items;
-    host.innerHTML=big; host.style.animation=""; host.style.justifyContent="";
-    host.style.animationDuration=Math.max(20,evs.length*6)+"s"; }
+  /* One copy of each event: the row scrolls by hand now, so the old marquee's
+     repeated copies would only read as duplicates. */
+  host.innerHTML=items;
   var all=$("liveStripAll");
   if(all&&!all._w){all._w=1;all.addEventListener("click",function(e){e.preventDefault();setView("live");});}
 }
