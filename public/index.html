@@ -2107,6 +2107,9 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    above - this is an ordinary paragraph and the space is really there - it
    just wants a little more air around a word set in a heavier weight. */
 #mySheetSub .sbm,#mySheetSub .b9m{margin-left:.18em}
+/* A wizard slip short of its target: the result, in the header, in amber. */
+.sheet-head p.ms-miss{margin-top:6px;font-size:13.5px;font-weight:700;color:var(--amber)}
+.ms-miss b{font-size:15px;font-weight:800}
 /* The cross is a drawn path, not a typed character. A text "x" or &times;
    carries the font's own side and vertical bearings, so it lands a pixel or two
    off centre inside a square button and reads as crooked whatever line-height
@@ -2847,8 +2850,8 @@ html{interpolate-size:allow-keywords}
 .slider-panel[data-zone="risky"] .risk-name{color:var(--red-ink)}
 .risk-ticks span{transition:color .18s ease,transform .18s ease}
 .risk-ticks span.zone-live{color:var(--text);transform:scale(1.08)}
-.risk-ticks{display:flex;justify-content:space-between;margin-top:8px;
-  font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.risk-ticks{display:grid;grid-template-columns:repeat(5,1fr);text-align:center;margin-top:8px;
+  font-size:11.5px;font-weight:700;color:var(--faint)}
 /* Slider fill effect - webkit only but progressive enhancement */
 .risk{background-size:0% 100%;background-repeat:no-repeat;background-image:linear-gradient(90deg,var(--green),var(--win) 55%,var(--red))}
 .risk::-webkit-slider-runnable-track{background:transparent}
@@ -4823,8 +4826,16 @@ button.wsp-go.waiting{opacity:.55}
   .wsp-chip.wsp-risk:hover{background:var(--wr);color:var(--wr-ink,#fff);
     transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
   .wsp-chip.wsp-risk.on:hover{transform:none}
+  .wsp-chip.wsp-risk:disabled:hover{background:none;color:var(--faint);transform:none;box-shadow:none}
 }
 .wsp-chip.wsp-risk:active{transform:translateY(0) scale(.97)}
+/* A rung this pool cannot reach: drawn, so the ladder keeps its shape, but
+   plainly not a choice - the .wsp-reach line under the row says why. */
+.wsp-chip.wsp-risk:disabled{border-color:var(--line);border-style:dashed;color:var(--faint);
+  cursor:not-allowed;opacity:.7}
+.wsp-chip.wsp-risk:disabled:active{transform:none}
+.wsp-reach{flex-basis:100%;margin:2px 0 0;font-size:12.5px;line-height:1.45;color:var(--soft)}
+.wsp-reach b{color:var(--accent);font-weight:800}
 
 /* The jackpot pair should not look like more of the same scale.
    x50 to x6000 is a spectrum; x20k and x50k are a different proposition -
@@ -7480,7 +7491,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       </div>
       <div class="risk-wrap stage-in stage-in-4"><input type="range" id="risk" class="risk" min="0" max="100" step="any" value="45"
         aria-label="Risk level"><span class="risk-bubble" id="riskBubble">-</span></div>
-      <div class="risk-ticks stage-in stage-in-5"><span>Safe</span><span>Balanced</span><span>Risky</span></div>
+      <div class="risk-ticks stage-in stage-in-5"><span>Safest</span><span>Safe</span><span>Balanced</span><span>Bold</span><span>Risky</span></div>
       <!-- The Wizard's slip style, for the Slider too (owner, 28 Sep 2026: "i
            think the slip style should apply to the slider and when more games
            smaller odds is clicked, it should apply"). One value, WSP.legodd,
@@ -7802,7 +7813,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 <div class="sheet myslip-sheet" id="mySheet" role="dialog" aria-modal="true" aria-labelledby="mySheet-title">
   <div class="sheet-grab"><i></i></div>
   <div class="sheet-head">
-    <div class="info"><h3 id="mySheet-title">My slip</h3><p id="mySheetSub">Predictions you picked - book them to <span class="sbm">SportyBet</span>.</p></div>
+    <div class="info"><h3 id="mySheet-title">My slip</h3><p id="mySheetSub">Predictions you picked - book them to <span class="sbm">SportyBet</span>.</p><p class="ms-miss" id="mySheetMiss" hidden></p></div>
     <button class="sheet-collapse" id="mySheet-x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>Collapse</span></button>
   </div>
   <div class="sheet-body" id="mySheetBody"></div>
@@ -12537,6 +12548,17 @@ function riskParams(r){
     tier:(r<33?0:(r<66?1:2))};
 }
 function riskWord(r){return r<20?"Safest":r<40?"Safe":r<60?"Balanced":r<80?"Bold":"Risky";}
+/* ONE VOCABULARY FOR THE DIAL. The ticks under the slider are riskWord's five
+   bands, and the lit one is whichever riskWord names - read off the word, so
+   the heading and the tick cannot disagree. They did: three ticks on a
+   33/66 split lit "Balanced" at 60 while the heading said "Bold" (critique,
+   6 Oct). Null lights nothing (first visit, nothing chosen yet). */
+function paintTicks(r){
+  var ti=document.querySelector(".slider-panel .risk-ticks"); if(!ti) return;
+  var w=(r==null)?"":riskWord(r);
+  ti.querySelectorAll("span").forEach(function(s){ s.classList.toggle("zone-live",s.textContent===w); });
+  var inp=$("risk"); if(inp) inp.setAttribute("aria-valuetext",w||"Not set");
+}
 /* "High scoring" is the model's own Over-2.5 read, not a league list - so it
    follows Eliteserien, the Eredivisie and whoever else is scoring this season
    without anyone maintaining names. Same bar the "Over 2.5" category uses. */
@@ -19131,6 +19153,19 @@ function renderMySheet(){
     "</div>";
   }).join("");
   $("myTotOdds").textContent="\u00d7"+myOdds().toFixed(2);
+  /* A WIZARD SLIP SHORT OF ITS TARGET SAYS SO IN THE HEADER, not only in the
+     note under the legs. Read live off the slip, so a removed or added leg
+     keeps it true, and gone once the slip reaches the target or holds no
+     wizard legs. WSP._miss is set by wspConjure. */
+  var _mm=$("mySheetMiss");
+  if(_mm){
+    var _tot=myOdds(), _want=WSP._miss&&WSP._miss.want;
+    var _say=!!_want && _tot<_want*0.995 &&
+      MYSLIP.some(function(x){ return x.auto&&x.via==="wizard"; });
+    _mm.hidden=!_say;
+    _mm.innerHTML=_say ? "<b>\u00d7"+(_tot>=100?Math.round(_tot).toLocaleString("en"):_tot.toFixed(2))+
+      "</b> of your \u00d7"+(+_want).toLocaleString("en")+": the most today's games reach" : "";
+  }
   body.querySelectorAll("[data-myrm]").forEach(function(b){
     b.addEventListener("click",function(){var p=b.dataset.myrm.split("|"); toggleMy(p[0],p[1]);});});
   body.querySelectorAll("[data-myswap]").forEach(function(b){
@@ -19742,7 +19777,7 @@ function wspMarkets(){var m=[];
    this, so what the row shows cannot drift from what gets built. It briefly had
    a fourth answer, "slider", when Auto was a chip in this row. */
 /* The three slip styles, shared by both builders. */
-var SLIP_STYLES=[[1.25,"More games","smaller odds"],[1.4,"Balanced",""],[1.7,"Fewer games","bigger odds"]];
+var SLIP_STYLES=[[1.25,"More games","smaller odds"],[1.4,"Even",""],[1.7,"Fewer games","bigger odds"]];
 /* WHAT THE STYLE MEANS TO THE SLIDER, which has no payout to divide.
    The Wizard reads legodd as "reach the target with legs priced near this",
    so the leg count falls out of the arithmetic. The Slider's count comes from
@@ -20438,26 +20473,37 @@ function wspBuild(){
    there is no second estimator here to disagree with the first.
    Cached on everything the pool depends on EXCEPT the payout, which is the one
    thing it must not depend on: renderWizardPanel runs on every chip tap. */
-var WSP_REACH={sig:null,max:0};
-function wspMaxReach(){
+/* `at` is the probe target. The leg cap depends on it - 40 below the jackpot
+   tier, JACKPOT_LEG_CAP from it - so one ceiling cannot answer both: a
+   50-leg probe would call x6k reachable on a board whose 40-leg slip stops
+   well short of it. renderWizardPanel asks at 1e12 for the jackpot rungs and
+   just under JACKPOT_ODDS for the rest. One cache slot per probe target.
+   The key carries the league picker, the volatile-league switch and the book
+   too: scopeFixtures and wspMarkets read them, and a key without them kept
+   the ceiling of a pool the reader had already changed. */
+var WSP_REACH={};
+function wspMaxReach(at){
+  at=at||1e12;
   var sig=[wspStyleOn(),JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE,SDAY,SPAN,TOD,
+           JSON.stringify(BLD_PICK),!!VOL_IN,curBook().key,(DATA&&DATA.fixtures||[]).length,
            !!WSP.everyGame,WSP.seed,WSP.shuffles,
            Object.keys(WSP.removed||{}).length].join("|");
-  if(WSP_REACH.sig===sig) return WSP_REACH.max;
+  var slot=WSP_REACH[at]||(WSP_REACH[at]={sig:null,max:0});
+  if(slot.sig===sig) return slot.max;
   var was=WSP.odds;
   try{
-    WSP.odds=1e12;
+    WSP.odds=at;
     var r=wspBuild();
-    WSP_REACH.max=(r&&isFinite(r.odds))?r.odds:0;
+    slot.max=(r&&isFinite(r.odds))?r.odds:0;
   }catch(e){
     /* Never let a probe decide nothing can be built: on an error the ladder
-       falls back to offering the jackpot rungs, which is what it did before
-       this existed. */
-    WSP_REACH.max=Infinity;
+       falls back to offering every rung, which is what it did before this
+       existed. */
+    slot.max=Infinity;
   }
   WSP.odds=was;
-  WSP_REACH.sig=sig;
-  return WSP_REACH.max;
+  slot.sig=sig;
+  return slot.max;
 }
 // --- Wizard panel rendering (replaces renderWsp) ---
 /* WHICH TOGGLE PRODUCES WHICH LEG. Kept beside the chips rather than derived,
@@ -20589,6 +20635,7 @@ function wspConjure(shuffle){
               via:"wizard",k:kickoffOf(c.id,c.f)};}));
   var seen={}; MYSLIP=MYSLIP.filter(function(x){
     if(seen[x.id])return false;seen[x.id]=1;return true;});
+  WSP._miss=r.short?{want:WSP.odds}:null;
   saveMy(); renderFab(); openMySheet();
   /* Straight to the bottom - the last legs and the total are what you want to
      see, and no animation, because it should already be there. */
@@ -20610,11 +20657,14 @@ function wspConjure(shuffle){
      short is a market problem, far over is a price-per-game problem. */
   var T=WSP.odds, per=(r.picks.length?Math.pow(r.odds,1/r.picks.length):0);
   var missNote="";
+  /* Same figure as the slip header: ×3.61 rounded to ×4 sat under a header
+     saying ×3.61. Whole numbers only once the decimals stop mattering. */
+  var oddsTx=(r.odds>=100?Math.round(r.odds).toLocaleString("en"):r.odds.toFixed(2));
   if(r.short){
     missNote="We could not reach ×"+(+T).toFixed(0)+" today. Best from the markets "+
-      "you picked is ×"+r.odds.toFixed(0)+" on "+r.picks.length+" games. "+
+      "you picked is ×"+oddsTx+" on "+r.picks.length+" games. "+
       "Switch on more markets, or ask for less.";
-    window.swToast&&window.swToast("Best we can build today is ×"+r.odds.toFixed(0)+
+    window.swToast&&window.swToast("Best we can build today is ×"+oddsTx+
       " from "+r.picks.length+" games we rate","info","wspshort");
   } else if(T!=null&&r.odds>T*1.5&&r.picks.length>1){
     missNote="You asked for ×"+(+T).toFixed(0)+" and this pays ×"+r.odds.toFixed(0)+
@@ -21329,6 +21379,7 @@ function renderSliderPanel(){
     var _z=displayRisk<33?"safe":displayRisk<66?"mid":"risky";var _sp=$("sliderPanel");if(_sp)_sp.setAttribute("data-zone",_z);
     _r.style.setProperty("--rz",_z==="safe"?"rgba(43,199,120,.35)":_z==="mid"?"rgba(242,184,75,.4)":"rgba(230,57,70,.4)");}})();
   $("riskName").textContent=firstVisit ? "-" : riskWord(BUILD.risk);
+  paintTicks(BUILD.risk);
   var _ss=$("sldStyleChips");
   if(_ss){
     _ss.innerHTML=SLIP_STYLES.map(function(st){
@@ -21396,6 +21447,23 @@ function renderWizardPanel(){
      the same limit. It moves with the board: the jackpot rungs appear
      whenever the pool in front of the reader can actually build them. */
   WSP._maxTarget=odds[odds.length-1];
+  /* REACHABLE BEFORE CONJURE, NOT AFTER. Reported (critique, 6 Oct): x100
+     picked, Conjure pressed, x15.55 handed back with the reason in small grey
+     type under the legs. The same probe as the jackpot gate, asked per rung:
+     a rung this pool cannot reach is drawn disabled and the line under the
+     row says how high it does go. Skipped in "every game that qualifies",
+     where the payout does not drive the slip. A chosen rung that just went
+     out of reach is dropped, the same as a jackpot rung above. */
+  function reachFor(o){ return wspMaxReach(isJackpotOdds(o)?1e12:JACKPOT_ODDS-1); }
+  function canReach(o){ return WSP.everyGame || reachFor(o)>=o*0.995; }
+  if(WSP.odds!=null && odds.indexOf(WSP.odds)>=0 && !canReach(WSP.odds)){
+    WSP.odds=null; WSP._sig=null; WSP._slip=null;
+  }
+  /* The ceiling under the first rung out of reach. Usually the only one; a
+     jackpot rung can still be live above it, because it is allowed more legs
+     (JACKPOT_LEG_CAP) - its own striped tier and note say what that costs. */
+  var _topReach=0;
+  odds.some(function(o){ if(canReach(o)) return false; _topReach=reachFor(o); return true; });
   /* Named for what they change, not for a promise they cannot keep.
      "Safer, more games" was the reported-worst of the three and measurably
      the least likely to land: more legs is more results that have to come
@@ -21412,10 +21480,10 @@ function renderWizardPanel(){
          the middle - x100 and x500 - nearly vanished into the fill. The ink is
          chosen by contrast ratio against the actual colour, so every chip is
          readable whatever hue lands on it. */
-      var big=o>=JACKPOT_FROM;
+      var big=o>=JACKPOT_FROM, out=!canReach(o);
       return "<button class='wsp-chip wsp-risk"+(WSP.odds===o?" on":"")+(big?" wsp-jack":"")+
         "' style='--wr:hsl("+hue+",64%,46%);--wr-ink:"+inkOn(hue,0.64,0.46)+
-        "' data-o='"+o+"'>\u00d7"+(o>=1000?(o/1000)+"k":o)+"</button>";}).join("")+
+        "' data-o='"+o+"'"+(out?" disabled":"")+">\u00d7"+(o>=1000?(o/1000)+"k":o)+"</button>";}).join("")+
     /* The chips stay the way in: one tap, and the green-to-red hue says what
        kind of ask it is before you commit. The box is for someone who knows
        the number they want and it is not on the ladder - x250, x7500 - not a
@@ -21426,6 +21494,11 @@ function renderWizardPanel(){
       "autocomplete='off' maxlength='5' placeholder='own' "+
       "aria-label='Your own target payout, from 2 to 50000' value='"+
       ((WSP.odds&&odds.indexOf(WSP.odds)<0)?WSP.odds:"")+"'></span>"+
+    /* The ceiling, said once and only when a rung is out of reach, in the
+       same format as the slip header and the miss note. Inside the chip row (a
+       full-width flex line) so the desktop grid needs no new cell. */
+    (_topReach>0 ? "<p class='wsp-reach'>Your games and markets reach up to <b>×"+
+      (_topReach>=100?Math.round(_topReach).toLocaleString("en"):_topReach.toFixed(2))+"</b> right now. Switch on more markets to go bigger.</p>" : "")+
     "</div>"+
     /* Where a target the current window cannot reach explains itself. Empty
        the rest of the time, and it carries no margin when empty. */
@@ -21794,7 +21867,7 @@ function renderBuilderOutput(){
      not to keep dragging. */
   var _short = !firstVisit && picks.length < p.maxGames;
   $("riskSub").textContent=firstVisit ? "Move slider to build"
-    : (picks.length+" game"+(picks.length===1?"":"s")+" \u00b7 "+P0(p.minConf)+"%+ confidence"+
+    : (picks.length+" game"+(picks.length===1?"":"s")+" \u00b7 each pick "+P0(p.minConf)+"%+"+
        (_short ? " \u00b7 all that clear the bar in this window" : ""));
   // Stats
   var odds=totalOdds(picks);
@@ -21817,12 +21890,18 @@ function renderBuilderOutput(){
      grid follows the count so the row stays even. */
   var _jackSlip=isJackpotOdds(WSP.odds)&&BUILD.mode==="wizard";
   var _statsEl=$("bldStats");
-  _statsEl.classList.toggle("stats-2",_jackSlip);
+  /* THE TOTAL ONCE. In the Slider it already rides the thumb while dragging
+     and sits, gold, on the sticky foot (#bfOdds) - a third copy in this tile
+     row made four with the subtitle and had readers asking which was real.
+     The Wizard keeps its tile: the foot is hidden in wiz-mode and the tile is
+     the only place its pre-Conjure preview total shows. */
+  var _tileOdds=isWiz;
+  _statsEl.classList.toggle("stats-2",_jackSlip||!_tileOdds);
   _statsEl.innerHTML=
     "<div class='stat'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='4' y='7' width='16' height='13' rx='2'/><path d='M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/></svg></span><b>"+picks.length+"</b><i>Games</i></div>"+
     (_jackSlip?"":"<div class='stat'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z'/></svg></span><b>"+(picks.length?P0(avg)+"%":"-")+"</b><i>Average confidence</i></div>")+
-    "<div class='stat odds'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='8'/><path d='M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3H10a1.5 1.5 0 0 0 0 3h4'/></svg></span><b id='totOdds'>"+(picks.length?pre+odds.toFixed(2):"-")+"</b>"+
-      "<i>Total odds"+(picks.length&&!real?" (est.)":"")+"</i></div>";
+    (!_tileOdds?"":"<div class='stat odds'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='8'/><path d='M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3H10a1.5 1.5 0 0 0 0 3h4'/></svg></span><b id='totOdds'>"+(picks.length?pre+odds.toFixed(2):"-")+"</b>"+
+      "<i>Total odds"+(picks.length&&!real?" (est.)":"")+"</i></div>");
   var _bf=$("bfOdds");
   if(_bf) _bf.innerHTML=picks.length?"<b>"+pre+odds.toFixed(2)+"</b><i>"+
     picks.length+" game"+(picks.length===1?"":"s")+"</i>":"";
@@ -21988,8 +22067,7 @@ $("risk").addEventListener("input",function(){
   var sp=$("sliderPanel"); if(sp){var prev=sp.getAttribute("data-zone");sp.setAttribute("data-zone",zone);
     if(prev&&prev!==zone&&navigator.vibrate)navigator.vibrate(8);}
   this.style.setProperty('--rz',zone==="safe"?"rgba(43,199,120,.35)":zone==="mid"?"rgba(242,184,75,.4)":"rgba(230,57,70,.4)");
-  var ti=$("risk").closest(".slider-panel").querySelector(".risk-ticks");
-  if(ti){var sp2=ti.querySelectorAll("span");sp2.forEach(function(s,i){s.classList.toggle("zone-live",(zone==="safe"&&i===0)||(zone==="mid"&&i===1)||(zone==="risky"&&i===2));});}
+  paintTicks(pct);
   BUILD.removed={}; $("bookResult").innerHTML="";
   /* Coalesced to one rebuild per frame. A range input fires `input` on every
      pixel of a drag, and this handler used to run renderBuilder synchronously

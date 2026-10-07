@@ -139,14 +139,16 @@ test("the probe asks the real builder and leaves the target as it found it", () 
      caches - and the cache key must not include WSP.odds, which is the one
      thing the answer must not depend on. WSP.odds is borrowed for the probe;
      leaving it borrowed would build every later slip at 1e12. */
-  const fn = /function wspMaxReach\(\)\{[\s\S]*?\n\}/.exec(code)[0];
+  const fn = /function wspMaxReach\(at\)\{[\s\S]*?\n\}/.exec(code)[0];
   assert.match(fn, /wspBuild\(\)/, "it must measure with the builder itself");
   assert.match(fn, /WSP\.odds=was/, "and must put the target back");
   const sig = /var sig=\[([\s\S]*?)\]\.join/.exec(fn);
   assert.ok(sig, "the cache key must be explicit");
   assert.ok(!/WSP\.odds/.test(sig[1]),
     "the target must not be part of the key that decides the ceiling");
-  for (const dep of ["SCOPE", "SDAY", "SPAN", "TOD", "WSP.mk"])
+  /* And the pool the Wizard builds from: the league picker, the volatile
+     switch and the book all change what scopeFixtures/wspMarkets return. */
+  for (const dep of ["SCOPE", "SDAY", "SPAN", "TOD", "WSP.mk", "BLD_PICK", "VOL_IN", "curBook()"])
     assert.ok(sig[1].includes(dep), "the key must move with " + dep);
 });
 
