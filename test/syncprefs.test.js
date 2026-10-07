@@ -13,9 +13,10 @@ test("avatar, name and theme sync", () => {
 
 test("only a free avatar is accepted for now", () => {
   assert.deepStrictEqual(Y.FREE_AVATARS, ["fire", "8bit", "2bit", "lino", "glass", "halo"]);
-  assert.strictEqual(Y.AVATARS.length, 14);
+  assert.strictEqual(Y.AVATARS.length, 29);
   assert.deepStrictEqual(val({ avatar: pref("gold") }), {});        // locked skin
   assert.deepStrictEqual(val({ avatar: pref("../x") }), {});
+  assert.deepStrictEqual(val({ avatar: pref("runes") }), {});       // new skin, free default
 });
 
 test("a name is trimmed text, 24 chars at most, no markup", () => {

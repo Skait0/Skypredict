@@ -22036,9 +22036,13 @@ window.swSetTheme=function(t){ setTheme(t==="light"?"light":"dark"); };
 /* SWAVATAR */
 /* Lists match lib/roles.js. The role is display-only; the server checks. */
 window.swAvatarKey=function(){
-  var FREE=["fire","8bit","2bit","lino","glass","halo"], FF=["gold","holo","graffiti","lowpoly","clay"], OWNER=["storm","lich","afro"], v=null, r=null;
-  try{ v=localStorage.getItem("sw.avatar"); r=localStorage.getItem("sw.role"); }catch(e){}
-  var ok=r==="admin"?FREE.concat(FF,OWNER):r==="ff"?FREE.concat(FF):FREE;
+  var FREE=["fire","8bit","2bit","lino","glass","halo"], FF=["gold","holo","graffiti","lowpoly","clay",
+    "runes","noir","goldbeard","nebula","cyber","blaze","synth","abyss","alchemist","ink","magma","ent","nomad","wired"],
+    OWNER=["storm","lich","afro"], PERSONAL=["dread"], v=null, r=null, p=null;
+  try{ v=localStorage.getItem("sw.avatar"); r=localStorage.getItem("sw.role"); p=localStorage.getItem("sw.personal"); }catch(e){}
+  /* Any role but free has the skins; personal portraits only where /api/me granted them. */
+  var ok=(r==="admin"?FREE.concat(FF,OWNER):r&&r!=="free"?FREE.concat(FF):FREE).concat(
+    String(p||"").split(",").filter(function(k){ return PERSONAL.indexOf(k)>=0; }));
   return ok.indexOf(v)>=0?v:"fire";
 };
 /* /SWAVATAR */
@@ -22991,7 +22995,8 @@ load().catch(function(){});
 
   /* Plan from GET /api/me, for the menu and the avatar picker. Display only. */
   function saveRole(me){
-    var v={"sw.role":me&&me.role,"sw.plan":me&&me.plan,"sw.codeLimit":me&&me.codeLimit};
+    var v={"sw.role":me&&me.role,"sw.plan":me&&me.plan,"sw.codeLimit":me&&me.codeLimit,
+      "sw.personal":me&&me.personal&&me.personal.length?me.personal.join(","):null};
     for(var k in v) if(own(v,k)) try{ if(v[k]==null) ls.removeItem(k); else ls.setItem(k,String(v[k])); }catch(e){}
   }
   function signedOutHere(reason,quiet){
