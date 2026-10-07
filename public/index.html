@@ -2695,9 +2695,11 @@ html.mode-live #live{display:block}
 .bld-mode-btn:hover{color:var(--text);background:var(--card)}
 .bld-mode-btn:hover svg{opacity:1}
 .bld-mode-btn.on{background:var(--red-fill);color:#fff;box-shadow:0 2px 8px rgba(230,57,70,.3)}
-/* Both modes wear the same selected fill. The Wizard used to turn violet, a
-   fourth brand hue DESIGN.md never had; selected is red here like every
-   other chosen chip on the page. */
+/* The Wizard toggle stays violet/gold when selected: owner's choice 7 Oct.
+   The toggle only - no other purple on the site. */
+.bld-mode-btn.on[data-mode="wizard"]{background:linear-gradient(120deg,#6d3bd4,#8b5cf6);
+  box-shadow:inset 0 0 0 1px rgba(242,184,75,.55),0 2px 12px rgba(139,92,246,.5)}
+.bld-mode-btn.on[data-mode="wizard"] svg{filter:drop-shadow(0 0 4px rgba(242,184,75,.8))}
 .bld-mode-btn.on svg{opacity:1}
 .bld-mode-btn:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 /* The filters bar and the copy button were the two remaining controls that
@@ -6212,6 +6214,7 @@ footer{margin-top:26px;padding-top:18px;
   .bld-mode-btn { transition: transform 0.15s ease, box-shadow 0.15s ease; }
   .bld-mode-btn:hover { transform: scale(1.02); }
   .bld-mode-btn.on { transform: translateZ(50px); box-shadow: 0 4px 16px rgba(230,57,70,.4); }
+  .bld-mode-btn.on[data-mode="wizard"] { box-shadow: 0 4px 18px rgba(139,92,246,.5); } /* owner's choice 7 Oct */
   .bld-panel { transform: translateZ(30px); }
   .bld-panel .risk-wrap { transform: translateZ(10px); }
   .risk { transform: translateZ(20px); }

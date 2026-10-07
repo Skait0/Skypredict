@@ -19,7 +19,19 @@ function fnSrc(name) {
 }
 
 test("no violet: the builder speaks in the site's own tokens", () => {
-  assert.doesNotMatch(html, /#8b5cf6|#c084fc|#a78bfa|#6d3bd4|#2b1a5e|#1d1142|124,77,255|139,92,246|90,46,210/i);
+  /* Except the Wizard mode toggle - owner's choice 7 Oct. Exactly these
+     rules, each present once; violet anywhere else still fails. */
+  const ALLOWED = [
+    '.bld-mode-btn.on[data-mode="wizard"]{background:linear-gradient(120deg,#6d3bd4,#8b5cf6);\n' +
+      '  box-shadow:inset 0 0 0 1px rgba(242,184,75,.55),0 2px 12px rgba(139,92,246,.5)}',
+    '.bld-mode-btn.on[data-mode="wizard"] { box-shadow: 0 4px 18px rgba(139,92,246,.5); }',
+  ];
+  let rest = html.replace(/\r\n/g, "\n");
+  for (const r of ALLOWED) {
+    assert.strictEqual(rest.split(r).length, 2, "toggle rule present once: " + r.slice(0, 60));
+    rest = rest.replace(r, "");
+  }
+  assert.doesNotMatch(rest, /#8b5cf6|#c084fc|#a78bfa|#6d3bd4|#2b1a5e|#1d1142|124,77,255|139,92,246|90,46,210/i);
 });
 
 test("no gradient text in the app", () => {
