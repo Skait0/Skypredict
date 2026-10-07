@@ -23420,6 +23420,16 @@ load().catch(function(){});
   var PERSON='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>';
   function paintButton(){
     var b=$("hdAccount"); if(!b) return;
+    /* WAIT FOR THE AVATAR, DO NOT GUESS IT (owner, 7 Oct 2026: "the default
+       wizard shows first and after a while, the selected wizard shows").
+       /api/me often answers before the deferred app bundle has run, and
+       swAvatarKey lives there - so this painted "fire" and the real portrait
+       only arrived with the next repaint. Stay hidden until the bundle is in
+       (it runs before DOMContentLoaded); "load" covers a bundle that failed. */
+    if(st.on&&!root.swAvatarKey&&d.readyState!=="complete"&&!st.avWait){
+      st.avWait=1; d.addEventListener("DOMContentLoaded",paintButton); root.addEventListener("load",paintButton);
+      return;
+    }
     b.hidden=false;
     if(st.on){
       b.innerHTML='<img class="ac-av" src="/av/'+(root.swAvatarKey?root.swAvatarKey():"fire")+'.webp" alt="" width="36" height="36">';
