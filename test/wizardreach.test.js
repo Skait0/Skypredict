@@ -282,7 +282,7 @@ test("the window words follow the scope", () => {
   reset();
   const said = [["all", 0, "in all upcoming games"], ["wknd", 0, "this weekend"],
                 ["span", 0, "in the next 3 days"], ["day", 0, "today"], ["day", 1, "tomorrow"],
-                ["day", 4, "on saturday"]].map(([s, d, want]) => {
+                ["day", 4, "on Saturday"]].map(([s, d, want]) => {
     api.setScope(s, d);
     api.WSP.odds = 5000; api.setSlip([]); api.wspConjure(false);
     return [api.ELS.mySheetMiss.innerHTML.replace(/^.*the most we can build /, ""), want];
@@ -335,6 +335,16 @@ test("an empty window says so and names the day, not the markets", () => {
     assert.match(html, /<p class='wsp-reach'>No games left today\. Widen the day and the payouts light up\.<\/p>/);
     assert.doesNotMatch(html, /×1\.00/);
     assert.doesNotMatch(html, /Pick a payout above/, "no 'pick one' over a row of dead chips");
+    /* The lever fits the scope: there is no "day" to widen on a weekend. */
+    for (const [s, d, line] of [
+      ["day", 4, "No games left on Saturday. Widen the day"],
+      ["wknd", 0, "No games left this weekend. Try All upcoming"],
+      ["span", 0, "No games left in the next 3 days. Try All upcoming"],
+      ["all", 0, "No games left in all upcoming games. Widen the leagues"]]) {
+      api.setScope(s, d);
+      api.renderWizardPanel();
+      assert.ok(api.ELS.wizardPanel.innerHTML.includes(line + " and the payouts light up."), s + ": " + line);
+    }
   } finally { BOARD.forEach(f => { delete f._out; }); }
 });
 

@@ -10413,14 +10413,14 @@ function scopeFixtures(){
    league picker ("12 leagues playing today"), the Wizard's ceiling line and
    the short-slip header ("the most we can build this weekend"). `playing`
    is the picker's phrasing; without it a single day reads "today",
-   "tomorrow" or "on saturday". */
+   "tomorrow" or "on Saturday" - a weekday keeps its capital. */
 function windowWords(playing){
   if(SCOPE==="all") return "in all upcoming games";
   if(SCOPE==="span") return "in the next "+SPAN+" days";
   if(SCOPE==="wknd") return "this weekend";
   return (playing?"playing ":"")+
     (TOD==="all"?"":(TOD==="early"?"in the morning ":TOD==="mid"?"in the afternoon ":"in the evening "))+
-    (!playing&&SDAY>1?"on ":"")+dayName(SDAY).toLowerCase();
+    (!playing&&SDAY>1?"on ":"")+(SDAY>1?dayName(SDAY):dayName(SDAY).toLowerCase());
 }
 /* The leagues actually available to choose from, with how many games each has
    in the current day/time window - so the picker offers what can be built with
@@ -21513,7 +21513,7 @@ function renderWizardPanel(){
     _reachLine=_inWin
       ? "No game "+windowWords()+" clears the bar on the markets you have on. "+
         "Switch on more markets and the payouts light up."
-      : "No games left "+windowWords()+". Widen the "+(SCOPE==="all"?"leagues":"day")+
+      : "No games left "+windowWords()+". "+(SCOPE==="all"?"Widen the leagues":SCOPE==="day"?"Widen the day":"Try All upcoming")+
         " and the payouts light up.";
   } else if(_topReach>0){
     _reachLine="Your games and markets reach up to <b>×"+
