@@ -16,8 +16,14 @@ test("ff from live grant, free otherwise", async () => {
   assert.strictEqual(await R.roleOf(db(null), u, env), "free");
 });
 test("db throw or no env -> free, never throws", async () => {
-  const bad = { grantFor: async () => { throw new Error("x"); } };
-  assert.strictEqual(await R.roleOf(bad, { id: "1", email: "a@b.com" }, {}), "free");
+  const bad = { grantFor: async () => { throw new Error("db read failed: x"); } };
+  /* With no SENTRY_DSN, report() writes to console.error - that line is the proof it was reported. */
+  const logged = [], was = console.error, dsn = process.env.SENTRY_DSN;
+  delete process.env.SENTRY_DSN;
+  console.error = (...a) => logged.push(a.join(" "));
+  try { assert.strictEqual(await R.roleOf(bad, { id: "1", email: "a@b.com" }, {}), "free"); }
+  finally { console.error = was; if (dsn !== undefined) process.env.SENTRY_DSN = dsn; }
+  assert.ok(logged.some((l) => /db read failed/.test(l)), "a failed grant read must be reported, not swallowed");
   assert.strictEqual(await R.roleOf(db(null), { id: "1" }, {}), "free");
   assert.strictEqual(await R.roleOf(db(null), null, {}), "free");
 });

@@ -81,6 +81,8 @@ test("a database blip on a lookup throws, rather than reading as signed out", as
   capture({ status: 500, body: { message: "down" } });
   await assert.rejects(DB.sessionByHash("a".repeat(64)), /db read failed/);
   await assert.rejects(DB.userById(U1), /db read failed/);
+  /* A grant read that fails must not look like "no grant": roleOf reports it. */
+  await assert.rejects(DB.grantFor("a@b.com"), /db read failed/);
 });
 
 test("the feature table read tells failure apart from an empty table", async () => {
