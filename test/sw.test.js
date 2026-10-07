@@ -388,6 +388,25 @@ test("hashed bundles are still cache-first", async () => {
   assert.strictEqual(res.body, "cached bundle");
 });
 
+/* A FIXED-NAME SCRIPT IS NOT AN ASSET EITHER (7 Oct 2026). account-ui.js
+   holds the avatar picker; served cache-first, Family & friends kept the
+   picker from before the new skins shipped while the server granted them. */
+test("a script that keeps its name comes from the network first", async () => {
+  const w = load();
+  const c = await w.caches.api.open(VERSION);
+  await c.put(req("/account-ui.js"), new Res("old picker"));
+  const res = await fire(w.on, req("/account-ui.js"));
+  assert.strictEqual(res.body, "net");
+});
+
+test("and from the cache when the network is gone", async () => {
+  const w = load({ net: () => Promise.reject(new Error("offline")) });
+  const c = await w.caches.api.open(VERSION);
+  await c.put(req("/account-ui.js"), new Res("old picker"));
+  const res = await fire(w.on, req("/account-ui.js"));
+  assert.strictEqual(res.body, "old picker");
+});
+
 /* ------------------------------------------------------------ the push */
 
 function loadPush(opts) {

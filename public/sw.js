@@ -9,7 +9,7 @@
  * exist. Static assets stay cache-first, since those are the ones worth having
  * instantly and they change under a new name when they change at all.
  */
-const VERSION = "sw-v12";
+const VERSION = "sw-v13";
 const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/wiz-logo.png"];
 
 /* THE KILL SWITCH. Set to true, deploy, and every installed worker deletes its
@@ -190,6 +190,23 @@ self.addEventListener("fetch", function (e) {
           }),
         ]);
       })
+    );
+    return;
+  }
+
+  /* A SCRIPT OR STYLE THAT KEEPS ITS NAME IS NOT IMMUTABLE (7 Oct 2026).
+     account-ui.js, signin.js and spell.js are served under one name forever.
+     Cache-first handed every returning phone the copy from before the last
+     deploy: the 14 new skins and the personal portrait shipped, the server
+     granted them, and Family & friends still saw the old picker without them.
+     Network-first, cache only when the network fails. Hashed bundles
+     (app.<hash>.js) fall through to cache-first below, as before. */
+  var fixedName = /\.(js|css)$/i.test(url.pathname) &&
+    !/\.[0-9a-f]{6,}\.(js|css)$/i.test(url.pathname);
+  if (fixedName) {
+    e.respondWith(
+      fetch(req).then(function (res) { keep(req, res); return res; })
+        .catch(function () { return caches.match(req); })
     );
     return;
   }
