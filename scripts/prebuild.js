@@ -751,9 +751,12 @@ function writeCard(payload) {
   /* buildCard returns null rather than throwing when a figure will not fit the
      cells baked for it. Yesterday's card is a far better outcome than a card
      with a hole in it, or a failed deploy. */
+  /* LOUD, because the fallback is the committed og-card.png, which rots: it
+     sat at "83 leagues" and a backtest's "last 21 days" for two weeks after
+     the board passed 99 leagues, and nothing said so. */
   if (!png) {
-    warn("share card not rebuilt: leagues=" + leagues + " pct=" + pct +
-         " does not fit the baked two-digit slots; keeping the last one");
+    warn("SHARE CARD FAILED to rebuild (" + (card.refusal({ leagues: leagues, pct: pct }) || "no image") +
+         "); serving the STALE committed og-card.png");
     return;
   }
   fs.writeFileSync(path.join(PUB, "og-card.png"), png);

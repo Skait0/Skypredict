@@ -142,18 +142,20 @@ function advanceOf(ctx, font) {
 
   /* --------------------------------------------- line one, with a number in it
      Drawn in three pieces so a fixed-width gap can be left where the digits
-     go. The gap is two cells wide whatever the number turns out to be. */
+     go. The gap is three cells wide (the board passed 100 leagues on 7 Oct
+     2026); lib/ogcard.js centres a two-digit count in it. */
   const slots = { leagues: [], pct: [] };
+  const LEAGUE_CELLS = 3;
 
   x.font = STYLES.leagues.font;
   x.fillStyle = STYLES.leagues.color;
   const pre = "Football predictions across ", post = " leagues";
-  const lineW = x.measureText(pre).width + 2 * advL + x.measureText(post).width;
+  const lineW = x.measureText(pre).width + LEAGUE_CELLS * advL + x.measureText(post).width;
   let lx = (W - lineW) / 2;
   const baseY1 = 470;
   x.fillText(pre, lx, baseY1); lx += x.measureText(pre).width;
-  slots.leagues.push(Math.round(lx), Math.round(lx + advL));
-  lx += 2 * advL;
+  for (let i = 0; i < LEAGUE_CELLS; i++) slots.leagues.push(Math.round(lx + i * advL));
+  lx += LEAGUE_CELLS * advL;
   x.fillText(post, lx, baseY1);
 
   /* "Free" came off the card on 3 Sep, with the same line on the page: it

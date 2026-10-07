@@ -262,10 +262,16 @@ test("the base is not mutated between renders", () => {
 /* ------------------------------------------------------------- the guards */
 
 test("a figure that will not fit is refused, not rendered wrong", () => {
-  /* The cells were baked two digits wide. Three digits would overflow into the
-     baked text beside them; one would leave a hole. Null tells the build to
-     keep the card it already has. */
-  assert.strictEqual(OG.buildCard({ leagues: 470, pct: 73 }), null, "three digits");
+  /* The percentage cells are two digits wide, the league cells three. More
+     would overflow into the baked text beside them; one would leave a hole.
+     Null tells the build to keep the card it already has, and refusal() says
+     why so the build can print it. */
+  assert.strictEqual(OG.buildCard({ leagues: 4700, pct: 73 }), null, "four league digits");
+  assert.match(OG.refusal({ leagues: 4700, pct: 73 }), /leagues=4700 needs 2-3 digits/);
+  assert.strictEqual(OG.composite({ leagues: 107, pct: 100 }), null, "three percentage digits");
+  assert.match(OG.refusal({ leagues: 107, pct: 100 }), /pct=100 needs 2-2 digits/);
+  assert.strictEqual(OG.composite({ leagues: -5, pct: 73 }), null, "a negative count");
+  assert.strictEqual(OG.refusal({ leagues: 107, pct: 79 }), null);
   assert.strictEqual(OG.buildCard({ leagues: 4, pct: 73 }), null, "one digit");
   assert.strictEqual(OG.buildCard({ leagues: 47, pct: 100 }), null, "a full hundred percent");
   assert.strictEqual(OG.buildCard({ leagues: 47.5, pct: 73 }), null, "not a whole number");
@@ -300,11 +306,13 @@ test("every digit lands exactly where its mask says", () => {
   const byteAt = {};
   for (const name of order) { byteAt[name] = at; at += 10 * meta.styles[name].cellW * meta.cellH; }
 
-  for (let d = 0; d <= 9; d++) {
+  for (const d of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 100, 101, 107, 159]) {
     /* Tens digit fixed at 1, units cycling, so every mask is exercised in a
-       slot whose neighbour is known. */
-    const value = 10 + d;
-    const px = OG.composite({ leagues: value, pct: value });
+       slot whose neighbour is known. Then three-digit league counts, and the
+       two-digit ones must sit centred in the three league cells. */
+    const figs = d < 10 ? { leagues: 10 + d, pct: 10 + d } : { leagues: d, pct: 79 };
+    const value = d < 10 ? 10 + d : d;
+    const px = OG.composite(figs);
     assert.ok(px, "no composite for " + value);
 
     /* Expected alpha for every pixel the render is allowed to have touched. */
@@ -312,8 +320,10 @@ test("every digit lands exactly where its mask says", () => {
     for (const name of order) {
       const s = meta.styles[name];
       const cellBytes = s.cellW * meta.cellH;
-      [1, d].forEach((digit, slot) => {
-        const [x0, y0] = s.slots[slot];
+      const digits = String(figs[name]).split("").map(Number);
+      const centre = Math.round((s.slots.length - digits.length) * s.cellW / 2);
+      digits.forEach((digit, slot) => {
+        const x0 = s.slots[0][0] + centre + slot * s.cellW, y0 = s.slots[0][1];
         const src = byteAt[name] + digit * cellBytes;
         for (let y = 0; y < meta.cellH; y++) {
           for (let x = 0; x < s.cellW; x++) {
@@ -357,6 +367,14 @@ test("every two-digit pair composites, and every one draws ink", () => {
     assert.ok(px, "no card for " + n);
     if (n !== 11) assert.ok(!px.equals(bare), "the digits for " + n + " drew nothing");
   }
+  /* The league count passed 100 on 7 Oct 2026 (107), and the card had been
+     refusing to rebuild ever since. Every three-digit count must render. */
+  for (let n = 100; n <= 999; n++) {
+    const px = OG.composite({ leagues: n, pct: 79 });
+    assert.ok(px, "no card for " + n + " leagues");
+    assert.ok(!px.equals(bare), "the digits for " + n + " drew nothing");
+  }
+  assert.ok(OG.buildCard({ leagues: 107, pct: 79 }), "today's board: 107 leagues");
 });
 
 /* ------------------------------------------------------------ the assets */
@@ -375,14 +393,17 @@ test("the baked assets agree with the metrics that describe them", () => {
 test("every cell sits inside the canvas", () => {
   for (const name of Object.keys(meta.styles)) {
     const s = meta.styles[name];
-    assert.strictEqual(s.slots.length, OG.DIGITS, name + " does not have " + OG.DIGITS + " cells");
+    assert.strictEqual(s.slots.length, name === "leagues" ? 3 : OG.DIGITS,
+      name + " has " + s.slots.length + " cells");
     for (const [x, y] of s.slots) {
       assert.ok(x >= 0 && x + s.cellW <= meta.w, name + " cell runs off the side");
       assert.ok(y >= 0 && y + meta.cellH <= meta.h, name + " cell runs off the top or bottom");
     }
-    /* The two cells must be adjacent, or the number renders with a gap in it. */
-    assert.strictEqual(s.slots[1][0] - s.slots[0][0], s.cellW, name + " cells are not adjacent");
-    assert.strictEqual(s.slots[1][1], s.slots[0][1], name + " cells are not on the same line");
+    /* The cells must be adjacent, or the number renders with a gap in it. */
+    for (let i = 1; i < s.slots.length; i++) {
+      assert.strictEqual(s.slots[i][0] - s.slots[i - 1][0], s.cellW, name + " cells are not adjacent");
+      assert.strictEqual(s.slots[i][1], s.slots[0][1], name + " cells are not on the same line");
+    }
   }
 });
 
@@ -418,9 +439,46 @@ test("a card that cannot be built never fails the deploy", () => {
   const fn = prebuild.slice(prebuild.indexOf("function writeCard(payload)"),
                             prebuild.indexOf("/* ------------------------------------------------------------------- run */"));
   assert.match(fn, /if \(!png\)/, "a refused card is not handled");
-  assert.match(fn, /keeping the last one/, "it does not say it kept the previous card");
+  assert.match(fn, /STALE committed og-card\.png/, "it does not say it kept the previous card");
   assert.ok((fn.match(/catch \(e\)/g) || []).length >= 2,
     "loading and rendering both need to be caught, or a bad asset fails the deploy");
+});
+
+/* Runs the real writeCard with the file system stubbed. The committed card it
+   falls back to rotted for two weeks (83 leagues, "last 21 days") because the
+   fallback said nothing anyone read. */
+function runWriteCard(payload) {
+  const start = prebuild.indexOf("function writeCard(payload)");
+  let d = 0, k = prebuild.indexOf("{", start);
+  for (; k < prebuild.length; k++) { if (prebuild[k] === "{") d++; else if (prebuild[k] === "}") { d--; if (!d) break; } }
+  const out = { warns: [], logs: [], written: null };
+  new Function("require", "fs", "path", "PUB", "warn", "log", "stampCard", "payload",
+    prebuild.slice(start, k + 1) + "\nwriteCard(payload);")(
+    (m) => require(path.join(ROOT, "lib", path.basename(m))),
+    { writeFileSync: (f, b) => { out.written = { f, b }; } }, path, "PUB",
+    (m) => out.warns.push(m), (m) => out.logs.push(m), () => {}, payload);
+  return out;
+}
+
+test("today's board (107 leagues, graded record) writes a fresh card", () => {
+  const leagues = Array.from({ length: 107 }, (_, i) => "L" + i);
+  const r = runWriteCard({ leagues, record: { correct: 940, total: 1191, days: 14 } });
+  assert.deepStrictEqual(r.warns, []);
+  assert.ok(r.written && /og-card\.png$/.test(r.written.f), "no card written");
+  assert.match(r.logs.join("\n"), /share card: 107 leagues, 79%/);
+});
+
+test("a card that falls back says so, loudly and with the reason", () => {
+  const r = runWriteCard({ leagues: Array.from({ length: 1000 }, (_, i) => "L" + i),
+    record: { correct: 940, total: 1191 } });
+  assert.strictEqual(r.written, null, "nothing may be written on a refusal");
+  assert.strictEqual(r.warns.length, 1);
+  assert.match(r.warns[0], /SHARE CARD FAILED.*leagues=1000 needs 2-3 digits.*STALE committed og-card\.png/);
+  /* The same words the build-log whitelist keys on, in case this line is ever
+     routed through it rather than straight to warn. */
+  const wl = prebuild.match(/\.filter\(\(l\) => (\/.+\/i)\.test\(l\)\)/);
+  assert.ok(wl, "the whitelist regex moved");
+  assert.ok(eval(wl[1]).test(r.warns[0]), "the fallback line would be filtered out of the build log");
 });
 
 test("the percentage the card shows is the one the site shows", () => {
