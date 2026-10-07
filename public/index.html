@@ -892,8 +892,6 @@ main[tabindex="-1"]:focus{outline:none}
 .finder-h b{font-size:15px;font-weight:800}
 .finder-h span{margin-left:auto;font-size:12px;color:var(--soft);font-weight:600}
 .picker{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.field label{display:block;font-size:11px;font-weight:800;letter-spacing:.07em;
-  text-transform:uppercase;color:var(--soft);margin-bottom:6px}
 select{width:100%;appearance:none;-webkit-appearance:none;min-height:50px;
   text-overflow:ellipsis;background:var(--card-2);color:var(--text);
   border:1px solid var(--line);border-radius:var(--r-md);padding:13px 34px 13px 13px;
@@ -1291,7 +1289,6 @@ html.mode-live .btabs{transform:none!important}
 .live-bell{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:34px;padding:0 11px;
   background:var(--card);border:1px solid var(--line);color:var(--soft);border-radius:var(--r-md);cursor:pointer;flex-shrink:0;
   font:inherit;font-weight:800;font-size:11px}
-.live-bell .bell-lbl{}
 .live-bell:hover{color:var(--text)}
 .live-bell.on{color:var(--green-ink);border-color:var(--green);background:var(--green-wash)}
 .mono img{width:100%;height:100%;border-radius:inherit;object-fit:cover;display:block}
@@ -2531,12 +2528,14 @@ html.mode-live #live{display:block}
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 70px),transparent);
   mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 70px),transparent)}
 .ticker-track{display:flex;align-items:center;gap:0;white-space:nowrap;height:100%;
-  overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;padding-right:70px;
+  overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;
+  /* Room for "See all" and its fade (about 89px) so the last event scrolls clear of it. */
+  padding-right:100px;
   overscroll-behavior-x:contain}
 .ticker-track::-webkit-scrollbar{display:none}
-.tk-item{scroll-snap-align:start}
+.ticker-track:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
 .tk-goaltag{background:var(--green);color:#04210f;vertical-align:middle}
-.tk-item{display:inline-flex;align-items:center;gap:9px;padding:0 22px;font-size:13.5px;font-weight:700;
+.tk-item{scroll-snap-align:start;display:inline-flex;align-items:center;gap:9px;padding:0 22px;font-size:13.5px;font-weight:700;
   color:var(--text);border-right:1px solid var(--line-soft);animation:tkEnter .5s ease-out}
 @keyframes tkEnter{from{opacity:0}to{opacity:1}}
 .tk-min{color:var(--faint)!important}
@@ -5088,7 +5087,6 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .finder{padding:11px}
 .finder-h{margin-bottom:9px}
 .picker{gap:7px}
-.field label{margin-bottom:4px}
 .chosen{margin-top:8px;padding:7px 10px}
 .datebar{padding:4px}
 .dnav{width:34px;height:34px}
@@ -5374,7 +5372,7 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
   font-size:11.5px;line-height:1.5;color:var(--faint)}
 .bmh{display:inline-block}
 .bmh b{font-weight:800;margin-right:4px}
-.bmh-wiz b{color:var(--accent)}
+.bmh-wiz b{color:var(--red-ink)}
 .bmh-slide b{color:var(--red-ink)}
 @media(max-width:560px){
   /* One phrase per line, each kept whole. The old rule made the second label
@@ -5393,7 +5391,7 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
 .bld-coach li{font-size:12px;line-height:1.5;color:var(--soft);
   display:flex;gap:8px;align-items:flex-start}
 .bld-coach li b{font-weight:800}
-.bld-coach li.bc-wiz b{color:var(--accent)}
+.bld-coach li.bc-wiz b{color:var(--red-ink)}
 .bld-coach li.bc-slide b{color:var(--red-ink)}
 .bc-num{flex-shrink:0;width:17px;height:17px;border-radius:50%;background:var(--raise);
   color:var(--text);font-size:9.5px;font-weight:800;display:flex;
@@ -7094,7 +7092,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 
   <div id="liveStripWrap" hidden>
     <div class="ticker">
-      <div class="ticker-track" id="liveStrip"></div>
+      <div class="ticker-track" id="liveStrip" tabindex="0" aria-label="Live scores"></div>
       <a href="#" id="liveStripAll" class="ticker-all">See all &rarr;</a>
     </div>
   </div>
@@ -18280,8 +18278,8 @@ function statusText(m){
   return {t:(m.minute!=null?m.minute+"\u2019":"Live"),ft:false};
 }
 function scorersHTML(m){
-  var hs=(m.homeGoals||[]).map(function(g){return "<div class='sr h'><span>\u26bd "+esc2(g.player)+"</span><span class='mn'>"+esc2(g.minute)+"\u2019</span></div>";});
-  var as=(m.awayGoals||[]).map(function(g){return "<div class='sr a'><span class='mn'>"+esc2(g.minute)+"\u2019</span><span>\u26bd "+esc2(g.player)+"</span></div>";});
+  var hs=(m.homeGoals||[]).map(function(g){return "<div class='sr h'><span>"+esc2(g.player)+"</span><span class='mn'>"+esc2(g.minute)+"\u2019</span></div>";});
+  var as=(m.awayGoals||[]).map(function(g){return "<div class='sr a'><span class='mn'>"+esc2(g.minute)+"\u2019</span><span>"+esc2(g.player)+"</span></div>";});
   if(!hs.length&&!as.length) return "";
   return "<div class='lv-scorers'>"+hs.join("")+as.join("")+"</div>";
 }

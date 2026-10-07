@@ -27,6 +27,12 @@ test("no gradient text in the app", () => {
   assert.match(html, /\.bld-title em\{font-style:normal;color:var\(--accent\)\}/);
 });
 
+test("the Wizard mode label is house red, not gold (gold is for odds, codes, totals)", () => {
+  assert.match(html, /\.bmh-wiz b\{color:var\(--red-ink\)\}/);
+  assert.match(html, /\.bld-coach li\.bc-wiz b\{color:var\(--red-ink\)\}/);
+  assert.doesNotMatch(html, /(bmh-wiz|bc-wiz)[^{]*\{[^}]*--accent/);
+});
+
 test("the decorative loops are gone, not just paused", () => {
   for (const k of ["tickscroll", "tkTagBlink", "goalTagBlink", "ctaRun", "orbBreath", "baFlicker",
     "wslSheen", "runePulse", "livePulse", "potdLivePulse", "scSheen", "sbSweep", "wspOrbDrift",
@@ -44,8 +50,27 @@ test("the live dot stays, calm, and stands still under reduced motion", () => {
   assert.ok(dot > 0 && still > dot, "reduced-motion rule comes after the dot rule, so it wins");
 });
 
-test("no emoji icons on the board", () => {
-  assert.doesNotMatch(html, /🔥 Big odds|🔔 Follow|Telegram 🔮|content:"\\26a1"/);
+test("no emoji pictographs anywhere in the app outside the entry gate", () => {
+  /* The gate (head bootstrap, CSS, markup, its own script) is out of bounds
+     and is cut out first. JS (⚽, surrogate pairs) and CSS ("\26a1")
+     escapes are decoded, so an emoji cannot hide behind an escape.
+     Emoji_Presentation is what renders as a picture: text glyphs such as
+     the check mark or the star stay legal. */
+  function cut(s, a, b) { const i = s.indexOf(a), j = s.indexOf(b, i + 1); assert.ok(i >= 0 && j > i, a); return s.slice(0, i) + s.slice(j); }
+  let app = cut(html, "/* THE INTRO GATE, DECIDED BEFORE FIRST PAINT.", "/* Catch the install offer");
+  app = cut(app, "/* ================= INTRO GATE", "/* THE WIZARD PAGE, TIGHTENED FOR A PHONE.");
+  app = cut(app, '<div id="swGate"', "</script>");
+  /* Outgoing share copy is message text for WhatsApp/X, not an icon in our
+     UI - the wizard emoji there is the brand's posting voice (same as the X
+     and Telegram posts). Only these two strings are let through. */
+  app = app.split('"\\ud83e\\uddd9 My Soccerwizard slip').join('"My Soccerwizard slip');
+  const dec = app
+    .replace(/\\u([dD][89abAB][0-9a-fA-F]{2})\\u([dD][c-fC-F][0-9a-fA-F]{2})/g, (m, a, b) => String.fromCharCode(parseInt(a, 16), parseInt(b, 16)))
+    .replace(/\\u\{([0-9a-fA-F]+)\}/g, (m, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/\\u([0-9a-fA-F]{4})/g, (m, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/content:\s*["']\\([0-9a-fA-F]{2,6})/g, (m, h) => "content:'" + String.fromCodePoint(parseInt(h, 16)));
+  const found = (dec.match(/\p{Emoji_Presentation}/gu) || []);
+  assert.deepStrictEqual(found, [], "emoji found: " + found.join(" "));
 });
 
 test("bottom tab labels are at least 11px", () => {
