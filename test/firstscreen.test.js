@@ -134,3 +134,76 @@ test("the fixed Build me a slip button only exists where the rail column can hol
   assert.match(src, /@media\(min-width:1060px\)\{ \.ctafab\{display:inline-flex\} \}/);
   assert.ok(!/@media\(min-width:721px\)\{ \.ctafab\{display:inline-flex\} \}/.test(src));
 });
+
+/* ---- the shut filters bar names every filter that is not the default ---- */
+const SUM_SRC = ["updateFiltersSum", "scopeLabel", "leagueCount", "leagueAllowed", "leagueDefault",
+  "leaguePicksTouched", "marketCount", "spanName"].map(grab).join("\n");
+const TOD_LABEL = { early: "Early", mid: "Mid day", late: "Late" };
+
+function filtersSum(state) {
+  const el = { textContent: "" };
+  const LEAGUES = ["Premier League", "La Liga", "Serie A", "National League"];
+  const ctx = Object.assign({
+    document: {
+      getElementById: (id) => (id === "filtersSum" ? el : null),
+      querySelector: (s) => { const m = /data-tod='(\w+)'/.exec(s); return m ? { textContent: TOD_LABEL[m[1]] } : null; },
+    },
+    SCOPE: "day", SDAY: 0, TOD: "all", SPAN: 3, TOP_ONLY: false, VOL_IN: false, BLD_PICK: {},
+    BUILD: { mk: { wd: true, o15: true, o25: true, tts: true } },
+    dayName: (o) => (o === 1 ? "Tomorrow" : "Saturday"),
+    isVolatile: (l) => l === "National League",
+    leaguesOnBoard: () => LEAGUES.map((league) => ({ league, n: 3 })),
+  }, state);
+  vm.runInNewContext(SUM_SRC + "\nupdateFiltersSum();", ctx);
+  return el.textContent;
+}
+
+test("filters summary: the untouched default", () => {
+  assert.strictEqual(filtersSum({}), "All leagues · 4 markets");
+});
+
+test("filters summary: leagues taken out, or the volatile ones let in", () => {
+  assert.strictEqual(filtersSum({ BLD_PICK: { "La Liga": 0 } }), "2 of 4 leagues · 4 markets");
+  assert.strictEqual(filtersSum({ VOL_IN: true }), "4 of 4 leagues · 4 markets");
+});
+
+test("filters summary: the weekend, a single day with a time, all upcoming", () => {
+  assert.strictEqual(filtersSum({ SCOPE: "wknd" }), "Weekend · All leagues · 4 markets");
+  assert.strictEqual(filtersSum({ SDAY: 5, TOD: "late" }), "Saturday · Late · All leagues · 4 markets");
+  assert.strictEqual(filtersSum({ TOD: "early" }), "Today only · Early · All leagues · 4 markets");
+  assert.strictEqual(filtersSum({ SCOPE: "span" }), "Next 3 days · All leagues · 4 markets");
+  assert.strictEqual(filtersSum({ SCOPE: "all" }), "All upcoming · All leagues · 4 markets");
+});
+
+test("filters summary: top flight, alone and with leagues narrowed", () => {
+  assert.strictEqual(filtersSum({ TOP_ONLY: true }), "Top flight · 4 markets");
+  assert.strictEqual(filtersSum({ TOP_ONLY: true, BLD_PICK: { "Serie A": 0 }, BUILD: { mk: { wd: true } } }),
+    "Top flight · 2 of 4 leagues · 1 market");
+});
+
+/* ---- the sheet for every bookmaker ---- */
+const BOOKS5 = [
+  { key: "sporty", skin: "sb", mark: "<span class='sbm'>SportyBet</span>", open: "https://www.sportybet.com/?shareCode=" },
+  { key: "bet9ja", skin: "b9", mark: "<span class='b9m'><span class='b9r'>bet</span><span class='b9g'>9ja</span></span>", open: "https://sports.bet9ja.com/?bookABetCode=" },
+  { key: "betking", skin: "bk", mark: "<span class='bkm'><span class='bkk'>Bet</span><span class='bkg'>King</span></span>", open: null },
+  { key: "betpawa", skin: "bw", mark: "<span class='bwm'><span class='bwb'>bet</span><span class='bwp'>Pawa</span></span>", open: "https://www.betpawa.ng/?code=" },
+  { key: "onexbet", skin: "xb", mark: "<span class='xbm'>1X<span class='xbb'>BET</span></span>", open: "https://1xbet.ng/?code=" },
+];
+
+test("every bookmaker's sheet: its skin, Copy alone as the primary, then Open in or the paste sentence", () => {
+  for (const B of BOOKS5) {
+    const h = sheetHTML(B, true);
+    assert.match(h, new RegExp("code-card--modal code-card--" + B.skin + "'"), B.key + " skin");
+    const acts = /<div class='code-acts'>([\s\S]*?)<\/div>/.exec(h)[1];
+    assert.strictEqual((acts.match(/<button/g) || []).length, 1, B.key + ": one primary");
+    if (B.open) assert.ok(h.includes("<a class='code-open' href='" + B.open + "SB7XK2Q9'") && h.includes(">Open in " + B.mark + "</a>"), B.key + " opens");
+    else assert.match(h, /<span class='code-paste'>Paste this code/, B.key + " has no deep link, so it says where to paste");
+    assert.ok(h.indexOf("code-follow") > h.indexOf("code-next"), B.key + ": follow line last");
+  }
+});
+
+test("on the outlined Open in, 1xBet and betPawa marks take their card colours, not the white button's ink", () => {
+  assert.match(src, /\.code-card\.code-card--modal\.code-card--xb \.code-opens \.code-open \.xbm\{color:#fff\}/);
+  assert.match(src, /\.code-card\.code-card--modal\.code-card--xb \.code-opens \.code-open \.xbm \.xbb\{color:#14A0FF\}/);
+  assert.match(src, /\.code-card\.code-card--modal\.code-card--bw \.code-opens \.code-open \.bwm \.bwp\{color:#9CE800\}/);
+});

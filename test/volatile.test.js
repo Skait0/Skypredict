@@ -50,12 +50,13 @@ function harness(fixtures, store) {
     "function showPrompt(t,h,l){UI.html=h; UI.target=t; UI.label=l; ASK.go=BTN('confirm-go'); ASK.keep=BTN('confirm-cancel'); return true;}" +
     "function promptEl(){return {querySelector:function(s){return s==='.confirm-go'?ASK.go:ASK.keep;}};}" +
     "function clearPrompt(t){UI.cleared++;}" +
+    "function updateFiltersSum(){}" +
     "var BLD_PICK={}, VOL_IN=false, VOL_SRC=null, VOL_MAP={};" +
     grab("tierOf") + grab("compOf") + grab("countryOf") +
     grab("loadLeaguePicks") + grab("isVolatile") + grab("leagueDefault") +
     grab("leagueAllowed") + grab("leaguesChosen") + grab("leaguePicksTouched") +
     grab("setLeaguePicked") + grab("clearLeaguePicks") + grab("setVolIn") +
-    grab("inScope") + grab("scopeFixtures") + grab("windowWords") + grab("leaguesOnBoard") +
+    grab("inScope") + grab("scopeFixtures") + grab("windowWords") + grab("leaguesOnBoard") + grab("leagueCount") +
     grab("resetLeagues") + grab("askVolatile") + grab("renderLeaguePicker") + "\n" +
     "loadLeaguePicks();" +
     "return {scopeFixtures:scopeFixtures, leaguesOnBoard:leaguesOnBoard," +

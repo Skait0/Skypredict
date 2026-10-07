@@ -54,7 +54,9 @@ test("the All leagues chip resets through the ask", () => {
 });
 
 test("only leagues actually playing are offered", () => {
-  assert.match(picker, /var avail=leaguesOnBoard\(\);/);
+  /* The count lives in leagueCount (7 Oct 2026), shared with the shut filters bar. */
+  assert.match(picker, /var lc=leagueCount\(\), avail=lc\.avail/);
+  assert.match(src, /function leagueCount\(\)\{\s*var avail=leaguesOnBoard\(\);/);
 });
 
 test("nothing is left on the old include-set", () => {

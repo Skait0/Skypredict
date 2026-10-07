@@ -2710,7 +2710,8 @@ html.mode-live #live{display:block}
 .filters-toggle .ft-l{display:inline-flex;align-items:center;gap:9px;letter-spacing:.02em}
 .filters-toggle .ft-l svg{width:16px;height:16px;color:var(--faint)}
 .filters-toggle .ft-r{display:inline-flex;align-items:center;gap:9px}
-.filters-toggle .ft-sum{font-size:12px;font-weight:700;color:var(--faint)}
+.filters-toggle .ft-sum{font-size:12px;font-weight:700;color:var(--faint);text-align:right;line-height:1.35}
+.filters-toggle .ft-r{min-width:0}
 .filters-toggle .ft-chev{width:16px;height:16px;color:var(--soft);transition:transform .2s ease}
 .filters-toggle[aria-expanded="false"] .ft-chev{transform:rotate(-90deg)}
 /* THE OPEN STATE HAS NO CEILING. It was max-height:600px, which is a number
@@ -5653,8 +5654,11 @@ html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
    this whole block is out of scope. */
 @media(max-width:720px){
   .home-grid>.home-rail{display:contents}
-  .home-grid>.home-rail>.slip-cta{order:1}
-  .home-grid>.home-rail>#myres{order:2}
+  /* The offer and My results step out of the rail ahead of the board in the
+     DOM on a phone (script, "where the live row stands"), so keyboard order
+     matches this; the rail-child selectors cover the moment before it runs. */
+  .home-grid>.home-rail>.slip-cta,.home-grid>.slip-cta{order:1}
+  .home-grid>.home-rail>#myres,.home-grid>#myres{order:2}
   .home-grid>.home-main{order:3}
   /* Everything below the first screen of games (the board is capped at 78vh
      on a phone, see "board cap"), in the order a reader acts on it: the
@@ -6092,6 +6096,15 @@ html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
 @media(hover:hover){
   .code-card.code-card--modal .code-opens .code-open:hover{background:rgba(255,255,255,.08);filter:none}
 }
+/* On the outlined button the wordmark sits on the card's own dark ground, so
+   it takes the colours the card already gives it in the title - not the dark
+   ink it wore on the white button, which left 1xBet's "1X" at 1.1:1. Bet9ja's
+   red stays its brand red (#D42127, about 3.7:1 here): it is their logotype,
+   which WCAG exempts, and any lighter red stops being their mark; "Open in"
+   beside it carries the label at full contrast. */
+.code-card.code-card--modal.code-card--xb .code-opens .code-open .xbm{color:#fff}
+.code-card.code-card--modal.code-card--xb .code-opens .code-open .xbm .xbb{color:#14A0FF}
+.code-card.code-card--modal.code-card--bw .code-opens .code-open .bwm .bwp{color:#9CE800}
 /* Save and Share: what you might do next, as one quiet pair. */
 .code-next{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .code-card--modal .code-next .share-btn{font-size:12.5px;font-weight:700;padding:8px 16px;
@@ -8491,10 +8504,26 @@ function leagueRank(l){
 var TOP_ONLY=false; try{TOP_ONLY=localStorage.getItem("sw.toponly")==="1";}catch(e){}
 function setTopOnly(v){TOP_ONLY=!!v;try{localStorage.setItem("sw.toponly",v?"1":"0");}catch(e){}}
 function marketCount(){try{return Object.keys(BUILD.mk).filter(function(k){return BUILD.mk[k];}).length;}catch(e){return 0;}}
+/* THE SHUT FILTERS BAR NAMES EVERYTHING THAT IS NOT THE DEFAULT. The panel
+   starts shut on a phone, so this line is all a reader sees of it: a window
+   other than today, a time of day, top flight, leagues taken out (or the
+   volatile ones let in) each get a short word, from the same helpers the
+   controls label themselves with. "Weekend \u00b7 12 of 47 leagues \u00b7 4 markets". */
 function updateFiltersSum(){
   var el=document.getElementById("filtersSum"); if(!el) return;
-  var n=marketCount();
-  el.textContent=(TOP_ONLY?"Top flight":"All leagues")+" \u00b7 "+n+" market"+(n===1?"":"s");
+  var n=marketCount(), parts=[];
+  if(SCOPE==="all") parts.push("All upcoming");
+  else if(SCOPE!=="day"||SDAY!==0||TOD!=="all") parts.push(scopeLabel());
+  if(SCOPE!=="all"&&TOD!=="all"){
+    var t=document.querySelector("[data-tod='"+TOD+"'] .so-t");
+    if(t) parts.push(t.textContent);
+  }
+  var lc=null; try{ lc=leagueCount(); }catch(e){}
+  if(TOP_ONLY) parts.push("Top flight");
+  if(lc&&lc.narrowed) parts.push(lc.words);
+  else if(!TOP_ONLY) parts.push("All leagues");
+  parts.push(n+" market"+(n===1?"":"s"));
+  el.textContent=parts.join(" \u00b7 ");
 }
 function isSAleague(l){return !!SA_COUNTRIES[countryOf(l||"")];}
 function isAsianLeague(l){
@@ -10429,10 +10458,29 @@ function clampDay(){
   if(SCOPE==="wknd"){SCOPE="day"; try{localStorage.setItem("sw.scope","day");}catch(e){}}
   if(list.length){SDAY=list[0]; try{localStorage.setItem("sw.sday",SDAY);}catch(e){}}
 }
+/* The day pill's own label (on "All upcoming" the pill still names the day it
+   would go back to), and so the filters bar's short name for a narrow window. */
+function scopeLabel(){
+  return SCOPE==="span" ? spanName(SPAN)
+       : SCOPE==="wknd" ? "Weekend"
+       : (SDAY===0 ? "Today only" : dayName(SDAY));
+}
+/* How many leagues are in, over what is playing in the window - the picker's
+   button and the filters bar both say it, so there is one count. `narrowed`
+   is anything but the untouched default: a league taken out or put back by
+   hand, or the volatile ones let in. */
+function leagueCount(){
+  var avail=leaguesOnBoard();
+  var live=avail.filter(function(x){return leagueAllowed(x.league);}).length;
+  var touched=leaguePicksTouched();
+  return {avail:avail, live:live, touched:touched, narrowed:touched||VOL_IN,
+    words:live+" of "+avail.length+" leagues"};
+}
 function paintScope(){
+  var seg=$("scopeSeg");
+  if(seg) clampDay();
   updateFiltersSum();
-  var seg=$("scopeSeg"); if(!seg) return;
-  clampDay();
+  if(!seg) return;
   /* Only "all" carries data-scope now; the day pill is a dropdown trigger and
      is lit on its own below. */
   seg.querySelectorAll("[data-scope]").forEach(function(b){
@@ -10451,9 +10499,7 @@ function paintScope(){
   /* "Today only" reads best when the day really is today; any other choice
      shows its own name ("Tomorrow", "Saturday") so the pill says what it does. */
   var lbl=$("scopeDayLbl");
-  if(lbl) lbl.textContent = SCOPE==="span" ? spanName(SPAN)
-        : SCOPE==="wknd" ? "Weekend"
-        : (SDAY===0 ? "Today only" : dayName(SDAY));
+  if(lbl) lbl.textContent = scopeLabel();
   /* Counts make the choice concrete: "12" against "168" says more about what
      the switch does than either label manages on its own. The day pill counts
      against the day it points at. */
@@ -18570,15 +18616,27 @@ function syncLiveDots(){
    the board, see home layout): above the board it arrived a second after the
    games and pushed the first one down the screen. On a wider screen it keeps
    its full-width place above the board. Moved before /api/live can answer, so
-   the move itself shifts nothing. */
+   the move itself shifts nothing.
+   AND THE READING ORDER FOLLOWS THE SCREEN. CSS order puts the board above
+   the rail's cards on a phone, but a keyboard or a screen reader follows the
+   DOM, which had every rail card first. So on a phone the offer and the
+   reader's own slips step out of the rail ahead of the board, and the board
+   moves ahead of the rest. Nothing moves on screen - the CSS order already
+   draws it this way - so this costs no layout shift. */
 (function(){
   var w=$("liveStripWrap"),g=document.querySelector(".home-grid"),
-      r=document.querySelector(".home-rail");
-  if(!w||!g||!r||!window.matchMedia) return;
+      r=document.querySelector(".home-rail"),m=document.querySelector(".home-main"),
+      cta=$("slipCta"),mine=$("myres");
+  if(!w||!g||!r||!m||!cta||!mine||!window.matchMedia) return;
   var mq=window.matchMedia("(max-width:720px)");
   function place(){
-    if(mq.matches){ if(w.parentNode!==r) r.insertBefore(w,$("sotd")); }
-    else if(w.nextElementSibling!==g) g.parentNode.insertBefore(w,g);
+    if(mq.matches){
+      if(w.parentNode!==r) r.insertBefore(w,$("sotd"));
+      if(cta.parentNode!==g){ g.insertBefore(m,r); g.insertBefore(cta,m); g.insertBefore(mine,m); }
+    }else{
+      if(w.nextElementSibling!==g) g.parentNode.insertBefore(w,g);
+      if(cta.parentNode!==r){ r.insertBefore(mine,r.firstChild); r.insertBefore(cta,mine); g.insertBefore(r,m); }
+    }
   }
   place();
   if(mq.addEventListener) mq.addEventListener("change",place); else if(mq.addListener) mq.addListener(place);
@@ -21299,8 +21357,7 @@ function renderLeaguePicker(){
       sum=$("lgpSum"),cnt=$("lgpCount"),clr=$("lgpClear");
   if(!open||!box||!list) return;
 
-  var avail=leaguesOnBoard();
-  var touched=leaguePicksTouched();
+  var lc=leagueCount(), avail=lc.avail, touched=lc.touched;
   /* Name the window this list describes.
      Without it, "5 available" reads as a broken picker. It was reported as
      one: with Early selected the list held five leagues while the reporter
@@ -21310,9 +21367,10 @@ function renderLeaguePicker(){
   var win = windowWords(true);
   /* Counted over what is on the board, so a stored tap for a league not
      playing in this window does not skew the numbers. */
-  var live=avail.filter(function(x){return leagueAllowed(x.league);}).length;
+  var live=lc.live;
   var vol=avail.filter(function(x){return isVolatile(x.league);}).length;
-  sum.textContent = !touched ? live+" league"+(live===1?"":"s") : live+" of "+avail.length+" leagues";
+  sum.textContent = !touched ? live+" league"+(live===1?"":"s") : lc.words;
+  updateFiltersSum();
   open.classList.toggle("narrowed",touched);
   if(cnt) cnt.textContent=avail.length+" league"+(avail.length===1?"":"s")+" "+win;
   if(clr) clr.hidden=!touched;

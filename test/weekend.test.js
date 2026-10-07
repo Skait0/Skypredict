@@ -118,7 +118,9 @@ test("a stored Weekend is still the right weekend the next day", () => {
 });
 
 test("the pill, the league picker and the empty state all name the weekend", () => {
-  assert.match(grab("paintScope"), /SCOPE==="wknd" \? "Weekend"/);
+  /* The pill's label is scopeLabel (7 Oct 2026), shared with the shut filters bar. */
+  assert.match(grab("scopeLabel"), /SCOPE==="wknd" \? "Weekend"/);
+  assert.match(grab("paintScope"), /lbl\.textContent = scopeLabel\(\)/);
   assert.match(grab("paintScope"), /\(SCOPE==="span"\|\|SCOPE==="wknd"\)\?buildableSpan\(\)\.length/);
   assert.match(grab("renderLeaguePicker"), /windowWords\(true\)/);
   assert.match(grab("windowWords"), /SCOPE==="wknd"\) return "this weekend"/);
