@@ -68,7 +68,7 @@ test("the shadow keeps index.html's line numbers", { skip: !there }, () => {
   const html = fs.readFileSync(path.join(ROOT, "public", "index.html"), "utf8").split("\n");
   const shadow = fs.readFileSync(OUT, "utf8").split("\n");
   assert.equal(shadow.length, html.length, "the shadow is a different length from index.html");
-  ["function bookAllows(", "var BOOK_ONLY=", "async function bookSlip()", "function mixReline("]
+  ["function bookAllows(", "var BOOK_ONLY=", "function bookMy(", "function mixReline("]
     .forEach((needle) => {
       const a = html.findIndex((l) => l.includes(needle));
       const b = shadow.findIndex((l) => l.includes(needle));

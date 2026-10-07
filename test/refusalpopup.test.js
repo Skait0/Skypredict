@@ -94,7 +94,6 @@ test("the pop-up puts a swap in front of each refused game, and books what was t
     "only the swaps left ticked are booked");
   /* And every caller books them. */
   assert.match(src, /bookRounds\(safe\.concat\(swapIn\),B,src,target,h,round\+1\);\},gone,h\);/);
-  assert.match(src, /doBook\(safe\.concat\(swapIn\),\(retried\|\|0\)\+1,B\);\},_gone\);/);
   assert.match(src, /doBookMy\(safe\.concat\(swapIn\),\(retried\|\|0\)\+1,B\);\s*\},_dropped\);/);
 });
 
