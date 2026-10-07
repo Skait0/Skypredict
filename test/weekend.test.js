@@ -151,6 +151,24 @@ test("a stored Weekend with games left is kept", () => {
   assert.strictEqual(H.state().SCOPE, "wknd");
 });
 
+test("a stored Weekend survives the parse-time paint, before load() has filled the board", () => {
+  /* paintScope runs at parse time while DATA.fixtures is still []; clampDay
+     must not read that as "no weekend games" and wipe (and sync) the choice. */
+  const board = [];
+  const store = { "sw.scope": "wknd", "sw.sday": "0" };
+  const H = harness(3, store, board);
+  H.clampDay();
+  assert.strictEqual(H.state().SCOPE, "wknd", "memory untouched");
+  assert.deepStrictEqual(store, { "sw.scope": "wknd", "sw.sday": "0" }, "storage untouched");
+  /* Real data arrives with nothing on the weekend (Wed 3, Thu 4 only): now the
+     fallback to the first day with games still happens. */
+  board.push({ date: 3, league: "L" }, { date: 4, league: "L" });
+  H.clampDay();
+  assert.strictEqual(H.state().SCOPE, "day");
+  assert.strictEqual(store["sw.scope"], "day");
+  assert.strictEqual(store["sw.sday"], "0");
+});
+
 test("the Weekend row counts what a tap builds, but exists on structure alone", () => {
   /* Friday (5); the weekend is days 6 and 7. One game there is in a benched
      league "V", so the row says 2 - the pill's number - not 3. */

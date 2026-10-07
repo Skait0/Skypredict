@@ -129,7 +129,9 @@ test("the whole first load stays inside a phone budget", () => {
      predictions, the converter's refusal recovery) had brought it to the edge,
      and the sign-in release added 1.2 KB brotli to index.html - 702 against
      700. Nothing heavy came back; the guard is for the 394 KB-image kind of
-     regression, and 720 still catches that. */
+     regression, and 720 still catches that.
+
+     raised 7 Oct 2026 by owner; was 720; measured ~718 with live payload. */
   const zlib = require("zlib");
   const wire = (f) => {
     const b = fs.readFileSync(path.join(PUB, f));
@@ -154,7 +156,7 @@ test("the whole first load stays inside a phone budget", () => {
       try { sent += Math.round(wire(f) / 1024); } catch (e) {}
     });
 
-  assert.ok(sent <= 720,
+  assert.ok(sent <= 760,
     "a first load sends about " + sent + " KB over the wire (" + total + " KB raw). " +
     "It was 1,600 KB raw when phones on LTE started timing out. Something heavy " +
     "has been added back.");

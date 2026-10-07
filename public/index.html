@@ -8135,10 +8135,12 @@ function renderMyResults(){
       "</div></div>"+
     "<div class='ys-lh'><h4>Recent</h4><span class='ys-clr'></span></div>"+
     rows.map(function(s){
+      /* An unknown book key has no mark - no mark, no leading comma. */
+      var bm=s.book?bookMark(s.book):"";
       return "<div class='sw-swipe' data-sid='"+esc(s.sid)+"'><div class='sw-bin'>"+BIN_SVG+"</div>"+
         "<div class='sw-card ys-row' role='button' tabindex='0'><span class='ys-dot "+slipState(s)+"' role='img' aria-label='"+({run:"Running",lost:"Lost",won:"Won"})[slipState(s)]+"'></span>"+
         "<span class='ys-m'><span class='ys-code num'>"+esc(s.code||"No code")+"</span>"+
-        "<small>"+(s.book?bookMark(s.book)+", ":"")+s.legs.length+(s.legs.length===1?" game":" games")+(slipWhenPlain(s.at)?", "+esc(slipWhenPlain(s.at)):"")+"</small></span>"+
+        "<small>"+(bm?bm+", ":"")+s.legs.length+(s.legs.length===1?" game":" games")+(slipWhenPlain(s.at)?", "+esc(slipWhenPlain(s.at)):"")+"</small></span>"+
         "<span class='ys-od num'>×"+(s.odds>=1000?Math.round(s.odds).toLocaleString():s.odds.toFixed(2))+"</span></div></div>";
     }).join("");
   host.querySelectorAll("[data-ysf]").forEach(function(b){ b.onclick=function(){ openSlipsSheet(b.getAttribute("data-ysf")); }; });
@@ -8535,7 +8537,9 @@ function updateFiltersSum(){
   }
   var lc=null; try{ lc=leagueCount(); }catch(e){}
   if(TOP_ONLY) parts.push("Top flight");
-  if(lc&&lc.narrowed) parts.push(lc.words);
+  /* Benched volatile leagues are leagues out, so the line agrees with the
+     picker's count rather than claiming "All leagues". */
+  if(lc&&(lc.narrowed||lc.live<lc.avail.length)) parts.push(lc.words);
   else if(!TOP_ONLY) parts.push("All leagues");
   parts.push(n+" market"+(n===1?"":"s"));
   el.textContent=parts.join(" \u00b7 ");
@@ -10487,6 +10491,10 @@ function dayPickList(){
    whose games have all started (Sunday night) falls back the same way, onto
    that day as a single-day window. */
 function clampDay(){
+  /* paintScope runs once at parse time, before load() fills the board. With
+     no fixtures every window looks empty, and this used to wipe a stored
+     Weekend (and sync "day" to the reader's other devices) on every load. */
+  if(!DATA.fixtures.length) return;
   if(SCOPE==="wknd"){
     var w=weekendOffs();
     if(spanBuildable(w[1]-w[0]+1,w[0])>0) return;

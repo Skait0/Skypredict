@@ -142,7 +142,7 @@ const TOD_LABEL = { early: "Early", mid: "Mid day", late: "Late" };
 
 function filtersSum(state) {
   const el = { textContent: "" };
-  const LEAGUES = ["Premier League", "La Liga", "Serie A", "National League"];
+  const LEAGUES = (state && state.LEAGUES) || ["Premier League", "La Liga", "Serie A", "National League"];
   const ctx = Object.assign({
     document: {
       getElementById: (id) => (id === "filtersSum" ? el : null),
@@ -158,8 +158,18 @@ function filtersSum(state) {
   return el.textContent;
 }
 
+/* A board with no volatile league on it: the untouched default is every league. */
+const TOP3 = ["Premier League", "La Liga", "Serie A"];
+
 test("filters summary: the untouched default", () => {
-  assert.strictEqual(filtersSum({}), "All leagues · 4 markets");
+  assert.strictEqual(filtersSum({ LEAGUES: TOP3 }), "All leagues · 4 markets");
+});
+
+test("filters summary: benched volatile leagues are counted out, as the picker counts them", () => {
+  /* National League sits on the bench by default; the line must not claim
+     "All leagues" while the picker button says 3 of 4. */
+  assert.strictEqual(filtersSum({}), "3 of 4 leagues · 4 markets");
+  assert.strictEqual(filtersSum({ SCOPE: "wknd" }), "Weekend · 3 of 4 leagues · 4 markets");
 });
 
 test("filters summary: leagues taken out, or the volatile ones let in", () => {
@@ -168,15 +178,17 @@ test("filters summary: leagues taken out, or the volatile ones let in", () => {
 });
 
 test("filters summary: the weekend, a single day with a time, all upcoming", () => {
-  assert.strictEqual(filtersSum({ SCOPE: "wknd" }), "Weekend · All leagues · 4 markets");
-  assert.strictEqual(filtersSum({ SDAY: 5, TOD: "late" }), "Saturday · Late · All leagues · 4 markets");
-  assert.strictEqual(filtersSum({ TOD: "early" }), "Today only · Early · All leagues · 4 markets");
-  assert.strictEqual(filtersSum({ SCOPE: "span" }), "Next 3 days · All leagues · 4 markets");
-  assert.strictEqual(filtersSum({ SCOPE: "all" }), "All upcoming · All leagues · 4 markets");
+  const L = { LEAGUES: TOP3 };
+  assert.strictEqual(filtersSum({ ...L, SCOPE: "wknd" }), "Weekend · All leagues · 4 markets");
+  assert.strictEqual(filtersSum({ ...L, SDAY: 5, TOD: "late" }), "Saturday · Late · All leagues · 4 markets");
+  assert.strictEqual(filtersSum({ ...L, TOD: "early" }), "Today only · Early · All leagues · 4 markets");
+  assert.strictEqual(filtersSum({ ...L, SCOPE: "span" }), "Next 3 days · All leagues · 4 markets");
+  assert.strictEqual(filtersSum({ ...L, SCOPE: "all" }), "All upcoming · All leagues · 4 markets");
 });
 
 test("filters summary: top flight, alone and with leagues narrowed", () => {
-  assert.strictEqual(filtersSum({ TOP_ONLY: true }), "Top flight · 4 markets");
+  /* Top flight drops lower leagues from the board itself, volatile ones included. */
+  assert.strictEqual(filtersSum({ LEAGUES: TOP3, TOP_ONLY: true }), "Top flight · 4 markets");
   assert.strictEqual(filtersSum({ TOP_ONLY: true, BLD_PICK: { "Serie A": 0 }, BUILD: { mk: { wd: true } } }),
     "Top flight · 2 of 4 leagues · 1 market");
 });

@@ -50,6 +50,12 @@ test("Recent row copy: no possessive, no ', last', singular game", () => {
   assert.match(row({ ...base, legs: [1, 2, 3] }, "today's"), /SportyBet, 3 games, today<\/small>/);
   assert.match(row({ ...base, legs: [1] }, "Saturday's"), /1 game, Saturday<\/small>/);
   assert.match(row({ ...base, legs: [1] }, "last"), /SportyBet, 1 game<\/small>/);
+  /* An unknown book key (an old save, a book since removed) has no mark: the
+     row starts at the count, never with a stray ", ". */
+  const unk = row({ ...base, book: "sportybet", legs: [1, 2, 3, 4] }, "today's");
+  assert.match(unk, /<small>4 games, today<\/small>/);
+  assert.doesNotMatch(unk, /<small>, /);
+  assert.match(row({ ...base, book: undefined, legs: [1] }, "today's"), /<small>1 game, today<\/small>/);
 });
 
 test("sheet meta copy: no possessive, no ', last'", () => {
