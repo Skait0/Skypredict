@@ -58,30 +58,51 @@ const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "
   "hasRealOdd", "pricedFixture", "mProb", "allowedMarkets", "preferGoalsOverDouble",
   "isJackpotOdds", "wspMarkets", "codeMarket", "provenMarkets", "isProven", "safeUnpriced",
   "fetchedMarket", "bookAllows", "wspStyleOn", "wspBuild", "wspMaxReach",
-  "leagueAllowed", "leagueDefault", "setLeaguePicked",
-  "renderWizardPanel", "renderMySheet", "riskWord", "paintTicks"];
+  "leagueAllowed", "leagueDefault", "setLeaguePicked", "leaguesChosen", "windowWords",
+  "renderWizardPanel", "renderMySheet", "riskWord", "paintTicks", "repaintAfterMatch",
+  /* renderBuilderOutput and wspConjure, driven for real, and what they lean on. */
+  "renderBuilderOutput", "wspConjure", "riskParams", "buildPicks", "sliderStyle", "styleFit",
+  "totalOdds", "oddsAreReal", "conf"];
+
+/* The page's own restore statement for the short-slip header, run as written. */
+const RESTORE_MISS = /try\{var _wm=JSON\.parse\(localStorage\.getItem\("sw\.wspmiss"\)[\s\S]*?\}catch\(e\)\{\}/.exec(src);
+if (!RESTORE_MISS) throw new Error("sw.wspmiss restore statement not found in index.html");
 
 const api = new Function("STUB", [
   "var TOP_ONLY=false, SCOPE='all', SDAY=0, SPAN=3, TOD='all', BLD_PICK={}, VOL_IN=true;",
-  "var FIXTURES=[], MYSLIP=[], BUILD={mode:'wizard',risk:45};",
-  "var DATA=null, localStorage={getItem(){return null},setItem(){},removeItem(){}};",
+  "var FIXTURES=[], MYSLIP=[], BUILD_NOSYNC=false;",
+  (/^var BUILD=\{[\s\S]*?\};/m.exec(src) || [""])[0],
+  "var DATA=null, STORE={}, localStorage={getItem(k){return k in STORE?STORE[k]:null},",
+  "  setItem(k,v){STORE[k]=String(v)},removeItem(k){delete STORE[k]}};",
   "var BOOKS={sporty:{key:'sporty',odds:'sportyOdds',id:'eventId'}};",
   "var ELS={}; function $(id){ return ELS[id]||(ELS[id]=STUB(id)); }",
   "var document={querySelector:function(s){return s==='.slider-panel .risk-ticks'?$('ticks'):null;},",
-  "  querySelectorAll:function(){return [];},documentElement:{classList:{contains(){return true}}}};",
+  "  querySelectorAll:function(){return [];},activeElement:null,",
+  "  documentElement:{classList:{contains(c){return c==='mode-build';},toggle(){},add(){},remove(){}}}};",
   "var window={};",
   "function isVolatile(){return false;}",
   "function notStarted(){return true;}",
   "function todFixtures(a){return a;}",
-  "function inScope(){return true;}",
+  "function inScope(f){return !f._out;}",
   /* The real predicate, so a league taken out of the picker leaves the pool. */
   grab("scopeFixtures"),
   "function slipUse(){return {};}",
-  "function paintBookPickers(){} function pruneMy(){} function fixtureById(){return null;}",
+  "function paintBookPickers(){} function pruneMy(){}",
+  "function fixtureById(id){return FIXTURES.filter(function(f){return fid(f)===id;})[0]||null;}",
   "function swapOptions(){return [];} function oddCell(){return '';} function esc(s){return String(s);}",
-  "function myOdds(){return MYSLIP.reduce(function(a,x){return a*x.o;},1);}",
+  "function myOdds(){return MYSLIP.reduce(function(a,x){return a*(x.o||1);},1);}",
   "function showPrompt(){return false;} function clearPrompt(){}",
   "var XSVG=''; function inkOn(){return '#fff';}",
+  "var P0=function(x){return Math.round(x*100);};",
+  "function dayName(o){return o===0?'Today':o===1?'Tomorrow':'Saturday';}",
+  "function schedulePrecheck(){} function emptyWhy(){return '';} function compOf(l){return l;}",
+  "function dayOff(){return 0;} function fDay(){return '';} function kickTime(){return '';}",
+  "function mLabel(f,c){return c;} function floorGap(){return null;} function saveMy(){}",
+  "function renderFab(){} function bookTakes(){return true;} function paintBookPickerWith(){}",
+  "function bookOnlyHint(){return '';} function renderIdleMarkets(){} function kickoffOf(){return 0;}",
+  "function renderBuilder(){ renderBuilderOutput(); }",
+  "function openMySheet(){ renderMySheet(); }",
+  "function paint(){}",
   konst("SAFE_UNPRICED"), konst("BOOK_ONLY"), konst("CORNER_CODES"), konst("TEAM_CORNER_CODES"),
   konst("SHOTS_CODES"), konst("TEAM_SHOTS_CODES"), konst("HCAP_CODES"), konst("ESTIMATE_SHRINK"),
   "function curBook(){return {key:'sporty',label:'SportyBet',full:true,odds:'sportyOdds',id:'eventId'};}",
@@ -92,9 +113,13 @@ const api = new Function("STUB", [
   (/^var SLIP_STYLES=[\s\S]*?;$/m.exec(src) || [""])[0],
   "var WSP_REACH={};",
 ].concat(FNS.map(grab)).join("\n") + `
-  return { WSP, ELS, $, wspMaxReach, renderWizardPanel, renderMySheet, paintTicks,
-           setLeaguePicked, SLIP_STYLES,
+  return { WSP, BUILD, ELS, $, STORE, wspMaxReach, renderWizardPanel, renderMySheet, paintTicks,
+           setLeaguePicked, SLIP_STYLES, repaintAfterMatch, renderBuilderOutput, wspConjure,
+           clearReach(){ WSP_REACH = {}; },
+           restoreMiss(){ ${RESTORE_MISS[0]} },
+           setScope(s, d){ SCOPE = s; SDAY = d || 0; },
            setFixtures(f){ FIXTURES = f; DATA = {fixtures: f}; },
+           getSlip(){ return MYSLIP; },
            setSlip(s){ MYSLIP = s; } };
 `)(stubEl);
 
@@ -118,6 +143,10 @@ const BOARD = Array.from({ length: 12 }, (_, i) => fx(i, LEAGUES[i % 3]));
 
 function reset() {
   api.setFixtures(BOARD);
+  api.setScope("all", 0);
+  api.BUILD.mode = "wizard";
+  api.clearReach();
+  for (const k of Object.keys(api.STORE)) delete api.STORE[k];
   Object.assign(api.WSP, { odds: null, legodd: 1.4, everyGame: false, seed: 4242,
                            shuffles: 0, conjured: false, removed: {}, _miss: null });
   api.WSP.mk = { wd: true, any: false, out: true, o15: true, o25: true, o35: false, fh: false,
@@ -223,10 +252,99 @@ test("a short Wizard slip says the result in the slip header", () => {
   assert.strictEqual(h.hidden, true);
 });
 
-test("wspConjure records the shortfall from the build it just made", () => {
-  const fn = grab("wspConjure");
-  assert.match(fn, /WSP\._miss=r\.short\?\{want:WSP\.odds\}:null;[\s\S]*openMySheet\(\)/,
-    "the miss must be set before the sheet renders");
+test("wspConjure puts the shortfall in the header, names the window, and it survives a reload", () => {
+  reset();
+  api.setScope("wknd");
+  api.WSP.odds = 5000;                 /* custom: above anything 12 games make */
+  api.setSlip([]);
+  api.wspConjure(false);
+  const h = api.ELS.mySheetMiss;
+  assert.strictEqual(h.hidden, false, "a short conjure must show the header");
+  assert.match(h.innerHTML, /^<b>×[\d.,]+<\/b> of your ×5,000: the most we can build this weekend$/);
+  /* Reload: the slip is restored from storage, WSP starts without _miss and
+     the page's own restore statement reads it back. */
+  api.WSP._miss = null;
+  api.setScope("all");
+  api.restoreMiss();
+  h.innerHTML = ""; h.hidden = true;
+  api.renderMySheet();
+  assert.strictEqual(h.hidden, false);
+  assert.match(h.innerHTML, /the most we can build this weekend$/,
+    "the window is the one the slip was built in, not the one on screen now");
+  /* A conjure that reaches its target clears the stored header. */
+  api.WSP.odds = 10;
+  api.wspConjure(false);
+  assert.strictEqual(api.STORE["sw.wspmiss"], undefined);
+  assert.strictEqual(h.hidden, true);
+});
+
+test("the window words follow the scope", () => {
+  reset();
+  const said = [["all", 0, "in all upcoming games"], ["wknd", 0, "this weekend"],
+                ["span", 0, "in the next 3 days"], ["day", 0, "today"], ["day", 1, "tomorrow"],
+                ["day", 4, "on saturday"]].map(([s, d, want]) => {
+    api.setScope(s, d);
+    api.WSP.odds = 5000; api.setSlip([]); api.wspConjure(false);
+    return [api.ELS.mySheetMiss.innerHTML.replace(/^.*the most we can build /, ""), want];
+  });
+  for (const [got, want] of said) assert.strictEqual(got, want);
+});
+
+test("a book feed landing clears the ceiling and redraws the rungs", () => {
+  /* Same fixture count, new prices: every input the cache is keyed on is
+     unchanged, so only the feed path can tell the probe to start over. */
+  reset();
+  Object.keys(api.WSP.mk).forEach(k => { api.WSP.mk[k] = (k === "wd"); });
+  const board = Array.from({ length: 60 }, (_, i) => {
+    const f = fx(i, LEAGUES[i % 3]); f.sportyOdds = { "1X": 1.05 }; return f; });
+  api.setFixtures(board);
+  api.renderWizardPanel();
+  const before = chips(api.ELS.wizardPanel.innerHTML);
+  assert.strictEqual(before["50"], true, "x50 is out of reach at 1.05 a leg: " + JSON.stringify(before));
+  board.forEach(f => { f.sportyOdds["1X"] = 1.22; });   /* the feed attaches in place */
+  api.renderWizardPanel();
+  assert.strictEqual(chips(api.ELS.wizardPanel.innerHTML)["50"], true,
+    "without the feed path the stale ceiling stands (this is the bug)");
+  api.repaintAfterMatch();
+  const after = chips(api.ELS.wizardPanel.innerHTML);
+  assert.strictEqual(after["50"], false, "after the feed lands x50 is reachable: " + JSON.stringify(after));
+});
+
+test("a reshuffle does not re-run the probe for a new seed", () => {
+  reset();
+  const a = api.wspMaxReach(19999);
+  /* Prices doubled under the cache: a re-probe would see a different board. */
+  BOARD.forEach(f => { f._was = f.sportyOdds; f.sportyOdds = Object.fromEntries(
+    Object.entries(f._was).map(([k, v]) => [k, Math.round(v * 200) / 100])); });
+  try {
+    api.WSP.seed = 777;
+    assert.strictEqual(api.wspMaxReach(19999), a, "the seed must not be part of the key");
+    api.WSP.shuffles = 2;      /* South America and Asia can join from here */
+    assert.notStrictEqual(api.wspMaxReach(19999), a, "the shuffle bucket must be");
+  } finally { BOARD.forEach(f => { f.sportyOdds = f._was; delete f._was; }); }
+});
+
+test("an empty window says so and names the day, not the markets", () => {
+  reset();
+  api.setScope("day", 0);
+  BOARD.forEach(f => { f._out = true; });
+  try {
+    api.renderWizardPanel();
+    const html = api.ELS.wizardPanel.innerHTML;
+    assert.ok(Object.values(chips(html)).every(Boolean));
+    assert.match(html, /<p class='wsp-reach'>No games left today\. Widen the day and the payouts light up\.<\/p>/);
+    assert.doesNotMatch(html, /×1\.00/);
+    assert.doesNotMatch(html, /Pick a payout above/, "no 'pick one' over a row of dead chips");
+  } finally { BOARD.forEach(f => { delete f._out; }); }
+});
+
+test("markets that build nothing say so and name the markets", () => {
+  reset();
+  Object.keys(api.WSP.mk).forEach(k => { api.WSP.mk[k] = (k === "draw"); });  /* no draw clears 0.26 here */
+  api.renderWizardPanel();
+  const html = api.ELS.wizardPanel.innerHTML;
+  assert.match(html, /No game in all upcoming games clears the bar on the markets you have on\. Switch on more markets/);
+  assert.doesNotMatch(html, /Pick a payout above/);
 });
 
 /* ------------------------------------------------------------ the Slider */
@@ -257,14 +375,22 @@ test("the slip-style chips share no word with the dial", () => {
   }
 });
 
-test("the Slider subtitle reads as a per-pick floor, not a second confidence figure", () => {
-  assert.match(src, /" \\u00b7 each pick "\+P0\(p\.minConf\)\+"%\+"/);
-  assert.doesNotMatch(src, /"%\+ confidence"/);
-});
-
-test("the Slider shows the total once: no odds tile beside the gold foot", () => {
-  const fn = grab("renderBuilderOutput");
-  assert.match(fn, /var _tileOdds=isWiz;/);
-  assert.match(fn, /\(!_tileOdds\?"":"<div class='stat odds'>/);
-  assert.match(src, /\.bf-odds b\{[^}]*color:var\(--win\)/, "the foot total is the gold one");
+test("the Slider shows the total once, gold on the foot, and the subtitle is a per-pick floor", () => {
+  reset();
+  api.BUILD.mode = "slider"; api.BUILD.risk = 60; api.BUILD.touched = true; api.BUILD.removed = {};
+  api.renderBuilderOutput();
+  const stats = api.ELS.bldStats;
+  assert.doesNotMatch(stats.innerHTML, /Total odds/, "no odds tile in the Slider");
+  assert.strictEqual((stats.innerHTML.match(/<div class='stat[ ']/g) || []).length, 2);
+  assert.ok(stats.classList.contains("stats-2"), "two tiles, two columns");
+  assert.match(api.ELS.bfOdds.innerHTML, /<b>~?×[\d.]+<\/b>/, "the total is on the foot");
+  assert.match(src, /\.bf-odds b\{[^}]*color:var\(--win\)/, "and the foot figure is gold");
+  const sub = api.ELS.riskSub.textContent;
+  assert.match(sub, /^\d+ games? · each pick \d+%\+/);
+  assert.doesNotMatch(sub, /confidence/);
+  /* The Wizard keeps its tile: its foot is hidden, the tile is its preview. */
+  api.BUILD.mode = "wizard"; api.WSP.odds = 10;
+  api.renderBuilderOutput();
+  assert.match(stats.innerHTML, /Total odds/);
+  assert.ok(!stats.classList.contains("stats-2"));
 });

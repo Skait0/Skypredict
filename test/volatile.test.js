@@ -55,7 +55,7 @@ function harness(fixtures, store) {
     grab("loadLeaguePicks") + grab("isVolatile") + grab("leagueDefault") +
     grab("leagueAllowed") + grab("leaguesChosen") + grab("leaguePicksTouched") +
     grab("setLeaguePicked") + grab("clearLeaguePicks") + grab("setVolIn") +
-    grab("inScope") + grab("scopeFixtures") + grab("leaguesOnBoard") +
+    grab("inScope") + grab("scopeFixtures") + grab("windowWords") + grab("leaguesOnBoard") +
     grab("resetLeagues") + grab("askVolatile") + grab("renderLeaguePicker") + "\n" +
     "loadLeaguePicks();" +
     "return {scopeFixtures:scopeFixtures, leaguesOnBoard:leaguesOnBoard," +

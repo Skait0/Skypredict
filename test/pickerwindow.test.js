@@ -33,7 +33,12 @@ const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), 
 test("the picker names its time window rather than a bare count", () => {
   const fn = /function renderLeaguePicker\(\)\{[\s\S]*?\n\}/.exec(src);
   assert.ok(fn, "renderLeaguePicker not found");
-  const body = fn[0];
+  /* The words live in windowWords since 7 Oct, shared with the Wizard's
+     ceiling line and the short-slip header; the picker must use them. */
+  assert.match(fn[0], /var win = windowWords\(true\);/, "the picker must name the window via windowWords");
+  const ww = /function windowWords\(playing\)\{[\s\S]*?\n\}/.exec(src);
+  assert.ok(ww, "windowWords not found");
+  const body = ww[0];
 
   /* The window phrase has to be built from the live scope and bucket, not
      hard-coded, or it will drift the moment either changes. */

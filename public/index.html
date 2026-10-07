@@ -2107,9 +2107,10 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    above - this is an ordinary paragraph and the space is really there - it
    just wants a little more air around a word set in a heavier weight. */
 #mySheetSub .sbm,#mySheetSub .b9m{margin-left:.18em}
-/* A wizard slip short of its target: the result, in the header, in amber. */
+/* A wizard slip short of its target, in the header: the words amber (caution),
+   the figure gold like every other total. */
 .sheet-head p.ms-miss{margin-top:6px;font-size:13.5px;font-weight:700;color:var(--amber)}
-.ms-miss b{font-size:15px;font-weight:800}
+.ms-miss b{font-size:15px;font-weight:800;color:var(--accent)}
 /* The cross is a drawn path, not a typed character. A text "x" or &times;
    carries the font's own side and vertical bearings, so it lands a pixel or two
    off centre inside a square button and reads as crooked whatever line-height
@@ -10408,6 +10409,19 @@ function scopeFixtures(){
     return inScope(f);
   }));
 }
+/* THE WINDOW, IN WORDS - one copy for every sentence that names it: the
+   league picker ("12 leagues playing today"), the Wizard's ceiling line and
+   the short-slip header ("the most we can build this weekend"). `playing`
+   is the picker's phrasing; without it a single day reads "today",
+   "tomorrow" or "on saturday". */
+function windowWords(playing){
+  if(SCOPE==="all") return "in all upcoming games";
+  if(SCOPE==="span") return "in the next "+SPAN+" days";
+  if(SCOPE==="wknd") return "this weekend";
+  return (playing?"playing ":"")+
+    (TOD==="all"?"":(TOD==="early"?"in the morning ":TOD==="mid"?"in the afternoon ":"in the evening "))+
+    (!playing&&SDAY>1?"on ":"")+dayName(SDAY).toLowerCase();
+}
 /* The leagues actually available to choose from, with how many games each has
    in the current day/time window - so the picker offers what can be built with
    rather than every league the payload has ever carried. Counted BEFORE the
@@ -12531,6 +12545,16 @@ async function loadSporty(){
 /* Redraw whatever is currently showing ids, without disturbing anything the
    user is part-way through. */
 function repaintAfterMatch(){
+  /* New prices change what the Wizard can reach without changing any input
+     its ceiling is keyed on, so the probe starts over - and the payout rungs
+     are redrawn if they are on screen, or a rung locked out on the old board
+     stays locked. Not while the custom box has focus: the redraw would take
+     the number from under the fingers typing it. */
+  WSP_REACH={};
+  try{
+    if(BUILD.mode==="wizard" && document.documentElement.classList.contains("mode-build") &&
+       !(document.activeElement && document.activeElement.id==="wspCust")) renderWizardPanel();
+  }catch(e){}
   try{
     if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
     if(typeof paint==="function") paint();
@@ -19164,7 +19188,8 @@ function renderMySheet(){
       MYSLIP.some(function(x){ return x.auto&&x.via==="wizard"; });
     _mm.hidden=!_say;
     _mm.innerHTML=_say ? "<b>\u00d7"+(_tot>=100?Math.round(_tot).toLocaleString("en"):_tot.toFixed(2))+
-      "</b> of your \u00d7"+(+_want).toLocaleString("en")+": the most today's games reach" : "";
+      "</b> of your \u00d7"+(+_want).toLocaleString("en")+": the most we can build "+
+      (WSP._miss.win||"right now") : "";
   }
   body.querySelectorAll("[data-myrm]").forEach(function(b){
     b.addEventListener("click",function(){var p=b.dataset.myrm.split("|"); toggleMy(p[0],p[1]);});});
@@ -19661,6 +19686,11 @@ function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
 var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,tcorn:false,shots:false,tshots:false,hcap:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* The slip style is remembered (and synced) since accounts, 29 Sep 2026. */
 try{var _lo=+localStorage.getItem("sw.legodd"); if(_lo>1&&_lo<10) WSP.legodd=_lo;}catch(e){}
+/* The short-slip header (see wspConjure), kept with the slip across reloads.
+   renderMySheet shows it only while the slip still holds wizard legs short of
+   the target, so a stale entry draws nothing. */
+try{var _wm=JSON.parse(localStorage.getItem("sw.wspmiss")||"null");
+  if(_wm&&+_wm.want>1) WSP._miss={want:+_wm.want,win:typeof _wm.win==="string"?_wm.win:""};}catch(e){}
 /* THE MARKET CHIPS ARE REMEMBERED. They never were: every load rebuilt both
    sets from the literals above, so a reader who switched Over 1.5 off and
    Both score on found Win or draw, Outright win, Over 1.5 and Team over 0.5
@@ -19783,7 +19813,7 @@ var SLIP_STYLES=[[1.25,"More games","smaller odds"],[1.4,"Even",""],[1.7,"Fewer 
    so the leg count falls out of the arithmetic. The Slider's count comes from
    the risk dial instead, so the style says the same thing two ways: prefer
    markets priced near the style's leg odds, and take more or fewer games.
-   Balanced is neutral - no pull, no change of count - so a reader who never
+   Even (the 1.4 chip, "Balanced" until 7 Oct) is neutral - no pull, no change of count - so a reader who never
    touches the row gets exactly the Slider they had. */
 function sliderStyle(){
   var per=WSP.legodd||1.4;
@@ -20480,13 +20510,22 @@ function wspBuild(){
    just under JACKPOT_ODDS for the rest. One cache slot per probe target.
    The key carries the league picker, the volatile-league switch and the book
    too: scopeFixtures and wspMarkets read them, and a key without them kept
-   the ceiling of a pool the reader had already changed. */
+   the ceiling of a pool the reader had already changed.
+   DATA CHANGES UNDER AN UNCHANGED KEY: a book feed landing, a reload of the
+   payload. Those reset WSP_REACH outright (repaintAfterMatch, load). A
+   kickoff shrinks the pool, so the count of games still in the window is in
+   the key instead of the payload's raw length.
+   NOT THE SEED. A reshuffle re-ran both probes (200-300 ms on All upcoming
+   on a cheap phone) for a ceiling that barely moves: the seed only reorders
+   near-ties when the leg cap binds. The shuffle COUNT stays, bucketed at 3,
+   because at 2 and 3 South America and Asia join the pool (saMode/asiaMode
+   in wspBuild) and that can raise the ceiling. */
 var WSP_REACH={};
 function wspMaxReach(at){
   at=at||1e12;
   var sig=[wspStyleOn(),JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE,SDAY,SPAN,TOD,
-           JSON.stringify(BLD_PICK),!!VOL_IN,curBook().key,(DATA&&DATA.fixtures||[]).length,
-           !!WSP.everyGame,WSP.seed,WSP.shuffles,
+           JSON.stringify(BLD_PICK),!!VOL_IN,curBook().key,scopeFixtures().length,
+           !!WSP.everyGame,Math.min(WSP.shuffles||0,3),
            Object.keys(WSP.removed||{}).length].join("|");
   var slot=WSP_REACH[at]||(WSP_REACH[at]={sig:null,max:0});
   if(slot.sig===sig) return slot.max;
@@ -20635,7 +20674,12 @@ function wspConjure(shuffle){
               via:"wizard",k:kickoffOf(c.id,c.f)};}));
   var seen={}; MYSLIP=MYSLIP.filter(function(x){
     if(seen[x.id])return false;seen[x.id]=1;return true;});
-  WSP._miss=r.short?{want:WSP.odds}:null;
+  /* The window is named as it was when this slip was built - the reader may
+     change it afterwards, and the slip still came from this one. Stored with
+     the slip so the header survives a reload (restored beside WSP). */
+  WSP._miss=r.short?{want:WSP.odds,win:windowWords()}:null;
+  try{ if(WSP._miss) localStorage.setItem("sw.wspmiss",JSON.stringify(WSP._miss));
+       else localStorage.removeItem("sw.wspmiss"); }catch(e){}
   saveMy(); renderFab(); openMySheet();
   /* Straight to the bottom - the last legs and the total are what you want to
      see, and no animation, because it should already be there. */
@@ -21298,12 +21342,7 @@ function renderLeaguePicker(){
      was looking at a day on which nearly every top flight was playing - all
      of them outside the Early window. The list was right and said nothing
      about why, which is the same thing as being wrong. */
-  var win = (SCOPE==="all") ? "in all upcoming games"
-          : (SCOPE==="span") ? ("in the next "+SPAN+" days")
-          : (SCOPE==="wknd") ? "this weekend"
-          : ("playing "+(TOD==="all" ? "" :
-              (TOD==="early"?"in the morning ":TOD==="mid"?"in the afternoon ":"in the evening "))+
-             dayName(SDAY).toLowerCase());
+  var win = windowWords(true);
   /* Counted over what is on the board, so a stored tap for a league not
      playing in this window does not skew the numbers. */
   var live=avail.filter(function(x){return leagueAllowed(x.league);}).length;
@@ -21464,6 +21503,23 @@ function renderWizardPanel(){
      (JACKPOT_LEG_CAP) - its own striped tier and note say what that costs. */
   var _topReach=0;
   odds.some(function(o){ if(canReach(o)) return false; _topReach=reachFor(o); return true; });
+  var _allOut=!WSP.everyGame && odds.every(function(o){ return !canReach(o); });
+  /* The line under the row. A ceiling of x1 means nothing could be built at
+     all, and "reach up to x1.00" read like a bug and named the wrong lever
+     when the window itself was empty - so that case says which it is. */
+  var _reachLine="";
+  if(_topReach>0 && _topReach<1.005){
+    var _inWin=scopeFixtures().filter(function(f){ return !(TOP_ONLY&&isLowerFixture(f)); }).length;
+    _reachLine=_inWin
+      ? "No game "+windowWords()+" clears the bar on the markets you have on. "+
+        "Switch on more markets and the payouts light up."
+      : "No games left "+windowWords()+". Widen the "+(SCOPE==="all"?"leagues":"day")+
+        " and the payouts light up.";
+  } else if(_topReach>0){
+    _reachLine="Your games and markets reach up to <b>×"+
+      (_topReach>=100?Math.round(_topReach).toLocaleString("en"):_topReach.toFixed(2))+
+      "</b> "+windowWords()+". Switch on more markets to go bigger.";
+  }
   /* Named for what they change, not for a promise they cannot keep.
      "Safer, more games" was the reported-worst of the three and measurably
      the least likely to land: more legs is more results that have to come
@@ -21497,8 +21553,7 @@ function renderWizardPanel(){
     /* The ceiling, said once and only when a rung is out of reach, in the
        same format as the slip header and the miss note. Inside the chip row (a
        full-width flex line) so the desktop grid needs no new cell. */
-    (_topReach>0 ? "<p class='wsp-reach'>Your games and markets reach up to <b>×"+
-      (_topReach>=100?Math.round(_topReach).toLocaleString("en"):_topReach.toFixed(2))+"</b> right now. Switch on more markets to go bigger.</p>" : "")+
+    (_reachLine ? "<p class='wsp-reach'>"+_reachLine+"</p>" : "")+
     "</div>"+
     /* Where a target the current window cannot reach explains itself. Empty
        the rest of the time, and it carries no margin when empty. */
@@ -21517,7 +21572,9 @@ function renderWizardPanel(){
   /* The slider tells a first-timer to move it; the wizard said nothing and
      simply had a payout chosen already. With nothing picked, say what to do
      and keep Conjure out of reach until there is something to aim at. */
-  if(WSP.odds==null)
+  /* Not when every rung is disabled: "pick one" over a row of dead chips
+     contradicts the line that says why they are dead. */
+  if(WSP.odds==null && !_allOut)
     html += "<p class='wsp-hint'>Pick a payout above - we'll find the games that reach it.</p>";
   /* Slip style trades legs against odds while reaching the same payout, and
      the Slider is one of the four answers rather than a mode that replaces the
@@ -22417,6 +22474,10 @@ async function load(){
     DATA=got.payload;
     holdTheDay();
     await loadSporty();
+    /* A new payload and its first prices: any Wizard ceiling probed before
+       this (a reload, or a tap while SportyBet was still loading) is stale.
+       See wspMaxReach. */
+    WSP_REACH={};
     loadBet9jaSoon();
     LOAD_RETRY=0;
     /* The first moment fixtureById can answer, so the first moment the saved

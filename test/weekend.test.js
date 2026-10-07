@@ -120,7 +120,8 @@ test("a stored Weekend is still the right weekend the next day", () => {
 test("the pill, the league picker and the empty state all name the weekend", () => {
   assert.match(grab("paintScope"), /SCOPE==="wknd" \? "Weekend"/);
   assert.match(grab("paintScope"), /\(SCOPE==="span"\|\|SCOPE==="wknd"\)\?buildableSpan\(\)\.length/);
-  assert.match(grab("renderLeaguePicker"), /SCOPE==="wknd"\) \? "this weekend"/);
+  assert.match(grab("renderLeaguePicker"), /windowWords\(true\)/);
+  assert.match(grab("windowWords"), /SCOPE==="wknd"\) return "this weekend"/);
   assert.match(src, /SCOPE==="wknd"\?"this weekend"/);
   assert.match(grab("openDayMenu"), /\+weekendOpt\(\)\+/, "Weekend sits after the span options");
   assert.match(grab("openDayMenu"), /setWeekend\(\)/);
