@@ -87,11 +87,59 @@ test("the link-preview image lists every book", () => {
 
 test("the static pages name 1xBet where they list the books", () => {
   const P = read("lib/pages.js");
-  assert.match(P, /title: "Free SportyBet, Bet9ja, BetKing, betPawa and 1xBet booking codes/);
+  assert.match(require("../lib/pages.js").renderCodesHub([], () => null),
+    /<title>Free SportyBet, Bet9ja, BetKing, betPawa and 1xBet booking codes/);
   assert.match(P, /<li><b>1xBet<\/b>: <code>\$\{esc\(XB_SHARE\)\}YOURCODE<\/code><\/li>/);
   assert.match(P, /<h2>By hand, on 1xBet<\/h2>/);
   assert.match(P, /<h2>By hand, on BetKing or betPawa<\/h2>/);
   /* The <title>s stay short on purpose - 60 characters with the brand, pinned in
      convertpage/bookinglinks tests - so the five names live in h1, sub and body. */
   assert.match(P, /sub: "Or any of the five to any other\."/);
+});
+
+/* ONE LIST OF LIVE BOOKS, AND EVERY COUNT OR LIST READS IT (7 Oct 2026).
+   The critique found the number of bookmakers given as two, three, four or
+   five depending on the surface: "on both bookmakers" under a page drawing
+   five tickets. lib/books.js is the list; the app's BOOKS table, the app's
+   meta copy, the static pages and the social copy are held to it here. */
+const B = require("../lib/books.js");
+
+test("lib/books.js is the app's own book list", () => {
+  assert.deepStrictEqual(B.KEYS.slice().sort(), KEYS.slice().sort());
+  assert.deepStrictEqual(B.NAMES, LABEL);
+  assert.strictEqual(require("../lib/doctor.js").BOOK_NAMES, B.NAMES, "the bot keeps its own copy again");
+});
+
+test("the app's title, description and card text list exactly the live books", () => {
+  const index = read("public/index.html");
+  const head = index.slice(0, index.indexOf("</head>"));
+  const or = B.list("or");
+  for (const m of head.match(/<meta (?:name|property)="(?:description|og:description|twitter:description|og:image:alt|twitter:image:alt)" content="[^"]*"/g)) {
+    assert.ok(m.includes(or), "app meta does not list the live books: " + m);
+  }
+});
+
+test("the static pages and the social copy count and list the same books", () => {
+  const P = require("../lib/pages.js");
+  const hub = P.renderCodesHub([], () => null);
+  assert.ok(hub.includes(B.list()), "the hub's title/description");
+  assert.match(hub, new RegExp("on all " + B.COUNT_WORD + " books"), "the hub's sub-line");
+  const day = P.renderCodesDay({ date: "2026-10-01", codes: { sporty: "A1", bet9ja: "B2", onexbet: "C3" },
+    legs: [{ home: "A", away: "B", tip: "Home win" }] }, () => null);
+  assert.match(day, /booked as one slip on SportyBet, Bet9ja and 1xBet\./, "a day names the books that day had");
+  /* Any surface that says how many: a count word must be the live count. */
+  const WORDS = ["two", "three", "four", "five", "six", "seven"];
+  const counted = /\b(both|two|three|four|five|six|seven) (?:bookmakers|bookies|books)\b/g;
+  const surfaces = { hub, day, social: read("lib/social.js").replace(/BOOKS\.COUNT_WORD/g, B.COUNT_WORD) };
+  for (const [name, text] of Object.entries(surfaces)) {
+    for (const m of text.match(counted) || []) {
+      const w = m.split(" ")[0];
+      assert.ok(w === B.COUNT_WORD || !WORDS.includes(w) && w !== "both", name + " says \"" + m + "\"");
+    }
+  }
+  const S = require("../lib/social.js");
+  const seen = new Set();
+  for (let i = 0; i < 8; i++) seen.add(S.promo({}, 0, i).x);
+  assert.ok([...seen].some((t) => t.includes("all " + B.COUNT_WORD + " bookies")));
+  assert.ok([...seen].some((t) => t.includes(B.list("or"))));
 });

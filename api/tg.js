@@ -377,7 +377,7 @@ module.exports = async function handler(req, res) {
       if (legs) { used = b; break; }
     }
     if (!legs) {
-      await say("I couldn't read <code>" + code + "</code>" + (book ? " on " + D.BOOK_NAMES[book] : " on any of the five bookies") +
+      await say("I couldn't read <code>" + code + "</code>" + (book ? " on " + D.BOOK_NAMES[book] : " on any of the " + require("../lib/books.js").COUNT_WORD + " bookies") +
         ". Check the code - or it may have expired, or every game may have started.");
       return res.status(200).json({ ok: true });
     }

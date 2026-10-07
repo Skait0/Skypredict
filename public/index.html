@@ -6099,7 +6099,7 @@ html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
 /* On the outlined button the wordmark sits on the card's own dark ground, so
    it takes the colours the card already gives it in the title - not the dark
    ink it wore on the white button, which left 1xBet's "1X" at 1.1:1. Bet9ja's
-   red stays its brand red (#D42127, about 3.7:1 here): it is their logotype,
+   red stays its brand red (#D42127, measured 3.4:1 here): it is their logotype,
    which WCAG exempts, and any lighter red stops being their mark; "Open in"
    beside it carries the label at full contrast. */
 .code-card.code-card--modal.code-card--xb .code-opens .code-open .xbm{color:#fff}
@@ -16598,7 +16598,10 @@ function splitBoxInner(picks,oddsOf){
       var parts=splitPicks(picks,n);
       var each=parts.map(function(p){return oddsOf(p);});
       var lo=Math.min.apply(null,each), hi=Math.max.apply(null,each);
-      var pay=lo.toFixed(lo>=100?0:1)+(hi-lo>0.05?"-"+hi.toFixed(hi>=100?0:1):"");
+      /* Compare what is printed, not the raw gap: x1.66 and x1.74 are 0.08
+         apart and both print 1.7, which read "about x1.7-1.7 each". */
+      var loS=lo.toFixed(lo>=100?0:1), hiS=hi.toFixed(hi>=100?0:1);
+      var pay=loS+(hiS!==loS?"-"+hiS:"");
       return "<button class='sp-way' type='button' data-n='"+n+"'>"+
         "<b>"+n+" tickets</b><span>"+
         (blind?"priced at the bookmaker":"about x"+pay+" each")+
