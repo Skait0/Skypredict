@@ -17913,7 +17913,7 @@ function yestCounts(graded){
 function renderDaily(){
   var host=$("daily"); if(!host) return;
   var yd=windowRecord(1), res=yd?yd.rows:[];
-  var rec=DATA.record;
+  var rec=windowRecord(21);
   if(!res.length&&(!rec||!rec.total)){host.innerHTML="";return;}
 
   var hit=res.filter(function(r){return r.hit;}).length;
@@ -17997,25 +17997,36 @@ function renderDaily(){
    made, not a scroll later. */
 function renderProof(){
   var el=$("scProof"); if(!el) return;
-  var rec=DATA.record;
-  if(!rec||!rec.total){el.hidden=true;el.innerHTML="";return;}
-  var pct=Math.round(100*rec.correct/rec.total);
+  var rec=windowRecord(21);
+  if(!rec){el.hidden=true;el.innerHTML="";return;}
   el.hidden=false;
-  el.innerHTML="<span><b>"+pct+"% of our tips landed</b> over the last "+
-    (rec.days||0)+" days · every one checked against the final score</span>";
+  el.innerHTML="<span><b>"+rec.pct+"% of our tips landed</b> over the last "+
+    rec.days+" days · every one checked against the final score</span>";
 }
 
 /* ---- Accuracy record (renders only with real data) ---- */
 /* Hit rate over the last N days, graded from the results feed. A short window
    is a small sample and swings hard; showing it beside the long one is what
-   keeps a cold week readable as a cold week rather than as the whole story. */
+   keeps a cold week readable as a cold week rather than as the whole story.
+   Every record figure on the page comes through here, and lib/grade.js
+   windowRecord does the same for the build (share card, posts). `days` is the
+   window the graded rows really reach: about two weeks are kept, and that
+   must not read as "the last 21 days". Brier is on each tip's own
+   probability, which is what the calibration cell grades. */
 function windowRecord(days){
+  var span=0, bs=0, bn=0;
   var res=(DATA.results||[]).filter(function(r){
-    var o=dayOff(r.date); return o<0 && o>=-days;
+    var o=dayOff(r.date); if(!(o<0 && o>=-days)) return false;
+    if(-o>span) span=-o;
+    return true;
   });
   if(!res.length) return null;
   var hit=res.filter(function(r){return r.hit;}).length;
-  return {correct:hit,total:res.length,pct:Math.round(100*hit/res.length),days:days,rows:res};
+  res.forEach(function(r){
+    if(typeof r.tip_p==="number"){ bs+=Math.pow((r.hit?1:0)-r.tip_p,2); bn++; }
+  });
+  return {correct:hit,total:res.length,pct:Math.round(100*hit/res.length),days:span,
+    brier:bn?Math.round(bs/bn*1000)/1000:null,rows:res};
 }
 /* The headline percentage is a blend, and a blend moves with its mix rather
    than with the model: folding Over 1.5 into the graded set lifted the overall
@@ -18045,9 +18056,9 @@ function marketBreakdownHTML(rec){
 }
 function renderRecord(){
   var host=$("record"); if(!host) return;
-  var rec=DATA.record;
-  if(!rec||!rec.total){host.innerHTML="";return;}
-  var pct=Math.round(100*rec.correct/rec.total);
+  var rec=windowRecord(21);
+  if(!rec){host.innerHTML="";return;}
+  var pct=rec.pct;
   /* This is the one claim no rival tips site makes: a graded, calibrated
      history. It gets a real panel - both windows, how well the stated
      confidence matched reality, and yesterday - because it is the reason to
@@ -18059,7 +18070,8 @@ function renderRecord(){
   var b=rec.brier;
   var cal=(b==null)?null:(b<=0.18?"Excellent":b<=0.21?"Good":b<=0.24?"Fair":"Rough");
   var yest=windowRecord(1);
-  var wk=windowRecord(7);
+  /* Under eight days of history the two windows are the same rows. */
+  var wk=rec.days>7?windowRecord(7):null;
   var cold=wk&&wk.pct<pct-5;
   host.innerHTML=
     "<div class='rec-panel'>"+
@@ -18069,16 +18081,18 @@ function renderRecord(){
         (wk?"<div class='rec-cell'><b class='pc"+(cold?" cool":"")+"'>"+wk.pct+"%</b>"+
           "<i>last 7 days \u00b7 "+wk.correct+"/"+wk.total+"</i></div>":"")+
         "<div class='rec-cell'><b class='pc'>"+pct+"%</b><i>last "+
-          (rec.days||21)+" days \u00b7 "+rec.correct+"/"+rec.total+"</i></div>"+
+          rec.days+" days \u00b7 "+rec.correct+"/"+rec.total+"</i></div>"+
         (cal?"<div class='rec-cell'><b>"+cal+"</b><i>calibration</i></div>":"")+
         (yest?"<div class='rec-cell'><b>"+yest.correct+"/"+yest.total+
           "</b><i>yesterday</i></div>":"")+
       "</div>"+
       "<div class='rec-bar'><i style='width:"+pct+"%'></i></div>"+
-      marketBreakdownHTML(rec)+
+      /* Graded by market in the build (lib/grade.js windowRecord over the
+         same results); the page has no tip-to-market map of its own. */
+      marketBreakdownHTML(DATA.record)+
       "<div class='rec-foot'>"+
         (cold?"A short week swings hard - seven days is a small sample, and the "+
-              (rec.days||21)+"-day figure is the honest one. ":"")+
+              rec.days+"-day figure is the honest one. ":"")+
         (cal?"When we say 70%, it lands near 70% - ":"")+
         "measured on games the model had not seen.</div>"+
     "</div>";
