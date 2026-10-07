@@ -1765,7 +1765,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .confirm-card .ca{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .confirm-card button{font:inherit;font-weight:800;font-size:14px;padding:11px 18px;border-radius:var(--r-md);cursor:pointer;border:0}
 .confirm-go{background:var(--red-fill);color:#fff}
-.confirm-cancel{background:var(--card);color:var(--text);border:1px solid var(--line)!important}
+.confirm-cancel,.confirm-alt{background:var(--card);color:var(--text);border:1px solid var(--line)!important}
 /* THE BOOKING POP-UP - see showPrompt. Above the code dialog (220), because
    Make it safer asks from inside it. */
 .ask-scrim{position:fixed;inset:0;z-index:240;background:rgba(10,14,10,.5);
@@ -1774,7 +1774,9 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .ask-card{position:relative;width:min(440px,100%);max-height:min(82vh,680px);overflow:auto;overscroll-behavior:contain;
   background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
   padding:18px 16px 16px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
-.ask-x{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;border:0;
+/* z-index: the card's body comes after this button in the DOM, so a long first
+   line painted over it and took the tap - the X did nothing (owner, 7 Oct). */
+.ask-x{position:absolute;top:8px;right:8px;z-index:2;width:34px;height:34px;border-radius:50%;border:0;
   background:var(--raise);color:var(--soft);display:grid;place-items:center;cursor:pointer}
 .ask-x svg{width:15px;height:15px}
 .ask-card .confirm-card{background:none;border:0;padding:0;text-align:left}
@@ -2178,7 +2180,7 @@ html.locked{overflow:hidden}
      is as wide as the word and no wider. */
   .bld-foot .clear-btn.wordy{width:auto;padding:0 13px;gap:6px}
   .bld-foot .clear-btn.wordy span{font-size:13px}
-  .confirm-go,.confirm-cancel{padding:9px 16px;font-size:13.5px}
+  .confirm-go,.confirm-cancel,.confirm-alt{padding:9px 16px;font-size:13.5px}
   .slip-cta{animation:none;padding:12px 16px}      /* kill the pulsing glow loop on desktop */
   .slip-cta::after{display:none}
   .lmore-x,.more-collapse{width:auto;display:inline-block;padding:7px 14px}
@@ -3314,6 +3316,8 @@ html{interpolate-size:allow-keywords}
 /* In the sheet this line sits outside the scrolling body, level with the book
    picker, so it needs the sheet's own gutter rather than the panel's. */
 #myNote{padding:0 16px;margin-top:8px}
+.ms-edit{padding:0 16px;margin:8px 0 0;font-size:13px;color:var(--soft)}
+.ms-edit[hidden]{display:none}
 #bookResult{margin-top:14px}
 /* Compact centred modal for the booking code */
 /* ---- converting a borrowed code to the other book ---- */
@@ -5937,8 +5941,25 @@ html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
   .toprow .viewtoggle.top .vt{padding:7px 12px}
 }
 
-/* Conjure is a .book-btn like every other "do it" button: sentence case, the
-   standard fill, no violet glass and no rune pulse (Task 4, 7 Oct). */
+/* CONJURE KEEPS ITS WIZARDRY (owner, 7 Oct 2026: "i want the conjure button
+   back to the wizardry purple"). Violet glass, gold lining, slow rune pulse,
+   as before Task 4 - on Conjure only (#wspGo). "Add selections to slip" takes
+   the same slot after a conjure and stays the red primary. Sentence case kept:
+   the spaced capitals were a separate tell. */
+button#wspGo{color:#EDE7FF!important;
+  background:linear-gradient(165deg,#2b1a5e 0%,#1d1142 60%,#140a30 100%)!important;
+  border:1px solid rgba(212,175,55,.6)!important;
+  box-shadow:0 4px 18px rgba(90,46,210,.35),inset 0 0 12px rgba(124,77,255,.22),
+    inset 0 1px 0 rgba(255,255,255,.14)!important;
+  position:relative;overflow:hidden}
+@media (hover:hover){
+  button#wspGo:hover{color:#fff!important;border-color:rgba(232,199,95,.9)!important;
+    box-shadow:0 6px 26px rgba(112,66,240,.55),inset 0 0 18px rgba(140,96,255,.35),
+      inset 0 1px 0 rgba(255,255,255,.2)!important}}
+button#wspGo::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(212,175,55,.25);animation:runePulse 3.2s ease-in-out infinite}
+@keyframes runePulse{0%,100%{opacity:.35}50%{opacity:.85}}
+@media(prefers-reduced-motion:reduce){ button#wspGo::after{animation:none;opacity:.5} }
 
 /* Slip style -> Conjure reads as one step: the chips choose the style, the
    button acts on it. Tighten the label above the chips and let Conjure sit
@@ -7483,7 +7504,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
            list that can run to forty games. Filled with them in
            renderBuilderOutput. -->
       <span class="bf-odds" id="bfOdds" aria-live="polite"></span>
-      <button class="book-btn" id="bookBtn" type="button">Get code</button>
+      <button class="book-btn" id="bookBtn" type="button">Add selections to slip</button>
     </div>
     <div class="bld-note stage-in stage-in-5" id="bldNote" data-parallax="0.1"></div>
     <!-- Names whichever book is selected - see paintBookPickers. Hardcoded, it
@@ -7770,6 +7791,12 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
        one book sells sat here with a live button and no explanation, and the
        only way to find out was to press it. -->
   <div class="bld-note" id="myNote" aria-live="polite"></div>
+  <!-- THE SHEET IS WHERE A BUILT SLIP IS EDITED (owner, 7 Oct 2026). The
+       builder and the Wizard hand their legs here with "Add selections to
+       slip" instead of booking from their own panel, so the one line a reader
+       needs is that nothing is final until Get code. Shown while the slip
+       carries machine-picked legs - see renderMySheet. -->
+  <p class="ms-edit" id="myEditHint" hidden>Swap or remove any game before you get the code.</p>
   <div class="mysheet-foot" id="mySheetFoot" hidden>
     <div class="bld-odds" aria-live="polite"><i>Total odds</i><b id="myTotOdds">-</b></div>
     <!-- Only for a conjured slip: reshuffling a slip somebody picked by hand
@@ -10204,9 +10231,6 @@ addEventListener("keydown",function(e){
   }});
 
 /* ============================================================ build a slip */
-/* Set only while clearMy repaints the builder, to stop that repaint from
-   syncing the picks back into a slip the user just emptied. */
-var BUILD_NOSYNC=false;
 /* The markets a fresh visit starts with.
    Four, not seven. Win or draw and Team over 0.5 are the two safest things on
    the board (tier 0), Over 1.5 is the one goals line safe enough to headline,
@@ -18810,25 +18834,12 @@ function clearMy(){
   try{
     WSP.odds=null;
     clearSlipState();
-    /* The builder writes its picks into MYSLIP on every render, which is what
-       makes the slider and the slip feel like one thing. Here it was the bug:
-       Clear emptied the slip and then called renderBuilder to repaint the
-       preview, and that render put the very same legs straight back before the
-       sheet was drawn. The slip never cleared. Once the slider has been touched
-       the sync is unconditional, so this happened on every Clear from the
-       slider page - and since a phone leaves :hover on the last thing tapped,
-       the button stayed red as well, which is why it read as jammed rather than
-       as undoing its own work.
-       Suppress the sync for this one repaint, and lower touched afterwards so
-       an incidental render cannot resurrect the slip either. Moving the slider
-       or changing a filter raises it again, so the next deliberate act brings
-       the sync straight back. */
-    BUILD_NOSYNC=true; BUILD.touched=false;
-    try{
-      if(document.documentElement.classList.contains("mode-build")) renderBuilder();
-      if(typeof renderSlipTease==="function") renderSlipTease();
-    }finally{ BUILD_NOSYNC=false; }
-  }catch(e){ BUILD_NOSYNC=false; }
+    /* The builder no longer writes into My slip on render (addBuiltToSlip is
+       the one way in), so this repaint cannot put the cleared legs back. */
+    BUILD.touched=false;
+    if(document.documentElement.classList.contains("mode-build")) renderBuilder();
+    if(typeof renderSlipTease==="function") renderSlipTease();
+  }catch(e){}
   renderMySheet();
 }
 function flyToSlip(srcEl){
@@ -19168,6 +19179,41 @@ function swapMy(id,oldCode,newCode){
    touch-action on the bar it leaves every button in the sheet alone. */
 function lockBody(on){ try{ scrollLock("sheet",on); }catch(e){} }
 function openMySheet(){renderMySheet();$("scrim").classList.add("on");$("mySheet").classList.add("on");lockBody(true);pushOverlay();}
+/* THE ONE WAY A BUILT SLIP REACHES MY SLIP (owner, 7 Oct 2026). The Slider's
+   bar and the Wizard panel both end on "Add selections to slip"; the sheet is
+   where games are swapped or removed and where Get code lives. An empty slip
+   just fills. A slip already holding games is asked about first - replacing
+   would throw away games the reader chose by hand, adding changes the odds
+   and leg count the builder just showed - so neither happens silently. On
+   add, a game already on the slip keeps the reader's own market. */
+function addBuiltToSlip(picks,via){
+  if(!picks||!picks.length) return;
+  var legs=picks.map(function(c){
+    return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true,
+            via:via,k:kickoffOf(c.id,c.f)};});
+  var same=MYSLIP.length===legs.length&&legs.every(function(l){
+    return MYSLIP.some(function(x){return x.id===l.id&&x.code===l.code;});});
+  function put(keep){
+    var seen={};
+    MYSLIP=keep.concat(legs).filter(function(x){
+      if(seen[x.id])return false;seen[x.id]=1;return true;});
+    saveMy(); renderFab(); openMySheet();
+    if(via==="wizard") putMissNote(WSP._missNote);
+  }
+  if(!MYSLIP.length||same){ put([]); return; }
+  var n=MYSLIP.length, m=legs.length;
+  showPrompt("bldAdd","<div class='confirm-card'><p><b>Your slip already has "+
+      n+(n===1?" game":" games")+".</b> Replace "+(n===1?"it":"them")+" with "+(m===1?"this one":"these "+m)+
+      ", or add "+(m===1?"it":"these "+m)+" to your slip?</p>"+
+    "<div class='ca'><button class='confirm-go' type='button'>Replace "+(n===1?"it":"them")+"</button>"+
+    "<button class='confirm-alt' type='button'>Add to "+(n===1?"it":"them")+"</button></div></div>",
+    "Your slip already has games");
+  var host=promptEl("bldAdd");
+  host.querySelector(".confirm-go").addEventListener("click",function(){
+    clearPrompt("bldAdd"); put([]); });
+  host.querySelector(".confirm-alt").addEventListener("click",function(){
+    clearPrompt("bldAdd"); put(MYSLIP.slice()); });
+}
 function wireSlipsSheet(){
   var x=$("slipsSheet-x"); if(x&&!x._w){x._w=1;x.addEventListener("click",closeSlipsSheet);}
 }
@@ -19252,6 +19298,8 @@ function renderMySheet(){
   var shuf=$("mySheetShuffle");
   if(shuf) shuf.hidden = !MYSLIP.some(function(x){return x.auto;})
     || !document.documentElement.classList.contains("mode-build");
+  var eh=$("myEditHint");
+  if(eh) eh.hidden = !MYSLIP.some(function(x){return x.auto;});
   body.innerHTML=MYSLIP.map(function(x){
     var f=fixtureById(x.id);
     var teams=f?esc(f.home)+" v "+esc(f.away):"Match";
@@ -19722,7 +19770,7 @@ $("myClearBtn").addEventListener("click",clearMy);
       window.swToast&&window.swToast("Pick a target payout to shuffle","info","noodds");
       setView("build"); return;
     }
-    wspConjure(true);
+    wspConjure(true,true);
   });
 })();
 /* Compare all bookies: fetch the feeds not yet loaded. The board repaints
@@ -20750,7 +20798,11 @@ function renderIdleMarkets(picks){
     "</span> added nothing: "+tail+"</p>";
 }
 
-function wspConjure(shuffle){
+/* fill: write the legs into My slip and open it. Only the sheet's own Shuffle
+   does - the reader is already looking at the slip there. Conjure on the panel
+   stops at the numbers and offers "Add selections to slip" (owner, 7 Oct
+   2026), so the sheet no longer opens on a slip nobody has said yes to. */
+function wspConjure(shuffle,fill){
   if(shuffle){WSP.seed=Math.floor(Math.random()*1e6);WSP.shuffles=(WSP.shuffles||0)+1;}
   /* A fresh conjure is a new question, so the shuffle escalation starts over.
      The counter only ever incremented, which would have left a session that
@@ -20772,22 +20824,26 @@ function wspConjure(shuffle){
      itself is read where it can be acted on, which is also where Get code
      lives. auto:true marks them as machine-picked, so a later conjure
      replaces them and leaves anything hand-picked alone. */
-  MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
-    .concat(r.picks.map(function(c){
-      return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true,
-              via:"wizard",k:kickoffOf(c.id,c.f)};}));
-  var seen={}; MYSLIP=MYSLIP.filter(function(x){
-    if(seen[x.id])return false;seen[x.id]=1;return true;});
+  if(fill){
+    MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
+      .concat(r.picks.map(function(c){
+        return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true,
+                via:"wizard",k:kickoffOf(c.id,c.f)};}));
+    var seen={}; MYSLIP=MYSLIP.filter(function(x){
+      if(seen[x.id])return false;seen[x.id]=1;return true;});
+  }
   /* The window is named as it was when this slip was built - the reader may
      change it afterwards, and the slip still came from this one. Stored with
      the slip so the header survives a reload (restored beside WSP). */
   WSP._miss=r.short?{want:WSP.odds,win:windowWords()}:null;
   try{ if(WSP._miss) localStorage.setItem("sw.wspmiss",JSON.stringify(WSP._miss));
        else localStorage.removeItem("sw.wspmiss"); }catch(e){}
-  saveMy(); renderFab(); openMySheet();
-  /* Straight to the bottom - the last legs and the total are what you want to
-     see, and no animation, because it should already be there. */
-  try{var mb=$("mySheetBody"); if(mb) mb.scrollTop=mb.scrollHeight;}catch(e){}
+  if(fill){
+    saveMy(); renderFab(); openMySheet();
+    /* Straight to the bottom - the last legs and the total are what you want
+       to see, and no animation, because it should already be there. */
+    try{var mb=$("mySheetBody"); if(mb) mb.scrollTop=mb.scrollHeight;}catch(e){}
+  }
   window.__wizChime&&window.__wizChime();
   /* Say what was actually built. When the board could not reach the target on
      markets we have a record for, tell the person plainly instead of quietly
@@ -20825,7 +20881,12 @@ function wspConjure(shuffle){
     window.swToast&&window.swToast((shuffle?"Reshuffled - ":"Conjured ")+r.picks.length+" games · ~×"+r.odds.toFixed(0),"ok");
   }
   /* On the slip, not only in a toast: a toast is gone in two seconds and this
-     explains the number they are looking at. */
+     explains the number they are looking at. Kept for addBuiltToSlip when the
+     sheet is not open yet. */
+  WSP._missNote=missNote;
+  if(fill) putMissNote(missNote);
+}
+function putMissNote(missNote){
   try{
     var body=$("mySheetBody");
     if(body){
@@ -21770,9 +21831,16 @@ function renderWizardPanel(){
       "<span class='wsl-a' aria-hidden='true'>\u2192</span></button>";
     html += "</div>";
   }
-  html +=
-    "<button class='book-btn wsp-go"+(WSP.odds==null?" waiting":"")+
-      "' id='wspGo' type='button'>Conjure ticket</button>";
+  /* ONE BUTTON, AND IT IS THE NEXT STEP (owner, 7 Oct 2026). Conjure until a
+     slip exists, then "Add selections to slip" in its place. No "Conjure
+     again": this panel shows only the numbers, so a reroll would change a slip
+     nobody can see ("why is there a conjure again? there is no preview"). A
+     new payout or style is a new ticket and brings Conjure back (see the chip
+     handlers); the sheet's Shuffle rerolls where the games are on screen. */
+  html += WSP.conjured
+    ? "<button class='book-btn wsp-go' id='wspAdd' type='button'>Add selections to slip</button>"
+    : "<button class='book-btn wsp-go"+(WSP.odds==null?" waiting":"")+
+        "' id='wspGo' type='button'>Conjure ticket</button>";
 
   $("wizardPanel").innerHTML=html;
   // Panel visibility
@@ -21788,7 +21856,10 @@ function renderWizardPanel(){
   // list itself stays hidden until Conjure is tapped, so Conjure keeps its
   // reveal moment.
   $("wspOddsChips").querySelectorAll("[data-o]").forEach(function(c){
-    c.addEventListener("click",function(){WSP.odds=+c.dataset.o;WSP._sig=null;
+    /* A new payout is a new ticket: back to Conjure (owner, 7 Oct 2026 - "the
+       button should go back to conjure, thats the magic!"). Same for a typed
+       payout, the wider-window offer and a new slip style below. */
+    c.addEventListener("click",function(){WSP.odds=+c.dataset.o;WSP._sig=null;WSP.conjured=false;
       try{localStorage.setItem("sw.wspodds",String(WSP.odds));}catch(e){}
       renderBuilder();});
   });
@@ -21828,7 +21899,7 @@ function renderWizardPanel(){
         WSP.removed={}; WSP._slip=null; WSP._sig=null;
         var _br=$("bookResult"); if(_br) _br.innerHTML="";
       }
-      WSP.odds=typed; WSP._sig=null;
+      WSP.odds=typed; WSP._sig=null; WSP.conjured=false;
       try{localStorage.setItem("sw.wspodds",String(typed));}catch(e){}
       renderBuilder();
     });
@@ -21854,7 +21925,7 @@ function renderWizardPanel(){
       var _needsWider=(_typed>_ceil && SCOPE!=="all" && _typed<=(WSP._wideMaxTarget||50000));
       WSP._typed="";
       if(v!==WSP.odds){
-        WSP.odds=v; WSP._sig=null;
+        WSP.odds=v; WSP._sig=null; WSP.conjured=false;
         try{localStorage.setItem("sw.wspodds",String(v));}catch(e){}
         renderBuilder();
         var again=$("wspCust"); if(again){ again.focus(); }
@@ -21921,7 +21992,7 @@ function renderWizardPanel(){
     c.addEventListener("click",function(){
       WSP.legodd=+c.dataset.lo;
       try{localStorage.setItem("sw.legodd",String(WSP.legodd));}catch(e){}
-      WSP._sig=null;renderBuilder();
+      WSP._sig=null;WSP.conjured=false;renderBuilder();
       /* renderBuilder rebuilds the input, so a half-typed target would be lost
          by choosing a style for it - which is the one moment the row is on
          screen BECAUSE something is being typed. */
@@ -21939,7 +22010,9 @@ function renderWizardPanel(){
     try{localStorage.setItem("sw.mode","slider");}catch(e){}
     renderBuilder(); bldToPanel();
   });
-  $("wspGo").addEventListener("click",function(){
+  /* Absent once conjured - Add takes its place. */
+  var _go=$("wspGo");
+  if(_go) _go.addEventListener("click",function(){
     /* Disabled would have been silent about why. It stays pressable and says
        what is missing, then points at the chips that answer it. */
     if(WSP.odds==null){
@@ -21953,6 +22026,8 @@ function renderWizardPanel(){
       return;
     }
     buzzConjure(); wspConjure(false);});
+  var _add=$("wspAdd");
+  if(_add) _add.addEventListener("click",function(){ addBuiltToSlip(BUILD.picks,"wizard"); });
 
 }
 function renderBuilderOutput(){
@@ -22131,22 +22206,11 @@ function renderBuilderOutput(){
       sh.hidden=false;
     }else{ sh.textContent=""; sh.hidden=true; }
   }
-  // Sync to MYSLIP (slider once touched; wizard always reflects its preview)
-  /* Never sync the ghost.
-     Before Conjure is pressed the wizard renders a preview of what it would
-     build - that is the point of it, you see the shape of the ticket while
-     choosing a payout. But the sync condition asked only whether we were in
-     wizard mode, so those preview legs went straight into My slip, and the
-     slip filled itself before the button was touched. Conjure then appeared
-     to do nothing, because its work was already on screen.
-     A preview is a preview until somebody says yes. */
-  if(!BUILD_NOSYNC && !wizGhost && (BUILD.touched || isWiz)){
-    MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
-      .concat(picks.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true,
-              via:isWiz?"wizard":"slider"};}));
-    var _seen={}; MYSLIP=MYSLIP.filter(function(x){if(_seen[x.id])return false;_seen[x.id]=1;return true;});
-    saveMy(); renderFab();
-  }
+  /* NO SYNC INTO MY SLIP (owner, 7 Oct 2026). The builder used to write its
+     picks into My slip on every render; now a slip goes there only through
+     "Add selections to slip" (addBuiltToSlip), which asks before touching a
+     slip that already holds games. A preview is a preview until somebody
+     says yes. */
   /* What the CURRENT book will take, not what SportyBet would. This counted
      c.eventId, which is SportyBet's id, so the note under a Bet9ja slip
      described SportyBet's coverage. */
@@ -22163,9 +22227,11 @@ function renderBuilderOutput(){
     var lbl=mLabel(c.f,c.code).replace(/<[^>]+>/g,"");
     if(lostMk.indexOf(lbl)<0) lostMk.push(lbl);
   });
+  /* Adds to My slip, where the code is got - so any game on the slip counts,
+     not only the ones this book takes; the sheet says what it cannot book. */
   var btn=$("bookBtn");
-  btn.disabled=BUILD.booking||!bookable;
-  btn.textContent=BUILD.booking?"Booking\u2026":"Get code";
+  btn.disabled=!picks.length;
+  btn.textContent="Add selections to slip";
   // Hide footer actions when slip is empty, and in wizard GHOST mode (before
   // Conjure) - the earlier hide was being overridden here because ghost picks
   // are non-empty. This is the single source of truth for foot visibility.
@@ -22327,7 +22393,7 @@ document.querySelectorAll(".bld-mode-btn").forEach(function(btn){
     renderBuilder();
   });
 });
-$("bookBtn").addEventListener("click",bookSlip);
+$("bookBtn").addEventListener("click",function(){ addBuiltToSlip(BUILD.picks,"slider"); });
 $("clearBtn").addEventListener("click",clearSlip);
 $("shuffleBtn").addEventListener("click",function(){if(BUILD.mode==="wizard"){wspConjure(true);return;}BUILD.touched=true;BUILD.seed=Math.floor(Math.random()*1e6);BUILD.shuffles=(BUILD.shuffles||0)+1;BUILD.removed={};$("bookResult").innerHTML="";renderBuilder();});
 
@@ -23354,6 +23420,16 @@ load().catch(function(){});
   var PERSON='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>';
   function paintButton(){
     var b=$("hdAccount"); if(!b) return;
+    /* WAIT FOR THE AVATAR, DO NOT GUESS IT (owner, 7 Oct 2026: "the default
+       wizard shows first and after a while, the selected wizard shows").
+       /api/me often answers before the deferred app bundle has run, and
+       swAvatarKey lives there - so this painted "fire" and the real portrait
+       only arrived with the next repaint. Stay hidden until the bundle is in
+       (it runs before DOMContentLoaded); "load" covers a bundle that failed. */
+    if(st.on&&!root.swAvatarKey&&d.readyState!=="complete"&&!st.avWait){
+      st.avWait=1; d.addEventListener("DOMContentLoaded",paintButton); root.addEventListener("load",paintButton);
+      return;
+    }
     b.hidden=false;
     if(st.on){
       b.innerHTML='<img class="ac-av" src="/av/'+(root.swAvatarKey?root.swAvatarKey():"fire")+'.webp" alt="" width="36" height="36">';

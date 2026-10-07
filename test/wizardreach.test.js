@@ -61,7 +61,7 @@ const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "
   "leagueAllowed", "leagueDefault", "setLeaguePicked", "leaguesChosen", "windowWords",
   "renderWizardPanel", "renderMySheet", "riskWord", "paintTicks", "repaintAfterMatch",
   /* renderBuilderOutput and wspConjure, driven for real, and what they lean on. */
-  "renderBuilderOutput", "wspConjure", "riskParams", "buildPicks", "sliderStyle", "styleFit",
+  "renderBuilderOutput", "wspConjure", "putMissNote", "addBuiltToSlip", "riskParams", "buildPicks", "sliderStyle", "styleFit",
   "totalOdds", "oddsAreReal", "conf"];
 
 /* The page's own restore statement for the short-slip header, run as written. */
@@ -70,7 +70,7 @@ if (!RESTORE_MISS) throw new Error("sw.wspmiss restore statement not found in in
 
 const api = new Function("STUB", [
   "var TOP_ONLY=false, SCOPE='all', SDAY=0, SPAN=3, TOD='all', BLD_PICK={}, VOL_IN=true;",
-  "var FIXTURES=[], MYSLIP=[], BUILD_NOSYNC=false;",
+  "var FIXTURES=[], MYSLIP=[];",
   (/^var BUILD=\{[\s\S]*?\};/m.exec(src) || [""])[0],
   "var DATA=null, STORE={}, localStorage={getItem(k){return k in STORE?STORE[k]:null},",
   "  setItem(k,v){STORE[k]=String(v)},removeItem(k){delete STORE[k]}};",
@@ -114,7 +114,7 @@ const api = new Function("STUB", [
   "var WSP_REACH={};",
 ].concat(FNS.map(grab)).join("\n") + `
   return { WSP, BUILD, ELS, $, STORE, wspMaxReach, renderWizardPanel, renderMySheet, paintTicks,
-           setLeaguePicked, SLIP_STYLES, repaintAfterMatch, renderBuilderOutput, wspConjure,
+           setLeaguePicked, SLIP_STYLES, repaintAfterMatch, renderBuilderOutput, wspConjure, addBuiltToSlip,
            clearReach(){ WSP_REACH = {}; },
            restoreMiss(){ ${RESTORE_MISS[0]} },
            setScope(s, d){ SCOPE = s; SDAY = d || 0; },
@@ -257,7 +257,10 @@ test("wspConjure puts the shortfall in the header, names the window, and it surv
   api.setScope("wknd");
   api.WSP.odds = 5000;                 /* custom: above anything 12 games make */
   api.setSlip([]);
+  /* Conjure stops at the panel; the header shows once the slip is added
+     (owner, 7 Oct 2026 - "Add selections to slip"). */
   api.wspConjure(false);
+  api.addBuiltToSlip(api.BUILD.picks, "wizard");
   const h = api.ELS.mySheetMiss;
   assert.strictEqual(h.hidden, false, "a short conjure must show the header");
   assert.match(h.innerHTML, /^<b>×[\d.,]+<\/b> of your ×5,000: the most we can build this weekend$/);
@@ -273,7 +276,9 @@ test("wspConjure puts the shortfall in the header, names the window, and it surv
     "the window is the one the slip was built in, not the one on screen now");
   /* A conjure that reaches its target clears the stored header. */
   api.WSP.odds = 10;
+  api.setSlip([]);
   api.wspConjure(false);
+  api.addBuiltToSlip(api.BUILD.picks, "wizard");
   assert.strictEqual(api.STORE["sw.wspmiss"], undefined);
   assert.strictEqual(h.hidden, true);
 });
@@ -285,6 +290,7 @@ test("the window words follow the scope", () => {
                 ["day", 4, "on Saturday"]].map(([s, d, want]) => {
     api.setScope(s, d);
     api.WSP.odds = 5000; api.setSlip([]); api.wspConjure(false);
+    api.addBuiltToSlip(api.BUILD.picks, "wizard");
     return [api.ELS.mySheetMiss.innerHTML.replace(/^.*the most we can build /, ""), want];
   });
   for (const [got, want] of said) assert.strictEqual(got, want);
