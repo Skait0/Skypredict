@@ -28,8 +28,9 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-const PUB = "C:/Users/DELL/Desktop/skypredict/public";
-const ASSETS = "C:/Users/DELL/Desktop/skypredict/assets";
+/* This checkout, not a fixed path: a worktree must not write another tree's assets. */
+const PUB = path.join(__dirname, "..", "public");
+const ASSETS = path.join(__dirname, "..", "assets");
 const PORT = 8093;
 
 const W = 1568, H = 772;
@@ -141,18 +142,20 @@ function advanceOf(ctx, font) {
 
   /* --------------------------------------------- line one, with a number in it
      Drawn in three pieces so a fixed-width gap can be left where the digits
-     go. The gap is two cells wide whatever the number turns out to be. */
+     go. The gap is three cells wide (the board passed 100 leagues on 7 Oct
+     2026); lib/ogcard.js centres a two-digit count in it. */
   const slots = { leagues: [], pct: [] };
+  const LEAGUE_CELLS = 3;
 
   x.font = STYLES.leagues.font;
   x.fillStyle = STYLES.leagues.color;
   const pre = "Football predictions across ", post = " leagues";
-  const lineW = x.measureText(pre).width + 2 * advL + x.measureText(post).width;
+  const lineW = x.measureText(pre).width + LEAGUE_CELLS * advL + x.measureText(post).width;
   let lx = (W - lineW) / 2;
   const baseY1 = 470;
   x.fillText(pre, lx, baseY1); lx += x.measureText(pre).width;
-  slots.leagues.push(Math.round(lx), Math.round(lx + advL));
-  lx += 2 * advL;
+  for (let i = 0; i < LEAGUE_CELLS; i++) slots.leagues.push(Math.round(lx + i * advL));
+  lx += LEAGUE_CELLS * advL;
   x.fillText(post, lx, baseY1);
 
   /* "Free" came off the card on 3 Sep, with the same line on the page: it
@@ -190,7 +193,10 @@ function advanceOf(ctx, font) {
   const chipPost = "% of tips landed";
   const chipW = 2 * advP + x.measureText(chipPost).width;
   x.font = "600 26px 'Plus Jakarta Sans', system-ui, sans-serif";
-  const note = "last 21 days · every one checked";
+  /* No window in the bake. The percentage is the graded record, whose window
+     is however far graded history reaches (14 days or less, 7 Oct 2026), and
+     baked words cannot follow it. */
+  const note = "every one checked against the final score";
   const noteW = x.measureText(note).width;
 
   const padX = 26, inner = 22, boxH = 60;

@@ -219,3 +219,28 @@ test("role, plan and code limit ride on GET; avatars are role-aware on POST", as
     assert.deepStrictEqual([r.role, r.codeLimit, r.data.prefs.avatar.v], ["admin", "none", "afro"]);
   } finally { delete process.env.SW_ADMIN_EMAILS; }
 });
+
+test("new skins: refused for free, saved for ff and admin; personal portrait only for its one email", async () => {
+  const w = world();
+  const av = (v) => ({ prefs: { avatar: { v, at: 5 } } });
+  const saved = async (u, v) => {
+    await w.me(mePost(u.cookie, { base_version: 0, data: payload({}, av(v)) }));
+    return (await w.me(meGet(u.cookie))).json();
+  };
+  w.db.grantFor = async (e) => (e.startsWith("ff") ? { email: e } : null);
+  process.env.SW_ADMIN_EMAILS = "boss@b.com";
+  process.env.SW_PERSONAL_AVATARS = "dread:Pal@B.com";
+  try {
+    for (const k of ["runes", "wired"]) {
+      assert.strictEqual((await saved(await w.user("free" + k + "@b.com"), k)).data.prefs.avatar, undefined, k);
+      assert.strictEqual((await saved(await w.user("ff" + k + "@b.com"), k)).data.prefs.avatar.v, k);
+    }
+    const ad = await w.user("boss@b.com");
+    assert.strictEqual((await saved(ad, "nomad")).data.prefs.avatar.v, "nomad");
+    let r = await saved(ad, "dread");
+    assert.deepStrictEqual([r.data.prefs.avatar.v, r.personal], ["nomad", []]);
+    assert.strictEqual((await saved(await w.user("ffx@b.com"), "dread")).data.prefs.avatar, undefined);
+    r = await saved(await w.user("pal@b.com"), "dread");
+    assert.deepStrictEqual([r.role, r.personal, r.data.prefs.avatar.v], ["free", ["dread"], "dread"]);
+  } finally { delete process.env.SW_ADMIN_EMAILS; delete process.env.SW_PERSONAL_AVATARS; }
+});

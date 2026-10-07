@@ -38,17 +38,28 @@
   }
   var AV_FREE=["fire","8bit","2bit","lino","glass","halo"];
   /* Must match lib/roles.js (test/accountui.test.js checks). */
-  var AV_FF=AV_FREE.concat(["gold","holo","graffiti","lowpoly","clay"]);
+  var AV_FF=AV_FREE.concat(["gold","holo","graffiti","lowpoly","clay",
+    "runes","noir","goldbeard","nebula","cyber","blaze","synth","abyss","alchemist","ink","magma","ent","nomad","wired"]);
   var AV_OWNER=["storm","lich","afro"];
+  var AV_PERSONAL=["dread"];
   var AV_NAME={fire:"Fire eyes","8bit":"Arcade","2bit":"2-bit",lino:"Linocut",glass:"Stained glass",halo:"Halo",
-    storm:"Storm caller",lich:"Frost lich",gold:"Gold trophy",holo:"Hologram",graffiti:"Graffiti",afro:"Afrofuturist",lowpoly:"Low-poly",clay:"Clay"};
+    storm:"Storm caller",lich:"Frost lich",gold:"Gold trophy",holo:"Hologram",graffiti:"Graffiti",afro:"Afrofuturist",lowpoly:"Low-poly",clay:"Clay",
+    runes:"Rune etched",noir:"Neon noir",goldbeard:"Gold beard",nebula:"Nebula",cyber:"Cyber seer",blaze:"Blaze",
+    synth:"Synthwave",abyss:"Abyss",alchemist:"Alchemist",ink:"Ink sketch",magma:"Magma",ent:"Forest ent",
+    nomad:"Desert nomad",wired:"Wired",dread:"Star dreads"};
   var LOCK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
-  function pickerHtml(cur,role){
-    var mine=role==="admin"?AV_FF.concat(AV_OWNER):role==="ff"?AV_FF:AV_FREE;
-    return "<p class='swa-h'>Avatar</p><div class='swa-pick'>"+mine.map(function(k){
+  /* Any role but free has the skins (a future paid plan too); lib/roles.js hasSkins. */
+  function hasSkins(role){ return !!role&&role!=="free"; }
+  /* personal: comma list from GET /api/me, only for the one account it is granted to. */
+  function pickerHtml(cur,role,personal){
+    var own=String(personal||"").split(",").filter(function(k){ return AV_PERSONAL.indexOf(k)>=0; });
+    var mine=(role==="admin"?AV_FF.concat(AV_OWNER):hasSkins(role)?AV_FF:AV_FREE).concat(own);
+    /* One row up to 7, else 6 a row unless that leaves one alone on the last row. */
+    var n=mine.length, cols=n<=7?Math.max(n,6):n%6!==1?6:n%5!==1?5:7;
+    return "<p class='swa-h'>Avatar</p><div class='swa-pick'"+(cols===6?"":" style='grid-template-columns:repeat("+cols+",1fr)'")+">"+mine.map(function(k){
         return "<button type='button' data-av=\""+k+"\" aria-pressed=\""+(k===cur?"true":"false")+"\" aria-label=\""+AV_NAME[k]+" avatar\"><img src='/av/"+k+".webp' alt='' loading='lazy' width='44' height='44'></button>";
       }).join("")+"</div>"+
-      (role==="ff"||role==="admin"?"":"<p class='swa-h'>Skins<small>Unlock with plans</small></p><div class='swa-pick swa-lock'>"+AV_FF.slice(AV_FREE.length).map(function(k){
+      (hasSkins(role)?"":"<p class='swa-h'>Skins<small>Unlock with plans</small></p><div class='swa-pick swa-lock'>"+AV_FF.slice(AV_FREE.length).map(function(k){
         return "<button type='button' disabled aria-label=\""+AV_NAME[k]+", comes with plans\"><img src='/av/"+k+".webp' alt='' loading='lazy' width='56' height='56'>"+LOCK+"</button>";
       }).join("")+"</div>");
   }
@@ -67,7 +78,7 @@
   function profileHtml(o){
     return "<label class='swa-lbl' for='swaName'>Name on your slips</label>"+
       "<input class='swa-in' id='swaName' maxlength='24' autocomplete='nickname' value=\""+esc(o.name)+"\">"+
-      pickerHtml(o.avatar,o.role)+recordHtml(o.record)+subHtml(o.quota,o.role,o.plan);
+      pickerHtml(o.avatar,o.role,o.personal)+recordHtml(o.record)+subHtml(o.quota,o.role,o.plan);
   }
   function grantsHtml(list){
     if(!list.length) return "<div class='swa-set'><span class='swa-st'><small>No one yet. Add an email above.</small></span></div>";
@@ -101,7 +112,7 @@
         "<input class='swa-in' id='swaDelIn' autocomplete='off' autocapitalize='characters'><button class='swa-outbtn swa-danger' id='swaDelGo' type='button'>Delete for good</button></div>"+
       "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>";
   }
-  var api={firstNameOf:firstNameOf,menuHtml:menuHtml,codesHtml:codesHtml,esc:esc,I:I,AV_FREE:AV_FREE,AV_FF:AV_FF,AV_OWNER:AV_OWNER,pickerHtml:pickerHtml,grantsHtml:grantsHtml,adminHtml:adminHtml,recordHtml:recordHtml,profileHtml:profileHtml,settingsHtml:settingsHtml};
+  var api={firstNameOf:firstNameOf,menuHtml:menuHtml,codesHtml:codesHtml,esc:esc,I:I,AV_FREE:AV_FREE,AV_FF:AV_FF,AV_OWNER:AV_OWNER,AV_PERSONAL:AV_PERSONAL,pickerHtml:pickerHtml,grantsHtml:grantsHtml,adminHtml:adminHtml,recordHtml:recordHtml,profileHtml:profileHtml,settingsHtml:settingsHtml};
   if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
   if(!root.document) return;
 
@@ -126,7 +137,7 @@
     ".swa-h{font-size:13px;font-weight:700;color:var(--soft);margin:18px 2px 8px}.swa-h small{font-weight:600;color:var(--faint);margin-left:6px}"+
     ".swa-lbl{display:block;font-size:12px;font-weight:700;color:var(--faint);margin:0 0 5px}"+
     ".swa-in{width:100%;height:42px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:15px;font-weight:700;padding:0 12px;box-sizing:border-box}"+
-    ".swa-pick{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.swa-pick.swa-lock{grid-template-columns:repeat(5,1fr);gap:12px;padding:0 18px}"+
+    ".swa-pick{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.swa-pick.swa-lock{grid-template-columns:repeat(5,1fr);gap:12px;padding:0 36px 0 0}"+
     ".swa-pick button{aspect-ratio:1;border-radius:50%;border:1.5px solid transparent;background:var(--card-2);padding:0;overflow:hidden;position:relative;cursor:pointer}"+
     ".swa-pick img{width:100%;height:100%;object-fit:cover;display:block}"+
     ".swa-pick button[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-rim)}"+
@@ -223,7 +234,7 @@
     close();
     var a=acct();
     var v=view("Profile",profileHtml({name:firstNameOf(lsGet("sw.name"),a.st.email),
-      avatar:root.swAvatarKey?root.swAvatarKey():"fire",role:role(),plan:lsGet("sw.plan"),
+      avatar:root.swAvatarKey?root.swAvatarKey():"fire",role:role(),personal:lsGet("sw.personal"),plan:lsGet("sw.plan"),
       record:root.swRecord?root.swRecord():{built:0,won:0,settled:0},
       quota:root.swQuotaToday?root.swQuotaToday():null}));
     var nm=v.querySelector("#swaName");

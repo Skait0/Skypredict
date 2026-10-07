@@ -37,6 +37,7 @@ function make(deps) {
       if (!user) return H.sendJson(res, 401, { error: "signed_out", reason: "deleted" }, [S.clearCookie(S.COOKIE)]);
 
       const role = await R.roleOf(db, user, env);
+      const personal = R.personalAvatars(user.email, env);
       if (!post) {
         const row = await db.getUserData(s.userId);
         /* An entitlements outage must not hide the reader's own data: send
@@ -45,7 +46,7 @@ function make(deps) {
         try { entitlements = await A.entitlements(db, s.userId, A.FEATURES, t); }
         catch (e) { await report(e, { route: "me/entitlements" }); }
         return H.sendJson(res, 200, { signedIn: true, email: user.email, role, plan: R.planLabel(role),
-          codeLimit: role === "admin" ? "none" : R.codeLimitFor(role), version: row ? row.version : 0,
+          codeLimit: role === "admin" ? "none" : R.codeLimitFor(role), personal, version: row ? row.version : 0,
           data: row ? row.data : Y.empty(), entitlements }, cookies);
       }
 
@@ -53,7 +54,7 @@ function make(deps) {
       if (bodySize(req) > Y.MAX_BYTES + 1024) return H.sendJson(res, 413, { error: "too_big" });
       const body = await H.readJson(req, Y.MAX_BYTES + 1024);
       if (!body) return H.sendJson(res, 400, { error: "bad_shape" });
-      const v = Y.validate(body.data, { avatars: R.avatarsFor(role) });
+      const v = Y.validate(body.data, { avatars: R.avatarsFor(role).concat(personal) });
       if (!v.ok) return H.sendJson(res, v.error === "too_big" ? 413 : 400, { error: v.error });
       for (let i = 0; i < 3; i++) {
         const row = await db.getUserData(s.userId);

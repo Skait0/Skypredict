@@ -24,9 +24,10 @@ const QUOTA = require("../lib/quota.js");
 const FOLLOW = require("../lib/follow.js");
 const ASK = require("../lib/ask.js");
 const S = require("../lib/slipedit.js");
+const BOOKS = require("../lib/books.js");
 
 const SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
-const ORDER = ["sporty", "bet9ja", "betking", "betpawa", "onexbet"];
+const ORDER = BOOKS.KEYS;
 
 const TOKEN = () => (process.env.TELEGRAM_BOT_TOKEN || "").trim();
 function secretFor(token) {
@@ -53,7 +54,7 @@ async function readCode(book, code) {
 
 const HELLO =
   "🔮 <b>The Wizard's Eye</b> 🧙\n<i>Drop any code. The Wizard's Eye sees it all.</i>\n\n" +
-  "Send me any booking code - SportyBet, Bet9ja, BetKing, betPawa or 1xBet - and you get:\n" +
+  "Send me any booking code - " + BOOKS.list("or") + " - and you get:\n" +
   "🔥 your bankers\n👀 the legs to tighten\n💰 what it pays\n" +
   "🔁 the same slip on another bookie, one tap\n🔔 live updates as each game lands\n\n" +
   "Paste the code on its own, or a share link. Say which bookie if you know it.\n\n" +
@@ -377,7 +378,7 @@ module.exports = async function handler(req, res) {
       if (legs) { used = b; break; }
     }
     if (!legs) {
-      await say("I couldn't read <code>" + code + "</code>" + (book ? " on " + D.BOOK_NAMES[book] : " on any of the five bookies") +
+      await say("I couldn't read <code>" + code + "</code>" + (book ? " on " + D.BOOK_NAMES[book] : " on any of the " + BOOKS.COUNT_WORD + " bookies") +
         ". Check the code - or it may have expired, or every game may have started.");
       return res.status(200).json({ ok: true });
     }
@@ -398,3 +399,4 @@ module.exports = async function handler(req, res) {
 };
 
 module.exports.secretFor = secretFor;
+module.exports.HELLO = HELLO;

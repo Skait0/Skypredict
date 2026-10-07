@@ -155,7 +155,7 @@ test("the build runs a wider window for markets than for the headline", () => {
     require("path").join(__dirname, "..", "lib", "build.js"), "utf8");
   assert.match(b, /days: cfg\.marketDays \|\| 120/,
     "market verification should not be limited to the 21-day headline window");
-  assert.match(b, /if \(record && marketRecord\) record\.markets = marketRecord;/,
+  assert.match(b, /if \(marketRecord\) record\.markets = marketRecord;/,
     "the market rows are never attached to the payload");
 });
 

@@ -170,11 +170,12 @@ test("the buckets still work there, they just are not lit", () => {
 
 test("toggling Top flight repaints the counts", () => {
   /* Filtering them is useless if nothing redraws. The chain is
-     click -> setTopOnly -> renderBuilder -> paintScope -> paintTod. */
-  const i = src.indexOf('setTopOnly(c.dataset.btp==="true");');
-  assert.ok(i > 0, "the Top flight buttons are no longer wired to setTopOnly");
-  assert.match(src.slice(i, i + 120), /renderBuilder\(\);/,
-    "toggling Top flight must repaint the builder");
+     click -> setTopOnly -> renderBuilder -> paintScope -> paintTod.
+     "All leagues" turns it off through resetLeagues, which repaints too. */
+  assert.ok(src.indexOf('if(c.dataset.btp==="true"){ setTopOnly(true); renderBuilder(); }') > 0,
+    "Top flight only must set the flag and repaint the builder");
+  assert.match(grab("resetLeagues"), /setTopOnly\(false\);[\s\S]*renderBuilder\(\);/,
+    "All leagues must clear Top flight and repaint the builder");
   assert.match(grab("paintScope"), /paintTod\(\);/,
     "paintScope must carry on into the time buckets");
 });

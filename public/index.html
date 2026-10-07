@@ -318,6 +318,10 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
   --accent:#F2B84B;
   --on-accent:#14120E;
   --accent-rim:rgba(242,184,75,.42);
+  /* The same gold on a surface that stays dark in both themes - the booked
+     code's card wears its bookmaker's dark colours either way, so the light
+     theme's deep --accent would sink into it. Not redefined for light. */
+  --accent-on-dark:#F2B84B;
   --grey:#5A5762;
   --cream:#DCD8D2;
   --ball:#F2F1F0; --ball-ink:#161619;
@@ -495,8 +499,11 @@ main[tabindex="-1"]:focus{outline:none}
 .ys-chip{display:flex;align-items:center;justify-content:center;gap:6px;height:34px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);cursor:pointer;color:var(--soft);font:inherit;font-size:12px;font-weight:700}
 .ys-chip .num{font-size:15px}
 .ys-chip.run .num{color:var(--accent)}.ys-chip.lost .num{color:var(--red-ink)}.ys-chip.won .num{color:var(--green-ink)}
-.ys-live{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:ysLive 1.6s ease-in-out infinite}
-@keyframes ysLive{50%{opacity:.25}}
+/* LIVE DOTS: the one loop that carries information - something is in play.
+   All of them share one slow fade (no scale, no ring), and stand still for
+   anyone who asked for less motion - see the rule after .live-dot (Task 4). */
+@keyframes liveCalm{50%{opacity:.4}}
+.ys-live{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:liveCalm 2.4s ease-in-out infinite}
 .ys-lh{display:flex;align-items:center;justify-content:space-between;min-height:24px;margin:0 2px 4px}
 .ys-lh h4{margin:0;font-size:13px;font-weight:700;color:var(--soft)}
 .ys-clrb{border:0;background:none;color:var(--faint);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:4px 0}
@@ -512,7 +519,7 @@ main[tabindex="-1"]:focus{outline:none}
 .ys-dot.run{background:var(--accent)}.ys-dot.lost{background:var(--red)}.ys-dot.won{background:var(--green)}
 @media (hover:hover){.ys-chip:hover{border-color:var(--grey)}.ys-clrb:hover{color:var(--red-ink)}}
 .ys .num,.ys-row .num{font-weight:800}
-.eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+.eyebrow{font-size:11px;font-weight:800;
   color:var(--faint)}
 
 /* ================================================================== top */
@@ -574,12 +581,6 @@ main[tabindex="-1"]:focus{outline:none}
   background:linear-gradient(150deg,var(--red-fill),#7E1018);
   display:flex;align-items:center;justify-content:center;color:#fff;
   position:relative;overflow:hidden}
-/* a slow light sweep across the tile, so the mark has a pulse of its own
-   even when nobody is touching it */
-.sigil::after{content:"";position:absolute;inset:0;
-  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.42) 50%,transparent 65%);
-  transform:translateX(-120%);animation:sheen 7s 2.4s ease-in-out infinite}
-@keyframes sheen{0%{transform:translateX(-120%)}18%,100%{transform:translateX(120%)}}
 
 /* Every transform is on fill-box so the SVG parts pivot on themselves
    rather than the canvas corner. */
@@ -795,8 +796,8 @@ main[tabindex="-1"]:focus{outline:none}
   letter-spacing:-.04em;color:var(--green)}
 .potd .big em{font-style:normal;font-size:.45em}
 /* Locked POTD status chip + result states */
-.potd-status{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.06em;
-  text-transform:uppercase;padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.22);color:#fff;
+.potd-status{margin-left:auto;font-size:11px;font-weight:800;
+  padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.22);color:#fff;
   display:inline-flex;align-items:center;gap:6px}
 .potd-won .potd-top,.potd.potd-won .potd-top{background:var(--green);color:var(--on-green)}
 .potd.potd-won{border-color:var(--green)}
@@ -807,8 +808,7 @@ main[tabindex="-1"]:focus{outline:none}
    single pulse we kept has something to be seen against. */
 .potd-status.potd-live{background:#fff;color:var(--red)}
 .potd-status.potd-live .ld{width:7px;height:7px;border-radius:50%;background:var(--red);
-  box-shadow:0 0 0 0 rgba(230,57,70,.7);animation:potdLivePulse 1.4s ease-out infinite}
-@keyframes potdLivePulse{0%{box-shadow:0 0 0 0 rgba(230,57,70,.55)}70%{box-shadow:0 0 0 6px rgba(230,57,70,0)}100%{box-shadow:0 0 0 0 rgba(230,57,70,0)}}
+  animation:liveCalm 2.4s ease-in-out infinite}
 /* Centre the separator against the digits. As a half-size <em> on the baseline
    it dropped to the foot of the numbers; a flex row aligns all three on the
    optical middle so the dash sits between them. */
@@ -896,8 +896,6 @@ main[tabindex="-1"]:focus{outline:none}
 .finder-h b{font-size:15px;font-weight:800}
 .finder-h span{margin-left:auto;font-size:12px;color:var(--soft);font-weight:600}
 .picker{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.field label{display:block;font-size:11px;font-weight:800;letter-spacing:.07em;
-  text-transform:uppercase;color:var(--soft);margin-bottom:6px}
 select{width:100%;appearance:none;-webkit-appearance:none;min-height:50px;
   text-overflow:ellipsis;background:var(--card-2);color:var(--text);
   border:1px solid var(--line);border-radius:var(--r-md);padding:13px 34px 13px 13px;
@@ -953,7 +951,7 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
   padding:4px 11px;font-weight:700}
 .comp{margin-top:10px}
 .comp-h{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;
-  letter-spacing:.09em;text-transform:uppercase;color:var(--soft);padding-bottom:5px}
+  color:var(--soft);padding-bottom:5px}
 .comp-h span{flex:1}
 .comp-h .flag{width:18px;height:13px}
 .star{width:34px;height:34px;flex-shrink:0;background:none;border:0;cursor:pointer;
@@ -992,7 +990,7 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .m-add.on .ma-ic{background:var(--green)}
 .m-top{display:flex;align-items:center;gap:7px;margin-bottom:12px;flex-wrap:wrap}
 .t{font-size:12px;color:var(--faint);font-weight:700}
-.pill{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+.pill{font-size:10px;font-weight:800;
   padding:4px 9px;border-radius:99px;background:var(--card-2);color:var(--soft)}
 .pill.value{background:var(--green-wash);color:var(--green-ink)}
 /* Ties a board row to the Pick of the day card above it. Amber with the same
@@ -1027,9 +1025,9 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
    more than a full run of form. */
 .form i{width:12px;height:12px;border-radius:var(--r-sm);font-style:normal;font-size:9px;
   font-weight:800;display:flex;align-items:center;justify-content:center;color:#fff}
-.form i.W{background:var(--green)}
+.form i.W{background:var(--green);color:var(--on-green)}
 .form i.D{background:var(--grey)}
-.form i.L{background:var(--red)}
+.form i.L{background:var(--red-fill)}
 /* Provisional result from a match still in play: same colour as the settled
    chips but ringed and breathing, so an unfinished game never reads as final. */
 .form i.prov{box-shadow:0 0 0 1.5px var(--bg),0 0 0 3px currentColor;opacity:.9;
@@ -1062,7 +1060,7 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .sc{text-align:center;flex-shrink:0;padding-left:14px;border-left:1px solid var(--line)}
 .sc b{display:block;font-weight:800;font-size:20px;letter-spacing:-.02em}
 .sc i{display:block;font-style:normal;font-size:9px;color:var(--faint);margin-top:3px;
-  font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+  font-weight:700}
 /* one key for the whole page, rather than a note repeated on every card */
 .key{display:inline-flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:12px;
   max-width:100%;padding:11px 14px;background:var(--card);border:1px solid var(--line-soft);
@@ -1127,7 +1125,7 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
   border:1px solid var(--line);border-radius:var(--r-md);padding:14px;cursor:pointer;
   transition:transform .16s,box-shadow .16s}
 .gl-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.26)}
-.gl-k{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);
+.gl-k{font-size:10px;font-weight:800;color:var(--faint);
   display:flex;align-items:center;gap:6px;margin-bottom:8px}
 .gl-k .dot{width:6px;height:6px;border-radius:50%;background:var(--red)}
 .gl-card.banker .gl-k .dot{background:var(--green)}
@@ -1186,7 +1184,7 @@ html.mode-live .btabs{transform:none!important}
      aiming at even though it cannot intercept the tap. */
   #toasts{bottom:calc(var(--btabs-h) + 10px)}
   .btab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;
-    color:var(--faint);font:inherit;font-size:10px;font-weight:700;padding:6px 0;cursor:pointer}
+    color:var(--faint);font:inherit;font-size:11px;font-weight:700;padding:6px 0;cursor:pointer}
   .btab svg{width:22px;height:22px}
   /* THE SQUARE WHITE BOX ON TAP WAS THE BROWSER'S OWN FOCUS RING.
      Every other control here defines a :focus-visible ring and this one never
@@ -1295,7 +1293,6 @@ html.mode-live .btabs{transform:none!important}
 .live-bell{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:34px;padding:0 11px;
   background:var(--card);border:1px solid var(--line);color:var(--soft);border-radius:var(--r-md);cursor:pointer;flex-shrink:0;
   font:inherit;font-weight:800;font-size:11px}
-.live-bell .bell-lbl{letter-spacing:.04em;text-transform:uppercase}
 .live-bell:hover{color:var(--text)}
 .live-bell.on{color:var(--green-ink);border-color:var(--green);background:var(--green-wash)}
 .mono img{width:100%;height:100%;border-radius:inherit;object-fit:cover;display:block}
@@ -1305,7 +1302,7 @@ html.mode-live .btabs{transform:none!important}
    to pulse now reads as enchanted rather than flashing - a thin rune-gold edge
    and a warm ember, which is the same language as the runes in the background. */
 .navt.build{background:var(--red-fill);color:#fff;
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.45),0 2px 10px rgba(230,57,70,.28)}
+  box-shadow:inset 0 0 0 1px rgba(242,184,75,.45)}
 .navt.build.on{background:var(--red-fill);color:#fff}
 @keyframes starpulse{0%{box-shadow:0 0 0 0 rgba(230,57,70,.55)}70%{box-shadow:0 0 0 11px rgba(230,57,70,0)}100%{box-shadow:0 0 0 0 rgba(230,57,70,0)}}
 .lthead,.lrow{column-gap:12px}
@@ -1362,8 +1359,7 @@ html.mode-build .list-hint,html.mode-live .list-hint{display:none}
 html.tapped .list-hint{display:none}
 .lt-tip{padding-right:10px}
 .lt-score{padding-left:10px}
-@keyframes litPulse{0%,100%{text-shadow:0 0 8px rgba(43,199,120,.7);transform:scale(1)}50%{text-shadow:0 0 20px rgba(43,199,120,1);transform:scale(1.22)}}
-.lv-sc.lit{color:var(--green)!important;animation:litPulse 1s ease-in-out infinite}
+.lv-sc.lit{color:var(--green)!important}
 @keyframes litScale{0%,100%{transform:scale(1)}50%{transform:scale(1.28)}}
 .lv.just-scored{border-color:var(--green);box-shadow:0 0 0 2px rgba(43,199,120,.3)}
 .gl-team{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1384,45 +1380,16 @@ html.tapped .list-hint{display:none}
 .slip-cta{display:flex;flex-direction:column;align-items:stretch;gap:12px;width:100%;text-align:left;margin:14px 0 2px;
   background:linear-gradient(160deg,var(--card) 0%,var(--card-2) 100%);
   border:1px solid var(--line);
-  box-shadow:0 4px 18px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.04);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
   border-radius:var(--r-lg);padding:15px 16px;cursor:pointer;color:var(--text);font:inherit;
   position:relative;overflow:hidden}
 /* A thin gold rule along the top - the site's premium accent, as a hairline
    rather than a field of colour. */
 .slip-cta::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;
   background:linear-gradient(90deg,transparent,rgba(242,184,75,.55),transparent)}
-.slip-cta::before{content:'';position:absolute;top:-40%;left:-10%;width:55%;height:180%;
-  background:radial-gradient(closest-side,rgba(124,77,255,.10),transparent);
-  animation:wspOrbDrift 5s ease-in-out infinite alternate}
-@keyframes wspOrbDrift{from{transform:translate(0,0)}to{transform:translate(30px,12px)}}
-/* A crimson light running the border. The angle is animated rather than the
-   element, because rotating a wide box would drag the gradient out of round
-   and the light would race the long sides and crawl the short ones.
-   The ring is the border and nothing else: two masks, one clipped to the
-   padding box, composited so only the 1.5px frame between them survives. */
-@property --ctaAng{syntax:'<angle>';initial-value:0deg;inherits:false}
-.cta-run{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:2;
-  padding:1.5px;
-  background:conic-gradient(from var(--ctaAng),
-    transparent 0deg 210deg,
-    rgba(230,57,70,.35) 250deg,
-    var(--red) 292deg,
-    #ff8f97 300deg,
-    var(--red) 308deg,
-    rgba(230,57,70,.35) 340deg,
-    transparent 360deg);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;
-  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  mask-composite:exclude;
-  animation:ctaRun 3.6s linear infinite}
-@keyframes ctaRun{to{--ctaAng:360deg}}
-/* Where @property is unsupported the angle never animates, so the light would
-   sit frozen on one edge. Better to show nothing than a smear. */
-@supports not (background:conic-gradient(from var(--ctaAng),red,blue)){
-  .cta-run{display:none}
-}
-@media(prefers-reduced-motion:reduce){.cta-run{display:none}}
+/* The violet drift and the crimson light running the border are gone (Task 4,
+   7 Oct): four effects on one card made it read as an advert. The gold
+   keyline above and the button are the emphasis. */
 .slip-cta:hover{border-color:var(--faint)}
 /* Deliberately nothing here: this used to restyle the button whenever the
    panel was hovered, which meant hovering the button itself did nothing
@@ -1437,14 +1404,10 @@ html.tapped .list-hint{display:none}
    wizard's robe red on the pentagons, gold seams. All the ball's own light
    and shading is in the drawing; this box only sizes it and breathes the
    glow around it. */
-.sc-orb{flex-shrink:0;width:44px;height:44px;margin-top:0;border-radius:50%;display:block;
-  filter:drop-shadow(0 0 5px rgba(255,255,255,.35));
-  animation:orbBreath 3.4s ease-in-out infinite}
+/* No breathing halo (Task 4): the ball turning is the motion; a pulsing
+   white glow round it was decoration on decoration. */
+.sc-orb{flex-shrink:0;width:44px;height:44px;margin-top:0;border-radius:50%;display:block}
 .sc-orb canvas,.ctafab-orb canvas{display:block;width:100%;height:100%}
-@media(prefers-reduced-motion:reduce){ .sc-orb{animation:none} }
-@keyframes orbBreath{
-  0%,100%{filter:drop-shadow(0 0 4px rgba(255,255,255,.25))}
-  50%{filter:drop-shadow(0 0 9px rgba(255,255,255,.5))}}
 /* ON A CREAM CARD THE BALL NEEDS AN EDGE, NOT A GLOW. Its white panels and
    top-left highlight are the card's own colour, so a glow of any hue left the
    upper rim undrawn and the ball read as a smudge (reported 24 Sep, light
@@ -1453,14 +1416,7 @@ html.tapped .list-hint{display:none}
    that shadow instead of a halo. The violet it replaces was off-palette next
    to red pentagons and gold seams. */
 [data-theme="light"] .sc-orb{
-  filter:drop-shadow(0 0 .6px rgba(40,18,22,.7)) drop-shadow(0 3px 5px rgba(70,25,30,.28));
-  animation:orbBreathLight 3.4s ease-in-out infinite}
-@keyframes orbBreathLight{
-  0%,100%{filter:drop-shadow(0 0 .6px rgba(40,18,22,.7)) drop-shadow(0 3px 5px rgba(70,25,30,.24))}
-  50%{filter:drop-shadow(0 0 .6px rgba(40,18,22,.7)) drop-shadow(0 5px 9px rgba(70,25,30,.36))}}
-/* The light rule outranks the plain reduced-motion one above, so it must say
-   it again or the breath comes back for readers who asked for stillness. */
-@media(prefers-reduced-motion:reduce){ [data-theme="light"] .sc-orb{animation:none} }
+  filter:drop-shadow(0 0 .6px rgba(40,18,22,.7)) drop-shadow(0 3px 5px rgba(70,25,30,.28))}
 .sc-tx{flex:1;min-width:0}
 .sc-tx b{display:block;font-size:16.5px;font-weight:800;color:var(--text);letter-spacing:.01em}
 .sc-tx i{display:block;font-style:normal;font-size:12.5px;color:var(--soft);margin-top:3px}
@@ -1474,13 +1430,13 @@ html.tapped .list-hint{display:none}
 .sc-go-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;
   padding:12px 22px;font-size:13.5px;line-height:1.15;border-radius:10px;
   color:#fff!important;
-  background:linear-gradient(178deg,#e8323f 0%,#d2202c 100%)!important;
+  background:linear-gradient(178deg,#D33140 0%,#BE1F2B 100%)!important;
   border:1px solid rgba(255,255,255,.14)!important;
   box-shadow:0 1px 0 rgba(255,255,255,.16) inset,0 2px 10px rgba(160,20,32,.3)!important;
   letter-spacing:0;text-transform:none;font-weight:700;position:relative;overflow:hidden;
   transition:background .18s,box-shadow .18s,transform .12s}
 .sc-go-btn:hover{
-  background:linear-gradient(178deg,#ff6b76 0%,#ef4551 100%)!important;
+  background:linear-gradient(178deg,var(--red-fill) 0%,#C8222F 100%)!important;
   border-color:rgba(255,255,255,.34)!important;
   box-shadow:0 1px 0 rgba(255,255,255,.3) inset!important}
 .sc-go-btn:active{transform:translateY(1px)}
@@ -1526,18 +1482,7 @@ html.tapped .list-hint{display:none}
   position:relative;overflow:hidden;
   transition:box-shadow .18s ease,transform .12s ease,border-color .18s ease}
 
-/* One slow pass of light, and no other idle motion.
-   The card around this already runs a conic gradient along its border, a gold
-   hairline and a violet drift. A fourth thing competing for the same eye is
-   how a card stops looking designed and starts looking anxious - so this is a
-   single diagonal sheen, seven seconds apart, at an opacity you notice only
-   because it moves. It is the same gesture the SportyBet code card uses, so
-   the two read as one system. */
-.sc-go-primary::after{content:"";position:absolute;inset:0;border-radius:inherit;
-  pointer-events:none;
-  background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.10) 50%,transparent 58%);
-  background-size:280% 100%;animation:scSheen 7s ease-in-out infinite}
-@keyframes scSheen{0%,72%{background-position:140% 0}100%{background-position:-40% 0}}
+/* No idle sheen (Task 4): the pill is still until a pointer reaches it. */
 
 /* The arrow is the invitation, and it only moves under a pointer - an arrow
    that twitches on its own is a fidget, one that leans when you approach is a
@@ -1556,13 +1501,11 @@ html.tapped .list-hint{display:none}
     border-color:rgba(255,255,255,.26)!important;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.12),
                0 8px 26px rgba(0,0,0,.55),
-               0 0 0 1px rgba(230,57,70,.5),
-               0 0 22px rgba(230,57,70,.28)!important;
+               0 0 0 1px rgba(230,57,70,.5)!important;
     transform:translateY(-1px)}
 }
 .sc-actions .sc-go-primary:active,.sc-go-primary:active{transform:translateY(1px)}
 @media(prefers-reduced-motion:reduce){
-  .sc-go-primary::after{animation:none}
   .sc-go-arw{transition:none}
 }
 /* The pair share a shape.
@@ -1586,7 +1529,7 @@ html.tapped .list-hint{display:none}
     flex:1 1 0;width:auto;min-width:170px;max-width:240px;height:38px;
     display:inline-flex;align-items:center;justify-content:center;margin:0;
     text-align:center;white-space:nowrap;
-    padding:0 10px;font-size:13px;font-weight:800;letter-spacing:.06em;line-height:normal;
+    padding:0 10px;font-size:13px;font-weight:800;letter-spacing:0;line-height:normal;
     box-sizing:border-box}
 }
 /* Ghost. Two filled buttons side by side compete and flatten the hierarchy;
@@ -1611,7 +1554,7 @@ html.mode-build .slip-cta,html.mode-live .slip-cta{display:none}
      from --red-fill instead so every point under the label clears AA. */
   background:radial-gradient(circle at 20% 0%,#db3643,#c22e3a 55%,#a51826);color:#fff;
   border:1px solid rgba(242,184,75,.55);border-radius:99px;padding:12px 14px 12px 18px;
-  box-shadow:0 10px 30px rgba(165,24,38,.5),inset 0 1px 2px rgba(255,255,255,.4);cursor:pointer}
+  box-shadow:0 6px 16px rgba(0,0,0,.4),inset 0 1px 2px rgba(255,255,255,.4);cursor:pointer}
 .slipbar-in .sb-tx{flex:1;min-width:0}
 .slipbar-in .sb-tx b{display:block;font-size:14px;font-weight:800;line-height:1.2}
 .slipbar-in .sb-tx i{font-style:normal;font-size:11.5px;font-weight:600;opacity:.85}
@@ -1656,7 +1599,7 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
   .gl-card.score .gl-pc{flex-shrink:0}
   .myfab{padding:0;width:54px;height:54px;justify-content:center;border-radius:50%;
     background:radial-gradient(circle at 50% 40%,rgba(230,57,70,.92),rgba(150,20,32,.88));
-    border:0;box-shadow:0 6px 20px rgba(230,57,70,.5),0 0 0 1px rgba(255,180,185,.35) inset}
+    border:0;box-shadow:0 4px 12px rgba(0,0,0,.35),0 0 0 1px rgba(255,180,185,.35) inset}
   .myfab .lbl{display:none}
   .myfab-tk{position:relative;display:inline-flex;color:#fff}
   .myfab-tk svg{display:none}
@@ -1688,14 +1631,13 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
 .trust .link{color:var(--red-ink);font-weight:700;text-decoration:none}
 .trust .link:hover{text-decoration:underline}
 .pill.goals{background:var(--win-wash);color:var(--win-ink)}
-.pill.value{background:linear-gradient(120deg,#F2B84B,#ffd873);color:#1a1400;font-weight:800;animation:valpulse 2s ease-out infinite}
-@keyframes valpulse{0%{box-shadow:0 0 0 0 rgba(242,184,75,.5)}70%{box-shadow:0 0 0 8px rgba(242,184,75,0)}100%{box-shadow:0 0 0 0 rgba(242,184,75,0)}}
+.pill.value{background:var(--accent);color:var(--on-accent);font-weight:800}
 .vmark{flex-shrink:0;font-size:10px;font-weight:800;color:#1a1400;background:#F2B84B;padding:2px 6px;border-radius:99px;margin-left:2px;font-variant-numeric:tabular-nums}
 .m{border-left-width:3px;border-left-style:solid;border-left-color:var(--edge)}
 .m.conf-strong{border-left-color:var(--green)}
 .m.conf-lean{border-left-color:var(--win)}
 .m.conf-slight{border-left-color:var(--grey)}
-.tipbox .grade{margin-left:auto;font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 7px;border-radius:99px;background:var(--raise);color:var(--soft);white-space:nowrap}
+.tipbox .grade{margin-left:auto;font-size:9px;font-weight:800;padding:3px 7px;border-radius:99px;background:var(--raise);color:var(--soft);white-space:nowrap}
 .conf-strong .tipbox .grade{background:var(--green-wash);color:var(--green-ink)}
 .conf-lean .tipbox .grade{background:var(--win-wash);color:var(--win-ink)}
 .tipbox .p{margin-left:9px}
@@ -1732,8 +1674,8 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
 .lt-score{display:flex;flex-direction:column;align-items:center;justify-content:center;
   min-width:50px;flex-shrink:0;line-height:1.1}
 .lt-score b{font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;color:var(--text)}
-.lt-score i{font-style:normal;font-size:9px;font-weight:700;letter-spacing:.06em;
-  text-transform:uppercase;color:var(--faint);margin-top:2px}
+.lt-score i{font-style:normal;font-size:9px;font-weight:700;
+  color:var(--faint);margin-top:2px}
 .clear-btn{background:var(--raise);color:var(--soft);border:1px solid var(--line);
   font:inherit;font-weight:800;font-size:14px;padding:13px 16px;border-radius:var(--r-md);cursor:pointer;flex-shrink:0}
 /* Only where there is a pointer that can hover. A phone has none, and Android
@@ -1751,47 +1693,27 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
 /* Book-all: a small flashy pill above the board. It only appears when the
    visible tips are actually bookable, so it never sits there dead. */
 .bookall-row{display:flex;justify-content:flex-end;margin:8px 0 2px}
-/* The outline version of this read as dull - it is the one control on the board
-   that starts a slip, and a grey-rimmed pill made it look like a tertiary
-   option next to the filters. Back to the crimson pill with the gold rim and
-   its ember: the brightest thing in the row, which is what it should be. */
+/* The one control on the board that starts a slip, so it is DESIGN.md's filled
+   action pill: solid red, the gold count chip, nothing glowing or flickering
+   (Task 4, 7 Oct - the ember spark and the hover tremor are gone). */
 .bookall{position:relative;overflow:hidden;display:none;align-items:center;gap:8px;
-  background:linear-gradient(135deg,#6d1017,var(--red-fill) 55%,#9c1620);color:#fff;
-  border:1px solid rgba(242,184,75,.55);
-  font:inherit;font-weight:800;font-size:12.5px;letter-spacing:.03em;
-  padding:8px 15px 8px 27px;border-radius:99px;cursor:pointer;
-  text-shadow:0 1px 2px rgba(0,0,0,.55);
-  box-shadow:0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.12);
-  transition:filter .25s,box-shadow .25s,transform .15s}
+  background:var(--red-fill);color:#fff;border:0;
+  font:inherit;font-weight:800;font-size:12.5px;
+  padding:8px 14px;border-radius:99px;cursor:pointer;
+  transition:filter .14s var(--ease-out),transform .14s var(--ease-out)}
 .bookall.show{display:inline-flex}
-/* Calm at rest, menacing on approach: the ember flares, a red bloom opens up
-   and the pill gives one small tremor - a spell about to be cast, not a
-   button begging to be pressed. */
-.bookall:hover{filter:brightness(1.1);
-  box-shadow:0 0 0 1px rgba(242,184,75,.85),0 7px 24px rgba(230,57,70,.55),
-             inset 0 1px 0 rgba(255,255,255,.16);
-  animation:baTremor .3s ease-in-out 1}
-.bookall:hover .ba-spark{background:#FFD873;box-shadow:0 0 13px 3px rgba(242,184,75,1)}
+@media(hover:hover){
+  .bookall:hover{filter:brightness(1.1);transform:translateY(-1px)}
+}
 .bookall:active{transform:scale(.97)}
-@keyframes baTremor{0%,100%{transform:translateX(0)}20%{transform:translateX(-1.5px)}
-  60%{transform:translateX(1.5px)}80%{transform:translateX(-1px)}}
-html.reduce .bookall:hover{animation:none}
+@media(prefers-reduced-motion:reduce){.bookall{transition:none}.bookall:hover{transform:none}}
 .bookall:disabled{opacity:.6;cursor:not-allowed}
-.bookall .ba-n{background:rgba(242,184,75,.92);color:#2a1400;border-radius:99px;padding:1px 7px;
-  font-variant-numeric:tabular-nums;font-size:11.5px;text-shadow:none}
-.ba-spark{position:absolute;top:50%;left:11px;width:5px;height:5px;margin-top:-2.5px;
-  border-radius:50%;background:#F2B84B;pointer-events:none;
-  box-shadow:0 0 7px 1px rgba(242,184,75,.85);animation:baFlicker 2.8s ease-in-out infinite;
-  transition:background .25s,box-shadow .25s}
-@keyframes baFlicker{0%,100%{opacity:.5;transform:scale(.85)}
-  12%{opacity:1;transform:scale(1.2)}22%{opacity:.55;transform:scale(.95)}
-  38%{opacity:1;transform:scale(1.1)}56%{opacity:.45;transform:scale(.88)}
-  74%{opacity:.95;transform:scale(1.15)}}
+.bookall .ba-n{background:var(--accent);color:var(--on-accent);border-radius:99px;padding:1px 7px;
+  font-variant-numeric:tabular-nums;font-size:11.5px}
 .bookall .ba-tx{margin-left:0}
 .bookall{white-space:nowrap}
 /* "Build all 6 tips" fits even on a 320px phone, so nothing is hidden here any
    more - the old rule dropped the trailing words and left a bare "Build all 6". */
-html.reduce .ba-spark{animation:none;opacity:0}
 html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookall-row{display:none}
 #bookAllResult:not(:empty){margin:10px 0 2px}
 .confirm-card p{margin:0 0 12px;font-size:14px;color:var(--text);font-weight:600}
@@ -1898,7 +1820,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    Everything else in this rule is already restated by the grid rule further
    down - this line was the only thing still reaching the page. */
 .lt-tip{display:flex;align-items:center;gap:7px;font-weight:700;color:var(--text)}
-.lt-tip .grade{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+.lt-tip .grade{font-size:10px;font-weight:800;
   padding:3px 8px;border-radius:99px;background:var(--raise);color:var(--soft)}
 .conf-strong .lt-tip .grade{background:var(--green-wash);color:var(--green-ink)}
 .conf-lean .lt-tip .grade{background:var(--win-wash);color:var(--win-ink)}
@@ -1951,8 +1873,8 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
      long team names from visually crowding the Pred column. */
   grid-template-columns:46px minmax(0,1fr) 38px 38px 38px minmax(120px,208px) 62px 18px;
   align-items:center;column-gap:14px}
-.lthead{padding:7px 8px 6px;font-size:10px;font-weight:800;letter-spacing:.06em;
-  text-transform:uppercase;color:var(--faint);border-bottom:1px solid var(--line-soft);
+.lthead{padding:7px 8px 6px;font-size:10px;font-weight:800;
+  color:var(--faint);border-bottom:1px solid var(--line-soft);
   border-left:3px solid transparent}
 .lthead .c{text-align:center}
 /* MATCH, TIP, PRED are 10px uppercase, which is the size that needs contrast
@@ -2033,7 +1955,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .why{display:block;margin-top:9px;font-size:12.5px;line-height:1.5;color:var(--soft)}
 .conf-strong .vdot{background:var(--green)}
 .conf-lean .vdot{background:var(--win)}
-.tipbox .k{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+.tipbox .k{font-size:10px;font-weight:800;
   color:var(--faint)}
 .tipbox .v{font-weight:700;font-size:14px}
 /* The book's price beside the Draw picks call - see boardPick. */
@@ -2042,7 +1964,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .tipbox .p.hi{color:var(--green)}
 .valuebox{display:flex;align-items:center;gap:9px;margin-top:8px;
   background:var(--green-wash);border-radius:var(--r-md);padding:10px 13px;font-size:13px}
-.valuebox .k{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+.valuebox .k{font-size:10px;font-weight:800;
   color:var(--green-ink)}
 .valuebox b{font-weight:700}
 .valuebox .odds{margin-left:auto;font-weight:800;color:var(--green-ink)}
@@ -2063,7 +1985,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .more-in{overflow:hidden;min-height:0}
 .more-pad{padding:4px 15px 16px}
 .grp{margin-top:14px}
-.grp h3{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+.grp h3{font-size:11px;font-weight:800;
   color:var(--soft);margin-bottom:9px}
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .opt{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
@@ -2109,6 +2031,10 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    above - this is an ordinary paragraph and the space is really there - it
    just wants a little more air around a word set in a heavier weight. */
 #mySheetSub .sbm,#mySheetSub .b9m{margin-left:.18em}
+/* A wizard slip short of its target, in the header: the words amber (caution),
+   the figure gold like every other total. */
+.sheet-head p.ms-miss{margin-top:6px;font-size:13.5px;font-weight:700;color:var(--amber)}
+.ms-miss b{font-size:15px;font-weight:800;color:var(--accent)}
 /* The cross is a drawn path, not a typed character. A text "x" or &times;
    carries the font's own side and vertical bearings, so it lands a pixel or two
    off centre inside a square button and reads as crooked whatever line-height
@@ -2140,7 +2066,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .sl2-filt .num{font-weight:700;opacity:.75;margin-left:4px}
 .sl2{background:var(--card);border:1px solid var(--line);border-radius:12px}
 .sl2-top{display:flex;align-items:center;gap:8px;padding:12px 12px 10px}
-.sl2-st{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;padding:4px 8px;border-radius:99px}
+.sl2-st{font-size:10.5px;font-weight:800;padding:4px 8px;border-radius:99px}
 .sl2-st.jack{color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent)}
 .sl2-st.run{color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent)}
 .sl2-st.lost{color:var(--red-ink);background:color-mix(in srgb,var(--red) 13%,transparent)}
@@ -2320,8 +2246,10 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
 .badge18 sup{font-size:8px;font-weight:800;margin-left:1px}
 .foot-brand span{display:block;font-size:12px;color:var(--faint);margin-top:2px}
 .foot-cols{display:grid;gap:20px;margin-bottom:22px}
-.foot-cols h4{font-size:11px;font-weight:800;letter-spacing:.09em;
-  text-transform:uppercase;color:var(--red-ink);margin-bottom:7px}
+/* h3, not h4: straight after a page's h2 an h4 skips a level (7 Oct 2026,
+   same change as lib/pages.js - the two footers move together). */
+.foot-cols h3{font-size:11px;font-weight:800;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--red-ink);margin:0 0 7px}
 .foot-cols p{font-size:13px;line-height:1.65;max-width:38ch}
 /* Footer link row. Sits between the three columns and the legal line, so the
    legal line keeps the last word. Wraps rather than scrolls on a phone.
@@ -2391,6 +2319,8 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
   outline:2px solid var(--red);outline-offset:2px}
 .foot-legal{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-top:16px;
   border-top:1px solid var(--line-soft);font-size:12px;color:var(--faint)}
+.foot-legal a{color:var(--soft);text-underline-offset:3px}
+@media (display-mode: standalone){.foot-links .fl-inst{display:none}}
 .foot-legal .rg{margin-left:auto;color:var(--red-ink);font-weight:700;text-decoration:none}
 .foot-legal .rg:hover{text-decoration:underline}
 @media(min-width:720px){.foot-cols{grid-template-columns:repeat(3,1fr);gap:26px}}
@@ -2556,8 +2486,9 @@ html.mode-live #liveStrip,html.mode-live #liveStripWrap,html.mode-live #builder,
 html.mode-live .home-grid{display:none}
 html.mode-live #live{display:block}
 .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff3b3b;
-  margin-left:3px;vertical-align:middle;animation:livePulse 1.4s infinite}
-@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+  margin-left:3px;vertical-align:middle;animation:liveCalm 2.4s ease-in-out infinite}
+/* After every live-dot rule, so it wins the cascade. */
+@media(prefers-reduced-motion:reduce){.ys-live,.potd-status.potd-live .ld,.live-dot{animation:none}}
 /* On a phone the live cue rides the bottom Live tab. It used to sit in the top
    nav, where at narrow widths it drifted into the theme toggle. Absolute so it
    pins to the icon instead of pushing the label sideways, and ringed in the
@@ -2572,7 +2503,7 @@ html.mode-live #live{display:block}
 #liveStripWrap{margin-top:22px;border-top:1px solid var(--line-soft);padding-top:14px}
 .ls-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 2px 4px}
 .ls-head span{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;
-  letter-spacing:.05em;text-transform:uppercase;color:var(--soft)}
+  color:var(--soft)}
 .ls-head b{color:var(--faint);font-weight:700}
 .ls-head a{font-size:13px;font-weight:800;color:var(--red-ink);text-decoration:none}
 .ls-head a:hover{text-decoration:underline}
@@ -2582,13 +2513,13 @@ html.mode-live #live{display:block}
 .ls-card:hover{border-color:var(--line)}
 .ls-card.goal{border-color:var(--green);box-shadow:0 0 0 2px rgba(43,199,120,.3)}
 .ls-card.goal .ls-top{color:var(--green)}
-.ls-row b.lit{color:var(--green);text-shadow:0 0 10px rgba(43,199,120,.9);animation:litPulse 1.1s ease-in-out infinite}
+.ls-row b.lit{color:var(--green)}
 .ls-more{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
   min-width:120px;background:var(--raise);border-style:dashed}
 .ls-more-n{font-size:20px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
 .ls-more-t{font-size:12px;font-weight:800;color:var(--red-ink)}
 .ls-top{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;
-  letter-spacing:.05em;text-transform:uppercase;color:#ff3b3b;margin-bottom:7px}
+  color:#ff3b3b;margin-bottom:7px}
 .ls-min{color:var(--faint)}
 .ls-row{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:700;line-height:1.5}
 .ls-row b{font-variant-numeric:tabular-nums}
@@ -2599,18 +2530,22 @@ html.mode-live #live{display:block}
 }
 #liveStripWrap{margin-top:20px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);
   padding:0;background:linear-gradient(180deg,var(--card),var(--card-2))}
+/* A row you swipe, not a marquee (Task 4, 7 Oct). The 55s scroll could not be
+   paused on a phone and read badly at speed; events now sit still, newest
+   first, and the reader moves them. */
 .ticker{position:relative;display:flex;align-items:center;overflow:hidden;height:46px;
   background:linear-gradient(180deg,var(--card),var(--card-2));
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 70px),transparent);
   mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 70px),transparent)}
-@media(max-width:560px){.ticker-track{animation-duration:38s}}
-.ticker-track{display:flex;align-items:center;gap:0;white-space:nowrap;width:max-content;will-change:transform;
-  animation:tickscroll 55s linear infinite}
-.ticker:hover .ticker-track,.ticker:active .ticker-track{animation-play-state:paused}
-@keyframes tickscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.tk-goaltag{background:var(--green);color:#04210f;animation:tkTagBlink .8s steps(1) infinite;vertical-align:middle}
-@keyframes tkTagBlink{0%,100%{opacity:1;box-shadow:0 0 12px rgba(43,199,120,.95)}50%{opacity:.5;box-shadow:0 0 3px rgba(43,199,120,.4)}}
-.tk-item{display:inline-flex;align-items:center;gap:9px;padding:0 22px;font-size:13.5px;font-weight:700;
+.ticker-track{display:flex;align-items:center;gap:0;white-space:nowrap;height:100%;
+  overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;
+  /* Room for "See all" and its fade (about 89px) so the last event scrolls clear of it. */
+  padding-right:100px;
+  overscroll-behavior-x:contain}
+.ticker-track::-webkit-scrollbar{display:none}
+.ticker-track:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
+.tk-goaltag{background:var(--green);color:#04210f;vertical-align:middle}
+.tk-item{scroll-snap-align:start;display:inline-flex;align-items:center;gap:9px;padding:0 22px;font-size:13.5px;font-weight:700;
   color:var(--text);border-right:1px solid var(--line-soft);animation:tkEnter .5s ease-out}
 @keyframes tkEnter{from{opacity:0}to{opacity:1}}
 .tk-min{color:var(--faint)!important}
@@ -2618,7 +2553,7 @@ html.mode-live #live{display:block}
 .ticker .tk-item.tk-draw span{color:var(--soft)!important}
 .ticker .tk-item.tk-draw .tk-sc{color:var(--text)!important}
 .tk-ic{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;flex-shrink:0}
-.tk-tag{font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+.tk-tag{font-size:9.5px;font-weight:800;
   padding:3px 9px;border-radius:99px}
 .tk-goal .tk-tag{background:var(--green-wash);color:var(--green-ink)}
 .tk-ht .tk-tag{background:var(--raise);color:var(--soft)}
@@ -2640,25 +2575,9 @@ html.mode-live #live{display:block}
 .tk-red .tk-ic::before{background:var(--red)}
 .tk-red .tk-ic{color:var(--red)}
 .tk-ht .tk-ic,.tk-ft .tk-ic{color:var(--faint)}
-.tk-ball svg{display:block;animation:tkball 1.4s ease-in-out infinite}
-.tk-ball{position:absolute;font-size:15px;animation:tkball 1.4s ease-in-out infinite}
-@keyframes tkball{0%{transform:translateX(-8px) rotate(0)}55%{transform:translateX(4px) rotate(320deg)}
-  70%{transform:translateX(4px) rotate(320deg)}100%{transform:translateX(-8px) rotate(0)}}
-.tk-goalfx{position:relative;display:inline-block;width:22px;height:16px}
-.tk-goalpost{position:absolute;right:0;top:1px;width:13px;height:14px;color:var(--faint);opacity:.85}
-.tk-ball2{position:absolute;left:0;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#fff,#cfcfd6);box-shadow:0 0 5px rgba(43,199,120,.8);
-  animation:goalshot 1.7s cubic-bezier(.4,0,.5,1) infinite}
-@keyframes goalshot{0%{left:-1px;opacity:0;transform:scale(.8)}15%{opacity:1}55%{left:9px;transform:scale(1)}72%{left:9px}100%{left:-1px;opacity:0;transform:scale(.8)}}
-.tk-net{position:absolute;right:0;width:9px;height:16px;border:1.5px solid var(--faint);border-left:none;
-  border-radius:0 3px 3px 0;opacity:.7}
-.tk-net::before{content:"";position:absolute;inset:0;background:
-  repeating-linear-gradient(90deg,transparent 0 2px,var(--faint) 2px 2.5px),
-  repeating-linear-gradient(0deg,transparent 0 2px,var(--faint) 2px 2.5px);opacity:.5}
 .tk-goal.flash .tk-ic{animation:tkflash 1s ease-out}
 .tk-goal.flash .tk-sc{color:inherit}
-.tk-goal.flash .tk-sc .glow{color:var(--green);animation:tkscglow 1s ease-in-out infinite}
-@keyframes tkscglow{0%,100%{text-shadow:0 0 6px rgba(43,199,120,.7)}50%{text-shadow:0 0 14px rgba(43,199,120,1)}}
+.tk-goal.flash .tk-sc .glow{color:var(--green)}
 @keyframes tkflash{0%{filter:drop-shadow(0 0 0 var(--green))}30%{filter:drop-shadow(0 0 10px var(--green))}100%{filter:none}}
 .ticker-all{flex-shrink:0;align-self:center;display:inline-flex;align-items:center;gap:3px;position:absolute;right:0;top:0;bottom:0;
   padding:5px 12px 5px 30px;font-size:11px;font-weight:800;color:#fff;
@@ -2676,7 +2595,7 @@ html.mode-live #live{display:block}
 .lv-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .lv-lg{font-size:11px;color:var(--faint);font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lv-status{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:10.5px;
-  font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#ff3b3b;flex-shrink:0}
+  font-weight:800;color:#ff3b3b;flex-shrink:0}
 .lv-status.ft{color:var(--faint)}
 .lv-status .live-dot{margin:0}
 .lv-teams{display:grid;grid-template-columns:1fr auto;gap:3px 12px;align-items:center}
@@ -2712,7 +2631,7 @@ html.mode-live #live{display:block}
 .lv-scorers .mn{color:var(--faint);font-variant-numeric:tabular-nums}
 .lv-tip{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12.5px;font-weight:700;flex-wrap:wrap}
 .lv-tip .lbl{color:var(--soft);font-weight:600}
-.lv-badge{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+.lv-badge{font-size:11px;font-weight:800;
   padding:4px 9px;border-radius:99px}
 .lv-badge.win{background:var(--green-wash);color:var(--green-ink)}
 .lv-badge.lose{background:var(--red-wash);color:var(--red-ink)}
@@ -2734,7 +2653,7 @@ html.mode-live #live{display:block}
 .lv-chip.on .n{color:rgba(255,255,255,.8)}
 .lv-grp{margin-bottom:14px}
 .lv-grp-h{display:flex;align-items:center;gap:9px;padding:4px 2px 10px;font-size:12px;font-weight:800;
-  letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
+  color:var(--soft)}
 .lv-grp-h .flag{width:20px;height:14px}
 .lv-grp-h .ct{color:var(--faint);font-weight:700}
 .lv-grp-h .gc{margin-left:auto;background:var(--raise);color:var(--soft);border-radius:99px;padding:2px 9px;font-size:11px}
@@ -2753,18 +2672,17 @@ html.mode-live #live{display:block}
 .goal-badge{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:120px;height:auto;
   border-radius:var(--r-sm);box-shadow:0 4px 14px rgba(0,0,0,.4);
   animation:goalBadgeIn 3s ease-out forwards;pointer-events:none;z-index:2}
-.goal-tag{display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;
-  letter-spacing:.06em;color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;
+.goal-tag{display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;
+  color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;
   margin-right:6px;vertical-align:middle;animation:goalTagPop .35s ease-out}
 @keyframes goalTagPop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
 .lv-sc.scored{position:relative;color:var(--red-ink)!important;z-index:1}
 .lv-sc.scored::before{content:"";position:absolute;inset:-2px -6px;border-radius:var(--r-sm);
-   background:var(--red-wash);box-shadow:0 0 0 1px var(--red),0 0 10px rgba(230,57,70,.7);
-   z-index:-1;animation:scoredGlow 1.1s ease-in-out infinite}
+   background:var(--red-wash);box-shadow:0 0 0 1px var(--red);
+   z-index:-1}
 .lv-sc{overflow:visible}
 .lv-sc.scored{margin-left:52px}
 .lv-sc .goal-tag{position:absolute;right:calc(100% + 12px);top:50%;bottom:auto;left:auto;transform:translateY(-50%);margin:0;z-index:3}
-@keyframes scoredGlow{0%,100%{box-shadow:0 0 0 1px var(--red),0 0 8px rgba(230,57,70,.55)}50%{box-shadow:0 0 0 1px var(--red),0 0 16px rgba(230,57,70,.95)}}
 @media(max-width:520px){.lv-scorers{grid-template-columns:1fr}.lv-scorers .sr.a{justify-content:flex-start;text-align:left;grid-column:1}}
 .bld-head{margin-bottom:20px}
 .bld-head h2{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:8px 0 4px}
@@ -2779,10 +2697,8 @@ html.mode-live #live{display:block}
 .bld-mode-btn:hover{color:var(--text);background:var(--card)}
 .bld-mode-btn:hover svg{opacity:1}
 .bld-mode-btn.on{background:var(--red-fill);color:#fff;box-shadow:0 2px 8px rgba(230,57,70,.3)}
-/* Each mode wears its own identity when active: Slider = red/gold ember (fast,
-   hands-on); Wizard = violet/gold enchantment (let the app decide). */
-.bld-mode-btn.on[data-mode="slider"]{background:linear-gradient(120deg,#c8323d,var(--red));
-  box-shadow:inset 0 0 0 1px rgba(242,184,75,.5),0 2px 10px rgba(230,57,70,.4)}
+/* The Wizard toggle stays violet/gold when selected: owner's choice 7 Oct.
+   The toggle only - no other purple on the site. */
 .bld-mode-btn.on[data-mode="wizard"]{background:linear-gradient(120deg,#6d3bd4,#8b5cf6);
   box-shadow:inset 0 0 0 1px rgba(242,184,75,.55),0 2px 12px rgba(139,92,246,.5)}
 .bld-mode-btn.on[data-mode="wizard"] svg{filter:drop-shadow(0 0 4px rgba(242,184,75,.8))}
@@ -2802,7 +2718,8 @@ html.mode-live #live{display:block}
 .filters-toggle .ft-l{display:inline-flex;align-items:center;gap:9px;letter-spacing:.02em}
 .filters-toggle .ft-l svg{width:16px;height:16px;color:var(--faint)}
 .filters-toggle .ft-r{display:inline-flex;align-items:center;gap:9px}
-.filters-toggle .ft-sum{font-size:12px;font-weight:700;color:var(--faint)}
+.filters-toggle .ft-sum{font-size:12px;font-weight:700;color:var(--faint);text-align:right;line-height:1.35}
+.filters-toggle .ft-r{min-width:0}
 .filters-toggle .ft-chev{width:16px;height:16px;color:var(--soft);transition:transform .2s ease}
 .filters-toggle[aria-expanded="false"] .ft-chev{transform:rotate(-90deg)}
 /* THE OPEN STATE HAS NO CEILING. It was max-height:600px, which is a number
@@ -2849,8 +2766,8 @@ html{interpolate-size:allow-keywords}
 .slider-panel[data-zone="risky"] .risk-name{color:var(--red-ink)}
 .risk-ticks span{transition:color .18s ease,transform .18s ease}
 .risk-ticks span.zone-live{color:var(--text);transform:scale(1.08)}
-.risk-ticks{display:flex;justify-content:space-between;margin-top:8px;
-  font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.risk-ticks{display:grid;grid-template-columns:repeat(5,1fr);text-align:center;margin-top:8px;
+  font-size:11.5px;font-weight:700;color:var(--faint)}
 /* Slider fill effect - webkit only but progressive enhancement */
 .risk{background-size:0% 100%;background-repeat:no-repeat;background-image:linear-gradient(90deg,var(--green),var(--win) 55%,var(--red))}
 .risk::-webkit-slider-runnable-track{background:transparent}
@@ -3017,8 +2934,8 @@ html{interpolate-size:allow-keywords}
    longest label decide the height of all three - or ellipsise a label nobody
    can then read - it wraps to a second line and the tracking eases off, so the
    words fit the box instead of the box straining round the words. */
-.stat i{display:block;font-style:normal;font-size:11px;font-weight:700;letter-spacing:.03em;
-  text-transform:uppercase;color:var(--faint);margin-top:3px;
+.stat i{display:block;font-style:normal;font-size:11px;font-weight:700;
+  color:var(--faint);margin-top:3px;
   line-height:1.25;overflow-wrap:anywhere;hyphens:none}
 /* Two tiles, not three, when the confidence one is dropped for a jackpot. */
 .bld-stats.stats-2{grid-template-columns:repeat(2,1fr)}
@@ -3180,6 +3097,12 @@ html{interpolate-size:allow-keywords}
   .bld-foot .bf-odds{margin-left:auto;text-align:right}
   html.mode-build.bld-foot-on .myfab.myfab{bottom:calc(var(--btabs-h,0px) + 142px)}
 }
+/* Lifted clear of the bar it still landed on the slip itself: on a 360px
+   phone the red count sat on a leg's price and its remove button, so a
+   mis-tap dropped a game (critique, 6 Oct 2026). While the builder's bar is
+   up it already says how many games and what they pay, so the bubble steps
+   aside there and comes back on every other screen. */
+@media(max-width:720px){ html.mode-build.bld-foot-on .myfab.myfab{display:none} }
 /* Secondary actions become quiet icon-ghost buttons so Book owns the bar. */
 .bld-foot .clear-btn{flex:0 0 auto;width:44px;height:44px;padding:0;display:grid;place-items:center;
   background:var(--raise);border:1px solid var(--line-soft);color:var(--soft);border-radius:var(--r-sm);
@@ -3193,7 +3116,7 @@ html{interpolate-size:allow-keywords}
 .bld-foot .clear-btn:active{transform:scale(.94)}
 .bld-odds{flex:1}
 .bld-odds i{display:block;font-style:normal;font-size:11px;font-weight:700;
-  letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+  color:var(--faint)}
 .bld-odds b{font-size:24px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
 .book-btn{background:var(--red-fill);color:#fff;border:0;font:inherit;font-weight:800;font-size:15px;
   padding:14px 22px;border-radius:var(--r-sm);cursor:pointer;white-space:nowrap;
@@ -3238,8 +3161,8 @@ html{interpolate-size:allow-keywords}
    the row takes no space at all - it was showing on the wizard page above a
    slip of nought games. */
 .bookpick[hidden]{display:none}
-.bookpick-l{font-size:11px;font-weight:700;letter-spacing:.05em;
-  text-transform:uppercase;color:var(--faint);margin-right:1px}
+.bookpick-l{font-size:11px;font-weight:700;
+  color:var(--faint);margin-right:1px}
 .bp{font:inherit;font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:99px;
   border:1px solid transparent;cursor:pointer;white-space:nowrap;line-height:1.15;
   display:inline-flex;align-items:center;min-height:30px;
@@ -3528,8 +3451,8 @@ html{interpolate-size:allow-keywords}
 .byo-go{flex:0 0 auto;font:inherit;font-size:13.5px;font-weight:800;padding:11px 20px;
   border-radius:var(--r-md);cursor:pointer;color:#fff;border:0;letter-spacing:.01em;
   background:
-    radial-gradient(120% 140% at 50% 0%,rgba(255,255,255,.28) 0%,rgba(255,255,255,0) 60%),
-    linear-gradient(180deg,#f4555f 0%,var(--red-fill) 55%,#cc2f3b 100%);
+    radial-gradient(120% 140% at 50% 0%,rgba(255,255,255,.14) 0%,rgba(255,255,255,0) 60%),
+    linear-gradient(180deg,var(--red-fill) 0%,#CC2F3B 55%,#B82733 100%);
   /* THE EDGE IS GOLD, which is this site's mark for "this is the one".
      The hero CTA carries it, the header's Build tab carries it, and the
      wordmark is gold: a white hairline here would have been a fourth
@@ -3850,8 +3773,8 @@ html{interpolate-size:allow-keywords}
   color:var(--soft);cursor:pointer}
 .code-x svg{width:15px;height:15px}
 .code-x:hover{color:var(--text);border-color:var(--red)}
-.code-card i{font-style:normal;font-size:12px;font-weight:700;letter-spacing:.05em;
-  text-transform:uppercase;color:var(--green-ink)}
+.code-card i{font-style:normal;font-size:12px;font-weight:700;
+  color:var(--green-ink)}
 .code-card b{display:block;font-size:32px;font-weight:800;letter-spacing:.08em;
   color:var(--text);margin:6px 0 14px;font-variant-numeric:tabular-nums}
 /* How many codes are left today, on the one screen every booking ends on.
@@ -4037,15 +3960,6 @@ html{interpolate-size:allow-keywords}
 .code-card--sb b,[data-theme="light"] .code-card--sb b{
   color:#fff;text-shadow:0 0 24px rgba(230,57,70,.55)}
 
-/* A slow sweep, once every few seconds. The card is on screen for as long as
-   it takes to copy a code, so this is the one place a little motion reads as
-   alive rather than restless. Off entirely for anyone who has asked for less. */
-.code-card--sb::after{content:"";position:absolute;inset:0;border-radius:inherit;
-  pointer-events:none;overflow:hidden;
-  background:linear-gradient(100deg,transparent 40%,rgba(255,255,255,.06) 50%,transparent 60%);
-  background-size:260% 100%;animation:sbSweep 5.5s ease-in-out infinite}
-@keyframes sbSweep{0%,70%{background-position:130% 0}100%{background-position:-30% 0}}
-@media (prefers-reduced-motion: reduce){ .code-card--sb::after{animation:none} }
 
 .code-card--sb .code-acts .code-copy,
 .code-card--sb .code-acts .share-btn{
@@ -4472,7 +4386,7 @@ html{interpolate-size:allow-keywords}
   align-items:center;gap:9px;padding:0 18px 0 12px;height:50px;border-radius:99px;
   background:var(--red-fill);color:#fff;border:0;cursor:pointer;
   font:inherit;font-size:13.5px;font-weight:800;letter-spacing:-.01em;
-  box-shadow:0 10px 28px rgba(230,57,70,.34);
+  box-shadow:0 6px 16px rgba(0,0,0,.35);
   opacity:0;transform:translateY(10px) scale(.96);
   transition:opacity .22s ease,transform .22s cubic-bezier(.2,.8,.3,1)}
 .ctafab.on{opacity:1;transform:none}
@@ -4488,26 +4402,20 @@ html{interpolate-size:allow-keywords}
 .ctafab-orb{width:34px;height:34px;padding:4px;box-sizing:border-box;border-radius:50%;flex-shrink:0;
   background:radial-gradient(circle at 50% 40%,#2a1a1d,#0d0809);
   box-shadow:0 0 0 1.5px rgba(255,255,255,.7),0 2px 6px rgba(0,0,0,.4);margin-left:-3px}
-@media(min-width:721px){ .ctafab{display:inline-flex} }
+/* IN THE RAIL'S COLUMN, NOT ON THE BOARD (7 Oct 2026). Bottom left, it sat on
+   the team names of whatever row was passing ("Stevenage" in the critique).
+   It now appears only once the whole rail has scrolled away, and lines up
+   with the rail's left edge (set by script), so it stands in that column's
+   empty space beside My slip and never over a fixture. Below 1060 there is no
+   rail column for it to stand in; the header's "Build me a slip" tab does the
+   same job there and is on screen at every scroll. */
+@media(min-width:1060px){ .ctafab{display:inline-flex} }
 @media(prefers-reduced-motion:reduce){
   .ctafab{transition:opacity .2s ease}
   .ctafab.on{transform:none}
 }
-.wspfab{position:fixed;left:16px;bottom:16px;z-index:125;width:56px;height:56px;border-radius:50%;
-  border:0;padding:0;cursor:pointer;background:radial-gradient(circle at 50% 40%,#3a2a63,#1a1230);
-  box-shadow:0 6px 20px rgba(120,80,220,.5),0 0 0 1px rgba(180,150,255,.35) inset;
-  display:flex;align-items:center;justify-content:center;animation:wspFloat 3.2s ease-in-out infinite}
-.wspfab img{width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(180,150,255,.7))}
-.wspfab::after{content:"\26a1";position:absolute;right:-2px;top:-2px;font-size:16px;
-  filter:drop-shadow(0 0 5px rgba(255,225,120,.95));animation:wspBolt 2.6s ease-in-out infinite}
-@keyframes wspBolt{0%,72%,100%{opacity:.35;transform:scale(.9) rotate(0)}80%{opacity:1;transform:scale(1.25) rotate(-8deg)}88%{opacity:.6;transform:scale(1.05)}}
-.wspfab-spark{position:absolute;inset:-3px;border-radius:50%;pointer-events:none;
-  box-shadow:0 0 14px 2px rgba(242,184,75,.5);animation:wspGlow 2.4s ease-in-out infinite}
-@keyframes wspFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-@keyframes wspGlow{0%,100%{opacity:.5}50%{opacity:1}}
-@media(max-width:720px){.wspfab{bottom:92px;width:52px;height:52px}.wspfab img{width:34px;height:34px}}
 .wsp-lead{font-size:13.5px;color:var(--soft);margin-bottom:16px;line-height:1.5}
-.wsp-lbl{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin:16px 0 8px}
+.wsp-lbl{font-size:11px;font-weight:800;color:var(--faint);margin:16px 0 8px}
 .wsp-hint{margin:9px 0 2px;font-size:12px;line-height:1.5;color:var(--faint)}
 /* The jackpot note is the one hint that has to be read rather than glanced at,
    so it gets an edge and a little weight - still a note, not a warning box. */
@@ -4579,35 +4487,21 @@ button.wsp-go.waiting{opacity:.55}
 /* The arrow sits after the words, not pushed to a far edge - the pill is only
    as wide as what it says. */
 .wsp-slider-link .wsl-a{margin-left:2px}
-.wsp-slider-link .wsl-t{
-  background-image:linear-gradient(100deg,
-    var(--win-ink) 0%, var(--win-ink) 38%, #fff 50%, var(--win-ink) 62%, var(--win-ink) 100%);
-  background-size:280% 100%;
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  animation:wslSheen 5.5s ease-in-out infinite}
+/* Plain text in the pill's own ink. The looping white sheen across the words
+   was gradient text (Task 4, 7 Oct); the border and the arrow already say
+   "press me". */
+.wsp-slider-link .wsl-t{color:var(--win-ink)}
 /* The arrow is its own element so it can move without dragging the text. */
 .wsp-slider-link .wsl-a{display:inline-block;color:var(--win-ink);font-weight:800;
   transition:transform .22s cubic-bezier(.2,.7,.3,1)}
-/* The hairline grows from the left rather than fading, so the eye follows it
-   to the words instead of the whole thing simply brightening. */
-/* The underline was the whole affordance when this was a link. The border is
-   now, so the hairline would only be a second one. */
-@keyframes wslSheen{
-  0%,72%{background-position:120% 0}
-  100%{background-position:-40% 0}
-}
 @media(hover:hover){
-  .wsp-slider-link:hover .wsl-t{animation-play-state:paused;color:#fff;
-    -webkit-text-fill-color:var(--text)}
+  .wsp-slider-link:hover .wsl-t{color:var(--text)}
   .wsp-slider-link:hover{border-color:var(--win-ink);background:rgba(242,184,75,.2)}
   .wsp-slider-link:hover .wsl-a{transform:translateX(4px)}
 }
 .wsp-slider-link:active .wsl-a{transform:translateX(2px)}
 .wsp-slider-link:focus-visible{outline:2px solid var(--red-ink);outline-offset:3px}
-/* Somebody who has asked for less movement gets none of it. */
 @media(prefers-reduced-motion:reduce){
-  .wsp-slider-link .wsl-t{animation:none;color:var(--soft);
-    -webkit-text-fill-color:var(--soft)}
   .wsp-slider-link .wsl-a{transition:none}
 }
 /* THE DRAW LOOKS DIFFERENT BECAUSE IT IS DIFFERENT. Every other chip here
@@ -4764,12 +4658,9 @@ button.wsp-go.waiting{opacity:.55}
 .lgp-row .lgp-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lgp-row .lgp-n{flex:0 0 auto;font-size:11.5px;font-weight:700;color:var(--faint)}
 .lgp-row .lgp-ct{color:var(--faint);font-weight:600}
-/* Nothing picked means every league is in. An empty tick box says the opposite,
-   so in that state each row carries a muted tick: included, but not chosen. The
-   red tick stays for a deliberate choice, which keeps the first tap reading as
-   "narrow to this one" rather than "untick this one". */
-.lgp-list.all-in .lgp-tick{background:var(--card-2);border-color:var(--faint);
-  color:var(--faint)}
+/* A third-division-and-below league: listed, unticked until asked for. */
+.lgp-row .lgp-vol{flex:0 0 auto;padding:2px 8px;border-radius:99px;border:1px solid var(--line);
+  background:var(--card-2);color:var(--soft);font-size:11px;font-weight:700;line-height:1.3}
 .lgp-allin{padding:9px 12px;font-size:12px;line-height:1.45;color:var(--soft);
   border-bottom:1px solid var(--line-soft)}
 .lgp-allin b{color:var(--text);font-weight:700}
@@ -4778,7 +4669,7 @@ button.wsp-go.waiting{opacity:.55}
   background:var(--card-2);border-bottom:1px solid var(--line-soft)}
 @media (hover:hover){
   .lgp-open:hover{background:var(--raise);border-color:var(--soft)}
-  .lgp-clear:hover{background:var(--card-2);color:var(--red)}
+  .lgp-clear:hover{background:var(--card-2);color:var(--red-ink)}
   .lgp-row:hover{background:var(--card-2)}
 }
 /* A control that does nothing under a cursor reads as a label, not a choice.
@@ -4810,8 +4701,8 @@ button.wsp-go.waiting{opacity:.55}
    its label needs. margin-top on .wsp-go is neutralised inside the row. */
 .wsp-acts{display:flex;gap:10px;margin-top:16px;align-items:stretch}
 .wsp-acts .wsp-shuffle{flex:0 0 auto;padding:11px 16px;font-size:14px;white-space:nowrap}
-.book-btn{background:linear-gradient(180deg,#e6414e,var(--red))!important;box-shadow:0 3px 10px rgba(230,57,70,.4),inset 0 1px 0 rgba(255,255,255,.18)}
-.wsp-chip.on{background:var(--red);box-shadow:0 2px 8px rgba(230,57,70,.3)}
+.book-btn{background:linear-gradient(180deg,var(--red-fill),#C62F3B)!important;box-shadow:0 3px 10px rgba(230,57,70,.4),inset 0 1px 0 rgba(255,255,255,.18)}
+.wsp-chip.on{background:var(--red-fill);box-shadow:0 2px 8px rgba(230,57,70,.3)}
 /* Payout chips carry a risk hue (green x50 -> red x6000). Tinted when idle,
    filled with the same hue when selected; overrides the generic red .on above. */
 .wsp-chip.wsp-risk{border-color:var(--wr);color:var(--wr);
@@ -4828,8 +4719,16 @@ button.wsp-go.waiting{opacity:.55}
   .wsp-chip.wsp-risk:hover{background:var(--wr);color:var(--wr-ink,#fff);
     transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
   .wsp-chip.wsp-risk.on:hover{transform:none}
+  .wsp-chip.wsp-risk:disabled:hover{background:none;color:var(--faint);transform:none;box-shadow:none}
 }
 .wsp-chip.wsp-risk:active{transform:translateY(0) scale(.97)}
+/* A rung this pool cannot reach: drawn, so the ladder keeps its shape, but
+   plainly not a choice - the .wsp-reach line under the row says why. */
+.wsp-chip.wsp-risk:disabled{border-color:var(--line);border-style:dashed;color:var(--faint);
+  cursor:not-allowed;opacity:.7}
+.wsp-chip.wsp-risk:disabled:active{transform:none}
+.wsp-reach{flex-basis:100%;margin:2px 0 0;font-size:12.5px;line-height:1.45;color:var(--soft)}
+.wsp-reach b{color:var(--accent);font-weight:800}
 
 /* The jackpot pair should not look like more of the same scale.
    x50 to x6000 is a spectrum; x20k and x50k are a different proposition -
@@ -4874,13 +4773,10 @@ button.wsp-go.waiting{opacity:.55}
    the button has been sitting on the Live tab. --btabs-h is only defined
    where the bar exists, so the fallback keeps the desktop position. */
 .myfab{position:fixed;right:16px;bottom:calc(var(--btabs-h,0px) + 16px);z-index:130;
-  background:radial-gradient(circle at 50% 40%,rgba(230,57,70,.92),rgba(150,20,32,.88));color:#fff;
+  background:radial-gradient(circle at 50% 40%,rgba(219,54,67,.96),rgba(150,20,32,.9));color:#fff;
   border:0;font:inherit;font-weight:800;font-size:15px;padding:14px 20px;border-radius:99px;
   cursor:pointer;display:flex;align-items:center;gap:9px;
-  box-shadow:0 6px 20px rgba(230,57,70,.5),0 0 0 1px rgba(255,180,185,.35) inset;
-  animation:orbGlow 2.8s ease-in-out infinite}
-@keyframes orbGlow{0%,100%{box-shadow:0 6px 20px rgba(230,57,70,.45),0 0 0 1px rgba(255,180,185,.3) inset}
-  50%{box-shadow:0 6px 26px rgba(230,57,70,.7),0 0 0 1px rgba(255,180,185,.45) inset}}
+  box-shadow:0 4px 12px rgba(0,0,0,.35),0 0 0 1px rgba(255,180,185,.35) inset}
 html.reduce .myfab{animation:none}
 /* On the Build view with its Shuffle / Clear / Get code bar showing, the bubble
    sat on the end of Get code. It rises clear of the bar (about 74px tall)
@@ -4972,7 +4868,7 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
 .sotd-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .sotd-odds{flex:1}
 .sotd-odds i{display:block;font-style:normal;font-size:11px;font-weight:700;
-  letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+  color:var(--faint)}
 .sotd-odds b{font-size:22px;font-weight:800;color:var(--win);font-variant-numeric:tabular-nums}
 .sotd-btn{background:var(--red-fill);color:#fff;border:0;font:inherit;font-weight:800;
   font-size:14px;padding:12px 18px;border-radius:var(--r-md);cursor:pointer}
@@ -5009,10 +4905,8 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
 @keyframes lgpFlat{from{opacity:0}to{opacity:1}}
 @keyframes streakFlat{from{opacity:0}to{opacity:1}}
 .goal-tag{position:absolute;right:calc(100% + 6px);top:50%;transform:translateY(-50%);
-  display:inline-flex;align-items:center;font-size:9px;font-weight:800;letter-spacing:.06em;
-  color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;white-space:nowrap;
-  box-shadow:0 0 8px rgba(43,199,120,.7);animation:goalTagBlink .9s steps(1) infinite;z-index:2}
-@keyframes goalTagBlink{0%,100%{opacity:1;box-shadow:0 0 12px rgba(43,199,120,.95)}50%{opacity:.45;box-shadow:0 0 4px rgba(43,199,120,.4)}}
+  display:inline-flex;align-items:center;font-size:10.5px;font-weight:800;
+  color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;white-space:nowrap;z-index:2}
 .lv-sc{font-weight:600}
 .lv.ft-row .lv-sc{font-weight:800}
 .streak b{color:var(--win);font-weight:800}
@@ -5030,15 +4924,15 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
    rather than red, because seven days is a small sample and not a verdict. */
 .rec-cell .pc.cool{color:var(--amber)}
 .rec-cell i{display:block;font-style:normal;font-size:10.5px;font-weight:700;
-  letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-top:2px}
+  color:var(--faint);margin-top:2px}
 .rec-bar{height:5px;border-radius:99px;background:var(--raise);overflow:hidden}
 .rec-bar i{display:block;height:100%;border-radius:99px;background:var(--green);
   transition:width 1.05s cubic-bezier(.25,.8,.3,1)}
 /* Per-market rows. A quiet table under the headline, not a second scoreboard
    competing with it - the overall figure stays the loud number. */
 .rec-mk{margin-top:12px;padding-top:11px;border-top:1px solid var(--line-soft)}
-.rec-mk-h{font-size:10.5px;font-weight:800;letter-spacing:.08em;
-  text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+.rec-mk-h{font-size:10.5px;font-weight:800;
+  color:var(--faint);margin-bottom:7px}
 .rec-mk-row{display:grid;grid-template-columns:1fr 52px 34px 40px;align-items:center;
   gap:8px;padding:3px 0;font-size:12px}
 .rec-mk-row .mk-n{color:var(--text);font-weight:700;min-width:0;
@@ -5078,7 +4972,7 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
   cursor:pointer;flex:0 0 auto;white-space:nowrap}
 .notif button.on{background:var(--green-wash);color:var(--green-ink);border-color:var(--green)}
 .powered{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
-.powered i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.powered i{font-style:normal;font-size:10px;font-weight:700;color:var(--faint)}
 .powered img{height:16px;width:auto;display:block;border-radius:var(--r-sm)}
 @media(max-width:600px){.powered i{display:none}}
 
@@ -5219,7 +5113,6 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .finder{padding:11px}
 .finder-h{margin-bottom:9px}
 .picker{gap:7px}
-.field label{margin-bottom:4px}
 .chosen{margin-top:8px;padding:7px 10px}
 .datebar{padding:4px}
 .dnav{width:34px;height:34px}
@@ -5250,7 +5143,7 @@ select{min-height:44px;padding:10px 32px 10px 12px}
 .mtoggle{margin:10px -12px 0;padding:10px 12px}
 .more-pad{padding:2px 10px 8px}
 .grp{margin-top:7px}
-.grp h3{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+.grp h3{font-size:10.5px;font-weight:800;color:var(--faint);margin-bottom:4px}
 .opts{gap:4px}
 .opt{padding:6px 9px;font-size:12.5px;border-radius:var(--r-sm)}
 .opt .n{font-size:11.5px;font-weight:600}
@@ -5463,9 +5356,7 @@ html:not(.mode-build) .bld-dock{display:none}
   color:var(--soft);padding:6px 12px;border-radius:99px;cursor:pointer;
   transition:background .15s,color .15s}
 .bd-m:hover{color:var(--text)}
-.bd-m.on{color:#fff}
-.bd-m.on[data-bdmode="slider"]{background:linear-gradient(120deg,#c8323d,var(--red))}
-.bd-m.on[data-bdmode="wizard"]{background:linear-gradient(120deg,#6d3bd4,#8b5cf6)}
+.bd-m.on{color:#fff;background:var(--red-fill)}
 .bd-sum{display:inline-flex;align-items:center;gap:8px;background:none;border:0;
   font:inherit;font-size:12px;font-weight:700;color:var(--faint);
   padding:6px 10px 6px 4px;cursor:pointer;white-space:nowrap;
@@ -5490,14 +5381,8 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
    carried by the second half - so the builder reads as part of the site. */
 .bld-title{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.03em;
   line-height:1.05;margin:6px 0 12px}
-.bld-title em{font-style:normal;
-  background:linear-gradient(100deg,#8b5cf6 0%,#c084fc 45%,var(--win) 100%);
-  -webkit-background-clip:text;background-clip:text;color:transparent}
-/* A gradient that fails to clip leaves invisible text, so keep a real colour
-   underneath for anything that does not support it. */
-@supports not ((-webkit-background-clip:text) or (background-clip:text)){
-  .bld-title em{color:#a78bfa;background:none}
-}
+/* Gold, flat - the way h1 em carries colour everywhere else (DESIGN.md). */
+.bld-title em{font-style:normal;color:var(--accent)}
 .bld-mode-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .bld-help{width:26px;height:26px;flex-shrink:0;border-radius:50%;cursor:pointer;
   background:var(--card-2);border:1px solid var(--line);color:var(--soft);
@@ -5513,9 +5398,8 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
   font-size:11.5px;line-height:1.5;color:var(--faint)}
 .bmh{display:inline-block}
 .bmh b{font-weight:800;margin-right:4px}
-.bmh-wiz b{color:#a78bfa}
+.bmh-wiz b{color:var(--red-ink)}
 .bmh-slide b{color:var(--red-ink)}
-[data-theme="light"] .bmh-wiz b{color:#5b21b6}
 @media(max-width:560px){
   /* One phrase per line, each kept whole. The old rule made the second label
      a block on its own, which stranded "Slider" above its own explanation. */
@@ -5526,20 +5410,23 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
 /* The builder's own coach: opened by the ? beside the toggle, and shown once
    unprompted to anyone who has not seen it. Same bargain as the board's -
    dismissible, remembered, and never covering anything. */
-.bld-coach{margin:11px 0 0;padding:11px 13px;border:1px solid var(--line);
+.bld-coach{position:relative;margin:11px 0 0;padding:11px 13px;border:1px solid var(--line);
   border-radius:var(--r-md);background:var(--card-2)}
-.bld-coach h4{font-size:12.5px;font-weight:800;margin-bottom:7px}
+.bld-coach h4{font-size:12.5px;font-weight:800;margin-bottom:7px;padding-right:76px}
+/* First visit used to stack hint + coach + its own button row ~470px above
+   the control. The coach says everything the two hint lines say, so the hint
+   steps aside while it is open, and "Got it" sits beside the heading. */
+.bld-mode-hint:has(~ #bldCoach:not(:empty)){display:none}
 .bld-coach ul{list-style:none;display:flex;flex-direction:column;gap:7px}
 .bld-coach li{font-size:12px;line-height:1.5;color:var(--soft);
   display:flex;gap:8px;align-items:flex-start}
 .bld-coach li b{font-weight:800}
-.bld-coach li.bc-wiz b{color:#a78bfa}
+.bld-coach li.bc-wiz b{color:var(--red-ink)}
 .bld-coach li.bc-slide b{color:var(--red-ink)}
-[data-theme="light"] .bld-coach li.bc-wiz b{color:#5b21b6}
 .bc-num{flex-shrink:0;width:17px;height:17px;border-radius:50%;background:var(--raise);
   color:var(--text);font-size:9.5px;font-weight:800;display:flex;
   align-items:center;justify-content:center;margin-top:1px}
-.bld-coach .bc-x{margin-top:9px;background:var(--red-fill);color:#fff;border:0;
+.bld-coach .bc-x{position:absolute;top:8px;right:9px;margin:0;background:var(--red-fill);color:#fff;border:0;
   border-radius:var(--r-sm);font:inherit;font-size:11.5px;font-weight:800;
   padding:7px 13px;cursor:pointer}
 #bldCoach:empty{display:none}
@@ -5675,8 +5562,8 @@ html.is-results #codeCard{display:none}
 .ck-chip b{font-weight:700;color:var(--soft);font-size:11.5px}
 .ck-chip code{font-size:14px;font-weight:800;letter-spacing:.07em;
   font-variant-numeric:tabular-nums;color:var(--accent)}
-.ck-chip .ck-cp{font-size:10.5px;font-weight:800;text-transform:uppercase;
-  letter-spacing:.04em;color:var(--faint)}
+.ck-chip .ck-cp{font-size:10.5px;font-weight:800;
+  color:var(--faint)}
 .ck-chip.done .ck-cp{color:var(--green-ink)}
 .ck-chip.done{border-color:var(--green)}
 @media (hover:hover){
@@ -5779,15 +5666,40 @@ html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
    this whole block is out of scope. */
 @media(max-width:720px){
   .home-grid>.home-rail{display:contents}
-  .home-grid>.home-rail>.slip-cta{order:1}
-  .home-grid>.home-rail>#myres{order:2}
+  /* The offer and My results step out of the rail ahead of the board in the
+     DOM on a phone (script, "where the live row stands"), so keyboard order
+     matches this; the rail-child selectors cover the moment before it runs. */
+  .home-grid>.home-rail>.slip-cta,.home-grid>.slip-cta{order:1}
+  .home-grid>.home-rail>#myres,.home-grid>#myres{order:2}
   .home-grid>.home-main{order:3}
-  .home-grid>.home-rail>#potd{order:4;margin-top:14px}
-  .home-grid>.home-rail>#daily{order:5}
+  /* Everything below the first screen of games (the board is capped at 78vh
+     on a phone, see "board cap"), in the order a reader acts on it: the
+     live row, the ready-made slip, the record that says why to trust it,
+     then the pick, the recap and the install offer. The live row moved down
+     here with the rest: it lands a second after the board, and above it its
+     arrival shoved the first game down the screen (CLS). */
+  .home-grid>.home-rail>#liveStripWrap{order:4}
+  .home-grid>.home-rail>#sotd{order:5}
+  .home-grid>.home-rail>#record{order:6}
+  .home-grid>.home-rail>#potd{order:7;margin-top:14px}
+  .home-grid>.home-rail>#daily{order:8}
+  .home-grid>.home-rail>#instBar{order:9}
+  .home-grid>.home-rail>#iosSteps{order:10}
   /* A button that scrolls to the thing directly beneath it. It was a second
      door into the room you are standing in - and with the board now one card
      away, the scroll it performs is the one the thumb was already making. */
   .sc-actions #scBrowse{display:none}
+}
+/* Between a phone and the two-column layout the rail still stacks above the
+   board, as it always has. Slip of the day and the record now live in the
+   rail for the desktop column, so here they are lifted out of that stack and
+   kept after the board, where they were - not 750px of cards in front of it. */
+@media(min-width:721px) and (max-width:1059px){
+  .home-grid>.home-rail{display:contents}
+  .home-grid>.home-rail>*{order:1}
+  .home-grid>.home-main{order:2}
+  .home-grid>.home-rail>#sotd{order:3}
+  .home-grid>.home-rail>#record{order:4}
 }
 @media(min-width:1060px){
   .wrap{max-width:1420px}
@@ -5800,6 +5712,9 @@ html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
   .home-rail{flex:0 0 372px;order:2;gap:9px;margin-top:14px}
   .home-rail>*{margin-top:0}
   .home-rail .potd,.home-rail .slip-cta{margin-top:0}
+  /* Slip of the day and the record carry their own top margin from when they
+     ran full width under the board; in the rail the gap does the spacing. */
+  .home-rail .sotd,.home-rail #record>*{margin-top:0}
   /* The filter bar sticks in its own column; without a matching offset the two
      sticky things fight over the same strip of screen. */
   .home-main .bar{top:12px}
@@ -5890,10 +5805,33 @@ html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
   .trust-i.t-static{display:none}
   .intro h1{font-size:clamp(23px,7vw,30px)}
 
-  /* This IS the hero on a phone - it is the reason the page exists and the
-     first thing in the column. It was trimmed to banner size when it sat
-     third; as the opening card it earns its presence back. Still tight: the
-     height goes into the headline and the buttons, not into padding. */
+  /* THE OFFER, CUT TO ITS BUTTON (7 Oct 2026). As a card - orb, headline,
+     teaser line, button, proof line - it stood 224px tall between the
+     headline and the board, and with the install bar and the live row above
+     it the first game landed at 1,143px on a 780px phone: the page asked
+     "Who's winning today?" and answered two scrolls later. The button says
+     everything the card did ("Build me a SportyBet slip"), the sticky slip bar
+     carries the teaser once it scrolls away, and the proof line's number is
+     in the record card under the first screen of games. */
+  .slip-cta.slip-cta--hero{padding:0;margin-top:12px;background:none;border:0;box-shadow:none;overflow:visible}
+  .slip-cta.slip-cta--hero::after,.slip-cta--hero .sc-head{display:none}
+  html.booting .slip-cta .sc-proof[hidden],.slip-cta .sc-proof{display:none}
+  /* "Today's code" points at the codes card, which is now on the same first
+     screen with its own link to every code. */
+  .trust .trust-i.tc{display:none}
+  /* "SportyBet code in one tap" says what the button under it says, and it
+     cost the trust row a second line. */
+  .trust .trust-i.t-sporty{display:none}
+  /* X and Telegram are in the header on every screen; "All books & past
+     codes" is the same page as the card's own heading and the line beside
+     it, and on a phone it wrapped the foot to a second line. */
+  .ck-soc,.ck-all{display:none}
+  /* The hint keeps its instruction and drops its second clause, which the
+     open panel says itself, so it stays on one line. */
+  .list-hint .lh-more{display:none}
+  /* The count sits beside the heading rather than under it. */
+  .board-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 10px}
+  .board-head p{margin-top:0}
   .slip-cta{padding:13px 13px;gap:10px;margin-top:12px}
   .slip-cta .sc-head{gap:11px;align-items:center}
   .slip-cta .sc-orb{width:44px;height:44px}
@@ -5999,32 +5937,8 @@ html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
   .toprow .viewtoggle.top .vt{padding:7px 12px}
 }
 
-/* ------------------------------------------------------- Conjure, any width
-   The wizardry look - violet glass, gold lining, slow rune pulse - used to be
-   declared inside a min-width:720px block, so phones fell back to a plain
-   button. Defined once here for every screen; the breakpoints above and below
-   only set its size. */
-/* :not(.sc-go-btn) keeps the home banner out of this. Its two path buttons are
-   a matched pair - violet Conjure beside crimson slider - and restyling one
-   half of it here would break a deliberate arrangement. */
-button.wsp-go:not(.sc-go-btn){font-weight:800;letter-spacing:.09em;text-transform:uppercase;
-  color:#EDE7FF!important;
-  background:linear-gradient(165deg,#2b1a5e 0%,#1d1142 60%,#140a30 100%)!important;
-  border:1px solid rgba(212,175,55,.6)!important;
-  box-shadow:0 4px 18px rgba(90,46,210,.35),inset 0 0 12px rgba(124,77,255,.22),
-    inset 0 1px 0 rgba(255,255,255,.14)!important;
-  position:relative;overflow:hidden}
-button.wsp-go:not(.sc-go-btn):hover{color:#fff!important;
-  border-color:rgba(232,199,95,.9)!important;
-  box-shadow:0 6px 26px rgba(112,66,240,.55),inset 0 0 18px rgba(140,96,255,.35),
-    inset 0 1px 0 rgba(255,255,255,.2)!important}
-button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
-  border-radius:inherit;pointer-events:none;
-  box-shadow:inset 0 0 0 1px rgba(212,175,55,.25);
-  animation:runePulse 3.2s ease-in-out infinite}
-@keyframes runePulse{0%,100%{opacity:.35}50%{opacity:.85}}
-@media(prefers-reduced-motion:reduce){
-  button.wsp-go:not(.sc-go-btn)::after{animation:none;opacity:.5}}
+/* Conjure is a .book-btn like every other "do it" button: sentence case, the
+   standard fill, no violet glass and no rune pulse (Task 4, 7 Oct). */
 
 /* Slip style -> Conjure reads as one step: the chips choose the style, the
    button acts on it. Tighten the label above the chips and let Conjure sit
@@ -6179,6 +6093,43 @@ button.wsp-go:not(.sc-go-btn)::after{content:'';position:absolute;inset:0;
 .code-x{top:6px;right:6px;width:28px;height:28px}
 .confirm-card{padding:13px}
 
+/* ---- the booked code, in tiers (7 Oct 2026; see showCode) ----
+   Declared after every bookmaker's skin so it wins at equal weight. The code
+   is the hero: gold, the largest type on the card (--accent-on-dark, because
+   these cards stay dark in the light theme too). Copy is the one primary, full
+   width in the book's own button colour; "Open in" is the outlined second
+   under it, no longer the white slab that outshouted the code. */
+.code-card.code-card--modal>b{font-size:34px;color:var(--accent-on-dark);
+  text-shadow:none;margin:8px 0 8px}
+.code-card--modal .code-acts .code-copy{flex:1 1 100%;font-size:15px;padding:13px 18px}
+.code-card--modal .code-opens{margin-top:8px}
+.code-card.code-card--modal .code-opens .code-open{flex:1 1 100%;padding:11px 18px;
+  background:transparent;color:#fff;border:1px solid rgba(255,255,255,.34);box-shadow:none}
+@media(hover:hover){
+  .code-card.code-card--modal .code-opens .code-open:hover{background:rgba(255,255,255,.08);filter:none}
+}
+/* On the outlined button the wordmark sits on the card's own dark ground, so
+   it takes the colours the card already gives it in the title - not the dark
+   ink it wore on the white button, which left 1xBet's "1X" at 1.1:1. Bet9ja's
+   red stays its brand red (#D42127, measured 3.4:1 here): it is their logotype,
+   which WCAG exempts, and any lighter red stops being their mark; "Open in"
+   beside it carries the label at full contrast. */
+.code-card.code-card--modal.code-card--xb .code-opens .code-open .xbm{color:#fff}
+.code-card.code-card--modal.code-card--xb .code-opens .code-open .xbm .xbb{color:#14A0FF}
+.code-card.code-card--modal.code-card--bw .code-opens .code-open .bwm .bwp{color:#9CE800}
+/* Save and Share: what you might do next, as one quiet pair. */
+.code-next{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.code-card--modal .code-next .share-btn{font-size:12.5px;font-weight:700;padding:8px 16px;
+  border-radius:99px;color:#fff;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.22);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 1px 4px rgba(0,0,0,.28)}
+@media(hover:hover){ .code-card--modal .code-next .share-btn:hover{background:rgba(0,0,0,.42)} }
+/* Telegram and X: small print at the foot, after the moment. */
+.code-card--modal .code-follow{display:flex;justify-content:center;flex-wrap:wrap;gap:2px 14px;
+  margin-top:14px;padding-top:10px;border-top:1px solid rgba(255,255,255,.14)}
+.code-card--modal .code-follow .code-tg{display:inline-flex;width:auto;margin:0;padding:4px 2px;
+  background:none;box-shadow:none;color:rgba(255,255,255,.66);font-size:11.5px;font-weight:700}
+@media(hover:hover){ .code-card--modal .code-follow .code-tg:hover{color:#fff;filter:none} }
+
 /* --- sheets --- */
 .sheet-grab{padding:7px 0 2px}
 .sheet-head{padding:6px 15px 10px;gap:10px}
@@ -6197,7 +6148,7 @@ footer{margin-top:26px;padding-top:18px;
   padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 .foot-brand{margin-bottom:14px;padding-bottom:14px;gap:10px}
 .foot-cols{gap:14px;margin-bottom:14px}
-.foot-cols h4{margin-bottom:5px}
+.foot-cols h3{margin-bottom:5px}
 .foot-cols p{line-height:1.55}
 .foot-legal{padding-top:12px;gap:8px 15px}
 @media(min-width:720px){.foot-cols{gap:20px}}
@@ -6269,7 +6220,7 @@ footer{margin-top:26px;padding-top:18px;
   .bld-mode-btn { transition: transform 0.15s ease, box-shadow 0.15s ease; }
   .bld-mode-btn:hover { transform: scale(1.02); }
   .bld-mode-btn.on { transform: translateZ(50px); box-shadow: 0 4px 16px rgba(230,57,70,.4); }
-  .bld-mode-btn.on[data-mode="wizard"] { box-shadow: 0 4px 18px rgba(139,92,246,.5); }
+  .bld-mode-btn.on[data-mode="wizard"] { box-shadow: 0 4px 18px rgba(139,92,246,.5); } /* owner's choice 7 Oct */
   .bld-panel { transform: translateZ(30px); }
   .bld-panel .risk-wrap { transform: translateZ(10px); }
   .risk { transform: translateZ(20px); }
@@ -6736,7 +6687,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   .bld-coach h4{margin-bottom:5px}
   .bld-coach ul{gap:5px}
   .bld-coach li{font-size:11.5px;line-height:1.42;gap:7px}
-  .bld-coach .bc-x{margin-top:7px;padding:6px 12px}
+  .bld-coach .bc-x{top:6px;right:8px;padding:6px 12px}
 }
 
 /* THE FILTER PANEL, IN TWO COLUMNS ON A WIDE SCREEN.
@@ -6779,7 +6730,11 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
   .wsp-chips.mkt-palette{grid-template-columns:repeat(auto-fit,minmax(max(108px,calc((100% - 5 * 6px) / 6)),1fr))}
 }
 .sw-swipe{position:relative;margin:0 0 8px;border-radius:12px;overflow:hidden;touch-action:pan-y}
-.sw-bin{position:absolute;inset:0;background:var(--red-fill);display:flex;align-items:center;justify-content:flex-end;padding-right:20px;border-radius:12px;color:#fff}
+/* The red bin is painted only while the card is off its rest. Left on under a
+   resting card, it bled through the anti-aliased corners and showed red each
+   time the card changed size (Show / Hide games, delete, Undo). */
+.sw-bin{position:absolute;inset:0;background:var(--red-fill);display:flex;align-items:center;justify-content:flex-end;padding-right:20px;border-radius:12px;color:#fff;visibility:hidden}
+.sw-swipe.sw-live .sw-bin{visibility:visible}
 .sw-bin svg{width:22px;height:22px;transform:scale(var(--s,.7));transition:transform 120ms var(--ease-out)}
 .sw-bin.armed{background:color-mix(in srgb,var(--red-fill) 70%,black)}
 .sw-card{position:relative;transform:translateX(0);will-change:transform;touch-action:pan-y}
@@ -7224,39 +7179,11 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       <a class="trust-i link tc" href="/booking-codes">Today's code</a>
       <a class="trust-i link" href="#how">How accurate?</a>
     </div>
-    <!-- The header's install icon cannot be reached on a phone: that row needs
-         527px of content and a phone gives it 320-390, so the last item sits
-         off the right edge whether or not it is unhidden. A wider labelled
-         button would only push it further out, so on a phone the offer lives
-         here instead, where there is room to say what it is. Shown only when
-         the browser has actually offered a prompt, and dismissible - an
-         install nag that will not go away is worse than no install button. -->
-    <div class="inst-bar" id="instBar" hidden>
-      <span class="ib-ic" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
-      </span>
-      <span class="ib-tx"><b>Install Soccerwizard</b><i>Straight to today's card, no browser</i></span>
-      <button class="ib-go" id="instGo" type="button">Install</button>
-      <button class="ib-x" id="instX" type="button" aria-label="Not now">✕</button>
-    </div>
-    <!-- iOS HAS NO INSTALL PROMPT, so tapping Install cannot install anything -
-         it can only say where Safari keeps the control. That used to be a
-         toast, which is the wrong shape for it: the Share button is at the
-         BOTTOM of Safari, the toast is at the top, and it has gone by the time
-         anyone has looked away and back. Steps that stay put until dismissed,
-         with the actual glyph to look for, are the whole fix. -->
-    <div class="ios-steps" id="iosSteps" hidden>
-      <button class="is-x" id="iosStepsX" type="button" aria-label="Close">✕</button>
-      <div class="is-h" id="iosStepsH">Add Soccerwizard to your Home Screen</div>
-      <ol class="is-l" id="iosStepsL"></ol>
-      <p class="is-note" id="iosStepsN" hidden></p>
-    </div>
   </section>
 
   <div id="liveStripWrap" hidden>
     <div class="ticker">
-      <div class="ticker-track" id="liveStrip"></div>
+      <div class="ticker-track" id="liveStrip" tabindex="0" aria-label="Live scores"></div>
       <a href="#" id="liveStripAll" class="ticker-all">See all &rarr;</a>
     </div>
   </div>
@@ -7271,11 +7198,6 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
            thing on a phone - with its own proof line inside it, so being
            convincing costs no scroll. Everything else supports it. -->
       <div class="slip-cta slip-cta--wizard slip-cta--hero" id="slipCta">
-        <!-- A light running the card's edge. This is the one thing on the page
-             the site exists to get tapped, and it sat in the same still box as
-             everything around it. Its own element because both pseudo-elements
-             here are spoken for - the gold hairline and the violet drift. -->
-        <span class="cta-run" aria-hidden="true"></span>
         <div class="sc-head">
           <span class="sc-orb" aria-hidden="true"><canvas class="orb-ball" data-size="44"></canvas></span>
           <span class="sc-tx">
@@ -7293,6 +7215,42 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       <div id="myres"></div>
       <div id="potd"></div>
       <div id="daily"></div>
+      <!-- SLIP OF THE DAY AND THE RECORD, IN THE RAIL (7 Oct 2026). They sat
+           full width under every game while the desktop rail stood empty for
+           2,700px, so the most actionable thing on the page and the reason to
+           trust the rest were the last things anybody reached. On a phone the
+           rail dissolves (see home layout) and these two come straight after
+           the capped first screen of games, ahead of the full list. -->
+      <div id="sotd"></div>
+      <div id="record"></div>
+      <!-- The phone's install offer. It used to sit between the headline and
+           the first game, a 54px nag in the most expensive space on the page,
+           while the header already carries an install icon on every screen.
+           Here it waits under the day's cards; desktop never shows it (the
+           header icon has the room there). Shown only when the app is not
+           installed, and dismissible - an install nag that will not go away
+           is worse than no install button. -->
+      <div class="inst-bar" id="instBar" hidden>
+        <span class="ib-ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        </span>
+        <span class="ib-tx"><b>Install Soccerwizard</b><i>Straight to today's card, no browser</i></span>
+        <button class="ib-go" id="instGo" type="button">Install</button>
+        <button class="ib-x" id="instX" type="button" aria-label="Not now">✕</button>
+      </div>
+      <!-- iOS HAS NO INSTALL PROMPT, so tapping Install cannot install anything -
+           it can only say where Safari keeps the control. That used to be a
+           toast, which is the wrong shape for it: the Share button is at the
+           BOTTOM of Safari, the toast is at the top, and it has gone by the time
+           anyone has looked away and back. Steps that stay put until dismissed,
+           with the actual glyph to look for, are the whole fix. -->
+      <div class="ios-steps" id="iosSteps" hidden>
+        <button class="is-x" id="iosStepsX" type="button" aria-label="Close">✕</button>
+        <div class="is-h" id="iosStepsH">Add Soccerwizard to your Home Screen</div>
+        <ol class="is-l" id="iosStepsL"></ol>
+        <p class="is-note" id="iosStepsN" hidden></p>
+      </div>
     </aside>
 
     <div class="home-main">
@@ -7325,7 +7283,6 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     </div>
   <div class="bookall-row">
         <button class="bookall" id="bookAll" type="button">
-          <span class="ba-spark" aria-hidden="true"></span>
           <span class="ba-tx">Add all</span>
           <span class="ba-n" id="bookAllN"></span>
           <span class="ba-tx ba-tx2">tips to slip</span>
@@ -7371,22 +7328,19 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 
   <div class="key">
     <span><b>1.6</b> = goals we expect that team to score</span>
-    <span class="k-form"><i style="background:var(--green)">W</i>
-      <i style="background:var(--green)">W</i>
+    <span class="k-form"><i style="background:var(--green);color:var(--on-green)">W</i>
+      <i style="background:var(--green);color:var(--on-green)">W</i>
       <i style="background:var(--grey)">D</i>
-      <i style="background:var(--red)">L</i>
-      <i style="background:var(--green)">W</i> last 5 games</span>
+      <i style="background:var(--red-fill)">L</i>
+      <i style="background:var(--green);color:var(--on-green)">W</i> last 5 games</span>
   </div>
 
   <p class="list-hint">▾ <span class="v-tap">Tap</span><span class="v-click">Click</span>
-    any match for every option we predict, and add any of them to your slip.</p>
+    any match for every option we predict<span class="lh-more">, and add any of them to your slip</span>.</p>
   <main id="list"></main>
   <div id="listMore"></div>
     </div><!-- /.home-main -->
   </div><!-- /.home-grid -->
-
-  <div id="sotd"></div>
-  <div id="record"></div>
 
   <section id="builder">
     <div class="bld-head">
@@ -7441,7 +7395,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
              as a section heading over the markets below it. -->
         <button class="wsp-chip lgp-open stage-in stage-in-4" type="button" id="lgpOpen"
                 aria-expanded="false" aria-controls="lgpBox">
-          <span id="lgpSum">Any league</span>
+          <span id="lgpSum">Leagues</span>
           <span class="lgp-caret" aria-hidden="true">&#9662;</span>
         </button>
       </div>
@@ -7449,7 +7403,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
         <div class="lgp-box" id="lgpBox" hidden>
           <div class="lgp-head">
             <span id="lgpCount"></span>
-            <button class="lgp-clear" type="button" id="lgpClear">Any league</button>
+            <button class="lgp-clear" type="button" id="lgpClear">All leagues</button>
           </div>
           <div class="lgp-list" id="lgpList"></div>
         </div>
@@ -7481,7 +7435,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       </div>
       <div class="risk-wrap stage-in stage-in-4"><input type="range" id="risk" class="risk" min="0" max="100" step="any" value="45"
         aria-label="Risk level"><span class="risk-bubble" id="riskBubble">-</span></div>
-      <div class="risk-ticks stage-in stage-in-5"><span>Safe</span><span>Balanced</span><span>Risky</span></div>
+      <div class="risk-ticks stage-in stage-in-5"><span>Safest</span><span>Safe</span><span>Balanced</span><span>Bold</span><span>Risky</span></div>
       <!-- The Wizard's slip style, for the Slider too (owner, 28 Sep 2026: "i
            think the slip style should apply to the slider and when more games
            smaller odds is clicked, it should apply"). One value, WSP.legodd,
@@ -7556,7 +7510,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <p class="conv-sub stage-in stage-in-2">Move a booking code to the other
       bookmaker, or read what is inside one and cut it into smaller tickets.
       On your phone? Send any code to our
-      <a href="https://t.me/Soccerwizardhqbot" target="_blank" rel="noopener">Wizard's Eye on Telegram 🔮</a>.</p>
+      <a href="https://t.me/Soccerwizardhqbot" target="_blank" rel="noopener">Wizard's Eye on Telegram</a>.</p>
     <section class="byo" id="byo" aria-labelledby="byo-h">
       <h3 id="byo-h">Already have a booking code?</h3>
       <p class="byo-sub">Paste it, or several separated by spaces and we'll merge
@@ -7670,17 +7624,17 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       </div>
       <div class="foot-cols">
         <div>
-          <h4>What this is</h4>
+          <h3>What this is</h3>
           <p>Statistical football predictions across dozens of leagues, rebuilt
           every morning from results.</p>
         </div>
         <div>
-          <h4>What it isn't</h4>
+          <h3>What it isn't</h3>
           <p>A guarantee. The model cannot see injuries, suspensions or team
           news, and no prediction is ever certain.</p>
         </div>
         <div>
-          <h4>Play responsibly</h4>
+          <h3>Play responsibly</h3>
           <p>Only stake what you can afford to lose. If betting stops being
           fun, step away and seek support.</p>
         </div>
@@ -7691,16 +7645,17 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
            sitemap. Search engines weight real internal links well above a
            sitemap, and a reader had nowhere to go. -->
       <nav class="foot-links" aria-label="Site">
+        <!-- The essential few, in the static footer's order (lib/pages.js
+             pageFooter; 7 Oct 2026). Privacy and terms are in the legal row. -->
+        <a href="/booking-codes">Daily booking codes</a>
         <a href="/matches">All match predictions</a>
         <!-- THE ONLY CRAWLABLE WAY IN. The Converter is a view, so the header
              tab and the bottom bar are both <button> - a crawler follows
              neither, and this is the strongest page on the site. The anchor
              says what the destination is rather than what the button says. -->
         <a href="/convert-a-booking-code">Convert a booking code</a>
-        <a href="/booking-codes">Daily booking codes</a>
         <a href="/how-it-works">How it works</a>
-        <a href="/privacy">Privacy</a>
-        <a href="/terms">Terms</a>
+        <a class="fl-inst" href="/install">Install the app</a>
         <button type="button" id="contactBtn">Contact us</button>
         <!-- @soccerwizardhq. The first version of this link pointed at a
              sixteen-character handle, which X cannot issue, so it 404d for
@@ -7725,6 +7680,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
         <span>&copy; <span id="yr"></span> Soccerwizard</span>
         <span class="badge18" aria-label="Eighteen plus only">18<sup>+</sup></span>
         <span>Predictions are estimates, not certainties</span>
+        <a href="/privacy">Privacy</a><a href="/terms">Terms</a>
         <a class="rg" href="https://www.begambleaware.org" target="_blank" rel="noopener">BeGambleAware.org</a>
       </div>
     </div>
@@ -7803,7 +7759,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 <div class="sheet myslip-sheet" id="mySheet" role="dialog" aria-modal="true" aria-labelledby="mySheet-title">
   <div class="sheet-grab"><i></i></div>
   <div class="sheet-head">
-    <div class="info"><h3 id="mySheet-title">My slip</h3><p id="mySheetSub">Predictions you picked - book them to <span class="sbm">SportyBet</span>.</p></div>
+    <div class="info"><h3 id="mySheet-title">My slip</h3><p id="mySheetSub">Predictions you picked - book them to <span class="sbm">SportyBet</span>.</p><p class="ms-miss" id="mySheetMiss" hidden></p></div>
     <button class="sheet-collapse" id="mySheet-x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>Collapse</span></button>
   </div>
   <div class="sheet-body" id="mySheetBody"></div>
@@ -8179,10 +8135,12 @@ function renderMyResults(){
       "</div></div>"+
     "<div class='ys-lh'><h4>Recent</h4><span class='ys-clr'></span></div>"+
     rows.map(function(s){
+      /* An unknown book key has no mark - no mark, no leading comma. */
+      var bm=s.book?bookMark(s.book):"";
       return "<div class='sw-swipe' data-sid='"+esc(s.sid)+"'><div class='sw-bin'>"+BIN_SVG+"</div>"+
         "<div class='sw-card ys-row' role='button' tabindex='0'><span class='ys-dot "+slipState(s)+"' role='img' aria-label='"+({run:"Running",lost:"Lost",won:"Won"})[slipState(s)]+"'></span>"+
         "<span class='ys-m'><span class='ys-code num'>"+esc(s.code||"No code")+"</span>"+
-        "<small>"+(s.book?bookMark(s.book)+", ":"")+s.legs.length+(s.legs.length===1?" game":" games")+(slipWhenPlain(s.at)?", "+esc(slipWhenPlain(s.at)):"")+"</small></span>"+
+        "<small>"+(bm?bm+", ":"")+s.legs.length+(s.legs.length===1?" game":" games")+(slipWhenPlain(s.at)?", "+esc(slipWhenPlain(s.at)):"")+"</small></span>"+
         "<span class='ys-od num'>×"+(s.odds>=1000?Math.round(s.odds).toLocaleString():s.odds.toFixed(2))+"</span></div></div>";
     }).join("");
   host.querySelectorAll("[data-ysf]").forEach(function(b){ b.onclick=function(){ openSlipsSheet(b.getAttribute("data-ysf")); }; });
@@ -8199,7 +8157,7 @@ function renderMyResults(){
     card.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openIt(); } });
   });
   clearAllControl(host.querySelector(".ys-clr"));
-  if(!SL_PEEKED){ SL_PEEKED=true; var first=host.querySelector(".sw-card"); if(first) first.classList.add("sw-peek"); }
+  if(!SL_PEEKED){ SL_PEEKED=true; var first=host.querySelector(".sw-card"); if(first){ first.classList.add("sw-peek"); first.parentNode.classList.add("sw-live"); setTimeout(function(){ if(first.classList.contains("sw-peek")){ first.classList.remove("sw-peek"); first.parentNode.classList.remove("sw-live"); } },1900); } }
 }
 function visibleSids(){ return SLIPS.filter(function(s){return !(window.swPend&&window.swPend.hidden(s.sid));}).map(function(s){return s.sid;}); }
 /* Clear all asks in place: "Clear N? Keep / Clear". No confirm(). */
@@ -8295,12 +8253,12 @@ function swSwipe(row,onDelete){
   card.addEventListener("pointerdown",function(e){
     if(e.target.closest("button,a,input")) return;
     drag=true; lock=null; x0=e.clientX; y0=e.clientY; dx=0; t0=Date.now(); W=card.offsetWidth;
-    card.classList.remove("sw-snap","sw-peek");
+    card.classList.remove("sw-snap","sw-peek"); row.classList.remove("sw-live");
   });
   card.addEventListener("pointermove",function(e){
     if(!drag) return;
     var mx=e.clientX-x0, my=e.clientY-y0;
-    if(lock===null&&(Math.abs(mx)>6||Math.abs(my)>6)){ lock=Math.abs(mx)>Math.abs(my)?"x":"y"; if(lock==="x") try{ card.setPointerCapture(e.pointerId); }catch(er){} }
+    if(lock===null&&(Math.abs(mx)>6||Math.abs(my)>6)){ lock=Math.abs(mx)>Math.abs(my)?"x":"y"; if(lock==="x"){ row.classList.add("sw-live"); try{ card.setPointerCapture(e.pointerId); }catch(er){} } }
     if(lock!=="x") return;
     dx=Math.min(0,mx); if(dx<-W*.8) dx=-W*.8+(dx+W*.8)*.5;
     card.style.transform="translateX("+dx+"px)";
@@ -8316,7 +8274,7 @@ function swSwipe(row,onDelete){
       row.style.height=row.offsetHeight+"px";
       setTimeout(function(){ row.classList.add("sw-collapse"); },180);
       setTimeout(onDelete,430);
-    } else { card.classList.add("sw-snap"); card.style.transform="translateX(0)"; bin.classList.remove("armed"); armed=false; }
+    } else { card.classList.add("sw-snap"); card.style.transform="translateX(0)"; bin.classList.remove("armed"); armed=false; setTimeout(function(){ if(!drag) row.classList.remove("sw-live"); },330); }
   }
   card.addEventListener("pointerup",end); card.addEventListener("pointercancel",end);
 }
@@ -8563,10 +8521,28 @@ function leagueRank(l){
 var TOP_ONLY=false; try{TOP_ONLY=localStorage.getItem("sw.toponly")==="1";}catch(e){}
 function setTopOnly(v){TOP_ONLY=!!v;try{localStorage.setItem("sw.toponly",v?"1":"0");}catch(e){}}
 function marketCount(){try{return Object.keys(BUILD.mk).filter(function(k){return BUILD.mk[k];}).length;}catch(e){return 0;}}
+/* THE SHUT FILTERS BAR NAMES EVERYTHING THAT IS NOT THE DEFAULT. The panel
+   starts shut on a phone, so this line is all a reader sees of it: a window
+   other than today, a time of day, top flight, leagues taken out (or the
+   volatile ones let in) each get a short word, from the same helpers the
+   controls label themselves with. "Weekend \u00b7 12 of 47 leagues \u00b7 4 markets". */
 function updateFiltersSum(){
   var el=document.getElementById("filtersSum"); if(!el) return;
-  var n=marketCount();
-  el.textContent=(TOP_ONLY?"Top flight":"All leagues")+" \u00b7 "+n+" market"+(n===1?"":"s");
+  var n=marketCount(), parts=[];
+  if(SCOPE==="all") parts.push("All upcoming");
+  else if(SCOPE!=="day"||SDAY!==0||TOD!=="all") parts.push(scopeLabel());
+  if(SCOPE!=="all"&&TOD!=="all"){
+    var t=document.querySelector("[data-tod='"+TOD+"'] .so-t");
+    if(t) parts.push(t.textContent);
+  }
+  var lc=null; try{ lc=leagueCount(); }catch(e){}
+  if(TOP_ONLY) parts.push("Top flight");
+  /* Benched volatile leagues are leagues out, so the line agrees with the
+     picker's count rather than claiming "All leagues". */
+  if(lc&&(lc.narrowed||lc.live<lc.avail.length)) parts.push(lc.words);
+  else if(!TOP_ONLY) parts.push("All leagues");
+  parts.push(n+" market"+(n===1?"":"s"));
+  el.textContent=parts.join(" \u00b7 ");
 }
 function isSAleague(l){return !!SA_COUNTRIES[countryOf(l||"")];}
 function isAsianLeague(l){
@@ -10271,7 +10247,7 @@ var SCOPE="day";
    makes, for the same reason. */
 try{ if(!localStorage.getItem("sw.scopedflt2")){ localStorage.removeItem("sw.scope");
   localStorage.setItem("sw.scopedflt2","1"); } }catch(e){}
-try{var sc0=localStorage.getItem("sw.scope"); if(sc0==="day"||sc0==="all"||sc0==="span") SCOPE=sc0;}catch(e){}
+try{var sc0=localStorage.getItem("sw.scope"); if(sc0==="day"||sc0==="all"||sc0==="span"||sc0==="wknd") SCOPE=sc0;}catch(e){}
 /* Which single day the "day" window points at: 0 today, 1 tomorrow, and so on.
    Only meaningful while SCOPE is "day". A saved offset can outlive its
    fixtures - yesterday's "tomorrow" is today - so clampDay() pulls it back to
@@ -10289,6 +10265,15 @@ var SPAN=3;
 try{var sp0=parseInt(localStorage.getItem("sw.span"),10);
   if(SPAN_CHOICES.indexOf(sp0)>=0) SPAN=sp0;}catch(e){}
 function spanName(n){return "Next "+n+" days";}
+/* The weekend window ("wknd"), as [first, last] day offsets from today.
+   Worked out from today's date every time it is asked, never stored, so a
+   Weekend chosen on Friday still means this weekend after Monday's reload.
+   Sunday: just Sunday. Saturday: Sat + Sun. Mon-Fri: the coming Sat + Sun. */
+function weekendOffs(){
+  var d=new Date().getDay();
+  if(d===0) return [0,0];
+  return [6-d,7-d];
+}
 /* Time of day, by local kickoff. Someone building a slip at lunchtime does
    not want games that started this morning, and someone who will be watching
    in the evening wants only the evening card. The cuts follow how a day
@@ -10338,24 +10323,60 @@ function todFixtures(list){
      still there under "All day". */
   return list.filter(function(f){ return todOf(f)===TOD; });
 }
-/* Which leagues a slip may draw from.
-   Empty means every league, which is both the default and what "clear" returns
-   to - a stored set that had emptied itself would otherwise build nothing and
-   look broken. Kept as a plain object so it survives JSON round-tripping into
-   localStorage. */
-var BLD_LEAGUES={};
-try{var _bl0=JSON.parse(localStorage.getItem("sw.bldleagues")||"{}");
-  if(_bl0&&typeof _bl0==="object"&&!Array.isArray(_bl0)) BLD_LEAGUES=_bl0;}catch(e){}
-function leaguesChosen(){for(var k in BLD_LEAGUES){if(BLD_LEAGUES[k])return true;}return false;}
-function leagueAllowed(l){return !leaguesChosen()||!!BLD_LEAGUES[l];}
-function leagueChosenCount(){var n=0;for(var k in BLD_LEAGUES){if(BLD_LEAGUES[k])n++;}return n;}
+/* Which leagues a slip may draw from. Untick to remove: every league starts
+   in, and a tap takes out (or puts back) just that one. BLD_PICK holds only
+   the taps that differ from the default, {league: 1|0}. The default is "in",
+   except a volatile league, which sits out until VOL_IN says otherwise.
+   The old include-set (sw.bldleagues) meant the opposite and is dropped on
+   load, so everyone starts with every league ticked. Unticking every league
+   is an empty pool, not "all" - the empty state says to widen the leagues. */
+var BLD_PICK={}, VOL_IN=false;
+function loadLeaguePicks(){
+  BLD_PICK={}; VOL_IN=false;
+  try{localStorage.removeItem("sw.bldleagues");}catch(e){}
+  try{var p=JSON.parse(localStorage.getItem("sw.bldpick")||"{}");
+    if(p&&typeof p==="object"&&!Array.isArray(p)) BLD_PICK=p;}catch(e){}
+  try{VOL_IN=localStorage.getItem("sw.volin")==="1";}catch(e){}
+}
+loadLeaguePicks();
+/* Volatile = third division and below: every fixture the league has on the
+   board is tier 3-5. Results there swing a lot, so they are opt-in. An
+   unranked fixture (no tier stamped) does not count, or an old payload with
+   no tiers would bench every league. Cached per fixture list, because
+   leagueAllowed runs once per fixture. */
+var VOL_SRC=null, VOL_MAP={};
+function isVolatile(l){
+  var all=(DATA&&DATA.fixtures)||[];
+  if(VOL_SRC!==all){
+    VOL_SRC=all; VOL_MAP={};
+    for(var i=0;i<all.length;i++){
+      var t=tierOf(all[i]), lg=all[i].league;
+      VOL_MAP[lg]=(VOL_MAP[lg]!==false)&&t>=3&&t<TIER_UNRANKED;
+    }
+  }
+  return !!VOL_MAP[l];
+}
+function leagueDefault(l){return !isVolatile(l)||VOL_IN;}
+function leagueAllowed(l){
+  if(Object.prototype.hasOwnProperty.call(BLD_PICK,l)) return !!BLD_PICK[l];
+  return leagueDefault(l);
+}
+/* Has the reader narrowed the pool - taken out a league that would be in? */
+function leaguesChosen(){for(var k in BLD_PICK){if(BLD_PICK[k]===0)return true;}return false;}
+function leaguePicksTouched(){for(var k in BLD_PICK){return true;}return false;}
 function setLeaguePicked(l,on){
-  if(on) BLD_LEAGUES[l]=1; else delete BLD_LEAGUES[l];
-  try{localStorage.setItem("sw.bldleagues",JSON.stringify(BLD_LEAGUES));}catch(e){}
+  /* Only a difference from the default is stored, so ticking a league back
+     returns the picker to its untouched state rather than leaving a no-op override. */
+  if(!!on===leagueDefault(l)) delete BLD_PICK[l]; else BLD_PICK[l]=on?1:0;
+  try{localStorage.setItem("sw.bldpick",JSON.stringify(BLD_PICK));}catch(e){}
 }
 function clearLeaguePicks(){
-  BLD_LEAGUES={};
-  try{localStorage.removeItem("sw.bldleagues");}catch(e){}
+  BLD_PICK={};
+  try{localStorage.removeItem("sw.bldpick");}catch(e){}
+}
+function setVolIn(v){
+  VOL_IN=!!v;
+  try{localStorage.setItem("sw.volin",VOL_IN?"1":"0");}catch(e){}
 }
 /* Is this fixture inside the window - the ONE answer, because the board, the
    league picker and the counts drift apart the moment there are two copies of
@@ -10365,6 +10386,7 @@ function inScope(f){
   var o=dayOff(fDay(f));
   if(SCOPE==="day") return o===SDAY;
   if(SCOPE==="span") return o>=SDAY&&o<SDAY+SPAN;
+  if(SCOPE==="wknd"){var w=weekendOffs(); return o>=w[0]&&o<=w[1];}
   return true;
 }
 function scopeFixtures(){
@@ -10373,6 +10395,19 @@ function scopeFixtures(){
     if(!leagueAllowed(f.league)) return false;
     return inScope(f);
   }));
+}
+/* THE WINDOW, IN WORDS - one copy for every sentence that names it: the
+   league picker ("12 leagues playing today"), the Wizard's ceiling line and
+   the short-slip header ("the most we can build this weekend"). `playing`
+   is the picker's phrasing; without it a single day reads "today",
+   "tomorrow" or "on Saturday" - a weekday keeps its capital. */
+function windowWords(playing){
+  if(SCOPE==="all") return "in all upcoming games";
+  if(SCOPE==="span") return "in the next "+SPAN+" days";
+  if(SCOPE==="wknd") return "this weekend";
+  return (playing?"playing ":"")+
+    (TOD==="all"?"":(TOD==="early"?"in the morning ":TOD==="mid"?"in the afternoon ":"in the evening "))+
+    (!playing&&SDAY>1?"on ":"")+(SDAY>1?dayName(SDAY):dayName(SDAY).toLowerCase());
 }
 /* The leagues actually available to choose from, with how many games each has
    in the current day/time window - so the picker offers what can be built with
@@ -10425,10 +10460,17 @@ function buildableAll(){
   });
 }
 /* The same three filters across the whole span, for the pill that is showing
-   one. Built from buildableOn so there is no third copy of the filters. */
+   one. Built from buildableOn so there is no third copy of the filters. The
+   weekend is a span too, just one whose days come from the calendar. */
 function buildableSpan(){
+  var w=SCOPE==="wknd"?weekendOffs():[SDAY,SDAY+SPAN-1];
+  return buildableRange(w[0],w[1]);
+}
+/* Days a..b inclusive, filtered. Also the day menu's span and Weekend counts,
+   so a row says what the tap will actually hand you. */
+function buildableRange(a,b){
   var out=[];
-  for(var i=0;i<SPAN;i++) out=out.concat(buildableOn(SDAY+i));
+  for(var i=a;i<=b;i++) out=out.concat(buildableOn(i));
   return out;
 }
 /* Structural, like dayBuildable and for the same reason: it decides what the
@@ -10445,16 +10487,45 @@ function dayPickList(){
   return activeDays().filter(function(o){return o>=0&&dayBuildable(o)>0;});
 }
 /* A stored day can point at a day with nothing left on it - keep it if it still
-   has games, otherwise fall to the earliest day that does. */
+   has games, otherwise fall to the earliest day that does. A stored Weekend
+   whose games have all started (Sunday night) falls back the same way, onto
+   that day as a single-day window. */
 function clampDay(){
-  if(SCOPE!=="day"||dayBuildable(SDAY)>0) return;
+  /* paintScope runs once at parse time, before load() fills the board. With
+     no fixtures every window looks empty, and this used to wipe a stored
+     Weekend (and sync "day" to the reader's other devices) on every load. */
+  if(!DATA.fixtures.length) return;
+  if(SCOPE==="wknd"){
+    var w=weekendOffs();
+    if(spanBuildable(w[1]-w[0]+1,w[0])>0) return;
+  }else if(SCOPE!=="day"||dayBuildable(SDAY)>0) return;
   var list=dayPickList();
+  if(SCOPE==="wknd"){SCOPE="day"; try{localStorage.setItem("sw.scope","day");}catch(e){}}
   if(list.length){SDAY=list[0]; try{localStorage.setItem("sw.sday",SDAY);}catch(e){}}
 }
+/* The day pill's own label (on "All upcoming" the pill still names the day it
+   would go back to), and so the filters bar's short name for a narrow window. */
+function scopeLabel(){
+  return SCOPE==="span" ? spanName(SPAN)
+       : SCOPE==="wknd" ? "Weekend"
+       : (SDAY===0 ? "Today only" : dayName(SDAY));
+}
+/* How many leagues are in, over what is playing in the window - the picker's
+   button and the filters bar both say it, so there is one count. `narrowed`
+   is anything but the untouched default: a league taken out or put back by
+   hand, or the volatile ones let in. */
+function leagueCount(){
+  var avail=leaguesOnBoard();
+  var live=avail.filter(function(x){return leagueAllowed(x.league);}).length;
+  var touched=leaguePicksTouched();
+  return {avail:avail, live:live, touched:touched, narrowed:touched||VOL_IN,
+    words:live+" of "+avail.length+" leagues"};
+}
 function paintScope(){
+  var seg=$("scopeSeg");
+  if(seg) clampDay();
   updateFiltersSum();
-  var seg=$("scopeSeg"); if(!seg) return;
-  clampDay();
+  if(!seg) return;
   /* Only "all" carries data-scope now; the day pill is a dropdown trigger and
      is lit on its own below. */
   seg.querySelectorAll("[data-scope]").forEach(function(b){
@@ -10473,13 +10544,12 @@ function paintScope(){
   /* "Today only" reads best when the day really is today; any other choice
      shows its own name ("Tomorrow", "Saturday") so the pill says what it does. */
   var lbl=$("scopeDayLbl");
-  if(lbl) lbl.textContent = SCOPE==="span" ? spanName(SPAN)
-        : (SDAY===0 ? "Today only" : dayName(SDAY));
+  if(lbl) lbl.textContent = scopeLabel();
   /* Counts make the choice concrete: "12" against "168" says more about what
      the switch does than either label manages on its own. The day pill counts
      against the day it points at. */
   try{
-    var n={day:SCOPE==="span"?buildableSpan().length:buildableOn(SDAY).length,
+    var n={day:(SCOPE==="span"||SCOPE==="wknd")?buildableSpan().length:buildableOn(SDAY).length,
            all:buildableAll().length};
     seg.querySelectorAll("[data-scope-n]").forEach(function(el){
       el.textContent=n[el.getAttribute("data-scope-n")];
@@ -10561,6 +10631,16 @@ function setSpan(n){
   /* Early / mid / late slice ONE day. A span is not one day, so the bucket
      retires with the widening - the same rule "All upcoming" follows, and
      todFixtures already ignores TOD outside a single day. */
+  if(TOD!=="all") TOD="all";
+  paintScope(); return true;
+}
+/* The weekend window. Only the choice is stored ("wknd"); which days it
+   covers comes from weekendOffs() each time, so it never goes stale. Like a
+   span it is not one day, so the time bucket retires with it. */
+function setWeekend(){
+  if(SCOPE==="wknd") return false;
+  SCOPE="wknd";
+  try{localStorage.setItem("sw.scope","wknd");}catch(e){}
   if(TOD!=="all") TOD="all";
   paintScope(); return true;
 }
@@ -12029,7 +12109,8 @@ function askHost(){
   var m=$("askModal"); if(m) return m;
   m=document.createElement("div");
   m.id="askModal"; m.className="ask-scrim"; m.hidden=true;
-  m.innerHTML="<div class='ask-card' role='dialog' aria-modal='true' aria-label='Before we book'>"+
+  m.innerHTML="<div class='ask-card' role='dialog' aria-modal='true' aria-labelledby='askLbl'>"+
+    "<span class='sr-only' id='askLbl'>Before we book</span>"+
     "<button class='ask-x' type='button' aria-label='Close'>"+
       "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' aria-hidden='true'><path d='M6 6l12 12M18 6L6 18'/></svg></button>"+
     "<div class='ask-body' id='askBody'></div></div>";
@@ -12077,9 +12158,11 @@ function scrollLock(who,on){
   }
 }
 function askLock(on){ scrollLock("ask",on); }
-function showPrompt(target,html){
+/* label names the dialog for a screen reader; booking asks keep the default. */
+function showPrompt(target,html,label){
   if(INLINE_ASK[target]){ var el=$(target); if(!el) return false; el.innerHTML=html; return true; }
   var m=askHost();
+  var lb=$("askLbl"); if(lb) lb.textContent=label||"Before we book";
   if(ASK_FOR===null) askLock(true);
   $("askBody").innerHTML=html;
   ASK_FOR=target; m.hidden=false;
@@ -12470,6 +12553,16 @@ async function loadSporty(){
 /* Redraw whatever is currently showing ids, without disturbing anything the
    user is part-way through. */
 function repaintAfterMatch(){
+  /* New prices change what the Wizard can reach without changing any input
+     its ceiling is keyed on, so the probe starts over - and the payout rungs
+     are redrawn if they are on screen, or a rung locked out on the old board
+     stays locked. Not while the custom box has focus: the redraw would take
+     the number from under the fingers typing it. */
+  WSP_REACH={};
+  try{
+    if(BUILD.mode==="wizard" && document.documentElement.classList.contains("mode-build") &&
+       !(document.activeElement && document.activeElement.id==="wspCust")) renderWizardPanel();
+  }catch(e){}
   try{
     if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
     if(typeof paint==="function") paint();
@@ -12487,6 +12580,17 @@ function riskParams(r){
     tier:(r<33?0:(r<66?1:2))};
 }
 function riskWord(r){return r<20?"Safest":r<40?"Safe":r<60?"Balanced":r<80?"Bold":"Risky";}
+/* ONE VOCABULARY FOR THE DIAL. The ticks under the slider are riskWord's five
+   bands, and the lit one is whichever riskWord names - read off the word, so
+   the heading and the tick cannot disagree. They did: three ticks on a
+   33/66 split lit "Balanced" at 60 while the heading said "Bold" (critique,
+   6 Oct). Null lights nothing (first visit, nothing chosen yet). */
+function paintTicks(r){
+  var ti=document.querySelector(".slider-panel .risk-ticks"); if(!ti) return;
+  var w=(r==null)?"":riskWord(r);
+  ti.querySelectorAll("span").forEach(function(s){ s.classList.toggle("zone-live",s.textContent===w); });
+  var inp=$("risk"); if(inp) inp.setAttribute("aria-valuetext",w||"Not set");
+}
 /* "High scoring" is the model's own Over-2.5 read, not a league list - so it
    follows Eliteserien, the Eredivisie and whoever else is scoring this season
    without anyone maintaining names. Same bar the "Over 2.5" category uses. */
@@ -14353,13 +14457,28 @@ function showCode(code,hostId,save,B,picks,d){
     /* The warning belongs here, on the one screen a reader always sees after
        booking, rather than somewhere they may never look. */
     quotaNoteHTML(SW_QUOTA_LEFT)+
-    /* Three rows, narrowing to a point. What you do with the code sits at the
-       top as a small pair; the one thing most people are here to do sits alone
-       under it, with nothing beside it to share the attention; and the other
-       book that takes the same code sits last, said as a sentence. */
+    /* THE CODE IS THE PEAK, AND ONE BUTTON SERVES IT (7 Oct 2026). Ten
+       actions used to share this card with equal voices - a white "Open in"
+       louder than the code itself, red Copy and Share beside it, then Save,
+       Split, Safer, football.com and two social pills - and on a 780px phone
+       it filled the screen. Now in tiers: Copy, full width, is the one
+       primary; "Open in" sits under it as the outlined second; Save and Share
+       are a quiet pair of next steps; then split and safer; and the follow
+       links are a line of small print at the foot, after the moment rather
+       than in it. */
     "<div class='code-acts'>"+
       "<button class='code-copy' type='button'>Copy</button>"+
-      "<button class='share-btn' type='button' data-sh='1'>↗ Share</button>"+
+    "</div>"+
+    /* A book with no deep link gets a sentence, not a link that looks like
+       one. BetKing reads a booking code from the betslip's own box and from
+       nowhere in the URL, so "Open in BetKing" with the code appended would
+       land the reader on their board with an empty slip and no idea why. */
+    "<div class='code-opens'>"+
+      (B.open
+        ? "<a class='code-open' href='"+B.open+encodeURIComponent(code)+
+            "' target='_blank' rel='noopener'>Open in "+B.mark+"</a>"
+        : "<span class='code-paste'>Paste this code into the booking code box "+
+            "on your "+B.mark+" betslip.</span>")+
     "</div>"+
     /* Filled only when the read-back says the bookmaker kept fewer legs than
        we sent - see reconcileCode. Empty and marginless otherwise, so a slip
@@ -14371,20 +14490,11 @@ function showCode(code,hostId,save,B,picks,d){
        the running tally counted it. Keeping a slip is now a decision.
        The code is still yours either way: this saves the record, not
        the bet. */
-    (save?"<div class='code-keep'>"+
-      "<button class='code-save' type='button'>Save to Your slips</button>"+
-      "<span class='code-keep-n'>Only saved slips count towards your record.</span>"+
-    "</div>":"")+
-    /* A book with no deep link gets a sentence, not a link that looks like
-       one. BetKing reads a booking code from the betslip's own box and from
-       nowhere in the URL, so "Open in BetKing" with the code appended would
-       land the reader on their board with an empty slip and no idea why. */
-    "<div class='code-opens'>"+
-      (B.open
-        ? "<a class='code-open' href='"+B.open+encodeURIComponent(code)+
-            "' target='_blank' rel='noopener'>Open in "+B.mark+"</a>"
-        : "<span class='code-paste'>Paste this code into the booking code box "+
-            "on your "+B.mark+" betslip.</span>")+
+    "<div class='code-keep'><div class='code-next'>"+
+      (save?"<button class='code-save' type='button'>Save to Your slips</button>":"")+
+      "<button class='share-btn' type='button' data-sh='1'>↗ Share</button>"+
+    "</div>"+
+      (save?"<span class='code-keep-n'>Only saved slips count towards your record.</span>":"")+
     "</div>"+
     /* Offered after the code, not instead of it: the slip they asked for is
        booked and above this. Only when there are legs to deal and at least
@@ -14421,14 +14531,16 @@ function showCode(code,hostId,save,B,picks,d){
        <b> - `.code-card b` is the 32px booking-code style. */
     /* The bot, opened ON THIS CODE (?start=book_CODE, read by api/tg.js): one
        tap gets the doctor's read and the Follow my slip button. */
+    "<div class='code-follow'>"+
     "<a class='code-tg' href='https://t.me/Soccerwizardhqbot?start="+encodeURIComponent(B.key+"_"+code)+"' target='_blank' rel='noopener'>"+
       "<svg viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'><path d='M23.1 3.8 19.6 20.3c-.3 1.2-1 1.5-2 .9l-5.5-4-2.7 2.6c-.3.3-.6.6-1.2.6l.4-5.6L18.8 6c.4-.4-.1-.6-.7-.2L5.5 13.7 0 12c-1.2-.4-1.2-1.2.3-1.8L21.5 2c1-.4 1.9.2 1.6 1.8z'/></svg>"+
-      "<span>🔔 Follow this slip live on Telegram</span></a>"+
+      "<span>Follow this slip live on Telegram</span></a>"+
     /* And X, beside it (owner, 25 Sep: the modal had Telegram and no X). The
        daily code and results go out there every morning. */
     "<a class='code-tg code-tw' href='https://x.com/soccerwizardhq' target='_blank' rel='noopener'>"+
       "<svg viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'><path d='M18.2 2.3h3.4l-7.4 8.5 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9.1L.9 2.3h7l4.8 6.4zm-1.2 17.9h1.9L7.1 4.2H5z'/></svg>"+
       "<span>Follow us on X</span></a>"+
+    "</div>"+
     "</div>";
   document.body.appendChild(wrap);
   /* A fixed scrim stops clicks, not the wheel: the board went on scrolling
@@ -16531,7 +16643,10 @@ function splitBoxInner(picks,oddsOf){
       var parts=splitPicks(picks,n);
       var each=parts.map(function(p){return oddsOf(p);});
       var lo=Math.min.apply(null,each), hi=Math.max.apply(null,each);
-      var pay=lo.toFixed(lo>=100?0:1)+(hi-lo>0.05?"-"+hi.toFixed(hi>=100?0:1):"");
+      /* Compare what is printed, not the raw gap: x1.66 and x1.74 are 0.08
+         apart and both print 1.7, which read "about x1.7-1.7 each". */
+      var loS=lo.toFixed(lo>=100?0:1), hiS=hi.toFixed(hi>=100?0:1);
+      var pay=loS+(hiS!==loS?"-"+hiS:"");
       return "<button class='sp-way' type='button' data-n='"+n+"'>"+
         "<b>"+n+" tickets</b><span>"+
         (blind?"priced at the bookmaker":"about x"+pay+" each")+
@@ -16711,11 +16826,13 @@ function slipImage(picks, odds, code){
     g.fillStyle="#17171a"; g.fillRect(PAD,y-40,W-PAD*2,64);
     g.fillStyle="#f2f1f0";
     g.font="700 28px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
-    const teams=((f.home||"")+" v "+(f.away||"")).slice(0,38);
+    /* Cut with an ellipsis, never mid-word bare ("over 0.5 goa"). */
+    const clip=function(t,n){return t.length>n?t.slice(0,n-1).replace(/\s+$/,"")+"…":t;};
+    const teams=clip((f.home||"")+" v "+(f.away||""),38);
     g.fillText(teams,PAD+20,y);
     g.fillStyle="#f2b84b";
     g.font="800 26px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
-    const lab=(typeof mLabel==="function"&&f.home?mLabel(f,pk.code):pk.code||"").slice(0,26);
+    const lab=clip(typeof mLabel==="function"&&f.home?mLabel(f,pk.code):pk.code||"",26);
     const lw=g.measureText(lab).width;
     g.fillText(lab,W-PAD-20-lw,y);
     y+=ROW;
@@ -17731,12 +17848,12 @@ function applyBoardCap(n){
           (BOOKS[k].mark||esc(BOOKS[k].label))+"</button>";
       }).join("");
       var tiles="<div class='ck-tile'><div class='ck-th'>"+esc(when)+odds+"</div>"+chip(daily[pick])+"</div>";
-      if(big) tiles+="<div class='ck-tile big'><div class='ck-th'>🔥 Big odds of the day<span class='ck-tot'>×"+
+      if(big) tiles+="<div class='ck-tile big'><div class='ck-th'>Big odds of the day<span class='ck-tot'>×"+
         Number(big.odds).toFixed(2)+"</span></div>"+chip(big.codes[pick]&&big.codes[pick].code)+"</div>";
       host.innerHTML="<div class='ck-top'><a class='ck-tag' href='/booking-codes'>Daily booking codes</a></div>"+
         "<div class='ck-tabs' role='tablist' aria-label='Bookmaker'>"+tabs+"</div>"+
         "<div class='ck-tiles'>"+tiles+"</div>"+
-        "<div class='ck-foot'>"+foot+" · <a href='/booking-codes'>All books &amp; past codes &rsaquo;</a></div>"+
+        "<div class='ck-foot'>"+foot+"<span class='ck-all'> · <a href='/booking-codes'>All books &amp; past codes &rsaquo;</a></span></div>"+
         /* True since 24 Sep: the mint run posts the code to both, every morning
            (xqueue.js, tgpost.js). Said only once the channel really gets it. */
         "<div class='ck-soc'>Posted every morning on "+
@@ -17772,8 +17889,10 @@ function applyBoardCap(n){
 /* ---- Yesterday, in one sentence ----
    The first question a newcomer has is whether any of this works, and the
    honest answer is a number we already compute. It used to be a chip in the
-   trust row that nobody reads. Graded from the results feed rather than
-   recordYest, which is a one-day backtest and is often null. */
+   trust row that nobody reads. Graded from the results feed through
+   windowRecord(1), the same call the record panel's "yesterday" cell makes,
+   so the two can never print different numbers (they did on 6 Oct: 26/39
+   here, 16/21 there, from the build's old one-day backtest). */
 /* HOW MANY OF YESTERDAY'S TIPS ARE STILL OUT, and how many there were.
    Three sources, best first, because each knows something the next does not:
 
@@ -17818,8 +17937,8 @@ function yestCounts(graded){
 }
 function renderDaily(){
   var host=$("daily"); if(!host) return;
-  var res=(DATA.results||[]).filter(function(r){return dayOff(r.date)===-1;});
-  var rec=DATA.record;
+  var yd=windowRecord(1), res=yd?yd.rows:[];
+  var rec=windowRecord(21);
   if(!res.length&&(!rec||!rec.total)){host.innerHTML="";return;}
 
   var hit=res.filter(function(r){return r.hit;}).length;
@@ -17873,7 +17992,7 @@ function renderDaily(){
 
   var foot="";
   if(rec&&rec.total){
-    foot="<div class='daily-foot'>Over the last "+(rec.days||0)+" days, <b>"+
+    foot="<div class='daily-foot'>"+(rec.days===1?"Yesterday":"Over the last "+rec.days+" days")+", <b>"+
       rec.correct+" of "+rec.total+"</b> tips landed ("+
       Math.round(100*rec.correct/rec.total)+"%). Every tip is checked against "+
       "the final score.</div>";
@@ -17903,25 +18022,36 @@ function renderDaily(){
    made, not a scroll later. */
 function renderProof(){
   var el=$("scProof"); if(!el) return;
-  var rec=DATA.record;
-  if(!rec||!rec.total){el.hidden=true;el.innerHTML="";return;}
-  var pct=Math.round(100*rec.correct/rec.total);
+  var rec=windowRecord(21);
+  if(!rec){el.hidden=true;el.innerHTML="";return;}
   el.hidden=false;
-  el.innerHTML="<span><b>"+pct+"% of our tips landed</b> over the last "+
-    (rec.days||0)+" days · every one checked against the final score</span>";
+  el.innerHTML="<span><b>"+rec.pct+"% of our tips landed</b> "+
+    (rec.days===1?"yesterday":"over the last "+rec.days+" days")+" · every one checked against the final score</span>";
 }
 
 /* ---- Accuracy record (renders only with real data) ---- */
 /* Hit rate over the last N days, graded from the results feed. A short window
    is a small sample and swings hard; showing it beside the long one is what
-   keeps a cold week readable as a cold week rather than as the whole story. */
+   keeps a cold week readable as a cold week rather than as the whole story.
+   Every record figure on the page comes through here, and lib/grade.js
+   windowRecord does the same for the build (share card, posts). `days` is the
+   window the graded rows really reach: about two weeks are kept, and that
+   must not read as "the last 21 days". Brier is on each tip's own
+   probability, which is what the calibration cell grades. */
 function windowRecord(days){
+  var span=0, bs=0, bn=0;
   var res=(DATA.results||[]).filter(function(r){
-    var o=dayOff(r.date); return o<0 && o>=-days;
+    var o=dayOff(r.date); if(!(o<0 && o>=-days)) return false;
+    if(-o>span) span=-o;
+    return true;
   });
   if(!res.length) return null;
   var hit=res.filter(function(r){return r.hit;}).length;
-  return {correct:hit,total:res.length,pct:Math.round(100*hit/res.length),days:days};
+  res.forEach(function(r){
+    if(typeof r.tip_p==="number"){ bs+=Math.pow((r.hit?1:0)-r.tip_p,2); bn++; }
+  });
+  return {correct:hit,total:res.length,pct:Math.round(100*hit/res.length),days:span,
+    brier:bn?Math.round(bs/bn*1000)/1000:null,rows:res};
 }
 /* The headline percentage is a blend, and a blend moves with its mix rather
    than with the model: folding Over 1.5 into the graded set lifted the overall
@@ -17951,9 +18081,9 @@ function marketBreakdownHTML(rec){
 }
 function renderRecord(){
   var host=$("record"); if(!host) return;
-  var rec=DATA.record;
-  if(!rec||!rec.total){host.innerHTML="";return;}
-  var pct=Math.round(100*rec.correct/rec.total);
+  var rec=windowRecord(21);
+  if(!rec){host.innerHTML="";return;}
+  var pct=rec.pct;
   /* This is the one claim no rival tips site makes: a graded, calibrated
      history. It gets a real panel - both windows, how well the stated
      confidence matched reality, and yesterday - because it is the reason to
@@ -17964,8 +18094,10 @@ function renderRecord(){
      reads as a poor week next to the longer record it sits inside. */
   var b=rec.brier;
   var cal=(b==null)?null:(b<=0.18?"Excellent":b<=0.21?"Good":b<=0.24?"Fair":"Rough");
-  var yest=DATA.recordYest;
-  var wk=windowRecord(7);
+  /* With one day of history the headline cell already is yesterday. */
+  var yest=rec.days>1?windowRecord(1):null;
+  /* Under eight days of history the two windows are the same rows. */
+  var wk=rec.days>7?windowRecord(7):null;
   var cold=wk&&wk.pct<pct-5;
   host.innerHTML=
     "<div class='rec-panel'>"+
@@ -17974,17 +18106,19 @@ function renderRecord(){
       "<div class='rec-grid'>"+
         (wk?"<div class='rec-cell'><b class='pc"+(cold?" cool":"")+"'>"+wk.pct+"%</b>"+
           "<i>last 7 days \u00b7 "+wk.correct+"/"+wk.total+"</i></div>":"")+
-        "<div class='rec-cell'><b class='pc'>"+pct+"%</b><i>last "+
-          (rec.days||21)+" days \u00b7 "+rec.correct+"/"+rec.total+"</i></div>"+
+        "<div class='rec-cell'><b class='pc'>"+pct+"%</b><i>"+
+          (rec.days===1?"yesterday":"last "+rec.days+" days")+" \u00b7 "+rec.correct+"/"+rec.total+"</i></div>"+
         (cal?"<div class='rec-cell'><b>"+cal+"</b><i>calibration</i></div>":"")+
-        (yest&&yest.total?"<div class='rec-cell'><b>"+yest.correct+"/"+yest.total+
+        (yest?"<div class='rec-cell'><b>"+yest.correct+"/"+yest.total+
           "</b><i>yesterday</i></div>":"")+
       "</div>"+
       "<div class='rec-bar'><i style='width:"+pct+"%'></i></div>"+
-      marketBreakdownHTML(rec)+
+      /* Graded by market in the build (lib/grade.js windowRecord over the
+         same results); the page has no tip-to-market map of its own. */
+      marketBreakdownHTML(DATA.record)+
       "<div class='rec-foot'>"+
         (cold?"A short week swings hard - seven days is a small sample, and the "+
-              (rec.days||21)+"-day figure is the honest one. ":"")+
+              rec.days+"-day figure is the honest one. ":"")+
         (cal?"When we say 70%, it lands near 70% - ":"")+
         "measured on games the model had not seen.</div>"+
     "</div>";
@@ -18350,8 +18484,8 @@ function statusText(m){
   return {t:(m.minute!=null?m.minute+"\u2019":"Live"),ft:false};
 }
 function scorersHTML(m){
-  var hs=(m.homeGoals||[]).map(function(g){return "<div class='sr h'><span>\u26bd "+esc2(g.player)+"</span><span class='mn'>"+esc2(g.minute)+"\u2019</span></div>";});
-  var as=(m.awayGoals||[]).map(function(g){return "<div class='sr a'><span class='mn'>"+esc2(g.minute)+"\u2019</span><span>\u26bd "+esc2(g.player)+"</span></div>";});
+  var hs=(m.homeGoals||[]).map(function(g){return "<div class='sr h'><span>"+esc2(g.player)+"</span><span class='mn'>"+esc2(g.minute)+"\u2019</span></div>";});
+  var as=(m.awayGoals||[]).map(function(g){return "<div class='sr a'><span class='mn'>"+esc2(g.minute)+"\u2019</span><span>"+esc2(g.player)+"</span></div>";});
   if(!hs.length&&!as.length) return "";
   return "<div class='lv-scorers'>"+hs.join("")+as.join("")+"</div>";
 }
@@ -18410,8 +18544,8 @@ function applyGoalFX(host){
     if(!card) return;
     card.classList.add("just-scored");
     var f=LIVE.flash[id];
-    if(f.h){var e=card.querySelector('.lv-sc[data-side="h"]'); if(e){e.classList.add("pop","scored");e.insertAdjacentHTML("afterbegin","<span class='goal-tag'>GOAL</span>");}}
-    if(f.a){var e2=card.querySelector('.lv-sc[data-side="a"]'); if(e2){e2.classList.add("pop","scored");e2.insertAdjacentHTML("afterbegin","<span class='goal-tag'>GOAL</span>");}}
+    if(f.h){var e=card.querySelector('.lv-sc[data-side="h"]'); if(e){e.classList.add("pop","scored");e.insertAdjacentHTML("afterbegin","<span class='goal-tag'>Goal</span>");}}
+    if(f.a){var e2=card.querySelector('.lv-sc[data-side="a"]'); if(e2){e2.classList.add("pop","scored");e2.insertAdjacentHTML("afterbegin","<span class='goal-tag'>Goal</span>");}}
   });
   LIVE.flash={};
   var now3=Date.now();
@@ -18510,7 +18644,7 @@ function tickerItemHTML(e){
   else if(e.kind==="ht"){tag="Half-time";ic="<span class='tk-ic'>"+S+"<circle cx='12' cy='12' r='9'/><path d='M12 8v4l2.5 1.5'/></svg></span>";}
   else{tag="Full-time";ic="<span class='tk-ic'>"+S+"<circle cx='12' cy='12' r='9'/><path d='M8.5 12.5l2.4 2.4 4.6-5'/></svg></span>";}
   var draw=(e.kind==="ft"&&e.lead===""&&/^\d+-\d+$/.test(e.sc));
-  var gtag="<span class='tk-tag tk-goaltag'>GOAL</span>";
+  var gtag="<span class='tk-tag tk-goaltag'>Goal</span>";
   var scHTML;
   if(e.kind==="goal"&&e.fresh){var pr=String(e.sc).split("-");
     scHTML="<b class='tk-sc'><span class='"+(e.gh?"glow":"")+"'>"+pr[0]+"</span>-<span class='"+(e.ga?"glow":"")+"'>"+pr[1]+"</span></b>";}
@@ -18531,6 +18665,36 @@ function syncLiveDots(){
   var d=$("liveDot"); if(d) d.hidden=!any;
   var dB=$("liveDotB"); if(dB) dB.hidden=!any||here;
 }
+/* WHERE THE LIVE ROW STANDS. On a phone it joins the rail's cards under the
+   first screen of games (the rail dissolves there and orders its cards around
+   the board, see home layout): above the board it arrived a second after the
+   games and pushed the first one down the screen. On a wider screen it keeps
+   its full-width place above the board. Moved before /api/live can answer, so
+   the move itself shifts nothing.
+   AND THE READING ORDER FOLLOWS THE SCREEN. CSS order puts the board above
+   the rail's cards on a phone, but a keyboard or a screen reader follows the
+   DOM, which had every rail card first. So on a phone the offer and the
+   reader's own slips step out of the rail ahead of the board, and the board
+   moves ahead of the rest. Nothing moves on screen - the CSS order already
+   draws it this way - so this costs no layout shift. */
+(function(){
+  var w=$("liveStripWrap"),g=document.querySelector(".home-grid"),
+      r=document.querySelector(".home-rail"),m=document.querySelector(".home-main"),
+      cta=$("slipCta"),mine=$("myres");
+  if(!w||!g||!r||!m||!cta||!mine||!window.matchMedia) return;
+  var mq=window.matchMedia("(max-width:720px)");
+  function place(){
+    if(mq.matches){
+      if(w.parentNode!==r) r.insertBefore(w,$("sotd"));
+      if(cta.parentNode!==g){ g.insertBefore(m,r); g.insertBefore(cta,m); g.insertBefore(mine,m); }
+    }else{
+      if(w.nextElementSibling!==g) g.parentNode.insertBefore(w,g);
+      if(cta.parentNode!==r){ r.insertBefore(mine,r.firstChild); r.insertBefore(cta,mine); g.insertBefore(r,m); }
+    }
+  }
+  place();
+  if(mq.addEventListener) mq.addEventListener("change",place); else if(mq.addListener) mq.addListener(place);
+})();
 function renderLiveStrip(){
   var wrap=$("liveStripWrap"),host=$("liveStrip"); if(!wrap||!host) return;
   var root=document.documentElement;
@@ -18542,10 +18706,9 @@ function renderLiveStrip(){
   if(sig===LIVE._tksig) return;
   LIVE._tksig=sig;
   var items=evs.map(tickerItemHTML).join("");
-  if(evs.length<=2){ host.innerHTML=items; host.style.animation="none"; host.style.justifyContent="center"; }
-  else { var reps=evs.length<4?3:2; var big=""; for(var r=0;r<reps;r++) big+=items;
-    host.innerHTML=big; host.style.animation=""; host.style.justifyContent="";
-    host.style.animationDuration=Math.max(20,evs.length*6)+"s"; }
+  /* One copy of each event: the row scrolls by hand now, so the old marquee's
+     repeated copies would only read as duplicates. */
+  host.innerHTML=items;
   var all=$("liveStripAll");
   if(all&&!all._w){all._w=1;all.addEventListener("click",function(e){e.preventDefault();setView("live");});}
 }
@@ -18711,6 +18874,41 @@ function toggleMy(id,code,label,p,srcEl){
   saveMy(); renderFab(); syncAddBtn(id,code);
   if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
 }
+/* ?add=<fid> FROM A MATCH PAGE. lib/pages.js links an upcoming match page
+   here with the same fid() the card's Add to slip carries, so this adds that
+   card's tip through toggleMy - no second add path - and opens My slip so the
+   reader sees it land. Read once and dropped from the address bar, so a reload
+   does not add it twice. Waits out the entry gate (it never touches it): the
+   add happens when the board is what the reader is looking at. One leg per
+   game - a game already on the slip, whatever its market, is not added again.
+   The leg is tagged via:"match" so a booking of it reports src=match. */
+function addFromLink(){
+  var q, id;
+  try{ q=new URLSearchParams(location.search||""); id=q.get("add"); }catch(e){ return; }
+  if(!id) return;
+  try{
+    q.delete("add"); var _qs=q.toString();
+    history.replaceState(history.state,"",location.pathname+(_qs?"?"+_qs:"")+(location.hash||""));
+  }catch(e){}
+  (function whenBoard(){
+    if(document.documentElement.classList.contains("sw-gate-on")){ setTimeout(whenBoard,250); return; }
+    var f=fixtureById(id), code=f&&tipCode(f);
+    if(!f||!code||f.tip_p==null){
+      window.swToast&&window.swToast("That game is off the board now. Plenty more to pick from!","info","addlink"); return; }
+    if(!(notStarted(f)&&isUpcoming(f))){
+      window.swToast&&window.swToast("That one has kicked off. Plenty more on the board!","info","addlink"); return; }
+    if(!MYSLIP.some(function(x){return x.id===id;})){
+      toggleMy(id,code,plainTip(f),f.tip_p.toFixed(3),null);
+      MYSLIP.forEach(function(x){ if(x.id===id&&x.code===code) x.via="match"; }); saveMy();
+    }
+    /* A later day's game: step the board to its day, the same state the day
+       arrows set, so the card behind the slip is the one just added. Not
+       setDay - that is the builder's stored window (sw.sday), not the board. */
+    var off=dayOff(fDay(f));
+    if(V.off!==off){ V.off=off; V.dayPicked=true; V.country=""; V.league=""; render(); }
+    openMySheet();
+  })();
+}
 /* Repaint the add buttons for one match+market wherever they sit on the
    board, so the tick agrees with the slip. Shared by adding and by changing
    a pick - a change has to repaint two markets, the one being left and the
@@ -18831,6 +19029,22 @@ function dayAway(e){
   closeDayMenu();
 }
 function dayKey(e){ if(e.key==="Escape"){ e.preventDefault(); closeDayMenu(); } }
+/* The Weekend row of the day menu, after the spans: Sat - Sun (Sunday alone
+   on a Sunday) with its count. Left out when the weekend has nothing left to
+   build with, the same way an empty day is never offered. */
+function weekendOpt(){
+  /* Whether the row exists is structural, like the days below it; the number
+     on it is what a tap builds from, after the league and Top flight filters. */
+  var w=weekendOffs();
+  if(!spanBuildable(w[1]-w[0]+1,w[0])) return "";
+  var n=buildableRange(w[0],w[1]).length;
+  var cur=(SCOPE==="wknd");
+  return "<button type='button' role='option' class='day-opt day-span"+(cur?" on":"")+"'"+
+    (cur?" aria-selected='true'":"")+" data-wknd='1'>"+
+    "<span class='dy-n'>Weekend</span>"+
+    "<span class='dy-d'>"+esc(dayDate(w[0]))+(w[1]>w[0]?" - "+esc(dayDate(w[1])):"")+"</span>"+
+    "<span class='dy-c'>"+n+"</span></button>";
+}
 function openDayMenu(btn){
   var wasOpen=DAYMENU&&DAYMENU._btn===btn;
   closeDayMenu();
@@ -18851,15 +19065,15 @@ function openDayMenu(btn){
       (cur?" aria-selected='true'":"")+" data-span='"+n+"'>"+
       "<span class='dy-n'>"+esc(spanName(n))+"</span>"+
       "<span class='dy-d'>"+esc(dayDate(s0))+" - "+esc(dayDate(s0+n-1))+"</span>"+
-      "<span class='dy-c'>"+spanBuildable(n,s0)+"</span></button>";
-  }).join("")+
+      "<span class='dy-c'>"+buildableRange(s0,s0+n-1).length+"</span></button>";
+  }).join("")+weekendOpt()+
   list.map(function(o){
     var cur=(SCOPE==="day"&&o===SDAY);
     return "<button type='button' role='option' class='day-opt"+(cur?" on":"")+"'"+
       (cur?" aria-selected='true'":"")+" data-off='"+o+"'>"+
       "<span class='dy-n'>"+esc(dayName(o))+"</span>"+
       "<span class='dy-d'>"+esc(dayDate(o))+"</span>"+
-      "<span class='dy-c'>"+dayBuildable(o)+"</span></button>";
+      "<span class='dy-c'>"+buildableOn(o).length+"</span></button>";
   }).join("");
   document.body.appendChild(m);
   var r=btn.getBoundingClientRect(), mw=m.offsetWidth;
@@ -18879,6 +19093,16 @@ function openDayMenu(btn){
       var n=parseInt(b.dataset.span,10); closeDayMenu();
       /* Same reset as every other window change: the pool moved. */
       if(setSpan(n)){
+        BUILD.removed={}; BUILD.touched=true;
+        WSP.removed={}; WSP._slip=null; WSP._sig=null;
+        $("bookResult").innerHTML=""; renderBuilder();
+      }
+    });
+  });
+  m.querySelectorAll("[data-wknd]").forEach(function(b){
+    b.addEventListener("click",function(){
+      closeDayMenu();
+      if(setWeekend()){
         BUILD.removed={}; BUILD.touched=true;
         WSP.removed={}; WSP._slip=null; WSP._sig=null;
         $("bookResult").innerHTML=""; renderBuilder();
@@ -19057,6 +19281,20 @@ function renderMySheet(){
     "</div>";
   }).join("");
   $("myTotOdds").textContent="\u00d7"+myOdds().toFixed(2);
+  /* A WIZARD SLIP SHORT OF ITS TARGET SAYS SO IN THE HEADER, not only in the
+     note under the legs. Read live off the slip, so a removed or added leg
+     keeps it true, and gone once the slip reaches the target or holds no
+     wizard legs. WSP._miss is set by wspConjure. */
+  var _mm=$("mySheetMiss");
+  if(_mm){
+    var _tot=myOdds(), _want=WSP._miss&&WSP._miss.want;
+    var _say=!!_want && _tot<_want*0.995 &&
+      MYSLIP.some(function(x){ return x.auto&&x.via==="wizard"; });
+    _mm.hidden=!_say;
+    _mm.innerHTML=_say ? "<b>\u00d7"+(_tot>=100?Math.round(_tot).toLocaleString("en"):_tot.toFixed(2))+
+      "</b> of your \u00d7"+(+_want).toLocaleString("en")+": the most we can build "+
+      (WSP._miss.win||"right now") : "";
+  }
   body.querySelectorAll("[data-myrm]").forEach(function(b){
     b.addEventListener("click",function(){var p=b.dataset.myrm.split("|"); toggleMy(p[0],p[1]);});});
   body.querySelectorAll("[data-myswap]").forEach(function(b){
@@ -19552,6 +19790,11 @@ function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
 var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o15:true,o25:false,o35:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,tcorn:false,shots:false,tshots:false,hcap:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* The slip style is remembered (and synced) since accounts, 29 Sep 2026. */
 try{var _lo=+localStorage.getItem("sw.legodd"); if(_lo>1&&_lo<10) WSP.legodd=_lo;}catch(e){}
+/* The short-slip header (see wspConjure), kept with the slip across reloads.
+   renderMySheet shows it only while the slip still holds wizard legs short of
+   the target, so a stale entry draws nothing. */
+try{var _wm=JSON.parse(localStorage.getItem("sw.wspmiss")||"null");
+  if(_wm&&+_wm.want>1) WSP._miss={want:+_wm.want,win:typeof _wm.win==="string"?_wm.win:""};}catch(e){}
 /* THE MARKET CHIPS ARE REMEMBERED. They never were: every load rebuilt both
    sets from the literals above, so a reader who switched Over 1.5 off and
    Both score on found Win or draw, Outright win, Over 1.5 and Team over 0.5
@@ -19668,13 +19911,13 @@ function wspMarkets(){var m=[];
    this, so what the row shows cannot drift from what gets built. It briefly had
    a fourth answer, "slider", when Auto was a chip in this row. */
 /* The three slip styles, shared by both builders. */
-var SLIP_STYLES=[[1.25,"More games","smaller odds"],[1.4,"Balanced",""],[1.7,"Fewer games","bigger odds"]];
+var SLIP_STYLES=[[1.25,"More games","smaller odds"],[1.4,"Even",""],[1.7,"Fewer games","bigger odds"]];
 /* WHAT THE STYLE MEANS TO THE SLIDER, which has no payout to divide.
    The Wizard reads legodd as "reach the target with legs priced near this",
    so the leg count falls out of the arithmetic. The Slider's count comes from
    the risk dial instead, so the style says the same thing two ways: prefer
    markets priced near the style's leg odds, and take more or fewer games.
-   Balanced is neutral - no pull, no change of count - so a reader who never
+   Even (the 1.4 chip, "Balanced" until 7 Oct) is neutral - no pull, no change of count - so a reader who never
    touches the row gets exactly the Slider they had. */
 function sliderStyle(){
   var per=WSP.legodd||1.4;
@@ -20364,26 +20607,46 @@ function wspBuild(){
    there is no second estimator here to disagree with the first.
    Cached on everything the pool depends on EXCEPT the payout, which is the one
    thing it must not depend on: renderWizardPanel runs on every chip tap. */
-var WSP_REACH={sig:null,max:0};
-function wspMaxReach(){
+/* `at` is the probe target. The leg cap depends on it - 40 below the jackpot
+   tier, JACKPOT_LEG_CAP from it - so one ceiling cannot answer both: a
+   50-leg probe would call x6k reachable on a board whose 40-leg slip stops
+   well short of it. renderWizardPanel asks at 1e12 for the jackpot rungs and
+   just under JACKPOT_ODDS for the rest. One cache slot per probe target.
+   The key carries the league picker, the volatile-league switch and the book
+   too: scopeFixtures and wspMarkets read them, and a key without them kept
+   the ceiling of a pool the reader had already changed.
+   DATA CHANGES UNDER AN UNCHANGED KEY: a book feed landing, a reload of the
+   payload. Those reset WSP_REACH outright (repaintAfterMatch, load). A
+   kickoff shrinks the pool, so the count of games still in the window is in
+   the key instead of the payload's raw length.
+   NOT THE SEED. A reshuffle re-ran both probes (200-300 ms on All upcoming
+   on a cheap phone) for a ceiling that barely moves: the seed only reorders
+   near-ties when the leg cap binds. The shuffle COUNT stays, bucketed at 3,
+   because at 2 and 3 South America and Asia join the pool (saMode/asiaMode
+   in wspBuild) and that can raise the ceiling. */
+var WSP_REACH={};
+function wspMaxReach(at){
+  at=at||1e12;
   var sig=[wspStyleOn(),JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE,SDAY,SPAN,TOD,
-           !!WSP.everyGame,WSP.seed,WSP.shuffles,
+           JSON.stringify(BLD_PICK),!!VOL_IN,curBook().key,scopeFixtures().length,
+           !!WSP.everyGame,Math.min(WSP.shuffles||0,3),
            Object.keys(WSP.removed||{}).length].join("|");
-  if(WSP_REACH.sig===sig) return WSP_REACH.max;
+  var slot=WSP_REACH[at]||(WSP_REACH[at]={sig:null,max:0});
+  if(slot.sig===sig) return slot.max;
   var was=WSP.odds;
   try{
-    WSP.odds=1e12;
+    WSP.odds=at;
     var r=wspBuild();
-    WSP_REACH.max=(r&&isFinite(r.odds))?r.odds:0;
+    slot.max=(r&&isFinite(r.odds))?r.odds:0;
   }catch(e){
     /* Never let a probe decide nothing can be built: on an error the ladder
-       falls back to offering the jackpot rungs, which is what it did before
-       this existed. */
-    WSP_REACH.max=Infinity;
+       falls back to offering every rung, which is what it did before this
+       existed. */
+    slot.max=Infinity;
   }
   WSP.odds=was;
-  WSP_REACH.sig=sig;
-  return WSP_REACH.max;
+  slot.sig=sig;
+  return slot.max;
 }
 // --- Wizard panel rendering (replaces renderWsp) ---
 /* WHICH TOGGLE PRODUCES WHICH LEG. Kept beside the chips rather than derived,
@@ -20515,6 +20778,12 @@ function wspConjure(shuffle){
               via:"wizard",k:kickoffOf(c.id,c.f)};}));
   var seen={}; MYSLIP=MYSLIP.filter(function(x){
     if(seen[x.id])return false;seen[x.id]=1;return true;});
+  /* The window is named as it was when this slip was built - the reader may
+     change it afterwards, and the slip still came from this one. Stored with
+     the slip so the header survives a reload (restored beside WSP). */
+  WSP._miss=r.short?{want:WSP.odds,win:windowWords()}:null;
+  try{ if(WSP._miss) localStorage.setItem("sw.wspmiss",JSON.stringify(WSP._miss));
+       else localStorage.removeItem("sw.wspmiss"); }catch(e){}
   saveMy(); renderFab(); openMySheet();
   /* Straight to the bottom - the last legs and the total are what you want to
      see, and no animation, because it should already be there. */
@@ -20536,11 +20805,14 @@ function wspConjure(shuffle){
      short is a market problem, far over is a price-per-game problem. */
   var T=WSP.odds, per=(r.picks.length?Math.pow(r.odds,1/r.picks.length):0);
   var missNote="";
+  /* Same figure as the slip header: ×3.61 rounded to ×4 sat under a header
+     saying ×3.61. Whole numbers only once the decimals stop mattering. */
+  var oddsTx=(r.odds>=100?Math.round(r.odds).toLocaleString("en"):r.odds.toFixed(2));
   if(r.short){
     missNote="We could not reach ×"+(+T).toFixed(0)+" today. Best from the markets "+
-      "you picked is ×"+r.odds.toFixed(0)+" on "+r.picks.length+" games. "+
+      "you picked is ×"+oddsTx+" on "+r.picks.length+" games. "+
       "Switch on more markets, or ask for less.";
-    window.swToast&&window.swToast("Best we can build today is ×"+r.odds.toFixed(0)+
+    window.swToast&&window.swToast("Best we can build today is ×"+oddsTx+
       " from "+r.picks.length+" games we rate","info","wspshort");
   } else if(T!=null&&r.odds>T*1.5&&r.picks.length>1){
     missNote="You asked for ×"+(+T).toFixed(0)+" and this pays ×"+r.odds.toFixed(0)+
@@ -20614,11 +20886,19 @@ function renderBldDock(){
   });
   /* Watches the real toggle: while it is on screen the dock stays out of the
      way, because two copies of the same control at once is just noise. */
+  /* And while the Slider or Wizard panel is on screen: the dock is pinned top
+     right, which is exactly where the panel prints its subtitle ("11 games ·
+     69%+ confidence"), and the panel is the control the dock stands in for
+     (critique, 6 Oct 2026). A panel that is display:none never intersects,
+     so only the one in use counts. */
   var head=document.querySelector(".bld-mode-row");
   if(head&&"IntersectionObserver" in window){
-    new IntersectionObserver(function(es){
-      dock.classList.toggle("on",!es[0].isIntersecting);
-    },{threshold:0}).observe(head);
+    var seen={};
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){ seen[e.target.id||"head"]=e.isIntersecting; });
+      dock.classList.toggle("on",!seen.head&&!seen.sliderPanel&&!seen.wizardPanel);
+    },{threshold:0});
+    [head,$("sliderPanel"),$("wizardPanel")].forEach(function(el){ if(el) io.observe(el); });
   }
 }
 /* WHICH CODES EACH CHIP GOVERNS. The slider's mkOn map already knows this
@@ -21114,13 +21394,46 @@ function renderShared(){
       lg._wired=1;
       lg.querySelectorAll("[data-btp]").forEach(function(c){
         c.addEventListener("click",function(){
-          setTopOnly(c.dataset.btp==="true");
-          renderBuilder();
+          if(c.dataset.btp==="true"){ setTopOnly(true); renderBuilder(); }
+          else resetLeagues();
         });
       });
     }
   }
   renderLeaguePicker();
+}
+/* "All leagues", from the chip or the picker's own reset: every tap undone,
+   Top flight off, and - when the window holds any - a quick ask about the
+   volatile leagues, every time, since they are the one group left out. */
+function resetLeagues(){
+  clearLeaguePicks();
+  setTopOnly(false);
+  WSP._sig=null;
+  renderBuilder();
+  askVolatile();
+}
+function askVolatile(){
+  var vol=leaguesOnBoard().filter(function(x){return isVolatile(x.league);});
+  if(!vol.length) return;
+  var done=function(add){
+    setVolIn(add); clearPrompt("volAsk");
+    WSP._sig=null; renderBuilder();
+  };
+  showPrompt("volAsk","<div class='confirm-card'><p>Want the volatile leagues in too?"+
+    "<span class='cf-list'>These are third divisions and below, where results swing a lot, "+
+    "so they sit on the bench unless you call them up: "+
+    vol.map(function(x){return esc(compOf(x.league))+" ("+esc(countryOf(x.league))+")";}).join(", ")+
+    ".</span></p><div class='ca'>"+
+    "<button class='confirm-go' type='button'>Add them</button>"+
+    "<button class='confirm-cancel' type='button'>Keep them out</button></div></div>",
+    "Add volatile leagues?");
+  var h=promptEl("volAsk");
+  h.querySelector(".confirm-go").addEventListener("click",function(){ done(true); });
+  var keep=h.querySelector(".confirm-cancel");
+  /* The backdrop, the X and Escape all press this one, so closing the ask
+     any way at all keeps them out. It is also where focus starts. */
+  keep.addEventListener("click",function(){ done(false); });
+  try{ keep.focus({preventScroll:true}); }catch(e){}
 }
 /* The league picker.
    Repainted with the rest of the builder because its contents depend on the
@@ -21133,27 +21446,23 @@ function renderLeaguePicker(){
       sum=$("lgpSum"),cnt=$("lgpCount"),clr=$("lgpClear");
   if(!open||!box||!list) return;
 
-  var avail=leaguesOnBoard();
-  var n=leagueChosenCount();
+  var lc=leagueCount(), avail=lc.avail, touched=lc.touched;
   /* Name the window this list describes.
      Without it, "5 available" reads as a broken picker. It was reported as
      one: with Early selected the list held five leagues while the reporter
      was looking at a day on which nearly every top flight was playing - all
      of them outside the Early window. The list was right and said nothing
      about why, which is the same thing as being wrong. */
-  var win = (SCOPE==="all") ? "in all upcoming games"
-          : (SCOPE==="span") ? ("in the next "+SPAN+" days")
-          : ("playing "+(TOD==="all" ? "" :
-              (TOD==="early"?"in the morning ":TOD==="mid"?"in the afternoon ":"in the evening "))+
-             dayName(SDAY).toLowerCase());
-  /* A stored pick for a league that is not playing today would otherwise show
-     "2 leagues" over an empty board with nothing to un-tick. */
-  var live=avail.filter(function(x){return BLD_LEAGUES[x.league];}).length;
-  sum.textContent = !n ? "Any league"
-    : (live ? live+" league"+(live===1?"":"s") : n+" picked, none playing");
-  open.classList.toggle("narrowed",!!n);
+  var win = windowWords(true);
+  /* Counted over what is on the board, so a stored tap for a league not
+     playing in this window does not skew the numbers. */
+  var live=lc.live;
+  var vol=avail.filter(function(x){return isVolatile(x.league);}).length;
+  sum.textContent = !touched ? live+" league"+(live===1?"":"s") : lc.words;
+  updateFiltersSum();
+  open.classList.toggle("narrowed",touched);
   if(cnt) cnt.textContent=avail.length+" league"+(avail.length===1?"":"s")+" "+win;
-  if(clr) clr.hidden=!n;
+  if(clr) clr.hidden=!touched;
 
   /* A time window narrow enough to hide most of the card should say so here,
      beside the short list it caused, rather than leaving the reader to connect
@@ -21171,15 +21480,19 @@ function renderLeaguePicker(){
 
   /* Said once, where the doubt actually is, rather than only in the summary
      button above the open panel. */
-  var allIn = n ? "" : "<div class='lgp-allin'><b>All " + avail.length +
-    " leagues are in.</b> Tap any to build from that one only.</div>";
-  list.classList.toggle("all-in", !n);
+  var volOut = vol && !VOL_IN;
+  var allIn = (touched || !avail.length) ? "" : "<div class='lgp-allin'><b>" +
+    (volOut ? (avail.length-vol) + " of " + avail.length + " leagues are in.</b> " +
+      "The volatile ones wait on the bench until you tick them. "
+    : "All " + avail.length + " leagues are in.</b> ") + "Tap any to leave it out.</div>";
   list.innerHTML = allIn + hint + (avail.length
     ? avail.map(function(x){
-        return "<button class='lgp-row"+(BLD_LEAGUES[x.league]?" on":"")+"' type='button' "+
-          "data-lg=\""+esc(x.league)+"\" aria-pressed='"+(!!BLD_LEAGUES[x.league])+"'>"+
+        var on=leagueAllowed(x.league);
+        return "<button class='lgp-row"+(on?" on":"")+"' type='button' "+
+          "data-lg=\""+esc(x.league)+"\" aria-pressed='"+on+"'>"+
           "<span class='lgp-tick' aria-hidden='true'>✓</span>"+
           "<span class='lgp-nm'>"+esc(compOf(x.league))+"<span class='lgp-ct'> · "+esc(countryOf(x.league))+"</span></span>"+
+          (isVolatile(x.league)?"<span class='lgp-vol'>Volatile</span>":"")+
           "<span class='lgp-n'>"+x.n+"</span></button>";
       }).join("")
     : "<div class='lgp-empty'>No games in this window.</div>");
@@ -21187,7 +21500,7 @@ function renderLeaguePicker(){
   list.querySelectorAll("[data-lg]").forEach(function(b){
     b.addEventListener("click",function(){
       var l=b.dataset.lg;
-      setLeaguePicked(l,!BLD_LEAGUES[l]);
+      setLeaguePicked(l,!leagueAllowed(l));
       /* The slip is built from a pool that just changed, so any conjured slip
          is stale. Drop it rather than leave legs from a league now excluded. */
       WSP._sig=null;
@@ -21204,9 +21517,7 @@ function renderLeaguePicker(){
     });
     clr.addEventListener("click",function(e){
       e.stopPropagation();
-      clearLeaguePicks();
-      WSP._sig=null;
-      renderBuilder();
+      resetLeagues();
     });
   }
 }
@@ -21219,6 +21530,7 @@ function renderSliderPanel(){
     var _z=displayRisk<33?"safe":displayRisk<66?"mid":"risky";var _sp=$("sliderPanel");if(_sp)_sp.setAttribute("data-zone",_z);
     _r.style.setProperty("--rz",_z==="safe"?"rgba(43,199,120,.35)":_z==="mid"?"rgba(242,184,75,.4)":"rgba(230,57,70,.4)");}})();
   $("riskName").textContent=firstVisit ? "-" : riskWord(BUILD.risk);
+  paintTicks(BUILD.risk);
   var _ss=$("sldStyleChips");
   if(_ss){
     _ss.innerHTML=SLIP_STYLES.map(function(st){
@@ -21286,6 +21598,40 @@ function renderWizardPanel(){
      the same limit. It moves with the board: the jackpot rungs appear
      whenever the pool in front of the reader can actually build them. */
   WSP._maxTarget=odds[odds.length-1];
+  /* REACHABLE BEFORE CONJURE, NOT AFTER. Reported (critique, 6 Oct): x100
+     picked, Conjure pressed, x15.55 handed back with the reason in small grey
+     type under the legs. The same probe as the jackpot gate, asked per rung:
+     a rung this pool cannot reach is drawn disabled and the line under the
+     row says how high it does go. Skipped in "every game that qualifies",
+     where the payout does not drive the slip. A chosen rung that just went
+     out of reach is dropped, the same as a jackpot rung above. */
+  function reachFor(o){ return wspMaxReach(isJackpotOdds(o)?1e12:JACKPOT_ODDS-1); }
+  function canReach(o){ return WSP.everyGame || reachFor(o)>=o*0.995; }
+  if(WSP.odds!=null && odds.indexOf(WSP.odds)>=0 && !canReach(WSP.odds)){
+    WSP.odds=null; WSP._sig=null; WSP._slip=null;
+  }
+  /* The ceiling under the first rung out of reach. Usually the only one; a
+     jackpot rung can still be live above it, because it is allowed more legs
+     (JACKPOT_LEG_CAP) - its own striped tier and note say what that costs. */
+  var _topReach=0;
+  odds.some(function(o){ if(canReach(o)) return false; _topReach=reachFor(o); return true; });
+  var _allOut=!WSP.everyGame && odds.every(function(o){ return !canReach(o); });
+  /* The line under the row. A ceiling of x1 means nothing could be built at
+     all, and "reach up to x1.00" read like a bug and named the wrong lever
+     when the window itself was empty - so that case says which it is. */
+  var _reachLine="";
+  if(_topReach>0 && _topReach<1.005){
+    var _inWin=scopeFixtures().filter(function(f){ return !(TOP_ONLY&&isLowerFixture(f)); }).length;
+    _reachLine=_inWin
+      ? "No game "+windowWords()+" clears the bar on the markets you have on. "+
+        "Switch on more markets and the payouts light up."
+      : "No games left "+windowWords()+". "+(SCOPE==="all"?"Widen the leagues":SCOPE==="day"?"Widen the day":"Try All upcoming")+
+        " and the payouts light up.";
+  } else if(_topReach>0){
+    _reachLine="Your games and markets reach up to <b>×"+
+      (_topReach>=100?Math.round(_topReach).toLocaleString("en"):_topReach.toFixed(2))+
+      "</b> "+windowWords()+". Switch on more markets to go bigger.";
+  }
   /* Named for what they change, not for a promise they cannot keep.
      "Safer, more games" was the reported-worst of the three and measurably
      the least likely to land: more legs is more results that have to come
@@ -21302,10 +21648,10 @@ function renderWizardPanel(){
          the middle - x100 and x500 - nearly vanished into the fill. The ink is
          chosen by contrast ratio against the actual colour, so every chip is
          readable whatever hue lands on it. */
-      var big=o>=JACKPOT_FROM;
+      var big=o>=JACKPOT_FROM, out=!canReach(o);
       return "<button class='wsp-chip wsp-risk"+(WSP.odds===o?" on":"")+(big?" wsp-jack":"")+
         "' style='--wr:hsl("+hue+",64%,46%);--wr-ink:"+inkOn(hue,0.64,0.46)+
-        "' data-o='"+o+"'>\u00d7"+(o>=1000?(o/1000)+"k":o)+"</button>";}).join("")+
+        "' data-o='"+o+"'"+(out?" disabled":"")+">\u00d7"+(o>=1000?(o/1000)+"k":o)+"</button>";}).join("")+
     /* The chips stay the way in: one tap, and the green-to-red hue says what
        kind of ask it is before you commit. The box is for someone who knows
        the number they want and it is not on the ladder - x250, x7500 - not a
@@ -21316,6 +21662,10 @@ function renderWizardPanel(){
       "autocomplete='off' maxlength='5' placeholder='own' "+
       "aria-label='Your own target payout, from 2 to 50000' value='"+
       ((WSP.odds&&odds.indexOf(WSP.odds)<0)?WSP.odds:"")+"'></span>"+
+    /* The ceiling, said once and only when a rung is out of reach, in the
+       same format as the slip header and the miss note. Inside the chip row (a
+       full-width flex line) so the desktop grid needs no new cell. */
+    (_reachLine ? "<p class='wsp-reach'>"+_reachLine+"</p>" : "")+
     "</div>"+
     /* Where a target the current window cannot reach explains itself. Empty
        the rest of the time, and it carries no margin when empty. */
@@ -21334,7 +21684,9 @@ function renderWizardPanel(){
   /* The slider tells a first-timer to move it; the wizard said nothing and
      simply had a payout chosen already. With nothing picked, say what to do
      and keep Conjure out of reach until there is something to aim at. */
-  if(WSP.odds==null)
+  /* Not when every rung is disabled: "pick one" over a row of dead chips
+     contradicts the line that says why they are dead. */
+  if(WSP.odds==null && !_allOut)
     html += "<p class='wsp-hint'>Pick a payout above - we'll find the games that reach it.</p>";
   /* Slip style trades legs against odds while reaching the same payout, and
      the Slider is one of the four answers rather than a mode that replaces the
@@ -21684,7 +22036,7 @@ function renderBuilderOutput(){
      not to keep dragging. */
   var _short = !firstVisit && picks.length < p.maxGames;
   $("riskSub").textContent=firstVisit ? "Move slider to build"
-    : (picks.length+" game"+(picks.length===1?"":"s")+" \u00b7 "+P0(p.minConf)+"%+ confidence"+
+    : (picks.length+" game"+(picks.length===1?"":"s")+" \u00b7 each pick "+P0(p.minConf)+"%+"+
        (_short ? " \u00b7 all that clear the bar in this window" : ""));
   // Stats
   var odds=totalOdds(picks);
@@ -21707,12 +22059,18 @@ function renderBuilderOutput(){
      grid follows the count so the row stays even. */
   var _jackSlip=isJackpotOdds(WSP.odds)&&BUILD.mode==="wizard";
   var _statsEl=$("bldStats");
-  _statsEl.classList.toggle("stats-2",_jackSlip);
+  /* THE TOTAL ONCE. In the Slider it already rides the thumb while dragging
+     and sits, gold, on the sticky foot (#bfOdds) - a third copy in this tile
+     row made four with the subtitle and had readers asking which was real.
+     The Wizard keeps its tile: the foot is hidden in wiz-mode and the tile is
+     the only place its pre-Conjure preview total shows. */
+  var _tileOdds=isWiz;
+  _statsEl.classList.toggle("stats-2",_jackSlip||!_tileOdds);
   _statsEl.innerHTML=
     "<div class='stat'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='4' y='7' width='16' height='13' rx='2'/><path d='M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/></svg></span><b>"+picks.length+"</b><i>Games</i></div>"+
     (_jackSlip?"":"<div class='stat'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z'/></svg></span><b>"+(picks.length?P0(avg)+"%":"-")+"</b><i>Average confidence</i></div>")+
-    "<div class='stat odds'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='8'/><path d='M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3H10a1.5 1.5 0 0 0 0 3h4'/></svg></span><b id='totOdds'>"+(picks.length?pre+odds.toFixed(2):"-")+"</b>"+
-      "<i>Total odds"+(picks.length&&!real?" (est.)":"")+"</i></div>";
+    (!_tileOdds?"":"<div class='stat odds'><span class='stat-ic'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='8'/><path d='M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3H10a1.5 1.5 0 0 0 0 3h4'/></svg></span><b id='totOdds'>"+(picks.length?pre+odds.toFixed(2):"-")+"</b>"+
+      "<i>Total odds"+(picks.length&&!real?" (est.)":"")+"</i></div>");
   var _bf=$("bfOdds");
   if(_bf) _bf.innerHTML=picks.length?"<b>"+pre+odds.toFixed(2)+"</b><i>"+
     picks.length+" game"+(picks.length===1?"":"s")+"</i>":"";
@@ -21727,6 +22085,7 @@ function renderBuilderOutput(){
     /* Name the day that came up empty rather than always saying "today" - with
        a day picked, the blank board might be tomorrow or Saturday. */
     var dryDay=SCOPE==="span"?("in the next "+SPAN+" days")
+      :SCOPE==="wknd"?"this weekend"
       :(SDAY===0?"today":(SDAY===1?"tomorrow":dayName(SDAY)));
     $("slip").innerHTML="<div class='bld-empty'><b>"+(isWiz?(WSP.conjured?"No slip yet":"Ready when you are")+"":"Nothing in your slip")+"</b>"+
       (isWiz?(WSP.conjured?("No games match your wizard settings - try a lower payout"+(leaguesChosen()?", widen the leagues":"")+" or enable more markets."):"Tap a target payout to preview your slip.")
@@ -21877,8 +22236,7 @@ $("risk").addEventListener("input",function(){
   var sp=$("sliderPanel"); if(sp){var prev=sp.getAttribute("data-zone");sp.setAttribute("data-zone",zone);
     if(prev&&prev!==zone&&navigator.vibrate)navigator.vibrate(8);}
   this.style.setProperty('--rz',zone==="safe"?"rgba(43,199,120,.35)":zone==="mid"?"rgba(242,184,75,.4)":"rgba(230,57,70,.4)");
-  var ti=$("risk").closest(".slider-panel").querySelector(".risk-ticks");
-  if(ti){var sp2=ti.querySelectorAll("span");sp2.forEach(function(s,i){s.classList.toggle("zone-live",(zone==="safe"&&i===0)||(zone==="mid"&&i===1)||(zone==="risky"&&i===2));});}
+  paintTicks(pct);
   BUILD.removed={}; $("bookResult").innerHTML="";
   /* Coalesced to one rebuild per frame. A range input fires `input` on every
      pixel of a drag, and this handler used to run renderBuilder synchronously
@@ -21932,17 +22290,18 @@ paintScope();
 (function(){
   var t=document.getElementById("filtersToggle"),b=document.getElementById("filtersBody");
   if(!t||!b) return;
-  /* OPEN, EVERYWHERE, UNTIL THE READER SAYS OTHERWISE.
-     It used to start closed under 560px, on the reasoning that the panel is
-     322px of a 390px screen and the defaults are already right for nearly
-     everybody. The counter-argument won: a first-time visitor who cannot see
-     the controls does not know the slip can be narrowed at all, and a panel
-     they have to discover is worth less than the scroll it costs. One tap
-     still shuts it, and a stored choice still wins on both sizes. */
-  var open=true;
+  /* SHUT ON A PHONE, OPEN ON A WIDE SCREEN, UNTIL THE READER SAYS OTHERWISE.
+     Open everywhere put the 22 market chips between a phone and the dial or
+     the payout chips: the slider sat at 1,087px on a 780px screen, so "give
+     me a slip" took two scrolls past settings whose defaults are right for
+     nearly everybody (critique, 6 Oct 2026). Shut, the bar still says what is
+     set - "All leagues · 4 markets" - so nobody is left not knowing the slip
+     can be narrowed, and one tap opens it. A stored choice wins on both
+     sizes. */
+  var open=!(window.matchMedia&&window.matchMedia("(max-width:560px)").matches);
   try{
     var pref=localStorage.getItem("sw.filters");
-    open=(pref===null) ? true : pref!=="0";
+    if(pref!==null) open=pref!=="0";
   }catch(e){}
   function apply(){ b.hidden=!open; t.setAttribute("aria-expanded",open?"true":"false"); }
   apply();
@@ -22036,9 +22395,13 @@ window.swSetTheme=function(t){ setTheme(t==="light"?"light":"dark"); };
 /* SWAVATAR */
 /* Lists match lib/roles.js. The role is display-only; the server checks. */
 window.swAvatarKey=function(){
-  var FREE=["fire","8bit","2bit","lino","glass","halo"], FF=["gold","holo","graffiti","lowpoly","clay"], OWNER=["storm","lich","afro"], v=null, r=null;
-  try{ v=localStorage.getItem("sw.avatar"); r=localStorage.getItem("sw.role"); }catch(e){}
-  var ok=r==="admin"?FREE.concat(FF,OWNER):r==="ff"?FREE.concat(FF):FREE;
+  var FREE=["fire","8bit","2bit","lino","glass","halo"], FF=["gold","holo","graffiti","lowpoly","clay",
+    "runes","noir","goldbeard","nebula","cyber","blaze","synth","abyss","alchemist","ink","magma","ent","nomad","wired"],
+    OWNER=["storm","lich","afro"], PERSONAL=["dread"], v=null, r=null, p=null;
+  try{ v=localStorage.getItem("sw.avatar"); r=localStorage.getItem("sw.role"); p=localStorage.getItem("sw.personal"); }catch(e){}
+  /* Any role but free has the skins; personal portraits only where /api/me granted them. */
+  var ok=(r==="admin"?FREE.concat(FF,OWNER):r&&r!=="free"?FREE.concat(FF):FREE).concat(
+    String(p||"").split(",").filter(function(k){ return PERSONAL.indexOf(k)>=0; }));
   return ok.indexOf(v)>=0?v:"fire";
 };
 /* /SWAVATAR */
@@ -22230,6 +22593,10 @@ async function load(){
     DATA=got.payload;
     holdTheDay();
     await loadSporty();
+    /* A new payload and its first prices: any Wizard ceiling probed before
+       this (a reload, or a tap while SportyBet was still loading) is stale.
+       See wspMaxReach. */
+    WSP_REACH={};
     loadBet9jaSoon();
     LOAD_RETRY=0;
     /* The first moment fixtureById can answer, so the first moment the saved
@@ -22243,6 +22610,7 @@ async function load(){
        pullServerResults. Only while a slip is still open. */
     try{ pullServerResults(); setInterval(pullServerResults, 5*60*1000); }catch(e){}
     hideLoader();
+    try{ addFromLink(); }catch(e){}
     /* THE FRESHNESS FETCH IS GONE, and this is the note for whoever wonders
        where it went. It called /api/predictions whenever the baked payload was
        over six hours old - which is most of the day - and repainted only if the
@@ -22298,8 +22666,12 @@ setTimeout(hideLoader,8000);
    offering you the thing you are already looking at. */
 (function(){
   var fab=document.getElementById("ctaFab");
-  var cta=document.querySelector(".slip-cta");
+  /* The whole rail, not just the offer card: the button stands in the rail's
+     column, so it may only appear once nothing of the rail is left there. */
+  var cta=document.querySelector(".home-rail");
   if(!fab||!cta||!("IntersectionObserver" in window)) return;
+  function line(){ var l=cta.getBoundingClientRect().left; if(l>0) fab.style.left=Math.round(l)+"px"; }
+  window.addEventListener("resize",line);
   function allowed(){
     var c=document.documentElement.classList;
     return !c.contains("mode-build") && !c.contains("mode-live");
@@ -22307,6 +22679,7 @@ setTimeout(hideLoader,8000);
   var out=false;
   function apply(){
     var show=out&&allowed();
+    if(show) line();
     fab.hidden=!show;
     /* Flipped on the next frame so the transition has a state to move from -
        set together with hidden it would simply appear. */
@@ -22856,7 +23229,7 @@ load().catch(function(){});
   "use strict";
   var KEYS={slips:"sw.slips.v1",myslip:"sw.myslip",livefav:"sw.livefav",leaguefav:"formline.favs.v1"};
   var PREFS={book:"sw.book",mk:"sw.mk",risk:"sw.risk",mode:"sw.mode",wspodds:"sw.wspodds",
-    bldleagues:"sw.bldleagues",toponly:"sw.toponly",scope:"sw.scope",legodd:"sw.legodd",
+    bldpick:"sw.bldpick",volin:"sw.volin",toponly:"sw.toponly",scope:"sw.scope",legodd:"sw.legodd",
     avatar:"sw.avatar",name:"sw.name",theme:"sw.theme"};
   var META="sw.sync.meta", SLIPS_KEEP=60;
 
@@ -22991,7 +23364,8 @@ load().catch(function(){});
 
   /* Plan from GET /api/me, for the menu and the avatar picker. Display only. */
   function saveRole(me){
-    var v={"sw.role":me&&me.role,"sw.plan":me&&me.plan,"sw.codeLimit":me&&me.codeLimit};
+    var v={"sw.role":me&&me.role,"sw.plan":me&&me.plan,"sw.codeLimit":me&&me.codeLimit,
+      "sw.personal":me&&me.personal&&me.personal.length?me.personal.join(","):null};
     for(var k in v) if(own(v,k)) try{ if(v[k]==null) ls.removeItem(k); else ls.setItem(k,String(v[k])); }catch(e){}
   }
   function signedOutHere(reason,quiet){

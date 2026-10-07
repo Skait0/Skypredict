@@ -40,7 +40,8 @@ test("the same tie on another date is a different page", () => {
 
 test("an upcoming match leads with the tip and its confidence", () => {
   const html = P.renderMatchPage(fixture(), null);
-  assert.match(html, /1X, home or draw/);
+  /* In words, with the code kept for anyone who books by it (7 Oct 2026). */
+  assert.match(html, /RAAL La Louviere or draw \(1X\)/);
   assert.match(html, /70% confidence/);
   assert.match(html, /<h1>RAAL La Louviere vs Mechelen prediction<\/h1>/);
 });

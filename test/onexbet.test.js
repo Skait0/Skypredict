@@ -93,7 +93,7 @@ test("the converter, the bot and the daily code know the fifth book", () => {
   const fs = require("node:fs");
   const read = (p) => fs.readFileSync(require("node:path").join(__dirname, "..", p), "utf8");
   assert.match(read("lib/convert.js"), /onexbet: "\/api\/onexbet"/);
-  assert.match(read("lib/doctor.js"), /onexbet: "1xBet"/);
+  assert.strictEqual(require("../lib/doctor.js").BOOK_NAMES.onexbet, "1xBet");
   assert.match(read("lib/bigodds.js"), /\["onexbet", "1xBet"\]/);
   assert.match(read("scripts/mkcode.js"), /codes\.onexbet = /);
   assert.match(read("scripts/namesaudit.js"), /onexbet: "\/api\/onexbet"/);

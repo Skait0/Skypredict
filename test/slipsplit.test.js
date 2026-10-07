@@ -106,3 +106,18 @@ test("the legs keep their order within a ticket", () => {
     assert.deepEqual(idx, [...idx].sort((a, b) => a - b));
   }
 });
+
+/* THE PRICE RANGE ON A WAY TO SPLIT, as it is printed. It collapsed the range
+   only when hi-lo <= 0.05 but printed one decimal, so tickets at x1.66 and
+   x1.74 read "about x1.7-1.7 each". The printed strings decide now. */
+test("a split whose tickets round to the same price says one price", () => {
+  const box = new Function(grab("splitWays") + grab("splitPicks") + grab("splitBoxInner") +
+    "\nreturn splitBoxInner;")();
+  const price = (vals) => (part) => vals[Number(part[0].id.slice(1)) % vals.length];
+  const legsN = Array.from({ length: 4 }, (_, i) => ({ id: "g" + i }));
+  const same = box(legsN, price([1.66, 1.74]));
+  assert.ok(!/x1\.7-1\.7/.test(same), "printed a range of one price: " + same);
+  assert.match(same, /about x1\.7 each/);
+  const apart = box(legsN, price([1.6, 1.9]));
+  assert.match(apart, /about x1\.6-1\.9 each/, "a real range still shows both ends");
+});

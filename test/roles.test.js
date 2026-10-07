@@ -22,11 +22,29 @@ test("db throw or no env -> free, never throws", async () => {
   assert.strictEqual(await R.roleOf(db(null), null, {}), "free");
 });
 test("avatarsFor sizes and ff excludes owner skins", () => {
-  assert.strictEqual(R.avatarsFor("admin").length, 14);
-  assert.strictEqual(R.avatarsFor("ff").length, 11);
+  assert.strictEqual(R.avatarsFor("admin").length, 28);
+  assert.strictEqual(R.avatarsFor("ff").length, 25);
   assert.strictEqual(R.avatarsFor("free").length, 6);
+  assert.deepStrictEqual(R.OWNER_AVATARS.slice().sort(), ["afro", "lich", "storm"]);
+  for (const r of ["free", "ff", "admin"]) for (const k of R.PERSONAL_AVATARS) assert.ok(!R.avatarsFor(r).includes(k), r + " " + k);
   for (const a of ["afro", "storm", "lich"]) assert.ok(!R.avatarsFor("ff").includes(a));
   for (const a of R.avatarsFor("free")) assert.ok(R.avatarsFor("ff").includes(a));
+});
+test("any role but free has the skins, so a future paid role needs no change", () => {
+  assert.deepStrictEqual(R.avatarsFor("pro"), R.avatarsFor("ff"));
+  for (const a of ["afro", "storm", "lich", "dread"]) assert.ok(!R.avatarsFor("pro").includes(a), a);
+  for (const r of [null, undefined, "", "free"]) assert.deepStrictEqual(R.avatarsFor(r), R.avatarsFor("free"));
+  for (const k of ["runes", "noir", "goldbeard", "nebula", "cyber", "blaze", "synth", "abyss", "alchemist", "ink", "magma", "ent", "nomad", "wired"]) {
+    assert.ok(!R.avatarsFor("free").includes(k) && R.avatarsFor("ff").includes(k) && R.avatarsFor("admin").includes(k), k);
+  }
+});
+test("personalAvatars: only the listed email, only personal keys, case and space insensitive", () => {
+  const env = { SW_PERSONAL_AVATARS: " DREAD : Pal@Example.com , storm:pal@example.com, dread:other@example.com" };
+  assert.deepStrictEqual(R.personalAvatars(" pal@EXAMPLE.com", env), ["dread"]);
+  assert.deepStrictEqual(R.personalAvatars("other@example.com", env), ["dread"]);
+  assert.deepStrictEqual(R.personalAvatars("boss@x.com", env), []);
+  assert.deepStrictEqual(R.personalAvatars("pal@example.com", {}), []);
+  assert.deepStrictEqual(R.personalAvatars("", env), []);
 });
 test("codeLimitFor and planLabel", () => {
   assert.strictEqual(R.codeLimitFor("admin"), Infinity);

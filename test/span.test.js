@@ -77,7 +77,8 @@ test("the span's count is the filtered day count, summed", () => {
      applies all three, and a count that skips one starts lying about what a tap
      hands you. */
   const fn = new Function("SDAY", "SPAN", "DAYS",
-    "function buildableOn(o){return DAYS[o]||[];}" + grab("buildableSpan") +
+    "var SCOPE='span';" +
+    "function buildableOn(o){return DAYS[o]||[];}" + grab("buildableSpan") + grab("buildableRange") +
     "\nreturn buildableSpan;");
   const days = { 0: ["a", "b"], 1: ["c"], 2: [], 3: ["d"] };
   assert.deepStrictEqual(fn(0, 3, days)(), ["a", "b", "c"]);
@@ -87,7 +88,7 @@ test("the span's count is the filtered day count, summed", () => {
 });
 
 test("the pill counts the span when it is showing one", () => {
-  assert.match(grab("paintScope"), /SCOPE==="span"\?buildableSpan\(\)\.length/,
+  assert.match(grab("paintScope"), /\(SCOPE==="span"\|\|SCOPE==="wknd"\)\?buildableSpan\(\)\.length/,
     "the pill would show one day's count over a several-day window");
 });
 
