@@ -146,9 +146,10 @@ test("an empty list is not treated as 'drop everything'", () => {
 
 test("both retries ask the server, not our stale copy", () => {
   const calls = src.match(/safe\s*=\s*dropUnbookable\(/g) || [];
-  /* Three since 24 Sep: doBook, doBookMy, and bookRounds - which the converter
+  /* Two since 8 Oct, when the builder's own doBook went (builders now hand
+     their picks to My slip): doBookMy, and bookRounds - which the converter
      and the board's Book all go through. */
-  assert.strictEqual(calls.length, 3,
+  assert.strictEqual(calls.length, 2,
     "every refusal path must use it");
   assert.doesNotMatch(src, /safe\s*=\s*picks\.filter\(/,
     "the board's dead local filter should be gone");
@@ -189,15 +190,6 @@ test("a refused leg is dropped only after the reader agrees", () => {
     "and the open sheet redrawn, or the screen keeps showing the dropped leg");
 });
 
-test("the board's refusal asks too, rather than quietly re-sending", () => {
-  const i = src.indexOf("var safe=dropUnbookable(picks,d,B);", src.indexOf("function doBook("));
-  assert.ok(i > 0, "the board's refusal branch not found");
-  const branch = src.slice(i, i + 1400);
-  assert.match(branch, /confirmAfterRefusal\("bookResult"/);
-  assert.doesNotMatch(branch, /Retrying without unavailable markets/,
-    "that note was the sound of a decision being taken for somebody");
-});
-
 test("the question names the games, and offers a way out", () => {
   const fn = src.slice(src.indexOf("function confirmAfterRefusal"),
                        src.indexOf("function confirmDropUnpriced"));
@@ -218,7 +210,7 @@ test("the retry does not wipe the note explaining itself", () => {
   /* Scoped to the ENTRY-time clear in each booking function. The clears in the
      confirm-cancel handlers are a different thing and should stay unguarded -
      dismissing a prompt ought to empty the panel. */
-  [["doBook", "bookResult"], ["doBookMy", "myBookResult"]].forEach(([fn, panel]) => {
+  [["doBookMy", "myBookResult"]].forEach(([fn, panel]) => {
     const body = grab(fn);
     const i = body.indexOf(`$("${panel}").innerHTML="";`);
     assert.ok(i > 0, `${fn} has no entry-time clear of ${panel}`);

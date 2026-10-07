@@ -10,8 +10,10 @@
  * booking functions narrowed exactly once (`!retried`), so the second answer,
  * which the server can now name, had nowhere to go.
  *
- * These run the real doBook and dropUnbookable against a scripted bookmaker,
- * so they test the path a reader takes, not strings in the source.
+ * These run the real doBookMy and dropUnbookable against a scripted bookmaker,
+ * so they test the path a reader takes, not strings in the source. (They ran
+ * the builder's doBook until 8 Oct 2026, when builders began handing their
+ * picks to My slip and doBook went.)
  */
 
 const test = require("node:test");
@@ -39,22 +41,28 @@ function harness(answer) {
   let finish;
   const done = new Promise((r) => { finish = r; });
   const stubs = {
-    $, BUILD: {}, renderBuilder() {}, totalOdds: () => 2, rememberSlip() {},
+    $, saveMy() {}, renderFab() {}, renderMySheet() {}, resetMyBookBtn() {}, rememberSlip() {},
+    legOdd: () => 1.3,
     bookFetch(sel) { log.sent.push(sel.map((s) => s.eventId)); return Promise.resolve(answer(sel)); },
     showCode(code) { log.code = code; finish(); },
     bookErrHTML(d) { log.error = (d && d.detail) || "error"; finish(); return "err"; },
-    showBookErr() {}, wspTakeSwaps() {},
+    showBookErr() {},
     confirmAfterRefusal(target, names, keep, B, go) {
       log.prompts.push(names.slice()); setImmediate(() => go([]));           // the reader taps "Book the other"
     },
   };
   const names = Object.keys(stubs);
   const body =
-    "function fixtureById(){return null;}\n" + BOOKS.prelude("sporty") +
-    "\nvar REFUSAL_ROUNDS=" + ROUNDS + ";\n" + WHY() + fn("dropUnbookable") + "\n" + fn("doBook") +
-    "\nreturn doBook;";
-  const doBook = new Function(...names, body)(...names.map((k) => stubs[k]));
-  return { doBook, log, done };
+    "var PICKS=arguments[arguments.length-1];" +
+    "function fixtureById(id){for(var i=0;i<PICKS.length;i++)if(PICKS[i].id===id)return PICKS[i].f;return null;}\n" +
+    BOOKS.prelude("sporty") +
+    "\nvar REFUSAL_ROUNDS=" + ROUNDS + ";var MYBOOK_GEN=0;" +
+    "var MYSLIP=PICKS.map(function(c){return {id:c.id,code:c.code,via:'slider'};});\n" +
+    WHY() + fn("dropUnbookable") + "\n" + fn("doBookMy") + "\nreturn doBookMy;";
+  /* My slip's legs are built from the picks, so the slip is made at the call. */
+  const book = (picks) =>
+    new Function(...names, body)(...names.map((k) => stubs[k]), picks)(picks);
+  return { book, log, done };
 }
 
 /* Leg i on event "e<i>". `real` false means our copy of SportyBet's card has
@@ -81,7 +89,7 @@ test("the 24 Sep slip: a nameless refusal, then a named one, then a code", async
     return refuse({ unbookable: ids.filter((e) => dead.has(e))
       .map((e) => ({ eventId: e, prediction: "1X", reason: "refused_alone" })) });
   });
-  h.doBook(picks);
+  h.book(picks);
   await h.done;
   assert.strictEqual(h.log.error, null, "it must not end on the raw refusal");
   assert.strictEqual(h.log.code, "GOOD1");
@@ -98,7 +106,7 @@ test("every round drops at least one leg, and the rounds are bounded", async () 
   for (let i = 0; i < 12; i++) picks.push(leg(i, true));
   const h = harness((sel) => refuse({ unbookable: [
     { eventId: sel[0].eventId, prediction: "1X", reason: "refused_alone" }] }));
-  h.doBook(picks);
+  h.book(picks);
   await h.done;
   assert.ok(h.log.error, "ends on an error");
   assert.strictEqual(h.log.prompts.length, ROUNDS);
@@ -109,7 +117,7 @@ test("every round drops at least one leg, and the rounds are bounded", async () 
 test("a refusal that cannot be narrowed ends at once", async () => {
   const picks = [leg(0, true), leg(1, true)];
   const h = harness(() => refuse());                             // names nothing, all legs real
-  h.doBook(picks);
+  h.book(picks);
   await h.done;
   assert.ok(h.log.error);
   assert.strictEqual(h.log.prompts.length, 0, "nothing to offer, so nothing is asked");

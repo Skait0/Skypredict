@@ -255,8 +255,9 @@ test("the add-all path uses the same constant, not its own copy", () => {
 });
 
 test("both booking paths are guarded, so neither is the way round", () => {
-  /* bookSlip sends the BUILDER's picks, which the leg cap already bounds;
-     bookMy sends the reader's own slip, which nothing bounds. If the builder
+  /* The builder's picks, which the leg cap already bounds, now reach a
+     bookmaker through My slip; bookMy sends the reader's own slip, which
+     nothing else bounds. If the builder
      cap is ever removed this test is the thing that should start failing. */
   const build = /cap=isJackpotOdds\(T\)\?JACKPOT_LEG_CAP:(\d+)/.exec(src);
   assert.ok(build, "the builder must still cap its own leg count");

@@ -12022,7 +12022,7 @@ function gateDetail(picks,B){
   });
   return n?{rows:rows,odds:tot.toFixed(2),legs:n,book:(B&&B.label)||""}:null;
 }
-window.swResume={bookSlip:function(){bookSlip();},bookMy:function(){bookMy();},build:function(){setView("build");},slips:function(){openSlipsSheet("all");}};
+window.swResume={bookMy:function(){bookMy();},build:function(){setView("build");},slips:function(){openSlipsSheet("all");}};
 window.swSetBook=function(k){setBook(k);};window.swBookKey=function(){return BOOKMAKER;};window.swBookMarks=function(){var o={};Object.keys(BOOKS).forEach(function(k){o[k]=BOOKS[k].mark||BOOKS[k].label;});return o;};
 function setBook(k){
   if(!BOOKS[k]||k===BOOKMAKER) return;
@@ -13921,85 +13921,6 @@ function totalOdds(picks){
     var o=legOdd(c.f,c.code,c.p);
     return (o&&isFinite(o)&&o>1)?t*o:t;},1);
 }
-async function bookSlip(){
-  if(window.swGate&&!swGate("book",gateDetail(BUILD.picks,curBook()),bookSlip,"bookSlip")) return;
-  var B=curBook();
-  var picks = BUILD.picks;
-  /* A LEG THIS BOOKMAKER CANNOT TAKE STOPS THE WHOLE TICKET, so it is caught
-     here rather than by the bookmaker. One refused selection refuses the slip
-     behind it, and the reply that comes back names a market rather than a
-     reason anybody can act on. The slider will not pick these - see
-     bookAllows - so this is for a slip built before the book was switched, or
-     one a reader assembled by hand. Offered as a switch rather than a
-     refusal: the leg is perfectly bookable, just not here. */
-  var wrongBook=picks.filter(function(c){return !bookAllows(c.code,B);});
-  if(wrongBook.length){
-    /* ONE BUTTON PER BOOK THAT SELLS IT, rather than a favourite picked off
-       the front of the list. Two books sell the 1.5 rung and choosing between
-       them for the reader would move their whole slip to a bookmaker they may
-       not hold an account with, on a tap that said only "Use". */
-    var need=(BOOK_ONLY[wrongBook[0].code]||["bet9ja"]).filter(function(k){return !!BOOKS[k];});
-    if(!need.length) need=["bet9ja"];
-    $("bookResult").innerHTML="<div class='confirm-card'><p><b>"+
-      wrongBook.length+" leg"+(wrongBook.length===1?"":"s")+"</b> on this slip "+
-      (wrongBook.length===1?"is":"are")+" sold by "+bookNames(need)+" and not by "+
-      B.label+". Book the whole slip at "+bookNames(need)+" instead?</p>"+
-      "<div class='ca'>"+need.map(function(k){
-        return "<button class='confirm-go' type='button' data-use='"+esc(k)+"'>Use "+
-          esc(BOOKS[k].label)+"</button>";}).join("")+
-      "<button class='confirm-cancel' type='button'>Cancel</button></div></div>";
-    $("bookResult").querySelectorAll(".confirm-go").forEach(function(btn){
-      btn.addEventListener("click",function(){
-        setBook(btn.dataset.use);
-        $("bookResult").innerHTML="";
-        bookSlip();
-      });
-    });
-    promptEl("bookResult").querySelector(".confirm-cancel").addEventListener("click",function(){
-      $("bookResult").innerHTML="";
-    });
-    return;
-  }
-  var has=function(c){return !!bookIdOf(c,B);};
-  var bookable=picks.filter(has);
-  var missing=picks.filter(function(c){return !has(c);});
-
-  /* If some picks have no id for this book, try to match them first before
-     giving up. Only SportyBet is worth awaiting - Bet9ja loads once at boot
-     and a game it does not carry will not appear by asking again. */
-  if(missing.length > 0 && B.key==="sporty"){
-    $("bookResult").innerHTML="<div class='code-info'>Matching "+B.mark+" events...</div>";
-    await loadSporty();
-    /* Re-evaluate after matching */
-    picks = BUILD.picks;  // refresh in case DATA.fixtures updated
-    bookable = picks.filter(has);
-    missing = picks.filter(function(c){return !has(c);});
-  }
-
-  if(!bookable.length){
-    $("bookResult").innerHTML="<div class='code-err'>None of these games are on "+
-      B.mark+" right now, so a code can't be created. Try lowering the risk, or "+
-      "check back nearer kickoff.</div>";
-    return;
-  }
-  if(missing.length){
-    /* Said once, short. It was "1 game isn't available on Bet9ja yet. Book
-       the other 2 without it?" - two sentences and a trailing clause to carry
-       one fact and one question. */
-    showPrompt("bookResult","<div class='confirm-card'><p>"+B.mark+" doesn't have "+
-      missing.length+" of these games.</p>"+
-      "<div class='ca'><button class='confirm-go' type='button'>Book the other "+
-      (bookable.length===1?"one":bookable.length)+"</button>"+
-      "<button class='confirm-cancel' type='button'>Cancel</button></div></div>");
-    promptEl("bookResult").querySelector(".confirm-go").addEventListener("click",function(){
-      clearPrompt("bookResult");
-      if(!confirmDropUnpriced(bookable,"bookResult",doBook,B)) doBook(bookable);});
-    promptEl("bookResult").querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt("bookResult");});
-    return;
-  }
-  if(confirmDropUnpriced(bookable,"bookResult",doBook,B)) return;
-  doBook(bookable);
-}
 /* Does SportyBet actually price this exact pick?
    Having an eventId only says the MATCH is listed. A slip dies on the market:
    we price every fixture for every market we model, SportyBet does not carry
@@ -14332,57 +14253,6 @@ function bookRounds(picks,B,src,target,h,round){
       h.fail(d);
     })
     .catch(function(){ h.idle(); h.fail({_kind:"net"}); });
-}
-/* A swap taken in the refusal pop-up replaces the refused leg in the
-   wizard's cached slip too, or the list on screen goes on showing the market
-   the book turned down under a code that holds the other one. */
-function wspTakeSwaps(sw){
-  if(!sw||!sw.length||!WSP._slip) return;
-  var by={}; sw.forEach(function(a){ by[a.id]=a; });
-  WSP._slip.forEach(function(c){ var a=by[c.id]; if(a){ c.code=a.code; c.p=a.p; } });
-}
-function doBook(picks,retried,B){
-  B=B||curBook();
-  var sel=picks.map(function(c){return B.sel(c);});
-  if(!sel.length) return;
-  if(!retried&&lineCheck(picks,B,"bookResult",function(p){doBook(p,0,B);})) return;
-  BUILD.booking=true; renderBuilder();
-  /* Not on a retry: the caller has just written which pick it dropped and
-     why, and clearing here wiped that within the same tick - so the note
-     never reached the screen and the recovery looked like a stall. */
-  if(!retried) $("bookResult").innerHTML="";
-  bookFetch(sel,B,"builder")
-    .then(function(d){
-      BUILD.booking=false; renderBuilder();
-      var code=B.codeOf(d);
-      if(d&&d.success&&code){
-        showCode(code,"bookResult",function(){
-          rememberSlip(picks,totalOdds(picks),code,B&&B.key);},B,picks,d);
-      } else {
-        /* SportyBet can reject individual markets ("no market") when our pick
-           used an estimated odd for a market it doesn't list. Retry once with
-           only the legs carrying real SportyBet odds - those are verified to
-           exist. Toggling slider/wizard used to be the manual workaround. */
-        var rejected=!d||!d.success;
-        var safe=dropUnbookable(picks,d,B);
-        if(rejected&&(retried||0)<REFUSAL_ROUNDS&&safe.length>=1&&safe.length<picks.length){
-          var _kept={}; safe.forEach(function(c){_kept[c.id+"|"+c.code]=1;});
-          var _gone=picks.filter(function(c){return !_kept[c.id+"|"+c.code];});
-          var _out=_gone.map(function(c){var f=c.f||fixtureById(c.id);
-              return (f?(f.home+" v "+f.away):"One pick")+whyOf(c);});
-          confirmAfterRefusal("bookResult",_out,safe.length,B,function(swapIn){
-            wspTakeSwaps(swapIn);
-            doBook(safe.concat(swapIn),(retried||0)+1,B);},_gone);
-        } else {
-          showBookErr("bookResult",bookErrHTML(d,B));
-        }
-      }
-    })
-    .catch(function(){
-      BUILD.booking=false; renderBuilder();
-      showBookErr("bookResult","<div class='code-err'>Couldn't reach the booking "+
-        "service. Check your connection and try again.</div>");
-    });
 }
 /* The state half of Clear, without the repaint. Both Clear buttons run this -
    the trash in the builder foot and the one in the My slip sheet - because
@@ -19366,10 +19236,39 @@ async function bookMy(){
   var has=function(c){return !!bookIdOf(c,B);};
   var picks=MYSLIP.map(function(x){var f=fixtureById(x.id);
     return {id:x.id,f:f,code:x.code,p:x.p,eventId:(f&&f.eventId)||null};});
+  /* A LEG THIS BOOKMAKER CANNOT TAKE STOPS THE WHOLE TICKET, and the reply
+     names a market rather than a reason anybody can act on. The builders
+     will not pick these (see bookAllows), but their picks land here and the
+     reader can switch book after. Offered as a switch, one button per book
+     that sells it: the leg is bookable, just not here. Lived in the builder's
+     bookSlip until 8 Oct 2026, when builders began handing picks to My slip. */
+  var wrongBook=picks.filter(function(c){return !bookAllows(c.code,B);});
+  if(wrongBook.length){
+    var need=(BOOK_ONLY[wrongBook[0].code]||["bet9ja"]).filter(function(k){return !!BOOKS[k];});
+    if(!need.length) need=["bet9ja"];
+    showPrompt("myBookResult","<div class='confirm-card'><p><b>"+
+      wrongBook.length+" leg"+(wrongBook.length===1?"":"s")+"</b> on this slip "+
+      (wrongBook.length===1?"is":"are")+" sold by "+bookNames(need)+" and not by "+
+      B.label+". Book the whole slip at "+bookNames(need)+" instead?</p>"+
+      "<div class='ca'>"+need.map(function(k){
+        return "<button class='confirm-go' type='button' data-use='"+esc(k)+"'>Use "+
+          esc(BOOKS[k].label)+"</button>";}).join("")+
+      "<button class='confirm-cancel' type='button'>Cancel</button></div></div>");
+    promptEl("myBookResult").querySelectorAll(".confirm-go").forEach(function(btn){
+      btn.addEventListener("click",function(){
+        clearPrompt("myBookResult");
+        setBook(btn.dataset.use); paintBookPickers();
+        bookMy();
+      });
+    });
+    promptEl("myBookResult").querySelector(".confirm-cancel").addEventListener("click",function(){clearPrompt("myBookResult");});
+    return;
+  }
   var bookable=picks.filter(has);
   var missing=picks.filter(function(c){return !has(c);});
 
-  /* Only SportyBet is worth awaiting - see bookSlip. */
+  /* Only SportyBet is worth awaiting - Bet9ja loads once at boot and a game
+     it does not carry will not appear by asking again. */
   if(missing.length > 0 && B.key==="sporty"){
     $("myBookResult").innerHTML="<div class='code-info'>Matching "+B.mark+" events…</div>";
     await loadSporty();

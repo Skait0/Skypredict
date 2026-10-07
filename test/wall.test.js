@@ -8,7 +8,6 @@ const block = /<script id="swAccount">([\s\S]*?)<\/script>/.exec(html)[1];
 const fnBody = (name) => { const m = new RegExp("(?:async )?function " + name + "\\([^)]*\\)\\{([\\s\\S]{0,600})").exec(html); assert.ok(m, name); return m[1]; };
 
 test("each locked entry point asks swGate first", () => {
-  assert.match(fnBody("bookSlip"), /^\s*if\(window\.swGate&&!swGate\("book",gateDetail\(BUILD\.picks,curBook\(\)\),bookSlip,"bookSlip"\)\) return;/);
   assert.match(fnBody("bookMy"), /^\s*if\(window\.swGate&&!swGate\("book",/);
   assert.match(fnBody("splitAndBook"), /^\s*if\(window\.swGate&&!swGate\("book",/);
   assert.match(fnBody("openSlipsSheet"), /^\s*if\(window\.swGate&&!swGate\("slips",null,function\(\)\{openSlipsSheet\(filter\);\},"slips"\)\) return;/);
@@ -55,7 +54,7 @@ test("a Google redirect comes back into the spell and resumes only a whitelisted
   assert.match(block, /signedin=1/);
   assert.match(block, /sessionStorage/);
   assert.match(block, /root\.swResume&&root\.swResume\[g\.resume\]/);
-  assert.match(html, /window\.swResume=\{bookSlip:function\(\)\{bookSlip\(\);\},bookMy:function\(\)\{bookMy\(\);\},build:function\(\)\{setView\("build"\);\},slips:function\(\)\{openSlipsSheet\("all"\);\}\};/);
+  assert.match(html, /window\.swResume=\{bookMy:function\(\)\{bookMy\(\);\},build:function\(\)\{setView\("build"\);\},slips:function\(\)\{openSlipsSheet\("all"\);\}\};/);
 });
 
 test("every way into Build passes the wall: setView gates the build view itself", () => {

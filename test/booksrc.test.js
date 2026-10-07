@@ -41,12 +41,14 @@ test("every booking call site says where it came from", () => {
   const derived = calls.filter((c) => /_via\|\|"myslip"\)/.test(c));
   /* Seven since 24 Sep 2026: Make it safer books from the code modal itself
      now, as "safer", apart from the converter's "editor" it used to hand to.
-     Nine since 28 Sep: the converter's Trim to odds and Change markets. */
-  assert.equal(labelled.length + derived.length, 9,
-    "expected nine attributed call sites, found " + (labelled.length + derived.length) +
+     Nine since 28 Sep: the converter's Trim to odds and Change markets.
+     Eight since 8 Oct: the builder's own "builder" booking went - builders
+     hand their picks to My slip, which books them under the legs' labels. */
+  assert.equal(labelled.length + derived.length, 8,
+    "expected eight attributed call sites, found " + (labelled.length + derived.length) +
     ": " + calls.join(" | "));
   assert.equal(derived.length, 1, "only My slip derives its label");
-  ["builder", "split", "convert", "editor", "board", "safer", "trim", "change"].forEach((s) => {
+  ["split", "convert", "editor", "board", "safer", "trim", "change"].forEach((s) => {
     assert.ok(labelled.some((c) => c.includes('"' + s + '"')), s + " is not labelled anywhere");
   });
   /* And the three writers that fill My slip must stamp what they are, or the

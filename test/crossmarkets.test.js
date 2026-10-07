@@ -167,6 +167,44 @@ test("the slider asks the question before it picks, and booking asks again", () 
     "the switch offer is back to a single hard-coded book");
 });
 
+test("My slip offers the switch, and a tap books the whole slip there", async () => {
+  /* Since 8 Oct 2026 every builder slip is booked from My slip, and the
+     reader can change book after building it. Runs the real bookMy: a leg only
+     Bet9ja and BetKing sell, on SportyBet, must raise the switch rather than
+     send a ticket SportyBet will refuse whole. */
+  const B = require("./books.js");
+  const log = { asks: [], set: [], booked: null, btns: {} };
+  const stubs = {
+    window: {}, $: () => ({ innerHTML: "", classList: { contains() { return false; } } }),
+    fixtureById: (id) => ({ id, eventId: "s" + id, b9EventId: "n" + id, bkEventId: "k" + id }), notStarted: () => true,
+    loadSporty: async () => {}, renderMySheet() {}, paintBookPickers() {}, esc: String,
+    confirmDropUnpriced: () => false, capWaysHTML: () => "", wireSplit() {},
+    doBookMy(p) { log.booked = p.map((c) => c.code); },
+  };
+  const names = Object.keys(stubs);
+  const body = B.prelude("sporty") +
+    "var BETSLIP_MAX=50;var MYSLIP=[{id:'a',code:'MIX_X_OV_1.5'},{id:'b',code:'1X'}];\n" +
+    B.decl("BOOK_ONLY") + "\n" + B.fn("bookAllows") + "\n" + B.fn("bookNames") + "\n" +
+    "function setBook(k){ BOOKMAKER=k; LOG.set.push(k); }\n" +
+    "function showPrompt(t,h){ LOG.asks.push(h); }\nfunction clearPrompt(){}\n" +
+    "function promptEl(){ return { querySelector(){ return { addEventListener(){} }; }," +
+    " querySelectorAll(){ var h=LOG.asks[LOG.asks.length-1], out=[], re=/data-use='([a-z0-9]+)'/g, m;" +
+    " while((m=re.exec(h))) (function(k){ out.push({ dataset:{use:k}, addEventListener(e,f){ LOG.btns[k]=f; } }); })(m[1]);" +
+    " return out; } }; }\n" +
+    B.src.slice(B.src.indexOf("async function bookMy("), B.src.indexOf("\nfunction doBookMy(")) +
+    "\nreturn bookMy;";
+  const bookMy = new Function(...names, "LOG", body)(...names.map((k) => stubs[k]), log);
+  await bookMy();
+  assert.strictEqual(log.asks.length, 1, "it must ask before sending");
+  assert.match(log.asks[0], /sold by Bet9ja or BetKing and not by SportyBet/);
+  assert.deepStrictEqual(Object.keys(log.btns).sort(), ["bet9ja", "betking"], "one button per book that sells it");
+  assert.strictEqual(log.booked, null, "nothing is sent before the reader picks");
+  log.btns.betking();
+  await new Promise((r) => setImmediate(r));
+  assert.deepStrictEqual(log.set, ["betking"]);
+  assert.deepStrictEqual(log.booked, ["MIX_X_OV_1.5", "1X"], "the whole slip books at the book they chose");
+});
+
 /* ------------------------------------------------------- win either half */
 
 test("win either half is priced from two halves, not from the full-time matrix", () => {
