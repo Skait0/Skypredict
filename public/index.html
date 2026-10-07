@@ -18857,8 +18857,13 @@ function addFromLink(){
       window.swToast&&window.swToast("That one has kicked off. Plenty more on the board!","info","addlink"); return; }
     if(!MYSLIP.some(function(x){return x.id===id;})){
       toggleMy(id,code,plainTip(f),f.tip_p.toFixed(3),null);
-      MYSLIP[MYSLIP.length-1].via="match"; saveMy();
+      MYSLIP.forEach(function(x){ if(x.id===id&&x.code===code) x.via="match"; }); saveMy();
     }
+    /* A later day's game: step the board to its day, the same state the day
+       arrows set, so the card behind the slip is the one just added. Not
+       setDay - that is the builder's stored window (sw.sday), not the board. */
+    var off=dayOff(fDay(f));
+    if(V.off!==off){ V.off=off; V.dayPicked=true; V.country=""; V.league=""; render(); }
     openMySheet();
   })();
 }

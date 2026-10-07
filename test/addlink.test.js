@@ -26,7 +26,7 @@ function grab(name) {
 const FNS = ["fid", "fixtureById", "tipCode", "plainTip", "isUpcoming", "notStarted",
   "kickoffOf", "myslipHas", "toggleMy", "addFromLink"];
 
-const soon = new Date(Date.now() + 3 * 3600e3).toISOString();
+const soon = new Date(Date.now() + 2 * 864e5).toISOString();
 const gone = new Date(Date.now() - 3600e3).toISOString();
 const FX = [
   { date: soon.slice(0, 10), kickoff: soon, home: "Arsenal", away: "Leeds", tip: "1X, home or draw", tip_p: 0.81, eventId: "sr:1" },
@@ -46,7 +46,8 @@ function app(search, opts) {
     URLSearchParams,
     $: () => null, saveMy() { ctx.saves++; }, renderFab() {}, syncAddBtn() {}, flyToSlip() {},
     openMySheet() { ctx.opened++; }, loadSporty() {}, repaintAfterMatch() {},
-    dayOff: () => 0, fDay: () => 0,
+    fDay: (f) => f.date, dayOff: (d) => Math.round((Date.parse(d) - Date.parse(new Date().toISOString().slice(0, 10))) / 864e5),
+    V: { off: opts.off || 0, dayPicked: false, country: "x", league: "y" }, renders: 0, render() { ctx.renders++; },
   };
   ctx.window = { swToast: (m) => ctx.toasts.push(m) };
   vm.createContext(ctx);
@@ -68,8 +69,22 @@ test("?add=<id> adds that card's tip once, opens My slip, and leaves the address
   assert.strictEqual(leg.p, 0.81);
   assert.strictEqual(leg.via, "match", "a booking of it reports src=match");
   assert.strictEqual(a.opened, 1, "the slip opens so the reader sees it land");
+  assert.strictEqual(a.V.off, a.dayOff(FX[0].date), "the board steps to the game's day");
+  assert.ok(a.V.dayPicked && a.V.country === "" && a.renders === 1, "as the day arrows do");
   assert.strictEqual(a.url, "/?x=1", "add= is gone, the rest of the query stays");
   assert.deepStrictEqual(a.toasts, []);
+});
+
+test("via lands on the added leg, not on whatever was last; a board already on that day is not repainted", () => {
+  const other = { id: "mOther", code: "1", label: "y", p: 0.6 };
+  const d = Math.round((Date.parse(FX[0].date) - Date.parse(new Date().toISOString().slice(0, 10))) / 864e5);
+  const a = app("?add=" + id(FX[0]), { slip: [other], off: d });
+  vm.runInContext("addFromLink()", a);
+  assert.strictEqual(a.MYSLIP.length, 2);
+  assert.strictEqual(a.MYSLIP.find((x) => x.id === id(FX[0])).via, "match");
+  assert.strictEqual(other.via, undefined);
+  assert.strictEqual(a.renders, 0);
+  assert.strictEqual(a.V.dayPicked, false);
 });
 
 test("a game already on the slip is not added twice", () => {
@@ -112,15 +127,19 @@ test("behind the entry gate the add waits until the board shows", () => {
 
 test("load() runs it once the payload is in", () => {
   const body = grab("load");
-  const at = body.indexOf("addFromLink()");
-  assert.ok(at > body.indexOf("DATA=got.payload") && at > body.indexOf("paint()"), "after the board is painted");
+  const at = body.indexOf("addFromLink()"), got = body.indexOf("DATA=got.payload"), painted = body.indexOf("paint()");
+  assert.ok(at >= 0 && got >= 0 && painted >= 0, "all three anchors are still in load()");
+  assert.ok(at > got && at > painted, "after the board is painted");
 });
 
 test("the match page links with the id the app's card uses, for every real fixture", () => {
   const ctx = {}; vm.createContext(ctx); vm.runInContext(grab("fid"), ctx);
-  const data = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "public", "predictions.json"), "utf8"));
-  const tipped = (data.fixtures || []).filter((f) => f.tip).slice(0, 200);
-  assert.ok(tipped.length > 0);
+  /* The payload is gitignored, so a fresh checkout has none - the real
+     fixtures are checked when it is there, the accented pair always. */
+  let data = null;
+  try { data = require("../public/predictions.json"); } catch (e) { /* not built */ }
+  const tipped = data ? (data.fixtures || []).filter((f) => f.tip).slice(0, 200) : [];
+  if (data) assert.ok(tipped.length > 0);
   for (const f of tipped.concat([{ date: "2026-10-07", home: "Atlético Mineiro", away: "São Paulo", tip: "Home win" }])) {
     const h = P.renderMatchPage(f, null, []);
     const m = /<p class='tip-go'><a href='\/\?add=([^']+)'>Add this game to my slip<\/a>/.exec(h);
