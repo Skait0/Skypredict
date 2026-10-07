@@ -92,6 +92,17 @@ test("Conjure becomes Add once a slip exists - no Conjure again", () => {
   assert.match(src, /html \+= WSP\.conjured\s*\? "<button class='book-btn wsp-go' id='wspAdd'/);
 });
 
+test("a new payout or slip style brings Conjure back", () => {
+  /* Owner, 7 Oct 2026: "when i select another xN after i have conjured and
+     added previously, it only shows add selection to slip, the button should
+     go back to conjure, thats the magic!" Chip, typed payout, wider-window
+     offer and style chip each lower the flag. */
+  assert.match(src, /WSP\.odds=\+c\.dataset\.o;WSP\._sig=null;WSP\.conjured=false;/, "payout chip");
+  assert.match(src, /WSP\.odds=v; WSP\._sig=null; WSP\.conjured=false;/, "typed payout");
+  assert.match(src, /WSP\.odds=typed; WSP\._sig=null; WSP\.conjured=false;/, "wider window");
+  assert.match(src, /WSP\.legodd=\+c\.dataset\.lo;[\s\S]{0,120}WSP\._sig=null;WSP\.conjured=false;renderBuilder\(\);/, "style chip");
+});
+
 test("both builders end on Add selections to slip, not on booking", () => {
   assert.match(src, /\$\("bookBtn"\)\.addEventListener\("click",function\(\)\{ addBuiltToSlip\(BUILD\.picks,"slider"\); \}\);/);
   assert.match(src, /id='wspAdd' type='button'>Add selections to slip<\/button>/);

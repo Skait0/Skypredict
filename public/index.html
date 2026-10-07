@@ -21835,8 +21835,8 @@ function renderWizardPanel(){
      slip exists, then "Add selections to slip" in its place. No "Conjure
      again": this panel shows only the numbers, so a reroll would change a slip
      nobody can see ("why is there a conjure again? there is no preview"). A
-     changed payout or style rebuilds the conjured slip by itself, and the
-     sheet's Shuffle rerolls where the games are on screen. */
+     new payout or style is a new ticket and brings Conjure back (see the chip
+     handlers); the sheet's Shuffle rerolls where the games are on screen. */
   html += WSP.conjured
     ? "<button class='book-btn wsp-go' id='wspAdd' type='button'>Add selections to slip</button>"
     : "<button class='book-btn wsp-go"+(WSP.odds==null?" waiting":"")+
@@ -21856,7 +21856,10 @@ function renderWizardPanel(){
   // list itself stays hidden until Conjure is tapped, so Conjure keeps its
   // reveal moment.
   $("wspOddsChips").querySelectorAll("[data-o]").forEach(function(c){
-    c.addEventListener("click",function(){WSP.odds=+c.dataset.o;WSP._sig=null;
+    /* A new payout is a new ticket: back to Conjure (owner, 7 Oct 2026 - "the
+       button should go back to conjure, thats the magic!"). Same for a typed
+       payout, the wider-window offer and a new slip style below. */
+    c.addEventListener("click",function(){WSP.odds=+c.dataset.o;WSP._sig=null;WSP.conjured=false;
       try{localStorage.setItem("sw.wspodds",String(WSP.odds));}catch(e){}
       renderBuilder();});
   });
@@ -21896,7 +21899,7 @@ function renderWizardPanel(){
         WSP.removed={}; WSP._slip=null; WSP._sig=null;
         var _br=$("bookResult"); if(_br) _br.innerHTML="";
       }
-      WSP.odds=typed; WSP._sig=null;
+      WSP.odds=typed; WSP._sig=null; WSP.conjured=false;
       try{localStorage.setItem("sw.wspodds",String(typed));}catch(e){}
       renderBuilder();
     });
@@ -21922,7 +21925,7 @@ function renderWizardPanel(){
       var _needsWider=(_typed>_ceil && SCOPE!=="all" && _typed<=(WSP._wideMaxTarget||50000));
       WSP._typed="";
       if(v!==WSP.odds){
-        WSP.odds=v; WSP._sig=null;
+        WSP.odds=v; WSP._sig=null; WSP.conjured=false;
         try{localStorage.setItem("sw.wspodds",String(v));}catch(e){}
         renderBuilder();
         var again=$("wspCust"); if(again){ again.focus(); }
@@ -21989,7 +21992,7 @@ function renderWizardPanel(){
     c.addEventListener("click",function(){
       WSP.legodd=+c.dataset.lo;
       try{localStorage.setItem("sw.legodd",String(WSP.legodd));}catch(e){}
-      WSP._sig=null;renderBuilder();
+      WSP._sig=null;WSP.conjured=false;renderBuilder();
       /* renderBuilder rebuilds the input, so a half-typed target would be lost
          by choosing a style for it - which is the one moment the row is on
          screen BECAUSE something is being typed. */
