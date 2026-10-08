@@ -63,8 +63,8 @@ test("a refused leg is offered the safest priced bet on the same game", () => {
   const next = new Function("F", "OPTS", "NOW", "WHY",
     "var REFUSAL_WHY=WHY();function curBook(){return {odds:'sportyOdds'};}" +
     "function fixtureById(){return F;} function kickMs(){return NOW();}" +
-    "function swapOptions(){return OPTS;} function bookAllows(){return true;}" +
-    decl("SAFE_ALT_MIN") + "\n" + fn("nextSafePick") + "\nreturn nextSafePick;")(
+    "function swapOptions(){return OPTS;} function bookAllows(){return true;} function refusedToday(){return {};}" +
+    decl("SAFE_ALT_MIN") + "\n" + fn("safePicks") + "\n" + fn("nextSafePick") + "\nreturn nextSafePick;")(
     f, opts, () => now, () => why);
   const B = { odds: "sportyOdds" };
   const realNow = Date.now;
@@ -85,7 +85,7 @@ test("a refused leg is offered the safest priced bet on the same game", () => {
 
 test("the pop-up puts a swap in front of each refused game, and books what was ticked", () => {
   const fnSrc = body("confirmAfterRefusal");
-  assert.match(fnSrc, /nextSafePick\(c,B\)/, "each refused game gets its offer");
+  assert.match(fnSrc, /safePicks\(c,B\)/, "each refused game gets its offers");
   /* Owner, 29 Sep 2026: show the market they refused, and a Swap or Remove
      choice rather than a tick box. */
   assert.match(fnSrc, /class='ask-off'><s>/, "the refused market is named, struck through");
@@ -166,4 +166,59 @@ test("one scroll lock, held by name, released only when the last overlay closes"
   assert.strictEqual(win.to, 640, "and the page is back where it was");
   const src = require("./books.js").src;
   assert.doesNotMatch(src, /document\.body\.style\.overflow="hidden"/, "no overlay locks on its own any more");
+});
+
+/* Owner, 8 Oct 2026: "it shouldnt affect the size of the remove pill",
+   "add a remove all button", and the pop-up needed a zoom-out on a 13-inch
+   laptop before Book could be reached. */
+test("Remove keeps one size, whatever the swap beside it wraps to", () => {
+  assert.match(src, /\.confirm-card \.ask-opt\[data-v='drop'\]\{[^}]*align-self:center/);
+});
+
+test("Remove all turns every swap into a removal, offered only when there are two or more", () => {
+  const fnSrc = body("confirmAfterRefusal");
+  assert.match(fnSrc, /swap\.filter\(Boolean\)\.length>1\?"<button class='ask-all' type='button'>Remove all<\/button>"/);
+  assert.match(fnSrc, /el\.querySelectorAll\("\.ask-opt\[data-v='drop'\]"\)\.forEach\(function\(b\)\{ b\.click\(\); \}\);/,
+    "goes through each row's own Remove, so the Book count follows");
+});
+
+test("the pop-up fits a laptop screen and its buttons stay in view", () => {
+  assert.match(src, /\.ask-card\{[^}]*max-height:min\(calc\(100dvh - 32px\),680px\)/);
+  assert.match(src, /\.ask-card \.confirm-card \.ca\{[^}]*position:sticky;bottom:-16px/);
+});
+
+/* Owner, 8 Oct 2026: "the same games keep coming up" - but "just the options
+   refused for the day ... not the whole fixture". */
+test("a refused market is remembered for today, at that book, for that market only", () => {
+  const store = {};
+  let now = Date.parse("2026-10-08T12:00:00Z");
+  const api = new Function("localStorage", "Date",
+    decl("REFUSED_KEY") + "\n" + fn("refusedDay") + "\n" + fn("refusedToday") + "\n" + fn("noteRefused") +
+    "\nreturn {note:noteRefused, today:refusedToday};")(
+    { getItem: (k) => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); } },
+    class extends Date { constructor(...a) { super(...(a.length ? a : [now])); } static now() { return now; } });
+  api.note({ id: "g1", code: "1X" }, { key: "sporty" });
+  const k = api.today();
+  assert.strictEqual(k["sporty|g1|1X"], 1);
+  assert.strictEqual(k["sporty|g1|OVER_1.5"], undefined, "other markets on the game stay");
+  assert.strictEqual(k["bet9ja|g1|1X"], undefined, "other books stay");
+  now = Date.parse("2026-10-08T22:59:00Z");
+  assert.strictEqual(api.today()["sporty|g1|1X"], 1, "still today in Lagos at 23:59");
+  now = Date.parse("2026-10-08T23:00:00Z");
+  assert.deepStrictEqual(api.today(), {}, "Lagos midnight: the book may sell it tomorrow");
+});
+
+test("only named refusals are written, and both builders skip that market only", () => {
+  assert.match(body("dropUnbookable"), /REFUSAL_WHY\[c\.id\+"\|"\+c\.code\]=w;\s*noteRefused\(c,B\);/);
+  assert.match(body("buildPicks"), /function sane\(c\)\{\s*if\(refused\[rk\+fid\(f\)\+"\|"\+c\]\) return false;/);
+  assert.match(body("wspBuild"), /allowed\.forEach\(function\(c\)\{\s*if\(refused\[rk\+fid\(f\)\+"\|"\+c\]\)return;/);
+  assert.match(body("safePicks"), /if\(refused\[B\.key\+"\|"\+c\.id\+"\|"\+o\.code\]\) return;/, "and the pop-up never offers it");
+});
+
+test("the pop-up steps through every safe pick on a game, not just the likeliest", () => {
+  /* "the options offered are always the same" */
+  const f = body("confirmAfterRefusal");
+  assert.match(f, /lists\[i\]\.length>1\?"<button class='ask-next'/);
+  assert.match(f, /at\[i\]=\(at\[i\]\+1\)%lists\[i\]\.length; alts\[i\]=lists\[i\]\[at\[i\]\];/);
+  assert.match(f, /pill\.click\(\);/, "stepping to one chooses it");
 });

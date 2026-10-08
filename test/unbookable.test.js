@@ -52,7 +52,7 @@ const BOOKS = require("./books.js");
 const dropUnbookable = new Function(
   "function fixtureById(){return null;}" + BOOKS.prelude("sporty") +
   "var REFUSAL_WHY={};" + grab("refusalWhy") + "\n" + grab("whyOf") + "\n" +
-  grab("dropUnbookable") + "\nreturn dropUnbookable;")();
+  grab("refusedDay") + grab("refusedToday") + grab("noteRefused") + grab("dropUnbookable") + "\nreturn dropUnbookable;")();
 
 function leg(ev, code, odd) {
   return { id: "id" + ev, eventId: ev, code: code,

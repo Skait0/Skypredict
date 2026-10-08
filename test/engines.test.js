@@ -84,7 +84,7 @@ const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "
   "buildPicks",
   /* Which chip is lit, derived from the same predicate wspBuild uses. */
   "wspStyleOn",
-  "wspBuild"];
+  "wspBuild", "refusedDay", "refusedToday", "noteRefused"];
 
 const api = new Function([
   "var TOP_ONLY=false;",

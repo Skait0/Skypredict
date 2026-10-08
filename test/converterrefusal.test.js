@@ -69,7 +69,7 @@ function harness(answer, ask, matchFixture) {
     ".replace(/<[^>]+>/g,'');};\n" +
     "var REFUSAL_ROUNDS=" + ROUNDS + ";var REFUSAL_WHY={};\n" +
     "function lineCheck(){ return false; }\n" +
-    fn("refusalWhy") + fn("whyOf") + fn("dropUnbookable") + fn("notStarted") + fn("legStarted") +
+    fn("refusalWhy") + fn("whyOf") + fn("refusedDay") + fn("refusedToday") + fn("noteRefused") + fn("dropUnbookable") + fn("notStarted") + fn("legStarted") +
     opt("pickStarted") + opt("editErrHTML") + fn("bookReason") + fn("bookErrHTML") +
     fn("bookRounds") + fn("legPick") + fn("bookLegs") + fn("splitPicks") + fn("splitAndBook") +
     "\nreturn {bookLegs:bookLegs, splitAndBook:splitAndBook, legPick:legPick, bookRounds:bookRounds, B:BOOKS.sporty};";

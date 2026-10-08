@@ -57,7 +57,7 @@ const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "
   "fid", "oddOf", "legOdd", "bookVerdict", "bookMayTake", "bookIsPriced", "bookIdOf",
   "hasRealOdd", "pricedFixture", "mProb", "allowedMarkets", "preferGoalsOverDouble",
   "isJackpotOdds", "wspMarkets", "codeMarket", "provenMarkets", "isProven", "safeUnpriced",
-  "fetchedMarket", "bookAllows", "wspStyleOn", "wspBuild", "wspMaxReach",
+  "fetchedMarket", "bookAllows", "wspStyleOn", "wspBuild", "refusedDay", "refusedToday", "noteRefused", "wspMaxReach",
   "leagueAllowed", "leagueDefault", "setLeaguePicked", "leaguesChosen", "windowWords",
   "renderWizardPanel", "renderMySheet", "riskWord", "paintTicks", "repaintAfterMatch",
   /* renderBuilderOutput and wspConjure, driven for real, and what they lean on. */

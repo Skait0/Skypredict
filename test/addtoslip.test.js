@@ -85,11 +85,12 @@ test("the pop-up's X sits above the card body, so a tap reaches it", () => {
   assert.match(src, /\.ask-x\{position:absolute;[^}]*z-index:2/);
 });
 
-test("Conjure becomes Add once a slip exists - no Conjure again", () => {
-  /* "why is there a conjure again? there is no preview" - the panel shows no
-     games, so a reroll there changes a slip nobody can see. */
+test("Conjure goes straight to My slip - no Add step, no Conjure again", () => {
+  /* Owner, 8 Oct 2026: "add to selection after conjure kills the magic". One
+     tap builds and fills the slip; a slip with games gets the Replace/Add ask. */
   assert.doesNotMatch(src, /Conjure again/);
-  assert.match(src, /html \+= WSP\.conjured\s*\? "<button class='book-btn wsp-go' id='wspAdd'/);
+  assert.doesNotMatch(src, /id='wspAdd'/);
+  assert.match(src, /buzzConjure\(\); wspConjure\(false\);\s*if\(WSP\.conjured\) addBuiltToSlip\(BUILD\.picks,"wizard"\);/);
 });
 
 test("a new payout or slip style brings Conjure back", () => {
@@ -103,8 +104,7 @@ test("a new payout or slip style brings Conjure back", () => {
   assert.match(src, /WSP\.legodd=\+c\.dataset\.lo;[\s\S]{0,120}WSP\._sig=null;WSP\.conjured=false;renderBuilder\(\);/, "style chip");
 });
 
-test("both builders end on Add selections to slip, not on booking", () => {
+test("the Slider ends on Add selections to slip, not on booking", () => {
   assert.match(src, /\$\("bookBtn"\)\.addEventListener\("click",function\(\)\{ addBuiltToSlip\(BUILD\.picks,"slider"\); \}\);/);
-  assert.match(src, /id='wspAdd' type='button'>Add selections to slip<\/button>/);
   assert.match(src, /btn\.textContent="Add selections to slip";/);
 });
