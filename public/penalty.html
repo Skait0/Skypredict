@@ -98,6 +98,7 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #hint.on{opacity:1}#hint i{display:block;font-style:normal;animation:pw-nudge .9s ease-in-out infinite}
 /* pop words */
 #pop{position:absolute;left:0;right:0;top:46%;text-align:center;font:italic 800 54px/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:-.01em;opacity:0;pointer-events:none;z-index:7;-webkit-text-stroke:2px #07080a;paint-order:stroke fill;text-shadow:0 6px 24px #000c}
+#pop small{display:block;margin-top:6px;font-size:17px;letter-spacing:.18em;color:#fff;-webkit-text-stroke:0;opacity:.92}
 #pop.go{animation:pw-pop .95s cubic-bezier(.2,.9,.25,1)}
 #combo{position:absolute;right:0;left:0;text-align:center;top:calc(108px + env(safe-area-inset-top));font:italic 800 14px/1 "Roboto Condensed",sans-serif;color:var(--gold);letter-spacing:.1em;opacity:0;z-index:6}
 #combo.on{opacity:1;animation:pw-flame .8s ease-in-out infinite alternate}
@@ -444,7 +445,9 @@ function drawBoard(){
 function boardNow(side){$("rowA").classList.toggle("now",side==="a");$("rowB").classList.toggle("now",side==="b");}
 /* ---------------------------------------------------------------- effects */
 var fx={
-  pop:function(word,color){var p=$("pop");p.textContent=word;p.style.color=color||"#fff";p.classList.remove("go");void p.offsetWidth;p.classList.add("go");},
+  /* a big word, and (for a miss) the reason in small type under it */
+  pop:function(word,color,why){var p=$("pop");p.textContent=word;if(why){var w=document.createElement("small");w.textContent=why;p.appendChild(w);}
+    p.style.color=color||"#fff";p.classList.remove("go");void p.offsetWidth;p.classList.add("go");},
   shake:function(level){CAM_FX.shake=Math.max(CAM_FX.shake,level>1?9:4);},
   /* asks for slow motion on the NEXT kick's flight only; aiming stays full view */
   slowmo:function(on){SLOWNEXT=!!on&&!REDUCED;if(!on){TS=1;CAM_FX.zoomTo=1;}},
@@ -665,8 +668,8 @@ function playKick(k){
     }else if(what==="bar"){
       hitStop=0.08;fx.shake(2);fx.buzz([30,30,30]);fx.sprite("burst",bp.x,bp.y,56,320);
       /* it hit the woodwork - say exactly that, never "saved" (owner, 8 Oct 2026) */
-      fx.pop("OFF THE BAR!","#E63946");fx.board("OFF THE BAR","#E63946");if(you)streak=0;fx.combo(streak);
-    }else{fx.pop("OVER!","#E63946");fx.board("MISSED","#E63946");fx.shake(0);if(you)streak=0;fx.combo(streak);}
+      fx.pop("WAHALA!","#E63946","OFF THE BAR");fx.board("OFF THE BAR","#E63946");if(you)streak=0;fx.combo(streak);
+    }else{fx.pop("WAHALA!","#E63946","OVER THE BAR");fx.board("MISSED","#E63946");fx.shake(0);if(you)streak=0;fx.combo(streak);}
   }
 }
 
