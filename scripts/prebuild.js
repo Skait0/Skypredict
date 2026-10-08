@@ -56,7 +56,7 @@ async function bakePayload() {
      jump off a game that had already been played. Best-effort: no network, a
      cold site or a payload without one simply means a fresh pick, which is
      what used to happen every time anyway. */
-  let prevPotd = null, prevFixtures = null, prevPublished = null, prevPayload = null;
+  let prevPotd = null, prevPotdNext = null, prevFixtures = null, prevPublished = null, prevPayload = null;
   try {
     const origin = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
     const r = await fetch(origin + "/predictions.json", { signal: AbortSignal.timeout(8000) });
@@ -68,6 +68,8 @@ async function bakePayload() {
          below for why that matters more than it sounds. */
       prevPayload = prev;
       prevPotd = prev.potd || null;
+      /* Tomorrow's pick, recorded tonight - see choosePotds in lib/build.js. */
+      prevPotdNext = prev.potdNext || null;
       /* The board as readers saw it, tips and all. recordPublishedTips writes
          those tips to the record once the games have been played, which is the
          only way to file the tip we actually showed rather than one this build
@@ -123,7 +125,7 @@ async function bakePayload() {
 
   let payload;
   try {
-    payload = await buildPayload({ prevPotd, prevFixtures, prevPublished });
+    payload = await buildPayload({ prevPotd, prevPotdNext, prevFixtures, prevPublished });
   } catch (e) {
     warn("build failed: " + e.message);
     payload = fallBackToPrevious(e.message);
@@ -135,7 +137,8 @@ async function bakePayload() {
      one. */
   if (payload && payload.potd) {
     log("pick of the day: " + payload.potd.home + " v " + payload.potd.away +
-        (prevPotd && prevPotd.id === payload.potd.id ? " (carried forward)" : " (chosen fresh)"));
+        ((prevPotd && prevPotd.id === payload.potd.id) || (prevPotdNext && prevPotdNext.id === payload.potd.id)
+          ? " (carried forward)" : " (chosen fresh)"));
   }
   const n = (payload && Array.isArray(payload.fixtures)) ? payload.fixtures.length : 0;
   if (n < MIN) {

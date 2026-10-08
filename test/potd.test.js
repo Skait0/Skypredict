@@ -380,3 +380,51 @@ test("a pick that is still inside the reader's day is kept across rebakes", () =
                  away: "Aalesund", date: "2026-08-30" };
   assert.deepStrictEqual(build.choosePotd(board, prev, FUTURE), prev);
 });
+
+/* ---- across midnight: one pick per day, decided once (8 Oct 2026) ----
+   The last build of 7 Oct ran at 22:44Z with a pick dated the 7th. Past Lagos
+   midnight every browser chose its own (Haras El Hodood, 82%), then the first
+   build after it chose fresh (Santos v Flamengo, 76%). */
+const tonightGame = fx({ date: "2026-10-07", kickoff: "2026-10-07T19:00:00.000Z", home: "Shooting Stars", away: "Kano Pillars", tip_p: 0.83 });
+const flamengo = (p) => fx({ date: "2026-10-08", kickoff: "2026-10-08T22:30:00.000Z", home: "Santos", away: "Flamengo RJ", tip_p: p });
+const haras = (p) => fx({ date: "2026-10-08", kickoff: "2026-10-08T12:30:00.000Z", home: "Haras El Hodood", away: "El Seka El Hadid", tip_p: p });
+const EVENING = Date.parse("2026-10-07T22:44:00Z"), MORNING = Date.parse("2026-10-08T06:30:00Z");
+
+const AFTERNOON = Date.parse("2026-10-07T15:00:00Z");
+/* The day as it ran: an afternoon build picks the 7th's game, the 22:44Z build carries it. */
+function evening() {
+  const first = build.choosePotds([tonightGame, flamengo(0.85), haras(0.80)], null, null, AFTERNOON);
+  return build.choosePotds([tonightGame, flamengo(0.85), haras(0.80)], first.potd, first.potdNext, EVENING);
+}
+test("the evening build records tomorrow's pick", () => {
+  const first = build.choosePotds([tonightGame, flamengo(0.85), haras(0.80)], null, null, AFTERNOON);
+  const { potd, potdNext } = build.choosePotds([tonightGame, flamengo(0.85), haras(0.80)], first.potd, first.potdNext, EVENING);
+  assert.strictEqual(potd.home, "Shooting Stars", "today's pick is still today's");
+  assert.strictEqual(potdNext.home, "Santos", "and tomorrow's is chosen now, not by each browser after midnight");
+  assert.strictEqual(potdNext.date, "2026-10-08");
+});
+
+test("the morning build keeps it, even when the refit now ranks another game higher", () => {
+  const night = evening();
+  /* Recalibration moves every number on every build - here Haras overtakes. */
+  const morning = build.choosePotds([flamengo(0.76), haras(0.90)], night.potd, night.potdNext, MORNING);
+  assert.deepStrictEqual(morning.potd, night.potdNext, "the pick readers saw after midnight is the day's pick");
+});
+
+test("evening rebakes keep both today's pick and tomorrow's", () => {
+  const first = build.choosePotds([tonightGame, flamengo(0.85), haras(0.80)], null, null, AFTERNOON);
+  const again = build.choosePotds([tonightGame, flamengo(0.70), haras(0.95)], first.potd, first.potdNext, EVENING);
+  assert.deepStrictEqual(again.potd, first.potd);
+  assert.deepStrictEqual(again.potdNext, first.potdNext, "a rebake must not re-roll tomorrow either");
+});
+
+test("a recorded pick whose game has left the card is replaced in the morning", () => {
+  const night = evening();
+  const morning = build.choosePotds([haras(0.80)], night.potd, night.potdNext, MORNING);
+  assert.strictEqual(morning.potd.home, "Haras El Hodood");
+});
+
+test("after midnight the page shows the recorded pick, not one of its own", () => {
+  assert.match(potd, /\(DATA\.potdNext&&DATA\.potdNext\.date===dateStr\)\?DATA\.potdNext:null/,
+    "with no pick dated today, the page must read potdNext before falling back to choosing");
+});

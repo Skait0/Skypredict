@@ -9496,7 +9496,11 @@ function renderPotd(){
      It is chosen once in lib/build.js and carried forward across rebakes, so
      the localStorage lock below is now only the fallback for a payload built
      before this existed. */
-  const baked=(DATA.potd&&DATA.potd.date===dateStr)?DATA.potd:null;
+  /* After Lagos midnight the last build's pick is for yesterday, and the
+     morning build has not run. It recorded tomorrow's pick as potdNext so this
+     page does not choose its own in that gap - see choosePotds in lib/build.js. */
+  const baked=(DATA.potd&&DATA.potd.date===dateStr)?DATA.potd:
+    (DATA.potdNext&&DATA.potdNext.date===dateStr)?DATA.potdNext:null;
   if(baked&&baked.id){
     top=day.filter(function(f){return fid(f)===baked.id;})[0]
       || (DATA.fixtures||[]).filter(function(f){return fid(f)===baked.id;})[0]
