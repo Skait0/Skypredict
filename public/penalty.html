@@ -135,6 +135,7 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #sheet.on{transform:none}
 #sheet h2{margin:2px 0 6px;font:italic 800 26px/1.05 "Roboto Condensed",sans-serif;letter-spacing:.01em}
 #sheet p{margin:0 0 12px;color:var(--soft);font-size:14px}
+#sheet p.credit{margin:12px 0 0;font-size:11px;opacity:.6}#sheet p.credit a{color:inherit}
 #sheet .note{color:var(--gold);font-weight:800}
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;margin-top:8px;border:0;border-radius:999px;font:800 15px "Plus Jakarta Sans",system-ui;cursor:pointer;text-decoration:none;transition:transform .12s}
 .btn:active{transform:scale(.97)}
@@ -496,6 +497,35 @@ function drawBoard(){
 }
 function boardNow(side){$("rowA").classList.toggle("now",side==="a");$("rowB").classList.toggle("now",side==="b");}
 /* ---------------------------------------------------------------- effects */
+/* ---------------------------------------------------------------- sound
+   Web Audio, started by the first tap (phones play nothing before one). The
+   recorded sounds load after that tap; the whoosh, the net, and the legendary
+   riser and thunder are shaped noise. Muting silences sound and vibration;
+   a hidden tab goes quiet. Crowd: Gregor Quendel (CC BY 4.0); hits: Kenney (CC0). */
+var SFX={ctx:null,bus:null,bed:null,buf:{}};
+function sfxStart(){
+  if(!SFX.ctx){var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;var c=SFX.ctx=new AC();
+    SFX.bus=c.createGain();SFX.bus.gain.value=MUTED?0:1;SFX.bus.connect(c.destination);
+    ["kick","glove","bar","roar","roarbig","murmur"].forEach(function(n){
+      fetch("/penalty/sfx/"+n+".mp3?v="+SPV).then(function(r){return r.arrayBuffer();})
+        .then(function(a){return new Promise(function(ok,no){c.decodeAudioData(a,ok,no);});})
+        .then(function(b){SFX.buf[n]=b;if(n==="murmur")sfxBed();}).catch(function(){});});}
+  if(SFX.ctx.state==="suspended"&&!document.hidden)SFX.ctx.resume();}
+function sfxBed(){var c=SFX.ctx,b=SFX.buf.murmur;if(!b||SFX.bed)return;var s=c.createBufferSource(),g=c.createGain();
+  s.buffer=b;s.loop=true;g.gain.value=0.22;s.connect(g);g.connect(SFX.bus);s.start();SFX.bed=s;}
+function sfx(n,vol,rate){var c=SFX.ctx,b=SFX.buf[n];if(!c||!b)return;var s=c.createBufferSource(),g=c.createGain();
+  s.buffer=b;s.playbackRate.value=rate||1;g.gain.value=vol==null?1:vol;s.connect(g);g.connect(SFX.bus);s.start();}
+/* band-passed noise swept from f0 to f1; rise=true swells up instead of dying away */
+function hiss(dur,f0,f1,vol,rise,q){var c=SFX.ctx;if(!c)return;var n=Math.ceil(c.sampleRate*dur),b=c.createBuffer(1,n,c.sampleRate),d=b.getChannelData(0);
+  for(var i=0;i<n;i++)d[i]=Math.random()*2-1;
+  var s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain(),t=c.currentTime;s.buffer=b;f.type="bandpass";f.Q.value=q||1;
+  f.frequency.setValueAtTime(f0,t);f.frequency.exponentialRampToValueAtTime(f1,t+dur);g.gain.setValueAtTime(0.0001,t);
+  if(rise){g.gain.exponentialRampToValueAtTime(vol,t+dur*0.92);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);}
+  else{g.gain.exponentialRampToValueAtTime(vol,t+Math.min(0.03,dur/4));g.gain.exponentialRampToValueAtTime(0.0001,t+dur);}
+  s.connect(f);f.connect(g);g.connect(SFX.bus);s.start(t);}
+function setMuted(m){MUTED=!!m;try{localStorage.setItem("pw.mute",MUTED?"1":"0");}catch(e){}if(SFX.bus)SFX.bus.gain.value=MUTED?0:1;}
+document.addEventListener("pointerdown",sfxStart,true);document.addEventListener("keydown",sfxStart,true);
+document.addEventListener("visibilitychange",function(){if(!SFX.ctx)return;if(document.hidden)SFX.ctx.suspend();else SFX.ctx.resume();});
 var fx={
   /* a big word, and (for a miss) the reason in small type under it */
   pop:function(word,color,why){var p=$("pop");p.textContent=word;if(why){var w=document.createElement("small");w.textContent=why;p.appendChild(w);}
@@ -667,11 +697,11 @@ function playKick(k){
   if(k.outcome==="over")kp.arc=0;
   if((k.outcome==="over"||k.outcome==="goal"&&Math.abs(kp.y-aim.y)<1.1)&&Math.abs(kp.x-aim.x)<1.2){kp.x=Math.max(-3.4,Math.min(3.4,aim.x+(kp.x>=aim.x?1.7:-1.7)));}
   trailGold=perfect||spell;
-  if(spell){$("app").classList.add("legend");fx.pop("LEGENDARY SHOT!","#F2B84B");fx.flash(0.12,260);fx.buzz([20,40,60]);if(!REDUCED){TS=0.38;CAM_FX.zoomTo=1.14;}}
+  if(spell){$("app").classList.add("legend");hiss(1.1,250,3200,0.35,true,1.6);fx.pop("LEGENDARY SHOT!","#F2B84B");fx.flash(0.12,260);fx.buzz([20,40,60]);if(!REDUCED){TS=0.38;CAM_FX.zoomTo=1.14;}}
   /* run-up: three strides to the ball */
   S.img="s-run.webp";
   return tween(180,function(u){S.x=-0.72+0.3*u;S.z=-1.25+0.65*u;}).then(function(){
-    S.img="s-strike.webp";fx.buzz(12);hitStop=0.05;B.fly=true;summon();
+    S.img="s-strike.webp";fx.buzz(12);sfx("kick",0.55+0.45*power,0.92+0.16*power);if(spell)hiss(1.6,500,45,0.9,false,0.7);hitStop=0.05;B.fly=true;summon();
     if(SLOWNEXT){TS=0.38;CAM_FX.zoomTo=1.14;}
     return new Promise(function(done){
       var t=0,phase="fly",after=0,k0={x:K.x,y:K.y},reacted=false,launched=false,landed=false,settled=false,landT=0,heldIt=false,loadT=0,fallV=0,saveAt=f.T*(kp.x===0&&kp.y<1?0.97:0.93);
@@ -742,19 +772,21 @@ function playKick(k){
       var top=high(k.shot.spot)&&col(k.shot.spot)!==1&&kind==="green";
       fx.sprite("burst",bp.x,bp.y,spell?150:top?90:64,spell?620:420);if(top||spell)fx.sprite("star",bp.x,bp.y,spell?170:110,620);
       if(spell){fx.shake(2);fx.flash(0.22,420);}
+      hiss(0.32,3200,1100,0.28,false,0.8);sfx(spell||top?"roarbig":"roar",spell?1:0.8);
       fx.pop(spell?"LEGENDARY!":top?"TOP BINS!":perfect?"WIZARDRY!":(you?"GOAL!":"OYA!"),spell||top?"#F2B84B":"#2FD48A");
       fx.board(top?"TOP BINS":"GOAL",top?"#F2B84B":"#2FD48A");
       if(you){streak++;award({top:top,curl:curl,perfect:perfect,streak:streak});}fx.combo(streak);
       if(you&&(spell||perfect||streak>=3)&&k.outcome==="goal")lightning(bp.x,bp.y);
     }else if(what==="save"){
+      sfx("glove",caught?0.6:1);
       if(caught){fx.pop("CAUGHT!","#E63946");fx.board("SAVED","#E63946");fx.buzz([15,30]);hitStop=0.05;if(you)streak=0;fx.combo(streak);return;}
       hitStop=0.09;fx.shake(1);fx.buzz([20,40,20]);fx.sprite("burst",bp.x,bp.y,70,380);
       fx.pop("SAVED!","#E63946");fx.board("SAVED","#E63946");if(you)streak=0;fx.combo(streak);
     }else if(what==="bar"){
-      hitStop=0.08;fx.shake(2);fx.buzz([30,30,30]);fx.sprite("burst",bp.x,bp.y,56,320);
+      hitStop=0.08;fx.shake(2);fx.buzz([30,30,30]);sfx("bar");fx.sprite("burst",bp.x,bp.y,56,320);
       /* it hit the woodwork - say exactly that, never "saved" (owner, 8 Oct 2026) */
       fx.pop("WAHALA!","#E63946","OFF THE BAR");fx.board("OFF THE BAR","#E63946");if(you)streak=0;fx.combo(streak);
-    }else{fx.pop("WAHALA!","#E63946","OVER THE BAR");fx.board("MISSED","#E63946");fx.shake(0);if(you)streak=0;fx.combo(streak);}
+    }else{hiss(0.55,700,2600,0.3);fx.pop("WAHALA!","#E63946","OVER THE BAR");fx.board("MISSED","#E63946");fx.shake(0);if(you)streak=0;fx.combo(streak);}
   }
 }
 
@@ -770,6 +802,7 @@ window.PW={RULES:{strike:strike,neighbour:neighbour,judge:judge,shootout:shootou
   tag:function(t){$("tag").textContent=t||"";},
   coachReset:function(){COACHED={};try{localStorage.removeItem("pw.coach");}catch(e){}},
   smartDive:smartDive,levelOf:levelOf,trailFor:trailFor,get xp(){return XP;},
+  setMuted:setMuted,get muted(){return MUTED;},
   setSolo:function(on){SOLO=!!on;SPELL=0;SPELLARMED=false;SPELLNOW=false;drawSpell();newWind();},consumeSpell:consumeSpell,
   get char(){return ME;},setChar:function(c){ME=c==="wizard"?"wizard":"ten";try{localStorage.setItem("pw.char",ME);}catch(e){}loadChar(ME);SC=ME;KC=OPP||other();},
   resetStreak:function(){streak=0;fx.combo(0);},
@@ -1011,9 +1044,9 @@ function home(){
     F.btn("Face today's Wizard Keeper","ghost",function(){F.closeSheet();daily();}),
     F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),
     F.btn("How to play","ghost",function(){PW.coachReset();F.closeSheet();F.practice();})];
-  var mute=F.btn("Vibration: on","ghost",function(e){var m=localStorage.getItem("pw.mute")==="1";localStorage.setItem("pw.mute",m?"0":"1");e.currentTarget.textContent="Vibration: "+(m?"on":"off");});
-  try{if(localStorage.getItem("pw.mute")==="1")mute.textContent="Vibration: off";}catch(e){}
-  nodes.push(mute);
+  var mute=F.btn(PW.muted?"Sound: off":"Sound: on","ghost",function(e){PW.setMuted(!PW.muted);e.currentTarget.textContent=PW.muted?"Sound: off":"Sound: on";});
+  var credit=F.el("p","credit");credit.innerHTML='Crowd sounds by Gregor Quendel, <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener" target="_blank">CC BY 4.0</a>';
+  nodes.push(mute,credit);
   F.sheet(nodes);
   /* "Ada beat you 4-3": finished challenges this device created in the last week. */
   F.api("GET","mine",null,{device:PW.DEV}).then(function(r){var seen={};try{seen=JSON.parse(localStorage.getItem("pw.seen")||"{}");}catch(e){}
