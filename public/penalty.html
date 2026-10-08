@@ -482,4 +482,113 @@ window.PW={RULES:{strike:strike,neighbour:neighbour,judge:judge,shootout:shootou
   tag:function(t){$("tag").textContent=t||"";}};
 })();
 </script>
+<script>
+(function(){
+"use strict";
+var PW=window.PW,R=PW.RULES,REG=R.REG,BONUS=R.BONUS,$=function(id){return document.getElementById(id);};
+var ORIGIN=location.origin;
+window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};
+function track(name,data){try{window.va("event",{name:name,data:data||{}});}catch(e){}}
+function api(method,a,body,q){
+  var qs="?a="+a+Object.keys(q||{}).map(function(k){return "&"+k+"="+encodeURIComponent(q[k]);}).join("");
+  return fetch("/api/penalty"+qs,{method:method,headers:method==="POST"?{"Content-Type":"application/json","X-SW-Request":"1"}:{},
+    body:method==="POST"?JSON.stringify(body):undefined}).then(function(r){return r.json().then(function(j){return {status:r.status,j:j};});})
+    .catch(function(){return {status:0,j:{}};});
+}
+function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+function sheet(nodes){var s=$("sheet");s.textContent="";nodes.forEach(function(n){s.appendChild(n);});s.classList.add("on");}
+function closeSheet(){$("sheet").classList.remove("on");}
+function btn(label,cls,fn){var b=el("button","btn "+cls,label);b.type="button";b.addEventListener("click",fn);return b;}
+function dots(outs){var d=$("dotsYou");d.textContent="";outs.forEach(function(o){var i=el("i",o==="goal"?"g":"m");d.appendChild(i);});}
+
+/* The one network failure screen: never invents a result. */
+function offline(retry){sheet([el("p",null,"Can't reach the pitch, try again."),btn("Try again","red",function(){closeSheet();retry();})]);}
+
+function askName(){return new Promise(function(done){
+  if(PW.NAME)return done(PW.NAME);
+  var i=el("input","name");i.placeholder="Your name";i.maxLength=16;i.autocomplete="nickname";
+  sheet([el("h2",null,"What do we call you?"),i,el("div","row"),btn("Let's go","red",function(){
+    var n=i.value.replace(/[^\p{L}\p{N} ]/gu,"").replace(/\s+/g," ").trim().slice(0,16);if(!n){i.focus();return;}
+    PW.setName(n);closeSheet();done(n);})]);setTimeout(function(){i.focus();},350);
+});}
+
+function shareSheet(text,url,where){
+  var full=text+" "+url;
+  var wa=btn("WhatsApp","red",function(){track("share",{ch:"whatsapp",where:where});open("https://wa.me/?text="+encodeURIComponent(full),"_blank");});
+  var x=btn("X","red",function(){track("share",{ch:"x",where:where});open("https://x.com/intent/post?text="+encodeURIComponent(text+" via @SoccerWizardhq")+"&url="+encodeURIComponent(url),"_blank");});
+  var row=el("div","row");row.appendChild(wa);row.appendChild(x);
+  var row2=el("div","row");
+  row2.appendChild(btn("Copy link","ghost",function(e){track("share",{ch:"copy",where:where});try{navigator.clipboard.writeText(url);e.currentTarget.textContent="Copied";}catch(_){}}));
+  if(navigator.share)row2.appendChild(btn("Share","ghost",function(){track("share",{ch:"system",where:where});navigator.share({text:text,url:url}).catch(function(){});}));
+  return [row,row2];
+}
+
+function tipsCard(){var box=el("div","tips");
+  api("GET","tips").then(function(r){if(!r.j||!r.j.home)return;
+    box.appendChild(el("p",null,"The wizard's real picks today"));
+    box.appendChild(el("b",null,r.j.home+" v "+r.j.away));
+    box.appendChild(el("p",null,r.j.tip+" · "+r.j.pct+"%"));
+    var a=el("a","btn ghost","See all predictions");a.href="/";a.addEventListener("click",function(){track("tips_clicked");});box.appendChild(a);});
+  return box;}
+
+/* THE CHALLENGER: 5 shots + 3 bonus vs a computer keeper, 5 dives + 3 bonus
+   vs computer shots. Judged here (no stakes); the picks go to the server. */
+function challenger(){askName().then(function(name){
+  var shots=[],dives=[],outs=[],i=0,cpu=0;PW.setScore(0,0,"Computer");
+  function cpuDive(){return Math.floor(Math.random()*6);}
+  function cpuShot(){return {spot:Math.floor(Math.random()*6),power:0.45+Math.random()*0.5};}
+  var p=Promise.resolve();
+  for(var i=0;i<REG+BONUS;i++)(function(n){p=p.then(function(){
+    if(n===REG)PW.fx.pop("BONUS KICKS","#F2B84B");
+    PW.fx.slowmo(n===REG-1);
+    return PW.aimAndShoot().then(function(s){shots.push(s);var d=cpuDive(),o=R.judge(s,d);
+      if(n<REG){outs.push(o);dots(outs);PW.setScore(outs.filter(function(x){return x==="goal";}).length,cpu);}
+      return PW.playKick({who:"you",shot:R.strike(s.spot,s.power),dive:d,outcome:o});})
+    .then(function(){return PW.pickDive();})
+    .then(function(dv){dives.push(dv);var cs=cpuShot(),co=R.judge(cs,dv);if(n<REG&&co==="goal")cpu++;return PW.playKick({who:"them",shot:R.strike(cs.spot,cs.power),dive:dv,outcome:co}).then(function(){if(n<REG)PW.setScore(outs.filter(function(x){return x==="goal";}).length,cpu);});});
+  });})(i);
+  p.then(function save(){PW.fx.slowmo(false);
+    return api("POST","create",{name:name,device:PW.DEV,shots:shots,dives:dives}).then(function(r){
+      if(r.status!==200)return offline(save);
+      track("challenge_created");
+      var url=ORIGIN+"/p/"+r.j.id,score=outs.filter(function(o){return o==="goal";}).length;
+      sheet([el("h2",null,"You scored "+score+"/5")].concat(shareSheet("I scored "+score+"/5 on Penalty Wahala. Bet you can't save it:",url,"challenge"),[tipsCard()]));
+    });});
+});}
+
+/* THE FRIEND: alternate shot then dive; the server judges and reveals only the
+   shot just taken. A dropped connection resumes at the next kick. */
+function friend(id){api("GET","match",null,{id:id}).then(function(r){
+  if(r.status===0)return offline(function(){friend(id);});
+  if(r.status!==200)return sheet([el("h2",null,"This challenge doesn't exist"),btn("Start your own","red",function(){closeSheet();challenger();})]);
+  var m=r.j;track("challenge_opened");
+  if(m.expired)return sheet([el("h2",null,"This challenge ran out"),btn("Start your own","red",function(){closeSheet();challenger();})]);
+  if(m.done)return result(m.score.a,m.score.b,m.winner,m.challenger,id);
+  sheet([el("h2",null,m.challenger+" challenges you"),el("p",null,"5 shots, 5 saves. Free, no stakes."),btn("Kick off","red",function(){closeSheet();askName().then(go);})]);
+  var outs=m.outcomes.slice();PW.setScore(m.score.a,m.score.b,m.challenger);
+  function go(name){var n=outs.length;var shot=n%2===0;
+    PW.fx.slowmo(Math.floor(n/2)>=REG-1);
+    var step=shot?PW.aimAndShoot().then(function(s){return api("POST","kick",{id:id,device:PW.DEV,name:name,kind:"shot",spot:s.spot,power:s.power}).then(function(x){return {x:x,s:s};});})
+                 :PW.pickDive().then(function(dv){return api("POST","kick",{id:id,device:PW.DEV,name:name,kind:"dive",spot:dv}).then(function(x){return {x:x,dv:dv};});});
+    step.then(function(o){var x=o.x;
+      if(x.status===0)return offline(function(){go(name);});
+      if(x.status===409&&x.j.error==="taken")return sheet([el("h2",null,"Someone else is playing this one"),btn("Start your own","red",function(){closeSheet();challenger();})]);
+      if(x.status!==200)return offline(function(){friend(id);});
+      outs.push(x.j.outcome);dots(outs.filter(function(_,i){return i%2===0;}));
+      var anim=shot?PW.playKick({who:"you",shot:R.strike(o.s.spot,o.s.power),dive:x.j.outcome==="save"?o.s.spot:(o.s.spot+3)%6,outcome:x.j.outcome})
+                    :PW.playKick({who:"them",shot:x.j.against,dive:o.dv,outcome:x.j.outcome});
+      anim.then(function(){var st=x.j.state;PW.setScore(st.score.a,st.score.b);if(st.done){track("challenge_finished");PW.fx.slowmo(false);return result(st.score.a,st.score.b,st.winner,m.challenger,id);}go(name);});
+    });}
+});}
+
+function result(a,b,winner,chName,id){
+  var url=ORIGIN+"/p/"+id;
+  var head=winner==="a"?"You beat "+chName+" "+a+"-"+b:winner==="b"?chName+" beat you "+b+"-"+a:"Draw, "+a+"-"+b;
+  var text=winner==="a"?"I beat "+chName+" "+a+"-"+b+" on Penalty Wahala 😤 Your turn:":"Penalty Wahala: "+head+". Try me:";
+  sheet([el("h2",null,head)].concat(shareSheet(text,url,"result"),[btn("Start your own challenge","ghost",function(){closeSheet();challenger();}),tipsCard()]));
+}
+
+window.PWFlow={challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,offline:offline};
+})();
+</script>
 </body></html>

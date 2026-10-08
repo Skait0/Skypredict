@@ -96,3 +96,26 @@ test("only the first pose of each character and the ball load up front", () => {
   const eager = (html.match(/<link rel="preload" as="image" href="\/penalty\/[a-z-]+\.webp">/g) || []).length;
   assert.strictEqual(eager, 3);
 });
+
+test("shares go to WhatsApp and X equally, X credits the account", () => {
+  assert.match(html, /https:\/\/wa\.me\/\?text=/);
+  assert.match(html, /https:\/\/x\.com\/intent\/post\?text=/);
+  assert.match(html, /via @SoccerWizardhq/);
+});
+
+test("every POST carries the site's request header", () => {
+  assert.match(html, /"X-SW-Request":"1"/);
+});
+
+test("analytics events named in the spec are sent", () => {
+  for (const e of ["challenge_created", "challenge_opened", "challenge_finished", "tips_clicked", "share"]) assert.match(html, new RegExp('track\\("' + e + '"'));
+});
+
+test("the challenger takes 5 shots and 3 bonus shots, 5 dives and 3 bonus dives", () => {
+  assert.match(html, /for\(var i=0;i<REG\+BONUS;i\+\+\)/);
+});
+
+test("no bet, booking code or price anywhere in the game", () => {
+  /* "no stakes" is allowed copy; a stake to place is not. */
+  assert.doesNotMatch(html, /booking code|\bodds\b|SportyBet|Bet9ja|place a bet|your stake/i);
+});
