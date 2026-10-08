@@ -41,9 +41,17 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:600 1
 /* LED boards behind the goal */
 .boards{position:absolute;left:0;right:0;background:#050506;border-top:1px solid #2a2a30;border-bottom:1px solid #2a2a30;overflow:hidden}
 .boards:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#ffffff0d,transparent 40%),repeating-linear-gradient(90deg,transparent 0 2px,#05050666 2px 3px);pointer-events:none}
-.track{position:absolute;top:0;bottom:0;left:0;display:flex;align-items:center;white-space:nowrap;animation:pw-marquee 22s linear infinite;will-change:transform}
-.track span{font:italic 800 var(--bf,14px)/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:.08em;color:var(--red);text-shadow:0 0 6px #e6394699;padding-right:2.2em}
-.track span b{color:#fff;font-weight:800;text-shadow:0 0 6px #ffffff66}
+.track{position:absolute;top:0;bottom:0;left:0;display:flex;align-items:center;white-space:nowrap;animation:pw-marquee 34s linear infinite;will-change:transform}
+/* one panel per brand, each in its own colours, the way stadium LEDs rotate */
+.track .pn{display:inline-flex;align-items:center;height:100%;padding:0 1.6em;font:italic 800 var(--bf,14px)/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:.06em;border-right:1px solid #ffffff14}
+.track .pn b,.track .pn i{font-style:inherit;font-weight:800;color:#fff;text-shadow:0 0 6px #ffffff55}
+.track .pn .red{color:var(--red);text-shadow:0 0 6px #e6394699}
+.track .sb{background:#c8102e}.track .sb i{color:#ffd9de}
+.track .b9 .b9r{color:#D42127;text-shadow:0 0 6px #d4212799}.track .b9 .b9g{color:#22A04B;text-shadow:0 0 6px #22a04b99}
+.track .gold{color:#FFC400!important;text-shadow:0 0 6px #ffc40099!important}
+.track .lime{color:#9CE800!important;text-shadow:0 0 6px #9ce80099!important}
+.track .xb{background:#0b2a4a}.track .blue{color:#4fa3e8!important;text-shadow:0 0 6px #276BA6!important}
+/* 1xBet brand blue #276BA6 */
 .bflash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:italic 800 var(--bf,14px)/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:.3em;opacity:0;background:#050506}
 .bflash.go{animation:pw-blink .9s steps(1) 1}
 /* pitch */
@@ -65,6 +73,22 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .zones button:active{background:#e6394633}
 /* HUD */
 #hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:center;padding:calc(10px + env(safe-area-inset-top)) 14px 0;z-index:6;pointer-events:none}
+/* the shootout board: one row per side, a circle per kick - green goal, red miss,
+   hollow still to come - and the side about to kick lit */
+.sboard{display:grid;gap:3px;min-width:min(310px,92vw);padding:6px 10px;border-radius:12px;background:#0b0c10e6;border:1px solid var(--line);box-shadow:0 10px 26px #0009;backdrop-filter:blur(6px)}
+.srow{display:grid;grid-template-columns:minmax(52px,1fr) auto 26px;align-items:center;gap:8px;padding:2px 2px;border-radius:7px;transition:background .2s}
+.srow.now{background:#ffffff0f}
+.srow[hidden]{display:none}
+.srow .who{font:italic 800 12px/1 "Roboto Condensed",sans-serif;letter-spacing:.08em;color:var(--soft);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38vw}
+.srow.now .who{color:#fff}
+.srow b{font:italic 800 18px/1 "Roboto Condensed",sans-serif;text-align:right}
+.kicks{display:flex;gap:4px}
+.kicks i{position:relative;width:14px;height:14px;border-radius:50%;border:1.5px solid #ffffff40;transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
+.kicks i.g{background:var(--green);border-color:var(--green);transform:scale(1.1)}
+.kicks i.m{background:var(--red);border-color:var(--red)}
+.kicks i.m:before,.kicks i.m:after{content:"";position:absolute;left:3px;right:3px;top:5.5px;height:1.5px;background:#fff;transform:rotate(45deg)}
+.kicks i.m:after{transform:rotate(-45deg)}
+.kicks i.sd{border-style:dashed}
 .score{display:flex;align-items:center;gap:10px;background:#0d0d0fcc;border:1px solid var(--line);border-radius:99px;padding:7px 14px;backdrop-filter:blur(6px)}
 .score b{font:italic 800 18px/1 "Roboto Condensed",sans-serif;min-width:14px;text-align:center}
 .score .who{font-size:12px;color:var(--soft);max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -119,7 +143,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
   <div id="world">
     <div class="sky"></div><div class="beam l"></div><div class="beam r"></div>
     <div class="crowd" id="crowd"></div>
-    <div class="boards" id="boards"><div class="track"><span><b>SOCCERWIZARD</b> &middot; FREE PICKS EVERY DAY &middot; <b>SOCCERWIZARD</b>.LIVE &middot; PLAY PENALTY &middot;</span><span><b>SOCCERWIZARD</b> &middot; FREE PICKS EVERY DAY &middot; <b>SOCCERWIZARD</b>.LIVE &middot; PLAY PENALTY &middot;</span></div><div class="bflash" id="bflash"></div></div>
+    <div class="boards" id="boards"><div class="track"><span class="pn"><b>SOCCER</b><i class="red">WIZARD</i></span><span class="pn sb"><b>SPORTY</b><i>BET</i></span><span class="pn b9"><i class="b9r">BET</i><i class="b9g">9JA</i></span><span class="pn bk"><b>BET</b><i class="gold">KING</i></span><span class="pn bw"><b>BET</b><i class="lime">PAWA</i></span><span class="pn xb"><b>1X</b><i class="blue">BET</i></span><span class="pn"><b>PLAY</b><i class="red">PENALTY</i></span><span class="pn"><b>SOCCER</b><i class="red">WIZARD</i></span><span class="pn sb"><b>SPORTY</b><i>BET</i></span><span class="pn b9"><i class="b9r">BET</i><i class="b9g">9JA</i></span><span class="pn bk"><b>BET</b><i class="gold">KING</i></span><span class="pn bw"><b>BET</b><i class="lime">PAWA</i></span><span class="pn xb"><b>1X</b><i class="blue">BET</i></span><span class="pn"><b>PLAY</b><i class="red">PENALTY</i></span></div><div class="bflash" id="bflash"></div></div>
     <div class="grass" id="grass"></div>
     <svg class="layer" id="turf"></svg>
     <svg class="layer" id="lines"></svg>
@@ -139,7 +163,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
     <svg class="layer" id="guide"></svg>
   </div>
   <svg class="layer" id="bolt" style="z-index:8"></svg>
-  <div id="hud"><div class="score"><span class="who" id="whoA">You</span><b id="scA">0</b><div class="dots" id="dotsYou"></div><b id="scB">0</b><span class="who" id="whoB"></span></div></div>
+  <div id="hud"><div class="sboard"><div class="srow" id="rowA"><span class="who" id="whoA">YOU</span><span class="kicks" id="kA"></span><b id="scA">0</b></div><div class="srow" id="rowB"><span class="who" id="whoB">CPU</span><span class="kicks" id="kB"></span><b id="scB">0</b></div></div></div>
   <div id="tag"></div><div id="combo"></div>
   <div id="hint"></div>
   <div id="coach" role="status"><img src="/penalty/kw-taunt.webp" alt=""><p></p></div><i id="ghost"></i>
@@ -265,7 +289,7 @@ function layout(){
   $("boards").style.cssText="top:"+bTop+"px;height:"+bH+"px;--bf:"+Math.round(bH*0.62)+"px";
   $("grass").style.cssText="top:"+(bTop+bH)+"px;--st:"+Math.round(H*0.035)+"px";
   var z=$("zones");z.style.left=gl.x+"px";z.style.top=gl.y+"px";z.style.width=(gr.x-gl.x)+"px";z.style.height=goalH+"px";
-  drawTurf();drawLines();drawGoal(0,0,0);
+  drawTurf();drawLines();drawGoal();
   if(!document.querySelector(".crowd i"))for(var i=0;i<26;i++){var d=document.createElement("i");d.style.left=Math.random()*100+"%";d.style.top=Math.random()*90+"%";d.style.animationDelay=(Math.random()*0.5)+"s";$("crowd").appendChild(d);}
   place();
 }
@@ -290,16 +314,30 @@ function drawLines(){
   line(s,P(-30,0,GOAL.z),P(30,0,GOAL.z),c,2,o);
   var sp=P(0,0,0);svgEl("ellipse",{cx:sp.x,cy:sp.y+0.02*sp.s,rx:0.1*sp.s,ry:0.035*sp.s,fill:c,"fill-opacity":0.55},s);
 }
-/* The net, with a give at one point: (ix,iy) in metres on the goal plane,
-   depth d in metres. Each mesh node is pushed back by d with a smooth falloff
-   around the impact - that is the billow. */
-function drawGoal(ix,iy,d){
+/* THE NET IS A CLOTH (owner: "there is no football net physics"). A grid of
+   knots, each pulled back to rest and to its neighbours by springs, damped;
+   the edges are tied to the frame and the ground. A ball hitting it pushes the
+   knots around it back, the push travels outward as a ripple, and it settles. */
+function netMake(cols,rows){return {c:cols,r:rows,d:new Array(cols*rows).fill(0),v:new Array(cols*rows).fill(0)};}
+function netHit(N,ci,ri,force){for(var j=0;j<N.r;j++)for(var i=0;i<N.c;i++){if(i===0||j===0||i===N.c-1||j===N.r-1)continue;
+  var r2=(i-ci)*(i-ci)+(j-ri)*(j-ri)*1.4;N.v[j*N.c+i]+=force*Math.exp(-r2/3);}}
+function netStep(N,dt){var nd=N.d.slice(),K1=60,K2=140,DAMP=5.5;
+  for(var j=1;j<N.r-1;j++)for(var i=1;i<N.c-1;i++){var k=j*N.c+i,avg=(N.d[k-1]+N.d[k+1]+N.d[k-N.c]+N.d[k+N.c])/4;
+    N.v[k]+=(-K1*N.d[k]+K2*(avg-N.d[k])-DAMP*N.v[k])*dt;nd[k]=N.d[k]+N.v[k]*dt;}
+  N.d=nd;}
+var NETC=18,NETR=9,NETN=netMake(NETC,NETR),NETLIVE=false,NETI={x:0,y:1};
+function netAt(x,y){return {i:Math.round((x+GOAL.w/2)/GOAL.w*(NETC-1)),j:Math.round(y/GOAL.h*(NETR-1))};}
+function drawGoal(){
   var n=$("net");n.textContent="";var back=GOAL.z+1.6,top=GOAL.h*0.85;
-  function node(x,y){var r2=((x-ix)*(x-ix)+(y-iy)*(y-iy)*1.6),push=d*Math.exp(-r2/1.6);
+  /* a knot pushed back also spreads away from the hit and sags, so the
+     billow reads from straight behind the ball, not only as depth */
+  function node(i,j){var x=-GOAL.w/2+GOAL.w*i/(NETC-1),y=GOAL.h*j/(NETR-1),push=NETN.d[j*NETC+i];
+    x+=(x-NETI.x)*push*0.16;y+=(y-NETI.y)*push*0.12-push*0.25;
     var zz=GOAL.z+0.2+(back-GOAL.z)*(0.55+0.45*(1-y/GOAL.h))+push;return P(x,Math.min(y,top+(GOAL.h-top)*(1-(zz-GOAL.z)/2)),zz);}
-  var st="#ffffff",op=0.22;
-  for(var gx=-GOAL.w/2;gx<=GOAL.w/2+0.01;gx+=0.42){var prev=null;for(var gy=0;gy<=GOAL.h+0.01;gy+=0.3){var p=node(gx,gy);if(prev)line(n,prev,p,st,1,op);prev=p;}}
-  for(var gy2=0;gy2<=GOAL.h+0.01;gy2+=0.3){var pv=null;for(var gx2=-GOAL.w/2;gx2<=GOAL.w/2+0.01;gx2+=0.42){var q=node(gx2,gy2);if(pv)line(n,pv,q,st,1,op);pv=q;}}
+  var st="#ffffff",op=0.22,i,j,pts=[];
+  for(j=0;j<NETR;j++){pts[j]=[];for(i=0;i<NETC;i++)pts[j][i]=node(i,j);}
+  for(i=0;i<NETC;i++)for(j=1;j<NETR;j++)line(n,pts[j-1][i],pts[j][i],st,1,op);
+  for(j=0;j<NETR;j++)for(i=1;i<NETC;i++)line(n,pts[j][i-1],pts[j][i],st,1,op);
   var po=$("posts");po.textContent="";var L=P(-GOAL.w/2,0,GOAL.z),LT=P(-GOAL.w/2,GOAL.h,GOAL.z),R=P(GOAL.w/2,0,GOAL.z),RT=P(GOAL.w/2,GOAL.h,GOAL.z);
   var w=Math.max(4,0.12*L.s);
   [[L,LT],[R,RT],[LT,RT]].forEach(function(seg){line(po,seg[0],seg[1],"#000",w+3,0.35);line(po,seg[0],seg[1],"#f4f4f6",w,1);line(po,seg[0],seg[1],"#ffffff",w*0.35,0.9);});
@@ -344,7 +382,6 @@ function dust(x){if(REDUCED)return;var d=$("dust"),p=P(x,0,GOAL.z),w=1.6*p.s,t0=
    camera's shake and zoom. TS slows simulated time for the decisive kicks;
    hitStop freezes it for a few frames on contact. */
 var CAM_FX={sx:0,sy:0,zoom:1,zoomTo:1,shake:0};
-var NET={d:0,v:0,ix:0,iy:1};
 var TS=1,hitStop=0,jobs=[],last=performance.now();
 function every(fn){jobs.push(fn);}
 function tick(now){
@@ -353,7 +390,9 @@ function tick(now){
   /* jobs started by a job (an impact starting a burst) join after this frame */
   var cur=jobs;jobs=[];cur=cur.filter(function(f){return f(dt,real)!==false;});jobs=cur.concat(jobs);
   /* net: damped spring back to rest */
-  if(NET.d||NET.v){NET.v+=(-90*NET.d-9*NET.v)*real;NET.d+=NET.v*real;if(Math.abs(NET.d)<0.003&&Math.abs(NET.v)<0.02){NET.d=0;NET.v=0;}drawGoal(NET.ix,NET.iy,NET.d);}
+  /* the net cloth, stepped while it moves (two sub-steps keep it stable) */
+  if(NETLIVE){netStep(NETN,real/2);netStep(NETN,real/2);drawGoal();
+    var e=0;for(var q=0;q<NETN.d.length;q++)e+=Math.abs(NETN.d[q])+Math.abs(NETN.v[q]);if(e<0.02){NETN=netMake(NETC,NETR);NETLIVE=false;drawGoal();}}
   /* keeper idles: a small bob while waiting */
   K.bob=K.idle&&!REDUCED?Math.sin(now/380)*1.6:0;
   /* A keeper waiting for the kick shuffles his weight across the line. The
@@ -374,6 +413,18 @@ function tick(now){
 requestAnimationFrame(tick);
 addEventListener("resize",layout);
 
+/* ---------------------------------------------------------------- board
+   Every kick lands on its side's row as it is taken (playKick writes it).
+   Five circles each, more appear in sudden death; single for a solo go. */
+var BOARD={a:[],b:[],single:false};
+function drawBoard(){
+  [["a","kA","scA"],["b","kB","scB"]].forEach(function(r){var outs=BOARD[r[0]],host=$(r[1]);host.textContent="";
+    var n=Math.max(REG,BOARD.a.length,BOARD.b.length);if(n>REG&&!BOARD.single)n=Math.max(BOARD.a.length,BOARD.b.length)+(BOARD.a.length===BOARD.b.length?1:0);
+    for(var i=0;i<Math.max(REG,n);i++){var c=document.createElement("i");if(i>=REG)c.className="sd";if(i<outs.length)c.className=outs[i]==="goal"?"g":"m";host.appendChild(c);}
+    $(r[2]).textContent=outs.filter(function(o){return o==="goal";}).length;});
+  $("rowB").hidden=BOARD.single;
+}
+function boardNow(side){$("rowA").classList.toggle("now",side==="a");$("rowB").classList.toggle("now",side==="b");}
 /* ---------------------------------------------------------------- effects */
 var fx={
   pop:function(word,color){var p=$("pop");p.textContent=word;p.style.color=color||"#fff";p.classList.remove("go");void p.offsetWidth;p.classList.add("go");},
@@ -465,7 +516,7 @@ function guide(g){var s=$("guide");s.textContent="";if(!g||!g.ok)return;
   var ang=Math.atan2(e.y-c1.y,e.x-c1.x),h=11;
   svgEl("path",{d:"M"+(e.x+Math.cos(ang)*h)+" "+(e.y+Math.sin(ang)*h)+" L"+(e.x+Math.cos(ang+2.5)*h)+" "+(e.y+Math.sin(ang+2.5)*h)+" L"+(e.x+Math.cos(ang-2.5)*h)+" "+(e.y+Math.sin(ang-2.5)*h)+"Z",fill:col},s);}
 function aimAndShoot(){
-  $("tag").textContent="YOUR SHOT";K.idle=true;SC=ME;KC=OPP||other();hint("SWIPE THE BALL TO SHOOT");
+  $("tag").textContent="YOUR SHOT";boardNow("a");K.idle=true;SC=ME;KC=OPP||other();hint("SWIPE THE BALL TO SHOOT");
   coach("shoot","Swipe the ball toward the goal. Where you swipe is where it goes. Swipe faster to hit it harder, bend your swipe to curl it.",true);
   return new Promise(function(done){
     var app=$("app"),path=null;
@@ -478,7 +529,7 @@ function aimAndShoot(){
     app.addEventListener("pointerdown",down);app.addEventListener("pointermove",move);app.addEventListener("pointerup",up);
   });
 }
-function pickDive(){$("tag").textContent="YOUR SAVE · TAP WHERE TO DIVE";K.idle=true;KC=ME;SC=OPP||other();
+function pickDive(){$("tag").textContent="YOUR SAVE · TAP WHERE TO DIVE";boardNow("b");K.idle=true;KC=ME;SC=OPP||other();
   coach("dive","Your turn in goal. Tap the part of the goal where you think the shot is going, and you dive there.",false);return tapSpot();}
 
 /* ---------------------------------------------------------------- a kick */
@@ -501,6 +552,8 @@ function resetScene(){
 /* k = {who:"you"|"them", shot:{spot,kind,power?}, dive, outcome} */
 function playKick(k){
   K.idle=false;if(k.who==="you"){SC=ME;KC=OPP||other();}else{SC=OPP||other();KC=ME;}
+  var you=k.who==="you";
+  BOARD[you?"a":"b"].push(k.outcome);
   var kind=k.shot.kind,power=k.shot.power!=null?k.shot.power:(kind==="green"?0.65:kind==="weak"?0.4:0.95);
   var perfect=kind==="green"&&power>=0.72&&power<=0.82;
   /* Your swipe gave the exact aim and the curl; a stored or computer shot
@@ -508,7 +561,7 @@ function playKick(k){
   var aim=target(k.shot.spot,k.outcome==="bar"?"bar":kind);
   if(k.shot.aim){aim={x:k.shot.aim.x,y:aim.y===3.4||k.outcome==="bar"?aim.y:k.shot.aim.y};if(k.outcome==="bar")aim.x=Math.max(-3.4,Math.min(3.4,k.shot.aim.x));}
   var curl=k.shot.curl!=null?k.shot.curl:(Math.random()*0.8-0.4),side=curl>=0?1:-1;
-  var f=flightPlan(aim,power,curl),kp=keeperPose(k.dive),you=k.who==="you";
+  var f=flightPlan(aim,power,curl),kp=keeperPose(k.dive);
   trailGold=perfect;
   /* run-up: three strides to the ball */
   S.img="s-run.webp";
@@ -547,7 +600,7 @@ function playKick(k){
           }
         }else if(phase==="after"){
           after+=dt;
-          if(k.outcome==="goal"){var damp=Math.exp(-after*14);B.z=GOAL.z+(4/14)*(1-damp)*1.2;B.x=ox+vx*(1-damp)/14*4;
+          if(k.outcome==="goal"){var damp=Math.exp(-after*14);if(after<0.5){var nq=netAt(B.x,B.y);netHit(NETN,nq.i,nq.j,dt*18*(1-after*2));NETLIVE=true;}B.z=GOAL.z+(4/14)*(1-damp)*1.2;B.x=ox+vx*(1-damp)/14*4;
             vy-=9.81*dt;oy+=vy*dt;if(oy<0.11){oy=0.11;vy=-vy*RESTITUTION;if(Math.abs(vy)<0.5)vy=0;}B.y=oy;}
           else{vy-=9.81*dt;B.x+=vx*dt;B.y+=vy*dt;B.z+=vz*dt;
             if(B.y<0.11){B.y=0.11;vy=Math.abs(vy)*RESTITUTION;vx*=0.8;vz*=0.8;if(vy<0.6)vy=0;if(after-lastHit>0.08){lastHit=after;if(vy>1.2)fx.shake(0);}}
@@ -567,12 +620,12 @@ function playKick(k){
     else{K.img="k-shrug.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x=0;K.flip=1;S.img="s-head.webp";
       if(you)coach("over","Too hard, it flew. Ease off: a firm swipe goes in, a slap goes over. The line turns red when you're overdoing it.",false);}
     return wait(950);
-  }).then(function(){resetScene();});
+  }).then(function(){resetScene();drawBoard();});
 
   function impact(what){
     var bp=P(B.x,B.y,B.z);
     if(what==="goal"){
-      NET.ix=B.x;NET.iy=B.y;NET.v=14+power*10;hitStop=0.07;fx.shake(kind==="green"?2:1);fx.buzz(40);fx.hype();
+      var nh=netAt(B.x,B.y);NETI={x:B.x,y:B.y};netHit(NETN,nh.i,nh.j,12+power*8);NETLIVE=true;hitStop=0.07;fx.shake(kind==="green"?2:1);fx.buzz(40);fx.hype();
       var top=high(k.shot.spot)&&col(k.shot.spot)!==1&&kind==="green";
       fx.sprite("burst",bp.x,bp.y,top?90:64,420);if(top)fx.sprite("star",bp.x,bp.y,110,620);
       fx.pop(top?"TOP BINS!":perfect?"WIZARDRY!":(you?"GOAL!":"OYA!"),top?"#F2B84B":"#2FD48A");
@@ -593,7 +646,8 @@ layout();
 window.PW={RULES:{strike:strike,neighbour:neighbour,judge:judge,shootout:shootout,ZONES:ZONES,REG:REG,BONUS:BONUS},
   aimAndShoot:aimAndShoot,pickDive:pickDive,playKick:playKick,fx:fx,
   get DEV(){return DEV;},get NAME(){return NAME;},setName:function(n){NAME=n;try{localStorage.setItem("pw.name",n);}catch(e){}},
-  setScore:function(a,b,who){$("scA").textContent=a;$("scB").textContent=b;if(who!=null)$("whoB").textContent=who;},
+  setScore:function(a,b,who){if(who!=null)$("whoB").textContent=who;},
+  newBoard:function(who,single,a,b){BOARD={a:(a||[]).slice(),b:(b||[]).slice(),single:!!single};if(who!=null)$("whoB").textContent=who;drawBoard();boardNow(null);},
   tag:function(t){$("tag").textContent=t||"";},
   coachReset:function(){COACHED={};try{localStorage.removeItem("pw.coach");}catch(e){}},
   get char(){return ME;},setChar:function(c){ME=c==="wizard"?"wizard":"ten";try{localStorage.setItem("pw.char",ME);}catch(e){}loadChar(ME);SC=ME;KC=OPP||other();},
@@ -620,7 +674,6 @@ function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=c
 function sheet(nodes){PW.tag("");PW.fx.combo(0);var s=$("sheet");s.textContent="";nodes.forEach(function(n){s.appendChild(n);});s.classList.add("on");}
 function closeSheet(){$("sheet").classList.remove("on");}
 function btn(label,cls,fn){var b=el("button","btn "+cls,label);b.type="button";b.addEventListener("click",fn);return b;}
-function dots(outs){var d=$("dotsYou");d.textContent="";outs.forEach(function(o){var i=el("i",o==="goal"?"g":"m");d.appendChild(i);});}
 
 /* The one failure screen: never invents a result, and says which failure it
    was - only a dead connection is "can't reach"; a server that answered
@@ -633,7 +686,7 @@ function offline(retry){
 
 /* A FULL MATCH AGAINST THE COMPUTER, NOTHING SENT ANYWHERE: shot, save, shot,
    save, sudden death, scored by the same shootout rules the server uses. */
-function practice(){PW.setOpponent(null);PW.resetStreak();var outs=[];PW.setScore(0,0,"Computer");dots([]);
+function practice(){PW.setOpponent(null);PW.resetStreak();var outs=[];PW.newBoard("Computer",false);
   function cpuShot(){return {spot:Math.floor(Math.random()*6),power:0.45+Math.random()*0.5};}
   function next(){var st=R.shootout(outs);PW.setScore(st.a,st.b);if(st.done)return finish(st);
     PW.fx.slowmo(Math.floor(outs.length/2)>=REG-1);
@@ -684,7 +737,7 @@ function tipsCard(){var box=el("div","tips");
 /* THE CHALLENGER: 5 shots + 3 bonus vs a computer keeper, 5 dives + 3 bonus
    vs computer shots. Judged here (no stakes); the picks go to the server. */
 function challenger(){PW.setOpponent(null);PW.resetStreak();askName().then(function(name){
-  var shots=[],dives=[],outs=[],i=0,cpu=0;PW.setScore(0,0,"Computer");
+  var shots=[],dives=[],outs=[],i=0,cpu=0;PW.newBoard("Computer",false);
   function cpuDive(){return Math.floor(Math.random()*6);}
   function cpuShot(){return {spot:Math.floor(Math.random()*6),power:0.45+Math.random()*0.5};}
   var p=Promise.resolve();
@@ -692,7 +745,7 @@ function challenger(){PW.setOpponent(null);PW.resetStreak();askName().then(funct
     if(n===REG)PW.fx.pop("BONUS KICKS","#F2B84B");
     PW.fx.slowmo(n===REG-1);
     return PW.aimAndShoot().then(function(s){shots.push(s);var d=cpuDive(),o=R.judge(s,d);
-      if(n<REG){outs.push(o);dots(outs);PW.setScore(outs.filter(function(x){return x==="goal";}).length,cpu);}
+      if(n<REG){outs.push(o);PW.setScore(outs.filter(function(x){return x==="goal";}).length,cpu);}
       return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power},dive:d,outcome:o});})
     .then(function(){return PW.pickDive();})
     .then(function(dv){dives.push(dv);var cs=cpuShot(),co=R.judge(cs,dv);if(n<REG&&co==="goal")cpu++;return PW.playKick({who:"them",shot:R.strike(cs.spot,cs.power),dive:dv,outcome:co}).then(function(){if(n<REG)PW.setScore(outs.filter(function(x){return x==="goal";}).length,cpu);});});
@@ -720,7 +773,7 @@ function friend(id){PW.setOpponent(null);PW.resetStreak();api("GET","match",null
     .concat(shareSheet("Bet you can't beat me on Play Penalty:",url,"challenge"),[btn("Start another challenge","ghost",function(){closeSheet();challenger();})]));
   if(m.role!=="friend"&&m.outcomes.length)return sheet([el("h2",null,"Someone else is playing this one"),btn("Start your own","red",function(){closeSheet();challenger();})]);
   sheet([el("h2",null,m.challenger+" challenges you"),el("p",null,"5 shots, 5 saves. Free, no stakes. Pick your player:"),charPicker(),btn("Kick off","red",function(){closeSheet();askName().then(go);})]);
-  var outs=m.outcomes.slice();PW.setScore(m.score.a,m.score.b,m.challenger);
+  var outs=m.outcomes.slice();PW.newBoard(m.challenger,false,outs.filter(function(_,i){return i%2===0;}),outs.filter(function(_,i){return i%2===1;}));
   function go(name){var n=outs.length;var shot=n%2===0;
     PW.fx.slowmo(Math.floor(n/2)>=REG-1);
     var step=shot?PW.aimAndShoot().then(function(s){return api("POST","kick",{id:id,device:PW.DEV,name:name,kind:"shot",spot:s.spot,power:s.power}).then(function(x){return {x:x,s:s};});})
@@ -769,7 +822,7 @@ function faced(){F.sheet([F.el("h2",null,"You've faced today's keeper"),F.el("p"
   F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})]);}
 /* A replay that counts for nothing: five shots against random dives, judged
    on the phone, no server, no streak. */
-function forFun(){var outs=[];PW.resetStreak();PW.setScore(0,0,"Just for fun");
+function forFun(){var outs=[];PW.resetStreak();PW.newBoard("Just for fun",true);
   function one(){PW.aimAndShoot().then(function(s){var d=Math.floor(Math.random()*6),o=R.judge(s,d);outs.push(o);
     PW.setScore(outs.filter(function(x){return x==="goal";}).length,outs.filter(function(x){return x!=="goal";}).length);
     return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power},dive:d,outcome:o});})
@@ -777,8 +830,8 @@ function forFun(){var outs=[];PW.resetStreak();PW.setScore(0,0,"Just for fun");
       F.sheet([F.el("h2",null,"Just for fun: "+outs.filter(function(x){return x==="goal";}).length+"/5"),F.el("p",null,"Not counted. Tomorrow's keeper is the one that counts."),
         F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})]);});}
   one();}
-function daily(){var outs=[],day=null,i=0;PW.setScore(0,0,"The Wizard");PW.setOpponent("wizard");PW.resetStreak();
-  function sync(st){day=st.day;i=st.at;outs=st.outcomes.slice();PW.setScore(outs.filter(function(o){return o==="goal";}).length,outs.filter(function(o){return o!=="goal";}).length);}
+function daily(){var outs=[],day=null,i=0;PW.newBoard("The Wizard",true);PW.setOpponent("wizard");PW.resetStreak();
+  function sync(st){day=st.day;i=st.at;outs=st.outcomes.slice();PW.newBoard("The Wizard",true,outs,[]);PW.setScore(outs.filter(function(o){return o==="goal";}).length,outs.filter(function(o){return o!=="goal";}).length);}
   function start(){F.api("GET","dailystate",null,{device:PW.DEV}).then(function(r){
     if(r.status!==200)return F.offline(start);
     if(r.j.score!=null)return faced();

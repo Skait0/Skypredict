@@ -73,7 +73,7 @@ test("the ball bounces with energy loss, so it settles instead of bouncing forev
 
 test("Soccerwizard is on the advert boards", () => {
   assert.match(html, /class="boards"/);
-  assert.match(html, /SOCCERWIZARD/);
+  assert.match(html.replace(/<[^>]+>/g, ""), /SOCCERWIZARD/);
 });
 
 test("lightning strikes only on a perfect strike or a hot streak", () => {
@@ -194,7 +194,7 @@ test("a full match against the computer needs no server and is offered from home
 test("the scoreboard names fit a phone", () => {
   assert.doesNotMatch(html, /\.score \.who\{[^}]*max-width:80px/);
   assert.doesNotMatch(html, /setScore\(0,0,"Wizard Keeper"\)/, "the long label is gone");
-  assert.match(html, /setScore\(0,0,"The Wizard"\)/);
+  assert.match(html, /newBoard\("The Wizard",true\)/);
 });
 
 test("Play the computer is the first button on the home screen", () => {
@@ -326,4 +326,31 @@ test("every keeper pose has its own measured height, per character, so he never 
 test("a diving keeper lands on the landing frames: impact or crash, then down, or holding the ball", () => {
   for (const f of ["k-land", "k-crash", "k-down", "k-held"]) assert.match(html, new RegExp('"' + f + '\\.webp"'), f);
   assert.match(html, /K\.img=high\(k\.dive\)\?"k-crash\.webp":"k-land\.webp"/);
+});
+
+/* Round 6b, owner 8 Oct 2026: "use the normal penalty scoreboard style",
+   "there is no football net physics", "in the advert runner, add all the bookies
+   and their colors". */
+test("the scoreboard is a shootout board: a row per side, a circle per kick, filled as they go", () => {
+  assert.match(html, /class="sboard"/);
+  assert.match(html, /id="kA"/); assert.match(html, /id="kB"/);
+  assert.match(html, /function drawBoard\(/);
+  assert.match(grabFn("playKick"), /BOARD\[you\?"a":"b"\]\.push\(/, "every kick is written to its side");
+});
+
+test("the net is a cloth: an impact billows it and it settles back to rest", () => {
+  const mk = new Function(grabFn("netMake") + "\n" + grabFn("netHit") + "\n" + grabFn("netStep") + "\nreturn {netMake:netMake,netHit:netHit,netStep:netStep};")();
+  const N = mk.netMake(18, 9);
+  mk.netHit(N, 9, 5, 6);
+  let peak = 0; for (let i = 0; i < 20; i++) { mk.netStep(N, 1 / 60); peak = Math.max(peak, ...N.d.map(Math.abs)); }
+  assert.ok(peak > 0.2, "it billows: " + peak);
+  for (let i = 0; i < 600; i++) mk.netStep(N, 1 / 60);
+  assert.ok(Math.max(...N.d.map(Math.abs)) < 0.01, "it settles");
+  assert.ok(N.d.every((v, i) => (i % 18 === 0 || i % 18 === 17 || i < 18 || i >= 18 * 8) ? v === 0 : true), "the frame edges are pinned");
+});
+
+test("every bookmaker runs on the LED boards in its own colours", () => {
+  const boards = /<div class="boards"[\s\S]*?<div class="bflash"/.exec(html)[0];
+  for (const b of ["SPORTYBET", "BET9JA", "BETKING", "BETPAWA", "1XBET", "SOCCERWIZARD"]) assert.match(boards.replace(/<[^>]+>/g, ""), new RegExp(b), b);
+  for (const c of ["#D42127", "#FFC400", "#9CE800", "#276BA6"]) assert.match(html, new RegExp(c), c);
 });
