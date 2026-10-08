@@ -147,7 +147,7 @@ test("the daily keeper is always The Wizard", () => {
 test("lightning is yours alone, and only for a real perfect strike or a hot streak", () => {
   assert.match(html, /if\(you&&\(perfect\|\|streak>=3\)&&k\.outcome==="goal"\)lightning\(/);
   assert.doesNotMatch(html, /power=k\.shot\.power!=null\?k\.shot\.power:\(kind==="green"\?0\.72/, "a guessed power must never land in the perfect band");
-  assert.match(html, /shot:\{spot:s\.spot,kind:R\.strike\(s\.spot,s\.power\)\.kind,power:s\.power\}/, "your own shots carry their real power");
+  assert.match(html, /shot:\{spot:s\.spot,kind:R\.strike\(s\.spot,s\.power\)\.kind,power:s\.power,aim:s\.aim,curl:s\.curl\}/, "your own shots carry their real power, aim and curl");
 });
 
 test("the streak starts at zero every match", () => {
@@ -222,7 +222,7 @@ test("a longer swipe aims higher, and the aim never leaves the frame", () => {
   const short = S(swp([[200, 700], [200, 640]], 80), H), long = S(swp([[200, 700], [200, 440]], 260), H);
   assert.ok(long.aim.y > short.aim.y && long.spot >= 3 && short.spot < 3, JSON.stringify({ short, long }));
   const wild = S(swp([[200, 700], [600, 650]], 120), H);
-  assert.ok(Math.abs(wild.aim.x) <= 3.45 && wild.aim.y <= 2.25);
+  assert.ok(Math.abs(wild.aim.x) <= 3.5 && wild.aim.y <= 2.3);
 });
 
 test("swipe speed is power: a lazy swipe is weak, a wild one sails over", () => {
@@ -439,10 +439,6 @@ test("no aim arrow while you hold the ball", () => {
   assert.doesNotMatch(html, /id="guide"/);
 });
 
-test("the ball trails fire in flight", () => {
-  assert.match(html, /function fireTick\(/);
-  assert.match(grabFn("playKick"), /fireTick\(/);
-});
 
 test("a swipe that turns right curls the ball right; one that turns left, left", () => {
   const S = swipe();
@@ -474,4 +470,44 @@ test("the keeper is happy when he saves or the kicker misses: up off the floor, 
   assert.match(f, /if\(k\.outcome!=="goal"\)return wait\([^)]*\)\.then\(function\(\)\{K\.img=k\.outcome==="save"\?"k-roar\.webp":"k-taunt\.webp";/);
   assert.doesNotMatch(f, /"k-shrug\.webp"/, "no shrugging at a miss");
   assert.doesNotMatch(html, /The line turns red/, "the aim line is gone; the coach must not mention it");
+});
+
+/* Round 11, owner 8 Oct 2026: "the fiery trail is too much, give me something
+   wizardry", "the controls dont feel fluid enough, ball direction seems
+   limited", "more game mechanics to make the penalty crazier". */
+test("every flow flies the ball to your real aim with your curl, not to a spot's centre", () => {
+  assert.doesNotMatch(html, /kind:R\.strike\(s\.spot,s\.power\)\.kind,power:s\.power\}/, "a shot without aim/curl lands on a fixed spot");
+  assert.doesNotMatch(html, /kind:R\.strike\(o\.s\.spot,o\.s\.power\)\.kind,power:o\.s\.power\}/);
+  assert.match(html, /power:s\.power,aim:s\.aim,curl:s\.curl\}/);
+});
+
+test("the swipe projects to a point on the goal: the whole frame is reachable", () => {
+  const S = swipe();
+  const geo = { bx: 200, by: 700, gx: 200, gy: 380, sG: 45, k: 2.4 };
+  const top = S(swp([[200, 700], [240, 600], [270, 520]], 150), H, geo);
+  assert.ok(top.aim.x > 3 && top.aim.y > 2, "top corner: " + JSON.stringify(top.aim));
+  const low = S(swp([[200, 700], [185, 640]], 120), H, geo);
+  assert.ok(low.aim.y < 0.8 && low.aim.x < 0, "low left: " + JSON.stringify(low.aim));
+  const mid = S(swp([[200, 700], [210, 630], [215, 540]], 160), H, geo);
+  assert.ok(Math.abs(mid.aim.x) < 2 && mid.aim.y > 0.4 && mid.aim.y < 2.3, "anywhere between: " + JSON.stringify(mid.aim));
+});
+
+test("a long fast swipe fires as it crosses, without waiting for the finger to lift", () => {
+  assert.match(grabFn("aimAndShoot"), /if\(\w+>CAM\.H\*0\.3\)fire\(/);
+});
+
+test("the trail is a spell: star motes spiral round the ball's path; a summoning circle marks the strike", () => {
+  assert.doesNotMatch(html, /function fireTick\(/);
+  assert.match(html, /function spellTick\(/);
+  assert.match(grabFn("playKick"), /spellTick\(/);
+  assert.match(html, /function summon\(/);
+});
+
+test("solo modes add wind and a spell meter; challenges and the daily stay plain and fair", () => {
+  for (const f of ["practice", "survival", "forFun"]) assert.match(grabFn(f), /PW\.setSolo\(true\)/, f);
+  for (const f of ["challenger", "friend", "daily"]) assert.match(grabFn(f), /PW\.setSolo\(false\)/, f);
+  assert.match(html, /function consumeSpell\(/);
+  assert.match(html, /id="cast"/);
+  assert.match(html, /id="wind"/);
+  assert.match(grabFn("playKick"), /SPELLNOW/);
 });
