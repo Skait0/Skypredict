@@ -523,6 +523,7 @@ test("the legendary shot: LEGEND shows only while you aim, freezes the keeper, a
   assert.match(grabFn("playKick"), /\$\("app"\)\.classList\.add\("legend"\)/);
   assert.match(html, /#app\.legend #keeper\{filter:/);
   assert.doesNotMatch(html, /id="runes"/, "the rune circle is gone");
+  assert.match(html, /#spellbox\[hidden\]\{display:none\}/, "display:flex must not beat hidden: no meter in challenges or the daily");
   for (const f of ["practice", "survival", "forFun"]) assert.match(grabFn(f), /if\(sp&&o==="save"\)o="goal"/, f);
 });
 
