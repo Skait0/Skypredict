@@ -142,3 +142,27 @@ test("tips returns the pick of the day summary", async () => {
   const w = world();
   assert.deepStrictEqual((await w.call("GET", "tips")).json(), { home: "PSV", away: "Heerenveen", tip: "Over 1.5", pct: 82, league: "Eredivisie" });
 });
+
+/* Final review, 8 Oct 2026. */
+test("match tells the opener their side, never echoing a device", async () => {
+  const w = world(); const id = await create(w);
+  await w.call("POST", "kick", { id, device: DEV2, name: "Ada", kind: "shot", spot: 0, power: 0.7 });
+  const as = async (d) => (await w.call("GET", "match", null, { id, device: d }));
+  const ch = await as(DEV1), fr = await as(DEV2), other = await as(DEV3), none = await w.call("GET", "match", null, { id });
+  assert.deepStrictEqual([ch.json().role, fr.json().role, other.json().role, none.json().role], ["challenger", "friend", null, null]);
+  for (const r of [ch, fr, other]) assert.ok(!r.body.includes(DEV1) && !r.body.includes(DEV2), "no device in the answer");
+});
+
+test("dailystate says where a go stands so a reload or lost answer resumes, never sending dives", async () => {
+  const w = world();
+  const fresh = (await w.call("GET", "dailystate", null, { device: DEV1 })).json();
+  assert.deepStrictEqual([fresh.at, fresh.outcomes, fresh.score], [0, [], null]);
+  const r0 = await w.call("POST", "daily", { device: DEV1, i: 0, spot: 0, power: 0.7 });
+  const r1 = await w.call("POST", "daily", { device: DEV1, i: 1, spot: 1, power: 0.7, day: r0.json().day });
+  const st = await w.call("GET", "dailystate", null, { device: DEV1 });
+  assert.deepStrictEqual([st.json().at, st.json().outcomes, st.json().day], [2, [r0.json().outcome, r1.json().outcome], "2026-10-08"]);
+  assert.ok(!/"spot"|dive/.test(st.body), "no shot detail or dive in the state");
+  const lost = await w.call("POST", "daily", { device: DEV1, i: 1, spot: 1, power: 0.7, day: "2026-10-08" });
+  assert.strictEqual(lost.code, 409);
+  assert.strictEqual(lost.json().at, 2, "a replayed shot is told where the go really is");
+});

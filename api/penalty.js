@@ -11,6 +11,12 @@ const DAY_MS = 864e5;
 const REG_LEN = P.REG + P.BONUS;           // 8 stored shots and 8 stored dives
 const DEV_RE = /^[0-9a-f-]{36}$/;
 
+/* Where a daily go stands: outcomes only, never the shots or the dives. */
+function dailyState(day, play) {
+  const shots = play ? play.shots : [];
+  return { day, at: shots.length, outcomes: shots.map((x) => x.outcome), score: play && play.score != null ? play.score : null };
+}
+
 function make(deps) {
   const db = deps.db, now = deps.now || Date.now;
   const key = () => process.env.PENALTY_KEY || "";
@@ -18,6 +24,12 @@ function make(deps) {
   const tips = deps.tips || defaultTips;
   const bad = (res) => H.sendJson(res, 400, { error: "bad" });
 
+  /* Which side the opener is on, so a finished or running challenge is told
+     from their side. Computed from the device; the device never goes back. */
+  function roleOf(m, dev) {
+    if (!DEV_RE.test(String(dev || ""))) return null;
+    return dev === m.challenger_device ? "challenger" : dev === m.friend_device ? "friend" : null;
+  }
   function publicState(m, t) {
     const s = P.shootout(m.friend_kicks.map((k) => k.outcome));
     return { id: m.id, challenger: m.challenger_name, friend: m.friend_name, outcomes: m.friend_kicks.map((k) => k.outcome),
@@ -44,7 +56,7 @@ function make(deps) {
     async match(req, res, t) {
       const m = await db.getMatch(String((req.query || {}).id || "").toUpperCase());
       if (!m) return H.sendJson(res, 404, { error: "not_found" });
-      return H.sendJson(res, 200, publicState(m, t));
+      return H.sendJson(res, 200, Object.assign(publicState(m, t), { role: roleOf(m, (req.query || {}).device) }));
     },
     async kick(req, res, t) {
       const b = await H.readJson(req, 1024);
@@ -94,7 +106,10 @@ function make(deps) {
       const day = b.i > 0 && (b.day === today || b.day === yesterday) ? b.day : today;
       const play = await db.getPlay(day, b.device);
       const shots = play ? play.shots : [];
-      if (shots.length !== b.i || (play && play.score != null)) return H.sendJson(res, 409, { error: "turn" });
+      /* Out of step (a reload, or an answer that never arrived): say where the
+         go really stands so the page resumes there. */
+      if (shots.length !== b.i || (play && play.score != null))
+        return H.sendJson(res, 409, Object.assign({ error: "turn" }, dailyState(day, play)));
       const dives = P.dailyDives(key(), day);
       const outcome = P.judge(shot, dives[b.i]);
       const next = shots.concat([{ spot: b.spot, power: b.power, outcome }]);
@@ -109,6 +124,16 @@ function make(deps) {
         out.better = r && r.total > 1 ? Math.round(100 * r.below / (r.total - 1)) : null;
       }
       return H.sendJson(res, 200, out);
+    },
+    async dailystate(req, res, t) {
+      const dev = String((req.query || {}).device || "");
+      if (!DEV_RE.test(dev)) return bad(res);
+      const today = P.lagosDay(t), yesterday = P.lagosDay(t - DAY_MS);
+      /* An unfinished go from before Lagos midnight is still finished against
+         its own keeper. */
+      const prev = await db.getPlay(yesterday, dev);
+      if (prev && prev.score == null && prev.shots.length) return H.sendJson(res, 200, dailyState(yesterday, prev));
+      return H.sendJson(res, 200, dailyState(today, await db.getPlay(today, dev)));
     },
     async mine(req, res, t) {
       const dev = String((req.query || {}).device || "");

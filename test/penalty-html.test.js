@@ -83,7 +83,7 @@ test("Soccerwizard is on the advert boards", () => {
 test("lightning strikes only on a perfect strike or a hot streak", () => {
   const calls = html.match(/lightning\(/g) || [];
   assert.strictEqual(calls.length, 2, "one definition, one call");
-  assert.match(html, /if\(\(perfect\|\|streak>=3\)&&k\.outcome==="goal"\)\{?\s*lightning\(/);
+  assert.match(html, /if\(you&&\(perfect\|\|streak>=3\)&&k\.outcome==="goal"\)\{?\s*lightning\(/);
 });
 
 test("every sprite the page names exists on disk", () => {
@@ -149,4 +149,45 @@ test("players choose Ten or The Wizard, the choice is kept, the opponent is the 
 
 test("the daily keeper is always The Wizard", () => {
   assert.match(html, /function daily\(\)\{[^}]*PW\.setOpponent\("wizard"\)/);
+});
+
+/* Final review fixes, 8 Oct 2026. */
+test("lightning is yours alone, and only for a real perfect strike or a hot streak", () => {
+  assert.match(html, /if\(you&&\(perfect\|\|streak>=3\)&&k\.outcome==="goal"\)lightning\(/);
+  assert.doesNotMatch(html, /power=k\.shot\.power!=null\?k\.shot\.power:\(kind==="green"\?0\.72/, "a guessed power must never land in the perfect band");
+  assert.match(html, /shot:\{spot:s\.spot,kind:R\.strike\(s\.spot,s\.power\)\.kind,power:s\.power\}/, "your own shots carry their real power");
+});
+
+test("the streak starts at zero every match", () => {
+  assert.match(html, /resetStreak:function\(\)\{streak=0;/);
+  for (const f of ["challenger", "friend", "daily"]) assert.match(html, new RegExp("function " + f + "\\([^)]*\\)\\{[^]{0,200}PW\\.resetStreak\\(\\)"), f);
+});
+
+test("on a desktop a click or Space shoots; the hint says so", () => {
+  assert.match(html, /e\.key===" "\|\|e\.key==="Enter"/);
+  assert.match(html, /CLICK OR PRESS SPACE TO SHOOT/);
+});
+
+test("a challenge is told from the opener's side", () => {
+  assert.match(html, /api\("GET","match",null,\{id:id,device:PW\.DEV\}\)/);
+  assert.match(html, /m\.role==="challenger"/);
+  assert.match(html, /function result\(a,b,winner,chName,id,role,frName\)/);
+});
+
+test("a daily go resumes where it stopped, and a finished day can be replayed for fun", () => {
+  assert.match(html, /api\("GET","dailystate",null,\{device:PW\.DEV\}\)/);
+  assert.match(html, /function forFun\(\)/);
+  assert.match(html, /Play again for fun/);
+});
+
+test("the waiting keeper shuffles and mirrors at the centre, so his stance never leans one way", () => {
+  assert.match(html, /if\(K\.idle&&K\.img==="k-ready\.webp"&&!REDUCED\)\{var sw=Math\.sin\(now\/1700\*Math\.PI\);K\.x=sw\*0\.22;K\.flip=sw>=0\?1:-1;\}/);
+});
+
+/* Owner on the preview, 8 Oct 2026: "i get, cant reach the pitch". The server
+   had answered (forbidden / not configured); only a dead connection is "can't reach". */
+test("the error screen says what actually happened", () => {
+  assert.match(html, /LAST=\{status:r\.status,error:j&&j\.error\}/);
+  assert.match(html, /isn't switched on here yet/);
+  assert.match(html, /LAST\.status===0\?"Can't reach the pitch, try again\."/);
 });

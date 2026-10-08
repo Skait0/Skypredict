@@ -319,6 +319,10 @@ function tick(now){
   if(NET.d||NET.v){NET.v+=(-90*NET.d-9*NET.v)*real;NET.d+=NET.v*real;if(Math.abs(NET.d)<0.003&&Math.abs(NET.v)<0.02){NET.d=0;NET.v=0;}drawGoal(NET.ix,NET.iy,NET.d);}
   /* keeper idles: a small bob while waiting */
   K.bob=K.idle&&!REDUCED?Math.sin(now/380)*1.6:0;
+  /* A keeper waiting for the kick shuffles his weight across the line. The
+     wizard's ready pose is drawn mid-lunge, so it is mirrored as he passes
+     the centre - he never reads as leaning one way (owner, 8 Oct 2026). */
+  if(K.idle&&K.img==="k-ready.webp"&&!REDUCED){var sw=Math.sin(now/1700*Math.PI);K.x=sw*0.22;K.flip=sw>=0?1:-1;}
   CAM_FX.zoom+=(CAM_FX.zoomTo-CAM_FX.zoom)*Math.min(1,real*6);
   CAM_FX.shake=Math.max(0,CAM_FX.shake-real*28);
   var a=REDUCED?0:CAM_FX.shake;CAM_FX.sx=(Math.random()*2-1)*a;CAM_FX.sy=(Math.random()*2-1)*a;
@@ -382,17 +386,23 @@ function aimAndShoot(){
   return tapSpot().then(function(spot){return new Promise(function(done){
     var r=$("reticle"),tp=target(spot,"green"),pp=P(tp.x,tp.y,GOAL.z);r.style.left=pp.x+"px";r.style.top=pp.y+"px";r.classList.add("on");
     var bar=$("bar"),knob=$("knob"),w=bar.getBoundingClientRect().width,t0=performance.now(),raf=0,pos=0;
-    bar.classList.add("on");hint("FLICK UP TO SHOOT");
+    var FINE=matchMedia("(pointer: fine)").matches;
+    bar.classList.add("on");hint(FINE?"CLICK OR PRESS SPACE TO SHOOT":"FLICK UP TO SHOOT");
     function sweep(t){var ph=((t-t0)/900)%2;pos=ph<1?ph:2-ph;knob.style.transform="translateX("+(pos*w)+"px)";raf=requestAnimationFrame(sweep);}
     raf=requestAnimationFrame(sweep);
     var sy=0,st=0,app=$("app");
     function down(e){sy=e.clientY;st=performance.now();}
-    function up(e){var lift=sy-e.clientY,ms=Math.max(1,performance.now()-st);if(lift<24)return;
-      cancelAnimationFrame(raf);bar.classList.remove("on");r.classList.remove("on");hint("");
-      app.removeEventListener("pointerdown",down);app.removeEventListener("pointerup",up);
-      var full=Math.min(1,(lift/ms)/1.2);                    /* px per ms; 1.2+ is a full flick */
+    /* A flick on a phone; on a desktop a plain click or Space/Enter strikes
+       clean. The press that chose the spot is not a shot: only a press that
+       began after the bar started counts. */
+    function up(e){if(!st)return;var lift=sy-e.clientY,ms=Math.max(1,performance.now()-st);
+      if(lift<24){if(FINE)fire(1);return;}
+      fire(Math.min(1,(lift/ms)/1.2));}                       /* px per ms; 1.2+ is a full flick */
+    function key(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();fire(1);}}
+    function fire(full){cancelAnimationFrame(raf);bar.classList.remove("on");r.classList.remove("on");hint("");
+      app.removeEventListener("pointerdown",down);app.removeEventListener("pointerup",up);removeEventListener("keydown",key);
       fx.buzz(15);done({spot:spot,power:Math.max(0,Math.min(1,pos*(0.8+0.2*full)))});}
-    app.addEventListener("pointerdown",down);app.addEventListener("pointerup",up);
+    app.addEventListener("pointerdown",down);app.addEventListener("pointerup",up);addEventListener("keydown",key);
   });});
 }
 function pickDive(){$("tag").textContent="YOUR SAVE · TAP WHERE TO DIVE";K.idle=true;KC=ME;SC=OPP||other();return tapSpot();}
@@ -417,7 +427,7 @@ function resetScene(){
 /* k = {who:"you"|"them", shot:{spot,kind,power?}, dive, outcome} */
 function playKick(k){
   K.idle=false;if(k.who==="you"){SC=ME;KC=OPP||other();}else{SC=OPP||other();KC=ME;}
-  var kind=k.shot.kind,power=k.shot.power!=null?k.shot.power:(kind==="green"?0.72:kind==="weak"?0.4:0.95);
+  var kind=k.shot.kind,power=k.shot.power!=null?k.shot.power:(kind==="green"?0.65:kind==="weak"?0.4:0.95);
   var perfect=kind==="green"&&power>=0.72&&power<=0.82;
   var aim=target(k.shot.spot,k.outcome==="bar"?"bar":kind),side=col(k.shot.spot)===1?(Math.random()<.5?-1:1):(col(k.shot.spot)===0?-1:1);
   var f=flightPlan(aim,power,side*-1),kp=keeperPose(k.dive),you=k.who==="you";
@@ -479,7 +489,7 @@ function playKick(k){
       fx.pop(top?"TOP BINS!":perfect?"WIZARDRY!":(you?"GOAL!":"OYA!"),top?"#F2B84B":"#2FD48A");
       fx.board(top?"TOP BINS":"GOAL",top?"#F2B84B":"#2FD48A");
       if(you)streak++;fx.combo(streak);
-      if((perfect||streak>=3)&&k.outcome==="goal")lightning(bp.x,bp.y);
+      if(you&&(perfect||streak>=3)&&k.outcome==="goal")lightning(bp.x,bp.y);
     }else if(what==="save"){
       hitStop=0.09;fx.shake(1);fx.buzz([20,40,20]);fx.sprite("burst",bp.x,bp.y,70,380);
       fx.pop("SAVED!","#E63946");fx.board("SAVED","#E63946");if(you)streak=0;fx.combo(streak);
@@ -497,6 +507,7 @@ window.PW={RULES:{strike:strike,neighbour:neighbour,judge:judge,shootout:shootou
   setScore:function(a,b,who){$("scA").textContent=a;$("scB").textContent=b;if(who!=null)$("whoB").textContent=who;},
   tag:function(t){$("tag").textContent=t||"";},
   get char(){return ME;},setChar:function(c){ME=c==="wizard"?"wizard":"ten";try{localStorage.setItem("pw.char",ME);}catch(e){}loadChar(ME);SC=ME;KC=OPP||other();},
+  resetStreak:function(){streak=0;fx.combo(0);},
   setOpponent:function(c){OPP=c||null;loadChar(OPP||other());KC=OPP||other();}};
 })();
 </script>
@@ -510,17 +521,25 @@ function track(name,data){try{window.va("event",{name:name,data:data||{}});}catc
 function api(method,a,body,q){
   var qs="?a="+a+Object.keys(q||{}).map(function(k){return "&"+k+"="+encodeURIComponent(q[k]);}).join("");
   return fetch("/api/penalty"+qs,{method:method,headers:method==="POST"?{"Content-Type":"application/json","X-SW-Request":"1"}:{},
-    body:method==="POST"?JSON.stringify(body):undefined}).then(function(r){return r.json().then(function(j){return {status:r.status,j:j};});})
-    .catch(function(){return {status:0,j:{}};});
+    body:method==="POST"?JSON.stringify(body):undefined}).then(function(r){return r.text().then(function(t){var j={};try{j=JSON.parse(t)||{};}catch(e){}
+      LAST={status:r.status,error:j&&j.error};return {status:r.status,j:j};});})
+    .catch(function(){LAST={status:0,error:null};return {status:0,j:{}};});
 }
+var LAST={status:0,error:null};
 function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
 function sheet(nodes){PW.tag("");PW.fx.combo(0);var s=$("sheet");s.textContent="";nodes.forEach(function(n){s.appendChild(n);});s.classList.add("on");}
 function closeSheet(){$("sheet").classList.remove("on");}
 function btn(label,cls,fn){var b=el("button","btn "+cls,label);b.type="button";b.addEventListener("click",fn);return b;}
 function dots(outs){var d=$("dotsYou");d.textContent="";outs.forEach(function(o){var i=el("i",o==="goal"?"g":"m");d.appendChild(i);});}
 
-/* The one network failure screen: never invents a result. */
-function offline(retry){sheet([el("p",null,"Can't reach the pitch, try again."),btn("Try again","red",function(){closeSheet();retry();})]);}
+/* The one failure screen: never invents a result, and says which failure it
+   was - only a dead connection is "can't reach"; a server that answered
+   "not here" or "not set up" is not switched on. */
+function offline(retry){
+  var off=LAST.status===403||LAST.status===404||LAST.error==="not_configured";
+  var msg=LAST.status===0?"Can't reach the pitch, try again.":off?"Penalty Wahala isn't switched on here yet. Play the computer meanwhile.":
+    LAST.status===429?"Too many kicks for a moment. Try again shortly.":"Something went wrong on our side ("+(LAST.error||LAST.status)+"). Try again.";
+  sheet([el("p",null,msg),btn("Try again","red",function(){closeSheet();retry();})]);}
 
 function askName(){return new Promise(function(done){
   if(PW.NAME)return done(PW.NAME);
@@ -557,7 +576,7 @@ function tipsCard(){var box=el("div","tips");
 
 /* THE CHALLENGER: 5 shots + 3 bonus vs a computer keeper, 5 dives + 3 bonus
    vs computer shots. Judged here (no stakes); the picks go to the server. */
-function challenger(){PW.setOpponent(null);askName().then(function(name){
+function challenger(){PW.setOpponent(null);PW.resetStreak();askName().then(function(name){
   var shots=[],dives=[],outs=[],i=0,cpu=0;PW.setScore(0,0,"Computer");
   function cpuDive(){return Math.floor(Math.random()*6);}
   function cpuShot(){return {spot:Math.floor(Math.random()*6),power:0.45+Math.random()*0.5};}
@@ -567,7 +586,7 @@ function challenger(){PW.setOpponent(null);askName().then(function(name){
     PW.fx.slowmo(n===REG-1);
     return PW.aimAndShoot().then(function(s){shots.push(s);var d=cpuDive(),o=R.judge(s,d);
       if(n<REG){outs.push(o);dots(outs);PW.setScore(outs.filter(function(x){return x==="goal";}).length,cpu);}
-      return PW.playKick({who:"you",shot:R.strike(s.spot,s.power),dive:d,outcome:o});})
+      return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power},dive:d,outcome:o});})
     .then(function(){return PW.pickDive();})
     .then(function(dv){dives.push(dv);var cs=cpuShot(),co=R.judge(cs,dv);if(n<REG&&co==="goal")cpu++;return PW.playKick({who:"them",shot:R.strike(cs.spot,cs.power),dive:dv,outcome:co}).then(function(){if(n<REG)PW.setScore(outs.filter(function(x){return x==="goal";}).length,cpu);});});
   });})(i);
@@ -582,12 +601,17 @@ function challenger(){PW.setOpponent(null);askName().then(function(name){
 
 /* THE FRIEND: alternate shot then dive; the server judges and reveals only the
    shot just taken. A dropped connection resumes at the next kick. */
-function friend(id){PW.setOpponent(null);api("GET","match",null,{id:id}).then(function(r){
+function friend(id){PW.setOpponent(null);PW.resetStreak();api("GET","match",null,{id:id,device:PW.DEV}).then(function(r){
   if(r.status===0)return offline(function(){friend(id);});
   if(r.status!==200)return sheet([el("h2",null,"This challenge doesn't exist"),btn("Start your own","red",function(){closeSheet();challenger();})]);
   var m=r.j;track("challenge_opened");
   if(m.expired)return sheet([el("h2",null,"This challenge ran out"),btn("Start your own","red",function(){closeSheet();challenger();})]);
-  if(m.done)return result(m.score.a,m.score.b,m.winner,m.challenger,id);
+  if(m.done)return result(m.score.a,m.score.b,m.winner,m.challenger,id,m.role,m.friend);
+  var url=ORIGIN+"/p/"+id;
+  if(m.role==="challenger")return sheet([el("h2",null,m.outcomes.length?m.friend+" is taking your challenge":"Waiting for a friend"),
+    el("p",null,m.outcomes.length?"Open this link again when it's done.":"Send it to someone. The link is yours to share.")]
+    .concat(shareSheet("Bet you can't beat me on Penalty Wahala:",url,"challenge"),[btn("Start another challenge","ghost",function(){closeSheet();challenger();})]));
+  if(m.role!=="friend"&&m.outcomes.length)return sheet([el("h2",null,"Someone else is playing this one"),btn("Start your own","red",function(){closeSheet();challenger();})]);
   sheet([el("h2",null,m.challenger+" challenges you"),el("p",null,"5 shots, 5 saves. Free, no stakes. Pick your player:"),charPicker(),btn("Kick off","red",function(){closeSheet();askName().then(go);})]);
   var outs=m.outcomes.slice();PW.setScore(m.score.a,m.score.b,m.challenger);
   function go(name){var n=outs.length;var shot=n%2===0;
@@ -599,16 +623,22 @@ function friend(id){PW.setOpponent(null);api("GET","match",null,{id:id}).then(fu
       if(x.status===409&&x.j.error==="taken")return sheet([el("h2",null,"Someone else is playing this one"),btn("Start your own","red",function(){closeSheet();challenger();})]);
       if(x.status!==200)return offline(function(){friend(id);});
       outs.push(x.j.outcome);dots(outs.filter(function(_,i){return i%2===0;}));
-      var anim=shot?PW.playKick({who:"you",shot:R.strike(o.s.spot,o.s.power),dive:x.j.outcome==="save"?o.s.spot:(o.s.spot+3)%6,outcome:x.j.outcome})
+      var anim=shot?PW.playKick({who:"you",shot:{spot:o.s.spot,kind:R.strike(o.s.spot,o.s.power).kind,power:o.s.power},dive:x.j.outcome==="save"?o.s.spot:(o.s.spot+3)%6,outcome:x.j.outcome})
                     :PW.playKick({who:"them",shot:x.j.against,dive:o.dv,outcome:x.j.outcome});
-      anim.then(function(){var st=x.j.state;PW.setScore(st.score.a,st.score.b);if(st.done){track("challenge_finished");PW.fx.slowmo(false);return result(st.score.a,st.score.b,st.winner,m.challenger,id);}go(name);});
+      anim.then(function(){var st=x.j.state;PW.setScore(st.score.a,st.score.b);if(st.done){track("challenge_finished");PW.fx.slowmo(false);return result(st.score.a,st.score.b,st.winner,m.challenger,id,"friend",name);}go(name);});
     });}
 });}
 
-function result(a,b,winner,chName,id){
-  var url=ORIGIN+"/p/"+id;
-  var head=winner==="a"?"You beat "+chName+" "+a+"-"+b:winner==="b"?chName+" beat you "+b+"-"+a:"Draw, "+a+"-"+b;
-  var text=winner==="a"?"I beat "+chName+" "+a+"-"+b+" on Penalty Wahala 😤 Your turn:":"Penalty Wahala: "+head+". Try me:";
+/* a = the friend's goals, b = the challenger's. Told from whoever is looking:
+   the friend, the challenger, or anyone else who opened the link. */
+function result(a,b,winner,chName,id,role,frName){
+  var url=ORIGIN+"/p/"+id,fr=frName||"Your friend",head,text;
+  if(role==="friend"){head=winner==="a"?"You beat "+chName+" "+a+"-"+b:winner==="b"?chName+" beat you "+b+"-"+a:"Draw, "+a+"-"+b;
+    text=winner==="a"?"I beat "+chName+" "+a+"-"+b+" on Penalty Wahala 😤 Your turn:":"Penalty Wahala: "+head+". Try me:";}
+  else if(role==="challenger"){head=winner==="b"?"You beat "+fr+" "+b+"-"+a:winner==="a"?fr+" beat you "+a+"-"+b:"You drew with "+fr+", "+a+"-"+b;
+    text=winner==="b"?"I beat "+fr+" "+b+"-"+a+" on Penalty Wahala 😤 Who's next?":"Penalty Wahala: "+head+". Try me:";}
+  else{head=winner==="a"?fr+" beat "+chName+" "+a+"-"+b:winner==="b"?chName+" beat "+fr+" "+b+"-"+a:chName+" and "+fr+" drew "+a+"-"+b;
+    text="Penalty Wahala: "+head+". Think you can do better?";}
   sheet([el("h2",null,head)].concat(shareSheet(text,url,"result"),[btn("Start your own challenge","ghost",function(){closeSheet();challenger();}),tipsCard()]));
 }
 
@@ -628,14 +658,31 @@ function bumpStreak(day){var s={last:null,n:0};try{s=JSON.parse(localStorage.get
 /* DAILY: shoot only, five shots, every shot judged on the server against the
    day's keeper. The day comes back with the first shot and is sent with the
    rest, so a go across Lagos midnight finishes against one keeper. */
-function daily(){var outs=[],day=null,i=0;PW.setScore(0,0,"Wizard Keeper");PW.setOpponent("wizard");
+function faced(){F.sheet([F.el("h2",null,"You've faced today's keeper"),F.el("p",null,"New keeper at midnight. Only your first go counts."),
+  F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})]);}
+/* A replay that counts for nothing: five shots against random dives, judged
+   on the phone, no server, no streak. */
+function forFun(){var outs=[];PW.resetStreak();PW.setScore(0,0,"Just for fun");
+  function one(){PW.aimAndShoot().then(function(s){var d=Math.floor(Math.random()*6),o=R.judge(s,d);outs.push(o);
+    PW.setScore(outs.filter(function(x){return x==="goal";}).length,outs.filter(function(x){return x!=="goal";}).length);
+    return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power},dive:d,outcome:o});})
+    .then(function(){if(outs.length<R.REG)return one();
+      F.sheet([F.el("h2",null,"Just for fun: "+outs.filter(function(x){return x==="goal";}).length+"/5"),F.el("p",null,"Not counted. Tomorrow's keeper is the one that counts."),
+        F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})]);});}
+  one();}
+function daily(){var outs=[],day=null,i=0;PW.setScore(0,0,"Wizard Keeper");PW.setOpponent("wizard");PW.resetStreak();
+  function sync(st){day=st.day;i=st.at;outs=st.outcomes.slice();PW.setScore(outs.filter(function(o){return o==="goal";}).length,outs.filter(function(o){return o!=="goal";}).length);}
+  function start(){F.api("GET","dailystate",null,{device:PW.DEV}).then(function(r){
+    if(r.status!==200)return F.offline(start);
+    if(r.j.score!=null)return faced();
+    sync(r.j);shot();});}
   function shot(){PW.fx.slowmo(i===R.REG-1);
     PW.aimAndShoot().then(function(s){return F.api("POST","daily",{device:PW.DEV,i:i,spot:s.spot,power:s.power,day:day}).then(function(x){return {x:x,s:s};});})
     .then(function(o){var x=o.x;
-      if(x.status===409)return F.sheet([F.el("h2",null,"You've faced today's keeper"),F.el("p",null,"New keeper at midnight. Challenge a friend meanwhile."),F.btn("Challenge a friend","red",function(){F.closeSheet();F.challenger();})]);
+      if(x.status===409){if(x.j.score!=null)return faced();if(x.j.at!=null){sync(x.j);return shot();}return F.offline(start);}
       if(x.status!==200)return F.offline(shot);
       day=x.j.day;outs.push(x.j.outcome);PW.setScore(outs.filter(function(o){return o==="goal";}).length,outs.filter(function(o){return o!=="goal";}).length);
-      return PW.playKick({who:"you",shot:R.strike(o.s.spot,o.s.power),dive:x.j.outcome==="save"?o.s.spot:(o.s.spot+3)%6,outcome:x.j.outcome}).then(function(){
+      return PW.playKick({who:"you",shot:{spot:o.s.spot,kind:R.strike(o.s.spot,o.s.power).kind,power:o.s.power},dive:x.j.outcome==="save"?o.s.spot:(o.s.spot+3)%6,outcome:x.j.outcome}).then(function(){
         if(!x.j.done){i++;return shot();}
         PW.fx.slowmo(false);F.track("daily_played",{score:x.j.score});
         var n=bumpStreak(day),grid=outs.map(function(o){return o==="goal"?"⚽":"❌";}).join("");
@@ -645,7 +692,7 @@ function daily(){var outs=[],day=null,i=0;PW.setScore(0,0,"Wizard Keeper");PW.se
           F.el("p",null,(x.j.better!=null?"Better than "+x.j.better+"% of players today. ":"")+"Streak: "+n+(n===1?" day":" days"))];
         F.sheet(nodes.concat(F.shareSheet(text,location.origin+"/penalty","daily"),[F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),F.tipsCard()]));
       });});}
-  shot();}
+  start();}
 
 function home(){
   var nodes=[F.el("h2",null,"Penalty Wahala"),F.el("p",null,"Free. No stakes. Just bragging rights. Pick your player:"),F.charPicker(),
