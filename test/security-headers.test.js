@@ -61,3 +61,16 @@ test("CSP lets Google Identity Services load its script, frame, style and calls"
     assert.match(csp, /style-src[^;]*https:\/\/accounts\.google\.com\/gsi\/style/);
   }
 });
+
+/* Owner, 8 Oct 2026: a reader on skypredict-theta.vercel.app got "Something
+   went wrong" signing in - every auth POST there is 403 (Origin must be www).
+   Pages on that host go to www; /api stays put for crons and scripts; only
+   that host, so www (behind Cloudflare) is never caught in a loop. */
+test("the Vercel alias sends pages to www, and only pages, and only that host", () => {
+  const r = (cfg.redirects || []).find((x) => (x.has || []).some((h) => h.type === "host" && h.value === "skypredict-theta.vercel.app"));
+  assert.ok(r, "a host-scoped redirect");
+  assert.strictEqual(r.destination, "https://www.soccerwizard.live/$1");
+  const re = new RegExp("^" + r.source + "$");
+  assert.ok(re.test("/") && re.test("/matches") && re.test("/m/abc"), "pages move");
+  assert.ok(!re.test("/api/live") && !re.test("/api/auth/email/send"), "the API does not");
+});

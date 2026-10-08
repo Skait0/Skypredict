@@ -193,6 +193,14 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/((?!api/).*)",
+      "has": [{ "type": "host", "value": "skypredict-theta.vercel.app" }],
+      "destination": "https://www.soccerwizard.live/$1",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/s",
