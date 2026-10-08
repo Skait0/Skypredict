@@ -1531,6 +1531,31 @@ html.tapped .list-hint{display:none}
     text-align:center;white-space:nowrap;
     padding:0 10px;font-size:13px;font-weight:800;letter-spacing:0;line-height:normal;
     box-sizing:border-box}
+  /* STACKED, AS ON A PHONE (8 Oct 2026). Side by side in the rail each got
+     193px, and "Build me a SportyBet slip" with its arrow needs about 224 -
+     nowrap plus overflow:hidden cut both ends off ("uild me a ... slip").
+     The rail has no room for the two labels in one row, so each takes the
+     full width and the offer is the widest target on the card. */
+  .sc-actions{flex-direction:column;align-items:stretch}
+  .sc-actions .sc-go-btn, .sc-actions button.wsp-go{flex:0 0 auto;max-width:none;height:40px}
+}
+/* DARK THEME: THE OFFER IS A RED KEY, NOT A BLACK ONE (owner, 8 Oct 2026).
+   Black on the #0D0D0F ground had no contrast to give, and beside the ghost
+   button the pair read as equals. DESIGN.md: a pill that does something is
+   filled red or gold, and gold is already working hard on this screen. The
+   light theme keeps its black key - on a light ground it is the strongest
+   thing there, and the owner likes it. */
+[data-theme="dark"] .sc-actions .sc-go-primary,[data-theme="dark"] .sc-go-primary{
+  background:linear-gradient(178deg,#DB3643 0%,#BE1F2B 100%)!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 4px 14px rgba(150,18,30,.38)!important}
+[data-theme="dark"] .sc-go-primary .sbm,[data-theme="dark"] .sc-go-primary .b9m .b9r,
+[data-theme="dark"] .sc-go-primary .sc-go-arw{color:#fff!important}
+@media(hover:hover){
+  [data-theme="dark"] .sc-actions .sc-go-primary:hover,[data-theme="dark"] .sc-go-primary:hover{
+    background:linear-gradient(178deg,#E5444F 0%,#C8222F 100%)!important;
+    border-color:rgba(255,255,255,.3)!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 6px 18px rgba(150,18,30,.45)!important}
 }
 /* Ghost. Two filled buttons side by side compete and flatten the hierarchy;
    this one is present and plainly second. */
@@ -5598,6 +5623,18 @@ html.is-results #codeCard{display:none}
 .ck-tab[aria-selected="true"]{border-color:var(--accent);background:rgba(242,184,75,.12);color:var(--text)}
 .ck-tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media (hover:hover){ .ck-tab:hover{border-color:var(--accent)} }
+/* DARK THEME: GOLD BACK TO WHAT IT MEANS (owner, 8 Oct 2026: "on the dark
+   mode it kinda messes with me"). #F2B84B on #0D0D0F is the loudest pair the
+   palette has, and the first screen spent it eight times - on a view toggle,
+   a count, a card label, a selected tab - so the code and the odds, which
+   DESIGN.md gives it to, had nothing left to stand out with. These go
+   neutral; the code, the odds and pick of the day keep it. Light theme's
+   gold is a muted bronze and stays as it is. */
+[data-theme="dark"] .vt.on{background:var(--raise);color:var(--text)}
+[data-theme="dark"] .bookall .ba-n{background:#fff;color:#B81E2B}
+[data-theme="dark"] .ck-tag{color:var(--soft)}
+[data-theme="dark"] .ck-tab[aria-selected="true"]{border-color:rgba(242,241,240,.5);background:rgba(255,255,255,.06)}
+@media (hover:hover){ [data-theme="dark"] .ck-tab:hover{border-color:var(--faint)} }
 .ck-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media (max-width:520px){ .ck-tiles{grid-template-columns:1fr} }
 .ck-tile{border:1px solid var(--line);border-radius:var(--r-md);background:var(--card-2);
