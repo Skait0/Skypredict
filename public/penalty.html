@@ -47,14 +47,18 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:600 1
 .track{position:absolute;top:0;bottom:0;left:0;display:flex;align-items:center;white-space:nowrap;animation:pw-marquee 34s linear infinite;will-change:transform}
 /* one panel per brand, each in its own colours, the way stadium LEDs rotate */
 .track .pn{display:inline-flex;align-items:center;height:100%;padding:0 1.6em;font:italic 800 var(--bf,14px)/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:.06em;border-right:1px solid #ffffff14}
-.track .pn b,.track .pn i{font-style:inherit;font-weight:800;color:#fff;text-shadow:0 0 6px #ffffff55}
-.track .pn .red{color:var(--red);text-shadow:0 0 6px #e6394699}
-.track .sb{background:#c8102e}.track .sb i{color:#ffd9de}
-.track .b9 .b9r{color:#D42127;text-shadow:0 0 6px #d4212799}.track .b9 .b9g{color:#22A04B;text-shadow:0 0 6px #22a04b99}
-.track .gold{color:#FFC400!important;text-shadow:0 0 6px #ffc40099!important}
-.track .lime{color:#9CE800!important;text-shadow:0 0 6px #9ce80099!important}
-.track .xb{background:#0b2a4a}.track .blue{color:#4fa3e8!important;text-shadow:0 0 6px #276BA6!important}
-/* 1xBet brand blue #276BA6 */
+.track .pn b,.track .pn i{font-style:inherit;font-weight:800;color:#F2F1F0}
+.track .pn .red{color:var(--red)}
+.track .pn.mk{font-family:"Plus Jakarta Sans",system-ui,sans-serif;font-style:normal;letter-spacing:-.01em;color:#F2F1F0}
+/* BOOKMAKER WORDMARKS: the same marks, faces and colours as the site
+   (public/index.html .sbm/.b9m/.bkm/.bwm/.xbm, dark-ground values). The
+   owner: the bookie names must carry the bookie colours like the website. */
+.sbm{color:#E63946;font-weight:800;white-space:nowrap}
+.b9m,.bkm,.bwm,.xbm{font-weight:800;white-space:nowrap}
+.b9r{color:#D42127}.b9g{color:#14B151}
+.bkm{font-family:"Roboto Condensed","Arial Narrow","Helvetica Neue Condensed","Liberation Sans Narrow",sans-serif;font-stretch:condensed;letter-spacing:-.005em}.bkg{color:#FFC400}
+.bwm{font-family:Roboto,"Helvetica Neue",Arial,sans-serif;letter-spacing:-.01em}.bwp{color:#9CE800}
+.xbm{font-family:"Roboto Condensed",Roboto,"Arial Narrow",Arial,sans-serif;font-style:italic;letter-spacing:-.01em}.xbb{color:#14A0FF}
 .bflash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:italic 800 var(--bf,14px)/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:.3em;opacity:0;background:#050506}
 .bflash.go{animation:pw-blink .9s steps(1) 1}
 /* pitch */
@@ -97,7 +101,7 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .score .who{font-size:12px;color:var(--soft);max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #tag{position:absolute;top:calc(86px + env(safe-area-inset-top));left:0;right:0;text-align:center;font:italic 800 13px/1 "Roboto Condensed",sans-serif;letter-spacing:.2em;color:var(--soft);z-index:6;pointer-events:none}
 /* power bar: weak / green / over, with the sweet spot marked in gold */
-#hint{position:absolute;left:0;right:0;bottom:calc(14% + env(safe-area-inset-bottom));text-align:center;font:italic 800 15px/1 "Roboto Condensed",sans-serif;letter-spacing:.18em;color:#fff;opacity:0;transition:opacity .2s;z-index:5;pointer-events:none;text-shadow:0 2px 8px #000}
+#hint{position:absolute;left:0;right:0;bottom:calc(31% + env(safe-area-inset-bottom));text-align:center;font:italic 800 15px/1 "Roboto Condensed",sans-serif;letter-spacing:.18em;color:#fff;opacity:0;transition:opacity .2s;z-index:5;pointer-events:none;text-shadow:0 2px 8px #000}
 #hint.on{opacity:1}#hint i{display:block;font-style:normal;animation:pw-nudge .9s ease-in-out infinite}
 /* pop words */
 #pop{position:absolute;left:0;right:0;top:46%;text-align:center;font:italic 800 54px/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:-.01em;opacity:0;pointer-events:none;z-index:7;-webkit-text-stroke:2px #07080a;paint-order:stroke fill;text-shadow:0 6px 24px #000c}
@@ -135,25 +139,31 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #sheet.on{transform:none}
 #sheet h2{margin:2px 0 6px;font:italic 800 26px/1.05 "Roboto Condensed",sans-serif;letter-spacing:.01em}
 #sheet p{margin:0 0 12px;color:var(--soft);font-size:14px}
-#sheet p.credit{margin:12px 0 0;font-size:11px;opacity:.6}#sheet p.credit a{color:inherit}
+#sheet p.credit{margin:4px 0 0;font-size:11px;opacity:.6;text-align:center}#sheet p.credit a{color:inherit}
 #sheet .note{color:var(--gold);font-weight:800}
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;margin-top:8px;border:0;border-radius:999px;font:800 15px "Plus Jakarta Sans",system-ui;cursor:pointer;text-decoration:none;transition:transform .12s}
 .btn:active{transform:scale(.97)}
-.btn.red{background:var(--red);color:#fff;box-shadow:0 8px 24px #e6394644}.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn:focus-visible,.pick button:focus-visible,.sfoot button:focus-visible,#cast:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media (hover:hover){.btn.ghost:hover{background:var(--card2)}.sfoot button:hover{color:var(--text)}}
+::selection{background:#E6394666;color:#fff}
+.btn.red{background:var(--red);color:#fff}.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
 .row{display:flex;gap:8px}.row .btn{flex:1}
 input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:0 18px;font:inherit;font-size:16px;margin-bottom:4px}
 .pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 6px}
 .pick button{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px 9px;border-radius:16px;border:1px solid var(--line);background:var(--card2);color:var(--soft);font:italic 800 14px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;cursor:pointer;transition:transform .15s,border-color .15s}
 .pick button img{height:86px;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
-.pick button.on{border-color:var(--red);color:var(--text);box-shadow:0 0 0 1px var(--red),0 10px 26px #e6394633}
+.pick button.on{border-color:var(--red);color:var(--text);box-shadow:0 0 0 1px var(--red)}
 .pick button.on img{transform:scale(1.08) translateY(-2px)}
-.tips{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--card2)}
+.tips{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
 .tips:empty{display:none}
-.tips .tk{font:italic 800 13px/1 "Roboto Condensed",sans-serif;letter-spacing:.14em;color:var(--gold)!important;text-transform:uppercase}
-.codes{display:grid;gap:6px;margin:8px 0 10px}
-.crow{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
-.crow span{font-size:13px;color:var(--soft)}.crow code{font:800 15px/1 "Roboto Condensed",monospace;letter-spacing:.06em;color:#fff}
-.btn.sm{height:30px;margin:0;padding:0 12px;width:auto;font-size:12px}.tips p{margin:0 0 4px!important}.tips b{display:block;font-size:16px;margin-bottom:2px}
+.tips h3{margin:0 0 2px;font:800 17px/1.25 "Plus Jakarta Sans",system-ui,sans-serif;color:var(--text)}
+.codes{margin:8px 0 12px}
+.crow{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;padding:9px 0}
+.crow+.crow{border-top:1px solid var(--line)}
+.crow>span{font-size:15px}.crow code{font:800 16px/1 "Plus Jakarta Sans",system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.04em;color:var(--gold)}
+.btn.sm{height:32px;margin:0;padding:0 14px;width:auto;font-size:12.5px}.tips p{margin:0 0 4px!important}
+.sfoot{display:flex;justify-content:center;gap:22px;margin-top:10px}
+.sfoot button{background:none;border:0;color:var(--soft);font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;padding:10px 4px;cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line)}
 @keyframes pw-marquee{to{transform:translateX(-50%)}}
 @keyframes pw-blink{0%{opacity:1}20%{opacity:0}35%{opacity:1}55%{opacity:0}70%{opacity:1}100%{opacity:0}}
 @keyframes pw-twinkle{0%{opacity:0}50%{opacity:.9}}
@@ -167,7 +177,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
   <div id="world">
     <div class="sky"></div><div class="beam l"></div><div class="beam r"></div>
     <div class="crowd" id="crowd"><canvas id="crowdc"></canvas></div>
-    <div class="boards" id="boards"><div class="track"><span class="pn"><b>SOCCER</b><i class="red">WIZARD</i></span><span class="pn sb"><b>SPORTY</b><i>BET</i></span><span class="pn b9"><i class="b9r">BET</i><i class="b9g">9JA</i></span><span class="pn bk"><b>BET</b><i class="gold">KING</i></span><span class="pn bw"><b>BET</b><i class="lime">PAWA</i></span><span class="pn xb"><b>1X</b><i class="blue">BET</i></span><span class="pn"><b>PLAY</b><i class="red">PENALTY</i></span><span class="pn"><b>SOCCER</b><i class="red">WIZARD</i></span><span class="pn sb"><b>SPORTY</b><i>BET</i></span><span class="pn b9"><i class="b9r">BET</i><i class="b9g">9JA</i></span><span class="pn bk"><b>BET</b><i class="gold">KING</i></span><span class="pn bw"><b>BET</b><i class="lime">PAWA</i></span><span class="pn xb"><b>1X</b><i class="blue">BET</i></span><span class="pn"><b>PLAY</b><i class="red">PENALTY</i></span></div><div class="bflash" id="bflash"></div></div>
+    <div class="boards" id="boards"><div class="track"><span class="pn"><b>SOCCER</b><i class="red">WIZARD</i></span><span class="pn mk"><span class="sbm">SportyBet</span></span><span class="pn mk"><span class="b9m"><span class="b9r">bet</span><span class="b9g">9ja</span></span></span><span class="pn mk"><span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span></span><span class="pn mk"><span class="bwm"><span class="bwb">bet</span><span class="bwp">Pawa</span></span></span><span class="pn mk"><span class="xbm">1X<span class="xbb">BET</span></span></span><span class="pn"><b>PLAY</b><i class="red">PENALTY</i></span><span class="pn"><b>SOCCER</b><i class="red">WIZARD</i></span><span class="pn mk"><span class="sbm">SportyBet</span></span><span class="pn mk"><span class="b9m"><span class="b9r">bet</span><span class="b9g">9ja</span></span></span><span class="pn mk"><span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span></span><span class="pn mk"><span class="bwm"><span class="bwb">bet</span><span class="bwp">Pawa</span></span></span><span class="pn mk"><span class="xbm">1X<span class="xbb">BET</span></span></span><span class="pn"><b>PLAY</b><i class="red">PENALTY</i></span></div><div class="bflash" id="bflash"></div></div>
     <div class="grass" id="grass"></div>
     <svg class="layer" id="turf"></svg>
     <svg class="layer" id="lines"></svg>
@@ -479,7 +489,7 @@ function award(o){var r=stylePoints(o),before=levelOf(XP);chargeSpell(34+10*r.ta
    plain, because the server judges them. */
 var SOLO=false,WIND=0,SPELL=0,SPELLARMED=false,SPELLNOW=false,AIMING=false;
 function newWind(){WIND=SOLO&&Math.random()>0.25?Math.round((Math.random()*2-1)*20):0;var w=$("wind");
-  w.hidden=!SOLO;w.textContent=WIND?"WIND "+Math.abs(WIND)+" km/h "+(WIND>0?"\u2192":"\u2190"):"CALM";}
+  w.hidden=!SOLO;w.innerHTML=WIND?"WIND "+Math.abs(WIND)+' km/h <svg width="14" height="10" viewBox="0 0 14 10" aria-hidden="true" style="vertical-align:-1px'+(WIND<0?";transform:scaleX(-1)":"")+'"><path d="M1 5h11M8 1l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>':"CALM";}
 function drawSpell(){var b=$("spellbox");b.hidden=!SOLO;b.classList.toggle("full",SPELL>=100);b.querySelector("i").style.transform="scaleX("+(SPELL/100)+")";
   var c=$("cast");c.hidden=!(SOLO&&SPELL>=100&&AIMING);c.classList.toggle("armed",SPELLARMED);c.textContent=SPELLARMED?"ARMED":"LEGEND";}
 function chargeSpell(n){if(!SOLO||SPELLARMED)return;SPELL=Math.min(100,SPELL+n);drawSpell();if(SPELL>=100)fx.buzz([10,30,10]);}
@@ -605,7 +615,7 @@ function tapSpot(){return new Promise(function(done){
     z.querySelectorAll("button").forEach(function(x){x.removeEventListener("pointerdown",on);});z.classList.remove("on");fx.buzz(8);done(s);}
   z.querySelectorAll("button").forEach(function(x){x.addEventListener("pointerdown",on);});
 });}
-function hint(t){var h=$("hint");h.textContent="";if(t){var i=document.createElement("i");i.textContent="↑";h.appendChild(i);h.appendChild(document.createTextNode(t));h.classList.add("on");}else h.classList.remove("on");}
+function hint(t,up){var h=$("hint");h.textContent="";if(t){if(up){var i=document.createElement("i");i.innerHTML='<svg width="18" height="11" viewBox="0 0 18 11" aria-hidden="true"><path d="M2 9l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';h.appendChild(i);}h.appendChild(document.createTextNode(t));h.classList.add("on");}else h.classList.remove("on");}
 /* AIM, THEN FLICK. The tap chooses the spot. The bar sweeps 0 -> 1 -> 0; an
    upward flick stops it, and a short or slow flick costs power. The flick
    never chooses direction. */
@@ -633,7 +643,7 @@ function swipeShot(path,H,geo){
 /* While the finger is down: a dotted line from the ball to where it would go,
    bent by the curl, coloured by the power - grey weak, green clean, red over. */
 function aimAndShoot(){
-  $("tag").textContent="YOUR SHOT";boardNow("a");newWind();K.idle=true;AIMING=true;drawSpell();SC=ME;KC=OPP||other();hint("SWIPE THE BALL TO SHOOT");
+  $("tag").textContent="YOUR SHOT";boardNow("a");newWind();K.idle=true;AIMING=true;drawSpell();SC=ME;KC=OPP||other();hint("SWIPE THE BALL TO SHOOT",true);
   coach("shoot","Swipe the ball toward the goal. Where you swipe is where it goes. Swipe faster to hit it harder, bend your swipe to curl it.",true);
   return new Promise(function(done){
     var app=$("app"),path=null;
@@ -652,8 +662,8 @@ function aimAndShoot(){
     app.addEventListener("pointerdown",down);app.addEventListener("pointermove",move);app.addEventListener("pointerup",up);
   });
 }
-function pickDive(){$("tag").textContent="YOUR SAVE · TAP WHERE TO DIVE";boardNow("b");K.idle=true;KC=ME;SC=OPP||other();
-  coach("dive","Your turn in goal. Tap the part of the goal where you think the shot is going, and you dive there.",false);return tapSpot();}
+function pickDive(){$("tag").textContent="YOUR SAVE";hint("TAP WHERE TO DIVE");boardNow("b");K.idle=true;KC=ME;SC=OPP||other();
+  coach("dive","Your turn in goal. Tap the part of the goal where you think the shot is going, and you dive there.",false);return tapSpot().then(function(s){hint("");return s;});}
 
 /* ---------------------------------------------------------------- a kick */
 var streak=0;
@@ -884,20 +894,22 @@ function charPicker(){var box=el("div","pick");
    offering codes"). After every match: today's wizard slip with its real
    booking code on every bookmaker, one tap to copy; then the builder and the
    pick of the day. No stake is ever placed here - it hands you the code. */
-var BOOKN={sporty:"SportyBet",bet9ja:"Bet9ja",betking:"BetKing",betpawa:"betPawa",onexbet:"1xBet"};
+/* the site's wordmarks (public/index.html BOOKS.<key>.mark), never our type */
+var BOOKM={sporty:'<span class="sbm">SportyBet</span>',bet9ja:'<span class="b9m"><span class="b9r">bet</span><span class="b9g">9ja</span></span>',
+  betking:'<span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span>',betpawa:'<span class="bwm"><span class="bwb">bet</span><span class="bwp">Pawa</span></span>',
+  onexbet:'<span class="xbm">1X<span class="xbb">BET</span></span>'};
 function tipsCard(){var box=el("div","tips");
   api("GET","tips").then(function(r){if(!r.j)return;
-    box.appendChild(el("p","tk",""+"Let the wizard pick for you"));
     var c=r.j.code;
     if(c&&c.codes&&Object.keys(c.codes).length){
-      box.appendChild(el("b",null,"Today's wizard slip: "+c.games+" games"+(c.odds?" · ×"+(+c.odds).toFixed(2):"")));
+      box.appendChild(el("h3",null,"Today's wizard slip"));
+      box.appendChild(el("p",null,c.games+" games"+(c.odds?", total odds "+(+c.odds).toFixed(2):"")));
       var list=el("div","codes");
-      Object.keys(BOOKN).forEach(function(k){if(!c.codes[k])return;var row=el("div","crow");row.appendChild(el("span",null,BOOKN[k]));row.appendChild(el("code",null,c.codes[k]));
+      Object.keys(BOOKM).forEach(function(k){if(!c.codes[k])return;var row=el("div","crow"),nm=el("span");nm.innerHTML=BOOKM[k];row.appendChild(nm);row.appendChild(el("code",null,c.codes[k]));
         var cp=btn("Copy","ghost sm",function(){try{navigator.clipboard.writeText(c.codes[k]);cp.textContent="Copied";track("code_copied",{book:k});}catch(e){}});row.appendChild(cp);list.appendChild(row);});
       box.appendChild(list);}
-    if(r.j.home)box.appendChild(el("p",null,"Pick of the day: "+r.j.home+" v "+r.j.away+" · "+r.j.tip+" · "+r.j.pct+"%"));
-    var b1=el("a","btn red","Build me a slip");b1.href="/";b1.addEventListener("click",function(){track("tips_clicked",{to:"build"});});box.appendChild(b1);
-    var b2=el("a","btn ghost","See all predictions");b2.href="/";b2.addEventListener("click",function(){track("tips_clicked",{to:"predictions"});});box.appendChild(b2);});
+    if(r.j.home)box.appendChild(el("p",null,"Pick of the day: "+r.j.home+" v "+r.j.away+", "+r.j.tip+" ("+r.j.pct+"%)"));
+    var b1=el("a","btn red","Build me a slip");b1.href="/";b1.addEventListener("click",function(){track("tips_clicked",{to:"build"});});box.appendChild(b1);});
   return box;}
 
 /* THE CHALLENGER: 5 shots + 3 bonus vs a computer keeper, 5 dives + 3 bonus
@@ -1035,18 +1047,21 @@ window.PWHome=function(){home();};
 function home(){
   var lv=PW.levelOf(PW.xp),nx=[3,5,8].filter(function(x){return x>lv;})[0],best=0;try{best=+localStorage.getItem("pw.best")||0;}catch(e){}
   var nodes=[F.el("h2",null,"Play Penalty"),
-    F.el("p","note","Level "+lv+" · "+PW.xp.toLocaleString("en")+" pts · "+PW.trailFor(lv).name+" trail"+(nx?" · next unlock at level "+nx:"")+(best?" · best run "+best:"")),
-    F.el("p",null,"Free. No stakes. Just bragging rights. Pick your player:"),F.charPicker(),
+    F.el("p","note","Level "+lv+" · "+PW.xp.toLocaleString("en")+" pts"),
+    F.el("p",null,PW.trailFor(lv).name.charAt(0).toUpperCase()+PW.trailFor(lv).name.slice(1)+" trail"+(nx?", a new one at level "+nx:"")+"."+(best?" Best run: "+best+".":"")+" No money involved. Pick your player."),F.charPicker(),
     /* The one that always works comes first (owner: "there is no play
        against computer" - it sat below the fold of the sheet on a phone). */
     F.btn("Play the computer","red",function(){F.closeSheet();F.practice();}),
     F.btn("Sudden Death","ghost",function(){F.closeSheet();F.survival();}),
     F.btn("Face today's Wizard Keeper","ghost",function(){F.closeSheet();daily();}),
-    F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),
-    F.btn("How to play","ghost",function(){PW.coachReset();F.closeSheet();F.practice();})];
-  var mute=F.btn(PW.muted?"Sound: off":"Sound: on","ghost",function(e){PW.setMuted(!PW.muted);e.currentTarget.textContent=PW.muted?"Sound: off":"Sound: on";});
+    F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})];
+  /* the two settings-like actions sit small under the modes, not as two more full-width buttons */
+  var foot=F.el("div","sfoot"),how=F.el("button",null,"How to play"),mute=F.el("button",null,PW.muted?"Sound off":"Sound on");how.type=mute.type="button";
+  how.addEventListener("click",function(){PW.coachReset();F.closeSheet();F.practice();});
+  mute.addEventListener("click",function(){PW.setMuted(!PW.muted);mute.textContent=PW.muted?"Sound off":"Sound on";});
+  foot.appendChild(how);foot.appendChild(mute);
   var credit=F.el("p","credit");credit.innerHTML='Crowd sounds by Gregor Quendel, <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener" target="_blank">CC BY 4.0</a>';
-  nodes.push(mute,credit);
+  nodes.push(foot,credit);
   F.sheet(nodes);
   /* "Ada beat you 4-3": finished challenges this device created in the last week. */
   F.api("GET","mine",null,{device:PW.DEV}).then(function(r){var seen={};try{seen=JSON.parse(localStorage.getItem("pw.seen")||"{}");}catch(e){}

@@ -342,8 +342,11 @@ test("the net is a cloth: an impact billows it and it settles back to rest", () 
 
 test("every bookmaker runs on the LED boards in its own colours", () => {
   const boards = /<div class="boards"[\s\S]*?<div class="bflash"/.exec(html)[0];
-  for (const b of ["SPORTYBET", "BET9JA", "BETKING", "BETPAWA", "1XBET", "SOCCERWIZARD"]) assert.match(boards.replace(/<[^>]+>/g, ""), new RegExp(b), b);
-  for (const c of ["#D42127", "#FFC400", "#9CE800", "#276BA6"]) assert.match(html, new RegExp(c), c);
+  for (const b of ["SPORTYBET", "BET9JA", "BETKING", "BETPAWA", "1XBET", "SOCCERWIZARD"]) assert.match(boards.replace(/<[^>]+>/g, ""), new RegExp(b, "i"), b);
+  /* the site's own wordmarks and colours (owner, 9 Oct 2026), not our type */
+  for (const m of ["sbm", "b9m", "bkm", "bwm", "xbm"]) assert.match(boards, new RegExp('class="' + m + '"'), m);
+  for (const c of ["#E63946", "#D42127", "#14B151", "#FFC400", "#9CE800", "#14A0FF"]) assert.match(html, new RegExp(c), c);
+  assert.doesNotMatch(html, /\.track[^{]*\{[^}]*text-shadow:0 0/, "no zero-offset glows on the boards");
 });
 
 /* Round 7, owner 8 Oct 2026: "act a renowned game dev and add features to make it
@@ -431,7 +434,9 @@ test("the turn label sits below the scoreboard, and the miss cross is centred", 
    the stand is empty", "the red dot on the ball stays on after shooting". */
 test("no stakes in the game: nothing is wagered, but the wizard's slip and codes are offered", () => {
   assert.doesNotMatch(html, /place a bet|your stake|stake to win/i);
-  assert.match(grabFn("tipsCard"), /Let the wizard pick for you/);
+  assert.match(grabFn("tipsCard"), /Today's wizard slip/);
+  assert.match(grabFn("tipsCard"), /nm\.innerHTML=BOOKM\[k\]/, "bookmaker names are their wordmarks, in their colours");
+  assert.doesNotMatch(grabFn("tipsCard"), /See all predictions/, "one button per destination");
   assert.match(grabFn("tipsCard"), /r\.j\.code/);
   assert.match(grabFn("tipsCard"), /Build me a slip/);
 });
