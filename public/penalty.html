@@ -134,6 +134,10 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #spellbox span{font:italic 800 11px/1 "Roboto Condensed",sans-serif;letter-spacing:.14em;color:var(--gold)}
 #spellbox b{position:relative;width:64px;height:7px;border-radius:99px;background:#ffffff1a;overflow:hidden}
 #spellbox i{position:absolute;inset:0;background:linear-gradient(90deg,var(--red),var(--gold));transform-origin:0 50%;transform:scaleX(0);transition:transform .4s cubic-bezier(.2,.9,.25,1)}
+/* sound on/off, always in reach during play (owner) */
+#snd{position:absolute;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:7;width:42px;height:42px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--line);background:#0d0d0fcc;color:#F2F1F0;cursor:pointer}
+#snd[aria-pressed="false"]{color:var(--soft)}
+#snd:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 #cast{position:absolute;right:14px;bottom:calc(18% + env(safe-area-inset-bottom));z-index:7;height:46px;padding:0 18px;border-radius:99px;border:1px solid var(--gold);background:radial-gradient(circle at 30% 30%,#3a2a10,#0d0d0f);color:var(--gold);font:italic 800 15px/1 "Roboto Condensed",sans-serif;letter-spacing:.16em;box-shadow:0 0 0 0 #f2b84b88;animation:pw-castpulse 1.4s ease-out infinite;cursor:pointer}
 #cast.armed{background:var(--gold);color:#0d0d0f;animation:none;box-shadow:0 0 24px #f2b84b}
 @keyframes pw-castpulse{0%{box-shadow:0 0 0 0 #f2b84b88}100%{box-shadow:0 0 0 16px #f2b84b00}}
@@ -208,6 +212,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
   <div id="wind" hidden>CALM</div>
   <div id="spellbox" hidden><span>LEGENDARY</span><b><i></i></b></div>
   <button id="cast" type="button" hidden>LEGEND</button>
+  <button id="snd" type="button"></button>
   <div id="hud"><div class="sboard"><div class="srow" id="rowA"><i class="av" id="avA"></i><span class="who" id="whoA">YOU</span><span class="kicks" id="kA"></span><b id="scA">0</b></div><div class="srow" id="rowB"><i class="av" id="avB"></i><span class="who" id="whoB">CPU</span><span class="kicks" id="kB"></span><b id="scB">0</b></div></div></div>
   <div id="tag"></div><div id="combo"></div>
   <div id="hint"></div>
@@ -544,7 +549,7 @@ function hiss(dur,f0,f1,vol,rise,q){var c=SFX.ctx;if(!c)return;var n=Math.ceil(c
   if(rise){g.gain.exponentialRampToValueAtTime(vol,t+dur*0.92);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);}
   else{g.gain.exponentialRampToValueAtTime(vol,t+Math.min(0.03,dur/4));g.gain.exponentialRampToValueAtTime(0.0001,t+dur);}
   s.connect(f);f.connect(g);g.connect(SFX.bus);s.start(t);}
-function setMuted(m){MUTED=!!m;try{localStorage.setItem("pw.mute",MUTED?"1":"0");}catch(e){}if(SFX.bus)SFX.bus.gain.value=MUTED?0:1;}
+function setMuted(m){MUTED=!!m;try{localStorage.setItem("pw.mute",MUTED?"1":"0");}catch(e){}if(SFX.bus)SFX.bus.gain.value=MUTED?0:1;drawSnd();}
 document.addEventListener("pointerdown",sfxStart,true);document.addEventListener("keydown",sfxStart,true);
 document.addEventListener("visibilitychange",function(){if(!SFX.ctx)return;if(document.hidden)SFX.ctx.suspend();else SFX.ctx.resume();});
 var fx={
@@ -796,7 +801,7 @@ function playKick(k){
       var top=high(k.shot.spot)&&col(k.shot.spot)!==1&&kind==="green";
       fx.sprite("burst",bp.x,bp.y,spell?150:top?90:64,spell?620:420);if(top||spell)fx.sprite("star",bp.x,bp.y,spell?170:110,620);
       if(spell){fx.shake(2);fx.flash(0.22,420);}
-      hiss(0.32,3200,1100,0.28,false,0.8);sfx(spell||top?"roarbig":"roar",spell?1:0.8);
+      hiss(0.32,3200,1100,0.28,false,0.8);sfx(spell||top?"roarbig":"roar",spell?0.5:0.4);
       fx.pop(spell?"LEGENDARY!":top?"TOP BINS!":perfect?"WIZARDRY!":(you?"GOAL!":"OYA!"),spell||top?"#F2B84B":"#2FD48A");
       fx.board(top?"TOP BINS":"GOAL",top?"#F2B84B":"#2FD48A");
       if(you){streak++;award({top:top,curl:curl,perfect:perfect,streak:streak});}fx.combo(streak);
@@ -817,6 +822,10 @@ function playKick(k){
 layout();drawBoard();
 $("cast").addEventListener("click",function(e){e.stopPropagation();if(SPELL>=100&&!SPELLARMED){SPELLARMED=true;drawSpell();fx.pop("LEGENDARY","#F2B84B","ON TARGET IS A GOAL");fx.buzz([20,20,40]);}});
 $("cast").addEventListener("pointerdown",function(e){e.stopPropagation();});
+function drawSnd(){var b=$("snd");b.innerHTML=MUTED?'<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>':'<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.5 4.5 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>';b.setAttribute("aria-pressed",String(!MUTED));b.setAttribute("aria-label",MUTED?"Sound off":"Sound on");}
+$("snd").addEventListener("pointerdown",function(e){e.stopPropagation();});
+$("snd").addEventListener("click",function(e){e.stopPropagation();setMuted(!MUTED);});
+drawSnd();
 window.PWV=function(){return SPV;};
 window.PW={RULES:{strike:strike,neighbour:neighbour,judge:judge,shootout:shootout,ZONES:ZONES,REG:REG,BONUS:BONUS},
   aimAndShoot:aimAndShoot,pickDive:pickDive,playKick:playKick,fx:fx,
@@ -875,7 +884,9 @@ function practice(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(true);var o
         return PW.playKick({who:"them",shot:{spot:cs.spot,kind:R.strike(cs.spot,cs.power).kind,power:cs.power},dive:dv,outcome:o});}).then(next);}
   function finish(st){PW.fx.slowmo(false);track("practice_finished");
     var head=st.winner==="a"?"You beat the computer "+st.a+"-"+st.b:st.winner==="b"?"The computer won "+st.b+"-"+st.a:"Draw, "+st.a+"-"+st.b;
-    sheet([el("h2",null,head),el("p",null,"Fancy a real opponent?"),btn("Play again","red",function(){closeSheet();practice();}),
+    /* a shootout stops once one side cannot catch up; say so, or 4-2 after nine kicks reads like a bug (owner) */
+    var early=outs.length<2*REG?(st.winner==="a"?"The computer can't catch up, so it ends early. ":"You can't catch up with the kicks left, so it ends early. "):"";
+    sheet([el("h2",null,head),el("p",null,early+"Fancy a real opponent?"),btn("Play again","red",function(){closeSheet();practice();}),
       btn("Challenge a friend","ghost",function(){closeSheet();challenger();}),tipsCard()]);}
   next();}
 

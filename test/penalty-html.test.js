@@ -547,3 +547,10 @@ test("owner, 9 Oct 2026: a far-corner shot always gets a dive, faces on the scor
   assert.match(grabFn("pickDive"), /setTag\("YOUR SAVE","save"\)/);
   assert.match(html, /#tag\.go\{animation:pw-turn/);
 });
+
+test("owner, 9 Oct 2026: goal crowd at half volume, a sound button on the pitch, an early finish explained", () => {
+  assert.match(html, /sfx\(spell\|\|top\?"roarbig":"roar",spell\?0\.5:0\.4\)/);
+  assert.match(html, /<button id="snd" type="button"><\/button>/);
+  assert.match(html, /function setMuted\(m\)\{.*drawSnd\(\);\}/);
+  assert.match(grabFn("practice"), /so it ends early/);
+});
