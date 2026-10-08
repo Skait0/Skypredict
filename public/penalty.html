@@ -591,4 +591,56 @@ function result(a,b,winner,chName,id){
 window.PWFlow={challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,offline:offline};
 })();
 </script>
+<script>
+(function(){
+"use strict";
+var PW=window.PW,F=window.PWFlow,R=PW.RULES;
+function lagos(ms){return new Date(ms+3600000).toISOString().slice(0,10);}
+function bumpStreak(day){var s={last:null,n:0};try{s=JSON.parse(localStorage.getItem("pw.streak")||"null")||s;}catch(e){}
+  if(s.last===day)return s.n;
+  var y=new Date(Date.parse(day+"T12:00:00Z")-864e5).toISOString().slice(0,10);
+  s.n=s.last===y?s.n+1:1;s.last=day;try{localStorage.setItem("pw.streak",JSON.stringify(s));}catch(e){}return s.n;}
+
+/* DAILY: shoot only, five shots, every shot judged on the server against the
+   day's keeper. The day comes back with the first shot and is sent with the
+   rest, so a go across Lagos midnight finishes against one keeper. */
+function daily(){var outs=[],day=null,i=0;PW.setScore(0,0,"Wizard Keeper");
+  function shot(){PW.fx.slowmo(i===R.REG-1);
+    PW.aimAndShoot().then(function(s){return F.api("POST","daily",{device:PW.DEV,i:i,spot:s.spot,power:s.power,day:day}).then(function(x){return {x:x,s:s};});})
+    .then(function(o){var x=o.x;
+      if(x.status===409)return F.sheet([F.el("h2",null,"You've faced today's keeper"),F.el("p",null,"New keeper at midnight. Challenge a friend meanwhile."),F.btn("Challenge a friend","red",function(){F.closeSheet();F.challenger();})]);
+      if(x.status!==200)return F.offline(shot);
+      day=x.j.day;outs.push(x.j.outcome);PW.setScore(outs.filter(function(o){return o==="goal";}).length,outs.filter(function(o){return o!=="goal";}).length);
+      return PW.playKick({who:"you",shot:R.strike(o.s.spot,o.s.power),dive:x.j.outcome==="save"?o.s.spot:(o.s.spot+3)%6,outcome:x.j.outcome}).then(function(){
+        if(!x.j.done){i++;return shot();}
+        PW.fx.slowmo(false);F.track("daily_played",{score:x.j.score});
+        var n=bumpStreak(day),grid=outs.map(function(o){return o==="goal"?"⚽":"❌";}).join("");
+        var d=new Date(day+"T12:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+        var text="Wizard Keeper "+d+": "+grid+" "+x.j.score+"/5";
+        var nodes=[F.el("h2",null,x.j.score+"/5 against the Wizard Keeper"),
+          F.el("p",null,(x.j.better!=null?"Better than "+x.j.better+"% of players today. ":"")+"Streak: "+n+(n===1?" day":" days"))];
+        F.sheet(nodes.concat(F.shareSheet(text,location.origin+"/penalty","daily"),[F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),F.tipsCard()]));
+      });});}
+  shot();}
+
+function home(){
+  var nodes=[F.el("h2",null,"Penalty Wahala"),F.el("p",null,"Free. No stakes. Just bragging rights."),
+    F.btn("Face today's Wizard Keeper","red",function(){F.closeSheet();daily();}),
+    F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})];
+  var mute=F.btn("Vibration: on","ghost",function(e){var m=localStorage.getItem("pw.mute")==="1";localStorage.setItem("pw.mute",m?"0":"1");e.currentTarget.textContent="Vibration: "+(m?"on":"off");});
+  try{if(localStorage.getItem("pw.mute")==="1")mute.textContent="Vibration: off";}catch(e){}
+  nodes.push(mute);
+  F.sheet(nodes);
+  /* "Ada beat you 4-3": finished challenges this device created in the last week. */
+  F.api("GET","mine",null,{device:PW.DEV}).then(function(r){var seen={};try{seen=JSON.parse(localStorage.getItem("pw.seen")||"{}");}catch(e){}
+    (r.j.results||[]).filter(function(x){return !seen[x.id]&&x.score;}).slice(0,1).forEach(function(x){
+      var line=x.won?"You beat "+x.friend+" "+x.score.you+"-"+x.score.them:x.draw?"You drew with "+x.friend:x.friend+" beat you "+x.score.them+"-"+x.score.you;
+      $note(line);seen[x.id]=1;try{localStorage.setItem("pw.seen",JSON.stringify(seen));}catch(e){}});});
+  function $note(t){var s=document.getElementById("sheet");s.insertBefore(F.el("p","note",t),s.firstChild);}
+}
+
+var c=new URLSearchParams(location.search).get("c");
+if(c&&/^[A-Za-z0-9]{6}$/.test(c))F.friend(c.toUpperCase());else home();
+})();
+</script>
 </body></html>

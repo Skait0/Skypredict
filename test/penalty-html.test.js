@@ -119,3 +119,21 @@ test("no bet, booking code or price anywhere in the game", () => {
   /* "no stakes" is allowed copy; a stake to place is not. */
   assert.doesNotMatch(html, /booking code|\bodds\b|SportyBet|Bet9ja|place a bet|your stake/i);
 });
+
+test("daily share line names the day and ends with the account", () => {
+  assert.match(html, /"Wizard Keeper "\+/);
+  assert.match(html, /"⚽":"❌"/);
+});
+
+test("the streak advances only on consecutive Lagos days", () => {
+  assert.match(html, /function bumpStreak\(day\)/);
+  assert.match(html, /function lagos\(ms\)\{return new Date\(ms\+3600000\)/);
+});
+
+test("the daily go is tracked", () => {
+  assert.match(html, /track\("daily_played"/);
+});
+
+test("a challenge link opens the friend flow, anything else the home screen", () => {
+  assert.match(html, /new URLSearchParams\(location\.search\)\.get\("c"\)/);
+});
