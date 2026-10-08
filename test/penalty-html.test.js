@@ -135,7 +135,7 @@ test("a challenge link opens the friend flow, anything else the home screen", ()
 test("players choose Ten or The Wizard, the choice is kept, the opponent is the other", () => {
   assert.match(html, /localStorage\.setItem\("pw\.char"/);
   assert.match(html, /function charPicker\(/);
-  for (const pose of ["set", "spring", "dive-low", "dive-high", "jump", "catch", "beaten", "roar", "shrug", "taunt"]) assert.match(html, new RegExp('"kw-' + pose + '\.webp"'), "wizard keeper " + pose);
+  for (const pose of ["set", "spring", "dive-low", "dive-high", "jump", "catch", "beaten", "roar", "taunt"]) assert.match(html, new RegExp('"kw-' + pose + '\.webp"'), "wizard keeper " + pose);
   for (const pose of ["stand", "run", "strike", "follow", "arms", "slide", "head"]) assert.match(html, new RegExp('"sw-' + pose + '\.webp"'), "wizard shooter " + pose);
 });
 
@@ -309,7 +309,7 @@ test("a dive leaves an afterimage trail and lands with a bounce and a puff of tu
    sizes are not proportional", plus the landing sheets for both keepers. */
 test("every keeper pose has its own measured height, per character, so he never changes size", () => {
   const KH = JSON.parse(/var KH=(\{[^;]*\});/.exec(html)[1]);
-  for (const c of ["k-", "kw-"]) for (const p of ["set", "spring", "dive-low", "dive-high", "jump", "catch", "beaten", "roar", "shrug", "land", "down", "held", "crash"])
+  for (const c of ["k-", "kw-"]) for (const p of ["set", "spring", "dive-low", "dive-high", "jump", "catch", "beaten", "roar", "land", "down", "held", "crash"])
     assert.ok(KH[c + p + ".webp"] > 0.4 && KH[c + p + ".webp"] < 2.8, c + p);
   assert.match(html, /kh=KH\[file\(K\.img\)\]\*kp\.s/, "looked up by the file actually drawn");
 });
@@ -467,4 +467,11 @@ test("a catch is a catch: no parry burst, the ball rides into his hands and land
   assert.match(f, /var catchIt=kind==="weak"&&k\.dive===k\.shot\.spot;impact\("save",catchIt\);/);
   assert.match(f, /if\(caught\)\{fx\.pop\("CAUGHT!"/);
   assert.match(f, /if\(B\.att\)\{B\.x=K\.x;/);
+});
+
+test("the keeper is happy when he saves or the kicker misses: up off the floor, roaring or taunting", () => {
+  const f = grabFn("playKick");
+  assert.match(f, /if\(k\.outcome!=="goal"\)return wait\([^)]*\)\.then\(function\(\)\{K\.img=k\.outcome==="save"\?"k-roar\.webp":"k-taunt\.webp";/);
+  assert.doesNotMatch(f, /"k-shrug\.webp"/, "no shrugging at a miss");
+  assert.doesNotMatch(html, /The line turns red/, "the aim line is gone; the coach must not mention it");
 });

@@ -243,9 +243,9 @@ try{DEV=localStorage.getItem("pw.dev");if(!DEV){DEV=uuid();localStorage.setItem(
 
 /* Every pose, by file. The first of each character and the ball are preloaded
    in <head>; the rest are fetched once the page is up. */
-var SPRITES=["k-set.webp","k-spring.webp","k-land.webp","k-down.webp","k-held.webp","k-crash.webp","k-taunt.webp","k-dive-low.webp","k-dive-high.webp","k-jump.webp","k-catch.webp","k-beaten.webp","k-roar.webp","k-shrug.webp",
+var SPRITES=["k-set.webp","k-spring.webp","k-land.webp","k-down.webp","k-held.webp","k-crash.webp","k-taunt.webp","k-dive-low.webp","k-dive-high.webp","k-jump.webp","k-catch.webp","k-beaten.webp","k-roar.webp",
   "s-stand.webp","s-run.webp","s-strike.webp","s-follow.webp","s-arms.webp","s-slide.webp","s-head.webp","p-ball.webp","p-burst.webp","p-star.webp",
-  "kw-set.webp","kw-spring.webp","kw-land.webp","kw-down.webp","kw-held.webp","kw-crash.webp","kw-taunt.webp","kw-dive-low.webp","kw-dive-high.webp","kw-jump.webp","kw-catch.webp","kw-beaten.webp","kw-roar.webp","kw-shrug.webp",
+  "kw-set.webp","kw-spring.webp","kw-land.webp","kw-down.webp","kw-held.webp","kw-crash.webp","kw-taunt.webp","kw-dive-low.webp","kw-dive-high.webp","kw-jump.webp","kw-catch.webp","kw-beaten.webp","kw-roar.webp",
   "sw-stand.webp","sw-run.webp","sw-strike.webp","sw-follow.webp","sw-arms.webp","sw-slide.webp","sw-head.webp"];
 var IMG={};
 /* TWO CHARACTERS (owner, 8 Oct 2026): Ten and The Wizard. You play as one,
@@ -263,7 +263,7 @@ addEventListener("load",function(){loadChar(ME);loadChar(other());});
    from one known length on it (a standing keeper 1.75-1.85m, a stretched dive
    2.2m). Resizing every pose to one height made a diagonal dive look smaller
    than a standing keeper (owner, 8 Oct 2026). */
-var KH={"k-taunt.webp":1.96,"k-dive-low.webp":1.09,"k-dive-high.webp":2.05,"k-jump.webp":2.38,"k-catch.webp":1.88,"k-beaten.webp":1.46,"k-roar.webp":1.85,"k-shrug.webp":1.89,"kw-taunt.webp":2.07,"kw-dive-low.webp":0.97,"kw-dive-high.webp":1.74,"kw-jump.webp":2.55,"kw-catch.webp":2.38,"kw-beaten.webp":1.18,"kw-roar.webp":1.85,"kw-shrug.webp":1.9,"k-set.webp":1.75,"k-spring.webp":1.64,"kw-set.webp":1.85,"kw-spring.webp":1.49,"k-land.webp":0.94,"k-down.webp":0.66,"k-held.webp":0.69,"k-crash.webp":1.1,"kw-land.webp":0.94,"kw-down.webp":0.65,"kw-held.webp":0.7,"kw-crash.webp":1.05};
+var KH={"k-taunt.webp":1.96,"k-dive-low.webp":1.09,"k-dive-high.webp":2.05,"k-jump.webp":2.38,"k-catch.webp":1.88,"k-beaten.webp":1.46,"k-roar.webp":1.85,"kw-taunt.webp":2.07,"kw-dive-low.webp":0.97,"kw-dive-high.webp":1.74,"kw-jump.webp":2.55,"kw-catch.webp":2.38,"kw-beaten.webp":1.18,"kw-roar.webp":1.85,"k-set.webp":1.75,"k-spring.webp":1.64,"kw-set.webp":1.85,"kw-spring.webp":1.49,"k-land.webp":0.94,"k-down.webp":0.66,"k-held.webp":0.69,"k-crash.webp":1.1,"kw-land.webp":0.94,"kw-down.webp":0.65,"kw-held.webp":0.7,"kw-crash.webp":1.05};
 
 /* ---------------------------------------------------------------- camera
    World: x across (m, right +), y up, z from the penalty spot toward goal
@@ -670,8 +670,12 @@ function playKick(k){
     if(wide){K.img=K.img==="k-held.webp"?"k-held.webp":"k-down.webp";K.y=KH[file(K.img)]/2;K.rot=0;S.img=k.outcome==="goal"?(you&&streak>=3?"s-slide.webp":"s-arms.webp"):"s-head.webp";}
     else if(k.outcome==="goal"){K.img="k-beaten.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x*=0.85;S.img=you&&streak>=3?"s-slide.webp":"s-arms.webp";}
     else if(k.outcome==="save"){K.img="k-roar.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x*=0.6;K.flip=1;S.img="s-head.webp";}
-    else{K.img="k-shrug.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x=0;K.flip=1;S.img="s-head.webp";
-      if(you)coach("over","Too hard, it flew. Ease off: a firm swipe goes in, a slap goes over. The line turns red when you're overdoing it.",false);}
+    else{K.img="k-taunt.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x=0;K.flip=1;S.img="s-head.webp";
+      if(you)coach("over","Too hard, it flew. Ease off: a firm swipe goes in, a slap goes over.",false);}
+    /* whenever the kicker fails, the keeper is happy: off the floor after a
+       beat and roaring at a save, smirking and pointing at a miss */
+    if(k.outcome!=="goal")return wait(wide?420:120).then(function(){K.img=k.outcome==="save"?"k-roar.webp":"k-taunt.webp";
+      K.y=KH[file(K.img)]/2;K.rot=0;K.flip=1;K.x*=0.7;K.sq=1;fx.buzz(10);}).then(function(){return wait(820);});
     return wait(950);
   }).then(function(){resetScene();drawBoard();});
 
