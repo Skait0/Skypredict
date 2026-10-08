@@ -354,3 +354,49 @@ test("every bookmaker runs on the LED boards in its own colours", () => {
   for (const b of ["SPORTYBET", "BET9JA", "BETKING", "BETPAWA", "1XBET", "SOCCERWIZARD"]) assert.match(boards.replace(/<[^>]+>/g, ""), new RegExp(b), b);
   for (const c of ["#D42127", "#FFC400", "#9CE800", "#276BA6"]) assert.match(html, new RegExp(c), c);
 });
+
+/* Round 7, owner 8 Oct 2026: "act a renowned game dev and add features to make it
+   mad addictive and interactive". */
+function pure(names) { return new Function(names.map(grabFn).join("\n") + "\nreturn {" + names.map((n) => n + ":" + n).join(",") + "};")(); }
+
+test("style points: a plain goal is 100, top bins, curl and perfect power add, the streak multiplies", () => {
+  const { stylePoints } = pure(["stylePoints"]);
+  assert.deepStrictEqual(stylePoints({ top: false, curl: 0, perfect: false, streak: 1 }), { pts: 100, tags: [] });
+  const big = stylePoints({ top: true, curl: 0.6, perfect: true, streak: 3 });
+  assert.strictEqual(big.pts, Math.round((100 + 60 + 40 + 50) * 1.5));
+  assert.deepStrictEqual(big.tags, ["TOP BINS", "CURL", "PERFECT", "x1.5"]);
+});
+
+test("levels climb and slow down; trails unlock at 3, 5 and 8", () => {
+  const { levelOf, trailFor } = pure(["levelOf", "trailFor"]);
+  assert.strictEqual(levelOf(0), 1);
+  assert.ok(levelOf(400) === 2 && levelOf(1600) === 3 && levelOf(10000) === 6);
+  assert.strictEqual(trailFor(1).name, "red"); assert.strictEqual(trailFor(3).name, "gold");
+  assert.strictEqual(trailFor(5).name, "electric"); assert.strictEqual(trailFor(9).name, "white-hot");
+});
+
+test("the Sudden Death keeper reads you better with every goal, but never perfectly", () => {
+  const { smartDive } = pure(["smartDive"]);
+  const hit = (streak) => { let n = 0; for (let i = 0; i < 4000; i++) { const d = smartDive(4, streak, Math.random); if (d % 3 === 4 % 3) n++; } return n / 4000; };
+  const early = hit(0), late = hit(12);
+  assert.ok(late > early + 0.2, "smarter: " + early.toFixed(2) + " -> " + late.toFixed(2));
+  assert.ok(late < 0.75, "still beatable: " + late.toFixed(2));
+});
+
+test("Sudden Death runs on the phone, keeps a best, and is on the home screen", () => {
+  const f = grabFn("survival");
+  assert.doesNotMatch(f, /api\(/);
+  assert.match(f, /pw\.best/);
+  assert.match(html, /"Sudden Death"/);
+});
+
+test("your goals earn points with a floating tag, and the level shows at home", () => {
+  assert.match(grabFn("playKick"), /award\(/);
+  assert.match(html, /id="pts"/);
+  assert.match(grabFn("home"), /levelOf\(/);
+});
+
+test("nothing calls the retired dot strip", () => {
+  assert.doesNotMatch(html, /\bdots\(/);
+  assert.doesNotMatch(html, /\.dots\{/);
+});

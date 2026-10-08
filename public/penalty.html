@@ -92,8 +92,6 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .score{display:flex;align-items:center;gap:10px;background:#0d0d0fcc;border:1px solid var(--line);border-radius:99px;padding:7px 14px;backdrop-filter:blur(6px)}
 .score b{font:italic 800 18px/1 "Roboto Condensed",sans-serif;min-width:14px;text-align:center}
 .score .who{font-size:12px;color:var(--soft);max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dots{display:flex;gap:4px}.dots i{width:9px;height:9px;border-radius:50%;background:#2a2a30;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
-.dots i.g{background:var(--green);transform:scale(1.15)}.dots i.m{background:var(--red)}
 #tag{position:absolute;top:calc(56px + env(safe-area-inset-top));left:0;right:0;text-align:center;font:italic 800 13px/1 "Roboto Condensed",sans-serif;letter-spacing:.2em;color:var(--soft);z-index:6;pointer-events:none}
 /* power bar: weak / green / over, with the sweet spot marked in gold */
 #hint{position:absolute;left:0;right:0;bottom:calc(14% + env(safe-area-inset-bottom));text-align:center;font:italic 800 15px/1 "Roboto Condensed",sans-serif;letter-spacing:.18em;color:#fff;opacity:0;transition:opacity .2s;z-index:5;pointer-events:none;text-shadow:0 2px 8px #000}
@@ -111,6 +109,9 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #ghost{position:absolute;left:var(--gx,50%);top:var(--gy,80%);width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:#ffffffcc;box-shadow:0 0 0 6px #ffffff33;opacity:0;pointer-events:none;z-index:7}
 #ghost.on{animation:pw-ghost 1.6s cubic-bezier(.3,.7,.3,1) infinite}
 @keyframes pw-ghost{0%{opacity:0;transform:translate(0,0) scale(.8)}15%{opacity:1;transform:translate(0,0) scale(1)}70%{opacity:1;transform:translate(46px,-190px) scale(.9)}100%{opacity:0;transform:translate(52px,-210px) scale(.8)}}
+#pts{position:absolute;left:0;right:0;top:57%;text-align:center;font:italic 800 18px/1 "Roboto Condensed",sans-serif;letter-spacing:.06em;color:var(--gold);text-shadow:0 2px 10px #000;opacity:0;pointer-events:none;z-index:7}
+#pts.go{animation:pw-pts 1.4s cubic-bezier(.2,.9,.25,1)}
+@keyframes pw-pts{0%{opacity:0;transform:translateY(14px) scale(.8)}18%{opacity:1;transform:translateY(0) scale(1.08)}70%{opacity:1;transform:translateY(-10px) scale(1)}100%{opacity:0;transform:translateY(-24px) scale(1)}}
 #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:8}
 /* bottom sheet (menus, results) */
 #sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .45s cubic-bezier(.2,.9,.25,1);z-index:9;max-height:85%;overflow:auto;box-shadow:0 -20px 50px #000a}
@@ -167,6 +168,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
   <div id="tag"></div><div id="combo"></div>
   <div id="hint"></div>
   <div id="coach" role="status"><img src="/penalty/kw-taunt.webp" alt=""><p></p></div><i id="ghost"></i>
+  <div id="pts"></div>
   <div id="pop"></div><div id="flash"></div>
   <div id="sheet"></div>
 </div>
@@ -413,6 +415,21 @@ function tick(now){
 requestAnimationFrame(tick);
 addEventListener("resize",layout);
 
+/* ---------------------------------------------------------------- the hook
+   Points for every goal you score, a level that climbs, ball trails that
+   unlock. Kept on the phone. */
+function stylePoints(o){var base=100,tags=[];
+  if(o.top){base+=60;tags.push("TOP BINS");}if(Math.abs(o.curl)>0.45){base+=40;tags.push("CURL");}if(o.perfect){base+=50;tags.push("PERFECT");}
+  var mult=1+0.25*Math.max(0,(o.streak||1)-1);if(mult>1)tags.push("x"+(Math.round(mult*100)/100));
+  return {pts:Math.round(base*mult),tags:tags};}
+function levelOf(xp){return Math.floor(Math.sqrt(Math.max(0,xp)/400))+1;}
+function trailFor(lv){var T=[{lv:1,name:"red",c:"#E63946"},{lv:3,name:"gold",c:"#F2B84B"},{lv:5,name:"electric",c:"#4FC3F7"},{lv:8,name:"white-hot",c:"#FFFFFF"}],t=T[0];
+  T.forEach(function(x){if(lv>=x.lv)t=x;});return t;}
+var XP=0;try{XP=+localStorage.getItem("pw.xp")||0;}catch(e){}
+function award(o){var r=stylePoints(o),before=levelOf(XP);XP+=r.pts;try{localStorage.setItem("pw.xp",String(XP));}catch(e){}
+  var p=$("pts");p.textContent="+"+r.pts+(r.tags.length?"  "+r.tags.join(" · "):"");p.classList.remove("go");void p.offsetWidth;p.classList.add("go");
+  var after=levelOf(XP);if(after>before){setTimeout(function(){fx.pop("LEVEL "+after+"!","#F2B84B");fx.board("LEVEL "+after,"#F2B84B");fx.flash(0.14,260);fx.buzz([30,40,60]);
+    var tr=trailFor(after);if(tr.lv===after)setTimeout(function(){fx.pop(tr.name.toUpperCase()+" TRAIL","#fff");},900);},700);}}
 /* ---------------------------------------------------------------- board
    Every kick lands on its side's row as it is taken (playKick writes it).
    Five circles each, more appear in sudden death; single for a solo go. */
@@ -462,7 +479,7 @@ function lightning(x,y){
 /* Trail: the ball's last screen positions, thinner and fainter with age. */
 var TRAIL=[],trailGold=false;
 function drawTrail(){var s=$("trail");s.textContent="";for(var i=1;i<TRAIL.length;i++){var a=TRAIL[i-1],b=TRAIL[i],f=i/TRAIL.length;
-  line(s,a,b,"#E63946",Math.max(1,b.w*0.9*f),0.55*f*a.o);if(trailGold)line(s,a,b,"#F2B84B",Math.max(0.6,b.w*0.25*f),0.8*f*a.o);}}
+  line(s,a,b,trailFor(levelOf(XP)).c,Math.max(1,b.w*0.9*f),0.55*f*a.o);if(trailGold)line(s,a,b,"#F2B84B",Math.max(0.6,b.w*0.25*f),0.8*f*a.o);}}
 
 /* ---------------------------------------------------------------- coach
    The Wizard teaches each lesson once (stored on the phone); "How to play"
@@ -537,6 +554,10 @@ var streak=0;
 function wait(ms){return new Promise(function(r){setTimeout(r,ms);});}
 function tween(ms,fn){return new Promise(function(done){var t=0;every(function(dt){t+=dt*1000;var u=Math.min(1,t/ms);fn(u);if(u>=1){done();return false;}});});}
 var easeOut=function(u){return 1-Math.pow(1-u,3);};
+/* SUDDEN DEATH keeper: guesses your column more often the longer your run,
+   capped well short of certain, so mixing your corners keeps you alive. */
+function smartDive(spot,streak,rnd){var read=Math.min(0.6,0.15+0.035*streak);
+  if(rnd()<read){var c=spot%3;return c+(rnd()<0.5?0:3);}return Math.floor(rnd()*6);}
 function keeperPose(dive){
   if(dive==null)return {x:0,y:0.85,img:"k-set.webp",rot:0,arc:0};
   var c=col(dive),hi=high(dive);
@@ -630,7 +651,7 @@ function playKick(k){
       fx.sprite("burst",bp.x,bp.y,top?90:64,420);if(top)fx.sprite("star",bp.x,bp.y,110,620);
       fx.pop(top?"TOP BINS!":perfect?"WIZARDRY!":(you?"GOAL!":"OYA!"),top?"#F2B84B":"#2FD48A");
       fx.board(top?"TOP BINS":"GOAL",top?"#F2B84B":"#2FD48A");
-      if(you)streak++;fx.combo(streak);
+      if(you){streak++;award({top:top,curl:curl,perfect:perfect,streak:streak});}fx.combo(streak);
       if(you&&(perfect||streak>=3)&&k.outcome==="goal")lightning(bp.x,bp.y);
     }else if(what==="save"){
       hitStop=0.09;fx.shake(1);fx.buzz([20,40,20]);fx.sprite("burst",bp.x,bp.y,70,380);
@@ -642,7 +663,7 @@ function playKick(k){
   }
 }
 
-layout();
+layout();drawBoard();
 window.PW={RULES:{strike:strike,neighbour:neighbour,judge:judge,shootout:shootout,ZONES:ZONES,REG:REG,BONUS:BONUS},
   aimAndShoot:aimAndShoot,pickDive:pickDive,playKick:playKick,fx:fx,
   get DEV(){return DEV;},get NAME(){return NAME;},setName:function(n){NAME=n;try{localStorage.setItem("pw.name",n);}catch(e){}},
@@ -650,6 +671,7 @@ window.PW={RULES:{strike:strike,neighbour:neighbour,judge:judge,shootout:shootou
   newBoard:function(who,single,a,b){BOARD={a:(a||[]).slice(),b:(b||[]).slice(),single:!!single};if(who!=null)$("whoB").textContent=who;drawBoard();boardNow(null);},
   tag:function(t){$("tag").textContent=t||"";},
   coachReset:function(){COACHED={};try{localStorage.removeItem("pw.coach");}catch(e){}},
+  smartDive:smartDive,levelOf:levelOf,trailFor:trailFor,get xp(){return XP;},
   get char(){return ME;},setChar:function(c){ME=c==="wizard"?"wizard":"ten";try{localStorage.setItem("pw.char",ME);}catch(e){}loadChar(ME);SC=ME;KC=OPP||other();},
   resetStreak:function(){streak=0;fx.combo(0);},
   setOpponent:function(c){OPP=c||null;loadChar(OPP||other());KC=OPP||other();}};
@@ -691,7 +713,7 @@ function practice(){PW.setOpponent(null);PW.resetStreak();var outs=[];PW.newBoar
   function next(){var st=R.shootout(outs);PW.setScore(st.a,st.b);if(st.done)return finish(st);
     PW.fx.slowmo(Math.floor(outs.length/2)>=REG-1);
     if(st.next==="a")return PW.aimAndShoot().then(function(s){var d=Math.floor(Math.random()*6),o=R.judge(s,d);outs.push(o);
-        dots(outs.filter(function(_,i){return i%2===0;}));
+        
         return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power},dive:d,outcome:o});}).then(next);
     return PW.pickDive().then(function(dv){var cs=cpuShot(),o=R.judge(cs,dv);outs.push(o);
         return PW.playKick({who:"them",shot:{spot:cs.spot,kind:R.strike(cs.spot,cs.power).kind,power:cs.power},dive:dv,outcome:o});}).then(next);}
@@ -782,7 +804,7 @@ function friend(id){PW.setOpponent(null);PW.resetStreak();api("GET","match",null
       if(x.status===0)return offline(function(){go(name);});
       if(x.status===409&&x.j.error==="taken")return sheet([el("h2",null,"Someone else is playing this one"),btn("Start your own","red",function(){closeSheet();challenger();})]);
       if(x.status!==200)return offline(function(){friend(id);});
-      outs.push(x.j.outcome);dots(outs.filter(function(_,i){return i%2===0;}));
+      outs.push(x.j.outcome);
       var anim=shot?PW.playKick({who:"you",shot:{spot:o.s.spot,kind:R.strike(o.s.spot,o.s.power).kind,power:o.s.power},dive:x.j.outcome==="save"?o.s.spot:(o.s.spot+3)%6,outcome:x.j.outcome})
                     :PW.playKick({who:"them",shot:x.j.against,dive:o.dv,outcome:x.j.outcome});
       anim.then(function(){var st=x.j.state;PW.setScore(st.score.a,st.score.b);if(st.done){track("challenge_finished");PW.fx.slowmo(false);return result(st.score.a,st.score.b,st.winner,m.challenger,id,"friend",name);}go(name);});
@@ -802,7 +824,18 @@ function result(a,b,winner,chName,id,role,frName){
   sheet([el("h2",null,head)].concat(shareSheet(text,url,"result"),[btn("Start your own challenge","ghost",function(){closeSheet();challenger();}),tipsCard()]));
 }
 
-window.PWFlow={challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,offline:offline,charPicker:charPicker,practice:practice};
+/* SUDDEN DEATH: you shoot until you miss; the keeper learns your habits. */
+function survival(){PW.setOpponent(null);PW.resetStreak();var run=0,best=0;try{best=+localStorage.getItem("pw.best")||0;}catch(e){}
+  PW.newBoard("Sudden death",true);PW.tag("SUDDEN DEATH");
+  function next(){PW.aimAndShoot().then(function(s){var d=PW.smartDive(s.spot,run,Math.random),o=R.judge(s,d);
+      return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:d,outcome:o}).then(function(){return o;});})
+    .then(function(o){if(o==="goal"){run++;return next();}
+      var nb=run>best;if(nb){best=run;try{localStorage.setItem("pw.best",String(best));}catch(e){}}track("survival_over",{run:run});
+      sheet([el("h2",null,run+(run===1?" goal":" goals")+" in a row"),el("p",null,nb&&run>0?"New best!":"Your best: "+best)]
+        .concat(shareSheet("I scored "+run+" in a row against the keeper on Play Penalty. Beat that:",ORIGIN+"/penalty","survival"),
+          [btn("Go again","red",function(){closeSheet();survival();}),btn("Back","ghost",function(){closeSheet();if(window.PWHome)window.PWHome();})]));});}
+  next();}
+window.PWFlow={survival:survival,challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,offline:offline,charPicker:charPicker,practice:practice};
 })();
 </script>
 <script>
@@ -854,11 +887,16 @@ function daily(){var outs=[],day=null,i=0;PW.newBoard("The Wizard",true);PW.setO
       });});}
   start();}
 
+window.PWHome=function(){home();};
 function home(){
-  var nodes=[F.el("h2",null,"Play Penalty"),F.el("p",null,"Free. No stakes. Just bragging rights. Pick your player:"),F.charPicker(),
+  var lv=PW.levelOf(PW.xp),nx=[3,5,8].filter(function(x){return x>lv;})[0],best=0;try{best=+localStorage.getItem("pw.best")||0;}catch(e){}
+  var nodes=[F.el("h2",null,"Play Penalty"),
+    F.el("p","note","Level "+lv+" · "+PW.xp.toLocaleString("en")+" pts · "+PW.trailFor(lv).name+" trail"+(nx?" · next unlock at level "+nx:"")+(best?" · best run "+best:"")),
+    F.el("p",null,"Free. No stakes. Just bragging rights. Pick your player:"),F.charPicker(),
     /* The one that always works comes first (owner: "there is no play
        against computer" - it sat below the fold of the sheet on a phone). */
     F.btn("Play the computer","red",function(){F.closeSheet();F.practice();}),
+    F.btn("Sudden Death","ghost",function(){F.closeSheet();F.survival();}),
     F.btn("Face today's Wizard Keeper","ghost",function(){F.closeSheet();daily();}),
     F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),
     F.btn("How to play","ghost",function(){PW.coachReset();F.closeSheet();F.practice();})];
