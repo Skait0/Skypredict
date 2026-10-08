@@ -2,9 +2,9 @@
 <html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Penalty Wahala | Soccerwizard</title>
+<title>Play Penalty | Soccerwizard</title>
 <meta name="description" content="A free penalty shootout. Beat your friends, face the Wizard Keeper every day.">
-<meta property="og:title" content="Penalty Wahala">
+<meta property="og:title" content="Play Penalty">
 <meta property="og:description" content="Take your 5 shots, make your 5 saves. Free, no stakes.">
 <meta property="og:image" content="https://www.soccerwizard.live/penalty/og.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Roboto+Condensed:ital,wght@1,800&display=swap">
 <style>
-/* PENALTY WAHALA - wizardry x soccer, the site's own tokens. Gold is for wins
+/* PLAY PENALTY - wizardry x soccer, the site's own tokens. Gold is for wins
    and small accents only; red is the brand and the action. */
 :root{--bg:#0D0D0F;--card:#16161A;--card2:#1D1D22;--line:#2A2A30;--text:#F3F3F5;--soft:#A3A3AD;--faint:#6E6E78;--red:#E63946;--gold:#F2B84B;--green:#2FD48A}
 *{box-sizing:border-box}
@@ -47,7 +47,9 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:600 1
 .bflash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:italic 800 var(--bf,14px)/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:.3em;opacity:0;background:#050506}
 .bflash.go{animation:pw-blink .9s steps(1) 1}
 /* pitch */
-.grass{position:absolute;left:0;right:0;bottom:0;background:repeating-linear-gradient(180deg,#17502d 0 var(--st,28px),#13442a var(--st,28px) calc(var(--st,28px)*2))}
+.grass{position:absolute;left:0;right:0;bottom:0;background:#155029}
+/* grain: fractal noise, so the turf reads as grass and not as paint */
+.grass:before{content:"";position:absolute;inset:0;opacity:.32;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 .55 0 0 0 0 .2 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
 .grass:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#07080a99,transparent 30%),radial-gradient(120% 80% at 50% 70%,transparent 50%,#07080a99 100%)}
 svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
 .sprite{position:absolute;left:0;top:0;transform-origin:50% 50%;will-change:transform;pointer-events:none;-webkit-user-drag:none}
@@ -69,10 +71,6 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .dots i.g{background:var(--green);transform:scale(1.15)}.dots i.m{background:var(--red)}
 #tag{position:absolute;top:calc(56px + env(safe-area-inset-top));left:0;right:0;text-align:center;font:italic 800 13px/1 "Roboto Condensed",sans-serif;letter-spacing:.2em;color:var(--soft);z-index:6;pointer-events:none}
 /* power bar: weak / green / over, with the sweet spot marked in gold */
-#bar{position:absolute;left:14%;right:14%;bottom:calc(9% + env(safe-area-inset-bottom));height:12px;border-radius:99px;background:linear-gradient(90deg,#34343c 0 55%,#1f7a4e 55% 72%,var(--green) 72% 82%,#1f7a4e 82% 88%,var(--red) 88%);box-shadow:0 0 0 1px #ffffff1a,0 6px 20px #0008;opacity:0;transform:translateY(10px);transition:opacity .18s,transform .18s;z-index:5}
-#bar.on{opacity:1;transform:none}
-#bar:before{content:"";position:absolute;left:72%;width:10%;top:-3px;bottom:-3px;border-radius:4px;border:1px solid var(--gold);opacity:.8}
-#knob{position:absolute;top:-6px;left:0;width:6px;height:24px;margin-left:-3px;border-radius:4px;background:#fff;box-shadow:0 0 10px #fff,0 0 2px #000;will-change:transform}
 #hint{position:absolute;left:0;right:0;bottom:calc(14% + env(safe-area-inset-bottom));text-align:center;font:italic 800 15px/1 "Roboto Condensed",sans-serif;letter-spacing:.18em;color:#fff;opacity:0;transition:opacity .2s;z-index:5;pointer-events:none;text-shadow:0 2px 8px #000}
 #hint.on{opacity:1}#hint i{display:block;font-style:normal;animation:pw-nudge .9s ease-in-out infinite}
 /* pop words */
@@ -80,6 +78,14 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #pop.go{animation:pw-pop .95s cubic-bezier(.2,.9,.25,1)}
 #combo{position:absolute;right:0;left:0;text-align:center;top:calc(80px + env(safe-area-inset-top));font:italic 800 14px/1 "Roboto Condensed",sans-serif;color:var(--gold);letter-spacing:.1em;opacity:0;z-index:6}
 #combo.on{opacity:1;animation:pw-flame .8s ease-in-out infinite alternate}
+/* the coach: The Wizard with a tip, and a ghost finger showing the swipe */
+#coach{position:absolute;left:12px;right:12px;top:47%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;background:#0d0d0fe6;border:1px solid var(--line);box-shadow:0 12px 30px #000a;z-index:7;opacity:0;transform:translateY(8px) scale(.98);transition:opacity .25s,transform .25s;pointer-events:none}
+#coach.on{opacity:1;transform:none}
+#coach img{height:64px;flex:none}
+#coach p{margin:0;font-size:13.5px;line-height:1.4;color:var(--text)}
+#ghost{position:absolute;left:var(--gx,50%);top:var(--gy,80%);width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:#ffffffcc;box-shadow:0 0 0 6px #ffffff33;opacity:0;pointer-events:none;z-index:7}
+#ghost.on{animation:pw-ghost 1.6s cubic-bezier(.3,.7,.3,1) infinite}
+@keyframes pw-ghost{0%{opacity:0;transform:translate(0,0) scale(.8)}15%{opacity:1;transform:translate(0,0) scale(1)}70%{opacity:1;transform:translate(46px,-190px) scale(.9)}100%{opacity:0;transform:translate(52px,-210px) scale(.8)}}
 #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:8}
 /* bottom sheet (menus, results) */
 #sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .45s cubic-bezier(.2,.9,.25,1);z-index:9;max-height:85%;overflow:auto;box-shadow:0 -20px 50px #000a}
@@ -113,8 +119,9 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
   <div id="world">
     <div class="sky"></div><div class="beam l"></div><div class="beam r"></div>
     <div class="crowd" id="crowd"></div>
-    <div class="boards" id="boards"><div class="track"><span><b>SOCCERWIZARD</b> &middot; FREE PICKS EVERY DAY &middot; <b>SOCCERWIZARD</b>.LIVE &middot; PENALTY WAHALA &middot;</span><span><b>SOCCERWIZARD</b> &middot; FREE PICKS EVERY DAY &middot; <b>SOCCERWIZARD</b>.LIVE &middot; PENALTY WAHALA &middot;</span></div><div class="bflash" id="bflash"></div></div>
+    <div class="boards" id="boards"><div class="track"><span><b>SOCCERWIZARD</b> &middot; FREE PICKS EVERY DAY &middot; <b>SOCCERWIZARD</b>.LIVE &middot; PLAY PENALTY &middot;</span><span><b>SOCCERWIZARD</b> &middot; FREE PICKS EVERY DAY &middot; <b>SOCCERWIZARD</b>.LIVE &middot; PLAY PENALTY &middot;</span></div><div class="bflash" id="bflash"></div></div>
     <div class="grass" id="grass"></div>
+    <svg class="layer" id="turf"></svg>
     <svg class="layer" id="lines"></svg>
     <svg class="layer" id="net"></svg>
     <img class="sprite" id="keeper" src="/penalty/k-ready.webp" alt="">
@@ -126,18 +133,19 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
     <img class="sprite" id="burst" src="/penalty/p-burst.webp" alt="" style="opacity:0">
     <img class="sprite" id="star" src="/penalty/p-star.webp" alt="" style="opacity:0">
     <div class="zones" id="zones"><button data-s="3" aria-label="Top left"></button><button data-s="4" aria-label="Top middle"></button><button data-s="5" aria-label="Top right"></button><button data-s="0" aria-label="Bottom left"></button><button data-s="1" aria-label="Bottom middle"></button><button data-s="2" aria-label="Bottom right"></button></div>
+    <svg class="layer" id="guide"></svg>
     <div id="reticle"></div>
   </div>
   <svg class="layer" id="bolt" style="z-index:8"></svg>
   <div id="hud"><div class="score"><span class="who" id="whoA">You</span><b id="scA">0</b><div class="dots" id="dotsYou"></div><b id="scB">0</b><span class="who" id="whoB"></span></div></div>
   <div id="tag"></div><div id="combo"></div>
-  <div id="bar"><i id="knob"></i></div>
   <div id="hint"></div>
+  <div id="coach" role="status"><img src="/penalty/kw-taunt.webp" alt=""><p></p></div><i id="ghost"></i>
   <div id="pop"></div><div id="flash"></div>
   <div id="sheet"></div>
 </div>
 <script>
-/* PENALTY WAHALA. Spec: docs/specs/2026-10-08-penalty-wahala-design.md.
+/* PLAY PENALTY. Spec: docs/specs/2026-10-08-penalty-wahala-design.md.
    The four rule functions below are copied verbatim from lib/penalty.js; a
    test fails if they drift. Everything else here is presentation: a small
    pseudo-3D world (metres, projected through one camera), a ball on real
@@ -234,8 +242,8 @@ function target(spot,kind){
 /* The kick, solved backwards from where it must cross the line: forward
    speed from power, then the launch that meets the target under gravity,
    with sideways bend from spin. */
-function flightPlan(t,power,side){
-  var g=9.81,vz=12+22*power,T=11/vz,ax=side*(power>0.55?3.2:1.2);
+function flightPlan(t,power,curl){
+  var g=9.81,vz=12+22*power,T=11/vz,ax=curl*6;
   return {vz:vz,T:T,ax:ax,vy:(t.y+0.5*g*T*T)/T,vx:(t.x-0.5*ax*T*T)/T};
 }
 var RESTITUTION=0.42;
@@ -252,12 +260,22 @@ function layout(){
   $("boards").style.cssText="top:"+bTop+"px;height:"+bH+"px;--bf:"+Math.round(bH*0.62)+"px";
   $("grass").style.cssText="top:"+(bTop+bH)+"px;--st:"+Math.round(H*0.035)+"px";
   var z=$("zones");z.style.left=gl.x+"px";z.style.top=gl.y+"px";z.style.width=(gr.x-gl.x)+"px";z.style.height=goalH+"px";
-  drawLines();drawGoal(0,0,0);
+  drawTurf();drawLines();drawGoal(0,0,0);
   if(!document.querySelector(".crowd i"))for(var i=0;i<26;i++){var d=document.createElement("i");d.style.left=Math.random()*100+"%";d.style.top=Math.random()*90+"%";d.style.animationDelay=(Math.random()*0.5)+"s";$("crowd").appendChild(d);}
   place();
 }
 function svgEl(tag,attrs,parent){var e=document.createElementNS(NS,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
 function line(svg,a,b,st,w,op){return svgEl("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:st,"stroke-width":w,"stroke-opacity":op==null?1:op,"stroke-linecap":"round"},svg);}
+/* Mowing stripes, 2.4m wide, laid on the ground plane: they narrow into the
+   distance the way a real pitch does under one camera. */
+function drawTurf(){
+  var s=$("turf");s.textContent="";
+  for(var z=-4.4,i=0;z<GOAL.z+20;z+=2.4,i++){
+    var a=P(-40,0,z),b=P(40,0,z),c=P(40,0,z+2.4),d=P(-40,0,z+2.4);
+    svgEl("polygon",{points:[a,b,c,d].map(function(p){return p.x.toFixed(1)+","+p.y.toFixed(1);}).join(" "),
+      fill:i%2?"#ffffff":"#000000","fill-opacity":i%2?0.035:0.09},s);
+  }
+}
 function drawLines(){
   var s=$("lines");s.textContent="";var c="#e8f5ec",o=0.55;
   /* 18-yard box (16.5m deep, 40.3m wide) and 6-yard box, from the goal line toward us */
@@ -370,6 +388,18 @@ var TRAIL=[],trailGold=false;
 function drawTrail(){var s=$("trail");s.textContent="";for(var i=1;i<TRAIL.length;i++){var a=TRAIL[i-1],b=TRAIL[i],f=i/TRAIL.length;
   line(s,a,b,"#E63946",Math.max(1,b.w*0.9*f),0.55*f*a.o);if(trailGold)line(s,a,b,"#F2B84B",Math.max(0.6,b.w*0.25*f),0.8*f*a.o);}}
 
+/* ---------------------------------------------------------------- coach
+   The Wizard teaches each lesson once (stored on the phone); "How to play"
+   clears them. Any touch dismisses the tip without eating the touch. */
+var COACHED={};try{COACHED=JSON.parse(localStorage.getItem("pw.coach")||"{}")||{};}catch(e){}
+function coach(key,text,ghost){
+  if(COACHED[key])return;COACHED[key]=1;try{localStorage.setItem("pw.coach",JSON.stringify(COACHED));}catch(e){}
+  var c=$("coach"),gh=$("ghost"),app=$("app"),bp=P(B.x,B.y,B.z);
+  c.querySelector("p").textContent=text;c.classList.add("on");
+  gh.style.setProperty("--gx",bp.x+"px");gh.style.setProperty("--gy",bp.y+"px");gh.classList.toggle("on",!!ghost&&!REDUCED);
+  function off(){c.classList.remove("on");gh.classList.remove("on");app.removeEventListener("pointerdown",off,true);}
+  setTimeout(function(){app.addEventListener("pointerdown",off,true);},300);
+}
 /* ---------------------------------------------------------------- input */
 function tapSpot(){return new Promise(function(done){
   var z=$("zones");z.classList.add("on");
@@ -381,31 +411,45 @@ function hint(t){var h=$("hint");h.textContent="";if(t){var i=document.createEle
 /* AIM, THEN FLICK. The tap chooses the spot. The bar sweeps 0 -> 1 -> 0; an
    upward flick stops it, and a short or slow flick costs power. The flick
    never chooses direction. */
-function aimAndShoot(){
-  $("tag").textContent="YOUR SHOT";K.idle=true;SC=ME;KC=OPP||other();
-  return tapSpot().then(function(spot){return new Promise(function(done){
-    var r=$("reticle"),tp=target(spot,"green"),pp=P(tp.x,tp.y,GOAL.z);r.style.left=pp.x+"px";r.style.top=pp.y+"px";r.classList.add("on");
-    var bar=$("bar"),knob=$("knob"),w=bar.getBoundingClientRect().width,t0=performance.now(),raf=0,pos=0;
-    var FINE=matchMedia("(pointer: fine)").matches;
-    bar.classList.add("on");hint(FINE?"CLICK OR PRESS SPACE TO SHOOT":"FLICK UP TO SHOOT");
-    function sweep(t){var ph=((t-t0)/900)%2;pos=ph<1?ph:2-ph;knob.style.transform="translateX("+(pos*w)+"px)";raf=requestAnimationFrame(sweep);}
-    raf=requestAnimationFrame(sweep);
-    var sy=0,st=0,app=$("app");
-    function down(e){sy=e.clientY;st=performance.now();}
-    /* A flick on a phone; on a desktop a plain click or Space/Enter strikes
-       clean. The press that chose the spot is not a shot: only a press that
-       began after the bar started counts. */
-    function up(e){if(!st)return;var lift=sy-e.clientY,ms=Math.max(1,performance.now()-st);
-      if(lift<24){if(FINE)fire(1);return;}
-      fire(Math.min(1,(lift/ms)/1.2));}                       /* px per ms; 1.2+ is a full flick */
-    function key(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();fire(1);}}
-    function fire(full){cancelAnimationFrame(raf);bar.classList.remove("on");r.classList.remove("on");hint("");
-      app.removeEventListener("pointerdown",down);app.removeEventListener("pointerup",up);removeEventListener("keydown",key);
-      fx.buzz(15);done({spot:spot,power:Math.max(0,Math.min(1,pos*(0.8+0.2*full)))});}
-    app.addEventListener("pointerdown",down);app.addEventListener("pointerup",up);addEventListener("keydown",key);
-  });});
+/* ONE SWIPE (owner, 8 Oct 2026: "the select, the meter and the flick at the
+   same time is a hassle"). Swipe from the ball toward the goal: the direction
+   is where it goes, the length how high, the speed how hard, and a bent swipe
+   curls it. Same on a phone and with a mouse. Pure, so it is tested. */
+function swipeShot(path,H){
+  var a=path[0],b=path[path.length-1],lift=a.y-b.y,lat=b.x-a.x,len=Math.sqrt(lift*lift+lat*lat);
+  if(lift<30||len<40)return {ok:false};
+  var ms=Math.max(16,b.t-a.t),power=Math.max(0,Math.min(1,(len/ms)/1.6));
+  var x=Math.max(-3.45,Math.min(3.45,(lat/lift)*5.2)),y=Math.max(0.2,Math.min(2.2,0.2+(lift/(H*0.32))*1.6));
+  /* curl: the swipe's furthest bow off its own chord, as a share of its length;
+     bowing right curls the ball back left, as a real curler does */
+  var dev=0;for(var i=1;i<path.length-1;i++){var p=path[i],cr=((b.x-a.x)*(p.y-a.y)-(b.y-a.y)*(p.x-a.x))/len;if(Math.abs(cr)>Math.abs(dev))dev=cr;}
+  var curl=Math.max(-1,Math.min(1,-dev/len*4)),c=x<-1.22?0:x>1.22?2:1;
+  return {ok:true,spot:c+(y>=1.22?3:0),power:power,aim:{x:x,y:y},curl:curl};
 }
-function pickDive(){$("tag").textContent="YOUR SAVE · TAP WHERE TO DIVE";K.idle=true;KC=ME;SC=OPP||other();return tapSpot();}
+/* While the finger is down: a dotted line from the ball to where it would go,
+   bent by the curl, coloured by the power - grey weak, green clean, red over. */
+function guide(g){var s=$("guide");s.textContent="";var r=$("reticle");
+  if(!g||!g.ok){r.classList.remove("on");return;}
+  var col=g.power>ZONES.overAbove?"#E63946":g.power<ZONES.weakBelow?"#A3A3AD":"#2FD48A";
+  var b=P(B.x,B.y,B.z),t=P(g.aim.x,g.power>ZONES.overAbove?3.3:g.aim.y,GOAL.z),mx=(b.x+t.x)/2-g.curl*60,my=(b.y+t.y)/2;
+  svgEl("path",{d:"M"+b.x+" "+b.y+" Q"+mx+" "+my+" "+t.x+" "+t.y,stroke:col,"stroke-width":3,"stroke-dasharray":"2 9","stroke-linecap":"round",fill:"none","stroke-opacity":0.9},s);
+  r.style.left=t.x+"px";r.style.top=t.y+"px";r.style.borderColor=col;r.classList.add("on");}
+function aimAndShoot(){
+  $("tag").textContent="YOUR SHOT";K.idle=true;SC=ME;KC=OPP||other();hint("SWIPE THE BALL TO SHOOT");
+  coach("shoot","Swipe the ball toward the goal. Where you swipe is where it goes. Swipe faster to hit it harder, bend your swipe to curl it.",true);
+  return new Promise(function(done){
+    var app=$("app"),path=null;
+    function pt(e){var a=app.getBoundingClientRect();return {x:e.clientX-a.left,y:e.clientY-a.top,t:performance.now()};}
+    function down(e){var p=pt(e);if(p.y<CAM.H*0.45)return;path=[p];try{app.setPointerCapture(e.pointerId);}catch(_){}}
+    function move(e){if(!path)return;path.push(pt(e));guide(swipeShot(path,CAM.H));}
+    function up(e){if(!path)return;path.push(pt(e));var g=swipeShot(path,CAM.H);path=null;guide(null);if(!g.ok)return;
+      app.removeEventListener("pointerdown",down);app.removeEventListener("pointermove",move);app.removeEventListener("pointerup",up);
+      hint("");fx.buzz(15);done({spot:g.spot,power:g.power,aim:g.aim,curl:g.curl});}
+    app.addEventListener("pointerdown",down);app.addEventListener("pointermove",move);app.addEventListener("pointerup",up);
+  });
+}
+function pickDive(){$("tag").textContent="YOUR SAVE · TAP WHERE TO DIVE";K.idle=true;KC=ME;SC=OPP||other();
+  coach("dive","Your turn in goal. Tap the part of the goal where you think the shot is going, and you dive there.",false);return tapSpot();}
 
 /* ---------------------------------------------------------------- a kick */
 var streak=0;
@@ -429,12 +473,16 @@ function playKick(k){
   K.idle=false;if(k.who==="you"){SC=ME;KC=OPP||other();}else{SC=OPP||other();KC=ME;}
   var kind=k.shot.kind,power=k.shot.power!=null?k.shot.power:(kind==="green"?0.65:kind==="weak"?0.4:0.95);
   var perfect=kind==="green"&&power>=0.72&&power<=0.82;
-  var aim=target(k.shot.spot,k.outcome==="bar"?"bar":kind),side=col(k.shot.spot)===1?(Math.random()<.5?-1:1):(col(k.shot.spot)===0?-1:1);
-  var f=flightPlan(aim,power,side*-1),kp=keeperPose(k.dive),you=k.who==="you";
+  /* Your swipe gave the exact aim and the curl; a stored or computer shot
+     aims at its spot with a little natural bend. */
+  var aim=target(k.shot.spot,k.outcome==="bar"?"bar":kind);
+  if(k.shot.aim){aim={x:k.shot.aim.x,y:aim.y===3.4||k.outcome==="bar"?aim.y:k.shot.aim.y};if(k.outcome==="bar")aim.x=Math.max(-3.4,Math.min(3.4,k.shot.aim.x));}
+  var curl=k.shot.curl!=null?k.shot.curl:(Math.random()*0.8-0.4),side=curl>=0?1:-1;
+  var f=flightPlan(aim,power,curl),kp=keeperPose(k.dive),you=k.who==="you";
   trailGold=perfect;
   /* run-up: three strides to the ball */
   S.img="s-run.webp";
-  return tween(320,function(u){S.x=-0.72+0.3*u;S.z=-1.25+0.65*u;}).then(function(){
+  return tween(180,function(u){S.x=-0.72+0.3*u;S.z=-1.25+0.65*u;}).then(function(){
     S.img="s-strike.webp";fx.buzz(12);hitStop=0.05;
     return new Promise(function(done){
       var t=0,phase="fly",after=0,k0={x:K.x,y:K.y},reacted=false,saveAt=f.T*(kp.x===0&&kp.y<1?0.97:0.93);
@@ -476,7 +524,8 @@ function playKick(k){
     /* reactions, then the scene resets for the next kick */
     if(k.outcome==="goal"){K.img="k-beaten.webp";K.y=0.62;K.rot=0;K.x*=0.85;S.img=you&&streak>=3?"s-slide.webp":"s-arms.webp";}
     else if(k.outcome==="save"){K.img="k-roar.webp";K.y=0.95;K.rot=0;K.x*=0.6;K.flip=1;S.img="s-head.webp";}
-    else{K.img="k-shrug.webp";K.y=0.95;K.rot=0;K.x=0;K.flip=1;S.img="s-head.webp";}
+    else{K.img="k-shrug.webp";K.y=0.95;K.rot=0;K.x=0;K.flip=1;S.img="s-head.webp";
+      if(you)coach("over","Too hard, it flew. Ease off: a firm swipe goes in, a slap goes over. The line turns red when you're overdoing it.",false);}
     return wait(950);
   }).then(function(){resetScene();});
 
@@ -506,6 +555,7 @@ window.PW={RULES:{strike:strike,neighbour:neighbour,judge:judge,shootout:shootou
   get DEV(){return DEV;},get NAME(){return NAME;},setName:function(n){NAME=n;try{localStorage.setItem("pw.name",n);}catch(e){}},
   setScore:function(a,b,who){$("scA").textContent=a;$("scB").textContent=b;if(who!=null)$("whoB").textContent=who;},
   tag:function(t){$("tag").textContent=t||"";},
+  coachReset:function(){COACHED={};try{localStorage.removeItem("pw.coach");}catch(e){}},
   get char(){return ME;},setChar:function(c){ME=c==="wizard"?"wizard":"ten";try{localStorage.setItem("pw.char",ME);}catch(e){}loadChar(ME);SC=ME;KC=OPP||other();},
   resetStreak:function(){streak=0;fx.combo(0);},
   setOpponent:function(c){OPP=c||null;loadChar(OPP||other());KC=OPP||other();}};
@@ -537,7 +587,7 @@ function dots(outs){var d=$("dotsYou");d.textContent="";outs.forEach(function(o)
    "not here" or "not set up" is not switched on. */
 function offline(retry){
   var off=LAST.status===403||LAST.status===404||LAST.error==="not_configured";
-  var msg=LAST.status===0?"Can't reach the pitch, try again.":off?"Penalty Wahala isn't switched on here yet. Play the computer meanwhile.":
+  var msg=LAST.status===0?"Can't reach the pitch, try again.":off?"Play Penalty isn't switched on here yet. Play the computer meanwhile.":
     LAST.status===429?"Too many kicks for a moment. Try again shortly.":"Something went wrong on our side ("+(LAST.error||LAST.status)+"). Try again.";
   sheet([el("p",null,msg),btn("Try again","red",function(){closeSheet();retry();}),btn("Play the computer","ghost",function(){closeSheet();practice();})]);}
 
@@ -612,7 +662,7 @@ function challenger(){PW.setOpponent(null);PW.resetStreak();askName().then(funct
       if(r.status!==200)return offline(save);
       track("challenge_created");
       var url=ORIGIN+"/p/"+r.j.id,score=outs.filter(function(o){return o==="goal";}).length;
-      sheet([el("h2",null,"You scored "+score+"/5")].concat(shareSheet("I scored "+score+"/5 on Penalty Wahala. Bet you can't save it:",url,"challenge"),[tipsCard()]));
+      sheet([el("h2",null,"You scored "+score+"/5")].concat(shareSheet("I scored "+score+"/5 on Play Penalty. Bet you can't save it:",url,"challenge"),[tipsCard()]));
     });});
 });}
 
@@ -627,7 +677,7 @@ function friend(id){PW.setOpponent(null);PW.resetStreak();api("GET","match",null
   var url=ORIGIN+"/p/"+id;
   if(m.role==="challenger")return sheet([el("h2",null,m.outcomes.length?m.friend+" is taking your challenge":"Waiting for a friend"),
     el("p",null,m.outcomes.length?"Open this link again when it's done.":"Send it to someone. The link is yours to share.")]
-    .concat(shareSheet("Bet you can't beat me on Penalty Wahala:",url,"challenge"),[btn("Start another challenge","ghost",function(){closeSheet();challenger();})]));
+    .concat(shareSheet("Bet you can't beat me on Play Penalty:",url,"challenge"),[btn("Start another challenge","ghost",function(){closeSheet();challenger();})]));
   if(m.role!=="friend"&&m.outcomes.length)return sheet([el("h2",null,"Someone else is playing this one"),btn("Start your own","red",function(){closeSheet();challenger();})]);
   sheet([el("h2",null,m.challenger+" challenges you"),el("p",null,"5 shots, 5 saves. Free, no stakes. Pick your player:"),charPicker(),btn("Kick off","red",function(){closeSheet();askName().then(go);})]);
   var outs=m.outcomes.slice();PW.setScore(m.score.a,m.score.b,m.challenger);
@@ -651,11 +701,11 @@ function friend(id){PW.setOpponent(null);PW.resetStreak();api("GET","match",null
 function result(a,b,winner,chName,id,role,frName){
   var url=ORIGIN+"/p/"+id,fr=frName||"Your friend",head,text;
   if(role==="friend"){head=winner==="a"?"You beat "+chName+" "+a+"-"+b:winner==="b"?chName+" beat you "+b+"-"+a:"Draw, "+a+"-"+b;
-    text=winner==="a"?"I beat "+chName+" "+a+"-"+b+" on Penalty Wahala 😤 Your turn:":"Penalty Wahala: "+head+". Try me:";}
+    text=winner==="a"?"I beat "+chName+" "+a+"-"+b+" on Play Penalty 😤 Your turn:":"Play Penalty: "+head+". Try me:";}
   else if(role==="challenger"){head=winner==="b"?"You beat "+fr+" "+b+"-"+a:winner==="a"?fr+" beat you "+a+"-"+b:"You drew with "+fr+", "+a+"-"+b;
-    text=winner==="b"?"I beat "+fr+" "+b+"-"+a+" on Penalty Wahala 😤 Who's next?":"Penalty Wahala: "+head+". Try me:";}
+    text=winner==="b"?"I beat "+fr+" "+b+"-"+a+" on Play Penalty 😤 Who's next?":"Play Penalty: "+head+". Try me:";}
   else{head=winner==="a"?fr+" beat "+chName+" "+a+"-"+b:winner==="b"?chName+" beat "+fr+" "+b+"-"+a:chName+" and "+fr+" drew "+a+"-"+b;
-    text="Penalty Wahala: "+head+". Think you can do better?";}
+    text="Play Penalty: "+head+". Think you can do better?";}
   sheet([el("h2",null,head)].concat(shareSheet(text,url,"result"),[btn("Start your own challenge","ghost",function(){closeSheet();challenger();}),tipsCard()]));
 }
 
@@ -712,12 +762,13 @@ function daily(){var outs=[],day=null,i=0;PW.setScore(0,0,"The Wizard");PW.setOp
   start();}
 
 function home(){
-  var nodes=[F.el("h2",null,"Penalty Wahala"),F.el("p",null,"Free. No stakes. Just bragging rights. Pick your player:"),F.charPicker(),
+  var nodes=[F.el("h2",null,"Play Penalty"),F.el("p",null,"Free. No stakes. Just bragging rights. Pick your player:"),F.charPicker(),
     /* The one that always works comes first (owner: "there is no play
        against computer" - it sat below the fold of the sheet on a phone). */
     F.btn("Play the computer","red",function(){F.closeSheet();F.practice();}),
     F.btn("Face today's Wizard Keeper","ghost",function(){F.closeSheet();daily();}),
-    F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})];
+    F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),
+    F.btn("How to play","ghost",function(){PW.coachReset();F.closeSheet();F.practice();})];
   var mute=F.btn("Vibration: on","ghost",function(e){var m=localStorage.getItem("pw.mute")==="1";localStorage.setItem("pw.mute",m?"0":"1");e.currentTarget.textContent="Vibration: "+(m?"on":"off");});
   try{if(localStorage.getItem("pw.mute")==="1")mute.textContent="Vibration: off";}catch(e){}
   nodes.push(mute);

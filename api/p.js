@@ -12,13 +12,13 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 
 function render(m, t) {
   let title, line, go;
-  if (!m) { title = "Penalty Wahala"; line = "This challenge doesn't exist. Start your own."; go = "/penalty"; }
+  if (!m) { title = "Play Penalty"; line = "This challenge doesn't exist. Start your own."; go = "/penalty"; }
   else {
     const s = P.shootout(m.friend_kicks.map((k) => k.outcome));
     const ch = m.challenger_name, fr = m.friend_name;
-    if (s.done && s.winner === "a") title = fr + " beat " + ch + " " + s.a + "-" + s.b + " on Penalty Wahala";
-    else if (s.done && s.winner === "b") title = ch + " beat " + fr + " " + s.b + "-" + s.a + " on Penalty Wahala";
-    else if (s.done) title = ch + " and " + fr + " drew " + s.a + "-" + s.b + " on Penalty Wahala";
+    if (s.done && s.winner === "a") title = fr + " beat " + ch + " " + s.a + "-" + s.b + " on Play Penalty";
+    else if (s.done && s.winner === "b") title = ch + " beat " + fr + " " + s.b + "-" + s.a + " on Play Penalty";
+    else if (s.done) title = ch + " and " + fr + " drew " + s.a + "-" + s.b + " on Play Penalty";
     else title = ch + " challenges you to a penalty shootout";
     const expired = !m.friend_kicks.length && Date.parse(m.expires_at) <= t;
     line = expired ? "This challenge ran out. Start your own." : s.done ? "See how it went, then start your own." : "Take your 5 shots and make your 5 saves. Free, no stakes.";

@@ -37,10 +37,6 @@ test("names are written as text, never as HTML", () => {
   assert.doesNotMatch(html, /innerHTML\s*=\s*[^;]*\.challenger/);
 });
 
-test("the flick only times the shot", () => {
-  assert.match(html, /function aimAndShoot\(/);
-  assert.doesNotMatch(html, /dx[^;]*spot\s*=/, "swipe direction must never choose the spot");
-});
 
 /* Owner, 8 Oct 2026: "best motion and fluid movements, ball physics and
    dynamics, thunder lightning - catchy, not noisy - Soccerwizard on the
@@ -163,10 +159,6 @@ test("the streak starts at zero every match", () => {
   for (const f of ["challenger", "friend", "daily"]) assert.match(html, new RegExp("function " + f + "\\([^)]*\\)\\{[^]{0,200}PW\\.resetStreak\\(\\)"), f);
 });
 
-test("on a desktop a click or Space shoots; the hint says so", () => {
-  assert.match(html, /e\.key===" "\|\|e\.key==="Enter"/);
-  assert.match(html, /CLICK OR PRESS SPACE TO SHOOT/);
-});
 
 test("a challenge is told from the opener's side", () => {
   assert.match(html, /api\("GET","match",null,\{id:id,device:PW\.DEV\}\)/);
@@ -212,4 +204,84 @@ test("Play the computer is the first button on the home screen", () => {
   const home = grabFn("home");
   const i = home.indexOf('"Play the computer"'), j = home.indexOf("Face today's Wizard Keeper"), k = home.indexOf('"Challenge a friend"');
   assert.ok(i > 0 && i < j && i < k, "first, above the fold on a phone");
+});
+
+/* Round 3, owner 8 Oct 2026: "the select, the meter and the flick at the same
+   time is a hassle" -> one swipe; "make sure the ball moves in the direction of
+   the swipe, also ball physics and curve"; the name is Play Penalty; more
+   texture on the grass; a coach to teach people how to play. */
+function swipe() { return new Function(grabFn("swipeShot") + "\nreturn swipeShot;")(); }
+const H = 800;
+const swp = (pts, ms) => pts.map((p, i) => ({ x: p[0], y: p[1], t: i * ms / (pts.length - 1) }));
+
+test("a swipe straight up goes down the middle; a swipe to the right goes right", () => {
+  const S = swipe();
+  const up = S(swp([[200, 700], [200, 600], [200, 520]], 150), H);
+  assert.ok(up.ok && Math.abs(up.aim.x) < 0.3 && up.spot % 3 === 1, JSON.stringify(up));
+  const right = S(swp([[200, 700], [260, 600], [310, 520]], 150), H);
+  assert.ok(right.aim.x > 1.3 && right.spot % 3 === 2, "right swipe, right side: " + JSON.stringify(right));
+  const left = S(swp([[200, 700], [140, 600], [90, 520]], 150), H);
+  assert.ok(left.aim.x < -1.3 && left.spot % 3 === 0, "left swipe, left side");
+});
+
+test("a longer swipe aims higher, and the aim never leaves the frame", () => {
+  const S = swipe();
+  const short = S(swp([[200, 700], [200, 640]], 80), H), long = S(swp([[200, 700], [200, 440]], 260), H);
+  assert.ok(long.aim.y > short.aim.y && long.spot >= 3 && short.spot < 3, JSON.stringify({ short, long }));
+  const wild = S(swp([[200, 700], [600, 650]], 120), H);
+  assert.ok(Math.abs(wild.aim.x) <= 3.45 && wild.aim.y <= 2.25);
+});
+
+test("swipe speed is power: a lazy swipe is weak, a wild one sails over", () => {
+  const S = swipe();
+  const slow = S(swp([[200, 700], [200, 560]], 400), H), fast = S(swp([[200, 700], [200, 420]], 90), H);
+  assert.ok(slow.power < 0.55, "slow = weak " + slow.power);
+  assert.ok(fast.power > 0.88, "too fast = over " + fast.power);
+});
+
+test("a curved swipe curls the ball, a straight one does not", () => {
+  const S = swipe();
+  const straight = S(swp([[200, 700], [220, 610], [240, 520]], 150), H);
+  const bent = S(swp([[200, 700], [240, 640], [250, 580], [240, 520]], 150), H);
+  assert.ok(Math.abs(straight.curl) < 0.15, "straight " + straight.curl);
+  assert.ok(bent.curl < -0.3, "bowed right then back: curls back left " + bent.curl);
+});
+
+test("a tap or a downward drag is not a shot", () => {
+  const S = swipe();
+  assert.strictEqual(S(swp([[200, 700], [202, 698]], 100), H).ok, false);
+  assert.strictEqual(S(swp([[200, 600], [200, 700]], 100), H).ok, false);
+});
+
+test("the ball leaves along the swipe and lands on the aim; the spin bends it on the way", () => {
+  const plan = new Function(grabFn("flightPlan") + "\nreturn flightPlan;")();
+  const f = plan({ x: 2, y: 1.5 }, 0.75, 0.8);
+  const at = (s) => ({ x: f.vx * s + 0.5 * f.ax * s * s, y: f.vy * s - 0.5 * 9.81 * s * s });
+  assert.ok(Math.abs(at(f.T).x - 2) < 0.01 && Math.abs(at(f.T).y - 1.5) < 0.01);
+  assert.ok(f.ax > 0 && plan({ x: 2, y: 1.5 }, 0.75, 0).ax === 0, "curl is the bend, none without it");
+});
+
+test("one swipe shoots: no meter, no second gesture", () => {
+  assert.doesNotMatch(html, /id="bar"/);
+  assert.match(html, /SWIPE THE BALL TO SHOOT/);
+  assert.match(grabFn("aimAndShoot"), /swipeShot\(/);
+});
+
+test("the game is called Play Penalty", () => {
+  assert.doesNotMatch(html, /Penalty Wahala|PENALTY WAHALA/);
+  assert.match(html, /<title>Play Penalty \| Soccerwizard<\/title>/);
+  assert.match(html, /PLAY PENALTY/);
+});
+
+test("the turf has perspective stripes and a grain", () => {
+  assert.match(grabFn("drawTurf"), /polygon/);
+  assert.match(html, /feTurbulence/);
+});
+
+test("The Wizard coaches a first-timer, once per lesson, and How to play replays it", () => {
+  assert.match(html, /function coach\(key,/);
+  assert.match(html, /localStorage\.setItem\("pw\.coach"/);
+  assert.match(html, /\/penalty\/kw-taunt\.webp/);
+  for (const k of ["shoot", "dive", "over"]) assert.match(html, new RegExp('coach\\("' + k + '"'), k);
+  assert.match(html, /"How to play"/);
 });

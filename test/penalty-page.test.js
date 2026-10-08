@@ -17,7 +17,7 @@ test("an open challenge previews the challenger on WhatsApp and X", () => {
 
 test("a finished challenge previews the score", () => {
   const m = Object.assign({}, base, { friend_name: "Ada", friend_kicks: ["goal", "save", "goal", "save", "goal", "save"].map((o) => ({ outcome: o })) });
-  assert.match(render(m, T), /og:title" content="Ada beat Tobi 3-0 on Penalty Wahala"/);
+  assert.match(render(m, T), /og:title" content="Ada beat Tobi 3-0 on Play Penalty"/);
 });
 
 test("an expired unstarted challenge says so", () => {
