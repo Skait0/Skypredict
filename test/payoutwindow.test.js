@@ -91,7 +91,9 @@ test("accepting clears the slip drawn from the old window", () => {
   const fn = /window\.askWiderWindow=function[\s\S]*?\n  \};/.exec(code)[0];
   assert.match(fn, /WSP\.removed=\{\}/);
   assert.match(fn, /WSP\._slip=null/);
-  assert.match(fn, /bookResult/, "and the old code must not sit under a new slip");
+  /* The builder's own code box (#bookResult) is gone (8 Oct 2026): codes are
+     got in My slip and shown in the modal, so there is no old code to clear. */
+  assert.doesNotMatch(code, /[^A-Za-z]bookResult[^A-Za-z]/, "no dead #bookResult left to clear");
 });
 
 /* ------------------------------------------------------- one ladder, sliced */

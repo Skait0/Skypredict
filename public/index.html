@@ -3368,7 +3368,6 @@ html{interpolate-size:allow-keywords}
 #myNote{padding:0 16px;margin-top:8px}
 .ms-edit{padding:0 16px;margin:8px 0 0;font-size:13px;color:var(--soft)}
 .ms-edit[hidden]{display:none}
-#bookResult{margin-top:14px}
 /* Compact centred modal for the booking code */
 /* ---- converting a borrowed code to the other book ---- */
 .byo-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
@@ -4892,7 +4891,7 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
   .mysheet-foot .book-btn{flex:0 0 auto;order:0}
 }
 #myBookResult{padding:0 16px 20px}
-#myBookResult:not(:empty),#bookResult:not(:empty),#sotdResult:not(:empty){margin-top:12px}
+#myBookResult:not(:empty),#sotdResult:not(:empty){margin-top:12px}
 .code-card,.confirm-card,.code-err{position:relative;z-index:1}
 .myslip-sheet{padding-bottom:14px}
 /* ===================================================== retention features */
@@ -6167,7 +6166,6 @@ button#wspGo::after{content:'';position:absolute;inset:0;border-radius:inherit;p
   .myslip-sheet .bookpick{padding:0 18px}
 .bookpick-l{font-size:10.5px}
 .bld-note{margin-top:7px}
-#bookResult{margin-top:10px}
 .code-card{padding:14px}
 .code-card b{margin:5px 0 10px;font-size:26px;letter-spacing:.06em;word-break:break-all}
 .code-acts{gap:7px}
@@ -7576,7 +7574,6 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <!-- Names whichever book is selected - see paintBookPickers. Hardcoded, it
          told a Bet9ja slip what SportyBet's odds do. -->
     <div class="bld-approx" id="bldApprox">*Est. odds are a rough model guide - real SportyBet odds are usually lower.</div>
-    <div id="bookResult"></div>
 
     <!-- A CODE SOMEBODY ALREADY HOLDS. Not every slip worth splitting came
          from here: people arrive with a code from a friend, a Telegram
@@ -12292,7 +12289,7 @@ function clearPrompt(target){
   ASK_FOR=null; askLock(false);
 }
 /* Every prompt on the page, whichever slip raised it. */
-function clearPrompts(){ clearPrompt("bookResult"); clearPrompt("myBookResult"); }
+function clearPrompts(){ clearPrompt("myBookResult"); }
 /* Will this book actually take this leg?
    bookIdOf answers a narrower question: does the book have the GAME. It says
    nothing about the market, and Bet9ja carries plenty of fixtures without
@@ -14384,7 +14381,6 @@ function bookRounds(picks,B,src,target,h,round){
 function clearSlipState(){
   BUILD.picks.forEach(function(c){BUILD.removed[c.id]=1;});
   WSP.conjured=false; WSP.removed={}; WSP._slip=null; WSP._sig=null;
-  $("bookResult").innerHTML="";
   var to=$("totOdds"); if(to) to.textContent="-";
 }
 function clearSlip(){
@@ -19100,7 +19096,7 @@ function openDayMenu(btn){
       if(setSpan(n)){
         BUILD.removed={}; BUILD.touched=true;
         WSP.removed={}; WSP._slip=null; WSP._sig=null;
-        $("bookResult").innerHTML=""; renderBuilder();
+        renderBuilder();
       }
     });
   });
@@ -19110,7 +19106,7 @@ function openDayMenu(btn){
       if(setWeekend()){
         BUILD.removed={}; BUILD.touched=true;
         WSP.removed={}; WSP._slip=null; WSP._sig=null;
-        $("bookResult").innerHTML=""; renderBuilder();
+        renderBuilder();
       }
     });
   });
@@ -19122,7 +19118,7 @@ function openDayMenu(btn){
       if(setDay(off)){
         BUILD.removed={}; BUILD.touched=true;
         WSP.removed={}; WSP._slip=null; WSP._sig=null;
-        $("bookResult").innerHTML=""; renderBuilder();
+        renderBuilder();
       }
     });
   });
@@ -21923,7 +21919,6 @@ function renderWizardPanel(){
       if(setScope("all")){
         BUILD.removed={}; BUILD.touched=true;
         WSP.removed={}; WSP._slip=null; WSP._sig=null;
-        var _br=$("bookResult"); if(_br) _br.innerHTML="";
       }
       WSP.odds=typed; WSP._sig=null; WSP.conjured=false;
       try{localStorage.setItem("sw.wspodds",String(typed));}catch(e){}
@@ -22003,7 +21998,6 @@ function renderWizardPanel(){
       WSP.odds=null; WSP._sig=null; WSP._slip=null; WSP.conjured=false; WSP.removed={};
       try{localStorage.removeItem("sw.wspodds");}catch(e){}
       var _to=$("totOdds"); if(_to) _to.textContent="-";
-      var _br=$("bookResult"); if(_br) _br.innerHTML="";
       renderBuilder();
       var again=$("wspCust");
       if(again){ again.value=c; again.focus();
@@ -22327,7 +22321,7 @@ $("risk").addEventListener("input",function(){
     if(prev&&prev!==zone&&navigator.vibrate)navigator.vibrate(8);}
   this.style.setProperty('--rz',zone==="safe"?"rgba(43,199,120,.35)":zone==="mid"?"rgba(242,184,75,.4)":"rgba(230,57,70,.4)");
   paintTicks(pct);
-  BUILD.removed={}; $("bookResult").innerHTML="";
+  BUILD.removed={};
   /* Coalesced to one rebuild per frame. A range input fires `input` on every
      pixel of a drag, and this handler used to run renderBuilder synchronously
      on each one - measured at 20.8ms on this desktop, of which 11.8ms is
@@ -22354,7 +22348,7 @@ paintScope();
     b.addEventListener("click",function(){
       if(!setScope(b.getAttribute("data-scope"))) return;
       BUILD.removed={}; BUILD.touched=true;
-      $("bookResult").innerHTML=""; renderBuilder();
+      renderBuilder();
     });
   });
 })();
@@ -22372,7 +22366,7 @@ paintScope();
          stale. */
       BUILD.removed={}; BUILD.touched=true;
       WSP.removed={}; WSP._slip=null; WSP._sig=null;
-      $("bookResult").innerHTML=""; renderBuilder();
+      renderBuilder();
     });
   });
 })();
@@ -22419,7 +22413,7 @@ document.querySelectorAll(".bld-mode-btn").forEach(function(btn){
 });
 $("bookBtn").addEventListener("click",function(){ addBuiltToSlip(BUILD.picks,"slider"); });
 $("clearBtn").addEventListener("click",clearSlip);
-$("shuffleBtn").addEventListener("click",function(){if(BUILD.mode==="wizard"){wspConjure(true);return;}BUILD.touched=true;BUILD.seed=Math.floor(Math.random()*1e6);BUILD.shuffles=(BUILD.shuffles||0)+1;BUILD.removed={};$("bookResult").innerHTML="";renderBuilder();});
+$("shuffleBtn").addEventListener("click",function(){if(BUILD.mode==="wizard"){wspConjure(true);return;}BUILD.touched=true;BUILD.seed=Math.floor(Math.random()*1e6);BUILD.shuffles=(BUILD.shuffles||0)+1;BUILD.removed={};renderBuilder();});
 
 var CONTACT_EMAIL="hello@soccerwizard.live";
 /* Contact dialog.
@@ -22860,7 +22854,7 @@ setTimeout(hideLoader,8000);
     if(e.key==='/'&&!/input|textarea|select/i.test((document.activeElement||{}).tagName||'')){
       var q=document.getElementById('q');if(q){e.preventDefault();q.focus();}}
   });
-  ['bookResult','myBookResult','sotdResult'].forEach(function(id){var el=document.getElementById(id);if(!el)return;
+  ['myBookResult','sotdResult'].forEach(function(id){var el=document.getElementById(id);if(!el)return;
     new MutationObserver(function(){if(el.querySelector('.code-err'))window.swToast("Couldn't get a code",'err');}).observe(el,{childList:true});});
   /* Sound toggle removed at owner's request (persistently broken across
      rebuilds). Goal notifications still fire for followed matches; only the

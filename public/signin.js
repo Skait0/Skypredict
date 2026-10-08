@@ -30,7 +30,11 @@
     if(e==="dead") return "Too many wrong tries. Ask for a new code.";
     if(e==="expired") return "That code has expired. Ask for a new code.";
     if(e==="used") return "That code has been used. Ask for a new code.";
-    return "Something went wrong. Try again.";
+    /* Sign-in answers only www (guardPost checks the Origin). A reader on any
+       other address got the catch-all and nothing to act on (8 Oct 2026). */
+    if(e==="forbidden") return "Sign in at www.soccerwizard.live - this address can't sign you in.";
+    /* The status rides along, so a screenshot of this says which failure it was. */
+    return "Something went wrong ("+(e||st)+"). Try again.";
   }
   function env(ua,standalone){
     ua=String(ua||"");

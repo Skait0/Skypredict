@@ -44,6 +44,10 @@ test("every server error has words", () => {
   assert.match(S.errText(429, { error: "slow_down", minutes: 15 }), /15 minutes/);
   assert.match(S.errText(400, { error: "wrong", left: 1 }), /1 try left/);
   for (const e of ["bad_email", "bot", "send_failed", "dead", "expired", "used"]) assert.ok(S.errText(400, { error: e }).length > 10, e);
+  /* 8 Oct 2026: a reader on the Vercel alias got 403 forbidden as "Something went wrong". */
+  assert.match(S.errText(403, { error: "forbidden" }), /www\.soccerwizard\.live/);
+  assert.strictEqual(S.errText(500, { error: "server" }), "Something went wrong (server). Try again.");
+  assert.strictEqual(S.errText(502, null), "Something went wrong (502). Try again.", "no body: the status says which");
 });
 
 test("tokens fall back to the static pages' names", () => {
