@@ -215,6 +215,10 @@
       "destination": "/api/s"
     },
     {
+      "source": "/p/:id",
+      "destination": "/api/p?id=:id"
+    },
+    {
       "source": "/slipcard.png",
       "destination": "/api/slipcard"
     },
