@@ -32,7 +32,10 @@
 
   var d=root.document, NS="http://www.w3.org/2000/svg", seq=0;
   var CSS=".sws{position:relative;display:flex;flex-direction:column;height:100%;min-height:360px}"+
-    ".sws-flash{position:absolute;inset:-30px;background:radial-gradient(circle at 50% 30%,var(--si-glow),var(--si-glow-soft) 40%,transparent 70%);opacity:0;pointer-events:none;z-index:5}"+
+    /* The glow bleeds into the sign-in sheet's padding (12px top, 20px sides
+       and foot) and no further: -30px reached 10px past the sheet, and the
+       sheet's overflow:auto drew scrollbars on both sides (owner, 8 Oct 2026). */
+    ".sws-flash{position:absolute;inset:-12px -20px -20px;background:radial-gradient(circle at 50% 30%,var(--si-glow),var(--si-glow-soft) 40%,transparent 70%);opacity:0;pointer-events:none;z-index:5}"+
     ".sws-flash.go{animation:sws-fl .7s ease-out}@keyframes sws-fl{0%{opacity:1}100%{opacity:0}}"+
     ".sws-hud{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--si-faint);height:22px}"+
     ".sws-hud b{color:var(--si-act-ink)}.sws-call{color:var(--si-act-ink);opacity:0;transition:opacity .2s}.sws-call.on{opacity:1}"+

@@ -48,3 +48,12 @@ test("the goal and the final frame take the 20s Retry button away", () => {
   assert.match(src, /function goal\(\)\{[\s\S]{0,400}cap\(2\)/);
   assert.match(src, /function showFinal\(\)\{[^\n]*cap\(2\)/);
 });
+
+/* Owner, 8 Oct 2026: "the log in animation has scrolls on both sides". The
+   flash at inset:-30px reached 10px past the sign-in sheet (padding 12px top,
+   20px sides and foot), and its overflow:auto drew both scrollbars. */
+test("the flash glow stays inside the sign-in sheet's padding", () => {
+  const m = /\.sws-flash\{position:absolute;inset:(-?\d+)px (-?\d+)px (-?\d+)px;/.exec(src);
+  assert.ok(m, "inset is top, sides, foot");
+  assert.ok(+m[1] >= -12 && +m[2] >= -20 && +m[3] >= -20, "no further than the sheet's padding");
+});
