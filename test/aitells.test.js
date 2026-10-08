@@ -119,3 +119,12 @@ test("the live ticker renders each event once and does not scroll itself", () =>
   for (const e of evs) assert.strictEqual(host.innerHTML.split("<i>" + e.home + "</i>").length - 1, 1, e.home);
   assert.deepStrictEqual(host.style, {}, "no inline animation is set");
 });
+
+/* Owner, 8 Oct 2026: the running dot becomes a gold scanner, on the chip and
+   on a running Recent row - and it still stands still under reduced motion. */
+test("running is a gold scanner that moves only by transform and rests under reduced motion", () => {
+  assert.match(html, /@keyframes ysScan\{to\{transform:translateX\(122%\)\}\}/);
+  assert.match(html, /\.ys-live:after,\.ys-dot\.run:after\{[^}]*background:var\(--accent\)[^}]*animation:ysScan /);
+  assert.match(html, /prefers-reduced-motion:reduce\)\{[^{]*\.ys-live:after,\.ys-dot\.run:after[^{]*\{animation:none!important/);
+  assert.match(html, /\.ys-dot\.lost,\.ys-dot\.won\{margin:0 6px\}/, "settled dots keep the 20px so codes line up");
+});

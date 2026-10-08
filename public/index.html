@@ -503,7 +503,15 @@ main[tabindex="-1"]:focus{outline:none}
    All of them share one slow fade (no scale, no ring), and stand still for
    anyone who asked for less motion - see the rule after .live-dot (Task 4). */
 @keyframes liveCalm{50%{opacity:.4}}
-.ys-live{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:liveCalm 2.4s ease-in-out infinite}
+/* RUNNING IS A SCANNER, NOT A DOT (owner, 8 Oct 2026: "replace the glowing
+   dot ... another type of cool light", gold kept). A gold light sweeps a short
+   track and back - on the "N running" chip and on a running Recent row. Only
+   transform moves; still under reduced motion (rule after .live-dot). */
+@keyframes ysScan{to{transform:translateX(122%)}}
+.ys-live,.ys-dot.run{position:relative;width:18px;height:5px;border-radius:99px;overflow:hidden;flex:none;
+  background:color-mix(in srgb,var(--accent) 18%,transparent)}
+.ys-live:after,.ys-dot.run:after{content:"";position:absolute;top:0;bottom:0;left:0;width:45%;border-radius:99px;
+  background:var(--accent);box-shadow:0 0 8px var(--accent);animation:ysScan 1.3s ease-in-out infinite alternate}
 .ys-lh{display:flex;align-items:center;justify-content:space-between;min-height:24px;margin:0 2px 4px}
 .ys-lh h4{margin:0;font-size:13px;font-weight:700;color:var(--soft)}
 .ys-clrb{border:0;background:none;color:var(--faint);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:4px 0}
@@ -516,7 +524,9 @@ main[tabindex="-1"]:focus{outline:none}
 #myres .sw-swipe{margin:0 0 6px}
 .ys-od{font-size:15px;color:var(--accent)}
 .ys-dot{width:8px;height:8px;border-radius:50%;flex:none}
-.ys-dot.run{background:var(--accent)}.ys-dot.lost{background:var(--red)}.ys-dot.won{background:var(--green)}
+.ys-dot.run{width:20px;height:6px}.ys-dot.lost{background:var(--red)}.ys-dot.won{background:var(--green)}
+/* Settled dots keep the scanner's 20px, so the codes line up row to row. */
+.ys-dot.lost,.ys-dot.won{margin:0 6px}
 @media (hover:hover){.ys-chip:hover{border-color:var(--grey)}.ys-clrb:hover{color:var(--red-ink)}}
 .ys .num,.ys-row .num{font-weight:800}
 .eyebrow{font-size:11px;font-weight:800;
@@ -6827,7 +6837,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 .sw-undo .u-bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--red);transform-origin:left;transform:scaleX(0)}
 .sw-undo.on .u-bar{animation:swUndoBar 5s linear forwards}
 @keyframes swUndoBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
-@media (prefers-reduced-motion:reduce){.sw-card,.sw-undo,.sw-swipe,.ys-live,.ys-dot.run,.sw-undo .u-bar{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){.sw-card,.sw-undo,.sw-swipe,.ys-live,.ys-dot.run,.ys-live:after,.ys-dot.run:after,.sw-undo .u-bar{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
