@@ -537,3 +537,13 @@ test("every sprite address carries the art version, so new art is never served f
   assert.match(html, /function setImg\(el,f\)\{[^}]*"\/penalty\/"\+f\+"\?v="\+SPV/);
   assert.doesNotMatch(html.replace(/<script>[\s\S]*<\/script>/g, ""), /\.webp"/, "static tags too");
 });
+
+test("owner, 9 Oct 2026: a far-corner shot always gets a dive, faces on the scoreboard, a turn banner you notice", () => {
+  assert.match(grabFn("playKick"), /col\(k\.dive\)===1&&Math\.abs\(aim\.x\)>2\.2\)\{var sd=aim\.x>0\?1:-1;kp=keeperPose\(/);
+  assert.match(html, /<i class="av" id="avA"><\/i>/);
+  assert.match(html, /<i class="av" id="avB"><\/i>/);
+  assert.match(grabFn("drawBoard"), /face\(ME\)[\s\S]*face\(OPP\|\|other\(\)\)/);
+  assert.match(grabFn("aimAndShoot"), /setTag\("YOUR SHOT","shot"\)/);
+  assert.match(grabFn("pickDive"), /setTag\("YOUR SAVE","save"\)/);
+  assert.match(html, /#tag\.go\{animation:pw-turn/);
+});

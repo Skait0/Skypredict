@@ -83,8 +83,11 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 /* the shootout board: one row per side, a circle per kick - green goal, red miss,
    hollow still to come - and the side about to kick lit */
 .sboard{display:grid;gap:3px;min-width:min(310px,92vw);padding:6px 10px;border-radius:12px;background:#0b0c10e6;border:1px solid var(--line);box-shadow:0 10px 26px #0009;backdrop-filter:blur(6px)}
-.srow{display:grid;grid-template-columns:minmax(52px,1fr) auto 26px;align-items:center;gap:8px;padding:2px 2px;border-radius:7px;transition:background .2s}
+.srow{display:grid;grid-template-columns:22px minmax(52px,1fr) auto 26px;align-items:center;gap:8px;padding:2px 2px;border-radius:7px;transition:background .2s}
 .srow.now{background:#ffffff0f}
+/* whose face is whose: a head-and-shoulders crop of each side's keeper sprite (owner) */
+.srow .av{width:22px;height:22px;border-radius:50%;background:#1E1E22 no-repeat 50% 7%/250% auto;border:1px solid var(--line)}
+.srow.now .av{border-color:#F2F1F0}
 .srow[hidden]{display:none}
 .srow .who{font:italic 800 12px/1 "Roboto Condensed",sans-serif;letter-spacing:.08em;color:var(--soft);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38vw}
 .srow.now .who{color:#fff}
@@ -99,7 +102,12 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .score{display:flex;align-items:center;gap:10px;background:#0d0d0fcc;border:1px solid var(--line);border-radius:99px;padding:7px 14px;backdrop-filter:blur(6px)}
 .score b{font:italic 800 18px/1 "Roboto Condensed",sans-serif;min-width:14px;text-align:center}
 .score .who{font-size:12px;color:var(--soft);max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#tag{position:absolute;top:calc(86px + env(safe-area-inset-top));left:0;right:0;text-align:center;font:italic 800 13px/1 "Roboto Condensed",sans-serif;letter-spacing:.2em;color:var(--soft);z-index:6;pointer-events:none}
+#tag{position:absolute;top:calc(86px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);padding:8px 18px 7px;border-radius:99px;background:#0d0d0fe0;border:1px solid var(--line);font:italic 800 18px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;color:#F2F1F0;white-space:nowrap;z-index:6;pointer-events:none}
+#tag:empty{display:none}
+/* the turn is the one thing to read between kicks (owner: "your shot and your save is not noticeable") */
+#tag.shot{color:var(--gold);border-color:#F2B84B88}#tag.save{color:#2FD48A;border-color:#2FD48A88}
+#tag.go{animation:pw-turn .42s cubic-bezier(.2,.9,.25,1)}
+@keyframes pw-turn{0%{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.86)}60%{opacity:1;transform:translateX(-50%) scale(1.06)}100%{transform:translateX(-50%) scale(1)}}
 /* power bar: weak / green / over, with the sweet spot marked in gold */
 #hint{position:absolute;left:0;right:0;bottom:calc(31% + env(safe-area-inset-bottom));text-align:center;font:italic 800 15px/1 "Roboto Condensed",sans-serif;letter-spacing:.18em;color:#fff;opacity:0;transition:opacity .2s;z-index:5;pointer-events:none;text-shadow:0 2px 8px #000}
 #hint.on{opacity:1}#hint i{display:block;font-style:normal;animation:pw-nudge .9s ease-in-out infinite}
@@ -107,7 +115,7 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #pop{position:absolute;left:0;right:0;top:46%;text-align:center;font:italic 800 54px/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:-.01em;opacity:0;pointer-events:none;z-index:7;-webkit-text-stroke:2px #07080a;paint-order:stroke fill;text-shadow:0 6px 24px #000c}
 #pop small{display:block;margin-top:6px;font-size:17px;letter-spacing:.18em;color:#fff;-webkit-text-stroke:0;opacity:.92}
 #pop.go{animation:pw-pop .95s cubic-bezier(.2,.9,.25,1)}
-#combo{position:absolute;right:0;left:0;text-align:center;top:calc(128px + env(safe-area-inset-top));font:italic 800 14px/1 "Roboto Condensed",sans-serif;color:var(--gold);letter-spacing:.1em;opacity:0;z-index:6}
+#combo{position:absolute;right:0;left:0;text-align:center;top:calc(150px + env(safe-area-inset-top));font:italic 800 14px/1 "Roboto Condensed",sans-serif;color:var(--gold);letter-spacing:.1em;opacity:0;z-index:6}
 #combo.on{opacity:1;animation:pw-flame .8s ease-in-out infinite alternate}
 /* the coach: The Wizard with a tip, and a ghost finger showing the swipe */
 #coach{position:absolute;left:12px;right:12px;top:47%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;background:#0d0d0fe6;border:1px solid var(--line);box-shadow:0 12px 30px #000a;z-index:7;opacity:0;transform:translateY(8px) scale(.98);transition:opacity .25s,transform .25s;pointer-events:none}
@@ -120,9 +128,9 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #pts{position:absolute;left:0;right:0;top:57%;text-align:center;font:italic 800 18px/1 "Roboto Condensed",sans-serif;letter-spacing:.06em;color:var(--gold);text-shadow:0 2px 10px #000;opacity:0;pointer-events:none;z-index:7}
 #pts.go{animation:pw-pts 1.4s cubic-bezier(.2,.9,.25,1)}
 @keyframes pw-pts{0%{opacity:0;transform:translateY(14px) scale(.8)}18%{opacity:1;transform:translateY(0) scale(1.08)}70%{opacity:1;transform:translateY(-10px) scale(1)}100%{opacity:0;transform:translateY(-24px) scale(1)}}
-#wind{position:absolute;left:12px;top:calc(106px + env(safe-area-inset-top));font:italic 800 12px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;color:var(--soft);z-index:6;pointer-events:none}
+#wind{position:absolute;left:12px;top:calc(128px + env(safe-area-inset-top));font:italic 800 12px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;color:var(--soft);z-index:6;pointer-events:none}
 #spellbox[hidden]{display:none}
-#spellbox{position:absolute;right:12px;top:calc(104px + env(safe-area-inset-top));display:flex;align-items:center;gap:6px;z-index:6;pointer-events:none}
+#spellbox{position:absolute;right:12px;top:calc(126px + env(safe-area-inset-top));display:flex;align-items:center;gap:6px;z-index:6;pointer-events:none}
 #spellbox span{font:italic 800 11px/1 "Roboto Condensed",sans-serif;letter-spacing:.14em;color:var(--gold)}
 #spellbox b{position:relative;width:64px;height:7px;border-radius:99px;background:#ffffff1a;overflow:hidden}
 #spellbox i{position:absolute;inset:0;background:linear-gradient(90deg,var(--red),var(--gold));transform-origin:0 50%;transform:scaleX(0);transition:transform .4s cubic-bezier(.2,.9,.25,1)}
@@ -200,7 +208,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
   <div id="wind" hidden>CALM</div>
   <div id="spellbox" hidden><span>LEGENDARY</span><b><i></i></b></div>
   <button id="cast" type="button" hidden>LEGEND</button>
-  <div id="hud"><div class="sboard"><div class="srow" id="rowA"><span class="who" id="whoA">YOU</span><span class="kicks" id="kA"></span><b id="scA">0</b></div><div class="srow" id="rowB"><span class="who" id="whoB">CPU</span><span class="kicks" id="kB"></span><b id="scB">0</b></div></div></div>
+  <div id="hud"><div class="sboard"><div class="srow" id="rowA"><i class="av" id="avA"></i><span class="who" id="whoA">YOU</span><span class="kicks" id="kA"></span><b id="scA">0</b></div><div class="srow" id="rowB"><i class="av" id="avB"></i><span class="who" id="whoB">CPU</span><span class="kicks" id="kB"></span><b id="scB">0</b></div></div></div>
   <div id="tag"></div><div id="combo"></div>
   <div id="hint"></div>
   <div id="coach" role="status"><img src="/penalty/kw-taunt.webp?v=12" alt=""><p></p></div><i id="ghost"></i>
@@ -498,7 +506,10 @@ function consumeSpell(){if(!SPELLARMED)return false;SPELLARMED=false;SPELL=0;SPE
    Every kick lands on its side's row as it is taken (playKick writes it).
    Five circles each, more appear in sudden death; single for a solo go. */
 var BOARD={a:[],b:[],single:false};
+function face(c){return "url(/penalty/"+(c==="wizard"?"kw-set.webp":"k-set.webp")+"?v="+SPV+")";}
+function setTag(t,kind){var g=$("tag");g.textContent=t||"";g.className=kind||"";if(t){void g.offsetWidth;g.classList.add("go");}}
 function drawBoard(){
+  $("avA").style.backgroundImage=face(ME);$("avB").style.backgroundImage=face(OPP||other());
   [["a","kA","scA"],["b","kB","scB"]].forEach(function(r){var outs=BOARD[r[0]],host=$(r[1]);host.textContent="";
     var n=Math.max(REG,BOARD.a.length,BOARD.b.length);if(n>REG&&!BOARD.single)n=Math.max(BOARD.a.length,BOARD.b.length)+(BOARD.a.length===BOARD.b.length?1:0);
     for(var i=0;i<Math.max(REG,n);i++){var c=document.createElement("i");if(i>=REG)c.className="sd";if(i<outs.length)c.className=outs[i]==="goal"?"g":"m";host.appendChild(c);}
@@ -643,7 +654,7 @@ function swipeShot(path,H,geo){
 /* While the finger is down: a dotted line from the ball to where it would go,
    bent by the curl, coloured by the power - grey weak, green clean, red over. */
 function aimAndShoot(){
-  $("tag").textContent="YOUR SHOT";boardNow("a");newWind();K.idle=true;AIMING=true;drawSpell();SC=ME;KC=OPP||other();hint("SWIPE THE BALL TO SHOOT",true);
+  setTag("YOUR SHOT","shot");boardNow("a");newWind();K.idle=true;AIMING=true;drawSpell();SC=ME;KC=OPP||other();hint("SWIPE THE BALL TO SHOOT",true);
   coach("shoot","Swipe the ball toward the goal. Where you swipe is where it goes. Swipe faster to hit it harder, bend your swipe to curl it.",true);
   return new Promise(function(done){
     var app=$("app"),path=null;
@@ -662,7 +673,7 @@ function aimAndShoot(){
     app.addEventListener("pointerdown",down);app.addEventListener("pointermove",move);app.addEventListener("pointerup",up);
   });
 }
-function pickDive(){$("tag").textContent="YOUR SAVE";hint("TAP WHERE TO DIVE");boardNow("b");K.idle=true;KC=ME;SC=OPP||other();
+function pickDive(){setTag("YOUR SAVE","save");hint("TAP WHERE TO DIVE");boardNow("b");K.idle=true;KC=ME;SC=OPP||other();
   coach("dive","Your turn in goal. Tap the part of the goal where you think the shot is going, and you dive there.",false);return tapSpot().then(function(s){hint("");return s;});}
 
 /* ---------------------------------------------------------------- a kick */
@@ -699,6 +710,9 @@ function playKick(k){
   if(k.shot.aim){aim={x:k.shot.aim.x,y:aim.y===3.4||k.outcome==="bar"?aim.y:k.shot.aim.y};if(k.outcome==="bar")aim.x=Math.max(-3.4,Math.min(3.4,k.shot.aim.x));}
   var curl=k.shot.curl!=null?k.shot.curl:(Math.random()*0.8-0.4),side=curl>=0?1:-1;
   var f=flightPlan(aim,power,curl),kp=keeperPose(k.dive);
+  /* A shot to the far side when he guessed the middle: he still throws himself
+     at it and falls short, rather than hopping on the spot (owner, 9 Oct 2026). */
+  if(k.outcome!=="save"&&k.dive!=null&&col(k.dive)===1&&Math.abs(aim.x)>2.2){var sd=aim.x>0?1:-1;kp=keeperPose((sd>0?2:0)+(aim.y>=1.22?3:0));kp.x=sd*1.3;}
   /* What you see must agree with the call. A save: the keeper's dive ends on
      the ball's line. A goal: he ends clearly away from it. */
   if(k.outcome==="save"){kp.x=Math.max(-3.2,Math.min(3.2,aim.x));kp.y=Math.max(0.45,Math.min(1.8,aim.y));
@@ -809,14 +823,14 @@ window.PW={RULES:{strike:strike,neighbour:neighbour,judge:judge,shootout:shootou
   get DEV(){return DEV;},get NAME(){return NAME;},setName:function(n){NAME=n;try{localStorage.setItem("pw.name",n);}catch(e){}},
   setScore:function(a,b,who){if(who!=null)$("whoB").textContent=who;},
   newBoard:function(who,single,a,b){BOARD={a:(a||[]).slice(),b:(b||[]).slice(),single:!!single};if(who!=null)$("whoB").textContent=who;drawBoard();boardNow(null);},
-  tag:function(t){$("tag").textContent=t||"";},
+  tag:function(t){setTag(t);},
   coachReset:function(){COACHED={};try{localStorage.removeItem("pw.coach");}catch(e){}},
   smartDive:smartDive,levelOf:levelOf,trailFor:trailFor,get xp(){return XP;},
   setMuted:setMuted,get muted(){return MUTED;},
   setSolo:function(on){SOLO=!!on;SPELL=0;SPELLARMED=false;SPELLNOW=false;drawSpell();newWind();},consumeSpell:consumeSpell,
-  get char(){return ME;},setChar:function(c){ME=c==="wizard"?"wizard":"ten";try{localStorage.setItem("pw.char",ME);}catch(e){}loadChar(ME);SC=ME;KC=OPP||other();},
+  get char(){return ME;},setChar:function(c){ME=c==="wizard"?"wizard":"ten";try{localStorage.setItem("pw.char",ME);}catch(e){}loadChar(ME);SC=ME;KC=OPP||other();drawBoard();},
   resetStreak:function(){streak=0;fx.combo(0);},
-  setOpponent:function(c){OPP=c||null;loadChar(OPP||other());KC=OPP||other();}};
+  setOpponent:function(c){OPP=c||null;loadChar(OPP||other());KC=OPP||other();drawBoard();}};
 })();
 </script>
 <script>
