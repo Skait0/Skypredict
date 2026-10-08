@@ -17417,7 +17417,12 @@ function renderSlipOfDay(){
      cannot rate, today has no card at all and the slip is tomorrow's - the
      heading has to say so rather than calling it today's. */
   var _sdOff=_sdDate?dayOff(_sdDate):0;
-  var lock=_sdDate?loadSotdLock(_sdDate):null;
+  /* The build's slip wins when it has one for this day - one slip for every
+     reader, decided once (chooseSotds in lib/build.js). The browser's own
+     lock and choice below are only the fallback for a payload without one. */
+  var _baked=[DATA.sotd,DATA.sotdNext].filter(function(s){
+    return s&&s.date===_sdDate&&Array.isArray(s.legs)&&s.legs.length>=2; })[0]||null;
+  var lock=_sdDate?(_baked||loadSotdLock(_sdDate)):null;
   if(lock){
     /* Read the locked legs back as they stand now - kicked off, finished or
        still to come. A leg whose fixture has gone from the payload entirely is

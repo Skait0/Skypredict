@@ -56,7 +56,7 @@ async function bakePayload() {
      jump off a game that had already been played. Best-effort: no network, a
      cold site or a payload without one simply means a fresh pick, which is
      what used to happen every time anyway. */
-  let prevPotd = null, prevPotdNext = null, prevFixtures = null, prevPublished = null, prevPayload = null;
+  let prevPotd = null, prevPotdNext = null, prevSotd = null, prevSotdNext = null, prevFixtures = null, prevPublished = null, prevPayload = null;
   try {
     const origin = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
     const r = await fetch(origin + "/predictions.json", { signal: AbortSignal.timeout(8000) });
@@ -70,6 +70,9 @@ async function bakePayload() {
       prevPotd = prev.potd || null;
       /* Tomorrow's pick, recorded tonight - see choosePotds in lib/build.js. */
       prevPotdNext = prev.potdNext || null;
+      /* The slip of the day, recorded the same way (chooseSotds). */
+      prevSotd = prev.sotd || null;
+      prevSotdNext = prev.sotdNext || null;
       /* The board as readers saw it, tips and all. recordPublishedTips writes
          those tips to the record once the games have been played, which is the
          only way to file the tip we actually showed rather than one this build
@@ -125,7 +128,7 @@ async function bakePayload() {
 
   let payload;
   try {
-    payload = await buildPayload({ prevPotd, prevPotdNext, prevFixtures, prevPublished });
+    payload = await buildPayload({ prevPotd, prevPotdNext, prevSotd, prevSotdNext, prevFixtures, prevPublished });
   } catch (e) {
     warn("build failed: " + e.message);
     payload = fallBackToPrevious(e.message);
