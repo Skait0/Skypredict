@@ -1796,7 +1796,10 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .ask-scrim{position:fixed;inset:0;z-index:240;background:rgba(10,14,10,.5);
   backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:16px}
 .ask-scrim[hidden]{display:none}
-.ask-card{position:relative;width:min(440px,100%);max-height:min(82vh,680px);overflow:auto;overscroll-behavior:contain;
+/* The whole screen less the scrim's padding, and the buttons stick to the
+   foot: on a 13-inch laptop (~610px tall) the old 82vh cap pushed Book off
+   the bottom and the owner had to zoom out to reach it (8 Oct 2026). */
+.ask-card{position:relative;width:min(440px,100%);max-height:min(calc(100dvh - 32px),680px);overflow:auto;overscroll-behavior:contain;
   background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
   padding:18px 16px 16px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
 /* z-index: the card's body comes after this button in the DOM, so a long first
@@ -1807,11 +1810,12 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .ask-card .confirm-card{background:none;border:0;padding:0;text-align:left}
 .ask-card .confirm-card>p:first-child,.ask-card .code-err{padding-right:36px}
 .ask-card .code-err{margin:0 0 14px}
-.ask-card .confirm-card .ca{justify-content:stretch}
+.ask-card .confirm-card .ca{justify-content:stretch;position:sticky;bottom:-16px;z-index:1;
+  margin-bottom:-16px;padding:10px 0 16px;background:var(--card)}
 .ask-card .confirm-card .ca button{flex:1 1 auto}
 /* Compact on purpose (owner, 29 Sep 2026: "reduce the font size and tighten
    the swap pills, make it small but readable"). 12px is the floor. */
-.ask-refusal>p:first-child{font-size:15px;margin-bottom:10px}
+.ask-refusal>p:first-child{font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .ask-rows{display:flex;flex-direction:column;gap:5px;margin:0 0 12px}
 .ask-row{display:flex;flex-direction:column;gap:4px;padding:8px 9px;border:1px solid var(--line-soft);
   border-radius:var(--r-md);background:var(--raise)}
@@ -1828,7 +1832,11 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    offered. A second small line is still tight. */
 .confirm-card .ask-opt b{font-weight:800;min-width:0}
 .ask-opt i{margin-left:auto;font-style:normal;opacity:.75;white-space:nowrap;font-size:11.5px}
-.confirm-card .ask-opt[data-v='drop']{flex:0 0 auto;justify-content:center;padding:5px 11px}
+/* One size whatever the swap beside it wraps to (owner, 8 Oct 2026): a long
+   team name made the swap two lines and the stretch made Remove tall with it. */
+.confirm-card .ask-opt[data-v='drop']{flex:0 0 auto;justify-content:center;padding:5px 11px;align-self:center}
+.confirm-card .ask-all{margin-left:auto;padding:4px 10px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);color:var(--soft);font-size:12px;font-weight:600;cursor:pointer}
 .confirm-card .ask-opt.on{border-color:var(--win)!important;background:var(--win-wash);color:var(--text)}
 /* What the code pays, under the code - see codeTotHTML. No <b>: .code-card b
    is the 32px booking-code style. */
@@ -14048,12 +14056,17 @@ function confirmAfterRefusal(target,names,keep,B,go,refused,h){
        :"<span class='ask-none'>Removed - nothing safer on sale</span>")+"</div>";
   }).join("")+(n>8?"<p class='ask-more'>+"+(n-8)+" more removed</p>":"");
   var label=function(){ return "Book "+(keep+swap.filter(Boolean).length); };
-  showPrompt(target,"<div class='confirm-card ask-refusal'><p><b>"+B.mark+" can't take "+n+"</b></p>"+
+  /* Remove all (owner, 8 Oct 2026): one tap when none of the swaps are wanted. */
+  showPrompt(target,"<div class='confirm-card ask-refusal'><p><b>"+B.mark+" can't take "+n+"</b>"+
+    (swap.filter(Boolean).length>1?"<button class='ask-all' type='button'>Remove all</button>":"")+"</p>"+
     "<div class='ask-rows'>"+rows+"</div>"+
     "<div class='ca'><button class='confirm-go' type='button'>"+label()+"</button>"+
     "<button class='confirm-cancel' type='button'>"+((h&&h.stopLabel)||"Cancel")+"</button></div></div>");
   var el=promptEl(target); if(!el) return;
   var goBtn=el.querySelector(".confirm-go");
+  var all=el.querySelector(".ask-all");
+  if(all) all.addEventListener("click",function(){
+    el.querySelectorAll(".ask-opt[data-v='drop']").forEach(function(b){ b.click(); });});
   el.querySelectorAll(".ask-opt").forEach(function(b){
     b.addEventListener("click",function(){
       var i=+b.dataset.i; swap[i]=b.dataset.v==="swap";
@@ -21785,15 +21798,12 @@ function renderWizardPanel(){
       "<span class='wsl-a' aria-hidden='true'>\u2192</span></button>";
     html += "</div>";
   }
-  /* ONE BUTTON, AND IT IS THE NEXT STEP (owner, 7 Oct 2026). Conjure until a
-     slip exists, then "Add selections to slip" in its place. No "Conjure
-     again": this panel shows only the numbers, so a reroll would change a slip
-     nobody can see ("why is there a conjure again? there is no preview"). A
-     new payout or style is a new ticket and brings Conjure back (see the chip
-     handlers); the sheet's Shuffle rerolls where the games are on screen. */
-  html += WSP.conjured
-    ? "<button class='book-btn wsp-go' id='wspAdd' type='button'>Add selections to slip</button>"
-    : "<button class='book-btn wsp-go"+(WSP.odds==null?" waiting":"")+
+  /* ONE BUTTON, AND IT GOES STRAIGHT TO THE SLIP (owner, 8 Oct 2026: "add to
+     selection after conjure kills the magic"). Conjure builds and puts the
+     games in My slip in one tap; a slip already holding games gets the
+     Replace/Add question (addBuiltToSlip). No reroll label here - the sheet's
+     Shuffle rerolls where the games are on screen. */
+  html += "<button class='book-btn wsp-go"+(WSP.odds==null?" waiting":"")+
         "' id='wspGo' type='button'>Conjure ticket</button>";
 
   $("wizardPanel").innerHTML=html;
@@ -21964,7 +21974,6 @@ function renderWizardPanel(){
     try{localStorage.setItem("sw.mode","slider");}catch(e){}
     renderBuilder(); bldToPanel();
   });
-  /* Absent once conjured - Add takes its place. */
   var _go=$("wspGo");
   if(_go) _go.addEventListener("click",function(){
     /* Disabled would have been silent about why. It stays pressable and says
@@ -21979,9 +21988,8 @@ function renderWizardPanel(){
       }
       return;
     }
-    buzzConjure(); wspConjure(false);});
-  var _add=$("wspAdd");
-  if(_add) _add.addEventListener("click",function(){ addBuiltToSlip(BUILD.picks,"wizard"); });
+    buzzConjure(); wspConjure(false);
+    if(WSP.conjured) addBuiltToSlip(BUILD.picks,"wizard");});
 
 }
 function renderBuilderOutput(){

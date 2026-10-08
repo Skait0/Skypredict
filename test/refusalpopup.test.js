@@ -167,3 +167,22 @@ test("one scroll lock, held by name, released only when the last overlay closes"
   const src = require("./books.js").src;
   assert.doesNotMatch(src, /document\.body\.style\.overflow="hidden"/, "no overlay locks on its own any more");
 });
+
+/* Owner, 8 Oct 2026: "it shouldnt affect the size of the remove pill",
+   "add a remove all button", and the pop-up needed a zoom-out on a 13-inch
+   laptop before Book could be reached. */
+test("Remove keeps one size, whatever the swap beside it wraps to", () => {
+  assert.match(src, /\.confirm-card \.ask-opt\[data-v='drop'\]\{[^}]*align-self:center/);
+});
+
+test("Remove all turns every swap into a removal, offered only when there are two or more", () => {
+  const fnSrc = body("confirmAfterRefusal");
+  assert.match(fnSrc, /swap\.filter\(Boolean\)\.length>1\?"<button class='ask-all' type='button'>Remove all<\/button>"/);
+  assert.match(fnSrc, /el\.querySelectorAll\("\.ask-opt\[data-v='drop'\]"\)\.forEach\(function\(b\)\{ b\.click\(\); \}\);/,
+    "goes through each row's own Remove, so the Book count follows");
+});
+
+test("the pop-up fits a laptop screen and its buttons stay in view", () => {
+  assert.match(src, /\.ask-card\{[^}]*max-height:min\(calc\(100dvh - 32px\),680px\)/);
+  assert.match(src, /\.ask-card \.confirm-card \.ca\{[^}]*position:sticky;bottom:-16px/);
+});
