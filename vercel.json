@@ -1,6 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
+    "api/penalty.js": {
+      "maxDuration": 10,
+      "includeFiles": "public/predictions.json"
+    },
     "api/predictions.js": {
       "maxDuration": 10,
       "memory": 512,
