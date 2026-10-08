@@ -111,10 +111,6 @@ test("the challenger takes 5 shots and 3 bonus shots, 5 dives and 3 bonus dives"
   assert.match(html, /for\(var i=0;i<REG\+BONUS;i\+\+\)/);
 });
 
-test("no bet, booking code or price anywhere in the game", () => {
-  /* "no stakes" is allowed copy; a stake to place is not. */
-  assert.doesNotMatch(html, /booking code|\bodds\b|SportyBet|Bet9ja|place a bet|your stake/i);
-});
 
 test("daily share line names the day and ends with the account", () => {
   assert.match(html, /"Wizard Keeper "\+/);
@@ -308,11 +304,6 @@ test("a dive leaves an afterimage trail and lands with a bounce and a puff of tu
   assert.match(html, /function dust\(/);
 });
 
-test("holding the ball shows a short direction arrow, not where it will land", () => {
-  const g = grabFn("guide");
-  assert.doesNotMatch(g, /reticle/, "no target in the goal while aiming");
-  assert.match(g, /0\.32/, "the arrow covers only the first part of the path");
-});
 
 /* Round 6, owner 8 Oct 2026: "when the keeper saves, the keeper gets smaller - the
    sizes are not proportional", plus the landing sheets for both keepers. */
@@ -429,4 +420,51 @@ test("a save is made where the ball is; a goal keeps the keeper clear of it", ()
 test("the turn label sits below the scoreboard, and the miss cross is centred", () => {
   assert.match(html, /#tag\{position:absolute;top:calc\(86px \+ env\(safe-area-inset-top\)\)/);
   assert.match(html, /\.kicks i\.m:before,\.kicks i\.m:after\{content:"";position:absolute;left:50%;top:50%;width:8px;height:1\.5px;margin:-\.75px 0 0 -4px;/);
+});
+
+/* Round 9, owner 8 Oct 2026: "our selling point is picking games for people and
+   offering codes - incorporate it", "the arrow when you are about to take the
+   shot - remove it", "trailing fire when the ball is in flight", "if i shoot
+   while i do a curl motion, let the ball curl in the direction", "it looks like
+   the stand is empty", "the red dot on the ball stays on after shooting". */
+test("no stakes in the game: nothing is wagered, but the wizard's slip and codes are offered", () => {
+  assert.doesNotMatch(html, /place a bet|your stake|stake to win/i);
+  assert.match(grabFn("tipsCard"), /Let the wizard pick for you/);
+  assert.match(grabFn("tipsCard"), /r\.j\.code/);
+  assert.match(grabFn("tipsCard"), /Build me a slip/);
+});
+
+test("no aim arrow while you hold the ball", () => {
+  assert.doesNotMatch(html, /function guide\(/);
+  assert.doesNotMatch(html, /id="guide"/);
+});
+
+test("the ball trails fire in flight", () => {
+  assert.match(html, /function fireTick\(/);
+  assert.match(grabFn("playKick"), /fireTick\(/);
+});
+
+test("a swipe that turns right curls the ball right; one that turns left, left", () => {
+  const S = swipe();
+  const right = S(swp([[200, 700], [200, 640], [210, 580], [240, 530]], 150), H);
+  const left = S(swp([[200, 700], [200, 640], [190, 580], [160, 530]], 150), H);
+  assert.ok(right.curl > 0.3, "turning right " + right.curl);
+  assert.ok(left.curl < -0.3, "turning left " + left.curl);
+});
+
+test("the stand is full: a drawn crowd that jumps on a goal", () => {
+  assert.match(html, /<canvas id="crowdc"/);
+  assert.match(html, /function drawCrowd\(/);
+  assert.match(html, /\.hype #crowdc\{animation:pw-jump/);
+});
+
+test("the ball's red glow goes out in flight and comes back at rest", () => {
+  assert.match(html, /B\.fly\?"saturate\(\.12\) brightness\(1\.06\)":"none"/);
+});
+
+test("a catch is a catch: no parry burst, the ball rides into his hands and lands with him", () => {
+  const f = grabFn("playKick");
+  assert.match(f, /var catchIt=kind==="weak"&&k\.dive===k\.shot\.spot;impact\("save",catchIt\);/);
+  assert.match(f, /if\(caught\)\{fx\.pop\("CAUGHT!"/);
+  assert.match(f, /if\(B\.att\)\{B\.x=K\.x;/);
 });

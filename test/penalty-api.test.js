@@ -166,3 +166,11 @@ test("dailystate says where a go stands so a reload or lost answer resumes, neve
   assert.strictEqual(lost.code, 409);
   assert.strictEqual(lost.json().at, 2, "a replayed shot is told where the go really is");
 });
+
+test("tips carry today's wizard slip code, or the latest one before today, never a future one", () => {
+  const { pickCode } = require("../api/penalty.js");
+  const map = { "2026-10-07": { legs: [1, 2], odds: 3.1, codes: { sporty: "A" } }, "2026-10-08": { legs: [1, 2, 3], odds: 4.2, codes: { sporty: "B" } }, "2026-10-09": { legs: [1], odds: 2, codes: { sporty: "C" } } };
+  assert.deepStrictEqual(pickCode(map, "2026-10-08"), { date: "2026-10-08", games: 3, odds: 4.2, codes: { sporty: "B" } });
+  assert.strictEqual(pickCode(map, "2026-10-10").date, "2026-10-09");
+  assert.strictEqual(pickCode({ "2026-10-09": map["2026-10-09"] }, "2026-10-08"), null);
+});

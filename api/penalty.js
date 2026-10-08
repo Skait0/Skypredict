@@ -160,6 +160,15 @@ function make(deps) {
 /* Today's pick of the day, read from the payload this deploy shipped with
    (includeFiles in vercel.json). The payload records potd as {id, home, away,
    date}; the tip and its probability live on the fixture. */
+/* The wizard's daily slip (data/daily-codes.json, written by the mint): the
+   one for this Lagos day, or the latest before it; never a future one. */
+function pickCode(map, today) {
+  const days = Object.keys(map || {}).filter((d) => d <= today).sort();
+  const d = days[days.length - 1];
+  if (!d) return null;
+  const e = map[d] || {};
+  return { date: d, games: (e.legs || []).length, odds: e.odds, codes: e.codes || {} };
+}
 let TIPS = null;
 function defaultTips() {
   if (TIPS) return TIPS;
@@ -169,9 +178,11 @@ function defaultTips() {
     const f = (d.fixtures || []).find((x) => x.home === p.home && x.away === p.away && x.date === p.date);
     TIPS = f ? { home: f.home, away: f.away, tip: f.tip, pct: Math.round(f.tip_p * 100), league: f.league } : {};
   } catch (e) { TIPS = {}; }
+  try { TIPS = Object.assign({}, TIPS, { code: pickCode(require("../data/daily-codes.json"), P.lagosDay(Date.now())) }); } catch (e) {}
   return TIPS;
 }
 
 module.exports = make({ db: Object.assign({}, require("../lib/penaltydb.js"), { rlHit: require("../lib/auth/db.js").rlHit }),
   report: (e, c) => require("../lib/report.js").report(e, c) });
 module.exports.make = make;
+module.exports.pickCode = pickCode;
