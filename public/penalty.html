@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Play Penalty | Soccerwizard</title>
+<meta name="description" content="A free penalty shootout. Beat your friends, face the Wizard Keeper every day.">
+<meta property="og:title" content="Play Penalty">
+<meta property="og:description" content="Take your 5 shots, make your 5 saves. Free, no stakes.">
+<meta property="og:image" content="https://www.soccerwizard.live/penalty/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@SoccerWizardhq">
+<meta name="theme-color" content="#0D0D0F">
+<link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
+<link rel="preload" as="image" href="/penalty/k-set.webp?v=12">
+<link rel="preload" as="image" href="/penalty/s-stand.webp?v=12">
+<link rel="preload" as="image" href="/penalty/p-ball.webp?v=12">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Roboto+Condensed:ital,wght@1,800&display=swap">
+<style>
+/* PLAY PENALTY - wizardry x soccer, the site's own tokens. Gold is for wins
+   and small accents only; red is the brand and the action. */
+:root{--bg:#0D0D0F;--card:#16161A;--card2:#1D1D22;--line:#2A2A30;--text:#F3F3F5;--soft:#A3A3AD;--faint:#6E6E78;--red:#E63946;--gold:#F2B84B;--green:#2FD48A}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:600 15px/1.35 "Plus Jakarta Sans",system-ui,sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+#app{position:relative;max-width:480px;height:100dvh;margin:0 auto;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;background:#07080a}
+#world{position:absolute;inset:0;will-change:transform}
+/* night sky, two floodlight cones, a crowd that only twinkles when it has a reason */
+.sky{position:absolute;inset:0;background:radial-gradient(120% 60% at 50% 0%,#1a1c24 0%,#0b0c10 55%,#07080a 100%)}
+.beam{position:absolute;top:-10%;width:70%;height:75%;opacity:.07;background:linear-gradient(180deg,#fff,transparent 80%);filter:blur(6px);transition:opacity .25s}
+.beam.l{left:-25%;transform:skewX(28deg)}.beam.r{right:-25%;transform:skewX(-28deg)}
+.flashing .beam{opacity:.22}
+/* the stand: tiers that fade into the dark, heads at three sizes so no grid shows */
+.crowd{position:absolute;left:0;right:0;background:
+  linear-gradient(180deg,#07080a 0%,#07080ae6 30%,#07080a59 75%,#07080a1a 100%),
+  repeating-linear-gradient(180deg,transparent 0 21px,#0000004d 21px 23px),
+  radial-gradient(circle at 5px 6px,#1c1d23 4px,transparent 5px) 0 0/13px 11px,
+  radial-gradient(circle at 9px 4px,#17181d 5px,transparent 6px) 3px 5px/17px 12px,
+  radial-gradient(circle at 6px 8px,#202128 3px,transparent 4px) 7px 2px/11px 13px,#0c0d11}
+.crowd i{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;opacity:0}
+#crowdc{position:absolute;left:0;bottom:0;width:100%;height:100%;transform-origin:50% 100%}
+.hype #crowdc{animation:pw-jump .45s cubic-bezier(.3,.7,.3,1) 3}
+@keyframes pw-jump{40%{transform:translateY(-3px) scaleY(1.01)}}
+.hype .crowd i{animation:pw-twinkle .5s steps(2) 3}
+/* LED boards behind the goal */
+.boards{position:absolute;left:0;right:0;background:#050506;border-top:1px solid #2a2a30;border-bottom:1px solid #2a2a30;overflow:hidden}
+.boards:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#ffffff0d,transparent 40%),repeating-linear-gradient(90deg,transparent 0 2px,#05050666 2px 3px);pointer-events:none}
+.track{position:absolute;top:0;bottom:0;left:0;display:flex;align-items:center;white-space:nowrap;animation:pw-marquee 34s linear infinite;will-change:transform}
+/* one panel per brand, each in its own colours, the way stadium LEDs rotate */
+.track .pn{display:inline-flex;align-items:center;height:100%;padding:0 1.6em;font:italic 800 var(--bf,14px)/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:.06em;border-right:1px solid #ffffff14}
+.track .pn b,.track .pn i{font-style:inherit;font-weight:800;color:#fff;text-shadow:0 0 6px #ffffff55}
+.track .pn .red{color:var(--red);text-shadow:0 0 6px #e6394699}
+.track .sb{background:#c8102e}.track .sb i{color:#ffd9de}
+.track .b9 .b9r{color:#D42127;text-shadow:0 0 6px #d4212799}.track .b9 .b9g{color:#22A04B;text-shadow:0 0 6px #22a04b99}
+.track .gold{color:#FFC400!important;text-shadow:0 0 6px #ffc40099!important}
+.track .lime{color:#9CE800!important;text-shadow:0 0 6px #9ce80099!important}
+.track .xb{background:#0b2a4a}.track .blue{color:#4fa3e8!important;text-shadow:0 0 6px #276BA6!important}
+/* 1xBet brand blue #276BA6 */
+.bflash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:italic 800 var(--bf,14px)/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:.3em;opacity:0;background:#050506}
+.bflash.go{animation:pw-blink .9s steps(1) 1}
+/* pitch */
+.grass{position:absolute;left:0;right:0;bottom:0;background:#155029}
+/* grain: fractal noise, so the turf reads as grass and not as paint */
+.grass:before{content:"";position:absolute;inset:0;opacity:.32;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 .55 0 0 0 0 .2 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+.grass:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#07080a99,transparent 30%),radial-gradient(120% 80% at 50% 70%,transparent 50%,#07080a99 100%)}
+svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.sprite{position:absolute;left:0;top:0;transform-origin:50% 50%;will-change:transform;pointer-events:none;-webkit-user-drag:none}
+#shooter{transform-origin:50% 100%}
+.kghost{opacity:0;filter:saturate(.6) brightness(1.4)}
+#dust{position:absolute;left:0;top:0;border-radius:50%;background:radial-gradient(closest-side,#d9e4c6cc,#8fa77a55 60%,transparent);opacity:0;pointer-events:none;will-change:transform,opacity}
+#kshadow{position:absolute;left:0;top:0;border-radius:50%;background:radial-gradient(closest-side,#000b,transparent);pointer-events:none;will-change:transform,opacity}
+#shadow{position:absolute;left:0;top:0;border-radius:50%;background:radial-gradient(closest-side,#000a,transparent);will-change:transform,opacity}
+#ball{z-index:3}
+.zones{position:absolute;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;opacity:0;pointer-events:none;transition:opacity .2s}
+.zones.on{opacity:1;pointer-events:auto}
+.zones button{border:0;margin:2px;border-radius:10px;background:#ffffff08;outline:1px dashed #ffffff30;cursor:pointer;touch-action:manipulation}
+.zones button:active{background:#e6394633}
+/* HUD */
+#hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:center;padding:calc(10px + env(safe-area-inset-top)) 14px 0;z-index:6;pointer-events:none}
+/* the shootout board: one row per side, a circle per kick - green goal, red miss,
+   hollow still to come - and the side about to kick lit */
+.sboard{display:grid;gap:3px;min-width:min(310px,92vw);padding:6px 10px;border-radius:12px;background:#0b0c10e6;border:1px solid var(--line);box-shadow:0 10px 26px #0009;backdrop-filter:blur(6px)}
+.srow{display:grid;grid-template-columns:minmax(52px,1fr) auto 26px;align-items:center;gap:8px;padding:2px 2px;border-radius:7px;transition:background .2s}
+.srow.now{background:#ffffff0f}
+.srow[hidden]{display:none}
+.srow .who{font:italic 800 12px/1 "Roboto Condensed",sans-serif;letter-spacing:.08em;color:var(--soft);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38vw}
+.srow.now .who{color:#fff}
+.srow b{font:italic 800 18px/1 "Roboto Condensed",sans-serif;text-align:right}
+.kicks{display:flex;gap:4px}
+.kicks i{position:relative;width:14px;height:14px;border-radius:50%;border:1.5px solid #ffffff40;transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
+.kicks i.g{background:var(--green);border-color:var(--green);transform:scale(1.1)}
+.kicks i.m{background:var(--red);border-color:var(--red)}
+.kicks i.m:before,.kicks i.m:after{content:"";position:absolute;left:50%;top:50%;width:8px;height:1.5px;margin:-.75px 0 0 -4px;background:#fff;transform:rotate(45deg)}
+.kicks i.m:after{transform:rotate(-45deg)}
+.kicks i.sd{border-style:dashed}
+.score{display:flex;align-items:center;gap:10px;background:#0d0d0fcc;border:1px solid var(--line);border-radius:99px;padding:7px 14px;backdrop-filter:blur(6px)}
+.score b{font:italic 800 18px/1 "Roboto Condensed",sans-serif;min-width:14px;text-align:center}
+.score .who{font-size:12px;color:var(--soft);max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#tag{position:absolute;top:calc(86px + env(safe-area-inset-top));left:0;right:0;text-align:center;font:italic 800 13px/1 "Roboto Condensed",sans-serif;letter-spacing:.2em;color:var(--soft);z-index:6;pointer-events:none}
+/* power bar: weak / green / over, with the sweet spot marked in gold */
+#hint{position:absolute;left:0;right:0;bottom:calc(14% + env(safe-area-inset-bottom));text-align:center;font:italic 800 15px/1 "Roboto Condensed",sans-serif;letter-spacing:.18em;color:#fff;opacity:0;transition:opacity .2s;z-index:5;pointer-events:none;text-shadow:0 2px 8px #000}
+#hint.on{opacity:1}#hint i{display:block;font-style:normal;animation:pw-nudge .9s ease-in-out infinite}
+/* pop words */
+#pop{position:absolute;left:0;right:0;top:46%;text-align:center;font:italic 800 54px/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:-.01em;opacity:0;pointer-events:none;z-index:7;-webkit-text-stroke:2px #07080a;paint-order:stroke fill;text-shadow:0 6px 24px #000c}
+#pop small{display:block;margin-top:6px;font-size:17px;letter-spacing:.18em;color:#fff;-webkit-text-stroke:0;opacity:.92}
+#pop.go{animation:pw-pop .95s cubic-bezier(.2,.9,.25,1)}
+#combo{position:absolute;right:0;left:0;text-align:center;top:calc(128px + env(safe-area-inset-top));font:italic 800 14px/1 "Roboto Condensed",sans-serif;color:var(--gold);letter-spacing:.1em;opacity:0;z-index:6}
+#combo.on{opacity:1;animation:pw-flame .8s ease-in-out infinite alternate}
+/* the coach: The Wizard with a tip, and a ghost finger showing the swipe */
+#coach{position:absolute;left:12px;right:12px;top:47%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;background:#0d0d0fe6;border:1px solid var(--line);box-shadow:0 12px 30px #000a;z-index:7;opacity:0;transform:translateY(8px) scale(.98);transition:opacity .25s,transform .25s;pointer-events:none}
+#coach.on{opacity:1;transform:none}
+#coach img{height:64px;flex:none}
+#coach p{margin:0;font-size:13.5px;line-height:1.4;color:var(--text)}
+#ghost{position:absolute;left:var(--gx,50%);top:var(--gy,80%);width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:#ffffffcc;box-shadow:0 0 0 6px #ffffff33;opacity:0;pointer-events:none;z-index:7}
+#ghost.on{animation:pw-ghost 1.6s cubic-bezier(.3,.7,.3,1) infinite}
+@keyframes pw-ghost{0%{opacity:0;transform:translate(0,0) scale(.8)}15%{opacity:1;transform:translate(0,0) scale(1)}70%{opacity:1;transform:translate(46px,-190px) scale(.9)}100%{opacity:0;transform:translate(52px,-210px) scale(.8)}}
+#pts{position:absolute;left:0;right:0;top:57%;text-align:center;font:italic 800 18px/1 "Roboto Condensed",sans-serif;letter-spacing:.06em;color:var(--gold);text-shadow:0 2px 10px #000;opacity:0;pointer-events:none;z-index:7}
+#pts.go{animation:pw-pts 1.4s cubic-bezier(.2,.9,.25,1)}
+@keyframes pw-pts{0%{opacity:0;transform:translateY(14px) scale(.8)}18%{opacity:1;transform:translateY(0) scale(1.08)}70%{opacity:1;transform:translateY(-10px) scale(1)}100%{opacity:0;transform:translateY(-24px) scale(1)}}
+#wind{position:absolute;left:12px;top:calc(106px + env(safe-area-inset-top));font:italic 800 12px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;color:var(--soft);z-index:6;pointer-events:none}
+#spellbox{position:absolute;right:12px;top:calc(104px + env(safe-area-inset-top));display:flex;align-items:center;gap:6px;z-index:6;pointer-events:none}
+#spellbox span{font:italic 800 11px/1 "Roboto Condensed",sans-serif;letter-spacing:.14em;color:var(--gold)}
+#spellbox b{position:relative;width:64px;height:7px;border-radius:99px;background:#ffffff1a;overflow:hidden}
+#spellbox i{position:absolute;inset:0;background:linear-gradient(90deg,var(--red),var(--gold));transform-origin:0 50%;transform:scaleX(0);transition:transform .4s cubic-bezier(.2,.9,.25,1)}
+#cast{position:absolute;right:14px;bottom:calc(18% + env(safe-area-inset-bottom));z-index:7;height:46px;padding:0 18px;border-radius:99px;border:1px solid var(--gold);background:radial-gradient(circle at 30% 30%,#3a2a10,#0d0d0f);color:var(--gold);font:italic 800 15px/1 "Roboto Condensed",sans-serif;letter-spacing:.16em;box-shadow:0 0 0 0 #f2b84b88;animation:pw-castpulse 1.4s ease-out infinite;cursor:pointer}
+#cast.armed{background:var(--gold);color:#0d0d0f;animation:none;box-shadow:0 0 24px #f2b84b}
+@keyframes pw-castpulse{0%{box-shadow:0 0 0 0 #f2b84b88}100%{box-shadow:0 0 0 16px #f2b84b00}}
+/* LEGENDARY: the full meter glows; on the shot the kicker burns gold and the keeper is frozen */
+#spellbox.full span{text-shadow:0 0 8px var(--gold)}#spellbox.full b{box-shadow:0 0 10px var(--gold);animation:pw-castpulse 1.4s ease-out infinite}
+#app.legend #shooter{filter:drop-shadow(0 0 8px #F2B84B) drop-shadow(0 0 20px #F2B84Baa)}
+#app.legend #keeper{filter:grayscale(.75) brightness(.85) drop-shadow(0 0 8px #8fd8ff)}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:8}
+/* bottom sheet (menus, results) */
+#sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .45s cubic-bezier(.2,.9,.25,1);z-index:9;max-height:85%;overflow:auto;box-shadow:0 -20px 50px #000a}
+#sheet.on{transform:none}
+#sheet h2{margin:2px 0 6px;font:italic 800 26px/1.05 "Roboto Condensed",sans-serif;letter-spacing:.01em}
+#sheet p{margin:0 0 12px;color:var(--soft);font-size:14px}
+#sheet .note{color:var(--gold);font-weight:800}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;margin-top:8px;border:0;border-radius:999px;font:800 15px "Plus Jakarta Sans",system-ui;cursor:pointer;text-decoration:none;transition:transform .12s}
+.btn:active{transform:scale(.97)}
+.btn.red{background:var(--red);color:#fff;box-shadow:0 8px 24px #e6394644}.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.row{display:flex;gap:8px}.row .btn{flex:1}
+input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:0 18px;font:inherit;font-size:16px;margin-bottom:4px}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 6px}
+.pick button{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px 9px;border-radius:16px;border:1px solid var(--line);background:var(--card2);color:var(--soft);font:italic 800 14px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;cursor:pointer;transition:transform .15s,border-color .15s}
+.pick button img{height:86px;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+.pick button.on{border-color:var(--red);color:var(--text);box-shadow:0 0 0 1px var(--red),0 10px 26px #e6394633}
+.pick button.on img{transform:scale(1.08) translateY(-2px)}
+.tips{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--card2)}
+.tips:empty{display:none}
+.tips .tk{font:italic 800 13px/1 "Roboto Condensed",sans-serif;letter-spacing:.14em;color:var(--gold)!important;text-transform:uppercase}
+.codes{display:grid;gap:6px;margin:8px 0 10px}
+.crow{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.crow span{font-size:13px;color:var(--soft)}.crow code{font:800 15px/1 "Roboto Condensed",monospace;letter-spacing:.06em;color:#fff}
+.btn.sm{height:30px;margin:0;padding:0 12px;width:auto;font-size:12px}.tips p{margin:0 0 4px!important}.tips b{display:block;font-size:16px;margin-bottom:2px}
+@keyframes pw-marquee{to{transform:translateX(-50%)}}
+@keyframes pw-blink{0%{opacity:1}20%{opacity:0}35%{opacity:1}55%{opacity:0}70%{opacity:1}100%{opacity:0}}
+@keyframes pw-twinkle{0%{opacity:0}50%{opacity:.9}}
+@keyframes pw-nudge{50%{transform:translateY(-6px)}}
+@keyframes pw-pop{0%{opacity:0;transform:scale(.3) skewX(-8deg)}22%{opacity:1;transform:scale(1.18) skewX(-8deg)}40%{transform:scale(.96) skewX(-8deg)}55%{opacity:1;transform:scale(1) skewX(-8deg)}100%{opacity:0;transform:scale(1.06) translateY(-14px) skewX(-8deg)}}
+@keyframes pw-flame{from{opacity:.7;transform:scale(1)}to{opacity:1;transform:scale(1.1)}}
+@keyframes pw-breathe{50%{transform:scaleY(1.015)}}
+@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style></head>
+<body><div id="app">
+  <div id="world">
+    <div class="sky"></div><div class="beam l"></div><div class="beam r"></div>
+    <div class="crowd" id="crowd"><canvas id="crowdc"></canvas></div>
+    <div class="boards" id="boards"><div class="track"><span class="pn"><b>SOCCER</b><i class="red">WIZARD</i></span><span class="pn sb"><b>SPORTY</b><i>BET</i></span><span class="pn b9"><i class="b9r">BET</i><i class="b9g">9JA</i></span><span class="pn bk"><b>BET</b><i class="gold">KING</i></span><span class="pn bw"><b>BET</b><i class="lime">PAWA</i></span><span class="pn xb"><b>1X</b><i class="blue">BET</i></span><span class="pn"><b>PLAY</b><i class="red">PENALTY</i></span><span class="pn"><b>SOCCER</b><i class="red">WIZARD</i></span><span class="pn sb"><b>SPORTY</b><i>BET</i></span><span class="pn b9"><i class="b9r">BET</i><i class="b9g">9JA</i></span><span class="pn bk"><b>BET</b><i class="gold">KING</i></span><span class="pn bw"><b>BET</b><i class="lime">PAWA</i></span><span class="pn xb"><b>1X</b><i class="blue">BET</i></span><span class="pn"><b>PLAY</b><i class="red">PENALTY</i></span></div><div class="bflash" id="bflash"></div></div>
+    <div class="grass" id="grass"></div>
+    <svg class="layer" id="turf"></svg>
+    <svg class="layer" id="lines"></svg>
+    <svg class="layer" id="net"></svg>
+    <svg class="layer" id="posts"></svg>
+    <img class="sprite kghost" id="kg0" alt=""><img class="sprite kghost" id="kg1" alt=""><img class="sprite kghost" id="kg2" alt="">
+    <div id="dust"></div>
+    <div id="kshadow"></div>
+    <img class="sprite" id="keeper" src="/penalty/k-set.webp?v=12" alt="">
+    <div id="shadow"></div>
+    <svg class="layer" id="trail"></svg>
+    <svg class="layer" id="fire" style="mix-blend-mode:screen"></svg>
+    <img class="sprite" id="ball" src="/penalty/p-ball.webp?v=12" alt="">
+    <img class="sprite" id="shooter" src="/penalty/s-stand.webp?v=12" alt="">
+    <img class="sprite" id="burst" src="/penalty/p-burst.webp?v=12" alt="" style="opacity:0">
+    <img class="sprite" id="star" src="/penalty/p-star.webp?v=12" alt="" style="opacity:0">
+    <div class="zones" id="zones"><button data-s="3" aria-label="Top left"></button><button data-s="4" aria-label="Top middle"></button><button data-s="5" aria-label="Top right"></button><button data-s="0" aria-label="Bottom left"></button><button data-s="1" aria-label="Bottom middle"></button><button data-s="2" aria-label="Bottom right"></button></div>
+  </div>
+  <svg class="layer" id="bolt" style="z-index:8"></svg>
+  <div id="wind" hidden>CALM</div>
+  <div id="spellbox" hidden><span>LEGENDARY</span><b><i></i></b></div>
+  <button id="cast" type="button" hidden>LEGEND</button>
+  <div id="hud"><div class="sboard"><div class="srow" id="rowA"><span class="who" id="whoA">YOU</span><span class="kicks" id="kA"></span><b id="scA">0</b></div><div class="srow" id="rowB"><span class="who" id="whoB">CPU</span><span class="kicks" id="kB"></span><b id="scB">0</b></div></div></div>
+  <div id="tag"></div><div id="combo"></div>
+  <div id="hint"></div>
+  <div id="coach" role="status"><img src="/penalty/kw-taunt.webp?v=12" alt=""><p></p></div><i id="ghost"></i>
+  <div id="pts"></div>
+  <div id="pop"></div><div id="flash"></div>
+  <div id="sheet"></div>
+</div>
+<script>
+/* PLAY PENALTY. Spec: docs/specs/2026-10-08-penalty-wahala-design.md.
+   The four rule functions below are copied verbatim from lib/penalty.js; a
+   test fails if they drift. Everything else here is presentation: a small
+   pseudo-3D world (metres, projected through one camera), a ball on real
+   ballistics, and effects that only move transform and opacity. */
+(function(){
+"use strict";
+var ZONES={weakBelow:0.55,overAbove:0.88};
+var REG=5,BONUS=3;
+var col=function(s){return s%3;},high=function(s){return s>=3;};
+function strike(spot, power) {
+  const kind = power > ZONES.overAbove ? "over" : power < ZONES.weakBelow ? "weak" : "green";
+  return { spot, kind };
+}
+function neighbour(a, b) {
+  if (a === b) return false;
+  if (col(a) === col(b)) return true;                       // other height, same column
+  return high(a) === high(b) && Math.abs(col(a) - col(b)) === 1;
+}
+function judge(shot, dive) {
+  const s = strike(shot.spot, shot.power);
+  if (s.kind === "over") return high(s.spot) ? "over" : "bar";
+  if (dive === s.spot) return "save";
+  if (s.kind === "weak" && neighbour(dive, s.spot)) return "save";
+  return "goal";
+}
+/* Outcomes alternate A, B, A, B... Regulation is five each and ends early once
+   the trailing side cannot catch up; then up to BONUS rounds of sudden death;
+   still level after that is a draw. */
+function shootout(outcomes) {
+  let a = 0, b = 0;
+  const n = outcomes.length;
+  for (let i = 0; i < n; i++) if (outcomes[i] === "goal") { if (i % 2 === 0) a++; else b++; }
+  const takenA = Math.ceil(n / 2), takenB = Math.floor(n / 2);
+  const round = Math.max(takenA, 1);
+  const res = (done, winner) => ({ a, b, done, winner, next: done ? null : (n % 2 === 0 ? "a" : "b"), round });
+  if (takenA <= REG && takenB <= REG) {
+    const leftA = REG - takenA, leftB = REG - takenB;
+    if (a > b + leftB) return res(true, "a");
+    if (b > a + leftA) return res(true, "b");
+    if (takenA < REG || takenB < REG) return res(false, null);
+    if (a !== b) return res(true, a > b ? "a" : "b");
+    return res(false, null);
+  }
+  if (takenA !== takenB) return res(false, null);          // B still to kick this round
+  if (a !== b) return res(true, a > b ? "a" : "b");
+  if (takenA >= REG + BONUS) return res(true, "draw");
+  return res(false, null);
+}
+
+var $=function(id){return document.getElementById(id);};
+var REDUCED=matchMedia("(prefers-reduced-motion: reduce)").matches;
+var NS="http://www.w3.org/2000/svg";
+function uuid(){var b=crypto.getRandomValues(new Uint8Array(16));b[6]=b[6]&15|64;b[8]=b[8]&63|128;
+  var h=Array.prototype.map.call(b,function(x){return (x+256).toString(16).slice(1);}).join("");
+  return h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20);}
+var DEV=null,NAME=null,MUTED=false;
+try{DEV=localStorage.getItem("pw.dev");if(!DEV){DEV=uuid();localStorage.setItem("pw.dev",DEV);}NAME=localStorage.getItem("pw.name");MUTED=localStorage.getItem("pw.mute")==="1";}catch(e){DEV=DEV||uuid();}
+
+/* Every pose, by file. The first of each character and the ball are preloaded
+   in <head>; the rest are fetched once the page is up. */
+var SPRITES=["k-set.webp","k-spring.webp","k-land.webp","k-down.webp","k-held.webp","k-crash.webp","k-taunt.webp","k-dive-low.webp","k-dive-high.webp","k-jump.webp","k-catch.webp","k-beaten.webp","k-roar.webp",
+  "s-stand.webp","s-run.webp","s-strike.webp","s-follow.webp","s-arms.webp","s-slide.webp","s-head.webp","p-ball.webp","p-burst.webp","p-star.webp",
+  "kw-set.webp","kw-spring.webp","kw-land.webp","kw-down.webp","kw-held.webp","kw-crash.webp","kw-taunt.webp","kw-dive-low.webp","kw-dive-high.webp","kw-jump.webp","kw-catch.webp","kw-beaten.webp","kw-roar.webp",
+  "sw-stand.webp","sw-run.webp","sw-strike.webp","sw-follow.webp","sw-arms.webp","sw-slide.webp","sw-head.webp"];
+var IMG={};
+/* TWO CHARACTERS (owner, 8 Oct 2026): Ten and The Wizard. You play as one,
+   the opponent is the other, and the daily keeper is always The Wizard. Poses
+   are named for Ten; file() swaps in the wizard set when he is on the pitch.
+   Only the characters in play are fetched. */
+var ME="ten",OPP=null;try{ME=localStorage.getItem("pw.char")==="wizard"?"wizard":"ten";}catch(e){}
+function other(){return ME==="ten"?"wizard":"ten";}
+var KC=other(),SC=ME;
+function file(f){if(KC==="wizard"&&f.indexOf("k-")===0)return "kw-"+f.slice(2);if(SC==="wizard"&&f.indexOf("s-")===0)return "sw-"+f.slice(2);return f;}
+function loadChar(c){var pre=c==="wizard"?/^(kw|sw|p)-/:/^(k|s|p)-/;SPRITES.forEach(function(f){if(pre.test(f)&&!IMG[f]){var i=new Image();i.src="/penalty/"+f+"?v="+SPV;IMG[f]=i;}});}
+addEventListener("load",function(){loadChar(ME);loadChar(other());});
+/* HOW TALL EACH POSE IS DRAWN, in metres, per file. Measured, not guessed:
+   every crop's size in its source sheet times that sheet's scale, which comes
+   from one known length on it (a standing keeper 1.75-1.85m, a stretched dive
+   2.2m). Resizing every pose to one height made a diagonal dive look smaller
+   than a standing keeper (owner, 8 Oct 2026). */
+var KH={"k-taunt.webp":1.96,"k-dive-low.webp":1.09,"k-dive-high.webp":2.05,"k-jump.webp":2.38,"k-catch.webp":1.88,"k-beaten.webp":1.46,"k-roar.webp":1.85,"kw-taunt.webp":2.07,"kw-dive-low.webp":0.97,"kw-dive-high.webp":1.74,"kw-jump.webp":2.55,"kw-catch.webp":2.38,"kw-beaten.webp":1.18,"kw-roar.webp":1.85,"k-set.webp":1.75,"k-spring.webp":1.64,"kw-set.webp":1.85,"kw-spring.webp":1.49,"k-land.webp":0.94,"k-down.webp":0.66,"k-held.webp":0.69,"k-crash.webp":1.1,"kw-land.webp":0.94,"kw-down.webp":0.65,"kw-held.webp":0.7,"kw-crash.webp":1.05};
+
+/* ---------------------------------------------------------------- camera
+   World: x across (m, right +), y up, z from the penalty spot toward goal
+   (goal line z=11). One pinhole camera behind and above the spot, fitted to
+   the screen on every resize: the goal fills ~86% of the width, the spot
+   sits at 80% of the height. */
+var CAM={c:5.5,F:700,h:3,hz:200,cx:200,W:400,H:800};
+function P(x,y,z){var s=CAM.F/(z+CAM.c);return {x:CAM.cx+x*s,y:CAM.hz+(CAM.h-y)*s,s:s};}
+var GOAL={w:7.32,h:2.44,z:11},SPOTX=[-2.44,0,2.44];
+function target(spot,kind){
+  var x=SPOTX[col(spot)]*0.94,y=high(spot)?1.85:0.45;
+  if(kind==="over")y=3.4;
+  if(kind==="bar"){y=GOAL.h;x=SPOTX[col(spot)]*0.7;}
+  return {x:x,y:y};
+}
+/* The kick, solved backwards from where it must cross the line: forward
+   speed from power, then the launch that meets the target under gravity,
+   with sideways bend from spin. */
+function flightPlan(t,power,curl){
+  var g=9.81,vz=12+22*power,T=11/vz,ax=curl*6;
+  return {vz:vz,T:T,ax:ax,vy:(t.y+0.5*g*T*T)/T,vx:(t.x-0.5*ax*T*T)/T};
+}
+var RESTITUTION=0.42;
+
+function layout(){
+  var a=$("app").getBoundingClientRect(),W=a.width,H=a.height;
+  var goalW=Math.min(W*0.86,420),sG=goalW/GOAL.w,goalBottom=H*0.42,spotY=H*0.8;
+  CAM.W=W;CAM.H=H;CAM.cx=W/2;CAM.F=sG*(GOAL.z+CAM.c);
+  var s0=CAM.F/CAM.c;CAM.h=(spotY-goalBottom)/(s0-sG);CAM.hz=goalBottom-CAM.h*sG;
+  var gl=P(-GOAL.w/2,GOAL.h,GOAL.z),gr=P(GOAL.w/2,0,GOAL.z),goalH=gr.y-gl.y;
+  /* crowd and boards stand behind the goal */
+  var bTop=gr.y-goalH*0.42,bH=Math.max(16,goalH*0.2);
+  $("crowd").style.cssText="top:0;height:"+bTop+"px";drawCrowd(W,bTop);
+  $("boards").style.cssText="top:"+bTop+"px;height:"+bH+"px;--bf:"+Math.round(bH*0.62)+"px";
+  $("grass").style.cssText="top:"+(bTop+bH)+"px;--st:"+Math.round(H*0.035)+"px";
+  var z=$("zones");z.style.left=gl.x+"px";z.style.top=gl.y+"px";z.style.width=(gr.x-gl.x)+"px";z.style.height=goalH+"px";
+  drawTurf();drawLines();drawGoal();
+  if(!document.querySelector(".crowd i"))for(var i=0;i<26;i++){var d=document.createElement("i");d.style.left=Math.random()*100+"%";d.style.top=Math.random()*90+"%";d.style.animationDelay=(Math.random()*0.5)+"s";$("crowd").appendChild(d);}
+  place();
+}
+function svgEl(tag,attrs,parent){var e=document.createElementNS(NS,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function line(svg,a,b,st,w,op){return svgEl("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:st,"stroke-width":w,"stroke-opacity":op==null?1:op,"stroke-linecap":"round"},svg);}
+/* THE STAND, drawn once per size: tiered rows of fans (heads and shoulders in
+   kit colours), smaller up the stand, lit from the floodlights, fading into the
+   dark at the top. It was a pattern before and read as empty (owner). */
+function drawCrowd(w,h){var c=$("crowdc"),dpr=Math.min(2,window.devicePixelRatio||1);c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
+  var g=c.getContext("2d");g.scale(dpr,dpr);g.clearRect(0,0,w,h);
+  var cols=["#c8102e","#a3222d","#e8e8ec","#2a2c35","#7a1f28","#f2f2f4","#1d2433","#e63946","#3b3e48","#b51d2b"];
+  for(var y=h,row=0;y>-10;row++){var sc=Math.max(0.35,1-row*0.06),hh=14*sc,gap=11*sc;
+    for(var x=(row%2)*gap*0.5-4;x<w+10;x+=gap*(0.9+Math.random()*0.35)){var c1=cols[(Math.random()*cols.length)|0],lit=0.35+0.65*(y/h);
+      g.globalAlpha=lit*(0.75+Math.random()*0.25);g.fillStyle=c1;g.beginPath();g.ellipse(x,y-hh*0.35,gap*0.42,hh*0.42,0,Math.PI,0);g.fill();
+      g.fillStyle=Math.random()<0.5?"#3a2a22":"#5a3d2c";g.beginPath();g.arc(x,y-hh*0.78,gap*0.24,0,7);g.fill();}
+    y-=hh*0.62;}
+  g.globalAlpha=1;var gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,"rgba(7,8,10,.95)");gr.addColorStop(0.45,"rgba(7,8,10,.45)");gr.addColorStop(1,"rgba(7,8,10,.05)");
+  g.fillStyle=gr;g.fillRect(0,0,w,h);}
+/* Mowing stripes, 2.4m wide, laid on the ground plane: they narrow into the
+   distance the way a real pitch does under one camera. */
+function drawTurf(){
+  var s=$("turf");s.textContent="";
+  for(var z=-4.4,i=0;z<GOAL.z+20;z+=2.4,i++){
+    var a=P(-40,0,z),b=P(40,0,z),c=P(40,0,z+2.4),d=P(-40,0,z+2.4);
+    svgEl("polygon",{points:[a,b,c,d].map(function(p){return p.x.toFixed(1)+","+p.y.toFixed(1);}).join(" "),
+      fill:i%2?"#ffffff":"#000000","fill-opacity":i%2?0.035:0.09},s);
+  }
+}
+function drawLines(){
+  var s=$("lines");s.textContent="";var c="#e8f5ec",o=0.55;
+  /* 18-yard box (16.5m deep, 40.3m wide) and 6-yard box, from the goal line toward us */
+  /* the 18-yard line is behind the camera; stop the box short of the lens */
+  [[20.15,16.5],[9.16,5.5]].forEach(function(b){var zf=Math.max(GOAL.z-b[1],0.8-CAM.c);
+    line(s,P(-b[0],0,GOAL.z),P(-b[0],0,zf),c,2,o);line(s,P(b[0],0,GOAL.z),P(b[0],0,zf),c,2,o);line(s,P(-b[0],0,zf),P(b[0],0,zf),c,2,o);});
+  line(s,P(-30,0,GOAL.z),P(30,0,GOAL.z),c,2,o);
+  var sp=P(0,0,0);svgEl("ellipse",{cx:sp.x,cy:sp.y+0.02*sp.s,rx:0.1*sp.s,ry:0.035*sp.s,fill:c,"fill-opacity":0.55},s);
+}
+/* THE NET IS A CLOTH (owner: "there is no football net physics"). A grid of
+   knots, each pulled back to rest and to its neighbours by springs, damped;
+   the edges are tied to the frame and the ground. A ball hitting it pushes the
+   knots around it back, the push travels outward as a ripple, and it settles. */
+function netMake(cols,rows){return {c:cols,r:rows,d:new Array(cols*rows).fill(0),v:new Array(cols*rows).fill(0)};}
+function netHit(N,ci,ri,force){for(var j=0;j<N.r;j++)for(var i=0;i<N.c;i++){if(i===0||j===0||i===N.c-1||j===N.r-1)continue;
+  var r2=(i-ci)*(i-ci)+(j-ri)*(j-ri)*1.4;N.v[j*N.c+i]+=force*Math.exp(-r2/3);}}
+function netStep(N,dt){var nd=N.d.slice(),K1=60,K2=140,DAMP=5.5;
+  for(var j=1;j<N.r-1;j++)for(var i=1;i<N.c-1;i++){var k=j*N.c+i,avg=(N.d[k-1]+N.d[k+1]+N.d[k-N.c]+N.d[k+N.c])/4;
+    N.v[k]+=(-K1*N.d[k]+K2*(avg-N.d[k])-DAMP*N.v[k])*dt;nd[k]=N.d[k]+N.v[k]*dt;}
+  N.d=nd;}
+var NETC=18,NETR=9,NETN=netMake(NETC,NETR),NETLIVE=false,NETI={x:0,y:1};
+function netAt(x,y){return {i:Math.round((x+GOAL.w/2)/GOAL.w*(NETC-1)),j:Math.round(y/GOAL.h*(NETR-1))};}
+function drawGoal(){
+  var n=$("net");n.textContent="";var back=GOAL.z+1.6,top=GOAL.h*0.85;
+  /* a knot pushed back also spreads away from the hit and sags, so the
+     billow reads from straight behind the ball, not only as depth */
+  function node(i,j){var x=-GOAL.w/2+GOAL.w*i/(NETC-1),y=GOAL.h*j/(NETR-1),push=NETN.d[j*NETC+i];
+    x+=(x-NETI.x)*push*0.16;y+=(y-NETI.y)*push*0.12-push*0.25;
+    var zz=GOAL.z+0.2+(back-GOAL.z)*(0.55+0.45*(1-y/GOAL.h))+push;return P(x,Math.min(y,top+(GOAL.h-top)*(1-(zz-GOAL.z)/2)),zz);}
+  var st="#ffffff",op=0.22,i,j,pts=[];
+  for(j=0;j<NETR;j++){pts[j]=[];for(i=0;i<NETC;i++)pts[j][i]=node(i,j);}
+  for(i=0;i<NETC;i++)for(j=1;j<NETR;j++)line(n,pts[j-1][i],pts[j][i],st,1,op);
+  for(j=0;j<NETR;j++)for(i=1;i<NETC;i++)line(n,pts[j][i-1],pts[j][i],st,1,op);
+  var po=$("posts");po.textContent="";var L=P(-GOAL.w/2,0,GOAL.z),LT=P(-GOAL.w/2,GOAL.h,GOAL.z),R=P(GOAL.w/2,0,GOAL.z),RT=P(GOAL.w/2,GOAL.h,GOAL.z);
+  var w=Math.max(4,0.12*L.s);
+  [[L,LT],[R,RT],[LT,RT]].forEach(function(seg){line(po,seg[0],seg[1],"#000",w+3,0.35);line(po,seg[0],seg[1],"#f4f4f6",w,1);line(po,seg[0],seg[1],"#ffffff",w*0.35,0.9);});
+}
+
+/* ---------------------------------------------------------------- actors */
+var K={x:0,y:0.85,rot:0,img:"k-set.webp",flip:1,bob:0,sq:1};       // keeper, on the goal line
+var S={x:-0.72,z:-1.25,img:"s-stand.webp"};                       // shooter, behind the ball
+var B={x:0,y:0.11,z:0,rot:0,vis:1,alpha:1,fly:false};                      // ball
+/* the art version: bump when sprites are replaced, so no browser keeps the old ones */
+var SPV="12";
+function setImg(el,f){if(el.getAttribute("data-f")!==f){el.setAttribute("data-f",f);el.src="/penalty/"+f+"?v="+SPV;}}
+function place(){
+  var k=$("keeper"),kp=P(K.x,K.y,GOAL.z),kh=KH[file(K.img)]*kp.s,kim=IMG[file(K.img)],ar=kim&&kim.naturalWidth?kim.naturalWidth/kim.naturalHeight:1;
+  setImg(k,file(K.img));k.style.height=kh+"px";k.style.width=kh*ar+"px";
+  k.style.transform="translate("+(kp.x-kh*ar/2)+"px,"+(kp.y-kh/2+K.bob)+"px) rotate("+K.rot+"deg) scale("+(K.flip*K.sq)+","+(1/K.sq)+")";
+  if(KTRAIL){KHIST.unshift({tf:k.style.transform,src:k.src,w:k.style.width,h:k.style.height});KHIST.length=Math.min(KHIST.length,10);
+    for(var gi=0;gi<3;gi++){var g=$("kg"+gi),hs=KHIST[3*(gi+1)];if(!hs){g.style.opacity=0;continue;}
+      if(g.src!==hs.src)g.src=hs.src;g.style.width=hs.w;g.style.height=hs.h;g.style.transform=hs.tf;g.style.opacity=[0.32,0.18,0.08][gi];}}
+  /* his shadow: on the ground under him, smaller and fainter the higher he is */
+  var gp0=P(K.x,0,GOAL.z),air=Math.max(0,K.y-0.85)+Math.max(0,-K.bob)/kp.s,ks=$("kshadow"),kw=Math.min(kh*ar,1.2*kp.s)*(1-Math.min(0.5,air*0.35));
+  ks.style.width=kw+"px";ks.style.height=kw*0.22+"px";ks.style.opacity=Math.max(0.15,0.55-air*0.25);
+  ks.style.transform="translate("+(gp0.x-kw/2)+"px,"+(gp0.y-kw*0.11)+"px)";
+  var sh=$("shooter"),sp=P(S.x,0,S.z),sH=1.75*sp.s*0.6,sim=IMG[file(S.img)],sar=sim&&sim.naturalWidth?sim.naturalWidth/sim.naturalHeight:0.47;
+  setImg(sh,file(S.img));sh.style.height=sH+"px";sh.style.width=sH*sar+"px";sh.style.transform="translate("+(sp.x-sH*sar/2)+"px,"+(sp.y-sH)+"px)";
+  var bp=P(B.x,B.y,B.z),bd=Math.max(7,0.3*bp.s),b=$("ball");
+  b.style.width=b.style.height=bd+"px";b.style.opacity=B.vis?B.alpha:0;b.style.filter=B.fly?"saturate(.12) brightness(1.06)":"none";
+  b.style.transform="translate("+(bp.x-bd/2)+"px,"+(bp.y-bd/2)+"px) rotate("+B.rot+"deg)";
+  var gp=P(B.x,0,B.z),sw=bd*1.5,sd=$("shadow");sd.style.width=sw+"px";sd.style.height=sw*0.35+"px";
+  sd.style.opacity=B.vis?Math.max(0,0.55-B.y*0.12)*B.alpha:0;sd.style.transform="translate("+(gp.x-sw/2)+"px,"+(gp.y-sw*0.17)+"px)";
+  var w=$("world");w.style.transformOrigin=CAM.cx+"px "+P(0,1,GOAL.z).y+"px";
+  w.style.transform="translate("+CAM_FX.sx+"px,"+CAM_FX.sy+"px) scale("+CAM_FX.zoom+")";
+}
+
+/* A dive leaves fading copies of the keeper along his path for a few frames. */
+var KTRAIL=false,KHIST=[];
+function afterimage(on){KTRAIL=!!on&&!REDUCED;KHIST=[];if(!KTRAIL)for(var i=0;i<3;i++){var g=document.getElementById("kg"+i);if(g)g.style.opacity=0;}}
+/* A puff of turf where a diving keeper hits the ground. */
+function dust(x){if(REDUCED)return;var d=$("dust"),p=P(x,0,GOAL.z),w=1.6*p.s,t0=performance.now();d.style.width=w+"px";d.style.height=w*0.35+"px";
+  every(function(){var u=(performance.now()-t0)/520;if(u>=1){d.style.opacity=0;return false;}
+    d.style.opacity=(1-u)*0.9;d.style.transform="translate("+(p.x-w/2)+"px,"+(p.y-w*0.2)+"px) scale("+(0.5+u*1.1)+","+(0.6+u*0.7)+")";});}
+/* ---------------------------------------------------------------- the loop
+   One requestAnimationFrame drives everything: actors, the net's spring, the
+   camera's shake and zoom. TS slows simulated time for the decisive kicks;
+   hitStop freezes it for a few frames on contact. */
+var CAM_FX={sx:0,sy:0,zoom:1,zoomTo:1,shake:0};
+var TS=1,SLOWNEXT=false,hitStop=0,jobs=[],last=performance.now();
+function every(fn){jobs.push(fn);}
+function tick(now){
+  var real=Math.min(0.05,(now-last)/1000);last=now;
+  var dt=hitStop>0?0:real*TS;hitStop=Math.max(0,hitStop-real);
+  /* jobs started by a job (an impact starting a burst) join after this frame */
+  var cur=jobs;jobs=[];cur=cur.filter(function(f){return f(dt,real)!==false;});jobs=cur.concat(jobs);
+  /* net: damped spring back to rest */
+  /* the net cloth, stepped while it moves (two sub-steps keep it stable) */
+  if(NETLIVE){netStep(NETN,real/2);netStep(NETN,real/2);drawGoal();
+    var e=0;for(var q=0;q<NETN.d.length;q++)e+=Math.abs(NETN.d[q])+Math.abs(NETN.v[q]);if(e<0.02){NETN=netMake(NETC,NETR);NETLIVE=false;drawGoal();}}
+  /* keeper idles: a small bob while waiting */
+  K.bob=K.idle&&!REDUCED?Math.sin(now/380)*1.6:0;
+  /* A keeper waiting for the kick shuffles his weight across the line. The
+     wizard's ready pose is drawn mid-lunge, so it is mirrored as he passes
+     the centre - he never reads as leaning one way (owner, 8 Oct 2026). */
+  /* Waiting: both feet down in the set position, sliding across the line in
+     small hops - up on each step, a soft squash as he lands. His shadow stays
+     on the grass, so you can see when he is off it. The step frames lifted one
+     foot and read as a foot resting on an invisible ball (owner, 8 Oct 2026). */
+  if(K.idle&&K.img==="k-set.webp"&&!REDUCED){
+    var ph=now/1700*Math.PI,hop=Math.abs(Math.sin(ph*2));K.x=Math.sin(ph)*0.22;K.flip=1;
+    K.bob=-hop*7;K.sq=1+(hop<0.18?(0.18-hop)*0.35:0);}
+  CAM_FX.zoom+=(CAM_FX.zoomTo-CAM_FX.zoom)*Math.min(1,real*6);
+  CAM_FX.shake=Math.max(0,CAM_FX.shake-real*28);
+  var a=REDUCED?0:CAM_FX.shake;CAM_FX.sx=(Math.random()*2-1)*a;CAM_FX.sy=(Math.random()*2-1)*a;
+  place();requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+addEventListener("resize",layout);
+
+/* ---------------------------------------------------------------- the hook
+   Points for every goal you score, a level that climbs, ball trails that
+   unlock. Kept on the phone. */
+function stylePoints(o){var base=100,tags=[];
+  if(o.top){base+=60;tags.push("TOP BINS");}if(Math.abs(o.curl)>0.45){base+=40;tags.push("CURL");}if(o.perfect){base+=50;tags.push("PERFECT");}
+  var mult=1+0.25*Math.max(0,(o.streak||1)-1);if(mult>1)tags.push("x"+(Math.round(mult*100)/100));
+  return {pts:Math.round(base*mult),tags:tags};}
+function levelOf(xp){return Math.floor(Math.sqrt(Math.max(0,xp)/400))+1;}
+function trailFor(lv){var T=[{lv:1,name:"red",c:"#E63946"},{lv:3,name:"gold",c:"#F2B84B"},{lv:5,name:"electric",c:"#4FC3F7"},{lv:8,name:"white-hot",c:"#FFFFFF"}],t=T[0];
+  T.forEach(function(x){if(lv>=x.lv)t=x;});return t;}
+var XP=0;try{XP=+localStorage.getItem("pw.xp")||0;}catch(e){}
+function award(o){var r=stylePoints(o),before=levelOf(XP);chargeSpell(34+10*r.tags.filter(function(x){return x[0]!=="x";}).length);XP+=r.pts;try{localStorage.setItem("pw.xp",String(XP));}catch(e){}
+  var p=$("pts");p.textContent="+"+r.pts+(r.tags.length?"  "+r.tags.join(" · "):"");p.classList.remove("go");void p.offsetWidth;p.classList.add("go");
+  var after=levelOf(XP);if(after>before){setTimeout(function(){fx.pop("LEVEL "+after+"!","#F2B84B");fx.board("LEVEL "+after,"#F2B84B");fx.flash(0.14,260);fx.buzz([30,40,60]);
+    var tr=trailFor(after);if(tr.lv===after)setTimeout(function(){fx.pop(tr.name.toUpperCase()+" TRAIL","#fff");},900);},700);}}
+/* ---------------------------------------------------------------- spells & wind
+   Solo modes only (the computer, Sudden Death, for fun): a wind that carries
+   the ball, and a spell meter charged by goals and style. Full, it offers
+   LEGENDARY SHOT, offered only while you aim: the keeper is frozen, dives too
+   late, and anything on target goes in (owner, 8 Oct 2026). Challenges and the daily stay
+   plain, because the server judges them. */
+var SOLO=false,WIND=0,SPELL=0,SPELLARMED=false,SPELLNOW=false,AIMING=false;
+function newWind(){WIND=SOLO&&Math.random()>0.25?Math.round((Math.random()*2-1)*20):0;var w=$("wind");
+  w.hidden=!SOLO;w.textContent=WIND?"WIND "+Math.abs(WIND)+" km/h "+(WIND>0?"\u2192":"\u2190"):"CALM";}
+function drawSpell(){var b=$("spellbox");b.hidden=!SOLO;b.classList.toggle("full",SPELL>=100);b.querySelector("i").style.transform="scaleX("+(SPELL/100)+")";
+  var c=$("cast");c.hidden=!(SOLO&&SPELL>=100&&AIMING);c.classList.toggle("armed",SPELLARMED);c.textContent=SPELLARMED?"ARMED":"LEGEND";}
+function chargeSpell(n){if(!SOLO||SPELLARMED)return;SPELL=Math.min(100,SPELL+n);drawSpell();if(SPELL>=100)fx.buzz([10,30,10]);}
+function consumeSpell(){if(!SPELLARMED)return false;SPELLARMED=false;SPELL=0;SPELLNOW=true;drawSpell();return true;}
+/* ---------------------------------------------------------------- board
+   Every kick lands on its side's row as it is taken (playKick writes it).
+   Five circles each, more appear in sudden death; single for a solo go. */
+var BOARD={a:[],b:[],single:false};
+function drawBoard(){
+  [["a","kA","scA"],["b","kB","scB"]].forEach(function(r){var outs=BOARD[r[0]],host=$(r[1]);host.textContent="";
+    var n=Math.max(REG,BOARD.a.length,BOARD.b.length);if(n>REG&&!BOARD.single)n=Math.max(BOARD.a.length,BOARD.b.length)+(BOARD.a.length===BOARD.b.length?1:0);
+    for(var i=0;i<Math.max(REG,n);i++){var c=document.createElement("i");if(i>=REG)c.className="sd";if(i<outs.length)c.className=outs[i]==="goal"?"g":"m";host.appendChild(c);}
+    $(r[2]).textContent=outs.filter(function(o){return o==="goal";}).length;});
+  $("rowB").hidden=BOARD.single;
+}
+function boardNow(side){$("rowA").classList.toggle("now",side==="a");$("rowB").classList.toggle("now",side==="b");}
+/* ---------------------------------------------------------------- effects */
+var fx={
+  /* a big word, and (for a miss) the reason in small type under it */
+  pop:function(word,color,why){var p=$("pop");p.textContent=word;if(why){var w=document.createElement("small");w.textContent=why;p.appendChild(w);}
+    p.style.color=color||"#fff";p.classList.remove("go");void p.offsetWidth;p.classList.add("go");},
+  shake:function(level){CAM_FX.shake=Math.max(CAM_FX.shake,level>1?9:4);},
+  /* asks for slow motion on the NEXT kick's flight only; aiming stays full view */
+  slowmo:function(on){SLOWNEXT=!!on&&!REDUCED;if(!on){TS=1;CAM_FX.zoomTo=1;}},
+  combo:function(n){var c=$("combo");if(n>=3){c.textContent="ON FIRE x"+n;c.classList.add("on");}else c.classList.remove("on");},
+  buzz:function(ms){if(!MUTED&&navigator.vibrate)try{navigator.vibrate(ms);}catch(e){}},
+  board:function(word,color){var f=$("bflash");f.textContent=word;f.style.color=color;f.style.textShadow="0 0 8px "+color;f.classList.remove("go");void f.offsetWidth;f.classList.add("go");},
+  hype:function(){var a=$("app");a.classList.remove("hype");void a.offsetWidth;a.classList.add("hype");},
+  flash:function(op,ms){var f=$("flash");f.style.transition="none";f.style.opacity=op;void f.offsetWidth;f.style.transition="opacity "+(ms||220)+"ms ease-out";f.style.opacity=0;},
+  sprite:function(id,x,y,size,ms){var e=$(id);if(REDUCED)return;var t0=performance.now();e.style.width=e.style.height=size+"px";
+    every(function(){var t=(performance.now()-t0)/(ms||420);if(t>=1){e.style.opacity=0;return false;}
+      var sc=0.4+0.9*(1-Math.pow(1-t,3));e.style.opacity=t<0.15?t/0.15:1-(t-0.15)/0.85;e.style.transform="translate("+(x-size/2)+"px,"+(y-size/2)+"px) scale("+sc+") rotate("+(t*40)+"deg)";});}
+};
+/* A bolt: midpoint displacement from the top of the screen to the strike
+   point, a white core over a red glow, drawn in ~80ms, flickered twice. Kept
+   for the moments that earned it (see playKick). */
+function lightning(x,y){
+  if(REDUCED){fx.flash(0.12,200);return;}
+  var svg=$("bolt"),pts=[[x+(Math.random()*120-60),-20],[x,y]];
+  for(var lvl=0;lvl<5;lvl++){var nx=[];for(var i=0;i<pts.length-1;i++){var a=pts[i],b=pts[i+1],m=[(a[0]+b[0])/2+(Math.random()*2-1)*42/(lvl+1),(a[1]+b[1])/2];nx.push(a,m);}nx.push(pts[pts.length-1]);pts=nx;}
+  var br=pts[Math.floor(pts.length*0.45)],bpts=[br,[br[0]+(Math.random()<.5?-1:1)*(40+Math.random()*40),br[1]+60+Math.random()*50]];
+  function path(p){return "M"+p.map(function(q){return q[0].toFixed(1)+" "+q[1].toFixed(1);}).join(" L");}
+  var g=svgEl("g",{},svg);
+  svgEl("path",{d:path(pts),stroke:"#E63946","stroke-width":9,"stroke-opacity":0.35,fill:"none",style:"filter:blur(4px)"},g);
+  svgEl("path",{d:path(bpts),stroke:"#ffffff","stroke-width":1.4,fill:"none","stroke-opacity":0.8},g);
+  var core=svgEl("path",{d:path(pts),stroke:"#ffffff","stroke-width":2.6,fill:"none","stroke-linejoin":"round"},g);
+  var L=core.getTotalLength();core.style.strokeDasharray=L;core.style.strokeDashoffset=L;
+  var t0=performance.now();$("app").classList.add("flashing");fx.flash(0.16,180);fx.shake(1);
+  every(function(){var t=performance.now()-t0;core.style.strokeDashoffset=Math.max(0,L*(1-t/80));
+    g.style.opacity=t<140?1:t<190?0.2:t<230?1:Math.max(0,1-(t-230)/260);
+    if(t>170&&t<180)fx.flash(0.08,120);
+    if(t>520){svg.removeChild(g);$("app").classList.remove("flashing");return false;}});
+}
+/* THE SPELL TRAIL (owner: "the fiery trail is too much, give me something
+   wizardry"): four-point star motes shed along the ball's path, each orbiting
+   the point it was born at, twinkling gold, red and white, fading out. */
+var MOTES=[];
+function star(cx,cy,r,rot){var p=[];for(var i=0;i<8;i++){var a=rot+i*Math.PI/4,rr=i%2?r*0.32:r;p.push((cx+Math.cos(a)*rr).toFixed(1)+","+(cy+Math.sin(a)*rr).toFixed(1));}return p.join(" ");}
+function spellTick(dt,bp,size,flying){
+  if(flying&&!REDUCED)for(var n=0;n<2;n++)MOTES.push({cx:bp.x,cy:bp.y,a:Math.random()*6.3,va:(Math.random()<.5?-1:1)*(5+Math.random()*4),rad:size*0.2,vr:size*(0.9+Math.random()),
+    r:size*(0.16+Math.random()*0.14),rot:Math.random(),col:["#F2B84B","#E63946","#FFFFFF"][(Math.random()*3)|0],life:1});
+  MOTES.forEach(function(m){m.life-=dt*1.7;m.a+=m.va*dt;m.rad+=m.vr*dt;m.rot+=dt*4;});MOTES=MOTES.filter(function(m){return m.life>0;});
+  var s=$("fire");s.textContent="";MOTES.forEach(function(m){var tw=0.6+0.4*Math.sin(m.life*18+m.rot);
+    svgEl("polygon",{points:star(m.cx+Math.cos(m.a)*m.rad,m.cy+Math.sin(m.a)*m.rad*0.6,m.r*(0.5+m.life*0.7)*tw,m.rot),fill:m.col,"fill-opacity":(m.life*0.9).toFixed(2)},s);});}
+/* A summoning circle flares on the penalty spot at the strike: pitch-marking
+   rings in gold and red, opening out and fading. */
+function summon(){if(REDUCED)return;var s=$("lines"),p=P(0,0,0),g=svgEl("g",{},s),t0=performance.now();
+  var c1=svgEl("ellipse",{cx:p.x,cy:p.y,rx:0.5*p.s,ry:0.18*p.s,fill:"none",stroke:"#F2B84B","stroke-width":2.5},g),
+      c2=svgEl("ellipse",{cx:p.x,cy:p.y,rx:0.34*p.s,ry:0.12*p.s,fill:"none",stroke:"#E63946","stroke-width":1.6,"stroke-dasharray":"4 5"},g);
+  every(function(){var u=(performance.now()-t0)/620;if(u>=1){if(g.parentNode)g.parentNode.removeChild(g);return false;}
+    var k=1+u*1.6;c1.setAttribute("rx",0.5*p.s*k);c1.setAttribute("ry",0.18*p.s*k);c2.setAttribute("rx",0.34*p.s*(1+u*2.2));c2.setAttribute("ry",0.12*p.s*(1+u*2.2));
+    g.setAttribute("opacity",(1-u).toFixed(2));});}
+/* Trail: the ball's last screen positions, thinner and fainter with age. */
+var TRAIL=[],trailGold=false;
+function drawTrail(){var s=$("trail");s.textContent="";for(var i=1;i<TRAIL.length;i++){var a=TRAIL[i-1],b=TRAIL[i],f=i/TRAIL.length;
+  line(s,a,b,trailFor(levelOf(XP)).c,Math.max(1,b.w*0.9*f),0.55*f*a.o);if(trailGold)line(s,a,b,"#F2B84B",Math.max(0.6,b.w*0.25*f),0.8*f*a.o);}}
+
+/* ---------------------------------------------------------------- coach
+   The Wizard teaches each lesson once (stored on the phone); "How to play"
+   clears them. Any touch dismisses the tip without eating the touch. */
+var COACHED={};try{COACHED=JSON.parse(localStorage.getItem("pw.coach")||"{}")||{};}catch(e){}
+function coach(key,text,ghost){
+  if(COACHED[key])return;COACHED[key]=1;try{localStorage.setItem("pw.coach",JSON.stringify(COACHED));}catch(e){}
+  var c=$("coach"),gh=$("ghost"),app=$("app"),bp=P(B.x,B.y,B.z);
+  c.querySelector("p").textContent=text;c.classList.add("on");
+  gh.style.setProperty("--gx",bp.x+"px");gh.style.setProperty("--gy",bp.y+"px");gh.classList.toggle("on",!!ghost&&!REDUCED);
+  function off(){c.classList.remove("on");gh.classList.remove("on");app.removeEventListener("pointerdown",off,true);}
+  setTimeout(function(){app.addEventListener("pointerdown",off,true);},300);
+}
+/* ---------------------------------------------------------------- input */
+function tapSpot(){return new Promise(function(done){
+  var z=$("zones");z.classList.add("on");
+  function on(e){e.preventDefault();e.stopPropagation();var s=+e.currentTarget.getAttribute("data-s");
+    z.querySelectorAll("button").forEach(function(x){x.removeEventListener("pointerdown",on);});z.classList.remove("on");fx.buzz(8);done(s);}
+  z.querySelectorAll("button").forEach(function(x){x.addEventListener("pointerdown",on);});
+});}
+function hint(t){var h=$("hint");h.textContent="";if(t){var i=document.createElement("i");i.textContent="↑";h.appendChild(i);h.appendChild(document.createTextNode(t));h.classList.add("on");}else h.classList.remove("on");}
+/* AIM, THEN FLICK. The tap chooses the spot. The bar sweeps 0 -> 1 -> 0; an
+   upward flick stops it, and a short or slow flick costs power. The flick
+   never chooses direction. */
+/* ONE SWIPE (owner, 8 Oct 2026: "the select, the meter and the flick at the
+   same time is a hassle"). Swipe from the ball toward the goal: the direction
+   is where it goes, the length how high, the speed how hard, and a bent swipe
+   curls it. Same on a phone and with a mouse. Pure, so it is tested. */
+/* THE AIM IS WHERE YOUR SWIPE POINTS ON THE GOAL (owner: "ball direction seems
+   limited"). The swipe, scaled up from the ball, lands on a point of the goal
+   mouth: any width, any height, with fine control near the posts. */
+function swipeShot(path,H,geo){
+  var G=geo||{bx:200,by:700,gx:200,gy:380,sG:45,k:2.4};
+  var a=path[0],b=path[path.length-1],lift=a.y-b.y,lat=b.x-a.x,len=Math.sqrt(lift*lift+lat*lat);
+  if(lift<30||len<40)return {ok:false};
+  var ms=Math.max(16,b.t-a.t),power=Math.max(0,Math.min(1,(len/ms)/1.6));
+  var ex=G.bx+lat*G.k,ey=G.by-lift*G.k;
+  var x=Math.max(-3.5,Math.min(3.5,(ex-G.gx)/G.sG)),y=Math.max(0.15,Math.min(2.3,(G.gy-ey)/G.sG));
+  /* curl follows the turn of the swipe: compare its heading at the start with
+     its heading at the end - turning right curls the ball right (owner) */
+  var q1=path[Math.max(1,Math.floor(path.length*0.3))],q3=path[Math.min(path.length-2,Math.floor(path.length*0.7))]||a;
+  var h0=Math.atan2(q1.x-a.x,a.y-q1.y),h1=Math.atan2(b.x-q3.x,q3.y-b.y),turn=path.length>2?h1-h0:0;
+  var curl=Math.max(-1,Math.min(1,turn/0.7)),c=x<-1.22?0:x>1.22?2:1;
+  return {ok:true,spot:c+(y>=1.22?3:0),power:power,aim:{x:x,y:y},curl:curl};
+}
+/* While the finger is down: a dotted line from the ball to where it would go,
+   bent by the curl, coloured by the power - grey weak, green clean, red over. */
+function aimAndShoot(){
+  $("tag").textContent="YOUR SHOT";boardNow("a");newWind();K.idle=true;AIMING=true;drawSpell();SC=ME;KC=OPP||other();hint("SWIPE THE BALL TO SHOOT");
+  coach("shoot","Swipe the ball toward the goal. Where you swipe is where it goes. Swipe faster to hit it harder, bend your swipe to curl it.",true);
+  return new Promise(function(done){
+    var app=$("app"),path=null;
+    function pt(e){var a=app.getBoundingClientRect();return {x:e.clientX-a.left,y:e.clientY-a.top,t:performance.now()};}
+    function down(e){var p=pt(e);if(p.y<CAM.H*0.45)return;path=[p];K.img="k-spring.webp";try{app.setPointerCapture(e.pointerId);}catch(_){}}
+    /* a long swipe strikes the moment it crosses - no waiting for the lift */
+    function move(e){if(!path)return;var p=pt(e);path.push(p);var dl=Math.hypot(p.x-path[0].x,p.y-path[0].y);if(dl>CAM.H*0.3)fire();}
+    function up(e){if(!path)return;path.push(pt(e));fire();}
+    function geo(){var bp=P(B.x,B.y,B.z),g0=P(0,0,GOAL.z);return {bx:bp.x,by:bp.y,gx:g0.x,gy:g0.y,sG:g0.s,k:(bp.y-(g0.y-1.2*g0.s))/(CAM.H*0.22)};}
+    function fire(){var g=swipeShot(path,CAM.H,geo());path=null;if(!g.ok){K.img="k-set.webp";return;}
+      app.removeEventListener("pointerdown",down);app.removeEventListener("pointermove",move);app.removeEventListener("pointerup",up);AIMING=false;drawSpell();
+      /* wind (solo modes): it carries the ball; the zone is judged where it ends up */
+      if(SOLO&&WIND){g.aim.x=Math.max(-3.5,Math.min(3.5,g.aim.x+WIND/20*1.1));g.curl=Math.max(-1,Math.min(1,g.curl+WIND/20*0.6));
+        g.spot=(g.aim.x<-1.22?0:g.aim.x>1.22?2:1)+(g.aim.y>=1.22?3:0);}
+      hint("");fx.buzz(15);done({spot:g.spot,power:g.power,aim:g.aim,curl:g.curl});}
+    app.addEventListener("pointerdown",down);app.addEventListener("pointermove",move);app.addEventListener("pointerup",up);
+  });
+}
+function pickDive(){$("tag").textContent="YOUR SAVE · TAP WHERE TO DIVE";boardNow("b");K.idle=true;KC=ME;SC=OPP||other();
+  coach("dive","Your turn in goal. Tap the part of the goal where you think the shot is going, and you dive there.",false);return tapSpot();}
+
+/* ---------------------------------------------------------------- a kick */
+var streak=0;
+function wait(ms){return new Promise(function(r){setTimeout(r,ms);});}
+function tween(ms,fn){return new Promise(function(done){var t=0;every(function(dt){t+=dt*1000;var u=Math.min(1,t/ms);fn(u);if(u>=1){done();return false;}});});}
+var easeOut=function(u){return 1-Math.pow(1-u,3);};
+/* SUDDEN DEATH keeper: guesses your column more often the longer your run,
+   capped well short of certain, so mixing your corners keeps you alive. */
+function smartDive(spot,streak,rnd){var read=Math.min(0.6,0.15+0.035*streak);
+  if(rnd()<read){var c=spot%3;return c+(rnd()<0.5?0:3);}return Math.floor(rnd()*6);}
+function keeperPose(dive){
+  if(dive==null)return {x:0,y:0.85,img:"k-set.webp",rot:0,arc:0};
+  var c=col(dive),hi=high(dive);
+  if(c===1)return hi?{x:0,y:1.45,img:"k-jump.webp",rot:0,arc:0.35}:{x:0,y:0.75,img:"k-spring.webp",rot:0,arc:0};
+  var side=c===2?1:-1;
+  return hi?{x:side*2.2,y:1.6,img:"k-dive-high.webp",rot:side*8,arc:0.6,flip:side}:{x:side*2.3,y:0.5,img:"k-dive-low.webp",rot:side*-6,arc:0.25,flip:side};
+}
+function resetScene(){
+  B.x=0;B.y=0.11;B.z=0;B.rot=0;B.vis=1;B.alpha=1;B.fly=false;B.att=false;MOTES=[];$("app").classList.remove("legend");TRAIL=[];drawTrail();
+  K.x=0;K.y=0.85;K.rot=0;K.flip=1;K.sq=1;K.img="k-set.webp";afterimage(false);S.x=-0.72;S.z=-1.25;S.img="s-stand.webp";
+  fx.slowmo(false);
+}
+/* k = {who:"you"|"them", shot:{spot,kind,power?}, dive, outcome} */
+function playKick(k){
+  K.idle=false;if(k.who==="you"){SC=ME;KC=OPP||other();}else{SC=OPP||other();KC=ME;}
+  var you=k.who==="you",spell=SPELLNOW&&you;SPELLNOW=false;
+  BOARD[you?"a":"b"].push(k.outcome);
+  var kind=k.shot.kind,power=k.shot.power!=null?k.shot.power:(kind==="green"?0.65:kind==="weak"?0.4:0.95);
+  var perfect=kind==="green"&&power>=0.72&&power<=0.82;
+  /* Your swipe gave the exact aim and the curl; a stored or computer shot
+     aims at its spot with a little natural bend. */
+  var aim=target(k.shot.spot,k.outcome==="bar"?"bar":kind);
+  if(k.shot.aim){aim={x:k.shot.aim.x,y:aim.y===3.4||k.outcome==="bar"?aim.y:k.shot.aim.y};if(k.outcome==="bar")aim.x=Math.max(-3.4,Math.min(3.4,k.shot.aim.x));}
+  var curl=k.shot.curl!=null?k.shot.curl:(Math.random()*0.8-0.4),side=curl>=0?1:-1;
+  var f=flightPlan(aim,power,curl),kp=keeperPose(k.dive);
+  /* What you see must agree with the call. A save: the keeper's dive ends on
+     the ball's line. A goal: he ends clearly away from it. */
+  if(k.outcome==="save"){kp.x=Math.max(-3.2,Math.min(3.2,aim.x));kp.y=Math.max(0.45,Math.min(1.8,aim.y));
+    if(Math.abs(kp.x)<0.9&&kp.img!=="k-jump.webp"&&aim.y>=1.22)kp.img="k-jump.webp";}
+  /* over the bar: no leap, so his hands stay under the ball (owner saw a save called over); the dive also goes wide of it below */
+  if(k.outcome==="over")kp.arc=0;
+  if((k.outcome==="over"||k.outcome==="goal"&&Math.abs(kp.y-aim.y)<1.1)&&Math.abs(kp.x-aim.x)<1.2){kp.x=Math.max(-3.4,Math.min(3.4,aim.x+(kp.x>=aim.x?1.7:-1.7)));}
+  trailGold=perfect||spell;
+  if(spell){$("app").classList.add("legend");fx.pop("LEGENDARY SHOT!","#F2B84B");fx.flash(0.12,260);fx.buzz([20,40,60]);if(!REDUCED){TS=0.38;CAM_FX.zoomTo=1.14;}}
+  /* run-up: three strides to the ball */
+  S.img="s-run.webp";
+  return tween(180,function(u){S.x=-0.72+0.3*u;S.z=-1.25+0.65*u;}).then(function(){
+    S.img="s-strike.webp";fx.buzz(12);hitStop=0.05;B.fly=true;summon();
+    if(SLOWNEXT){TS=0.38;CAM_FX.zoomTo=1.14;}
+    return new Promise(function(done){
+      var t=0,phase="fly",after=0,k0={x:K.x,y:K.y},reacted=false,launched=false,landed=false,settled=false,landT=0,heldIt=false,loadT=0,fallV=0,saveAt=f.T*(kp.x===0&&kp.y<1?0.97:0.93);
+      var vx=f.vx,vy=f.vy,vz=f.vz,ox=0,oy=0.11,lastHit=0;
+      setTimeout(function(){S.img="s-follow.webp";},140);
+      every(function(dt){
+        t+=dt;
+        /* the keeper reads it a beat late, then commits along an arc */
+        var kt=Math.max(0,Math.min(1,(t-f.T*(spell?0.74:0.12))/(f.T*(spell?0.5:0.82))));
+        if(kt>0&&!reacted){reacted=true;loadT=t;K.img="k-spring.webp";K.sq=1;}
+        if(reacted&&!launched&&t-loadT>0.05){launched=true;K.img=kp.img;K.flip=kp.flip||1;if(kp.x!==0)afterimage(true);}
+        if(launched&&(phase==="fly"||phase==="after")){
+          if(kt<1||kp.x===0){var e=easeOut(kt);K.x=k0.x+(kp.x-k0.x)*e;K.y=k0.y+(kp.y-k0.y)*kt+kp.arc*4*kt*(1-kt);K.rot=kp.rot*e;
+            K.sq=kp.x!==0?1+0.14*Math.sin(Math.PI*Math.min(1,kt)):1;}
+          else if(!landed){fallV+=9.81*1.4*dt;K.y=Math.max(0.42,K.y-fallV*dt);K.sq+=(1-K.sq)*Math.min(1,dt*10);
+            if(K.y<=0.42){landed=true;afterimage(false);dust(K.x);fx.shake(0);K.sq=0.9;K.rot=0;
+              K.img=high(k.dive)?"k-crash.webp":"k-land.webp";K.y=KH[file(K.img)]/2;landT=t;}}
+          else if(!settled&&t-landT>0.24){settled=true;K.img=heldIt?"k-held.webp":"k-down.webp";if(heldIt){B.vis=0;B.att=false;}K.y=KH[file(K.img)]/2;}
+          else K.sq+=(1-K.sq)*Math.min(1,dt*8);}
+        if(phase==="fly"){
+          B.x=vx*t+0.5*f.ax*t*t;B.y=oy+vy*t-0.5*9.81*t*t;B.z=vz*t;B.rot+=dt*(900+power*900)*(side);
+          var bp=P(B.x,B.y,B.z);spellTick(dt,bp,Math.max(6,0.3*bp.s),true);TRAIL.push({x:bp.x,y:bp.y,w:Math.max(2,0.3*bp.s*0.5),o:1});if(TRAIL.length>16)TRAIL.shift();drawTrail();
+          if(k.outcome==="save"&&t>=saveAt){phase="after";
+            var catchIt=kind==="weak"&&k.dive===k.shot.spot;impact("save",catchIt);
+            /* caught: standing, the catch pose holds it; diving, the ball rides in
+               his hands to the ground and the held pose takes over */
+            if(catchIt){if(kp.x===0){B.vis=0;K.img="k-catch.webp";}else{heldIt=true;B.att=true;}}
+            else{
+              vx=(col(k.dive)===1?(Math.random()<.5?-1:1):(col(k.dive)===0?-1:1))*(4+Math.random()*4);vz=-f.vz*0.22;vy=3.5+Math.random()*3;ox=B.x;oy=B.y;after=0;}
+          }else if(t>=f.T){phase="after";ox=B.x;oy=B.y;after=0;
+            if(k.outcome==="goal"){impact("goal");vx=(vx+f.ax*f.T)*0.25;vy=0;vz=4;}
+            else if(k.outcome==="bar"){impact("bar");vz=-f.vz*0.32;vy=-Math.abs(f.vy-9.81*f.T)*0.25-0.5;vx*=0.4;}
+            else{impact("over");vz=f.vz;vy=f.vy-9.81*f.T;vx=vx+f.ax*f.T;}
+          }
+        }else if(phase==="after"){
+          after+=dt;
+          if(k.outcome==="goal"){var damp=Math.exp(-after*14);if(after<0.5){var nq=netAt(B.x,B.y);netHit(NETN,nq.i,nq.j,dt*18*(1-after*2));NETLIVE=true;}B.z=GOAL.z+(4/14)*(1-damp)*1.2;B.x=Math.max(-3.5,Math.min(3.5,ox+vx*(1-damp)/14*4));
+            vy-=9.81*dt;oy+=vy*dt;if(oy<0.11){oy=0.11;vy=-vy*RESTITUTION;if(Math.abs(vy)<0.5)vy=0;}B.y=oy;}
+          else if(B.att){B.x=K.x;B.y=Math.max(0.25,K.y);B.z=GOAL.z-0.15;}
+          else{vy-=9.81*dt;B.x+=vx*dt;B.y+=vy*dt;B.z+=vz*dt;
+            if(B.y<0.11){B.y=0.11;vy=Math.abs(vy)*RESTITUTION;vx*=0.8;vz*=0.8;if(vy<0.6)vy=0;if(after-lastHit>0.08){lastHit=after;if(vy>1.2)fx.shake(0);}}
+            if(k.outcome==="over")B.alpha=Math.max(0,1-after*1.6);}
+          B.rot+=dt*400*side;
+          TRAIL.forEach(function(p){p.o=Math.max(0,p.o-dt*3.5);});drawTrail();spellTick(dt,null,0,false);
+          if(after>1.05){done();return false;}
+        }
+      });
+    });
+  }).then(function(){
+    /* reactions, then the scene resets for the next kick */
+    var wide=Math.abs(K.x)>0.8&&(K.img==="k-down.webp"||K.img==="k-held.webp"||K.img==="k-land.webp"||K.img==="k-crash.webp");
+    if(wide){K.img=K.img==="k-held.webp"?"k-held.webp":"k-down.webp";K.y=KH[file(K.img)]/2;K.rot=0;S.img=k.outcome==="goal"?(you&&streak>=3?"s-slide.webp":"s-arms.webp"):"s-head.webp";}
+    else if(k.outcome==="goal"){K.img="k-beaten.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x*=0.85;S.img=you&&streak>=3?"s-slide.webp":"s-arms.webp";}
+    else if(k.outcome==="save"){K.img="k-roar.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x*=0.6;K.flip=1;S.img="s-head.webp";}
+    else{K.img="k-taunt.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x=0;K.flip=1;S.img="s-head.webp";
+      if(you)coach("over","Too hard, it flew. Ease off: a firm swipe goes in, a slap goes over.",false);}
+    /* whenever the kicker fails, the keeper is happy: off the floor after a
+       beat and roaring at a save, smirking and pointing at a miss */
+    if(k.outcome!=="goal")return wait(wide?420:120).then(function(){K.img=k.outcome==="save"?"k-roar.webp":"k-taunt.webp";
+      K.y=KH[file(K.img)]/2;K.rot=0;K.flip=1;K.x*=0.7;K.sq=1;fx.buzz(10);}).then(function(){return wait(820);});
+    return wait(950);
+  }).then(function(){resetScene();drawBoard();});
+
+  function impact(what,caught){
+    var bp=P(B.x,B.y,B.z);
+    if(what==="goal"){
+      var nh=netAt(B.x,B.y);NETI={x:B.x,y:B.y};netHit(NETN,nh.i,nh.j,12+power*8);NETLIVE=true;hitStop=0.07;fx.shake(kind==="green"?2:1);fx.buzz(40);fx.hype();
+      var top=high(k.shot.spot)&&col(k.shot.spot)!==1&&kind==="green";
+      fx.sprite("burst",bp.x,bp.y,spell?150:top?90:64,spell?620:420);if(top||spell)fx.sprite("star",bp.x,bp.y,spell?170:110,620);
+      if(spell){fx.shake(2);fx.flash(0.22,420);}
+      fx.pop(spell?"LEGENDARY!":top?"TOP BINS!":perfect?"WIZARDRY!":(you?"GOAL!":"OYA!"),spell||top?"#F2B84B":"#2FD48A");
+      fx.board(top?"TOP BINS":"GOAL",top?"#F2B84B":"#2FD48A");
+      if(you){streak++;award({top:top,curl:curl,perfect:perfect,streak:streak});}fx.combo(streak);
+      if(you&&(spell||perfect||streak>=3)&&k.outcome==="goal")lightning(bp.x,bp.y);
+    }else if(what==="save"){
+      if(caught){fx.pop("CAUGHT!","#E63946");fx.board("SAVED","#E63946");fx.buzz([15,30]);hitStop=0.05;if(you)streak=0;fx.combo(streak);return;}
+      hitStop=0.09;fx.shake(1);fx.buzz([20,40,20]);fx.sprite("burst",bp.x,bp.y,70,380);
+      fx.pop("SAVED!","#E63946");fx.board("SAVED","#E63946");if(you)streak=0;fx.combo(streak);
+    }else if(what==="bar"){
+      hitStop=0.08;fx.shake(2);fx.buzz([30,30,30]);fx.sprite("burst",bp.x,bp.y,56,320);
+      /* it hit the woodwork - say exactly that, never "saved" (owner, 8 Oct 2026) */
+      fx.pop("WAHALA!","#E63946","OFF THE BAR");fx.board("OFF THE BAR","#E63946");if(you)streak=0;fx.combo(streak);
+    }else{fx.pop("WAHALA!","#E63946","OVER THE BAR");fx.board("MISSED","#E63946");fx.shake(0);if(you)streak=0;fx.combo(streak);}
+  }
+}
+
+layout();drawBoard();
+$("cast").addEventListener("click",function(e){e.stopPropagation();if(SPELL>=100&&!SPELLARMED){SPELLARMED=true;drawSpell();fx.pop("LEGENDARY","#F2B84B","ON TARGET IS A GOAL");fx.buzz([20,20,40]);}});
+$("cast").addEventListener("pointerdown",function(e){e.stopPropagation();});
+window.PWV=function(){return SPV;};
+window.PW={RULES:{strike:strike,neighbour:neighbour,judge:judge,shootout:shootout,ZONES:ZONES,REG:REG,BONUS:BONUS},
+  aimAndShoot:aimAndShoot,pickDive:pickDive,playKick:playKick,fx:fx,
+  get DEV(){return DEV;},get NAME(){return NAME;},setName:function(n){NAME=n;try{localStorage.setItem("pw.name",n);}catch(e){}},
+  setScore:function(a,b,who){if(who!=null)$("whoB").textContent=who;},
+  newBoard:function(who,single,a,b){BOARD={a:(a||[]).slice(),b:(b||[]).slice(),single:!!single};if(who!=null)$("whoB").textContent=who;drawBoard();boardNow(null);},
+  tag:function(t){$("tag").textContent=t||"";},
+  coachReset:function(){COACHED={};try{localStorage.removeItem("pw.coach");}catch(e){}},
+  smartDive:smartDive,levelOf:levelOf,trailFor:trailFor,get xp(){return XP;},
+  setSolo:function(on){SOLO=!!on;SPELL=0;SPELLARMED=false;SPELLNOW=false;drawSpell();newWind();},consumeSpell:consumeSpell,
+  get char(){return ME;},setChar:function(c){ME=c==="wizard"?"wizard":"ten";try{localStorage.setItem("pw.char",ME);}catch(e){}loadChar(ME);SC=ME;KC=OPP||other();},
+  resetStreak:function(){streak=0;fx.combo(0);},
+  setOpponent:function(c){OPP=c||null;loadChar(OPP||other());KC=OPP||other();}};
+})();
+</script>
+<script>
+(function(){
+"use strict";
+var PW=window.PW,R=PW.RULES,REG=R.REG,BONUS=R.BONUS,$=function(id){return document.getElementById(id);};
+var ORIGIN=location.origin;
+window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};
+function track(name,data){try{window.va("event",{name:name,data:data||{}});}catch(e){}}
+function api(method,a,body,q){
+  var qs="?a="+a+Object.keys(q||{}).map(function(k){return "&"+k+"="+encodeURIComponent(q[k]);}).join("");
+  return fetch("/api/penalty"+qs,{method:method,headers:method==="POST"?{"Content-Type":"application/json","X-SW-Request":"1"}:{},
+    body:method==="POST"?JSON.stringify(body):undefined}).then(function(r){return r.text().then(function(t){var j={};try{j=JSON.parse(t)||{};}catch(e){}
+      LAST={status:r.status,error:j&&j.error};return {status:r.status,j:j};});})
+    .catch(function(){LAST={status:0,error:null};return {status:0,j:{}};});
+}
+var LAST={status:0,error:null};
+function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+function sheet(nodes){PW.tag("");PW.fx.combo(0);var s=$("sheet");s.textContent="";nodes.forEach(function(n){s.appendChild(n);});s.classList.add("on");}
+function closeSheet(){$("sheet").classList.remove("on");}
+function btn(label,cls,fn){var b=el("button","btn "+cls,label);b.type="button";b.addEventListener("click",fn);return b;}
+
+/* The one failure screen: never invents a result, and says which failure it
+   was - only a dead connection is "can't reach"; a server that answered
+   "not here" or "not set up" is not switched on. */
+function offline(retry){
+  var off=LAST.status===403||LAST.status===404||LAST.error==="not_configured";
+  var msg=LAST.status===0?"Can't reach the pitch, try again.":off?"Play Penalty isn't switched on here yet. Play the computer meanwhile.":
+    LAST.status===429?"Too many kicks for a moment. Try again shortly.":"Something went wrong on our side ("+(LAST.error||LAST.status)+"). Try again.";
+  sheet([el("p",null,msg),btn("Try again","red",function(){closeSheet();retry();}),btn("Play the computer","ghost",function(){closeSheet();practice();})]);}
+
+/* A FULL MATCH AGAINST THE COMPUTER, NOTHING SENT ANYWHERE: shot, save, shot,
+   save, sudden death, scored by the same shootout rules the server uses. */
+function practice(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(true);var outs=[];PW.newBoard("Computer",false);
+  function cpuShot(){return {spot:Math.floor(Math.random()*6),power:0.45+Math.random()*0.5};}
+  function next(){var st=R.shootout(outs);PW.setScore(st.a,st.b);if(st.done)return finish(st);
+    PW.fx.slowmo(Math.floor(outs.length/2)>=REG-1);
+    if(st.next==="a")return PW.aimAndShoot().then(function(s){var sp=PW.consumeSpell(),d=Math.floor(Math.random()*6),o=R.judge(s,d);if(sp&&o==="save")o="goal";outs.push(o);
+        
+        return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:d,outcome:o});}).then(next);
+    return PW.pickDive().then(function(dv){var cs=cpuShot(),o=R.judge(cs,dv);outs.push(o);
+        return PW.playKick({who:"them",shot:{spot:cs.spot,kind:R.strike(cs.spot,cs.power).kind,power:cs.power},dive:dv,outcome:o});}).then(next);}
+  function finish(st){PW.fx.slowmo(false);track("practice_finished");
+    var head=st.winner==="a"?"You beat the computer "+st.a+"-"+st.b:st.winner==="b"?"The computer won "+st.b+"-"+st.a:"Draw, "+st.a+"-"+st.b;
+    sheet([el("h2",null,head),el("p",null,"Fancy a real opponent?"),btn("Play again","red",function(){closeSheet();practice();}),
+      btn("Challenge a friend","ghost",function(){closeSheet();challenger();}),tipsCard()]);}
+  next();}
+
+function askName(){return new Promise(function(done){
+  if(PW.NAME)return done(PW.NAME);
+  var i=el("input","name");i.placeholder="Your name";i.maxLength=16;i.autocomplete="nickname";
+  sheet([el("h2",null,"What do we call you?"),i,el("div","row"),btn("Let's go","red",function(){
+    var n=i.value.replace(/[^\p{L}\p{N} ]/gu,"").replace(/\s+/g," ").trim().slice(0,16);if(!n){i.focus();return;}
+    PW.setName(n);closeSheet();done(n);})]);setTimeout(function(){i.focus();},350);
+});}
+
+function shareSheet(text,url,where){
+  var full=text+" "+url;
+  var wa=btn("WhatsApp","red",function(){track("share",{ch:"whatsapp",where:where});open("https://wa.me/?text="+encodeURIComponent(full),"_blank");});
+  var x=btn("X","red",function(){track("share",{ch:"x",where:where});open("https://x.com/intent/post?text="+encodeURIComponent(text+" via @SoccerWizardhq")+"&url="+encodeURIComponent(url),"_blank");});
+  var row=el("div","row");row.appendChild(wa);row.appendChild(x);
+  var row2=el("div","row");
+  row2.appendChild(btn("Copy link","ghost",function(e){track("share",{ch:"copy",where:where});try{navigator.clipboard.writeText(url);e.currentTarget.textContent="Copied";}catch(_){}}));
+  if(navigator.share)row2.appendChild(btn("Share","ghost",function(){track("share",{ch:"system",where:where});navigator.share({text:text,url:url}).catch(function(){});}));
+  return [row,row2];
+}
+
+/* Ten or The Wizard: who you play as. The opponent is the other one. */
+function charPicker(){var box=el("div","pick");
+  [["ten","TEN","/penalty/k-set.webp?v="+PWV()],["wizard","THE WIZARD","/penalty/kw-set.webp?v="+PWV()]].forEach(function(c){
+    var b=el("button",PW.char===c[0]?"on":"");b.type="button";var i=el("img");i.src=c[2];i.alt="";b.appendChild(i);b.appendChild(el("span",null,c[1]));
+    b.addEventListener("click",function(){PW.setChar(c[0]);PW.fx.buzz(10);box.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b);});});box.appendChild(b);});
+  return box;}
+/* THE FUNNEL (owner: "our selling point is picking games for people and
+   offering codes"). After every match: today's wizard slip with its real
+   booking code on every bookmaker, one tap to copy; then the builder and the
+   pick of the day. No stake is ever placed here - it hands you the code. */
+var BOOKN={sporty:"SportyBet",bet9ja:"Bet9ja",betking:"BetKing",betpawa:"betPawa",onexbet:"1xBet"};
+function tipsCard(){var box=el("div","tips");
+  api("GET","tips").then(function(r){if(!r.j)return;
+    box.appendChild(el("p","tk",""+"Let the wizard pick for you"));
+    var c=r.j.code;
+    if(c&&c.codes&&Object.keys(c.codes).length){
+      box.appendChild(el("b",null,"Today's wizard slip: "+c.games+" games"+(c.odds?" · ×"+(+c.odds).toFixed(2):"")));
+      var list=el("div","codes");
+      Object.keys(BOOKN).forEach(function(k){if(!c.codes[k])return;var row=el("div","crow");row.appendChild(el("span",null,BOOKN[k]));row.appendChild(el("code",null,c.codes[k]));
+        var cp=btn("Copy","ghost sm",function(){try{navigator.clipboard.writeText(c.codes[k]);cp.textContent="Copied";track("code_copied",{book:k});}catch(e){}});row.appendChild(cp);list.appendChild(row);});
+      box.appendChild(list);}
+    if(r.j.home)box.appendChild(el("p",null,"Pick of the day: "+r.j.home+" v "+r.j.away+" · "+r.j.tip+" · "+r.j.pct+"%"));
+    var b1=el("a","btn red","Build me a slip");b1.href="/";b1.addEventListener("click",function(){track("tips_clicked",{to:"build"});});box.appendChild(b1);
+    var b2=el("a","btn ghost","See all predictions");b2.href="/";b2.addEventListener("click",function(){track("tips_clicked",{to:"predictions"});});box.appendChild(b2);});
+  return box;}
+
+/* THE CHALLENGER: 5 shots + 3 bonus vs a computer keeper, 5 dives + 3 bonus
+   vs computer shots. Judged here (no stakes); the picks go to the server. */
+function challenger(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);askName().then(function(name){
+  var shots=[],dives=[],outs=[],i=0,cpu=0;PW.newBoard("Computer",false);
+  function cpuDive(){return Math.floor(Math.random()*6);}
+  function cpuShot(){return {spot:Math.floor(Math.random()*6),power:0.45+Math.random()*0.5};}
+  var p=Promise.resolve();
+  for(var i=0;i<REG+BONUS;i++)(function(n){p=p.then(function(){
+    if(n===REG)PW.fx.pop("BONUS KICKS","#F2B84B");
+    PW.fx.slowmo(n===REG-1);
+    return PW.aimAndShoot().then(function(s){shots.push(s);var d=cpuDive(),o=R.judge(s,d);
+      if(n<REG){outs.push(o);PW.setScore(outs.filter(function(x){return x==="goal";}).length,cpu);}
+      return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:d,outcome:o});})
+    .then(function(){return PW.pickDive();})
+    .then(function(dv){dives.push(dv);var cs=cpuShot(),co=R.judge(cs,dv);if(n<REG&&co==="goal")cpu++;return PW.playKick({who:"them",shot:R.strike(cs.spot,cs.power),dive:dv,outcome:co}).then(function(){if(n<REG)PW.setScore(outs.filter(function(x){return x==="goal";}).length,cpu);});});
+  });})(i);
+  p.then(function save(){PW.fx.slowmo(false);
+    return api("POST","create",{name:name,device:PW.DEV,shots:shots,dives:dives}).then(function(r){
+      if(r.status!==200)return offline(save);
+      track("challenge_created");
+      var url=ORIGIN+"/p/"+r.j.id,score=outs.filter(function(o){return o==="goal";}).length;
+      sheet([el("h2",null,"You scored "+score+"/5")].concat(shareSheet("I scored "+score+"/5 on Play Penalty. Bet you can't save it:",url,"challenge"),[tipsCard()]));
+    });});
+});}
+
+/* THE FRIEND: alternate shot then dive; the server judges and reveals only the
+   shot just taken. A dropped connection resumes at the next kick. */
+function friend(id){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);api("GET","match",null,{id:id,device:PW.DEV}).then(function(r){
+  if(r.status===0)return offline(function(){friend(id);});
+  if(r.status!==200)return sheet([el("h2",null,"This challenge doesn't exist"),btn("Start your own","red",function(){closeSheet();challenger();})]);
+  var m=r.j;track("challenge_opened");
+  if(m.expired)return sheet([el("h2",null,"This challenge ran out"),btn("Start your own","red",function(){closeSheet();challenger();})]);
+  if(m.done)return result(m.score.a,m.score.b,m.winner,m.challenger,id,m.role,m.friend);
+  var url=ORIGIN+"/p/"+id;
+  if(m.role==="challenger")return sheet([el("h2",null,m.outcomes.length?m.friend+" is taking your challenge":"Waiting for a friend"),
+    el("p",null,m.outcomes.length?"Open this link again when it's done.":"Send it to someone. The link is yours to share.")]
+    .concat(shareSheet("Bet you can't beat me on Play Penalty:",url,"challenge"),[btn("Start another challenge","ghost",function(){closeSheet();challenger();})]));
+  if(m.role!=="friend"&&m.outcomes.length)return sheet([el("h2",null,"Someone else is playing this one"),btn("Start your own","red",function(){closeSheet();challenger();})]);
+  sheet([el("h2",null,m.challenger+" challenges you"),el("p",null,"5 shots, 5 saves. Free, no stakes. Pick your player:"),charPicker(),btn("Kick off","red",function(){closeSheet();askName().then(go);})]);
+  var outs=m.outcomes.slice();PW.newBoard(m.challenger,false,outs.filter(function(_,i){return i%2===0;}),outs.filter(function(_,i){return i%2===1;}));
+  function go(name){var n=outs.length;var shot=n%2===0;
+    PW.fx.slowmo(Math.floor(n/2)>=REG-1);
+    var step=shot?PW.aimAndShoot().then(function(s){return api("POST","kick",{id:id,device:PW.DEV,name:name,kind:"shot",spot:s.spot,power:s.power}).then(function(x){return {x:x,s:s};});})
+                 :PW.pickDive().then(function(dv){return api("POST","kick",{id:id,device:PW.DEV,name:name,kind:"dive",spot:dv}).then(function(x){return {x:x,dv:dv};});});
+    step.then(function(o){var x=o.x;
+      if(x.status===0)return offline(function(){go(name);});
+      if(x.status===409&&x.j.error==="taken")return sheet([el("h2",null,"Someone else is playing this one"),btn("Start your own","red",function(){closeSheet();challenger();})]);
+      if(x.status!==200)return offline(function(){friend(id);});
+      outs.push(x.j.outcome);
+      var anim=shot?PW.playKick({who:"you",shot:{spot:o.s.spot,kind:R.strike(o.s.spot,o.s.power).kind,power:o.s.power,aim:o.s.aim,curl:o.s.curl},dive:x.j.outcome==="save"?o.s.spot:(o.s.spot+3)%6,outcome:x.j.outcome})
+                    :PW.playKick({who:"them",shot:x.j.against,dive:o.dv,outcome:x.j.outcome});
+      anim.then(function(){var st=x.j.state;PW.setScore(st.score.a,st.score.b);if(st.done){track("challenge_finished");PW.fx.slowmo(false);return result(st.score.a,st.score.b,st.winner,m.challenger,id,"friend",name);}go(name);});
+    });}
+});}
+
+/* a = the friend's goals, b = the challenger's. Told from whoever is looking:
+   the friend, the challenger, or anyone else who opened the link. */
+function result(a,b,winner,chName,id,role,frName){
+  var url=ORIGIN+"/p/"+id,fr=frName||"Your friend",head,text;
+  if(role==="friend"){head=winner==="a"?"You beat "+chName+" "+a+"-"+b:winner==="b"?chName+" beat you "+b+"-"+a:"Draw, "+a+"-"+b;
+    text=winner==="a"?"I beat "+chName+" "+a+"-"+b+" on Play Penalty 😤 Your turn:":"Play Penalty: "+head+". Try me:";}
+  else if(role==="challenger"){head=winner==="b"?"You beat "+fr+" "+b+"-"+a:winner==="a"?fr+" beat you "+a+"-"+b:"You drew with "+fr+", "+a+"-"+b;
+    text=winner==="b"?"I beat "+fr+" "+b+"-"+a+" on Play Penalty 😤 Who's next?":"Play Penalty: "+head+". Try me:";}
+  else{head=winner==="a"?fr+" beat "+chName+" "+a+"-"+b:winner==="b"?chName+" beat "+fr+" "+b+"-"+a:chName+" and "+fr+" drew "+a+"-"+b;
+    text="Play Penalty: "+head+". Think you can do better?";}
+  sheet([el("h2",null,head)].concat(shareSheet(text,url,"result"),[btn("Start your own challenge","ghost",function(){closeSheet();challenger();}),tipsCard()]));
+}
+
+/* SUDDEN DEATH: you shoot until you miss; the keeper learns your habits. */
+function survival(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(true);var run=0,best=0;try{best=+localStorage.getItem("pw.best")||0;}catch(e){}
+  PW.newBoard("Sudden death",true);PW.tag("SUDDEN DEATH");
+  function next(){PW.aimAndShoot().then(function(s){var sp=PW.consumeSpell(),d=PW.smartDive(s.spot,run,Math.random),o=R.judge(s,d);if(sp&&o==="save")o="goal";
+      return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:d,outcome:o}).then(function(){return o;});})
+    .then(function(o){if(o==="goal"){run++;return next();}
+      var nb=run>best;if(nb){best=run;try{localStorage.setItem("pw.best",String(best));}catch(e){}}track("survival_over",{run:run});
+      sheet([el("h2",null,run+(run===1?" goal":" goals")+" in a row"),el("p",null,nb&&run>0?"New best!":"Your best: "+best)]
+        .concat(shareSheet("I scored "+run+" in a row against the keeper on Play Penalty. Beat that:",ORIGIN+"/penalty","survival"),
+          [btn("Go again","red",function(){closeSheet();survival();}),btn("Back","ghost",function(){closeSheet();if(window.PWHome)window.PWHome();})]));});}
+  next();}
+window.PWFlow={survival:survival,challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,offline:offline,charPicker:charPicker,practice:practice};
+})();
+</script>
+<script>
+(function(){
+"use strict";
+var PW=window.PW,F=window.PWFlow,R=PW.RULES;
+function lagos(ms){return new Date(ms+3600000).toISOString().slice(0,10);}
+function bumpStreak(day){var s={last:null,n:0};try{s=JSON.parse(localStorage.getItem("pw.streak")||"null")||s;}catch(e){}
+  if(s.last===day)return s.n;
+  var y=new Date(Date.parse(day+"T12:00:00Z")-864e5).toISOString().slice(0,10);
+  s.n=s.last===y?s.n+1:1;s.last=day;try{localStorage.setItem("pw.streak",JSON.stringify(s));}catch(e){}return s.n;}
+
+/* DAILY: shoot only, five shots, every shot judged on the server against the
+   day's keeper. The day comes back with the first shot and is sent with the
+   rest, so a go across Lagos midnight finishes against one keeper. */
+function faced(){F.sheet([F.el("h2",null,"You've faced today's keeper"),F.el("p",null,"New keeper at midnight. Only your first go counts."),
+  F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})]);}
+/* A replay that counts for nothing: five shots against random dives, judged
+   on the phone, no server, no streak. */
+function forFun(){var outs=[];PW.resetStreak();PW.setSolo(true);PW.newBoard("Just for fun",true);
+  function one(){PW.aimAndShoot().then(function(s){var sp=PW.consumeSpell(),d=Math.floor(Math.random()*6),o=R.judge(s,d);if(sp&&o==="save")o="goal";outs.push(o);
+    PW.setScore(outs.filter(function(x){return x==="goal";}).length,outs.filter(function(x){return x!=="goal";}).length);
+    return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:d,outcome:o});})
+    .then(function(){if(outs.length<R.REG)return one();
+      F.sheet([F.el("h2",null,"Just for fun: "+outs.filter(function(x){return x==="goal";}).length+"/5"),F.el("p",null,"Not counted. Tomorrow's keeper is the one that counts."),
+        F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})]);});}
+  one();}
+function daily(){var outs=[],day=null,i=0;PW.setSolo(false);PW.newBoard("The Wizard",true);PW.setOpponent("wizard");PW.resetStreak();
+  function sync(st){day=st.day;i=st.at;outs=st.outcomes.slice();PW.newBoard("The Wizard",true,outs,[]);PW.setScore(outs.filter(function(o){return o==="goal";}).length,outs.filter(function(o){return o!=="goal";}).length);}
+  function start(){F.api("GET","dailystate",null,{device:PW.DEV}).then(function(r){
+    if(r.status!==200)return F.offline(start);
+    if(r.j.score!=null)return faced();
+    sync(r.j);shot();});}
+  function shot(){PW.fx.slowmo(i===R.REG-1);
+    PW.aimAndShoot().then(function(s){return F.api("POST","daily",{device:PW.DEV,i:i,spot:s.spot,power:s.power,day:day}).then(function(x){return {x:x,s:s};});})
+    .then(function(o){var x=o.x;
+      if(x.status===409){if(x.j.score!=null)return faced();if(x.j.at!=null){sync(x.j);return shot();}return F.offline(start);}
+      if(x.status!==200)return F.offline(shot);
+      day=x.j.day;outs.push(x.j.outcome);PW.setScore(outs.filter(function(o){return o==="goal";}).length,outs.filter(function(o){return o!=="goal";}).length);
+      return PW.playKick({who:"you",shot:{spot:o.s.spot,kind:R.strike(o.s.spot,o.s.power).kind,power:o.s.power,aim:o.s.aim,curl:o.s.curl},dive:x.j.outcome==="save"?o.s.spot:(o.s.spot+3)%6,outcome:x.j.outcome}).then(function(){
+        if(!x.j.done){i++;return shot();}
+        PW.fx.slowmo(false);F.track("daily_played",{score:x.j.score});
+        var n=bumpStreak(day),grid=outs.map(function(o){return o==="goal"?"⚽":"❌";}).join("");
+        var d=new Date(day+"T12:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+        var text="Wizard Keeper "+d+": "+grid+" "+x.j.score+"/5";
+        var nodes=[F.el("h2",null,x.j.score+"/5 against the Wizard Keeper"),
+          F.el("p",null,(x.j.better!=null?"Better than "+x.j.better+"% of players today. ":"")+"Streak: "+n+(n===1?" day":" days"))];
+        F.sheet(nodes.concat(F.shareSheet(text,location.origin+"/penalty","daily"),[F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),F.tipsCard()]));
+      });});}
+  start();}
+
+window.PWHome=function(){home();};
+function home(){
+  var lv=PW.levelOf(PW.xp),nx=[3,5,8].filter(function(x){return x>lv;})[0],best=0;try{best=+localStorage.getItem("pw.best")||0;}catch(e){}
+  var nodes=[F.el("h2",null,"Play Penalty"),
+    F.el("p","note","Level "+lv+" · "+PW.xp.toLocaleString("en")+" pts · "+PW.trailFor(lv).name+" trail"+(nx?" · next unlock at level "+nx:"")+(best?" · best run "+best:"")),
+    F.el("p",null,"Free. No stakes. Just bragging rights. Pick your player:"),F.charPicker(),
+    /* The one that always works comes first (owner: "there is no play
+       against computer" - it sat below the fold of the sheet on a phone). */
+    F.btn("Play the computer","red",function(){F.closeSheet();F.practice();}),
+    F.btn("Sudden Death","ghost",function(){F.closeSheet();F.survival();}),
+    F.btn("Face today's Wizard Keeper","ghost",function(){F.closeSheet();daily();}),
+    F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),
+    F.btn("How to play","ghost",function(){PW.coachReset();F.closeSheet();F.practice();})];
+  var mute=F.btn("Vibration: on","ghost",function(e){var m=localStorage.getItem("pw.mute")==="1";localStorage.setItem("pw.mute",m?"0":"1");e.currentTarget.textContent="Vibration: "+(m?"on":"off");});
+  try{if(localStorage.getItem("pw.mute")==="1")mute.textContent="Vibration: off";}catch(e){}
+  nodes.push(mute);
+  F.sheet(nodes);
+  /* "Ada beat you 4-3": finished challenges this device created in the last week. */
+  F.api("GET","mine",null,{device:PW.DEV}).then(function(r){var seen={};try{seen=JSON.parse(localStorage.getItem("pw.seen")||"{}");}catch(e){}
+    (r.j.results||[]).filter(function(x){return !seen[x.id]&&x.score;}).slice(0,1).forEach(function(x){
+      var line=x.won?"You beat "+x.friend+" "+x.score.you+"-"+x.score.them:x.draw?"You drew with "+x.friend:x.friend+" beat you "+x.score.them+"-"+x.score.you;
+      $note(line);seen[x.id]=1;try{localStorage.setItem("pw.seen",JSON.stringify(seen));}catch(e){}});});
+  function $note(t){var s=document.getElementById("sheet");s.insertBefore(F.el("p","note",t),s.firstChild);}
+}
+
+var c=new URLSearchParams(location.search).get("c");
+if(c&&/^[A-Za-z0-9]{6}$/.test(c))F.friend(c.toUpperCase());else home();
+})();
+</script>
+</body></html>
