@@ -207,3 +207,9 @@ test("the scoreboard names fit a phone", () => {
   assert.doesNotMatch(html, /setScore\(0,0,"Wizard Keeper"\)/, "the long label is gone");
   assert.match(html, /setScore\(0,0,"The Wizard"\)/);
 });
+
+test("Play the computer is the first button on the home screen", () => {
+  const home = grabFn("home");
+  const i = home.indexOf('"Play the computer"'), j = home.indexOf("Face today's Wizard Keeper"), k = home.indexOf('"Challenge a friend"');
+  assert.ok(i > 0 && i < j && i < k, "first, above the fold on a phone");
+});

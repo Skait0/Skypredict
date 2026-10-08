@@ -713,9 +713,11 @@ function daily(){var outs=[],day=null,i=0;PW.setScore(0,0,"The Wizard");PW.setOp
 
 function home(){
   var nodes=[F.el("h2",null,"Penalty Wahala"),F.el("p",null,"Free. No stakes. Just bragging rights. Pick your player:"),F.charPicker(),
-    F.btn("Face today's Wizard Keeper","red",function(){F.closeSheet();daily();}),
-    F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),
-    F.btn("Play the computer","ghost",function(){F.closeSheet();F.practice();})];
+    /* The one that always works comes first (owner: "there is no play
+       against computer" - it sat below the fold of the sheet on a phone). */
+    F.btn("Play the computer","red",function(){F.closeSheet();F.practice();}),
+    F.btn("Face today's Wizard Keeper","ghost",function(){F.closeSheet();daily();}),
+    F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})];
   var mute=F.btn("Vibration: on","ghost",function(e){var m=localStorage.getItem("pw.mute")==="1";localStorage.setItem("pw.mute",m?"0":"1");e.currentTarget.textContent="Vibration: "+(m?"on":"off");});
   try{if(localStorage.getItem("pw.mute")==="1")mute.textContent="Vibration: off";}catch(e){}
   nodes.push(mute);
