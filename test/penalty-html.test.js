@@ -76,10 +76,10 @@ test("Soccerwizard is on the advert boards", () => {
   assert.match(html.replace(/<[^>]+>/g, ""), /SOCCERWIZARD/);
 });
 
-test("lightning strikes only on a perfect strike or a hot streak", () => {
+test("lightning strikes only on a legendary shot, a perfect strike or a hot streak", () => {
   const calls = html.match(/lightning\(/g) || [];
   assert.strictEqual(calls.length, 2, "one definition, one call");
-  assert.match(html, /if\(you&&\(perfect\|\|streak>=3\)&&k\.outcome==="goal"\)\{?\s*lightning\(/);
+  assert.match(html, /if\(you&&\(spell\|\|perfect\|\|streak>=3\)&&k\.outcome==="goal"\)\{?\s*lightning\(/);
 });
 
 test("every sprite the page names exists on disk", () => {
@@ -145,7 +145,7 @@ test("the daily keeper is always The Wizard", () => {
 
 /* Final review fixes, 8 Oct 2026. */
 test("lightning is yours alone, and only for a real perfect strike or a hot streak", () => {
-  assert.match(html, /if\(you&&\(perfect\|\|streak>=3\)&&k\.outcome==="goal"\)lightning\(/);
+  assert.match(html, /if\(you&&\(spell\|\|perfect\|\|streak>=3\)&&k\.outcome==="goal"\)lightning\(/);
   assert.doesNotMatch(html, /power=k\.shot\.power!=null\?k\.shot\.power:\(kind==="green"\?0\.72/, "a guessed power must never land in the perfect band");
   assert.match(html, /shot:\{spot:s\.spot,kind:R\.strike\(s\.spot,s\.power\)\.kind,power:s\.power,aim:s\.aim,curl:s\.curl\}/, "your own shots carry their real power, aim and curl");
 });
@@ -414,7 +414,9 @@ test("the slow-motion zoom starts at the strike, never while you aim", () => {
 test("a save is made where the ball is; a goal keeps the keeper clear of it", () => {
   const f = grabFn("playKick");
   assert.match(f, /if\(k\.outcome==="save"\)\{kp\.x=Math\.max\(-3\.2,Math\.min\(3\.2,aim\.x\)\)/);
-  assert.match(f, /if\(k\.outcome==="goal"&&Math\.abs\(kp\.x-aim\.x\)<1\.2&&Math\.abs\(kp\.y-aim\.y\)<1\.1\)/);
+  assert.match(f, /if\(\(k\.outcome==="over"\|\|k\.outcome==="goal"&&Math\.abs\(kp\.y-aim\.y\)<1\.1\)&&Math\.abs\(kp\.x-aim\.x\)<1\.2\)/);
+  assert.match(f, /if\(k\.outcome==="over"\)kp\.arc=0;/, "over the bar: the keeper never leaps into the ball's path");
+  assert.match(f, /B\.x=Math\.max\(-3\.5,Math\.min\(3\.5,ox\+vx/, "a goal stays inside the posts as it settles in the net");
 });
 
 test("the turn label sits below the scoreboard, and the miss cross is centred", () => {
@@ -510,6 +512,18 @@ test("solo modes add wind and a spell meter; challenges and the daily stay plain
   assert.match(html, /id="cast"/);
   assert.match(html, /id="wind"/);
   assert.match(grabFn("playKick"), /SPELLNOW/);
+});
+
+test("the legendary shot: LEGEND shows only while you aim, freezes the keeper, and on target always scores", () => {
+  assert.match(html, /c\.hidden=!\(SOLO&&SPELL>=100&&AIMING\)/);
+  const aim = grabFn("aimAndShoot");
+  assert.match(aim, /AIMING=true;drawSpell\(\)/);
+  assert.match(aim, /AIMING=false;drawSpell\(\)/);
+  assert.match(html, /"ARMED":"LEGEND"/, "short labels: a long one covered the ball and blocked the swipe");
+  assert.match(grabFn("playKick"), /\$\("app"\)\.classList\.add\("legend"\)/);
+  assert.match(html, /#app\.legend #keeper\{filter:/);
+  assert.doesNotMatch(html, /id="runes"/, "the rune circle is gone");
+  for (const f of ["practice", "survival", "forFun"]) assert.match(grabFn(f), /if\(sp&&o==="save"\)o="goal"/, f);
 });
 
 test("every sprite address carries the art version, so new art is never served from an old cache", () => {
