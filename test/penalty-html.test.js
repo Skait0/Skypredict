@@ -137,3 +137,16 @@ test("the daily go is tracked", () => {
 test("a challenge link opens the friend flow, anything else the home screen", () => {
   assert.match(html, /new URLSearchParams\(location\.search\)\.get\("c"\)/);
 });
+
+/* Owner, 8 Oct 2026: "another character as the wizard. players can choose
+   who they want to use". */
+test("players choose Ten or The Wizard, the choice is kept, the opponent is the other", () => {
+  assert.match(html, /localStorage\.setItem\("pw\.char"/);
+  assert.match(html, /function charPicker\(/);
+  for (const pose of ["ready", "dive-low", "dive-high", "jump", "catch", "beaten", "roar", "shrug", "taunt"]) assert.match(html, new RegExp('"kw-' + pose + '\.webp"'), "wizard keeper " + pose);
+  for (const pose of ["stand", "run", "strike", "follow", "arms", "slide", "head"]) assert.match(html, new RegExp('"sw-' + pose + '\.webp"'), "wizard shooter " + pose);
+});
+
+test("the daily keeper is always The Wizard", () => {
+  assert.match(html, /function daily\(\)\{[^}]*PW\.setOpponent\("wizard"\)/);
+});

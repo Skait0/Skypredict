@@ -92,6 +92,11 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .btn.red{background:var(--red);color:#fff;box-shadow:0 8px 24px #e6394644}.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
 .row{display:flex;gap:8px}.row .btn{flex:1}
 input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:0 18px;font:inherit;font-size:16px;margin-bottom:4px}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 6px}
+.pick button{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px 9px;border-radius:16px;border:1px solid var(--line);background:var(--card2);color:var(--soft);font:italic 800 14px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;cursor:pointer;transition:transform .15s,border-color .15s}
+.pick button img{height:86px;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+.pick button.on{border-color:var(--red);color:var(--text);box-shadow:0 0 0 1px var(--red),0 10px 26px #e6394633}
+.pick button.on img{transform:scale(1.08) translateY(-2px)}
 .tips{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--card2)}
 .tips:empty{display:none}.tips p{margin:0 0 4px!important}.tips b{display:block;font-size:16px;margin-bottom:2px}
 @keyframes pw-marquee{to{transform:translateX(-50%)}}
@@ -194,9 +199,20 @@ try{DEV=localStorage.getItem("pw.dev");if(!DEV){DEV=uuid();localStorage.setItem(
 /* Every pose, by file. The first of each character and the ball are preloaded
    in <head>; the rest are fetched once the page is up. */
 var SPRITES=["k-ready.webp","k-taunt.webp","k-dive-low.webp","k-dive-high.webp","k-jump.webp","k-catch.webp","k-beaten.webp","k-roar.webp","k-shrug.webp",
-  "s-stand.webp","s-run.webp","s-strike.webp","s-follow.webp","s-arms.webp","s-slide.webp","s-head.webp","p-ball.webp","p-burst.webp","p-star.webp"];
+  "s-stand.webp","s-run.webp","s-strike.webp","s-follow.webp","s-arms.webp","s-slide.webp","s-head.webp","p-ball.webp","p-burst.webp","p-star.webp",
+  "kw-ready.webp","kw-taunt.webp","kw-dive-low.webp","kw-dive-high.webp","kw-jump.webp","kw-catch.webp","kw-beaten.webp","kw-roar.webp","kw-shrug.webp",
+  "sw-stand.webp","sw-run.webp","sw-strike.webp","sw-follow.webp","sw-arms.webp","sw-slide.webp","sw-head.webp"];
 var IMG={};
-addEventListener("load",function(){SPRITES.forEach(function(f){var i=new Image();i.src="/penalty/"+f;IMG[f]=i;});});
+/* TWO CHARACTERS (owner, 8 Oct 2026): Ten and The Wizard. You play as one,
+   the opponent is the other, and the daily keeper is always The Wizard. Poses
+   are named for Ten; file() swaps in the wizard set when he is on the pitch.
+   Only the characters in play are fetched. */
+var ME="ten",OPP=null;try{ME=localStorage.getItem("pw.char")==="wizard"?"wizard":"ten";}catch(e){}
+function other(){return ME==="ten"?"wizard":"ten";}
+var KC=other(),SC=ME;
+function file(f){if(KC==="wizard"&&f.indexOf("k-")===0)return "kw-"+f.slice(2);if(SC==="wizard"&&f.indexOf("s-")===0)return "sw-"+f.slice(2);return f;}
+function loadChar(c){var pre=c==="wizard"?/^(kw|sw|p)-/:/^(k|s|p)-/;SPRITES.forEach(function(f){if(pre.test(f)&&!IMG[f]){var i=new Image();i.src="/penalty/"+f;IMG[f]=i;}});}
+addEventListener("load",function(){loadChar(ME);loadChar(other());});
 /* How tall each pose stands in the world, in metres, so a dive and a crouch
    share one scale. */
 var KH={"k-ready.webp":1.7,"k-taunt.webp":2,"k-dive-low.webp":1.05,"k-dive-high.webp":2.15,"k-jump.webp":2.45,"k-catch.webp":1.9,"k-beaten.webp":1.25,"k-roar.webp":1.95,"k-shrug.webp":1.95};
@@ -272,11 +288,11 @@ var S={x:-0.72,z:-1.25,img:"s-stand.webp"};                       // shooter, be
 var B={x:0,y:0.11,z:0,rot:0,vis:1,alpha:1};                      // ball
 function setImg(el,f){if(el.getAttribute("data-f")!==f){el.setAttribute("data-f",f);el.src="/penalty/"+f;}}
 function place(){
-  var k=$("keeper"),kp=P(K.x,K.y,GOAL.z),kh=KH[K.img]*kp.s,kim=IMG[K.img],ar=kim&&kim.naturalWidth?kim.naturalWidth/kim.naturalHeight:1;
-  setImg(k,K.img);k.style.height=kh+"px";k.style.width=kh*ar+"px";
+  var k=$("keeper"),kp=P(K.x,K.y,GOAL.z),kh=KH[K.img]*kp.s,kim=IMG[file(K.img)],ar=kim&&kim.naturalWidth?kim.naturalWidth/kim.naturalHeight:1;
+  setImg(k,file(K.img));k.style.height=kh+"px";k.style.width=kh*ar+"px";
   k.style.transform="translate("+(kp.x-kh*ar/2)+"px,"+(kp.y-kh/2+K.bob)+"px) rotate("+K.rot+"deg) scaleX("+K.flip+")";
-  var sh=$("shooter"),sp=P(S.x,0,S.z),sH=1.75*sp.s*0.6,sim=IMG[S.img],sar=sim&&sim.naturalWidth?sim.naturalWidth/sim.naturalHeight:0.47;
-  setImg(sh,S.img);sh.style.height=sH+"px";sh.style.width=sH*sar+"px";sh.style.transform="translate("+(sp.x-sH*sar/2)+"px,"+(sp.y-sH)+"px)";
+  var sh=$("shooter"),sp=P(S.x,0,S.z),sH=1.75*sp.s*0.6,sim=IMG[file(S.img)],sar=sim&&sim.naturalWidth?sim.naturalWidth/sim.naturalHeight:0.47;
+  setImg(sh,file(S.img));sh.style.height=sH+"px";sh.style.width=sH*sar+"px";sh.style.transform="translate("+(sp.x-sH*sar/2)+"px,"+(sp.y-sH)+"px)";
   var bp=P(B.x,B.y,B.z),bd=Math.max(7,0.3*bp.s),b=$("ball");
   b.style.width=b.style.height=bd+"px";b.style.opacity=B.vis?B.alpha:0;
   b.style.transform="translate("+(bp.x-bd/2)+"px,"+(bp.y-bd/2)+"px) rotate("+B.rot+"deg)";
@@ -362,7 +378,7 @@ function hint(t){var h=$("hint");h.textContent="";if(t){var i=document.createEle
    upward flick stops it, and a short or slow flick costs power. The flick
    never chooses direction. */
 function aimAndShoot(){
-  $("tag").textContent="YOUR SHOT";K.idle=true;
+  $("tag").textContent="YOUR SHOT";K.idle=true;SC=ME;KC=OPP||other();
   return tapSpot().then(function(spot){return new Promise(function(done){
     var r=$("reticle"),tp=target(spot,"green"),pp=P(tp.x,tp.y,GOAL.z);r.style.left=pp.x+"px";r.style.top=pp.y+"px";r.classList.add("on");
     var bar=$("bar"),knob=$("knob"),w=bar.getBoundingClientRect().width,t0=performance.now(),raf=0,pos=0;
@@ -379,7 +395,7 @@ function aimAndShoot(){
     app.addEventListener("pointerdown",down);app.addEventListener("pointerup",up);
   });});
 }
-function pickDive(){$("tag").textContent="YOUR SAVE · TAP WHERE TO DIVE";K.idle=true;return tapSpot();}
+function pickDive(){$("tag").textContent="YOUR SAVE · TAP WHERE TO DIVE";K.idle=true;KC=ME;SC=OPP||other();return tapSpot();}
 
 /* ---------------------------------------------------------------- a kick */
 var streak=0;
@@ -400,7 +416,7 @@ function resetScene(){
 }
 /* k = {who:"you"|"them", shot:{spot,kind,power?}, dive, outcome} */
 function playKick(k){
-  K.idle=false;
+  K.idle=false;if(k.who==="you"){SC=ME;KC=OPP||other();}else{SC=OPP||other();KC=ME;}
   var kind=k.shot.kind,power=k.shot.power!=null?k.shot.power:(kind==="green"?0.72:kind==="weak"?0.4:0.95);
   var perfect=kind==="green"&&power>=0.72&&power<=0.82;
   var aim=target(k.shot.spot,k.outcome==="bar"?"bar":kind),side=col(k.shot.spot)===1?(Math.random()<.5?-1:1):(col(k.shot.spot)===0?-1:1);
@@ -479,7 +495,9 @@ window.PW={RULES:{strike:strike,neighbour:neighbour,judge:judge,shootout:shootou
   aimAndShoot:aimAndShoot,pickDive:pickDive,playKick:playKick,fx:fx,
   get DEV(){return DEV;},get NAME(){return NAME;},setName:function(n){NAME=n;try{localStorage.setItem("pw.name",n);}catch(e){}},
   setScore:function(a,b,who){$("scA").textContent=a;$("scB").textContent=b;if(who!=null)$("whoB").textContent=who;},
-  tag:function(t){$("tag").textContent=t||"";}};
+  tag:function(t){$("tag").textContent=t||"";},
+  get char(){return ME;},setChar:function(c){ME=c==="wizard"?"wizard":"ten";try{localStorage.setItem("pw.char",ME);}catch(e){}loadChar(ME);SC=ME;KC=OPP||other();},
+  setOpponent:function(c){OPP=c||null;loadChar(OPP||other());KC=OPP||other();}};
 })();
 </script>
 <script>
@@ -523,6 +541,12 @@ function shareSheet(text,url,where){
   return [row,row2];
 }
 
+/* Ten or The Wizard: who you play as. The opponent is the other one. */
+function charPicker(){var box=el("div","pick");
+  [["ten","TEN","/penalty/k-ready.webp"],["wizard","THE WIZARD","/penalty/kw-ready.webp"]].forEach(function(c){
+    var b=el("button",PW.char===c[0]?"on":"");b.type="button";var i=el("img");i.src=c[2];i.alt="";b.appendChild(i);b.appendChild(el("span",null,c[1]));
+    b.addEventListener("click",function(){PW.setChar(c[0]);PW.fx.buzz(10);box.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b);});});box.appendChild(b);});
+  return box;}
 function tipsCard(){var box=el("div","tips");
   api("GET","tips").then(function(r){if(!r.j||!r.j.home)return;
     box.appendChild(el("p",null,"The wizard's real picks today"));
@@ -533,7 +557,7 @@ function tipsCard(){var box=el("div","tips");
 
 /* THE CHALLENGER: 5 shots + 3 bonus vs a computer keeper, 5 dives + 3 bonus
    vs computer shots. Judged here (no stakes); the picks go to the server. */
-function challenger(){askName().then(function(name){
+function challenger(){PW.setOpponent(null);askName().then(function(name){
   var shots=[],dives=[],outs=[],i=0,cpu=0;PW.setScore(0,0,"Computer");
   function cpuDive(){return Math.floor(Math.random()*6);}
   function cpuShot(){return {spot:Math.floor(Math.random()*6),power:0.45+Math.random()*0.5};}
@@ -558,13 +582,13 @@ function challenger(){askName().then(function(name){
 
 /* THE FRIEND: alternate shot then dive; the server judges and reveals only the
    shot just taken. A dropped connection resumes at the next kick. */
-function friend(id){api("GET","match",null,{id:id}).then(function(r){
+function friend(id){PW.setOpponent(null);api("GET","match",null,{id:id}).then(function(r){
   if(r.status===0)return offline(function(){friend(id);});
   if(r.status!==200)return sheet([el("h2",null,"This challenge doesn't exist"),btn("Start your own","red",function(){closeSheet();challenger();})]);
   var m=r.j;track("challenge_opened");
   if(m.expired)return sheet([el("h2",null,"This challenge ran out"),btn("Start your own","red",function(){closeSheet();challenger();})]);
   if(m.done)return result(m.score.a,m.score.b,m.winner,m.challenger,id);
-  sheet([el("h2",null,m.challenger+" challenges you"),el("p",null,"5 shots, 5 saves. Free, no stakes."),btn("Kick off","red",function(){closeSheet();askName().then(go);})]);
+  sheet([el("h2",null,m.challenger+" challenges you"),el("p",null,"5 shots, 5 saves. Free, no stakes. Pick your player:"),charPicker(),btn("Kick off","red",function(){closeSheet();askName().then(go);})]);
   var outs=m.outcomes.slice();PW.setScore(m.score.a,m.score.b,m.challenger);
   function go(name){var n=outs.length;var shot=n%2===0;
     PW.fx.slowmo(Math.floor(n/2)>=REG-1);
@@ -588,7 +612,7 @@ function result(a,b,winner,chName,id){
   sheet([el("h2",null,head)].concat(shareSheet(text,url,"result"),[btn("Start your own challenge","ghost",function(){closeSheet();challenger();}),tipsCard()]));
 }
 
-window.PWFlow={challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,offline:offline};
+window.PWFlow={challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,offline:offline,charPicker:charPicker};
 })();
 </script>
 <script>
@@ -604,7 +628,7 @@ function bumpStreak(day){var s={last:null,n:0};try{s=JSON.parse(localStorage.get
 /* DAILY: shoot only, five shots, every shot judged on the server against the
    day's keeper. The day comes back with the first shot and is sent with the
    rest, so a go across Lagos midnight finishes against one keeper. */
-function daily(){var outs=[],day=null,i=0;PW.setScore(0,0,"Wizard Keeper");
+function daily(){var outs=[],day=null,i=0;PW.setScore(0,0,"Wizard Keeper");PW.setOpponent("wizard");
   function shot(){PW.fx.slowmo(i===R.REG-1);
     PW.aimAndShoot().then(function(s){return F.api("POST","daily",{device:PW.DEV,i:i,spot:s.spot,power:s.power,day:day}).then(function(x){return {x:x,s:s};});})
     .then(function(o){var x=o.x;
@@ -624,7 +648,7 @@ function daily(){var outs=[],day=null,i=0;PW.setScore(0,0,"Wizard Keeper");
   shot();}
 
 function home(){
-  var nodes=[F.el("h2",null,"Penalty Wahala"),F.el("p",null,"Free. No stakes. Just bragging rights."),
+  var nodes=[F.el("h2",null,"Penalty Wahala"),F.el("p",null,"Free. No stakes. Just bragging rights. Pick your player:"),F.charPicker(),
     F.btn("Face today's Wizard Keeper","red",function(){F.closeSheet();daily();}),
     F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})];
   var mute=F.btn("Vibration: on","ghost",function(e){var m=localStorage.getItem("pw.mute")==="1";localStorage.setItem("pw.mute",m?"0":"1");e.currentTarget.textContent="Vibration: "+(m?"on":"off");});
