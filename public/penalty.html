@@ -11,7 +11,7 @@
 <meta name="twitter:site" content="@SoccerWizardhq">
 <meta name="theme-color" content="#0D0D0F">
 <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
-<link rel="preload" as="image" href="/penalty/k-ready.webp">
+<link rel="preload" as="image" href="/penalty/k-set.webp">
 <link rel="preload" as="image" href="/penalty/s-stand.webp">
 <link rel="preload" as="image" href="/penalty/p-ball.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,14 +54,14 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:600 1
 svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
 .sprite{position:absolute;left:0;top:0;transform-origin:50% 50%;will-change:transform;pointer-events:none;-webkit-user-drag:none}
 #shooter{transform-origin:50% 100%}
+.kghost{opacity:0;filter:saturate(.6) brightness(1.4)}
+#dust{position:absolute;left:0;top:0;border-radius:50%;background:radial-gradient(closest-side,#d9e4c6cc,#8fa77a55 60%,transparent);opacity:0;pointer-events:none;will-change:transform,opacity}
 #shadow{position:absolute;left:0;top:0;border-radius:50%;background:radial-gradient(closest-side,#000a,transparent);will-change:transform,opacity}
 #ball{z-index:3}
 .zones{position:absolute;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;opacity:0;pointer-events:none;transition:opacity .2s}
 .zones.on{opacity:1;pointer-events:auto}
 .zones button{border:0;margin:2px;border-radius:10px;background:#ffffff08;outline:1px dashed #ffffff30;cursor:pointer;touch-action:manipulation}
 .zones button:active{background:#e6394633}
-#reticle{position:absolute;left:0;top:0;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:2px dashed var(--red);box-shadow:0 0 12px #e6394688,inset 0 0 8px #e6394666;opacity:0;pointer-events:none}
-#reticle.on{opacity:1;animation:pw-spin 2.2s linear infinite}
 /* HUD */
 #hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:center;padding:calc(10px + env(safe-area-inset-top)) 14px 0;z-index:6;pointer-events:none}
 .score{display:flex;align-items:center;gap:10px;background:#0d0d0fcc;border:1px solid var(--line);border-radius:99px;padding:7px 14px;backdrop-filter:blur(6px)}
@@ -108,7 +108,6 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
 @keyframes pw-marquee{to{transform:translateX(-50%)}}
 @keyframes pw-blink{0%{opacity:1}20%{opacity:0}35%{opacity:1}55%{opacity:0}70%{opacity:1}100%{opacity:0}}
 @keyframes pw-twinkle{0%{opacity:0}50%{opacity:.9}}
-@keyframes pw-spin{to{transform:rotate(1turn)}}
 @keyframes pw-nudge{50%{transform:translateY(-6px)}}
 @keyframes pw-pop{0%{opacity:0;transform:scale(.3) skewX(-8deg)}22%{opacity:1;transform:scale(1.18) skewX(-8deg)}40%{transform:scale(.96) skewX(-8deg)}55%{opacity:1;transform:scale(1) skewX(-8deg)}100%{opacity:0;transform:scale(1.06) translateY(-14px) skewX(-8deg)}}
 @keyframes pw-flame{from{opacity:.7;transform:scale(1)}to{opacity:1;transform:scale(1.1)}}
@@ -124,8 +123,10 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
     <svg class="layer" id="turf"></svg>
     <svg class="layer" id="lines"></svg>
     <svg class="layer" id="net"></svg>
-    <img class="sprite" id="keeper" src="/penalty/k-ready.webp" alt="">
     <svg class="layer" id="posts"></svg>
+    <img class="sprite kghost" id="kg0" alt=""><img class="sprite kghost" id="kg1" alt=""><img class="sprite kghost" id="kg2" alt="">
+    <div id="dust"></div>
+    <img class="sprite" id="keeper" src="/penalty/k-set.webp" alt="">
     <div id="shadow"></div>
     <svg class="layer" id="trail"></svg>
     <img class="sprite" id="ball" src="/penalty/p-ball.webp" alt="">
@@ -134,7 +135,6 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
     <img class="sprite" id="star" src="/penalty/p-star.webp" alt="" style="opacity:0">
     <div class="zones" id="zones"><button data-s="3" aria-label="Top left"></button><button data-s="4" aria-label="Top middle"></button><button data-s="5" aria-label="Top right"></button><button data-s="0" aria-label="Bottom left"></button><button data-s="1" aria-label="Bottom middle"></button><button data-s="2" aria-label="Bottom right"></button></div>
     <svg class="layer" id="guide"></svg>
-    <div id="reticle"></div>
   </div>
   <svg class="layer" id="bolt" style="z-index:8"></svg>
   <div id="hud"><div class="score"><span class="who" id="whoA">You</span><b id="scA">0</b><div class="dots" id="dotsYou"></div><b id="scB">0</b><span class="who" id="whoB"></span></div></div>
@@ -206,9 +206,9 @@ try{DEV=localStorage.getItem("pw.dev");if(!DEV){DEV=uuid();localStorage.setItem(
 
 /* Every pose, by file. The first of each character and the ball are preloaded
    in <head>; the rest are fetched once the page is up. */
-var SPRITES=["k-ready.webp","k-taunt.webp","k-dive-low.webp","k-dive-high.webp","k-jump.webp","k-catch.webp","k-beaten.webp","k-roar.webp","k-shrug.webp",
+var SPRITES=["k-set.webp","k-step-l.webp","k-step-r.webp","k-spring.webp","k-taunt.webp","k-dive-low.webp","k-dive-high.webp","k-jump.webp","k-catch.webp","k-beaten.webp","k-roar.webp","k-shrug.webp",
   "s-stand.webp","s-run.webp","s-strike.webp","s-follow.webp","s-arms.webp","s-slide.webp","s-head.webp","p-ball.webp","p-burst.webp","p-star.webp",
-  "kw-ready.webp","kw-taunt.webp","kw-dive-low.webp","kw-dive-high.webp","kw-jump.webp","kw-catch.webp","kw-beaten.webp","kw-roar.webp","kw-shrug.webp",
+  "kw-set.webp","kw-step-l.webp","kw-step-r.webp","kw-spring.webp","kw-taunt.webp","kw-dive-low.webp","kw-dive-high.webp","kw-jump.webp","kw-catch.webp","kw-beaten.webp","kw-roar.webp","kw-shrug.webp",
   "sw-stand.webp","sw-run.webp","sw-strike.webp","sw-follow.webp","sw-arms.webp","sw-slide.webp","sw-head.webp"];
 var IMG={};
 /* TWO CHARACTERS (owner, 8 Oct 2026): Ten and The Wizard. You play as one,
@@ -223,7 +223,7 @@ function loadChar(c){var pre=c==="wizard"?/^(kw|sw|p)-/:/^(k|s|p)-/;SPRITES.forE
 addEventListener("load",function(){loadChar(ME);loadChar(other());});
 /* How tall each pose stands in the world, in metres, so a dive and a crouch
    share one scale. */
-var KH={"k-ready.webp":1.7,"k-taunt.webp":2,"k-dive-low.webp":1.05,"k-dive-high.webp":2.15,"k-jump.webp":2.45,"k-catch.webp":1.9,"k-beaten.webp":1.25,"k-roar.webp":1.95,"k-shrug.webp":1.95};
+var KH={"k-set.webp":1.9,"k-step-l.webp":1.9,"k-step-r.webp":1.9,"k-spring.webp":1.6,"k-taunt.webp":2,"k-dive-low.webp":1.05,"k-dive-high.webp":2.15,"k-jump.webp":2.45,"k-catch.webp":1.9,"k-beaten.webp":1.25,"k-roar.webp":1.95,"k-shrug.webp":1.95};
 
 /* ---------------------------------------------------------------- camera
    World: x across (m, right +), y up, z from the penalty spot toward goal
@@ -301,14 +301,17 @@ function drawGoal(ix,iy,d){
 }
 
 /* ---------------------------------------------------------------- actors */
-var K={x:0,y:0.85,rot:0,img:"k-ready.webp",flip:1,bob:0};       // keeper, on the goal line
+var K={x:0,y:0.85,rot:0,img:"k-set.webp",flip:1,bob:0,sq:1};       // keeper, on the goal line
 var S={x:-0.72,z:-1.25,img:"s-stand.webp"};                       // shooter, behind the ball
 var B={x:0,y:0.11,z:0,rot:0,vis:1,alpha:1};                      // ball
 function setImg(el,f){if(el.getAttribute("data-f")!==f){el.setAttribute("data-f",f);el.src="/penalty/"+f;}}
 function place(){
   var k=$("keeper"),kp=P(K.x,K.y,GOAL.z),kh=KH[K.img]*kp.s,kim=IMG[file(K.img)],ar=kim&&kim.naturalWidth?kim.naturalWidth/kim.naturalHeight:1;
   setImg(k,file(K.img));k.style.height=kh+"px";k.style.width=kh*ar+"px";
-  k.style.transform="translate("+(kp.x-kh*ar/2)+"px,"+(kp.y-kh/2+K.bob)+"px) rotate("+K.rot+"deg) scaleX("+K.flip+")";
+  k.style.transform="translate("+(kp.x-kh*ar/2)+"px,"+(kp.y-kh/2+K.bob)+"px) rotate("+K.rot+"deg) scale("+(K.flip*K.sq)+","+(1/K.sq)+")";
+  if(KTRAIL){KHIST.unshift({tf:k.style.transform,src:k.src,w:k.style.width,h:k.style.height});KHIST.length=Math.min(KHIST.length,10);
+    for(var gi=0;gi<3;gi++){var g=$("kg"+gi),hs=KHIST[3*(gi+1)];if(!hs){g.style.opacity=0;continue;}
+      if(g.src!==hs.src)g.src=hs.src;g.style.width=hs.w;g.style.height=hs.h;g.style.transform=hs.tf;g.style.opacity=[0.32,0.18,0.08][gi];}}
   var sh=$("shooter"),sp=P(S.x,0,S.z),sH=1.75*sp.s*0.6,sim=IMG[file(S.img)],sar=sim&&sim.naturalWidth?sim.naturalWidth/sim.naturalHeight:0.47;
   setImg(sh,file(S.img));sh.style.height=sH+"px";sh.style.width=sH*sar+"px";sh.style.transform="translate("+(sp.x-sH*sar/2)+"px,"+(sp.y-sH)+"px)";
   var bp=P(B.x,B.y,B.z),bd=Math.max(7,0.3*bp.s),b=$("ball");
@@ -320,6 +323,13 @@ function place(){
   w.style.transform="translate("+CAM_FX.sx+"px,"+CAM_FX.sy+"px) scale("+CAM_FX.zoom+")";
 }
 
+/* A dive leaves fading copies of the keeper along his path for a few frames. */
+var KTRAIL=false,KHIST=[];
+function afterimage(on){KTRAIL=!!on&&!REDUCED;KHIST=[];if(!KTRAIL)for(var i=0;i<3;i++){var g=document.getElementById("kg"+i);if(g)g.style.opacity=0;}}
+/* A puff of turf where a diving keeper hits the ground. */
+function dust(x){if(REDUCED)return;var d=$("dust"),p=P(x,0,GOAL.z),w=1.6*p.s,t0=performance.now();d.style.width=w+"px";d.style.height=w*0.35+"px";
+  every(function(){var u=(performance.now()-t0)/520;if(u>=1){d.style.opacity=0;return false;}
+    d.style.opacity=(1-u)*0.9;d.style.transform="translate("+(p.x-w/2)+"px,"+(p.y-w*0.2)+"px) scale("+(0.5+u*1.1)+","+(0.6+u*0.7)+")";});}
 /* ---------------------------------------------------------------- the loop
    One requestAnimationFrame drives everything: actors, the net's spring, the
    camera's shake and zoom. TS slows simulated time for the decisive kicks;
@@ -340,7 +350,10 @@ function tick(now){
   /* A keeper waiting for the kick shuffles his weight across the line. The
      wizard's ready pose is drawn mid-lunge, so it is mirrored as he passes
      the centre - he never reads as leaning one way (owner, 8 Oct 2026). */
-  if(K.idle&&K.img==="k-ready.webp"&&!REDUCED){var sw=Math.sin(now/1700*Math.PI);K.x=sw*0.22;K.flip=sw>=0?1:-1;}
+  if(K.idle&&(K.img==="k-set.webp"||K.img==="k-step-l.webp"||K.img==="k-step-r.webp")&&!REDUCED){
+    var ph=now/1700*Math.PI,sw=Math.sin(ph),v=Math.cos(ph);K.x=sw*0.22;K.flip=1;
+    if(Math.abs(v)<0.55)K.img="k-set.webp";else K.img=v>0?"k-step-r.webp":"k-step-l.webp";
+    K.bob=-Math.max(0,Math.abs(v)-0.55)*9;}
   CAM_FX.zoom+=(CAM_FX.zoomTo-CAM_FX.zoom)*Math.min(1,real*6);
   CAM_FX.shake=Math.max(0,CAM_FX.shake-real*28);
   var a=REDUCED?0:CAM_FX.shake;CAM_FX.sx=(Math.random()*2-1)*a;CAM_FX.sy=(Math.random()*2-1)*a;
@@ -428,21 +441,26 @@ function swipeShot(path,H){
 }
 /* While the finger is down: a dotted line from the ball to where it would go,
    bent by the curl, coloured by the power - grey weak, green clean, red over. */
-function guide(g){var s=$("guide");s.textContent="";var r=$("reticle");
-  if(!g||!g.ok){r.classList.remove("on");return;}
-  var col=g.power>ZONES.overAbove?"#E63946":g.power<ZONES.weakBelow?"#A3A3AD":"#2FD48A";
-  var b=P(B.x,B.y,B.z),t=P(g.aim.x,g.power>ZONES.overAbove?3.3:g.aim.y,GOAL.z),mx=(b.x+t.x)/2-g.curl*60,my=(b.y+t.y)/2;
-  svgEl("path",{d:"M"+b.x+" "+b.y+" Q"+mx+" "+my+" "+t.x+" "+t.y,stroke:col,"stroke-width":3,"stroke-dasharray":"2 9","stroke-linecap":"round",fill:"none","stroke-opacity":0.9},s);
-  r.style.left=t.x+"px";r.style.top=t.y+"px";r.style.borderColor=col;r.classList.add("on");}
+/* While the finger is down: a short arrow off the ball showing direction,
+   curl and power (grey weak, green clean, red over). It covers only the first
+   0.32 of the path, so it guides without giving away where the ball lands
+   (owner: "if i hold the ball i see the direction the ball is going to"). */
+function guide(g){var s=$("guide");s.textContent="";if(!g||!g.ok)return;
+  var col=g.power>ZONES.overAbove?"#E63946":g.power<ZONES.weakBelow?"#A3A3AD":"#2FD48A",u=0.32;
+  var b=P(B.x,B.y,B.z),t=P(g.aim.x,g.power>ZONES.overAbove?3.3:g.aim.y,GOAL.z),m={x:(b.x+t.x)/2-g.curl*60,y:(b.y+t.y)/2};
+  var c1={x:b.x+(m.x-b.x)*u,y:b.y+(m.y-b.y)*u},q={x:m.x+(t.x-m.x)*u,y:m.y+(t.y-m.y)*u},e={x:c1.x+(q.x-c1.x)*u,y:c1.y+(q.y-c1.y)*u};
+  svgEl("path",{d:"M"+b.x+" "+b.y+" Q"+c1.x+" "+c1.y+" "+e.x+" "+e.y,stroke:col,"stroke-width":4,"stroke-linecap":"round",fill:"none","stroke-opacity":0.9},s);
+  var ang=Math.atan2(e.y-c1.y,e.x-c1.x),h=11;
+  svgEl("path",{d:"M"+(e.x+Math.cos(ang)*h)+" "+(e.y+Math.sin(ang)*h)+" L"+(e.x+Math.cos(ang+2.5)*h)+" "+(e.y+Math.sin(ang+2.5)*h)+" L"+(e.x+Math.cos(ang-2.5)*h)+" "+(e.y+Math.sin(ang-2.5)*h)+"Z",fill:col},s);}
 function aimAndShoot(){
   $("tag").textContent="YOUR SHOT";K.idle=true;SC=ME;KC=OPP||other();hint("SWIPE THE BALL TO SHOOT");
   coach("shoot","Swipe the ball toward the goal. Where you swipe is where it goes. Swipe faster to hit it harder, bend your swipe to curl it.",true);
   return new Promise(function(done){
     var app=$("app"),path=null;
     function pt(e){var a=app.getBoundingClientRect();return {x:e.clientX-a.left,y:e.clientY-a.top,t:performance.now()};}
-    function down(e){var p=pt(e);if(p.y<CAM.H*0.45)return;path=[p];try{app.setPointerCapture(e.pointerId);}catch(_){}}
+    function down(e){var p=pt(e);if(p.y<CAM.H*0.45)return;path=[p];K.img="k-spring.webp";try{app.setPointerCapture(e.pointerId);}catch(_){}}
     function move(e){if(!path)return;path.push(pt(e));guide(swipeShot(path,CAM.H));}
-    function up(e){if(!path)return;path.push(pt(e));var g=swipeShot(path,CAM.H);path=null;guide(null);if(!g.ok)return;
+    function up(e){if(!path)return;path.push(pt(e));var g=swipeShot(path,CAM.H);path=null;guide(null);if(!g.ok){K.img="k-set.webp";return;}
       app.removeEventListener("pointerdown",down);app.removeEventListener("pointermove",move);app.removeEventListener("pointerup",up);
       hint("");fx.buzz(15);done({spot:g.spot,power:g.power,aim:g.aim,curl:g.curl});}
     app.addEventListener("pointerdown",down);app.addEventListener("pointermove",move);app.addEventListener("pointerup",up);
@@ -457,15 +475,15 @@ function wait(ms){return new Promise(function(r){setTimeout(r,ms);});}
 function tween(ms,fn){return new Promise(function(done){var t=0;every(function(dt){t+=dt*1000;var u=Math.min(1,t/ms);fn(u);if(u>=1){done();return false;}});});}
 var easeOut=function(u){return 1-Math.pow(1-u,3);};
 function keeperPose(dive){
-  if(dive==null)return {x:0,y:0.85,img:"k-ready.webp",rot:0,arc:0};
+  if(dive==null)return {x:0,y:0.85,img:"k-set.webp",rot:0,arc:0};
   var c=col(dive),hi=high(dive);
-  if(c===1)return hi?{x:0,y:1.45,img:"k-jump.webp",rot:0,arc:0.35}:{x:0,y:0.75,img:"k-ready.webp",rot:0,arc:0};
+  if(c===1)return hi?{x:0,y:1.45,img:"k-jump.webp",rot:0,arc:0.35}:{x:0,y:0.75,img:"k-spring.webp",rot:0,arc:0};
   var side=c===2?1:-1;
   return hi?{x:side*2.2,y:1.6,img:"k-dive-high.webp",rot:side*8,arc:0.6,flip:side}:{x:side*2.3,y:0.5,img:"k-dive-low.webp",rot:side*-6,arc:0.25,flip:side};
 }
 function resetScene(){
   B.x=0;B.y=0.11;B.z=0;B.rot=0;B.vis=1;B.alpha=1;TRAIL=[];drawTrail();
-  K.x=0;K.y=0.85;K.rot=0;K.flip=1;K.img="k-ready.webp";S.x=-0.72;S.z=-1.25;S.img="s-stand.webp";
+  K.x=0;K.y=0.85;K.rot=0;K.flip=1;K.sq=1;K.img="k-set.webp";afterimage(false);S.x=-0.72;S.z=-1.25;S.img="s-stand.webp";
   fx.slowmo(false);
 }
 /* k = {who:"you"|"them", shot:{spot,kind,power?}, dive, outcome} */
@@ -485,15 +503,21 @@ function playKick(k){
   return tween(180,function(u){S.x=-0.72+0.3*u;S.z=-1.25+0.65*u;}).then(function(){
     S.img="s-strike.webp";fx.buzz(12);hitStop=0.05;
     return new Promise(function(done){
-      var t=0,phase="fly",after=0,k0={x:K.x,y:K.y},reacted=false,saveAt=f.T*(kp.x===0&&kp.y<1?0.97:0.93);
+      var t=0,phase="fly",after=0,k0={x:K.x,y:K.y},reacted=false,launched=false,landed=false,loadT=0,fallV=0,saveAt=f.T*(kp.x===0&&kp.y<1?0.97:0.93);
       var vx=f.vx,vy=f.vy,vz=f.vz,ox=0,oy=0.11,lastHit=0;
       setTimeout(function(){S.img="s-follow.webp";},140);
       every(function(dt){
         t+=dt;
         /* the keeper reads it a beat late, then commits along an arc */
         var kt=Math.max(0,Math.min(1,(t-f.T*0.12)/(f.T*0.82)));
-        if(kt>0&&!reacted){reacted=true;K.img=kp.img;K.flip=kp.flip||1;}
-        if(phase==="fly"||phase==="after"){var e=easeOut(kt);K.x=k0.x+(kp.x-k0.x)*e;K.y=k0.y+(kp.y-k0.y)*kt+kp.arc*4*kt*(1-kt);K.rot=kp.rot*e;}
+        if(kt>0&&!reacted){reacted=true;loadT=t;K.img="k-spring.webp";K.sq=1;}
+        if(reacted&&!launched&&t-loadT>0.05){launched=true;K.img=kp.img;K.flip=kp.flip||1;if(kp.x!==0)afterimage(true);}
+        if(launched&&(phase==="fly"||phase==="after")){
+          if(kt<1||kp.x===0){var e=easeOut(kt);K.x=k0.x+(kp.x-k0.x)*e;K.y=k0.y+(kp.y-k0.y)*kt+kp.arc*4*kt*(1-kt);K.rot=kp.rot*e;
+            K.sq=kp.x!==0?1+0.14*Math.sin(Math.PI*Math.min(1,kt)):1;}
+          else if(!landed){fallV+=9.81*1.4*dt;K.y=Math.max(0.42,K.y-fallV*dt);K.sq+=(1-K.sq)*Math.min(1,dt*10);
+            if(K.y<=0.42){landed=true;afterimage(false);dust(K.x);fx.shake(0);K.sq=0.86;}}
+          else K.sq+=(1-K.sq)*Math.min(1,dt*8);}
         if(phase==="fly"){
           B.x=vx*t+0.5*f.ax*t*t;B.y=oy+vy*t-0.5*9.81*t*t;B.z=vz*t;B.rot+=dt*(900+power*900)*(side);
           var bp=P(B.x,B.y,B.z);TRAIL.push({x:bp.x,y:bp.y,w:Math.max(2,0.3*bp.s*0.5),o:1});if(TRAIL.length>16)TRAIL.shift();drawTrail();
@@ -629,7 +653,7 @@ function shareSheet(text,url,where){
 
 /* Ten or The Wizard: who you play as. The opponent is the other one. */
 function charPicker(){var box=el("div","pick");
-  [["ten","TEN","/penalty/k-ready.webp"],["wizard","THE WIZARD","/penalty/kw-ready.webp"]].forEach(function(c){
+  [["ten","TEN","/penalty/k-set.webp"],["wizard","THE WIZARD","/penalty/kw-set.webp"]].forEach(function(c){
     var b=el("button",PW.char===c[0]?"on":"");b.type="button";var i=el("img");i.src=c[2];i.alt="";b.appendChild(i);b.appendChild(el("span",null,c[1]));
     b.addEventListener("click",function(){PW.setChar(c[0]);PW.fx.buzz(10);box.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b);});});box.appendChild(b);});
   return box;}

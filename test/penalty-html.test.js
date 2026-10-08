@@ -83,7 +83,7 @@ test("lightning strikes only on a perfect strike or a hot streak", () => {
 });
 
 test("every sprite the page names exists on disk", () => {
-  const names = [...new Set((html.match(/[kps]-[a-z-]+(?=\.webp)/g) || []))];
+  const names = [...new Set((html.match(/\b(?:kw|sw|k|s|p)-[a-z-]+(?=\.webp)/g) || []))];
   assert.ok(names.length >= 15, names.join(","));
   for (const n of names) assert.ok(fs.existsSync(path.join(__dirname, "..", "public", "penalty", n + ".webp")), n);
 });
@@ -139,7 +139,7 @@ test("a challenge link opens the friend flow, anything else the home screen", ()
 test("players choose Ten or The Wizard, the choice is kept, the opponent is the other", () => {
   assert.match(html, /localStorage\.setItem\("pw\.char"/);
   assert.match(html, /function charPicker\(/);
-  for (const pose of ["ready", "dive-low", "dive-high", "jump", "catch", "beaten", "roar", "shrug", "taunt"]) assert.match(html, new RegExp('"kw-' + pose + '\.webp"'), "wizard keeper " + pose);
+  for (const pose of ["set", "step-l", "step-r", "spring", "dive-low", "dive-high", "jump", "catch", "beaten", "roar", "shrug", "taunt"]) assert.match(html, new RegExp('"kw-' + pose + '\.webp"'), "wizard keeper " + pose);
   for (const pose of ["stand", "run", "strike", "follow", "arms", "slide", "head"]) assert.match(html, new RegExp('"sw-' + pose + '\.webp"'), "wizard shooter " + pose);
 });
 
@@ -172,9 +172,6 @@ test("a daily go resumes where it stopped, and a finished day can be replayed fo
   assert.match(html, /Play again for fun/);
 });
 
-test("the waiting keeper shuffles and mirrors at the centre, so his stance never leans one way", () => {
-  assert.match(html, /if\(K\.idle&&K\.img==="k-ready\.webp"&&!REDUCED\)\{var sw=Math\.sin\(now\/1700\*Math\.PI\);K\.x=sw\*0\.22;K\.flip=sw>=0\?1:-1;\}/);
-});
 
 /* Owner on the preview, 8 Oct 2026: "i get, cant reach the pitch". The server
    had answered (forbidden / not configured); only a dead connection is "can't reach". */
@@ -284,4 +281,33 @@ test("The Wizard coaches a first-timer, once per lesson, and How to play replays
   assert.match(html, /\/penalty\/kw-taunt\.webp/);
   for (const k of ["shoot", "dive", "over"]) assert.match(html, new RegExp('coach\\("' + k + '"'), k);
   assert.match(html, /"How to play"/);
+});
+
+/* Round 4, owner 8 Oct 2026: new set-position sheets; "when the keeper jumps
+   he gets hidden by the goal post, fix that, give this crazy nice motion";
+   "if i hold the ball i see the direction the ball is going to - should it be so?" */
+test("the keeper is drawn in front of the posts", () => {
+  assert.ok(html.indexOf('id="posts"') < html.indexOf('id="keeper"'), "posts first, keeper over them");
+});
+
+test("the waiting keeper stands in his set position and shuffles on the step frames", () => {
+  assert.match(html, /"k-set\.webp"/);
+  assert.match(html, /K\.img=v>0\?"k-step-r\.webp":"k-step-l\.webp"/);
+  assert.doesNotMatch(html, /K\.flip=sw>=0\?1:-1/, "no mirroring a lunge any more");
+  assert.doesNotMatch(html, /"k-ready\.webp"/, "the leaning pose is retired");
+});
+
+test("the keeper loads up when the kicker puts a finger on the ball", () => {
+  assert.match(grabFn("aimAndShoot"), /K\.img="k-spring\.webp"/);
+});
+
+test("a dive leaves an afterimage trail and lands with a bounce and a puff of turf", () => {
+  assert.match(html, /function afterimage\(/);
+  assert.match(html, /function dust\(/);
+});
+
+test("holding the ball shows a short direction arrow, not where it will land", () => {
+  const g = grabFn("guide");
+  assert.doesNotMatch(g, /reticle/, "no target in the goal while aiming");
+  assert.match(g, /0\.32/, "the arrow covers only the first part of the path");
 });
