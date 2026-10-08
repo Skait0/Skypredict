@@ -208,9 +208,9 @@ try{DEV=localStorage.getItem("pw.dev");if(!DEV){DEV=uuid();localStorage.setItem(
 
 /* Every pose, by file. The first of each character and the ball are preloaded
    in <head>; the rest are fetched once the page is up. */
-var SPRITES=["k-set.webp","k-spring.webp","k-taunt.webp","k-dive-low.webp","k-dive-high.webp","k-jump.webp","k-catch.webp","k-beaten.webp","k-roar.webp","k-shrug.webp",
+var SPRITES=["k-set.webp","k-spring.webp","k-land.webp","k-down.webp","k-held.webp","k-crash.webp","k-taunt.webp","k-dive-low.webp","k-dive-high.webp","k-jump.webp","k-catch.webp","k-beaten.webp","k-roar.webp","k-shrug.webp",
   "s-stand.webp","s-run.webp","s-strike.webp","s-follow.webp","s-arms.webp","s-slide.webp","s-head.webp","p-ball.webp","p-burst.webp","p-star.webp",
-  "kw-set.webp","kw-spring.webp","kw-taunt.webp","kw-dive-low.webp","kw-dive-high.webp","kw-jump.webp","kw-catch.webp","kw-beaten.webp","kw-roar.webp","kw-shrug.webp",
+  "kw-set.webp","kw-spring.webp","kw-land.webp","kw-down.webp","kw-held.webp","kw-crash.webp","kw-taunt.webp","kw-dive-low.webp","kw-dive-high.webp","kw-jump.webp","kw-catch.webp","kw-beaten.webp","kw-roar.webp","kw-shrug.webp",
   "sw-stand.webp","sw-run.webp","sw-strike.webp","sw-follow.webp","sw-arms.webp","sw-slide.webp","sw-head.webp"];
 var IMG={};
 /* TWO CHARACTERS (owner, 8 Oct 2026): Ten and The Wizard. You play as one,
@@ -223,9 +223,12 @@ var KC=other(),SC=ME;
 function file(f){if(KC==="wizard"&&f.indexOf("k-")===0)return "kw-"+f.slice(2);if(SC==="wizard"&&f.indexOf("s-")===0)return "sw-"+f.slice(2);return f;}
 function loadChar(c){var pre=c==="wizard"?/^(kw|sw|p)-/:/^(k|s|p)-/;SPRITES.forEach(function(f){if(pre.test(f)&&!IMG[f]){var i=new Image();i.src="/penalty/"+f;IMG[f]=i;}});}
 addEventListener("load",function(){loadChar(ME);loadChar(other());});
-/* How tall each pose stands in the world, in metres, so a dive and a crouch
-   share one scale. */
-var KH={"k-set.webp":1.9,"k-spring.webp":1.6,"k-taunt.webp":2,"k-dive-low.webp":1.05,"k-dive-high.webp":2.15,"k-jump.webp":2.45,"k-catch.webp":1.9,"k-beaten.webp":1.25,"k-roar.webp":1.95,"k-shrug.webp":1.95};
+/* HOW TALL EACH POSE IS DRAWN, in metres, per file. Measured, not guessed:
+   every crop's size in its source sheet times that sheet's scale, which comes
+   from one known length on it (a standing keeper 1.75-1.85m, a stretched dive
+   2.2m). Resizing every pose to one height made a diagonal dive look smaller
+   than a standing keeper (owner, 8 Oct 2026). */
+var KH={"k-taunt.webp":1.96,"k-dive-low.webp":1.09,"k-dive-high.webp":2.05,"k-jump.webp":2.38,"k-catch.webp":1.88,"k-beaten.webp":1.46,"k-roar.webp":1.85,"k-shrug.webp":1.89,"kw-taunt.webp":2.07,"kw-dive-low.webp":0.97,"kw-dive-high.webp":1.74,"kw-jump.webp":2.55,"kw-catch.webp":2.38,"kw-beaten.webp":1.18,"kw-roar.webp":1.85,"kw-shrug.webp":1.9,"k-set.webp":1.75,"k-spring.webp":1.64,"kw-set.webp":1.85,"kw-spring.webp":1.49,"k-land.webp":0.94,"k-down.webp":0.66,"k-held.webp":0.69,"k-crash.webp":1.1,"kw-land.webp":0.94,"kw-down.webp":0.65,"kw-held.webp":0.7,"kw-crash.webp":1.05};
 
 /* ---------------------------------------------------------------- camera
    World: x across (m, right +), y up, z from the penalty spot toward goal
@@ -308,7 +311,7 @@ var S={x:-0.72,z:-1.25,img:"s-stand.webp"};                       // shooter, be
 var B={x:0,y:0.11,z:0,rot:0,vis:1,alpha:1};                      // ball
 function setImg(el,f){if(el.getAttribute("data-f")!==f){el.setAttribute("data-f",f);el.src="/penalty/"+f;}}
 function place(){
-  var k=$("keeper"),kp=P(K.x,K.y,GOAL.z),kh=KH[K.img]*kp.s,kim=IMG[file(K.img)],ar=kim&&kim.naturalWidth?kim.naturalWidth/kim.naturalHeight:1;
+  var k=$("keeper"),kp=P(K.x,K.y,GOAL.z),kh=KH[file(K.img)]*kp.s,kim=IMG[file(K.img)],ar=kim&&kim.naturalWidth?kim.naturalWidth/kim.naturalHeight:1;
   setImg(k,file(K.img));k.style.height=kh+"px";k.style.width=kh*ar+"px";
   k.style.transform="translate("+(kp.x-kh*ar/2)+"px,"+(kp.y-kh/2+K.bob)+"px) rotate("+K.rot+"deg) scale("+(K.flip*K.sq)+","+(1/K.sq)+")";
   if(KTRAIL){KHIST.unshift({tf:k.style.transform,src:k.src,w:k.style.width,h:k.style.height});KHIST.length=Math.min(KHIST.length,10);
@@ -512,7 +515,7 @@ function playKick(k){
   return tween(180,function(u){S.x=-0.72+0.3*u;S.z=-1.25+0.65*u;}).then(function(){
     S.img="s-strike.webp";fx.buzz(12);hitStop=0.05;
     return new Promise(function(done){
-      var t=0,phase="fly",after=0,k0={x:K.x,y:K.y},reacted=false,launched=false,landed=false,loadT=0,fallV=0,saveAt=f.T*(kp.x===0&&kp.y<1?0.97:0.93);
+      var t=0,phase="fly",after=0,k0={x:K.x,y:K.y},reacted=false,launched=false,landed=false,settled=false,landT=0,heldIt=false,loadT=0,fallV=0,saveAt=f.T*(kp.x===0&&kp.y<1?0.97:0.93);
       var vx=f.vx,vy=f.vy,vz=f.vz,ox=0,oy=0.11,lastHit=0;
       setTimeout(function(){S.img="s-follow.webp";},140);
       every(function(dt){
@@ -525,14 +528,16 @@ function playKick(k){
           if(kt<1||kp.x===0){var e=easeOut(kt);K.x=k0.x+(kp.x-k0.x)*e;K.y=k0.y+(kp.y-k0.y)*kt+kp.arc*4*kt*(1-kt);K.rot=kp.rot*e;
             K.sq=kp.x!==0?1+0.14*Math.sin(Math.PI*Math.min(1,kt)):1;}
           else if(!landed){fallV+=9.81*1.4*dt;K.y=Math.max(0.42,K.y-fallV*dt);K.sq+=(1-K.sq)*Math.min(1,dt*10);
-            if(K.y<=0.42){landed=true;afterimage(false);dust(K.x);fx.shake(0);K.sq=0.86;}}
+            if(K.y<=0.42){landed=true;afterimage(false);dust(K.x);fx.shake(0);K.sq=0.9;K.rot=0;
+              K.img=high(k.dive)?"k-crash.webp":"k-land.webp";K.y=KH[file(K.img)]/2;landT=t;}}
+          else if(!settled&&t-landT>0.24){settled=true;K.img=heldIt?"k-held.webp":"k-down.webp";K.y=KH[file(K.img)]/2;}
           else K.sq+=(1-K.sq)*Math.min(1,dt*8);}
         if(phase==="fly"){
           B.x=vx*t+0.5*f.ax*t*t;B.y=oy+vy*t-0.5*9.81*t*t;B.z=vz*t;B.rot+=dt*(900+power*900)*(side);
           var bp=P(B.x,B.y,B.z);TRAIL.push({x:bp.x,y:bp.y,w:Math.max(2,0.3*bp.s*0.5),o:1});if(TRAIL.length>16)TRAIL.shift();drawTrail();
           if(k.outcome==="save"&&t>=saveAt){phase="after";impact("save");
             var catchIt=kind==="weak"&&k.dive===k.shot.spot;
-            if(catchIt){K.img="k-catch.webp";B.vis=0;}
+            if(catchIt){B.vis=0;if(kp.x===0)K.img="k-catch.webp";else heldIt=true;}
             else{
               vx=(col(k.dive)===1?(Math.random()<.5?-1:1):(col(k.dive)===0?-1:1))*(4+Math.random()*4);vz=-f.vz*0.22;vy=3.5+Math.random()*3;ox=B.x;oy=B.y;after=0;}
           }else if(t>=f.T){phase="after";ox=B.x;oy=B.y;after=0;
@@ -555,9 +560,11 @@ function playKick(k){
     });
   }).then(function(){
     /* reactions, then the scene resets for the next kick */
-    if(k.outcome==="goal"){K.img="k-beaten.webp";K.y=0.62;K.rot=0;K.x*=0.85;S.img=you&&streak>=3?"s-slide.webp":"s-arms.webp";}
-    else if(k.outcome==="save"){K.img="k-roar.webp";K.y=0.95;K.rot=0;K.x*=0.6;K.flip=1;S.img="s-head.webp";}
-    else{K.img="k-shrug.webp";K.y=0.95;K.rot=0;K.x=0;K.flip=1;S.img="s-head.webp";
+    var wide=Math.abs(K.x)>0.8&&(K.img==="k-down.webp"||K.img==="k-held.webp"||K.img==="k-land.webp"||K.img==="k-crash.webp");
+    if(wide){K.img=K.img==="k-held.webp"?"k-held.webp":"k-down.webp";K.y=KH[file(K.img)]/2;K.rot=0;S.img=k.outcome==="goal"?(you&&streak>=3?"s-slide.webp":"s-arms.webp"):"s-head.webp";}
+    else if(k.outcome==="goal"){K.img="k-beaten.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x*=0.85;S.img=you&&streak>=3?"s-slide.webp":"s-arms.webp";}
+    else if(k.outcome==="save"){K.img="k-roar.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x*=0.6;K.flip=1;S.img="s-head.webp";}
+    else{K.img="k-shrug.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x=0;K.flip=1;S.img="s-head.webp";
       if(you)coach("over","Too hard, it flew. Ease off: a firm swipe goes in, a slap goes over. The line turns red when you're overdoing it.",false);}
     return wait(950);
   }).then(function(){resetScene();});

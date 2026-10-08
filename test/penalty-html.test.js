@@ -313,3 +313,17 @@ test("holding the ball shows a short direction arrow, not where it will land", (
   assert.doesNotMatch(g, /reticle/, "no target in the goal while aiming");
   assert.match(g, /0\.32/, "the arrow covers only the first part of the path");
 });
+
+/* Round 6, owner 8 Oct 2026: "when the keeper saves, the keeper gets smaller - the
+   sizes are not proportional", plus the landing sheets for both keepers. */
+test("every keeper pose has its own measured height, per character, so he never changes size", () => {
+  const KH = JSON.parse(/var KH=(\{[^;]*\});/.exec(html)[1]);
+  for (const c of ["k-", "kw-"]) for (const p of ["set", "spring", "dive-low", "dive-high", "jump", "catch", "beaten", "roar", "shrug", "land", "down", "held", "crash"])
+    assert.ok(KH[c + p + ".webp"] > 0.4 && KH[c + p + ".webp"] < 2.8, c + p);
+  assert.match(html, /kh=KH\[file\(K\.img\)\]\*kp\.s/, "looked up by the file actually drawn");
+});
+
+test("a diving keeper lands on the landing frames: impact or crash, then down, or holding the ball", () => {
+  for (const f of ["k-land", "k-crash", "k-down", "k-held"]) assert.match(html, new RegExp('"' + f + '\\.webp"'), f);
+  assert.match(html, /K\.img=high\(k\.dive\)\?"k-crash\.webp":"k-land\.webp"/);
+});
