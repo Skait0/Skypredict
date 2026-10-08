@@ -191,3 +191,19 @@ test("the error screen says what actually happened", () => {
   assert.match(html, /isn't switched on here yet/);
   assert.match(html, /LAST\.status===0\?"Can't reach the pitch, try again\."/);
 });
+
+/* Owner on the preview, 8 Oct 2026: "how do i play against computer?" and
+   "the wizard keeper text is cutting off and doesnt even show on mobile". */
+test("a full match against the computer needs no server and is offered from home and from the error screen", () => {
+  const f = grabFn("practice");
+  assert.doesNotMatch(f, /api\(/, "practice never calls the server");
+  assert.match(f, /shootout\(/, "scored with the real shootout rules");
+  assert.match(html, /"Play the computer"/);
+  assert.match(grabFn("offline"), /Play the computer/);
+});
+
+test("the scoreboard names fit a phone", () => {
+  assert.doesNotMatch(html, /\.score \.who\{[^}]*max-width:80px/);
+  assert.doesNotMatch(html, /setScore\(0,0,"Wizard Keeper"\)/, "the long label is gone");
+  assert.match(html, /setScore\(0,0,"The Wizard"\)/);
+});

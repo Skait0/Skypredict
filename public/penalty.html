@@ -64,7 +64,7 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:center;padding:calc(10px + env(safe-area-inset-top)) 14px 0;z-index:6;pointer-events:none}
 .score{display:flex;align-items:center;gap:10px;background:#0d0d0fcc;border:1px solid var(--line);border-radius:99px;padding:7px 14px;backdrop-filter:blur(6px)}
 .score b{font:italic 800 18px/1 "Roboto Condensed",sans-serif;min-width:14px;text-align:center}
-.score .who{font-size:12px;color:var(--soft);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.score .who{font-size:12px;color:var(--soft);max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dots{display:flex;gap:4px}.dots i{width:9px;height:9px;border-radius:50%;background:#2a2a30;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
 .dots i.g{background:var(--green);transform:scale(1.15)}.dots i.m{background:var(--red)}
 #tag{position:absolute;top:calc(56px + env(safe-area-inset-top));left:0;right:0;text-align:center;font:italic 800 13px/1 "Roboto Condensed",sans-serif;letter-spacing:.2em;color:var(--soft);z-index:6;pointer-events:none}
@@ -539,7 +539,24 @@ function offline(retry){
   var off=LAST.status===403||LAST.status===404||LAST.error==="not_configured";
   var msg=LAST.status===0?"Can't reach the pitch, try again.":off?"Penalty Wahala isn't switched on here yet. Play the computer meanwhile.":
     LAST.status===429?"Too many kicks for a moment. Try again shortly.":"Something went wrong on our side ("+(LAST.error||LAST.status)+"). Try again.";
-  sheet([el("p",null,msg),btn("Try again","red",function(){closeSheet();retry();})]);}
+  sheet([el("p",null,msg),btn("Try again","red",function(){closeSheet();retry();}),btn("Play the computer","ghost",function(){closeSheet();practice();})]);}
+
+/* A FULL MATCH AGAINST THE COMPUTER, NOTHING SENT ANYWHERE: shot, save, shot,
+   save, sudden death, scored by the same shootout rules the server uses. */
+function practice(){PW.setOpponent(null);PW.resetStreak();var outs=[];PW.setScore(0,0,"Computer");dots([]);
+  function cpuShot(){return {spot:Math.floor(Math.random()*6),power:0.45+Math.random()*0.5};}
+  function next(){var st=R.shootout(outs);PW.setScore(st.a,st.b);if(st.done)return finish(st);
+    PW.fx.slowmo(Math.floor(outs.length/2)>=REG-1);
+    if(st.next==="a")return PW.aimAndShoot().then(function(s){var d=Math.floor(Math.random()*6),o=R.judge(s,d);outs.push(o);
+        dots(outs.filter(function(_,i){return i%2===0;}));
+        return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power},dive:d,outcome:o});}).then(next);
+    return PW.pickDive().then(function(dv){var cs=cpuShot(),o=R.judge(cs,dv);outs.push(o);
+        return PW.playKick({who:"them",shot:{spot:cs.spot,kind:R.strike(cs.spot,cs.power).kind,power:cs.power},dive:dv,outcome:o});}).then(next);}
+  function finish(st){PW.fx.slowmo(false);track("practice_finished");
+    var head=st.winner==="a"?"You beat the computer "+st.a+"-"+st.b:st.winner==="b"?"The computer won "+st.b+"-"+st.a:"Draw, "+st.a+"-"+st.b;
+    sheet([el("h2",null,head),el("p",null,"Fancy a real opponent?"),btn("Play again","red",function(){closeSheet();practice();}),
+      btn("Challenge a friend","ghost",function(){closeSheet();challenger();}),tipsCard()]);}
+  next();}
 
 function askName(){return new Promise(function(done){
   if(PW.NAME)return done(PW.NAME);
@@ -642,7 +659,7 @@ function result(a,b,winner,chName,id,role,frName){
   sheet([el("h2",null,head)].concat(shareSheet(text,url,"result"),[btn("Start your own challenge","ghost",function(){closeSheet();challenger();}),tipsCard()]));
 }
 
-window.PWFlow={challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,offline:offline,charPicker:charPicker};
+window.PWFlow={challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,offline:offline,charPicker:charPicker,practice:practice};
 })();
 </script>
 <script>
@@ -670,7 +687,7 @@ function forFun(){var outs=[];PW.resetStreak();PW.setScore(0,0,"Just for fun");
       F.sheet([F.el("h2",null,"Just for fun: "+outs.filter(function(x){return x==="goal";}).length+"/5"),F.el("p",null,"Not counted. Tomorrow's keeper is the one that counts."),
         F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})]);});}
   one();}
-function daily(){var outs=[],day=null,i=0;PW.setScore(0,0,"Wizard Keeper");PW.setOpponent("wizard");PW.resetStreak();
+function daily(){var outs=[],day=null,i=0;PW.setScore(0,0,"The Wizard");PW.setOpponent("wizard");PW.resetStreak();
   function sync(st){day=st.day;i=st.at;outs=st.outcomes.slice();PW.setScore(outs.filter(function(o){return o==="goal";}).length,outs.filter(function(o){return o!=="goal";}).length);}
   function start(){F.api("GET","dailystate",null,{device:PW.DEV}).then(function(r){
     if(r.status!==200)return F.offline(start);
@@ -697,7 +714,8 @@ function daily(){var outs=[],day=null,i=0;PW.setScore(0,0,"Wizard Keeper");PW.se
 function home(){
   var nodes=[F.el("h2",null,"Penalty Wahala"),F.el("p",null,"Free. No stakes. Just bragging rights. Pick your player:"),F.charPicker(),
     F.btn("Face today's Wizard Keeper","red",function(){F.closeSheet();daily();}),
-    F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})];
+    F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),
+    F.btn("Play the computer","ghost",function(){F.closeSheet();F.practice();})];
   var mute=F.btn("Vibration: on","ghost",function(e){var m=localStorage.getItem("pw.mute")==="1";localStorage.setItem("pw.mute",m?"0":"1");e.currentTarget.textContent="Vibration: "+(m?"on":"off");});
   try{if(localStorage.getItem("pw.mute")==="1")mute.textContent="Vibration: off";}catch(e){}
   nodes.push(mute);
