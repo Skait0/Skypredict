@@ -658,8 +658,9 @@ function playKick(k){
       fx.pop("SAVED!","#E63946");fx.board("SAVED","#E63946");if(you)streak=0;fx.combo(streak);
     }else if(what==="bar"){
       hitStop=0.08;fx.shake(2);fx.buzz([30,30,30]);fx.sprite("burst",bp.x,bp.y,56,320);
-      fx.pop("WAHALA!","#E63946");if(you)streak=0;fx.combo(streak);
-    }else{fx.pop("WAHALA!","#E63946");fx.shake(0);if(you)streak=0;fx.combo(streak);}
+      /* it hit the woodwork - say exactly that, never "saved" (owner, 8 Oct 2026) */
+      fx.pop("OFF THE BAR!","#E63946");fx.board("OFF THE BAR","#E63946");if(you)streak=0;fx.combo(streak);
+    }else{fx.pop("OVER!","#E63946");fx.board("MISSED","#E63946");fx.shake(0);if(you)streak=0;fx.combo(streak);}
   }
 }
 

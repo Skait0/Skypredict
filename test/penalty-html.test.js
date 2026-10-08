@@ -400,3 +400,12 @@ test("nothing calls the retired dot strip", () => {
   assert.doesNotMatch(html, /\bdots\(/);
   assert.doesNotMatch(html, /\.dots\{/);
 });
+
+/* Owner, 8 Oct 2026: "when the ball hits the bar, dont say saved - missed, or hit the post". */
+test("a shot off the bar says so, an over says missed, and neither says saved", () => {
+  const f = grabFn("playKick");
+  const bar = f.slice(f.indexOf('what==="bar"'), f.indexOf("}else{", f.indexOf('what==="bar"')));
+  assert.match(bar, /fx\.pop\("OFF THE BAR!"/); assert.match(bar, /fx\.board\("OFF THE BAR"/);
+  assert.doesNotMatch(bar, /SAVED/);
+  assert.match(f, /fx\.pop\("OVER!"[^;]*\);fx\.board\("MISSED"/);
+});
