@@ -56,6 +56,7 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #shooter{transform-origin:50% 100%}
 .kghost{opacity:0;filter:saturate(.6) brightness(1.4)}
 #dust{position:absolute;left:0;top:0;border-radius:50%;background:radial-gradient(closest-side,#d9e4c6cc,#8fa77a55 60%,transparent);opacity:0;pointer-events:none;will-change:transform,opacity}
+#kshadow{position:absolute;left:0;top:0;border-radius:50%;background:radial-gradient(closest-side,#000b,transparent);pointer-events:none;will-change:transform,opacity}
 #shadow{position:absolute;left:0;top:0;border-radius:50%;background:radial-gradient(closest-side,#000a,transparent);will-change:transform,opacity}
 #ball{z-index:3}
 .zones{position:absolute;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;opacity:0;pointer-events:none;transition:opacity .2s}
@@ -126,6 +127,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
     <svg class="layer" id="posts"></svg>
     <img class="sprite kghost" id="kg0" alt=""><img class="sprite kghost" id="kg1" alt=""><img class="sprite kghost" id="kg2" alt="">
     <div id="dust"></div>
+    <div id="kshadow"></div>
     <img class="sprite" id="keeper" src="/penalty/k-set.webp" alt="">
     <div id="shadow"></div>
     <svg class="layer" id="trail"></svg>
@@ -206,9 +208,9 @@ try{DEV=localStorage.getItem("pw.dev");if(!DEV){DEV=uuid();localStorage.setItem(
 
 /* Every pose, by file. The first of each character and the ball are preloaded
    in <head>; the rest are fetched once the page is up. */
-var SPRITES=["k-set.webp","k-step-l.webp","k-step-r.webp","k-spring.webp","k-taunt.webp","k-dive-low.webp","k-dive-high.webp","k-jump.webp","k-catch.webp","k-beaten.webp","k-roar.webp","k-shrug.webp",
+var SPRITES=["k-set.webp","k-spring.webp","k-taunt.webp","k-dive-low.webp","k-dive-high.webp","k-jump.webp","k-catch.webp","k-beaten.webp","k-roar.webp","k-shrug.webp",
   "s-stand.webp","s-run.webp","s-strike.webp","s-follow.webp","s-arms.webp","s-slide.webp","s-head.webp","p-ball.webp","p-burst.webp","p-star.webp",
-  "kw-set.webp","kw-step-l.webp","kw-step-r.webp","kw-spring.webp","kw-taunt.webp","kw-dive-low.webp","kw-dive-high.webp","kw-jump.webp","kw-catch.webp","kw-beaten.webp","kw-roar.webp","kw-shrug.webp",
+  "kw-set.webp","kw-spring.webp","kw-taunt.webp","kw-dive-low.webp","kw-dive-high.webp","kw-jump.webp","kw-catch.webp","kw-beaten.webp","kw-roar.webp","kw-shrug.webp",
   "sw-stand.webp","sw-run.webp","sw-strike.webp","sw-follow.webp","sw-arms.webp","sw-slide.webp","sw-head.webp"];
 var IMG={};
 /* TWO CHARACTERS (owner, 8 Oct 2026): Ten and The Wizard. You play as one,
@@ -223,7 +225,7 @@ function loadChar(c){var pre=c==="wizard"?/^(kw|sw|p)-/:/^(k|s|p)-/;SPRITES.forE
 addEventListener("load",function(){loadChar(ME);loadChar(other());});
 /* How tall each pose stands in the world, in metres, so a dive and a crouch
    share one scale. */
-var KH={"k-set.webp":1.9,"k-step-l.webp":1.9,"k-step-r.webp":1.9,"k-spring.webp":1.6,"k-taunt.webp":2,"k-dive-low.webp":1.05,"k-dive-high.webp":2.15,"k-jump.webp":2.45,"k-catch.webp":1.9,"k-beaten.webp":1.25,"k-roar.webp":1.95,"k-shrug.webp":1.95};
+var KH={"k-set.webp":1.9,"k-spring.webp":1.6,"k-taunt.webp":2,"k-dive-low.webp":1.05,"k-dive-high.webp":2.15,"k-jump.webp":2.45,"k-catch.webp":1.9,"k-beaten.webp":1.25,"k-roar.webp":1.95,"k-shrug.webp":1.95};
 
 /* ---------------------------------------------------------------- camera
    World: x across (m, right +), y up, z from the penalty spot toward goal
@@ -312,6 +314,10 @@ function place(){
   if(KTRAIL){KHIST.unshift({tf:k.style.transform,src:k.src,w:k.style.width,h:k.style.height});KHIST.length=Math.min(KHIST.length,10);
     for(var gi=0;gi<3;gi++){var g=$("kg"+gi),hs=KHIST[3*(gi+1)];if(!hs){g.style.opacity=0;continue;}
       if(g.src!==hs.src)g.src=hs.src;g.style.width=hs.w;g.style.height=hs.h;g.style.transform=hs.tf;g.style.opacity=[0.32,0.18,0.08][gi];}}
+  /* his shadow: on the ground under him, smaller and fainter the higher he is */
+  var gp0=P(K.x,0,GOAL.z),air=Math.max(0,K.y-0.85)+Math.max(0,-K.bob)/kp.s,ks=$("kshadow"),kw=Math.min(kh*ar,1.2*kp.s)*(1-Math.min(0.5,air*0.35));
+  ks.style.width=kw+"px";ks.style.height=kw*0.22+"px";ks.style.opacity=Math.max(0.15,0.55-air*0.25);
+  ks.style.transform="translate("+(gp0.x-kw/2)+"px,"+(gp0.y-kw*0.11)+"px)";
   var sh=$("shooter"),sp=P(S.x,0,S.z),sH=1.75*sp.s*0.6,sim=IMG[file(S.img)],sar=sim&&sim.naturalWidth?sim.naturalWidth/sim.naturalHeight:0.47;
   setImg(sh,file(S.img));sh.style.height=sH+"px";sh.style.width=sH*sar+"px";sh.style.transform="translate("+(sp.x-sH*sar/2)+"px,"+(sp.y-sH)+"px)";
   var bp=P(B.x,B.y,B.z),bd=Math.max(7,0.3*bp.s),b=$("ball");
@@ -350,10 +356,13 @@ function tick(now){
   /* A keeper waiting for the kick shuffles his weight across the line. The
      wizard's ready pose is drawn mid-lunge, so it is mirrored as he passes
      the centre - he never reads as leaning one way (owner, 8 Oct 2026). */
-  if(K.idle&&(K.img==="k-set.webp"||K.img==="k-step-l.webp"||K.img==="k-step-r.webp")&&!REDUCED){
-    var ph=now/1700*Math.PI,sw=Math.sin(ph),v=Math.cos(ph);K.x=sw*0.22;K.flip=1;
-    if(Math.abs(v)<0.55)K.img="k-set.webp";else K.img=v>0?"k-step-r.webp":"k-step-l.webp";
-    K.bob=-Math.max(0,Math.abs(v)-0.55)*9;}
+  /* Waiting: both feet down in the set position, sliding across the line in
+     small hops - up on each step, a soft squash as he lands. His shadow stays
+     on the grass, so you can see when he is off it. The step frames lifted one
+     foot and read as a foot resting on an invisible ball (owner, 8 Oct 2026). */
+  if(K.idle&&K.img==="k-set.webp"&&!REDUCED){
+    var ph=now/1700*Math.PI,hop=Math.abs(Math.sin(ph*2));K.x=Math.sin(ph)*0.22;K.flip=1;
+    K.bob=-hop*7;K.sq=1+(hop<0.18?(0.18-hop)*0.35:0);}
   CAM_FX.zoom+=(CAM_FX.zoomTo-CAM_FX.zoom)*Math.min(1,real*6);
   CAM_FX.shake=Math.max(0,CAM_FX.shake-real*28);
   var a=REDUCED?0:CAM_FX.shake;CAM_FX.sx=(Math.random()*2-1)*a;CAM_FX.sy=(Math.random()*2-1)*a;

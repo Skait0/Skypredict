@@ -139,7 +139,7 @@ test("a challenge link opens the friend flow, anything else the home screen", ()
 test("players choose Ten or The Wizard, the choice is kept, the opponent is the other", () => {
   assert.match(html, /localStorage\.setItem\("pw\.char"/);
   assert.match(html, /function charPicker\(/);
-  for (const pose of ["set", "step-l", "step-r", "spring", "dive-low", "dive-high", "jump", "catch", "beaten", "roar", "shrug", "taunt"]) assert.match(html, new RegExp('"kw-' + pose + '\.webp"'), "wizard keeper " + pose);
+  for (const pose of ["set", "spring", "dive-low", "dive-high", "jump", "catch", "beaten", "roar", "shrug", "taunt"]) assert.match(html, new RegExp('"kw-' + pose + '\.webp"'), "wizard keeper " + pose);
   for (const pose of ["stand", "run", "strike", "follow", "arms", "slide", "head"]) assert.match(html, new RegExp('"sw-' + pose + '\.webp"'), "wizard shooter " + pose);
 });
 
@@ -290,10 +290,12 @@ test("the keeper is drawn in front of the posts", () => {
   assert.ok(html.indexOf('id="posts"') < html.indexOf('id="keeper"'), "posts first, keeper over them");
 });
 
-test("the waiting keeper stands in his set position and shuffles on the step frames", () => {
+test("the waiting keeper keeps both feet down in his set position, hops across the line, and casts a shadow", () => {
   assert.match(html, /"k-set\.webp"/);
-  assert.match(html, /K\.img=v>0\?"k-step-r\.webp":"k-step-l\.webp"/);
-  assert.doesNotMatch(html, /K\.flip=sw>=0\?1:-1/, "no mirroring a lunge any more");
+  assert.doesNotMatch(html, /k-step-/, "the one-foot step frames read as a foot on an invisible ball");
+  assert.match(html, /if\(K\.idle&&K\.img==="k-set\.webp"&&!REDUCED\)\{/);
+  assert.match(html, /K\.bob=-hop\*7;/);
+  assert.match(html, /id="kshadow"/);
   assert.doesNotMatch(html, /"k-ready\.webp"/, "the leaning pose is retired");
 });
 
