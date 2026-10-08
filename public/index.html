@@ -4915,6 +4915,10 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
    updated" and nowhere else. Two other comments in this file already describe
    the behaviour this rule was preventing. */
 .trust-i.streak b{color:var(--win)}
+/* Dark theme: the streak reads in the row's own white, like the date beside
+   it (owner, 8 Oct 2026) - bright gold here was one more spend of the accent
+   the code and the odds need. Light theme keeps its bronze. */
+[data-theme="dark"] .trust-i.streak b,[data-theme="dark"] .streak b{color:var(--text)}
 /* The one place on this page that has earned a bounce: a streak reaching two
    is rare and is the only moment here worth marking. Fires when the badge
    goes from hidden to shown, and not on a re-render that leaves the class
