@@ -1835,6 +1835,13 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 /* One size whatever the swap beside it wraps to (owner, 8 Oct 2026): a long
    team name made the swap two lines and the stretch made Remove tall with it. */
 .confirm-card .ask-opt[data-v='drop']{flex:0 0 auto;justify-content:center;padding:5px 11px;align-self:center}
+.confirm-card .ask-next{flex:0 0 auto;align-self:center;display:flex;align-items:center;gap:4px;
+  padding:5px 9px;border-radius:12px;border:1px solid var(--line)!important;background:var(--card);
+  color:var(--soft);font-size:14px;font-weight:700;line-height:1.25}
+.confirm-card .ask-next i{font-style:normal;font-size:11px;opacity:.8}
+/* A phone needs the room for the bet's name; the arrow alone says "another". */
+@media(max-width:480px){ .confirm-card .ask-next{padding:5px 8px} .confirm-card .ask-next i,
+  .confirm-card .ask-opt[data-v='swap']>span{display:none} }
 .confirm-card .ask-all{margin-left:auto;padding:4px 10px;border-radius:12px;border:1px solid var(--line);
   background:var(--card);color:var(--soft);font-size:12px;font-weight:600;cursor:pointer}
 .confirm-card .ask-opt.on{border-color:var(--win)!important;background:var(--win-wash);color:var(--text)}
@@ -11081,6 +11088,22 @@ var REFUSAL_ROUNDS=4;
    fault; the reason says it is theirs, and a moved line says what to pick
    instead. Keyed like the callers' own lists, id|code. */
 var REFUSAL_WHY={};
+/* WHAT A BOOK REFUSED TODAY, REMEMBERED UNTIL LAGOS MIDNIGHT (owner, 8 Oct
+   2026: "the same games keep coming up"). Keyed book|game|market, so only that
+   market on that game at that book sits out - the game stays for every other
+   market and every other book, and tomorrow starts clean because the book may
+   sell it then. Only legs the book NAMED are written; a guess is never kept. */
+var REFUSED_KEY="sw.refused";
+function refusedDay(){ return new Date(Date.now()+3600e3).toISOString().slice(0,10); }
+function refusedToday(){
+  try{ var r=JSON.parse(localStorage.getItem(REFUSED_KEY)||"null");
+       if(r&&r.day===refusedDay()&&r.k) return r.k; }catch(e){}
+  return {};
+}
+function noteRefused(c,B){
+  var k=refusedToday(); k[B.key+"|"+c.id+"|"+c.code]=1;
+  try{ localStorage.setItem(REFUSED_KEY,JSON.stringify({day:refusedDay(),k:k})); }catch(e){}
+}
 function refusalWhy(b,c){
   if(b.reason==="started") return "kicked off";
   if(b.reason==="closed") return "market closed";
@@ -11114,6 +11137,7 @@ function dropUnbookable(picks,d,B){
       if(!kill[k]) return true;
       var w=refusalWhy(byKey[k],c);
       if(w) REFUSAL_WHY[c.id+"|"+c.code]=w;
+      noteRefused(c,B);
       kill[k]--; return false; });
     /* Our price for that market was wrong. Forget it rather than keep showing
        it - the pre-flight and the board both read this. */
@@ -13698,10 +13722,12 @@ function buildPicks(){
   allowed=allowed.filter(function(c){return mkOn[c]!==false && bookAllows(c,curBook());});
   var f0=BUILD.risk/100;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
+  var refused=refusedToday(), rk=B.key+"|";
   scopeFixtures().forEach(function(f){
     if(TOP_ONLY && isLowerFixture(f)) return;
     var homeFav=f.home_p>f.away_p;
     function sane(c){
+      if(refused[rk+fid(f)+"|"+c]) return false;
       if(!cornersOpen(f,c)) return false;
       if(c==="1"&&!homeFav) return false;
       if(c==="2"&&homeFav) return false;
@@ -14013,21 +14039,25 @@ function hasSportyMarket(c){ return BOOKS.sporty.priced(c); }
    or better; never the market just refused, never a game that has started.
    Null when there is nothing honest to offer, and the row then says only why. */
 var SAFE_ALT_MIN=0.60;
-function nextSafePick(c,B){
+/* EVERY HONEST OFFER, LIKELIEST FIRST. The pop-up shows the first and the
+   reader can step through the rest (owner, 8 Oct 2026: "the options offered
+   are always the same"). Anything this book refused today is left out. */
+function safePicks(c,B){
   B=B||curBook();
-  var f=c&&(c.f||fixtureById(c.id)); if(!f) return null;
-  var ko=kickMs(f); if(ko!=null&&ko<=Date.now()) return null;
-  if(/kicked off|started/.test(REFUSAL_WHY[c.id+"|"+c.code]||"")) return null;
-  var own=f[B.odds]||{}, best=null;
+  var f=c&&(c.f||fixtureById(c.id)); if(!f) return [];
+  var ko=kickMs(f); if(ko!=null&&ko<=Date.now()) return [];
+  if(/kicked off|started/.test(REFUSAL_WHY[c.id+"|"+c.code]||"")) return [];
+  var own=f[B.odds]||{}, refused=refusedToday(), out=[];
   swapOptions(f).forEach(function(o){
     if(o.code===c.code||!(o.p>=SAFE_ALT_MIN)) return;
     if(!(own[o.code]>1.01)||!bookAllows(o.code,B)) return;
-    if(!best||o.p>best.p) best=o;
+    if(refused[B.key+"|"+c.id+"|"+o.code]) return;
+    if(out.some(function(x){return x.code===o.code;})) return;
+    out.push(Object.assign({},c,{code:o.code,p:+o.p,label:o.label,f:c.f||f,auto:false}));
   });
-  if(!best) return null;
-  return Object.assign({},c,{code:best.code,p:+best.p,label:best.label,
-    f:c.f||f,auto:false});
+  return out.sort(function(a,b){return b.p-a.p;});
 }
+function nextSafePick(c,B){ return safePicks(c,B)[0]||null; }
 function confirmAfterRefusal(target,names,keep,B,go,refused,h){
   var n=names.length;
   /* ONE ROW PER REFUSED GAME: the game, the market they refused and why,
@@ -14036,21 +14066,27 @@ function confirmAfterRefusal(target,names,keep,B,go,refused,h){
      swap or remove button ... tighten all new windows". Swap is chosen by
      default when there is one to offer; a game with nothing safer on sale
      says so and is simply left out. The price is the book's own. */
-  var alts=(refused||[]).map(function(c){ return nextSafePick(c,B); });
+  var lists=(refused||[]).map(function(c){ return safePicks(c,B); }), at=lists.map(function(){return 0;});
+  var alts=lists.map(function(l){ return l[0]||null; });
   var swap=alts.map(function(a){ return !!a; });
   var plain=function(s){ return String(s||"").replace(/<[^>]+>/g,""); };
+  var optHTML=function(a){
+    var o=((a.f||{})[B.odds]||{})[a.code];
+    return "<span aria-hidden='true'>&#8644;</span><b title='"+esc(plain(a.label))+"'>"+esc(plain(a.label))+"</b>"+
+      "<i>"+P0(a.p)+"%"+(o?" · "+(+o).toFixed(2):"")+"</i>";
+  };
   var rows=names.slice(0,8).map(function(nm,i){
     var c=(refused||[])[i], f=c&&(c.f||fixtureById(c.id)), a=alts[i];
     var game=f?f.home+" v "+f.away:nm;
     var mkt=c?plain(c.label||(f?mLabel(f,c.code):c.code)):"";
     var why=c?(REFUSAL_WHY[c.id+"|"+c.code]||""):"";
-    var o=a&&((a.f||{})[B.odds]||{})[a.code];
     return "<div class='ask-row'><span class='ask-g'>"+esc(game)+"</span>"+
       (mkt?"<span class='ask-off'><s>"+esc(mkt)+"</s>"+(why?" · "+esc(why):"")+"</span>":"")+
       (a?"<div class='ask-ch' role='group' aria-label='"+esc(game)+"'>"+
           "<button class='ask-opt on' type='button' data-i='"+i+"' data-v='swap' aria-pressed='true'>"+
-            "<span aria-hidden='true'>&#8644;</span><b title='"+esc(plain(a.label))+"'>"+esc(plain(a.label))+"</b>"+
-            "<i>"+P0(a.p)+"%"+(o?" · "+(+o).toFixed(2):"")+"</i></button>"+
+            optHTML(a)+"</button>"+
+          (lists[i].length>1?"<button class='ask-next' type='button' data-i='"+i+"' aria-label='Another safe pick'>"+
+            "<i>1/"+lists[i].length+"</i>&#8635;</button>":"")+
           "<button class='ask-opt' type='button' data-i='"+i+"' data-v='drop' aria-pressed='false'>Remove</button>"+
         "</div>"
        :"<span class='ask-none'>Removed - nothing safer on sale</span>")+"</div>";
@@ -14067,6 +14103,15 @@ function confirmAfterRefusal(target,names,keep,B,go,refused,h){
   var all=el.querySelector(".ask-all");
   if(all) all.addEventListener("click",function(){
     el.querySelectorAll(".ask-opt[data-v='drop']").forEach(function(b){ b.click(); });});
+  /* Next safe pick on that game, round and round; stepping to one chooses it. */
+  el.querySelectorAll(".ask-next").forEach(function(b){
+    b.addEventListener("click",function(){
+      var i=+b.dataset.i; at[i]=(at[i]+1)%lists[i].length; alts[i]=lists[i][at[i]];
+      var pill=el.querySelector(".ask-opt[data-i='"+i+"'][data-v='swap']");
+      pill.innerHTML=optHTML(alts[i]); b.querySelector("i").textContent=(at[i]+1)+"/"+lists[i].length;
+      pill.click();
+    });
+  });
   el.querySelectorAll(".ask-opt").forEach(function(b){
     b.addEventListener("click",function(){
       var i=+b.dataset.i; swap[i]=b.dataset.v==="swap";
@@ -19960,11 +20005,13 @@ function wspBuild(){
   var allowed=wspMarkets(),all=[];
   var seed=WSP.seed||0, shuffles=WSP.shuffles||0;
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
+  var refused=refusedToday(), rk=curBook().key+"|";
   scopeFixtures().forEach(function(f){
     if(TOP_ONLY && isLowerFixture(f)) return;
     if(WSP.removed && WSP.removed[fid(f)]) return;
     var homeFav=f.home_p>f.away_p,cands=[];
     allowed.forEach(function(c){
+      if(refused[rk+fid(f)+"|"+c])return;
       if(c==="1"&&!homeFav)return; if(c==="2"&&homeFav)return;
       if(c==="1X"&&!homeFav)return; if(c==="X2"&&homeFav)return;
       if(!cornersOpen(f,c))return;

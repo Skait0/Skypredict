@@ -64,7 +64,7 @@ const FNS = ["cornersK", "cornersOver", "cornersOpen", "countryOf", "isSAleague"
   /* A market one bookmaker sells and the other does not - the slider asks
      before it picks, so the harness needs the question and its table. */
   "bookAllows",
-  "allowedMarkets", "preferGoalsOverDouble", "sliderStyle", "styleFit", "buildPicks"];
+  "allowedMarkets", "preferGoalsOverDouble", "sliderStyle", "styleFit", "buildPicks", "refusedDay", "refusedToday", "noteRefused"];
 
 function engine(fixtures) {
   return new Function("FX", [

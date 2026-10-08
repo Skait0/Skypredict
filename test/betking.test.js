@@ -607,7 +607,7 @@ function dropHarness() {
     "function fixtureById(){ return null; }\n" +
     "function mLabel(f,c){ return c === 'SHOTS_OV_27.5' ? 'Over 27.5 shots' : null; }\n" +
     "var REFUSAL_WHY={};\n" + fn("refusalWhy") + "\n" + fn("whyOf") + "\n" +
-    fn("dropUnbookable") + "\nreturn Object.assign(dropUnbookable, {whyOf: whyOf});")();
+    fn("refusedDay") + fn("refusedToday") + fn("noteRefused") + fn("dropUnbookable") + "\nreturn Object.assign(dropUnbookable, {whyOf: whyOf});")();
 }
 
 test("a refused leg carries SportyBet's reason into the list the reader sees", () => {
