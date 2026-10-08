@@ -89,7 +89,7 @@ test("every sprite the page names exists on disk", () => {
 });
 
 test("only the first pose of each character and the ball load up front", () => {
-  const eager = (html.match(/<link rel="preload" as="image" href="\/penalty\/[a-z-]+\.webp">/g) || []).length;
+  const eager = (html.match(/<link rel="preload" as="image" href="\/penalty\/[a-z-]+\.webp\?v=\d+">/g) || []).length;
   assert.strictEqual(eager, 3);
 });
 
@@ -510,4 +510,10 @@ test("solo modes add wind and a spell meter; challenges and the daily stay plain
   assert.match(html, /id="cast"/);
   assert.match(html, /id="wind"/);
   assert.match(grabFn("playKick"), /SPELLNOW/);
+});
+
+test("every sprite address carries the art version, so new art is never served from an old cache", () => {
+  assert.match(html, /var SPV="\d+";/);
+  assert.match(html, /function setImg\(el,f\)\{[^}]*"\/penalty\/"\+f\+"\?v="\+SPV/);
+  assert.doesNotMatch(html.replace(/<script>[\s\S]*<\/script>/g, ""), /\.webp"/, "static tags too");
 });

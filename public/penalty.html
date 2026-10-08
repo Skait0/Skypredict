@@ -11,9 +11,9 @@
 <meta name="twitter:site" content="@SoccerWizardhq">
 <meta name="theme-color" content="#0D0D0F">
 <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
-<link rel="preload" as="image" href="/penalty/k-set.webp">
-<link rel="preload" as="image" href="/penalty/s-stand.webp">
-<link rel="preload" as="image" href="/penalty/p-ball.webp">
+<link rel="preload" as="image" href="/penalty/k-set.webp?v=12">
+<link rel="preload" as="image" href="/penalty/s-stand.webp?v=12">
+<link rel="preload" as="image" href="/penalty/p-ball.webp?v=12">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Roboto+Condensed:ital,wght@1,800&display=swap">
 <style>
@@ -174,14 +174,14 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
     <img class="sprite kghost" id="kg0" alt=""><img class="sprite kghost" id="kg1" alt=""><img class="sprite kghost" id="kg2" alt="">
     <div id="dust"></div>
     <div id="kshadow"></div>
-    <img class="sprite" id="keeper" src="/penalty/k-set.webp" alt="">
+    <img class="sprite" id="keeper" src="/penalty/k-set.webp?v=12" alt="">
     <div id="shadow"></div>
     <svg class="layer" id="trail"></svg>
     <svg class="layer" id="fire" style="mix-blend-mode:screen"></svg>
-    <img class="sprite" id="ball" src="/penalty/p-ball.webp" alt="">
-    <img class="sprite" id="shooter" src="/penalty/s-stand.webp" alt="">
-    <img class="sprite" id="burst" src="/penalty/p-burst.webp" alt="" style="opacity:0">
-    <img class="sprite" id="star" src="/penalty/p-star.webp" alt="" style="opacity:0">
+    <img class="sprite" id="ball" src="/penalty/p-ball.webp?v=12" alt="">
+    <img class="sprite" id="shooter" src="/penalty/s-stand.webp?v=12" alt="">
+    <img class="sprite" id="burst" src="/penalty/p-burst.webp?v=12" alt="" style="opacity:0">
+    <img class="sprite" id="star" src="/penalty/p-star.webp?v=12" alt="" style="opacity:0">
     <div class="zones" id="zones"><button data-s="3" aria-label="Top left"></button><button data-s="4" aria-label="Top middle"></button><button data-s="5" aria-label="Top right"></button><button data-s="0" aria-label="Bottom left"></button><button data-s="1" aria-label="Bottom middle"></button><button data-s="2" aria-label="Bottom right"></button></div>
   </div>
   <svg class="layer" id="bolt" style="z-index:8"></svg>
@@ -192,7 +192,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
   <div id="hud"><div class="sboard"><div class="srow" id="rowA"><span class="who" id="whoA">YOU</span><span class="kicks" id="kA"></span><b id="scA">0</b></div><div class="srow" id="rowB"><span class="who" id="whoB">CPU</span><span class="kicks" id="kB"></span><b id="scB">0</b></div></div></div>
   <div id="tag"></div><div id="combo"></div>
   <div id="hint"></div>
-  <div id="coach" role="status"><img src="/penalty/kw-taunt.webp" alt=""><p></p></div><i id="ghost"></i>
+  <div id="coach" role="status"><img src="/penalty/kw-taunt.webp?v=12" alt=""><p></p></div><i id="ghost"></i>
   <div id="pts"></div>
   <div id="pop"></div><div id="flash"></div>
   <div id="sheet"></div>
@@ -272,7 +272,7 @@ var ME="ten",OPP=null;try{ME=localStorage.getItem("pw.char")==="wizard"?"wizard"
 function other(){return ME==="ten"?"wizard":"ten";}
 var KC=other(),SC=ME;
 function file(f){if(KC==="wizard"&&f.indexOf("k-")===0)return "kw-"+f.slice(2);if(SC==="wizard"&&f.indexOf("s-")===0)return "sw-"+f.slice(2);return f;}
-function loadChar(c){var pre=c==="wizard"?/^(kw|sw|p)-/:/^(k|s|p)-/;SPRITES.forEach(function(f){if(pre.test(f)&&!IMG[f]){var i=new Image();i.src="/penalty/"+f;IMG[f]=i;}});}
+function loadChar(c){var pre=c==="wizard"?/^(kw|sw|p)-/:/^(k|s|p)-/;SPRITES.forEach(function(f){if(pre.test(f)&&!IMG[f]){var i=new Image();i.src="/penalty/"+f+"?v="+SPV;IMG[f]=i;}});}
 addEventListener("load",function(){loadChar(ME);loadChar(other());});
 /* HOW TALL EACH POSE IS DRAWN, in metres, per file. Measured, not guessed:
    every crop's size in its source sheet times that sheet's scale, which comes
@@ -387,7 +387,9 @@ function drawGoal(){
 var K={x:0,y:0.85,rot:0,img:"k-set.webp",flip:1,bob:0,sq:1};       // keeper, on the goal line
 var S={x:-0.72,z:-1.25,img:"s-stand.webp"};                       // shooter, behind the ball
 var B={x:0,y:0.11,z:0,rot:0,vis:1,alpha:1,fly:false};                      // ball
-function setImg(el,f){if(el.getAttribute("data-f")!==f){el.setAttribute("data-f",f);el.src="/penalty/"+f;}}
+/* the art version: bump when sprites are replaced, so no browser keeps the old ones */
+var SPV="12";
+function setImg(el,f){if(el.getAttribute("data-f")!==f){el.setAttribute("data-f",f);el.src="/penalty/"+f+"?v="+SPV;}}
 function place(){
   var k=$("keeper"),kp=P(K.x,K.y,GOAL.z),kh=KH[file(K.img)]*kp.s,kim=IMG[file(K.img)],ar=kim&&kim.naturalWidth?kim.naturalWidth/kim.naturalHeight:1;
   setImg(k,file(K.img));k.style.height=kh+"px";k.style.width=kh*ar+"px";
@@ -756,6 +758,7 @@ function playKick(k){
 layout();drawBoard();
 $("cast").addEventListener("click",function(e){e.stopPropagation();if(SPELL>=100&&!SPELLARMED){SPELLARMED=true;drawSpell();fx.pop("SPELL READY","#F2B84B");fx.buzz([20,20,40]);}});
 $("cast").addEventListener("pointerdown",function(e){e.stopPropagation();});
+window.PWV=function(){return SPV;};
 window.PW={RULES:{strike:strike,neighbour:neighbour,judge:judge,shootout:shootout,ZONES:ZONES,REG:REG,BONUS:BONUS},
   aimAndShoot:aimAndShoot,pickDive:pickDive,playKick:playKick,fx:fx,
   get DEV(){return DEV;},get NAME(){return NAME;},setName:function(n){NAME=n;try{localStorage.setItem("pw.name",n);}catch(e){}},
@@ -837,7 +840,7 @@ function shareSheet(text,url,where){
 
 /* Ten or The Wizard: who you play as. The opponent is the other one. */
 function charPicker(){var box=el("div","pick");
-  [["ten","TEN","/penalty/k-set.webp"],["wizard","THE WIZARD","/penalty/kw-set.webp"]].forEach(function(c){
+  [["ten","TEN","/penalty/k-set.webp?v="+PWV()],["wizard","THE WIZARD","/penalty/kw-set.webp?v="+PWV()]].forEach(function(c){
     var b=el("button",PW.char===c[0]?"on":"");b.type="button";var i=el("img");i.src=c[2];i.alt="";b.appendChild(i);b.appendChild(el("span",null,c[1]));
     b.addEventListener("click",function(){PW.setChar(c[0]);PW.fx.buzz(10);box.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b);});});box.appendChild(b);});
   return box;}
