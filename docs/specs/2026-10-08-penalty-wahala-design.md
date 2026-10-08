@@ -17,7 +17,7 @@ or a price.
 
 Success looks like: challenge links opened from WhatsApp and X, those visitors
 clicking through to the predictions, and players returning for the daily
-keeper on consecutive days. The tracking in section 6 measures exactly these.
+keeper on consecutive days. The tracking in section 8 measures exactly these.
 
 ## 2. Scope
 
@@ -71,8 +71,11 @@ Tap the spot to dive to. The shot then comes. No timing; it is a guess.
    shootout: the friend shoots against the challenger's stored dive, then dives
    against the challenger's stored shot, and so on.
 4. Level after five each: sudden death, one kick each, using further stored
-   picks. The challenger stores three extra shots and three extra dives for
-   this when they play. Still level after three rounds: a draw.
+   picks. The challenger takes three quick **bonus shots** and three **bonus
+   dives** straight after their first five (about 15 seconds more; owner
+   approved 8 Oct 2026). They count only if the challenge reaches sudden
+   death, and the computer never kicks on the challenger's behalf. Still level
+   after three rounds: a draw.
 5. Both see the final score. The challenger sees "Ada beat you 4-3" the next
    time they open the game on the same device.
 
@@ -107,7 +110,8 @@ not changed except for the entry points in release step 2.
 
 | File | Job |
 | --- | --- |
-| `public/penalty.html` | The game page: inline SVG pitch, keeper, ball; one script; dark and gold. Under 100KB. |
+| `public/penalty.html` | The game page: inline SVG pitch and goal, one script, the site's tokens. Under 100KB before the character art. |
+| `public/penalty/*.webp` | Character and effect sprites cut from the owner's Nano Banana sheets (section 6). About 60-80KB in all, loaded after the page opens. |
 | `lib/penalty.js` | The rules as pure functions: power zones, the save rule, scoring, sudden death, daily dives from a key and a date. Used by the API and the tests. |
 | `api/penalty.js` | One API file for every game call (below). |
 | `api/p.js` | Server-rendered challenge page for `/p/<id>`, with WhatsApp and X preview tags, following `api/s.js`. |
@@ -164,7 +168,48 @@ result.
 The site's existing rate limiter (`rlHit`) caps match creation and kicks per
 IP, so the tables cannot be flooded.
 
-## 5. Sharing and the funnel
+## 5. Feel: light, flashy, addictive
+
+Owner, 8 Oct 2026: "light and crazy dope, flashy, addictive and interactive".
+Every effect is CSS or SVG on the page - no game engine, no video.
+
+- **Post shake and net bulge** on every goal, reusing the sign-in Tactics
+  Spell's shake and bulge (`sws-sh`, `sws-bulge` in `public/spell.js`). Hitting
+  the bar: a harder post shake plus a short screen shake.
+- **Slow motion and zoom** on the fifth kick and on every sudden-death kick:
+  the view pushes in and the ball travels slowly.
+- **Spell trail:** the ball leaves a red comet trail, longer the nearer the
+  power was to perfect. A perfect top-corner goal adds a gold star burst.
+- **Keeper flash:** a save fires red sparks from the gloves; the keeper taunts
+  after a save and slumps after a goal.
+- **On fire:** three goals in a row lights a combo meter; the ball burns and
+  the shakes grow until the run ends.
+- **Pop words:** "OYA!", "WAHALA!", "TOP BINS!", "SAVED!" punch onto the
+  screen at the moment they fit.
+- **Haptics:** a short vibration on strike, goal and save where the phone
+  supports it, with one tap to mute.
+- **Reduced motion:** the same moments without shake, zoom or slow motion.
+
+Animations move only `transform` and `opacity`, so a cheap Android phone keeps
+up.
+
+## 6. Art
+
+The owner generates three sheets in Nano Banana from prompts given on 8 Oct
+2026: the Wizard Keeper (12 front-view poses), the shooter (8 back-view
+poses), and props and effects (crystal-ball football, spell trail, sparks,
+star burst, shockwave, shaking post, bulging net, rune ring).
+
+- Theme: wizardry x soccer. Magic comes from football shapes (rune gloves, a
+  centre-circle sigil); no wizard hats or robes.
+- Colours: the site's red as the main colour, near-black, white; gold only as
+  small accents.
+- Flat colours and thick outlines on a solid #00FF00 background, so each pose
+  can be cut out cleanly and stays small.
+- Each pose becomes a small WebP sprite. Until the sheets arrive the build uses
+  simple SVG stand-ins of the same size, so nothing waits on the art.
+
+## 7. Sharing and the funnel
 
 ### The challenge link
 
@@ -193,13 +238,13 @@ IP, so the tables cannot be flooded.
 - Release step 2 adds a "Penalty Wahala" item to the site menu and one line
   under Your slips.
 
-## 6. Tracking
+## 8. Tracking
 
 Vercel Analytics events: challenge created, challenge opened, challenge
 finished, daily played, tips card clicked, share tapped (with the channel:
 WhatsApp, X, copy, system).
 
-## 7. Errors
+## 9. Errors
 
 - **Connection drops mid-match:** each kick is stored as it is played;
   reopening the link resumes at the next kick.
@@ -210,7 +255,7 @@ WhatsApp, X, copy, system).
 - **Reduced motion:** kicks resolve without the swoops; the power bar still
   works.
 
-## 8. Testing
+## 10. Testing
 
 - `lib/penalty.js`: power zones, the save rule (same spot, neighbour, weak),
   scoring, sudden death, the draw after three extra rounds, daily dives the
@@ -221,7 +266,7 @@ WhatsApp, X, copy, system).
 - A headless browser plays a full challenge from both sides and one daily go,
   at 360px and laptop width, before the owner sees it.
 
-## 9. Rollout
+## 11. Rollout
 
 1. **Hidden:** live at `/penalty` with no link from the site. The owner and a
    few friends play it.
