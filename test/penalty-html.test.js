@@ -409,3 +409,22 @@ test("a shot off the bar says so, an over says missed, and neither says saved", 
   assert.doesNotMatch(bar, /SAVED/);
   assert.match(f, /fx\.pop\("OVER!"[^;]*\);fx\.board\("MISSED"/);
 });
+
+/* Round 8, owner 8 Oct 2026: "your save tap where to dive runs into the score
+   board", "the miss icon has its x not centralised", "sometimes it looks like the
+   ball went inside but it says saved", "it seems like the game is cropped". */
+test("the slow-motion zoom starts at the strike, never while you aim", () => {
+  assert.match(html, /slowmo:function\(on\)\{SLOWNEXT=!!on&&!REDUCED;if\(!on\)\{TS=1;CAM_FX\.zoomTo=1;\}\}/);
+  assert.match(grabFn("playKick"), /if\(SLOWNEXT\)\{TS=0\.38;CAM_FX\.zoomTo=1\.14;\}/);
+});
+
+test("a save is made where the ball is; a goal keeps the keeper clear of it", () => {
+  const f = grabFn("playKick");
+  assert.match(f, /if\(k\.outcome==="save"\)\{kp\.x=Math\.max\(-3\.2,Math\.min\(3\.2,aim\.x\)\)/);
+  assert.match(f, /if\(k\.outcome==="goal"&&Math\.abs\(kp\.x-aim\.x\)<1\.2&&Math\.abs\(kp\.y-aim\.y\)<1\.1\)/);
+});
+
+test("the turn label sits below the scoreboard, and the miss cross is centred", () => {
+  assert.match(html, /#tag\{position:absolute;top:calc\(86px \+ env\(safe-area-inset-top\)\)/);
+  assert.match(html, /\.kicks i\.m:before,\.kicks i\.m:after\{content:"";position:absolute;left:50%;top:50%;width:8px;height:1\.5px;margin:-\.75px 0 0 -4px;/);
+});

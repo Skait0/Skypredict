@@ -86,20 +86,20 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .kicks i{position:relative;width:14px;height:14px;border-radius:50%;border:1.5px solid #ffffff40;transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
 .kicks i.g{background:var(--green);border-color:var(--green);transform:scale(1.1)}
 .kicks i.m{background:var(--red);border-color:var(--red)}
-.kicks i.m:before,.kicks i.m:after{content:"";position:absolute;left:3px;right:3px;top:5.5px;height:1.5px;background:#fff;transform:rotate(45deg)}
+.kicks i.m:before,.kicks i.m:after{content:"";position:absolute;left:50%;top:50%;width:8px;height:1.5px;margin:-.75px 0 0 -4px;background:#fff;transform:rotate(45deg)}
 .kicks i.m:after{transform:rotate(-45deg)}
 .kicks i.sd{border-style:dashed}
 .score{display:flex;align-items:center;gap:10px;background:#0d0d0fcc;border:1px solid var(--line);border-radius:99px;padding:7px 14px;backdrop-filter:blur(6px)}
 .score b{font:italic 800 18px/1 "Roboto Condensed",sans-serif;min-width:14px;text-align:center}
 .score .who{font-size:12px;color:var(--soft);max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#tag{position:absolute;top:calc(56px + env(safe-area-inset-top));left:0;right:0;text-align:center;font:italic 800 13px/1 "Roboto Condensed",sans-serif;letter-spacing:.2em;color:var(--soft);z-index:6;pointer-events:none}
+#tag{position:absolute;top:calc(86px + env(safe-area-inset-top));left:0;right:0;text-align:center;font:italic 800 13px/1 "Roboto Condensed",sans-serif;letter-spacing:.2em;color:var(--soft);z-index:6;pointer-events:none}
 /* power bar: weak / green / over, with the sweet spot marked in gold */
 #hint{position:absolute;left:0;right:0;bottom:calc(14% + env(safe-area-inset-bottom));text-align:center;font:italic 800 15px/1 "Roboto Condensed",sans-serif;letter-spacing:.18em;color:#fff;opacity:0;transition:opacity .2s;z-index:5;pointer-events:none;text-shadow:0 2px 8px #000}
 #hint.on{opacity:1}#hint i{display:block;font-style:normal;animation:pw-nudge .9s ease-in-out infinite}
 /* pop words */
 #pop{position:absolute;left:0;right:0;top:46%;text-align:center;font:italic 800 54px/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:-.01em;opacity:0;pointer-events:none;z-index:7;-webkit-text-stroke:2px #07080a;paint-order:stroke fill;text-shadow:0 6px 24px #000c}
 #pop.go{animation:pw-pop .95s cubic-bezier(.2,.9,.25,1)}
-#combo{position:absolute;right:0;left:0;text-align:center;top:calc(80px + env(safe-area-inset-top));font:italic 800 14px/1 "Roboto Condensed",sans-serif;color:var(--gold);letter-spacing:.1em;opacity:0;z-index:6}
+#combo{position:absolute;right:0;left:0;text-align:center;top:calc(108px + env(safe-area-inset-top));font:italic 800 14px/1 "Roboto Condensed",sans-serif;color:var(--gold);letter-spacing:.1em;opacity:0;z-index:6}
 #combo.on{opacity:1;animation:pw-flame .8s ease-in-out infinite alternate}
 /* the coach: The Wizard with a tip, and a ghost finger showing the swipe */
 #coach{position:absolute;left:12px;right:12px;top:47%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;background:#0d0d0fe6;border:1px solid var(--line);box-shadow:0 12px 30px #000a;z-index:7;opacity:0;transform:translateY(8px) scale(.98);transition:opacity .25s,transform .25s;pointer-events:none}
@@ -384,7 +384,7 @@ function dust(x){if(REDUCED)return;var d=$("dust"),p=P(x,0,GOAL.z),w=1.6*p.s,t0=
    camera's shake and zoom. TS slows simulated time for the decisive kicks;
    hitStop freezes it for a few frames on contact. */
 var CAM_FX={sx:0,sy:0,zoom:1,zoomTo:1,shake:0};
-var TS=1,hitStop=0,jobs=[],last=performance.now();
+var TS=1,SLOWNEXT=false,hitStop=0,jobs=[],last=performance.now();
 function every(fn){jobs.push(fn);}
 function tick(now){
   var real=Math.min(0.05,(now-last)/1000);last=now;
@@ -446,7 +446,8 @@ function boardNow(side){$("rowA").classList.toggle("now",side==="a");$("rowB").c
 var fx={
   pop:function(word,color){var p=$("pop");p.textContent=word;p.style.color=color||"#fff";p.classList.remove("go");void p.offsetWidth;p.classList.add("go");},
   shake:function(level){CAM_FX.shake=Math.max(CAM_FX.shake,level>1?9:4);},
-  slowmo:function(on){TS=on&&!REDUCED?0.38:1;CAM_FX.zoomTo=on&&!REDUCED?1.14:1;},
+  /* asks for slow motion on the NEXT kick's flight only; aiming stays full view */
+  slowmo:function(on){SLOWNEXT=!!on&&!REDUCED;if(!on){TS=1;CAM_FX.zoomTo=1;}},
   combo:function(n){var c=$("combo");if(n>=3){c.textContent="ON FIRE x"+n;c.classList.add("on");}else c.classList.remove("on");},
   buzz:function(ms){if(!MUTED&&navigator.vibrate)try{navigator.vibrate(ms);}catch(e){}},
   board:function(word,color){var f=$("bflash");f.textContent=word;f.style.color=color;f.style.textShadow="0 0 8px "+color;f.classList.remove("go");void f.offsetWidth;f.classList.add("go");},
@@ -583,11 +584,16 @@ function playKick(k){
   if(k.shot.aim){aim={x:k.shot.aim.x,y:aim.y===3.4||k.outcome==="bar"?aim.y:k.shot.aim.y};if(k.outcome==="bar")aim.x=Math.max(-3.4,Math.min(3.4,k.shot.aim.x));}
   var curl=k.shot.curl!=null?k.shot.curl:(Math.random()*0.8-0.4),side=curl>=0?1:-1;
   var f=flightPlan(aim,power,curl),kp=keeperPose(k.dive);
+  /* What you see must agree with the call. A save: the keeper's dive ends on
+     the ball's line. A goal: he ends clearly away from it. */
+  if(k.outcome==="save"){kp.x=Math.max(-3.2,Math.min(3.2,aim.x));kp.y=Math.max(0.45,Math.min(1.8,aim.y));
+    if(Math.abs(kp.x)<0.9&&kp.img!=="k-jump.webp"&&aim.y>=1.22)kp.img="k-jump.webp";}
+  if(k.outcome==="goal"&&Math.abs(kp.x-aim.x)<1.2&&Math.abs(kp.y-aim.y)<1.1){kp.x=Math.max(-3.4,Math.min(3.4,aim.x+(kp.x>=aim.x?1.3:-1.3)));}
   trailGold=perfect;
   /* run-up: three strides to the ball */
   S.img="s-run.webp";
   return tween(180,function(u){S.x=-0.72+0.3*u;S.z=-1.25+0.65*u;}).then(function(){
-    S.img="s-strike.webp";fx.buzz(12);hitStop=0.05;
+    S.img="s-strike.webp";fx.buzz(12);hitStop=0.05;if(SLOWNEXT){TS=0.38;CAM_FX.zoomTo=1.14;}
     return new Promise(function(done){
       var t=0,phase="fly",after=0,k0={x:K.x,y:K.y},reacted=false,launched=false,landed=false,settled=false,landT=0,heldIt=false,loadT=0,fallV=0,saveAt=f.T*(kp.x===0&&kp.y<1?0.97:0.93);
       var vx=f.vx,vy=f.vy,vz=f.vz,ox=0,oy=0.11,lastHit=0;
