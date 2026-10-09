@@ -229,7 +229,14 @@ test("the pop-up steps through every safe pick on a game, not just the likeliest
 test("every refused game has a safe swap: no question, the swaps are booked and the reader is told", () => {
   const fnSrc = body("confirmAfterRefusal");
   assert.match(fnSrc, /if\(n&&\(refused\|\|\[\]\)\.length===n&&alts\.every\(Boolean\)\)\{/);
-  assert.match(fnSrc, /swToast\(n\+\(n===1\?" game":" games"\)\+" updated to what "\+plain\(B\.label\)\+" offers now"/);
+  assert.match(fnSrc, /swToast\(n\+\(n===1\?" game":" games"\)\+" updated to what "\+String\(B\.label\|\|"the bookmaker"\)\+" offers now"/);
+  /* It runs before the pop-up's own helpers are defined: a call to one of them
+     (plain(), on 9 Oct) threw, and the catch said "Couldn't reach the booking
+     service" on every refused slip. So the early path may use nothing declared
+     below it. */
+  const early = fnSrc.slice(fnSrc.indexOf("NO QUESTION WHEN"), fnSrc.indexOf("var plain="));
+  assert.ok(early.length > 0, "the auto-swap sits before plain() is defined");
+  assert.doesNotMatch(early, /\bplain\(|\boptHTML\(|\blabel\(\)/, "and calls nothing defined after it");
   assert.match(fnSrc, /go\(alts\);\s*return;/);
 });
 

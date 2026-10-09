@@ -14143,7 +14143,7 @@ function confirmAfterRefusal(target,names,keep,B,go,refused,h){
      nothing to offer, where the choice really is the reader's. */
   if(n&&(refused||[]).length===n&&alts.every(Boolean)){
     clearPrompt(target);
-    if(window.swToast) swToast(n+(n===1?" game":" games")+" updated to what "+plain(B.label)+" offers now","",
+    if(window.swToast) swToast(n+(n===1?" game":" games")+" updated to what "+String(B.label||"the bookmaker")+" offers now","",
       "swapnote");
     go(alts);
     return;
