@@ -93,7 +93,7 @@ test("only senior men's national competitions go to the international fit", () =
                "International Africa Cup of Nations Qualification"];
   const no = ["International Clubs UEFA Champions League", "International Clubs Club Friendly Games",
               "International Youth U21 UEFA European Championship, Qualification",
-              "International Int. Friendly Games, Women",
+              "International Int. Friendly Games, Women", "International Int. Friendly Games W",
               "Simulated Reality League UEFA Nations League SRL", "England Premier League"];
   for (const l of yes) assert.equal(I.isNationalCompetition(l), true, l);
   for (const l of no) assert.equal(I.isNationalCompetition(l), false, l);

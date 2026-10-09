@@ -26,6 +26,12 @@ const assert = require("node:assert");
 
 const { isUnratedCompetition } = require("../lib/build.js");
 
+test("a competition name ending in a bare W is women's football (9 Oct 2026)", () => {
+  assert.strictEqual(isUnratedCompetition("International Int. Friendly Games W"), true);
+  assert.strictEqual(isUnratedCompetition("International Int. Friendly Games W", { has: () => true }), true);
+  assert.strictEqual(isUnratedCompetition("Germany Bundesliga", { has: () => true }), false);
+});
+
 test("the reported fixture's competition is refused", () => {
   assert.strictEqual(isUnratedCompetition("Germany Amateur DFB-Pokal Junioren"), true);
 });
