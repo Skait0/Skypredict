@@ -227,3 +227,21 @@ test("ranked: the board keeps each device's best, longest first, and says where 
   assert.strictEqual(all.top[0].name, "Old");
   assert.strictEqual((await w.call("GET", "board", null, { period: "ever" })).code, 400);
 });
+
+test("league (owner, 9 Oct 2026): promotion is instant, relegation waits for Monday, the table is your division", async () => {
+  const w = world();  // world clock: 2026-10-08 (a Thursday), Lagos week from Mon 2026-10-05
+  w.db.t.runs = {
+    A: { device: DEV1, name: "Tobi", streak: 7, created_at: "2026-09-30T10:00:00.000Z" },   // last week: Champions tier
+    B: { device: DEV1, name: "Tobi", streak: 2, created_at: "2026-10-07T10:00:00.000Z" },   // this week only 2
+    C: { device: DEV2, name: "Ada", streak: 6, created_at: "2026-10-07T11:00:00.000Z" },    // promoted to Champions this week
+    D: { device: DEV3, name: "Bola", streak: 4, created_at: "2026-10-07T12:00:00.000Z" },   // NPFL
+  };
+  const me = (await w.call("GET", "board", null, { period: "league", device: DEV1 })).json();
+  assert.strictEqual(me.division.name, "Champions League", "last week's tier holds until Monday");
+  assert.deepStrictEqual(me.top.map((x) => x.name), ["Ada", "Tobi"]);
+  assert.deepStrictEqual(me.division.next, { name: "Legend", at: 10, need: 8 });
+  const bola = (await w.call("GET", "board", null, { period: "league", device: DEV3 })).json();
+  assert.strictEqual(bola.division.name, "NPFL");
+  assert.deepStrictEqual(bola.top.map((x) => x.name), ["Bola"]);
+  assert.strictEqual(P.divisionOf(0, 0), 0); assert.strictEqual(P.divisionOf(0, 3), 1); assert.strictEqual(P.divisionOf(12, 0), 3);
+});

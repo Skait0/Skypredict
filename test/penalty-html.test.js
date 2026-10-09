@@ -645,3 +645,14 @@ test("game lettering (owner, 9 Oct 2026): gradient word, shadow outline, rays, r
   assert.match(html, /@keyframes pw-pop\{0%\{opacity:0;transform:scale\(2\.5\)/);
   assert.match(html, /#tag\.shot\{background:linear-gradient/);
 });
+
+test("batch 2 (owner, 9 Oct 2026): a League tab with your division's crest, promotion when your division goes up", () => {
+  const lb = grabFn("leaderboard");
+  assert.match(lb, /\[\["league","League"\],\["today","Today"\],\["week","Week"\],\["all","All time"\]\]/);
+  assert.match(lb, /per==="league"&&r\.j\.division/);
+  assert.match(grabFn("crest"), /<svg viewBox="0 0 48 56"/);
+  assert.match(grabFn("promote"), /PW\.fx\.pop\("PROMOTED!",DIV\[t\]\[1\],DIV\[t\]\[2\]\.toUpperCase\(\)\)/);
+  assert.match(grabFn("survival"), /lg\.division\.tier>was\)setTimeout\(function\(\)\{promote\(lg\.division\.tier\);\}/);
+  assert.match(html, /F\.leaderboard\("league"\)/, "the menu opens your league");
+  assert.match(html, /#pop\{[^}]*z-index:13/, "the word sits above the promotion overlay");
+});

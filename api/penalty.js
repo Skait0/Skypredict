@@ -192,6 +192,7 @@ function make(deps) {
     /* The tables: today and this week (Lagos), and all time. Best run per device. */
     async board(req, res, t) {
       const per = String((req.query || {}).period || "today");
+      if (per === "league") return league(req, res, t);
       const since = per === "today" ? P.lagosDay(t) + "T00:00:00+01:00" : per === "week" ? P.lagosWeek(t) + "T00:00:00+01:00" : per === "all" ? null : undefined;
       if (since === undefined) return bad(res);
       const dev = String((req.query || {}).device || ""), seen = new Set(), rows = [];
@@ -205,6 +206,28 @@ function make(deps) {
       return H.sendJson(res, 200, { period: per, top: rows.slice(0, 20), me });
     },
   };
+  /* MY LEAGUE: everyone in your division this week, by their best run this
+     week. Division = max(last week's earned tier, this week's), so the table
+     moves the moment someone is promoted. */
+  async function league(req, res, t) {
+    const dev = String((req.query || {}).device || "");
+    const thisWk = P.lagosWeek(t), lastWk = P.lagosWeek(t - 7 * DAY_MS);
+    const rows = await db.board(lastWk + "T00:00:00+01:00", 5000);
+    const start = Date.parse(thisWk + "T00:00:00+01:00"), who = new Map();
+    for (const r of rows) {
+      const w = who.get(r.device) || { name: r.name, last: 0, now: 0 };
+      if (Date.parse(r.created_at) >= start) { w.now = Math.max(w.now, r.streak); w.name = r.name; } else w.last = Math.max(w.last, r.streak);
+      who.set(r.device, w);
+    }
+    const me = who.get(dev) || { last: 0, now: 0 };
+    const tier = P.divisionOf(me.last, me.now), D = P.DIVISIONS, next = D[tier + 1] || null;
+    const table = [...who.entries()].filter(([, w]) => w.now > 0 && P.divisionOf(w.last, w.now) === tier)
+      .sort((a, b) => b[1].now - a[1].now).map(([d, w]) => ({ name: w.name, streak: w.now, you: d === dev }));
+    const rank = table.findIndex((x) => x.you) + 1;
+    return H.sendJson(res, 200, { period: "league", division: { tier, id: D[tier].id, name: D[tier].name,
+      next: next ? { name: next.name, at: next.at, need: Math.max(0, next.at - me.now) } : null },
+      top: table.slice(0, 20), me: rank ? { rank, streak: me.now } : null, players: table.length });
+  }
   const POSTS = new Set(["create", "kick", "daily", "picks", "ranked"]);
 
   return async function handler(req, res) {

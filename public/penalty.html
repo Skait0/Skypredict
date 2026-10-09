@@ -121,7 +121,7 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
    thick ink outline and a 3D drop; a shine sweeps it; rays and a shockwave
    ring burst behind; it slams in big and blurred, overshoots and settles. The
    colour of the moment rides --c. */
-#pop{position:absolute;left:0;right:0;top:44%;text-align:center;font:italic 800 64px/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:-.01em;opacity:0;pointer-events:none;z-index:7;isolation:isolate;--c:#fff}
+#pop{position:absolute;left:0;right:0;top:44%;text-align:center;font:italic 800 64px/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:-.01em;opacity:0;pointer-events:none;z-index:13;isolation:isolate;--c:#fff}
 #pop .w{display:inline-block;padding:0 .1em;transform:skewX(-9deg);color:transparent;-webkit-text-fill-color:transparent;
   background:linear-gradient(105deg,transparent 40%,#ffffffd9 50%,transparent 60%) 150% 0/300% 100% no-repeat,linear-gradient(180deg,#fff 0%,#fff 16%,var(--c) 50%,color-mix(in srgb,var(--c) 55%,#000) 100%);
   -webkit-background-clip:text;background-clip:text;filter:drop-shadow(2px 0 0 #07080a) drop-shadow(-2px 0 0 #07080a) drop-shadow(0 2px 0 #07080a) drop-shadow(0 -2px 0 #07080a) drop-shadow(0 4px 0 #07080a) drop-shadow(0 7px 0 color-mix(in srgb,var(--c) 40%,#000)) drop-shadow(0 14px 20px #000c)}
@@ -185,6 +185,13 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .smenu{float:right;margin:0 0 4px 12px;height:32px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:none;color:var(--soft);font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}
 .smenu:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 #sheet h2.best{color:var(--gold)}
+/* DIVISION CRESTS (owner, 9 Oct 2026 - batch 2): a shield per division */
+.crest{display:inline-block;vertical-align:middle;flex:none}.crest svg{display:block;width:100%;height:100%}
+.lb li.lgh{display:flex;align-items:center;gap:10px;padding:4px 4px 10px;border:0}.lb li.lgh b{color:#F2F1F0}.lgh b{display:block;font:italic 800 18px/1.1 "Roboto Condensed",sans-serif}.lgh span{display:block;font-size:12.5px;color:var(--soft)}
+#promo{position:absolute;inset:0;z-index:12;display:grid;place-items:center;align-content:start;padding-top:22%;background:radial-gradient(circle at 50% 35%,#2a1d06f2,#07080af7 70%);opacity:0;pointer-events:none}
+#promo.go{animation:pw-vs 2.6s ease both;pointer-events:auto}
+#promo .crest{width:150px;height:175px}#promo.go .crest{animation:pw-flip 1s cubic-bezier(.2,.9,.25,1) both}
+@keyframes pw-flip{0%{opacity:0;transform:perspective(700px) rotateY(200deg) scale(.3)}60%{opacity:1;transform:perspective(700px) rotateY(-14deg) scale(1.12)}100%{transform:perspective(700px) rotateY(0) scale(1)}}
 /* THE VS CARD (EA FC's walkout): your face, theirs, what is at stake */
 #vs{position:absolute;inset:0;z-index:12;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 12px;background:radial-gradient(circle at 50% 50%,#2a0e12f2,#07080af7 70%);opacity:0;pointer-events:none}
 #vs.go{animation:pw-vs 1.7s ease both}
@@ -287,6 +294,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
   <button id="snd" type="button"></button>
   <div id="hud"><div class="sboard"><div class="srow" id="rowA"><i class="av" id="avA"></i><span class="who" id="whoA">YOU</span><span class="kicks" id="kA"></span><b id="scA">0</b></div><div class="srow" id="rowB"><i class="av" id="avB"></i><span class="who" id="whoB">CPU</span><span class="kicks" id="kB"></span><b id="scB">0</b></div></div></div>
   <div id="tag"></div><div id="combo"></div>
+  <div id="promo" aria-hidden="true"></div>
   <div id="vs" aria-hidden="true"><div class="vl"><i></i><b></b></div><div class="vx">VS<span class="vm"></span></div><div class="vr"><i></i><b></b></div></div>
   <a id="exit" href="/" aria-label="Soccerwizard home"><img src="/penalty/wiz-64.webp?v=12" alt="" width="26" height="26"></a>
   <div id="hint"></div>
@@ -1123,6 +1131,8 @@ function survival(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);askN
          Again comes first and biggest; under it, who to beat next. */
       var best=0;try{best=+localStorage.getItem("pw.rbest")||0;}catch(e){}
       var nb=streak>best&&streak>0;if(nb){try{localStorage.setItem("pw.rbest",String(streak));}catch(e){}PW.fx.pop("NEW BEST!","#F2B84B",streak+" IN A ROW");PW.fx.flash(0.16,320);PW.fx.buzz([30,40,80]);}
+      leagueTier(function(lg){if(lg){var was=-1;try{was=+(localStorage.getItem("pw.div")||-1);}catch(e){}
+        try{localStorage.setItem("pw.div",String(lg.division.tier));}catch(e){}if(was>=0&&lg.division.tier>was)setTimeout(function(){promote(lg.division.tier);},500);}});
       api("GET","board",null,{period:"today",device:PW.DEV}).then(function(b){var me=b.j&&b.j.me,top=(b.j&&b.j.top)||[],line;
         if(me&&streak>0){var above=me.rank>1&&top[me.rank-2];
           line=me.rank===1?"You're top of today's table.":"You're number "+me.rank+" today."+(above?" "+(above.streak-me.streak+1)+" more to pass "+above.name+".":"");}
@@ -1130,23 +1140,35 @@ function survival(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);askN
         var h=el("h2",nb?"best":null,nb?"New best: "+streak+" in a row":streak+(streak===1?" goal":" goals")+" in a row");
         sheet([h,el("p",null,line+(nb||!best?"":" Your best: "+best+"."))]
           .concat([btn("Again","red",function(){closeSheet();survival();}),
-            row(btn("Leaderboard","ghost",function(){closeSheet();leaderboard("today");}),btn("Challenge a friend","ghost",function(){closeSheet();challenger();}))],
+            row(btn("Leaderboard","ghost",function(){closeSheet();leaderboard("league");}),btn("Challenge a friend","ghost",function(){closeSheet();challenger();}))],
             shareSheet("I scored "+streak+" in a row against the Wizard Keeper on Play Penalty. Beat that:",ORIGIN+"/penalty","survival")));});});}
   PW.vs(name,PW.char,"Wizard Keeper","wizard","RANKED").then(next);});}
 function row(a,b){var r=el("div","row");r.appendChild(a);r.appendChild(b);return r;}
-/* THE LEADERBOARD: today, this week, all time; best run per player, top 20. */
+/* DIVISION CRESTS: Grassroots, NPFL, Champions League, Legend. */
+var DIV=[["G","#B07B4F","Grassroots"],["N","#2FD48A","NPFL"],["C","#4FA3E8","Champions League"],["L","#F2B84B","Legend"]];
+function crest(t,w){var d=DIV[t]||DIV[0],c=el("span","crest");c.style.width=w+"px";c.style.height=Math.round(w*1.16)+"px";
+  c.innerHTML='<svg viewBox="0 0 48 56" aria-hidden="true"><path d="M24 2 44 9v17c0 13-9 23-20 28C13 49 4 39 4 26V9z" fill="'+d[1]+'" stroke="#07080a" stroke-width="3" stroke-linejoin="round"/>'+
+    '<path d="M24 8 38 13v13c0 9-6 16-14 20-8-4-14-11-14-20V13z" fill="#ffffff2e"/><text x="24" y="35" text-anchor="middle" font-family="Roboto Condensed,sans-serif" font-style="italic" font-weight="800" font-size="19" fill="#07080a">'+d[0]+'</text></svg>';return c;}
+/* THE PROMOTION MOMENT: the new crest flips in, PROMOTED slams over it. */
+function promote(t){var p=$("promo");p.textContent="";p.appendChild(crest(t,150));p.classList.remove("go");void p.offsetWidth;p.classList.add("go");
+  PW.fx.pop("PROMOTED!",DIV[t][1],DIV[t][2].toUpperCase());PW.fx.buzz([30,40,90]);PW.fx.flash(0.18,360);
+  p.onclick=function(){p.classList.remove("go");};setTimeout(function(){p.classList.remove("go");},2600);}
+function leagueTier(cb){api("GET","board",null,{period:"league",device:PW.DEV}).then(function(r){cb(r.status===200&&r.j&&r.j.division?r.j:null);});}
+/* THE LEADERBOARD: your league this week, then today, this week, all time; best run per player, top 20. */
 function leaderboard(per){
   var tabs=el("div","lbt"),list=el("ol","lb");
-  [["today","Today"],["week","This week"],["all","All time"]].forEach(function(x){var b=el("button",x[0]===per?"on":"",x[1]);b.type="button";
+  [["league","League"],["today","Today"],["week","Week"],["all","All time"]].forEach(function(x){var b=el("button",x[0]===per?"on":"",x[1]);b.type="button";
     b.addEventListener("click",function(){leaderboard(x[0]);});tabs.appendChild(b);});
   sheet([el("h2",null,"Leaderboard"),el("p",null,"Ranked sudden death: goals in a row against the Wizard Keeper."),tabs,list,btn("Play Ranked","red",function(){closeSheet();survival();})]);
   list.appendChild(el("li","lbe","Loading..."));
   api("GET","board",null,{period:per,device:PW.DEV}).then(function(r){list.textContent="";var top=(r.j&&r.j.top)||[];
     if(r.status!==200){list.appendChild(el("li","lbe","Couldn't load the table. Try again shortly."));return;}
-    if(!top.length){list.appendChild(el("li","lbe","Nobody on the table yet. Be the first."));return;}
+    if(per==="league"&&r.j.division){var dv=r.j.division,hd=el("li","lgh"),tx=el("div");hd.appendChild(crest(dv.tier,34));
+      tx.appendChild(el("b",null,dv.name));tx.appendChild(el("span",null,dv.next?(dv.next.need?dv.next.need+" more in a row this week for "+dv.next.name:"Promoted to "+dv.next.name+" next week"):"Top division"));hd.appendChild(tx);list.appendChild(hd);}
+    if(!top.length){list.appendChild(el("li","lbe",per==="league"?"Nobody in your division has scored this week. Be the first.":"Nobody on the table yet. Be the first."));return;}
     top.forEach(function(x,k){var li=el("li",x.you?"you":"");li.appendChild(el("b",null,String(k+1)));li.appendChild(el("span",null,x.name));li.appendChild(el("i",null,String(x.streak)));list.appendChild(li);});
     var me=r.j.me;if(me&&me.rank>20){var li=el("li","you");li.appendChild(el("b",null,String(me.rank)));li.appendChild(el("span",null,"You"));li.appendChild(el("i",null,String(me.streak)));list.appendChild(li);}});}
-window.PWFlow={survival:survival,leaderboard:leaderboard,row:row,challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,offline:offline,charPicker:charPicker,practice:practice};
+window.PWFlow={survival:survival,leaderboard:leaderboard,promote:promote,row:row,challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,offline:offline,charPicker:charPicker,practice:practice};
 })();
 </script>
 <script>
@@ -1207,7 +1229,7 @@ function home(){
     /* The one that always works comes first (owner: "there is no play
        against computer" - it sat below the fold of the sheet on a phone). */
     F.btn("Play the computer","red",function(){F.closeSheet();F.practice();}),
-    F.row(F.btn("Ranked","ghost",function(){F.closeSheet();F.survival();}),F.btn("Leaderboard","ghost",function(){F.closeSheet();F.leaderboard("today");})),
+    F.row(F.btn("Ranked","ghost",function(){F.closeSheet();F.survival();}),F.btn("Leaderboard","ghost",function(){F.closeSheet();F.leaderboard("league");})),
     F.btn("Face today's Wizard Keeper","ghost",function(){F.closeSheet();daily();}),
     F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})];
   var foot=F.el("div","sfoot"),how=F.el("button",null,"How to play"),mute=F.el("button",null,PW.muted?"Sound off":"Sound on");how.type=mute.type="button";
