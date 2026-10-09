@@ -19,6 +19,11 @@ function fakeDb() {
     async getPlay(d, dev) { const p = t.plays[d + dev]; return p ? JSON.parse(JSON.stringify(p)) : null; },
     async putPlay(r, prev) { const cur = t.plays[r.day + r.device]; if ((cur ? cur.shots_n : 0) !== prev) return false; t.plays[r.day + r.device] = JSON.parse(JSON.stringify(r)); return true; },
     async rankFor(day, s) { const all = Object.values(t.plays).filter((p) => p.day === day && p.score != null); return { below: all.filter((p) => p.score < s).length, total: all.length }; },
+    async setPicks(id, dev, s, d) { const m = t.m[id]; if (!m || m.challenger_device !== dev || m.kicks_n !== 0) return false; m.ch_shots = s; m.ch_dives = d; return true; },
+    async createRun(r) { t.runs = t.runs || {}; if (t.runs[r.id]) return false; t.runs[r.id] = JSON.parse(JSON.stringify(r)); return true; },
+    async getRun(id) { return t.runs && t.runs[id] ? JSON.parse(JSON.stringify(t.runs[id])) : null; },
+    async appendRun(id, n, patch) { const r = t.runs && t.runs[id]; if (!r || r.kicks_n !== n) return false; Object.assign(r, JSON.parse(JSON.stringify(patch))); return true; },
+    async board(since) { return Object.values(t.runs || {}).filter((r) => r.streak > 0 && (!since || r.created_at >= new Date(since).toISOString())).sort((a, b) => b.streak - a.streak || (a.created_at < b.created_at ? -1 : 1)); },
     async mine(dev) { return Object.values(t.m).filter((m) => m.challenger_device === dev && m.finished_at).map((m) => ({ id: m.id, friend_name: m.friend_name, result: m.result, finished_at: m.finished_at })); },
   };
 }
@@ -173,4 +178,52 @@ test("tips carry today's wizard slip code, or the latest one before today, never
   assert.deepStrictEqual(pickCode(map, "2026-10-08"), { date: "2026-10-08", games: 3, odds: 4.2, codes: { sporty: "B" } });
   assert.strictEqual(pickCode(map, "2026-10-10").date, "2026-10-09");
   assert.strictEqual(pickCode({ "2026-10-09": map["2026-10-09"] }, "2026-10-08"), null);
+});
+
+/* ---------------------------------------------------------------- link first and ranked (owner, 9 Oct 2026) */
+test("a challenge can go out before its picks: the friend waits, the picks land once, then it plays", async () => {
+  const w = world();
+  const r = await w.call("POST", "create", { name: "Tobi", device: DEV1 });
+  assert.strictEqual(r.code, 200); const id = r.json().id;
+  assert.strictEqual((await w.call("GET", "match", null, { id, device: DEV2 })).json().pending, true);
+  assert.strictEqual((await w.call("POST", "kick", { id, device: DEV2, name: "Ada", kind: "shot", spot: 0, power: 0.7 })).json().error, "pending");
+  assert.strictEqual((await w.call("POST", "picks", { id, device: DEV2, shots: shots([0, 1, 2, 3, 4, 5, 0, 1], 0.7), dives: [5, 5, 5, 5, 5, 5, 5, 5] })).code, 409, "only the challenger");
+  assert.strictEqual((await w.call("POST", "picks", { id, device: DEV1, shots: shots([0, 1, 2], 0.7), dives: [5] })).code, 400);
+  assert.strictEqual((await w.call("POST", "picks", { id, device: DEV1, shots: shots([0, 1, 2, 3, 4, 5, 0, 1], 0.7), dives: [5, 5, 5, 5, 5, 5, 5, 5] })).code, 200);
+  assert.strictEqual((await w.call("POST", "picks", { id, device: DEV1, shots: shots([0, 1, 2, 3, 4, 5, 0, 1], 0.7), dives: [0, 0, 0, 0, 0, 0, 0, 0] })).code, 409, "once");
+  assert.strictEqual((await w.call("GET", "match", null, { id, device: DEV2 })).json().pending, false);
+  const k = await w.call("POST", "kick", { id, device: DEV2, name: "Ada", kind: "shot", spot: 0, power: 0.7 });
+  assert.strictEqual(k.code, 200); assert.strictEqual(k.json().outcome, "goal");
+});
+
+test("ranked: the server judges every kick against a keeper the page cannot know; a miss ends the run", async () => {
+  const w = world(), key = "k".repeat(32);
+  let r = await w.call("POST", "ranked", { device: DEV1, name: "Tobi", i: 0, spot: 2, power: 0.7 });
+  assert.strictEqual(r.code, 200); let j = r.json(); const run = j.run;
+  const expect = (i, spot, streak) => P.judge({ spot, power: 0.7 }, P.rankedDive(key, run, i, spot, streak));
+  assert.strictEqual(j.outcome, expect(0, 2, 0));
+  let i = 0, streak = 0;
+  while (j.alive) { streak = j.streak; i++; const spot = i % 6;
+    r = await w.call("POST", "ranked", { device: DEV1, run, i, spot, power: 0.7 }); j = r.json();
+    assert.strictEqual(j.outcome, expect(i, spot, streak)); if (i > 400) break; }
+  assert.strictEqual(j.alive, false);
+  const again = await w.call("POST", "ranked", { device: DEV1, run, i: i + 1, spot: 0, power: 0.7 });
+  assert.strictEqual(again.code, 409, "a finished run takes no more kicks");
+  const other = await w.call("POST", "ranked", { device: DEV2, run, i: i + 1, spot: 0, power: 0.7 });
+  assert.strictEqual(other.code, 404, "nobody else's device can kick it");
+  assert.strictEqual((await w.call("POST", "ranked", { device: DEV1, i: 0, spot: 0, power: 0.7 })).code, 400, "a run needs a name");
+});
+
+test("ranked: the board keeps each device's best, longest first, and says where you stand", async () => {
+  const w = world();
+  w.db.t.runs = { A: { id: "AAAAAA", device: DEV1, name: "Tobi", streak: 4, created_at: "2026-10-08T09:00:00.000Z" },
+    B: { id: "BBBBBB", device: DEV1, name: "Tobi", streak: 9, created_at: "2026-10-08T09:30:00.000Z" },
+    C: { id: "CCCCCC", device: DEV2, name: "Ada", streak: 7, created_at: "2026-10-08T08:00:00.000Z" },
+    D: { id: "DDDDDD", device: DEV3, name: "Old", streak: 30, created_at: "2026-09-01T08:00:00.000Z" } };
+  const today = (await w.call("GET", "board", null, { period: "today", device: DEV2 })).json();
+  assert.deepStrictEqual(today.top.map((x) => [x.name, x.streak]), [["Tobi", 9], ["Ada", 7]]);
+  assert.deepStrictEqual(today.me, { rank: 2, streak: 7 });
+  const all = (await w.call("GET", "board", null, { period: "all" })).json();
+  assert.strictEqual(all.top[0].name, "Old");
+  assert.strictEqual((await w.call("GET", "board", null, { period: "ever" })).code, 400);
 });

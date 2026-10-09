@@ -93,6 +93,7 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .kicks i{position:relative;width:14px;height:14px;border-radius:50%;border:1.5px solid #ffffff40;transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
 .kicks i.g{background:var(--green);border-color:var(--green);transform:scale(1.1)}
 .kicks i.m{background:var(--red);border-color:var(--red)}
+.kicks i.l{background:#F2B84B99;border-color:#F2B84B}
 .kicks i.m:before,.kicks i.m:after{content:"";position:absolute;left:50%;top:50%;width:8px;height:1.5px;margin:-.75px 0 0 -4px;background:#fff;transform:rotate(45deg)}
 .kicks i.m:after{transform:rotate(-45deg)}
 .kicks i.sd{border-style:dashed}
@@ -200,6 +201,12 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
 .crow+.crow{border-top:1px solid var(--line)}
 .crow>span{font-size:15px}.crow code{font:800 16px/1 "Plus Jakarta Sans",system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.04em;color:var(--gold)}
 .btn.sm{height:28px;margin:0;padding:0 13px;width:auto;font-size:12px}.tips p{margin:0 0 4px!important;font-size:13px!important}.tips .btn.red{height:46px;margin-top:8px}
+.lbt{display:flex;gap:6px;margin:4px 0 8px}.lbt button{flex:1;height:34px;border-radius:99px;border:1px solid var(--line);background:none;color:var(--soft);font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}
+.lbt button.on{background:var(--card2);color:var(--text);border-color:#F2B84B88}
+.lb{list-style:none;margin:0 0 6px;padding:0;max-height:46vh;overflow:auto}
+.lb li{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:8px;padding:7px 4px;font-size:14px}.lb li+li{border-top:1px solid var(--line)}
+.lb b{color:var(--soft);font-variant-numeric:tabular-nums}.lb i{font-style:normal;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+.lb li.you{background:#F2B84B14;border-radius:8px}.lb li.you span{color:var(--gold)}.lb .lbe{display:block;color:var(--soft)}
 .sfoot{display:flex;flex-wrap:wrap;justify-content:center;gap:0 18px;margin-top:10px}
 .sfoot button{background:none;border:0;color:var(--soft);font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;padding:10px 4px;cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line)}
 @keyframes pw-marquee{to{transform:translateX(-50%)}}
@@ -544,7 +551,7 @@ function drawBoard(){
   $("avA").style.backgroundImage=face(ME);$("avB").style.backgroundImage=face(OPP||other());
   [["a","kA","scA"],["b","kB","scB"]].forEach(function(r){var outs=BOARD[r[0]],host=$(r[1]);host.textContent="";
     var n=Math.max(REG,BOARD.a.length,BOARD.b.length);if(n>REG&&!BOARD.single)n=Math.max(BOARD.a.length,BOARD.b.length)+(BOARD.a.length===BOARD.b.length?1:0);
-    for(var i=0;i<Math.max(REG,n);i++){var c=document.createElement("i");if(i>=REG)c.className="sd";if(i<outs.length)c.className=outs[i]==="goal"?"g":"m";host.appendChild(c);}
+    for(var i=0;i<Math.max(REG,n);i++){var c=document.createElement("i");if(i>=REG)c.className="sd";if(i<outs.length)c.className=outs[i]==="goal"?"g":outs[i]==="locked"?"l":"m";host.appendChild(c);}
     $(r[2]).textContent=outs.filter(function(o){return o==="goal";}).length;});
   $("rowB").hidden=BOARD.single;
 }
@@ -788,6 +795,7 @@ function playKick(k){
               vx=(col(k.dive)===1?(Math.random()<.5?-1:1):(col(k.dive)===0?-1:1))*(4+Math.random()*4);vz=-f.vz*0.22;vy=3.5+Math.random()*3;ox=B.x;oy=B.y;after=0;}
           }else if(t>=f.T){phase="after";ox=B.x;oy=B.y;after=0;
             if(k.outcome==="goal"){impact("goal");vx=(vx+f.ax*f.T)*0.25;vy=0;vz=4;}
+            else if(k.outcome==="locked"){impact("locked");vz=f.vz*0.15;vy=0;vx=0;}
             else if(k.outcome==="bar"){impact("bar");vz=-f.vz*0.32;vy=-Math.abs(f.vy-9.81*f.T)*0.25-0.5;vx*=0.4;}
             else{impact("over");vz=f.vz;vy=f.vy-9.81*f.T;vx=vx+f.ax*f.T;}
           }
@@ -798,7 +806,7 @@ function playKick(k){
           else if(B.att){B.x=K.x;B.y=Math.max(0.25,K.y);B.z=GOAL.z-0.15;}
           else{vy-=9.81*dt;B.x+=vx*dt;B.y+=vy*dt;B.z+=vz*dt;
             if(B.y<0.11){B.y=0.11;vy=Math.abs(vy)*RESTITUTION;vx*=0.8;vz*=0.8;if(vy<0.6)vy=0;if(after-lastHit>0.08){lastHit=after;if(vy>1.2)fx.shake(0);}}
-            if(k.outcome==="over")B.alpha=Math.max(0,1-after*1.6);}
+            if(k.outcome==="over"||k.outcome==="locked")B.alpha=Math.max(0,1-after*1.6);}
           B.rot+=dt*400*side;
           TRAIL.forEach(function(p){p.o=Math.max(0,p.o-dt*3.5);});drawTrail();spellTick(dt,null,0,false);
           if(after>1.05){done();return false;}
@@ -822,6 +830,7 @@ function playKick(k){
 
   function impact(what,caught){
     var bp=P(B.x,B.y,B.z);
+    if(what==="locked"){fx.pop("LOCKED IN","#F2B84B");fx.buzz(20);return;}
     if(what==="goal"){
       var nh=netAt(B.x,B.y);NETI={x:B.x,y:B.y};netHit(NETN,nh.i,nh.j,12+power*8);NETLIVE=true;hitStop=0.07;fx.shake(kind==="green"?2:1);fx.buzz(40);fx.hype();
       var top=high(k.shot.spot)&&col(k.shot.spot)!==1&&kind==="green";
@@ -861,7 +870,7 @@ window.PW={RULES:{strike:strike,neighbour:neighbour,judge:judge,shootout:shootou
   tag:function(t){setTag(t);},
   coachReset:function(){COACHED={};try{localStorage.removeItem("pw.coach");}catch(e){}},
   smartDive:smartDive,levelOf:levelOf,trailFor:trailFor,get xp(){return XP;},
-  setMuted:setMuted,get muted(){return MUTED;},
+  setMuted:setMuted,get muted(){return MUTED;},mark:function(side,o){BOARD[side].push(o);drawBoard();},
   setSolo:function(on){SOLO=!!on;SPELL=0;SPELLARMED=false;SPELLNOW=false;drawSpell();newWind();},consumeSpell:consumeSpell,
   get char(){return ME;},setChar:function(c){ME=c==="wizard"?"wizard":"ten";try{localStorage.setItem("pw.char",ME);}catch(e){}loadChar(ME);SC=ME;KC=OPP||other();drawBoard();},
   resetStreak:function(){streak=0;fx.combo(0);},
@@ -966,30 +975,28 @@ function tipsCard(){var box=el("div","tips");
     var b1=el("a","btn red","Build me a slip");b1.href="/";b1.addEventListener("click",function(){track("tips_clicked",{to:"build"});});box.appendChild(b1);});
   return box;}
 
-/* THE CHALLENGER: 5 shots + 3 bonus vs a computer keeper, 5 dives + 3 bonus
-   vs computer shots. Judged here (no stakes); the picks go to the server. */
+/* THE CHALLENGER (owner, 9 Oct 2026: "challenge a friend directly"): the link
+   goes out first; then 8 kicks and 8 dives, blind - each one LOCKED IN, judged
+   only when the friend plays them. No pretend match against the computer. */
 function challenger(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);askName().then(function(name){
-  var shots=[],dives=[],outs=[],i=0,cpu=0;PW.newBoard("Computer",false);
-  function cpuDive(){return Math.floor(Math.random()*6);}
-  function cpuShot(){return {spot:Math.floor(Math.random()*6),power:0.45+Math.random()*0.5};}
-  var p=Promise.resolve();
-  for(var i=0;i<REG+BONUS;i++)(function(n){p=p.then(function(){
-    if(n===REG)PW.fx.pop("BONUS KICKS","#F2B84B");
-    PW.fx.slowmo(n===REG-1);
-    return PW.aimAndShoot().then(function(s){shots.push(s);var d=cpuDive(),o=R.judge(s,d);
-      outs.push(o);
-      return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:d,outcome:o});})
-    .then(function(){return PW.pickDive();})
-    .then(function(dv){dives.push(dv);var cs=cpuShot(),co=R.judge(cs,dv);if(co!=="goal")cpu++;return PW.playKick({who:"them",shot:R.strike(cs.spot,cs.power),dive:dv,outcome:co});});
-  });})(i);
-  p.then(function save(){PW.fx.slowmo(false);
-    return api("POST","create",{name:name,device:PW.DEV,shots:shots,dives:dives}).then(function(r){
-      if(r.status!==200)return offline(save);
-      track("challenge_created");
-      var url=ORIGIN+"/p/"+r.j.id,score=outs.filter(function(o){return o==="goal";}).length,n=REG+BONUS;
-      sheet([el("h2",null,"Your kicks are set"),el("p",null,"Practice: you scored "+score+" of "+n+" and saved "+cpu+" of "+n+". Send the link: your friend plays against your real kicks and dives.")].concat(shareSheet("I've set my penalties on Play Penalty. Bet you can't save them:",url,"challenge"),[tipsCard()]));
-    });});
+  api("POST","create",{name:name,device:PW.DEV}).then(function(r){
+    if(r.status!==200)return offline(challenger);
+    track("challenge_created");var id=r.j.id,url=ORIGIN+"/p/"+id;
+    sheet([el("h2",null,"Send your challenge"),el("p",null,"Send the link now, then take your 8 kicks and 8 dives. Your friend plays them when you're done.")]
+      .concat(shareSheet("Bet you can't save my penalties on Play Penalty:",url,"challenge"),[btn("Take my kicks","red",function(){closeSheet();kicks(id,url);})]));});
 });}
+function kicks(id,url){var shots=[],dives=[],p=Promise.resolve();PW.newBoard("Your dives",false);
+  for(var n=0;n<REG+BONUS;n++)(function(n){p=p.then(function(){
+    if(n===REG)PW.fx.pop("BONUS KICKS","#F2B84B");
+    return PW.aimAndShoot().then(function(s){shots.push({spot:s.spot,power:s.power});
+      return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:null,outcome:"locked"});})
+    .then(function(){return PW.pickDive();})
+    .then(function(dv){dives.push(dv);PW.fx.pop("LOCKED IN","#F2B84B");PW.fx.buzz(20);PW.mark("b","locked");return new Promise(function(ok){setTimeout(ok,700);});});
+  });})(n);
+  p.then(function save(){return api("POST","picks",{id:id,device:PW.DEV,shots:shots,dives:dives}).then(function(r){
+    if(r.status!==200)return offline(save);
+    sheet([el("h2",null,"Your kicks are in"),el("p",null,"Your friend now plays your real kicks and dives. You'll see the result here when they finish.")]
+      .concat(shareSheet("Bet you can't save my penalties on Play Penalty:",url,"challenge"),[tipsCard()]));});});}
 
 /* THE FRIEND: alternate shot then dive; the server judges and reveals only the
    shot just taken. A dropped connection resumes at the next kick. */
@@ -998,6 +1005,8 @@ function friend(id){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);api(
   if(r.status!==200)return sheet([el("h2",null,"This challenge doesn't exist"),btn("Start your own","red",function(){closeSheet();challenger();})]);
   var m=r.j;track("challenge_opened");
   if(m.expired)return sheet([el("h2",null,"This challenge ran out"),btn("Start your own","red",function(){closeSheet();challenger();})]);
+  if(m.pending&&m.role==="challenger")return sheet([el("h2",null,"Take your kicks"),el("p",null,"Your friend can't play until your 8 kicks and 8 dives are in."),btn("Take my kicks","red",function(){closeSheet();kicks(id,ORIGIN+"/p/"+id);})]);
+  if(m.pending)return sheet([el("h2",null,m.challenger+" is still taking their kicks"),el("p",null,"Check back in a minute."),btn("Check again","red",function(){closeSheet();friend(id);})]);
   if(m.done)return result(m.score.a,m.score.b,m.winner,m.challenger,id,m.role,m.friend);
   var url=ORIGIN+"/p/"+id;
   if(m.role==="challenger")return sheet([el("h2",null,m.outcomes.length?m.friend+" is taking your challenge":"Waiting for a friend"),
@@ -1034,18 +1043,36 @@ function result(a,b,winner,chName,id,role,frName){
   sheet([el("h2",null,head)].concat(shareSheet(text,url,"result"),[btn("Start your own challenge","ghost",function(){closeSheet();challenger();}),tipsCard()]));
 }
 
-/* SUDDEN DEATH: you shoot until you miss; the keeper learns your habits. */
-function survival(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(true);var run=0,best=0;try{best=+localStorage.getItem("pw.best")||0;}catch(e){}
-  PW.newBoard("Sudden death",true);PW.tag("SUDDEN DEATH");
-  function next(){PW.aimAndShoot().then(function(s){var sp=PW.consumeSpell(),d=PW.smartDive(s.spot,run,Math.random),o=R.judge(s,d);if(sp&&o==="save")o="goal";
-      return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:d,outcome:o}).then(function(){return o;});})
-    .then(function(o){if(o==="goal"){run++;return next();}
-      var nb=run>best;if(nb){best=run;try{localStorage.setItem("pw.best",String(best));}catch(e){}}track("survival_over",{run:run});
-      sheet([el("h2",null,run+(run===1?" goal":" goals")+" in a row"),el("p",null,nb&&run>0?"New best!":"Your best: "+best)]
-        .concat(shareSheet("I scored "+run+" in a row against the keeper on Play Penalty. Beat that:",ORIGIN+"/penalty","survival"),
-          [btn("Go again","red",function(){closeSheet();survival();}),btn("Back","ghost",function(){closeSheet();if(window.PWHome)window.PWHome();})]));});}
-  next();}
-window.PWFlow={survival:survival,challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,offline:offline,charPicker:charPicker,practice:practice};
+/* RANKED SUDDEN DEATH (owner, 9 Oct 2026): you shoot until you miss; every kick
+   is judged on the server against a keeper that reads you more as the streak
+   grows, so the leaderboard can trust it. */
+function survival(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);askName().then(function(name){
+  var run=null,i=0,streak=0;PW.newBoard("Ranked",true);PW.tag("RANKED");
+  function kick(s){return api("POST","ranked",{device:PW.DEV,name:name,run:run,i:i,spot:s.spot,power:s.power}).then(function(r){
+    if(r.status!==200)return new Promise(function(ok){offline(function(){closeSheet();ok(kick(s));});});return r.j;});}
+  function next(){PW.aimAndShoot().then(function(s){return kick(s).then(function(j){run=j.run;i=j.i+1;streak=j.streak;
+      var o=j.outcome,d=o==="save"?s.spot:(s.spot+1+Math.floor(Math.random()*5))%6;
+      return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:d,outcome:o}).then(function(){return j;});});})
+    .then(function(j){if(j.alive)return next();track("survival_over",{run:streak});
+      api("GET","board",null,{period:"today",device:PW.DEV}).then(function(b){var me=b.j&&b.j.me;
+        sheet([el("h2",null,streak+(streak===1?" goal":" goals")+" in a row"),el("p",null,me&&streak>0?"You're number "+me.rank+" today. Best today: "+me.streak+".":"Score once to get on today's table.")]
+          .concat(shareSheet("I scored "+streak+" in a row against the Wizard Keeper on Play Penalty. Beat that:",ORIGIN+"/penalty","survival"),
+            [row(btn("Go again","red",function(){closeSheet();survival();}),btn("Leaderboard","ghost",function(){closeSheet();leaderboard("today");}))]));});});}
+  next();});}
+function row(a,b){var r=el("div","row");r.appendChild(a);r.appendChild(b);return r;}
+/* THE LEADERBOARD: today, this week, all time; best run per player, top 20. */
+function leaderboard(per){
+  var tabs=el("div","lbt"),list=el("ol","lb");
+  [["today","Today"],["week","This week"],["all","All time"]].forEach(function(x){var b=el("button",x[0]===per?"on":"",x[1]);b.type="button";
+    b.addEventListener("click",function(){leaderboard(x[0]);});tabs.appendChild(b);});
+  sheet([el("h2",null,"Leaderboard"),el("p",null,"Ranked sudden death: goals in a row against the Wizard Keeper."),tabs,list,btn("Play Ranked","red",function(){closeSheet();survival();})]);
+  list.appendChild(el("li","lbe","Loading..."));
+  api("GET","board",null,{period:per,device:PW.DEV}).then(function(r){list.textContent="";var top=(r.j&&r.j.top)||[];
+    if(r.status!==200){list.appendChild(el("li","lbe","Couldn't load the table. Try again shortly."));return;}
+    if(!top.length){list.appendChild(el("li","lbe","Nobody on the table yet. Be the first."));return;}
+    top.forEach(function(x,k){var li=el("li",x.you?"you":"");li.appendChild(el("b",null,String(k+1)));li.appendChild(el("span",null,x.name));li.appendChild(el("i",null,String(x.streak)));list.appendChild(li);});
+    var me=r.j.me;if(me&&me.rank>20){var li=el("li","you");li.appendChild(el("b",null,String(me.rank)));li.appendChild(el("span",null,"You"));li.appendChild(el("i",null,String(me.streak)));list.appendChild(li);}});}
+window.PWFlow={survival:survival,leaderboard:leaderboard,row:row,challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,offline:offline,charPicker:charPicker,practice:practice};
 })();
 </script>
 <script>
@@ -1106,7 +1133,7 @@ function home(){
     /* The one that always works comes first (owner: "there is no play
        against computer" - it sat below the fold of the sheet on a phone). */
     F.btn("Play the computer","red",function(){F.closeSheet();F.practice();}),
-    F.btn("Sudden Death","ghost",function(){F.closeSheet();F.survival();}),
+    F.row(F.btn("Ranked","ghost",function(){F.closeSheet();F.survival();}),F.btn("Leaderboard","ghost",function(){F.closeSheet();F.leaderboard("today");})),
     F.btn("Face today's Wizard Keeper","ghost",function(){F.closeSheet();daily();}),
     F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})];
   var foot=F.el("div","sfoot"),how=F.el("button",null,"How to play"),mute=F.el("button",null,PW.muted?"Sound off":"Sound on");how.type=mute.type="button";

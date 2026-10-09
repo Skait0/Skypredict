@@ -110,7 +110,7 @@ test("analytics events named in the spec are sent", () => {
 });
 
 test("the challenger takes 5 shots and 3 bonus shots, 5 dives and 3 bonus dives", () => {
-  assert.match(html, /for\(var i=0;i<REG\+BONUS;i\+\+\)/);
+  assert.match(grabFn("kicks"), /for\(var n=0;n<REG\+BONUS;n\+\+\)/);
 });
 
 
@@ -379,11 +379,12 @@ test("the Sudden Death keeper reads you better with every goal, but never perfec
   assert.ok(late < 0.75, "still beatable: " + late.toFixed(2));
 });
 
-test("Sudden Death runs on the phone, keeps a best, and is on the home screen", () => {
+test("Sudden Death is Ranked (owner, 9 Oct 2026): judged on the server, on the home screen beside the leaderboard", () => {
   const f = grabFn("survival");
-  assert.doesNotMatch(f, /api\(/);
-  assert.match(f, /pw\.best/);
-  assert.match(html, /"Sudden Death"/);
+  assert.match(f, /api\("POST","ranked",\{device:PW\.DEV,name:name,run:run,i:i,spot:s\.spot,power:s\.power\}\)/);
+  assert.doesNotMatch(f, /smartDive|consumeSpell/, "nothing on the phone decides a ranked kick");
+  assert.match(html, /F\.btn\("Ranked","ghost".*F\.btn\("Leaderboard","ghost"/);
+  assert.match(grabFn("leaderboard"), /api\("GET","board",null,\{period:per,device:PW\.DEV\}\)/);
 });
 
 test("your goals earn points with a floating tag, and the level shows at home", () => {
@@ -513,8 +514,8 @@ test("the trail is a spell: star motes spiral round the ball's path; a summoning
 });
 
 test("solo modes add wind and a spell meter; challenges and the daily stay plain and fair", () => {
-  for (const f of ["practice", "survival", "forFun"]) assert.match(grabFn(f), /PW\.setSolo\(true\)/, f);
-  for (const f of ["challenger", "friend", "daily"]) assert.match(grabFn(f), /PW\.setSolo\(false\)/, f);
+  for (const f of ["practice", "forFun"]) assert.match(grabFn(f), /PW\.setSolo\(true\)/, f);
+  for (const f of ["challenger", "friend", "daily", "survival"]) assert.match(grabFn(f), /PW\.setSolo\(false\)/, f);
   assert.match(html, /function consumeSpell\(/);
   assert.match(html, /id="cast"/);
   assert.match(html, /id="wind"/);
@@ -532,7 +533,7 @@ test("the legendary shot: LEGEND shows only while you aim, freezes the keeper, a
   assert.match(html, /#app\.legend #keeper\{filter:/);
   assert.doesNotMatch(html, /id="runes"/, "the rune circle is gone");
   assert.match(html, /#spellbox\[hidden\]\{display:none\}/, "display:flex must not beat hidden: no meter in challenges or the daily");
-  for (const f of ["practice", "survival", "forFun"]) assert.match(grabFn(f), /if\(sp&&o==="save"\)o="goal"/, f);
+  for (const f of ["practice", "forFun"]) assert.match(grabFn(f), /if\(sp&&o==="save"\)o="goal"/, f);
 });
 
 test("every sprite address carries the art version, so new art is never served from an old cache", () => {
@@ -597,9 +598,11 @@ test("release step 2 (owner, 9 Oct 2026): Play Penalty in the phone bar with a j
 test("owner, 9 Oct 2026: a way back to the site on every screen; the challenge result counts what the board counts", () => {
   assert.match(html, /<a id="exit" href="\/" aria-label="Soccerwizard home"><img src="\/penalty\/wiz-64\.webp\?v=/, "the way out shows where it goes");
   assert.match(html, /"Soccerwizard home"\);site\.type="button"/);
-  const f = grabFn("challenger");
-  assert.doesNotMatch(f, /if\(n<REG\)\{outs\.push/, "every kick counts, as on the scoreboard");
-  assert.match(f, /"Practice: you scored "\+score\+" of "\+n\+" and saved "\+cpu\+" of "\+n/);
+  /* owner, 9 Oct 2026: link first, then blind kicks - no pretend match against the computer */
+  assert.match(grabFn("challenger"), /api\("POST","create",\{name:name,device:PW\.DEV\}\)/);
+  assert.match(grabFn("kicks"), /outcome:"locked"/);
+  assert.match(grabFn("kicks"), /api\("POST","picks",\{id:id,device:PW\.DEV,shots:shots,dives:dives\}\)/);
+  assert.match(grabFn("friend"), /if\(m\.pending\)return sheet/);
 });
 
 test("owner, 9 Oct 2026: every end-of-game sheet has a way back to the game menu", () => {

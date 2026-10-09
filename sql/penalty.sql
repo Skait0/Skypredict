@@ -28,3 +28,19 @@ create table if not exists penalty_daily_plays (
 );
 create index if not exists penalty_daily_rank on penalty_daily_plays (day, score);
 alter table penalty_daily_plays enable row level security;
+
+-- Ranked (owner, 9 Oct 2026): sudden death against a keeper only the server
+-- knows; the leaderboard reads the longest streaks.
+create table if not exists penalty_ranked_runs (
+  id text primary key check (id ~ '^[A-Z2-9]{6}$'),
+  created_at timestamptz not null default now(),
+  device text not null,
+  name text not null,
+  kicks jsonb not null default '[]'::jsonb,
+  kicks_n int not null default 0,
+  streak int not null default 0,
+  alive boolean not null default true
+);
+create index if not exists penalty_ranked_board on penalty_ranked_runs (streak desc, created_at);
+create index if not exists penalty_ranked_recent on penalty_ranked_runs (created_at desc);
+alter table penalty_ranked_runs enable row level security;
