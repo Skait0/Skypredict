@@ -524,7 +524,8 @@ test("the legendary shot: LEGEND shows only while you aim, freezes the keeper, a
   const aim = grabFn("aimAndShoot");
   assert.match(aim, /AIMING=true;drawSpell\(\)/);
   assert.match(aim, /AIMING=false;drawSpell\(\)/);
-  assert.match(html, /"ARMED":"LEGEND"/, "short labels: a long one covered the ball and blocked the swipe");
+  assert.match(html, /#cast\{[^}]*width:64px;height:64px;[^}]*border-radius:50%/, "a round button that never covers the ball");
+  assert.match(html, /#cast\[hidden\]\{display:none\}/);
   assert.match(grabFn("playKick"), /\$\("app"\)\.classList\.add\("legend"\)/);
   assert.match(html, /#app\.legend #keeper\{filter:/);
   assert.doesNotMatch(html, /id="runes"/, "the rune circle is gone");

@@ -138,8 +138,24 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #snd{position:absolute;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:7;width:42px;height:42px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--line);background:#0d0d0fcc;color:#F2F1F0;cursor:pointer}
 #snd[aria-pressed="false"]{color:var(--soft)}
 #snd:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-#cast{position:absolute;right:14px;bottom:calc(18% + env(safe-area-inset-bottom));z-index:7;height:46px;padding:0 18px;border-radius:99px;border:1px solid var(--gold);background:radial-gradient(circle at 30% 30%,#3a2a10,#0d0d0f);color:var(--gold);font:italic 800 15px/1 "Roboto Condensed",sans-serif;letter-spacing:.16em;box-shadow:0 0 0 0 #f2b84b88;animation:pw-castpulse 1.4s ease-out infinite;cursor:pointer}
-#cast.armed{background:var(--gold);color:#0d0d0f;animation:none;box-shadow:0 0 24px #f2b84b}
+/* THE LEGENDARY BUTTON (owner: "a round electrifying button"): a charged orb.
+   Ready: a gold-and-red charge ring turns round it. Armed: the core lights gold,
+   the ring races, arcs crackle round the rim, and a shockwave goes out once. */
+#cast{position:absolute;right:16px;bottom:calc(18% + env(safe-area-inset-bottom));z-index:7;width:64px;height:64px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;isolation:isolate;cursor:pointer;color:#F2B84B;background:radial-gradient(circle at 35% 30%,#4a3410,#121114 68%)}
+#cast[hidden]{display:none}
+#cast:before{content:"";position:absolute;inset:-3px;z-index:-1;border-radius:50%;background:conic-gradient(#F2B84B,#E63946 22%,#F2B84B 45%,#2a2a30 60%,#F2B84B 80%,#E63946 92%,#F2B84B);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));animation:pw-spin 2.6s linear infinite}
+#cast .bolt{width:30px;height:30px;filter:drop-shadow(0 2px 3px #000a);animation:pw-hum 1.6s ease-in-out infinite}
+#cast .arcs{position:absolute;inset:-12px;width:88px;height:88px;opacity:0;pointer-events:none}
+#cast .wave{position:absolute;inset:0;border-radius:50%;border:2px solid #F2B84B;opacity:0;pointer-events:none}
+#cast.armed{color:#14120E;background:radial-gradient(circle at 35% 30%,#FFE6A6,#F2B84B 55%,#A9741C)}
+#cast.armed:before{animation-duration:.6s}
+#cast.armed .bolt{animation:pw-hum .35s steps(2) infinite}
+#cast.armed .arcs{opacity:1;animation:pw-crackle .22s steps(1) infinite}
+#cast.zap .wave{animation:pw-wave .6s cubic-bezier(.2,.9,.25,1)}
+@keyframes pw-spin{to{transform:rotate(1turn)}}
+@keyframes pw-hum{50%{transform:scale(1.08)}}
+@keyframes pw-crackle{0%{transform:rotate(0)}33%{transform:rotate(120deg) scaleX(-1)}66%{transform:rotate(240deg)}}
+@keyframes pw-wave{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(2.4)}}
 @keyframes pw-castpulse{0%{box-shadow:0 0 0 0 #f2b84b88}100%{box-shadow:0 0 0 16px #f2b84b00}}
 /* LEGENDARY: the full meter glows; on the shot the kicker burns gold and the keeper is frozen */
 #spellbox.full span{text-shadow:0 0 8px var(--gold)}#spellbox.full b{box-shadow:0 0 10px var(--gold);animation:pw-castpulse 1.4s ease-out infinite}
@@ -211,7 +227,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
   <svg class="layer" id="bolt" style="z-index:8"></svg>
   <div id="wind" hidden>CALM</div>
   <div id="spellbox" hidden><span>LEGENDARY</span><b><i></i></b></div>
-  <button id="cast" type="button" hidden>LEGEND</button>
+  <button id="cast" type="button" hidden aria-label="Legendary shot"><svg class="arcs" viewBox="0 0 88 88" aria-hidden="true" fill="none" stroke="#FFE6A6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M44 3l-3 5 4 2-3 5"/><path d="M82 52l-5-1-1 4-5-2"/><path d="M12 70l4-3-3-3 5-3"/></svg><svg class="bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 5 13.5h5.5L9.5 22 19 9.5h-5.6z" fill="currentColor"/></svg><i class="wave"></i></button>
   <button id="snd" type="button"></button>
   <div id="hud"><div class="sboard"><div class="srow" id="rowA"><i class="av" id="avA"></i><span class="who" id="whoA">YOU</span><span class="kicks" id="kA"></span><b id="scA">0</b></div><div class="srow" id="rowB"><i class="av" id="avB"></i><span class="who" id="whoB">CPU</span><span class="kicks" id="kB"></span><b id="scB">0</b></div></div></div>
   <div id="tag"></div><div id="combo"></div>
@@ -504,7 +520,7 @@ var SOLO=false,WIND=0,SPELL=0,SPELLARMED=false,SPELLNOW=false,AIMING=false;
 function newWind(){WIND=SOLO&&Math.random()>0.25?Math.round((Math.random()*2-1)*20):0;var w=$("wind");
   w.hidden=!SOLO;w.innerHTML=WIND?"WIND "+Math.abs(WIND)+' km/h <svg width="14" height="10" viewBox="0 0 14 10" aria-hidden="true" style="vertical-align:-1px'+(WIND<0?";transform:scaleX(-1)":"")+'"><path d="M1 5h11M8 1l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>':"CALM";}
 function drawSpell(){var b=$("spellbox");b.hidden=!SOLO;b.classList.toggle("full",SPELL>=100);b.querySelector("i").style.transform="scaleX("+(SPELL/100)+")";
-  var c=$("cast");c.hidden=!(SOLO&&SPELL>=100&&AIMING);c.classList.toggle("armed",SPELLARMED);c.textContent=SPELLARMED?"ARMED":"LEGEND";}
+  var c=$("cast");c.hidden=!(SOLO&&SPELL>=100&&AIMING);c.classList.toggle("armed",SPELLARMED);c.setAttribute("aria-label",SPELLARMED?"Legendary shot armed":"Legendary shot");}
 function chargeSpell(n){if(!SOLO||SPELLARMED)return;SPELL=Math.min(100,SPELL+n);drawSpell();if(SPELL>=100)fx.buzz([10,30,10]);}
 function consumeSpell(){if(!SPELLARMED)return false;SPELLARMED=false;SPELL=0;SPELLNOW=true;drawSpell();return true;}
 /* ---------------------------------------------------------------- board
@@ -820,7 +836,7 @@ function playKick(k){
 }
 
 layout();drawBoard();
-$("cast").addEventListener("click",function(e){e.stopPropagation();if(SPELL>=100&&!SPELLARMED){SPELLARMED=true;drawSpell();fx.pop("LEGENDARY","#F2B84B","ON TARGET IS A GOAL");fx.buzz([20,20,40]);}});
+$("cast").addEventListener("click",function(e){e.stopPropagation();if(SPELL>=100&&!SPELLARMED){SPELLARMED=true;drawSpell();var c=$("cast");c.classList.remove("zap");void c.offsetWidth;c.classList.add("zap");fx.flash(0.12,200);hiss(0.45,2600,600,0.25,false,3);fx.pop("LEGENDARY","#F2B84B","ON TARGET IS A GOAL");fx.buzz([20,20,40]);}});
 $("cast").addEventListener("pointerdown",function(e){e.stopPropagation();});
 function drawSnd(){var b=$("snd");b.innerHTML=MUTED?'<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>':'<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.5 4.5 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>';b.setAttribute("aria-pressed",String(!MUTED));b.setAttribute("aria-label",MUTED?"Sound off":"Sound on");}
 $("snd").addEventListener("pointerdown",function(e){e.stopPropagation();});
