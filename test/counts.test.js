@@ -38,7 +38,7 @@ function counters(opts) {
     "function dayOff(d){return d;}" +
     "function fDay(f){return f.date;}" +
     "function leagueAllowed(l){return !Object.keys(CHOSEN).length||!!CHOSEN[l];}" +
-    "function isLowerFixture(f){return !!f.lower;}" +
+    "function outsideTop(f){return !!f.lower;}" +
     grab("buildableOn") + "\n" + grab("buildableAll") +
     "\nreturn {on:buildableOn,all:buildableAll};");
   return fn({ fixtures: opts.fixtures }, opts.topOnly || false, opts.chosen || {});

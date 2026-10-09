@@ -7509,8 +7509,8 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       </div>
       <div class="wsp-lbl stage-in stage-in-2">Leagues</div>
       <div class="wsp-chips stage-in stage-in-3" id="bldLeagues">
+        <button class="wsp-chip stage-in stage-in-4" type="button" data-btp="true">Top leagues</button>
         <button class="wsp-chip stage-in stage-in-4" type="button" data-btp="false">All leagues</button>
-        <button class="wsp-chip stage-in stage-in-4" type="button" data-btp="true">Top flight only</button>
         <!-- Third control in the same row rather than a bar of its own: it is
              one more way to narrow the same thing, and full width made it read
              as a section heading over the markets below it. -->
@@ -8624,17 +8624,24 @@ var ASIA_MIN_EURO=3;
    The guard first: a few top flights read like tiers - Korea's K-League 1,
    Japan's J1, Spain's La Liga 1 - and would otherwise be demoted by the
    "league 1" pattern below. */
-/* Is this FIXTURE below the top division?
-   Prefer the tier the build stamped on it: that was decided against the league
-   the model actually rated the clubs in, and for a cup tie it is the worse of
-   the two clubs' divisions - so an FA Cup tie against a fourth-tier side is
-   correctly not top flight, which no amount of reading the competition name
-   could tell us. Falls back to the name test for a payload baked before the
-   field existed, so an old cached board still behaves. */
-function isLowerFixture(f){
+/* TOP LEAGUES (owner, 9 Oct 2026): the top division of the 30 strongest
+   countries on UEFA's country coefficient (football-coefficient.eu, read that
+   day), plus the three UEFA club competitions. It replaced "Top flight only",
+   which let every country's first division in - Kosovo's and Moldova's beside
+   the Premier League. Domestic cups and everything else stay in All leagues.
+   Names are the board's own, exactly; a renamed feed label drops out of Top
+   leagues rather than in. Russia's coefficient is frozen since its 2022 ban
+   but it is still 28th, so it stays. */
+function outsideTop(f){
   if(!f) return false;
-  if(f.tier) return f.tier>1;
-  return isLowerLeague(f.league);
+  var l=f.league||"";
+  if(/^International Clubs UEFA (Champions|Europa|Conference) League$/.test(l)) return false;
+  return ["England Premier League","Italy Serie A","Spain La Liga 1","Germany Bundesliga 1","France Ligue 1",
+    "Portugal Primeira Liga","Netherlands Eredivisie","Belgium Pro League","Turkey Super Lig","Czechia 1. Liga",
+    "Greece Super League","Poland Ekstraklasa","Denmark Superliga","Norway Eliteserien","Cyprus 1st Division",
+    "Switzerland Super League","Austria Bundesliga","Scotland Premiership","Sweden Allsvenskan","Croatia HNL",
+    "Israel Premier League","Hungary NB I","Ukraine Premier League","Serbia Superliga","Romania Superliga",
+    "Slovenia PrvaLiga","Azerbaijan Premier League","Russia Premier League","Slovakia Superliga","Bulgaria Parva Liga"].indexOf(l)<0;
 }
 function isLowerLeague(l){
   var s=(l||"").toLowerCase();
@@ -8649,9 +8656,11 @@ function leagueRank(l){
   if(isSAleague(l)) return 2;
   return 1;
 }
-/* Top flight only by default (owner, 9 Oct 2026); a reader's own choice wins. */
-var TOP_ONLY=true; try{var _to=localStorage.getItem("sw.toponly"); if(_to!==null) TOP_ONLY=_to==="1";}catch(e){}
-function setTopOnly(v){TOP_ONLY=!!v;try{localStorage.setItem("sw.toponly",v?"1":"0");}catch(e){}}
+/* Top leagues by default (owner, 9 Oct 2026); a reader's own choice wins. */
+/* A new key, so every reader starts on Top leagues once - including those who
+   had switched "Top flight only" off; from here their own choice sticks. */
+var TOP_ONLY=true; try{var _to=localStorage.getItem("sw.topleagues"); if(_to!==null) TOP_ONLY=_to==="1";}catch(e){}
+function setTopOnly(v){TOP_ONLY=!!v;try{localStorage.setItem("sw.topleagues",v?"1":"0");}catch(e){}}
 function marketCount(){try{return Object.keys(BUILD.mk).filter(function(k){return BUILD.mk[k];}).length;}catch(e){return 0;}}
 /* THE SHUT FILTERS BAR NAMES EVERYTHING THAT IS NOT THE DEFAULT. The panel
    starts shut on a phone, so this line is all a reader sees of it: a window
@@ -8668,7 +8677,7 @@ function updateFiltersSum(){
     if(t) parts.push(t.textContent);
   }
   var lc=null; try{ lc=leagueCount(); }catch(e){}
-  if(TOP_ONLY) parts.push("Top flight");
+  if(TOP_ONLY) parts.push("Top leagues");
   /* Benched volatile leagues are leagues out, so the line agrees with the
      picker's count rather than claiming "All leagues". */
   if(lc&&(lc.narrowed||lc.live<lc.avail.length)) parts.push(lc.words);
@@ -10554,7 +10563,7 @@ function leaguesOnBoard(){
     if(!notStarted(f)) return false;
     return inScope(f);
   })).forEach(function(f){
-    if(TOP_ONLY&&isLowerFixture(f)) return;
+    if(TOP_ONLY&&outsideTop(f)) return;
     seen[f.league]=(seen[f.league]||0)+1;
   });
   return Object.keys(seen).sort(function(a,b){
@@ -10584,14 +10593,14 @@ function buildableOn(off){
     if(!notStarted(f)) continue;
     if(dayOff(fDay(f))!==off) continue;
     if(!leagueAllowed(f.league)) continue;
-    if(TOP_ONLY&&isLowerFixture(f)) continue;
+    if(TOP_ONLY&&outsideTop(f)) continue;
     out.push(f);}
   return out;
 }
 /* The same three filters with no day at all, for the "All upcoming" count. */
 function buildableAll(){
   return (DATA.fixtures||[]).filter(function(f){
-    return notStarted(f)&&leagueAllowed(f.league)&&!(TOP_ONLY&&isLowerFixture(f));
+    return notStarted(f)&&leagueAllowed(f.league)&&!(TOP_ONLY&&outsideTop(f));
   });
 }
 /* The same three filters across the whole span, for the pill that is showing
@@ -13798,7 +13807,7 @@ function buildPicks(){
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
   var refused=refusedToday(), rk=B.key+"|";
   scopeFixtures().forEach(function(f){
-    if(TOP_ONLY && isLowerFixture(f)) return;
+    if(TOP_ONLY&&outsideTop(f)) return;
     var homeFav=f.home_p>f.away_p;
     function sane(c){
       if(refused[rk+fid(f)+"|"+c]) return false;
@@ -20130,7 +20139,7 @@ function wspBuild(){
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
   var refused=refusedToday(), rk=curBook().key+"|";
   scopeFixtures().forEach(function(f){
-    if(TOP_ONLY && isLowerFixture(f)) return;
+    if(TOP_ONLY&&outsideTop(f)) return;
     if(WSP.removed && WSP.removed[fid(f)]) return;
     var homeFav=f.home_p>f.away_p,cands=[];
     allowed.forEach(function(c){
@@ -21054,7 +21063,7 @@ function bldSummary(){
     lead = (BUILD.risk==null) ? "No risk set" : riskWord(BUILD.risk);
   }
   return lead+" · "+mkN+" market"+(mkN===1?"":"s")+
-         (TOP_ONLY?" · top flight":"");
+         (TOP_ONLY?" · top leagues":"");
 }
 function renderBldDock(){
   var dock=$("bldDock"); if(!dock) return;
@@ -21820,7 +21829,7 @@ function renderWizardPanel(){
      when the window itself was empty - so that case says which it is. */
   var _reachLine="";
   if(_topReach>0 && _topReach<1.005){
-    var _inWin=scopeFixtures().filter(function(f){ return !(TOP_ONLY&&isLowerFixture(f)); }).length;
+    var _inWin=scopeFixtures().filter(function(f){ return !(TOP_ONLY&&outsideTop(f)); }).length;
     _reachLine=_inWin
       ? "No game "+windowWords()+" clears the bar on the markets you have on. "+
         "Switch on more markets and the payouts light up."
@@ -22228,7 +22237,7 @@ function renderBuilderOutput(){
       ? "<b>This window holds "+picks.length+" games we rate.</b> Every style "+
         "uses all of them, so none of them changes the slip"+
         (WSP._short?" and ×"+WSP.odds+" is out of reach":"")+
-        ". Widen the day span, or turn off top flight only, to trade games "+
+        ". Widen the day span, or switch to All leagues, to trade games "+
         "against odds."
       : "";
   }
@@ -23431,7 +23440,7 @@ load().catch(function(){});
   "use strict";
   var KEYS={slips:"sw.slips.v1",myslip:"sw.myslip",livefav:"sw.livefav",leaguefav:"formline.favs.v1"};
   var PREFS={book:"sw.book",mk:"sw.mk",risk:"sw.risk",mode:"sw.mode",wspodds:"sw.wspodds",
-    bldpick:"sw.bldpick",volin:"sw.volin",toponly:"sw.toponly",scope:"sw.scope",legodd:"sw.legodd",
+    bldpick:"sw.bldpick",volin:"sw.volin",topleagues:"sw.topleagues",scope:"sw.scope",legodd:"sw.legodd",
     avatar:"sw.avatar",name:"sw.name",theme:"sw.theme"};
   var META="sw.sync.meta", SLIPS_KEEP=60;
 

@@ -55,10 +55,10 @@ test("builder filters start open on every screen (owner, 9 Oct 2026: shut by def
   assert.deepStrictEqual(runFilters(false), { open: true, expanded: "true" });
 });
 
-test("shut, the filters bar says so with a filled Show filters pill; Top flight only is the default", () => {
+test("shut, the filters bar says so with a filled Show filters pill; Top leagues is the default", () => {
   assert.match(FILTERS, /hint\.textContent=open\?"Hide":"Show filters"/);
   assert.match(src, /\.filters-toggle\[aria-expanded="false"\] \.ft-hint\{background:var\(--accent\)/);
-  assert.match(src, /var TOP_ONLY=true; try\{var _to=localStorage\.getItem\("sw\.toponly"\); if\(_to!==null\) TOP_ONLY=_to==="1";\}/);
+  assert.match(src, /var TOP_ONLY=true; try\{var _to=localStorage\.getItem\("sw\.topleagues"\); if\(_to!==null\) TOP_ONLY=_to==="1";\}/);
 });
 
 test("a stored filters choice wins on both sizes", () => {
@@ -194,9 +194,9 @@ test("filters summary: the weekend, a single day with a time, all upcoming", () 
 
 test("filters summary: top flight, alone and with leagues narrowed", () => {
   /* Top flight drops lower leagues from the board itself, volatile ones included. */
-  assert.strictEqual(filtersSum({ LEAGUES: TOP3, TOP_ONLY: true }), "Top flight · 4 markets");
+  assert.strictEqual(filtersSum({ LEAGUES: TOP3, TOP_ONLY: true }), "Top leagues · 4 markets");
   assert.strictEqual(filtersSum({ TOP_ONLY: true, BLD_PICK: { "Serie A": 0 }, BUILD: { mk: { wd: true } } }),
-    "Top flight · 2 of 4 leagues · 1 market");
+    "Top leagues · 2 of 4 leagues · 1 market");
 });
 
 /* ---- the sheet for every bookmaker ---- */

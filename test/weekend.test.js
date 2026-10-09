@@ -51,7 +51,7 @@ function harness(today, store, board) {
     "function leagueAllowed(l){return l!=='V';}" +
     "function activeDays(){var s={};FX.forEach(function(f){var o=dayOff(f.date);if(o>=0)s[o]=1;});" +
     "return Object.keys(s).map(Number).sort(function(a,b){return a-b;});}" +
-    "function isLowerFixture(){return false;}" +
+    "function outsideTop(){return false;}" +
     "function esc(s){return String(s);}" +
     "function dayDate(o){return 'D'+(CLOCK.today+o);}" +
     "var painted=0; function paintScope(){painted++;}" +

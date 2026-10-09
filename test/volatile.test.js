@@ -40,7 +40,7 @@ function harness(fixtures, store) {
     "function notStarted(){return true;}" +
     "function dayOff(){return 0;}" + "function fDay(f){return f.date;}" +
     "function todFixtures(l){return l;}" +
-    "function isLowerFixture(f){return !!(f.tier&&f.tier>1);}" +
+    "function outsideTop(f){return !!(f.tier&&f.tier>1);}" +
     "function leagueRank(){return 1;}" +
     "function esc(s){return String(s);}" +
     "function setTopOnly(v){TOP_ONLY=!!v;}" +

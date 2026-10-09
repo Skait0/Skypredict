@@ -36,7 +36,7 @@ function harness(fixtures, store) {
     "function notStarted(){return true;}" +
     "function dayOff(){return 0;}" + "function fDay(f){return f.date;}" +
     "function todFixtures(l){return l;}" +
-    "function isLowerFixture(f){return !!(f.tier&&f.tier>1);}" +
+    "function outsideTop(f){return !!(f.tier&&f.tier>1);}" +
     "function leagueRank(){return 1;}" +
     "var BLD_PICK={}, VOL_IN=false, VOL_SRC=null, VOL_MAP={};" +
     grab("tierOf") + grab("loadLeaguePicks") + grab("isVolatile") + grab("leagueDefault") +

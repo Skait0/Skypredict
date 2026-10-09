@@ -41,54 +41,21 @@ function grab(name) {
   for (; k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) break; } }
   return src.slice(i, k + 1);
 }
-const page = new Function(
-  grab("isLowerLeague") + "\n" + grab("isLowerFixture") + "\n" +
-  "return {isLowerFixture:isLowerFixture, isLowerLeague:isLowerLeague};")();
+const page = new Function(grab("outsideTop") + "\nreturn {outsideTop:outsideTop};")();
 
-test("the reported leaks are no longer top flight", () => {
-  /* Each of these was showing under "top flight only". The tier is what the
-     build now stamps; the league label is deliberately the one the FEED uses,
-     which is the string the old filter was reading. */
-  const leaks = [
-    ["England National League", 5],
-    ["Denmark 1. Division", 2],
-    ["Ireland First Division", 2],
-    ["Romania Liga 2", 2],
-  ];
-  for (const [league, tier] of leaks) {
-    assert.strictEqual(page.isLowerFixture({ league, tier }), true,
-      league + " is not a top flight");
-  }
+/* TOP LEAGUES (owner, 9 Oct 2026) replaced "Top flight only": the top division
+   of UEFA's 30 strongest countries plus the three UEFA club competitions -
+   not every country's first division. */
+test("Top leagues: the 30 top divisions and the UEFA cups stay, everything else goes", () => {
+  for (const league of ["England Premier League", "Spain La Liga 1", "Germany Bundesliga 1", "Czechia 1. Liga",
+    "Bulgaria Parva Liga", "Russia Premier League", "International Clubs UEFA Champions League",
+    "International Clubs UEFA Europa League", "International Clubs UEFA Conference League"])
+    assert.strictEqual(page.outsideTop({ league }), false, league + " is a top league");
+  for (const league of ["England Championship", "Kosovo Superliga", "Moldova Super Liga", "Brazil Serie A",
+    "USA MLS", "England EFL Cup", "Germany DFB Pokal", "International Clubs CONMEBOL Libertadores",
+    "Greece Super League 2", "Nigeria Premier League"])
+    assert.strictEqual(page.outsideTop({ league }), true, league + " is All leagues only");
 });
-
-test("a genuine top flight still passes", () => {
-  for (const league of ["England Premier League", "Italy Serie A", "USA MLS",
-                        "Japan J1 League", "Norway Eliteserien"]) {
-    assert.strictEqual(page.isLowerFixture({ league, tier: 1 }), false,
-      league + " is a top flight and must not be filtered out");
-  }
-});
-
-test("an unmapped fixture is not smuggled into a top-flight filter", () => {
-  /* tier 0 means "we could not establish it". A filter that promises the top
-     division must exclude it rather than assume. */
-  assert.strictEqual(page.isLowerFixture({ league: "Some New Cup", tier: 0 }), false,
-    "precondition: tier 0 falls through to the name test");
-  /* ...and the name test is what decides, which is the old behaviour kept only
-     as a fallback for a payload baked before the field existed. */
-  assert.strictEqual(page.isLowerFixture({ league: "England Championship" }), true,
-    "with no tier stamped, the name test still has to work");
-});
-
-test("a stamped tier beats the league name", () => {
-  /* The National League case: the name says nothing useful, the tier does. */
-  assert.strictEqual(page.isLowerFixture({ league: "England National League" }), false,
-    "precondition: the name alone does not give it away - this was the bug");
-  assert.strictEqual(page.isLowerFixture({ league: "England National League", tier: 5 }), true,
-    "with the tier stamped it is correctly excluded");
-});
-
-/* --------------------------------------------------------- the build ladder */
 
 test("every league the build is configured for has a tier", () => {
   const missing = [];
@@ -135,7 +102,7 @@ test("nothing below the top division survives the filter on the real board", () 
   const fixtures = payload.fixtures || [];
   if (fixtures.length < 50) return;
 
-  const kept = fixtures.filter(f => !page.isLowerFixture(f));
+  const kept = fixtures.filter(f => !page.outsideTop(f));
   assert.ok(kept.length > 0, "the filter cannot empty the board");
 
   const wrong = kept.filter(f => f.tier && f.tier > 1)

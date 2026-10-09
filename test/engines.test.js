@@ -59,7 +59,7 @@ function konst(name) {
 }
 
 const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmerican",
-  "saWeight", "isLowerLeague", "isLowerFixture", "fid", "oddOf", "legOdd",
+  "saWeight", "isLowerLeague", "outsideTop", "fid", "oddOf", "legOdd",
   /* ONE FUNCTION ANSWERS "will this book take this leg" - see bookVerdict in
      index.html. Lifted, not stubbed: stubbing it is how three copies of the
      same bug survived. */

@@ -53,7 +53,7 @@ function stubEl(id) {
 }
 
 const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "isSAleague",
-  "isAsianLeague", "isAsian", "isSouthAmerican", "saWeight", "isLowerLeague", "isLowerFixture",
+  "isAsianLeague", "isAsian", "isSouthAmerican", "saWeight", "isLowerLeague", "outsideTop",
   "fid", "oddOf", "legOdd", "bookVerdict", "bookMayTake", "bookIsPriced", "bookIdOf",
   "hasRealOdd", "pricedFixture", "mProb", "allowedMarkets", "preferGoalsOverDouble",
   "isJackpotOdds", "wspMarkets", "codeMarket", "provenMarkets", "isProven", "safeUnpriced",
