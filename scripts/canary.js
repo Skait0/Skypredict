@@ -118,7 +118,7 @@ async function canary(key) {
     out.why = "nothing kicking off far enough ahead (" + pool.length + ")";
     return out;
   }
-  const legs = pool.slice(0, 2);
+  let legs = pool.slice(0, 2), next = 2;
 
   if (DRY) {
     out.ok = true;
@@ -126,18 +126,33 @@ async function canary(key) {
     return out;
   }
 
-  const sels = legs.map((l) => {
-    const s = { eventId: String(l.eventId) };
-    s[B.arg] = MARKET;
-    return s;
-  });
-  const r = await fetch(ORIGIN + "/api/book?book=" + key, {
-    method: "POST",
-    headers: { "User-Agent": UA, "Content-Type": "application/json" },
-    body: JSON.stringify({ selections: sels }),
-  });
-  const d = await r.json().catch(() => null);
-  const code = d && d.success && d[B.field];
+  /* A REFUSED LEG IS SWAPPED, NOT A FAILURE - the header always promised this
+     and the loop was never written, so one Bet9ja game without a home-win
+     market turned the whole run red on 9 Oct 2026 while booking itself worked.
+     Only a refusal that NAMES legs is retried, and only three times: a book
+     that refuses everything still fails, which is the point. */
+  let sels, r, d, code;
+  for (let tries = 0; tries < 3; tries++) {
+    sels = legs.map((l) => {
+      const s = { eventId: String(l.eventId) };
+      s[B.arg] = MARKET;
+      return s;
+    });
+    r = await fetch(ORIGIN + "/api/book?book=" + key, {
+      method: "POST",
+      headers: { "User-Agent": UA, "Content-Type": "application/json" },
+      body: JSON.stringify({ selections: sels }),
+    });
+    d = await r.json().catch(() => null);
+    code = d && d.success && d[B.field];
+    const named = (d && Array.isArray(d.unbookable) ? d.unbookable : []).map((u) => String(u.eventId));
+    if (code || !named.length) break;
+    const kept = legs.filter((l) => !named.includes(String(l.eventId)));
+    if (kept.length === legs.length) break;
+    while (kept.length < 2 && next < pool.length) kept.push(pool[next++]);
+    if (kept.length < 2) break;
+    legs = kept;
+  }
   if (!code) {
     out.why = "booking " + r.status + " " + JSON.stringify(d).slice(0, 140);
     return out;
