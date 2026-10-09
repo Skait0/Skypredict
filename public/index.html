@@ -14117,14 +14117,26 @@ function shortLine(f,code,B){
 /* EVERY HONEST OFFER, LIKELIEST FIRST. The pop-up shows the first and the
    reader can step through the rest (owner, 8 Oct 2026: "the options offered
    are always the same"). Anything this book refused today is left out. */
+/* A BUILT LEG IS ONLY EVER SWAPPED INTO A MARKET THE READER PICKED (owner,
+   9 Oct 2026: a reader got markets they had switched off, because a refused or
+   moved leg was swapped automatically into whatever the game had). Legs the
+   reader added by hand are theirs and keep every option. */
+function chipOn(code){
+  for(var k in MKT_BY_CHIP) if(MKT_BY_CHIP[k].indexOf(code)>=0) return !!(BUILD.mk[k]||WSP.mk[k]);
+  return false;
+}
+function builtLeg(c){
+  return !!(c&&(c.auto||MYSLIP.some(function(x){ return x.auto&&x.id===c.id&&x.code===c.code; })));
+}
 function safePicks(c,B){
   B=B||curBook();
+  var built=builtLeg(c);
   var f=c&&(c.f||fixtureById(c.id)); if(!f) return [];
   var ko=kickMs(f); if(ko!=null&&ko<=Date.now()) return [];
   if(/kicked off|started/.test(REFUSAL_WHY[c.id+"|"+c.code]||"")) return [];
   var own=f[B.odds]||{}, refused=refusedToday(), out=[];
   swapOptions(f).forEach(function(o){
-    if(o.code===c.code||!(o.p>=SAFE_ALT_MIN)) return;
+    if(o.code===c.code||!(o.p>=SAFE_ALT_MIN)||(built&&!chipOn(o.code))) return;
     if(!(own[o.code]>1.01)||!bookAllows(o.code,B)||shortLine(f,o.code,B)) return;
     if(refused[B.key+"|"+c.id+"|"+o.code]) return;
     if(out.some(function(x){return x.code===o.code;})) return;
@@ -19324,8 +19336,16 @@ function liveCheckMy(legs){
           var x=mine(v), f=x&&fixtureById(x.id); if(!x) return;
           if(v.reason==="line_moved"&&v.now&&+v.odds>1&&f){
             var o=f[B.odds]=f[B.odds]||{}; o[v.now]=+v.odds;
-            x.was=x.label; x.wasTo=v.now; x.code=v.now; x.label=mLabel(f,v.now);
-            var q=mProb(f,v.now); if(q!=null) x.p=q;
+            delete o[x.code];
+          }
+          /* The new line only if its chip is on; otherwise the likeliest pick
+             in a market the reader did pick; otherwise the game goes. */
+          var alt=(v.reason==="line_moved"&&v.now&&+v.odds>1&&f&&chipOn(v.now))
+            ? {code:v.now,label:mLabel(f,v.now),p:mProb(f,v.now)}
+            : (v.reason!=="started"&&nextSafePick(x,B));
+          if(alt){
+            x.was=x.label; x.wasTo=alt.code; x.code=alt.code; x.label=alt.label;
+            if(alt.p!=null) x.p=alt.p;
             moved++;
           } else {
             MYSLIP.splice(MYSLIP.indexOf(x),1); gone++;
@@ -19339,7 +19359,7 @@ function liveCheckMy(legs){
     saveMy(); renderFab();
     if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
     window.swToast&&window.swToast("SportyBet right now: "+
-      (moved?moved+(moved===1?" line":" lines")+" updated":"")+(moved&&gone?", ":"")+
+      (moved?moved+(moved===1?" game":" games")+" updated":"")+(moved&&gone?", ":"")+
       (gone?gone+(gone===1?" game":" games")+" closed and taken off":""),"info","livemy");
   }
   next();
@@ -19448,7 +19468,7 @@ function renderMySheet(){
           "aria-label=\"Change the pick for "+teams+"\">"+
           "<span class='sp-swap-lbl'>"+esc(x.label)+"</span></button></div>"
       : "<div class='sp-meta'>"+esc(x.label)+"</div>";
-    var was=x.was&&x.wasTo===x.code?"<div class='sp-meta'>Was "+esc(x.was)+" - SportyBet moved the line</div>":"";
+    var was=x.was&&x.wasTo===x.code?"<div class='sp-meta'>Was "+esc(x.was)+" - SportyBet changed it</div>":"";
     return "<div class='sp-row'>"+
       "<div class='sp-main'><div class='sp-teams'>"+teams+noid+"</div>"+
         picker+was+"</div>"+

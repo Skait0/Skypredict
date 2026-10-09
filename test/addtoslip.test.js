@@ -114,12 +114,14 @@ test("a built slip is checked on SportyBet's live card as it lands", async () =>
      goals line takes SportyBet's line and price and says what it was; a
      closed one leaves the slip; an unanswered leg stays as it was. */
   let sent = null, toast = null;
-  const F = { a: { id: "a", eventId: "e1", sportyOdds: {} }, b: { id: "b", eventId: "e2" }, c: { id: "c", eventId: "e3" } };
+  const F = { a: { id: "a", eventId: "e1", sportyOdds: {} }, b: { id: "b", eventId: "e2" }, c: { id: "c", eventId: "e3" }, d: { id: "d", eventId: "e4", sportyOdds: {} } };
   const run = new Function("F", "FETCH", "TOAST", [
     "var MYBOOK_GEN=0, B={key:'sporty',book:'/api/book?book=sporty',odds:'sportyOdds',id:'eventId',",
     "  sel:function(c){return {eventId:F[c.id].eventId,prediction:c.code};}};",
     "var MYSLIP=[{id:'a',code:'HOME_OVER_0.5',label:'HOME_OVER_0.5'},{id:'b',code:'OVER_1.5',label:'OVER_1.5'},",
-    "  {id:'c',code:'1',label:'1'}];",
+    "  {id:'c',code:'1',label:'1'},{id:'d',code:'AWAY_OVER_0.5',label:'AWAY_OVER_0.5'}];",
+    "function chipOn(c){return c!=='AWAY_OVER_1.5';}",
+    "function nextSafePick(x){return x.id==='d'?{code:'1X',label:'1X',p:0.8}:null;}",
     "function curBook(){return B;} function bookIdOf(c){return F[c.id].eventId;} function fixtureById(id){return F[id];}",
     "function mLabel(f,c){return c;} function mProb(){return 0.7;} function saveMy(){} function renderFab(){}",
     "function $(){return null;} var fetch=FETCH, window={swToast:TOAST};",
@@ -128,11 +130,13 @@ test("a built slip is checked on SportyBet's live card as it lands", async () =>
   ].join("\n"));
   const slip = run(F, (url, o) => { sent = JSON.parse(o.body); return Promise.resolve({ json: () => ({ verdicts: [
     { eventId: "e1", prediction: "HOME_OVER_0.5", reason: "line_moved", now: "HOME_OVER_1.5", odds: 1.62 },
-    { eventId: "e2", prediction: "OVER_1.5", reason: "closed" }] }) }); }, (m) => { toast = m; });
+    { eventId: "e2", prediction: "OVER_1.5", reason: "closed" },
+    { eventId: "e4", prediction: "AWAY_OVER_0.5", reason: "line_moved", now: "AWAY_OVER_1.5", odds: 2.1 }] }) }); }, (m) => { toast = m; });
   await new Promise((r) => setTimeout(r, 10));
   assert.strictEqual(sent.goals, true, "goals lines are asked about");
-  assert.deepStrictEqual(slip().map((x) => x.code), ["HOME_OVER_1.5", "1"]);
+  assert.deepStrictEqual(slip().map((x) => x.code), ["HOME_OVER_1.5", "1", "1X"],
+    "a line moved into a market the reader switched off is not taken; their own markets are");
   assert.strictEqual(slip()[0].was, "HOME_OVER_0.5");
   assert.strictEqual(F.a.sportyOdds["HOME_OVER_1.5"], 1.62, "SportyBet's live price");
-  assert.match(toast, /1 line updated, 1 game closed/);
+  assert.match(toast, /2 games updated, 1 game closed/);
 });

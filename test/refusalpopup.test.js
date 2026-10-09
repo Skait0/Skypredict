@@ -64,7 +64,8 @@ test("a refused leg is offered the safest priced bet on the same game", () => {
     "var REFUSAL_WHY=WHY();function curBook(){return {odds:'sportyOdds'};}" +
     "function fixtureById(){return F;} function kickMs(){return NOW();}" +
     "function swapOptions(){return OPTS;} function bookAllows(){return true;} function refusedToday(){return {};} function shortLine(){return false;}" +
-    decl("SAFE_ALT_MIN") + "\n" + fn("safePicks") + "\n" + fn("nextSafePick") + "\nreturn nextSafePick;")(
+    "var MYSLIP=[{id:'f1',code:'1',auto:true}];function chipOn(c){return c!=='OVER_1.5';}" +
+    decl("SAFE_ALT_MIN") + "\n" + fn("builtLeg") + "\n" + fn("safePicks") + "\n" + fn("nextSafePick") + "\nreturn nextSafePick;")(
     f, opts, () => now, () => why);
   const B = { odds: "sportyOdds" };
   const realNow = Date.now;
@@ -79,6 +80,8 @@ test("a refused leg is offered the safest priced bet on the same game", () => {
   why["f1|OVER_2.5"] = "kicked off";
   assert.strictEqual(next({ id: "f1", code: "OVER_2.5" }, B), null, "nor when they say it has");
   delete why["f1|OVER_2.5"];
+  assert.strictEqual(next({ id: "f1", code: "1", p: 0.5 }, B).code, "1X",
+    "a built leg is swapped only into a market whose chip is on (owner, 9 Oct 2026)");
   f.sportyOdds = { "1": 2.1 };
   assert.strictEqual(next({ id: "f1", code: "OVER_2.5" }, B), null, "nothing under 60% is offered as safe");
 });
