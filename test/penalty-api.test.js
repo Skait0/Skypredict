@@ -234,34 +234,35 @@ test("league (owner, 9 Oct 2026): promotion is instant, relegation waits for Mon
     A: { device: DEV1, name: "Tobi", streak: 7, created_at: "2026-09-30T10:00:00.000Z" },   // last week: Champions tier
     B: { device: DEV1, name: "Tobi", streak: 2, created_at: "2026-10-07T10:00:00.000Z" },   // this week only 2
     C: { device: DEV2, name: "Ada", streak: 6, created_at: "2026-10-07T11:00:00.000Z" },    // promoted to Champions this week
-    D: { device: DEV3, name: "Bola", streak: 4, created_at: "2026-10-07T12:00:00.000Z" },   // NPFL
+    D: { device: DEV3, name: "Bola", streak: 4, created_at: "2026-10-07T12:00:00.000Z" },   // Premier League
   };
   const me = (await w.call("GET", "board", null, { period: "league", device: DEV1 })).json();
   assert.strictEqual(me.division.name, "Champions League", "last week's tier holds until Monday");
   assert.deepStrictEqual(me.top.map((x) => x.name), ["Ada", "Tobi"]);
   assert.deepStrictEqual(me.division.next, { name: "Legend", at: 10, need: 8 });
   const bola = (await w.call("GET", "board", null, { period: "league", device: DEV3 })).json();
-  assert.strictEqual(bola.division.name, "NPFL");
+  assert.strictEqual(bola.division.name, "Premier League");
   assert.deepStrictEqual(bola.top.map((x) => x.name), ["Bola"]);
   assert.strictEqual(P.divisionOf(0, 0), 0); assert.strictEqual(P.divisionOf(0, 3), 1); assert.strictEqual(P.divisionOf(12, 0), 3);
 });
 
 test("club wars (owner, 9 Oct 2026): a run carries its club, every goal this week counts for it", async () => {
   const w = world();
-  const r = await w.call("POST", "ranked", { device: DEV1, name: "Tobi", club: "enyimba", i: 0, spot: 2, power: 0.7 });
+  const r = await w.call("POST", "ranked", { device: DEV1, name: "Tobi", club: "juventus", i: 0, spot: 2, power: 0.7 });
   assert.strictEqual(r.code, 200);
-  assert.strictEqual(Object.values(w.db.t.runs)[0].club, "enyimba", "the club is stored on the run");
+  assert.strictEqual(Object.values(w.db.t.runs)[0].club, "juventus", "the club is stored on the run");
   await w.call("POST", "ranked", { device: DEV2, name: "Ada", club: "<script>", i: 0, spot: 2, power: 0.7 });
   assert.strictEqual(Object.values(w.db.t.runs)[1].club, null, "an unknown club is not stored");
   w.db.t.runs = {
     A: { device: DEV1, name: "Tobi", club: "arsenal", streak: 4, created_at: "2026-10-07T10:00:00.000Z" },
     B: { device: DEV1, name: "Tobi", club: "arsenal", streak: 3, created_at: "2026-10-08T09:00:00.000Z" },
-    C: { device: DEV2, name: "Ada", club: "enyimba", streak: 6, created_at: "2026-10-07T11:00:00.000Z" },
-    D: { device: DEV3, name: "Old", club: "enyimba", streak: 30, created_at: "2026-09-30T08:00:00.000Z" },
+    C: { device: DEV2, name: "Ada", club: "juventus", streak: 6, created_at: "2026-10-07T11:00:00.000Z" },
+    D: { device: DEV3, name: "Old", club: "juventus", streak: 30, created_at: "2026-09-30T08:00:00.000Z" },
     E: { device: DEV3, name: "Bola", club: null, streak: 5, created_at: "2026-10-07T12:00:00.000Z" },
+    F: { device: DEV3, name: "Bola", club: "enyimba", streak: 9, created_at: "2026-10-07T13:00:00.000Z" },   // removed 9 Oct
   };
   const c = (await w.call("GET", "board", null, { period: "clubs", device: DEV1 })).json();
-  assert.deepStrictEqual(c.top, [{ club: "arsenal", goals: 7, players: 1 }, { club: "enyimba", goals: 6, players: 1 }],
+  assert.deepStrictEqual(c.top, [{ club: "arsenal", goals: 7, players: 1 }, { club: "juventus", goals: 6, players: 1 }],
     "sum of this week's goals; last week and clubless runs left out");
   assert.strictEqual(c.mine, "arsenal");
   const today = (await w.call("GET", "board", null, { period: "today" })).json();

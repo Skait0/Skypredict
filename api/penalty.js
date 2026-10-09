@@ -238,7 +238,7 @@ function make(deps) {
     const rows = await db.board(P.lagosWeek(t) + "T00:00:00+01:00", 5000), by = new Map();
     let mine = null, mineAt = 0;
     for (const r of rows) {
-      if (!r.club) continue;
+      if (!P.cleanClub(r.club)) continue;          // no club, or one since removed
       const c = by.get(r.club) || { club: r.club, goals: 0, players: new Set() };
       c.goals += r.streak; c.players.add(r.device); by.set(r.club, c);
       const at = Date.parse(r.created_at);

@@ -1121,9 +1121,9 @@ function result(a,b,winner,chName,id,role,frName){
    The ids must match CLUBS in lib/penalty.js. */
 var CLUBS=[["arsenal","Arsenal","ARS","#EF0107","#fff"],["chelsea","Chelsea","CHE","#034694","#fff"],["man-united","Man United","MUN","#DA291C","#FBE122"],
   ["man-city","Man City","MCI","#6CABDD","#1C2C5B"],["liverpool","Liverpool","LIV","#C8102E","#fff"],["barcelona","Barcelona","BAR","#A50044","#EDBB00"],
-  ["real-madrid","Real Madrid","RMA","#FFFFFF","#00529F"],["enyimba","Enyimba","ENY","#1E5AA8","#fff"],["kano-pillars","Kano Pillars","KAN","#F2C230","#12306B"],
-  ["rangers","Rangers","RAN","#B22234","#fff"],["rivers-united","Rivers United","RIV","#0033A0","#fff"],["shooting-stars","Shooting Stars","3SC","#2A6FDB","#fff"],
-  ["remo-stars","Remo Stars","REM","#5BB8E8","#0B2340"]];
+  ["real-madrid","Real Madrid","RMA","#FFFFFF","#00529F"],["tottenham","Tottenham","TOT","#132257","#fff"],["newcastle","Newcastle","NEW","#241F20","#fff"],
+  ["bayern","Bayern Munich","BAY","#DC052D","#fff"],["psg","PSG","PSG","#004170","#fff"],["juventus","Juventus","JUV","#111111","#fff"],
+  ["ac-milan","AC Milan","MIL","#FB090B","#111"]];
 function clubOf(id){for(var k=0;k<CLUBS.length;k++)if(CLUBS[k][0]===id)return CLUBS[k];return null;}
 function badge(id){var c=clubOf(id),b=el("i","cb",c?c[2]:"");if(!c)return null;b.style.background=c[3];b.style.color=c[4];b.title=c[1];return b;}
 function myClub(){try{return clubOf(localStorage.getItem("pw.club"))?localStorage.getItem("pw.club"):null;}catch(e){return null;}}
@@ -1164,8 +1164,8 @@ function survival(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);askN
 function report(){var m=PW.match,r=el("div","rep");
   [["\u2605 "+m.stars,"Stars"],[String(m.tops),"Top bins"],[String(m.saves),"Your saves"]].forEach(function(x){var d=el("div");d.appendChild(el("b",null,x[0]));d.appendChild(el("span",null,x[1]));r.appendChild(d);});return r;}
 function row(a,b){var r=el("div","row");r.appendChild(a);r.appendChild(b);return r;}
-/* DIVISION CRESTS: Grassroots, NPFL, Champions League, Legend. */
-var DIV=[["G","#B07B4F","Grassroots"],["N","#2FD48A","NPFL"],["C","#4FA3E8","Champions League"],["L","#F2B84B","Legend"]];
+/* DIVISION CRESTS: Grassroots, Premier League, Champions League, Legend. */
+var DIV=[["G","#B07B4F","Grassroots"],["P","#2FD48A","Premier League"],["C","#4FA3E8","Champions League"],["L","#F2B84B","Legend"]];
 function crest(t,w){var d=DIV[t]||DIV[0],c=el("span","crest");c.style.width=w+"px";c.style.height=Math.round(w*1.16)+"px";
   c.innerHTML='<svg viewBox="0 0 48 56" aria-hidden="true"><path d="M24 2 44 9v17c0 13-9 23-20 28C13 49 4 39 4 26V9z" fill="'+d[1]+'" stroke="#07080a" stroke-width="3" stroke-linejoin="round"/>'+
     '<path d="M24 8 38 13v13c0 9-6 16-14 20-8-4-14-11-14-20V13z" fill="#ffffff2e"/><text x="24" y="35" text-anchor="middle" font-family="Roboto Condensed,sans-serif" font-style="italic" font-weight="800" font-size="19" fill="#07080a">'+d[0]+'</text></svg>';return c;}
