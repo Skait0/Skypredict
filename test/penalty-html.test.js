@@ -605,3 +605,8 @@ test("owner, 9 Oct 2026: every end-of-game sheet has a way back to the game menu
   assert.match(grabFn("sheet"), /if\(!isMenu&&window\.PWHome\)\{var m=el\("button","smenu","Menu"\)/);
   assert.match(html, /F\.sheet\(nodes,true\);/, "the menu itself does not offer itself");
 });
+
+test("the home menu fits a short phone; the logo button steps aside while a sheet is open", () => {
+  assert.match(html, /@media\(max-height:700px\)\{\.pick button img\{height:60px\}\.btn\{height:44px\}/);
+  assert.match(html, /#app:has\(#sheet\.on\) #exit\{display:none\}/);
+});
