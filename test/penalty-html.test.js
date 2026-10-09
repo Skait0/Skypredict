@@ -396,13 +396,13 @@ test("nothing calls the retired dot strip", () => {
 });
 
 /* Owner, 8 Oct 2026: "when the ball hits the bar, dont say saved - missed, or hit the post". */
-test("a miss is WAHALA with its reason under it; the bar never says saved", () => {
+test("your miss is WAHALA with its reason under it; the bar never says saved", () => {
   /* Owner: "when the ball hits the bar, dont say saved" then "i liked the wahala lol". */
   const f = grabFn("playKick");
   const bar = f.slice(f.indexOf('what==="bar"'), f.indexOf("}else{", f.indexOf('what==="bar"')));
-  assert.match(bar, /fx\.pop\("WAHALA!","#E63946","OFF THE BAR"\)/); assert.match(bar, /fx\.board\("OFF THE BAR"/);
+  assert.match(bar, /fx\.pop\(you\?"WAHALA!":"MISSED!",you\?"#E63946":"#2FD48A","OFF THE BAR"\)/); assert.match(bar, /fx\.board\("OFF THE BAR"/);
   assert.doesNotMatch(bar, /SAVED/);
-  assert.match(f, /fx\.pop\("WAHALA!","#E63946","OVER THE BAR"\);fx\.board\("MISSED"/);
+  assert.match(f, /fx\.pop\(you\?"WAHALA!":"MISSED!",you\?"#E63946":"#2FD48A","OVER THE BAR"\);fx\.board\("MISSED"/);
   assert.match(html, /pop:function\(word,color,why\)/);
 });
 
@@ -550,7 +550,7 @@ test("owner, 9 Oct 2026: a far-corner shot always gets a dive, faces on the scor
 });
 
 test("owner, 9 Oct 2026: goal crowd at half volume, a sound button on the pitch, an early finish explained", () => {
-  assert.match(html, /sfx\(spell\|\|top\?"roarbig":"roar",spell\?0\.5:0\.4\)/);
+  assert.match(html, /sfx\(spell\|\|top\?"roarbig":"roar",spell\?0\.25:0\.2\)/, "soft: a quarter of the first mix");
   assert.match(html, /<button id="snd" type="button"><\/button>/);
   assert.match(html, /function setMuted\(m\)\{.*drawSnd\(\);\}/);
   assert.match(grabFn("practice"), /so it ends early/);
@@ -559,4 +559,14 @@ test("owner, 9 Oct 2026: goal crowd at half volume, a sound button on the pitch,
 test("a closed sheet is inert, so Space can never restart a match behind your back", () => {
   assert.match(html, /function closeSheet\(\)\{.*document\.activeElement\.blur\(\);s\.inert=true;/);
   assert.match(html, /s\.inert=false;s\.classList\.add\("on"\)/);
+});
+
+test("owner, 9 Oct 2026: OYA only when you score, WAHALA only when your own kick misses, both soft", () => {
+  const f = grabFn("playKick");
+  assert.match(f, /\(you\?"OYA!":"GOAL!"\)/);
+  assert.match(f, /if\(you\)sfx\("oya",0\.7\)/);
+  assert.equal((f.match(/if\(you\)sfx\("wahala",0\.7\)/g) || []).length, 3, "saved, off the bar, over the bar");
+  assert.equal((f.match(/fx\.pop\(you\?"WAHALA!":"MISSED!"/g) || []).length, 2);
+  assert.doesNotMatch(f, /fx\.pop\("WAHALA!"/, "never on the other side's miss");
+  assert.match(html, /"oya","wahala"\]/);
 });
