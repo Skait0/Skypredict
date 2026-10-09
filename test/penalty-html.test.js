@@ -599,3 +599,8 @@ test("owner, 9 Oct 2026: a way back to the site on every screen; the challenge r
   assert.doesNotMatch(f, /if\(n<REG\)\{outs\.push/, "every kick counts, as on the scoreboard");
   assert.match(f, /"Practice: you scored "\+score\+" of "\+n\+" and saved "\+cpu\+" of "\+n/);
 });
+
+test("owner, 9 Oct 2026: every end-of-game sheet has a way back to the game menu", () => {
+  assert.match(grabFn("sheet"), /if\(!isMenu&&window\.PWHome\)\{var m=el\("button","smenu","Menu"\)/);
+  assert.match(html, /F\.sheet\(nodes,true\);/, "the menu itself does not offer itself");
+});

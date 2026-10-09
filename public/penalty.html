@@ -132,7 +132,6 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #spellbox span{font:italic 800 11px/1 "Roboto Condensed",sans-serif;letter-spacing:.14em;color:var(--gold)}
 #spellbox b{position:relative;width:64px;height:7px;border-radius:99px;background:#ffffff1a;overflow:hidden}
 #spellbox i{position:absolute;inset:0;background:linear-gradient(90deg,var(--red),var(--gold));transform-origin:0 50%;transform:scaleX(0);transition:transform .4s cubic-bezier(.2,.9,.25,1)}
-/* sound on/off, always in reach during play (owner) */
 #snd{position:absolute;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:7;width:42px;height:42px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--line);background:#0d0d0fcc;color:#F2F1F0;cursor:pointer}
 #snd[aria-pressed="false"]{color:var(--soft)}
 #snd:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
@@ -161,6 +160,8 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 /* bottom sheet (menus, results) */
 #sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .45s cubic-bezier(.2,.9,.25,1);z-index:9;max-height:85%;overflow:auto;box-shadow:0 -20px 50px #000a}
 #sheet.on{transform:none}
+.smenu{float:right;margin:0 0 4px 12px;height:32px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:none;color:var(--soft);font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}
+.smenu:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 #sheet h2{margin:2px 0 6px;font:italic 800 26px/1.05 "Roboto Condensed",sans-serif;letter-spacing:.01em}
 #sheet p{margin:0 0 12px;color:var(--soft);font-size:14px}
 #sheet p.credit{margin:4px 0 0;font-size:11px;opacity:.6;text-align:center}#sheet p.credit a{color:inherit}
@@ -738,8 +739,6 @@ function playKick(k){
   if(k.shot.aim){aim={x:k.shot.aim.x,y:aim.y===3.4||k.outcome==="bar"?aim.y:k.shot.aim.y};if(k.outcome==="bar")aim.x=Math.max(-3.4,Math.min(3.4,k.shot.aim.x));}
   var curl=k.shot.curl!=null?k.shot.curl:(Math.random()*0.8-0.4),side=curl>=0?1:-1;
   var f=flightPlan(aim,power,curl),kp=keeperPose(k.dive);
-  /* A shot to the far side when he guessed the middle: he still throws himself
-     at it and falls short, rather than hopping on the spot (owner, 9 Oct 2026). */
   if(k.outcome!=="save"&&k.dive!=null&&col(k.dive)===1&&Math.abs(aim.x)>2.2){var sd=aim.x>0?1:-1;kp=keeperPose((sd>0?2:0)+(aim.y>=1.22?3:0));kp.x=sd*1.3;}
   /* What you see must agree with the call. A save: the keeper's dive ends on
      the ball's line. A goal: he ends clearly away from it. */
@@ -883,7 +882,9 @@ function api(method,a,body,q){
 }
 var LAST={status:0,error:null};
 function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
-function sheet(nodes){PW.tag("");PW.fx.combo(0);var s=$("sheet");s.textContent="";nodes.forEach(function(n){s.appendChild(n);});s.inert=false;s.classList.add("on");}
+function sheet(nodes,isMenu){PW.tag("");PW.fx.combo(0);var s=$("sheet");s.textContent="";
+  if(!isMenu&&window.PWHome){var m=el("button","smenu","Menu");m.type="button";m.addEventListener("click",function(){closeSheet();window.PWHome();});s.appendChild(m);}
+  nodes.forEach(function(n){s.appendChild(n);});s.inert=false;s.classList.add("on");}
 /* Closed = inert: a focused button there once took Space (shoot) and started a second match. */
 function closeSheet(){var s=$("sheet");if(s.contains(document.activeElement))document.activeElement.blur();s.inert=true;s.classList.remove("on");}
 function btn(label,cls,fn){var b=el("button","btn "+cls,label);b.type="button";b.addEventListener("click",fn);return b;}
@@ -910,7 +911,6 @@ function practice(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(true);var o
         return PW.playKick({who:"them",shot:{spot:cs.spot,kind:R.strike(cs.spot,cs.power).kind,power:cs.power},dive:dv,outcome:o});}).then(next);}
   function finish(st){PW.fx.slowmo(false);track("practice_finished");
     var head=st.winner==="a"?"You beat the computer "+st.a+"-"+st.b:st.winner==="b"?"The computer won "+st.b+"-"+st.a:"Draw, "+st.a+"-"+st.b;
-    /* a shootout stops once one side cannot catch up; say so, or 4-2 after nine kicks reads like a bug (owner) */
     var early=outs.length<2*REG?(st.winner==="a"?"The computer can't catch up, so it ends early. ":"You can't catch up with the kicks left, so it ends early. "):"";
     var acts=el("div","row");acts.appendChild(btn("Play again","red",function(){closeSheet();practice();}));acts.appendChild(btn("Challenge a friend","ghost",function(){closeSheet();challenger();}));
     sheet([el("h2",null,head)].concat(early?[el("p",null,early.trim())]:[],[acts,tipsCard()]));}
@@ -984,7 +984,6 @@ function challenger(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);as
     return api("POST","create",{name:name,device:PW.DEV,shots:shots,dives:dives}).then(function(r){
       if(r.status!==200)return offline(save);
       track("challenge_created");
-      /* all eight, as on the board; the computer only stood in (owner: "5/5" under 8-7) */
       var url=ORIGIN+"/p/"+r.j.id,score=outs.filter(function(o){return o==="goal";}).length,n=REG+BONUS;
       sheet([el("h2",null,"Your kicks are set"),el("p",null,"Practice: you scored "+score+" of "+n+" and saved "+cpu+" of "+n+". Send the link: your friend plays against your real kicks and dives.")].concat(shareSheet("I've set my penalties on Play Penalty. Bet you can't save them:",url,"challenge"),[tipsCard()]));
     });});
@@ -1108,14 +1107,13 @@ function home(){
     F.btn("Sudden Death","ghost",function(){F.closeSheet();F.survival();}),
     F.btn("Face today's Wizard Keeper","ghost",function(){F.closeSheet();daily();}),
     F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})];
-  /* the two settings-like actions sit small under the modes, not as two more full-width buttons */
   var foot=F.el("div","sfoot"),how=F.el("button",null,"How to play"),mute=F.el("button",null,PW.muted?"Sound off":"Sound on");how.type=mute.type="button";
   how.addEventListener("click",function(){PW.coachReset();F.closeSheet();F.practice();});
   mute.addEventListener("click",function(){PW.setMuted(!PW.muted);mute.textContent=PW.muted?"Sound off":"Sound on";});
   foot.appendChild(how);foot.appendChild(mute);
   var credit=F.el("p","credit");credit.innerHTML='Crowd sounds by Gregor Quendel, <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener" target="_blank">CC BY 4.0</a>';
   nodes.push(foot,credit);
-  F.sheet(nodes);
+  F.sheet(nodes,true);
   /* "Ada beat you 4-3": finished challenges this device created in the last week. */
   F.api("GET","mine",null,{device:PW.DEV}).then(function(r){var seen={};try{seen=JSON.parse(localStorage.getItem("pw.seen")||"{}");}catch(e){}
     (r.j.results||[]).filter(function(x){return !seen[x.id]&&x.score;}).slice(0,1).forEach(function(x){
