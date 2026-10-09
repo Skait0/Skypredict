@@ -739,6 +739,11 @@ function resetScene(){
 function playKick(k){
   K.idle=false;if(k.who==="you"){SC=ME;KC=OPP||other();}else{SC=OPP||other();KC=ME;}
   var you=k.who==="you",spell=SPELLNOW&&you;SPELLNOW=false;
+  /* NEAR MISSES PLAY SLOW (owner, 9 Oct 2026): the keeper went the right way
+     and still missed it, or got a fingertip to a weak one. Inches are what
+     make people press Again. */
+  var near=k.dive!=null&&(k.outcome==="goal"&&col(k.dive)===col(k.shot.spot)&&high(k.dive)!==high(k.shot.spot)||k.outcome==="save"&&k.dive!==k.shot.spot);
+  if(near)fx.slowmo(true);
   BOARD[you?"a":"b"].push(k.outcome);
   var kind=k.shot.kind,power=k.shot.power!=null?k.shot.power:(kind==="green"?0.65:kind==="weak"?0.4:0.95);
   var perfect=kind==="green"&&power>=0.72&&power<=0.82;
@@ -837,6 +842,7 @@ function playKick(k){
       fx.sprite("burst",bp.x,bp.y,spell?150:top?90:64,spell?620:420);if(top||spell)fx.sprite("star",bp.x,bp.y,spell?170:110,620);
       if(spell){fx.shake(2);fx.flash(0.22,420);}
       hiss(0.32,3200,1100,0.22,false,0.8);sfx(spell||top?"roarbig":"roar",spell?0.25:0.2);
+      if(near&&!spell){fx.pop(you?pick(["GOAL!","OYA!"]):"GOAL!","#2FD48A","BY INCHES");}else
       fx.pop(spell?"LEGENDARY!":top?"TOP BINS!":perfect?"WIZARDRY!":(you?pick(["GOAL!","OYA!"]):"GOAL!"),spell||top?"#F2B84B":"#2FD48A");
       fx.board(top?"TOP BINS":"GOAL",top?"#F2B84B":"#2FD48A");
       if(you){streak++;award({top:top,curl:curl,perfect:perfect,streak:streak});}fx.combo(streak);
@@ -845,7 +851,7 @@ function playKick(k){
       sfx("glove",caught?0.6:1);
       if(caught){fx.pop("CAUGHT!","#E63946");fx.board("SAVED","#E63946");fx.buzz([15,30]);hitStop=0.05;if(you)streak=0;fx.combo(streak);return;}
       hitStop=0.09;fx.shake(1);fx.buzz([20,40,20]);fx.sprite("burst",bp.x,bp.y,70,380);
-      fx.pop("SAVED!","#E63946");fx.board("SAVED","#E63946");if(you)streak=0;fx.combo(streak);
+      fx.pop("SAVED!","#E63946",near?"FINGERTIPS":null);fx.board("SAVED","#E63946");if(you)streak=0;fx.combo(streak);
     }else if(what==="bar"){
       hitStop=0.08;fx.shake(2);fx.buzz([30,30,30]);sfx("bar");fx.sprite("burst",bp.x,bp.y,56,320);
       /* it hit the woodwork - say exactly that, never "saved" (owner, 8 Oct 2026) */
@@ -1040,7 +1046,11 @@ function result(a,b,winner,chName,id,role,frName){
     text=winner==="b"?"I beat "+fr+" "+b+"-"+a+" on Play Penalty 😤 Who's next?":"Play Penalty: "+head+". Try me:";}
   else{head=winner==="a"?fr+" beat "+chName+" "+a+"-"+b:winner==="b"?chName+" beat "+fr+" "+b+"-"+a:chName+" and "+fr+" drew "+a+"-"+b;
     text="Play Penalty: "+head+". Think you can do better?";}
-  sheet([el("h2",null,head)].concat(shareSheet(text,url,"result"),[btn("Start your own challenge","ghost",function(){closeSheet();challenger();}),tipsCard()]));
+  /* CHALLENGE BACK (owner, 9 Oct 2026 - the 8 Ball Pool loop): the person who
+     just played answers with their own link, one tap. */
+  var back=role==="friend"?btn("Challenge "+chName+" back","red",function(){closeSheet();challenger();}):
+    role==="challenger"?btn("Rematch "+fr,"red",function(){closeSheet();challenger();}):btn("Start your own challenge","ghost",function(){closeSheet();challenger();});
+  sheet([el("h2",null,head),back].concat(shareSheet(text,url,"result"),[tipsCard()]));
 }
 
 /* RANKED SUDDEN DEATH (owner, 9 Oct 2026): you shoot until you miss; every kick
@@ -1054,10 +1064,19 @@ function survival(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);askN
       var o=j.outcome,d=o==="save"?s.spot:(s.spot+1+Math.floor(Math.random()*5))%6;
       return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:d,outcome:o}).then(function(){return j;});});})
     .then(function(j){if(j.alive)return next();track("survival_over",{run:streak});
-      api("GET","board",null,{period:"today",device:PW.DEV}).then(function(b){var me=b.j&&b.j.me;
-        sheet([el("h2",null,streak+(streak===1?" goal":" goals")+" in a row"),el("p",null,me&&streak>0?"You're number "+me.rank+" today. Best today: "+me.streak+".":"Score once to get on today's table.")]
-          .concat(shareSheet("I scored "+streak+" in a row against the Wizard Keeper on Play Penalty. Beat that:",ORIGIN+"/penalty","survival"),
-            [row(btn("Go again","red",function(){closeSheet();survival();}),btn("Leaderboard","ghost",function(){closeSheet();leaderboard("today");}))]));});});}
+      /* THE NEXT GO IS ONE TAP (owner, 9 Oct 2026 - the Subway Surfers rule):
+         Again comes first and biggest; under it, who to beat next. */
+      var best=0;try{best=+localStorage.getItem("pw.rbest")||0;}catch(e){}
+      var nb=streak>best&&streak>0;if(nb){try{localStorage.setItem("pw.rbest",String(streak));}catch(e){}PW.fx.pop("NEW BEST!","#F2B84B",streak+" IN A ROW");PW.fx.flash(0.16,320);PW.fx.buzz([30,40,80]);}
+      api("GET","board",null,{period:"today",device:PW.DEV}).then(function(b){var me=b.j&&b.j.me,top=(b.j&&b.j.top)||[],line;
+        if(me&&streak>0){var above=me.rank>1&&top[me.rank-2];
+          line=me.rank===1?"You're top of today's table.":"You're number "+me.rank+" today."+(above?" "+(above.streak-me.streak+1)+" more to pass "+above.name+".":"");}
+        else line="Score once to get on today's table.";
+        var h=el("h2",nb?"best":null,nb?"New best: "+streak+" in a row":streak+(streak===1?" goal":" goals")+" in a row");
+        sheet([h,el("p",null,line+(nb||!best?"":" Your best: "+best+"."))]
+          .concat([btn("Again","red",function(){closeSheet();survival();}),
+            row(btn("Leaderboard","ghost",function(){closeSheet();leaderboard("today");}),btn("Challenge a friend","ghost",function(){closeSheet();challenger();}))],
+            shareSheet("I scored "+streak+" in a row against the Wizard Keeper on Play Penalty. Beat that:",ORIGIN+"/penalty","survival")));});});}
   next();});}
 function row(a,b){var r=el("div","row");r.appendChild(a);r.appendChild(b);return r;}
 /* THE LEADERBOARD: today, this week, all time; best run per player, top 20. */

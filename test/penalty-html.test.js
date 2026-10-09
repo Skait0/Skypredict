@@ -614,3 +614,15 @@ test("the home menu fits a short phone; the logo button steps aside while a shee
   assert.match(html, /@media\(max-height:700px\)\{\.pick button img\{height:60px\}\.btn\{height:44px\}/);
   assert.match(html, /#app:has\(#sheet\.on\) #exit\{display:none\}/);
 });
+
+test("batch 1 (owner, 9 Oct 2026): Again first, who to pass next, a new best, near misses play slow, challenge back", () => {
+  const sv = grabFn("survival");
+  assert.match(sv, /btn\("Again","red"/);
+  assert.match(sv, /more to pass "\+above\.name/);
+  assert.match(sv, /localStorage\.setItem\("pw\.rbest"/);
+  const pk = grabFn("playKick");
+  assert.match(pk, /var near=k\.dive!=null&&\(k\.outcome==="goal"&&col\(k\.dive\)===col\(k\.shot\.spot\)&&high\(k\.dive\)!==high\(k\.shot\.spot\)\|\|k\.outcome==="save"&&k\.dive!==k\.shot\.spot\);/);
+  assert.match(pk, /"BY INCHES"/);
+  assert.match(pk, /near\?"FINGERTIPS":null/);
+  assert.match(grabFn("result"), /btn\("Challenge "\+chName\+" back","red"/);
+});
