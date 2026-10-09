@@ -594,7 +594,8 @@ test("release step 2 (owner, 9 Oct 2026): Play Penalty in the phone bar with a j
 });
 
 test("owner, 9 Oct 2026: a way back to the site on every screen; the challenge result counts what the board counts", () => {
-  assert.match(html, /<a id="exit" href="\/" aria-label="Back to Soccerwizard">/);
+  assert.match(html, /<a id="exit" href="\/" aria-label="Soccerwizard home"><img src="\/penalty\/wiz-64\.webp\?v=/, "the way out shows where it goes");
+  assert.match(html, /"Soccerwizard home"\);site\.type="button"/);
   const f = grabFn("challenger");
   assert.doesNotMatch(f, /if\(n<REG\)\{outs\.push/, "every kick counts, as on the scoreboard");
   assert.match(f, /"Practice: you scored "\+score\+" of "\+n\+" and saved "\+cpu\+" of "\+n/);

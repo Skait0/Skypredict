@@ -198,7 +198,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
 .crow+.crow{border-top:1px solid var(--line)}
 .crow>span{font-size:15px}.crow code{font:800 16px/1 "Plus Jakarta Sans",system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.04em;color:var(--gold)}
 .btn.sm{height:28px;margin:0;padding:0 13px;width:auto;font-size:12px}.tips p{margin:0 0 4px!important;font-size:13px!important}.tips .btn.red{height:46px;margin-top:8px}
-.sfoot{display:flex;justify-content:center;gap:22px;margin-top:10px}
+.sfoot{display:flex;flex-wrap:wrap;justify-content:center;gap:0 18px;margin-top:10px}
 .sfoot button{background:none;border:0;color:var(--soft);font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;padding:10px 4px;cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line)}
 @keyframes pw-marquee{to{transform:translateX(-50%)}}
 @keyframes pw-blink{0%{opacity:1}20%{opacity:0}35%{opacity:1}55%{opacity:0}70%{opacity:1}100%{opacity:0}}
@@ -239,7 +239,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
   <button id="snd" type="button"></button>
   <div id="hud"><div class="sboard"><div class="srow" id="rowA"><i class="av" id="avA"></i><span class="who" id="whoA">YOU</span><span class="kicks" id="kA"></span><b id="scA">0</b></div><div class="srow" id="rowB"><i class="av" id="avB"></i><span class="who" id="whoB">CPU</span><span class="kicks" id="kB"></span><b id="scB">0</b></div></div></div>
   <div id="tag"></div><div id="combo"></div>
-  <a id="exit" href="/" aria-label="Back to Soccerwizard"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
+  <a id="exit" href="/" aria-label="Soccerwizard home"><img src="/penalty/wiz-64.webp?v=12" alt="" width="26" height="26"></a>
   <div id="hint"></div>
   <div id="coach" role="status"><img src="/penalty/kw-taunt.webp?v=12" alt=""><p></p></div><i id="ghost"></i>
   <div id="pts"></div>
@@ -1110,7 +1110,8 @@ function home(){
   var foot=F.el("div","sfoot"),how=F.el("button",null,"How to play"),mute=F.el("button",null,PW.muted?"Sound off":"Sound on");how.type=mute.type="button";
   how.addEventListener("click",function(){PW.coachReset();F.closeSheet();F.practice();});
   mute.addEventListener("click",function(){PW.setMuted(!PW.muted);mute.textContent=PW.muted?"Sound off":"Sound on";});
-  foot.appendChild(how);foot.appendChild(mute);
+  var site=F.el("button",null,"Soccerwizard home");site.type="button";site.addEventListener("click",function(){location.href="/";});
+  foot.appendChild(how);foot.appendChild(mute);foot.appendChild(site);
   var credit=F.el("p","credit");credit.innerHTML='Crowd sounds by Gregor Quendel, <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener" target="_blank">CC BY 4.0</a>';
   nodes.push(foot,credit);
   F.sheet(nodes,true);
