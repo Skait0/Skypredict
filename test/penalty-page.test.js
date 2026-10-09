@@ -11,7 +11,7 @@ test("an open challenge previews the challenger on WhatsApp and X", () => {
   const h = render(base, T);
   assert.match(h, /<meta property="og:title" content="Tobi challenges you to a penalty shootout">/);
   assert.match(h, /<meta name="twitter:card" content="summary_large_image">/);
-  assert.match(h, /og:image" content="https:\/\/www\.soccerwizard\.live\/penalty\/og\.png"/);
+  assert.match(h, /og:image" content="https:\/\/www\.soccerwizard\.live\/penalty\/og-card\.jpg"/);
   assert.match(h, /location\.replace\("\/penalty\?c=K7Q2AB"\)/);
 });
 

@@ -24,7 +24,7 @@ function render(m, t) {
     line = expired ? "This challenge ran out. Start your own." : s.done ? "See how it went, then start your own." : "Take your 5 shots and make your 5 saves. Free, no stakes.";
     go = expired ? "/penalty" : "/penalty?c=" + m.id;
   }
-  const url = ORIGIN + (m ? "/p/" + m.id : "/penalty"), img = ORIGIN + "/penalty/og.png";
+  const url = ORIGIN + (m ? "/p/" + m.id : "/penalty"), img = ORIGIN + "/penalty/og-card.jpg";
   return "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">" +
     "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
     "<title>" + esc(title) + "</title>" +
