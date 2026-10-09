@@ -200,6 +200,12 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #vs .vx{font:italic 800 64px/1 "Roboto Condensed",sans-serif;text-align:center;color:#F2B84B;text-shadow:2px 2px 0 #07080a,-2px 2px 0 #07080a,2px -2px 0 #07080a,-2px -2px 0 #07080a,0 4px 0 #07080a,0 8px 0 #5a3a08}
 #vs .vm{color:var(--soft);text-shadow:none}
 #vs .vm{display:block;margin-top:8px;font-size:11px;letter-spacing:.22em;color:var(--soft)}
+#vs small{font:700 12px/1.35 "Plus Jakarta Sans",system-ui,sans-serif;color:var(--soft);text-align:center;min-height:1.2em;white-space:pre-line}
+#vs .vh{display:block;margin-top:10px;text-shadow:0 2px 6px #000;font:italic 800 13px/1.2 "Roboto Condensed",sans-serif;letter-spacing:.06em;color:#F2F1F0;white-space:nowrap}
+#vs .vt{display:none;position:absolute;left:0;right:0;bottom:calc(14% + env(safe-area-inset-bottom));text-align:center;text-decoration:none;font:italic 800 15px/1 "Roboto Condensed",sans-serif;letter-spacing:.18em;color:#F2B84B}
+#vs.tap{pointer-events:auto;cursor:pointer}#vs.tap .vt{display:block;animation:pw-vt 1.1s ease-in-out infinite}
+#vs.tap.go{animation:pw-vsin .3s ease both}
+@keyframes pw-vsin{from{opacity:0}to{opacity:1}}@keyframes pw-vt{50%{opacity:.35}}
 #vs.go .vl{animation:pw-vsl .55s cubic-bezier(.2,.9,.25,1) both}#vs.go .vr{animation:pw-vsr .55s cubic-bezier(.2,.9,.25,1) both}#vs.go .vx{animation:pw-vsx .5s .2s cubic-bezier(.3,1.6,.5,1) both}
 @keyframes pw-vs{0%{opacity:0}10%{opacity:1}86%{opacity:1}100%{opacity:0}}
 @keyframes pw-vsl{from{opacity:0;transform:translateX(-70px)}}@keyframes pw-vsr{from{opacity:0;transform:translateX(70px)}}@keyframes pw-vsx{from{opacity:0;transform:scale(.4)}}
@@ -295,7 +301,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
   <div id="hud"><div class="sboard"><div class="srow" id="rowA"><i class="av" id="avA"></i><span class="who" id="whoA">YOU</span><span class="kicks" id="kA"></span><b id="scA">0</b></div><div class="srow" id="rowB"><i class="av" id="avB"></i><span class="who" id="whoB">CPU</span><span class="kicks" id="kB"></span><b id="scB">0</b></div></div></div>
   <div id="tag"></div><div id="combo"></div>
   <div id="promo" aria-hidden="true"></div>
-  <div id="vs" aria-hidden="true"><div class="vl"><i></i><b></b></div><div class="vx">VS<span class="vm"></span></div><div class="vr"><i></i><b></b></div></div>
+  <div id="vs" aria-hidden="true"><div class="vl"><i></i><b></b><small></small></div><div class="vx">VS<span class="vm"></span><em class="vh"></em></div><div class="vr"><i></i><b></b><small></small></div><u class="vt">TAP TO KICK OFF</u></div>
   <a id="exit" href="/" aria-label="Soccerwizard home"><img src="/penalty/wiz-64.webp?v=12" alt="" width="26" height="26"></a>
   <div id="hint"></div>
   <div id="coach" role="status"><img src="/penalty/kw-taunt.webp?v=12" alt=""><p></p></div><i id="ghost"></i>
@@ -610,10 +616,14 @@ var BOARD={a:[],b:[],single:false};
 /* portraits cut from the 2752px source sheets (the 220px keeper sprite blew up blurry, owner 9 Oct) */
 function face(c){return "url(/penalty/face-"+(c==="wizard"?"wizard":"ten")+".webp?v="+SPV+")";}
 /* THE VS CARD before every match (owner, 9 Oct 2026). Skipped for reduced motion. */
-function vs(a,ca,b,cb,label){if(REDUCED)return Promise.resolve();var v=$("vs");
+/* x (duels): {l, r} lines under each name, mid (head to head), tap: wait for
+   the player instead of closing on its own. */
+function vs(a,ca,b,cb,label,x){x=x||{};if(REDUCED&&!x.tap)return Promise.resolve();var v=$("vs");
+  v.querySelector(".vl small").textContent=x.l||"";v.querySelector(".vr small").textContent=x.r||"";v.querySelector(".vh").textContent=x.mid||"";v.classList.toggle("tap",!!x.tap);
   v.querySelector(".vl i").style.backgroundImage=face(ca||ME);v.querySelector(".vr i").style.backgroundImage=face(cb||OPP||other());
   v.querySelector(".vl b").textContent=a;v.querySelector(".vr b").textContent=b;v.querySelector(".vm").textContent=label;
   v.classList.remove("go");void v.offsetWidth;v.classList.add("go");fx.buzz(20);
+  if(x.tap)return new Promise(function(r){v.onclick=function(){v.onclick=null;v.classList.remove("go","tap");fx.buzz(15);r();};});
   return new Promise(function(r){setTimeout(function(){v.classList.remove("go");r();},1700);});}
 /* STARS (Score! Hero): every goal of yours earns 1-3 - a corner, then a perfect
    strike or real curl. Counted per match. */
@@ -920,7 +930,7 @@ function playKick(k){
 
   function impact(what,caught){
     var bp=P(B.x,B.y,B.z);
-    if(what==="locked"){fx.pop("LOCKED IN","#F2B84B");fx.buzz(20);return;}
+    if(what==="locked"){fx.pop(k.sealedFor?"SEALED":"LOCKED IN","#F2B84B",k.sealedFor?k.sealedFor.toUpperCase()+" DIVES NEXT":null);fx.buzz(20);return;}
     if(what==="goal"){
       var nh=netAt(B.x,B.y);NETI={x:B.x,y:B.y};netHit(NETN,nh.i,nh.j,12+power*8);NETLIVE=true;hitStop=0.07;fx.shake(kind==="green"?2:1);fx.buzz(40);fx.hype();
       var top=high(k.shot.spot)&&col(k.shot.spot)!==1&&kind==="green";
@@ -988,7 +998,7 @@ function api(method,a,body,q){
 }
 var LAST={status:0,error:null};
 function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
-function sheet(nodes,isMenu){PW.tag("");PW.fx.combo(0);var s=$("sheet");s.textContent="";
+function sheet(nodes,isMenu){PW.tag("");PW.fx.combo(0);var s=$("sheet");s.textContent="";s.removeAttribute("data-duel");
   if(!isMenu&&window.PWHome){var m=el("button","smenu","Menu");m.type="button";m.addEventListener("click",function(){closeSheet();window.PWHome();});s.appendChild(m);}
   nodes.forEach(function(n){s.appendChild(n);});s.inert=false;s.classList.add("on");}
 /* Closed = inert: a focused button there once took Space (shoot) and started a second match. */
@@ -1074,16 +1084,83 @@ function tipsCard(){var box=el("div","tips");
   });
   return box;}
 
-/* THE CHALLENGER (owner, 9 Oct 2026: "challenge a friend directly"): the link
-   goes out first; then 8 kicks and 8 dives, blind - each one LOCKED IN, judged
-   only when the friend plays them. No pretend match against the computer. */
-function challenger(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);askName().then(function(name){
-  api("POST","create",{name:name,device:PW.DEV}).then(function(r){
-    if(r.status!==200)return offline(challenger);
-    track("challenge_created");var id=r.j.id,url=ORIGIN+"/p/"+id;
-    sheet([el("h2",null,"Send your challenge"),el("p",null,"Send the link now, then take your 8 kicks and 8 dives. Your friend plays them when you're done.")]
-      .concat(shareSheet("Bet you can't save my penalties on Play Penalty:",url,"challenge"),[btn("Take my kicks","red",function(){closeSheet();kicks(id,url);})]));});
+/* DUELS (owner, 9 Oct 2026: "do i still kick into a keeper that never
+   dives?"). Turn by turn against a friend, judged on the server (duelState in
+   lib/penalty.js): your turn is a save against the shot already waiting - a
+   real result at once - then your own shot, sealed until they dive. A link,
+   a "your turn" ping, and the page checks every 5s while it waits, so two
+   phones that are both open play almost live. */
+var TAUNT={calm:"Ice cold",fire:"Bring it on",silent:"Says nothing"},DPOLL=null;
+function lvl(){return PW.levelOf(PW.xp);}
+function sub(p){var c=p&&clubOf(p.club);return p?(c?c[2]+" \u00b7 ":"")+(p.lvl?"Level "+p.lvl:""):"";}
+function h2hLine(h,opp){return "You "+h.you+" \u2013 "+h.them+" "+opp+(h.draws?" ("+h.draws+" drawn)":"");}
+function sealedShot(s,who){return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:null,outcome:"locked",sealedFor:who});}
+function challenger(){clearInterval(DPOLL);PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);askName().then(function(name){
+  var g=el("div","clubs");Object.keys(TAUNT).forEach(function(k){g.appendChild(btn(TAUNT[k],"ghost",function(){closeSheet();first(k);}));});
+  sheet([el("h2",null,"Pick your mood"),el("p",null,"Your friend sees it on the VS card. Then take the first penalty: it stays sealed until they dive."),g]);
+  function first(taunt){PW.newBoard("Your friend",false);
+    PW.aimAndShoot().then(function(s){(function send(){api("POST","duel_new",{device:PW.DEV,name:name,char:PW.char,club:myClub(),taunt:taunt,lvl:lvl(),shot:{spot:s.spot,power:s.power}}).then(function(r){
+      if(r.status!==200)return offline(function(){closeSheet();send();});
+      track("duel_created");sealedShot(s,"your friend").then(function(){waiting(r.j.id,"Your friend",true);});});})();});}
 });}
+function waiting(id,opp,fresh){var url=ORIGIN+"/p/"+id;
+  sheet([el("h2",null,fresh?"Send it to a friend":opp+"'s turn"),el("p",null,fresh?"Your penalty is sealed. Whoever opens the link saves it, then shoots back. Turn by turn until someone wins.":"They save your shot, then shoot back. Keep this open, or we'll bring you back when it's your go.")]
+    .concat(shareSheet("Penalty duel: save my shot, then try to beat me \ud83d\ude24",url,"duel"),[pingBtn(),btn("Your duels","ghost",function(){closeSheet();duelsList();})]));
+  $("sheet").setAttribute("data-duel",id);watch(id);}
+function watch(id){clearInterval(DPOLL);var n=0;DPOLL=setInterval(function(){
+  if($("sheet").getAttribute("data-duel")!==id||++n>120){clearInterval(DPOLL);return;}
+  if(document.hidden)return;
+  api("GET","duel",null,{id:id,device:PW.DEV,lite:1}).then(function(r){if(r.status===200&&(r.j.mine||r.j.done)&&$("sheet").getAttribute("data-duel")===id){clearInterval(DPOLL);closeSheet();duel(id);}});},5000);}
+function board(d,me,opp,skipTheirSeal){var mine=[],theirs=[];d.kicks.forEach(function(k,i){if(skipTheirSeal&&k.sealed&&k.by!==me&&i===d.kicks.length-1)return;(k.by===me?mine:theirs).push(k.sealed?"locked":k.outcome);});PW.newBoard(opp,false,mine,theirs);}
+function duel(id){clearInterval(DPOLL);PW.resetStreak();PW.setSolo(false);
+  api("GET","duel",null,{id:id,device:PW.DEV}).then(function(r){
+    if(r.status===0)return offline(function(){closeSheet();duel(id);});
+    if(r.status!==200)return sheet([el("h2",null,"This duel doesn't exist"),btn("Start your own","red",function(){closeSheet();challenger();})]);
+    var d=r.j,me=d.me||"b",them=me==="a"?"b":"a",opp=d[them]?d[them].name:"Your friend";
+    if(d[them])PW.setOpponent(d[them].char);
+    board(d,me,opp);
+    if(d.done)return duelEnd(d,me,opp);
+    if(!d.mine)return d.me?waiting(id,opp,false):sheet([el("h2",null,"Someone else is playing this one"),btn("Start your own","red",function(){closeSheet();challenger();})]);
+    function go(name){var mine=d[me]||{name:name,club:myClub(),lvl:lvl()},their=d[them];
+      PW.vs(name,PW.char,their.name,their.char,"DUEL",{l:sub(mine),r:sub(their)+(their.taunt?"\n\u201c"+TAUNT[their.taunt]+"\u201d":""),mid:d.h2h&&d.h2h.you+d.h2h.them+d.h2h.draws?h2hLine(d.h2h,their.name):"First meeting",tap:true}).then(function(){turn(d,name,opp);});}
+    if(d.me)return go(d[me].name);
+    sheet([el("h2",null,d.a.name+" wants a penalty duel"),el("p",null,"Save their penalty, then take yours. Turn by turn: real saves, real goals. Pick your player:"),charPicker(),
+      btn("Kick off","red",function(){closeSheet();askName().then(go);})]);
+  });}
+function turn(d,name,opp){var me=d.me||"b";
+  function post(o){return api("POST","duel_turn",Object.assign({id:d.id,device:PW.DEV,name:name,char:PW.char,club:myClub(),lvl:lvl(),v:d.v},o)).then(function(x){
+    if(x.status===200)return x.j;
+    if(x.status===409&&x.j&&x.j.error!=="busy"){duel(d.id);return new Promise(function(){});}
+    return new Promise(function(ok){offline(function(){closeSheet();ok(post(o));});});});}
+  if(d.need==="dive"){board(d,me,opp,true);return PW.pickDive().then(function(dv){return post({dive:dv}).then(function(x){
+    return PW.playKick({who:"them",shot:x.against,dive:dv,outcome:x.outcome}).then(function(){board(x,me,opp);if(x.done)return duelEnd(x,me,opp);turn(x,name,opp);});});});}
+  PW.aimAndShoot().then(function(s){return post({shot:{spot:s.spot,power:s.power}}).then(function(x){
+    return sealedShot(s,opp).then(function(){board(x,me,opp);if(x.done)return duelEnd(x,me,opp);waiting(d.id,opp,false);});});});}
+function duelEnd(d,me,opp){var my=d.score[me],th=d.score[me==="a"?"b":"a"],w=d.winner;
+  var head=w==="draw"?"You drew with "+opp+", "+my+"-"+th:w===me?"You beat "+opp+" "+my+"-"+th:opp+" beat you "+th+"-"+my;
+  track("duel_finished");
+  sheet([el("h2",null,head)].concat(d.h2h?[el("p","note","Head to head: "+h2hLine(d.h2h,opp))]:[],[btn("Rematch "+opp,"red",function(){closeSheet();challenger();})],
+    shareSheet(head+" on Play Penalty. Think you can do better?",ORIGIN+"/penalty","duel_result"),[tipsCard()]));}
+function duelsList(){api("GET","duels",null,{device:PW.DEV}).then(function(r){var list=el("ol","lb"),ds=(r.j&&r.j.duels)||[];
+  if(!ds.length)list.appendChild(el("li","lbe","No duels yet. Start one and send the link."));
+  ds.forEach(function(x){var li=el("li",x.mine&&!x.done?"you":"");li.style.cursor="pointer";li.appendChild(el("b",null,x.done?(x.won?"W":x.draw?"D":"L"):x.mine?"\u25b6":"\u2026"));
+    li.appendChild(el("span",null,(x.done?"":x.mine?"Your turn vs ":"Their turn: ")+(x.opp||"waiting for a friend")));li.appendChild(el("i",null,x.you+"-"+x.them));
+    li.addEventListener("click",function(){closeSheet();duel(x.id);});list.appendChild(li);});
+  sheet([el("h2",null,"Your duels"),list,btn("Start a new duel","red",function(){closeSheet();challenger();})]);});}
+/* "Ping me when it's my turn": the same push subscription the daily code uses,
+   registered against this device. Shown only when the server can send. */
+function pingBtn(){var b=btn("Ping me when it's my turn","ghost",function(){b.disabled=true;b.textContent="Asking...";
+    api("GET","pushkey").then(function(k){if(!k.j||!k.j.key)throw 0;
+      return navigator.serviceWorker.register("/sw.js").then(function(reg){return reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(k.j.key)});})
+        .then(function(sub){return api("POST","duel_push",{device:PW.DEV,sub:sub.toJSON()});});})
+    .then(function(r){var ok=r&&r.status===200;b.textContent=ok?"We'll ping you":"Couldn't turn pings on";if(ok)try{localStorage.setItem("pw.ping","1");}catch(e){}})
+    .catch(function(){b.textContent="Pings are off on this phone";});});
+  b.hidden=true;var on=false;try{on=localStorage.getItem("pw.ping")==="1";}catch(e){}
+  if(!on&&"serviceWorker" in navigator&&"PushManager" in window)api("GET","pushkey").then(function(k){if(k.j&&k.j.key)b.hidden=false;});
+  return b;}
+function u8(s){var b=atob((s+"===".slice((s.length+3)%4)).replace(/-/g,"+").replace(/_/g,"/")),a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a;}
+/* THE OLD BLIND CHALLENGE: kicks() and friend() stay only so links sent
+   before duels (they expire after a day) still finish. */
 function kicks(id,url){var shots=[],dives=[],p=Promise.resolve();PW.newBoard("Your dives",false);
   for(var n=0;n<REG+BONUS;n++)(function(n){p=p.then(function(){
     if(n===REG)PW.fx.pop("BONUS KICKS","#F2B84B");
@@ -1224,7 +1301,7 @@ function leaderboard(per){
     if(!top.length){list.appendChild(el("li","lbe",per==="league"?"Nobody in your division has scored this week. Be the first.":"Nobody on the table yet. Be the first."));return;}
     top.forEach(function(x,k){var li=el("li",x.you?"you":"");li.appendChild(el("b",null,String(k+1)));li.appendChild(nameCell(x));li.appendChild(el("i",null,String(x.streak)));list.appendChild(li);});
     var me=r.j.me;if(me&&me.rank>20){var li=el("li","you");li.appendChild(el("b",null,String(me.rank)));li.appendChild(el("span",null,"You"));li.appendChild(el("i",null,String(me.streak)));list.appendChild(li);}});}
-window.PWFlow={survival:survival,leaderboard:leaderboard,promote:promote,row:row,challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,offline:offline,charPicker:charPicker,practice:practice};
+window.PWFlow={duel:duel,duelsList:duelsList,survival:survival,leaderboard:leaderboard,promote:promote,row:row,challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,offline:offline,charPicker:charPicker,practice:practice};
 })();
 </script>
 <script>
@@ -1304,10 +1381,15 @@ function home(){
       var line=x.won?"You beat "+x.friend+" "+x.score.you+"-"+x.score.them:x.draw?"You drew with "+x.friend:x.friend+" beat you "+x.score.them+"-"+x.score.you;
       $note(line);seen[x.id]=1;try{localStorage.setItem("pw.seen",JSON.stringify(seen));}catch(e){}});});
   function $note(t){var s=document.getElementById("sheet");s.insertBefore(F.el("p","note",t),s.firstChild);}
+  /* A duel waiting on you comes first; any duel at all earns the list. */
+  F.api("GET","duels",null,{device:PW.DEV}).then(function(r){var ds=(r.j&&r.j.duels)||[],s=document.getElementById("sheet");if(!ds.length||!s.classList.contains("on"))return;
+    var up=ds.filter(function(x){return x.mine&&!x.done;})[0];
+    var b=up?F.btn("Your turn vs "+(up.opp||"your friend"),"red",function(){F.closeSheet();F.duel(up.id);}):F.btn("Your duels","ghost",function(){F.closeSheet();F.duelsList();});
+    var h=s.querySelector("h2");if(h&&h.nextSibling)s.insertBefore(b,h.nextSibling.nextSibling);});
 }
 
-var c=new URLSearchParams(location.search).get("c");
-if(c&&/^[A-Za-z0-9]{6}$/.test(c))F.friend(c.toUpperCase());else home();
+var q=new URLSearchParams(location.search),c=q.get("c"),dq=q.get("d");
+if(dq&&/^[A-Za-z0-9]{6}$/.test(dq))F.duel(dq.toUpperCase());else if(c&&/^[A-Za-z0-9]{6}$/.test(c))F.friend(c.toUpperCase());else home();
 })();
 </script>
 </body></html>

@@ -46,3 +46,44 @@ create index if not exists penalty_ranked_recent on penalty_ranked_runs (created
 alter table penalty_ranked_runs enable row level security;
 -- Club wars (9 Oct 2026): the scorer's club, from CLUBS in lib/penalty.js.
 alter table penalty_ranked_runs add column if not exists club text check (club is null or club ~ '^[a-z0-9-]{2,24}$');
+
+-- DUELS (9 Oct 2026): turn by turn against a friend. kicks[k] is A's shot when
+-- k is even, B's when odd: {spot, power} while sealed, plus {dive, outcome}
+-- once the other side has dived. v counts turns and guards every PATCH.
+create table if not exists penalty_duels (
+  id text primary key check (id ~ '^[A-Z2-9]{6}$'),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  a_device text not null,
+  a_name text not null,
+  a_char text,
+  a_club text,
+  a_taunt text,
+  a_lvl int,
+  b_device text,
+  b_name text,
+  b_char text,
+  b_club text,
+  b_lvl int,
+  kicks jsonb not null default '[]'::jsonb,
+  v int not null default 0,
+  result jsonb,
+  finished_at timestamptz
+);
+create index if not exists penalty_duels_a on penalty_duels (a_device, updated_at desc);
+create index if not exists penalty_duels_b on penalty_duels (b_device, updated_at desc);
+alter table penalty_duels enable row level security;
+
+-- "Your turn" pings: one browser push subscription per device, and the line
+-- the service worker shows when the (empty) push arrives.
+create table if not exists penalty_push (
+  device text primary key,
+  endpoint text not null,
+  p256dh text not null,
+  auth text not null,
+  note jsonb,
+  note_at timestamptz,
+  updated_at timestamptz not null default now()
+);
+create index if not exists penalty_push_endpoint on penalty_push (endpoint);
+alter table penalty_push enable row level security;

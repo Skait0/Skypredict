@@ -106,7 +106,7 @@ test("every POST carries the site's request header", () => {
 });
 
 test("analytics events named in the spec are sent", () => {
-  for (const e of ["challenge_created", "challenge_opened", "challenge_finished", "tips_clicked", "share"]) assert.match(html, new RegExp('track\\("' + e + '"'));
+  for (const e of ["duel_created", "duel_finished", "challenge_opened", "challenge_finished", "tips_clicked", "share"]) assert.match(html, new RegExp('track\\("' + e + '"'));
 });
 
 test("the challenger takes 5 shots and 3 bonus shots, 5 dives and 3 bonus dives", () => {
@@ -129,8 +129,8 @@ test("the daily go is tracked", () => {
   assert.match(html, /track\("daily_played"/);
 });
 
-test("a challenge link opens the friend flow, anything else the home screen", () => {
-  assert.match(html, /new URLSearchParams\(location\.search\)\.get\("c"\)/);
+test("a duel link opens the duel, an old challenge link the friend flow, anything else the home screen", () => {
+  assert.match(html, /if\(dq&&\/\^\[A-Za-z0-9\]\{6\}\$\/\.test\(dq\)\)F\.duel\(dq\.toUpperCase\(\)\);else if\(c&&/);
 });
 
 /* Owner, 8 Oct 2026: "another character as the wizard. players can choose
@@ -611,8 +611,10 @@ test("release step 2 (owner, 9 Oct 2026): Play Penalty in the phone bar with a j
 test("owner, 9 Oct 2026: a way back to the site on every screen; the challenge result counts what the board counts", () => {
   assert.match(html, /<a id="exit" href="\/" aria-label="Soccerwizard home"><img src="\/penalty\/wiz-64\.webp\?v=/, "the way out shows where it goes");
   assert.match(html, /"Soccerwizard home"\);site\.type="button"/);
-  /* owner, 9 Oct 2026: link first, then blind kicks - no pretend match against the computer */
-  assert.match(grabFn("challenger"), /api\("POST","create",\{name:name,device:PW\.DEV\}\)/);
+  /* owner, 9 Oct 2026: duels replace blind kicks - a challenge opens with one
+     sealed shot, never a pretend match against the computer */
+  assert.match(grabFn("challenger"), /api\("POST","duel_new",\{device:PW\.DEV,name:name,/);
+  assert.match(grabFn("sealedShot"), /outcome:"locked",sealedFor:who/);
   assert.match(grabFn("kicks"), /outcome:"locked"/);
   assert.match(grabFn("kicks"), /api\("POST","picks",\{id:id,device:PW\.DEV,shots:shots,dives:dives\}\)/);
   assert.match(grabFn("friend"), /if\(m\.pending\)return sheet/);

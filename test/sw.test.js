@@ -482,3 +482,26 @@ test("with no tab open it opens the codes page", async () => {
   await held;
   assert.deepStrictEqual(w.state.navigated, ["/booking-codes"]);
 });
+
+test("a duel ping shows that duel's line and taps through to it (9 Oct 2026)", async () => {
+  const w = loadPush({ net: (rq) => Promise.resolve(Object.assign(new Res(null), { ok: true,
+    json: () => Promise.resolve(/a=note/.test(rq.url || rq) ? { title: "Your turn vs Ada", body: "It is 1-0.", url: "/penalty?d=ABC234" } : {}) })) });
+  w.self.registration.pushManager = { getSubscription: () => Promise.resolve({ endpoint: "https://fcm.googleapis.com/x" }) };
+  await firePush(w.on);
+  assert.strictEqual(w.state.shown.length, 1);
+  assert.strictEqual(w.state.shown[0].title, "Your turn vs Ada");
+  const went = [];
+  w.state.windows = [{ url: "https://www.soccerwizard.live/", navigate: (u) => { went.push(u); return Promise.resolve({ focus: () => {} }); } }];
+  let held = null;
+  w.on.notificationclick({ notification: { close: () => {}, data: w.state.shown[0].o.data }, waitUntil: (p) => { held = p; } });
+  await held;
+  assert.deepStrictEqual(went, ["/penalty?d=ABC234"]);
+});
+
+test("no duel line: the push is the daily code, as before", async () => {
+  const w = loadPush({ net: (rq) => Promise.resolve(Object.assign(new Res(null), { ok: true,
+    json: () => Promise.resolve(/a=note/.test(rq.url || rq) ? {} : { date: "2026-10-09", n: 3, codes: { sporty: "AB12CD" } }) })) });
+  w.self.registration.pushManager = { getSubscription: () => Promise.resolve({ endpoint: "https://fcm.googleapis.com/x" }) };
+  await firePush(w.on);
+  assert.match(w.state.shown[0].title, /code/i);
+});

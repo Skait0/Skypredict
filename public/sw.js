@@ -9,7 +9,7 @@
  * exist. Static assets stay cache-first, since those are the ones worth having
  * instantly and they change under a new name when they change at all.
  */
-const VERSION = "sw-v13";
+const VERSION = "sw-v14";
 const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/wiz-logo.png"];
 
 /* THE KILL SWITCH. Set to true, deploy, and every installed worker deletes its
@@ -256,9 +256,29 @@ function pushBody(d) {
   return books.length ? games + " · " + books.join(", ") : games + ", free to load";
 }
 
+/* A PLAY PENALTY DUEL PING (9 Oct 2026). Same empty push; the line comes from
+   /api/penalty?a=note for THIS subscription, and only while it is fresh. No
+   subscription to ask about, no line, or any failure: the daily code below,
+   exactly as before. */
+function duelNote() {
+  var pm = self.registration && self.registration.pushManager;
+  if (!pm || !pm.getSubscription) return Promise.resolve(null);
+  return pm.getSubscription().then(function (sub) {
+    if (!sub || !sub.endpoint) return null;
+    return fetch("/api/penalty?a=note&endpoint=" + encodeURIComponent(sub.endpoint))
+      .then(function (r) { return r.ok ? r.json() : null; });
+  }).catch(function () { return null; });
+}
+
 self.addEventListener("push", function (e) {
-  e.waitUntil(
-    fetch("/code-today.json?t=" + Date.now())
+  e.waitUntil(duelNote().then(function (n) {
+    if (n && n.title) {
+      return self.registration.showNotification(n.title, {
+        body: n.body || "", tag: "duel", renotify: true, icon: "/icon-192.png", badge: "/icon-192.png",
+        data: { url: n.url || "/penalty", go: true },
+      }).catch(function () { return self.registration.showNotification(n.title).catch(function () {}); });
+    }
+    return fetch("/code-today.json?t=" + Date.now())
       .then(function (r) { return r.ok ? r.json() : null; })
       .catch(function () { return null; })
       .then(function (d) {
@@ -279,8 +299,8 @@ self.addEventListener("push", function (e) {
              and a silent failure beats a strike. */
           return self.registration.showNotification(PUSH_TITLE).catch(function () {});
         });
-      })
-  );
+      });
+  }));
 });
 
 self.addEventListener("notificationclick", function (e) {
@@ -289,7 +309,11 @@ self.addEventListener("notificationclick", function (e) {
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
       /* Focus what is already open. Opening a second tab on a phone that is
          already showing the site is how a notification earns an uninstall. */
+      /* A duel ping goes to that duel: an open tab is moved there, not just
+         focused where it was. */
+      var d = e.notification.data || {};
       for (var i = 0; i < list.length; i++) {
+        if (d.go && list[i].navigate) return list[i].navigate(d.url).then(function (c) { return c && c.focus && c.focus(); });
         if (list[i].focus) return list[i].focus();
       }
       return self.clients.openWindow((e.notification.data && e.notification.data.url) || "/booking-codes");
