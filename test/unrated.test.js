@@ -94,9 +94,14 @@ test("nothing and nonsense are safe to ask about", () => {
 
 /* The end-to-end guard: whatever is on disk must be clean. Runs against the
    real payload so a regression is caught on the actual card. */
-test("no unrated competition survives into the built payload", () => {
+test("no unrated competition survives into the built payload", (t) => {
   let payload;
   try { payload = require("../public/predictions.json"); } catch (e) { return; }
+  /* public/predictions.json is a git-ignored build file. Two days old it was
+     baked under older rules, and failing on it hid a real women's-game leak
+     on 9 Oct 2026 as "the known failure" - so it is skipped, saying so. */
+  const age = Date.now() - Date.parse(payload.generatedAt || 0);
+  if (!(age < 2 * 864e5)) return t.skip("public/predictions.json is " + Math.round(age / 864e5) + " days old - rebuild it to check this");
   /* Asked against the index the build fits, as the build asks it: a listed
      senior league is released once it holds ratings (Norway 1st Division and
      Denmark 1. Division, backfilled 23 Sep 2026). Asked without one, this

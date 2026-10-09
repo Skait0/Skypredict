@@ -49,7 +49,7 @@ function konst(name) {
 }
 
 const FNS = ["cornersK", "cornersOver", "cornersOpen", "countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmerican",
-  "saWeight", "isLowerLeague", "outsideTop", "fid", "oddOf", "legOdd",
+  "saWeight", "isLowerLeague", "topKey", "outsideTop", "fid", "oddOf", "legOdd",
   /* ONE FUNCTION ANSWERS "will this book take this leg" - see bookVerdict in
      index.html. The harness lifts the real thing rather than a stub, because
      stubbing it is how three copies of the same bug survived. */

@@ -6871,6 +6871,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 .sw-undo.on .u-bar{animation:swUndoBar 5s linear forwards}
 @keyframes swUndoBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 @media (prefers-reduced-motion:reduce){.sw-card,.sw-undo,.sw-swipe,.ys-live,.ys-dot.run,.ys-live:after,.ys-dot.run:after,.sw-undo .u-bar{animation:none!important;transition:none!important}}
+.bld-empty .bld-alt{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
 </style>
 </head>
 <body>
@@ -8632,16 +8633,33 @@ var ASIA_MIN_EURO=3;
    Names are the board's own, exactly; a renamed feed label drops out of Top
    leagues rather than in. Russia's coefficient is frozen since its 2022 ban
    but it is still 28th, so it stays. */
+/* Matched loosely (owner, 9 Oct 2026: a renamed feed label must not drop a
+   league silently): case, spaces, dots and a trailing "1" are ignored, so
+   "Spain LaLiga" is "Spain La Liga 1" and "Germany Bundesliga" is
+   "Germany Bundesliga 1"; Turkiye is Turkey; and the sponsor names some feeds
+   use are aliases. A second division ("La Liga 2", "Super League 2") never
+   matches - its number is kept. */
+function topKey(l){ return String(l||"").toLowerCase().replace(/t[uü]rkiye/,"turkey").replace(/[^a-z0-9]/g,"").replace(/1$/,""); }
 function outsideTop(f){
   if(!f) return false;
   var l=f.league||"";
   if(/^International Clubs UEFA (Champions|Europa|Conference) League$/.test(l)) return false;
-  return ["England Premier League","Italy Serie A","Spain La Liga 1","Germany Bundesliga 1","France Ligue 1",
+  var m=outsideTop._m||(outsideTop._m={});      // one answer per league name, worked out once
+  if(m[l]!==undefined) return m[l];
+  var k=topKey(l);
+  return m[l]=!["England Premier League","Italy Serie A","Spain La Liga 1","Germany Bundesliga 1","France Ligue 1",
     "Portugal Primeira Liga","Netherlands Eredivisie","Belgium Pro League","Turkey Super Lig","Czechia 1. Liga",
     "Greece Super League","Poland Ekstraklasa","Denmark Superliga","Norway Eliteserien","Cyprus 1st Division",
     "Switzerland Super League","Austria Bundesliga","Scotland Premiership","Sweden Allsvenskan","Croatia HNL",
     "Israel Premier League","Hungary NB I","Ukraine Premier League","Serbia Superliga","Romania Superliga",
-    "Slovenia PrvaLiga","Azerbaijan Premier League","Russia Premier League","Slovakia Superliga","Bulgaria Parva Liga"].indexOf(l)<0;
+    "Slovenia PrvaLiga","Azerbaijan Premier League","Russia Premier League","Slovakia Superliga","Bulgaria Parva Liga",
+    "Czechia Chance Liga","Slovakia Nike Liga","Hungary OTP Bank Liga","Croatia SuperSport HNL","Bulgaria efbet Liga",
+    "Bulgaria First League","Poland PKO BP Ekstraklasa","Greece Stoiximan Super League","Cyprus Cyta Championship",
+    "Romania Liga I","Turkey Trendyol Super Lig","Portugal Liga Portugal","Portugal Liga Portugal Betclic",
+    "Belgium Jupiler Pro League","Denmark 3F Superliga","Austria Admiral Bundesliga","Switzerland Credit Suisse Super League",
+    "Scotland Scottish Premiership","Israel Ligat haAl","Russia Russian Premier League","Serbia Mozzart Bet Superliga",
+    "Netherlands VriendenLoterij Eredivisie","France Ligue 1 McDonalds","Slovenia Prva Liga","Spain LaLiga EA Sports"
+  ].some(function(n){ return topKey(n)===k; });
 }
 function isLowerLeague(l){
   var s=(l||"").toLowerCase();
@@ -12727,6 +12745,10 @@ async function loadSporty(){
           /* Only repaint for a rescue - on the first load the caller paints
              straight after us and doing it twice just flashes the board. */
           if(n&&SPORTY_TRIES>0) repaintAfterMatch();
+          /* A Slider slip already on screen is rebuilt from the fresher odds
+             (owner, 9 Oct 2026) - on the 10-minute refresh, not the first load. */
+          else if(SPORTY_TRIES>0&&BUILD.mode==="slider"&&(BUILD.picks||[]).length&&
+                  document.documentElement.classList.contains("mode-build")) try{ renderBuilder(); }catch(e){}
           SPORTY_TRIES++;
           return n;
         }
@@ -21261,6 +21283,16 @@ function emptyWhy(){
   }catch(e){}
   return "";
 }
+function topDryHTML(){
+  var by={},offs,nd,all=scopeFixtures().length;
+  DATA.fixtures.forEach(function(f){
+    if(!notStarted(f)||outsideTop(f)||!leagueAllowed(f.league)) return;
+    var o=dayOff(fDay(f)); if(o>SDAY) by[o]=(by[o]||0)+1; });
+  offs=Object.keys(by).map(Number).sort(function(a,b){return a-b;}); nd=offs[0];
+  return "No top-league games left "+(SDAY===0?"today":SDAY===1?"tomorrow":dayName(SDAY))+"."+
+    "<span class='bld-alt'>"+(nd!=null?"<button type='button' class='wsp-chip on' data-topday='"+nd+"'>"+dayName(nd)+" \u00b7 "+by[nd]+" games</button>":"")+
+    (all?"<button type='button' class='wsp-chip' data-topall='1'>All leagues "+(SDAY===0?"today":"")+" \u00b7 "+all+"</button>":"")+"</span>";
+}
 function renderBuilder(){
   saveMarkets();
   paintBookPickers();
@@ -22297,6 +22329,9 @@ function renderBuilderOutput(){
       "<p>Tap Conjure to reveal your slip.</p></div>";
   } else if(!picks.length){
     var dry=(SCOPE!=="all")&&!scopeFixtures().length;
+    /* The day has games, just none in Top leagues - at night, once they have
+       all kicked off (owner, 9 Oct 2026). Said as it is, with the two ways on. */
+    var topDry=!isWiz&&!dry&&SCOPE==="day"&&TOP_ONLY&&!scopeFixtures().some(function(f){return !outsideTop(f);});
     /* Name the day that came up empty rather than always saying "today" - with
        a day picked, the blank board might be tomorrow or Saturday. */
     var dryDay=SCOPE==="span"?("in the next "+SPAN+" days")
@@ -22305,8 +22340,11 @@ function renderBuilderOutput(){
     $("slip").innerHTML="<div class='bld-empty'><b>"+(isWiz?(WSP.conjured?"No slip yet":"Ready when you are")+"":"Nothing in your slip")+"</b>"+
       (isWiz?(WSP.conjured?("No games match your wizard settings - try a lower payout"+(leaguesChosen()?", widen the leagues":"")+" or enable more markets."):"Tap a target payout to preview your slip.")
        : (dry?("No fixtures "+(SDAY===0?"left ":"")+dryDay+(TOD!=="all"?" in this time window":"")+(leaguesChosen()?" in the leagues you picked":"")+" - "+(leaguesChosen()?"widen the leagues":"switch to All upcoming")+" to keep building.")
+         : topDry ? topDryHTML()
          : (firstVisit ? "Move the slider to build a fresh set of games."
              : (emptyWhy()||"No games match. Adjust risk or markets."))))+"</div>";
+    $("slip").querySelectorAll("[data-topday]").forEach(function(b){ b.addEventListener("click",function(){ setDay(+b.dataset.topday); renderBuilder(); }); });
+    $("slip").querySelectorAll("[data-topall]").forEach(function(b){ b.addEventListener("click",function(){ var c=document.querySelector('#bldLeagues [data-btp="false"]'); if(c) c.click(); }); });
   } else {
     $("slip").innerHTML=picks.map(function(c){
       var f=c.f, cf=conf(c.p);

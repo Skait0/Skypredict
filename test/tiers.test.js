@@ -41,7 +41,7 @@ function grab(name) {
   for (; k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) break; } }
   return src.slice(i, k + 1);
 }
-const page = new Function(grab("outsideTop") + "\nreturn {outsideTop:outsideTop};")();
+const page = new Function(grab("topKey") + "\n" + grab("outsideTop") +"\nreturn {outsideTop:outsideTop};")();
 
 /* TOP LEAGUES (owner, 9 Oct 2026) replaced "Top flight only": the top division
    of UEFA's 30 strongest countries plus the three UEFA club competitions -
@@ -113,4 +113,11 @@ test("nothing below the top division survives the filter on the real board", () 
   /* And the filter has to actually do something, or it would pass vacuously. */
   assert.ok(fixtures.length - kept.length > 0,
     "no fixtures were filtered at all - the board has no lower divisions to test against");
+});
+
+test("Top leagues survive a renamed feed label, and a second division never sneaks in", () => {
+  for (const league of ["Spain LaLiga", "Germany Bundesliga", "Turkiye Super Lig", "Czechia Chance Liga", "Slovakia Nike Liga"])
+    assert.strictEqual(page.outsideTop({ league }), false, league);
+  for (const league of ["Spain LaLiga 2", "Germany Bundesliga 2", "Greece Super League 2", "Turkiye 1. Lig", "Austria 2. Liga"])
+    assert.strictEqual(page.outsideTop({ league }), true, league);
 });
