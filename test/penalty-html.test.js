@@ -400,9 +400,9 @@ test("your miss is WAHALA with its reason under it; the bar never says saved", (
   /* Owner: "when the ball hits the bar, dont say saved" then "i liked the wahala lol". */
   const f = grabFn("playKick");
   const bar = f.slice(f.indexOf('what==="bar"'), f.indexOf("}else{", f.indexOf('what==="bar"')));
-  assert.match(bar, /fx\.pop\(you\?"WAHALA!":"MISSED!",you\?"#E63946":"#2FD48A","OFF THE BAR"\)/); assert.match(bar, /fx\.board\("OFF THE BAR"/);
+  assert.match(bar, /fx\.pop\(you\?pick\(\["WAHALA!","MISSED!"\]\):"MISSED!",you\?"#E63946":"#2FD48A","OFF THE BAR"\)/); assert.match(bar, /fx\.board\("OFF THE BAR"/);
   assert.doesNotMatch(bar, /SAVED/);
-  assert.match(f, /fx\.pop\(you\?"WAHALA!":"MISSED!",you\?"#E63946":"#2FD48A","OVER THE BAR"\);fx\.board\("MISSED"/);
+  assert.match(f, /fx\.pop\(you\?pick\(\["WAHALA!","MISSED!"\]\):"MISSED!",you\?"#E63946":"#2FD48A","OVER THE BAR"\);fx\.board\("MISSED"/);
   assert.match(html, /pop:function\(word,color,why\)/);
 });
 
@@ -561,12 +561,10 @@ test("a closed sheet is inert, so Space can never restart a match behind your ba
   assert.match(html, /s\.inert=false;s\.classList\.add\("on"\)/);
 });
 
-test("owner, 9 Oct 2026: OYA only when you score, WAHALA only when your own kick misses, both soft", () => {
+test("owner, 9 Oct 2026: OYA and WAHALA are yours alone and mixed with other words; no voice clips", () => {
   const f = grabFn("playKick");
-  assert.match(f, /\(you\?"OYA!":"GOAL!"\)/);
-  assert.match(f, /if\(you\)sfx\("oya",0\.7\)/);
-  assert.equal((f.match(/if\(you\)sfx\("wahala",0\.7\)/g) || []).length, 3, "saved, off the bar, over the bar");
-  assert.equal((f.match(/fx\.pop\(you\?"WAHALA!":"MISSED!"/g) || []).length, 2);
-  assert.doesNotMatch(f, /fx\.pop\("WAHALA!"/, "never on the other side's miss");
-  assert.match(html, /"oya","wahala"\]/);
+  assert.match(f, /\(you\?pick\(\["GOAL!","OYA!"\]\):"GOAL!"\)/);
+  assert.equal((f.match(/fx\.pop\(you\?pick\(\["WAHALA!","MISSED!"\]\):"MISSED!"/g) || []).length, 2);
+  assert.doesNotMatch(f, /fx\.pop\("WAHALA!"|"OYA!"\)/, "never on the other side's kick");
+  assert.doesNotMatch(html, /"oya"|"wahala"/, "the voice clips are gone");
 });
