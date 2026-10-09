@@ -251,3 +251,11 @@ test("a goals line under 1.15 is never picked or offered: the line a book pulls 
   assert.strictEqual(short({ sportyOdds: {} }, "OVER_1.5"), false, "no price is not evidence of anything");
   for (const name of ["buildPicks", "wspBuild", "safePicks"]) assert.match(body(name), /shortLine\(f,/, name + " skips short lines");
 });
+
+test("a lock released after the page shrank never lands past its end (owner, 9 Oct 2026)", () => {
+  const doc = { body: { style: {} }, documentElement: { style: {}, scrollHeight: 1200 } };
+  const win = { scrollY: 2000, innerHeight: 800, scrollTo(a, y) { this.to = typeof a === "object" ? a.top : y; } };
+  const lock = new Function("document", "window", decl("SCROLL_HELD") + "\n" + fn("scrollLock") + "\nreturn scrollLock;")(doc, win);
+  lock("sheet", true); lock("sheet", false);
+  assert.strictEqual(win.to, 400, "clamped to the new bottom, not the old spot");
+});

@@ -1177,6 +1177,9 @@ html:not(.reduce) .m:nth-child(n+7),html:not(.reduce) .lrow:nth-child(n+7){anima
   transition:transform .55s cubic-bezier(.5,.05,.5,1),opacity .55s}
 /* bottom tab bar (mobile only) */
 .btabs{display:none;transition:transform .3s ease}
+#bt-live.live .lv-core{fill:var(--red);stroke:var(--red);transform-box:fill-box;transform-origin:center;animation:sw-livecore 1.4s ease-in-out infinite}
+@keyframes sw-livecore{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.55}}
+@media (prefers-reduced-motion:reduce){#bt-live.live .lv-core{animation:none}}
 /* Play Penalty in the desktop header: a link out to the game, so a pill of its
    own beside the tab track rather than a tab inside it. The phone has its own
    copy in the bottom bar, so this one never shows under 720px. */
@@ -7861,7 +7864,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
        over there" and stays true however many books we add. The word
        under it carries the rest. -->
   <button class="btab" id="bt-convert" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M14.5 12h6.5M18 9l3 3-3 3"/></svg></span>Converter</button>
-  <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg><span class="live-dot btab-dot" id="liveDotB" hidden></span></span>Live</button>
+  <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle class="lv-core" cx="12" cy="12" r="3"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg></span>Live</button>
   <!-- PLAY PENALTY (release step 2, owner 9 Oct 2026: "a retro joystick as the
        nav icon on mobile"). A link, not a view: the game is its own page. -->
   <a class="btab" id="bt-play" href="/penalty" aria-label="Play Penalty"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5.5" r="2.8"/><path d="M12 8.3V15"/><path d="M4.5 15.5h15l1.3 3.7a1 1 0 0 1-.94 1.3H4.14a1 1 0 0 1-.94-1.3z"/><path d="M15.8 15.5v-1.6h2.6v1.6"/></svg></span>Play</a>
@@ -12303,7 +12306,11 @@ function scrollLock(who,on){
     b.position="fixed"; b.top=(-SCROLL_Y)+"px"; b.left="0"; b.right="0"; b.width="100%";
   }else{
     h.overflow=""; b.overflow=""; b.position=""; b.top=""; b.left=""; b.right=""; b.width="";
-    try{ window.scrollTo({top:SCROLL_Y,behavior:"instant"}); }catch(e){ window.scrollTo(0,SCROLL_Y); }
+    /* Never past the end: the page can shrink while a sheet is up (Clear on the
+       builder empties it), and the old spot then landed on the footer. */
+    var H=document.documentElement.scrollHeight, V=window.innerHeight;
+    var y=(H>0&&V>0)?Math.min(SCROLL_Y,Math.max(0,H-V)):SCROLL_Y;
+    try{ window.scrollTo({top:y,behavior:"instant"}); }catch(e){ window.scrollTo(0,y); }
   }
 }
 function askLock(on){ scrollLock("ask",on); }
@@ -18749,7 +18756,10 @@ function syncLiveDots(){
   var any=!!(typeof LIVE==="object"&&LIVE.matches&&LIVE.matches.length);
   var here=document.documentElement.classList.contains("mode-live");
   var d=$("liveDot"); if(d) d.hidden=!any;
-  var dB=$("liveDotB"); if(dB) dB.hidden=!any||here;
+  /* The Live tab's own centre circle pulses instead of a dot pinned beside it
+     (owner, 9 Oct 2026). Same rule as the dot had: live games, and not already
+     on Live. */
+  var bl=$("bt-live"); if(bl) bl.classList.toggle("live",any&&!here);
 }
 /* WHERE THE LIVE ROW STANDS. On a phone it joins the rail's cards under the
    first screen of games (the rail dissolves there and orders its cards around
@@ -18899,7 +18909,11 @@ function clearMy(){
     /* The builder no longer writes into My slip on render (addBuiltToSlip is
        the one way in), so this repaint cannot put the cleared legs back. */
     BUILD.touched=false;
-    if(document.documentElement.classList.contains("mode-build")) renderBuilder();
+    if(document.documentElement.classList.contains("mode-build")){ renderBuilder();
+      /* CLEARED ON THE BUILDER: back to its top. The sheet held the page at the
+         old scroll spot, which on the now-empty builder was blank screen, and
+         closing landed on the bottom of the page (owner, 9 Oct 2026). */
+      if(Object.keys(SCROLL_HELD).length){ SCROLL_Y=0; document.body.style.top="0px"; } }
     if(typeof renderSlipTease==="function") renderSlipTease();
   }catch(e){}
   renderMySheet();

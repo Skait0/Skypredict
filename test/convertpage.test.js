@@ -227,7 +227,11 @@ test("the Build staff is a mask, so it still paints in currentColor", () => {
   /* A red pulse on the red disc is invisible, and syncLiveDots already stops
      nudging you toward the page you are standing on. */
   assert.match(index, /\.btab\.on \.btab-dot\{display:none\}/);
-  assert.match(index, /dB\.hidden=!any\|\|here/, "the live dot no longer knows where you are");
+  /* Owner, 9 Oct 2026: no dot beside the icon; the Live icon's own centre
+     circle pulses, and still not while you are on Live. */
+  assert.match(index, /bl\.classList\.toggle\("live",any&&!here\)/, "the pulse no longer knows where you are");
+  assert.match(index, /<circle class="lv-core" cx="12" cy="12" r="3"\/>/);
+  assert.doesNotMatch(index, /id="liveDotB"/, "the separate dot is gone");
 });
 
 /* ------------------------------------------------------------------ search */
