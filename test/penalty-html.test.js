@@ -626,3 +626,13 @@ test("batch 1 (owner, 9 Oct 2026): Again first, who to pass next, a new best, ne
   assert.match(pk, /near\?"FINGERTIPS":null/);
   assert.match(grabFn("result"), /btn\("Challenge "\+chName\+" back","red"/);
 });
+
+test("match feel (owner, 9 Oct 2026): a VS card before each match, a TV score bug, 1-3 stars a goal", () => {
+  assert.match(html, /<div id="vs" aria-hidden="true">/);
+  assert.match(grabFn("practice"), /PW\.vs\(PW\.NAME\|\|"You",PW\.char,"Computer",null,"FRIENDLY"\)\.then\(next\)/);
+  assert.match(grabFn("survival"), /PW\.vs\(name,PW\.char,"Wizard Keeper","wizard","RANKED"\)\.then\(next\)/);
+  assert.match(grabFn("friend"), /PW\.vs\(n,PW\.char,m\.challenger,null,"CHALLENGE"\)/);
+  assert.match(html, /\.sboard:before\{content:"PENALTIES"/);
+  assert.match(grabFn("playKick"), /var st=you\?1\+\(top\?1:0\)\+\(perfect\|\|Math\.abs\(curl\)>0\.5\?1:0\):0;STARS\+=st;/);
+  assert.match(html, /#sheet h2\.best\{color:var\(--gold\)\}/);
+});

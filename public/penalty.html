@@ -164,6 +164,23 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #sheet.on{transform:none}
 .smenu{float:right;margin:0 0 4px 12px;height:32px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:none;color:var(--soft);font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}
 .smenu:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#sheet h2.best{color:var(--gold)}
+/* THE VS CARD (EA FC's walkout): your face, theirs, what is at stake */
+#vs{position:absolute;inset:0;z-index:12;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 12px;background:radial-gradient(circle at 50% 50%,#2a0e12f2,#07080af7 70%);opacity:0;pointer-events:none}
+#vs.go{animation:pw-vs 1.7s ease both}
+#vs .vl,#vs .vr{display:grid;justify-items:center;gap:9px;width:34%;min-width:0}
+#vs i{width:92px;height:92px;border-radius:50%;background:#1E1E22 no-repeat 50% 7%/250% auto;border:2px solid #F2F1F0}
+#vs .vr i{border-color:#E63946}
+#vs b{font:italic 800 18px/1.1 "Roboto Condensed",sans-serif;color:#F2F1F0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#vs .vx{font:italic 800 56px/1 "Roboto Condensed",sans-serif;color:#F2B84B;text-align:center}
+#vs .vm{display:block;margin-top:8px;font-size:11px;letter-spacing:.22em;color:var(--soft)}
+#vs.go .vl{animation:pw-vsl .55s cubic-bezier(.2,.9,.25,1) both}#vs.go .vr{animation:pw-vsr .55s cubic-bezier(.2,.9,.25,1) both}#vs.go .vx{animation:pw-vsx .5s .2s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes pw-vs{0%{opacity:0}10%{opacity:1}86%{opacity:1}100%{opacity:0}}
+@keyframes pw-vsl{from{opacity:0;transform:translateX(-70px)}}@keyframes pw-vsr{from{opacity:0;transform:translateX(70px)}}@keyframes pw-vsx{from{opacity:0;transform:scale(.4)}}
+/* TV SCOREBOARD (the broadcast score bug): a red PENALTIES tab, scores in white boxes */
+.sboard{position:relative}
+.sboard:before{content:"PENALTIES";position:absolute;top:-8px;left:12px;padding:2px 8px;border-radius:3px;background:#E63946;color:#fff;font:800 9px/1.3 "Plus Jakarta Sans",system-ui,sans-serif;letter-spacing:.16em}
+.srow b{background:#F2F1F0;color:#0d0d0f;border-radius:4px;padding:3px 0;text-align:center}
 #sheet h2{margin:2px 0 6px;font:italic 800 26px/1.05 "Roboto Condensed",sans-serif;letter-spacing:.01em}
 #sheet p{margin:0 0 12px;color:var(--soft);font-size:14px}
 #sheet p.credit{margin:4px 0 0;font-size:11px;opacity:.6;text-align:center}#sheet p.credit a{color:inherit}
@@ -248,6 +265,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
   <button id="snd" type="button"></button>
   <div id="hud"><div class="sboard"><div class="srow" id="rowA"><i class="av" id="avA"></i><span class="who" id="whoA">YOU</span><span class="kicks" id="kA"></span><b id="scA">0</b></div><div class="srow" id="rowB"><i class="av" id="avB"></i><span class="who" id="whoB">CPU</span><span class="kicks" id="kB"></span><b id="scB">0</b></div></div></div>
   <div id="tag"></div><div id="combo"></div>
+  <div id="vs" aria-hidden="true"><div class="vl"><i></i><b></b></div><div class="vx">VS<span class="vm"></span></div><div class="vr"><i></i><b></b></div></div>
   <a id="exit" href="/" aria-label="Soccerwizard home"><img src="/penalty/wiz-64.webp?v=12" alt="" width="26" height="26"></a>
   <div id="hint"></div>
   <div id="coach" role="status"><img src="/penalty/kw-taunt.webp?v=12" alt=""><p></p></div><i id="ghost"></i>
@@ -546,6 +564,15 @@ function consumeSpell(){if(!SPELLARMED)return false;SPELLARMED=false;SPELL=0;SPE
    Five circles each, more appear in sudden death; single for a solo go. */
 var BOARD={a:[],b:[],single:false};
 function face(c){return "url(/penalty/"+(c==="wizard"?"kw-set.webp":"k-set.webp")+"?v="+SPV+")";}
+/* THE VS CARD before every match (owner, 9 Oct 2026). Skipped for reduced motion. */
+function vs(a,ca,b,cb,label){if(REDUCED)return Promise.resolve();var v=$("vs");
+  v.querySelector(".vl i").style.backgroundImage=face(ca||ME);v.querySelector(".vr i").style.backgroundImage=face(cb||OPP||other());
+  v.querySelector(".vl b").textContent=a;v.querySelector(".vr b").textContent=b;v.querySelector(".vm").textContent=label;
+  v.classList.remove("go");void v.offsetWidth;v.classList.add("go");fx.buzz(20);
+  return new Promise(function(r){setTimeout(function(){v.classList.remove("go");r();},1700);});}
+/* STARS (Score! Hero): every goal of yours earns 1-3 - a corner, then a perfect
+   strike or real curl. Counted per match. */
+var STARS=0;
 function setTag(t,kind){var g=$("tag");g.textContent=t||"";g.className=kind||"";if(t){void g.offsetWidth;g.classList.add("go");}}
 function drawBoard(){
   $("avA").style.backgroundImage=face(ME);$("avB").style.backgroundImage=face(OPP||other());
@@ -842,7 +869,10 @@ function playKick(k){
       fx.sprite("burst",bp.x,bp.y,spell?150:top?90:64,spell?620:420);if(top||spell)fx.sprite("star",bp.x,bp.y,spell?170:110,620);
       if(spell){fx.shake(2);fx.flash(0.22,420);}
       hiss(0.32,3200,1100,0.22,false,0.8);sfx(spell||top?"roarbig":"roar",spell?0.25:0.2);
+      var st=you?1+(top?1:0)+(perfect||Math.abs(curl)>0.5?1:0):0;STARS+=st;
+      var stars=st?"\u2605\u2605\u2605".slice(0,st)+"\u2606\u2606\u2606".slice(0,3-st):null;
       if(near&&!spell){fx.pop(you?pick(["GOAL!","OYA!"]):"GOAL!","#2FD48A","BY INCHES");}else
+      if(stars&&!spell&&!top&&!perfect){fx.pop(pick(["GOAL!","OYA!"]),"#2FD48A",stars);}else
       fx.pop(spell?"LEGENDARY!":top?"TOP BINS!":perfect?"WIZARDRY!":(you?pick(["GOAL!","OYA!"]):"GOAL!"),spell||top?"#F2B84B":"#2FD48A");
       fx.board(top?"TOP BINS":"GOAL",top?"#F2B84B":"#2FD48A");
       if(you){streak++;award({top:top,curl:curl,perfect:perfect,streak:streak});}fx.combo(streak);
@@ -872,7 +902,8 @@ window.PW={RULES:{strike:strike,neighbour:neighbour,judge:judge,shootout:shootou
   aimAndShoot:aimAndShoot,pickDive:pickDive,playKick:playKick,fx:fx,
   get DEV(){return DEV;},get NAME(){return NAME;},setName:function(n){NAME=n;try{localStorage.setItem("pw.name",n);}catch(e){}},
   setScore:function(a,b,who){if(who!=null)$("whoB").textContent=who;},
-  newBoard:function(who,single,a,b){BOARD={a:(a||[]).slice(),b:(b||[]).slice(),single:!!single};if(who!=null)$("whoB").textContent=who;drawBoard();boardNow(null);},
+  vs:vs,get stars(){return STARS;},
+  newBoard:function(who,single,a,b){STARS=0;BOARD={a:(a||[]).slice(),b:(b||[]).slice(),single:!!single};if(who!=null)$("whoB").textContent=who;drawBoard();boardNow(null);},
   tag:function(t){setTag(t);},
   coachReset:function(){COACHED={};try{localStorage.removeItem("pw.coach");}catch(e){}},
   smartDive:smartDive,levelOf:levelOf,trailFor:trailFor,get xp(){return XP;},
@@ -930,8 +961,8 @@ function practice(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(true);var o
     var head=st.winner==="a"?"You beat the computer "+st.a+"-"+st.b:st.winner==="b"?"The computer won "+st.b+"-"+st.a:"Draw, "+st.a+"-"+st.b;
     var early=outs.length<2*REG?(st.winner==="a"?"The computer can't catch up, so it ends early. ":"You can't catch up with the kicks left, so it ends early. "):"";
     var acts=el("div","row");acts.appendChild(btn("Play again","red",function(){closeSheet();practice();}));acts.appendChild(btn("Challenge a friend","ghost",function(){closeSheet();challenger();}));
-    sheet([el("h2",null,head)].concat(early?[el("p",null,early.trim())]:[],[acts,tipsCard()]));}
-  next();}
+    sheet([el("h2",null,head),el("p",null,(early?early.trim()+" ":"")+"\u2605 "+PW.stars+" stars this match.")].concat([acts,tipsCard()]));}
+  PW.vs(PW.NAME||"You",PW.char,"Computer",null,"FRIENDLY").then(next);}
 
 function askName(){return new Promise(function(done){
   if(PW.NAME)return done(PW.NAME);
@@ -1019,7 +1050,7 @@ function friend(id){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);api(
     el("p",null,m.outcomes.length?"Open this link again when it's done.":"Send it to someone. The link is yours to share.")]
     .concat(shareSheet("Bet you can't beat me on Play Penalty:",url,"challenge"),[btn("Start another challenge","ghost",function(){closeSheet();challenger();})]));
   if(m.role!=="friend"&&m.outcomes.length)return sheet([el("h2",null,"Someone else is playing this one"),btn("Start your own","red",function(){closeSheet();challenger();})]);
-  sheet([el("h2",null,m.challenger+" challenges you"),el("p",null,"5 shots, 5 saves. Free, no stakes. Pick your player:"),charPicker(),btn("Kick off","red",function(){closeSheet();askName().then(go);})]);
+  sheet([el("h2",null,m.challenger+" challenges you"),el("p",null,"5 shots, 5 saves. Free, no stakes. Pick your player:"),charPicker(),btn("Kick off","red",function(){closeSheet();askName().then(function(n){return PW.vs(n,PW.char,m.challenger,null,"CHALLENGE").then(function(){go(n);});});})]);
   var outs=m.outcomes.slice();PW.newBoard(m.challenger,false,outs.filter(function(_,i){return i%2===0;}),outs.filter(function(_,i){return i%2===1;}));
   function go(name){var n=outs.length;var shot=n%2===0;
     PW.fx.slowmo(Math.floor(n/2)>=REG-1);
@@ -1077,7 +1108,7 @@ function survival(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);askN
           .concat([btn("Again","red",function(){closeSheet();survival();}),
             row(btn("Leaderboard","ghost",function(){closeSheet();leaderboard("today");}),btn("Challenge a friend","ghost",function(){closeSheet();challenger();}))],
             shareSheet("I scored "+streak+" in a row against the Wizard Keeper on Play Penalty. Beat that:",ORIGIN+"/penalty","survival")));});});}
-  next();});}
+  PW.vs(name,PW.char,"Wizard Keeper","wizard","RANKED").then(next);});}
 function row(a,b){var r=el("div","row");r.appendChild(a);r.appendChild(b);return r;}
 /* THE LEADERBOARD: today, this week, all time; best run per player, top 20. */
 function leaderboard(per){
