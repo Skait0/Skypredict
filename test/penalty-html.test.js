@@ -638,13 +638,14 @@ test("match feel (owner, 9 Oct 2026): a VS card before each match, a TV score bu
   assert.match(html, /#sheet h2\.best\{color:var\(--gold\)\}/);
 });
 
-test("game lettering (owner, 9 Oct 2026): gradient word, shadow outline, rays, ring, slam; plates for the turn", () => {
-  assert.match(grabFn("playKick") + html, /t\.className="w";t\.textContent=word/);
-  assert.match(html, /#pop \.w\{[^}]*background-clip:text/);
-  assert.doesNotMatch(html, /#pop \.w\{[^}]*-webkit-text-stroke/, "stroke draws the font's inner contours as stray lines");
-  assert.match(html, /#pop:before\{[^}]*repeating-conic-gradient/);
-  assert.match(html, /@keyframes pw-pop\{0%\{opacity:0;transform:scale\(2\.5\)/);
-  assert.match(html, /#tag\.shot\{background:linear-gradient/);
+test("game lettering stays cheap to draw (owner, 9 Oct 2026: 'it lags and its glitchy')", () => {
+  assert.match(html, /t\.className="w";t\.textContent=word/);
+  assert.match(html, /#pop \.w\{[^}]*color:var\(--c\);[^}]*text-shadow:/, "solid fill with a shadow outline, drawn once");
+  assert.doesNotMatch(html, /#pop \.w\{[^}]*(filter|background-clip)/, "no filter chain or clipped gradient on the word");
+  assert.doesNotMatch(html, /@keyframes pw-pop\{[^\n]*blur/, "no blur inside the slam");
+  assert.doesNotMatch(html, /repeating-conic-gradient|pw-shine|pw-rays/, "no ray burst or shine sweep");
+  assert.doesNotMatch(html, /\.sboard\{[^}]*backdrop-filter/, "the scoreboard does not blur the moving crowd under it");
+  assert.match(html, /#tag\.shot,#tag\.save\{padding:0;border:0;background:none;/, "the turn is lettering, not a plate");
 });
 
 test("batch 2 (owner, 9 Oct 2026): a League tab with your division's crest, promotion when your division goes up", () => {
