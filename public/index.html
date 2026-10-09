@@ -11143,13 +11143,26 @@ var REFUSAL_WHY={};
    sell it then. Only legs the book NAMED are written; a guess is never kept. */
 var REFUSED_KEY="sw.refused";
 function refusedDay(){ return new Date(Date.now()+3600e3).toISOString().slice(0,10); }
-function refusedToday(){
+/* SHARED REFUSALS (owner, 9 Oct 2026): what SportyBet refused for ANY reader
+   in the last half hour, sent beside the odds in /api/fixtures. Every builder
+   and swap already skips what refusedToday() names, so they skip these too.
+   Kept in memory only - the server owns their expiry. */
+var SHARED_REFUSED={};
+function setSharedRefused(list){
+  var by={}, out={};
+  ((DATA&&DATA.fixtures)||[]).forEach(function(f){ if(f.eventId) by[f.eventId]=fid(f); });
+  (list||[]).forEach(function(r){ var id=r&&by[r[0]]; if(id) out["sporty|"+id+"|"+r[1]]=1; });
+  SHARED_REFUSED=out;
+}
+/* own=true: this browser's refusals only - what noteRefused writes back. */
+function refusedToday(own){
+  var k={};
   try{ var r=JSON.parse(localStorage.getItem(REFUSED_KEY)||"null");
-       if(r&&r.day===refusedDay()&&r.k) return r.k; }catch(e){}
-  return {};
+       if(r&&r.day===refusedDay()&&r.k) k=r.k; }catch(e){}
+  return own||typeof SHARED_REFUSED==="undefined"?k:Object.assign({},SHARED_REFUSED,k);
 }
 function noteRefused(c,B){
-  var k=refusedToday(); k[B.key+"|"+c.id+"|"+c.code]=1;
+  var k=refusedToday(true); k[B.key+"|"+c.id+"|"+c.code]=1;
   try{ localStorage.setItem(REFUSED_KEY,JSON.stringify({day:refusedDay(),k:k})); }catch(e){}
 }
 function refusalWhy(b,c){
@@ -12700,6 +12713,7 @@ async function loadSporty(){
         if(d&&d.matches&&d.matches.length){
           SPORTY_AT=Date.now();
           var n=attachEventIds(d.matches,BOOKS.sporty);
+          setSharedRefused(d.refused);
           if(n) refreshByoPanels();
           /* Only repaint for a rescue - on the first load the caller paints
              straight after us and doing it twice just flashes the board. */

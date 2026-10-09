@@ -262,3 +262,22 @@ test("a lock released after the page shrank never lands past its end (owner, 9 O
   lock("sheet", true); lock("sheet", false);
   assert.strictEqual(win.to, 400, "clamped to the new bottom, not the old spot");
 });
+
+test("shared refusals: what SportyBet refused for anyone is skipped by everyone, own refusals still kept", () => {
+  const src2 = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "index.html"), "utf8");
+  const take = (name) => { const i = src2.search(new RegExp("\\nfunction " + name + "\\(")); let d = 0, k = src2.indexOf("{", i);
+    for (; k < src2.length; k++) { if (src2[k] === "{") d++; else if (src2[k] === "}" && !--d) break; } return src2.slice(i, k + 1); };
+  const STORE = {};
+  const api = new Function("localStorage", [
+    "var REFUSED_KEY='sw.refused', DATA={fixtures:[{id:'a',eventId:'sr:match:1'},{id:'b'}]};",
+    "function fid(f){return f.id;}",
+    take("refusedDay"), "var SHARED_REFUSED={};", take("setSharedRefused"),
+    take("refusedToday"), take("noteRefused"),
+    "return {set:setSharedRefused, today:refusedToday, note:noteRefused, local:function(){return refusedToday(true);}};"].join("\n"))(
+    { getItem: (k) => STORE[k] || null, setItem: (k, v) => { STORE[k] = v; } });
+  api.set([["sr:match:1", "HOME_OVER_0.5"], ["sr:match:404", "1"]]);
+  api.note({ id: "b", code: "1X" }, { key: "sporty" });
+  assert.deepStrictEqual(Object.keys(api.today()).sort(), ["sporty|a|HOME_OVER_0.5", "sporty|b|1X"]);
+  assert.deepStrictEqual(Object.keys(api.local()), ["sporty|b|1X"], "shared ones are never written to this browser");
+  assert.match(src2, /attachEventIds\(d\.matches,BOOKS\.sporty\);\s*setSharedRefused\(d\.refused\);/);
+});
