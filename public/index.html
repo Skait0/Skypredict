@@ -513,6 +513,13 @@ main[tabindex="-1"]:focus{outline:none}
 .ys-live:after,.ys-dot.run:after{content:"";position:absolute;top:0;bottom:0;left:0;width:45%;border-radius:99px;
   background:var(--accent);box-shadow:0 0 8px var(--accent);animation:ysScan 1.3s ease-in-out infinite alternate}
 .ys-lh{display:flex;align-items:center;justify-content:space-between;min-height:24px;margin:0 2px 4px}
+/* The one line under Your slips (release step 2): the game for the wait. */
+.ys-play{display:flex;align-items:center;gap:10px;margin:8px 2px 2px;padding-top:10px;border-top:1px solid var(--line);
+  color:var(--soft);font-size:12.5px;text-decoration:none}
+.ys-play svg{width:20px;height:20px;flex:none;color:var(--accent)}
+.ys-play b{margin-left:auto;color:var(--red-ink);font-weight:800;white-space:nowrap}
+.ys-play:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+@media(hover:hover){.ys-play:hover{color:var(--text)}}
 .ys-lh h4{margin:0;font-size:13px;font-weight:700;color:var(--soft)}
 .ys-clrb{border:0;background:none;color:var(--faint);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:4px 0}
 .ys-ask{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700}
@@ -1170,6 +1177,25 @@ html:not(.reduce) .m:nth-child(n+7),html:not(.reduce) .lrow:nth-child(n+7){anima
   transition:transform .55s cubic-bezier(.5,.05,.5,1),opacity .55s}
 /* bottom tab bar (mobile only) */
 .btabs{display:none;transition:transform .3s ease}
+/* Play Penalty in the desktop header: a link out to the game, so a pill of its
+   own beside the tab track rather than a tab inside it. The phone has its own
+   copy in the bottom bar, so this one never shows under 720px. */
+.navplay{display:none}
+a.btab{text-decoration:none}
+@media(min-width:721px){
+  /* it opens the right-hand group, so it takes the push the X icon used to */
+  .top-in .navplay~*{margin-left:0}
+  .navplay{display:inline-flex;align-items:center;gap:7px;margin:0 4px 0 auto;padding:7px 13px;border:1px solid var(--line);
+    border-radius:999px;color:var(--soft);font-weight:800;font-size:14px;text-decoration:none;white-space:nowrap;
+    transition:color .14s var(--ease-out),border-color .14s var(--ease-out)}
+  .navplay svg{width:18px;height:18px;color:var(--accent)}
+  .navplay:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  @media(hover:hover){.navplay:hover{color:var(--text);border-color:var(--accent-rim)}}
+}
+@media(min-width:721px) and (max-width:1023px){.navplay{padding:7px 9px}.navplay span{display:none}}
+/* 721-759: the centred tab track leaves it no room (measured -3px at 721) */
+@media(max-width:759px){.navplay{display:none!important}}
+
 .btabs.hide{transform:translateY(110%)}
 html.mode-live .btabs{transform:none!important}
 @media(max-width:720px){
@@ -7227,6 +7253,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
          page knows the app is not installed - see offerInstall - and never
          shown inside the app itself. Unlike the install bar, "Not now" does
          not hide it: this is the way back to /install for later. -->
+    <a class="navplay" id="tab-play" href="/penalty" aria-label="Play Penalty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5.5" r="2.8"/><path d="M12 8.3V15"/><path d="M4.5 15.5h15l1.3 3.7a1 1 0 0 1-.94 1.3H4.14a1 1 0 0 1-.94-1.3z"/><path d="M15.8 15.5v-1.6h2.6v1.6"/></svg><span>Play Penalty</span></a>
     <a class="tgl hsoc hsoc-inst" id="hdInstall" href="/install" aria-label="Install the app" title="Install the app" hidden><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 7.5v6.5M9.3 11.4 12 14l2.7-2.6M10.5 18.5h3"/></svg></a>
     <!-- Account (spec section 9). Stays hidden unless /api/me answers, so
          with AUTH_ENABLED off the header is exactly as before. Filled by the
@@ -7829,6 +7856,9 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
        under it carries the rest. -->
   <button class="btab" id="bt-convert" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M14.5 12h6.5M18 9l3 3-3 3"/></svg></span>Converter</button>
   <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg><span class="live-dot btab-dot" id="liveDotB" hidden></span></span>Live</button>
+  <!-- PLAY PENALTY (release step 2, owner 9 Oct 2026: "a retro joystick as the
+       nav icon on mobile"). A link, not a view: the game is its own page. -->
+  <a class="btab" id="bt-play" href="/penalty" aria-label="Play Penalty"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5.5" r="2.8"/><path d="M12 8.3V15"/><path d="M4.5 15.5h15l1.3 3.7a1 1 0 0 1-.94 1.3H4.14a1 1 0 0 1-.94-1.3z"/><path d="M15.8 15.5v-1.6h2.6v1.6"/></svg></span>Play</a>
 </nav>
 <div class="sheet slips-sheet" id="slipsSheet" role="dialog" aria-modal="true" aria-labelledby="slipsSheet-title">
   <div class="sheet-grab"><i></i></div>
@@ -8233,7 +8263,8 @@ function renderMyResults(){
         "<span class='ys-m'><span class='ys-code num'>"+esc(s.code||"No code")+"</span>"+
         "<small>"+(bm?bm+", ":"")+s.legs.length+(s.legs.length===1?" game":" games")+(slipWhenPlain(s.at)?", "+esc(slipWhenPlain(s.at)):"")+"</small></span>"+
         "<span class='ys-od num'>×"+(s.odds>=1000?Math.round(s.odds).toLocaleString():s.odds.toFixed(2))+"</span></div></div>";
-    }).join("");
+    }).join("")+
+    "<a class='ys-play' href='/penalty'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='5.5' r='2.8'/><path d='M12 8.3V15'/><path d='M4.5 15.5h15l1.3 3.7a1 1 0 0 1-.94 1.3H4.14a1 1 0 0 1-.94-1.3z'/><path d='M15.8 15.5v-1.6h2.6v1.6'/></svg><span>Waiting on your games? Take on the Wizard Keeper.</span><b>Play</b></a>";
   host.querySelectorAll("[data-ysf]").forEach(function(b){ b.onclick=function(){ openSlipsSheet(b.getAttribute("data-ysf")); }; });
   host.querySelectorAll(".sw-swipe").forEach(function(r){
     swSwipe(r,function(){ window.swPend.del(r.getAttribute("data-sid")); });

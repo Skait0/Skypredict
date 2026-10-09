@@ -584,3 +584,11 @@ test("owner, 9 Oct 2026: out wide is always a dive; total odds in gold", () => {
   assert.match(grabFn("tipsCard"), /el\("b","odds",/);
   assert.match(html, /\.tips \.odds\{color:var\(--gold\)/);
 });
+
+test("release step 2 (owner, 9 Oct 2026): Play Penalty in the phone bar with a joystick, in the desktop header, and under Your slips", () => {
+  const index = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "index.html"), "utf8");
+  assert.match(index, /<a class="btab" id="bt-play" href="\/penalty" aria-label="Play Penalty"><span class="bt-ic"><svg[^>]*>.*<\/svg><\/span>Play<\/a>/);
+  assert.match(index, /<a class="navplay" id="tab-play" href="\/penalty"/);
+  assert.match(index, /<a class='ys-play' href='\/penalty'>/);
+  assert.match(index, /a\.btab\{text-decoration:none\}/);
+});
