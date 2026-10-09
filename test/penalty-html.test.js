@@ -10,7 +10,7 @@ const html = fs.readFileSync(path.join(__dirname, "..", "public", "penalty.html"
 test("the page stays light", () => {
   /* measured as served (LF): a Windows checkout with autocrlf adds a byte a line */
   /* 100KB until the leaderboard; owner, 9 Oct 2026: "if we have to increase limit. okay" */
-  assert.ok(Buffer.byteLength(html.replace(/\r\n/g, "\n")) < 120 * 1024, "under 120KB before art");
+  assert.ok(Buffer.byteLength(html.replace(/\r\n/g, "\n")) < 140 * 1024, "under 140KB before art");
 });
 
 test("the browser rules are the server's rules, verbatim", () => {
@@ -114,8 +114,9 @@ test("the challenger takes 5 shots and 3 bonus shots, 5 dives and 3 bonus dives"
 });
 
 
-test("daily share line names the day and ends with the account", () => {
-  assert.match(html, /"Wizard Keeper "\+/);
+test("daily share line is numbered, Wordle-style, with the grid and the streak (owner, 9 Oct 2026)", () => {
+  assert.ok(html.includes('"Play Penalty #"+num+" vs the Wizard Keeper'), "numbered share line");
+  assert.ok(html.includes('F.el("p","dgrid",grid)'), "the grid shows on the result too");
   assert.match(html, /"⚽":"❌"/);
 });
 
@@ -655,4 +656,11 @@ test("batch 2 (owner, 9 Oct 2026): a League tab with your division's crest, prom
   assert.match(grabFn("survival"), /lg\.division\.tier>was\)setTimeout\(function\(\)\{promote\(lg\.division\.tier\);\}/);
   assert.match(html, /F\.leaderboard\("league"\)/, "the menu opens your league");
   assert.match(html, /#pop\{[^}]*z-index:13/, "the word sits above the promotion overlay");
+});
+
+test("match report card (owner, 9 Oct 2026): stars, top bins and your saves after a match", () => {
+  assert.match(grabFn("report"), /"Stars"\][\s\S]*"Top bins"\][\s\S]*"Your saves"\]/);
+  assert.match(grabFn("practice"), /\[report\(\),acts,tipsCard\(\)\]/);
+  assert.match(grabFn("result"), /role==="friend"\?\[report\(\)\]:\[\]/);
+  assert.match(grabFn("playKick"), /if\(you&&top\)TOPS\+\+;/);
 });
