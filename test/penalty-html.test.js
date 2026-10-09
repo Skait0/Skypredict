@@ -342,8 +342,11 @@ test("the net is a cloth: an impact billows it and it settles back to rest", () 
 
 test("every bookmaker runs on the LED boards in its own colours", () => {
   const boards = /<div class="boards"[\s\S]*?<div class="bflash"/.exec(html)[0];
-  for (const b of ["SPORTYBET", "BET9JA", "BETKING", "BETPAWA", "1XBET", "SOCCERWIZARD"]) assert.match(boards.replace(/<[^>]+>/g, ""), new RegExp(b), b);
-  for (const c of ["#D42127", "#FFC400", "#9CE800", "#276BA6"]) assert.match(html, new RegExp(c), c);
+  for (const b of ["SPORTYBET", "BET9JA", "BETKING", "BETPAWA", "1XBET", "SOCCERWIZARD"]) assert.match(boards.replace(/<[^>]+>/g, ""), new RegExp(b, "i"), b);
+  /* the site's own wordmarks and colours (owner, 9 Oct 2026), not our type */
+  for (const m of ["sbm", "b9m", "bkm", "bwm", "xbm"]) assert.match(boards, new RegExp('class="' + m + '"'), m);
+  for (const c of ["#E63946", "#D42127", "#14B151", "#FFC400", "#9CE800", "#14A0FF"]) assert.match(html, new RegExp(c), c);
+  assert.doesNotMatch(html, /\.track[^{]*\{[^}]*text-shadow:0 0/, "no zero-offset glows on the boards");
 });
 
 /* Round 7, owner 8 Oct 2026: "act a renowned game dev and add features to make it
@@ -393,13 +396,13 @@ test("nothing calls the retired dot strip", () => {
 });
 
 /* Owner, 8 Oct 2026: "when the ball hits the bar, dont say saved - missed, or hit the post". */
-test("a miss is WAHALA with its reason under it; the bar never says saved", () => {
+test("your miss is WAHALA with its reason under it; the bar never says saved", () => {
   /* Owner: "when the ball hits the bar, dont say saved" then "i liked the wahala lol". */
   const f = grabFn("playKick");
   const bar = f.slice(f.indexOf('what==="bar"'), f.indexOf("}else{", f.indexOf('what==="bar"')));
-  assert.match(bar, /fx\.pop\("WAHALA!","#E63946","OFF THE BAR"\)/); assert.match(bar, /fx\.board\("OFF THE BAR"/);
+  assert.match(bar, /fx\.pop\(you\?pick\(\["WAHALA!","MISSED!"\]\):"MISSED!",you\?"#E63946":"#2FD48A","OFF THE BAR"\)/); assert.match(bar, /fx\.board\("OFF THE BAR"/);
   assert.doesNotMatch(bar, /SAVED/);
-  assert.match(f, /fx\.pop\("WAHALA!","#E63946","OVER THE BAR"\);fx\.board\("MISSED"/);
+  assert.match(f, /fx\.pop\(you\?pick\(\["WAHALA!","MISSED!"\]\):"MISSED!",you\?"#E63946":"#2FD48A","OVER THE BAR"\);fx\.board\("MISSED"/);
   assert.match(html, /pop:function\(word,color,why\)/);
 });
 
@@ -431,7 +434,9 @@ test("the turn label sits below the scoreboard, and the miss cross is centred", 
    the stand is empty", "the red dot on the ball stays on after shooting". */
 test("no stakes in the game: nothing is wagered, but the wizard's slip and codes are offered", () => {
   assert.doesNotMatch(html, /place a bet|your stake|stake to win/i);
-  assert.match(grabFn("tipsCard"), /Let the wizard pick for you/);
+  assert.match(grabFn("tipsCard"), /Today's wizard slip/);
+  assert.match(grabFn("tipsCard"), /nm\.innerHTML=BOOKM\[k\]/, "bookmaker names are their wordmarks, in their colours");
+  assert.doesNotMatch(grabFn("tipsCard"), /See all predictions/, "one button per destination");
   assert.match(grabFn("tipsCard"), /r\.j\.code/);
   assert.match(grabFn("tipsCard"), /Build me a slip/);
 });
@@ -519,7 +524,8 @@ test("the legendary shot: LEGEND shows only while you aim, freezes the keeper, a
   const aim = grabFn("aimAndShoot");
   assert.match(aim, /AIMING=true;drawSpell\(\)/);
   assert.match(aim, /AIMING=false;drawSpell\(\)/);
-  assert.match(html, /"ARMED":"LEGEND"/, "short labels: a long one covered the ball and blocked the swipe");
+  assert.match(html, /#cast\{[^}]*width:64px;height:64px;[^}]*border-radius:50%/, "a round button that never covers the ball");
+  assert.match(html, /#cast\[hidden\]\{display:none\}/);
   assert.match(grabFn("playKick"), /\$\("app"\)\.classList\.add\("legend"\)/);
   assert.match(html, /#app\.legend #keeper\{filter:/);
   assert.doesNotMatch(html, /id="runes"/, "the rune circle is gone");
@@ -531,4 +537,49 @@ test("every sprite address carries the art version, so new art is never served f
   assert.match(html, /var SPV="\d+";/);
   assert.match(html, /function setImg\(el,f\)\{[^}]*"\/penalty\/"\+f\+"\?v="\+SPV/);
   assert.doesNotMatch(html.replace(/<script>[\s\S]*<\/script>/g, ""), /\.webp"/, "static tags too");
+});
+
+test("owner, 9 Oct 2026: a far-corner shot always gets a dive, faces on the scoreboard, a turn banner you notice", () => {
+  assert.match(grabFn("playKick"), /col\(k\.dive\)===1&&Math\.abs\(aim\.x\)>2\.2\)\{var sd=aim\.x>0\?1:-1;kp=keeperPose\(/);
+  assert.match(html, /<i class="av" id="avA"><\/i>/);
+  assert.match(html, /<i class="av" id="avB"><\/i>/);
+  assert.match(grabFn("drawBoard"), /face\(ME\)[\s\S]*face\(OPP\|\|other\(\)\)/);
+  assert.match(grabFn("aimAndShoot"), /setTag\("YOUR SHOT","shot"\)/);
+  assert.match(grabFn("pickDive"), /setTag\("YOUR SAVE","save"\)/);
+  assert.match(html, /#tag\.go\{animation:pw-turn/);
+});
+
+test("owner, 9 Oct 2026: goal crowd at half volume, a sound button on the pitch, an early finish explained", () => {
+  assert.match(html, /sfx\(spell\|\|top\?"roarbig":"roar",spell\?0\.25:0\.2\)/, "soft: a quarter of the first mix");
+  assert.match(html, /<button id="snd" type="button"><\/button>/);
+  assert.match(html, /function setMuted\(m\)\{.*drawSnd\(\);\}/);
+  assert.match(grabFn("practice"), /so it ends early/);
+});
+
+test("a closed sheet is inert, so Space can never restart a match behind your back", () => {
+  assert.match(html, /function closeSheet\(\)\{.*document\.activeElement\.blur\(\);s\.inert=true;/);
+  assert.match(html, /s\.inert=false;s\.classList\.add\("on"\)/);
+});
+
+test("owner, 9 Oct 2026: OYA and WAHALA are yours alone and mixed with other words; no voice clips", () => {
+  const f = grabFn("playKick");
+  assert.match(f, /\(you\?pick\(\["GOAL!","OYA!"\]\):"GOAL!"\)/);
+  assert.equal((f.match(/fx\.pop\(you\?pick\(\["WAHALA!","MISSED!"\]\):"MISSED!"/g) || []).length, 2);
+  assert.doesNotMatch(f, /fx\.pop\("WAHALA!"|"OYA!"\)/, "never on the other side's kick");
+  assert.doesNotMatch(html, /"oya"|"wahala"/, "the voice clips are gone");
+});
+
+test("owner, 9 Oct 2026: share is one row of round marks, not red pills; the result sheet fits a phone", () => {
+  const f = grabFn("shareSheet");
+  assert.match(f, /sh\("wa","WhatsApp"/);
+  assert.match(f, /sh\("xx","X"/);
+  assert.doesNotMatch(f, /btn\("WhatsApp","red"|btn\("X","red"/);
+  assert.match(html, /\.sh\.wa i\{background:#25D366/);
+  assert.match(grabFn("practice"), /var acts=el\("div","row"\)/, "Play again and Challenge share one row");
+});
+
+test("owner, 9 Oct 2026: out wide is always a dive; total odds in gold", () => {
+  assert.match(grabFn("playKick"), /if\(Math\.abs\(kp\.x\)>0\.9&&!kp\.flip\)\{var dv=keeperPose\(/);
+  assert.match(grabFn("tipsCard"), /el\("b","odds",/);
+  assert.match(html, /\.tips \.odds\{color:var\(--gold\)/);
 });
