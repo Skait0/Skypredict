@@ -858,8 +858,12 @@ function api(method,a,body,q){
 }
 var LAST={status:0,error:null};
 function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
-function sheet(nodes){PW.tag("");PW.fx.combo(0);var s=$("sheet");s.textContent="";nodes.forEach(function(n){s.appendChild(n);});s.classList.add("on");}
-function closeSheet(){$("sheet").classList.remove("on");}
+function sheet(nodes){PW.tag("");PW.fx.combo(0);var s=$("sheet");s.textContent="";nodes.forEach(function(n){s.appendChild(n);});s.inert=false;s.classList.add("on");}
+/* A closed sheet is inert. Its buttons used to keep keyboard focus as it slid
+   away, so Space (shoot, on a laptop) clicked "Play the computer" again and
+   started a second match on the same scoreboard: 0-5 on the board, "the
+   computer won 3-2" on the result (owner, 9 Oct 2026). */
+function closeSheet(){var s=$("sheet");if(s.contains(document.activeElement))document.activeElement.blur();s.inert=true;s.classList.remove("on");}
 function btn(label,cls,fn){var b=el("button","btn "+cls,label);b.type="button";b.addEventListener("click",fn);return b;}
 
 /* The one failure screen: never invents a result, and says which failure it

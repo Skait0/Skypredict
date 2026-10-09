@@ -554,3 +554,8 @@ test("owner, 9 Oct 2026: goal crowd at half volume, a sound button on the pitch,
   assert.match(html, /function setMuted\(m\)\{.*drawSnd\(\);\}/);
   assert.match(grabFn("practice"), /so it ends early/);
 });
+
+test("a closed sheet is inert, so Space can never restart a match behind your back", () => {
+  assert.match(html, /function closeSheet\(\)\{.*document\.activeElement\.blur\(\);s\.inert=true;/);
+  assert.match(html, /s\.inert=false;s\.classList\.add\("on"\)/);
+});
