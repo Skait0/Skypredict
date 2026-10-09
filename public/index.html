@@ -19275,6 +19275,7 @@ function addBuiltToSlip(picks,via){
       if(seen[x.id])return false;seen[x.id]=1;return true;});
     saveMy(); renderFab(); openMySheet();
     if(via==="wizard") putMissNote(WSP._missNote);
+    liveCheckMy(legs);
   }
   if(!MYSLIP.length||same){ put([]); return; }
   var n=MYSLIP.length, m=legs.length;
@@ -19289,6 +19290,59 @@ function addBuiltToSlip(picks,via){
     clearPrompt("bldAdd"); put([]); });
   host.querySelector(".confirm-alt").addEventListener("click",function(){
     clearPrompt("bldAdd"); put(MYSLIP.slice()); });
+}
+/* A BUILT SLIP IS CHECKED AS IT LANDS (owner, 9 Oct 2026). Booking-time
+   swaps fixed the refusals but the reader still saw "N games updated" after
+   pressing Get code - the slip on screen was not the slip that booked. So the
+   legs just added are read off SportyBet's live card now, goals lines too
+   (goals=true; the 9 Oct refusals were all team over 0.5 / over 1.5): a moved
+   line takes SportyBet's line and live price and says what it was, a closed
+   one leaves the slip. Eight games a call, one call at a time, each leg asked
+   once. Silence or failure changes nothing, and the booking-time swap stays
+   behind it for whatever moves in between. */
+function liveCheckMy(legs){
+  var B=curBook(); if(!B||B.key!=="sporty") return;
+  var todo=legs.filter(function(x){ return bookIdOf(x,B); }), gen=MYBOOK_GEN;
+  var moved=0, gone=0;
+  function mine(v){
+    for(var i=0;i<MYSLIP.length;i++){ var x=MYSLIP[i];
+      if(bookIdOf(x,B)===v.eventId&&x.code===v.prediction) return x; }
+    return null;
+  }
+  function next(){
+    if(!todo.length||gen!==MYBOOK_GEN){ done(); return; }
+    var evs={}, n=0, batch=[];
+    todo=todo.filter(function(x){ var e=bookIdOf(x,B);
+      if(!evs[e]&&n>=8) return true;
+      if(!evs[e]){ evs[e]=1; n++; } batch.push(x); return false; });
+    fetch(B.book+"&check=lines",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({goals:true,selections:batch.map(function(c){ return B.sel(c); })})})
+      .then(function(r){ return r.json(); }).catch(function(){ return {}; })
+      .then(function(d){
+        if(gen!==MYBOOK_GEN) return;
+        ((d&&d.verdicts)||[]).forEach(function(v){
+          var x=mine(v), f=x&&fixtureById(x.id); if(!x) return;
+          if(v.reason==="line_moved"&&v.now&&+v.odds>1&&f){
+            var o=f[B.odds]=f[B.odds]||{}; o[v.now]=+v.odds;
+            x.was=x.label; x.wasTo=v.now; x.code=v.now; x.label=mLabel(f,v.now);
+            var q=mProb(f,v.now); if(q!=null) x.p=q;
+            moved++;
+          } else {
+            MYSLIP.splice(MYSLIP.indexOf(x),1); gone++;
+          }
+        });
+        next();
+      });
+  }
+  function done(){
+    if(!moved&&!gone) return;
+    saveMy(); renderFab();
+    if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet();
+    window.swToast&&window.swToast("SportyBet right now: "+
+      (moved?moved+(moved===1?" line":" lines")+" updated":"")+(moved&&gone?", ":"")+
+      (gone?gone+(gone===1?" game":" games")+" closed and taken off":""),"info","livemy");
+  }
+  next();
 }
 function wireSlipsSheet(){
   var x=$("slipsSheet-x"); if(x&&!x._w){x._w=1;x.addEventListener("click",closeSlipsSheet);}
@@ -19394,9 +19448,10 @@ function renderMySheet(){
           "aria-label=\"Change the pick for "+teams+"\">"+
           "<span class='sp-swap-lbl'>"+esc(x.label)+"</span></button></div>"
       : "<div class='sp-meta'>"+esc(x.label)+"</div>";
+    var was=x.was&&x.wasTo===x.code?"<div class='sp-meta'>Was "+esc(x.was)+" - SportyBet moved the line</div>":"";
     return "<div class='sp-row'>"+
       "<div class='sp-main'><div class='sp-teams'>"+teams+noid+"</div>"+
-        picker+"</div>"+
+        picker+was+"</div>"+
       /* This leg's price. The duplicate was the copy printed inside the pick
          control itself - this column was never the problem, and without it a
          slip shows a total with nothing to add up to it. */

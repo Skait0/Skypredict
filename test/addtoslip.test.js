@@ -26,7 +26,7 @@ function harness(slip) {
   return new Function("SLIP", [
     "var MYSLIP=SLIP, WSP={}, opened=0, asked=null, btns={};",
     "function mLabel(f,c){return c;} function kickoffOf(){return 0;}",
-    "function saveMy(){} function renderFab(){} function putMissNote(){}",
+    "function saveMy(){} function renderFab(){} function putMissNote(){} function liveCheckMy(){}",
     "function openMySheet(){opened++;}",
     "function showPrompt(t,html){asked=html;return true;} function clearPrompt(){asked=null;}",
     "function promptEl(){return {querySelector:function(s){",
@@ -107,4 +107,32 @@ test("a new payout or slip style brings Conjure back", () => {
 test("the Slider ends on Add selections to slip, not on booking", () => {
   assert.match(src, /\$\("bookBtn"\)\.addEventListener\("click",function\(\)\{ addBuiltToSlip\(BUILD\.picks,"slider"\); \}\);/);
   assert.match(src, /btn\.textContent="Add selections to slip";/);
+});
+
+test("a built slip is checked on SportyBet's live card as it lands", async () => {
+  /* Owner, 9 Oct 2026: what the reader sees in My slip is what books. A moved
+     goals line takes SportyBet's line and price and says what it was; a
+     closed one leaves the slip; an unanswered leg stays as it was. */
+  let sent = null, toast = null;
+  const F = { a: { id: "a", eventId: "e1", sportyOdds: {} }, b: { id: "b", eventId: "e2" }, c: { id: "c", eventId: "e3" } };
+  const run = new Function("F", "FETCH", "TOAST", [
+    "var MYBOOK_GEN=0, B={key:'sporty',book:'/api/book?book=sporty',odds:'sportyOdds',id:'eventId',",
+    "  sel:function(c){return {eventId:F[c.id].eventId,prediction:c.code};}};",
+    "var MYSLIP=[{id:'a',code:'HOME_OVER_0.5',label:'HOME_OVER_0.5'},{id:'b',code:'OVER_1.5',label:'OVER_1.5'},",
+    "  {id:'c',code:'1',label:'1'}];",
+    "function curBook(){return B;} function bookIdOf(c){return F[c.id].eventId;} function fixtureById(id){return F[id];}",
+    "function mLabel(f,c){return c;} function mProb(){return 0.7;} function saveMy(){} function renderFab(){}",
+    "function $(){return null;} var fetch=FETCH, window={swToast:TOAST};",
+    grab("liveCheckMy"),
+    "liveCheckMy(MYSLIP.slice()); return function(){return MYSLIP;};",
+  ].join("\n"));
+  const slip = run(F, (url, o) => { sent = JSON.parse(o.body); return Promise.resolve({ json: () => ({ verdicts: [
+    { eventId: "e1", prediction: "HOME_OVER_0.5", reason: "line_moved", now: "HOME_OVER_1.5", odds: 1.62 },
+    { eventId: "e2", prediction: "OVER_1.5", reason: "closed" }] }) }); }, (m) => { toast = m; });
+  await new Promise((r) => setTimeout(r, 10));
+  assert.strictEqual(sent.goals, true, "goals lines are asked about");
+  assert.deepStrictEqual(slip().map((x) => x.code), ["HOME_OVER_1.5", "1"]);
+  assert.strictEqual(slip()[0].was, "HOME_OVER_0.5");
+  assert.strictEqual(F.a.sportyOdds["HOME_OVER_1.5"], 1.62, "SportyBet's live price");
+  assert.match(toast, /1 line updated, 1 game closed/);
 });

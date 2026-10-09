@@ -87,7 +87,7 @@ const api = new Function("STUB", [
   /* The real predicate, so a league taken out of the picker leaves the pool. */
   grab("scopeFixtures"),
   "function slipUse(){return {};}",
-  "function paintBookPickers(){} function pruneMy(){}",
+  "function paintBookPickers(){} function pruneMy(){} function liveCheckMy(){}",
   "function fixtureById(id){return FIXTURES.filter(function(f){return fid(f)===id;})[0]||null;}",
   "function swapOptions(){return [];} function oddCell(){return '';} function esc(s){return String(s);}",
   "function myOdds(){return MYSLIP.reduce(function(a,x){return a*(x.o||1);},1);}",
