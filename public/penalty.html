@@ -175,21 +175,31 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 @media (hover:hover){.btn.ghost:hover{background:var(--card2)}.sfoot button:hover{color:var(--text)}}
 ::selection{background:#E6394666;color:#fff}
 .btn.red{background:var(--red);color:#fff}.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
-.row{display:flex;gap:8px}.row .btn{flex:1}
+.row{display:flex;gap:8px}.row .btn{flex:1;font-size:14px}
+.share{display:flex;justify-content:center;gap:20px;margin:14px 0 6px}
+.sh{display:grid;justify-items:center;gap:6px;background:none;border:0;padding:0;cursor:pointer;color:var(--soft);font:800 11.5px "Plus Jakarta Sans",system-ui,sans-serif}
+.sh i{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;transition:transform .14s cubic-bezier(.23,1,.32,1)}
+.sh:active i{transform:scale(.92)}
+.sh.wa i{background:#25D366;color:#fff}
+.sh.xx i{background:#0A0A0B;color:#F2F1F0;border:1px solid #3a3a40}
+.sh.cp i,.sh.ns i{background:var(--card2);color:var(--text);border:1px solid var(--line)}
+.sh.done i{color:var(--gold);border-color:var(--gold)}.sh.done span{color:var(--gold)}
+.sh:focus-visible{outline:none}.sh:focus-visible i{outline:2px solid var(--gold);outline-offset:3px}
+@media (hover:hover){.sh:hover i{transform:translateY(-1px)}.sh:hover span{color:var(--text)}}
 input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:0 18px;font:inherit;font-size:16px;margin-bottom:4px}
 .pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 6px}
 .pick button{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px 9px;border-radius:16px;border:1px solid var(--line);background:var(--card2);color:var(--soft);font:italic 800 14px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;cursor:pointer;transition:transform .15s,border-color .15s}
 .pick button img{height:86px;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
 .pick button.on{border-color:var(--red);color:var(--text);box-shadow:0 0 0 1px var(--red)}
 .pick button.on img{transform:scale(1.08) translateY(-2px)}
-.tips{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.tips{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 .tips:empty{display:none}
-.tips h3{margin:0 0 2px;font:800 17px/1.25 "Plus Jakarta Sans",system-ui,sans-serif;color:var(--text)}
-.codes{margin:8px 0 12px}
-.crow{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;padding:9px 0}
+.tips h3{margin:0 0 1px;font:800 16px/1.25 "Plus Jakarta Sans",system-ui,sans-serif;color:var(--text)}
+.codes{margin:4px 0 8px}
+.crow{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;padding:5px 0}
 .crow+.crow{border-top:1px solid var(--line)}
 .crow>span{font-size:15px}.crow code{font:800 16px/1 "Plus Jakarta Sans",system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.04em;color:var(--gold)}
-.btn.sm{height:32px;margin:0;padding:0 14px;width:auto;font-size:12.5px}.tips p{margin:0 0 4px!important}
+.btn.sm{height:28px;margin:0;padding:0 13px;width:auto;font-size:12px}.tips p{margin:0 0 4px!important;font-size:13px!important}.tips .btn.red{height:46px;margin-top:8px}
 .sfoot{display:flex;justify-content:center;gap:22px;margin-top:10px}
 .sfoot button{background:none;border:0;color:var(--soft);font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;padding:10px 4px;cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line)}
 @keyframes pw-marquee{to{transform:translateX(-50%)}}
@@ -907,8 +917,8 @@ function practice(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(true);var o
     var head=st.winner==="a"?"You beat the computer "+st.a+"-"+st.b:st.winner==="b"?"The computer won "+st.b+"-"+st.a:"Draw, "+st.a+"-"+st.b;
     /* a shootout stops once one side cannot catch up; say so, or 4-2 after nine kicks reads like a bug (owner) */
     var early=outs.length<2*REG?(st.winner==="a"?"The computer can't catch up, so it ends early. ":"You can't catch up with the kicks left, so it ends early. "):"";
-    sheet([el("h2",null,head),el("p",null,early+"Fancy a real opponent?"),btn("Play again","red",function(){closeSheet();practice();}),
-      btn("Challenge a friend","ghost",function(){closeSheet();challenger();}),tipsCard()]);}
+    var acts=el("div","row");acts.appendChild(btn("Play again","red",function(){closeSheet();practice();}));acts.appendChild(btn("Challenge a friend","ghost",function(){closeSheet();challenger();}));
+    sheet([el("h2",null,head)].concat(early?[el("p",null,early.trim())]:[],[acts,tipsCard()]));}
   next();}
 
 function askName(){return new Promise(function(done){
@@ -919,15 +929,18 @@ function askName(){return new Promise(function(done){
     PW.setName(n);closeSheet();done(n);})]);setTimeout(function(){i.focus();},350);
 });}
 
+/* SHARE: four round marks in one row, the way a phone's share sheet looks -
+   WhatsApp and X in their own colours and logos (Simple Icons, CC0), copy and
+   the system sheet in ours. One row, not two rows of red pills (owner). */
+var SH_ICONS={wa:'<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>',x:'<svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>',copy:'<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></svg>',more:'<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>'};
 function shareSheet(text,url,where){
-  var full=text+" "+url;
-  var wa=btn("WhatsApp","red",function(){track("share",{ch:"whatsapp",where:where});open("https://wa.me/?text="+encodeURIComponent(full),"_blank");});
-  var x=btn("X","red",function(){track("share",{ch:"x",where:where});open("https://x.com/intent/post?text="+encodeURIComponent(text+" via @SoccerWizardhq")+"&url="+encodeURIComponent(url),"_blank");});
-  var row=el("div","row");row.appendChild(wa);row.appendChild(x);
-  var row2=el("div","row");
-  row2.appendChild(btn("Copy link","ghost",function(e){track("share",{ch:"copy",where:where});try{navigator.clipboard.writeText(url);e.currentTarget.textContent="Copied";}catch(_){}}));
-  if(navigator.share)row2.appendChild(btn("Share","ghost",function(){track("share",{ch:"system",where:where});navigator.share({text:text,url:url}).catch(function(){});}));
-  return [row,row2];
+  var full=text+" "+url,row=el("div","share");
+  function sh(cls,label,icon,fn){var b=el("button","sh "+cls);b.type="button";b.setAttribute("aria-label",label);var d=el("i");d.innerHTML=SH_ICONS[icon];b.appendChild(d);b.appendChild(el("span",null,label));b.addEventListener("click",fn);row.appendChild(b);return b;}
+  sh("wa","WhatsApp","wa",function(){track("share",{ch:"whatsapp",where:where});open("https://wa.me/?text="+encodeURIComponent(full),"_blank");});
+  sh("xx","X","x",function(){track("share",{ch:"x",where:where});open("https://x.com/intent/post?text="+encodeURIComponent(text+" via @SoccerWizardhq")+"&url="+encodeURIComponent(url),"_blank");});
+  var cp=sh("cp","Copy link","copy",function(){track("share",{ch:"copy",where:where});try{navigator.clipboard.writeText(url);cp.lastChild.textContent="Copied";cp.classList.add("done");}catch(_){}});
+  if(navigator.share)sh("ns","More","more",function(){track("share",{ch:"system",where:where});navigator.share({text:text,url:url}).catch(function(){});});
+  return [row];
 }
 
 /* Ten or The Wizard: who you play as. The opponent is the other one. */

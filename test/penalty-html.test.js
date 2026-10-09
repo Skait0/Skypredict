@@ -568,3 +568,12 @@ test("owner, 9 Oct 2026: OYA and WAHALA are yours alone and mixed with other wor
   assert.doesNotMatch(f, /fx\.pop\("WAHALA!"|"OYA!"\)/, "never on the other side's kick");
   assert.doesNotMatch(html, /"oya"|"wahala"/, "the voice clips are gone");
 });
+
+test("owner, 9 Oct 2026: share is one row of round marks, not red pills; the result sheet fits a phone", () => {
+  const f = grabFn("shareSheet");
+  assert.match(f, /sh\("wa","WhatsApp"/);
+  assert.match(f, /sh\("xx","X"/);
+  assert.doesNotMatch(f, /btn\("WhatsApp","red"|btn\("X","red"/);
+  assert.match(html, /\.sh\.wa i\{background:#25D366/);
+  assert.match(grabFn("practice"), /var acts=el\("div","row"\)/, "Play again and Challenge share one row");
+});
