@@ -17,6 +17,9 @@ function dailyState(day, play) {
   return { day, at: shots.length, outcomes: shots.map((x) => x.outcome), score: play && play.score != null ? play.score : null };
 }
 
+const picksOk = (b) => Array.isArray(b.shots) && Array.isArray(b.dives) && b.shots.length === REG_LEN &&
+  b.dives.length === REG_LEN && b.shots.every(P.validPick) && b.dives.every(P.validDive);
+
 function make(deps) {
   const db = deps.db, now = deps.now || Date.now;
   const key = () => process.env.PENALTY_KEY || "";
@@ -34,20 +37,21 @@ function make(deps) {
     const s = P.shootout(m.friend_kicks.map((k) => k.outcome));
     return { id: m.id, challenger: m.challenger_name, friend: m.friend_name, outcomes: m.friend_kicks.map((k) => k.outcome),
       score: { a: s.a, b: s.b }, done: s.done, winner: s.winner, next: s.next,
-      expired: !m.friend_kicks.length && Date.parse(m.expires_at) <= t };
+      expired: !m.friend_kicks.length && Date.parse(m.expires_at) <= t, pending: !(m.ch_shots || []).length };
   }
 
   const routes = {
     async create(req, res, t) {
       const b = await H.readJson(req, 4096);
       const name = b && P.cleanName(b.name);
-      if (!b || !name || !DEV_RE.test(String(b.device)) || !Array.isArray(b.shots) || !Array.isArray(b.dives) ||
-          b.shots.length !== REG_LEN || b.dives.length !== REG_LEN || !b.shots.every(P.validPick) || !b.dives.every(P.validDive)) return bad(res);
+      /* Picks may come later (the link goes out first) or now; when sent they must be whole. */
+      const later = b && b.shots == null && b.dives == null;
+      if (!b || !name || !DEV_RE.test(String(b.device)) || (!later && !picksOk(b))) return bad(res);
       if (!(await db.rlHit("pw:c:" + H.ipKey(req), 3600, 30))) return H.sendJson(res, 429, { error: "slow_down" });
       for (let tries = 0; tries < 3; tries++) {
         const id = P.newId();
         const ok = await db.createMatch({ id, challenger_name: name, challenger_device: b.device,
-          ch_shots: b.shots.map((s) => ({ spot: s.spot, power: s.power })), ch_dives: b.dives,
+          ch_shots: later ? [] : b.shots.map((s) => ({ spot: s.spot, power: s.power })), ch_dives: later ? [] : b.dives,
           expires_at: new Date(t + DAY_MS).toISOString() });
         if (ok) return H.sendJson(res, 200, { id });
       }
@@ -68,6 +72,7 @@ function make(deps) {
       if (!n && Date.parse(m.expires_at) <= t) return H.sendJson(res, 410, { error: "expired" });
       if (m.friend_device && m.friend_device !== b.device) return H.sendJson(res, 409, { error: "taken" });
       if (m.challenger_device === b.device) return H.sendJson(res, 409, { error: "taken" });
+      if (!(m.ch_shots || []).length) return H.sendJson(res, 409, { error: "pending" });
       const before = P.shootout(m.friend_kicks.map((k) => k.outcome));
       if (before.done) return H.sendJson(res, 409, { error: "turn" });
       const wantShot = n % 2 === 0, round = Math.floor(n / 2);
@@ -144,8 +149,63 @@ function make(deps) {
         score: r.result ? { you: r.result.b, them: r.result.a } : null })) });
     },
     async tips(req, res) { return H.sendJson(res, 200, tips() || {}); },
+    /* The challenger's eight kicks and eight dives, once, after the link went out. */
+    async picks(req, res) {
+      const b = await H.readJson(req, 4096);
+      if (!b || !DEV_RE.test(String(b.device)) || !picksOk(b)) return bad(res);
+      const m = await db.getMatch(String(b.id || "").toUpperCase());
+      if (!m) return H.sendJson(res, 404, { error: "not_found" });
+      if (m.challenger_device !== b.device || (m.ch_shots || []).length) return H.sendJson(res, 409, { error: "taken" });
+      const ok = await db.setPicks(m.id, b.device, b.shots.map((s) => ({ spot: s.spot, power: s.power })), b.dives);
+      return ok ? H.sendJson(res, 200, { ok: true }) : H.sendJson(res, 409, { error: "busy" });
+    },
+    /* RANKED: one kick of a sudden-death run, judged against rankedDive. i=0
+       opens a run; a miss ends it. The page learns the outcome, never a dive
+       before it shoots. */
+    async ranked(req, res, t) {
+      const b = await H.readJson(req, 512);
+      if (!b || !DEV_RE.test(String(b.device)) || !Number.isInteger(b.i) || b.i < 0 || b.i > 500) return bad(res);
+      const shot = { spot: b.spot, power: b.power };
+      if (!P.validPick(shot)) return bad(res);
+      if (key().length < 32) return H.sendJson(res, 503, { error: "not_configured" });
+      if (!(await db.rlHit("pw:r:" + H.ipKey(req), 3600, 900))) return H.sendJson(res, 429, { error: "slow_down" });
+      let run;
+      if (b.i === 0) {
+        const name = P.cleanName(b.name);
+        if (!name) return bad(res);
+        for (let tries = 0; tries < 3 && !run; tries++) {
+          const row = { id: P.newId(), device: b.device, name, kicks: [], kicks_n: 0, streak: 0, alive: true, created_at: new Date(t).toISOString() };
+          if (await db.createRun(row)) run = row;
+        }
+        if (!run) return H.sendJson(res, 500, { error: "server" });
+      } else {
+        run = await db.getRun(String(b.run || "").toUpperCase());
+        if (!run || run.device !== b.device) return H.sendJson(res, 404, { error: "not_found" });
+        if (!run.alive || run.kicks_n !== b.i) return H.sendJson(res, 409, { error: "turn", i: run.kicks_n, streak: run.streak, alive: run.alive });
+      }
+      const outcome = P.judge(shot, P.rankedDive(key(), run.id, b.i, shot.spot, run.streak));
+      const goal = outcome === "goal", streak = run.streak + (goal ? 1 : 0);
+      const patch = { kicks: run.kicks.concat([{ spot: shot.spot, power: shot.power, outcome }]), kicks_n: b.i + 1, streak, alive: goal };
+      if (!(await db.appendRun(run.id, b.i, patch))) return H.sendJson(res, 409, { error: "busy" });
+      return H.sendJson(res, 200, { outcome, run: run.id, i: b.i, streak, alive: goal });
+    },
+    /* The tables: today and this week (Lagos), and all time. Best run per device. */
+    async board(req, res, t) {
+      const per = String((req.query || {}).period || "today");
+      const since = per === "today" ? P.lagosDay(t) + "T00:00:00+01:00" : per === "week" ? P.lagosWeek(t) + "T00:00:00+01:00" : per === "all" ? null : undefined;
+      if (since === undefined) return bad(res);
+      const dev = String((req.query || {}).device || ""), seen = new Set(), rows = [];
+      let me = null;
+      for (const r of await db.board(since)) {
+        if (seen.has(r.device)) continue;
+        seen.add(r.device);
+        rows.push({ name: r.name, streak: r.streak, you: r.device === dev });
+        if (r.device === dev) me = { rank: rows.length, streak: r.streak };
+      }
+      return H.sendJson(res, 200, { period: per, top: rows.slice(0, 20), me });
+    },
   };
-  const POSTS = new Set(["create", "kick", "daily"]);
+  const POSTS = new Set(["create", "kick", "daily", "picks", "ranked"]);
 
   return async function handler(req, res) {
     const a = String((req.query || {}).a || "");
