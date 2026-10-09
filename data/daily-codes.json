@@ -1835,5 +1835,74 @@
       "onexbet": "5L7Q2"
     },
     "odds": 1.94
+  },
+  "2026-10-09": {
+    "date": "2026-10-09",
+    "generated": "2026-10-09T12:52:21.766Z",
+    "firstKickoff": "2026-10-09T16:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-09",
+        "home": "PSV Eindhoven",
+        "away": "Heerenveen",
+        "league": "Netherlands Eredivisie",
+        "kickoff": "2026-10-09T18:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.901,
+        "market": "OVER_1.5",
+        "odd": 1.06
+      },
+      {
+        "date": "2026-10-09",
+        "home": "Zlin",
+        "away": "Slavia Prague",
+        "league": "Czechia 1. Liga",
+        "kickoff": "2026-10-09T16:00:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.862,
+        "market": "X2",
+        "odd": 1.06
+      },
+      {
+        "date": "2026-10-09",
+        "home": "Jong AZ",
+        "away": "Den Bosch",
+        "league": "Netherlands Eerste Divisie",
+        "kickoff": "2026-10-09T18:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.903,
+        "market": "OVER_1.5",
+        "odd": 1.06
+      },
+      {
+        "date": "2026-10-09",
+        "home": "Shelbourne",
+        "away": "Sligo Rovers",
+        "league": "Ireland Premier Division",
+        "kickoff": "2026-10-09T18:45:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.802,
+        "market": "1X",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-09",
+        "home": "Jong Ajax",
+        "away": "Venlo",
+        "league": "Netherlands Eerste Divisie",
+        "kickoff": "2026-10-09T18:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.869,
+        "market": "OVER_1.5",
+        "odd": 1.07
+      }
+    ],
+    "codes": {
+      "sporty": "KGPWDT",
+      "bet9ja": "5V66KXH",
+      "betking": "D21JBH",
+      "betpawa": "CW9WG22"
+    },
+    "odds": 1.36
   }
 }
