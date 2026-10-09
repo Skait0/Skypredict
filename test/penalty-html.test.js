@@ -577,3 +577,9 @@ test("owner, 9 Oct 2026: share is one row of round marks, not red pills; the res
   assert.match(html, /\.sh\.wa i\{background:#25D366/);
   assert.match(grabFn("practice"), /var acts=el\("div","row"\)/, "Play again and Challenge share one row");
 });
+
+test("owner, 9 Oct 2026: out wide is always a dive; total odds in gold", () => {
+  assert.match(grabFn("playKick"), /if\(Math\.abs\(kp\.x\)>0\.9&&!kp\.flip\)\{var dv=keeperPose\(/);
+  assert.match(grabFn("tipsCard"), /el\("b","odds",/);
+  assert.match(html, /\.tips \.odds\{color:var\(--gold\)/);
+});

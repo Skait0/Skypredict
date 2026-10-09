@@ -138,9 +138,7 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #snd{position:absolute;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:7;width:42px;height:42px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--line);background:#0d0d0fcc;color:#F2F1F0;cursor:pointer}
 #snd[aria-pressed="false"]{color:var(--soft)}
 #snd:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-/* THE LEGENDARY BUTTON (owner: "a round electrifying button"): a charged orb.
-   Ready: a gold-and-red charge ring turns round it. Armed: the core lights gold,
-   the ring races, arcs crackle round the rim, and a shockwave goes out once. */
+/* the legendary orb: charge ring when ready; armed = gold core, racing ring, arcs, one shockwave */
 #cast{position:absolute;right:16px;bottom:calc(18% + env(safe-area-inset-bottom));z-index:7;width:64px;height:64px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;isolation:isolate;cursor:pointer;color:#F2B84B;background:radial-gradient(circle at 35% 30%,#4a3410,#121114 68%)}
 #cast[hidden]{display:none}
 #cast:before{content:"";position:absolute;inset:-3px;z-index:-1;border-radius:50%;background:conic-gradient(#F2B84B,#E63946 22%,#F2B84B 45%,#2a2a30 60%,#F2B84B 80%,#E63946 92%,#F2B84B);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));animation:pw-spin 2.6s linear infinite}
@@ -194,6 +192,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
 .pick button.on img{transform:scale(1.08) translateY(-2px)}
 .tips{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 .tips:empty{display:none}
+.tips .odds{color:var(--gold);font-weight:800;font-variant-numeric:tabular-nums}
 .tips h3{margin:0 0 1px;font:800 16px/1.25 "Plus Jakarta Sans",system-ui,sans-serif;color:var(--text)}
 .codes{margin:4px 0 8px}
 .crow{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;padding:5px 0}
@@ -752,6 +751,8 @@ function playKick(k){
   /* over the bar: no leap, so his hands stay under the ball (owner saw a save called over); the dive also goes wide of it below */
   if(k.outcome==="over")kp.arc=0;
   if((k.outcome==="over"||k.outcome==="goal"&&Math.abs(kp.y-aim.y)<1.1)&&Math.abs(kp.x-aim.x)<1.2){kp.x=Math.max(-3.4,Math.min(3.4,aim.x+(kp.x>=aim.x?1.7:-1.7)));}
+  /* out wide is always a dive: middle poses (no flip) moved wide slid sideways standing up */
+  if(Math.abs(kp.x)>0.9&&!kp.flip){var dv=keeperPose((kp.x>0?2:0)+(kp.y>=1.1?3:0));dv.x=kp.x;if(k.outcome==="save")dv.y=kp.y;kp=dv;}
   trailGold=perfect||spell;
   if(spell){$("app").classList.add("legend");hiss(1.1,250,3200,0.35,true,1.6);fx.pop("LEGENDARY SHOT!","#F2B84B");fx.flash(0.12,260);fx.buzz([20,40,60]);if(!REDUCED){TS=0.38;CAM_FX.zoomTo=1.14;}}
   /* run-up: three strides to the ball */
@@ -886,10 +887,7 @@ function api(method,a,body,q){
 var LAST={status:0,error:null};
 function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
 function sheet(nodes){PW.tag("");PW.fx.combo(0);var s=$("sheet");s.textContent="";nodes.forEach(function(n){s.appendChild(n);});s.inert=false;s.classList.add("on");}
-/* A closed sheet is inert. Its buttons used to keep keyboard focus as it slid
-   away, so Space (shoot, on a laptop) clicked "Play the computer" again and
-   started a second match on the same scoreboard: 0-5 on the board, "the
-   computer won 3-2" on the result (owner, 9 Oct 2026). */
+/* Closed = inert: a focused button there once took Space (shoot) and started a second match. */
 function closeSheet(){var s=$("sheet");if(s.contains(document.activeElement))document.activeElement.blur();s.inert=true;s.classList.remove("on");}
 function btn(label,cls,fn){var b=el("button","btn "+cls,label);b.type="button";b.addEventListener("click",fn);return b;}
 
@@ -929,9 +927,7 @@ function askName(){return new Promise(function(done){
     PW.setName(n);closeSheet();done(n);})]);setTimeout(function(){i.focus();},350);
 });}
 
-/* SHARE: four round marks in one row, the way a phone's share sheet looks -
-   WhatsApp and X in their own colours and logos (Simple Icons, CC0), copy and
-   the system sheet in ours. One row, not two rows of red pills (owner). */
+/* share: one row of round marks; WhatsApp and X logos from Simple Icons (CC0) */
 var SH_ICONS={wa:'<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>',x:'<svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>',copy:'<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></svg>',more:'<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>'};
 function shareSheet(text,url,where){
   var full=text+" "+url,row=el("div","share");
@@ -962,7 +958,7 @@ function tipsCard(){var box=el("div","tips");
     var c=r.j.code;
     if(c&&c.codes&&Object.keys(c.codes).length){
       box.appendChild(el("h3",null,"Today's wizard slip"));
-      box.appendChild(el("p",null,c.games+" games"+(c.odds?", total odds "+(+c.odds).toFixed(2):"")));
+      var meta=el("p",null,c.games+" games"+(c.odds?", total odds ":""));if(c.odds)meta.appendChild(el("b","odds",(+c.odds).toFixed(2)));box.appendChild(meta);
       var list=el("div","codes");
       Object.keys(BOOKM).forEach(function(k){if(!c.codes[k])return;var row=el("div","crow"),nm=el("span");nm.innerHTML=BOOKM[k];row.appendChild(nm);row.appendChild(el("code",null,c.codes[k]));
         var cp=btn("Copy","ghost sm",function(){try{navigator.clipboard.writeText(c.codes[k]);cp.textContent="Copied";track("code_copied",{book:k});}catch(e){}});row.appendChild(cp);list.appendChild(row);});
