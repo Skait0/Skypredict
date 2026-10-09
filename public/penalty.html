@@ -138,7 +138,7 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #ghost{position:absolute;left:var(--gx,50%);top:var(--gy,80%);width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:#ffffffcc;box-shadow:0 0 0 6px #ffffff33;opacity:0;pointer-events:none;z-index:7}
 #ghost.on{animation:pw-ghost 1.6s cubic-bezier(.3,.7,.3,1) infinite}
 @keyframes pw-ghost{0%{opacity:0;transform:translate(0,0) scale(.8)}15%{opacity:1;transform:translate(0,0) scale(1)}70%{opacity:1;transform:translate(46px,-190px) scale(.9)}100%{opacity:0;transform:translate(52px,-210px) scale(.8)}}
-#pts{position:absolute;left:0;right:0;top:57%;text-align:center;font:italic 800 18px/1 "Roboto Condensed",sans-serif;letter-spacing:.06em;color:var(--gold);text-shadow:0 2px 10px #000;opacity:0;pointer-events:none;z-index:7}
+#pts{position:absolute;left:0;right:0;top:calc(44% + 150px);text-align:center;font:italic 800 18px/1 "Roboto Condensed",sans-serif;letter-spacing:.06em;color:var(--gold);text-shadow:0 2px 10px #000;opacity:0;pointer-events:none;z-index:7}
 #pts.go{animation:pw-pts 1.4s cubic-bezier(.2,.9,.25,1)}
 @keyframes pw-pts{0%{opacity:0;transform:translateY(14px) scale(.8)}18%{opacity:1;transform:translateY(0) scale(1.08)}70%{opacity:1;transform:translateY(-10px) scale(1)}100%{opacity:0;transform:translateY(-24px) scale(1)}}
 #wind{position:absolute;left:12px;top:calc(128px + env(safe-area-inset-top));font:italic 800 12px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;color:var(--soft);z-index:6;pointer-events:none}
@@ -239,6 +239,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
 .tips:empty{display:none}
 .tips .odds{color:var(--gold);font-weight:800;font-variant-numeric:tabular-nums}
 .tips h3{margin:0 0 1px;font:800 16px/1.25 "Plus Jakarta Sans",system-ui,sans-serif;color:var(--text)}
+.tips>a.btn+h3,.tips>a.btn+p{margin-top:12px}
 .codes{margin:4px 0 8px}
 .crow{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;padding:5px 0}
 .crow+.crow{border-top:1px solid var(--line)}
@@ -403,9 +404,21 @@ function target(spot,kind){
 /* The kick, solved backwards from where it must cross the line: forward
    speed from power, then the launch that meets the target under gravity,
    with sideways bend from spin. */
+/* THE BEND IS A REAL BALL'S (owner, 9 Oct 2026: "more curl ... without
+   messing up the game play"). Two things from the physics and from EA FC:
+   - spin pushes a ball sideways harder the slower it goes, so the break comes
+     LATE: the sideways push grows through the flight (2t/T of its mean), not
+     a constant nudge from the boot;
+   - a finesse strike (a gentler swipe) bends far more than a laced one, as
+     FC's finesse-vs-power shots do. Up to ~1.3m of bow on a soft curler,
+     ~0.4m in the perfect-power band, ~0.2m on a blast.
+   Purely the picture: the ball still crosses the line exactly on your aim,
+   and every outcome is judged on spot and power alone - here and on the
+   server - so no result changes. */
 function flightPlan(t,power,curl){
-  var g=9.81,vz=12+22*power,T=11/vz,ax=curl*6;
-  return {vz:vz,T:T,ax:ax,vy:(t.y+0.5*g*T*T)/T,vx:(t.x-0.5*ax*T*T)/T};
+  var g=9.81,vz=12+22*power,T=11/vz,ax=curl*(14+22*(1-power)),vx=(t.x-ax*T*T/3)/T;
+  return {vz:vz,T:T,ax:ax,vy:(t.y+0.5*g*T*T)/T,vx:vx,
+    xAt:function(s){return vx*s+ax*s*s*s/(3*T);},vxAt:function(s){return vx+ax*s*s/T;}};
 }
 var RESTITUTION=0.42;
 
@@ -508,7 +521,9 @@ function place(){
   ks.style.transform="translate("+(gp0.x-kw/2)+"px,"+(gp0.y-kw*0.11)+"px)";
   var sh=$("shooter"),sp=P(S.x,0,S.z),sH=1.75*sp.s*0.6,sim=IMG[file(S.img)],sar=sim&&sim.naturalWidth?sim.naturalWidth/sim.naturalHeight:0.47;
   setImg(sh,file(S.img));sh.style.height=sH+"px";sh.style.width=sH*sar+"px";sh.style.transform="translate("+(sp.x-sH*sar/2)+"px,"+(sp.y-sH)+"px)";
-  var bp=P(B.x,B.y,B.z),bd=Math.max(7,0.3*bp.s),b=$("ball");
+  /* drawn 0.30m across so it reads on a phone, physics rests it at 0.11m (a
+     real ball's radius): lifted the 0.04m difference so it sits ON the grass */
+  var bp=P(B.x,B.y+0.04,B.z),bd=Math.max(7,0.3*bp.s),b=$("ball");
   b.style.width=b.style.height=bd+"px";b.style.opacity=B.vis?B.alpha:0;b.style.filter=B.fly?"saturate(.12) brightness(1.06)":"none";
   b.style.transform="translate("+(bp.x-bd/2)+"px,"+(bp.y-bd/2)+"px) rotate("+B.rot+"deg)";
   var gp=P(B.x,0,B.z),sw=bd*1.5,sd=$("shadow");sd.style.width=sw+"px";sd.style.height=sw*0.35+"px";
@@ -830,7 +845,7 @@ function playKick(k){
     if(SLOWNEXT){TS=0.38;CAM_FX.zoomTo=1.14;}
     return new Promise(function(done){
       var t=0,phase="fly",after=0,k0={x:K.x,y:K.y},reacted=false,launched=false,landed=false,settled=false,landT=0,heldIt=false,loadT=0,fallV=0,saveAt=f.T*(kp.x===0&&kp.y<1?0.97:0.93);
-      var vx=f.vx,vy=f.vy,vz=f.vz,ox=0,oy=0.11,lastHit=0;
+      var vx=f.vx,vy=f.vy,vz=f.vz,ox=0,oy=0.11,lastHit=0,released=false;
       setTimeout(function(){S.img="s-follow.webp";},140);
       every(function(dt){
         t+=dt;
@@ -838,7 +853,7 @@ function playKick(k){
         var kt=Math.max(0,Math.min(1,(t-f.T*(spell?0.74:0.12))/(f.T*(spell?0.5:0.82))));
         if(kt>0&&!reacted){reacted=true;loadT=t;K.img="k-spring.webp";K.sq=1;}
         if(reacted&&!launched&&t-loadT>0.05){launched=true;K.img=kp.img;K.flip=kp.flip||1;if(kp.x!==0)afterimage(true);}
-        if(launched&&(phase==="fly"||phase==="after")){
+        if(launched&&!released&&(phase==="fly"||phase==="after")){
           if(kt<1||kp.x===0){var e=easeOut(kt);K.x=k0.x+(kp.x-k0.x)*e;K.y=k0.y+(kp.y-k0.y)*kt+kp.arc*4*kt*(1-kt);K.rot=kp.rot*e;
             K.sq=kp.x!==0?1+0.14*Math.sin(Math.PI*Math.min(1,kt)):1;}
           else if(!landed){fallV+=9.81*1.4*dt;K.y=Math.max(0.42,K.y-fallV*dt);K.sq+=(1-K.sq)*Math.min(1,dt*10);
@@ -847,7 +862,7 @@ function playKick(k){
           else if(!settled&&t-landT>0.24){settled=true;K.img=heldIt?"k-held.webp":"k-down.webp";if(heldIt){B.vis=0;B.att=false;}K.y=KH[file(K.img)]/2;}
           else K.sq+=(1-K.sq)*Math.min(1,dt*8);}
         if(phase==="fly"){
-          B.x=vx*t+0.5*f.ax*t*t;B.y=oy+vy*t-0.5*9.81*t*t;B.z=vz*t;B.rot+=dt*(900+power*900)*(side);
+          B.x=f.xAt(t);B.y=oy+vy*t-0.5*9.81*t*t;B.z=vz*t;B.rot+=dt*(900+power*900)*(side);
           var bp=P(B.x,B.y,B.z);spellTick(dt,bp,Math.max(6,0.3*bp.s),true);TRAIL.push({x:bp.x,y:bp.y,w:Math.max(2,0.3*bp.s*0.5),o:1});if(TRAIL.length>16)TRAIL.shift();drawTrail();
           if(k.outcome==="save"&&t>=saveAt){phase="after";
             var catchIt=kind==="weak"&&k.dive===k.shot.spot;impact("save",catchIt);
@@ -857,22 +872,34 @@ function playKick(k){
             else{
               vx=(col(k.dive)===1?(Math.random()<.5?-1:1):(col(k.dive)===0?-1:1))*(4+Math.random()*4);vz=-f.vz*0.22;vy=3.5+Math.random()*3;ox=B.x;oy=B.y;after=0;}
           }else if(t>=f.T){phase="after";ox=B.x;oy=B.y;after=0;
-            if(k.outcome==="goal"){impact("goal");vx=(vx+f.ax*f.T)*0.25;vy=0;vz=4;}
+            if(k.outcome==="goal"){impact("goal");vx=f.vxAt(f.T)*0.25;vy=0;vz=4;}
             else if(k.outcome==="locked"){impact("locked");vz=f.vz*0.15;vy=0;vx=0;}
             else if(k.outcome==="bar"){impact("bar");vz=-f.vz*0.32;vy=-Math.abs(f.vy-9.81*f.T)*0.25-0.5;vx*=0.4;}
-            else{impact("over");vz=f.vz;vy=f.vy-9.81*f.T;vx=vx+f.ax*f.T;}
+            else{impact("over");vz=f.vz;vy=f.vy-9.81*f.T;vx=f.vxAt(f.T);}
           }
         }else if(phase==="after"){
+          /* the scene was reset for the next kick: the ball is not ours any more */
+          if(released&&!B.fly)return false;
           after+=dt;
           if(k.outcome==="goal"){var damp=Math.exp(-after*14);if(after<0.5){var nq=netAt(B.x,B.y);netHit(NETN,nq.i,nq.j,dt*18*(1-after*2));NETLIVE=true;}B.z=GOAL.z+(4/14)*(1-damp)*1.2;B.x=Math.max(-3.5,Math.min(3.5,ox+vx*(1-damp)/14*4));
             vy-=9.81*dt;oy+=vy*dt;if(oy<0.11){oy=0.11;vy=-vy*RESTITUTION;if(Math.abs(vy)<0.5)vy=0;}B.y=oy;}
           else if(B.att){B.x=K.x;B.y=Math.max(0.25,K.y);B.z=GOAL.z-0.15;}
           else{vy-=9.81*dt;B.x+=vx*dt;B.y+=vy*dt;B.z+=vz*dt;
             if(B.y<0.11){B.y=0.11;vy=Math.abs(vy)*RESTITUTION;vx*=0.8;vz*=0.8;if(vy<0.6)vy=0;if(after-lastHit>0.08){lastHit=after;if(vy>1.2)fx.shake(0);}}
+            /* on the grass it rolls to a stop rather than gliding on at full speed */
+            if(B.y<=0.11&&vy===0){var fr=Math.exp(-3*dt);vx*=fr;vz*=fr;}
             if(k.outcome==="over"||k.outcome==="locked")B.alpha=Math.max(0,1-after*1.6);}
           B.rot+=dt*400*side;
           TRAIL.forEach(function(p){p.o=Math.max(0,p.o-dt*3.5);});drawTrail();spellTick(dt,null,0,false);
-          if(after>1.05){done();return false;}
+          /* THE BALL COMES TO REST (owner, 9 Oct 2026: "the last movement of a
+             ball seems like it's not touching the ground"). The kick still
+             hands over at 1.05s as it always did, but the ball used to freeze
+             there, mid-bounce - measured 20px above the grass after a parry,
+             23px off the bar. Now it keeps falling and rolling through the
+             reaction until it is still on the ground. */
+          var still=B.att||!B.vis||B.alpha<=0.02||(B.y<=0.111&&vy===0&&(k.outcome==="goal"||Math.abs(vx)+Math.abs(vz)<0.3));
+          if(after>1.05&&!released){released=true;done();}
+          if(released&&(still||after>4))return false;
         }
       });
     });
@@ -1029,7 +1056,11 @@ function charPicker(){var box=el("div","pick");
 var BOOKM={sporty:'<span class="sbm">SportyBet</span>',bet9ja:'<span class="b9m"><span class="b9r">bet</span><span class="b9g">9ja</span></span>',
   betking:'<span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span>',betpawa:'<span class="bwm"><span class="bwb">bet</span><span class="bwp">Pawa</span></span>',
   onexbet:'<span class="xbm">1X<span class="xbb">BET</span></span>'};
+/* BUILD ME A SLIP COMES FIRST (owner, 9 Oct 2026): at the bottom it sat under
+   five booking codes and a phone had to scroll to find it. Drawn at once, so
+   it is there even before (or without) today's codes. */
 function tipsCard(){var box=el("div","tips");
+  var b1=el("a","btn red","Build me a slip");b1.href="/";b1.addEventListener("click",function(){track("tips_clicked",{to:"build"});});box.appendChild(b1);
   api("GET","tips").then(function(r){if(!r.j)return;
     var c=r.j.code;
     if(c&&c.codes&&Object.keys(c.codes).length){
@@ -1040,7 +1071,7 @@ function tipsCard(){var box=el("div","tips");
         var cp=btn("Copy","ghost sm",function(){try{navigator.clipboard.writeText(c.codes[k]);cp.textContent="Copied";track("code_copied",{book:k});}catch(e){}});row.appendChild(cp);list.appendChild(row);});
       box.appendChild(list);}
     if(r.j.home)box.appendChild(el("p",null,"Pick of the day: "+r.j.home+" v "+r.j.away+", "+r.j.tip+" ("+r.j.pct+"%)"));
-    var b1=el("a","btn red","Build me a slip");b1.href="/";b1.addEventListener("click",function(){track("tips_clicked",{to:"build"});});box.appendChild(b1);});
+  });
   return box;}
 
 /* THE CHALLENGER (owner, 9 Oct 2026: "challenge a friend directly"): the link

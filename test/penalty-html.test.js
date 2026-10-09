@@ -59,7 +59,7 @@ test("the ball flies on real physics and arrives on the aimed point at the goal 
   for (const t of [{ x: -2.44, y: 0.5 }, { x: 2.44, y: 1.85 }, { x: 0, y: 3.2 }]) {
     for (const power of [0.3, 0.72, 0.95]) {
       const f = plan(t, power, 1);
-      const at = (s) => ({ x: f.vx * s + 0.5 * f.ax * s * s, y: f.vy * s - 0.5 * 9.81 * s * s, z: f.vz * s });
+      const at = (s) => ({ x: f.xAt(s), y: f.vy * s - 0.5 * 9.81 * s * s, z: f.vz * s });
       const end = at(f.T);
       assert.ok(Math.abs(end.x - t.x) < 0.01 && Math.abs(end.y - t.y) < 0.01 && Math.abs(end.z - 11) < 0.01, JSON.stringify({ t, power, end }));
       assert.ok(f.T > 0.25 && f.T < 0.8, "flight time is a real kick's: " + f.T);
@@ -252,9 +252,21 @@ test("a tap or a downward drag is not a shot", () => {
 test("the ball leaves along the swipe and lands on the aim; the spin bends it on the way", () => {
   const plan = new Function(grabFn("flightPlan") + "\nreturn flightPlan;")();
   const f = plan({ x: 2, y: 1.5 }, 0.75, 0.8);
-  const at = (s) => ({ x: f.vx * s + 0.5 * f.ax * s * s, y: f.vy * s - 0.5 * 9.81 * s * s });
+  const at = (s) => ({ x: f.xAt(s), y: f.vy * s - 0.5 * 9.81 * s * s });
   assert.ok(Math.abs(at(f.T).x - 2) < 0.01 && Math.abs(at(f.T).y - 1.5) < 0.01);
   assert.ok(f.ax > 0 && plan({ x: 2, y: 1.5 }, 0.75, 0).ax === 0, "curl is the bend, none without it");
+});
+
+test("curl (owner, 9 Oct 2026): the break comes late, and a finesse swipe bends more than a blast", () => {
+  const plan = new Function(grabFn("flightPlan") + "\nreturn flightPlan;")();
+  const bow = (power) => { const f = plan({ x: 2, y: 1.5 }, power, 1); let m = 0;
+    for (let i = 1; i < 100; i++) { const s = f.T * i / 100; m = Math.max(m, Math.abs(f.xAt(s) - 2 * s / f.T)); } return m; };
+  assert.ok(bow(0.3) > 1.0 && bow(0.3) < 1.6, "a soft curler bows over a metre: " + bow(0.3));
+  assert.ok(bow(0.75) > 0.3 && bow(0.75) < 0.6, "the perfect band still visibly bends: " + bow(0.75));
+  assert.ok(bow(0.95) < bow(0.75) && bow(0.75) < bow(0.3), "harder strikes bend less");
+  const f = plan({ x: 2, y: 1.5 }, 0.5, 1), half = f.xAt(f.T / 2) - f.vx * f.T / 2, end = f.xAt(f.T) - f.vx * f.T;
+  assert.ok(half < end / 4, "most of the sideways break comes in the second half of the flight");
+  assert.doesNotMatch(grabFn("judge"), /curl/, "outcomes never read the curl");
 });
 
 test("one swipe shoots: no meter, no second gesture", () => {
