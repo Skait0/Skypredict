@@ -8,7 +8,8 @@ const P = require("../lib/penalty.js");
 const html = fs.readFileSync(path.join(__dirname, "..", "public", "penalty.html"), "utf8");
 
 test("the page stays light", () => {
-  assert.ok(Buffer.byteLength(html) < 100 * 1024, "under 100KB before art");
+  /* measured as served (LF): a Windows checkout with autocrlf adds a byte a line */
+  assert.ok(Buffer.byteLength(html.replace(/\r\n/g, "\n")) < 100 * 1024, "under 100KB before art");
 });
 
 test("the browser rules are the server's rules, verbatim", () => {
