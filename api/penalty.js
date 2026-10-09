@@ -174,7 +174,7 @@ function make(deps) {
         const name = P.cleanName(b.name);
         if (!name) return bad(res);
         for (let tries = 0; tries < 3 && !run; tries++) {
-          const row = { id: P.newId(), device: b.device, name, kicks: [], kicks_n: 0, streak: 0, alive: true, created_at: new Date(t).toISOString() };
+          const row = { id: P.newId(), device: b.device, name, club: P.cleanClub(b.club), kicks: [], kicks_n: 0, streak: 0, alive: true, created_at: new Date(t).toISOString() };
           if (await db.createRun(row)) run = row;
         }
         if (!run) return H.sendJson(res, 500, { error: "server" });
@@ -193,6 +193,7 @@ function make(deps) {
     async board(req, res, t) {
       const per = String((req.query || {}).period || "today");
       if (per === "league") return league(req, res, t);
+      if (per === "clubs") return clubs(req, res, t);
       const since = per === "today" ? P.lagosDay(t) + "T00:00:00+01:00" : per === "week" ? P.lagosWeek(t) + "T00:00:00+01:00" : per === "all" ? null : undefined;
       if (since === undefined) return bad(res);
       const dev = String((req.query || {}).device || ""), seen = new Set(), rows = [];
@@ -200,7 +201,7 @@ function make(deps) {
       for (const r of await db.board(since)) {
         if (seen.has(r.device)) continue;
         seen.add(r.device);
-        rows.push({ name: r.name, streak: r.streak, you: r.device === dev });
+        rows.push({ name: r.name, club: r.club || null, streak: r.streak, you: r.device === dev });
         if (r.device === dev) me = { rank: rows.length, streak: r.streak };
       }
       return H.sendJson(res, 200, { period: per, top: rows.slice(0, 20), me });
@@ -215,18 +216,37 @@ function make(deps) {
     const rows = await db.board(lastWk + "T00:00:00+01:00", 5000);
     const start = Date.parse(thisWk + "T00:00:00+01:00"), who = new Map();
     for (const r of rows) {
-      const w = who.get(r.device) || { name: r.name, last: 0, now: 0 };
-      if (Date.parse(r.created_at) >= start) { w.now = Math.max(w.now, r.streak); w.name = r.name; } else w.last = Math.max(w.last, r.streak);
+      const w = who.get(r.device) || { name: r.name, club: r.club || null, last: 0, now: 0 };
+      if (Date.parse(r.created_at) >= start) { w.now = Math.max(w.now, r.streak); w.name = r.name; w.club = r.club || null; } else w.last = Math.max(w.last, r.streak);
       who.set(r.device, w);
     }
     const me = who.get(dev) || { last: 0, now: 0 };
     const tier = P.divisionOf(me.last, me.now), D = P.DIVISIONS, next = D[tier + 1] || null;
     const table = [...who.entries()].filter(([, w]) => w.now > 0 && P.divisionOf(w.last, w.now) === tier)
-      .sort((a, b) => b[1].now - a[1].now).map(([d, w]) => ({ name: w.name, streak: w.now, you: d === dev }));
+      .sort((a, b) => b[1].now - a[1].now).map(([d, w]) => ({ name: w.name, club: w.club, streak: w.now, you: d === dev }));
     const rank = table.findIndex((x) => x.you) + 1;
     return H.sendJson(res, 200, { period: "league", division: { tier, id: D[tier].id, name: D[tier].name,
       next: next ? { name: next.name, at: next.at, need: Math.max(0, next.at - me.now) } : null },
       top: table.slice(0, 20), me: rank ? { rank, streak: me.now } : null, players: table.length });
+  }
+  /* CLUB WARS: every Ranked goal this week counts for the scorer's club, so
+     a club's total is the sum of its runs, not its best one. `mine` is the
+     club of your latest run this week. */
+  async function clubs(req, res, t) {
+    const dev = String((req.query || {}).device || "");
+    // ponytail: reads up to 5000 scoring runs a week; aggregate in SQL if a week outgrows that
+    const rows = await db.board(P.lagosWeek(t) + "T00:00:00+01:00", 5000), by = new Map();
+    let mine = null, mineAt = 0;
+    for (const r of rows) {
+      if (!r.club) continue;
+      const c = by.get(r.club) || { club: r.club, goals: 0, players: new Set() };
+      c.goals += r.streak; c.players.add(r.device); by.set(r.club, c);
+      const at = Date.parse(r.created_at);
+      if (r.device === dev && at > mineAt) { mine = r.club; mineAt = at; }
+    }
+    const top = [...by.values()].sort((a, b) => b.goals - a.goals)
+      .map((c) => ({ club: c.club, goals: c.goals, players: c.players.size }));
+    return H.sendJson(res, 200, { period: "clubs", top, mine });
   }
   const POSTS = new Set(["create", "kick", "daily", "picks", "ranked"]);
 

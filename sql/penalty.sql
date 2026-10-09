@@ -44,3 +44,5 @@ create table if not exists penalty_ranked_runs (
 create index if not exists penalty_ranked_board on penalty_ranked_runs (streak desc, created_at);
 create index if not exists penalty_ranked_recent on penalty_ranked_runs (created_at desc);
 alter table penalty_ranked_runs enable row level security;
+-- Club wars (9 Oct 2026): the scorer's club, from CLUBS in lib/penalty.js.
+alter table penalty_ranked_runs add column if not exists club text check (club is null or club ~ '^[a-z0-9-]{2,24}$');

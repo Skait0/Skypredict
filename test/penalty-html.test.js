@@ -382,7 +382,7 @@ test("the Sudden Death keeper reads you better with every goal, but never perfec
 
 test("Sudden Death is Ranked (owner, 9 Oct 2026): judged on the server, on the home screen beside the leaderboard", () => {
   const f = grabFn("survival");
-  assert.match(f, /api\("POST","ranked",\{device:PW\.DEV,name:name,run:run,i:i,spot:s\.spot,power:s\.power\}\)/);
+  assert.match(f, /api\("POST","ranked",\{device:PW\.DEV,name:name,club:club,run:run,i:i,spot:s\.spot,power:s\.power\}\)/);
   assert.doesNotMatch(f, /smartDive|consumeSpell/, "nothing on the phone decides a ranked kick");
   assert.match(html, /F\.btn\("Ranked","ghost".*F\.btn\("Leaderboard","ghost"/);
   assert.match(grabFn("leaderboard"), /api\("GET","board",null,\{period:per,device:PW\.DEV\}\)/);
@@ -650,7 +650,7 @@ test("game lettering stays cheap to draw (owner, 9 Oct 2026: 'it lags and its gl
 
 test("batch 2 (owner, 9 Oct 2026): a League tab with your division's crest, promotion when your division goes up", () => {
   const lb = grabFn("leaderboard");
-  assert.match(lb, /\[\["league","League"\],\["today","Today"\],\["week","Week"\],\["all","All time"\]\]/);
+  assert.match(lb, /\[\["league","League"\],\["clubs","Clubs"\],\["today","Today"\],\["week","Week"\],\["all","All time"\]\]/);
   assert.match(lb, /per==="league"&&r\.j\.division/);
   assert.match(grabFn("crest"), /<svg viewBox="0 0 48 56"/);
   assert.match(grabFn("promote"), /PW\.fx\.pop\("PROMOTED!",DIV\[t\]\[1\],DIV\[t\]\[2\]\.toUpperCase\(\)\)/);
@@ -664,4 +664,11 @@ test("match report card (owner, 9 Oct 2026): stars, top bins and your saves afte
   assert.match(grabFn("practice"), /\[report\(\),acts,tipsCard\(\)\]/);
   assert.match(grabFn("result"), /role==="friend"\?\[report\(\)\]:\[\]/);
   assert.match(grabFn("playKick"), /if\(you&&top\)TOPS\+\+;/);
+});
+
+test("club wars (owner, 9 Oct 2026): pick a club once, its badge by your name, a Clubs table", () => {
+  const ids = [...html.matchAll(/\["([a-z-]+)","[^"]+","[A-Z0-9]{3}","#/g)].map((m) => m[1]);
+  assert.deepStrictEqual(ids, require("../lib/penalty.js").CLUBS, "the page's clubs are the ones the server stores");
+  assert.match(html, /askName\(\)\.then\(function\(name\)\{return pickClub\(\)/, "Ranked asks for a club after the name");
+  assert.match(html, /li\.appendChild\(nameCell\(x\)\)/, "names on the tables carry the badge");
 });
