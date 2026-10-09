@@ -50,9 +50,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:600 1
 .track .pn b,.track .pn i{font-style:inherit;font-weight:800;color:#F2F1F0}
 .track .pn .red{color:var(--red)}
 .track .pn.mk{font-family:"Plus Jakarta Sans",system-ui,sans-serif;font-style:normal;letter-spacing:-.01em;color:#F2F1F0}
-/* BOOKMAKER WORDMARKS: the same marks, faces and colours as the site
-   (public/index.html .sbm/.b9m/.bkm/.bwm/.xbm, dark-ground values). The
-   owner: the bookie names must carry the bookie colours like the website. */
+/* bookmaker wordmarks: the site's .sbm/.b9m/.bkm/.bwm/.xbm, dark-ground colours */
 .sbm{color:#E63946;font-weight:800;white-space:nowrap}
 .b9m,.bkm,.bwm,.xbm{font-weight:800;white-space:nowrap}
 .b9r{color:#D42127}.b9g{color:#14B151}
@@ -85,7 +83,6 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .sboard{display:grid;gap:3px;min-width:min(310px,92vw);padding:6px 10px;border-radius:12px;background:#0b0c10e6;border:1px solid var(--line);box-shadow:0 10px 26px #0009;backdrop-filter:blur(6px)}
 .srow{display:grid;grid-template-columns:22px minmax(52px,1fr) auto 26px;align-items:center;gap:8px;padding:2px 2px;border-radius:7px;transition:background .2s}
 .srow.now{background:#ffffff0f}
-/* whose face is whose: a head-and-shoulders crop of each side's keeper sprite (owner) */
 .srow .av{width:22px;height:22px;border-radius:50%;background:#1E1E22 no-repeat 50% 7%/250% auto;border:1px solid var(--line)}
 .srow.now .av{border-color:#F2F1F0}
 .srow[hidden]{display:none}
@@ -102,9 +99,10 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .score{display:flex;align-items:center;gap:10px;background:#0d0d0fcc;border:1px solid var(--line);border-radius:99px;padding:7px 14px;backdrop-filter:blur(6px)}
 .score b{font:italic 800 18px/1 "Roboto Condensed",sans-serif;min-width:14px;text-align:center}
 .score .who{font-size:12px;color:var(--soft);max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#exit{position:absolute;left:12px;top:calc(86px + env(safe-area-inset-top));z-index:10;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--line);background:#0d0d0fcc;color:#F2F1F0}
+#exit:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 #tag{position:absolute;top:calc(86px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);padding:8px 18px 7px;border-radius:99px;background:#0d0d0fe0;border:1px solid var(--line);font:italic 800 18px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;color:#F2F1F0;white-space:nowrap;z-index:6;pointer-events:none}
 #tag:empty{display:none}
-/* the turn is the one thing to read between kicks (owner: "your shot and your save is not noticeable") */
 #tag.shot{color:var(--gold);border-color:#F2B84B88}#tag.save{color:#2FD48A;border-color:#2FD48A88}
 #tag.go{animation:pw-turn .42s cubic-bezier(.2,.9,.25,1)}
 @keyframes pw-turn{0%{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.86)}60%{opacity:1;transform:translateX(-50%) scale(1.06)}100%{transform:translateX(-50%) scale(1)}}
@@ -240,6 +238,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
   <button id="snd" type="button"></button>
   <div id="hud"><div class="sboard"><div class="srow" id="rowA"><i class="av" id="avA"></i><span class="who" id="whoA">YOU</span><span class="kicks" id="kA"></span><b id="scA">0</b></div><div class="srow" id="rowB"><i class="av" id="avB"></i><span class="who" id="whoB">CPU</span><span class="kicks" id="kB"></span><b id="scB">0</b></div></div></div>
   <div id="tag"></div><div id="combo"></div>
+  <a id="exit" href="/" aria-label="Back to Soccerwizard"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
   <div id="hint"></div>
   <div id="coach" role="status"><img src="/penalty/kw-taunt.webp?v=12" alt=""><p></p></div><i id="ghost"></i>
   <div id="pts"></div>
@@ -549,10 +548,8 @@ function drawBoard(){
 function boardNow(side){$("rowA").classList.toggle("now",side==="a");$("rowB").classList.toggle("now",side==="b");}
 /* ---------------------------------------------------------------- effects */
 /* ---------------------------------------------------------------- sound
-   Web Audio, started by the first tap (phones play nothing before one). The
-   recorded sounds load after that tap; the whoosh, the net, and the legendary
-   riser and thunder are shaped noise. Muting silences sound and vibration;
-   a hidden tab goes quiet. Crowd: Gregor Quendel (CC BY 4.0); hits: Kenney (CC0). */
+   Web Audio from the first tap; whooshes and the legendary riser are noise.
+   Crowd: Gregor Quendel (CC BY 4.0); hits: Kenney (CC0). */
 var SFX={ctx:null,bus:null,bed:null,buf:{}};
 function sfxStart(){
   if(!SFX.ctx){var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;var c=SFX.ctx=new AC();
@@ -978,17 +975,18 @@ function challenger(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);as
     if(n===REG)PW.fx.pop("BONUS KICKS","#F2B84B");
     PW.fx.slowmo(n===REG-1);
     return PW.aimAndShoot().then(function(s){shots.push(s);var d=cpuDive(),o=R.judge(s,d);
-      if(n<REG){outs.push(o);PW.setScore(outs.filter(function(x){return x==="goal";}).length,cpu);}
+      outs.push(o);
       return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:d,outcome:o});})
     .then(function(){return PW.pickDive();})
-    .then(function(dv){dives.push(dv);var cs=cpuShot(),co=R.judge(cs,dv);if(n<REG&&co==="goal")cpu++;return PW.playKick({who:"them",shot:R.strike(cs.spot,cs.power),dive:dv,outcome:co}).then(function(){if(n<REG)PW.setScore(outs.filter(function(x){return x==="goal";}).length,cpu);});});
+    .then(function(dv){dives.push(dv);var cs=cpuShot(),co=R.judge(cs,dv);if(co!=="goal")cpu++;return PW.playKick({who:"them",shot:R.strike(cs.spot,cs.power),dive:dv,outcome:co});});
   });})(i);
   p.then(function save(){PW.fx.slowmo(false);
     return api("POST","create",{name:name,device:PW.DEV,shots:shots,dives:dives}).then(function(r){
       if(r.status!==200)return offline(save);
       track("challenge_created");
-      var url=ORIGIN+"/p/"+r.j.id,score=outs.filter(function(o){return o==="goal";}).length;
-      sheet([el("h2",null,"You scored "+score+"/5")].concat(shareSheet("I scored "+score+"/5 on Play Penalty. Bet you can't save it:",url,"challenge"),[tipsCard()]));
+      /* all eight, as on the board; the computer only stood in (owner: "5/5" under 8-7) */
+      var url=ORIGIN+"/p/"+r.j.id,score=outs.filter(function(o){return o==="goal";}).length,n=REG+BONUS;
+      sheet([el("h2",null,"Your kicks are set"),el("p",null,"Practice: you scored "+score+" of "+n+" and saved "+cpu+" of "+n+". Send the link: your friend plays against your real kicks and dives.")].concat(shareSheet("I've set my penalties on Play Penalty. Bet you can't save them:",url,"challenge"),[tipsCard()]));
     });});
 });}
 

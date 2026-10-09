@@ -592,3 +592,10 @@ test("release step 2 (owner, 9 Oct 2026): Play Penalty in the phone bar with a j
   assert.match(index, /<a class='ys-play' href='\/penalty'>/);
   assert.match(index, /a\.btab\{text-decoration:none\}/);
 });
+
+test("owner, 9 Oct 2026: a way back to the site on every screen; the challenge result counts what the board counts", () => {
+  assert.match(html, /<a id="exit" href="\/" aria-label="Back to Soccerwizard">/);
+  const f = grabFn("challenger");
+  assert.doesNotMatch(f, /if\(n<REG\)\{outs\.push/, "every kick counts, as on the scoreboard");
+  assert.match(f, /"Practice: you scored "\+score\+" of "\+n\+" and saved "\+cpu\+" of "\+n/);
+});
