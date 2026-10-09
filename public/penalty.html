@@ -105,16 +105,36 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #exit:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 #tag{position:absolute;top:calc(86px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);padding:8px 18px 7px;border-radius:99px;background:#0d0d0fe0;border:1px solid var(--line);font:italic 800 18px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;color:#F2F1F0;white-space:nowrap;z-index:6;pointer-events:none}
 #tag:empty{display:none}
-#tag.shot{color:var(--gold);border-color:#F2B84B88}#tag.save{color:#2FD48A;border-color:#2FD48A88}
-#tag.go{animation:pw-turn .42s cubic-bezier(.2,.9,.25,1)}
+#tag.shot,#tag.save{transform:translateX(-50%) skewX(-12deg);border:0;border-radius:5px;padding:9px 22px 8px;font-size:20px;letter-spacing:.14em}
+#tag.shot{background:linear-gradient(180deg,#FFE7A3,#F2B84B 55%,#C98A1E);color:#1a1205;box-shadow:0 4px 0 #7a5410,0 12px 22px #000a}
+#tag.save{background:linear-gradient(180deg,#9CF5CB,#2FD48A 55%,#169456);color:#06200f;box-shadow:0 4px 0 #0d5c36,0 12px 22px #000a}
+#tag.go{animation:pw-turn .5s cubic-bezier(.2,.9,.25,1)}
+#tag.shot.go,#tag.save.go{animation:pw-turnk .5s cubic-bezier(.2,.9,.25,1)}
 @keyframes pw-turn{0%{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.86)}60%{opacity:1;transform:translateX(-50%) scale(1.06)}100%{transform:translateX(-50%) scale(1)}}
+@keyframes pw-turnk{0%{opacity:0;transform:translateX(-130%) skewX(-12deg)}55%{opacity:1;transform:translateX(-44%) skewX(-12deg)}75%{transform:translateX(-52%) skewX(-12deg)}100%{transform:translateX(-50%) skewX(-12deg)}}
 /* power bar: weak / green / over, with the sweet spot marked in gold */
 #hint{position:absolute;left:0;right:0;bottom:calc(31% + env(safe-area-inset-bottom));text-align:center;font:italic 800 15px/1 "Roboto Condensed",sans-serif;letter-spacing:.18em;color:#fff;opacity:0;transition:opacity .2s;z-index:5;pointer-events:none;text-shadow:0 2px 8px #000}
 #hint.on{opacity:1}#hint i{display:block;font-style:normal;animation:pw-nudge .9s ease-in-out infinite}
 /* pop words */
-#pop{position:absolute;left:0;right:0;top:46%;text-align:center;font:italic 800 54px/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:-.01em;opacity:0;pointer-events:none;z-index:7;-webkit-text-stroke:2px #07080a;paint-order:stroke fill;text-shadow:0 6px 24px #000c}
-#pop small{display:block;margin-top:6px;font-size:17px;letter-spacing:.18em;color:#fff;-webkit-text-stroke:0;opacity:.92}
-#pop.go{animation:pw-pop .95s cubic-bezier(.2,.9,.25,1)}
+/* GAME LETTERING (owner, 9 Oct 2026: "catchy game graphics for text and insane
+   dope animations"). The word is chunky italic with a white-to-colour fill, a
+   thick ink outline and a 3D drop; a shine sweeps it; rays and a shockwave
+   ring burst behind; it slams in big and blurred, overshoots and settles. The
+   colour of the moment rides --c. */
+#pop{position:absolute;left:0;right:0;top:44%;text-align:center;font:italic 800 64px/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:-.01em;opacity:0;pointer-events:none;z-index:7;isolation:isolate;--c:#fff}
+#pop .w{display:inline-block;padding:0 .1em;transform:skewX(-9deg);color:transparent;-webkit-text-fill-color:transparent;
+  background:linear-gradient(105deg,transparent 40%,#ffffffd9 50%,transparent 60%) 150% 0/300% 100% no-repeat,linear-gradient(180deg,#fff 0%,#fff 16%,var(--c) 50%,color-mix(in srgb,var(--c) 55%,#000) 100%);
+  -webkit-background-clip:text;background-clip:text;filter:drop-shadow(2px 0 0 #07080a) drop-shadow(-2px 0 0 #07080a) drop-shadow(0 2px 0 #07080a) drop-shadow(0 -2px 0 #07080a) drop-shadow(0 4px 0 #07080a) drop-shadow(0 7px 0 color-mix(in srgb,var(--c) 40%,#000)) drop-shadow(0 14px 20px #000c)}
+#pop small{display:inline-block;margin-top:10px;padding:5px 13px 4px;transform:skewX(-9deg);background:#07080a;border:2px solid var(--c);border-radius:4px;color:#fff;font-size:15px;letter-spacing:.2em;box-shadow:0 6px 16px #000a}
+#pop:before,#pop:after{content:"";position:absolute;left:50%;top:38%;pointer-events:none;z-index:-1;opacity:0}
+#pop:before{width:460px;height:460px;margin:-230px 0 0 -230px;background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--c) 60%,transparent) 0 5deg,transparent 5deg 15deg);-webkit-mask:radial-gradient(circle,#000 18%,transparent 64%);mask:radial-gradient(circle,#000 18%,transparent 64%)}
+#pop:after{width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;border:6px solid var(--c)}
+#pop.go{animation:pw-pop 1.15s cubic-bezier(.2,.9,.25,1) both}
+#pop.go .w{animation:pw-shine .7s .22s ease-out both}
+#pop.go:before{animation:pw-rays 1.15s ease-out both}#pop.go:after{animation:pw-ring .6s .05s cubic-bezier(.2,.9,.25,1) both}
+@keyframes pw-shine{to{background-position:-50% 0,0 0}}
+@keyframes pw-rays{0%{opacity:0;transform:scale(.3) rotate(0)}20%{opacity:.85}100%{opacity:0;transform:scale(1.25) rotate(28deg)}}
+@keyframes pw-ring{0%{opacity:.9;transform:scale(.2)}100%{opacity:0;transform:scale(3.2)}}
 #combo{position:absolute;right:0;left:0;text-align:center;top:calc(150px + env(safe-area-inset-top));font:italic 800 14px/1 "Roboto Condensed",sans-serif;color:var(--gold);letter-spacing:.1em;opacity:0;z-index:6}
 #combo.on{opacity:1;animation:pw-flame .8s ease-in-out infinite alternate}
 /* the coach: The Wizard with a tip, and a ghost finger showing the swipe */
@@ -172,7 +192,9 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #vs i{width:92px;height:92px;border-radius:50%;background:#1E1E22 no-repeat 50% 7%/250% auto;border:2px solid #F2F1F0}
 #vs .vr i{border-color:#E63946}
 #vs b{font:italic 800 18px/1.1 "Roboto Condensed",sans-serif;color:#F2F1F0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#vs .vx{font:italic 800 56px/1 "Roboto Condensed",sans-serif;color:#F2B84B;text-align:center}
+#vs .vx{font:italic 800 64px/1 "Roboto Condensed",sans-serif;text-align:center;color:transparent;-webkit-text-fill-color:transparent;
+  background:linear-gradient(180deg,#fff 10%,#F2B84B 55%,#9a6512);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(2px 0 0 #07080a) drop-shadow(-2px 0 0 #07080a) drop-shadow(0 2px 0 #07080a) drop-shadow(0 -2px 0 #07080a) drop-shadow(0 4px 0 #07080a) drop-shadow(0 8px 0 #5a3a08)}
+#vs .vm{-webkit-text-fill-color:var(--soft)}
 #vs .vm{display:block;margin-top:8px;font-size:11px;letter-spacing:.22em;color:var(--soft)}
 #vs.go .vl{animation:pw-vsl .55s cubic-bezier(.2,.9,.25,1) both}#vs.go .vr{animation:pw-vsr .55s cubic-bezier(.2,.9,.25,1) both}#vs.go .vx{animation:pw-vsx .5s .2s cubic-bezier(.3,1.6,.5,1) both}
 @keyframes pw-vs{0%{opacity:0}10%{opacity:1}86%{opacity:1}100%{opacity:0}}
@@ -230,7 +252,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
 @keyframes pw-blink{0%{opacity:1}20%{opacity:0}35%{opacity:1}55%{opacity:0}70%{opacity:1}100%{opacity:0}}
 @keyframes pw-twinkle{0%{opacity:0}50%{opacity:.9}}
 @keyframes pw-nudge{50%{transform:translateY(-6px)}}
-@keyframes pw-pop{0%{opacity:0;transform:scale(.3) skewX(-8deg)}22%{opacity:1;transform:scale(1.18) skewX(-8deg)}40%{transform:scale(.96) skewX(-8deg)}55%{opacity:1;transform:scale(1) skewX(-8deg)}100%{opacity:0;transform:scale(1.06) translateY(-14px) skewX(-8deg)}}
+@keyframes pw-pop{0%{opacity:0;transform:scale(2.5) rotate(-5deg);filter:blur(7px)}15%{opacity:1;transform:scale(.88) rotate(1deg);filter:blur(0)}23%{transform:scale(1.08)}31%{transform:scale(1)}78%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(-20px) scale(1.04)}}
 @keyframes pw-flame{from{opacity:.7;transform:scale(1)}to{opacity:1;transform:scale(1.1)}}
 @keyframes pw-breathe{50%{transform:scaleY(1.015)}}
 @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
@@ -614,8 +636,9 @@ document.addEventListener("pointerdown",sfxStart,true);document.addEventListener
 document.addEventListener("visibilitychange",function(){if(!SFX.ctx)return;if(document.hidden)SFX.ctx.suspend();else SFX.ctx.resume();});
 var fx={
   /* a big word, and (for a miss) the reason in small type under it */
-  pop:function(word,color,why){var p=$("pop");p.textContent=word;if(why){var w=document.createElement("small");w.textContent=why;p.appendChild(w);}
-    p.style.color=color||"#fff";p.classList.remove("go");void p.offsetWidth;p.classList.add("go");},
+  pop:function(word,color,why){var p=$("pop");p.textContent="";var t=document.createElement("span");t.className="w";t.textContent=word;p.appendChild(t);
+    if(why){p.appendChild(document.createElement("br"));var w=document.createElement("small");w.textContent=why;p.appendChild(w);}
+    p.style.setProperty("--c",color||"#fff");p.classList.remove("go");void p.offsetWidth;p.classList.add("go");},
   shake:function(level){CAM_FX.shake=Math.max(CAM_FX.shake,level>1?9:4);},
   /* asks for slow motion on the NEXT kick's flight only; aiming stays full view */
   slowmo:function(on){SLOWNEXT=!!on&&!REDUCED;if(!on){TS=1;CAM_FX.zoomTo=1;}},

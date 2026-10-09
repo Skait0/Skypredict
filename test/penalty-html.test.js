@@ -636,3 +636,12 @@ test("match feel (owner, 9 Oct 2026): a VS card before each match, a TV score bu
   assert.match(grabFn("playKick"), /var st=you\?1\+\(top\?1:0\)\+\(perfect\|\|Math\.abs\(curl\)>0\.5\?1:0\):0;STARS\+=st;/);
   assert.match(html, /#sheet h2\.best\{color:var\(--gold\)\}/);
 });
+
+test("game lettering (owner, 9 Oct 2026): gradient word, shadow outline, rays, ring, slam; plates for the turn", () => {
+  assert.match(grabFn("playKick") + html, /t\.className="w";t\.textContent=word/);
+  assert.match(html, /#pop \.w\{[^}]*background-clip:text/);
+  assert.doesNotMatch(html, /#pop \.w\{[^}]*-webkit-text-stroke/, "stroke draws the font's inner contours as stray lines");
+  assert.match(html, /#pop:before\{[^}]*repeating-conic-gradient/);
+  assert.match(html, /@keyframes pw-pop\{0%\{opacity:0;transform:scale\(2\.5\)/);
+  assert.match(html, /#tag\.shot\{background:linear-gradient/);
+});
