@@ -63,7 +63,7 @@ test("a refused leg is offered the safest priced bet on the same game", () => {
   const next = new Function("F", "OPTS", "NOW", "WHY",
     "var REFUSAL_WHY=WHY();function curBook(){return {odds:'sportyOdds'};}" +
     "function fixtureById(){return F;} function kickMs(){return NOW();}" +
-    "function swapOptions(){return OPTS;} function bookAllows(){return true;} function refusedToday(){return {};}" +
+    "function swapOptions(){return OPTS;} function bookAllows(){return true;} function refusedToday(){return {};} function shortLine(){return false;}" +
     decl("SAFE_ALT_MIN") + "\n" + fn("safePicks") + "\n" + fn("nextSafePick") + "\nreturn nextSafePick;")(
     f, opts, () => now, () => why);
   const B = { odds: "sportyOdds" };
@@ -221,4 +221,26 @@ test("the pop-up steps through every safe pick on a game, not just the likeliest
   assert.match(f, /lists\[i\]\.length>1\?"<button class='ask-next'/);
   assert.match(f, /at\[i\]=\(at\[i\]\+1\)%lists\[i\]\.length; alts\[i\]=lists\[i\]\[at\[i\]\];/);
   assert.match(f, /pill\.click\(\);/, "stepping to one chooses it");
+});
+
+/* Owner, 9 Oct 2026: "even when i pick 12 odds, like 7 games are not available ...
+   its very annoying to users". Live: 4 of 26 refused, every one a goals line
+   SportyBet had re-lined (1.06-1.07 moved up) or closed. */
+test("every refused game has a safe swap: no question, the swaps are booked and the reader is told", () => {
+  const fnSrc = body("confirmAfterRefusal");
+  assert.match(fnSrc, /if\(n&&\(refused\|\|\[\]\)\.length===n&&alts\.every\(Boolean\)\)\{/);
+  assert.match(fnSrc, /swToast\(n\+\(n===1\?" game":" games"\)\+" updated to what "\+plain\(B\.label\)\+" offers now"/);
+  assert.match(fnSrc, /go\(alts\);\s*return;/);
+});
+
+test("a goals line under 1.15 is never picked or offered: the line a book pulls first", () => {
+  const short = new Function("curBook", decl("SHORT_LINE") + "\n" + fn("shortLine") + "\nreturn shortLine;")(() => ({ odds: "sportyOdds" }));
+  const f = { sportyOdds: { "OVER_1.5": 1.06, "HOME_OVER_0.5": 1.07, "AWAY_OVER_0.5": 1.29, "1X": 1.05, "OVER_2.5": 1.15 } };
+  assert.strictEqual(short(f, "OVER_1.5"), true);
+  assert.strictEqual(short(f, "HOME_OVER_0.5"), true);
+  assert.strictEqual(short(f, "AWAY_OVER_0.5"), false, "1.29 is not short");
+  assert.strictEqual(short(f, "OVER_2.5"), false, "1.15 itself is allowed");
+  assert.strictEqual(short(f, "1X"), false, "double chance is not a line they re-line");
+  assert.strictEqual(short({ sportyOdds: {} }, "OVER_1.5"), false, "no price is not evidence of anything");
+  for (const name of ["buildPicks", "wspBuild", "safePicks"]) assert.match(body(name), /shortLine\(f,/, name + " skips short lines");
 });

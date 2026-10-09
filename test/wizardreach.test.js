@@ -57,7 +57,7 @@ const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "
   "fid", "oddOf", "legOdd", "bookVerdict", "bookMayTake", "bookIsPriced", "bookIdOf",
   "hasRealOdd", "pricedFixture", "mProb", "allowedMarkets", "preferGoalsOverDouble",
   "isJackpotOdds", "wspMarkets", "codeMarket", "provenMarkets", "isProven", "safeUnpriced",
-  "fetchedMarket", "bookAllows", "wspStyleOn", "wspBuild", "refusedDay", "refusedToday", "noteRefused", "wspMaxReach",
+  "fetchedMarket", "bookAllows", "wspStyleOn", "wspBuild", "refusedDay", "refusedToday", "noteRefused", "shortLine", "wspMaxReach",
   "leagueAllowed", "leagueDefault", "setLeaguePicked", "leaguesChosen", "windowWords",
   "renderWizardPanel", "renderMySheet", "riskWord", "paintTicks", "repaintAfterMatch",
   /* renderBuilderOutput and wspConjure, driven for real, and what they lean on. */
@@ -69,7 +69,7 @@ const RESTORE_MISS = /try\{var _wm=JSON\.parse\(localStorage\.getItem\("sw\.wspm
 if (!RESTORE_MISS) throw new Error("sw.wspmiss restore statement not found in index.html");
 
 const api = new Function("STUB", [
-  "var TOP_ONLY=false, SCOPE='all', SDAY=0, SPAN=3, TOD='all', BLD_PICK={}, VOL_IN=true;",
+  "var SHORT_LINE=1.15, TOP_ONLY=false, SCOPE='all', SDAY=0, SPAN=3, TOD='all', BLD_PICK={}, VOL_IN=true;",
   "var FIXTURES=[], MYSLIP=[];",
   (/^var BUILD=\{[\s\S]*?\};/m.exec(src) || [""])[0],
   "var DATA=null, STORE={}, localStorage={getItem(k){return k in STORE?STORE[k]:null},",

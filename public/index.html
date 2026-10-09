@@ -12674,7 +12674,14 @@ function loadBet9jaSoon(){
   /* Only the book the reader is already on. The others wait to be asked. */
   try{ ensureBookFeed(BOOKMAKER); }catch(e){}
 }
-var SPORTY_TRIES=0;
+var SPORTY_TRIES=0, SPORTY_AT=0;
+/* An open tab refreshes its copy of the prices when it is over ten minutes old.
+   /api/fixtures sits behind Vercel's CDN (s-maxage=300), so this reaches
+   Railway at most once per five minutes per edge however many tabs ask. */
+setInterval(function(){
+  if(document.hidden||!SPORTY_AT||Date.now()-SPORTY_AT<6e5) return;
+  SPORTY_AT=Date.now(); loadSporty();
+},12e4);
 async function loadSporty(){
   var attempts=0;
   while(attempts<3){
@@ -12684,6 +12691,7 @@ async function loadSporty(){
       if(r.ok){
         var d=await r.json();
         if(d&&d.matches&&d.matches.length){
+          SPORTY_AT=Date.now();
           var n=attachEventIds(d.matches,BOOKS.sporty);
           if(n) refreshByoPanels();
           /* Only repaint for a rescue - on the first load the caller paints
@@ -13773,6 +13781,7 @@ function buildPicks(){
     var homeFav=f.home_p>f.away_p;
     function sane(c){
       if(refused[rk+fid(f)+"|"+c]) return false;
+      if(shortLine(f,c,B)) return false;
       if(!cornersOpen(f,c)) return false;
       if(c==="1"&&!homeFav) return false;
       if(c==="2"&&homeFav) return false;
@@ -14084,6 +14093,20 @@ function hasSportyMarket(c){ return BOOKS.sporty.priced(c); }
    or better; never the market just refused, never a game that has started.
    Null when there is nothing honest to offer, and the row then says only why. */
 var SAFE_ALT_MIN=0.60;
+/* THE LINES A BOOK PULLS FIRST (owner, 9 Oct 2026: "even when i pick 12 odds,
+   like 7 games are not available"). Measured live on a 26-leg Slider slip:
+   SportyBet refused 4, every one a goals line - team over 0.5 at 1.07 moved to
+   over 1.5, match over 1.5 at 1.06 moved to over 2, one closed. A favourite's
+   shortest line is the one they withdraw or re-line as the price drifts, and
+   our copy of their prices is up to 45 minutes old. So no builder picks, and
+   no swap offers, a goals line this book prices under 1.15. */
+var SHORT_LINE=1.15;
+function shortLine(f,code,B){
+  if(!/^(HOME_|AWAY_)?OVER_/.test(code)) return false;
+  B=B||curBook();
+  var o=f&&f[B.odds]&&+f[B.odds][code];
+  return !!(o&&o>1&&o<SHORT_LINE);
+}
 /* EVERY HONEST OFFER, LIKELIEST FIRST. The pop-up shows the first and the
    reader can step through the rest (owner, 8 Oct 2026: "the options offered
    are always the same"). Anything this book refused today is left out. */
@@ -14095,7 +14118,7 @@ function safePicks(c,B){
   var own=f[B.odds]||{}, refused=refusedToday(), out=[];
   swapOptions(f).forEach(function(o){
     if(o.code===c.code||!(o.p>=SAFE_ALT_MIN)) return;
-    if(!(own[o.code]>1.01)||!bookAllows(o.code,B)) return;
+    if(!(own[o.code]>1.01)||!bookAllows(o.code,B)||shortLine(f,o.code,B)) return;
     if(refused[B.key+"|"+c.id+"|"+o.code]) return;
     if(out.some(function(x){return x.code===o.code;})) return;
     out.push(Object.assign({},c,{code:o.code,p:+o.p,label:o.label,f:c.f||f,auto:false}));
@@ -14114,6 +14137,17 @@ function confirmAfterRefusal(target,names,keep,B,go,refused,h){
   var lists=(refused||[]).map(function(c){ return safePicks(c,B); }), at=lists.map(function(){return 0;});
   var alts=lists.map(function(l){ return l[0]||null; });
   var swap=alts.map(function(a){ return !!a; });
+  /* NO QUESTION WHEN THERE IS A GOOD ANSWER (owner, 9 Oct 2026: "its very
+     annoying to users"). Every refused game has a safer pick the book sells, so
+     take them, book, and say what changed. The pop-up stays for a game with
+     nothing to offer, where the choice really is the reader's. */
+  if(n&&(refused||[]).length===n&&alts.every(Boolean)){
+    clearPrompt(target);
+    if(window.swToast) swToast(n+(n===1?" game":" games")+" updated to what "+plain(B.label)+" offers now","",
+      "swapnote");
+    go(alts);
+    return;
+  }
   var plain=function(s){ return String(s||"").replace(/<[^>]+>/g,""); };
   var optHTML=function(a){
     var o=((a.f||{})[B.odds]||{})[a.code];
@@ -20061,6 +20095,7 @@ function wspBuild(){
     var homeFav=f.home_p>f.away_p,cands=[];
     allowed.forEach(function(c){
       if(refused[rk+fid(f)+"|"+c])return;
+      if(shortLine(f,c))return;
       if(c==="1"&&!homeFav)return; if(c==="2"&&homeFav)return;
       if(c==="1X"&&!homeFav)return; if(c==="X2"&&homeFav)return;
       if(!cornersOpen(f,c))return;

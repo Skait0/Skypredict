@@ -78,7 +78,11 @@ test("only bookVerdict reads an odds cache to judge a market", () => {
                    /* Display: the reader's own book's draw price on a Draw
                       picks card (7 Oct 2026). Same reason as above - legOdd
                       would show SportyBet's price unnamed. */
-                   "boardPick"];
+                   "boardPick",
+                   /* Not "does the market exist" but "is this price too short
+                      to trust": a goals line under 1.15 is the one a book
+                      re-lines or pulls first (owner, 9 Oct 2026). */
+                   "shortLine"];
   const bodies = allowed.map(grab).join("\n");
 
   for (const re of patterns) {

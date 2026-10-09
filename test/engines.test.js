@@ -84,10 +84,10 @@ const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "
   "buildPicks",
   /* Which chip is lit, derived from the same predicate wspBuild uses. */
   "wspStyleOn",
-  "wspBuild", "refusedDay", "refusedToday", "noteRefused"];
+  "wspBuild", "refusedDay", "refusedToday", "noteRefused", "shortLine"];
 
 const api = new Function([
-  "var TOP_ONLY=false;",
+  "var TOP_ONLY=false;", "var SHORT_LINE=1.15;",
   "var FIXTURES=[];",
   /* null reads exactly like absent to every function that looks at it
      (they all ask typeof DATA and then DATA); a test sets cornersK through it. */
