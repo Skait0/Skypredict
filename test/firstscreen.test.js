@@ -50,9 +50,15 @@ function runFilters(phone, stored) {
   return { open: !body.hidden, expanded: toggle.attrs["aria-expanded"] };
 }
 
-test("builder filters start shut on a phone and open on a wide screen", () => {
-  assert.deepStrictEqual(runFilters(true), { open: false, expanded: "false" });
+test("builder filters start open on every screen (owner, 9 Oct 2026: shut by default confused people)", () => {
+  assert.deepStrictEqual(runFilters(true), { open: true, expanded: "true" });
   assert.deepStrictEqual(runFilters(false), { open: true, expanded: "true" });
+});
+
+test("shut, the filters bar says so with a filled Show filters pill; Top flight only is the default", () => {
+  assert.match(FILTERS, /hint\.textContent=open\?"Hide":"Show filters"/);
+  assert.match(src, /\.filters-toggle\[aria-expanded="false"\] \.ft-hint\{background:var\(--accent\)/);
+  assert.match(src, /var TOP_ONLY=true; try\{var _to=localStorage\.getItem\("sw\.toponly"\); if\(_to!==null\) TOP_ONLY=_to==="1";\}/);
 });
 
 test("a stored filters choice wins on both sizes", () => {

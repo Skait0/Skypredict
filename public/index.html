@@ -2800,6 +2800,12 @@ html.mode-live #live{display:block}
 .filters-toggle .ft-r{min-width:0}
 .filters-toggle .ft-chev{width:16px;height:16px;color:var(--soft);transition:transform .2s ease}
 .filters-toggle[aria-expanded="false"] .ft-chev{transform:rotate(-90deg)}
+/* SHUT MUST LOOK LIKE SOMETHING TO OPEN (owner, 9 Oct 2026). Open, the hint is
+   a quiet "Hide"; shut, the bar takes the accent rim and the hint becomes a
+   filled pill - a pill that does something is filled (DESIGN.md). */
+.filters-toggle .ft-hint{font-size:12px;font-weight:800;color:var(--faint);white-space:nowrap}
+.filters-toggle[aria-expanded="false"]{border-color:var(--accent-rim)}
+.filters-toggle[aria-expanded="false"] .ft-hint{background:var(--accent);color:var(--on-accent);padding:5px 11px;border-radius:99px}
 /* THE OPEN STATE HAS NO CEILING. It was max-height:600px, which is a number
    somebody measured once on a panel that has grown since: at 390px the filters
    stand 572px tall, so the market prompt that opens under the chips had 28px
@@ -7480,7 +7486,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <div class="bld-shared stage-in stage-in-1" id="bldShared" data-parallax="0.8">
       <button class="filters-toggle" id="filtersToggle" type="button" aria-expanded="true" aria-controls="filtersBody">
         <span class="ft-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16M7 12h10M10 19h4"/></svg>Filters</span>
-        <span class="ft-r"><span class="ft-sum" id="filtersSum"></span><svg class="ft-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+        <span class="ft-r"><span class="ft-sum" id="filtersSum"></span><span class="ft-hint" id="filtersHint">Hide</span><svg class="ft-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
       </button>
       <div class="filters-body" id="filtersBody">
       <div class="filters-col1">
@@ -8640,7 +8646,8 @@ function leagueRank(l){
   if(isSAleague(l)) return 2;
   return 1;
 }
-var TOP_ONLY=false; try{TOP_ONLY=localStorage.getItem("sw.toponly")==="1";}catch(e){}
+/* Top flight only by default (owner, 9 Oct 2026); a reader's own choice wins. */
+var TOP_ONLY=true; try{var _to=localStorage.getItem("sw.toponly"); if(_to!==null) TOP_ONLY=_to==="1";}catch(e){}
 function setTopOnly(v){TOP_ONLY=!!v;try{localStorage.setItem("sw.toponly",v?"1":"0");}catch(e){}}
 function marketCount(){try{return Object.keys(BUILD.mk).filter(function(k){return BUILD.mk[k];}).length;}catch(e){return 0;}}
 /* THE SHUT FILTERS BAR NAMES EVERYTHING THAT IS NOT THE DEFAULT. The panel
@@ -22413,12 +22420,17 @@ paintScope();
      set - "All leagues · 4 markets" - so nobody is left not knowing the slip
      can be narrowed, and one tap opens it. A stored choice wins on both
      sizes. */
-  var open=!(window.matchMedia&&window.matchMedia("(max-width:560px)").matches);
+  /* OPEN BY DEFAULT ON EVERY SCREEN (owner, 9 Oct 2026: "people are
+     complaining that the filter on default collapse is confusing"). The phone
+     default above was shut; readers did not find what was inside. Shut is
+     still one tap away, and remembered. */
+  var open=true;
   try{
     var pref=localStorage.getItem("sw.filters");
     if(pref!==null) open=pref!=="0";
   }catch(e){}
-  function apply(){ b.hidden=!open; t.setAttribute("aria-expanded",open?"true":"false"); }
+  var hint=document.getElementById("filtersHint");
+  function apply(){ b.hidden=!open; t.setAttribute("aria-expanded",open?"true":"false"); if(hint) hint.textContent=open?"Hide":"Show filters"; }
   apply();
   t.addEventListener("click",function(){ open=!open; try{localStorage.setItem("sw.filters",open?"1":"0");}catch(e){} apply(); });
 })();
