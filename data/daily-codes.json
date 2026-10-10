@@ -1904,5 +1904,74 @@
       "betpawa": "CW9WG22"
     },
     "odds": 1.36
+  },
+  "2026-10-10": {
+    "date": "2026-10-10",
+    "generated": "2026-10-10T12:10:28.308Z",
+    "firstKickoff": "2026-10-10T13:30:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-10",
+        "home": "Stjarnan",
+        "away": "KA Akureyri",
+        "league": "Iceland Besta deild",
+        "kickoff": "2026-10-10T14:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.912,
+        "market": "OVER_1.5",
+        "odd": null
+      },
+      {
+        "date": "2026-10-10",
+        "home": "Maritimo",
+        "away": "Porto",
+        "league": "Portugal Primeira Liga",
+        "kickoff": "2026-10-10T17:00:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.812,
+        "market": "X2",
+        "odd": 1.08
+      },
+      {
+        "date": "2026-10-10",
+        "home": "RB Leipzig",
+        "away": "Ein Frankfurt",
+        "league": "Germany Bundesliga 1",
+        "kickoff": "2026-10-10T16:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.874,
+        "market": "OVER_1.5",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-10",
+        "home": "Ajax",
+        "away": "Nijmegen",
+        "league": "Netherlands Eredivisie",
+        "kickoff": "2026-10-10T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.864,
+        "market": "OVER_1.5",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-10",
+        "home": "Paderborn",
+        "away": "Stuttgart",
+        "league": "Germany Bundesliga 1",
+        "kickoff": "2026-10-10T13:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.862,
+        "market": "OVER_1.5",
+        "odd": 1.08
+      }
+    ],
+    "codes": {
+      "sporty": "M82E2G",
+      "bet9ja": "5VBB8QL",
+      "betking": "RR2XWW",
+      "betpawa": "WFDUUDY"
+    },
+    "odds": null
   }
 }
