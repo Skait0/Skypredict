@@ -136,7 +136,7 @@ test("the two-way markets keep the flat weight", () => {
 test("team to score follows the book's order once blended", () => {
   const run = new Function(consts[0] + lift("blendWeight") + lift("_devig3") +
     "function bestTipFrom(){return null;} function kOf(){return {};} function tipCode(){return null;}" +
-    lift("blendFixture") + "\nreturn blendFixture;")();
+    (/var BLEND_FIELDS=\[[\s\S]*?\];/.exec(src) || [""])[0] + lift("blendFixture") + "\nreturn blendFixture;")();
   const f = { home_p: 0.328, draw_p: 0.277, away_p: 0.394, o15: 0.73, o25: 0.5, btts: 0.53,
     h_o05: 0.706, a_o05: 0.744, h_o15: 0.36, a_o15: 0.41, fh_o05: 0.7, o35: 0.25,
     sportyOdds: { "1": 2.23, "X": 3.5, "2": 3.26, "HOME_OVER_0.5": 1.25, "HOME_UNDER_0.5": 3.75,
@@ -154,7 +154,7 @@ test("team to score follows the book's order once blended", () => {
 test("one-sided combos are de-vigged with the game's own margin and kept between their parts", () => {
   const run = new Function(consts[0] + lift("blendWeight") + lift("_devig3") +
     "function bestTipFrom(){return null;} function kOf(){return {};} function tipCode(){return null;}" +
-    lift("blendFixture") + "\nreturn blendFixture;")();
+    (/var BLEND_FIELDS=\[[\s\S]*?\];/.exec(src) || [""])[0] + lift("blendFixture") + "\nreturn blendFixture;")();
   /* Aberdeen v St Johnstone, 11 Oct 2026: model and live SportyBet prices. */
   const f = { home_p: 0.328, draw_p: 0.277, away_p: 0.394, o15: 0.73, o25: 0.5, o35: 0.264, o45: 0.122, btts: 0.53,
     h_o05: 0.706, a_o05: 0.744, home_btts: 0.706, away_btts: 0.744, draw_btts: 0.609,
@@ -178,7 +178,7 @@ test("one-sided combos are de-vigged with the game's own margin and kept between
 test("corners, shots and handicap half lines from 1.5 keep the book's de-vigged figure", () => {
   const run = new Function(consts[0] + lift("blendWeight") + lift("_devig3") +
     "function bestTipFrom(){return null;} function kOf(){return {};} function tipCode(){return null;}" +
-    lift("blendFixture") + "\nreturn blendFixture;")();
+    (/var BLEND_FIELDS=\[[\s\S]*?\];/.exec(src) || [""])[0] + lift("blendFixture") + "\nreturn blendFixture;")();
   const f = { home_p: 0.5, draw_p: 0.25, away_p: 0.25, sportyOdds: { "1": 2, "X": 3.6, "2": 3.6,
     "CORNERS_OV_9.5": 1.9, "CORNERS_UN_9.5": 1.85, "SHOTS_H_OV_12.5": 1.8, "SHOTS_H_UN_12.5": 1.95,
     "AH_1_-1.5": 3.4, "AH_2_-1.5": 1.3, "AH_1_-0.5": 2, "AH_2_-0.5": 1.8, "AH_1_1": 1.2, "AH_2_1": 4,
@@ -193,4 +193,20 @@ test("corners, shots and handicap half lines from 1.5 keep the book's de-vigged 
   assert.ok(!("AH_1_1" in f._bk), "a whole line pushes, so its prices are not a two-way split");
   assert.ok(!("CORNERS_OV_10.5" in f._bk), "one side only: nothing to de-vig against");
   assert.strictEqual(f._bkB, 0.9);
+});
+
+test("a refresh blends from the model again, not from the last blend", () => {
+  const run = new Function(consts[0] + lift("blendWeight") + lift("_devig3") +
+    "function bestTipFrom(){return null;} function kOf(){return {};} function tipCode(){return null;}" +
+    (/var BLEND_FIELDS=\[[\s\S]*?\];/.exec(src) || [""])[0] + lift("blendFixture") + "\nreturn blendFixture;")();
+  const f = { home_p: 0.328, draw_p: 0.277, away_p: 0.394, h_o05: 0.706, a_o05: 0.744, btts: 0.53,
+    sportyOdds: { "1": 2.23, "X": 3.5, "2": 3.26, "HOME_OVER_0.5": 1.25, "HOME_UNDER_0.5": 3.75,
+      "AWAY_OVER_0.5": 1.38, "AWAY_UNDER_0.5": 2.9 } };
+  run(f); const once = { hp: f.home_p, h: f.h_o05 };
+  run(f); run(f);
+  assert.strictEqual(f.home_p, once.hp, "home win unchanged by later refreshes with the same prices");
+  assert.strictEqual(f.h_o05, once.h, "team to score unchanged too");
+  f.sportyOdds = Object.assign({}, f.sportyOdds, { "1": 2.0, "2": 3.8 });
+  run(f);
+  assert.ok(f.home_p > once.hp, "new prices still move it");
 });

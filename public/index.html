@@ -9121,8 +9121,19 @@ function blendWeight(gap){
   var t=Math.min(1, Math.abs(gap)/BLEND_FULL_GAP);
   return BLEND_MIN + (BLEND_MAX-BLEND_MIN)*t;
 }
+var BLEND_FIELDS=["home_p","draw_p","away_p","dc1x","dcx2","dc12","anybody","o15","o25","o35","o45","btts",
+  "h_o05","a_o05","h_o15","a_o15","fh_o05","home_btts","away_btts","draw_btts","home_o25","away_o25","draw_o25",
+  "tip","tip_p","score"];
 function blendFixture(f){
   var o=f.sportyOdds; if(!o) return; var B=0.30;
+  /* BLEND FROM THE MODEL EVERY TIME, NOT FROM THE LAST BLEND. An open tab
+     refreshes the odds every ten minutes (since 9 Oct 2026) and each refresh
+     ran this again on numbers already 90% the book's - the model's share went
+     10%, 1%, 0.1%. Measured on Aberdeen v St Johnstone: home 42.1% -> 43.0% ->
+     43.1% over two refreshes with the same prices. The model's own figures are
+     kept from the first call and restored before every later one. */
+  if(!f._m){ f._m={}; BLEND_FIELDS.forEach(function(k){ if(k in f) f._m[k]=f[k]; }); }
+  else BLEND_FIELDS.forEach(function(k){ if(k in f._m) f[k]=f._m[k]; });
   if(o["1"]&&o["X"]&&o["2"]){
     var m=_devig3(o["1"],o["X"],o["2"]);
     if(m){
@@ -14283,7 +14294,13 @@ function buildPicks(){
   while(picked.length<cap){
     var bi=-1,bs=Infinity;
     for(var i=0;i<cand.length;i++){ if(usedIx[i]) continue;
-      var s=i+LEAGUE_PEN*(lc[countryOf(cand[i].f.league)]||0); if(s<bs){bs=s;bi=i;} }
+      var s=i+LEAGUE_PEN*(lc[countryOf(cand[i].f.league)]||0);
+      /* The league spread must not out-rank SPREAD_CAP: measured on the live
+         board, a capped game from an unused country beat fresh games from a
+         busy one and went on 5 of 10 tickets. Capped games wait until no
+         other game is left, and then the least-used goes first. */
+      if(overExposed(cand[i].id,_use)) s+=1e6*((_use[cand[i].id]||0)-SPREAD_CAP+1);
+      if(s<bs){bs=s;bi=i;} }
     if(bi<0) break;
     usedIx[bi]=1;
     marketFor(cand[bi]);
