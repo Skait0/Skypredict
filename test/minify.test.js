@@ -13,7 +13,7 @@ const assert = require("node:assert");
 const fs = require("fs");
 const path = require("path");
 const { minify } = require("terser");
-const { minifyScript, minifyWithMap, sentryMap } = require("../scripts/prebuild.js");
+const { minifyScript, minifyWithMap, sentryMap, stripMapUrl } = require("../scripts/prebuild.js");
 
 const html = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
 const big = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)]
@@ -93,7 +93,10 @@ test("sentry-cli's debug-id stamp keeps the bundle a valid script with every top
     fs.writeFileSync(path.join(dir, "app.js"), code);
     fs.writeFileSync(path.join(dir, "app.js.map"), map);
     execFileSync(process.execPath, [require.resolve("@sentry/cli/bin/sentry-cli"), "sourcemaps", "inject", dir], { stdio: "pipe" });
-    const stamped = fs.readFileSync(path.join(dir, "app.js"), "utf8").replace(/\n?\/\/# sourceMappingURL=\S*\s*$/, "\n");
+    const raw = fs.readFileSync(path.join(dir, "app.js"), "utf8");
+    assert.match(raw, /sourceMappingURL/, "sanity: inject leaves the map comment in");
+    const stamped = stripMapUrl(raw);
+    assert.ok(!/sourceMappingURL/.test(stamped), "the real strip removes it wherever inject put it");
     assert.match(stamped, /\/\/# debugId=[0-9a-f-]{36}/, "stamped");
     assert.match(fs.readFileSync(path.join(dir, "app.js.map"), "utf8"), /"debug_?[iI]d"/, "and the map carries the same id");
     assert.doesNotThrow(() => new (require("vm").Script)(stamped));

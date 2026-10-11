@@ -706,7 +706,9 @@ async function minifyWithMap(js) {
  * The org and project are not secrets; the token comes from the Vercel env.
  */
 const SENTRY_ORG = "powerline-inc", SENTRY_PROJECT = "python";
-function stripMapUrl(code) { return code.replace(/\n?\/\/# sourceMappingURL=\S*\s*$/, "\n"); }
+/* Anywhere in the file, not just the last line: sentry-cli's inject moves the
+   comment above the //# debugId line it appends (found on the 11 Oct preview). */
+function stripMapUrl(code) { return code.replace(/\n?\/\/# sourceMappingURL=[^\n]*/g, "").replace(/\s*$/, "\n"); }
 function sentryMap(code, map) {
   if (!process.env.SENTRY_AUTH_TOKEN || !map) return stripMapUrl(code);
   const dir = fs.mkdtempSync(path.join(require("os").tmpdir(), "swmap-"));
@@ -917,4 +919,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { applyAuthMeta, minifyScript, minifyWithMap, sentryMap };
+module.exports = { applyAuthMeta, minifyScript, minifyWithMap, sentryMap, stripMapUrl };
