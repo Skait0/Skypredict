@@ -71,6 +71,7 @@ function harness(answer, ask, matchFixture) {
     "function lineCheck(){ return false; }\n" +
     fn("refusalWhy") + fn("whyOf") + fn("refusedDay") + fn("refusedToday") + fn("noteRefused") + fn("dropUnbookable") + fn("notStarted") + fn("legStarted") +
     opt("pickStarted") + opt("editErrHTML") + fn("bookReason") + fn("bookErrHTML") +
+    fn("wandHTML") + fn("clockHTML") + fn("clockSet") +
     fn("bookRounds") + fn("legPick") + fn("bookLegs") + fn("splitPicks") + fn("splitAndBook") +
     "\nreturn {bookLegs:bookLegs, splitAndBook:splitAndBook, legPick:legPick, bookRounds:bookRounds, B:BOOKS.sporty};";
   const api = new Function(...names, body)(...names.map((k) => stubs[k]));

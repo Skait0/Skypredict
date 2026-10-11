@@ -1105,11 +1105,22 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .rip-ink{position:absolute;border-radius:50%;transform:scale(0);background:rgba(150,150,160,.3);
   opacity:.6;pointer-events:none;animation:ripple .55s ease-out forwards}
 @keyframes ripple{to{transform:scale(2.6);opacity:0}}
+/* Board skeleton (owner, 11 Oct 2026): rows shaped like a fixture with a faint
+   gold sweep. No wizard - the board loads often and should stay quiet. */
 .sk{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line-soft);
-  border-radius:var(--r-md);height:56px;margin-bottom:8px}
+  border-radius:var(--r-md);height:56px;margin-bottom:8px;
+  display:grid;grid-template-columns:20px 1fr 48px;gap:12px;align-items:center;padding:0 14px}
+.sk i{display:block;height:9px;border-radius:5px;background:var(--line-soft)}
+.sk .sk-d{height:20px;border-radius:50%}
+.sk .sk-l{width:72%}
+.sk .sk-o{height:24px;border-radius:6px}
 .sk::after{content:"";position:absolute;inset:0;transform:translateX(-100%);
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
-  animation:shimmer 1.25s infinite}
+  background:linear-gradient(100deg,transparent 30%,color-mix(in srgb,var(--accent) 16%,transparent) 50%,transparent 70%);
+  animation:shimmer 1.5s linear infinite}
+.sk:nth-child(2)::after{animation-delay:.08s}
+.sk:nth-child(3)::after{animation-delay:.16s}
+.sk:nth-child(4)::after{animation-delay:.24s}
+.sk:nth-child(5)::after{animation-delay:.32s}
 @keyframes shimmer{100%{transform:translateX(100%)}}
 /* Clear of the bottom tab bar and the slip bar, both of which are fixed to
    the bottom and both of which hold things people tap. A toast landing on
@@ -1699,7 +1710,7 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
 .navt.build.on{background:var(--red-fill);color:#fff}
 .mini-load{display:inline-block;width:22px;height:22px;border-radius:50%;
   border:3px solid var(--line);border-top-color:var(--red);
-  animation:ldrspin .8s linear infinite;vertical-align:middle;margin-right:9px}
+  animation:spin .8s linear infinite;vertical-align:middle;margin-right:9px}
 .vt:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .trust{display:flex;flex-wrap:wrap;gap:8px 15px;align-items:center;margin-top:15px;font-size:12.5px;color:var(--soft)}
 .trust-i{display:inline-flex;align-items:center;gap:7px}
@@ -3976,10 +3987,6 @@ html{interpolate-size:allow-keywords}
 .cs-go:active{transform:scale(.97)}
 .cs-go:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media (hover:hover){.cs-go:hover{transform:translateY(-1px);filter:brightness(1.06)}}
-.cs-spin{width:11px;height:11px;margin-right:4px;border-radius:50%;
-  border:2px solid currentColor;border-right-color:transparent;
-  animation:csSpin .7s linear infinite}
-@keyframes csSpin{to{transform:rotate(360deg)}}
 .cs-go[aria-busy]{cursor:progress;filter:saturate(.8)}
 .cs-msg{flex:1 1 100%;margin:0;font-size:11.5px;font-weight:600;line-height:1.45;
   color:rgba(255,255,255,.86)}
@@ -4343,104 +4350,156 @@ html{interpolate-size:allow-keywords}
   background:radial-gradient(115% 62% at 50% 34%,rgba(230,57,70,.13),transparent 62%),
     radial-gradient(80% 46% at 50% 104%,rgba(242,184,75,.07),transparent 72%)}
 .loader>*{position:relative}
-/* One stage, 132px, holding four layers that share a clock: the halo behind,
-   the ring that sweeps, the wizard, and the highlight that crosses him. The
-   badge is the WHOLE badge - hood point to shoulders - so nothing is cut, and
-   it is sized to sit inside the ring rather than to fill it. */
-.loader-orbit{position:relative;width:196px;height:196px;display:flex;align-items:center;justify-content:center}
-/* The ring is a conic sweep behind a hole, not a border with two coloured
-   sides: a border can only be lit a quarter at a time, and this fades red into
-   gold the whole way round. */
-.loader-orbit .ring{position:absolute;border-radius:50%;
+/* TWO SCENES ON ONE STAGE (owner, 11 Oct 2026, from the loader lab). Keepy-uppy
+   on the first load of the day, the comet orbit on every later load that day -
+   the inline script after the loader picks by a localStorage day, and a storage
+   that throws gets keepy-uppy. Both use the real ball (#swBall) and the badge in
+   --sig. Transform and opacity only, so it holds on a cheap phone while the
+   bundle parses. The old rune ring, sweeps, halo and embers went with this. */
+.loader-orbit{position:relative;width:196px;height:196px;animation:ldrconjure .62s cubic-bezier(0.23,1,0.32,1) both}
+.ldr-ku,.ldr-co{position:absolute;inset:0}
+.ldr-co,.loader.co .ldr-ku{display:none}
+.loader.co .ldr-co{display:block}
+.ldr-sig{position:absolute;width:96px;height:96px;background:var(--sig) center/contain no-repeat;
+  filter:drop-shadow(0 6px 18px rgba(0,0,0,.55)) drop-shadow(0 0 16px rgba(242,184,75,.3))}
+/* The eyes are painted into the artwork; this is only the glow over them,
+   screened so it lights the pixels already there. 62%/31% is measured off the badge. */
+.ldr-eyes{position:absolute;width:96px;height:96px;pointer-events:none;mix-blend-mode:screen}
+.ldr-eyes::after{content:"";position:absolute;left:62%;top:31%;width:26px;height:12px;margin:-6px 0 0 -13px;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(180,245,255,.95),rgba(80,190,255,.5) 55%,transparent 80%);filter:blur(2px)}
+.sw-ball{display:block;width:100%;height:100%}
+
+/* Keepy-uppy: he heads the ball off his hood; it rises, HANGS and drifts a touch
+   higher (the wizard), then drops on gravity (the football). Each touch throws
+   sparks, flashes his eyes and pulses the rune ring under him. One 1.2s clock. */
+.ldr-ku .ldr-sig,.ldr-ku .ldr-eyes{left:50px;top:96px;animation:ldrHead 1.2s infinite}
+.ldr-ku .ldr-eyes::after{animation:ldrEyesKu 1.2s infinite}
+.ldr-rune{position:absolute;left:34px;top:168px;width:128px;height:26px;border-radius:50%;
+  border:1.5px solid color-mix(in srgb,var(--accent) 70%,transparent);
+  box-shadow:0 0 14px color-mix(in srgb,var(--accent) 45%,transparent),inset 0 0 10px color-mix(in srgb,var(--accent) 35%,transparent);
+  animation:ldrRune 1.2s infinite}
+.ldr-lift,.ldr-ghost{position:absolute;left:78px;top:74px;width:26px;height:26px;animation:ldrLift 1.2s infinite}
+.ldr-ghost{border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 70%,transparent),transparent);filter:blur(2px)}
+.ldr-ghost.g1{opacity:.45;animation-delay:.05s}
+.ldr-ghost.g2{opacity:.22;animation-delay:.1s}
+.ldr-squash{width:100%;height:100%;transform-origin:50% 100%;animation:ldrSquash 1.2s infinite}
+.ldr-spin{width:100%;height:100%;border-radius:50%;animation:ldrsweep 1.6s linear infinite;
+  filter:drop-shadow(0 0 6px color-mix(in srgb,var(--accent) 75%,transparent))}
+.ldr-burst{position:absolute;left:91px;top:98px;width:0;height:0}
+.ldr-burst svg{position:absolute;left:-5px;top:-5px;width:10px;height:10px;fill:var(--accent);opacity:0;
+  animation:ldrSpark 1.2s cubic-bezier(0.23,1,0.32,1) infinite}
+.ldr-burst svg:nth-child(1){--dx:-30px;--dy:-14px}
+.ldr-burst svg:nth-child(2){--dx:-18px;--dy:-30px;width:7px;height:7px}
+.ldr-burst svg:nth-child(3){--dx:22px;--dy:-26px}
+.ldr-burst svg:nth-child(4){--dx:32px;--dy:-8px;width:7px;height:7px;fill:#fff}
+.ldr-apex{position:absolute;left:83px;top:4px;width:16px;height:16px;fill:#fff;opacity:0;
+  animation:ldrApex 1.2s cubic-bezier(0.23,1,0.32,1) infinite}
+@keyframes ldrLift{
+  0%{transform:translateY(0);animation-timing-function:cubic-bezier(.33,1,.68,1)}
+  36%{transform:translateY(-56px);animation-timing-function:ease-in-out}
+  62%{transform:translateY(-63px);animation-timing-function:cubic-bezier(.32,0,.67,0)}
+  100%{transform:translateY(0)}}
+@keyframes ldrSquash{0%,100%{transform:scale(1.14,.84)}6%,94%{transform:scale(1)}}
+@keyframes ldrHead{0%,100%{transform:translateY(-3px)}8%,92%{transform:translateY(0)}}
+@keyframes ldrEyesKu{0%,100%{opacity:1;transform:scale(1.15)}20%,80%{opacity:.4;transform:scale(.95)}}
+@keyframes ldrRune{0%,100%{opacity:1;transform:scale(1.04)}25%,75%{opacity:.35;transform:scale(1)}}
+@keyframes ldrSpark{0%{opacity:1;transform:translate(0,0) scale(.4) rotate(0)}
+  30%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1) rotate(90deg)}100%{opacity:0}}
+@keyframes ldrApex{0%,40%{opacity:0;transform:scale(.3) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}62%,100%{opacity:0;transform:scale(.5) rotate(90deg)}}
+
+/* Comet orbit: one ball round him with a gold tail, eyes flaring as it passes
+   them - about 60deg into the 1.6s lap, so the peak sits at 17%. */
+.ldr-track,.ldr-trail,.ldr-arm{position:absolute;inset:4px;border-radius:50%}
+.ldr-track{border:1px dashed color-mix(in srgb,var(--accent) 35%,transparent)}
+.ldr-trail{background:conic-gradient(from 0deg,transparent 0deg 220deg,color-mix(in srgb,var(--accent) 70%,transparent) 345deg,var(--accent) 360deg);
   -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));
-  mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px))}
-.loader-orbit .r1{inset:19px;
-  background:conic-gradient(from 0deg,transparent 0deg,rgba(230,57,70,.12) 90deg,var(--red) 250deg,var(--win) 330deg,transparent 360deg);
-  animation:ldrsweep 2.4s linear infinite}
-/* A second, tighter ring going the other way at a different period. Two is a
-   dial; three was a fairground. */
-.loader-orbit .r2{inset:33px;opacity:.7;
-  background:conic-gradient(from 180deg,transparent 0deg,rgba(242,184,75,.5) 120deg,transparent 260deg);
-  animation:ldrsweep 3.6s linear infinite reverse}
-/* A summoning circle: forty ticks cut out of a gold ring, turning slowly
-   enough that you notice it only after the sweep has already told you the
-   page is working. */
-.loader-runes{position:absolute;inset:0;border-radius:50%;opacity:.9;
-  /* --accent, not a fixed gold (owner, 11 Oct 2026: the ring "seems to have low contrast"):
-     at .6 x .9 gold it all but vanished, worst on the light cream ground. --accent is the same
-     gold on dark and the deep bronze on light. Ticks 2deg wide, 6px deep. */
-  background:repeating-conic-gradient(from 0deg,var(--accent) 0deg 2deg,transparent 2deg 12deg);
-  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));
-  mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));
-  animation:ldrsweep 18s linear infinite reverse}
-/* Embers off the robe. Four, on one clock, offset - a handful of sparks reads
-   as heat coming off him; a dozen reads as a screensaver. */
-.loader-embers{position:absolute;inset:0;pointer-events:none}
-.loader-embers i{position:absolute;bottom:22%;left:50%;width:5px;height:5px;border-radius:50%;
-  background:#ffe9b8;box-shadow:0 0 10px 3px rgba(242,184,75,.9);opacity:0;
-  animation:ldrember 4.6s ease-out infinite}
-.loader-embers i:nth-child(1){margin-left:-46px;animation-delay:0s}
-.loader-embers i:nth-child(2){margin-left:-33px;animation-delay:1.15s;width:4px;height:4px}
-.loader-embers i:nth-child(3){margin-left:34px;animation-delay:2.3s}
-.loader-embers i:nth-child(4){margin-left:48px;animation-delay:3.45s;width:4px;height:4px;
-  background:#fff;box-shadow:0 0 9px 3px rgba(255,255,255,.7)}
-.loader-halo{position:absolute;inset:6px;border-radius:50%;
-  background:radial-gradient(circle,rgba(242,184,75,.34),rgba(230,57,70,.14) 46%,transparent 72%);
-  animation:ldrhalo 2.6s ease-in-out infinite}
-/* Under the wizard, not around him: a dark lens that lifts the artwork off a
-   background it otherwise shares a value with. */
-.loader-well{position:absolute;width:120px;height:120px;border-radius:50%;
-  background:radial-gradient(circle,rgba(0,0,0,.55),rgba(0,0,0,.25) 60%,transparent 72%)}
-/* The badge and the highlight are the same picture: one is drawn, the other is
-   used as a mask, so the shine is confined to the wizard's own shape. The
-   bytes travel once, in --sig on the loader element, because this paints
-   before any fetch can land. */
-.loader-sig{position:absolute;width:96px;height:96px;
-  background:var(--sig) center/contain no-repeat;
-  filter:drop-shadow(0 6px 18px rgba(0,0,0,.55)) drop-shadow(0 0 16px rgba(242,184,75,.35));
-  animation:ldrbreathe 2.6s ease-in-out infinite}
-/* The eyes are painted into the artwork, so this only adds the glow around
-   them - one blurred dot over the pair, screened so it lights the pixels that
-   are already there instead of covering them. The 62%/31% is measured off the
-   badge, not guessed. */
-.loader-eyes{position:absolute;width:96px;height:96px;pointer-events:none;mix-blend-mode:screen}
-.loader-eyes::after{content:"";position:absolute;left:62%;top:31%;width:26px;height:12px;
-  margin:-6px 0 0 -13px;border-radius:50%;
-  background:radial-gradient(closest-side,rgba(180,245,255,.95),rgba(80,190,255,.5) 55%,transparent 80%);
-  filter:blur(2.2px);animation:ldreyes 2.6s ease-in-out infinite}
-.loader-shine{position:absolute;width:96px;height:96px;pointer-events:none;
-  -webkit-mask:var(--sig) center/contain no-repeat;mask:var(--sig) center/contain no-repeat;
-  background:linear-gradient(105deg,transparent 45%,rgba(255,255,255,.34) 50%,transparent 55%);
-  background-size:260% 100%;animation:ldrshine 2.6s ease-in-out infinite}
-.loader-orbit{animation:ldrconjure .62s cubic-bezier(0.23,1,0.32,1) both}
+          mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));
+  animation:ldrsweep 1.6s linear infinite}
+.ldr-arm{animation:ldrsweep 1.6s linear infinite}
+.ldr-arm i{position:absolute;left:50%;top:0;width:24px;height:24px;margin:-12px 0 0 -12px;
+  filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 80%,transparent))}
+.ldr-co .ldr-sig,.ldr-co .ldr-eyes{left:50px;top:50px}
+.ldr-co .ldr-eyes::after{animation:ldrEyesCo 1.6s infinite}
+@keyframes ldrEyesCo{0%,100%{opacity:.4;transform:scale(.95)}10%{opacity:.5}17%{opacity:1;transform:scale(1.18)}32%{opacity:.4;transform:scale(.95)}}
+
 .loader-word{font-weight:800;font-size:19px;letter-spacing:-.01em;color:var(--text);
   animation:ldrconjure .62s cubic-bezier(0.23,1,0.32,1) .08s both}
 .loader-word em{color:var(--red);font-style:normal}
 @keyframes ldrsweep{to{transform:rotate(360deg)}}
-@keyframes ldrhalo{0%,100%{opacity:.55;transform:scale(.94)}50%{opacity:1;transform:scale(1.06)}}
-@keyframes ldrbreathe{0%,100%{transform:scale(1) translateY(0)}50%{transform:scale(1.04) translateY(-3px)}}
-/* One pass per breath, and it rests for the second half rather than sawing
-   back and forth across his face. */
-@keyframes ldrshine{0%{background-position:170% 0}45%,100%{background-position:-70% 0}}
-/* Up and out: an ember never falls back, and it fades before it reaches the
-   ring so nothing appears to cross the circle. */
-@keyframes ldrember{0%{opacity:0;transform:translateY(0) scale(.6)}
-  12%{opacity:1;transform:translateY(-10px) scale(1)}
-  70%{opacity:.55}
-  100%{opacity:0;transform:translateY(-58px) scale(.4)}}
-@keyframes ldreyes{0%,100%{opacity:.45;transform:scale(.94)}50%{opacity:1;transform:scale(1.08)}}
 @keyframes ldrconjure{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
-/* Fewer and gentler, not none: the halo keeps saying "working" without
-   anything travelling across the screen. It is the one loop that survives
-   here, because it reports state - the blink that used to sit beside it was
-   character, and character is exactly what this setting asks us to drop. */
+@keyframes ldrbreath{0%,100%{opacity:.45}50%{opacity:1}}
+
+/* WAITING MOMENTS AFTER THE LOADER, from the same lab (owner, 11 Oct 2026).
+   Wand sparkle: three stars inside a busy button - small, because people press
+   these many times a day. */
+.wand{display:inline-flex;gap:3px;margin-left:8px;vertical-align:middle}
+.wand svg{width:10px;height:10px;fill:currentColor;animation:wandTw .9s cubic-bezier(0.23,1,0.32,1) infinite}
+.wand svg:nth-child(2){animation-delay:.12s}
+.wand svg:nth-child(3){animation-delay:.24s}
+@keyframes wandTw{0%,100%{opacity:.35;transform:scale(.6) rotate(0)}40%{opacity:1;transform:scale(1) rotate(45deg)}}
+
+/* Crystal ball: reading one booking code in the converter. The orb floats over a
+   rune ring; the ball inside is a vision - screened so only light is left. Drawn
+   at 210px and scaled into a 130px box. */
+.sw-orbwait{flex-direction:column;align-items:center;gap:4px}
+.cb-box{width:130px;height:130px}
+.cb{position:relative;width:210px;height:210px;transform:scale(.62);transform-origin:0 0}
+.cb-sig{position:absolute;left:0;top:40px;width:100px;height:100px;background:url(/wiz-mark.png) center/contain no-repeat;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
+.cb-ground{position:absolute;left:94px;top:178px;width:100px;height:16px;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(0,0,0,.55),transparent);animation:cbShadow 3.2s ease-in-out infinite}
+.cb-glow{position:absolute;left:74px;top:158px;width:140px;height:40px;border-radius:50%;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 35%,transparent),transparent);animation:ldrbreath 2.8s ease-in-out infinite}
+.cb-ring{position:absolute;left:100px;top:170px;width:88px;height:18px;border-radius:50%;
+  border:1.5px solid color-mix(in srgb,var(--accent) 65%,transparent);
+  box-shadow:0 0 12px color-mix(in srgb,var(--accent) 40%,transparent),inset 0 0 8px color-mix(in srgb,var(--accent) 30%,transparent)}
+.cb-float{position:absolute;inset:0;animation:cbFloat 3.2s ease-in-out infinite}
+.cb-orb{position:absolute;left:88px;top:38px;width:112px;height:112px;border-radius:50%;overflow:hidden;
+  background:radial-gradient(circle at 50% 58%,rgba(90,140,255,.22),rgba(14,18,44,.55) 55%,rgba(4,6,18,.92) 82%,#000 100%);
+  box-shadow:inset -12px -16px 26px rgba(0,0,0,.7),inset 10px 12px 22px rgba(190,220,255,.16),
+    inset 0 0 0 1px rgba(255,255,255,.18),0 0 34px color-mix(in srgb,var(--accent) 30%,transparent),0 14px 24px rgba(0,0,0,.45)}
+.cb-mist{position:absolute;inset:-25%;border-radius:50%;filter:blur(9px);mix-blend-mode:screen;
+  background:conic-gradient(from 0deg,transparent,rgba(230,57,70,.7),transparent 38%,rgba(242,184,75,.75),transparent 72%);
+  -webkit-mask:radial-gradient(circle,#000 30%,transparent 62%);mask:radial-gradient(circle,#000 30%,transparent 62%);
+  animation:ldrsweep 5s linear infinite}
+.cb-mist.two{animation-duration:7.5s;animation-direction:reverse;opacity:.6;inset:-15%}
+.cb-vision{position:absolute;left:50%;top:52%;width:34px;height:34px;margin:-17px 0 0 -17px;mix-blend-mode:screen;
+  animation:cbVision 2.8s ease-in-out infinite}
+.cb-vision svg{filter:sepia(1) saturate(2.2) hue-rotate(-12deg) brightness(1.05) drop-shadow(0 0 6px rgba(242,184,75,.9))}
+.cb-vision::after{content:"";position:absolute;inset:-30%;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(242,184,75,.35),transparent);mix-blend-mode:screen}
+.cb-caustic{position:absolute;left:30%;bottom:7%;width:44%;height:14%;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(242,184,75,.7),transparent);filter:blur(2px);opacity:.8}
+.cb-rim{position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle,transparent 60%,rgba(160,200,255,.28) 69%,rgba(255,255,255,.08) 71%,transparent 72%)}
+.cb-gloss{position:absolute;left:14%;top:8%;width:46%;height:30%;border-radius:50%;
+  background:radial-gradient(ellipse at 40% 40%,rgba(255,255,255,.55),rgba(255,255,255,.08) 60%,transparent 70%);transform:rotate(-28deg)}
+.cb-spec{position:absolute;left:27%;top:18%;width:9px;height:6px;border-radius:50%;background:#fff;filter:blur(.5px);transform:rotate(-28deg)}
+@keyframes cbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes cbShadow{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.82);opacity:.6}}
+@keyframes cbVision{0%,100%{opacity:0;transform:scale(.85) rotate(-20deg);filter:blur(4px)}45%,55%{opacity:.5;transform:scale(1.08) rotate(0);filter:blur(.9px)}}
+
+/* Match clock: real progress only - ticket k of N, or code k of N. 18 ticks of
+   five minutes; full time turns green. */
+.sw-clockwait{flex-direction:column;align-items:center;gap:6px}
+.sw-clock{position:relative;width:132px;height:132px;display:grid;place-items:center}
+.swc-t{position:absolute;left:50%;top:4px;width:4px;height:11px;margin-left:-2px;border-radius:2px;
+  transform-origin:2px 62px;background:var(--line);transition:background-color .2s ease}
+.swc-t.on{background:var(--accent)}
+.sw-clock.done .swc-t{background:var(--green)}
+.swc-mid{display:grid;justify-items:center;gap:1px}
+.swc-sig{display:block;width:44px;height:44px;background:url(/wiz-mark.png) center/contain no-repeat}
+.swc-min{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1;color:var(--text)}
+
+/* Fewer and gentler, not none: what reports state keeps a slow pulse, nothing travels. */
 @media(prefers-reduced-motion:reduce){
-  .loader-orbit .ring,.loader-runes{animation:none;opacity:.4}
-  .loader-sig{animation:none}
-  .loader-shine,.loader-embers{display:none}
   .loader-orbit,.loader-word{animation:none}
-  .loader-eyes::after{animation:none}
-  .loader-halo{animation:ldrhalo 3.4s ease-in-out infinite}
+  .ldr-ku .ldr-sig,.ldr-ku .ldr-eyes,.ldr-lift,.ldr-squash,.ldr-spin,.ldr-arm{animation:none}
+  .ldr-ghost,.ldr-burst,.ldr-apex{display:none}
+  .ldr-ku .ldr-eyes::after,.ldr-co .ldr-eyes::after,.ldr-rune,.ldr-trail{animation:ldrbreath 2.4s ease-in-out infinite}
+  .wand svg,.cb-mist,.cb-float,.cb-ground,.cb-glow{animation:none}
+  .wand{animation:ldrbreath 1.6s ease-in-out infinite}
+  .cb-vision{animation:ldrbreath 2.8s ease-in-out infinite;filter:blur(.9px)}
 }
 /* opt add-to-slip button + floating my-slip */
 .opt.bk .n{padding-right:26px}
@@ -7371,12 +7430,17 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 <!-- The wizard travels inline: this paints before any request can come
      back, and a src the browser has to fetch would leave a hole in the
      middle of the ring for the first second of every cold visit. One copy
-     of the bytes, in a custom property, used by the badge and by the mask
-     the shine runs through. -->
+     of the bytes, in a custom property, used by the badge in both scenes. -->
 <div class="loader" id="loader" style="--sig:url(data:image/png;base64,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)">
-  <div class="loader-orbit"><span class="loader-halo"></span><span class="loader-well"></span><span class="loader-runes"></span><span class="ring r1"></span><span class="ring r2"></span><span class="loader-sig"></span><span class="loader-eyes"></span><span class="loader-shine"></span><span class="loader-embers"><i></i><i></i><i></i><i></i></span></div>
+  <div class="loader-orbit"><div class="ldr-ku"><span class="ldr-rune"></span><span class="ldr-sig"></span><span class="ldr-eyes"></span><span class="ldr-ghost g2"></span><span class="ldr-ghost g1"></span><div class="ldr-lift"><div class="ldr-squash"><div class="ldr-spin"><svg class="sw-ball" aria-hidden="true"><use href="#swBall"/></svg></div></div></div><span class="ldr-burst"><svg aria-hidden="true"><use href="#swStar"/></svg><svg aria-hidden="true"><use href="#swStar"/></svg><svg aria-hidden="true"><use href="#swStar"/></svg><svg aria-hidden="true"><use href="#swStar"/></svg></span><svg class="ldr-apex" aria-hidden="true"><use href="#swStar"/></svg></div><div class="ldr-co"><span class="ldr-track"></span><span class="ldr-trail"></span><span class="ldr-arm"><i><svg class="sw-ball" aria-hidden="true"><use href="#swBall"/></svg></i></span><span class="ldr-sig"></span><span class="ldr-eyes"></span></div></div>
   <div class="loader-word">Soccer<em>wizard</em></div>
 </div>
+<!-- The real ball (a truncated icosahedron projected onto a sphere) and the
+     wand star, drawn once and used by the loader, the converter orb and busy
+     buttons. Outside the loader, which is removed once the page is up. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="swBall" viewBox="0 0 24 24"><defs><clipPath id="swBallClip"><circle cx="12" cy="12" r="11"/></clipPath><radialGradient id="swBallShade" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset=".85" stop-color="#000" stop-opacity=".35"/><stop offset="1" stop-color="#000" stop-opacity=".6"/></radialGradient></defs><g clip-path="url(#swBallClip)"><circle cx="12" cy="12" r="11" fill="#FBFAF7"/><path d="M17.94 20.79L17.19 21.40L16.38 21.93L15.51 22.35L14.63 22.66L14.61 22.69L14.58 22.69L14.54 22.70L14.51 22.71L15.45 22.45L16.42 22.07L17.41 21.58L18.37 20.97L19.24 20.28L20.00 19.55L20.65 18.79L21.20 18.04L21.14 18.11L21.09 18.19L21.04 18.26L20.97 18.31L20.34 19.04L19.61 19.71L18.80 20.30Z" fill="#FBFAF7" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M14.63 22.66L13.63 22.83L12.58 22.89L11.54 22.83L10.51 22.66L9.77 22.68L9.04 22.58L8.34 22.37L7.67 22.11L8.15 22.31L8.68 22.49L9.25 22.65L9.85 22.79L11.03 22.96L12.24 23.00L13.41 22.91L14.51 22.71L14.54 22.70L14.58 22.69L14.61 22.69Z" fill="#17171B" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M22.03 14.91L22.38 13.94L22.64 12.93L22.78 11.90L22.81 10.90L22.91 10.73L22.91 10.57L22.88 10.41L22.86 10.25L22.96 11.09L23.00 12.00L22.96 12.96L22.83 13.94L22.56 15.08L22.19 16.15L21.72 17.15L21.20 18.04L21.14 18.11L21.09 18.19L21.04 18.26L20.97 18.31L21.38 17.55L21.70 16.71L21.92 15.82Z" fill="#FBFAF7" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M21.21 7.27L21.76 8.12L22.22 9.02L22.57 9.96L22.81 10.90L22.91 10.73L22.91 10.57L22.88 10.41L22.86 10.25L22.63 9.15L22.27 8.06L21.79 6.99L21.22 6.00L20.92 5.56L20.61 5.15L20.29 4.77L19.95 4.42L20.40 5.02L20.76 5.71L21.04 6.47Z" fill="#17171B" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M4.04 19.59L3.72 19.22L3.47 18.78L3.30 18.27L3.23 17.71L2.65 16.78L2.15 15.78L1.75 14.75L1.47 13.70L1.23 13.57L1.10 13.43L1.07 13.27L1.06 13.11L1.20 14.08L1.44 15.07L1.78 16.06L2.21 17.02L2.62 17.74L3.06 18.41L3.54 19.03Z" fill="#17171B" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M3.30 6.29L3.10 6.05L2.98 5.86L2.96 5.74L3.00 5.67L2.53 6.40L2.10 7.20L1.74 8.05L1.44 8.93L1.19 9.98L1.04 11.05L1.00 12.10L1.06 13.11L1.07 13.27L1.10 13.43L1.23 13.57L1.47 13.70L1.57 12.86L1.78 12.00L2.11 11.14L2.52 10.30L2.57 9.25L2.72 8.22L2.97 7.22Z" fill="#FBFAF7" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M13.93 2.32L14.57 2.07L15.19 1.92L15.78 1.88L16.31 1.94L15.66 1.63L14.97 1.41L14.25 1.23L13.52 1.11L12.47 1.01L11.41 1.02L10.36 1.12L9.36 1.32L9.39 1.32L9.45 1.42L9.53 1.63L9.64 1.94L10.70 1.88L11.78 1.92L12.88 2.07Z" fill="#17171B" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M6.61 4.42L7.30 3.67L8.05 3.00L8.84 2.41L9.64 1.94L9.53 1.63L9.45 1.42L9.39 1.32L9.36 1.32L8.46 1.58L7.56 1.93L6.68 2.37L5.84 2.89L5.03 3.49L4.27 4.17L3.59 4.91L3.00 5.67L2.96 5.74L2.98 5.86L3.10 6.05L3.30 6.29L4.01 5.73L4.81 5.22L5.69 4.78Z" fill="#FBFAF7" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M10.51 22.66L10.28 22.35L10.06 21.93L9.87 21.40L9.70 20.79L8.74 20.30L7.79 19.71L6.89 19.04L6.06 18.31L5.25 18.26L4.49 18.14L3.81 17.95L3.23 17.71L3.30 18.27L3.47 18.78L3.72 19.22L4.04 19.59L4.83 20.35L5.72 21.03L6.68 21.63L7.67 22.11L8.34 22.37L9.04 22.58L9.77 22.68Z" fill="#FBFAF7" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M19.65 15.28L20.37 15.24L21.03 15.16L21.58 15.05L22.03 14.91L21.92 15.82L21.70 16.71L21.38 17.55L20.97 18.31L20.34 19.04L19.61 19.71L18.80 20.30L17.94 20.79L17.83 20.45L17.65 20.02L17.41 19.50L17.12 18.92L17.85 18.10L18.52 17.21L19.13 16.26Z" fill="#17171B" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M18.84 7.64L19.55 7.48L20.19 7.36L20.75 7.29L21.21 7.27L21.04 6.47L20.76 5.71L20.40 5.02L19.95 4.42L19.15 3.67L18.26 3.00L17.30 2.41L16.31 1.94L15.78 1.88L15.19 1.92L14.57 2.07L13.93 2.32L14.29 2.89L14.62 3.57L14.93 4.34L15.20 5.17L16.17 5.69L17.12 6.29L18.02 6.95Z" fill="#FBFAF7" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M17.94 20.79L17.19 21.40L16.38 21.93L15.51 22.35L14.63 22.66L13.63 22.83L12.58 22.89L11.54 22.83L10.51 22.66L10.28 22.35L10.06 21.93L9.87 21.40L9.70 20.79L10.50 20.45L11.34 20.02L12.18 19.50L13.00 18.92L14.06 19.03L15.13 19.06L16.16 19.03L17.12 18.92L17.41 19.50L17.65 20.02L17.83 20.45Z" fill="#FBFAF7" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M18.06 11.65L18.56 12.57L19.00 13.50L19.37 14.41L19.65 15.28L20.37 15.24L21.03 15.16L21.58 15.05L22.03 14.91L22.38 13.94L22.64 12.93L22.78 11.90L22.81 10.90L22.57 9.96L22.22 9.02L21.76 8.12L21.21 7.27L20.75 7.29L20.19 7.36L19.55 7.48L18.84 7.64L18.75 8.59L18.58 9.60L18.35 10.63Z" fill="#FBFAF7" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M5.35 10.90L5.69 11.90L6.11 12.93L6.59 13.94L7.11 14.91L6.77 15.82L6.47 16.71L6.23 17.55L6.06 18.31L5.25 18.26L4.49 18.14L3.81 17.95L3.23 17.71L2.65 16.78L2.15 15.78L1.75 14.75L1.47 13.70L1.57 12.86L1.78 12.00L2.11 11.14L2.52 10.30L3.09 10.43L3.77 10.57L4.53 10.73Z" fill="#FBFAF7" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M7.87 7.27L7.49 6.47L7.14 5.71L6.85 5.02L6.61 4.42L5.69 4.78L4.81 5.22L4.01 5.73L3.30 6.29L2.97 7.22L2.72 8.22L2.57 9.25L2.52 10.30L3.09 10.43L3.77 10.57L4.53 10.73L5.35 10.90L5.88 9.96L6.50 9.02L7.17 8.12Z" fill="#17171B" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M12.17 7.64L11.08 7.48L9.98 7.36L8.90 7.29L7.87 7.27L7.49 6.47L7.14 5.71L6.85 5.02L6.61 4.42L7.30 3.67L8.05 3.00L8.84 2.41L9.64 1.94L10.70 1.88L11.78 1.92L12.88 2.07L13.93 2.32L14.29 2.89L14.62 3.57L14.93 4.34L15.20 5.17L14.48 5.69L13.72 6.29L12.94 6.95Z" fill="#FBFAF7" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M11.41 15.28L11.80 16.26L12.21 17.21L12.61 18.10L13.00 18.92L12.18 19.50L11.34 20.02L10.50 20.45L9.70 20.79L8.74 20.30L7.79 19.71L6.89 19.04L6.06 18.31L6.23 17.55L6.47 16.71L6.77 15.82L7.11 14.91L8.13 15.05L9.20 15.16L10.31 15.24Z" fill="#17171B" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M18.06 11.65L18.56 12.57L19.00 13.50L19.37 14.41L19.65 15.28L19.13 16.26L18.52 17.21L17.85 18.10L17.12 18.92L16.16 19.03L15.13 19.06L14.06 19.03L13.00 18.92L12.61 18.10L12.21 17.21L11.80 16.26L11.41 15.28L12.04 14.41L12.68 13.50L13.32 12.57L13.93 11.65L15.01 11.64L16.08 11.64L17.10 11.64Z" fill="#FBFAF7" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M18.06 11.65L18.35 10.63L18.58 9.60L18.75 8.59L18.84 7.64L18.02 6.95L17.12 6.29L16.17 5.69L15.20 5.17L14.48 5.69L13.72 6.29L12.94 6.95L12.17 7.64L12.62 8.59L13.07 9.60L13.51 10.63L13.93 11.65L15.01 11.64L16.08 11.64L17.10 11.64Z" fill="#17171B" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><path d="M12.17 7.64L11.08 7.48L9.98 7.36L8.90 7.29L7.87 7.27L7.17 8.12L6.50 9.02L5.88 9.96L5.35 10.90L5.69 11.90L6.11 12.93L6.59 13.94L7.11 14.91L8.13 15.05L9.20 15.16L10.31 15.24L11.41 15.28L12.04 14.41L12.68 13.50L13.32 12.57L13.93 11.65L13.51 10.63L13.07 9.60L12.62 8.59Z" fill="#FBFAF7" stroke="#3A3A40" stroke-width=".3" stroke-linejoin="round"/><circle cx="12" cy="12" r="11" fill="url(#swBallShade)"/></g></symbol><symbol id="swStar" viewBox="0 0 12 12"><path d="M6 0l1.4 4.6L12 6l-4.6 1.4L6 12 4.6 7.4 0 6l4.6-1.4z"/></symbol></svg>
+<!-- Keepy-uppy on the first load of the day, the comet orbit after. -->
+<script>try{var d=new Date().toDateString(),l=document.getElementById("loader");if(localStorage.getItem("sw.loaderDay")===d)l.classList.add("co");else localStorage.setItem("sw.loaderDay",d)}catch(e){}</script>
 
 <div class="top" id="top">
   <div class="top-in">
@@ -14906,6 +14970,33 @@ function schedulePrecheck(picks){
    an edited code can sit on screen past kickoff, and the book refuses a
    started game - so say so in one line, and when nothing is left, say that
    without calling the bookmaker at all. */
+/* WAITING MOMENTS (owner, 11 Oct 2026, from the loader lab). The wand is for a
+   busy button; the clock only where progress is real (k of N); the orb for
+   reading a code. All draw from the #swBall / #swStar symbols. */
+function wandHTML(t){
+  var s="<svg><use href='#swStar'/></svg>";
+  return t+"<span class='wand' aria-hidden='true'>"+s+s+s+"</span>";
+}
+function clockHTML(){
+  var t="";
+  for(var i=0;i<18;i++) t+="<i class='swc-t' style='transform:rotate("+(i*20)+"deg)'></i>";
+  return "<div class='sw-clock' role='progressbar' aria-label='Progress' aria-valuemin='0' aria-valuemax='90' aria-valuenow='0'>"+
+    t+"<div class='swc-mid'><i class='swc-sig'></i><b class='swc-min'>0'</b></div></div>";
+}
+function clockSet(el,k,n){
+  if(!el||!n) return;
+  var m=Math.round(Math.min(k,n)/n*90), lit=Math.round(m/5);
+  el.querySelectorAll(".swc-t").forEach(function(t,i){ t.classList.toggle("on",i<lit); });
+  var mn=el.querySelector(".swc-min"); if(mn) mn.textContent=m+"'";
+  el.setAttribute("aria-valuenow",m);
+  el.classList.toggle("done",k>=n);
+}
+function orbHTML(){
+  return "<div class='cb-box' aria-hidden='true'><div class='cb'><i class='cb-ground'></i><i class='cb-glow'></i>"+
+    "<i class='cb-sig'></i><i class='cb-ring'></i><div class='cb-float'><div class='cb-orb'>"+
+    "<i class='cb-mist'></i><i class='cb-mist two'></i><div class='cb-vision'><svg class='sw-ball'><use href='#swBall'/></svg></div>"+
+    "<i class='cb-caustic'></i><i class='cb-rim'></i><i class='cb-gloss'></i><i class='cb-spec'></i></div></div></div></div>";
+}
 function bookRounds(picks,B,src,target,h,round){
   round=round||0;
   if(!round&&window.swGate&&!swGate("book",gateDetail(picks,B),function(){bookRounds(picks,B,src,target,h,0);},"")){ h.idle(); return; }
@@ -15268,7 +15359,7 @@ function saferHere(wrap,code,B){
     if(SW_QUOTA_LEFT!==null&&isFinite(+SW_QUOTA_LEFT)&&+SW_QUOTA_LEFT<1)
       return say("A safer slip needs a new booking code and you have none left today. More after midnight.");
     go.setAttribute("aria-busy","true");
-    go.innerHTML="<span class='cs-spin' aria-hidden='true'></span>Working…";
+    go.innerHTML=wandHTML("Working…");
     try{ ensureBookFeed(B.key); }catch(_){}
     fetch("/api/slip?book="+encodeURIComponent(B.key)+"&code="+encodeURIComponent(code),
           {headers:{Accept:"application/json"}})
@@ -15417,8 +15508,8 @@ function splitAndBook(picks,n,host,B,opt){
   var pickOf=opt.pickOf||function(c){return c;};
   var oddsOf=opt.oddsOf||totalOdds;
   var parts=splitPicks(picks,n);
-  host.innerHTML="<div class='sp-out' aria-live='polite'><div class='sp-wait'>"+
-    "<span class='mini-load'></span>Booking "+n+" tickets…</div></div>";
+  host.innerHTML="<div class='sp-out' aria-live='polite'><div class='sp-wait sw-clockwait'>"+
+    clockHTML()+"<span class='sp-wait-t'>Booking "+n+" tickets…</span></div></div>";
   var out=host.querySelector(".sp-out");
   var done=[];
   /* EACH TICKET THROUGH THE SHARED REFUSAL LOOP (5 Oct 2026). A refused
@@ -15432,8 +15523,11 @@ function splitAndBook(picks,n,host,B,opt){
     var next=function(t){
       done.push(t);
       var w=out.querySelector(".sp-wait");
-      if(w) w.innerHTML="<span class='mini-load'></span>"+
-        "Booking ticket "+(i+2>parts.length?parts.length:i+2)+" of "+parts.length+"…";
+      if(w){
+        clockSet(w.querySelector(".sw-clock"),i+1,parts.length);
+        var wt=w.querySelector(".sp-wait-t");
+        if(wt) wt.textContent="Booking ticket "+(i+2>parts.length?parts.length:i+2)+" of "+parts.length+"…";
+      }
       step(i+1);
     };
     bookRounds(mine,B,"split","splitAsk",{
@@ -15624,8 +15718,8 @@ function byoRead(){
      feed that answer is silently "they do not list this game". refreshByoPanels
      redraws the panel when they land. */
   try{ Object.keys(BOOKS).forEach(ensureBookFeed); }catch(e){}
-  out.innerHTML="<div class='byo-wait'><span class='mini-load'></span>Reading "+
-    byoBook().label+" code "+esc(code)+"…</div>";
+  out.innerHTML="<div class='byo-wait sw-orbwait'>"+orbHTML()+"<span>Reading "+
+    byoBook().label+" code "+esc(code)+"…</span></div>";
   fetch("/api/slip?book="+encodeURIComponent(BYO.book)+"&code="+encodeURIComponent(code),
         {headers:{Accept:"application/json"}})
     .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
@@ -15678,8 +15772,11 @@ function byoReadMany(codes,out){
   try{ Object.keys(BOOKS).forEach(ensureBookFeed); }catch(e){}
   var lists=[], bad=[];
   function wait(i){
-    out.innerHTML="<div class='byo-wait'><span class='mini-load'></span>Reading "+
-      byoBook().label+" code "+(i+1)+" of "+codes.length+"…</div>";
+    if(!out.querySelector(".sw-clock"))
+      out.innerHTML="<div class='byo-wait sw-clockwait'>"+clockHTML()+"<span class='byo-wait-t'></span></div>";
+    clockSet(out.querySelector(".sw-clock"),i,codes.length);
+    var t=out.querySelector(".byo-wait-t");
+    if(t) t.textContent="Reading "+byoBook().label+" code "+(i+1)+" of "+codes.length+"…";
   }
   function step(i){
     if(i>=codes.length) return done();
@@ -16756,7 +16853,7 @@ function renderConvert(){
        idle() runs on success too: the button used to stay on "Booking…"
        after the code dialog was closed. */
     bookRounds(c.picks,c.to,"convert","byoConvOut",{
-      busy:function(){ b.disabled=true; b.textContent="Booking…"; },
+      busy:function(){ b.disabled=true; b.innerHTML=wandHTML("Booking…"); },
       idle:function(){ b.disabled=false; b.textContent=lbl; },
       code:function(code,sent,d){ showCode(code,"byoConvOut",null,c.to,sent,d); },
       fail:function(d){
@@ -17102,7 +17199,7 @@ function bookLegs(legs,B,src,outId,btn,label,end){
   var picks=legs.map(function(l){ return legPick(l,B); });
   var over=function(){ if(end) end(); };
   bookRounds(picks,B,src,outId,{
-    busy:function(){ if(btn){ btn.disabled=true; btn.textContent="Booking\u2026"; } },
+    busy:function(){ if(btn){ btn.disabled=true; btn.innerHTML=wandHTML("Booking\u2026"); } },
     idle:function(){ if(btn){ btn.disabled=false; btn.textContent=label; } },
     code:function(code,sent,d){ over(); if($(outId)) showCode(code,outId,null,B,sent,d); },
     fail:function(d){ over(); if($(outId)) showBookErr(outId,editErrHTML(d,B),"Keep editing"); },
@@ -17919,7 +18016,7 @@ function doBookList(picks,resultId,btnId,label,B){
   var btn=$(btnId);
   $(resultId).innerHTML="";
   bookRounds(going,B,"board",resultId,{
-    busy:function(){ if(btn){btn.disabled=true;btn.textContent="Booking\u2026";} },
+    busy:function(){ if(btn){btn.disabled=true;btn.innerHTML=wandHTML("Booking\u2026");} },
     idle:function(){ if(btn){btn.disabled=false;btn.textContent=label;} },
     /* What was BOOKED, which after a narrowing is not every game shown. */
     code:function(code,sent,d){
@@ -23417,8 +23514,8 @@ var LOAD_RETRY=0;
 function setBoard(html){ var el=$("list"); if(el) el.innerHTML=html; return !!el; }
 
 async function load(){
-  setBoard("<div class='none'><span class='mini-load'></span><b>Loading predictions</b>"+
-    "<p>Building from the latest results - just a moment.</p></div>");
+  setBoard("<div role='status' aria-label='Loading predictions'>"+
+    "<div class='sk'><i class='sk-d'></i><i class='sk-l'></i><i class='sk-o'></i></div>".repeat(5)+"</div>");
   try{
     const got=await fetchPayload();
     DATA=got.payload;
