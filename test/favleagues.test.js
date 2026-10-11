@@ -32,6 +32,7 @@ function page(store, topOnly) {
     isVolatile: (l) => /League [12]$/.test(l),
     notStarted: (f) => !f.started,
     compOf: (l) => l.split(" ").slice(1).join(" "),
+    inScope: (f) => !f.otherDay, todFixtures: (a) => a,
   };
   ctx.localStorage = { getItem: (k) => (k in ctx.STORE ? ctx.STORE[k] : null), setItem: (k, v) => { ctx.STORE[k] = String(v); },
     removeItem: (k) => { delete ctx.STORE[k]; } };
@@ -76,10 +77,10 @@ test("the sheet lists favourites first in UEFA order, under the names readers us
   const P = page({ "sw.favleagues": JSON.stringify({ "USA MLS": 1 }) });
   P.DATA = { fixtures: [
     { league: "USA MLS" }, { league: "Germany Bundesliga 1" }, { league: "England Premier League" },
-    { league: "International Clubs UEFA Champions League" }, { league: "England Championship" }, { league: "Spain La Liga 1", started: true }] };
+    { league: "International Clubs UEFA Champions League" }, { league: "England Championship" }, { league: "Spain La Liga 1", started: true }, { league: "Italy Serie A", otherDay: true }] };
   const rows = P.api.favRows();
   assert.deepStrictEqual(JSON.parse(JSON.stringify(rows.map((x) => x.league))), ["England Premier League", "Germany Bundesliga 1",
-    "International Clubs UEFA Champions League", "USA MLS", "England Championship"], "a played game lists nothing");
+    "International Clubs UEFA Champions League", "USA MLS", "England Championship"], "only the chosen window, and a played game lists nothing");
   assert.strictEqual(P.api.favName("International Clubs UEFA Champions League"), "Champions League");
   assert.strictEqual(P.api.favName("Germany Bundesliga 1"), "Bundesliga");
 });

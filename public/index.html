@@ -6882,7 +6882,11 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 #bldShared .filters-toggle .ft-ic{width:18px;height:18px;color:var(--soft)}
 #bldShared .filters-toggle .ft-t{font-size:15px;font-weight:800;letter-spacing:-.01em;color:var(--text)}
 #bldShared .filters-toggle .ft-chev{width:20px;height:20px;color:var(--faint);transform:none}
-#bldShared .filters-toggle[aria-expanded="true"] .ft-chev{transform:rotate(180deg)}
+#bldShared .filters-toggle .ft-r{display:inline-flex;align-items:center}
+#bldShared .filters-toggle .ft-hide{display:none;height:28px;padding:0 13px;border-radius:99px;border:1px solid var(--line);
+  align-items:center;font-size:12.5px;font-weight:800;color:var(--soft)}
+#bldShared .filters-toggle[aria-expanded="true"] .ft-hide{display:inline-flex}
+#bldShared .filters-toggle[aria-expanded="true"] .ft-chev{display:none}
 #bldShared .filters-toggle .ft-sum{grid-column:2/4;display:flex;flex-wrap:wrap;gap:6px;text-align:left}
 #bldShared .filters-toggle[aria-expanded="true"] .ft-sum{display:none}
 #bldShared .ft-tok{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:99px;
@@ -7582,7 +7586,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       <button class="filters-toggle" id="filtersToggle" type="button" aria-expanded="true" aria-controls="filtersBody">
         <svg class="ft-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
         <span class="ft-t">Filters</span>
-        <svg class="ft-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        <span class="ft-r"><span class="ft-hide">Hide</span><svg class="ft-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
         <span class="ft-sum" id="filtersSum"></span>
       </button>
       <div class="filters-body" id="filtersBody">
@@ -7962,7 +7966,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 <div class="sheet fav-sheet" id="favSheet" role="dialog" aria-modal="true" aria-labelledby="favSheet-title">
   <div class="sheet-grab"><i></i></div>
   <div class="sheet-head">
-    <div class="info"><h3 id="favSheet-title">Favourite leagues</h3><p>Slips use these when Favourite leagues is on. Star a league to add it.</p></div>
+    <div class="info"><h3 id="favSheet-title">Favourite leagues</h3><p id="favSheetSub">Star a league to add it to your favourites.</p></div>
     <button class="sheet-collapse" id="favSheet-x" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <label class="fav-find"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="favFind" type="search" placeholder="Find a league" autocomplete="off" aria-label="Find a league"></label>
@@ -21812,24 +21816,29 @@ function renderLeaguePicker(){
   if(!line) return;
   line.hidden=!TOP_ONLY;
   var favs=favRows().filter(function(x){ return x.fav; });
+  var ww=windowWords(false);
   tx.innerHTML=favs.length
-    ? "<b>"+favs.length+" league"+(favs.length===1?"":"s")+".</b> "+esc(favs.slice(0,3).map(function(x){ return favName(x.league); }).join(", "))+
+    ? "<b>"+favs.length+" league"+(favs.length===1?"":"s")+" "+esc(ww)+".</b> "+esc(favs.slice(0,3).map(function(x){ return favName(x.league); }).join(", "))+
       (favs.length>3?" and "+(favs.length-3)+" more.":".")
-    : "<b>None of your favourite leagues is playing.</b> Tap Edit to add some.";
+    : "<b>None of your favourite leagues play "+esc(ww)+".</b> Tap Edit to add some.";
   if(ed&&!ed._w){ ed._w=1; ed.addEventListener("click",openFavSheet); }
   if($("favSheet")&&$("favSheet").classList.contains("on")) renderFavSheet();
 }
-/* Every league with a game still to come, favourites first in UEFA order. */
+
 function favName(l){ return compOf(l).replace(/^Clubs (UEFA )?/,"").replace(/^(La Liga|Bundesliga) 1$/,"$1"); }
 function favRows(){
+  /* The leagues playing in the chosen day or period (owner, 11 Oct 2026:
+     "relative to the selected day or period"), favourites first in UEFA order. */
   var n={};
-  ((DATA&&DATA.fixtures)||[]).forEach(function(f){ if(notStarted(f)) n[f.league]=(n[f.league]||0)+1; });
+  todFixtures(((DATA&&DATA.fixtures)||[]).filter(function(f){ return notStarted(f)&&inScope(f); }))
+    .forEach(function(f){ n[f.league]=(n[f.league]||0)+1; });
   return Object.keys(n).map(function(l){ return {league:l,n:n[l],fav:favLeague(l),r:topRank(l)}; })
     .sort(function(a,b){ return (b.fav-a.fav)||((a.r<0?999:a.r)-(b.r<0?999:b.r))||(b.n-a.n)||(a.league<b.league?-1:1); });
 }
 function renderFavSheet(){
   var list=$("favList"); if(!list) return;
-  var q=(($("favFind")||{}).value||"").trim().toLowerCase();
+  var q=(($("favFind")||{}).value||"").trim().toLowerCase(), sub=$("favSheetSub");
+  if(sub) sub.textContent="Leagues "+windowWords(true)+". Star one to add it to your favourites.";
   var rows=favRows().filter(function(x){ return !q||x.league.toLowerCase().indexOf(q)>=0; });
   var row=function(x){
     var star=x.fav?"<path d='m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z' fill='currentColor'/>"
@@ -21842,7 +21851,7 @@ function renderFavSheet(){
   var on=rows.filter(function(x){ return x.fav; }), off=rows.filter(function(x){ return !x.fav; });
   list.innerHTML=(on.length?"<p class='fav-h'>Your favourites \u00b7 "+on.length+"</p>"+on.map(row).join(""):"")+
     (off.length?"<p class='fav-h'>More leagues \u00b7 "+off.length+"</p>"+off.map(row).join(""):"")+
-    (rows.length?"":"<p class='fav-none'>No league on the board matches that.</p>");
+    (rows.length?"":"<p class='fav-none'>"+(q?"No league playing "+esc(windowWords(false))+" matches that.":"No games "+esc(windowWords(false))+". Pick another day above.")+"</p>");
   list.querySelectorAll("[data-fl]").forEach(function(b){
     b.addEventListener("click",function(){
       setFav(b.dataset.fl,!favLeague(b.dataset.fl));
