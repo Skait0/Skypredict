@@ -125,8 +125,28 @@ test("the two-way markets keep the flat weight", () => {
      and changing them here would move numbers this evidence says nothing
      about. */
   const fn = lift("blendFixture");
-  assert.match(fn, /function two\(ov,un,field\)\{ if\(o\[ov\]&&o\[un\]\)\{var a=1\/o\[ov\],b=1\/o\[un\],s=a\+b; if\(s>0\) f\[field\]=f\[field\]\*\(1-B\)\+\(a\/s\)\*B;\} \}/,
+  assert.match(fn, /function two\(ov,un,field\)\{ if\(o\[ov\]&&o\[un\]&&typeof f\[field\]==="number"\)\{var a=1\/o\[ov\],b=1\/o\[un\],s=a\+b; if\(s>0\) f\[field\]=f\[field\]\*\(1-B\)\+\(a\/s\)\*B;\} \}/,
     "two() must still exist");
   assert.match(fn, /var o=f\.sportyOdds; if\(!o\) return; var B=0\.30;/,
     "and the flat 0.30 it reads must still be declared");
+});
+
+/* Owner, 11 Oct 2026: "our percentage is higher for the market with the bigger
+   odds, is this right?" Aberdeen v St Johnstone, live prices and model. */
+test("team to score follows the book's order once blended", () => {
+  const run = new Function(consts[0] + lift("blendWeight") + lift("_devig3") +
+    "function bestTipFrom(){return null;} function kOf(){return {};} function tipCode(){return null;}" +
+    lift("blendFixture") + "\nreturn blendFixture;")();
+  const f = { home_p: 0.328, draw_p: 0.277, away_p: 0.394, o15: 0.73, o25: 0.5, btts: 0.53,
+    h_o05: 0.706, a_o05: 0.744, h_o15: 0.36, a_o15: 0.41, fh_o05: 0.7, o35: 0.25,
+    sportyOdds: { "1": 2.23, "X": 3.5, "2": 3.26, "HOME_OVER_0.5": 1.25, "HOME_UNDER_0.5": 3.75,
+      "AWAY_OVER_0.5": 1.38, "AWAY_UNDER_0.5": 2.9, "HOME_OVER_1.5": 2.15, "HOME_UNDER_1.5": 1.66,
+      "AWAY_OVER_1.5": 2.75, "AWAY_UNDER_1.5": 1.41, "FH_OVER_0.5": 1.41, "FH_UNDER_0.5": 2.85 } };
+  run(f);
+  assert.ok(f.h_o05 > f.a_o05, "Aberdeen at x1.25 must read likelier than St Johnstone at x1.38: " + f.h_o05 + " / " + f.a_o05);
+  assert.ok(Math.abs(f.h_o05 - 0.75) < 0.01 && Math.abs(f.a_o05 - 0.684) < 0.01, "about 75% and 68%");
+  assert.ok(f.h_o15 > f.a_o15, "team over 1.5 follows too");
+  const g = { home_p: 0.4, draw_p: 0.3, away_p: 0.3, h_o05: 0.7, sportyOdds: { "HOME_OVER_0.5": 1.3 } };
+  run(g);
+  assert.strictEqual(g.h_o05, 0.7, "one side priced is no two-way price: left alone");
 });

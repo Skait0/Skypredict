@@ -9138,8 +9138,19 @@ function blendFixture(f){
       f.dc1x=f.home_p+f.draw_p; f.dcx2=f.draw_p+f.away_p; f.dc12=f.home_p+f.away_p; f.anybody=f.dc12;
     }
   }
-  function two(ov,un,field){ if(o[ov]&&o[un]){var a=1/o[ov],b=1/o[un],s=a+b; if(s>0) f[field]=f[field]*(1-B)+(a/s)*B;} }
+  function two(ov,un,field){ if(o[ov]&&o[un]&&typeof f[field]==="number"){var a=1/o[ov],b=1/o[un],s=a+b; if(s>0) f[field]=f[field]*(1-B)+(a/s)*B;} }
   two("OVER_2.5","UNDER_2.5","o25"); two("OVER_1.5","UNDER_1.5","o15"); two("GG","NG","btts");
+  /* TEAM GOALS, FIRST HALF AND 3.5 TOO (owner, 11 Oct 2026: "our percentage is
+     higher for the market with the bigger odds, is this right?"). It was not.
+     Aberdeen v St Johnstone: the model alone had St Johnstone the favourite,
+     SportyBet had Aberdeen at 2.23 against 3.26. The result was blended, team
+     to score was not - so the slip showed Aberdeen to score 71% at x1.25 and
+     St Johnstone 74% at x1.38, the book's order upside down (its own two-way
+     prices give 75% and 68%). Every line SportyBet sells both sides of now
+     takes the same weight as the result. */
+  two("HOME_OVER_0.5","HOME_UNDER_0.5","h_o05"); two("AWAY_OVER_0.5","AWAY_UNDER_0.5","a_o05");
+  two("HOME_OVER_1.5","HOME_UNDER_1.5","h_o15"); two("AWAY_OVER_1.5","AWAY_UNDER_1.5","a_o15");
+  two("FH_OVER_0.5","FH_UNDER_0.5","fh_o05"); two("OVER_3.5","UNDER_3.5","o35");
   /* THE HEADLINE HAS TO BE CHOSEN AGAIN, NOT JUST REPRICED.
      This is the bug that cost real money. The build picks the tip from the
      model's own numbers; the blend above then moves those numbers toward the
