@@ -1590,23 +1590,25 @@ html.tapped .list-hint{display:none}
   box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 4px 14px rgba(150,18,30,.38)!important}
 [data-theme="dark"] .sc-go-primary .sbm,[data-theme="dark"] .sc-go-primary .b9m .b9r,
 [data-theme="dark"] .sc-go-primary .sc-go-arw{color:#fff!important}
-/* THE BOOKMAKER'S MARK IN ITS OWN BADGE (owner, 11 Oct 2026: "the build me a
-   slip button on the home page ruins the bet9ja color"; picked option A). On
-   the red key Bet9ja's red "bet" vanished and was forced white, leaving green
-   "9ja" on red. The mark now sits in a small dark pill inside the key, where
-   every book shows its real colours. Dark theme only - the light theme's key
-   is already black. */
-[data-theme="dark"] .sc-go-primary .sc-lbl>.sbm,[data-theme="dark"] .sc-go-primary .sc-lbl>.b9m,
-[data-theme="dark"] .sc-go-primary .sc-lbl>.bkm,[data-theme="dark"] .sc-go-primary .sc-lbl>.bwm,
-[data-theme="dark"] .sc-go-primary .sc-lbl>.xbm{display:inline-flex;align-items:center;background:#111114;
-  border-radius:999px;padding:3px 10px;line-height:1.15;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
-/* Centred on the line, not sat on its baseline: on the baseline the pill's
-   room hung below the letters and it read as low beside "Build me a" (owner,
-   11 Oct 2026). The label becomes a centred row; the gap replaces the spaces. */
-[data-theme="dark"] .sc-go-primary .sc-lbl{display:inline-flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:.32em}
-[data-theme="dark"] .sc-go-primary .sc-lbl>.sbm{color:var(--red)!important}
-[data-theme="dark"] .sc-go-primary .sc-lbl>.b9m .b9r{color:var(--b9-red)!important}
-[data-theme="dark"] .sc-go-primary .sc-lbl>.b9m .b9g{color:var(--b9-green)!important}
+/* THE BOOKMAKER'S NAME ON A WHITE TAB (owner, 11 Oct 2026: "the build me a
+   slip button on the home page ruins the bet9ja color", then "can we use an
+   all white tab like it is on the white code selection page?"). On the red
+   key Bet9ja's red "bet" vanished. The name now sits on the same warm white
+   tab as the "Book with" pills, in the same brand inks, on both themes.
+   :root lifts these over the dark theme's force-everything-white rules. */
+:root .sc-go-primary .sc-lbl{display:inline-flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:.32em}
+:root .sc-go-primary .sc-lbl>.sbm,:root .sc-go-primary .sc-lbl>.b9m,:root .sc-go-primary .sc-lbl>.bkm,
+:root .sc-go-primary .sc-lbl>.bwm,:root .sc-go-primary .sc-lbl>.xbm{display:inline-flex;align-items:center;
+  background:#F4F1EA;border-radius:999px;padding:3px 10px;line-height:1.15;
+  box-shadow:0 1px 3px rgba(0,0,0,.25),inset 0 0 0 1px rgba(0,0,0,.08);color:#111!important}
+:root .sc-go-primary .sc-lbl>.sbm{color:#C62330!important}
+:root .sc-go-primary .sc-lbl>.b9m .b9r{color:#D42127!important}
+:root .sc-go-primary .sc-lbl>.b9m .b9g{color:#14B151!important}
+:root .sc-go-primary .sc-lbl>.bkm .bkk,:root .sc-go-primary .sc-lbl>.bwm .bwb,
+:root .sc-go-primary .sc-lbl>.xbm{color:#111!important}
+:root .sc-go-primary .sc-lbl>.bkm .bkg{color:#A97400!important}
+:root .sc-go-primary .sc-lbl>.bwm .bwp{color:#4F7300!important}
+:root .sc-go-primary .sc-lbl>.xbm .xbb{color:#276BA6!important}
 @media(hover:hover){
   [data-theme="dark"] .sc-actions .sc-go-primary:hover,[data-theme="dark"] .sc-go-primary:hover{
     background:linear-gradient(178deg,#E5444F 0%,#C8222F 100%)!important;
