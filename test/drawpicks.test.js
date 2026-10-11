@@ -36,7 +36,7 @@ function grab(name) {
 }
 
 const real = ["P0", "esc", "fid", "tipEval", "scoreSurvives", "mirrorScore", "reconcileScore", "edgeOf", "isValue", "valPill", "conf", "verdict", "plainTip", "whyLine", "tipCode", "boardPick",
-  "legOdd", "oddOf", "opt", "bestPriceHTML", "moreHTML", "countMarkets", "matchHTML", "listRowHTML", "CATS"]
+  "legOdd", "oddOf", "opt", "o05Of", "bestPriceHTML", "moreHTML", "countMarkets", "matchHTML", "listRowHTML", "CATS"]
   .map(grab).join("\n");
 const stubs = `
   var V={cat:"all"}, LOPEN={}, POTD_ID=null, PLUS="+";
