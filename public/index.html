@@ -3741,15 +3741,24 @@ html{interpolate-size:allow-keywords}
 .byo-sw.is-auto input{cursor:not-allowed}
 .byo-res .sp-q{color:var(--soft)}
 .byo-res .sp-way{background:var(--card-2);border-color:var(--line);color:var(--text)}.byo-res .code-split .sp-way span{color:var(--faint)}
-.byo-res .sp-t{background:var(--card-2);border-color:var(--line);color:var(--text)}
-.byo-res .sp-n{background:var(--raise);color:var(--soft)}
-.byo-res .sp-m,.byo-res .sp-note,.byo-res .sp-wait{color:var(--faint)}
-.byo-res .sp-head,.byo-res .code-split .sp-none{color:var(--text)}
-.byo-res .sp-copy,.byo-res .sp-open{background:var(--raise);border-color:var(--line);
+/* The same page-surface rows for the split that books from My slip and from
+   "Add all" (owner, 11 Oct 2026: "the split window ... on the white mode look
+   very faint and low contrast"). Those land in a .confirm-card on the page,
+   not on the code modal's dark glass, so the glass's white-alpha styles were
+   white on cream. */
+.byo-res .sp-t,.confirm-card .sp-t{background:var(--card-2);border-color:var(--line);color:var(--text)}
+.byo-res .sp-n,.confirm-card .sp-n{background:var(--raise);color:var(--soft)}
+.byo-res .sp-m,.byo-res .sp-note,.byo-res .sp-wait,
+.confirm-card .sp-m,.confirm-card .sp-note,.confirm-card .sp-wait{color:var(--faint)}
+.byo-res .sp-head,.byo-res .code-split .sp-none,.confirm-card .sp-head,.confirm-card .sp-t .sp-none{color:var(--text)}
+.byo-res .sp-copy,.byo-res .sp-open,.confirm-card .sp-copy,.confirm-card .sp-open{background:var(--raise);border-color:var(--line);
   color:var(--text)}
+.confirm-card .sp-t b{font-size:16px;font-weight:800;letter-spacing:.06em}
+.confirm-card .sp-bad{background:var(--red-wash);border-color:var(--red-ink)}
+.confirm-card .sp-bad .sp-none,.confirm-card .sp-bad .sp-m{color:var(--red-ink)}
 @media (hover:hover){
   .byo-res .sp-way:hover{background:var(--raise);border-color:var(--soft)}
-  .byo-res .sp-copy:hover,.byo-res .sp-open:hover{background:var(--card);border-color:var(--soft)}
+  .byo-res .sp-copy:hover,.byo-res .sp-open:hover,.confirm-card .sp-copy:hover,.confirm-card .sp-open:hover{background:var(--card);border-color:var(--soft)}
 }
 @media(max-width:560px){
   .byo-row{gap:7px}
@@ -14804,6 +14813,22 @@ function bookRounds(picks,B,src,target,h,round){
       if(round<REFUSAL_ROUNDS&&safe.length>=1&&safe.length<picks.length){
         var keep={}; safe.forEach(function(c){keep[c.id+"|"+c.code]=1;});
         var gone=picks.filter(function(c){return !keep[c.id+"|"+c.code];});
+        /* A GAME REFUSED AGAIN AFTER A SWAP IS LEFT OUT, NOT SWAPPED AGAIN
+           (owner, 11 Oct 2026: a split ticket "didnt go through"). Live: a
+           Nigeria Premier League game SportyBet had pulled was swapped to Home
+           win, Home or draw, Home to score and Any team in turn, each refused,
+           until the four rounds ran out and the whole 46-game ticket failed. A
+           second refusal on the same game means the book does not want the
+           game, so it goes and the rest books. */
+        var tried=h._tried||(h._tried={});
+        var again=gone.filter(function(c){return tried[c.id];});
+        gone.forEach(function(c){tried[c.id]=1;});
+        if(again.length){
+          gone=gone.filter(function(c){return again.indexOf(c)<0;});
+          if(window.swToast) swToast(again.length+(again.length===1?" game":" games")+" "+
+            String(B.label||"the bookmaker")+" won't take at all - left out","","swapnote");
+          if(!gone.length){ bookRounds(safe,B,src,target,h,round+1); return; }
+        }
         var out=gone.map(function(c){var f=c.f||fixtureById(c.id);
             return (f?(f.home+" v "+f.away):"One pick")+whyOf(c);});
         confirmAfterRefusal(target,out,safe.length,B,function(swapIn){

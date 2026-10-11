@@ -204,3 +204,35 @@ test("the converter and the board share the loop: betPawa refuses one of 16, the
   assert.strictEqual(log.sentPicks.length, 15, "the code is filed as what was booked");
   assert.strictEqual(log.busy, log.idle, "every Booking… is undone, success included");
 });
+
+/* Owner, 11 Oct 2026: a split ticket "didnt go through". Live: SportyBet had
+   pulled a Nigeria Premier League game; the auto-swap tried Home win, Home or
+   draw, Home to score and Any team on it in turn, each refused, until the
+   rounds ran out and the whole 46-game ticket failed. A game refused again
+   after its swap is now left out and the rest books. */
+test("a pulled game is dropped after one swap, and the rest of the ticket books", async () => {
+  const calls = [], toasts = [];
+  const NEXT = { "1": "1X", "1X": "HOME_OVER_0.5", "HOME_OVER_0.5": "12", "12": "X2", "X2": "GG" };
+  const run = new Function("CALLS", "TOASTS", "NEXT", [
+    "var REFUSAL_ROUNDS=" + ROUNDS + ";",
+    "var window={swToast:function(m){TOASTS.push(m);}}; function swToast(m){TOASTS.push(m);}",
+    "function pickStarted(){return false;} function lineCheck(){return false;}",
+    "function fixtureById(){return null;} function whyOf(){return '';}",
+    "function bookFetch(sel){ CALLS.push(sel.map(function(s){return s.id+':'+s.code;}));",
+    "  var bad=sel.filter(function(s){return s.id==='npfl';});",
+    "  return Promise.resolve(bad.length?{success:false,unbookable:bad}:{success:true,code:'OK'}); }",
+    "function dropUnbookable(picks,d){ var bad={}; (d.unbookable||[]).forEach(function(s){bad[s.id+'|'+s.code]=1;});",
+    "  return picks.filter(function(c){return !bad[c.id+'|'+c.code];}); }",
+    "function confirmAfterRefusal(t,names,keep,B,go,gone){ go(gone.map(function(c){return {id:c.id,code:NEXT[c.code]||'GG'};})); }",
+    fn("bookRounds"), "return bookRounds;"].join("\n"))(calls, toasts, NEXT);
+  const B = { key: "sporty", label: "SportyBet", sel: (c) => ({ id: c.id, code: c.code }), codeOf: (d) => d.code };
+  const picks = [{ id: "a", code: "1X" }, { id: "npfl", code: "1" }, { id: "b", code: "OVER_1.5" }];
+  const got = await new Promise((done) => run(picks, B, "split", "splitAsk", {
+    busy() {}, idle() {}, stop() { done({ stop: true }); },
+    code(code, sent) { done({ code, sent: sent.map((c) => c.id) }); },
+    fail(d) { done({ fail: d }); } }));
+  assert.ok(got.code, "the ticket books: " + JSON.stringify(got) + " " + JSON.stringify(calls));
+  assert.deepStrictEqual(got.sent.sort(), ["a", "b"], "without the pulled game");
+  assert.strictEqual(calls.length, 3, "book, one swap, then leave it out - not four swaps: " + JSON.stringify(calls));
+  assert.ok(toasts.some((t) => /won't take at all/.test(t)), "and the reader is told");
+});
