@@ -172,8 +172,11 @@ test("toggling Top flight repaints the counts", () => {
   /* Filtering them is useless if nothing redraws. The chain is
      click -> setTopOnly -> renderBuilder -> paintScope -> paintTod.
      "All leagues" turns it off through resetLeagues, which repaints too. */
-  assert.ok(src.indexOf('if(c.dataset.btp==="true"){ setTopOnly(true); renderBuilder(); }') > 0,
+  /* The repaint follows the paint since 11 Oct 2026 (renderBuilderSoon): the
+     chip lights at once, the builder redraws a frame later. */
+  assert.ok(src.indexOf('if(c.dataset.btp==="true"){ setTopOnly(true); renderBuilderSoon(); }') > 0,
     "Top flight only must set the flag and repaint the builder");
+  assert.ok(src.indexOf("else afterPaint(resetLeagues);") > 0, "All leagues still runs resetLeagues");
   assert.match(grab("resetLeagues"), /setTopOnly\(false\);[\s\S]*renderBuilder\(\);/,
     "All leagues must clear Top flight and repaint the builder");
   assert.match(grab("paintScope"), /paintTod\(\);/,
