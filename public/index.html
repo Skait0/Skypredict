@@ -6927,7 +6927,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 #bldShared .filters-body[hidden]{border:0;padding:0}
 #bldShared .filters-toggle{background:var(--card)}
 #bldShared .filters-toggle[aria-expanded="true"]{border-radius:12px 12px 0 0;border-bottom-color:var(--line-soft)}
-#bldShared .fs-lbl{display:block;margin:12px 0 6px;font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--soft)}
+#bldShared .fs-lbl{display:block;margin:18px 0 8px;font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--soft)}
 #bldShared .filters-col1>.fs-lbl:first-child{margin-top:4px}
 #bldShared .scope-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:4px;border-radius:99px;
   background:var(--bg);border:1px solid var(--line);margin:0}
@@ -6951,19 +6951,16 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 #bldShared .fav-edit{flex:none;height:28px;padding:0 11px;border-radius:99px;border:1px solid var(--accent-rim);background:none;color:var(--accent);
   font:inherit;font-size:12.5px;font-weight:800;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
 #bldShared .fav-edit svg{width:14px;height:14px}
-#bldShared .mk-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+#bldShared .mk-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:2px}
 #bldShared .mk-reset{background:none;border:0;padding:2px 0;font:inherit;font-size:12.5px;font-weight:700;color:var(--soft);cursor:pointer}
 #bldShared .mk-reset b{color:var(--text);font-variant-numeric:tabular-nums}
 #bldShared .mkt-palette{display:block}
-/* GROUP NAME BESIDE ITS PILLS (owner, 11 Oct 2026: "put the group names inline", and give every
-   label in this panel more contrast - --soft, not --faint). A fixed name column keeps the pill
-   rows lined up; a long name wraps inside it. The 7px top pad centres a one-line name on the
-   first 30px row of pills. */
-#bldShared .mk-grp{display:grid;grid-template-columns:86px minmax(0,1fr);column-gap:10px;align-items:start}
-#bldShared .mk-grp+.mk-grp{margin-top:7px}
-#bldShared .mk-grp-t{margin:0;padding-top:7px;font-size:12px;line-height:1.25;font-weight:700;color:var(--soft)}
-@media (max-width:480px){#bldShared .mk-grp{grid-template-columns:68px minmax(0,1fr);column-gap:8px}#bldShared .mk-grp-t{font-size:11.5px}}
-@media (pointer:coarse){#bldShared .mk-grp-t{padding-top:8px}}
+/* SEGMENTED, NOT CRAMPED (owner, 11 Oct 2026: the inline names looked "insanely cramped and
+   not segmented at all"). Tight inside a group - 30px pills, 6px apart - and clear air between
+   groups: the name on its own line above its pills, and a hairline with 10px either side
+   between one group and the next. Labels stay in --soft for contrast. */
+#bldShared .mk-grp+.mk-grp{margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft)}
+#bldShared .mk-grp-t{margin:0 0 6px;font-size:12px;line-height:1.25;font-weight:700;color:var(--soft)}
 #bldShared .mk-chips{display:flex;flex-wrap:wrap;gap:6px}
 #bldShared .mkt-chip{height:30px;padding:0 11px;border-radius:99px;font-size:12.5px;font-weight:700;gap:5px;white-space:nowrap;width:auto;
   /* NO SHAPE CHANGE, EVER (owner, 11 Oct 2026). Colour moves, the pill does
@@ -6976,7 +6973,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 #bldShared .mkt-chip.locked{opacity:1;filter:none;background:none;border-style:dashed;color:var(--faint)}
 #bldShared .mkt-chip.locked .mk-st{width:12px;height:12px}
 #bldShared .mkt-chip.wrong-book{opacity:1}
-#bldShared .mk-note{margin:8px 0 0;font-size:12px;font-weight:600;color:var(--faint)}
+#bldShared .mk-note{margin:10px 0 0;font-size:12px;font-weight:600;color:var(--faint)}
 /* A finger needs a little more than a mouse: 32px pills and segments on touch. */
 @media (pointer:coarse){
   #bldShared .mkt-chip{height:32px}
