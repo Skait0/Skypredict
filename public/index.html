@@ -8133,7 +8133,7 @@ function gradeCode(code, hg, ag){
     case"UNDER_4.5": return tot<5?"win":"lose";
     case"OVER_0.5": return tot>0?"win":"lose";
     case"NR3_ANY":case"NR3_H":case"NR3_A":
-      var r3=nr3Grade(hg,ag,c==="NR3_ANY"?"any":c==="NR3_H"?"h":"a");
+      var r3=nr3Grade(hg,ag,code==="NR3_ANY"?"any":code==="NR3_H"?"h":"a");
       return r3==null?null:(r3?"win":"lose");
     case"GG": return both?"win":"lose";
     case"HOME_OVER_0.5": return hg>0?"win":"lose";
@@ -8162,6 +8162,7 @@ function finalScoreFor(leg){
       var out={hg:r.hg, ag:r.ag};
       if(r.hc!=null&&r.ac!=null){ out.hc=r.hc; out.ac=r.ac; }
       if(r.hsh!=null&&r.ash!=null){ out.hsh=r.hsh; out.ash=r.ash; }
+      if(typeof r.seq==="string") out.seq=r.seq;
       return out;
     }
   }
@@ -8303,7 +8304,9 @@ function refreshSlipUI(){
    counts yet waits for lib/statsfill.js instead of voiding - for three days,
    after which there will be none and it voids as before. A push (0.5) is a
    refund and stays void. */
-function awaitsStats(code){ return /^(CORNERS|SHOTS)_/.test(code||""); }
+/* "3 or more in a row" waits the same way for its goal order (seq, filled by
+   lib/statsfill.js beside the corners) when the score alone cannot decide it. */
+function awaitsStats(code){ return /^(CORNERS|SHOTS|NR3)_/.test(code||""); }
 function statsGivenUp(l){
   var t=Date.parse((l.date||"")+"T00:00:00Z");
   return !isFinite(t) || Date.now()-t > 3*864e5;
@@ -13258,12 +13261,19 @@ function nr3Of(f,w){
    hold a run of 3; 3 or more against none must. Anything else (a 3-1) needs
    the goal order, so it is null - left for a reader to check, like Win either
    half. 80-92% settle this way (11 Oct 2026, 3,716 matches). */
-function nr3Grade(hg,ag,w){
+function nr3Grade(hg,ag,w,seq){
   if(typeof hg!=="number"||typeof ag!=="number") return null;
   var h=w!=="a", a=w!=="h";
   var hYes=hg>=3&&ag===0, aYes=ag>=3&&hg===0;
   if((h&&hYes)||(a&&aYes)) return false;
   if((!h||hg<=2)&&(!a||ag<=2)) return true;
+  /* The goal order, when the results feed has it (owner, 11 Oct 2026: "add
+     the goal timeline grading"). Trusted only if it rebuilds this score. */
+  if(typeof seq==="string"&&/^[HA]*$/.test(seq)&&seq.length===hg+ag&&
+     (seq.match(/H/g)||[]).length===hg){
+    var runH=/HHH/.test(seq), runA=/AAA/.test(seq);
+    return !((h&&runH)||(a&&runA));
+  }
   return null;
 }
 function mProb(f,c){
@@ -13828,9 +13838,9 @@ function gradeLeg(f,c,hg,ag,st){
     case"UNDER_3.5": return tot<3.5;
     case"UNDER_4.5": return tot<4.5;
     case"OVER_0.5": return tot>0.5;
-    case"NR3_ANY": return nr3Grade(hg,ag,"any");
-    case"NR3_H": return nr3Grade(hg,ag,"h");
-    case"NR3_A": return nr3Grade(hg,ag,"a");
+    case"NR3_ANY": return nr3Grade(hg,ag,"any",st&&st.seq);
+    case"NR3_H": return nr3Grade(hg,ag,"h",st&&st.seq);
+    case"NR3_A": return nr3Grade(hg,ag,"a",st&&st.seq);
     case"NG": return !both;
     case"HOME_UNDER_0.5": return hg<0.5;
     case"HOME_UNDER_1.5": return hg<1.5;

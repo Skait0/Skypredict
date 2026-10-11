@@ -87,3 +87,31 @@ test("past its deadline it asks nothing, so the sweep's 30-second limit is safe"
   const out = await SF.fillStats({ db: f.db, oracle: f.oracle, log: [], deadline: Date.now() - 1 }, NOW);
   assert.equal(out.asked, 0);
 });
+
+/* The goal order, for "3 or more goals in a row" (owner, 11 Oct 2026). */
+test("the goal order comes off the same answer: own goals as listed, missed penalties dropped, stoppage time in order", () => {
+  const ev = (min, team, detail, extra) => ({ type: "Goal", detail: detail || "Normal Goal", team: { id: team }, time: { elapsed: min, extra: extra || null } });
+  const f = { teams: { home: { id: 7 }, away: { id: 9 } }, goals: { home: 4, away: 1 }, events: [
+    ev(90, 7, "Normal Goal", 3), ev(12, 7), ev(40, 9, "Own Goal"), ev(55, 7, "Missed Penalty"), ev(90, 7), ev(70, 7),
+    { type: "Card", detail: "Yellow Card", team: { id: 9 }, time: { elapsed: 20 } } ] };
+  assert.equal(O.seqOfFixture(f), "HAHHH", "12 H, 40 own goal listed for 9 = A, 70 H, 90 H, 90+3 H; the missed penalty is not a goal");
+  f.goals.home = 5;
+  assert.equal(O.seqOfFixture(f), null, "events that do not rebuild the score give no order");
+});
+
+test("the order is written only where the score cannot settle a run, and a missing column stops it once", async () => {
+  const seqs = [], f = fakes([ours("Arbroath", "Queens Park", 3, 1), ours("Brechin", "Elgin", 2, 2)],
+    [theirs("Arbroath", "Queens Park", 3, 1, 101), theirs("Brechin", "Elgin", 2, 2, 102)], { 101: { hc: 4, ac: 6, hsh: 9, ash: 14 }, 102: { hc: 1, ac: 2, hsh: 3, ash: 4 } });
+  f.oracle.statsFor = async (ids) => ({ ok: true, stats: { 101: { hc: 4, ac: 6, hsh: 9, ash: 14 }, 102: { hc: 1, ac: 2, hsh: 3, ash: 4 } }, seqs: { 101: "HHAH", 102: "HAHA" }, quota: 400 });
+  f.db.patchSeq = async (r, s) => { seqs.push([r.home, s]); return { ok: true }; };
+  const out = await SF.fillStats({ db: f.db, oracle: f.oracle, log: [] }, NOW);
+  assert.deepEqual(seqs, [["Arbroath", "HHAH"]], "a 3-1 needs its order; a 2-2 does not");
+  assert.equal(out.filled, 2, "the corners are written either way");
+  const log = [], g = fakes([ours("Arbroath", "Queens Park", 3, 1), ours("Cove", "Peterhead", 1, 4)],
+    [theirs("Arbroath", "Queens Park", 3, 1, 101), theirs("Cove", "Peterhead", 1, 4, 103)], {});
+  g.oracle.statsFor = async () => ({ ok: true, stats: { 101: null, 103: null }, seqs: { 101: "HHAH", 103: "AAHAA" }, quota: 400 });
+  let tries = 0; g.db.patchSeq = async () => { tries++; return { ok: false, noColumn: true }; };
+  await SF.fillStats({ db: g.db, oracle: g.oracle, log }, NOW);
+  assert.equal(tries, 1, "no seq column: asked once, then left alone");
+  assert.ok(log.some((l) => /no seq column/.test(l)));
+});

@@ -28,6 +28,8 @@ module.exports = async function handler(req, res) {
          null is "not filled yet" and -1 "none to be had", and both mean the
          page must not settle a corners or shots leg on them. */
       for (const k of ["hc", "ac", "hsh", "ash"]) if (Number.isFinite(r[k]) && r[k] >= 0) o[k] = r[k];
+      /* The goal order, where it was needed and known (see lib/statsfill.js). */
+      if (typeof r.seq === "string" && /^[HA]+$/.test(r.seq)) o.seq = r.seq;
       return o;
     });
   return res.status(200).json({ ok: true, results });

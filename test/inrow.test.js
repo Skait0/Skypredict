@@ -52,3 +52,21 @@ test("graded from the score where the score decides it, otherwise left open", ()
   assert.strictEqual(K.nr3Grade(0, 4, "h"), true);
   assert.strictEqual(K.nr3Grade(0, 4, "a"), false);
 });
+
+test("with the goal order, the open cases settle too", () => {
+  assert.strictEqual(K.nr3Grade(3, 1, "any", "HHAH"), true, "H H A H: no run of three");
+  assert.strictEqual(K.nr3Grade(3, 1, "any", "AHHH"), false, "the last three in a row");
+  assert.strictEqual(K.nr3Grade(3, 1, "a", "AHHH"), true, "away never ran three");
+  assert.strictEqual(K.nr3Grade(2, 4, "h", "AAAHHA"), true);
+  assert.strictEqual(K.nr3Grade(2, 4, "a", "AAAHHA"), false);
+  assert.strictEqual(K.nr3Grade(3, 1, "any", "HHA"), null, "an order that does not rebuild the score is ignored");
+});
+
+test("the slip grader settles a 3-in-a-row leg without throwing (11 Oct 2026)", () => {
+  /* gradeCode named its argument `code`; the first cut said `c`, which threw
+     at settle time - and settling runs inside load(). Run it for real. */
+  const g = new Function(fn("nr3Grade") + fn("gradeCode") + "return gradeCode;")();
+  assert.strictEqual(g("NR3_ANY", 2, 2), "win");
+  assert.strictEqual(g("NR3_H", 3, 0), "lose");
+  assert.strictEqual(g("NR3_ANY", 3, 1), null, "open: left for the goal order");
+});
