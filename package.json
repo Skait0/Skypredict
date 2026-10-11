@@ -9,5 +9,8 @@
   "scripts": {
     "build": "node scripts/prebuild.js",
     "test": "node --test"
+  },
+  "dependencies": {
+    "terser": "5.51.2"
   }
 }

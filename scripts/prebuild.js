@@ -654,6 +654,38 @@ function injectAuthMeta() {
   }
 }
 
+/* -------------------------------------------------------------- 2a. minify
+ * Owner, 11 Oct 2026: "is it possible to lock our code from the console?"
+ * Code a browser runs cannot be locked, but it can be made much harder to read
+ * and copy: comments out (1,287 of them, 46 quoting the owner by date), local
+ * names shortened, whitespace gone. 880 KB -> about 400 KB as well.
+ *
+ * Only the deployed copy. public/index.html in git stays readable and every
+ * test reads it; test/minify.test.js runs this on the real page.
+ *
+ * TOP-LEVEL NAMES ARE KEPT (toplevel: false, terser's default for a script).
+ * Buttons built as strings call them by name - onclick="..." - and the small
+ * inline scripts and window.sw* hooks look them up the same way. Renaming one
+ * would break a button silently.
+ *
+ * No source map is written: served, it would hand the source straight back,
+ * and there is no Sentry upload token to send it there privately. Sentry's
+ * stack traces still name every top-level function.
+ */
+async function minifyScript(js) {
+  const { minify } = require("terser");
+  const out = await minify(js, {
+    module: false,
+    toplevel: false,
+    compress: true,
+    mangle: { toplevel: false },
+    format: { comments: false },
+    sourceMap: false,
+  });
+  if (!out || typeof out.code !== "string" || !out.code.length) throw new Error("terser returned no code");
+  return out.code;
+}
+
 /* --------------------------------------------------------------- 2. split */
 function biggest(html, re) {
   const found = [...html.matchAll(re)];
@@ -661,7 +693,7 @@ function biggest(html, re) {
   return found.sort((a, b) => b[1].length - a[1].length)[0];
 }
 
-function splitAssets() {
+async function splitAssets() {
   /* This rewrites the source file in place, so it may only run where the
      checkout is disposable. On Vercel that is true - the build tree is thrown
      away after deploy. On a developer's machine it is not: public/index.html
@@ -709,10 +741,22 @@ function splitAssets() {
      deferring it cannot break them. */
   const script = biggest(html, /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g);
   if (script) {
-    const name = "app." + hash(script[1]) + ".js";
-    fs.writeFileSync(path.join(PUB, name), script[1]);
+    /* FAIL CLOSED. Unlike the split itself, a minify that throws is not
+       allowed to fall back to shipping the readable bundle: the build fails
+       and Vercel keeps serving the last good deploy. */
+    let code;
+    try {
+      code = await minifyScript(script[1]);
+    } catch (e) {
+      const err = new Error("minify failed: " + (e && e.message));
+      err.failBuild = true;
+      throw err;
+    }
+    const name = "app." + hash(code) + ".js";
+    fs.writeFileSync(path.join(PUB, name), code);
     html = html.replace(script[0], '<script defer src="/' + name + '"></script>');
-    log("extracted " + name + " (" + (script[1].length / 1024).toFixed(0) + " KB)");
+    log("extracted " + name + " (" + (script[1].length / 1024).toFixed(0) + " KB -> " +
+        (code.length / 1024).toFixed(0) + " KB minified)");
   } else {
     warn("no inline <script> found");
   }
@@ -814,11 +858,17 @@ if (require.main === module) {
        share-image canvas - is rewritten while it is still in the page. */
     applyOrigin();
     injectAuthMeta();
-    splitAssets();
+    await splitAssets();
   })().catch((e) => {
-    /* Never fail the deploy over an optimisation. */
+    /* Never fail the deploy over an optimisation - except a failed minify,
+       which must not ship the readable bundle (see splitAssets). */
+    if (e && e.failBuild) {
+      console.error("[prebuild] " + e.message + " - failing the build; the live site is unchanged");
+      process.exitCode = 1;
+      return;
+    }
     warn("unexpected error, continuing: " + (e && e.message));
   });
 }
 
-module.exports = { applyAuthMeta };
+module.exports = { applyAuthMeta, minifyScript };

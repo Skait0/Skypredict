@@ -1,0 +1,69 @@
+"use strict";
+/* THE DEPLOYED BUNDLE IS MINIFIED (owner, 11 Oct 2026: "is it possible to lock
+ * our code from the console?"). Only the copy prebuild writes on Vercel -
+ * public/index.html in git stays readable, and every other test reads it.
+ *
+ * The one rule that keeps the site working: top-level names survive. Buttons
+ * built as strings call them by name (onclick="..."), and window.sw* hooks are
+ * looked up from other scripts. So the minified bundle must declare exactly the
+ * same top-level names as the source.
+ */
+const test = require("node:test");
+const assert = require("node:assert");
+const fs = require("fs");
+const path = require("path");
+const { minify } = require("terser");
+const { minifyScript } = require("../scripts/prebuild.js");
+
+const html = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+const big = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)]
+  .sort((a, b) => b[1].length - a[1].length)[0][1];
+
+async function topNames(js) {
+  const { ast } = await minify(js, { compress: false, mangle: false, format: { ast: true, code: false } });
+  const out = new Set();
+  for (const st of ast.body) {
+    const t = st.TYPE;
+    if (t === "Defun" || t === "DefClass") out.add(st.name.name);
+    else if (t === "Var" || t === "Let" || t === "Const")
+      for (const d of st.definitions) if (d.name && d.name.name) out.add(d.name.name);
+  }
+  return out;
+}
+
+let MIN;
+test.before(async () => { MIN = await minifyScript(big); });
+
+test("the minified bundle declares exactly the source's top-level names", async () => {
+  const a = await topNames(big), b = await topNames(MIN);
+  assert.ok(a.size > 500, "sanity: the source has its top-level functions");
+  assert.deepStrictEqual([...b].sort(), [...a].sort());
+});
+
+test("comments are gone and the bundle is much smaller", () => {
+  assert.ok(big.includes("NEAREST FIRST (owner, 11 Oct 2026"), "sanity: the source carries the comment");
+  assert.ok(!MIN.includes("NEAREST FIRST"), "no comment survives");
+  assert.ok(!/\n\s*\/\*/.test(MIN), "no block comment on its own line");
+  assert.ok(MIN.length < big.length * 0.6, "smaller: " + MIN.length + " of " + big.length);
+});
+
+test("it still parses as a classic script, and serves no source map", async () => {
+  assert.doesNotThrow(() => new (require("vm").Script)(MIN));
+  assert.ok(!/sourceMappingURL/.test(MIN), "no map is pointed at - it would hand the source back");
+});
+
+test("names called from HTML strings survive by name", () => {
+  for (const m of new Set([...big.matchAll(/onclick=\\?["']([A-Za-z_$][\w$]*)\(/g)].map((x) => x[1]))) {
+    assert.ok(new RegExp("function " + m.replace(/\$/g, "\\$") + "\\(").test(MIN) ||
+      new RegExp("\\b" + m.replace(/\$/g, "\\$") + "=").test(MIN), m);
+  }
+});
+
+test("prebuild writes the minified bundle, and a failed minify fails the build", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "scripts", "prebuild.js"), "utf8");
+  assert.match(src, /code = await minifyScript\(script\[1\]\);/);
+  assert.match(src, /const name = "app\." \+ hash\(code\) \+ "\.js";/, "the name follows the shipped bytes");
+  assert.match(src, /await splitAssets\(\);/);
+  assert.match(src, /fs\.writeFileSync\(path\.join\(PUB, name\), code\);/);
+  assert.match(src, /e && e\.failBuild\) \{[^}]*process\.exitCode = 1;/);
+});
