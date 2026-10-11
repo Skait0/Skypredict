@@ -106,11 +106,14 @@ test("every POST carries the site's request header", () => {
 });
 
 test("analytics events named in the spec are sent", () => {
-  for (const e of ["duel_created", "duel_finished", "challenge_opened", "challenge_finished", "tips_clicked", "share"]) assert.match(html, new RegExp('track\\("' + e + '"'));
+  for (const e of ["duel_created", "duel_finished", "tips_clicked", "share"]) assert.match(html, new RegExp('track\\("' + e + '"'));
 });
 
-test("the challenger takes 5 shots and 3 bonus shots, 5 dives and 3 bonus dives", () => {
-  assert.match(grabFn("kicks"), /for\(var n=0;n<REG\+BONUS;n\+\+\)/);
+/* The old blind challenge (kicks/friend/result, ?c= links) was removed on
+   11 Oct 2026 once its day-long links had all expired; duels replace it. */
+test("the old blind challenge is gone from the page", () => {
+  for (const f of ["kicks", "friend", "result"]) assert.doesNotMatch(html, new RegExp("function " + f + "\\("), f);
+  assert.doesNotMatch(html, /q\.get\("c"\)/, "a ?c= link just opens the menu");
 });
 
 
@@ -129,8 +132,8 @@ test("the daily go is tracked", () => {
   assert.match(html, /track\("daily_played"/);
 });
 
-test("a duel link opens the duel, an old challenge link the friend flow, anything else the home screen", () => {
-  assert.match(html, /if\(dq&&\/\^\[A-Za-z0-9\]\{6\}\$\/\.test\(dq\)\)F\.duel\(dq\.toUpperCase\(\)\);else if\(c&&/);
+test("a duel link opens the duel, anything else the home screen", () => {
+  assert.match(html, /if\(dq&&\/\^\[A-Za-z0-9\]\{6\}\$\/\.test\(dq\)\)F\.duel\(dq\.toUpperCase\(\)\);else home\(\);/);
 });
 
 /* Owner, 8 Oct 2026: "another character as the wizard. players can choose
@@ -155,15 +158,10 @@ test("lightning is yours alone, and only for a real perfect strike or a hot stre
 
 test("the streak starts at zero every match", () => {
   assert.match(html, /resetStreak:function\(\)\{streak=0;/);
-  for (const f of ["challenger", "friend", "daily"]) assert.match(html, new RegExp("function " + f + "\\([^)]*\\)\\{[^]{0,200}PW\\.resetStreak\\(\\)"), f);
+  for (const f of ["challenger", "daily"]) assert.match(html, new RegExp("function " + f + "\\([^)]*\\)\\{[^]{0,200}PW\\.resetStreak\\(\\)"), f);
 });
 
 
-test("a challenge is told from the opener's side", () => {
-  assert.match(html, /api\("GET","match",null,\{id:id,device:PW\.DEV\}\)/);
-  assert.match(html, /m\.role==="challenger"/);
-  assert.match(html, /function result\(a,b,winner,chName,id,role,frName\)/);
-});
 
 test("a daily go resumes where it stopped, and a finished day can be replayed for fun", () => {
   assert.match(html, /api\("GET","dailystate",null,\{device:PW\.DEV\}\)/);
@@ -528,7 +526,7 @@ test("the trail is a spell: star motes spiral round the ball's path; a summoning
 
 test("solo modes add wind and a spell meter; challenges and the daily stay plain and fair", () => {
   for (const f of ["practice", "forFun"]) assert.match(grabFn(f), /PW\.setSolo\(true\)/, f);
-  for (const f of ["challenger", "friend", "daily", "survival"]) assert.match(grabFn(f), /PW\.setSolo\(false\)/, f);
+  for (const f of ["challenger", "daily", "survival"]) assert.match(grabFn(f), /PW\.setSolo\(false\)/, f);
   assert.match(html, /function consumeSpell\(/);
   assert.match(html, /id="cast"/);
   assert.match(html, /id="wind"/);
@@ -615,9 +613,6 @@ test("owner, 9 Oct 2026: a way back to the site on every screen; the challenge r
      sealed shot, never a pretend match against the computer */
   assert.match(grabFn("challenger"), /api\("POST","duel_new",\{device:PW\.DEV,name:name,/);
   assert.match(grabFn("sealedShot"), /outcome:"locked",sealedFor:who/);
-  assert.match(grabFn("kicks"), /outcome:"locked"/);
-  assert.match(grabFn("kicks"), /api\("POST","picks",\{id:id,device:PW\.DEV,shots:shots,dives:dives\}\)/);
-  assert.match(grabFn("friend"), /if\(m\.pending\)return sheet/);
 });
 
 test("owner, 9 Oct 2026: every end-of-game sheet has a way back to the game menu", () => {
@@ -639,14 +634,12 @@ test("batch 1 (owner, 9 Oct 2026): Again first, who to pass next, a new best, ne
   assert.match(pk, /var near=k\.dive!=null&&\(k\.outcome==="goal"&&col\(k\.dive\)===col\(k\.shot\.spot\)&&high\(k\.dive\)!==high\(k\.shot\.spot\)\|\|k\.outcome==="save"&&k\.dive!==k\.shot\.spot\);/);
   assert.match(pk, /"BY INCHES"/);
   assert.match(pk, /near\?"FINGERTIPS":null/);
-  assert.match(grabFn("result"), /btn\("Challenge "\+chName\+" back","red"/);
 });
 
 test("match feel (owner, 9 Oct 2026): a VS card before each match, a TV score bug, 1-3 stars a goal", () => {
   assert.match(html, /<div id="vs" aria-hidden="true">/);
   assert.match(grabFn("practice"), /PW\.vs\(PW\.NAME\|\|"You",PW\.char,"Computer",null,"FRIENDLY"\)\.then\(next\)/);
   assert.match(grabFn("survival"), /PW\.vs\(name,PW\.char,"Wizard Keeper","wizard","RANKED"\)\.then\(next\)/);
-  assert.match(grabFn("friend"), /PW\.vs\(n,PW\.char,m\.challenger,null,"CHALLENGE"\)/);
   assert.match(html, /\.sboard:before\{content:"PENALTIES"/);
   assert.match(grabFn("playKick"), /var st=you\?1\+\(top\?1:0\)\+\(perfect\|\|Math\.abs\(curl\)>0\.5\?1:0\):0;STARS\+=st;/);
   assert.match(html, /#sheet h2\.best\{color:var\(--gold\)\}/);
@@ -676,7 +669,6 @@ test("batch 2 (owner, 9 Oct 2026): a League tab with your division's crest, prom
 test("match report card (owner, 9 Oct 2026): stars, top bins and your saves after a match", () => {
   assert.match(grabFn("report"), /"Stars"\][\s\S]*"Top bins"\][\s\S]*"Your saves"\]/);
   assert.match(grabFn("practice"), /\[report\(\),acts,tipsCard\(\),homeLink\(\)\]/);
-  assert.match(grabFn("result"), /role==="friend"\?\[report\(\)\]:\[\]/);
   assert.match(grabFn("playKick"), /if\(you&&top\)TOPS\+\+;/);
 });
 
@@ -692,5 +684,5 @@ test("every result ends with a Home link back to the site (owner, 11 Oct 2026)",
   assert.match(html, /function homeLink\(\)\{var a=el\("a","shome","Home"\);a\.href="\/";/);
   assert.match(html, /homeLink:homeLink/, "exported for the daily and for-fun screens");
   const uses = (html.match(/(?:F\.)?homeLink\(\)/g) || []).length - 1;
-  assert.strictEqual(uses, 7, "practice, duel, friend challenge, survival, faced, for fun, daily");
+  assert.strictEqual(uses, 6, "practice, duel, survival, faced, for fun, daily");
 });

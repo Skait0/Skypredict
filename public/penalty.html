@@ -1166,70 +1166,6 @@ function pingBtn(){var b=btn("Ping me when it's my turn","ghost",function(){b.di
   if(!on&&"serviceWorker" in navigator&&"PushManager" in window)api("GET","pushkey").then(function(k){if(k.j&&k.j.key)b.hidden=false;});
   return b;}
 function u8(s){var b=atob((s+"===".slice((s.length+3)%4)).replace(/-/g,"+").replace(/_/g,"/")),a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a;}
-/* THE OLD BLIND CHALLENGE: kicks() and friend() stay only so links sent
-   before duels (they expire after a day) still finish. */
-function kicks(id,url){var shots=[],dives=[],p=Promise.resolve();PW.newBoard("Your dives",false);
-  for(var n=0;n<REG+BONUS;n++)(function(n){p=p.then(function(){
-    if(n===REG)PW.fx.pop("BONUS KICKS","#F2B84B");
-    return PW.aimAndShoot().then(function(s){shots.push({spot:s.spot,power:s.power});
-      return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:null,outcome:"locked"});})
-    .then(function(){return PW.pickDive();})
-    .then(function(dv){dives.push(dv);PW.fx.pop("LOCKED IN","#F2B84B");PW.fx.buzz(20);PW.mark("b","locked");return new Promise(function(ok){setTimeout(ok,700);});});
-  });})(n);
-  p.then(function save(){return api("POST","picks",{id:id,device:PW.DEV,shots:shots,dives:dives}).then(function(r){
-    if(r.status!==200)return offline(save);
-    sheet([el("h2",null,"Your kicks are in"),el("p",null,"Your friend now plays your real kicks and dives. You'll see the result here when they finish.")]
-      .concat(shareSheet("Bet you can't save my penalties on Play Penalty:",url,"challenge"),[tipsCard()]));});});}
-
-/* THE FRIEND: alternate shot then dive; the server judges and reveals only the
-   shot just taken. A dropped connection resumes at the next kick. */
-function friend(id){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);api("GET","match",null,{id:id,device:PW.DEV}).then(function(r){
-  if(r.status===0)return offline(function(){friend(id);});
-  if(r.status!==200)return sheet([el("h2",null,"This challenge doesn't exist"),btn("Start your own","red",function(){closeSheet();challenger();})]);
-  var m=r.j;track("challenge_opened");
-  if(m.expired)return sheet([el("h2",null,"This challenge ran out"),btn("Start your own","red",function(){closeSheet();challenger();})]);
-  if(m.pending&&m.role==="challenger")return sheet([el("h2",null,"Take your kicks"),el("p",null,"Your friend can't play until your 8 kicks and 8 dives are in."),btn("Take my kicks","red",function(){closeSheet();kicks(id,ORIGIN+"/p/"+id);})]);
-  if(m.pending)return sheet([el("h2",null,m.challenger+" is still taking their kicks"),el("p",null,"Check back in a minute."),btn("Check again","red",function(){closeSheet();friend(id);})]);
-  if(m.done)return result(m.score.a,m.score.b,m.winner,m.challenger,id,m.role,m.friend);
-  var url=ORIGIN+"/p/"+id;
-  if(m.role==="challenger")return sheet([el("h2",null,m.outcomes.length?m.friend+" is taking your challenge":"Waiting for a friend"),
-    el("p",null,m.outcomes.length?"Open this link again when it's done.":"Send it to someone. The link is yours to share.")]
-    .concat(shareSheet("Bet you can't beat me on Play Penalty:",url,"challenge"),[btn("Start another challenge","ghost",function(){closeSheet();challenger();})]));
-  if(m.role!=="friend"&&m.outcomes.length)return sheet([el("h2",null,"Someone else is playing this one"),btn("Start your own","red",function(){closeSheet();challenger();})]);
-  sheet([el("h2",null,m.challenger+" challenges you"),el("p",null,"5 shots, 5 saves. Free, no stakes. Pick your player:"),charPicker(),btn("Kick off","red",function(){closeSheet();askName().then(function(n){return PW.vs(n,PW.char,m.challenger,null,"CHALLENGE").then(function(){go(n);});});})]);
-  var outs=m.outcomes.slice();PW.newBoard(m.challenger,false,outs.filter(function(_,i){return i%2===0;}),outs.filter(function(_,i){return i%2===1;}));
-  function go(name){var n=outs.length;var shot=n%2===0;
-    PW.fx.slowmo(Math.floor(n/2)>=REG-1);
-    var step=shot?PW.aimAndShoot().then(function(s){return api("POST","kick",{id:id,device:PW.DEV,name:name,kind:"shot",spot:s.spot,power:s.power}).then(function(x){return {x:x,s:s};});})
-                 :PW.pickDive().then(function(dv){return api("POST","kick",{id:id,device:PW.DEV,name:name,kind:"dive",spot:dv}).then(function(x){return {x:x,dv:dv};});});
-    step.then(function(o){var x=o.x;
-      if(x.status===0)return offline(function(){go(name);});
-      if(x.status===409&&x.j.error==="taken")return sheet([el("h2",null,"Someone else is playing this one"),btn("Start your own","red",function(){closeSheet();challenger();})]);
-      if(x.status!==200)return offline(function(){friend(id);});
-      outs.push(x.j.outcome);
-      var anim=shot?PW.playKick({who:"you",shot:{spot:o.s.spot,kind:R.strike(o.s.spot,o.s.power).kind,power:o.s.power,aim:o.s.aim,curl:o.s.curl},dive:x.j.outcome==="save"?o.s.spot:(o.s.spot+3)%6,outcome:x.j.outcome})
-                    :PW.playKick({who:"them",shot:x.j.against,dive:o.dv,outcome:x.j.outcome});
-      anim.then(function(){var st=x.j.state;PW.setScore(st.score.a,st.score.b);if(st.done){track("challenge_finished");PW.fx.slowmo(false);return result(st.score.a,st.score.b,st.winner,m.challenger,id,"friend",name);}go(name);});
-    });}
-});}
-
-/* a = the friend's goals, b = the challenger's. Told from whoever is looking:
-   the friend, the challenger, or anyone else who opened the link. */
-function result(a,b,winner,chName,id,role,frName){
-  var url=ORIGIN+"/p/"+id,fr=frName||"Your friend",head,text;
-  if(role==="friend"){head=winner==="a"?"You beat "+chName+" "+a+"-"+b:winner==="b"?chName+" beat you "+b+"-"+a:"Draw, "+a+"-"+b;
-    text=winner==="a"?"I beat "+chName+" "+a+"-"+b+" on Play Penalty 😤 Your turn:":"Play Penalty: "+head+". Try me:";}
-  else if(role==="challenger"){head=winner==="b"?"You beat "+fr+" "+b+"-"+a:winner==="a"?fr+" beat you "+a+"-"+b:"You drew with "+fr+", "+a+"-"+b;
-    text=winner==="b"?"I beat "+fr+" "+b+"-"+a+" on Play Penalty 😤 Who's next?":"Play Penalty: "+head+". Try me:";}
-  else{head=winner==="a"?fr+" beat "+chName+" "+a+"-"+b:winner==="b"?chName+" beat "+fr+" "+b+"-"+a:chName+" and "+fr+" drew "+a+"-"+b;
-    text="Play Penalty: "+head+". Think you can do better?";}
-  /* CHALLENGE BACK (owner, 9 Oct 2026 - the 8 Ball Pool loop): the person who
-     just played answers with their own link, one tap. */
-  var back=role==="friend"?btn("Challenge "+chName+" back","red",function(){closeSheet();challenger();}):
-    role==="challenger"?btn("Rematch "+fr,"red",function(){closeSheet();challenger();}):btn("Start your own challenge","ghost",function(){closeSheet();challenger();});
-  sheet([el("h2",null,head)].concat(role==="friend"?[report()]:[],[back],shareSheet(text,url,"result"),[tipsCard(),homeLink()]));
-}
-
 /* CLUB WARS (owner, 9 Oct 2026): pick a club once, its badge sits next to
    your name, and every Ranked goal counts on the weekly club table. Badges
    are the club's colours and three letters - no crests, no new characters.
@@ -1308,7 +1244,7 @@ function leaderboard(per){
     if(!top.length){list.appendChild(el("li","lbe",per==="league"?"Nobody in your division has scored this week. Be the first.":"Nobody on the table yet. Be the first."));return;}
     top.forEach(function(x,k){var li=el("li",x.you?"you":"");li.appendChild(el("b",null,String(k+1)));li.appendChild(nameCell(x));li.appendChild(el("i",null,String(x.streak)));list.appendChild(li);});
     var me=r.j.me;if(me&&me.rank>20){var li=el("li","you");li.appendChild(el("b",null,String(me.rank)));li.appendChild(el("span",null,"You"));li.appendChild(el("i",null,String(me.streak)));list.appendChild(li);}});}
-window.PWFlow={duel:duel,duelsList:duelsList,survival:survival,leaderboard:leaderboard,promote:promote,row:row,challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,homeLink:homeLink,offline:offline,charPicker:charPicker,practice:practice};
+window.PWFlow={duel:duel,duelsList:duelsList,survival:survival,leaderboard:leaderboard,promote:promote,row:row,challenger:challenger,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,homeLink:homeLink,offline:offline,charPicker:charPicker,practice:practice};
 })();
 </script>
 <script>
@@ -1395,8 +1331,8 @@ function home(){
     var h=s.querySelector("h2");if(h&&h.nextSibling)s.insertBefore(b,h.nextSibling.nextSibling);});
 }
 
-var q=new URLSearchParams(location.search),c=q.get("c"),dq=q.get("d");
-if(dq&&/^[A-Za-z0-9]{6}$/.test(dq))F.duel(dq.toUpperCase());else if(c&&/^[A-Za-z0-9]{6}$/.test(c))F.friend(c.toUpperCase());else home();
+var q=new URLSearchParams(location.search),dq=q.get("d");
+if(dq&&/^[A-Za-z0-9]{6}$/.test(dq))F.duel(dq.toUpperCase());else home();
 })();
 </script>
 </body></html>
