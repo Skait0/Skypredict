@@ -72,8 +72,8 @@ test("a refused leg is offered the safest priced bet on the same game", () => {
   const realNow = Date.now;
   now = realNow() + 3600e3;
   const a = next({ id: "f1", code: "OVER_2.5", p: 0.61 }, B);
-  assert.strictEqual(a.code, "OVER_1.5", "the likeliest market they price, not GG which they do not");
-  assert.strictEqual(a.p, 0.82);
+  assert.strictEqual(a.code, "1X", "the nearest step up from 61% they price, not GG which they do not");
+  assert.strictEqual(a.p, 0.78);
   assert.strictEqual(next({ id: "f1", code: "OVER_1.5" }, B).code, "1X", "never the market just refused");
   now = realNow() - 60e3;
   assert.strictEqual(next({ id: "f1", code: "OVER_2.5" }, B), null, "nothing on a game that has started");
@@ -81,10 +81,46 @@ test("a refused leg is offered the safest priced bet on the same game", () => {
   why["f1|OVER_2.5"] = "kicked off";
   assert.strictEqual(next({ id: "f1", code: "OVER_2.5" }, B), null, "nor when they say it has");
   delete why["f1|OVER_2.5"];
-  assert.strictEqual(next({ id: "f1", code: "1", p: 0.5 }, B).code, "1X",
+  assert.strictEqual(next({ id: "f1", code: "1", p: 0.8 }, B).code, "1X",
     "a built leg is swapped only into a market whose chip is on (owner, 9 Oct 2026)");
   f.sportyOdds = { "1": 2.1 };
   assert.strictEqual(next({ id: "f1", code: "OVER_2.5" }, B), null, "nothing under 60% is offered as safe");
+});
+
+/* Owner, 11 Oct 2026, on a 36-leg code converted to betPawa: "too low". Every
+   refused "X or over 2.5" leg was swapped onto Over 0.5 at ~1.05, the
+   likeliest thing the game had, and with a swap for every game nobody was asked. */
+test("a refused leg is swapped onto the NEAREST safer market, not the likeliest", () => {
+  const f = { id: "f1", bpOdds: { "OVER_0.5": 1.05, "OVER_1.5": 1.28, "HOME_OVER_0.5": 1.3, "1X": 1.5 } };
+  const opts = [
+    { code: "MIX_1_OV_2.5", label: "LASK or over 2.5", p: 0.74 },
+    { code: "OVER_0.5", label: "Over 0.5", p: 0.93 },
+    { code: "OVER_1.5", label: "Over 1.5", p: 0.84 },
+    { code: "HOME_OVER_0.5", label: "LASK to score", p: 0.83 },
+    { code: "1X", label: "LASK or draw", p: 0.72 },
+  ];
+  const picks = new Function("F", "OPTS",
+    "var REFUSAL_WHY={};function curBook(){return {odds:'bpOdds'};}" +
+    "function fixtureById(){return F;} function kickMs(){return Date.now()+3600e3;}" +
+    "function swapOptions(){return OPTS;} function bookAllows(){return true;} function refusedToday(){return {};}" +
+    "function dcOk(){return true;} var MYSLIP=[]; function chipOn(){return true;}" +
+    decl("SAFE_ALT_MIN") + "\n" + fn("builtLeg") + "\n" + fn("safePicks") + "\nreturn safePicks;")(f, opts);
+  const B = { key: "betpawa", odds: "bpOdds" };
+  assert.deepStrictEqual(picks({ id: "f1", code: "MIX_1_OV_2.5", p: 0.74 }, B).map((x) => x.code),
+    ["HOME_OVER_0.5", "OVER_1.5", "OVER_0.5", "1X"], "closest step up first, the rest upward, then anything below");
+  assert.strictEqual(picks({ id: "f1", code: "MIX_1_OV_2.5" }, B)[0].code, "HOME_OVER_0.5",
+    "a leg with no p of its own is judged by our rating of its market");
+});
+
+/* The other half of that conversion: the books' ids were gone from the board.
+   load() can run again (its retry), which replaces every fixture; SportyBet is
+   re-attached there, but the other books' feeds are memoised in ensureBookFeed
+   and never fetched again, so every swap read "nothing safer on sale". */
+test("a reload of the board re-attaches every bookmaker feed already fetched", () => {
+  const body = src.slice(src.indexOf("\nasync function load(){"));
+  const at = body.indexOf("await loadSporty();");
+  assert.ok(at > 0);
+  assert.match(body.slice(at), /^await loadSporty\(\);\s*\n[\s\S]{0,400}?Object\.keys\(FEED\)\.forEach\(function\(k\)\{\s*if\(k!=="sporty"&&BOOKS\[k\]\) attachEventIds\(FEED\[k\],BOOKS\[k\]\);/);
 });
 
 test("the pop-up puts a swap in front of each refused game, and books what was ticked", () => {

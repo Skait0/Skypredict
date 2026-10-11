@@ -14583,8 +14583,8 @@ function safePicks(c,B){
   var f=c&&(c.f||fixtureById(c.id)); if(!f) return [];
   var ko=kickMs(f); if(ko!=null&&ko<=Date.now()) return [];
   if(/kicked off|started/.test(REFUSAL_WHY[c.id+"|"+c.code]||"")) return [];
-  var own=f[B.odds]||{}, refused=refusedToday(), out=[];
-  swapOptions(f).forEach(function(o){
+  var own=f[B.odds]||{}, refused=refusedToday(), out=[], opts=swapOptions(f);
+  opts.forEach(function(o){
     if(o.code===c.code||!(o.p>=SAFE_ALT_MIN)||(built&&!chipOn(o.code))) return;
     if(!(own[o.code]>1.01)||!bookAllows(o.code,B)) return;
     /* The swap is our pick, so it keeps the builders' double chance rule
@@ -14595,7 +14595,18 @@ function safePicks(c,B){
     if(out.some(function(x){return x.code===o.code;})) return;
     out.push(Object.assign({},c,{code:o.code,p:+o.p,label:o.label,f:c.f||f,auto:false}));
   });
-  return out.sort(function(a,b){return b.p-a.p;});
+  /* NEAREST FIRST (owner, 11 Oct 2026, on a converted code: "too low"). The
+     likeliest swap is nearly always Over 0.5 at ~1.05, which keeps the game
+     and throws its price away - and when every refused game has a swap, the
+     first one is booked without asking. So the first offer is the closest step
+     up from the leg's own chance, then the rest upward, then anything below. */
+  var ref=+c.p||+((opts.filter(function(o){return o.code===c.code;})[0]||{}).p);
+  return out.sort(function(a,b){
+    if(!(ref>0)) return b.p-a.p;
+    var ua=a.p>=ref, ub=b.p>=ref;
+    if(ua!==ub) return ua?-1:1;
+    return ua?a.p-b.p:b.p-a.p;
+  });
 }
 function nextSafePick(c,B){ return safePicks(c,B)[0]||null; }
 function confirmAfterRefusal(target,names,keep,B,go,refused,h){
@@ -23361,6 +23372,11 @@ async function load(){
     DATA=got.payload;
     holdTheDay();
     await loadSporty();
+    /* A NEW BOARD HAS NONE OF THE OTHER BOOKS' IDS. load() runs again on its
+       retry, and ensureBookFeed is memoised, so a feed fetched before that
+       never attached again: every swap on a refused leg read "nothing safer
+       on sale" (owner, 11 Oct 2026, a 36-leg code converted to betPawa). */
+    try{ Object.keys(FEED).forEach(function(k){ if(k!=="sporty"&&BOOKS[k]) attachEventIds(FEED[k],BOOKS[k]); }); }catch(e){}
     /* A new payload and its first prices: any Wizard ceiling probed before
        this (a reload, or a tap while SportyBet was still loading) is stale.
        See wspMaxReach. */
