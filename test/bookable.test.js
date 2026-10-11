@@ -64,7 +64,7 @@ const FNS = ["cornersK", "cornersOver", "cornersOpen", "countryOf", "isSAleague"
   /* A market one bookmaker sells and the other does not - the slider asks
      before it picks, so the harness needs the question and its table. */
   "bookAllows",
-  "allowedMarkets", "preferGoalsOverDouble", "sliderStyle", "styleFit", "buildPicks", "refusedDay", "refusedToday", "noteRefused"];
+  "allowedMarkets", "highScoringLeague", "dcOk", "dcGoalsSwap", "preferGoalsOverDouble", "sliderStyle", "styleFit", "buildPicks", "refusedDay", "refusedToday", "noteRefused"];
 
 function engine(fixtures) {
   return new Function("FX", [
@@ -82,7 +82,7 @@ function engine(fixtures) {
     /* full: the cache for this book IS its whole book, which is what makes a
        missing price meaningful. odds: where that cache lives on a fixture. */
     "function curBook(){return {key:'sporty',label:'SportyBet',full:true,odds:'sportyOdds',id:'eventId'};}",
-    konst("HIGH_SCORING_O25"), konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
+    konst("HIGH_SCORING_O25"), (src.match(/var DC_MIN_FAV=[^;]*;/) || [""])[0], (src.match(/var HIGH_SCORING_LEAGUES=\[[\s\S]*?\];/) || [""])[0], konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
     konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"),
   konst("SPREAD_PEN"), konst("SPREAD_MULT"),
     (/^var BUILD=\{[\s\S]*?\};/m.exec(src) || [""])[0],

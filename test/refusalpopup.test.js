@@ -214,7 +214,7 @@ test("a refused market is remembered for today, at that book, for that market on
 test("only named refusals are written, and both builders skip that market only", () => {
   assert.match(body("dropUnbookable"), /REFUSAL_WHY\[c\.id\+"\|"\+c\.code\]=w;\s*noteRefused\(c,B\);/);
   assert.match(body("buildPicks"), /function sane\(c\)\{\s*if\(refused\[rk\+fid\(f\)\+"\|"\+c\]\) return false;/);
-  assert.match(body("wspBuild"), /allowed\.forEach\(function\(c\)\{\s*if\(refused\[rk\+fid\(f\)\+"\|"\+c\]\)return;/);
+  assert.match(body("wspBuild"), /fAllowed\.forEach\(function\(c\)\{\s*if\(refused\[rk\+fid\(f\)\+"\|"\+c\]\)return;/);
   assert.match(body("safePicks"), /if\(refused\[B\.key\+"\|"\+c\.id\+"\|"\+o\.code\]\) return;/, "and the pop-up never offers it");
 });
 

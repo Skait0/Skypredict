@@ -12912,9 +12912,45 @@ function paintTicks(r){
    follows Eliteserien, the Eredivisie and whoever else is scoring this season
    without anyone maintaining names. Same bar the "Over 2.5" category uses. */
 const HIGH_SCORING_O25=0.60;
+/* DOUBLE CHANCE ONLY BEHIND A REAL FAVOURITE (owner, 11 Oct 2026: "only give
+   double chance when its a little strong home or draw or away or draw").
+   Measured on 25,739 matches with closing odds: the favourite's double chance
+   lands 66% when it is a 35-40% favourite, 72% at 40-45%, 77% at 45-50%, and
+   79%+ from 50%. Below 50% it is the volatile leg on the slip.
+   HIGH-SCORING LEAGUES PLAY OVER 1.5 INSTEAD ("high scoring leagues should have
+   over 1.5 instead of double chance"). In the leagues below Over 1.5 lands 78%+
+   of games, and it matches or beats the favourite's double chance until that
+   favourite reaches 65% (then DC lands 88-94% against 85-87%), so a 65%+
+   favourite keeps its double chance. List measured, not remembered: football-
+   data seasons with odds (E0 D1 D2 N1 SWZ DNK FIN NOR USA SC0 SC3) plus
+   API-Football 2024-26 results at 150+ games. */
+var DC_MIN_FAV=0.50, DC_KEEP_FAV=0.65;
+var HIGH_SCORING_LEAGUES=["England Premier League","Germany Bundesliga 1","Germany Bundesliga 2",
+  "Netherlands Eredivisie","Switzerland Super League","Denmark Superliga","Finland Veikkausliiga",
+  "Norway Eliteserien","USA MLS","Scotland Premiership","Scotland League 2","Norway 1st Division",
+  "Iceland Besta deild","Iceland Besta deild karla","Estonia Meistriliiga","Netherlands Eerste Divisie",
+  "Germany 3. Liga","Slovenia Prva liga","Northern Ireland Championship","Finland Ykkosliiga",
+  "Hungary NB I.","Canada Canadian Premier League","Moldova Super Liga","Armenia Premier League",
+  "Wales Cymru Premier","Austria 2. Liga"];
+function highScoringLeague(l){
+  var m=highScoringLeague._m||(highScoringLeague._m=HIGH_SCORING_LEAGUES.reduce(function(o,n){o[topKey(n)]=1;return o;},{}));
+  return !!m[topKey(l)] || (POPULAR_ALIAS[l]!=null && !!m[topKey(POPULAR_ALIAS[l])]);
+}
+function dcOk(f,c){
+  var p=c==="1X"?f.home_p:f.away_p;
+  if(!(p>=DC_MIN_FAV)) return false;
+  return !(highScoringLeague(f.league)&&p<DC_KEEP_FAV);
+}
+/* The double chance chip brings Over 1.5 with it in a high-scoring league,
+   even with the Over 1.5 chip off - that is what the reader asked the chip for. */
+function dcGoalsSwap(f,allowed,dcOn){
+  if(!dcOn||!highScoringLeague(f.league)||allowed.indexOf("OVER_1.5")>=0) return allowed;
+  return allowed.concat("OVER_1.5");
+}
 function preferGoalsOverDouble(f,best,allowed,minConf){
   if(!best||(best.code!=="1X"&&best.code!=="X2")) return best;
   if(f.o25==null||f.o25<HIGH_SCORING_O25) return best;
+  if(Math.max(f.home_p||0,f.away_p||0)>=DC_KEEP_FAV) return best;
   if(allowed && allowed.indexOf("OVER_1.5")<0) return best;
   var ov=mProb(f,"OVER_1.5");
   if(ov==null||isNaN(ov)||ov<minConf) return best;
@@ -13944,8 +13980,7 @@ function buildPicks(){
       if(!cornersOpen(f,c)) return false;
       if(c==="1"&&!homeFav) return false;
       if(c==="2"&&homeFav) return false;
-      if(c==="1X"&&!homeFav) return false;
-      if(c==="X2"&&homeFav) return false;
+      if((c==="1X"||c==="X2")&&!dcOk(f,c)) return false;
       return true;
     }
     /* Prefer a leg SportyBet will actually take.
@@ -13968,7 +14003,7 @@ function buildPicks(){
     /* THE ONE QUESTION, ASKED ONCE - see bookVerdict. This used to be three
        separate peeks into sportyOdds, which is also how it judged prices at
        SportyBet while the reader was booking to Bet9ja. */
-    var usable=allowed.filter(sane);
+    var usable=dcGoalsSwap(f,allowed,BUILD.mk.wd!==false&&bookAllows("OVER_1.5",B)).filter(sane);
     var byVerdict={priced:[],unknown:[]};
     usable.forEach(function(c){
       var v=bookVerdict(f,c,B);
@@ -14017,12 +14052,18 @@ function buildPicks(){
        Over 1.5 clears the same confidence bar, take it instead. The lean above
        only nudges the score and double chance could still out-rank it; this
        decides it outright, which is what was being asked of the shuffle. */
+    var dcBest=best;
     best=preferGoalsOverDouble(f,best,usable,p.minConf);
+    /* Once Over 1.5 has won that call, the spread below must not hand the
+       double chance back - it re-picks from every market, and was undoing
+       this swap on every leg it made. */
+    var noDC=!!(best&&dcBest&&best!==dcBest);
     if(best){
       /* Every market this fixture could offer, so the slip can spread across
          markets instead of stacking one. Same reason as the league spread. */
       var alts=[];
       usable.forEach(function(c){
+        if(noDC&&(c==="1X"||c==="X2")) return;
         var v=mProb(f,c);
         if(v==null||isNaN(v)||v<p.minConf) return;
         /* The same score the market was chosen by above, kept so the spread
@@ -20258,10 +20299,11 @@ function wspBuild(){
     if(TOP_ONLY&&!favLeague(f.league)) return;
     if(WSP.removed && WSP.removed[fid(f)]) return;
     var homeFav=f.home_p>f.away_p,cands=[];
-    allowed.forEach(function(c){
+    var fAllowed=dcGoalsSwap(f,allowed,!!WSP.mk.wd&&bookAllows("OVER_1.5",curBook()));
+    fAllowed.forEach(function(c){
       if(refused[rk+fid(f)+"|"+c])return;
       if(c==="1"&&!homeFav)return; if(c==="2"&&homeFav)return;
-      if(c==="1X"&&!homeFav)return; if(c==="X2"&&homeFav)return;
+      if((c==="1X"||c==="X2")&&!dcOk(f,c))return;
       if(!cornersOpen(f,c))return;
       var v=mProb(f,c); if(v==null||isNaN(v))return;
       /* A DRAW NEVER CLEARS A HALF. Three-way probability puts it around 0.28
@@ -20284,10 +20326,12 @@ function wspBuild(){
     var best=cands.reduce(function(a,b){return b.p>a.p?b:a;});
     /* Same rule the slider uses: in a game the model expects goals in, take
        Over 1.5 over a double chance. Both shuffles should behave alike. */
-    var swapped=preferGoalsOverDouble(f,best,allowed,0.5);
+    var swapped=preferGoalsOverDouble(f,best,fAllowed,0.5);
     if(swapped!==best){
       var m=cands.filter(function(c){return c.code==="OVER_1.5";})[0];
-      if(m) best=m;
+      /* pickFrom re-chooses from best.cands, so the double chance has to
+         leave them or it simply comes back. */
+      if(m){ best=m; cands=cands.filter(function(c){return c.code!=="1X"&&c.code!=="X2";}); }
     }
     best.cands=cands; all.push(best);
   });

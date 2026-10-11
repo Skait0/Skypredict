@@ -65,7 +65,7 @@ const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "
      same bug survived. */
   "bookVerdict", "bookMayTake", "bookIsPriced", "bookIdOf",
   "hasRealOdd", "pricedFixture", "mProb", "riskParams",
-  "allowedMarkets", "preferGoalsOverDouble", "isJackpotOdds", "wspMarkets",
+  "allowedMarkets", "highScoringLeague", "dcOk", "dcGoalsSwap", "preferGoalsOverDouble", "isJackpotOdds", "wspMarkets",
   /* The wizard now asks which markets have a published record before it
      reaches for one, so its harness needs them too. */
   "codeMarket", "provenMarkets", "isProven",
@@ -104,7 +104,7 @@ const api = new Function([
   konst("SAFE_UNPRICED"), konst("BOOK_ONLY"), konst("CORNER_CODES"), konst("TEAM_CORNER_CODES"), konst("SHOTS_CODES"), konst("TEAM_SHOTS_CODES"), konst("HCAP_CODES"), konst("ESTIMATE_SHRINK"),
   "function curBook(){return {key:'sporty',label:'SportyBet',full:true,odds:'sportyOdds',id:'eventId'};}",
   konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
-  konst("HIGH_SCORING_O25"), konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
+  konst("HIGH_SCORING_O25"), (src.match(/var DC_MIN_FAV=[^;]*;/) || [""])[0], (src.match(/var HIGH_SCORING_LEAGUES=\[[\s\S]*?\];/) || [""])[0], konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
   konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"),
   konst("SPREAD_PEN"), konst("SPREAD_MULT"),
   (/^var BUILD=\{[\s\S]*?\};/m.exec(src) || [""])[0],
@@ -697,4 +697,42 @@ test("the slip style moves the slider's count and its leg odds, and Balanced mov
   const more60 = run(1.25), fewer60 = run(1.7);
   assert.ok(fewer60.odd > more60.odd,
     `bigger odds each: ${fewer60.odd.toFixed(2)} v ${more60.odd.toFixed(2)}`);
+});
+
+/* Owner, 11 Oct 2026: "only give double chance when its a little strong home
+   or draw or away or draw" and "when double chance button is selected, high
+   scoring leagues should have over 1.5 instead of double chance". */
+test("double chance only behind a 50%+ favourite, in both engines", () => {
+  for (const risk of [5, 30, 60, 90]) for (const seed of [1, 7, 12345]) {
+    reset();
+    Object.assign(api.BUILD, { risk, seed });
+    const legs = api.buildPicks().concat(
+      (Object.assign(api.WSP, { odds: 20, slider: false, seed }), api.wspBuild().picks || []));
+    for (const c of legs) {
+      if (c.code !== "1X" && c.code !== "X2") continue;
+      const fav = c.code === "1X" ? c.f.home_p : c.f.away_p;
+      assert.ok(fav >= 0.5, `${c.f.home}-${c.f.away} ${c.code} at a ${fav} favourite (risk ${risk}, seed ${seed})`);
+    }
+  }
+});
+
+test("Win or draw alone: a high-scoring league plays Over 1.5 unless the favourite is 65%+", () => {
+  const only = { wd: true, any: false, out: false, o15: false, o25: false, o35: false, fh: false, tts: false, tts2: false, both: false };
+  const mk = (league, hp) => ({ date: "2026-10-12", league, home: "H" + league + hp, away: "A" + hp,
+    home_p: hp, draw_p: 0.22, away_p: 0.78 - hp, dc1x: hp + 0.22, dcx2: 1 - hp, dc12: 0.78,
+    anybody: 0.78, o15: 0.82, o25: 0.58, o35: 0.33, btts: 0.55, fh_o05: 0.75,
+    h_o05: 0.88, h_o15: 0.55, a_o05: 0.66, a_o15: 0.28 });
+  const board = [mk("Netherlands Eredivisie", 0.55), mk("Germany Bundesliga 1", 0.70), mk("Spain La Liga", 0.55)].map(priced);
+  for (const engine of ["slider", "wizard"]) {
+    reset();
+    api.setFixtures(board);
+    api.BUILD.mk = Object.assign({}, only); api.WSP.mk = Object.assign({}, only);
+    Object.assign(api.BUILD, { risk: 10 });
+    const legs = engine === "slider" ? api.buildPicks()
+      : (Object.assign(api.WSP, { odds: null, everyGame: true, slider: false }), api.wspBuild().picks);
+    const by = Object.fromEntries(legs.map(c => [c.f.league, c.code]));
+    assert.strictEqual(by["Netherlands Eredivisie"], "OVER_1.5", engine + ": 55% favourite in a high-scoring league");
+    assert.strictEqual(by["Germany Bundesliga 1"], "1X", engine + ": a 70% favourite keeps its double chance");
+    assert.strictEqual(by["Spain La Liga"], "1X", engine + ": an ordinary league keeps double chance");
+  }
 });

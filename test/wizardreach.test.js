@@ -55,7 +55,7 @@ function stubEl(id) {
 const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "isSAleague",
   "isAsianLeague", "isAsian", "isSouthAmerican", "saWeight", "isLowerLeague", "topKey", "topRank", "outsideTop", "favLeague",
   "fid", "oddOf", "legOdd", "bookVerdict", "bookMayTake", "bookIsPriced", "bookIdOf",
-  "hasRealOdd", "pricedFixture", "mProb", "allowedMarkets", "preferGoalsOverDouble",
+  "hasRealOdd", "pricedFixture", "mProb", "allowedMarkets", "highScoringLeague", "dcOk", "dcGoalsSwap", "preferGoalsOverDouble",
   "isJackpotOdds", "wspMarkets", "codeMarket", "provenMarkets", "isProven", "safeUnpriced",
   "fetchedMarket", "bookAllows", "wspStyleOn", "wspBuild", "refusedDay", "refusedToday", "noteRefused", "wspMaxReach",
   "leagueAllowed", "leagueDefault", "setLeaguePicked", "leaguesChosen", "windowWords", "setFav",
@@ -108,7 +108,7 @@ const api = new Function("STUB", [
   konst("SHOTS_CODES"), konst("TEAM_SHOTS_CODES"), konst("HCAP_CODES"), konst("ESTIMATE_SHRINK"),
   "function curBook(){return {key:'sporty',label:'SportyBet',full:true,odds:'sportyOdds',id:'eventId'};}",
   konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
-  konst("HIGH_SCORING_O25"), konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
+  konst("HIGH_SCORING_O25"), (src.match(/var DC_MIN_FAV=[^;]*;/) || [""])[0], (src.match(/var HIGH_SCORING_LEAGUES=\[[\s\S]*?\];/) || [""])[0], konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
   konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"), konst("SPREAD_PEN"), konst("SPREAD_MULT"),
   (/^var WSP=\{[\s\S]*?\};/m.exec(src) || [""])[0],
   (/^var SLIP_STYLES=[\s\S]*?;$/m.exec(src) || [""])[0],
@@ -139,7 +139,9 @@ function fx(i, league) {
     "HOME_OVER_0.5": o(f.h_o05), "AWAY_OVER_0.5": o(f.a_o05) };
   return f;
 }
-const LEAGUES = ["England Premier League", "Spain La Liga", "Italy Serie A"];
+/* Not a high-scoring league: there a 55-64% favourite loses its double chance
+   to Over 1.5 (owner, 11 Oct 2026), which is not what these tests measure. */
+const LEAGUES = ["France Ligue 1", "Spain La Liga", "Italy Serie A"];
 const BOARD = Array.from({ length: 12 }, (_, i) => fx(i, LEAGUES[i % 3]));
 
 function reset() {
