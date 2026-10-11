@@ -14436,6 +14436,10 @@ function safePicks(c,B){
   swapOptions(f).forEach(function(o){
     if(o.code===c.code||!(o.p>=SAFE_ALT_MIN)||(built&&!chipOn(o.code))) return;
     if(!(own[o.code]>1.01)||!bookAllows(o.code,B)) return;
+    /* The swap is our pick, so it keeps the builders' double chance rule
+       (dcOk): an underdog's "or draw" can clear 60% and still be the volatile
+       leg the rule exists to keep off a slip. */
+    if((o.code==="1X"||o.code==="X2")&&!dcOk(f,o.code)) return;
     if(refused[B.key+"|"+c.id+"|"+o.code]) return;
     if(out.some(function(x){return x.code===o.code;})) return;
     out.push(Object.assign({},c,{code:o.code,p:+o.p,label:o.label,f:c.f||f,auto:false}));

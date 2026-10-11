@@ -64,6 +64,7 @@ test("a refused leg is offered the safest priced bet on the same game", () => {
     "var REFUSAL_WHY=WHY();function curBook(){return {odds:'sportyOdds'};}" +
     "function fixtureById(){return F;} function kickMs(){return NOW();}" +
     "function swapOptions(){return OPTS;} function bookAllows(){return true;} function refusedToday(){return {};}" +
+    "function dcOk(){return true;}" +
     "var MYSLIP=[{id:'f1',code:'1',auto:true}];function chipOn(c){return c!=='OVER_1.5';}" +
     decl("SAFE_ALT_MIN") + "\n" + fn("builtLeg") + "\n" + fn("safePicks") + "\n" + fn("nextSafePick") + "\nreturn nextSafePick;")(
     f, opts, () => now, () => why);
@@ -273,4 +274,8 @@ test("shared refusals: what SportyBet refused for anyone is skipped by everyone,
   assert.deepStrictEqual(Object.keys(api.today()).sort(), ["sporty|a|HOME_OVER_0.5", "sporty|b|1X"]);
   assert.deepStrictEqual(Object.keys(api.local()), ["sporty|b|1X"], "shared ones are never written to this browser");
   assert.match(src2, /attachEventIds\(d\.matches,BOOKS\.sporty\);\s*setSharedRefused\(d\.refused\);/);
+});
+
+test("a swap never offers double chance the builders would not (owner, 11 Oct 2026)", () => {
+  assert.match(body("safePicks"), /\(o\.code==="1X"\|\|o\.code==="X2"\)&&!dcOk\(f,o\.code\)\) return;/);
 });
