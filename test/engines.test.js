@@ -106,7 +106,7 @@ const api = new Function([
   konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
   konst("HIGH_SCORING_O25"), (src.match(/var DC_MIN_FAV=[^;]*;/) || [""])[0], (src.match(/var HIGH_SCORING_LEAGUES=\[[\s\S]*?\];/) || [""])[0], konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
   konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"),
-  konst("SPREAD_PEN"), konst("SPREAD_CAP"), grab("overExposed"), konst("HCAP_DOG_BAR"), grab("dogHcap"), grab("judgedP"), konst("SPREAD_MULT"),
+  konst("SPREAD_PEN"), konst("SPREAD_CAP"), grab("overExposed"), konst("HCAP_DOG_BAR"), konst("BANKERS"), grab("bankersOn"), grab("dogHcap"), grab("judgedP"), konst("SPREAD_MULT"),
   (/^var BUILD=\{[\s\S]*?\};/m.exec(src) || [""])[0],
   (/^var WSP=\{[\s\S]*?\};/m.exec(src) || [""])[0],
 ].concat(FNS.map(grab)).join("\n") + `
@@ -811,4 +811,35 @@ test("a book-priced line is mixed into mProb, and the handicap bar stands down t
   assert.strictEqual(api.dogHcap(g, "AH_2_-1.5"), true, "unpriced underdog line keeps its correction");
   const h = { home_p: 0.5, draw_p: 0.25, away_p: 0.25, _bk: { "CORNERS_OV_9.5": 0.48 }, _bkB: 0.9 };
   assert.strictEqual(api.mProb(h, "CORNERS_OV_9.5"), 0.48, "no model number: the book's own figure");
+});
+
+/* Owner, 11 Oct 2026: Bankers - "leg prices from 1.02 ... for gamblers like
+   my dad". Every leg x1.25 or under, shortest first, and a payout these legs
+   cannot reach comes back short (the panel then points at another style). */
+test("Bankers: every leg at x1.25 or under, shorter than More games, short when out of reach", () => {
+  const legOdds = (legs) => legs.map(c => api.legOdd(c.f, c.code, c.p));
+  const avg = (a) => a.reduce((x, y) => x + y, 0) / (a.length || 1);
+  for (const T of [2, 4]) {
+    reset();
+    Object.assign(api.WSP, { odds: T, slider: false, legodd: 1.1 });
+    const b = api.wspBuild();
+    assert.ok(b.picks.length > 0, "Bankers builds x" + T);
+    legOdds(b.picks).forEach(o => assert.ok(o <= 1.25 && o > 1.01, "leg at x" + o));
+    api.WSP.legodd = 1.25;
+    const m = api.wspBuild();
+    assert.ok(avg(legOdds(b.picks)) <= avg(legOdds(m.picks)) + 1e-9,
+      "x" + T + ": Bankers legs average no longer than More games");
+  }
+  reset();
+  Object.assign(api.WSP, { odds: 1e6, slider: false, legodd: 1.1 });
+  const big = api.wspBuild();
+  assert.ok(big.short, "x1,000,000 from legs at x1.25 or under on this board is short, and says so");
+  legOdds(big.picks).forEach(o => assert.ok(o <= 1.25, "never stretched past x1.25: x" + o));
+  reset();
+  api.WSP.legodd = 1.1;
+  for (const risk of [5, 50, 95]) {
+    api.BUILD.risk = risk;
+    legOdds(api.buildPicks()).forEach(o => assert.ok(o <= 1.25, "slider risk " + risk + ": leg at x" + o));
+  }
+  api.WSP.legodd = 1.4;
 });

@@ -14131,6 +14131,7 @@ function buildPicks(){
       if(v0==null||isNaN(v0)) return;
       var v=judgedP(f,c,v0);
       if(v<p.minConf) return;
+      if(bankersOn()&&!(legOdd(f,c,v0,B)<=BANKER_MAX)) return;
       var score=(1-f0)*v + f0*(oddOf(v)/12);
       /* A QUOTE OUTRANKS AN ESTIMATE ON A CLOSE CALL.
          The old rule was blunter - "when real odds exist for any candidate,
@@ -14175,6 +14176,7 @@ function buildPicks(){
         if(v0==null||isNaN(v0)) return;
         var v=judgedP(f,c,v0);
         if(v<p.minConf) return;
+        if(bankersOn()&&!(legOdd(f,c,v0,B)<=BANKER_MAX)) return;
         /* The same score the market was chosen by above, kept so the spread
            below can prefer a different market without abandoning what the risk
            dial asked for. Scoring alternatives by probability alone broke the
@@ -19731,7 +19733,7 @@ function renderMySheet(){
     _mm.hidden=!_say;
     _mm.innerHTML=_say ? "<b>\u00d7"+(_tot>=100?Math.round(_tot).toLocaleString("en"):_tot.toFixed(2))+
       "</b> of your \u00d7"+(+_want).toLocaleString("en")+": the most we can build "+
-      (WSP._miss.win||"right now") : "";
+      (WSP._miss.win||"right now")+(bankersOn()?". For more, pick another slip style.":"") : "";
   }
   body.querySelectorAll("[data-myrm]").forEach(function(b){
     b.addEventListener("click",function(){var p=b.dataset.myrm.split("|"); toggleMy(p[0],p[1]);});});
@@ -20380,7 +20382,15 @@ function wspMarkets(){var m=[];
    this, so what the row shows cannot drift from what gets built. It briefly had
    a fourth answer, "slider", when Auto was a chip in this row. */
 /* The three slip styles, shared by both builders. */
-var SLIP_STYLES=[[1.25,"More games","smaller odds"],[1.4,"Even",""],[1.7,"Fewer games","bigger odds"]];
+/* BANKERS (owner, 11 Oct 2026: "for gamblers like my dad, he likes those very
+   silly odds"). Legs x1.02 to x1.25 only, the shortest the payout allows -
+   which the Wizard does by itself once the style's leg price is 1.1 and
+   nothing above BANKER_MAX is a candidate. "More games" aims AT x1.25; this
+   never goes past it. A payout these legs cannot reach is said, with a
+   pointer to another style, rather than met with longer legs. */
+var BANKERS=1.1, BANKER_MAX=1.25;
+function bankersOn(){ return WSP.legodd===BANKERS; }
+var SLIP_STYLES=[[BANKERS,"Bankers","x1.02-1.25 legs"],[1.25,"More games","smaller odds"],[1.4,"Even",""],[1.7,"Fewer games","bigger odds"]];
 /* WHAT THE STYLE MEANS TO THE SLIDER, which has no payout to divide.
    The Wizard reads legodd as "reach the target with legs priced near this",
    so the leg count falls out of the arithmetic. The Slider's count comes from
@@ -20446,7 +20456,9 @@ function wspBuild(){
          the picks before they leave this function. */
       var vj=judgedP(f,c,v);
       if(vj<floor)return;
-      cands.push({f:f,id:fid(f),code:c,p:vj,od:legOdd(f,c,v)});
+      var od=legOdd(f,c,v);
+      if(bankersOn()&&!(od<=BANKER_MAX))return;
+      cands.push({f:f,id:fid(f),code:c,p:vj,od:od});
     });
     if(!cands.length)return;
     var best=cands.reduce(function(a,b){return b.p>a.p?b:a;});
@@ -20646,6 +20658,11 @@ function wspBuild(){
     want=WSP.everyGame
       ? Math.min(cap,list.length)
       : Math.max(4, Math.min(cap, Math.ceil(Math.log(T)/Math.log(perEff))));
+    /* Bankers plans for every leg it may use, so the price asked of each one
+       is as low as the payout allows - x10 over 40 legs is x1.06 a game.
+       Planning the usual way gave x1.19 legs, barely under More games
+       (measured on the live board, 11 Oct 2026). */
+    if(bankersOn()&&!WSP.everyGame) want=Math.max(4,Math.min(cap,list.length));
     /* With no payout to hit there is no per-leg target to aim at either, so
        aim low: the nearest-to-target rule below then picks each game's safest
        available market instead of stretching for odds. Low still has to mean
@@ -20802,6 +20819,10 @@ function wspBuild(){
        is floor-limited by the board: below about twenty legs there are
        simply not enough long-odds games to reach a big payout. */
     var styleTilt=(per<=1.3?-1.2:(per>=1.6?1.2:0));
+    /* Bankers ranks hard toward the shortest price: the edge term alone
+       prefers longer legs (a short leg carries more of the book's margin), and
+       the -1.2 More games uses still let x1.2 beat x1.05. */
+    if(bankersOn()) styleTilt=-6;
     /* Read once, before the costs are set - it is the same for every leg. */
     var _use=slipUse();
     /* See SPREAD_CAP: a game on three open tickets sits out while the board
@@ -21302,7 +21323,9 @@ function wspConjure(shuffle,fill){
   if(r.short){
     missNote="We could not reach ×"+(+T).toFixed(0)+" today. Best from the markets "+
       "you picked is ×"+oddsTx+" on "+r.picks.length+" games. "+
-      "Switch on more markets, or ask for less.";
+      (bankersOn()
+        ? "Bankers keeps every game at ×1.25 or under. For more, pick another slip style like More games or Fewer games, or ask for less."
+        : "Switch on more markets, or ask for less.");
     window.swToast&&window.swToast("Best we can build today is ×"+oddsTx+
       " from "+r.picks.length+" games we rate","info","wspshort");
   } else if(T!=null&&r.odds>T*1.5&&r.picks.length>1){
