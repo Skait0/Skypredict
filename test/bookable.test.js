@@ -49,7 +49,7 @@ function konst(name) {
 }
 
 const FNS = ["cornersK", "cornersOver", "cornersOpen", "countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmerican",
-  "saWeight", "isLowerLeague", "topKey", "outsideTop", "fid", "oddOf", "legOdd",
+  "saWeight", "isLowerLeague", "topKey", "topRank", "outsideTop", "favLeague", "fid", "oddOf", "legOdd",
   /* ONE FUNCTION ANSWERS "will this book take this leg" - see bookVerdict in
      index.html. The harness lifts the real thing rather than a stub, because
      stubbing it is how three copies of the same bug survived. */
@@ -69,6 +69,7 @@ const FNS = ["cornersK", "cornersOver", "cornersOpen", "countryOf", "isSAleague"
 function engine(fixtures) {
   return new Function("FX", [
     "var TOP_ONLY=false;", "var SHORT_LINE=1.15;",
+  (src.match(/var POPULAR=\[[\s\S]*?\];/) || [""])[0], (src.match(/var POPULAR_ALIAS=\{[\s\S]*?\};/) || [""])[0], "var FAVB={};",
     "var FIXTURES=FX;",
     "function scopeFixtures(){return FIXTURES;}",
     /* No saved slips in these harnesses, so nothing is already exposed;

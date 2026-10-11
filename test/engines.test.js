@@ -59,7 +59,7 @@ function konst(name) {
 }
 
 const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "isSAleague", "isAsianLeague", "isAsian", "isSouthAmerican",
-  "saWeight", "isLowerLeague", "topKey", "outsideTop", "fid", "oddOf", "legOdd",
+  "saWeight", "isLowerLeague", "topKey", "topRank", "outsideTop", "favLeague", "fid", "oddOf", "legOdd",
   /* ONE FUNCTION ANSWERS "will this book take this leg" - see bookVerdict in
      index.html. Lifted, not stubbed: stubbing it is how three copies of the
      same bug survived. */
@@ -88,6 +88,7 @@ const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "
 
 const api = new Function([
   "var TOP_ONLY=false;", "var SHORT_LINE=1.15;",
+  (src.match(/var POPULAR=\[[\s\S]*?\];/) || [""])[0], (src.match(/var POPULAR_ALIAS=\{[\s\S]*?\};/) || [""])[0], "var FAVB={};",
   "var FIXTURES=[];",
   /* null reads exactly like absent to every function that looks at it
      (they all ask typeof DATA and then DATA); a test sets cornersK through it. */

@@ -41,19 +41,20 @@ function grab(name) {
   for (; k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) break; } }
   return src.slice(i, k + 1);
 }
-const page = new Function(grab("topKey") + "\n" + grab("outsideTop") +"\nreturn {outsideTop:outsideTop};")();
+const lists = (src.match(/var POPULAR=\[[\s\S]*?\];/) || [""])[0] + "\n" + (src.match(/var POPULAR_ALIAS=\{[\s\S]*?\};/) || [""])[0];
+const page = new Function(lists + "\n" + grab("topKey") + "\n" + grab("topRank") + "\n" + grab("outsideTop") + "\nreturn {outsideTop:outsideTop};")();
 
 /* TOP LEAGUES (owner, 9 Oct 2026) replaced "Top flight only": the top division
    of UEFA's 30 strongest countries plus the three UEFA club competitions -
    not every country's first division. */
-test("Top leagues: the 30 top divisions and the UEFA cups stay, everything else goes", () => {
+test("Popular leagues: the top 20 countries' top divisions and the UEFA cups, everything else out", () => {
   for (const league of ["England Premier League", "Spain La Liga 1", "Germany Bundesliga 1", "Czechia 1. Liga",
-    "Bulgaria Parva Liga", "Russia Premier League", "International Clubs UEFA Champions League",
+    "Croatia HNL", "Sweden Allsvenskan", "International Clubs UEFA Champions League",
     "International Clubs UEFA Europa League", "International Clubs UEFA Conference League"])
     assert.strictEqual(page.outsideTop({ league }), false, league + " is a top league");
   for (const league of ["England Championship", "Kosovo Superliga", "Moldova Super Liga", "Brazil Serie A",
     "USA MLS", "England EFL Cup", "Germany DFB Pokal", "International Clubs CONMEBOL Libertadores",
-    "Greece Super League 2", "Nigeria Premier League"])
+    "Greece Super League 2", "Nigeria Premier League", "Bulgaria Parva Liga", "Russia Premier League", "Israel Premier League"])
     assert.strictEqual(page.outsideTop({ league }), true, league + " is All leagues only");
 });
 
@@ -105,10 +106,13 @@ test("nothing below the top division survives the filter on the real board", () 
   const kept = fixtures.filter(f => !page.outsideTop(f));
   assert.ok(kept.length > 0, "the filter cannot empty the board");
 
-  const wrong = kept.filter(f => f.tier && f.tier > 1)
-    .map(f => `${f.league} (tier ${f.tier}): ${f.home} v ${f.away}`);
+  /* By name, not by the stamped tier: the stamp is not reliable for this (11
+     Oct 2026 it called a Danish Superliga game tier 2 and Spain's fourth
+     tier tier 1). A second-or-lower division never carries a popular name. */
+  const wrong = kept.filter(f => /\b(2|ii|championship|segunda|serie b|ligue 2|eerste divisie|1\. lig|superettan)\b/i.test(f.league))
+    .map(f => `${f.league}: ${f.home} v ${f.away}`);
   assert.deepStrictEqual(wrong, [],
-    wrong.length + " lower-division fixture(s) survived 'top flight only'");
+    wrong.length + " lower-division fixture(s) survived Popular leagues");
 
   /* And the filter has to actually do something, or it would pass vacuously. */
   assert.ok(fixtures.length - kept.length > 0,
@@ -116,7 +120,7 @@ test("nothing below the top division survives the filter on the real board", () 
 });
 
 test("Top leagues survive a renamed feed label, and a second division never sneaks in", () => {
-  for (const league of ["Spain LaLiga", "Germany Bundesliga", "Turkiye Super Lig", "Czechia Chance Liga", "Slovakia Nike Liga"])
+  for (const league of ["Spain LaLiga", "Germany Bundesliga", "Turkiye Super Lig", "Czechia Chance Liga", "Croatia SuperSport HNL"])
     assert.strictEqual(page.outsideTop({ league }), false, league);
   for (const league of ["Spain LaLiga 2", "Germany Bundesliga 2", "Greece Super League 2", "Turkiye 1. Lig", "Austria 2. Liga"])
     assert.strictEqual(page.outsideTop({ league }), true, league);

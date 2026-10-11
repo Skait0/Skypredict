@@ -55,7 +55,7 @@ test("builder filters start open on every screen (owner, 9 Oct 2026: shut by def
   assert.deepStrictEqual(runFilters(false), { open: true, expanded: "true" });
 });
 
-test("shut, the filters bar says so with a filled Show filters pill; Top leagues is the default", () => {
+test("shut, the filters bar says so with a filled Show filters pill; Favourite leagues is the default", () => {
   assert.match(FILTERS, /hint\.textContent=open\?"Hide":"Show filters"/);
   assert.match(src, /\.filters-toggle\[aria-expanded="false"\] \.ft-hint\{background:var\(--accent\)/);
   assert.match(src, /var TOP_ONLY=true; try\{var _to=localStorage\.getItem\("sw\.topleagues"\); if\(_to!==null\) TOP_ONLY=_to==="1";\}/);
@@ -141,62 +141,38 @@ test("the fixed Build me a slip button only exists where the rail column can hol
   assert.ok(!/@media\(min-width:721px\)\{ \.ctafab\{display:inline-flex\} \}/.test(src));
 });
 
-/* ---- the shut filters bar names every filter that is not the default ---- */
-const SUM_SRC = ["updateFiltersSum", "scopeLabel", "leagueCount", "leagueAllowed", "leagueDefault",
-  "leaguePicksTouched", "marketCount", "spanName"].map(grab).join("\n");
-const TOD_LABEL = { early: "Early", mid: "Mid day", late: "Late" };
+/* ---- the shut filters bar: three tokens (redesign, 11 Oct 2026) ---- */
+const SUM_SRC = ["updateFiltersSum", "scopeLabel", "marketCount", "spanName"].map(grab).join("\n");
+const TOD_LABEL = { early: "Early", mid: "Midday", late: "Late" };
 
 function filtersSum(state) {
-  const el = { textContent: "" };
-  const LEAGUES = (state && state.LEAGUES) || ["Premier League", "La Liga", "Serie A", "National League"];
+  const el = { innerHTML: "" };
   const ctx = Object.assign({
     document: {
       getElementById: (id) => (id === "filtersSum" ? el : null),
       querySelector: (s) => { const m = /data-tod='(\w+)'/.exec(s); return m ? { textContent: TOD_LABEL[m[1]] } : null; },
     },
-    SCOPE: "day", SDAY: 0, TOD: "all", SPAN: 3, TOP_ONLY: false, VOL_IN: false, BLD_PICK: {},
+    SCOPE: "day", SDAY: 0, TOD: "all", SPAN: 3, TOP_ONLY: true,
     BUILD: { mk: { wd: true, o15: true, o25: true, tts: true } },
     dayName: (o) => (o === 1 ? "Tomorrow" : "Saturday"),
-    isVolatile: (l) => l === "National League",
-    leaguesOnBoard: () => LEAGUES.map((league) => ({ league, n: 3 })),
+    esc: (x) => String(x),
+    scopeFixtures: () => new Array((state && state.n) || 32),
   }, state);
   vm.runInNewContext(SUM_SRC + "\nupdateFiltersSum();", ctx);
-  return el.textContent;
+  return [...el.innerHTML.matchAll(/<span class='ft-tok'>([\s\S]*?)<\/span>/g)].map((m) => m[1].replace(/<[^>]+>/g, ""));
 }
 
-/* A board with no volatile league on it: the untouched default is every league. */
-const TOP3 = ["Premier League", "La Liga", "Serie A"];
-
-test("filters summary: the untouched default", () => {
-  assert.strictEqual(filtersSum({ LEAGUES: TOP3 }), "All leagues · 4 markets");
-});
-
-test("filters summary: benched volatile leagues are counted out, as the picker counts them", () => {
-  /* National League sits on the bench by default; the line must not claim
-     "All leagues" while the picker button says 3 of 4. */
-  assert.strictEqual(filtersSum({}), "3 of 4 leagues · 4 markets");
-  assert.strictEqual(filtersSum({ SCOPE: "wknd" }), "Weekend · 3 of 4 leagues · 4 markets");
-});
-
-test("filters summary: leagues taken out, or the volatile ones let in", () => {
-  assert.strictEqual(filtersSum({ BLD_PICK: { "La Liga": 0 } }), "2 of 4 leagues · 4 markets");
-  assert.strictEqual(filtersSum({ VOL_IN: true }), "4 of 4 leagues · 4 markets");
+test("filters summary: when, which leagues, how many markets", () => {
+  assert.deepStrictEqual(filtersSum({}), ["Today 32", "Favourites", "4 markets"]);
+  assert.deepStrictEqual(filtersSum({ TOP_ONLY: false, BUILD: { mk: { wd: true } } }), ["Today 32", "All leagues", "1 market"]);
 });
 
 test("filters summary: the weekend, a single day with a time, all upcoming", () => {
-  const L = { LEAGUES: TOP3 };
-  assert.strictEqual(filtersSum({ ...L, SCOPE: "wknd" }), "Weekend · All leagues · 4 markets");
-  assert.strictEqual(filtersSum({ ...L, SDAY: 5, TOD: "late" }), "Saturday · Late · All leagues · 4 markets");
-  assert.strictEqual(filtersSum({ ...L, TOD: "early" }), "Today only · Early · All leagues · 4 markets");
-  assert.strictEqual(filtersSum({ ...L, SCOPE: "span" }), "Next 3 days · All leagues · 4 markets");
-  assert.strictEqual(filtersSum({ ...L, SCOPE: "all" }), "All upcoming · All leagues · 4 markets");
-});
-
-test("filters summary: top flight, alone and with leagues narrowed", () => {
-  /* Top flight drops lower leagues from the board itself, volatile ones included. */
-  assert.strictEqual(filtersSum({ LEAGUES: TOP3, TOP_ONLY: true }), "Top leagues · 4 markets");
-  assert.strictEqual(filtersSum({ TOP_ONLY: true, BLD_PICK: { "Serie A": 0 }, BUILD: { mk: { wd: true } } }),
-    "Top leagues · 2 of 4 leagues · 1 market");
+  assert.deepStrictEqual(filtersSum({ SCOPE: "wknd", n: 90 })[0], "Weekend 90");
+  assert.deepStrictEqual(filtersSum({ SDAY: 5, TOD: "late" })[0], "Saturday, late 32");
+  assert.deepStrictEqual(filtersSum({ TOD: "early" })[0], "Today, early 32");
+  assert.deepStrictEqual(filtersSum({ SCOPE: "span" })[0], "Next 3 days 32");
+  assert.deepStrictEqual(filtersSum({ SCOPE: "all", n: 319 })[0], "All upcoming 319");
 });
 
 /* ---- the sheet for every bookmaker ---- */

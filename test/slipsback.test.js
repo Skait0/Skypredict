@@ -28,8 +28,8 @@ function world() {
     + 'function openSlipsSheet(){$("scrim").classList.add("on");$("slipsSheet").classList.add("on");lockBody(true);'
     + "if(!SLIPS_PUSHED){ SLIPS_PUSHED=true; history.pushState({sw:1},''); }}"
     + "return {open:openSlipsSheet,close:closeSlipsSheet};";
-  const api = new Function("$", "lockBody", "history", "window", "swAccountUI", "closeSheet", "closeMySheet", "document", "setView", src)(
-    k => els[k], () => {}, history, win, win.swAccountUI, () => {}, () => {}, doc, () => {});
+  const api = new Function("$", "lockBody", "history", "window", "swAccountUI", "closeSheet", "closeMySheet", "closeFavSheet", "document", "setView", src)(
+    k => els[k], () => {}, history, win, win.swAccountUI, () => {}, () => {}, () => {}, doc, () => {});
   api.pop = () => listeners[0]();
   return { api, on, hist, win };
 }

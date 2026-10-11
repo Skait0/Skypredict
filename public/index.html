@@ -6872,6 +6872,97 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 @keyframes swUndoBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 @media (prefers-reduced-motion:reduce){.sw-card,.sw-undo,.sw-swipe,.ys-live,.ys-dot.run,.ys-live:after,.ys-dot.run:after,.sw-undo .u-bar{animation:none!important;transition:none!important}}
 .bld-empty .bld-alt{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+
+/* ================================================= builder filters, 11 Oct 2026
+   One card, three sections (When / Leagues / Markets); the bar names what is
+   set as three tokens. Approved mockup: claude.ai/artifact/6dd7gj1WmdVs9P2cBoioF2 */
+#bldShared .filters-toggle{display:grid;grid-template-columns:auto 1fr auto;align-items:center;column-gap:10px;row-gap:8px;
+  padding:14px 14px 14px 16px;border-radius:12px;text-align:left}
+#bldShared .filters-toggle[aria-expanded="false"]{border-color:var(--line)}
+#bldShared .filters-toggle .ft-ic{width:18px;height:18px;color:var(--soft)}
+#bldShared .filters-toggle .ft-t{font-size:15px;font-weight:800;letter-spacing:-.01em;color:var(--text)}
+#bldShared .filters-toggle .ft-chev{width:20px;height:20px;color:var(--faint);transform:none}
+#bldShared .filters-toggle[aria-expanded="true"] .ft-chev{transform:rotate(180deg)}
+#bldShared .filters-toggle .ft-sum{grid-column:2/4;display:flex;flex-wrap:wrap;gap:6px;text-align:left}
+#bldShared .filters-toggle[aria-expanded="true"] .ft-sum{display:none}
+#bldShared .ft-tok{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:99px;
+  background:var(--card-2);border:1px solid var(--line);font-size:12px;font-weight:700;color:var(--soft);white-space:nowrap}
+#bldShared .ft-tok b{color:var(--text);font-weight:800;font-variant-numeric:tabular-nums}
+#bldShared .filters-body{background:var(--card);border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;
+  margin-top:0;padding:12px 16px 18px}
+#bldShared .filters-toggle[aria-expanded="true"]{margin-bottom:0}
+#bldShared{gap:0}
+#bldShared .filters-body[hidden]{border:0;padding:0}
+#bldShared .filters-toggle{background:var(--card)}
+#bldShared .filters-toggle[aria-expanded="true"]{border-radius:12px 12px 0 0;border-bottom-color:var(--line-soft)}
+#bldShared .fs-lbl{display:block;margin:18px 0 10px;font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+#bldShared .filters-col1>.fs-lbl:first-child{margin-top:6px}
+#bldShared .scope-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:4px;border-radius:99px;
+  background:var(--bg);border:1px solid var(--line);margin:0}
+#bldShared .scope-opt{height:40px;border-radius:99px;font-size:13.5px;font-weight:700;color:var(--soft);display:flex;align-items:center;justify-content:center;gap:7px;padding:0 8px}
+#bldShared .scope-opt.on{background:var(--raise);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.35),inset 0 0 0 1px var(--line)}
+#bldShared .so-n{background:none;padding:0;font-size:12px;font-weight:800;color:var(--faint);font-variant-numeric:tabular-nums}
+#bldShared .scope-opt.on .so-n{background:none;color:var(--accent)}
+#bldShared .tod-seg{background:none;border:0;padding:0;margin-top:10px;gap:6px}
+#bldShared .tod-seg .scope-opt{height:46px;flex-direction:column;gap:3px;font-size:12.5px;border:1px solid var(--line);padding:0 4px}
+#bldShared .tod-seg .scope-opt.on{background:none;box-shadow:none;border-color:var(--text)}
+#bldShared .tod-seg .so-n{font-size:11.5px}
+#bldShared .lg-seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:99px;background:var(--bg);border:1px solid var(--line)}
+#bldShared .lg-seg button{height:40px;border-radius:99px;border:0;background:none;color:var(--soft);font:inherit;font-size:13.5px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;white-space:nowrap}
+#bldShared .lg-seg button svg{width:14px;height:14px}
+#bldShared .lg-seg button.on{background:var(--raise);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.35),inset 0 0 0 1px var(--line)}
+#bldShared .lg-seg button:focus-visible,#bldShared .fav-edit:focus-visible,#bldShared .mk-reset:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#bldShared .fav-line{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+#bldShared .fav-line p{margin:0;font-size:12.5px;font-weight:600;line-height:1.45;color:var(--faint);min-width:0}
+#bldShared .fav-line p b{color:var(--soft);font-weight:700}
+#bldShared .fav-edit{flex:none;height:32px;padding:0 13px;border-radius:99px;border:1px solid var(--accent-rim);background:none;color:var(--accent);
+  font:inherit;font-size:12.5px;font-weight:800;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+#bldShared .fav-edit svg{width:14px;height:14px}
+#bldShared .mk-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+#bldShared .mk-reset{background:none;border:0;padding:4px 0;font:inherit;font-size:12.5px;font-weight:700;color:var(--soft);cursor:pointer}
+#bldShared .mk-reset b{color:var(--text);font-variant-numeric:tabular-nums}
+#bldShared .mkt-palette{display:block}
+#bldShared .mk-grp+.mk-grp{margin-top:14px}
+#bldShared .mk-grp-t{margin:0 0 8px;font-size:12px;font-weight:700;color:var(--faint)}
+#bldShared .mk-chips{display:flex;flex-wrap:wrap;gap:7px}
+#bldShared .mkt-chip{height:34px;padding:0 13px;border-radius:99px;font-size:13px;font-weight:700;gap:6px;white-space:nowrap;width:auto}
+#bldShared .mkt-chip .mkt-icon{display:none}
+#bldShared .mkt-chip .mk-st{width:13px;height:13px;flex:none}
+#bldShared .mkt-chip.on{box-shadow:none}
+#bldShared .mkt-chip.locked{opacity:1;filter:none;background:none;border-style:dashed;color:var(--faint)}
+#bldShared .mkt-chip.locked .mk-st{width:12px;height:12px}
+#bldShared .mkt-chip.wrong-book{opacity:1}
+#bldShared .mk-note{margin:12px 0 0;font-size:12px;font-weight:600;color:var(--faint)}
+@media (hover:hover){
+  #bldShared .lg-seg button:hover:not(.on),#bldShared .scope-opt:hover:not(.on){color:var(--text)}
+  #bldShared .fav-edit:hover{background:var(--card-2)}
+  #bldShared .mk-reset:hover{color:var(--text)}
+}
+@media (min-width:720px){
+  #bldShared .filters-col1>.fs-lbl:first-child,#bldShared .filters-col2>.mk-head .fs-lbl{margin-top:6px}
+}
+/* the favourite leagues sheet */
+.fav-sheet .sheet-body{padding:0 0 8px}
+.fav-find{display:flex;align-items:center;gap:8px;margin:12px 16px 4px;height:42px;padding:0 14px;border-radius:99px;
+  border:1px solid var(--line);background:var(--bg);color:var(--faint)}
+.fav-find svg{width:16px;height:16px;flex:none}
+.fav-find input{flex:1;min-width:0;border:0;background:none;color:var(--text);font:inherit;font-size:14px;font-weight:600;outline:none}
+.fav-find:focus-within{border-color:var(--faint)}
+.fav-h{margin:0;padding:14px 16px 6px;font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+.fav-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid var(--line-soft)}
+.fav-nm{font-size:14px;font-weight:700;line-height:1.25;color:var(--text);min-width:0}
+.fav-ct{display:block;margin-top:2px;font-size:12px;font-weight:600;color:var(--faint)}
+.fav-star{width:36px;height:36px;border-radius:99px;border:1px solid var(--line);background:none;color:var(--faint);display:grid;place-items:center;cursor:pointer}
+.fav-star svg{width:17px;height:17px}
+.fav-star.on{border-color:var(--accent-rim);color:var(--accent)}
+.fav-star:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.fav-none{margin:0;padding:18px 16px;font-size:13px;color:var(--faint)}
+.fav-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px calc(16px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);flex-shrink:0}
+.fav-reset{background:none;border:0;padding:8px 0;font:inherit;font-size:13px;font-weight:700;color:var(--soft);cursor:pointer}
+.fav-done{height:42px;padding:0 22px;border-radius:99px;border:0;background:var(--red-fill);color:#fff;font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+@media (hover:hover){ .fav-reset:hover{color:var(--text)} .fav-star:hover{border-color:var(--faint)} }
 </style>
 </head>
 <body>
@@ -7489,15 +7580,18 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <!-- SHARED CONTROLS (always visible) -->
     <div class="bld-shared stage-in stage-in-1" id="bldShared" data-parallax="0.8">
       <button class="filters-toggle" id="filtersToggle" type="button" aria-expanded="true" aria-controls="filtersBody">
-        <span class="ft-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16M7 12h10M10 19h4"/></svg>Filters</span>
-        <span class="ft-r"><span class="ft-sum" id="filtersSum"></span><span class="ft-hint" id="filtersHint">Hide</span><svg class="ft-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+        <svg class="ft-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+        <span class="ft-t">Filters</span>
+        <svg class="ft-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        <span class="ft-sum" id="filtersSum"></span>
       </button>
       <div class="filters-body" id="filtersBody">
       <div class="filters-col1">
+      <div class="wsp-lbl fs-lbl">When</div>
       <div class="scope-seg stage-in stage-in-2" id="scopeSeg" role="group" aria-label="Fixture window">
         <button class="scope-opt scope-day stage-in stage-in-3" type="button" id="scopeDayBtn"
           aria-haspopup="listbox" aria-expanded="false" aria-label="Choose a day">
-          <span class="so-t" id="scopeDayLbl">Today only</span><span class="so-n" data-scope-n="day"></span>
+          <span class="so-t" id="scopeDayLbl">Today</span><span class="so-n" data-scope-n="day"></span>
           <svg class="so-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
         <button class="scope-opt stage-in stage-in-3" type="button" data-scope="all">
           <span class="so-t">All upcoming</span><span class="so-n" data-scope-n="all"></span></button>
@@ -7505,31 +7599,16 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       <div class="scope-seg tod-seg stage-in stage-in-2" id="todSeg" role="group" aria-label="Kick-off time, today only">
         <button class="scope-opt stage-in stage-in-3" type="button" data-tod="all"><span class="so-t">All day</span><span class="so-n" data-tod-n="all"></span></button>
         <button class="scope-opt stage-in stage-in-3" type="button" data-tod="early"><span class="so-t">Early</span><span class="so-n" data-tod-n="early"></span></button>
-        <button class="scope-opt stage-in stage-in-3" type="button" data-tod="mid"><span class="so-t">Mid day</span><span class="so-n" data-tod-n="mid"></span></button>
+        <button class="scope-opt stage-in stage-in-3" type="button" data-tod="mid"><span class="so-t">Midday</span><span class="so-n" data-tod-n="mid"></span></button>
         <button class="scope-opt stage-in stage-in-3" type="button" data-tod="late"><span class="so-t">Late</span><span class="so-n" data-tod-n="late"></span></button>
       </div>
-      <div class="wsp-lbl stage-in stage-in-2">Leagues</div>
-      <div class="wsp-chips stage-in stage-in-3" id="bldLeagues">
-        <button class="wsp-chip stage-in stage-in-4" type="button" data-btp="true">Top leagues</button>
-        <button class="wsp-chip stage-in stage-in-4" type="button" data-btp="false">All leagues</button>
-        <!-- Third control in the same row rather than a bar of its own: it is
-             one more way to narrow the same thing, and full width made it read
-             as a section heading over the markets below it. -->
-        <button class="wsp-chip lgp-open stage-in stage-in-4" type="button" id="lgpOpen"
-                aria-expanded="false" aria-controls="lgpBox">
-          <span id="lgpSum">Leagues</span>
-          <span class="lgp-caret" aria-hidden="true">&#9662;</span>
-        </button>
+      <div class="wsp-lbl fs-lbl">Leagues</div>
+      <div class="lg-seg" id="bldLeagues" role="group" aria-label="Leagues">
+        <button type="button" data-btp="true"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>Favourite leagues</button>
+        <button type="button" data-btp="false">All leagues</button>
       </div>
-      <div class="lgp-wrap stage-in stage-in-3">
-        <div class="lgp-box" id="lgpBox" hidden>
-          <div class="lgp-head">
-            <span id="lgpCount"></span>
-            <button class="lgp-clear" type="button" id="lgpClear">All leagues</button>
-          </div>
-          <div class="lgp-list" id="lgpList"></div>
-        </div>
-      </div>
+      <div class="fav-line" id="favLine"><p id="favLineTxt"></p>
+        <button type="button" class="fav-edit" id="favEdit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Edit</button></div>
       </div><!-- /.filters-col1 -->
       <!-- One box, because the two columns of this panel are one grid and its
            rows are shared: left on its own, this label sat in a row sized by
@@ -7537,7 +7616,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
            Wrapped, the right column is a single grid item and the label is
            spaced by its own margin again. -->
       <div class="filters-col2">
-        <div class="wsp-lbl stage-in stage-in-2">Include markets</div>
+        <div class="mk-head"><span class="wsp-lbl fs-lbl">Markets</span><button type="button" class="mk-reset" id="mkReset"></button></div>
         <div class="wsp-chips mkt-palette stage-in stage-in-3" id="bldMk"></div>
         <!-- Where the draw asks before it turns on. Empty until then. -->
         <div id="mkAsk"></div>
@@ -7880,6 +7959,16 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 </div>
 <div class="sw-undo" id="swUndo" role="status" aria-live="polite"><span class="u-msg"></span><button type="button" id="swUndoBtn">Undo</button><i class="u-bar"></i></div>
 
+<div class="sheet fav-sheet" id="favSheet" role="dialog" aria-modal="true" aria-labelledby="favSheet-title">
+  <div class="sheet-grab"><i></i></div>
+  <div class="sheet-head">
+    <div class="info"><h3 id="favSheet-title">Favourite leagues</h3><p>Slips use these when Favourite leagues is on. Star a league to add it.</p></div>
+    <button class="sheet-collapse" id="favSheet-x" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <label class="fav-find"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="favFind" type="search" placeholder="Find a league" autocomplete="off" aria-label="Find a league"></label>
+  <div class="sheet-body" id="favList"></div>
+  <div class="fav-foot"><button type="button" class="fav-reset" id="favReset">Reset to the top 20</button><button type="button" class="fav-done" id="favDone">Done</button></div>
+</div>
 <div class="sheet myslip-sheet" id="mySheet" role="dialog" aria-modal="true" aria-labelledby="mySheet-title">
   <div class="sheet-grab"><i></i></div>
   <div class="sheet-head">
@@ -8625,42 +8714,54 @@ var ASIA_MIN_EURO=3;
    The guard first: a few top flights read like tiers - Korea's K-League 1,
    Japan's J1, Spain's La Liga 1 - and would otherwise be demoted by the
    "league 1" pattern below. */
-/* TOP LEAGUES (owner, 9 Oct 2026): the top division of the 30 strongest
-   countries on UEFA's country coefficient (football-coefficient.eu, read that
-   day), plus the three UEFA club competitions. It replaced "Top flight only",
-   which let every country's first division in - Kosovo's and Moldova's beside
-   the Premier League. Domestic cups and everything else stay in All leagues.
-   Names are the board's own, exactly; a renamed feed label drops out of Top
-   leagues rather than in. Russia's coefficient is frozen since its 2022 ban
-   but it is still 28th, so it stays. */
-/* Matched loosely (owner, 9 Oct 2026: a renamed feed label must not drop a
-   league silently): case, spaces, dots and a trailing "1" are ignored, so
-   "Spain LaLiga" is "Spain La Liga 1" and "Germany Bundesliga" is
-   "Germany Bundesliga 1"; Turkiye is Turkey; and the sponsor names some feeds
-   use are aliases. A second division ("La Liga 2", "Super League 2") never
-   matches - its number is kept. */
+/* POPULAR LEAGUES (owner, 9-11 Oct 2026): the top division of the 20
+   strongest countries on UEFA's country coefficient (football-coefficient.eu,
+   9 Oct 2026), plus the three UEFA club competitions. It is where every
+   reader's Favourite leagues start (see FAVB below). Names are matched
+   loosely - case, spaces, dots, a trailing "1" and Turkiye/Turkey are
+   ignored - and the sponsor names some feeds use are listed too, so a renamed
+   label does not drop a league; a second division never matches, because its
+   number is kept. In rank order: topRank() reads the position. */
+var POPULAR=["England Premier League","Italy Serie A","Spain La Liga 1","Germany Bundesliga 1","France Ligue 1",
+  "Portugal Primeira Liga","Netherlands Eredivisie","Belgium Pro League","Turkey Super Lig","Czechia 1. Liga",
+  "Greece Super League","Poland Ekstraklasa","Denmark Superliga","Norway Eliteserien","Cyprus 1st Division",
+  "Switzerland Super League","Austria Bundesliga","Scotland Premiership","Sweden Allsvenskan","Croatia HNL",
+  "International Clubs UEFA Champions League","International Clubs UEFA Europa League","International Clubs UEFA Conference League"];
+var POPULAR_ALIAS={"Czechia Chance Liga":"Czechia 1. Liga","Poland PKO BP Ekstraklasa":"Poland Ekstraklasa",
+  "Greece Stoiximan Super League":"Greece Super League","Cyprus Cyta Championship":"Cyprus 1st Division",
+  "Turkey Trendyol Super Lig":"Turkey Super Lig","Portugal Liga Portugal":"Portugal Primeira Liga",
+  "Portugal Liga Portugal Betclic":"Portugal Primeira Liga","Belgium Jupiler Pro League":"Belgium Pro League",
+  "Denmark 3F Superliga":"Denmark Superliga","Austria Admiral Bundesliga":"Austria Bundesliga",
+  "Switzerland Credit Suisse Super League":"Switzerland Super League","Scotland Scottish Premiership":"Scotland Premiership",
+  "Netherlands VriendenLoterij Eredivisie":"Netherlands Eredivisie","France Ligue 1 McDonalds":"France Ligue 1",
+  "Spain LaLiga EA Sports":"Spain La Liga 1","Croatia SuperSport HNL":"Croatia HNL"};
 function topKey(l){ return String(l||"").toLowerCase().replace(/t[uü]rkiye/,"turkey").replace(/[^a-z0-9]/g,"").replace(/1$/,""); }
-function outsideTop(f){
-  if(!f) return false;
-  var l=f.league||"";
-  if(/^International Clubs UEFA (Champions|Europa|Conference) League$/.test(l)) return false;
-  var m=outsideTop._m||(outsideTop._m={});      // one answer per league name, worked out once
+/* Position in POPULAR, or -1. One answer per league name, worked out once. */
+function topRank(l){
+  var m=topRank._m||(topRank._m={});
   if(m[l]!==undefined) return m[l];
-  var k=topKey(l);
-  return m[l]=!["England Premier League","Italy Serie A","Spain La Liga 1","Germany Bundesliga 1","France Ligue 1",
-    "Portugal Primeira Liga","Netherlands Eredivisie","Belgium Pro League","Turkey Super Lig","Czechia 1. Liga",
-    "Greece Super League","Poland Ekstraklasa","Denmark Superliga","Norway Eliteserien","Cyprus 1st Division",
-    "Switzerland Super League","Austria Bundesliga","Scotland Premiership","Sweden Allsvenskan","Croatia HNL",
-    "Israel Premier League","Hungary NB I","Ukraine Premier League","Serbia Superliga","Romania Superliga",
-    "Slovenia PrvaLiga","Azerbaijan Premier League","Russia Premier League","Slovakia Superliga","Bulgaria Parva Liga",
-    "Czechia Chance Liga","Slovakia Nike Liga","Hungary OTP Bank Liga","Croatia SuperSport HNL","Bulgaria efbet Liga",
-    "Bulgaria First League","Poland PKO BP Ekstraklasa","Greece Stoiximan Super League","Cyprus Cyta Championship",
-    "Romania Liga I","Turkey Trendyol Super Lig","Portugal Liga Portugal","Portugal Liga Portugal Betclic",
-    "Belgium Jupiler Pro League","Denmark 3F Superliga","Austria Admiral Bundesliga","Switzerland Credit Suisse Super League",
-    "Scotland Scottish Premiership","Israel Ligat haAl","Russia Russian Premier League","Serbia Mozzart Bet Superliga",
-    "Netherlands VriendenLoterij Eredivisie","France Ligue 1 McDonalds","Slovenia Prva Liga","Spain LaLiga EA Sports"
-  ].some(function(n){ return topKey(n)===k; });
+  var k=topKey(l), i, a;
+  for(i=0;i<POPULAR.length;i++) if(topKey(POPULAR[i])===k) return m[l]=i;
+  for(a in POPULAR_ALIAS) if(topKey(a)===k) return m[l]=POPULAR.indexOf(POPULAR_ALIAS[a]);
+  return m[l]=-1;
 }
+function outsideTop(f){ return !!f && topRank(f.league||"")<0; }
+/* FAVOURITE LEAGUES - the builder's own list (owner, 11 Oct 2026). Separate
+   from the board's stars on purpose: "i might want to see the full board but
+   my build me slip should be what i want". Starts as POPULAR; stored as the
+   difference from it, {league: 1 added | 0 taken out}, and synced as the
+   favleagues pref.
+   ponytail: prefs sync up to 500 characters (about 15 changes); past that the
+   list still works on this phone and stops syncing - move it to its own sync
+   set if readers curate more than that. */
+var FAVB={};
+try{ var _fb=JSON.parse(localStorage.getItem("sw.favleagues")||"{}"); if(_fb&&typeof _fb==="object"&&!Array.isArray(_fb)) FAVB=_fb; }catch(e){}
+function favLeague(l){ return Object.prototype.hasOwnProperty.call(FAVB,l) ? !!FAVB[l] : topRank(l)>=0; }
+function setFav(l,on){
+  if(!!on===(topRank(l)>=0)) delete FAVB[l]; else FAVB[l]=on?1:0;
+  try{ localStorage.setItem("sw.favleagues",JSON.stringify(FAVB)); }catch(e){}
+}
+function resetFavs(){ FAVB={}; try{ localStorage.removeItem("sw.favleagues"); }catch(e){} }
 function isLowerLeague(l){
   var s=(l||"").toLowerCase();
   if(/\bk-?league 1\b|\bj1 league\b|\bla liga 1\b|\bliga 1\b|\bligue 1\b|\bserie a\b|\bbundesliga 1\b/.test(s)) return false;
@@ -8687,21 +8788,15 @@ function marketCount(){try{return Object.keys(BUILD.mk).filter(function(k){retur
    controls label themselves with. "Weekend \u00b7 12 of 47 leagues \u00b7 4 markets". */
 function updateFiltersSum(){
   var el=document.getElementById("filtersSum"); if(!el) return;
-  var n=marketCount(), parts=[];
-  if(SCOPE==="all") parts.push("All upcoming");
-  else if(SCOPE!=="day"||SDAY!==0||TOD!=="all") parts.push(scopeLabel());
-  if(SCOPE!=="all"&&TOD!=="all"){
+  var n=marketCount(), c=0, when=SCOPE==="all"?"All upcoming":scopeLabel().replace(/ only$/,"");
+  try{ c=scopeFixtures().length; }catch(e){}
+  if(SCOPE==="day"&&TOD!=="all"){
     var t=document.querySelector("[data-tod='"+TOD+"'] .so-t");
-    if(t) parts.push(t.textContent);
+    if(t) when+=", "+t.textContent.toLowerCase();
   }
-  var lc=null; try{ lc=leagueCount(); }catch(e){}
-  if(TOP_ONLY) parts.push("Top leagues");
-  /* Benched volatile leagues are leagues out, so the line agrees with the
-     picker's count rather than claiming "All leagues". */
-  if(lc&&(lc.narrowed||lc.live<lc.avail.length)) parts.push(lc.words);
-  else if(!TOP_ONLY) parts.push("All leagues");
-  parts.push(n+" market"+(n===1?"":"s"));
-  el.textContent=parts.join(" \u00b7 ");
+  el.innerHTML="<span class='ft-tok'>"+esc(when)+" <b>"+c+"</b></span>"+
+    "<span class='ft-tok'>"+(TOP_ONLY?"Favourites":"All leagues")+"</span>"+
+    "<span class='ft-tok'><b>"+n+"</b> market"+(n===1?"":"s")+"</span>";
 }
 function isSAleague(l){return !!SA_COUNTRIES[countryOf(l||"")];}
 function isAsianLeague(l){
@@ -10351,18 +10446,19 @@ function closeSheet(){
   document.documentElement.classList.remove("locked");
   if(SHEET_RETURN){SHEET_RETURN.focus();SHEET_RETURN=null;}
 }
-$("scrim").addEventListener("click",function(){closeSheet();closeMySheet();closeSlipsSheet();});
+$("scrim").addEventListener("click",function(){closeFavSheet();closeSheet();closeMySheet();closeSlipsSheet();});
 $("sheet-x").addEventListener("click",closeSheet);
-function anyOverlayOpen(){return ($("sheet")&&$("sheet").classList.contains("on"))||($("mySheet")&&$("mySheet").classList.contains("on"))||($("slipsSheet")&&$("slipsSheet").classList.contains("on"));}
+function anyOverlayOpen(){return ($("favSheet")&&$("favSheet").classList.contains("on"))||($("sheet")&&$("sheet").classList.contains("on"))||($("mySheet")&&$("mySheet").classList.contains("on"))||($("slipsSheet")&&$("slipsSheet").classList.contains("on"));}
 window.addEventListener("popstate",function(){
   if(window.swAccountUI&&swAccountUI.eatPop()) return;
   if(SKIP_POP){SKIP_POP=false;return;}
-  if(anyOverlayOpen()){SLIPS_PUSHED=false;closeSheet();closeMySheet();closeSlipsSheet();}
+  if(anyOverlayOpen()){SLIPS_PUSHED=false;closeFavSheet();closeSheet();closeMySheet();closeSlipsSheet();}
   else if(document.documentElement.classList.contains("mode-build")||document.documentElement.classList.contains("mode-live")){setView("pred");}
 });
 function pushOverlay(){try{history.pushState({sw:1},"");}catch(e){}}
 addEventListener("keydown",function(e){
   if(e.key==="Escape"){
+    if($("favSheet")&&$("favSheet").classList.contains("on")) closeFavSheet();
     if($("sheet").classList.contains("on")) closeSheet();
     if($("mySheet").classList.contains("on")) closeMySheet();
     if($("slipsSheet")&&$("slipsSheet").classList.contains("on")) closeSlipsSheet();
@@ -10520,12 +10616,17 @@ function isVolatile(l){
 }
 function leagueDefault(l){return !isVolatile(l)||VOL_IN;}
 function leagueAllowed(l){
-  if(Object.prototype.hasOwnProperty.call(BLD_PICK,l)) return !!BLD_PICK[l];
+  /* Favourite leagues mode is the reader's list and nothing else - a league
+     they added counts even when it is a lower division. All leagues is every
+     league, the volatile ones waiting on the bench as before. The old
+     per-league taps (BLD_PICK) stopped applying with the 11 Oct 2026 redesign:
+     nothing on screen could undo them any more. */
+  if(TOP_ONLY) return favLeague(l);
   return leagueDefault(l);
 }
 /* Has the reader narrowed the pool - taken out a league that would be in? */
-function leaguesChosen(){for(var k in BLD_PICK){if(BLD_PICK[k]===0)return true;}return false;}
-function leaguePicksTouched(){for(var k in BLD_PICK){return true;}return false;}
+function leaguesChosen(){return !!TOP_ONLY;}
+function leaguePicksTouched(){return false;}
 function setLeaguePicked(l,on){
   /* Only a difference from the default is stored, so ticking a league back
      returns the picker to its untouched state rather than leaving a no-op override. */
@@ -10581,7 +10682,7 @@ function leaguesOnBoard(){
     if(!notStarted(f)) return false;
     return inScope(f);
   })).forEach(function(f){
-    if(TOP_ONLY&&outsideTop(f)) return;
+    if(TOP_ONLY&&!favLeague(f.league)) return;
     seen[f.league]=(seen[f.league]||0)+1;
   });
   return Object.keys(seen).sort(function(a,b){
@@ -10611,14 +10712,14 @@ function buildableOn(off){
     if(!notStarted(f)) continue;
     if(dayOff(fDay(f))!==off) continue;
     if(!leagueAllowed(f.league)) continue;
-    if(TOP_ONLY&&outsideTop(f)) continue;
+    if(TOP_ONLY&&!favLeague(f.league)) continue;
     out.push(f);}
   return out;
 }
 /* The same three filters with no day at all, for the "All upcoming" count. */
 function buildableAll(){
   return (DATA.fixtures||[]).filter(function(f){
-    return notStarted(f)&&leagueAllowed(f.league)&&!(TOP_ONLY&&outsideTop(f));
+    return notStarted(f)&&leagueAllowed(f.league)&&!(TOP_ONLY&&!favLeague(f.league));
   });
 }
 /* The same three filters across the whole span, for the pill that is showing
@@ -10706,7 +10807,7 @@ function paintScope(){
   /* "Today only" reads best when the day really is today; any other choice
      shows its own name ("Tomorrow", "Saturday") so the pill says what it does. */
   var lbl=$("scopeDayLbl");
-  if(lbl) lbl.textContent = scopeLabel();
+  if(lbl) lbl.textContent = scopeLabel().replace(/ only$/,"");
   /* Counts make the choice concrete: "12" against "168" says more about what
      the switch does than either label manages on its own. The day pill counts
      against the day it points at. */
@@ -13829,7 +13930,7 @@ function buildPicks(){
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
   var refused=refusedToday(), rk=B.key+"|";
   scopeFixtures().forEach(function(f){
-    if(TOP_ONLY&&outsideTop(f)) return;
+    if(TOP_ONLY&&!favLeague(f.league)) return;
     var homeFav=f.home_p>f.away_p;
     function sane(c){
       if(refused[rk+fid(f)+"|"+c]) return false;
@@ -20018,6 +20119,7 @@ try{var _wm=JSON.parse(localStorage.getItem("sw.wspmiss")||"null");
    default instead of reading as off, a retired key is ignored, and only real
    booleans are taken. A set with nothing on is refused - the builder cannot
    build from it and the chip guard would not let the reader get there. */
+var MK_DEFAULT={b:JSON.parse(JSON.stringify(BUILD.mk)),w:JSON.parse(JSON.stringify(WSP.mk))};
 var MK_STORE="sw.mk";
 (function(){
   try{
@@ -20161,7 +20263,7 @@ function wspBuild(){
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
   var refused=refusedToday(), rk=curBook().key+"|";
   scopeFixtures().forEach(function(f){
-    if(TOP_ONLY&&outsideTop(f)) return;
+    if(TOP_ONLY&&!favLeague(f.league)) return;
     if(WSP.removed && WSP.removed[fid(f)]) return;
     var homeFav=f.home_p>f.away_p,cands=[];
     allowed.forEach(function(c){
@@ -21286,10 +21388,11 @@ function emptyWhy(){
 function topDryHTML(){
   var by={},offs,nd,all=scopeFixtures().length;
   DATA.fixtures.forEach(function(f){
-    if(!notStarted(f)||outsideTop(f)||!leagueAllowed(f.league)) return;
+    if(!notStarted(f)||!favLeague(f.league)) return;
     var o=dayOff(fDay(f)); if(o>SDAY) by[o]=(by[o]||0)+1; });
   offs=Object.keys(by).map(Number).sort(function(a,b){return a-b;}); nd=offs[0];
-  return "No top-league games left "+(SDAY===0?"today":SDAY===1?"tomorrow":dayName(SDAY))+"."+
+  all=DATA.fixtures.filter(function(f){ return notStarted(f)&&dayOff(fDay(f))===SDAY&&leagueDefault(f.league); }).length;
+  return "No games from your favourite leagues left "+(SDAY===0?"today":SDAY===1?"tomorrow":dayName(SDAY))+"."+
     "<span class='bld-alt'>"+(nd!=null?"<button type='button' class='wsp-chip on' data-topday='"+nd+"'>"+dayName(nd)+" \u00b7 "+by[nd]+" games</button>":"")+
     (all?"<button type='button' class='wsp-chip' data-topall='1'>All leagues "+(SDAY===0?"today":"")+" \u00b7 "+all+"</button>":"")+"</span>";
 }
@@ -21329,7 +21432,7 @@ function renderShared(){
     /* The near-sure leg readers asked for (8 Oct 2026). Held out over 5,447
        matches: 93%+ calls landed 94.5%. Off by default; never a board tip. */
     {k:"u45", label:"Under 4.5", tier:0, sub:"Under 4.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M8 12h8"/>'},
-    {k:"fh", label:"1st half", tier:2, sub:"FH over 0.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l3.5 2"/>'},
+    {k:"fh", label:"1st half goal", tier:2, sub:"FH over 0.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l3.5 2"/>'},
     /* One side's goals rather than the two added together. Both sides go in
        the pool; whichever the model likes better is the one that gets used. */
     {k:"tts", label:"Team over 0.5", tier:0, sub:"One side's goals", icon:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 7v10"/>'},
@@ -21339,21 +21442,21 @@ function renderShared(){
        selection, so a leg books like any other; the model prices them off the
        same scoreline matrix as everything above. All four start off - see
        BUILD.mk - because none of them has a graded result yet. */
-    {k:"dro25", label:"Draw or o2.5", tier:1, sub:"X or over 2.5", icon:'<path d="M4 12h16"/><path d="M12 5v14"/>'},
+    {k:"dro25", label:"Draw or over 2.5", tier:1, sub:"X or over 2.5", icon:'<path d="M4 12h16"/><path d="M12 5v14"/>'},
     {k:"drgg", label:"Draw or GG", tier:1, sub:"X or both score", icon:'<path d="M4 12h16"/><circle cx="7" cy="7" r="2"/><circle cx="17" cy="17" r="2"/>'},
     {k:"rsgg", label:"Result or GG", tier:0, sub:"1 or 2, or both score", icon:'<path d="M5 19L12 5l7 14"/><path d="M8 15h8"/>'},
-    {k:"rso25", label:"Result or o2.5", tier:1, sub:"1 or 2, or over 2.5", icon:'<path d="M5 19L12 5l7 14"/><circle cx="12" cy="17" r="1.6"/>'},
+    {k:"rso25", label:"Result or over 2.5", tier:1, sub:"1 or 2, or over 2.5", icon:'<path d="M5 19L12 5l7 14"/><circle cx="12" cy="17" r="1.6"/>'},
     /* THE ONE MARKET THAT NARROWS YOUR CHOICE OF BOOKMAKER. Bet9ja and BetKing
        sell this family at 1.5; SportyBet's card starts at 2.5. The chip says
        so, and asks before it turns on, rather than failing quietly at the
        booking step. `only` is a list - see BOOK_ONLY, which is the same fact
        keyed by market code. */
-    {k:"dro15", label:"Draw or o1.5", tier:0, sub:"X or over 1.5", only:["bet9ja","betking"],
+    {k:"dro15", label:"Draw or over 1.5", tier:0, sub:"X or over 1.5", only:["bet9ja","betking"],
      icon:'<path d="M4 12h16"/><path d="M9 8l3-3 3 3"/>'},
     /* WIN EITHER HALF. Graded on 945 held-out matches before it was offered:
        60.0% against 58.9% predicted, the closest of any market here bar the
        match result itself. Both books sell it per side. */
-    {k:"rso15", label:"Result or o1.5", tier:0, sub:"1 or 2, or over 1.5", only:["bet9ja","betking"],
+    {k:"rso15", label:"Result or over 1.5", tier:0, sub:"1 or 2, or over 1.5", only:["bet9ja","betking"],
      icon:'<path d="M5 19L12 5l7 14"/><path d="M9 9l3-3 3 3"/>'},
     {k:"weh", label:"Win a half", tier:0, sub:"Either half", icon:'<path d="M12 4v16"/><path d="M5 8h4"/><path d="M15 16h4"/>'},
     /* Corners, total for the match - see CORNER_CODES. */
@@ -21383,9 +21486,7 @@ function renderShared(){
   (function(){
     var lg=$("bldLeagues"),mkw=$("bldMk"); if(!lg||!mkw) return;
     lg.querySelectorAll("[data-btp]").forEach(function(c){c.classList.toggle("on",(c.dataset.btp==="true")===!!TOP_ONLY);});
-    var html=MKT_CFG.filter(function(m){
-      return !m.wizardOnly || BUILD.mode==="wizard";
-    }).map(function(m){
+    var chipOf=function(m){
       /* A wizard-only market is not in BUILD.mk at all, so asking BUILD
          whether it is on would answer "undefined !== false" - true - and draw
          the chip lit while the builder treated it as off. */
@@ -21420,7 +21521,10 @@ function renderShared(){
         (m.only?" data-only='"+m.only.join(",")+"'":"")+
         (locked&&!wrongBook?" title='Tap to move the dial to where this can fill'":"")+
         " type='button'>"+
-        "<span class='mkt-icon' aria-hidden='true'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>"+m.icon+"</svg></span>"+
+        /* The state, drawn (11 Oct 2026 redesign): a tick when on, a padlock
+           when the dial or the bookmaker keeps it shut. */
+        (enabled ? "<svg class='mk-st' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='m5 12 5 5 9-10'/></svg>"
+          : locked ? "<svg class='mk-st' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5' y='11' width='14' height='9' rx='2'/><path d='M8 11V8a4 4 0 0 1 8 0v3'/></svg>" : "")+
         "<span>"+m.label+"</span>"+
         (m.only
           ? "<span class='tier-badge only-badge' title='"+
@@ -21435,8 +21539,27 @@ function renderShared(){
             "'>"+esc(m.only.length>1 ? m.only.length+" books" : bookNames(m.only))+" only</span>"
           : "<span class='tier-badge' title='Unlocks at "+tierLabel+" tier'>T"+(m.tier+1)+"</span>")+
         "</button>";
-    }).join("");
+    };
+    /* In groups a reader recognises, not 22 chips in a grid (owner, 11 Oct
+       2026: "the whole filter tab feels poorly put together"). */
+    var shown=MKT_CFG.filter(function(m){ return !m.wizardOnly || BUILD.mode==="wizard"; });
+    var html=[["Result",["wd","any","out","weh","draw"]],["Goals",["o15","o25","o35","u45","fh","both"]],
+      ["Team goals",["tts","tts2"]],["Combos",["drgg","rsgg","dro25","rso25","dro15","rso15"]],
+      ["Corners, shots and handicap",["corn","tcorn","shots","tshots","hcap"]]].map(function(g){
+      var cs=g[1].map(function(k){ return shown.filter(function(m){ return m.k===k; })[0]; }).filter(Boolean);
+      return cs.length ? "<div class='mk-grp'><p class='mk-grp-t'>"+g[0]+"</p><div class='mk-chips'>"+cs.map(chipOf).join("")+"</div></div>" : "";
+    }).join("")+(BUILD.mode!=="wizard"&&shown.some(function(m){ return p.tier<m.tier; })
+      ? "<p class='mk-note'>Padlocked markets open up as you slide towards Bold.</p>" : "");
     mkw.innerHTML=html;
+    var rs=$("mkReset");
+    if(rs){
+      var on=marketCount();
+      rs.innerHTML="<b>"+on+"</b> on \u00b7 Reset";
+      if(!rs._w){ rs._w=1; rs.addEventListener("click",function(){
+        Object.keys(MK_DEFAULT.b).forEach(function(k){ BUILD.mk[k]=MK_DEFAULT.b[k]; });
+        Object.keys(MK_DEFAULT.w).forEach(function(k){ WSP.mk[k]=MK_DEFAULT.w[k]; });
+        WSP._sig=null; renderBuilder(); }); }
+    }
     mkw.querySelectorAll("[data-m]").forEach(function(c){
       c.addEventListener("click",function(){
         /* A CHIP LOCKED BY THE BOOKMAKER IS A QUESTION, NOT A WALL. Bet9ja and
@@ -21682,84 +21805,65 @@ function askVolatile(){
    kept on the element rather than in a variable, so a repaint does not shut a
    list somebody is halfway down. */
 function renderLeaguePicker(){
-  var open=$("lgpOpen"),box=$("lgpBox"),list=$("lgpList"),
-      sum=$("lgpSum"),cnt=$("lgpCount"),clr=$("lgpClear");
-  if(!open||!box||!list) return;
-
-  var lc=leagueCount(), avail=lc.avail, touched=lc.touched;
-  /* Name the window this list describes.
-     Without it, "5 available" reads as a broken picker. It was reported as
-     one: with Early selected the list held five leagues while the reporter
-     was looking at a day on which nearly every top flight was playing - all
-     of them outside the Early window. The list was right and said nothing
-     about why, which is the same thing as being wrong. */
-  var win = windowWords(true);
-  /* Counted over what is on the board, so a stored tap for a league not
-     playing in this window does not skew the numbers. */
-  var live=lc.live;
-  var vol=avail.filter(function(x){return isVolatile(x.league);}).length;
-  sum.textContent = !touched ? live+" league"+(live===1?"":"s") : lc.words;
-  updateFiltersSum();
-  open.classList.toggle("narrowed",touched);
-  if(cnt) cnt.textContent=avail.length+" league"+(avail.length===1?"":"s")+" "+win;
-  if(clr) clr.hidden=!touched;
-
-  /* A time window narrow enough to hide most of the card should say so here,
-     beside the short list it caused, rather than leaving the reader to connect
-     it to a segment further up the page. */
-  var hint="";
-  if(SCOPE==="day"&&TOD!=="all"){
-    var allDay=DATA.fixtures.filter(function(f){
-      return notStarted(f)&&dayOff(fDay(f))===SDAY;
-    }).length;
-    var here=scopeFixtures().length;
-    if(allDay>here) hint="<div class='lgp-hint'>"+(allDay-here)+
-      " more game"+((allDay-here)===1?"":"s")+" "+esc(dayName(SDAY).toLowerCase())+
-      " outside this time window - switch to All day to see their leagues.</div>";
-  }
-
-  /* Said once, where the doubt actually is, rather than only in the summary
-     button above the open panel. */
-  var volOut = vol && !VOL_IN;
-  var allIn = (touched || !avail.length) ? "" : "<div class='lgp-allin'><b>" +
-    (volOut ? (avail.length-vol) + " of " + avail.length + " leagues are in.</b> " +
-      "The volatile ones wait on the bench until you tick them. "
-    : "All " + avail.length + " leagues are in.</b> ") + "Tap any to leave it out.</div>";
-  list.innerHTML = allIn + hint + (avail.length
-    ? avail.map(function(x){
-        var on=leagueAllowed(x.league);
-        return "<button class='lgp-row"+(on?" on":"")+"' type='button' "+
-          "data-lg=\""+esc(x.league)+"\" aria-pressed='"+on+"'>"+
-          "<span class='lgp-tick' aria-hidden='true'>✓</span>"+
-          "<span class='lgp-nm'>"+esc(compOf(x.league))+"<span class='lgp-ct'> · "+esc(countryOf(x.league))+"</span></span>"+
-          (isVolatile(x.league)?"<span class='lgp-vol'>Volatile</span>":"")+
-          "<span class='lgp-n'>"+x.n+"</span></button>";
-      }).join("")
-    : "<div class='lgp-empty'>No games in this window.</div>");
-
-  list.querySelectorAll("[data-lg]").forEach(function(b){
+  var line=$("favLine"),tx=$("favLineTxt"),ed=$("favEdit");
+  if(!line) return;
+  line.hidden=!TOP_ONLY;
+  var favs=favRows().filter(function(x){ return x.fav; });
+  tx.innerHTML=favs.length
+    ? "<b>"+favs.length+" league"+(favs.length===1?"":"s")+".</b> "+esc(favs.slice(0,3).map(function(x){ return favName(x.league); }).join(", "))+
+      (favs.length>3?" and "+(favs.length-3)+" more.":".")
+    : "<b>None of your favourite leagues is playing.</b> Tap Edit to add some.";
+  if(ed&&!ed._w){ ed._w=1; ed.addEventListener("click",openFavSheet); }
+  if($("favSheet")&&$("favSheet").classList.contains("on")) renderFavSheet();
+}
+/* Every league with a game still to come, favourites first in UEFA order. */
+function favName(l){ return compOf(l).replace(/^Clubs (UEFA )?/,"").replace(/ 1$/,""); }
+function favRows(){
+  var n={};
+  ((DATA&&DATA.fixtures)||[]).forEach(function(f){ if(notStarted(f)) n[f.league]=(n[f.league]||0)+1; });
+  return Object.keys(n).map(function(l){ return {league:l,n:n[l],fav:favLeague(l),r:topRank(l)}; })
+    .sort(function(a,b){ return (b.fav-a.fav)||((a.r<0?999:a.r)-(b.r<0?999:b.r))||(b.n-a.n)||(a.league<b.league?-1:1); });
+}
+function renderFavSheet(){
+  var list=$("favList"); if(!list) return;
+  var q=(($("favFind")||{}).value||"").trim().toLowerCase();
+  var rows=favRows().filter(function(x){ return !q||x.league.toLowerCase().indexOf(q)>=0; });
+  var row=function(x){
+    var star=x.fav?"<path d='m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z' fill='currentColor'/>"
+      :"<path d='m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z' fill='none' stroke='currentColor' stroke-width='2' stroke-linejoin='round'/>";
+    return "<div class='fav-row'><span class='fav-nm'>"+esc(favName(x.league))+"<span class='fav-ct'>"+esc(countryOf(x.league))+
+      " \u00b7 "+x.n+" game"+(x.n===1?"":"s")+(FAVB[x.league]===1?" \u00b7 added by you":"")+"</span></span>"+
+      "<button type='button' class='fav-star"+(x.fav?" on":"")+"' data-fl=\""+esc(x.league)+"\" aria-pressed='"+x.fav+"' aria-label='"+
+      (x.fav?"Remove ":"Add ")+esc(favName(x.league))+"'><svg viewBox='0 0 24 24' aria-hidden='true'>"+star+"</svg></button></div>";
+  };
+  var on=rows.filter(function(x){ return x.fav; }), off=rows.filter(function(x){ return !x.fav; });
+  list.innerHTML=(on.length?"<p class='fav-h'>Your favourites \u00b7 "+on.length+"</p>"+on.map(row).join(""):"")+
+    (off.length?"<p class='fav-h'>More leagues \u00b7 "+off.length+"</p>"+off.map(row).join(""):"")+
+    (rows.length?"":"<p class='fav-none'>No league on the board matches that.</p>");
+  list.querySelectorAll("[data-fl]").forEach(function(b){
     b.addEventListener("click",function(){
-      var l=b.dataset.lg;
-      setLeaguePicked(l,!leagueAllowed(l));
-      /* The slip is built from a pool that just changed, so any conjured slip
-         is stale. Drop it rather than leave legs from a league now excluded. */
-      WSP._sig=null;
-      renderBuilder();
+      setFav(b.dataset.fl,!favLeague(b.dataset.fl));
+      WSP._sig=null; renderFavSheet(); renderBuilder();
     });
   });
-
-  if(!open._wired){
-    open._wired=1;
-    open.addEventListener("click",function(){
-      var showing=!box.hidden;
-      box.hidden=showing;
-      open.setAttribute("aria-expanded",String(!showing));
-    });
-    clr.addEventListener("click",function(e){
-      e.stopPropagation();
-      resetLeagues();
-    });
+}
+function openFavSheet(){
+  var sh=$("favSheet"); if(!sh) return;
+  if(!sh._w){
+    sh._w=1;
+    $("favSheet-x").addEventListener("click",closeFavSheet);
+    $("favDone").addEventListener("click",closeFavSheet);
+    $("favReset").addEventListener("click",function(){ resetFavs(); WSP._sig=null; renderFavSheet(); renderBuilder(); });
+    $("favFind").addEventListener("input",renderFavSheet);
   }
+  $("favFind").value="";
+  renderFavSheet();
+  $("scrim").classList.add("on"); sh.classList.add("on"); lockBody(true); pushOverlay();
+}
+function closeFavSheet(){
+  var sh=$("favSheet"); if(!sh||!sh.classList.contains("on")) return;
+  sh.classList.remove("on");
+  if(!anyOverlayOpen()){ $("scrim").classList.remove("on"); lockBody(false); }
 }
 function renderSliderPanel(){
   var firstVisit = BUILD.risk === null;
@@ -21861,7 +21965,7 @@ function renderWizardPanel(){
      when the window itself was empty - so that case says which it is. */
   var _reachLine="";
   if(_topReach>0 && _topReach<1.005){
-    var _inWin=scopeFixtures().filter(function(f){ return !(TOP_ONLY&&outsideTop(f)); }).length;
+    var _inWin=scopeFixtures().filter(function(f){ return !(TOP_ONLY&&!favLeague(f.league)); }).length;
     _reachLine=_inWin
       ? "No game "+windowWords()+" clears the bar on the markets you have on. "+
         "Switch on more markets and the payouts light up."
@@ -22331,7 +22435,7 @@ function renderBuilderOutput(){
     var dry=(SCOPE!=="all")&&!scopeFixtures().length;
     /* The day has games, just none in Top leagues - at night, once they have
        all kicked off (owner, 9 Oct 2026). Said as it is, with the two ways on. */
-    var topDry=!isWiz&&!dry&&SCOPE==="day"&&TOP_ONLY&&!scopeFixtures().some(function(f){return !outsideTop(f);});
+    var topDry=!isWiz&&!dry&&SCOPE==="day"&&TOP_ONLY&&!scopeFixtures().length&&DATA.fixtures.some(function(f){return notStarted(f)&&dayOff(fDay(f))===SDAY;});
     /* Name the day that came up empty rather than always saying "today" - with
        a day picked, the blank board might be tomorrow or Saturday. */
     var dryDay=SCOPE==="span"?("in the next "+SPAN+" days")
@@ -23478,7 +23582,7 @@ load().catch(function(){});
   "use strict";
   var KEYS={slips:"sw.slips.v1",myslip:"sw.myslip",livefav:"sw.livefav",leaguefav:"formline.favs.v1"};
   var PREFS={book:"sw.book",mk:"sw.mk",risk:"sw.risk",mode:"sw.mode",wspodds:"sw.wspodds",
-    bldpick:"sw.bldpick",volin:"sw.volin",topleagues:"sw.topleagues",scope:"sw.scope",legodd:"sw.legodd",
+    bldpick:"sw.bldpick",volin:"sw.volin",topleagues:"sw.topleagues",favleagues:"sw.favleagues",scope:"sw.scope",legodd:"sw.legodd",
     avatar:"sw.avatar",name:"sw.name",theme:"sw.theme"};
   var META="sw.sync.meta", SLIPS_KEEP=60;
 

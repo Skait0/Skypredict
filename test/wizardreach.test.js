@@ -53,12 +53,12 @@ function stubEl(id) {
 }
 
 const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "isSAleague",
-  "isAsianLeague", "isAsian", "isSouthAmerican", "saWeight", "isLowerLeague", "topKey", "outsideTop",
+  "isAsianLeague", "isAsian", "isSouthAmerican", "saWeight", "isLowerLeague", "topKey", "topRank", "outsideTop", "favLeague",
   "fid", "oddOf", "legOdd", "bookVerdict", "bookMayTake", "bookIsPriced", "bookIdOf",
   "hasRealOdd", "pricedFixture", "mProb", "allowedMarkets", "preferGoalsOverDouble",
   "isJackpotOdds", "wspMarkets", "codeMarket", "provenMarkets", "isProven", "safeUnpriced",
   "fetchedMarket", "bookAllows", "wspStyleOn", "wspBuild", "refusedDay", "refusedToday", "noteRefused", "shortLine", "wspMaxReach",
-  "leagueAllowed", "leagueDefault", "setLeaguePicked", "leaguesChosen", "windowWords",
+  "leagueAllowed", "leagueDefault", "setLeaguePicked", "leaguesChosen", "windowWords", "setFav",
   "renderWizardPanel", "renderMySheet", "riskWord", "paintTicks", "repaintAfterMatch",
   /* renderBuilderOutput and wspConjure, driven for real, and what they lean on. */
   "renderBuilderOutput", "wspConjure", "putMissNote", "addBuiltToSlip", "riskParams", "buildPicks", "sliderStyle", "styleFit",
@@ -70,6 +70,7 @@ if (!RESTORE_MISS) throw new Error("sw.wspmiss restore statement not found in in
 
 const api = new Function("STUB", [
   "var SHORT_LINE=1.15, TOP_ONLY=false, SCOPE='all', SDAY=0, SPAN=3, TOD='all', BLD_PICK={}, VOL_IN=true;",
+  (src.match(/var POPULAR=\[[\s\S]*?\];/) || [""])[0], (src.match(/var POPULAR_ALIAS=\{[\s\S]*?\};/) || [""])[0], "var FAVB={};",
   "var FIXTURES=[], MYSLIP=[];",
   (/^var BUILD=\{[\s\S]*?\};/m.exec(src) || [""])[0],
   "var DATA=null, STORE={}, localStorage={getItem(k){return k in STORE?STORE[k]:null},",
@@ -114,7 +115,7 @@ const api = new Function("STUB", [
   "var WSP_REACH={};",
 ].concat(FNS.map(grab)).join("\n") + `
   return { WSP, BUILD, ELS, $, STORE, wspMaxReach, renderWizardPanel, renderMySheet, paintTicks,
-           setLeaguePicked, SLIP_STYLES, repaintAfterMatch, renderBuilderOutput, wspConjure, addBuiltToSlip,
+           setLeaguePicked, setFav, setTop: function(v){ TOP_ONLY = v; }, SLIP_STYLES, repaintAfterMatch, renderBuilderOutput, wspConjure, addBuiltToSlip,
            clearReach(){ WSP_REACH = {}; },
            restoreMiss(){ ${RESTORE_MISS[0]} },
            setScope(s, d){ SCOPE = s; SDAY = d || 0; },
@@ -179,22 +180,24 @@ test("a rung the pool cannot reach is disabled before Conjure, and the ceiling i
   assert.strictEqual(+m[1].replace(/,/g, ""), Math.round(ceil));
 });
 
-test("the ceiling is the pool the Wizard builds from: the league picker moves it", () => {
+test("the ceiling is the pool the Wizard builds from: Favourite leagues moves it", () => {
   reset();
+  api.setTop(true);
+  LEAGUES.forEach(l => api.setFav(l, true));
   const all = api.wspMaxReach(19999);
-  api.setLeaguePicked(LEAGUES[0], false);
-  api.setLeaguePicked(LEAGUES[1], false);
+  api.setFav(LEAGUES[0], false);
+  api.setFav(LEAGUES[1], false);
   try {
     const one = api.wspMaxReach(19999);
-    assert.ok(one < all, `taking two leagues out must lower the ceiling (x${all} -> x${one}); ` +
-      "a key without the picker would keep the old one");
+    assert.ok(one < all, `taking two leagues out of the favourites must lower the ceiling (x${all} -> x${one}); ` +
+      "a key without the favourites would keep the old one");
     api.renderWizardPanel();
     const c = chips(api.ELS.wizardPanel.innerHTML);
     assert.ok(Object.keys(c).some(o => +o <= all && +o > one && c[o]),
       "a rung reachable before the picker change must be disabled after it");
   } finally {
-    api.setLeaguePicked(LEAGUES[0], true);
-    api.setLeaguePicked(LEAGUES[1], true);
+    LEAGUES.forEach(l => api.setFav(l, false));
+    api.setTop(false);
   }
 });
 

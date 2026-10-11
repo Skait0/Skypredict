@@ -38,7 +38,7 @@ function counters(opts) {
     "function dayOff(d){return d;}" +
     "function fDay(f){return f.date;}" +
     "function leagueAllowed(l){return !Object.keys(CHOSEN).length||!!CHOSEN[l];}" +
-    "function outsideTop(f){return !!f.lower;}" +
+    "function favLeague(l){return !/League 1|Serie B/.test(l);}" +
     grab("buildableOn") + "\n" + grab("buildableAll") +
     "\nreturn {on:buildableOn,all:buildableAll};");
   return fn({ fixtures: opts.fixtures }, opts.topOnly || false, opts.chosen || {});

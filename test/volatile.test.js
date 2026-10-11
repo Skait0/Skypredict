@@ -36,14 +36,14 @@ function harness(fixtures, store) {
     "var localStorage={getItem:function(k){return STORE[k]===undefined?null:STORE[k];}," +
     "setItem:function(k,v){STORE[k]=String(v);},removeItem:function(k){delete STORE[k];}};" +
     "var DATA={fixtures:FX};" +
-    "var SCOPE='all', SDAY=0, SPAN=3, TOD='all', TOP_ONLY=true, TIER_UNRANKED=6, WSP={};" +
+    "var SCOPE='all', SDAY=0, SPAN=3, TOD='all', TOP_ONLY=(STORE['sw.topleagues']!=='0'), TIER_UNRANKED=6, WSP={};" +
     "function notStarted(){return true;}" +
     "function dayOff(){return 0;}" + "function fDay(f){return f.date;}" +
     "function todFixtures(l){return l;}" +
     "function outsideTop(f){return !!(f.tier&&f.tier>1);}" +
     "function leagueRank(){return 1;}" +
     "function esc(s){return String(s);}" +
-    "function setTopOnly(v){TOP_ONLY=!!v;}" +
+    "function setTopOnly(v){TOP_ONLY=!!v;STORE['sw.topleagues']=v?'1':'0';}" +
     "function renderBuilder(){UI.renders++;}" +
     "var ASK={go:null,keep:null};" +
     "function $(id){return EL[id];}" + "function dayName(){return 'Today';}" +
@@ -51,6 +51,7 @@ function harness(fixtures, store) {
     "function promptEl(){return {querySelector:function(s){return s==='.confirm-go'?ASK.go:ASK.keep;}};}" +
     "function clearPrompt(t){UI.cleared++;}" +
     "function updateFiltersSum(){}" +
+    "function favLeague(l){return !isVolatile(l);}" +
     "var BLD_PICK={}, VOL_IN=false, VOL_SRC=null, VOL_MAP={};" +
     grab("tierOf") + grab("compOf") + grab("countryOf") +
     grab("loadLeaguePicks") + grab("isVolatile") + grab("leagueDefault") +
@@ -95,14 +96,6 @@ test("volatile = every fixture tier 3 or lower; unranked does not count", () => 
 test("volatile leagues are listed but left out by default", () => {
   const H = harness(BOARD);
   assert.deepStrictEqual(leagues(H.scopeFixtures()), SAFE);});
-
-test("a single volatile league can be ticked on its own", () => {
-  const H = harness(BOARD);
-  H.setLeaguePicked("England League 1", true);
-  assert.deepStrictEqual(leagues(H.scopeFixtures()), SAFE.concat(["England League 1"]).sort());
-  assert.strictEqual(H.leagueAllowed("England League 2"), false, "the others stay out");
-  assert.deepStrictEqual(JSON.parse(H.store["sw.bldpick"]), { "England League 1": 1 });
-});
 
 test("All leagues clears taps, turns Top flight off and asks, naming them and why", () => {
   const H = harness(BOARD);
@@ -189,14 +182,4 @@ test("showPrompt labels the dialog, defaulting to the booking label", () => {
   assert.strictEqual(lbl.textContent, "Add volatile leagues?");
   show("bookResult", "<p>x</p>");
   assert.strictEqual(lbl.textContent, "Before we book", "a later booking ask resets it");
-});
-
-test("the summary counts the leagues in, never 'Any league' while volatile ones sit out", () => {
-  const H = harness(BOARD);
-  H.resetLeagues(); H.ask.keep.click();             // Top flight off, volatile out
-  assert.strictEqual(H.summary(), "3 leagues");
-  H.setLeaguePicked("Spain La Liga 1", false);
-  assert.strictEqual(H.summary(), "2 of 6 leagues");
-  H.resetLeagues(); H.ask.go.click();
-  assert.strictEqual(H.summary(), "6 leagues", "every league in once they are added");
 });

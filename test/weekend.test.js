@@ -122,7 +122,6 @@ test("the pill, the league picker and the empty state all name the weekend", () 
   assert.match(grab("scopeLabel"), /SCOPE==="wknd" \? "Weekend"/);
   assert.match(grab("paintScope"), /lbl\.textContent = scopeLabel\(\)/);
   assert.match(grab("paintScope"), /\(SCOPE==="span"\|\|SCOPE==="wknd"\)\?buildableSpan\(\)\.length/);
-  assert.match(grab("renderLeaguePicker"), /windowWords\(true\)/);
   assert.match(grab("windowWords"), /SCOPE==="wknd"\) return "this weekend"/);
   assert.match(src, /SCOPE==="wknd"\?"this weekend"/);
   assert.match(grab("openDayMenu"), /\+weekendOpt\(\)\+/, "Weekend sits after the span options");
