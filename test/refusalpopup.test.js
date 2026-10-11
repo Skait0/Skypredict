@@ -63,7 +63,7 @@ test("a refused leg is offered the safest priced bet on the same game", () => {
   const next = new Function("F", "OPTS", "NOW", "WHY",
     "var REFUSAL_WHY=WHY();function curBook(){return {odds:'sportyOdds'};}" +
     "function fixtureById(){return F;} function kickMs(){return NOW();}" +
-    "function swapOptions(){return OPTS;} function bookAllows(){return true;} function refusedToday(){return {};} function shortLine(){return false;}" +
+    "function swapOptions(){return OPTS;} function bookAllows(){return true;} function refusedToday(){return {};}" +
     "var MYSLIP=[{id:'f1',code:'1',auto:true}];function chipOn(c){return c!=='OVER_1.5';}" +
     decl("SAFE_ALT_MIN") + "\n" + fn("builtLeg") + "\n" + fn("safePicks") + "\n" + fn("nextSafePick") + "\nreturn nextSafePick;")(
     f, opts, () => now, () => why);
@@ -243,16 +243,9 @@ test("every refused game has a safe swap: no question, the swaps are booked and 
   assert.match(fnSrc, /go\(alts\);\s*return;/);
 });
 
-test("a goals line under 1.15 is never picked or offered: the line a book pulls first", () => {
-  const short = new Function("curBook", decl("SHORT_LINE") + "\n" + fn("shortLine") + "\nreturn shortLine;")(() => ({ odds: "sportyOdds" }));
-  const f = { sportyOdds: { "OVER_1.5": 1.06, "HOME_OVER_0.5": 1.07, "AWAY_OVER_0.5": 1.29, "1X": 1.05, "OVER_2.5": 1.15 } };
-  assert.strictEqual(short(f, "OVER_1.5"), true);
-  assert.strictEqual(short(f, "HOME_OVER_0.5"), true);
-  assert.strictEqual(short(f, "AWAY_OVER_0.5"), false, "1.29 is not short");
-  assert.strictEqual(short(f, "OVER_2.5"), false, "1.15 itself is allowed");
-  assert.strictEqual(short(f, "1X"), false, "double chance is not a line they re-line");
-  assert.strictEqual(short({ sportyOdds: {} }, "OVER_1.5"), false, "no price is not evidence of anything");
-  for (const name of ["buildPicks", "wspBuild", "safePicks"]) assert.match(body(name), /shortLine\(f,/, name + " skips short lines");
+test("short goals lines stay pickable: team over 0.5 under 1.15 is the owner's call (11 Oct 2026)", () => {
+  const page = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "index.html"), "utf8");
+  assert.doesNotMatch(page, /shortLine|SHORT_LINE/, "no 1.15 floor on goals lines anywhere");
 });
 
 test("a lock released after the page shrank never lands past its end (owner, 9 Oct 2026)", () => {

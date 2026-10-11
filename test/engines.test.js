@@ -84,10 +84,10 @@ const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "
   "buildPicks",
   /* Which chip is lit, derived from the same predicate wspBuild uses. */
   "wspStyleOn",
-  "wspBuild", "refusedDay", "refusedToday", "noteRefused", "shortLine"];
+  "wspBuild", "refusedDay", "refusedToday", "noteRefused"];
 
 const api = new Function([
-  "var TOP_ONLY=false;", "var SHORT_LINE=1.15;",
+  "var TOP_ONLY=false;",
   (src.match(/var POPULAR=\[[\s\S]*?\];/) || [""])[0], (src.match(/var POPULAR_ALIAS=\{[\s\S]*?\};/) || [""])[0], "var FAVB={};",
   "var FIXTURES=[];",
   /* null reads exactly like absent to every function that looks at it
