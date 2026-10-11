@@ -4365,10 +4365,13 @@ html{interpolate-size:allow-keywords}
 /* A summoning circle: forty ticks cut out of a gold ring, turning slowly
    enough that you notice it only after the sweep has already told you the
    page is working. */
-.loader-runes{position:absolute;inset:0;border-radius:50%;opacity:.6;
-  background:repeating-conic-gradient(from 0deg,rgba(242,184,75,.9) 0deg 1.6deg,transparent 1.6deg 12deg);
-  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 5px));
-  mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 5px));
+.loader-runes{position:absolute;inset:0;border-radius:50%;opacity:.9;
+  /* --accent, not a fixed gold (owner, 11 Oct 2026: the ring "seems to have low contrast"):
+     at .6 x .9 gold it all but vanished, worst on the light cream ground. --accent is the same
+     gold on dark and the deep bronze on light. Ticks 2deg wide, 6px deep. */
+  background:repeating-conic-gradient(from 0deg,var(--accent) 0deg 2deg,transparent 2deg 12deg);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));
+  mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));
   animation:ldrsweep 18s linear infinite reverse}
 /* Embers off the robe. Four, on one clock, offset - a handful of sparks reads
    as heat coming off him; a dozen reads as a screensaver. */
