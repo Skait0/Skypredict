@@ -6944,7 +6944,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 }
 /* the favourite leagues sheet */
 .fav-sheet .sheet-body{padding:0 0 8px}
-.fav-find{display:flex;align-items:center;gap:8px;margin:12px 16px 4px;height:42px;padding:0 14px;border-radius:99px;
+.fav-find{display:flex;align-items:center;gap:10px;margin:12px 16px 4px;height:46px;min-height:46px;flex-shrink:0;padding:0 16px;border-radius:99px;
   border:1px solid var(--line);background:var(--bg);color:var(--faint)}
 .fav-find svg{width:16px;height:16px;flex:none}
 .fav-find input{flex:1;min-width:0;border:0;background:none;color:var(--text);font:inherit;font-size:14px;font-weight:600;outline:none}
@@ -6953,16 +6953,16 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 .fav-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid var(--line-soft)}
 .fav-nm{font-size:14px;font-weight:700;line-height:1.25;color:var(--text);min-width:0}
 .fav-ct{display:block;margin-top:2px;font-size:12px;font-weight:600;color:var(--faint)}
-.fav-star{width:36px;height:36px;border-radius:99px;border:1px solid var(--line);background:none;color:var(--faint);display:grid;place-items:center;cursor:pointer}
-.fav-star svg{width:17px;height:17px}
-.fav-star.on{border-color:var(--accent-rim);color:var(--accent)}
+.fav-star{width:40px;height:40px;border-radius:99px;border:0;background:none;color:var(--faint);display:grid;place-items:center;cursor:pointer}
+.fav-star svg{width:22px;height:22px}
+.fav-star.on{color:var(--accent)}
 .fav-star:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .fav-none{margin:0;padding:18px 16px;font-size:13px;color:var(--faint)}
 .fav-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px calc(16px + env(safe-area-inset-bottom));
   border-top:1px solid var(--line);flex-shrink:0}
 .fav-reset{background:none;border:0;padding:8px 0;font:inherit;font-size:13px;font-weight:700;color:var(--soft);cursor:pointer}
 .fav-done{height:42px;padding:0 22px;border-radius:99px;border:0;background:var(--red-fill);color:#fff;font:inherit;font-size:14px;font-weight:800;cursor:pointer}
-@media (hover:hover){ .fav-reset:hover{color:var(--text)} .fav-star:hover{border-color:var(--faint)} }
+@media (hover:hover){ .fav-reset:hover{color:var(--text)} .fav-star:hover{color:var(--text)} }
 </style>
 </head>
 <body>
@@ -8778,8 +8778,11 @@ function leagueRank(l){
 /* Top leagues by default (owner, 9 Oct 2026); a reader's own choice wins. */
 /* A new key, so every reader starts on Top leagues once - including those who
    had switched "Top flight only" off; from here their own choice sticks. */
-var TOP_ONLY=true; try{var _to=localStorage.getItem("sw.topleagues"); if(_to!==null) TOP_ONLY=_to==="1";}catch(e){}
-function setTopOnly(v){TOP_ONLY=!!v;try{localStorage.setItem("sw.topleagues",v?"1":"0");}catch(e){}}
+/* sw.favmode since 11 Oct 2026 (owner: "make the favourite leagues the
+   default"): a new key again, so everyone who had picked All leagues starts on
+   Favourite leagues once more; their own choice sticks from here. */
+var TOP_ONLY=true; try{var _to=localStorage.getItem("sw.favmode"); if(_to!==null) TOP_ONLY=_to==="1";}catch(e){}
+function setTopOnly(v){TOP_ONLY=!!v;try{localStorage.setItem("sw.favmode",v?"1":"0");}catch(e){}}
 function marketCount(){try{return Object.keys(BUILD.mk).filter(function(k){return BUILD.mk[k];}).length;}catch(e){return 0;}}
 /* THE SHUT FILTERS BAR NAMES EVERYTHING THAT IS NOT THE DEFAULT. The panel
    starts shut on a phone, so this line is all a reader sees of it: a window
@@ -21817,7 +21820,7 @@ function renderLeaguePicker(){
   if($("favSheet")&&$("favSheet").classList.contains("on")) renderFavSheet();
 }
 /* Every league with a game still to come, favourites first in UEFA order. */
-function favName(l){ return compOf(l).replace(/^Clubs (UEFA )?/,"").replace(/ 1$/,""); }
+function favName(l){ return compOf(l).replace(/^Clubs (UEFA )?/,"").replace(/^(La Liga|Bundesliga) 1$/,"$1"); }
 function favRows(){
   var n={};
   ((DATA&&DATA.fixtures)||[]).forEach(function(f){ if(notStarted(f)) n[f.league]=(n[f.league]||0)+1; });
@@ -23582,7 +23585,7 @@ load().catch(function(){});
   "use strict";
   var KEYS={slips:"sw.slips.v1",myslip:"sw.myslip",livefav:"sw.livefav",leaguefav:"formline.favs.v1"};
   var PREFS={book:"sw.book",mk:"sw.mk",risk:"sw.risk",mode:"sw.mode",wspodds:"sw.wspodds",
-    bldpick:"sw.bldpick",volin:"sw.volin",topleagues:"sw.topleagues",favleagues:"sw.favleagues",scope:"sw.scope",legodd:"sw.legodd",
+    bldpick:"sw.bldpick",volin:"sw.volin",favmode:"sw.favmode",favleagues:"sw.favleagues",scope:"sw.scope",legodd:"sw.legodd",
     avatar:"sw.avatar",name:"sw.name",theme:"sw.theme"};
   var META="sw.sync.meta", SLIPS_KEEP=60;
 

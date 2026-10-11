@@ -58,7 +58,7 @@ test("builder filters start open on every screen (owner, 9 Oct 2026: shut by def
 test("shut, the filters bar says so with a filled Show filters pill; Favourite leagues is the default", () => {
   assert.match(FILTERS, /hint\.textContent=open\?"Hide":"Show filters"/);
   assert.match(src, /\.filters-toggle\[aria-expanded="false"\] \.ft-hint\{background:var\(--accent\)/);
-  assert.match(src, /var TOP_ONLY=true; try\{var _to=localStorage\.getItem\("sw\.topleagues"\); if\(_to!==null\) TOP_ONLY=_to==="1";\}/);
+  assert.match(src, /var TOP_ONLY=true; try\{var _to=localStorage\.getItem\("sw\.favmode"\); if\(_to!==null\) TOP_ONLY=_to==="1";\}/);
 });
 
 test("a stored filters choice wins on both sizes", () => {

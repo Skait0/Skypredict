@@ -36,14 +36,14 @@ function harness(fixtures, store) {
     "var localStorage={getItem:function(k){return STORE[k]===undefined?null:STORE[k];}," +
     "setItem:function(k,v){STORE[k]=String(v);},removeItem:function(k){delete STORE[k];}};" +
     "var DATA={fixtures:FX};" +
-    "var SCOPE='all', SDAY=0, SPAN=3, TOD='all', TOP_ONLY=(STORE['sw.topleagues']!=='0'), TIER_UNRANKED=6, WSP={};" +
+    "var SCOPE='all', SDAY=0, SPAN=3, TOD='all', TOP_ONLY=(STORE['sw.favmode']!=='0'), TIER_UNRANKED=6, WSP={};" +
     "function notStarted(){return true;}" +
     "function dayOff(){return 0;}" + "function fDay(f){return f.date;}" +
     "function todFixtures(l){return l;}" +
     "function outsideTop(f){return !!(f.tier&&f.tier>1);}" +
     "function leagueRank(){return 1;}" +
     "function esc(s){return String(s);}" +
-    "function setTopOnly(v){TOP_ONLY=!!v;STORE['sw.topleagues']=v?'1':'0';}" +
+    "function setTopOnly(v){TOP_ONLY=!!v;STORE['sw.favmode']=v?'1':'0';}" +
     "function renderBuilder(){UI.renders++;}" +
     "var ASK={go:null,keep:null};" +
     "function $(id){return EL[id];}" + "function dayName(){return 'Today';}" +

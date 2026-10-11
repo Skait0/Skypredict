@@ -86,10 +86,16 @@ test("the sheet lists favourites first in UEFA order, under the names readers us
 
 test("the panel: Favourite leagues first and on by default, an Edit sheet, synced, the board's stars untouched", () => {
   assert.match(src, /<button type="button" data-btp="true">[\s\S]*?Favourite leagues<\/button>\s*<button type="button" data-btp="false">All leagues<\/button>/);
-  assert.match(src, /var TOP_ONLY=true; try\{var _to=localStorage\.getItem\("sw\.topleagues"\)/);
+  assert.match(src, /var TOP_ONLY=true; try\{var _to=localStorage\.getItem\("sw\.favmode"\)/);
   assert.match(src, /id="favSheet"[\s\S]*?Reset to the top 20/);
   assert.match(src, /favleagues:"sw\.favleagues"/, "synced from the page");
   assert.ok(require("../lib/sync.js").PREF_KEYS.includes("favleagues"), "and accepted by the server");
   assert.match(grab("toggleFav"), /FAVS\[l\]/, "the board's stars keep their own list");
   assert.doesNotMatch(grab("toggleFav"), /favleagues|FAVB/);
+});
+
+test("league names read as readers say them, without eating a real number", () => {
+  const { api } = page();
+  assert.strictEqual(api.favName("France Ligue 1"), "Ligue 1");
+  assert.strictEqual(api.favName("Spain La Liga 1"), "La Liga");
 });
