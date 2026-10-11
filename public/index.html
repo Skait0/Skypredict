@@ -13939,6 +13939,14 @@ function slipUse(){
    it can still come through. */
 var SPREAD_PEN=0.15;    /* wizard: added to _cost, where the whole spread is ~0.9 */
 var SPREAD_MULT=0.85;   /* slider: multiplies the ranking key */
+/* THREE TICKETS PER GAME, THEN ANOTHER GAME (owner, 11 Oct 2026). The penalty
+   above was not enough: on 4 Oct ten tickets built in a row carried Girona v
+   Mallorca on seven, it finished 0-0, and that one result lost all seven. A
+   game already on SPREAD_CAP open tickets is used only when the board has
+   nothing else to fill the slip with. */
+var SPREAD_CAP=3;
+function overExposed(id,use){ return (use[id]||0)>=SPREAD_CAP; }
+
 function buildPicks(){
   /* The book being built for, read once. Every price question below is
      asked of THIS book - the peeks it replaced all read sportyOdds, so a
@@ -14144,6 +14152,10 @@ function buildPicks(){
     return kb-ka;
   });
   cand=cand.filter(function(c){return !BUILD.removed[c.id];});
+  /* Games already on three open tickets go to the back of the queue: taken
+     only when everything else has been used. See SPREAD_CAP. */
+  cand=cand.filter(function(c){return !overExposed(c.id,_use);})
+    .concat(cand.filter(function(c){return overExposed(c.id,_use);}));
   /* HOW MANY LEGS WERE ACTUALLY AVAILABLE, recorded where it is knowable.
      The note under a short slip first counted the games clearing the floor
      itself, which reads high: it cannot see the bookmaker-odds rule, the
@@ -20678,6 +20690,10 @@ function wspBuild(){
     var styleTilt=(per<=1.3?-1.2:(per>=1.6?1.2:0));
     /* Read once, before the costs are set - it is the same for every leg. */
     var _use=slipUse();
+    /* See SPREAD_CAP: a game on three open tickets sits out while the board
+       still has enough other games for this slip. */
+    var freshC=chosen.filter(function(c){ return !overExposed(c.id,_use); });
+    if(freshC.length>=want) chosen=freshC;
     chosen.forEach(function(c){
       /* Shuffle jitter, widening each time it is asked for.
          Reported: "when i shuffle, some games dont leave the ticket".

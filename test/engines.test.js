@@ -100,13 +100,13 @@ const api = new Function([
   "function scopeFixtures(){return FIXTURES;}",
   /* No saved slips in this harness, so nothing is already exposed; the
      spread penalty is exercised on its own in spread.test.js. */
-  "function slipUse(){return {};}",
+  "var USE={}; function slipUse(){return USE;}",
   konst("SAFE_UNPRICED"), konst("BOOK_ONLY"), konst("CORNER_CODES"), konst("TEAM_CORNER_CODES"), konst("SHOTS_CODES"), konst("TEAM_SHOTS_CODES"), konst("HCAP_CODES"), konst("ESTIMATE_SHRINK"),
   "function curBook(){return {key:'sporty',label:'SportyBet',full:true,odds:'sportyOdds',id:'eventId'};}",
   konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
   konst("HIGH_SCORING_O25"), (src.match(/var DC_MIN_FAV=[^;]*;/) || [""])[0], (src.match(/var HIGH_SCORING_LEAGUES=\[[\s\S]*?\];/) || [""])[0], konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
   konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"),
-  konst("SPREAD_PEN"), konst("SPREAD_MULT"),
+  konst("SPREAD_PEN"), konst("SPREAD_CAP"), grab("overExposed"), konst("SPREAD_MULT"),
   (/^var BUILD=\{[\s\S]*?\};/m.exec(src) || [""])[0],
   (/^var WSP=\{[\s\S]*?\};/m.exec(src) || [""])[0],
 ].concat(FNS.map(grab)).join("\n") + `
@@ -115,7 +115,8 @@ const api = new Function([
            JACKPOT_ODDS, JACKPOT_LEG_CAP,
            setFixtures(f){ FIXTURES = f; },
            setData(d){ DATA = d; },
-           setTopOnly(v){ TOP_ONLY = v; } };
+           setTopOnly(v){ TOP_ONLY = v; },
+           setUse(u){ USE = u; } };
 `)();
 
 const BOARD = [
@@ -735,4 +736,36 @@ test("Win or draw alone: a high-scoring league plays Over 1.5 unless the favouri
     assert.strictEqual(by["Germany Bundesliga 1"], "1X", engine + ": a 70% favourite keeps its double chance");
     assert.strictEqual(by["Spain La Liga"], "1X", engine + ": an ordinary league keeps double chance");
   }
+});
+
+/* Owner, 11 Oct 2026: ten tickets built in a row carried Girona v Mallorca on
+   seven; one 0-0 lost them all. Replayed: build, save, build again. */
+function maxRepeat(engine, n) {
+  const use = {}; let worst = 0;
+  for (let t = 0; t < n; t++) {
+    api.setUse(use);
+    Object.assign(api.BUILD, { seed: 100 + t }); api.WSP.seed = 100 + t;
+    const legs = engine === "slider" ? api.buildPicks() : api.wspBuild().picks;
+    legs.forEach(c => { use[c.id] = (use[c.id] || 0) + 1; worst = Math.max(worst, use[c.id]); });
+  }
+  api.setUse({});
+  return worst;
+}
+test("no game lands on more than three tickets built in a row, in both engines", () => {
+  for (const engine of ["slider", "wizard"]) {
+    reset();
+    api.BUILD.risk = 5;
+    Object.assign(api.WSP, { odds: 3, slider: false });
+    assert.ok(maxRepeat(engine, 5) <= 3, engine + ": a game went on a fourth ticket");
+  }
+});
+
+test("a thin board still fills the slip with games on three tickets", () => {
+  reset();
+  const all = {}; api.BUILD.risk = 95;
+  api.buildPicks().forEach(c => { all[c.id] = 3; });
+  const before = api.buildPicks().length;
+  api.setUse(all);
+  assert.strictEqual(api.buildPicks().length, before, "exposed games are a last resort, not banned");
+  api.setUse({});
 });

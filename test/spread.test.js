@@ -119,7 +119,8 @@ test("the wizard reads it before it uses it", () => {
      a test of how the file happens to be checked out rather than of the code:
      it went red the moment a tool rewrote the file as LF, and it would fail for
      anyone on a platform that does not use CRLF. */
-  const i = src.search(/var _use=slipUse\(\);\s*chosen\.forEach/);
+  /* The SPREAD_CAP filter sits between the two since 11 Oct 2026. */
+  const i = src.search(/var _use=slipUse\(\);[\s\S]{0,600}?chosen\.forEach/);
   const j = src.indexOf("+repeat*(_use[c.id]||0)");
   assert.ok(i > 0, "the wizard's _use is not defined before its loop");
   assert.ok(j > i, "_use is read before it is assigned");
