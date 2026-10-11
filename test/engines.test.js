@@ -102,11 +102,11 @@ const api = new Function([
      spread penalty is exercised on its own in spread.test.js. */
   "var USE={}; function slipUse(){return USE;}",
   konst("SAFE_UNPRICED"), konst("BOOK_ONLY"), konst("CORNER_CODES"), konst("TEAM_CORNER_CODES"), konst("SHOTS_CODES"), konst("TEAM_SHOTS_CODES"), konst("HCAP_CODES"), konst("ESTIMATE_SHRINK"),
-  "function curBook(){return {key:'sporty',label:'SportyBet',full:true,odds:'sportyOdds',id:'eventId'};}",
+  "var CURB={key:'sporty',label:'SportyBet',full:true,odds:'sportyOdds',id:'eventId'}; function curBook(){return CURB;}",
   konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
   konst("HIGH_SCORING_O25"), (src.match(/var DC_MIN_FAV=[^;]*;/) || [""])[0], (src.match(/var HIGH_SCORING_LEAGUES=\[[\s\S]*?\];/) || [""])[0], konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
   konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"),
-  konst("SPREAD_PEN"), konst("SPREAD_CAP"), grab("overExposed"), konst("HCAP_DOG_BAR"), konst("BANKERS"), grab("bankersOn"), konst("BEST_CHANCE"), grab("bestChanceOn"), grab("dogHcap"), grab("judgedP"), konst("SPREAD_MULT"),
+  konst("SPREAD_PEN"), konst("SPREAD_CAP"), grab("overExposed"), konst("HCAP_DOG_BAR"), konst("BANKERS"), grab("bankersOn"), konst("BEST_CHANCE"), grab("bestChanceOn"), grab("bookQuotes"), grab("dogHcap"), grab("judgedP"), konst("SPREAD_MULT"),
   (/^var BUILD=\{[\s\S]*?\};/m.exec(src) || [""])[0],
   (/^var WSP=\{[\s\S]*?\};/m.exec(src) || [""])[0],
 ].concat(FNS.map(grab)).join("\n") + `
@@ -116,7 +116,8 @@ const api = new Function([
            setFixtures(f){ FIXTURES = f; },
            setData(d){ DATA = d; },
            setTopOnly(v){ TOP_ONLY = v; },
-           setUse(u){ USE = u; } };
+           setUse(u){ USE = u; },
+           setBook(b){ CURB = b; } };
 `)();
 
 const BOARD = [
@@ -864,4 +865,25 @@ test("Best chance lands at least as often as every other style, and still reache
     assert.strictEqual(api.WSP.legodd, 1.55, "the style is left as the reader chose it");
   }
   api.WSP.legodd = 1.4;
+});
+
+/* Owner, 11 Oct 2026: "make bet9ja slips use bet9ja's own list". */
+test("a Bet9ja slip takes a line Bet9ja quotes even where SportyBet does not", () => {
+  const only = { wd: false, any: false, out: false, o05: true, o15: false, o25: false, o35: false, fh: false, tts: false, tts2: false, both: false };
+  const g = Object.assign(priced(BOARD[0]), {});
+  delete g.sportyOdds["OVER_0.5"];
+  g.sportyOdds["UNDER_1.5"] = 3.9;
+  g.b9Odds = { "OVER_0.5": 1.05 };
+  for (const [book, want] of [["bet9ja", "OVER_0.5"], ["sporty", null]]) {
+    reset();
+    api.setFixtures([g]);
+    api.WSP.mk = Object.assign({}, only);
+    Object.assign(api.WSP, { odds: null, everyGame: true, slider: false, legodd: 1.4 });
+    api.setBook(book === "bet9ja" ? { key: "bet9ja", label: "Bet9ja", full: false, odds: "b9Odds", id: "b9EventId" }
+                                  : { key: "sporty", label: "SportyBet", full: true, odds: "sportyOdds", id: "eventId" });
+    const legs = api.wspBuild().picks;
+    const code = legs.length ? legs[0].code : null;
+    assert.strictEqual(code, want, book + ": " + JSON.stringify(legs.map(c => c.code)));
+  }
+  api.setBook({ key: "sporty", label: "SportyBet", full: true, odds: "sportyOdds", id: "eventId" });
 });

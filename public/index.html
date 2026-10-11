@@ -12629,6 +12629,15 @@ function bookVerdict(f,code,B){
   return (v&&v>1.01)?"priced":"not-priced";
 }
 /* The two questions the callers actually ask, both in terms of the one above. */
+/* Does this book QUOTE the market here - a price in its own feed? Only ever a
+   yes: a quote proves the market exists, its absence proves nothing (see
+   bookVerdict). The Wizard asks it so a Bet9ja slip can use a line Bet9ja
+   prices where SportyBet does not (owner, 11 Oct 2026). */
+function bookQuotes(f,code,B){
+  B=B||curBook();
+  var v=f&&f[B.odds]&&f[B.odds][code];
+  return !!(v&&v>1.01);
+}
 function bookMayTake(f,code,B){ return bookVerdict(f,code,B)!=="not-priced"; }
 function bookIsPriced(f,code,B){ return bookVerdict(f,code,B)==="priced"; }
 /* The old body of this function is now bookVerdict above, which says WHY
@@ -20599,7 +20608,14 @@ function wspBuild(){
        14 Sep), so SportyBet's listing is a sound proxy for all three, and
        overpriced's 5-point bar was fitted to SportyBet's board mean of -3.5
        and would mean something different against another distribution. */
-    function hasReal(c){var o=c.f&&c.f.sportyOdds&&c.f.sportyOdds[c.code];return !!(o&&o>1.01);}
+    /* ...OR THE SELECTED BOOK'S OWN FEED QUOTES IT (owner, 11 Oct 2026: "make
+       bet9ja slips use bet9ja's own list"). SportyBet stays the proxy for what
+       a book sells, but where the reader's own book prices the line itself
+       that is better evidence than any proxy: Over 0.5 is on 1,105 Bet9ja
+       games and only 650 SportyBet ones, and those 455 were being skipped. A
+       quote is proof the market exists; its absence still proves nothing. */
+    function hasReal(c){var o=c.f&&c.f.sportyOdds&&c.f.sportyOdds[c.code];if(o&&o>1.01)return true;
+      var B=curBook();return B.key!=="sporty"&&bookQuotes(c.f,c.code,B);}
     /* Only markets SportyBet actually lists for this event.
        It used to fall back to the estimated-odds candidates when none of a
        fixture's markets were real - "prefer real, settle for anything". That

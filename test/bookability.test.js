@@ -78,7 +78,11 @@ test("only bookVerdict reads an odds cache to judge a market", () => {
                    /* Display: the reader's own book's draw price on a Draw
                       picks card (7 Oct 2026). Same reason as above - legOdd
                       would show SportyBet's price unnamed. */
-                   "boardPick"];
+                   "boardPick",
+                   /* "Does this book quote it" - a positive only, never a
+                      refusal; lets a Bet9ja slip use Bet9ja's own list
+                      (11 Oct 2026). */
+                   "bookQuotes"];
   const bodies = allowed.map(grab).join("\n");
 
   for (const re of patterns) {
