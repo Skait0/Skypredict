@@ -13,7 +13,7 @@ const assert = require("node:assert");
 const fs = require("fs");
 const path = require("path");
 const { minify } = require("terser");
-const { minifyScript } = require("../scripts/prebuild.js");
+const { minifyScript, minifyWithMap, sentryMap } = require("../scripts/prebuild.js");
 
 const html = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
 const big = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)]
@@ -61,9 +61,49 @@ test("names called from HTML strings survive by name", () => {
 
 test("prebuild writes the minified bundle, and a failed minify fails the build", () => {
   const src = fs.readFileSync(path.join(__dirname, "..", "scripts", "prebuild.js"), "utf8");
-  assert.match(src, /code = await minifyScript\(script\[1\]\);/);
+  assert.match(src, /\(\{ code, map \} = await minifyWithMap\(script\[1\]\)\);/);
+  assert.match(src, /code = sentryMap\(code, map\);\s*const name = "app\." \+ hash\(code\)/, "the map step runs before the name is taken");
   assert.match(src, /const name = "app\." \+ hash\(code\) \+ "\.js";/, "the name follows the shipped bytes");
   assert.match(src, /await splitAssets\(\);/);
   assert.match(src, /fs\.writeFileSync\(path\.join\(PUB, name\), code\);/);
   assert.match(src, /e && e\.failBuild\) \{[^}]*process\.exitCode = 1;/);
+});
+
+/* SENTRY'S MAP (owner, 11 Oct 2026). The map goes to Sentry only; the bundle
+   keeps a debug id and nothing that points at a map. No network here: the
+   upload itself is only exercised on a Vercel build. */
+test("the map build ships the same code, and without a token no map is pointed at", async () => {
+  const { code, map } = await minifyWithMap(big);
+  assert.ok(map && JSON.parse(map).mappings, "a real map is produced");
+  assert.match(code, /\/\/# sourceMappingURL=app\.js\.map\s*$/, "terser points at the placeholder");
+  const saved = process.env.SENTRY_AUTH_TOKEN;
+  delete process.env.SENTRY_AUTH_TOKEN;
+  try {
+    const out = sentryMap(code, map);
+    assert.ok(!/sourceMappingURL/.test(out), "stripped before shipping");
+    assert.strictEqual(out.trim(), MIN.trim(), "identical to the plain minify");
+  } finally { if (saved !== undefined) process.env.SENTRY_AUTH_TOKEN = saved; }
+});
+
+test("sentry-cli's debug-id stamp keeps the bundle a valid script with every top-level name", async () => {
+  const os = require("os"), { execFileSync } = require("child_process");
+  const { code, map } = await minifyWithMap(big);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "swmap-test-"));
+  try {
+    fs.writeFileSync(path.join(dir, "app.js"), code);
+    fs.writeFileSync(path.join(dir, "app.js.map"), map);
+    execFileSync(process.execPath, [require.resolve("@sentry/cli/bin/sentry-cli"), "sourcemaps", "inject", dir], { stdio: "pipe" });
+    const stamped = fs.readFileSync(path.join(dir, "app.js"), "utf8").replace(/\n?\/\/# sourceMappingURL=\S*\s*$/, "\n");
+    assert.match(stamped, /\/\/# debugId=[0-9a-f-]{36}/, "stamped");
+    assert.match(fs.readFileSync(path.join(dir, "app.js.map"), "utf8"), /"debug_?[iI]d"/, "and the map carries the same id");
+    assert.doesNotThrow(() => new (require("vm").Script)(stamped));
+    assert.deepStrictEqual([...(await topNames(stamped))].sort(), [...(await topNames(big))].sort());
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("the map is never written under public/", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "scripts", "prebuild.js"), "utf8");
+  const body = src.slice(src.indexOf("function sentryMap("), src.indexOf("/* --------------------------------------------------------------- 2. split"));
+  assert.match(body, /fs\.mkdtempSync\(path\.join\(require\("os"\)\.tmpdir\(\), "swmap-"\)\)/);
+  assert.doesNotMatch(body, /\bPUB\b/);
 });

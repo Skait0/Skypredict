@@ -668,11 +668,11 @@ function injectAuthMeta() {
  * inline scripts and window.sw* hooks look them up the same way. Renaming one
  * would break a button silently.
  *
- * No source map is written: served, it would hand the source straight back,
- * and there is no Sentry upload token to send it there privately. Sentry's
- * stack traces still name every top-level function.
+ * No source map is ever served: it would hand the source straight back. With
+ * SENTRY_AUTH_TOKEN set on Vercel, one is sent to Sentry privately instead -
+ * see sentryMap below.
  */
-async function minifyScript(js) {
+async function terse(js, sourceMap) {
   const { minify } = require("terser");
   const out = await minify(js, {
     module: false,
@@ -680,10 +680,54 @@ async function minifyScript(js) {
     compress: true,
     mangle: { toplevel: false },
     format: { comments: false },
-    sourceMap: false,
+    sourceMap,
   });
   if (!out || typeof out.code !== "string" || !out.code.length) throw new Error("terser returned no code");
-  return out.code;
+  return out;
+}
+async function minifyScript(js) { return (await terse(js, false)).code; }
+/* The same minify, with a map for Sentry. The map's URL is a placeholder that
+   sentryMap strips before the bundle is written. */
+async function minifyWithMap(js) {
+  const out = await terse(js, { url: "app.js.map", includeSources: true });
+  return { code: out.code, map: typeof out.map === "string" ? out.map : JSON.stringify(out.map) };
+}
+
+/* ------------------------------------------------------- 2b. sentry map
+ * Owner, 11 Oct 2026: Sentry should show the real source lines of a minified
+ * error. The map goes to Sentry only, never into public/: it is written to a
+ * temp folder, sentry-cli stamps a debug id into the bundle and uploads both,
+ * and the bundle keeps nothing but that id. Debug ids tie an error to its map
+ * without file names or releases, so the hashed name does not matter.
+ *
+ * FAILS OPEN, unlike the minify. No token, no network, a CLI error: the bundle
+ * ships minified without a debug id, and Sentry shows minified frames as
+ * before. Error tracking is never a reason to stop a deploy.
+ * The org and project are not secrets; the token comes from the Vercel env.
+ */
+const SENTRY_ORG = "powerline-inc", SENTRY_PROJECT = "python";
+function stripMapUrl(code) { return code.replace(/\n?\/\/# sourceMappingURL=\S*\s*$/, "\n"); }
+function sentryMap(code, map) {
+  if (!process.env.SENTRY_AUTH_TOKEN || !map) return stripMapUrl(code);
+  const dir = fs.mkdtempSync(path.join(require("os").tmpdir(), "swmap-"));
+  try {
+    fs.writeFileSync(path.join(dir, "app.js"), code);
+    fs.writeFileSync(path.join(dir, "app.js.map"), map);
+    const cli = require.resolve("@sentry/cli/bin/sentry-cli");
+    const env = Object.assign({}, process.env, { SENTRY_ORG, SENTRY_PROJECT });
+    const run = (args) => require("child_process").execFileSync(process.execPath, [cli].concat(args),
+      { env, stdio: "pipe", timeout: 120000 });
+    run(["sourcemaps", "inject", dir]);
+    const stamped = fs.readFileSync(path.join(dir, "app.js"), "utf8");
+    run(["sourcemaps", "upload", dir]);
+    log("source map uploaded to Sentry (" + (/\/\/# debugId=(\S+)/.exec(stamped) || [, "?"])[1] + ")");
+    return stripMapUrl(stamped);
+  } catch (e) {
+    warn("source map not uploaded, shipping without it: " + String(e && e.message || e).split("\n")[0]);
+    return stripMapUrl(code);
+  } finally {
+    try { fs.rmSync(dir, { recursive: true, force: true }); } catch (e) { /* temp folder */ }
+  }
 }
 
 /* --------------------------------------------------------------- 2. split */
@@ -744,14 +788,16 @@ async function splitAssets() {
     /* FAIL CLOSED. Unlike the split itself, a minify that throws is not
        allowed to fall back to shipping the readable bundle: the build fails
        and Vercel keeps serving the last good deploy. */
-    let code;
+    let code, map;
     try {
-      code = await minifyScript(script[1]);
+      ({ code, map } = await minifyWithMap(script[1]));
     } catch (e) {
       const err = new Error("minify failed: " + (e && e.message));
       err.failBuild = true;
       throw err;
     }
+    /* Never throws: with no token or a failed upload it just drops the map. */
+    code = sentryMap(code, map);
     const name = "app." + hash(code) + ".js";
     fs.writeFileSync(path.join(PUB, name), code);
     html = html.replace(script[0], '<script defer src="/' + name + '"></script>');
@@ -871,4 +917,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { applyAuthMeta, minifyScript };
+module.exports = { applyAuthMeta, minifyScript, minifyWithMap, sentryMap };
