@@ -1590,6 +1590,23 @@ html.tapped .list-hint{display:none}
   box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 4px 14px rgba(150,18,30,.38)!important}
 [data-theme="dark"] .sc-go-primary .sbm,[data-theme="dark"] .sc-go-primary .b9m .b9r,
 [data-theme="dark"] .sc-go-primary .sc-go-arw{color:#fff!important}
+/* THE BOOKMAKER'S MARK IN ITS OWN BADGE (owner, 11 Oct 2026: "the build me a
+   slip button on the home page ruins the bet9ja color"; picked option A). On
+   the red key Bet9ja's red "bet" vanished and was forced white, leaving green
+   "9ja" on red. The mark now sits in a small dark pill inside the key, where
+   every book shows its real colours. Dark theme only - the light theme's key
+   is already black. */
+[data-theme="dark"] .sc-go-primary .sc-lbl>.sbm,[data-theme="dark"] .sc-go-primary .sc-lbl>.b9m,
+[data-theme="dark"] .sc-go-primary .sc-lbl>.bkm,[data-theme="dark"] .sc-go-primary .sc-lbl>.bwm,
+[data-theme="dark"] .sc-go-primary .sc-lbl>.xbm{display:inline-flex;align-items:center;background:#111114;
+  border-radius:999px;padding:3px 10px;line-height:1.15;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+/* Centred on the line, not sat on its baseline: on the baseline the pill's
+   room hung below the letters and it read as low beside "Build me a" (owner,
+   11 Oct 2026). The label becomes a centred row; the gap replaces the spaces. */
+[data-theme="dark"] .sc-go-primary .sc-lbl{display:inline-flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:.32em}
+[data-theme="dark"] .sc-go-primary .sc-lbl>.sbm{color:var(--red)!important}
+[data-theme="dark"] .sc-go-primary .sc-lbl>.b9m .b9r{color:var(--b9-red)!important}
+[data-theme="dark"] .sc-go-primary .sc-lbl>.b9m .b9g{color:var(--b9-green)!important}
 @media(hover:hover){
   [data-theme="dark"] .sc-actions .sc-go-primary:hover,[data-theme="dark"] .sc-go-primary:hover{
     background:linear-gradient(178deg,#E5444F 0%,#C8222F 100%)!important;
@@ -23950,9 +23967,14 @@ load().catch(function(){});
   }
 
   var css=d.createElement("style");
-  css.textContent="#hdAccount.ac-on{width:36px;height:36px;border-radius:50%;padding:0;overflow:hidden;border:1.5px solid var(--accent-rim);background:var(--card-2)}"+
+  /* THE AVATAR AS A MEDALLION (owner, 11 Oct 2026: "is there a way to design
+     it to make it more visible?"; picked option A). At 34-36px it matched the
+     install/X/Telegram buttons and read as one more icon; a 46px gold ring with
+     a soft glow, set apart from them, reads as yours. 44px on phones. */
+  css.textContent="#hdAccount.ac-on{width:46px;height:46px;border-radius:50%;padding:0;overflow:hidden;border:2px solid #F2B84B;"+
+    "box-shadow:0 0 0 3px rgba(242,184,75,.18),0 0 18px rgba(242,184,75,.35);margin-left:6px;flex:0 0 auto;background:var(--card-2)}"+
     "#hdAccount .ac-av{width:100%;height:100%;object-fit:cover;display:block}"+
-    "@media(max-width:420px){#hdAccount.ac-on{width:34px;height:34px}}"+
+    "@media(max-width:420px){#hdAccount.ac-on{width:44px;height:44px}}"+
     "#acctNote{position:fixed;left:12px;right:12px;top:12px;z-index:9999;background:var(--card);color:var(--text);"+
     "border:1px solid var(--line);border-radius:12px;padding:12px 44px 12px 14px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.35)}"+
     "#acctNote button{position:absolute;right:6px;top:6px;background:none;border:0;color:var(--soft);font-size:20px;width:32px;height:32px;cursor:pointer}";

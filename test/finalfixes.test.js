@@ -20,7 +20,8 @@ test("1 avatar is the last header item, after X and Telegram", () => {
   const hd = html.indexOf('id="hdAccount"');
   assert.ok(hd > html.indexOf("hsoc-tg"), "hdAccount after the Telegram link");
   assert.ok(hd > html.indexOf("hsoc-x"));
-  assert.match(html, /@media\(max-width:420px\)\{#hdAccount\.ac-on\{width:34px/);
+  /* 44px on phones since the medallion (owner picked option A, 11 Oct 2026). */
+  assert.match(html, /@media\(max-width:420px\)\{#hdAccount\.ac-on\{width:44px/);
 });
 
 test("3 menu and resume open My slips on All", () => {
