@@ -54,7 +54,7 @@ const FNS = ["cornersK", "cornersOver", "cornersOpen", "countryOf", "isSAleague"
      index.html. The harness lifts the real thing rather than a stub, because
      stubbing it is how three copies of the same bug survived. */
   "bookVerdict", "bookMayTake", "bookIsPriced", "bookIdOf",
-  "hasRealOdd", "pricedFixture", "mProb", "riskParams",
+  "hasRealOdd", "pricedFixture", "o05Of", "mProb", "riskParams",
   /* The slider now restricts an unpriced fixture to markets SportyBet always
      lists, so the harness needs that helper and its table. */
   "safeUnpriced",

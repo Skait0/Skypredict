@@ -13152,6 +13152,18 @@ function oddCell(f,c,p){
    is, and a ticket of them is never flattered.
    Asked for after a 45-leg code, 8B9WJU, came back 42 legs of these with no
    number on any of them - which left the whole editor blind. */
+/* AT LEAST ONE GOAL. The model's own o05 once the build ships it; until then
+   the same number exactly, from three it already ships: P(home scores) +
+   P(away scores) - P(both score) is P(either scores). */
+/* TOP LEVEL, NOT BESIDE marginGe. That one is nested inside mProb on purpose;
+   this was put next to it on 11 Oct 2026, the match options could not see it,
+   every paint threw, and load() retried the whole board every few seconds. */
+function o05Of(f){
+  if(!f) return null;
+  if(typeof f.o05==="number") return f.o05;
+  if(typeof f.h_o05!=="number"||typeof f.a_o05!=="number"||typeof f.btts!=="number") return null;
+  return Math.max(0,Math.min(1,f.h_o05+f.a_o05-f.btts));
+}
 function mProb(f,c){
   /* The book's own figure for a line, where blendFixture kept one (f._bk):
      mixed in at the result's weight, or used outright when the model has no
@@ -13164,15 +13176,6 @@ function mProb(f,c){
 /* P(margin >= k) for k in -2..3, from the result and the four margin tails
    the build ships in `mg` (home by 2+, 3+, away by 2+, 3+). Null when the
    fixture has no tails - a handicap is never guessed. */
-/* AT LEAST ONE GOAL. The model's own o05 once the build ships it; until then
-   the same number exactly, from three it already ships: P(home scores) +
-   P(away scores) - P(both score) is P(either scores). */
-function o05Of(f){
-  if(!f) return null;
-  if(typeof f.o05==="number") return f.o05;
-  if(typeof f.h_o05!=="number"||typeof f.a_o05!=="number"||typeof f.btts!=="number") return null;
-  return Math.max(0,Math.min(1,f.h_o05+f.a_o05-f.btts));
-}
 function marginGe(f){
   var mg=f&&f.mg;
   if(!mg||mg.length!==4||f.home_p==null||f.away_p==null) return null;
@@ -20002,9 +20005,12 @@ document.addEventListener("click",function(e){
 });
 /* noGate: only for the unprompted restore of the saved view on load, which
    may run after /api/me has answered and must never pop the sign-in sheet. */
-function setView(v,noGate){
+function setView(v,noGate,repaint){
   var args=[].slice.call(arguments);
   if(v==="build"&&!noGate&&window.swGate&&!swGate("build",null,function(){setView.apply(null,args);},"build")) return;
+  /* Set before V.view is overwritten below: a repaint of the view already
+     showing keeps your place. */
+  var stay=repaint===true&&V.view===v;
   var root=document.documentElement;
   /* Leaving the board pushes a history entry, so the browser's Back button
      returns here instead of leaving the site. popstate already knew how to
@@ -20050,6 +20056,13 @@ function setView(v,noGate){
   if(v==="build") renderBuilder();
   if(v==="live"){ renderLive(); fetchLive(); try{window.__wireAlert&&window.__wireAlert();}catch(e){} }
   if(v==="pred") renderLiveStrip();
+  /* A REPAINT IS NOT A NAVIGATION (owner, 11 Oct 2026: "when im scrolling down
+     on the build me a slip page, it abruptly scrolls me back up"). paint()
+     re-applies the view you are already on whenever fresh odds land - every
+     ten-minute refresh and every feed rescue - and that took you to the top,
+     shut an open sheet and folded the open cards mid-read. Only a real change
+     of view does those now. */
+  if(stay) return;
   for(var k in LOPEN) delete LOPEN[k];
   if(typeof closeSheet==="function") closeSheet();
   window.scrollTo(0,0);
@@ -23037,7 +23050,7 @@ function paint(){
     DATA.fixtures=out;
   })();
   /* Restore saved view tab (pred/live/build) on reload. Default is "pred". */
-  setView(V.view || "pred",true);
+  setView(V.view || "pred",true,true);
   let d=DATA.generated||"";
   try{d=new Date(d+"T00:00:00Z").toLocaleDateString(undefined,
     {day:"numeric",month:"short",timeZone:"UTC"});}catch(e){}
@@ -23197,7 +23210,6 @@ async function load(){
        See wspMaxReach. */
     WSP_REACH={};
     loadBet9jaSoon();
-    LOAD_RETRY=0;
     /* The first moment fixtureById can answer, so the first moment the saved
        slip can be judged. Before this the badge is drawn from whatever was in
        localStorage, including yesterday's conjured legs. */
@@ -23205,6 +23217,11 @@ async function load(){
     settleSlips();   /* first pass on load: results are already old news */
     startLive();
     paint();
+    /* Reset only once the board has painted. It used to sit above, so a throw
+       in paint() looked like a failed load AND reset the count: load() retried
+       every few seconds for ever, scrolling the reader to the top each time
+       (11 Oct 2026). Now a paint bug retries four times and stops. */
+    LOAD_RETRY=0;
     /* Fresh final scores for My slips, without waiting for a rebuild - see
        pullServerResults. Only while a slip is still open. */
     try{ pullServerResults(); setInterval(pullServerResults, 5*60*1000); }catch(e){}

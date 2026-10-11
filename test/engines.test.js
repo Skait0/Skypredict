@@ -64,7 +64,7 @@ const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "
      index.html. Lifted, not stubbed: stubbing it is how three copies of the
      same bug survived. */
   "bookVerdict", "bookMayTake", "bookIsPriced", "bookIdOf",
-  "hasRealOdd", "pricedFixture", "mProb", "riskParams",
+  "hasRealOdd", "pricedFixture", "o05Of", "mProb", "riskParams",
   "allowedMarkets", "highScoringLeague", "dcOk", "dcGoalsSwap", "preferGoalsOverDouble", "isJackpotOdds", "wspMarkets",
   /* The wizard now asks which markets have a published record before it
      reaches for one, so its harness needs them too. */

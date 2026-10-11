@@ -60,3 +60,21 @@ test("it is a pick and a chip, off by default, never the board's tip, and the sw
   const build = fs.readFileSync(path.join(__dirname, "..", "lib", "build.js"), "utf8");
   assert.doesNotMatch(build, /"OVER_0\.5"/, "the build never makes it the headline tip");
 });
+
+test("o05Of is top level, not nested in mProb beside marginGe (11 Oct 2026 outage)", () => {
+  /* Put next to marginGe, it landed inside mProb: the match options could not
+     reach it, every paint threw, and load() retried the board every few
+     seconds. grab() lifts a nested function just the same, so only the
+     nesting itself can be checked. */
+  const body = grab("mProb");
+  assert.doesNotMatch(body, /function o05Of\(/, "o05Of must not live inside mProb");
+  assert.match(src, /\nfunction o05Of\(f\)\{/, "and it exists at top level");
+});
+
+test("load() resets its retry count only after the board has painted", () => {
+  const at = src.indexOf("\nasync function load(){");
+  assert.ok(at > 0, "the page's load()");
+  const load = src.slice(at, src.indexOf("\nfunction hideLoader(", at));
+  const paint = load.indexOf("paint();"), reset = load.indexOf("LOAD_RETRY=0;");
+  assert.ok(paint > 0 && reset > paint, "a paint bug must not reset the count and loop for ever");
+});

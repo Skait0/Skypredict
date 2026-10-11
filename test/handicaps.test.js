@@ -38,7 +38,7 @@ test("the build ships them as mg on every board fixture", () => {
 });
 
 const price = (f) => new Function("f", "DATA",
-  fn("cLgamma") + fn("cornersOver") + fn("cornersK") + fn("mProb") +
+  fn("cLgamma") + fn("cornersOver") + fn("cornersK") + fn("o05Of") + fn("mProb") +
   "return function(c){return mProb(f,c);};")(f, {});
 
 // A strong home side: home 62%, draw 22%, away 16%; home by 2+ 34%, by 3+ 15%;

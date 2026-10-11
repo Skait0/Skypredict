@@ -470,7 +470,7 @@ test("a trim ranks on our model first and the bookmaker's price second", () => {
     "var MATCH_WINDOW_MS=86400000;" +
     src.slice(src.indexOf("var TEAM_ALIASES = {"), src.indexOf("function simTeams(")) +
     grab("simTeams") + grab("evStart") + grab("sameSlot") +
-    grab("srOf") + grab("fixtureByBookId") + grab("fixtureByLeg") + grab("mProb") +
+    grab("srOf") + grab("fixtureByBookId") + grab("fixtureByLeg") + grab("o05Of") + grab("mProb") +
     grab("legChance") + grab("trimPlan") +
     "\nreturn {legChance:legChance,trimPlan:trimPlan};")();
   const B = { key: "sporty", id: "eventId" };
@@ -539,7 +539,7 @@ test("a game we do not carry can still cross to the other book", () => {
 });
 
 test("a pick with no fixture is priced as unknown, not as nothing", () => {
-  const mProb = new Function(grab("mProb") + "\nreturn mProb;")();
+  const mProb = new Function(grab("o05Of") + grab("mProb") + "\nreturn mProb;")();
   assert.equal(mProb(null, "OVER_1.5"), null, "a fixture-less leg must not throw");
   assert.equal(mProb({ o15: 0.8 }, "OVER_1.5"), 0.8);
 });
@@ -556,7 +556,7 @@ test("a swap keeps the game and widens the outcome, never the reverse", () => {
     "function curBook(){return {key:'sporty',full:true,odds:'sportyOdds',id:'eventId'};}" +
     src.slice(src.indexOf("var TEAM_ALIASES = {"), src.indexOf("function simTeams(")) +
     grab("simTeams") + grab("evStart") + grab("sameSlot") + grab("fixtureByBookId") +
-    grab("srOf") + grab("fixtureByLeg") + grab("mProb") + grab("bookAllows") + grab("legChance") +
+    grab("srOf") + grab("fixtureByLeg") + grab("o05Of") + grab("mProb") + grab("bookAllows") + grab("legChance") +
     /* The editor asks the shared verdict before it swaps a leg onto a market -
        see bookVerdict. Lifted rather than stubbed, so this test exercises the
        real rule. */

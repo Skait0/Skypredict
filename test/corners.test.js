@@ -155,7 +155,7 @@ test("the page and the build compute the same corners number", () => {
 
 function prices(fixture, k) {
   return new Function("f", "DATA",
-    grab("cLgamma") + grab("cornersOver") + grab("cornersK") + grab("mProb") +
+    grab("cLgamma") + grab("cornersOver") + grab("cornersK") + grab("o05Of") + grab("mProb") +
     "return function(c){return mProb(f,c);};")(fixture, { cornersK: k });
 }
 
@@ -196,7 +196,7 @@ test("the model knows it publishes corners now", () => {
      hole in one payload - see saferRungs. It probes the shipped mProb, so it
      must follow this market family without being told about it. */
   const knows = new Function("DATA",
-    grab("cLgamma") + grab("cornersOver") + grab("cornersK") + grab("mProb") +
+    grab("cLgamma") + grab("cornersOver") + grab("cornersK") + grab("o05Of") + grab("mProb") +
     "var MODEL_KNOWS={};" + grab("modelPrices") + "return modelPrices;")({ cornersK: 18 });
   assert.equal(knows("CORNERS_OV_9.5"), true);
   assert.equal(knows("CORNERS_H_OV_4.5"), true);

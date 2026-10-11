@@ -60,5 +60,5 @@ test("a Google redirect comes back into the spell and resumes only a whitelisted
 test("every way into Build passes the wall: setView gates the build view itself", () => {
   assert.match(fnBody("setView"), /^\s*var args=\[\]\.slice\.call\(arguments\);\s*if\(v==="build"&&!noGate&&window\.swGate&&!swGate\("build",null,function\(\)\{setView\.apply\(null,args\);\},"build"\)\) return;/);
   /* The saved-view restore on load runs unprompted, possibly after /api/me answered: it must never pop the sheet. */
-  assert.match(html, /setView\(V\.view \|\| "pred",true\);/);
+  assert.match(html, /setView\(V\.view \|\| "pred",true(?:,true)?\);/);
 });

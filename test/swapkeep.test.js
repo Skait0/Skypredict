@@ -311,7 +311,7 @@ function ladder(fixture) {
   const api = new Function("BYO", "B", "f",
     arr("SAFER_TO") + decl("SAFER_WIDER") + decl("SAFER_STRENGTH") +
     grab("saferAtom") + grab("saferGrade") + grab("saferWider") + grab("gradeLeg") +
-    grab("saferRungs") + grab("saferDial") + grab("mProb") + grab("saferSwap") +
+    grab("saferRungs") + grab("saferDial") + grab("o05Of") + grab("mProb") + grab("saferSwap") +
     decl("MODEL_KNOWS") + grab("modelPrices") +
     grab("pinKey") + grab("isPinned") +
     "function fixtureByLeg(){return f;}function bookAllows(){return true;}" +
@@ -405,7 +405,7 @@ test("the shuffle button only appears when it would change something", () => {
  * a model - around nil a handicap IS a market we already publish. These run the
  * shipped mProb rather than a copy of the identities. */
 function prices(fixture) {
-  return new Function("f", grab("mProb") + "return function(c){return mProb(f,c);};")(fixture);
+  return new Function("f", grab("o05Of") + grab("mProb") + "return function(c){return mProb(f,c);};")(fixture);
 }
 
 test("a handicap around nil is priced as the market it already is", () => {
@@ -510,7 +510,7 @@ test("a missing field is not the same as a market we do not carry", () => {
     "a fixture with a hole in it must not start swapping legs for nothing");
   /* Which one it is, asked of the shipped probe rather than asserted here. */
   const knows = new Function(
-    grab("mProb") + "var MODEL_KNOWS={};" + grab("modelPrices") + "return modelPrices;")();
+    grab("o05Of") + grab("mProb") + "var MODEL_KNOWS={};" + grab("modelPrices") + "return modelPrices;")();
   assert.equal(knows("GG"), true, "the model publishes both teams to score");
   assert.equal(knows("AH_1_-1"), false, "and does not publish a whole ball handicap");
 });
@@ -526,7 +526,7 @@ test("a pinned leg is neither swapped nor dropped", () => {
   const api = new Function("BYO", "B", "f",
     arr("SAFER_TO") + declOf("SAFER_WIDER") + declOf("SAFER_STRENGTH") +
     grab("saferAtom") + grab("saferGrade") + grab("saferWider") + grab("gradeLeg") +
-    grab("saferRungs") + grab("saferDial") + grab("mProb") + grab("saferSwap") +
+    grab("saferRungs") + grab("saferDial") + grab("o05Of") + grab("mProb") + grab("saferSwap") +
     declOf("MODEL_KNOWS") + grab("modelPrices") + grab("pinKey") + grab("isPinned") +
     grab("legChance") + grab("saferDroppable") + grab("saferPlan") + grab("saferWhy") +
     "function fixtureByLeg(){return f;}function bookAllows(){return true;}" +
@@ -559,7 +559,7 @@ test("a cut leg says why it is being cut", () => {
   const api = new Function("BYO", "B", "f",
     arr("SAFER_TO") + declOf("SAFER_WIDER") + declOf("SAFER_STRENGTH") +
     grab("saferAtom") + grab("saferGrade") + grab("saferWider") + grab("gradeLeg") +
-    grab("saferRungs") + grab("saferDial") + grab("mProb") + grab("saferSwap") +
+    grab("saferRungs") + grab("saferDial") + grab("o05Of") + grab("mProb") + grab("saferSwap") +
     declOf("MODEL_KNOWS") + grab("modelPrices") + grab("pinKey") + grab("isPinned") +
     grab("legChance") + grab("saferWhy") +
     "function fixtureByLeg(l){return l.nofix?null:f;}function bookAllows(){return true;}" +

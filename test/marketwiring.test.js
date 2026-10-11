@@ -69,7 +69,7 @@ const api = new Function(
   "function esc(s){return String(s);}" +
   "function bookAllows(){return true;}" +
   "var DATA={cornersK:52,shotsK:41};" + grab("cornersK") + grab("cLgamma") + grab("cornersOver") +
-  grab("mProb") + grab("mLabel") + grab("swapOptions") +
+  grab("o05Of") + grab("mProb") + grab("mLabel") + grab("swapOptions") +
   "\nreturn {mProb:mProb,mLabel:mLabel,swapOptions:swapOptions,MKT_BY_CHIP:MKT_BY_CHIP};"
 )();
 
