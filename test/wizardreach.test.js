@@ -109,7 +109,7 @@ const api = new Function("STUB", [
   "function curBook(){return {key:'sporty',label:'SportyBet',full:true,odds:'sportyOdds',id:'eventId'};}",
   konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
   konst("HIGH_SCORING_O25"), (src.match(/var DC_MIN_FAV=[^;]*;/) || [""])[0], (src.match(/var HIGH_SCORING_LEAGUES=\[[\s\S]*?\];/) || [""])[0], konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
-  konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"), konst("SPREAD_PEN"), konst("SPREAD_CAP"), grab("overExposed"), konst("SPREAD_MULT"),
+  konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"), konst("SPREAD_PEN"), konst("SPREAD_CAP"), grab("overExposed"), konst("HCAP_DOG_BAR"), grab("dogHcap"), grab("judgedP"), konst("SPREAD_MULT"),
   (/^var WSP=\{[\s\S]*?\};/m.exec(src) || [""])[0],
   (/^var SLIP_STYLES=[\s\S]*?;$/m.exec(src) || [""])[0],
   "var WSP_REACH={};",

@@ -110,7 +110,8 @@ test("a draw is not held to a floor no draw can clear", () => {
   const fn = grab("wspBuild");
   assert.match(fn, /var floor=\(c==="X"\)\?0\.26:\(c==="GG"\)\?0\.42:0\.5;/,
     "the draw needs a floor it can actually clear");
-  assert.match(fn, /if\(v<floor\)return;/, "and the floor must be applied");
+  /* vj: the judged figure (HCAP_DOG_BAR), which is v for every non-handicap. */
+  assert.match(fn, /if\(vj<floor\)return;/, "and the floor must be applied");
   assert.ok(!/0\.30/.test(/var floor=[^;]*/.exec(fn)[0]),
     "0.30 was measured to admit 2 fixtures in 863 - it must not come back");
 });

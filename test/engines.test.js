@@ -106,7 +106,7 @@ const api = new Function([
   konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
   konst("HIGH_SCORING_O25"), (src.match(/var DC_MIN_FAV=[^;]*;/) || [""])[0], (src.match(/var HIGH_SCORING_LEAGUES=\[[\s\S]*?\];/) || [""])[0], konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
   konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"),
-  konst("SPREAD_PEN"), konst("SPREAD_CAP"), grab("overExposed"), konst("SPREAD_MULT"),
+  konst("SPREAD_PEN"), konst("SPREAD_CAP"), grab("overExposed"), konst("HCAP_DOG_BAR"), grab("dogHcap"), grab("judgedP"), konst("SPREAD_MULT"),
   (/^var BUILD=\{[\s\S]*?\};/m.exec(src) || [""])[0],
   (/^var WSP=\{[\s\S]*?\};/m.exec(src) || [""])[0],
 ].concat(FNS.map(grab)).join("\n") + `
@@ -768,4 +768,31 @@ test("a thin board still fills the slip with games on three tickets", () => {
   api.setUse(all);
   assert.strictEqual(api.buildPicks().length, before, "exposed games are a last resort, not banned");
   api.setUse({});
+});
+
+/* Owner, 11 Oct 2026: the underdog's head start over-claims by ~1.6 points on
+   22,263 held-out matches. Builders judge it 2 points lower; the ticket keeps
+   the real figure. */
+test("an underdog +1.5 that only edges Over 1.5 loses the call; the favourite's line does not", () => {
+  const mk = { wd: false, any: false, out: false, o15: true, o25: false, o35: false, fh: false,
+               tts: false, tts2: false, both: false, hcap: true };
+  /* Home a strong favourite: away +1.5 survives unless home wins by 2+. */
+  const f = (o15, hBy2) => ({ date: "2026-10-12", league: "Spain La Liga", home: "H" + o15, away: "A" + hBy2,
+    home_p: 0.62, draw_p: 0.22, away_p: 0.16, dc1x: 0.84, dcx2: 0.38, dc12: 0.78, anybody: 0.78,
+    o15, o25: 0.5, o35: 0.25, btts: 0.45, fh_o05: 0.7, h_o05: 0.88, h_o15: 0.55, a_o05: 0.55, a_o15: 0.2,
+    mg: [hBy2, 0.08, 0.04, 0.01] });
+  const dog = 0.795, board = [f(0.79, 1 - dog)].map(x => {
+    const y = priced(x); y.sportyOdds["AH_2_-1.5"] = 1.22; y.sportyOdds["AH_1_-1.5"] = 4.5; return y; });
+  reset();
+  api.setFixtures(board);
+  api.BUILD.mk = Object.assign({}, mk); api.BUILD.risk = 2;
+  const legs = api.buildPicks();
+  assert.strictEqual(legs.length, 1);
+  assert.strictEqual(legs[0].code, "OVER_1.5", "79.5% underdog +1.5 judged 77.5%, so Over 1.5 at 79% wins");
+  /* Clearly stronger, it still gets picked - and shows its real figure. */
+  const strong = [f(0.79, 0.12)].map(x => { const y = priced(x); y.sportyOdds["AH_2_-1.5"] = 1.12; return y; });
+  api.setFixtures(strong);
+  const s = api.buildPicks();
+  assert.strictEqual(s[0].code, "AH_2_-1.5");
+  assert.ok(Math.abs(s[0].p - 0.88) < 1e-9, "the ticket shows 88%, not the judged 86%: " + s[0].p);
 });

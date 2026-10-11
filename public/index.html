@@ -13946,6 +13946,22 @@ var SPREAD_MULT=0.85;   /* slider: multiplies the ranking key */
    nothing else to fill the slip with. */
 var SPREAD_CAP=3;
 function overExposed(id,use){ return (use[id]||0)>=SPREAD_CAP; }
+/* THE UNDERDOG'S HEAD START READS 2 POINTS HIGH (owner, 11 Oct 2026).
+   Over 22,263 held-out matches: underdog +1.5 landed 76.9% against 78.5%
+   claimed, +2.5 89.8% against 91.5% - the only markets we over-claim. They
+   lose to big wins, which the score grid rates slightly low, and the SportyBet
+   blend never reaches them (blendFixture moves 1X2, Over 1.5/2.5 and GG only).
+   The favourite's +1.5 is on the money (88.8% / 88.7%) and is left alone.
+   Builders judge these legs 2 points lower; the ticket shows the real figure.
+   Whole lines +1/+2 survive exactly when +1.5/+2.5 win, so they share it. */
+var HCAP_DOG_BAR=0.02;
+function dogHcap(f,code){
+  var m=/^AH_([12])_(-?[\d.]+)$/.exec(code||""); if(!m||!f) return false;
+  var L=parseFloat(m[2]);
+  if(m[1]==="1") return L>=1&&f.home_p<f.away_p;
+  return L<=-1&&f.away_p<f.home_p;
+}
+function judgedP(f,code,p){ return dogHcap(f,code)?p-HCAP_DOG_BAR:p; }
 
 function buildPicks(){
   /* The book being built for, read once. Every price question below is
@@ -14030,8 +14046,10 @@ function buildPicks(){
 
     var best=null,bestScore=-1;
     usable.forEach(function(c){
-      var v=mProb(f,c);
-      if(v==null||isNaN(v)||v<p.minConf) return;
+      var v0=mProb(f,c);
+      if(v0==null||isNaN(v0)) return;
+      var v=judgedP(f,c,v0);
+      if(v<p.minConf) return;
       var score=(1-f0)*v + f0*(oddOf(v)/12);
       /* A QUOTE OUTRANKS AN ESTIMATE ON A CLOSE CALL.
          The old rule was blunter - "when real odds exist for any candidate,
@@ -14053,7 +14071,7 @@ function buildPicks(){
       /* The slip style's pull toward its leg odds - see sliderStyle. */
       if(sty.pull) score*=1-sty.pull/2+sty.pull*styleFit(legOdd(f,c,v,B),sty.per);
       score*=1+(h32(fid(f)+"|"+c+"|"+(BUILD.seed||0))-0.5)*(0.9+0.8*f0);
-      if(score>bestScore){bestScore=score;best={code:c,p:v};}
+      if(score>bestScore){bestScore=score;best={code:c,p:v0};}
     });
     /* In a game the model expects goals in, a double chance is the timid pick:
        it needs the favourite not to lose, in a match likely to be open. If
@@ -14072,8 +14090,10 @@ function buildPicks(){
       var alts=[];
       usable.forEach(function(c){
         if(noDC&&(c==="1X"||c==="X2")) return;
-        var v=mProb(f,c);
-        if(v==null||isNaN(v)||v<p.minConf) return;
+        var v0=mProb(f,c);
+        if(v0==null||isNaN(v0)) return;
+        var v=judgedP(f,c,v0);
+        if(v<p.minConf) return;
         /* The same score the market was chosen by above, kept so the spread
            below can prefer a different market without abandoning what the risk
            dial asked for. Scoring alternatives by probability alone broke the
@@ -14082,7 +14102,7 @@ function buildPicks(){
         var sc=(1-f0)*v + f0*(oddOf(v)/12);
         if((c==="OVER_1.5"||c==="OVER_2.5") && f.o25!=null) sc*=1+Math.max(0,f.o25-0.5)*0.8;
         if(sty.pull) sc*=1-sty.pull/2+sty.pull*styleFit(legOdd(f,c,v,B),sty.per);
-        alts.push({code:c,p:v,score:sc});
+        alts.push({code:c,p:v0,score:sc});
       });
       cand.push({f:f,id:fid(f),code:best.code,p:best.p,eventId:f.eventId||null,_alts:alts});
     }
@@ -20331,8 +20351,11 @@ function wspBuild(){
          often than the 24.2% base. The model reads low on draws, which is the
          same under-confidence the calibration work found elsewhere. */
       var floor=(c==="X")?0.26:(c==="GG")?0.42:0.5;
-      if(v<floor)return;
-      cands.push({f:f,id:fid(f),code:c,p:v,od:legOdd(f,c,v)});
+      /* Judged, not shown: see HCAP_DOG_BAR. The real figure goes back on
+         the picks before they leave this function. */
+      var vj=judgedP(f,c,v);
+      if(vj<floor)return;
+      cands.push({f:f,id:fid(f),code:c,p:vj,od:legOdd(f,c,v)});
     });
     if(!cands.length)return;
     var best=cands.reduce(function(a,b){return b.p>a.p?b:a;});
@@ -20958,7 +20981,9 @@ function wspBuild(){
   var pool=ranked(poolList,
                   saMode==="mix"?0.75:0.92,
                   asiaMode==="mix"?1:0.8);
-  return accumulate(pool);
+  var out=accumulate(pool);
+  (out.picks||[]).forEach(function(c){ if(dogHcap(c.f,c.code)) c.p+=HCAP_DOG_BAR; });
+  return out;
 }
 /* THE HIGHEST PAYOUT THIS BOARD CAN ACTUALLY BUILD, asked of the builder.
    Reported: on a card full of games, typing anything over x6,000 answered "that
