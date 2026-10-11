@@ -23,7 +23,9 @@ function grab(name) {
   return src.slice(i, k + 1);
 }
 const LISTS = src.match(/var POPULAR=\[[\s\S]*?\];/)[0] + "\n" + src.match(/var POPULAR_ALIAS=\{[\s\S]*?\};/)[0];
-const FAVB_LOAD = src.match(/var FAVB=\{\};\ntry\{[^\n]*\n/)[0];
+/* \r?\n: index.html is committed CRLF, and an LF-only pattern failed on a
+   fresh checkout (found 11 Oct 2026). */
+const FAVB_LOAD = src.match(/var FAVB=\{\};\r?\ntry\{[^\r\n]*\r?\n/)[0];
 
 function page(store, topOnly) {
   const ctx = {
