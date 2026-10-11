@@ -166,7 +166,7 @@ test("nothing is stretched to get there", () => {
   /* A longer slip is not a looser one. Every extra leg phase 2 adds comes from
      `chosen`, which bestOf already filtered, and from `_alts`, which carries
      the cap too - so the slip may grow in length and never in optimism. */
-  const cap40 = /var T=WSP\.odds, cap=isJackpotOdds\(T\)\?JACKPOT_LEG_CAP:40/.test(code);
+  const cap40 = /var T=WSP\.odds, cap=\(?isJackpotOdds\(T\)(?:\|\|bankersOn\(\)\))?\?JACKPOT_LEG_CAP:40/.test(code);
   assert.ok(cap40, "the hard 40-leg cap still bounds everything");
   assert.ok(!/VALUE_CAP\s*[*+]/.test(code),
     "the cap is a constant; scaling it with slip length would undo the fix");

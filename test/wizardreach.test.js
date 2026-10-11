@@ -415,3 +415,21 @@ test("the Slider shows the total once, gold on the foot, and the subtitle is a p
   assert.match(stats.innerHTML, /Total odds/);
   assert.ok(!stats.classList.contains("stats-2"));
 });
+
+test("Bankers gets 50 legs at any payout; the other styles keep 40 below the jackpot (owner, 11 Oct 2026)", () => {
+  /* Sixty games, double chance only at x1.12: forty legs make about x93,
+     fifty about x290. */
+  reset();
+  Object.keys(api.WSP.mk).forEach(k => { api.WSP.mk[k] = (k === "wd"); });
+  api.setFixtures(Array.from({ length: 60 }, (_, i) => {
+    const f = fx(i, LEAGUES[i % 3]); f.sportyOdds = { "1X": 1.12 }; return f; }));
+  const was = api.WSP.legodd;
+  try {
+    api.WSP.legodd = 1.1; api.clearReach();
+    const bankers = api.wspMaxReach(19999);
+    api.WSP.legodd = 1.25; api.clearReach();
+    const more = api.wspMaxReach(19999);
+    assert.ok(bankers > 200, "Bankers reaches past forty legs' worth: x" + bankers);
+    assert.ok(more < 100, "More games stays at forty below the jackpot: x" + more);
+  } finally { api.WSP.legodd = was; api.clearReach(); }
+});

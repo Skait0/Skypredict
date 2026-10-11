@@ -20527,7 +20527,10 @@ function wspBuild(){
        chip at all - so a first-time visitor got a slip built to a style that
        none of the three buttons showed as chosen, and tapping Balanced
        silently changed the result while appearing to change nothing. */
-    var T=WSP.odds, cap=isJackpotOdds(T)?JACKPOT_LEG_CAP:40, per=WSP.legodd||1.4;
+    /* Bankers gets the jackpot's 50 legs at any payout (owner, 11 Oct 2026:
+       "let bankers use 50 legs for any big target"): legs of x1.02-1.25
+       multiply slowly, and 40 of them topped out near x400-900. */
+    var T=WSP.odds, cap=(isJackpotOdds(T)||bankersOn())?JACKPOT_LEG_CAP:40, per=WSP.legodd||1.4;
     /* Nothing to aim at yet - say so with an empty slip rather than
        inventing a target. */
     if(T==null && !WSP.everyGame) return {picks:[],odds:1,conf:0};
