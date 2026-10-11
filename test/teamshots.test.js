@@ -16,7 +16,7 @@ const { src, fn, decl } = require("./books.js");
 const S = require("../lib/sliplink.js");
 
 const price = (f, k) => new Function("f", "DATA",
-  fn("cLgamma") + fn("cornersOver") + fn("cornersK") + fn("o05Of") + fn("mProb") +
+  fn("cLgamma") + fn("cornersOver") + fn("cornersK") + fn("o05Of") + fn("nr3Poisson") + fn("nr3Of") + fn("mProb") +
   "return function(c){return mProb(f,c);};")(f, { shotsK: k, cornersK: 18 });
 
 test("a team's line is priced off that team's own rate", () => {

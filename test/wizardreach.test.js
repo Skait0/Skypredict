@@ -55,7 +55,7 @@ function stubEl(id) {
 const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "isSAleague",
   "isAsianLeague", "isAsian", "isSouthAmerican", "saWeight", "isLowerLeague", "topKey", "topRank", "outsideTop", "favLeague",
   "fid", "oddOf", "legOdd", "bookVerdict", "bookMayTake", "bookIsPriced", "bookIdOf",
-  "hasRealOdd", "pricedFixture", "o05Of", "mProb", "allowedMarkets", "highScoringLeague", "dcOk", "dcGoalsSwap", "preferGoalsOverDouble",
+  "hasRealOdd", "pricedFixture", "o05Of", "nr3Poisson", "nr3Of", "mProb", "allowedMarkets", "highScoringLeague", "dcOk", "dcGoalsSwap", "preferGoalsOverDouble",
   "isJackpotOdds", "wspMarkets", "codeMarket", "provenMarkets", "isProven", "safeUnpriced",
   "fetchedMarket", "bookAllows", "wspStyleOn", "wspBuild", "refusedDay", "refusedToday", "noteRefused", "wspMaxReach",
   "leagueAllowed", "leagueDefault", "setLeaguePicked", "leaguesChosen", "windowWords", "setFav",

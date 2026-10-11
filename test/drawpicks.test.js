@@ -64,6 +64,7 @@ const page = `
   function bookTakes(){return true;} var BETSLIP_MAX=50; function capWaysHTML(){return "";}
   function paintBookPickerWith(){} function allBookFeeds(){return null;} function wireSplit(){}
   var BOOKMAKER="sporty";
+  function mProb(){return null;}
 `;
 const H = new Function(stubs + page + real + ["openSheet", "bookAllPicks", "confirmBookAll"].map(grab).join("\n") +
   "\nreturn {V:V,CATS:CATS,matchHTML:matchHTML,listRowHTML:listRowHTML,moreHTML:moreHTML," +

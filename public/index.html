@@ -8132,6 +8132,9 @@ function gradeCode(code, hg, ag){
     case"OVER_3.5": return tot>3?"win":"lose";
     case"UNDER_4.5": return tot<5?"win":"lose";
     case"OVER_0.5": return tot>0?"win":"lose";
+    case"NR3_ANY":case"NR3_H":case"NR3_A":
+      var r3=nr3Grade(hg,ag,c==="NR3_ANY"?"any":c==="NR3_H"?"h":"a");
+      return r3==null?null:(r3?"win":"lose");
     case"GG": return both?"win":"lose";
     case"HOME_OVER_0.5": return hg>0?"win":"lose";
     case"HOME_OVER_1.5": return hg>1?"win":"lose";
@@ -9231,6 +9234,9 @@ function blendFixture(f){
      the model. */
   var bk={};
   /* Over 0.5 match goals (owner, 11 Oct 2026): market 18 total=0.5, both sides. */
+  /* 3 or more in a row: SportyBet sells Yes and No, so a clean two-way split. */
+  ["ANY","H","A"].forEach(function(w){ var n=o["NR3_"+w], y=o["R3_"+w];
+    if(n>1&&y>1){ var an=1/n, ay=1/y; bk["NR3_"+w]=an/(an+ay); bk["R3_"+w]=ay/(an+ay); } });
   if(o["OVER_0.5"]>1&&o["UNDER_0.5"]>1){ var a0=1/o["OVER_0.5"],b0=1/o["UNDER_0.5"]; bk["OVER_0.5"]=a0/(a0+b0); bk["UNDER_0.5"]=b0/(a0+b0); }
   Object.keys(o).forEach(function(k){
     var cs=/^((?:CORNERS|SHOTS)(?:_[HA])?)_OV_(\d+\.5)$/.exec(k);
@@ -10090,6 +10096,10 @@ function moreHTML(f){
       opt("Under 2.5 goals",1-f.o25,(1-f.o25)>=.6)+
       /* A pick, not a tip: never the board's call, but readers asked to add it. */
       opt("Under 4.5 goals",f.o45==null?null:1-f.o45,f.o45!=null&&(1-f.o45)>=.9,"UNDER_4.5",id)+
+      /* Picks, not tips: SportyBet's "3 or more goals in a row - No". */
+      opt("No team scores 3 in a row",mProb(f,"NR3_ANY"),false,"NR3_ANY",id)+
+      opt(esc(f.home)+" won't score 3 in a row",mProb(f,"NR3_H"),false,"NR3_H",id)+
+      opt(esc(f.away)+" won't score 3 in a row",mProb(f,"NR3_A"),false,"NR3_A",id)+
       opt("Both teams score",f.btts,f.btts>=.6,"GG",id)+
       opt("Goal in 1st half",f.fh_o05,f.fh_o05!=null&&f.fh_o05>=.7,"FH_OVER_0.5",id)+"</div></div>"+
     "<div class='grp'><h3>Combos</h3><div class='opts'>"+
@@ -10589,7 +10599,7 @@ addEventListener("keydown",function(e){
    last market switched on before it had one took over the wizard's picks for a
    week. They begin earning a record the moment the next card is graded; until
    then they are there for anyone who goes looking. */
-var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o05:false,o15:true,o25:false,o35:false,u45:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,corn:false,tcorn:false,shots:false,tshots:false,hcap:false},touched:false,mode:"slider"};
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o05:false,o15:true,o25:false,o35:false,u45:false,nr3:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,corn:false,tcorn:false,shots:false,tshots:false,hcap:false},touched:false,mode:"slider"};
 /* NO `draw` KEY HERE, deliberately. The draw is a Wizard market and lives in
    WSP.mk alone. It was briefly mirrored into BUILD.mk like every other toggle,
    which was inert - "X" is in neither allowedMarkets nor mkOn, so no risk
@@ -13113,7 +13123,7 @@ function inkOn(h,s,l){
    Tiers match the chips: safe markets are the ones that win most often, and
    the ones that pay are unlocked as the slider goes up. */
 function allowedMarkets(t){
-  var m=["1X","X2","OVER_0.5","OVER_1.5","1","2","UNDER_4.5",
+  var m=["1X","X2","OVER_0.5","OVER_1.5","1","2","UNDER_4.5","NR3_ANY","NR3_H","NR3_A",
          /* One side finding the net at all - the likeliest thing on the card
             after a double chance. */
          "HOME_OVER_0.5","AWAY_OVER_0.5"];
@@ -13201,6 +13211,61 @@ function o05Of(f){
   if(typeof f.h_o05!=="number"||typeof f.a_o05!=="number"||typeof f.btts!=="number") return null;
   return Math.max(0,Math.min(1,f.h_o05+f.a_o05-f.btts));
 }
+/* 3 OR MORE GOALS IN A ROW (owner, 11 Oct 2026). Tested on 3,711 matches with
+   goal timelines: given the final score, goal ORDER is random (any team 21.2%
+   observed v 21.1% predicted), so the chance of a run comes from the scoring
+   rates alone - each goal is the home side's with probability lh/(lh+la),
+   independent of the last. Rates read off team-to-score (Poisson P(0)=e^-l),
+   which is already 90% the book's. The model alone ran 1-2 points high on No
+   over 22,263 held-out matches, so SportyBet's own Yes/No split is blended in
+   at the usual weight via f._bk. Cached per fixture on its two inputs. */
+function nr3Poisson(lh,la){
+  var lam=lh+la, p=lam>0?lh/lam:0.5, out={any:0,h:0,a:0}, w=Math.exp(-lam);
+  for(var n=0;n<=14;n++){
+    if(n>0) w=w*lam/n;
+    /* sequences of n goals: track last side and its run length (1-2) */
+    var st=n?{H1:p,A1:1-p}:null, noH=n?0:1, noA=n?0:1, noAny=n?0:1;
+    if(n){
+      /* home-run-free and away-run-free counted separately, any = both */
+      var h0=[1,0,0], a0=[1,0,0];
+      for(var i=0;i<n;i++){
+        h0=[(h0[0]+h0[1]+h0[2])*(1-p), h0[0]*p, h0[1]*p];
+        a0=[(a0[0]+a0[1]+a0[2])*p, a0[0]*(1-p), a0[1]*(1-p)];
+      }
+      noH=h0[0]+h0[1]+h0[2]; noA=a0[0]+a0[1]+a0[2];
+      for(var j=1;j<n;j++){ var nx={};
+        for(var k in st){ var side=k[0], run=+k[1], v=st[k];
+          var keepRun=side+(run+1), flip=(side==="H"?"A":"H")+"1";
+          if(run+1<3) nx[keepRun]=(nx[keepRun]||0)+v*(side==="H"?p:1-p);
+          nx[flip]=(nx[flip]||0)+v*(side==="H"?1-p:p); }
+        st=nx; }
+      noAny=0; for(var q in st) noAny+=st[q];
+    }
+    out.any+=w*noAny; out.h+=w*noH; out.a+=w*noA;
+  }
+  return out;
+}
+function nr3Of(f,w){
+  if(!f||typeof f.h_o05!=="number"||typeof f.a_o05!=="number") return null;
+  var c=f._nr3;
+  if(!c||c.h!==f.h_o05||c.a!==f.a_o05){
+    var lh=-Math.log(Math.max(1e-6,1-f.h_o05)), la=-Math.log(Math.max(1e-6,1-f.a_o05));
+    c=f._nr3={h:f.h_o05,a:f.a_o05,v:nr3Poisson(lh,la)};
+  }
+  return c.v[w];
+}
+/* Settled by the score where the score decides it: 2 or fewer goals cannot
+   hold a run of 3; 3 or more against none must. Anything else (a 3-1) needs
+   the goal order, so it is null - left for a reader to check, like Win either
+   half. 80-92% settle this way (11 Oct 2026, 3,716 matches). */
+function nr3Grade(hg,ag,w){
+  if(typeof hg!=="number"||typeof ag!=="number") return null;
+  var h=w!=="a", a=w!=="h";
+  var hYes=hg>=3&&ag===0, aYes=ag>=3&&hg===0;
+  if((h&&hYes)||(a&&aYes)) return false;
+  if((!h||hg<=2)&&(!a||ag<=2)) return true;
+  return null;
+}
 function mProb(f,c){
   /* The book's own figure for a line, where blendFixture kept one (f._bk):
      mixed in at the result's weight, or used outright when the model has no
@@ -13281,6 +13346,8 @@ function marginGe(f){
     case"UNDER_3.5":return cpl(f.o35);
     case"UNDER_4.5":return cpl(f.o45);
     case"OVER_0.5":return o05Of(f);
+    case"NR3_ANY":return nr3Of(f,"any");case"NR3_H":return nr3Of(f,"h");case"NR3_A":return nr3Of(f,"a");
+    case"R3_ANY":return cpl(nr3Of(f,"any"));case"R3_H":return cpl(nr3Of(f,"h"));case"R3_A":return cpl(nr3Of(f,"a"));
     case"UNDER_0.5":return cpl(o05Of(f));
     case"NG":return cpl(f.btts);
     case"FH_UNDER_0.5":return cpl(f.fh_o05);
@@ -13501,7 +13568,8 @@ function cLgamma(x){
    leave it out for that reason); its team-corner lines (4.5-5.5)
    were not priced on either fixture the verifier booked; and it sells no
    shots. Add it to an entry only after booking one real code of that market. */
-var BOOK_ONLY={"MIX_X_OV_1.5":["bet9ja","betking"],
+var BOOK_ONLY={"NR3_ANY":["sporty"],"NR3_H":["sporty"],"NR3_A":["sporty"],
+  "MIX_X_OV_1.5":["bet9ja","betking"],
   /* Corners per team (25 Sep 2026): Betpawa sells none, verified absent in
      betpawa.py. BetKing sells one main line per side, not the ladder, and
      refused the tested ones - see TEAM_CORNER_CODES. */
@@ -13669,7 +13737,7 @@ var ESTIMATE_SHRINK=0.85;
 function fetchedMarket(code){
   return !!SAFE_UNPRICED[code] ||
     /^(OVER|UNDER)_[013]\.5$/.test(code) || code==="OVER_2.5" || code==="UNDER_2.5" ||
-    code==="GG" || code==="NG" || code==="FH_OVER_0.5" ||
+    code==="GG" || code==="NG" || code==="FH_OVER_0.5" || /^N?R3_(ANY|H|A)$/.test(code) ||
     /^(HOME|AWAY)_OVER_[01]\.5$/.test(code);
 }
 var MIN_GRADED=10;
@@ -13683,6 +13751,7 @@ function codeMarket(c){
     case"OVER_2.5":return"Over 2.5";
     case"OVER_3.5":return"Over 3.5";
     case"HOME_OVER_0.5":case"AWAY_OVER_0.5":return"Team over 0.5";
+    case"NR3_ANY":case"NR3_H":case"NR3_A":return"3 in a row: No";
     case"HOME_OVER_1.5":case"AWAY_OVER_1.5":return"Team over 1.5";
     /* Same names lib/model.js grades them under, so a chip cannot be offered
        by default until its family has a record. */
@@ -13759,6 +13828,9 @@ function gradeLeg(f,c,hg,ag,st){
     case"UNDER_3.5": return tot<3.5;
     case"UNDER_4.5": return tot<4.5;
     case"OVER_0.5": return tot>0.5;
+    case"NR3_ANY": return nr3Grade(hg,ag,"any");
+    case"NR3_H": return nr3Grade(hg,ag,"h");
+    case"NR3_A": return nr3Grade(hg,ag,"a");
     case"NG": return !both;
     case"HOME_UNDER_0.5": return hg<0.5;
     case"HOME_UNDER_1.5": return hg<1.5;
@@ -13825,6 +13897,12 @@ function mLabel(f,c){
     case"OVER_3.5":return"Over 3.5 goals";
     case"UNDER_4.5":return"Under 4.5 goals";
     case"OVER_0.5":return"Over 0.5 goals";
+    case"NR3_ANY":return"No team scores 3 in a row";
+    case"NR3_H":return esc(f.home)+" won't score 3 in a row";
+    case"NR3_A":return esc(f.away)+" won't score 3 in a row";
+    case"R3_ANY":return"A team scores 3 in a row";
+    case"R3_H":return esc(f.home)+" scores 3 in a row";
+    case"R3_A":return esc(f.away)+" scores 3 in a row";
     case"HOME_OVER_0.5":return esc(f.home)+" over 0.5 goals";
     case"AWAY_OVER_0.5":return esc(f.away)+" over 0.5 goals";
     case"HOME_OVER_1.5":return esc(f.home)+" over 1.5 goals";
@@ -14110,7 +14188,7 @@ function buildPicks(){
   var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier), cand=[];
   var sty=sliderStyle();
   var mkOn={"1X":BUILD.mk.wd,"X2":BUILD.mk.wd,"12":BUILD.mk.any,"1":BUILD.mk.out,"2":BUILD.mk.out,
-    "OVER_0.5":BUILD.mk.o05===true,"OVER_1.5":BUILD.mk.o15,"OVER_2.5":BUILD.mk.o25,"OVER_3.5":BUILD.mk.o35,"UNDER_4.5":BUILD.mk.u45,
+    "OVER_0.5":BUILD.mk.o05===true,"NR3_ANY":BUILD.mk.nr3===true,"NR3_H":BUILD.mk.nr3===true,"NR3_A":BUILD.mk.nr3===true,"OVER_1.5":BUILD.mk.o15,"OVER_2.5":BUILD.mk.o25,"OVER_3.5":BUILD.mk.o35,"UNDER_4.5":BUILD.mk.u45,
     "FH_OVER_0.5":BUILD.mk.fh,
     "HOME_OVER_0.5":BUILD.mk.tts,"AWAY_OVER_0.5":BUILD.mk.tts,
     "HOME_OVER_1.5":BUILD.mk.tts2,"AWAY_OVER_1.5":BUILD.mk.tts2,"GG":BUILD.mk.both,
@@ -14141,6 +14219,9 @@ function buildPicks(){
     function sane(c){
       if(refused[rk+fid(f)+"|"+c]) return false;
       if(!cornersOpen(f,c)) return false;
+      /* SportyBet-only and swept (owner, 11 Oct 2026; NPFL has no such
+         market): only where their own feed quotes it, like corners. */
+      if(/^NR3_/.test(c)&&!bookQuotes(f,c,BOOKS.sporty)) return false;
       if(c==="1"&&!homeFav) return false;
       if(c==="2"&&homeFav) return false;
       if((c==="1X"||c==="X2")&&!dcOk(f,c)) return false;
@@ -17385,7 +17466,7 @@ function slipName(s){
    corner case. Mirrors sliplink's MARKETS keys and test/sliplink.test.js fails
    if the two ever drift. */
 var LINK_MARKETS={"1":1,"2":1,"X":1,"1X":1,"X2":1,"12":1,
-  "OVER_0.5":1,"OVER_1.5":1,"OVER_2.5":1,"OVER_3.5":1,"UNDER_4.5":1,"GG":1,"FH_OVER_0.5":1,
+  "OVER_0.5":1,"NR3_ANY":1,"NR3_H":1,"NR3_A":1,"OVER_1.5":1,"OVER_2.5":1,"OVER_3.5":1,"UNDER_4.5":1,"GG":1,"FH_OVER_0.5":1,
   "HOME_OVER_0.5":1,"AWAY_OVER_0.5":1,"HOME_OVER_1.5":1,"AWAY_OVER_1.5":1,
   "MIX_1_OV_1.5":1,"MIX_2_OV_1.5":1,"MIX_X_OV_1.5":1,
   "MIX_1_OV_2.5":1,"MIX_2_OV_2.5":1,"MIX_X_OV_2.5":1,
@@ -19252,7 +19333,7 @@ function myOdds(){return MYSLIP.reduce(function(t,x){return t*legOdd(fixtureById
  */
 var SWAP_ORDER=["1","2","1X","X2","12","OVER_1.5","OVER_2.5","GG",
   "FH_OVER_0.5","OVER_3.5","UNDER_4.5","HOME_OVER_0.5","AWAY_OVER_0.5",
-  "HOME_OVER_1.5","AWAY_OVER_1.5","OVER_0.5"];
+  "HOME_OVER_1.5","AWAY_OVER_1.5","OVER_0.5","NR3_A","NR3_H","NR3_ANY"];
 var SWAP_NEVER={"X":1};
 function swapOptions(f){
   if(!f) return [];
@@ -20340,7 +20421,7 @@ const JACKPOT_ODDS=20000;
 const BETSLIP_MAX=50;
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
-var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o05:false,o15:true,o25:false,o35:false,u45:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,tcorn:false,shots:false,tshots:false,hcap:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o05:false,nr3:false,o15:true,o25:false,o35:false,u45:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,tcorn:false,shots:false,tshots:false,hcap:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* The slip style is remembered (and synced) since accounts, 29 Sep 2026. */
 try{var _lo=+localStorage.getItem("sw.legodd"); if(_lo>1&&_lo<10) WSP.legodd=_lo;}catch(e){}
 /* The short-slip header (see wspConjure), kept with the slip across reloads.
@@ -20426,6 +20507,7 @@ function wspMarkets(){var m=[];
   if(WSP.mk.o35)m.push("OVER_3.5");
   if(WSP.mk.u45)m.push("UNDER_4.5");
   if(WSP.mk.o05)m.push("OVER_0.5");
+  if(WSP.mk.nr3)m=m.concat(["NR3_ANY","NR3_H","NR3_A"]);
   if(WSP.mk.fh)m.push("FH_OVER_0.5");
   /* Both sides go in the pool and the better one wins on its own merits.
      Unlike a match result, backing either team to score is a real bet
@@ -21278,7 +21360,7 @@ function wspMaxReach(at){
    because the mapping is the one thing that would silently rot: a market added
    to wspMarkets and not to this list simply stops being reported on. */
 var MKT_CODES={wd:["1X","X2"],any:["12"],out:["1","2"],o15:["OVER_1.5"],
-  o05:["OVER_0.5"],o25:["OVER_2.5"],o35:["OVER_3.5"],u45:["UNDER_4.5"],fh:["FH_OVER_0.5"],
+  o05:["OVER_0.5"],nr3:["NR3_ANY","NR3_H","NR3_A"],o25:["OVER_2.5"],o35:["OVER_3.5"],u45:["UNDER_4.5"],fh:["FH_OVER_0.5"],
   tts:["HOME_OVER_0.5","AWAY_OVER_0.5"],tts2:["HOME_OVER_1.5","AWAY_OVER_1.5"],
   both:["GG"],draw:["X"],corn:["CORNERS_OV_7.5","CORNERS_OV_8.5","CORNERS_OV_9.5","CORNERS_OV_10.5"],
   tcorn:["CORNERS_H_OV_3.5","CORNERS_H_OV_4.5","CORNERS_H_OV_5.5","CORNERS_A_OV_2.5","CORNERS_A_OV_3.5","CORNERS_A_OV_4.5"],
@@ -21546,7 +21628,7 @@ function renderBldDock(){
    way to name the chip that fell short. One table, read twice, beats two
    tables that can disagree. */
 var MKT_BY_CHIP={wd:["1X","X2"],any:["12"],out:["1","2"],
-  o05:["OVER_0.5"],o15:["OVER_1.5"],o25:["OVER_2.5"],o35:["OVER_3.5"],u45:["UNDER_4.5"],fh:["FH_OVER_0.5"],
+  o05:["OVER_0.5"],nr3:["NR3_ANY","NR3_H","NR3_A"],o15:["OVER_1.5"],o25:["OVER_2.5"],o35:["OVER_3.5"],u45:["UNDER_4.5"],fh:["FH_OVER_0.5"],
   tts:["HOME_OVER_0.5","AWAY_OVER_0.5"],tts2:["HOME_OVER_1.5","AWAY_OVER_1.5"],
   both:["GG"],
   dro25:["MIX_X_OV_2.5"],drgg:["MIXGG_X"],rsgg:["MIXGG_1","MIXGG_2"],
@@ -21745,6 +21827,10 @@ function renderShared(){
     /* Over 0.5 goals (owner, 11 Oct 2026): the x1.02-1.06 leg a Bankers slip
        is built from. Off by default; never a board tip. */
     {k:"o05", label:"Over 0.5", tier:0, sub:"Over 0.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 8v8"/>'},
+    /* 3 or more goals in a row - No (owner, 11 Oct 2026). One chip, three
+       versions (any team, home, away); the builder takes whichever fits the
+       payout - the safest at a small one, a longer one at a big one. */
+    {k:"nr3", label:"3 in a row: No", tier:0, sub:"No 3-goal run", icon:'<path d="M5 12h3M10.5 12h3M16 12h3"/><path d="M4 4l16 16"/>'},
     {k:"u45", label:"Under 4.5", tier:0, sub:"Under 4.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M8 12h8"/>'},
     {k:"fh", label:"1st half goal", tier:2, sub:"FH over 0.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l3.5 2"/>'},
     /* One side's goals rather than the two added together. Both sides go in
@@ -21857,7 +21943,7 @@ function renderShared(){
     /* In groups a reader recognises, not 22 chips in a grid (owner, 11 Oct
        2026: "the whole filter tab feels poorly put together"). */
     var shown=MKT_CFG.filter(function(m){ return !m.wizardOnly || BUILD.mode==="wizard"; });
-    var html=[["Result",["wd","any","out","weh","draw"]],["Goals",["o05","o15","o25","o35","u45","fh","both"]],
+    var html=[["Result",["wd","any","out","weh","draw"]],["Goals",["o05","o15","o25","o35","u45","nr3","fh","both"]],
       ["Team goals",["tts","tts2"]],["Combos",["drgg","rsgg","dro25","rso25","dro15","rso15"]],
       ["Corners, shots and handicap",["corn","tcorn","shots","tshots","hcap"]]].map(function(g){
       var cs=g[1].map(function(k){ return shown.filter(function(m){ return m.k===k; })[0]; }).filter(Boolean);

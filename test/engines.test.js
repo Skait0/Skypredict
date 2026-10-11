@@ -64,7 +64,7 @@ const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "
      index.html. Lifted, not stubbed: stubbing it is how three copies of the
      same bug survived. */
   "bookVerdict", "bookMayTake", "bookIsPriced", "bookIdOf",
-  "hasRealOdd", "pricedFixture", "o05Of", "mProb", "riskParams",
+  "hasRealOdd", "pricedFixture", "o05Of", "nr3Poisson", "nr3Of", "mProb", "riskParams",
   "allowedMarkets", "highScoringLeague", "dcOk", "dcGoalsSwap", "preferGoalsOverDouble", "isJackpotOdds", "wspMarkets",
   /* The wizard now asks which markets have a published record before it
      reaches for one, so its harness needs them too. */
@@ -886,4 +886,24 @@ test("a Bet9ja slip takes a line Bet9ja quotes even where SportyBet does not", (
     assert.strictEqual(code, want, book + ": " + JSON.stringify(legs.map(c => c.code)));
   }
   api.setBook({ key: "sporty", label: "SportyBet", full: true, odds: "sportyOdds", id: "eventId" });
+});
+
+/* Owner, 11 Oct 2026: "3 goals in a row - No" - one chip, the builder picks
+   home, away or any team; "higher payout, higher odds on the 3". */
+test("3 in a row: a small payout takes the safest version, a big one reaches for a longer one", () => {
+  const only = { wd: false, any: false, out: false, o05: false, nr3: true, o15: false, o25: false, o35: false, fh: false, tts: false, tts2: false, both: false };
+  const board = Array.from({ length: 12 }, (_, i) => {
+    const f = priced(Object.assign({}, BOARD[i % BOARD.length], { home: "H" + i, away: "A" + i, h_o05: 0.72, a_o05: 0.74 }));
+    Object.assign(f.sportyOdds, { "NR3_A": 1.06, "R3_A": 9, "NR3_H": 1.07, "R3_H": 8.5, "NR3_ANY": 1.24, "R3_ANY": 4.4 });
+    return f; });
+  const codes = (legs) => [...new Set(legs.map((c) => c.code))].sort().join(",");
+  reset(); api.setFixtures(board); api.WSP.mk = Object.assign({}, only);
+  Object.assign(api.WSP, { odds: 1.3, slider: false, legodd: 1.25 });
+  const small = api.wspBuild().picks;
+  assert.ok(small.length > 0 && !small.some((c) => c.code === "NR3_ANY"), "x1.3 stays on the safest: " + codes(small));
+  Object.assign(api.WSP, { odds: 6, legodd: 1.7 });
+  const big = api.wspBuild().picks;
+  assert.ok(big.some((c) => c.code === "NR3_ANY"), "x6 reaches for the longer Any-team No: " + codes(big));
+  big.concat(small).forEach((c) => assert.ok(/^NR3_/.test(c.code), "only the No side is ever picked: " + c.code));
+  api.WSP.legodd = 1.4;
 });
