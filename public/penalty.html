@@ -217,6 +217,9 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #sheet p{margin:0 0 12px;color:var(--soft);font-size:14px}
 #sheet p.credit{margin:4px 0 0;font-size:11px;opacity:.6;text-align:center}#sheet p.credit a{color:inherit}
 #sheet .note{color:var(--gold);font-weight:800}
+/* "Home" under a result (owner, 11 Oct 2026): a plain word, back to the site. */
+.shome{display:block;margin:14px auto 2px;padding:8px 14px;text-align:center;color:inherit;opacity:.8;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.shome:hover{opacity:1}
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;margin-top:8px;border:0;border-radius:999px;font:800 15px "Plus Jakarta Sans",system-ui;cursor:pointer;text-decoration:none;transition:transform .12s}
 .btn:active{transform:scale(.97)}
 .btn:focus-visible,.pick button:focus-visible,.sfoot button:focus-visible,#cast:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
@@ -998,6 +1001,10 @@ function api(method,a,body,q){
 }
 var LAST={status:0,error:null};
 function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+/* Back to Soccerwizard, at the foot of every result (owner, 11 Oct 2026: "add a
+   home word link to the result page"). The wizard top-left does the same from
+   the pitch; this is where the eye lands when a game ends. */
+function homeLink(){var a=el("a","shome","Home");a.href="/";a.addEventListener("click",function(){track("home_clicked");});return a;}
 function sheet(nodes,isMenu){PW.tag("");PW.fx.combo(0);var s=$("sheet");s.textContent="";s.removeAttribute("data-duel");
   if(!isMenu&&window.PWHome){var m=el("button","smenu","Menu");m.type="button";m.addEventListener("click",function(){closeSheet();window.PWHome();});s.appendChild(m);}
   nodes.forEach(function(n){s.appendChild(n);});s.inert=false;s.classList.add("on");}
@@ -1029,7 +1036,7 @@ function practice(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(true);var o
     var head=st.winner==="a"?"You beat the computer "+st.a+"-"+st.b:st.winner==="b"?"The computer won "+st.b+"-"+st.a:"Draw, "+st.a+"-"+st.b;
     var early=outs.length<2*REG?(st.winner==="a"?"The computer can't catch up, so it ends early. ":"You can't catch up with the kicks left, so it ends early. "):"";
     var acts=el("div","row");acts.appendChild(btn("Play again","red",function(){closeSheet();practice();}));acts.appendChild(btn("Challenge a friend","ghost",function(){closeSheet();challenger();}));
-    sheet([el("h2",null,head)].concat(early?[el("p",null,early.trim())]:[],[report(),acts,tipsCard()]));}
+    sheet([el("h2",null,head)].concat(early?[el("p",null,early.trim())]:[],[report(),acts,tipsCard(),homeLink()]));}
   PW.vs(PW.NAME||"You",PW.char,"Computer",null,"FRIENDLY").then(next);}
 
 function askName(){return new Promise(function(done){
@@ -1140,7 +1147,7 @@ function duelEnd(d,me,opp){var my=d.score[me],th=d.score[me==="a"?"b":"a"],w=d.w
   var head=w==="draw"?"You drew with "+opp+", "+my+"-"+th:w===me?"You beat "+opp+" "+my+"-"+th:opp+" beat you "+th+"-"+my;
   track("duel_finished");
   sheet([el("h2",null,head)].concat(d.h2h?[el("p","note","Head to head: "+h2hLine(d.h2h,opp))]:[],[btn("Rematch "+opp,"red",function(){closeSheet();challenger();})],
-    shareSheet(head+" on Play Penalty. Think you can do better?",ORIGIN+"/penalty","duel_result"),[tipsCard()]));}
+    shareSheet(head+" on Play Penalty. Think you can do better?",ORIGIN+"/penalty","duel_result"),[tipsCard(),homeLink()]));}
 function duelsList(){api("GET","duels",null,{device:PW.DEV}).then(function(r){var list=el("ol","lb"),ds=(r.j&&r.j.duels)||[];
   if(!ds.length)list.appendChild(el("li","lbe","No duels yet. Start one and send the link."));
   ds.forEach(function(x){var li=el("li",x.mine&&!x.done?"you":"");li.style.cursor="pointer";li.appendChild(el("b",null,x.done?(x.won?"W":x.draw?"D":"L"):x.mine?"\u25b6":"\u2026"));
@@ -1220,7 +1227,7 @@ function result(a,b,winner,chName,id,role,frName){
      just played answers with their own link, one tap. */
   var back=role==="friend"?btn("Challenge "+chName+" back","red",function(){closeSheet();challenger();}):
     role==="challenger"?btn("Rematch "+fr,"red",function(){closeSheet();challenger();}):btn("Start your own challenge","ghost",function(){closeSheet();challenger();});
-  sheet([el("h2",null,head)].concat(role==="friend"?[report()]:[],[back],shareSheet(text,url,"result"),[tipsCard()]));
+  sheet([el("h2",null,head)].concat(role==="friend"?[report()]:[],[back],shareSheet(text,url,"result"),[tipsCard(),homeLink()]));
 }
 
 /* CLUB WARS (owner, 9 Oct 2026): pick a club once, its badge sits next to
@@ -1267,7 +1274,7 @@ function survival(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);askN
         sheet([h,el("p",null,line+(nb||!best?"":" Your best: "+best+"."))]
           .concat([btn("Again","red",function(){closeSheet();survival();}),
             row(btn("Leaderboard","ghost",function(){closeSheet();leaderboard("league");}),btn("Challenge a friend","ghost",function(){closeSheet();challenger();}))],
-            shareSheet("I scored "+streak+" in a row against the Wizard Keeper on Play Penalty. Beat that:",ORIGIN+"/penalty","survival")));});});}
+            shareSheet("I scored "+streak+" in a row against the Wizard Keeper on Play Penalty. Beat that:",ORIGIN+"/penalty","survival"),[homeLink()]));});});}
   PW.vs(name,PW.char,"Wizard Keeper","wizard","RANKED").then(next);});}
 function report(){var m=PW.match,r=el("div","rep");
   [["\u2605 "+m.stars,"Stars"],[String(m.tops),"Top bins"],[String(m.saves),"Your saves"]].forEach(function(x){var d=el("div");d.appendChild(el("b",null,x[0]));d.appendChild(el("span",null,x[1]));r.appendChild(d);});return r;}
@@ -1301,7 +1308,7 @@ function leaderboard(per){
     if(!top.length){list.appendChild(el("li","lbe",per==="league"?"Nobody in your division has scored this week. Be the first.":"Nobody on the table yet. Be the first."));return;}
     top.forEach(function(x,k){var li=el("li",x.you?"you":"");li.appendChild(el("b",null,String(k+1)));li.appendChild(nameCell(x));li.appendChild(el("i",null,String(x.streak)));list.appendChild(li);});
     var me=r.j.me;if(me&&me.rank>20){var li=el("li","you");li.appendChild(el("b",null,String(me.rank)));li.appendChild(el("span",null,"You"));li.appendChild(el("i",null,String(me.streak)));list.appendChild(li);}});}
-window.PWFlow={duel:duel,duelsList:duelsList,survival:survival,leaderboard:leaderboard,promote:promote,row:row,challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,offline:offline,charPicker:charPicker,practice:practice};
+window.PWFlow={duel:duel,duelsList:duelsList,survival:survival,leaderboard:leaderboard,promote:promote,row:row,challenger:challenger,friend:friend,api:api,track:track,sheet:sheet,closeSheet:closeSheet,el:el,btn:btn,shareSheet:shareSheet,tipsCard:tipsCard,homeLink:homeLink,offline:offline,charPicker:charPicker,practice:practice};
 })();
 </script>
 <script>
@@ -1318,7 +1325,7 @@ function bumpStreak(day){var s={last:null,n:0};try{s=JSON.parse(localStorage.get
    day's keeper. The day comes back with the first shot and is sent with the
    rest, so a go across Lagos midnight finishes against one keeper. */
 function faced(){F.sheet([F.el("h2",null,"You've faced today's keeper"),F.el("p",null,"New keeper at midnight. Only your first go counts."),
-  F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})]);}
+  F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),F.homeLink()]);}
 /* A replay that counts for nothing: five shots against random dives, judged
    on the phone, no server, no streak. */
 function forFun(){var outs=[];PW.resetStreak();PW.setSolo(true);PW.newBoard("Just for fun",true);
@@ -1327,7 +1334,7 @@ function forFun(){var outs=[];PW.resetStreak();PW.setSolo(true);PW.newBoard("Jus
     return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:d,outcome:o});})
     .then(function(){if(outs.length<R.REG)return one();
       F.sheet([F.el("h2",null,"Just for fun: "+outs.filter(function(x){return x==="goal";}).length+"/5"),F.el("p",null,"Not counted. Tomorrow's keeper is the one that counts."),
-        F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})]);});}
+        F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),F.homeLink()]);});}
   one();}
 function daily(){var outs=[],day=null,i=0;PW.setSolo(false);PW.newBoard("The Wizard",true);PW.setOpponent("wizard");PW.resetStreak();
   function sync(st){day=st.day;i=st.at;outs=st.outcomes.slice();PW.newBoard("The Wizard",true,outs,[]);PW.setScore(outs.filter(function(o){return o==="goal";}).length,outs.filter(function(o){return o!=="goal";}).length);}
@@ -1351,7 +1358,7 @@ function daily(){var outs=[],day=null,i=0;PW.setSolo(false);PW.newBoard("The Wiz
         var text="Play Penalty #"+num+" vs the Wizard Keeper\n"+grid+" "+x.j.score+"/5"+(n>1?" \ud83d\udd25"+n:"");
         var nodes=[F.el("h2",null,x.j.score+"/5 against the Wizard Keeper"),F.el("p","dgrid",grid),
           F.el("p",null,(x.j.better!=null?"Better than "+x.j.better+"% of players today. ":"")+"Streak: "+n+(n===1?" day":" days"))];
-        F.sheet(nodes.concat(F.shareSheet(text,location.origin+"/penalty","daily"),[F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),F.tipsCard()]));
+        F.sheet(nodes.concat(F.shareSheet(text,location.origin+"/penalty","daily"),[F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),F.tipsCard(),F.homeLink()]));
       });});}
   start();}
 

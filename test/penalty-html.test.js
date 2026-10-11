@@ -675,7 +675,7 @@ test("batch 2 (owner, 9 Oct 2026): a League tab with your division's crest, prom
 
 test("match report card (owner, 9 Oct 2026): stars, top bins and your saves after a match", () => {
   assert.match(grabFn("report"), /"Stars"\][\s\S]*"Top bins"\][\s\S]*"Your saves"\]/);
-  assert.match(grabFn("practice"), /\[report\(\),acts,tipsCard\(\)\]/);
+  assert.match(grabFn("practice"), /\[report\(\),acts,tipsCard\(\),homeLink\(\)\]/);
   assert.match(grabFn("result"), /role==="friend"\?\[report\(\)\]:\[\]/);
   assert.match(grabFn("playKick"), /if\(you&&top\)TOPS\+\+;/);
 });
@@ -685,4 +685,12 @@ test("club wars (owner, 9 Oct 2026): pick a club once, its badge by your name, a
   assert.deepStrictEqual(ids, require("../lib/penalty.js").CLUBS, "the page's clubs are the ones the server stores");
   assert.match(html, /askName\(\)\.then\(function\(name\)\{return pickClub\(\)/, "Ranked asks for a club after the name");
   assert.match(html, /li\.appendChild\(nameCell\(x\)\)/, "names on the tables carry the badge");
+});
+
+test("every result ends with a Home link back to the site (owner, 11 Oct 2026)", () => {
+  const html = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "penalty.html"), "utf8");
+  assert.match(html, /function homeLink\(\)\{var a=el\("a","shome","Home"\);a\.href="\/";/);
+  assert.match(html, /homeLink:homeLink/, "exported for the daily and for-fun screens");
+  const uses = (html.match(/(?:F\.)?homeLink\(\)/g) || []).length - 1;
+  assert.strictEqual(uses, 7, "practice, duel, friend challenge, survival, faced, for fun, daily");
 });
