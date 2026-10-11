@@ -150,3 +150,27 @@ test("team to score follows the book's order once blended", () => {
   run(g);
   assert.strictEqual(g.h_o05, 0.7, "one side priced is no two-way price: left alone");
 });
+
+test("one-sided combos are de-vigged with the game's own margin and kept between their parts", () => {
+  const run = new Function(consts[0] + lift("blendWeight") + lift("_devig3") +
+    "function bestTipFrom(){return null;} function kOf(){return {};} function tipCode(){return null;}" +
+    lift("blendFixture") + "\nreturn blendFixture;")();
+  /* Aberdeen v St Johnstone, 11 Oct 2026: model and live SportyBet prices. */
+  const f = { home_p: 0.328, draw_p: 0.277, away_p: 0.394, o15: 0.73, o25: 0.5, o35: 0.264, o45: 0.122, btts: 0.53,
+    h_o05: 0.706, a_o05: 0.744, home_btts: 0.706, away_btts: 0.744, draw_btts: 0.609,
+    home_o25: 0.621, away_o25: 0.645, draw_o25: 0.686,
+    sportyOdds: { "1": 2.23, "X": 3.5, "2": 3.26, "OVER_1.5": 1.31, "UNDER_1.5": 3.5, "GG": 1.75, "NG": 2,
+      "HOME_OVER_0.5": 1.25, "HOME_UNDER_0.5": 3.75, "AWAY_OVER_0.5": 1.38, "AWAY_UNDER_0.5": 2.9,
+      "MIXGG_1": 1.25, "MIXGG_2": 1.38, "MIXGG_X": 1.54 } };
+  run(f);
+  assert.ok(f.home_btts > f.away_btts, "Aberdeen or both score at x1.25 reads likelier than St Johnstone's at x1.38: " +
+    f.home_btts.toFixed(3) + " / " + f.away_btts.toFixed(3));
+  for (const [c, part] of [["home_btts", "home_p"], ["away_btts", "away_p"], ["draw_btts", "draw_p"]]) {
+    assert.ok(f[c] >= Math.max(f[part], f.btts) - 1e-9, c + " at least as likely as each part");
+    assert.ok(f[c] <= Math.min(1, f[part] + f.btts) + 1e-9, c + " no likelier than both together");
+  }
+  assert.strictEqual(f.home_o25, 0.621, "no price, no change");
+  const g = { home_p: 0.4, draw_p: 0.3, away_p: 0.3, btts: 0.5, home_btts: 0.7, sportyOdds: { "MIXGG_1": 1.2 } };
+  run(g);
+  assert.strictEqual(g.home_btts, 0.7, "no two-sided line to take a margin from: left alone");
+});

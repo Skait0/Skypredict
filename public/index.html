@@ -9151,6 +9151,36 @@ function blendFixture(f){
   two("HOME_OVER_0.5","HOME_UNDER_0.5","h_o05"); two("AWAY_OVER_0.5","AWAY_UNDER_0.5","a_o05");
   two("HOME_OVER_1.5","HOME_UNDER_1.5","h_o15"); two("AWAY_OVER_1.5","AWAY_UNDER_1.5","a_o15");
   two("FH_OVER_0.5","FH_UNDER_0.5","fh_o05"); two("OVER_3.5","UNDER_3.5","o35");
+  /* THE ONE-SIDED MARKETS (owner, 11 Oct 2026). SportyBet sells "result or
+     both score", "result or over 2.5" and Under 4.5 with no other side to
+     de-vig against, and they stayed on the model - Aberdeen or both score at
+     x1.25 against St Johnstone's x1.38 read the wrong way round, like team to
+     score did. So take this game's own margin from the lines it does price
+     both sides of, strip it from the one-sided price, and blend at the same
+     weight. A combination can never be less likely than either of its parts,
+     nor likelier than both together, so the result is held between them. */
+  var ovr=[], pairs=[["OVER_1.5","UNDER_1.5"],["OVER_2.5","UNDER_2.5"],["OVER_3.5","UNDER_3.5"],["GG","NG"],
+    ["HOME_OVER_0.5","HOME_UNDER_0.5"],["AWAY_OVER_0.5","AWAY_UNDER_0.5"],["FH_OVER_0.5","FH_UNDER_0.5"]];
+  pairs.forEach(function(q){ if(o[q[0]]>1&&o[q[1]]>1) ovr.push(1/o[q[0]]+1/o[q[1]]); });
+  if(ovr.length){
+    var margin=ovr.reduce(function(a,b){return a+b;},0)/ovr.length;
+    var one=function(code,field,lo,hi){
+      if(!(o[code]>1)||typeof f[field]!=="number"||!(lo<=hi)) return;
+      var v=f[field]*(1-B)+Math.min(1,(1/o[code])/margin)*B;
+      f[field]=Math.max(lo,Math.min(hi,v));
+    };
+    one("MIXGG_1","home_btts",Math.max(f.home_p,f.btts),Math.min(1,f.home_p+f.btts));
+    one("MIXGG_2","away_btts",Math.max(f.away_p,f.btts),Math.min(1,f.away_p+f.btts));
+    one("MIXGG_X","draw_btts",Math.max(f.draw_p,f.btts),Math.min(1,f.draw_p+f.btts));
+    one("MIX_1_OV_2.5","home_o25",Math.max(f.home_p,f.o25),Math.min(1,f.home_p+f.o25));
+    one("MIX_2_OV_2.5","away_o25",Math.max(f.away_p,f.o25),Math.min(1,f.away_p+f.o25));
+    one("MIX_X_OV_2.5","draw_o25",Math.max(f.draw_p,f.o25),Math.min(1,f.draw_p+f.o25));
+    /* Under 4.5 is stored as its complement, o45. */
+    if(o["UNDER_4.5"]>1&&typeof f.o45==="number"){
+      var u=(1-f.o45)*(1-B)+Math.min(1,(1/o["UNDER_4.5"])/margin)*B;
+      f.o45=Math.max(0,Math.min(f.o35==null?1:f.o35,1-u));
+    }
+  }
   /* THE HEADLINE HAS TO BE CHOSEN AGAIN, NOT JUST REPRICED.
      This is the bug that cost real money. The build picks the tip from the
      model's own numbers; the blend above then moves those numbers toward the
