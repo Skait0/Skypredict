@@ -110,7 +110,7 @@ const api = new Function([
   (/^var BUILD=\{[\s\S]*?\};/m.exec(src) || [""])[0],
   (/^var WSP=\{[\s\S]*?\};/m.exec(src) || [""])[0],
 ].concat(FNS.map(grab)).join("\n") + `
-  return { BUILD, WSP, buildPicks, wspBuild, wspMarkets, legOdd, fid,
+  return { BUILD, WSP, buildPicks, wspBuild, wspMarkets, legOdd, fid, mProb, dogHcap,
            wspStyleOn,
            JACKPOT_ODDS, JACKPOT_LEG_CAP,
            setFixtures(f){ FIXTURES = f; },
@@ -795,4 +795,20 @@ test("an underdog +1.5 that only edges Over 1.5 loses the call; the favourite's 
   const s = api.buildPicks();
   assert.strictEqual(s[0].code, "AH_2_-1.5");
   assert.ok(Math.abs(s[0].p - 0.88) < 1e-9, "the ticket shows 88%, not the judged 86%: " + s[0].p);
+});
+
+/* Owner, 11 Oct 2026: "best prediction known to exist". A line the book sells
+   both sides of is mixed toward its de-vigged price; the underdog handicap
+   correction then stands down, since the model's lean is already gone. */
+test("a book-priced line is mixed into mProb, and the handicap bar stands down there", () => {
+  const f = { home_p: 0.62, draw_p: 0.22, away_p: 0.16, mg: [0.25, 0.1, 0.04, 0.01],
+    _bk: { "AH_2_-1.5": 0.70 }, _bkB: 0.9 };
+  const model = 1 - 0.25;   /* away +1.5 survives unless home wins by 2+ */
+  assert.ok(Math.abs(api.mProb(f, "AH_2_-1.5") - (model * 0.1 + 0.70 * 0.9)) < 1e-9);
+  assert.strictEqual(api.dogHcap(f, "AH_2_-1.5"), false, "priced by the book: no second correction");
+  const g = Object.assign({}, f, { _bk: {} });
+  assert.ok(Math.abs(api.mProb(g, "AH_2_-1.5") - model) < 1e-9, "no book figure, model as before");
+  assert.strictEqual(api.dogHcap(g, "AH_2_-1.5"), true, "unpriced underdog line keeps its correction");
+  const h = { home_p: 0.5, draw_p: 0.25, away_p: 0.25, _bk: { "CORNERS_OV_9.5": 0.48 }, _bkB: 0.9 };
+  assert.strictEqual(api.mProb(h, "CORNERS_OV_9.5"), 0.48, "no model number: the book's own figure");
 });

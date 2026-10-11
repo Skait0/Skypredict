@@ -174,3 +174,23 @@ test("one-sided combos are de-vigged with the game's own margin and kept between
   run(g);
   assert.strictEqual(g.home_btts, 0.7, "no two-sided line to take a margin from: left alone");
 });
+
+test("corners, shots and handicap half lines from 1.5 keep the book's de-vigged figure", () => {
+  const run = new Function(consts[0] + lift("blendWeight") + lift("_devig3") +
+    "function bestTipFrom(){return null;} function kOf(){return {};} function tipCode(){return null;}" +
+    lift("blendFixture") + "\nreturn blendFixture;")();
+  const f = { home_p: 0.5, draw_p: 0.25, away_p: 0.25, sportyOdds: { "1": 2, "X": 3.6, "2": 3.6,
+    "CORNERS_OV_9.5": 1.9, "CORNERS_UN_9.5": 1.85, "SHOTS_H_OV_12.5": 1.8, "SHOTS_H_UN_12.5": 1.95,
+    "AH_1_-1.5": 3.4, "AH_2_-1.5": 1.3, "AH_1_-0.5": 2, "AH_2_-0.5": 1.8, "AH_1_1": 1.2, "AH_2_1": 4,
+    "CORNERS_OV_10.5": 2.4 } };
+  run(f);
+  const dv = (a, b) => (1 / a) / (1 / a + 1 / b);
+  assert.ok(Math.abs(f._bk["CORNERS_OV_9.5"] - dv(1.9, 1.85)) < 1e-12);
+  assert.ok(Math.abs(f._bk["SHOTS_H_OV_12.5"] - dv(1.8, 1.95)) < 1e-12);
+  assert.ok(Math.abs(f._bk["AH_1_-1.5"] - dv(3.4, 1.3)) < 1e-12);
+  assert.ok(Math.abs(f._bk["AH_2_-1.5"] - dv(1.3, 3.4)) < 1e-12);
+  assert.ok(!("AH_1_-0.5" in f._bk), "the 0.5 lines come from the blended result");
+  assert.ok(!("AH_1_1" in f._bk), "a whole line pushes, so its prices are not a two-way split");
+  assert.ok(!("CORNERS_OV_10.5" in f._bk), "one side only: nothing to de-vig against");
+  assert.strictEqual(f._bkB, 0.9);
+});

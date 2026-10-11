@@ -9181,6 +9181,24 @@ function blendFixture(f){
       f.o45=Math.max(0,Math.min(f.o35==null?1:f.o35,1-u));
     }
   }
+  /* EVERY OTHER LINE THE BOOK SELLS BOTH SIDES OF (owner, 11 Oct 2026: "make
+     sure all options are well picked ... best prediction known to exist").
+     Corners and shots, match and team, and the handicap half lines from 1.5 out
+     (the 0.5 lines and draw no bet already come from the blended result). These
+     are priced line by line, not from one field, so the book's de-vigged figure
+     is kept per code in f._bk and mProb mixes it in at the same weight. Whole
+     handicap lines push, so their two prices are not a two-way split: left on
+     the model. */
+  var bk={};
+  Object.keys(o).forEach(function(k){
+    var cs=/^((?:CORNERS|SHOTS)(?:_[HA])?)_OV_(\d+\.5)$/.exec(k);
+    if(cs){ var un=o[cs[1]+"_UN_"+cs[2]];
+      if(o[k]>1&&un>1){ var a1=1/o[k],b1=1/un; bk[k]=a1/(a1+b1); } }
+    var ah=/^AH_1_(-?\d+\.5)$/.exec(k);
+    if(ah&&Math.abs(parseFloat(ah[1]))>=1.5){ var o2=o["AH_2_"+ah[1]];
+      if(o[k]>1&&o2>1){ var a2=1/o[k],b2=1/o2; bk[k]=a2/(a2+b2); bk["AH_2_"+ah[1]]=b2/(a2+b2); } }
+  });
+  f._bk=bk; f._bkB=B;
   /* THE HEADLINE HAS TO BE CHOSEN AGAIN, NOT JUST REPRICED.
      This is the bug that cost real money. The build picks the tip from the
      model's own numbers; the blend above then moves those numbers toward the
@@ -13119,6 +13137,14 @@ function oddCell(f,c,p){
    Asked for after a 45-leg code, 8B9WJU, came back 42 legs of these with no
    number on any of them - which left the whole editor blind. */
 function mProb(f,c){
+  /* The book's own figure for a line, where blendFixture kept one (f._bk):
+     mixed in at the result's weight, or used outright when the model has no
+     number for it at all. */
+  if(f&&f._bk&&f._bk[c]!=null&&!f._bkIn){
+    var mv; f._bkIn=1;
+    try{ mv=mProb(f,c); }finally{ f._bkIn=0; }
+    return (mv==null||isNaN(mv))?f._bk[c]:mv*(1-f._bkB)+f._bk[c]*f._bkB;
+  }
 /* P(margin >= k) for k in -2..3, from the result and the four margin tails
    the build ships in `mg` (home by 2+, 3+, away by 2+, 3+). Null when the
    fixture has no tails - a handicap is never guessed. */
@@ -13998,6 +14024,9 @@ function overExposed(id,use){ return (use[id]||0)>=SPREAD_CAP; }
 var HCAP_DOG_BAR=0.02;
 function dogHcap(f,code){
   var m=/^AH_([12])_(-?[\d.]+)$/.exec(code||""); if(!m||!f) return false;
+  /* A line the book prices is already 90% the book's figure (f._bk): the
+     model's lean is gone, and taking 2 points off again would double-count. */
+  if(f._bk&&f._bk[code]!=null) return false;
   var L=parseFloat(m[2]);
   if(m[1]==="1") return L>=1&&f.home_p<f.away_p;
   return L<=-1&&f.away_p<f.home_p;
