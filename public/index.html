@@ -20409,7 +20409,18 @@ function wspMarkets(){var m=[];
    pointer to another style, rather than met with longer legs. */
 var BANKERS=1.1, BANKER_MAX=1.25;
 function bankersOn(){ return WSP.legodd===BANKERS; }
-var SLIP_STYLES=[[BANKERS,"Bankers","x1.02-1.25 legs"],[1.25,"More games","smaller odds"],[1.4,"Even",""],[1.7,"Fewer games","bigger odds"]];
+/* BEST CHANCE (owner, 11 Oct 2026: "lets have another style then"). With our
+   figures following the book's de-vigged prices, a slip lands with roughly
+   (what each leg's margin leaves) / payout - so for a fixed payout the only
+   thing to win is margin: fewer legs, and legs where the cut is thin. Rather
+   than guess the leg price that does that, the Wizard builds the slip at each
+   of BEST_CHANCE_PERS (every other style's price included; x1.32 and x1.5
+   never won on the live board, 11 Oct, and cost a build each) and keeps the one
+   likeliest to land that still reaches the payout. It can never land less
+   often than More games, Even or Fewer games would at the same payout. */
+var BEST_CHANCE=1.55, BEST_CHANCE_PERS=[1.25,1.4,1.6,1.7,1.85,2.1];
+function bestChanceOn(){ return WSP.legodd===BEST_CHANCE; }
+var SLIP_STYLES=[[BANKERS,"Bankers","x1.02-1.25 legs"],[1.25,"More games","smaller odds"],[1.4,"Even",""],[1.7,"Fewer games","bigger odds"],[BEST_CHANCE,"Best chance","likeliest to land"]];
 /* WHAT THE STYLE MEANS TO THE SLIDER, which has no payout to divide.
    The Wizard reads legodd as "reach the target with legs priced near this",
    so the leg count falls out of the arithmetic. The Slider's count comes from
@@ -21115,7 +21126,22 @@ function wspBuild(){
   var pool=ranked(poolList,
                   saMode==="mix"?0.75:0.92,
                   asiaMode==="mix"?1:0.8);
-  var out=accumulate(pool);
+  var out;
+  if(bestChanceOn()&&!WSP.everyGame&&WSP.odds!=null){
+    /* See BEST_CHANCE. A slip that reaches the payout beats one that does
+       not; among those that reach it, the likeliest wins; if none can, the
+       one that gets closest. */
+    var keepPer=WSP.legodd, bestLand=-1;
+    try{
+      BEST_CHANCE_PERS.forEach(function(per){
+        WSP.legodd=per;
+        var r=accumulate(pool);
+        var land=(r.picks||[]).reduce(function(a,c){ return a*c.p; },1);
+        var score=r.short ? -1/(1+r.odds) : land;
+        if(!out||score>bestLand){ out=r; bestLand=score; }
+      });
+    } finally { WSP.legodd=keepPer; }
+  } else out=accumulate(pool);
   (out.picks||[]).forEach(function(c){ if(dogHcap(c.f,c.code)) c.p+=HCAP_DOG_BAR; });
   return out;
 }

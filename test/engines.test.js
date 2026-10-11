@@ -106,7 +106,7 @@ const api = new Function([
   konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
   konst("HIGH_SCORING_O25"), (src.match(/var DC_MIN_FAV=[^;]*;/) || [""])[0], (src.match(/var HIGH_SCORING_LEAGUES=\[[\s\S]*?\];/) || [""])[0], konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
   konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"),
-  konst("SPREAD_PEN"), konst("SPREAD_CAP"), grab("overExposed"), konst("HCAP_DOG_BAR"), konst("BANKERS"), grab("bankersOn"), grab("dogHcap"), grab("judgedP"), konst("SPREAD_MULT"),
+  konst("SPREAD_PEN"), konst("SPREAD_CAP"), grab("overExposed"), konst("HCAP_DOG_BAR"), konst("BANKERS"), grab("bankersOn"), konst("BEST_CHANCE"), grab("bestChanceOn"), grab("dogHcap"), grab("judgedP"), konst("SPREAD_MULT"),
   (/^var BUILD=\{[\s\S]*?\};/m.exec(src) || [""])[0],
   (/^var WSP=\{[\s\S]*?\};/m.exec(src) || [""])[0],
 ].concat(FNS.map(grab)).join("\n") + `
@@ -840,6 +840,28 @@ test("Bankers: every leg at x1.25 or under, shorter than More games, short when 
   for (const risk of [5, 50, 95]) {
     api.BUILD.risk = risk;
     legOdds(api.buildPicks()).forEach(o => assert.ok(o <= 1.25, "slider risk " + risk + ": leg at x" + o));
+  }
+  api.WSP.legodd = 1.4;
+});
+
+/* Owner, 11 Oct 2026: "lets have another style then!" - Best chance builds the
+   slip at every style's leg price and keeps the likeliest that reaches the
+   payout. */
+test("Best chance lands at least as often as every other style, and still reaches the payout", () => {
+  const land = (legs) => legs.reduce((a, c) => a * c.p, 1);
+  for (const T of [3, 6, 15]) {
+    reset();
+    Object.assign(api.WSP, { odds: T, slider: false, seed: 4242 });
+    const others = [1.25, 1.4, 1.7].map(lo => { api.WSP.legodd = lo; const r = api.wspBuild(); return { lo, r }; });
+    api.WSP.legodd = 1.55;
+    const best = api.wspBuild();
+    assert.ok(best.picks.length > 0 && !best.short, "x" + T + " reached");
+    others.forEach(o => {
+      if (o.r.short) return;
+      assert.ok(land(best.picks) >= land(o.r.picks) - 1e-12,
+        "x" + T + ": Best chance " + land(best.picks).toFixed(4) + " vs style " + o.lo + " " + land(o.r.picks).toFixed(4));
+    });
+    assert.strictEqual(api.WSP.legodd, 1.55, "the style is left as the reader chose it");
   }
   api.WSP.legodd = 1.4;
 });
