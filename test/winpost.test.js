@@ -55,9 +55,13 @@ test("the captions credit a rank, never a person or a code", () => {
   assert.ok(x.length <= 280, "fits on X: " + x.length);
 });
 
+test("a slip with an id links its list banner by id, and nothing else", () => {
+  assert.strictEqual(P.imageUrl("https://www.soccerwizard.live", slip(42, 11.55)), "https://www.soccerwizard.live/api/slipcard?w=42");
+});
+
 test("the banner exists for every rank the captions can name", () => {
   for (const odds of [5, 24.6, 124.5, 20796]) {
-    const url = P.imageUrl("https://www.soccerwizard.live", slip(1, odds));
+    const url = P.imageUrl("https://www.soccerwizard.live", slip(undefined, odds));
     const q = new URL(url).searchParams;
     const png = CARD.buildWin(q.get("r"), q.get("g"), q.get("o"));
     assert.ok(png && png.length > 1000, "banner for " + q.get("r"));
