@@ -14304,7 +14304,34 @@ function dogHcap(f,code){
   if(m[1]==="1") return L>=1&&f.home_p<f.away_p;
   return L<=-1&&f.away_p<f.home_p;
 }
-function judgedP(f,code,p){ return dogHcap(f,code)?p-HCAP_DOG_BAR:p; }
+/* UNDER 4.5 IS A SAFE FILLER, NOT A BET AGAINST A ROUT (owner, 12 Oct 2026, Viking v Bayern:
+   "these two teams are far apart. this is messed up"). It shipped for games the model reads as
+   tight - at 93%+ it landed 94.5% in the backtest - but a mismatch is where a favourite runs up
+   five, and the Poisson read is weakest exactly there. So it is not offered when the game is
+   expected to be high-scoring (3+ goals) or either side is expected to score about two or more.
+   On the 12 Oct board this turns off 222 such fixtures and only 2 of the 455 legs at 85%+. */
+/* THE SAME TRAP ON A HANDICAP (owner, 12 Oct 2026: "check for all the options also so we dont
+   have this issue again"). The underdog's +1.5 / +2.5 (and +1 / +2) lose only to a big win - the
+   one thing a strong favourite is there to do - and they were already our only over-claimed
+   markets (see HCAP_DOG_BAR). Audit of the 12 Oct board: 137 underdog +1.5 legs at 70%+ sat in
+   games like Viking v Bayern. Refused when the favourite is expected to score about two or more,
+   or to out-score the underdog by about a goal. Checked whether or not the book prices it: a
+   price says how likely, not that the bet is the right shape for a slip built to land. */
+/* Both guards live inside judgedP so every caller - and every test harness that lifts judgedP
+   on its own - gets them with it. */
+function judgedP(f,code,p){
+  function u45Rout(f){ return !!f&&((Number(f.lh)||0)+(Number(f.la)||0)>=3||Math.max(Number(f.lh)||0,Number(f.la)||0)>=1.9); }
+  function hcapRout(f,code){
+    var m=/^AH_([12])_(-?[\d.]+)$/.exec(code||""); if(!m||!f) return false;
+    var L=parseFloat(m[2]), dog=m[1]==="1"?(L>=1&&f.home_p<f.away_p):(L<=-1&&f.away_p<f.home_p);
+    if(!dog) return false;
+    var fx=Math.max(Number(f.lh)||0,Number(f.la)||0), gap=Math.abs((Number(f.lh)||0)-(Number(f.la)||0));
+    return fx>=1.9||gap>=0.9;
+  }
+  if(code==="UNDER_4.5"&&u45Rout(f)) return -1;
+  if(hcapRout(f,code)) return -1;
+  return dogHcap(f,code)?p-HCAP_DOG_BAR:p;
+}
 
 function buildPicks(){
   /* The book being built for, read once. Every price question below is
