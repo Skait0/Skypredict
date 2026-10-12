@@ -4648,7 +4648,19 @@ button.wsp-go.waiting{opacity:.55}
    otherwise only used for a confident call - a second accent already in the
    palette rather than a new one invented for one control. */
 /* The Slider's copy of the style row and its way back - see renderSliderPanel. */
-#sldStyleChips{display:flex;flex-wrap:wrap;gap:6px}
+/* ONE LINE ON A PHONE (owner, 12 Oct 2026: "tighten it up let it stay on the line"):
+   four equal columns; the qualifier may wrap under its name rather than push a pill
+   onto a second row. */
+#sldStyleChips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+#sldStyleChips .wsp-chip.wsp-style{padding:6px 3px;border-radius:14px}
+#sldStyleChips .wsp-chip.wsp-style b{font-size:11.5px}
+#sldStyleChips .wsp-chip.wsp-style i{font-size:9px;white-space:normal;text-align:center;line-height:1.15}
+@media(max-width:380px){
+  #sldStyleChips{gap:4px}
+  #sldStyleChips .wsp-chip.wsp-style{padding:6px 2px}
+  #sldStyleChips .wsp-chip.wsp-style b{font-size:10.5px;letter-spacing:-.01em}
+  #sldStyleChips .wsp-chip.wsp-style i{font-size:8.5px}
+}
 .sld-back{margin-top:14px}
 /* Clear of the sticky header when bldToPanel scrolls a panel up to the top. */
 .bld-panel{scroll-margin-top:84px}
@@ -20703,22 +20715,22 @@ function bankersOn(){ return WSP.legodd===BANKERS; }
    of BEST_CHANCE_PERS (every other style's price included; x1.32 and x1.5
    never won on the live board, 11 Oct, and cost a build each) and keeps the one
    likeliest to land that still reaches the payout. It can never land less
-   often than More games, Even or Fewer games would at the same payout. */
+   often than More games, Balanced or Fewer games would at the same payout. */
 var BEST_CHANCE=1.55, BEST_CHANCE_PERS=[1.25,1.4,1.6,1.7,1.85,2.1];
 function bestChanceOn(){ return WSP.legodd===BEST_CHANCE; }
-var SLIP_STYLES=[[BANKERS,"Bankers","x1.02-1.25 legs"],[1.25,"More games","smaller odds"],[1.4,"Even",""],[1.7,"Fewer games","bigger odds"],[BEST_CHANCE,"Best chance","likeliest to land"]];
+var SLIP_STYLES=[[BANKERS,"Bankers","x1.02-1.25"],[1.25,"More games","smaller odds"],[1.4,"Balanced",""],[1.7,"Fewer games","bigger odds"],[BEST_CHANCE,"Best chance","likeliest to land"]];
 /* WHAT THE STYLE MEANS TO THE SLIDER, which has no payout to divide.
    The Wizard reads legodd as "reach the target with legs priced near this",
    so the leg count falls out of the arithmetic. The Slider's count comes from
    the risk dial instead, so the style says the same thing two ways: prefer
    markets priced near the style's leg odds, and take more or fewer games.
-   Even (the 1.4 chip, "Balanced" until 7 Oct) is neutral - no pull, no change of count - so a reader who never
+   Balanced (the 1.4 chip; "Even" from 7 to 12 Oct, Balanced again at the owner's ask) is neutral - no pull, no change of count - so a reader who never
    touches the row gets exactly the Slider they had. */
 /* BEST CHANCE IS NOT OFFERED HERE (owner, 11 Oct 2026: "if it ignores the slider,
    then it should be turned off"). It means "the likeliest slip that reaches the
    payout", and the Slider has no payout - sliderStyle reads its 1.55 as neutral,
-   so it built the Even slip under another name. Chosen in the Wizard, the Slider
-   lights Even, which is the slip it actually builds. */
+   so it built the Balanced slip under another name. Chosen in the Wizard, the Slider
+   lights Balanced, which is the slip it actually builds. */
 function sliderStyles(){
   return SLIP_STYLES.filter(function(st){ return st[0]!==BEST_CHANCE; });
 }
