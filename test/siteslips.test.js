@@ -4,7 +4,7 @@
  * EVERY BOOKED SLIP IS KEPT, AND THE OWNER SEES THE ONES THAT LAND (owner, 12 Oct 2026:
  * "save all slips that is generated via our platform and when any ones hits, i will see
  * it in the admin"). Saved at the one route every booking passes through, graded by the
- * same grader as "Follow my slip", listed on the admin page; a hit at x50 or more pings
+ * same grader as "Follow my slip", listed on the admin page; a hit at x20 or more pings
  * the owner on Telegram once.
  */
 
@@ -170,4 +170,8 @@ test("only the admin can read the hits", async () => {
   const ok = await ask(await cookie("boss@x.com"));
   assert.strictEqual(ok.code, 200);
   assert.deepStrictEqual(ok.json().hits.map((x) => x.code), ["BIG001"]);
+});
+
+test("the owner is pinged from x20 (owner, 12 Oct 2026)", () => {
+  assert.strictEqual(W.PING_AT, 20);
 });

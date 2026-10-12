@@ -12,6 +12,7 @@
 const SB = require("../lib/supabase.js");
 const S = require("../lib/social.js");
 const BIG = require("../lib/bigodds.js");
+const WIN = require("../lib/winpost.js");
 
 const SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
 const CHANNEL = process.env.TELEGRAM_CHAT || "@soccerwizardTG";
@@ -27,7 +28,7 @@ async function gql(k, query) {
   return b.data;
 }
 let XCH = null;
-async function postX(text) {
+async function postX(text, image) {
   const k = (process.env.BUFFER_KEY || "").trim();
   if (!k) return false;
   try {
@@ -38,8 +39,10 @@ async function postX(text) {
       XCH = ch && ch.id;
     }
     if (!XCH) return false;
+    /* An image rides as assets:[{image:{url}}] - `images` is not a field (24 Sep). */
+    const assets = image ? `assets:[{image:{url:${JSON.stringify(image)}}}],` : "";
     const res = (await gql(k, `mutation{createPost(input:{text:${JSON.stringify(text)},channelId:${JSON.stringify(XCH)},` +
-      `schedulingType:automatic,mode:shareNow}){__typename ... on PostActionSuccess{post{id}} ... on MutationError{message}}}`)).createPost;
+      assets + `schedulingType:automatic,mode:shareNow}){__typename ... on PostActionSuccess{post{id}} ... on MutationError{message}}}`)).createPost;
     return res.__typename === "PostActionSuccess";
   } catch (e) { return false; }
 }
@@ -48,6 +51,15 @@ async function postTG(text) {
   if (!t) return false;
   const r = await fetch("https://api.telegram.org/bot" + t + "/sendMessage", { method: "POST",
     headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: CHANNEL, text: withBot(text) }) });
+  const b = await r.json().catch(() => null);
+  return !!(b && b.ok);
+}
+/* The won-slip banner with its caption (1024 is Telegram's photo caption limit). */
+async function postTGPhoto(photo, caption) {
+  const t = (process.env.TELEGRAM_BOT_TOKEN || "").trim();
+  if (!t) return false;
+  const r = await fetch("https://api.telegram.org/bot" + t + "/sendPhoto", { method: "POST",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: CHANNEL, photo, caption: withBot(caption, 1024) }) });
   const b = await r.json().catch(() => null);
   return !!(b && b.ok);
 }
@@ -89,6 +101,19 @@ module.exports = async function handler(req, res) {
   for (const it of items) {
     const ok = it.channel === "x" ? await postX(it.text) : await postTG(it.text);
     if (ok) { await SB.logSocial({ key: it.key, channel: it.channel, kind: it.kind, text: it.text }); sent.push(it.key); }
+  }
+  /* WON SLIPS (lib/winpost.js): today's landed site slips at x5+, biggest first,
+     three a day per channel, the banner plus a caption crediting a wizard rank -
+     never a person or a code. social_log's key stops a double post. */
+  const landed = await SB.landedSlipsSince(new Date(now - 864e5).toISOString());
+  if (landed.ok) {
+    for (const ch of ["tg", "x"]) {
+      for (const s of WIN.pick(landed.rows, log.rows, ch, now, S.dayOf, S.hourOf)) {
+        const text = WIN.caption(s, ch), img = WIN.imageUrl(SITE, s);
+        const ok = ch === "x" ? await postX(text, img) : await postTGPhoto(img, text);
+        if (ok) { await SB.logSocial({ key: WIN.key(s, ch), channel: ch, kind: "win", text }); sent.push(WIN.key(s, ch)); }
+      }
+    }
   }
   return res.status(200).json({ ok: true, due: items.length, sent });
 };

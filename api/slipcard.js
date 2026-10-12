@@ -34,17 +34,18 @@ function fallback() {
 }
 
 module.exports = (req, res) => {
-  let g = null, o = null;
-  if (req.query) { g = req.query.g; o = req.query.o; }
+  let g = null, o = null, rk = null;
+  if (req.query) { g = req.query.g; o = req.query.o; rk = req.query.r; }
   if (g == null && req.url) {
     try {
       const q = new URL(req.url, "https://x").searchParams;
-      g = q.get("g"); o = q.get("o");
+      g = q.get("g"); o = q.get("o"); rk = q.get("r");
     } catch (e) { /* fall through to the static card */ }
   }
 
+  /* ?r=<rank> is the won-slip banner the social engine posts (lib/winpost.js). */
   let png = null;
-  try { png = CARD.build(g, o); }
+  try { png = rk ? CARD.buildWin(String(rk), g, o) : CARD.build(g, o); }
   catch (e) { png = null; }
 
   if (!png) {
