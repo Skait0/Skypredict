@@ -1457,7 +1457,7 @@ html.tapped .list-hint{display:none}
 /* No breathing halo (Task 4): the ball turning is the motion; a pulsing
    white glow round it was decoration on decoration. */
 .sc-orb{flex-shrink:0;width:44px;height:44px;margin-top:0;border-radius:50%;display:block}
-.sc-orb canvas,.ctafab-orb canvas{display:block;width:100%;height:100%}
+.sc-orb canvas{display:block;width:100%;height:100%}
 /* ON A CREAM CARD THE BALL NEEDS AN EDGE, NOT A GLOW. Its white panels and
    top-left highlight are the card's own colour, so a glow of any hue left the
    upper rim undrawn and the ball read as a smudge (reported 24 Sep, light
@@ -3489,13 +3489,20 @@ html{interpolate-size:allow-keywords}
      panel they opened ride above the games, which stay below as the reference
      material they already are. */
   .byo{display:flex;flex-direction:column}
-  .byo>.byo-side{order:1}
-  .byo>#byoOut{order:2}
+  /* What was read comes first now - its leg list is folded, so it is a few
+     lines - and the jobs follow it, live (owner, 12 Oct 2026: the count used
+     to land under five cards and nobody saw it). */
+  .byo>#byoOut{order:1}
+  .byo>.byo-side{order:2}
 }
 .byo h3{font-size:14px;font-weight:800;letter-spacing:-.01em;margin:0 0 3px}
 .byo-sub{margin:0 0 11px;font-size:12.5px;font-weight:600;color:var(--faint)}
 .byo-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .byo-hint{margin:7px 0 0;font-size:12px;font-weight:600;color:var(--faint);line-height:1.45}
+.byo-teaser{margin:12px 0 0;font-size:12px;font-weight:600;color:var(--faint)}
+.byo-teaser b{color:var(--soft);font-weight:700}
+.byo-side:not(:has(.byo-job:not([disabled]))) .byo-jobs{display:none}
+.byo-side:has(.byo-job:not([disabled])) .byo-teaser{display:none}
 .byo-book{display:inline-flex;background:var(--card-2);border:1px solid var(--line);
   border-radius:99px;padding:3px;gap:2px;flex:0 0 auto}
 /* THE TOGGLE WEARS THEIR COLOURS.
@@ -4571,15 +4578,17 @@ html{interpolate-size:allow-keywords}
 .ctafab:hover{filter:brightness(1.06)}
 .ctafab:active{transform:scale(.97)}
 .ctafab:focus-visible{outline:2px solid var(--text);outline-offset:3px}
-/* THE BALL SITS IN A DARK WELL. Straight on the red fill it vanished: the
-   pentagons are the wizard's robe red, the same family as --red-fill, and the
-   ball's own shaded rim darkens into it, so the outline and half the pattern
-   were gone (reported 24 Sep, "the contrast is shit"). A near-black disc
-   behind it separates both - white panels and red pentagons each read against
-   dark - and the thin light rim draws the edge the red was eating. */
-.ctafab-orb{width:34px;height:34px;padding:4px;box-sizing:border-box;border-radius:50%;flex-shrink:0;
-  background:radial-gradient(circle at 50% 40%,#2a1a1d,#0d0809);
-  box-shadow:0 0 0 1.5px rgba(255,255,255,.7),0 2px 6px rgba(0,0,0,.4);margin-left:-3px}
+/* THE STAFF, NOT A SPINNING BALL (owner, 12 Oct 2026: "looks tacky"). The
+   glossy 3D ball turned forever beside a flat button and pulled the eye off the
+   board; the staff is the Build tab's own mark on a phone, so building has one
+   symbol everywhere. Still, white on the red; one twinkle of its star on hover. */
+.ctafab-ic{display:inline-flex;width:27px;height:27px;flex-shrink:0;margin-left:-2px}
+.ctafab-ic svg{width:100%;height:100%}
+.ctafab-ic .cf-star{transform-origin:12px 5.6px}
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+  .ctafab:hover .cf-star{animation:cfTwinkle .5s cubic-bezier(.23,1,.32,1)}
+}
+@keyframes cfTwinkle{0%{transform:scale(1) rotate(0)}45%{transform:scale(1.45) rotate(36deg)}100%{transform:scale(1) rotate(72deg)}}
 /* IN THE RAIL'S COLUMN, NOT ON THE BOARD (7 Oct 2026). Bottom left, it sat on
    the team names of whatever row was passing ("Stevenage" in the critique).
    It now appears only once the whole rail has scrolled away, and lines up
@@ -7835,16 +7844,18 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <div class="conv-head stage-in stage-in-1">
       <h2 class="stage-in stage-in-2">Converter</h2>
     </div>
-    <p class="conv-sub stage-in stage-in-2">Move a booking code to the other
-      bookmaker, or read what is inside one and cut it into smaller tickets.
+    <p class="conv-sub stage-in stage-in-2">Paste a booking code, or several
+      from different bookmakers, and we'll read them into one slip. Then
+      convert it, edit it or cut it into smaller tickets.
       On your phone? Send any code to our
       <a href="https://t.me/Soccerwizardhqbot" target="_blank" rel="noopener">Wizard's Eye on Telegram</a>.</p>
     <section class="byo" id="byo" aria-labelledby="byo-h">
       <h3 id="byo-h">Already have a booking code?</h3>
       <p class="byo-sub">Paste it, or several separated by spaces and we'll merge
-        them into one slip. Then pick what we should do with it.</p>
+        them into one slip, even from different bookmakers. Then pick what we
+        should do with it.</p>
       <div class="byo-row">
-        <div class="byo-book" role="group" aria-label="Which bookmaker issued it">
+        <div class="byo-book" role="group" aria-label="Your bookmaker">
           <!-- Their own wordmarks, not two grey words. The marks and their
                colours are the ones already shipped elsewhere on this page -
                .sbm and .b9m, sampled from the logo files - so the toggle reads
@@ -7861,8 +7872,8 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
             aria-label="1xBet"><span class="xbm">1X<span class="xbb">BET</span></span></button>
         </div>
         <input id="byoCode" type="text" inputmode="latin" autocomplete="off"
-               spellcheck="false" maxlength="110" placeholder="Booking code, or a few to merge"
-               aria-label="Booking code, or several separated by spaces to merge them">
+               spellcheck="false" maxlength="110" placeholder="A code, or a few from any bookies"
+               aria-label="Booking code, or several from any bookmakers separated by spaces to merge them">
         <button class="byo-go" id="byoGo" type="button">Read it</button>
       </div>
       <!-- MERGING IS NOT A JOB, SO IT IS NOT A CARD. The three cards below act
@@ -7874,8 +7885,9 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
            Not in .byo-sub either: the converter hides that line, which is how
            a placeholder ended up being the only thing on the page that said
            several codes could go in at once. -->
-      <p class="byo-hint">Got more than one code? Paste them all, separated by
-        spaces, and we'll read them into a single slip.</p>
+      <p class="byo-hint">Codes from different bookies? Paste them all,
+        separated by spaces. We find each one's bookie and bring every game onto
+        the one you pick above.</p>
       <!-- THE THREE JOBS, ON SCREEN BEFORE THERE IS A CODE.
            The panel used to be one box that read a code and then grew three
            different offers underneath it, so nobody knew the other two
@@ -7889,6 +7901,12 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
            height across the rows it covers, which dropped the panel into the
            middle of a forty-leg list. -->
       <div class="byo-side">
+      <!-- THE JOBS ARE HIDDEN UNTIL THERE IS A SLIP. Five greyed-out cards read
+           as a broken page and pushed everything below them down; the owner
+           asked for them gone (12 Oct 2026). This one line still says what the
+           page can do, and the cards appear, live, the moment a code is read. -->
+      <p class="byo-teaser">Then: <b>Convert</b> · <b>Edit</b> · <b>Split</b> ·
+        <b>Trim</b> · <b>Change markets</b></p>
       <div class="byo-jobs" id="byoJobs" role="group" aria-label="What to do with the code">
         <button class="byo-job" type="button" data-job="edit" disabled>
           <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"/></svg></span>
@@ -8027,7 +8045,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 
 <button class="myfab" id="myFab" type="button" hidden><span class="myfab-tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10a1 1 0 0 1 1 1v16l-2.2-1.5L13.6 20 12 18.6 10.4 20 8.2 18.5 6 20V4a1 1 0 0 1 1-1z"/></svg><span class="myfab-c" id="myFabC">0</span></span><span class="lbl">My slip</span></button>
 <button class="ctafab" id="ctaFab" type="button" hidden>
-  <span class="ctafab-orb" aria-hidden="true"><canvas class="orb-ball" data-size="26"></canvas></span>
+  <span class="ctafab-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5.6" r="3.4"/><path class="cf-star" d="M12 3.6l.62 1.28 1.4.2-1.01.98.24 1.4L12 6.78l-1.25.66.24-1.4-1.01-.98 1.4-.2z" fill="currentColor" stroke="none"/><path d="M12 9v10.4"/><path d="M10.6 11.4h2.8"/><path d="M10.4 19.4h3.2"/></svg></span>
   <span>Build me a slip</span>
 </button>
 <nav class="btabs" aria-label="Sections">
@@ -15679,11 +15697,15 @@ function legStarted(l){
  * exactly like a slip that arrived as one code - including the cap, which is
  * what a merge is most likely to hit.
  *
- * Two rules, and both are the bookmaker's, not ours. One selection per game,
+ * One rule, and it is the bookmaker's, not ours: one selection per game,
  * because no betslip will take two outcomes on the same match in one ticket -
  * so a game already on the slip is dropped and counted rather than booked into
- * a certain refusal. And all the codes must be the SAME book: they are read
- * through that book's own reader, and neither will read the other's code.
+ * a certain refusal.
+ * The codes need NOT be the same book. Each is read on the book picked above
+ * first, and only a "no slip behind that code" sends it on to the others -
+ * see byoReadAnyBook. Legs from another book are brought onto the picked one
+ * before the merge (byoBringOver), so everything after the read still sees a
+ * slip from ONE book, which is all it was ever written for.
  * BYO_MAX_CODES is about the wait, nothing else - each code is a round trip to
  * the bookmaker and they are made one at a time, because a burst is the shape
  * of traffic that got this project block-paged once already. */
@@ -15776,13 +15798,58 @@ function byoRead(){
 /* One code, answered rather than thrown: a merge that loses one slip still
    has the others to offer, so a failure here is a line in the result and not
    the end of the read. */
-function byoSlipFetch(code){
-  return fetch("/api/slip?book="+encodeURIComponent(BYO.book)+
+function byoSlipFetch(code,book){
+  return fetch("/api/slip?book="+encodeURIComponent(book||BYO.book)+
                "&code="+encodeURIComponent(code),
                {headers:{Accept:"application/json"}})
     .then(function(r){return r.json().then(function(d){
-      return {ok:!!(r.ok&&d&&d.success),d:d};});})
-    .catch(function(){return {ok:false,d:null};});
+      return {ok:!!(r.ok&&d&&d.success),d:d,status:r.status};});})
+    .catch(function(){return {ok:false,d:null,status:0};});
+}
+/* A CODE FROM ANY BOOK. The picked book is asked first, then the book the last
+   foreign code came from (three friends' codes are usually two books, not
+   five), then the rest. Only "no slip behind that code" moves on: a code that
+   failed for any other reason would fail the same way everywhere, and the
+   reads are rationed (twenty a minute, api/slip.js) - so a 429 stops the
+   search rather than spending the rest of the allowance on it. */
+var BYO_LAST_FOREIGN=null;
+function byoReadAnyBook(code){
+  var order=[BYO.book];
+  if(BYO_LAST_FOREIGN&&BYO_LAST_FOREIGN!==BYO.book) order.push(BYO_LAST_FOREIGN);
+  Object.keys(BOOKS).forEach(function(k){ if(order.indexOf(k)<0) order.push(k); });
+  function at(i){
+    return byoSlipFetch(code,order[i]).then(function(r){
+      if(r.ok){
+        if(order[i]!==BYO.book) BYO_LAST_FOREIGN=order[i];
+        return {ok:true,d:r.d,book:order[i]};
+      }
+      var notHere=r.status===404||!!(r.d&&r.d.notFound);
+      return (notHere&&i+1<order.length)?at(i+1):{ok:false,d:r.d,status:r.status};
+    });
+  }
+  return at(0);
+}
+/* ANOTHER BOOK'S LEGS, BROUGHT ONTO THE PICKED ONE. The converter's own rules
+   (eventOnBook, nearestLine), applied at the read rather than at the end, so
+   the merged slip is one book's slip and every job below works on it as it
+   is. A leg that cannot make the trip is set aside with the converter's own
+   reason - it is not guessed at. The price stays the one its own book
+   printed, and fromBook says which book that was. */
+function byoBringOver(legs,from,to){
+  var kept=[],lost=[];
+  (legs||[]).forEach(function(l){
+    var hit=eventOnBook(l,from,to), code=l.prediction, near=nearestLine(code);
+    var why=legStarted(l)?"this game has already started":
+            !l.prediction?"a market we don't carry":
+            hit.id==null?to.label+" doesn't list this game":
+            (mixReline(code)&&to.key==="sporty")?to.label+" sells this market at 2.5 goals only":null;
+    if(why){ lost.push({leg:l,from:from,why:why}); return; }
+    if(near&&!to.wholeLines) code=near;
+    var c={}; for(var k in l) c[k]=l[k];
+    c.eventId=hit.id; c.prediction=code; c.fromBook=from.key;
+    kept.push(c);
+  });
+  return {legs:kept,lost:lost};
 }
 function byoReadMany(codes,out){
   BYO.legs=null; BYO.booked=null; BYO.dropped=null;
@@ -15799,22 +15866,37 @@ function byoReadMany(codes,out){
   function step(i){
     if(i>=codes.length) return done();
     wait(i);
-    byoSlipFetch(codes[i]).then(function(r){
-      if(r.ok) lists.push(r.d.legs||[]); else bad.push(codes[i]);
+    byoReadAnyBook(codes[i]).then(function(r){
+      if(r.ok) lists.push({legs:r.d.legs||[],book:r.book}); else bad.push(codes[i]);
       step(i+1);
     });
   }
   function done(){
     if(!lists.length){
       out.innerHTML="<div class='code-err'><b>None of those codes could be read.</b>"+
-        "<span>Check them, and check the bookmaker above - "+byoBook().label+
-        " will not read a code from another one.</span></div>";
+        "<span>We tried all five bookmakers. Check the codes and try again.</span></div>";
       return;
     }
-    var m=byoMerge(lists);
-    BYO.legs=m.legs;
-    BYO.merged={read:lists.length,asked:codes.length,clash:m.clash,bad:bad};
-    renderByo();
+    /* The picked book's own feed has to be in before another book's game can
+       be found on it - feedMatch reads it, and an empty feed answers "they do
+       not list this game" about a feed nobody had loaded yet. */
+    var to=byoBook(), from={};
+    lists.forEach(function(x){ if(x.book!==to.key) from[x.book]=1; });
+    var wait=Object.keys(from).length?ensureBookFeed(to.key):Promise.resolve(0);
+    wait.then(function(){
+      var lost=[];
+      var parts=lists.map(function(x){
+        if(x.book===to.key) return x.legs;
+        var b=byoBringOver(x.legs,BOOKS[x.book],to);
+        lost=lost.concat(b.lost);
+        return b.legs;
+      });
+      var m=byoMerge(parts);
+      BYO.legs=m.legs;
+      BYO.merged={read:lists.length,asked:codes.length,clash:m.clash,bad:bad,lost:lost,
+        from:Object.keys(from)};
+      renderByo();
+    });
   }
   step(0);
 }
@@ -16311,7 +16393,9 @@ function renderByo(){
   var mg=BYO.merged;
   out.innerHTML="<div class='byo-res'>"+
     "<div class='byo-head'><b>"+legs.length+" game"+(legs.length===1?"":"s")+
-      " read</b><span>from "+B.label+" code"+(mg?"s ":" ")+esc(BYO.code)+"</span></div>"+
+      " read</b><span>from "+(mg&&mg.from&&mg.from.length
+        ? [B.key].concat(mg.from).map(bookMark).join(" + ")+" codes, all on "+bookMark(B.key)+" now · "
+        : B.label+" code"+(mg?"s ":" "))+esc(BYO.code)+"</span></div>"+
     "<button class='byo-clear' type='button' aria-label='Clear this code'>Clear</button>"+
     "<p class='byo-count'>"+
       (away
@@ -16320,7 +16404,13 @@ function renderByo(){
       (mg&&mg.clash?" · "+mg.clash+" already on another of these slips":"")+
       (mg&&mg.bad.length?" · "+mg.bad.length+" code"+(mg.bad.length===1?"":"s")+
         " would not read ("+esc(mg.bad.join(", "))+")":"")+
+      (mg&&mg.lost&&mg.lost.length?" · "+mg.lost.length+" could not move to "+bookMark(B.key):"")+
     "</p>"+
+    /* NAMED, NOT ONLY COUNTED: a game that stayed behind on its own book is
+       one the reader may want to book there by hand. */
+    (mg&&mg.lost&&mg.lost.length?"<p class='byo-count byo-lost'>"+mg.lost.map(function(x){
+      return esc((x.leg.home||"?")+" v "+(x.leg.away||"?"))+" <span>("+bookMark(x.from.key)+": "+esc(x.why)+")</span>";
+    }).join("<br>")+"</p>":"")+
     /* FOLDED, BECAUSE THE JOBS ARE BELOW IT. Eleven rows of games pushed Edit
        for me off the bottom of a phone, and the list is reference material -
        what matters first is how many survived and what can be done with them.
@@ -16405,6 +16495,10 @@ function paintJobs(usable,B){
       b.addEventListener("click",function(){
         if(b.disabled) return;
         BYO.job=(BYO.job===b.dataset.job)?null:b.dataset.job;
+        /* The games sit ABOVE the jobs on a phone now, so an opened game list
+           would push the panel this opens off the screen. Fold it first. */
+        var fold=document.querySelector("#byoOut .byo-legs-fold");
+        if(fold&&BYO.job) fold.open=false;
         paintJobs(usable,B);
         renderStage(usable,B);
       });
@@ -16702,18 +16796,26 @@ function mixReline(code){
   return m?(m[1]+"_2.5"):null;
 }
 
+/* One leg's game on the other book: through our fixture when the board pairs
+   it, else straight from that book's feed. Shared by the converter and by a
+   merge of codes from different books, so the two can never disagree about
+   which game a leg is. */
+function eventOnBook(l,from,to){
+  var f=l.prediction?fixtureByLeg(l,from):null;
+  var id=f?f[to.id]:null;
+  /* A GAME WE DO NOT CARRY CAN STILL CROSS. If the board cannot pair it, the
+     other book's own feed is asked directly - see feedMatch. The pick then
+     carries that id rather than a fixture, which bookIdOf already prefers
+     when a fixture has nothing to say. */
+  var direct=(!l.prediction||legStarted(l))?null:((!f||id==null)?feedMatch(l,to):null);
+  if(direct) id=direct.eventId;
+  return {f:f,id:id};
+}
 function byoConversion(){
   var from=byoBook(), to=convTarget(from);
   var picks=[], stuck=[], changed=[], offer=[];
   (BYO.legs||[]).forEach(function(l){
-    var f=l.prediction?fixtureByLeg(l,from):null;
-    var id=f?f[to.id]:null;
-    /* A GAME WE DO NOT CARRY CAN STILL CROSS. If the board cannot pair it, the
-       other book's own feed is asked directly - see feedMatch. The pick then
-       carries that id rather than a fixture, which bookIdOf already prefers
-       when a fixture has nothing to say. */
-    var direct=(!l.prediction||legStarted(l))?null:((!f||id==null)?feedMatch(l,to):null);
-    if(direct) id=direct.eventId;
+    var hit=eventOnBook(l,from,to), f=hit.f, id=hit.id;
     if(legStarted(l)) stuck.push({leg:l,why:"this game has already started"});
     else if(!l.prediction) stuck.push({leg:l,why:"a market we don't carry"});
     else if(id==null&&!f) stuck.push({leg:l,why:to.label+" doesn't list this game"});
