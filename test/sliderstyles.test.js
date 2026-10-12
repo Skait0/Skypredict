@@ -18,10 +18,10 @@ const api = new Function(
 test("the Slider offers every slip style except Best chance", () => {
   const names = api.sliderStyles().map((s) => s[1]);
   assert.ok(!names.includes("Best chance"));
-  assert.deepStrictEqual(names, ["Bankers", "More games", "Even", "Fewer games"]);
+  assert.deepStrictEqual(names, ["Bankers", "More games", "Balanced", "Fewer games"]);
 });
 
-test("with Best chance chosen in the Wizard, the Slider shows Even, which is what it builds", () => {
+test("with Best chance chosen in the Wizard, the Slider shows Balanced, which is what it builds", () => {
   api.WSP.legodd = api.BEST_CHANCE;
   assert.strictEqual(api.sliderStyleOn(1.4), true);
   assert.strictEqual(api.sliderStyleOn(1.7), false);

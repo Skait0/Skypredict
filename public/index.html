@@ -4648,7 +4648,19 @@ button.wsp-go.waiting{opacity:.55}
    otherwise only used for a confident call - a second accent already in the
    palette rather than a new one invented for one control. */
 /* The Slider's copy of the style row and its way back - see renderSliderPanel. */
-#sldStyleChips{display:flex;flex-wrap:wrap;gap:6px}
+/* ONE LINE ON A PHONE (owner, 12 Oct 2026: "tighten it up let it stay on the line"):
+   four equal columns; the qualifier may wrap under its name rather than push a pill
+   onto a second row. */
+#sldStyleChips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+#sldStyleChips .wsp-chip.wsp-style{padding:6px 3px;border-radius:14px}
+#sldStyleChips .wsp-chip.wsp-style b{font-size:11.5px}
+#sldStyleChips .wsp-chip.wsp-style i{font-size:9px;white-space:normal;text-align:center;line-height:1.15}
+@media(max-width:380px){
+  #sldStyleChips{gap:4px}
+  #sldStyleChips .wsp-chip.wsp-style{padding:6px 2px}
+  #sldStyleChips .wsp-chip.wsp-style b{font-size:10.5px;letter-spacing:-.01em}
+  #sldStyleChips .wsp-chip.wsp-style i{font-size:8.5px}
+}
 .sld-back{margin-top:14px}
 /* Clear of the sticky header when bldToPanel scrolls a panel up to the top. */
 .bld-panel{scroll-margin-top:84px}
@@ -7031,6 +7043,10 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 #bldShared .mkt-chip:hover,#bldShared .mkt-chip.locked:hover{transform:none}
 #bldShared .mkt-chip .mkt-icon{display:none}
 #bldShared .mkt-chip .mk-st{width:13px;height:13px;flex:none}
+/* The one-block palette: smaller pills, tighter gaps (owner, 12 Oct 2026). */
+#bldShared .mk-one{gap:5px;margin-top:6px}
+#bldShared .mk-one .mkt-chip{height:27px;padding:0 9px;font-size:12px}
+#bldShared .mk-one .tier-badge{font-size:9.5px;padding:1px 4px}
 #bldShared .mkt-chip.on{box-shadow:none}
 #bldShared .mkt-chip.locked{opacity:1;filter:none;background:none;border-style:dashed;color:var(--faint)}
 #bldShared .mkt-chip.locked .mk-st{width:12px;height:12px}
@@ -20699,22 +20715,22 @@ function bankersOn(){ return WSP.legodd===BANKERS; }
    of BEST_CHANCE_PERS (every other style's price included; x1.32 and x1.5
    never won on the live board, 11 Oct, and cost a build each) and keeps the one
    likeliest to land that still reaches the payout. It can never land less
-   often than More games, Even or Fewer games would at the same payout. */
+   often than More games, Balanced or Fewer games would at the same payout. */
 var BEST_CHANCE=1.55, BEST_CHANCE_PERS=[1.25,1.4,1.6,1.7,1.85,2.1];
 function bestChanceOn(){ return WSP.legodd===BEST_CHANCE; }
-var SLIP_STYLES=[[BANKERS,"Bankers","x1.02-1.25 legs"],[1.25,"More games","smaller odds"],[1.4,"Even",""],[1.7,"Fewer games","bigger odds"],[BEST_CHANCE,"Best chance","likeliest to land"]];
+var SLIP_STYLES=[[BANKERS,"Bankers","x1.02-1.25"],[1.25,"More games","smaller odds"],[1.4,"Balanced",""],[1.7,"Fewer games","bigger odds"],[BEST_CHANCE,"Best chance","likeliest to land"]];
 /* WHAT THE STYLE MEANS TO THE SLIDER, which has no payout to divide.
    The Wizard reads legodd as "reach the target with legs priced near this",
    so the leg count falls out of the arithmetic. The Slider's count comes from
    the risk dial instead, so the style says the same thing two ways: prefer
    markets priced near the style's leg odds, and take more or fewer games.
-   Even (the 1.4 chip, "Balanced" until 7 Oct) is neutral - no pull, no change of count - so a reader who never
+   Balanced (the 1.4 chip; "Even" from 7 to 12 Oct, Balanced again at the owner's ask) is neutral - no pull, no change of count - so a reader who never
    touches the row gets exactly the Slider they had. */
 /* BEST CHANCE IS NOT OFFERED HERE (owner, 11 Oct 2026: "if it ignores the slider,
    then it should be turned off"). It means "the likeliest slip that reaches the
    payout", and the Slider has no payout - sliderStyle reads its 1.55 as neutral,
-   so it built the Even slip under another name. Chosen in the Wizard, the Slider
-   lights Even, which is the slip it actually builds. */
+   so it built the Balanced slip under another name. Chosen in the Wizard, the Slider
+   lights Balanced, which is the slip it actually builds. */
 function sliderStyles(){
   return SLIP_STYLES.filter(function(st){ return st[0]!==BEST_CHANCE; });
 }
@@ -22118,12 +22134,14 @@ function renderShared(){
     /* In groups a reader recognises, not 22 chips in a grid (owner, 11 Oct
        2026: "the whole filter tab feels poorly put together"). */
     var shown=MKT_CFG.filter(function(m){ return !m.wizardOnly || BUILD.mode==="wizard"; });
-    var html=[["Result",["wd","any","out","weh","draw"]],["Goals",["o05","o15","o25","o35","u45","nr3","fh","both"]],
-      ["Team goals",["tts","tts2"]],["Combos",["drgg","rsgg","dro25","rso25","dro15","rso15"]],
-      ["Corners, shots and handicap",["corn","tcorn","shots","tshots","hcap"]]].map(function(g){
-      var cs=g[1].map(function(k){ return shown.filter(function(m){ return m.k===k; })[0]; }).filter(Boolean);
-      return cs.length ? "<div class='mk-grp'><p class='mk-grp-t'>"+g[0]+"</p><div class='mk-chips'>"+cs.map(chipOf).join("")+"</div></div>" : "";
-    }).join("")+(BUILD.mode!=="wizard"&&shown.some(function(m){ return p.tier<m.tier; })
+    /* ONE PLACE, SMALL AND TIGHT (owner, 12 Oct 2026: "most users want the options
+       button in one place like it used to be, small, well tightened. arrange them in
+       order"). Every chip in one block, no headings, in reading order: result, goals,
+       team goals, combos, then corners, shots and handicap. */
+    var ORDER=["wd","any","out","weh","draw","o05","o15","o25","o35","u45","nr3","fh","both",
+      "tts","tts2","drgg","rsgg","dro25","rso25","dro15","rso15","corn","tcorn","shots","tshots","hcap"];
+    var cs=ORDER.map(function(k){ return shown.filter(function(m){ return m.k===k; })[0]; }).filter(Boolean);
+    var html="<div class='mk-chips mk-one'>"+cs.map(chipOf).join("")+"</div>"+(BUILD.mode!=="wizard"&&shown.some(function(m){ return p.tier<m.tier; })
       ? "<p class='mk-note'>Padlocked markets open up as you slide towards Bold.</p>" : "");
     mkw.innerHTML=html;
     var rs=$("mkReset");
