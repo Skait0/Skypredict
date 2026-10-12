@@ -41,7 +41,11 @@ function make(deps) {
         if (action === "hits") {
           const got = await slips.hits(200);
           if (!got || !got.ok) return H.sendJson(res, 503, { error: "unavailable" });
-          return H.sendJson(res, 200, { hits: got.rows });
+          /* Each landed win carries what sharing it needs: the rank banner and both captions. */
+          const WIN = require("../lib/winpost.js"), SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
+          const hits = (got.rows || []).map((h) => (h.status === "landed" && WIN.rankOf(h.total_odds))
+            ? Object.assign({}, h, { share: { img: WIN.imageUrl(SITE, h), x: WIN.caption(h, "x"), tg: WIN.caption(h, "tg") } }) : h);
+          return H.sendJson(res, 200, { hits });
         }
         if (action === "grants") {
           const rows = (await db.listGrants()).filter((g) => !g.revoked_at);

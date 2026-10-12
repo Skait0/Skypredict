@@ -32,7 +32,18 @@ async function send(chatId, text) {
   return !!(b && b.ok);
 }
 
+/* A photo with a caption, for the owner's win ping: the banner they can forward as it is. */
+async function sendPhoto(chatId, photo, caption) {
+  const r = await fetch("https://api.telegram.org/bot" + (process.env.TELEGRAM_BOT_TOKEN || "").trim() + "/sendPhoto", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, photo, caption: String(caption).slice(0, 1024) }),
+  });
+  const b = await r.json().catch(() => null);
+  return !!(b && b.ok);
+}
+
 const W = require("../lib/slipwatch.js");
+const WIN = require("../lib/winpost.js");
 const UPSTREAM = "https://web-production-798c0.up.railway.app";
 
 /* The same read-back api/tg.js uses for Follow my slip. */
@@ -62,7 +73,15 @@ function slipDeps() {
     results: async (since) => ((await SB.recentResults(since)).rows || [])
       .map((r) => ({ date: r.match_date, home: r.home, away: r.away, hg: r.hg, ag: r.ag })),
     /* The owner's own chat (SW_OWNER_TG_CHAT). Unset: hits still land on the admin page. */
-    ping: owner ? (text) => send(owner, text) : null,
+    /* A WIN THE OWNER CAN SHARE (12 Oct 2026: "a win just came in. there is no way for me to share it").
+       The ping is the post itself: the rank banner with the X-ready caption, forwardable as it is,
+       then the code and the Telegram-ready caption as a second message. No code or user on the banner. */
+    ping: owner ? async (text, slip) => {
+      const r = slip && WIN.rankOf(slip.total_odds);
+      if (!r) return send(owner, text);
+      await sendPhoto(owner, WIN.imageUrl(SITE, slip), WIN.caption(slip, "x"));
+      return send(owner, text + "\n\n<b>Ready to post on Telegram:</b>\n" + WIN.caption(slip, "tg").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c]));
+    } : null,
   };
 }
 

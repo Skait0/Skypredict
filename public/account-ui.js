@@ -113,7 +113,8 @@
         (h.total_odds?" · <span class='swa-gold'>×"+esc(Number(h.total_odds).toLocaleString("en-US",{maximumFractionDigits:2}))+"</span>":"")+"</b>"+
         "<small>"+esc(games+" · "+when+(h.who?" · "+h.who:""))+"</small>"+
         (legs.length?"<small>"+esc(legs.slice(0,3).join(" · ")+(legs.length>3?" and "+(legs.length-3)+" more":""))+"</small>":"")+"</span>"+
-        (h.status==="check"?"<span class='swa-soon'>Check</span>":"")+"</div>"; }).join("");
+        (h.status==="check"?"<span class='swa-soon'>Check</span>":"")+
+        (h.share?"<button type='button' class='swa-share' data-share='"+esc(JSON.stringify(h.share))+"'>Share</button>":"")+"</div>"; }).join("");
   }
   var CHEV='<svg class="swa-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
   function devWords(n){ return n==null?"":(n<=1?"Just this device":"This phone and "+(n-1)+" other"+(n>2?"s":"")); }
@@ -350,6 +351,20 @@
       var box=v.querySelector("#swaHits"); if(!box) return;
       box.innerHTML=code===200?hitsHtml(j.hits||[]):
         "<div class='swa-set'><span class='swa-st'><small>"+(code===503?"The slip ledger is not set up yet.":"Could not load the hits.")+"</small></span></div>";
+      /* SHARE A WIN: the phone's own share sheet with the banner and caption; on a desktop, the banner
+         opens in a tab and the caption is copied. Nothing names the code or the user. */
+      box.querySelectorAll("[data-share]").forEach(function(b){ b.onclick=function(){
+        var s; try{ s=JSON.parse(b.getAttribute("data-share")); }catch(e){ return; }
+        var text=s.x||s.tg||"";
+        function fallback(){ try{ root.open(s.img,"_blank","noopener"); }catch(e){}
+          try{ navigator.clipboard.writeText(text).then(function(){ say("Caption copied. Banner opened in a new tab."); }); }catch(e){} }
+        if(!navigator.share) return fallback();
+        fetch(s.img).then(function(r){ return r.blob(); }).then(function(bl){
+          var f=new File([bl],"soccerwizard-win.png",{type:bl.type||"image/png"});
+          var data=(navigator.canShare&&navigator.canShare({files:[f]}))?{files:[f],text:text}:{text:text,url:s.img};
+          return navigator.share(data);
+        }).catch(function(e){ if(!e||e.name!=="AbortError") fallback(); });
+      }; });
     });
     btn.onclick=function(){
       var e=inp.value.replace(/^\s+|\s+$/g,""); if(!e) return say("Add an email first.");

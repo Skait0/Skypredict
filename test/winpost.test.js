@@ -64,3 +64,22 @@ test("the banner exists for every rank the captions can name", () => {
     assert.strictEqual(png.slice(1, 4).toString(), "PNG");
   }
 });
+
+/* A WIN THE OWNER CAN SHARE (12 Oct 2026: "a win just came in. there is no way for me to share it"). */
+test("the owner gets a shareable copy of every channel win, and the admin page can share it", () => {
+  const fs = require("fs"), path = require("path");
+  const social = fs.readFileSync(path.join(__dirname, "..", "api", "social.js"), "utf8");
+  assert.match(social, /if \(ok && ch === "tg" && owner\) await postTGPhoto\(img, WIN\.caption\(s, "x"\), owner\);/,
+    "after the channel post, the same banner goes to the owner's own chat");
+  const ping = fs.readFileSync(path.join(__dirname, "..", "api", "tgfollow.js"), "utf8");
+  assert.match(ping, /await sendPhoto\(owner, WIN\.imageUrl\(SITE, slip\), WIN\.caption\(slip, "x"\)\);/,
+    "the x20 ping is the banner itself, ready to forward");
+  const account = fs.readFileSync(path.join(__dirname, "..", "api", "account.js"), "utf8");
+  assert.match(account, /share: \{ img: WIN\.imageUrl\(SITE, h\), x: WIN\.caption\(h, "x"\), tg: WIN\.caption\(h, "tg"\) \}/);
+  const ui = require("../public/account-ui.js");
+  const html = ui.hitsHtml([{ status: "landed", code: "ABC12", book: "sporty", total_odds: 11.55, leg_count: 7, legs: [],
+    share: { img: "https://x/a.png", x: "cap", tg: "cap" } }]);
+  assert.match(html, /data-share=/);
+  assert.doesNotMatch(ui.hitsHtml([{ status: "check", code: "ABC12", book: "sporty", total_odds: 11.55, legs: [] }]), /data-share=/,
+    "only a landed win can be shared");
+});

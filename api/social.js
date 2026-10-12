@@ -55,11 +55,11 @@ async function postTG(text) {
   return !!(b && b.ok);
 }
 /* The won-slip banner with its caption (1024 is Telegram's photo caption limit). */
-async function postTGPhoto(photo, caption) {
+async function postTGPhoto(photo, caption, chat) {
   const t = (process.env.TELEGRAM_BOT_TOKEN || "").trim();
   if (!t) return false;
   const r = await fetch("https://api.telegram.org/bot" + t + "/sendPhoto", { method: "POST",
-    headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: CHANNEL, photo, caption: withBot(caption, 1024) }) });
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chat || CHANNEL, photo, caption: chat ? String(caption).slice(0, 1024) : withBot(caption, 1024) }) });
   const b = await r.json().catch(() => null);
   return !!(b && b.ok);
 }
@@ -112,6 +112,10 @@ module.exports = async function handler(req, res) {
         const text = WIN.caption(s, ch), img = WIN.imageUrl(SITE, s);
         const ok = ch === "x" ? await postX(text, img) : await postTGPhoto(img, text);
         if (ok) { await SB.logSocial({ key: WIN.key(s, ch), channel: ch, kind: "win", text }); sent.push(WIN.key(s, ch)); }
+        /* A copy the owner can share (12 Oct 2026: a channel post could not be shared): the same banner
+           to their own chat, with the X-ready caption, once per win (on the Telegram post). */
+        const owner = String(process.env.SW_OWNER_TG_CHAT || "").trim();
+        if (ok && ch === "tg" && owner) await postTGPhoto(img, WIN.caption(s, "x"), owner);
       }
     }
   }
