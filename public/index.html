@@ -7031,6 +7031,10 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 #bldShared .mkt-chip:hover,#bldShared .mkt-chip.locked:hover{transform:none}
 #bldShared .mkt-chip .mkt-icon{display:none}
 #bldShared .mkt-chip .mk-st{width:13px;height:13px;flex:none}
+/* The one-block palette: smaller pills, tighter gaps (owner, 12 Oct 2026). */
+#bldShared .mk-one{gap:5px;margin-top:6px}
+#bldShared .mk-one .mkt-chip{height:27px;padding:0 9px;font-size:12px}
+#bldShared .mk-one .tier-badge{font-size:9.5px;padding:1px 4px}
 #bldShared .mkt-chip.on{box-shadow:none}
 #bldShared .mkt-chip.locked{opacity:1;filter:none;background:none;border-style:dashed;color:var(--faint)}
 #bldShared .mkt-chip.locked .mk-st{width:12px;height:12px}
@@ -22118,12 +22122,14 @@ function renderShared(){
     /* In groups a reader recognises, not 22 chips in a grid (owner, 11 Oct
        2026: "the whole filter tab feels poorly put together"). */
     var shown=MKT_CFG.filter(function(m){ return !m.wizardOnly || BUILD.mode==="wizard"; });
-    var html=[["Result",["wd","any","out","weh","draw"]],["Goals",["o05","o15","o25","o35","u45","nr3","fh","both"]],
-      ["Team goals",["tts","tts2"]],["Combos",["drgg","rsgg","dro25","rso25","dro15","rso15"]],
-      ["Corners, shots and handicap",["corn","tcorn","shots","tshots","hcap"]]].map(function(g){
-      var cs=g[1].map(function(k){ return shown.filter(function(m){ return m.k===k; })[0]; }).filter(Boolean);
-      return cs.length ? "<div class='mk-grp'><p class='mk-grp-t'>"+g[0]+"</p><div class='mk-chips'>"+cs.map(chipOf).join("")+"</div></div>" : "";
-    }).join("")+(BUILD.mode!=="wizard"&&shown.some(function(m){ return p.tier<m.tier; })
+    /* ONE PLACE, SMALL AND TIGHT (owner, 12 Oct 2026: "most users want the options
+       button in one place like it used to be, small, well tightened. arrange them in
+       order"). Every chip in one block, no headings, in reading order: result, goals,
+       team goals, combos, then corners, shots and handicap. */
+    var ORDER=["wd","any","out","weh","draw","o05","o15","o25","o35","u45","nr3","fh","both",
+      "tts","tts2","drgg","rsgg","dro25","rso25","dro15","rso15","corn","tcorn","shots","tshots","hcap"];
+    var cs=ORDER.map(function(k){ return shown.filter(function(m){ return m.k===k; })[0]; }).filter(Boolean);
+    var html="<div class='mk-chips mk-one'>"+cs.map(chipOf).join("")+"</div>"+(BUILD.mode!=="wizard"&&shown.some(function(m){ return p.tier<m.tier; })
       ? "<p class='mk-note'>Padlocked markets open up as you slide towards Bold.</p>" : "");
     mkw.innerHTML=html;
     var rs=$("mkReset");
