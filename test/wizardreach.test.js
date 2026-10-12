@@ -388,10 +388,10 @@ test("the dial's ticks are riskWord's words and the lit one matches the heading"
   }
 });
 
-/* Except Balanced: the owner asked for the 1.4 style to be "Balanced" again on 12 Oct
-   2026, knowing the dial has a Balanced stop too. */
+/* The dial's middle stop became "Medium" (owner, 12 Oct 2026) so the 1.4 style could be
+   "Balanced" again. The rule holds in full. */
 test("the slip-style chips share no word with the dial", () => {
-  const dial = ["Safest", "Safe", "Bold", "Risky"];
+  const dial = ["Safest", "Safe", "Medium", "Bold", "Risky"];
   for (const st of api.SLIP_STYLES) {
     for (const w of dial) assert.ok(!new RegExp("\\b" + w + "\\b").test(st[1] + " " + st[2]),
       `style "${st[1]}" reuses the dial word ${w}`);

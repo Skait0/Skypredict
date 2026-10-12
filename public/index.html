@@ -7764,7 +7764,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       </div>
       <div class="risk-wrap stage-in stage-in-4"><input type="range" id="risk" class="risk" min="0" max="100" step="any" value="45"
         aria-label="Risk level"><span class="risk-bubble" id="riskBubble">-</span></div>
-      <div class="risk-ticks stage-in stage-in-5"><span>Safest</span><span>Safe</span><span>Balanced</span><span>Bold</span><span>Risky</span></div>
+      <div class="risk-ticks stage-in stage-in-5"><span>Safest</span><span>Safe</span><span>Medium</span><span>Bold</span><span>Risky</span></div>
       <!-- The Wizard's slip style, for the Slider too (owner, 28 Sep 2026: "i
            think the slip style should apply to the slider and when more games
            smaller odds is clicked, it should apply"). One value, WSP.legodd,
@@ -13117,7 +13117,9 @@ function riskParams(r){
   return {minConf:Math.min(0.75,(0.72+floorBoost)-span*f), maxGames:Math.round(3+f*32),
     tier:(r<33?0:(r<66?1:2))};
 }
-function riskWord(r){return r<20?"Safest":r<40?"Safe":r<60?"Balanced":r<80?"Bold":"Risky";}
+/* The middle stop is "Medium" (owner, 12 Oct 2026), so it never shares a word with
+   the Balanced slip style beside it. */
+function riskWord(r){return r<20?"Safest":r<40?"Safe":r<60?"Medium":r<80?"Bold":"Risky";}
 /* ONE VOCABULARY FOR THE DIAL. The ticks under the slider are riskWord's five
    bands, and the lit one is whichever riskWord names - read off the word, so
    the heading and the tick cannot disagree. They did: three ticks on a
@@ -22090,10 +22092,10 @@ function renderShared(){
          the badge below says which one. */
       var wrongBook=!!(m.only && m.only.indexOf(curBook().key)<0);
       if(wrongBook) locked=true;
-      var tierLabel=["Safe","Balanced","Risky"][m.tier];
+      var tierLabel=["Safe","Medium","Risky"][m.tier];
       var subLabel=m.sub;
       if(m.tierMax!==undefined && p.tier >= m.tierMax){
-        tierLabel=["Safe","Balanced","Risky"][m.tierMax];
+        tierLabel=["Safe","Medium","Risky"][m.tierMax];
         subLabel=m.subMax;
       }
       var unlockClass=(window._prevTier!==undefined && p.tier > window._prevTier && p.tier >= m.tier && window._prevTier < m.tier) ? " unlocking" : "";
