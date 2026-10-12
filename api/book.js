@@ -50,4 +50,11 @@ const opts = {
 module.exports = require("../lib/bookproxy.js").makeHandler({
   gate: GATE.makeGate(opts),
   record: GATE.makeRecorder(opts),
+  /* Every minted code into site_slips, for grading and the admin's hits list
+     (lib/slipwatch.js, sql/site_slips.sql). */
+  save: async (req, s) => {
+    const w = await GATE.whoOf(opts, req);
+    await DB.putSiteSlip({ book: s.book, code: s.code, who: w.who, subject: w.subject, src: GATE.srcOf(req),
+      leg_count: s.legCount, total_odds: s.odds });
+  },
 });

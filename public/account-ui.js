@@ -92,7 +92,28 @@
       "<input class='swa-in' id='swaGEmail' type='email' autocomplete='off' autocapitalize='none' spellcheck='false'>"+
       "<button class='swa-outbtn swa-go' id='swaGrant' type='button'>Give Family &amp; friends</button>"+
       "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>"+
-      "<p class='swa-h'>Family &amp; friends</p><div class='swa-card' id='swaGrants'>"+(list?grantsHtml(list):"<div class='swa-set'><span class='swa-st'><small>Loading</small></span></div>")+"</div>";
+      "<p class='swa-h'>Family &amp; friends</p><div class='swa-card' id='swaGrants'>"+(list?grantsHtml(list):"<div class='swa-set'><span class='swa-st'><small>Loading</small></span></div>")+"</div>"+
+      "<p class='swa-h'>Slips that landed</p><div class='swa-card' id='swaHits'><div class='swa-set'><span class='swa-st'><small>Loading</small></span></div></div>";
+  }
+  /* EVERY CODE BOOKED ON THE SITE THAT CAME HOME (owner, 12 Oct 2026; lib/slipwatch.js).
+     "check" = every leg we could grade won, but some legs (corners, shots, first half)
+     cannot be graded from a final score - shown so the owner can look, never as a hit. */
+  var BOOK_NAME={sporty:"SportyBet",bet9ja:"Bet9ja",betking:"BetKing",betpawa:"Betpawa",onexbet:"1xBet"};
+  function hitsHtml(list){
+    if(!list.length) return "<div class='swa-set'><span class='swa-st'><small>No landed slips yet. They show up here within ten minutes of the last game ending.</small></span></div>";
+    var landed=list.filter(function(h){ return h.status==="landed"; });
+    var best=landed.reduce(function(m,h){ return Math.max(m,Number(h.total_odds)||0); },0);
+    var head="<div class='swa-set'><span class='swa-st'><b>"+landed.length+" landed"+(best?" · biggest ×"+esc(best.toLocaleString("en-US",{maximumFractionDigits:2})):"")+"</b>"+
+      "<small>"+(list.length-landed.length)+" to check by hand</small></span></div>";
+    return head+list.map(function(h){
+      var when=""; try{ when=new Date(h.settled_at||h.created_at).toLocaleDateString(undefined,{day:"numeric",month:"short"}); }catch(e){}
+      var legs=(h.legs||[]).map(function(l){ return l.name; });
+      var games=(h.leg_count||legs.length)+" game"+((h.leg_count||legs.length)===1?"":"s");
+      return "<div class='swa-set'><span class='swa-st'><b>"+esc(h.code)+" · "+esc(BOOK_NAME[h.book]||h.book)+
+        (h.total_odds?" · <span class='swa-gold'>×"+esc(Number(h.total_odds).toLocaleString("en-US",{maximumFractionDigits:2}))+"</span>":"")+"</b>"+
+        "<small>"+esc(games+" · "+when+(h.who?" · "+h.who:""))+"</small>"+
+        (legs.length?"<small>"+esc(legs.slice(0,3).join(" · ")+(legs.length>3?" and "+(legs.length-3)+" more":""))+"</small>":"")+"</span>"+
+        (h.status==="check"?"<span class='swa-soon'>Check</span>":"")+"</div>"; }).join("");
   }
   var CHEV='<svg class="swa-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
   function devWords(n){ return n==null?"":(n<=1?"Just this device":"This phone and "+(n-1)+" other"+(n>2?"s":"")); }
@@ -112,7 +133,7 @@
         "<input class='swa-in' id='swaDelIn' autocomplete='off' autocapitalize='characters'><button class='swa-outbtn swa-danger' id='swaDelGo' type='button'>Delete for good</button></div>"+
       "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>";
   }
-  var api={firstNameOf:firstNameOf,menuHtml:menuHtml,codesHtml:codesHtml,esc:esc,I:I,AV_FREE:AV_FREE,AV_FF:AV_FF,AV_OWNER:AV_OWNER,AV_PERSONAL:AV_PERSONAL,pickerHtml:pickerHtml,grantsHtml:grantsHtml,adminHtml:adminHtml,recordHtml:recordHtml,profileHtml:profileHtml,settingsHtml:settingsHtml};
+  var api={firstNameOf:firstNameOf,menuHtml:menuHtml,codesHtml:codesHtml,esc:esc,I:I,AV_FREE:AV_FREE,AV_FF:AV_FF,AV_OWNER:AV_OWNER,AV_PERSONAL:AV_PERSONAL,pickerHtml:pickerHtml,grantsHtml:grantsHtml,hitsHtml:hitsHtml,adminHtml:adminHtml,recordHtml:recordHtml,profileHtml:profileHtml,settingsHtml:settingsHtml};
   if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
   if(!root.document) return;
 
@@ -325,6 +346,11 @@
             if(c2===200){ say("Removed."); load(); } else { b.disabled=false; fail(c2,j2); } }); }; });
       });
     }
+    a.req("GET","/api/account/hits",null,function(code,j){
+      var box=v.querySelector("#swaHits"); if(!box) return;
+      box.innerHTML=code===200?hitsHtml(j.hits||[]):
+        "<div class='swa-set'><span class='swa-st'><small>"+(code===503?"The slip ledger is not set up yet.":"Could not load the hits.")+"</small></span></div>";
+    });
     btn.onclick=function(){
       var e=inp.value.replace(/^\s+|\s+$/g,""); if(!e) return say("Add an email first.");
       btn.disabled=true;

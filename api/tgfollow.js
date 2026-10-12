@@ -32,6 +32,40 @@ async function send(chatId, text) {
   return !!(b && b.ok);
 }
 
+const W = require("../lib/slipwatch.js");
+const UPSTREAM = "https://web-production-798c0.up.railway.app";
+
+/* The same read-back api/tg.js uses for Follow my slip. */
+async function readCode(book, code) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 6000);
+  try {
+    const r = await fetch(UPSTREAM + "/api/slip?book=" + book + "&code=" + encodeURIComponent(code),
+      { signal: ctrl.signal, headers: { accept: "application/json" } });
+    const b = await r.json().catch(() => null);
+    return b && b.success && Array.isArray(b.legs) && b.legs.length ? b.legs : null;
+  } catch (e) { return null; } finally { clearTimeout(t); }
+}
+
+function slipDeps() {
+  const owner = String(process.env.SW_OWNER_TG_CHAT || "").trim();
+  return {
+    newSlips: (n) => SB.newSiteSlips(n),
+    openSlips: () => SB.openSiteSlips(),
+    patch: (id, p) => SB.patchSiteSlip(id, p),
+    readCode,
+    fixtures: async () => {
+      const pay = await (await fetch(SITE + "/predictions.json")).json().catch(() => ({}));
+      return (pay && pay.fixtures) || [];
+    },
+    track: F.track,
+    results: async (since) => ((await SB.recentResults(since)).rows || [])
+      .map((r) => ({ date: r.match_date, home: r.home, away: r.away, hg: r.hg, ag: r.ag })),
+    /* The owner's own chat (SW_OWNER_TG_CHAT). Unset: hits still land on the admin page. */
+    ping: owner ? (text) => send(owner, text) : null,
+  };
+}
+
 module.exports = async function handler(req, res) {
   if (!allowed(req)) return res.status(401).json({ ok: false });
   const out = { swept: null, follows: 0, sent: 0, closed: 0 };
@@ -43,6 +77,11 @@ module.exports = async function handler(req, res) {
       out.swept = b ? { ok: b.ok, finalised: b.finalised, observed: b.observed } : { ok: false };
     } catch (e) { out.swept = { ok: false }; }
   }
+
+  /* 3. Every code booked on the site: read back, graded, hits listed for the admin
+     and big ones messaged to the owner (lib/slipwatch.js). Its own try, before the
+     follows, which return early when nobody is following anything. */
+  try { out.slips = await W.tick(slipDeps()); } catch (e) { out.slips = { ok: false }; }
 
   const open = await SB.openFollows();
   if (!open.ok || !open.rows.length) return res.status(200).json(out);

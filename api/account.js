@@ -17,13 +17,15 @@ function make(deps) {
   const { db } = deps;
   const now = deps.now || Date.now;
   const env = deps.env || process.env;
+  /* The booked-slip ledger (lib/slipwatch.js); a dep so tests need no database. */
+  const slips = deps.slips || { hits: (n) => require("../lib/supabase.js").siteSlipHits(n) };
   return async function handler(req, res) {
     if (!H.enabled()) return H.notFound(res);
     const action = String((req.query || {}).action || "");
     if (action === "delete") { const g = H.guardPost(req); if (g) return H.sendJson(res, g.status, { error: g.error }); }
     else if (action === "consent") { if (req.method === "POST") { const g = H.guardPost(req); if (g) return H.sendJson(res, g.status, { error: g.error }); } else if (req.method !== "GET") return H.sendJson(res, 405, { error: "method" }); }
     else if (action === "export") { if (req.method !== "GET") return H.sendJson(res, 405, { error: "method" }); }
-    else if (action === "grants") { if (req.method !== "GET") return H.sendJson(res, 405, { error: "method" }); }
+    else if (action === "grants" || action === "hits") { if (req.method !== "GET") return H.sendJson(res, 405, { error: "method" }); }
     else if (action === "grant" || action === "revoke") { const g = H.guardPost(req); if (g) return H.sendJson(res, g.status, { error: g.error }); }
     else return H.notFound(res);
     const t = now();
@@ -32,9 +34,15 @@ function make(deps) {
       if (s.state !== "ok") return H.sendJson(res, 401, { error: "signed_out", reason: s.reason || null },
         s.state === "ended" ? [S.clearCookie(S.COOKIE)] : null);
 
-      if (action === "grants" || action === "grant" || action === "revoke") {
+      if (action === "grants" || action === "grant" || action === "revoke" || action === "hits") {
         const user = await db.userById(s.userId);
         if (!user || (await R.roleOf(db, user, env)) !== "admin") return H.sendJson(res, 403, { error: "forbidden" });
+        /* Slips booked on the site that landed (or need a manual check), newest first. */
+        if (action === "hits") {
+          const got = await slips.hits(200);
+          if (!got || !got.ok) return H.sendJson(res, 503, { error: "unavailable" });
+          return H.sendJson(res, 200, { hits: got.rows });
+        }
         if (action === "grants") {
           const rows = (await db.listGrants()).filter((g) => !g.revoked_at);
           return H.sendJson(res, 200, { grants: rows.map((g) => ({ email: g.email, created_at: g.created_at })) });

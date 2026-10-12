@@ -46,10 +46,12 @@ function res() {
    saw is returned so the test can assert what was and was not called. */
 async function run(opts, fn) {
   const o = opts || {};
-  const seen = { counts: 0, inserts: 0, bookings: 0 };
+  const seen = { counts: 0, inserts: 0, bookings: 0, slips: 0 };
   const real = global.fetch;
   global.fetch = async (url, init) => {
     const u = String(url);
+    /* The slip ledger (lib/slipwatch.js): every minted code is saved once. */
+    if (u.includes("site_slips")) { seen.slips++; return { ok: true, status: 201, text: async () => "" }; }
     if (u.includes("book_quota")) {
       if ((init && init.method) === "POST") {
         seen.inserts++;
@@ -91,6 +93,7 @@ test("a device under the cap books, and the booking is recorded", async () => {
   assert.equal(r._o.body.code, "MS0LJY", "the code reaches the reader");
   assert.equal(seen.bookings, 1);
   assert.equal(seen.inserts, 1, "one row for one booking");
+  assert.equal(seen.slips, 1, "and the slip itself is kept for grading");
 });
 
 test("what is left counts the code just issued", async () => {
@@ -117,7 +120,7 @@ test("a Supabase outage does not stop anyone booking", async () => {
   const real = global.fetch;
   let bookings = 0;
   global.fetch = async (url) => {
-    if (String(url).includes("book_quota")) throw new Error("supabase down");
+    if (String(url).includes("/rest/v1/")) throw new Error("supabase down");   /* quota and slip ledger alike */
     bookings++;
     const body = { success: true, code: "MS0LJY" };
     return { ok: true, status: 200, text: async () => JSON.stringify(body),
