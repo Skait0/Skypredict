@@ -1457,7 +1457,7 @@ html.tapped .list-hint{display:none}
 /* No breathing halo (Task 4): the ball turning is the motion; a pulsing
    white glow round it was decoration on decoration. */
 .sc-orb{flex-shrink:0;width:44px;height:44px;margin-top:0;border-radius:50%;display:block}
-.sc-orb canvas,.ctafab-orb canvas{display:block;width:100%;height:100%}
+.sc-orb canvas{display:block;width:100%;height:100%}
 /* ON A CREAM CARD THE BALL NEEDS AN EDGE, NOT A GLOW. Its white panels and
    top-left highlight are the card's own colour, so a glow of any hue left the
    upper rim undrawn and the ball read as a smudge (reported 24 Sep, light
@@ -4578,15 +4578,17 @@ html{interpolate-size:allow-keywords}
 .ctafab:hover{filter:brightness(1.06)}
 .ctafab:active{transform:scale(.97)}
 .ctafab:focus-visible{outline:2px solid var(--text);outline-offset:3px}
-/* THE BALL SITS IN A DARK WELL. Straight on the red fill it vanished: the
-   pentagons are the wizard's robe red, the same family as --red-fill, and the
-   ball's own shaded rim darkens into it, so the outline and half the pattern
-   were gone (reported 24 Sep, "the contrast is shit"). A near-black disc
-   behind it separates both - white panels and red pentagons each read against
-   dark - and the thin light rim draws the edge the red was eating. */
-.ctafab-orb{width:34px;height:34px;padding:4px;box-sizing:border-box;border-radius:50%;flex-shrink:0;
-  background:radial-gradient(circle at 50% 40%,#2a1a1d,#0d0809);
-  box-shadow:0 0 0 1.5px rgba(255,255,255,.7),0 2px 6px rgba(0,0,0,.4);margin-left:-3px}
+/* THE STAFF, NOT A SPINNING BALL (owner, 12 Oct 2026: "looks tacky"). The
+   glossy 3D ball turned forever beside a flat button and pulled the eye off the
+   board; the staff is the Build tab's own mark on a phone, so building has one
+   symbol everywhere. Still, white on the red; one twinkle of its star on hover. */
+.ctafab-ic{display:inline-flex;width:27px;height:27px;flex-shrink:0;margin-left:-2px}
+.ctafab-ic svg{width:100%;height:100%}
+.ctafab-ic .cf-star{transform-origin:12px 5.6px}
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+  .ctafab:hover .cf-star{animation:cfTwinkle .5s cubic-bezier(.23,1,.32,1)}
+}
+@keyframes cfTwinkle{0%{transform:scale(1) rotate(0)}45%{transform:scale(1.45) rotate(36deg)}100%{transform:scale(1) rotate(72deg)}}
 /* IN THE RAIL'S COLUMN, NOT ON THE BOARD (7 Oct 2026). Bottom left, it sat on
    the team names of whatever row was passing ("Stevenage" in the critique).
    It now appears only once the whole rail has scrolled away, and lines up
@@ -8043,7 +8045,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 
 <button class="myfab" id="myFab" type="button" hidden><span class="myfab-tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10a1 1 0 0 1 1 1v16l-2.2-1.5L13.6 20 12 18.6 10.4 20 8.2 18.5 6 20V4a1 1 0 0 1 1-1z"/></svg><span class="myfab-c" id="myFabC">0</span></span><span class="lbl">My slip</span></button>
 <button class="ctafab" id="ctaFab" type="button" hidden>
-  <span class="ctafab-orb" aria-hidden="true"><canvas class="orb-ball" data-size="26"></canvas></span>
+  <span class="ctafab-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5.6" r="3.4"/><path class="cf-star" d="M12 3.6l.62 1.28 1.4.2-1.01.98.24 1.4L12 6.78l-1.25.66.24-1.4-1.01-.98 1.4-.2z" fill="currentColor" stroke="none"/><path d="M12 9v10.4"/><path d="M10.6 11.4h2.8"/><path d="M10.4 19.4h3.2"/></svg></span>
   <span>Build me a slip</span>
 </button>
 <nav class="btabs" aria-label="Sections">
