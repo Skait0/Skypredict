@@ -132,8 +132,23 @@ test("choosing a span retires the time bucket with it", () => {
 test("a span starts at the first day that still has games", () => {
   /* Otherwise "Next 3 days" picked on Saturday evening means Saturday plus two,
      with the first of the three already played out. */
-  assert.match(grab("setSpan"), /dayPickList\(\)/,
+  assert.match(grab("setSpan"), /spanStart\(\)/,
     "setSpan is not anchoring the span to a day that still has fixtures");
+});
+
+test("a span starts at the first day with games in the reader's leagues, every paint", () => {
+  /* 12 Oct 2026, 23:29 Monday: Monday still had other leagues' late games, so
+     "Next 2 days" on Champions League ran Mon + Tue and showed 8, not Tue + Wed
+     = 16. A start stored on an earlier day did the same. */
+  const fn = new Function("DAYS", "FILT", "SDAY0",
+    "var SCOPE='span', SDAY=SDAY0, DATA={fixtures:[1]}, localStorage={setItem:function(){}};" +
+    "function dayPickList(){return Object.keys(DAYS).map(Number).filter(function(o){return DAYS[o]>0;});}" +
+    "function buildableOn(o){return FILT[o]||[];}" +
+    grab("spanStart") + grab("clampDay") + "\nclampDay(); return SDAY;");
+  const days = { 0: 40, 1: 300, 2: 280 }, ucl = { 1: Array(8), 2: Array(8) };
+  assert.strictEqual(fn(days, ucl, 0), 1, "Monday has no Champions League left");
+  assert.strictEqual(fn(days, { 0: [1], 1: [1] }, 1), 0, "today's games pull the start back");
+  assert.strictEqual(fn(days, {}, 2), 0, "nothing in the leagues: fall back to the first day with games");
 });
 
 test("the wizard's slip is redrawn when the width changes", () => {

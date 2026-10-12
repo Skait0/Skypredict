@@ -10953,6 +10953,13 @@ function buildableOn(off){
     out.push(f);}
   return out;
 }
+/* Where a "Next N days" window starts: the first day still holding a game the
+   filters let through, else the first day with any game. */
+function spanStart(){
+  var list=dayPickList();
+  for(var i=0;i<list.length;i++) if(buildableOn(list[i]).length) return list[i];
+  return list.length?list[0]:0;
+}
 /* The same three filters with no day at all, for the "All upcoming" count. */
 function buildableAll(){
   return (DATA.fixtures||[]).filter(function(f){
@@ -10995,6 +11002,15 @@ function clampDay(){
      no fixtures every window looks empty, and this used to wipe a stored
      Weekend (and sync "day" to the reader's other devices) on every load. */
   if(!DATA.fixtures.length) return;
+  /* "Next N days" is counted from the first day with games in the reader's
+     leagues, every paint - not from the day it was picked on. A start stored
+     on Sunday, or a late-Monday pick when only Monday's other leagues were
+     left, put Champions League Tuesday + Wednesday (8 + 8) at 8. */
+  if(SCOPE==="span"){
+    var s=spanStart();
+    if(s!==SDAY){SDAY=s; try{localStorage.setItem("sw.sday",String(s));}catch(e){}}
+    return;
+  }
   if(SCOPE==="wknd"){
     var w=weekendOffs();
     if(spanBuildable(w[1]-w[0]+1,w[0])>0) return;
@@ -11122,7 +11138,7 @@ function setDay(off){
    day already played out - or from a Saturday picked earlier. */
 function setSpan(n){
   if(SPAN_CHOICES.indexOf(n)<0) return false;
-  var list=dayPickList(), start=list.length?list[0]:0;
+  var start=spanStart();
   if(SCOPE==="span"&&SPAN===n&&SDAY===start) return false;
   SCOPE="span"; SPAN=n; SDAY=start;
   try{localStorage.setItem("sw.scope","span");
@@ -19899,7 +19915,7 @@ function openDayMenu(btn){
      narrow window, so the choices run narrow-last. */
   m.innerHTML=SPAN_CHOICES.map(function(n){
     var cur=(SCOPE==="span"&&SPAN===n);
-    var s0=list[0];
+    var s0=spanStart();
     return "<button type='button' role='option' class='day-opt day-span"+(cur?" on":"")+"'"+
       (cur?" aria-selected='true'":"")+" data-span='"+n+"'>"+
       "<span class='dy-n'>"+esc(spanName(n))+"</span>"+
