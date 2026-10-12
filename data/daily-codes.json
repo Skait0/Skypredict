@@ -2042,5 +2042,73 @@
       "onexbet": "EVE44"
     },
     "odds": 1.44
+  },
+  "2026-10-12": {
+    "date": "2026-10-12",
+    "generated": "2026-10-12T14:51:43.020Z",
+    "firstKickoff": "2026-10-12T16:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-12",
+        "home": "Criciuma",
+        "away": "America MG",
+        "league": "Brazil Brasileiro Serie B",
+        "kickoff": "2026-10-12T22:30:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.74,
+        "market": "1X",
+        "odd": 1.08
+      },
+      {
+        "date": "2026-10-12",
+        "home": "AEK Larnaca",
+        "away": "Omonia Aradippou",
+        "league": "Cyprus 1st Division",
+        "kickoff": "2026-10-12T16:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.842,
+        "market": "1X",
+        "odd": 1.09
+      },
+      {
+        "date": "2026-10-12",
+        "home": "Elfsborg",
+        "away": "Halmstad",
+        "league": "Sweden Allsvenskan",
+        "kickoff": "2026-10-12T17:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.836,
+        "market": "1X",
+        "odd": 1.11
+      },
+      {
+        "date": "2026-10-12",
+        "home": "Ludogorets",
+        "away": "Arda",
+        "league": "Bulgaria Parva Liga",
+        "kickoff": "2026-10-12T17:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.812,
+        "market": "1X",
+        "odd": 1.12
+      },
+      {
+        "date": "2026-10-12",
+        "home": "Universidad de Chile",
+        "away": "Nublense",
+        "league": "Chile Primera Division",
+        "kickoff": "2026-10-12T20:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.842,
+        "market": "1X",
+        "odd": 1.14
+      }
+    ],
+    "codes": {
+      "sporty": "HQ5R7X",
+      "bet9ja": "5VKC2TS",
+      "betpawa": "KQHOGL7"
+    },
+    "odds": 1.67
   }
 }
