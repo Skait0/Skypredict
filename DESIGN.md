@@ -57,19 +57,33 @@ card and the ground).
 
 ## Type
 
-One family: Plus Jakarta Sans (400-800), loaded from Google Fonts in both
-sheets. No second webfont - a test forbids adding one, because BetKing's
-wordmark is drawn with a condensed system stack
-(`"Roboto Condensed","Arial Narrow",…`) rather than a download.
+Two families, both from Google Fonts in one request:
 
-- h1 17-26px/800, `h1 em` is gold - that is how a headline gets colour.
+- **Plus Jakarta Sans** (400-800) is the body face: prose, labels, chips and
+  buttons.
+- **Saira Condensed** (600-800), token `--disp`, is the display face. It sets
+  the headlines (uppercase, `letter-spacing:.005em`), the risk word, and the
+  numbers people came for: odds, totals, the stat tiles and the slider bubble.
+  It was chosen on 13 Oct 2026 (option 2b of the type mock-up) because Plus
+  Jakarta on everything read as an AI-template site. Fallback:
+  `'Roboto Condensed','Arial Narrow',sans-serif`. The rule sits last in the
+  app sheet, under "DISPLAY FACE".
+
+Don't add a third family. BetKing's wordmark still uses its condensed system
+stack, and a test forbids a Roboto webfont link for it. The static pages are
+still all Plus Jakarta Sans.
+
+- h1 17-26px/800 in `--disp`, one colour. There is no gold or red second
+  half: `.intro h1 span` and `.bld-title em` inherit the colour. A
+  split-colour headline is the most common AI-template tell.
 - Body 13px/1.65 in the shell, `--soft`.
 - Section labels: 11px/800, `letter-spacing:.09em`, uppercase - the one
   uppercase label style (app: `.potd-top b`, `.sotd-top b`, `.ck-tag` and the
   footer heads; static pages: the footer heads only). Static section headings
   are 15px/800 sentence case.
 - Anything read aloud or typed in (codes, odds, scores) is
-  `font-variant-numeric:tabular-nums` and 800.
+  `font-variant-numeric:tabular-nums` and 800. Odds and totals are also in
+  `--disp`.
 
 ## Components
 

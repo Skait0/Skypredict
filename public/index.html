@@ -102,9 +102,9 @@
      If the font never arrives, the fallback stack stands and the site works.
      That is the right failure. -->
 <link rel="stylesheet" media="print" onload="this.media='all';this.onload=null"
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Saira+Condensed:wght@600;700;800&display=swap">
 <noscript><link rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Saira+Condensed:wght@600;700;800&display=swap"></noscript>
 <script>
 (function(){var t=null;try{t=localStorage.getItem("sw.theme");}catch(e){}
 /* Dark is the default whatever the device says. The light theme is built and
@@ -7095,6 +7095,19 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 .fav-reset{background:none;border:0;padding:8px 0;font:inherit;font-size:13px;font-weight:700;color:var(--soft);cursor:pointer}
 .fav-done{height:42px;padding:0 22px;border-radius:99px;border:0;background:var(--red-fill);color:#fff;font:inherit;font-size:14px;font-weight:800;cursor:pointer}
 @media (hover:hover){ .fav-reset:hover{color:var(--text)} .fav-star:hover{color:var(--text)} }
+/* DISPLAY FACE. Asked: "dont you think the font style is an a.i giveaway?" -
+   Plus Jakarta on everything, plus a coloured second half on every headline,
+   is the stock AI-template look. Saira Condensed carries the headlines and the
+   numbers people came for (odds, totals, the risk word); body text stays Plus
+   Jakarta. Option 2b of the 13 Oct 2026 mock-up. Last in the sheet so it wins
+   over the per-heading rules above without raising their specificity. */
+:root{--disp:'Saira Condensed','Roboto Condensed','Arial Narrow',sans-serif}
+.intro h1,.potd h2,.sotd h2,.bld-head h2,.live-head h2,.board-head h2,.conv-head h2,
+.country-h h2,.faves-h h2{font-family:var(--disp);text-transform:uppercase;letter-spacing:.005em}
+.risk-name{font-family:var(--disp);text-transform:uppercase;letter-spacing:.02em;font-size:24px}
+.potd .big,.stat b,.bf-odds b,.risk-bubble b,.odds{font-family:var(--disp);letter-spacing:0}
+.bf-odds b{font-size:21px}
+.intro h1 span,.bld-title em{color:inherit}
 </style>
 </head>
 <body>
