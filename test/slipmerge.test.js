@@ -76,7 +76,7 @@ test("the read is capped, and the cap is about the wait", () => {
   assert.match(many, /step\(i\+1\);/, "the reads must be sequential");
   assert.doesNotMatch(many, /Promise\.all/, "a burst is exactly what this must not do");
   /* A code that will not read loses its own slip and nothing else. */
-  assert.match(many, /if\(r\.ok\) lists\.push\(r\.d\.legs\|\|\[\]\); else bad\.push/);
+  assert.match(many, /if\(r\.ok\) lists\.push\(\{legs:r\.d\.legs\|\|\[\],book:r\.book\}\); else bad\.push/);
 });
 
 test("the input can hold more than one code", () => {
@@ -86,4 +86,74 @@ test("the input can hold more than one code", () => {
   const inp = src.slice(src.indexOf('<input id="byoCode"'), src.indexOf('id="byoGo"'));
   assert.match(inp, /maxlength="110"/);
   assert.match(inp, /placeholder="Booking code, or a few to merge"/);
+});
+
+/* CODES FROM DIFFERENT BOOKS. Each code is read on the picked book first and
+   only "no slip behind that code" sends it on, so a code from the picked book
+   costs exactly one read, as it always did. */
+function anyBook(answers) {
+  const calls = [];
+  const env = new Function("BOOKS", "BYO", "byoSlipFetch",
+    "var BYO_LAST_FOREIGN=null;" + grab("byoReadAnyBook") +
+    "return byoReadAnyBook;");
+  const BOOKS = { sporty: {}, bet9ja: {}, betking: {}, betpawa: {}, onexbet: {} };
+  const read = env(BOOKS, { book: "sporty" }, (code, book) => {
+    calls.push(book);
+    const a = answers[book] || { status: 404 };
+    return Promise.resolve({ ok: !!a.ok, d: a.ok ? { success: true, legs: [] } : {}, status: a.status || 200 });
+  });
+  return { read, calls };
+}
+
+test("a code from the picked book is read once, as before", async () => {
+  const t = anyBook({ sporty: { ok: true } });
+  const r = await t.read("ABC123");
+  assert.equal(r.book, "sporty");
+  assert.deepEqual(t.calls, ["sporty"]);
+});
+
+test("a code from another book is found by asking the others in turn", async () => {
+  const t = anyBook({ betking: { ok: true } });
+  const r = await t.read("ABC123");
+  assert.equal(r.ok, true);
+  assert.equal(r.book, "betking");
+  assert.deepEqual(t.calls, ["sporty", "bet9ja", "betking"]);
+});
+
+test("only 'not this book' moves on - a rate limit stops the search", async () => {
+  /* Reads are rationed at twenty a minute; spending the rest of them on a
+     search that cannot succeed would lock the reader out of their next paste. */
+  const t = anyBook({ sporty: { status: 429 } });
+  const r = await t.read("ABC123");
+  assert.equal(r.ok, false);
+  assert.deepEqual(t.calls, ["sporty"]);
+});
+
+/* Another book's legs land on the picked book through the converter's own
+   lookup, keep their own price, and say where they came from. */
+const bring = new Function("eventOnBook", "legStarted", "nearestLine", "mixReline",
+  grab("byoBringOver") + "return byoBringOver;");
+
+test("another book's legs are brought onto the picked book, or set aside with the reason", () => {
+  const from = { key: "bet9ja", label: "Bet9ja" }, to = { key: "sporty", label: "SportyBet", wholeLines: true };
+  const ids = { "A": "sr:match:1" };
+  const fn = bring((l) => ({ f: null, id: ids[l.home] == null ? null : ids[l.home] }),
+    (l) => !!l.started, () => null, () => null);
+  const b = fn([
+    { home: "A", away: "B", prediction: "1", eventId: "9ja-1", odds: "1.5" },
+    { home: "C", away: "D", prediction: "GG", eventId: "9ja-2" },
+    { home: "A", away: "B", prediction: "1", started: true },
+    { home: "A", away: "B" },
+  ], from, to);
+  assert.equal(b.legs.length, 1);
+  assert.equal(b.legs[0].eventId, "sr:match:1", "the picked book's id, not the source's");
+  assert.equal(b.legs[0].odds, "1.5", "the price its own book printed");
+  assert.equal(b.legs[0].fromBook, "bet9ja");
+  assert.deepEqual(b.lost.map((x) => x.why), [
+    "SportyBet doesn't list this game", "this game has already started", "a market we don't carry"]);
+});
+
+test("the converter and the merge share one lookup", () => {
+  assert.match(grab("byoConversion"), /eventOnBook\(l,from,to\)/);
+  assert.match(grab("byoBringOver"), /eventOnBook\(l,from,to\)/);
 });

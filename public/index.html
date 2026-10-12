@@ -7842,7 +7842,8 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <section class="byo" id="byo" aria-labelledby="byo-h">
       <h3 id="byo-h">Already have a booking code?</h3>
       <p class="byo-sub">Paste it, or several separated by spaces and we'll merge
-        them into one slip. Then pick what we should do with it.</p>
+        them into one slip, even from different bookmakers. Then pick what we
+        should do with it.</p>
       <div class="byo-row">
         <div class="byo-book" role="group" aria-label="Which bookmaker issued it">
           <!-- Their own wordmarks, not two grey words. The marks and their
@@ -15679,11 +15680,15 @@ function legStarted(l){
  * exactly like a slip that arrived as one code - including the cap, which is
  * what a merge is most likely to hit.
  *
- * Two rules, and both are the bookmaker's, not ours. One selection per game,
+ * One rule, and it is the bookmaker's, not ours: one selection per game,
  * because no betslip will take two outcomes on the same match in one ticket -
  * so a game already on the slip is dropped and counted rather than booked into
- * a certain refusal. And all the codes must be the SAME book: they are read
- * through that book's own reader, and neither will read the other's code.
+ * a certain refusal.
+ * The codes need NOT be the same book. Each is read on the book picked above
+ * first, and only a "no slip behind that code" sends it on to the others -
+ * see byoReadAnyBook. Legs from another book are brought onto the picked one
+ * before the merge (byoBringOver), so everything after the read still sees a
+ * slip from ONE book, which is all it was ever written for.
  * BYO_MAX_CODES is about the wait, nothing else - each code is a round trip to
  * the bookmaker and they are made one at a time, because a burst is the shape
  * of traffic that got this project block-paged once already. */
@@ -15776,13 +15781,58 @@ function byoRead(){
 /* One code, answered rather than thrown: a merge that loses one slip still
    has the others to offer, so a failure here is a line in the result and not
    the end of the read. */
-function byoSlipFetch(code){
-  return fetch("/api/slip?book="+encodeURIComponent(BYO.book)+
+function byoSlipFetch(code,book){
+  return fetch("/api/slip?book="+encodeURIComponent(book||BYO.book)+
                "&code="+encodeURIComponent(code),
                {headers:{Accept:"application/json"}})
     .then(function(r){return r.json().then(function(d){
-      return {ok:!!(r.ok&&d&&d.success),d:d};});})
-    .catch(function(){return {ok:false,d:null};});
+      return {ok:!!(r.ok&&d&&d.success),d:d,status:r.status};});})
+    .catch(function(){return {ok:false,d:null,status:0};});
+}
+/* A CODE FROM ANY BOOK. The picked book is asked first, then the book the last
+   foreign code came from (three friends' codes are usually two books, not
+   five), then the rest. Only "no slip behind that code" moves on: a code that
+   failed for any other reason would fail the same way everywhere, and the
+   reads are rationed (twenty a minute, api/slip.js) - so a 429 stops the
+   search rather than spending the rest of the allowance on it. */
+var BYO_LAST_FOREIGN=null;
+function byoReadAnyBook(code){
+  var order=[BYO.book];
+  if(BYO_LAST_FOREIGN&&BYO_LAST_FOREIGN!==BYO.book) order.push(BYO_LAST_FOREIGN);
+  Object.keys(BOOKS).forEach(function(k){ if(order.indexOf(k)<0) order.push(k); });
+  function at(i){
+    return byoSlipFetch(code,order[i]).then(function(r){
+      if(r.ok){
+        if(order[i]!==BYO.book) BYO_LAST_FOREIGN=order[i];
+        return {ok:true,d:r.d,book:order[i]};
+      }
+      var notHere=r.status===404||!!(r.d&&r.d.notFound);
+      return (notHere&&i+1<order.length)?at(i+1):{ok:false,d:r.d,status:r.status};
+    });
+  }
+  return at(0);
+}
+/* ANOTHER BOOK'S LEGS, BROUGHT ONTO THE PICKED ONE. The converter's own rules
+   (eventOnBook, nearestLine), applied at the read rather than at the end, so
+   the merged slip is one book's slip and every job below works on it as it
+   is. A leg that cannot make the trip is set aside with the converter's own
+   reason - it is not guessed at. The price stays the one its own book
+   printed, and fromBook says which book that was. */
+function byoBringOver(legs,from,to){
+  var kept=[],lost=[];
+  (legs||[]).forEach(function(l){
+    var hit=eventOnBook(l,from,to), code=l.prediction, near=nearestLine(code);
+    var why=legStarted(l)?"this game has already started":
+            !l.prediction?"a market we don't carry":
+            hit.id==null?to.label+" doesn't list this game":
+            (mixReline(code)&&to.key==="sporty")?to.label+" sells this market at 2.5 goals only":null;
+    if(why){ lost.push({leg:l,from:from,why:why}); return; }
+    if(near&&!to.wholeLines) code=near;
+    var c={}; for(var k in l) c[k]=l[k];
+    c.eventId=hit.id; c.prediction=code; c.fromBook=from.key;
+    kept.push(c);
+  });
+  return {legs:kept,lost:lost};
 }
 function byoReadMany(codes,out){
   BYO.legs=null; BYO.booked=null; BYO.dropped=null;
@@ -15799,22 +15849,37 @@ function byoReadMany(codes,out){
   function step(i){
     if(i>=codes.length) return done();
     wait(i);
-    byoSlipFetch(codes[i]).then(function(r){
-      if(r.ok) lists.push(r.d.legs||[]); else bad.push(codes[i]);
+    byoReadAnyBook(codes[i]).then(function(r){
+      if(r.ok) lists.push({legs:r.d.legs||[],book:r.book}); else bad.push(codes[i]);
       step(i+1);
     });
   }
   function done(){
     if(!lists.length){
       out.innerHTML="<div class='code-err'><b>None of those codes could be read.</b>"+
-        "<span>Check them, and check the bookmaker above - "+byoBook().label+
-        " will not read a code from another one.</span></div>";
+        "<span>We tried all five bookmakers. Check the codes and try again.</span></div>";
       return;
     }
-    var m=byoMerge(lists);
-    BYO.legs=m.legs;
-    BYO.merged={read:lists.length,asked:codes.length,clash:m.clash,bad:bad};
-    renderByo();
+    /* The picked book's own feed has to be in before another book's game can
+       be found on it - feedMatch reads it, and an empty feed answers "they do
+       not list this game" about a feed nobody had loaded yet. */
+    var to=byoBook(), from={};
+    lists.forEach(function(x){ if(x.book!==to.key) from[x.book]=1; });
+    var wait=Object.keys(from).length?ensureBookFeed(to.key):Promise.resolve(0);
+    wait.then(function(){
+      var lost=[];
+      var parts=lists.map(function(x){
+        if(x.book===to.key) return x.legs;
+        var b=byoBringOver(x.legs,BOOKS[x.book],to);
+        lost=lost.concat(b.lost);
+        return b.legs;
+      });
+      var m=byoMerge(parts);
+      BYO.legs=m.legs;
+      BYO.merged={read:lists.length,asked:codes.length,clash:m.clash,bad:bad,lost:lost,
+        from:Object.keys(from)};
+      renderByo();
+    });
   }
   step(0);
 }
@@ -16311,7 +16376,9 @@ function renderByo(){
   var mg=BYO.merged;
   out.innerHTML="<div class='byo-res'>"+
     "<div class='byo-head'><b>"+legs.length+" game"+(legs.length===1?"":"s")+
-      " read</b><span>from "+B.label+" code"+(mg?"s ":" ")+esc(BYO.code)+"</span></div>"+
+      " read</b><span>from "+(mg&&mg.from&&mg.from.length
+        ? [B.key].concat(mg.from).map(bookMark).join(" + ")+" codes, all on "+bookMark(B.key)+" now · "
+        : B.label+" code"+(mg?"s ":" "))+esc(BYO.code)+"</span></div>"+
     "<button class='byo-clear' type='button' aria-label='Clear this code'>Clear</button>"+
     "<p class='byo-count'>"+
       (away
@@ -16320,7 +16387,13 @@ function renderByo(){
       (mg&&mg.clash?" · "+mg.clash+" already on another of these slips":"")+
       (mg&&mg.bad.length?" · "+mg.bad.length+" code"+(mg.bad.length===1?"":"s")+
         " would not read ("+esc(mg.bad.join(", "))+")":"")+
+      (mg&&mg.lost&&mg.lost.length?" · "+mg.lost.length+" could not move to "+bookMark(B.key):"")+
     "</p>"+
+    /* NAMED, NOT ONLY COUNTED: a game that stayed behind on its own book is
+       one the reader may want to book there by hand. */
+    (mg&&mg.lost&&mg.lost.length?"<p class='byo-count byo-lost'>"+mg.lost.map(function(x){
+      return esc((x.leg.home||"?")+" v "+(x.leg.away||"?"))+" <span>("+bookMark(x.from.key)+": "+esc(x.why)+")</span>";
+    }).join("<br>")+"</p>":"")+
     /* FOLDED, BECAUSE THE JOBS ARE BELOW IT. Eleven rows of games pushed Edit
        for me off the bottom of a phone, and the list is reference material -
        what matters first is how many survived and what can be done with them.
@@ -16702,18 +16775,26 @@ function mixReline(code){
   return m?(m[1]+"_2.5"):null;
 }
 
+/* One leg's game on the other book: through our fixture when the board pairs
+   it, else straight from that book's feed. Shared by the converter and by a
+   merge of codes from different books, so the two can never disagree about
+   which game a leg is. */
+function eventOnBook(l,from,to){
+  var f=l.prediction?fixtureByLeg(l,from):null;
+  var id=f?f[to.id]:null;
+  /* A GAME WE DO NOT CARRY CAN STILL CROSS. If the board cannot pair it, the
+     other book's own feed is asked directly - see feedMatch. The pick then
+     carries that id rather than a fixture, which bookIdOf already prefers
+     when a fixture has nothing to say. */
+  var direct=(!l.prediction||legStarted(l))?null:((!f||id==null)?feedMatch(l,to):null);
+  if(direct) id=direct.eventId;
+  return {f:f,id:id};
+}
 function byoConversion(){
   var from=byoBook(), to=convTarget(from);
   var picks=[], stuck=[], changed=[], offer=[];
   (BYO.legs||[]).forEach(function(l){
-    var f=l.prediction?fixtureByLeg(l,from):null;
-    var id=f?f[to.id]:null;
-    /* A GAME WE DO NOT CARRY CAN STILL CROSS. If the board cannot pair it, the
-       other book's own feed is asked directly - see feedMatch. The pick then
-       carries that id rather than a fixture, which bookIdOf already prefers
-       when a fixture has nothing to say. */
-    var direct=(!l.prediction||legStarted(l))?null:((!f||id==null)?feedMatch(l,to):null);
-    if(direct) id=direct.eventId;
+    var hit=eventOnBook(l,from,to), f=hit.f, id=hit.id;
     if(legStarted(l)) stuck.push({leg:l,why:"this game has already started"});
     else if(!l.prediction) stuck.push({leg:l,why:"a market we don't carry"});
     else if(id==null&&!f) stuck.push({leg:l,why:to.label+" doesn't list this game"});
