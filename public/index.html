@@ -3489,13 +3489,20 @@ html{interpolate-size:allow-keywords}
      panel they opened ride above the games, which stay below as the reference
      material they already are. */
   .byo{display:flex;flex-direction:column}
-  .byo>.byo-side{order:1}
-  .byo>#byoOut{order:2}
+  /* What was read comes first now - its leg list is folded, so it is a few
+     lines - and the jobs follow it, live (owner, 12 Oct 2026: the count used
+     to land under five cards and nobody saw it). */
+  .byo>#byoOut{order:1}
+  .byo>.byo-side{order:2}
 }
 .byo h3{font-size:14px;font-weight:800;letter-spacing:-.01em;margin:0 0 3px}
 .byo-sub{margin:0 0 11px;font-size:12.5px;font-weight:600;color:var(--faint)}
 .byo-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .byo-hint{margin:7px 0 0;font-size:12px;font-weight:600;color:var(--faint);line-height:1.45}
+.byo-teaser{margin:12px 0 0;font-size:12px;font-weight:600;color:var(--faint)}
+.byo-teaser b{color:var(--soft);font-weight:700}
+.byo-side:not(:has(.byo-job:not([disabled]))) .byo-jobs{display:none}
+.byo-side:has(.byo-job:not([disabled])) .byo-teaser{display:none}
 .byo-book{display:inline-flex;background:var(--card-2);border:1px solid var(--line);
   border-radius:99px;padding:3px;gap:2px;flex:0 0 auto}
 /* THE TOGGLE WEARS THEIR COLOURS.
@@ -7835,8 +7842,9 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <div class="conv-head stage-in stage-in-1">
       <h2 class="stage-in stage-in-2">Converter</h2>
     </div>
-    <p class="conv-sub stage-in stage-in-2">Move a booking code to the other
-      bookmaker, or read what is inside one and cut it into smaller tickets.
+    <p class="conv-sub stage-in stage-in-2">Paste a booking code, or several
+      from different bookmakers, and we'll read them into one slip. Then
+      convert it, edit it or cut it into smaller tickets.
       On your phone? Send any code to our
       <a href="https://t.me/Soccerwizardhqbot" target="_blank" rel="noopener">Wizard's Eye on Telegram</a>.</p>
     <section class="byo" id="byo" aria-labelledby="byo-h">
@@ -7845,7 +7853,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
         them into one slip, even from different bookmakers. Then pick what we
         should do with it.</p>
       <div class="byo-row">
-        <div class="byo-book" role="group" aria-label="Which bookmaker issued it">
+        <div class="byo-book" role="group" aria-label="Your bookmaker">
           <!-- Their own wordmarks, not two grey words. The marks and their
                colours are the ones already shipped elsewhere on this page -
                .sbm and .b9m, sampled from the logo files - so the toggle reads
@@ -7862,8 +7870,8 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
             aria-label="1xBet"><span class="xbm">1X<span class="xbb">BET</span></span></button>
         </div>
         <input id="byoCode" type="text" inputmode="latin" autocomplete="off"
-               spellcheck="false" maxlength="110" placeholder="Booking code, or a few to merge"
-               aria-label="Booking code, or several separated by spaces to merge them">
+               spellcheck="false" maxlength="110" placeholder="A code, or a few from any bookies"
+               aria-label="Booking code, or several from any bookmakers separated by spaces to merge them">
         <button class="byo-go" id="byoGo" type="button">Read it</button>
       </div>
       <!-- MERGING IS NOT A JOB, SO IT IS NOT A CARD. The three cards below act
@@ -7875,8 +7883,9 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
            Not in .byo-sub either: the converter hides that line, which is how
            a placeholder ended up being the only thing on the page that said
            several codes could go in at once. -->
-      <p class="byo-hint">Got more than one code? Paste them all, separated by
-        spaces, and we'll read them into a single slip.</p>
+      <p class="byo-hint">Codes from different bookies? Paste them all,
+        separated by spaces. We find each one's bookie and bring every game onto
+        the one you pick above.</p>
       <!-- THE THREE JOBS, ON SCREEN BEFORE THERE IS A CODE.
            The panel used to be one box that read a code and then grew three
            different offers underneath it, so nobody knew the other two
@@ -7890,6 +7899,12 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
            height across the rows it covers, which dropped the panel into the
            middle of a forty-leg list. -->
       <div class="byo-side">
+      <!-- THE JOBS ARE HIDDEN UNTIL THERE IS A SLIP. Five greyed-out cards read
+           as a broken page and pushed everything below them down; the owner
+           asked for them gone (12 Oct 2026). This one line still says what the
+           page can do, and the cards appear, live, the moment a code is read. -->
+      <p class="byo-teaser">Then: <b>Convert</b> · <b>Edit</b> · <b>Split</b> ·
+        <b>Trim</b> · <b>Change markets</b></p>
       <div class="byo-jobs" id="byoJobs" role="group" aria-label="What to do with the code">
         <button class="byo-job" type="button" data-job="edit" disabled>
           <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"/></svg></span>
@@ -16478,6 +16493,10 @@ function paintJobs(usable,B){
       b.addEventListener("click",function(){
         if(b.disabled) return;
         BYO.job=(BYO.job===b.dataset.job)?null:b.dataset.job;
+        /* The games sit ABOVE the jobs on a phone now, so an opened game list
+           would push the panel this opens off the screen. Fold it first. */
+        var fold=document.querySelector("#byoOut .byo-legs-fold");
+        if(fold&&BYO.job) fold.open=false;
         paintJobs(usable,B);
         renderStage(usable,B);
       });

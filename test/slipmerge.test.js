@@ -85,7 +85,7 @@ test("the input can hold more than one code", () => {
      worked. */
   const inp = src.slice(src.indexOf('<input id="byoCode"'), src.indexOf('id="byoGo"'));
   assert.match(inp, /maxlength="110"/);
-  assert.match(inp, /placeholder="Booking code, or a few to merge"/);
+  assert.match(inp, /placeholder="A code, or a few from any bookies"/);
 });
 
 /* CODES FROM DIFFERENT BOOKS. Each code is read on the picked book first and

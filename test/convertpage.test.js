@@ -325,7 +325,8 @@ test("the jobs and their panel ride beside the games, not under forty of them", 
   assert.match(index, /\.byo>\.byo-side\{grid-column:2;position:sticky/);
   assert.match(index, /grid-auto-flow:row dense/,
     "without dense the games start a row below the side column");
-  /* Phone: no second column, so the panel rides above the games instead. */
-  assert.match(index, /\.byo>\.byo-side\{order:1\}/);
-  assert.match(index, /\.byo>#byoOut\{order:2\}/);
+  /* Phone (owner, 12 Oct 2026): what was read comes first, the jobs follow it. */
+  assert.ok(index.includes(".byo>#byoOut{order:1}"));
+  assert.ok(index.includes(".byo>.byo-side{order:2}"));
+  assert.ok(index.includes("if(fold&&BYO.job) fold.open=false;"), "opening a job must fold the game list above it");
 });
