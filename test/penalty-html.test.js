@@ -196,7 +196,7 @@ test("the scoreboard names fit a phone", () => {
 
 test("Play the computer is the first button on the home screen", () => {
   const home = grabFn("home");
-  const i = home.indexOf('"Play the computer"'), j = home.indexOf("Face today's Wizard Keeper"), k = home.indexOf('"Challenge a friend"');
+  const i = home.indexOf('"Play the computer"'), j = home.indexOf('"Wizard Keeper"'), k = home.indexOf('"Challenge a friend"');
   assert.ok(i > 0 && i < j && i < k, "first, above the fold on a phone");
 });
 
@@ -608,7 +608,10 @@ test("release step 2 (owner, 9 Oct 2026): Play Penalty in the phone bar with a j
 
 test("owner, 9 Oct 2026: a way back to the site on every screen; the challenge result counts what the board counts", () => {
   assert.match(html, /<a id="exit" href="\/" aria-label="Soccerwizard home"><img src="\/penalty\/wiz-64\.webp\?v=/, "the way out shows where it goes");
-  assert.match(html, /"Soccerwizard home"\);site\.type="button"/);
+  /* owner, 13 Oct 2026: the start screen shows a labelled Home button up top, so the
+     footer word went. */
+  assert.match(html, /<span>Home<\/span><\/a>/);
+  assert.match(html, /#app:has\(#sheet\.on\) #exit span\{display:inline\}/);
   /* owner, 9 Oct 2026: duels replace blind kicks - a challenge opens with one
      sealed shot, never a pretend match against the computer */
   assert.match(grabFn("challenger"), /api\("POST","duel_new",\{device:PW\.DEV,name:name,/);
@@ -620,9 +623,11 @@ test("owner, 9 Oct 2026: every end-of-game sheet has a way back to the game menu
   assert.match(html, /F\.sheet\(nodes,true\);/, "the menu itself does not offer itself");
 });
 
-test("the home menu fits a short phone; the logo button steps aside while a sheet is open", () => {
-  assert.match(html, /@media\(max-height:700px\)\{\.pick button img\{height:60px\}\.btn\{height:44px\}/);
-  assert.match(html, /#app:has\(#sheet\.on\) #exit\{display:none\}/);
+test("the home menu fits a short phone with no scroll; Home stays up top while a sheet is open", () => {
+  /* owner, 13 Oct 2026: "i hate to scroll on that beginning page", "there is no home button". */
+  assert.match(html, /@media\(max-height:700px\)\{\.pick button img\{height:66px\}\.btn\{height:42px;margin-top:6px\}/);
+  assert.match(html, /@media\(max-height:620px\)\{\.pick button img\{height:52px\}/);
+  assert.doesNotMatch(html, /#app:has\(#sheet\.on\) #exit\{display:none\}/, "Home must not hide on the start screen");
 });
 
 test("batch 1 (owner, 9 Oct 2026): Again first, who to pass next, a new best, near misses play slow, challenge back", () => {

@@ -101,7 +101,11 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .score b{font:italic 800 18px/1 "Roboto Condensed",sans-serif;min-width:14px;text-align:center}
 .score .who{font-size:12px;color:var(--soft);max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #exit{position:absolute;left:12px;top:calc(86px + env(safe-area-inset-top));z-index:10;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--line);background:#0d0d0fcc;color:#F2F1F0}
-#app:has(#sheet.on) #exit{display:none}
+/* HOME ON THE START SCREEN (owner, 13 Oct 2026: "there is no home button in the start
+   page"). It used to hide under every sheet; now it stays, and says what it is. */
+#exit span{display:none;font:800 13px "Plus Jakarta Sans",system-ui,sans-serif}
+#app:has(#sheet.on) #exit{width:auto;text-decoration:none;padding:0 13px 0 5px;gap:6px;display:flex;align-items:center;border-radius:99px;border-color:var(--gold)}
+#app:has(#sheet.on) #exit span{display:inline}
 #exit:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 #tag{position:absolute;top:calc(86px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);padding:8px 18px 7px;border-radius:99px;background:#0d0d0fe0;border:1px solid var(--line);font:italic 800 18px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;color:#F2F1F0;white-space:nowrap;z-index:6;pointer-events:none}
 #tag:empty{display:none}
@@ -147,8 +151,10 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #spellbox span{font:italic 800 11px/1 "Roboto Condensed",sans-serif;letter-spacing:.14em;color:var(--gold)}
 #spellbox b{position:relative;width:64px;height:7px;border-radius:99px;background:#ffffff1a;overflow:hidden}
 #spellbox i{position:absolute;inset:0;background:linear-gradient(90deg,var(--red),var(--gold));transform-origin:0 50%;transform:scaleX(0);transition:transform .4s cubic-bezier(.2,.9,.25,1)}
-#snd{position:absolute;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:7;width:42px;height:42px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--line);background:#0d0d0fcc;color:#F2F1F0;cursor:pointer}
-#snd[aria-pressed="false"]{color:var(--soft)}
+/* Mute where a thumb finds it (owner, 13 Oct 2026: "put a mute on the game page" - the
+   dark grey one was not seen). Gold ring and a bright icon; red when muted. */
+#snd{position:absolute;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:7;width:48px;height:48px;display:grid;place-items:center;border-radius:50%;border:2px solid var(--gold);background:#0d0d0fe6;color:#F2F1F0;cursor:pointer;box-shadow:0 4px 14px #0008}
+#snd[aria-pressed="false"]{color:#F2F1F0;border-color:var(--red)}
 #snd:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 /* the legendary orb: charge ring when ready; armed = gold core, racing ring, arcs, one shockwave */
 #cast{position:absolute;right:16px;bottom:calc(18% + env(safe-area-inset-bottom));z-index:7;width:64px;height:64px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;isolation:isolate;cursor:pointer;color:#F2B84B;background:radial-gradient(circle at 35% 30%,#4a3410,#121114 68%)}
@@ -240,9 +246,24 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:0 18px;font:inherit;font-size:16px;margin-bottom:4px}
 .pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 6px}
 .pick button{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px 9px;border-radius:16px;border:1px solid var(--line);background:var(--card2);color:var(--soft);font:italic 800 14px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;cursor:pointer;transition:transform .15s,border-color .15s}
-.pick button img{height:86px;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
-.pick button.on{border-color:var(--red);color:var(--text);box-shadow:0 0 0 1px var(--red)}
-@media(max-height:700px){.pick button img{height:60px}.btn{height:44px}#sheet h2{font-size:23px}}
+.pick button img{position:relative;z-index:1;height:96px;filter:drop-shadow(0 6px 10px #000b) grayscale(.55) brightness(.75);transition:transform .25s cubic-bezier(.3,1.6,.5,1),filter .25s}
+.pick button span{position:relative;z-index:1;font-size:17px;letter-spacing:.06em}
+.pick button{overflow:hidden;isolation:isolate}
+/* The fight-card look (owner: "a crazier selection picture"): each fighter in their own
+   light - fire for Ten, arcane gold and violet for The Wizard - and the picked one
+   lit up, roaring, with a spinning aura round the card. */
+.pick button::before{content:"";position:absolute;inset:0;z-index:0;opacity:.35;transition:opacity .25s}
+.pick .c-ten::before{background:radial-gradient(120% 80% at 50% 105%,#ff7a1a 0%,#E63946 38%,#3a0a10 70%,transparent 85%)}
+.pick .c-wizard::before{background:radial-gradient(120% 80% at 50% 105%,#F2B84B 0%,#8a3cff 42%,#1a0b33 72%,transparent 86%)}
+.pick button.on::before{opacity:1;animation:pwflare 1.6s ease-in-out infinite alternate}
+.pick button.on img{filter:drop-shadow(0 0 14px #fff6) drop-shadow(0 8px 12px #000c)}
+.pick button.on{border-color:transparent;color:#fff;box-shadow:0 0 0 2px var(--gold),0 0 26px #F2B84B66}
+.pick button.on::after{content:"";position:absolute;inset:-40%;z-index:-1;background:conic-gradient(from 0deg,transparent 0 70%,#F2B84B 80%,transparent 90%);animation:pwspin 2.4s linear infinite}
+@keyframes pwflare{from{filter:brightness(.9) saturate(1)}to{filter:brightness(1.25) saturate(1.3)}}
+@keyframes pwspin{to{transform:rotate(1turn)}}
+@media (prefers-reduced-motion:reduce){.pick button.on::before,.pick button.on::after{animation:none}}
+@media(max-height:700px){.pick button img{height:66px}.btn{height:42px;margin-top:6px}#sheet h2{font-size:23px}}
+@media(max-height:620px){.pick button img{height:52px}#sheet p.credit{display:none}}
 .pick button.on img{transform:scale(1.08) translateY(-2px)}
 .tips{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 .tips:empty{display:none}
@@ -305,7 +326,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
   <div id="tag"></div><div id="combo"></div>
   <div id="promo" aria-hidden="true"></div>
   <div id="vs" aria-hidden="true"><div class="vl"><i></i><b></b><small></small></div><div class="vx">VS<span class="vm"></span><em class="vh"></em></div><div class="vr"><i></i><b></b><small></small></div><u class="vt">TAP TO KICK OFF</u></div>
-  <a id="exit" href="/" aria-label="Soccerwizard home"><img src="/penalty/wiz-64.webp?v=12" alt="" width="26" height="26"></a>
+  <a id="exit" href="/" aria-label="Soccerwizard home"><img src="/penalty/wiz-64.webp?v=12" alt="" width="26" height="26"><span>Home</span></a>
   <div id="hint"></div>
   <div id="coach" role="status"><img src="/penalty/kw-taunt.webp?v=12" alt=""><p></p></div><i id="ghost"></i>
   <div id="pts"></div>
@@ -515,7 +536,7 @@ var K={x:0,y:0.85,rot:0,img:"k-set.webp",flip:1,bob:0,sq:1};       // keeper, on
 var S={x:-0.72,z:-1.25,img:"s-stand.webp"};                       // shooter, behind the ball
 var B={x:0,y:0.11,z:0,rot:0,vis:1,alpha:1,fly:false};                      // ball
 /* the art version: bump when sprites are replaced, so no browser keeps the old ones */
-var SPV="12";
+var SPV="13";
 function setImg(el,f){if(el.getAttribute("data-f")!==f){el.setAttribute("data-f",f);el.src="/penalty/"+f+"?v="+SPV;}}
 function place(){
   var k=$("keeper"),kp=P(K.x,K.y,GOAL.z),kh=KH[file(K.img)]*kp.s,kim=IMG[file(K.img)],ar=kim&&kim.naturalWidth?kim.naturalWidth/kim.naturalHeight:1;
@@ -1061,8 +1082,8 @@ function shareSheet(text,url,where){
 
 /* Ten or The Wizard: who you play as. The opponent is the other one. */
 function charPicker(){var box=el("div","pick");
-  [["ten","TEN","/penalty/k-set.webp?v="+PWV()],["wizard","THE WIZARD","/penalty/kw-set.webp?v="+PWV()]].forEach(function(c){
-    var b=el("button",PW.char===c[0]?"on":"");b.type="button";var i=el("img");i.src=c[2];i.alt="";b.appendChild(i);b.appendChild(el("span",null,c[1]));
+  [["ten","TEN","/penalty/k-roar.webp?v="+PWV()],["wizard","THE WIZARD","/penalty/kw-roar.webp?v="+PWV()]].forEach(function(c){
+    var b=el("button",(PW.char===c[0]?"on ":"")+"c-"+c[0]);b.type="button";var i=el("img");i.src=c[2];i.alt="";b.appendChild(i);b.appendChild(el("span",null,c[1]));
     b.addEventListener("click",function(){PW.setChar(c[0]);PW.fx.buzz(10);box.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b);});});box.appendChild(b);});
   return box;}
 /* THE FUNNEL (owner: "our selling point is picking games for people and
@@ -1301,20 +1322,19 @@ function daily(){var outs=[],day=null,i=0;PW.setSolo(false);PW.newBoard("The Wiz
 window.PWHome=function(){home();};
 function home(){
   var lv=PW.levelOf(PW.xp),nx=[3,5,8].filter(function(x){return x>lv;})[0],best=0;try{best=+localStorage.getItem("pw.best")||0;}catch(e){}
+  /* One screen, no scroll (owner, 13 Oct 2026: "i hate to scroll on that beginning page"). */
   var nodes=[F.el("h2",null,"Play Penalty"),
-    F.el("p","note","Level "+lv+" · "+PW.xp.toLocaleString("en")+" pts"),
-    F.el("p",null,PW.trailFor(lv).name.charAt(0).toUpperCase()+PW.trailFor(lv).name.slice(1)+" trail"+(nx?", a new one at level "+nx:"")+"."+(best?" Best run: "+best+".":"")+" No money involved. Pick your player."),F.charPicker(),
+    F.el("p","note","Level "+lv+" · "+PW.xp.toLocaleString("en")+" pts"+(nx?" · new trail at level "+nx:"")+(best?" · best run "+best:"")),
+    F.charPicker(),
     /* The one that always works comes first (owner: "there is no play
        against computer" - it sat below the fold of the sheet on a phone). */
     F.btn("Play the computer","red",function(){F.closeSheet();F.practice();}),
     F.row(F.btn("Ranked","ghost",function(){F.closeSheet();F.survival();}),F.btn("Leaderboard","ghost",function(){F.closeSheet();F.leaderboard("league");})),
-    F.btn("Face today's Wizard Keeper","ghost",function(){F.closeSheet();daily();}),
-    F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();})];
+    F.row(F.btn("Wizard Keeper","ghost",function(){F.closeSheet();daily();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}))];
   var foot=F.el("div","sfoot"),how=F.el("button",null,"How to play"),mute=F.el("button",null,PW.muted?"Sound off":"Sound on");how.type=mute.type="button";
   how.addEventListener("click",function(){PW.coachReset();F.closeSheet();F.practice();});
   mute.addEventListener("click",function(){PW.setMuted(!PW.muted);mute.textContent=PW.muted?"Sound off":"Sound on";});
-  var site=F.el("button",null,"Soccerwizard home");site.type="button";site.addEventListener("click",function(){location.href="/";});
-  foot.appendChild(how);foot.appendChild(mute);foot.appendChild(site);
+  foot.appendChild(how);foot.appendChild(mute);
   var credit=F.el("p","credit");credit.innerHTML='Crowd sounds by Gregor Quendel, <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener" target="_blank">CC BY 4.0</a>';
   nodes.push(foot,credit);
   F.sheet(nodes,true);
