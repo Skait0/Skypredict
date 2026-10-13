@@ -637,7 +637,7 @@ test("batch 1 (owner, 9 Oct 2026): Again first, who to pass next, a new best, ne
   assert.match(sv, /more to pass "\+above\.name/);
   assert.match(sv, /localStorage\.setItem\("pw\.rbest"/);
   const pk = grabFn("playKick");
-  assert.match(pk, /var near=k\.dive!=null&&\(k\.outcome==="goal"&&col\(k\.dive\)===col\(k\.shot\.spot\)&&high\(k\.dive\)!==high\(k\.shot\.spot\)\|\|k\.outcome==="save"&&k\.dive!==k\.shot\.spot\);/);
+  assert.match(pk, /near=k\.dive!=null&&\(k\.outcome==="goal"&&col\(k\.dive\)===col\(k\.shot\.spot\)&&high\(k\.dive\)!==high\(k\.shot\.spot\)\|\|k\.outcome==="save"&&k\.dive!==k\.shot\.spot\);/);
   assert.match(pk, /"BY INCHES"/);
   assert.match(pk, /near\?"FINGERTIPS":null/);
 });
@@ -742,7 +742,9 @@ test("the perfect strike: flick as the ring closes, and the power lands in the s
 
 test("kicker tells only against the computer, true two times in three", () => {
   assert.match(html, /tc=cs\.spot%3;if\(Math\.random\(\)>0\.65\)/);
-  assert.match(html, /return PW\.pickDive\(tc\)/);
+  assert.match(html, /return PW\.saveLive\(\{spot:cs\.spot,kind:R\.strike\(cs\.spot,cs\.power\)\.kind,power:cs\.power\},tc\)/, "a computer kick is saved live");
+  assert.match(html, /if\(o==="save"&&t\+\(col\(dv\)===1\?0\.12:0\.26\)>f\.T\)o="goal";/, "a dive that cannot get there in time is a goal");
+  assert.match(html, /if\(k\.live\)k\.outcome=judge\(k\.shot,NaN\);/, "until you dive, the call comes from the strike alone");
   assert.match(html, /return PW\.pickDive\(\)\.then\(function\(dv\)\{return post\(\{dive:dv\}\)/, "a duel has no tell: the shot is sealed");
 });
 

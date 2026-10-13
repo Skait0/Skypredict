@@ -95,17 +95,20 @@
     return m<1?"just now":m<60?m+" min ago":m<1440?Math.round(m/60)+" h ago":(Math.round(m/1440)===1?"1 day ago":Math.round(m/1440)+" days ago");
   }
   function num(x){ return Number(x||0).toLocaleString("en-US"); }
+  /* Each bookmaker in its own wordmark and colours, as on the site (owner, 13 Oct 2026). */
+  function markOf(k){ var m=null; try{ m=root.swBookMarks?root.swBookMarks():null; }catch(e){}
+    return "<span class='swa-bk'>"+(m&&m[k]?m[k]:esc(BOOK_NAME[k]||k))+"</span>"; }
   function msg(t){ return "<div class='swa-set'><span class='swa-st'><small>"+esc(t)+"</small></span></div>"; }
   function switchesHtml(fl){
     var off=(fl&&fl.booksOff)||[];
     return Object.keys(BOOK_NAME).map(function(k){ var on=off.indexOf(k)<0;
-      return "<div class='swa-set'><span class='swa-st'><b>"+esc(BOOK_NAME[k])+"</b><small>"+(on?"Booking on":"Paused. Readers are told to pick another bookmaker.")+"</small></span>"+
+      return "<div class='swa-set'><span class='swa-st'><b>"+markOf(k)+"</b><small>"+(on?"Booking on":"Paused. Readers are told to pick another bookmaker.")+"</small></span>"+
         "<button class='swa-sw' type='button' role='switch' data-book-sw='"+k+"' aria-checked='"+on+"' aria-label='"+esc(BOOK_NAME[k])+" booking'></button></div>"; }).join("");
   }
   function statusHtml(st,board){
     var by={}; ((st&&st.books)||[]).forEach(function(b){ by[b.book]=b; });
     var rows=Object.keys(BOOK_NAME).map(function(k){ var b=by[k];
-      return "<div class='swa-set'><span class='swa-st'><b>"+esc(BOOK_NAME[k])+"</b><small>"+
+      return "<div class='swa-set'><span class='swa-st'><b>"+markOf(k)+"</b><small>"+
         (b?"Last code "+ago(b.last)+" · "+num(b.lastHour)+" in the last hour · "+num(b.today)+" today":"No codes in the last 7 days")+"</small></span></div>"; });
     if(board&&board.generatedAt) rows.push("<div class='swa-set'><span class='swa-st'><b>Predictions</b><small>Built "+ago(board.generatedAt)+"</small></span></div>");
     return rows.join("");
@@ -138,17 +141,18 @@
      is remembered on this device. The two lists that grow carry their count on the
      tab, so a closed one still says what it holds. */
   var ADMIN_TABS=[["swaTSw","Switches"],["swaTStatus","Status"],["swaTNums","Numbers"],
-    ["swaTLk","Readers"],["swaTGrants","Family & friends"],["swaTHits","Slips"],["swaTLog","Log"]];
+    ["swaTLk","Find a reader"],["swaTGrants","Family & friends"],["swaTHits","Slips"],["swaTLog","Log"]];
   function adminHtml(list){
     var body={
       swaTSw:"<div class='swa-card' id='swaSw'>"+msg("Loading")+"</div>"+
         "<label class='swa-lbl' for='swaNotice'>Notice for every reader</label>"+
-        "<input class='swa-in' id='swaNotice' type='text' maxlength='200' autocomplete='off' placeholder='SportyBet codes are slow tonight. Try Bet9ja.'>"+
+        "<textarea class='swa-in swa-ta' id='swaNotice' rows='2' maxlength='200' autocomplete='off' placeholder='SportyBet codes are slow tonight. Try Bet9ja.'></textarea>"+
         "<button class='swa-outbtn swa-go' id='swaNoticeGo' type='button'>Show notice</button>"+
         "<button class='swa-outbtn' id='swaNoticeOff' type='button'>Clear notice</button>",
       swaTStatus:"<div class='swa-card' id='swaStatus'>"+msg("Loading")+"</div>",
       swaTNums:"<div class='swa-card' id='swaNums'>"+msg("Loading")+"</div>",
-      swaTLk:"<label class='swa-lbl' for='swaLkEmail'>Email</label>"+
+      swaTLk:"<p class='swa-note'>Type a reader's email to see their plan, devices and booked codes. From there you can sign them out everywhere or give them Family &amp; friends.</p>"+
+        "<label class='swa-lbl' for='swaLkEmail'>Reader's email</label>"+
         "<input class='swa-in' id='swaLkEmail' type='email' autocomplete='off' autocapitalize='none' spellcheck='false'>"+
         "<button class='swa-outbtn swa-go' id='swaLkGo' type='button'>Look up</button>"+
         "<div class='swa-card' id='swaLk' hidden></div>",
@@ -198,6 +202,7 @@
         /* After layout: run at once, the sheet is still sliding in and the tab ends half off the edge. */
         if(on) setTimeout(function(){ try{ b.scrollIntoView({block:"nearest",inline:"center"}); }catch(e){} },60); });
       v.querySelectorAll(".swa-panel").forEach(function(p){ p.hidden=p.id!==id; });
+      var m=v.querySelector("#swaMsg"); if(m) m.textContent="";
       try{ localStorage.setItem("sw.admintab",id); }catch(e){}
     }
     v.querySelectorAll(".swa-tab").forEach(function(b){
@@ -227,12 +232,13 @@
       var when=""; try{ when=new Date(h.settled_at||h.created_at).toLocaleDateString(undefined,{day:"numeric",month:"short"}); }catch(e){}
       var legs=(h.legs||[]).map(function(l){ return l.name; });
       var games=(h.leg_count||legs.length)+" game"+((h.leg_count||legs.length)===1?"":"s");
-      return "<div class='swa-set'><span class='swa-st'><b>"+esc(h.code)+" · "+esc(BOOK_NAME[h.book]||h.book)+
+      return "<div class='swa-set'><span class='swa-st'><b>"+esc(h.code)+" · "+markOf(h.book)+
         (h.total_odds?" · <span class='swa-gold'>×"+esc(Number(h.total_odds).toLocaleString("en-US",{maximumFractionDigits:2}))+"</span>":"")+"</b>"+
         "<small>"+esc(games+" · "+when+(h.who?" · "+h.who:""))+"</small>"+
         "<small>"+esc(srcWords(h.src))+"</small>"+
-        (legs.length?"<small>"+esc(legs.slice(0,3).join(" · ")+(legs.length>3?" and "+(legs.length-3)+" more":""))+"</small>":"")+"</span>"+
-        (h.status==="check"?"<button type='button' class='swa-pillbtn' data-chk='"+esc(String(h.id))+"' aria-expanded='false'>Check</button>":"")+
+        (legs.length?"<small>"+esc(legs.slice(0,3).join(" · "))+"</small>"+
+          (legs.length>3?"<details class='swa-more'><summary>Show "+(legs.length-3)+" more</summary><small>"+esc(legs.slice(3).join(" · "))+"</small></details>":""):"")+"</span>"+
+        (h.status==="check"?"<button type='button' class='swa-pillbtn' data-chk='"+esc(String(h.id))+"' data-code='"+esc(h.code)+"' aria-expanded='false'>Check</button>":"")+
         (h.share?"<button type='button' class='swa-pillbtn' data-share='"+esc(JSON.stringify(h.share))+"'>Share</button>":"")+"</div>"+
         (h.status==="check"?checkHtml(h):""); }).join("");
   }
@@ -298,7 +304,7 @@
     ".swa-won{color:var(--green-ink)}.swa-lost{color:var(--red-ink)}.swa-open{color:var(--amber)}"+
     ".swa-chkbox{flex-wrap:wrap;gap:8px}.swa-chkbox .swa-st{flex:1 1 100%}.swa-chkbox small{display:block;margin-top:6px}.swa-chkbox small b{display:block;color:var(--text);font-size:12.5px;margin-bottom:2px}.swa-set .swa-pillbtn+.swa-pillbtn{margin-left:6px}"+
     ".swa-h{font-size:13px;font-weight:700;color:var(--soft);margin:18px 2px 8px}.swa-h small{font-weight:600;color:var(--faint);margin-left:6px}"+
-    ".swa-lbl{display:block;font-size:12px;font-weight:700;color:var(--faint);margin:0 0 5px}"+
+    ".swa-lbl{display:block;font-size:12px;font-weight:700;color:var(--faint);margin:0 0 5px}.swa-ta{height:auto;min-height:62px;padding:9px 12px;line-height:1.4;resize:vertical}.swa-more summary{cursor:pointer;font-size:12px;font-weight:800;color:var(--accent);list-style:none;margin-top:2px}.swa-more summary::-webkit-details-marker{display:none}.swa-bk{font-weight:800}"+
     ".swa-in{width:100%;height:42px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:15px;font-weight:700;padding:0 12px;box-sizing:border-box}"+
     ".swa-pick{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.swa-pick.swa-lock{grid-template-columns:repeat(5,1fr);gap:12px;padding:0 36px 0 0}"+
     ".swa-pick button{aspect-ratio:1;border-radius:50%;border:1.5px solid transparent;background:var(--card-2);padding:0;overflow:hidden;position:relative;cursor:pointer}"+
@@ -552,7 +558,7 @@
         }).catch(function(e){ if(!e||e.name!=="AbortError") fallback(); });
       }; });
       box.querySelectorAll("[data-chk]").forEach(function(b){ b.onclick=function(){
-        var id=b.getAttribute("data-chk"), panel=box.querySelector("[data-chkbox='"+id+"']"); if(!panel) return;
+        var id=b.getAttribute("data-chk"), code=b.getAttribute("data-code")||"The slip", panel=box.querySelector("[data-chkbox='"+id+"']"); if(!panel) return;
         panel.hidden=!panel.hidden; b.setAttribute("aria-expanded",String(!panel.hidden));
         /* EVERY LEG, IN WORDS (api/account.js slipdetail, lib/slipdetail.js): the pick,
            the odds, the final score, and won / lost / what to check by hand. */
@@ -575,7 +581,7 @@
           var to=s.getAttribute("data-settle");
           panel.querySelectorAll("button").forEach(function(x){ x.disabled=true; });
           a.req("POST","/api/account/settle",{id:id,status:to},function(c2,j2){
-            if(c2===200){ say(to==="landed"?"Marked as landed. It now counts, and you can share it.":"Marked as lost."); hitsLoad(); }
+            if(c2===200){ say(to==="landed"?code+" marked as landed. It now counts as a win, and you can share it.":code+" marked as lost. It stays off the win list."); hitsLoad(); }
             else { panel.querySelectorAll("button").forEach(function(x){ x.disabled=false; });
               if(c2===409) say("Already settled. Refreshing."), hitsLoad(); else fail(c2,j2); } }); }; });
       }; });
