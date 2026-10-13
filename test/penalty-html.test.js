@@ -708,5 +708,5 @@ test("the game menus carry no template tells: no pills, no spinning aura, no ita
   assert.ok(!/border-radius:999px/.test(html), "pill buttons");
   assert.ok(!/pwspin|pwflare/.test(html), "spinning aura round the picked card");
   assert.ok(!/Roboto\+Condensed/.test(html), "the site's display face is Saira Condensed");
-  assert.match(html, /#sheet h2\{[^}]*font:800 27px\/1\.05 "Saira Condensed"[^}]*text-transform:uppercase\}/);
+  assert.match(html, /#sheet h2\{[^}]*font:800 24px\/1\.05 "Saira Condensed"[^}]*text-transform:uppercase\}/);
 });

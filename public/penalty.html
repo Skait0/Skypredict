@@ -187,15 +187,15 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #app.legend #keeper{filter:grayscale(.75) brightness(.85) drop-shadow(0 0 8px #8fd8ff)}
 #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:8}
 /* bottom sheet (menus, results) */
-#sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .45s cubic-bezier(.2,.9,.25,1);z-index:9;max-height:92%;overflow:auto;touch-action:pan-y;overscroll-behavior:contain;box-shadow:0 -20px 50px #000a}
+#sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:14px 16px calc(14px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .45s cubic-bezier(.2,.9,.25,1);z-index:9;max-height:calc(100% - 132px - env(safe-area-inset-top));overflow:auto;touch-action:pan-y;overscroll-behavior:contain;box-shadow:0 -20px 50px #000a}
 #sheet.on{transform:none}
-.smenu{float:right;margin:0 0 4px 12px;height:32px;padding:0 14px;border-radius:6px;border:1px solid var(--line);background:none;color:var(--soft);font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}
+.smenu{background:none;border:0;padding:10px 4px;color:var(--soft);font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line)}
 .smenu:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 #sheet h2.best{color:var(--gold)}
 /* THE MATCH REPORT (EA FC's full-time card): three numbers you earned */
-.rep{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 10px}
-.rep div{padding:9px 6px 8px;border:1px solid var(--line);border-radius:10px;background:var(--card2);text-align:center}
-.rep b{display:block;font:800 26px/1 "Saira Condensed",sans-serif;color:var(--gold)}.rep span{display:block;margin-top:4px;font-size:11px;letter-spacing:.08em;color:var(--soft);text-transform:uppercase}
+.rep{display:flex;justify-content:center;margin:2px 0 8px}
+.rep div{display:flex;align-items:baseline;gap:4px;padding:0 10px;white-space:nowrap}@media(max-width:340px){.rep div{padding:0 6px}.rep span{font-size:9.5px}}.rep div+div{border-left:1px solid var(--line)}
+.rep b{font:800 20px/1 "Saira Condensed",sans-serif;color:var(--gold)}.rep span{font-size:10.5px;letter-spacing:.08em;color:var(--soft);text-transform:uppercase}
 #sheet p.dgrid{margin:4px 0 8px;font-size:30px;letter-spacing:4px;color:var(--text)}
 /* DIVISION CRESTS (owner, 9 Oct 2026 - batch 2): a shield per division */
 .crest{display:inline-block;vertical-align:middle;flex:none}.crest svg{display:block;width:100%;height:100%}
@@ -227,13 +227,13 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .sboard{position:relative}
 .sboard:before{content:"PENALTIES";position:absolute;top:-8px;left:12px;padding:2px 8px;border-radius:3px;background:#E63946;color:#fff;font:800 9px/1.3 "Plus Jakarta Sans",system-ui,sans-serif;letter-spacing:.16em}
 .srow b{background:#F2F1F0;color:#0d0d0f;border-radius:4px;padding:3px 0;text-align:center}
-#sheet h2{margin:2px 0 6px;font:800 27px/1.05 "Saira Condensed",sans-serif;letter-spacing:.005em;text-transform:uppercase}
+#sheet h2{margin:2px 0 6px;font:800 24px/1.05 "Saira Condensed",sans-serif;letter-spacing:.005em;text-transform:uppercase}
 #sheet p{margin:0 0 12px;color:var(--soft);font-size:14px}
 #sheet p.credit{margin:4px 0 0;font-size:11px;opacity:.6;text-align:center}#sheet p.credit a{color:inherit}
 #sheet .note{color:var(--gold);font-weight:800}
 #sheet .note span+span:before{content:"";display:inline-block;width:1px;height:.9em;margin:0 8px;vertical-align:-1px;background:var(--line)}
 /* "Home" under a result (owner, 11 Oct 2026): a plain word, back to the site. */
-.shome{display:block;margin:14px auto 2px;padding:8px 14px;text-align:center;color:inherit;opacity:.8;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.shome{padding:10px 4px;color:var(--soft);font-size:13px;font-weight:800;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line)}
 .shome:hover{opacity:1}
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;margin-top:8px;border:0;border-radius:8px;font:800 15px "Plus Jakarta Sans",system-ui;cursor:pointer;text-decoration:none;transition:transform .12s}
 .btn:active{transform:scale(.97)}
@@ -267,19 +267,21 @@ input.name{width:100%;height:50px;border-radius:8px;border:1px solid var(--line)
 .pick button.on::before{opacity:1}
 .pick button.on img{filter:drop-shadow(0 8px 12px #000c)}
 .pick button.on{border:2px solid var(--gold);padding:9px 5px 8px;color:#fff}
-@media(max-height:700px){.pick button img{height:66px}.btn{height:42px;margin-top:6px}#sheet h2{font-size:23px}}
+#sheet .btn{height:44px;margin-top:6px}
+@media(max-height:700px){.pick button img{height:66px}.btn{height:42px;margin-top:6px}#sheet h2{font-size:22px}}
 @media(max-height:620px){.pick button img{height:52px}#sheet p.credit{display:none}}
+@media(max-height:540px){#sheet{padding-top:10px;padding-bottom:calc(8px + env(safe-area-inset-bottom))}#sheet .btn{height:38px;margin-top:5px}#sheet h2{font-size:20px}.tips p{display:none}.sfoot{margin-top:0}}
 .pick button.on img{transform:scale(1.08) translateY(-2px)}
-.tips{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.tips{margin-top:10px;padding-top:8px;border-top:1px solid var(--line)}
 .tips:empty{display:none}
 .tips .odds{color:var(--gold);font-weight:800;font-variant-numeric:tabular-nums}
-.tips h3{margin:0 0 1px;font:800 16px/1.25 "Plus Jakarta Sans",system-ui,sans-serif;color:var(--text)}
-.tips>a.btn+h3,.tips>a.btn+p{margin-top:12px}
-.codes{margin:4px 0 8px}
-.crow{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;padding:5px 0}
-.crow+.crow{border-top:1px solid var(--line)}
-.crow>span{font-size:15px}.crow code{font:800 16px/1 "Plus Jakarta Sans",system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.04em;color:var(--gold)}
-.btn.sm{height:28px;margin:0;padding:0 13px;width:auto;font-size:12px}.tips p{margin:0 0 4px!important;font-size:13px!important}.tips .btn.red{height:46px;margin-top:8px}
+.tips h3{margin:8px 0 6px;font:800 14px/1.25 "Plus Jakarta Sans",system-ui,sans-serif;color:var(--text)}.tips h3 small{font-weight:600;color:var(--soft);font-size:12.5px}
+
+.codes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 0 6px}
+.crow{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card2);color:inherit;font:inherit;text-align:left;cursor:pointer}.crow.done{border-color:var(--gold)}
+
+.crow>span{font-size:11.5px;line-height:1}.crow code{font:800 14px/1 "Plus Jakarta Sans",system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.04em;color:var(--gold)}
+.btn.sm{height:28px;margin:0;padding:0 13px;width:auto;font-size:12px}.tips p{margin:0!important;font-size:12.5px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tips .btn.red{margin-top:0}
 .lbt{display:flex;gap:6px;margin:4px 0 8px}.lbt button{flex:1;height:34px;border-radius:6px;border:1px solid var(--line);background:none;color:var(--soft);font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}
 .lbt button.on{background:var(--card2);color:var(--text);border-color:#F2B84B88}
 .lb{list-style:none;margin:0 0 6px;padding:0;max-height:46vh;overflow:auto;touch-action:pan-y}
@@ -288,7 +290,7 @@ input.name{width:100%;height:50px;border-radius:8px;border:1px solid var(--line)
 .lb li>span{display:flex;align-items:center;min-width:0}.cb{display:inline-grid;place-items:center;flex:none;width:30px;height:20px;border-radius:5px;margin-right:8px;font:italic 800 10px/1 "Saira Condensed",sans-serif;letter-spacing:.04em;box-shadow:inset 0 0 0 1px #ffffff26}
 .clubs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:6px 0 10px}.clubs button{display:flex;align-items:center;gap:8px;height:42px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--text);font:700 13.5px "Plus Jakarta Sans",system-ui,sans-serif;text-align:left;cursor:pointer}.clubs button.on{border-color:#F2B84B}.clubs .cb{margin:0}
 .lb li.you{background:#F2B84B14;border-radius:8px}.lb li.you span{color:var(--gold)}.lb .lbe{display:block;color:var(--soft)}
-.sfoot{display:flex;flex-wrap:wrap;justify-content:center;gap:0 18px;margin-top:10px}
+.sfoot{display:flex;flex-wrap:wrap;justify-content:center;gap:0 18px;margin-top:6px}
 .sfoot button{background:none;border:0;color:var(--soft);font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;padding:10px 4px;cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line)}
 @keyframes pw-marquee{to{transform:translateX(-50%)}}
 @keyframes pw-blink{0%{opacity:1}20%{opacity:0}35%{opacity:1}55%{opacity:0}70%{opacity:1}100%{opacity:0}}
@@ -1035,8 +1037,9 @@ function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=c
    the pitch; this is where the eye lands when a game ends. */
 function homeLink(){var a=el("a","shome","Home");a.href="/";a.addEventListener("click",function(){track("home_clicked");});return a;}
 function sheet(nodes,isMenu){PW.tag("");PW.fx.combo(0);var s=$("sheet");s.textContent="";s.removeAttribute("data-duel");
-  if(!isMenu&&window.PWHome){var m=el("button","smenu","Menu");m.type="button";m.addEventListener("click",function(){closeSheet();window.PWHome();});s.appendChild(m);}
-  nodes.forEach(function(n){s.appendChild(n);});s.inert=false;s.classList.add("on");}
+  var foot=el("div","sfoot");
+  if(!isMenu&&window.PWHome){var m=el("button","smenu","Menu");m.type="button";m.addEventListener("click",function(){closeSheet();window.PWHome();});foot.appendChild(m);}
+  nodes.forEach(function(n){(n.className==="shome"?foot:s).appendChild(n);});if(foot.firstChild)s.appendChild(foot);s.inert=false;s.classList.add("on");}
 /* Closed = inert: a focused button there once took Space (shoot) and started a second match. */
 function closeSheet(){var s=$("sheet");if(s.contains(document.activeElement))document.activeElement.blur();s.inert=true;s.classList.remove("on");}
 function btn(label,cls,fn){var b=el("button","btn "+cls,label);b.type="button";b.addEventListener("click",fn);return b;}
@@ -1110,13 +1113,12 @@ function tipsCard(){var box=el("div","tips");
   api("GET","tips").then(function(r){if(!r.j)return;
     var c=r.j.code;
     if(c&&c.codes&&Object.keys(c.codes).length){
-      box.appendChild(el("h3",null,"Today's wizard slip"));
-      var meta=el("p",null,c.games+" games"+(c.odds?", total odds ":""));if(c.odds)meta.appendChild(el("b","odds",(+c.odds).toFixed(2)));box.appendChild(meta);
+      var h3=el("h3",null,"Today's wizard slip "),sm=el("small",null,c.games+" games"+(c.odds?", odds ":""));if(c.odds)sm.appendChild(el("b","odds",(+c.odds).toFixed(2)));sm.appendChild(document.createTextNode(". Tap to copy"));h3.appendChild(sm);box.appendChild(h3);
       var list=el("div","codes");
-      Object.keys(BOOKM).forEach(function(k){if(!c.codes[k])return;var row=el("div","crow"),nm=el("span");nm.innerHTML=BOOKM[k];row.appendChild(nm);row.appendChild(el("code",null,c.codes[k]));
-        var cp=btn("Copy","ghost sm",function(){try{navigator.clipboard.writeText(c.codes[k]);cp.textContent="Copied";track("code_copied",{book:k});}catch(e){}});row.appendChild(cp);list.appendChild(row);});
+      Object.keys(BOOKM).forEach(function(k){if(!c.codes[k])return;var row=el("button","crow"),nm=el("span"),cd=el("code",null,c.codes[k]);row.type="button";nm.innerHTML=BOOKM[k];row.appendChild(nm);row.appendChild(cd);
+        row.addEventListener("click",function(){try{navigator.clipboard.writeText(c.codes[k]);cd.textContent="Copied";row.classList.add("done");track("code_copied",{book:k});}catch(e){}});list.appendChild(row);});
       box.appendChild(list);}
-    if(r.j.home)box.appendChild(el("p",null,"Pick of the day: "+r.j.home+" v "+r.j.away+", "+r.j.tip+" ("+r.j.pct+"%)"));
+    if(r.j.home)box.appendChild(el("p",null,"Pick of the day: "+r.j.home+" v "+r.j.away+", "+r.j.tip));
   });
   return box;}
 
