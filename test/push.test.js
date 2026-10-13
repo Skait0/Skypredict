@@ -206,7 +206,7 @@ const BOARD = {
   potdNext: { home: "Stuttgart II", away: "Hoffenheim II", date: "2026-10-13" },
   fixtures: [
     { home: "Arsenal", away: "Chelsea", date: "2026-10-12", tip: "Home Win", ko: "17:30" },
-    { home: "Stuttgart II", away: "Hoffenheim II", date: "2026-10-13", tip: "Over 1.5", ko: "17:00" },
+    { home: "Stuttgart II", away: "Hoffenheim II", date: "2026-10-13", tip: "Over 1.5", time: "17:00" },
   ],
 };
 

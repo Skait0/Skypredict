@@ -134,7 +134,7 @@ function potdNote(now, data) {
   const p = [d.potd, d.potdNext].find((x) => x && x.date === today);
   const f = p && (d.fixtures || []).find((x) => x.home === p.home && x.away === p.away && x.date === p.date);
   if (!f) return { title: "Today's picks are up 🧙", body: "Free picks and booking codes, ready to load.", url: "/" };
-  return { title: "Pick of the day 🧙🔥", body: f.home + " vs " + f.away + " · " + f.tip + (f.ko ? " · " + f.ko : ""), url: "/" };
+  return { title: "Pick of the day 🧙🔥", body: f.home + " vs " + f.away + " · " + f.tip + ((f.time || f.ko) ? " · " + (f.time || f.ko) : ""), url: "/" };
 }
 
 module.exports.parse = parse;
