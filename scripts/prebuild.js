@@ -693,6 +693,44 @@ async function minifyWithMap(js) {
   return { code: out.code, map: typeof out.map === "string" ? out.map : JSON.stringify(out.map) };
 }
 
+/* ------------------------------------------------- 2c. the other scripts
+ * Owner, 13 Oct 2026: "hope you are not writing in a way that will need minifying
+ * again?" - so nothing ships as written. The main page's bundle is minified above;
+ * this does the same to the account sheet (account-ui.js, which every visitor
+ * loads) and every inline script of the game page (penalty.html). Same rules:
+ * deployed copies only, top-level names kept, and a minify that fails fails the
+ * build rather than shipping the readable source. JSON blocks are left alone.
+ */
+async function mustMinify(js, what) {
+  try { return await minifyScript(js); }
+  catch (e) { const err = new Error("minify failed (" + what + "): " + (e && e.message)); err.failBuild = true; throw err; }
+}
+async function minifyPage(html, what) {
+  const parts = [...html.matchAll(/<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*?)<\/script>/g)]
+    .filter((m) => !/json/i.test(m[1]) && m[2].trim());
+  let out = html;
+  for (const m of parts) {
+    const code = await mustMinify(m[2], what);
+    out = out.replace(m[0], () => "<script" + m[1] + ">" + code + "</script>");
+  }
+  return out;
+}
+async function minifyMore() {
+  if (!process.env.VERCEL && !process.env.SPLIT) return;
+  const ui = path.join(PUB, "account-ui.js");
+  if (fs.existsSync(ui)) {
+    const src = fs.readFileSync(ui, "utf8"), code = await mustMinify(src, "account-ui.js");
+    fs.writeFileSync(ui, code);
+    log("account-ui.js " + (src.length / 1024).toFixed(0) + " KB -> " + (code.length / 1024).toFixed(0) + " KB minified");
+  }
+  const game = path.join(PUB, "penalty.html");
+  if (fs.existsSync(game)) {
+    const src = fs.readFileSync(game, "utf8"), out = await minifyPage(src, "penalty.html");
+    fs.writeFileSync(game, out);
+    log("penalty.html " + (src.length / 1024).toFixed(0) + " KB -> " + (out.length / 1024).toFixed(0) + " KB minified");
+  }
+}
+
 /* ------------------------------------------------------- 2b. sentry map
  * Owner, 11 Oct 2026: Sentry should show the real source lines of a minified
  * error. The map goes to Sentry only, never into public/: it is written to a
@@ -907,6 +945,7 @@ if (require.main === module) {
     applyOrigin();
     injectAuthMeta();
     await splitAssets();
+    await minifyMore();
   })().catch((e) => {
     /* Never fail the deploy over an optimisation - except a failed minify,
        which must not ship the readable bundle (see splitAssets). */
@@ -919,4 +958,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { applyAuthMeta, minifyScript, minifyWithMap, sentryMap, stripMapUrl };
+module.exports = { applyAuthMeta, minifyScript, minifyWithMap, sentryMap, stripMapUrl, minifyPage };

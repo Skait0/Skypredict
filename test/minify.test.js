@@ -110,3 +110,26 @@ test("the map is never written under public/", () => {
   assert.match(body, /fs\.mkdtempSync\(path\.join\(require\("os"\)\.tmpdir\(\), "swmap-"\)\)/);
   assert.doesNotMatch(body, /\bPUB\b/);
 });
+
+/* 13 Oct 2026: the account sheet and the game page are minified on deploy too. */
+test("the game page's scripts minify, keep their top-level names, and its JSON is untouched", async () => {
+  const { minifyPage } = require("../scripts/prebuild.js");
+  const game = fs.readFileSync(path.join(__dirname, "..", "public", "penalty.html"), "utf8");
+  const out = await minifyPage(game, "penalty.html");
+  assert.ok(out.length < game.length * 0.85, "barely smaller: " + game.length + " -> " + out.length);
+  const scripts = (h) => [...h.matchAll(/<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*?)<\/script>/g)].filter((m) => !/json/i.test(m[1]) && m[2].trim());
+  const a = scripts(game), b = scripts(out);
+  assert.strictEqual(b.length, a.length);
+  for (let i = 0; i < a.length; i++) assert.deepStrictEqual([...(await topNames(b[i][2]))].sort(), [...(await topNames(a[i][2]))].sort());
+  const json = (h) => (h.match(/<script[^>]*json[^>]*>[\s\S]*?<\/script>/gi) || []).join("");
+  assert.strictEqual(json(out), json(game));
+});
+
+test("account-ui.js minifies to a working script that still sets window.swAccountUI", async () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "account-ui.js"), "utf8");
+  const code = await minifyScript(src);
+  /* Mostly CSS and HTML text, which minifying cannot shorten: about a fifth comes off. */
+  assert.ok(code.length < src.length * 0.85, "barely smaller: " + src.length + " -> " + code.length);
+  assert.match(code, /swAccountUI/, "the page looks the sheet up by this name");
+  new (require("vm").Script)(code);
+});
