@@ -70,14 +70,17 @@ async function world() {
   const flags = { get: async () => stored, set: async (v) => (stored = F.clean(v)), _reset: () => {} };
   const admin = { stats: async () => ({ ok: true, stats: { users: 3, codesToday: 7, books: [] } }),
     slipsOf: async () => [{ book: "sporty", code: "ABC", status: "open", created_at: new Date(clock()).toISOString() }] };
-  const h = account.make({ db, now: clock, env: { SW_ADMIN_EMAILS: "boss@x.com" }, flags, admin });
+  const ledger = { 41: "check", 42: "landed" };
+  const slips = { hits: async () => ({ ok: true, rows: [] }),
+    settle: async (id, to) => { if (ledger[id] !== "check") return { ok: true, changed: false }; ledger[id] = to; return { ok: true, changed: true }; } };
+  const h = account.make({ db, now: clock, env: { SW_ADMIN_EMAILS: "boss@x.com" }, flags, admin, slips });
   const call = async (req) => { const r = fakeRes(); await h(req, r); return r; };
   const user = async (email) => {
     const u = await db.createUser({ email });
     return { id: u.id, cookie: S.COOKIE + "=" + (await S.startSession(db, u.id, "Chrome/129 Android", clock())).token };
   };
   const boss = await user("boss@x.com"), mum = await user("mum@home.com"), plain = await user("a@b.com");
-  return { db, call, boss, mum, plain, stored: () => stored };
+  return { db, call, boss, mum, plain, stored: () => stored, ledger };
 }
 const get = (who, action, query) => Object.assign(getReq("account", {}, { cookie: who.cookie }), { query: Object.assign({ action }, query || {}) });
 const post = (who, action, body) => Object.assign(postReq("account", body, { cookie: who.cookie }), { query: { action } });
@@ -121,4 +124,26 @@ test("sign out everywhere ends the reader's sessions but never the admin's own",
   assert.strictEqual((await w.call(post(w.boss, "signout", { email: "a@b.com" }))).code, 200);
   assert.strictEqual((await w.db.liveSessions(w.plain.id, new Date(Date.UTC(2026, 9, 13, 10)).toISOString())).length, 0);
   assert.strictEqual((await w.call(post(w.boss, "signout", { email: "ghost@x.com" }))).code, 404);
+});
+
+test("a check slip is settled by the admin once, and only a check slip", async () => {
+  const w = await world();
+  assert.strictEqual((await w.call(post(w.plain, "settle", { id: "41", status: "landed" }))).code, 403);
+  assert.strictEqual((await w.call(post(w.boss, "settle", { id: "41", status: "won" }))).code, 400);
+  assert.strictEqual((await w.call(post(w.boss, "settle", { id: "41; drop", status: "landed" }))).code, 400);
+  assert.strictEqual((await w.call(post(w.boss, "settle", { id: "41", status: "landed" }))).code, 200);
+  assert.strictEqual(w.ledger[41], "landed");
+  assert.strictEqual((await w.call(post(w.boss, "settle", { id: "41", status: "lost" }))).code, 409, "a settled slip cannot be flipped");
+  assert.strictEqual((await w.call(post(w.boss, "settle", { id: "42", status: "lost" }))).code, 409);
+});
+
+test("every clipboard write on the site catches its refusal", () => {
+  /* Sentry, 13 Oct 2026: NotAllowedError from an uncaught writeText. */
+  const fs = require("fs"), path = require("path");
+  const read = (f) => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
+  const ui = read("public/account-ui.js"), pages = read("lib/pages.js");
+  assert.ok(ui.includes("},show); else show();"), "the admin share fallback lets a refused copy go");
+  assert.ok(!pages.includes('writeText(b.dataset.t).then(function(){b.textContent="Copied";});'),
+    "the /x page copy button lets a refused copy go");
+  assert.ok(pages.includes('function(){b.textContent="Select and copy";}'));
 });

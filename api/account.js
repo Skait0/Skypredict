@@ -15,14 +15,15 @@ const { report } = require("../lib/report.js");
 
 const REAUTH_MS = 10 * 60e3;
 const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup"];
-const ADMIN_POST = ["grant", "revoke", "setflags", "signout"];
+const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle"];
 
 function make(deps) {
   const { db } = deps;
   const now = deps.now || Date.now;
   const env = deps.env || process.env;
   /* The booked-slip ledger (lib/slipwatch.js); a dep so tests need no database. */
-  const slips = deps.slips || { hits: (n) => require("../lib/supabase.js").siteSlipHits(n) };
+  const slips = deps.slips || { hits: (n) => require("../lib/supabase.js").siteSlipHits(n),
+    settle: (id, to) => require("../lib/supabase.js").settleCheckSlip(id, to) };
   /* The admin's switches and numbers; deps too, for the same reason. */
   const flags = deps.flags || require("../lib/flags.js");
   const admin = deps.admin || { stats: () => require("../lib/supabase.js").adminStats(),
@@ -54,6 +55,15 @@ function make(deps) {
           const hits = (got.rows || []).map((h) => (h.status === "landed" && WIN.rankOf(h.total_odds))
             ? Object.assign({}, h, { share: { img: WIN.imageUrl(SITE, h), x: WIN.caption(h, "x"), tg: WIN.caption(h, "tg") } }) : h);
           return H.sendJson(res, 200, { hits });
+        }
+        /* A "check" slip settled by the owner after looking it up on the bookmaker. */
+        if (action === "settle") {
+          const b = (await H.readJson(req, 256)) || {};
+          const id = String(b.id || ""), to = b.status;
+          if (!/^\d{1,18}$/.test(id) || (to !== "landed" && to !== "lost")) return H.sendJson(res, 400, { error: "bad_request" });
+          const got = await slips.settle(id, to);
+          if (!got || !got.ok) return H.sendJson(res, 503, { error: "unavailable" });
+          return got.changed ? H.sendJson(res, 200, { ok: true }) : H.sendJson(res, 409, { error: "not_check" });
         }
         if (action === "flags") {
           if (flags._reset) flags._reset(); // the admin sees the stored switches, not a cached copy

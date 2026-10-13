@@ -133,27 +133,35 @@
       (r.role==="admin"?"":"<div class='swa-set'><span class='swa-st'><b>Family &amp; friends</b><small>"+(r.ff?"Yes":"No")+"</small></span>"+
         "<button class='swa-pillbtn' type='button' data-lk-ff='"+(r.ff?"revoke":"grant")+"'>"+(r.ff?"Remove":"Give")+"</button></div>");
   }
-  function adminHtml(list){
-    return "<p class='swa-h'>Site switches</p><div class='swa-card' id='swaSw'>"+msg("Loading")+"</div>"+
-      "<label class='swa-lbl' for='swaNotice'>Notice for every reader</label>"+
-      "<input class='swa-in' id='swaNotice' type='text' maxlength='200' autocomplete='off' placeholder='SportyBet codes are slow tonight. Try Bet9ja.'>"+
-      "<button class='swa-outbtn swa-go' id='swaNoticeGo' type='button'>Show notice</button>"+
-      "<button class='swa-outbtn' id='swaNoticeOff' type='button'>Clear notice</button>"+
-      "<p class='swa-h'>Status</p><div class='swa-card' id='swaStatus'>"+msg("Loading")+"</div>"+
-      "<p class='swa-h'>Numbers</p><div class='swa-card' id='swaNums'>"+msg("Loading")+"</div>"+
-      "<p class='swa-h'>Find a reader</p>"+
-      "<label class='swa-lbl' for='swaLkEmail'>Email</label>"+
-      "<input class='swa-in' id='swaLkEmail' type='email' autocomplete='off' autocapitalize='none' spellcheck='false'>"+
-      "<button class='swa-outbtn swa-go' id='swaLkGo' type='button'>Look up</button>"+
-      "<div class='swa-card' id='swaLk' hidden></div>"+
-      "<p class='swa-h'>Give Family &amp; friends</p>"+
-      "<label class='swa-lbl' for='swaGEmail'>Email</label>"+
-      "<input class='swa-in' id='swaGEmail' type='email' autocomplete='off' autocapitalize='none' spellcheck='false'>"+
-      "<button class='swa-outbtn swa-go' id='swaGrant' type='button'>Give Family &amp; friends</button>"+
-      "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>"+
-      "<p class='swa-h'>Family &amp; friends</p><div class='swa-card' id='swaGrants'>"+(list?grantsHtml(list):"<div class='swa-set'><span class='swa-st'><small>Loading</small></span></div>")+"</div>"+
-      "<p class='swa-h'>Slips that landed</p><div class='swa-card' id='swaHits'><div class='swa-set'><span class='swa-st'><small>Loading</small></span></div></div>";
+  /* EVERY SECTION FOLDS (owner, 13 Oct 2026: "make the sections with long lists
+     collapseable"). A native <details>, so it works with the keyboard and a screen
+     reader for free. The two lists that grow without end start closed, with their
+     count in the heading (setCount) so a closed one still says what it holds. */
+  function fold(id,title,body,open){
+    return "<details class='swa-fold' id='"+id+"'"+(open?" open":"")+"><summary class='swa-h'>"+title+
+      "<small class='swa-cnt'></small></summary>"+body+"</details>";
   }
+  function adminHtml(list){
+    /* The message line sits on top, so a switch flipped up here is answered where the eye is. */
+    return "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>"+
+      fold("swaFSw","Site switches","<div class='swa-card' id='swaSw'>"+msg("Loading")+"</div>"+
+        "<label class='swa-lbl' for='swaNotice'>Notice for every reader</label>"+
+        "<input class='swa-in' id='swaNotice' type='text' maxlength='200' autocomplete='off' placeholder='SportyBet codes are slow tonight. Try Bet9ja.'>"+
+        "<button class='swa-outbtn swa-go' id='swaNoticeGo' type='button'>Show notice</button>"+
+        "<button class='swa-outbtn' id='swaNoticeOff' type='button'>Clear notice</button>",true)+
+      fold("swaFStatus","Status","<div class='swa-card' id='swaStatus'>"+msg("Loading")+"</div>",true)+
+      fold("swaFNums","Numbers","<div class='swa-card' id='swaNums'>"+msg("Loading")+"</div>",true)+
+      fold("swaFLk","Find a reader","<label class='swa-lbl' for='swaLkEmail'>Email</label>"+
+        "<input class='swa-in' id='swaLkEmail' type='email' autocomplete='off' autocapitalize='none' spellcheck='false'>"+
+        "<button class='swa-outbtn swa-go' id='swaLkGo' type='button'>Look up</button>"+
+        "<div class='swa-card' id='swaLk' hidden></div>",true)+
+      fold("swaFGrants","Family &amp; friends","<label class='swa-lbl' for='swaGEmail'>Email</label>"+
+        "<input class='swa-in' id='swaGEmail' type='email' autocomplete='off' autocapitalize='none' spellcheck='false'>"+
+        "<button class='swa-outbtn swa-go' id='swaGrant' type='button'>Give Family &amp; friends</button>"+
+        "<div class='swa-card' id='swaGrants'>"+(list?grantsHtml(list):msg("Loading"))+"</div>",false)+
+      fold("swaFHits","Slips that landed","<div class='swa-card' id='swaHits'>"+msg("Loading")+"</div>",false);
+  }
+  function setCount(v,id,text){ var el=v.querySelector("#"+id+" .swa-cnt"); if(el) el.textContent=text||""; }
   /* EVERY CODE BOOKED ON THE SITE THAT CAME HOME (owner, 12 Oct 2026; lib/slipwatch.js).
      "check" = every leg we could grade won, but some legs (corners, shots, first half)
      cannot be graded from a final score - shown so the owner can look, never as a hit. */
@@ -172,8 +180,22 @@
         (h.total_odds?" · <span class='swa-gold'>×"+esc(Number(h.total_odds).toLocaleString("en-US",{maximumFractionDigits:2}))+"</span>":"")+"</b>"+
         "<small>"+esc(games+" · "+when+(h.who?" · "+h.who:""))+"</small>"+
         (legs.length?"<small>"+esc(legs.slice(0,3).join(" · ")+(legs.length>3?" and "+(legs.length-3)+" more":""))+"</small>":"")+"</span>"+
-        (h.status==="check"?"<span class='swa-soon'>Check</span>":"")+
-        (h.share?"<button type='button' class='swa-share' data-share='"+esc(JSON.stringify(h.share))+"'>Share</button>":"")+"</div>"; }).join("");
+        (h.status==="check"?"<button type='button' class='swa-pillbtn swa-chk' data-chk='"+esc(String(h.id))+"' aria-expanded='false'>Check</button>":"")+
+        (h.share?"<button type='button' class='swa-share' data-share='"+esc(JSON.stringify(h.share))+"'>Share</button>":"")+"</div>"+
+        (h.status==="check"?checkHtml(h):""); }).join("");
+  }
+  /* SETTLE A "CHECK" BY HAND (owner, 13 Oct 2026). Every leg we could grade won; the
+     rest (corners, shots, first half) cannot be read off a final score. Tapping
+     Check opens the legs; the owner looks the code up on the bookmaker and says
+     which way it went (/api/account/settle). */
+  function checkHtml(h){
+    var legs=(h.legs||[]).map(function(l){ return "Won: "+esc(l.name); }).join("<br>");
+    var n=h.untracked|0;
+    return "<div class='swa-set swa-chkbox' data-chkbox='"+esc(String(h.id))+"' hidden><span class='swa-st'><small>"+(legs||"No legs we could grade.")+
+      (n?"<br>Plus "+n+" leg"+(n===1?"":"s")+" we cannot grade from the score (corners, shots or first half).":"")+
+      "<br>Look the code up on "+esc(BOOK_NAME[h.book]||h.book)+", then say how it went.</small></span>"+
+      "<button type='button' class='swa-pillbtn' data-settle='landed'>It landed</button>"+
+      "<button type='button' class='swa-pillbtn' data-settle='lost'>It lost</button></div>";
   }
   var CHEV='<svg class="swa-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
   function devWords(n){ return n==null?"":(n<=1?"Just this device":"This phone and "+(n-1)+" other"+(n>2?"s":"")); }
@@ -215,6 +237,10 @@
     ".swa-view.on{transform:none;visibility:visible;transition:transform .28s cubic-bezier(.23,1,.32,1),visibility 0s}.swa-in-wrap{max-width:520px;margin:0 auto}"+
     ".swa-back{display:flex;align-items:center;gap:4px;border:0;background:none;color:var(--soft);font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:6px 4px 6px 0}.swa-back svg{width:18px;height:18px}"+
     ".swa-t{margin:0 0 16px;font-size:22px;font-weight:800;letter-spacing:-.01em}"+
+    ".swa-fold>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;user-select:none}.swa-fold>summary::-webkit-details-marker{display:none}"+
+    ".swa-fold>summary::after{content:'';width:7px;height:7px;margin-left:auto;margin-right:4px;border-right:2px solid var(--faint);border-bottom:2px solid var(--faint);transform:rotate(-45deg);transition:transform .14s}"+
+    ".swa-fold[open]>summary::after{transform:rotate(45deg)}.swa-fold>summary:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:4px}"+
+    ".swa-chkbox{flex-wrap:wrap;gap:8px}.swa-chkbox .swa-st{flex:1 1 100%}"+
     ".swa-h{font-size:13px;font-weight:700;color:var(--soft);margin:18px 2px 8px}.swa-h small{font-weight:600;color:var(--faint);margin-left:6px}"+
     ".swa-lbl{display:block;font-size:12px;font-weight:700;color:var(--faint);margin:0 0 5px}"+
     ".swa-in{width:100%;height:42px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:15px;font-weight:700;padding:0 12px;box-sizing:border-box}"+
@@ -400,14 +426,16 @@
     function load(){
       a.req("GET","/api/account/grants",null,function(code,j){
         if(code!==200) return fail(code,j);
-        var box=v.querySelector("#swaGrants"); box.innerHTML=grantsHtml(j.grants||[]);
+        var box=v.querySelector("#swaGrants"); box.innerHTML=grantsHtml(j.grants||[]); setCount(v,"swaFGrants",String((j.grants||[]).length));
         box.querySelectorAll("[data-revoke]").forEach(function(b){ b.onclick=function(){ b.disabled=true;
           a.req("POST","/api/account/revoke",{email:b.getAttribute("data-revoke")},function(c2,j2){
             if(c2===200){ say("Removed."); load(); } else { b.disabled=false; fail(c2,j2); } }); }; });
       });
     }
-    a.req("GET","/api/account/hits",null,function(code,j){
+    function hitsLoad(){ a.req("GET","/api/account/hits",null,function(code,j){
       var box=v.querySelector("#swaHits"); if(!box) return;
+      if(code===200){ var hs=j.hits||[], nc=hs.filter(function(h){ return h.status==="check"; }).length;
+        setCount(v,"swaFHits",hs.length-nc+" landed"+(nc?" · "+nc+" to check":"")); }
       box.innerHTML=code===200?hitsHtml(j.hits||[]):
         "<div class='swa-set'><span class='swa-st'><small>"+(code===503?"The slip ledger is not set up yet.":"Could not load the hits.")+"</small></span></div>";
       /* SHARE A WIN: the phone's own share sheet with the banner and caption; on a desktop, the banner
@@ -415,8 +443,15 @@
       box.querySelectorAll("[data-share]").forEach(function(b){ b.onclick=function(){
         var s; try{ s=JSON.parse(b.getAttribute("data-share")); }catch(e){ return; }
         var text=s.x||s.tg||"";
+        /* THE COPY CAN BE REFUSED. By the time a failed share falls back here the tap
+           is spent, and the browser answers writeText with NotAllowedError (Sentry,
+           13 Oct 2026). A rejected promise escapes try/catch, so it is caught on the
+           promise, and the caption is shown to copy by hand instead. */
         function fallback(){ try{ root.open(s.img,"_blank","noopener"); }catch(e){}
-          try{ navigator.clipboard.writeText(text).then(function(){ say("Caption copied. Banner opened in a new tab."); }); }catch(e){} }
+          function show(){ say("Banner opened in a new tab. Copy this caption: "+text); }
+          try{ var w=navigator.clipboard&&navigator.clipboard.writeText(text);
+            if(w&&w.then) w.then(function(){ say("Caption copied. Banner opened in a new tab."); },show); else show();
+          }catch(e){ show(); } }
         if(!navigator.share) return fallback();
         fetch(s.img).then(function(r){ return r.blob(); }).then(function(bl){
           var f=new File([bl],"soccerwizard-win.png",{type:bl.type||"image/png"});
@@ -424,7 +459,19 @@
           return navigator.share(data);
         }).catch(function(e){ if(!e||e.name!=="AbortError") fallback(); });
       }; });
-    });
+      box.querySelectorAll("[data-chk]").forEach(function(b){ b.onclick=function(){
+        var id=b.getAttribute("data-chk"), panel=box.querySelector("[data-chkbox='"+id+"']"); if(!panel) return;
+        panel.hidden=!panel.hidden; b.setAttribute("aria-expanded",String(!panel.hidden));
+        panel.querySelectorAll("[data-settle]").forEach(function(s){ s.onclick=function(){
+          var to=s.getAttribute("data-settle");
+          panel.querySelectorAll("button").forEach(function(x){ x.disabled=true; });
+          a.req("POST","/api/account/settle",{id:id,status:to},function(c2,j2){
+            if(c2===200){ say(to==="landed"?"Marked as landed. It now counts, and you can share it.":"Marked as lost."); hitsLoad(); }
+            else { panel.querySelectorAll("button").forEach(function(x){ x.disabled=false; });
+              if(c2===409) say("Already settled. Refreshing."), hitsLoad(); else fail(c2,j2); } }); }; });
+      }; });
+    }); }
+    hitsLoad();
     var flags={booksOff:[],notice:""};
     var board=null; try{ board=root.swBoard?root.swBoard():null; }catch(e){}
     function paintSw(){

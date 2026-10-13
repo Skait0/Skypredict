@@ -158,8 +158,15 @@ Settings. The sections, in order:
 4. **Find a reader**: email lookup showing plan, join date, last seen,
    devices with "Sign out everywhere", their codes (Family & friends only:
    free readers are counted by device), and Give or Remove Family & friends.
-5. **Give Family & friends**, the grants list, and **Slips that landed**, as
-   before.
+5. **Family & friends** (give by email, then the list) and **Slips that
+   landed**. A "check" slip has a **Check** button that opens its legs, notes
+   the ones a final score cannot grade, and settles it with "It landed" or "It
+   lost".
+
+Every section is a native `<details>` (`.swa-fold`) with a chevron on the
+right. The first four start open. Family & friends and Slips that landed grow
+without end, so they start closed and show their count in the heading ("12",
+"9 landed · 2 to check"). The status line (`#swaMsg`) sits above all of them.
 
 Every result line is a short sentence ("Bet9ja booking paused. Readers see it
 within a couple of minutes."), never a code or a status word.
