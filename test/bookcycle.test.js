@@ -141,8 +141,9 @@ test("a wordmark inside a flex button is wrapped so the words keep their spaces"
 });
 
 test("the primary offer is a black pill and the mark is red on it", () => {
-  assert.match(src, /\.sc-go-primary[^{]*\{[^}]*border-radius:999px/,
-    "a pill, and it has to beat .sc-go-btn's own 10px");
+  /* A chip, not a pill, since 13 Oct 2026 (pills read as an AI template). */
+  assert.match(src, /\.sc-go-primary[^{]*\{[^}]*border-radius:var\(--r-chip\)!important/,
+    "the chip radius, and it has to beat .sc-go-btn's own 10px");
   assert.match(src, /\.sc-go-primary \.sbm\{color:var\(--red\)!important\}/,
     "on black the mark is their red; on the red buttons it inherits white");
   /* The list that forces the mark to inherit exists so it does not vanish on

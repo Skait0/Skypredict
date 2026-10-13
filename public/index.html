@@ -445,6 +445,11 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
 [data-theme="light"]{color-scheme:light}
 select,option{background-color:var(--card);color:var(--text)}
 :root{--r-sm:4px;--r-md:6px;--r-lg:8px;
+  /* Chips, buttons and toggles (--r-chip) and the trays that hold a row of
+     them (--r-seg). They were all 99px pills, which read as an AI template
+     (13 Oct 2026). Dots, tracks, counters and the round floating buttons
+     keep their 99px. */
+  --r-chip:6px;--r-seg:8px;
   /* THE curve. Thirty-odd hand-rolled cubic-beziers in this file are all
      reaching for this one - (.25,.8,.3,1), (.25,.9,.3,1), (.3,.9,.3,1),
      (.2,.9,.25,1) and so on differ by less than a frame and by nothing the
@@ -490,7 +495,7 @@ main[tabindex="-1"]:focus{outline:none}
 .ys-all{margin-left:auto;display:flex;align-items:center;gap:2px;border:0;background:none;font:inherit;font-size:12.5px;font-weight:700;color:var(--red-ink);cursor:pointer}
 .ys-all svg{width:14px;height:14px}
 .ys-chips{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.ys-chip{display:flex;align-items:center;justify-content:center;gap:6px;height:34px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);cursor:pointer;color:var(--soft);font:inherit;font-size:12px;font-weight:700}
+.ys-chip{display:flex;align-items:center;justify-content:center;gap:6px;height:34px;border-radius:var(--r-chip);border:1px solid var(--line);background:var(--card-2);cursor:pointer;color:var(--soft);font:inherit;font-size:12px;font-weight:700}
 .ys-chip .num{font-size:15px}
 .ys-chip.run .num{color:var(--accent)}.ys-chip.lost .num{color:var(--red-ink)}.ys-chip.won .num{color:var(--green-ink)}
 /* LIVE DOTS: the one loop that carries information - something is in play.
@@ -517,8 +522,8 @@ main[tabindex="-1"]:focus{outline:none}
 .ys-lh h4{margin:0;font-size:13px;font-weight:700;color:var(--soft)}
 .ys-clrb{border:0;background:none;color:var(--faint);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:4px 0}
 .ys-ask{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700}
-.ys-no{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:99px;padding:6px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
-.ys-yes{border:0;background:var(--red-fill);color:#fff;border-radius:99px;padding:7px 13px;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.ys-no{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:var(--r-chip);padding:6px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.ys-yes{border:0;background:var(--red-fill);color:#fff;border-radius:var(--r-chip);padding:7px 13px;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
 .ys-row{cursor:pointer;display:flex;align-items:center;gap:9px;padding:7px 11px;background:var(--card);border:1px solid var(--line);border-radius:12px}
 .ys-m{flex:1;min-width:0}.ys-code{display:block;font-size:13.5px;line-height:1.25;letter-spacing:.06em}
 .ys-m small{display:block;font-size:12px;font-weight:600;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:0;line-height:1.3}
@@ -652,7 +657,7 @@ main[tabindex="-1"]:focus{outline:none}
    takes the auto margin from the X icon. */
 /* Outlined, not filled: a solid red pill shouted over the red "Build me a
    slip" button right under it. The red ring and arrow still pick it out. */
-.top-in .hsoc-inst{width:auto;height:34px;padding:0 12px;gap:5px;border:1.5px solid var(--red);border-radius:99px;
+.top-in .hsoc-inst{width:auto;height:34px;padding:0 12px;gap:5px;border:1.5px solid var(--red);border-radius:var(--r-chip);
   background:var(--card);color:var(--text);font-size:12.5px;font-weight:700;white-space:nowrap}
 .hsoc-inst svg{color:var(--red-ink)}
 .top-in .hsoc-inst:not([hidden]){margin-left:auto}
@@ -679,7 +684,7 @@ main[tabindex="-1"]:focus{outline:none}
 .ib-tx i{font-style:normal;font-size:11.5px;color:var(--soft);line-height:1.25;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ib-go{flex:0 0 auto;white-space:nowrap;font:inherit;font-size:12.5px;font-weight:800;
-  padding:8px 14px;border-radius:99px;border:0;cursor:pointer;
+  padding:8px 14px;border-radius:var(--r-chip);border:0;cursor:pointer;
   background:var(--red-fill);color:#fff}
 .ib-x{flex:0 0 auto;width:26px;height:26px;padding:0;border:0;background:none;
   color:var(--faint);font-size:13px;cursor:pointer;border-radius:50%}
@@ -825,7 +830,7 @@ main[tabindex="-1"]:focus{outline:none}
 .potd .big em{font-style:normal;font-size:.45em}
 /* Locked POTD status chip + result states */
 .potd-status{margin-left:auto;font-size:11px;font-weight:800;
-  padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.22);color:#fff;
+  padding:3px 10px;border-radius:var(--r-sm);background:rgba(255,255,255,.22);color:#fff;
   display:inline-flex;align-items:center;gap:6px}
 .potd-won .potd-top,.potd.potd-won .potd-top{background:var(--green);color:var(--on-green)}
 .potd.potd-won{border-color:var(--green)}
@@ -877,7 +882,7 @@ main[tabindex="-1"]:focus{outline:none}
 .cats::-webkit-scrollbar{display:none}
 .cat{flex-shrink:0;background:var(--card);border:1px solid var(--line);
   color:var(--soft);font-family:inherit;font-size:13px;font-weight:700;
-  padding:10px 15px;border-radius:99px;cursor:pointer;transition:.18s;
+  padding:10px 15px;border-radius:var(--r-chip);cursor:pointer;transition:.18s;
   display:flex;align-items:center;gap:7px}
 .cat:hover:not(:disabled){color:var(--text);border-color:var(--faint)}
 .cat[aria-pressed="true"]{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
@@ -1006,7 +1011,7 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
    instead - lighter, and it still spans nearly the full width, so nothing is
    lost as a tap target. */
 .m-add{width:calc(100% - 24px);margin:10px 12px 12px;
-  background:transparent;border:1px solid var(--line);border-radius:99px;
+  background:transparent;border:1px solid var(--line);border-radius:var(--r-chip);
   color:var(--red-ink);font:inherit;font-weight:800;font-size:12.5px;padding:10px 14px;
   cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
   transition:border-color .18s,background .18s,color .18s}
@@ -1019,7 +1024,7 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .m-top{display:flex;align-items:center;gap:7px;margin-bottom:12px;flex-wrap:wrap}
 .t{font-size:12px;color:var(--faint);font-weight:700}
 .pill{font-size:10px;font-weight:800;
-  padding:4px 9px;border-radius:99px;background:var(--card-2);color:var(--soft)}
+  padding:4px 9px;border-radius:var(--r-chip);background:var(--card-2);color:var(--soft)}
 .pill.value{background:var(--green-wash);color:var(--green-ink)}
 /* Ties a board row to the Pick of the day card above it. Amber with the same
    star the card carries, so the eye pairs them rather than reading two games. */
@@ -1068,7 +1073,7 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 /* Day-board status badge. A game on today's board is still to come (no badge),
    in play (live score), or settled (score + whether the tip landed). */
 .fx-st{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;
-  padding:2px 7px;border-radius:99px;white-space:nowrap;vertical-align:middle}
+  padding:2px 7px;border-radius:var(--r-sm);white-space:nowrap;vertical-align:middle}
 .fx-live{background:var(--red-fill);color:#fff}
 /* A solid dot, not a pulsing one. One live badge blinking reads as alive; a
    busy Saturday of twenty blinking on their own timers reads as an emergency,
@@ -1147,7 +1152,7 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
    same thing and asks for much less. The coloured border went with the dot:
    ringing the whole box in green to say "installed" was the heaviest part. */
 .toast{background:var(--card);border:1px solid var(--line);color:var(--text);font-weight:600;
-  font-size:13px;padding:9px 15px;border-radius:99px;box-shadow:0 6px 18px rgba(0,0,0,.26);
+  font-size:13px;padding:9px 15px;border-radius:var(--r-chip);box-shadow:0 6px 18px rgba(0,0,0,.26);
   display:flex;align-items:center;gap:8px;opacity:0;transform:translateY(8px);
   transition:opacity .22s,transform .22s;max-width:88vw}
 .toast.in{opacity:1;transform:translateY(0)}
@@ -1195,7 +1200,7 @@ html:not(.reduce) .m:nth-child(6),html:not(.reduce) .lrow:nth-child(6){animation
 html:not(.reduce) .m:nth-child(n+7),html:not(.reduce) .lrow:nth-child(n+7){animation-delay:.18s}
 /* fly-to-slip chip */
 .fly-chip{position:fixed;z-index:300;background:var(--red-fill);color:#fff;font-weight:800;font-size:12px;
-  padding:6px 12px;border-radius:99px;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.4);
+  padding:6px 12px;border-radius:var(--r-chip);pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.4);
   transition:transform .55s cubic-bezier(.5,.05,.5,1),opacity .55s}
 /* bottom tab bar (mobile only) */
 .btabs{display:none;transition:transform .3s ease}
@@ -1211,7 +1216,7 @@ a.btab{text-decoration:none}
   /* it opens the right-hand group, so it takes the push the X icon used to */
   .top-in .navplay~*{margin-left:0}
   .navplay{display:inline-flex;align-items:center;gap:7px;margin:0 4px 0 auto;padding:7px 13px;border:1px solid var(--line);
-    border-radius:999px;color:var(--soft);font-weight:800;font-size:14px;text-decoration:none;white-space:nowrap;
+    border-radius:var(--r-chip);color:var(--soft);font-weight:800;font-size:14px;text-decoration:none;white-space:nowrap;
     transition:color .14s var(--ease-out),border-color .14s var(--ease-out)}
   .navplay svg{width:18px;height:18px;color:var(--accent)}
   .navplay:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -1388,7 +1393,7 @@ html.mode-live .btabs{transform:none!important}
 .rr-v{color:var(--faint);text-align:center;font-size:12px}
 .rr-tip{display:flex;align-items:center;gap:8px;margin-top:7px;padding-top:7px;
   border-top:1px solid var(--line-soft);font-size:12.5px;color:var(--soft)}
-.rr-badge{margin-left:auto;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.rr-badge{margin-left:auto;font-size:11px;font-weight:800;padding:3px 9px;border-radius:var(--r-sm);white-space:nowrap}
 .rrow.hit .rr-badge{background:var(--green-wash);color:var(--green-ink)}
 .rrow.miss .rr-badge{background:var(--red-wash);color:var(--red-ink)}
 html.is-results .slip-cta,html.is-results #glance,html.is-results .thin-note{display:none}
@@ -1503,7 +1508,7 @@ html.tapped .list-hint{display:none}
      raised-key idea on the neutrals we actually use. */
   background:linear-gradient(180deg,#1E1E22,#101013)!important;
   border:1px solid rgba(242,184,75,.28)!important;
-  border-radius:999px!important;
+  border-radius:var(--r-chip)!important;
   color:#fff!important;
   gap:9px;
   /* Depth, not decoration. A light along the top edge and a deep shadow under
@@ -1530,6 +1535,10 @@ html.tapped .list-hint{display:none}
 .sc-go-arw{flex:0 0 auto;font-size:1.05em;line-height:1;opacity:.8;color:var(--accent);
   transform:translateX(0);
   transition:transform .22s cubic-bezier(.3,0,.2,1),opacity .22s ease}
+/* Drawn arrows, not a typed arrow character (13 Oct 2026): a text arrow in a button is
+   a stock AI-template touch. */
+.sc-go-arw svg,.wsl-a svg{display:block}
+.wsl-a{vertical-align:middle}
 /* Their mark in their red. On the red button this was forced to white to stop
    it disappearing; on black it can be itself, which is the whole point of
    putting it here. */
@@ -1554,7 +1563,7 @@ html.tapped .list-hint{display:none}
    different places. Hierarchy is carried by weight - one is a solid black key,
    the other a hairline outline - which is the difference worth seeing. Shape
    is not. */
-.sc-actions .slider-btn.sc-go-btn{border-radius:999px!important}
+.sc-actions .slider-btn.sc-go-btn{border-radius:var(--r-chip)!important}
 .sc-logo{height:30px;width:auto;display:inline-block;margin-left:9px;vertical-align:-9px;border-radius:4px}
 .sc-head{display:flex;align-items:flex-start;gap:13px}
 .sc-actions{display:flex;gap:10px;flex-wrap:wrap}
@@ -1602,7 +1611,7 @@ html.tapped .list-hint{display:none}
 :root .sc-go-primary .sc-lbl{display:inline-flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:.32em}
 :root .sc-go-primary .sc-lbl>.sbm,:root .sc-go-primary .sc-lbl>.b9m,:root .sc-go-primary .sc-lbl>.bkm,
 :root .sc-go-primary .sc-lbl>.bwm,:root .sc-go-primary .sc-lbl>.xbm{display:inline-flex;align-items:center;
-  background:#F4F1EA;border-radius:999px;padding:3px 10px;line-height:1.15;
+  background:#F4F1EA;border-radius:var(--r-sm);padding:3px 10px;line-height:1.15;
   box-shadow:0 1px 3px rgba(0,0,0,.25),inset 0 0 0 1px rgba(0,0,0,.08);color:#111!important}
 :root .sc-go-primary .sc-lbl>.sbm{color:#C62330!important}
 :root .sc-go-primary .sc-lbl>.b9m .b9r{color:#D42127!important}
@@ -1639,7 +1648,7 @@ html.mode-build .slip-cta,html.mode-live .slip-cta{display:none}
      mid stop was the 4.17:1 brand red. Same radial, same deep centre, run
      from --red-fill instead so every point under the label clears AA. */
   background:#DB3643;color:#fff;
-  border:1px solid rgba(242,184,75,.55);border-radius:99px;padding:12px 14px 12px 18px;
+  border:1px solid rgba(242,184,75,.55);border-radius:var(--r-chip);padding:12px 14px 12px 18px;
   box-shadow:0 4px 12px rgba(0,0,0,.35);cursor:pointer}
 .slipbar-in .sb-tx{flex:1;min-width:0}
 .slipbar-in .sb-tx b{display:block;font-size:14px;font-weight:800;line-height:1.2}
@@ -1712,18 +1721,20 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
    site before this line existed. */
 .trust-i[hidden]{display:none}
 .trust-i b{color:var(--text);font-weight:700}
-.trust-i::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--faint)}
+/* A hairline between items, not a bullet dot: "• a • b • c" is a stock
+   AI-template stat row (13 Oct 2026). */
+.trust-i::before{content:"";width:1px;height:13px;background:var(--line);margin-right:5px}
 .trust-i:first-child::before{display:none}
 .trust .link{color:var(--red-ink);font-weight:700;text-decoration:none}
 .trust .link:hover{text-decoration:underline}
 .pill.goals{background:var(--win-wash);color:var(--win-ink)}
 .pill.value{background:var(--accent);color:var(--on-accent);font-weight:800}
-.vmark{flex-shrink:0;font-size:10px;font-weight:800;color:#1a1400;background:#F2B84B;padding:2px 6px;border-radius:99px;margin-left:2px;font-variant-numeric:tabular-nums}
+.vmark{flex-shrink:0;font-size:10px;font-weight:800;color:#1a1400;background:#F2B84B;padding:2px 6px;border-radius:var(--r-sm);margin-left:2px;font-variant-numeric:tabular-nums}
 .m{border-left-width:3px;border-left-style:solid;border-left-color:var(--edge)}
 .m.conf-strong{border-left-color:var(--green)}
 .m.conf-lean{border-left-color:var(--win)}
 .m.conf-slight{border-left-color:var(--grey)}
-.tipbox .grade{margin-left:auto;font-size:9px;font-weight:800;padding:3px 7px;border-radius:99px;background:var(--raise);color:var(--soft);white-space:nowrap}
+.tipbox .grade{margin-left:auto;font-size:9px;font-weight:800;padding:3px 7px;border-radius:var(--r-sm);background:var(--raise);color:var(--soft);white-space:nowrap}
 .conf-strong .tipbox .grade{background:var(--green-wash);color:var(--green-ink)}
 .conf-lean .tipbox .grade{background:var(--win-wash);color:var(--win-ink)}
 .tipbox .p{margin-left:9px}
@@ -1785,7 +1796,7 @@ html.mode-build .viewtoggle.top,html.mode-live .viewtoggle.top{display:none}
 .bookall{position:relative;overflow:hidden;display:none;align-items:center;gap:8px;
   background:var(--red-fill);color:#fff;border:0;
   font:inherit;font-weight:800;font-size:12.5px;
-  padding:8px 14px;border-radius:99px;cursor:pointer;
+  padding:8px 14px;border-radius:var(--r-chip);cursor:pointer;
   transition:filter .14s var(--ease-out),transform .14s var(--ease-out)}
 .bookall.show{display:inline-flex}
 @media(hover:hover){
@@ -1818,7 +1829,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    now, dark enough to sit on the green wash and on the Bet9ja black alike. */
 .code-save{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.22);
   color:#fff;
-  font:inherit;font-weight:700;font-size:12.5px;padding:8px 16px;border-radius:99px;
+  font:inherit;font-weight:700;font-size:12.5px;padding:8px 16px;border-radius:var(--r-chip);
   cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 1px 4px rgba(0,0,0,.28);
   transition:background .16s ease,border-color .16s ease,color .16s ease}
 [data-theme="light"] .code-save{background:rgba(20,18,18,.82);
@@ -1830,7 +1841,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 /* The custom payout box, sized and shaped like the chips beside it so it
    reads as one more option in the row rather than a form. */
 .wsp-cust{display:inline-flex;align-items:center;gap:2px;background:var(--card-2);
-  border:1px dashed var(--line);border-radius:99px;padding:0 12px 0 13px;height:38px}
+  border:1px dashed var(--line);border-radius:var(--r-chip);padding:0 12px 0 13px;height:38px}
 .wsp-cust-x{font-size:13px;font-weight:700;color:var(--faint)}
 .wsp-cust-in{width:56px;background:transparent;border:0;outline:0;color:var(--text);
   font:inherit;font-weight:700;font-size:13px;padding:0}
@@ -1924,7 +1935,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    down - this line was the only thing still reaching the page. */
 .lt-tip{display:flex;align-items:center;gap:7px;font-weight:700;color:var(--text)}
 .lt-tip .grade{font-size:10px;font-weight:800;
-  padding:3px 8px;border-radius:99px;background:var(--raise);color:var(--soft)}
+  padding:3px 8px;border-radius:var(--r-sm);background:var(--raise);color:var(--soft)}
 .conf-strong .lt-tip .grade{background:var(--green-wash);color:var(--green-ink)}
 .conf-lean .lt-tip .grade{background:var(--win-wash);color:var(--win-ink)}
 .lt-tip .p{font-weight:800}
@@ -2011,7 +2022,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    only the list slanted. */
 .lt-tip .grade{flex-shrink:0;font-style:normal;font-size:10px;font-weight:800;
   font-variant-numeric:tabular-nums;
-  padding:2px 7px;border-radius:99px;background:var(--raise);color:var(--soft)}
+  padding:2px 7px;border-radius:var(--r-sm);background:var(--raise);color:var(--soft)}
 .conf-strong .lt-tip .grade{background:var(--green-wash);color:var(--green-ink)}
 .conf-lean .lt-tip .grade{background:var(--win-wash);color:var(--win-ink)}
 .lt-score{text-align:center;font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;
@@ -2164,12 +2175,12 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    Share / Safer / Rebuild / more, the booking code, a progress bar, and the
    legs behind a Show games toggle. */
 .sl2-filt{display:flex;gap:6px;margin:0 0 6px;overflow-x:auto;scrollbar-width:none}
-.sl2-filt button{flex:none;padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--soft);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.sl2-filt button{flex:none;padding:7px 12px;border-radius:var(--r-chip);border:1px solid var(--line);background:var(--card);color:var(--soft);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .sl2-filt button.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
 .sl2-filt .num{font-weight:700;opacity:.75;margin-left:4px}
 .sl2{background:var(--card);border:1px solid var(--line);border-radius:12px}
 .sl2-top{display:flex;align-items:center;gap:8px;padding:12px 12px 10px}
-.sl2-st{font-size:10.5px;font-weight:800;padding:4px 8px;border-radius:99px}
+.sl2-st{font-size:10.5px;font-weight:800;padding:4px 8px;border-radius:var(--r-sm)}
 .sl2-st.jack{color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent)}
 .sl2-st.run{color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent)}
 .sl2-st.lost{color:var(--red-ink);background:color-mix(in srgb,var(--red) 13%,transparent)}
@@ -2178,7 +2189,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .sl2-od{margin-left:auto;font-size:20px;color:var(--accent)}
 .sl2 .num{font-weight:800}
 .sl2-acts{display:flex;gap:4px;padding:0 10px 10px;white-space:nowrap}
-.sl2-a{display:flex;align-items:center;justify-content:center;gap:5px;height:32px;padding:0 9px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);color:var(--text);font:inherit;font-size:12px;font-weight:800;cursor:pointer;flex:none;text-decoration:none}
+.sl2-a{display:flex;align-items:center;justify-content:center;gap:5px;height:32px;padding:0 9px;border-radius:var(--r-chip);border:1px solid var(--line);background:var(--card-2);color:var(--text);font:inherit;font-size:12px;font-weight:800;cursor:pointer;flex:none;text-decoration:none}
 .sl2-a svg{width:14px;height:14px;flex:none}
 .sl2-a.safer svg{color:var(--green-ink)}
 .sl2-a.share{background:var(--red-fill);border-color:var(--red-fill);color:#fff;flex:1 1 0;min-width:0}
@@ -2186,7 +2197,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .sl2-a.del svg{width:16px;height:16px}
 .sl2-code{display:flex;align-items:center;gap:10px;margin:0 12px 10px;padding:7px 7px 7px 12px;border-radius:8px;background:var(--card-2)}
 .sl2-code .num{font-size:18px;letter-spacing:.08em;color:var(--text)}
-.sl2-code button{margin-left:auto;display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:99px;padding:5px 11px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.sl2-code button{margin-left:auto;display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:var(--r-chip);padding:5px 11px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .sl2-code button.ok{color:var(--green-ink)}
 .sl2-code svg{width:13px;height:13px}
 .sl2-mid{display:flex;align-items:center;gap:10px;padding:0 12px 11px;color:var(--soft);font-size:12px;font-weight:600}
@@ -2217,9 +2228,9 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    62px). Let the pill size to its text and centre it - the background makes the
    little width changes read as intentional rather than as the row twitching. */
 .fx-soon.near{color:var(--win-ink);background:var(--win-wash);
-  padding:2px 8px;border-radius:99px;min-width:0;justify-content:center}
+  padding:2px 8px;border-radius:var(--r-sm);min-width:0;justify-content:center}
 .sheet-collapse{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;
-  height:36px;padding:0 13px 0 10px;border-radius:99px;
+  height:36px;padding:0 13px 0 10px;border-radius:var(--r-chip);
   border:1px solid var(--line);background:var(--card-2);color:var(--soft);
   font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;
   transition:background .16s,color .16s,border-color .16s,transform .12s}
@@ -2322,7 +2333,7 @@ html.locked{overflow:hidden}
    and not as a call to action. Tactile on press, like every other button on
    the site. */
 .none-reset{margin-top:16px;background:var(--raise);color:var(--text);
-  border:1px solid var(--line);border-radius:999px;padding:9px 18px;
+  border:1px solid var(--line);border-radius:var(--r-chip);padding:9px 18px;
   font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
   transition:border-color .15s ease,background .15s ease,transform .06s ease}
 .none-reset:active{transform:scale(.98)}
@@ -2368,7 +2379,7 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
 .foot-links a,.foot-links button{display:inline-flex;align-items:center;gap:7px;
   background:transparent;border:1px solid var(--line);color:var(--soft);
   font:inherit;font-size:12.5px;font-weight:600;line-height:1;
-  padding:8px 13px;border-radius:99px;cursor:pointer;text-decoration:none;
+  padding:8px 13px;border-radius:var(--r-chip);cursor:pointer;text-decoration:none;
   transition:background .16s ease,border-color .16s ease,color .16s ease,transform .12s ease}
 .foot-links svg{width:14px;height:14px;flex:0 0 auto}
 @media (hover:hover){
@@ -2405,12 +2416,12 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
 .contact-mail a:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:3px}
 .contact-mail .c-copy{flex:0 0 auto;background:transparent;border:1px solid var(--line);
   color:var(--soft);font:inherit;font-size:12px;font-weight:700;padding:5px 11px;
-  border-radius:99px;cursor:pointer;transition:border-color .16s,color .16s}
+  border-radius:var(--r-chip);cursor:pointer;transition:border-color .16s,color .16s}
 @media (hover:hover){.contact-mail .c-copy:hover{border-color:var(--faint);color:var(--text)}}
 .contact-mail .c-copy:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .contact-acts{display:flex;gap:9px;flex-wrap:wrap}
 .contact-acts a,.contact-acts button{display:inline-flex;align-items:center;gap:7px;
-  border-radius:99px;padding:9px 15px;font:inherit;font-size:13px;font-weight:700;
+  border-radius:var(--r-chip);padding:9px 15px;font:inherit;font-size:13px;font-weight:700;
   cursor:pointer;text-decoration:none;border:1px solid var(--line);
   background:var(--card-2);color:var(--soft);transition:background .16s,border-color .16s,color .16s}
 .contact-acts .primary{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
@@ -2483,10 +2494,10 @@ footer{margin-top:44px;border-top:1px solid var(--line);padding-top:26px;
    same two words inside a recessed rail read as a switch, and that is the
    whole difference between "no buttons" and a segmented control. */
 .nav{background:var(--raise);border:1px solid var(--line);
-  border-radius:999px;padding:3px;gap:2px}
+  border-radius:var(--r-seg);padding:3px;gap:2px}
 .navt{background:transparent;border:1px solid transparent;color:var(--soft);
   font:inherit;font-weight:800;font-size:14px;padding:7px 15px;
-  border-radius:999px;cursor:pointer;white-space:nowrap;position:relative;
+  border-radius:var(--r-chip);cursor:pointer;white-space:nowrap;position:relative;
   transition:background .18s ease,color .18s ease,border-color .18s ease,
              transform .12s ease,box-shadow .18s ease}
 /* The selected tab is LIFTED off the track rather than filled in. A flat
@@ -2654,7 +2665,7 @@ html.mode-live #live{display:block}
 .ticker .tk-item.tk-draw .tk-sc{color:var(--text)!important}
 .tk-ic{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;flex-shrink:0}
 .tk-tag{font-size:9.5px;font-weight:800;
-  padding:3px 9px;border-radius:99px}
+  padding:3px 9px;border-radius:var(--r-sm)}
 .tk-goal .tk-tag{background:var(--green-wash);color:var(--green-ink)}
 .tk-ht .tk-tag{background:var(--raise);color:var(--soft)}
 .tk-ft .tk-tag{background:var(--raise);color:var(--faint)}
@@ -2705,13 +2716,13 @@ html.mode-live #live{display:block}
 .lv-selwrap{margin:2px 0 14px}
 .lv-tabs{display:flex;gap:8px;margin:0 0 12px}
 .lv-tab{background:var(--card-2);border:1px solid var(--line);color:var(--soft);font:inherit;
-  font-weight:800;font-size:12.5px;padding:7px 14px;border-radius:99px;cursor:pointer}
+  font-weight:800;font-size:12.5px;padding:7px 14px;border-radius:var(--r-chip);cursor:pointer}
 .lv-tab.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
 .lv-tab i{font-style:normal;background:rgba(255,255,255,.22);border-radius:99px;
   padding:0 6px;margin-left:4px;font-size:11px}
 .lv-lgs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
 .lv-lg-chip{background:var(--card-2);border:1px solid var(--line-soft);color:var(--soft);font:inherit;
-  font-weight:700;font-size:11.5px;padding:5px 11px;border-radius:99px;cursor:pointer}
+  font-weight:700;font-size:11.5px;padding:5px 11px;border-radius:var(--r-chip);cursor:pointer}
 .lv-lg-chip.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
 .lv-star{background:none;border:0;padding:0 0 0 8px;cursor:pointer;flex-shrink:0;
   color:var(--faint);font-size:15px;line-height:1}
@@ -2732,7 +2743,7 @@ html.mode-live #live{display:block}
 .lv-tip{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12.5px;font-weight:700;flex-wrap:wrap}
 .lv-tip .lbl{color:var(--soft);font-weight:600}
 .lv-badge{font-size:11px;font-weight:800;
-  padding:4px 9px;border-radius:99px}
+  padding:4px 9px;border-radius:var(--r-sm)}
 .lv-badge.win{background:var(--green-wash);color:var(--green-ink)}
 .lv-badge.lose{background:var(--red-wash);color:var(--red-ink)}
 .lv-badge.level{background:var(--raise);color:var(--soft)}
@@ -2746,7 +2757,7 @@ html.mode-live #live{display:block}
 .lv-seg::-webkit-scrollbar{display:none}
 .lv-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;background:var(--card);
   border:1px solid var(--line-soft);color:var(--soft);font:inherit;font-weight:700;font-size:13px;
-  padding:8px 13px;border-radius:99px;cursor:pointer;white-space:nowrap}
+  padding:8px 13px;border-radius:var(--r-chip);cursor:pointer;white-space:nowrap}
 .lv-chip .flag{width:18px;height:13px}
 .lv-chip .n{color:var(--faint);font-variant-numeric:tabular-nums}
 .lv-chip.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
@@ -2773,7 +2784,7 @@ html.mode-live #live{display:block}
   border-radius:var(--r-sm);box-shadow:0 4px 14px rgba(0,0,0,.4);
   animation:goalBadgeIn 3s ease-out forwards;pointer-events:none;z-index:2}
 .goal-tag{display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;
-  color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;
+  color:#04210f;background:var(--green);padding:2px 6px;border-radius:var(--r-sm);
   margin-right:6px;vertical-align:middle;animation:goalTagPop .35s ease-out}
 @keyframes goalTagPop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
 .lv-sc.scored{position:relative;color:var(--red-ink)!important;z-index:1}
@@ -2789,9 +2800,9 @@ html.mode-live #live{display:block}
 .bld-head p{color:var(--soft);font-size:14px;max-width:52ch;margin-bottom:16px}
 
 /* Mode toggle - premium segmented control */
-.bld-mode{display:inline-flex;background:var(--card-2);border:1px solid var(--line);border-radius:99px;padding:3px;gap:2px}
+.bld-mode{display:inline-flex;background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-seg);padding:3px;gap:2px}
 .bld-mode-btn{display:inline-flex;align-items:center;gap:8px;background:none;border:0;font:inherit;font-weight:700;font-size:13px;color:var(--soft);
-  padding:8px 16px;border-radius:99px;cursor:pointer;white-space:nowrap;
+  padding:8px 16px;border-radius:var(--r-chip);cursor:pointer;white-space:nowrap;
   transition:background .15s,color .15s,box-shadow .15s}
 .bld-mode-btn svg{flex-shrink:0;opacity:.8;transition:opacity .15s}
 .bld-mode-btn:hover{color:var(--text);background:var(--card)}
@@ -2906,7 +2917,7 @@ html{interpolate-size:allow-keywords}
 .risk:active~.risk-bubble{transform:translateY(-4px) scale(1.06)}
 @media (prefers-reduced-motion:reduce){.risk-bubble,.risk::-webkit-slider-thumb{transition:none}}
 .mkts{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px;padding-top:15px;border-top:1px solid var(--line-soft)}
-.mkt{font-size:12px;font-weight:700;padding:6px 11px;border-radius:99px;
+.mkt{font-size:12px;font-weight:700;padding:6px 11px;border-radius:var(--r-chip);
   background:var(--raise);color:var(--faint);border:1px solid transparent;transition:all .15s}
 .mkt.on{background:var(--green-wash);color:var(--green-ink);border-color:var(--green)}
 
@@ -2941,7 +2952,7 @@ html{interpolate-size:allow-keywords}
 .mkt-chip{display:inline-flex;align-items:center;justify-content:center;
   gap:5px;background:var(--card-2);
   border:1px solid var(--line);color:var(--soft);font:inherit;font-weight:700;
-  font-size:12.5px;padding:7px 11px;border-radius:99px;cursor:pointer;
+  font-size:12.5px;padding:7px 11px;border-radius:var(--r-chip);cursor:pointer;
   min-width:0;white-space:nowrap;
   transition:background .15s,border-color .15s,color .15s,opacity .15s,transform .1s,box-shadow .15s}
 .mkt-chip:hover:not(.locked){border-color:var(--faint);transform:translateY(-1px)}
@@ -3269,7 +3280,7 @@ html{interpolate-size:allow-keywords}
 .bookpick[hidden]{display:none}
 .bookpick-l{font-size:11px;font-weight:700;
   color:var(--faint);margin-right:1px}
-.bp{font:inherit;font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:99px;
+.bp{font:inherit;font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:var(--r-chip);
   border:1px solid transparent;cursor:pointer;white-space:nowrap;line-height:1.15;
   display:inline-flex;align-items:center;min-height:30px;
   box-shadow:0 1px 3px rgba(0,0,0,.28);
@@ -3493,7 +3504,7 @@ html{interpolate-size:allow-keywords}
 .byo-side:not(:has(.byo-job:not([disabled]))) .byo-jobs{display:none}
 .byo-side:has(.byo-job:not([disabled])) .byo-teaser{display:none}
 .byo-book{display:inline-flex;background:var(--card-2);border:1px solid var(--line);
-  border-radius:99px;padding:3px;gap:2px;flex:0 0 auto}
+  border-radius:var(--r-chip);padding:3px;gap:2px;flex:0 0 auto}
 /* THE TOGGLE WEARS THEIR COLOURS.
    A booking code belongs to one bookmaker and picking the wrong one is the
    commonest way a read fails, so the choice should look like the logo on the
@@ -3503,7 +3514,7 @@ html{interpolate-size:allow-keywords}
    Unpicked, a mark is dimmed rather than recoloured: greying out a brand makes
    it somebody else's brand. */
 .byo-b{font:inherit;font-size:12px;font-weight:700;padding:6px 12px;border:0;
-  border-radius:99px;background:none;cursor:pointer;line-height:1;
+  border-radius:var(--r-chip);background:none;cursor:pointer;line-height:1;
   transition:background .15s,box-shadow .15s,opacity .15s}
 .byo-b .sbm,.byo-b .b9m,.byo-b .bkm,.byo-b .bwm,.byo-b .xbm{font-size:12.5px;letter-spacing:-.01em}
 .byo-b:not(.on){opacity:.5}
@@ -3697,7 +3708,7 @@ html{interpolate-size:allow-keywords}
    at .42, so the row reads as one family without four filled pills shouting at
    each other; the selected one takes the full fill. */
 .sf-chip{font:inherit;font-size:12px;font-weight:700;padding:5px 11px;
-  border-radius:99px;border:1px solid var(--accent-rim);background:var(--card);
+  border-radius:var(--r-chip);border:1px solid var(--accent-rim);background:var(--card);
   color:var(--soft);cursor:pointer;transition:color .15s,border-color .15s}
 .sf-chip.on{color:var(--on-accent);background:var(--accent);border-color:var(--accent)}
 @media (hover:hover){.sf-chip:not(.on):hover{color:var(--text);border-color:var(--accent)}}
@@ -3711,7 +3722,7 @@ html{interpolate-size:allow-keywords}
 .sf-row{display:grid;grid-template-columns:1fr auto;column-gap:10px;align-items:center}
 .sf-row .sf-g,.sf-row .sf-m{grid-column:1}
 .sf-keep{grid-column:2;grid-row:1/3;align-self:center;justify-self:end;
-  font:inherit;font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:99px;
+  font:inherit;font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:var(--r-chip);
   border:1px solid var(--line);background:var(--card);color:var(--soft);
   cursor:pointer;white-space:nowrap;
   transition:color .15s,border-color .15s,background .15s}
@@ -3740,7 +3751,7 @@ html{interpolate-size:allow-keywords}
 @media (hover:hover){.byo-cancel:hover,.byo-reset:hover{color:var(--text);
   border-color:var(--soft)}}
 .byo-clear{float:right;font:inherit;font-size:11.5px;font-weight:700;
-  padding:3px 9px;border-radius:99px;background:transparent;cursor:pointer;
+  padding:3px 9px;border-radius:var(--r-chip);background:transparent;cursor:pointer;
   border:1px solid var(--line);color:var(--faint)}
 @media (hover:hover){.byo-clear:hover{color:var(--text);border-color:var(--soft)}}
 /* A switch Auto is holding down: still readable, clearly not yours to move. */
@@ -3940,7 +3951,7 @@ html{interpolate-size:allow-keywords}
    declares - so the pill reads as their badge rather than as another of our
    buttons. Dark enough for white type at any weight. */
 .code-also .code-open-alt{font-size:10.5px;font-weight:700;padding:5px 11px;
-  border-radius:99px;letter-spacing:.01em;text-decoration:none;white-space:nowrap;
+  border-radius:var(--r-chip);letter-spacing:.01em;text-decoration:none;white-space:nowrap;
   background:#282450;color:#fff;border:0;transition:filter .16s}
 .code-also .code-open-alt:hover{filter:brightness(1.35)}
 /* The dot in "football.com" takes their lime, #9FF611 - the accent that runs
@@ -3950,7 +3961,7 @@ html{interpolate-size:allow-keywords}
 /* Telegram's own blue, on every book's card colour - a quiet pill, not a
    second call to action competing with Open in / Copy. */
 .code-tg{display:inline-flex;align-items:center;gap:7px;margin:12px auto 0;
-  padding:6px 13px;border-radius:99px;background:#229ED9;color:#fff;
+  padding:6px 13px;border-radius:var(--r-chip);background:#229ED9;color:#fff;
   font-size:11.5px;font-weight:700;text-decoration:none;transition:filter .16s}
 .code-tg svg{width:13px;height:13px;flex-shrink:0}
 .code-tg:hover{filter:brightness(1.1)}
@@ -3975,7 +3986,7 @@ html{interpolate-size:allow-keywords}
    book's card colour. */
 .cs-go{flex:0 0 auto;display:inline-flex;align-items:center;gap:3px;font:inherit;
   font-size:12.5px;font-weight:800;padding:8px 11px 8px 14px;border:0;
-  border-radius:99px;text-decoration:none;white-space:nowrap;
+  border-radius:var(--r-chip);text-decoration:none;white-space:nowrap;
   background:var(--accent);color:var(--on-accent);
   box-shadow:0 2px 10px rgba(0,0,0,.3);
   transition:transform .14s var(--ease-out),filter .14s var(--ease-out)}
@@ -4327,7 +4338,7 @@ html{interpolate-size:allow-keywords}
 /* brand loader */
 .netpill{position:fixed;left:50%;top:14px;transform:translateX(-50%) translateY(-140%);
   z-index:400;display:inline-flex;align-items:center;gap:8px;
-  background:var(--card);border:1px solid var(--line);border-radius:99px;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r-chip);
   padding:8px 15px;font-size:12.5px;font-weight:800;color:var(--text);
   box-shadow:0 8px 24px rgba(0,0,0,.4);transition:transform .35s cubic-bezier(.3,.9,.3,1),opacity .3s;opacity:0}
 .netpill.show{transform:translateX(-50%) translateY(0);opacity:1}
@@ -4609,7 +4620,7 @@ button.wsp-go.waiting{opacity:.55}
 @media(prefers-reduced-motion:reduce){.wsp-nudge{animation:none}}
 .wsp-chips{display:flex;flex-wrap:wrap;gap:8px}
 .wsp-chip{background:var(--card-2);border:1px solid var(--line);color:var(--soft);font:inherit;
-  font-weight:700;font-size:13px;padding:9px 15px;border-radius:99px;cursor:pointer}
+  font-weight:700;font-size:13px;padding:9px 15px;border-radius:var(--r-chip);cursor:pointer}
 .wsp-chip.on{background:var(--red-fill);border-color:var(--red-fill);color:#fff}
 /* Slip style pills.
    The labels now carry the trade-off ("More games / smaller odds"), which is
@@ -4665,7 +4676,7 @@ button.wsp-go.waiting{opacity:.55}
 .sld-back[hidden]{display:none}
 .wsp-slider-link{position:relative;display:inline-flex;align-items:center;gap:8px;
   max-width:100%;margin:4px 0 0;padding:9px 14px;
-  border:1px solid var(--win);border-radius:99px;background:var(--win-wash);
+  border:1px solid var(--win);border-radius:var(--r-chip);background:var(--win-wash);
   color:var(--win-ink);font:inherit;font-size:12.5px;font-weight:700;
   letter-spacing:.01em;text-decoration:none;cursor:pointer;
   transition:border-color .18s ease,background .18s ease;
@@ -4830,7 +4841,7 @@ button.wsp-go.waiting{opacity:.55}
    and a full-height button there would push the list down the screen. */
 .lgp-clear{background:var(--card-2);border:1px solid var(--line);
   color:var(--red-ink);font:inherit;font-weight:700;font-size:12.5px;
-  cursor:pointer;padding:8px 13px;border-radius:999px;line-height:1;
+  cursor:pointer;padding:8px 13px;border-radius:var(--r-chip);line-height:1;
   flex:0 0 auto;transition:background .15s,border-color .15s}
 @media(hover:hover){.lgp-clear:hover{background:var(--raise);border-color:var(--faint)}}
 .lgp-clear:active{transform:translateY(1px)}
@@ -5098,7 +5109,7 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
 @keyframes streakFlat{from{opacity:0}to{opacity:1}}
 .goal-tag{position:absolute;right:calc(100% + 6px);top:50%;transform:translateY(-50%);
   display:inline-flex;align-items:center;font-size:10.5px;font-weight:800;
-  color:#04210f;background:var(--green);padding:2px 6px;border-radius:99px;white-space:nowrap;z-index:2}
+  color:#04210f;background:var(--green);padding:2px 6px;border-radius:var(--r-sm);white-space:nowrap;z-index:2}
 .lv-sc{font-weight:600}
 .lv.ft-row .lv-sc{font-weight:800}
 .streak b{color:var(--win);font-weight:800}
@@ -5160,7 +5171,7 @@ html.scrolling .myfab,html.scrolling .wspfab{opacity:.3}
   font-size:13px;color:var(--soft)}
 .notif>span{flex:1 1 180px;min-width:0}
 .notif button{background:var(--raise);border:1px solid var(--line);color:var(--text);
-  font:inherit;font-weight:700;font-size:12.5px;padding:7px 13px;border-radius:99px;
+  font:inherit;font-weight:700;font-size:12.5px;padding:7px 13px;border-radius:var(--r-chip);
   cursor:pointer;flex:0 0 auto;white-space:nowrap}
 .notif button.on{background:var(--green-wash);color:var(--green-ink);border-color:var(--green)}
 .powered{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
@@ -5283,7 +5294,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 @media(max-width:720px){
   .fbtn{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
     background:var(--card-2);border:1px solid var(--line);color:var(--soft);
-    font:inherit;font-weight:700;font-size:12px;padding:8px 12px;border-radius:99px;
+    font:inherit;font-weight:700;font-size:12px;padding:8px 12px;border-radius:var(--r-chip);
     cursor:pointer;position:relative;min-height:36px;
     transition:color .15s,border-color .15s,background .15s}
   .fbtn svg{width:14px;height:14px;flex:none}
@@ -5536,16 +5547,16 @@ select{min-height:44px;padding:10px 32px 10px 12px}
    slip is in a sheet, so a fourth floating thing is the clutter we removed. */
 .bld-dock{position:fixed;top:74px;right:22px;z-index:115;
   display:flex;align-items:center;gap:8px;padding:6px;
-  background:var(--card);border:1px solid var(--line);border-radius:99px;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r-seg);
   box-shadow:0 8px 26px rgba(0,0,0,.34);
   opacity:0;transform:translateY(-8px);pointer-events:none;
   transition:opacity .22s ease,transform .22s ease}
 .bld-dock.on{opacity:1;transform:translateY(0);pointer-events:auto}
 .bld-dock[hidden]{display:none}
 html:not(.mode-build) .bld-dock{display:none}
-.bd-mode{display:flex;gap:2px;background:var(--card-2);border-radius:99px;padding:2px}
+.bd-mode{display:flex;gap:2px;background:var(--card-2);border-radius:var(--r-seg);padding:2px}
 .bd-m{background:none;border:0;font:inherit;font-weight:700;font-size:12px;
-  color:var(--soft);padding:6px 12px;border-radius:99px;cursor:pointer;
+  color:var(--soft);padding:6px 12px;border-radius:var(--r-chip);cursor:pointer;
   transition:background .15s,color .15s}
 .bd-m:hover{color:var(--text)}
 .bd-m.on{color:#fff;background:var(--red-fill)}
@@ -5627,8 +5638,11 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
    Anchored to the card it is talking about, inside it, so there is no
    positioning to go wrong on a narrow screen and nothing covering content. */
 .coach{display:flex;align-items:center;gap:10px;margin:0 10px 10px;
-  padding:10px 12px;border:1px solid var(--red);border-radius:var(--r-md);
-  background:var(--red-wash);position:relative}
+  padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-md);
+  background:var(--card-2);position:relative}
+/* Neutral card (13 Oct 2026): a red-framed tip under a red-ringed pick under
+   red chips put three red frames on one screen, so none of them pointed.
+   The ring on the pick is the one red thing now. */
 /* A list row is an eight-column grid, so appending the coach to it auto-placed
    it into a cell: on desktop that rendered as a 26px-wide, 572px-tall column of
    single words. It has to span the row. Written against any grid parent, not
@@ -5641,7 +5655,7 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
 /* Dismissing a tip is the quietest action on the page; it does not need a
    filled red block. */
 .coach-x{flex-shrink:0;background:transparent;color:var(--soft);
-  border:1px solid var(--line);border-radius:99px;font:inherit;font-size:11.5px;
+  border:1px solid var(--line);border-radius:var(--r-chip);font:inherit;font-size:11.5px;
   font-weight:700;padding:6px 14px;cursor:pointer;
   transition:color .15s,border-color .15s,background .15s}
 .coach-x:hover{color:var(--text);border-color:var(--faint);background:var(--card-2)}
@@ -5723,7 +5737,7 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
 .daily-foot{margin-top:9px;font-size:12px;color:var(--soft);line-height:1.45}
 .daily-foot b{color:var(--text);font-weight:800}
 .dl-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;
-  font-weight:800;padding:2px 8px;border-radius:99px}
+  font-weight:800;padding:2px 8px;border-radius:var(--r-chip)}
 .dl-pill.good{background:var(--green-wash);color:var(--green-ink)}
 .dl-pill.bad{background:var(--red-wash);color:var(--red-ink)}
 .daily-empty{font-size:12.5px;color:var(--soft)}
@@ -5744,7 +5758,7 @@ html.is-results #codeCard{display:none}
 .ck-when{margin-left:auto;font-size:11.5px;color:var(--faint);font-weight:700}
 /* What the slip pays, in the colour this site uses for what it favours. */
 .ck-tot{font-size:12px;font-weight:800;color:var(--accent);
-  font-variant-numeric:tabular-nums;padding:1px 7px;border-radius:99px;
+  font-variant-numeric:tabular-nums;padding:1px 7px;border-radius:var(--r-sm);
   background:rgba(242,184,75,.12)}
 /* The chip names are the bookmakers' own wordmarks, which carry their own
    colours - only the size is ours. */
@@ -5752,7 +5766,7 @@ html.is-results #codeCard{display:none}
 .ck-codes{display:flex;flex-wrap:wrap;gap:8px}
 /* Tabular numerals and wide tracking: these are read out loud and typed in. */
 .ck-chip{display:inline-flex;align-items:center;gap:8px;cursor:pointer;
-  border:1px solid var(--line);border-radius:99px;background:var(--card-2);
+  border:1px solid var(--line);border-radius:var(--r-chip);background:var(--card-2);
   color:var(--text);padding:6px 12px;font:inherit;font-size:12px;
   transition:border-color 140ms var(--ease-out),transform 140ms var(--ease-out)}
 .ck-chip b{font-weight:700;color:var(--soft);font-size:11.5px}
@@ -5784,7 +5798,7 @@ html.is-results #codeCard{display:none}
    to the reader's own book; /booking-codes keeps every book and every day. */
 .ck-tabs{display:flex;gap:4px;flex-wrap:wrap;margin:0 0 10px}
 .ck-tab{font:inherit;font-size:11.5px;font-weight:700;cursor:pointer;color:var(--soft);
-  background:transparent;border:1px solid var(--line);border-radius:99px;padding:4px 10px;
+  background:transparent;border:1px solid var(--line);border-radius:var(--r-chip);padding:4px 10px;
   transition:border-color 140ms var(--ease-out),background 140ms var(--ease-out)}
 .ck-tab .sbm,.ck-tab .b9m,.ck-tab .bkm,.ck-tab .bwm,.ck-tab .xbm{font-size:11.5px}
 .ck-tab[aria-selected="true"]{border-color:var(--accent);background:rgba(242,184,75,.12);color:var(--text)}
@@ -6030,6 +6044,8 @@ html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
   /* "SportyBet code in one tap" says what the button under it says, and it
      cost the trust row a second line. */
   .trust .trust-i.t-sporty{display:none}
+  /* With the SportyBet item gone, "Updated" leads the row: no hairline before it. */
+  .trust .trust-i.t-sporty+.trust-i::before{display:none}
   /* X and Telegram are in the header on every screen; "All books & past
      codes" is the same page as the card's own heading and the line beside
      it, and on a phone it wrapped the foot to a second line. */
@@ -6344,7 +6360,7 @@ button#wspGo::after{content:'';position:absolute;inset:0;border-radius:inherit;p
 /* Save and Share: what you might do next, as one quiet pair. */
 .code-next{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .code-card--modal .code-next .share-btn{font-size:12.5px;font-weight:700;padding:8px 16px;
-  border-radius:99px;color:#fff;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.22);
+  border-radius:var(--r-chip);color:#fff;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.22);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 1px 4px rgba(0,0,0,.28)}
 @media(hover:hover){ .code-card--modal .code-next .share-btn:hover{background:rgba(0,0,0,.42)} }
 /* Telegram and X: small print at the foot, after the moment. */
@@ -6624,7 +6640,7 @@ html.sw-gate-known #swGate .sw-g-under{display:none}
 html.sw-gate-known #swGate .sw-g-panel{animation-delay:.18s}
 html.sw-gate-known #swGate .sw-g-skip{
   display:inline-flex; align-items:center; justify-content:center;
-  border:1.5px solid rgba(201,201,206,.42); border-radius:999px;
+  border:1.5px solid rgba(201,201,206,.42); border-radius:var(--r-chip);
   padding:10px 26px; color:#E8E8EC; background:rgba(13,13,15,.35);
   -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
   margin-top:2px;
@@ -6647,7 +6663,7 @@ html.sw-gate-known #swGate .sw-g-skip{
 #swGate .sw-g-enter{
   position:relative; overflow:hidden; appearance:none; cursor:pointer; margin-top:4px;
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
-  min-width:min(268px,74vw); padding:13px 30px 13px 40px; border-radius:999px;
+  min-width:min(268px,74vw); padding:13px 30px 13px 40px; border-radius:var(--r-chip);
   background:linear-gradient(135deg,#6d1017,#E63946 55%,#9c1620); color:#fff;
   border:1.5px solid rgba(242,184,75,.62);
   font:inherit; font-weight:800; font-size:15.5px; letter-spacing:.03em;
@@ -6987,13 +7003,13 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 #bldShared .filters-toggle .ft-t{font-size:15px;font-weight:800;letter-spacing:-.01em;color:var(--text)}
 #bldShared .filters-toggle .ft-chev{width:20px;height:20px;color:var(--faint);transform:none}
 #bldShared .filters-toggle .ft-r{display:inline-flex;align-items:center}
-#bldShared .filters-toggle .ft-hide{display:none;height:26px;padding:0 11px;border-radius:99px;border:1px solid var(--line);
+#bldShared .filters-toggle .ft-hide{display:none;height:26px;padding:0 11px;border-radius:var(--r-chip);border:1px solid var(--line);
   align-items:center;font-size:12.5px;font-weight:800;color:var(--soft)}
 #bldShared .filters-toggle[aria-expanded="true"] .ft-hide{display:inline-flex}
 #bldShared .filters-toggle[aria-expanded="true"] .ft-chev{display:none}
 #bldShared .filters-toggle .ft-sum{grid-column:2/4;display:flex;flex-wrap:wrap;gap:6px;text-align:left}
 #bldShared .filters-toggle[aria-expanded="true"] .ft-sum{display:none}
-#bldShared .ft-tok{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:99px;
+#bldShared .ft-tok{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:var(--r-chip);
   background:var(--card-2);border:1px solid var(--line);font-size:12px;font-weight:700;color:var(--soft);white-space:nowrap}
 #bldShared .ft-tok b{color:var(--text);font-weight:800;font-variant-numeric:tabular-nums}
 #bldShared .filters-body{background:var(--card);border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;
@@ -7005,9 +7021,9 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 #bldShared .filters-toggle[aria-expanded="true"]{border-radius:12px 12px 0 0;border-bottom-color:var(--line-soft)}
 #bldShared .fs-lbl{display:block;margin:18px 0 8px;font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--soft)}
 #bldShared .filters-col1>.fs-lbl:first-child{margin-top:4px}
-#bldShared .scope-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:4px;border-radius:99px;
+#bldShared .scope-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:4px;border-radius:var(--r-seg);
   background:var(--bg);border:1px solid var(--line);margin:0}
-#bldShared .scope-opt{height:32px;border-radius:99px;font-size:13px;font-weight:700;color:var(--soft);display:flex;align-items:center;justify-content:center;gap:7px;padding:0 8px}
+#bldShared .scope-opt{height:32px;border-radius:var(--r-chip);font-size:13px;font-weight:700;color:var(--soft);display:flex;align-items:center;justify-content:center;gap:7px;padding:0 8px}
 #bldShared .scope-opt.on{background:var(--raise);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.35),inset 0 0 0 1px var(--line)}
 #bldShared .so-n{background:none;padding:0;font-size:12px;font-weight:800;color:var(--faint);font-variant-numeric:tabular-nums}
 #bldShared .scope-opt.on .so-n{background:none;color:var(--accent)}
@@ -7015,8 +7031,8 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 #bldShared .tod-seg .scope-opt{height:40px;flex-direction:column;gap:1px;font-size:12.5px;border:1px solid var(--line);padding:0 4px}
 #bldShared .tod-seg .scope-opt.on{background:none;box-shadow:none;border-color:var(--text)}
 #bldShared .tod-seg .so-n{font-size:11.5px}
-#bldShared .lg-seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:99px;background:var(--bg);border:1px solid var(--line)}
-#bldShared .lg-seg button{height:32px;border-radius:99px;border:0;background:none;color:var(--soft);font:inherit;font-size:13px;font-weight:700;
+#bldShared .lg-seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:var(--r-seg);background:var(--bg);border:1px solid var(--line)}
+#bldShared .lg-seg button{height:32px;border-radius:var(--r-chip);border:0;background:none;color:var(--soft);font:inherit;font-size:13px;font-weight:700;
   display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;white-space:nowrap}
 #bldShared .lg-seg button svg{width:14px;height:14px}
 #bldShared .lg-seg button.on{background:var(--raise);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.35),inset 0 0 0 1px var(--line)}
@@ -7024,7 +7040,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 #bldShared .fav-line{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
 #bldShared .fav-line p{margin:0;font-size:12.5px;font-weight:600;line-height:1.35;color:var(--faint);min-width:0}
 #bldShared .fav-line p b{color:var(--soft);font-weight:700}
-#bldShared .fav-edit{flex:none;height:28px;padding:0 11px;border-radius:99px;border:1px solid var(--accent-rim);background:none;color:var(--accent);
+#bldShared .fav-edit{flex:none;height:28px;padding:0 11px;border-radius:var(--r-chip);border:1px solid var(--accent-rim);background:none;color:var(--accent);
   font:inherit;font-size:12.5px;font-weight:800;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
 #bldShared .fav-edit svg{width:14px;height:14px}
 #bldShared .mk-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:2px}
@@ -7038,7 +7054,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 #bldShared .mk-grp+.mk-grp{margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft)}
 #bldShared .mk-grp-t{margin:0 0 6px;font-size:12px;line-height:1.25;font-weight:700;color:var(--soft)}
 #bldShared .mk-chips{display:flex;flex-wrap:wrap;gap:6px}
-#bldShared .mkt-chip{height:30px;padding:0 11px;border-radius:99px;font-size:12.5px;font-weight:700;gap:5px;white-space:nowrap;width:auto;
+#bldShared .mkt-chip{height:30px;padding:0 11px;border-radius:var(--r-chip);font-size:12.5px;font-weight:700;gap:5px;white-space:nowrap;width:auto;
   /* NO SHAPE CHANGE, EVER (owner, 11 Oct 2026). Colour moves, the pill does
      not: no hover lift or scale, no tick on "on" (see chipOf). */
   transform:none;transition:background-color .12s var(--ease-out),border-color .12s var(--ease-out),color .12s var(--ease-out)}
@@ -7069,7 +7085,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 }
 /* the favourite leagues sheet */
 .fav-sheet .sheet-body{padding:0 0 8px}
-.fav-find{display:flex;align-items:center;gap:10px;margin:12px 16px 4px;height:46px;min-height:46px;flex-shrink:0;padding:0 16px;border-radius:99px;
+.fav-find{display:flex;align-items:center;gap:10px;margin:12px 16px 4px;height:46px;min-height:46px;flex-shrink:0;padding:0 16px;border-radius:var(--r-chip);
   border:1px solid var(--line);background:var(--bg);color:var(--faint)}
 .fav-find svg{width:16px;height:16px;flex:none}
 .fav-find input{flex:1;min-width:0;border:0;background:none;color:var(--text);font:inherit;font-size:14px;font-weight:600;outline:none}
@@ -7086,7 +7102,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 .fav-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px calc(16px + env(safe-area-inset-bottom));
   border-top:1px solid var(--line);flex-shrink:0}
 .fav-reset{background:none;border:0;padding:8px 0;font:inherit;font-size:13px;font-weight:700;color:var(--soft);cursor:pointer}
-.fav-done{height:42px;padding:0 22px;border-radius:99px;border:0;background:var(--red-fill);color:#fff;font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+.fav-done{height:42px;padding:0 22px;border-radius:var(--r-chip);border:0;background:var(--red-fill);color:#fff;font:inherit;font-size:14px;font-weight:800;cursor:pointer}
 @media (hover:hover){ .fav-reset:hover{color:var(--text)} .fav-star:hover{color:var(--text)} }
 /* DISPLAY FACE. Asked: "dont you think the font style is an a.i giveaway?" -
    Plus Jakarta on everything, plus a coloured second half on every headline,
@@ -7522,7 +7538,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
     <div class="trust parallax-shallow stage-in stage-in-2" data-parallax="0.8">
       <!-- The thing most people come for, said plainly and said first. -->
       <span class="trust-i t-sporty"><span class="bk-line"><b class="bkc" id="bkCycle" aria-label="SportyBet, Bet9ja, BetKing, betPawa, 1xBet or football.com"><i class="bkc-i on" data-bk="sporty">SportyBet</i><i class="bkc-i" data-bk="b9"><span class="b9r">bet</span><span class="b9g">9ja</span></i><i class="bkc-i" data-bk="bk"><span class="bkk">Bet</span><span class="bkg">King</span></i><i class="bkc-i" data-bk="bw"><span class="bwb">bet</span><span class="bwp">Pawa</span></i><i class="bkc-i" data-bk="xb">1X<span class="xbb">BET</span></i><i class="bkc-i" data-bk="fb">football<span class="fb-dot">.</span>com</i></b> code in one tap</span></span>
-      <span class="trust-i"><b id="when2">-</b> last updated</span>
+      <span class="trust-i">Updated <b id="when2">-</b></span>
       <span class="trust-i" id="streak" hidden></span>
       <!-- "Rebuilt daily from results" lived here and said the same thing as
            the dated "last updated" item forty pixels to its left. Six items on
@@ -7562,7 +7578,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
           </span>
         </div>
         <div class="sc-actions">
-          <button class="wsp-go sc-go-btn sc-go-primary" data-scmode="wizard" type="button"><span class="sc-lbl">Build me a <span class="sbm">SportyBet</span> slip</span><span class="sc-go-arw" aria-hidden="true">→</span></button>
+          <button class="wsp-go sc-go-btn sc-go-primary" data-scmode="wizard" type="button"><span class="sc-lbl">Build me a <span class="sbm">SportyBet</span> slip</span><span class="sc-go-arw" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span></button>
           <button class="slider-btn sc-go-btn" id="scBrowse" type="button">See today's predictions</button>
         </div>
         <div class="sc-proof" id="scProof" hidden></div>
@@ -9128,7 +9144,7 @@ function best(f){return Math.max(f.home_p,f.draw_p,f.away_p);}
    making them read every card to find it. */
 const CATS=[
   {k:"all",   label:"All games",   test:function(){return true;}},
-  {k:"fav",   label:"\u2605 Favourites", test:function(f){return isFav(f.league)||isFav("c:"+countryOf(f.league));}},
+  {k:"fav",   label:"Favourites", test:function(f){return isFav(f.league)||isFav("c:"+countryOf(f.league));}},
   {k:"banker",label:"80%+ picks",  test:function(f){return f.tip_p>=0.80;}},
   {k:"value", label:"\u2726 Better price", test:function(f){return isValue(f);}},
   {k:"win",   label:"Straight win", test:function(f){
@@ -19441,7 +19457,7 @@ function renderLive(){
   $("liveSub").textContent=LIVE.matches.length+" match"+(LIVE.matches.length===1?"":"es")+" in play \u00b7 updates every 30s";
   var tabs="<div class='lv-tabs'>"+
     "<button class='lv-tab"+(LIVE.favOnly?"":" on")+"' data-lvt='all' type='button'>All live</button>"+
-    "<button class='lv-tab"+(LIVE.favOnly?" on":"")+"' data-lvt='fav' type='button'>\u2605 Following"+
+    "<button class='lv-tab"+(LIVE.favOnly?" on":"")+"' data-lvt='fav' type='button'>Following"+
       (favN?" <i>"+favN+"</i>":"")+"</button></div>";
   if(LIVE.favOnly && !shown.length){
     host.innerHTML=tabs+"<div class='live-empty'><b>No followed matches in play</b>"+
@@ -22865,7 +22881,7 @@ function renderWizardPanel(){
     html += "<div class='wsp-lbl wsp-auto-lbl'>Auto</div>";
     html += "<button class='wsp-slider-link' id='wspToSlider' type='button'>"+
       "<span class='wsl-t'>Let the Slider pick</span>"+
-      "<span class='wsl-a' aria-hidden='true'>\u2192</span></button>";
+      "<span class='wsl-a' aria-hidden='true'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12h13M13 6l6 6-6 6'/></svg></span></button>";
     html += "</div>";
   }
   /* ONE BUTTON, AND IT GOES STRAIGHT TO THE SLIP (owner, 8 Oct 2026: "add to

@@ -36,7 +36,8 @@ Dark is the default; light comes from `prefers-color-scheme`. App values:
 --win / --accent #F2B84B  --on-accent #14120E  --accent-rim rgba(242,184,75,.42)
 --grey #5A5762
 --ease-out cubic-bezier(0.23,1,0.32,1)
---r-sm 4px  --r-md 6px  --r-lg 8px   (pills use 99px)
+--r-sm 4px  --r-md 6px  --r-lg 8px  --r-chip 6px  --r-seg 8px
+(99px only for dots, progress tracks, counters and the round floating buttons)
 ```
 
 Light: `--bg #E9E4DA`, `--card #F4F1EA`, `--text #1C1A18`, `--faint #65605A`,
@@ -88,12 +89,29 @@ still all Plus Jakarta Sans.
 ## Components
 
 - **Cards**: `background:var(--card)`, `1px solid var(--line)`, 12px radius.
-- **Pills and chips**: `border-radius:99px`, `1px solid var(--line)`,
-  12-12.5px/600-800, 8/13px padding. A chip that acts uses `--card2` on hover.
-- **A pill that does something is filled**: solid `--red-fill` (Install, All
-  games) or solid `--accent` gold (Share your win, Make it safer), 12.5px/800,
-  8/14px. A translucent or outlined pill reads as a label, not a button, and
-  another brand's colour reads as their badge (the owner, 24 Sep 2026).
+- **Chips and buttons**: `border-radius:var(--r-chip)` (6px), `1px solid
+  var(--line)`, 12-12.5px/600-800, 8/13px padding. A chip that acts uses
+  `--card2` on hover. A tray holding a row of them (segmented controls, the
+  nav) is `var(--r-seg)` (8px); small tags and grade badges are `--r-sm`.
+  They were all 99px pills until 13 Oct 2026, when pills on everything were
+  judged an AI-template tell.
+- **A chip that does something is filled**: solid `--red-fill` (All games,
+  Build me a slip) or solid `--accent` gold (Share your win, Make it safer),
+  12.5px/800, 8/14px. A translucent or outlined chip reads as a label, not a
+  button, and another brand's colour reads as their badge (the owner, 24 Sep
+  2026). One exception: the header's Download app button is outlined in red,
+  because a filled one competed with Build me a slip right under it (13 Oct
+  2026).
+- **No glow, gloss or wallpaper.** Buttons are flat fills with no coloured
+  halo. The tab bar marks the current page with a red icon, a red label and a
+  short red bar on its top edge; no rings, no neon. The page ground is plain
+  `--bg`.
+- **No typed symbols as icons.** Arrows in buttons are drawn SVG, not "→";
+  labels such as Favourites carry no "★". A typed arrow between two values
+  ("x1.50 → x2.10") is text, and stays.
+- **One red frame per screen.** The coach card is neutral (`--card-2`,
+  `--line`) so the red ring on the pick is the one thing pointing.
+- **Stat rows** separate items with a 1px `--line` hairline, not bullet dots.
 - **An action happens where it is pressed.** Make it safer used to send the
   reader to the converter; it now does the job in the modal and shows what
   changed. Link out only when the destination is the point.
