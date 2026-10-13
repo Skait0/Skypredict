@@ -94,13 +94,13 @@ test("the Handicap chip offers the safe side on every book", () => {
 });
 
 test("the leg says which handicap it is, in both families' words", () => {
-  const mLabel = new Function(fn("esc") + fn("clubName") + fn("mLabel") + "\nreturn mLabel;")();
+  const mLabel = new Function(fn("esc") + fn("mLabel") + "\nreturn mLabel;")();
   const f = { home: "Arsenal", away: "Leeds" };
-  assert.strictEqual(mLabel(f, "AH_2_-1.5"), "Leeds United +1.5 (handicap 0:2)");
+  assert.strictEqual(mLabel(f, "AH_2_-1.5"), "Leeds +1.5 (handicap 0:2)");
   assert.strictEqual(mLabel(f, "AH_1_-1.5"), "Arsenal -1.5 (handicap 0:1)");
-  assert.strictEqual(mLabel(f, "AH_2_-2.5"), "Leeds United +2.5 (handicap 0:3)");
+  assert.strictEqual(mLabel(f, "AH_2_-2.5"), "Leeds +2.5 (handicap 0:3)");
   assert.strictEqual(mLabel(f, "AH_1_1.5"), "Arsenal +1.5 (handicap 2:0)");
-  assert.strictEqual(mLabel(f, "AH_2_1.5"), "Leeds United -1.5 (handicap 1:0)");
+  assert.strictEqual(mLabel(f, "AH_2_1.5"), "Leeds -1.5 (handicap 1:0)");
 });
 
 /* WHOLE LINES (30 Sep 2026): +1 / +2 either side, and -1 for either side.
@@ -132,9 +132,9 @@ test("whole lines are offered only where they are sold", () => {
 });
 
 test("a whole line says what happens on the exact margin", () => {
-  const mLabel = new Function(fn("esc") + fn("clubName") + fn("mLabel") + "\nreturn mLabel;")();
+  const mLabel = new Function(fn("esc") + fn("mLabel") + "\nreturn mLabel;")();
   const f = { home: "Arsenal", away: "Leeds" };
-  assert.strictEqual(mLabel(f, "AH_2_-1"), "Leeds United +1 (stake back if they lose by 1)");
+  assert.strictEqual(mLabel(f, "AH_2_-1"), "Leeds +1 (stake back if they lose by 1)");
   assert.strictEqual(mLabel(f, "AH_1_-1"), "Arsenal -1 (stake back if they win by 1)");
   assert.strictEqual(mLabel(f, "AH_1_2"), "Arsenal +2 (stake back if they lose by 2)");
 });

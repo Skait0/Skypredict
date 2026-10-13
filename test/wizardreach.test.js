@@ -90,7 +90,7 @@ const api = new Function("STUB", [
   "function slipUse(){return {};}",
   "function paintBookPickers(){} function pruneMy(){}",
   "function fixtureById(id){return FIXTURES.filter(function(f){return fid(f)===id;})[0]||null;}",
-  "function swapOptions(){return [];} function oddCell(){return '';} function esc(s){return String(s);}function clubName(n){return n;}",
+  "function swapOptions(){return [];} function oddCell(){return '';} function esc(s){return String(s);}",
   "function myOdds(){return MYSLIP.reduce(function(a,x){return a*(x.o||1);},1);}",
   "function showPrompt(){return false;} function clearPrompt(){}",
   "var XSVG=''; function inkOn(){return '#fff';}",

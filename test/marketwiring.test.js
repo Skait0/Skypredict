@@ -66,7 +66,7 @@ const api = new Function(
      never offered, and the order the rows come out in. */
   decl(/(var SWAP_NEVER=\{[^;]*\};)/, "SWAP_NEVER") +
   decl(/(var SWAP_ORDER=\[[^\]]*\];)/, "SWAP_ORDER") +
-  "function esc(s){return String(s);}function clubName(n){return n;}" +
+  "function esc(s){return String(s);}" +
   "function bookAllows(){return true;}" +
   "var DATA={cornersK:52,shotsK:41};" + grab("cornersK") + grab("cLgamma") + grab("cornersOver") +
   grab("o05Of") + grab("nr3Poisson") + grab("nr3Of") + grab("mProb") + grab("mLabel") + grab("swapOptions") +

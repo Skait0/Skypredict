@@ -59,7 +59,7 @@ function harness(book) {
   el.classList.contains = Set.prototype.has.bind(el.classList);
   const api = new Function("EL",
     "function $(id){return EL;}" +
-    "function esc(s){return String(s);}function clubName(n){return n;}" +
+    "function esc(s){return String(s);}" +
     "function fixtureById(){return null;}" +
     BOOKCTX.prelude(book) +
     grab("hasSportyMarket") + "\n" + grab("confirmDropUnpriced") + "\n" +

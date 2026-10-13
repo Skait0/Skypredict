@@ -35,7 +35,7 @@ function grab(name) {
   assert.fail("could not find the end of " + name);
 }
 
-const real = ["P0", "esc", "clubName", "fid", "tipEval", "scoreSurvives", "mirrorScore", "reconcileScore", "edgeOf", "isValue", "valPill", "conf", "verdict", "plainTip", "whyLine", "tipCode", "boardPick",
+const real = ["P0", "esc", "fid", "tipEval", "scoreSurvives", "mirrorScore", "reconcileScore", "edgeOf", "isValue", "valPill", "conf", "verdict", "plainTip", "whyLine", "tipCode", "boardPick",
   "legOdd", "oddOf", "opt", "o05Of", "bestPriceHTML", "moreHTML", "countMarkets", "matchHTML", "listRowHTML", "CATS"]
   .map(grab).join("\n");
 const stubs = `
