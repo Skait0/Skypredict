@@ -221,3 +221,13 @@ test("signing out closes the full-screen view too; delete 401 signs out; sign ou
   assert.ok(src.includes("\"/api/auth/logout-all\""));
   assert.ok(src.includes("if(code===401) return a.signedOutHere(j&&j.reason)"));
 });
+
+test("admin tabs wrap onto a second line rather than scrolling out of sight (owner, 13 Oct 2026)", () => {
+  assert.match(src, /\.swa-tabs\{display:flex;flex-wrap:wrap;/);
+  assert.doesNotMatch(src, /\.swa-tabs\{[^}]*overflow-x:auto/);
+});
+
+test("the numbers read as phrases: a count never runs into its period", () => {
+  assert.match(src, /num\(st\.landed7d\)\+" in the last 7 days"/);
+  assert.doesNotMatch(src, /"7 days "\+num\(/);
+});

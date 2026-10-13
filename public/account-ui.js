@@ -116,11 +116,13 @@
   function numbersHtml(st,board){
     var rec=board&&board.record, rows=[
       ["Readers with an account",num(st.users)],
-      ["New accounts","today "+num(st.signupsToday)+" · 7 days "+num(st.signups7d)],
-      ["Signed-in readers seen","today "+num(st.activeToday)+" · 7 days "+num(st.active7d)],
+      /* Plain phrases, so a count never runs into its period (owner, 13 Oct 2026:
+         "it just saw 7 days 10. no demarcation"). */
+      ["New accounts",num(st.signupsToday)+" today, "+num(st.signups7d)+" in the last 7 days"],
+      ["Signed-in readers seen",num(st.activeToday)+" today, "+num(st.active7d)+" in the last 7 days"],
       ["Family & friends",num(st.ffMembers)],
-      ["Codes booked","today "+num(st.codesToday)+" · 7 days "+num(st.codes7d)],
-      ["Slips that landed","7 days "+num(st.landed7d)]];
+      ["Codes booked",num(st.codesToday)+" today, "+num(st.codes7d)+" in the last 7 days"],
+      ["Slips that landed",num(st.landed7d)+" in the last 7 days"]];
     if(rec&&rec.total) rows.push(["Our picks",num(rec.correct)+" of "+num(rec.total)+" right ("+Math.round(100*rec.correct/rec.total)+"%) · last "+(rec.days||14)+" days"]);
     return rows.map(function(r){ return "<div class='swa-set'><span class='swa-st'><b>"+esc(r[0])+"</b><small>"+esc(r[1])+"</small></span></div>"; }).join("");
   }
@@ -300,7 +302,7 @@
     ".swa-view.on{transform:none;visibility:visible;transition:transform .28s cubic-bezier(.23,1,.32,1),visibility 0s}.swa-in-wrap{max-width:520px;margin:0 auto}"+
     ".swa-back{display:flex;align-items:center;gap:4px;border:0;background:none;color:var(--soft);font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:6px 4px 6px 0}.swa-back svg{width:18px;height:18px}"+
     ".swa-t{margin:0 0 16px;font-size:22px;font-weight:800;letter-spacing:-.01em}"+
-    ".swa-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:4px -2px 4px;padding:2px}.swa-tabs::-webkit-scrollbar{display:none}"+
+    ".swa-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:4px -2px 4px;padding:2px}.swa-tabs::-webkit-scrollbar{display:none}"+
     ".swa-tab{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--soft);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}"+
     ".swa-tab[aria-selected='true']{background:var(--red-fill);border-color:transparent;color:#fff}.swa-tab:focus-visible{outline:2px solid var(--red);outline-offset:2px}"+
     ".swa-tab .swa-cnt{font-size:11px;font-weight:800;opacity:.85}.swa-tab .swa-cnt:empty{display:none}"+

@@ -33,3 +33,14 @@ test("the site drops youth, reserve and women's competitions before matching any
   const i = html.indexOf("function attachEventIds(");
   assert.match(html.slice(i, i + 1500), /sporty=sporty\.filter\(function\(m\)\{ return !isSimEvent\(m\) && !leagueTag\(m\.league\); \}\);/);
 });
+
+test("the build skips the same competitions the site does, so the senior tie keeps its slot", () => {
+  const { youthComp } = require("../lib/build.js");
+  const html = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  const leagueTag = new Function(html.slice(html.indexOf("function leagueTag(s){"), html.indexOf("\n}\n", html.indexOf("function leagueTag(s){")) + 2) + "\nreturn leagueTag;")();
+  for (const l of ["International Youth UEFA Youth League", "International FIFA World Cup, Women, Qualification, UEFA",
+    "Turkiye Amateur U19 PAF Ligi", "International Clubs UEFA Champions League", "Italy Serie C, Group A", "England Premier League"]) {
+    assert.strictEqual(youthComp(l), !!leagueTag(l), l);
+  }
+  assert.strictEqual(youthComp("International Clubs UEFA Champions League"), false);
+});
