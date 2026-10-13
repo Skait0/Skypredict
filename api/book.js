@@ -48,6 +48,8 @@ const opts = {
 };
 
 module.exports = require("../lib/bookproxy.js").makeHandler({
+  /* The admin's per-bookie switch (lib/flags.js); fails open. */
+  isOff: require("../lib/flags.js").isOff,
   gate: GATE.makeGate(opts),
   record: GATE.makeRecorder(opts),
   /* Every minted code into site_slips, for grading and the admin's hits list

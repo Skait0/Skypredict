@@ -129,6 +129,40 @@ still all Plus Jakarta Sans.
   Contact us, then the two outbound links pushed right by
   `.fl-x{margin-left:auto}`), `.foot-legal` (©, `.badge18`, the estimates
   line, Privacy and Terms as plain links, `.rg` BeGambleAware pushed right). Changing one means changing both.
+- **Header download button** (`.hsoc-inst`, `.tn-inst` on the static pages):
+  outlined in `--red`, `--card` fill, drawn down-arrow in `--red-ink`,
+  12.5px/700, 34px tall. It reads "Download app" on desktop and "App" at
+  420px and below. On a phone where the account icon is also in the bar, it
+  shows the arrow only.
+- **Notice line** (`.sw-notice`, set from Admin, read from `/api/flags`): one
+  line under the header, `--card-2` with a `--line` border and a 3px `--red`
+  left edge, 13.5px `--text`, with a plain "Close" that hides it for that page
+  view. Red, not gold: a notice is often a warning, and gold never is.
+- **Paused bookie** (`book_off` from `/api/book`): the normal `.code-err`
+  block. The bold line is "<wordmark> booking is paused right now." and the
+  next line says the slip is saved and to pick another bookmaker.
+
+## Admin page
+
+The Admin view in the account sheet (`public/account-ui.js`), owner only. It
+uses the same `.swa-h` headings, `.swa-card` cards and `.swa-set` rows as
+Settings. The sections, in order:
+
+1. **Site switches**: one row per bookmaker with a `.swa-sw` switch (on means
+   booking is on), then the notice input with "Show notice" and "Clear notice".
+2. **Status**: per bookmaker, when its last code was booked, how many in the
+   last hour and how many today, then how long ago the predictions were built.
+3. **Numbers**: accounts, new accounts, signed-in readers seen, Family &
+   friends, codes booked, slips that landed, and our pick record over the last
+   14 days.
+4. **Find a reader**: email lookup showing plan, join date, last seen,
+   devices with "Sign out everywhere", their codes (Family & friends only:
+   free readers are counted by device), and Give or Remove Family & friends.
+5. **Give Family & friends**, the grants list, and **Slips that landed**, as
+   before.
+
+Every result line is a short sentence ("Bet9ja booking paused. Readers see it
+within a couple of minutes."), never a code or a status word.
 
 ## Motion and state
 

@@ -7104,6 +7104,13 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 .fav-reset{background:none;border:0;padding:8px 0;font:inherit;font-size:13px;font-weight:700;color:var(--soft);cursor:pointer}
 .fav-done{height:42px;padding:0 22px;border-radius:var(--r-chip);border:0;background:var(--red-fill);color:#fff;font:inherit;font-size:14px;font-weight:800;cursor:pointer}
 @media (hover:hover){ .fav-reset:hover{color:var(--text)} .fav-star:hover{color:var(--text)} }
+/* The admin's notice line (see /api/flags). */
+.sw-notice{display:flex;align-items:center;gap:12px;max-width:1100px;margin:10px auto 0;padding:10px 14px;
+  background:var(--card-2);border:1px solid var(--line);border-left:3px solid var(--red);border-radius:var(--r-md);
+  font-size:13.5px;line-height:1.45;color:var(--text)}
+.sw-notice p{flex:1;min-width:0;margin:0}
+.sw-notice button{flex-shrink:0;background:none;border:0;color:var(--soft);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:4px}
+@media(max-width:720px){ .sw-notice{margin:8px 12px 0} }
 /* DISPLAY FACE. Asked: "dont you think the font style is an a.i giveaway?" -
    Plus Jakarta on everything, plus a coloured second half on every headline,
    is the stock AI-template look. Saira Condensed carries the headlines and the
@@ -11411,6 +11418,8 @@ function bookFetch(sel,B,src){
            more round trips to be told the same thing, and delays the retry
            that actually helps - the one without those legs. */
         if(d&&d.unbookable&&d.unbookable.length){ d._kind="refused"; return d; }
+        /* The admin paused this bookie (lib/flags.js). Retrying cannot help. */
+        if(d&&d.error==="book_off"){ d._kind="off"; return d; }
         if(tries<3) return new Promise(function(res){setTimeout(res,600*tries);}).then(attempt);
         d=d||{}; d._kind="refused"; return d;
       })
@@ -11426,6 +11435,23 @@ function bookFetch(sel,B,src){
   }
   return attempt();
 }
+/* The admin page (account-ui.js) reads the build time and the pick record
+   from here: DATA is a let, so it is not on window. */
+window.swBoard=function(){ return DATA&&DATA.generatedAt?{generatedAt:DATA.generatedAt,record:DATA.record||null}:null; };
+/* THE ADMIN'S NOTICE (lib/flags.js, /api/flags): one line under the header for
+   every reader, until the admin clears it. Close hides it for this page view.
+   A failed read shows nothing. */
+(function(){
+  try{ fetch("/api/flags").then(function(r){ return r.ok?r.json():null; }).then(function(f){
+    var t=f&&typeof f.notice==="string"?f.notice:"", top=document.getElementById("top");
+    if(!t||!top) return;
+    var el=document.createElement("div"); el.className="sw-notice"; el.setAttribute("role","status");
+    el.innerHTML="<p></p><button type='button' aria-label='Close notice'>Close</button>";
+    el.querySelector("p").textContent=t;
+    el.querySelector("button").onclick=function(){ el.remove(); };
+    top.insertAdjacentElement("afterend",el);
+  }).catch(function(){}); }catch(e){}
+})();
 /* Whatever reason the service gave, in whichever field it used. */
 function bookReason(d){
   if(!d) return "";
@@ -11443,6 +11469,10 @@ function bookErrHTML(d,B){
     return "<div class='code-err'><b>The booking service didn't answer in time.</b>"+
       "<span>It goes to sleep when it is quiet and takes a few seconds to wake up. "+
       "Tap again - the second try almost always works.</span></div>";
+  if(kind==="off")
+    return "<div class='code-err'><b>"+B.mark+" booking is paused right now.</b>"+
+      "<span>We switched it off while we fix a problem. Your slip is saved - "+
+      "pick another bookmaker and book it there.</span></div>";
   if(kind==="net")
     return "<div class='code-err'><b>Couldn't reach the booking service.</b>"+
       "<span>Check your connection and try again. Your slip is saved either way.</span></div>";

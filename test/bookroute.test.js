@@ -52,6 +52,8 @@ async function run(opts, fn) {
     const u = String(url);
     /* The slip ledger (lib/slipwatch.js): every minted code is saved once. */
     if (u.includes("site_slips")) { seen.slips++; return { ok: true, status: 201, text: async () => "" }; }
+    /* The admin's switches (lib/flags.js): nothing paused. */
+    if (u.includes("site_flags")) { seen.flags = (seen.flags || 0) + 1; return { ok: true, status: 200, text: async () => "[]" }; }
     if (u.includes("book_quota")) {
       if ((init && init.method) === "POST") {
         seen.inserts++;

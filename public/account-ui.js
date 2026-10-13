@@ -87,8 +87,67 @@
       return "<div class='swa-set'><span class='swa-st'><b>"+esc(g.email)+"</b><small>since "+esc(when)+"</small></span>"+
         "<button class='swa-pillbtn' type='button' data-revoke=\""+esc(g.email)+"\">Remove</button></div>"; }).join("");
   }
+  /* GOD MODE (owner, 13 Oct 2026): switches, status, numbers and reader lookup,
+     over /api/account/{flags,setflags,stats,lookup,signout}. */
+  function ago(iso){
+    var t=Date.parse(iso); if(!isFinite(t)) return "never";
+    var m=Math.round((Date.now()-t)/60000);
+    return m<1?"just now":m<60?m+" min ago":m<1440?Math.round(m/60)+" h ago":Math.round(m/1440)+" days ago";
+  }
+  function num(x){ return Number(x||0).toLocaleString("en-US"); }
+  function msg(t){ return "<div class='swa-set'><span class='swa-st'><small>"+esc(t)+"</small></span></div>"; }
+  function switchesHtml(fl){
+    var off=(fl&&fl.booksOff)||[];
+    return Object.keys(BOOK_NAME).map(function(k){ var on=off.indexOf(k)<0;
+      return "<div class='swa-set'><span class='swa-st'><b>"+esc(BOOK_NAME[k])+"</b><small>"+(on?"Booking on":"Paused. Readers are told to pick another bookmaker.")+"</small></span>"+
+        "<button class='swa-sw' type='button' role='switch' data-book-sw='"+k+"' aria-checked='"+on+"' aria-label='"+esc(BOOK_NAME[k])+" booking'></button></div>"; }).join("");
+  }
+  function statusHtml(st,board){
+    var by={}; ((st&&st.books)||[]).forEach(function(b){ by[b.book]=b; });
+    var rows=Object.keys(BOOK_NAME).map(function(k){ var b=by[k];
+      return "<div class='swa-set'><span class='swa-st'><b>"+esc(BOOK_NAME[k])+"</b><small>"+
+        (b?"Last code "+ago(b.last)+" · "+num(b.lastHour)+" in the last hour · "+num(b.today)+" today":"No codes in the last 7 days")+"</small></span></div>"; });
+    if(board&&board.generatedAt) rows.push("<div class='swa-set'><span class='swa-st'><b>Predictions</b><small>Built "+ago(board.generatedAt)+"</small></span></div>");
+    return rows.join("");
+  }
+  function numbersHtml(st,board){
+    var rec=board&&board.record, rows=[
+      ["Readers with an account",num(st.users)],
+      ["New accounts","today "+num(st.signupsToday)+" · 7 days "+num(st.signups7d)],
+      ["Signed-in readers seen","today "+num(st.activeToday)+" · 7 days "+num(st.active7d)],
+      ["Family & friends",num(st.ffMembers)],
+      ["Codes booked","today "+num(st.codesToday)+" · 7 days "+num(st.codes7d)],
+      ["Slips that landed","7 days "+num(st.landed7d)]];
+    if(rec&&rec.total) rows.push(["Our picks",num(rec.correct)+" of "+num(rec.total)+" right ("+Math.round(100*rec.correct/rec.total)+"%) · last "+(rec.days||14)+" days"]);
+    return rows.map(function(r){ return "<div class='swa-set'><span class='swa-st'><b>"+esc(r[0])+"</b><small>"+esc(r[1])+"</small></span></div>"; }).join("");
+  }
+  function lookupHtml(r){
+    if(!r.found) return msg(r.email+" has no account."+(r.ff?" Family & friends is waiting for them when they sign up.":""));
+    var devs=(r.devices||[]).map(function(d){ return esc((d.label||"Device")+" · "+ago(d.last_used_at)); }).join("<br>");
+    var codes=r.codes==null?"Free readers are counted by device, so their codes are not tied to the account.":
+      (r.codes.length?r.codes.map(function(c){ return c.code+" · "+(BOOK_NAME[c.book]||c.book)+" · "+c.status+" · "+ago(c.created_at); }).join(" | "):"No codes yet.");
+    return "<div class='swa-set'><span class='swa-st'><b>"+esc(r.email)+"</b><small>"+esc(r.plan+" · joined "+ago(r.created_at)+" · last seen "+ago(r.last_seen_at)+(r.google?" · Google":""))+"</small></span></div>"+
+      "<div class='swa-set'><span class='swa-st'><b>Signed in on "+(r.devices||[]).length+"</b><small>"+(devs||"No devices")+"</small></span>"+
+        ((r.devices||[]).length&&r.role!=="admin"?"<button class='swa-pillbtn' type='button' data-lk-out>Sign out everywhere</button>":"")+"</div>"+
+      "<div class='swa-set'><span class='swa-st'><b>Codes</b><small>"+esc(codes)+"</small></span></div>"+
+      (r.role==="admin"?"":"<div class='swa-set'><span class='swa-st'><b>Family &amp; friends</b><small>"+(r.ff?"Yes":"No")+"</small></span>"+
+        "<button class='swa-pillbtn' type='button' data-lk-ff='"+(r.ff?"revoke":"grant")+"'>"+(r.ff?"Remove":"Give")+"</button></div>");
+  }
   function adminHtml(list){
-    return "<label class='swa-lbl' for='swaGEmail'>Email</label>"+
+    return "<p class='swa-h'>Site switches</p><div class='swa-card' id='swaSw'>"+msg("Loading")+"</div>"+
+      "<label class='swa-lbl' for='swaNotice'>Notice for every reader</label>"+
+      "<input class='swa-in' id='swaNotice' type='text' maxlength='200' autocomplete='off' placeholder='SportyBet codes are slow tonight. Try Bet9ja.'>"+
+      "<button class='swa-outbtn swa-go' id='swaNoticeGo' type='button'>Show notice</button>"+
+      "<button class='swa-outbtn' id='swaNoticeOff' type='button'>Clear notice</button>"+
+      "<p class='swa-h'>Status</p><div class='swa-card' id='swaStatus'>"+msg("Loading")+"</div>"+
+      "<p class='swa-h'>Numbers</p><div class='swa-card' id='swaNums'>"+msg("Loading")+"</div>"+
+      "<p class='swa-h'>Find a reader</p>"+
+      "<label class='swa-lbl' for='swaLkEmail'>Email</label>"+
+      "<input class='swa-in' id='swaLkEmail' type='email' autocomplete='off' autocapitalize='none' spellcheck='false'>"+
+      "<button class='swa-outbtn swa-go' id='swaLkGo' type='button'>Look up</button>"+
+      "<div class='swa-card' id='swaLk' hidden></div>"+
+      "<p class='swa-h'>Give Family &amp; friends</p>"+
+      "<label class='swa-lbl' for='swaGEmail'>Email</label>"+
       "<input class='swa-in' id='swaGEmail' type='email' autocomplete='off' autocapitalize='none' spellcheck='false'>"+
       "<button class='swa-outbtn swa-go' id='swaGrant' type='button'>Give Family &amp; friends</button>"+
       "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>"+
@@ -366,6 +425,54 @@
         }).catch(function(e){ if(!e||e.name!=="AbortError") fallback(); });
       }; });
     });
+    var flags={booksOff:[],notice:""};
+    var board=null; try{ board=root.swBoard?root.swBoard():null; }catch(e){}
+    function paintSw(){
+      var box=v.querySelector("#swaSw"); box.innerHTML=switchesHtml(flags);
+      box.querySelectorAll("[data-book-sw]").forEach(function(b){ b.onclick=function(){
+        var k=b.getAttribute("data-book-sw"), off=flags.booksOff.slice(), i=off.indexOf(k);
+        if(i<0) off.push(k); else off.splice(i,1);
+        b.disabled=true;
+        saveFlags({booksOff:off,notice:flags.notice},(i<0?BOOK_NAME[k]+" booking paused.":BOOK_NAME[k]+" booking back on.")); }; });
+    }
+    function saveFlags(next,done){
+      a.req("POST","/api/account/setflags",next,function(code,j){
+        if(code!==200){ paintSw(); return fail(code,j); }
+        flags=j; paintSw(); v.querySelector("#swaNotice").value=flags.notice||"";
+        say(done+" Readers see it within a couple of minutes."); });
+    }
+    a.req("GET","/api/account/flags",null,function(code,j){
+      if(code!==200){ v.querySelector("#swaSw").innerHTML=msg("Could not load the switches."); return; }
+      flags=j; paintSw(); v.querySelector("#swaNotice").value=flags.notice||"";
+    });
+    v.querySelector("#swaNoticeGo").onclick=function(){
+      var t=v.querySelector("#swaNotice").value.replace(/^\s+|\s+$/g,""); if(!t) return say("Type the notice first.");
+      saveFlags({booksOff:flags.booksOff,notice:t},"Notice is up."); };
+    v.querySelector("#swaNoticeOff").onclick=function(){ saveFlags({booksOff:flags.booksOff,notice:""},"Notice cleared."); };
+    a.req("GET","/api/account/stats",null,function(code,j){
+      var bad=msg(code===503?"Numbers are not set up yet. Run sql/admin.sql in Supabase.":"Could not load the numbers.");
+      v.querySelector("#swaStatus").innerHTML=code===200?statusHtml(j,board):bad;
+      v.querySelector("#swaNums").innerHTML=code===200?numbersHtml(j,board):bad;
+    });
+    var lkIn=v.querySelector("#swaLkEmail"), lkGo=v.querySelector("#swaLkGo"), lkBox=v.querySelector("#swaLk");
+    function lookup(){
+      var e=lkIn.value.replace(/^\s+|\s+$/g,""); if(!e) return say("Add an email first.");
+      lkGo.disabled=true;
+      a.req("GET","/api/account/lookup?email="+encodeURIComponent(e),null,function(code,j){ lkGo.disabled=false;
+        if(code!==200) return fail(code,j);
+        lkBox.hidden=false; lkBox.innerHTML=lookupHtml(j);
+        var out=lkBox.querySelector("[data-lk-out]");
+        if(out) out.onclick=function(){ out.disabled=true;
+          a.req("POST","/api/account/signout",{email:j.email},function(c2,j2){
+            if(c2===200){ say("Signed out on every device."); lookup(); } else { out.disabled=false; fail(c2,j2); } }); };
+        var ff=lkBox.querySelector("[data-lk-ff]");
+        if(ff) ff.onclick=function(){ ff.disabled=true;
+          a.req("POST","/api/account/"+ff.getAttribute("data-lk-ff"),{email:j.email},function(c2,j2){
+            if(c2===200){ say("Done."); lookup(); load(); } else { ff.disabled=false; fail(c2,j2); } }); };
+      });
+    }
+    lkGo.onclick=lookup;
+    lkIn.onkeydown=function(e){ if(e.key==="Enter") lookup(); };
     btn.onclick=function(){
       var e=inp.value.replace(/^\s+|\s+$/g,""); if(!e) return say("Add an email first.");
       btn.disabled=true;
