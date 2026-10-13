@@ -916,11 +916,13 @@ main[tabindex="-1"]:focus{outline:none}
 .dlabel i{display:block;font-style:normal;font-size:11px;color:var(--faint);font-weight:600}
 .search{position:relative;flex:1 1 240px}
 .pick-sel{flex:0 1 148px;min-height:48px;border-radius:var(--r-md)}
-.orange{display:flex;align-items:center;gap:6px;flex:0 1 auto;font-size:13px;color:var(--soft);font-weight:700}
-.orange input{width:68px;min-height:48px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);
+/* Odds and sort share one line (owner: "tighten it"). */
+.orange{display:flex;align-items:center;gap:6px;flex:0 0 auto;font-size:13px;color:var(--soft);font-weight:700}
+.orange input{width:54px;min-height:48px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);
   color:var(--text);font:inherit;font-variant-numeric:tabular-nums;text-align:center;padding:0 6px}
 .orange input:focus-visible{outline:2px solid var(--red);outline-offset:1px}
-#bsort{flex-basis:200px}
+#bsort{flex:1 1 112px;min-width:0}
+@media(max-width:720px){ #country,#league{flex:1 1 140px;min-width:0} }
 .search input{width:100%;background:var(--card);border:1px solid var(--line);
   border-radius:var(--r-md);padding:14px 14px 14px 40px;color:var(--text);
   font-family:inherit;font-size:15px}
@@ -7712,7 +7714,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
         <span>to</span>
         <input id="omax" type="text" inputmode="decimal" placeholder="to" autocomplete="off" aria-label="Highest odds"></div>
       <select id="bsort" class="pick-sel" aria-label="Sort the board">
-        <option value="">By league</option><option value="strong">Strongest first</option>
+        <option value="">Sort</option><option value="strong">Strongest</option>
         <option value="kick">Kickoff</option><option value="odds">Highest odds</option></select>
       <span id="finder-count" hidden></span>
     </div>
