@@ -249,7 +249,8 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
 .pick button img{position:relative;z-index:1;height:96px;filter:drop-shadow(0 6px 10px #000b) grayscale(.55) brightness(.75);transition:transform .25s cubic-bezier(.3,1.6,.5,1),filter .25s}
 .pick button span{position:relative;z-index:1;font-size:17px;letter-spacing:.06em}
 .pick button{overflow:hidden;isolation:isolate}
-/* The fight-card look (owner: "a crazier selection picture"): each fighter in their own
+/* The fight-card look (owner: "a crazier selection picture"; art by the owner, 13 Oct
+   2026, no gloves - they are players here, not keepers): each fighter in their own
    light - fire for Ten, arcane gold and violet for The Wizard - and the picked one
    lit up, roaring, with a spinning aura round the card. */
 .pick button::before{content:"";position:absolute;inset:0;z-index:0;opacity:.35;transition:opacity .25s}
@@ -1082,7 +1083,7 @@ function shareSheet(text,url,where){
 
 /* Ten or The Wizard: who you play as. The opponent is the other one. */
 function charPicker(){var box=el("div","pick");
-  [["ten","TEN","/penalty/k-roar.webp?v="+PWV()],["wizard","THE WIZARD","/penalty/kw-roar.webp?v="+PWV()]].forEach(function(c){
+  [["ten","TEN","/penalty/c-ten.webp?v="+PWV()],["wizard","THE WIZARD","/penalty/c-wizard.webp?v="+PWV()]].forEach(function(c){
     var b=el("button",(PW.char===c[0]?"on ":"")+"c-"+c[0]);b.type="button";var i=el("img");i.src=c[2];i.alt="";b.appendChild(i);b.appendChild(el("span",null,c[1]));
     b.addEventListener("click",function(){PW.setChar(c[0]);PW.fx.buzz(10);box.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b);});});box.appendChild(b);});
   return box;}
