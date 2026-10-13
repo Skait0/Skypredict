@@ -144,7 +144,11 @@
     ["swaTLk","Find a reader"],["swaTGrants","Family & friends"],["swaTHits","Slips"],["swaTLog","Log"]];
   function adminHtml(list){
     var body={
-      swaTSw:"<div class='swa-card' id='swaSw'>"+msg("Loading")+"</div>"+
+      swaTSw:"<div class='swa-card'><div class='swa-set'><span class='swa-st'><b>Maintenance mode</b><small>Every reader sees the maintenance page and all booking stops. You still see the site.</small></span>"+
+        "<button class='swa-sw' id='swaMaint' type='button' role='switch' aria-checked='false' aria-label='Maintenance mode'></button></div></div>"+
+        "<label class='swa-lbl' for='swaMaintMsg'>Message on the maintenance page</label>"+
+        "<input class='swa-in' id='swaMaintMsg' type='text' maxlength='120' autocomplete='off' placeholder='Back by 8pm with fresh picks.'>"+
+        "<div class='swa-card' id='swaSw'>"+msg("Loading")+"</div>"+
         "<label class='swa-lbl' for='swaNotice'>Notice for every reader</label>"+
         "<textarea class='swa-in swa-ta' id='swaNotice' rows='2' maxlength='200' autocomplete='off' placeholder='SportyBet codes are slow tonight. Try Bet9ja.'></textarea>"+
         "<button class='swa-outbtn swa-go' id='swaNoticeGo' type='button'>Show notice</button>"+
@@ -179,6 +183,8 @@
       b.filter(function(k){ return a.indexOf(k)<0; }).forEach(function(k){ out.push("Turned "+(BOOK_NAME[k]||k)+" booking back on"); });
       var nb=(d.before&&d.before.notice)||"", na=(d.after&&d.after.notice)||"";
       if(na!==nb) out.push(na?"Set the notice: \u201c"+na+"\u201d":"Cleared the notice");
+      var mb=!!(d.before&&d.before.maint), ma=!!(d.after&&d.after.maint);
+      if(ma!==mb) out.push(ma?"Turned maintenance mode on":"Turned maintenance mode off");
       return out.join(". ")||"Saved the switches with no change";
     }
     if(r.action==="lookup") return "Looked up "+t+(d.found===false?" (no account)":"");
@@ -595,6 +601,7 @@
     var flags={booksOff:[],notice:""};
     var board=null; try{ board=root.swBoard?root.swBoard():null; }catch(e){}
     function paintSw(){
+      v.querySelector("#swaMaint").setAttribute("aria-checked",flags.maint?"true":"false");
       var box=v.querySelector("#swaSw"); box.innerHTML=switchesHtml(flags);
       box.querySelectorAll("[data-book-sw]").forEach(function(b){ b.onclick=function(){
         var k=b.getAttribute("data-book-sw"), off=flags.booksOff.slice(), i=off.indexOf(k);
@@ -603,15 +610,20 @@
         saveFlags({booksOff:off,notice:flags.notice},(i<0?BOOK_NAME[k]+" booking paused.":BOOK_NAME[k]+" booking back on.")); }; });
     }
     function saveFlags(next,done){
-      a.req("POST","/api/account/setflags",next,function(code,j){
+      a.req("POST","/api/account/setflags",Object.assign({},flags,next),function(code,j){
         if(code!==200){ paintSw(); return fail(code,j); }
         flags=j; paintSw(); v.querySelector("#swaNotice").value=flags.notice||"";
         say(done+" Readers see it within a couple of minutes."); });
     }
     a.req("GET","/api/account/flags",null,function(code,j){
       if(code!==200){ v.querySelector("#swaSw").innerHTML=msg("Could not load the switches."); return; }
-      flags=j; paintSw(); v.querySelector("#swaNotice").value=flags.notice||"";
+      flags=j; paintSw(); v.querySelector("#swaNotice").value=flags.notice||""; v.querySelector("#swaMaintMsg").value=flags.maintMsg||"";
     });
+    v.querySelector("#swaMaint").onclick=function(){
+      var on=!flags.maint;
+      if(on&&!root.confirm("Turn maintenance mode on? Every reader sees the maintenance page and booking stops until you turn it off.")) return;
+      saveFlags({maint:on,maintMsg:v.querySelector("#swaMaintMsg").value.replace(/^\s+|\s+$/g,"")},
+        on?"Maintenance mode is on.":"Maintenance mode is off. The site is back."); };
     v.querySelector("#swaNoticeGo").onclick=function(){
       var t=v.querySelector("#swaNotice").value.replace(/^\s+|\s+$/g,""); if(!t) return say("Type the notice first.");
       saveFlags({booksOff:flags.booksOff,notice:t},"Notice is up."); };

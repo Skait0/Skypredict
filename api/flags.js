@@ -14,7 +14,7 @@ const POLICY = { browser: BROWSER_REVALIDATE, cdn: "public, s-maxage=60", vercel
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ error: "method" });
   let v;
-  try { v = await F.get(); } catch (e) { v = { booksOff: [], notice: "" }; }
+  try { v = await F.get(); } catch (e) { v = { booksOff: [], notice: "", maint: false, maintMsg: "" }; }
   applyCache(res, POLICY);
   return res.status(200).json(v);
 };

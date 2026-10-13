@@ -16,8 +16,8 @@ const account = require("../api/account.js");
 
 test("only known bookies and one clean notice line survive", () => {
   assert.deepStrictEqual(F.clean({ booksOff: ["SPORTY", "sporty", "nope", "bet9ja"], notice: "  Slow\n tonight  " }),
-    { booksOff: ["sporty", "bet9ja"], notice: "Slow tonight" });
-  assert.deepStrictEqual(F.clean(null), { booksOff: [], notice: "" });
+    { booksOff: ["sporty", "bet9ja"], notice: "Slow tonight", maint: false, maintMsg: "" });
+  assert.deepStrictEqual(F.clean(null), { booksOff: [], notice: "", maint: false, maintMsg: "" });
   assert.strictEqual(F.clean({ notice: "x".repeat(500) }).notice.length, F.NOTICE_MAX);
 });
 
@@ -98,8 +98,8 @@ test("admin pauses a bookie and sets a notice", async () => {
   const w = await world();
   const r = await w.call(post(w.boss, "setflags", { booksOff: ["bet9ja", "x"], notice: "Bet9ja is down" }));
   assert.strictEqual(r.code, 200);
-  assert.deepStrictEqual(r.json(), { booksOff: ["bet9ja"], notice: "Bet9ja is down" });
-  assert.deepStrictEqual((await w.call(get(w.boss, "flags"))).json(), { booksOff: ["bet9ja"], notice: "Bet9ja is down" });
+  assert.deepStrictEqual(r.json(), { booksOff: ["bet9ja"], notice: "Bet9ja is down", maint: false, maintMsg: "" });
+  assert.deepStrictEqual((await w.call(get(w.boss, "flags"))).json(), { booksOff: ["bet9ja"], notice: "Bet9ja is down", maint: false, maintMsg: "" });
 });
 
 test("admin reads the numbers", async () => {

@@ -112,7 +112,7 @@ function make(deps) {
           const before = await flags.get();
           const done = await flags.set((await H.readJson(req, 2048)) || {}, s.userId);
           if (!done) return H.sendJson(res, 503, { error: "unavailable" });
-          await record("setflags", null, { before: { booksOff: before.booksOff, notice: before.notice }, after: done });
+          await record("setflags", null, { before: { booksOff: before.booksOff, notice: before.notice, maint: before.maint }, after: done });
           return H.sendJson(res, 200, done);
         }
         if (action === "stats") {

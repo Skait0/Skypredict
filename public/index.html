@@ -7125,6 +7125,12 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 .sw-notice p{flex:1;min-width:0;margin:0}
 .sw-notice button{flex-shrink:0;background:none;border:0;color:var(--soft);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:4px}
 @media(max-width:720px){ .sw-notice{margin:8px 12px 0} }
+/* Maintenance mode (swMaint): the whole screen, the site's own tokens. */
+#swMaint{position:fixed;inset:0;z-index:100000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px 20px;background:var(--bg);color:var(--text);text-align:center}
+#swMaint h2{margin:6px 0 0;font:800 28px/1.1 var(--disp);text-transform:uppercase;letter-spacing:.005em}
+#swMaint p{margin:0;max-width:340px;color:var(--soft);font-size:14.5px;line-height:1.5}
+#swMaint .mt-go{margin-top:8px;padding:12px 20px;border-radius:var(--r-seg);background:var(--red-fill);color:#fff;font-weight:800;text-decoration:none}
+#swMaint .mt-links{display:flex;gap:18px;margin-top:4px}#swMaint .mt-links a{color:var(--soft);font-weight:700;font-size:13px}
 /* DISPLAY FACE. Asked: "dont you think the font style is an a.i giveaway?" -
    Plus Jakarta on everything, plus a coloured second half on every headline,
    is the stock AI-template look. Saira Condensed carries the headlines and the
@@ -11491,11 +11497,29 @@ function bookFetch(sel,B,src){
 /* The admin page (account-ui.js) reads the build time and the pick record
    from here: DATA is a let, so it is not on window. */
 window.swBoard=function(){ return DATA&&DATA.generatedAt?{generatedAt:DATA.generatedAt,record:DATA.record||null}:null; };
+/* MAINTENANCE MODE (owner, 13 Oct 2026; Admin > Switches). Every reader gets this
+   page over the whole site, and booking is refused server-side (lib/flags.js
+   isOff). The admin keeps the real site, with a line saying it is on - the
+   role is this device's, and faking it gets nothing: booking stays off. */
+function swMaint(msg){
+  var admin=false; try{ admin=localStorage.getItem("sw.role")==="admin"; }catch(e){}
+  if(admin){ var top=document.getElementById("top"); if(!top) return;
+    var n=document.createElement("div"); n.className="sw-notice"; n.setAttribute("role","status");
+    n.innerHTML="<p><b>Maintenance mode is on.</b> Readers see the maintenance page. Turn it off in Admin, Switches.</p>";
+    top.insertAdjacentElement("afterend",n); return; }
+  var m=document.createElement("div"); m.id="swMaint"; m.setAttribute("role","alert");
+  m.innerHTML="<img src='/wiz-logo.png' alt='' width='72' height='72'><h2>The Wizard is tuning up</h2><p></p>"+
+    "<a class='mt-go' href='/penalty'>Play Penalty while you wait</a>"+
+    "<div class='mt-links'><a href='https://t.me/soccerwizardTG' rel='noopener'>Telegram</a><a href='https://x.com/soccerwizardhq' rel='noopener'>X</a></div>";
+  m.querySelector("p").textContent=msg||"We're making Soccerwizard better. Back shortly with fresh picks.";
+  document.body.appendChild(m); document.documentElement.style.overflow="hidden";
+}
 /* THE ADMIN'S NOTICE (lib/flags.js, /api/flags): one line under the header for
    every reader, until the admin clears it. Close hides it for this page view.
    A failed read shows nothing. */
 (function(){
   try{ fetch("/api/flags").then(function(r){ return r.ok?r.json():null; }).then(function(f){
+    if(f&&f.maint) swMaint(f.maintMsg);
     var t=f&&typeof f.notice==="string"?f.notice:"", top=document.getElementById("top");
     if(!t||!top) return;
     var el=document.createElement("div"); el.className="sw-notice"; el.setAttribute("role","status");
