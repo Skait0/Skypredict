@@ -8256,8 +8256,13 @@ try{var _sv=localStorage.getItem("sw.view"); if(_sv) V.list=(_sv==="list");}catc
 /* Which tab you are on is session state, not a preference. Kept in
    sessionStorage so it survives moving around the site and a reload, and is
    gone once the tab or the app is closed - coming back later should start at
-   the front door, not wherever you happened to stop. */
-try{var _sv2=sessionStorage.getItem("sw.viewtab"); if(_sv2 && ["pred","live","build"].includes(_sv2)) V.view=_sv2;}catch(e){}
+   the front door, not wherever you happened to stop.
+   ONLY ON A RELOAD OR BACK/FORWARD (owner, 13 Oct 2026: "when i click on the
+   home button on the penalty game, it take me to the livescore page"). A link
+   to "/" - Home in the game, the logo on any page - means the front door. */
+try{var _nav=(performance.getEntriesByType&&performance.getEntriesByType("navigation")[0]||{}).type;
+  var _sv2=(_nav==="reload"||_nav==="back_forward")&&sessionStorage.getItem("sw.viewtab");
+  if(_sv2 && ["pred","live","build"].includes(_sv2)) V.view=_sv2;}catch(e){}
 /* Clear the old localStorage copy so an existing visitor is not pinned to the
    tab they were on when this changed. */
 try{localStorage.removeItem("sw.viewtab");}catch(e){}
