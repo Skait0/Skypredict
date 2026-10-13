@@ -110,10 +110,12 @@ test("the footer is the essential few, privacy and terms in the legal row", () =
   assert.match(legal, /href="\/terms"/);
 });
 
-test("one uppercase label style on a page: the footer heads", () => {
+test("one uppercase label style on a page: the footer heads, plus the display headings", () => {
+  /* The headings joined them on 13 Oct 2026: h1 and h2 are set in Saira Condensed,
+     uppercase, as in the app (DESIGN.md "Type"). Still no third uppercase style. */
   for (const h of [P.renderMatchPage(UP, null, []), P.renderCodesHub([], () => null), P.renderNotFound()]) {
     const css = (h.match(/<style>[\s\S]*?<\/style>/g) || []).join("");
     const rules = css.split("}").filter((r) => /text-transform:uppercase/.test(r)).map((r) => r.split("{")[0].trim());
-    assert.deepStrictEqual(rules, [".foot-cols h3"], "uppercase on: " + rules.join(", "));
+    assert.deepStrictEqual(rules, ["h1,h2", ".foot-cols h3"], "uppercase on: " + rules.join(", "));
   }
 });
