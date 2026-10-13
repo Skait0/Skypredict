@@ -1,41 +1,21 @@
 "use strict";
-/* One name, two clubs, two countries (30 Sep 2026): Arsenal of England and
- * Arsenal Dzerzhinsk of Belarus were fitted as one team. */
+/* Full club names on screen (owner, 13 Oct 2026); the short names stay the key. */
 const test = require("node:test");
 const assert = require("node:assert");
-const B = require("../lib/build.js");
-const M = require("../lib/model.js");
+const fs = require("fs");
+const html = fs.readFileSync(require.resolve("../public/index.html"), "utf8");
+const src = html.slice(html.indexOf("function clubName("), html.indexOf("function fid("));
+const clubName = new Function(src + "\nreturn clubName;")();
 
-function m(league, home, away) { return { date: new Date("2026-09-01"), league, home, away, hg: 1, ag: 0 }; }
-
-test("a name in two countries becomes two clubs, and each fixture finds its own", () => {
-  const ms = [
-    m("England Premier League", "Arsenal", "Chelsea"),
-    m("Belarus Vysshaya Liga", "Arsenal", "Dinamo Minsk"),
-    m("England Premier League", "Chelsea", "Liverpool"),
-  ];
-  assert.deepStrictEqual(B.disambiguateClubs(ms), ["Arsenal"]);
-  assert.strictEqual(ms[0].home, "Arsenal [England]");
-  assert.strictEqual(ms[1].home, "Arsenal [Belarus]");
-  assert.strictEqual(ms[2].home, "Chelsea", "a name in one country is left alone");
-
-  const idx = M.buildIndex(ms);
-  idx.clubPick = B.clubPicks(idx);
-  const epl = idx.lIdx["England Premier League"], bel = idx.lIdx["Belarus Vysshaya Liga"];
-  assert.strictEqual(M.matchTeam(idx, "Arsenal", epl), "Arsenal [England]");
-  assert.strictEqual(M.matchTeam(idx, "Arsenal", bel), "Arsenal [Belarus]");
-  assert.strictEqual(M.matchTeam(idx, "Arsenal", null, "Belarus"), "Arsenal [Belarus]", "a Belarus cup");
-  assert.strictEqual(M.matchTeam(idx, "Arsenal", null, "International"), "Arsenal [England]",
-    "a European tie goes to the stronger UEFA country");
-  assert.strictEqual(M.matchTeam(idx, "Chelsea", epl), "Chelsea");
-  assert.strictEqual(B.plainClub("Arsenal [England]"), "Arsenal", "readers never see the key");
+test("short names are drawn in full, everything else as it is", () => {
+  assert.strictEqual(clubName("Ath Madrid"), "Atletico Madrid");
+  assert.strictEqual(clubName("Man United"), "Manchester United");
+  assert.strictEqual(clubName("Nott'm Forest"), "Nottingham Forest");
+  assert.strictEqual(clubName("Arsenal"), "Arsenal");
+  assert.strictEqual(clubName("constructor"), "constructor");
 });
 
-test("a clash nothing settles is refused, never matched to either club by resemblance", () => {
-  const ms = [m("Guatemala Liga Nacional", "Comunicaciones", "Mixco"),
-              m("Argentina Primera B", "Comunicaciones", "Flandria")];
-  B.disambiguateClubs(ms);
-  const idx = M.buildIndex(ms);
-  idx.clubPick = B.clubPicks(idx);
-  assert.strictEqual(M.matchTeam(idx, "Comunicaciones", null, "International"), null);
+test("search finds a club by either name, and fid still keys on the short one", () => {
+  assert.match(html, /\+" "\+clubName\(f\.home\)\+" "\+clubName\(f\.away\)\)\.toLowerCase\(\)/);
+  assert.match(html, /function fid\(f\)\{return "m"\+\(f\.date\+f\.home\+f\.away\)/);
 });

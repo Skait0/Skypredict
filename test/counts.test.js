@@ -200,7 +200,7 @@ function board(view, fixtures) {
     "function countryOf(l){return String(l).split(' ')[0];}" +
     "function catTest(k){var c=CATS.filter(function(x){return x.k===k;})[0];" +
       "return c?c.test:function(){return true;};}" +
-    grab("baseFiltered") + grab("shown") +
+    grab("clubName") + grab("baseFiltered") + grab("shown") +
     "return {base:baseFiltered(),shown:shown()};");
   const CATS = [
     { k: "all", label: "All games", test: () => true },

@@ -83,12 +83,12 @@ test("progress words", () => {
 });
 
 const SHEET_FNS = ["slipWhen", "slipWhenPlain", "slipState", "slipCounts", "progressWords", "renderSlipsSheet", "wireSlipButtons", "slipToggle"];
-const NAMES = ["SLIPS", "window", "document", "BOOKS", "esc", "$", "slipWhen", "swSwipe", "clearAllControl", "BIN_SVG", "SHARE_SVG", "SAFE_SVG", "RB_SVG", "COPY_SVG", "CHEV_SVG", "bookMark", "isJackpotSlip", "shareWin", "SLOPEN"];
+const NAMES = ["SLIPS", "window", "document", "BOOKS", "esc", "$", "slipWhen", "swSwipe", "clearAllControl", "BIN_SVG", "SHARE_SVG", "SAFE_SVG", "RB_SVG", "COPY_SVG", "CHEV_SVG", "bookMark", "isJackpotSlip", "shareWin", "SLOPEN", "clubName"];
 const SHEET_SRC = SHEET_FNS.map(grab).join("\n") + "; return {renderSlipsSheet, wireSlipButtons, slipToggle, slopen: function () { return SLOPEN; }};";
 function mkSheet(vals) {
   return new Function(...NAMES, SHEET_SRC)(...NAMES.map((n) => vals[n]));
 }
-const baseVals = (o) => Object.assign({ SLIPS: [], window: { swPend: { hidden: () => false } }, document: {}, BOOKS: { sporty: { label: "S" } }, esc: (x) => x, $: () => null, slipWhen: () => "today's", swSwipe() {}, clearAllControl() {}, BIN_SVG: "", SHARE_SVG: "", SAFE_SVG: "", RB_SVG: "", COPY_SVG: "", CHEV_SVG: "", bookMark: () => "", isJackpotSlip: () => false, shareWin() {}, SLOPEN: null }, o);
+const baseVals = (o) => Object.assign({ clubName: (x) => x, SLIPS: [], window: { swPend: { hidden: () => false } }, document: {}, BOOKS: { sporty: { label: "S" } }, esc: (x) => x, $: () => null, slipWhen: () => "today's", swSwipe() {}, clearAllControl() {}, BIN_SVG: "", SHARE_SVG: "", SAFE_SVG: "", RB_SVG: "", COPY_SVG: "", CHEV_SVG: "", bookMark: () => "", isJackpotSlip: () => false, shareWin() {}, SLOPEN: null }, o);
 
 function drawSheet(slip) {
   let out = "";

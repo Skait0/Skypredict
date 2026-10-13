@@ -20,7 +20,7 @@ function harness(book, answer) {
     return answer === "fail" ? Promise.reject(new Error("down"))
       : Promise.resolve({ json: () => Promise.resolve(answer) }); };
   const api = new Function("EL", "fetch",
-    "function $(){return EL;}\nfunction esc(s){return String(s);}\n" +
+    "function $(){return EL;}\nfunction esc(s){return String(s);}function clubName(n){return n;}\n" +
     "function fixtureById(){return null;}\n" +
     "function mLabel(f,c){var m=/_(OV)_([\\d.]+)$/.exec(c);return m?'Over '+m[2]+(c.indexOf('SHOTS')===0?' shots':' corners'):c;}\n" +
     "function mProb(f,c){return c==='SHOTS_OV_27.5'?0.61:null;}\n" +

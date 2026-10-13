@@ -50,7 +50,7 @@ test("a team-shots leg settles on that team's count", () => {
 });
 
 test("it reads as the team and the line", () => {
-  const mLabel = new Function(fn("esc") + fn("mLabel") + "\nreturn mLabel;")();
+  const mLabel = new Function(fn("esc") + fn("clubName") + fn("mLabel") + "\nreturn mLabel;")();
   const f = { home: "USA", away: "Chile" };
   assert.strictEqual(mLabel(f, "SHOTS_H_OV_13.5"), "USA over 13.5 shots");
   assert.strictEqual(mLabel(f, "SHOTS_A_UN_8.5"), "Chile under 8.5 shots");

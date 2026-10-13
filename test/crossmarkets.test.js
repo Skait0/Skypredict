@@ -33,7 +33,7 @@ function grab(name) {
   return src.slice(i, k + 1);
 }
 
-const mLabel = new Function("esc", grab("mLabel") + "\nreturn mLabel;")((s) => String(s));
+const mLabel = new Function("esc", grab("clubName") + grab("mLabel") + "\nreturn mLabel;")((s) => String(s));
 const mixReline = new Function(grab("mixReline") + "\nreturn mixReline;")();
 
 /* The keys of both PASSTHROUGH_MAPs, asked of the API itself. Half of each

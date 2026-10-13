@@ -8280,6 +8280,25 @@ const LOPEN={};
 
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){
   return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});}
+/* FULL CLUB NAMES ON SCREEN (owner, 13 Oct 2026). The board's names are
+   football-data's short forms ("Ath Madrid", "Man United") and they stay the
+   key for matching, links and grading - this only changes what is drawn.
+   Kept to names no longer than ones the board already shows. The map lives
+   inside the function so the tests that lift functions out of this page
+   get it with them. */
+function clubName(n){var F=clubName.F||(clubName.F={"Ath Madrid":"Atletico Madrid","Ath Bilbao":"Athletic Bilbao","Ath Bilbao B":"Athletic Bilbao B",
+  "Man City":"Manchester City","Man United":"Manchester United","Nott'm Forest":"Nottingham Forest",
+  "M'gladbach":"Mönchengladbach","Ein Frankfurt":"Eintracht Frankfurt","Dortmund":"Borussia Dortmund",
+  "Leverkusen":"Bayer Leverkusen","Hertha":"Hertha Berlin","Sp Lisbon":"Sporting CP","Sp Braga":"Sporting Braga",
+  "Sp Gijon":"Sporting Gijon","Paris SG":"PSG","Sociedad":"Real Sociedad","Sociedad B":"Real Sociedad B",
+  "Vallecano":"Rayo Vallecano","Espanol":"Espanyol","Betis":"Real Betis","Celta":"Celta Vigo","Celta B":"Celta Vigo B",
+  "Oviedo":"Real Oviedo","Sheffield Weds":"Sheffield Wednesday","Inter":"Inter Milan","Milan":"AC Milan",
+  "Verona":"Hellas Verona","St Etienne":"Saint-Etienne","Guimaraes":"Vitoria Guimaraes","Newcastle":"Newcastle United",
+  "Leeds":"Leeds United","Leicester":"Leicester City","Ipswich":"Ipswich Town","Hull":"Hull City","Stoke":"Stoke City",
+  "Derby":"Derby County","Luton":"Luton Town","Wigan":"Wigan Athletic","Bolton":"Bolton Wanderers",
+  "Oxford":"Oxford United","Mansfield":"Mansfield Town","Exeter":"Exeter City","Burton":"Burton Albion",
+  "Crewe":"Crewe Alexandra","Goztep":"Goztepe"});
+  return F.hasOwnProperty(n)?F[n]:n;}
 function fid(f){return "m"+(f.date+f.home+f.away).replace(/[^a-zA-Z0-9]/g,"");}
 
 /* ==================================================================
@@ -8768,7 +8787,7 @@ function renderSlipsSheet(){
           return "<i class='"+(l.res==="win"?"w":l.res==="lose"?"l":"")+"'></i>"; }).join("")+"</div></div>"+
         "<div class='sl2-legs'>"+sp.legs.map(function(l){
           var sc=(l.hg!=null&&l.ag!=null)?(" "+l.hg+"-"+l.ag):"";
-          return "<div class='sl2-leg "+(l.res||"open")+"'><span class='d'></span><span class='t'>"+esc(l.home)+" v "+esc(l.away)+"</span><span class='p'>"+esc(l.label||l.code)+esc(sc)+"</span></div>"; }).join("")+"</div>"+
+          return "<div class='sl2-leg "+(l.res||"open")+"'><span class='d'></span><span class='t'>"+esc(clubName(l.home))+" v "+esc(clubName(l.away))+"</span><span class='p'>"+esc(l.label||l.code)+esc(sc)+"</span></div>"; }).join("")+"</div>"+
         "<button class='sl2-tog' type='button' data-slop='"+esc(sp.sid)+"' aria-expanded='"+open+"'><span>"+(open?"Hide games":"Show "+sp.legs.length+" games")+"</span>"+CHEV_SVG+"</button>"+
         "</div></div>";
     }).join("");
@@ -9214,7 +9233,7 @@ function baseFiltered(){
   return onDay().filter(function(f){
     if(V.country&&countryOf(f.league)!==V.country) return false;
     if(V.league&&f.league!==V.league) return false;
-    if(q&&(f.league+" "+f.home+" "+f.away).toLowerCase().indexOf(q)<0) return false;
+    if(q&&(f.league+" "+f.home+" "+f.away+" "+clubName(f.home)+" "+clubName(f.away)).toLowerCase().indexOf(q)<0) return false;
     /* ODDS RANGE: on the card's own pick, at the reader's bookie (SportyBet's
        price when theirs has none). A pick with no price at all cannot be in a
        range, so it sits out while one is set. */
@@ -10150,7 +10169,7 @@ function renderPotd(){
       "<div class='potd-body'>"+
         "<div class='potd-grid'>"+
           "<div><h2>"+esc(plainTip(top))+"</h2>"+
-            "<p class='meta'>"+esc(top.home)+" v "+esc(top.away)+" &middot; "+
+            "<p class='meta'>"+esc(clubName(top.home))+" v "+esc(clubName(top.away))+" &middot; "+
               dayName(dayOff(fDay(top)))+" "+esc(kickTime(top))+
               metaExtra+"</p></div>"+
           bigHTML+
@@ -10286,11 +10305,11 @@ function moreHTML(f){
   const id=fid(f);
   return "<div class='more-pad'>"+
     "<div class='grp'><h3>Who wins</h3><div class='opts'>"+
-      opt(esc(f.home)+" to win",f.home_p,f.home_p>=.6,"1",id)+
-      opt(esc(f.away)+" to win",f.away_p,f.away_p>=.6,"2",id)+
+      opt(esc(clubName(f.home))+" to win",f.home_p,f.home_p>=.6,"1",id)+
+      opt(esc(clubName(f.away))+" to win",f.away_p,f.away_p>=.6,"2",id)+
       opt("Draw",f.draw_p,f.draw_p>=.4,"X",id)+
-      opt(esc(f.home)+" or draw",f.dc1x,f.dc1x>=.75,"1X",id)+
-      opt(esc(f.away)+" or draw",f.dcx2,f.dcx2>=.75,"X2",id)+
+      opt(esc(clubName(f.home))+" or draw",f.dc1x,f.dc1x>=.75,"1X",id)+
+      opt(esc(clubName(f.away))+" or draw",f.dcx2,f.dcx2>=.75,"X2",id)+
       opt("Any team to win",noDraw,noDraw>=.75,"12",id)+"</div></div>"+
     "<div class='grp'><h3>Goals</h3><div class='opts'>"+
       /* A pick, not a tip - the near-certain leg Bankers players stack. */
@@ -10302,8 +10321,8 @@ function moreHTML(f){
       opt("Under 4.5 goals",f.o45==null?null:1-f.o45,f.o45!=null&&(1-f.o45)>=.9,"UNDER_4.5",id)+
       /* Picks, not tips: SportyBet's "3 or more goals in a row - No". */
       opt("No team scores 3 in a row",mProb(f,"NR3_ANY"),false,"NR3_ANY",id)+
-      opt(esc(f.home)+" won't score 3 in a row",mProb(f,"NR3_H"),false,"NR3_H",id)+
-      opt(esc(f.away)+" won't score 3 in a row",mProb(f,"NR3_A"),false,"NR3_A",id)+
+      opt(esc(clubName(f.home))+" won't score 3 in a row",mProb(f,"NR3_H"),false,"NR3_H",id)+
+      opt(esc(clubName(f.away))+" won't score 3 in a row",mProb(f,"NR3_A"),false,"NR3_A",id)+
       opt("Both teams score",f.btts,f.btts>=.6,"GG",id)+
       opt("Goal in 1st half",f.fh_o05,f.fh_o05!=null&&f.fh_o05>=.7,"FH_OVER_0.5",id)+"</div></div>"+
     "<div class='grp'><h3>Combos</h3><div class='opts'>"+
@@ -10406,11 +10425,11 @@ function matchHTML(f){
       "<span class='teams'>"+
         "<span class='tnames'>"+
           "<span class='tn"+(hw?" win":"")+"'>"+
-            "<span class='who'><span>"+esc(f.home)+"</span>"+formHTML(f.form_home,f.home)+"</span>"+
+            "<span class='who'><span>"+esc(clubName(f.home))+"</span>"+formHTML(f.form_home,f.home)+"</span>"+
             "<span class='g num' title='Goals we expect them to score'>"+
               f.lh.toFixed(1)+"</span></span>"+
           "<span class='tn"+(aw?" win":"")+"'>"+
-            "<span class='who'><span>"+esc(f.away)+"</span>"+formHTML(f.form_away,f.away)+"</span>"+
+            "<span class='who'><span>"+esc(clubName(f.away))+"</span>"+formHTML(f.form_away,f.away)+"</span>"+
             "<span class='g num' title='Goals we expect them to score'>"+
               f.la.toFixed(1)+"</span></span>"+
         "</span>"+
@@ -10526,9 +10545,9 @@ function listRowHTML(f){
   const _open=!!LOPEN[id], _mid="more-"+id;
   return "<div class='lrow conf-"+cf+openCls+"' data-lf='"+id+"'>"+
     "<button type='button' class='sr-only lrow-toggle' aria-expanded='"+(_open?"true":"false")+
-      "' aria-controls='"+_mid+"'>Options for "+esc(f.home)+" v "+esc(f.away)+"</button>"+
+      "' aria-controls='"+_mid+"'>Options for "+esc(clubName(f.home))+" v "+esc(clubName(f.away))+"</button>"+
     "<span class='lt-time'>"+esc(kickTime(f))+"</span>"+
-    "<span class='lt-match'><span class='tm'>"+esc(f.home)+"</span><span class='vs'>v</span><span class='tm'>"+esc(f.away)+"</span>"+statusSlot(f)+(id===POTD_ID?"<span class='lt-pick' title='Pick of the day' aria-label='Pick of the day'>★</span>":"")+"</span>"+
+    "<span class='lt-match'><span class='tm'>"+esc(clubName(f.home))+"</span><span class='vs'>v</span><span class='tm'>"+esc(clubName(f.away))+"</span>"+statusSlot(f)+(id===POTD_ID?"<span class='lt-pick' title='Pick of the day' aria-label='Pick of the day'>★</span>":"")+"</span>"+
     "<span class='lt-p"+(lead==="h"?" lead":"")+"'>"+_lt100[0]+"<small>%</small></span>"+
     "<span class='lt-p"+(lead==="d"?" lead":"")+"'>"+_lt100[1]+"<small>%</small></span>"+
     "<span class='lt-p"+(lead==="a"?" lead":"")+"'>"+_lt100[2]+"<small>%</small></span>"+
@@ -10567,9 +10586,9 @@ function renderResults(){
       "<div class='country-body'>"+byC[c].map(function(r){
         return "<div class='rrow "+(r.hit?"hit":"miss")+"'>"+
           "<div class='rr-main'>"+
-            "<span class='rr-tm rr-h'>"+esc(r.home)+"</span>"+
+            "<span class='rr-tm rr-h'>"+esc(clubName(r.home))+"</span>"+
             "<b class='rr-sc'>"+r.hg+"</b><span class='rr-v'>-</span><b class='rr-sc'>"+r.ag+"</b>"+
-            "<span class='rr-tm rr-a'>"+esc(r.away)+"</span>"+
+            "<span class='rr-tm rr-a'>"+esc(clubName(r.away))+"</span>"+
           "</div>"+
           "<div class='rr-tip'><span class='rr-t'>"+esc(plainTip(r))+"</span>"+
             "<span class='rr-badge'>"+(r.hit?"Hit":"Miss")+"</span></div>"+
@@ -10748,7 +10767,7 @@ function fixtureById(id){
 function openSheet(id){
   var f=fixtureById(id); if(!f) return;
   SHEET_RETURN=document.querySelector("[data-fx='"+id+"']");
-  $("sheet-title").textContent=f.home+" v "+f.away;
+  $("sheet-title").textContent=clubName(f.home)+" v "+clubName(f.away);
   var pk=boardPick(f);
   $("sheet-sub").textContent=compOf(f.league)+" \u00b7 "+
     dayName(dayOff(fDay(f)))+" "+kickTime(f)+" \u00b7 "+pk.label+" "+
@@ -14179,9 +14198,9 @@ function gradeLeg(f,c,hg,ag,st){
   return null;   /* first-half markets and anything unknown */
 }
 function mLabel(f,c){
-  switch(c){case"1":return esc(f.home)+" to win";case"2":return esc(f.away)+" to win";
-    case"X":return"Draw";case"1X":return esc(f.home)+" or draw";
-    case"X2":return esc(f.away)+" or draw";case"12":return"Any team to win";
+  switch(c){case"1":return esc(clubName(f.home))+" to win";case"2":return esc(clubName(f.away))+" to win";
+    case"X":return"Draw";case"1X":return esc(clubName(f.home))+" or draw";
+    case"X2":return esc(clubName(f.away))+" or draw";case"12":return"Any team to win";
     case"OVER_1.5":return"Over 1.5 goals";case"OVER_2.5":return"Over 2.5 goals";
     case"GG":return"Both teams to score";
     case"FH_OVER_0.5":return"Goal in 1st half";
@@ -14189,26 +14208,26 @@ function mLabel(f,c){
     case"UNDER_4.5":return"Under 4.5 goals";
     case"OVER_0.5":return"Over 0.5 goals";
     case"NR3_ANY":return"No team scores 3 in a row";
-    case"NR3_H":return esc(f.home)+" won't score 3 in a row";
-    case"NR3_A":return esc(f.away)+" won't score 3 in a row";
+    case"NR3_H":return esc(clubName(f.home))+" won't score 3 in a row";
+    case"NR3_A":return esc(clubName(f.away))+" won't score 3 in a row";
     case"R3_ANY":return"A team scores 3 in a row";
-    case"R3_H":return esc(f.home)+" scores 3 in a row";
-    case"R3_A":return esc(f.away)+" scores 3 in a row";
-    case"HOME_OVER_0.5":return esc(f.home)+" over 0.5 goals";
-    case"AWAY_OVER_0.5":return esc(f.away)+" over 0.5 goals";
-    case"HOME_OVER_1.5":return esc(f.home)+" over 1.5 goals";
-    case"AWAY_OVER_1.5":return esc(f.away)+" over 1.5 goals";
+    case"R3_H":return esc(clubName(f.home))+" scores 3 in a row";
+    case"R3_A":return esc(clubName(f.away))+" scores 3 in a row";
+    case"HOME_OVER_0.5":return esc(clubName(f.home))+" over 0.5 goals";
+    case"AWAY_OVER_0.5":return esc(clubName(f.away))+" over 0.5 goals";
+    case"HOME_OVER_1.5":return esc(clubName(f.home))+" over 1.5 goals";
+    case"AWAY_OVER_1.5":return esc(clubName(f.away))+" over 1.5 goals";
     /* Markets we move but never predict - see PASSTHROUGH_MAP in the API.
        1UP and 2UP are the early-payout promotion both books run: the bet pays
        as soon as that side goes one (or two) goals ahead, whatever the final
        score. The whole Over lines push on the exact number, which is what
        makes them a different bet from the .5 line beside them. */
-    case"UP1_1":return esc(f.home)+" 1UP";
+    case"UP1_1":return esc(clubName(f.home))+" 1UP";
     case"UP1_X":return"Draw 1UP";
-    case"UP1_2":return esc(f.away)+" 1UP";
-    case"UP2_1":return esc(f.home)+" 2UP";
+    case"UP1_2":return esc(clubName(f.away))+" 1UP";
+    case"UP2_1":return esc(clubName(f.home))+" 2UP";
     case"UP2_X":return"Draw 2UP";
-    case"UP2_2":return esc(f.away)+" 2UP";
+    case"UP2_2":return esc(clubName(f.away))+" 2UP";
     case"OVER_2":return"Over 2 goals";
     case"OVER_3":return"Over 3 goals";
     case"UNDER_2":return"Under 2 goals";
@@ -14216,7 +14235,7 @@ function mLabel(f,c){
   /* 1X2-or-Over/Under, which is parameterised rather than a fixed list: three
      sides by two directions by whichever line the book sells. Built here so a
      new line needs no new case. */
-  var side3=function(k){return k==="1"?esc(f.home):(k==="2"?esc(f.away):"Draw");};
+  var side3=function(k){return k==="1"?esc(clubName(f.home)):(k==="2"?esc(clubName(f.away)):"Draw");};
   var mx=/^MIX_([12X])_(OV|UN)_([\d.]+)$/.exec(c||"");
   if(mx) return side3(mx[1])+" or "+(mx[2]==="OV"?"over ":"under ")+mx[3]+" goals";
   /* Everything the converter learned to read today. Parameterised rather than
@@ -14226,25 +14245,25 @@ function mLabel(f,c){
   var mg=/^MIX(GG|NG)_([12X])$/.exec(c||"");
   if(mg) return side3(mg[2])+" or "+(mg[1]==="GG"?"both teams to score":"no goals");
   var cd=/^CARD_([HA])_(\d)$/.exec(c||"");
-  if(cd) return (cd[1]==="H"?esc(f.home):esc(f.away))+" "+cd[2]+"+ cards";
+  if(cd) return (cd[1]==="H"?esc(clubName(f.home)):esc(clubName(f.away)))+" "+cd[2]+"+ cards";
   var cn=/^CORNERS_(OV|UN)_([\d.]+)$/.exec(c||"");
   if(cn) return (cn[1]==="OV"?"Over ":"Under ")+cn[2]+" corners";
   var sn=/^SHOTS_(OV|UN)_([\d.]+)$/.exec(c||"");
   if(sn) return (sn[1]==="OV"?"Over ":"Under ")+sn[2]+" shots";
   var tsn=/^SHOTS_([HA])_(OV|UN)_([\d.]+)$/.exec(c||"");
-  if(tsn) return (tsn[1]==="H"?esc(f.home):esc(f.away))+(tsn[2]==="OV"?" over ":" under ")+tsn[3]+" shots";
+  if(tsn) return (tsn[1]==="H"?esc(clubName(f.home)):esc(clubName(f.away)))+(tsn[2]==="OV"?" over ":" under ")+tsn[3]+" shots";
   /* EVERY FAMILY ADDED FROM A READER'S CODE ON 14 SEP. These are pass-through
      markets - we move them, we never predict them - but the editor and the
      splitter both draw a leg through this function, so an unnamed one prints
      its own code on the panel while somebody is deciding what to do with it. */
   var cs=/^CORNERS_([HA])_(OV|UN)_([\d.]+)$/.exec(c||"");
-  if(cs) return (cs[1]==="H"?esc(f.home):esc(f.away))+" "+
+  if(cs) return (cs[1]==="H"?esc(clubName(f.home)):esc(clubName(f.away)))+" "+
     (cs[2]==="OV"?"over ":"under ")+cs[3]+" corners";
   /* Double chance with the 1UP promotion: the same sign, paid early if the
      side goes a goal up. */
   var d1=/^DC1UP_(1X|12|X2)$/.exec(c||"");
-  if(d1) return (d1[1]==="1X"?esc(f.home)+" or draw"
-    :(d1[1]==="12"?esc(f.home)+" or "+esc(f.away):"Draw or "+esc(f.away)))+", 1UP";
+  if(d1) return (d1[1]==="1X"?esc(clubName(f.home))+" or draw"
+    :(d1[1]==="12"?esc(clubName(f.home))+" or "+esc(clubName(f.away)):"Draw or "+esc(clubName(f.away))))+", 1UP";
   /* Goals inside the opening minutes. Both numbers are the bet. */
   var eg=/^EARLY_(OV|UN)_(\d+)_([\d.]+)$/.exec(c||"");
   if(eg) return (eg[1]==="OV"?"Over ":"Under ")+eg[3]+
@@ -14261,7 +14280,7 @@ function mLabel(f,c){
   if(fg){
     var half=fg[1]==="_FH"?" in the first half":(fg[1]==="_SH"?" in the second half":"");
     if(fg[2]==="N") return "No goal"+(half||" at all");
-    return (fg[2]==="1"?esc(f.home):esc(f.away))+" to score first"+half;
+    return (fg[2]==="1"?esc(clubName(f.home)):esc(clubName(f.away)))+" to score first"+half;
   }
   var ex=/^EXACT(_FH|_SH)?_(\d)$/.exec(c||"");
   if(ex){
@@ -14270,13 +14289,13 @@ function mLabel(f,c){
     return "Exactly "+ex[2]+(+ex[2]===top?"+":"")+" goal"+(ex[2]==="1"?"":"s")+w;
   }
   var tg=/^TEAMGOALS_([HA])_(\d)$/.exec(c||"");
-  if(tg) return (tg[1]==="H"?esc(f.home):esc(f.away))+
+  if(tg) return (tg[1]==="H"?esc(clubName(f.home)):esc(clubName(f.away)))+
     (tg[2]==="3"?" to score 3+":" to score exactly "+tg[2]);
   var gr=/^GOALRANGE_(\d)(?:_(\d))?$/.exec(c||"");
   if(gr) return gr[2]?(gr[1]+"-"+gr[2]+" goals"):(gr[1]+"+ goals");
   var wm=/^MARGIN_(?:([HA])(\d)|DRAW)$/.exec(c||"");
   if(wm) return wm[1]===undefined?"Draw, any score"
-    :((wm[1]==="H"?esc(f.home):esc(f.away))+" by "+wm[2]+(wm[2]==="3"?"+":"")+
+    :((wm[1]==="H"?esc(clubName(f.home)):esc(clubName(f.away)))+" by "+wm[2]+(wm[2]==="3"?"+":"")+
       " goal"+(wm[2]==="1"?"":"s"));
   /* Two markets, each a Yes/No, so "No" to the over one is NOT the under one -
      it is "at least one half stayed under", which is why the negative is
@@ -14288,7 +14307,7 @@ function mLabel(f,c){
                        : ("Not both halves "+side+" 1.5 goals");
   }
   var hs=/^(FH|SH)_(HOME|AWAY)_(OVER|UNDER)_([\d.]+)$/.exec(c||"");
-  if(hs) return (hs[2]==="HOME"?esc(f.home):esc(f.away))+" "+
+  if(hs) return (hs[2]==="HOME"?esc(clubName(f.home)):esc(clubName(f.away)))+" "+
     (hs[3]==="OVER"?"over ":"under ")+hs[4]+" goals in the "+
     (hs[1]==="FH"?"first":"second")+" half";
   /* THE SIBLING FAMILIES: half-versions and per-team versions of markets
@@ -14301,28 +14320,28 @@ function mLabel(f,c){
        "Home (0:1)" on its own has sent people the wrong way. */
     var ehWhen=eh[1]==="FH_"?" in the first half":(eh[1]==="SH_"?" in the second half":"");
     var homeLeads=+eh[2]>0, amt=Math.max(+eh[2],+eh[3]);
-    var lead=(homeLeads?esc(f.home):esc(f.away))+" +"+amt;
+    var lead=(homeLeads?esc(clubName(f.home)):esc(clubName(f.away)))+" +"+amt;
     if(eh[4]==="X") return "Draw with "+lead+ehWhen;
     var picksLeader=(eh[4]==="1")===homeLeads;
     /* Naming the same club twice - "Newcastle to win with Newcastle +1" - is
        how the first version read. Say the head start once, on whichever side
        is carrying it. */
     if(picksLeader) return lead+" to win"+ehWhen;
-    return (eh[4]==="1"?esc(f.home):esc(f.away))+" to beat "+lead+ehWhen;
+    return (eh[4]==="1"?esc(clubName(f.home)):esc(clubName(f.away)))+" to beat "+lead+ehWhen;
   }
   var hah=/^(FH|SH)_AH_(1|2)_(-?[\d.]+)$/.exec(c||"");
-  if(hah) return (hah[2]==="1"?esc(f.home):esc(f.away))+" "+
+  if(hah) return (hah[2]==="1"?esc(clubName(f.home)):esc(clubName(f.away)))+" "+
     (+hah[3]>0?"+":"")+hah[3]+" in the "+(hah[1]==="FH"?"first":"second")+" half";
   var fm=/^FH_MIX_(1|X|2)_(OV|UN)_([\d.]+)$/.exec(c||"");
-  if(fm) return (fm[1]==="1"?esc(f.home):(fm[1]==="2"?esc(f.away):"Draw"))+
+  if(fm) return (fm[1]==="1"?esc(clubName(f.home)):(fm[1]==="2"?esc(clubName(f.away)):"Draw"))+
     " and "+(fm[2]==="OV"?"over ":"under ")+fm[3]+" goals in the first half";
   var cr=/^CORNRANGE_(?:([HA])_)?(\d+)(?:_(\d+))?$/.exec(c||"");
   if(cr){
-    var who=cr[1]?((cr[1]==="H"?esc(f.home):esc(f.away))+" "):"";
+    var who=cr[1]?((cr[1]==="H"?esc(clubName(f.home)):esc(clubName(f.away)))+" "):"";
     return who+(cr[3]?(cr[2]+"-"+cr[3]):(cr[2]+"+"))+" corners";
   }
   var fc=/^FH_CARD(UN)?_([HA])_(\d)$/.exec(c||"");
-  if(fc) return (fc[2]==="H"?esc(f.home):esc(f.away))+
+  if(fc) return (fc[2]==="H"?esc(clubName(f.home)):esc(clubName(f.away)))+
     (fc[1]?" under ":" ")+fc[3]+(fc[1]?"":"+")+" booking"+(fc[3]==="1"&&!fc[1]?"":"s")+
     " in the first half";
   var sh=/^SH_(OVER|UNDER)_([\d.]+)$/.exec(c||"");
@@ -14331,13 +14350,13 @@ function mLabel(f,c){
      33 is three or more. */
   var gb=/^BOUNDS_([HA])_(\d)(\d)?$/.exec(c||"");
   if(gb){
-    var who=gb[1]==="H"?esc(f.home):esc(f.away);
+    var who=gb[1]==="H"?esc(clubName(f.home)):esc(clubName(f.away));
     if(gb[3]===undefined) return who+" to score exactly "+gb[2];
     if(gb[2]===gb[3]) return who+" to score "+gb[2]+"+";
     return who+" to score "+gb[2]+"-"+gb[3]+(gb[3]==="3"?"+":"");
   }
   var wh=/^WINHALF_([HA])_([YN])$/.exec(c||"");
-  if(wh) return (wh[1]==="H"?esc(f.home):esc(f.away))+
+  if(wh) return (wh[1]==="H"?esc(clubName(f.home)):esc(clubName(f.away)))+
     (wh[2]==="Y"?" to win a half":" not to win a half");
   /* Which half carried more of something. One shape for four families: goals
      for the match, goals for one side, bookings and corners. The tie outcome
@@ -14345,7 +14364,7 @@ function mLabel(f,c){
      of its own rather than reading as a missing case. */
   var hh=/^HIGHHALF_(?:([HA])_)?([12E])$/.exec(c||"");
   if(hh){
-    var who=hh[1]==="H"?esc(f.home):(hh[1]==="A"?esc(f.away):"");
+    var who=hh[1]==="H"?esc(clubName(f.home)):(hh[1]==="A"?esc(clubName(f.away)):"");
     if(hh[2]==="E") return who?who+" score the same in both halves"
       :"Both halves score the same";
     return (who?who+" score more":"More goals")+
@@ -14364,8 +14383,8 @@ function mLabel(f,c){
   var db=/^DNB_([12])$/.exec(c||"");
   if(db) return side3(db[1])+", draw no bet";
   var d2=/^DC2_(1X|12|X2)$/.exec(c||"");
-  if(d2) return "2nd half: "+(d2[1]==="1X"?esc(f.home)+" or draw"
-    :(d2[1]==="12"?esc(f.home)+" or "+esc(f.away):"draw or "+esc(f.away)));
+  if(d2) return "2nd half: "+(d2[1]==="1X"?esc(clubName(f.home))+" or draw"
+    :(d2[1]==="12"?esc(clubName(f.home))+" or "+esc(clubName(f.away)):"draw or "+esc(clubName(f.away))));
   /* The line is the HOME team's on both books, so the away side of it is the
      inverse - printing the raw number against the away name would say the
      opposite of the bet. */
@@ -14373,7 +14392,7 @@ function mLabel(f,c){
   if(ah){
     var n=parseFloat(ah[2]);
     var shown=ah[1]==="1"?n:-n;
-    var side=ah[1]==="1"?esc(f.home):esc(f.away);
+    var side=ah[1]==="1"?esc(clubName(f.home)):esc(clubName(f.away));
     /* Handicap 0 is draw no bet, and "Aston Villa 0" said nothing to anyone
        who does not already read handicap lines. */
     if(shown===0) return side+" win, draw no bet";
@@ -14947,7 +14966,7 @@ function confirmAfterRefusal(target,names,keep,B,go,refused,h){
   };
   var rows=names.slice(0,8).map(function(nm,i){
     var c=(refused||[])[i], f=c&&(c.f||fixtureById(c.id)), a=alts[i];
-    var game=f?f.home+" v "+f.away:nm;
+    var game=f?clubName(f.home)+" v "+clubName(f.away):nm;
     var mkt=c?plain(c.label||(f?mLabel(f,c.code):c.code)):"";
     var why=c?(REFUSAL_WHY[c.id+"|"+c.code]||""):"";
     return "<div class='ask-row'><span class='ask-g'>"+esc(game)+"</span>"+
@@ -15033,7 +15052,7 @@ function confirmDropUnpriced(picks,target,go,B){
   }
   var names=picks.filter(function(c){return !B.priced(c);})
     .map(function(c){var f=(c&&c.f)||fixtureById(c.id);
-      return f?(f.home+" v "+f.away):null;}).filter(Boolean).slice(0,4);
+      return f?(clubName(f.home)+" v "+clubName(f.away)):null;}).filter(Boolean).slice(0,4);
   showPrompt(target,"<div class='confirm-card'><p><b>"+B.mark+" can't take "+un+
     " pick"+(un===1?"":"s")+"</b>"+
     (names.length?"<span class='cf-list'>"+names.map(esc).join("<br>")+
@@ -15085,7 +15104,7 @@ function lineCheck(picks,B,target,go,stop){
         var v=byKey[bookIdOf(c,B)+"|"+c.code];
         if(!v){ next.push(c); return; }
         var f=c.f||fixtureById(c.id);
-        var who=f?(f.home+" v "+f.away):"One pick";
+        var who=f?(clubName(f.home)+" v "+clubName(f.away)):"One pick";
         if(v.reason==="line_moved"&&v.now){
           /* SportyBet's own live price for the new line, so the slip's total
              is theirs and not our estimate for a line we never cached. */
@@ -15267,7 +15286,7 @@ function bookRounds(picks,B,src,target,h,round){
           if(!gone.length){ bookRounds(safe,B,src,target,h,round+1); return; }
         }
         var out=gone.map(function(c){var f=c.f||fixtureById(c.id);
-            return (f?(f.home+" v "+f.away):"One pick")+whyOf(c);});
+            return (f?(clubName(f.home)+" v "+clubName(f.away)):"One pick")+whyOf(c);});
         confirmAfterRefusal(target,out,safe.length,B,function(swapIn){
           bookRounds(safe.concat(swapIn),B,src,target,h,round+1);},gone,h);
         return;
@@ -18534,7 +18553,7 @@ function renderSlipOfDay(){
           cls=" live";
           right="<span class='lg-c res'>"+st.hg+"-"+st.ag+"</span>";
         }
-        return "<div class='sotd-leg"+cls+"'><span class='lg-t'>"+esc(c.f.home)+" v "+esc(c.f.away)+
+        return "<div class='sotd-leg"+cls+"'><span class='lg-t'>"+esc(clubName(c.f.home))+" v "+esc(clubName(c.f.away))+
           "</span><span class='lg-p'>"+mLabel(c.f,c.code)+"</span>"+right+"</div>";
       }).join("")+"</div>"+
       "<div class='sotd-foot'><div class='sotd-odds'><i>Est. odds*</i><b>~\u00d7"+odds.toFixed(2)+"</b></div>"+
@@ -20298,7 +20317,7 @@ function renderMySheet(){
   if(eh) eh.hidden = !MYSLIP.some(function(x){return x.auto;});
   body.innerHTML=MYSLIP.map(function(x){
     var f=fixtureById(x.id);
-    var teams=f?esc(f.home)+" v "+esc(f.away):"Match";
+    var teams=f?esc(clubName(f.home))+" v "+esc(clubName(f.away)):"Match";
     var noid=(f&&f.eventId)?"":"<span class='sp-noid' title='Not on SportyBet yet - can&apos;t auto-book'>no ID</span>";
     /* Every other thing we predict for this match, so a leg can be changed
        without leaving the slip and hunting the board for the same game.
@@ -20553,7 +20572,7 @@ function doBookMy(bookable,retried,B){
              which game it means - the same complaint that put the team names
              into the booking pre-flight. */
           var _who=function(x){var f=fixtureById(x.id);
-            return (f?(f.home+" v "+f.away+(x.label?" - "+x.label:"")):(x.label||"One pick"))+whyOf(x);};
+            return (f?(clubName(f.home)+" v "+clubName(f.away)+(x.label?" - "+x.label:"")):(x.label||"One pick"))+whyOf(x);};
           confirmAfterRefusal("myBookResult",_dropped.map(_who),safe.length,B,function(swapIn){
             /* Only now. Taking the refused legs out of the slip itself, not
                just out of the request: left in, the code says three games
@@ -23354,7 +23373,7 @@ function renderBuilderOutput(){
     $("slip").innerHTML=picks.map(function(c){
       var f=c.f, cf=conf(c.p);
       return "<div class='sp-row conf-"+cf+"'>"+
-        "<div class='sp-main'><div class='sp-teams'>"+esc(f.home)+" v "+esc(f.away)+
+        "<div class='sp-main'><div class='sp-teams'>"+esc(clubName(f.home))+" v "+esc(clubName(f.away))+
           (c.eventId?"":"<span class='sp-noid' title='Not on SportyBet yet - can&apos;t auto-book'>no ID</span>")+"</div>"+
           "<div class='sp-meta'>"+compOf(f.league)+" \u00b7 "+dayName(dayOff(fDay(f)))+" "+kickTime(f)+"</div></div>"+
         "<div class='sp-pick'><b>"+mLabel(f,c.code)+"</b><i>"+P0(c.p)+"%</i></div>"+

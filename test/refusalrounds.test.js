@@ -58,7 +58,7 @@ function harness(answer) {
     BOOKS.prelude("sporty") +
     "\nvar REFUSAL_ROUNDS=" + ROUNDS + ";var MYBOOK_GEN=0;" +
     "var MYSLIP=PICKS.map(function(c){return {id:c.id,code:c.code,via:'slider'};});\n" +
-    WHY() + fn("dropUnbookable") + "\n" + fn("doBookMy") + "\nreturn doBookMy;";
+    WHY() + fn("clubName") + fn("dropUnbookable") + "\n" + fn("doBookMy") + "\nreturn doBookMy;";
   /* My slip's legs are built from the picks, so the slip is made at the call. */
   const book = (picks) =>
     new Function(...names, body)(...names.map((k) => stubs[k]), picks)(picks);
@@ -156,7 +156,7 @@ test("My slip narrows the same way, and the slip itself follows each round", asy
     BOOKS.prelude("sporty") +
     "\nvar REFUSAL_ROUNDS=" + ROUNDS + ";var MYBOOK_GEN=0;" +
     "var MYSLIP=PICKS.map(function(c){return {id:c.id,code:c.code,via:'slider'};});\n" +
-    WHY() + fn("dropUnbookable") + "\n" + fn("doBookMy") +
+    WHY() + fn("clubName") + fn("dropUnbookable") + "\n" + fn("doBookMy") +
     "\nreturn {go:doBookMy, slip:function(){return MYSLIP;}};";
   const api = new Function(...names, body)(...names.map((k) => stubs[k]), picks);
   api.go(picks);
@@ -188,7 +188,7 @@ test("the converter and the board share the loop: betPawa refuses one of 16, the
   const names = Object.keys(stubs);
   /* window: the sign-in wall at the top of bookRounds reads window.swGate; none here, as with accounts off. */
   const body = "var window={};function fixtureById(){return null;}\n" + BOOKS.prelude("sporty") +
-    "\nvar REFUSAL_ROUNDS=" + ROUNDS + ";\n" + WHY() + fn("dropUnbookable") + "\n" + fn("bookRounds") +
+    "\nvar REFUSAL_ROUNDS=" + ROUNDS + ";\n" + WHY() + fn("clubName") + fn("dropUnbookable") + "\n" + fn("bookRounds") +
     "\nreturn function(p,src,t,h){ return bookRounds(p,BOOKS.sporty,src,t,h); };";
   const bookRounds = new Function(...names, body)(...names.map((k) => stubs[k]));
   bookRounds(picks, "convert", "byoConvOut", {
