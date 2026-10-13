@@ -164,7 +164,7 @@ test("the converter has a way in from the navigation", () => {
     "the bottom bar cannot mark the converter page");
 });
 
-test("the red circle marks the page you are on", () => {
+test("a red bar marks the page you are on", () => {
   /* It sat on Build and never moved, which made it a call to action and left
      the current page marked by red text alone. A bar that does not say where
      you are is worth less than the emphasis it was buying. */
@@ -173,25 +173,15 @@ test("the red circle marks the page you are on", () => {
      changes. */
   assert.match(index, /\.btab \.bt-ic\{width:44px;height:44px;margin-top:-6px;border-radius:50%/,
     "the icon slot must be the same size on every tab");
-  /* IT IS A LIT RING NOW, NOT A FILLED DISC. The disc reversed its glyph to
-     white and so hid the one picture the reader was standing on; the ring
-     leaves it readable and glows around it. Pinned on the ring and the bloom
-     rather than on a `background`, which there deliberately is not. */
-  assert.match(index, /\.btab\.on \.bt-ic\{[\s\S]{0,260}inset 0 0 0 1\.5px var\(--red\)/,
-    "the active tab no longer draws its ring");
-  assert.match(index, /\.btab\.on \.bt-ic\{[\s\S]{0,260}0 0 14px 1px var\(--red-glow\)/,
-    "the active ring no longer glows");
-  assert.doesNotMatch(index, /\.btab\.on \.bt-ic\{[\s\S]{0,260}background:/,
-    "the active tab is filled again, which hides the glyph inside it");
-  /* Every tab wears the unlit ring, or the lit one is a badge rather than the
-     same object switched on. */
-  assert.match(index, /\.btab \.bt-ic\{[\s\S]{0,200}box-shadow:inset 0 0 0 1px var\(--line\)/,
-    "the inactive tabs lost their outline");
-  /* A glow is an rgba of the theme's own red - a box-shadow cannot thin a
-     colour - so both themes must define one or the dark bloom lands on the
-     light bar. */
-  ["--red-glow:rgba\\(230,57,70", "--red-glow:rgba\\(198,35,48"].forEach((v) =>
-    assert.match(index, new RegExp(v), "a theme is missing its own " + v.split(":")[0]));
+  /* NO RINGS, NO NEON (13 Oct 2026). Four ringed icons with the lit one
+     glowing read as a stock AI-template tab bar. The page you are on is a red
+     bar on the top edge, painted by a pseudo-element so the slot never
+     reflows, and no icon is filled, so the glyph stays readable. */
+  assert.match(index, /\.btab\.on::before\{content:"";position:absolute;[\s\S]{0,140}background:var\(--red\)/,
+    "the active tab lost its bar");
+  assert.doesNotMatch(index, /\.btab(\.on)? \.bt-ic\{[^}]*box-shadow/,
+    "a ring is back on the tab icons");
+  assert.doesNotMatch(index, /--red-glow/, "the neon glow is back");
 });
 
 test("the Build staff is a mask, so it still paints in currentColor", () => {

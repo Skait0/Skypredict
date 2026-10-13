@@ -294,8 +294,6 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
      rather than `--red` itself - a box-shadow cannot take a colour and thin it.
      The light theme sets its own below; without that, a dark-theme glow leaks
      onto a parchment bar and reads as a smudge. */
-  --red-glow:rgba(230,57,70,.55);
-  --red-glow-soft:rgba(230,57,70,.28);
   --green:#2FD48A;
   --green-ink:#4FE39E;
   --green-wash:rgba(47,212,138,.13);
@@ -400,8 +398,6 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
      a dark room; the same alphas on a pale bar read as a dirty halo rather
      than a glow, so the ring carries the meaning here and the bloom only
      softens its edge. */
-  --red-glow:rgba(198,35,48,.34);
-  --red-glow-soft:rgba(198,35,48,.16);
   --green:#0D814F;    /* 4.36:1, holding its old 4.31 */
   --green-ink:#0B7047;
   --green-wash:rgba(14,138,85,.10);
@@ -460,8 +456,6 @@ select,option{background-color:var(--card);color:var(--text)}
 button,a,.m,.lrow,.gl-card,.cat,.vt,.navt,.btab,.opt-add{-webkit-tap-highlight-color:transparent;tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;overflow-x:hidden}
 body{background:var(--bg);color:var(--text);
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='210' viewBox='0 0 210 210'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-linecap='round' opacity='0.014'%3E%3Cpath d='M33 30v26M23 37l10 6 10-6M33 43l-8 10M33 43l8 10'/%3E%3Cpath d='M156 44l11 16-11 16-11-16z'/%3E%3Cpath d='M92 142v22M83 149l9-6 9 6M85 164h14'/%3E%3Cpath d='M172 154l8 8-8 8-8-8z M172 148v28'/%3E%3Ccircle cx='58' cy='126' r='11'/%3E%3Cpath d='M58 115v22M47 126h22'/%3E%3C/g%3E%3C/svg%3E");
-  background-repeat:repeat;
   font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
   font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:40px;
   /* overflow-x HIDDEN creates a scroll container, and a scroll container
@@ -1268,7 +1262,7 @@ html.mode-live .btabs{transform:none!important}
      glyph slot is 22px tall, so this is a 22px box with the words centred in
      it rather than text pushing the label down. */
   .btab.on{color:var(--red-ink)}
-  /* THE RED CIRCLE IS WHERE YOU ARE.
+  /* THE MARKER IS WHERE YOU ARE (a red bar since 13 Oct 2026, see NO CIRCLES).
      It used to live on Build and never move, which made it the primary action
      and left the current page marked by nothing but red text. Now it rides the
      active tab, so the bar answers "where am I" at a glance and every
@@ -1285,42 +1279,15 @@ html.mode-live .btabs{transform:none!important}
      four tabs now and always was, as far as layout is concerned: the inactive
      ones simply paint nothing. Only colour and shadow animate, and neither
      reflows anything. */
-  /* EVERY TAB WEARS A RING, ONLY ONE OF THEM IS LIT. The ring is what makes
-     the lit one legible as the same object rather than a badge that appeared
-     out of nowhere: four outlines, one of which is switched on. Hairline and
-     --line, so an unlit ring is furniture and the eye goes straight past it. */
   .btab .bt-ic{width:44px;height:44px;margin-top:-6px;border-radius:50%;
-    box-shadow:inset 0 0 0 1px var(--line);
-    transition:color .2s ease,box-shadow .2s ease,filter .2s ease}
-  /* LIT, NOT FILLED. The marker was a solid red disc with a white glyph
-     punched out of it, which is a button's language - and it made the icon
-     underneath disappear: four tabs, and the one you were standing on was the
-     only one whose picture you could not read. A ring that lights up keeps the
-     glyph visible and still answers "where am I" from across the room.
-     Neon is three shadows and no fill: the tube itself (a solid inset ring),
-     the bloom it throws outward, and the light it spills back inside the
-     circle. The glyph is lit rather than reversed, so it glows in the same red
-     instead of turning white. Borrowed from the reference the owner sent - a
-     gold staff inside a red neon ring - with the colour moved to the site's
-     own red rather than the reference's hotter pink. */
-  .btab.on .bt-ic{
-    color:var(--red-ink);
-    box-shadow:
-      inset 0 0 0 1.5px var(--red),
-      inset 0 0 9px var(--red-glow-soft),
-      0 0 0 1px var(--red-glow-soft),
-      0 0 14px 1px var(--red-glow)}
-  /* The glyph carries its own small halo. Without it the ring glows and the
-     picture inside it stays flat, which reads as a sticker on a light rather
-     than a lit object. */
-  .btab.on svg{filter:drop-shadow(0 0 3px var(--red-glow))}
+    transition:color .2s ease}
   .btab.on svg{width:23px;height:23px}
   /* THE STAFF IS ARTWORK, AND IT IS STILL PAINTED IN currentColor.
      Drawn properly rather than traced into paths - a football's panels and a
      star cut out of them is more shape than a hand-written path survives - but
      used as a MASK, not as an image. The PNG supplies only its alpha; the
      colour comes from `background:currentColor`, so this tab behaves exactly
-     like the three line icons beside it: grey at rest, red and glowing when
+     like the three line icons beside it: grey at rest, red when
      it is the page you are on, and correct in both themes from one file. A
      coloured PNG could only ever be desaturated, never recoloured.
      The hand-drawn SVG stays in the markup underneath as the fallback and is
@@ -1336,8 +1303,7 @@ html.mode-live .btabs{transform:none!important}
        when the artwork does. The filename is content-hashed because
        vercel.json serves /app.* immutable for a year: new art, new name, no
        purge to remember. */
-    #bt-build.on .bt-staff{width:23px;height:23px;
-      filter:drop-shadow(0 0 3px var(--red-glow))}
+    #bt-build.on .bt-staff{width:23px;height:23px}
   }
   /* The pulse is a nudge toward live football you are NOT looking at. On the
      red disc it would be a red dot on red, and syncLiveDots already hides it
@@ -1352,6 +1318,13 @@ html.mode-live .btabs{transform:none!important}
      top-right corner is 11px in from each side: 9 and 7 put the dot back where
      it was against the glyph. */
   .btab .btab-dot{top:9px;right:7px}
+  /* NO CIRCLES, NO NEON (13 Oct 2026). Four ringed icons with the lit one
+     glowing is a stock AI-template tab bar. The page you are on is now a red
+     icon and label with a short red bar along the top edge of the bar - the
+     way native tab bars mark it. The 44px slot stays, so nothing reflows. */
+  .btab{position:relative}
+  .btab.on::before{content:"";position:absolute;top:-8px;left:50%;width:28px;height:3px;
+    margin-left:-14px;border-radius:0 0 3px 3px;background:var(--red)}
   @media (prefers-reduced-motion:reduce){.btab .bt-ic{transition:none}}
   body{padding-bottom:calc(var(--btabs-h) + 8px)}
 }
@@ -1613,9 +1586,11 @@ html.tapped .list-hint{display:none}
    light theme keeps its black key - on a light ground it is the strongest
    thing there, and the owner likes it. */
 [data-theme="dark"] .sc-actions .sc-go-primary,[data-theme="dark"] .sc-go-primary{
-  background:linear-gradient(178deg,#DB3643 0%,#BE1F2B 100%)!important;
-  border:1px solid rgba(255,255,255,.16)!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 4px 14px rgba(150,18,30,.38)!important}
+  /* Flat fill, no glow or gloss (13 Oct 2026): a red halo under a gradient
+     button is one of the stock AI-template looks. */
+  background:#DB3643!important;
+  border:1px solid transparent!important;
+  box-shadow:none!important}
 [data-theme="dark"] .sc-go-primary .sbm,[data-theme="dark"] .sc-go-primary .b9m .b9r,
 [data-theme="dark"] .sc-go-primary .sc-go-arw{color:#fff!important}
 /* THE BOOKMAKER'S NAME ON A WHITE TAB (owner, 11 Oct 2026: "the build me a
@@ -1639,9 +1614,9 @@ html.tapped .list-hint{display:none}
 :root .sc-go-primary .sc-lbl>.xbm .xbb{color:#276BA6!important}
 @media(hover:hover){
   [data-theme="dark"] .sc-actions .sc-go-primary:hover,[data-theme="dark"] .sc-go-primary:hover{
-    background:linear-gradient(178deg,#E5444F 0%,#C8222F 100%)!important;
-    border-color:rgba(255,255,255,.3)!important;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 6px 18px rgba(150,18,30,.45)!important}
+    background:#E5444F!important;
+    border-color:transparent!important;
+    box-shadow:none!important}
 }
 /* Ghost. Two filled buttons side by side compete and flatten the hierarchy;
    this one is present and plainly second. */
@@ -1663,9 +1638,9 @@ html.mode-build .slip-cta,html.mode-live .slip-cta{display:none}
   /* The pink highlight put white text on 2.3:1 wherever it fell, and the
      mid stop was the 4.17:1 brand red. Same radial, same deep centre, run
      from --red-fill instead so every point under the label clears AA. */
-  background:radial-gradient(circle at 20% 0%,#db3643,#c22e3a 55%,#a51826);color:#fff;
+  background:#DB3643;color:#fff;
   border:1px solid rgba(242,184,75,.55);border-radius:99px;padding:12px 14px 12px 18px;
-  box-shadow:0 6px 16px rgba(0,0,0,.4),inset 0 1px 2px rgba(255,255,255,.4);cursor:pointer}
+  box-shadow:0 4px 12px rgba(0,0,0,.35);cursor:pointer}
 .slipbar-in .sb-tx{flex:1;min-width:0}
 .slipbar-in .sb-tx b{display:block;font-size:14px;font-weight:800;line-height:1.2}
 .slipbar-in .sb-tx i{font-style:normal;font-size:11.5px;font-weight:600;opacity:.85}
@@ -2653,9 +2628,6 @@ html.mode-live #live{display:block}
 .ls-row b{font-variant-numeric:tabular-nums}
 .ls-row.lead span,.ls-row.lead b{color:var(--red-ink);font-weight:800}
 /* ---- live event ticker ---- */
-[data-theme="light"] body{
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='210' viewBox='0 0 210 210'%3E%3Cg fill='none' stroke='%23000000' stroke-width='1.6' stroke-linecap='round' opacity='0.04'%3E%3Cpath d='M33 30v26M23 37l10 6 10-6M33 43l-8 10M33 43l8 10'/%3E%3Cpath d='M156 44l11 16-11 16-11-16z'/%3E%3Cpath d='M92 142v22M83 149l9-6 9 6M85 164h14'/%3E%3Cpath d='M172 154l8 8-8 8-8-8z M172 148v28'/%3E%3Ccircle cx='58' cy='126' r='11'/%3E%3Cpath d='M58 115v22M47 126h22'/%3E%3C/g%3E%3C/svg%3E");
-}
 #liveStripWrap{margin-top:20px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);
   padding:0;background:linear-gradient(180deg,var(--card),var(--card-2))}
 /* A row you swipe, not a marquee (Task 4, 7 Oct). The 55s scroll could not be
