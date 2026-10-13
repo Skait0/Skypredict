@@ -133,7 +133,8 @@ test("the daily go is tracked", () => {
 });
 
 test("a duel link opens the duel, anything else the home screen", () => {
-  assert.match(html, /if\(dq&&\/\^\[A-Za-z0-9\]\{6\}\$\/\.test\(dq\)\)F\.duel\(dq\.toUpperCase\(\)\);else home\(\);/);
+  assert.match(html, /if\(dq&&\/\^\[A-Za-z0-9\]\{6\}\$\/\.test\(dq\)\)F\.duel\(dq\.toUpperCase\(\)\);/);
+  assert.match(html, /else if\(q\.get\("play"\)==="cpu"\)\{[^}]*F\.practice\(\);\}else home\(\);/, "Restart match lands back in a computer match");
 });
 
 /* Owner, 8 Oct 2026: "another character as the wizard. players can choose
@@ -689,5 +690,23 @@ test("every result ends with a Home link back to the site (owner, 11 Oct 2026)",
   assert.match(html, /function homeLink\(\)\{var a=el\("a","shome","Home"\);a\.href="\/";/);
   assert.match(html, /homeLink:homeLink/, "exported for the daily and for-fun screens");
   const uses = (html.match(/(?:F\.)?homeLink\(\)/g) || []).length - 1;
-  assert.strictEqual(uses, 6, "practice, duel, survival, faced, for fun, daily");
+  assert.strictEqual(uses, 7, "practice, duel, survival, faced, for fun, daily, pause menu");
+});
+
+test("a match has a pause menu, and mute and pause sit at the top of the screen (owner, 13 Oct 2026)", () => {
+  const html = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "penalty.html"), "utf8");
+  assert.match(html, /<button id="pause" type="button" aria-label="Pause">/);
+  assert.match(html, /function paused\(\)\{/);
+  for (const w of ["Resume", "Restart match", "Quit to menu", "Resign this duel"]) assert.ok(html.includes('"' + w + '"'), w);
+  assert.match(html, /#pause,#snd\{position:absolute;top:calc\(86px/, "not the bottom corner a phone cuts off");
+  assert.match(html, /touch-action:pan-y;overscroll-behavior:contain/, "a long result scrolls with a finger");
+  assert.match(html, /function down\(e\)\{if\(e\.target\.closest\("#sheet,button,a"\)\)return;/, "a tap on the menu is never a shot");
+});
+
+test("the game menus carry no template tells: no pills, no spinning aura, no italic headings", () => {
+  const html = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "penalty.html"), "utf8");
+  assert.ok(!/border-radius:999px/.test(html), "pill buttons");
+  assert.ok(!/pwspin|pwflare/.test(html), "spinning aura round the picked card");
+  assert.ok(!/Roboto\+Condensed/.test(html), "the site's display face is Saira Condensed");
+  assert.match(html, /#sheet h2\{[^}]*font:800 27px\/1\.05 "Saira Condensed"[^}]*text-transform:uppercase\}/);
 });

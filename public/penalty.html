@@ -15,7 +15,7 @@
 <link rel="preload" as="image" href="/penalty/s-stand.webp?v=12">
 <link rel="preload" as="image" href="/penalty/p-ball.webp?v=12">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Roboto+Condensed:ital,wght@1,800&display=swap">
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Saira+Condensed:wght@700;800&display=swap">
 <style>
 /* PLAY PENALTY - wizardry x soccer, the site's own tokens. Gold is for wins
    and small accents only; red is the brand and the action. */
@@ -46,7 +46,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:600 1
 .boards:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#ffffff0d,transparent 40%),repeating-linear-gradient(90deg,transparent 0 2px,#05050666 2px 3px);pointer-events:none}
 .track{position:absolute;top:0;bottom:0;left:0;display:flex;align-items:center;white-space:nowrap;animation:pw-marquee 34s linear infinite;will-change:transform}
 /* one panel per brand, each in its own colours, the way stadium LEDs rotate */
-.track .pn{display:inline-flex;align-items:center;height:100%;padding:0 1.6em;font:italic 800 var(--bf,14px)/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:.06em;border-right:1px solid #ffffff14}
+.track .pn{display:inline-flex;align-items:center;height:100%;padding:0 1.6em;font:italic 800 var(--bf,14px)/1 "Saira Condensed",Impact,sans-serif;letter-spacing:.06em;border-right:1px solid #ffffff14}
 .track .pn b,.track .pn i{font-style:inherit;font-weight:800;color:#F2F1F0}
 .track .pn .red{color:var(--red)}
 .track .pn.mk{font-family:"Plus Jakarta Sans",system-ui,sans-serif;font-style:normal;letter-spacing:-.01em;color:#F2F1F0}
@@ -57,7 +57,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:600 1
 .bkm{font-family:"Roboto Condensed","Arial Narrow","Helvetica Neue Condensed","Liberation Sans Narrow",sans-serif;font-stretch:condensed;letter-spacing:-.005em}.bkg{color:#FFC400}
 .bwm{font-family:Roboto,"Helvetica Neue",Arial,sans-serif;letter-spacing:-.01em}.bwp{color:#9CE800}
 .xbm{font-family:"Roboto Condensed",Roboto,"Arial Narrow",Arial,sans-serif;font-style:italic;letter-spacing:-.01em}.xbb{color:#14A0FF}
-.bflash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:italic 800 var(--bf,14px)/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:.3em;opacity:0;background:#050506}
+.bflash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:italic 800 var(--bf,14px)/1 "Saira Condensed",Impact,sans-serif;letter-spacing:.3em;opacity:0;background:#050506}
 .bflash.go{animation:pw-blink .9s steps(1) 1}
 /* pitch */
 .grass{position:absolute;left:0;right:0;bottom:0;background:#155029}
@@ -86,9 +86,9 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .srow .av{width:22px;height:22px;border-radius:50%;background:#1E1E22 no-repeat 50% 0/cover;border:1px solid var(--line)}
 .srow.now .av{border-color:#F2F1F0}
 .srow[hidden]{display:none}
-.srow .who{font:italic 800 12px/1 "Roboto Condensed",sans-serif;letter-spacing:.08em;color:var(--soft);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38vw}
+.srow .who{font:italic 800 12px/1 "Saira Condensed",sans-serif;letter-spacing:.08em;color:var(--soft);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38vw}
 .srow.now .who{color:#fff}
-.srow b{font:italic 800 18px/1 "Roboto Condensed",sans-serif;text-align:right}
+.srow b{font:italic 800 18px/1 "Saira Condensed",sans-serif;text-align:right}
 .kicks{display:flex;gap:4px}
 .kicks i{position:relative;width:14px;height:14px;border-radius:50%;border:1.5px solid #ffffff40;transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
 .kicks i.g{background:var(--green);border-color:var(--green);transform:scale(1.1)}
@@ -97,22 +97,21 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .kicks i.m:before,.kicks i.m:after{content:"";position:absolute;left:50%;top:50%;width:8px;height:1.5px;margin:-.75px 0 0 -4px;background:#fff;transform:rotate(45deg)}
 .kicks i.m:after{transform:rotate(-45deg)}
 .kicks i.sd{border-style:dashed}
-.score{display:flex;align-items:center;gap:10px;background:#0d0d0fcc;border:1px solid var(--line);border-radius:99px;padding:7px 14px;backdrop-filter:blur(6px)}
-.score b{font:italic 800 18px/1 "Roboto Condensed",sans-serif;min-width:14px;text-align:center}
+.score{display:flex;align-items:center;gap:10px;background:#0d0d0fcc;border:1px solid var(--line);border-radius:8px;padding:7px 14px;backdrop-filter:blur(6px)}
+.score b{font:italic 800 18px/1 "Saira Condensed",sans-serif;min-width:14px;text-align:center}
 .score .who{font-size:12px;color:var(--soft);max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #exit{position:absolute;left:12px;top:calc(86px + env(safe-area-inset-top));z-index:10;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--line);background:#0d0d0fcc;color:#F2F1F0}
 /* HOME ON THE START SCREEN (owner, 13 Oct 2026: "there is no home button in the start
    page"). It used to hide under every sheet; now it stays, and says what it is. */
 #exit span{display:none;font:800 13px "Plus Jakarta Sans",system-ui,sans-serif}
-#app:has(#sheet.on) #exit{width:auto;text-decoration:none;padding:0 13px 0 5px;gap:6px;display:flex;align-items:center;border-radius:99px;border-color:var(--gold)}
+#app:has(#sheet.on) #exit{width:auto;text-decoration:none;padding:0 13px 0 5px;gap:6px;display:flex;align-items:center;border-radius:8px}
 #app:has(#sheet.on) #exit span{display:inline}
 #exit:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#app:not(:has(#sheet.on)) #exit{display:none}
 /* END A DUEL (owner, 13 Oct 2026: "there is no way to end an ongoing challenge").
    Top right during your turn in a duel; resigning loses it. */
-#resign{position:absolute;right:12px;top:calc(86px + env(safe-area-inset-top));z-index:10;height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:#0d0d0fcc;color:#F2F1F0;font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}
-#resign[hidden],#app:has(#sheet.on) #resign{display:none}
-#resign:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-#tag{position:absolute;top:calc(86px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);padding:8px 18px 7px;border-radius:99px;background:#0d0d0fe0;border:1px solid var(--line);font:italic 800 18px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;color:#F2F1F0;white-space:nowrap;z-index:6;pointer-events:none}
+#resign{display:none}/* its hidden flag says a duel can be resigned; the button is in the pause menu */
+#tag{position:absolute;top:calc(86px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);padding:8px 18px 7px;border-radius:6px;background:#0d0d0fe0;border:1px solid var(--line);font:italic 800 18px/1 "Saira Condensed",sans-serif;letter-spacing:.12em;color:#F2F1F0;white-space:nowrap;z-index:6;pointer-events:none}
 #tag:empty{display:none}
 /* the turn as lettering, not a plate (owner, 9 Oct 2026: the plate covered the meter and he did not like it) */
 #tag.shot,#tag.save{padding:0;border:0;background:none;font-size:22px;letter-spacing:.1em;text-shadow:0 2px 0 #07080a,0 0 12px #000c}
@@ -120,7 +119,7 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #tag.go{animation:pw-turn .5s cubic-bezier(.2,.9,.25,1)}
 @keyframes pw-turn{0%{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.86)}60%{opacity:1;transform:translateX(-50%) scale(1.06)}100%{transform:translateX(-50%) scale(1)}}
 /* power bar: weak / green / over, with the sweet spot marked in gold */
-#hint{position:absolute;left:0;right:0;bottom:calc(31% + env(safe-area-inset-bottom));text-align:center;font:italic 800 15px/1 "Roboto Condensed",sans-serif;letter-spacing:.18em;color:#fff;opacity:0;transition:opacity .2s;z-index:5;pointer-events:none;text-shadow:0 2px 8px #000}
+#hint{position:absolute;left:0;right:0;bottom:calc(31% + env(safe-area-inset-bottom));text-align:center;font:italic 800 15px/1 "Saira Condensed",sans-serif;letter-spacing:.18em;color:#fff;opacity:0;transition:opacity .2s;z-index:5;pointer-events:none;text-shadow:0 2px 8px #000}
 #hint.on{opacity:1}#hint i{display:block;font-style:normal;animation:pw-nudge .9s ease-in-out infinite}
 /* pop words */
 /* GAME LETTERING (owner, 9 Oct 2026: "catchy game graphics for text and insane
@@ -128,7 +127,7 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
    thick ink outline and a 3D drop; a shine sweeps it; rays and a shockwave
    ring burst behind; it slams in big and blurred, overshoots and settles. The
    colour of the moment rides --c. */
-#pop{position:absolute;left:0;right:0;top:44%;text-align:center;font:italic 800 64px/1 "Roboto Condensed",Impact,sans-serif;letter-spacing:-.01em;opacity:0;pointer-events:none;z-index:13;isolation:isolate;will-change:transform,opacity;--c:#fff}
+#pop{position:absolute;left:0;right:0;top:44%;text-align:center;font:italic 800 64px/1 "Saira Condensed",Impact,sans-serif;letter-spacing:-.01em;opacity:0;pointer-events:none;z-index:13;isolation:isolate;will-change:transform,opacity;--c:#fff}
 #pop .w{display:inline-block;padding:0 .1em;transform:skewX(-9deg);color:var(--c);
   text-shadow:2px 2px 0 #07080a,-2px 2px 0 #07080a,2px -2px 0 #07080a,-2px -2px 0 #07080a,0 3px 0 #07080a,0 6px 0 color-mix(in srgb,var(--c) 45%,#000),0 9px 0 #07080a}
 #pop small{display:inline-block;margin-top:10px;padding:5px 13px 4px;transform:skewX(-9deg);background:#07080a;border:2px solid var(--c);border-radius:4px;color:#fff;font-size:15px;letter-spacing:.2em;box-shadow:0 6px 16px #000a}
@@ -137,7 +136,7 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #pop.go{animation:pw-pop 1.15s cubic-bezier(.2,.9,.25,1) both}
 #pop.go:after{animation:pw-ring .6s .05s cubic-bezier(.2,.9,.25,1) both}
 @keyframes pw-ring{0%{opacity:.9;transform:scale(.2)}100%{opacity:0;transform:scale(3.2)}}
-#combo{position:absolute;right:0;left:0;text-align:center;top:calc(150px + env(safe-area-inset-top));font:italic 800 14px/1 "Roboto Condensed",sans-serif;color:var(--gold);letter-spacing:.1em;opacity:0;z-index:6}
+#combo{position:absolute;right:0;left:0;text-align:center;top:calc(150px + env(safe-area-inset-top));font:italic 800 14px/1 "Saira Condensed",sans-serif;color:var(--gold);letter-spacing:.1em;opacity:0;z-index:6}
 #combo.on{opacity:1;animation:pw-flame .8s ease-in-out infinite alternate}
 /* the coach: The Wizard with a tip, and a ghost finger showing the swipe */
 #coach{position:absolute;left:12px;right:12px;top:47%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;background:#0d0d0fe6;border:1px solid var(--line);box-shadow:0 12px 30px #000a;z-index:7;opacity:0;transform:translateY(8px) scale(.98);transition:opacity .25s,transform .25s;pointer-events:none}
@@ -147,18 +146,22 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #ghost{position:absolute;left:var(--gx,50%);top:var(--gy,80%);width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:#ffffffcc;box-shadow:0 0 0 6px #ffffff33;opacity:0;pointer-events:none;z-index:7}
 #ghost.on{animation:pw-ghost 1.6s cubic-bezier(.3,.7,.3,1) infinite}
 @keyframes pw-ghost{0%{opacity:0;transform:translate(0,0) scale(.8)}15%{opacity:1;transform:translate(0,0) scale(1)}70%{opacity:1;transform:translate(46px,-190px) scale(.9)}100%{opacity:0;transform:translate(52px,-210px) scale(.8)}}
-#pts{position:absolute;left:0;right:0;top:calc(44% + 150px);text-align:center;font:italic 800 18px/1 "Roboto Condensed",sans-serif;letter-spacing:.06em;color:var(--gold);text-shadow:0 2px 10px #000;opacity:0;pointer-events:none;z-index:7}
+#pts{position:absolute;left:0;right:0;top:calc(44% + 150px);text-align:center;font:italic 800 18px/1 "Saira Condensed",sans-serif;letter-spacing:.06em;color:var(--gold);text-shadow:0 2px 10px #000;opacity:0;pointer-events:none;z-index:7}
 #pts.go{animation:pw-pts 1.4s cubic-bezier(.2,.9,.25,1)}
 @keyframes pw-pts{0%{opacity:0;transform:translateY(14px) scale(.8)}18%{opacity:1;transform:translateY(0) scale(1.08)}70%{opacity:1;transform:translateY(-10px) scale(1)}100%{opacity:0;transform:translateY(-24px) scale(1)}}
-#wind{position:absolute;left:12px;top:calc(128px + env(safe-area-inset-top));font:italic 800 12px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;color:var(--soft);z-index:6;pointer-events:none}
+#wind{position:absolute;left:12px;top:calc(138px + env(safe-area-inset-top));font:italic 800 12px/1 "Saira Condensed",sans-serif;letter-spacing:.12em;color:var(--soft);z-index:6;pointer-events:none}
 #spellbox[hidden]{display:none}
-#spellbox{position:absolute;right:12px;top:calc(126px + env(safe-area-inset-top));display:flex;align-items:center;gap:6px;z-index:6;pointer-events:none}
-#spellbox span{font:italic 800 11px/1 "Roboto Condensed",sans-serif;letter-spacing:.14em;color:var(--gold)}
+#spellbox{position:absolute;right:12px;top:calc(136px + env(safe-area-inset-top));display:flex;align-items:center;gap:6px;z-index:6;pointer-events:none}
+#spellbox span{font:italic 800 11px/1 "Saira Condensed",sans-serif;letter-spacing:.14em;color:var(--gold)}
 #spellbox b{position:relative;width:64px;height:7px;border-radius:99px;background:#ffffff1a;overflow:hidden}
 #spellbox i{position:absolute;inset:0;background:linear-gradient(90deg,var(--red),var(--gold));transform-origin:0 50%;transform:scaleX(0);transition:transform .4s cubic-bezier(.2,.9,.25,1)}
-/* Mute where a thumb finds it (owner, 13 Oct 2026: "put a mute on the game page" - the
-   dark grey one was not seen). Gold ring and a bright icon; red when muted. */
-#snd{position:absolute;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:7;width:48px;height:48px;display:grid;place-items:center;border-radius:50%;border:2px solid var(--gold);background:#0d0d0fe6;color:#F2F1F0;cursor:pointer;box-shadow:0 4px 14px #0008}
+/* Pause top-left, mute top-right, where every mobile game keeps them (owner, 13 Oct
+   2026: the bottom-corner mute was cut off on a phone, and there was no menu in a
+   match). Gold edge on mute so it is seen; red when muted. */
+#pause,#snd{position:absolute;top:calc(86px + env(safe-area-inset-top));z-index:10;width:40px;height:40px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--line);background:#0d0d0fe6;color:#F2F1F0;cursor:pointer;padding:0}
+#pause{left:12px}#snd{right:12px;border-color:var(--gold)}
+#app:has(#sheet.on) #pause{display:none}
+#pause:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 #snd[aria-pressed="false"]{color:#F2F1F0;border-color:var(--red)}
 #snd:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 /* the legendary orb: charge ring when ready; armed = gold core, racing ring, arcs, one shockwave */
@@ -184,19 +187,19 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #app.legend #keeper{filter:grayscale(.75) brightness(.85) drop-shadow(0 0 8px #8fd8ff)}
 #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:8}
 /* bottom sheet (menus, results) */
-#sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .45s cubic-bezier(.2,.9,.25,1);z-index:9;max-height:92%;overflow:auto;box-shadow:0 -20px 50px #000a}
+#sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .45s cubic-bezier(.2,.9,.25,1);z-index:9;max-height:92%;overflow:auto;touch-action:pan-y;overscroll-behavior:contain;box-shadow:0 -20px 50px #000a}
 #sheet.on{transform:none}
-.smenu{float:right;margin:0 0 4px 12px;height:32px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:none;color:var(--soft);font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}
+.smenu{float:right;margin:0 0 4px 12px;height:32px;padding:0 14px;border-radius:6px;border:1px solid var(--line);background:none;color:var(--soft);font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}
 .smenu:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 #sheet h2.best{color:var(--gold)}
 /* THE MATCH REPORT (EA FC's full-time card): three numbers you earned */
 .rep{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 10px}
 .rep div{padding:9px 6px 8px;border:1px solid var(--line);border-radius:10px;background:var(--card2);text-align:center}
-.rep b{display:block;font:italic 800 24px/1 "Roboto Condensed",sans-serif;color:var(--gold)}.rep span{display:block;margin-top:4px;font-size:11px;letter-spacing:.08em;color:var(--soft);text-transform:uppercase}
+.rep b{display:block;font:800 26px/1 "Saira Condensed",sans-serif;color:var(--gold)}.rep span{display:block;margin-top:4px;font-size:11px;letter-spacing:.08em;color:var(--soft);text-transform:uppercase}
 #sheet p.dgrid{margin:4px 0 8px;font-size:30px;letter-spacing:4px;color:var(--text)}
 /* DIVISION CRESTS (owner, 9 Oct 2026 - batch 2): a shield per division */
 .crest{display:inline-block;vertical-align:middle;flex:none}.crest svg{display:block;width:100%;height:100%}
-.lb li.lgh{display:flex;align-items:center;gap:10px;padding:4px 4px 10px;border:0}.lb li.lgh b{color:#F2F1F0}.lgh b{display:block;font:italic 800 18px/1.1 "Roboto Condensed",sans-serif}.lgh span{display:block;font-size:12.5px;color:var(--soft)}
+.lb li.lgh{display:flex;align-items:center;gap:10px;padding:4px 4px 10px;border:0}.lb li.lgh b{color:#F2F1F0}.lgh b{display:block;font:800 19px/1.1 "Saira Condensed",sans-serif;text-transform:uppercase}.lgh span{display:block;font-size:12.5px;color:var(--soft)}
 #promo{position:absolute;inset:0;z-index:12;display:grid;place-items:center;align-content:start;padding-top:22%;background:radial-gradient(circle at 50% 35%,#2a1d06f2,#07080af7 70%);opacity:0;pointer-events:none}
 #promo.go{animation:pw-vs 2.6s ease both;pointer-events:auto}
 #promo .crest{width:150px;height:175px}#promo.go .crest{animation:pw-flip 1s cubic-bezier(.2,.9,.25,1) both}
@@ -207,13 +210,13 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #vs .vl,#vs .vr{display:grid;justify-items:center;gap:9px;width:34%;min-width:0}
 #vs i{width:92px;height:92px;border-radius:50%;background:#1E1E22 no-repeat 50% 0/cover;border:2px solid #F2F1F0}
 #vs .vr i{border-color:#E63946}
-#vs b{font:italic 800 18px/1.1 "Roboto Condensed",sans-serif;color:#F2F1F0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#vs .vx{font:italic 800 64px/1 "Roboto Condensed",sans-serif;text-align:center;color:#F2B84B;text-shadow:2px 2px 0 #07080a,-2px 2px 0 #07080a,2px -2px 0 #07080a,-2px -2px 0 #07080a,0 4px 0 #07080a,0 8px 0 #5a3a08}
+#vs b{font:italic 800 18px/1.1 "Saira Condensed",sans-serif;color:#F2F1F0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#vs .vx{font:italic 800 64px/1 "Saira Condensed",sans-serif;text-align:center;color:#F2B84B;text-shadow:2px 2px 0 #07080a,-2px 2px 0 #07080a,2px -2px 0 #07080a,-2px -2px 0 #07080a,0 4px 0 #07080a,0 8px 0 #5a3a08}
 #vs .vm{color:var(--soft);text-shadow:none}
 #vs .vm{display:block;margin-top:8px;font-size:11px;letter-spacing:.22em;color:var(--soft)}
 #vs small{font:700 12px/1.35 "Plus Jakarta Sans",system-ui,sans-serif;color:var(--soft);text-align:center;min-height:1.2em;white-space:pre-line}
-#vs .vh{display:block;margin-top:10px;text-shadow:0 2px 6px #000;font:italic 800 13px/1.2 "Roboto Condensed",sans-serif;letter-spacing:.06em;color:#F2F1F0;white-space:nowrap}
-#vs .vt{display:none;position:absolute;left:0;right:0;bottom:calc(14% + env(safe-area-inset-bottom));text-align:center;text-decoration:none;font:italic 800 15px/1 "Roboto Condensed",sans-serif;letter-spacing:.18em;color:#F2B84B}
+#vs .vh{display:block;margin-top:10px;text-shadow:0 2px 6px #000;font:italic 800 13px/1.2 "Saira Condensed",sans-serif;letter-spacing:.06em;color:#F2F1F0;white-space:nowrap}
+#vs .vt{display:none;position:absolute;left:0;right:0;bottom:calc(14% + env(safe-area-inset-bottom));text-align:center;text-decoration:none;font:italic 800 15px/1 "Saira Condensed",sans-serif;letter-spacing:.18em;color:#F2B84B}
 #vs.tap{pointer-events:auto;cursor:pointer}#vs.tap .vt{display:block;animation:pw-vt 1.1s ease-in-out infinite}
 #vs.tap.go{animation:pw-vsin .3s ease both}
 @keyframes pw-vsin{from{opacity:0}to{opacity:1}}@keyframes pw-vt{50%{opacity:.35}}
@@ -224,14 +227,15 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .sboard{position:relative}
 .sboard:before{content:"PENALTIES";position:absolute;top:-8px;left:12px;padding:2px 8px;border-radius:3px;background:#E63946;color:#fff;font:800 9px/1.3 "Plus Jakarta Sans",system-ui,sans-serif;letter-spacing:.16em}
 .srow b{background:#F2F1F0;color:#0d0d0f;border-radius:4px;padding:3px 0;text-align:center}
-#sheet h2{margin:2px 0 6px;font:italic 800 26px/1.05 "Roboto Condensed",sans-serif;letter-spacing:.01em}
+#sheet h2{margin:2px 0 6px;font:800 27px/1.05 "Saira Condensed",sans-serif;letter-spacing:.005em;text-transform:uppercase}
 #sheet p{margin:0 0 12px;color:var(--soft);font-size:14px}
 #sheet p.credit{margin:4px 0 0;font-size:11px;opacity:.6;text-align:center}#sheet p.credit a{color:inherit}
 #sheet .note{color:var(--gold);font-weight:800}
+#sheet .note span+span:before{content:"";display:inline-block;width:1px;height:.9em;margin:0 8px;vertical-align:-1px;background:var(--line)}
 /* "Home" under a result (owner, 11 Oct 2026): a plain word, back to the site. */
 .shome{display:block;margin:14px auto 2px;padding:8px 14px;text-align:center;color:inherit;opacity:.8;font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .shome:hover{opacity:1}
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;margin-top:8px;border:0;border-radius:999px;font:800 15px "Plus Jakarta Sans",system-ui;cursor:pointer;text-decoration:none;transition:transform .12s}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;margin-top:8px;border:0;border-radius:8px;font:800 15px "Plus Jakarta Sans",system-ui;cursor:pointer;text-decoration:none;transition:transform .12s}
 .btn:active{transform:scale(.97)}
 .btn:focus-visible,.pick button:focus-visible,.sfoot button:focus-visible,#cast:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 @media (hover:hover){.btn.ghost:hover{background:var(--card2)}.sfoot button:hover{color:var(--text)}}
@@ -248,26 +252,21 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 .sh.done i{color:var(--gold);border-color:var(--gold)}.sh.done span{color:var(--gold)}
 .sh:focus-visible{outline:none}.sh:focus-visible i{outline:2px solid var(--gold);outline-offset:3px}
 @media (hover:hover){.sh:hover i{transform:translateY(-1px)}.sh:hover span{color:var(--text)}}
-input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:0 18px;font:inherit;font-size:16px;margin-bottom:4px}
+input.name{width:100%;height:50px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:0 18px;font:inherit;font-size:16px;margin-bottom:4px}
 .pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 6px}
-.pick button{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px 9px;border-radius:16px;border:1px solid var(--line);background:var(--card2);color:var(--soft);font:italic 800 14px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;cursor:pointer;transition:transform .15s,border-color .15s}
+.pick button{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px 9px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--soft);font:800 14px/1 "Saira Condensed",sans-serif;letter-spacing:.06em;cursor:pointer;transition:transform .15s,border-color .15s}
 .pick button img{position:relative;z-index:1;height:96px;filter:drop-shadow(0 6px 10px #000b) grayscale(.55) brightness(.75);transition:transform .25s cubic-bezier(.3,1.6,.5,1),filter .25s}
 .pick button span{position:relative;z-index:1;font-size:17px;letter-spacing:.06em}
 .pick button{overflow:hidden;isolation:isolate}
-/* The fight-card look (owner: "a crazier selection picture"; art by the owner, 13 Oct
-   2026, no gloves - they are players here, not keepers): each fighter in their own
-   light - fire for Ten, arcane gold and violet for The Wizard - and the picked one
-   lit up, roaring, with a spinning aura round the card. */
+/* The fight cards (art by the owner, 13 Oct 2026, no gloves): each fighter in their
+   own light, fire for Ten and arcane violet for The Wizard. The picked one is lit
+   with a gold edge. No spinning aura or glow: those read as AI-template. */
 .pick button::before{content:"";position:absolute;inset:0;z-index:0;opacity:.35;transition:opacity .25s}
 .pick .c-ten::before{background:radial-gradient(120% 80% at 50% 105%,#ff7a1a 0%,#E63946 38%,#3a0a10 70%,transparent 85%)}
 .pick .c-wizard::before{background:radial-gradient(120% 80% at 50% 105%,#F2B84B 0%,#8a3cff 42%,#1a0b33 72%,transparent 86%)}
-.pick button.on::before{opacity:1;animation:pwflare 1.6s ease-in-out infinite alternate}
-.pick button.on img{filter:drop-shadow(0 0 14px #fff6) drop-shadow(0 8px 12px #000c)}
-.pick button.on{border-color:transparent;color:#fff;box-shadow:0 0 0 2px var(--gold),0 0 26px #F2B84B66}
-.pick button.on::after{content:"";position:absolute;inset:-40%;z-index:-1;background:conic-gradient(from 0deg,transparent 0 70%,#F2B84B 80%,transparent 90%);animation:pwspin 2.4s linear infinite}
-@keyframes pwflare{from{filter:brightness(.9) saturate(1)}to{filter:brightness(1.25) saturate(1.3)}}
-@keyframes pwspin{to{transform:rotate(1turn)}}
-@media (prefers-reduced-motion:reduce){.pick button.on::before,.pick button.on::after{animation:none}}
+.pick button.on::before{opacity:1}
+.pick button.on img{filter:drop-shadow(0 8px 12px #000c)}
+.pick button.on{border:2px solid var(--gold);padding:9px 5px 8px;color:#fff}
 @media(max-height:700px){.pick button img{height:66px}.btn{height:42px;margin-top:6px}#sheet h2{font-size:23px}}
 @media(max-height:620px){.pick button img{height:52px}#sheet p.credit{display:none}}
 .pick button.on img{transform:scale(1.08) translateY(-2px)}
@@ -281,12 +280,12 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
 .crow+.crow{border-top:1px solid var(--line)}
 .crow>span{font-size:15px}.crow code{font:800 16px/1 "Plus Jakarta Sans",system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.04em;color:var(--gold)}
 .btn.sm{height:28px;margin:0;padding:0 13px;width:auto;font-size:12px}.tips p{margin:0 0 4px!important;font-size:13px!important}.tips .btn.red{height:46px;margin-top:8px}
-.lbt{display:flex;gap:6px;margin:4px 0 8px}.lbt button{flex:1;height:34px;border-radius:99px;border:1px solid var(--line);background:none;color:var(--soft);font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}
+.lbt{display:flex;gap:6px;margin:4px 0 8px}.lbt button{flex:1;height:34px;border-radius:6px;border:1px solid var(--line);background:none;color:var(--soft);font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}
 .lbt button.on{background:var(--card2);color:var(--text);border-color:#F2B84B88}
-.lb{list-style:none;margin:0 0 6px;padding:0;max-height:46vh;overflow:auto}
+.lb{list-style:none;margin:0 0 6px;padding:0;max-height:46vh;overflow:auto;touch-action:pan-y}
 .lb li{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:8px;padding:7px 4px;font-size:14px}.lb li+li{border-top:1px solid var(--line)}
 .lb b{color:var(--soft);font-variant-numeric:tabular-nums}.lb i{font-style:normal;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
-.lb li>span{display:flex;align-items:center;min-width:0}.cb{display:inline-grid;place-items:center;flex:none;width:30px;height:20px;border-radius:5px;margin-right:8px;font:italic 800 10px/1 "Roboto Condensed",sans-serif;letter-spacing:.04em;box-shadow:inset 0 0 0 1px #ffffff26}
+.lb li>span{display:flex;align-items:center;min-width:0}.cb{display:inline-grid;place-items:center;flex:none;width:30px;height:20px;border-radius:5px;margin-right:8px;font:italic 800 10px/1 "Saira Condensed",sans-serif;letter-spacing:.04em;box-shadow:inset 0 0 0 1px #ffffff26}
 .clubs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:6px 0 10px}.clubs button{display:flex;align-items:center;gap:8px;height:42px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--text);font:700 13.5px "Plus Jakarta Sans",system-ui,sans-serif;text-align:left;cursor:pointer}.clubs button.on{border-color:#F2B84B}.clubs .cb{margin:0}
 .lb li.you{background:#F2B84B14;border-radius:8px}.lb li.you span{color:var(--gold)}.lb .lbe{display:block;color:var(--soft)}
 .sfoot{display:flex;flex-wrap:wrap;justify-content:center;gap:0 18px;margin-top:10px}
@@ -328,6 +327,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
   <div id="spellbox" hidden><span>LEGENDARY</span><b><i></i></b></div>
   <button id="cast" type="button" hidden aria-label="Legendary shot"><svg class="arcs" viewBox="0 0 88 88" aria-hidden="true" fill="none" stroke="#FFE6A6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M44 3l-3 5 4 2-3 5"/><path d="M82 52l-5-1-1 4-5-2"/><path d="M12 70l4-3-3-3 5-3"/></svg><svg class="bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 5 13.5h5.5L9.5 22 19 9.5h-5.6z" fill="currentColor"/></svg><i class="wave"></i></button>
   <button id="snd" type="button"></button>
+  <button id="pause" type="button" aria-label="Pause"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1" fill="currentColor"/><rect x="9.5" y="2" width="3.5" height="12" rx="1" fill="currentColor"/></svg></button>
   <div id="hud"><div class="sboard"><div class="srow" id="rowA"><i class="av" id="avA"></i><span class="who" id="whoA">YOU</span><span class="kicks" id="kA"></span><b id="scA">0</b></div><div class="srow" id="rowB"><i class="av" id="avB"></i><span class="who" id="whoB">CPU</span><span class="kicks" id="kB"></span><b id="scB">0</b></div></div></div>
   <div id="tag"></div><div id="combo"></div>
   <div id="promo" aria-hidden="true"></div>
@@ -461,7 +461,8 @@ var RESTITUTION=0.42;
 
 function layout(){
   var a=$("app").getBoundingClientRect(),W=a.width,H=a.height;
-  var goalW=Math.min(W*0.86,420),sG=goalW/GOAL.w,goalBottom=H*0.42,spotY=H*0.8;
+  /* zoomed out (owner, 13 Oct 2026): room round the posts for a curler, boots on screen */
+  var goalW=Math.min(W*0.7,400),sG=goalW/GOAL.w,goalBottom=H*0.4,spotY=H*0.74;
   CAM.W=W;CAM.H=H;CAM.cx=W/2;CAM.F=sG*(GOAL.z+CAM.c);
   var s0=CAM.F/CAM.c;CAM.h=(spotY-goalBottom)/(s0-sG);CAM.hz=goalBottom-CAM.h*sG;
   var gl=P(-GOAL.w/2,GOAL.h,GOAL.z),gr=P(GOAL.w/2,0,GOAL.z),goalH=gr.y-gl.y;
@@ -565,7 +566,7 @@ function place(){
   b.style.transform="translate("+(bp.x-bd/2)+"px,"+(bp.y-bd/2)+"px) rotate("+B.rot+"deg)";
   var gp=P(B.x,0,B.z),sw=bd*1.5,sd=$("shadow");sd.style.width=sw+"px";sd.style.height=sw*0.35+"px";
   sd.style.opacity=B.vis?Math.max(0,0.55-B.y*0.12)*B.alpha:0;sd.style.transform="translate("+(gp.x-sw/2)+"px,"+(gp.y-sw*0.17)+"px)";
-  var w=$("world");w.style.transformOrigin=CAM.cx+"px "+P(0,1,GOAL.z).y+"px";
+  var w=$("world");w.style.transformOrigin=CAM.cx+"px "+(P(0,1,GOAL.z).y+P(0,0,0).y)/2+"px";
   w.style.transform="translate("+CAM_FX.sx+"px,"+CAM_FX.sy+"px) scale("+CAM_FX.zoom+")";
 }
 
@@ -811,7 +812,7 @@ function aimAndShoot(){
   return new Promise(function(done){
     var app=$("app"),path=null;
     function pt(e){var a=app.getBoundingClientRect();return {x:e.clientX-a.left,y:e.clientY-a.top,t:performance.now()};}
-    function down(e){var p=pt(e);if(p.y<CAM.H*0.45)return;path=[p];K.img="k-spring.webp";try{app.setPointerCapture(e.pointerId);}catch(_){}}
+    function down(e){if(e.target.closest("#sheet,button,a"))return;var p=pt(e);if(p.y<CAM.H*0.45)return;path=[p];K.img="k-spring.webp";try{app.setPointerCapture(e.pointerId);}catch(_){}}
     /* a long swipe strikes the moment it crosses - no waiting for the lift */
     function move(e){if(!path)return;var p=pt(e);path.push(p);var dl=Math.hypot(p.x-path[0].x,p.y-path[0].y);if(dl>CAM.H*0.3)fire();}
     function up(e){if(!path)return;path.push(pt(e));fire();}
@@ -1290,7 +1291,7 @@ window.PWFlow={duel:duel,duelsList:duelsList,survival:survival,leaderboard:leade
 <script>
 (function(){
 "use strict";
-var PW=window.PW,F=window.PWFlow,R=PW.RULES;
+var PW=window.PW,F=window.PWFlow,R=PW.RULES,$=function(i){return document.getElementById(i);};
 function lagos(ms){return new Date(ms+3600000).toISOString().slice(0,10);}
 function bumpStreak(day){var s={last:null,n:0};try{s=JSON.parse(localStorage.getItem("pw.streak")||"null")||s;}catch(e){}
   if(s.last===day)return s.n;
@@ -1339,19 +1340,35 @@ function daily(){var outs=[],day=null,i=0;PW.setSolo(false);PW.newBoard("The Wiz
   start();}
 
 window.PWHome=function(){$("resign").hidden=true;home();};
+function note(parts){var p=F.el("p","note");parts.forEach(function(t){p.appendChild(F.el("span",null,t));});return p;}
+/* PAUSE (owner, 13 Oct 2026: "im not seeing menu button while in game"). The menu
+   every mobile football game has: resume first, then restart, sound, how to play,
+   resign (duels), quit. Quitting reloads the page: a match is a chain of promises
+   waiting on a swipe, and a reload is the one way to drop it cleanly. */
+var MODE="";
+function paused(){var rz=$("resign"),snd=F.btn(PW.muted?"Sound off":"Sound on","ghost",function(){PW.setMuted(!PW.muted);snd.textContent=PW.muted?"Sound off":"Sound on";});
+  var nodes=[F.el("h2",null,"Paused"),F.btn("Resume","red",F.closeSheet)];
+  if(MODE==="cpu")nodes.push(F.btn("Restart match","ghost",function(){location.href="/penalty?play=cpu";}));
+  nodes.push(F.row(snd,F.btn("How to play","ghost",function(){PW.coachReset();F.closeSheet();})));
+  if(!rz.hidden)nodes.push(F.btn("Resign this duel","ghost",function(){F.closeSheet();rz.onclick();}));
+  nodes.push(F.btn("Quit to menu","ghost",function(){location.href="/penalty";}),F.homeLink());
+  F.sheet(nodes,true);}
+$("pause").addEventListener("pointerdown",function(e){e.stopPropagation();});
+$("pause").addEventListener("click",function(e){e.stopPropagation();paused();});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("sheet").classList.contains("on"))paused();});
 function home(){
   var lv=PW.levelOf(PW.xp),nx=[3,5,8].filter(function(x){return x>lv;})[0],best=0;try{best=+localStorage.getItem("pw.best")||0;}catch(e){}
   /* One screen, no scroll (owner, 13 Oct 2026: "i hate to scroll on that beginning page"). */
   var nodes=[F.el("h2",null,"Play Penalty"),
-    F.el("p","note","Level "+lv+" · "+PW.xp.toLocaleString("en")+" pts"+(nx?" · new trail at level "+nx:"")+(best?" · best run "+best:"")),
+    note(["Level "+lv,PW.xp.toLocaleString("en")+" pts"].concat(nx?["New trail at level "+nx]:[],best?["Best run "+best]:[])),
     F.charPicker(),
     /* The one that always works comes first (owner: "there is no play
        against computer" - it sat below the fold of the sheet on a phone). */
-    F.btn("Play the computer","red",function(){F.closeSheet();F.practice();}),
+    F.btn("Play the computer","red",function(){F.closeSheet();MODE="cpu";F.practice();}),
     F.row(F.btn("Ranked","ghost",function(){F.closeSheet();F.survival();}),F.btn("Leaderboard","ghost",function(){F.closeSheet();F.leaderboard("league");})),
     F.row(F.btn("Wizard Keeper","ghost",function(){F.closeSheet();daily();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}))];
   var foot=F.el("div","sfoot"),how=F.el("button",null,"How to play"),mute=F.el("button",null,PW.muted?"Sound off":"Sound on");how.type=mute.type="button";
-  how.addEventListener("click",function(){PW.coachReset();F.closeSheet();F.practice();});
+  how.addEventListener("click",function(){PW.coachReset();F.closeSheet();MODE="cpu";F.practice();});
   mute.addEventListener("click",function(){PW.setMuted(!PW.muted);mute.textContent=PW.muted?"Sound off":"Sound on";});
   foot.appendChild(how);foot.appendChild(mute);
   var credit=F.el("p","credit");credit.innerHTML='Crowd sounds by Gregor Quendel, <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener" target="_blank">CC BY 4.0</a>';
@@ -1371,7 +1388,8 @@ function home(){
 }
 
 var q=new URLSearchParams(location.search),dq=q.get("d");
-if(dq&&/^[A-Za-z0-9]{6}$/.test(dq))F.duel(dq.toUpperCase());else home();
+if(dq&&/^[A-Za-z0-9]{6}$/.test(dq))F.duel(dq.toUpperCase());
+else if(q.get("play")==="cpu"){history.replaceState(null,"","/penalty");MODE="cpu";F.practice();}else home();
 })();
 </script>
 </body></html>
