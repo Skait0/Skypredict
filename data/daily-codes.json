@@ -2110,5 +2110,73 @@
       "betpawa": "KQHOGL7"
     },
     "odds": 1.67
+  },
+  "2026-10-13": {
+    "date": "2026-10-13",
+    "generated": "2026-10-13T13:51:59.896Z",
+    "firstKickoff": "2026-10-13T18:45:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-13",
+        "home": "Viking",
+        "away": "Bayern Munich",
+        "league": "International Clubs UEFA Champions League",
+        "kickoff": "2026-10-13T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.735,
+        "market": "OVER_1.5",
+        "odd": 1.03
+      },
+      {
+        "date": "2026-10-13",
+        "home": "Galatasaray",
+        "away": "Barcelona",
+        "league": "International Clubs UEFA Champions League",
+        "kickoff": "2026-10-13T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.726,
+        "market": "OVER_1.5",
+        "odd": 1.05
+      },
+      {
+        "date": "2026-10-13",
+        "home": "RB Leipzig",
+        "away": "PSV Eindhoven",
+        "league": "International Clubs UEFA Champions League",
+        "kickoff": "2026-10-13T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.739,
+        "market": "OVER_1.5",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-13",
+        "home": "Inter",
+        "away": "Club Brugge",
+        "league": "International Clubs UEFA Champions League",
+        "kickoff": "2026-10-13T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.721,
+        "market": "OVER_1.5",
+        "odd": 1.09
+      },
+      {
+        "date": "2026-10-13",
+        "home": "East Kilbride",
+        "away": "Kelty Hearts",
+        "league": "Scotland Challenge Cup",
+        "kickoff": "2026-10-13T18:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.773,
+        "market": "OVER_1.5",
+        "odd": 1.07
+      }
+    ],
+    "codes": {
+      "sporty": "P1X2ZY",
+      "bet9ja": "5VNNJZP",
+      "betking": "G42SG9"
+    },
+    "odds": 1.35
   }
 }
