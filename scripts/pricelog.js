@@ -81,9 +81,18 @@ function rows(board, events, now) {
   return out;
 }
 
+/* Three tries, 5s apart. A run on 13 Oct 2026 died on a bare "terminated":
+   the connection dropped mid-download while a deploy swapped the site over. */
+async function getJson(url, tries) {
+  for (let i = 1; ; i++) {
+    try { const r = await fetch(url); if (!r.ok) throw new Error(url + " answered " + r.status); return await r.json(); }
+    catch (e) { if (i >= (tries || 3)) throw e; console.log("retrying " + url + " (" + e.message + ")"); await new Promise((d) => setTimeout(d, 5000)); }
+  }
+}
+
 if (require.main === module) (async () => {
-  const board = await (await fetch(ORIGIN + "/predictions.json")).json();
-  const j = await (await fetch(HOST + "/api/fixtures")).json();
+  const board = await getJson(ORIGIN + "/predictions.json");
+  const j = await getJson(HOST + "/api/fixtures");
   const events = (j.matches || []).map((m) => ({ eventId: m.eventId, homeTeam: m.homeTeam,
     awayTeam: m.awayTeam, startTime: m.startTime, league: m.league, odds: m.odds || null }));
   const got = rows(board, events, Date.now());
