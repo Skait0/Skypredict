@@ -71,8 +71,9 @@ Two families, both from Google Fonts in one request:
   app sheet, under "DISPLAY FACE".
 
 Don't add a third family. BetKing's wordmark still uses its condensed system
-stack, and a test forbids a Roboto webfont link for it. The static pages are
-still all Plus Jakarta Sans.
+stack, and a test forbids a Roboto webfont link for it. The static pages
+(`lib/pages.js`) load the same two families and set every `h1` and `h2` in
+Saira Condensed, uppercase, one colour (`h1 em` inherits); `h1` is 30px.
 
 - h1 17-26px/800 in `--disp`, one colour. There is no gold or red second
   half: `.intro h1 span` and `.bld-title em` inherit the colour. A
