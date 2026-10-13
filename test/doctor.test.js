@@ -3,6 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert");
 const D = require("../lib/doctor.js");
+const fs = require("fs");
 
 const KO = "2026-09-25T19:00:00.000Z";
 const fx = [
@@ -20,14 +21,15 @@ test("a code is found in the ways people actually send one", () => {
   assert.strictEqual(D.parse("hello there").code, null, "ordinary words are not codes");
 });
 
-test("each leg gets our number for its own market, strongest first", () => {
+test("each leg gets the board's number (90% the de-vigged price) for its own market, strongest first", () => {
   const ex = D.examine([leg("England", "Spain", "AWAY_OVER_1.5", 2.2),
     leg("Morocco", "Gabon", "HOME_OVER_1.5", 1.35), leg("Turkiye", "France", "X", 3.4)], fx);
-  assert.deepStrictEqual(ex.rows.map((r) => Math.round(r.p * 100)), [81, 37, 21]);
+  assert.deepStrictEqual(ex.rows.map((r) => Math.round(r.p * 100)), [72, 43, 27]);
+  assert.deepStrictEqual(ex.rows.map((r) => r.raw), [0.81, 0.37, 0.21], "the model's own number is kept for the flag");
   assert.strictEqual(ex.rows[0].name, "Morocco over 1.5");
   assert.match(ex.rows[2].name, /^Draw \(Turkiye v France\)$/, "a bare market says which game");
   assert.ok(ex.allPriced);
-  assert.ok(Math.abs(ex.all - 0.81 * 0.37 * 0.21) < 1e-9);
+  assert.ok(Math.abs(ex.all - D.blend(0.81, 1.35) * D.blend(0.37, 2.2) * D.blend(0.21, 3.4)) < 1e-9);
 });
 
 test("unders and no-goal markets are the complement, and unknowns are not guessed", () => {
@@ -43,7 +45,7 @@ test("the verdict and the payout, and no win-chance line (owner's call, 24 Sep)"
   const text = D.reply("sporty", "ABC123", [leg("Morocco", "Gabon", "HOME_OVER_1.5", 1.35),
     leg("Nowhere", "FC", "1", 1.5)], fx, "https://x.test");
   assert.doesNotMatch(text, /Chance all/);
-  assert.match(text, /Wizard's verdict: a banker 🔥/);
+  assert.match(text, /Wizard's verdict: 0 bankers, the rest solid/);
   assert.match(text, /Pays <b>×2\.03<\/b> · ₦1,000 → <b>₦2,025<\/b>/, "every leg's odds, read or not");
   assert.match(text, /1 we can't read/);
   assert.match(text, /go=convert/);
@@ -52,16 +54,16 @@ test("the verdict and the payout, and no win-chance line (owner's call, 24 Sep)"
   assert.doesNotMatch(noPrice, /Pays/, "a leg without a price means no total");
 });
 
-test("the reply flags a leg the odds rate well above our model", () => {
+test("the reply flags a leg our model rates well under the odds", () => {
   const text = D.reply("sporty", "ABC123", [leg("England", "Spain", "AWAY_OVER_1.5", 1.6),
     leg("Morocco", "Gabon", "HOME_OVER_1.5", 1.35), leg("Morocco", "Gabon", "1X", 1.05),
     leg("Turkiye", "France", "AWAY_OVER_1.5", 1.4)], fx, "https://x.test");
-  assert.match(text, /Spain over 1\.5 · <b>37%<\/b> \(odds say 63%\)/);
-  assert.match(text, /Wizard's verdict: 2 bankers, 2 to tighten/);
+  assert.match(text, /Spain over 1\.5 · <b>57%<\/b> \(our model is cooler on this one\)/);
+  assert.match(text, /Wizard's verdict: 1 banker, 1 to tighten/);
   /* Never more verdict legs than slip legs, and "Bankers" only over bankers. */
   const weak = D.reply("sporty", "ABC123", [leg("England", "Spain", "AWAY_OVER_1.5", 1.6),
     leg("Turkiye", "France", "AWAY_OVER_1.5", 1.4)], fx, "https://x.test");
-  assert.match(weak, /Wizard's verdict: 0 bankers, 2 to tighten/);
+  assert.match(weak, /Wizard's verdict: 0 bankers, 1 to tighten/);
   assert.match(weak, /💪 <b>Strongest<\/b>/);
   assert.doesNotMatch(weak, /🔥 <b>Bankers<\/b>/);
 });
@@ -129,4 +131,10 @@ test("the site's start link opens the bot on the reader's code", async () => {
       { status() { return this; }, json() { return this; } });
     assert.deepStrictEqual(asked.map((u) => /book=(\w+)&code=(\w+)/.exec(u).slice(1).join(":")), ["sporty:RQWKNC"]);
   } finally { global.fetch = real; delete process.env.TELEGRAM_BOT_TOKEN; }
+});
+
+test("the Wizard's Eye uses the site's market weight (owner, 13 Oct 2026)", () => {
+  const html = fs.readFileSync(require("path").join(__dirname, "..", "public", "index.html"), "utf8");
+  assert.strictEqual(D.MARKET_W, Number(/var BLEND_MIN=([\d.]+)/.exec(html)[1]));
+  assert.strictEqual(D.blend(0.5, null), 0.5, "no price, the model's number");
 });
