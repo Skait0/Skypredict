@@ -73,14 +73,16 @@ async function world() {
   const ledger = { 41: "check", 42: "landed" };
   const slips = { hits: async () => ({ ok: true, rows: [] }),
     settle: async (id, to) => { if (ledger[id] !== "check") return { ok: true, changed: false }; ledger[id] = to; return { ok: true, changed: true }; } };
-  const h = account.make({ db, now: clock, env: { SW_ADMIN_EMAILS: "boss@x.com" }, flags, admin, slips });
+  const log = [];
+  const audit = { log: async (row) => { log.push(row); return true; }, list: async () => ({ ok: true, rows: log.slice().reverse() }) };
+  const h = account.make({ db, now: clock, env: { SW_ADMIN_EMAILS: "boss@x.com" }, flags, admin, slips, audit });
   const call = async (req) => { const r = fakeRes(); await h(req, r); return r; };
   const user = async (email) => {
     const u = await db.createUser({ email });
     return { id: u.id, cookie: S.COOKIE + "=" + (await S.startSession(db, u.id, "Chrome/129 Android", clock())).token };
   };
   const boss = await user("boss@x.com"), mum = await user("mum@home.com"), plain = await user("a@b.com");
-  return { db, call, boss, mum, plain, stored: () => stored, ledger };
+  return { db, call, boss, mum, plain, stored: () => stored, ledger, log };
 }
 const get = (who, action, query) => Object.assign(getReq("account", {}, { cookie: who.cookie }), { query: Object.assign({ action }, query || {}) });
 const post = (who, action, body) => Object.assign(postReq("account", body, { cookie: who.cookie }), { query: { action } });
@@ -180,4 +182,30 @@ test("slipdetail is admin only and reads the slip back", async () => {
   const w = await world();
   assert.strictEqual((await w.call(get(w.plain, "slipdetail", { id: "41" }))).code, 403);
   assert.strictEqual((await w.call(get(w.boss, "slipdetail", { id: "x" }))).code, 400);
+});
+
+/* ------------------------------------------------------------ the audit log */
+
+test("every admin change and every reader lookup is logged with who did it", async () => {
+  const w = await world();
+  await w.call(post(w.boss, "setflags", { booksOff: ["sporty"], notice: "" }));
+  await w.call(get(w.boss, "lookup", { email: "a@b.com" }));
+  await w.call(post(w.boss, "signout", { email: "a@b.com" }));
+  await w.call(post(w.boss, "settle", { id: "41", status: "lost" }));
+  await w.call(get(w.boss, "stats"));                       /* reading the numbers is not logged */
+  assert.deepStrictEqual(w.log.map((r) => [r.action, r.target]),
+    [["setflags", null], ["lookup", "a@b.com"], ["signout", "a@b.com"], ["settle", "slip 41"]]);
+  assert.ok(w.log.every((r) => r.admin_email === "boss@x.com" && r.at));
+  assert.deepStrictEqual(w.log[0].detail.after.booksOff, ["sporty"]);
+  assert.deepStrictEqual(w.log[0].detail.before.booksOff, []);
+  const got = (await w.call(get(w.boss, "audit"))).json().log;
+  assert.strictEqual(got[0].action, "settle", "newest first");
+  assert.strictEqual((await w.call(get(w.mum, "audit"))).code, 403, "Family & friends cannot read it");
+});
+
+test("a refused or failed admin action is not logged as done", async () => {
+  const w = await world();
+  await w.call(post(w.plain, "setflags", { booksOff: ["sporty"] }));
+  await w.call(post(w.boss, "settle", { id: "42", status: "lost" }));   /* not a check slip: 409 */
+  assert.deepStrictEqual(w.log, []);
 });

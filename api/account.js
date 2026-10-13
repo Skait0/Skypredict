@@ -14,7 +14,7 @@ const C = require("../lib/auth/crypto.js");
 const { report } = require("../lib/report.js");
 
 const REAUTH_MS = 10 * 60e3;
-const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup", "slipdetail"];
+const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit"];
 const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle"];
 
 function make(deps) {
@@ -31,6 +31,11 @@ function make(deps) {
   const flags = deps.flags || require("../lib/flags.js");
   const admin = deps.admin || { stats: () => require("../lib/supabase.js").adminStats(),
     slipsOf: (subject) => require("../lib/supabase.js").slipsBySubject(subject, 10) };
+  /* THE AUDIT LOG (sql/admin.sql): every admin change, and every look at a reader's
+     private details, with who did it. A failed write never undoes or blocks the
+     action - it is reported, so a gap in the log is itself on record. */
+  const audit = deps.audit || { log: (row) => require("../lib/supabase.js").logAdmin(row),
+    list: (n) => require("../lib/supabase.js").adminLog(n) };
   return async function handler(req, res) {
     if (!H.enabled()) return H.notFound(res);
     const action = String((req.query || {}).action || "");
@@ -49,6 +54,16 @@ function make(deps) {
       if (ADMIN_GET.includes(action) || ADMIN_POST.includes(action)) {
         const user = await db.userById(s.userId);
         if (!user || (await R.roleOf(db, user, env)) !== "admin") return H.sendJson(res, 403, { error: "forbidden" });
+        const record = async (what, target, detail) => {
+          let ok = false;
+          try { ok = await audit.log({ at: new Date(t).toISOString(), admin_email: user.email, action: what,
+            target: target == null ? null : String(target).slice(0, 200), detail: detail || {} }); } catch (e) { ok = false; }
+          if (!ok) await report(new Error("admin audit write failed: " + what), { route: "account/audit" });
+        };
+        if (action === "audit") {
+          const got = await audit.list(200);
+          return got && got.ok ? H.sendJson(res, 200, { log: got.rows }) : H.sendJson(res, 503, { error: "unavailable" });
+        }
         /* Slips booked on the site that landed (or need a manual check), newest first. */
         if (action === "hits") {
           const got = await slips.hits(200);
@@ -85,15 +100,20 @@ function make(deps) {
           if (!/^\d{1,18}$/.test(id) || (to !== "landed" && to !== "lost")) return H.sendJson(res, 400, { error: "bad_request" });
           const got = await slips.settle(id, to);
           if (!got || !got.ok) return H.sendJson(res, 503, { error: "unavailable" });
-          return got.changed ? H.sendJson(res, 200, { ok: true }) : H.sendJson(res, 409, { error: "not_check" });
+          if (!got.changed) return H.sendJson(res, 409, { error: "not_check" });
+          await record("settle", "slip " + id, { status: to });
+          return H.sendJson(res, 200, { ok: true });
         }
         if (action === "flags") {
           if (flags._reset) flags._reset(); // the admin sees the stored switches, not a cached copy
           return H.sendJson(res, 200, await flags.get());
         }
         if (action === "setflags") {
+          const before = await flags.get();
           const done = await flags.set((await H.readJson(req, 2048)) || {}, s.userId);
-          return done ? H.sendJson(res, 200, done) : H.sendJson(res, 503, { error: "unavailable" });
+          if (!done) return H.sendJson(res, 503, { error: "unavailable" });
+          await record("setflags", null, { before: { booksOff: before.booksOff, notice: before.notice }, after: done });
+          return H.sendJson(res, 200, done);
         }
         if (action === "stats") {
           const got = await admin.stats();
@@ -104,6 +124,7 @@ function make(deps) {
           if (!email) return H.sendJson(res, 400, { error: "bad_email" });
           const u = await db.userByEmail(email);
           const grant = await db.grantFor(email);
+          await record("lookup", email, { found: !!u });
           /* A grant can exist before the person signs up, so "no account" still says whether they have one. */
           if (!u) return H.sendJson(res, 200, { found: false, email, ff: !!grant });
           const role = await R.roleOf(db, u, env);
@@ -119,6 +140,7 @@ function make(deps) {
           if (!u) return H.sendJson(res, 404, { error: "no_user" });
           if (u.id === s.userId) return H.sendJson(res, 400, { error: "self" });
           if (!(await db.endAllSessions(u.id, "admin", new Date(t).toISOString()))) return H.sendJson(res, 503, { error: "unavailable" });
+          await record("signout", email);
           return H.sendJson(res, 200, { ok: true });
         }
         if (action === "grants") {
@@ -129,6 +151,7 @@ function make(deps) {
         if (!email) return H.sendJson(res, 400, { error: "bad_email" });
         const done = action === "grant" ? await db.upsertGrant(email, s.userId) : await db.revokeGrant(email, new Date(t).toISOString());
         if (!done) return H.sendJson(res, 503, { error: "unavailable" });
+        await record(action, email);
         return H.sendJson(res, 200, { ok: true });
       }
 

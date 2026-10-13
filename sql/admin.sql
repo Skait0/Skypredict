@@ -62,3 +62,17 @@ as $$
   );
 $$;
 revoke all on function public.admin_stats() from public, anon, authenticated;
+
+-- THE AUDIT LOG (owner, 13 Oct 2026): every admin change and every look at a
+-- reader's private details, who did it and when. Append-only from the app: the
+-- functions only ever insert and read.
+create table if not exists public.admin_audit (
+  id          bigint generated always as identity primary key,
+  at          timestamptz not null default now(),
+  admin_email text not null,
+  action      text not null,
+  target      text,
+  detail      jsonb not null default '{}'::jsonb
+);
+create index if not exists admin_audit_at_idx on public.admin_audit (at desc);
+alter table public.admin_audit enable row level security;

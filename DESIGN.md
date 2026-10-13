@@ -150,7 +150,7 @@ uses the same `.swa-card` cards and `.swa-set` rows as Settings.
 
 **One section at a time.** A row of tabs (`.swa-tabs`, `.swa-tab`) across the
 top, scrolling sideways on a phone: Switches, Status, Numbers, Readers, Family
-& friends, Slips. Tabs are 34px, 6px corners, `--card` with a `--line`
+& friends, Slips, Log. Tabs are 34px, 6px corners, `--card` with a `--line`
 border; the open one is filled `--red-fill` with white text. The arrow keys
 move between them, the open tab scrolls into view, and the last one used is
 remembered on the device (`sw.admintab`). Family & friends shows its member
@@ -180,6 +180,10 @@ The tabs, in order:
    how many we cannot grade from a score, then the whole slip read back from
    the bookmaker (`/api/slip`, picks in words: "Corners over 9.5"), and "It
    landed" / "It lost" to settle it.
+7. **Log**: the audit log, newest first. Every admin change (switches, notice,
+   Family & friends, sign-outs, settled slips) and every reader lookup, each as
+   one sentence ("Paused Bet9ja booking", "Looked up ada@gmail.com") with who
+   did it and how long ago. Reading Numbers or Status is not logged.
 
 Every result line is a short sentence ("Bet9ja booking paused. Readers see it
 within a couple of minutes."), never a code or a status word.

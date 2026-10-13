@@ -92,7 +92,7 @@
   function ago(iso){
     var t=Date.parse(iso); if(!isFinite(t)) return "never";
     var m=Math.round((Date.now()-t)/60000);
-    return m<1?"just now":m<60?m+" min ago":m<1440?Math.round(m/60)+" h ago":Math.round(m/1440)+" days ago";
+    return m<1?"just now":m<60?m+" min ago":m<1440?Math.round(m/60)+" h ago":(Math.round(m/1440)===1?"1 day ago":Math.round(m/1440)+" days ago");
   }
   function num(x){ return Number(x||0).toLocaleString("en-US"); }
   function msg(t){ return "<div class='swa-set'><span class='swa-st'><small>"+esc(t)+"</small></span></div>"; }
@@ -138,7 +138,7 @@
      is remembered on this device. The two lists that grow carry their count on the
      tab, so a closed one still says what it holds. */
   var ADMIN_TABS=[["swaTSw","Switches"],["swaTStatus","Status"],["swaTNums","Numbers"],
-    ["swaTLk","Readers"],["swaTGrants","Family & friends"],["swaTHits","Slips"]];
+    ["swaTLk","Readers"],["swaTGrants","Family & friends"],["swaTHits","Slips"],["swaTLog","Log"]];
   function adminHtml(list){
     var body={
       swaTSw:"<div class='swa-card' id='swaSw'>"+msg("Loading")+"</div>"+
@@ -156,7 +156,8 @@
         "<input class='swa-in' id='swaGEmail' type='email' autocomplete='off' autocapitalize='none' spellcheck='false'>"+
         "<button class='swa-outbtn swa-go' id='swaGrant' type='button'>Give Family &amp; friends</button>"+
         "<div class='swa-card' id='swaGrants'>"+(list?grantsHtml(list):msg("Loading"))+"</div>",
-      swaTHits:"<div class='swa-card' id='swaHits'>"+msg("Loading")+"</div>"};
+      swaTHits:"<div class='swa-card' id='swaHits'>"+msg("Loading")+"</div>",
+      swaTLog:"<div class='swa-card' id='swaLog'>"+msg("Loading")+"</div>"};
     return "<div class='swa-tabs' role='tablist' aria-label='Admin sections'>"+ADMIN_TABS.map(function(t){
         return "<button type='button' role='tab' class='swa-tab' id='"+t[0]+"B' data-tab='"+t[0]+"' aria-controls='"+t[0]+"' aria-selected='false'>"+
           esc(t[1])+"<small class='swa-cnt'></small></button>"; }).join("")+"</div>"+
@@ -165,13 +166,37 @@
       ADMIN_TABS.map(function(t){
         return "<section class='swa-panel' id='"+t[0]+"' role='tabpanel' aria-labelledby='"+t[0]+"B' hidden>"+body[t[0]]+"</section>"; }).join("");
   }
+  /* THE AUDIT LOG, each entry as a sentence (/api/account/audit). */
+  function logLine(r){
+    var d=r.detail||{}, t=r.target||"";
+    if(r.action==="setflags"){
+      var b=(d.before&&d.before.booksOff)||[], a=(d.after&&d.after.booksOff)||[], out=[];
+      a.filter(function(k){ return b.indexOf(k)<0; }).forEach(function(k){ out.push("Paused "+(BOOK_NAME[k]||k)+" booking"); });
+      b.filter(function(k){ return a.indexOf(k)<0; }).forEach(function(k){ out.push("Turned "+(BOOK_NAME[k]||k)+" booking back on"); });
+      var nb=(d.before&&d.before.notice)||"", na=(d.after&&d.after.notice)||"";
+      if(na!==nb) out.push(na?"Set the notice: \u201c"+na+"\u201d":"Cleared the notice");
+      return out.join(". ")||"Saved the switches with no change";
+    }
+    if(r.action==="lookup") return "Looked up "+t+(d.found===false?" (no account)":"");
+    if(r.action==="signout") return "Signed "+t+" out on every device";
+    if(r.action==="grant") return "Gave Family & friends to "+t;
+    if(r.action==="revoke") return "Removed Family & friends from "+t;
+    if(r.action==="settle") return "Marked "+t+" as "+(d.status||"settled");
+    return r.action+(t?" "+t:"");
+  }
+  function logHtml(rows){
+    if(!rows.length) return msg("Nothing yet. Every change you make here, and every reader you look up, is recorded.");
+    return rows.map(function(r){
+      return "<div class='swa-set'><span class='swa-st'><b>"+esc(logLine(r))+"</b><small>"+esc(r.admin_email+" · "+ago(r.at))+"</small></span></div>"; }).join("");
+  }
   function setCount(v,id,text){ var el=v.querySelector("[data-tab='"+id+"'] .swa-cnt"); if(el) el.textContent=text||""; }
   function wireTabs(v){
     var saved=null; try{ saved=localStorage.getItem("sw.admintab"); }catch(e){}
     function show(id){
       v.querySelectorAll(".swa-tab").forEach(function(b){ var on=b.getAttribute("data-tab")===id;
         b.setAttribute("aria-selected",String(on)); b.tabIndex=on?0:-1;
-        if(on) try{ b.scrollIntoView({block:"nearest",inline:"nearest"}); }catch(e){} });
+        /* After layout: run at once, the sheet is still sliding in and the tab ends half off the edge. */
+        if(on) setTimeout(function(){ try{ b.scrollIntoView({block:"nearest",inline:"center"}); }catch(e){} },60); });
       v.querySelectorAll(".swa-panel").forEach(function(p){ p.hidden=p.id!==id; });
       try{ localStorage.setItem("sw.admintab",id); }catch(e){}
     }
@@ -519,6 +544,11 @@
       }; });
     }); }
     hitsLoad();
+    function logLoad(){ a.req("GET","/api/account/audit",null,function(code,j){
+      v.querySelector("#swaLog").innerHTML=code===200?logHtml(j.log||[]):
+        msg(code===503?"The log is not set up yet. Run sql/admin.sql in Supabase.":"Could not load the log."); }); }
+    logLoad();
+    v.querySelector("[data-tab='swaTLog']").addEventListener("click",logLoad);
     var flags={booksOff:[],notice:""};
     var board=null; try{ board=root.swBoard?root.swBoard():null; }catch(e){}
     function paintSw(){

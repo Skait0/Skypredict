@@ -15,7 +15,7 @@ async function world() {
   db.listGrants = async () => rows.slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
   db.upsertGrant = async (email, by) => { rows.push({ email, granted_by: by, created_at: new Date(clock() + rows.length).toISOString(), revoked_at: null }); return {}; };
   db.revokeGrant = async (email, iso) => { rows.forEach((r) => { if (r.email === email && !r.revoked_at) r.revoked_at = iso; }); return true; };
-  const h = account.make({ db, now: clock, env: { SW_ADMIN_EMAILS: "Boss@x.com" } });
+  const h = account.make({ db, now: clock, env: { SW_ADMIN_EMAILS: "Boss@x.com" }, audit: { log: async () => true } });
   const call = async (req) => { const r = fakeRes(); await h(req, r); return r; };
   const user = async (email) => {
     const u = await db.createUser({ email });
