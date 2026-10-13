@@ -53,7 +53,14 @@ jobs:
   # front of it - it reports, it does not gate. canary.yml owns that reasoning,
   # along with why it no longer carries a schedule of its own: it asked for
   # 05:30 and GitHub fired it zero times.
+  # AFTER the mint, not beside it (13 Oct 2026): run together, the mint was
+  # pulling ~1,300 BetKing events through the booking upstream at the very
+  # moment the canary booked, and BetKing answered the canary 502 four days
+  # running, while the same canary on its own passed. always(): it still
+  # reports when the mint fails.
   canary:
+    needs: mint
+    if: ${{ always() }}
     uses: ./.github/workflows/canary.yml
 
   mint:
