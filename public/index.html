@@ -7534,7 +7534,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
          page knows the app is not installed - see offerInstall - and never
          shown inside the app itself. Unlike the install bar, "Not now" does
          not hide it: this is the way back to /install for later. -->
-    <a class="navplay" id="tab-play" href="/penalty" aria-label="Play Penalty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5.5" r="2.8"/><path d="M12 8.3V15"/><path d="M4.5 15.5h15l1.3 3.7a1 1 0 0 1-.94 1.3H4.14a1 1 0 0 1-.94-1.3z"/><path d="M15.8 15.5v-1.6h2.6v1.6"/></svg><span>Play Penalty</span></a>
+    <a class="navplay" id="tab-play" href="/penalty" aria-label="Play Penalty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10a5 5 0 0 1 4.9 4l.9 4.6a2.6 2.6 0 0 1-4.6 2.1L16.4 16H7.6l-1.8 1.7a2.6 2.6 0 0 1-4.6-2.1l.9-4.6A5 5 0 0 1 7 7z"/><path d="M7.5 10v4M5.5 12h4"/><circle cx="15.5" cy="11" r=".9" fill="currentColor" stroke="none"/><circle cx="17.8" cy="13.2" r=".9" fill="currentColor" stroke="none"/></svg><span>Play Penalty</span></a>
     <a class="tgl hsoc hsoc-inst" id="hdInstall" href="/install" aria-label="Download the app" title="Download the app" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10.5l5 5 5-5M4.5 20.5h15"/></svg><span class="dl-l">Download app</span><span class="dl-s">App</span></a>
     <!-- Account (spec section 9). Stays hidden unless /api/me answers, so
          with AUTH_ENABLED off the header is exactly as before. Filled by the
@@ -8143,9 +8143,11 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
        under it carries the rest. -->
   <button class="btab" id="bt-convert" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M14.5 12h6.5M18 9l3 3-3 3"/></svg></span>Converter</button>
   <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle class="lv-core" cx="12" cy="12" r="3"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg></span>Live</button>
-  <!-- PLAY PENALTY (release step 2, owner 9 Oct 2026: "a retro joystick as the
-       nav icon on mobile"). A link, not a view: the game is its own page. -->
-  <a class="btab" id="bt-play" href="/penalty" aria-label="Play Penalty"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5.5" r="2.8"/><path d="M12 8.3V15"/><path d="M4.5 15.5h15l1.3 3.7a1 1 0 0 1-.94 1.3H4.14a1 1 0 0 1-.94-1.3z"/><path d="M15.8 15.5v-1.6h2.6v1.6"/></svg></span>Play</a>
+  <!-- PLAY PENALTY (release step 2). A game controller (owner, 13 Oct 2026: "change
+       the joystick to a controller icon. much more recogniseable"): the pad, a
+       d-pad on the left, two buttons on the right. A link, not a view: the game
+       is its own page. -->
+  <a class="btab" id="bt-play" href="/penalty" aria-label="Play Penalty"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10a5 5 0 0 1 4.9 4l.9 4.6a2.6 2.6 0 0 1-4.6 2.1L16.4 16H7.6l-1.8 1.7a2.6 2.6 0 0 1-4.6-2.1l.9-4.6A5 5 0 0 1 7 7z"/><path d="M7.5 10v4M5.5 12h4"/><circle cx="15.5" cy="11" r=".9" fill="currentColor" stroke="none"/><circle cx="17.8" cy="13.2" r=".9" fill="currentColor" stroke="none"/></svg></span>Play</a>
 </nav>
 <div class="sheet slips-sheet" id="slipsSheet" role="dialog" aria-modal="true" aria-labelledby="slipsSheet-title">
   <div class="sheet-grab"><i></i></div>
@@ -13335,15 +13337,26 @@ function relLum(rgb){
 function buzz(pattern){
   try{
     if(REDUCED) return;
-    if(!("vibrate" in navigator)) return;
     if(!matchMedia("(hover:none) and (pointer:coarse)").matches) return;
-    navigator.vibrate(pattern);
+    if("vibrate" in navigator){ navigator.vibrate(pattern); return; }
+    /* iPHONE (owner, 13 Oct 2026: haptics on add to slip and the nav). Safari has
+       no navigator.vibrate, but iOS 18 plays its own system tick when a switch
+       control is toggled, so a hidden <input switch> is clicked instead. One tick
+       whatever the pattern; older iOS simply stays silent. */
+    if(/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)){
+      if(!buzz.ios){ var l=document.createElement("label"),i=document.createElement("input");
+        i.type="checkbox"; i.setAttribute("switch",""); i.tabIndex=-1; l.appendChild(i);
+        l.setAttribute("aria-hidden","true"); l.style.cssText="position:fixed;left:-99px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none";
+        document.body.appendChild(l); buzz.ios=l; }
+      buzz.ios.click();
+    }
   }catch(e){}
 }
 /* Two tones for the conjure: it is the moment something was made. */
 function buzzConjure(){ buzz([14,45,26]); }
-/* One short tick for navigation: enough to feel, not enough to notice. */
-function buzzTap(){ buzz(10); }
+/* One short tick for navigation: enough to feel, not enough to notice. 15ms,
+   not 10: a 10ms pulse is below what many budget Android motors play at all. */
+function buzzTap(){ buzz(15); }
 function inkOn(h,s,l){
   var L=relLum(hslToRgb(h,s,l));
   var white=1.05/(L+0.05), black=(L+0.05)/0.05;
@@ -19814,10 +19827,11 @@ function flyToSlip(srcEl){
 }
 function toggleMy(id,code,label,p,srcEl){
   var i=-1; for(var k=0;k<MYSLIP.length;k++){if(MYSLIP[k].id===id&&MYSLIP[k].code===code){i=k;break;}}
-  if(i>=0) MYSLIP.splice(i,1); else {
+  /* A tap you can feel: a double tick when a leg goes on, one when it comes off. */
+  if(i>=0){ MYSLIP.splice(i,1); buzzTap(); } else {
     /* `k` is the kickoff, written down at the moment the leg is added - see
        pruneMy for why a leg has to carry its own clock. */
-    MYSLIP.push({id:id,code:code,label:label,p:+p,k:kickoffOf(id)}); flyToSlip(srcEl);
+    MYSLIP.push({id:id,code:code,label:label,p:+p,k:kickoffOf(id)}); flyToSlip(srcEl); buzz([15,40,20]);
     /* Heads-up if this game isn't on SportyBet yet - it can still be added, and
        we'll retry matching at book time, but the user should know up front. */
     var _f=fixtureById(id);
@@ -20620,6 +20634,7 @@ function goConvert(){
 }
 $("tab-convert").addEventListener("click",goConvert);
 $("bt-convert").addEventListener("click",function(){buzzTap();goConvert();});
+$("bt-play").addEventListener("click",function(){buzzTap();});
 $("logo").addEventListener("click",function(e){e.preventDefault();setView("pred");});
 (function(){
   var cta=$("slipCta"); if(!cta) return;

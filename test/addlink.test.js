@@ -44,7 +44,7 @@ function app(search, opts) {
     document: { documentElement: { classList: { contains: (c) => cls.has(c) } } },
     setTimeout: (fn) => timers.push(fn),
     URLSearchParams,
-    $: () => null, saveMy() { ctx.saves++; }, renderFab() {}, syncAddBtn() {}, flyToSlip() {},
+    $: () => null, saveMy() { ctx.saves++; }, renderFab() {}, syncAddBtn() {}, flyToSlip() {}, buzz() {}, buzzTap() {},
     openMySheet() { ctx.opened++; }, loadSporty() {}, repaintAfterMatch() {},
     fDay: (f) => f.date, dayOff: (d) => Math.round((Date.parse(d) - Date.parse(new Date().toISOString().slice(0, 10))) / 864e5),
     V: { off: opts.off || 0, dayPicked: false, country: "x", league: "y" }, renders: 0, render() { ctx.renders++; },
