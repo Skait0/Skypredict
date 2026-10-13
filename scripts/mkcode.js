@@ -415,56 +415,45 @@ if (require.main === module) (async () => {
   }
   if (!codes) throw new Error("could not book a slip both books accept - " + why);
 
-  /* BETKING JOINS THE SLIP OR SITS THE DAY OUT. IT NEVER SHAPES IT.
+  /* BETKING JOINS THE SLIP. IT NEVER SHAPES IT.
    *
    * The two books above negotiate the leg set between them: a refusal drops
    * that leg and the round starts again. A third book inside that loop would
    * mean BetKing's refusals deciding which games SportyBet and Bet9ja readers
    * get - a book that has never minted a daily code quietly degrading the two
    * that have. So it is asked LAST, for the legs the others already agreed,
-   * and every way of failing costs it the day and nothing else.
+   * and every way of failing costs it, never the other two.
    *
    * It cost nothing measurable to add: on 20-22 Sep its feed carried and
    * priced all five picks each day. If that stops being true the log line
-   * below is where it shows. */
-  const bkLegs = working.map((p) => p.betking);
-  if (bkLegs.every(Boolean)) {
-    const out = await bookSlipRetrying("betking",
-      working.map((p) => ({ eventId: p.betking, code: p.market })));
-    if (out.ok) codes.betking = out.code;
-    else console.log(`betking: ${out.why} - publishing without it`);
-  } else {
-    console.log(`betking: ${bkLegs.filter(Boolean).length} of ${bkLegs.length} legs ` +
-                "on its feed - publishing without it");
-  }
-
-  /* AND BETPAWA, ON THE SAME TERMS AND FOR THE SAME REASON. Asked last, for
-     the legs the first two already agreed, and every way of failing costs it
-     the day and nothing else. A fourth book negotiating the leg set would let
-     the newest book decide which games everybody else gets. */
-  const bpLegs = working.map((p) => p.betpawa);
-  if (bpLegs.every(Boolean)) {
-    const out = await bookSlipRetrying("betpawa",
-      working.map((p) => ({ eventId: p.betpawa, code: p.market })));
-    if (out.ok) codes.betpawa = out.code;
-    else console.log(`betpawa: ${out.why} - publishing without it`);
-  } else {
-    console.log(`betpawa: ${bpLegs.filter(Boolean).length} of ${bpLegs.length} legs ` +
-                "on its feed - publishing without it");
-  }
-
-  /* AND 1XBET, LAST, ON THE SAME ADDITIVE TERMS: asked only for the legs the
-     established books already agreed, and any failure costs 1xBet the day and
-     nothing else. It must never decide which games everybody else is given. */
-  const xbLegs = working.map((p) => p.onexbet);
-  if (xbLegs.every(Boolean)) {
-    const out = await bookSlipRetrying("onexbet",
-      working.map((p) => ({ eventId: p.onexbet, code: p.market })));
-    if (out.ok) codes.onexbet = out.code;
-    else console.log(`onexbet: ${out.why} - publishing without it`);
-  } else {
-    console.log(`onexbet: ${xbLegs.filter(Boolean).length} of ${xbLegs.length} legs ` +
-                "on its feed - publishing without it");
+   * below is where it shows.
+   *
+   * Betpawa and 1xBet join on exactly BetKing's terms.
+   *
+   * THEY TAKE WHAT THEY CAN (owner, 13 Oct 2026). All-or-nothing cost betPawa
+   * and 1xBet the 13 Oct code over one unpriced Over 1.5 each, and 1xBet the
+   * 12th over one game missing from its feed. Now a book books the legs it
+   * carries, drops any it refuses as unpriced, and publishes the rest - never
+   * fewer than legs-1 - and short[book] tells every page and post it holds
+   * fewer games than the slip. */
+  const short = {};
+  for (const bk of ["betking", "betpawa", "onexbet"]) {
+    let sel = working.filter((p) => p[bk]);
+    let out = { ok: false, why: `${sel.length} of ${working.length} legs on its feed` };
+    for (let go = 0; go < 2 && sel.length >= working.length - 1; go++) {
+      out = await bookSlipRetrying(bk, sel.map((p) => ({ eventId: p[bk], code: p.market })));
+      const bad = new Set((out.unbookable || []).map((u) => String(u.eventId)));
+      if (out.ok || !bad.size) break;
+      sel = sel.filter((p) => !bad.has(String(p[bk])));
+      out = { ok: false, why: `${out.why} (${working.length - sel.length} legs refused)` };
+    }
+    if (!out.ok) { console.log(`${bk}: ${out.why} - publishing without it`); continue; }
+    codes[bk] = out.code;
+    if (sel.length < working.length) {
+      short[bk] = sel.length;
+      console.log(`${bk}: ${sel.length} of ${working.length} legs - ` +
+        working.filter((p) => sel.indexOf(p) < 0).map((p) => p.f.home + " v " + p.f.away).join(", ") + " left out");
+    }
   }
 
   const entry = {
@@ -480,6 +469,7 @@ if (require.main === module) (async () => {
       odd: p.odd || null,
     })),
     codes: codes,
+    ...(Object.keys(short).length ? { short: short } : {}),
     /* SportyBet's price for the slip at the minute it was booked. The books
        re-price a code when it is loaded, so this is what it paid then, not a
        promise about now - both pages say so beside it. */

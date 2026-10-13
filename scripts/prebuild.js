@@ -422,6 +422,8 @@ async function writePages(payload) {
       date: newest.date,
       n: (newest.legs || []).length,
       codes: newest.codes || {},
+      /* books that booked fewer legs than the slip: { betpawa: 4 } (mkcode) */
+      short: newest.short || null,
       firstKickoff: newest.firstKickoff || null,
       /* What the slip pays, or null when any leg went unpriced - the card
          says nothing rather than a total that quietly dropped a leg. */

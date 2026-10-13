@@ -97,8 +97,9 @@ test("BetKing joins the slip or sits the day out, and never shapes it", () => {
   assert.ok(!/bookSlipRetrying\("betking"/.test(round) && !/attempt\.betking/.test(round),
     "BetKing is booked inside the round loop, so its refusals shape the slip");
   const after = mk.slice(mk.indexOf("if (!codes) throw"), mk.indexOf("const entry = {"));
-  assert.match(after, /bkLegs\.every\(Boolean\)/, "a leg it does not carry must not be booked");
-  assert.match(after, /codes\.betking = out\.code/);
+  assert.match(after, /let sel = working\.filter\(\(p\) => p\[bk\]\)/, "a leg it does not carry must not be booked");
+  assert.match(after, /for \(const bk of \["betking", /);
+  assert.match(after, /codes\[bk\] = out\.code/);
   assert.match(after, /publishing without it/, "a refusal has to leave the other codes standing");
   assert.match(mk, /events\("betking"\)\.catch\(/, "its feed being down must not cost the day");
 });

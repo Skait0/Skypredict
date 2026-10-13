@@ -18857,7 +18857,9 @@ function applyBoardCap(n){
         return "<button class='ck-tab' type='button' role='tab' data-book='"+k+"' aria-selected='"+(k===pick)+"'>"+
           (BOOKS[k].mark||esc(BOOKS[k].label))+"</button>";
       }).join("");
-      var tiles="<div class='ck-tile'><div class='ck-th'>"+esc(when)+odds+"</div>"+chip(daily[pick])+"</div>";
+      /* a book that booked fewer legs than the slip says so (mkcode short, 13 Oct 2026) */
+      var sh=d.short&&d.short[pick]&&daily[pick]?"<span class='ck-none'>"+d.short[pick]+" of "+d.n+" games on this book</span>":"";
+      var tiles="<div class='ck-tile'><div class='ck-th'>"+esc(when)+odds+"</div>"+chip(daily[pick])+sh+"</div>";
       if(big) tiles+="<div class='ck-tile big'><div class='ck-th'>Big odds of the day<span class='ck-tot'>×"+
         Number(big.odds).toFixed(2)+"</span></div>"+chip(big.codes[pick]&&big.codes[pick].code)+"</div>";
       host.innerHTML="<div class='ck-top'><a class='ck-tag' href='/booking-codes'>Daily booking codes</a></div>"+
