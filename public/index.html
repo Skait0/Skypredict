@@ -652,6 +652,23 @@ main[tabindex="-1"]:focus{outline:none}
 @media (hover:hover){ .hsoc-tg:hover{color:#29a9eb;border-color:rgba(41,169,235,.5)} }
 @media(max-width:560px){ .top-in .hsoc-x{margin-left:0} }
 @media(max-width:420px){ .top-in{gap:6px} .top-in .tgl{width:34px;height:34px} }
+/* Install: a labelled red button, not a bare phone icon. Owner, 13 Oct 2026:
+   "change the download button to something more visible, and easily
+   understandable". It is first of the right-hand cluster, so on desktop it
+   takes the auto margin from the X icon. */
+/* Outlined, not filled: a solid red pill shouted over the red "Build me a
+   slip" button right under it. The red ring and arrow still pick it out. */
+.top-in .hsoc-inst{width:auto;height:34px;padding:0 12px;gap:5px;border:1.5px solid var(--red);border-radius:99px;
+  background:var(--card);color:var(--text);font-size:12.5px;font-weight:700;white-space:nowrap}
+.hsoc-inst svg{color:var(--red-ink)}
+.top-in .hsoc-inst:not([hidden]){margin-left:auto}
+.top-in .hsoc-inst:not([hidden])~.hsoc-x{margin-left:0}
+@media(max-width:560px){ .top-in .hsoc-inst:not([hidden]){margin-left:0} }
+@media(max-width:420px){ .top-in .hsoc-inst{width:auto;padding:0 10px} }
+.hsoc-inst .dl-s{display:none}
+@media(max-width:420px){ .hsoc-inst .dl-l{display:none} .hsoc-inst .dl-s{display:inline} }
+/* Signed in, the account icon joins the bar and there is no room for a word. */
+@media(max-width:420px){ .top-in:has(#hdAccount:not([hidden])) .hsoc-inst span{display:none!important} }
 /* The install offer, for phones. The header icon stays for desktop, where the
    row has the width to hold it; here it would sit off the right edge. */
 .inst-bar{display:none;align-items:center;gap:10px;margin:14px 0 2px;
@@ -7509,7 +7526,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
          shown inside the app itself. Unlike the install bar, "Not now" does
          not hide it: this is the way back to /install for later. -->
     <a class="navplay" id="tab-play" href="/penalty" aria-label="Play Penalty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5.5" r="2.8"/><path d="M12 8.3V15"/><path d="M4.5 15.5h15l1.3 3.7a1 1 0 0 1-.94 1.3H4.14a1 1 0 0 1-.94-1.3z"/><path d="M15.8 15.5v-1.6h2.6v1.6"/></svg><span>Play Penalty</span></a>
-    <a class="tgl hsoc hsoc-inst" id="hdInstall" href="/install" aria-label="Install the app" title="Install the app" hidden><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 7.5v6.5M9.3 11.4 12 14l2.7-2.6M10.5 18.5h3"/></svg></a>
+    <a class="tgl hsoc hsoc-inst" id="hdInstall" href="/install" aria-label="Download the app" title="Download the app" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10.5l5 5 5-5M4.5 20.5h15"/></svg><span class="dl-l">Download app</span><span class="dl-s">App</span></a>
     <!-- Account (spec section 9). Stays hidden unless /api/me answers, so
          with AUTH_ENABLED off the header is exactly as before. Filled by the
          swAccount script at the end of the page. -->
