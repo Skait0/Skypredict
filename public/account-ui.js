@@ -526,8 +526,8 @@
             if(c3!==200||!d||!d.legs){ full.removeAttribute("data-done"); full.textContent="Could not read the slip. Tap Check again to retry."; return; }
             var won=0,lost=0,open=0;
             var rows=d.legs.map(function(l){
-              if(l.verdict==="won") won++; else if(l.verdict==="lost") lost++; else open++;
-              var mark=l.verdict==="won"?"<b class='swa-won'>Won</b>":l.verdict==="lost"?"<b class='swa-lost'>Lost</b>":"<b class='swa-open'>Check</b>";
+              if(l.verdict==="won"||l.verdict==="void") won++; else if(l.verdict==="lost") lost++; else open++;
+              var mark=l.verdict==="won"?"<b class='swa-won'>Won</b>":l.verdict==="void"?"<b class='swa-won'>Void</b>":l.verdict==="lost"?"<b class='swa-lost'>Lost</b>":"<b class='swa-open'>Check</b>";
               return "<div class='swa-leg'>"+mark+"<span><b>"+esc(l.pick)+"</b>"+(l.odds?" @ "+esc(String(l.odds)):"")+
                 "<br>"+esc(l.match)+(l.score?" · "+esc(l.score):"")+(l.why?"<br><i>"+esc(l.why)+"</i>":"")+"</span></div>"; }).join("");
             full.innerHTML="<b>"+d.legs.length+" legs: "+won+" won"+(lost?", "+lost+" lost":"")+(open?", "+open+" to check":"")+"</b>"+rows+

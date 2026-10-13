@@ -59,9 +59,10 @@ function slipDeps() {
       const pay = await (await fetch(SITE + "/predictions.json")).json().catch(() => ({}));
       return (pay && pay.fixtures) || [];
     },
-    track: F.track,
+    /* track left to lib/slipwatch.js (trackAll): every leg on the board, by market code. */
     results: async (since) => ((await SB.recentResults(since)).rows || [])
-      .map((r) => ({ date: r.match_date, home: r.home, away: r.away, hg: r.hg, ag: r.ag })),
+      .map((r) => ({ date: r.match_date, home: r.home, away: r.away, hg: r.hg, ag: r.ag,
+        hc: r.hc, ac: r.ac, hsh: r.hsh, ash: r.ash, seq: r.seq, hth: r.hth, hta: r.hta })),
     /* The owner's own chat (SW_OWNER_TG_CHAT). Unset: hits still land on the admin page. */
     /* A WIN THE OWNER CAN SHARE (12 Oct 2026: "a win just came in. there is no way for me to share it").
        The ping is the post itself: the rank banner with the X-ready caption, forwardable as it is,

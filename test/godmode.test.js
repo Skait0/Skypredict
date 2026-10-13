@@ -159,7 +159,7 @@ test("every leg is named, scored and settled where a score settles it", () => {
     /* Not on our board, but the results sweep has it: an Over 2.5 is settled, not "cannot grade". */
     { home: "Lens", away: "Sporting Lisbon", kickoff: ko, prediction: "OVER_2.5", odds: 1.7 },
     { home: "Arsenal", away: "Lille", kickoff: ko, prediction: "1X", odds: 1.2 },
-    { home: "Arsenal", away: "Lille", kickoff: ko, prediction: "CORNERS_OVER_9.5", odds: 1.8 },
+    { home: "Arsenal", away: "Lille", kickoff: ko, prediction: "CORNERS_OV_9.5", odds: 1.8 },
     { home: "Nowhere FC", away: "Ghost Utd", kickoff: ko, prediction: "OVER_1.5", odds: 1.3 },
   ];
   const results = [
@@ -171,8 +171,7 @@ test("every leg is named, scored and settled where a score settles it", () => {
   assert.strictEqual(d[0].pick, "Over 2.5 goals");
   assert.strictEqual(d[0].score, "2-1");
   assert.strictEqual(d[1].verdict, "lost", "Arsenal or draw, 0-1 is an away win");
-  assert.strictEqual(d[2].verdict, null);
-  assert.match(d[2].why, /Corners were 11 \(6-5\)/);
+  assert.strictEqual(d[2].verdict, "won", "corners over 9.5 on 6-5 is settled from the stats now (lib/legrade.js)");
   assert.strictEqual(d[2].pick, "Corners over 9.5");
   assert.strictEqual(d[3].verdict, null);
   assert.match(d[3].why, /No final score/);

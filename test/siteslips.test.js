@@ -64,7 +64,8 @@ test("a saver that throws never costs the reader their code", async () => {
 
 /* ------------------------------------------------------------ grading */
 
-const leg = (home, away, grade) => ({ date: "2026-10-12", home, away, code: "X", grade, name: home + " pick", ko: "2026-10-12T14:00:00Z" });
+const CODE = { "Home win": "1", "Over 1.5": "OVER_1.5" };
+const leg = (home, away, grade, code) => ({ date: "2026-10-12", home, away, code: code || CODE[grade] || null, grade, name: home + " pick", ko: "2026-10-12T14:00:00Z" });
 const R = (home, away, hg, ag) => ({ date: "2026-10-12", home, away, hg, ag });
 
 test("all legs won and nothing untracked is a hit", () => {
@@ -78,9 +79,11 @@ test("a lost leg settles the slip as lost at once, without waiting for the rest"
   assert.strictEqual(W.grade(s, [R("A", "B", 0, 1)], Date.UTC(2026, 9, 12, 20)).status, "lost");
 });
 
-test("every gradable leg won but some could not be graded: needs a manual check, never a guessed hit", () => {
+test("every gradable leg won but some could not be graded: a check only at x20 and up, never a guessed hit", () => {
   const s = { legs: [leg("A", "B", "Home win")], seen: {}, untracked: 2 };
-  assert.strictEqual(W.grade(s, [R("A", "B", 3, 1)], Date.UTC(2026, 9, 12, 20)).status, "check");
+  assert.strictEqual(W.grade(Object.assign({ total_odds: 45 }, s), [R("A", "B", 3, 1)], Date.UTC(2026, 9, 12, 20)).status, "check");
+  assert.strictEqual(W.grade(Object.assign({ total_odds: 6.2 }, s), [R("A", "B", 3, 1)], Date.UTC(2026, 9, 12, 20)).status, "ungraded",
+    "below x20 it closes quietly: not listed, not a hit, not a loss");
 });
 
 test("results still coming is still open", () => {
@@ -207,4 +210,35 @@ test("the booking route never saves a reader's own code", () => {
   assert.match(src, /isReaderSrc\(GATE\.srcOf\(req\)\)\) return;/);
   const sb = require("fs").readFileSync(require("path").join(__dirname, "..", "lib", "supabase.js"), "utf8");
   assert.match(sb, /src\.not\.in\.\(convert,editor,trim,change\)/, "old reader codes still reach the lists");
+});
+
+/* ---------------------------------- every market graded (owner, 13 Oct 2026) */
+
+test("corners, shots and first-half legs are graded from the stats and the half-time score", () => {
+  const s = { legs: [leg("A", "B", null, "CORNERS_OV_8.5"), leg("C", "D", null, "FH_OVER_0.5"), leg("E", "F", null, "SHOTS_H_OV_10.5")], seen: {}, untracked: 0 };
+  const res = [Object.assign(R("A", "B", 1, 0), { hc: 6, ac: 4 }), Object.assign(R("C", "D", 2, 2), { hth: 1, hta: 0 }),
+    Object.assign(R("E", "F", 0, 0), { hsh: 12, ash: 3 })];
+  const g = W.grade(s, res, Date.UTC(2026, 9, 12, 20));
+  assert.deepStrictEqual([g.status, g.seen], ["landed", { 0: "won", 1: "won", 2: "won" }]);
+});
+
+test("a stat not filled yet waits; three days on it closes as ungraded, or a check at x20+", () => {
+  const s = { legs: [leg("A", "B", "Home win"), leg("C", "D", null, "CORNERS_OV_8.5")], seen: {}, untracked: 0, last_kickoff: "2026-10-12T14:00:00Z" };
+  const res = [R("A", "B", 2, 0), R("C", "D", 1, 1)];
+  assert.strictEqual(W.grade(s, res, Date.UTC(2026, 9, 12, 20)).status, "open", "the corners may still arrive");
+  assert.strictEqual(W.grade(Object.assign({ total_odds: 3 }, s), res, Date.UTC(2026, 9, 16)).status, "ungraded");
+  assert.strictEqual(W.grade(Object.assign({ total_odds: 25 }, s), res, Date.UTC(2026, 9, 16)).status, "check");
+});
+
+test("a push gives the stake back: it neither breaks the slip nor counts as lost", () => {
+  const s = { legs: [leg("A", "B", "Home win"), leg("C", "D", null, "DNB_1")], seen: {}, untracked: 0 };
+  const g = W.grade(s, [R("A", "B", 1, 0), R("C", "D", 1, 1)], Date.UTC(2026, 9, 12, 20));
+  assert.deepStrictEqual([g.status, g.seen], ["landed", { 0: "won", 1: "void" }]);
+});
+
+test("the ledger tracks every board leg by its code, corners and shots included", () => {
+  const fx = [{ home: "A", away: "B", date: "2026-10-12", kickoff: "2026-10-12T18:00:00Z" }];
+  const t = W.trackAll([{ home: "A", away: "B", kickoff: "2026-10-12T18:00:00Z", prediction: "CORNERS_OV_9.5" },
+    { home: "Zed", away: "Qux", kickoff: "2026-10-12T18:00:00Z", prediction: "1" }], fx);
+  assert.deepStrictEqual(t.map((l) => l.code), ["CORNERS_OV_9.5"], "a game off the board is not tracked");
 });
