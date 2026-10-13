@@ -916,6 +916,11 @@ main[tabindex="-1"]:focus{outline:none}
 .dlabel i{display:block;font-style:normal;font-size:11px;color:var(--faint);font-weight:600}
 .search{position:relative;flex:1 1 240px}
 .pick-sel{flex:0 1 148px;min-height:48px;border-radius:var(--r-md)}
+.orange{display:flex;align-items:center;gap:6px;flex:0 1 auto;font-size:13px;color:var(--soft);font-weight:700}
+.orange input{width:68px;min-height:48px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);
+  color:var(--text);font:inherit;font-variant-numeric:tabular-nums;text-align:center;padding:0 6px}
+.orange input:focus-visible{outline:2px solid var(--red);outline-offset:1px}
+#bsort{flex-basis:200px}
 .search input{width:100%;background:var(--card);border:1px solid var(--line);
   border-radius:var(--r-md);padding:14px 14px 14px 40px;color:var(--text);
   font-family:inherit;font-size:15px}
@@ -7700,6 +7705,15 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
       </div>
       <select id="country" class="pick-sel" aria-label="Country"></select>
       <select id="league" class="pick-sel" aria-label="League"></select>
+      <!-- ODDS RANGE AND SORT (owner, 13 Oct 2026). The odds are the reader's own
+           bookie's price for the pick on the card. -->
+      <div class="orange"><label for="omin">Odds</label>
+        <input id="omin" type="text" inputmode="decimal" placeholder="from" autocomplete="off" aria-label="Lowest odds">
+        <span>to</span>
+        <input id="omax" type="text" inputmode="decimal" placeholder="to" autocomplete="off" aria-label="Highest odds"></div>
+      <select id="bsort" class="pick-sel" aria-label="Sort the board">
+        <option value="">By league</option><option value="strong">Strongest first</option>
+        <option value="kick">Kickoff</option><option value="odds">Highest odds</option></select>
       <span id="finder-count" hidden></span>
     </div>
     <div id="chosen"></div>
@@ -8226,7 +8240,7 @@ function conf(p){var pc=Math.round(p*100);return pc>=70?"strong":pc>=55?"lean":"
    which tier a pick is in. */
 function confLabel(p){var pc=Math.round(p*100);return pc>=70?"Strong":pc>=55?"Likely":"Bold";}
 function verdict(p){var pc=Math.round(p*100);return pc>=70?"Banker":pc>=55?"Worth a look":"Bold pick";}
-const V={off:0,dayPicked:false,country:"",league:"",q:"",cat:"all",list:true,view:"pred"};
+const V={off:0,dayPicked:false,country:"",league:"",q:"",cat:"all",list:true,view:"pred",omin:0,omax:0,sort:""};
 try{var _sv=localStorage.getItem("sw.view"); if(_sv) V.list=(_sv==="list");}catch(e){}
 /* Which tab you are on is session state, not a preference. Kept in
    sessionStorage so it survives moving around the site and a reload, and is
@@ -9179,7 +9193,29 @@ function baseFiltered(){
     if(V.country&&countryOf(f.league)!==V.country) return false;
     if(V.league&&f.league!==V.league) return false;
     if(q&&(f.league+" "+f.home+" "+f.away).toLowerCase().indexOf(q)<0) return false;
+    /* ODDS RANGE: on the card's own pick, at the reader's bookie (SportyBet's
+       price when theirs has none). A pick with no price at all cannot be in a
+       range, so it sits out while one is set. */
+    if(V.omin||V.omax){ var o=pickOdds(f);
+      if(!o||(V.omin&&o<V.omin)||(V.omax&&o>V.omax)) return false; }
     return true;});
+}
+/* The price of the pick the card leads with. */
+function pickOdds(f){
+  var c=boardPick(f).code; return c?(legOdd(f,c)||null):null;
+}
+/* SORT (owner, 13 Oct 2026). Any order but "by league" is one flat list:
+   grouped by country, "highest odds" would only sort inside each league. */
+var BSORTS={
+  strong:{name:"Strongest first",by:function(a,b){return (b.tip_p||0)-(a.tip_p||0);}},
+  kick:{name:"By kickoff",by:function(a,b){return String(a.kickoff||a.time).localeCompare(String(b.kickoff||b.time));}},
+  odds:{name:"Highest odds first",by:function(a,b){return (pickOdds(b)||0)-(pickOdds(a)||0);}}
+};
+function sortedBlock(list){
+  var s=BSORTS[V.sort], g=list.slice().sort(s.by);
+  return "<div class='comp'><div class='comp-h'><span>"+esc(s.name+" · "+g.length+" game"+(g.length===1?"":"s"))+"</span></div>"+
+    (V.list?"<div class='ltable'>"+LTHEAD+g.map(listRowHTML).join("")+"</div>"
+           :"<div class='grid'>"+g.map(matchHTML).join("")+"</div>")+"</div>";
 }
 function shown(){
   const t=catTest(V.cat);
@@ -10491,12 +10527,11 @@ function listBlock(l,games,withFlag){
   return "<div class='comp'><div class='comp-h'>"+(withFlag?flagFor(countryOf(l)):"")+"<span>"+esc(compOf(l))+"</span>"+
     "<button class='star' data-fav=\""+esc(l)+"\" aria-pressed='"+isFav(l)+
     "' aria-label='Pin league'>"+(isFav(l)?"\u2605":"\u2606")+"</button></div>"+
-    "<div class='ltable'>"+
-      "<div class='lthead'><span></span><span>Match</span><span class='c'>1</span>"+
-        "<span class='c'>X</span><span class='c'>2</span><span>Tip</span>"+
-        "<span class='c pred'>Pred</span><span></span></div>"+
-      g.map(listRowHTML).join("")+"</div></div>";
+    "<div class='ltable'>"+LTHEAD+g.map(listRowHTML).join("")+"</div></div>";
 }
+var LTHEAD="<div class='lthead'><span></span><span>Match</span><span class='c'>1</span>"+
+  "<span class='c'>X</span><span class='c'>2</span><span>Tip</span>"+
+  "<span class='c pred'>Pred</span><span></span></div>";
 function renderResults(){
   var rs=resultsOnDay();
   var hits=rs.filter(function(r){return r.hit;}).length;
@@ -10523,8 +10558,8 @@ function renderResults(){
    is deliberately left alone: someone who stepped to Wednesday meant it, and
    throwing them back to today would undo the one choice they made on purpose. */
 function resetBoardFilters(){
-  V.q=""; V.cat="all"; V.country=""; V.league="";
-  var box=document.getElementById("q"); if(box) box.value="";
+  V.q=""; V.cat="all"; V.country=""; V.league=""; V.omin=0; V.omax=0; V.sort="";
+  ["q","omin","omax","bsort"].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=""; });
   render();
 }
 /* WHAT THE CLOSED BUTTON HAS TO ADMIT. The search and the two selects fold
@@ -10535,7 +10570,7 @@ function resetBoardFilters(){
    describes, whatever changed it. */
 function syncFilterBtn(){
   var dot=$("fbtnOn"); if(!dot) return;
-  dot.hidden=!(V.q&&V.q.trim())&&!V.country&&!V.league;
+  dot.hidden=!(V.q&&V.q.trim())&&!V.country&&!V.league&&!V.omin&&!V.omax&&!V.sort;
 }
 /* Opened by the reader, so it stays open until they shut it: a panel that
    closed itself on the next render would eat the tap that opened it. */
@@ -10579,6 +10614,7 @@ function render(){
              : V.league ? "No games in " + esc(V.league) + " on this day"
              : V.country ? "No games in " + esc(V.country) + " on this day"
              : V.cat !== "all" ? "No games in this category on this day"
+             : (V.omin||V.omax) ? "No picks in that odds range on this day"
              : "No games on this day";
     setBoard("<div class='none'><b>" + _why + "</b>" +
       "<p>The rest of the board is still there.</p>" +
@@ -10591,8 +10627,9 @@ function render(){
   var _thin = list.length<=4 ? "<div class='thin-note'>Only "+list.length+" fixture"+(list.length===1?"":"s")+" available right now - more arrive as the weekend nears.</div>" : "";
   const byL={};
   list.forEach(function(f){(byL[f.league]=byL[f.league]||[]).push(f);});
-  const favL=Object.keys(byL).filter(isFav).sort();
-  let html="";
+  const favL=V.sort?[]:Object.keys(byL).filter(isFav).sort();
+  let html=V.sort&&BSORTS[V.sort]?sortedBlock(list):"";
+  if(html) Object.keys(byL).forEach(function(l){ delete byL[l]; });
   if(favL.length)
     html+="<div class='faves-h'><h2>\u2605 Pinned</h2><span>"+
       favL.reduce(function(n,l){return n+byL[l].length;},0)+" games</span></div>"+
@@ -10602,7 +10639,7 @@ function render(){
   // American entry to that list later still can't surface one here.
   /* ...and no second tiers either: England's Championship is on that list, and
      promoting it above everyone else's top flight is the thing being fixed. */
-  const tops=favL.length?[]:TOP_LEAGUES.filter(function(l){
+  const tops=(favL.length||V.sort)?[]:TOP_LEAGUES.filter(function(l){
     return byL[l]&&!isSAleague(l)&&!isLowerLeague(l);});
   if(tops.length)
     html+="<div class='faves-h'><h2>Top leagues</h2><span>"+
@@ -23612,6 +23649,11 @@ function paint(){
   const box=$("q");
   if(box){let t=null;box.addEventListener("input",function(){
     clearTimeout(t);t=setTimeout(function(){V.q=box.value;render();},160);});}
+  /* "1,5" is read as 1.5; anything that is not a price clears that end. */
+  ["omin","omax"].forEach(function(id){ var el=$(id); if(!el||el._w) return; el._w=1; var t=null;
+    el.addEventListener("input",function(){ clearTimeout(t); t=setTimeout(function(){
+      var n=parseFloat(String(el.value).replace(",",".")); V[id]=n>1?n:0; render(); },300); }); });
+  var bs=$("bsort"); if(bs&&!bs._w){ bs._w=1; bs.addEventListener("change",function(){ V.sort=BSORTS[bs.value]?bs.value:""; render(); }); }
   render();
   /* The scope segment is painted once at init, before any fixtures exist, and
      a page deep-linked to #build can draw the builder before the payload lands.
