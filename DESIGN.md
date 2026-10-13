@@ -145,10 +145,25 @@ still all Plus Jakarta Sans.
 ## Admin page
 
 The Admin view in the account sheet (`public/account-ui.js`), owner only. It
-uses the same `.swa-h` headings, `.swa-card` cards and `.swa-set` rows as
-Settings. The sections, in order:
+uses the same `.swa-card` cards and `.swa-set` rows as Settings.
 
-1. **Site switches**: one row per bookmaker with a `.swa-sw` switch (on means
+**One section at a time.** A row of tabs (`.swa-tabs`, `.swa-tab`) across the
+top, scrolling sideways on a phone: Switches, Status, Numbers, Readers, Family
+& friends, Slips. Tabs are 34px, 6px corners, `--card` with a `--line`
+border; the open one is filled `--red-fill` with white text. The arrow keys
+move between them, the open tab scrolls into view, and the last one used is
+remembered on the device (`sw.admintab`). Family & friends shows its member
+count on its tab, and Slips shows "2 to check" while any slip waits. The
+status line (`#swaMsg`) sits under the tabs.
+
+Every button in a row (Check, Share, Remove, Give, It landed, It lost) is the
+same `.swa-pillbtn`: `--card-2`, `--line` border, 6px corners, 12px/700. The
+big full-width buttons (`.swa-outbtn`) have 6px corners too. Only the on/off
+switch (`.swa-sw`) stays round.
+
+The tabs, in order:
+
+1. **Switches**: one row per bookmaker with a `.swa-sw` switch (on means
    booking is on), then the notice input with "Show notice" and "Clear notice".
 2. **Status**: per bookmaker, when its last code was booked, how many in the
    last hour and how many today, then how long ago the predictions were built.
@@ -158,15 +173,12 @@ Settings. The sections, in order:
 4. **Find a reader**: email lookup showing plan, join date, last seen,
    devices with "Sign out everywhere", their codes (Family & friends only:
    free readers are counted by device), and Give or Remove Family & friends.
-5. **Family & friends** (give by email, then the list) and **Slips that
-   landed**. A "check" slip has a **Check** button that opens its legs, notes
-   the ones a final score cannot grade, and settles it with "It landed" or "It
-   lost".
-
-Every section is a native `<details>` (`.swa-fold`) with a chevron on the
-right. The first four start open. Family & friends and Slips that landed grow
-without end, so they start closed and show their count in the heading ("12",
-"9 landed · 2 to check"). The status line (`#swaMsg`) sits above all of them.
+5. **Family & friends**: give by email, then the list.
+6. **Slips**: every booked slip that landed or waits on a check. A "check"
+   slip's **Check** button opens a panel under it: the legs we graded as won,
+   how many we cannot grade from a score, then the whole slip read back from
+   the bookmaker (`/api/slip`, picks in words: "Corners over 9.5"), and "It
+   landed" / "It lost" to settle it.
 
 Every result line is a short sentence ("Bet9ja booking paused. Readers see it
 within a couple of minutes."), never a code or a status word.

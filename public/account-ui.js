@@ -133,35 +133,56 @@
       (r.role==="admin"?"":"<div class='swa-set'><span class='swa-st'><b>Family &amp; friends</b><small>"+(r.ff?"Yes":"No")+"</small></span>"+
         "<button class='swa-pillbtn' type='button' data-lk-ff='"+(r.ff?"revoke":"grant")+"'>"+(r.ff?"Remove":"Give")+"</button></div>");
   }
-  /* EVERY SECTION FOLDS (owner, 13 Oct 2026: "make the sections with long lists
-     collapseable"). A native <details>, so it works with the keyboard and a screen
-     reader for free. The two lists that grow without end start closed, with their
-     count in the heading (setCount) so a closed one still says what it holds. */
-  function fold(id,title,body,open){
-    return "<details class='swa-fold' id='"+id+"'"+(open?" open":"")+"><summary class='swa-h'>"+title+
-      "<small class='swa-cnt'></small></summary>"+body+"</details>";
-  }
+  /* ONE SECTION AT A TIME (owner, 13 Oct 2026: "put all sections as row or something
+     that i can toggle in between"). A row of tabs across the top; the last one used
+     is remembered on this device. The two lists that grow carry their count on the
+     tab, so a closed one still says what it holds. */
+  var ADMIN_TABS=[["swaTSw","Switches"],["swaTStatus","Status"],["swaTNums","Numbers"],
+    ["swaTLk","Readers"],["swaTGrants","Family & friends"],["swaTHits","Slips"]];
   function adminHtml(list){
-    /* The message line sits on top, so a switch flipped up here is answered where the eye is. */
-    return "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>"+
-      fold("swaFSw","Site switches","<div class='swa-card' id='swaSw'>"+msg("Loading")+"</div>"+
+    var body={
+      swaTSw:"<div class='swa-card' id='swaSw'>"+msg("Loading")+"</div>"+
         "<label class='swa-lbl' for='swaNotice'>Notice for every reader</label>"+
         "<input class='swa-in' id='swaNotice' type='text' maxlength='200' autocomplete='off' placeholder='SportyBet codes are slow tonight. Try Bet9ja.'>"+
         "<button class='swa-outbtn swa-go' id='swaNoticeGo' type='button'>Show notice</button>"+
-        "<button class='swa-outbtn' id='swaNoticeOff' type='button'>Clear notice</button>",true)+
-      fold("swaFStatus","Status","<div class='swa-card' id='swaStatus'>"+msg("Loading")+"</div>",true)+
-      fold("swaFNums","Numbers","<div class='swa-card' id='swaNums'>"+msg("Loading")+"</div>",true)+
-      fold("swaFLk","Find a reader","<label class='swa-lbl' for='swaLkEmail'>Email</label>"+
+        "<button class='swa-outbtn' id='swaNoticeOff' type='button'>Clear notice</button>",
+      swaTStatus:"<div class='swa-card' id='swaStatus'>"+msg("Loading")+"</div>",
+      swaTNums:"<div class='swa-card' id='swaNums'>"+msg("Loading")+"</div>",
+      swaTLk:"<label class='swa-lbl' for='swaLkEmail'>Email</label>"+
         "<input class='swa-in' id='swaLkEmail' type='email' autocomplete='off' autocapitalize='none' spellcheck='false'>"+
         "<button class='swa-outbtn swa-go' id='swaLkGo' type='button'>Look up</button>"+
-        "<div class='swa-card' id='swaLk' hidden></div>",true)+
-      fold("swaFGrants","Family &amp; friends","<label class='swa-lbl' for='swaGEmail'>Email</label>"+
+        "<div class='swa-card' id='swaLk' hidden></div>",
+      swaTGrants:"<label class='swa-lbl' for='swaGEmail'>Email</label>"+
         "<input class='swa-in' id='swaGEmail' type='email' autocomplete='off' autocapitalize='none' spellcheck='false'>"+
         "<button class='swa-outbtn swa-go' id='swaGrant' type='button'>Give Family &amp; friends</button>"+
-        "<div class='swa-card' id='swaGrants'>"+(list?grantsHtml(list):msg("Loading"))+"</div>",false)+
-      fold("swaFHits","Slips that landed","<div class='swa-card' id='swaHits'>"+msg("Loading")+"</div>",false);
+        "<div class='swa-card' id='swaGrants'>"+(list?grantsHtml(list):msg("Loading"))+"</div>",
+      swaTHits:"<div class='swa-card' id='swaHits'>"+msg("Loading")+"</div>"};
+    return "<div class='swa-tabs' role='tablist' aria-label='Admin sections'>"+ADMIN_TABS.map(function(t){
+        return "<button type='button' role='tab' class='swa-tab' id='"+t[0]+"B' data-tab='"+t[0]+"' aria-controls='"+t[0]+"' aria-selected='false'>"+
+          esc(t[1])+"<small class='swa-cnt'></small></button>"; }).join("")+"</div>"+
+      /* The message line sits under the tabs, so an answer lands where the eye is. */
+      "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>"+
+      ADMIN_TABS.map(function(t){
+        return "<section class='swa-panel' id='"+t[0]+"' role='tabpanel' aria-labelledby='"+t[0]+"B' hidden>"+body[t[0]]+"</section>"; }).join("");
   }
-  function setCount(v,id,text){ var el=v.querySelector("#"+id+" .swa-cnt"); if(el) el.textContent=text||""; }
+  function setCount(v,id,text){ var el=v.querySelector("[data-tab='"+id+"'] .swa-cnt"); if(el) el.textContent=text||""; }
+  function wireTabs(v){
+    var saved=null; try{ saved=localStorage.getItem("sw.admintab"); }catch(e){}
+    function show(id){
+      v.querySelectorAll(".swa-tab").forEach(function(b){ var on=b.getAttribute("data-tab")===id;
+        b.setAttribute("aria-selected",String(on)); b.tabIndex=on?0:-1;
+        if(on) try{ b.scrollIntoView({block:"nearest",inline:"nearest"}); }catch(e){} });
+      v.querySelectorAll(".swa-panel").forEach(function(p){ p.hidden=p.id!==id; });
+      try{ localStorage.setItem("sw.admintab",id); }catch(e){}
+    }
+    v.querySelectorAll(".swa-tab").forEach(function(b){
+      b.onclick=function(){ show(b.getAttribute("data-tab")); };
+      b.onkeydown=function(e){ if(e.key!=="ArrowRight"&&e.key!=="ArrowLeft") return;
+        var all=[].slice.call(v.querySelectorAll(".swa-tab")), i=all.indexOf(b)+(e.key==="ArrowRight"?1:-1);
+        var nb=all[(i+all.length)%all.length]; nb.click(); nb.focus(); };
+    });
+    show(ADMIN_TABS.some(function(t){ return t[0]===saved; })?saved:ADMIN_TABS[0][0]);
+  }
   /* EVERY CODE BOOKED ON THE SITE THAT CAME HOME (owner, 12 Oct 2026; lib/slipwatch.js).
      "check" = every leg we could grade won, but some legs (corners, shots, first half)
      cannot be graded from a final score - shown so the owner can look, never as a hit. */
@@ -180,20 +201,23 @@
         (h.total_odds?" · <span class='swa-gold'>×"+esc(Number(h.total_odds).toLocaleString("en-US",{maximumFractionDigits:2}))+"</span>":"")+"</b>"+
         "<small>"+esc(games+" · "+when+(h.who?" · "+h.who:""))+"</small>"+
         (legs.length?"<small>"+esc(legs.slice(0,3).join(" · ")+(legs.length>3?" and "+(legs.length-3)+" more":""))+"</small>":"")+"</span>"+
-        (h.status==="check"?"<button type='button' class='swa-pillbtn swa-chk' data-chk='"+esc(String(h.id))+"' aria-expanded='false'>Check</button>":"")+
-        (h.share?"<button type='button' class='swa-share' data-share='"+esc(JSON.stringify(h.share))+"'>Share</button>":"")+"</div>"+
+        (h.status==="check"?"<button type='button' class='swa-pillbtn' data-chk='"+esc(String(h.id))+"' aria-expanded='false'>Check</button>":"")+
+        (h.share?"<button type='button' class='swa-pillbtn' data-share='"+esc(JSON.stringify(h.share))+"'>Share</button>":"")+"</div>"+
         (h.status==="check"?checkHtml(h):""); }).join("");
   }
   /* SETTLE A "CHECK" BY HAND (owner, 13 Oct 2026). Every leg we could grade won; the
      rest (corners, shots, first half) cannot be read off a final score. Tapping
      Check opens the legs; the owner looks the code up on the bookmaker and says
      which way it went (/api/account/settle). */
+  /* "OVER_1.5" -> "Over 1.5", "CORNERS_OVER_9.5" -> "Corners over 9.5"; short codes (1X, GG) stay as they are. */
+  function pickWords(p){ p=String(p||""); if(p.length<=3) return p;
+    p=p.replace(/_/g," ").toLowerCase(); return p.charAt(0).toUpperCase()+p.slice(1); }
   function checkHtml(h){
     var legs=(h.legs||[]).map(function(l){ return "Won: "+esc(l.name); }).join("<br>");
     var n=h.untracked|0;
-    return "<div class='swa-set swa-chkbox' data-chkbox='"+esc(String(h.id))+"' hidden><span class='swa-st'><small>"+(legs||"No legs we could grade.")+
+    return "<div class='swa-set swa-chkbox' data-chkbox='"+esc(String(h.id))+"' data-book='"+esc(h.book)+"' data-code='"+esc(h.code)+"' hidden><span class='swa-st'><small>"+(legs||"No legs we could grade.")+
       (n?"<br>Plus "+n+" leg"+(n===1?"":"s")+" we cannot grade from the score (corners, shots or first half).":"")+
-      "<br>Look the code up on "+esc(BOOK_NAME[h.book]||h.book)+", then say how it went.</small></span>"+
+      "</small><small data-full></small><small>Look the code up on "+esc(BOOK_NAME[h.book]||h.book)+" to be sure, then say how it went.</small></span>"+
       "<button type='button' class='swa-pillbtn' data-settle='landed'>It landed</button>"+
       "<button type='button' class='swa-pillbtn' data-settle='lost'>It lost</button></div>";
   }
@@ -237,10 +261,12 @@
     ".swa-view.on{transform:none;visibility:visible;transition:transform .28s cubic-bezier(.23,1,.32,1),visibility 0s}.swa-in-wrap{max-width:520px;margin:0 auto}"+
     ".swa-back{display:flex;align-items:center;gap:4px;border:0;background:none;color:var(--soft);font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:6px 4px 6px 0}.swa-back svg{width:18px;height:18px}"+
     ".swa-t{margin:0 0 16px;font-size:22px;font-weight:800;letter-spacing:-.01em}"+
-    ".swa-fold>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;user-select:none}.swa-fold>summary::-webkit-details-marker{display:none}"+
-    ".swa-fold>summary::after{content:'';width:7px;height:7px;margin-left:auto;margin-right:4px;border-right:2px solid var(--faint);border-bottom:2px solid var(--faint);transform:rotate(-45deg);transition:transform .14s}"+
-    ".swa-fold[open]>summary::after{transform:rotate(45deg)}.swa-fold>summary:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:4px}"+
-    ".swa-chkbox{flex-wrap:wrap;gap:8px}.swa-chkbox .swa-st{flex:1 1 100%}"+
+    ".swa-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:4px -2px 4px;padding:2px}.swa-tabs::-webkit-scrollbar{display:none}"+
+    ".swa-tab{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--soft);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}"+
+    ".swa-tab[aria-selected='true']{background:var(--red-fill);border-color:transparent;color:#fff}.swa-tab:focus-visible{outline:2px solid var(--red);outline-offset:2px}"+
+    ".swa-tab .swa-cnt{font-size:11px;font-weight:800;opacity:.85}.swa-tab .swa-cnt:empty{display:none}"+
+    ".swa-panel[hidden],.swa-set[hidden]{display:none!important}.swa-panel>.swa-card+.swa-lbl{margin-top:18px}"+
+    ".swa-chkbox{flex-wrap:wrap;gap:8px}.swa-chkbox .swa-st{flex:1 1 100%}.swa-chkbox small{display:block;margin-top:6px}.swa-chkbox small b{display:block;color:var(--text);font-size:12.5px;margin-bottom:2px}.swa-set .swa-pillbtn+.swa-pillbtn{margin-left:6px}"+
     ".swa-h{font-size:13px;font-weight:700;color:var(--soft);margin:18px 2px 8px}.swa-h small{font-weight:600;color:var(--faint);margin-left:6px}"+
     ".swa-lbl{display:block;font-size:12px;font-weight:700;color:var(--faint);margin:0 0 5px}"+
     ".swa-in{width:100%;height:42px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:15px;font-weight:700;padding:0 12px;box-sizing:border-box}"+
@@ -260,14 +286,14 @@
     ".swa-set{display:flex;align-items:center;gap:12px;padding:12px;min-height:52px;width:100%;box-sizing:border-box;border:0;background:none;color:inherit;font:inherit;text-align:left}.swa-set0{padding-bottom:8px}"+
     ".swa-st{flex:1;min-width:0}.swa-st b{display:block;overflow-wrap:anywhere;font-size:13.5px;font-weight:700}.swa-st small{display:block;font-size:12px;font-weight:600;color:var(--faint);margin-top:1px}"+
     ".swa-link{cursor:pointer}.swa-chev{width:16px;height:16px;color:var(--faint)}"+
-    ".swa-seg{display:flex;background:var(--card-2);border-radius:99px;padding:3px;gap:2px}.swa-seg button{border:0;background:none;color:var(--soft);font:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:99px;cursor:pointer}.swa-seg button[aria-pressed=true]{background:var(--card);color:var(--text)}"+
-    ".swa-books{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 12px}.swa-books button{border:1px solid var(--line);background:var(--card-2);border-radius:99px;padding:7px 11px;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer;color:var(--text)}.swa-books button[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}"+
+    ".swa-seg{display:flex;background:var(--card-2);border-radius:8px;padding:3px;gap:2px}.swa-seg button{border:0;background:none;color:var(--soft);font:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:6px;cursor:pointer}.swa-seg button[aria-pressed=true]{background:var(--card);color:var(--text)}"+
+    ".swa-books{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 12px}.swa-books button{border:1px solid var(--line);background:var(--card-2);border-radius:6px;padding:7px 11px;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer;color:var(--text)}.swa-books button[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}"+
     ".swa-sw{width:42px;height:26px;border-radius:99px;border:0;background:var(--raise);position:relative;cursor:pointer;flex:none}.swa-sw:after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}.swa-sw[aria-checked=true]{background:var(--green)}.swa-sw[aria-checked=true]:after{transform:translateX(16px)}"+
-    ".swa-outbtn{width:100%;height:44px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:13.5px;font-weight:800;cursor:pointer;margin:18px 0 12px}.swa-danger{color:var(--red-ink)}"+
+    ".swa-outbtn{width:100%;height:44px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:13.5px;font-weight:800;cursor:pointer;margin:18px 0 12px}.swa-danger{color:var(--red-ink)}"+
     ".swa-go{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}.swa-go[disabled]{opacity:.6;cursor:default}"+
     ".swa-fine{text-align:center}.swa-del{border:0;background:none;font:inherit;font-size:12.5px;font-weight:700;color:var(--red-ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}"+
     ".swa-note,.swa-msg{font-size:13px;color:var(--soft);line-height:1.5}.swa-card+.swa-card{margin-top:0}.swa-card .swa-set+.swa-set{border-top:1px solid var(--line)}"+
-    ".swa-pillbtn{border:1px solid var(--line);background:var(--card-2);color:var(--text);border-radius:99px;padding:6px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}"+
+    ".swa-pillbtn{border:1px solid var(--line);background:var(--card-2);color:var(--text);border-radius:6px;padding:6px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}"+
     ".swa-set:focus-visible,.swa-seg button:focus-visible,.swa-books button:focus-visible,.swa-sw:focus-visible,.swa-outbtn:focus-visible,.swa-del:focus-visible,.swa-pillbtn:focus-visible,.swa-in:focus-visible,.swa-back:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"+
     "@media (hover:hover){.swa-mi:hover{background:var(--card-2)}}"+
     "@media (prefers-reduced-motion:reduce){.swa-menu,.swa-scrim,.swa-view{transition:none}}";
@@ -417,6 +443,7 @@
     close();
     var a=acct();
     var v=view("Admin",adminHtml(null)), inp=v.querySelector("#swaGEmail"), btn=v.querySelector("#swaGrant");
+    wireTabs(v);
     function say(t){ v.querySelector("#swaMsg").textContent=t||""; }
     function fail(code,j){
       if(code===401) return a.signedOutHere(j&&j.reason);
@@ -426,7 +453,7 @@
     function load(){
       a.req("GET","/api/account/grants",null,function(code,j){
         if(code!==200) return fail(code,j);
-        var box=v.querySelector("#swaGrants"); box.innerHTML=grantsHtml(j.grants||[]); setCount(v,"swaFGrants",String((j.grants||[]).length));
+        var box=v.querySelector("#swaGrants"); box.innerHTML=grantsHtml(j.grants||[]); setCount(v,"swaTGrants",String((j.grants||[]).length));
         box.querySelectorAll("[data-revoke]").forEach(function(b){ b.onclick=function(){ b.disabled=true;
           a.req("POST","/api/account/revoke",{email:b.getAttribute("data-revoke")},function(c2,j2){
             if(c2===200){ say("Removed."); load(); } else { b.disabled=false; fail(c2,j2); } }); }; });
@@ -435,7 +462,7 @@
     function hitsLoad(){ a.req("GET","/api/account/hits",null,function(code,j){
       var box=v.querySelector("#swaHits"); if(!box) return;
       if(code===200){ var hs=j.hits||[], nc=hs.filter(function(h){ return h.status==="check"; }).length;
-        setCount(v,"swaFHits",hs.length-nc+" landed"+(nc?" · "+nc+" to check":"")); }
+        setCount(v,"swaTHits",nc?nc+" to check":String(hs.length-nc)); }
       box.innerHTML=code===200?hitsHtml(j.hits||[]):
         "<div class='swa-set'><span class='swa-st'><small>"+(code===503?"The slip ledger is not set up yet.":"Could not load the hits.")+"</small></span></div>";
       /* SHARE A WIN: the phone's own share sheet with the banner and caption; on a desktop, the banner
@@ -462,6 +489,20 @@
       box.querySelectorAll("[data-chk]").forEach(function(b){ b.onclick=function(){
         var id=b.getAttribute("data-chk"), panel=box.querySelector("[data-chkbox='"+id+"']"); if(!panel) return;
         panel.hidden=!panel.hidden; b.setAttribute("aria-expanded",String(!panel.hidden));
+        /* THE WHOLE SLIP. The ledger keeps only the legs a score can grade, so the
+           rest are read back from the bookmaker (/api/slip). After the games the
+           bookmaker may have dropped them, and then the graded legs are all there is. */
+        var full=panel.querySelector("[data-full]");
+        if(!panel.hidden&&full&&!full.getAttribute("data-done")){
+          full.setAttribute("data-done","1"); full.textContent="Reading the slip from the bookmaker...";
+          fetch("/api/slip?book="+encodeURIComponent(panel.getAttribute("data-book"))+"&code="+encodeURIComponent(panel.getAttribute("data-code")),
+            {headers:{Accept:"application/json"}}).then(function(r){ return r.json(); }).then(function(d){
+              var legs=d&&d.success&&Array.isArray(d.legs)?d.legs:[];
+              full.innerHTML=legs.length?"<b>The whole slip, "+legs.length+" games</b>"+legs.map(function(l){
+                return esc((l.home||"")+" v "+(l.away||"")+" · "+(l.market||l.label||pickWords(l.prediction))+(l.odds?" @ "+l.odds:"")); }).join("<br>")
+                :"The bookmaker no longer shows this slip, so only the graded legs above are known.";
+            }).catch(function(){ full.textContent="Could not read the slip from the bookmaker."; });
+        }
         panel.querySelectorAll("[data-settle]").forEach(function(s){ s.onclick=function(){
           var to=s.getAttribute("data-settle");
           panel.querySelectorAll("button").forEach(function(x){ x.disabled=true; });
