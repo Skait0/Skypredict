@@ -224,7 +224,20 @@ test("a longer swipe aims higher, and the aim never leaves the frame", () => {
   const short = S(swp([[200, 700], [200, 640]], 80), H), long = S(swp([[200, 700], [200, 440]], 260), H);
   assert.ok(long.aim.y > short.aim.y && long.spot >= 3 && short.spot < 3, JSON.stringify({ short, long }));
   const wild = S(swp([[200, 700], [600, 650]], 120), H);
-  assert.ok(Math.abs(wild.aim.x) <= 3.5 && wild.aim.y <= 2.3);
+  assert.ok(Math.abs(wild.aim.x) <= 3.66 && wild.aim.y <= 2.3);
+});
+
+test("a swipe past the post hits the post: a low corner struck over, so the rules call it bar", () => {
+  const S = swipe();
+  const P = new Function(grabFn("strike") + grabFn("judge") + "\nvar ZONES={weakBelow:0.55,overAbove:0.88},col=function(s){return s%3;},high=function(s){return s>=3;};" +
+    grabFn("neighbour") + "\nreturn judge;")();
+  for (const end of [[600, 600], [-200, 600], [560, 420]]) {
+    const w = S(swp([[200, 700], [300, 650], end], 150), H);
+    assert.ok(w.post && Math.abs(w.aim.x) === 3.66 && w.spot % 3 !== 1 && w.spot < 3, JSON.stringify(w));
+    for (let d = 0; d < 6; d++) assert.strictEqual(P(w, d), "bar");
+  }
+  const inside = S(swp([[200, 700], [230, 600], [260, 520]], 150), H);
+  assert.ok(!inside.post, "inside the posts is a normal shot");
 });
 
 test("swipe speed is power: a lazy swipe is weak, a wild one sails over", () => {
@@ -415,7 +428,7 @@ test("your miss is WAHALA with its reason under it; the bar never says saved", (
   /* Owner: "when the ball hits the bar, dont say saved" then "i liked the wahala lol". */
   const f = grabFn("playKick");
   const bar = f.slice(f.indexOf('what==="bar"'), f.indexOf("}else{", f.indexOf('what==="bar"')));
-  assert.match(bar, /fx\.pop\(you\?pick\(\["WAHALA!","MISSED!"\]\):"MISSED!",you\?"#E63946":"#2FD48A","OFF THE BAR"\)/); assert.match(bar, /fx\.board\("OFF THE BAR"/);
+  assert.match(bar, /fx\.pop\(you\?pick\(\["WAHALA!","MISSED!"\]\):"MISSED!",you\?"#E63946":"#2FD48A",post\?"OFF THE POST":"OFF THE BAR"\)/); assert.match(bar, /fx\.board\(post\?"OFF THE POST":"OFF THE BAR"/);
   assert.doesNotMatch(bar, /SAVED/);
   assert.match(f, /fx\.pop\(you\?pick\(\["WAHALA!","MISSED!"\]\):"MISSED!",you\?"#E63946":"#2FD48A","OVER THE BAR"\);fx\.board\("MISSED"/);
   assert.match(html, /pop:function\(word,color,why\)/);
@@ -726,7 +739,7 @@ test("a short, slow, straight push is a Panenka: a clean chip to the top middle"
 
 
 test("the perfect strike: flick as the ring closes, and the power lands in the sweet band", () => {
-  assert.match(html, /if\(!g\.panenka&&Math\.abs\(held-500\)<=90\)\{g\.power=0\.77;/);
+  assert.match(html, /if\(!g\.panenka&&!g\.post&&Math\.abs\(held-500\)<=90\)\{g\.power=0\.77;/);
   assert.match(html, /#ring\.on\{animation:pw-close \.5s linear forwards\}/, "the ring closes in the same 500ms");
 });
 

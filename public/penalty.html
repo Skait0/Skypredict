@@ -813,12 +813,17 @@ function swipeShot(path,H,geo){
   if(lift<30||len<40)return {ok:false};
   var power=Math.max(0,Math.min(1,(len/ms)/1.6));
   var ex=G.bx+lat*G.k,ey=G.by-lift*G.k;
-  var x=Math.max(-3.5,Math.min(3.5,(ex-G.gx)/G.sG)),y=Math.max(0.15,Math.min(2.3,(G.gy-ey)/G.sG));
+  var rx=(ex-G.gx)/G.sG,x=Math.max(-3.5,Math.min(3.5,rx)),y=Math.max(0.15,Math.min(2.3,(G.gy-ey)/G.sG));
   /* curl follows the turn of the swipe: compare its heading at the start with
      its heading at the end - turning right curls the ball right (owner) */
   var q1=path[Math.max(1,Math.floor(path.length*0.3))],q3=path[Math.min(path.length-2,Math.floor(path.length*0.7))]||a;
   var h0=Math.atan2(q1.x-a.x,a.y-q1.y),h1=Math.atan2(b.x-q3.x,q3.y-b.y),turn=path.length>2?h1-h0:0;
   var curl=Math.max(-1,Math.min(1,turn/0.7)),c=x<-1.22?0:x>1.22?2:1;
+  /* PAST THE POST IS OFF THE POST (owner, 13 Oct 2026: a swipe bent out wide
+     still curled in, because the aim stopped inside the post). The rules only
+     know spot and power, so it travels as a low corner struck over: judge()
+     calls that "bar", here and on the server. playKick draws the post. */
+  if(Math.abs(rx)>3.66)return {ok:true,spot:rx>0?2:0,power:1,aim:{x:rx>0?3.66:-3.66,y:y},curl:curl,post:true};
   return {ok:true,spot:c+(y>=1.22?3:0),power:power,aim:{x:x,y:y},curl:curl};
 }
 /* While the finger is down: a dotted line from the ball to where it would go,
@@ -839,11 +844,11 @@ function aimAndShoot(){
     function geo(){var bp=P(B.x,B.y,B.z),g0=P(0,0,GOAL.z);return {bx:bp.x,by:bp.y,gx:g0.x,gy:g0.y,sG:g0.s,k:(bp.y-(g0.y-1.2*g0.s))/(CAM.H*0.22)};}
     function fire(){var g=swipeShot(path,CAM.H,geo()),held=performance.now()-t0;path=null;if(!g.ok){K.img="k-set.webp";ring.className="";return;}
       /* flicked as the ring closed (500ms, +-90ms): the sweet spot of power */
-      if(!g.panenka&&Math.abs(held-500)<=90){g.power=0.77;ring.className="hit";fx.buzz([10,20,10]);}else ring.className="";
+      if(!g.panenka&&!g.post&&Math.abs(held-500)<=90){g.power=0.77;ring.className="hit";fx.buzz([10,20,10]);}else ring.className="";
       setTimeout(function(){if(ring.className==="hit")ring.className="";},260);
       app.removeEventListener("pointerdown",down);app.removeEventListener("pointermove",move);app.removeEventListener("pointerup",up);AIMING=false;drawSpell();
       /* wind (solo modes): it carries the ball; the zone is judged where it ends up */
-      if(SOLO&&WIND&&!g.panenka){g.aim.x=Math.max(-3.5,Math.min(3.5,g.aim.x+WIND/20*1.1));g.curl=Math.max(-1,Math.min(1,g.curl+WIND/20*0.6));
+      if(SOLO&&WIND&&!g.panenka&&!g.post){g.aim.x=Math.max(-3.5,Math.min(3.5,g.aim.x+WIND/20*1.1));g.curl=Math.max(-1,Math.min(1,g.curl+WIND/20*0.6));
         g.spot=(g.aim.x<-1.22?0:g.aim.x>1.22?2:1)+(g.aim.y>=1.22?3:0);}
       hint("");fx.buzz(15);done({spot:g.spot,power:g.power,aim:g.aim,curl:g.curl,panenka:!!g.panenka});}
     app.addEventListener("pointerdown",down);app.addEventListener("pointermove",move);app.addEventListener("pointerup",up);
@@ -889,8 +894,12 @@ function playKick(k){
      aims at its spot with a little natural bend. */
   var aim=target(k.shot.spot,k.outcome==="bar"?"bar":kind);
   if(k.shot.aim){aim={x:k.shot.aim.x,y:aim.y===3.4||k.outcome==="bar"?aim.y:k.shot.aim.y};if(k.outcome==="bar")aim.x=Math.max(-3.4,Math.min(3.4,k.shot.aim.x));}
+  /* a swipe past the post (see swipeShot): it bends onto the post, at the
+     swiped height; ponytail: its real swipe power is not kept, so it flies at 0.6 */
+  var post=k.outcome==="bar"&&!!k.shot.aim&&Math.abs(k.shot.aim.x)>=3.66;
+  if(post)aim={x:k.shot.aim.x,y:k.shot.aim.y};
   var curl=k.shot.curl!=null?k.shot.curl:(Math.random()*0.8-0.4),side=curl>=0?1:-1;
-  var f=flightPlan(aim,k.shot.panenka?0.08:power,curl);
+  var f=flightPlan(aim,k.shot.panenka?0.08:post?0.6:power,curl);
   function decide(){
   near=k.dive!=null&&(k.outcome==="goal"&&col(k.dive)===col(k.shot.spot)&&high(k.dive)!==high(k.shot.spot)||k.outcome==="save"&&k.dive!==k.shot.spot);
   if(near)fx.slowmo(true);
@@ -947,7 +956,7 @@ function playKick(k){
           }else if(t>=f.T){phase="after";ox=B.x;oy=B.y;after=0;
             if(k.outcome==="goal"){impact("goal");vx=f.vxAt(f.T)*0.25;vy=0;vz=4;}
             else if(k.outcome==="locked"){impact("locked");vz=f.vz*0.15;vy=0;vx=0;}
-            else if(k.outcome==="bar"){impact("bar");vz=-f.vz*0.32;vy=-Math.abs(f.vy-9.81*f.T)*0.25-0.5;vx*=0.4;}
+            else if(k.outcome==="bar"){impact("bar");vz=-f.vz*0.32;vy=-Math.abs(f.vy-9.81*f.T)*0.25-0.5;vx=post?-Math.sign(aim.x)*(3+Math.random()*2):vx*0.4;}
             else{impact("over");vz=f.vz;vy=f.vy-9.81*f.T;vx=f.vxAt(f.T);}
           }
         }else if(phase==="after"){
@@ -983,7 +992,8 @@ function playKick(k){
     else if(k.outcome==="goal"){K.img="k-beaten.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x*=0.85;S.img=you&&streak>=3?"s-slide.webp":"s-arms.webp";}
     else if(k.outcome==="save"){K.img="k-roar.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x*=0.6;K.flip=1;S.img="s-head.webp";}
     else{K.img="k-taunt.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x=0;K.flip=1;S.img="s-head.webp";
-      if(you)coach("over","Too hard, it flew. Ease off: a firm swipe goes in, a slap goes over.",false);}
+      if(you&&post)coach("post","Past the post hits the post. Keep your swipe inside the posts.",false);
+      else if(you)coach("over","Too hard, it flew. Ease off: a firm swipe goes in, a slap goes over.",false);}
     /* whenever the kicker fails, the keeper is happy: off the floor after a
        beat and roaring at a save, smirking and pointing at a miss */
     if(k.outcome!=="goal")return wait(wide?420:120).then(function(){K.img=k.outcome==="save"?"k-roar.webp":"k-taunt.webp";
@@ -1017,7 +1027,7 @@ function playKick(k){
     }else if(what==="bar"){
       hitStop=0.08;fx.shake(2);fx.buzz([30,30,30]);sfx("bar");fx.sprite("burst",bp.x,bp.y,56,320);
       /* it hit the woodwork - say exactly that, never "saved" (owner, 8 Oct 2026) */
-      fx.pop(you?pick(["WAHALA!","MISSED!"]):"MISSED!",you?"#E63946":"#2FD48A","OFF THE BAR");fx.board("OFF THE BAR","#E63946");if(you)streak=0;fx.combo(streak);
+      fx.pop(you?pick(["WAHALA!","MISSED!"]):"MISSED!",you?"#E63946":"#2FD48A",post?"OFF THE POST":"OFF THE BAR");fx.board(post?"OFF THE POST":"OFF THE BAR","#E63946");if(you)streak=0;fx.combo(streak);
     }else{hiss(0.55,700,2600,0.3);fx.pop(you?pick(["WAHALA!","MISSED!"]):"MISSED!",you?"#E63946":"#2FD48A","OVER THE BAR");fx.board("MISSED","#E63946");fx.shake(0);if(you)streak=0;fx.combo(streak);}
   }
 }
