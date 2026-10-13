@@ -861,7 +861,7 @@ function saveLive(shot,tell){setTag("YOUR SAVE","save");hint("SWIPE TO SAVE");bo
   coach("live","Read his run-up, then swipe the way the ball goes. From wide he goes right, straight on he goes left. Hard shots come fast: go early.",false);
   var live={dive:null},ctl={},k={who:"them",shot:shot,live:live};
   tapSpot(ctl).then(function(s){if(s!=null)live.dive=s;hint("");});
-  return wait(650).then(function(){return playKick(k);}).then(function(){ctl.cancel();hint("");return k.outcome;});}
+  return wait(900).then(function(){return playKick(k);}).then(function(){ctl.cancel();hint("");return k.outcome;});}
 function pickDive(tell){setTag("YOUR SAVE","save");hint("SWIPE TO DIVE");boardNow("b");K.idle=true;KC=ME;SC=OPP||other();
   coach("dive","Your turn in goal. Swipe the way you dive: up for high, flat for low. Or tap a spot in the goal.",false);
   /* KICKER TELLS (computer only): the run-up angle gives his side away, two times in three */
@@ -931,9 +931,9 @@ function playKick(k){
   /* run-up: three strides to the ball */
   S.img="s-run.webp";
   var sx0=S.x;
-  return tween(k.live?420:180,function(u){S.x=sx0+(-0.42-sx0)*u;S.z=-1.25+0.65*u;}).then(function(){
+  return tween(k.live?700:180,function(u){S.x=sx0+(-0.42-sx0)*u;S.z=-1.25+0.65*u;}).then(function(){
     S.img="s-strike.webp";fx.buzz(12);sfx("kick",0.55+0.45*power,0.92+0.16*power);if(spell)hiss(1.6,500,45,0.9,false,0.7);hitStop=0.075;B.fly=true;summon();
-    if(SLOWNEXT){TS=0.38;CAM_FX.zoomTo=1.14;}
+    if(SLOWNEXT){TS=0.38;CAM_FX.zoomTo=1.14;}else if(k.live&&!REDUCED)TS=0.5;/* a keeper needs time to react (owner, 13 Oct 2026: "too fast for me to react") */
     return new Promise(function(done){
       var t=0,phase="fly",after=0,k0={x:K.x,y:K.y},reacted=false,launched=false,landed=false,settled=false,landT=0,heldIt=false,loadT=0,fallV=0;
       var vx=f.vx,vy=f.vy,vz=f.vz,ox=0,oy=0.11,lastHit=0,released=false;
@@ -942,7 +942,7 @@ function playKick(k){
         t+=dt;
         if(k.live&&!decided&&(k.live.dive!=null||t>=f.T-0.04)){var dv=k.live.dive,o=judge(k.shot,dv==null?NaN:dv);
           /* he needs time to cross his goal: late is a goal, however right the guess */
-          if(o==="save"&&t+(col(dv)===1?0.12:0.26)>f.T)o="goal";
+          if(o==="save"&&t+(col(dv)===1?0.1:0.2)>f.T)o="goal";
           k.dive=dv;k.outcome=o;kStart=t;decide();}
         /* the keeper reads it a beat late, then commits along an arc */
         var kt=k.live?(decided?Math.max(0,Math.min(1,(t-kStart)/Math.max(0.1,(k.outcome==="save"?saveAt:f.T+0.15)-kStart))):0):
