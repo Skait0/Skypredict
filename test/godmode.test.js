@@ -147,3 +147,37 @@ test("every clipboard write on the site catches its refusal", () => {
     "the /x page copy button lets a refused copy go");
   assert.ok(pages.includes('function(){b.textContent="Select and copy";}'));
 });
+
+/* --------------------------------------------- one slip, leg by leg (Check) */
+
+test("every leg is named, scored and settled where a score settles it", () => {
+  const DET = require("../lib/slipdetail.js");
+  const ko = "2026-10-12T18:00:00Z";
+  const legs = [
+    /* Not on our board, but the results sweep has it: an Over 2.5 is settled, not "cannot grade". */
+    { home: "Lens", away: "Sporting Lisbon", kickoff: ko, prediction: "OVER_2.5", odds: 1.7 },
+    { home: "Arsenal", away: "Lille", kickoff: ko, prediction: "1X", odds: 1.2 },
+    { home: "Arsenal", away: "Lille", kickoff: ko, prediction: "CORNERS_OVER_9.5", odds: 1.8 },
+    { home: "Nowhere FC", away: "Ghost Utd", kickoff: ko, prediction: "OVER_1.5", odds: 1.3 },
+  ];
+  const results = [
+    { match_date: "2026-10-12", home: "Lens", away: "Sp Lisbon", hg: 2, ag: 1 },
+    { match_date: "2026-10-12", home: "Arsenal", away: "Lille", hg: 0, ag: 1, hc: 6, ac: 5 },
+  ];
+  const d = DET.detail(legs, results);
+  assert.strictEqual(d[0].verdict, "won");
+  assert.strictEqual(d[0].pick, "Over 2.5 goals");
+  assert.strictEqual(d[0].score, "2-1");
+  assert.strictEqual(d[1].verdict, "lost", "Arsenal or draw, 0-1 is an away win");
+  assert.strictEqual(d[2].verdict, null);
+  assert.match(d[2].why, /Corners were 11 \(6-5\)/);
+  assert.strictEqual(d[2].pick, "Corners over 9.5");
+  assert.strictEqual(d[3].verdict, null);
+  assert.match(d[3].why, /No final score/);
+});
+
+test("slipdetail is admin only and reads the slip back", async () => {
+  const w = await world();
+  assert.strictEqual((await w.call(get(w.plain, "slipdetail", { id: "41" }))).code, 403);
+  assert.strictEqual((await w.call(get(w.boss, "slipdetail", { id: "x" }))).code, 400);
+});

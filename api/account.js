@@ -14,7 +14,7 @@ const C = require("../lib/auth/crypto.js");
 const { report } = require("../lib/report.js");
 
 const REAUTH_MS = 10 * 60e3;
-const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup"];
+const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup", "slipdetail"];
 const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle"];
 
 function make(deps) {
@@ -23,7 +23,10 @@ function make(deps) {
   const env = deps.env || process.env;
   /* The booked-slip ledger (lib/slipwatch.js); a dep so tests need no database. */
   const slips = deps.slips || { hits: (n) => require("../lib/supabase.js").siteSlipHits(n),
-    settle: (id, to) => require("../lib/supabase.js").settleCheckSlip(id, to) };
+    settle: (id, to) => require("../lib/supabase.js").settleCheckSlip(id, to),
+    byId: (id) => require("../lib/supabase.js").siteSlipForCheck(id),
+    read: (book, code) => require("../lib/upstream.js").readSlip(book, code),
+    results: async (since) => (await require("../lib/supabase.js").recentResults(since)).rows || [] };
   /* The admin's switches and numbers; deps too, for the same reason. */
   const flags = deps.flags || require("../lib/flags.js");
   const admin = deps.admin || { stats: () => require("../lib/supabase.js").adminStats(),
@@ -55,6 +58,25 @@ function make(deps) {
           const hits = (got.rows || []).map((h) => (h.status === "landed" && WIN.rankOf(h.total_odds))
             ? Object.assign({}, h, { share: { img: WIN.imageUrl(SITE, h), x: WIN.caption(h, "x"), tg: WIN.caption(h, "tg") } }) : h);
           return H.sendJson(res, 200, { hits });
+        }
+        /* Every leg of one booked slip in words, with a score and a verdict where a
+           score settles it (lib/slipdetail.js). When the bookie no longer reads the
+           code back, the ledger's graded legs are all there is, and it says so. */
+        if (action === "slipdetail") {
+          const id = String((req.query || {}).id || "");
+          if (!/^\d{1,18}$/.test(id)) return H.sendJson(res, 400, { error: "bad_request" });
+          const row = await slips.byId(id);
+          if (!row) return H.sendJson(res, 404, { error: "no_slip" });
+          const legs = await slips.read(row.book, row.code);
+          const DET = require("../lib/slipdetail.js");
+          const since = new Date(Date.parse(row.created_at || "") - 2 * 864e5 || t - 14 * 864e5).toISOString().slice(0, 10);
+          const results = await slips.results(since);
+          if (legs) return H.sendJson(res, 200, { readBack: true, legs: DET.detail(legs, results) });
+          /* Fallback: the graded legs the ledger kept, with what it saw. */
+          const seen = row.seen || {};
+          return H.sendJson(res, 200, { readBack: false, untracked: row.untracked | 0,
+            legs: (row.legs || []).map((l, i) => ({ match: l.home + " v " + l.away, pick: l.name, odds: null,
+              verdict: seen[i] || null, score: null, why: seen[i] ? "" : "No result yet." })) });
         }
         /* A "check" slip settled by the owner after looking it up on the bookmaker. */
         if (action === "settle") {

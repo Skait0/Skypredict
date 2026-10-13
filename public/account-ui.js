@@ -186,6 +186,11 @@
   /* EVERY CODE BOOKED ON THE SITE THAT CAME HOME (owner, 12 Oct 2026; lib/slipwatch.js).
      "check" = every leg we could grade won, but some legs (corners, shots, first half)
      cannot be graded from a final score - shown so the owner can look, never as a hit. */
+  /* WHERE THE CODE CAME FROM (bookFetch's src). A converted code is the reader's own
+     picks rebooked on another bookie - not a slip we built - so it is named as such. */
+  var SRC_WORDS={convert:"Converted: the reader's own picks",board:"Built from our board",safer:"Made safer from our picks",
+    split:"Split from our picks",myslip:"My slip (our picks)"};
+  function srcWords(s){ return s?(SRC_WORDS[s]||"Built on the site ("+s+")"):"Source not recorded"; }
   var BOOK_NAME={sporty:"SportyBet",bet9ja:"Bet9ja",betking:"BetKing",betpawa:"Betpawa",onexbet:"1xBet"};
   function hitsHtml(list){
     if(!list.length) return "<div class='swa-set'><span class='swa-st'><small>No landed slips yet. They show up here within ten minutes of the last game ending.</small></span></div>";
@@ -200,6 +205,7 @@
       return "<div class='swa-set'><span class='swa-st'><b>"+esc(h.code)+" · "+esc(BOOK_NAME[h.book]||h.book)+
         (h.total_odds?" · <span class='swa-gold'>×"+esc(Number(h.total_odds).toLocaleString("en-US",{maximumFractionDigits:2}))+"</span>":"")+"</b>"+
         "<small>"+esc(games+" · "+when+(h.who?" · "+h.who:""))+"</small>"+
+        "<small>"+esc(srcWords(h.src))+"</small>"+
         (legs.length?"<small>"+esc(legs.slice(0,3).join(" · ")+(legs.length>3?" and "+(legs.length-3)+" more":""))+"</small>":"")+"</span>"+
         (h.status==="check"?"<button type='button' class='swa-pillbtn' data-chk='"+esc(String(h.id))+"' aria-expanded='false'>Check</button>":"")+
         (h.share?"<button type='button' class='swa-pillbtn' data-share='"+esc(JSON.stringify(h.share))+"'>Share</button>":"")+"</div>"+
@@ -209,15 +215,9 @@
      rest (corners, shots, first half) cannot be read off a final score. Tapping
      Check opens the legs; the owner looks the code up on the bookmaker and says
      which way it went (/api/account/settle). */
-  /* "OVER_1.5" -> "Over 1.5", "CORNERS_OVER_9.5" -> "Corners over 9.5"; short codes (1X, GG) stay as they are. */
-  function pickWords(p){ p=String(p||""); if(p.length<=3) return p;
-    p=p.replace(/_/g," ").toLowerCase(); return p.charAt(0).toUpperCase()+p.slice(1); }
   function checkHtml(h){
-    var legs=(h.legs||[]).map(function(l){ return "Won: "+esc(l.name); }).join("<br>");
-    var n=h.untracked|0;
-    return "<div class='swa-set swa-chkbox' data-chkbox='"+esc(String(h.id))+"' data-book='"+esc(h.book)+"' data-code='"+esc(h.code)+"' hidden><span class='swa-st'><small>"+(legs||"No legs we could grade.")+
-      (n?"<br>Plus "+n+" leg"+(n===1?"":"s")+" we cannot grade from the score (corners, shots or first half).":"")+
-      "</small><small data-full></small><small>Look the code up on "+esc(BOOK_NAME[h.book]||h.book)+" to be sure, then say how it went.</small></span>"+
+    return "<div class='swa-set swa-chkbox' data-chkbox='"+esc(String(h.id))+"' hidden><span class='swa-st'>"+
+      "<small data-full></small><small>Code "+esc(h.code)+" on "+esc(BOOK_NAME[h.book]||h.book)+". Check the legs marked Check there, then say how it went.</small></span>"+
       "<button type='button' class='swa-pillbtn' data-settle='landed'>It landed</button>"+
       "<button type='button' class='swa-pillbtn' data-settle='lost'>It lost</button></div>";
   }
@@ -266,6 +266,9 @@
     ".swa-tab[aria-selected='true']{background:var(--red-fill);border-color:transparent;color:#fff}.swa-tab:focus-visible{outline:2px solid var(--red);outline-offset:2px}"+
     ".swa-tab .swa-cnt{font-size:11px;font-weight:800;opacity:.85}.swa-tab .swa-cnt:empty{display:none}"+
     ".swa-panel[hidden],.swa-set[hidden]{display:none!important}.swa-panel>.swa-card+.swa-lbl{margin-top:18px}"+
+    ".swa-leg{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}.swa-leg>b{flex:0 0 46px;font-size:11px;text-transform:uppercase;letter-spacing:.04em}"+
+    ".swa-leg span{flex:1;min-width:0;color:var(--soft)}.swa-leg span b{color:var(--text);font-size:13px}.swa-leg i{font-style:normal;color:var(--faint)}"+
+    ".swa-won{color:var(--green-ink)}.swa-lost{color:var(--red-ink)}.swa-open{color:var(--amber)}"+
     ".swa-chkbox{flex-wrap:wrap;gap:8px}.swa-chkbox .swa-st{flex:1 1 100%}.swa-chkbox small{display:block;margin-top:6px}.swa-chkbox small b{display:block;color:var(--text);font-size:12.5px;margin-bottom:2px}.swa-set .swa-pillbtn+.swa-pillbtn{margin-left:6px}"+
     ".swa-h{font-size:13px;font-weight:700;color:var(--soft);margin:18px 2px 8px}.swa-h small{font-weight:600;color:var(--faint);margin-left:6px}"+
     ".swa-lbl{display:block;font-size:12px;font-weight:700;color:var(--faint);margin:0 0 5px}"+
@@ -489,19 +492,22 @@
       box.querySelectorAll("[data-chk]").forEach(function(b){ b.onclick=function(){
         var id=b.getAttribute("data-chk"), panel=box.querySelector("[data-chkbox='"+id+"']"); if(!panel) return;
         panel.hidden=!panel.hidden; b.setAttribute("aria-expanded",String(!panel.hidden));
-        /* THE WHOLE SLIP. The ledger keeps only the legs a score can grade, so the
-           rest are read back from the bookmaker (/api/slip). After the games the
-           bookmaker may have dropped them, and then the graded legs are all there is. */
+        /* EVERY LEG, IN WORDS (api/account.js slipdetail, lib/slipdetail.js): the pick,
+           the odds, the final score, and won / lost / what to check by hand. */
         var full=panel.querySelector("[data-full]");
         if(!panel.hidden&&full&&!full.getAttribute("data-done")){
-          full.setAttribute("data-done","1"); full.textContent="Reading the slip from the bookmaker...";
-          fetch("/api/slip?book="+encodeURIComponent(panel.getAttribute("data-book"))+"&code="+encodeURIComponent(panel.getAttribute("data-code")),
-            {headers:{Accept:"application/json"}}).then(function(r){ return r.json(); }).then(function(d){
-              var legs=d&&d.success&&Array.isArray(d.legs)?d.legs:[];
-              full.innerHTML=legs.length?"<b>The whole slip, "+legs.length+" games</b>"+legs.map(function(l){
-                return esc((l.home||"")+" v "+(l.away||"")+" · "+(l.market||l.label||pickWords(l.prediction))+(l.odds?" @ "+l.odds:"")); }).join("<br>")
-                :"The bookmaker no longer shows this slip, so only the graded legs above are known.";
-            }).catch(function(){ full.textContent="Could not read the slip from the bookmaker."; });
+          full.setAttribute("data-done","1"); full.textContent="Reading every leg...";
+          a.req("GET","/api/account/slipdetail?id="+encodeURIComponent(id),null,function(c3,d){
+            if(c3!==200||!d||!d.legs){ full.removeAttribute("data-done"); full.textContent="Could not read the slip. Tap Check again to retry."; return; }
+            var won=0,lost=0,open=0;
+            var rows=d.legs.map(function(l){
+              if(l.verdict==="won") won++; else if(l.verdict==="lost") lost++; else open++;
+              var mark=l.verdict==="won"?"<b class='swa-won'>Won</b>":l.verdict==="lost"?"<b class='swa-lost'>Lost</b>":"<b class='swa-open'>Check</b>";
+              return "<div class='swa-leg'>"+mark+"<span><b>"+esc(l.pick)+"</b>"+(l.odds?" @ "+esc(String(l.odds)):"")+
+                "<br>"+esc(l.match)+(l.score?" · "+esc(l.score):"")+(l.why?"<br><i>"+esc(l.why)+"</i>":"")+"</span></div>"; }).join("");
+            full.innerHTML="<b>"+d.legs.length+" legs: "+won+" won"+(lost?", "+lost+" lost":"")+(open?", "+open+" to check":"")+"</b>"+rows+
+              (d.readBack?"":"<i>The bookmaker no longer shows this code, so these are only the legs we graded"+(d.untracked?" ("+d.untracked+" more not shown)":"")+".</i>");
+          });
         }
         panel.querySelectorAll("[data-settle]").forEach(function(s){ s.onclick=function(){
           var to=s.getAttribute("data-settle");

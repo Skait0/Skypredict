@@ -175,3 +175,36 @@ test("only the admin can read the hits", async () => {
 test("the owner is pinged from x20 (owner, 12 Oct 2026)", () => {
   assert.strictEqual(W.PING_AT, 20);
 });
+
+/* --------------------------------------------- ours only (owner, 13 Oct 2026) */
+
+test("a reader's own code (converter) is never graded, new or already open", async () => {
+  const w = world({ rows: [
+    { id: 1, status: "new", book: "sporty", code: "CONV01", src: "convert" },
+    { id: 2, status: "open", book: "sporty", code: "CONV02", src: "editor", legs: [leg("A", "B", "Home win")], seen: {}, untracked: 0 },
+  ] });
+  await W.tick(w.deps);
+  assert.strictEqual(w.rows[0].status, "foreign");
+  assert.strictEqual(w.rows[1].status, "foreign");
+  assert.strictEqual(w.pings.length, 0);
+});
+
+test("a safer or split slip with a game off our board is foreign; a board slip is not tested", async () => {
+  const board = [{ home: "A", away: "B", date: "2026-10-12", kickoff: "2026-10-12T18:00:00Z" }];
+  const legs = async () => [{ eventId: "e1", prediction: "1", home: "A", away: "B", kickoff: "2026-10-12T18:00:00Z", odds: 2 },
+    { eventId: "e2", prediction: "OVER_1.5", home: "Zed", away: "Qux", kickoff: "2026-10-12T18:00:00Z", odds: 1.4 }];
+  const w = world({ rows: [
+    { id: 1, status: "new", book: "sporty", code: "SAFE01", src: "safer" },
+    { id: 2, status: "new", book: "sporty", code: "BRD001", src: "board" },
+  ], deps: { readCode: legs, fixtures: async () => board } });
+  await W.tick(w.deps);
+  assert.strictEqual(w.rows[0].status, "foreign");
+  assert.strictEqual(w.rows[1].status, "open");
+});
+
+test("the booking route never saves a reader's own code", () => {
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "api", "book.js"), "utf8");
+  assert.match(src, /isReaderSrc\(GATE\.srcOf\(req\)\)\) return;/);
+  const sb = require("fs").readFileSync(require("path").join(__dirname, "..", "lib", "supabase.js"), "utf8");
+  assert.match(sb, /src\.not\.in\.\(convert,editor,trim,change\)/, "old reader codes still reach the lists");
+});

@@ -44,19 +44,9 @@ async function sendPhoto(chatId, photo, caption) {
 
 const W = require("../lib/slipwatch.js");
 const WIN = require("../lib/winpost.js");
-const UPSTREAM = "https://web-production-798c0.up.railway.app";
 
-/* The same read-back api/tg.js uses for Follow my slip. */
-async function readCode(book, code) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 6000);
-  try {
-    const r = await fetch(UPSTREAM + "/api/slip?book=" + book + "&code=" + encodeURIComponent(code),
-      { signal: ctrl.signal, headers: { accept: "application/json" } });
-    const b = await r.json().catch(() => null);
-    return b && b.success && Array.isArray(b.legs) && b.legs.length ? b.legs : null;
-  } catch (e) { return null; } finally { clearTimeout(t); }
-}
+/* The same read-back api/tg.js uses for Follow my slip (lib/upstream.js). */
+const readCode = require("../lib/upstream.js").readSlip;
 
 function slipDeps() {
   const owner = String(process.env.SW_OWNER_TG_CHAT || "").trim();
