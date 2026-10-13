@@ -5670,6 +5670,10 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
   animation:coachLook 1.7s ease-in-out 3}
 @keyframes coachLook{0%,100%{outline-color:var(--red)}
   50%{outline-color:rgba(230,57,70,.35)}}
+/* A list row has about 4px between the teams line and the call, and the ring
+   reaches 7px out, so it ran through the fixture above. Reported 13 Oct 2026.
+   Pull the ring in and push the call down while the coach is up. */
+.lrow .coach-look{outline-offset:3px;margin-top:5px}
 @media(prefers-reduced-motion:reduce){.coach-look{animation:none}}
 @media(max-width:560px){
   .coach{margin:0 8px 8px;padding:9px 10px;gap:8px;flex-wrap:wrap}
