@@ -27,7 +27,11 @@ if (start < 0 || anchor < 0) throw new Error("could not locate matching code in 
 // which lives above the slice - lifted the same way, not rewritten.
 const cof = html.indexOf("function countryOf(l)");
 if (cof < 0) throw new Error("could not locate countryOf in index.html");
-const slice = html.slice(cof, html.indexOf("\n", cof)) + "\n" + html.slice(start, end);
+// ...and leagueTag, which drops youth/reserve/women's competitions first (13 Oct 2026).
+const ltg = html.indexOf("function leagueTag(s){");
+if (ltg < 0) throw new Error("could not locate leagueTag in index.html");
+const slice = html.slice(cof, html.indexOf("\n", cof)) + "\n" +
+  html.slice(ltg, html.indexOf("\n}\n", ltg) + 3) + html.slice(start, end);
 
 // Build a factory that closes over injected DATA + blendFixture stub and returns
 // the real functions. attachEventIds reads DATA.fixtures and calls blendFixture.

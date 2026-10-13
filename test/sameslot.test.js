@@ -140,7 +140,9 @@ test("the exact pass needs BOTH sides, which is what keeps Barcelona out", () =>
   const anchor = src.indexOf("return hits;", start);
   /* attachEventIds calls the page's countryOf, which sits above the slice. */
   const cof = src.indexOf("function countryOf(l)");
+  const ltg = src.indexOf("function leagueTag(s){");
   const slice = src.slice(cof, src.indexOf("\n", cof)) + "\n" +
+    src.slice(ltg, src.indexOf("\n}\n", ltg) + 3) +
     src.slice(start, src.indexOf("}", anchor) + 1);
   const DATA = { fixtures: [{ home: "Barcelona", away: "Vallecano",
                               date: "2026-08-31",

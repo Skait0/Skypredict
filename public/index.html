@@ -12460,7 +12460,16 @@ function refreshByoPanels(){
 function attachEventIds(sporty,B){
   B=B||BOOKS.sporty;
   if(!sporty||!sporty.length) return 0;
-  sporty=sporty.filter(function(m){ return !isSimEvent(m); });
+  /* NO YOUTH, RESERVE OR WOMEN'S COMPETITION (owner, 13 Oct 2026: "the wizard
+     picked uefa champions league under 19!!"). The Youth League plays the same
+     day as the Champions League, between the same clubs, and SportyBet names the
+     sides plainly ("Atletico Madrid v Manchester United FC", league
+     "International Youth UEFA Youth League"). Both names matched exactly, and an
+     exact match is let past the kick-off fence, so the senior fixture booked the
+     U19 game. Our board carries none of these competitions, so none of their
+     events can be ours; a club's own B or U23 side in a senior league ("Juventus
+     U23" in Serie C) has a plain league name and is untouched. */
+  sporty=sporty.filter(function(m){ return !isSimEvent(m) && !leagueTag(m.league); });
   try{ FEED[B.key]=sporty; }catch(e){}
   /* Verbose per-fixture match logging is opt-in: add ?debug=1 (or #debug) to the
      URL. Off by default so visitors get a clean console and we skip the

@@ -72,11 +72,11 @@ function grab(name) {
    function throws on the first comparison that uses it. */
 const NAMES = ["TEAM_ALIASES", "MATCH_WINDOW_MS", "normTeam", "normTeamRaw",
                "tokset", "teamMarkers", "sameVariant", "containsWords",
-               "simTeams", "evStart", "sameSlot", "tipCode"];
+               "simTeams", "evStart", "sameSlot", "tipCode", "leagueTag"];
 const M = new Function(
   NAMES.map(grab).join("\n") +
   "\nvar NT_CACHE=Object.create(null),NT_SIZE=0;const NT_MAX=20000;" +
-  "\nreturn {normTeam:normTeam,simTeams:simTeams,sameSlot:sameSlot,tipCode:tipCode};")();
+  "\nreturn {normTeam:normTeam,simTeams:simTeams,sameSlot:sameSlot,tipCode:tipCode,leagueTag:leagueTag};")();
 
 /* ------------------------------------------------------------------- data */
 
@@ -141,6 +141,10 @@ function srOf(ev) {
    match on both normalised names is allowed past the clock fence, and anything
    else needs the same slot and 0.6 a side. */
 function findEvent(f, list, sr) {
+  /* No youth, reserve or women's competition (13 Oct 2026): the Youth League
+     names its sides exactly like the senior clubs, and the exact-name pass below
+     has no clock fence. index.html attachEventIds drops the same events. */
+  list = (list || []).filter((m) => !M.leagueTag(m.league));
   /* BY SPORTRADAR ID FIRST (30 Sep 2026). BetKing sat out four daily codes in
      six days over one leg a day that failed a NAME match - "Club Villa
      Dalmine", national sides spelled their way - while the book listed the
