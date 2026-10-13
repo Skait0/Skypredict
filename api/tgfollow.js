@@ -55,6 +55,15 @@ function slipDeps() {
     openSlips: () => SB.openSiteSlips(),
     patch: (id, p) => SB.patchSiteSlip(id, p),
     readCode,
+    /* "Your slip landed" to the reader's phones. Overnight the line is held and
+       the 9am push shows it (api/push.js noteFor). */
+    userPing: async (userId, note) => {
+      const rows = await SB.pushSubsForUser(userId);
+      if (!rows.length || !(await SB.setPushNote(rows.map((r) => r.endpoint), note, new Date().toISOString()))) return false;
+      if (require("../lib/vapid.js").quietHours(Date.now())) return true;
+      const out = await require("../lib/pushsend.js").pushTo(rows);
+      return !!(out && out.sent);
+    },
     fixtures: async () => {
       const pay = await (await fetch(SITE + "/predictions.json")).json().catch(() => ({}));
       return (pay && pay.fixtures) || [];

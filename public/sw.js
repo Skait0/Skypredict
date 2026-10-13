@@ -9,7 +9,7 @@
  * exist. Static assets stay cache-first, since those are the ones worth having
  * instantly and they change under a new name when they change at all.
  */
-const VERSION = "sw-v14";
+const VERSION = "sw-v15";
 const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/wiz-logo.png"];
 
 /* THE KILL SWITCH. Set to true, deploy, and every installed worker deletes its
@@ -229,46 +229,35 @@ self.addEventListener("fetch", function (e) {
  *
  * The push carries NO PAYLOAD. That is deliberate: an encrypted payload needs
  * AES128-GCM at the sender and would have made this the first dependency in
- * the repo. The worker fetches the same 200-byte file the home page card reads
- * and writes the notification itself.
+ * the repo. The worker asks the site what to say and writes the notification
+ * itself: a duel line (/api/penalty?a=note), else this reader's own line or
+ * today's pick of the day (/api/push?a=note, 13 Oct 2026).
  *
  * If that fetch fails it still shows a line. userVisibleOnly is a promise to
  * the browser, and a push that shows nothing earns the "this site was updated
  * in the background" notice - which is worse than a plain message, and after a
  * few of them the browser stops delivering to us at all.
  */
-var PUSH_TITLE = "Today's booking code is up";
-
-function pushBody(d) {
-  var books = [];
-  if (d && d.codes) {
-    if (d.codes.sporty) books.push("SportyBet");
-    if (d.codes.bet9ja) books.push("Bet9ja");
-    if (d.codes.betking) books.push("BetKing");
-    /* betPawa was missing from this list for its whole first week, and 1xBet
-       joined 29 Sep 2026 - test/everybook.test.js now walks the page's BOOKS
-       against it, so the next book fails there instead of here. */
-    if (d.codes.betpawa) books.push("betPawa");
-    if (d.codes.onexbet) books.push("1xBet");
-  }
-  var n = d && d.n ? d.n : 0;
-  var games = n ? n + " game" + (n === 1 ? "" : "s") : "One slip";
-  return books.length ? games + " · " + books.join(", ") : games + ", free to load";
-}
+var PUSH_TITLE = "Today's picks are up";
 
 /* A PLAY PENALTY DUEL PING (9 Oct 2026). Same empty push; the line comes from
-   /api/penalty?a=note for THIS subscription, and only while it is fresh. No
-   subscription to ask about, no line, or any failure: the daily code below,
-   exactly as before. */
-function duelNote() {
+   /api/penalty?a=note for THIS subscription, and only while it is fresh. */
+function noteFrom(path) {
   var pm = self.registration && self.registration.pushManager;
   if (!pm || !pm.getSubscription) return Promise.resolve(null);
   return pm.getSubscription().then(function (sub) {
     if (!sub || !sub.endpoint) return null;
-    return fetch("/api/penalty?a=note&endpoint=" + encodeURIComponent(sub.endpoint))
+    return fetch(path + "&endpoint=" + encodeURIComponent(sub.endpoint))
       .then(function (r) { return r.ok ? r.json() : null; });
   }).catch(function () { return null; });
 }
+function duelNote() {
+  return noteFrom("/api/penalty?a=note");
+}
+function pushNote() {
+  return noteFrom("/api/push?a=note");
+}
+
 
 self.addEventListener("push", function (e) {
   e.waitUntil(duelNote().then(function (n) {
@@ -278,28 +267,21 @@ self.addEventListener("push", function (e) {
         data: { url: n.url || "/penalty", go: true },
       }).catch(function () { return self.registration.showNotification(n.title).catch(function () {}); });
     }
-    return fetch("/code-today.json?t=" + Date.now())
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .catch(function () { return null; })
-      .then(function (d) {
-        return self.registration.showNotification(PUSH_TITLE, {
-          body: d ? pushBody(d) : "Tap to see today's free code",
-          tag: "code-" + ((d && d.date) || "today"),
-          icon: "/icon-192.png",
-          badge: "/icon-192.png",
-          data: { url: "/booking-codes" },
-        }).catch(function () {
-          /* showNotification itself can reject - permission state, a
-             browser-specific TypeError on the options object, throttling.
-             That must not escape into waitUntil: a rejected push promise is a
-             silent-push strike, the exact thing userVisibleOnly promises will
-             not happen. Retry with the bare minimum - a plain title is more
-             likely to be accepted than the full options object - and if even
-             that rejects, swallow it. A shown notification beats a silent one,
-             and a silent failure beats a strike. */
-          return self.registration.showNotification(PUSH_TITLE).catch(function () {});
-        });
+    return pushNote().then(function (m) {
+      var t = (m && m.title) || PUSH_TITLE;
+      return self.registration.showNotification(t, {
+        body: (m && m.body) || "Tap to see today's free picks",
+        tag: "sw", renotify: true, icon: "/icon-192.png", badge: "/icon-192.png",
+        data: { url: (m && m.url) || "/", go: true },
+      }).catch(function () {
+        /* showNotification itself can reject - permission state, a
+           browser-specific TypeError on the options object, throttling.
+           That must not escape into waitUntil: a rejected push promise is a
+           silent-push strike. Retry with a bare title, and if even that
+           rejects, swallow it. */
+        return self.registration.showNotification(t).catch(function () {});
       });
+    });
   }));
 });
 
@@ -316,7 +298,7 @@ self.addEventListener("notificationclick", function (e) {
         if (d.go && list[i].navigate) return list[i].navigate(d.url).then(function (c) { return c && c.focus && c.focus(); });
         if (list[i].focus) return list[i].focus();
       }
-      return self.clients.openWindow((e.notification.data && e.notification.data.url) || "/booking-codes");
+      return self.clients.openWindow((e.notification.data && e.notification.data.url) || "/");
     })
   );
 });

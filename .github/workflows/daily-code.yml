@@ -135,42 +135,23 @@ jobs:
           done
           echo "minted=true" >> "$GITHUB_OUTPUT"
 
-      # Tell the readers who asked. Deliberately after the commit and never in
-      # front of it: the code is published either way, and a notification that
-      # did not go out costs one day's re-engagement.
-      #
-      # continue-on-error means this step can never fail the run. The script
-      # already exits 0 on every ordinary failure - no keys, quiet hours, a
-      # deploy that never landed - and exits 1 only when every single send
-      # failed, which is the keys being wrong. That one case is worth seeing,
-      # so it shows as a failed step in the run, annotated, with the job and
-      # the mint it follows still green.
-      #
-      # Gated on the commit step's own output, not bare success(): the commit
-      # step exits 0 on a day it commits nothing, and pushcode.js has no way to
-      # tell "freshly minted" from "still the newest entry from three days ago"
-      # - it always announces the newest one, on purpose, because the mint
-      # lands around midday UTC. Only the workflow knows whether today's run
-      # actually minted anything, so the gate lives here.
-      #
-      # The script waits for Vercel to actually serve the new code before it
-      # sends, so this step can sit here for several minutes on a slow build.
-      # 20 minutes, not 8: the deploy poll alone is 20 tries at 15s - five
-      # minutes - before a single push goes out, and each push now has its own
-      # 10s timeout. A step killed at 8 minutes is a send that half happened.
-      - name: Announce the code
+      # Wait for Vercel to serve the new code, so the link in the X posts below
+      # works when they go out. Reader pushes no longer ride this workflow: the
+      # 9am pick of the day is sent by Vercel cron (api/push.js?a=morning).
+      - name: Wait for the deploy
         if: steps.commit.outputs.minted == 'true'
         continue-on-error: true
-        timeout-minutes: 20
-        env:
-          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
-          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: node scripts/pushcode.js
+        timeout-minutes: 12
+        run: |
+          D=$(node -p 'Object.keys(require("./data/daily-codes.json")).sort().pop()')
+          for i in $(seq 1 40); do
+            curl -fs "https://www.soccerwizard.live/code-today.json?t=$i" | grep -q "\"date\":\"$D\"" && exit 0
+            sleep 15
+          done
+          echo "the site is not serving $D yet"
 
       # The day's posts for @SoccerWizardhq, queued in Buffer (free plan; X's
-      # own API charges per post). After the announcement on purpose: that step
+      # own API charges per post). After the wait on purpose: that step
       # waits for Vercel to serve the new code, so the link in the post works
       # when it goes out. Runs on a day with no new code too - yesterday's
       # result still wants posting. data/x-posts.json is the record that stops

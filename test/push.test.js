@@ -136,42 +136,7 @@ test("nobody is woken up at half past eleven", () => {
   assert.strictEqual(V.quietHours(Date.UTC(2026, 8, 20, 21, 0)), true, "22:00 Lagos exactly");
 });
 
-const S = require("../scripts/pushcode.js");
-
-test("the sender announces the newest code, not today's", () => {
-  /* mkcode runs at midday UTC, so for half the clock there is no entry dated
-     today. code-today.json follows the same rule and the two must agree, or
-     the notification names a day the site is not showing. */
-  const got = S.newestEntry({
-    "2026-09-19": { date: "2026-09-19", codes: { sporty: "A" }, legs: [1] },
-    "2026-09-20": { date: "2026-09-20", codes: { sporty: "B" }, legs: [1, 2] },
-  });
-  assert.strictEqual(got.date, "2026-09-20");
-  assert.strictEqual(S.newestEntry({}), null);
-  assert.strictEqual(
-    S.newestEntry({ "2026-09-20": { date: "2026-09-20", codes: {}, legs: [] } }), null,
-    "an entry with no bookmaker code is nothing to announce");
-});
-
-test("the sender waits for the deploy rather than pointing at yesterday", async () => {
-  /* The mint commits, Vercel builds, and a push sent immediately arrives
-     before the site serves the new code. The reader taps and lands on
-     yesterday's - which is exactly the complaint this feature exists to fix. */
-  let n = 0;
-  const fetchImpl = async () => ({
-    ok: true,
-    json: async () => ({ date: ++n < 3 ? "2026-09-19" : "2026-09-20" }),
-  });
-  const ok = await S.awaitDeploy("2026-09-20", { fetchImpl, tries: 5, waitMs: 0 });
-  assert.strictEqual(ok, true);
-  assert.strictEqual(n, 3, "it must keep asking until the date matches");
-});
-
-test("a deploy that never lands sends nothing at all", async () => {
-  const fetchImpl = async () => ({ ok: true, json: async () => ({ date: "2026-09-19" }) });
-  const ok = await S.awaitDeploy("2026-09-20", { fetchImpl, tries: 3, waitMs: 0 });
-  assert.strictEqual(ok, false);
-});
+const S = require("../lib/pushsend.js");
 
 test("a dead subscription is dropped, a busy push service is left alone", async () => {
   const seen = [];
@@ -188,7 +153,7 @@ test("a dead subscription is dropped, a busy push service is left alone", async 
     { fetchImpl, jwt: () => "tok", publicKey: "PUB" });
 
   assert.strictEqual(out.sent, 1);
-  assert.strictEqual(out.failed, 1, "429 is tomorrow's problem, not a dead row");
+  assert.strictEqual(out.failed, 1, "429 is the next push's problem, not a dead row");
   assert.deepStrictEqual(out.dead, ["https://fcm.googleapis.com/fcm/send/gone"]);
 
   /* The push itself: no body at all, which is the whole reason there is no
@@ -201,9 +166,6 @@ test("a dead subscription is dropped, a busy push service is left alone", async 
 });
 
 test("a push service that never answers costs a retry, not a subscriber", async () => {
-  /* Each push now aborts at 10s. An abort says the push service was slow, not
-     that the subscription is gone - dropping the row would unsubscribe a
-     reader who never asked to be, permanently, over one bad morning. */
   const fetchImpl = async () => {
     const e = new Error("The operation was aborted due to timeout");
     e.name = "TimeoutError";
@@ -211,74 +173,94 @@ test("a push service that never answers costs a retry, not a subscriber", async 
   };
   const out = await S.sendAll([{ endpoint: "https://fcm.googleapis.com/fcm/send/slow" }],
     { fetchImpl, jwt: () => "tok", publicKey: "PUB" });
-
   assert.strictEqual(out.failed, 1);
   assert.deepStrictEqual(out.dead, []);
   assert.strictEqual(out.sent, 0);
 });
 
-test("the daily run hands its dead subscriptions to dropPushSubs", async () => {
-  /* The wiring, not the pieces: sendAll collecting endpoints into out.dead is
-     worth nothing if main() never passes them on, and the branch that does is
-     one `if` deep in a function no other test enters. */
-  const fs = require("fs");
-  const realRead = fs.readFileSync;
-  const realFetch = globalThis.fetch;
-  const realNow = Date.now;
-  const realList = DB.listPushSubs;
-  const realDrop = DB.dropPushSubs;
+test("pushTo signs with the env keys and hands the dead rows to the drop", async () => {
   const keys = pair();
-
   let handed = null;
-  fs.readFileSync = () => JSON.stringify({
-    "2026-09-20": { date: "2026-09-20", codes: { sporty: "QZ5TFX" }, legs: [1] },
-  });
-  Date.now = () => Date.UTC(2026, 8, 20, 12, 0);      /* 13:00 Lagos: not quiet */
-  globalThis.fetch = async (url) => {
-    if (String(url).indexOf("code-today.json") >= 0) {
-      return { ok: true, json: async () => ({ date: "2026-09-20" }) };
-    }
-    return String(url).endsWith("gone") ? { ok: false, status: 410 } : { ok: true, status: 201 };
-  };
-  DB.listPushSubs = async () => ({ ok: true, rows: [
-    { endpoint: "https://fcm.googleapis.com/fcm/send/ok" },
-    { endpoint: "https://fcm.googleapis.com/fcm/send/gone" },
-  ] });
-  DB.dropPushSubs = async (list) => { handed = list; return { ok: true, dropped: list.length }; };
   process.env.VAPID_PRIVATE_KEY = keys.privateKeyB64;
   process.env.VAPID_PUBLIC_KEY = "PUB";
-
   try {
-    await S.main();
+    const out = await S.pushTo(
+      [{ endpoint: "https://fcm.googleapis.com/fcm/send/ok" }, { endpoint: "https://fcm.googleapis.com/fcm/send/gone" }],
+      { fetchImpl: async (url) => (url.endsWith("gone") ? { ok: false, status: 410 } : { ok: true, status: 201 }),
+        drop: async (list) => { handed = list; return { ok: true, dropped: list.length }; } });
+    assert.deepStrictEqual(out, { sent: 1, failed: 0, dropped: 1 });
+    assert.deepStrictEqual(handed, ["https://fcm.googleapis.com/fcm/send/gone"]);
   } finally {
-    fs.readFileSync = realRead;
-    globalThis.fetch = realFetch;
-    Date.now = realNow;
-    DB.listPushSubs = realList;
-    DB.dropPushSubs = realDrop;
     delete process.env.VAPID_PRIVATE_KEY;
     delete process.env.VAPID_PUBLIC_KEY;
   }
-
-  assert.deepStrictEqual(handed, ["https://fcm.googleapis.com/fcm/send/gone"],
-    "the 410 must reach the database, or tomorrow pushes to it again");
+  assert.strictEqual(await S.pushTo([{ endpoint: "https://fcm.googleapis.com/fcm/send/ok" }]), null,
+    "no keys, nothing sent");
 });
 
-test("a missing or broken codes file does not crash the sender", async () => {
-  /* The read/parse in main() is the one place a workflow could go red for
-     free after the code has already published. Break the read the same way
-     an absent or half-written file would, and assert the behaviour: no
-     rejection, no non-zero exit code - not a source string. */
-  const fs = require("fs");
-  const realRead = fs.readFileSync;
-  fs.readFileSync = () => { throw new Error("ENOENT: no such file or directory"); };
-  const before = process.exitCode;
-  process.exitCode = undefined;
+/* ------------------------------------------------ what the push says */
+
+const PR = require("../api/push.js");
+const BOARD = {
+  potd: { home: "Arsenal", away: "Chelsea", date: "2026-10-12" },
+  potdNext: { home: "Stuttgart II", away: "Hoffenheim II", date: "2026-10-13" },
+  fixtures: [
+    { home: "Arsenal", away: "Chelsea", date: "2026-10-12", tip: "Home Win", ko: "17:30" },
+    { home: "Stuttgart II", away: "Hoffenheim II", date: "2026-10-13", tip: "Over 1.5", ko: "17:00" },
+  ],
+};
+
+test("the 9am push names today's pick, even when the board was built yesterday", () => {
+  const nine = Date.UTC(2026, 9, 13, 8, 0);       /* 09:00 Lagos */
+  const n = PR.potdNote(nine, BOARD);
+  assert.match(n.title, /Pick of the day/);
+  assert.strictEqual(n.body, "Stuttgart II vs Hoffenheim II · Over 1.5 · 17:00");
+  assert.doesNotMatch(n.body, /%/, "no win-chance numbers in reader copy");
+  assert.strictEqual(n.url, "/");
+});
+
+test("no pick for today still says something", () => {
+  const n = PR.potdNote(Date.UTC(2026, 9, 20, 8, 0), BOARD);
+  assert.ok(n.title && n.body, "a push that shows nothing is a strike against us");
+});
+
+function res() {
+  const r = { code: 0, body: null };
+  r.status = (c) => { r.code = c; return r; };
+  r.setHeader = () => {};
+  r.json = (o) => { r.body = o; return r; };
+  return r;
+}
+
+test("the worker's note: the reader's own line once, then the pick", async () => {
+  const real = DB.takePushNote;
+  let held = { note: { title: "Your slip landed! 🔥🧙", body: "X", url: "/" }, note_at: new Date().toISOString() };
+  DB.takePushNote = async () => { const r = held; held = null; return r; };
   try {
-    await assert.doesNotReject(() => S.main());
-    assert.notStrictEqual(process.exitCode, 1);
-  } finally {
-    fs.readFileSync = realRead;
-    process.exitCode = before;
-  }
+    const ep = "https://fcm.googleapis.com/fcm/send/abc";
+    const a = res(); await PR({ method: "GET", query: { a: "note", endpoint: ep } }, a);
+    assert.strictEqual(a.body.title, "Your slip landed! 🔥🧙");
+    const b = res(); await PR({ method: "GET", query: { a: "note", endpoint: ep } }, b);
+    assert.ok(b.body.title && b.body.title !== a.body.title, "read once, then the pick of the day");
+    const c = res(); await PR({ method: "GET", query: { a: "note", endpoint: "https://evil.example/x" } }, c);
+    assert.deepStrictEqual(c.body, {}, "a stranger's URL is never looked up");
+  } finally { DB.takePushNote = real; }
+});
+
+test("only the cron can send the morning push", async () => {
+  const before = process.env.CRON_SECRET;
+  process.env.CRON_SECRET = "s3cret";
+  try {
+    const r = res();
+    await PR({ method: "GET", query: { a: "morning" }, headers: { authorization: "Bearer nope" } }, r);
+    assert.strictEqual(r.code, 401);
+  } finally { if (before === undefined) delete process.env.CRON_SECRET; else process.env.CRON_SECRET = before; }
+});
+
+test("Vercel cron sends the morning push at 09:02 Lagos", () => {
+  const v = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "..", "vercel.json"), "utf8"));
+  const c = v.crons.find((x) => x.path === "/api/push?a=morning");
+  assert.ok(c, "no cron for the morning push");
+  assert.strictEqual(c.schedule, "2 8 * * *", "08:02 UTC is 09:02 in Lagos");
+  assert.strictEqual(v.functions["api/push.js"].includeFiles, "public/predictions.json");
 });

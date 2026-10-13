@@ -256,7 +256,9 @@
         "<div class='swa-seg'><button type='button' data-theme=\"dark\" aria-pressed=\""+(o.theme!=="light")+"\">Dark</button><button type='button' data-theme=\"light\" aria-pressed=\""+(o.theme==="light")+"\">Light</button></div></div></div>"+
       "<p class='swa-h'>Booking</p><div class='swa-card'><div class='swa-set swa-set0'><span class='swa-st'><b>Default bookmaker</b><small>Codes open here first</small></span></div><div class='swa-books'>"+books+"</div></div>"+
       "<p class='swa-h'>Notifications</p><div class='swa-card'><div class='swa-set'><span class='swa-st'><b>Picks by email</b><small>The day's picks, each morning</small></span>"+
-        "<button class='swa-sw' id='swaMail' type='button' role=\"switch\" aria-checked=\""+(!!o.mail)+"\" aria-label='Picks by email'></button></div></div>"+
+        "<button class='swa-sw' id='swaMail' type='button' role=\"switch\" aria-checked=\""+(!!o.mail)+"\" aria-label='Picks by email'></button></div>"+
+        "<div class='swa-set'><span class='swa-st'><b>Phone notifications</b><small>Pick of the day at 9am, and when your slip lands</small></span>"+
+        "<button class='swa-sw' id='swaPush' type='button' role=\"switch\" aria-checked=\"false\" aria-label='Phone notifications'></button></div></div>"+
       "<p class='swa-h'>Account</p><div class='swa-card'><button class='swa-set swa-link' id='swaDevs' type='button'><span class='swa-st'><b>Signed-in devices</b><small>"+devWords(o.devices)+"</small></span>"+CHEV+"</button></div>"+
       "<button class='swa-outbtn' id='swaOut' type='button'>Sign out</button>"+
       "<div class='swa-fine'><button class='swa-del' id='swaDel' type='button'>Delete account</button></div>"+
@@ -412,6 +414,40 @@
       });
     });
   }
+  /* Phone notifications (13 Oct 2026): the same /api/push subscription the codes
+     page makes. Signed in, so the POST links it to this account for "your slip
+     landed"; an existing subscription is re-sent on open to link it too. */
+  function pushSwitch(b,say){
+    var n=root.navigator, reg=null, key=null;
+    function on(x){ b.setAttribute("aria-checked",x?"true":"false"); }
+    function u8(s){ var p=s.replace(/-/g,"+").replace(/_/g,"/"), r=atob(p+"=".repeat((4-p.length%4)%4)), o=new Uint8Array(r.length);
+      for(var i=0;i<r.length;i++) o[i]=r.charCodeAt(i); return o; }
+    function post(s){ var j=s.toJSON(); return fetch("/api/push",{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({endpoint:j.endpoint,keys:j.keys})}).then(function(r){ return r.ok; }); }
+    var sm=b.parentNode.querySelector("small");
+    if(!("PushManager" in root)||!n.serviceWorker||!("Notification" in root)){ b.disabled=true; sm.textContent="Add Soccerwizard to your Home Screen to turn this on"; return; }
+    if(Notification.permission==="denied"){ b.disabled=true; sm.textContent="Blocked in your browser settings"; return; }
+    fetch("/api/penalty?a=pushkey").then(function(r){ return r.json(); }).then(function(j){ key=j&&j.key; }).catch(function(){});
+    n.serviceWorker.getRegistration().then(function(r){ return r||n.serviceWorker.register("/sw.js"); }).then(function(r){
+      reg=r; return r.pushManager.getSubscription(); }).then(function(s){ if(s){ on(true); post(s).catch(function(){}); } }).catch(function(){});
+    b.onclick=function(){
+      if(b.getAttribute("aria-checked")!=="true"){
+        /* Permission first: it needs the tap's user activation, which an await spends. */
+        Notification.requestPermission().then(function(p){
+          if(p!=="granted") return say("Notifications are blocked for this site.");
+          if(!reg||!key) return say("Not ready yet. Try again in a moment.");
+          return reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(key)}).then(post).then(function(ok){
+            on(ok); say(ok?"Notifications on 🔥":"Something went wrong. Try again."); });
+        }).catch(function(){ say("Something went wrong. Try again."); });
+        return;
+      }
+      reg.pushManager.getSubscription().then(function(s){
+        if(!s) return;
+        var ep=s.endpoint;
+        return s.unsubscribe().then(function(){ return fetch("/api/push",{method:"DELETE",headers:{"content-type":"application/json"},body:JSON.stringify({endpoint:ep})}); });
+      }).then(function(){ on(false); say(""); }).catch(function(){ say("Something went wrong. Try again."); });
+    };
+  }
   function settings(){
     close();
     var a=acct();
@@ -432,6 +468,7 @@
     mail.onclick=function(){ var on=mail.getAttribute("aria-checked")!=="true"; mail.disabled=true;
       a.req("POST","/api/account/consent",{on:on},function(code,j){ mail.disabled=false;
         if(code===200) mail.setAttribute("aria-checked",j.on?"true":"false"); else fail(code,j); }); };
+    pushSwitch(v.querySelector("#swaPush"),say);
     a.req("GET","/api/auth/devices",null,function(code,j){
       var sm=v.querySelector("#swaDevs small"); if(code===200&&j.devices&&sm) sm.textContent=devWords(j.devices.length); });
     v.querySelector("#swaDevs").onclick=function(){ devices(); };

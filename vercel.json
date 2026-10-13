@@ -56,8 +56,9 @@
       "memory": 256
     },
     "api/push.js": {
-      "maxDuration": 10,
-      "memory": 256
+      "maxDuration": 60,
+      "memory": 256,
+      "includeFiles": "public/predictions.json"
     },
     "api/tg.js": {
       "maxDuration": 60,
@@ -104,6 +105,10 @@
     {
       "path": "/api/social",
       "schedule": "5 * * * *"
+    },
+    {
+      "path": "/api/push?a=morning",
+      "schedule": "2 8 * * *"
     }
   ],
   "headers": [

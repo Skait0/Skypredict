@@ -97,7 +97,7 @@ test("the converter, the bot and the daily code know the fifth book", () => {
   assert.match(read("lib/bigodds.js"), /\["onexbet", "1xBet"\]/);
   assert.match(read("scripts/mkcode.js"), /codes\.onexbet = /);
   assert.match(read("scripts/namesaudit.js"), /onexbet: "\/api\/onexbet"/);
-  assert.match(read("scripts/pushcode.js"), /c\.onexbet/);
+  assert.match(read("lib/slipwatch.js"), /onexbet: "1xBet"/);
   assert.ok(convert);
 });
 

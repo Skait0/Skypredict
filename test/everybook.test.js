@@ -60,16 +60,12 @@ test("the share API keeps the book it was told", () => {
   for (const k of KEYS) assert.strictEqual(S.bookOf(k), k);
 });
 
-test("the push notification names every book in the day's code", () => {
-  const sw = read("public/sw.js");
-  const i = sw.indexOf("function pushBody");
-  let d = 0, j = sw.indexOf("{", i);
-  for (; j < sw.length; j++) { if (sw[j] === "{") d++; else if (sw[j] === "}" && !--d) break; }
-  const pushBody = new Function(sw.slice(i, j + 1) + "\nreturn pushBody;")();
-  const codes = {};
-  for (const k of KEYS) codes[k] = "C" + k;
-  const out = pushBody({ n: 5, codes });
-  for (const k of KEYS) assert.match(out, new RegExp(LABEL[k]), k + " missing from the push text");
+test("the slip-landed push names every book", () => {
+  const W = require("../lib/slipwatch.js");
+  for (const k of KEYS) {
+    const n = W.userNote({ code: "C1", book: k, total_odds: 3, legs: [1, 2] });
+    assert.match(n.body, new RegExp(LABEL[k]), k + " missing from the push text");
+  }
 });
 
 test("the share-card image says which book's code it carries", () => {

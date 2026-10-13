@@ -425,20 +425,17 @@ function firePush(on) {
   return held || Promise.resolve();
 }
 
-test("a push becomes a notification naming the day's code", async () => {
-  const w = loadPush({ net: () => Promise.resolve(Object.assign(
-    new Res(null), { ok: true, json: () => Promise.resolve({
-      date: "2026-09-20", n: 5, codes: { sporty: "QZ5TFX", bet9ja: "5SCZZ2W" } }) })) });
+test("a push shows the line the site gives this subscription (13 Oct 2026)", async () => {
+  const w = loadPush({ net: (rq) => Promise.resolve(Object.assign(new Res(null), { ok: true,
+    json: () => Promise.resolve(/api\/push\?a=note/.test(rq.url || rq)
+      ? { title: "Pick of the day 🧙🔥", body: "Arsenal vs Chelsea · Over 1.5", url: "/" } : {}) })) });
+  w.self.registration.pushManager = { getSubscription: () => Promise.resolve({ endpoint: "https://fcm.googleapis.com/x" }) };
   await firePush(w.on);
   assert.strictEqual(w.state.shown.length, 1);
   const { title, o } = w.state.shown[0];
-  assert.match(title, /code/i);
-  assert.match(o.body, /5 games/);
-  assert.match(o.body, /SportyBet/);
-  assert.doesNotMatch(o.body, /BetKing/, "it must only name books that have a code");
-  /* A resend collapses onto the same notification rather than stacking. */
-  assert.strictEqual(o.tag, "code-2026-09-20");
-  assert.notStrictEqual(o.renotify, true);
+  assert.strictEqual(title, "Pick of the day 🧙🔥");
+  assert.strictEqual(o.body, "Arsenal vs Chelsea · Over 1.5");
+  assert.strictEqual(o.data.url, "/");
 });
 
 test("a push whose fetch fails still shows something", async () => {
@@ -473,14 +470,14 @@ test("a rejecting showNotification must not reject the push's waitUntil", async 
   await assert.doesNotReject(() => firePush(w.on));
 });
 
-test("with no tab open it opens the codes page", async () => {
+test("with no tab open it opens the home page", async () => {
   const w = loadPush();
   w.state.windows = [];
   w.self.clients.openWindow = (u) => { w.state.navigated.push(u); return Promise.resolve(); };
   let held = null;
   w.on.notificationclick({ notification: { close: () => {} }, waitUntil: (p) => { held = p; } });
   await held;
-  assert.deepStrictEqual(w.state.navigated, ["/booking-codes"]);
+  assert.deepStrictEqual(w.state.navigated, ["/"]);
 });
 
 test("a duel ping shows that duel's line and taps through to it (9 Oct 2026)", async () => {
@@ -498,10 +495,10 @@ test("a duel ping shows that duel's line and taps through to it (9 Oct 2026)", a
   assert.deepStrictEqual(went, ["/penalty?d=ABC234"]);
 });
 
-test("no duel line: the push is the daily code, as before", async () => {
+test("no duel line: the push shows the reader's own line or the pick", async () => {
   const w = loadPush({ net: (rq) => Promise.resolve(Object.assign(new Res(null), { ok: true,
-    json: () => Promise.resolve(/a=note/.test(rq.url || rq) ? {} : { date: "2026-10-09", n: 3, codes: { sporty: "AB12CD" } }) })) });
+    json: () => Promise.resolve(/api\/push\?a=note/.test(rq.url || rq) ? { title: "Your slip landed! 🔥🧙", body: "AB12CD on SportyBet", url: "/" } : {}) })) });
   w.self.registration.pushManager = { getSubscription: () => Promise.resolve({ endpoint: "https://fcm.googleapis.com/x" }) };
   await firePush(w.on);
-  assert.match(w.state.shown[0].title, /code/i);
+  assert.strictEqual(w.state.shown[0].title, "Your slip landed! 🔥🧙");
 });

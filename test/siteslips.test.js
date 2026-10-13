@@ -155,6 +155,32 @@ test("no owner chat configured: hits still land, nothing is sent", async () => {
   assert.strictEqual(s.status, "landed");
 });
 
+test("the signed-in reader is pushed once when every game on their slip lands", async () => {
+  const U = "0b8f3c1e-1111-4222-8333-944455556666";
+  const mine = { id: 1, status: "open", book: "sporty", code: "MINE01", subject: "u:" + U, total_odds: 3.1, legs: [leg("A", "B", "Home win")], seen: {}, untracked: 0 };
+  const anon = { id: 2, status: "open", book: "sporty", code: "ANON01", subject: "d:abc", total_odds: 3.1, legs: [leg("A", "B", "Home win")], seen: {}, untracked: 0 };
+  const lost = { id: 3, status: "open", book: "sporty", code: "LOST01", subject: "u:" + U, total_odds: 3.1, legs: [leg("C", "D", "Home win")], seen: {}, untracked: 0 };
+  const half = { id: 4, status: "open", book: "sporty", code: "HALF01", subject: "u:" + U, total_odds: 3.1,
+    legs: [leg("A", "B", "Home win"), leg("E", "F", "Home win")], seen: {}, untracked: 0 };
+  const sent = [];
+  const w = world({ rows: [mine, anon, lost, half], deps: {
+    results: async () => [R("A", "B", 1, 0), R("C", "D", 0, 2)],
+    userPing: async (uid, note) => { sent.push([uid, note]); return true; } } });
+  await W.tick(w.deps);
+  assert.strictEqual(sent.length, 1, "only the landed slip of a signed-in reader; not lost, not half in, not anonymous");
+  assert.strictEqual(sent[0][0], U);
+  assert.match(sent[0][1].body, /MINE01 on SportyBet/);
+  await W.tick(w.deps);
+  assert.strictEqual(sent.length, 1, "never twice");
+});
+
+test("a push that throws never undoes the grade", async () => {
+  const s = { id: 1, status: "open", book: "sporty", code: "MINE02", subject: "u:0b8f3c1e-1111-4222-8333-944455556666", total_odds: 2, legs: [leg("A", "B", "Home win")], seen: {}, untracked: 0 };
+  const w = world({ rows: [s], deps: { results: async () => [R("A", "B", 1, 0)], userPing: async () => { throw new Error("down"); } } });
+  await W.tick(w.deps);
+  assert.strictEqual(s.status, "landed");
+});
+
 /* ------------------------------------------------------------ the admin list */
 
 test("only the admin can read the hits", async () => {
