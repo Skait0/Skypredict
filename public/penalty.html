@@ -185,6 +185,14 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #spellbox.full span{text-shadow:0 0 8px var(--gold)}#spellbox.full b{box-shadow:0 0 10px var(--gold);animation:pw-castpulse 1.4s ease-out infinite}
 #app.legend #shooter{filter:drop-shadow(0 0 8px #F2B84B) drop-shadow(0 0 20px #F2B84Baa)}
 #app.legend #keeper{filter:grayscale(.75) brightness(.85) drop-shadow(0 0 8px #8fd8ff)}
+/* PERFECT STRIKE: a gold ring closes on the ball while your finger is down; flick as
+   it closes (owner, 13 Oct 2026 - Score! Hero's timed finish, one gesture still) */
+#ring{position:absolute;left:0;top:0;width:54px;height:54px;margin:-27px 0 0 -27px;border:3px solid var(--gold);border-radius:50%;opacity:0;pointer-events:none;z-index:6}
+#ring.on{animation:pw-close .5s linear forwards}#ring.hit{border-color:var(--green);opacity:1;animation:none;transform:scale(1.25);transition:transform .15s,opacity .3s}
+@keyframes pw-close{0%{opacity:.5;transform:scale(2.4)}100%{opacity:1;transform:scale(1)}}
+/* LITE: a phone that cannot hold 40fps loses the decoration, never the game */
+.lite .beam,.lite .crowd i,.lite .grass:before{display:none}.lite #crowdc{animation:none!important}
+#fps{position:absolute;left:4px;bottom:4px;z-index:20;font:700 11px monospace;color:#2FD48A;pointer-events:none}
 #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:8}
 /* bottom sheet (menus, results) */
 #sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:14px 16px calc(14px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .45s cubic-bezier(.2,.9,.25,1);z-index:9;max-height:calc(100% - 132px - env(safe-area-inset-top));overflow:auto;touch-action:pan-y;overscroll-behavior:contain;box-shadow:0 -20px 50px #000a}
@@ -328,7 +336,7 @@ input.name{width:100%;height:50px;border-radius:8px;border:1px solid var(--line)
   <div id="wind" hidden>CALM</div>
   <div id="spellbox" hidden><span>LEGENDARY</span><b><i></i></b></div>
   <button id="cast" type="button" hidden aria-label="Legendary shot"><svg class="arcs" viewBox="0 0 88 88" aria-hidden="true" fill="none" stroke="#FFE6A6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M44 3l-3 5 4 2-3 5"/><path d="M82 52l-5-1-1 4-5-2"/><path d="M12 70l4-3-3-3 5-3"/></svg><svg class="bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 5 13.5h5.5L9.5 22 19 9.5h-5.6z" fill="currentColor"/></svg><i class="wave"></i></button>
-  <button id="snd" type="button"></button>
+  <div id="ring"></div><button id="snd" type="button"></button>
   <button id="pause" type="button" aria-label="Pause"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1" fill="currentColor"/><rect x="9.5" y="2" width="3.5" height="12" rx="1" fill="currentColor"/></svg></button>
   <div id="hud"><div class="sboard"><div class="srow" id="rowA"><i class="av" id="avA"></i><span class="who" id="whoA">YOU</span><span class="kicks" id="kA"></span><b id="scA">0</b></div><div class="srow" id="rowB"><i class="av" id="avB"></i><span class="who" id="whoB">CPU</span><span class="kicks" id="kB"></span><b id="scB">0</b></div></div></div>
   <div id="tag"></div><div id="combo"></div>
@@ -483,7 +491,7 @@ function line(svg,a,b,st,w,op){return svgEl("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y,
 /* THE STAND, drawn once per size: tiered rows of fans (heads and shoulders in
    kit colours), smaller up the stand, lit from the floodlights, fading into the
    dark at the top. It was a pattern before and read as empty (owner). */
-function drawCrowd(w,h){var c=$("crowdc"),dpr=Math.min(2,window.devicePixelRatio||1);c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
+function drawCrowd(w,h){var c=$("crowdc"),dpr=Math.min(1.5,window.devicePixelRatio||1);c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
   var g=c.getContext("2d");g.scale(dpr,dpr);g.clearRect(0,0,w,h);
   var cols=["#c8102e","#a3222d","#e8e8ec","#2a2c35","#7a1f28","#f2f2f4","#1d2433","#e63946","#3b3e48","#b51d2b"];
   for(var y=h,row=0;y>-10;row++){var sc=Math.max(0.35,1-row*0.06),hh=14*sc,gap=11*sc;
@@ -548,6 +556,7 @@ var B={x:0,y:0.11,z:0,rot:0,vis:1,alpha:1,fly:false};                      // ba
 /* the art version: bump when sprites are replaced, so no browser keeps the old ones */
 var SPV="13";
 function setImg(el,f){if(el.getAttribute("data-f")!==f){el.setAttribute("data-f",f);el.src="/penalty/"+f+"?v="+SPV;}}
+var BPV=null;
 function place(){
   var k=$("keeper"),kp=P(K.x,K.y,GOAL.z),kh=KH[file(K.img)]*kp.s,kim=IMG[file(K.img)],ar=kim&&kim.naturalWidth?kim.naturalWidth/kim.naturalHeight:1;
   setImg(k,file(K.img));k.style.height=kh+"px";k.style.width=kh*ar+"px";
@@ -565,7 +574,8 @@ function place(){
      real ball's radius): lifted the 0.04m difference so it sits ON the grass */
   var bp=P(B.x,B.y+0.04,B.z),bd=Math.max(7,0.3*bp.s),b=$("ball");
   b.style.width=b.style.height=bd+"px";b.style.opacity=B.vis?B.alpha:0;b.style.filter=B.fly?"saturate(.12) brightness(1.06)":"none";
-  b.style.transform="translate("+(bp.x-bd/2)+"px,"+(bp.y-bd/2)+"px) rotate("+B.rot+"deg)";
+  var sv=B.fly&&BPV?Math.hypot(bp.x-BPV.x,bp.y-BPV.y):0,st=1+Math.min(0.45,sv/60),sa=sv?Math.atan2(bp.y-BPV.y,bp.x-BPV.x)*57.3:0;BPV={x:bp.x,y:bp.y};
+  b.style.transform="translate("+(bp.x-bd/2)+"px,"+(bp.y-bd/2)+"px) rotate("+sa+"deg) scale("+st+","+(1/st)+") rotate("+(B.rot-sa)+"deg)";
   var gp=P(B.x,0,B.z),sw=bd*1.5,sd=$("shadow");sd.style.width=sw+"px";sd.style.height=sw*0.35+"px";
   sd.style.opacity=B.vis?Math.max(0,0.55-B.y*0.12)*B.alpha:0;sd.style.transform="translate("+(gp.x-sw/2)+"px,"+(gp.y-sw*0.17)+"px)";
   var w=$("world");w.style.transformOrigin=CAM.cx+"px "+(P(0,1,GOAL.z).y+P(0,0,0).y)/2+"px";
@@ -574,7 +584,7 @@ function place(){
 
 /* A dive leaves fading copies of the keeper along his path for a few frames. */
 var KTRAIL=false,KHIST=[];
-function afterimage(on){KTRAIL=!!on&&!REDUCED;KHIST=[];if(!KTRAIL)for(var i=0;i<3;i++){var g=document.getElementById("kg"+i);if(g)g.style.opacity=0;}}
+function afterimage(on){KTRAIL=!!on&&!REDUCED&&!LITE;KHIST=[];if(!KTRAIL)for(var i=0;i<3;i++){var g=document.getElementById("kg"+i);if(g)g.style.opacity=0;}}
 /* A puff of turf where a diving keeper hits the ground. */
 function dust(x){if(REDUCED)return;var d=$("dust"),p=P(x,0,GOAL.z),w=1.6*p.s,t0=performance.now();d.style.width=w+"px";d.style.height=w*0.35+"px";
   every(function(){var u=(performance.now()-t0)/520;if(u>=1){d.style.opacity=0;return false;}
@@ -586,8 +596,11 @@ function dust(x){if(REDUCED)return;var d=$("dust"),p=P(x,0,GOAL.z),w=1.6*p.s,t0=
 var CAM_FX={sx:0,sy:0,zoom:1,zoomTo:1,shake:0};
 var TS=1,SLOWNEXT=false,hitStop=0,jobs=[],last=performance.now();
 function every(fn){jobs.push(fn);}
+var FR=1/60,FN=0,LITE=false,FPS=/[?&]fps/.test(location.search);
 function tick(now){
-  var real=Math.min(0.05,(now-last)/1000);last=now;
+  var real=Math.min(0.05,(now-last)/1000);last=now;if(real<0.05){FR=FR*0.95+real*0.05;FN++;}/* a stalled or hidden tab is not a slow phone */
+  if(!LITE&&FN>120&&FR>0.025){LITE=true;$("app").classList.add("lite");}
+  if(FPS&&FN%30===0){var fe=$("fps")||$("app").appendChild(Object.assign(document.createElement("div"),{id:"fps"}));fe.textContent=Math.round(1/FR)+" fps"+(LITE?" lite":"");}
   var dt=hitStop>0?0:real*TS;hitStop=Math.max(0,hitStop-real);
   /* jobs started by a job (an impact starting a burst) join after this frame */
   var cur=jobs;jobs=[];cur=cur.filter(function(f){return f(dt,real)!==false;});jobs=cur.concat(jobs);
@@ -775,12 +788,19 @@ function coach(key,text,ghost){
   setTimeout(function(){app.addEventListener("pointerdown",off,true);},300);
 }
 /* ---------------------------------------------------------------- input */
+/* The dive: swipe the way you go (up = high, flat = low, straight up the middle =
+   jump), or tap a spot in the goal. Same gesture as shooting (owner, 13 Oct 2026). */
 function tapSpot(){return new Promise(function(done){
-  var z=$("zones");z.classList.add("on");
-  function on(e){e.preventDefault();e.stopPropagation();var s=+e.currentTarget.getAttribute("data-s");
-    z.querySelectorAll("button").forEach(function(x){x.removeEventListener("pointerdown",on);});z.classList.remove("on");fx.buzz(8);done(s);}
+  var z=$("zones"),app=$("app"),p0=null,over=false;z.classList.add("on");
+  function end(s){if(over)return;over=true;z.querySelectorAll("button").forEach(function(x){x.removeEventListener("pointerdown",on);});
+    app.removeEventListener("pointerdown",dn);app.removeEventListener("pointerup",up);z.classList.remove("on");fx.buzz(8);done(s);}
+  function on(e){e.preventDefault();e.stopPropagation();end(+e.currentTarget.getAttribute("data-s"));}
+  function dn(e){if(e.target.closest("#sheet,button,a"))return;p0={x:e.clientX,y:e.clientY};}
+  function up(e){if(!p0)return;var s=diveOf(e.clientX-p0.x,p0.y-e.clientY);p0=null;if(s!=null)end(s);}
   z.querySelectorAll("button").forEach(function(x){x.addEventListener("pointerdown",on);});
+  app.addEventListener("pointerdown",dn);app.addEventListener("pointerup",up);
 });}
+function diveOf(dx,dy){var l=Math.hypot(dx,dy);if(l<25)return null;var c=Math.abs(dx)<0.4*l?1:dx<0?0:2;return c+((c===1?dy>0:dy>Math.abs(dx)*0.6)?3:0);}
 function hint(t,up){var h=$("hint");h.textContent="";if(t){if(up){var i=document.createElement("i");i.innerHTML='<svg width="18" height="11" viewBox="0 0 18 11" aria-hidden="true"><path d="M2 9l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';h.appendChild(i);}h.appendChild(document.createTextNode(t));h.classList.add("on");}else h.classList.remove("on");}
 /* AIM, THEN FLICK. The tap chooses the spot. The bar sweeps 0 -> 1 -> 0; an
    upward flick stops it, and a short or slow flick costs power. The flick
@@ -795,8 +815,10 @@ function hint(t,up){var h=$("hint");h.textContent="";if(t){if(up){var i=document
 function swipeShot(path,H,geo){
   var G=geo||{bx:200,by:700,gx:200,gy:380,sG:45,k:2.4};
   var a=path[0],b=path[path.length-1],lift=a.y-b.y,lat=b.x-a.x,len=Math.sqrt(lift*lift+lat*lat);
+  var ms=Math.max(16,b.t-a.t);
+  if(lift>=30&&lift<H*0.16&&Math.abs(lat)<lift*0.3&&lift/ms<0.35)return {ok:true,spot:4,power:0.7,aim:{x:0,y:1.9},curl:0,panenka:true};
   if(lift<30||len<40)return {ok:false};
-  var ms=Math.max(16,b.t-a.t),power=Math.max(0,Math.min(1,(len/ms)/1.6));
+  var power=Math.max(0,Math.min(1,(len/ms)/1.6));
   var ex=G.bx+lat*G.k,ey=G.by-lift*G.k;
   var x=Math.max(-3.5,Math.min(3.5,(ex-G.gx)/G.sG)),y=Math.max(0.15,Math.min(2.3,(G.gy-ey)/G.sG));
   /* curl follows the turn of the swipe: compare its heading at the start with
@@ -811,25 +833,33 @@ function swipeShot(path,H,geo){
 function aimAndShoot(){
   setTag("YOUR SHOT","shot");boardNow("a");newWind();K.idle=true;AIMING=true;drawSpell();SC=ME;KC=OPP||other();hint("SWIPE THE BALL TO SHOOT",true);
   coach("shoot","Swipe the ball toward the goal. Where you swipe is where it goes. Swipe faster to hit it harder, bend your swipe to curl it.",true);
+  if(COACHED.shoot)coach("ring","Hold the ball until the gold ring closes, then flick: a perfect strike. A short, gentle push up the middle is a Panenka.",false);
   return new Promise(function(done){
     var app=$("app"),path=null;
     function pt(e){var a=app.getBoundingClientRect();return {x:e.clientX-a.left,y:e.clientY-a.top,t:performance.now()};}
-    function down(e){if(e.target.closest("#sheet,button,a"))return;var p=pt(e);if(p.y<CAM.H*0.45)return;path=[p];K.img="k-spring.webp";try{app.setPointerCapture(e.pointerId);}catch(_){}}
+    var ring=$("ring"),t0=0;
+    function down(e){if(e.target.closest("#sheet,button,a"))return;var p=pt(e);if(p.y<CAM.H*0.45)return;path=[p];t0=p.t;K.img="k-spring.webp";try{app.setPointerCapture(e.pointerId);}catch(_){}
+      var bp=P(B.x,B.y,B.z);ring.className="";ring.style.left=bp.x+"px";ring.style.top=bp.y+"px";void ring.offsetWidth;ring.className="on";}
     /* a long swipe strikes the moment it crosses - no waiting for the lift */
     function move(e){if(!path)return;var p=pt(e);path.push(p);var dl=Math.hypot(p.x-path[0].x,p.y-path[0].y);if(dl>CAM.H*0.3)fire();}
     function up(e){if(!path)return;path.push(pt(e));fire();}
     function geo(){var bp=P(B.x,B.y,B.z),g0=P(0,0,GOAL.z);return {bx:bp.x,by:bp.y,gx:g0.x,gy:g0.y,sG:g0.s,k:(bp.y-(g0.y-1.2*g0.s))/(CAM.H*0.22)};}
-    function fire(){var g=swipeShot(path,CAM.H,geo());path=null;if(!g.ok){K.img="k-set.webp";return;}
+    function fire(){var g=swipeShot(path,CAM.H,geo()),held=performance.now()-t0;path=null;if(!g.ok){K.img="k-set.webp";ring.className="";return;}
+      /* flicked as the ring closed (500ms, +-90ms): the sweet spot of power */
+      if(!g.panenka&&Math.abs(held-500)<=90){g.power=0.77;ring.className="hit";fx.buzz([10,20,10]);}else ring.className="";
+      setTimeout(function(){if(ring.className==="hit")ring.className="";},260);
       app.removeEventListener("pointerdown",down);app.removeEventListener("pointermove",move);app.removeEventListener("pointerup",up);AIMING=false;drawSpell();
       /* wind (solo modes): it carries the ball; the zone is judged where it ends up */
-      if(SOLO&&WIND){g.aim.x=Math.max(-3.5,Math.min(3.5,g.aim.x+WIND/20*1.1));g.curl=Math.max(-1,Math.min(1,g.curl+WIND/20*0.6));
+      if(SOLO&&WIND&&!g.panenka){g.aim.x=Math.max(-3.5,Math.min(3.5,g.aim.x+WIND/20*1.1));g.curl=Math.max(-1,Math.min(1,g.curl+WIND/20*0.6));
         g.spot=(g.aim.x<-1.22?0:g.aim.x>1.22?2:1)+(g.aim.y>=1.22?3:0);}
-      hint("");fx.buzz(15);done({spot:g.spot,power:g.power,aim:g.aim,curl:g.curl});}
+      hint("");fx.buzz(15);done({spot:g.spot,power:g.power,aim:g.aim,curl:g.curl,panenka:!!g.panenka});}
     app.addEventListener("pointerdown",down);app.addEventListener("pointermove",move);app.addEventListener("pointerup",up);
   });
 }
-function pickDive(){setTag("YOUR SAVE","save");hint("TAP WHERE TO DIVE");boardNow("b");K.idle=true;KC=ME;SC=OPP||other();
-  coach("dive","Your turn in goal. Tap the part of the goal where you think the shot is going, and you dive there.",false);return tapSpot().then(function(s){hint("");return s;});}
+function pickDive(tell){setTag("YOUR SAVE","save");hint("SWIPE TO DIVE");boardNow("b");K.idle=true;KC=ME;SC=OPP||other();
+  coach("dive","Your turn in goal. Swipe the way you dive: up for high, flat for low. Or tap a spot in the goal.",false);
+  /* KICKER TELLS (computer only): the run-up angle gives his side away, two times in three */
+  if(tell!=null){S.x=[-0.5,-0.72,-0.95][tell];if(COACHED.dive)coach("tell","Read his run-up. From wide he goes right, straight on he goes left.",false);}return tapSpot().then(function(s){hint("");return s;});}
 
 /* ---------------------------------------------------------------- a kick */
 var streak=0;
@@ -869,7 +899,7 @@ function playKick(k){
   var aim=target(k.shot.spot,k.outcome==="bar"?"bar":kind);
   if(k.shot.aim){aim={x:k.shot.aim.x,y:aim.y===3.4||k.outcome==="bar"?aim.y:k.shot.aim.y};if(k.outcome==="bar")aim.x=Math.max(-3.4,Math.min(3.4,k.shot.aim.x));}
   var curl=k.shot.curl!=null?k.shot.curl:(Math.random()*0.8-0.4),side=curl>=0?1:-1;
-  var f=flightPlan(aim,power,curl),kp=keeperPose(k.dive);
+  var f=flightPlan(aim,k.shot.panenka?0.08:power,curl),kp=keeperPose(k.dive);
   if(k.outcome!=="save"&&k.dive!=null&&col(k.dive)===1&&Math.abs(aim.x)>2.2){var sd=aim.x>0?1:-1;kp=keeperPose((sd>0?2:0)+(aim.y>=1.22?3:0));kp.x=sd*1.3;}
   /* What you see must agree with the call. A save: the keeper's dive ends on
      the ball's line. A goal: he ends clearly away from it. */
@@ -884,8 +914,9 @@ function playKick(k){
   if(spell){$("app").classList.add("legend");hiss(1.1,250,3200,0.35,true,1.6);fx.pop("LEGENDARY SHOT!","#F2B84B");fx.flash(0.12,260);fx.buzz([20,40,60]);if(!REDUCED){TS=0.38;CAM_FX.zoomTo=1.14;}}
   /* run-up: three strides to the ball */
   S.img="s-run.webp";
-  return tween(180,function(u){S.x=-0.72+0.3*u;S.z=-1.25+0.65*u;}).then(function(){
-    S.img="s-strike.webp";fx.buzz(12);sfx("kick",0.55+0.45*power,0.92+0.16*power);if(spell)hiss(1.6,500,45,0.9,false,0.7);hitStop=0.05;B.fly=true;summon();
+  var sx0=S.x;
+  return tween(180,function(u){S.x=sx0+(-0.42-sx0)*u;S.z=-1.25+0.65*u;}).then(function(){
+    S.img="s-strike.webp";fx.buzz(12);sfx("kick",0.55+0.45*power,0.92+0.16*power);if(spell)hiss(1.6,500,45,0.9,false,0.7);hitStop=0.075;B.fly=true;summon();
     if(SLOWNEXT){TS=0.38;CAM_FX.zoomTo=1.14;}
     return new Promise(function(done){
       var t=0,phase="fly",after=0,k0={x:K.x,y:K.y},reacted=false,launched=false,landed=false,settled=false,landT=0,heldIt=false,loadT=0,fallV=0,saveAt=f.T*(kp.x===0&&kp.y<1?0.97:0.93);
@@ -895,8 +926,8 @@ function playKick(k){
         t+=dt;
         /* the keeper reads it a beat late, then commits along an arc */
         var kt=Math.max(0,Math.min(1,(t-f.T*(spell?0.74:0.12))/(f.T*(spell?0.5:0.82))));
-        if(kt>0&&!reacted){reacted=true;loadT=t;K.img="k-spring.webp";K.sq=1;}
-        if(reacted&&!launched&&t-loadT>0.05){launched=true;K.img=kp.img;K.flip=kp.flip||1;if(kp.x!==0)afterimage(true);}
+        if(kt>0&&!reacted){reacted=true;loadT=t;K.img="k-spring.webp";K.sq=0.86;}
+        if(reacted&&!launched&&t-loadT>0.07){launched=true;K.img=kp.img;K.flip=kp.flip||1;if(kp.x!==0)afterimage(true);}
         if(launched&&!released&&(phase==="fly"||phase==="after")){
           if(kt<1||kp.x===0){var e=easeOut(kt);K.x=k0.x+(kp.x-k0.x)*e;K.y=k0.y+(kp.y-k0.y)*kt+kp.arc*4*kt*(1-kt);K.rot=kp.rot*e;
             K.sq=kp.x!==0?1+0.14*Math.sin(Math.PI*Math.min(1,kt)):1;}
@@ -973,6 +1004,7 @@ function playKick(k){
       hiss(0.32,3200,1100,0.22,false,0.8);sfx(spell||top?"roarbig":"roar",spell?0.25:0.2);
       var st=you?1+(top?1:0)+(perfect||Math.abs(curl)>0.5?1:0):0;STARS+=st;if(you&&top)TOPS++;
       var stars=st?"\u2605\u2605\u2605".slice(0,st)+"\u2606\u2606\u2606".slice(0,3-st):null;
+      if(k.shot.panenka){fx.pop("PANENKA!","#F2B84B","CHEEKY");}else
       if(near&&!spell){fx.pop(you?pick(["GOAL!","OYA!"]):"GOAL!","#2FD48A","BY INCHES");}else
       if(stars&&!spell&&!top&&!perfect){fx.pop(pick(["GOAL!","OYA!"]),"#2FD48A",stars);}else
       fx.pop(spell?"LEGENDARY!":top?"TOP BINS!":perfect?"WIZARDRY!":(you?pick(["GOAL!","OYA!"]):"GOAL!"),spell||top?"#F2B84B":"#2FD48A");
@@ -1061,8 +1093,9 @@ function practice(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(true);var o
     PW.fx.slowmo(Math.floor(outs.length/2)>=REG-1);
     if(st.next==="a")return PW.aimAndShoot().then(function(s){var sp=PW.consumeSpell(),d=Math.floor(Math.random()*6),o=R.judge(s,d);if(sp&&o==="save")o="goal";outs.push(o);
         
-        return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:d,outcome:o});}).then(next);
-    return PW.pickDive().then(function(dv){var cs=cpuShot(),o=R.judge(cs,dv);outs.push(o);
+        return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl,panenka:s.panenka},dive:d,outcome:o});}).then(next);
+    var cs=cpuShot(),tc=cs.spot%3;if(Math.random()>0.65)tc=(tc+1+Math.floor(Math.random()*2))%3;
+    return PW.pickDive(tc).then(function(dv){var o=R.judge(cs,dv);outs.push(o);
         return PW.playKick({who:"them",shot:{spot:cs.spot,kind:R.strike(cs.spot,cs.power).kind,power:cs.power},dive:dv,outcome:o});}).then(next);}
   function finish(st){PW.fx.slowmo(false);track("practice_finished");
     var head=st.winner==="a"?"You beat the computer "+st.a+"-"+st.b:st.winner==="b"?"The computer won "+st.b+"-"+st.a:"Draw, "+st.a+"-"+st.b;
@@ -1132,7 +1165,7 @@ var TAUNT={calm:"Ice cold",fire:"Bring it on",silent:"Says nothing"},DPOLL=null;
 function lvl(){return PW.levelOf(PW.xp);}
 function sub(p){var c=p&&clubOf(p.club);return p?(c?c[2]+" \u00b7 ":"")+(p.lvl?"Level "+p.lvl:""):"";}
 function h2hLine(h,opp){return "You "+h.you+" \u2013 "+h.them+" "+opp+(h.draws?" ("+h.draws+" drawn)":"");}
-function sealedShot(s,who){return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:null,outcome:"locked",sealedFor:who});}
+function sealedShot(s,who){return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl,panenka:s.panenka},dive:null,outcome:"locked",sealedFor:who});}
 function challenger(){clearInterval(DPOLL);PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);askName().then(function(name){
   var g=el("div","clubs");Object.keys(TAUNT).forEach(function(k){g.appendChild(btn(TAUNT[k],"ghost",function(){closeSheet();first(k);}));});
   sheet([el("h2",null,"Pick your mood"),el("p",null,"Your friend sees it on the VS card. Then take the first penalty: it stays sealed until they dive."),g]);
@@ -1237,7 +1270,7 @@ function survival(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);askN
     if(r.status!==200)return new Promise(function(ok){offline(function(){closeSheet();ok(kick(s));});});return r.j;});}
   function next(){PW.aimAndShoot().then(function(s){return kick(s).then(function(j){run=j.run;i=j.i+1;streak=j.streak;
       var o=j.outcome,d=o==="save"?s.spot:(s.spot+1+Math.floor(Math.random()*5))%6;
-      return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:d,outcome:o}).then(function(){return j;});});})
+      return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl,panenka:s.panenka},dive:d,outcome:o}).then(function(){return j;});});})
     .then(function(j){if(j.alive)return next();track("survival_over",{run:streak});
       /* THE NEXT GO IS ONE TAP (owner, 9 Oct 2026 - the Subway Surfers rule):
          Again comes first and biggest; under it, who to beat next. */
@@ -1310,7 +1343,7 @@ function faced(){F.sheet([F.el("h2",null,"You've faced today's keeper"),F.el("p"
 function forFun(){var outs=[];PW.resetStreak();PW.setSolo(true);PW.newBoard("Just for fun",true);
   function one(){PW.aimAndShoot().then(function(s){var sp=PW.consumeSpell(),d=Math.floor(Math.random()*6),o=R.judge(s,d);if(sp&&o==="save")o="goal";outs.push(o);
     PW.setScore(outs.filter(function(x){return x==="goal";}).length,outs.filter(function(x){return x!=="goal";}).length);
-    return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl},dive:d,outcome:o});})
+    return PW.playKick({who:"you",shot:{spot:s.spot,kind:R.strike(s.spot,s.power).kind,power:s.power,aim:s.aim,curl:s.curl,panenka:s.panenka},dive:d,outcome:o});})
     .then(function(){if(outs.length<R.REG)return one();
       F.sheet([F.el("h2",null,"Just for fun: "+outs.filter(function(x){return x==="goal";}).length+"/5"),F.el("p",null,"Not counted. Tomorrow's keeper is the one that counts."),
         F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),F.homeLink()]);});}

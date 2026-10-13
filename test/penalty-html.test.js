@@ -154,7 +154,7 @@ test("the daily keeper is always The Wizard", () => {
 test("lightning is yours alone, and only for a real perfect strike or a hot streak", () => {
   assert.match(html, /if\(you&&\(spell\|\|perfect\|\|streak>=3\)&&k\.outcome==="goal"\)lightning\(/);
   assert.doesNotMatch(html, /power=k\.shot\.power!=null\?k\.shot\.power:\(kind==="green"\?0\.72/, "a guessed power must never land in the perfect band");
-  assert.match(html, /shot:\{spot:s\.spot,kind:R\.strike\(s\.spot,s\.power\)\.kind,power:s\.power,aim:s\.aim,curl:s\.curl\}/, "your own shots carry their real power, aim and curl");
+  assert.match(html, /shot:\{spot:s\.spot,kind:R\.strike\(s\.spot,s\.power\)\.kind,power:s\.power,aim:s\.aim,curl:s\.curl,panenka:s\.panenka\}/, "your own shots carry their real power, aim and curl");
 });
 
 test("the streak starts at zero every match", () => {
@@ -500,7 +500,7 @@ test("the keeper is happy when he saves or the kicker misses: up off the floor, 
 test("every flow flies the ball to your real aim with your curl, not to a spot's centre", () => {
   assert.doesNotMatch(html, /kind:R\.strike\(s\.spot,s\.power\)\.kind,power:s\.power\}/, "a shot without aim/curl lands on a fixed spot");
   assert.doesNotMatch(html, /kind:R\.strike\(o\.s\.spot,o\.s\.power\)\.kind,power:o\.s\.power\}/);
-  assert.match(html, /power:s\.power,aim:s\.aim,curl:s\.curl\}/);
+  assert.match(html, /power:s\.power,aim:s\.aim,curl:s\.curl,panenka:s\.panenka\}/);
 });
 
 test("the swipe projects to a point on the goal: the whole frame is reachable", () => {
@@ -709,4 +709,45 @@ test("the game menus carry no template tells: no pills, no spinning aura, no ita
   assert.ok(!/pwspin|pwflare/.test(html), "spinning aura round the picked card");
   assert.ok(!/Roboto\+Condensed/.test(html), "the site's display face is Saira Condensed");
   assert.match(html, /#sheet h2\{[^}]*font:800 24px\/1\.05 "Saira Condensed"[^}]*text-transform:uppercase\}/);
+});
+
+/* Gameplay round, owner 13 Oct 2026: "how do we make our gameplay better ... yet simple asf". */
+test("a short, slow, straight push is a Panenka: a clean chip to the top middle", () => {
+  const S = swipe();
+  const pk = S(swp([[200, 700], [201, 670], [200, 640]], 400), H);
+  assert.strictEqual(pk.panenka, true);
+  assert.strictEqual(pk.spot, 4, "top middle, so only a keeper who stays up the middle saves it");
+  assert.ok(pk.power >= 0.55 && pk.power <= 0.88, "judged green by lib/penalty.js, unchanged");
+  const fast = S(swp([[200, 700], [200, 640]], 60), H);
+  assert.ok(!fast.panenka, "a quick flick is a shot, not a chip");
+  const wide = S(swp([[200, 700], [240, 650]], 400), H);
+  assert.ok(!wide.panenka, "only straight up");
+});
+
+test("swipe to dive: the way you swipe is where the keeper goes", () => {
+  const dive = new Function(grabFn("diveOf") + "\nreturn diveOf;")();
+  assert.strictEqual(dive(-120, 10), 0, "flat left: low left");
+  assert.strictEqual(dive(-80, 90), 3, "up and left: high left");
+  assert.strictEqual(dive(120, 5), 2, "flat right: low right");
+  assert.strictEqual(dive(90, 100), 5, "up and right: high right");
+  assert.strictEqual(dive(0, 120), 4, "straight up: jump");
+  assert.strictEqual(dive(5, -80), 1, "straight down: stay low");
+  assert.strictEqual(dive(10, 5), null, "a touch is not a dive");
+});
+
+test("the perfect strike: flick as the ring closes, and the power lands in the sweet band", () => {
+  assert.match(html, /if\(!g\.panenka&&Math\.abs\(held-500\)<=90\)\{g\.power=0\.77;/);
+  assert.match(html, /#ring\.on\{animation:pw-close \.5s linear forwards\}/, "the ring closes in the same 500ms");
+});
+
+test("kicker tells only against the computer, true two times in three", () => {
+  assert.match(html, /tc=cs\.spot%3;if\(Math\.random\(\)>0\.65\)/);
+  assert.match(html, /return PW\.pickDive\(tc\)/);
+  assert.match(html, /return PW\.pickDive\(\)\.then\(function\(dv\)\{return post\(\{dive:dv\}\)/, "a duel has no tell: the shot is sealed");
+});
+
+test("a slow phone drops the decoration, never the game; ?fps shows the frame rate", () => {
+  assert.match(html, /if\(!LITE&&FN>120&&FR>0\.025\)\{LITE=true;\$\("app"\)\.classList\.add\("lite"\);\}/);
+  assert.match(html, /KTRAIL=!!on&&!REDUCED&&!LITE;/);
+  assert.match(html, /\.lite \.beam,\.lite \.crowd i,\.lite \.grass:before\{display:none\}/);
 });
