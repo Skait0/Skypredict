@@ -107,6 +107,11 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #app:has(#sheet.on) #exit{width:auto;text-decoration:none;padding:0 13px 0 5px;gap:6px;display:flex;align-items:center;border-radius:99px;border-color:var(--gold)}
 #app:has(#sheet.on) #exit span{display:inline}
 #exit:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+/* END A DUEL (owner, 13 Oct 2026: "there is no way to end an ongoing challenge").
+   Top right during your turn in a duel; resigning loses it. */
+#resign{position:absolute;right:12px;top:calc(86px + env(safe-area-inset-top));z-index:10;height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:#0d0d0fcc;color:#F2F1F0;font:800 13px "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}
+#resign[hidden],#app:has(#sheet.on) #resign{display:none}
+#resign:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 #tag{position:absolute;top:calc(86px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);padding:8px 18px 7px;border-radius:99px;background:#0d0d0fe0;border:1px solid var(--line);font:italic 800 18px/1 "Roboto Condensed",sans-serif;letter-spacing:.12em;color:#F2F1F0;white-space:nowrap;z-index:6;pointer-events:none}
 #tag:empty{display:none}
 /* the turn as lettering, not a plate (owner, 9 Oct 2026: the plate covered the meter and he did not like it) */
@@ -327,6 +332,7 @@ input.name{width:100%;height:50px;border-radius:999px;border:1px solid var(--lin
   <div id="tag"></div><div id="combo"></div>
   <div id="promo" aria-hidden="true"></div>
   <div id="vs" aria-hidden="true"><div class="vl"><i></i><b></b><small></small></div><div class="vx">VS<span class="vm"></span><em class="vh"></em></div><div class="vr"><i></i><b></b><small></small></div><u class="vt">TAP TO KICK OFF</u></div>
+  <button id="resign" type="button" hidden>Resign</button>
   <a id="exit" href="/" aria-label="Soccerwizard home"><img src="/penalty/wiz-64.webp?v=12" alt="" width="26" height="26"><span>Home</span></a>
   <div id="hint"></div>
   <div id="coach" role="status"><img src="/penalty/kw-taunt.webp?v=12" alt=""><p></p></div><i id="ghost"></i>
@@ -1132,9 +1138,10 @@ function challenger(){clearInterval(DPOLL);PW.setOpponent(null);PW.resetStreak()
       if(r.status!==200)return offline(function(){closeSheet();send();});
       track("duel_created");sealedShot(s,"your friend").then(function(){waiting(r.j.id,"Your friend",true);});});})();});}
 });}
-function waiting(id,opp,fresh){var url=ORIGIN+"/p/"+id;
+function waiting(id,opp,fresh){$("resign").hidden=true;var url=ORIGIN+"/p/"+id;
   sheet([el("h2",null,fresh?"Send it to a friend":opp+"'s turn"),el("p",null,fresh?"Your penalty is sealed. Whoever opens the link saves it, then shoots back. Turn by turn until someone wins.":"They save your shot, then shoot back. Keep this open, or we'll bring you back when it's your go.")]
-    .concat(shareSheet("Penalty duel: save my shot, then try to beat me \ud83d\ude24",url,"duel"),[pingBtn(),btn("Your duels","ghost",function(){closeSheet();duelsList();})]));
+    .concat(shareSheet("Penalty duel: save my shot, then try to beat me \ud83d\ude24",url,"duel"),[pingBtn(),btn("Your duels","ghost",function(){closeSheet();duelsList();}),
+      btn(fresh?"Call it off":"Resign","ghost",function(){closeSheet();resignDuel(id,opp,!fresh,function(){waiting(id,opp,fresh);});})]));
   $("sheet").setAttribute("data-duel",id);watch(id);}
 function watch(id){clearInterval(DPOLL);var n=0;DPOLL=setInterval(function(){
   if($("sheet").getAttribute("data-duel")!==id||++n>120){clearInterval(DPOLL);return;}
@@ -1157,6 +1164,7 @@ function duel(id){clearInterval(DPOLL);PW.resetStreak();PW.setSolo(false);
       btn("Kick off","red",function(){closeSheet();askName().then(go);})]);
   });}
 function turn(d,name,opp){var me=d.me||"b";
+  var rz=$("resign");rz.hidden=false;rz.onclick=function(){resignDuel(d.id,opp,!!d[me==="a"?"b":"a"],function(){rz.hidden=false;});};
   function post(o){return api("POST","duel_turn",Object.assign({id:d.id,device:PW.DEV,name:name,char:PW.char,club:myClub(),lvl:lvl(),v:d.v},o)).then(function(x){
     if(x.status===200)return x.j;
     if(x.status===409&&x.j&&x.j.error!=="busy"){duel(d.id);return new Promise(function(){});}
@@ -1165,14 +1173,24 @@ function turn(d,name,opp){var me=d.me||"b";
     return PW.playKick({who:"them",shot:x.against,dive:dv,outcome:x.outcome}).then(function(){board(x,me,opp);if(x.done)return duelEnd(x,me,opp);turn(x,name,opp);});});});}
   PW.aimAndShoot().then(function(s){return post({shot:{spot:s.spot,power:s.power}}).then(function(x){
     return sealedShot(s,opp).then(function(){board(x,me,opp);if(x.done)return duelEnd(x,me,opp);waiting(d.id,opp,false);});});});}
-function duelEnd(d,me,opp){var my=d.score[me],th=d.score[me==="a"?"b":"a"],w=d.winner;
-  var head=w==="draw"?"You drew with "+opp+", "+my+"-"+th:w===me?"You beat "+opp+" "+my+"-"+th:opp+" beat you "+th+"-"+my;
+/* Ask once, then end it on the server. Nobody joined yet: it is called off, not lost. */
+function resignDuel(id,opp,joined,back){$("resign").hidden=true;
+  sheet([el("h2",null,joined?"Resign this duel?":"Call this duel off?"),
+    el("p",null,joined?opp+" wins it at the score it stands. It counts in your head to head.":"Nobody has played your shot yet, so there is no result. The link stops working."),
+    btn(joined?"Resign":"Call it off","red",function(){closeSheet();
+      api("POST","duel_resign",{id:id,device:PW.DEV}).then(function(r){
+        if(r.status===200||r.status===409&&r.j&&r.j.done){var d=r.j;return duelEnd(d,d.me,opp);}
+        offline(function(){closeSheet();resignDuel(id,opp,joined,back);});});}),
+    btn("Keep playing","ghost",function(){closeSheet();back();})]);}
+function duelEnd(d,me,opp){$("resign").hidden=true;clearInterval(DPOLL);var my=d.score[me],th=d.score[me==="a"?"b":"a"],w=d.winner;
+  var head=d.calledOff?"Duel called off":d.resigned===me?"You resigned. "+opp+" wins "+th+"-"+my:d.resigned?opp+" resigned. You win "+my+"-"+th:
+    w==="draw"?"You drew with "+opp+", "+my+"-"+th:w===me?"You beat "+opp+" "+my+"-"+th:opp+" beat you "+th+"-"+my;
   track("duel_finished");
   sheet([el("h2",null,head)].concat(d.h2h?[el("p","note","Head to head: "+h2hLine(d.h2h,opp))]:[],[btn("Rematch "+opp,"red",function(){closeSheet();challenger();})],
     shareSheet(head+" on Play Penalty. Think you can do better?",ORIGIN+"/penalty","duel_result"),[tipsCard(),homeLink()]));}
 function duelsList(){api("GET","duels",null,{device:PW.DEV}).then(function(r){var list=el("ol","lb"),ds=(r.j&&r.j.duels)||[];
   if(!ds.length)list.appendChild(el("li","lbe","No duels yet. Start one and send the link."));
-  ds.forEach(function(x){var li=el("li",x.mine&&!x.done?"you":"");li.style.cursor="pointer";li.appendChild(el("b",null,x.done?(x.won?"W":x.draw?"D":"L"):x.mine?"\u25b6":"\u2026"));
+  ds.forEach(function(x){var li=el("li",x.mine&&!x.done?"you":"");li.style.cursor="pointer";li.appendChild(el("b",null,x.done?(x.calledOff?"\u2013":x.won?"W":x.draw?"D":"L"):x.mine?"\u25b6":"\u2026"));
     li.appendChild(el("span",null,(x.done?"":x.mine?"Your turn vs ":"Their turn: ")+(x.opp||"waiting for a friend")));li.appendChild(el("i",null,x.you+"-"+x.them));
     li.addEventListener("click",function(){closeSheet();duel(x.id);});list.appendChild(li);});
   sheet([el("h2",null,"Your duels"),list,btn("Start a new duel","red",function(){closeSheet();challenger();})]);});}
@@ -1320,7 +1338,7 @@ function daily(){var outs=[],day=null,i=0;PW.setSolo(false);PW.newBoard("The Wiz
       });});}
   start();}
 
-window.PWHome=function(){home();};
+window.PWHome=function(){$("resign").hidden=true;home();};
 function home(){
   var lv=PW.levelOf(PW.xp),nx=[3,5,8].filter(function(x){return x>lv;})[0],best=0;try{best=+localStorage.getItem("pw.best")||0;}catch(e){}
   /* One screen, no scroll (owner, 13 Oct 2026: "i hate to scroll on that beginning page"). */

@@ -253,14 +253,26 @@ function make(deps) {
      A sealed shot's spot and power never leave the server until the other
      side has dived against it. */
   const sideOf = (d, dev) => (dev === d.a_device ? "a" : d.b_device && dev === d.b_device ? "b" : null);
+  /* A RESIGNED DUEL IS OVER (owner, 13 Oct 2026: "there is no way to end an ongoing
+     challenge" - and resigning loses it, so nobody quits to dodge a defeat). The kicks
+     alone would say it is still going, so the stored result wins: the side that did
+     not resign is the winner, at the score it stood. A duel nobody had joined yet has
+     no one to lose to, so ending it calls it off (winner null). */
+  function stateOf(d) {
+    const st = P.duelState(d.kicks || []), r = d.result;
+    if (!r || (!r.resigned && !r.calledOff)) return st;
+    return Object.assign({}, st, { done: true, winner: r.winner || null, turn: null, need: null,
+      resigned: r.resigned || null, calledOff: !!r.calledOff });
+  }
   const player = (d, s) => (s === "a" ? { name: d.a_name, char: d.a_char, club: d.a_club, taunt: d.a_taunt, lvl: d.a_lvl }
     : d.b_device ? { name: d.b_name, char: d.b_char, club: d.b_club, lvl: d.b_lvl } : null);
   const cleanChar = (c) => (c === "wizard" ? "wizard" : "ten");
   const cleanLvl = (n) => (Number.isInteger(n) && n > 0 && n < 1000 ? n : null);
   async function duelView(d, dev, lite) {
-    const st = P.duelState(d.kicks), me = sideOf(d, dev);
+    const st = stateOf(d), me = sideOf(d, dev);
     const view = { id: d.id, me, v: d.v, a: player(d, "a"), b: player(d, "b"), score: st.score, done: st.done,
       winner: st.winner, turn: st.turn, need: st.need, open: !d.b_device && !st.done,
+      resigned: st.resigned || null, calledOff: !!st.calledOff,
       kicks: d.kicks.map((k, i) => (k.outcome ? { by: i % 2 ? "b" : "a", spot: k.spot, power: k.power, dive: k.dive, outcome: k.outcome }
         : { by: i % 2 ? "b" : "a", sealed: true })) };
     view.mine = me ? st.turn === me : view.open && DEV_RE.test(String(dev || "")) && st.turn === "b";
@@ -268,6 +280,7 @@ function make(deps) {
       const h = { you: 0, them: 0, draws: 0 };
       for (const r of await db.h2h(d.a_device, d.b_device)) {
         const w = r.result && r.result.winner;
+        if (r.result && r.result.calledOff) continue;     /* nobody played: no result */
         if (w === "draw") h.draws++;
         else if (w) { if ((w === "a") === (r.a_device === dev)) h.you++; else h.them++; }
       }
@@ -284,7 +297,9 @@ function make(deps) {
     const p = dev && await db.getPush(dev);
     if (!p) return;
     const other = side === "a" ? d.b_name : d.a_name, mine = st.score[side], theirs = st.score[side === "a" ? "b" : "a"];
-    const note = st.done
+    const note = st.done && st.resigned
+      ? { title: other + " resigned. You win " + mine + "-" + theirs, body: "Fancy a rematch?", url: "/penalty?d=" + d.id }
+      : st.done
       ? { title: st.winner === "draw" ? "You drew with " + other + " " + mine + "-" + theirs
         : st.winner === side ? "You beat " + other + " " + mine + "-" + theirs : other + " beat you " + theirs + "-" + mine,
         body: "Fancy a rematch?", url: "/penalty?d=" + d.id }
@@ -320,8 +335,8 @@ function make(deps) {
       if (!(await db.rlHit("pw:k:" + H.ipKey(req), 3600, 600))) return H.sendJson(res, 429, { error: "slow_down" });
       const d = await db.getDuel(String(b.id || "").toUpperCase());
       if (!d) return H.sendJson(res, 404, { error: "not_found" });
-      const st = P.duelState(d.kicks);
-      if (st.done) return H.sendJson(res, 409, { error: "done" });
+      const st = stateOf(d);
+      if (st.done) return H.sendJson(res, 409, Object.assign({ error: "done" }, await duelView(d, b.device)));
       let me = sideOf(d, b.device), join = null;
       if (!me) {
         if (d.b_device || b.device === d.a_device) return H.sendJson(res, 409, { error: "taken" });
@@ -354,14 +369,33 @@ function make(deps) {
       }
       return H.sendJson(res, 200, Object.assign(await duelView(nd, b.device), { outcome, against }));
     },
+    /* Either player ends the duel: they lose it, at the score it stood (stateOf). */
+    async duel_resign(req, res, t) {
+      const b = await H.readJson(req, 512);
+      if (!b || !DEV_RE.test(String(b.device))) return bad(res);
+      const d = await db.getDuel(String(b.id || "").toUpperCase());
+      if (!d) return H.sendJson(res, 404, { error: "not_found" });
+      const me = sideOf(d, b.device);
+      if (!me) return H.sendJson(res, 403, { error: "not_yours" });
+      const st = stateOf(d);
+      if (st.done) return H.sendJson(res, 409, Object.assign({ error: "done" }, await duelView(d, b.device)));
+      const at = new Date(t).toISOString(), other = me === "a" ? "b" : "a";
+      const result = d.b_device ? { a: st.score.a, b: st.score.b, winner: other, resigned: me }
+        : { a: st.score.a, b: st.score.b, winner: null, calledOff: true };
+      const patch = { result, finished_at: at, updated_at: at, v: d.v + 1 };
+      if (!(await db.updateDuel(d.id, d.v, patch))) return H.sendJson(res, 409, { error: "busy" });
+      const nd = Object.assign({}, d, patch);
+      if (d.b_device) { try { await notify(nd, other, stateOf(nd), t); } catch (e) { await report(e, { route: "penalty/notify" }); } }
+      return H.sendJson(res, 200, await duelView(nd, b.device));
+    },
     /* Every duel this device is in from the last fortnight, theirs-to-play first. */
     async duels(req, res, t) {
       const dev = String((req.query || {}).device || "");
       if (!DEV_RE.test(dev)) return bad(res);
       const rows = await db.myDuels(dev, new Date(t - 14 * DAY_MS).toISOString());
       const list = rows.map((d) => {
-        const me = sideOf(d, dev), st = P.duelState(d.kicks || []);
-        return { id: d.id, opp: me === "a" ? d.b_name : d.a_name, mine: st.turn === me, done: st.done,
+        const me = sideOf(d, dev), st = stateOf(d);
+        return { id: d.id, opp: me === "a" ? d.b_name : d.a_name, mine: st.turn === me, done: st.done, calledOff: !!st.calledOff,
           won: st.done && st.winner === me, draw: st.winner === "draw", you: st.score[me], them: st.score[me === "a" ? "b" : "a"] };
       });
       list.sort((x, y) => (y.mine && !y.done) - (x.mine && !x.done));
@@ -390,7 +424,7 @@ function make(deps) {
     },
     async pushkey(req, res) { return H.sendJson(res, 200, sendPush ? { key: process.env.VAPID_PUBLIC_KEY } : {}); },
   });
-  const POSTS = new Set(["create", "kick", "daily", "picks", "ranked", "duel_new", "duel_turn", "duel_push"]);
+  const POSTS = new Set(["create", "kick", "daily", "picks", "ranked", "duel_new", "duel_turn", "duel_push", "duel_resign"]);
 
   return async function handler(req, res) {
     const a = String((req.query || {}).a || "");

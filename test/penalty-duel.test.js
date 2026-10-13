@@ -136,3 +136,30 @@ test("duelState: a sealed shot waits for a dive; regulation can end early", () =
   const k = [{ spot: 0, power: 0.7, dive: 1, outcome: "goal" }, { spot: 1, power: 0.7 }];
   assert.deepStrictEqual([P.duelState(k).turn, P.duelState(k).need], ["a", "dive"]);
 });
+
+/* RESIGN (owner, 13 Oct 2026: "there is no way to end an ongoing challenge"; resigning loses). */
+test("a player resigns: the other side wins at the score it stood, and it is over for both", async () => {
+  const w = world();
+  const id = (await w.call("POST", "duel_new", { device: A, name: "Tobi", shot: firm(0) })).json().id;
+  const v = (await w.call("POST", "duel_turn", { id, device: B, name: "Ada", v: 1, dive: 2 })).json();   // A 1-0
+  await w.call("POST", "duel_push", { device: A, sub: { endpoint: EP, keys: { p256dh: "p", auth: "x" } } });
+  assert.strictEqual((await w.call("POST", "duel_resign", { id, device: C })).code, 403, "only a player can end it");
+  const r = (await w.call("POST", "duel_resign", { id, device: B })).json();
+  assert.deepStrictEqual([r.done, r.winner, r.resigned, r.score], [true, "a", "b", { a: 1, b: 0 }]);
+  const a = (await w.call("GET", "duel", null, { id, device: A })).json();
+  assert.deepStrictEqual([a.done, a.winner, a.resigned, a.mine], [true, "a", "b", false]);
+  assert.deepStrictEqual(a.h2h, { you: 1, them: 0, draws: 0 }, "it counts in head to head");
+  assert.match(w.t.push[A].note.title, /Ada resigned\. You win 1-0/);
+  assert.strictEqual((await w.call("POST", "duel_turn", { id, device: B, v: v.v + 1, shot: firm(3) })).code, 409, "no turns after it ends");
+  assert.strictEqual((await w.call("POST", "duel_resign", { id, device: A })).code, 409);
+  const list = (await w.call("GET", "duels", null, { device: B })).json().duels;
+  assert.deepStrictEqual([list[0].done, list[0].won], [true, false]);
+});
+
+test("a duel nobody joined is called off, not lost, and counts nowhere", async () => {
+  const w = world();
+  const id = (await w.call("POST", "duel_new", { device: A, name: "Tobi", shot: firm(0) })).json().id;
+  const r = (await w.call("POST", "duel_resign", { id, device: A })).json();
+  assert.deepStrictEqual([r.done, r.winner, r.calledOff], [true, null, true]);
+  assert.strictEqual((await w.call("POST", "duel_turn", { id, device: B, name: "Ada", v: 2, dive: 1 })).code, 409, "the link stops working");
+});
