@@ -149,7 +149,8 @@ test("the filters fold away on a phone and never on a desktop", () => {
 });
 
 test("the button says what it controls, and admits when a filter is on", () => {
-  assert.match(idx, /<button class="fbtn" id="fbtn" type="button" aria-expanded="false" aria-controls="tools">/,
+  /* aria-label too: on a phone the word is hidden and the button is an icon (13 Oct 2026). */
+  assert.match(idx, /<button class="fbtn" id="fbtn" type="button" aria-expanded="false" aria-controls="tools" aria-label="Filters">/,
     "the disclosure is not wired to what it opens");
   assert.match(idx, /<div class="tools" id="tools">/, "the panel has no id to point at");
   assert.match(idx, /b\.setAttribute\("aria-expanded",open\?"true":"false"\)/,

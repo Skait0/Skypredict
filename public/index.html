@@ -879,6 +879,10 @@ main[tabindex="-1"]:focus{outline:none}
    only where the search and the two selects cost a fifth of the screen. */
 .fbtn{display:none}
 .cats{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+/* More chips scroll on under the Filters button (owner: "whats hiding behind the
+   filter button?"). The last 28px fade out, so the row reads as "more this way". */
+@media(max-width:420px){ .fbtn>span:not(.fbtn-on){display:none} }
+.cats-row .cats{flex:1 1 auto;min-width:0;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);padding-right:24px}
 .cats::-webkit-scrollbar{display:none}
 .cat{flex-shrink:0;background:var(--card);border:1px solid var(--line);
   color:var(--soft);font-family:inherit;font-size:13px;font-weight:700;
@@ -922,7 +926,6 @@ main[tabindex="-1"]:focus{outline:none}
   color:var(--text);font:inherit;font-variant-numeric:tabular-nums;text-align:center;padding:0 6px}
 .orange input:focus-visible{outline:2px solid var(--red);outline-offset:1px}
 #bsort{flex:1 1 112px;min-width:0}
-@media(max-width:720px){ #country,#league{flex:1 1 140px;min-width:0} }
 .search input{width:100%;background:var(--card);border:1px solid var(--line);
   border-radius:var(--r-md);padding:14px 14px 14px 40px;color:var(--text);
   font-family:inherit;font-size:15px}
@@ -5312,6 +5315,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   .fbtn-on{width:7px;height:7px;border-radius:50%;background:var(--red);flex:none}
   .bar>.tools{display:none}
   .bar.f-open>.tools{display:flex}
+  /* Shorter and evenly shared (owner, 13 Oct 2026: "reduce the vertical width also, tighten it"). */
+  #country,#league{flex:1 1 140px;min-width:0}
+  .tools{gap:6px} .tools .search input{padding-top:9px;padding-bottom:9px}
+  .tools .pick-sel,.orange input{min-height:40px;height:40px}
 }
 .bar{margin-top:14px;padding:9px;gap:8px}
 .cats{gap:6px}
@@ -7691,7 +7698,7 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
          rebuilt from the payload on every render and would wipe it. -->
     <div class="cats-row">
       <div class="cats" id="cats"></div>
-      <button class="fbtn" id="fbtn" type="button" aria-expanded="false" aria-controls="tools">
+      <button class="fbtn" id="fbtn" type="button" aria-expanded="false" aria-controls="tools" aria-label="Filters">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
         <span>Filters</span><span class="fbtn-on" id="fbtnOn" hidden aria-hidden="true"></span>
       </button>
