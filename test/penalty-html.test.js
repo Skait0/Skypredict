@@ -724,16 +724,6 @@ test("a short, slow, straight push is a Panenka: a clean chip to the top middle"
   assert.ok(!wide.panenka, "only straight up");
 });
 
-test("swipe to dive: the way you swipe is where the keeper goes", () => {
-  const dive = new Function(grabFn("diveOf") + "\nreturn diveOf;")();
-  assert.strictEqual(dive(-120, 10), 0, "flat left: low left");
-  assert.strictEqual(dive(-80, 90), 3, "up and left: high left");
-  assert.strictEqual(dive(120, 5), 2, "flat right: low right");
-  assert.strictEqual(dive(90, 100), 5, "up and right: high right");
-  assert.strictEqual(dive(0, 120), 4, "straight up: jump");
-  assert.strictEqual(dive(5, -80), 1, "straight down: stay low");
-  assert.strictEqual(dive(10, 5), null, "a touch is not a dive");
-});
 
 test("the perfect strike: flick as the ring closes, and the power lands in the sweet band", () => {
   assert.match(html, /if\(!g\.panenka&&Math\.abs\(held-500\)<=90\)\{g\.power=0\.77;/);
@@ -742,9 +732,8 @@ test("the perfect strike: flick as the ring closes, and the power lands in the s
 
 test("kicker tells only against the computer, true two times in three", () => {
   assert.match(html, /tc=cs\.spot%3;if\(Math\.random\(\)>0\.65\)/);
-  assert.match(html, /return PW\.saveLive\(\{spot:cs\.spot,kind:R\.strike\(cs\.spot,cs\.power\)\.kind,power:cs\.power\},tc\)/, "a computer kick is saved live");
-  assert.match(html, /if\(o==="save"&&t\+\(col\(dv\)===1\?0\.1:0\.2\)>f\.T\)o="goal";/, "a dive that cannot get there in time is a goal");
-  assert.match(html, /if\(k\.live\)k\.outcome=judge\(k\.shot,NaN\);/, "until you dive, the call comes from the strike alone");
+  assert.match(html, /return PW\.pickDive\(tc\)\.then\(function\(dv\)\{var o=R\.judge\(cs,dv\);/, "tap to dive before the shot (owner: very simple)");
+  assert.ok(!/saveLive|diveOf/.test(html), "no swipe or live save");
   assert.match(html, /return PW\.pickDive\(\)\.then\(function\(dv\)\{return post\(\{dive:dv\}\)/, "a duel has no tell: the shot is sealed");
 });
 
@@ -754,8 +743,3 @@ test("a slow phone drops the decoration, never the game; ?fps shows the frame ra
   assert.match(html, /\.lite \.beam,\.lite \.crowd i,\.lite \.grass:before\{display:none\}/);
 });
 
-test("a computer kick plays at half speed while you keep, after a run-up you can read", () => {
-  assert.ok(html.includes("else if(k.live&&!REDUCED)TS=0.5;"));
-  assert.ok(html.includes("return tween(k.live?700:180,"));
-  assert.ok(html.includes("return wait(900).then(function(){return playKick(k);})"));
-});
