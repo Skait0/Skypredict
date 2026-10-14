@@ -183,3 +183,17 @@ test("the inbox folds and deletes, and the banner keeps GIFs for the inbox", () 
     "a closed notice stays closed until a new one is posted");
   assert.ok(fs.readFileSync(path.join(__dirname, "..", "sql", "messages.sql"), "utf8").includes("add column if not exists hidden bigint[]"));
 });
+
+/* Owner, 14 Oct 2026: Twitch/Kick-style wavy emotes, done as our own CSS motions. */
+test("emote motions and wavy text survive clean(), and nothing else rides along", () => {
+  assert.strictEqual(M.clean('<img class="m-emo m-bounce evil" src="/emo/1f525.webp" alt="fire">'),
+    '<img class="m-emo m-bounce" src="/emo/1f525.webp" alt="fire" width="28" height="28">');
+  assert.strictEqual(M.clean('<img class="m-emo m-spin m-wave" src="/emo/1f525.webp">'),
+    '<img class="m-emo m-spin" src="/emo/1f525.webp" alt="" width="28" height="28">', "one motion per emoji");
+  assert.strictEqual(M.clean('<span class="m-wavy"><span>G</span><span>o</span></span>'), '<span class="m-wavy"><span>G</span><span>o</span></span>');
+  assert.deepStrictEqual(M.MOT.map((m) => m[1]), ["None", "Wave", "Bounce", "Wiggle", "Jello", "Spin", "Pulse"]);
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
+  for (const [k] of M.MOT.slice(1)) assert.ok(src.includes("." + k + "{animation:"), k + " has its animation");
+  assert.ok(src.includes(".m-wavy>span{animation:none}") || /prefers-reduced-motion:reduce\)\{[^}]*\.m-wavy>span\{animation:none\}/.test(src),
+    "reduced motion stops them");
+});

@@ -42,7 +42,10 @@
     ["1f978","disguise"],["1f92e","sick"],["1f62a","sleepy tear"]];
   var TAGS={b:1,strong:1,i:1,em:1,u:1,s:1,strike:1,br:1,p:1,ul:1,ol:1,li:1,a:1,img:1,span:1,h3:1,blockquote:1};
   var DROP={script:1,style:1,iframe:1,object:1,embed:1,svg:1,math:1,template:1,noscript:1,textarea:1,select:1,title:1,head:1};
-  var CLS=["m-big","m-small","m-gold","m-red","m-green","m-glow","m-center"];
+  var CLS=["m-big","m-small","m-gold","m-red","m-green","m-glow","m-center","m-wavy"];
+  /* Emote motions, like a stream chat's emote modifiers (owner, 14 Oct 2026). CSS only. */
+  var MOT=[["","None"],["m-wave","Wave"],["m-bounce","Bounce"],["m-wiggle","Wiggle"],["m-jello","Jello"],["m-spin","Spin"],["m-pulse","Pulse"]];
+  function motOf(c){ var k=String(c||"").split(/\s+/).filter(function(x){ return x&&MOT.some(function(m){ return m[0]===x; }); })[0]; return k?" "+k:""; }
   var EMO_RE=/^\/emo\/[0-9a-f_]{2,20}\.webp$/;
   var GIF_RE=/^https:\/\/media\d?\.giphy\.com\/media\/[A-Za-z0-9._\-\/]{1,200}\.(gif|webp)$/;
   function unent(s){ return String(s).replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,"<").replace(/&gt;/g,">"); }
@@ -68,7 +71,7 @@
         var a=attrsOf(attrs);
         if(tag==="br"){ out+="<br>"; return ""; }
         if(tag==="img"){ var src=unent(a.src||""), alt=esc(unent(a.alt||"").slice(0,40));
-          if(EMO_RE.test(src)) out+="<img class=\"m-emo\" src=\""+esc(src)+"\" alt=\""+alt+"\" width=\"28\" height=\"28\">";
+          if(EMO_RE.test(src)) out+="<img class=\"m-emo"+motOf(a["class"])+"\" src=\""+esc(src)+"\" alt=\""+alt+"\" width=\"28\" height=\"28\">";
           else if(GIF_RE.test(src)) out+="<img class=\"m-gif\" src=\""+esc(src)+"\" alt=\""+alt+"\" loading=\"lazy\">";
           return ""; }
         if(tag==="a"){ var h=okHref(a.href||""); out+=h?"<a href=\""+esc(h)+"\""+(h.charAt(0)==="/"?"":" target=\"_blank\" rel=\"noopener nofollow\"")+">":"<a>"; return ""; }
@@ -95,7 +98,7 @@
     "<p><b><span class=\"m-glow\">Why the Wizard?</span></b> Our picks are numbers, not vibes. We show our record every day, wins and losses, so you always know how we are doing. Six bookies, one place, free.</p>"+
     "<p>Questions? Find the Wizard on <a href=\"https://t.me/soccerwizardTG\" target=\"_blank\" rel=\"noopener nofollow\">Telegram</a> or <a href=\"https://x.com/soccerwizardhq\" target=\"_blank\" rel=\"noopener nofollow\">X</a> "+emo("2728","sparkles")+"</p>"+
     "<p class=\"m-small\">18+ · Stake only what you can afford to lose.</p>";
-  var api={clean:clean,textOf:textOf,isEmpty:isEmpty,okHref:okHref,EMO:EMO,WELCOME:WELCOME};
+  var api={clean:clean,textOf:textOf,isEmpty:isEmpty,okHref:okHref,EMO:EMO,MOT:MOT,WELCOME:WELCOME};
   if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
   if(!root.document) return;
 
@@ -169,7 +172,19 @@
     ".swm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.swm-grid div{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:10px;text-align:center}"+
     ".swm-grid b{display:block;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}.swm-grid small{font-size:11.5px;color:var(--faint);font-weight:700}"+
     ".swm-acts{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}"+
-    "@media (prefers-reduced-motion:reduce){.swm-ban{animation:none}}";
+    /* emote motions and wavy text */
+    ".m-wave{animation:mWave 1.3s ease-in-out infinite;transform-origin:70% 85%}@keyframes mWave{0%,60%,100%{transform:rotate(0)}10%,30%{transform:rotate(14deg)}20%,40%{transform:rotate(-10deg)}}"+
+    ".m-bounce{animation:mBounce .9s cubic-bezier(.3,0,.5,1) infinite;transform-origin:50% 100%}@keyframes mBounce{0%,100%{transform:translateY(0) scale(1.08,.92)}15%{transform:translateY(0) scale(.95,1.05)}50%{transform:translateY(-38%) scale(.96,1.04)}85%{transform:translateY(0) scale(1.06,.94)}}"+
+    ".m-wiggle{animation:mWiggle .45s ease-in-out infinite alternate}@keyframes mWiggle{from{transform:rotate(-11deg)}to{transform:rotate(11deg)}}"+
+    ".m-jello{animation:mJello 1.4s ease-in-out infinite}@keyframes mJello{0%,45%,100%{transform:skew(0,0)}10%{transform:skew(-14deg,-14deg)}18%{transform:skew(9deg,9deg)}26%{transform:skew(-5deg,-5deg)}34%{transform:skew(2deg,2deg)}}"+
+    ".m-spin{animation:mSpin 1.8s linear infinite}@keyframes mSpin{to{transform:rotate(360deg)}}"+
+    ".m-pulse{animation:mPulse 1.1s ease-in-out infinite}@keyframes mPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.28)}}"+
+    ".m-wavy{white-space:pre-wrap}.m-wavy>span{display:inline-block;animation:mWavy 1.2s ease-in-out infinite}@keyframes mWavy{0%,100%{transform:translateY(0)}50%{transform:translateY(-.28em)}}"+
+    ".m-wavy>span:nth-child(8n+2){animation-delay:.08s}.m-wavy>span:nth-child(8n+3){animation-delay:.16s}.m-wavy>span:nth-child(8n+4){animation-delay:.24s}.m-wavy>span:nth-child(8n+5){animation-delay:.32s}"+
+    ".m-wavy>span:nth-child(8n+6){animation-delay:.4s}.m-wavy>span:nth-child(8n+7){animation-delay:.48s}.m-wavy>span:nth-child(8n){animation-delay:.56s}"+
+    ".swm-mots{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}.swm-mots button{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 9px;border:1px solid var(--line);border-radius:99px;background:none;color:var(--soft);font:inherit;font-size:12px;font-weight:800;cursor:pointer}"+
+    ".swm-mots button[aria-pressed=true]{background:var(--accent);border-color:transparent;color:var(--on-accent)}.swm-mots img{width:16px;height:16px}"+
+    "@media (prefers-reduced-motion:reduce){.swm-ban,.m-wave,.m-bounce,.m-wiggle,.m-jello,.m-spin,.m-pulse,.m-wavy>span{animation:none}}";
   var styled=false;
   function style(){ if(styled) return; styled=true; var s=d.createElement("style"); s.textContent=CSS; d.head.appendChild(s); }
 
@@ -334,7 +349,7 @@
     return "<div class='swm-ed'><div class='swm-tb' role='toolbar' aria-label='Formatting'>"+
       b("bold","Bold",I.b)+b("italic","Italic",I.i)+b("underline","Underline",I.u)+b("strikeThrough","Strike",I.s)+"<span class='swm-sep'></span>"+
       b("m-big","Big text",I.big)+b("m-gold","Gold","<b style='color:var(--accent);font-size:15px'>A</b>")+
-      b("m-glow","Glow","<b class='m-glow' style='font-size:15px'>A</b>")+
+      b("m-glow","Glow","<b class='m-glow' style='font-size:15px'>A</b>")+b("wavy","Wavy text","<b class='m-wavy' style='font-size:13px'><span>~</span><span>W</span><span>~</span></b>")+
       b("m-green","Green","<b style='color:var(--green-ink);font-size:15px'>A</b>")+b("m-red","Red","<b style='color:var(--red-ink);font-size:15px'>A</b>")+
       "<span class='swm-sep'></span>"+b("insertUnorderedList","Bullet list",I.list)+b("quote","Quote",I.quote)+b("center","Centre","≡")+
       b("link","Link",I.link)+b("emo","Animated emoji","<img src='/emo/1f525.webp' alt='' width='20' height='20'>")+b("gif","GIF","<b style='font-size:11px'>GIF</b>")+
@@ -342,7 +357,8 @@
       "<div class='swm-area m-body' contenteditable='true' role='textbox' aria-multiline='true' aria-label='Message' data-ph='Write something magic...'></div>"+
       "<div class='swm-pop' data-pop='link' hidden><div class='swm-row'><input class='swa-in' type='url' placeholder='https://... or /penalty' aria-label='Link address'>"+
         "<button type='button' class='swa-pillbtn' data-link-go>Add link</button></div></div>"+
-      "<div class='swm-pop' data-pop='emo' hidden><div class='swm-emos'>"+EMO.map(function(e){
+      "<div class='swm-pop' data-pop='emo' hidden><div class='swm-mots' role='group' aria-label='Emoji motion'>"+MOT.map(function(m,i){
+        return "<button type='button' data-mot='"+m[0]+"' aria-pressed='"+(i===0)+"'>"+(m[0]?"<img class='m-emo "+m[0]+"' src='/emo/26bd.webp' alt='' width='18' height='18'>":"")+m[1]+"</button>"; }).join("")+"</div><div class='swm-emos'>"+EMO.map(function(e){
         return "<button type='button' data-emo='"+e[0]+"' title='"+esc(e[1])+"'><img src='/emo/"+e[0]+".webp' alt='"+esc(e[1])+"' loading='lazy' width='32' height='32'></button>"; }).join("")+
         "</div><p class='swm-fine'>Animated emoji by Google (Noto, CC BY 4.0)</p></div>"+
       "<div class='swm-pop' data-pop='gif' hidden><div class='swm-row'><input class='swa-in' type='search' placeholder='Search GIFs' aria-label='Search GIFs'>"+
@@ -366,6 +382,21 @@
       var sp=d.createElement("span"); sp.className=cls; sp.appendChild(r.extractContents()); r.insertNode(sp);
       s.removeAllRanges(); var nr=d.createRange(); nr.selectNodeContents(sp); s.addRange(nr); keep();
     }
+    /* Wavy text: each letter its own span so it can ripple; again on wavy text turns it back to plain. */
+    function wavy(){
+      back(); var s=root.getSelection(); if(!s||!s.rangeCount) return;
+      var r=s.getRangeAt(0), host=r.commonAncestorContainer; host=host.nodeType===1?host:host.parentNode;
+      var cur=host.closest&&host.closest("span.m-wavy");
+      if(cur&&area.contains(cur)){ cur.replaceWith(d.createTextNode(cur.textContent)); keep(); return; }
+      var t=r.toString(); if(!t.replace(/\s/g,"")) return say("Select some words first.");
+      if(t.length>60) return say("Wavy works on a few words at a time (60 letters).");
+      var sp=d.createElement("span"); sp.className="m-wavy";
+      Array.prototype.forEach.call(t,function(ch){ var c=d.createElement("span"); c.textContent=ch; sp.appendChild(c); });
+      r.deleteContents(); r.insertNode(sp); s.removeAllRanges(); var nr=d.createRange(); nr.setStartAfter(sp); nr.collapse(true); s.addRange(nr); keep();
+    }
+    var mot="";
+    box.querySelectorAll("[data-mot]").forEach(function(b){ b.addEventListener("mousedown",function(e){ e.preventDefault(); });
+      b.onclick=function(){ mot=b.getAttribute("data-mot"); box.querySelectorAll("[data-mot]").forEach(function(x){ x.setAttribute("aria-pressed",String(x===b)); }); }; });
     box.querySelectorAll("[data-cmd]").forEach(function(btn){
       btn.addEventListener("mousedown",function(e){ e.preventDefault(); });   // keep the selection in the text
       btn.onclick=function(){
@@ -373,6 +404,7 @@
         if(c==="link"||c==="emo"||c==="gif"){ pop(c);
           var inp=box.querySelector("[data-pop='"+c+"'] input"); if(inp&&c==="link") inp.focus();
           if(c==="gif"&&!box.querySelector(".swm-gifs").childElementCount) gifs(""); return; }
+        if(c==="wavy") return wavy();
         if(/^m-/.test(c)) return wrap(c);
         back();
         if(c==="quote") d.execCommand("formatBlock",false,"blockquote");
@@ -397,7 +429,7 @@
     lk.onkeydown=function(e){ if(e.key==="Enter"){ e.preventDefault(); addLink(); } };
     box.querySelectorAll("[data-emo]").forEach(function(b){ b.addEventListener("mousedown",function(e){ e.preventDefault(); });
       b.onclick=function(){ var k=b.getAttribute("data-emo"), n=b.getAttribute("title");
-        insert("<img class=\"m-emo\" src=\"/emo/"+k+".webp\" alt=\""+esc(n)+"\" width=\"28\" height=\"28\">"); }; });
+        insert("<img class=\"m-emo"+(mot?" "+mot:"")+"\" src=\"/emo/"+k+".webp\" alt=\""+esc(n)+"\" width=\"28\" height=\"28\">"); }; });
     var gq=box.querySelector("[data-pop='gif'] input"), gl=box.querySelector(".swm-gifs");
     function gifs(q){
       gl.innerHTML="<p class='swa-note'>Loading...</p>";
