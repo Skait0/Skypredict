@@ -1229,7 +1229,11 @@ a.btab{text-decoration:none}
   border-radius:9px;background:var(--red);color:#fff;font:800 10px/17px inherit;text-align:center;
   box-shadow:0 0 0 2px var(--bg)}
 #hdAccount{position:relative}
-#hdAccount .bt-badge{top:-3px;right:-3px}
+/* On the avatar it is a dot on the rim, not a number over the face (owner,
+   14 Oct 2026: "the count kinda hinders the wizard avatar"). The number is in
+   the menu, beside Messages. */
+#hdAccount .bt-badge{top:-2px;right:-2px;min-width:0;width:12px;height:12px;padding:0;border-radius:50%;
+  font-size:0;line-height:0;color:transparent;overflow:hidden}
 @media(min-width:721px){
   /* it opens the right-hand group, so it takes the push the X icon used to */
   .top-in .navplay~*{margin-left:0}
