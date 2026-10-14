@@ -3531,8 +3531,12 @@ html{interpolate-size:allow-keywords}
 .byo-teaser b{color:var(--soft);font-weight:700}
 .byo-side:not(:has(.byo-job:not([disabled]))) .byo-jobs{display:none}
 .byo-side:has(.byo-job:not([disabled])) .byo-teaser{display:none}
-.byo-book{display:inline-flex;background:var(--card-2);border:1px solid var(--line);
-  border-radius:var(--r-chip);padding:3px;gap:2px;flex:0 0 auto}
+/* WRAPS, NEVER RUNS OFF THE SCREEN (owner, 14 Oct 2026: Betway missing from
+   the converter's row). Six wordmarks are 440px on one line; on a 375px phone
+   the sixth sat at x=381-454, past the edge, with nothing to say it was there.
+   A second line is honest; a hidden one is a missing bookmaker. */
+.byo-book{display:inline-flex;flex-wrap:wrap;max-width:100%;background:var(--card-2);
+  border:1px solid var(--line);border-radius:var(--r-chip);padding:3px;gap:2px;flex:0 0 auto}
 /* THE TOGGLE WEARS THEIR COLOURS.
    A booking code belongs to one bookmaker and picking the wrong one is the
    commonest way a read fails, so the choice should look like the logo on the

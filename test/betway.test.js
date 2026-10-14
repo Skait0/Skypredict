@@ -136,3 +136,11 @@ test("the Betway code card is built like the other books'", () => {
   assert.match(src, /\.code-card--wy \.code-acts \.code-copy,\r?\n\.code-card--wy \.code-acts \.share-btn\{\r?\n  background:#008600/);
   assert.ok(ratio("008600", "FFFFFF") >= 4.5);
 });
+
+test("the converter's bookmaker row wraps rather than hiding a book off a phone screen", () => {
+  /* Six wordmarks are 440px on one line; at 375px Betway sat past the edge
+     (owner, 14 Oct 2026: "its not in the converter bookie selection tab"). */
+  const rule = src.match(/\n\.byo-book\{[^}]*\}/)[0];
+  assert.match(rule, /flex-wrap:wrap/);
+  assert.match(rule, /max-width:100%/);
+});
