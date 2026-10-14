@@ -262,3 +262,8 @@ test("on a phone the emoji and GIF pickers open as a sheet in the keyboard's pla
   assert.ok(src.includes(".swm-pop.swm-sheet{position:fixed;left:0;right:0;bottom:0;"), "drawn at the bottom");
   assert.ok(src.includes("swm-sh-done") && src.includes('area.addEventListener("pointerdown"'), "Done or a tap on the text closes it");
 });
+
+test("the welcome never takes the banner: it waits in the inbox (owner, 14 Oct 2026)", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
+  assert.ok(src.includes("return !x.mine&&x.id!==0&&Date.parse(x.at)>since;"), "id 0 is the welcome, kept out of the banner");
+});

@@ -264,7 +264,9 @@
   function banner(){
     var old=d.getElementById("swmBan");
     var since=Math.max(Date.parse(state.readAt||"")||0,Date.parse(state.bannerAt||"")||0);
-    var m=state.msgs.filter(function(x){ return !x.mine&&Date.parse(x.at)>since; })[0];
+    /* The welcome (id 0) waits in the inbox with the dot; the banner is only
+       for the admin's broadcasts and direct messages (owner, 14 Oct 2026). */
+    var m=state.msgs.filter(function(x){ return !x.mine&&x.id!==0&&Date.parse(x.at)>since; })[0];
     if(!m){ if(old) old.remove(); return; }
     if(old&&old.getAttribute("data-id")===String(m.id)) return;
     if(old) old.remove();
