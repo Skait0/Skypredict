@@ -74,6 +74,14 @@ test("'admin' saved on a device is not enough: only the server's word in this pa
     /function isAdmin\(\)\{ if\(root\.swAdminLive!==true\) return false;/);
 });
 
+test("the hidden Admin tab is really hidden on phones (the cause, 14 Oct 2026)", () => {
+  /* .btab{display:flex} in the phone styles beat the hidden attribute, so the
+     tab showed for every user, signed in or not. Measured: before, display
+     flex at 78px wide for a signed-out visitor; after, display none. */
+  assert.match(src, /\.btab\{flex:1;display:flex;[\s\S]{0,400}?\.btab\[hidden\]\{display:none!important\}/);
+  assert.match(src, /<button class="btab" id="bt-admin" type="button" aria-label="Admin" hidden>/, "it starts hidden");
+});
+
 test("saveRole tells the page, and the account sheet's own Admin refuses other roles", () => {
   assert.match(grab(src, "saveRole"), /root\.swRoleChanged\(\)/);
   assert.match(grab(ui, "admin"), /if\(role\(\)!=="admin"\) return;/);
