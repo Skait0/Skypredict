@@ -634,7 +634,8 @@
             "<div class='m-body' hidden>"+clean(m.body)+"</div></span>"+
             "<span class='swm-bc-acts'><button type='button' class='swa-pillbtn' data-bc-edit='"+esc(String(m.id))+"'>Edit</button>"+
             "<button type='button' class='swa-pillbtn' data-bc-resend='"+esc(String(m.id))+"'>Resend</button>"+
-            "<button type='button' class='swa-pillbtn swm-del-b' data-unsend='"+esc(String(m.id))+"'>Delete</button></span></div>"; }).join(""):
+            "<button type='button' class='swa-pillbtn swm-del-b' data-unsend='"+esc(String(m.id))+"'>Unsend</button>"+
+            "<button type='button' class='swa-pillbtn' data-bc-del='"+esc(String(m.id))+"'>Delete</button></span></div>"; }).join(""):
           "<div class='swa-set'><span class='swa-st'><small>Nothing sent to everyone yet.</small></span></div>";
         var byId={}; bc.forEach(function(m){ byId[String(m.id)]=m; });
         /* Edit: into the editor, and Send becomes Save changes for that message. */
@@ -653,9 +654,14 @@
       });
     }
     function wireUnsend(box){ box.querySelectorAll("[data-unsend]").forEach(function(b){ b.onclick=function(){
-      if(!root.confirm("Delete this for everyone? Users stop seeing it.")) return; b.disabled=true;
+      if(!root.confirm("Unsend this? It disappears for every user.")) return; b.disabled=true;
       a.req("POST","/api/account/unsend",{id:b.getAttribute("data-unsend")},function(code,j){
-        if(code===200){ say("Deleted."); if(editing===b.getAttribute("data-unsend")){ editing=null; ed.clear(); label(); } load(); } else { b.disabled=false; say(errWords(code,j)); } }); }; }); }
+        if(code===200){ say("Unsent. Users no longer see it."); if(editing===b.getAttribute("data-unsend")){ editing=null; ed.clear(); label(); } load(); } else { b.disabled=false; say(errWords(code,j)); } }); }; });
+      /* Delete is for the admin only (owner, 14 Oct 2026): off this list, users keep it. */
+      box.querySelectorAll("[data-bc-del]").forEach(function(b){ b.onclick=function(){
+        if(!root.confirm("Delete this from your list? Users still have it. Use Unsend to take it from them.")) return; b.disabled=true;
+        a.req("POST","/api/account/msghide",{id:Number(b.getAttribute("data-bc-del"))},function(code,j){
+          if(code===200){ say("Deleted from your list. Users still have it."); load(); } else { b.disabled=false; say(errWords(code,j)); } }); }; }); }
     /* One reader's conversation, oldest first, with a reply box that sends to them. */
     function convo(id,list){
       var r=byId(id)||{id:id,email:""}, box=panel.querySelector("#swmConvo");

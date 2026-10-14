@@ -123,7 +123,12 @@ function make(deps) {
           const list = await msgs.all();
           if (!list) return H.sendJson(res, 503, { error: "unavailable" });
           const reads = await msgs.readsOf(s.userId);
-          return H.sendJson(res, 200, { messages: list, readAt: (reads && reads.read_at) || null });
+          /* Delete is for the admin only (owner, 14 Oct 2026): a broadcast they
+             deleted leaves their Broadcasts sent list, and users keep it.
+             Unsend is the one that takes it from everyone. */
+          const gone = new Set((reads && reads.hidden) || []);
+          const shown = list.filter((m) => !(m.user_id == null && gone.has(Number(m.id))));
+          return H.sendJson(res, 200, { messages: shown, readAt: (reads && reads.read_at) || null });
         }
         if (action === "gifs") {
           const got = await msgs.gifs(String((req.query || {}).q || ""), env);

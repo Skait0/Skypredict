@@ -288,3 +288,19 @@ test("the admin edits a sent broadcast in place, cleaned, without a new ping; no
   assert.ok(src.includes('go.textContent=editing?"Save changes"'), "Send becomes Save changes while editing");
   assert.ok(src.includes("class='swm-bc-hd' aria-expanded='false'") && src.includes("<div class='m-body' hidden>"), "each broadcast starts folded");
 });
+
+/* Owner, 14 Oct 2026: "let delete be for just me ... unsend should remove it from the board for everyone". */
+test("Delete takes a broadcast off the admin's list only; Unsend takes it from everyone", async () => {
+  const w = await world();
+  await w.call(post(w.boss, "send", { to: "all", html: "<b>One</b>" }));
+  await w.call(post(w.boss, "send", { to: "all", html: "<b>Two</b>" }));
+  const [one, two] = w.rows.map((r) => r.id);
+  assert.strictEqual((await w.call(post(w.boss, "msghide", { id: one }))).code, 200);
+  const mine = (await w.call(get(w.boss, "threads"))).json().messages.map((m) => m.id);
+  assert.ok(!mine.includes(one) && mine.includes(two), "gone from the admin's Broadcasts sent");
+  assert.ok((await w.call(get(w.ada, "inbox"))).json().messages.some((m) => m.id === one), "users keep it");
+  assert.strictEqual((await w.call(post(w.boss, "unsend", { id: two }))).code, 200);
+  assert.ok(!(await w.call(get(w.ada, "inbox"))).json().messages.some((m) => m.id === two), "Unsend takes it from users");
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
+  assert.ok(src.includes(">Unsend</button>") && src.includes("data-bc-del="), "both buttons on each broadcast");
+});
