@@ -3989,10 +3989,14 @@ html{interpolate-size:allow-keywords}
 /* A SportyBet code opens the same slip on football.com. That was an 11px
    footnote at the foot of the card, and readers who use football.com did not
    know the code was theirs too, or that the pill opened it (owner, 14 Oct
-   2026). Now the two are twin buttons under one caption that says so. The dot
-   in "football.com" takes their lime, #9FF611, as on their own site. */
-.code-two{flex:1 1 100%;margin:0;font-size:12px;font-weight:600;color:rgba(255,255,255,.7)}
-.code-card.code-card--modal .code-opens .code-open.code-open--half{flex:1 1 140px}
+   2026). SportyBet keeps the full Open button - the bigger book - and right
+   under it a plain sentence says the code works on football.com too, with a
+   smaller button of its own. The dot in "football.com" takes their lime,
+   #9FF611, as on their own site. */
+.code-two{flex:1 1 100%;margin:4px 0 0;font-size:12.5px;font-weight:600;line-height:1.35;color:rgba(255,255,255,.75)}
+.code-two .c2b{font-weight:800;color:#fff}
+.code-card.code-card--modal .code-opens .code-open.code-open--fb{flex:0 0 auto;font-size:12.5px;padding:7px 14px;
+  border-color:rgba(255,255,255,.22)}
 .code-open .fb-dot{color:#9FF611;font-weight:800}
 /* Telegram's own blue, on every book's card colour - a quiet pill, not a
    second call to action competing with Open in / Copy. */
@@ -15533,10 +15537,11 @@ function showCode(code,hostId,save,B,picks,d){
        land the reader on their board with an empty slip and no idea why. */
     "<div class='code-opens'>"+
       (B.key==="sporty"&&B.open
-        ? "<p class='code-two'>Same code, same slip on both:</p>"+
-          "<a class='code-open code-open--half' href='"+B.open+encodeURIComponent(code)+
+        ? "<a class='code-open' href='"+B.open+encodeURIComponent(code)+
             "' target='_blank' rel='noopener'>Open in "+B.mark+"</a>"+
-          "<a class='code-open code-open--half' href=\""+esc(_fb.href)+"\""+
+          /* No <b> - .code-card b is the 32px booking-code style. */
+          "<p class='code-two'>This code also works on <span class='c2b'>football.com</span> - same slip.</p>"+
+          "<a class='code-open code-open--fb' href=\""+esc(_fb.href)+"\""+
             (_fb.blank?" target='_blank'":"")+" rel='noopener'>Open in "+
             "<span class='fbm'>football<span class='fb-dot'>.</span>com</span></a>"
       : B.open

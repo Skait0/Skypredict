@@ -190,7 +190,7 @@ test("every bookmaker's sheet: its skin, Copy alone as the primary, then Open in
     assert.match(h, new RegExp("code-card--modal code-card--" + B.skin + "'"), B.key + " skin");
     const acts = /<div class='code-acts'>([\s\S]*?)<\/div>/.exec(h)[1];
     assert.strictEqual((acts.match(/<button/g) || []).length, 1, B.key + ": one primary");
-    if (B.open) assert.ok(h.includes("<a class='code-open" + (B.key === "sporty" ? " code-open--half" : "") + "' href='" + B.open + "SB7XK2Q9'") && h.includes(">Open in " + B.mark + "</a>"), B.key + " opens");
+    if (B.open) assert.ok(h.includes("<a class='code-open' href='" + B.open + "SB7XK2Q9'") && h.includes(">Open in " + B.mark + "</a>"), B.key + " opens");
     else assert.match(h, /<span class='code-paste'>Paste this code/, B.key + " has no deep link, so it says where to paste");
     assert.ok(h.indexOf("code-follow") > h.indexOf("code-next"), B.key + ": follow line last");
   }
@@ -202,13 +202,15 @@ test("on the outlined Open in, 1xBet and betPawa marks take their card colours, 
   assert.match(src, /\.code-card\.code-card--modal\.code-card--bw \.code-opens \.code-open \.bwm \.bwp\{color:#9CE800\}/);
 });
 
-test("a SportyBet code offers football.com as an equal twin, said in words (owner, 14 Oct 2026)", () => {
+test("a SportyBet code: SportyBet's Open leads, then a sentence and a smaller football.com button (owner, 14 Oct 2026)", () => {
   const h = sheetHTML(SPORTY, true);
   const opens = h.slice(h.indexOf("<div class='code-opens'>"), h.indexOf("<div class='code-kept'"));
-  assert.match(opens, /Same code, same slip on both/);
-  assert.strictEqual((opens.match(/class='code-open code-open--half'/g) || []).length, 2, "two equal buttons");
+  assert.ok(opens.includes("This code also works on <span class='c2b'>football.com</span>"), "says it in words");
+  const sb = opens.indexOf("Open in <span class='sbm'>"), fb = opens.indexOf("class='code-open code-open--fb'");
+  assert.ok(sb > 0 && fb > sb && opens.indexOf("also works on") > sb && opens.indexOf("also works on") < fb, "SportyBet first, then the sentence, then football.com");
+  assert.ok(src.includes(".code-open.code-open--fb{flex:0 0 auto;font-size:12.5px"), "football.com's button is the smaller one");
   assert.match(opens, /Open in <span class='fbm'>football<span class='fb-dot'>\.<\/span>com<\/span>/);
   assert.ok(h.indexOf("code-also") < 0, "the old footnote is gone");
   const other = sheetHTML({ key: "bet9ja", skin: "b9", mark: "<span class='b9m'>Bet9ja</span>", open: "https://sports.bet9ja.com/?bookABetCode=" }, true);
-  assert.ok(other.indexOf("football") < 0 && other.indexOf("code-open--half") < 0, "other books keep one Open button");
+  assert.ok(other.indexOf("football") < 0 && other.indexOf("code-open--fb") < 0, "other books keep one Open button");
 });
