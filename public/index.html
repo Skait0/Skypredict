@@ -3915,6 +3915,11 @@ html{interpolate-size:allow-keywords}
 }
 .code-modal-scrim{position:fixed;inset:0;z-index:220;background:rgba(10,14,10,.45);
   backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px;
+  /* A card taller than the screen (Made safer on a 1,500-odds slip lists
+     every swapped game) was centred past both edges with nothing to scroll -
+     cut off top and bottom (owner, 14 Oct 2026). The scrim scrolls instead,
+     and the card's auto margins centre it only while it fits. */
+  overflow-y:auto;overscroll-behavior:contain;
   /* THE CODE USED TO BLINK INTO EXISTENCE. It is the thing this whole product
      exists to hand over and it arrived with less ceremony than a tooltip.
      @starting-style is what makes the entrance possible without a class
@@ -3925,7 +3930,7 @@ html{interpolate-size:allow-keywords}
 @starting-style{.code-modal-scrim{opacity:0}}
 /* Scoped to the modal. .code-card is also rendered inline under the builder,
    where it is not being inserted and has nothing to animate from. */
-.code-modal-scrim .code-card{
+.code-modal-scrim .code-card{margin:auto;flex-shrink:0;
   transition:opacity 220ms var(--ease-out),transform 220ms var(--ease-out)}
 @starting-style{.code-modal-scrim .code-card{opacity:0;transform:scale(.96)}}
 /* A tinted pane, the way it always was in dark mode - the green wash there

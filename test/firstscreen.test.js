@@ -214,3 +214,11 @@ test("a SportyBet code: SportyBet's Open leads, then a sentence and a smaller fo
   const other = sheetHTML({ key: "bet9ja", skin: "b9", mark: "<span class='b9m'>Bet9ja</span>", open: "https://sports.bet9ja.com/?bookABetCode=" }, true);
   assert.ok(other.indexOf("football") < 0 && other.indexOf("code-open--fb") < 0, "other books keep one Open button");
 });
+
+test("a code card taller than the screen scrolls instead of being cut off top and bottom (owner, 14 Oct 2026)", () => {
+  /* Made safer on a 1,500-odds slip lists every swapped game; the scrim
+     centred the card past both edges and had nothing to scroll. */
+  const scrim = src.slice(src.indexOf(".code-modal-scrim{position:fixed"), src.indexOf("@starting-style{.code-modal-scrim{opacity:0}}"));
+  assert.ok(scrim.includes("overflow-y:auto"), "the scrim scrolls");
+  assert.ok(src.includes(".code-modal-scrim .code-card{margin:auto;flex-shrink:0;"), "auto margins centre the card only while it fits");
+});
