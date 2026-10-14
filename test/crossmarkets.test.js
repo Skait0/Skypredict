@@ -566,6 +566,10 @@ test("a swap keeps the game and widens the outcome, never the reverse", () => {
     grab("fetchedMarket") + grab("bookVerdict") +
     "var BYO={saferHow:'normal',saferSwapOn:true,saferDrop:false};" +
     grab("gradeLeg") +
+    /* saferSwap falls back to saferSafest (a very safe bet on the same game,
+       14 Oct 2026). These tests are about the LADDER, so the fallback sees an
+       empty market menu and changes nothing they assert. */
+    "var swapOptions=function(){return [];};var FEED_RAW={};" +
     src.slice(src.indexOf("var SAFER_TO=["), src.indexOf("function renderByo(")) +
     "\nreturn {saferSwap:saferSwap,saferPlan:saferPlan,saferDroppable:saferDroppable,SAFER_MIN_GAIN:SAFER_MIN_GAIN};")();
   const B = { key: "sporty", id: "eventId", odds: "sportyOdds" };

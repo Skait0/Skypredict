@@ -12509,6 +12509,10 @@ function attachTo(f,m,B){
  * Keeping the list costs one reference and removes the middle step: a leg can
  * be matched straight against the other book's own events. See feedMatch. */
 var FEED={};
+/* And the same lists BEFORE the youth / simulated filter. Never paired against
+   the board - FEED is for that - only read by the editor for a reader's OWN
+   leg on a game we do not rate: their game, their book's prices (saferSafest). */
+var FEED_RAW={};
 /* A READ THAT LANDED BEFORE THE PRICES DID.
  *
  * byoRead can finish in a few hundred milliseconds while /api/fixtures is
@@ -12539,6 +12543,7 @@ function refreshByoPanels(){
 function attachEventIds(sporty,B){
   B=B||BOOKS.sporty;
   if(!sporty||!sporty.length) return 0;
+  try{ FEED_RAW[B.key]=sporty; }catch(e){}
   /* NO YOUTH, RESERVE OR WOMEN'S COMPETITION (owner, 13 Oct 2026: "the wizard
      picked uefa champions league under 19!!"). The Youth League plays the same
      day as the Champions League, between the same clubs, and SportyBet names the
@@ -16529,10 +16534,63 @@ var SAFER_STRENGTH={
 };
 function saferDial(){ return SAFER_STRENGTH[BYO.saferHow]||SAFER_STRENGTH.normal; }
 
+/* A LEG WITH NO EASIER VERSION OF ITSELF STILL HAS A SAFE BET ON ITS GAME.
+   Owner, 14 Oct 2026: "instead of saying outright that we can't fix them,
+   since we can read the fixtures, find markets that are very safe and use them.
+   editing is all about safe games after all. just let the user know."
+   The ladder above only offers bets that CONTAIN the original, so "Everton or
+   draw" at 57% had nowhere to go and was offered up for removal. This keeps the
+   game and moves the leg to a different bet on it - which is a change of bet,
+   not a widening, so the row says so and the reader can Keep the original.
+   Two sources, the honest one first:
+   - a game on our board: our own model's chance, and only for a market the
+     book publishes a price for (the proof it sells it), with the builders'
+     double-chance rule (dcOk);
+   - a game we do not rate: the bookmaker's own price for it, read off its feed
+     (FEED_RAW - youth and lower leagues included, it is the reader's own game),
+     as a chance with ~5% margin taken off.
+   At least EDIT_SAFE_MIN either way, and a real step up from the leg it
+   replaces. Nearest qualifying step first (owner, 11 Oct: Over 0.5 at 1.05 on
+   every game "too low"), so the slip keeps as much of its price as it can. */
+var EDIT_SAFE_MIN=0.80;
+var BOOK_SAFE=["1X","X2","12","OVER_0.5","HOME_OVER_0.5","AWAY_OVER_0.5","OVER_1.5","UNDER_3.5","UNDER_4.5"];
+function feedRowOf(l,B){
+  var rows=(FEED_RAW&&FEED_RAW[B.key])||[], id=String(l&&l.eventId||"");
+  for(var i=0;i<rows.length;i++) if(String(rows[i].eventId)===id) return rows[i];
+  return null;
+}
+function saferSafest(l,B,f){
+  var gain=saferDial().gain, out=[], from=l.prediction;
+  if(f){
+    var pOld=mProb(f,from), own=f[B.odds]||{};
+    swapOptions(f).forEach(function(o){
+      if(o.code===from||!(o.p>=EDIT_SAFE_MIN)) return;
+      if(pOld!=null&&!(o.p-pOld>=gain)) return;
+      if(!(own[o.code]>1.01)||!bookAllows(o.code,B)||bookVerdict(f,o.code,B)==="not-priced") return;
+      if((o.code==="1X"||o.code==="X2")&&!dcOk(f,o.code)) return;
+      out.push({to:o.code,pOld:pOld,pNew:o.p,oddNew:own[o.code],src:"model"});
+    });
+  }else{
+    var row=feedRowOf(l,B), od=(row&&row.odds)||{};
+    var pO=(+l.odds>1.01)?1/(+l.odds)/1.05:null;
+    BOOK_SAFE.forEach(function(c){
+      if(c===from||!(+od[c]>1.01)||!bookAllows(c,B)) return;
+      var p=1/(+od[c])/1.05;
+      if(!(p>=EDIT_SAFE_MIN)) return;
+      if(pO!=null&&!(p-pO>=gain)) return;
+      out.push({to:c,pOld:null,pNew:null,pBook:p,oddNew:+od[c],src:"book"});
+    });
+  }
+  out.sort(function(a,b){ return (a.pNew!=null?a.pNew:a.pBook)-(b.pNew!=null?b.pNew:b.pBook); });
+  var best=out[0]; if(!best) return null;
+  return {leg:l,f:f||{home:l.home||"Home",away:l.away||"Away"},from:from,to:best.to,
+          pOld:best.pOld,pNew:best.pNew,pBook:best.pBook,oddOld:+l.odds||null,oddNew:best.oddNew,
+          kind:"safe",src:best.src};
+}
 function saferSwap(l,B){
   if(!l||!l.prediction) return null;
   if(isPinned(l)) return null;                    /* pinned means do not touch */
-  var f=fixtureByLeg(l,B); if(!f) return null;      /* no numbers, no opinion */
+  var f=fixtureByLeg(l,B); if(!f) return saferSafest(l,B,null);   /* their game, their book's prices */
   var from=l.prediction;
   var pOld=mProb(f,from);                           /* null is allowed: see saferRungs */
   /* UP THE LADDER WHILE IT KEEPS HELPING, as far as the dial allows. `steps`
@@ -16552,7 +16610,7 @@ function saferSwap(l,B){
     return bookAllows(r.to,B)&&bookVerdict(f,r.to,B)!=="not-priced"&&
            (pOld==null||(r.p-pOld)>=saferDial().gain);
   }).slice(0,steps).map(function(r){ return {to:r.to,pNew:r.p}; });
-  if(!opts.length) return null;
+  if(!opts.length) return saferSafest(l,B,f);      /* nothing wider: a safe bet on the game */
   /* THE FURTHEST RUNG BY DEFAULT, AND THE NEXT ONE ALONG ON A SHUFFLE.
      Every rung in here already passed the same tests - the book sells it, it
      is priced, and it gains more than the dial asks - so any of them is an
@@ -17312,12 +17370,17 @@ function offBoardNote(legs,B){
   var by={};
   off.forEach(function(l){ var k=l.league||"leagues we do not carry"; by[k]=(by[k]||0)+1; });
   var top=Object.keys(by).sort(function(a,b){ return by[b]-by[a]; });
+  /* It used to say these games are left untouched. Since 14 Oct 2026 a game we
+     do not rate can still move to a very safe bet at the book's own price (see
+     saferSafest), so the note says where the numbers come from instead. */
+  var bk=(B&&(B.mark||esc(B.label)))||"the bookmaker";
   return "<p class='byo-note sf-off'><b>"+off.length+" of these "+open.length+
-    " games are ones we don't cover</b>, so we have no numbers to judge them and "+
-    "Edit leaves them as they are: "+
+    " games are ones we don't cover</b>, so we can't rate them ourselves: "+
     top.slice(0,3).map(function(k){ return esc(k)+" ("+by[k]+")"; }).join(", ")+
     (top.length>3?" and "+(top.length-3)+" other league"+(top.length===4?"":"s"):"")+
-    ". It can only work on the other "+(open.length-off.length)+".</p>";
+    ". "+((open.length-off.length)?"We judge the other "+(open.length-off.length)+"; where ":"Where ")+
+    bk+" prices a very safe bet "+
+    "on one of these, we use its own price, and otherwise it stays as it is.</p>";
 }
 function saferBoxInner(legs,B){
   var plan=saferPlan(legs,B);
@@ -17377,7 +17440,11 @@ function saferBoxInner(legs,B){
       esc((p.leg.home||"?")+" v "+(p.leg.away||"?"))+"</span>"+
       "<span class='sf-m'>"+mLabel(f,p.from)+sfPct(p.pOld)+
       " → <b>"+mLabel(f,p.to)+"</b>"+sfPct(p.pNew)+
-      (p.pOld==null?" <i class='sf-proof'>wider bet</i>":"")+"</span>"+
+      (p.kind==="safe"
+        ? (p.src==="book"
+            ? " <i class='sf-proof'>x"+(+p.oddNew).toFixed(2)+" at "+(B.mark||esc(B.label))+" - we don't rate this game</i>"
+            : " <i class='sf-proof'>safest bet on this game</i>")
+        : (p.pOld==null?" <i class='sf-proof'>wider bet</i>":""))+"</span>"+
       pinBtn(p.leg)+"</div>";
   }).join("")+
   (plan.length>SHOW?"<p class='byo-note sf-more'>and "+(plan.length-SHOW)+
@@ -17437,6 +17504,15 @@ function saferBoxInner(legs,B){
       : (plan.length
           ? "<p class='byo-note'>"+plan.length+" leg"+(plan.length===1?"":"s")+
             " move to an easier bet on the same game. The rest stay as they are.</p>"+
+            (plan.some(function(p){return p.kind==="safe";})
+              ? "<p class='byo-note sf-safe'>"+plan.filter(function(p){return p.kind==="safe";}).length+
+                " of these had no easier version of the same bet, so we moved "+
+                (plan.filter(function(p){return p.kind==="safe";}).length===1?"it":"them")+
+                " to a very safe bet on the same game instead"+
+                (plan.some(function(p){return p.kind==="safe"&&p.src==="book";})
+                  ? " - where we don't rate the game, by "+(B.mark||esc(B.label))+"'s own price"
+                  : "")+". That is a different bet: <b>Keep</b> puts the original back.</p>"
+              : "")+
             "<div class='sf-rows'>"+rows+"</div>"
           : "")+
         (drop.length
