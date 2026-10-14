@@ -24,7 +24,7 @@ const lift = (env) => new Function("ENV",
   "var EDIT_SAFE_MIN=" + /var EDIT_SAFE_MIN=([\d.]+);/.exec(src)[1] + ";" +
   "var BOOK_SAFE=" + /var BOOK_SAFE=(\[[^\]]*\]);/.exec(src)[1] + ";" +
   "var FEED_RAW=ENV.FEED_RAW||{};" +
-  "function saferDial(){return {gain:0.08};}" +
+  "function saferDial(){return {gain:0.08,safe:ENV.SAFE===undefined?true:ENV.SAFE};}" +
   "function mProb(f,c){return (ENV.P||{})[c]==null?null:ENV.P[c];}" +
   "function swapOptions(){return Object.keys(ENV.P||{}).map(function(c){return {code:c,p:ENV.P[c]};});}" +
   "function bookAllows(c){return !(ENV.NOT||[]).includes(c);}" +
@@ -82,4 +82,22 @@ test("the panel tells the reader it is a different bet, in the book's own wordma
   // and the off-board note no longer promises to leave those games alone
   assert.doesNotMatch(src, /Edit leaves them as they are/);
   assert.match(src, /prices a very safe bet "\s*\+\s*"on one of these, we use its own price/);
+});
+
+test("the level decides who may be moved to a different bet (owner, 14 Oct 2026: x770 came back x25)", () => {
+  const f = { home: "Everton", away: "Chelsea", wyOdds: { "OVER_0.5": 1.05, "UNDER_4.5": 1.12 } };
+  const P = { "1X": 0.57, "OVER_0.5": 0.93, "UNDER_4.5": 0.86 };
+  const leg = { prediction: "1X", eventId: "1", odds: 1.6 };
+  assert.strictEqual(lift({ P, SAFE: false })(leg, B, f), null, "Light touch never swaps to an unrelated bet");
+  assert.strictEqual(lift({ P, SAFE: 0.60 })(leg, B, f).to, "UNDER_4.5", "Balanced: a leg we rate under 60% may move");
+  assert.strictEqual(lift({ P: Object.assign({}, P, { "1X": 0.66 }), SAFE: 0.60 })(leg, B, f), null,
+    "Balanced: a leg we rate 60%+ stays as it is");
+  assert.strictEqual(lift({ P: Object.assign({}, P, { "1X": 0.66 }), SAFE: true })(leg, B, f).to, "UNDER_4.5", "Safest moves it");
+  const FEED_RAW = { betway: [{ eventId: "7", odds: { "1X": 1.18 } }] };
+  assert.strictEqual(lift({ FEED_RAW, SAFE: 0.60 })({ prediction: "GG", eventId: "7", odds: 1.4 }, B, null), null,
+    "off the board, the book's own price (1/1.4 less margin = 68%) is the leg's chance");
+  const dial = src.slice(src.indexOf("var SAFER_STRENGTH={"), src.indexOf("function saferDial"));
+  assert.match(dial, /light:{[^}]*safe:false}/);
+  assert.match(dial, /normal:{[^}]*safe:0.60}/);
+  assert.match(dial, /strong:{[^}]*safe:true}/);
 });

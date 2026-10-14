@@ -315,3 +315,14 @@ test("shared refusals: what SportyBet refused for anyone is skipped by everyone,
 test("a swap never offers double chance the builders would not (owner, 11 Oct 2026)", () => {
   assert.match(body("safePicks"), /\(o\.code==="1X"\|\|o\.code==="X2"\)&&!dcOk\(f,o\.code\)\) return;/);
 });
+
+test("Make it safer offers the three levels with their odds before booking (owner, 14 Oct 2026)", () => {
+  const s = body("saferHere");
+  assert.match(src, /var SAFER_LEVELS=\["light","normal","strong"\];/);
+  assert.ok(s.includes("SAFER_LEVELS.forEach(function(how){"), "every level is worked out");
+  assert.ok(s.includes("saferRun(legs,B,how)"), "with its own dial");
+  assert.ok(s.indexOf("How much safer?") > 0 && s.indexOf("class='cs-lv' data-how='") > 0, "a row per level");
+  assert.ok(s.indexOf("bookRounds(") > s.indexOf("btn.addEventListener(\"click\""), "nothing is booked until a row is tapped");
+  assert.ok(s.includes("if(seen[sig]!=null)"), "two levels with the same changes are one row");
+  assert.ok(s.includes("\"about x\""), "an unpriced swap is an estimate and says so");
+});

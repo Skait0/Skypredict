@@ -4043,6 +4043,21 @@ html{interpolate-size:allow-keywords}
 .cs-msg{flex:1 1 100%;margin:0;font-size:11.5px;font-weight:600;line-height:1.45;
   color:rgba(255,255,255,.86)}
 .code-safer .code-err{flex:1 1 100%;margin:0}
+/* The three levels, each a row that books when tapped: name and how many games
+   it changes on the left, what it pays on the right in the site's gold. */
+.code-safer--pick{display:block}
+.cs-lvs{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.cs-lv{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:10px;
+  width:100%;padding:9px 12px;font:inherit;text-align:left;cursor:pointer;color:#fff;
+  border-radius:var(--r-md);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
+  transition:background .14s var(--ease-out),border-color .14s var(--ease-out)}
+.cs-lvn{font-size:13px;font-weight:800}
+.cs-lvc{grid-column:1;font-size:11.5px;font-weight:600;color:rgba(255,255,255,.7)}
+.cs-lvo{grid-column:2;grid-row:1 / span 2;font-size:15px;font-weight:800;
+  font-variant-numeric:tabular-nums;color:var(--accent);white-space:nowrap}
+.cs-lv:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cs-lv[aria-busy]{cursor:progress;opacity:.7}
+@media (hover:hover){.cs-lv:hover{background:rgba(255,255,255,.13);border-color:rgba(255,255,255,.3)}}
 /* What was done, in the slot the offer was in: the odds it pays now beside
    the heading, then one row per game that moved - old bet struck through,
    the new one after it. */
@@ -15674,20 +15689,20 @@ function showCode(code,hostId,save,B,picks,d){
    same game, bookFetch books that ticket, and the new code opens in this
    modal with what changed and what it now pays. Swaps only, no legs taken
    out: the promise on the pill is "same games".
-   Balanced first, the converter's usual call; Safest only when Balanced finds
-   nothing, because a press that answers "nothing to do" when there was
-   something is worse than one that goes a step further. The converter's own
-   dials live on BYO, so they are set for the run and put back after it - a
-   reader half way through an edit there keeps it.
+   THE READER PICKS HOW SAFE (owner, 14 Oct 2026: a x770 slip came back x25
+   with no say in it). The press works out Light touch, Balanced and Safest at
+   once - no booking - and shows what each pays and how many games it changes;
+   tapping one books it. The converter's own dials live on BYO, so they are set
+   for each run and put back after it - a reader half way through an edit
+   there keeps it.
    The href stays, so a middle-click or a new tab still gets the full editor. */
-function saferRun(legs,B){
+var SAFER_LEVELS=["light","normal","strong"];
+function saferRun(legs,B,how){
   var keep={how:BYO.saferHow,on:BYO.saferSwapOn,sh:BYO.saferShuffle,pin:BYO.saferPin};
   try{
     BYO.saferSwapOn=true; BYO.saferShuffle=0; BYO.saferPin={};
-    BYO.saferHow="normal";
-    var plan=saferPlan(legs,B);
-    if(!plan.length){ BYO.saferHow="strong"; plan=saferPlan(legs,B); }
-    return plan;
+    BYO.saferHow=how;
+    return saferPlan(legs,B);
   }finally{
     BYO.saferHow=keep.how; BYO.saferSwapOn=keep.on;
     BYO.saferShuffle=keep.sh; BYO.saferPin=keep.pin;
@@ -15749,10 +15764,48 @@ function saferHere(wrap,code,B){
         var legs=d.legs.filter(function(l){ return l.prediction&&!legStarted(l); });
         var started=d.legs.length-legs.length;
         if(!legs.length) return say("Every game on this slip has started, so there is nothing left to change.");
-        var plan=saferRun(legs,B);
-        if(!plan.length) return say("Already as safe as we can make it: no game here has a safer bet we trust.");
+        /* Every level worked out before anything is booked. Two levels that
+           make the same changes are one choice, shown under the safer name;
+           a level that changes nothing is not offered. */
+        var before=saferOdds(legs,[],B), seen={}, opts=[];
+        SAFER_LEVELS.forEach(function(how){
+          var plan=saferRun(legs,B,how);
+          if(!plan.length) return;
+          var sig=plan.map(function(p){ return p.leg.eventId+"|"+p.to; }).join(",");
+          if(seen[sig]!=null){ opts[seen[sig]].how=how; return; }
+          seen[sig]=opts.length;
+          var after=saferOdds(legs,plan,B), est=null;
+          /* A swapped bet the book has not priced yet: our own chance, less a
+             bookmaker's ~5% margin, stands in - and the row says "about". */
+          if(after.unknown){
+            est=after.odds;
+            plan.forEach(function(p){ if(!(p.oddNew>1)) est=(est&&p.pNew>0)?est*0.95/p.pNew:null; });
+            if(est&&saferOdds(legs.filter(function(l){ return !plan.some(function(p){ return p.leg===l; }); }),[],B).unknown) est=null;
+          }
+          opts.push({how:how,plan:plan,after:after,est:est});
+        });
+        if(!opts.length) return say("Already as safe as we can make it: no game here has a safer bet we trust.");
+        go.innerHTML=label; go.removeAttribute("aria-busy");
+        var was=before.known&&!before.unknown?"Now x"+before.odds.toFixed(2)+". ":"";
+        box.className="code-safer code-safer--pick";
+        box.innerHTML="<div class='cs-txt'><b>How much safer?</b><span>"+was+"Tap one to book it.</span></div>"+
+          "<div class='cs-lvs'>"+opts.map(function(o){
+            var n=o.plan.length;
+            return "<button type='button' class='cs-lv' data-how='"+o.how+"'>"+
+              "<span class='cs-lvn'>"+esc(SAFER_STRENGTH[o.how].label)+"</span>"+
+              "<span class='cs-lvc'>"+n+" game"+(n===1?"":"s")+" changed</span>"+
+              "<span class='cs-lvo'>"+(o.after.unknown?(o.est?"about x"+o.est.toFixed(2):"see betslip"):"x"+o.after.odds.toFixed(2))+"</span></button>";
+          }).join("")+"</div>";
+        box.querySelectorAll(".cs-lv").forEach(function(btn){
+          btn.addEventListener("click",function(){
+            if(box.querySelector(".cs-lv[aria-busy]")) return;
+            var o=opts.filter(function(x){ return x.how===btn.dataset.how; })[0];
+            btn.setAttribute("aria-busy","true");
+            bookSafer(o.plan,o.after,function(){ btn.removeAttribute("aria-busy"); });
+          });
+        });
+        function bookSafer(plan,after,idle){
         var byLeg={}; plan.forEach(function(p){ byLeg[p.leg.eventId+"|"+p.from]=p; });
-        var before=saferOdds(legs,[],B), after=saferOdds(legs,plan,B);
         /* THROUGH THE SAME REFUSAL LOOP AS EVERY OTHER BOOKING. A refusal here
            was written INTO the pill - the error card took the pill's own
            flex row and padding and blew it up to three times its height.
@@ -15769,7 +15822,7 @@ function saferHere(wrap,code,B){
         });
         bookRounds(picks,B,"safer","codeSaferHost",{
           busy:function(){},
-          idle:function(){ go.innerHTML=label; go.removeAttribute("aria-busy"); },
+          idle:idle,
           code:function(nc,sent,r){
             showCode(nc,"codeSaferHost",null,B,sent,r);
             var slot=document.querySelector("#codeModal .code-safer");
@@ -15777,6 +15830,7 @@ function saferHere(wrap,code,B){
           },
           fail:function(r){ showBookErr("codeSaferHost",bookErrHTML(r,B)); }
         });
+        }
       })
       .catch(function(){ say("Couldn't reach the bookmaker. Check your connection and try again."); });
   });
@@ -16568,14 +16622,19 @@ var SAFER_STRENGTH={
      the lowest bar to change a leg, the furthest a leg may travel, and the
      most legs offered up for removal. Every one of these dials moves in one
      direction, safety, so the labels say so and the scale reads in order. */
+  /* `safe` is how far a leg with no safer version of itself may be moved to a
+     different, very safe bet on its game (saferSafest): never, only when we
+     rate the leg under that chance, or always. Owner, 14 Oct 2026: a x770
+     wizard slip came back x25 from Make it safer because every level did it
+     to every leg, so the three levels were barely different. */
   auto:{gain:0.05,under:0.55,steps:2,label:"Auto",
         note:"We fix what we can and drop what we cannot",
-        swap:true,drop:true},
+        swap:true,drop:true,safe:true},
   light:{gain:0.14,under:0.50,steps:1,label:"Light touch",
-         note:"Only the legs that clearly need it"},
-  normal:{gain:0.08,under:0.60,steps:1,label:"Balanced",note:"Our usual call"},
+         note:"Only the legs that clearly need it",safe:false},
+  normal:{gain:0.08,under:0.60,steps:1,label:"Balanced",note:"Our usual call",safe:0.60},
   strong:{gain:0.03,under:0.70,steps:3,label:"Safest",
-          note:"Change anything that helps, as far as it helps"}
+          note:"Change anything that helps, as far as it helps",safe:true}
 };
 function saferDial(){ return SAFER_STRENGTH[BYO.saferHow]||SAFER_STRENGTH.normal; }
 
@@ -16605,9 +16664,11 @@ function feedRowOf(l,B){
   return null;
 }
 function saferSafest(l,B,f){
-  var gain=saferDial().gain, out=[], from=l.prediction;
+  var gain=saferDial().gain, out=[], from=l.prediction, lim=saferDial().safe;
+  if(!lim) return null;
   if(f){
     var pOld=mProb(f,from), own=f[B.odds]||{};
+    if(lim!==true&&pOld!=null&&pOld>=lim) return null;
     swapOptions(f).forEach(function(o){
       if(o.code===from||!(o.p>=EDIT_SAFE_MIN)) return;
       if(pOld!=null&&!(o.p-pOld>=gain)) return;
@@ -16618,6 +16679,7 @@ function saferSafest(l,B,f){
   }else{
     var row=feedRowOf(l,B), od=(row&&row.odds)||{};
     var pO=(+l.odds>1.01)?1/(+l.odds)/1.05:null;
+    if(lim!==true&&pO!=null&&pO>=lim) return null;
     BOOK_SAFE.forEach(function(c){
       if(c===from||!(+od[c]>1.01)||!bookAllows(c,B)) return;
       var p=1/(+od[c])/1.05;
@@ -16651,10 +16713,18 @@ function saferSwap(l,B){
      refusal, and only ever about a market the sweep fetches. saferRungs has
      already applied it; asked again so a rung can never arrive unchecked. */
   var steps=saferDial().steps||1;
+  /* A rung that barely helps is skipped at Balanced's bar on every level, and
+     only then are steps counted; the level's own bar is asked of the rung it
+     lands on (14 Oct 2026). Filtering on each level's own bar first let Light
+     touch's higher one skip past Balanced's rung to a further, safer one -
+     Light came out safer than Balanced on the same slip. */
+  var useful=Math.min(saferDial().gain,SAFER_STRENGTH.normal.gain);
   var opts=saferRungs(f,from,B).filter(function(r){
     return bookAllows(r.to,B)&&bookVerdict(f,r.to,B)!=="not-priced"&&
-           (pOld==null||(r.p-pOld)>=saferDial().gain);
-  }).slice(0,steps).map(function(r){ return {to:r.to,pNew:r.p}; });
+           (pOld==null||(r.p-pOld)>=useful);
+  }).slice(0,steps).filter(function(r){
+    return pOld==null||(r.p-pOld)>=saferDial().gain;
+  }).map(function(r){ return {to:r.to,pNew:r.p}; });
   if(!opts.length) return saferSafest(l,B,f);      /* nothing wider: a safe bet on the game */
   /* THE FURTHEST RUNG BY DEFAULT, AND THE NEXT ONE ALONG ON A SHUFFLE.
      Every rung in here already passed the same tests - the book sells it, it

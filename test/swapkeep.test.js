@@ -581,3 +581,14 @@ test("a cut leg says why it is being cut", () => {
   assert.match(why({ prediction: "AH_1_-1" }, B).why, /do not price/);
   assert.match(why({ prediction: null }, B).why, /cannot read/);
 });
+
+test("Light touch never travels further than Balanced on the same leg (owner, 14 Oct 2026)", () => {
+  /* Each level's own bar used to be applied before steps were counted, so
+     Light's higher bar skipped past Balanced's rung to a further one. */
+  const run = ladder(LOPSIDED);
+  for (const code of ["1", "2", "OVER_2.5", "OVER_3.5", "GG", "OVER_1.5"]) {
+    const l = run(code, "light"), n = run(code, "normal");
+    if (l && n) assert.ok(l.pNew <= n.pNew + 1e-9, code + ": Light " + l.to + " is safer than Balanced " + n.to);
+    if (l) assert.ok(n, code + ": Light moved it, so Balanced must too");
+  }
+});
