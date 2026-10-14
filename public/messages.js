@@ -169,6 +169,14 @@
     ".swm-tb button:hover,.swm-tb button[aria-pressed=true]{background:var(--raise)}.swm-tb .swm-sep{width:1px;background:var(--line);margin:4px 3px}"+
     ".swm-area{min-height:150px;max-height:420px;overflow-y:auto;padding:12px 14px;outline:none}.swm-area:empty:before{content:attr(data-ph);color:var(--faint)}"+
     ".swm-pop{border-top:1px solid var(--line);padding:10px;background:var(--card-2)}.swm-pop[hidden]{display:none}"+
+    /* the phone picker, in the keyboard's place */
+    ".swm-pop.swm-sheet{position:fixed;left:0;right:0;bottom:0;z-index:400;max-height:min(55vh,440px);overflow-y:auto;overscroll-behavior:contain;"+
+      "border:1px solid var(--line);border-bottom:0;border-radius:16px 16px 0 0;padding:0 12px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -10px 30px rgba(0,0,0,.45);"+
+      "animation:swmUp .22s cubic-bezier(.23,1,.32,1)}@keyframes swmUp{from{transform:translateY(40px);opacity:0}}"+
+    ".swm-sh-hd{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;margin:0 -12px 8px;padding:10px 12px;background:var(--card-2);border-bottom:1px solid var(--line)}"+
+    ".swm-sh-hd span{font-size:13px;font-weight:800;color:var(--soft)}.swm-sh-done{border:0;border-radius:8px;background:var(--accent);color:var(--on-accent);font:inherit;font-size:13px;font-weight:800;padding:6px 14px;cursor:pointer}"+
+    ".swm-sheet .swm-wizs,.swm-sheet .swm-emos,.swm-sheet .swm-gifs{max-height:none;overflow:visible}"+
+    "@media (prefers-reduced-motion:reduce){.swm-pop.swm-sheet{animation:none}}"+
     ".m-emo.m-wiz{width:2.75em;height:2.75em;vertical-align:-1em}"+
     ".swm-etabs{display:flex;gap:4px;margin-bottom:8px}.swm-etabs button{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 12px;border:0;border-radius:8px;background:none;color:var(--soft);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}"+
     ".swm-etabs button[aria-selected=true]{background:var(--raise);color:var(--text)}.swm-etabs img{width:18px;height:18px}"+
@@ -411,8 +419,40 @@
     function back(){ area.focus(); var s=root.getSelection(); if(saved&&s){ s.removeAllRanges(); s.addRange(saved); } }
     area.addEventListener("keyup",keep); area.addEventListener("mouseup",keep); area.addEventListener("input",keep);
     d.addEventListener("selectionchange",function(){ if(d.activeElement===area) keep(); });
-    function pop(name){ box.querySelectorAll("[data-pop]").forEach(function(p){ p.hidden=p.getAttribute("data-pop")!==name||!p.hidden; }); }
-    function insert(html){ back(); d.execCommand("insertHTML",false,html); keep(); }
+    /* ON A PHONE THE EMOJI AND GIF PICKERS TAKE THE KEYBOARD'S PLACE, the way
+       WhatsApp, Telegram and Discord do it (owner, 14 Oct 2026: the picker sat
+       behind the keyboard and scrolling it moved the cursor). Opening one closes
+       the keyboard and slides the picker up from the bottom; a tap inserts at
+       the remembered cursor without bringing the keyboard back; tapping the text
+       or Done closes it. Desktop keeps the inline panel. */
+    var touch=!!(root.matchMedia&&(root.matchMedia("(pointer:coarse)").matches||root.matchMedia("(max-width:720px)").matches));
+    function sheetOpen(){ return !!box.querySelector(".swm-pop.swm-sheet:not([hidden])"); }
+    function pop(name){
+      box.querySelectorAll("[data-pop]").forEach(function(p){
+        p.hidden=p.getAttribute("data-pop")!==name||!p.hidden;
+        var sheet=touch&&(p.getAttribute("data-pop")==="emo"||p.getAttribute("data-pop")==="gif");
+        p.classList.toggle("swm-sheet",sheet);
+        if(sheet&&!p.querySelector(".swm-sh-hd")){
+          var hd=d.createElement("div"); hd.className="swm-sh-hd";
+          hd.innerHTML="<span>"+(p.getAttribute("data-pop")==="gif"?"GIFs":"Emotes and emoji")+"</span><button type='button' class='swm-sh-done'>Done</button>";
+          hd.querySelector("button").addEventListener("mousedown",function(e){ e.preventDefault(); });
+          hd.querySelector("button").onclick=function(){ p.hidden=true; };
+          p.insertBefore(hd,p.firstChild);
+        }
+      });
+      if(sheetOpen()){ keep(); area.blur(); }
+    }
+    area.addEventListener("pointerdown",function(){ if(sheetOpen()) box.querySelectorAll(".swm-pop.swm-sheet").forEach(function(p){ p.hidden=true; }); });
+    function insert(html){
+      if(!sheetOpen()){ back(); d.execCommand("insertHTML",false,html); keep(); return; }
+      /* Into the remembered cursor, without focusing the text, so no keyboard. */
+      var r=saved&&area.contains(saved.startContainer)?saved:null;
+      if(!r){ r=d.createRange(); r.selectNodeContents(area); r.collapse(false); }
+      var t=d.createElement("template"); t.innerHTML=html; var last=t.content.lastChild;
+      r.deleteContents(); r.insertNode(t.content);
+      if(last){ r=d.createRange(); r.setStartAfter(last); r.collapse(true); }
+      saved=r;
+    }
     /* Wrap the selection in a styled span; tapping the same style again on styled text takes it off. */
     function wrap(cls){
       back(); var s=root.getSelection(); if(!s||!s.rangeCount) return;

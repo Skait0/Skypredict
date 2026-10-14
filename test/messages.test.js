@@ -251,3 +251,14 @@ test("the admin's editor builds (14 Oct 2026: a second var WIZ shadowed the emot
   for (const v of ["WIZ_EMO", "EMO", "MOT", "WIZ"]) assert.strictEqual(vars.filter((x) => x === v).length, 1, v + " is declared once");
   assert.ok(src.includes("WIZ_EMO.map(function(e){"), "the picker draws from the emote list");
 });
+
+/* Owner, 14 Oct 2026: on a phone the picker sat behind the keyboard. It now takes
+   the keyboard's place, like WhatsApp, Telegram and Discord. */
+test("on a phone the emoji and GIF pickers open as a sheet in the keyboard's place", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
+  assert.ok(src.includes('root.matchMedia("(pointer:coarse)")'), "phones and narrow screens get the sheet");
+  assert.ok(src.includes("if(sheetOpen()){ keep(); area.blur(); }"), "opening it closes the keyboard and keeps the cursor");
+  assert.ok(src.includes("r.deleteContents(); r.insertNode(t.content);"), "a tap inserts at the kept cursor without focusing the text");
+  assert.ok(src.includes(".swm-pop.swm-sheet{position:fixed;left:0;right:0;bottom:0;"), "drawn at the bottom");
+  assert.ok(src.includes("swm-sh-done") && src.includes('area.addEventListener("pointerdown"'), "Done or a tap on the text closes it");
+});
