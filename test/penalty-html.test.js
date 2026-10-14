@@ -489,7 +489,8 @@ test("a catch is a catch: no parry burst, the ball rides into his hands and land
 
 test("the keeper is happy when he saves or the kicker misses: up off the floor, roaring or taunting", () => {
   const f = grabFn("playKick");
-  assert.match(f, /if\(k\.outcome!=="goal"\)return wait\([^)]*\)\.then\(function\(\)\{K\.img=k\.outcome==="save"\?"k-roar\.webp":"k-taunt\.webp";/);
+  /* ...but not at a sealed duel shot, which has no result yet (14 Oct 2026). */
+  assert.match(f, /if\(k\.outcome!=="goal"&&k\.outcome!=="locked"\)return wait\([^)]*\)\.then\(function\(\)\{K\.img=k\.outcome==="save"\?"k-roar\.webp":"k-taunt\.webp";/);
   assert.doesNotMatch(f, /"k-shrug\.webp"/, "no shrugging at a miss");
   assert.doesNotMatch(html, /The line turns red/, "the aim line is gone; the coach must not mention it");
 });
@@ -743,3 +744,29 @@ test("a slow phone drops the decoration, never the game; ?fps shows the frame ra
   assert.match(html, /\.lite \.beam,\.lite \.crowd i,\.lite \.grass:before\{display:none\}/);
 });
 
+
+/* Owner, 14 Oct 2026: "when a shot is played in the middle and my keeper is in
+   the middle, the goal still goes in". A middle keeper covers both heights. */
+test("a keeper in the middle saves a middle shot at either height", () => {
+  const P = require("../lib/penalty.js");
+  const green = 0.7;                       // inside the green band, not weak, not over
+  assert.strictEqual(P.judge({ spot: 1, power: green }, 4), "save", "low middle shot, keeper high middle");
+  assert.strictEqual(P.judge({ spot: 4, power: green }, 1), "save", "high middle shot, keeper low middle");
+  assert.strictEqual(P.judge({ spot: 1, power: green }, 1), "save");
+  assert.strictEqual(P.judge({ spot: 0, power: green }, 1), "goal", "a side shot still beats a middle keeper");
+  assert.strictEqual(P.judge({ spot: 1, power: green }, 0), "goal", "a keeper who dives away concedes the middle");
+  assert.strictEqual(P.judge({ spot: 4, power: 0.95 }, 4), "over", "over the bar is still over");
+});
+
+test("a sealed duel shot leaves nobody looking beaten", () => {
+  /* Owner, 14 Oct 2026: the kicker put his hands on his head after a duel
+     shot - "locked" fell into the miss branch. */
+  assert.match(html, /else if\(k\.outcome==="locked"\)\{K\.img="k-set\.webp";[^}]*S\.img="s-stand\.webp";\}/);
+  assert.match(html, /if\(k\.outcome!=="goal"&&k\.outcome!=="locked"\)return wait/);
+});
+
+test("Build me a slip opens the builder", () => {
+  assert.match(html, /"Build me a slip"\);b1\.href="\/\?view=build";/);
+  const index = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "public", "index.html"), "utf8");
+  assert.match(index, /if\(_qv==="build"\)\{ V\.view="build";/);
+});

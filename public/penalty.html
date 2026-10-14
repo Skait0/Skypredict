@@ -375,6 +375,10 @@ function judge(shot, dive) {
   const s = strike(shot.spot, shot.power);
   if (s.kind === "over") return high(s.spot) ? "over" : "bar";
   if (dive === s.spot) return "save";
+  /* A keeper who stays in the middle is in front of every middle shot, high or
+     low (owner, 14 Oct 2026: "when a shot is played in the middle and my
+     keeper is in the middle, the goal still goes in"). */
+  if (dive != null && col(dive) === 1 && col(s.spot) === 1) return "save";
   if (s.kind === "weak" && neighbour(dive, s.spot)) return "save";
   return "goal";
 }
@@ -983,11 +987,15 @@ function playKick(k){
     if(wide){K.img=K.img==="k-held.webp"?"k-held.webp":"k-down.webp";K.y=KH[file(K.img)]/2;K.rot=0;S.img=k.outcome==="goal"?(you&&streak>=3?"s-slide.webp":"s-arms.webp"):"s-head.webp";}
     else if(k.outcome==="goal"){K.img="k-beaten.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x*=0.85;S.img=you&&streak>=3?"s-slide.webp":"s-arms.webp";}
     else if(k.outcome==="save"){K.img="k-roar.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x*=0.6;K.flip=1;S.img="s-head.webp";}
+    /* A SEALED SHOT HAS NO RESULT YET (owner, 14 Oct 2026: in a duel the
+       kicker put his hands on his head as if he had lost). It fell into the
+       miss branch below. Nobody has won or lost, so nobody looks it. */
+    else if(k.outcome==="locked"){K.img="k-set.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x=0;S.img="s-stand.webp";}
     else{K.img="k-taunt.webp";K.y=KH[file(K.img)]/2;K.rot=0;K.x=0;K.flip=1;S.img="s-head.webp";
       if(you)coach("over","Too hard, it flew. Ease off: a firm swipe goes in, a slap goes over.",false);}
     /* whenever the kicker fails, the keeper is happy: off the floor after a
        beat and roaring at a save, smirking and pointing at a miss */
-    if(k.outcome!=="goal")return wait(wide?420:120).then(function(){K.img=k.outcome==="save"?"k-roar.webp":"k-taunt.webp";
+    if(k.outcome!=="goal"&&k.outcome!=="locked")return wait(wide?420:120).then(function(){K.img=k.outcome==="save"?"k-roar.webp":"k-taunt.webp";
       K.y=KH[file(K.img)]/2;K.rot=0;K.flip=1;K.x*=0.7;K.sq=1;fx.buzz(10);}).then(function(){return wait(820);});
     return wait(950);
   }).then(function(){resetScene();drawBoard();});
@@ -1141,7 +1149,7 @@ var BOOKM={sporty:'<span class="sbm">SportyBet</span>',bet9ja:'<span class="b9m"
    five booking codes and a phone had to scroll to find it. Drawn at once, so
    it is there even before (or without) today's codes. */
 function tipsCard(){var box=el("div","tips");
-  var b1=el("a","btn red","Build me a slip");b1.href="/";b1.addEventListener("click",function(){track("tips_clicked",{to:"build"});});box.appendChild(b1);
+  var b1=el("a","btn red","Build me a slip");b1.href="/?view=build";b1.addEventListener("click",function(){track("tips_clicked",{to:"build"});});box.appendChild(b1);
   api("GET","tips").then(function(r){if(!r.j)return;
     var c=r.j.code;
     if(c&&c.codes&&Object.keys(c.codes).length){

@@ -8339,6 +8339,13 @@ try{var _sv=localStorage.getItem("sw.view"); if(_sv) V.list=(_sv==="list");}catc
 try{var _nav=(performance.getEntriesByType&&performance.getEntriesByType("navigation")[0]||{}).type;
   var _sv2=(_nav==="reload"||_nav==="back_forward")&&sessionStorage.getItem("sw.viewtab");
   if(_sv2 && ["pred","live","build"].includes(_sv2)) V.view=_sv2;}catch(e){}
+/* /?view=build OPENS THE BUILDER (owner, 14 Oct 2026: the game's "Build me a
+   slip" pill landed on the board). Same switch the reload restore uses, then
+   gone from the address bar so a later refresh is the front door again. */
+try{var _qv=new URLSearchParams(location.search||"").get("view");
+  if(_qv==="build"){ V.view="build";
+    history.replaceState(null,"",location.pathname+location.search.replace(/([?&])view=build&?/,"$1").replace(/[?&]$/,"")+location.hash); }
+}catch(e){}
 /* Clear the old localStorage copy so an existing visitor is not pinned to the
    tab they were on when this changed. */
 try{localStorage.removeItem("sw.viewtab");}catch(e){}
