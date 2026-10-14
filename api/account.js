@@ -22,6 +22,9 @@ const READER_GET = ["inbox"];
 const READER_POST = ["msgread", "reply"];
 const MSG = require("../public/messages.js");
 const REPLY_MAX = 1000, BODY_MAX = 12000, TO_MAX = 200;
+/* Readers' replies are off (owner, 14 Oct 2026: "remove the reply for readers
+   except i say otherwise"). true puts them back; the inbox needs its reply box back too. */
+const REPLIES = false;
 
 function make(deps) {
   const { db } = deps;
@@ -244,6 +247,7 @@ function make(deps) {
       }
       /* A reply is plain text, stored as written and escaped wherever it is drawn. */
       if (action === "reply") {
+        if (!REPLIES) return H.sendJson(res, 403, { error: "replies_off" });
         const text = String(((await H.readJson(req, 8192)) || {}).text || "").replace(/\r\n?/g, "\n").trim();
         if (!text) return H.sendJson(res, 400, { error: "empty" });
         if (text.length > REPLY_MAX) return H.sendJson(res, 400, { error: "too_long" });

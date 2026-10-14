@@ -4,9 +4,10 @@
    - clean(): the only HTML a message may carry. The server runs it before a
      message is stored (api/account.js send) and the page runs it again before
      anything is drawn, so neither side trusts the other.
-   - the reader's side: the inbox (avatar menu > Messages, where they can reply),
-     the badge on the avatar, and the newest unread message as a banner under
-     the header (no replying there, owner's rule).
+   - the reader's side: the inbox (avatar menu > Messages), the badge on the
+     avatar, and the newest unread message as a banner under the header. Readers
+     cannot reply (owner, 14 Oct 2026: "remove the reply for readers except i
+     say otherwise"); api/account.js REPLIES switches it back on.
    - the admin's side: the Messages tab (editor, who to send to, conversations)
      and the Readers tab (every account, search by name or email, the full
      customer view). Admin only: the server refuses every admin action to anyone
@@ -79,7 +80,7 @@
     "<li><b>Edit for me.</b> One tap swaps a risky leg for a safer bet on the same game.</li>"+
     "<li><b>Follow it live.</b> Your slips track themselves and tell you when they land "+emo("1f389","party")+"</li></ul>"+
     "<p><b><span class=\"m-glow\">Why the Wizard?</span></b> Our picks are numbers, not vibes. We show our record every day, wins and losses, so you always know how we are doing. Six bookies, one place, free.</p>"+
-    "<p>Questions? Reply right here. The Wizard reads every message "+emo("2728","sparkles")+"</p>"+
+    "<p>Questions? Find the Wizard on <a href=\"https://t.me/soccerwizardTG\" target=\"_blank\" rel=\"noopener nofollow\">Telegram</a> or <a href=\"https://x.com/soccerwizardhq\" target=\"_blank\" rel=\"noopener nofollow\">X</a> "+emo("2728","sparkles")+"</p>"+
     "<p class=\"m-small\">18+ · Stake only what you can afford to lose.</p>";
   var api={clean:clean,textOf:textOf,isEmpty:isEmpty,okHref:okHref,EMO:EMO,WELCOME:WELCOME};
   if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
@@ -119,8 +120,6 @@
     ".swm-meta{display:flex;gap:8px;align-items:center;font-size:11.5px;font-weight:700;color:var(--faint);margin-top:6px}.swm-meta button{margin-left:auto}"+
     ".swm-who{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--accent);margin-bottom:6px}.swm-who img{width:22px;height:22px;border-radius:50%}"+
     ".swm-tag{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);border:1px solid var(--line);border-radius:4px;padding:1px 5px}"+
-    ".swm-rep{display:flex;gap:8px;align-items:flex-end;position:sticky;bottom:0;background:var(--bg);padding:8px 0 4px}"+
-    ".swm-rep textarea{flex:1;min-height:44px;max-height:140px;resize:vertical;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:14.5px;padding:10px 12px;box-sizing:border-box}"+
     /* the send button and its answer */
     ".swm-send{position:relative;flex:none;height:44px;padding:0 18px;border:0;border-radius:10px;background:var(--accent);color:var(--on-accent);font:inherit;font-size:14px;font-weight:800;cursor:pointer;transition:background .2s,transform .1s}"+
     ".swm-send:active{transform:scale(.97)}.swm-send[disabled]{opacity:.7;cursor:default}.swm-send.swm-ok{background:var(--green);color:#fff;opacity:1}.swm-send.swm-bad{background:var(--red-fill);color:#fff;opacity:1}"+
@@ -225,10 +224,8 @@
   function inbox(){
     if(!on()||!root.swAccountUI||!root.swAccountUI.view) return;
     style(); root.swAccountUI.close();
-    var v=root.swAccountUI.view("Messages","<div class='swm-thread' id='swmThread'><p class='swa-note'>Loading...</p></div>"+
-      "<div class='swm-rep'><textarea id='swmRe' maxlength='1000' rows='1' placeholder='Reply to the Wizard' aria-label='Your reply'></textarea>"+
-      "<button type='button' class='swm-send' id='swmReGo'>Send</button></div>");
-    var box=v.querySelector("#swmThread"), ta=v.querySelector("#swmRe"), go=v.querySelector("#swmReGo");
+    var v=root.swAccountUI.view("Messages","<div class='swm-thread' id='swmThread'><p class='swa-note'>Loading...</p></div>");
+    var box=v.querySelector("#swmThread");
     function draw(){
       var since=Date.parse(state.readAt||"")||0;
       var list=state.msgs.slice().reverse();
@@ -242,15 +239,6 @@
       acct().req("POST","/api/account/msgread",{what:"inbox"},function(code){
         if(code===200){ state.readAt=new Date().toISOString(); state.unread=0; paint(); } });
     });
-    go.onclick=function(){
-      var t=ta.value.replace(/^\s+|\s+$/g,""); if(!t){ ta.focus(); return; }
-      sendState(go,"busy");
-      acct().req("POST","/api/account/reply",{text:t},function(code,j){
-        if(code!==200) return sendState(go,"bad",errWords(code,j));
-        ta.value=""; sendState(go,"ok","✓ Sent");
-        state.msgs.unshift({id:j.id,at:new Date().toISOString(),mine:true,body:t}); draw();
-      });
-    };
   }
 
   /* ------------------------------------------------------- admin: shared */

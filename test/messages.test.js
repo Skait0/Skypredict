@@ -44,7 +44,7 @@ test("clean() keeps the editor's formatting and drops everything that could run"
 
 test("the welcome is wizardy, survives clean(), and follows the voice rules", () => {
   assert.strictEqual(M.clean(M.WELCOME), M.WELCOME);
-  assert.match(M.textOf(M.WELCOME), /Welcome[\s\S]*Build me a slip[\s\S]*SportyBet, Bet9ja, BetKing, betPawa, 1xBet or Betway[\s\S]*Reply right here[\s\S]*18\+/);
+  assert.match(M.textOf(M.WELCOME), /Welcome[\s\S]*Build me a slip[\s\S]*SportyBet, Bet9ja, BetKing, betPawa, 1xBet or Betway[\s\S]*Telegram or X[\s\S]*18\+/);
   assert.doesNotMatch(M.WELCOME, /—|load am/i);
 });
 
@@ -114,21 +114,16 @@ test("a broadcast reaches every inbox, a direct message only its reader, and the
   assert.strictEqual((await w.call(get(w.ben, "inbox"))).json().messages.length, 1);
 });
 
-test("a reader replies in their inbox, the admin's badge counts it, and reading clears both sides", async () => {
+/* Owner, 14 Oct 2026: "remove the reply for readers except i say otherwise". */
+test("readers cannot reply, and opening the inbox reads it", async () => {
   const w = await world();
   assert.strictEqual((await w.call(post(w.ada, "msgread", { what: "inbox" }))).code, 200);
   assert.strictEqual((await w.call(get(w.ada, "inbox"))).json().unread, 0);
-  const r = await w.call(post(w.ada, "reply", { text: "  <b>thanks</b> wizard \r\n" }));
-  assert.strictEqual(r.code, 200);
-  assert.strictEqual(w.rows[0].body, "<b>thanks</b> wizard", "stored as plain text, escaped where it is drawn");
-  assert.strictEqual(w.rows[0].from_admin, false); assert.strictEqual(w.rows[0].user_id, w.ada.id);
-  assert.strictEqual((await w.call(get(w.ben, "inbox"))).json().messages.length, 1, "a reply is not anyone else's business");
-  assert.strictEqual((await w.call(get(w.boss, "inbox"))).json().adminUnread, 1);
-  await w.call(post(w.boss, "msgread", { what: "inbox" }));
-  assert.strictEqual((await w.call(get(w.boss, "inbox"))).json().adminUnread, 0);
-  assert.strictEqual((await w.call(post(w.ada, "reply", { text: "x".repeat(1001) }))).json().error, "too_long");
-  for (let i = 0; i < 19; i++) await w.call(post(w.ada, "reply", { text: "hi" }));
-  assert.strictEqual((await w.call(post(w.ada, "reply", { text: "one more" }))).code, 429, "twenty an hour");
+  const r = await w.call(post(w.ada, "reply", { text: "thanks wizard" }));
+  assert.strictEqual(r.code, 403); assert.strictEqual(r.json().error, "replies_off");
+  assert.strictEqual(w.rows.length, 0, "nothing stored");
+  assert.doesNotMatch(fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8"), /\/api\/account\/reply/, "no reply box in the inbox");
+  assert.doesNotMatch(M.WELCOME, /Reply right here/);
 });
 
 test("the customer view carries the profile, the stats and the thread", async () => {
