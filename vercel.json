@@ -240,6 +240,7 @@
       "destination": "/api/account?action=:action"
     }
   ],
+  "ignoreCommand": "bash scripts/ignore-build.sh",
   "cleanUrls": true,
   "trailingSlash": false,
   "git": {
