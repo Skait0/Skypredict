@@ -65,10 +65,12 @@ test("booking from the slip sheet counts the selections", () => {
   /* The hole. This path is reached from "confirm and trim", from the FAB, and
      from any slip built by hand, none of which is bounded by the builder. */
   const fn = body("bookMy");
-  assert.match(fn, /bookable\.length>BETSLIP_MAX/,
+  /* Per book since 14 Oct 2026: BetKing and Betway take 40, the rest 50. */
+  assert.match(fn, /var _cap=slipMax\(B\)/, "bookMy must read the limit of the book in play");
+  assert.match(fn, /bookable\.length>_cap/,
     "bookMy must refuse to send more selections than a betslip takes");
-  assert.match(fn, /slice\(0,BETSLIP_MAX\)/,
-    "and must offer the first BETSLIP_MAX rather than an arbitrary number");
+  assert.match(fn, /slice\(0,_cap\)/,
+    "and must offer the first _cap rather than an arbitrary number");
 });
 
 test("it asks rather than trimming behind the reader's back", () => {
@@ -76,7 +78,7 @@ test("it asks rather than trimming behind the reader's back", () => {
      rest is how somebody ends up holding a bet they did not make - the same
      rule the duplicate-match and unpriced-leg guards on this path follow. */
   const fn = body("bookMy");
-  const at = fn.indexOf("bookable.length>BETSLIP_MAX");
+  const at = fn.indexOf("bookable.length>_cap");
   assert.ok(at >= 0);
   const guard = fn.slice(at, at + 2600);
   assert.match(guard, /showPrompt\("myBookResult"/,
@@ -104,7 +106,7 @@ test("it asks rather than trimming behind the reader's back", () => {
 test("the split offered at the cap deals tickets that all fit", () => {
   const MAX = konstNum("BETSLIP_MAX");
   const env = new Function("BETSLIP_MAX",
-    body("splitPicks") + body("splitWays") + body("capWays") +
+    body("slipMax") + body("splitPicks") + body("splitWays") + body("capWays") +
     "\nreturn {splitPicks:splitPicks, capWays:capWays};")(MAX);
   for (const n of [51, 100, 170, 249, 400]) {
     const picks = Array.from({ length: n }, (_, i) => i);
@@ -127,6 +129,13 @@ test("the split offered at the cap deals tickets that all fit", () => {
   assert.deepStrictEqual(env.capWays(170), [4]);
   assert.deepStrictEqual(env.capWays(400), [8],
     "when nothing up to four fits, the limit names the number");
+  /* And a 40-game book (BetKing, Betway) gets ways that fit 40: 90 in two
+     tickets is 45 a ticket, which those betslips refuse. */
+  const B40 = { max: 40 };
+  assert.deepStrictEqual(env.capWays(90, B40), [3, 4]);
+  for (const w of env.capWays(170, B40))
+    for (const p of env.splitPicks(Array.from({ length: 170 }, (_, i) => i), w))
+      assert.ok(p.length <= 40, "a 40-game book was dealt a ticket of " + p.length);
 });
 
 test("the cap prompt offers the split through the quota-checked path", () => {
@@ -134,11 +143,11 @@ test("the cap prompt offers the split through the quota-checked path", () => {
      tickets being started with two codes left. Same reason the code modal
      goes through wireSplit and not around it. */
   const fn = body("bookMy");
-  const at = fn.indexOf("bookable.length>BETSLIP_MAX");
+  const at = fn.indexOf("bookable.length>_cap");
   const guard = fn.slice(at, at + 2600);
-  assert.match(guard, /capWaysHTML\(bookable\)/,
+  assert.match(guard, /capWaysHTML\(bookable,B\)/,
     "the ticket counts must come from the limit, not a guess");
-  assert.match(body("capWays"), /BETSLIP_MAX/,
+  assert.match(body("capWays"), /slipMax\(B\)/,
     "and capWays must be the thing that reads the limit");
   assert.match(guard, /wireSplit\(/, "the split must be wired, and wired here");
   assert.ok(!/splitAndBook\(/.test(guard),
@@ -174,7 +183,7 @@ test("the board's book-all prompt names the book in play and offers the split", 
     "a book is still hardcoded in the prompt");
   assert.match(fn, /var B=curBook\(\)/, "it must read the selected book");
   assert.match(fn, /B\.mark/, "and name it");
-  assert.match(fn, /capWaysHTML\(bookable\)/, "the split must be offered here too");
+  assert.match(fn, /capWaysHTML\(bookable,B\)/, "the split must be offered here too");
   assert.match(fn, /wireSplit\(host,bookable,B/,
     "and started through the quota-checked path");
   assert.ok(!/splitAndBook\(/.test(fn), "never straight to splitAndBook");
@@ -248,7 +257,7 @@ test("the add-all path uses the same constant, not its own copy", () => {
   /* It had a local CAP=50. Two copies of a bookmaker's limit drift, and the
      one that drifts is the one nobody is looking at. */
   const fn = body("confirmBookAll");
-  assert.match(fn, /var CAP=BETSLIP_MAX/,
+  assert.match(fn, /var CAP=slipMax\(B\)/,
     "add-all must read the shared limit");
   assert.ok(!/CAP\s*=\s*50/.test(fn),
     "no second copy of the number");
@@ -261,7 +270,7 @@ test("both booking paths are guarded, so neither is the way round", () => {
      cap is ever removed this test is the thing that should start failing. */
   const build = /cap=\(?isJackpotOdds\(T\)(?:\|\|bankersOn\(\)\))?\?JACKPOT_LEG_CAP:(\d+)/.exec(src);
   assert.ok(build, "the builder must still cap its own leg count");
-  assert.match(body("bookMy"), /BETSLIP_MAX/,
+  assert.match(body("bookMy"), /slipMax\(B\)/,
     "and the unbounded path must check explicitly");
 });
 
@@ -271,10 +280,46 @@ test("the guard names whichever book is selected, not SportyBet", () => {
      bookmaker toggle is exactly the kind of thing that gets added after the
      copy was written. */
   const fn = body("bookMy");
-  const at = fn.indexOf("bookable.length>BETSLIP_MAX");
+  const at = fn.indexOf("bookable.length>_cap");
   const guard = fn.slice(at, at + 2600);
   assert.match(guard, /\+B\.mark\+/,
     "the prompt must name the book in play");
   assert.ok(!/SportyBet|Bet9ja/.test(guard),
     "and must not hardcode either book's name");
+});
+
+/* EACH BOOK'S OWN LIMIT, AND ONE GUARD EVERY PATH PASSES (14 Oct 2026). The
+   single 50 stopped being true: BetKing's own settings say 40, and Betway took
+   40 and refused 50 (measured, test codes). And only the slip sheet and Book
+   all checked at all - the converter, Edit, Trim, Change and split tickets
+   booked straight through, so a 45-game slip converted to Betway died whole at
+   the server. */
+test("each book carries its own limit, and the 40-game books are 40", () => {
+  const i = src.indexOf("var BOOKS={");
+  const books = new Function(
+    'var BOOK_URL="",SPORTY_URL="",B9_URL="",B9_BOOK_URL="",BK_URL=null,BK_BOOK_URL="",' +
+    'BP_URL=null,BP_BOOK_URL="",XB_URL="",XB_BOOK_URL="",WY_URL="",WY_BOOK_URL="";' +
+    src.slice(i, src.indexOf("\n};", i) + 3) + "\nreturn BOOKS;")();
+  const max = Object.fromEntries(Object.keys(books).map((k) => [k, books[k].max]));
+  assert.deepStrictEqual(max, { sporty: 50, bet9ja: 50, betking: 40, betpawa: 50, onexbet: 50, betway: 40 });
+  const slipMax = new Function("BETSLIP_MAX", body("slipMax") + "\nreturn slipMax;")(50);
+  assert.strictEqual(slipMax(books.betway), 40);
+  assert.strictEqual(slipMax({}), 50, "a book with no limit falls back to 50");
+});
+
+test("every booking path asks before it sends more than the book takes", () => {
+  const fn = body("bookRounds");
+  const at = fn.indexOf("picks.length>slipMax(B)");
+  assert.ok(at >= 0, "bookRounds must check the limit of the book in play");
+  /* The whole condition, not just the comparison: mutation-tested, an
+     `if(false&&picks.length>slipMax(B))` kept every softer assertion green. */
+  assert.match(fn, /\n  if\(!round&&picks\.length>slipMax\(B\)\)\{/, "the check must be live on the first round");
+  assert.ok(at < fn.indexOf("bookFetch("), "the check must come before the request");
+  const guard = fn.slice(at, fn.indexOf("return;", at));
+  assert.match(guard, /showPrompt\(target/, "the reader is asked");
+  assert.match(guard, /capWaysHTML\(picks,B\)/, "with the split on offer");
+  assert.match(fn.slice(at, at + 1600), /wireSplit\(/, "through the quota-checked path");
+  assert.match(fn.slice(at, at + 1600), /picks=picks\.slice\(0,cap\)/, "Book N sends the first N");
+  assert.match(guard, /B\.mark/, "and it names the book");
+  assert.ok(!/splitAndBook\(/.test(fn.slice(at, at + 1600)), "never straight to splitAndBook");
 });

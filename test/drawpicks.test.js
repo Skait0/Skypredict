@@ -61,7 +61,7 @@ const page = `
   var FX=[]; function fixtureById(id){return FX.filter(function(f){return fid(f)===id;})[0];}
   function compOf(l){return l;} function dayName(){return "Today";} function dayOff(){return 0;} function fDay(){return "";}
   function pushOverlay(){} function notStarted(){return true;} function shown(){return FX;}
-  function bookTakes(){return true;} var BETSLIP_MAX=50; function capWaysHTML(){return "";}
+  function bookTakes(){return true;} var BETSLIP_MAX=50; function slipMax(B){return (B&&+B.max)||BETSLIP_MAX;} function capWaysHTML(){return "";}
   function paintBookPickerWith(){} function allBookFeeds(){return null;} function wireSplit(){}
   var BOOKMAKER="sporty";
   function mProb(){return null;}

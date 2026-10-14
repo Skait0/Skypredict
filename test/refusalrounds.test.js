@@ -188,7 +188,7 @@ test("the converter and the board share the loop: betPawa refuses one of 16, the
   const names = Object.keys(stubs);
   /* window: the sign-in wall at the top of bookRounds reads window.swGate; none here, as with accounts off. */
   const body = "var window={};function fixtureById(){return null;}\n" + BOOKS.prelude("sporty") +
-    "\nvar REFUSAL_ROUNDS=" + ROUNDS + ";\n" + WHY() + fn("dropUnbookable") + "\n" + fn("bookRounds") +
+    "\nvar REFUSAL_ROUNDS=" + ROUNDS + ";\n" + WHY() + fn("dropUnbookable") + "\n" + fn("slipMax") + ";var BETSLIP_MAX=50;" + fn("bookRounds") +
     "\nreturn function(p,src,t,h){ return bookRounds(p,BOOKS.sporty,src,t,h); };";
   const bookRounds = new Function(...names, body)(...names.map((k) => stubs[k]));
   bookRounds(picks, "convert", "byoConvOut", {
@@ -224,7 +224,7 @@ test("a pulled game is dropped after one swap, and the rest of the ticket books"
     "function dropUnbookable(picks,d){ var bad={}; (d.unbookable||[]).forEach(function(s){bad[s.id+'|'+s.code]=1;});",
     "  return picks.filter(function(c){return !bad[c.id+'|'+c.code];}); }",
     "function confirmAfterRefusal(t,names,keep,B,go,gone){ go(gone.map(function(c){return {id:c.id,code:NEXT[c.code]||'GG'};})); }",
-    fn("bookRounds"), "return bookRounds;"].join("\n"))(calls, toasts, NEXT);
+    fn("slipMax") + ";var BETSLIP_MAX=50;" + fn("bookRounds"), "return bookRounds;"].join("\n"))(calls, toasts, NEXT);
   const B = { key: "sporty", label: "SportyBet", sel: (c) => ({ id: c.id, code: c.code }), codeOf: (d) => d.code };
   const picks = [{ id: "a", code: "1X" }, { id: "npfl", code: "1" }, { id: "b", code: "OVER_1.5" }];
   const got = await new Promise((done) => run(picks, B, "split", "splitAsk", {

@@ -183,7 +183,7 @@ test("My slip offers the switch, and a tap books the whole slip there", async ()
   };
   const names = Object.keys(stubs);
   const body = B.prelude("sporty") +
-    "var BETSLIP_MAX=50;var MYSLIP=[{id:'a',code:'MIX_X_OV_1.5'},{id:'b',code:'1X'}];\n" +
+    "var BETSLIP_MAX=50;function slipMax(B){return (B&&+B.max)||BETSLIP_MAX;}var MYSLIP=[{id:'a',code:'MIX_X_OV_1.5'},{id:'b',code:'1X'}];\n" +
     B.decl("BOOK_ONLY") + "\n" + B.fn("bookAllows") + "\n" + B.fn("bookNames") + "\n" +
     "function setBook(k){ BOOKMAKER=k; LOG.set.push(k); }\n" +
     "function showPrompt(t,h){ LOG.asks.push(h); }\nfunction clearPrompt(){}\n" +

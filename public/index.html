@@ -11950,8 +11950,8 @@ var BOOKS={
      book is judged on whether it lists the GAME, and the market is answered by
      the bookmaker, who names what it will not take. server.py's _unbookable
      carries the same correction on the other side of the wire. */
-  sporty:{key:"sporty",label:"SportyBet",id:"eventId",odds:"sportyOdds",blend:true, full:false, arg:"prediction",skin:"sb",readable:true, wholeLines:true},
-  bet9ja:{key:"bet9ja",label:"Bet9ja",  id:"b9EventId",odds:"b9Odds",  blend:false,full:false,arg:"code",      skin:"b9",readable:true, wholeLines:false},
+  sporty:{key:"sporty",label:"SportyBet",id:"eventId",odds:"sportyOdds",blend:true, full:false, arg:"prediction",skin:"sb",readable:true, wholeLines:true, max:50},
+  bet9ja:{key:"bet9ja",label:"Bet9ja",  id:"b9EventId",odds:"b9Odds",  blend:false,full:false,arg:"code",      skin:"b9",readable:true, wholeLines:false, max:50},
   /* BetKing, on the same terms as Bet9ja and for the same reason: a booking
      code is only any use to somebody who banks with the firm that issued it.
      `full` is false because their day feed carries the default markets only -
@@ -11961,7 +11961,7 @@ var BOOKS={
      `blend` is false for the same modelling reason it is false for Bet9ja,
      not because the unders are missing: betking.py maps every under line, and
      blendFixture still reads f.sportyOdds whatever book it was called for. */
-  betking:{key:"betking",label:"BetKing",id:"bkEventId",odds:"bkOdds",blend:false,full:false,arg:"code",skin:"bk",readable:true,wholeLines:false},
+  betking:{key:"betking",label:"BetKing",id:"bkEventId",odds:"bkOdds",blend:false,full:false,arg:"code",skin:"bk",readable:true,wholeLines:false,max:40},
   /* Betpawa, the fourth, on the same terms as the second and third.
      `full` is false for the usual reason and NOT the usual one: their list
      endpoint does carry every modelled market - we ask for the market ids we
@@ -11971,18 +11971,18 @@ var BOOKS={
      booking route reads the event's own card either way.
      `skin` is "bw" rather than "bp" because .bp is already the book pill's
      own class, and a skin class of the same name would inherit its padding. */
-  betpawa:{key:"betpawa",label:"betPawa",id:"bpEventId",odds:"bpOdds",blend:false,full:false,arg:"code",skin:"bw",readable:true,wholeLines:false},
+  betpawa:{key:"betpawa",label:"betPawa",id:"bpEventId",odds:"bpOdds",blend:false,full:false,arg:"code",skin:"bw",readable:true,wholeLines:false,max:50},
   /* THE FIFTH BOOK, 1xBet (29 Sep 2026). It sells whole goal lines (Total 2,
      Total 3 on their card, and pushes on them), so wholeLines is true as on
      SportyBet. `xb` was checked free before it was taken - see the skill's
      note on bp/bw. */
-  onexbet:{key:"onexbet",label:"1xBet",id:"xbEventId",odds:"xbOdds",blend:false,full:false,arg:"code",skin:"xb",readable:true,wholeLines:true},
+  onexbet:{key:"onexbet",label:"1xBet",id:"xbEventId",odds:"xbOdds",blend:false,full:false,arg:"code",skin:"xb",readable:true,wholeLines:true,max:50},
   /* THE SIXTH BOOK, Betway (14 Oct 2026). Its event id IS Sportradar's match
      id, and its feed hands it over as srId, so it pairs to the board by id
      before any name (srOf). Half goal lines only on ten deep cards, so
      wholeLines is false. `wy` because bw is betPawa's skin and bt was taken -
      grepped before naming (skill: class collisions). */
-  betway:{key:"betway",label:"Betway",id:"wyEventId",odds:"wyOdds",blend:false,full:false,arg:"code",skin:"wy",readable:true,wholeLines:false}
+  betway:{key:"betway",label:"Betway",id:"wyEventId",odds:"wyOdds",blend:false,full:false,arg:"code",skin:"wy",readable:true,wholeLines:false,max:40}
 };
 
 /* Common team name aliases that SportyBet uses but our data doesn't (or vice versa).
@@ -15347,6 +15347,31 @@ function bookRounds(picks,B,src,target,h,round){
       picks=live;
     }
   }
+  /* OVER THIS BOOK'S LIMIT: ASKED, NOT REFUSED (14 Oct 2026). The slip sheet
+     and Book all have always asked; the converter, Edit, Trim, Change and a
+     split ticket booked straight through, so a 45-game slip converted to
+     Betway or BetKing died whole at the server ("capped at 40"). One question,
+     the same one the slip sheet asks, for every path: book the first N or
+     split across tickets that fit. */
+  if(!round&&picks.length>slipMax(B)){
+    var cap=slipMax(B);
+    h.idle();
+    showPrompt(target,"<div class='confirm-card' id='bookCapCard'><p>"+(B.mark||esc(B.label))+" takes "+cap+
+      " picks on one slip and this has "+picks.length+". Book the first "+cap+
+      ", or split them across tickets that fit?</p><div class='ca'>"+
+      "<button class='confirm-go' type='button'>Book "+cap+"</button>"+
+      "<button class='confirm-cancel' type='button'>Cancel</button></div>"+
+      capWaysHTML(picks,B)+"</div>");
+    var ph=promptEl(target);
+    if(ph){
+      wireSplit(ph,picks,B,{sel:"#bookCapCard"});
+      ph.querySelector(".confirm-go").addEventListener("click",function(){
+        clearPrompt(target); picks=picks.slice(0,cap); bookRounds(picks,B,src,target,h,0); });
+      ph.querySelector(".confirm-cancel").addEventListener("click",function(){
+        clearPrompt(target); if(h.stop) h.stop(); });
+    }
+    return;
+  }
   if(!round&&lineCheck(picks,B,target,function(safe){bookRounds(safe,B,src,target,h,0);},h.stop)) return;
   h.busy();
   bookFetch(picks.map(function(c){return B.sel(c);}),B,src)
@@ -15807,15 +15832,16 @@ function splitWays(len){
    choice up to four, it is only the ones that cannot be placed that go.
    When nothing up to four fits, the limit itself names the number, which is
    the only honest offer left. */
-function capWays(len){
-  var fits=splitWays(len).filter(function(n){return Math.ceil(len/n)<=BETSLIP_MAX;});
-  return fits.length?fits:[Math.ceil(len/BETSLIP_MAX)];
+function capWays(len,B){
+  var cap=slipMax(B);
+  var fits=splitWays(len).filter(function(n){return Math.ceil(len/n)<=cap;});
+  return fits.length?fits:[Math.ceil(len/cap)];
 }
 /* The row of ticket counts, priced by leg count rather than payout: at the cap
    the question is "will this fit", and the odds of each part are already on
    screen above. */
-function capWaysHTML(picks){
-  return "<div class='sp-ways'>"+capWays(picks.length).map(function(n){
+function capWaysHTML(picks,B){
+  return "<div class='sp-ways'>"+capWays(picks.length,B).map(function(n){
     var parts=splitPicks(picks,n);
     return "<button class='sp-way' type='button' data-n='"+n+"'><b>"+n+
       " tickets</b><span>"+parts.map(function(p){return p.length;}).join(" + ")+
@@ -18439,7 +18465,7 @@ function confirmBookAll(){
   var skipped=picks.length-bookable.length;
   /* Rather than silently truncating, say what will happen and point at the
      slip sheet, where trimming is easy. See BETSLIP_MAX. */
-  var CAP=BETSLIP_MAX, over=bookable.length>CAP;
+  var CAP=slipMax(B), over=bookable.length>CAP;
   var going=over?bookable.slice(0,CAP):bookable;
   var goingOdds=going.reduce(function(t,c){return t*legOdd(c.f,c.code,c.p);},1);
   /* In the Draw picks view bookAllPicks hands over draws - say so. */
@@ -18462,7 +18488,7 @@ function confirmBookAll(){
        wants; the splitter keeps every tip on the board and deals it across
        tickets that fit. Offered whether or not the board is over the cap -
        twenty tips as two tickets of ten is a different bet, not a workaround. */
-    (bookable.length>=4?capWaysHTML(bookable):"")+"</div>";
+    (bookable.length>=4?capWaysHTML(bookable,B):"")+"</div>";
   function fillSlip(){
     MYSLIP=MYSLIP.filter(function(x){return !x.auto;})
       .concat(bookable.map(function(c){return {id:c.id,code:c.code,label:mLabel(c.f,c.code),p:c.p,auto:true,via:"board"};}));
@@ -20619,8 +20645,9 @@ async function bookMy(){
      "Bet Limit Reached". Nothing failed on our side to tell us.
      Asked rather than trimmed silently, the same as every other thing this
      path refuses: they chose these games and they should choose which go. */
-  if(bookable.length>BETSLIP_MAX){
-    var _fit=bookable.slice(0,BETSLIP_MAX), _cut=bookable.length-BETSLIP_MAX;
+  var _cap=slipMax(B);
+  if(bookable.length>_cap){
+    var _fit=bookable.slice(0,_cap), _cut=bookable.length-_cap;
     /* THE THIRD ANSWER: KEEP THEM ALL, ACROSS SEVERAL TICKETS. Book 50 throws
        the rest away and Let me trim asks the reader to do it by hand - both
        lose games they chose. Reported by a reader with 170 on the slip. The
@@ -20630,12 +20657,12 @@ async function bookMy(){
        everywhere else a split is offered - one forced number is a fact, not a
        choice, and two, three and four tickets are different bets. */
     showPrompt("myBookResult","<div class='confirm-card' id='myCapCard'><p>"+B.mark+" takes "+
-      BETSLIP_MAX+" picks on one slip and you have "+bookable.length+
-      ". Book the first "+BETSLIP_MAX+", split them across several tickets, "+
+      _cap+" picks on one slip and you have "+bookable.length+
+      ". Book the first "+_cap+", split them across several tickets, "+
       "or close this and remove "+_cut+
       "?</p><div class='ca'><button class='confirm-go' type='button'>Book "+
-      BETSLIP_MAX+"</button><button class='confirm-cancel' type='button'>"+
-      "Let me trim</button></div>"+capWaysHTML(bookable)+"</div>");
+      _cap+"</button><button class='confirm-cancel' type='button'>"+
+      "Let me trim</button></div>"+capWaysHTML(bookable,B)+"</div>");
     /* Through wireSplit, never straight to splitAndBook: the quota check that
        stops a four-ticket split costing codes the reader does not have lives
        there, and a second call site would skip it. */
@@ -21049,6 +21076,13 @@ const JACKPOT_ODDS=20000;
    An upstream that answers success with something unusable is worse than one
    that errors, so the check has to be ours. */
 const BETSLIP_MAX=50;
+/* THE BOOKS STOPPED AGREEING (14 Oct 2026), so - as the note above said it
+   would - the limit moved onto the BOOKS table: `max` per book. BetKing's own
+   settings say 40 and Betway refused 50 and took 40 (measured, test codes);
+   the rest stay at 50. Every check asks slipMax(B), and bookRounds asks it
+   for every path that books, so a 45-game converted slip is asked about, not
+   refused whole by the server. BETSLIP_MAX is only the fallback. */
+function slipMax(B){ return (B&&+B.max)||BETSLIP_MAX; }
 const JACKPOT_LEG_CAP=50;
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
 var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o05:false,nr3:false,o15:true,o25:false,o35:false,u45:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,tcorn:false,shots:false,tshots:false,hcap:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
