@@ -72,6 +72,15 @@ test("big odds only on a good day, and only legs with a real SportyBet price", (
   /* Three families, so the 40% rule cannot be what stops it - only the floor. */
   const dear = feed.map((e) => Object.assign({}, e, { odds: { "1X": 1.40, "OVER_1.5": 1.40, "HOME_OVER_0.5": 1.40 } }));
   assert.strictEqual(B.pick(many, now, dear), null, "no leg under 75% on the board");
+  /* TOWARDS x10 (owner, 14 Oct 2026). Each game offers a 1X at 1.20 and
+     richer legs at 1.25 that the board still reads at ~78%: the twelve start
+     on the safe ones and are upgraded until the slip reaches x10. */
+  const rich = { "1X": 1.20, "OVER_1.5": 1.20, "HOME_OVER_0.5": 1.20, "AWAY_OVER_0.5": 1.28 };
+  // three markets read ~80% (twelve of them make x8.9), the away one ~76%: only upgrades reach x10
+  const richFeed = feed.map((e) => Object.assign({}, e, { odds: rich }));
+  const up = B.pick({ fixtures: many.fixtures.map((f) => Object.assign({}, f, { a_o05: 0.9 })) }, now, richFeed);
+  assert.ok(up && up.odds >= 10, "stacks to x10 when the board allows it: x" + (up && up.odds));
+  assert.ok(up.legs.length <= 12 && up.legs.every((l) => l.p >= 0.75), "and never under 75%");
   /* And a 1.04 leg adds risk and no payout. */
   const cheap = feed.map((e) => Object.assign({}, e, { odds: { "1X": 1.04, "OVER_1.5": 1.04, "HOME_OVER_0.5": 1.04 } }));
   assert.strictEqual(B.pick(many, now, cheap), null, "nothing under 1.10");
