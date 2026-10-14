@@ -156,7 +156,9 @@ test("the whole first load stays inside a phone budget", () => {
       try { sent += Math.round(wire(f) / 1024); } catch (e) {}
     });
 
-  assert.ok(sent <= 760,
+  /* raised 14 Oct 2026 by owner ("raise and push"): was 760; the home page
+     motion added 1.9 KB brotli and measured 762. */
+  assert.ok(sent <= 780,
     "a first load sends about " + sent + " KB over the wire (" + total + " KB raw). " +
     "It was 1,600 KB raw when phones on LTE started timing out. Something heavy " +
     "has been added back.");
