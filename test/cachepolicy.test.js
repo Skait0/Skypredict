@@ -34,7 +34,7 @@ const predictions = require("../api/predictions.js");
    a later tweak cannot quietly make a feed older than it used to be.
    BetKing was added at the same numbers as Bet9ja and is held to them. */
 const BEFORE = { live: 20, fixtures: 600, bet9ja: 600, betking: 600,
-                 betpawa: 600, onexbet: 600 };
+                 betpawa: 600, onexbet: 600, betway: 600 };
 
 /* A deploy must be visible within this. The board is baked at build time and
    Cloudflare has no idea a build happened, so its window IS the delay. */

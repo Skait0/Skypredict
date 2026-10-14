@@ -88,12 +88,13 @@ test("only the known bookmakers can be reached", () => {
      point of this test is that nothing ELSE is reachable, and a per-entry
      check would pass with an extra book quietly added. */
   assert.deepStrictEqual(Object.keys(P.BOOKS).sort(),
-    ["bet9ja", "betking", "betpawa", "onexbet", "sporty"]);
+    ["bet9ja", "betking", "betpawa", "betway", "onexbet", "sporty"]);
   assert.strictEqual(P.BOOKS.sporty, "/api/generate-booking-code");
   assert.strictEqual(P.BOOKS.bet9ja, "/api/bet9ja/booking-code");
   assert.strictEqual(P.BOOKS.betking, "/api/betking/booking-code");
   assert.strictEqual(P.BOOKS.betpawa, "/api/betpawa/booking-code");
   assert.strictEqual(P.BOOKS.onexbet, "/api/onexbet/booking-code");
+  assert.strictEqual(P.BOOKS.betway, "/api/betway/booking-code");
 });
 
 test("the timeout is longer than the feeds but still bounded", () => {

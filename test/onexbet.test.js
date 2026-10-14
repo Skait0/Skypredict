@@ -23,7 +23,7 @@ test("BOOKS.onexbet opens their slip by code", () => {
 });
 
 test("the book sits in the site-wide order and the feed loader", () => {
-  assert.match(src, /var ORDER=\["sporty","bet9ja","betking","betpawa","onexbet"\]/);
+  assert.match(src, /var ORDER=\["sporty","bet9ja","betking","betpawa","onexbet"(,"betway")?\]/);
   assert.match(src, /k==="onexbet"\?loadOnexbet/);
   assert.match(src, /function loadOnexbet\(\)\{ return loadSecondBook\(ONEXBET_FIXTURES,BOOKS\.onexbet\); \}/);
 });

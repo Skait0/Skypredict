@@ -11817,6 +11817,13 @@ const XB_BOOK_URL="/api/book?book=onexbet";
    the bet slip and add new bets?" first - their dialog, not ours. */
 const XB_URL="https://1xbet.ng/en?coupon-code=";
 const ONEXBET_FIXTURES="/api/onexbet";
+const WY_BOOK_URL="/api/book?book=betway";
+/* Betway HAS a deep link: any page of theirs with ?bookingCode= opens the
+   betslip and loads that code (their Modals chunk reads r.query.bookingCode),
+   and their own /bookabet/ redirect sends people to /sport/soccer/?bookingCode=
+   - read out of their Nuxt bundle 14 Oct 2026. */
+const WY_URL="https://www.betway.com.ng/sport/soccer/?bookingCode=";
+const BETWAY_FIXTURES="/api/betway";
 
 /* The two bookmakers differ in what they are FOR, not just in their
    field names, and the matcher needs to know which it is filling in.
@@ -11903,7 +11910,13 @@ var BOOKS={
      Total 3 on their card, and pushes on them), so wholeLines is true as on
      SportyBet. `xb` was checked free before it was taken - see the skill's
      note on bp/bw. */
-  onexbet:{key:"onexbet",label:"1xBet",id:"xbEventId",odds:"xbOdds",blend:false,full:false,arg:"code",skin:"xb",readable:true,wholeLines:true}
+  onexbet:{key:"onexbet",label:"1xBet",id:"xbEventId",odds:"xbOdds",blend:false,full:false,arg:"code",skin:"xb",readable:true,wholeLines:true},
+  /* THE SIXTH BOOK, Betway (14 Oct 2026). Its event id IS Sportradar's match
+     id, and its feed hands it over as srId, so it pairs to the board by id
+     before any name (srOf). Half goal lines only on ten deep cards, so
+     wholeLines is false. `wy` because bw is betPawa's skin and bt was taken -
+     grepped before naming (skill: class collisions). */
+  betway:{key:"betway",label:"Betway",id:"wyEventId",odds:"wyOdds",blend:false,full:false,arg:"code",skin:"wy",readable:true,wholeLines:false}
 };
 
 /* Common team name aliases that SportyBet uses but our data doesn't (or vice versa).
@@ -12772,6 +12785,16 @@ function bookWire(){
   /* Judged on the event, like the other second books: their booking route
      reads the card fresh and names any leg it will not take. */
   BOOKS.onexbet.priced=function(c){ return !!bookIdOf(c,BOOKS.onexbet); };
+
+  BOOKS.betway.mark="<span class='wym'>betway</span>";
+  BOOKS.betway.book=WY_BOOK_URL;
+  BOOKS.betway.open=WY_URL;
+  BOOKS.betway.sel=function(c){return {eventId:bookIdOf(c,BOOKS.betway),code:c.code};};
+  BOOKS.betway.codeOf=function(d){return d&&d.code;};
+  /* Judged on the event, like the other second books: the booking route reads
+     the card fresh, re-reads every price live and names any leg it will not
+     take. */
+  BOOKS.betway.priced=function(c){ return !!bookIdOf(c,BOOKS.betway); };
 }
 /* BOOKING QUESTIONS COME UP AS A POP-UP, NOT AT THE FOOT OF THE PAGE.
    Owner, 28 Sep 2026: "when sportybet cant take games, i hate to have to
@@ -13093,6 +13116,9 @@ async function loadBetKing(){ return loadSecondBook(BETKING_FIXTURES,BOOKS.betki
    sides in a single "Home - Away" string - so it goes through b9Rows too. */
 async function loadBetpawa(){ return loadSecondBook(BETPAWA_FIXTURES,BOOKS.betpawa); }
 async function loadOnexbet(){ return loadSecondBook(ONEXBET_FIXTURES,BOOKS.onexbet); }
+/* Betway's feed is the same shape again - rows keyed by event id, "Home -
+   Away" in one string, srId beside it - so it goes through b9Rows too. */
+async function loadBetway(){ return loadSecondBook(BETWAY_FIXTURES,BOOKS.betway); }
 async function loadSecondBook(url,B){
   try{
     var r=await fetch(url,{headers:{Accept:"application/json"}});
@@ -13203,7 +13229,8 @@ function ensureBookFeed(k){
   /* SportyBet is the board's own prices, loaded before this ever runs. */
   if(!k||k==="sporty"||BOOK_FEED[k]) return BOOK_FEED[k]||Promise.resolve(0);
   var load=k==="bet9ja"?loadBet9ja:k==="betking"?loadBetKing:
-           k==="betpawa"?loadBetpawa:k==="onexbet"?loadOnexbet:null;
+           k==="betpawa"?loadBetpawa:k==="onexbet"?loadOnexbet:
+           k==="betway"?loadBetway:null;
   if(!load) return Promise.resolve(0);
   BOOK_FEED[k]=load().then(function(n){ BOOK_FEED_DONE[k]=1; if(n) repaintAfterMatch(); return n; })
     .catch(function(){ BOOK_FEED_DONE[k]=1; return 0; });
@@ -13859,6 +13886,9 @@ function cLgamma(x){
    leave it out for that reason); its team-corner lines (4.5-5.5)
    were not priced on either fixture the verifier booked; and it sells no
    shots. Add it to an entry only after booking one real code of that market. */
+/* Betway (14 Oct 2026) sells the OR family at 2.5 only, no Asian handicap, one
+   corner line per team (like BetKing), total corners 8.5-11.5 and no shots -
+   all read off ten deep cards; the entries below say so one by one. */
 var BOOK_ONLY={"NR3_ANY":["sporty"],"NR3_H":["sporty"],"NR3_A":["sporty"],
   "MIX_X_OV_1.5":["bet9ja","betking"],
   /* Corners per team (25 Sep 2026): Betpawa sells none, verified absent in
@@ -13889,15 +13919,26 @@ var BOOK_ONLY={"NR3_ANY":["sporty"],"NR3_H":["sporty"],"NR3_A":["sporty"],
      "or both score", is sold as an OR bet by SportyBet, Bet9ja and BetKing
      only. Betpawa and 1xBet sell the AND bet under a similar name, so the
      builders must never pick these for them (bookAllows). */
-  "MIX_1_OV_2.5":["sporty","bet9ja","betking"],"MIX_X_OV_2.5":["sporty","bet9ja","betking"],
-  "MIX_2_OV_2.5":["sporty","bet9ja","betking"],
-  "MIXGG_1":["sporty","bet9ja","betking"],"MIXGG_X":["sporty","bet9ja","betking"],
-  "MIXGG_2":["sporty","bet9ja","betking"],
+  /* BETWAY IS IN THIS FAMILY (14 Oct 2026), unlike betPawa and 1xBet: its
+     "X Or Over 2.5" (854-859) and "X Or Both Teams To Score" (860-862) are OR
+     bets, priced below both parts on 18 of 18 checks. At 2.5 only - it sells
+     no 1.5 rung, so the 1.5 entries above leave it out. */
+  "MIX_1_OV_2.5":["sporty","bet9ja","betking","betway"],"MIX_X_OV_2.5":["sporty","bet9ja","betking","betway"],
+  "MIX_2_OV_2.5":["sporty","bet9ja","betking","betway"],
+  "MIXGG_1":["sporty","bet9ja","betking","betway"],"MIXGG_X":["sporty","bet9ja","betking","betway"],
+  "MIXGG_2":["sporty","bet9ja","betking","betway"],
   /* 1xBet's total-corners card runs 8.5-11.5 - verified absent at 7.5 on
      eight deep cards - so the corners chip's bottom rung is the other four's. */
   "CORNERS_OV_7.5":["sporty","bet9ja","betking","betpawa"],
   /* Whole-line handicaps (30 Sep 2026): BetKing and Betpawa sell half lines
      only - the reader there is offered the +1.5 beside it instead. */
+  /* Half-line handicaps (14 Oct 2026): Betway sells NO full-time Asian
+     handicap - market 16 is absent on ten deep cards, and its handicap is the
+     three-way one, a different bet - so the chip's half lines, which every
+     other book sells, name those five and leave Betway out. */
+  "AH_1_1.5":["sporty","bet9ja","betking","betpawa","onexbet"],"AH_1_2.5":["sporty","bet9ja","betking","betpawa","onexbet"],
+  "AH_2_-1.5":["sporty","bet9ja","betking","betpawa","onexbet"],"AH_2_-2.5":["sporty","bet9ja","betking","betpawa","onexbet"],
+  "AH_1_-1.5":["sporty","bet9ja","betking","betpawa","onexbet"],"AH_2_1.5":["sporty","bet9ja","betking","betpawa","onexbet"],
   "AH_1_1":["sporty","bet9ja","onexbet"],"AH_1_2":["sporty","bet9ja","onexbet"],"AH_2_-1":["sporty","bet9ja","onexbet"],"AH_2_-2":["sporty","bet9ja","onexbet"],"AH_1_-1":["sporty","bet9ja","onexbet"],"AH_2_1":["sporty","bet9ja","onexbet"],
   /* Team shots (30 Sep 2026): SportyBet's 900552/900553. No other book's card
      has been read for a per-team shots market yet. */
@@ -13941,8 +13982,9 @@ var SHOTS_CODES=["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5"
 var TEAM_SHOTS_CODES=["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_H_OV_10.5","SHOTS_H_OV_11.5","SHOTS_H_OV_12.5","SHOTS_H_OV_13.5","SHOTS_H_OV_14.5","SHOTS_H_OV_15.5","SHOTS_H_OV_16.5","SHOTS_H_OV_17.5","SHOTS_H_OV_18.5","SHOTS_A_OV_7.5","SHOTS_A_OV_8.5","SHOTS_A_OV_9.5","SHOTS_A_OV_10.5","SHOTS_A_OV_11.5","SHOTS_A_OV_12.5","SHOTS_A_OV_13.5","SHOTS_A_OV_14.5","SHOTS_A_OV_15.5","SHOTS_A_OV_16.5","SHOTS_A_OV_17.5","SHOTS_A_OV_18.5"];
 /* HANDICAPS, the safe side (30 Sep 2026) - see mProb. A head start of 1.5 or
    2.5 for either team, and the favourite at -1.5: the 3-way (0:2) and (0:1)
-   in the Asian half-line form every book sells, so the chip needs no BOOK_ONLY
-   entry. The floor decides which ones clear - the chip itself starts off. */
+   in the Asian half-line form every book but Betway sells - see BOOK_ONLY for
+   the Betway exception (14 Oct 2026). The floor decides which ones clear - the
+   chip itself starts off. */
 /* Whole lines (+-1, +-2) joined 30 Sep 2026: SportyBet, Bet9ja and 1xBet
    sell them, BetKing and Betpawa do not (see BOOK_ONLY). */
 var HCAP_CODES=["AH_1_1.5","AH_1_2.5","AH_2_-1.5","AH_2_-2.5","AH_1_-1.5","AH_2_1.5","AH_1_1","AH_1_2","AH_2_-1","AH_2_-2","AH_1_-1","AH_2_1"];
@@ -18822,7 +18864,7 @@ function applyBoardCap(n){
        for the board - so most people never touch a tab. /booking-codes keeps
        every book and every day. The chips are the same .ck-chip the click
        handler below copies from. */
-    var ORDER=["sporty","bet9ja","betking","betpawa","onexbet"];
+    var ORDER=["sporty","bet9ja","betking","betpawa","onexbet","betway"];
     var daily={}; ORDER.forEach(function(k){ if(d.codes[k]&&BOOKS[k]) daily[k]=d.codes[k]; });
     if(!Object.keys(daily).length) return;
     var big=null;
@@ -22360,7 +22402,9 @@ function renderShared(){
      icon:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>'},
     /* Team shots - see TEAM_SHOTS_CODES. SportyBet alone, so it narrows the
        book and says so before it turns on, like Total shots. */
-    /* Handicap - see HCAP_CODES. Every book sells these lines. */
+    /* Handicap - see HCAP_CODES. Every book but Betway sells the half lines
+       (Betway sells no Asian handicap at all, 14 Oct 2026), and three sell the
+       whole ones - per leg in BOOK_ONLY, so a Betway slip gets none of these. */
     {k:"hcap", label:"Handicap", tier:0, sub:"(0:1) / (0:2), the safe side",
      icon:'<path d="M4 18h16"/><path d="M8 18V9"/><path d="M16 18V6"/>'},
     {k:"tshots", label:"Team shots", tier:0, sub:"Home or away, over", only:["sporty"],
