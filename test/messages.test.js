@@ -215,8 +215,9 @@ test("the inbox folds and deletes, and the banner keeps GIFs for the inbox", () 
   assert.ok(src.includes(".swm-ban .m-body .m-gif{display:none}"));
   assert.ok(src.includes("swAdminBadgeRefresh(); banner(); return; }"), "the admin sees the banner too");
   const html = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
-  assert.ok(html.includes('if(localStorage.getItem("sw.noticeX")===t) return;') && html.includes('localStorage.setItem("sw.noticeX",t)'),
-    "a closed notice stays closed until a new one is posted");
+  /* Since 14 Oct 2026 the closed notice is a fingerprint that rides the account. */
+  assert.ok(html.includes("if(seen()) return;") && html.includes('localStorage.setItem("sw.noticeX",h)') && html.includes('noticex:"sw.noticeX"'),
+    "a closed notice stays closed, on every device, until a new one is posted");
   assert.ok(fs.readFileSync(path.join(__dirname, "..", "sql", "messages.sql"), "utf8").includes("add column if not exists hidden bigint[]"));
 });
 

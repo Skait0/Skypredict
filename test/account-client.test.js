@@ -149,3 +149,27 @@ test("the storage listener never schedules a sync itself, so two tabs cannot pin
   assert.match(body, /st\.raw=rawNow\(\)/, "a META write from another tab updates st.raw so this tab does not think it has something new");
   assert.doesNotMatch(body, /schedule\(/, "the listener must never schedule a sync itself - watch() alone decides, or two tabs re-sync each other forever");
 });
+
+/* Owner, 14 Oct 2026: "make sure that all filter, all things done on account is
+   replicated across devices", "even avatars dont sync", and the board notice
+   closed on the phone was still up on the laptop. */
+test("filters, avatar and a closed notice changed on one device arrive on the other, and the page takes them in", () => {
+  const A = load();
+  const phone = store(), laptop = store();
+  let server = null, ver = 0;
+  const sync = (ls, t) => { server = Y.merge(server, Y.validate(A.collect(ls, t), { avatars: ["fire", "halo", "goldbeard"] }).data, t); A.apply(ls, server, ++ver); };
+  sync(phone, NOW); sync(laptop, NOW + 1000);
+  const set = { "sw.favmode": "0", "sw.favleagues": JSON.stringify({ "Spain La Liga 1": 0 }), "sw.bldpick": JSON.stringify({ "England Championship": 0 }),
+    "sw.volin": "1", "sw.scope": "day", "sw.sday": "2", "sw.span": "7", "sw.view": "cards", "sw.avatar": "goldbeard", "sw.noticeX": "n1a2b3c", "sw.book": "betway" };
+  for (const [k, v] of Object.entries(set)) phone.setItem(k, v);
+  sync(phone, NOW + 60e3); sync(laptop, NOW + 120e3);
+  for (const [k, v] of Object.entries(set)) assert.strictEqual(laptop.getItem(k), v, k + " reached the laptop");
+  /* And the page reloads every one of them into memory, then repaints. */
+  const reload = html.slice(html.indexOf("window.swReloadSynced=function(){"), html.indexOf("function myslipHas("));
+  for (const k of ["BOOK_KEY", '"sw.risk"', '"sw.mode"', '"sw.scope"', '"sw.sday"', '"sw.span"', '"sw.favmode"', '"sw.favleagues"', "loadLeaguePicks()",
+    '"sw.legodd"', "loadMarkets()", '"sw.view"', '"sw.theme"', "swNoticeCheck", "renderBuilder()", "refreshSlipUI()", "render()"])
+    assert.ok(reload.includes(k), "the reload takes in " + k);
+  assert.match(html, /if\(before!==st\.raw\)\{ reload\(\); paintButton\(\); \}/, "the avatar in the header is repainted after a pull");
+  assert.deepStrictEqual(Y.validate({ v: 1, prefs: { sday: { v: "99", at: 1 }, view: { v: "<x>", at: 1 }, noticex: { v: "javascript:", at: 1 } } }).data.prefs, {},
+    "the server keeps only well-formed values");
+});

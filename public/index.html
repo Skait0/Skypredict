@@ -11647,6 +11647,7 @@ function swMaint(msg){
   m.querySelector("p").textContent=msg||"We're making Soccerwizard better. Back shortly with fresh picks.";
   document.body.appendChild(m); document.documentElement.style.overflow="hidden";
 }
+function swNoticeHash(t){ var h=5381; for(var i=0;i<t.length;i++) h=((h*33)^t.charCodeAt(i))>>>0; return "n"+h.toString(16); }
 /* THE ADMIN'S NOTICE (lib/flags.js, /api/flags): one line under the header for
    every reader, until the admin clears it. Close hides it on this device until
    the admin posts a different notice (owner, 14 Oct 2026: it came back on every
@@ -11656,11 +11657,16 @@ function swMaint(msg){
     if(f&&f.maint) swMaint(f.maintMsg);
     var t=f&&typeof f.notice==="string"?f.notice:"", top=document.getElementById("top");
     if(!t||!top) return;
-    try{ if(localStorage.getItem("sw.noticeX")===t) return; }catch(e){}
+    /* Remembered as a short fingerprint of the text, which the account
+       carries to every device (prefs noticex): close it on the phone and
+       it is closed on the laptop too (owner, 14 Oct 2026). */
+    var h=swNoticeHash(t), seen=function(){ try{ var x=localStorage.getItem("sw.noticeX"); return x===h||x===t; }catch(e){ return false; } };
+    if(seen()) return;
     var el=document.createElement("div"); el.className="sw-notice"; el.setAttribute("role","status");
     el.innerHTML="<p></p><button type='button' aria-label='Close notice'>Close</button>";
     el.querySelector("p").textContent=t;
-    el.querySelector("button").onclick=function(){ el.remove(); try{ localStorage.setItem("sw.noticeX",t); }catch(e){} };
+    el.querySelector("button").onclick=function(){ el.remove(); try{ localStorage.setItem("sw.noticeX",h); }catch(e){} };
+    window.swNoticeCheck=function(){ if(seen()&&el.parentNode) el.remove(); };
     top.insertAdjacentElement("afterend",el);
   }).catch(function(){}); }catch(e){}
 })();
@@ -20097,6 +20103,29 @@ function saveMy(){try{localStorage.setItem("sw.myslip",JSON.stringify(MYSLIP));}
    redraw. Prefs are not re-read here; they take effect on the next load,
    which is enough for settings and far simpler than re-running every init. */
 window.swReloadSynced=function(){
+  /* SETTINGS TOO, NOT ONLY SLIPS (owner, 14 Oct 2026: "make sure that all
+     filter, all things done on account is replicated across devices").
+     A pull wrote them to storage but the page kept its old values in memory -
+     and its next save would have written those back over the new ones. */
+  try{
+    var g=function(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } };
+    var bk=g(BOOK_KEY); if(bk&&BOOKS[bk]&&bk!==BOOKMAKER){ BOOKMAKER=bk; try{ ensureBookFeed(bk); }catch(e){} }
+    var rr=g("sw.risk"); if(rr!=null&&isFinite(+rr)) BUILD.risk=+rr;
+    var rm=g("sw.mode"); if(rm==="slider"||rm==="wizard") BUILD.mode=rm;
+    var sc=g("sw.scope"); if(sc==="day"||sc==="all"||sc==="span"||sc==="wknd") SCOPE=sc;
+    var sd=parseInt(g("sw.sday"),10); if(!isNaN(sd)&&sd>=0&&sd<=14) SDAY=sd;
+    var sp=parseInt(g("sw.span"),10); if(SPAN_CHOICES.indexOf(sp)>=0) SPAN=sp;
+    var fm=g("sw.favmode"); if(fm!==null) TOP_ONLY=fm==="1";
+    var fb=null; try{ fb=JSON.parse(g("sw.favleagues")||"{}"); }catch(e){}
+    FAVB=(fb&&typeof fb==="object"&&!Array.isArray(fb))?fb:{};
+    loadLeaguePicks();
+    var lo=+g("sw.legodd"); if(lo>1&&lo<10) WSP.legodd=lo;
+    loadMarkets(); MK_SAVED=JSON.stringify({b:BUILD.mk,w:WSP.mk});
+    var vw=g("sw.view"); if(vw) V.list=(vw==="list");
+    var th=g("sw.theme"); if(th==="dark"||th==="light") document.documentElement.setAttribute("data-theme",th);
+    if(window.swNoticeCheck) swNoticeCheck();
+    if(document.documentElement.classList.contains("mode-build")) renderBuilder();
+  }catch(e){}
   try{SLIPS=JSON.parse(localStorage.getItem("sw.slips.v1")||"[]");}catch(e){SLIPS=[];}
   if(!Array.isArray(SLIPS)) SLIPS=[];
   try{MYSLIP=JSON.parse(localStorage.getItem("sw.myslip")||"[]");}catch(e){MYSLIP=[];}
@@ -21308,7 +21337,7 @@ try{var _wm=JSON.parse(localStorage.getItem("sw.wspmiss")||"null");
    build from it and the chip guard would not let the reader get there. */
 var MK_DEFAULT={b:JSON.parse(JSON.stringify(BUILD.mk)),w:JSON.parse(JSON.stringify(WSP.mk))};
 var MK_STORE="sw.mk";
-(function(){
+function loadMarkets(){
   try{
     var s=JSON.parse(localStorage.getItem(MK_STORE)||"null");
     if(!s||typeof s!=="object") return;
@@ -21322,7 +21351,8 @@ var MK_STORE="sw.mk";
       if(any) Object.keys(next).forEach(function(k){ into[k]=next[k]; });
     });
   }catch(e){}
-})();
+}
+loadMarkets();
 /* Saved from renderBuilder, which every toggle path ends in (the chip, the
    draw prompt, the book-only prompt, the tier jump via slideRisk), so a new
    path cannot forget to. Written only when the set changed - renderBuilder
@@ -24942,7 +24972,7 @@ load().catch(function(){});
   var KEYS={slips:"sw.slips.v1",myslip:"sw.myslip",livefav:"sw.livefav",leaguefav:"formline.favs.v1"};
   var PREFS={book:"sw.book",mk:"sw.mk",risk:"sw.risk",mode:"sw.mode",wspodds:"sw.wspodds",
     bldpick:"sw.bldpick",volin:"sw.volin",favmode:"sw.favmode",favleagues:"sw.favleagues",scope:"sw.scope",legodd:"sw.legodd",
-    avatar:"sw.avatar",name:"sw.name",theme:"sw.theme"};
+    avatar:"sw.avatar",name:"sw.name",theme:"sw.theme",noticex:"sw.noticeX",sday:"sw.sday",span:"sw.span",view:"sw.view"};
   var META="sw.sync.meta", SLIPS_KEEP=60;
 
   function own(o,k){ return Object.prototype.hasOwnProperty.call(o,k); }
@@ -25019,8 +25049,8 @@ load().catch(function(){});
   function clearSynced(ls){
     var k;
     for(k in KEYS) if(own(KEYS,k)) try{ ls.removeItem(KEYS[k]); }catch(e){}
-    /* a device's look (theme) belongs to the reader, not the account: it survives sign-out */
-    for(k in PREFS) if(own(PREFS,k)&&k!=="theme") try{ ls.removeItem(PREFS[k]); }catch(e){}
+    /* a device's look (theme, cards or list) belongs to the reader, not the account: it survives sign-out */
+    for(k in PREFS) if(own(PREFS,k)&&k!=="theme"&&k!=="view") try{ ls.removeItem(PREFS[k]); }catch(e){}
     try{ ls.removeItem(META); }catch(e){}
   }
 
@@ -25136,7 +25166,7 @@ load().catch(function(){});
            merge is idempotent, so nothing is lost or duplicated. */
         if(rawNow()!==sent){ schedule(0); return; }
         var before=rawNow(); apply(ls,j.data,j.version); st.raw=rawNow(); st.backoff=0; st.pulled=Date.now();
-        if(before!==st.raw) reload();
+        if(before!==st.raw){ reload(); paintButton(); }
         return;
       }
       if(code===401) return signedOutHere(j.reason);
