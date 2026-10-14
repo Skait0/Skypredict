@@ -15532,7 +15532,7 @@ function showCode(code,hostId,save,B,picks,d){
        nowhere in the URL, so "Open in BetKing" with the code appended would
        land the reader on their board with an empty slip and no idea why. */
     "<div class='code-opens'>"+
-      (B.key==="sporty"
+      (B.key==="sporty"&&B.open
         ? "<p class='code-two'>Same code, same slip on both:</p>"+
           "<a class='code-open code-open--half' href='"+B.open+encodeURIComponent(code)+
             "' target='_blank' rel='noopener'>Open in "+B.mark+"</a>"+
