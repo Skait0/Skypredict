@@ -64,15 +64,20 @@
     ".swsi-slip .t em{font-size:19px}"+
     ".swsi-wax{position:absolute;left:38%;top:12px;width:46px;height:46px;border-radius:50%;transform:rotate(-8deg);display:flex;align-items:center;justify-content:center;"+
       "background:var(--si-act);box-shadow:0 0 0 3px var(--si-card),0 4px 10px rgba(0,0,0,.35)}"+
-    /* ONE BUTTON, NO SWAP (owner, 14 Oct 2026: "the first google icon starts on
-       the left then ... glitches to the right ... looks tacky"). Ours is drawn
-       first and stays; Google's is drawn invisibly ON TOP of it, in the same
-       white outline style, and fades in only once it has finished drawing
-       itself (it repaints from "Continue with" to "Continue as you"). */
-    ".swsi-gwrap{position:relative}.swsi-g[hidden],.swsi-gbtn[hidden]{display:none!important}"+
-    ".swsi-g{position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;border-radius:999px;overflow:hidden;"+
-      "opacity:0;pointer-events:none;transition:opacity .28s ease}.swsi-g.ready{opacity:1;pointer-events:auto}"+
-    "@media (prefers-reduced-motion:reduce){.swsi-g{transition:none}}"+
+    /* ONE BOX, ONE BUTTON (owner, 14 Oct 2026: the swap "glitches ... looks
+       tacky", then the overlay showed ours peeking out behind Google's). While
+       Google's button loads, its own box shows a plain pill the same size - no
+       logo, no words to jump - and Google's fades in there once it has drawn
+       itself ("Continue with" repaints to "Continue as you"). Ours appears only
+       if Google never comes (ownButton). */
+    ".swsi-g[hidden],.swsi-gbtn[hidden]{display:none!important}"+
+    ".swsi-g{position:relative;min-height:44px;display:flex;align-items:center;justify-content:center}"+
+    /* The placeholder is a 44px pill centred in the box: Google's own box grows
+       to 74px around its 44px button, so painting the box would not match. */
+    ".swsi-g::before{content:'';position:absolute;left:0;right:0;top:50%;height:44px;margin-top:-22px;border-radius:999px;"+
+      "background:var(--si-card2);transition:opacity .28s ease;pointer-events:none}.swsi-g.ready::before{opacity:0}"+
+    ".swsi-g iframe{opacity:0;transition:opacity .28s ease}.swsi-g.ready iframe{opacity:1}"+
+    "@media (prefers-reduced-motion:reduce){.swsi-g,.swsi-g iframe{transition:none}}"+
     ".swsi-g iframe{color-scheme:light}.swsi-gbtn{width:100%;height:44px;border-radius:999px;border:1px solid var(--si-line);background:#fff;color:rgba(0,0,0,.87);font:600 14px Roboto,Arial,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px}.swsi-gbtn svg{width:18px;height:18px;flex:none}"+
     ".swsi-or{display:flex;align-items:center;gap:10px;color:var(--si-faint);font-size:12.5px;font-weight:600;margin:12px 0}"+
     ".swsi-or:before,.swsi-or:after{content:'';flex:1;height:1px;background:var(--si-line)}"+
@@ -136,7 +141,7 @@
     box.innerHTML="<div class='swsi-grab'></div><button class='swsi-x' type='button' aria-label='Close'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' aria-hidden='true'><path d='M6 6l12 12M18 6L6 18'/></svg></button>"+
       "<div class='swsi-form'><div class='swsi-head'></div><p class='swsi-h' id='swsiH'></p><p class='swsi-s'>Your slips follow you to every phone and laptop.</p>"+
       "<p class='swsi-flag' hidden></p>"+
-      "<div class='swsi-gwrap'><div class='swsi-g'></div><button class='swsi-gbtn' type='button'><svg viewBox='0 0 48 48' aria-hidden='true'><path fill='#EA4335' d='M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.2l7.9 6.2C12.5 13.6 17.8 9.5 24 9.5z'/><path fill='#4285F4' d='M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.8c4.3-4 6.9-9.9 6.9-17.2z'/><path fill='#FBBC05' d='M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.2C1 16.4 0 20.1 0 24s1 7.6 2.7 10.8l7.8-6.2z'/><path fill='#34A853' d='M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.8c-2.1 1.4-4.8 2.3-8.5 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.2C6.6 42.6 14.6 48 24 48z'/></svg>Continue with Google</button><div class='swsi-or'>or get a code by email</div></div>"+
+      "<div class='swsi-gwrap'><div class='swsi-g'></div><button class='swsi-gbtn' type='button' hidden><svg viewBox='0 0 48 48' aria-hidden='true'><path fill='#EA4335' d='M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.2l7.9 6.2C12.5 13.6 17.8 9.5 24 9.5z'/><path fill='#4285F4' d='M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.8c4.3-4 6.9-9.9 6.9-17.2z'/><path fill='#FBBC05' d='M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.2C1 16.4 0 20.1 0 24s1 7.6 2.7 10.8l7.8-6.2z'/><path fill='#34A853' d='M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.8c-2.1 1.4-4.8 2.3-8.5 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.2C6.6 42.6 14.6 48 24 48z'/></svg>Continue with Google</button><div class='swsi-or'>or get a code by email</div></div>"+
       "<form class='swsi-ef' novalidate><div class='swsi-row'><input type='email' autocomplete='email' inputmode='email' maxlength='254' aria-label='Your email' placeholder='you@email.com'>"+
       "<button class='swsi-go' type='submit'>Send</button></div><div class='swsi-ts'></div></form>"+
       "<form class='swsi-cf' novalidate hidden><div class='swsi-sent'><span>6-digit code sent to<br><b class='swsi-to'></b></span></div>"+
@@ -194,9 +199,9 @@
            button signs in with that account in one tap instead of opening
            Google's account picker again (owner, 14 Oct 2026). */
         g.initialize({client_id:gcid,nonce:j.nonce,callback:onCredential,use_fedcm_for_prompt:true,use_fedcm_for_button:true,button_auto_select:true,auto_select:false,itp_support:true,context:"signin",cancel_on_tap_outside:false});
-        /* Google's button is drawn over ours, invisible, and fades in once it
-           has settled; ours stays underneath and clickable until then. */
-        var gb=$(".swsi-gbtn"); gb.hidden=false; slot.hidden=false; slot.classList.remove("ready");
+        /* Google's button is drawn in its own box, invisible over a plain
+           pill, and fades in once it has settled. */
+        $(".swsi-gbtn").hidden=true; slot.hidden=false; slot.classList.remove("ready");
         g.renderButton(slot,{theme:"outline",shape:"pill",text:"continue_with",size:"large",width:Math.min(400,slot.offsetWidth||320)});
         (function wait(n){
           var f=slot.querySelector("iframe");
@@ -204,8 +209,7 @@
           var done=false, show=function(){ if(done) return; done=true;
             /* Google repaints "Continue with" into "Continue as you" a moment
                after its frame loads: wait that out, then one fade. */
-            setTimeout(function(){ if(!live(sid)) return; slot.classList.add("ready");
-              gb.setAttribute("aria-hidden","true"); gb.tabIndex=-1; },700); };
+            setTimeout(function(){ if(!live(sid)) return; slot.classList.add("ready"); },700); };
           f.addEventListener("load",show); setTimeout(show,1500);
         })(0);
         try{ g.prompt(); }catch(e){} }
@@ -319,7 +323,7 @@
     $(".swsi-head").innerHTML=header(o.action,o.detail);
     titles();
     $(".swsi-ef").hidden=false; $(".swsi-cf").hidden=true; $(".swsi-gbtn").disabled=false;
-    $(".swsi-gbtn").hidden=false; $(".swsi-gbtn").removeAttribute("aria-hidden"); $(".swsi-gbtn").tabIndex=0;
+    $(".swsi-gbtn").hidden=true;
     $(".swsi-g").innerHTML=""; $(".swsi-g").classList.remove("ready"); $(".swsi-g").hidden=false; say(""); googleShown(true);
     if(p) p();
   }

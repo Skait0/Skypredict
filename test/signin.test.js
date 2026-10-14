@@ -90,11 +90,11 @@ test("'Use a different email' puts the headline, subline and header back", () =>
 
 /* Owner, 14 Oct 2026: "the first google icon starts on the left then when google
    account is detected the other icon glitches to the right ... looks tacky". */
-test("Google's button fades in over ours once it has settled, in the same white style", () => {
-  assert.ok(src.includes(".swsi-g{position:absolute;inset:0;z-index:1;"), "drawn on top of ours, not instead of it");
-  assert.ok(src.includes("opacity:0;pointer-events:none;transition:opacity .28s ease}.swsi-g.ready{opacity:1;pointer-events:auto}"));
-  assert.ok(src.includes('theme:"outline"'), "the same white outline as ours, not filled black");
-  assert.ok(src.includes('f.addEventListener("load",show); setTimeout(show,1500);'), "fades only after Google's frame has loaded");
-  assert.ok(!src.includes("slot.hidden=false; $(\".swsi-gbtn\").hidden=true;"), "ours is never swapped out from under it");
-  assert.ok(src.includes(".swsi-g[hidden],.swsi-gbtn[hidden]{display:none!important}"), "display:flex cannot beat hidden");
+test("Google's button fades in, in its own box over a plain pill, never over ours", () => {
+  assert.ok(src.includes(".swsi-g::before{content:''"), "a plain 44px pill holds the place while Google loads");
+  assert.ok(src.includes(".swsi-g iframe{opacity:0;transition:opacity .28s ease}.swsi-g.ready iframe{opacity:1}"), "Google's button fades in");
+  assert.ok(src.includes("swsi-gwrap'><div class='swsi-g'></div><button class='swsi-gbtn' type='button' hidden>"), "ours starts hidden");
+  assert.ok(!src.includes(".swsi-g{position:absolute"), "no overlay: two designs never stack");
+  assert.ok(src.includes('theme:"outline"'));
+  assert.ok(src.includes(".swsi-g[hidden],.swsi-gbtn[hidden]{display:none!important}"));
 });

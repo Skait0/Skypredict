@@ -254,6 +254,13 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
 })();
 </script>
 <style>
+/* HIDDEN MEANS HIDDEN, SITE-WIDE (14 Oct 2026). A class with display:flex or
+   inline-block beats the browser's own [hidden] rule, and that one trap put
+   the admin-only tab on every phone, a "live" dot on the desktop Live tab with
+   no games live, an invisible desktop button that still caught clicks, and the
+   favourite-leagues line under All leagues. One rule ends the class of bug;
+   anything that animates in sets hidden=false first and its class second. */
+[hidden]{display:none!important}
 /* ==========================================================================
    Matte black ground, red for signal, green for strength. Red marks the
    brand and anything the reader should notice; green is reserved for
@@ -1358,21 +1365,23 @@ html.mode-live .btabs{transform:none!important}
   .btab.on::before{content:"";position:absolute;top:-8px;left:50%;width:28px;height:3px;
     margin-left:-14px;border-radius:0 0 3px 3px;background:var(--red)}
   @media (prefers-reduced-motion:reduce){.btab .bt-ic{transition:none}}
-  /* BUILD IS THE STAR OF THE BAR (owner, 14 Oct 2026: "make the build nav icon
-     to be the star of the nav bar"). This reverses the 13 Oct NO CIRCLES rule
-     for Build only, on the owner's word: one raised gold disc in the middle,
-     the site's own accent, no neon. Its bottom edge sits where every other
-     icon's does (56-18 = 44-6), so the labels keep one baseline, and the red
-     bar still marks the page you are on. */
-  #bt-build .bt-ic{width:56px;height:56px;margin-top:-18px;color:var(--on-accent);
-    background:linear-gradient(160deg,#F7CB6E,var(--accent) 55%,#D99A2B);
-    box-shadow:0 0 0 4px var(--card),0 6px 14px rgba(0,0,0,.35)}
-  #bt-build{color:var(--accent)}
-  #bt-build.on{color:var(--accent)}
-  #bt-build .bt-staff,#bt-build.on .bt-staff{width:26px;height:26px}
-  #bt-build svg,#bt-build.on svg{width:26px;height:26px}
-  #bt-build:active .bt-ic{transform:scale(.95)}
-  @media (prefers-reduced-motion:reduce){#bt-build:active .bt-ic{transform:none}}
+  /* BUILD IS THE STAR OF THE BAR (owner, 14 Oct 2026). Not a raised disc - the
+     gold circle read as a pasted-on template button, and circles here are only
+     for dots and floating buttons (DESIGN.md). The house action colour on the
+     house shape instead: a red tile at the radius the site's buttons use, the
+     staff in white, a real offset shadow, the label in full-strength text. It
+     sits in the same 44px slot on the same baseline as every tab, so it leads
+     by colour and weight, not by breaking the bar. The red top bar still marks
+     the page you are on. */
+  #bt-build .bt-ic{width:50px;height:36px;margin-top:-2px;margin-bottom:4px;border-radius:12px;color:#fff;
+    background:var(--red-fill);box-shadow:0 4px 12px rgba(219,54,67,.28),0 1px 0 rgba(255,255,255,.14) inset;
+    transition:transform .16s var(--ease-out),background-color .2s ease}
+  #bt-build,#bt-build.on{color:var(--text);font-weight:800}
+  #bt-build .bt-staff,#bt-build.on .bt-staff{width:24px;height:24px}
+  #bt-build svg,#bt-build.on svg{width:24px;height:24px}
+  #bt-build.on .bt-ic{background:var(--red)}
+  #bt-build:active .bt-ic{transform:scale(.94)}
+  @media (prefers-reduced-motion:reduce){#bt-build .bt-ic{transition:none}#bt-build:active .bt-ic{transform:none}}
   body{padding-bottom:calc(var(--btabs-h) + 8px)}
 }
 .record-bar i{transition:width 1.05s cubic-bezier(.25,.8,.3,1)}
