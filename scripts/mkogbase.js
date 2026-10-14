@@ -171,19 +171,27 @@ function advanceOf(ctx, font) {
       ["SportyBet", "#e63946", NAME], [", ", null],
       ["bet", "#d42127", NAME], ["9ja", "#14b151", NAME], [", ", null],
       ["Bet", "#f2f1f0", NAME], ["King", "#ffc400", NAME], [", ", null],
-      ["bet", "#f2f1f0", NAME], ["Pawa", "#9ce800", NAME], [" or ", null],
+      ["bet", "#f2f1f0", NAME], ["Pawa", "#9ce800", NAME], [", ", null],
       /* 1xBet, 29 Sep 2026: white "1X" and "BET" in the accent off their logo. */
-      ["1X", "#f2f1f0", NAME], ["BET", "#14a0ff", NAME], [" code in one tap", null],
+      ["1X", "#f2f1f0", NAME], ["BET", "#14a0ff", NAME], [" or ", null],
+      /* Betway, 14 Oct 2026: one lowercase word, white on their black. */
+      ["betway", "#f2f1f0", NAME], [" code in one tap", null],
     ];
     const fontOf = (s) => s[2] || STYLES.leagues.font;
     let total = 0;
     for (const s of segs) { x.font = fontOf(s); total += x.measureText(s[0]).width; }
-    let sx = (W - total) / 2;
+    /* Six names no longer fit the card at full size: scaled to fit, uniformly
+       (never scaleX - these are logos), keeping 60px clear each side. */
+    const k = Math.min(1, (W - 120) / total);
+    x.save();
+    x.translate(W / 2, 520); x.scale(k, k);
+    let sx = -total / 2;
     x.textAlign = "left";
     for (const s of segs) {
       x.font = fontOf(s); x.fillStyle = s[1] || STYLES.leagues.color;
-      x.fillText(s[0], sx, 520); sx += x.measureText(s[0]).width;
+      x.fillText(s[0], sx, 0); sx += x.measureText(s[0]).width;
     }
+    x.restore();
   }
 
   /* ------------------------------------------------------------- the chip

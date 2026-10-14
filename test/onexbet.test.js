@@ -95,7 +95,7 @@ test("the converter, the bot and the daily code know the fifth book", () => {
   assert.match(read("lib/convert.js"), /onexbet: "\/api\/onexbet"/);
   assert.strictEqual(require("../lib/doctor.js").BOOK_NAMES.onexbet, "1xBet");
   assert.match(read("lib/bigodds.js"), /\["onexbet", "1xBet"\]/);
-  assert.match(read("scripts/mkcode.js"), /for \(const bk of \[[^\]]*"onexbet"\]\)[\s\S]*codes\[bk\] = /);
+  assert.match(read("scripts/mkcode.js"), /for \(const bk of \[[^\]]*"onexbet"[^\]]*\]\)[\s\S]*codes\[bk\] = /);
   assert.match(read("scripts/namesaudit.js"), /onexbet: "\/api\/onexbet"/);
   assert.match(read("lib/slipwatch.js"), /onexbet: "1xBet"/);
   assert.ok(convert);

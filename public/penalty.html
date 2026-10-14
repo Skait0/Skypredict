@@ -50,13 +50,14 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:600 1
 .track .pn b,.track .pn i{font-style:inherit;font-weight:800;color:#F2F1F0}
 .track .pn .red{color:var(--red)}
 .track .pn.mk{font-family:"Plus Jakarta Sans",system-ui,sans-serif;font-style:normal;letter-spacing:-.01em;color:#F2F1F0}
-/* bookmaker wordmarks: the site's .sbm/.b9m/.bkm/.bwm/.xbm, dark-ground colours */
+/* bookmaker wordmarks: the site's .sbm/.b9m/.bkm/.bwm/.xbm/.wym, dark-ground colours */
 .sbm{color:#E63946;font-weight:800;white-space:nowrap}
 .b9m,.bkm,.bwm,.xbm{font-weight:800;white-space:nowrap}
 .b9r{color:#D42127}.b9g{color:#14B151}
 .bkm{font-family:"Roboto Condensed","Arial Narrow","Helvetica Neue Condensed","Liberation Sans Narrow",sans-serif;font-stretch:condensed;letter-spacing:-.005em}.bkg{color:#FFC400}
 .bwm{font-family:Roboto,"Helvetica Neue",Arial,sans-serif;letter-spacing:-.01em}.bwp{color:#9CE800}
-.xbm{font-family:"Roboto Condensed",Roboto,"Arial Narrow",Arial,sans-serif;font-style:italic;letter-spacing:-.01em}.xbb{color:#14A0FF}
+.xbm{font-family:"Roboto Condensed",Roboto,"Arial Narrow",Arial,sans-serif;font-style:italic;letter-spacing:-.01em}
+.wym{font-family:Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:900;letter-spacing:-.03em;white-space:nowrap;text-transform:lowercase;color:#F2F1F0}.xbb{color:#14A0FF}
 .bflash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:italic 800 var(--bf,14px)/1 "Saira Condensed",Impact,sans-serif;letter-spacing:.3em;opacity:0;background:#050506}
 .bflash.go{animation:pw-blink .9s steps(1) 1}
 /* pitch */
@@ -313,7 +314,7 @@ input.name{width:100%;height:50px;border-radius:8px;border:1px solid var(--line)
   <div id="world">
     <div class="sky"></div><div class="beam l"></div><div class="beam r"></div>
     <div class="crowd" id="crowd"><canvas id="crowdc"></canvas></div>
-    <div class="boards" id="boards"><div class="track"><span class="pn"><b>SOCCER</b><i class="red">WIZARD</i></span><span class="pn mk"><span class="sbm">SportyBet</span></span><span class="pn mk"><span class="b9m"><span class="b9r">bet</span><span class="b9g">9ja</span></span></span><span class="pn mk"><span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span></span><span class="pn mk"><span class="bwm"><span class="bwb">bet</span><span class="bwp">Pawa</span></span></span><span class="pn mk"><span class="xbm">1X<span class="xbb">BET</span></span></span><span class="pn"><b>PLAY</b><i class="red">PENALTY</i></span><span class="pn"><b>SOCCER</b><i class="red">WIZARD</i></span><span class="pn mk"><span class="sbm">SportyBet</span></span><span class="pn mk"><span class="b9m"><span class="b9r">bet</span><span class="b9g">9ja</span></span></span><span class="pn mk"><span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span></span><span class="pn mk"><span class="bwm"><span class="bwb">bet</span><span class="bwp">Pawa</span></span></span><span class="pn mk"><span class="xbm">1X<span class="xbb">BET</span></span></span><span class="pn"><b>PLAY</b><i class="red">PENALTY</i></span></div><div class="bflash" id="bflash"></div></div>
+    <div class="boards" id="boards"><div class="track"><span class="pn"><b>SOCCER</b><i class="red">WIZARD</i></span><span class="pn mk"><span class="sbm">SportyBet</span></span><span class="pn mk"><span class="b9m"><span class="b9r">bet</span><span class="b9g">9ja</span></span></span><span class="pn mk"><span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span></span><span class="pn mk"><span class="bwm"><span class="bwb">bet</span><span class="bwp">Pawa</span></span></span><span class="pn mk"><span class="xbm">1X<span class="xbb">BET</span></span></span><span class="pn mk"><span class="wym">betway</span></span><span class="pn"><b>PLAY</b><i class="red">PENALTY</i></span><span class="pn"><b>SOCCER</b><i class="red">WIZARD</i></span><span class="pn mk"><span class="sbm">SportyBet</span></span><span class="pn mk"><span class="b9m"><span class="b9r">bet</span><span class="b9g">9ja</span></span></span><span class="pn mk"><span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span></span><span class="pn mk"><span class="bwm"><span class="bwb">bet</span><span class="bwp">Pawa</span></span></span><span class="pn mk"><span class="xbm">1X<span class="xbb">BET</span></span></span><span class="pn mk"><span class="wym">betway</span></span><span class="pn"><b>PLAY</b><i class="red">PENALTY</i></span></div><div class="bflash" id="bflash"></div></div>
     <div class="grass" id="grass"></div>
     <svg class="layer" id="turf"></svg>
     <svg class="layer" id="lines"></svg>
@@ -1135,7 +1136,7 @@ function charPicker(){var box=el("div","pick");
 /* the site's wordmarks (public/index.html BOOKS.<key>.mark), never our type */
 var BOOKM={sporty:'<span class="sbm">SportyBet</span>',bet9ja:'<span class="b9m"><span class="b9r">bet</span><span class="b9g">9ja</span></span>',
   betking:'<span class="bkm"><span class="bkk">Bet</span><span class="bkg">King</span></span>',betpawa:'<span class="bwm"><span class="bwb">bet</span><span class="bwp">Pawa</span></span>',
-  onexbet:'<span class="xbm">1X<span class="xbb">BET</span></span>'};
+  onexbet:'<span class="xbm">1X<span class="xbb">BET</span></span>',betway:'<span class="wym">betway</span>'};
 /* BUILD ME A SLIP COMES FIRST (owner, 9 Oct 2026): at the bottom it sat under
    five booking codes and a phone had to scroll to find it. Drawn at once, so
    it is there even before (or without) today's codes. */

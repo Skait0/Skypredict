@@ -115,6 +115,8 @@ test("the converter, the bot and the daily code know the sixth book", () => {
   assert.match(read("lib/slipwatch.js"), /betway: "Betway"/);
 });
 
+/* Copy and Share use their darker #008600: white on the #00A826 accent is
+   3.2:1, on #008600 4.8:1 (caught writing the card, 14 Oct 2026). */
 test("the Betway code card is built like the other books'", () => {
   const rule = (sel) => {
     const i = src.indexOf(sel + "{");
@@ -125,5 +127,6 @@ test("the Betway code card is built like the other books'", () => {
   assert.match(ground, /radial-gradient\([^)]*rgba\(0,168,38/);
   assert.match(rule(".code-card--wy .code-open"), /background:#fff/);
   assert.match(rule(".code-card--wy .code-open .wym"), /color:#000/);
-  assert.match(src, /\.code-card--wy \.code-acts \.code-copy,\r?\n\.code-card--wy \.code-acts \.share-btn\{\r?\n  background:#00A826/);
+  assert.match(src, /\.code-card--wy \.code-acts \.code-copy,\r?\n\.code-card--wy \.code-acts \.share-btn\{\r?\n  background:#008600/);
+  assert.ok(ratio("008600", "FFFFFF") >= 4.5);
 });

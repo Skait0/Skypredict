@@ -97,6 +97,7 @@ const FEEDS = {
   betking: "/api/betking/fixtures",
   betpawa: "/api/betpawa/fixtures",
   onexbet: "/api/onexbet/fixtures",
+  betway: "/api/betway/fixtures",
 };
 
 async function events(which) {
@@ -123,7 +124,8 @@ async function events(which) {
       awayTeam: (bits.slice(1).join(" - ") || "").trim(),
       startTime: Date.parse(m.kickoff), league: m.league,
       /* Sportradar's match id where the book carries one (BetKing on every
-         row, Bet9ja and Betpawa on most, 1xBet never) - findEvent pairs on
+         row, Bet9ja and Betpawa on most, Betway on every row because its
+         own event id IS Sportradar's, 1xBet never) - findEvent pairs on
          it before it trusts a name. */
       srId: m.srId ? String(m.srId) : null,
     };
@@ -314,8 +316,17 @@ if (require.main === module) (async () => {
     console.log("onexbet fixtures: " + e.message + " - publishing without it");
     return [];
   });
+  /* AND BETWAY, LAST, ON THE SAME ADDITIVE TERMS (14 Oct 2026): asked only for
+     the legs the established books already agreed, and any failure - feed,
+     session, refusal - costs Betway the day and nothing else. It must never
+     decide which games everybody else is given. */
+  const wy = await events("betway").catch((e) => {
+    console.log("betway fixtures: " + e.message + " - publishing without it");
+    return [];
+  });
   console.log(`feeds: ${sporty.length} SportyBet events, ${b9.length} Bet9ja events, ` +
-              `${bk.length} BetKing events, ${bp.length} Betpawa events, ${xb.length} 1xBet events`);
+              `${bk.length} BetKing events, ${bp.length} Betpawa events, ${xb.length} 1xBet events, ` +
+              `${wy.length} Betway events`);
 
   /* Most confident FIRST BY THE MARKET-LED NUMBER, the one the site shows. */
   pool.sort((a, b) => blendedConf(b, findEvent(b, sporty)) - blendedConf(a, findEvent(a, sporty)));
@@ -327,12 +338,14 @@ if (require.main === module) (async () => {
     if (picked.length >= legs) break;
     const s = findEvent(f, sporty), sr = srOf(s), b = findEvent(f, b9, sr);
     if (!s || !b) continue;
-    const k = findEvent(f, bk, sr), w = findEvent(f, bp, sr), x = findEvent(f, xb, sr);
+    const k = findEvent(f, bk, sr), w = findEvent(f, bp, sr), x = findEvent(f, xb, sr),
+          y = findEvent(f, wy, sr);
     const market = M.tipCode(f);
     picked.push({ f: f, sporty: s.eventId, bet9ja: b.eventId,
                   betking: k ? k.eventId : null,
                   betpawa: w ? w.eventId : null,
-                  onexbet: x ? x.eventId : null, market: market,
+                  onexbet: x ? x.eventId : null,
+                  betway: y ? y.eventId : null, market: market,
                   odd: legOdd(s, market) });
   }
   if (picked.length < legs) {
@@ -401,13 +414,15 @@ if (require.main === module) (async () => {
     while (working.length < legs && spare.length) {
       const f = spare.shift();
       const sp = findEvent(f, sporty), spr = srOf(sp), bb = findEvent(f, b9, spr),
-            kk = findEvent(f, bk, spr), ww = findEvent(f, bp, spr), xx = findEvent(f, xb, spr);
+            kk = findEvent(f, bk, spr), ww = findEvent(f, bp, spr), xx = findEvent(f, xb, spr),
+            yy = findEvent(f, wy, spr);
       if (sp && bb) {
         const market = M.tipCode(f);
         working.push({ f: f, sporty: sp.eventId, bet9ja: bb.eventId,
                        betking: kk ? kk.eventId : null,
                        betpawa: ww ? ww.eventId : null,
-                       onexbet: xx ? xx.eventId : null, market: market,
+                       onexbet: xx ? xx.eventId : null,
+                       betway: yy ? yy.eventId : null, market: market,
                        odd: legOdd(sp, market) });
       }
     }
@@ -428,7 +443,7 @@ if (require.main === module) (async () => {
    * priced all five picks each day. If that stops being true the log line
    * below is where it shows.
    *
-   * Betpawa and 1xBet join on exactly BetKing's terms.
+   * Betpawa, 1xBet and Betway join on exactly BetKing's terms.
    *
    * THEY TAKE WHAT THEY CAN (owner, 13 Oct 2026). All-or-nothing cost betPawa
    * and 1xBet the 13 Oct code over one unpriced Over 1.5 each, and 1xBet the
@@ -437,7 +452,7 @@ if (require.main === module) (async () => {
    * fewer than legs-1 - and short[book] tells every page and post it holds
    * fewer games than the slip. */
   const short = {};
-  for (const bk of ["betking", "betpawa", "onexbet"]) {
+  for (const bk of ["betking", "betpawa", "onexbet", "betway"]) {
     let sel = working.filter((p) => p[bk]);
     let out = { ok: false, why: `${sel.length} of ${working.length} legs on its feed` };
     for (let go = 0; go < 2 && sel.length >= working.length - 1; go++) {
@@ -477,7 +492,7 @@ if (require.main === module) (async () => {
   };
   console.log(`sporty: ${codes.sporty || "-"}   bet9ja: ${codes.bet9ja || "-"}   ` +
               `betking: ${codes.betking || "-"}   betpawa: ${codes.betpawa || "-"}   ` +
-              `onexbet: ${codes.onexbet || "-"}`);
+              `onexbet: ${codes.onexbet || "-"}   betway: ${codes.betway || "-"}`);
 
   /* --dry was declared at the top of this file, documented in the usage line,
      and never read - so a "dry" run booked two real slips and wrote the file

@@ -17,7 +17,7 @@ test("the X post marks the short code and only that one", () => {
 
 test("mkcode books what an additive book accepts and records short", () => {
   const src = fs.readFileSync(require.resolve("../scripts/mkcode.js"), "utf8");
-  assert.match(src, /for \(const bk of \["betking", "betpawa", "onexbet"\]\)/);
+  assert.match(src, /for \(const bk of \["betking", "betpawa", "onexbet", "betway"\]\)/);
   assert.match(src, /sel\.length >= working\.length - 1/, "never fewer than legs-1");
   assert.match(src, /short\[bk\] = sel\.length/);
 });
