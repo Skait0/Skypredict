@@ -719,11 +719,13 @@ async function minifyPage(html, what) {
 }
 async function minifyMore() {
   if (!process.env.VERCEL && !process.env.SPLIT) return;
-  const ui = path.join(PUB, "account-ui.js");
-  if (fs.existsSync(ui)) {
-    const src = fs.readFileSync(ui, "utf8"), code = await mustMinify(src, "account-ui.js");
+  /* messages.js (the message board) too: every signed-in reader loads it. */
+  for (const name of ["account-ui.js", "messages.js"]) {
+    const ui = path.join(PUB, name);
+    if (!fs.existsSync(ui)) continue;
+    const src = fs.readFileSync(ui, "utf8"), code = await mustMinify(src, name);
     fs.writeFileSync(ui, code);
-    log("account-ui.js " + (src.length / 1024).toFixed(0) + " KB -> " + (code.length / 1024).toFixed(0) + " KB minified");
+    log(name + " " + (src.length / 1024).toFixed(0) + " KB -> " + (code.length / 1024).toFixed(0) + " KB minified");
   }
   const game = path.join(PUB, "penalty.html");
   if (fs.existsSync(game)) {

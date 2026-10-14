@@ -1,0 +1,562 @@
+/* THE MESSAGE BOARD (owner, 14 Oct 2026: "make the notice a message board ... send
+   broadcast to all users and also specific users ... a whole text editing suite
+   where i can apply tiny gifs, emojis, links"). Three parts, one file:
+   - clean(): the only HTML a message may carry. The server runs it before a
+     message is stored (api/account.js send) and the page runs it again before
+     anything is drawn, so neither side trusts the other.
+   - the reader's side: the inbox (avatar menu > Messages, where they can reply),
+     the badge on the avatar, and the newest unread message as a banner under
+     the header (no replying there, owner's rule).
+   - the admin's side: the Messages tab (editor, who to send to, conversations)
+     and the Readers tab (every account, search by name or email, the full
+     customer view). Admin only: the server refuses every admin action to anyone
+     else. Plain ES5, like account-ui.js. */
+(function(root){
+  "use strict";
+  /* ---------------------------------------------------------------- shared */
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  /* Animated emoji: Google's Noto animated emoji (CC BY 4.0), cut to 64px in public/emo. */
+  var EMO=[["1f525","fire"],["26bd","ball"],["1f3c6","trophy"],["1f947","gold medal"],["1f4b8","money flying"],["1f911","money face"],
+    ["1f389","party"],["1f38a","confetti"],["1f973","party face"],["1f680","rocket"],["1f4af","100"],["1f44f","clap"],["1f64c","raised hands"],
+    ["1f4aa","muscle"],["1f929","star struck"],["1f60e","cool"],["1f60d","heart eyes"],["1f602","tears of joy"],["1f923","rolling"],
+    ["1f92f","mind blown"],["1f440","eyes"],["1f52e","crystal ball"],["2728","sparkles"],["1f31f","glowing star"],["26a1","lightning"],
+    ["1f4a5","boom"],["2705","check"],["274c","cross"],["26a0_fe0f","warning"],["1f6a8","siren"],["1f514","bell"],["1f4e3","megaphone"],
+    ["1f381","gift"],["1f451","crown"],["1f48e","gem"],["1f3af","bullseye"],["1f4c8","chart up"],["1f3b2","dice"],["1f340","clover"],
+    ["1f64f","pray"],["2764_fe0f","heart"],["1f44d","thumbs up"],["1f44b","wave"],["1f91d","handshake"],["1fae1","salute"],["1f609","wink"],
+    ["1f60f","smirk"],["1f92a","zany"],["1f914","thinking"],["1f92b","shush"],["1f924","drool"],["1f975","hot"],["1f976","cold"],
+    ["1f631","scream"],["1f62d","sob"],["1f97a","pleading"],["1f621","angry"],["1f480","skull"],["1f47b","ghost"],["1f410","goat"],
+    ["1f981","lion"],["1f308","rainbow"],["23f0","alarm"],["23f3","hourglass"],["1f198","sos"]];
+  var TAGS={b:1,strong:1,i:1,em:1,u:1,s:1,strike:1,br:1,p:1,ul:1,ol:1,li:1,a:1,img:1,span:1,h3:1,blockquote:1};
+  var DROP={script:1,style:1,iframe:1,object:1,embed:1,svg:1,math:1,template:1,noscript:1,textarea:1,select:1,title:1,head:1};
+  var CLS=["m-big","m-small","m-gold","m-red","m-green","m-glow","m-center"];
+  var EMO_RE=/^\/emo\/[0-9a-f_]{2,20}\.webp$/;
+  var GIF_RE=/^https:\/\/media\d?\.giphy\.com\/media\/[A-Za-z0-9._\-\/]{1,200}\.(gif|webp)$/;
+  function unent(s){ return String(s).replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,"<").replace(/&gt;/g,">"); }
+  /* A link goes to the web over https, or somewhere on our own site. */
+  function okHref(u){ u=unent(u).replace(/^\s+|\s+$/g,"");
+    return /^https:\/\/[^\s"'<>\\]+$/i.test(u)||/^\/(?!\/)[^\s"'<>\\]*$/.test(u)?u:null; }
+  function attrsOf(s){ var o={}, re=/([a-zA-Z_:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/g, m;
+    while((m=re.exec(s||""))) o[m[1].toLowerCase()]=m[2]!=null?m[2]:m[3]!=null?m[3]:m[4]; return o; }
+  function classOf(c){ var k=String(c||"").split(/\s+/).filter(function(x){ return CLS.indexOf(x)>=0; }); return k.length?" class=\""+k.join(" ")+"\"":""; }
+  function clean(html){
+    var out="", drop=0;
+    String(html==null?"":html).slice(0,40000).replace(/<!--[\s\S]*?-->|<(\/?)([a-zA-Z][a-zA-Z0-9]*)((?:[^>"']|"[^"]*"|'[^']*')*)>|([^<]+)|(<)/g,
+      function(m,close,tag,attrs,text,lt){
+        if(text!=null){ if(!drop) out+=text.replace(/&(?![a-zA-Z]{2,8};|#\d{1,7};|#x[0-9a-fA-F]{1,6};)/g,"&amp;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); return ""; }
+        if(lt){ if(!drop) out+="&lt;"; return ""; }
+        if(!tag) return "";
+        tag=tag.toLowerCase();
+        if(DROP[tag]){ if(!/\/\s*$/.test(attrs||"")) drop=Math.max(0,drop+(close?-1:1)); return ""; }
+        if(drop) return "";
+        if(tag==="div") tag="p";
+        if(!TAGS[tag]) return "";
+        if(close){ if(tag!=="br"&&tag!=="img") out+="</"+tag+">"; return ""; }
+        var a=attrsOf(attrs);
+        if(tag==="br"){ out+="<br>"; return ""; }
+        if(tag==="img"){ var src=unent(a.src||""), alt=esc(unent(a.alt||"").slice(0,40));
+          if(EMO_RE.test(src)) out+="<img class=\"m-emo\" src=\""+esc(src)+"\" alt=\""+alt+"\" width=\"28\" height=\"28\">";
+          else if(GIF_RE.test(src)) out+="<img class=\"m-gif\" src=\""+esc(src)+"\" alt=\""+alt+"\" loading=\"lazy\">";
+          return ""; }
+        if(tag==="a"){ var h=okHref(a.href||""); out+=h?"<a href=\""+esc(h)+"\""+(h.charAt(0)==="/"?"":" target=\"_blank\" rel=\"noopener nofollow\"")+">":"<a>"; return ""; }
+        out+="<"+tag+(/^(span|p|h3|li|blockquote)$/.test(tag)?classOf(a["class"]):"")+">";
+        return "";
+      });
+    return out;
+  }
+  /* The words alone, for previews and the log. */
+  function textOf(html){ return unent(String(html||"").replace(/<img[^>]*alt="([^"]*)"[^>]*>/g," $1 ").replace(/<(br|\/p|\/li|\/h3)[^>]*>/g," ").replace(/<[^>]*>/g,""))
+    .replace(/\s+/g," ").replace(/^\s+|\s+$/g,""); }
+  function isEmpty(html){ return !textOf(html)&&!/<img /.test(html); }
+  /* Every account's first message (owner, 14 Oct 2026: "a welcome wizardy kind of
+     message that also tells users how to use our website and why our site is the
+     best"). Served by the inbox, dated when the account was made. */
+  function emo(cp,alt){ return "<img class=\"m-emo\" src=\"/emo/"+cp+".webp\" alt=\""+alt+"\" width=\"28\" height=\"28\">"; }
+  var WELCOME="<h3 class=\"m-big m-gold\">Welcome to the Wizard's tower "+emo("1f52e","crystal ball")+"</h3>"+
+    "<p>The crystal ball is warm and today's board is live. Here is how to make it work for you:</p><ul>"+
+    "<li><b>Read the board.</b> Every game gets our chance on every market, worked out from real results. The higher the %, the stronger the pick.</li>"+
+    "<li><b>Build a slip.</b> Tap the picks you like, or let <b>Build me a slip</b> pick for you, and choose how safe you want it.</li>"+
+    "<li><b>Book it in one tap.</b> Get a booking code for SportyBet, Bet9ja, BetKing, betPawa, 1xBet or Betway. Got a code already? Paste it in the converter and move it to another bookie.</li>"+
+    "<li><b>Edit for me.</b> One tap swaps a risky leg for a safer bet on the same game.</li>"+
+    "<li><b>Follow it live.</b> Your slips track themselves and tell you when they land "+emo("1f389","party")+"</li></ul>"+
+    "<p><b><span class=\"m-glow\">Why the Wizard?</span></b> Our picks are numbers, not vibes. We show our record every day, wins and losses, so you always know how we are doing. Six bookies, one place, free.</p>"+
+    "<p>Questions? Reply right here. The Wizard reads every message "+emo("2728","sparkles")+"</p>"+
+    "<p class=\"m-small\">18+ · Stake only what you can afford to lose.</p>";
+  var api={clean:clean,textOf:textOf,isEmpty:isEmpty,okHref:okHref,EMO:EMO,WELCOME:WELCOME};
+  if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
+  if(!root.document) return;
+
+  /* ------------------------------------------------------------------ page */
+  var d=root.document;
+  function acct(){ return root.swAcct||{st:{}}; }
+  function on(){ var a=acct(); return !!(a.st&&a.st.on&&a.req); }
+  function isAdmin(){ try{ return localStorage.getItem("sw.role")==="admin"; }catch(e){ return false; } }
+  function ago(iso){ var t=Date.parse(iso); if(!isFinite(t)) return "";
+    var m=Math.round((Date.now()-t)/60000);
+    return m<1?"just now":m<60?m+" min ago":m<1440?Math.round(m/60)+" h ago":Math.round(m/1440)===1?"yesterday":Math.round(m/1440)+" days ago"; }
+  function when(iso){ try{ return new Date(iso).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } }
+  var CSS=
+    /* the message itself, everywhere it is drawn */
+    ".m-body{font-size:14px;line-height:1.5;overflow-wrap:anywhere}.m-body p,.m-body h3,.m-body ul,.m-body ol,.m-body blockquote{margin:0 0 8px}.m-body>:last-child{margin-bottom:0}"+
+    ".m-body h3{font-size:16px;font-weight:800}.m-body ul,.m-body ol{padding-left:20px}.m-body li{margin:3px 0}.m-body a{color:var(--accent);font-weight:700}"+
+    ".m-body blockquote{border-left:3px solid var(--accent);padding-left:10px;color:var(--soft)}"+
+    ".m-big{font-size:1.3em;font-weight:800}.m-small{font-size:.82em;color:var(--faint)}.m-gold{color:var(--accent)}.m-red{color:var(--red-ink)}.m-green{color:var(--green-ink)}.m-center{text-align:center}"+
+    ".m-glow{color:var(--accent);text-shadow:0 0 10px rgba(242,184,75,.75),0 0 2px rgba(242,184,75,.9)}"+
+    ".m-emo{width:1.75em;height:1.75em;vertical-align:-.45em;display:inline-block}.m-gif{display:block;max-width:100%;height:auto;max-height:180px;border-radius:8px;margin:6px 0}"+
+    /* the banner under the header */
+    ".swm-ban{display:flex;gap:12px;align-items:flex-start;max-width:1100px;margin:10px auto 0;padding:12px 14px;border-radius:12px;border:1px solid var(--accent);"+
+      "background:linear-gradient(135deg,rgba(242,184,75,.14),rgba(230,57,70,.08)) var(--card);box-sizing:border-box;animation:swmIn .35s cubic-bezier(.23,1,.32,1)}"+
+    "@keyframes swmIn{from{opacity:0;transform:translateY(-6px)}}"+
+    ".swm-ban .m-body{flex:1;min-width:0;max-height:4.6em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}"+
+    ".swm-ban .m-body .m-gif{display:none}.swm-ban-b{display:flex;flex-direction:column;gap:6px;flex:none}"+
+    ".swm-ban button{border:0;border-radius:6px;font:inherit;font-size:12.5px;font-weight:800;padding:6px 10px;cursor:pointer}"+
+    ".swm-ban .swm-open{background:var(--accent);color:var(--on-accent)}.swm-ban .swm-x{background:none;color:var(--soft)}"+
+    "@media(max-width:720px){.swm-ban{margin:8px 12px 0}}"+
+    /* the inbox and threads */
+    ".swm-thread{display:flex;flex-direction:column;gap:10px;margin:4px 0 14px}"+
+    ".swm-msg{max-width:88%;padding:11px 13px;border-radius:14px;background:var(--card);border:1px solid var(--line)}"+
+    ".swm-msg.swm-me{align-self:flex-end;background:var(--card-2);border-color:transparent;border-bottom-right-radius:4px}.swm-msg.swm-wiz{border-bottom-left-radius:4px}"+
+    ".swm-msg.swm-new{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-rim)}"+
+    ".swm-meta{display:flex;gap:8px;align-items:center;font-size:11.5px;font-weight:700;color:var(--faint);margin-top:6px}.swm-meta button{margin-left:auto}"+
+    ".swm-who{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--accent);margin-bottom:6px}.swm-who img{width:22px;height:22px;border-radius:50%}"+
+    ".swm-tag{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);border:1px solid var(--line);border-radius:4px;padding:1px 5px}"+
+    ".swm-rep{display:flex;gap:8px;align-items:flex-end;position:sticky;bottom:0;background:var(--bg);padding:8px 0 4px}"+
+    ".swm-rep textarea{flex:1;min-height:44px;max-height:140px;resize:vertical;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:14.5px;padding:10px 12px;box-sizing:border-box}"+
+    /* the send button and its answer */
+    ".swm-send{position:relative;flex:none;height:44px;padding:0 18px;border:0;border-radius:10px;background:var(--accent);color:var(--on-accent);font:inherit;font-size:14px;font-weight:800;cursor:pointer;transition:background .2s,transform .1s}"+
+    ".swm-send:active{transform:scale(.97)}.swm-send[disabled]{opacity:.7;cursor:default}.swm-send.swm-ok{background:var(--green);color:#fff;opacity:1}.swm-send.swm-bad{background:var(--red-fill);color:#fff;opacity:1}"+
+    ".swm-send.swm-wide{width:100%;margin:12px 0 4px;height:48px;font-size:15px}"+
+    /* the editor */
+    ".swm-ed{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}.swm-ed:focus-within{border-color:var(--accent)}"+
+    ".swm-tb{display:flex;flex-wrap:wrap;gap:2px;padding:6px;border-bottom:1px solid var(--line);background:var(--card-2)}"+
+    ".swm-tb button{min-width:34px;height:32px;padding:0 8px;border:0;border-radius:6px;background:none;color:var(--text);font:inherit;font-size:13px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:4px}"+
+    ".swm-tb button:hover,.swm-tb button[aria-pressed=true]{background:var(--raise)}.swm-tb .swm-sep{width:1px;background:var(--line);margin:4px 3px}"+
+    ".swm-area{min-height:150px;max-height:420px;overflow-y:auto;padding:12px 14px;outline:none}.swm-area:empty:before{content:attr(data-ph);color:var(--faint)}"+
+    ".swm-pop{border-top:1px solid var(--line);padding:10px;background:var(--card-2)}.swm-pop[hidden]{display:none}"+
+    ".swm-emos{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:4px;max-height:210px;overflow-y:auto}"+
+    ".swm-emos button{aspect-ratio:1;border:0;border-radius:8px;background:none;cursor:pointer;padding:4px}.swm-emos button:hover{background:var(--raise)}.swm-emos img{width:100%;height:100%}"+
+    ".swm-gifs{columns:3 96px;column-gap:6px;max-height:260px;overflow-y:auto;margin-top:8px}.swm-gifs button{display:block;width:100%;border:0;padding:0;margin:0 0 6px;background:none;cursor:pointer;border-radius:6px;overflow:hidden}.swm-gifs img{width:100%;display:block}"+
+    ".swm-row{display:flex;gap:6px}.swm-row .swa-in{flex:1;height:38px;font-size:14px}.swm-fine{font-size:11px;color:var(--faint);margin:6px 2px 0}"+
+    /* who it goes to */
+    ".swm-to{display:flex;gap:6px;margin:0 0 10px}.swm-to button{flex:1;height:38px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--soft);font:inherit;font-size:13px;font-weight:800;cursor:pointer}"+
+    ".swm-to button[aria-pressed=true]{background:var(--red-fill);border-color:transparent;color:#fff}"+
+    ".swm-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.swm-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 4px;border-radius:99px;background:var(--card-2);font-size:12.5px;font-weight:700}"+
+    ".swm-chip img{width:22px;height:22px;border-radius:50%}.swm-chip button{border:0;background:none;color:var(--faint);font:inherit;font-size:15px;cursor:pointer;padding:0 4px;line-height:1}"+
+    /* readers */
+    ".swm-list{max-height:430px;overflow-y:auto}.swm-r{display:flex;align-items:center;gap:11px;width:100%;padding:10px 12px;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;box-sizing:border-box}"+
+    ".swm-r+.swm-r{border-top:1px solid var(--line)}.swm-r:hover,.swm-r.swm-hi{background:var(--card-2)}.swm-r img{width:36px;height:36px;border-radius:50%;flex:none;background:var(--card-2)}"+
+    ".swm-r>span:not(.swm-unr){flex:1;min-width:0}.swm-r b{display:block;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.swm-r small{display:block;font-size:12px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"+
+    ".swm-r i{font-style:normal;font-size:11px;font-weight:700;color:var(--faint);flex:none}.swm-r mark{background:none;color:var(--accent)}"+
+    ".swm-unr{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red);color:#fff;font-size:10.5px;font-weight:800;line-height:18px;text-align:center;flex:none;box-sizing:border-box}"+
+    ".swm-hero{display:flex;gap:14px;align-items:center;padding:16px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(135deg,rgba(242,184,75,.12),transparent 60%) var(--card);margin-bottom:12px}"+
+    ".swm-hero img{width:72px;height:72px;border-radius:50%;box-shadow:0 0 0 3px var(--accent-rim)}.swm-hero b{display:block;font-size:19px;font-weight:800}.swm-hero small{display:block;font-size:13px;color:var(--soft);overflow-wrap:anywhere}"+
+    ".swm-pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.swm-pills span{font-size:11px;font-weight:800;padding:2px 7px;border-radius:99px;background:var(--card-2);color:var(--soft)}.swm-pills .swm-gold{color:var(--accent)}"+
+    ".swm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.swm-grid div{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:10px;text-align:center}"+
+    ".swm-grid b{display:block;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}.swm-grid small{font-size:11.5px;color:var(--faint);font-weight:700}"+
+    ".swm-acts{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}"+
+    "@media (prefers-reduced-motion:reduce){.swm-ban{animation:none}}";
+  var styled=false;
+  function style(){ if(styled) return; styled=true; var s=d.createElement("style"); s.textContent=CSS; d.head.appendChild(s); }
+
+  /* The send button says what happened, on itself (owner: "i should see the message
+     sent or broadcast sent confirmation on the send button"). */
+  function sendState(btn,state,text){
+    if(!btn.getAttribute("data-label")) btn.setAttribute("data-label",btn.textContent);
+    clearTimeout(btn._t); btn.classList.remove("swm-ok","swm-bad");
+    if(state==="busy"){ btn.disabled=true; btn.textContent="Sending..."; return; }
+    btn.disabled=false;
+    if(state==="ok"||state==="bad"){ btn.classList.add(state==="ok"?"swm-ok":"swm-bad"); btn.textContent=text;
+      btn._t=setTimeout(function(){ btn.classList.remove("swm-ok","swm-bad"); btn.textContent=btn.getAttribute("data-label"); },state==="ok"?2600:3200); }
+  }
+  function errWords(code,j){
+    if(code===0) return "No connection";
+    if(code===429) return "Slow down a little";
+    if(code===503) return j&&j.error==="no_key"?"GIF search needs a key":"Messages are not set up yet";
+    if(j&&j.error==="too_long") return "Too long";
+    if(j&&j.error==="empty") return "Write something first";
+    return "Not sent, try again";
+  }
+
+  /* ---------------------------------------------- the reader: poll + badge */
+  var state={msgs:[],unread:0,readAt:null,bannerAt:null,adminUnread:0,loaded:false};
+  function poll(cb){
+    if(!on()) return cb&&cb(null);
+    acct().req("GET","/api/account/inbox",null,function(code,j){
+      if(code===200&&j){ state.msgs=j.messages||[]; state.unread=j.unread|0; state.readAt=j.readAt||null; state.bannerAt=j.bannerAt||null;
+        state.adminUnread=j.adminUnread|0; state.loaded=true; paint(); }
+      if(cb) cb(code===200?j:null);
+    });
+  }
+  /* The avatar's badge for a reader. The admin's avatar carries the admin count (index.html adminBadge). */
+  function paint(){
+    if(isAdmin()){ if(root.swAdminBadgeRefresh) root.swAdminBadgeRefresh(); return; }
+    var acc=d.getElementById("hdAccount"); if(!acc) return;
+    var b=acc.querySelector(".bt-badge"), n=state.unread;
+    if(n){ if(!b){ b=d.createElement("b"); b.className="bt-badge"; acc.appendChild(b); } b.textContent=n>9?"9+":String(n); }
+    else if(b) b.remove();
+    banner();
+  }
+  /* The newest message the reader has not seen, under the header. Read it in the
+     inbox or close it and it does not come back. */
+  function banner(){
+    var old=d.getElementById("swmBan");
+    var since=Math.max(Date.parse(state.readAt||"")||0,Date.parse(state.bannerAt||"")||0);
+    var m=state.msgs.filter(function(x){ return !x.mine&&Date.parse(x.at)>since; })[0];
+    if(!m){ if(old) old.remove(); return; }
+    if(old&&old.getAttribute("data-id")===String(m.id)) return;
+    if(old) old.remove();
+    var top=d.getElementById("top"); if(!top) return;
+    style();
+    var el=d.createElement("div"); el.className="swm-ban"; el.id="swmBan"; el.setAttribute("role","status"); el.setAttribute("data-id",String(m.id));
+    el.innerHTML="<div class='m-body'>"+clean(m.body)+"</div><div class='swm-ban-b'><button type='button' class='swm-open'>Open</button><button type='button' class='swm-x' aria-label='Close message'>Close</button></div>";
+    el.querySelector(".swm-open").onclick=function(){ inbox(); };
+    el.querySelector(".swm-x").onclick=function(){ el.remove(); state.bannerAt=new Date().toISOString();
+      acct().req("POST","/api/account/msgread",{what:"banner"},function(){}); };
+    var after=d.querySelector(".sw-notice")||top; after.insertAdjacentElement("afterend",el);
+  }
+
+  /* -------------------------------------------------------- the inbox view */
+  var WIZ="<div class='swm-who'><img src='/wiz-logo.png' alt=''>The Wizard</div>";
+  function bubble(m,since,admin){
+    var cls=m.mine?"swm-me":"swm-wiz", fresh=!m.mine&&Date.parse(m.at)>since;
+    return "<div class='swm-msg "+cls+(fresh?" swm-new":"")+"'>"+(m.mine?"":WIZ)+
+      "<div class='m-body'>"+(m.mine?esc(m.body).replace(/\n/g,"<br>"):clean(m.body))+"</div>"+
+      "<div class='swm-meta'>"+(m.bcast?"<span class='swm-tag'>To everyone</span>":"")+esc(when(m.at))+(admin||"")+"</div></div>";
+  }
+  function inbox(){
+    if(!on()||!root.swAccountUI||!root.swAccountUI.view) return;
+    style(); root.swAccountUI.close();
+    var v=root.swAccountUI.view("Messages","<div class='swm-thread' id='swmThread'><p class='swa-note'>Loading...</p></div>"+
+      "<div class='swm-rep'><textarea id='swmRe' maxlength='1000' rows='1' placeholder='Reply to the Wizard' aria-label='Your reply'></textarea>"+
+      "<button type='button' class='swm-send' id='swmReGo'>Send</button></div>");
+    var box=v.querySelector("#swmThread"), ta=v.querySelector("#swmRe"), go=v.querySelector("#swmReGo");
+    function draw(){
+      var since=Date.parse(state.readAt||"")||0;
+      var list=state.msgs.slice().reverse();
+      box.innerHTML=list.length?list.map(function(m){ return bubble(m,since); }).join(""):"<p class='swa-note'>No messages yet.</p>";
+      var last=box.lastElementChild; if(last) try{ last.scrollIntoView({block:"end"}); }catch(e){}
+    }
+    poll(function(j){
+      if(!j){ box.innerHTML="<p class='swa-note'>Could not load your messages. Try again in a moment.</p>"; return; }
+      draw();
+      /* Opening the inbox is reading it: the badge and the banner go. */
+      acct().req("POST","/api/account/msgread",{what:"inbox"},function(code){
+        if(code===200){ state.readAt=new Date().toISOString(); state.unread=0; paint(); } });
+    });
+    go.onclick=function(){
+      var t=ta.value.replace(/^\s+|\s+$/g,""); if(!t){ ta.focus(); return; }
+      sendState(go,"busy");
+      acct().req("POST","/api/account/reply",{text:t},function(code,j){
+        if(code!==200) return sendState(go,"bad",errWords(code,j));
+        ta.value=""; sendState(go,"ok","✓ Sent");
+        state.msgs.unshift({id:j.id,at:new Date().toISOString(),mine:true,body:t}); draw();
+      });
+    };
+  }
+
+  /* ------------------------------------------------------- admin: shared */
+  var readers=null;      // every account, from /api/account/readers
+  function loadReaders(cb){
+    if(readers) return cb(readers);
+    acct().req("GET","/api/account/readers",null,function(code,j){
+      if(code===200&&j&&j.readers){ readers=j.readers; return cb(readers); }
+      cb(null,code,j);
+    });
+  }
+  function nameOf(r){ return r.name||String(r.email||"").split("@")[0]; }
+  function avOf(r){ return "/av/"+(/^[a-z0-9]{2,12}$/.test(r.avatar||"")?r.avatar:"fire")+".webp"; }
+  function byId(id){ return (readers||[]).filter(function(r){ return r.id===id; })[0]||null; }
+  /* Name or email, any part of it; names and emails that start with what was typed come first. */
+  function match(list,q){
+    q=String(q||"").toLowerCase().replace(/^\s+|\s+$/g,"");
+    if(!q) return list.slice();
+    var hit=[]; list.forEach(function(r){
+      var n=nameOf(r).toLowerCase(), e=String(r.email||"").toLowerCase();
+      var s=n.indexOf(q)===0||e.indexOf(q)===0?0:n.indexOf(q)>0||e.indexOf(q)>0?1:-1;
+      if(s>=0) hit.push([s,r]); });
+    return hit.sort(function(a,b){ return a[0]-b[0]; }).map(function(x){ return x[1]; });
+  }
+  function mark(text,q){ var t=String(text||""), i=q?t.toLowerCase().indexOf(q.toLowerCase()):-1;
+    return i<0?esc(t):esc(t.slice(0,i))+"<mark>"+esc(t.slice(i,i+q.length))+"</mark>"+esc(t.slice(i+q.length)); }
+  function rowHtml(r,q,extra){
+    return "<button type='button' class='swm-r' data-rid='"+esc(r.id)+"'><img src='"+avOf(r)+"' alt='' loading='lazy'>"+
+      "<span><b>"+mark(nameOf(r),q)+"</b><small>"+mark(r.email,q)+"</small></span>"+(extra||"<i>"+esc(ago(r.last_seen_at))+"</i>")+"</button>";
+  }
+
+  /* ---------------------------------------------------- admin: the editor */
+  var I={
+    b:"<b>B</b>",i:"<i style='font-family:serif'>I</i>",u:"<u>U</u>",s:"<s>S</s>",
+    big:"<span style='font-size:15px'>A</span><span style='font-size:11px'>A</span>",
+    list:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>',
+    quote:'<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M4 11h4l-2 6h3l2-6V5H4zm9 0h4l-2 6h3l2-6V5h-7z"/></svg>',
+    link:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>',
+    clear:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7V5h14v2M10 5l-3 14M5 19h6M15 14l5 5M20 14l-5 5"/></svg>'
+  };
+  function editorHtml(){
+    function b(cmd,label,html){ return "<button type='button' data-cmd='"+cmd+"' aria-label='"+label+"' title='"+label+"'>"+html+"</button>"; }
+    return "<div class='swm-ed'><div class='swm-tb' role='toolbar' aria-label='Formatting'>"+
+      b("bold","Bold",I.b)+b("italic","Italic",I.i)+b("underline","Underline",I.u)+b("strikeThrough","Strike",I.s)+"<span class='swm-sep'></span>"+
+      b("m-big","Big text",I.big)+b("m-gold","Gold","<b style='color:var(--accent);font-size:15px'>A</b>")+
+      b("m-glow","Glow","<b class='m-glow' style='font-size:15px'>A</b>")+
+      b("m-green","Green","<b style='color:var(--green-ink);font-size:15px'>A</b>")+b("m-red","Red","<b style='color:var(--red-ink);font-size:15px'>A</b>")+
+      "<span class='swm-sep'></span>"+b("insertUnorderedList","Bullet list",I.list)+b("quote","Quote",I.quote)+b("center","Centre","≡")+
+      b("link","Link",I.link)+b("emo","Animated emoji","<img src='/emo/1f525.webp' alt='' width='20' height='20'>")+b("gif","GIF","<b style='font-size:11px'>GIF</b>")+
+      b("clear","Clear formatting",I.clear)+"</div>"+
+      "<div class='swm-area m-body' contenteditable='true' role='textbox' aria-multiline='true' aria-label='Message' data-ph='Write something magic...'></div>"+
+      "<div class='swm-pop' data-pop='link' hidden><div class='swm-row'><input class='swa-in' type='url' placeholder='https://... or /penalty' aria-label='Link address'>"+
+        "<button type='button' class='swa-pillbtn' data-link-go>Add link</button></div></div>"+
+      "<div class='swm-pop' data-pop='emo' hidden><div class='swm-emos'>"+EMO.map(function(e){
+        return "<button type='button' data-emo='"+e[0]+"' title='"+esc(e[1])+"'><img src='/emo/"+e[0]+".webp' alt='"+esc(e[1])+"' loading='lazy' width='32' height='32'></button>"; }).join("")+
+        "</div><p class='swm-fine'>Animated emoji by Google (Noto, CC BY 4.0)</p></div>"+
+      "<div class='swm-pop' data-pop='gif' hidden><div class='swm-row'><input class='swa-in' type='search' placeholder='Search GIFs' aria-label='Search GIFs'>"+
+        "<button type='button' class='swa-pillbtn' data-gif-go>Search</button></div><div class='swm-gifs'></div><p class='swm-fine'>Powered by GIPHY</p></div></div>";
+  }
+  function wireEditor(box,a,say){
+    var area=box.querySelector(".swm-area"), saved=null;
+    function keep(){ var s=root.getSelection&&root.getSelection(); if(s&&s.rangeCount&&area.contains(s.anchorNode)) saved=s.getRangeAt(0).cloneRange(); }
+    function back(){ area.focus(); var s=root.getSelection(); if(saved&&s){ s.removeAllRanges(); s.addRange(saved); } }
+    area.addEventListener("keyup",keep); area.addEventListener("mouseup",keep); area.addEventListener("input",keep);
+    d.addEventListener("selectionchange",function(){ if(d.activeElement===area) keep(); });
+    function pop(name){ box.querySelectorAll("[data-pop]").forEach(function(p){ p.hidden=p.getAttribute("data-pop")!==name||!p.hidden; }); }
+    function insert(html){ back(); d.execCommand("insertHTML",false,html); keep(); }
+    /* Wrap the selection in a styled span; tapping the same style again on styled text takes it off. */
+    function wrap(cls){
+      back(); var s=root.getSelection(); if(!s||!s.rangeCount) return;
+      var r=s.getRangeAt(0), host=r.commonAncestorContainer; host=host.nodeType===1?host:host.parentNode;
+      var cur=host.closest&&host.closest("span."+cls);
+      if(cur&&area.contains(cur)){ while(cur.firstChild) cur.parentNode.insertBefore(cur.firstChild,cur); cur.remove(); return; }
+      if(r.collapsed) return say("Select some words first.");
+      var sp=d.createElement("span"); sp.className=cls; sp.appendChild(r.extractContents()); r.insertNode(sp);
+      s.removeAllRanges(); var nr=d.createRange(); nr.selectNodeContents(sp); s.addRange(nr); keep();
+    }
+    box.querySelectorAll("[data-cmd]").forEach(function(btn){
+      btn.addEventListener("mousedown",function(e){ e.preventDefault(); });   // keep the selection in the text
+      btn.onclick=function(){
+        var c=btn.getAttribute("data-cmd");
+        if(c==="link"||c==="emo"||c==="gif"){ pop(c);
+          var inp=box.querySelector("[data-pop='"+c+"'] input"); if(inp&&c==="link") inp.focus();
+          if(c==="gif"&&!box.querySelector(".swm-gifs").childElementCount) gifs(""); return; }
+        if(/^m-/.test(c)) return wrap(c);
+        back();
+        if(c==="quote") d.execCommand("formatBlock",false,"blockquote");
+        else if(c==="center"){ var s=root.getSelection(), n=s&&s.anchorNode; n=n&&(n.nodeType===1?n:n.parentNode);
+          var p=n&&n.closest&&n.closest("p,h3,div,blockquote,li"); if(!p||!area.contains(p)||p===area){ d.execCommand("formatBlock",false,"p"); n=root.getSelection().anchorNode; n=n&&(n.nodeType===1?n:n.parentNode); p=n&&n.closest&&n.closest("p"); }
+          if(p&&area.contains(p)) p.classList.toggle("m-center"); }
+        else if(c==="clear"){ d.execCommand("removeFormat"); d.execCommand("unlink"); }
+        else d.execCommand(c);
+        keep();
+      };
+    });
+    var lk=box.querySelector("[data-pop='link'] input");
+    function addLink(){
+      var u=lk.value.replace(/^\s+|\s+$/g,""); if(!/^(https?:\/\/|\/)/i.test(u)) u="https://"+u.replace(/^\/+/,"");
+      u=u.replace(/^http:/i,"https:");
+      if(!api.okHref(u)) return say("That link does not look right.");
+      back(); var s=root.getSelection();
+      if(s&&!s.isCollapsed) d.execCommand("createLink",false,u); else insert("<a href=\""+esc(u)+"\">"+esc(u.replace(/^https:\/\//,""))+"</a>&nbsp;");
+      lk.value=""; pop(null); keep();
+    }
+    box.querySelector("[data-link-go]").onclick=addLink;
+    lk.onkeydown=function(e){ if(e.key==="Enter"){ e.preventDefault(); addLink(); } };
+    box.querySelectorAll("[data-emo]").forEach(function(b){ b.addEventListener("mousedown",function(e){ e.preventDefault(); });
+      b.onclick=function(){ var k=b.getAttribute("data-emo"), n=b.getAttribute("title");
+        insert("<img class=\"m-emo\" src=\"/emo/"+k+".webp\" alt=\""+esc(n)+"\" width=\"28\" height=\"28\">"); }; });
+    var gq=box.querySelector("[data-pop='gif'] input"), gl=box.querySelector(".swm-gifs");
+    function gifs(q){
+      gl.innerHTML="<p class='swa-note'>Loading...</p>";
+      a.req("GET","/api/account/gifs?q="+encodeURIComponent(q),null,function(code,j){
+        if(code!==200){ gl.innerHTML="<p class='swa-note'>"+(j&&j.error==="no_key"?"GIF search needs a GIPHY key. Add GIPHY_API_KEY on Vercel (free at developers.giphy.com).":"Could not load GIFs. Try again.")+"</p>"; return; }
+        gl.innerHTML=(j.gifs||[]).map(function(g){ return "<button type='button' data-gif='"+esc(g.url)+"' title='"+esc(g.title)+"'><img src='"+esc(g.url)+"' alt='"+esc(g.title)+"' loading='lazy'></button>"; }).join("")||"<p class='swa-note'>Nothing found.</p>";
+        gl.querySelectorAll("[data-gif]").forEach(function(b){ b.addEventListener("mousedown",function(e){ e.preventDefault(); });
+          b.onclick=function(){ insert("<img class=\"m-gif\" src=\""+esc(b.getAttribute("data-gif"))+"\" alt=\""+esc(b.getAttribute("title")||"GIF")+"\"><br>"); pop(null); }; });
+      });
+    }
+    box.querySelector("[data-gif-go]").onclick=function(){ gifs(gq.value); };
+    gq.onkeydown=function(e){ if(e.key==="Enter"){ e.preventDefault(); gifs(gq.value); } };
+    /* Pasted text arrives as plain text: a paste from a web page brings its whole stylesheet. */
+    area.addEventListener("paste",function(e){ var t=e.clipboardData&&e.clipboardData.getData("text/plain"); if(t==null) return;
+      e.preventDefault(); d.execCommand("insertText",false,t); });
+    return { html:function(){ return clean(area.innerHTML); }, clear:function(){ area.innerHTML=""; saved=null; }, focus:function(){ area.focus(); } };
+  }
+
+  /* -------------------------------------------- admin: the Messages tab */
+  function messagesHtml(){
+    return "<p class='swa-h' style='margin-top:6px'>New message</p>"+
+      "<div class='swm-to' role='group' aria-label='Send to'><button type='button' data-to='all' aria-pressed='true'>Everyone</button><button type='button' data-to='some' aria-pressed='false'>Pick readers</button></div>"+
+      "<div id='swmPick' hidden><input class='swa-in' id='swmPickIn' type='search' autocomplete='off' placeholder='Name or email' aria-label='Find readers to message'>"+
+        "<div class='swa-card swm-list' id='swmPickList' hidden></div><div class='swm-chips' id='swmChips'></div></div>"+
+      editorHtml()+
+      "<button type='button' class='swm-send swm-wide' id='swmGo'>Broadcast to everyone</button>"+
+      "<p class='swa-h'>Conversations</p><div class='swa-card' id='swmConvos'><div class='swa-set'><span class='swa-st'><small>Loading</small></span></div></div>"+
+      "<div id='swmConvo' hidden></div>"+
+      "<p class='swa-h'>Broadcasts sent</p><div class='swa-card' id='swmSent'><div class='swa-set'><span class='swa-st'><small>Loading</small></span></div></div>";
+  }
+  function messagesTab(v,a,say,setCount,goTab){
+    style();
+    var panel=v.querySelector("#swaTMsg"); panel.innerHTML=messagesHtml();
+    var ed=wireEditor(panel,a,say), go=panel.querySelector("#swmGo"), mode="all", picked=[];
+    var pickBox=panel.querySelector("#swmPick"), pin=panel.querySelector("#swmPickIn"), plist=panel.querySelector("#swmPickList"), chips=panel.querySelector("#swmChips");
+    function label(){ go.textContent=mode==="all"?"Broadcast to everyone":picked.length?"Send to "+(picked.length===1?nameOf(byId(picked[0])||{}):picked.length+" readers"):"Pick who gets it";
+      go.setAttribute("data-label",go.textContent); }
+    function paintChips(){ chips.innerHTML=picked.map(function(id){ var r=byId(id)||{id:id,email:id};
+      return "<span class='swm-chip'><img src='"+avOf(r)+"' alt=''>"+esc(nameOf(r))+"<button type='button' data-unpick='"+esc(id)+"' aria-label='Remove "+esc(nameOf(r))+"'>×</button></span>"; }).join("");
+      chips.querySelectorAll("[data-unpick]").forEach(function(b){ b.onclick=function(){ picked=picked.filter(function(x){ return x!==b.getAttribute("data-unpick"); }); paintChips(); label(); }; }); }
+    function showPick(){
+      loadReaders(function(list){
+        if(!list){ plist.hidden=false; plist.innerHTML="<div class='swa-set'><span class='swa-st'><small>Could not load readers.</small></span></div>"; return; }
+        var q=pin.value, hits=match(list,q).filter(function(r){ return picked.indexOf(r.id)<0; }).slice(0,60);
+        plist.hidden=false; plist.innerHTML=hits.map(function(r){ return rowHtml(r,q); }).join("")||"<div class='swa-set'><span class='swa-st'><small>No one matches.</small></span></div>";
+        plist.querySelectorAll("[data-rid]").forEach(function(b){ b.addEventListener("mousedown",function(e){ e.preventDefault(); });
+          b.onclick=function(){ picked.push(b.getAttribute("data-rid")); pin.value=""; paintChips(); label(); showPick(); }; });
+      });
+    }
+    pin.addEventListener("focus",showPick); pin.addEventListener("input",showPick);
+    pin.addEventListener("blur",function(){ setTimeout(function(){ plist.hidden=true; },150); });
+    panel.querySelectorAll("[data-to]").forEach(function(b){ b.onclick=function(){
+      mode=b.getAttribute("data-to"); panel.querySelectorAll("[data-to]").forEach(function(x){ x.setAttribute("aria-pressed",String(x===b)); });
+      pickBox.hidden=mode!=="some"; label(); if(mode==="some") pin.focus(); }; });
+    go.onclick=function(){
+      var html=ed.html();
+      if(api.isEmpty(html)){ ed.focus(); return sendState(go,"bad","Write something first"); }
+      if(mode==="some"&&!picked.length){ pin.focus(); return sendState(go,"bad","Pick who gets it"); }
+      if(mode==="all"&&!root.confirm("Send this to every reader?")) return;
+      sendState(go,"busy");
+      a.req("POST","/api/account/send",{to:mode==="all"?"all":picked,html:html},function(code,j){
+        if(code!==200) return sendState(go,"bad",errWords(code,j));
+        sendState(go,"ok",mode==="all"?"✓ Broadcast sent":"✓ Message sent"+(picked.length>1?" to "+picked.length:""));
+        ed.clear(); picked=[]; paintChips(); setTimeout(label,2700); load();
+      });
+    };
+    /* A reader picked from elsewhere (the customer view's "Message them"). */
+    function to(id){ panel.querySelector("[data-to='some']").click(); if(picked.indexOf(id)<0) picked.push(id); paintChips(); label(); pin.blur(); ed.focus(); }
+    function load(){
+      a.req("GET","/api/account/threads",null,function(code,j){
+        var cv=panel.querySelector("#swmConvos"), sent=panel.querySelector("#swmSent");
+        if(code!==200){ var w="<div class='swa-set'><span class='swa-st'><small>"+(code===503?"Messages are not set up yet. Run sql/messages.sql in Supabase.":"Could not load messages.")+"</small></span></div>";
+          cv.innerHTML=w; sent.innerHTML=w; return; }
+        var seen=Date.parse(j.readAt||"")||0, by={}, order=[], bc=[];
+        (j.messages||[]).forEach(function(m){
+          if(!m.user_id){ bc.push(m); return; }
+          if(!by[m.user_id]){ by[m.user_id]=[]; order.push(m.user_id); }
+          by[m.user_id].push(m); });
+        var unread=0;
+        loadReaders(function(){
+          cv.innerHTML=order.length?order.map(function(id){
+            var t=by[id], r=byId(id)||{id:id,email:"Deleted account"}, last=t[0];
+            var n=t.filter(function(m){ return !m.from_admin&&Date.parse(m.created_at)>seen; }).length; unread+=n;
+            return rowHtml(r,"",n?"<span class='swm-unr'>"+n+"</span>":"<i>"+esc(ago(last.created_at))+"</i>").replace("<small>"+esc(r.email)+"</small>",
+              "<small>"+(last.from_admin?"You: ":"")+esc(api.textOf(last.from_admin?last.body:esc(last.body)).slice(0,70))+"</small>"); }).join(""):
+            "<div class='swa-set'><span class='swa-st'><small>No conversations yet. Replies from readers show up here.</small></span></div>";
+          setCount(v,"swaTMsg",unread?unread+" new":"");
+          cv.querySelectorAll("[data-rid]").forEach(function(b){ b.onclick=function(){ convo(b.getAttribute("data-rid"),by[b.getAttribute("data-rid")]); }; });
+          if(unread) a.req("POST","/api/account/msgread",{what:"inbox"},function(c2){ if(c2===200){ state.adminUnread=0; if(root.swAdminBadgeRefresh) root.swAdminBadgeRefresh(); } });
+        });
+        sent.innerHTML=bc.length?bc.map(function(m){
+          return "<div class='swa-set'><span class='swa-st'><div class='m-body'>"+clean(m.body)+"</div><small>"+esc(when(m.created_at))+"</small></span>"+
+            "<button type='button' class='swa-pillbtn' data-unsend='"+esc(String(m.id))+"'>Unsend</button></div>"; }).join(""):
+          "<div class='swa-set'><span class='swa-st'><small>Nothing sent to everyone yet.</small></span></div>";
+        wireUnsend(sent);
+      });
+    }
+    function wireUnsend(box){ box.querySelectorAll("[data-unsend]").forEach(function(b){ b.onclick=function(){
+      if(!root.confirm("Unsend this? Readers stop seeing it.")) return; b.disabled=true;
+      a.req("POST","/api/account/unsend",{id:b.getAttribute("data-unsend")},function(code,j){
+        if(code===200){ say("Unsent."); load(); } else { b.disabled=false; say(errWords(code,j)); } }); }; }); }
+    /* One reader's conversation, oldest first, with a reply box that sends to them. */
+    function convo(id,list){
+      var r=byId(id)||{id:id,email:""}, box=panel.querySelector("#swmConvo");
+      box.hidden=false;
+      box.innerHTML="<p class='swa-h'>"+esc(nameOf(r))+" <small>"+esc(r.email)+"</small></p><div class='swm-thread'>"+
+        (list||[]).slice().reverse().map(function(m){ return bubble({id:m.id,at:m.created_at,mine:!m.from_admin,body:m.body},Infinity,
+          m.from_admin?"<button type='button' class='swa-pillbtn' data-unsend='"+esc(String(m.id))+"'>Unsend</button>":""); }).join("")+
+        "</div><div class='swm-acts'><button type='button' class='swa-pillbtn' data-reply-to>Reply with the editor</button><button type='button' class='swa-pillbtn' data-open-reader>Open their profile</button></div>";
+      /* In the admin's view the reader's words sit on the left and the admin's on the right. */
+      box.querySelectorAll(".swm-msg").forEach(function(el){ el.classList.toggle("swm-me"); el.classList.toggle("swm-wiz"); });
+      box.querySelectorAll(".swm-msg.swm-wiz .swm-who").forEach(function(w){ w.remove(); });
+      wireUnsend(box);
+      box.querySelector("[data-reply-to]").onclick=function(){ to(id); try{ panel.querySelector(".swm-ed").scrollIntoView({block:"center",behavior:"smooth"}); }catch(e){} };
+      box.querySelector("[data-open-reader]").onclick=function(){ goTab("swaTLk"); if(root.swMsg._openReader) root.swMsg._openReader(id); };
+      try{ box.scrollIntoView({block:"start",behavior:"smooth"}); }catch(e){}
+    }
+    load();
+    return { to:to, load:load };
+  }
+
+  /* ---------------------------------- admin: Readers, the customer view */
+  function readersHtml(){
+    return "<input class='swa-in' id='swmRdIn' type='search' autocomplete='off' autocapitalize='none' spellcheck='false' placeholder='Search by name or email' aria-label='Search readers'>"+
+      "<p class='swm-fine' id='swmRdN'></p><div class='swa-card swm-list' id='swmRdList' hidden></div><div id='swmRd' hidden></div>";
+  }
+  function readersTab(v,a,say,msgTab,goTab){
+    style();
+    var panel=v.querySelector("#swaTLk"); panel.innerHTML=readersHtml();
+    var inp=panel.querySelector("#swmRdIn"), list=panel.querySelector("#swmRdList"), card=panel.querySelector("#swmRd"), n=panel.querySelector("#swmRdN"), hi=-1;
+    function show(){
+      loadReaders(function(all,code){
+        if(!all){ list.hidden=false; list.innerHTML="<div class='swa-set'><span class='swa-st'><small>"+(code===503?"Readers list is not set up yet. Run sql/messages.sql in Supabase.":"Could not load readers.")+"</small></span></div>"; return; }
+        var q=inp.value.replace(/^\s+|\s+$/g,""), hits=match(all,q);
+        n.textContent=q?hits.length+" of "+all.length+" readers":all.length+" readers, most recently seen first";
+        hi=-1; list.hidden=false; card.hidden=true;
+        list.innerHTML=hits.slice(0,200).map(function(r){ return rowHtml(r,q); }).join("")||"<div class='swa-set'><span class='swa-st'><small>No one matches.</small></span></div>";
+        list.querySelectorAll("[data-rid]").forEach(function(b){ b.onclick=function(){ open(b.getAttribute("data-rid")); }; });
+      });
+    }
+    inp.addEventListener("focus",show); inp.addEventListener("input",show);
+    inp.addEventListener("keydown",function(e){
+      var rows=[].slice.call(list.querySelectorAll("[data-rid]")); if(!rows.length) return;
+      if(e.key==="ArrowDown"||e.key==="ArrowUp"){ e.preventDefault(); hi=(hi+(e.key==="ArrowDown"?1:-1)+rows.length)%rows.length;
+        rows.forEach(function(r,i){ r.classList.toggle("swm-hi",i===hi); }); try{ rows[hi].scrollIntoView({block:"nearest"}); }catch(x){} }
+      if(e.key==="Enter"){ e.preventDefault(); open(rows[Math.max(hi,0)].getAttribute("data-rid")); } });
+    function stat(num,label){ return "<div><b>"+esc(String(num))+"</b><small>"+esc(label)+"</small></div>"; }
+    function row(k,val,btn){ return "<div class='swa-set'><span class='swa-st'><b>"+esc(k)+"</b><small>"+val+"</small></span>"+(btn||"")+"</div>"; }
+    function open(id){
+      list.hidden=true; card.hidden=false; n.textContent="";
+      card.innerHTML="<p class='swa-note'>Loading...</p>";
+      a.req("GET","/api/account/reader?id="+encodeURIComponent(id),null,function(code,r){
+        if(code!==200||!r||!r.found){ card.innerHTML="<p class='swa-note'>"+(code===404?"That account no longer exists.":"Could not load this reader.")+"</p>"; return; }
+        var BOOK={sporty:"SportyBet",bet9ja:"Bet9ja",betking:"BetKing",betpawa:"betPawa",onexbet:"1xBet",betway:"Betway"};
+        var devs=(r.devices||[]).map(function(x){ return esc((x.label||"Device")+" · "+ago(x.last_used_at)); }).join("<br>")||"None";
+        var codes=r.codes==null?"Free readers' codes are counted by device, not account.":
+          (r.codes.length?r.codes.map(function(c){ return esc(c.code+" · "+(BOOK[c.book]||c.book)+" · "+c.status+" · "+ago(c.created_at)); }).join("<br>"):"No codes yet.");
+        var rec=r.record||{}, thread=(r.thread||[]).slice().reverse();
+        card.innerHTML="<button type='button' class='swa-back' data-back>‹ All readers</button>"+
+          "<div class='swm-hero'><img src='"+avOf(r)+"' alt=''><div style='min-width:0'><b>"+esc(nameOf(r))+"</b><small>"+esc(r.email)+"</small>"+
+            "<div class='swm-pills'><span class='"+(r.role==="admin"||r.ff?"swm-gold":"")+"'>"+esc(r.plan||"Free plan")+"</span>"+(r.google?"<span>Google</span>":"<span>Email code</span>")+
+            (r.push?"<span>Phone alerts on</span>":"")+(r.mail?"<span>Picks by email</span>":"")+"</div></div></div>"+
+          "<div class='swm-grid'>"+stat(r.slips|0,"slips saved")+stat(rec.won|0,"slips won")+stat((r.devices||[]).length,"devices")+"</div>"+
+          "<div class='swm-acts'><button type='button' class='swa-pillbtn' data-msg>Message them</button>"+
+            (r.role!=="admin"?"<button type='button' class='swa-pillbtn' data-ff='"+(r.ff?"revoke":"grant")+"'>"+(r.ff?"Remove Family & friends":"Give Family & friends")+"</button>":"")+
+            ((r.devices||[]).length&&r.role!=="admin"?"<button type='button' class='swa-pillbtn' data-out>Sign out everywhere</button>":"")+"</div>"+
+          "<div class='swa-card'>"+row("Joined",esc(when(r.created_at)+" · "+ago(r.created_at)))+row("Last seen",esc(ago(r.last_seen_at)||"never"))+
+            row("Signed in on",devs)+row("Default bookmaker",esc(BOOK[r.book]||"Not set"))+row("Theme",r.theme==="light"?"Light":"Dark")+
+            row("Record",esc((rec.won|0)+" won of "+(rec.settled|0)+" settled"))+row("Codes booked",codes)+"</div>"+
+          "<p class='swa-h'>Messages</p>"+(thread.length?"<div class='swm-thread'>"+thread.map(function(m){
+            return bubble({id:m.id,at:m.created_at,mine:!m.from_admin,body:m.body},Infinity); }).join("")+"</div>":"<p class='swa-note'>No direct messages yet. They also get every broadcast.</p>");
+        card.querySelectorAll(".swm-msg").forEach(function(el){ el.classList.toggle("swm-me"); el.classList.toggle("swm-wiz"); });
+        card.querySelectorAll(".swm-msg.swm-wiz .swm-who").forEach(function(w){ w.remove(); });
+        card.querySelector("[data-back]").onclick=function(){ show(); inp.focus(); };
+        card.querySelector("[data-msg]").onclick=function(){ goTab("swaTMsg"); if(msgTab) msgTab.to(r.id); };
+        var ff=card.querySelector("[data-ff]");
+        if(ff) ff.onclick=function(){ ff.disabled=true; a.req("POST","/api/account/"+ff.getAttribute("data-ff"),{email:r.email},function(c2){
+          if(c2===200){ say("Done."); readers=null; open(id); } else { ff.disabled=false; say("Something went wrong. Try again."); } }); };
+        var out=card.querySelector("[data-out]");
+        if(out) out.onclick=function(){ if(!root.confirm("Sign "+r.email+" out on every device?")) return; out.disabled=true;
+          a.req("POST","/api/account/signout",{email:r.email},function(c2){ if(c2===200){ say("Signed out on every device."); open(id); } else { out.disabled=false; say("Something went wrong. Try again."); } }); };
+      });
+    }
+    root.swMsg._openReader=open;
+    return { open:open };
+  }
+  /* Called by account-ui.js when the Admin view opens: fills both tabs. */
+  function admin(v,a,say,setCount,goTab){
+    readers=null;
+    var m=messagesTab(v,a,say,setCount,goTab);
+    readersTab(v,a,say,m,goTab);
+  }
+
+  root.swMsg={poll:poll,inbox:inbox,admin:admin,unread:function(){ return state.unread; },adminUnread:function(){ return state.adminUnread; }};
+  /* Polled on load, every ten minutes while the app is open, and on coming back to it. */
+  function tick(){ if(!d.hidden) poll(); }
+  root.addEventListener("load",function(){ setTimeout(tick,3000); });
+  setInterval(tick,10*60*1000);
+  d.addEventListener("visibilitychange",tick);
+})(typeof window!=="undefined"?window:this);

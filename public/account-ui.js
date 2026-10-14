@@ -14,6 +14,7 @@
     user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
     slips:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
     gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+    chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-5A8 8 0 1 1 21 12z"/></svg>',
     shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/></svg>',
     out:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>'
   };
@@ -31,6 +32,7 @@
       "<div class='swa-list'>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='profile'>"+I.user+"Profile</button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='slips'>"+I.slips+"My slips<span class='swa-r swa-n'>"+(o.slips||0)+"</span></button>"+
+        "<button class='swa-mi' type='button' role='menuitem' data-go='msgs'>"+I.chat+"Messages"+(o.unread?"<span class='swa-r swa-unr'>"+(o.unread>9?"9+":o.unread)+"</span>":"")+"</button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='settings'>"+I.gear+"Settings</button>"+
         (o.role==="admin"?"<button class='swa-mi' type='button' role='menuitem' data-go='admin'>"+I.shield+"Admin</button>":"")+
       "</div><div class='swa-list'>"+
@@ -142,8 +144,9 @@
      that i can toggle in between"). A row of tabs across the top; the last one used
      is remembered on this device. The two lists that grow carry their count on the
      tab, so a closed one still says what it holds. */
-  var ADMIN_TABS=[["swaTSw","Switches"],["swaTStatus","Status"],["swaTNums","Numbers"],
-    ["swaTLk","Find a reader"],["swaTGrants","Family & friends"],["swaTHits","Slips"],["swaTLog","Log"]];
+  /* Messages and Readers (owner, 14 Oct 2026) are filled by public/messages.js. */
+  var ADMIN_TABS=[["swaTMsg","Messages"],["swaTLk","Readers"],["swaTSw","Switches"],["swaTStatus","Status"],["swaTNums","Numbers"],
+    ["swaTGrants","Family & friends"],["swaTHits","Slips"],["swaTLog","Log"]];
   function adminHtml(list){
     var body={
       swaTSw:"<div class='swa-card'><div class='swa-set'><span class='swa-st'><b>Maintenance mode</b><small>Every reader sees the maintenance page and all booking stops. You still see the site.</small></span>"+
@@ -151,10 +154,10 @@
         "<label class='swa-lbl' for='swaMaintMsg'>Message on the maintenance page</label>"+
         "<input class='swa-in' id='swaMaintMsg' type='text' maxlength='120' autocomplete='off' placeholder='Back by 8pm with fresh picks.'>"+
         "<div class='swa-card' id='swaSw'>"+msg("Loading")+"</div>"+
-        "<label class='swa-lbl' for='swaNotice'>Notice for every reader</label>"+
-        "<textarea class='swa-in swa-ta' id='swaNotice' rows='2' maxlength='200' autocomplete='off' placeholder='SportyBet codes are slow tonight. Try Bet9ja.'></textarea>"+
-        "<button class='swa-outbtn swa-go' id='swaNoticeGo' type='button'>Show notice</button>"+
-        "<button class='swa-outbtn' id='swaNoticeOff' type='button'>Clear notice</button>",
+        /* The old one-line notice is the message board now (Messages tab). One still up is shown here to clear. */
+        "<div id='swaOldNotice' hidden><label class='swa-lbl'>Old notice line, still showing</label><div class='swa-card'><div class='swa-set'><span class='swa-st'><small id='swaNoticeT'></small></span>"+
+        "<button class='swa-pillbtn' id='swaNoticeOff' type='button'>Clear</button></div></div></div>",
+      swaTMsg:"<div class='swa-card'>"+msg("Loading")+"</div>",
       swaTStatus:"<div class='swa-card' id='swaStatus'>"+msg("Loading")+"</div>",
       swaTNums:"<div class='swa-card' id='swaNums'>"+msg("Loading")+"</div>",
       swaTLk:"<p class='swa-note'>Type a reader's email to see their plan, devices and booked codes. From there you can sign them out everywhere or give them Family &amp; friends.</p>"+
@@ -190,6 +193,8 @@
       return out.join(". ")||"Saved the switches with no change";
     }
     if(r.action==="lookup") return "Looked up "+t+(d.found===false?" (no account)":"");
+    if(r.action==="send") return "Sent a message to "+t+(d.text?": \u201c"+d.text+"\u201d":"");
+    if(r.action==="unsend") return "Unsent "+t;
     if(r.action==="signout") return "Signed "+t+" out on every device";
     if(r.action==="grant") return "Gave Family & friends to "+t;
     if(r.action==="revoke") return "Removed Family & friends from "+t;
@@ -296,6 +301,7 @@
     ".swa-bar{height:4px;border-radius:2px;background:var(--raise);margin-top:8px;overflow:hidden}.swa-bar i{display:block;height:100%;background:var(--accent);border-radius:2px}"+
     ".swa-list{border-top:1px solid var(--line);padding:6px}"+
     ".swa-mi{width:100%;display:flex;align-items:center;gap:11px;padding:10px 9px;border:0;background:none;border-radius:8px;color:var(--text);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;text-align:left}"+
+    ".swa-unr{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red);color:#fff;font-size:10.5px;font-weight:800;line-height:18px;text-align:center;box-sizing:border-box}"+
     ".swa-mi svg{width:18px;height:18px;color:var(--soft);flex:none}.swa-r{margin-left:auto;color:var(--faint)}.swa-out{color:var(--soft)}"+
     ".swa-mi:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"+
     ".swa-view{position:fixed;inset:0;z-index:9982;background:var(--bg);color:var(--text);overflow-y:auto;padding:16px 16px 40px;transform:translateX(100%);visibility:hidden;transition:transform .28s cubic-bezier(.23,1,.32,1),visibility 0s .28s}"+
@@ -355,6 +361,7 @@
       if(go==="slips"&&root.openSlipsSheet) root.openSlipsSheet("all");
       else if(go==="profile") profile();
       else if(go==="settings") settings();
+      else if(go==="msgs"&&root.swMsg) root.swMsg.inbox();
       else if(go==="admin") admin();
       else if(go==="out") signOut();
     });
@@ -366,7 +373,7 @@
     ensure();
     var a=acct();
     menu.innerHTML=menuHtml({name:firstNameOf(savedName(),a.st.email),email:a.st.email,role:role(),plan:lsGet("sw.plan"),
-      quota:root.swQuotaToday?root.swQuotaToday():null,slips:root.swSlipCount?root.swSlipCount():0});
+      quota:root.swQuotaToday?root.swQuotaToday():null,slips:root.swSlipCount?root.swSlipCount():0,unread:root.swMsg?root.swMsg.unread():0});
     lastFocus=d.activeElement;
     scrim.classList.add("on"); menu.classList.add("on");
     var av=d.getElementById("hdAccount"); if(av) av.setAttribute("aria-expanded","true");
@@ -607,6 +614,7 @@
     var board=null; try{ board=root.swBoard?root.swBoard():null; }catch(e){}
     function paintSw(){
       v.querySelector("#swaMaint").setAttribute("aria-checked",flags.maint?"true":"false");
+      v.querySelector("#swaOldNotice").hidden=!flags.notice; v.querySelector("#swaNoticeT").textContent=flags.notice||"";
       var box=v.querySelector("#swaSw"); box.innerHTML=switchesHtml(flags);
       box.querySelectorAll("[data-book-sw]").forEach(function(b){ b.onclick=function(){
         var k=b.getAttribute("data-book-sw"), off=flags.booksOff.slice(), i=off.indexOf(k);
@@ -617,21 +625,18 @@
     function saveFlags(next,done){
       a.req("POST","/api/account/setflags",Object.assign({},flags,next),function(code,j){
         if(code!==200){ paintSw(); return fail(code,j); }
-        flags=j; paintSw(); v.querySelector("#swaNotice").value=flags.notice||"";
+        flags=j; paintSw();
         say(done+" Readers see it within a couple of minutes."); });
     }
     a.req("GET","/api/account/flags",null,function(code,j){
       if(code!==200){ v.querySelector("#swaSw").innerHTML=msg("Could not load the switches."); return; }
-      flags=j; paintSw(); v.querySelector("#swaNotice").value=flags.notice||""; v.querySelector("#swaMaintMsg").value=flags.maintMsg||"";
+      flags=j; paintSw(); v.querySelector("#swaMaintMsg").value=flags.maintMsg||"";
     });
     v.querySelector("#swaMaint").onclick=function(){
       var on=!flags.maint;
       if(on&&!root.confirm("Turn maintenance mode on? Every reader sees the maintenance page and booking stops until you turn it off.")) return;
       saveFlags({maint:on,maintMsg:v.querySelector("#swaMaintMsg").value.replace(/^\s+|\s+$/g,"")},
         on?"Maintenance mode is on.":"Maintenance mode is off. The site is back."); };
-    v.querySelector("#swaNoticeGo").onclick=function(){
-      var t=v.querySelector("#swaNotice").value.replace(/^\s+|\s+$/g,""); if(!t) return say("Type the notice first.");
-      saveFlags({booksOff:flags.booksOff,notice:t},"Notice is up."); };
     v.querySelector("#swaNoticeOff").onclick=function(){ saveFlags({booksOff:flags.booksOff,notice:""},"Notice cleared."); };
     a.req("GET","/api/account/stats",null,function(code,j){
       var bad=msg(code===503?"Numbers are not set up yet. Run sql/admin.sql in Supabase.":"Could not load the numbers.");
@@ -664,11 +669,14 @@
         if(code===200){ inp.value=""; say("Done. They now have Family & friends."); load(); } else fail(code,j); });
     };
     load();
+    /* The message board's two tabs. Drawn last: Readers replaces the old email lookup. */
+    if(root.swMsg) root.swMsg.admin(v,a,say,setCount,function(id){ var b=v.querySelector("[data-tab='"+id+"']"); if(b) b.click(); });
+    else v.querySelector("#swaTMsg").innerHTML=msg("Messages did not load. Refresh the page.");
   }
   function eatPop(){
     if(ownBack){ ownBack=false; return true; }
     if(viewEl&&viewEl.classList.contains("on")){ closeView(true); return true; }
     return false;
   }
-  root.swAccountUI={eatPop:eatPop,open:open,close:close,toggle:toggle,profile:profile,settings:settings,admin:admin,closeView:closeView};
+  root.swAccountUI={eatPop:eatPop,open:open,close:close,toggle:toggle,profile:profile,settings:settings,admin:admin,closeView:closeView,view:view};
 })(typeof window!=="undefined"?window:this);

@@ -74,6 +74,7 @@
      favicon and icon-180 the apple-touch icon. -->
 <link rel="manifest" href="/manifest.webmanifest">
 <script src="/account-ui.js" defer></script>
+<script src="/messages.js" defer></script>
 <meta name="mobile-web-app-capable" content="yes">
 <!-- The Apple-prefixed name is deprecated and Chrome warns on it, but iOS
      still reads only that one. Both ship until Safari takes the standard. -->
@@ -20887,7 +20888,9 @@ $("tab-pred").addEventListener("click",function(){setView("pred");});
    opened here; opening it clears the badge. Polled on load, every five minutes
    while the app is open, and when it comes back to the front. On desktop,
    where the bottom bar is hidden, the same count sits on the account avatar,
-   which is where the admin page is opened from there. */
+   which is where the admin page is opened from there. Readers' replies on the
+   message board (public/messages.js) add to the same count. */
+var adminHitsN=0;
 function adminSeen(){ try{ return +localStorage.getItem("sw.adminSeen")||0; }catch(e){ return 0; } }
 function paintAdminBadge(n){
   var t=$("bt-admin"), b=$("btAdminN"), acc=$("hdAccount");
@@ -20905,14 +20908,16 @@ function adminBadge(){
   swAcct.req("GET","/api/account/hits",null,function(code,j){
     if(code!==200) return;
     var seen=adminSeen();
-    var n=(j&&j.hits||[]).filter(function(h){ return Date.parse(h.settled_at||h.created_at||"")>seen; }).length;
-    paintAdminBadge(n);
+    adminHitsN=(j&&j.hits||[]).filter(function(h){ return Date.parse(h.settled_at||h.created_at||"")>seen; }).length;
+    swAdminBadgeRefresh();
   });
 }
+function swAdminBadgeRefresh(){ paintAdminBadge(adminHitsN+(window.swMsg?swMsg.adminUnread():0)); }
+window.swAdminBadgeRefresh=swAdminBadgeRefresh;
 window.paintAdminBadge=paintAdminBadge;
 if($("bt-admin")) $("bt-admin").addEventListener("click",function(){
   try{ localStorage.setItem("sw.adminSeen",String(Date.now())); }catch(e){}
-  paintAdminBadge(0);
+  adminHitsN=0; paintAdminBadge(0);
   if(window.swAccountUI) swAccountUI.admin();
 });
 window.addEventListener("load",function(){ setTimeout(adminBadge,2500); });

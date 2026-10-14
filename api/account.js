@@ -14,8 +14,14 @@ const C = require("../lib/auth/crypto.js");
 const { report } = require("../lib/report.js");
 
 const REAUTH_MS = 10 * 60e3;
-const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit"];
-const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle"];
+const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit", "readers", "reader", "threads", "gifs"];
+const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle", "send", "unsend"];
+/* THE MESSAGE BOARD (owner, 14 Oct 2026; sql/messages.sql, public/messages.js):
+   any signed-in reader reads their inbox, marks it read and replies in it. */
+const READER_GET = ["inbox"];
+const READER_POST = ["msgread", "reply"];
+const MSG = require("../public/messages.js");
+const REPLY_MAX = 1000, BODY_MAX = 12000, TO_MAX = 200;
 
 function make(deps) {
   const { db } = deps;
@@ -31,6 +37,7 @@ function make(deps) {
   const flags = deps.flags || require("../lib/flags.js");
   const admin = deps.admin || { stats: () => require("../lib/supabase.js").adminStats(),
     slipsOf: (subject) => require("../lib/supabase.js").slipsBySubject(subject, 10) };
+  const msgs = deps.msgs || require("../lib/messages.js");
   /* THE AUDIT LOG (sql/admin.sql): every admin change, and every look at a reader's
      private details, with who did it. A failed write never undoes or blocks the
      action - it is reported, so a gap in the log is itself on record. */
@@ -43,7 +50,8 @@ function make(deps) {
     else if (action === "consent") { if (req.method === "POST") { const g = H.guardPost(req); if (g) return H.sendJson(res, g.status, { error: g.error }); } else if (req.method !== "GET") return H.sendJson(res, 405, { error: "method" }); }
     else if (action === "export") { if (req.method !== "GET") return H.sendJson(res, 405, { error: "method" }); }
     else if (ADMIN_GET.includes(action)) { if (req.method !== "GET") return H.sendJson(res, 405, { error: "method" }); }
-    else if (ADMIN_POST.includes(action)) { const g = H.guardPost(req); if (g) return H.sendJson(res, g.status, { error: g.error }); }
+    else if (ADMIN_POST.includes(action) || READER_POST.includes(action)) { const g = H.guardPost(req); if (g) return H.sendJson(res, g.status, { error: g.error }); }
+    else if (READER_GET.includes(action)) { if (req.method !== "GET") return H.sendJson(res, 405, { error: "method" }); }
     else return H.notFound(res);
     const t = now();
     try {
@@ -60,6 +68,69 @@ function make(deps) {
             target: target == null ? null : String(target).slice(0, 200), detail: detail || {} }); } catch (e) { ok = false; }
           if (!ok) await report(new Error("admin audit write failed: " + what), { route: "account/audit" });
         };
+        /* A reader's whole file, for the lookup by email and the customer view. */
+        const profileOf = async (u) => {
+          const role = await R.roleOf(db, u, env);
+          const devices = (await db.liveSessions(u.id, new Date(t).toISOString()))
+            .map((d) => ({ label: d.label, last_used_at: d.last_used_at }));
+          return { found: true, id: u.id, email: u.email, role, plan: R.planLabel(role), ff: !!(await db.grantFor(u.email)),
+            google: !!u.google_sub, created_at: u.created_at, last_seen_at: u.last_seen_at, devices,
+            codes: role === "ff" ? await admin.slipsOf("u:" + u.id) : null };
+        };
+        if (action === "readers") {
+          const list = await msgs.readers();
+          return list ? H.sendJson(res, 200, { readers: list }) : H.sendJson(res, 503, { error: "unavailable" });
+        }
+        /* THE CUSTOMER VIEW: everything we hold on one reader, and their messages. */
+        if (action === "reader") {
+          const id = String((req.query || {}).id || "");
+          if (!C.UUID_RE.test(id)) return H.sendJson(res, 400, { error: "bad_request" });
+          const u = await db.userById(id);
+          if (!u) return H.sendJson(res, 404, { error: "no_user" });
+          await record("lookup", u.email, { found: true, view: "reader" });
+          const p = await profileOf(u);
+          const row = await db.getUserData(u.id), data = (row && row.data) || {}, prefs = data.prefs || {};
+          const pv = (k) => (prefs[k] && typeof prefs[k] === "object" ? prefs[k].v : null);
+          const consent = await db.consentFor(u.id);
+          return H.sendJson(res, 200, Object.assign(p, { name: pv("name"), avatar: pv("avatar"), book: pv("book"), theme: pv("theme"),
+            slips: Object.keys((data.slips && data.slips.items) || {}).length, record: data.record || null,
+            mail: !!(consent && !consent.revoked_at), push: await msgs.pushCount(u.id), thread: (await msgs.threadOf(u.id)) || [] }));
+        }
+        if (action === "threads") {
+          const list = await msgs.all();
+          if (!list) return H.sendJson(res, 503, { error: "unavailable" });
+          const reads = await msgs.readsOf(s.userId);
+          return H.sendJson(res, 200, { messages: list, readAt: (reads && reads.read_at) || null });
+        }
+        if (action === "gifs") {
+          const got = await msgs.gifs(String((req.query || {}).q || ""), env);
+          return got ? H.sendJson(res, 200, { gifs: got }) : H.sendJson(res, 503, { error: env.GIPHY_API_KEY ? "unavailable" : "no_key" });
+        }
+        /* Sent to everyone (one row, user_id null) or to chosen readers (a row each).
+           The HTML is cleaned here, whatever the page sent. */
+        if (action === "send") {
+          const b = (await H.readJson(req, 64 * 1024)) || {};
+          const html = MSG.clean(b.html);
+          if (MSG.isEmpty(html)) return H.sendJson(res, 400, { error: "empty" });
+          if (html.length > BODY_MAX) return H.sendJson(res, 400, { error: "too_long" });
+          let to = null;
+          if (b.to !== "all") {
+            to = [...new Set(Array.isArray(b.to) ? b.to.filter((x) => typeof x === "string" && C.UUID_RE.test(x)) : [])];
+            if (!to.length || to.length > TO_MAX) return H.sendJson(res, 400, { error: "bad_request" });
+          }
+          const at = new Date(t).toISOString();
+          const got = await msgs.add((to || [null]).map((uid) => ({ created_at: at, user_id: uid, from_admin: true, body: html })));
+          if (!got) return H.sendJson(res, 503, { error: "unavailable" });
+          await record("send", to ? to.length + " reader" + (to.length === 1 ? "" : "s") : "everyone", { text: MSG.textOf(html).slice(0, 200), to: to || "all" });
+          return H.sendJson(res, 200, { ok: true, sent: got.length, ids: got.map((m) => m.id) });
+        }
+        if (action === "unsend") {
+          const id = String(((await H.readJson(req, 256)) || {}).id || "");
+          if (!/^\d{1,18}$/.test(id)) return H.sendJson(res, 400, { error: "bad_request" });
+          if (!(await msgs.unsend(id, new Date(t).toISOString()))) return H.sendJson(res, 404, { error: "no_message" });
+          await record("unsend", "message " + id);
+          return H.sendJson(res, 200, { ok: true });
+        }
         if (action === "audit") {
           const got = await audit.list(200);
           return got && got.ok ? H.sendJson(res, 200, { log: got.rows }) : H.sendJson(res, 503, { error: "unavailable" });
@@ -127,12 +198,7 @@ function make(deps) {
           await record("lookup", email, { found: !!u });
           /* A grant can exist before the person signs up, so "no account" still says whether they have one. */
           if (!u) return H.sendJson(res, 200, { found: false, email, ff: !!grant });
-          const role = await R.roleOf(db, u, env);
-          const devices = (await db.liveSessions(u.id, new Date(t).toISOString()))
-            .map((d) => ({ label: d.label, last_used_at: d.last_used_at }));
-          return H.sendJson(res, 200, { found: true, email: u.email, role, plan: R.planLabel(role), ff: !!grant,
-            google: !!u.google_sub, created_at: u.created_at, last_seen_at: u.last_seen_at, devices,
-            codes: role === "ff" ? await admin.slipsOf("u:" + u.id) : null });
+          return H.sendJson(res, 200, await profileOf(u));
         }
         if (action === "signout") {
           const email = C.normEmail(((await H.readJson(req, 512)) || {}).email);
@@ -153,6 +219,37 @@ function make(deps) {
         if (!done) return H.sendJson(res, 503, { error: "unavailable" });
         await record(action, email);
         return H.sendJson(res, 200, { ok: true });
+      }
+
+      /* The inbox: the reader's thread, every broadcast, and the welcome, newest
+         first. The admin's answer also says how many replies wait for them. */
+      if (action === "inbox") {
+        const user = await db.userById(s.userId);
+        if (!user) return H.sendJson(res, 401, { error: "signed_out", reason: "deleted" }, [S.clearCookie(S.COOKIE)]);
+        const [list, reads] = await Promise.all([msgs.inboxOf(s.userId), msgs.readsOf(s.userId)]);
+        if (!list || !reads) return H.sendJson(res, 503, { error: "unavailable" });
+        const isAdmin = (await R.roleOf(db, user, env)) === "admin";
+        const out = list.map((m) => ({ id: m.id, at: m.created_at, mine: !m.from_admin, bcast: m.user_id == null, body: m.body }));
+        out.push({ id: 0, at: user.created_at, mine: false, bcast: false, body: MSG.WELCOME });
+        const seen = Date.parse(reads.read_at || "") || 0;
+        return H.sendJson(res, 200, { messages: out, readAt: reads.read_at, bannerAt: reads.banner_at,
+          unread: isAdmin ? 0 : out.filter((m) => !m.mine && Date.parse(m.at) > seen).length,
+          adminUnread: isAdmin ? (await msgs.repliesSince(reads.read_at)) || 0 : 0 });
+      }
+      if (action === "msgread") {
+        const what = ((await H.readJson(req, 256)) || {}).what;
+        if (what !== "inbox" && what !== "banner") return H.sendJson(res, 400, { error: "bad_request" });
+        const done = await msgs.markRead(s.userId, what === "inbox" ? "read_at" : "banner_at", new Date(t).toISOString());
+        return done ? H.sendJson(res, 200, { ok: true }) : H.sendJson(res, 503, { error: "unavailable" });
+      }
+      /* A reply is plain text, stored as written and escaped wherever it is drawn. */
+      if (action === "reply") {
+        const text = String(((await H.readJson(req, 8192)) || {}).text || "").replace(/\r\n?/g, "\n").trim();
+        if (!text) return H.sendJson(res, 400, { error: "empty" });
+        if (text.length > REPLY_MAX) return H.sendJson(res, 400, { error: "too_long" });
+        if (!(await db.rlHit("msg:" + s.userId, 3600, 20))) return H.sendJson(res, 429, { error: "slow_down" });
+        const got = await msgs.add([{ created_at: new Date(t).toISOString(), user_id: s.userId, from_admin: false, body: text }]);
+        return got && got[0] ? H.sendJson(res, 200, { ok: true, id: got[0].id }) : H.sendJson(res, 503, { error: "unavailable" });
       }
 
       if (action === "consent") {
