@@ -82,7 +82,7 @@ module.exports = async function handler(req, res) {
     try { body = JSON.parse(text); }
     catch (e) {
       return res.status(502).json({ success: false,
-        error: "the reader sent no JSON (http " + up.status + ")" });
+        error: "the bookmaker sent no JSON (http " + up.status + ")" });
     }
     res.setHeader("Cache-Control", "no-store");
     /* Status passed through, not flattened. A 404 here means "no slip behind

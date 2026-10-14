@@ -133,7 +133,7 @@ function make(deps) {
           const at = new Date(t).toISOString();
           const got = await msgs.add((to || [null]).map((uid) => ({ created_at: at, user_id: uid, from_admin: true, body: html })));
           if (!got) return H.sendJson(res, 503, { error: "unavailable" });
-          await record("send", to ? to.length + " reader" + (to.length === 1 ? "" : "s") : "everyone", { text: MSG.textOf(html).slice(0, 200), to: to || "all" });
+          await record("send", to ? to.length + " user" + (to.length === 1 ? "" : "s") : "everyone", { text: MSG.textOf(html).slice(0, 200), to: to || "all" });
           /* A failed ping never fails the send: the message is already in the inbox. */
           let pinged = 0;
           try {
