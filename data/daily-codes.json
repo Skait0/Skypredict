@@ -2178,5 +2178,75 @@
       "betking": "G42SG9"
     },
     "odds": 1.35
+  },
+  "2026-10-14": {
+    "date": "2026-10-14",
+    "generated": "2026-10-14T11:29:43.236Z",
+    "firstKickoff": "2026-10-14T17:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-14",
+        "home": "Haugesund",
+        "away": "Lyn",
+        "league": "Norway 1st Division",
+        "kickoff": "2026-10-14T17:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.953,
+        "market": "OVER_1.5",
+        "odd": 1.06
+      },
+      {
+        "date": "2026-10-14",
+        "home": "Stromsgodset",
+        "away": "Kongsvinger",
+        "league": "Norway 1st Division",
+        "kickoff": "2026-10-14T17:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.956,
+        "market": "OVER_1.5",
+        "odd": 1.06
+      },
+      {
+        "date": "2026-10-14",
+        "home": "Sogndal",
+        "away": "Odds BK",
+        "league": "Norway 1st Division",
+        "kickoff": "2026-10-14T17:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.837,
+        "market": "OVER_1.5",
+        "odd": 1.08
+      },
+      {
+        "date": "2026-10-14",
+        "home": "Inter Miami",
+        "away": "New York City",
+        "league": "USA MLS",
+        "kickoff": "2026-10-14T23:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.916,
+        "market": "OVER_1.5",
+        "odd": 1.11
+      },
+      {
+        "date": "2026-10-14",
+        "home": "FC Cincinnati",
+        "away": "New England Revolution",
+        "league": "USA MLS",
+        "kickoff": "2026-10-14T23:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.93,
+        "market": "OVER_1.5",
+        "odd": 1.11
+      }
+    ],
+    "codes": {
+      "sporty": "MPE9DM",
+      "bet9ja": "5VRS78M",
+      "betking": "VC17EY",
+      "betpawa": "UUI211K",
+      "betway": "BW79C0A789"
+    },
+    "odds": 1.5
   }
 }
