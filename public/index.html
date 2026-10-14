@@ -25061,6 +25061,10 @@ load().catch(function(){});
         root.swSignIn.resume({action:g.action,detail:g.detail,afterAuth:function(j,done){ sync(false,done); },
           onDone:(root.swResume&&root.swResume[g.resume])||null});
       } else sync(false);
+      /* A message push opens the inbox (public/messages.js). */
+      if(/[?&]msgs=1/.test(location.search)){
+        if(root.swMsg) root.swMsg.inbox(); else root.addEventListener("load",function(){ if(root.swMsg) root.swMsg.inbox(); });
+      }
       if(/[?&]account=1/.test(location.search)){
         if(root.swAccountUI) root.swAccountUI.settings(); else root.addEventListener("load",function(){ if(root.swAccountUI) root.swAccountUI.settings(); });
       }

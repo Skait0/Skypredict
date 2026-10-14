@@ -411,6 +411,7 @@
       a.req("POST","/api/account/send",{to:mode==="all"?"all":picked,html:html},function(code,j){
         if(code!==200) return sendState(go,"bad",errWords(code,j));
         sendState(go,"ok",mode==="all"?"✓ Broadcast sent":"✓ Message sent"+(picked.length>1?" to "+picked.length:""));
+        say(j.pinged?"Pinged "+j.pinged+" phone"+(j.pinged===1?"":"s")+".":"In their inboxes. No phones pinged (none have notifications on, or it is quiet hours: they get it at 9am).");
         ed.clear(); picked=[]; paintChips(); setTimeout(label,2700); load();
       });
     };

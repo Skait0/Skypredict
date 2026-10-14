@@ -74,14 +74,16 @@ async function world() {
   };
   const log = [];
   const audit = { log: async (row) => { log.push(row); return true; }, list: async () => ({ ok: true, rows: [] }) };
-  const h = account.make({ db, now: clock, env: { SW_ADMIN_EMAILS: "boss@x.com" }, msgs, audit,
+  const pings = [], pingCtl = { fail: false };
+  const ping = async (uids, note) => { if (pingCtl.fail) throw new Error("push down"); pings.push([uids, note]); return 2; };
+  const h = account.make({ db, now: clock, env: { SW_ADMIN_EMAILS: "boss@x.com" }, msgs, audit, ping,
     admin: { stats: async () => ({}), slipsOf: async () => [] } });
   const call = async (req) => { const r = fakeRes(); await h(req, r); return r; };
   const user = async (email) => {
     const u = await db.createUser({ email });
     return { id: u.id, cookie: S.COOKIE + "=" + (await S.startSession(db, u.id, "Chrome/129 Android", clock())).token };
   };
-  return { call, rows, log, boss: await user("boss@x.com"), ada: await user("ada@x.com"), ben: await user("ben@x.com") };
+  return { call, rows, log, pings, pingCtl, boss: await user("boss@x.com"), ada: await user("ada@x.com"), ben: await user("ben@x.com") };
 }
 const get = (who, action, query) => Object.assign(getReq("account", {}, { cookie: who.cookie }), { query: Object.assign({ action }, query || {}) });
 const post = (who, action, body) => Object.assign(postReq("account", body, { cookie: who.cookie }), { query: { action } });
@@ -112,6 +114,23 @@ test("a broadcast reaches every inbox, a direct message only its reader, and the
   /* Unsend takes it out of every inbox. */
   assert.strictEqual((await w.call(post(w.boss, "unsend", { id: w.rows[0].id }))).code, 200);
   assert.strictEqual((await w.call(get(w.ben, "inbox"))).json().messages.length, 1);
+});
+
+/* Owner, 14 Oct 2026: "do the phone push for new messages". */
+test("a new message pings phones, and a push that fails never fails the send", async () => {
+  const w = await world();
+  const b = await w.call(post(w.boss, "send", { to: "all", html: "<b>Big night</b> " + "x".repeat(200) }));
+  assert.strictEqual(b.json().pinged, 2);
+  assert.strictEqual(w.pings[0][0], null, "a broadcast pings every signed-in phone");
+  assert.strictEqual(w.pings[0][1].url, "/?msgs=1", "the tap opens the inbox");
+  assert.ok(w.pings[0][1].body.startsWith("Big night x") && w.pings[0][1].body.length <= 120);
+  assert.doesNotMatch(w.pings[0][1].title + w.pings[0][1].body, /—|load am/i);
+  await w.call(post(w.boss, "send", { to: [w.ada.id], html: "Just you" }));
+  assert.deepStrictEqual(w.pings[1][0], [w.ada.id], "a direct message pings only its reader");
+  w.pingCtl.fail = true;
+  const f = await w.call(post(w.boss, "send", { to: [w.ada.id], html: "Still sent" }));
+  assert.strictEqual(f.code, 200); assert.strictEqual(f.json().pinged, 0);
+  assert.strictEqual(w.rows.length, 3, "in the inbox whatever the push did");
 });
 
 /* Owner, 14 Oct 2026: "remove the reply for readers except i say otherwise". */

@@ -41,6 +41,15 @@ function make(deps) {
   const admin = deps.admin || { stats: () => require("../lib/supabase.js").adminStats(),
     slipsOf: (subject) => require("../lib/supabase.js").slipsBySubject(subject, 10) };
   const msgs = deps.msgs || require("../lib/messages.js");
+  /* A new message pings the readers' phones: the line is stored on each of their
+     subscriptions, then an empty push goes out. Overnight (22:00-06:00 Lagos)
+     the line waits for the 9am push, like "your slip landed". Returns phones pinged. */
+  const ping = deps.ping || (async (uids, note, iso) => {
+    const subs = await msgs.noteSubs(uids, note, iso);
+    if (!subs.length || require("../lib/vapid.js").quietHours(now())) return 0;
+    const out = await require("../lib/pushsend.js").pushTo(subs);
+    return (out && out.sent) || 0;
+  });
   /* THE AUDIT LOG (sql/admin.sql): every admin change, and every look at a reader's
      private details, with who did it. A failed write never undoes or blocks the
      action - it is reported, so a gap in the log is itself on record. */
@@ -125,7 +134,14 @@ function make(deps) {
           const got = await msgs.add((to || [null]).map((uid) => ({ created_at: at, user_id: uid, from_admin: true, body: html })));
           if (!got) return H.sendJson(res, 503, { error: "unavailable" });
           await record("send", to ? to.length + " reader" + (to.length === 1 ? "" : "s") : "everyone", { text: MSG.textOf(html).slice(0, 200), to: to || "all" });
-          return H.sendJson(res, 200, { ok: true, sent: got.length, ids: got.map((m) => m.id) });
+          /* A failed ping never fails the send: the message is already in the inbox. */
+          let pinged = 0;
+          try {
+            const words = MSG.textOf(html);
+            pinged = await ping(to, { title: "New message from the Wizard 🔮",
+              body: words.length > 120 ? words.slice(0, 117) + "..." : words || "Tap to read it", url: "/?msgs=1" }, at);
+          } catch (e) { await report(e, { route: "account/send-push" }); }
+          return H.sendJson(res, 200, { ok: true, sent: got.length, ids: got.map((m) => m.id), pinged });
         }
         if (action === "unsend") {
           const id = String(((await H.readJson(req, 256)) || {}).id || "");
