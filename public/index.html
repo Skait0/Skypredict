@@ -20969,8 +20969,7 @@ function paintAdminBadge(n){
     else if(ab) ab.remove(); }
 }
 function adminBadge(){
-  var t=$("bt-admin"), role=null;
-  try{ role=localStorage.getItem("sw.role"); }catch(e){}
+  var t=$("bt-admin"), role=isAdminRole()?"admin":null;
   if(t) t.hidden=role!=="admin";
   if(role!=="admin"||!window.swAcct||!swAcct.st||!swAcct.st.on){ paintAdminBadge(0); return; }
   swAcct.req("GET","/api/account/hits",null,function(code,j){
@@ -20983,7 +20982,7 @@ function adminBadge(){
 function swAdminBadgeRefresh(){ paintAdminBadge(adminHitsN+(window.swMsg?swMsg.adminUnread():0)); }
 window.swAdminBadgeRefresh=swAdminBadgeRefresh;
 window.paintAdminBadge=paintAdminBadge;
-function isAdminRole(){ try{ return localStorage.getItem("sw.role")==="admin"; }catch(e){ return false; } }
+function isAdminRole(){ if(window.swAdminLive!==true) return false; try{ return localStorage.getItem("sw.role")==="admin"; }catch(e){ return false; } }
 /* Display only: the server refuses every admin request from any other account
    (lib/roles.js, SW_ADMIN_EMAILS). But a tab left over from the last account on
    this device must not even open the page. */
@@ -25038,6 +25037,11 @@ load().catch(function(){});
     /* The role just changed (sign in, sign out, another account on this device):
        everything drawn for the old role is redrawn now, not at the next load
        (owner, 14 Oct 2026: a Family & friends account still had the Admin tab). */
+    /* Admin is only ever what the server said in THIS page view. A role saved
+       in storage (another account, an old login, a hand edit) never shows
+       admin by itself (owner, 14 Oct 2026: a separate device's Family & friends
+       account had the Admin tab). */
+    root.swAdminLive=!!(me&&me.role==="admin");
     if(root.swRoleChanged) try{ root.swRoleChanged(); }catch(e){}
   }
   function signedOutHere(reason,quiet){

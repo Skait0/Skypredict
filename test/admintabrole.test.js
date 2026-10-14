@@ -19,11 +19,12 @@ function grab(s, name) {
   return s.slice(i, k + 1);
 }
 
-function page(role) {
+function page(role, live) {
   const store = { "sw.role": role };
   const els = { "bt-admin": { hidden: false, listeners: [], setAttribute() {}, addEventListener(e, f) { this.listeners.push(f); } }, btAdminN: null, hdAccount: null };
   const calls = { admin: 0, closeView: 0, hits: 0 };
-  const win = {};
+  /* swAdminLive: the server said admin in this page view (saveRole). */
+  const win = { swAdminLive: live === undefined ? role === "admin" : live };
   const ctx = {
     window: win, localStorage: { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } },
     $: (id) => els[id] || null,
@@ -43,6 +44,7 @@ test("switching from the admin to another account on this device takes the Admin
   P.win.swRoleChanged();
   assert.strictEqual(P.els["bt-admin"].hidden, false, "the admin sees it");
   P.store["sw.role"] = "ff";            // what saveRole writes for the new account
+  P.win.swAdminLive = false;
   P.win.swRoleChanged();
   assert.strictEqual(P.els["bt-admin"].hidden, true, "gone as soon as the role is not admin");
   assert.strictEqual(P.calls.closeView, 1, "an admin page left open is closed");
@@ -56,6 +58,20 @@ test("a stale Admin tab cannot open the admin page", () => {
   const A = page("admin");
   A.click();
   assert.strictEqual(A.calls.admin, 1, "the admin still gets in");
+});
+
+test("'admin' saved on a device is not enough: only the server's word in this page view shows it", () => {
+  /* The separate-device case: storage said admin, the server never did. */
+  const P = page("admin", false);
+  P.win.swRoleChanged();
+  assert.strictEqual(P.els["bt-admin"].hidden, true, "no Admin tab from storage alone");
+  P.click();
+  assert.strictEqual(P.calls.admin, 0, "and it cannot open the page");
+  assert.strictEqual(P.calls.hits, 0, "no admin request is even made");
+  assert.match(grab(src, "saveRole"), /root\.swAdminLive=!!\(me&&me\.role==="admin"\);/);
+  assert.match(ui, /function role\(\)\{ var r=lsGet\("sw\.role"\)\|\|"free"; return r==="admin"&&root\.swAdminLive!==true\?"free":r; \}/);
+  assert.match(fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8"),
+    /function isAdmin\(\)\{ if\(root\.swAdminLive!==true\) return false;/);
 });
 
 test("saveRole tells the page, and the account sheet's own Admin refuses other roles", () => {

@@ -122,7 +122,7 @@
   var d=root.document;
   function acct(){ return root.swAcct||{st:{}}; }
   function on(){ var a=acct(); return !!(a.st&&a.st.on&&a.req); }
-  function isAdmin(){ try{ return localStorage.getItem("sw.role")==="admin"; }catch(e){ return false; } }
+  function isAdmin(){ if(root.swAdminLive!==true) return false; try{ return localStorage.getItem("sw.role")==="admin"; }catch(e){ return false; } }
   function ago(iso){ var t=Date.parse(iso); if(!isFinite(t)) return "";
     var m=Math.round((Date.now()-t)/60000);
     return m<1?"just now":m<60?m+" min ago":m<1440?Math.round(m/60)+" h ago":Math.round(m/1440)===1?"yesterday":Math.round(m/1440)+" days ago"; }

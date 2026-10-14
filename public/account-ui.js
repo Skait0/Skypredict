@@ -367,7 +367,8 @@
     });
   }
   function acct(){ return root.swAcct||{st:{email:""}}; }
-  function role(){ return lsGet("sw.role")||"free"; }
+  /* Admin only once the server has said so in this page view (index.html saveRole, swAdminLive). */
+  function role(){ var r=lsGet("sw.role")||"free"; return r==="admin"&&root.swAdminLive!==true?"free":r; }
   function savedName(){ try{ return root.localStorage.getItem("sw.name")||""; }catch(e){ return ""; } }
   function open(){
     ensure();
