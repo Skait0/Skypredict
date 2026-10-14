@@ -138,7 +138,9 @@ test("sign-out with no connection says still signed in, rather than claiming suc
 test("boot() never calls /api/me when the page carries no sw-auth meta (AUTH_ENABLED off)", () => {
   const m = /function boot\(\)\{([\s\S]*?)\n\s*var b=\$\("hdAccount"\)/.exec(block[1]);
   assert.ok(m, "boot() function body up to its first statement");
-  assert.match(m[1], /if\(!d\.querySelector\('meta\[name="sw-auth"\]'\)\)\s*return;/,
+  /* `return firstDone();` since 14 Oct 2026: it still bails first, and also tells
+     the loader there is no sync to wait for. */
+  assert.match(m[1], /if\(!d\.querySelector\('meta\[name="sw-auth"\]'\)\)\s*return(?: firstDone\(\))?;/,
     "boot() must bail before touching the DOM or the network when the meta guard is absent");
 });
 
@@ -172,4 +174,17 @@ test("filters, avatar and a closed notice changed on one device arrive on the ot
   assert.match(html, /if\(before!==st\.raw\)\{ reload\(\); paintButton\(\); \}/, "the avatar in the header is repainted after a pull");
   assert.deepStrictEqual(Y.validate({ v: 1, prefs: { sday: { v: "99", at: 1 }, view: { v: "<x>", at: 1 }, noticex: { v: "javascript:", at: 1 } } }).data.prefs, {},
     "the server keeps only well-formed values");
+});
+
+/* Owner, 14 Oct 2026: "when i refresh the home page, it does a glitchy thing.
+   like the board is loading multiple times". */
+test("the loader lifts once, after the notice and the first sync, never later than 1.2s past the board", () => {
+  const f = /function hideLoaderSettled\(\)\{[\s\S]*?\n\}/.exec(html);
+  assert.ok(f, "hideLoaderSettled exists");
+  assert.match(f[0], /\[window\.swFlagsReady,window\.swFirstSync\]/);
+  assert.match(f[0], /setTimeout\(fin,1200\)/, "capped, so a slow answer never holds the page");
+  assert.match(html, /hideLoaderSettled\(\);\n\s*try\{ addFromLink\(\); \}catch\(e\)\{\}/, "the success path uses it");
+  assert.match(html, /window\.swFlagsReady=fetch\("\/api\/flags"\)/);
+  assert.match(block[1], /\} else sync\(false,function\(\)\{ firstDone\(\); \}\);/, "the first sync resolves it");
+  assert.match(html, /html\.booting \.sc-proof\[hidden\]\{display:flex!important;/, "the space held while loading survives [hidden]{display:none!important}");
 });

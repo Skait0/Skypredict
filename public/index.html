@@ -259,7 +259,10 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
    the admin-only tab on every phone, a "live" dot on the desktop Live tab with
    no games live, an invisible desktop button that still caught clicks, and the
    favourite-leagues line under All leagues. One rule ends the class of bug;
-   anything that animates in sets hidden=false first and its class second. */
+   anything that animates in sets hidden=false first and its class second.
+   Two rules show a hidden element on purpose and say so with !important at a
+   higher specificity: .filters-body[hidden] (the fold animation) and
+   html.booting .sc-proof[hidden] (space held while the page loads). */
 [hidden]{display:none!important}
 /* ==========================================================================
    Matte black ground, red for signal, green for strength. Red marks the
@@ -2887,7 +2890,7 @@ html.mode-live #live{display:block}
    transition and hiding what the reader was told to read. */
 html{interpolate-size:allow-keywords}
 .filters-body{overflow:hidden;transition:max-height .25s ease,opacity .2s ease;max-height:max-content;opacity:1;padding-bottom:4px;margin-bottom:12px}
-.filters-body[hidden]{display:block;max-height:0;opacity:0;pointer-events:none;margin:0}
+.filters-body[hidden]{display:block!important;max-height:0;opacity:0;pointer-events:none;margin:0}
 
 .bld-panel{background:var(--card);border:1px solid var(--line-soft);
   border-radius:var(--r-lg);padding:18px 18px 16px}
@@ -5978,7 +5981,7 @@ html.booting #list{min-height:70vh}
    it is 40px of card that appears above everything else on a phone. Held open
    invisibly rather than shown empty: there is nothing truthful to put in it
    until the number arrives. */
-html.booting .sc-proof[hidden]{display:flex;visibility:hidden;min-height:40px}
+html.booting .sc-proof[hidden]{display:flex!important;visibility:hidden;min-height:40px}
 /* The two rail cards are taller once the layout stops being a phone: measured
    290/140 at 929px and 300/150 at 1440, so one step at 721 covers both within
    ten pixels. The board itself only pushes the closing note and the footer,
@@ -11636,7 +11639,9 @@ function swNoticeHash(t){ var h=5381; for(var i=0;i<t.length;i++) h=((h*33)^t.ch
    the admin posts a different notice (owner, 14 Oct 2026: it came back on every
    refresh). A failed read shows nothing. */
 (function(){
-  try{ fetch("/api/flags").then(function(r){ return r.ok?r.json():null; }).then(function(f){
+  /* swFlagsReady: the loader waits for the notice so it does not drop in and
+     push the board down after it has shown (hideLoaderSettled). */
+  try{ window.swFlagsReady=fetch("/api/flags").then(function(r){ return r.ok?r.json():null; }).then(function(f){
     if(f&&f.maint) swMaint(f.maintMsg);
     var t=f&&typeof f.notice==="string"?f.notice:"", top=document.getElementById("top");
     if(!t||!top) return;
@@ -24343,7 +24348,7 @@ async function load(){
     /* Fresh final scores for My slips, without waiting for a rebuild - see
        pullServerResults. Only while a slip is still open. */
     try{ pullServerResults(); setInterval(pullServerResults, 5*60*1000); }catch(e){}
-    hideLoader();
+    hideLoaderSettled();
     try{ addFromLink(); }catch(e){}
     /* THE FRESHNESS FETCH IS GONE, and this is the note for whoever wonders
        where it went. It called /api/predictions whenever the baked payload was
@@ -24384,6 +24389,19 @@ function hideLoader(){
   var l=$("loader"); if(!l) return; l.classList.add("hide");
   setTimeout(function(){if(l&&l.parentNode) l.parentNode.removeChild(l);},500);}
 setTimeout(hideLoader,8000);
+/* ONE REVEAL, NOT FOUR (owner, 14 Oct 2026: "when i refresh the home page ...
+   the board is loading multiple times"). The board used to show, then the
+   notice dropped in above it, then the first account sync redrew the rail,
+   each shifting the page. The loader now holds until the notice and the first
+   sync are in, then lifts once - capped at 1.2s so a slow answer never holds
+   the page. */
+function hideLoaderSettled(){
+  var done=false, fin=function(){ if(done) return; done=true; hideLoader(); };
+  var waits=[window.swFlagsReady,window.swFirstSync].filter(Boolean);
+  if(!waits.length||!window.Promise) return fin();
+  Promise.all(waits).then(fin,fin);
+  setTimeout(fin,1200);
+}
 /* THE BOTTOM BAR NO LONGER HIDES, AND THE OBSERVER THAT HID IT IS GONE.
    It used to disappear while the slip CTA was on screen, on the reasoning that
    two ways into the builder at once is clutter. That reasoning died when the
@@ -25234,25 +25252,31 @@ load().catch(function(){});
 
   /* ----------------------------------------------------------- start up */
   root.swAcct={st:st,req:req,signedOutHere:signedOutHere,notice:notice,sync:sync,paintButton:paintButton};
+  /* The first sync settles the page: the loader waits for it (capped) so the
+     rail does not redraw under the reader a moment after the board shows
+     (owner, 14 Oct 2026: "the board is loading multiple times"). */
+  var firstDone=function(){};
+  root.swFirstSync=root.Promise?new Promise(function(r){ firstDone=r; }):null;
   function boot(){
-    if(!d.querySelector('meta[name="sw-auth"]')) return;
-    var b=$("hdAccount"); if(!b) return;
+    if(!d.querySelector('meta[name="sw-auth"]')) return firstDone();
+    var b=$("hdAccount"); if(!b) return firstDone();
     b.addEventListener("click",function(){
       if(st.on&&root.swAccountUI) return root.swAccountUI.toggle();
       location.href="/login?return="+encodeURIComponent(location.pathname+location.search);
     });
     req("GET","/api/me",null,function(code,j){
-      if(code===404||code===0||code>=500) return;            // off, offline or down: stay invisible, keep local
+      if(code===404||code===0||code>=500) return firstDone();            // off, offline or down: stay invisible, keep local
       st.known=true;
-      if(code===401){ readGate(); paintButton(); if(readMeta(ls)) signedOutHere(j.reason); return; }
-      if(!(code===200&&j&&j.signedIn===true)) return;        // any other 200 is not a signed-in answer: stay invisible
+      if(code===401){ readGate(); paintButton(); if(readMeta(ls)) signedOutHere(j.reason); return firstDone(); }
+      if(!(code===200&&j&&j.signedIn===true)) return firstDone();        // any other 200 is not a signed-in answer: stay invisible
       st.on=true; st.email=j.email||""; saveRole(j); paintButton();
       wire();
       var g=readGate();
       if(g&&root.swSignIn){
+        firstDone();
         root.swSignIn.resume({action:g.action,detail:g.detail,afterAuth:function(j,done){ sync(false,done); },
           onDone:(root.swResume&&root.swResume[g.resume])||null});
-      } else sync(false);
+      } else sync(false,function(){ firstDone(); });
       /* A message push opens the inbox (public/messages.js). */
       if(/[?&]msgs=1/.test(location.search)){
         if(root.swMsg) root.swMsg.inbox(); else root.addEventListener("load",function(){ if(root.swMsg) root.swMsg.inbox(); });
