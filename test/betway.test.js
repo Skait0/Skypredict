@@ -144,3 +144,12 @@ test("the converter's bookmaker row wraps rather than hiding a book off a phone 
   assert.match(rule, /flex-wrap:wrap/);
   assert.match(rule, /max-width:100%/);
 });
+
+test("the admin tab sits in the nav bar with a badge for what landed", () => {
+  /* Owner, 14 Oct 2026: admin icon in the nav bar, a badge instead of a ping. */
+  assert.match(src, /<button class="btab" id="bt-admin" type="button" aria-label="Admin" hidden>/);
+  assert.match(src, /t\.hidden=role!=="admin"/, "only the admin role sees it");
+  assert.match(src, /swAcct\.req\("GET","\/api\/account\/hits"/);
+  assert.match(src, /Date\.parse\(h\.settled_at\|\|h\.created_at\|\|""\)>seen/, "counts only what settled since last seen");
+  assert.match(src, /localStorage\.setItem\("sw\.adminSeen"/, "opening Admin clears it");
+});

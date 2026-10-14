@@ -520,6 +520,9 @@
   }
   function admin(){
     close();
+    /* Opening Admin is reading it: the nav badge clears (index.html adminBadge). */
+    try{ localStorage.setItem("sw.adminSeen",String(Date.now())); }catch(e){}
+    if(root.paintAdminBadge) root.paintAdminBadge(0);
     var a=acct();
     var v=view("Admin",adminHtml(null)), inp=v.querySelector("#swaGEmail"), btn=v.querySelector("#swaGrant");
     wireTabs(v);

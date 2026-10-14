@@ -1222,6 +1222,13 @@ html:not(.reduce) .m:nth-child(n+7),html:not(.reduce) .lrow:nth-child(n+7){anima
    copy in the bottom bar, so this one never shows under 720px. */
 .navplay{display:none}
 a.btab{text-decoration:none}
+/* The admin tab's count: what landed (or needs a check) since the owner last looked. */
+.bt-ic{position:relative}
+.bt-badge{position:absolute;top:-5px;right:-10px;min-width:17px;height:17px;padding:0 4px;
+  border-radius:9px;background:var(--red);color:#fff;font:800 10px/17px inherit;text-align:center;
+  box-shadow:0 0 0 2px var(--bg)}
+#hdAccount{position:relative}
+#hdAccount .bt-badge{top:-3px;right:-3px}
 @media(min-width:721px){
   /* it opens the right-hand group, so it takes the push the X icon used to */
   .top-in .navplay~*{margin-left:0}
@@ -8224,6 +8231,10 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
        d-pad on the left, two buttons on the right. A link, not a view: the game
        is its own page. -->
   <a class="btab" id="bt-play" href="/penalty" aria-label="Play Penalty"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10a5 5 0 0 1 4.9 4l.9 4.6a2.6 2.6 0 0 1-4.6 2.1L16.4 16H7.6l-1.8 1.7a2.6 2.6 0 0 1-4.6-2.1l.9-4.6A5 5 0 0 1 7 7z"/><path d="M7.5 10v4M5.5 12h4"/><circle cx="15.5" cy="11" r=".9" fill="currentColor" stroke="none"/><circle cx="17.8" cy="13.2" r=".9" fill="currentColor" stroke="none"/></svg></span>Play</a>
+  <!-- ADMIN, for the admin account only (owner, 14 Oct 2026: "move the admin icon to
+       the nav bar and put a notification badge on it when there is a landed slip").
+       Shown and counted by adminBadge(). -->
+  <button class="btab" id="bt-admin" type="button" aria-label="Admin" hidden><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><b class="bt-badge" id="btAdminN" hidden></b></span>Admin</button>
 </nav>
 <div class="sheet slips-sheet" id="slipsSheet" role="dialog" aria-modal="true" aria-labelledby="slipsSheet-title">
   <div class="sheet-grab"><i></i></div>
@@ -20870,6 +20881,43 @@ function setView(v,noGate,repaint){
 }
 function setMode(build){ setView(build?"build":"pred"); }
 $("tab-pred").addEventListener("click",function(){setView("pred");});
+/* THE ADMIN TAB AND ITS BADGE (owner, 14 Oct 2026). Only for the admin role
+   (sw.role, saved from /api/me). The count is the ledger's landed slips - and
+   the x20+ ones waiting for a manual check - settled since Admin was last
+   opened here; opening it clears the badge. Polled on load, every five minutes
+   while the app is open, and when it comes back to the front. On desktop,
+   where the bottom bar is hidden, the same count sits on the account avatar,
+   which is where the admin page is opened from there. */
+function adminSeen(){ try{ return +localStorage.getItem("sw.adminSeen")||0; }catch(e){ return 0; } }
+function paintAdminBadge(n){
+  var t=$("bt-admin"), b=$("btAdminN"), acc=$("hdAccount");
+  if(b){ b.hidden=!n; b.textContent=n>9?"9+":String(n); }
+  if(t) t.setAttribute("aria-label",n?"Admin, "+n+" new":"Admin");
+  if(acc){ var ab=acc.querySelector(".bt-badge");
+    if(n){ if(!ab){ ab=document.createElement("b"); ab.className="bt-badge"; acc.appendChild(ab); } ab.textContent=n>9?"9+":String(n); }
+    else if(ab) ab.remove(); }
+}
+function adminBadge(){
+  var t=$("bt-admin"), role=null;
+  try{ role=localStorage.getItem("sw.role"); }catch(e){}
+  if(t) t.hidden=role!=="admin";
+  if(role!=="admin"||!window.swAcct||!swAcct.st||!swAcct.st.on){ paintAdminBadge(0); return; }
+  swAcct.req("GET","/api/account/hits",null,function(code,j){
+    if(code!==200) return;
+    var seen=adminSeen();
+    var n=(j&&j.hits||[]).filter(function(h){ return Date.parse(h.settled_at||h.created_at||"")>seen; }).length;
+    paintAdminBadge(n);
+  });
+}
+window.paintAdminBadge=paintAdminBadge;
+if($("bt-admin")) $("bt-admin").addEventListener("click",function(){
+  try{ localStorage.setItem("sw.adminSeen",String(Date.now())); }catch(e){}
+  paintAdminBadge(0);
+  if(window.swAccountUI) swAccountUI.admin();
+});
+window.addEventListener("load",function(){ setTimeout(adminBadge,2500); });
+setInterval(function(){ if(!document.hidden) adminBadge(); },5*60*1000);
+document.addEventListener("visibilitychange",function(){ if(!document.hidden) adminBadge(); });
 $("tab-live").addEventListener("click",function(){setView("live");});
 $("tab-build").addEventListener("click",function(){if(window.swGate&&!swGate("build",null,function(){setView("build");},"build")) return; setView("build");});
 $("liveRefresh").addEventListener("click",fetchLive);

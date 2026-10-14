@@ -106,7 +106,9 @@ test("the bottom bar still clears the safe area and stays under five items", () 
   assert.ok(r, "the phone rule for .btabs has gone");
   assert.match(r, /env\(safe-area-inset-bottom\)/,
     "a fixed bottom bar has to clear the home indicator: " + r);
-  const items = (src.match(/class="btab[ "]/g) || []).length;
+  /* Readers see five. The admin tab (owner, 14 Oct 2026) is hidden for every
+     account but the admin's, so it is not counted against the readers' bar. */
+  const items = (src.match(/class="btab[ "](?![^>]*id="bt-admin")/g) || []).length;
   assert.ok(items > 0 && items <= 5, "bottom navigation holds " + items + " items");
 });
 
