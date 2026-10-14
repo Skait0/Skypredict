@@ -10994,22 +10994,21 @@ try{localStorage.removeItem("sw.tod");}catch(e){}
 if(SCOPE!=="day") TOD="all";
 /* The buckets are named for the part of the day a reader is in, so they have
    to match what the clock on the card says.
-     Early   05:00 - 12:59  morning
+     Early   00:00 - 12:59  the small hours and the morning
      Mid day 13:00 - 17:59  afternoon
-     Late    18:00 - 04:59  evening, and on past midnight
-   Two things were wrong before. "Early" was everything before 15:00, so a
-   14:30 kickoff was filed as early - it is not, and it was reported as one.
-   Worse, the late bucket ended at midnight while getHours() wraps to 0, so
-   every overnight game came back as hour 0-4 and landed in "Early" as well:
-   61 of today's 357 fixtures, which is why picking Early returned a screen of
-   late-night football. Late now runs through to 05:00 rather than stopping at
-   the date boundary, because a 00:30 kickoff is the end of an evening, not the
-   start of a morning. */
+     Late    18:00 - 23:59  evening
+   The buckets split the day the card is filed under, by its own clock. They
+   used to send 00:00-04:59 to Late ("the end of the evening before"), but a
+   bucket is picked inside one day: tomorrow's 01:00 MLS kickoff then sat in
+   tomorrow's Late, never under Early, where a reader looking at tomorrow
+   expects the night's American games (owner, 14 Oct 2026). Games already
+   started are filtered out before this, so today's Early never fills with
+   last night's football. */
 function todOf(f){
   var t=kickMs(f); if(!t) return null;
   var h=new Date(t).getHours();
-  if(h>=5&&h<13) return "early";
-  if(h>=13&&h<18) return "mid";
+  if(h<13) return "early";
+  if(h<18) return "mid";
   return "late";
 }
 function todFixtures(list){

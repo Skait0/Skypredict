@@ -58,19 +58,20 @@ test("the reported case: a 14:30 kickoff is not early", () => {
   assert.strictEqual(api.todOf(at(14, 30)), "mid");
 });
 
-test("overnight kickoffs are late, not early", () => {
-  /* The real fault. Hours 0-4 wrap past midnight and used to read as early. */
+test("after-midnight kickoffs are early in the day they are filed under (owner, 14 Oct 2026)", () => {
+  /* Tomorrow's 01:00 MLS games sat in tomorrow's Late, never under Early.
+     A bucket is picked inside one day, so the small hours open that day. */
   for (const h of [0, 1, 2, 3, 4]) {
-    assert.strictEqual(api.todOf(at(h, 30)), "late",
-      String(h).padStart(2, "0") + ":30 should be late, it is the end of an evening");
+    assert.strictEqual(api.todOf(at(h, 30)), "early",
+      String(h).padStart(2, "0") + ":30 should be early: the first games of that day");
   }
 });
 
 test("each bucket covers the hours its label claims", () => {
   const want = {
-    early: [5, 6, 7, 8, 9, 10, 11, 12],
+    early: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     mid:   [13, 14, 15, 16, 17],
-    late:  [18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4],
+    late:  [18, 19, 20, 21, 22, 23],
   };
   for (const bucket of Object.keys(want)) {
     for (const h of want[bucket]) {
@@ -92,8 +93,8 @@ test("every hour of the day lands in exactly one bucket", () => {
 });
 
 test("the boundaries themselves sit on the right side", () => {
-  assert.strictEqual(api.todOf(at(4, 59)), "late");
-  assert.strictEqual(api.todOf(at(5, 0)),  "early");
+  assert.strictEqual(api.todOf(at(0, 0)),  "early");
+  assert.strictEqual(api.todOf(at(23, 59)), "late");
   assert.strictEqual(api.todOf(at(12, 59)), "early");
   assert.strictEqual(api.todOf(at(13, 0)), "mid");
   assert.strictEqual(api.todOf(at(17, 59)), "mid");
