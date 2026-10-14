@@ -87,3 +87,14 @@ test("'Use a different email' puts the headline, subline and header back", () =>
   assert.match(src, /\$\("\.swsi-again"\)\.addEventListener\("click",function\(\)\{[^}]*titles\(\);/);
   assert.match(fn("reset"), /titles\(\);/);
 });
+
+/* Owner, 14 Oct 2026: "the first google icon starts on the left then when google
+   account is detected the other icon glitches to the right ... looks tacky". */
+test("Google's button fades in over ours once it has settled, in the same white style", () => {
+  assert.ok(src.includes(".swsi-g{position:absolute;inset:0;z-index:1;"), "drawn on top of ours, not instead of it");
+  assert.ok(src.includes("opacity:0;pointer-events:none;transition:opacity .28s ease}.swsi-g.ready{opacity:1;pointer-events:auto}"));
+  assert.ok(src.includes('theme:"outline"'), "the same white outline as ours, not filled black");
+  assert.ok(src.includes('f.addEventListener("load",show); setTimeout(show,1500);'), "fades only after Google's frame has loaded");
+  assert.ok(!src.includes("slot.hidden=false; $(\".swsi-gbtn\").hidden=true;"), "ours is never swapped out from under it");
+  assert.ok(src.includes(".swsi-g[hidden],.swsi-gbtn[hidden]{display:none!important}"), "display:flex cannot beat hidden");
+});
