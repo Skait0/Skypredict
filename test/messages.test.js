@@ -208,3 +208,10 @@ test("every Wizard emote is in public/emo, survives clean() bigger, and nothing 
     assert.strictEqual(M.clean('<img src="' + bad + '">'), "", bad);
   for (const [, , mot] of M.WIZ) assert.ok(mot === "" || M.MOT.some((m) => m[0] === mot), mot);
 });
+
+test("the admin's editor builds (14 Oct 2026: a second var WIZ shadowed the emote list and the tab hung on Loading)", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
+  const vars = [...src.matchAll(/\bvar\s+([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]);
+  for (const v of ["WIZ_EMO", "EMO", "MOT", "WIZ"]) assert.strictEqual(vars.filter((x) => x === v).length, 1, v + " is declared once");
+  assert.ok(src.includes("WIZ_EMO.map(function(e){"), "the picker draws from the emote list");
+});

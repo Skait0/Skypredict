@@ -50,7 +50,7 @@
   /* The Wizard's own emotes (owner, 14 Oct 2026; drawn from our logo with Nano
      Banana). [file, label, motion]: two-frame ones animate in the file and get
      no motion; the rest move with one of the MOT motions. Drawn bigger. */
-  var WIZ=[["rave","glow sticks","m-bounce"],["rave2","glow sticks crossed","m-bounce"],["hype","hype","m-bounce"],["hype2","screaming joy","m-wiggle"],
+  var WIZ_EMO=[["rave","glow sticks","m-bounce"],["rave2","glow sticks crossed","m-bounce"],["hype","hype","m-bounce"],["hype2","screaming joy","m-wiggle"],
     ["party","party","m-bounce"],["dj","dj","m-bounce"],["beat","on the beat","m-bounce"],["dance","dance",""],["clap","clap",""],["lol","lol",""],
     ["champagne","champagne","m-wiggle"],["trophy","trophy","m-bounce"],["money","money","m-bounce"],["fire","on fire","m-pulse"],["goal","goal","m-bounce"],
     ["header","header","m-wiggle"],["score","scores","m-bounce"],["keepy","keepy ups",""],["bicycle","bicycle kick","m-wiggle"],["banker","banker","m-jello"],
@@ -114,7 +114,7 @@
     "<p><b><span class=\"m-glow\">Why the Wizard?</span></b> Our picks are numbers, not vibes. We show our record every day, wins and losses, so you always know how we are doing. Six bookies, one place, free.</p>"+
     "<p>Questions? Find the Wizard on <a href=\"https://t.me/soccerwizardTG\" target=\"_blank\" rel=\"noopener nofollow\">Telegram</a> or <a href=\"https://x.com/soccerwizardhq\" target=\"_blank\" rel=\"noopener nofollow\">X</a> "+emo("2728","sparkles")+"</p>"+
     "<p class=\"m-small\">18+ · Stake only what you can afford to lose.</p>";
-  var api={clean:clean,textOf:textOf,isEmpty:isEmpty,okHref:okHref,EMO:EMO,MOT:MOT,WIZ:WIZ,WELCOME:WELCOME};
+  var api={clean:clean,textOf:textOf,isEmpty:isEmpty,okHref:okHref,EMO:EMO,MOT:MOT,WIZ:WIZ_EMO,WELCOME:WELCOME};
   if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
   if(!root.document) return;
 
@@ -170,7 +170,7 @@
     ".m-emo.m-wiz{width:2.75em;height:2.75em;vertical-align:-1em}"+
     ".swm-etabs{display:flex;gap:4px;margin-bottom:8px}.swm-etabs button{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 12px;border:0;border-radius:8px;background:none;color:var(--soft);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}"+
     ".swm-etabs button[aria-selected=true]{background:var(--raise);color:var(--text)}.swm-etabs img{width:18px;height:18px}"+
-    ".swm-wizs{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:4px;max-height:260px;overflow-y:auto}.swm-wizs[hidden]{display:none}"+
+    ".swm-wizs{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:4px;max-height:260px;overflow-y:auto;overflow-x:hidden}.swm-wizs[hidden]{display:none}"+
     ".swm-wizs button{aspect-ratio:1;border:0;border-radius:10px;background:none;cursor:pointer;padding:3px}.swm-wizs button:hover{background:var(--raise)}.swm-wizs img{width:100%;height:100%}"+
     ".swm-emos{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:4px;max-height:210px;overflow-y:auto}"+
     ".swm-emos button{aspect-ratio:1;border:0;border-radius:8px;background:none;cursor:pointer;padding:4px}.swm-emos button:hover{background:var(--raise)}.swm-emos img{width:100%;height:100%}"+
@@ -381,7 +381,7 @@
       "<div class='swm-pop' data-pop='emo' hidden><div class='swm-etabs' role='tablist'><button type='button' role='tab' data-etab='wiz' aria-selected='true'>"+
         "<img src='/emo/wiz-hype.webp' alt='' width='18' height='18'>Wizard</button><button type='button' role='tab' data-etab='emo' aria-selected='false'>"+
         "<img src='/emo/1f525.webp' alt='' width='18' height='18'>Emoji</button></div>"+
-      "<div class='swm-wizs' data-epane='wiz'>"+WIZ.map(function(e){
+      "<div class='swm-wizs' data-epane='wiz'>"+WIZ_EMO.map(function(e){
         return "<button type='button' data-wiz='"+e[0]+"' data-wmot='"+e[2]+"' title='"+esc(e[1])+"'><img class='"+e[2]+"' src='/emo/wiz-"+e[0]+".webp' alt='"+esc(e[1])+"' loading='lazy' width='48' height='48'></button>"; }).join("")+
         "</div><div data-epane='emo' hidden><div class='swm-mots' role='group' aria-label='Emoji motion'>"+MOT.map(function(m,i){
         return "<button type='button' data-mot='"+m[0]+"' aria-pressed='"+(i===0)+"'>"+(m[0]?"<img class='m-emo "+m[0]+"' src='/emo/26bd.webp' alt='' width='18' height='18'>":"")+m[1]+"</button>"; }).join("")+"</div><div class='swm-emos'>"+EMO.map(function(e){
