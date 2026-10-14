@@ -484,8 +484,8 @@
   /* -------------------------------------------- admin: the Messages tab */
   function messagesHtml(){
     return "<p class='swa-h' style='margin-top:6px'>New message</p>"+
-      "<div class='swm-to' role='group' aria-label='Send to'><button type='button' data-to='all' aria-pressed='true'>Everyone</button><button type='button' data-to='some' aria-pressed='false'>Pick readers</button></div>"+
-      "<div id='swmPick' hidden><input class='swa-in' id='swmPickIn' type='search' autocomplete='off' placeholder='Name or email' aria-label='Find readers to message'>"+
+      "<div class='swm-to' role='group' aria-label='Send to'><button type='button' data-to='all' aria-pressed='true'>Everyone</button><button type='button' data-to='some' aria-pressed='false'>Pick users</button></div>"+
+      "<div id='swmPick' hidden><input class='swa-in' id='swmPickIn' type='search' autocomplete='off' placeholder='Name or email' aria-label='Find users to message'>"+
         "<div class='swa-card swm-list' id='swmPickList' hidden></div><div class='swm-chips' id='swmChips'></div></div>"+
       editorHtml()+
       "<button type='button' class='swm-send swm-wide' id='swmGo'>Broadcast to everyone</button>"+
@@ -498,14 +498,14 @@
     var panel=v.querySelector("#swaTMsg"); panel.innerHTML=messagesHtml();
     var ed=wireEditor(panel,a,say), go=panel.querySelector("#swmGo"), mode="all", picked=[];
     var pickBox=panel.querySelector("#swmPick"), pin=panel.querySelector("#swmPickIn"), plist=panel.querySelector("#swmPickList"), chips=panel.querySelector("#swmChips");
-    function label(){ go.textContent=mode==="all"?"Broadcast to everyone":picked.length?"Send to "+(picked.length===1?nameOf(byId(picked[0])||{}):picked.length+" readers"):"Pick who gets it";
+    function label(){ go.textContent=mode==="all"?"Broadcast to everyone":picked.length?"Send to "+(picked.length===1?nameOf(byId(picked[0])||{}):picked.length+" users"):"Pick who gets it";
       go.setAttribute("data-label",go.textContent); }
     function paintChips(){ chips.innerHTML=picked.map(function(id){ var r=byId(id)||{id:id,email:id};
       return "<span class='swm-chip'><img src='"+avOf(r)+"' alt=''>"+esc(nameOf(r))+"<button type='button' data-unpick='"+esc(id)+"' aria-label='Remove "+esc(nameOf(r))+"'>×</button></span>"; }).join("");
       chips.querySelectorAll("[data-unpick]").forEach(function(b){ b.onclick=function(){ picked=picked.filter(function(x){ return x!==b.getAttribute("data-unpick"); }); paintChips(); label(); }; }); }
     function showPick(){
       loadReaders(function(list){
-        if(!list){ plist.hidden=false; plist.innerHTML="<div class='swa-set'><span class='swa-st'><small>Could not load readers.</small></span></div>"; return; }
+        if(!list){ plist.hidden=false; plist.innerHTML="<div class='swa-set'><span class='swa-st'><small>Could not load users.</small></span></div>"; return; }
         var q=pin.value, hits=match(list,q).filter(function(r){ return picked.indexOf(r.id)<0; }).slice(0,60);
         plist.hidden=false; plist.innerHTML=hits.map(function(r){ return rowHtml(r,q); }).join("")||"<div class='swa-set'><span class='swa-st'><small>No one matches.</small></span></div>";
         plist.querySelectorAll("[data-rid]").forEach(function(b){ b.addEventListener("mousedown",function(e){ e.preventDefault(); });
@@ -521,7 +521,7 @@
       var html=ed.html();
       if(api.isEmpty(html)){ ed.focus(); return sendState(go,"bad","Write something first"); }
       if(mode==="some"&&!picked.length){ pin.focus(); return sendState(go,"bad","Pick who gets it"); }
-      if(mode==="all"&&!root.confirm("Send this to every reader?")) return;
+      if(mode==="all"&&!root.confirm("Send this to every user?")) return;
       sendState(go,"busy");
       a.req("POST","/api/account/send",{to:mode==="all"?"all":picked,html:html},function(code,j){
         if(code!==200) return sendState(go,"bad",errWords(code,j));
@@ -549,7 +549,7 @@
             var n=t.filter(function(m){ return !m.from_admin&&Date.parse(m.created_at)>seen; }).length; unread+=n;
             return rowHtml(r,"",n?"<span class='swm-unr'>"+n+"</span>":"<i>"+esc(ago(last.created_at))+"</i>").replace("<small>"+esc(r.email)+"</small>",
               "<small>"+(last.from_admin?"You: ":"")+esc(api.textOf(last.from_admin?last.body:esc(last.body)).slice(0,70))+"</small>"); }).join(""):
-            "<div class='swa-set'><span class='swa-st'><small>No conversations yet. Replies from readers show up here.</small></span></div>";
+            "<div class='swa-set'><span class='swa-st'><small>No conversations yet. Replies from users show up here.</small></span></div>";
           setCount(v,"swaTMsg",unread?unread+" new":"");
           cv.querySelectorAll("[data-rid]").forEach(function(b){ b.onclick=function(){ convo(b.getAttribute("data-rid"),by[b.getAttribute("data-rid")]); }; });
           if(unread) a.req("POST","/api/account/msgread",{what:"inbox"},function(c2){ if(c2===200){ state.adminUnread=0; if(root.swAdminBadgeRefresh) root.swAdminBadgeRefresh(); } });
@@ -562,7 +562,7 @@
       });
     }
     function wireUnsend(box){ box.querySelectorAll("[data-unsend]").forEach(function(b){ b.onclick=function(){
-      if(!root.confirm("Unsend this? Readers stop seeing it.")) return; b.disabled=true;
+      if(!root.confirm("Unsend this? Users stop seeing it.")) return; b.disabled=true;
       a.req("POST","/api/account/unsend",{id:b.getAttribute("data-unsend")},function(code,j){
         if(code===200){ say("Unsent."); load(); } else { b.disabled=false; say(errWords(code,j)); } }); }; }); }
     /* One reader's conversation, oldest first, with a reply box that sends to them. */
@@ -572,7 +572,7 @@
       box.innerHTML="<p class='swa-h'>"+esc(nameOf(r))+" <small>"+esc(r.email)+"</small></p><div class='swm-thread'>"+
         (list||[]).slice().reverse().map(function(m){ return bubble({id:m.id,at:m.created_at,mine:!m.from_admin,body:m.body},Infinity,
           m.from_admin?"<button type='button' class='swa-pillbtn' data-unsend='"+esc(String(m.id))+"'>Unsend</button>":""); }).join("")+
-        "</div><div class='swm-acts'><button type='button' class='swa-pillbtn' data-reply-to>Reply with the editor</button><button type='button' class='swa-pillbtn' data-open-reader>Open their profile</button></div>";
+        "</div><div class='swm-acts'><button type='button' class='swa-pillbtn' data-reply-to>Reply with the editor</button><button type='button' class='swa-pillbtn' data-open-user>Open their profile</button></div>";
       /* In the admin's view the reader's words sit on the left and the admin's on the right. */
       box.querySelectorAll(".swm-msg").forEach(function(el){ el.classList.toggle("swm-me"); el.classList.toggle("swm-wiz"); });
       box.querySelectorAll(".swm-msg.swm-wiz .swm-who").forEach(function(w){ w.remove(); });
@@ -587,7 +587,7 @@
 
   /* ---------------------------------- admin: Readers, the customer view */
   function readersHtml(){
-    return "<input class='swa-in' id='swmRdIn' type='search' autocomplete='off' autocapitalize='none' spellcheck='false' placeholder='Search by name or email' aria-label='Search readers'>"+
+    return "<input class='swa-in' id='swmRdIn' type='search' autocomplete='off' autocapitalize='none' spellcheck='false' placeholder='Search by name or email' aria-label='Search users'>"+
       "<p class='swm-fine' id='swmRdN'></p><div class='swa-card swm-list' id='swmRdList' hidden></div><div id='swmRd' hidden></div>";
   }
   function readersTab(v,a,say,msgTab,goTab){
@@ -596,9 +596,9 @@
     var inp=panel.querySelector("#swmRdIn"), list=panel.querySelector("#swmRdList"), card=panel.querySelector("#swmRd"), n=panel.querySelector("#swmRdN"), hi=-1;
     function show(){
       loadReaders(function(all,code){
-        if(!all){ list.hidden=false; list.innerHTML="<div class='swa-set'><span class='swa-st'><small>"+(code===503?"Readers list is not set up yet. Run sql/messages.sql in Supabase.":"Could not load readers.")+"</small></span></div>"; return; }
+        if(!all){ list.hidden=false; list.innerHTML="<div class='swa-set'><span class='swa-st'><small>"+(code===503?"Users list is not set up yet. Run sql/messages.sql in Supabase.":"Could not load users.")+"</small></span></div>"; return; }
         var q=inp.value.replace(/^\s+|\s+$/g,""), hits=match(all,q);
-        n.textContent=q?hits.length+" of "+all.length+" readers":all.length+" readers, most recently seen first";
+        n.textContent=q?hits.length+" of "+all.length+" users":all.length+" users, most recently seen first";
         hi=-1; list.hidden=false; card.hidden=true;
         list.innerHTML=hits.slice(0,200).map(function(r){ return rowHtml(r,q); }).join("")||"<div class='swa-set'><span class='swa-st'><small>No one matches.</small></span></div>";
         list.querySelectorAll("[data-rid]").forEach(function(b){ b.onclick=function(){ open(b.getAttribute("data-rid")); }; });
@@ -616,13 +616,13 @@
       list.hidden=true; card.hidden=false; n.textContent="";
       card.innerHTML="<p class='swa-note'>Loading...</p>";
       a.req("GET","/api/account/reader?id="+encodeURIComponent(id),null,function(code,r){
-        if(code!==200||!r||!r.found){ card.innerHTML="<p class='swa-note'>"+(code===404?"That account no longer exists.":"Could not load this reader.")+"</p>"; return; }
+        if(code!==200||!r||!r.found){ card.innerHTML="<p class='swa-note'>"+(code===404?"That account no longer exists.":"Could not load this user.")+"</p>"; return; }
         var BOOK={sporty:"SportyBet",bet9ja:"Bet9ja",betking:"BetKing",betpawa:"betPawa",onexbet:"1xBet",betway:"Betway"};
         var devs=(r.devices||[]).map(function(x){ return esc((x.label||"Device")+" · "+ago(x.last_used_at)); }).join("<br>")||"None";
-        var codes=r.codes==null?"Free readers' codes are counted by device, not account.":
+        var codes=r.codes==null?"Free users' codes are counted by device, not account.":
           (r.codes.length?r.codes.map(function(c){ return esc(c.code+" · "+(BOOK[c.book]||c.book)+" · "+c.status+" · "+ago(c.created_at)); }).join("<br>"):"No codes yet.");
         var rec=r.record||{}, thread=(r.thread||[]).slice().reverse();
-        card.innerHTML="<button type='button' class='swa-back' data-back>‹ All readers</button>"+
+        card.innerHTML="<button type='button' class='swa-back' data-back>‹ All users</button>"+
           "<div class='swm-hero'><img src='"+avOf(r)+"' alt=''><div style='min-width:0'><b>"+esc(nameOf(r))+"</b><small>"+esc(r.email)+"</small>"+
             "<div class='swm-pills'><span class='"+(r.role==="admin"||r.ff?"swm-gold":"")+"'>"+esc(r.plan||"Free plan")+"</span>"+(r.google?"<span>Google</span>":"<span>Email code</span>")+
             (r.push?"<span>Phone alerts on</span>":"")+(r.mail?"<span>Picks by email</span>":"")+"</div></div></div>"+

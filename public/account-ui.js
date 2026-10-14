@@ -104,7 +104,7 @@
   function switchesHtml(fl){
     var off=(fl&&fl.booksOff)||[];
     return Object.keys(BOOK_NAME).map(function(k){ var on=off.indexOf(k)<0;
-      return "<div class='swa-set'><span class='swa-st'><b>"+markOf(k)+"</b><small>"+(on?"Booking on":"Paused. Readers are told to pick another bookmaker.")+"</small></span>"+
+      return "<div class='swa-set'><span class='swa-st'><b>"+markOf(k)+"</b><small>"+(on?"Booking on":"Paused. Users are told to pick another bookmaker.")+"</small></span>"+
         "<button class='swa-sw' type='button' role='switch' data-book-sw='"+k+"' aria-checked='"+on+"' aria-label='"+esc(BOOK_NAME[k])+" booking'></button></div>"; }).join("");
   }
   function statusHtml(st,board){
@@ -117,11 +117,11 @@
   }
   function numbersHtml(st,board){
     var rec=board&&board.record, rows=[
-      ["Readers with an account",num(st.users)],
+      ["Users with an account",num(st.users)],
       /* Plain phrases, so a count never runs into its period (owner, 13 Oct 2026:
          "it just saw 7 days 10. no demarcation"). */
       ["New accounts",num(st.signupsToday)+" today, "+num(st.signups7d)+" in the last 7 days"],
-      ["Signed-in readers seen",num(st.activeToday)+" today, "+num(st.active7d)+" in the last 7 days"],
+      ["Signed-in users seen",num(st.activeToday)+" today, "+num(st.active7d)+" in the last 7 days"],
       ["Family & friends",num(st.ffMembers)],
       ["Codes booked",num(st.codesToday)+" today, "+num(st.codes7d)+" in the last 7 days"],
       ["Slips that landed",num(st.landed7d)+" in the last 7 days"]];
@@ -131,7 +131,7 @@
   function lookupHtml(r){
     if(!r.found) return msg(r.email+" has no account."+(r.ff?" Family & friends is waiting for them when they sign up.":""));
     var devs=(r.devices||[]).map(function(d){ return esc((d.label||"Device")+" · "+ago(d.last_used_at)); }).join("<br>");
-    var codes=r.codes==null?"Free readers are counted by device, so their codes are not tied to the account.":
+    var codes=r.codes==null?"Free users are counted by device, so their codes are not tied to the account.":
       (r.codes.length?r.codes.map(function(c){ return c.code+" · "+(BOOK_NAME[c.book]||c.book)+" · "+c.status+" · "+ago(c.created_at); }).join(" | "):"No codes yet.");
     return "<div class='swa-set'><span class='swa-st'><b>"+esc(r.email)+"</b><small>"+esc(r.plan+" · joined "+ago(r.created_at)+" · last seen "+ago(r.last_seen_at)+(r.google?" · Google":""))+"</small></span></div>"+
       "<div class='swa-set'><span class='swa-st'><b>Signed in on "+(r.devices||[]).length+"</b><small>"+(devs||"No devices")+"</small></span>"+
@@ -145,11 +145,11 @@
      is remembered on this device. The two lists that grow carry their count on the
      tab, so a closed one still says what it holds. */
   /* Messages and Readers (owner, 14 Oct 2026) are filled by public/messages.js. */
-  var ADMIN_TABS=[["swaTMsg","Messages"],["swaTLk","Readers"],["swaTSw","Switches"],["swaTStatus","Status"],["swaTNums","Numbers"],
-    ["swaTGrants","Family & friends"],["swaTHits","Slips"],["swaTLog","Log"]];
+  var ADMIN_TABS=[["swaTMsg","Messages"],["swaTLk","Users"],["swaTSw","Switches"],["swaTStatus","Status"],["swaTNums","Numbers"],
+    ["swaTGrants","Family & friends"],["swaTHits","Won slips"],["swaTLog","Log"]];
   function adminHtml(list){
     var body={
-      swaTSw:"<div class='swa-card'><div class='swa-set'><span class='swa-st'><b>Maintenance mode</b><small>Every reader sees the maintenance page and all booking stops. You still see the site.</small></span>"+
+      swaTSw:"<div class='swa-card'><div class='swa-set'><span class='swa-st'><b>Maintenance mode</b><small>Every user sees the maintenance page and all booking stops. You still see the site.</small></span>"+
         "<button class='swa-sw' id='swaMaint' type='button' role='switch' aria-checked='false' aria-label='Maintenance mode'></button></div></div>"+
         "<label class='swa-lbl' for='swaMaintMsg'>Message on the maintenance page</label>"+
         "<input class='swa-in' id='swaMaintMsg' type='text' maxlength='120' autocomplete='off' placeholder='Back by 8pm with fresh picks.'>"+
@@ -160,8 +160,8 @@
       swaTMsg:"<div class='swa-card'>"+msg("Loading")+"</div>",
       swaTStatus:"<div class='swa-card' id='swaStatus'>"+msg("Loading")+"</div>",
       swaTNums:"<div class='swa-card' id='swaNums'>"+msg("Loading")+"</div>",
-      swaTLk:"<p class='swa-note'>Type a reader's email to see their plan, devices and booked codes. From there you can sign them out everywhere or give them Family &amp; friends.</p>"+
-        "<label class='swa-lbl' for='swaLkEmail'>Reader's email</label>"+
+      swaTLk:"<p class='swa-note'>Type a user's email to see their plan, devices and booked codes. From there you can sign them out everywhere or give them Family &amp; friends.</p>"+
+        "<label class='swa-lbl' for='swaLkEmail'>User's email</label>"+
         "<input class='swa-in' id='swaLkEmail' type='email' autocomplete='off' autocapitalize='none' spellcheck='false'>"+
         "<button class='swa-outbtn swa-go' id='swaLkGo' type='button'>Look up</button>"+
         "<div class='swa-card' id='swaLk' hidden></div>",
@@ -202,7 +202,7 @@
     return r.action+(t?" "+t:"");
   }
   function logHtml(rows){
-    if(!rows.length) return msg("Nothing yet. Every change you make here, and every reader you look up, is recorded.");
+    if(!rows.length) return msg("Nothing yet. Every change you make here, and every user you look up, is recorded.");
     return rows.map(function(r){
       return "<div class='swa-set'><span class='swa-st'><b>"+esc(logLine(r))+"</b><small>"+esc(r.admin_email+" · "+ago(r.at))+"</small></span></div>"; }).join("");
   }
@@ -231,7 +231,7 @@
      cannot be graded from a final score - shown so the owner can look, never as a hit. */
   /* WHERE THE CODE CAME FROM (bookFetch's src). A converted code is the reader's own
      picks rebooked on another bookie - not a slip we built - so it is named as such. */
-  var SRC_WORDS={convert:"Converted: the reader's own picks",board:"Built from our board",safer:"Made safer from our picks",
+  var SRC_WORDS={convert:"Converted: the user's own picks",board:"Built from our board",safer:"Made safer from our picks",
     split:"Split from our picks",myslip:"My slip (our picks)"};
   function srcWords(s){ return s?(SRC_WORDS[s]||"Built on the site ("+s+")"):"Source not recorded"; }
   var BOOK_NAME={sporty:"SportyBet",bet9ja:"Bet9ja",betking:"BetKing",betpawa:"Betpawa",onexbet:"1xBet",betway:"Betway"};
@@ -626,7 +626,7 @@
       a.req("POST","/api/account/setflags",Object.assign({},flags,next),function(code,j){
         if(code!==200){ paintSw(); return fail(code,j); }
         flags=j; paintSw();
-        say(done+" Readers see it within a couple of minutes."); });
+        say(done+" Users see it within a couple of minutes."); });
     }
     a.req("GET","/api/account/flags",null,function(code,j){
       if(code!==200){ v.querySelector("#swaSw").innerHTML=msg("Could not load the switches."); return; }
@@ -634,7 +634,7 @@
     });
     v.querySelector("#swaMaint").onclick=function(){
       var on=!flags.maint;
-      if(on&&!root.confirm("Turn maintenance mode on? Every reader sees the maintenance page and booking stops until you turn it off.")) return;
+      if(on&&!root.confirm("Turn maintenance mode on? Every user sees the maintenance page and booking stops until you turn it off.")) return;
       saveFlags({maint:on,maintMsg:v.querySelector("#swaMaintMsg").value.replace(/^\s+|\s+$/g,"")},
         on?"Maintenance mode is on.":"Maintenance mode is off. The site is back."); };
     v.querySelector("#swaNoticeOff").onclick=function(){ saveFlags({booksOff:flags.booksOff,notice:""},"Notice cleared."); };
