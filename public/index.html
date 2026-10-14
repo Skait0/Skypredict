@@ -13952,9 +13952,10 @@ function cLgamma(x){
    leave it out for that reason); its team-corner lines (4.5-5.5)
    were not priced on either fixture the verifier booked; and it sells no
    shots. Add it to an entry only after booking one real code of that market. */
-/* Betway (14 Oct 2026) sells the OR family at 2.5 only, no Asian handicap, one
-   corner line per team (like BetKing), total corners 8.5-11.5 and no shots -
-   all read off ten deep cards; the entries below say so one by one. */
+/* Betway (14 Oct 2026) sells the OR family at 2.5 only, half-line handicaps
+   only (on its three-way market), one corner line per team (like BetKing),
+   total corners 8.5-11.5 and no shots - all read off ten deep cards; the
+   entries below say so one by one. */
 var BOOK_ONLY={"NR3_ANY":["sporty"],"NR3_H":["sporty"],"NR3_A":["sporty"],
   "MIX_X_OV_1.5":["bet9ja","betking"],
   /* Corners per team (25 Sep 2026): Betpawa sells none, verified absent in
@@ -13998,13 +13999,6 @@ var BOOK_ONLY={"NR3_ANY":["sporty"],"NR3_H":["sporty"],"NR3_A":["sporty"],
   "CORNERS_OV_7.5":["sporty","bet9ja","betking","betpawa"],
   /* Whole-line handicaps (30 Sep 2026): BetKing and Betpawa sell half lines
      only - the reader there is offered the +1.5 beside it instead. */
-  /* Half-line handicaps (14 Oct 2026): Betway sells NO full-time Asian
-     handicap - market 16 is absent on ten deep cards, and its handicap is the
-     three-way one, a different bet - so the chip's half lines, which every
-     other book sells, name those five and leave Betway out. */
-  "AH_1_1.5":["sporty","bet9ja","betking","betpawa","onexbet"],"AH_1_2.5":["sporty","bet9ja","betking","betpawa","onexbet"],
-  "AH_2_-1.5":["sporty","bet9ja","betking","betpawa","onexbet"],"AH_2_-2.5":["sporty","bet9ja","betking","betpawa","onexbet"],
-  "AH_1_-1.5":["sporty","bet9ja","betking","betpawa","onexbet"],"AH_2_1.5":["sporty","bet9ja","betking","betpawa","onexbet"],
   "AH_1_1":["sporty","bet9ja","onexbet"],"AH_1_2":["sporty","bet9ja","onexbet"],"AH_2_-1":["sporty","bet9ja","onexbet"],"AH_2_-2":["sporty","bet9ja","onexbet"],"AH_1_-1":["sporty","bet9ja","onexbet"],"AH_2_1":["sporty","bet9ja","onexbet"],
   /* Team shots (30 Sep 2026): SportyBet's 900552/900553. No other book's card
      has been read for a per-team shots market yet. */
@@ -14048,9 +14042,10 @@ var SHOTS_CODES=["SHOTS_OV_19.5","SHOTS_OV_20.5","SHOTS_OV_21.5","SHOTS_OV_22.5"
 var TEAM_SHOTS_CODES=["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_H_OV_10.5","SHOTS_H_OV_11.5","SHOTS_H_OV_12.5","SHOTS_H_OV_13.5","SHOTS_H_OV_14.5","SHOTS_H_OV_15.5","SHOTS_H_OV_16.5","SHOTS_H_OV_17.5","SHOTS_H_OV_18.5","SHOTS_A_OV_7.5","SHOTS_A_OV_8.5","SHOTS_A_OV_9.5","SHOTS_A_OV_10.5","SHOTS_A_OV_11.5","SHOTS_A_OV_12.5","SHOTS_A_OV_13.5","SHOTS_A_OV_14.5","SHOTS_A_OV_15.5","SHOTS_A_OV_16.5","SHOTS_A_OV_17.5","SHOTS_A_OV_18.5"];
 /* HANDICAPS, the safe side (30 Sep 2026) - see mProb. A head start of 1.5 or
    2.5 for either team, and the favourite at -1.5: the 3-way (0:2) and (0:1)
-   in the Asian half-line form every book but Betway sells - see BOOK_ONLY for
-   the Betway exception (14 Oct 2026). The floor decides which ones clear - the
-   chip itself starts off. */
+   in the Asian half-line form every book sells - Betway on its three-way
+   handicap, which wins on exactly the same scores (betway.py AH_VIA_EH, 14 Oct
+   2026), so the chip needs no BOOK_ONLY entry. The floor decides which ones
+   clear - the chip itself starts off. */
 /* Whole lines (+-1, +-2) joined 30 Sep 2026: SportyBet, Bet9ja and 1xBet
    sell them, BetKing and Betpawa do not (see BOOK_ONLY). */
 var HCAP_CODES=["AH_1_1.5","AH_1_2.5","AH_2_-1.5","AH_2_-2.5","AH_1_-1.5","AH_2_1.5","AH_1_1","AH_1_2","AH_2_-1","AH_2_-2","AH_1_-1","AH_2_1"];
@@ -22469,9 +22464,9 @@ function renderShared(){
      icon:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>'},
     /* Team shots - see TEAM_SHOTS_CODES. SportyBet alone, so it narrows the
        book and says so before it turns on, like Total shots. */
-    /* Handicap - see HCAP_CODES. Every book but Betway sells the half lines
-       (Betway sells no Asian handicap at all, 14 Oct 2026), and three sell the
-       whole ones - per leg in BOOK_ONLY, so a Betway slip gets none of these. */
+    /* Handicap - see HCAP_CODES. Every book sells the half lines (Betway on
+       its three-way handicap, the same bet at half lines); three sell the whole
+       ones - per leg in BOOK_ONLY. */
     {k:"hcap", label:"Handicap", tier:0, sub:"(0:1) / (0:2), the safe side",
      icon:'<path d="M4 18h16"/><path d="M8 18V9"/><path d="M16 18V6"/>'},
     {k:"tshots", label:"Team shots", tier:0, sub:"Home or away, over", only:["sporty"],

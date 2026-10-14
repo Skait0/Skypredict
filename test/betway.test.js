@@ -81,14 +81,16 @@ test("the header cycle, the builder and the code card carry Betway", () => {
 const ONLY = () => new Function("return " + src.match(/var BOOK_ONLY=(\{[\s\S]*?\});/)[1] + ";")();
 const HCAP = () => new Function("return " + src.match(/var HCAP_CODES=(\[[^\]]*\]);/)[1] + ";")();
 
-test("the handicap chip never hands Betway a line it does not sell", () => {
-  /* Betway sells no full-time Asian handicap at all (market 16 absent on ten
-     deep cards) - its handicap is the three-way one. Every chip line must
-     name the books that do sell it, and Betway must not be among them. */
+test("the handicap chip offers Betway its half lines and never its whole ones", () => {
+  /* Betway sells no Asian handicap, but a half-line Asian bet wins on exactly
+     the scores one three-way outcome does, so betway.py books the half lines
+     there (AH_VIA_EH, owner's call 14 Oct 2026, 12/12 price checks). Whole
+     lines push, so they stay with the three books that sell them. */
   const only = ONLY();
   for (const c of HCAP()) {
-    assert.ok(only[c], c + " has no BOOK_ONLY entry, so every book is assumed");
-    assert.ok(!only[c].includes("betway"), c);
+    const whole = !/\.5$/.test(c);
+    if (whole) assert.ok(only[c] && !only[c].includes("betway"), c);
+    else assert.ok(!only[c] || only[c].includes("betway"), c + " keeps Betway out");
   }
 });
 
