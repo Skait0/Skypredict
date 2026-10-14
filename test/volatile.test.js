@@ -97,12 +97,12 @@ test("volatile leagues are listed but left out by default", () => {
   const H = harness(BOARD);
   assert.deepStrictEqual(leagues(H.scopeFixtures()), SAFE);});
 
-test("All leagues clears taps, turns Top flight off and asks, naming them and why", () => {
+test("All leagues keeps the reader's unticks, turns Favourite off and asks, naming them and why", () => {
   const H = harness(BOARD);
   H.setLeaguePicked("Spain La Liga 1", false);
   H.resetLeagues();
   assert.strictEqual(H.topOnly(), false);
-  assert.strictEqual(H.store["sw.bldpick"], undefined, "taps cleared");
+  assert.deepStrictEqual(JSON.parse(H.store["sw.bldpick"]), { "Spain La Liga 1": 0 }, "unticks made in Edit survive");
   const html = H.ui.html;
   assert.ok(html, "the pop-up must open while volatile leagues are on the board");
   assert.match(html, /volatile/i);
@@ -134,7 +134,11 @@ test("Add them brings every volatile league in, and it survives a reload", () =>
   assert.strictEqual(harness(BOARD, store).scopeFixtures().length, BOARD.length);
 });
 
-test("asked on every click, and Keep after Add takes them back out", () => {
+test("asked on each switch in from Favourite, never when already on All (owner, 14 Oct 2026)", () => {
+  assert.ok(src.indexOf("else if(TOP_ONLY) afterPaint(resetLeagues);") > 0, "a tap on the lit All chip does nothing");
+});
+
+test("asked again on the next switch in, and Keep after Add takes them back out", () => {
   const H = harness(BOARD);
   H.resetLeagues(); H.ask.go.click();
   H.ui.html = null;
@@ -142,6 +146,14 @@ test("asked on every click, and Keep after Add takes them back out", () => {
   assert.ok(H.ui.html, "asked again");
   H.ask.keep.click();
   assert.deepStrictEqual(leagues(H.scopeFixtures()), SAFE);
+});
+
+test("the answer covers every volatile league, hand ticks included", () => {
+  const H = harness(BOARD);
+  H.setLeaguePicked("England League 1", true);
+  H.resetLeagues(); H.ask.keep.click();
+  assert.strictEqual(H.leagueAllowed("England League 1"), false);
+  assert.strictEqual(H.store["sw.bldpick"], "{}");
 });
 
 test("no volatile league on the board, no pop-up", () => {

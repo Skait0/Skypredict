@@ -30,7 +30,7 @@ const FAVB_LOAD = src.match(/var FAVB=\{\};\r?\ntry\{[^\r\n]*\r?\n/)[0];
 function page(store, topOnly) {
   const ctx = {
     STORE: store || {}, TOP_ONLY: topOnly !== false,
-    localStorage: null, VOL_IN: false,
+    localStorage: null, VOL_IN: false, BLD_PICK: {},
     isVolatile: (l) => /League [12]$/.test(l),
     notStarted: (f) => !f.started,
     compOf: (l) => l.split(" ").slice(1).join(" "),
@@ -39,8 +39,8 @@ function page(store, topOnly) {
   ctx.localStorage = { getItem: (k) => (k in ctx.STORE ? ctx.STORE[k] : null), setItem: (k, v) => { ctx.STORE[k] = String(v); },
     removeItem: (k) => { delete ctx.STORE[k]; } };
   vm.runInNewContext(LISTS + "\n" + FAVB_LOAD + ["topKey", "topRank", "favLeague", "setFav", "resetFavs", "leagueDefault",
-    "leagueAllowed", "favName", "favRows"].map(grab).join("\n") +
-    "\nthis.api={favLeague:favLeague,setFav:setFav,resetFavs:resetFavs,leagueAllowed:leagueAllowed,favRows:favRows,favName:favName};", ctx);
+    "leagueAllowed", "setLeaguePicked", "favName", "favRows"].map(grab).join("\n") +
+    "\nthis.api={setLeaguePicked:setLeaguePicked,favLeague:favLeague,setFav:setFav,resetFavs:resetFavs,leagueAllowed:leagueAllowed,favRows:favRows,favName:favName};", ctx);
   return ctx;
 }
 
@@ -95,6 +95,33 @@ test("the panel: Favourite leagues first and on by default, an Edit sheet, synce
   assert.ok(require("../lib/sync.js").PREF_KEYS.includes("favleagues"), "and accepted by the server");
   assert.match(grab("toggleFav"), /FAVS\[l\]/, "the board's stars keep their own list");
   assert.doesNotMatch(grab("toggleFav"), /favleagues|FAVB/);
+});
+
+test("All leagues has its own list: untick a league to leave it out, tick a volatile one in (owner, 14 Oct 2026)", () => {
+  const P = page({}, false);
+  P.DATA = { fixtures: [{ league: "England Premier League" }, { league: "England Championship" }, { league: "England League 1" }] };
+  P.api.setLeaguePicked("England Championship", false);
+  P.api.setLeaguePicked("England League 1", true);
+  assert.strictEqual(P.api.leagueAllowed("England Championship"), false, "unticked is out");
+  assert.strictEqual(P.api.leagueAllowed("England League 1"), true, "a volatile league ticked by hand is in");
+  assert.deepStrictEqual(JSON.parse(P.STORE["sw.bldpick"]), { "England Championship": 0, "England League 1": 1 });
+  const on = Object.fromEntries(P.api.favRows().map((x) => [x.league, x.on]));
+  assert.deepStrictEqual(on, { "England Premier League": true, "England League 1": true, "England Championship": false },
+    "the sheet's rows follow the All list, not the favourites");
+  P.api.setLeaguePicked("England Championship", true);
+  assert.strictEqual("England Championship" in JSON.parse(P.STORE["sw.bldpick"]), false, "ticked back = no entry");
+  const fav = page({ "sw.bldpick": JSON.stringify({ "England Premier League": 0 }) });
+  fav.BLD_PICK = { "England Premier League": 0 };
+  assert.strictEqual(fav.api.leagueAllowed("England Premier League"), true, "All's unticks never touch Favourite leagues");
+});
+
+test("the line and the Edit sheet speak for the list that is on, not always the favourites", () => {
+  const f = grab("renderLeaguePicker");
+  assert.ok(!f.includes("line.hidden"), "the line shows in both modes (CSS display:flex beat hidden anyway)");
+  assert.ok(f.includes("if(!TOP_ONLY){") && f.includes("Left out: "), "All leagues says what it left out");
+  const s = grab("renderFavSheet");
+  assert.ok(s.includes('all?"All leagues":"Favourite leagues"'), "the sheet is titled for its list");
+  assert.ok(s.includes("setLeaguePicked(l,!leagueAllowed(l))"), "a tap under All ticks or unticks, not stars");
 });
 
 test("league names read as readers say them, without eating a real number", () => {

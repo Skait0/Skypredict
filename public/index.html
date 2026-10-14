@@ -11032,15 +11032,14 @@ function leagueDefault(l){return !isVolatile(l)||VOL_IN;}
 function leagueAllowed(l){
   /* Favourite leagues mode is the reader's list and nothing else - a league
      they added counts even when it is a lower division. All leagues is every
-     league, the volatile ones waiting on the bench as before. The old
-     per-league taps (BLD_PICK) stopped applying with the 11 Oct 2026 redesign:
-     nothing on screen could undo them any more. */
+     league, the volatile ones waiting on the bench, less any the reader
+     unticked in its Edit sheet (BLD_PICK, owner 14 Oct 2026). */
   if(TOP_ONLY) return favLeague(l);
-  return leagueDefault(l);
+  return Object.prototype.hasOwnProperty.call(BLD_PICK,l) ? !!BLD_PICK[l] : leagueDefault(l);
 }
 /* Has the reader narrowed the pool - taken out a league that would be in? */
-function leaguesChosen(){return !!TOP_ONLY;}
-function leaguePicksTouched(){return false;}
+function leaguesChosen(){return !!TOP_ONLY||leaguePicksTouched();}
+function leaguePicksTouched(){for(var k in BLD_PICK) if(Object.prototype.hasOwnProperty.call(BLD_PICK,k)) return true; return false;}
 function setLeaguePicked(l,on){
   /* Only a difference from the default is stored, so ticking a league back
      returns the picker to its untouched state rather than leaving a no-op override. */
@@ -22934,18 +22933,18 @@ function renderShared(){
           /* Lit at once, rebuilt after the paint - see renderBuilderSoon. */
           lg.querySelectorAll("[data-btp]").forEach(function(x){ x.classList.toggle("on",x===c); });
           if(c.dataset.btp==="true"){ setTopOnly(true); renderBuilderSoon(); }
-          else afterPaint(resetLeagues);
+          else if(TOP_ONLY) afterPaint(resetLeagues);
         });
       });
     }
   }
   renderLeaguePicker();
 }
-/* "All leagues", from the chip or the picker's own reset: every tap undone,
-   Top flight off, and - when the window holds any - a quick ask about the
-   volatile leagues, every time, since they are the one group left out. */
+/* "All leagues", tapped from Favourite leagues: Favourite off and - when the
+   window holds any - a quick ask about the volatile leagues, since they are
+   the one group left out. Tapping it while already on All does nothing (owner,
+   14 Oct 2026); the leagues the reader unticked in Edit stay unticked. */
 function resetLeagues(){
-  clearLeaguePicks();
   setTopOnly(false);
   WSP._sig=null;
   renderBuilder();
@@ -22955,7 +22954,10 @@ function askVolatile(){
   var vol=leaguesOnBoard().filter(function(x){return isVolatile(x.league);});
   if(!vol.length) return;
   var done=function(add){
-    setVolIn(add); clearPrompt("volAsk");
+    /* The answer covers every volatile league, so drop any hand tick on one. */
+    setVolIn(add);
+    vol.forEach(function(x){ if(Object.prototype.hasOwnProperty.call(BLD_PICK,x.league)) setLeaguePicked(x.league,add); });
+    clearPrompt("volAsk");
     WSP._sig=null; renderBuilder();
   };
   showPrompt("volAsk","<div class='confirm-card'><p>Want the volatile leagues in too?"+
@@ -22983,12 +22985,18 @@ function askVolatile(){
 function renderLeaguePicker(){
   var line=$("favLine"),tx=$("favLineTxt"),ed=$("favEdit");
   if(!line) return;
-  line.hidden=!TOP_ONLY;
-  var favs=favRows().filter(function(x){ return x.fav; });
-  var ww=windowWords(false);
-  tx.innerHTML=favs.length
-    ? "<b>"+favs.length+" league"+(favs.length===1?"":"s")+" "+esc(ww)+".</b> "+esc(favs.slice(0,3).map(function(x){ return favName(x.league); }).join(", "))+
-      (favs.length>3?" and "+(favs.length-3)+" more.":".")
+  var rows=favRows(), favs=rows.filter(function(x){ return x.on; });
+  var ww=windowWords(false), names=function(a){ return esc(a.slice(0,3).map(function(x){ return favName(x.league); }).join(", "))+
+    (a.length>3?" and "+(a.length-3)+" more.":"."); };
+  /* All leagues edits its own list (owner, 14 Oct 2026), so the line speaks
+     for whichever list is on - it used to describe the favourites in both. */
+  if(!TOP_ONLY){
+    var out=rows.filter(function(x){ return !x.on; });
+    tx.innerHTML=!rows.length ? "<b>No games "+esc(ww)+".</b>"
+      : out.length ? "<b>"+favs.length+" of "+rows.length+" leagues "+esc(ww)+".</b> Left out: "+names(out)
+      : "<b>All "+rows.length+" league"+(rows.length===1?"":"s")+" "+esc(ww)+".</b> Tap Edit to leave some out.";
+  } else tx.innerHTML=favs.length
+    ? "<b>"+favs.length+" league"+(favs.length===1?"":"s")+" "+esc(ww)+".</b> "+names(favs)
     : "<b>None of your favourite leagues play "+esc(ww)+".</b> Tap Edit to add some.";
   if(ed&&!ed._w){ ed._w=1; ed.addEventListener("click",openFavSheet); }
   if($("favSheet")&&$("favSheet").classList.contains("on")) renderFavSheet();
@@ -22997,33 +23005,45 @@ function renderLeaguePicker(){
 function favName(l){ return compOf(l).replace(/^Clubs (UEFA )?/,"").replace(/^(La Liga|Bundesliga) 1$/,"$1"); }
 function favRows(){
   /* The leagues playing in the chosen day or period (owner, 11 Oct 2026:
-     "relative to the selected day or period"), favourites first in UEFA order. */
+     "relative to the selected day or period"), favourites first in UEFA order.
+     `on` is membership of the list being edited: favourites, or under All
+     leagues the leagues left in. */
   var n={};
   todFixtures(((DATA&&DATA.fixtures)||[]).filter(function(f){ return notStarted(f)&&inScope(f); }))
     .forEach(function(f){ n[f.league]=(n[f.league]||0)+1; });
-  return Object.keys(n).map(function(l){ return {league:l,n:n[l],fav:favLeague(l),r:topRank(l)}; })
-    .sort(function(a,b){ return (b.fav-a.fav)||((a.r<0?999:a.r)-(b.r<0?999:b.r))||(b.n-a.n)||(a.league<b.league?-1:1); });
+  return Object.keys(n).map(function(l){ var fav=favLeague(l); return {league:l,n:n[l],fav:fav,on:TOP_ONLY?fav:leagueAllowed(l),r:topRank(l)}; })
+    .sort(function(a,b){ return (b.on-a.on)||((a.r<0?999:a.r)-(b.r<0?999:b.r))||(b.n-a.n)||(a.league<b.league?-1:1); });
 }
 function renderFavSheet(){
   var list=$("favList"); if(!list) return;
   var q=(($("favFind")||{}).value||"").trim().toLowerCase(), sub=$("favSheetSub");
-  if(sub) sub.textContent="Leagues "+windowWords(true)+". Star one to add it to your favourites.";
+  /* One sheet, two lists: stars for Favourite leagues, ticks for All leagues
+     (untick to leave a league out - owner, 14 Oct 2026). */
+  var all=!TOP_ONLY;
+  if($("favSheet-title")) $("favSheet-title").textContent=all?"All leagues":"Favourite leagues";
+  if($("favReset")) $("favReset").textContent=all?"Tick them all":"Reset to the top 20";
+  if(sub) sub.textContent="Leagues "+windowWords(true)+". "+(all?"Untick one to leave it out of your slips.":"Star one to add it to your favourites.");
   var rows=favRows().filter(function(x){ return !q||x.league.toLowerCase().indexOf(q)>=0; });
   var row=function(x){
-    var star=x.fav?"<path d='m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z' fill='currentColor'/>"
+    var ico=all
+      ? (x.on?"<circle cx='12' cy='12' r='9' fill='currentColor'/><path d='m8 12.5 2.7 2.7L16.2 9.6' fill='none' stroke='#fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/>"
+             :"<circle cx='12' cy='12' r='8.5' fill='none' stroke='currentColor' stroke-width='2'/>")
+      : x.on?"<path d='m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z' fill='currentColor'/>"
       :"<path d='m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z' fill='none' stroke='currentColor' stroke-width='2' stroke-linejoin='round'/>";
+    var note=all ? (isVolatile(x.league)?" \u00b7 volatile":"") : (FAVB[x.league]===1?" \u00b7 added by you":"");
     return "<div class='fav-row'><span class='fav-nm'>"+esc(favName(x.league))+"<span class='fav-ct'>"+esc(countryOf(x.league))+
-      " \u00b7 "+x.n+" game"+(x.n===1?"":"s")+(FAVB[x.league]===1?" \u00b7 added by you":"")+"</span></span>"+
-      "<button type='button' class='fav-star"+(x.fav?" on":"")+"' data-fl=\""+esc(x.league)+"\" aria-pressed='"+x.fav+"' aria-label='"+
-      (x.fav?"Remove ":"Add ")+esc(favName(x.league))+"'><svg viewBox='0 0 24 24' aria-hidden='true'>"+star+"</svg></button></div>";
+      " \u00b7 "+x.n+" game"+(x.n===1?"":"s")+note+"</span></span>"+
+      "<button type='button' class='fav-star"+(x.on?" on":"")+"' data-fl=\""+esc(x.league)+"\" aria-pressed='"+x.on+"' aria-label='"+
+      (all?(x.on?"Leave out ":"Put back "):(x.on?"Remove ":"Add "))+esc(favName(x.league))+"'><svg viewBox='0 0 24 24' aria-hidden='true'>"+ico+"</svg></button></div>";
   };
-  var on=rows.filter(function(x){ return x.fav; }), off=rows.filter(function(x){ return !x.fav; });
-  list.innerHTML=(on.length?"<p class='fav-h'>Your favourites \u00b7 "+on.length+"</p>"+on.map(row).join(""):"")+
-    (off.length?"<p class='fav-h'>More leagues \u00b7 "+off.length+"</p>"+off.map(row).join(""):"")+
+  var on=rows.filter(function(x){ return x.on; }), off=rows.filter(function(x){ return !x.on; });
+  list.innerHTML=(on.length?"<p class='fav-h'>"+(all?"In your slips":"Your favourites")+" \u00b7 "+on.length+"</p>"+on.map(row).join(""):"")+
+    (off.length?"<p class='fav-h'>"+(all?"Left out":"More leagues")+" \u00b7 "+off.length+"</p>"+off.map(row).join(""):"")+
     (rows.length?"":"<p class='fav-none'>"+(q?"No league playing "+esc(windowWords(false))+" matches that.":"No games "+esc(windowWords(false))+". Pick another day above.")+"</p>");
   list.querySelectorAll("[data-fl]").forEach(function(b){
     b.addEventListener("click",function(){
-      setFav(b.dataset.fl,!favLeague(b.dataset.fl));
+      var l=b.dataset.fl;
+      if(TOP_ONLY) setFav(l,!favLeague(l)); else setLeaguePicked(l,!leagueAllowed(l));
       WSP._sig=null; renderFavSheet(); renderBuilder();
     });
   });
@@ -23034,7 +23054,11 @@ function openFavSheet(){
     sh._w=1;
     $("favSheet-x").addEventListener("click",closeFavSheet);
     $("favDone").addEventListener("click",closeFavSheet);
-    $("favReset").addEventListener("click",function(){ resetFavs(); WSP._sig=null; renderFavSheet(); renderBuilder(); });
+    $("favReset").addEventListener("click",function(){
+      /* Tick them all means all - the volatile ones too, which is also the
+         answer to the ask, so it is stored the same way. */
+      if(TOP_ONLY) resetFavs(); else { setVolIn(true); clearLeaguePicks(); }
+      WSP._sig=null; renderFavSheet(); renderBuilder(); });
     $("favFind").addEventListener("input",renderFavSheet);
   }
   $("favFind").value="";

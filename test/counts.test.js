@@ -176,7 +176,7 @@ test("toggling Top flight repaints the counts", () => {
      chip lights at once, the builder redraws a frame later. */
   assert.ok(src.indexOf('if(c.dataset.btp==="true"){ setTopOnly(true); renderBuilderSoon(); }') > 0,
     "Top flight only must set the flag and repaint the builder");
-  assert.ok(src.indexOf("else afterPaint(resetLeagues);") > 0, "All leagues still runs resetLeagues");
+  assert.ok(src.indexOf("else if(TOP_ONLY) afterPaint(resetLeagues);") > 0, "All leagues still runs resetLeagues");
   assert.match(grab("resetLeagues"), /setTopOnly\(false\);[\s\S]*renderBuilder\(\);/,
     "All leagues must clear Top flight and repaint the builder");
   assert.match(grab("paintScope"), /paintTod\(\);/,
