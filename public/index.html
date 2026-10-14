@@ -18499,9 +18499,21 @@ function shareWin(sp,btn){
     setTimeout(function(){ done(); },2600);
   });
 }
-function bookList(picks,resultId,btnId,label){
+function bookList(picks,resultId,btnId,label,retried){
+  /* An id the board gained since this slip was built counts. */
+  picks.forEach(function(c){ if(!c.eventId&&c.f&&c.f.eventId) c.eventId=c.f.eventId; });
   var bookable=picks.filter(function(c){return c.eventId;});
   var missing=picks.filter(function(c){return !c.eventId;});
+  /* NOT "NONE ARE ON SPORTYBET" WHILE SPORTYBET'S LIST IS STILL ON ITS WAY
+     (owner, 14 Oct 2026: right after signing in every game read as missing
+     until a bookie switch reloaded it). No ids at all means the list has not
+     landed: wait for it once, then decide. */
+  if(!bookable.length&&!retried){
+    $(resultId).innerHTML="<div class='code-err'>Getting SportyBet's games…</div>";
+    loadSporty().then(function(){ bookList(picks,resultId,btnId,label,true); },
+                      function(){ bookList(picks,resultId,btnId,label,true); });
+    return;
+  }
   if(!bookable.length){$(resultId).innerHTML="<div class='code-err'>None of these are on SportyBet right now, so a code can't be created.</div>";return;}
   if(missing.length){
     $(resultId).innerHTML="<div class='confirm-card'><p>"+missing.length+" game"+(missing.length===1?" isn't":"s aren't")+" available on SportyBet yet. Book the other "+bookable.length+"?</p><div class='ca'><button class='confirm-go' type='button'>Book "+bookable.length+"</button><button class='confirm-cancel' type='button'>Clear</button></div></div>";
@@ -18568,9 +18580,24 @@ function confirmBookAll(){
     var wait=allBookFeeds();
     if(wait) wait.then(function(){ if(host.querySelector(".bookpick")) confirmBookAll(); });
   }
+  /* SPORTYBET'S LIST NOT HERE YET IS NOT "NONE ARE ON SPORTYBET" (owner, 14
+     Oct 2026: after signing in every game read as missing until a bookie
+     switch reloaded it). bookFeedPending only knows the other books; for
+     SportyBet, a board with no SportyBet id at all means its list has not
+     landed. Wait for it once; if it still is not there, say we could not reach
+     SportyBet rather than blaming the games. */
+  var spMissing=B.key==="sporty"&&typeof DATA!=="undefined"&&!((DATA&&DATA.fixtures)||[]).some(function(f){ return f.eventId; });
+  if(!bookable.length&&spMissing&&!confirmBookAll._waiting){
+    confirmBookAll._waiting=true;
+    host.innerHTML="<div class='code-err'>Getting "+B.mark+" games…</div>";
+    var again=function(){ confirmBookAll._waited=true; confirmBookAll(); confirmBookAll._waiting=false; confirmBookAll._waited=false; };
+    loadSporty().then(again,again);
+    return;
+  }
   if(!bookable.length){
     host.innerHTML="<div class='code-err'>"+
-      (bookFeedPending(BOOKMAKER)?"Checking which of these games are on "+B.mark+"…":
+      (spMissing?"Couldn't reach "+B.mark+" just now. Try again in a moment.":
+       bookFeedPending(BOOKMAKER)?"Checking which of these games are on "+B.mark+"…":
         "None of these games are on "+B.mark+" right now.")+
       "</div><div class='bookpick'></div>";
     wirePicker();

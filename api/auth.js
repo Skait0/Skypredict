@@ -50,7 +50,11 @@ function make(deps) {
     const s = await S.startSession(db, user.id, ua, t);
     if (!s) throw new Error("session insert failed");
     await db.touchUser(user.id, iso(t));
-    if (existed) await E.sendNewDevice(user.email, C.deviceLabel(ua));
+    /* The new-device email is a courtesy, not part of signing in: it gets 1.5s
+       and the sign-in goes on either way (owner, 14 Oct 2026: a 504 at sign-in -
+       the whole chain ran past the function's limit). */
+    if (existed) await Promise.race([E.sendNewDevice(user.email, C.deviceLabel(ua)).catch(() => false),
+      new Promise((r) => setTimeout(r, 1500))]);
     return s;
   }
 

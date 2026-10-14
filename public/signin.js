@@ -125,7 +125,7 @@
     if(!d.getElementById("swsi-css")){ var st=d.createElement("style"); st.id="swsi-css"; st.textContent=CSS; d.head.appendChild(st); }
     box=d.createElement("div"); box.className="swsi sw-tok"+(page?" page":""); box.setAttribute("role","dialog"); box.setAttribute("aria-modal",page?"false":"true"); box.setAttribute("aria-labelledby","swsiH");
     box.innerHTML="<div class='swsi-grab'></div><button class='swsi-x' type='button' aria-label='Close'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' aria-hidden='true'><path d='M6 6l12 12M18 6L6 18'/></svg></button>"+
-      "<div class='swsi-form'><div class='swsi-head'></div><p class='swsi-h' id='swsiH'></p><p class='swsi-s'>Free. Your slips follow you to every phone and laptop.</p>"+
+      "<div class='swsi-form'><div class='swsi-head'></div><p class='swsi-h' id='swsiH'></p><p class='swsi-s'>Your slips follow you to every phone and laptop.</p>"+
       "<p class='swsi-flag' hidden></p>"+
       "<div class='swsi-gwrap'><div class='swsi-g'></div><button class='swsi-gbtn' type='button' hidden><svg viewBox='0 0 48 48' aria-hidden='true'><path fill='#EA4335' d='M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.2l7.9 6.2C12.5 13.6 17.8 9.5 24 9.5z'/><path fill='#4285F4' d='M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.8c4.3-4 6.9-9.9 6.9-17.2z'/><path fill='#FBBC05' d='M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.2C1 16.4 0 20.1 0 24s1 7.6 2.7 10.8l7.8-6.2z'/><path fill='#34A853' d='M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.8c-2.1 1.4-4.8 2.3-8.5 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.2C6.6 42.6 14.6 48 24 48z'/></svg>Continue with Google</button><div class='swsi-or'>or get a code by email</div></div>"+
       "<form class='swsi-ef' novalidate><div class='swsi-row'><input type='email' autocomplete='email' inputmode='email' maxlength='254' aria-label='Your email' placeholder='you@email.com'>"+
@@ -181,7 +181,10 @@
       if(st!==200||!j.nonce){ clearTimeout(fallback); ownButton(); return; }
       NONCE=j;
       function go(){ if(!live(sid)) return; var g=root.google&&root.google.accounts&&root.google.accounts.id; if(!g) return;
-        g.initialize({client_id:gcid,nonce:j.nonce,callback:onCredential,use_fedcm_for_prompt:true,auto_select:false,itp_support:true,context:"signin",cancel_on_tap_outside:false});
+        /* use_fedcm_for_button + button_auto_select: the "Continue as you@..."
+           button signs in with that account in one tap instead of opening
+           Google's account picker again (owner, 14 Oct 2026). */
+        g.initialize({client_id:gcid,nonce:j.nonce,callback:onCredential,use_fedcm_for_prompt:true,use_fedcm_for_button:true,button_auto_select:true,auto_select:false,itp_support:true,context:"signin",cancel_on_tap_outside:false});
         /* Google's button wins whenever it arrives: if ours stood in while the
            script was slow, swap back in the same 44px (no jump). */
         slot.hidden=false; $(".swsi-gbtn").hidden=true;
@@ -263,9 +266,12 @@
   function playSpell(){
     if(spell) return;
     $(".swsi-form").classList.add("gone"); var m=$(".swsi-spell"); m.classList.add("on");
+    /* The X sat over the spell (owner, 14 Oct 2026). Closing mid sign-in does
+       nothing useful, so it steps aside until the spell is over or undone. */
+    var x=$(".swsi-x"); if(x) x.style.visibility="hidden";
     spell=root.swSpell?root.swSpell(m,{odds:(cur.detail&&cur.detail.rows||[]).map(function(r){ return r.o; }),onRetry:function(){ unplay(); say("Try again."); }}):null;
   }
-  function unplay(){ if(spell){ spell.stop(); spell=null; } $(".swsi-spell").classList.remove("on"); $(".swsi-spell").innerHTML=""; $(".swsi-form").classList.remove("gone"); }
+  function unplay(){ if(spell){ spell.stop(); spell=null; } var x=$(".swsi-x"); if(x) x.style.visibility=""; $(".swsi-spell").classList.remove("on"); $(".swsi-spell").innerHTML=""; $(".swsi-form").classList.remove("gone"); }
   /* afterAuth(j,done) answers done() once the account is ready, or
      done(false) when it is not: then the sheet closes with no goal and no onDone. */
   function authed(j,email,o){
@@ -290,7 +296,7 @@
     SESS++; var p=pend; pend=null; cur=o; TS=null; EMAIL=""; NONCE=null; if(spell){ spell.stop(); spell=null; }
     if(tsId!=null){ try{ root.turnstile.reset(tsId); }catch(e){} }
     $(".swsi-spell").classList.remove("on"); $(".swsi-spell").innerHTML="";
-    $(".swsi-form").classList.remove("gone");
+    $(".swsi-form").classList.remove("gone"); var xr=$(".swsi-x"); if(xr) xr.style.visibility="";
     $(".swsi-head").innerHTML=header(o.action,o.detail);
     titles();
     $(".swsi-ef").hidden=false; $(".swsi-cf").hidden=true; $(".swsi-gbtn").hidden=true; $(".swsi-gbtn").disabled=false;
