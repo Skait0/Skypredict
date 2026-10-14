@@ -72,6 +72,10 @@ test("every wordmark selector list that names betPawa names Betway", () => {
   for (const l of lists.filter((x) => /\.sbm/.test(x))) assert.match(l, /\.wym/, l);
 });
 
+test("the entry screen names Betway (owner-facing first screen, missed by the sweep, caught driving the page)", () => {
+  assert.match(src, /<p class="sw-g-sub">[^<]*(?:<[^>]+>[^<]*)*<span class="wym">betway<\/span> code\.<\/p>/);
+});
+
 test("the header cycle, the builder and the code card carry Betway", () => {
   assert.match(src, /<i class="bkc-i[^"]*" data-bk="wy"/);
   assert.match(src, /<button class="byo-b" type="button" data-book="betway"/);
