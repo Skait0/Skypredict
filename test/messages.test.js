@@ -71,6 +71,7 @@ async function world() {
     readers: async () => [{ id: "x", email: "a@b.com" }],
     pushCount: async () => 1,
     gifs: async () => null,
+    hide: async (uid, id) => { const r = reads[uid] || { read_at: null, banner_at: null }; r.hidden = (r.hidden || []).concat([Number(id)]); reads[uid] = r; return true; },
   };
   const log = [];
   const audit = { log: async (row) => { log.push(row); return true; }, list: async () => ({ ok: true, rows: [] }) };
@@ -155,4 +156,30 @@ test("the customer view carries the profile, the stats and the thread", async ()
   assert.ok("slips" in j && "record" in j && "devices" in j && "mail" in j);
   assert.strictEqual((await w.call(get(w.boss, "reader", { id: "nope" }))).code, 400);
   assert.ok(w.log.some((l) => l.action === "lookup" && l.target === "ada@x.com"), "opening a reader is in the audit log");
+});
+
+/* Owner, 14 Oct 2026: "there is no way to delete messages from the inbox". */
+test("a reader deletes a message from their own inbox only, the welcome too", async () => {
+  const w = await world();
+  await w.call(post(w.boss, "send", { to: "all", html: "<b>Big night</b>" }));
+  const id = w.rows[0].id;
+  assert.strictEqual((await w.call(post(w.ada, "msghide", { id }))).code, 200);
+  assert.strictEqual((await w.call(post(w.ada, "msghide", { id: 0 }))).code, 200);
+  assert.strictEqual((await w.call(post(w.ada, "msghide", { id: "1;drop" }))).code, 400);
+  assert.deepStrictEqual((await w.call(get(w.ada, "inbox"))).json().messages, [], "gone from Ada's inbox");
+  assert.strictEqual((await w.call(get(w.ben, "inbox"))).json().messages.length, 2, "Ben still has the broadcast and the welcome");
+  assert.strictEqual(w.rows.length, 1, "nothing deleted for real");
+});
+
+test("the inbox folds and deletes, and the banner keeps GIFs for the inbox", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
+  assert.ok(src.includes("/api/account/msghide") && src.includes("Tap again to delete"), "delete asks twice, then hides");
+  assert.ok(src.includes("swm-shut") && src.includes('(open?"Less":"More")'), "messages fold");
+  assert.ok(src.includes("open to see it") && src.includes("swm-gifchip"), "a GIF in the banner is a chip");
+  assert.ok(src.includes(".swm-ban .m-body .m-gif{display:none}"));
+  assert.ok(src.includes("swAdminBadgeRefresh(); banner(); return; }"), "the admin sees the banner too");
+  const html = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  assert.ok(html.includes('if(localStorage.getItem("sw.noticeX")===t) return;') && html.includes('localStorage.setItem("sw.noticeX",t)'),
+    "a closed notice stays closed until a new one is posted");
+  assert.ok(fs.readFileSync(path.join(__dirname, "..", "sql", "messages.sql"), "utf8").includes("add column if not exists hidden bigint[]"));
 });

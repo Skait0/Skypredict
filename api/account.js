@@ -19,7 +19,7 @@ const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle", "send", 
 /* THE MESSAGE BOARD (owner, 14 Oct 2026; sql/messages.sql, public/messages.js):
    any signed-in reader reads their inbox, marks it read and replies in it. */
 const READER_GET = ["inbox"];
-const READER_POST = ["msgread", "reply"];
+const READER_POST = ["msgread", "msghide", "reply"];
 const MSG = require("../public/messages.js");
 const REPLY_MAX = 1000, BODY_MAX = 12000, TO_MAX = 200;
 /* Readers' replies are off (owner, 14 Oct 2026: "remove the reply for readers
@@ -248,8 +248,10 @@ function make(deps) {
         const [list, reads] = await Promise.all([msgs.inboxOf(s.userId), msgs.readsOf(s.userId)]);
         if (!list || !reads) return H.sendJson(res, 503, { error: "unavailable" });
         const isAdmin = (await R.roleOf(db, user, env)) === "admin";
+        const gone = new Set(reads.hidden || []);
         const out = list.map((m) => ({ id: m.id, at: m.created_at, mine: !m.from_admin, bcast: m.user_id == null, body: m.body }));
         out.push({ id: 0, at: user.created_at, mine: false, bcast: false, body: MSG.WELCOME });
+        for (let i = out.length - 1; i >= 0; i--) if (gone.has(Number(out[i].id))) out.splice(i, 1);
         const seen = Date.parse(reads.read_at || "") || 0;
         return H.sendJson(res, 200, { messages: out, readAt: reads.read_at, bannerAt: reads.banner_at,
           unread: isAdmin ? 0 : out.filter((m) => !m.mine && Date.parse(m.at) > seen).length,
@@ -260,6 +262,11 @@ function make(deps) {
         if (what !== "inbox" && what !== "banner") return H.sendJson(res, 400, { error: "bad_request" });
         const done = await msgs.markRead(s.userId, what === "inbox" ? "read_at" : "banner_at", new Date(t).toISOString());
         return done ? H.sendJson(res, 200, { ok: true }) : H.sendJson(res, 503, { error: "unavailable" });
+      }
+      if (action === "msghide") {
+        const id = ((await H.readJson(req, 256)) || {}).id;
+        if (!/^\d{1,18}$/.test(String(id))) return H.sendJson(res, 400, { error: "bad_request" });
+        return (await msgs.hide(s.userId, id)) ? H.sendJson(res, 200, { ok: true }) : H.sendJson(res, 503, { error: "unavailable" });
       }
       /* A reply is plain text, stored as written and escaped wherever it is drawn. */
       if (action === "reply") {

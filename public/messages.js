@@ -26,7 +26,20 @@
     ["1f64f","pray"],["2764_fe0f","heart"],["1f44d","thumbs up"],["1f44b","wave"],["1f91d","handshake"],["1fae1","salute"],["1f609","wink"],
     ["1f60f","smirk"],["1f92a","zany"],["1f914","thinking"],["1f92b","shush"],["1f924","drool"],["1f975","hot"],["1f976","cold"],
     ["1f631","scream"],["1f62d","sob"],["1f97a","pleading"],["1f621","angry"],["1f480","skull"],["1f47b","ghost"],["1f410","goat"],
-    ["1f981","lion"],["1f308","rainbow"],["23f0","alarm"],["23f3","hourglass"],["1f198","sos"]];
+    ["1f981","lion"],["1f308","rainbow"],["23f0","alarm"],["23f3","hourglass"],["1f198","sos"],
+    /* 69 more (owner, 14 Oct 2026: "more tiny animated emojis") */
+    ["1fa84","magic wand"],["1f948","silver medal"],["1f949","bronze medal"],["1f3c1","chequered flag"],["1f37e","champagne"],["1f37b","cheers"],
+    ["1f942","clink"],["1f37f","popcorn"],["1f3b0","slot machine"],["1f4c9","chart down"],["1f600","grin"],["1f601","beaming"],
+    ["1f606","laughing"],["1f605","sweat smile"],["1f643","upside down"],["1f970","in love"],["1f618","kiss"],["1f61c","tongue wink"],
+    ["1f917","hug"],["1f92d","oops"],["1f644","eye roll"],["1f62c","grimace"],["1f634","sleepy"],["1f974","woozy"],
+    ["1f635","dizzy face"],["1f920","cowboy"],["1f913","nerd"],["1f9d0","monocle"],["1f615","confused"],["1f62e","wow"],
+    ["1f633","flushed"],["1f628","fearful"],["1f622","cry"],["1f624","huff"],["1f92c","cursing"],["1f608","devil"],
+    ["1f921","clown"],["1f4a9","poop"],["1f916","robot"],["1f648","see no evil"],["1f49a","green heart"],["1f49b","yellow heart"],
+    ["1f494","broken heart"],["1f496","sparkling heart"],["1f4ab","dizzy"],["1f44c","ok"],["270c_fe0f","victory"],["1f91e","fingers crossed"],
+    ["1f919","call me"],["1f449","point right"],["1f446","point up"],["1f447","point down"],["1f44a","fist bump"],["270a","raised fist"],
+    ["1f483","dance"],["1f327_fe0f","rain"],["1f32a_fe0f","tornado"],["1f30b","volcano"],["1f40d","snake"],["1f98a","fox"],
+    ["1f985","eagle"],["1f984","unicorn"],["1f9e0","brain"],["1f60a","smile"],["1f62e_200d_1f4a8","phew"],["1f972","tear smile"],
+    ["1f978","disguise"],["1f92e","sick"],["1f62a","sleepy tear"]];
   var TAGS={b:1,strong:1,i:1,em:1,u:1,s:1,strike:1,br:1,p:1,ul:1,ol:1,li:1,a:1,img:1,span:1,h3:1,blockquote:1};
   var DROP={script:1,style:1,iframe:1,object:1,embed:1,svg:1,math:1,template:1,noscript:1,textarea:1,select:1,title:1,head:1};
   var CLS=["m-big","m-small","m-gold","m-red","m-green","m-glow","m-center"];
@@ -108,7 +121,7 @@
       "background:linear-gradient(135deg,rgba(242,184,75,.14),rgba(230,57,70,.08)) var(--card);box-sizing:border-box;animation:swmIn .35s cubic-bezier(.23,1,.32,1)}"+
     "@keyframes swmIn{from{opacity:0;transform:translateY(-6px)}}"+
     ".swm-ban .m-body{flex:1;min-width:0;max-height:4.6em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}"+
-    ".swm-ban .m-body .m-gif{display:none}.swm-ban-b{display:flex;flex-direction:column;gap:6px;flex:none}"+
+    ".swm-ban .m-body .m-gif{display:none}.swm-gifchip{display:inline-block;margin-top:2px;font-size:11.5px;font-weight:800;color:var(--accent);border:1px solid var(--accent-rim);border-radius:99px;padding:2px 8px}.swm-ban-b{display:flex;flex-direction:column;gap:6px;flex:none}"+
     ".swm-ban button{border:0;border-radius:6px;font:inherit;font-size:12.5px;font-weight:800;padding:6px 10px;cursor:pointer}"+
     ".swm-ban .swm-open{background:var(--accent);color:var(--on-accent)}.swm-ban .swm-x{background:none;color:var(--soft)}"+
     "@media(max-width:720px){.swm-ban{margin:8px 12px 0}}"+
@@ -119,6 +132,10 @@
     ".swm-msg.swm-new{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-rim)}"+
     ".swm-meta{display:flex;gap:8px;align-items:center;font-size:11.5px;font-weight:700;color:var(--faint);margin-top:6px}.swm-meta button{margin-left:auto}"+
     ".swm-who{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--accent);margin-bottom:6px}.swm-who img{width:22px;height:22px;border-radius:50%}"+
+    ".swm-fold{display:flex;flex-direction:column}.swm-fold.swm-shut{cursor:pointer}"+
+    ".swm-shut .m-body{max-height:3em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 45%,transparent);mask-image:linear-gradient(#000 45%,transparent)}.swm-shut .m-body .m-gif{display:none}"+
+    ".swm-tog{margin-left:auto;border:0;background:none;color:var(--accent);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;padding:2px 4px}.swm-meta .swm-tog{margin-left:auto}.swm-meta .swm-tog+.swm-del{margin-left:0}"+
+    ".swm-del{border:0;background:none;color:var(--faint);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;padding:2px 4px}.swm-del:hover,.swm-del.swm-arm{color:var(--red-ink)}"+
     ".swm-tag{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);border:1px solid var(--line);border-radius:4px;padding:1px 5px}"+
     /* the send button and its answer */
     ".swm-send{position:relative;flex:none;height:44px;padding:0 18px;border:0;border-radius:10px;background:var(--accent);color:var(--on-accent);font:inherit;font-size:14px;font-weight:800;cursor:pointer;transition:background .2s,transform .1s}"+
@@ -187,7 +204,9 @@
   }
   /* The avatar's badge for a reader. The admin's avatar carries the admin count (index.html adminBadge). */
   function paint(){
-    if(isAdmin()){ if(root.swAdminBadgeRefresh) root.swAdminBadgeRefresh(); return; }
+    /* The admin's avatar carries the admin count, but the banner shows for them
+       too, so they see what readers see (owner, 14 Oct 2026). */
+    if(isAdmin()){ if(root.swAdminBadgeRefresh) root.swAdminBadgeRefresh(); banner(); return; }
     var acc=d.getElementById("hdAccount"); if(!acc) return;
     var b=acc.querySelector(".bt-badge"), n=state.unread;
     if(n){ if(!b){ b=d.createElement("b"); b.className="bt-badge"; acc.appendChild(b); } b.textContent=n>9?"9+":String(n); }
@@ -206,7 +225,9 @@
     var top=d.getElementById("top"); if(!top) return;
     style();
     var el=d.createElement("div"); el.className="swm-ban"; el.id="swmBan"; el.setAttribute("role","status"); el.setAttribute("data-id",String(m.id));
-    el.innerHTML="<div class='m-body'>"+clean(m.body)+"</div><div class='swm-ban-b'><button type='button' class='swm-open'>Open</button><button type='button' class='swm-x' aria-label='Close message'>Close</button></div>";
+    /* A GIF is too big for the banner: it waits in the inbox, and a chip says so. */
+    var body=clean(m.body), gif=/class="m-gif"/.test(body);
+    el.innerHTML="<div class='m-body'>"+body+(gif?"<span class='swm-gifchip'>GIF · open to see it</span>":"")+"</div><div class='swm-ban-b'><button type='button' class='swm-open'>Open</button><button type='button' class='swm-x' aria-label='Close message'>Close</button></div>";
     el.querySelector(".swm-open").onclick=function(){ inbox(); };
     el.querySelector(".swm-x").onclick=function(){ el.remove(); state.bannerAt=new Date().toISOString();
       acct().req("POST","/api/account/msgread",{what:"banner"},function(){}); };
@@ -226,10 +247,39 @@
     style(); root.swAccountUI.close();
     var v=root.swAccountUI.view("Messages","<div class='swm-thread' id='swmThread'><p class='swa-note'>Loading...</p></div>");
     var box=v.querySelector("#swmThread");
+    /* Each message folds to one line; unread ones and the newest start open.
+       Delete hides a message for this reader only (owner, 14 Oct 2026): first
+       tap asks, second tap deletes. */
+    var since=Date.parse(state.readAt||"")||0;
     function draw(){
-      var since=Date.parse(state.readAt||"")||0;
-      var list=state.msgs.slice().reverse();
-      box.innerHTML=list.length?list.map(function(m){ return bubble(m,since); }).join(""):"<p class='swa-note'>No messages yet.</p>";
+      var list=state.msgs.slice().reverse(), newest=list.length?list[list.length-1].id:null;
+      box.innerHTML=list.length?list.map(function(m){
+        var open=m.id===newest||(!m.mine&&Date.parse(m.at)>since);
+        return "<div class='swm-fold"+(open?"":" swm-shut")+"' data-id='"+esc(String(m.id))+"'>"+
+          bubble(m,since,"<button type='button' class='swm-tog'>"+(open?"Less":"More")+"</button><button type='button' class='swm-del'>Delete</button>")+"</div>";
+      }).join(""):"<p class='swa-note'>No messages.</p>";
+      box.querySelectorAll(".swm-fold").forEach(function(f){
+        var tog=f.querySelector(".swm-tog"), del=f.querySelector(".swm-del"), armed=null;
+        function set(shut){ f.classList.toggle("swm-shut",shut); tog.textContent=shut?"More":"Less"; tog.setAttribute("aria-expanded",String(!shut)); }
+        /* A message that fits in its folded height has nothing to fold. */
+        var mb=f.querySelector(".m-body"), was=f.classList.contains("swm-shut");
+        f.classList.add("swm-shut"); var fits=mb.scrollHeight<=mb.clientHeight+2&&!/class="m-gif"/.test(mb.innerHTML);
+        if(!was) f.classList.remove("swm-shut");
+        if(fits){ f.classList.remove("swm-shut"); tog.remove(); tog={setAttribute:function(){},textContent:""}; }
+        tog.setAttribute("aria-expanded",String(!f.classList.contains("swm-shut")));
+        tog.onclick=function(e){ e.stopPropagation(); set(!f.classList.contains("swm-shut")); };
+        f.onclick=function(e){ if(f.classList.contains("swm-shut")&&!e.target.closest("button,a")) set(false); };
+        del.onclick=function(){
+          if(!armed){ del.textContent="Tap again to delete"; del.classList.add("swm-arm");
+            armed=setTimeout(function(){ armed=null; del.textContent="Delete"; del.classList.remove("swm-arm"); },3000); return; }
+          clearTimeout(armed); del.disabled=true; del.textContent="Deleting...";
+          var id=f.getAttribute("data-id");
+          acct().req("POST","/api/account/msghide",{id:Number(id)},function(code){
+            if(code!==200){ del.disabled=false; del.textContent="Could not delete. Try again"; armed=null; return; }
+            state.msgs=state.msgs.filter(function(x){ return String(x.id)!==id; }); draw(); paint();
+          });
+        };
+      });
       var last=box.lastElementChild; if(last) try{ last.scrollIntoView({block:"end"}); }catch(e){}
     }
     poll(function(j){

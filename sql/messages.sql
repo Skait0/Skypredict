@@ -26,6 +26,8 @@ create table if not exists public.message_reads (
   banner_at  timestamptz
 );
 alter table public.message_reads enable row level security;
+-- The messages a reader deleted from their inbox (14 Oct 2026). Hidden for them only.
+alter table public.message_reads add column if not exists hidden bigint[] not null default '{}';
 
 -- Every account with its synced name and avatar, for the admin's Readers list.
 create or replace function public.admin_readers()
