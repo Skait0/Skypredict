@@ -296,7 +296,7 @@
     /* Replies are back on (owner, 14 Oct 2026: "i want feedback from users").
        Plain text only: the server cleans it and every view escapes it. */
     var v=root.swAccountUI.view("Messages","<div class='swm-thread' id='swmThread'><p class='swa-note'>Loading...</p></div>"+
-      "<div class='swm-rep'><textarea id='swmRe' maxlength='1000' rows='1' placeholder='Reply to the Wizard: questions, ideas, feedback' aria-label='Your reply'></textarea>"+
+      "<div class='swm-rep'><textarea id='swmRe' maxlength='1000' rows='1' placeholder='Questions, ideas or feedback?' aria-label='Your reply'></textarea>"+
       "<button type='button' class='swm-send' id='swmReGo'>Send</button></div>");
     var box=v.querySelector("#swmThread"), ta=v.querySelector("#swmRe"), go=v.querySelector("#swmReGo");
     go.onclick=function(){

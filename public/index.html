@@ -1215,8 +1215,10 @@ html:not(.reduce) .m:nth-child(n+7),html:not(.reduce) .lrow:nth-child(n+7){anima
   transition:transform .55s cubic-bezier(.5,.05,.5,1),opacity .55s}
 /* bottom tab bar (mobile only) */
 .btabs{display:none;transition:transform .3s ease}
-#bt-live.live .lv-core{fill:var(--red);stroke:var(--red);transform-box:fill-box;transform-origin:center;animation:sw-livecore 1.4s ease-in-out infinite}
-@keyframes sw-livecore{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.55}}
+/* Smaller core and pulse (owner, 14 Oct 2026: it touched the arcs). At its
+   biggest it is 2.6px of 6px inner room, so there is always a gap. */
+#bt-live.live .lv-core{fill:var(--red);stroke:none;transform-box:fill-box;transform-origin:center;animation:sw-livecore 1.4s ease-in-out infinite}
+@keyframes sw-livecore{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.6}}
 @media (prefers-reduced-motion:reduce){#bt-live.live .lv-core{animation:none}}
 /* Play Penalty in the desktop header: a link out to the game, so a pill of its
    own beside the tab track rather than a tab inside it. The phone has its own
@@ -1356,6 +1358,21 @@ html.mode-live .btabs{transform:none!important}
   .btab.on::before{content:"";position:absolute;top:-8px;left:50%;width:28px;height:3px;
     margin-left:-14px;border-radius:0 0 3px 3px;background:var(--red)}
   @media (prefers-reduced-motion:reduce){.btab .bt-ic{transition:none}}
+  /* BUILD IS THE STAR OF THE BAR (owner, 14 Oct 2026: "make the build nav icon
+     to be the star of the nav bar"). This reverses the 13 Oct NO CIRCLES rule
+     for Build only, on the owner's word: one raised gold disc in the middle,
+     the site's own accent, no neon. Its bottom edge sits where every other
+     icon's does (56-18 = 44-6), so the labels keep one baseline, and the red
+     bar still marks the page you are on. */
+  #bt-build .bt-ic{width:56px;height:56px;margin-top:-18px;color:var(--on-accent);
+    background:linear-gradient(160deg,#F7CB6E,var(--accent) 55%,#D99A2B);
+    box-shadow:0 0 0 4px var(--card),0 6px 14px rgba(0,0,0,.35)}
+  #bt-build{color:var(--accent)}
+  #bt-build.on{color:var(--accent)}
+  #bt-build .bt-staff,#bt-build.on .bt-staff{width:26px;height:26px}
+  #bt-build svg,#bt-build.on svg{width:26px;height:26px}
+  #bt-build:active .bt-ic{transform:scale(.95)}
+  @media (prefers-reduced-motion:reduce){#bt-build:active .bt-ic{transform:none}}
   body{padding-bottom:calc(var(--btabs-h) + 8px)}
 }
 .record-bar i{transition:width 1.05s cubic-bezier(.25,.8,.3,1)}
@@ -8237,7 +8254,6 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
      Wizard hats were tried before any of this and every one of them read as
      a traffic cone: a narrow cone over a brim that curves the same way is a
      road sign, not a hat. -->
-  <button class="btab" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><i class="bt-staff" aria-hidden="true"></i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5.6" r="3.4"/><path d="M12 3.6l.62 1.28 1.4.2-1.01.98.24 1.4L12 6.78l-1.25.66.24-1.4-1.01-.98 1.4-.2z" fill="currentColor" stroke="none"/><path d="M12 9v10.4"/><path d="M10.6 11.4h2.8"/><path d="M10.4 19.4h3.2"/></svg></span>Build</button>
   <!-- A SLIP AND ONE ARROW OUT OF IT. Not two arrows swapping - that is
        the shuffle icon, #shuffleBtn draws exactly that - and not the two
        books named, which a third bookmaker would make wrong rather than
@@ -8245,7 +8261,8 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
        over there" and stays true however many books we add. The word
        under it carries the rest. -->
   <button class="btab" id="bt-convert" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M14.5 12h6.5M18 9l3 3-3 3"/></svg></span>Converter</button>
-  <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle class="lv-core" cx="12" cy="12" r="3"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg></span>Live</button>
+  <button class="btab" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><i class="bt-staff" aria-hidden="true"></i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5.6" r="3.4"/><path d="M12 3.6l.62 1.28 1.4.2-1.01.98.24 1.4L12 6.78l-1.25.66.24-1.4-1.01-.98 1.4-.2z" fill="currentColor" stroke="none"/><path d="M12 9v10.4"/><path d="M10.6 11.4h2.8"/><path d="M10.4 19.4h3.2"/></svg></span>Build</button>
+  <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle class="lv-core" cx="12" cy="12" r="2"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg></span>Live</button>
   <!-- PLAY PENALTY (release step 2). A game controller (owner, 13 Oct 2026: "change
        the joystick to a controller icon. much more recogniseable"): the pad, a
        d-pad on the left, two buttons on the right. A link, not a view: the game

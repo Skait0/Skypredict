@@ -220,7 +220,10 @@ test("the Build staff is a mask, so it still paints in currentColor", () => {
   /* Owner, 9 Oct 2026: no dot beside the icon; the Live icon's own centre
      circle pulses, and still not while you are on Live. */
   assert.match(index, /bl\.classList\.toggle\("live",any&&!here\)/, "the pulse no longer knows where you are");
-  assert.match(index, /<circle class="lv-core" cx="12" cy="12" r="3"\/>/);
+  /* r=2 since 14 Oct 2026 (owner: the dot touched the arcs); pulse 1.3x, no stroke. */
+  assert.match(index, /<circle class="lv-core" cx="12" cy="12" r="2"\/>/);
+  assert.match(index, /#bt-live\.live \.lv-core\{fill:var\(--red\);stroke:none;/);
+  assert.match(index, /@keyframes sw-livecore\{[^}]*\}50%\{transform:scale\(1\.3\)/);
   assert.doesNotMatch(index, /id="liveDotB"/, "the separate dot is gone");
 });
 
