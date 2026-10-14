@@ -22,9 +22,20 @@ const READER_GET = ["inbox"];
 const READER_POST = ["msgread", "msghide", "reply"];
 const MSG = require("../public/messages.js");
 const REPLY_MAX = 1000, BODY_MAX = 12000, TO_MAX = 200;
-/* Readers' replies are off (owner, 14 Oct 2026: "remove the reply for readers
-   except i say otherwise"). true puts them back; the inbox needs its reply box back too. */
-const REPLIES = false;
+/* Users' replies are ON again (owner, 14 Oct 2026: "lets give the users the
+   ability to reply. i want feedback from users for now"). false turns them off. */
+const REPLIES = true;
+/* A reply is plain text and nothing else: control characters, zero-width and
+   direction-override characters (used to disguise text) are removed, runs of
+   blank lines are capped, and it is escaped wherever it is drawn. */
+/* Control characters, zero-width and direction-override characters (used to
+   disguise text): built from their codes so none sits invisibly in this file. */
+const REPLY_STRIP = new RegExp("[" + [[0x00, 0x08], [0x0B, 0x1F], [0x7F, 0x9F], [0x200B, 0x200F], [0x2028, 0x202E],
+  [0x2060, 0x2064], [0x2066, 0x206F], [0xFEFF, 0xFEFF]].map(([a, b]) => String.fromCharCode(a) + "-" + String.fromCharCode(b)).join("") + "]", "g");
+function cleanReply(raw) {
+  return String(raw == null ? "" : raw).replace(/\r\n?/g, "\n").replace(REPLY_STRIP, "")
+    .replace(/\n{3,}/g, "\n\n").trim();
+}
 
 function make(deps) {
   const { db } = deps;
@@ -271,7 +282,7 @@ function make(deps) {
       /* A reply is plain text, stored as written and escaped wherever it is drawn. */
       if (action === "reply") {
         if (!REPLIES) return H.sendJson(res, 403, { error: "replies_off" });
-        const text = String(((await H.readJson(req, 8192)) || {}).text || "").replace(/\r\n?/g, "\n").trim();
+        const text = cleanReply(((await H.readJson(req, 8192)) || {}).text);
         if (!text) return H.sendJson(res, 400, { error: "empty" });
         if (text.length > REPLY_MAX) return H.sendJson(res, 400, { error: "too_long" });
         if (!(await db.rlHit("msg:" + s.userId, 3600, 20))) return H.sendJson(res, 429, { error: "slow_down" });
@@ -315,3 +326,4 @@ function make(deps) {
 
 module.exports = make({ db: require("../lib/auth/db.js") });
 module.exports.make = make;
+module.exports.cleanReply = cleanReply;

@@ -135,15 +135,51 @@ test("a new message pings phones, and a push that fails never fails the send", a
 });
 
 /* Owner, 14 Oct 2026: "remove the reply for readers except i say otherwise". */
-test("readers cannot reply, and opening the inbox reads it", async () => {
+/* Owner, 14 Oct 2026: "lets give the users the ability to reply. i want feedback
+   from users for now. make sure the input from the users are secure and cant
+   access the backend. safe from hackers." */
+test("users reply in their own thread, as plain text, and opening the inbox reads it", async () => {
   const w = await world();
   assert.strictEqual((await w.call(post(w.ada, "msgread", { what: "inbox" }))).code, 200);
   assert.strictEqual((await w.call(get(w.ada, "inbox"))).json().unread, 0);
-  const r = await w.call(post(w.ada, "reply", { text: "thanks wizard" }));
-  assert.strictEqual(r.code, 403); assert.strictEqual(r.json().error, "replies_off");
-  assert.strictEqual(w.rows.length, 0, "nothing stored");
-  assert.doesNotMatch(fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8"), /\/api\/account\/reply/, "no reply box in the inbox");
-  assert.doesNotMatch(M.WELCOME, /Reply right here/);
+  const r = await w.call(post(w.ada, "reply", { text: "  thanks wizard  ", user_id: w.ben.id, from_admin: true }));
+  assert.strictEqual(r.code, 200);
+  assert.strictEqual(w.rows[0].body, "thanks wizard");
+  assert.strictEqual(w.rows[0].user_id, w.ada.id, "the thread is the session's, never the request's");
+  assert.strictEqual(w.rows[0].from_admin, false, "a user can never post as the admin");
+  assert.strictEqual((await w.call(get(w.ben, "inbox"))).json().messages.filter((m) => m.mine).length, 0, "Ben sees none of it");
+  assert.match(fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8"), /\/api\/account\/reply/, "the inbox has its reply box");
+  assert.match(M.WELCOME, /Reply right here/);
+});
+
+test("a hostile reply is stored as text and drawn as text everywhere", async () => {
+  const w = await world();
+  const evil = "<img src=x onerror=alert(1)><script>steal()</script><a href=javascript:x>hi</a> '); DROP TABLE messages;--";
+  assert.strictEqual((await w.call(post(w.ada, "reply", { text: evil }))).code, 200);
+  assert.strictEqual(w.rows[0].body, evil, "stored exactly as typed: it is only ever text, through PostgREST's JSON");
+  /* Every view that draws a user's reply escapes it. */
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
+  assert.ok(src.includes('(m.mine?esc(m.body).replace(/\\n/g,"<br>"):clean(m.body))'), "the bubble escapes a user's own words");
+  for (const call of ["bubble({id:m.id,at:m.created_at,mine:!m.from_admin,body:m.body},Infinity,", "bubble({id:m.id,at:m.created_at,mine:!m.from_admin,body:m.body},Infinity); })"])
+    assert.ok(src.includes(call), "admin views draw replies as the user's own (escaped): " + call.slice(0, 40));
+  assert.ok(src.includes("esc(api.textOf(last.from_admin?last.body:esc(last.body)).slice(0,70))"), "the conversation preview escapes");
+  assert.ok(src.includes("if(!m.user_id){ if(m.from_admin) bc.push(m); return; }"), "only the admin's broadcasts are drawn as HTML");
+  /* And what the escape does to it. */
+  const esc = (x) => String(x).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  assert.doesNotMatch(esc(evil), /<img|<script|<a /);
+});
+
+test("replies are capped, rate limited, signed-in only, and cleaned of disguise characters", async () => {
+  const w = await world();
+  assert.strictEqual((await w.call(post(w.ada, "reply", { text: "x".repeat(1001) }))).json().error, "too_long");
+  assert.strictEqual((await w.call(post(w.ada, "reply", { text: " \n\u200b " }))).json().error, "empty");
+  const anon = Object.assign(postReq("account", { text: "hi" }, {}), { query: { action: "reply" } });
+  assert.strictEqual((await w.call(anon)).code, 401, "no session, no reply");
+  let last = null;
+  for (let i = 0; i < 21; i++) last = await w.call(post(w.ben, "reply", { text: "spam " + i }));
+  assert.strictEqual(last.code, 429, "the 21st reply in an hour is refused");
+  const c = account.cleanReply("ok\u202Egnp.exe\u0000\u200B\n\n\n\nend\r\n");
+  assert.strictEqual(c, "okgnp.exe\n\nend", "bidi overrides, zero-width and control characters go; blank lines are capped");
 });
 
 test("the customer view carries the profile, the stats and the thread", async () => {

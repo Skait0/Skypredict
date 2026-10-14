@@ -112,7 +112,7 @@
     "<li><b>Edit for me.</b> One tap swaps a risky leg for a safer bet on the same game.</li>"+
     "<li><b>Follow it live.</b> Your slips track themselves and tell you when they land "+emo("1f389","party")+"</li></ul>"+
     "<p><b><span class=\"m-glow\">Why the Wizard?</span></b> Our picks are numbers, not vibes. We show our record every day, wins and losses, so you always know how we are doing. Six bookies, one place, free.</p>"+
-    "<p>Questions? Find the Wizard on <a href=\"https://t.me/soccerwizardTG\" target=\"_blank\" rel=\"noopener nofollow\">Telegram</a> or <a href=\"https://x.com/soccerwizardhq\" target=\"_blank\" rel=\"noopener nofollow\">X</a> "+emo("2728","sparkles")+"</p>"+
+    "<p>Got a question, an idea or feedback? Reply right here, the Wizard reads every message. Or find us on <a href=\"https://t.me/soccerwizardTG\" target=\"_blank\" rel=\"noopener nofollow\">Telegram</a> or <a href=\"https://x.com/soccerwizardhq\" target=\"_blank\" rel=\"noopener nofollow\">X</a> "+emo("2728","sparkles")+"</p>"+
     "<p class=\"m-small\">18+ · Stake only what you can afford to lose.</p>";
   var api={clean:clean,textOf:textOf,isEmpty:isEmpty,okHref:okHref,EMO:EMO,MOT:MOT,WIZ:WIZ_EMO,WELCOME:WELCOME};
   if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
@@ -155,6 +155,8 @@
     ".swm-shut .m-body{max-height:3em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 45%,transparent);mask-image:linear-gradient(#000 45%,transparent)}.swm-shut .m-body .m-gif{display:none}"+
     ".swm-tog{margin-left:auto;border:0;background:none;color:var(--accent);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;padding:2px 4px}.swm-meta .swm-tog{margin-left:auto}.swm-meta .swm-tog+.swm-del{margin-left:0}"+
     ".swm-del{border:0;background:none;color:var(--faint);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;padding:2px 4px}.swm-del:hover,.swm-del.swm-arm{color:var(--red-ink)}"+
+    ".swm-rep{display:flex;gap:8px;align-items:flex-end;position:sticky;bottom:0;background:var(--bg);padding:8px 0 4px}"+
+    ".swm-rep textarea{flex:1;min-height:44px;max-height:140px;resize:vertical;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:14.5px;padding:10px 12px;box-sizing:border-box}"+
     ".swm-tag{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);border:1px solid var(--line);border-radius:4px;padding:1px 5px}"+
     /* the send button and its answer */
     ".swm-send{position:relative;flex:none;height:44px;padding:0 18px;border:0;border-radius:10px;background:var(--accent);color:var(--on-accent);font:inherit;font-size:14px;font-weight:800;cursor:pointer;transition:background .2s,transform .1s}"+
@@ -281,8 +283,21 @@
   function inbox(){
     if(!on()||!root.swAccountUI||!root.swAccountUI.view) return;
     style(); root.swAccountUI.close();
-    var v=root.swAccountUI.view("Messages","<div class='swm-thread' id='swmThread'><p class='swa-note'>Loading...</p></div>");
-    var box=v.querySelector("#swmThread");
+    /* Replies are back on (owner, 14 Oct 2026: "i want feedback from users").
+       Plain text only: the server cleans it and every view escapes it. */
+    var v=root.swAccountUI.view("Messages","<div class='swm-thread' id='swmThread'><p class='swa-note'>Loading...</p></div>"+
+      "<div class='swm-rep'><textarea id='swmRe' maxlength='1000' rows='1' placeholder='Reply to the Wizard: questions, ideas, feedback' aria-label='Your reply'></textarea>"+
+      "<button type='button' class='swm-send' id='swmReGo'>Send</button></div>");
+    var box=v.querySelector("#swmThread"), ta=v.querySelector("#swmRe"), go=v.querySelector("#swmReGo");
+    go.onclick=function(){
+      var t=ta.value.replace(/^\s+|\s+$/g,""); if(!t){ ta.focus(); return; }
+      sendState(go,"busy");
+      acct().req("POST","/api/account/reply",{text:t},function(code,j){
+        if(code!==200) return sendState(go,"bad",errWords(code,j));
+        ta.value=""; sendState(go,"ok","✓ Sent");
+        state.msgs.unshift({id:j.id,at:new Date().toISOString(),mine:true,body:t}); draw();
+      });
+    };
     /* Each message folds to one line; unread ones and the newest start open.
        Delete hides a message for this reader only (owner, 14 Oct 2026): first
        tap asks, second tap deletes. */
@@ -539,7 +554,9 @@
           cv.innerHTML=w; sent.innerHTML=w; return; }
         var seen=Date.parse(j.readAt||"")||0, by={}, order=[], bc=[];
         (j.messages||[]).forEach(function(m){
-          if(!m.user_id){ bc.push(m); return; }
+          /* Only the admin's own broadcasts are drawn as HTML here; a row with no
+             thread that is not from the admin is never treated as one. */
+          if(!m.user_id){ if(m.from_admin) bc.push(m); return; }
           if(!by[m.user_id]){ by[m.user_id]=[]; order.push(m.user_id); }
           by[m.user_id].push(m); });
         var unread=0;
