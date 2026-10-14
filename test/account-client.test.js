@@ -181,7 +181,7 @@ test("filters, avatar and a closed notice changed on one device arrive on the ot
 test("the loader lifts once, after the notice and the first sync, never later than 1.2s past the board", () => {
   const f = /function hideLoaderSettled\(\)\{[\s\S]*?\n\}/.exec(html);
   assert.ok(f, "hideLoaderSettled exists");
-  assert.match(f[0], /\[window\.swFlagsReady,window\.swFirstSync\]/);
+  assert.match(f[0], /\[window\.swFlagsReady,window\.swFirstSync,window\.swLiveReady\]/, "and the live strip, so it never shoves the board");
   assert.match(f[0], /setTimeout\(fin,1200\)/, "capped, so a slow answer never holds the page");
   assert.match(html, /hideLoaderSettled\(\);\n\s*try\{ addFromLink\(\); \}catch\(e\)\{\}/, "the success path uses it");
   assert.match(html, /window\.swFlagsReady=fetch\("\/api\/flags"\)/);

@@ -7252,6 +7252,40 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 .potd .big,.stat b,.bf-odds b,.risk-bubble b,.odds{font-family:var(--disp);letter-spacing:0}
 .bf-odds b{font-size:21px}
 .intro h1 span,.bld-title em{color:inherit}
+/* Home page, alive (owner, 14 Oct 2026). One moment per thing; still under reduced motion. */
+.intro-row{display:flex;align-items:center;gap:12px}
+.intro-row h1{flex:0 1 auto;min-width:0}
+.wiz-face{flex:none;width:72px;height:72px;cursor:pointer;transform-origin:50% 90%;-webkit-tap-highlight-color:transparent}
+.wiz-face:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:12px}
+@media(min-width:721px){.wiz-face{width:96px;height:96px}}
+html:not(.booting):not(.reduce) .wiz-face{animation:wizIn .55s var(--ease-out) .1s both}
+html:not(.reduce) .wiz-face.tip{animation:wizTip .65s var(--ease-out)}
+@keyframes wizIn{from{opacity:0;transform:translateY(10px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes wizTip{0%,100%{transform:rotate(0)}25%{transform:rotate(-7deg)}55%{transform:rotate(5deg)}80%{transform:rotate(-2deg)}}
+.yday{display:flex;align-items:center;gap:8px;margin:8px 0 0;font-size:13px;font-weight:700;color:var(--soft)}
+.yday img{width:26px;height:26px;flex:none}
+.yday b{color:var(--green-ink);font-variant-numeric:tabular-nums}
+/* The day's code: gold tile, large display-face code. */
+#codeCard .ck-tile:first-child{border-color:var(--accent-rim);background:linear-gradient(180deg,rgba(242,184,75,.07),transparent 70%) var(--card-2)}
+#codeCard .ck-tile:first-child .ck-chip code{font-family:var(--disp);font-size:24px;letter-spacing:.1em}
+#codeCard .ck-tile:first-child .ck-tot{font-family:var(--disp);font-size:15px}
+.ck-rev span{display:inline-block;animation:ckCh .2s var(--ease-out) both}
+@keyframes ckCh{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.ck-chip.ck-ok{animation:ckPop .2s var(--ease-out)}
+@keyframes ckPop{from{transform:scale(.92)}to{transform:none}}
+/* A fresh goal in the live strip bumps once in gold. */
+html:not(.reduce) .tk-sc .glow{display:inline-block;animation:tkGoal 1.1s var(--ease-out)}
+@keyframes tkGoal{0%{transform:scale(1)}18%{transform:scale(1.4);color:var(--accent)}100%{transform:scale(1)}}
+/* Confidence meter (scroll-driven; full where unsupported); top three in gold. */
+.mtr{position:relative;display:inline-block;width:46px;height:4px;margin-left:6px;border-radius:2px;background:var(--card-2);overflow:hidden;vertical-align:middle;flex:none}
+.mtr b{position:absolute;inset:0;transform-origin:left;transform:scaleX(var(--p));border-radius:2px;background:var(--grey)}
+.conf-strong .mtr b{background:var(--green)}.conf-lean .mtr b{background:var(--win)}
+.lrow.top3 .mtr b{background:var(--accent)}
+@supports (animation-timeline:view()){html:not(.reduce) .mtr b{animation:mtrFill linear both;animation-timeline:view();animation-range:entry 10% entry 90%}}
+@keyframes mtrFill{from{transform:scaleX(.03)}to{transform:scaleX(var(--p))}}
+.lrow.top3.top3{border-left-color:var(--accent)}
+.lt-our{flex:none;margin-left:8px;font-style:normal;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+@media (prefers-reduced-motion:reduce){.wiz-face,.wiz-face.tip,.ck-rev span,.ck-chip.ck-ok,.tk-sc .glow,.mtr b{animation:none!important}}
 </style>
 </head>
 <body>
@@ -7669,7 +7703,12 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 <div class="wrap">
 
   <section class="intro">
-    <h1 class="parallax-forward stage-in stage-in-1" data-parallax="1.2">Who's winning <span>today?</span></h1>
+    <div class="intro-row">
+      <h1 class="parallax-forward stage-in stage-in-1" data-parallax="1.2">Who's winning <span>today?</span></h1>
+      <!-- The Wizard's face; renderYday sets his pose and src (off the first-load budget). -->
+      <img class="wiz-face" id="wizFace" width="72" height="72" alt="The Wizard" tabindex="0" role="button" hidden>
+    </div>
+    <p class="yday" id="yday" hidden></p>
     <div class="trust parallax-shallow stage-in stage-in-2" data-parallax="0.8">
       <!-- The thing most people come for, said plainly and said first. -->
       <span class="trust-i t-sporty"><span class="bk-line"><b class="bkc" id="bkCycle" aria-label="SportyBet, Bet9ja, BetKing, betPawa, 1xBet, Betway or football.com"><i class="bkc-i on" data-bk="sporty">SportyBet</i><i class="bkc-i" data-bk="b9"><span class="b9r">bet</span><span class="b9g">9ja</span></i><i class="bkc-i" data-bk="bk"><span class="bkk">Bet</span><span class="bkg">King</span></i><i class="bkc-i" data-bk="bw"><span class="bwb">bet</span><span class="bwp">Pawa</span></i><i class="bkc-i" data-bk="xb">1X<span class="xbb">BET</span></i><i class="bkc-i" data-bk="wy">betway</i><i class="bkc-i" data-bk="fb">football<span class="fb-dot">.</span>com</i></b> code in one tap</span></span>
@@ -10640,12 +10679,12 @@ function setRowOpen(r,open){
   if(p){ if(open) p.removeAttribute("inert"); else p.setAttribute("inert",""); }
 }
 function listRowHTML(f){
-  const pk=boardPick(f), cf=conf(pk.p), id=fid(f), openCls=LOPEN[id]?" open":"";
+  const pk=boardPick(f), cf=conf(pk.p), id=fid(f), openCls=LOPEN[id]?" open":"", t3=typeof isTop3==="function"&&isTop3(f);
   const lead=(f.home_p>=f.draw_p&&f.home_p>=f.away_p)?"h":(f.away_p>=f.draw_p?"a":"d");
   /* One split of one certainty - print three numbers that add to a hundred. */
   const _lt100=split100([f.home_p,f.draw_p,f.away_p]);
   const _open=!!LOPEN[id], _mid="more-"+id;
-  return "<div class='lrow conf-"+cf+openCls+"' data-lf='"+id+"'>"+
+  return "<div class='lrow conf-"+cf+openCls+(t3?" top3":"")+"' data-lf='"+id+"'>"+
     "<button type='button' class='sr-only lrow-toggle' aria-expanded='"+(_open?"true":"false")+
       "' aria-controls='"+_mid+"'>Options for "+esc(f.home)+" v "+esc(f.away)+"</button>"+
     "<span class='lt-time'>"+esc(kickTime(f))+"</span>"+
@@ -10655,7 +10694,9 @@ function listRowHTML(f){
     "<span class='lt-p"+(lead==="a"?" lead":"")+"'>"+_lt100[2]+"<small>%</small></span>"+
     "<span class='lt-tip'><span class='vdot'></span><span class='tx' title=\""+esc(pk.label)+"\">"+esc(pk.label)+"</span>"+
       (pk.o?"<i class='todd num'>x"+pk.o.toFixed(2)+"</i>":"")+
-      "<i class='grade'>"+P0(pk.p)+"%</i></span>"+
+      "<i class='grade'>"+P0(pk.p)+"%</i>"+
+      "<i class='mtr' style='--p:"+Math.max(0,Math.min(1,+pk.p||0)).toFixed(2)+"' aria-hidden='true'><b></b></i>"+
+      (t3?"<i class='lt-our'>Our pick</i>":"")+"</span>"+
     "<span class='lt-score' title='One way this match could end, drawn from our score distribution - not the most likely score'>"+pk.sc+"</span>"+
     "<span class='lt-chev' aria-hidden='true'>\u25be</span>"+
     /* inert while shut: the panel is collapsed with max-height, which hides it
@@ -10735,7 +10776,7 @@ function render(){
   /* Rail content, so it survives the results-view early return below.
      renderProof stands on its own: the hero must carry its proof even on a
      day the recap has nothing to say. */
-  renderDaily(); renderProof();
+  renderDaily(); renderProof(); renderYday();
   if(V.off<0){ document.documentElement.classList.add("is-results");
     $("potd").innerHTML="";POTD_ID="";$("sotd").innerHTML="";$("record").innerHTML="";
     renderBoardHead([]); renderResults(); return; }
@@ -19150,6 +19191,60 @@ function applyBoardCap(n){
   });
 }
 
+/* Home page, alive (14 Oct 2026): run openings once the loader has lifted. */
+function afterReveal(fn){
+  var r=document.documentElement;
+  if(!r.classList.contains("booting")) return fn();
+  var mo=new MutationObserver(function(){ if(!r.classList.contains("booting")){ mo.disconnect(); fn(); } });
+  mo.observe(r,{attributes:true,attributeFilter:["class"]});
+}
+/* A number that climbs to its value once, eased out. */
+function swCount(el,to,ms,fmt,from){
+  if(!el) return; fmt=fmt||function(v){ return String(Math.round(v)); }; from=from||0;
+  if(REDUCED){ el.textContent=fmt(to); return; }
+  var t0=null; el.textContent=fmt(from);
+  requestAnimationFrame(function f(t){ if(!t0) t0=t; var k=Math.min(1,(t-t0)/ms), e=1-Math.pow(1-k,3);
+    el.textContent=fmt(from+(to-from)*e); if(k<1) requestAnimationFrame(f); });
+}
+/* Yesterday under the headline (windowRecord(1), as the recap); the Wizard's pose follows it. */
+function renderYday(){
+  var el=$("yday"), face=$("wizFace"); if(!el) return;
+  var yd=windowRecord(1);
+  var good=!!(yd&&yd.total&&yd.correct/yd.total>=0.7);
+  if(face){ var src="/emo/"+(good?"wiz-hype":"wiz-crystal2")+".webp"; if(face.getAttribute("src")!==src) face.setAttribute("src",src);
+    face.alt=good?"The Wizard, celebrating yesterday":"The Wizard"; face.hidden=false; }
+  if(!yd||!yd.total){ el.hidden=true; el.innerHTML=""; return; }
+  var hit=yd.correct, n=yd.total, pend=yestCounts(n).pending;
+  el.innerHTML="<img src='/emo/"+(good?"wiz-landed":"wiz-think")+".webp' alt='' width='26' height='26'>"+
+    "<span>Yesterday: <b><span class='yd-n'>"+hit+"</span> of "+n+" landed</b>"+(pend?" so far":"")+"</span>";
+  el.hidden=false;
+  if(!renderYday._played){ renderYday._played=1; var c=el.querySelector(".yd-n"); afterReveal(function(){ swCount(c,hit,650); }); }
+}
+(function(){
+  var f=$("wizFace"); if(!f) return;
+  var tip=function(){ f.classList.remove("tip"); void f.offsetWidth; f.classList.add("tip"); try{ buzz(22); }catch(e){} };
+  f.addEventListener("click",tip);
+  f.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); tip(); } });
+})();
+/* Code letters reveal and odds count up; Copy reads data-code. */
+function ckReveal(host){
+  if(REDUCED||!host) return;
+  var c=host.querySelector(".ck-tile .ck-chip code");
+  if(c){ var t=c.textContent; c.innerHTML=t.split("").map(function(ch,i){ return "<span style='animation-delay:"+(i*45)+"ms'>"+esc(ch)+"</span>"; }).join(""); c.classList.add("ck-rev"); }
+  var o=host.querySelector(".ck-tile .ck-tot");
+  if(o){ var v=parseFloat(o.textContent.replace(/[^0-9.]/g,"")); if(v>1) swCount(o,v,600,function(x){ return "×"+x.toFixed(2); },1); }
+}
+/* The day's three best picks per day, games still to play. */
+var TOP3={sig:null,ids:{}};
+function isTop3(f){
+  var all=(DATA&&DATA.fixtures)||[], sig=all.length+"|"+(all[0]&&all[0].date)+"|"+(V&&V.off);
+  if(TOP3.sig!==sig){
+    TOP3.sig=sig; TOP3.ids={}; var by={};
+    all.forEach(function(x){ if(!notStarted(x)) return; var p=boardPick(x).p; if(!(p>0)) return; var d=fDay(x); (by[d]=by[d]||[]).push({id:fid(x),p:p}); });
+    Object.keys(by).forEach(function(d){ by[d].sort(function(a,b){ return b.p-a.p; }).slice(0,3).forEach(function(r){ TOP3.ids[r.id]=1; }); });
+  }
+  return !!TOP3.ids[fid(f)];
+}
 /* ---- The day's booking code, on the board ----
    /booking-codes is the page with the strongest claim on this site - every
    code we ever published, with what happened to each leg of it - and it was
@@ -19225,6 +19320,7 @@ function applyBoardCap(n){
     }
     paintCard();
     host.hidden=false;
+    afterReveal(function(){ ckReveal(host); });
     /* BIG ODDS OF THE DAY, when there is one (api/bigodds.js, minted at 11:00
        Lagos on a good day). A second tile on the same tabs; nothing is drawn
        on a day without one. */
@@ -19238,12 +19334,13 @@ function applyBoardCap(n){
       /* A tab is the reader choosing their bookmaker, not just a view: it sets
          the site-wide book (setBook, remembered in sw.book), so the builder,
          My slip and every booking follow it from here. */
-      if(t){ pick=t.getAttribute("data-book"); try{ setBook(pick); }catch(err){} paintCard(); return; }
+      if(t){ pick=t.getAttribute("data-book"); try{ setBook(pick); }catch(err){} paintCard(); ckReveal(host); return; }
       var b=e.target&&e.target.closest?e.target.closest(".ck-chip"):null;
       if(!b) return;
       copyText(b.getAttribute("data-code"));
       var cp=b.querySelector(".ck-cp"); if(!cp) return;
       b.classList.add("done"); cp.textContent="Copied";
+      b.classList.remove("ck-ok"); void b.offsetWidth; b.classList.add("ck-ok"); try{ buzz(22); }catch(err){}
       setTimeout(function(){ b.classList.remove("done"); cp.textContent="Copy"; },1600);
     });
   }).catch(function(){});
@@ -20051,7 +20148,10 @@ function syncLiveDots(){
   var mq=window.matchMedia("(max-width:720px)");
   function place(){
     if(mq.matches){
-      if(w.parentNode!==r) r.insertBefore(w,$("sotd"));
+      /* Live goes back above the board (owner, 14 Oct 2026); the loader now
+         waits for its first answer (swLiveReady), so it no longer shoves
+         the board when it lands. */
+      if(w.nextElementSibling!==g) g.parentNode.insertBefore(w,g);
       if(cta.parentNode!==g){ g.insertBefore(m,r); g.insertBefore(cta,m); g.insertBefore(mine,m); }
     }else{
       if(w.nextElementSibling!==g) g.parentNode.insertBefore(w,g);
@@ -20079,7 +20179,7 @@ function renderLiveStrip(){
   if(all&&!all._w){all._w=1;all.addEventListener("click",function(e){e.preventDefault();setView("live");});}
 }
 function startLive(){
-  fetchLive();
+  window.swLiveReady=fetchLive();
   if(LIVE.timer) clearInterval(LIVE.timer);
   LIVE.timer=setInterval(function(){ if(!document.hidden) fetchLive(); },30000);
 }
@@ -20088,8 +20188,7 @@ var MYSLIP=[];
 try{MYSLIP=JSON.parse(localStorage.getItem("sw.myslip")||"[]");}catch(e){MYSLIP=[];}
 function saveMy(){try{localStorage.setItem("sw.myslip",JSON.stringify(MYSLIP));}catch(e){}}
 /* Sync (the swAccount script) rewrote the stored copies: read them back and
-   redraw. Prefs are not re-read here; they take effect on the next load,
-   which is enough for settings and far simpler than re-running every init. */
+   redraw - slips, My slip, favourites, and since 14 Oct 2026 every setting. */
 window.swReloadSynced=function(){
   /* SETTINGS TOO, NOT ONLY SLIPS (owner, 14 Oct 2026: "make sure that all
      filter, all things done on account is replicated across devices").
@@ -24397,7 +24496,7 @@ setTimeout(hideLoader,8000);
    the page. */
 function hideLoaderSettled(){
   var done=false, fin=function(){ if(done) return; done=true; hideLoader(); };
-  var waits=[window.swFlagsReady,window.swFirstSync].filter(Boolean);
+  var waits=[window.swFlagsReady,window.swFirstSync,window.swLiveReady].filter(Boolean);
   if(!waits.length||!window.Promise) return fin();
   Promise.all(waits).then(fin,fin);
   setTimeout(fin,1200);
