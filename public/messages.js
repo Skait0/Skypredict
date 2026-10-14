@@ -47,6 +47,21 @@
   var MOT=[["","None"],["m-wave","Wave"],["m-bounce","Bounce"],["m-wiggle","Wiggle"],["m-jello","Jello"],["m-spin","Spin"],["m-pulse","Pulse"]];
   function motOf(c){ var k=String(c||"").split(/\s+/).filter(function(x){ return x&&MOT.some(function(m){ return m[0]===x; }); })[0]; return k?" "+k:""; }
   var EMO_RE=/^\/emo\/[0-9a-f_]{2,20}\.webp$/;
+  /* The Wizard's own emotes (owner, 14 Oct 2026; drawn from our logo with Nano
+     Banana). [file, label, motion]: two-frame ones animate in the file and get
+     no motion; the rest move with one of the MOT motions. Drawn bigger. */
+  var WIZ=[["rave","glow sticks","m-bounce"],["rave2","glow sticks crossed","m-bounce"],["hype","hype","m-bounce"],["hype2","screaming joy","m-wiggle"],
+    ["party","party","m-bounce"],["dj","dj","m-bounce"],["beat","on the beat","m-bounce"],["dance","dance",""],["clap","clap",""],["lol","lol",""],
+    ["champagne","champagne","m-wiggle"],["trophy","trophy","m-bounce"],["money","money","m-bounce"],["fire","on fire","m-pulse"],["goal","goal","m-bounce"],
+    ["header","header","m-wiggle"],["score","scores","m-bounce"],["keepy","keepy ups",""],["bicycle","bicycle kick","m-wiggle"],["banker","banker","m-jello"],
+    ["landed","landed","m-bounce"],["x10","x10","m-bounce"],["crystal","crystal ball","m-pulse"],["crystal2","crystal ball glowing","m-pulse"],["wand","magic wand",""],
+    ["spell","spell","m-pulse"],["lock","lock it in","m-wiggle"],["study","studying","m-wiggle"],["think","thinking","m-pulse"],["chef","chef kiss","m-pulse"],
+    ["bless","blessing","m-pulse"],["pray","please land","m-pulse"],["gg","gg","m-bounce"],["cool","cool","m-pulse"],["heart","heart","m-pulse"],
+    ["hi","hi","m-wave"],["wave","wave","m-wave"],["salute","salute","m-wave"],["pump","fist pump","m-bounce"],["point","point up","m-wiggle"],
+    ["shock","shock","m-jello"],["sus","sus","m-wiggle"],["shh","shh","m-wiggle"],["popcorn","popcorn","m-bounce"],["facepalm","facepalm","m-jello"],
+    ["nope","nope","m-wiggle"],["rage","rage","m-wiggle"],["cry","cry","m-jello"],["rip","torn slip","m-jello"],["sleep","sleep","m-pulse"],
+    ["var","var","m-pulse"],["red","red card","m-wiggle"],["whistle","whistle","m-wiggle"],["scarf","scarf","m-wave"]];
+  var WIZ_RE=/^\/emo\/wiz-[a-z0-9]{1,12}\.webp$/;
   var GIF_RE=/^https:\/\/media\d?\.giphy\.com\/media\/[A-Za-z0-9._\-\/]{1,200}\.(gif|webp)$/;
   function unent(s){ return String(s).replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,"<").replace(/&gt;/g,">"); }
   /* A link goes to the web over https, or somewhere on our own site. */
@@ -72,6 +87,7 @@
         if(tag==="br"){ out+="<br>"; return ""; }
         if(tag==="img"){ var src=unent(a.src||""), alt=esc(unent(a.alt||"").slice(0,40));
           if(EMO_RE.test(src)) out+="<img class=\"m-emo"+motOf(a["class"])+"\" src=\""+esc(src)+"\" alt=\""+alt+"\" width=\"28\" height=\"28\">";
+          else if(WIZ_RE.test(src)) out+="<img class=\"m-emo m-wiz"+motOf(a["class"])+"\" src=\""+esc(src)+"\" alt=\""+alt+"\" width=\"44\" height=\"44\">";
           else if(GIF_RE.test(src)) out+="<img class=\"m-gif\" src=\""+esc(src)+"\" alt=\""+alt+"\" loading=\"lazy\">";
           return ""; }
         if(tag==="a"){ var h=okHref(a.href||""); out+=h?"<a href=\""+esc(h)+"\""+(h.charAt(0)==="/"?"":" target=\"_blank\" rel=\"noopener nofollow\"")+">":"<a>"; return ""; }
@@ -98,7 +114,7 @@
     "<p><b><span class=\"m-glow\">Why the Wizard?</span></b> Our picks are numbers, not vibes. We show our record every day, wins and losses, so you always know how we are doing. Six bookies, one place, free.</p>"+
     "<p>Questions? Find the Wizard on <a href=\"https://t.me/soccerwizardTG\" target=\"_blank\" rel=\"noopener nofollow\">Telegram</a> or <a href=\"https://x.com/soccerwizardhq\" target=\"_blank\" rel=\"noopener nofollow\">X</a> "+emo("2728","sparkles")+"</p>"+
     "<p class=\"m-small\">18+ · Stake only what you can afford to lose.</p>";
-  var api={clean:clean,textOf:textOf,isEmpty:isEmpty,okHref:okHref,EMO:EMO,MOT:MOT,WELCOME:WELCOME};
+  var api={clean:clean,textOf:textOf,isEmpty:isEmpty,okHref:okHref,EMO:EMO,MOT:MOT,WIZ:WIZ,WELCOME:WELCOME};
   if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
   if(!root.document) return;
 
@@ -151,6 +167,11 @@
     ".swm-tb button:hover,.swm-tb button[aria-pressed=true]{background:var(--raise)}.swm-tb .swm-sep{width:1px;background:var(--line);margin:4px 3px}"+
     ".swm-area{min-height:150px;max-height:420px;overflow-y:auto;padding:12px 14px;outline:none}.swm-area:empty:before{content:attr(data-ph);color:var(--faint)}"+
     ".swm-pop{border-top:1px solid var(--line);padding:10px;background:var(--card-2)}.swm-pop[hidden]{display:none}"+
+    ".m-emo.m-wiz{width:2.75em;height:2.75em;vertical-align:-1em}"+
+    ".swm-etabs{display:flex;gap:4px;margin-bottom:8px}.swm-etabs button{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 12px;border:0;border-radius:8px;background:none;color:var(--soft);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}"+
+    ".swm-etabs button[aria-selected=true]{background:var(--raise);color:var(--text)}.swm-etabs img{width:18px;height:18px}"+
+    ".swm-wizs{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:4px;max-height:260px;overflow-y:auto}.swm-wizs[hidden]{display:none}"+
+    ".swm-wizs button{aspect-ratio:1;border:0;border-radius:10px;background:none;cursor:pointer;padding:3px}.swm-wizs button:hover{background:var(--raise)}.swm-wizs img{width:100%;height:100%}"+
     ".swm-emos{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:4px;max-height:210px;overflow-y:auto}"+
     ".swm-emos button{aspect-ratio:1;border:0;border-radius:8px;background:none;cursor:pointer;padding:4px}.swm-emos button:hover{background:var(--raise)}.swm-emos img{width:100%;height:100%}"+
     ".swm-gifs{columns:3 96px;column-gap:6px;max-height:260px;overflow-y:auto;margin-top:8px}.swm-gifs button{display:block;width:100%;border:0;padding:0;margin:0 0 6px;background:none;cursor:pointer;border-radius:6px;overflow:hidden}.swm-gifs img{width:100%;display:block}"+
@@ -357,10 +378,15 @@
       "<div class='swm-area m-body' contenteditable='true' role='textbox' aria-multiline='true' aria-label='Message' data-ph='Write something magic...'></div>"+
       "<div class='swm-pop' data-pop='link' hidden><div class='swm-row'><input class='swa-in' type='url' placeholder='https://... or /penalty' aria-label='Link address'>"+
         "<button type='button' class='swa-pillbtn' data-link-go>Add link</button></div></div>"+
-      "<div class='swm-pop' data-pop='emo' hidden><div class='swm-mots' role='group' aria-label='Emoji motion'>"+MOT.map(function(m,i){
+      "<div class='swm-pop' data-pop='emo' hidden><div class='swm-etabs' role='tablist'><button type='button' role='tab' data-etab='wiz' aria-selected='true'>"+
+        "<img src='/emo/wiz-hype.webp' alt='' width='18' height='18'>Wizard</button><button type='button' role='tab' data-etab='emo' aria-selected='false'>"+
+        "<img src='/emo/1f525.webp' alt='' width='18' height='18'>Emoji</button></div>"+
+      "<div class='swm-wizs' data-epane='wiz'>"+WIZ.map(function(e){
+        return "<button type='button' data-wiz='"+e[0]+"' data-wmot='"+e[2]+"' title='"+esc(e[1])+"'><img class='"+e[2]+"' src='/emo/wiz-"+e[0]+".webp' alt='"+esc(e[1])+"' loading='lazy' width='48' height='48'></button>"; }).join("")+
+        "</div><div data-epane='emo' hidden><div class='swm-mots' role='group' aria-label='Emoji motion'>"+MOT.map(function(m,i){
         return "<button type='button' data-mot='"+m[0]+"' aria-pressed='"+(i===0)+"'>"+(m[0]?"<img class='m-emo "+m[0]+"' src='/emo/26bd.webp' alt='' width='18' height='18'>":"")+m[1]+"</button>"; }).join("")+"</div><div class='swm-emos'>"+EMO.map(function(e){
         return "<button type='button' data-emo='"+e[0]+"' title='"+esc(e[1])+"'><img src='/emo/"+e[0]+".webp' alt='"+esc(e[1])+"' loading='lazy' width='32' height='32'></button>"; }).join("")+
-        "</div><p class='swm-fine'>Animated emoji by Google (Noto, CC BY 4.0)</p></div>"+
+        "</div><p class='swm-fine'>Animated emoji by Google (Noto, CC BY 4.0)</p></div></div>"+
       "<div class='swm-pop' data-pop='gif' hidden><div class='swm-row'><input class='swa-in' type='search' placeholder='Search GIFs' aria-label='Search GIFs'>"+
         "<button type='button' class='swa-pillbtn' data-gif-go>Search</button></div><div class='swm-gifs'></div><p class='swm-fine'>Powered by GIPHY</p></div></div>";
   }
@@ -427,6 +453,13 @@
     }
     box.querySelector("[data-link-go]").onclick=addLink;
     lk.onkeydown=function(e){ if(e.key==="Enter"){ e.preventDefault(); addLink(); } };
+    box.querySelectorAll("[data-etab]").forEach(function(t){ t.addEventListener("mousedown",function(e){ e.preventDefault(); });
+      t.onclick=function(){ var k=t.getAttribute("data-etab");
+        box.querySelectorAll("[data-etab]").forEach(function(x){ x.setAttribute("aria-selected",String(x===t)); });
+        box.querySelectorAll("[data-epane]").forEach(function(p){ p.hidden=p.getAttribute("data-epane")!==k; }); }; });
+    box.querySelectorAll("[data-wiz]").forEach(function(b){ b.addEventListener("mousedown",function(e){ e.preventDefault(); });
+      b.onclick=function(){ var k=b.getAttribute("data-wiz"), m=b.getAttribute("data-wmot");
+        insert("<img class=\"m-emo m-wiz"+(m?" "+m:"")+"\" src=\"/emo/wiz-"+k+".webp\" alt=\""+esc(b.getAttribute("title"))+"\" width=\"44\" height=\"44\">"); }; });
     box.querySelectorAll("[data-emo]").forEach(function(b){ b.addEventListener("mousedown",function(e){ e.preventDefault(); });
       b.onclick=function(){ var k=b.getAttribute("data-emo"), n=b.getAttribute("title");
         insert("<img class=\"m-emo"+(mot?" "+mot:"")+"\" src=\"/emo/"+k+".webp\" alt=\""+esc(n)+"\" width=\"28\" height=\"28\">"); }; });

@@ -197,3 +197,14 @@ test("emote motions and wavy text survive clean(), and nothing else rides along"
   assert.ok(src.includes(".m-wavy>span{animation:none}") || /prefers-reduced-motion:reduce\)\{[^}]*\.m-wavy>span\{animation:none\}/.test(src),
     "reduced motion stops them");
 });
+
+/* Owner, 14 Oct 2026: the Wizard's own emotes, in their own picker tab. */
+test("every Wizard emote is in public/emo, survives clean() bigger, and nothing else under /emo/wiz- does", () => {
+  for (const [k] of M.WIZ) assert.ok(fs.existsSync(path.join(__dirname, "..", "public", "emo", "wiz-" + k + ".webp")), k);
+  assert.ok(M.WIZ.length >= 50);
+  assert.strictEqual(M.clean('<img class="m-emo m-wiz m-bounce" src="/emo/wiz-rave.webp" alt="glow sticks">'),
+    '<img class="m-emo m-wiz m-bounce" src="/emo/wiz-rave.webp" alt="glow sticks" width="44" height="44">');
+  for (const bad of ["/emo/wiz-../x.webp", "/emo/wiz-RAVE.webp", "/emo/wiz-.webp", "https://evil.com/emo/wiz-rave.webp"])
+    assert.strictEqual(M.clean('<img src="' + bad + '">'), "", bad);
+  for (const [, , mot] of M.WIZ) assert.ok(mot === "" || M.MOT.some((m) => m[0] === mot), mot);
+});
