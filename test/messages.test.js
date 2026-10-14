@@ -65,6 +65,7 @@ async function world() {
     markRead: async (uid, f, iso) => { reads[uid] = Object.assign({ read_at: null, banner_at: null }, reads[uid], { [f]: iso }); return true; },
     add: async (list) => list.map((m) => { const r = Object.assign({ id: ++seq }, m); rows.push(r); return r; }),
     unsend: async (id, iso) => { const r = rows.find((m) => String(m.id) === String(id) && m.from_admin && !m.deleted_at); if (!r) return false; r.deleted_at = iso; return true; },
+    editBody: async (id, body) => { const r = rows.find((m) => String(m.id) === String(id) && m.from_admin && !m.deleted_at); if (!r) return false; r.body = body; return true; },
     all: async () => rows.filter((m) => !m.deleted_at).slice().reverse(),
     threadOf: async (uid) => rows.filter((m) => m.user_id === uid && !m.deleted_at).slice().reverse(),
     repliesSince: async (iso) => rows.filter((m) => !m.from_admin && !m.deleted_at && (!iso || m.created_at > iso)).length,
@@ -267,4 +268,23 @@ test("on a phone the emoji and GIF pickers open as a sheet in the keyboard's pla
 test("the welcome never takes the banner: it waits in the inbox (owner, 14 Oct 2026)", () => {
   const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
   assert.ok(src.includes("return !x.mine&&x.id!==0&&Date.parse(x.at)>since;"), "id 0 is the welcome, kept out of the banner");
+});
+
+/* Owner, 14 Oct 2026: "there should be an edit button for sent broadcast. resend. delete." */
+test("the admin edits a sent broadcast in place, cleaned, without a new ping; nobody else can", async () => {
+  const w = await world();
+  await w.call(post(w.boss, "send", { to: "all", html: "<b>Old</b>" }));
+  const id = w.rows[0].id, pings = w.pings.length;
+  assert.strictEqual((await w.call(post(w.ada, "edit", { id, html: "hacked" }))).code, 403, "users cannot edit");
+  const r = await w.call(post(w.boss, "edit", { id, html: "<b>New</b><script>x()</script>" }));
+  assert.strictEqual(r.code, 200);
+  assert.strictEqual(w.rows[0].body, "<b>New</b>", "cleaned like a send");
+  assert.strictEqual(w.rows.length, 1, "same message, not a new one");
+  assert.strictEqual(w.pings.length, pings, "no new ping for an edit");
+  assert.strictEqual((await w.call(post(w.boss, "edit", { id, html: "<p> </p>" }))).json().error, "empty");
+  assert.strictEqual((await w.call(post(w.boss, "edit", { id: "1;x", html: "a" }))).code, 400);
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
+  assert.ok(src.includes("data-bc-edit") && src.includes("data-bc-resend") && src.includes(">Delete</button>"), "Edit, Resend and Delete on each broadcast");
+  assert.ok(src.includes('go.textContent=editing?"Save changes"'), "Send becomes Save changes while editing");
+  assert.ok(src.includes("class='swm-bc-hd' aria-expanded='false'") && src.includes("<div class='m-body' hidden>"), "each broadcast starts folded");
 });

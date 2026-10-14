@@ -15,7 +15,7 @@ const { report } = require("../lib/report.js");
 
 const REAUTH_MS = 10 * 60e3;
 const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit", "readers", "reader", "threads", "gifs"];
-const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle", "send", "unsend"];
+const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle", "send", "unsend", "edit"];
 /* THE MESSAGE BOARD (owner, 14 Oct 2026; sql/messages.sql, public/messages.js):
    any signed-in reader reads their inbox, marks it read and replies in it. */
 const READER_GET = ["inbox"];
@@ -153,6 +153,19 @@ function make(deps) {
               body: words.length > 120 ? words.slice(0, 117) + "..." : words || "Tap to read it", url: "/?msgs=1" }, at);
           } catch (e) { await report(e, { route: "account/send-push" }); }
           return H.sendJson(res, 200, { ok: true, sent: got.length, ids: got.map((m) => m.id), pinged });
+        }
+        /* Edit a sent message in place (owner, 14 Oct 2026). Cleaned like a
+           send; no new ping - it is the same message, corrected. */
+        if (action === "edit") {
+          const b = (await H.readJson(req, 64 * 1024)) || {};
+          const id = String(b.id || "");
+          if (!/^\d{1,18}$/.test(id)) return H.sendJson(res, 400, { error: "bad_request" });
+          const html = MSG.clean(b.html);
+          if (MSG.isEmpty(html)) return H.sendJson(res, 400, { error: "empty" });
+          if (html.length > BODY_MAX) return H.sendJson(res, 400, { error: "too_long" });
+          if (!(await msgs.editBody(id, html))) return H.sendJson(res, 404, { error: "no_message" });
+          await record("edit", "message " + id, { text: MSG.textOf(html).slice(0, 200) });
+          return H.sendJson(res, 200, { ok: true });
         }
         if (action === "unsend") {
           const id = String(((await H.readJson(req, 256)) || {}).id || "");

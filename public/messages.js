@@ -152,6 +152,11 @@
     ".swm-meta{display:flex;gap:8px;align-items:center;font-size:11.5px;font-weight:700;color:var(--faint);margin-top:6px}.swm-meta button{margin-left:auto}"+
     ".swm-who{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--accent);margin-bottom:6px}.swm-who img{width:22px;height:22px;border-radius:50%}"+
     ".swm-fold{display:flex;flex-direction:column}.swm-fold.swm-shut{cursor:pointer}"+
+    ".swm-bc .swa-st{min-width:0;flex:1}.swm-bc-hd{display:block;width:100%;border:0;background:none;padding:0;color:inherit;font:inherit;text-align:left;cursor:pointer}"+
+    ".swm-bc-hd b{display:block;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.swm-bc-hd small{display:block}"+
+    ".swm-bc .m-body{margin-top:8px}.swm-bc .m-body[hidden]{display:none}"+
+    ".swm-bc{flex-wrap:wrap}.swm-bc-acts{display:flex;gap:6px;flex-wrap:wrap;flex:none}.swa-pillbtn.swm-del-b{color:var(--red-ink)}"+
+    "@media(max-width:520px){.swm-bc-acts{flex:1 1 100%;margin-top:8px}}"+
     ".swm-shut .m-body{max-height:3em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 45%,transparent);mask-image:linear-gradient(#000 45%,transparent)}.swm-shut .m-body .m-gif{display:none}"+
     ".swm-tog{margin-left:auto;border:0;background:none;color:var(--accent);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;padding:2px 4px}.swm-meta .swm-tog{margin-left:auto}.swm-meta .swm-tog+.swm-del{margin-left:0}"+
     ".swm-del{border:0;background:none;color:var(--faint);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;padding:2px 4px}.swm-del:hover,.swm-del.swm-arm{color:var(--red-ink)}"+
@@ -535,7 +540,8 @@
     /* Pasted text arrives as plain text: a paste from a web page brings its whole stylesheet. */
     area.addEventListener("paste",function(e){ var t=e.clipboardData&&e.clipboardData.getData("text/plain"); if(t==null) return;
       e.preventDefault(); d.execCommand("insertText",false,t); });
-    return { html:function(){ return clean(area.innerHTML); }, clear:function(){ area.innerHTML=""; saved=null; }, focus:function(){ area.focus(); } };
+    return { html:function(){ return clean(area.innerHTML); }, clear:function(){ area.innerHTML=""; saved=null; }, focus:function(){ area.focus(); },
+      set:function(h){ area.innerHTML=clean(h); saved=null; } };
   }
 
   /* -------------------------------------------- admin: the Messages tab */
@@ -554,8 +560,10 @@
     style();
     var panel=v.querySelector("#swaTMsg"); panel.innerHTML=messagesHtml();
     var ed=wireEditor(panel,a,say), go=panel.querySelector("#swmGo"), mode="all", picked=[];
+    /* The id of a sent broadcast being edited; Send becomes Save changes. */
+    var editing=null;
     var pickBox=panel.querySelector("#swmPick"), pin=panel.querySelector("#swmPickIn"), plist=panel.querySelector("#swmPickList"), chips=panel.querySelector("#swmChips");
-    function label(){ go.textContent=mode==="all"?"Broadcast to everyone":picked.length?"Send to "+(picked.length===1?nameOf(byId(picked[0])||{}):picked.length+" users"):"Pick who gets it";
+    function label(){ go.textContent=editing?"Save changes":mode==="all"?"Broadcast to everyone":picked.length?"Send to "+(picked.length===1?nameOf(byId(picked[0])||{}):picked.length+" users"):"Pick who gets it";
       go.setAttribute("data-label",go.textContent); }
     function paintChips(){ chips.innerHTML=picked.map(function(id){ var r=byId(id)||{id:id,email:id};
       return "<span class='swm-chip'><img src='"+avOf(r)+"' alt=''>"+esc(nameOf(r))+"<button type='button' data-unpick='"+esc(id)+"' aria-label='Remove "+esc(nameOf(r))+"'>×</button></span>"; }).join("");
@@ -577,6 +585,10 @@
     go.onclick=function(){
       var html=ed.html();
       if(api.isEmpty(html)){ ed.focus(); return sendState(go,"bad","Write something first"); }
+      if(editing){ var id=editing; sendState(go,"busy");
+        return a.req("POST","/api/account/edit",{id:id,html:html},function(code,j){
+          if(code!==200) return sendState(go,"bad",errWords(code,j));
+          sendState(go,"ok","✓ Saved"); say("Updated for everyone. No new ping."); editing=null; ed.clear(); setTimeout(label,2700); load(); }); }
       if(mode==="some"&&!picked.length){ pin.focus(); return sendState(go,"bad","Pick who gets it"); }
       if(mode==="all"&&!root.confirm("Send this to every user?")) return;
       sendState(go,"busy");
@@ -613,17 +625,37 @@
           cv.querySelectorAll("[data-rid]").forEach(function(b){ b.onclick=function(){ convo(b.getAttribute("data-rid"),by[b.getAttribute("data-rid")]); }; });
           if(unread) a.req("POST","/api/account/msgread",{what:"inbox"},function(c2){ if(c2===200){ state.adminUnread=0; if(root.swAdminBadgeRefresh) root.swAdminBadgeRefresh(); } });
         });
+        /* Each broadcast is one line until it is opened (owner, 14 Oct 2026:
+           "sent broadcast should be collapsed till i open it"). */
         sent.innerHTML=bc.length?bc.map(function(m){
-          return "<div class='swa-set'><span class='swa-st'><div class='m-body'>"+clean(m.body)+"</div><small>"+esc(when(m.created_at))+"</small></span>"+
-            "<button type='button' class='swa-pillbtn' data-unsend='"+esc(String(m.id))+"'>Unsend</button></div>"; }).join(""):
+          var line=textOf(clean(m.body).replace(/<img[^>]*>/g," ")).slice(0,90)||"GIF";
+          return "<div class='swa-set swm-bc'><span class='swa-st'><button type='button' class='swm-bc-hd' aria-expanded='false'>"+
+            "<b>"+esc(line)+"</b><small>"+esc(when(m.created_at))+"</small></button>"+
+            "<div class='m-body' hidden>"+clean(m.body)+"</div></span>"+
+            "<span class='swm-bc-acts'><button type='button' class='swa-pillbtn' data-bc-edit='"+esc(String(m.id))+"'>Edit</button>"+
+            "<button type='button' class='swa-pillbtn' data-bc-resend='"+esc(String(m.id))+"'>Resend</button>"+
+            "<button type='button' class='swa-pillbtn swm-del-b' data-unsend='"+esc(String(m.id))+"'>Delete</button></span></div>"; }).join(""):
           "<div class='swa-set'><span class='swa-st'><small>Nothing sent to everyone yet.</small></span></div>";
+        var byId={}; bc.forEach(function(m){ byId[String(m.id)]=m; });
+        /* Edit: into the editor, and Send becomes Save changes for that message. */
+        sent.querySelectorAll("[data-bc-edit]").forEach(function(b){ b.onclick=function(){
+          var m=byId[b.getAttribute("data-bc-edit")]; if(!m) return;
+          editing=String(m.id); ed.set(m.body); panel.querySelector("[data-to='all']").click(); label();
+          try{ panel.scrollIntoView({block:"start",behavior:"smooth"}); }catch(e){} ed.focus(); }; });
+        /* Resend: the same words as a new broadcast, which pings phones again. */
+        sent.querySelectorAll("[data-bc-resend]").forEach(function(b){ b.onclick=function(){
+          var m=byId[b.getAttribute("data-bc-resend")]; if(!m||!root.confirm("Send this to every user again?")) return; b.disabled=true;
+          a.req("POST","/api/account/send",{to:"all",html:m.body},function(code,j){ b.disabled=false;
+            if(code===200){ say("Sent again."+(j.pinged?" Pinged "+j.pinged+" phone"+(j.pinged===1?"":"s")+".":"")); load(); } else say(errWords(code,j)); }); }; });
+        sent.querySelectorAll(".swm-bc-hd").forEach(function(h){ h.onclick=function(){
+          var b=h.parentNode.querySelector(".m-body"), open=b.hidden; b.hidden=!open; h.setAttribute("aria-expanded",String(open)); }; });
         wireUnsend(sent);
       });
     }
     function wireUnsend(box){ box.querySelectorAll("[data-unsend]").forEach(function(b){ b.onclick=function(){
-      if(!root.confirm("Unsend this? Users stop seeing it.")) return; b.disabled=true;
+      if(!root.confirm("Delete this for everyone? Users stop seeing it.")) return; b.disabled=true;
       a.req("POST","/api/account/unsend",{id:b.getAttribute("data-unsend")},function(code,j){
-        if(code===200){ say("Unsent."); load(); } else { b.disabled=false; say(errWords(code,j)); } }); }; }); }
+        if(code===200){ say("Deleted."); if(editing===b.getAttribute("data-unsend")){ editing=null; ed.clear(); label(); } load(); } else { b.disabled=false; say(errWords(code,j)); } }); }; }); }
     /* One reader's conversation, oldest first, with a reply box that sends to them. */
     function convo(id,list){
       var r=byId(id)||{id:id,email:""}, box=panel.querySelector("#swmConvo");

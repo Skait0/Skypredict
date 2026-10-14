@@ -304,6 +304,7 @@
     ".swa-unr{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red);color:#fff;font-size:10.5px;font-weight:800;line-height:18px;text-align:center;box-sizing:border-box}"+
     ".swa-mi svg{width:18px;height:18px;color:var(--soft);flex:none}.swa-r{margin-left:auto;color:var(--faint)}.swa-out{color:var(--soft)}"+
     ".swa-mi:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"+
+    ".swa-tab.swa-new::after{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-left:6px;vertical-align:middle}"+
     ".swa-view{position:fixed;inset:0;z-index:9982;background:var(--bg);color:var(--text);overflow-y:auto;padding:16px 16px 40px;transform:translateX(100%);visibility:hidden;transition:transform .28s cubic-bezier(.23,1,.32,1),visibility 0s .28s}"+
     ".swa-view.on{transform:none;visibility:visible;transition:transform .28s cubic-bezier(.23,1,.32,1),visibility 0s}.swa-in-wrap{max-width:520px;margin:0 auto}"+
     ".swa-back{display:flex;align-items:center;gap:4px;border:0;background:none;color:var(--soft);font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:6px 4px 6px 0}.swa-back svg{width:18px;height:18px}"+
@@ -559,7 +560,12 @@
     function hitsLoad(){ a.req("GET","/api/account/hits",null,function(code,j){
       var box=v.querySelector("#swaHits"); if(!box) return;
       if(code===200){ var hs=j.hits||[], nc=hs.filter(function(h){ return h.status==="check"; }).length;
-        setCount(v,"swaTHits",nc?nc+" to check":String(hs.length-nc)); }
+        /* No numbers (owner, 14 Oct 2026): a dot while there is a win you have
+           not seen, gone once Won slips is open, back with the next win. */
+        setCount(v,"swaTHits","");
+        var tb=v.querySelector("[data-tab='swaTHits']"), fresh=root.swAdminHitsNew?root.swAdminHitsNew():0;
+        if(tb){ tb.classList.toggle("swa-new",fresh>0||nc>0);
+          if(!tb._seen){ tb._seen=1; tb.addEventListener("click",function(){ tb.classList.remove("swa-new"); if(root.swAdminHitsSeen) root.swAdminHitsSeen(); }); } } }
       box.innerHTML=code===200?hitsHtml(j.hits||[]):
         "<div class='swa-set'><span class='swa-st'><small>"+(code===503?"The slip ledger is not set up yet.":"Could not load the hits.")+"</small></span></div>";
       /* SHARE A WIN: the phone's own share sheet with the banner and caption; on a desktop, the banner

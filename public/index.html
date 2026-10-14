@@ -1241,6 +1241,7 @@ a.btab{text-decoration:none}
 /* On the avatar it is a dot on the rim, not a number over the face (owner,
    14 Oct 2026: "the count kinda hinders the wizard avatar"). The number is in
    the menu, beside Messages. */
+#btAdminN{min-width:0;width:10px;height:10px;padding:0;border-radius:50%;font-size:0;top:-1px;right:-3px}
 #hdAccount .bt-badge{top:-2px;right:-2px;min-width:0;width:12px;height:12px;padding:0;border-radius:50%;
   font-size:0;line-height:0;color:transparent;overflow:hidden}
 @media(min-width:721px){
@@ -1365,23 +1366,6 @@ html.mode-live .btabs{transform:none!important}
   .btab.on::before{content:"";position:absolute;top:-8px;left:50%;width:28px;height:3px;
     margin-left:-14px;border-radius:0 0 3px 3px;background:var(--red)}
   @media (prefers-reduced-motion:reduce){.btab .bt-ic{transition:none}}
-  /* BUILD IS THE STAR OF THE BAR (owner, 14 Oct 2026). Not a raised disc - the
-     gold circle read as a pasted-on template button, and circles here are only
-     for dots and floating buttons (DESIGN.md). The house action colour on the
-     house shape instead: a red tile at the radius the site's buttons use, the
-     staff in white, a real offset shadow, the label in full-strength text. It
-     sits in the same 44px slot on the same baseline as every tab, so it leads
-     by colour and weight, not by breaking the bar. The red top bar still marks
-     the page you are on. */
-  #bt-build .bt-ic{width:50px;height:36px;margin-top:-2px;margin-bottom:4px;border-radius:12px;color:#fff;
-    background:var(--red-fill);box-shadow:0 4px 12px rgba(219,54,67,.28),0 1px 0 rgba(255,255,255,.14) inset;
-    transition:transform .16s var(--ease-out),background-color .2s ease}
-  #bt-build,#bt-build.on{color:var(--text);font-weight:800}
-  #bt-build .bt-staff,#bt-build.on .bt-staff{width:24px;height:24px}
-  #bt-build svg,#bt-build.on svg{width:24px;height:24px}
-  #bt-build.on .bt-ic{background:var(--red)}
-  #bt-build:active .bt-ic{transform:scale(.94)}
-  @media (prefers-reduced-motion:reduce){#bt-build .bt-ic{transition:none}#bt-build:active .bt-ic{transform:none}}
   body{padding-bottom:calc(var(--btabs-h) + 8px)}
 }
 .record-bar i{transition:width 1.05s cubic-bezier(.25,.8,.3,1)}
@@ -8269,8 +8253,8 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
        merely cramped. A card with an arrow leaving it says "this slip,
        over there" and stays true however many books we add. The word
        under it carries the rest. -->
-  <button class="btab" id="bt-convert" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M14.5 12h6.5M18 9l3 3-3 3"/></svg></span>Converter</button>
   <button class="btab" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><i class="bt-staff" aria-hidden="true"></i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5.6" r="3.4"/><path d="M12 3.6l.62 1.28 1.4.2-1.01.98.24 1.4L12 6.78l-1.25.66.24-1.4-1.01-.98 1.4-.2z" fill="currentColor" stroke="none"/><path d="M12 9v10.4"/><path d="M10.6 11.4h2.8"/><path d="M10.4 19.4h3.2"/></svg></span>Build</button>
+  <button class="btab" id="bt-convert" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M14.5 12h6.5M18 9l3 3-3 3"/></svg></span>Converter</button>
   <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle class="lv-core" cx="12" cy="12" r="2"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg></span>Live</button>
   <!-- PLAY PENALTY (release step 2). A game controller (owner, 13 Oct 2026: "change
        the joystick to a controller icon. much more recogniseable"): the pad, a
@@ -21051,8 +21035,9 @@ var adminHitsN=0;
 function adminSeen(){ try{ return +localStorage.getItem("sw.adminSeen")||0; }catch(e){ return 0; } }
 function paintAdminBadge(n){
   var t=$("bt-admin"), b=$("btAdminN"), acc=$("hdAccount");
-  if(b){ b.hidden=!n; b.textContent=n>9?"9+":String(n); }
-  if(t) t.setAttribute("aria-label",n?"Admin, "+n+" new":"Admin");
+  /* A dot, not a number (owner, 14 Oct 2026: "dont put any numbers"). */
+  if(b){ b.hidden=!n; b.textContent=""; }
+  if(t) t.setAttribute("aria-label",n?"Admin, something new":"Admin");
   if(acc){ var ab=acc.querySelector(".bt-badge");
     if(n){ if(!ab){ ab=document.createElement("b"); ab.className="bt-badge"; acc.appendChild(ab); } ab.textContent=n>9?"9+":String(n); }
     else if(ab) ab.remove(); }
@@ -21070,6 +21055,10 @@ function adminBadge(){
 }
 function swAdminBadgeRefresh(){ paintAdminBadge(adminHitsN+(window.swMsg?swMsg.adminUnread():0)); }
 window.swAdminBadgeRefresh=swAdminBadgeRefresh;
+/* Bottom-bar haptics: 22ms (owner, 14 Oct 2026: "a little haptic feedback"),
+   up from 15ms, which many Android phones are too coarse to play. buzz()
+   stands down on devices without vibration and under reduced motion. */
+function navBuzz(){ try{ buzz(22); }catch(e){} }
 window.paintAdminBadge=paintAdminBadge;
 function isAdminRole(){ if(window.swAdminLive!==true) return false; try{ return localStorage.getItem("sw.role")==="admin"; }catch(e){ return false; } }
 /* Display only: the server refuses every admin request from any other account
@@ -21079,10 +21068,14 @@ window.swRoleChanged=function(){
   adminBadge();
   if(!isAdminRole()&&window.swAccountUI&&swAccountUI.closeView) swAccountUI.closeView();
 };
+/* The win dot clears when Won slips is opened (account-ui), not when Admin
+   is: owner, 14 Oct 2026 - "when i have opened the page, let the badge
+   disappear until there is a new winning". */
+window.swAdminHitsSeen=function(){ try{ localStorage.setItem("sw.adminSeen",String(Date.now())); }catch(e){} adminHitsN=0; swAdminBadgeRefresh(); };
+window.swAdminHitsNew=function(){ return adminHitsN; };
 if($("bt-admin")) $("bt-admin").addEventListener("click",function(){
+  navBuzz();
   if(!isAdminRole()){ $("bt-admin").hidden=true; return; }
-  try{ localStorage.setItem("sw.adminSeen",String(Date.now())); }catch(e){}
-  adminHitsN=0; paintAdminBadge(0);
   if(window.swAccountUI) swAccountUI.admin();
 });
 window.addEventListener("load",function(){ setTimeout(adminBadge,2500); });
@@ -21091,9 +21084,9 @@ document.addEventListener("visibilitychange",function(){ if(!document.hidden) ad
 $("tab-live").addEventListener("click",function(){setView("live");});
 $("tab-build").addEventListener("click",function(){if(window.swGate&&!swGate("build",null,function(){setView("build");},"build")) return; setView("build");});
 $("liveRefresh").addEventListener("click",fetchLive);
-$("bt-pred").addEventListener("click",function(){buzzTap();setView("pred");});
-$("bt-live").addEventListener("click",function(){buzzTap();setView("live");});
-$("bt-build").addEventListener("click",function(){buzzTap();setView("build");});
+$("bt-pred").addEventListener("click",function(){navBuzz();setView("pred");});
+$("bt-live").addEventListener("click",function(){navBuzz();setView("live");});
+$("bt-build").addEventListener("click",function(){navBuzz();setView("build");});
 /* THE CONVERTER HAS A WAY IN NOW. It sits at the foot of the builder, which is
    two taps and a scroll from anywhere, and the owner has said twice they could
    not find it. It is not a view of its own - it is one panel inside the
@@ -21109,8 +21102,8 @@ function goConvert(){
   try{ if(box&&window.matchMedia("(min-width:721px)").matches) box.focus(); }catch(e){}
 }
 $("tab-convert").addEventListener("click",goConvert);
-$("bt-convert").addEventListener("click",function(){buzzTap();goConvert();});
-$("bt-play").addEventListener("click",function(){buzzTap();});
+$("bt-convert").addEventListener("click",function(){navBuzz();goConvert();});
+$("bt-play").addEventListener("click",function(){navBuzz();});
 $("logo").addEventListener("click",function(e){e.preventDefault();setView("pred");});
 (function(){
   var cta=$("slipCta"); if(!cta) return;
