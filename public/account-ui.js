@@ -527,6 +527,9 @@
   }
   function admin(){
     close();
+    /* Only the admin role opens it, whatever button asked (14 Oct 2026). The
+       server is the real gate: it answers 403 to every admin call from anyone else. */
+    if(role()!=="admin") return;
     /* Opening Admin is reading it: the nav badge clears (index.html adminBadge). */
     try{ localStorage.setItem("sw.adminSeen",String(Date.now())); }catch(e){}
     if(root.paintAdminBadge) root.paintAdminBadge(0);

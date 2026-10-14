@@ -20983,7 +20983,16 @@ function adminBadge(){
 function swAdminBadgeRefresh(){ paintAdminBadge(adminHitsN+(window.swMsg?swMsg.adminUnread():0)); }
 window.swAdminBadgeRefresh=swAdminBadgeRefresh;
 window.paintAdminBadge=paintAdminBadge;
+function isAdminRole(){ try{ return localStorage.getItem("sw.role")==="admin"; }catch(e){ return false; } }
+/* Display only: the server refuses every admin request from any other account
+   (lib/roles.js, SW_ADMIN_EMAILS). But a tab left over from the last account on
+   this device must not even open the page. */
+window.swRoleChanged=function(){
+  adminBadge();
+  if(!isAdminRole()&&window.swAccountUI&&swAccountUI.closeView) swAccountUI.closeView();
+};
 if($("bt-admin")) $("bt-admin").addEventListener("click",function(){
+  if(!isAdminRole()){ $("bt-admin").hidden=true; return; }
   try{ localStorage.setItem("sw.adminSeen",String(Date.now())); }catch(e){}
   adminHitsN=0; paintAdminBadge(0);
   if(window.swAccountUI) swAccountUI.admin();
@@ -25026,6 +25035,10 @@ load().catch(function(){});
     var v={"sw.role":me&&me.role,"sw.plan":me&&me.plan,"sw.codeLimit":me&&me.codeLimit,
       "sw.personal":me&&me.personal&&me.personal.length?me.personal.join(","):null};
     for(var k in v) if(own(v,k)) try{ if(v[k]==null) ls.removeItem(k); else ls.setItem(k,String(v[k])); }catch(e){}
+    /* The role just changed (sign in, sign out, another account on this device):
+       everything drawn for the old role is redrawn now, not at the next load
+       (owner, 14 Oct 2026: a Family & friends account still had the Admin tab). */
+    if(root.swRoleChanged) try{ root.swRoleChanged(); }catch(e){}
   }
   function signedOutHere(reason,quiet){
     var had=!!readMeta(ls);
