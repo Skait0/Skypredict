@@ -3986,22 +3986,14 @@ html{interpolate-size:allow-keywords}
 .code-opens .code-open{flex:0 0 auto;font:inherit;font-weight:800;font-size:14px;
   padding:11px 18px;border-radius:var(--r-md);text-decoration:none;
   display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
-/* The other book, on its own line and said as a sentence. Quiet enough that it
-   cannot be mistaken for a second call to action, but the name is a pill you
-   can press rather than a fact you have to act on yourself. */
-.code-also{display:flex;align-items:center;justify-content:center;gap:7px;
-  margin:9px 0 0;font-size:11px;font-weight:600;color:var(--soft)}
-/* football.com's own colour, #282450, which is the theme colour their site
-   declares - so the pill reads as their badge rather than as another of our
-   buttons. Dark enough for white type at any weight. */
-.code-also .code-open-alt{font-size:10.5px;font-weight:700;padding:5px 11px;
-  border-radius:var(--r-chip);letter-spacing:.01em;text-decoration:none;white-space:nowrap;
-  background:#282450;color:#fff;border:0;transition:filter .16s}
-.code-also .code-open-alt:hover{filter:brightness(1.35)}
-/* The dot in "football.com" takes their lime, #9FF611 - the accent that runs
-   against this purple on their own site. It is the one spot of it here, which
-   is as much as it can take next to our crimson. */
-.code-also .code-open-alt .fb-dot{color:#9FF611;font-weight:800}
+/* A SportyBet code opens the same slip on football.com. That was an 11px
+   footnote at the foot of the card, and readers who use football.com did not
+   know the code was theirs too, or that the pill opened it (owner, 14 Oct
+   2026). Now the two are twin buttons under one caption that says so. The dot
+   in "football.com" takes their lime, #9FF611, as on their own site. */
+.code-two{flex:1 1 100%;margin:0;font-size:12px;font-weight:600;color:rgba(255,255,255,.7)}
+.code-card.code-card--modal .code-opens .code-open.code-open--half{flex:1 1 140px}
+.code-open .fb-dot{color:#9FF611;font-weight:800}
 /* Telegram's own blue, on every book's card colour - a quiet pill, not a
    second call to action competing with Open in / Copy. */
 .code-tg{display:inline-flex;align-items:center;gap:7px;margin:12px auto 0;
@@ -4152,8 +4144,6 @@ html{interpolate-size:allow-keywords}
 .code-card--sb .code-x{background:rgba(255,255,255,.08);color:#fff;
   border-color:rgba(255,255,255,.2)}
 @media(hover:hover){ .code-card--sb .code-x:hover{border-color:var(--red);color:#fff} }
-/* The footnote sits on black now, so its own colours have to come up with it. */
-.code-card--sb .code-also{color:rgba(255,255,255,.62)}
 
 /* ---- the code card in Bet9ja's colours --------------------------------
 
@@ -4220,7 +4210,7 @@ html{interpolate-size:allow-keywords}
    "Open in" and the mark two flex items with nothing between them:
    "Open inbet9ja". A space in the string cannot survive that, so it is a
    margin. Both books, because both had it - only Bet9ja's was noticed. */
-.code-open .sbm,.code-open .b9m,.code-open .bkm,.code-open .bwm,.code-open .xbm,.code-open .wym{margin-left:.3em}
+.code-open .sbm,.code-open .b9m,.code-open .bkm,.code-open .bwm,.code-open .xbm,.code-open .wym,.code-open .fbm{margin-left:.3em}
 
 /* --- the BetKing code card -------------------------------------------------
    Same construction as the Bet9ja one above and for the same reasons: their
@@ -4336,7 +4326,6 @@ html{interpolate-size:allow-keywords}
 @media(hover:hover){
   .code-card--xb .code-x:hover{border-color:#14A0FF;color:#fff}
 }
-.code-card--xb .code-also{color:rgba(255,255,255,.62)}
 /* Betway's card, built like the other five: a near-black ground tinted toward
    their green, the green as ACCENT - a bloom at the top, the edge, the rule,
    the glow behind the code - and the white pill carrying the wordmark in
@@ -4376,7 +4365,6 @@ html{interpolate-size:allow-keywords}
 @media(hover:hover){
   .code-card--wy .code-x:hover{border-color:#00A826;color:#fff}
 }
-.code-card--wy .code-also{color:rgba(255,255,255,.62)}
 /* Gold is a light colour: white on it is unreadable, so their buttons take
    the dark ink their own site uses on gold. */
 .code-card--bk .code-acts .code-copy,
@@ -15544,7 +15532,14 @@ function showCode(code,hostId,save,B,picks,d){
        nowhere in the URL, so "Open in BetKing" with the code appended would
        land the reader on their board with an empty slip and no idea why. */
     "<div class='code-opens'>"+
-      (B.open
+      (B.key==="sporty"
+        ? "<p class='code-two'>Same code, same slip on both:</p>"+
+          "<a class='code-open code-open--half' href='"+B.open+encodeURIComponent(code)+
+            "' target='_blank' rel='noopener'>Open in "+B.mark+"</a>"+
+          "<a class='code-open code-open--half' href=\""+esc(_fb.href)+"\""+
+            (_fb.blank?" target='_blank'":"")+" rel='noopener'>Open in "+
+            "<span class='fbm'>football<span class='fb-dot'>.</span>com</span></a>"
+      : B.open
         ? "<a class='code-open' href='"+B.open+encodeURIComponent(code)+
             "' target='_blank' rel='noopener'>Open in "+B.mark+"</a>"
         : "<span class='code-paste'>Paste this code into the booking code box "+
@@ -15587,14 +15582,6 @@ function showCode(code,hostId,save,B,picks,d){
           "fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' "+
           "stroke-linejoin='round'/></svg></a>"+
     "</div>"+
-    /* Same code, same slip, other book. This was a footnote saying it "also
-       works on football.com", which left anyone who uses that app to copy the
-       code and go and find it. The sentence stays - it is what makes the pill
-       make sense - but the name is now the way in. */
-    (B.key==="sporty"?"<p class='code-also'>Works on "+
-      "<a class='code-open-alt' href=\""+esc(_fb.href)+"\""+
-        (_fb.blank?" target='_blank'":"")+" rel='noopener'>"+
-        "football<span class='fb-dot'>.</span>com</a></p>":"")+
     /* THE ASK LIVES WHERE THE READER IS HAPPIEST: the moment a code lands.
        An icon on screen all day gets tuned out; one line here, under a code
        they just got, is the best-converting spot the site has (24 Sep). No
