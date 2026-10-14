@@ -54,11 +54,11 @@ test("big odds only on a good day, and only legs with a real SportyBet price", (
   const g = (i) => Object.assign(fx("H" + i, "A" + i, "1X, home or draw", 0.8, "2026-09-25T19:00:00Z"),
     { dc1x: 0.9, o15: 0.9, h_o05: 0.9 });
   const many = { fixtures: Array.from({ length: 24 }, (_, i) => g(i)) };
-  const price = { "1X": 1.12, "OVER_1.5": 1.12, "HOME_OVER_0.5": 1.12 };
+  const price = { "1X": 1.15, "OVER_1.5": 1.15, "HOME_OVER_0.5": 1.15 };
   const feed = many.fixtures.map((f, i) => ({ id: i, home: f.home, away: f.away, ko: Date.parse(f.kickoff), odds: price }));
   const p = B.pick(many, now, feed);
-  assert.ok(p && p.odds >= 5, "stacks to at least x5");
-  assert.ok(p.legs.length <= 20, "twenty legs at most");
+  assert.ok(p && p.odds >= 4, "stacks to at least x4");
+  assert.ok(p.legs.length <= 12, "twelve legs at most (owner, 14 Oct 2026: 20 was too many)");
   assert.strictEqual(new Set(p.legs.map((l) => l.home)).size, p.legs.length, "one leg per game");
   /* Never one market family on more than 40% of the slip - "all double chance"
      was 1X/X2/12 every time. */
