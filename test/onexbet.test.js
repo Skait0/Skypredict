@@ -23,7 +23,7 @@ test("BOOKS.onexbet opens their slip by code", () => {
 });
 
 test("the book sits in the site-wide order and the feed loader", () => {
-  assert.match(src, /var ORDER=\["sporty","bet9ja","betking","betpawa","onexbet"\]/);
+  assert.match(src, /var ORDER=\["sporty","bet9ja","betking","betpawa","onexbet"(,"betway")?\]/);
   assert.match(src, /k==="onexbet"\?loadOnexbet/);
   assert.match(src, /function loadOnexbet\(\)\{ return loadSecondBook\(ONEXBET_FIXTURES,BOOKS\.onexbet\); \}/);
 });
@@ -95,7 +95,7 @@ test("the converter, the bot and the daily code know the fifth book", () => {
   assert.match(read("lib/convert.js"), /onexbet: "\/api\/onexbet"/);
   assert.strictEqual(require("../lib/doctor.js").BOOK_NAMES.onexbet, "1xBet");
   assert.match(read("lib/bigodds.js"), /\["onexbet", "1xBet"\]/);
-  assert.match(read("scripts/mkcode.js"), /for \(const bk of \[[^\]]*"onexbet"\]\)[\s\S]*codes\[bk\] = /);
+  assert.match(read("scripts/mkcode.js"), /for \(const bk of \[[^\]]*"onexbet"[^\]]*\]\)[\s\S]*codes\[bk\] = /);
   assert.match(read("scripts/namesaudit.js"), /onexbet: "\/api\/onexbet"/);
   assert.match(read("lib/slipwatch.js"), /onexbet: "1xBet"/);
   assert.ok(convert);

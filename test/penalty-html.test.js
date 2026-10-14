@@ -356,9 +356,9 @@ test("the net is a cloth: an impact billows it and it settles back to rest", () 
 
 test("every bookmaker runs on the LED boards in its own colours", () => {
   const boards = /<div class="boards"[\s\S]*?<div class="bflash"/.exec(html)[0];
-  for (const b of ["SPORTYBET", "BET9JA", "BETKING", "BETPAWA", "1XBET", "SOCCERWIZARD"]) assert.match(boards.replace(/<[^>]+>/g, ""), new RegExp(b, "i"), b);
+  for (const b of ["SPORTYBET", "BET9JA", "BETKING", "BETPAWA", "1XBET", "BETWAY", "SOCCERWIZARD"]) assert.match(boards.replace(/<[^>]+>/g, ""), new RegExp(b, "i"), b);
   /* the site's own wordmarks and colours (owner, 9 Oct 2026), not our type */
-  for (const m of ["sbm", "b9m", "bkm", "bwm", "xbm"]) assert.match(boards, new RegExp('class="' + m + '"'), m);
+  for (const m of ["sbm", "b9m", "bkm", "bwm", "xbm", "wym"]) assert.match(boards, new RegExp('class="' + m + '"'), m);
   for (const c of ["#E63946", "#D42127", "#14B151", "#FFC400", "#9CE800", "#14A0FF"]) assert.match(html, new RegExp(c), c);
   assert.doesNotMatch(html, /\.track[^{]*\{[^}]*text-shadow:0 0/, "no zero-offset glows on the boards");
 });

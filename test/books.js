@@ -68,7 +68,9 @@ function prelude(book) {
       ' BK_URL=null, BK_BOOK_URL="/bkbook", BP_URL=null, BP_BOOK_URL="/bpbook",' +
     /* 1xBet is the one second book that CAN be opened (?coupon-code=), so its
        URL is a real prefix here rather than null. */
-      ' XB_URL="https://1xbet.ng/en?coupon-code=", XB_BOOK_URL="/xbbook";\n' +
+      ' XB_URL="https://1xbet.ng/en?coupon-code=", XB_BOOK_URL="/xbbook",' +
+    /* Betway can be opened too (?bookingCode= on any page of theirs). */
+      ' WY_URL="https://www.betway.com.ng/sport/soccer/?bookingCode=", WY_BOOK_URL="/wybook";\n' +
     decl("BOOKS") + "\n" +
     'var BOOK_KEY="sw.book";\n' +
     "var BOOKMAKER=" + JSON.stringify(book || "sporty") + ";\n" +

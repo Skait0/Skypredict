@@ -311,7 +311,8 @@ function ladder(fixture) {
   const api = new Function("BYO", "B", "f",
     arr("SAFER_TO") + decl("SAFER_WIDER") + decl("SAFER_STRENGTH") +
     grab("saferAtom") + grab("saferGrade") + grab("saferWider") + grab("gradeLeg") +
-    grab("saferRungs") + grab("saferDial") + grab("o05Of") + grab("nr3Poisson") + grab("nr3Of") + grab("mProb") + grab("saferSwap") +
+    grab("saferRungs") + grab("saferDial") + grab("o05Of") + grab("nr3Poisson") + grab("nr3Of") + grab("mProb") + grab("saferSwap") + grab("saferSafest") + grab("feedRowOf") +
+    "var EDIT_SAFE_MIN=0.80,BOOK_SAFE=[],FEED_RAW={};var swapOptions=function(){return [];};" +
     decl("MODEL_KNOWS") + grab("modelPrices") +
     grab("pinKey") + grab("isPinned") +
     "function fixtureByLeg(){return f;}function bookAllows(){return true;}" +
@@ -526,7 +527,8 @@ test("a pinned leg is neither swapped nor dropped", () => {
   const api = new Function("BYO", "B", "f",
     arr("SAFER_TO") + declOf("SAFER_WIDER") + declOf("SAFER_STRENGTH") +
     grab("saferAtom") + grab("saferGrade") + grab("saferWider") + grab("gradeLeg") +
-    grab("saferRungs") + grab("saferDial") + grab("o05Of") + grab("nr3Poisson") + grab("nr3Of") + grab("mProb") + grab("saferSwap") +
+    grab("saferRungs") + grab("saferDial") + grab("o05Of") + grab("nr3Poisson") + grab("nr3Of") + grab("mProb") + grab("saferSwap") + grab("saferSafest") + grab("feedRowOf") +
+    "var EDIT_SAFE_MIN=0.80,BOOK_SAFE=[],FEED_RAW={};var swapOptions=function(){return [];};" +
     declOf("MODEL_KNOWS") + grab("modelPrices") + grab("pinKey") + grab("isPinned") +
     grab("legChance") + grab("saferDroppable") + grab("saferPlan") + grab("saferWhy") +
     "function fixtureByLeg(){return f;}function bookAllows(){return true;}" +
@@ -559,7 +561,8 @@ test("a cut leg says why it is being cut", () => {
   const api = new Function("BYO", "B", "f",
     arr("SAFER_TO") + declOf("SAFER_WIDER") + declOf("SAFER_STRENGTH") +
     grab("saferAtom") + grab("saferGrade") + grab("saferWider") + grab("gradeLeg") +
-    grab("saferRungs") + grab("saferDial") + grab("o05Of") + grab("nr3Poisson") + grab("nr3Of") + grab("mProb") + grab("saferSwap") +
+    grab("saferRungs") + grab("saferDial") + grab("o05Of") + grab("nr3Poisson") + grab("nr3Of") + grab("mProb") + grab("saferSwap") + grab("saferSafest") + grab("feedRowOf") +
+    "var EDIT_SAFE_MIN=0.80,BOOK_SAFE=[],FEED_RAW={};var swapOptions=function(){return [];};" +
     declOf("MODEL_KNOWS") + grab("modelPrices") + grab("pinKey") + grab("isPinned") +
     grab("legChance") + grab("saferWhy") +
     "function fixtureByLeg(l){return l.nofix?null:f;}function bookAllows(){return true;}" +

@@ -289,9 +289,11 @@ test("the 1.5 rung of the family belongs to every book that sells it, all three 
   Object.values(BOOK_ONLY).forEach((b) =>
     assert.deepEqual([].concat(b).sort(), ["bet9ja", "betking"]));
   /* And the 2.5 rung stays on every book that sells the OR bet - the three
-     that always had it - which is what makes it the default there. */
-  assert.deepEqual([].concat(ALL["MIX_1_OV_2.5"]).sort(), ["bet9ja", "betking", "sporty"]);
-  assert.deepEqual([].concat(ALL["MIXGG_X"]).sort(), ["bet9ja", "betking", "sporty"]);
+     that always had it, and Betway since 14 Oct 2026: its "X Or Over 2.5" and
+     "X Or Both Teams To Score" priced below both parts on 18 of 18 checks. It
+     sells no 1.5 rung, so the list above leaves it out. */
+  assert.deepEqual([].concat(ALL["MIX_1_OV_2.5"]).sort(), ["bet9ja", "betking", "betway", "sporty"]);
+  assert.deepEqual([].concat(ALL["MIXGG_X"]).sort(), ["bet9ja", "betking", "betway", "sporty"]);
 });
 
 test("the chip's book list and the market map cannot drift apart", () => {
@@ -564,6 +566,10 @@ test("a swap keeps the game and widens the outcome, never the reverse", () => {
     grab("fetchedMarket") + grab("bookVerdict") +
     "var BYO={saferHow:'normal',saferSwapOn:true,saferDrop:false};" +
     grab("gradeLeg") +
+    /* saferSwap falls back to saferSafest (a very safe bet on the same game,
+       14 Oct 2026). These tests are about the LADDER, so the fallback sees an
+       empty market menu and changes nothing they assert. */
+    "var swapOptions=function(){return [];};var FEED_RAW={};" +
     src.slice(src.indexOf("var SAFER_TO=["), src.indexOf("function renderByo(")) +
     "\nreturn {saferSwap:saferSwap,saferPlan:saferPlan,saferDroppable:saferDroppable,SAFER_MIN_GAIN:SAFER_MIN_GAIN};")();
   const B = { key: "sporty", id: "eventId", odds: "sportyOdds" };

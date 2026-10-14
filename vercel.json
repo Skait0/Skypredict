@@ -42,6 +42,10 @@
       "maxDuration": 15,
       "memory": 256
     },
+    "api/betway.js": {
+      "maxDuration": 15,
+      "memory": 256
+    },
     "api/s.js": {
       "maxDuration": 10,
       "memory": 256

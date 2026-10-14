@@ -26,8 +26,8 @@ const ROOT = path.join(__dirname, "..");
 const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
 const KEYS = Object.keys(new Function(
   'var BOOK_URL="",SPORTY_URL="",B9_URL="",B9_BOOK_URL="",BK_URL=null,BK_BOOK_URL="",' +
-  'BP_URL=null,BP_BOOK_URL="",XB_URL="",XB_BOOK_URL="";\n' + decl("BOOKS") + "\nreturn BOOKS;")());
-const LABEL = { sporty: "SportyBet", bet9ja: "Bet9ja", betking: "BetKing", betpawa: "betPawa", onexbet: "1xBet" };
+  'BP_URL=null,BP_BOOK_URL="",XB_URL="",XB_BOOK_URL="",WY_URL="",WY_BOOK_URL="";\n' + decl("BOOKS") + "\nreturn BOOKS;")());
+const LABEL = { sporty: "SportyBet", bet9ja: "Bet9ja", betking: "BetKing", betpawa: "betPawa", onexbet: "1xBet", betway: "Betway" };
 
 test("the book list these tests walk is the page's own", () => {
   assert.deepStrictEqual(KEYS.slice().sort(), Object.keys(LABEL).sort(),
@@ -48,6 +48,9 @@ test("a shared slip names the book that booked it, every book", () => {
 test("a book with a deep link gets the button; one without says to paste", () => {
   const xb = S.renderBody(LEGS, null, { code: "35ZRS", book: "onexbet" });
   assert.match(xb, /href="https:\/\/1xbet\.ng\/en\?coupon-code=35ZRS"/);
+  /* Betway too (14 Oct 2026): ?bookingCode= on any page of theirs. */
+  const wy = S.renderBody(LEGS, null, { code: "BW79B45CD9", book: "betway" });
+  assert.match(wy, /href="https:\/\/www\.betway\.com\.ng\/sport\/soccer\/\?bookingCode=BW79B45CD9"/);
   for (const k of ["betking", "betpawa"]) {
     const h = S.renderBody(LEGS, null, { code: "ABC12", book: k });
     assert.ok(!/class="go"/.test(h), k + " has no deep link, so no Open button");
@@ -79,18 +82,21 @@ test("the share-card image says which book's code it carries", () => {
 test("the link-preview image lists every book", () => {
   const og = read("scripts/mkogbase.js");
   assert.match(og, /\["1X", "#f2f1f0", NAME\], \["BET", "#14a0ff", NAME\]/);
+  assert.match(og, /\["betway", "#f2f1f0", NAME\]/);
 });
 
 test("the static pages name 1xBet where they list the books", () => {
   const P = read("lib/pages.js");
   assert.match(require("../lib/pages.js").renderCodesHub([], () => null),
-    /<title>Free SportyBet, Bet9ja, BetKing, betPawa and 1xBet booking codes/);
+    /<title>Free SportyBet, Bet9ja, BetKing, betPawa, 1xBet and Betway booking codes/);
   assert.match(P, /<li><b>1xBet<\/b>: <code>\$\{esc\(XB_SHARE\)\}YOURCODE<\/code><\/li>/);
   assert.match(P, /<h2>By hand, on 1xBet<\/h2>/);
+  assert.match(P, /<li><b>Betway<\/b>: <code>\$\{esc\(WY_SHARE\)\}YOURCODE<\/code><\/li>/);
+  assert.match(P, /<h2>By hand, on Betway<\/h2>/);
   assert.match(P, /<h2>By hand, on BetKing or betPawa<\/h2>/);
   /* The <title>s stay short on purpose - 60 characters with the brand, pinned in
      convertpage/bookinglinks tests - so the five names live in h1, sub and body. */
-  assert.match(require("../lib/pages.js").renderConvertPage(), /<p class="meta">Or any of the five to any other\.<\/p>/);
+  assert.match(require("../lib/pages.js").renderConvertPage(), /<p class="meta">Or any of the six to any other\.<\/p>/);
 });
 
 /* ONE LIST OF LIVE BOOKS, AND EVERY COUNT OR LIST READS IT (7 Oct 2026).
@@ -170,14 +176,14 @@ test("the bot's words did not change when they moved onto the list", () => {
      before lib/books.js existed (7 Oct 2026). */
   const tg = require("../api/tg.js");
   assert.ok(tg.HELLO.startsWith("🔮 <b>The Wizard's Eye</b> 🧙\n<i>Drop any code. The Wizard's Eye sees it all.</i>\n\n" +
-    "Send me any booking code - SportyBet, Bet9ja, BetKing, betPawa or 1xBet - and you get:\n"));
+    "Send me any booking code - SportyBet, Bet9ja, BetKing, betPawa, 1xBet or Betway - and you get:\n"));
   const w = read("scripts/tgwebhook.js");
   const expr = /short_description:\s*([\s\S]*?) \}\);/.exec(w)[1];
   assert.strictEqual(new Function("require", "return " + expr)((p) => require(require("node:path").join(ROOT, "scripts", p))),
-    "🔮 The Wizard's Eye: drop any SportyBet, Bet9ja, BetKing, betPawa or 1xBet code. It sees it all.");
+    "🔮 The Wizard's Eye: drop any SportyBet, Bet9ja, BetKing, betPawa, 1xBet or Betway code. It sees it all.");
   const miss = /" on any of the " \+ BOOKS\.COUNT_WORD \+ " bookies"/;
   assert.match(read("api/tg.js"), miss);
-  assert.strictEqual(B.COUNT_WORD, "five");
+  assert.strictEqual(B.COUNT_WORD, "six");
 });
 
 test("the app footer is the static footer: same pills, legal links, h3 heads", () => {

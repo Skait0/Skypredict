@@ -229,7 +229,7 @@
   var SRC_WORDS={convert:"Converted: the reader's own picks",board:"Built from our board",safer:"Made safer from our picks",
     split:"Split from our picks",myslip:"My slip (our picks)"};
   function srcWords(s){ return s?(SRC_WORDS[s]||"Built on the site ("+s+")"):"Source not recorded"; }
-  var BOOK_NAME={sporty:"SportyBet",bet9ja:"Bet9ja",betking:"BetKing",betpawa:"Betpawa",onexbet:"1xBet"};
+  var BOOK_NAME={sporty:"SportyBet",bet9ja:"Bet9ja",betking:"BetKing",betpawa:"Betpawa",onexbet:"1xBet",betway:"Betway"};
   function hitsHtml(list){
     if(!list.length) return "<div class='swa-set'><span class='swa-st'><small>No landed slips yet. They show up here within ten minutes of the last game ending.</small></span></div>";
     var landed=list.filter(function(h){ return h.status==="landed"; });
