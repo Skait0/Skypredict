@@ -45,18 +45,39 @@ test("every post fits X, carries 18+, and has no em dash", () => {
   }
 });
 
+/* BALANCED, 75%+, ANY MARKET (owner, 14 Oct 2026: "let it pick using the
+   balanced or more game less odds style. no picks less than 75 percent. also,
+   all the games always seem to double chance"). The chance is the BOARD's
+   (D.blend, 90% the book's de-vigged price) - what a reader sees. */
 test("big odds only on a good day, and only legs with a real SportyBet price", () => {
   const now = at("2026-09-25T11:05:00");
-  const many = { fixtures: Array.from({ length: 7 }, (_, i) =>
-    fx("H" + i, "A" + i, "1X, home or draw", 0.8 - i * 0.01, "2026-09-25T19:00:00Z")) };
-  const feed = many.fixtures.map((f, i) => ({ id: i, home: f.home, away: f.away, ko: Date.parse(f.kickoff), odds: { "1X": 1.5 } }));
+  const g = (i) => Object.assign(fx("H" + i, "A" + i, "1X, home or draw", 0.8, "2026-09-25T19:00:00Z"),
+    { dc1x: 0.9, o15: 0.9, h_o05: 0.9 });
+  const many = { fixtures: Array.from({ length: 24 }, (_, i) => g(i)) };
+  const price = { "1X": 1.12, "OVER_1.5": 1.12, "HOME_OVER_0.5": 1.12 };
+  const feed = many.fixtures.map((f, i) => ({ id: i, home: f.home, away: f.away, ko: Date.parse(f.kickoff), odds: price }));
   const p = B.pick(many, now, feed);
-  assert.ok(p && p.odds >= 8, "stacks to at least x8");
-  assert.ok(p.legs.length <= 8);
+  assert.ok(p && p.odds >= 5, "stacks to at least x5");
+  assert.ok(p.legs.length <= 20, "twenty legs at most");
+  assert.strictEqual(new Set(p.legs.map((l) => l.home)).size, p.legs.length, "one leg per game");
+  /* Never one market family on more than 40% of the slip - "all double chance"
+     was 1X/X2/12 every time. */
+  const fam = {}; p.legs.forEach((l) => { const f = B.family(l.prediction); fam[f] = (fam[f] || 0) + 1; });
+  for (const [f, n] of Object.entries(fam)) assert.ok(n <= Math.ceil(0.4 * p.legs.length), f + " on " + n + " of " + p.legs.length);
+  assert.ok(Object.keys(fam).length >= 3, "the slip mixes markets: " + JSON.stringify(fam));
+  assert.ok(p.legs.every((l) => l.p >= 0.75 && l.odds >= 1.10));
   assert.strictEqual(B.pick({ fixtures: many.fixtures.slice(0, 3) }, now, feed), null, "three is not a good day");
+  /* A leg the board puts under 75% never goes on, whatever the model says:
+     priced 1.40 the board reads it at ~68%. */
+  /* Three families, so the 40% rule cannot be what stops it - only the floor. */
+  const dear = feed.map((e) => Object.assign({}, e, { odds: { "1X": 1.40, "OVER_1.5": 1.40, "HOME_OVER_0.5": 1.40 } }));
+  assert.strictEqual(B.pick(many, now, dear), null, "no leg under 75% on the board");
+  /* And a 1.04 leg adds risk and no payout. */
+  const cheap = feed.map((e) => Object.assign({}, e, { odds: { "1X": 1.04, "OVER_1.5": 1.04, "HOME_OVER_0.5": 1.04 } }));
+  assert.strictEqual(B.pick(many, now, cheap), null, "nothing under 1.10");
   const unpriced = feed.map((e) => Object.assign({}, e, { odds: {} }));
   assert.strictEqual(B.pick(many, now, unpriced), null, "no price, no leg");
   const t = B.texts(p, { sporty: { code: "ABC123", n: p.legs.length }, bet9ja: { code: "5XY", n: p.legs.length - 1 } });
-  assert.match(t.x, /Big odds of the day[\s\S]*SportyBet: ABC123[\s\S]*Bet9ja: 5XY \(\d of \d\)/);
+  assert.match(t.x, /Big odds of the day[\s\S]*SportyBet: ABC123[\s\S]*Bet9ja: 5XY \(\d+ of \d+\)/);
   assert.ok(S.xLen(t.x) <= 280);
 });
