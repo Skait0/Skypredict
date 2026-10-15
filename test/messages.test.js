@@ -313,3 +313,13 @@ test("previews show the editor's non-breaking spaces as spaces, not code", () =>
   assert.strictEqual(M.textOf("a&#160;b"), "a b");
   assert.strictEqual(M.textOf("&amp;nbsp;"), "&nbsp;", "a typed '&nbsp;' stays as typed");
 });
+
+/* Owner, 14 Oct 2026: the Wizard emotes "jump up way too close to the top that
+   it hinders selection between the emotes and emoji". Measured at 390px in the
+   phone sheet: before, a bouncing emote rose 16px over the tabs and 146 of 976
+   tap points on them hit an emote; after, a 6px gap and 0 of 976. */
+test("the emote tabs stay above the bouncing Wizard emotes", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
+  assert.match(src, /\.swm-etabs\{position:relative;z-index:2;background:var\(--card-2\);/);
+  assert.match(src, /\.swm-wizs\{[^}]*padding-top:22px;/, "room for the top row's bounce");
+});

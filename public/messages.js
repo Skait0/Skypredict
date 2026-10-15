@@ -183,9 +183,12 @@
     ".swm-sheet .swm-wizs,.swm-sheet .swm-emos,.swm-sheet .swm-gifs{max-height:none;overflow:visible}"+
     "@media (prefers-reduced-motion:reduce){.swm-pop.swm-sheet{animation:none}}"+
     ".m-emo.m-wiz{width:2.75em;height:2.75em;vertical-align:-1em}"+
-    ".swm-etabs{display:flex;gap:4px;margin-bottom:8px}.swm-etabs button{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 12px;border:0;border-radius:8px;background:none;color:var(--soft);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}"+
+    /* The tabs sit above the emotes, and the top row has room to bounce (owner,
+       14 Oct 2026: the emotes "jump up way too close to the top that it hinders
+       selection between the emotes and emoji"). */
+    ".swm-etabs{position:relative;z-index:2;background:var(--card-2);display:flex;gap:4px;margin-bottom:8px}.swm-etabs button{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 12px;border:0;border-radius:8px;background:none;color:var(--soft);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}"+
     ".swm-etabs button[aria-selected=true]{background:var(--raise);color:var(--text)}.swm-etabs img{width:18px;height:18px}"+
-    ".swm-wizs{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:4px;max-height:260px;overflow-y:auto;overflow-x:hidden}.swm-wizs[hidden]{display:none}"+
+    ".swm-wizs{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:4px;padding-top:22px;max-height:260px;overflow-y:auto;overflow-x:hidden}.swm-wizs[hidden]{display:none}"+
     ".swm-wizs button{aspect-ratio:1;border:0;border-radius:10px;background:none;cursor:pointer;padding:3px}.swm-wizs button:hover{background:var(--raise)}.swm-wizs img{width:100%;height:100%}"+
     ".swm-emos{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:4px;max-height:210px;overflow-y:auto}"+
     ".swm-emos button{aspect-ratio:1;border:0;border-radius:8px;background:none;cursor:pointer;padding:4px}.swm-emos button:hover{background:var(--raise)}.swm-emos img{width:100%;height:100%}"+
