@@ -1263,6 +1263,14 @@ a.btab{text-decoration:none}
 
 .btabs.hide{transform:translateY(110%)}
 html.mode-live .btabs{transform:none!important}
+/* THE TAB BAR STAYS UNDER AN ACCOUNT PANEL (owner, 15 Oct 2026: "why doesnt the
+   nav bar show while im in the admin page?"). Admin, Profile, Settings and
+   Messages stop at the bar instead of covering it; --btabs-h is 0 where
+   there is no bar. */
+html .swa-view{bottom:var(--btabs-h,0px)}
+html.acct-open .btabs{transform:none!important;z-index:9983}
+/* The emoji/GIF sheet takes the keyboard's place, so the bar goes as a keyboard would. */
+html.acct-open:has(.swm-pop.swm-sheet:not([hidden])) .btabs{display:none}
 @media(max-width:720px){
   /* ONE NAVIGATION ON A PHONE, AND IT IS THIS ONE. The header's tabs are
      hidden further down, where the rule that used to exempt Home and Build
@@ -21195,6 +21203,21 @@ if($("bt-admin")) $("bt-admin").addEventListener("click",function(){
   if(!isAdminRole()){ $("bt-admin").hidden=true; return; }
   if(window.swAccountUI) swAccountUI.admin();
 });
+/* An account panel open over the page: the Admin tab is the one lit while
+   Admin is open, none while Profile, Settings or Messages are, and any other
+   tab closes the panel on its way to its own page (account-ui mark()). */
+window.swNavMark=function(k){
+  document.documentElement.classList.toggle("acct-open",!!k);
+  var cur=k?(k==="admin"?"bt-admin":""):({pred:"bt-pred",live:"bt-live",build:"bt-build",convert:"bt-convert"})[V.view];
+  document.querySelectorAll(".btabs .btab").forEach(function(b){ b.classList.toggle("on",b.id===cur); });
+};
+document.querySelector(".btabs").addEventListener("click",function(e){
+  var b=e.target.closest(".btab");
+  if(!b||b.id==="bt-admin"||!document.documentElement.classList.contains("acct-open")||!window.swAccountUI) return;
+  /* Home is the page under the panel, so it closes like Back; the others push
+     their own history entry, so the panel's entry is left for Back to pass. */
+  swAccountUI.closeView(b.id!=="bt-pred");
+},true);
 window.addEventListener("load",function(){ setTimeout(adminBadge,2500); });
 setInterval(function(){ if(!document.hidden) adminBadge(); },5*60*1000);
 document.addEventListener("visibilitychange",function(){ if(!document.hidden) adminBadge(); });

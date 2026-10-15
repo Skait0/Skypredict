@@ -113,3 +113,16 @@ test("the open account panel comes back after a refresh, Admin only for the admi
   assert.match(ui, /function closeView\(popped\)\{ if\(!viewEl\|\|!viewEl\.classList\.contains\("on"\)\) return; viewEl\.classList\.remove\("on"\); mark\(null\);/, "closing forgets it");
   assert.match(src, /root\.swAccountUI\.restore\(\)/, "the page restores once /api/me has answered");
 });
+
+/* Owner, 15 Oct 2026: "why doesnt the nav bar show while im in the admin page?"
+   The account panels were full-screen and covered the tab bar. Checked at 390px:
+   the bar shows under Admin with the Admin tab lit; Live and Home close the
+   panel and open their page; Back still closes it; the emoji sheet hides the
+   bar while it is open and gives it back on Done. */
+test("the tab bar stays on screen under an account panel, and its tabs leave the panel", () => {
+  assert.match(src, /html \.swa-view\{bottom:var\(--btabs-h,0px\)\}/);
+  assert.match(src, /html\.acct-open \.btabs\{transform:none!important;z-index:9983\}/, "above the panel (z 9982), never slid away");
+  assert.match(src, /html\.acct-open:has\(\.swm-pop\.swm-sheet:not\(\[hidden\]\)\) \.btabs\{display:none\}/);
+  assert.match(src, /swAccountUI\.closeView\(b\.id!=="bt-pred"\);\n\},true\);/, "another tab closes the panel first");
+  assert.match(ui, /if\(root\.swNavMark\) root\.swNavMark\(k\); \}/, "every open and close tells the bar");
+});

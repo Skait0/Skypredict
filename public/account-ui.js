@@ -418,7 +418,8 @@
   /* THE OPEN PANEL SURVIVES A REFRESH (owner, 14 Oct 2026: "when i refresh on the
      admin page, it takes me back to the home page"). Kept for this tab only;
      restore() reopens it once /api/me has answered, Admin only for the admin. */
-  function mark(k){ try{ if(k) root.sessionStorage.setItem("sw.acctview",k); else root.sessionStorage.removeItem("sw.acctview"); }catch(e){} }
+  function mark(k){ try{ if(k) root.sessionStorage.setItem("sw.acctview",k); else root.sessionStorage.removeItem("sw.acctview"); }catch(e){}
+    if(root.swNavMark) root.swNavMark(k); }
   function restore(){
     var k=null; try{ k=root.sessionStorage.getItem("sw.acctview"); }catch(e){}
     if(k==="admin"){ if(role()==="admin") admin(); else mark(null); }
