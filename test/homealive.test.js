@@ -67,3 +67,8 @@ test("a goal flashes the whole tile, and a goal scored while the page was shut f
   assert.match(src, /html:not\(\.reduce\) \.tk-item\.flash\{border-radius:var\(--r-md\);animation:tkWash 2s/);
   assert.match(src, /\.tk-sc \.glow,\.tk-item\.flash,\.mtr b\{animation:none!important\}/, "still under reduced motion");
 });
+
+test("the header logo steps aside on the home page only, where the big Wizard stands in", () => {
+  assert.match(src, /html\.mode-pred \.logo \.sig\{display:none\}/);
+  assert.match(src, /<img class="sig" src="\/wiz-mark\.png" alt="">/, "still in the header for every other page");
+});
