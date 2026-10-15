@@ -335,3 +335,14 @@ test("the sent-broadcast index never shadows the reader lookup", () => {
   assert.match(src, /var bcBy=\{\}; bc\.forEach\(function\(m\)\{ bcBy\[String\(m\.id\)\]=m; \}\);/);
   assert.match(src, /r=byId\(id\)\|\|\{id:id,email:"Deleted account"\}/);
 });
+
+/* Sentry, 15 Oct 2026: "Cannot set properties of null (setting 'onclick')" when the
+   admin opened a conversation: the button is data-open-user but the click was wired
+   to [data-open-reader], so the lookup returned null and the rest of open() never ran. */
+test("every button the admin conversation wires up exists in its markup", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
+  const wired = [...src.matchAll(/box\.querySelector\("\[(data-[a-z-]+)\]"\)\.onclick/g)].map((m) => m[1]);
+  assert.ok(wired.length >= 2);
+  // the attribute must also appear outside a [selector], i.e. in the markup that is drawn
+  for (const attr of wired) assert.ok(new RegExp("[^\\[]" + attr + "(?![\\w-])").test(src), attr + " is wired but no button carries it");
+});

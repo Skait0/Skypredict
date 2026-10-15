@@ -679,7 +679,7 @@
       box.querySelectorAll(".swm-msg.swm-wiz .swm-who").forEach(function(w){ w.remove(); });
       wireUnsend(box);
       box.querySelector("[data-reply-to]").onclick=function(){ to(id); try{ panel.querySelector(".swm-ed").scrollIntoView({block:"center",behavior:"smooth"}); }catch(e){} };
-      box.querySelector("[data-open-reader]").onclick=function(){ goTab("swaTLk"); if(root.swMsg._openReader) root.swMsg._openReader(id); };
+      box.querySelector("[data-open-user]").onclick=function(){ goTab("swaTLk"); if(root.swMsg._openReader) root.swMsg._openReader(id); };
       try{ box.scrollIntoView({block:"start",behavior:"smooth"}); }catch(e){}
     }
     load();
