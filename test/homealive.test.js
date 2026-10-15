@@ -48,10 +48,22 @@ test("rows carry a confidence meter and the day's top three wear gold", () => {
 });
 
 test("every new motion stops under reduced motion", () => {
-  assert.match(src, /@media \(prefers-reduced-motion:reduce\)\{\.wiz-face,\.wiz-face\.tip,\.ck-rev span,\.ck-chip\.ck-ok,\.tk-sc \.glow,\.mtr b\{animation:none!important\}\}/);
+  assert.match(src, /@media \(prefers-reduced-motion:reduce\)\{\.wiz-face,\.wiz-face\.tip,\.ck-rev span,\.ck-chip\.ck-ok,\.tk-sc \.glow,\.tk-item\.flash,\.mtr b\{animation:none!important\}\}/);
 });
 
 test("the live strip sits above the board on phones too, and the loader waits for its first answer", () => {
   assert.match(src, /window\.swLiveReady=fetchLive\(\);/);
   assert.match(src, /if\(mq\.matches\)\{\n(?:.*\n){0,3}?\s*if\(w\.nextElementSibling!==g\) g\.parentNode\.insertBefore\(w,g\);/);
+});
+
+/* Owner, 14 Oct 2026: "the live strip doesnt flash the new goal". A fresh load
+   had no earlier score to compare with, and the bump was one digit. Proved in a
+   headless run with a faked /api/live: in-session 0-0 -> 1-0 and after a reload
+   1-0 -> 2-0 both put tkWash on the tile and tkGoal on the digit. */
+test("a goal flashes the whole tile, and a goal scored while the page was shut flashes on return", () => {
+  assert.match(src, /localStorage\.getItem\("sw\.liveprev"\)/);
+  assert.match(src, /Date\.now\(\)-sp\.at<3\*3600e3/, "kept three hours");
+  assert.match(src, /localStorage\.setItem\("sw\.liveprev",JSON\.stringify\(\{at:Date\.now\(\),s:LIVE\.prev\}\)\)/);
+  assert.match(src, /html:not\(\.reduce\) \.tk-item\.flash\{border-radius:var\(--r-md\);animation:tkWash 2s/);
+  assert.match(src, /\.tk-sc \.glow,\.tk-item\.flash,\.mtr b\{animation:none!important\}/, "still under reduced motion");
 });

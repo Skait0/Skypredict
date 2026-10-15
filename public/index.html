@@ -7275,6 +7275,8 @@ html:not(.reduce) .wiz-face.tip{animation:wizTip .65s var(--ease-out)}
 @keyframes ckPop{from{transform:scale(.92)}to{transform:none}}
 /* A fresh goal in the live strip bumps once in gold. */
 html:not(.reduce) .tk-sc .glow{display:inline-block;animation:tkGoal 1.1s var(--ease-out)}
+html:not(.reduce) .tk-item.flash{border-radius:var(--r-md);animation:tkWash 2s var(--ease-out)}
+@keyframes tkWash{0%,35%{background:rgba(242,184,75,.2)}100%{background:transparent}}
 @keyframes tkGoal{0%{transform:scale(1)}18%{transform:scale(1.4);color:var(--accent)}100%{transform:scale(1)}}
 /* Confidence meter (scroll-driven; full where unsupported); top three in gold. */
 .mtr{position:relative;display:inline-block;width:46px;height:4px;margin-left:6px;border-radius:2px;background:var(--card-2);overflow:hidden;vertical-align:middle;flex:none}
@@ -7285,7 +7287,7 @@ html:not(.reduce) .tk-sc .glow{display:inline-block;animation:tkGoal 1.1s var(--
 @keyframes mtrFill{from{transform:scaleX(.03)}to{transform:scaleX(var(--p))}}
 .lrow.top3.top3{border-left-color:var(--accent)}
 .lt-our{flex:none;margin-left:8px;font-style:normal;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
-@media (prefers-reduced-motion:reduce){.wiz-face,.wiz-face.tip,.ck-rev span,.ck-chip.ck-ok,.tk-sc .glow,.mtr b{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.wiz-face,.wiz-face.tip,.ck-rev span,.ck-chip.ck-ok,.tk-sc .glow,.tk-item.flash,.mtr b{animation:none!important}}
 </style>
 </head>
 <body>
@@ -19744,6 +19746,13 @@ async function fetchLive(){
         return !/\bsrl\b|esoccer|e-?football|cyber|simulat|virtual|\b8 ?mins?\b|\b10 ?mins?\b|\b12 ?mins?\b/.test(s);
       });
       var flash={};
+      /* The last scores this device saw, kept 3 hours, so a goal scored while
+         the page was shut still flashes on the next visit (owner, 14 Oct 2026:
+         "the live strip doesnt flash the new goal" - a fresh load had nothing
+         to compare with). */
+      if(!LIVE._prevLoaded){ LIVE._prevLoaded=1;
+        try{ var sp=JSON.parse(localStorage.getItem("sw.liveprev")||"null");
+          if(sp&&sp.s&&Date.now()-sp.at<3*3600e3) Object.keys(sp.s).forEach(function(k){ if(!LIVE.prev[k]) LIVE.prev[k]=sp.s[k]; }); }catch(e){} }
       d.matches.forEach(function(m){
         var id=m.eventId||(m.home+m.away);
         var p=LIVE.prev[id];
@@ -19754,6 +19763,7 @@ async function fetchLive(){
         LIVE.prev[id]={h:h,a:a};
       });
       LIVE.flash=flash;
+      try{ localStorage.setItem("sw.liveprev",JSON.stringify({at:Date.now(),s:LIVE.prev})); }catch(e){}
       var _n=Date.now();Object.keys(flash).forEach(function(id){LIVE.lit[id]={h:flash[id].h,a:flash[id].a,until:_n+60000};});
       var now=Date.now(), cur={};
       d.matches.forEach(function(m){var id=m.eventId||(m.home+m.away);cur[id]=1;LIVE.store[id]={m:m,ts:now};});
