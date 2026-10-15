@@ -21121,6 +21121,8 @@ function setView(v,noGate,repaint){
   if(bp)bp.classList.toggle("on",v==="pred");
   if(bl)bl.classList.toggle("on",v==="live");
   if(bb)bb.classList.toggle("on",v==="build");
+  /* A page tab is never lit beside Admin. */
+  var ba=$("bt-admin"); if(ba) ba.classList.remove("on");
   /* The circle marks where you are, and the converter is a where now. */
   if(bc)bc.classList.toggle("on",v==="convert");
   /* A tab for the page you are already on is only ever a way back, so it is
@@ -21213,10 +21215,12 @@ window.swNavMark=function(k){
 };
 document.querySelector(".btabs").addEventListener("click",function(e){
   var b=e.target.closest(".btab");
-  if(!b||b.id==="bt-admin"||!document.documentElement.classList.contains("acct-open")||!window.swAccountUI) return;
-  /* Home is the page under the panel, so it closes like Back; the others push
-     their own history entry, so the panel's entry is left for Back to pass. */
-  swAccountUI.closeView(b.id!=="bt-pred");
+  if(!b||b.id==="bt-admin"||!document.querySelector(".swa-view.on")||!window.swAccountUI) return;
+  /* Closed in place, never with history.back(): on a phone that Back could
+     land on an earlier copy of the page with Admin still open (owner, 15 Oct
+     2026: "i clicked on home and the admin stayed open"). The panel's history
+     entry is left for the next Back to pass over. */
+  swAccountUI.closeView(true);
 },true);
 window.addEventListener("load",function(){ setTimeout(adminBadge,2500); });
 setInterval(function(){ if(!document.hidden) adminBadge(); },5*60*1000);

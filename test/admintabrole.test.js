@@ -123,6 +123,8 @@ test("the tab bar stays on screen under an account panel, and its tabs leave the
   assert.match(src, /html \.swa-view\{bottom:var\(--btabs-h,0px\)\}/);
   assert.match(src, /html\.acct-open \.btabs\{transform:none!important;z-index:9983\}/, "above the panel (z 9982), never slid away");
   assert.match(src, /html\.acct-open:has\(\.swm-pop\.swm-sheet:not\(\[hidden\]\)\) \.btabs\{display:none\}/);
-  assert.match(src, /swAccountUI\.closeView\(b\.id!=="bt-pred"\);\n\},true\);/, "another tab closes the panel first");
+  assert.match(src, /if\(!b\|\|b\.id==="bt-admin"\|\|!document\.querySelector\("\.swa-view\.on"\)/, "keyed on the open panel itself");
+  assert.match(src, /swAccountUI\.closeView\(true\);\n\},true\);/, "another tab closes the panel first, without history.back()");
+  assert.match(src, /var ba=\$\("bt-admin"\); if\(ba\) ba\.classList\.remove\("on"\);/, "a page tab is never lit beside Admin");
   assert.match(ui, /if\(root\.swNavMark\) root\.swNavMark\(k\); \}/, "every open and close tells the bar");
 });
