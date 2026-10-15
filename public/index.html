@@ -1230,7 +1230,7 @@ html:not(.reduce) .m:nth-child(n+7),html:not(.reduce) .lrow:nth-child(n+7){anima
 #bt-live.live .lv-core{fill:var(--red);stroke:none;transform-box:fill-box;transform-origin:center;animation:sw-livecore 1.4s ease-in-out infinite}
 @keyframes sw-livecore{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.6}}
 @media (prefers-reduced-motion:reduce){#bt-live.live .lv-core{animation:none}}
-/* Play Penalty in the desktop header: a link out to the game, so a pill of its
+/* Wizard Penalty in the desktop header: a link out to the game, so a pill of its
    own beside the tab track rather than a tab inside it. The phone has its own
    copy in the bottom bar, so this one never shows under 720px. */
 .navplay{display:none}
@@ -7696,7 +7696,7 @@ html:not(.reduce) .tk-item.flash{border-radius:var(--r-md);animation:tkWash 2s v
          page knows the app is not installed - see offerInstall - and never
          shown inside the app itself. Unlike the install bar, "Not now" does
          not hide it: this is the way back to /install for later. -->
-    <a class="navplay" id="tab-play" href="/penalty" aria-label="Play Penalty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10a5 5 0 0 1 4.9 4l.9 4.6a2.6 2.6 0 0 1-4.6 2.1L16.4 16H7.6l-1.8 1.7a2.6 2.6 0 0 1-4.6-2.1l.9-4.6A5 5 0 0 1 7 7z"/><path d="M7.5 10v4M5.5 12h4"/><circle cx="15.5" cy="11" r=".9" fill="currentColor" stroke="none"/><circle cx="17.8" cy="13.2" r=".9" fill="currentColor" stroke="none"/></svg><span>Play Penalty</span></a>
+    <a class="navplay" id="tab-play" href="/penalty" aria-label="Wizard Penalty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10a5 5 0 0 1 4.9 4l.9 4.6a2.6 2.6 0 0 1-4.6 2.1L16.4 16H7.6l-1.8 1.7a2.6 2.6 0 0 1-4.6-2.1l.9-4.6A5 5 0 0 1 7 7z"/><path d="M7.5 10v4M5.5 12h4"/><circle cx="15.5" cy="11" r=".9" fill="currentColor" stroke="none"/><circle cx="17.8" cy="13.2" r=".9" fill="currentColor" stroke="none"/></svg><span>Wizard Penalty</span></a>
     <a class="tgl hsoc hsoc-inst" id="hdInstall" href="/install" aria-label="Download the app" title="Download the app" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10.5l5 5 5-5M4.5 20.5h15"/></svg><span class="dl-l">Download app</span><span class="dl-s">App</span></a>
     <!-- Account (spec section 9). Stays hidden unless /api/me answers, so
          with AUTH_ENABLED off the header is exactly as before. Filled by the
@@ -8312,11 +8312,11 @@ html:not(.reduce) .tk-item.flash{border-radius:var(--r-md);animation:tkWash 2s v
   <button class="btab" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><i class="bt-staff" aria-hidden="true"></i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5.6" r="3.4"/><path d="M12 3.6l.62 1.28 1.4.2-1.01.98.24 1.4L12 6.78l-1.25.66.24-1.4-1.01-.98 1.4-.2z" fill="currentColor" stroke="none"/><path d="M12 9v10.4"/><path d="M10.6 11.4h2.8"/><path d="M10.4 19.4h3.2"/></svg></span>Build</button>
   <button class="btab" id="bt-convert" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M14.5 12h6.5M18 9l3 3-3 3"/></svg></span>Converter</button>
   <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle class="lv-core" cx="12" cy="12" r="2"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg></span>Live</button>
-  <!-- PLAY PENALTY (release step 2). A game controller (owner, 13 Oct 2026: "change
+  <!-- WIZARD PENALTY (release step 2). A game controller (owner, 13 Oct 2026: "change
        the joystick to a controller icon. much more recogniseable"): the pad, a
        d-pad on the left, two buttons on the right. A link, not a view: the game
        is its own page. -->
-  <a class="btab" id="bt-play" href="/penalty" aria-label="Play Penalty"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10a5 5 0 0 1 4.9 4l.9 4.6a2.6 2.6 0 0 1-4.6 2.1L16.4 16H7.6l-1.8 1.7a2.6 2.6 0 0 1-4.6-2.1l.9-4.6A5 5 0 0 1 7 7z"/><path d="M7.5 10v4M5.5 12h4"/><circle cx="15.5" cy="11" r=".9" fill="currentColor" stroke="none"/><circle cx="17.8" cy="13.2" r=".9" fill="currentColor" stroke="none"/></svg></span>Play</a>
+  <a class="btab" id="bt-play" href="/penalty" aria-label="Wizard Penalty"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10a5 5 0 0 1 4.9 4l.9 4.6a2.6 2.6 0 0 1-4.6 2.1L16.4 16H7.6l-1.8 1.7a2.6 2.6 0 0 1-4.6-2.1l.9-4.6A5 5 0 0 1 7 7z"/><path d="M7.5 10v4M5.5 12h4"/><circle cx="15.5" cy="11" r=".9" fill="currentColor" stroke="none"/><circle cx="17.8" cy="13.2" r=".9" fill="currentColor" stroke="none"/></svg></span>Play</a>
   <!-- ADMIN, for the admin account only (owner, 14 Oct 2026: "move the admin icon to
        the nav bar and put a notification badge on it when there is a landed slip").
        Shown and counted by adminBadge(). -->
@@ -11683,7 +11683,7 @@ function swMaint(msg){
     top.insertAdjacentElement("afterend",n); return; }
   var m=document.createElement("div"); m.id="swMaint"; m.setAttribute("role","alert");
   m.innerHTML="<img src='/wiz-logo.png' alt='' width='72' height='72'><h2>The Wizard is tuning up</h2><p></p>"+
-    "<a class='mt-go' href='/penalty'>Play Penalty while you wait</a>"+
+    "<a class='mt-go' href='/penalty'>Play Wizard Penalty while you wait</a>"+
     "<div class='mt-links'><a href='https://t.me/soccerwizardTG' rel='noopener'>Telegram</a><a href='https://x.com/soccerwizardhq' rel='noopener'>X</a></div>";
   m.querySelector("p").textContent=msg||"We're making Soccerwizard better. Back shortly with fresh picks.";
   document.body.appendChild(m); document.documentElement.style.overflow="hidden";

@@ -118,7 +118,7 @@ test("the old blind challenge is gone from the page", () => {
 
 
 test("daily share line is numbered, Wordle-style, with the grid and the streak (owner, 9 Oct 2026)", () => {
-  assert.ok(html.includes('"Play Penalty #"+num+" vs the Wizard Keeper'), "numbered share line");
+  assert.ok(html.includes('"Wizard Penalty #"+num+" vs the Wizard Keeper'), "numbered share line");
   assert.ok(html.includes('F.el("p","dgrid",grid)'), "the grid shows on the result too");
   assert.match(html, /"⚽":"❌"/);
 });
@@ -203,7 +203,7 @@ test("Play the computer is the first button on the home screen", () => {
 
 /* Round 3, owner 8 Oct 2026: "the select, the meter and the flick at the same
    time is a hassle" -> one swipe; "make sure the ball moves in the direction of
-   the swipe, also ball physics and curve"; the name is Play Penalty; more
+   the swipe, also ball physics and curve"; the name is Wizard Penalty; more
    texture on the grass; a coach to teach people how to play. */
 function swipe() { return new Function(grabFn("swipeShot") + "\nreturn swipeShot;")(); }
 const H = 800;
@@ -274,10 +274,10 @@ test("one swipe shoots: no meter, no second gesture", () => {
   assert.match(grabFn("aimAndShoot"), /swipeShot\(/);
 });
 
-test("the game is called Play Penalty", () => {
+test("the game is called Wizard Penalty (owner, 15 Oct 2026: renamed from Play Penalty across the site)", () => {
   assert.doesNotMatch(html, /Penalty Wahala|PENALTY WAHALA/);
-  assert.match(html, /<title>Play Penalty \| Soccerwizard<\/title>/);
-  assert.match(html, /PLAY PENALTY/);
+  assert.match(html, /<title>Wizard Penalty \| Soccerwizard<\/title>/);
+  assert.match(html, /WIZARD PENALTY/);
 });
 
 test("the turf has perspective stripes and a grain", () => {
@@ -600,9 +600,9 @@ test("owner, 9 Oct 2026: out wide is always a dive; total odds in gold", () => {
   assert.match(html, /\.tips \.odds\{color:var\(--gold\)/);
 });
 
-test("release step 2 (owner, 9 Oct 2026): Play Penalty in the phone bar with a controller, in the desktop header, and under Your slips", () => {
+test("release step 2 (owner, 9 Oct 2026): Wizard Penalty in the phone bar with a controller, in the desktop header, and under Your slips", () => {
   const index = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "index.html"), "utf8");
-  assert.match(index, /<a class="btab" id="bt-play" href="\/penalty" aria-label="Play Penalty"><span class="bt-ic"><svg[^>]*>.*<\/svg><\/span>Play<\/a>/);
+  assert.match(index, /<a class="btab" id="bt-play" href="\/penalty" aria-label="Wizard Penalty"><span class="bt-ic"><svg[^>]*>.*<\/svg><\/span>Play<\/a>/);
   assert.match(index, /<a class="navplay" id="tab-play" href="\/penalty"/);
   assert.match(index, /<a class='ys-play' href='\/penalty'>/);
   assert.match(index, /a\.btab\{text-decoration:none\}/);

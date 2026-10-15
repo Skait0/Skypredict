@@ -2,9 +2,9 @@
 <html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Play Penalty | Soccerwizard</title>
+<title>Wizard Penalty | Soccerwizard</title>
 <meta name="description" content="A free penalty shootout. Beat your friends, face the Wizard Keeper every day.">
-<meta property="og:title" content="Play Penalty">
+<meta property="og:title" content="Wizard Penalty">
 <meta property="og:description" content="Take your 5 shots, make your 5 saves. Free, no stakes.">
 <meta property="og:image" content="https://www.soccerwizard.live/penalty/og-card.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Saira+Condensed:wght@700;800&display=swap">
 <style>
-/* PLAY PENALTY - wizardry x soccer, the site's own tokens. Gold is for wins
+/* WIZARD PENALTY - wizardry x soccer, the site's own tokens. Gold is for wins
    and small accents only; red is the brand and the action. */
 :root{--bg:#0D0D0F;--card:#16161A;--card2:#1D1D22;--line:#2A2A30;--text:#F3F3F5;--soft:#A3A3AD;--faint:#6E6E78;--red:#E63946;--gold:#F2B84B;--green:#2FD48A}
 *{box-sizing:border-box}
@@ -352,7 +352,7 @@ input.name{width:100%;height:50px;border-radius:8px;border:1px solid var(--line)
   <div id="sheet"></div>
 </div>
 <script>
-/* PLAY PENALTY. Spec: docs/specs/2026-10-08-penalty-wahala-design.md.
+/* WIZARD PENALTY. Spec: docs/specs/2026-10-08-penalty-wahala-design.md.
    The four rule functions below are copied verbatim from lib/penalty.js; a
    test fails if they drift. Everything else here is presentation: a small
    pseudo-3D world (metres, projected through one camera), a ball on real
@@ -1088,7 +1088,7 @@ function btn(label,cls,fn){var b=el("button","btn "+cls,label);b.type="button";b
    "not here" or "not set up" is not switched on. */
 function offline(retry){
   var off=LAST.status===403||LAST.status===404||LAST.error==="not_configured";
-  var msg=LAST.status===0?"Can't reach the pitch, try again.":off?"Play Penalty isn't switched on here yet. Play the computer meanwhile.":
+  var msg=LAST.status===0?"Can't reach the pitch, try again.":off?"Wizard Penalty isn't switched on here yet. Play the computer meanwhile.":
     LAST.status===429?"Too many kicks for a moment. Try again shortly.":"Something went wrong on our side ("+(LAST.error||LAST.status)+"). Try again.";
   sheet([el("p",null,msg),btn("Try again","red",function(){closeSheet();retry();}),btn("Play the computer","ghost",function(){closeSheet();practice();})]);}
 
@@ -1230,7 +1230,7 @@ function duelEnd(d,me,opp){$("resign").hidden=true;clearInterval(DPOLL);var my=d
     w==="draw"?"You drew with "+opp+", "+my+"-"+th:w===me?"You beat "+opp+" "+my+"-"+th:opp+" beat you "+th+"-"+my;
   track("duel_finished");
   sheet([el("h2",null,head)].concat(d.h2h?[el("p","note","Head to head: "+h2hLine(d.h2h,opp))]:[],[btn("Rematch "+opp,"red",function(){closeSheet();challenger();})],
-    shareSheet(head+" on Play Penalty. Think you can do better?",ORIGIN+"/penalty","duel_result"),[tipsCard(),homeLink()]));}
+    shareSheet(head+" on Wizard Penalty. Think you can do better?",ORIGIN+"/penalty","duel_result"),[tipsCard(),homeLink()]));}
 function duelsList(){api("GET","duels",null,{device:PW.DEV}).then(function(r){var list=el("ol","lb"),ds=(r.j&&r.j.duels)||[];
   if(!ds.length)list.appendChild(el("li","lbe","No duels yet. Start one and send the link."));
   ds.forEach(function(x){var li=el("li",x.mine&&!x.done?"you":"");li.style.cursor="pointer";li.appendChild(el("b",null,x.done?(x.calledOff?"\u2013":x.won?"W":x.draw?"D":"L"):x.mine?"\u25b6":"\u2026"));
@@ -1293,7 +1293,7 @@ function survival(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);askN
         sheet([h,el("p",null,line+(nb||!best?"":" Your best: "+best+"."))]
           .concat([btn("Again","red",function(){closeSheet();survival();}),
             row(btn("Leaderboard","ghost",function(){closeSheet();leaderboard("league");}),btn("Challenge a friend","ghost",function(){closeSheet();challenger();}))],
-            shareSheet("I scored "+streak+" in a row against the Wizard Keeper on Play Penalty. Beat that:",ORIGIN+"/penalty","survival"),[homeLink()]));});});}
+            shareSheet("I scored "+streak+" in a row against the Wizard Keeper on Wizard Penalty. Beat that:",ORIGIN+"/penalty","survival"),[homeLink()]));});});}
   PW.vs(name,PW.char,"Wizard Keeper","wizard","RANKED").then(next);});}
 function report(){var m=PW.match,r=el("div","rep");
   [["\u2605 "+m.stars,"Stars"],[String(m.tops),"Top bins"],[String(m.saves),"Your saves"]].forEach(function(x){var d=el("div");d.appendChild(el("b",null,x[0]));d.appendChild(el("span",null,x[1]));r.appendChild(d);});return r;}
@@ -1374,7 +1374,7 @@ function daily(){var outs=[],day=null,i=0;PW.setSolo(false);PW.newBoard("The Wiz
         var d=new Date(day+"T12:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short"});
         /* WORDLE-STYLE (owner, 9 Oct 2026): a numbered day, the grid, the streak */
         var num=Math.round((Date.parse(day+"T12:00:00Z")-Date.parse("2026-10-08T12:00:00Z"))/864e5)+1;
-        var text="Play Penalty #"+num+" vs the Wizard Keeper\n"+grid+" "+x.j.score+"/5"+(n>1?" \ud83d\udd25"+n:"");
+        var text="Wizard Penalty #"+num+" vs the Wizard Keeper\n"+grid+" "+x.j.score+"/5"+(n>1?" \ud83d\udd25"+n:"");
         var nodes=[F.el("h2",null,x.j.score+"/5 against the Wizard Keeper"),F.el("p","dgrid",grid),
           F.el("p",null,(x.j.better!=null?"Better than "+x.j.better+"% of players today. ":"")+"Streak: "+n+(n===1?" day":" days"))];
         F.sheet(nodes.concat(F.shareSheet(text,location.origin+"/penalty","daily"),[F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),F.tipsCard(),F.homeLink()]));
@@ -1401,7 +1401,7 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("sheet")
 function home(){
   var lv=PW.levelOf(PW.xp),nx=[3,5,8].filter(function(x){return x>lv;})[0],best=0;try{best=+localStorage.getItem("pw.best")||0;}catch(e){}
   /* One screen, no scroll (owner, 13 Oct 2026: "i hate to scroll on that beginning page"). */
-  var nodes=[F.el("h2",null,"Play Penalty"),
+  var nodes=[F.el("h2",null,"Wizard Penalty"),
     note(["Level "+lv,PW.xp.toLocaleString("en")+" pts"].concat(nx?["New trail at level "+nx]:[],best?["Best run "+best]:[])),
     F.charPicker(),
     /* The one that always works comes first (owner: "there is no play

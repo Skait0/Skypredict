@@ -14,20 +14,20 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 function renderDuel(d) {
   const st = P.duelState(d.kicks || []), a = d.a_name, b = d.b_name || "a friend";
   const title = !st.done ? a + " wants a penalty duel"
-    : st.winner === "draw" ? a + " and " + b + " drew " + st.score.a + "-" + st.score.b + " on Play Penalty"
-    : (st.winner === "a" ? a + " beat " + b + " " + st.score.a + "-" + st.score.b : b + " beat " + a + " " + st.score.b + "-" + st.score.a) + " on Play Penalty";
+    : st.winner === "draw" ? a + " and " + b + " drew " + st.score.a + "-" + st.score.b + " on Wizard Penalty"
+    : (st.winner === "a" ? a + " beat " + b + " " + st.score.a + "-" + st.score.b : b + " beat " + a + " " + st.score.b + "-" + st.score.a) + " on Wizard Penalty";
   return { title, line: st.done ? "See how it went, then start your own." : "Save their penalty, then take yours. Turn by turn, free, no stakes.", go: "/penalty?d=" + d.id };
 }
 function render(m, t, duel) {
   let title, line, go;
   if (duel) ({ title, line, go } = renderDuel(duel));
-  else if (!m) { title = "Play Penalty"; line = "This challenge doesn't exist. Start your own."; go = "/penalty"; }
+  else if (!m) { title = "Wizard Penalty"; line = "This challenge doesn't exist. Start your own."; go = "/penalty"; }
   else {
     const s = P.shootout(m.friend_kicks.map((k) => k.outcome));
     const ch = m.challenger_name, fr = m.friend_name;
-    if (s.done && s.winner === "a") title = fr + " beat " + ch + " " + s.a + "-" + s.b + " on Play Penalty";
-    else if (s.done && s.winner === "b") title = ch + " beat " + fr + " " + s.b + "-" + s.a + " on Play Penalty";
-    else if (s.done) title = ch + " and " + fr + " drew " + s.a + "-" + s.b + " on Play Penalty";
+    if (s.done && s.winner === "a") title = fr + " beat " + ch + " " + s.a + "-" + s.b + " on Wizard Penalty";
+    else if (s.done && s.winner === "b") title = ch + " beat " + fr + " " + s.b + "-" + s.a + " on Wizard Penalty";
+    else if (s.done) title = ch + " and " + fr + " drew " + s.a + "-" + s.b + " on Wizard Penalty";
     else title = ch + " challenges you to a penalty shootout";
     const expired = !m.friend_kicks.length && Date.parse(m.expires_at) <= t;
     line = expired ? "This challenge ran out. Start your own." : s.done ? "See how it went, then start your own." : "Take your 5 shots and make your 5 saves. Free, no stakes.";

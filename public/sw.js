@@ -240,7 +240,7 @@ self.addEventListener("fetch", function (e) {
  */
 var PUSH_TITLE = "Today's picks are up";
 
-/* A PLAY PENALTY DUEL PING (9 Oct 2026). Same empty push; the line comes from
+/* A WIZARD PENALTY DUEL PING (9 Oct 2026). Same empty push; the line comes from
    /api/penalty?a=note for THIS subscription, and only while it is fresh. */
 function noteFrom(path) {
   var pm = self.registration && self.registration.pushManager;
