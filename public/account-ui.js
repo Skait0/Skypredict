@@ -415,13 +415,24 @@
     viewEl.querySelector(".swa-back").focus({preventScroll:true});
     return viewEl;
   }
-  function closeView(popped){ if(!viewEl||!viewEl.classList.contains("on")) return; viewEl.classList.remove("on");
+  /* THE OPEN PANEL SURVIVES A REFRESH (owner, 14 Oct 2026: "when i refresh on the
+     admin page, it takes me back to the home page"). Kept for this tab only;
+     restore() reopens it once /api/me has answered, Admin only for the admin. */
+  function mark(k){ try{ if(k) root.sessionStorage.setItem("sw.acctview",k); else root.sessionStorage.removeItem("sw.acctview"); }catch(e){} }
+  function restore(){
+    var k=null; try{ k=root.sessionStorage.getItem("sw.acctview"); }catch(e){}
+    if(k==="admin"){ if(role()==="admin") admin(); else mark(null); }
+    else if(k==="profile") profile();
+    else if(k==="settings") settings();
+    else if(k==="msgs"&&root.swMsg) root.swMsg.inbox();
+  }
+  function closeView(popped){ if(!viewEl||!viewEl.classList.contains("on")) return; viewEl.classList.remove("on"); mark(null);
     if(pushed){ pushed=false; if(popped!==true){ ownBack=true; try{ root.history.back(); }catch(e){ ownBack=false; } } } d.documentElement.classList.remove("locked");
     var av=d.getElementById("hdAccount"); if(av) try{ av.focus(); }catch(e){} }
   function lsGet(k){ try{ return root.localStorage.getItem(k); }catch(e){ return null; } }
   function lsSet(k,v){ try{ root.localStorage.setItem(k,v); }catch(e){} }
   function profile(){
-    close();
+    close(); mark("profile");
     var a=acct();
     var v=view("Profile",profileHtml({name:firstNameOf(lsGet("sw.name"),a.st.email),
       avatar:root.swAvatarKey?root.swAvatarKey():"fire",role:role(),personal:lsGet("sw.personal"),plan:lsGet("sw.plan"),
@@ -476,7 +487,7 @@
     };
   }
   function settings(){
-    close();
+    close(); mark("settings");
     var a=acct();
     var v=view("Settings",settingsHtml({theme:lsGet("sw.theme")==="light"?"light":"dark",
       book:root.swBookKey?root.swBookKey():"sporty",marks:root.swBookMarks?root.swBookMarks():{},mail:false,devices:null}));
@@ -536,6 +547,7 @@
     /* Only the admin role opens it, whatever button asked (14 Oct 2026). The
        server is the real gate: it answers 403 to every admin call from anyone else. */
     if(role()!=="admin") return;
+    mark("admin");
     /* Opening Admin is reading it: the nav badge clears (index.html adminBadge). */
     try{ localStorage.setItem("sw.adminSeen",String(Date.now())); }catch(e){}
     if(root.paintAdminBadge) root.paintAdminBadge(0);
@@ -692,5 +704,5 @@
     if(viewEl&&viewEl.classList.contains("on")){ closeView(true); return true; }
     return false;
   }
-  root.swAccountUI={eatPop:eatPop,open:open,close:close,toggle:toggle,profile:profile,settings:settings,admin:admin,closeView:closeView,view:view};
+  root.swAccountUI={eatPop:eatPop,open:open,close:close,toggle:toggle,profile:profile,settings:settings,admin:admin,closeView:closeView,view:view,mark:mark,restore:restore};
 })(typeof window!=="undefined"?window:this);

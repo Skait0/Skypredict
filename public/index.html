@@ -25380,6 +25380,11 @@ load().catch(function(){});
       if(!(code===200&&j&&j.signedIn===true)) return firstDone();        // any other 200 is not a signed-in answer: stay invisible
       st.on=true; st.email=j.email||""; saveRole(j); paintButton();
       wire();
+      /* Reopen the account panel that was open before a refresh (account-ui restore). */
+      if(!/[?&](msgs|account)=1/.test(location.search)){
+        if(root.swAccountUI&&root.swAccountUI.restore) root.swAccountUI.restore();
+        else root.addEventListener("load",function(){ if(root.swAccountUI&&root.swAccountUI.restore) root.swAccountUI.restore(); });
+      }
       var g=readGate();
       if(g&&root.swSignIn){
         firstDone();

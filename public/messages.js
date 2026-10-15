@@ -304,6 +304,7 @@
       "<div class='swm-rep'><textarea id='swmRe' maxlength='1000' rows='1' placeholder='Questions, ideas or feedback?' aria-label='Your reply'></textarea>"+
       "<button type='button' class='swm-send' id='swmReGo'>Send</button></div>");
     var box=v.querySelector("#swmThread"), ta=v.querySelector("#swmRe"), go=v.querySelector("#swmReGo");
+    if(root.swAccountUI.mark) root.swAccountUI.mark("msgs");
     go.onclick=function(){
       var t=ta.value.replace(/^\s+|\s+$/g,""); if(!t){ ta.focus(); return; }
       sendState(go,"busy");

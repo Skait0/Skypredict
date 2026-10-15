@@ -88,3 +88,28 @@ test("saveRole tells the page, and the account sheet's own Admin refuses other r
   /* The real gate: admin comes only from SW_ADMIN_EMAILS on the server. */
   assert.match(fs.readFileSync(path.join(__dirname, "..", "lib", "roles.js"), "utf8"), /if \(admins\.includes\(email\)\) return "admin";/);
 });
+
+/* Owner, 14 Oct 2026: "when i refresh on the admin page, it takes me back to the
+   home page". The open account panel is kept for the tab and reopened once
+   /api/me has answered - Admin only when the server said admin. */
+test("the open account panel comes back after a refresh, Admin only for the admin", () => {
+  const vm = require("vm");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "public", "account-ui.js"), "utf8");
+  const cut = (name) => grab(ui, name);
+  function run(stored, live) {
+    const ss = { m: { "sw.acctview": stored }, getItem(k) { return k in this.m ? this.m[k] : null; }, setItem(k, v) { this.m[k] = v; }, removeItem(k) { delete this.m[k]; } };
+    const opened = [];
+    const ctx = { root: { sessionStorage: ss, swAdminLive: live, swMsg: { inbox() { opened.push("msgs"); } } },
+      lsGet: () => "admin", opened };
+    vm.runInNewContext(cut("mark") + cut("role") + cut("restore") +
+      "\nfunction admin(){ opened.push('admin'); } function profile(){ opened.push('profile'); } function settings(){ opened.push('settings'); }\nrestore();", ctx);
+    return { opened, left: ss.m["sw.acctview"] };
+  }
+  assert.deepStrictEqual(run("admin", true).opened, ["admin"], "the admin, confirmed by the server, is back on Admin");
+  const fake = run("admin", false);
+  assert.deepStrictEqual(fake.opened, [], "a stored 'admin' alone opens nothing");
+  assert.strictEqual(fake.left, undefined, "and is forgotten");
+  for (const k of ["profile", "settings", "msgs"]) assert.deepStrictEqual(run(k, false).opened, [k], k + " comes back");
+  assert.match(ui, /function closeView\(popped\)\{ if\(!viewEl\|\|!viewEl\.classList\.contains\("on"\)\) return; viewEl\.classList\.remove\("on"\); mark\(null\);/, "closing forgets it");
+  assert.match(src, /root\.swAccountUI\.restore\(\)/, "the page restores once /api/me has answered");
+});
