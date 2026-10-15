@@ -641,15 +641,15 @@
             "<button type='button' class='swa-pillbtn swm-del-b' data-unsend='"+esc(String(m.id))+"'>Unsend</button>"+
             "<button type='button' class='swa-pillbtn' data-bc-del='"+esc(String(m.id))+"'>Delete</button></span></div>"; }).join(""):
           "<div class='swa-set'><span class='swa-st'><small>Nothing sent to everyone yet.</small></span></div>";
-        var byId={}; bc.forEach(function(m){ byId[String(m.id)]=m; });
+        var bcBy={}; bc.forEach(function(m){ bcBy[String(m.id)]=m; });
         /* Edit: into the editor, and Send becomes Save changes for that message. */
         sent.querySelectorAll("[data-bc-edit]").forEach(function(b){ b.onclick=function(){
-          var m=byId[b.getAttribute("data-bc-edit")]; if(!m) return;
+          var m=bcBy[b.getAttribute("data-bc-edit")]; if(!m) return;
           editing=String(m.id); ed.set(m.body); panel.querySelector("[data-to='all']").click(); label();
           try{ panel.scrollIntoView({block:"start",behavior:"smooth"}); }catch(e){} ed.focus(); }; });
         /* Resend: the same words as a new broadcast, which pings phones again. */
         sent.querySelectorAll("[data-bc-resend]").forEach(function(b){ b.onclick=function(){
-          var m=byId[b.getAttribute("data-bc-resend")]; if(!m||!root.confirm("Send this to every user again?")) return; b.disabled=true;
+          var m=bcBy[b.getAttribute("data-bc-resend")]; if(!m||!root.confirm("Send this to every user again?")) return; b.disabled=true;
           a.req("POST","/api/account/send",{to:"all",html:m.body},function(code,j){ b.disabled=false;
             if(code===200){ say("Sent again."+(j.pinged?" Pinged "+j.pinged+" phone"+(j.pinged===1?"":"s")+".":"")); load(); } else say(errWords(code,j)); }); }; });
         sent.querySelectorAll(".swm-bc-hd").forEach(function(h){ h.onclick=function(){

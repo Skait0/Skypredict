@@ -61,7 +61,9 @@ function make(deps) {
         const merged = Y.merge(row ? row.data : null, v.data, t);
         const put = await db.putUserData(s.userId, merged, row ? row.version : 0);
         if (put.ok) return H.sendJson(res, 200, { version: put.version, data: merged }, cookies);
-        if (!put.conflict) throw new Error("user_data save failed");
+        /* The reason rides in the message, so Sentry names it (15 Oct 2026: one
+           bare "user_data save failed" that said nothing). */
+        if (!put.conflict) throw new Error("user_data save failed: " + String(put.why || "unknown").slice(0, 200));
       }
       return H.sendJson(res, 409, { error: "busy" }, cookies);
     } catch (e) {

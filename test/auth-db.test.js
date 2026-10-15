@@ -106,3 +106,13 @@ test("consent: upsert merges on user_id and clears revoked_at; revoke patches on
   assert.match(calls[1].url, new RegExp("email_consent\\?user_id=eq\\." + id));
   assert.strictEqual(await DB.upsertConsent("not-a-uuid", {}), false);
 });
+
+/* Sentry, 15 Oct 2026: a bare "user_data save failed" from api/me said nothing
+   about why. The database's own reason now comes back with the failure. */
+test("a failed save that is not a clash says why", async () => {
+  capture({ status: 503, body: { message: "upstream timeout" } });
+  const r = await DB.putUserData(U1, { v: 1 }, 4);
+  assert.strictEqual(r.ok, false);
+  assert.ok(!r.conflict);
+  assert.match(r.why, /http 503/);
+});

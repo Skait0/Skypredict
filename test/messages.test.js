@@ -323,3 +323,15 @@ test("the emote tabs stay above the bouncing Wizard emotes", () => {
   assert.match(src, /\.swm-etabs\{position:relative;z-index:2;background:var\(--card-2\);/);
   assert.match(src, /\.swm-wizs\{[^}]*padding-top:22px;/, "room for the top row's bounce");
 });
+
+/* Sentry, 15 Oct 2026: "TypeError: A is not a function" in messages.js, and the
+   admin's Conversations stuck on "Loading" (owner's screenshot). load() kept the
+   sent broadcasts in a local `var byId={}`, which hoisted over the byId()
+   reader lookup for the whole function, so drawing a conversation threw.
+   Harness: before, "Loading" + "byId is not a function"; after, the row draws. */
+test("the sent-broadcast index never shadows the reader lookup", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
+  assert.ok(!/var byId\s*=/.test(src), "no local named byId");
+  assert.match(src, /var bcBy=\{\}; bc\.forEach\(function\(m\)\{ bcBy\[String\(m\.id\)\]=m; \}\);/);
+  assert.match(src, /r=byId\(id\)\|\|\{id:id,email:"Deleted account"\}/);
+});
