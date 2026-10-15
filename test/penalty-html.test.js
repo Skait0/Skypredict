@@ -770,3 +770,9 @@ test("Build me a slip opens the builder", () => {
   const index = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "public", "index.html"), "utf8");
   assert.match(index, /if\(_qv==="build"\)\{ V\.view="build";/);
 });
+
+test("the stadium boards say WIZARD PENALTY too (owner, 15 Oct 2026: 'hope it changes in the game too')", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "public", "penalty.html"), "utf8");
+  assert.ok(!html.includes("<b>PLAY</b><i class=\"red\">PENALTY</i>"), "no board still says PLAY PENALTY");
+  assert.ok(html.includes("<b>WIZARD</b><i class=\"red\">PENALTY</i>"));
+});
