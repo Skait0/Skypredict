@@ -634,7 +634,7 @@ test("the home menu fits a short phone with no scroll; Home stays up top while a
 
 test("batch 1 (owner, 9 Oct 2026): Again first, who to pass next, a new best, near misses play slow, challenge back", () => {
   const sv = grabFn("survival");
-  assert.match(sv, /btn\("Again","red"/);
+  assert.match(sv, /btn\("Play again","red"/);
   assert.match(sv, /more to pass "\+above\.name/);
   assert.match(sv, /localStorage\.setItem\("pw\.rbest"/);
   const pk = grabFn("playKick");
@@ -775,4 +775,15 @@ test("the stadium boards say WIZARD PENALTY too (owner, 15 Oct 2026: 'hope it ch
   const html = fs.readFileSync(path.join(__dirname, "..", "public", "penalty.html"), "utf8");
   assert.ok(!html.includes("<b>PLAY</b><i class=\"red\">PENALTY</i>"), "no board still says PLAY PENALTY");
   assert.ok(html.includes("<b>WIZARD</b><i class=\"red\">PENALTY</i>"));
+});
+
+/* Owner, 15 Oct 2026: "some of the game menus in the wizard penalty dont have play again".
+   The daily Wizard Keeper result had none, and Ranked only said "Again". */
+test("every end-of-game screen offers a way to play again", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "public", "penalty.html"), "utf8");
+  assert.ok(html.includes('F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend"'), "daily result: Play again for fun");
+  assert.ok(html.includes('btn("Play again","red",function(){closeSheet();survival();})'), "Ranked result: Play again");
+  assert.ok(!/btn\("Again"/.test(html), "no bare 'Again' button");
+  assert.ok(html.includes('btn("Play again","red",function(){closeSheet();practice();})'), "vs computer");
+  assert.ok(/btn\("Rematch "\+opp/.test(html), "friend duel: Rematch");
 });

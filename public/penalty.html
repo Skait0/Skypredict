@@ -1291,7 +1291,7 @@ function survival(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(false);askN
         else line="Score once to get on today's table.";
         var h=el("h2",nb?"best":null,nb?"New best: "+streak+" in a row":streak+(streak===1?" goal":" goals")+" in a row");
         sheet([h,el("p",null,line+(nb||!best?"":" Your best: "+best+"."))]
-          .concat([btn("Again","red",function(){closeSheet();survival();}),
+          .concat([btn("Play again","red",function(){closeSheet();survival();}),
             row(btn("Leaderboard","ghost",function(){closeSheet();leaderboard("league");}),btn("Challenge a friend","ghost",function(){closeSheet();challenger();}))],
             shareSheet("I scored "+streak+" in a row against the Wizard Keeper on Wizard Penalty. Beat that:",ORIGIN+"/penalty","survival"),[homeLink()]));});});}
   PW.vs(name,PW.char,"Wizard Keeper","wizard","RANKED").then(next);});}
@@ -1377,7 +1377,7 @@ function daily(){var outs=[],day=null,i=0;PW.setSolo(false);PW.newBoard("The Wiz
         var text="Wizard Penalty #"+num+" vs the Wizard Keeper\n"+grid+" "+x.j.score+"/5"+(n>1?" \ud83d\udd25"+n:"");
         var nodes=[F.el("h2",null,x.j.score+"/5 against the Wizard Keeper"),F.el("p","dgrid",grid),
           F.el("p",null,(x.j.better!=null?"Better than "+x.j.better+"% of players today. ":"")+"Streak: "+n+(n===1?" day":" days"))];
-        F.sheet(nodes.concat(F.shareSheet(text,location.origin+"/penalty","daily"),[F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),F.tipsCard(),F.homeLink()]));
+        F.sheet(nodes.concat(F.shareSheet(text,location.origin+"/penalty","daily"),[F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),F.tipsCard(),F.homeLink()]));
       });});}
   start();}
 
