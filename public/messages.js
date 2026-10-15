@@ -63,7 +63,7 @@
     ["var","var","m-pulse"],["red","red card","m-wiggle"],["whistle","whistle","m-wiggle"],["scarf","scarf","m-wave"]];
   var WIZ_RE=/^\/emo\/wiz-[a-z0-9]{1,12}\.webp$/;
   var GIF_RE=/^https:\/\/media\d?\.giphy\.com\/media\/[A-Za-z0-9._\-\/]{1,200}\.(gif|webp)$/;
-  function unent(s){ return String(s).replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,"<").replace(/&gt;/g,">"); }
+  function unent(s){ return String(s).replace(/&nbsp;|&#160;/g," ").replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,"<").replace(/&gt;/g,">"); }
   /* A link goes to the web over https, or somewhere on our own site. */
   function okHref(u){ u=unent(u).replace(/^\s+|\s+$/g,"");
     return /^https:\/\/[^\s"'<>\\]+$/i.test(u)||/^\/(?!\/)[^\s"'<>\\]*$/.test(u)?u:null; }

@@ -304,3 +304,12 @@ test("Delete takes a broadcast off the admin's list only; Unsend takes it from e
   const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
   assert.ok(src.includes(">Unsend</button>") && src.includes("data-bc-del="), "both buttons on each broadcast");
 });
+
+/* Owner, 14 Oct 2026 (screenshot): a sent broadcast's folded line read
+   "&nbsp;Meet your new Wizard look&nbsp;&nbs..." - the editor's spaces were
+   shown as code. Previews read them as plain spaces now. */
+test("previews show the editor's non-breaking spaces as spaces, not code", () => {
+  assert.strictEqual(M.textOf("<p>&nbsp;Meet your new Wizard look&nbsp;&nbsp;</p>"), "Meet your new Wizard look");
+  assert.strictEqual(M.textOf("a&#160;b"), "a b");
+  assert.strictEqual(M.textOf("&amp;nbsp;"), "&nbsp;", "a typed '&nbsp;' stays as typed");
+});
