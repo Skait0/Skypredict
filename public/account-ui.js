@@ -455,36 +455,58 @@
   }
   /* Phone notifications (13 Oct 2026): the same /api/push subscription the codes
      page makes. Signed in, so the POST links it to this account for "your slip
-     landed"; an existing subscription is re-sent on open to link it too. */
+     landed"; an existing subscription is re-sent on open to link it too.
+     One subscription, two switches: Settings and the Slip of the day card
+     (owner, 15 Oct 2026: the card's button only showed the browser's
+     permission, so it read "on" for good and never subscribed anyone). */
+  var PUSH={reg:null,key:null,ready:null};
+  function pushOk(){ var n=root.navigator; return !!(n&&n.serviceWorker&&("PushManager" in root)&&("Notification" in root)); }
+  function u8(s){ var p=s.replace(/-/g,"+").replace(/_/g,"/"), r=atob(p+"=".repeat((4-p.length%4)%4)), o=new Uint8Array(r.length);
+    for(var i=0;i<r.length;i++) o[i]=r.charCodeAt(i); return o; }
+  function pushPost(s){ var j=s.toJSON(); return fetch("/api/push",{method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({endpoint:j.endpoint,keys:j.keys})}).then(function(r){ return r.ok; }); }
+  function pushInit(){
+    if(PUSH.ready) return PUSH.ready;
+    var n=root.navigator;
+    PUSH.ready=Promise.all([
+      fetch("/api/penalty?a=pushkey").then(function(r){ return r.json(); }).then(function(j){ PUSH.key=j&&j.key; }).catch(function(){}),
+      n.serviceWorker.getRegistration().then(function(r){ return r||n.serviceWorker.register("/sw.js"); }).then(function(r){ PUSH.reg=r; }).catch(function(){})
+    ]);
+    return PUSH.ready;
+  }
+  function pushSub(){ return pushInit().then(function(){ return PUSH.reg?PUSH.reg.pushManager.getSubscription():null; }); }
+  /* cb(on): this phone holds a subscription. It is re-sent, which links it to the account. */
+  function pushState(cb){
+    if(!pushOk()||Notification.permission==="denied") return cb(false);
+    pushSub().then(function(s){ if(s) pushPost(s).catch(function(){}); cb(!!s); }).catch(function(){ cb(false); });
+  }
+  /* cb(ok, line). Permission first: it needs the tap's user activation, which an await spends. */
+  function pushOn(cb){
+    Notification.requestPermission().then(function(p){
+      if(p!=="granted") return cb(false,"Notifications are blocked for this site.");
+      return pushInit().then(function(){
+        if(!PUSH.reg||!PUSH.key) return cb(false,"Not ready yet. Try again in a moment.");
+        return PUSH.reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(PUSH.key)}).then(pushPost).then(function(ok){
+          cb(ok,ok?"Notifications on \uD83D\uDD25":"Something went wrong. Try again."); });
+      });
+    }).catch(function(){ cb(false,"Something went wrong. Try again."); });
+  }
+  function pushOff(cb){
+    pushSub().then(function(s){
+      if(!s) return;
+      var ep=s.endpoint;
+      return s.unsubscribe().then(function(){ return fetch("/api/push",{method:"DELETE",headers:{"content-type":"application/json"},body:JSON.stringify({endpoint:ep})}); });
+    }).then(function(){ cb(true); }).catch(function(){ cb(false); });
+  }
   function pushSwitch(b,say){
-    var n=root.navigator, reg=null, key=null;
     function on(x){ b.setAttribute("aria-checked",x?"true":"false"); }
-    function u8(s){ var p=s.replace(/-/g,"+").replace(/_/g,"/"), r=atob(p+"=".repeat((4-p.length%4)%4)), o=new Uint8Array(r.length);
-      for(var i=0;i<r.length;i++) o[i]=r.charCodeAt(i); return o; }
-    function post(s){ var j=s.toJSON(); return fetch("/api/push",{method:"POST",headers:{"content-type":"application/json"},
-      body:JSON.stringify({endpoint:j.endpoint,keys:j.keys})}).then(function(r){ return r.ok; }); }
     var sm=b.parentNode.querySelector("small");
-    if(!("PushManager" in root)||!n.serviceWorker||!("Notification" in root)){ b.disabled=true; sm.textContent="Add Soccerwizard to your Home Screen to turn this on"; return; }
+    if(!pushOk()){ b.disabled=true; sm.textContent="Add Soccerwizard to your Home Screen to turn this on"; return; }
     if(Notification.permission==="denied"){ b.disabled=true; sm.textContent="Blocked in your browser settings"; return; }
-    fetch("/api/penalty?a=pushkey").then(function(r){ return r.json(); }).then(function(j){ key=j&&j.key; }).catch(function(){});
-    n.serviceWorker.getRegistration().then(function(r){ return r||n.serviceWorker.register("/sw.js"); }).then(function(r){
-      reg=r; return r.pushManager.getSubscription(); }).then(function(s){ if(s){ on(true); post(s).catch(function(){}); } }).catch(function(){});
+    pushState(on);
     b.onclick=function(){
-      if(b.getAttribute("aria-checked")!=="true"){
-        /* Permission first: it needs the tap's user activation, which an await spends. */
-        Notification.requestPermission().then(function(p){
-          if(p!=="granted") return say("Notifications are blocked for this site.");
-          if(!reg||!key) return say("Not ready yet. Try again in a moment.");
-          return reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(key)}).then(post).then(function(ok){
-            on(ok); say(ok?"Notifications on 🔥":"Something went wrong. Try again."); });
-        }).catch(function(){ say("Something went wrong. Try again."); });
-        return;
-      }
-      reg.pushManager.getSubscription().then(function(s){
-        if(!s) return;
-        var ep=s.endpoint;
-        return s.unsubscribe().then(function(){ return fetch("/api/push",{method:"DELETE",headers:{"content-type":"application/json"},body:JSON.stringify({endpoint:ep})}); });
-      }).then(function(){ on(false); say(""); }).catch(function(){ say("Something went wrong. Try again."); });
+      if(b.getAttribute("aria-checked")!=="true") return pushOn(function(ok,m){ on(ok); say(m); });
+      pushOff(function(ok){ if(ok){ on(false); say(""); } else say("Something went wrong. Try again."); });
     };
   }
   function settings(){
@@ -705,5 +727,5 @@
     if(viewEl&&viewEl.classList.contains("on")){ closeView(true); return true; }
     return false;
   }
-  root.swAccountUI={eatPop:eatPop,open:open,close:close,toggle:toggle,profile:profile,settings:settings,admin:admin,closeView:closeView,view:view,mark:mark,restore:restore};
+  root.swAccountUI={eatPop:eatPop,open:open,close:close,toggle:toggle,profile:profile,settings:settings,admin:admin,closeView:closeView,view:view,mark:mark,restore:restore,push:{ok:pushOk,state:pushState,on:pushOn,off:pushOff}};
 })(typeof window!=="undefined"?window:this);

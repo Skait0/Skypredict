@@ -264,3 +264,22 @@ test("Vercel cron sends the morning push at 09:02 Lagos", () => {
   assert.strictEqual(c.schedule, "2 8 * * *", "08:02 UTC is 09:02 in Lagos");
   assert.strictEqual(v.functions["api/push.js"].includeFiles, "public/predictions.json");
 });
+
+/* Owner, 15 Oct 2026: "the notification button on the app is stuck on. plus, I
+   don't even get any notifications." The Slip of the day button only showed the
+   browser's permission ("Reminders on" for good) and never subscribed a phone;
+   only two subscriptions had ever been saved, both from Settings. It is now the
+   same subscription as Settings. Checked in Chrome at 390px with a faked push
+   service: off, tap = subscribe + POST, tap = unsubscribe + DELETE, Settings
+   agrees. */
+test("the Slip of the day notifications button subscribes and unsubscribes, like Settings", () => {
+  const fs = require("fs"), path = require("path");
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "public", "account-ui.js"), "utf8");
+  assert.ok(!/Reminders on/.test(src), "no longer a permission readout");
+  assert.match(src, /var P=window\.swAccountUI&&swAccountUI\.push;/);
+  assert.match(src, /if\(on\) return P\.off\(/, "a tap when on turns it off");
+  assert.match(ui, /push:\{ok:pushOk,state:pushState,on:pushOn,off:pushOff\}/);
+  assert.match(ui, /function pushSwitch\(b,say\)\{[\s\S]*?pushState\(on\);/, "Settings uses the same state");
+  assert.match(src, /r\.showNotification\(title,opts\)/, "the in-tab settle notice goes through the service worker (Android refuses new Notification)");
+});

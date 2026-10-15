@@ -19598,14 +19598,16 @@ function renderRecord(){
     "</div>";
 }
 /* ---- Notifications opt-in ----
-   What this can honestly do is tell you the moment your slip finishes, while
-   the site is open in a tab. It cannot wake a closed phone: that needs a push
-   service and a server holding subscriptions, neither of which exists here.
-   The old copy promised a daily nudge that nothing ever sent, which is worse
-   than offering nothing - so it now describes the thing it actually does. */
+   A real phone push since 13 Oct 2026: the pick of the day at 9am and "your
+   slip landed". This button is the same subscription as Settings > Phone
+   notifications (account-ui push). It used to show only the browser's
+   permission, so once allowed it read "on" for good, tapping it did nothing,
+   and no phone was ever subscribed from here (owner, 15 Oct 2026: "the
+   notification button on the app is stuck on. plus, I don't even get any
+   notifications"). */
 function renderNotif(host){
-  if(!("Notification" in window)) return "";
-  return "<div class='notif'><span>Get told the moment your slip settles.</span>"+
+  if(!("Notification" in window)||!("PushManager" in window)) return "";
+  return "<div class='notif'><span>Pick of the day at 9am, and a ping when your slip lands.</span>"+
     "<button id='notifBtn' type='button'></button></div>";
 }
 /* Fires once per slip. The flag rides in the slip itself, so a reload cannot
@@ -19620,27 +19622,25 @@ function notifySettled(list){
     var body=s.won
       ? "All "+s.legs.length+" landed. That paid ×"+s.odds.toFixed(2)+"."
       : s.hits+" of "+s.legs.length+" landed this time.";
-    try{ new Notification(s.won?"Your slip won":"Your slip is settled",
-      {body:body, tag:"slip-"+s.sid, icon:"/icon-192-maskable.png"}); }catch(e){}
+    var title=s.won?"Your slip won":"Your slip is settled", opts={body:body, tag:"slip-"+s.sid, icon:"/icon-192-maskable.png"};
+    /* Android Chrome refuses new Notification(); the service worker's own call works everywhere it exists. */
+    try{ if(navigator.serviceWorker&&navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(function(r){ return r.showNotification(title,opts); }).catch(function(){});
+         else new Notification(title,opts); }catch(e){}
   });
   if(changed) saveSlips();
 }
 function wireNotif(){
   var b=$("notifBtn"); if(!b) return;
-  function paintBtn(){
-    var on=(window.Notification&&Notification.permission==="granted");
-    b.textContent=on?"Reminders on":"Turn on reminders";
-    b.classList.toggle("on",on);
-  }
-  paintBtn();
+  var P=window.swAccountUI&&swAccountUI.push;
+  /* account-ui.js is deferred, so on the first paint it may not be here yet. */
+  if(!P){ if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",wireNotif,{once:true}); else b.parentNode.hidden=true; return; }
+  if(b._wired) return; b._wired=1;
+  var on=false;
+  function paint(x){ on=x; b.textContent=x?"Notifications on":"Turn on notifications"; b.classList.toggle("on",x); b.setAttribute("aria-pressed",x?"true":"false"); }
+  paint(false); P.state(paint);
   b.addEventListener("click",function(){
-    if(!("Notification" in window)) return;
-    Notification.requestPermission().then(function(p){
-      paintBtn();
-      if(p==="granted"){try{new Notification("Soccerwizard",
-        {body:"Done. We'll tell you as soon as one of your slips finishes.",
-         icon:"/icon-192-maskable.png"});}catch(e){}}
-    });
+    if(on) return P.off(function(ok){ if(ok) paint(false); if(window.swToast) swToast(ok?"Notifications off":"Something went wrong. Try again.",ok?"ok":"err","push"); });
+    P.on(function(ok,m){ paint(ok); if(m&&window.swToast) swToast(m,ok?"ok":"err","push"); });
   });
 }
 /* ============================================================ live scores */
