@@ -2248,5 +2248,79 @@
       "betway": "BW79C0A789"
     },
     "odds": 1.5
+  },
+  "2026-10-15": {
+    "date": "2026-10-15",
+    "generated": "2026-10-15T11:06:16.334Z",
+    "firstKickoff": "2026-10-15T12:30:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-15",
+        "home": "Brighton",
+        "away": "FK Kauno Zalgiris",
+        "league": "International Clubs UEFA Conference League",
+        "kickoff": "2026-10-15T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.729,
+        "market": "OVER_1.5",
+        "odd": 1.05
+      },
+      {
+        "date": "2026-10-15",
+        "home": "Twente",
+        "away": "Thun",
+        "league": "International Clubs UEFA Conference League",
+        "kickoff": "2026-10-15T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.733,
+        "market": "OVER_1.5",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-15",
+        "home": "Benfica",
+        "away": "Celtic",
+        "league": "International Clubs UEFA Europa League",
+        "kickoff": "2026-10-15T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.721,
+        "market": "OVER_1.5",
+        "odd": 1.09
+      },
+      {
+        "date": "2026-10-15",
+        "home": "Bournemouth",
+        "away": "Sturm Graz",
+        "league": "International Clubs UEFA Europa League",
+        "kickoff": "2026-10-15T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.729,
+        "market": "OVER_1.5",
+        "odd": 1.09
+      },
+      {
+        "date": "2026-10-15",
+        "home": "Kahraba Ismailia",
+        "away": "Team",
+        "league": "Egypt 2. Division A",
+        "kickoff": "2026-10-15T12:30:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.832,
+        "market": "1X",
+        "odd": 1.11
+      }
+    ],
+    "codes": {
+      "sporty": "ZBBRGQ",
+      "bet9ja": "5VWGKY6",
+      "betking": "G92CUS",
+      "betpawa": "1YJMTWS",
+      "betway": "BW7A080494"
+    },
+    "short": {
+      "betking": 4,
+      "betway": 4
+    },
+    "odds": 1.48
   }
 }
