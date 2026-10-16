@@ -176,7 +176,8 @@ test("Plus screen: three passes, founder price struck through, pay button names 
   assert.equal((h.match(/data-pass=/g) || []).length, 3);
   assert.match(h, /<s>₦2,000<\/s><b>₦1,500<\/b>/);
   assert.match(h, /Pay ₦1,500 with Paystack/);
-  assert.match(h, /480 places left/);
+  assert.match(h, /<b>480<\/b> of 500 places left/);
+  assert.match(h, /wiz-spell\.webp/);
   assert.match(h, /Nothing renews/);
   assert.doesNotMatch(h, /\bfree\b/i, "never say free in marketing");
   assert.match(UI.plusHtml({ passes, founder: null, role: "free" }, "week"), /Pay ₦800 with Paystack/);
