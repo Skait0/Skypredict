@@ -38,7 +38,8 @@ begin
                          + make_interval(days => r.days)
   returning current_period_end into v_end;
   return v_end;
-end $$;
+end;
+$$;
 
 -- Founding Wizards (owner, 16 Oct 2026): the first 500 buyers pay the founder
 -- price on their first 3 month passes. taken = founders so far, mine = this
