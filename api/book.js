@@ -58,6 +58,7 @@ module.exports = require("../lib/bookproxy.js").makeHandler({
   isOff: require("../lib/flags.js").isOff,
   gate: GATE.makeGate(opts),
   record: GATE.makeRecorder(opts),
+  release: GATE.makeRelease(opts),
   /* Every minted code into site_slips, for grading and the admin's hits list
      (lib/slipwatch.js, sql/site_slips.sql). */
   save: async (req, s) => {

@@ -46,7 +46,7 @@ function res() {
    saw is returned so the test can assert what was and was not called. */
 async function run(opts, fn) {
   const o = opts || {};
-  const seen = { counts: 0, inserts: 0, bookings: 0, slips: 0 };
+  const seen = { counts: 0, inserts: 0, deletes: 0, bookings: 0, slips: 0 };
   const real = global.fetch;
   global.fetch = async (url, init) => {
     const u = String(url);
@@ -55,12 +55,17 @@ async function run(opts, fn) {
     /* The admin's switches (lib/flags.js): nothing paused. */
     if (u.includes("site_flags")) { seen.flags = (seen.flags || 0) + 1; return { ok: true, status: 200, text: async () => "[]" }; }
     if (u.includes("book_quota")) {
+      /* The gate holds a place first and reads its id back (?select=id), then
+         counts up to that id, so the count includes its own row. */
       if ((init && init.method) === "POST") {
         seen.inserts++;
-        return { ok: true, status: 201, text: async () => "" };
+        const id = (o.used || 0) + 1;
+        return { ok: true, status: 201, text: async () => (u.includes("select=id") ? JSON.stringify([{ id }]) : "") };
       }
+      if ((init && init.method) === "DELETE") { seen.deletes++; return { ok: true, status: 204, text: async () => "" }; }
       seen.counts++;
-      const rows = Array.from({ length: o.used == null ? 0 : o.used }, (_, i) => ({ id: i }));
+      const n = (o.used == null ? 0 : o.used) + (u.includes("id=lte.") ? 1 : 0);
+      const rows = Array.from({ length: n }, (_, i) => ({ id: i }));
       return { ok: true, status: 200, text: async () => JSON.stringify(rows) };
     }
     seen.bookings++;
@@ -113,7 +118,7 @@ test("a rejected slip is not recorded, so a retry costs nothing", async () => {
   }, () => handler(post(), r));
   assert.equal(r._o.code, 400, "the rejection passes through with its list");
   assert.ok(r._o.body.unbookable);
-  assert.equal(seen.inserts, 0);
+  assert.equal(seen.inserts - seen.deletes, 0, "its held place is given back");
 });
 
 test("a Supabase outage does not stop anyone booking", async () => {

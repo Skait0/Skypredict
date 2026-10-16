@@ -320,3 +320,55 @@ test("free or null role takes the device path; no cookie never calls roleOf", as
   assert.equal(calls, 1, "no session cookie, no lookup");
   assert.equal(db.asked[1].subject, "device-abc123");
 });
+
+/* ---------------------------------------- a split cannot beat the count */
+
+/* A stand-in that behaves like book_quota: rows with ids, counted up to an id.
+   Every call yields first, so requests sent together interleave the way
+   they do against the real database. */
+function heldStore() {
+  const rows = []; let next = 1;
+  const tick = () => new Promise((r) => setImmediate(r));
+  return {
+    rows,
+    async holdBooking(subject, day) { await tick(); const id = next++; rows.push({ id, subject, day }); return { ok: true, id }; },
+    async releaseBooking(id) { await tick(); const i = rows.findIndex((r) => r.id === id); if (i >= 0) rows.splice(i, 1); return { ok: true }; },
+    async countBookings(subject, day, cap, upto) { await tick(); return { ok: true, n: rows.filter((r) => r.subject === subject && r.day === day && (upto == null || r.id <= upto)).length }; },
+    async recordBooking(subject, day) { const id = next++; rows.push({ id, subject, day }); return { ok: true }; },
+  };
+}
+const freeAcct = (db) => ({ db, freeLimit: 2, sessionCookie: "sw_s", now: () => at,
+  roleOf: async () => ({ role: "free", userId: "acct1" }) });
+const signedIn = () => ({ headers: { cookie: "sw_s=tok", "x-sw-device": "device-abc123" } });
+
+test("a free account splitting into three tickets gets two codes, not three", async () => {
+  const db = heldStore();
+  const gate = G.makeGate(freeAcct(db)), record = G.makeRecorder(freeAcct(db));
+  const got = [];
+  for (let i = 0; i < 3; i++) {            /* the modal books one ticket at a time */
+    const r = signedIn(); const v = await gate(r);
+    got.push(v.allow);
+    if (v.allow) await record(r);
+  }
+  assert.deepEqual(got, [true, true, false]);
+  assert.equal(db.rows.length, 2, "one row per code, the hold is the row");
+});
+
+test("three tickets sent at once with one code left get exactly one", async () => {
+  const db = heldStore();
+  db.rows.push({ id: 0, subject: "u:acct1", day: "2026-09-08" });   /* one used already */
+  const gate = G.makeGate(freeAcct(db));
+  const vs = await Promise.all([gate(signedIn()), gate(signedIn()), gate(signedIn())]);
+  assert.equal(vs.filter((v) => v.allow).length, 1);
+  assert.equal(db.rows.length, 2, "the refused ones gave their places back");
+});
+
+test("a booking the bookmaker refused gives its place back", async () => {
+  const db = heldStore();
+  const gate = G.makeGate(freeAcct(db)), release = G.makeRelease(freeAcct(db));
+  const r = signedIn();
+  assert.equal((await gate(r)).allow, true);
+  await release(r);
+  assert.equal(db.rows.length, 0);
+  assert.equal((await gate(signedIn())).remaining, 1, "both codes still there");
+});
