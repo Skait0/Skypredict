@@ -205,7 +205,7 @@ test("role, plan and code limit ride on GET; avatars are role-aware on POST", as
   };
   const f = await w.user("free@b.com");
   let r = await saved(f, "afro");
-  assert.deepStrictEqual([r.role, r.plan, r.codeLimit, r.data.prefs.avatar], ["free", "Free plan", null, undefined]);
+  assert.deepStrictEqual([r.role, r.plan, r.codeLimit, r.data.prefs.avatar], ["free", "Free plan", 2, undefined]);
   const ff = await w.user("ff@b.com");
   w.db.grantFor = async (e) => (e.startsWith("ff") ? { email: e } : null);
   assert.strictEqual((await saved(ff, "gold")).data.prefs.avatar.v, "gold");

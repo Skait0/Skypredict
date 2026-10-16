@@ -9,7 +9,7 @@
 (function(root){
   "use strict";
   var WORDING="Email me the wizard's best picks. Unsubscribe any time.";
-  var HEAD={book:"book this slip",build:"build a slip",slips:"see your slips"};
+  var HEAD={book:"book this slip",build:"build a slip",slips:"see your slips",plus:"get Plus"};
   var TOKENS=".sw-tok{--si-act:var(--red-fill,var(--brand));--si-act-ink:var(--red-ink,var(--brand));--si-odds:var(--win,var(--accent));"+
     "--si-grey:var(--grey,var(--d));--si-faint:var(--faint);--si-line:var(--line);--si-card:var(--card);--si-card2:var(--card-2,var(--card2));"+
     "--si-bg:var(--bg);--si-text:var(--text);--si-soft:var(--soft);--si-ball:var(--ball,#fff);--si-ball-ink:var(--ball-ink,var(--bg));"+

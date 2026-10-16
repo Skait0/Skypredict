@@ -62,7 +62,7 @@ test("every other refusal is untouched", () => {
   /* This branch is additive: a named refusal, a timeout, our own cap and the
      plain error all read exactly as they did. */
   assert.match(html({ _kind: "timeout" }, B), /didn't answer in time/);
-  assert.match(html({ _kind: "capped" }, B), /today's ten booking codes/);
+  assert.match(html({ _kind: "capped", limit: 20, plan: "plus" }, B), /today's 20 booking codes[\s\S]*after midnight/);
   assert.match(html({}, B), /wouldn't take this slip/);
   assert.match(html({}, B), /Remove a leg and try again/);
   /* suspectAll false is not suspectAll. */

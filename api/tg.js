@@ -64,13 +64,14 @@ const HELLO =
   "• <i>convert to Bet9ja</i>\n• <i>book me today's 5 safest</i>\n\n" +
   "Daily codes: @soccerwizardTG · <a href=\"" + SITE + "\">soccerwizard.live</a>\n<i>18+</i>";
 
-/* CONVERSIONS IN THE BOT: FIVE A DAY PER PERSON (owner's call, 24 Sep). The
+/* CODES IN THE BOT: TWO A DAY PER PERSON (owner, 16 Oct 2026; was five). The
    doctor is unlimited; converting books a real code at a bookmaker, so it is
    counted in book_quota like every site booking, under a hashed Telegram id
    and src "tgbot". A count we cannot read lets the conversion through, the
    same fail-open rule the site's gate uses - an outage of ours is not the
-   reader's problem. The cap is the funnel: past it, the site does unlimited. */
-const CONVERT_CAP = 5;
+   reader's problem. The cap is the funnel: past it, Plus on the site. */
+const CONVERT_CAP = 2;
+const PLUS_LINE = "Plus on <a href=\"" + SITE + "\">soccerwizard.live</a>: 20 codes a day, from ₦200 🧙";
 const subjectOf = (uid) => "tg-" + crypto.createHash("sha256")
   .update((process.env.SW_QUOTA_PEPPER || "") + ":" + uid).digest("hex").slice(0, 24);
 
@@ -131,9 +132,7 @@ async function onConvert(cq) {
   const day = QUOTA.dayOf(Date.now());
   const used = await SB.countBookings(subject, day, CONVERT_CAP).catch(() => ({ ok: false, n: null }));
   if (used.ok && used.n >= CONVERT_CAP) {
-    await say("🔥 That's your " + CONVERT_CAP + " conversions for today.\n\n" +
-      "Want more? The converter on <a href=\"" + SITE + "/?book=" + from + "&code=" + code + "&go=convert\">soccerwizard.live</a> " +
-      "does it with no daily limit, plus the slip builder and every graded code 🧙");
+    await say("🔥 That's your " + CONVERT_CAP + " codes for today.\n\nWant more? " + PLUS_LINE);
     return;
   }
   tg("sendChatAction", { chat_id: chat.id, action: "typing" }).catch(() => {});
@@ -155,12 +154,12 @@ async function onConvert(cq) {
     (stuck.length > 4 ? "; +" + (stuck.length - 4) + " more" : ""));
   if ((r.changed || []).length) out.push("Line moved to what " + D.BOOK_NAMES[to] + " sells on " + r.changed.length + " leg" + (r.changed.length === 1 ? "" : "s") + ".");
   out.push("", (left != null ? "⚡ " + left + " conversion" + (left === 1 ? "" : "s") + " left today. " : "") +
-    "Unlimited, plus the slip builder, on <a href=\"" + SITE + "\">soccerwizard.live</a> 🧙", "<i>18+</i>");
+    PLUS_LINE, "<i>18+</i>");
   await say(out.join("\n"));
 }
 
 /* INSTRUCTIONS (28 Sep 2026): trim, keep, split, change, today. Each books
-   real codes, so each counts against the same five a day as a conversion -
+   real codes, so each counts against the same two a day as a conversion -
    a split into three costs three. Same fail-open rule on a count we cannot
    read. */
 async function quota(uid, cost) {
@@ -199,8 +198,7 @@ async function onAsk(msg, ask, book, code, legs) {
   const q = await quota(msg.from && msg.from.id, cost);
   if (!q.ok) {
     await say("🔥 That needs " + cost + " new code" + (cost === 1 ? "" : "s") + " and you've used your " + CONVERT_CAP +
-      " for today.\n\nThe converter on <a href=\"" + TO_SITE(book, code, "convert") + "\">soccerwizard.live</a> " +
-      "trims, splits and changes with no daily limit 🧙");
+      " for today.\n\n" + PLUS_LINE);
     return;
   }
   const fx = await fixtures();
@@ -224,7 +222,7 @@ async function onAsk(msg, ask, book, code, legs) {
     return true;
   };
   const tail = (k) => { const l = q.left(k); return (l != null ? "⚡ " + l + " code" + (l === 1 ? "" : "s") + " left today. " : "") +
-    "Unlimited on <a href=\"" + SITE + "\">soccerwizard.live</a> 🧙\n<i>18+</i>"; };
+    PLUS_LINE + "\n<i>18+</i>"; };
 
   if (ask.kind === "trim" || ask.kind === "keep") {
     const plan = ask.kind === "trim" ? ASK.planTrim(legs, fx, ask.odds) : ASK.planKeep(legs, fx, ask.games);
@@ -298,8 +296,7 @@ async function onToday(msg, ask) {
   const book = ask.book || "sporty", B = D.BOOK_NAMES[book];
   const q = await quota(msg.from && msg.from.id, 1);
   if (!q.ok) {
-    await say("🔥 You've used your " + CONVERT_CAP + " codes for today. The slip builder on " +
-      "<a href=\"" + SITE + "\">soccerwizard.live</a> has no daily limit 🧙");
+    await say("🔥 You've used your " + CONVERT_CAP + " codes for today. " + PLUS_LINE);
     return;
   }
   tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});

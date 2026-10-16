@@ -4439,6 +4439,11 @@ html{interpolate-size:allow-keywords}
    half, so it gets its own line rather than trailing the first as a clause. */
 .code-err b{display:block;font-weight:800;margin-bottom:3px}
 .code-err span{display:block;font-weight:600;font-size:12.5px;line-height:1.45;opacity:.9}
+/* The daily limit is an offer, not an error: gold, with the Plus button. */
+.code-err.code-plus{background:var(--card-2);border-color:var(--accent);color:var(--text)}
+.code-plusgo{margin-top:12px;width:100%;height:44px;border:0;border-radius:var(--r-md);background:var(--accent);
+  color:var(--on-accent);font:inherit;font-size:14.5px;font-weight:800;cursor:pointer}
+.code-plusgo:focus-visible{outline:2px solid var(--text);outline-offset:2px}
 .code-info{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
   padding:15px;color:var(--soft);font-weight:600;font-size:14px;
   display:flex;align-items:center;gap:10px}
@@ -11741,11 +11746,17 @@ function bookErrHTML(d,B){
      SportyBet's name on a decision we made and then tell the reader to remove
      a leg - when nothing is wrong with their slip and nothing they do to it
      will help. Say whose rule it is and when it lifts. */
+  /* THE PAYGATE (owner, 16 Oct 2026): an account on 2 a day is offered Plus
+     right here (account-ui.js opens it on [data-plus]); a pass holder at 20,
+     or a device, is told when it resets. */
+  if(kind==="capped"&&d.plan==="free"&&window.swPlus)
+    return "<div class='code-err code-plus'><b>That's your "+(d.limit||2)+" codes for today.</b>"+
+      "<span>Your slip is saved. Plus gives you 20 codes a day on every bookie, from ₦200. Pay once, nothing renews.</span>"+
+      "<button type='button' class='code-plusgo' data-plus>Get Plus</button></div>";
   if(kind==="capped")
-    return "<div class='code-err'><b>That's today's ten booking codes.</b>"+
-      "<span>Every device gets ten a day for now. Your slip is saved - "+
-      "the code will be here after midnight. Everything else on the board "+
-      "still works.</span></div>";
+    return "<div class='code-err'><b>That's today's "+(d&&d.limit?d.limit+" ":"")+"booking codes.</b>"+
+      "<span>Your slip is saved - the code will be here after midnight. "+
+      "Everything else on the board still works.</span></div>";
   /* Every leg had kicked off by the time Book was pressed, so nothing was
      sent (bookRounds, 5 Oct 2026). */
   if(kind==="started")
@@ -25272,6 +25283,7 @@ load().catch(function(){});
   /* Plan from GET /api/me, for the menu and the avatar picker. Display only. */
   function saveRole(me){
     var v={"sw.role":me&&me.role,"sw.plan":me&&me.plan,"sw.codeLimit":me&&me.codeLimit,
+      "sw.plusUntil":me&&me.plusUntil,"sw.founder":me&&me.founder?"1":null,
       "sw.personal":me&&me.personal&&me.personal.length?me.personal.join(","):null};
     for(var k in v) if(own(v,k)) try{ if(v[k]==null) ls.removeItem(k); else ls.setItem(k,String(v[k])); }catch(e){}
     /* The role just changed (sign in, sign out, another account on this device):
@@ -25391,7 +25403,7 @@ load().catch(function(){});
   }
 
   /* ----------------------------------------------------------- start up */
-  root.swAcct={st:st,req:req,signedOutHere:signedOutHere,notice:notice,sync:sync,paintButton:paintButton};
+  root.swAcct={st:st,req:req,signedOutHere:signedOutHere,notice:notice,sync:sync,paintButton:paintButton,saveRole:saveRole};
   /* The first sync settles the page: the loader waits for it (capped) so the
      rail does not redraw under the reader a moment after the board shows
      (owner, 14 Oct 2026: "the board is loading multiple times"). */

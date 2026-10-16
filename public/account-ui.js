@@ -16,9 +16,16 @@
     gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-5A8 8 0 1 1 21 12z"/></svg>',
     shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/></svg>',
-    out:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>'
+    out:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>',
+    bolt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>'
   };
-  function planHtml(o){ return "<span class='swa-plan"+(o.role==="admin"?" swa-gold":"")+"'>"+esc(o.plan||"Free plan")+"</span>"; }
+  function dayMonth(iso){ var t=Date.parse(iso||""); if(!isFinite(t)) return ""; try{ return new Date(t).toLocaleDateString("en-GB",{day:"numeric",month:"short"}); }catch(e){ return ""; } }
+  /* "Plus · until 12 Nov", and the Founding Wizard badge (api/pay.js) for good once earned. */
+  function planHtml(o){ var u=o.role==="plus"?dayMonth(o.plusUntil):"";
+    return "<span class='swa-plan"+(o.role==="admin"?" swa-gold":"")+"'>"+esc(o.plan||"Free plan")+(u?" · until "+esc(u):"")+"</span>"+
+      (o.founder?"<span class='swa-fw'>Founding Wizard</span>":""); }
+  /* Everyone but admin and Family & friends can buy or top up a pass. */
+  function canBuy(role){ return role!=="admin"&&role!=="ff"; }
   function codesHtml(q,role){
     if(role==="admin") return "<div class='swa-q'><div class='swa-q1'><span>Codes today</span><span class='swa-n'>No limit</span></div></div>";
     if(!q) return "";
@@ -30,6 +37,7 @@
     return "<div class='swa-id'><b>"+esc(o.name)+"</b><small>"+esc(o.email)+"</small>"+planHtml(o)+"</div>"+
       codesHtml(o.quota,o.role)+
       "<div class='swa-list'>"+
+        (canBuy(o.role)?"<button class='swa-mi swa-mplus' type='button' role='menuitem' data-go='plus'>"+I.bolt+(o.role==="plus"?"Add days to Plus":"Get Plus")+"<span class='swa-r'>20 codes a day</span></button>":"")+
         "<button class='swa-mi' type='button' role='menuitem' data-go='profile'>"+I.user+"Profile</button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='slips'>"+I.slips+"My slips<span class='swa-r swa-n'>"+(o.slips||0)+"</span></button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='msgs'>"+I.chat+"Messages"+(o.unread?"<span class='swa-r swa-unr'>"+(o.unread>9?"9+":o.unread)+"</span>":"")+"</button>"+
@@ -71,16 +79,41 @@
       "<span class='swa-m'><b>slips won</b><br>"+(r.settled?"of "+r.settled+" settled, "+pct+"%":"none settled yet")+"</span>"+
       "<span class='swa-side'><span class='swa-n'>"+r.built+"</span>saved</span></div>";
   }
-  function subHtml(q,role,plan){
-    var what=role==="admin"?"Every feature, no limit":role==="ff"?"Every feature, 100 codes a day":"Every feature, 10 codes a day";
-    return "<p class='swa-h'>Subscription</p><div class='swa-card'><div class='swa-subtop'><span><b"+(role==="admin"?" class='swa-gold'":"")+">"+esc(plan||"Free plan")+"</b><small>"+what+"</small></span>"+
-      (role==="ff"||role==="admin"?"":"<span class='swa-soon'>More plans soon</span>")+"</div>"+
+  function subHtml(q,role,plan,until){
+    var u=role==="plus"?dayMonth(until):"";
+    var what=role==="admin"?"Every feature, no limit":role==="ff"?"Every feature, 100 codes a day":
+      role==="plus"?"20 codes a day"+(u?", until "+esc(u):""):"2 codes a day";
+    return "<p class='swa-h'>Your plan</p><div class='swa-card'><div class='swa-subtop'><span><b"+(role==="admin"?" class='swa-gold'":"")+">"+esc(plan||"Free plan")+"</b><small>"+what+"</small></span>"+
+      (canBuy(role)?"<button class='swa-pillbtn swa-pgo' type='button' data-plus>"+(role==="plus"?"Add days":"Get Plus")+"</button>":"")+"</div>"+
       (role==="admin"||q?"<div class='swa-subuse'>"+codesHtml(q,role).replace("class='swa-q'","class='swa-q swa-q0'")+(role==="admin"?"":"<small>Resets at midnight</small>")+"</div>":"")+"</div>";
+  }
+  /* THE PLUS SCREEN (owner, 16 Oct 2026). o = GET /api/pay/offer plus role and
+     plusUntil. Prepaid: nothing renews, a new pass stacks on the days left. */
+  function naira(n){ return "₦"+String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,","); }
+  function plusHtml(o,pick){
+    var u=o.role==="plus"?dayMonth(o.plusUntil):"", f=o.founder;
+    var passes=(o.passes||[]).map(function(p){
+      var per=p.days>1?naira(p.naira/p.days)+" a day":"24 hours";
+      var fw=p.pass==="month"&&p.naira<p.full;
+      return "<button type='button' class='swa-pass' data-pass='"+esc(p.pass)+"' aria-pressed='"+(p.pass===pick?"true":"false")+"'>"+
+        "<span class='swa-st'><b>"+esc(p.label)+"</b><small>"+(p.days>1?p.days+" days · ":"")+per+"</small>"+
+        (fw?"<small class='swa-fwp'>Founding Wizard price"+(f&&f.monthsLeft<3?" · "+f.monthsLeft+" of 3 months left":"")+"</small>":"")+"</span>"+
+        "<span class='swa-price'>"+(fw?"<s>"+naira(p.full)+"</s>":"")+"<b>"+naira(p.naira)+"</b></span>"+
+        (p.pass==="month"?"<span class='swa-best'>Best value</span>":"")+"</button>"; }).join("");
+    var sel=(o.passes||[]).filter(function(p){ return p.pass===pick; })[0];
+    return "<p class='swa-note'>20 booking codes a day on every bookie, from every tool: the Wizard, Slider, Converter, Edit for me, Split and Trim. "+
+        "Pay once. Nothing renews.</p>"+
+      (u?"<p class='swa-note swa-on'>Your Plus runs until <b>"+esc(u)+"</b>. A new pass adds its days on top.</p>":"")+
+      (f&&f.open&&f.seatsLeft>0&&f.monthsLeft===3?"<p class='swa-note swa-fwn'><b>Founding Wizards:</b> the first 500 users pay "+naira(1500)+" for their first 3 month passes. "+f.seatsLeft+" places left.</p>":"")+
+      "<div class='swa-passes'>"+(passes||"<p class='swa-note'>Prices did not load. Check your connection and try again.</p>")+"</div>"+
+      (sel?"<button class='swa-outbtn swa-go' id='swaPay' type='button'>Pay "+naira(sel.naira)+" with Paystack</button>":"")+
+      "<p class='swa-note swa-fine'>Card, bank transfer or USSD, on Paystack's secure page. 18+.</p>"+
+      "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>";
   }
   function profileHtml(o){
     return "<label class='swa-lbl' for='swaName'>Name on your slips</label>"+
       "<input class='swa-in' id='swaName' maxlength='24' autocomplete='nickname' value=\""+esc(o.name)+"\">"+
-      pickerHtml(o.avatar,o.role,o.personal)+recordHtml(o.record)+subHtml(o.quota,o.role,o.plan);
+      pickerHtml(o.avatar,o.role,o.personal)+recordHtml(o.record)+subHtml(o.quota,o.role,o.plan,o.plusUntil);
   }
   function grantsHtml(list){
     if(!list.length) return "<div class='swa-set'><span class='swa-st'><small>No one yet. Add an email above.</small></span></div>";
@@ -285,7 +318,7 @@
         "<input class='swa-in' id='swaDelIn' autocomplete='off' autocapitalize='characters'><button class='swa-outbtn swa-danger' id='swaDelGo' type='button'>Delete for good</button></div>"+
       "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>";
   }
-  var api={firstNameOf:firstNameOf,menuHtml:menuHtml,codesHtml:codesHtml,esc:esc,I:I,AV_FREE:AV_FREE,AV_FF:AV_FF,AV_OWNER:AV_OWNER,AV_PERSONAL:AV_PERSONAL,pickerHtml:pickerHtml,grantsHtml:grantsHtml,hitsHtml:hitsHtml,adminHtml:adminHtml,recordHtml:recordHtml,profileHtml:profileHtml,settingsHtml:settingsHtml};
+  var api={firstNameOf:firstNameOf,menuHtml:menuHtml,plusHtml:plusHtml,naira:naira,codesHtml:codesHtml,esc:esc,I:I,AV_FREE:AV_FREE,AV_FF:AV_FF,AV_OWNER:AV_OWNER,AV_PERSONAL:AV_PERSONAL,pickerHtml:pickerHtml,grantsHtml:grantsHtml,hitsHtml:hitsHtml,adminHtml:adminHtml,recordHtml:recordHtml,profileHtml:profileHtml,settingsHtml:settingsHtml};
   if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
   if(!root.document) return;
 
@@ -350,6 +383,18 @@
     ".swa-note,.swa-msg{font-size:13px;color:var(--soft);line-height:1.5}.swa-card+.swa-card{margin-top:0}.swa-card .swa-set+.swa-set{border-top:1px solid var(--line)}"+
     ".swa-pillbtn{border:1px solid var(--line);background:var(--card-2);color:var(--text);border-radius:6px;padding:6px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}"+
     ".swa-set:focus-visible,.swa-seg button:focus-visible,.swa-books button:focus-visible,.swa-sw:focus-visible,.swa-outbtn:focus-visible,.swa-del:focus-visible,.swa-pillbtn:focus-visible,.swa-in:focus-visible,.swa-back:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"+
+    /* Plus (owner, 16 Oct 2026): three passes, gold for the price, the month marked. */
+    ".swa-fw{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:99px;border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:800}"+
+    ".swa-mplus{color:var(--accent)}.swa-mplus svg{color:var(--accent)}.swa-mplus .swa-r{font-size:11.5px;font-weight:700}"+
+    ".swa-pgo{margin-left:auto;border-color:var(--accent);color:var(--accent);white-space:nowrap}"+
+    ".swa-passes{display:grid;gap:10px;margin:16px 0 4px}"+
+    ".swa-pass{position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:14px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);font:inherit;text-align:left;cursor:pointer}"+
+    ".swa-pass[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-rim)}"+
+    ".swa-pass .swa-st b{font-size:15px;font-weight:800}.swa-fwp{color:var(--accent)!important}"+
+    ".swa-price{text-align:right;font-variant-numeric:tabular-nums}.swa-price b{display:block;font-size:19px;font-weight:800;color:var(--accent)}.swa-price s{display:block;font-size:12px;color:var(--faint)}"+
+    ".swa-best{position:absolute;top:-9px;right:12px;padding:1px 8px;border-radius:99px;background:var(--accent);color:var(--on-accent);font-size:10.5px;font-weight:800}"+
+    ".swa-on{color:var(--text)}.swa-fwn{border:1px dashed var(--accent);border-radius:10px;padding:10px 12px}"+
+    ".swa-pass:focus-visible,.swa-pgo:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"+
     "@media (hover:hover){.swa-mi:hover{background:var(--card-2)}}"+
     "@media (prefers-reduced-motion:reduce){.swa-menu,.swa-scrim,.swa-view{transition:none}}";
   function ensure(){
@@ -368,9 +413,12 @@
       else if(go==="settings") settings();
       else if(go==="msgs"&&root.swMsg) root.swMsg.inbox();
       else if(go==="admin") admin();
+      else if(go==="plus") plus();
       else if(go==="out") signOut();
     });
   }
+  /* Any [data-plus] on the page opens Plus: the code-limit message, the plan card. */
+  d.addEventListener("click",function(e){ var b=e.target.closest&&e.target.closest("[data-plus]"); if(b){ e.preventDefault(); plus(); } });
   function acct(){ return root.swAcct||{st:{email:""}}; }
   /* Admin only once the server has said so in this page view (index.html saveRole, swAdminLive). */
   function role(){ var r=lsGet("sw.role")||"free"; return r==="admin"&&root.swAdminLive!==true?"free":r; }
@@ -379,6 +427,7 @@
     ensure();
     var a=acct();
     menu.innerHTML=menuHtml({name:firstNameOf(savedName(),a.st.email),email:a.st.email,role:role(),plan:lsGet("sw.plan"),
+      plusUntil:lsGet("sw.plusUntil"),founder:lsGet("sw.founder")==="1",
       quota:root.swQuotaToday?root.swQuotaToday():null,slips:root.swSlipCount?root.swSlipCount():0,unread:root.swMsg?root.swMsg.unread():0});
     lastFocus=d.activeElement;
     scrim.classList.add("on"); menu.classList.add("on");
@@ -425,18 +474,63 @@
     if(k==="admin"){ if(role()==="admin") admin(); else mark(null); }
     else if(k==="profile") profile();
     else if(k==="settings") settings();
+    else if(k==="plus") plus();
     else if(k==="msgs"&&root.swMsg) root.swMsg.inbox();
+    paidReturn();
   }
   function closeView(popped){ if(!viewEl||!viewEl.classList.contains("on")) return; viewEl.classList.remove("on"); mark(null);
     if(pushed){ pushed=false; if(popped!==true){ ownBack=true; try{ root.history.back(); }catch(e){ ownBack=false; } } } d.documentElement.classList.remove("locked");
     var av=d.getElementById("hdAccount"); if(av) try{ av.focus(); }catch(e){} }
   function lsGet(k){ try{ return root.localStorage.getItem(k); }catch(e){ return null; } }
   function lsSet(k,v){ try{ root.localStorage.setItem(k,v); }catch(e){} }
+  function plus(){
+    var a=acct();
+    if(!a.st.on){ if(root.swGate) root.swGate("plus",null,plus,""); return; }
+    close(); mark("plus");
+    var pick="month", offer={passes:[]};
+    var me={role:role(),plusUntil:lsGet("sw.plusUntil")};
+    function draw(){
+      var v=view("Plus",plusHtml({passes:offer.passes,founder:offer.founder,role:me.role,plusUntil:me.plusUntil},pick));
+      v.querySelectorAll("[data-pass]").forEach(function(b){ b.onclick=function(){ pick=b.getAttribute("data-pass"); draw(); }; });
+      var pay=v.querySelector("#swaPay"), msg=v.querySelector("#swaMsg");
+      if(pay) pay.onclick=function(){
+        pay.disabled=true; msg.textContent="Opening Paystack...";
+        a.req("POST","/api/pay/start",{pass:pick},function(code,j){
+          if(code===200&&j&&j.url){ root.location.href=j.url; return; }
+          pay.disabled=false;
+          msg.textContent=code===0?"No connection. Check your data and try again.":
+            code===401?"Sign in again to pay.":code===429?"Too many tries. Try again in a few minutes.":
+            "Paystack didn't answer. Try again in a minute.";
+        });
+      };
+    }
+    draw();
+    a.req("GET","/api/pay/offer",null,function(code,j){ if(code===200&&j&&j.passes){ offer=j; if(viewEl&&viewEl.classList.contains("on")) draw(); } });
+  }
+  /* BACK FROM PAYSTACK (?paid=<reference>). Settled by our server asking
+     Paystack, never by this page: a few asks while the payment lands, then
+     the account is re-read so the new plan shows everywhere. */
+  function paidReturn(){
+    var m=/[?&]paid=(sw_[0-9a-f]{20})/.exec(root.location.search); if(!m) return;
+    try{ root.history.replaceState(null,"",root.location.pathname+root.location.search.replace(/[?&]paid=[^&]*/,"").replace(/^&/,"?")+root.location.hash); }catch(e){}
+    var a=acct(), tries=0;
+    (function ask(){
+      a.req("GET","/api/pay/verify?ref="+m[1],null,function(code,j){
+        if(code===200&&j&&j.paid){
+          a.req("GET","/api/me",null,function(c2,me){ if(c2===200&&me&&me.signedIn&&a.saveRole) a.saveRole(me); });
+          a.notice("Plus is on"+(j.until?" until "+dayMonth(j.until):"")+". 20 codes a day.");
+          return;
+        }
+        if(++tries<6) return setTimeout(ask,2500);
+        a.notice("Payment not confirmed yet. If you paid, Plus switches on within a few minutes.");
+      });
+    })();
+  }
   function profile(){
     close(); mark("profile");
     var a=acct();
     var v=view("Profile",profileHtml({name:firstNameOf(lsGet("sw.name"),a.st.email),
-      avatar:root.swAvatarKey?root.swAvatarKey():"fire",role:role(),personal:lsGet("sw.personal"),plan:lsGet("sw.plan"),
+      avatar:root.swAvatarKey?root.swAvatarKey():"fire",role:role(),personal:lsGet("sw.personal"),plan:lsGet("sw.plan"),plusUntil:lsGet("sw.plusUntil"),
       record:root.swRecord?root.swRecord():{built:0,won:0,settled:0},
       quota:root.swQuotaToday?root.swQuotaToday():null}));
     var nm=v.querySelector("#swaName");
@@ -727,5 +821,6 @@
     if(viewEl&&viewEl.classList.contains("on")){ closeView(true); return true; }
     return false;
   }
-  root.swAccountUI={eatPop:eatPop,open:open,close:close,toggle:toggle,profile:profile,settings:settings,admin:admin,closeView:closeView,view:view,mark:mark,restore:restore,push:{ok:pushOk,state:pushState,on:pushOn,off:pushOff}};
+  root.swPlus={open:plus};
+  root.swAccountUI={eatPop:eatPop,open:open,close:close,toggle:toggle,profile:profile,settings:settings,admin:admin,plus:plus,closeView:closeView,view:view,mark:mark,restore:restore,push:{ok:pushOk,state:pushState,on:pushOn,off:pushOff}};
 })(typeof window!=="undefined"?window:this);

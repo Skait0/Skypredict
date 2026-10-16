@@ -95,6 +95,10 @@
     "api/account.js": {
       "maxDuration": 10,
       "memory": 256
+    },
+    "api/pay.js": {
+      "maxDuration": 25,
+      "memory": 256
     }
   },
   "crons": [
@@ -238,6 +242,10 @@
     {
       "source": "/api/account/:action",
       "destination": "/api/account?action=:action"
+    },
+    {
+      "source": "/api/pay/:action",
+      "destination": "/api/pay?action=:action"
     }
   ],
   "ignoreCommand": "bash scripts/ignore-build.sh",

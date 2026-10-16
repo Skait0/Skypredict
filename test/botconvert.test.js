@@ -81,14 +81,14 @@ function botWith(stubs) {
   return { sent, tap, done };
 }
 
-test("past five conversions a day the bot sends people to the site, and books nothing", async () => {
+test("past two codes a day the bot sends people to Plus on the site, and books nothing", async () => {
   let booked = false;
-  const b = botWith({ count: async () => ({ ok: true, n: 5 }),
+  const b = botWith({ count: async () => ({ ok: true, n: 2 }),
     fetch: async () => { booked = true; return { json: async () => ({}) }; } });
   try {
     await b.tap("cv|bet9ja|sporty|RQWKNC");
     const msg = b.sent.find((s) => s.method === "sendMessage");
-    assert.match(msg.body.text, /your 5 conversions for today/);
+    assert.match(msg.body.text, /your 2 codes for today[\s\S]*Plus/);
     assert.match(msg.body.text, /soccerwizard\.live/);
     assert.strictEqual(booked, false, "no read, no booking once the cap is reached");
   } finally { b.done(); }

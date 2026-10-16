@@ -151,9 +151,36 @@ test("menu: plan label from the account, Admin item only for admin, admin codes 
 test("subscription card follows the plan", () => {
   const p = (role, plan) => UI.profileHtml({ name: "A", avatar: "fire", role, plan, record: { built: 0, won: 0, settled: 0 }, quota: null });
   assert.match(p("ff", "Family & friends"), /100 codes a day/);
-  assert.doesNotMatch(p("ff", "Family & friends"), /More plans soon/);
+  assert.doesNotMatch(p("ff", "Family & friends"), /data-plus/);
   assert.match(p("admin", "Admin"), /No limit/);
-  assert.match(p(undefined, undefined), /Free plan[\s\S]*10 codes a day[\s\S]*More plans soon/);
+  assert.doesNotMatch(p("admin", "Admin"), /data-plus/);
+  assert.match(p(undefined, undefined), /Free plan[\s\S]*2 codes a day[\s\S]*data-plus>Get Plus/);
+  const plus = UI.profileHtml({ name: "A", avatar: "fire", role: "plus", plan: "Plus", plusUntil: "2026-11-12T10:00:00Z",
+    record: { built: 0, won: 0, settled: 0 }, quota: null });
+  assert.match(plus, /20 codes a day, until 12 Nov[\s\S]*data-plus>Add days/);
+});
+
+test("menu: Get Plus for free, Add days for Plus, nothing to buy for ff/admin; founder badge", () => {
+  const base = { name: "A", email: "a@b.c", quota: null, slips: 0 };
+  assert.match(UI.menuHtml(Object.assign({}, base, { role: "free" })), /data-go='plus'>[\s\S]*Get Plus/);
+  const pl = UI.menuHtml(Object.assign({}, base, { role: "plus", plan: "Plus", plusUntil: "2026-11-12T10:00:00Z", founder: true }));
+  assert.match(pl, /Plus · until 12 Nov/); assert.match(pl, /Add days to Plus/); assert.match(pl, /Founding Wizard/);
+  for (const role of ["ff", "admin"]) assert.doesNotMatch(UI.menuHtml(Object.assign({}, base, { role })), /data-go='plus'/);
+});
+
+test("Plus screen: three passes, founder price struck through, pay button names the price", () => {
+  const passes = [{ pass: "day", days: 1, label: "Day pass", naira: 200, full: 200 },
+    { pass: "week", days: 7, label: "Week pass", naira: 800, full: 800 },
+    { pass: "month", days: 30, label: "Month pass", naira: 1500, full: 2000 }];
+  const h = UI.plusHtml({ passes, founder: { open: true, seatsLeft: 480, monthsLeft: 3 }, role: "free" }, "month");
+  assert.equal((h.match(/data-pass=/g) || []).length, 3);
+  assert.match(h, /<s>₦2,000<\/s><b>₦1,500<\/b>/);
+  assert.match(h, /Pay ₦1,500 with Paystack/);
+  assert.match(h, /480 places left/);
+  assert.match(h, /Nothing renews/);
+  assert.doesNotMatch(h, /\bfree\b/i, "never say free in marketing");
+  assert.match(UI.plusHtml({ passes, founder: null, role: "free" }, "week"), /Pay ₦800 with Paystack/);
+  assert.match(UI.plusHtml({ passes, role: "plus", plusUntil: "2026-11-12T10:00:00Z" }, "day"), /runs until <b>12 Nov<\/b>/);
 });
 
 test("admin view: form, rows with since and Remove, emails escaped", () => {
@@ -175,7 +202,7 @@ test("record: one card, won big, the rate only over settled slips", () => {
 test("profile has no second avatar besides the picker tiles", () => {
   const h = UI.profileHtml({ name: "Kayode", avatar: "fire", record: { built: 1, won: 0, settled: 0 }, quota: null });
   assert.strictEqual((h.match(/\/av\//g) || []).length, 25, "only the 6 free tiles and 19 locked skins");
-  assert.match(h, /Subscription/); assert.match(h, /Free plan/); assert.doesNotMatch(h, /Codes today/);
+  assert.match(h, /Your plan/); assert.match(h, /Free plan/); assert.doesNotMatch(h, /Codes today/);
 });
 
 test("isSyncedKey also covers PREFS keys, so a name saved in another tab reloads", () => {

@@ -31,10 +31,14 @@ const opts = {
      anyone holding one of these ids books without limit, so keep them long,
      random and unpublished, and rotate by changing this variable. */
   exempt: String(process.env.SW_QUOTA_EXEMPT || "").split(","),
-  /* Signed-in readers: admin books free of any count, Family & friends are
-     counted per account (u:<id>) against 100 a day. Anyone else, or any
-     failure here, takes the device/address path above. */
+  /* Signed-in readers: admin books free of any count, everyone else is
+     counted per account (u:<id>). A failed lookup takes the device/address
+     path above. */
   userLimit: 100,
+  /* The paygate (owner, 16 Oct 2026): signed-in free accounts 2 a day, any
+     Plus pass 20, counted per account (u:<id>). lib/roles.js holds the numbers. */
+  freeLimit: R.FREE_CODES,
+  plusLimit: R.PLUS_CODES,
   sessionCookie: S.COOKIE,
   roleOf: async (req) => {
     const s = await S.readSession(AUTHDB, req, Date.now());

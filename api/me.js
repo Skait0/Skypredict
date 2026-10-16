@@ -45,8 +45,15 @@ function make(deps) {
         let entitlements = {};
         try { entitlements = await A.entitlements(db, s.userId, A.FEATURES, t); }
         catch (e) { await report(e, { route: "me/entitlements" }); }
+        /* The pass end for "Plus until 12 Nov", and the Founding Wizard badge
+           (kept for good once earned, api/pay.js). Either failing hides it. */
+        const [sub, fo] = await Promise.all([
+          role === "plus" && db.subscription ? db.subscription(s.userId).catch(() => null) : null,
+          db.founderOffer ? db.founderOffer(s.userId).catch(() => null) : null]);
         return H.sendJson(res, 200, { signedIn: true, email: user.email, role, plan: R.planLabel(role),
           codeLimit: role === "admin" ? "none" : R.codeLimitFor(role), personal, version: row ? row.version : 0,
+          plusUntil: sub && sub.current_period_end ? new Date(sub.current_period_end).toISOString() : null,
+          founder: !!(fo && fo.mine > 0),
           data: row ? row.data : Y.empty(), entitlements }, cookies);
       }
 
