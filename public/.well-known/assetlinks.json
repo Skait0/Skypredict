@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "live.soccerwizard.app",
+    "sha256_cert_fingerprints": [
+      "32:0F:99:4C:CA:9D:E1:3B:04:F6:00:B6:4E:5B:A8:67:C1:0C:D6:E5:49:E0:36:AE:07:4E:CA:D8:06:71:43:67"
+    ]
+  }
+}]

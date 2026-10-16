@@ -585,6 +585,8 @@
   function lsGet(k){ try{ return root.localStorage.getItem(k); }catch(e){ return null; } }
   function lsSet(k,v){ try{ root.localStorage.setItem(k,v); }catch(e){} }
   function plus(){
+    /* The Play Store app sells nothing (Play billing rules, index.html sw-twa). */
+    if(d.documentElement.classList.contains("sw-twa")) return;
     var a=acct();
     if(!a.st.on){ if(root.swGate) root.swGate("plus",null,plus,""); return; }
     close(); mark("plus");
