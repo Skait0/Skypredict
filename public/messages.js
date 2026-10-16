@@ -730,7 +730,18 @@
           "<div class='swm-grid'>"+stat(r.slips|0,"slips saved")+stat(rec.won|0,"slips won")+stat((r.devices||[]).length,"devices")+"</div>"+
           "<div class='swm-acts'><button type='button' class='swa-pillbtn' data-msg>Message them</button>"+
             (r.role!=="admin"?"<button type='button' class='swa-pillbtn' data-ff='"+(r.ff?"revoke":"grant")+"'>"+(r.ff?"Remove Family & friends":"Give Family & friends")+"</button>":"")+
-            ((r.devices||[]).length&&r.role!=="admin"?"<button type='button' class='swa-pillbtn' data-out>Sign out everywhere</button>":"")+"</div>"+
+            ((r.devices||[]).length&&r.role!=="admin"?"<button type='button' class='swa-pillbtn' data-out>Sign out everywhere</button>":"")+
+            (r.role!=="admin"?"<button type='button' class='swa-pillbtn' data-gift aria-expanded='false'>Gift a pass</button>":"")+"</div>"+
+          /* GIFT A PASS (owner, 16 Oct 2026): POST /api/account/gift. The reader
+             gets an inbox message: a gift box for a gift, "Reimbursement" for one. */
+          (r.role!=="admin"?"<div class='swa-card swm-giftf' hidden>"+
+            "<label class='swa-lbl' for='swmGiftPass'>Pass</label><select class='swa-in' id='swmGiftPass'>"+
+              "<option value='day'>Day pass</option><option value='week'>Week pass</option><option value='month'>Month pass</option></select>"+
+            "<label class='swa-lbl' for='swmGiftWhy'>Reason</label><select class='swa-in' id='swmGiftWhy'>"+
+              "<option value='gift'>🎁 Gift</option><option value='reimburse'>Reimbursement</option></select>"+
+            "<label class='swa-lbl' for='swmGiftNote'>Message to them (optional)</label>"+
+            "<textarea class='swa-in' id='swmGiftNote' rows='3' maxlength='500' placeholder='Thanks for sticking with us.'></textarea>"+
+            "<div class='swm-acts'><button type='button' class='swa-pillbtn swa-pgo' data-giftgo>Give it</button></div></div>":"")+
           "<div class='swa-card'>"+row("Joined",esc(when(r.created_at)+" · "+ago(r.created_at)))+row("Last seen",esc(ago(r.last_seen_at)||"never"))+
             row("Signed in on",devs)+row("Default bookmaker",esc(BOOK[r.book]||"Not set"))+row("Theme",r.theme==="light"?"Light":"Dark")+
             row("Record",esc((rec.won|0)+" won of "+(rec.settled|0)+" settled"))+row("Codes booked",codes)+"</div>"+
@@ -743,6 +754,25 @@
         var ff=card.querySelector("[data-ff]");
         if(ff) ff.onclick=function(){ ff.disabled=true; a.req("POST","/api/account/"+ff.getAttribute("data-ff"),{email:r.email},function(c2){
           if(c2===200){ say("Done."); readers=null; open(id); } else { ff.disabled=false; say("Something went wrong. Try again."); } }); };
+        var gift=card.querySelector("[data-gift]"), gf=card.querySelector(".swm-giftf");
+        if(gift&&gf){
+          gift.onclick=function(){ gf.hidden=!gf.hidden; gift.setAttribute("aria-expanded",String(!gf.hidden)); if(!gf.hidden) gf.querySelector("select").focus(); };
+          var go=gf.querySelector("[data-giftgo]");
+          go.onclick=function(){
+            var pass=gf.querySelector("#swmGiftPass"), why=gf.querySelector("#swmGiftWhy");
+            var what=pass.options[pass.selectedIndex].text+" as "+(why.value==="gift"?"a gift":"a reimbursement");
+            if(!root.confirm("Give "+nameOf(r)+" a "+what+"?")) return;
+            go.disabled=true;
+            a.req("POST","/api/account/gift",{id:r.id,pass:pass.value,reason:why.value,note:gf.querySelector("#swmGiftNote").value},function(c2,j){
+              go.disabled=false;
+              if(c2===200&&j&&j.ok){
+                var d=new Date(j.until).toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+                say("Given. Their pass runs until "+d+(j.sent?"":" - the message did not send, tell them yourself")+".");
+                open(id);
+              } else say(c2===503?"Could not give it. Has sql/gifts.sql been run in Supabase?":"Something went wrong. Try again.");
+            });
+          };
+        }
         var out=card.querySelector("[data-out]");
         if(out) out.onclick=function(){ if(!root.confirm("Sign "+r.email+" out on every device?")) return; out.disabled=true;
           a.req("POST","/api/account/signout",{email:r.email},function(c2){ if(c2===200){ say("Signed out on every device."); open(id); } else { out.disabled=false; say("Something went wrong. Try again."); } }); };

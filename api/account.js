@@ -16,7 +16,7 @@ const SW = require("../lib/slipwatch.js");
 
 const REAUTH_MS = 10 * 60e3;
 const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit", "readers", "reader", "threads", "gifs"];
-const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle", "send", "unsend", "edit"];
+const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle", "send", "unsend", "edit", "gift"];
 /* THE MESSAGE BOARD (owner, 14 Oct 2026; sql/messages.sql, public/messages.js):
    any signed-in reader reads their inbox, marks it read and replies in it. */
 const READER_GET = ["inbox"];
@@ -38,6 +38,20 @@ function cleanReply(raw) {
     .replace(/\n{3,}/g, "\n\n").trim();
 }
 
+/* Gifts (action "gift"): the pass lengths and names are the ones sold (api/pay.js). */
+const { PASSES } = require("./pay.js");
+const GIFT_REASONS = ["gift", "reimburse"], GIFT_NOTE_MAX = 500;
+const escHtml = (x) => String(x).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[c]);
+/* The inbox message. A gift opens with a gift box; a reimbursement says so. */
+function giftHtml(reason, label, until, note) {
+  const day = new Date(until).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Africa/Lagos" });
+  const head = reason === "gift" ? "🎁 <b>A gift from Soccerwizard</b>" : "<b>Reimbursement</b>";
+  const line = reason === "gift"
+    ? "We've put a " + label + " on your account, on us: 20 booking codes a day until " + day + "."
+    : "We've put a " + label + " on your account to make it right: 20 booking codes a day until " + day + ".";
+  return "<p>" + head + "</p><p>" + line + "</p>" +
+    (note ? "<p>" + escHtml(note).replace(/\n/g, "<br>") + "</p>" : "");
+}
 function make(deps) {
   const { db } = deps;
   const now = deps.now || Date.now;
@@ -264,6 +278,37 @@ function make(deps) {
           if (!(await db.endAllSessions(u.id, "admin", new Date(t).toISOString()))) return H.sendJson(res, 503, { error: "unavailable" });
           await record("signout", email);
           return H.sendJson(res, 200, { ok: true });
+        }
+        /* GIFT A PASS (owner, 16 Oct 2026): a Day, Week or Month pass, as a gift
+           or a reimbursement, stacked on whatever they have (sql/gifts.sql). The
+           reader gets an inbox message that says which it is - a gift box for a
+           gift, "Reimbursement" for one - with the admin's note, and a phone ping. */
+        if (action === "gift") {
+          const b = (await H.readJson(req, 4096)) || {};
+          const id = String(b.id || ""), pass = String(b.pass || ""), reason = String(b.reason || "");
+          const P = PASSES[pass];
+          if (!C.UUID_RE.test(id) || !P || !GIFT_REASONS.includes(reason)) return H.sendJson(res, 400, { error: "bad_request" });
+          const note = cleanReply(b.note).slice(0, GIFT_NOTE_MAX);
+          const u = await db.userById(id);
+          if (!u) return H.sendJson(res, 404, { error: "no_user" });
+          let until = null;
+          try { until = await db.giftPass(u.id, pass, P.days, reason); }
+          catch (e) { await report(e, { route: "account/gift" }); }
+          /* null: sql/gifts.sql not run yet, or the database refused. Nothing was given. */
+          if (!until) return H.sendJson(res, 503, { error: "unavailable" });
+          const at = new Date(t).toISOString();
+          const html = MSG.clean(giftHtml(reason, P.label, until, note));
+          let sent = false;
+          try { sent = !!(await msgs.add([{ created_at: at, user_id: u.id, from_admin: true, body: html }])); }
+          catch (e) { await report(e, { route: "account/gift-msg" }); }
+          await record("gift", u.email, { pass, reason, until, note: note.slice(0, 200), sent });
+          /* The pass is given whether or not the message or the ping went. */
+          let pinged = 0;
+          try {
+            pinged = await ping([u.id], { title: reason === "gift" ? "🎁 A gift from the Wizard" : "Reimbursement from Soccerwizard",
+              body: P.label + " added to your account. Tap to see.", url: "/?msgs=1" }, at);
+          } catch (e) { await report(e, { route: "account/gift-push" }); }
+          return H.sendJson(res, 200, { ok: true, until, sent, pinged });
         }
         if (action === "grants") {
           const rows = (await db.listGrants()).filter((g) => !g.revoked_at);
