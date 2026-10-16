@@ -271,7 +271,7 @@ self.addEventListener("push", function (e) {
       var t = (m && m.title) || PUSH_TITLE;
       return self.registration.showNotification(t, {
         body: (m && m.body) || "Tap to see today's free picks",
-        tag: "sw", renotify: true, icon: "/icon-192.png", badge: "/icon-192.png",
+        tag: (m && m.tag) || "sw", renotify: true, icon: "/icon-192.png", badge: "/icon-192.png",
         data: { url: (m && m.url) || "/", go: true },
       }).catch(function () {
         /* showNotification itself can reject - permission state, a

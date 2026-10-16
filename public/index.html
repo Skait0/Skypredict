@@ -19692,23 +19692,27 @@ function renderNotif(host){
     "<button id='notifBtn' type='button'></button></div>";
 }
 /* Fires once per slip. The flag rides in the slip itself, so a reload cannot
-   announce the same result twice. */
+   announce the same result twice.
+   ONLY A LANDED SLIP SPEAKS (owner, 16 Oct 2026: "it gives a barrage of n of n
+   landed, your slip is settled"). A lost or part-landed slip settles quietly - it
+   is in My slips. Several wins at once are one notification, not a stack. A single
+   win is tagged by its code, the same tag the server's "your slip landed" push
+   carries (lib/slipwatch.js userNote), so a phone that gets both shows it once. */
 function notifySettled(list){
   if(!list||!list.length) return;
-  if(!("Notification" in window)||Notification.permission!=="granted") return;
-  var changed=false;
-  list.forEach(function(s){
-    if(s.told) return;
-    s.told=true; changed=true;
-    var body=s.won
-      ? "All "+s.legs.length+" landed. That paid ×"+s.odds.toFixed(2)+"."
-      : s.hits+" of "+s.legs.length+" landed this time.";
-    var title=s.won?"Your slip won":"Your slip is settled", opts={body:body, tag:"slip-"+s.sid, icon:"/icon-192-maskable.png"};
-    /* Android Chrome refuses new Notification(); the service worker's own call works everywhere it exists. */
-    try{ if(navigator.serviceWorker&&navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(function(r){ return r.showNotification(title,opts); }).catch(function(){});
-         else new Notification(title,opts); }catch(e){}
-  });
+  var won=[], changed=false;
+  list.forEach(function(s){ if(s.told) return; s.told=true; changed=true; if(s.won) won.push(s); });
   if(changed) saveSlips();
+  if(!won.length||!("Notification" in window)||Notification.permission!=="granted") return;
+  var one=won.length===1?won[0]:null;
+  /* No emoji in the app (test: emoji only at the entry gate); the server's push keeps its own. */
+  var title=one?"Your slip landed!":won.length+" of your slips landed!";
+  var body=one?"All "+one.legs.length+" landed. That paid ×"+one.odds.toFixed(2)+"."
+    :won.map(function(s){ return "×"+s.odds.toFixed(2); }).join(", ")+". Every game in.";
+  var opts={body:body, tag:one?"slip-"+(one.code||one.sid):"slips-landed", icon:"/icon-192-maskable.png", data:{url:"/"}};
+  /* Android Chrome refuses new Notification(); the service worker's own call works everywhere it exists. */
+  try{ if(navigator.serviceWorker&&navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(function(r){ return r.showNotification(title,opts); }).catch(function(){});
+       else new Notification(title,opts); }catch(e){}
 }
 function wireNotif(){
   var b=$("notifBtn"); if(!b) return;
