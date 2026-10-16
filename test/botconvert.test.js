@@ -81,14 +81,17 @@ function botWith(stubs) {
   return { sent, tap, done };
 }
 
-test("past two codes a day the bot sends people to the Wizard Pass on the site, and books nothing", async () => {
-  let booked = false;
-  const b = botWith({ count: async () => ({ ok: true, n: 2 }),
+test("past the two trial codes the bot sends people to the Wizard Pass on the site, and books nothing", async () => {
+  /* The trial is once (owner, 16 Oct 2026), so the count spans every day ("*"),
+     not today - two a day was the whole need of a casual punter. */
+  let booked = false, countedDay = null;
+  const b = botWith({ count: async (subject, day) => { countedDay = day; return { ok: true, n: 2 }; },
     fetch: async () => { booked = true; return { json: async () => ({}) }; } });
   try {
     await b.tap("cv|bet9ja|sporty|RQWKNC");
+    assert.strictEqual(countedDay, "*", "counted over every day, not today");
     const msg = b.sent.find((s) => s.method === "sendMessage");
-    assert.match(msg.body.text, /your 2 codes for today[\s\S]*Wizard Pass/);
+    assert.match(msg.body.text, /used your 2 trial codes[\s\S]*Wizard Pass/);
     assert.match(msg.body.text, /soccerwizard\.live/);
     assert.strictEqual(booked, false, "no read, no booking once the cap is reached");
   } finally { b.done(); }

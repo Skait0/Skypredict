@@ -64,7 +64,8 @@ const HELLO =
   "• <i>convert to Bet9ja</i>\n• <i>book me today's 5 safest</i>\n\n" +
   "Daily codes: @soccerwizardTG · <a href=\"" + SITE + "\">soccerwizard.live</a>\n<i>18+</i>";
 
-/* CODES IN THE BOT: TWO A DAY PER PERSON (owner, 16 Oct 2026; was five). The
+/* CODES IN THE BOT: A TWO-CODE TRIAL PER PERSON, ONCE (owner, 16 Oct 2026; was
+   two a day, before that five - the same trial as the site, lib/bookgate.js). The
    doctor is unlimited; converting books a real code at a bookmaker, so it is
    counted in book_quota like every site booking, under a hashed Telegram id
    and src "tgbot". A count we cannot read lets the conversion through, the
@@ -130,9 +131,10 @@ async function onConvert(cq) {
     disable_web_page_preview: true, reply_to_message_id: cq.message.message_id });
   const subject = subjectOf(cq.from && cq.from.id);
   const day = QUOTA.dayOf(Date.now());
-  const used = await SB.countBookings(subject, day, CONVERT_CAP).catch(() => ({ ok: false, n: null }));
+  /* Counted over every day: the trial is once (rows are still filed by day). */
+  const used = await SB.countBookings(subject, QUOTA.ALL_DAYS, CONVERT_CAP).catch(() => ({ ok: false, n: null }));
   if (used.ok && used.n >= CONVERT_CAP) {
-    await say("🔥 That's your " + CONVERT_CAP + " codes for today.\n\nWant more? " + PLUS_LINE);
+    await say("🔥 You've used your " + CONVERT_CAP + " trial codes.\n\nWant more? " + PLUS_LINE);
     return;
   }
   tg("sendChatAction", { chat_id: chat.id, action: "typing" }).catch(() => {});
@@ -153,18 +155,18 @@ async function onConvert(cq) {
     esc((s.leg.home || "") + " v " + (s.leg.away || "")) + " (" + esc(s.why) + ")").join("; ") +
     (stuck.length > 4 ? "; +" + (stuck.length - 4) + " more" : ""));
   if ((r.changed || []).length) out.push("Line moved to what " + D.BOOK_NAMES[to] + " sells on " + r.changed.length + " leg" + (r.changed.length === 1 ? "" : "s") + ".");
-  out.push("", (left != null ? "⚡ " + left + " conversion" + (left === 1 ? "" : "s") + " left today. " : "") +
+  out.push("", (left != null ? "⚡ " + left + " trial code" + (left === 1 ? "" : "s") + " left. " : "") +
     PLUS_LINE, "<i>18+</i>");
   await say(out.join("\n"));
 }
 
 /* INSTRUCTIONS (28 Sep 2026): trim, keep, split, change, today. Each books
-   real codes, so each counts against the same two a day as a conversion -
+   real codes, so each counts against the same two-code trial as a conversion -
    a split into three costs three. Same fail-open rule on a count we cannot
    read. */
 async function quota(uid, cost) {
   const subject = subjectOf(uid), day = QUOTA.dayOf(Date.now());
-  const used = await SB.countBookings(subject, day, CONVERT_CAP).catch(() => ({ ok: false, n: null }));
+  const used = await SB.countBookings(subject, QUOTA.ALL_DAYS, CONVERT_CAP).catch(() => ({ ok: false, n: null }));
   return { subject, day, used, ok: !(used.ok && used.n + cost > CONVERT_CAP),
            left: (k) => (used.ok ? Math.max(0, CONVERT_CAP - used.n - k) : null) };
 }
@@ -197,8 +199,10 @@ async function onAsk(msg, ask, book, code, legs) {
   const cost = ask.kind === "split" ? ask.n : 1;
   const q = await quota(msg.from && msg.from.id, cost);
   if (!q.ok) {
-    await say("🔥 That needs " + cost + " new code" + (cost === 1 ? "" : "s") + " and you've used your " + CONVERT_CAP +
-      " for today.\n\n" + PLUS_LINE);
+    const have = q.left(0);
+    await say("🔥 That needs " + cost + " new code" + (cost === 1 ? "" : "s") + " and you have " +
+      (have ? have + " trial code" + (have === 1 ? "" : "s") + " left" : "used your " + CONVERT_CAP + " trial codes") +
+      ".\n\n" + PLUS_LINE);
     return;
   }
   const fx = await fixtures();
@@ -221,7 +225,7 @@ async function onAsk(msg, ask, book, code, legs) {
     await say(out.join("\n"), convertButtons(book, r.code));
     return true;
   };
-  const tail = (k) => { const l = q.left(k); return (l != null ? "⚡ " + l + " code" + (l === 1 ? "" : "s") + " left today. " : "") +
+  const tail = (k) => { const l = q.left(k); return (l != null ? "⚡ " + l + " trial code" + (l === 1 ? "" : "s") + " left. " : "") +
     PLUS_LINE + "\n<i>18+</i>"; };
 
   if (ask.kind === "trim" || ask.kind === "keep") {
@@ -296,7 +300,7 @@ async function onToday(msg, ask) {
   const book = ask.book || "sporty", B = D.BOOK_NAMES[book];
   const q = await quota(msg.from && msg.from.id, 1);
   if (!q.ok) {
-    await say("🔥 You've used your " + CONVERT_CAP + " codes for today. " + PLUS_LINE);
+    await say("🔥 You've used your " + CONVERT_CAP + " trial codes. " + PLUS_LINE);
     return;
   }
   tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
@@ -320,7 +324,7 @@ async function onToday(msg, ask) {
     lines.push(esc(D.label(x.leg)) + (p ? " · <b>" + pc(p) + "</b>" : ""));
   }
   const l = q.left(1);
-  lines.push("", (l != null ? "⚡ " + l + " code" + (l === 1 ? "" : "s") + " left today. " : "") +
+  lines.push("", (l != null ? "⚡ " + l + " trial code" + (l === 1 ? "" : "s") + " left. " : "") +
     "Every graded code on <a href=\"" + SITE + "/booking-codes\">soccerwizard.live</a>", "<i>Estimates, not certainties. 18+</i>");
   await say(lines.join("\n"), convertButtons(book, r.code));
 }
