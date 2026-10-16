@@ -62,6 +62,7 @@ jobs:
     needs: mint
     if: ${{ always() }}
     uses: ./.github/workflows/canary.yml
+    secrets: inherit   # SW_BOT_DEVICE, the exempt id the canary books with
 
   mint:
     runs-on: ubuntu-latest
@@ -113,6 +114,8 @@ jobs:
       # the right answer is no code today rather than a code we cannot stand
       # behind tomorrow.
       - name: Mint
+        env:
+          SW_BOT_DEVICE: ${{ secrets.SW_BOT_DEVICE }}
         run: |
           node scripts/mkcode.js \
             --legs=${{ inputs.legs || '5' }} \

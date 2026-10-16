@@ -80,6 +80,8 @@ jobs:
       # Exits non-zero if any book fails, so the run goes red and GitHub mails
       # it. A canary nobody is told about is a log line.
       - name: Book and read back
+        env:
+          SW_BOT_DEVICE: ${{ secrets.SW_BOT_DEVICE }}
         run: |
           node scripts/canary.js \
             ${{ inputs.books && format('--books={0}', inputs.books) || '' }} \

@@ -141,7 +141,9 @@ async function canary(key) {
     });
     r = await fetch(ORIGIN + "/api/book?book=" + key, {
       method: "POST",
-      headers: { "User-Agent": UA, "Content-Type": "application/json" },
+      /* An exempt device id, as scripts/mkcode.js: signed out books nothing since the trial. */
+      headers: Object.assign({ "User-Agent": UA, "Content-Type": "application/json" },
+        process.env.SW_BOT_DEVICE ? { "x-sw-device": process.env.SW_BOT_DEVICE } : {}),
       body: JSON.stringify({ selections: sels }),
     });
     d = await r.json().catch(() => null);

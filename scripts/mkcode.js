@@ -196,7 +196,10 @@ function slipOdds(legs) {
 async function bookSlip(which, selections) {
   const got = await getJson(ORIGIN + "/api/book?book=" + which, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    /* Signed out books nothing since the trial (16 Oct 2026, lib/bookgate.js); an
+       exempt device id (SW_BOT_DEVICE, also listed in Vercel's SW_QUOTA_EXEMPT) still does. */
+    headers: Object.assign({ "Content-Type": "application/json", Accept: "application/json" },
+      process.env.SW_BOT_DEVICE ? { "x-sw-device": process.env.SW_BOT_DEVICE } : {}),
     body: JSON.stringify({ selections: selections }),
   });
   const d = got.body || {};
