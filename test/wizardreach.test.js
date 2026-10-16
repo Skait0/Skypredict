@@ -107,7 +107,7 @@ const api = new Function("STUB", [
   konst("SAFE_UNPRICED"), konst("BOOK_ONLY"), konst("CORNER_CODES"), konst("TEAM_CORNER_CODES"),
   konst("SHOTS_CODES"), konst("TEAM_SHOTS_CODES"), konst("HCAP_CODES"), konst("ESTIMATE_SHRINK"),
   "function curBook(){return {key:'sporty',label:'SportyBet',full:true,odds:'sportyOdds',id:'eventId'};}",
-  konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
+  konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"), konst("BETSLIP_MAX"), grab("slipMax"),
   konst("HIGH_SCORING_O25"), (src.match(/var DC_MIN_FAV=[^;]*;/) || [""])[0], (src.match(/var HIGH_SCORING_LEAGUES=\[[\s\S]*?\];/) || [""])[0], konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
   konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"), konst("SPREAD_PEN"), konst("SPREAD_CAP"), grab("overExposed"), konst("HCAP_DOG_BAR"), konst("BANKERS"), grab("bankersOn"), konst("BEST_CHANCE"), grab("bestChanceOn"), grab("bookQuotes"), grab("dogHcap"), grab("judgedP"), konst("SPREAD_MULT"),
   (/^var WSP=\{[\s\S]*?\};/m.exec(src) || [""])[0],
