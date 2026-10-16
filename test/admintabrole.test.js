@@ -105,7 +105,11 @@ test("the open account panel comes back after a refresh, Admin only for the admi
       "\nfunction admin(){ opened.push('admin'); } function profile(){ opened.push('profile'); } function settings(){ opened.push('settings'); } function plus(){ opened.push('plus'); } function paidReturn(){} function passLink(){}\nrestore();", ctx);
     return { opened, left: ss.m["sw.acctview"] };
   }
-  assert.deepStrictEqual(run("admin", true).opened, ["admin"], "the admin, confirmed by the server, is back on Admin");
+  /* Owner, 16 Oct 2026: a refresh with Admin open always lands home - it used to
+     reopen only when the server's answer came in time, so it was never the same twice. */
+  const real = run("admin", true);
+  assert.deepStrictEqual(real.opened, [], "a refresh never reopens Admin, even for the admin");
+  assert.strictEqual(real.left, undefined, "and forgets it was open");
   const fake = run("admin", false);
   assert.deepStrictEqual(fake.opened, [], "a stored 'admin' alone opens nothing");
   assert.strictEqual(fake.left, undefined, "and is forgotten");

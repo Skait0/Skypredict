@@ -572,12 +572,16 @@
   }
   /* THE OPEN PANEL SURVIVES A REFRESH (owner, 14 Oct 2026: "when i refresh on the
      admin page, it takes me back to the home page"). Kept for this tab only;
-     restore() reopens it once /api/me has answered, Admin only for the admin. */
+     restore() reopens it once /api/me has answered.
+     EXCEPT ADMIN (owner, 16 Oct 2026: "sometimes I refresh and it stays open" - it
+     reopened only when the server's admin answer came in time, so it was never the
+     same twice). A refresh with Admin open always lands on the home page; Admin is
+     one tap away in the bottom bar and the avatar menu. */
   function mark(k){ try{ if(k) root.sessionStorage.setItem("sw.acctview",k); else root.sessionStorage.removeItem("sw.acctview"); }catch(e){}
     if(root.swNavMark) root.swNavMark(k); }
   function restore(){
     var k=null; try{ k=root.sessionStorage.getItem("sw.acctview"); }catch(e){}
-    if(k==="admin"){ if(role()==="admin") admin(); else mark(null); }
+    if(k==="admin") mark(null);
     else if(k==="profile") profile();
     else if(k==="settings") settings();
     else if(k==="plus") plus();
