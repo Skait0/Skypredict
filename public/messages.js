@@ -114,7 +114,20 @@
     "<p><b><span class=\"m-glow\">Why the Wizard?</span></b> Our picks are numbers, not vibes. We show our record every day, wins and losses, so you always know how we are doing. Six bookies, one place, free.</p>"+
     "<p>Got a question, an idea or feedback? Reply right here, the Wizard reads every message. Or find us on <a href=\"https://t.me/soccerwizardTG\" target=\"_blank\" rel=\"noopener nofollow\">Telegram</a> or <a href=\"https://x.com/soccerwizardhq\" target=\"_blank\" rel=\"noopener nofollow\">X</a> "+emo("2728","sparkles")+"</p>"+
     "<p class=\"m-small\">18+ · Stake only what you can afford to lose.</p>";
-  var api={clean:clean,textOf:textOf,isEmpty:isEmpty,okHref:okHref,EMO:EMO,MOT:MOT,WIZ:WIZ_EMO,WELCOME:WELCOME};
+  /* GIFT A PASS (owner, 16 Oct 2026): the message a gifted user gets, built here so
+     the server (api/account.js) and the admin's preview are the same words. A gift
+     opens with the gift box, in gold like the welcome; a reimbursement says so,
+     plainly. No `until` (the preview) leaves the date out: the server stacks the
+     days on whatever pass they hold, so only it knows the end. */
+  function giftHtml(reason,label,until,note){
+    var day=until?new Date(until).toLocaleDateString("en-GB",{day:"numeric",month:"short",timeZone:"Africa/Lagos"}):"";
+    var head=reason==="gift"?"<h3 class=\"m-big m-gold\">"+emo("1f381","gift")+" A gift from Soccerwizard</h3>":"<h3 class=\"m-big\">Reimbursement</h3>";
+    var line="We've put a "+label+" on your account"+(reason==="gift"?", on us":" to make it right")+
+      ": 20 booking codes a day"+(day?" until "+day:"")+".";
+    var esc=function(s){ return String(s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); };
+    return head+"<p>"+line+"</p>"+(note?"<p>"+esc(note).replace(/\n/g,"<br>")+"</p>":"");
+  }
+  var api={clean:clean,textOf:textOf,isEmpty:isEmpty,okHref:okHref,EMO:EMO,MOT:MOT,WIZ:WIZ_EMO,WELCOME:WELCOME,giftHtml:giftHtml};
   if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
   if(!root.document) return;
 
@@ -193,6 +206,13 @@
     ".swm-emos{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:4px;max-height:210px;overflow-y:auto}"+
     ".swm-emos button{aspect-ratio:1;border:0;border-radius:8px;background:none;cursor:pointer;padding:4px}.swm-emos button:hover{background:var(--raise)}.swm-emos img{width:100%;height:100%}"+
     ".swm-gifs{columns:3 96px;column-gap:6px;max-height:260px;overflow-y:auto;margin-top:8px}.swm-gifs button{display:block;width:100%;border:0;padding:0;margin:0 0 6px;background:none;cursor:pointer;border-radius:6px;overflow:hidden}.swm-gifs img{width:100%;display:block}"+
+    /* gift a pass (admin reader card) */
+    ".swm-giftf{margin:2px 0 16px}.swm-giftf .swa-lbl{margin:14px 0 6px}.swm-giftf .swa-lbl small{font-weight:600;margin-left:4px}"+
+    ".swm-giftf .swa-seg{display:inline-flex;flex-wrap:wrap}"+
+    ".swm-gnote{display:block;height:auto;min-height:84px;padding:10px 12px;font-size:14px;font-weight:500;line-height:1.5;resize:vertical}"+
+    ".swm-gprev{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.55;color:var(--soft);overflow-wrap:anywhere}"+
+    ".swm-gprev h3{margin:0 0 6px;font-size:15px}.swm-gprev p{margin:0 0 6px}.swm-gprev p:last-child{margin:0}"+
+    ".swm-giftf .swa-outbtn{margin:16px 0 0}"+
     ".swm-row{display:flex;gap:6px}.swm-row .swa-in{flex:1;height:38px;font-size:14px}.swm-fine{font-size:11px;color:var(--faint);margin:6px 2px 0}"+
     /* who it goes to */
     ".swm-to{display:flex;gap:6px;margin:0 0 10px}.swm-to button{flex:1;height:38px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--soft);font:inherit;font-size:13px;font-weight:800;cursor:pointer}"+
@@ -731,17 +751,24 @@
           "<div class='swm-acts'><button type='button' class='swa-pillbtn' data-msg>Message them</button>"+
             (r.role!=="admin"?"<button type='button' class='swa-pillbtn' data-ff='"+(r.ff?"revoke":"grant")+"'>"+(r.ff?"Remove Family & friends":"Give Family & friends")+"</button>":"")+
             ((r.devices||[]).length&&r.role!=="admin"?"<button type='button' class='swa-pillbtn' data-out>Sign out everywhere</button>":"")+
-            (r.role!=="admin"?"<button type='button' class='swa-pillbtn' data-gift aria-expanded='false'>Gift a pass</button>":"")+"</div>"+
-          /* GIFT A PASS (owner, 16 Oct 2026): POST /api/account/gift. The reader
-             gets an inbox message: a gift box for a gift, "Reimbursement" for one. */
-          (r.role!=="admin"?"<div class='swa-card swm-giftf' hidden>"+
-            "<label class='swa-lbl' for='swmGiftPass'>Pass</label><select class='swa-in' id='swmGiftPass'>"+
-              "<option value='day'>Day pass</option><option value='week'>Week pass</option><option value='month'>Month pass</option></select>"+
-            "<label class='swa-lbl' for='swmGiftWhy'>Reason</label><select class='swa-in' id='swmGiftWhy'>"+
-              "<option value='gift'>🎁 Gift</option><option value='reimburse'>Reimbursement</option></select>"+
-            "<label class='swa-lbl' for='swmGiftNote'>Message to them (optional)</label>"+
-            "<textarea class='swa-in' id='swmGiftNote' rows='3' maxlength='500' placeholder='Thanks for sticking with us.'></textarea>"+
-            "<div class='swm-acts'><button type='button' class='swa-pillbtn swa-pgo' data-giftgo>Give it</button></div></div>":"")+
+            (r.role!=="admin"?"<button type='button' class='swa-pillbtn' data-gift aria-expanded='false' aria-controls='swmGift'>Gift a pass</button>":"")+"</div>"+
+          /* GIFT A PASS (owner, 16 Oct 2026): POST /api/account/gift. Laid out like the
+             admin's other forms - fields on the ground, the same segmented control as
+             Settings for the two choices, one full-width gold action that names what it
+             gives - with the user's message previewed from the same words the server
+             sends (giftHtml). */
+          (r.role!=="admin"?"<div class='swm-giftf' id='swmGift' hidden>"+
+            "<span class='swa-lbl' id='swmGiftPassL'>Pass</span>"+
+            "<div class='swa-seg' role='group' aria-labelledby='swmGiftPassL' data-gseg='pass'>"+
+              "<button type='button' data-v='day' aria-pressed='true'>Day</button><button type='button' data-v='week' aria-pressed='false'>Week</button>"+
+              "<button type='button' data-v='month' aria-pressed='false'>Month</button></div>"+
+            "<span class='swa-lbl' id='swmGiftWhyL'>Reason</span>"+
+            "<div class='swa-seg' role='group' aria-labelledby='swmGiftWhyL' data-gseg='why'>"+
+              "<button type='button' data-v='gift' aria-pressed='true'>Gift</button><button type='button' data-v='reimburse' aria-pressed='false'>Reimbursement</button></div>"+
+            "<label class='swa-lbl' for='swmGiftNote'>Note to them <small>optional</small></label>"+
+            "<textarea class='swa-in swm-gnote' id='swmGiftNote' rows='3' maxlength='500' placeholder='Thanks for sticking with us.'></textarea>"+
+            "<span class='swa-lbl'>What they'll see</span><div class='swm-gprev' aria-live='polite'></div>"+
+            "<button type='button' class='swa-outbtn swa-go' data-giftgo></button></div>":"")+
           "<div class='swa-card'>"+row("Joined",esc(when(r.created_at)+" · "+ago(r.created_at)))+row("Last seen",esc(ago(r.last_seen_at)||"never"))+
             row("Signed in on",devs)+row("Default bookmaker",esc(BOOK[r.book]||"Not set"))+row("Theme",r.theme==="light"?"Light":"Dark")+
             row("Record",esc((rec.won|0)+" won of "+(rec.settled|0)+" settled"))+row("Codes booked",codes)+"</div>"+
@@ -756,20 +783,33 @@
           if(c2===200){ say("Done."); readers=null; open(id); } else { ff.disabled=false; say("Something went wrong. Try again."); } }); };
         var gift=card.querySelector("[data-gift]"), gf=card.querySelector(".swm-giftf");
         if(gift&&gf){
-          gift.onclick=function(){ gf.hidden=!gf.hidden; gift.setAttribute("aria-expanded",String(!gf.hidden)); if(!gf.hidden) gf.querySelector("select").focus(); };
-          var go=gf.querySelector("[data-giftgo]");
+          var PASS={day:"Day pass",week:"Week pass",month:"Month pass"};
+          var go=gf.querySelector("[data-giftgo]"), note=gf.querySelector("#swmGiftNote"), prev=gf.querySelector(".swm-gprev");
+          var pick=function(k){ var on=gf.querySelector("[data-gseg='"+k+"'] [aria-pressed='true']"); return on&&on.getAttribute("data-v"); };
+          /* The preview and the button follow every choice, so what is given is never a guess. */
+          var paint=function(){
+            var p=pick("pass"), w=pick("why");
+            prev.innerHTML=clean(giftHtml(w,PASS[p],null,note.value.replace(/^\s+|\s+$/g,"")));
+            go.textContent="Give "+PASS[p]+(w==="gift"?" as a gift":" as a reimbursement");
+          };
+          gf.querySelectorAll("[data-gseg] button").forEach(function(b){ b.onclick=function(){
+            b.parentNode.querySelectorAll("button").forEach(function(x){ x.setAttribute("aria-pressed",String(x===b)); }); paint(); }; });
+          note.oninput=paint;
+          paint();
+          gift.onclick=function(){ gf.hidden=!gf.hidden; gift.setAttribute("aria-expanded",String(!gf.hidden));
+            if(!gf.hidden) gf.querySelector("[data-gseg] [aria-pressed='true']").focus(); };
           go.onclick=function(){
-            var pass=gf.querySelector("#swmGiftPass"), why=gf.querySelector("#swmGiftWhy");
-            var what=pass.options[pass.selectedIndex].text+" as "+(why.value==="gift"?"a gift":"a reimbursement");
-            if(!root.confirm("Give "+nameOf(r)+" a "+what+"?")) return;
-            go.disabled=true;
-            a.req("POST","/api/account/gift",{id:r.id,pass:pass.value,reason:why.value,note:gf.querySelector("#swmGiftNote").value},function(c2,j){
-              go.disabled=false;
+            if(!root.confirm(go.textContent+" to "+nameOf(r)+"?")) return;
+            go.disabled=true; var was=go.textContent; go.textContent="Giving…";
+            a.req("POST","/api/account/gift",{id:r.id,pass:pick("pass"),reason:pick("why"),note:note.value},function(c2,j){
+              go.disabled=false; go.textContent=was;
               if(c2===200&&j&&j.ok){
                 var d=new Date(j.until).toLocaleDateString("en-GB",{day:"numeric",month:"short"});
-                say("Given. Their pass runs until "+d+(j.sent?"":" - the message did not send, tell them yourself")+".");
+                say("Given. "+nameOf(r)+"'s pass now runs until "+d+"."+(j.sent?"":" The message didn't send, so tell them yourself."));
                 open(id);
-              } else say(c2===503?"Could not give it. Has sql/gifts.sql been run in Supabase?":"Something went wrong. Try again.");
+              } else say(c2===503?"Couldn't give it. Has sql/gifts.sql been run in Supabase?":
+                /* No answer may still have been given: check before a second try gifts twice. */
+                !c2?"No answer. Reopen their profile and check their plan before trying again.":"Something went wrong. Nothing was given. Try again.");
             });
           };
         }

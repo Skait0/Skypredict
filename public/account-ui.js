@@ -126,13 +126,26 @@
   function profileHtml(o){
     return "<label class='swa-lbl' for='swaName'>Name on your slips</label>"+
       "<input class='swa-in' id='swaName' maxlength='24' autocomplete='nickname' value=\""+esc(o.name)+"\">"+
-      pickerHtml(o.avatar,o.role,o.personal)+recordHtml(o.record)+subHtml(o.quota,o.role,o.plan,o.plusUntil)+tgHtml();
+      pickerHtml(o.avatar,o.role,o.personal)+recordHtml(o.record)+subHtml(o.quota,o.role,o.plan,o.plusUntil)+tgHtml(o.role);
   }
   /* CONNECT TELEGRAM (owner, 16 Oct 2026; lib/tglink.js): ties the bot to this
-     account, so a Wizard Pass works in the bot too. */
-  function tgHtml(){
+     account, so a Wizard Pass works in the bot too. A real link, filled by tgFill
+     when the panel opens (so it opens in a new tab like any link, and says whether
+     this account is already connected); the click handler covers a stale one. */
+  function tgPitch(role){ return role==="plus"||role==="ff"||role==="admin"?"Use your Wizard Pass in the bot too.":"Book and convert codes from a chat."; }
+  function tgHtml(role){
     return "<p class='swa-h'>Telegram bot</p><div class='swa-card'><div class='swa-set'><span class='swa-st'><b>Wizard's Eye</b>"+
-      "<small>Connect it to use your pass there too.</small></span><button class='swa-pillbtn' type='button' data-tglink>Connect Telegram</button></div></div>";
+      "<small id='swaTgT'>"+tgPitch(role)+"</small></span>"+
+      "<a class='swa-pillbtn swa-tgbtn' data-tglink target='_blank' rel='noopener'>Connect</a></div></div>";
+  }
+  function tgFill(v,role){
+    var b=v.querySelector("[data-tglink]"), t=v.querySelector("#swaTgT");
+    if(!b||!root.swAcct) return;
+    root.swAcct.req("GET","/api/account/tglink",null,function(code,j){
+      if(code!==200||!j||!j.url) return;
+      b.href=j.url; b.setAttribute("data-at",String(Date.now()));
+      if(j.linked){ b.textContent="Reconnect"; if(t) t.textContent="Connected. "+tgPitch(role).replace(" too","").replace("Use","You can use"); }
+    });
   }
   function grantsHtml(list){
     if(!list.length) return "<div class='swa-set'><span class='swa-st'><small>No one yet. Add an email above.</small></span></div>";
@@ -431,7 +444,7 @@
     /* Passes: Saira numerals for the price, the month marked with a flat tag. */
     ".swa-fw{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:var(--r-sm);border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:800}"+
     ".swa-mplus{color:var(--accent)}.swa-mplus svg{color:var(--accent)}.swa-mplus .swa-r{font-size:11.5px;font-weight:700}"+
-    ".swa-pgo{margin-left:auto;border-color:var(--accent);color:var(--accent);white-space:nowrap}"+
+    ".swa-tgbtn{flex:none;text-decoration:none;white-space:nowrap}.swa-pgo{margin-left:auto;border-color:var(--accent);color:var(--accent);white-space:nowrap}"+
     ".swa-passes{display:grid;gap:11px;margin:0}"+
     ".swa-pass{position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:66px;padding:11px 16px 11px 48px;border:1.5px solid var(--line);border-radius:12px;"+
       "background:var(--card);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .18s,background-color .18s}"+
@@ -479,11 +492,15 @@
   });
   /* Any [data-plus] on the page opens Plus: the code-limit message, the plan card. */
   d.addEventListener("click",function(e){ var b=e.target.closest&&e.target.closest("[data-plus]"); if(b){ e.preventDefault(); plus(); } });
-  /* [data-tglink]: fetch a fresh 15-minute link and open the bot on it. Same tab, so
-     iOS opens the Telegram app rather than blocking a pop-up after the wait. */
+  /* [data-tglink]: a link tgFill filled in the last 10 minutes opens as itself, in a
+     new tab. One not filled yet, or near its 15-minute end, is fetched afresh and
+     opened in this tab: a pop-up after the wait is blocked, and on a phone the same
+     tab hands straight over to the Telegram app. */
   d.addEventListener("click",function(e){ var b=e.target.closest&&e.target.closest("[data-tglink]"); if(!b||!root.swAcct) return;
-    e.preventDefault(); b.disabled=true; var was=b.textContent; b.textContent="Opening...";
-    root.swAcct.req("GET","/api/account/tglink",null,function(code,j){ b.disabled=false; b.textContent=was;
+    if(b.getAttribute("href")&&Date.now()-(+b.getAttribute("data-at")||0)<10*60e3) return;
+    e.preventDefault(); if(b.getAttribute("aria-busy")) return;
+    b.setAttribute("aria-busy","true"); var was=b.textContent; b.textContent="Opening…";
+    root.swAcct.req("GET","/api/account/tglink",null,function(code,j){ b.removeAttribute("aria-busy"); b.textContent=was;
       if(code===200&&j&&j.url) root.location.href=j.url; else b.textContent="Try again"; }); });
   function acct(){ return root.swAcct||{st:{email:""}}; }
   /* Admin only once the server has said so in this page view (index.html saveRole, swAdminLive). */
@@ -611,6 +628,7 @@
       avatar:root.swAvatarKey?root.swAvatarKey():"fire",role:role(),personal:lsGet("sw.personal"),plan:lsGet("sw.plan"),plusUntil:lsGet("sw.plusUntil"),
       record:root.swRecord?root.swRecord():{built:0,won:0,settled:0},
       quota:root.swQuotaToday?root.swQuotaToday():null}));
+    tgFill(v,role());
     var nm=v.querySelector("#swaName");
     nm.addEventListener("change",function(){
       var t=nm.value.replace(/^\s+|\s+$/g,"").replace(/[<>]/g,"").slice(0,24);

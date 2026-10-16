@@ -108,11 +108,12 @@ test("the account panel's link opens the bot with a token for this reader", asyn
   const db = fakeDb(clock);
   const u = await db.createUser({ email: "fan@x.com" });
   const cookie = S.COOKIE + "=" + (await S.startSession(db, u.id, "Chrome/129 Android", clock())).token;
-  const h = account.make({ db, now: clock, env: { AUTH_PEPPER: SECRET } });
+  const h = account.make({ db, now: clock, env: { AUTH_PEPPER: SECRET }, tgLinked: async (uid) => uid === u.id });
   const r = fakeRes();
   await h(Object.assign(getReq("account", {}, { cookie }), { query: { action: "tglink" } }), r);
   assert.strictEqual(r.code, 200);
   const m = /^https:\/\/t\.me\/Soccerwizardhqbot\?start=link_(.+)$/.exec(r.json().url);
   assert.ok(m);
   assert.strictEqual(L.readToken(m[1], NOW, SECRET), u.id);
+  assert.strictEqual(r.json().linked, true, "and says this account is already connected");
 });

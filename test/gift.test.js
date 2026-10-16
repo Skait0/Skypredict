@@ -47,7 +47,8 @@ test("a gift adds the pass and opens the message with a gift box", async () => {
   assert.deepStrictEqual(w.gifts, [{ uid: w.plain.id, pass: "week", days: 7, reason: "gift" }]);
   const body = w.inbox[0].body;
   assert.strictEqual(w.inbox[0].user_id, w.plain.id);
-  assert.match(body, /^<p>🎁 <b>A gift from Soccerwizard<\/b><\/p>/);
+  assert.match(body, /^<h3 class="m-big m-gold"><img class="m-emo" src="\/emo\/1f381\.webp" alt="gift"[^>]*> A gift from Soccerwizard<\/h3>/,
+    "the gift box, drawn as the site's own emoji, before the message");
   assert.match(body, /Week pass on your account, on us: 20 booking codes a day until 23 Oct/);
   assert.match(body, /Thanks for &lt;b&gt;sticking&lt;\/b&gt; with us/, "the note is text, never markup");
   assert.match(w.pings[0].note.title, /🎁/);
@@ -59,8 +60,8 @@ test("a reimbursement says so, with no gift box", async () => {
   const r = await w.call(w.boss, { id: w.plain.id, pass: "month", reason: "reimburse" });
   assert.strictEqual(r.code, 200);
   assert.strictEqual(w.gifts[0].days, 30);
-  assert.match(w.inbox[0].body, /^<p><b>Reimbursement<\/b><\/p>/);
-  assert.ok(!/🎁/.test(w.inbox[0].body));
+  assert.match(w.inbox[0].body, /^<h3 class="m-big">Reimbursement<\/h3>/);
+  assert.ok(!/1f381/.test(w.inbox[0].body), "no gift box on a reimbursement");
   assert.match(w.pings[0].note.title, /Reimbursement/);
 });
 
@@ -86,4 +87,12 @@ test("a message that fails to send still leaves the pass given, and says so", as
   assert.strictEqual(r.code, 200);
   assert.strictEqual(r.json().sent, false);
   assert.strictEqual(w.gifts.length, 1);
+});
+
+test("the admin's preview is the server's message, less the date it cannot know", () => {
+  const MSG = require("../public/messages.js");
+  const prev = MSG.giftHtml("gift", "Week pass", null, "Hi");
+  assert.match(prev, /Week pass on your account, on us: 20 booking codes a day\./);
+  assert.ok(!/until/.test(prev), "the server stacks days, so only it knows the end");
+  assert.strictEqual(MSG.clean(prev), prev, "nothing in it is stripped on the way to the inbox");
 });

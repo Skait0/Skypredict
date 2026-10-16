@@ -42,17 +42,7 @@ function cleanReply(raw) {
 /* Gifts (action "gift"): the pass lengths and names are the ones sold (api/pay.js). */
 const { PASSES } = require("./pay.js");
 const GIFT_REASONS = ["gift", "reimburse"], GIFT_NOTE_MAX = 500;
-const escHtml = (x) => String(x).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[c]);
-/* The inbox message. A gift opens with a gift box; a reimbursement says so. */
-function giftHtml(reason, label, until, note) {
-  const day = new Date(until).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Africa/Lagos" });
-  const head = reason === "gift" ? "🎁 <b>A gift from Soccerwizard</b>" : "<b>Reimbursement</b>";
-  const line = reason === "gift"
-    ? "We've put a " + label + " on your account, on us: 20 booking codes a day until " + day + "."
-    : "We've put a " + label + " on your account to make it right: 20 booking codes a day until " + day + ".";
-  return "<p>" + head + "</p><p>" + line + "</p>" +
-    (note ? "<p>" + escHtml(note).replace(/\n/g, "<br>") + "</p>" : "");
-}
+/* The inbox message is MSG.giftHtml (public/messages.js), shared with the admin's preview. */
 function make(deps) {
   const { db } = deps;
   const now = deps.now || Date.now;
@@ -70,6 +60,8 @@ function make(deps) {
   const admin = deps.admin || { stats: () => require("../lib/supabase.js").adminStats(),
     slipsOf: (subject) => require("../lib/supabase.js").slipsBySubject(subject, 10) };
   const msgs = deps.msgs || require("../lib/messages.js");
+  /* Connect Telegram's "Connected" line (sql/tglinks.sql); a dep so tests need no database. */
+  const tgLinked = deps.tgLinked || ((uid) => require("../lib/supabase.js").tgLinkedFor(uid));
   /* A new message pings the readers' phones: the line is stored on each of their
      subscriptions, then an empty push goes out. Overnight (22:00-06:00 Lagos)
      the line waits for the 9am push, like "your slip landed". Returns phones pinged. */
@@ -298,7 +290,7 @@ function make(deps) {
           /* null: sql/gifts.sql not run yet, or the database refused. Nothing was given. */
           if (!until) return H.sendJson(res, 503, { error: "unavailable" });
           const at = new Date(t).toISOString();
-          const html = MSG.clean(giftHtml(reason, P.label, until, note));
+          const html = MSG.clean(MSG.giftHtml(reason, P.label, until, note));
           let sent = false;
           try { sent = !!(await msgs.add([{ created_at: at, user_id: u.id, from_admin: true, body: html }])); }
           catch (e) { await report(e, { route: "account/gift-msg" }); }
@@ -328,7 +320,9 @@ function make(deps) {
       if (action === "tglink") {
         const token = require("../lib/tglink.js").makeToken(s.userId, t, env.AUTH_PEPPER);
         if (!token) return H.sendJson(res, 503, { error: "unavailable" });
-        return H.sendJson(res, 200, { url: "https://t.me/" + TG_BOT + "?start=link_" + token });
+        let linked = null;
+        try { linked = await tgLinked(s.userId); } catch (e) { /* the link still works */ }
+        return H.sendJson(res, 200, { url: "https://t.me/" + TG_BOT + "?start=link_" + token, linked });
       }
       /* The inbox: the reader's thread, every broadcast, and the welcome, newest
          first. The admin's answer also says how many replies wait for them. */
