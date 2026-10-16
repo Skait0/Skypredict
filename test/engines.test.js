@@ -103,7 +103,7 @@ const api = new Function([
   "var USE={}; function slipUse(){return USE;}",
   konst("SAFE_UNPRICED"), konst("BOOK_ONLY"), konst("CORNER_CODES"), konst("TEAM_CORNER_CODES"), konst("SHOTS_CODES"), konst("TEAM_SHOTS_CODES"), konst("HCAP_CODES"), konst("ESTIMATE_SHRINK"),
   "var CURB={key:'sporty',label:'SportyBet',full:true,odds:'sportyOdds',id:'eventId'}; function curBook(){return CURB;}",
-  konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"),
+  konst("JACKPOT_ODDS"), konst("JACKPOT_LEG_CAP"), konst("BETSLIP_MAX"), grab("slipMax"),
   konst("HIGH_SCORING_O25"), (src.match(/var DC_MIN_FAV=[^;]*;/) || [""])[0], (src.match(/var HIGH_SCORING_LEAGUES=\[[\s\S]*?\];/) || [""])[0], konst("SA_MIN_EURO"), konst("ASIA_MIN_EURO"),
   konst("SA_COUNTRIES"), konst("ASIA_PREFIXES"),
   konst("SPREAD_PEN"), konst("SPREAD_CAP"), grab("overExposed"), konst("HCAP_DOG_BAR"), konst("BANKERS"), grab("bankersOn"), konst("BEST_CHANCE"), grab("bestChanceOn"), grab("bookQuotes"), grab("dogHcap"), grab("judgedP"), konst("SPREAD_MULT"),
@@ -946,4 +946,21 @@ test("the top fifth of the lever reaches further; Bankers keeps its count", () =
   api.BUILD.risk = 100;
   api.WSP.legodd = 1.4; const bal = api.buildPicks().length;
   assert.ok(bal > 35, "Balanced reaches past the old 35 at the end: " + bal);
+});
+
+test("no slip passes the bookmaker's own leg limit: 50, or 40 where the book says so", () => {
+  /* Owner, 16 Oct 2026: "52 legs? max is 50 ... for some bookies its 40 legs tops". */
+  reset();
+  const big = [];
+  for (let k = 0; k < 8; k++) BOARD.forEach((f) => big.push(priced(Object.assign({}, f, { home: f.home + " " + k, away: f.away + " " + k }))));
+  api.setFixtures(big);
+  api.BUILD.risk = 100;
+  for (const max of [undefined, 40]) {
+    api.setBook({ key: "sporty", label: "SportyBet", full: true, odds: "sportyOdds", id: "eventId", max });
+    for (const lo of [1.1, 1.25, 1.4, 1.7]) {
+      api.WSP.legodd = lo;
+      const n = api.buildPicks().length;
+      assert.ok(n <= (max || 50), `style ${lo}, book limit ${max || 50}: ${n} legs`);
+    }
+  }
 });

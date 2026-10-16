@@ -14939,13 +14939,17 @@ function buildPicks(neutral){
      sets the target total; More games and Fewer games then take legs in their own
      ranked order until they reach it - short legs need more games, long legs
      fewer. The count bound is generous (x1.6) so a style whose legs are short can
-     still get there; a board that cannot reach it stops at the bound. Not Bankers. */
+     still get there; a board that cannot reach it stops at the bound, and no slip ever
+     passes the book's own limit (slipMax). Not Bankers. */
   var target=0, loopCap=cap;
   if(ref){
     target=ref.reduce(function(t,c){ var o=legOdd(c.f,c.code,c.p,B); return t*(o>1?o:oddOf(c.p)); },1);
     cap=Math.max(0,ref.length);
-    loopCap=Math.max(cap,Math.min(60,Math.round(p.maxGames*1.6))-removedCount);   /* 60: no bookmaker takes a longer slip */
+    loopCap=Math.max(cap,Math.round(p.maxGames*1.6)-removedCount);
   }
+  /* NEVER MORE LEGS THAN THE BOOK TAKES (owner, 16 Oct 2026: "max is 50 ... for some
+     bookies its 40 legs tops"). slipMax is the selected bookmaker's limit. */
+  cap=Math.min(cap,slipMax(B)); loopCap=Math.min(loopCap,slipMax(B));
   /* Europe first. South American games are held back unless Europe can't fill
      the slip, or the user has reshuffled a couple of times and clearly wants a
      different mix. Once allowed in they're penalised rather than cut, so Europe
