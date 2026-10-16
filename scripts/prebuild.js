@@ -461,6 +461,7 @@ async function writePages(payload) {
     ["/how-to-load-a-booking-code", () => P.renderHowToCode()],
     ["/convert-a-booking-code", () => P.renderConvertPage()],
     ["/install", () => P.renderInstall()],
+    ["/wizard-pass", () => P.renderWizardPass()],
     ["/booking-codes", () => P.renderCodesHub(codeDays, resultOf)],
   ];
 

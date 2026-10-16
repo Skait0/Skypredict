@@ -25430,6 +25430,9 @@ load().catch(function(){});
     req("GET","/api/me",null,function(code,j){
       if(code===404||code===0||code>=500) return firstDone();            // off, offline or down: stay invisible, keep local
       st.known=true;
+      /* /?pass=1 signed out (the /wizard-pass button): sign in first, then back
+         here, where account-ui's passLink opens the Wizard Pass. */
+      if(code===401&&/[?&]pass=1(&|$)/.test(location.search)){ location.replace("/login?return="+encodeURIComponent("/?pass=1")); return firstDone(); }
       if(code===401){ readGate(); paintButton(); if(readMeta(ls)) signedOutHere(j.reason); return firstDone(); }
       if(!(code===200&&j&&j.signedIn===true)) return firstDone();        // any other 200 is not a signed-in answer: stay invisible
       st.on=true; st.email=j.email||""; saveRole(j); paintButton();

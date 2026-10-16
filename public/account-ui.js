@@ -568,7 +568,16 @@
     else if(k==="settings") settings();
     else if(k==="plus") plus();
     else if(k==="msgs"&&root.swMsg) root.swMsg.inbox();
+    passLink();
     paidReturn();
+  }
+  /* /?pass=1, from the /wizard-pass page's button (lib/pages.js renderWizardPass):
+     open the Wizard Pass, through sign-in when signed out. The flag leaves the
+     address so a refresh does not open it again. */
+  function passLink(){
+    if(!/[?&]pass=1(&|$)/.test(root.location.search)) return;
+    try{ root.history.replaceState(null,"",root.location.pathname+root.location.search.replace(/[?&]pass=1/,"").replace(/^&/,"?")+root.location.hash); }catch(e){}
+    plus();
   }
   function closeView(popped){ if(!viewEl||!viewEl.classList.contains("on")) return; viewEl.classList.remove("on"); mark(null);
     if(pushed){ pushed=false; if(popped!==true){ ownBack=true; try{ root.history.back(); }catch(e){ ownBack=false; } } } d.documentElement.classList.remove("locked");

@@ -102,7 +102,7 @@ test("the open account panel comes back after a refresh, Admin only for the admi
     const ctx = { root: { sessionStorage: ss, swAdminLive: live, swMsg: { inbox() { opened.push("msgs"); } } },
       lsGet: () => "admin", opened };
     vm.runInNewContext(cut("mark") + cut("role") + cut("restore") +
-      "\nfunction admin(){ opened.push('admin'); } function profile(){ opened.push('profile'); } function settings(){ opened.push('settings'); } function plus(){ opened.push('plus'); } function paidReturn(){}\nrestore();", ctx);
+      "\nfunction admin(){ opened.push('admin'); } function profile(){ opened.push('profile'); } function settings(){ opened.push('settings'); } function plus(){ opened.push('plus'); } function paidReturn(){} function passLink(){}\nrestore();", ctx);
     return { opened, left: ss.m["sw.acctview"] };
   }
   assert.deepStrictEqual(run("admin", true).opened, ["admin"], "the admin, confirmed by the server, is back on Admin");
