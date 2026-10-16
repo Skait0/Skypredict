@@ -2322,5 +2322,82 @@
       "betway": 4
     },
     "odds": 1.48
+  },
+  "2026-10-16": {
+    "date": "2026-10-16",
+    "generated": "2026-10-16T12:17:42.710Z",
+    "firstKickoff": "2026-10-16T16:30:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-16",
+        "home": "SK Rapid",
+        "away": "Hartberg",
+        "league": "Austria Bundesliga",
+        "kickoff": "2026-10-16T17:30:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.793,
+        "market": "1X",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-16",
+        "home": "Ein Frankfurt",
+        "away": "FC Koln",
+        "league": "Germany Bundesliga 1",
+        "kickoff": "2026-10-16T18:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.912,
+        "market": "OVER_1.5",
+        "odd": 1.09
+      },
+      {
+        "date": "2026-10-16",
+        "home": "Shooting Stars",
+        "away": "Ranchers Bees",
+        "league": "Nigeria Premier League",
+        "kickoff": "2026-10-16T17:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.823,
+        "market": "1X",
+        "odd": 1.08
+      },
+      {
+        "date": "2026-10-16",
+        "home": "Venlo",
+        "away": "Jong AZ",
+        "league": "Netherlands Eerste Divisie",
+        "kickoff": "2026-10-16T18:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.917,
+        "market": "OVER_1.5",
+        "odd": 1.09
+      },
+      {
+        "date": "2026-10-16",
+        "home": "Energie Cottbus",
+        "away": "Nurnberg",
+        "league": "Germany Bundesliga 2",
+        "kickoff": "2026-10-16T16:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.89,
+        "market": "OVER_1.5",
+        "odd": 1.09
+      }
+    ],
+    "codes": {
+      "sporty": "KQ4LZU",
+      "bet9ja": "5W2F7X8",
+      "betking": "4B2TAX",
+      "betpawa": "VXDYYFF",
+      "onexbet": "MJELU",
+      "betway": "BW7A5248FB"
+    },
+    "short": {
+      "betking": 4,
+      "betpawa": 4,
+      "onexbet": 4,
+      "betway": 4
+    },
+    "odds": 1.5
   }
 }
