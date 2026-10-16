@@ -218,7 +218,7 @@
      is remembered on this device. The two lists that grow carry their count on the
      tab, so a closed one still says what it holds. */
   /* Messages and Readers (owner, 14 Oct 2026) are filled by public/messages.js. */
-  var ADMIN_TABS=[["swaTMsg","Messages"],["swaTLk","Users"],["swaTSw","Switches"],["swaTStatus","Status"],["swaTNums","Numbers"],
+  var ADMIN_TABS=[["swaTMsg","Messages"],["swaTAlerts","Alerts"],["swaTLk","Users"],["swaTSw","Switches"],["swaTStatus","Status"],["swaTNums","Numbers"],
     ["swaTGrants","Family & friends"],["swaTHits","Won slips"],["swaTLog","Log"]];
   function adminHtml(list){
     var body={
@@ -243,7 +243,8 @@
         "<button class='swa-outbtn swa-go' id='swaGrant' type='button'>Give Family &amp; friends</button>"+
         "<div class='swa-card' id='swaGrants'>"+(list?grantsHtml(list):msg("Loading"))+"</div>",
       swaTHits:"<div class='swa-card' id='swaHits'>"+msg("Loading")+"</div>",
-      swaTLog:"<div class='swa-card' id='swaLog'>"+msg("Loading")+"</div>"};
+      swaTLog:"<div class='swa-card' id='swaLog'>"+msg("Loading")+"</div>",
+      swaTAlerts:"<div class='swa-card' id='swaAlerts'>"+msg("Loading")+"</div>"};
     return "<div class='swa-tabs' role='tablist' aria-label='Admin sections'>"+ADMIN_TABS.map(function(t){
         return "<button type='button' role='tab' class='swa-tab' id='"+t[0]+"B' data-tab='"+t[0]+"' aria-controls='"+t[0]+"' aria-selected='false'>"+
           esc(t[1])+"<small class='swa-cnt'></small></button>"; }).join("")+"</div>"+
@@ -278,6 +279,16 @@
     if(!rows.length) return msg("Nothing yet. Every change you make here, and every user you look up, is recorded.");
     return rows.map(function(r){
       return "<div class='swa-set'><span class='swa-st'><b>"+esc(logLine(r))+"</b><small>"+esc(r.admin_email+" · "+ago(r.at))+"</small></span></div>"; }).join("");
+  }
+  /* ALERTS (owner, 16 Oct 2026: "log every alert"): everything that came in, newest
+     first (api/account.js alerts, lib/alerts.js); a red dot on what arrived since this
+     device last opened the tab. Labels are words, not emoji (DESIGN.md). */
+  var ALERT_KIND={reply:"Reply",payment:"Payment",founder:"Founding Wizard",win:"Slip landed",signup:"New user"};
+  function alertsHtml(list,seen){
+    if(!list.length) return msg("Nothing yet. Replies, payments, landed slips and new users show up here.");
+    return list.map(function(x){ var fresh=Date.parse(x.at)>seen;
+      return "<div class='swa-set swa-al"+(fresh?" swa-alnew":"")+"'><span class='swa-st'><b>"+(fresh?"<i class='swa-aldot' aria-label='New'></i>":"")+esc(x.title)+"</b>"+
+        "<small><span class='swa-alk swa-alk-"+esc(x.kind)+"'>"+esc(ALERT_KIND[x.kind]||x.kind)+"</span>"+(x.detail?esc(x.detail)+" · ":"")+esc(ago(x.at))+"</small></span></div>"; }).join("");
   }
   function setCount(v,id,text){ var el=v.querySelector("[data-tab='"+id+"'] .swa-cnt"); if(el) el.textContent=text||""; }
   function wireTabs(v){
@@ -390,6 +401,9 @@
     ".swa-tab{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--soft);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}"+
     ".swa-tab[aria-selected='true']{background:var(--red-fill);border-color:transparent;color:#fff}.swa-tab:focus-visible{outline:2px solid var(--red);outline-offset:2px}"+
     ".swa-tab .swa-cnt{font-size:11px;font-weight:800;opacity:.85}.swa-tab .swa-cnt:empty{display:none}"+
+    ".swa-aldot{display:inline-block;width:8px;height:8px;border-radius:99px;background:var(--red);margin-right:7px;vertical-align:1px}"+
+    ".swa-alk{display:inline-block;margin-right:6px;padding:0 6px;border-radius:4px;background:var(--card-2);color:var(--soft);font-size:11px;font-weight:700}"+
+    ".swa-alk-founder,.swa-alk-win{color:var(--accent)}.swa-alk-payment{color:var(--green-ink)}"+
     ".swa-panel[hidden],.swa-set[hidden]{display:none!important}.swa-panel>.swa-card+.swa-lbl{margin-top:18px}"+
     ".swa-leg{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}.swa-leg>b{flex:0 0 46px;font-size:11px;text-transform:uppercase;letter-spacing:.04em}"+
     ".swa-leg span{flex:1;min-width:0;color:var(--soft)}.swa-leg span b{color:var(--text);font-size:13px}.swa-leg i{font-style:normal;color:var(--faint)}"+
@@ -864,6 +878,20 @@
       }; });
     }); }
     hitsLoad();
+    /* Alerts: the count on the tab is what came in since this device last opened it;
+       opening the tab shows the dots once, then counts them as seen. */
+    var alerts=[];
+    function alertsSeen(){ try{ return +localStorage.getItem("sw.alertsSeen")||0; }catch(e){ return 0; } }
+    function alertsPaint(){ var seen=alertsSeen(), n=alerts.filter(function(x){ return Date.parse(x.at)>seen; }).length;
+      v.querySelector("#swaAlerts").innerHTML=alertsHtml(alerts,seen); setCount(v,"swaTAlerts",n?String(n):""); }
+    function alertsRead(){ if(!alerts.length) return; alertsPaint();
+      try{ localStorage.setItem("sw.alertsSeen",String(Date.parse(alerts[0].at)||Date.now())); }catch(e){} setCount(v,"swaTAlerts",""); }
+    function alertsLoad(){ a.req("GET","/api/account/alerts",null,function(code,j){
+      if(code!==200){ v.querySelector("#swaAlerts").innerHTML=msg("Could not load alerts."); return; }
+      alerts=j.alerts||[]; alertsPaint();
+      var tb=v.querySelector("[data-tab='swaTAlerts']"); if(tb&&tb.getAttribute("aria-selected")==="true") alertsRead(); }); }
+    alertsLoad();
+    v.querySelector("[data-tab='swaTAlerts']").addEventListener("click",alertsRead);
     function logLoad(){ a.req("GET","/api/account/audit",null,function(code,j){
       v.querySelector("#swaLog").innerHTML=code===200?logHtml(j.log||[]):
         msg(code===503?"The log is not set up yet. Run sql/admin.sql in Supabase.":"Could not load the log."); }); }

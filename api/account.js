@@ -15,7 +15,7 @@ const { report } = require("../lib/report.js");
 const SW = require("../lib/slipwatch.js");
 
 const REAUTH_MS = 10 * 60e3;
-const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit", "readers", "reader", "threads", "gifs"];
+const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit", "readers", "reader", "threads", "gifs", "alerts"];
 const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle", "send", "unsend", "edit", "gift"];
 /* THE MESSAGE BOARD (owner, 14 Oct 2026; sql/messages.sql, public/messages.js):
    any signed-in reader reads their inbox, marks it read and replies in it. */
@@ -191,6 +191,18 @@ function make(deps) {
           if (!(await msgs.unsend(id, new Date(t).toISOString()))) return H.sendJson(res, 404, { error: "no_message" });
           await record("unsend", "message " + id);
           return H.sendJson(res, 200, { ok: true });
+        }
+        /* ALERTS (owner, 16 Oct 2026: "log every alert"): replies, paid passes,
+           landed slips and new accounts, newest first (lib/alerts.js). A source
+           that fails is left out rather than failing the list. */
+        if (action === "alerts") {
+          const safe = (p, d) => Promise.resolve().then(() => p()).catch(() => d);
+          const [messages, readers, payments, hits] = await Promise.all([
+            safe(() => msgs.all(), null), safe(() => msgs.readers(), null),
+            safe(() => (db.recentPayments ? db.recentPayments(50) : []), []), safe(() => slips.hits(50), null)]);
+          if (!messages && !readers) return H.sendJson(res, 503, { error: "unavailable" });
+          return H.sendJson(res, 200, { alerts: require("../lib/alerts.js").buildAlerts(
+            { messages, readers, payments, slips: hits && hits.rows }, 100) });
         }
         if (action === "audit") {
           const got = await audit.list(200);

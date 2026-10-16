@@ -89,7 +89,7 @@ const post = (who, action, body) => Object.assign(postReq("account", body, { coo
 
 test("every god-mode action is admin only", async () => {
   const w = await world();
-  for (const a of ["flags", "stats", "lookup"]) assert.strictEqual((await w.call(get(w.plain, a, { email: "a@b.com" }))).code, 403, a);
+  for (const a of ["flags", "stats", "lookup", "alerts"]) assert.strictEqual((await w.call(get(w.plain, a, { email: "a@b.com" }))).code, 403, a);
   for (const a of ["setflags", "signout"]) assert.strictEqual((await w.call(post(w.plain, a, { booksOff: ["sporty"], email: "boss@x.com" }))).code, 403, a);
   assert.deepStrictEqual(w.stored().booksOff, [], "a refused setflags wrote nothing");
 });
