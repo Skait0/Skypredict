@@ -1,5 +1,5 @@
 {
-  "_about": "Daily social drops (owner, 16 Oct 2026: 'lock all these plans ... dont forget the cover images'). One clip a day at 12:30 Lagos on X + Instagram (scheduled in Buffer) and Telegram (.github/workflows/promo-drop.yml reads this file). Feature posts at 19:00 Lagos on X + Telegram. Every Reel has its own cover (public/promo/covers). Rules: no 'free', no win promises, 18+, no em dashes, catchy first line.",
+  "_about": "Daily social drops (owner, 16 Oct 2026: 'lock all these plans ... dont forget the cover images'). One clip a day at 12:30 Lagos on X + Instagram (scheduled in Buffer) and Telegram (.github/workflows/promo-drop.yml reads this file). Feature posts at 19:00 Lagos on X + Telegram. Every Reel has its own cover (public/promo/covers). Rules: no 'free', no win promises, 18+, no em dashes, catchy first line. Buffer cannot send a custom cover image, so the Instagram file (igVideo) ends with the cover as a 0.6s still and the Reel cover is set with metadata.thumbnailOffset = coverMs.",
   "site": "https://www.soccerwizard.live",
   "drops": [
     {
@@ -9,7 +9,9 @@
       "video": "/promo/build-and-book.mp4",
       "cover": "/promo/covers/build-and-book.jpg",
       "x": "Your slip to a booking code in one tap 🧙\n\nBuild it, tap Get code, paste it in SportyBet, Bet9ja, BetKing, betPawa, 1xBet or Betway. Your slips follow you on every phone.\n\nsoccerwizard.live\n18+",
-      "ig": "Build it. Book it. 🧙\n\nTap Get code and your slip is ready to paste in SportyBet, Bet9ja, BetKing, betPawa, 1xBet or Betway. Your slips follow you on every phone and laptop.\n\nWhich bookie do you use? Tell us below 👇\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball"
+      "ig": "Build it. Book it. 🧙\n\nTap Get code and your slip is ready to paste in SportyBet, Bet9ja, BetKing, betPawa, 1xBet or Betway. Your slips follow you on every phone and laptop.\n\nWhich bookie do you use? Tell us below 👇\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
+      "igVideo": "/promo/build-and-book-ig.mp4",
+      "coverMs": 33600
     },
     {
       "date": "2026-10-18",
@@ -18,7 +20,9 @@
       "video": "/promo/the-penalty.mp4",
       "cover": "/promo/covers/the-penalty.jpg",
       "x": "Got 3 codes from 3 different bookies? 😤\n\nMerge them into one slip. Trim the weak legs. Split it into tickets. Convert it to any bookie. Picked by stats.\n\nsoccerwizard.live\n18+",
-      "ig": "Got 3 codes? Merge them. 🔮\n\nOne slip from codes on different bookies. Trim the weak legs, split it into tickets, convert it to any bookie.\n\nWhat is the most codes you have ever juggled at once? 👇\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball"
+      "ig": "Got 3 codes? Merge them. 🔮\n\nOne slip from codes on different bookies. Trim the weak legs, split it into tickets, convert it to any bookie.\n\nWhat is the most codes you have ever juggled at once? 👇\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
+      "igVideo": "/promo/the-penalty-ig.mp4",
+      "coverMs": 34900
     },
     {
       "date": "2026-10-19",
@@ -27,7 +31,9 @@
       "video": "/promo/more-and-proof.mp4",
       "cover": "/promo/covers/more-and-proof.jpg",
       "x": "Stats. Not luck. 📊\n\nEvery tip we post is graded against the final score, wins and losses, in public. Live scores, Wizard Penalty, and the pick of the day at 9am.\n\nsoccerwizard.live\n18+",
-      "ig": "Stats. Not luck. 📊\n\nEvery tip graded against the final score, in public. Losses included. That is the difference.\n\nLive scores, a game for halftime, and the pick of the day at 9am.\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball"
+      "ig": "Stats. Not luck. 📊\n\nEvery tip graded against the final score, in public. Losses included. That is the difference.\n\nLive scores, a game for halftime, and the pick of the day at 9am.\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
+      "igVideo": "/promo/more-and-proof-ig.mp4",
+      "coverMs": 21700
     },
     {
       "date": "2026-10-20",
@@ -36,7 +42,9 @@
       "video": "/promo/merge-codes.mp4",
       "cover": "/promo/covers/merge-codes.jpg",
       "x": "A SportyBet code and a Bet9ja code walk into the converter... 👀\n\nOne slip comes out. On the bookie you actually use.\n\nPaste them all at soccerwizard.live\n18+",
-      "ig": "Different bookies. One slip. 🔮\n\nPaste a SportyBet code and a Bet9ja code together and get one slip on your bookie. Then make the hard games easier with Edit for me.\n\nTag the friend always sending you codes from the wrong bookie 👇\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball"
+      "ig": "Different bookies. One slip. 🔮\n\nPaste a SportyBet code and a Bet9ja code together and get one slip on your bookie. Then make the hard games easier with Edit for me.\n\nTag the friend always sending you codes from the wrong bookie 👇\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
+      "igVideo": "/promo/merge-codes-ig.mp4",
+      "coverMs": 24633
     },
     {
       "date": "2026-10-21",
@@ -45,7 +53,9 @@
       "video": "/promo/back-home.mp4",
       "cover": "/promo/covers/back-home.jpg",
       "x": "In a hurry? 🏃\n\nOpen the board, see today's code, tap Copy, paste in your bookie. Booked.\n\nEvery game shows how likely it lands, and the top 3 of the day are in gold.\n\nsoccerwizard.live\n18+",
-      "ig": "Copy. Paste. Booked. ⚡\n\nToday's code is waiting on the board. Every game shows how likely it lands, and the day's top 3 are in gold.\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball"
+      "ig": "Copy. Paste. Booked. ⚡\n\nToday's code is waiting on the board. Every game shows how likely it lands, and the day's top 3 are in gold.\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
+      "igVideo": "/promo/back-home-ig.mp4",
+      "coverMs": 21500
     },
     {
       "date": "2026-10-22",
@@ -54,7 +64,9 @@
       "video": "/promo/promo-tour.mp4",
       "cover": "/promo/covers/promo-tour.jpg",
       "x": "Still scrolling and comparing games one by one? 😮‍💨\n\nLet the Wizard do it. Slide from the safest odds to the maddest, shuffle for a new slip every tap, convert to any bookie.\n\nStop picking. Start conjuring.\nsoccerwizard.live\n18+",
-      "ig": "Stop picking. Start conjuring. 🧙\n\nSlide from the safest odds to the maddest. Not feeling it? Shuffle for a new slip. Convert it to any bookie.\n\nSafest or maddest, which side are you? 👇\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball"
+      "ig": "Stop picking. Start conjuring. 🧙\n\nSlide from the safest odds to the maddest. Not feeling it? Shuffle for a new slip. Convert it to any bookie.\n\nSafest or maddest, which side are you? 👇\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
+      "igVideo": "/promo/promo-tour-ig.mp4",
+      "coverMs": 64433
     },
     {
       "date": "2026-10-23",
@@ -63,7 +75,9 @@
       "video": "/promo/how-much-today.mp4",
       "cover": "/promo/covers/how-much-today.jpg",
       "x": "How much do you want to win today? 🤔\n\nSay x10. Say x100. The Wizard builds the slip. Or slide your risk. Then split it, shuffle it, save it, book it.\n\nsoccerwizard.live\n18+",
-      "ig": "How much do you want to win today? 🤔\n\nName it. Slide it. Split it. Book it.\n\nDrop your number below and we'll see who's bold 👇\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball"
+      "ig": "How much do you want to win today? 🤔\n\nName it. Slide it. Split it. Book it.\n\nDrop your number below and we'll see who's bold 👇\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
+      "igVideo": "/promo/how-much-today-ig.mp4",
+      "coverMs": 36000
     },
     {
       "date": "2026-10-17",
