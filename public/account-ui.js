@@ -435,7 +435,7 @@
     ".swa-wpfine{margin:10px 0 0;text-align:center;font-size:12px;font-weight:600;color:var(--faint)}.swa-wpfoot .swa-msg{margin:6px 0 0;text-align:center}"+
     "@media (prefers-reduced-motion:reduce){.swa-fwbar i{transition:none}}"+
     /* Passes: Saira numerals for the price, the month marked with a flat tag. */
-    ".swa-fw{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:99px;border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:800}"+
+    ".swa-fw{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:var(--r-sm);border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:800}"+
     ".swa-mplus{color:var(--accent)}.swa-mplus svg{color:var(--accent)}.swa-mplus .swa-r{font-size:11.5px;font-weight:700}"+
     ".swa-pgo{margin-left:auto;border-color:var(--accent);color:var(--accent);white-space:nowrap}"+
     ".swa-passes{display:grid;gap:12px;margin:0 0 4px}"+
