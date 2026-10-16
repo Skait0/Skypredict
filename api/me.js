@@ -54,6 +54,8 @@ function make(deps) {
           codeLimit: role === "admin" ? "none" : R.codeLimitFor(role), personal, version: row ? row.version : 0,
           plusUntil: sub && sub.current_period_end ? new Date(sub.current_period_end).toISOString() : null,
           founder: !!(fo && fo.mine > 0),
+          /* Their place among the Founding Wizards, for the plan card (sql/founder_no.sql). */
+          founderNo: fo && fo.mine > 0 && Number.isInteger(fo.no) ? fo.no : null,
           data: row ? row.data : Y.empty(), entitlements }, cookies);
       }
 

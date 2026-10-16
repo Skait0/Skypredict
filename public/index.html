@@ -25294,7 +25294,7 @@ load().catch(function(){});
   /* Plan from GET /api/me, for the menu and the avatar picker. Display only. */
   function saveRole(me){
     var v={"sw.role":me&&me.role,"sw.plan":me&&me.plan,"sw.codeLimit":me&&me.codeLimit,
-      "sw.plusUntil":me&&me.plusUntil,"sw.founder":me&&me.founder?"1":null,
+      "sw.plusUntil":me&&me.plusUntil,"sw.founder":me&&me.founder?"1":null,"sw.founderNo":me&&me.founderNo?String(me.founderNo):null,
       "sw.personal":me&&me.personal&&me.personal.length?me.personal.join(","):null};
     for(var k in v) if(own(v,k)) try{ if(v[k]==null) ls.removeItem(k); else ls.setItem(k,String(v[k])); }catch(e){}
     /* The role just changed (sign in, sign out, another account on this device):

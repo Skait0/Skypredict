@@ -259,3 +259,15 @@ test("the numbers read as phrases: a count never runs into its period", () => {
   assert.match(src, /num\(st\.landed7d\)\+" in the last 7 days"/);
   assert.doesNotMatch(src, /"7 days "\+num\(/);
 });
+
+test("a Founding Wizard's plan card carries the crest, their number and the thanks", () => {
+  /* Owner, 16 Oct 2026: the honour on the plan card, for good. */
+  const p = (o) => UI.profileHtml(Object.assign({ name: "A", avatar: "fire", role: "plus", plan: "Wizard Pass",
+    record: { built: 0, won: 0, settled: 0 }, quota: null }, o));
+  const fw = p({ founder: true, founderNo: "37" });
+  assert.match(fw, /swa-card swa-fwcard/, "the gold-rimmed, favoured card");
+  assert.match(fw, /src='\/fw\/crest-sm\.webp'/);
+  assert.match(fw, /No\. 37 of the first 500\. With thanks for being one of the first\./);
+  assert.match(p({ founder: true }), /<small>With thanks for being one of the first\./, "no number yet still honours them");
+  assert.doesNotMatch(p({}), /swa-fwseal|crest/, "nobody else gets it");
+});

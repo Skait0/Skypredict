@@ -79,12 +79,20 @@
       "<span class='swa-m'><b>slips won</b><br>"+(r.settled?"of "+r.settled+" settled, "+pct+"%":"none settled yet")+"</span>"+
       "<span class='swa-side'><span class='swa-n'>"+r.built+"</span>saved</span></div>";
   }
-  function subHtml(q,role,plan,until){
+  /* THE FOUNDING WIZARD HONOUR (owner, 16 Oct 2026): the crest, their number and a
+     thank-you on the plan card, kept for good like the badge. No number yet (the
+     database has not said) still shows the honour. */
+  function fwHtml(no){
+    return "<div class='swa-fwseal'><img src='/fw/crest-sm.webp' alt='Founding Wizard crest' width='80' height='92'>"+
+      "<span><b>Founding Wizard</b><small>"+(no?"No. "+esc(no)+" of the first 500. ":"")+"With thanks for being one of the first.</small></span></div>";
+  }
+  function subHtml(q,role,plan,until,fw,fwNo){
     var u=role==="plus"?dayMonth(until):"";
     var what=role==="admin"?"Every feature, no limit":role==="ff"?"Every feature, 100 codes a day":
       role==="plus"?"20 codes a day"+(u?", until "+esc(u):""):"2 trial codes";
-    return "<p class='swa-h'>Your plan</p><div class='swa-card'><div class='swa-subtop'><span><b"+(role==="admin"?" class='swa-gold'":"")+">"+esc(plan||"Free plan")+"</b><small>"+what+"</small></span>"+
+    return "<p class='swa-h'>Your plan</p><div class='swa-card"+(fw?" swa-fwcard":"")+"'><div class='swa-subtop'><span><b"+(role==="admin"?" class='swa-gold'":"")+">"+esc(plan||"Free plan")+"</b><small>"+what+"</small></span>"+
       (canBuy(role)?"<button class='swa-pillbtn swa-pgo' type='button' data-plus>"+(role==="plus"?"Add days":"Get Wizard Pass")+"</button>":"")+"</div>"+
+      (fw?fwHtml(fwNo):"")+
       (role==="admin"||q?"<div class='swa-subuse'>"+codesHtml(q,role).replace("class='swa-q'","class='swa-q swa-q0'")+(role==="admin"?"":role==="plus"||role==="ff"?"<small>Resets at midnight</small>":"")+"</div>":"")+"</div>";
   }
   /* THE PLUS SCREEN (owner, 16 Oct 2026). o = GET /api/pay/offer plus role and
@@ -126,7 +134,7 @@
   function profileHtml(o){
     return "<label class='swa-lbl' for='swaName'>Name on your slips</label>"+
       "<input class='swa-in' id='swaName' maxlength='24' autocomplete='nickname' value=\""+esc(o.name)+"\">"+
-      pickerHtml(o.avatar,o.role,o.personal)+recordHtml(o.record)+subHtml(o.quota,o.role,o.plan,o.plusUntil)+tgHtml(o.role);
+      pickerHtml(o.avatar,o.role,o.personal)+recordHtml(o.record)+subHtml(o.quota,o.role,o.plan,o.plusUntil,o.founder,o.founderNo)+tgHtml(o.role);
   }
   /* CONNECT TELEGRAM (owner, 16 Oct 2026; lib/tglink.js): ties the bot to this
      account, so a Wizard Pass works in the bot too. A real link, filled by tgFill
@@ -444,7 +452,7 @@
     /* Passes: Saira numerals for the price, the month marked with a flat tag. */
     ".swa-fw{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:var(--r-sm);border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:800}"+
     ".swa-mplus{color:var(--accent)}.swa-mplus svg{color:var(--accent)}.swa-mplus .swa-r{font-size:11.5px;font-weight:700}"+
-    ".swa-tgbtn{flex:none;text-decoration:none;white-space:nowrap}.swa-pgo{margin-left:auto;border-color:var(--accent);color:var(--accent);white-space:nowrap}"+
+    ".swa-fwcard{border-color:var(--accent-rim)}.swa-fwseal{display:flex;align-items:center;gap:14px;padding:12px 14px;border-top:1px solid var(--line)}.swa-fwseal img{flex:none;width:80px;height:92px}.swa-fwseal b{display:block;font-family:var(--disp);font-size:20px;font-weight:800;text-transform:uppercase;letter-spacing:.005em;color:var(--accent);line-height:1.1}.swa-fwseal small{display:block;margin-top:3px;font-size:12.5px;font-weight:600;color:var(--soft);line-height:1.45}.swa-tgbtn{flex:none;text-decoration:none;white-space:nowrap}.swa-pgo{margin-left:auto;border-color:var(--accent);color:var(--accent);white-space:nowrap}"+
     ".swa-passes{display:grid;gap:11px;margin:0}"+
     ".swa-pass{position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:66px;padding:11px 16px 11px 48px;border:1.5px solid var(--line);border-radius:12px;"+
       "background:var(--card);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .18s,background-color .18s}"+
@@ -626,6 +634,7 @@
     var a=acct();
     var v=view("Profile",profileHtml({name:firstNameOf(lsGet("sw.name"),a.st.email),
       avatar:root.swAvatarKey?root.swAvatarKey():"fire",role:role(),personal:lsGet("sw.personal"),plan:lsGet("sw.plan"),plusUntil:lsGet("sw.plusUntil"),
+      founder:lsGet("sw.founder")==="1",founderNo:lsGet("sw.founderNo"),
       record:root.swRecord?root.swRecord():{built:0,won:0,settled:0},
       quota:root.swQuotaToday?root.swQuotaToday():null}));
     tgFill(v,role());

@@ -62,6 +62,8 @@
     ["nope","nope","m-wiggle"],["rage","rage","m-wiggle"],["cry","cry","m-jello"],["rip","torn slip","m-jello"],["sleep","sleep","m-pulse"],
     ["var","var","m-pulse"],["red","red card","m-wiggle"],["whistle","whistle","m-wiggle"],["scarf","scarf","m-wave"]];
   var WIZ_RE=/^\/emo\/wiz-[a-z0-9]{1,12}\.webp$/;
+  /* The Founding Wizard crest (owner, 16 Oct 2026), the one site image a message may carry beyond emoji. */
+  var FW_RE=/^\/fw\/crest(-sm)?\.webp$/;
   var GIF_RE=/^https:\/\/media\d?\.giphy\.com\/media\/[A-Za-z0-9._\-\/]{1,200}\.(gif|webp)$/;
   function unent(s){ return String(s).replace(/&nbsp;|&#160;/g," ").replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,"<").replace(/&gt;/g,">"); }
   /* A link goes to the web over https, or somewhere on our own site. */
@@ -88,6 +90,7 @@
         if(tag==="img"){ var src=unent(a.src||""), alt=esc(unent(a.alt||"").slice(0,40));
           if(EMO_RE.test(src)) out+="<img class=\"m-emo"+motOf(a["class"])+"\" src=\""+esc(src)+"\" alt=\""+alt+"\" width=\"28\" height=\"28\">";
           else if(WIZ_RE.test(src)) out+="<img class=\"m-emo m-wiz"+motOf(a["class"])+"\" src=\""+esc(src)+"\" alt=\""+alt+"\" width=\"44\" height=\"44\">";
+          else if(FW_RE.test(src)) out+="<img class=\"m-crest\" src=\""+esc(src)+"\" alt=\""+alt+"\" width=\"160\" height=\"185\">";
           else if(GIF_RE.test(src)) out+="<img class=\"m-gif\" src=\""+esc(src)+"\" alt=\""+alt+"\" loading=\"lazy\">";
           return ""; }
         if(tag==="a"){ var h=okHref(a.href||""); out+=h?"<a href=\""+esc(h)+"\""+(h.charAt(0)==="/"?"":" target=\"_blank\" rel=\"noopener nofollow\"")+">":"<a>"; return ""; }
@@ -127,7 +130,16 @@
     var esc=function(s){ return String(s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); };
     return head+"<p>"+line+"</p>"+(note?"<p>"+esc(note).replace(/\n/g,"<br>")+"</p>":"");
   }
-  var api={clean:clean,textOf:textOf,isEmpty:isEmpty,okHref:okHref,EMO:EMO,MOT:MOT,WIZ:WIZ_EMO,WELCOME:WELCOME,giftHtml:giftHtml};
+  /* WELCOME, FOUNDING WIZARD (owner, 16 Oct 2026): sent once, when someone's first
+     founder pass is paid (api/pay.js). The crest leads, like the gift box. */
+  function founderHtml(no){
+    return "<p><img src=\"/fw/crest.webp\" alt=\"Founding Wizard crest\"></p>"+
+      "<h3 class=\"m-big m-gold\">Welcome, Founding Wizard"+(no?" No. "+no:"")+"</h3>"+
+      "<p>You are one of the first 500 to back Soccerwizard, and we will not forget it. "+
+      "Your Founding Wizard crest is on your profile for good, and your first three month passes stay at the founders' price.</p>"+
+      "<p>Thank you for believing in the Wizard early. Reply here any time: we read every message.</p>";
+  }
+  var api={clean:clean,textOf:textOf,isEmpty:isEmpty,okHref:okHref,EMO:EMO,MOT:MOT,WIZ:WIZ_EMO,WELCOME:WELCOME,giftHtml:giftHtml,founderHtml:founderHtml};
   if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
   if(!root.document) return;
 
@@ -145,7 +157,7 @@
     ".m-body{font-size:14px;line-height:1.5;overflow-wrap:anywhere}.m-body p,.m-body h3,.m-body ul,.m-body ol,.m-body blockquote{margin:0 0 8px}.m-body>:last-child{margin-bottom:0}"+
     ".m-body h3{font-size:16px;font-weight:800}.m-body ul,.m-body ol{padding-left:20px}.m-body li{margin:3px 0}.m-body a{color:var(--accent);font-weight:700}"+
     ".m-body blockquote{border-left:3px solid var(--accent);padding-left:10px;color:var(--soft)}"+
-    ".m-big{font-size:1.3em;font-weight:800}.m-small{font-size:.82em;color:var(--faint)}.m-gold{color:var(--accent)}.m-red{color:var(--red-ink)}.m-green{color:var(--green-ink)}.m-center{text-align:center}"+
+    ".m-big{font-size:1.3em;font-weight:800}.m-crest{display:block;width:160px;height:auto;margin:4px auto 2px}.m-small{font-size:.82em;color:var(--faint)}.m-gold{color:var(--accent)}.m-red{color:var(--red-ink)}.m-green{color:var(--green-ink)}.m-center{text-align:center}"+
     ".m-glow{color:var(--accent);text-shadow:0 0 10px rgba(242,184,75,.75),0 0 2px rgba(242,184,75,.9)}"+
     ".m-emo{width:1.75em;height:1.75em;vertical-align:-.45em;display:inline-block}.m-gif{display:block;max-width:100%;height:auto;max-height:180px;border-radius:8px;margin:6px 0}"+
     /* the banner under the header */

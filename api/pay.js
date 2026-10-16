@@ -51,6 +51,21 @@ function make(deps) {
   const env = deps.env || process.env;
   const now = deps.now || Date.now;
 
+  /* WELCOME, FOUNDING WIZARD (owner, 16 Oct 2026): the crest and a thank-you in
+     their inbox, once - on the payment that made them one (their first founder
+     month; applyPayment credits a reference only once, so a retried webhook or
+     the return page cannot send it twice). Never fails the payment. */
+  const msgs = deps.msgs || require("../lib/messages.js");
+  async function welcomeFounder(userId) {
+    try {
+      const o = await db.founderOffer(userId);
+      if (!o || o.mine !== 1) return;
+      const MSG = require("../public/messages.js");
+      await msgs.add([{ created_at: new Date(now()).toISOString(), user_id: userId, from_admin: true,
+        body: MSG.clean(MSG.founderHtml(Number.isInteger(o.no) ? o.no : null)) }]);
+    } catch (e) { /* the pass is credited; a lost thank-you is not worth a failed payment */ }
+  }
+
   /* Paid at Paystack, in naira, for the amount on our row -> credited once.
      Returns the pass end (ISO) when this reference is paid, else null. */
   async function settle(ps, ref) {
@@ -60,7 +75,10 @@ function make(deps) {
       const t = await ps.verify(ref);
       if (!t || t.status !== "success" || t.currency !== "NGN" || Number(t.amount) !== row.amount_kobo) return null;
       const end = await db.applyPayment(ref, row.amount_kobo);
-      if (end) return new Date(end).toISOString();
+      if (end) {
+        if (row.amount_kobo === FOUNDER.kobo) await welcomeFounder(row.user_id);
+        return new Date(end).toISOString();
+      }
     }
     const s = await db.subscription(row.user_id);
     return s && s.current_period_end ? new Date(s.current_period_end).toISOString() : null;

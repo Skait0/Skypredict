@@ -100,9 +100,11 @@ function world(opts) {
   const ps = { inits: [], status: {}, amount: {},
     async init(b) { this.inits.push(b); return o.initFails ? null : { authorization_url: "https://checkout.paystack.com/x" + b.reference.slice(-4) }; },
     async verify(ref) { return { status: this.status[ref] || "abandoned", currency: "NGN", amount: this.amount[ref] != null ? this.amount[ref] : (pays[ref] && pays[ref].amount_kobo) }; } };
-  const h = PAY.make({ db, now: clock, paystack: ps, env: { PAYSTACK_SECRET_KEY: "sk_test_x" } });
+  const inbox = [];
+  const msgs = { add: async (rows) => { inbox.push(...rows); return rows; } };
+  const h = PAY.make({ db, now: clock, paystack: ps, msgs, env: { PAYSTACK_SECRET_KEY: "sk_test_x" } });
   const call = async (req) => { const r = fakeRes(); await h(req, r); return r; };
-  const w = { db, ps, pays, subs, call, advance(ms) { T += ms; } };
+  const w = { db, ps, pays, subs, call, inbox, advance(ms) { T += ms; } };
   w.user = async (email) => {
     const u = await db.createUser({ email });
     const s = await S.startSession(db, u.id, "Chrome/129 Android", clock());
@@ -238,4 +240,27 @@ test("an exempt phone signed in is counted, even when the account lookup fails (
 test("the booking route asks who you are once per booking, not three times", () => {
   const src = require("fs").readFileSync(require("path").join(__dirname, "..", "api", "book.js"), "utf8");
   assert.match(src, /req\._swRole \|\| \(req\._swRole =/);
+});
+
+test("the first founder pass brings the crest and a thank-you, once; nothing else does", async () => {
+  /* Owner, 16 Oct 2026: the Founding Wizard honour, in their inbox. */
+  const w = world();
+  const u = await w.user("first@b.com");
+  const week = await w.start(u, "week");
+  w.ps.status[week.reference] = "success";
+  await w.hook(week.reference);
+  assert.equal(w.inbox.length, 0, "a normal pass sends no welcome");
+  const m1 = await w.start(u, "month");
+  w.ps.status[m1.reference] = "success";
+  await w.hook(m1.reference);
+  await w.hook(m1.reference);                     /* Paystack retries */
+  await w.verify(u, m1.reference);                /* and the return page lands too */
+  assert.equal(w.inbox.length, 1, "one welcome, however many times the payment is reported");
+  assert.equal(w.inbox[0].user_id, u.id);
+  assert.match(w.inbox[0].body, /src="\/fw\/crest\.webp"/);
+  assert.match(w.inbox[0].body, /Welcome, Founding Wizard/);
+  const m2 = await w.start(u, "month");
+  w.ps.status[m2.reference] = "success";
+  await w.hook(m2.reference);
+  assert.equal(w.inbox.length, 1, "their second founder month is not a second welcome");
 });
