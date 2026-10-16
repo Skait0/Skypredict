@@ -268,3 +268,59 @@ test("the ledger tracks every board leg by its code, corners and shots included"
     { home: "Zed", away: "Qux", kickoff: "2026-10-12T18:00:00Z", prediction: "1" }], fx);
   assert.deepStrictEqual(t.map((l) => l.code), ["CORNERS_OV_9.5"], "a game off the board is not tracked");
 });
+
+/* ---- the second look (owner, 16 Oct 2026: "why do i still have to check a slip that
+   already has a lost leg on it?") and a check confirmed by hand reaching Telegram ---- */
+const offBoard = (score) => ({
+  rows: [{ id: 1, status: "open", book: "sporty", code: "CHK001", total_odds: 120, legs: [leg("A", "B", "Home win")], seen: {}, untracked: 1, notified: false }],
+  deps: {
+    readCode: async () => [{ prediction: "1", home: "A", away: "B", odds: 2 }, { prediction: "1", home: "Zed", away: "Qux", odds: 60 }],
+    results: async () => [R("A", "B", 2, 0), R("Zed", "Qux", score[0], score[1])],
+    now: () => Date.UTC(2026, 9, 12, 20, 30),
+  },
+});
+
+test("a slip the ledger would file as check is lost when a leg off our board lost", async () => {
+  const w = world(offBoard([0, 1]));
+  await W.tick(w.deps);
+  assert.strictEqual(w.rows[0].status, "lost");
+  assert.deepStrictEqual(w.pings, []);
+});
+
+test("and landed, with the owner pinged, when every leg off our board won too", async () => {
+  const w = world(offBoard([3, 0]));
+  await W.tick(w.deps);
+  assert.strictEqual(w.rows[0].status, "landed");
+  assert.strictEqual(w.pings.length, 1);
+});
+
+test("a leg nobody can settle from a score keeps it a check", async () => {
+  const o = offBoard([3, 0]);
+  o.deps.readCode = async () => [{ prediction: "1", home: "A", away: "B", odds: 2 }, { prediction: "1", home: "Nowhere", away: "Never", odds: 60 }];
+  const w = world(o);
+  await W.tick(w.deps);
+  assert.strictEqual(w.rows[0].status, "check");
+});
+
+test("slips already waiting on check get a fresh look in the run on the hour, a sixth at a time", async () => {
+  const now = Date.UTC(2026, 9, 13, 9, 3);
+  const slot = Math.floor(now / 36e5) % 6;
+  const row = (id) => ({ id, status: "check", book: "sporty", code: "OLD" + id, total_odds: 80, legs: [leg("A", "B", "Home win")], seen: { 0: "won" }, untracked: 1, notified: false });
+  const rows = [row(slot), row(slot + 1)];
+  const w = world({ rows, deps: { checkSlips: async () => rows.filter((r) => r.status === "check"),
+    readCode: async () => [{ prediction: "1", home: "A", away: "B", odds: 2 }, { prediction: "1", home: "Zed", away: "Qux", odds: 40 }],
+    results: async () => [R("A", "B", 2, 0), R("Zed", "Qux", 0, 0)], now: () => now } });
+  await W.tick(w.deps);
+  assert.deepStrictEqual(rows.map((r) => r.status), ["lost", "check"], "only this hour's sixth");
+  const later = world({ rows: [row(slot)], deps: { checkSlips: async () => [row(slot)], now: () => now + 15 * 6e4 } });
+  await W.tick(later.deps);
+  assert.strictEqual(later.patches.length, 0, "not in the :10-:59 runs");
+});
+
+test("It landed on a check slip pings the owner and dates the win today", async () => {
+  process.env.AUTH_ENABLED = "1";
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "lib", "supabase.js"), "utf8");
+  assert.match(src, /body: JSON\.stringify\(\{ status: to, settled_at: new Date\(\)\.toISOString\(\) \}\)/);
+  const acc = require("fs").readFileSync(require("path").join(__dirname, "..", "api", "account.js"), "utf8");
+  assert.match(acc, /to === "landed" && got\.row && Number\(got\.row\.total_odds\) >= SW\.PING_AT && slips\.ping/);
+});

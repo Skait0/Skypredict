@@ -75,7 +75,7 @@ test("the owner gets a shareable copy of every channel win, and the admin page c
   const social = fs.readFileSync(path.join(__dirname, "..", "api", "social.js"), "utf8");
   assert.match(social, /if \(ok && ch === "tg" && owner\) await postTGPhoto\(img, WIN\.caption\(s, "x"\), owner\);/,
     "after the channel post, the same banner goes to the owner's own chat");
-  const ping = fs.readFileSync(path.join(__dirname, "..", "api", "tgfollow.js"), "utf8");
+  const ping = fs.readFileSync(path.join(__dirname, "..", "lib", "ownerping.js"), "utf8");
   assert.match(ping, /await sendPhoto\(owner, WIN\.imageUrl\(SITE, slip\), WIN\.caption\(slip, "x"\)\);/,
     "the x20 ping is the banner itself, ready to forward");
   const account = fs.readFileSync(path.join(__dirname, "..", "api", "account.js"), "utf8");

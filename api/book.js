@@ -40,12 +40,14 @@ const opts = {
   freeLimit: R.FREE_CODES,
   plusLimit: R.PLUS_CODES,
   sessionCookie: S.COOKIE,
-  roleOf: async (req) => {
+  /* Once per booking: the gate, the counter and the ledger all ask, and each answer is
+     up to five reads. Kept on the request, so the next booking asks afresh. */
+  roleOf: (req) => req._swRole || (req._swRole = (async () => {
     const s = await S.readSession(AUTHDB, req, Date.now());
     if (s.state !== "ok") return null;
     const u = await AUTHDB.userById(s.userId);
     return u ? { role: await R.roleOf(AUTHDB, u, process.env), userId: u.id } : null;
-  },
+  })()),
   /* Temporary, for diagnosing a quota that reports "open". Unset it again
      once the answer is known - it puts database errors in a response header. */
   debug: process.env.SW_QUOTA_DEBUG === "1",

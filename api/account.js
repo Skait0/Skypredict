@@ -12,6 +12,7 @@ const K = require("../lib/auth/consent.js");
 const R = require("../lib/roles.js");
 const C = require("../lib/auth/crypto.js");
 const { report } = require("../lib/report.js");
+const SW = require("../lib/slipwatch.js");
 
 const REAUTH_MS = 10 * 60e3;
 const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit", "readers", "reader", "threads", "gifs"];
@@ -44,6 +45,8 @@ function make(deps) {
   /* The booked-slip ledger (lib/slipwatch.js); a dep so tests need no database. */
   const slips = deps.slips || { hits: (n) => require("../lib/supabase.js").siteSlipHits(n),
     settle: (id, to) => require("../lib/supabase.js").settleCheckSlip(id, to),
+    ping: require("../lib/ownerping.js").ownerPing(),
+    notified: (id) => require("../lib/supabase.js").patchSiteSlip(id, { notified: true }),
     byId: (id) => require("../lib/supabase.js").siteSlipForCheck(id),
     read: (book, code) => require("../lib/upstream.js").readSlip(book, code),
     results: async (since) => (await require("../lib/supabase.js").recentResults(since)).rows || [] };
@@ -221,6 +224,11 @@ function make(deps) {
           if (!got || !got.ok) return H.sendJson(res, 503, { error: "unavailable" });
           if (!got.changed) return H.sendJson(res, 409, { error: "not_check" });
           await record("settle", "slip " + id, { status: to });
+          /* A win confirmed by hand pings the owner's Telegram like one the grader finds
+             (lib/ownerping.js); the hourly win post takes it now settled_at is today. */
+          if (to === "landed" && got.row && Number(got.row.total_odds) >= SW.PING_AT && slips.ping) {
+            try { if (await slips.ping(SW.pingText(got.row), got.row)) await slips.notified(id); } catch (e) { /* settled either way */ }
+          }
           return H.sendJson(res, 200, { ok: true });
         }
         if (action === "flags") {

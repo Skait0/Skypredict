@@ -221,3 +221,21 @@ test("the bot gives 2 codes a day and points past them to Plus, never 'unlimited
   assert.match(src, /20 codes a day, from ₦200/);
   assert.doesNotMatch(src, /no daily limit|"Unlimited/);
 });
+
+test("an exempt phone signed in is counted, even when the account lookup fails (owner, 16 Oct 2026)", async () => {
+  const db = store({ "device-abc121": 10 });
+  const base = { db, deviceLimit: 10, ipLimit: 200, userLimit: 100, freeLimit: 2, plusLimit: 20, pepper: "p",
+    sessionCookie: "sess", exempt: ["device-abc121"], now: () => at, roleTimeoutMs: 20 };
+  for (const roleOf of [async () => { throw new Error("db down"); }, () => new Promise(() => {})]) {
+    const v = await G.makeGate(Object.assign({}, base, { roleOf }))(withCookie);
+    assert.equal(v.allow, false, "the device's own count, not its exemption");
+  }
+  const signedOut = { headers: { "x-sw-device": "device-abc121", "x-forwarded-for": "105.112.4.9" } };
+  assert.equal((await G.makeGate(Object.assign({}, base, { roleOf: async () => null }))(signedOut)).counted, false,
+    "signed out, our own test phone is still exempt");
+});
+
+test("the booking route asks who you are once per booking, not three times", () => {
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "api", "book.js"), "utf8");
+  assert.match(src, /req\._swRole \|\| \(req\._swRole =/);
+});
