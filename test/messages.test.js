@@ -351,3 +351,12 @@ test("every button the admin conversation wires up exists in its markup", () => 
   // the attribute must also appear outside a [selector], i.e. in the markup that is drawn
   for (const attr of wired) assert.ok(new RegExp("[^\\[]" + attr + "(?![\\w-])").test(src), attr + " is wired but no button carries it");
 });
+
+test("a push's ?msgs=1 opens the inbox once, then leaves the address", () => {
+  /* Owner, 16 Oct 2026: "when i refresh my app it goes to my messages" - the flag
+     stayed in the address, so every refresh reopened the inbox. */
+  const idx = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  assert.match(idx, /history\.replaceState\(history\.state,"",location\.pathname\+location\.search\.replace\(re,""\)/);
+  assert.match(idx, /if\(once\("msgs"\)\)\{/);
+  assert.match(idx, /if\(once\("account"\)\)\{/);
+});

@@ -25464,11 +25464,16 @@ load().catch(function(){});
         root.swSignIn.resume({action:g.action,detail:g.detail,afterAuth:function(j,done){ sync(false,done); },
           onDone:(root.swResume&&root.swResume[g.resume])||null});
       } else sync(false,function(){ firstDone(); });
-      /* A message push opens the inbox (public/messages.js). */
-      if(/[?&]msgs=1/.test(location.search)){
+      /* A message push opens the inbox (public/messages.js). The flag then leaves
+         the address: left in, every refresh reopened Messages (owner, 16 Oct 2026). */
+      var once=function(k){ var re=new RegExp("[?&]"+k+"=1(?=&|$)");
+        if(!re.test(location.search)) return false;
+        try{ history.replaceState(history.state,"",location.pathname+location.search.replace(re,"").replace(/^&/,"?")+location.hash); }catch(e){}
+        return true; };
+      if(once("msgs")){
         if(root.swMsg) root.swMsg.inbox(); else root.addEventListener("load",function(){ if(root.swMsg) root.swMsg.inbox(); });
       }
-      if(/[?&]account=1/.test(location.search)){
+      if(once("account")){
         if(root.swAccountUI) root.swAccountUI.settings(); else root.addEventListener("load",function(){ if(root.swAccountUI) root.swAccountUI.settings(); });
       }
     });
