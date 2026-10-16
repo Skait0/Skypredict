@@ -231,26 +231,31 @@ The paid plan (owner, 16 Oct 2026). It is called **Wizard Pass**, never
   Founding Wizard gets a small outlined gold tag (`.swa-fw`, `--r-sm`).
 - **Profile** has "Your plan" (not Subscription: nothing renews) with a
   Get Wizard Pass / Add days button.
-- **The page** (`plusHtml`, `.swa-wp`), the site's strongest moves at full
-  strength:
-  - The title in `--disp`, 46px, uppercase, gold, with room above it; the
-    `wiz-spell` emote (112px) casting beside it; one line, "20 booking codes a
-    day, on every bookie."
-  - The promise as numbers between two hairlines: a faint "2 a day now", a
-    drawn arrow, a 58px gold "20 a day with the pass".
-  - What it unlocks as ticked hairline rows (drawn gold ticks).
-  - **Founding Wizards** as the one favoured panel (`--card`, `--accent-rim`,
-    12px): a gold display-face heading, one line of terms, a real places-left
-    bar (6px track, `--accent` fill) that fills once on open, and
-    "438 of 500 places left". It is the page's one motion.
-  - Passes as cards with a drawn radio (empty ring, gold and ticked when
-    picked), the name in `--disp` uppercase, the per-day price under it, and
-    the price in `--disp` 30px gold. The month carries a square "Best value"
-    tag; a founder price shows the full price struck through above it.
-    Picking updates in place, so the scroll stays and the bar does not replay.
-  - The pay button is pinned at the bottom: flat gold, 54px, drawn lock,
-    "Pay ₦1,500 with Paystack", with "Pay once. Nothing renews. Card, transfer
-    or USSD. 18+." under it.
+- **The page** (`plusHtml`, `.swa-wp`) is **simple and fits one screen with
+  no scrolling** (owner, 16 Oct 2026: "i liked the old one because it was
+  simple and every detail could be seen"). A longer, scrolling version with a
+  2-to-20 comparison and a ticked list was built and rejected the same day.
+  Top to bottom:
+  - The title in `--disp`, 40px, uppercase, gold; the `wiz-spell` emote (70px)
+    beside it, set below the sticky Back bar so it is never clipped.
+  - One paragraph: "**20 booking codes a day** on every bookie, from every
+    tool: the Wizard, Slider, Converter, Edit for me, Split and Trim. Pay
+    once. Nothing renews."
+  - **Founding Wizards** as the one favoured strip (`--card`, `--accent-rim`,
+    12px): the gold heading with "438 of 500 places left" on the same line,
+    one line of terms, and a 5px places bar that fills once on open (the
+    page's one motion).
+  - Three compact pass cards (66px): a drawn radio (empty ring, gold and
+    ticked when picked), the name in `--disp` uppercase, the per-day price
+    under it, the price in `--disp` 28px gold. The month carries a square
+    "Best value" tag; a founder price shows the full price struck through.
+    Picking updates in place.
+  - The pay button in the flow: flat gold, 52px, drawn lock, "Pay ₦1,500 with
+    Paystack", and one fine-print line under it.
+  - Measured to fit 390x680 and 375x600 of panel height (the space above the
+    tab bar); a `max-height:660px` query tightens it for short phones.
+  - Leaving Paystack with Back brings the page back as it was: on `pageshow`
+    the pay button is enabled again, and 15s after a tap it re-enables anyway.
 - Back from Paystack, a notice says "Your Wizard Pass is on until 12 Nov."
   Never the word "free" in this copy.
 

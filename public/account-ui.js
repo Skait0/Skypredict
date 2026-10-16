@@ -90,13 +90,12 @@
   /* THE PLUS SCREEN (owner, 16 Oct 2026). o = GET /api/pay/offer plus role and
      plusUntil. Prepaid: nothing renews, a new pass stacks on the days left. */
   function naira(n){ return "₦"+String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,","); }
-  /* Owner, 16 Oct 2026: "the get wizard pass page is boring... make users want to pay".
-     The site's own strongest moves at full strength: the mascot casting, the display
-     face in gold for the promise, the numbers that matter in Saira, hairline rows, and
-     one favoured panel (accent rim) for the founders. One motion: the places bar fills. */
-  var TICK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  /* Owner, 16 Oct 2026: "i liked the old one because it was simple and every detail could
+     be seen on the page... make it look better. everything has to be on one page without
+     scrolling." The old order - what you get, the founders' offer, three passes, pay - in
+     the site's own type: the gold display title with the wizard, Saira prices, one
+     favoured strip for the founders. Sized to fit a phone above the tab bar. */
   var LOCKI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
-  var ARROW='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
   function passHtml(p,pick,f){
     var fw=p.pass==="month"&&p.naira<p.full;
     var per=p.days>1?p.days+" days · "+naira(p.naira/p.days)+" a day":"24 hours";
@@ -111,26 +110,18 @@
     var passes=(o.passes||[]).map(function(p){ return passHtml(p,pick,f); }).join("");
     var sel=(o.passes||[]).filter(function(p){ return p.pass===pick; })[0];
     var taken=f?Math.max(0,500-f.seatsLeft):0;
-    return "<div class='swa-wphero'><img class='swa-wpwiz' src='/emo/wiz-spell.webp' alt='' width='112' height='112'>"+
-        "<p class='swa-wpsub'>20 booking codes a day, on every bookie.</p></div>"+
-      (u?"<p class='swa-wpnow'>Your pass runs until <b>"+esc(u)+"</b>. A new pass adds its days on top.</p>":
-        "<div class='swa-wpcmp' aria-label='2 codes a day now, 20 with the pass'>"+
-          "<span><b class='swa-wpold'>2</b><small>a day now</small></span>"+ARROW+
-          "<span><b class='swa-wpnew'>20</b><small>a day with the pass</small></span></div>")+
-      "<p class='swa-h'>Every tool books with it</p>"+
-      "<ul class='swa-wplist'>"+["The Wizard and the Slider","Converter, on all six bookies","Edit for me, Split and Trim","Every avatar skin"]
-        .map(function(t){ return "<li>"+TICK+t+"</li>"; }).join("")+"</ul>"+
+    return "<img class='swa-wpwiz' src='/emo/wiz-spell.webp' alt='' width='112' height='112'>"+
+      "<p class='swa-wpsub'><b>20 booking codes a day</b> on every bookie, from every tool: the Wizard, Slider, Converter, Edit for me, Split and Trim. Pay once. Nothing renews.</p>"+
+      (u?"<p class='swa-wpnow'>Your pass runs until <b>"+esc(u)+"</b>. A new pass adds its days on top.</p>":"")+
       (f&&f.open&&f.seatsLeft>0&&f.monthsLeft===3?
-        "<div class='swa-fwpanel'><p class='swa-fwt'>Founding Wizards</p>"+
-          "<p class='swa-fwd'>The first 500 users pay <b>"+naira(1500)+"</b> for their first 3 month passes, and keep the Founding Wizard badge.</p>"+
-          "<div class='swa-fwbar' role='img' aria-label='"+taken+" of 500 places taken'><i style='--to:"+Math.max(2,Math.round(100*taken/500))+"%'></i></div>"+
-          "<p class='swa-fwleft'><b>"+f.seatsLeft+"</b> of 500 places left</p></div>":"")+
-      "<p class='swa-h'>Choose your pass</p>"+
+        "<div class='swa-fwpanel'><div class='swa-fwhead'><span class='swa-fwt'>Founding Wizards</span>"+
+            "<span class='swa-fwleft'><b>"+f.seatsLeft+"</b> of 500 places left</span></div>"+
+          "<p class='swa-fwd'>The first 500 users pay <b>"+naira(1500)+"</b> for their first 3 month passes.</p>"+
+          "<div class='swa-fwbar' role='img' aria-label='"+taken+" of 500 places taken'><i style='--to:"+Math.max(2,Math.round(100*taken/500))+"%'></i></div></div>":"")+
       "<div class='swa-passes'>"+(passes||"<p class='swa-note'>Prices did not load. Check your connection and try again.</p>")+"</div>"+
-      "<div class='swa-wpfoot'>"+
-        (sel?"<button class='swa-wppay' id='swaPay' type='button'>"+LOCKI+"<span>Pay "+naira(sel.naira)+" with Paystack</span></button>":"")+
-        "<p class='swa-wpfine'>Pay once. Nothing renews. Card, transfer or USSD. 18+.</p>"+
-        "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p></div>";
+      (sel?"<button class='swa-wppay' id='swaPay' type='button'>"+LOCKI+"<span>Pay "+naira(sel.naira)+" with Paystack</span></button>":"")+
+      "<p class='swa-wpfine'>Card, bank transfer or USSD, on Paystack's secure page. 18+.</p>"+
+      "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>";
   }
   function profileHtml(o){
     return "<label class='swa-lbl' for='swaName'>Name on your slips</label>"+
@@ -405,41 +396,38 @@
     ".swa-note,.swa-msg{font-size:13px;color:var(--soft);line-height:1.5}.swa-card+.swa-card{margin-top:0}.swa-card .swa-set+.swa-set{border-top:1px solid var(--line)}"+
     ".swa-pillbtn{border:1px solid var(--line);background:var(--card-2);color:var(--text);border-radius:6px;padding:6px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}"+
     ".swa-set:focus-visible,.swa-seg button:focus-visible,.swa-books button:focus-visible,.swa-sw:focus-visible,.swa-outbtn:focus-visible,.swa-del:focus-visible,.swa-pillbtn:focus-visible,.swa-in:focus-visible,.swa-back:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"+
-    /* THE WIZARD PASS PAGE (owner, 16 Oct 2026: "boring... the wizard pass font is white... too
-       close to the gold line above"). The title in the display face, gold; the mascot casting;
-       the promise as numbers; one favoured panel; a pay bar that stays under the thumb. */
-    ".swa-wp .swa-t{font-family:var(--disp);font-size:46px;line-height:.95;"+
-      "font-weight:800;text-transform:uppercase;letter-spacing:.005em;color:var(--accent);margin:30px 120px 10px 0;text-wrap:balance}"+
-    ".swa-wp .swa-in-wrap{position:relative}"+
-    ".swa-wphero{margin:0 0 22px}.swa-wpwiz{position:absolute;top:42px;right:-6px;width:112px;height:112px;pointer-events:none}"+
-    ".swa-wpsub{margin:0;padding-right:112px;font-size:16px;line-height:1.35;font-weight:700;color:var(--text)}"+
-    ".swa-wpcmp{display:flex;align-items:flex-end;gap:18px;padding:16px 0 18px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}"+
-    ".swa-wpcmp>span{display:flex;flex-direction:column;gap:4px}.swa-wpcmp>svg{width:24px;height:24px;color:var(--faint);flex:none;margin-bottom:22px}"+
-    ".swa-wpcmp b{font-family:var(--disp);font-weight:800;line-height:1;font-variant-numeric:tabular-nums}"+
-    ".swa-wpold{font-size:34px;color:var(--faint)}.swa-wpnew{font-size:58px;color:var(--accent)}"+
-    ".swa-wpcmp small{font-size:12.5px;font-weight:700;color:var(--soft);line-height:1.25;white-space:nowrap}"+
-    ".swa-wpnow{margin:0;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:14px;font-weight:600;color:var(--soft)}.swa-wpnow b{color:var(--accent)}"+
-    ".swa-wp .swa-h{margin:26px 2px 10px}"+
-    ".swa-wplist{list-style:none;margin:0;padding:0}.swa-wplist li{display:flex;align-items:center;gap:11px;padding:11px 2px;font-size:14.5px;font-weight:700;color:var(--text)}"+
-    ".swa-wplist li+li{border-top:1px solid var(--line)}.swa-wplist svg{width:17px;height:17px;color:var(--accent);flex:none}"+
-    ".swa-fwpanel{margin:26px 0 0;padding:16px;border:1px solid var(--accent-rim);border-radius:12px;background:var(--card)}"+
-    ".swa-fwt{margin:0 0 6px;font-family:var(--disp);font-size:22px;font-weight:800;text-transform:uppercase;letter-spacing:.005em;color:var(--accent)}"+
-    ".swa-fwd{margin:0 0 14px;font-size:13.5px;line-height:1.5;color:var(--soft)}.swa-fwd b{color:var(--text)}"+
-    ".swa-fwbar{height:6px;border-radius:99px;background:var(--raise);overflow:hidden}"+
+    /* THE WIZARD PASS PAGE (owner, 16 Oct 2026): simple, every detail in sight, one screen
+       with no scrolling. Title gold in the display face with the wizard beside it; one
+       paragraph; the founders as one favoured strip; three compact passes; pay. */
+    ".swa-view.swa-wp{padding-bottom:16px}.swa-wp .swa-in-wrap{position:relative}"+
+    ".swa-wp .swa-t{font-family:var(--disp);font-size:40px;line-height:1;font-weight:800;text-transform:uppercase;letter-spacing:.005em;color:var(--accent);margin:22px 84px 14px 0}"+
+    ".swa-wpwiz{position:absolute;top:52px;right:-2px;width:70px;height:70px;pointer-events:none}"+
+    ".swa-wpsub{margin:0;font-size:13.5px;line-height:1.45;font-weight:600;color:var(--soft)}.swa-wpsub b{color:var(--text)}"+
+    ".swa-wpnow{margin:10px 0 0;font-size:13.5px;font-weight:600;color:var(--soft)}.swa-wpnow b{color:var(--accent)}"+
+    ".swa-fwpanel{margin:16px 0 0;padding:12px 14px;border:1px solid var(--accent-rim);border-radius:12px;background:var(--card)}"+
+    ".swa-fwhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px}"+
+    ".swa-fwt{font-family:var(--disp);font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:.005em;color:var(--accent)}"+
+    ".swa-fwleft{font-size:12px;font-weight:700;color:var(--faint);white-space:nowrap}.swa-fwleft b{font-family:var(--disp);font-size:15px;color:var(--text);font-variant-numeric:tabular-nums}"+
+    ".swa-fwd{margin:4px 0 10px;font-size:13px;line-height:1.45;color:var(--soft)}.swa-fwd b{color:var(--text)}"+
+    ".swa-fwbar{height:5px;border-radius:99px;background:var(--raise);overflow:hidden}"+
     ".swa-fwbar i{display:block;height:100%;width:0;border-radius:99px;background:var(--accent);transition:width 1.1s var(--ease-out,cubic-bezier(.23,1,.32,1)) .15s}.swa-fwbar i.on{width:var(--to)}"+
-    ".swa-fwleft{margin:8px 0 0;font-size:12.5px;font-weight:700;color:var(--faint)}.swa-fwleft b{font-family:var(--disp);font-size:17px;color:var(--text);font-variant-numeric:tabular-nums}"+
-    ".swa-wpfoot{position:sticky;bottom:-40px;margin:22px -16px -40px;padding:14px 16px 22px;background:var(--bg);border-top:1px solid var(--line)}"+
-    ".swa-wppay{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;height:54px;border:0;border-radius:var(--r-lg,8px);background:var(--accent);color:var(--on-accent);"+
+    ".swa-wp .swa-passes{margin-top:18px}"+
+    ".swa-wppay{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;height:52px;margin-top:16px;border:0;border-radius:var(--r-lg,8px);background:var(--accent);color:var(--on-accent);"+
       "font:inherit;font-size:16px;font-weight:800;cursor:pointer}.swa-wppay svg{width:18px;height:18px}.swa-wppay[disabled]{opacity:.6;cursor:default}"+
     ".swa-wppay:focus-visible{outline:2px solid var(--text);outline-offset:3px}"+
-    ".swa-wpfine{margin:10px 0 0;text-align:center;font-size:12px;font-weight:600;color:var(--faint)}.swa-wpfoot .swa-msg{margin:6px 0 0;text-align:center}"+
+    ".swa-wpfine{margin:8px 0 0;text-align:center;font-size:12px;font-weight:600;color:var(--faint)}.swa-wp .swa-msg{margin:4px 0 0;text-align:center}"+
+    /* short phones (iPhone SE, 360x640): tighter, so it still fits above the tab bar */
+    "@media (max-height:660px){.swa-wp .swa-t{font-size:32px;margin:12px 66px 12px 0}.swa-wpwiz{width:56px;height:56px;top:44px}"+
+      ".swa-wpsub{font-size:12.5px;line-height:1.4}.swa-wp .swa-pass{min-height:54px;padding-top:7px;padding-bottom:7px}.swa-wp .swa-price b{font-size:23px}"+
+      ".swa-wp .swa-pass .swa-st b{font-size:17px}.swa-wp .swa-passes{gap:9px;margin-top:12px}"+
+      ".swa-fwpanel{margin-top:10px;padding:9px 12px}.swa-fwd{margin:2px 0 8px;font-size:12.5px}.swa-wppay{height:46px;margin-top:10px}.swa-wpfine{margin-top:6px}}"+
     "@media (prefers-reduced-motion:reduce){.swa-fwbar i{transition:none}}"+
     /* Passes: Saira numerals for the price, the month marked with a flat tag. */
     ".swa-fw{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:var(--r-sm);border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:800}"+
     ".swa-mplus{color:var(--accent)}.swa-mplus svg{color:var(--accent)}.swa-mplus .swa-r{font-size:11.5px;font-weight:700}"+
     ".swa-pgo{margin-left:auto;border-color:var(--accent);color:var(--accent);white-space:nowrap}"+
-    ".swa-passes{display:grid;gap:12px;margin:0 0 4px}"+
-    ".swa-pass{position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:76px;padding:14px 16px 14px 48px;border:1.5px solid var(--line);border-radius:12px;"+
+    ".swa-passes{display:grid;gap:11px;margin:0}"+
+    ".swa-pass{position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:66px;padding:11px 16px 11px 48px;border:1.5px solid var(--line);border-radius:12px;"+
       "background:var(--card);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .18s,background-color .18s}"+
     /* a drawn radio: an empty ring, gold and ticked when picked */
     ".swa-pass::before{content:'';position:absolute;left:16px;top:50%;width:18px;height:18px;margin-top:-10px;border-radius:50%;border:2px solid var(--grey);box-sizing:content-box;"+
@@ -447,10 +435,10 @@
     ".swa-pass[aria-pressed=true]{border-color:var(--accent);background:var(--card-2)}"+
     ".swa-pass[aria-pressed=true]::before{border-color:var(--accent);background-color:var(--accent);"+
       "background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2314120E' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E\")}"+
-    ".swa-pass .swa-st b{font-family:var(--disp);font-size:21px;line-height:1.05;font-weight:800;text-transform:uppercase;letter-spacing:.005em}"+
-    ".swa-pass .swa-st small{margin-top:3px}.swa-fwp{color:var(--accent)!important;font-weight:700!important}"+
+    ".swa-pass .swa-st b{font-family:var(--disp);font-size:19px;line-height:1.05;font-weight:800;text-transform:uppercase;letter-spacing:.005em}"+
+    ".swa-pass .swa-st small{margin-top:2px}.swa-fwp{color:var(--accent)!important;font-weight:700!important}"+
     ".swa-price{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--disp)}"+
-    ".swa-price b{display:block;font-size:30px;line-height:1;font-weight:800;color:var(--accent)}.swa-price s{display:block;font-size:15px;font-weight:700;color:var(--faint)}"+
+    ".swa-price b{display:block;font-size:28px;line-height:1;font-weight:800;color:var(--accent)}.swa-price s{display:block;font-size:14px;font-weight:700;color:var(--faint)}"+
     ".swa-best{position:absolute;top:-10px;left:46px;padding:2px 8px;border-radius:var(--r-sm,4px);background:var(--accent);color:var(--on-accent);font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}"+
     "@media (hover:hover){.swa-pass:hover{border-color:var(--accent-rim)}}"+
     ".swa-pass:focus-visible,.swa-pgo:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"+
@@ -476,6 +464,13 @@
       else if(go==="out") signOut();
     });
   }
+  /* BACK FROM PAYSTACK WITHOUT PAYING (owner, 16 Oct 2026: "when i close paystack without
+     paying, the pay button is greyed out"). The phone restores the page as it was left,
+     button disabled mid-tap; whenever the page is shown again it is live again. */
+  if(root.addEventListener) root.addEventListener("pageshow",function(){
+    var b=d.getElementById("swaPay"), m=d.getElementById("swaMsg");
+    if(b&&b.disabled){ b.disabled=false; if(m) m.textContent=""; }
+  });
   /* Any [data-plus] on the page opens Plus: the code-limit message, the plan card. */
   d.addEventListener("click",function(e){ var b=e.target.closest&&e.target.closest("[data-plus]"); if(b){ e.preventDefault(); plus(); } });
   function acct(){ return root.swAcct||{st:{email:""}}; }
@@ -565,7 +560,9 @@
       if(pay) pay.onclick=function(){
         pay.disabled=true; msg.textContent="Opening Paystack...";
         a.req("POST","/api/pay/start",{pass:pick},function(code,j){
-          if(code===200&&j&&j.url){ root.location.href=j.url; return; }
+          if(code===200&&j&&j.url){ root.location.href=j.url;
+            setTimeout(function(){ pay.disabled=false; msg.textContent=""; },15000);   /* Paystack never opened: tap again */
+            return; }
           pay.disabled=false;
           msg.textContent=code===0?"No connection. Check your data and try again.":
             code===401?"Sign in again to pay.":code===429?"Too many tries. Try again in a few minutes.":
