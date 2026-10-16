@@ -323,3 +323,22 @@ test("every booking path asks before it sends more than the book takes", () => {
   assert.match(guard, /B\.mark/, "and it names the book");
   assert.ok(!/splitAndBook\(/.test(fn.slice(at, at + 1600)), "never straight to splitAndBook");
 });
+
+test("short of codes, My slip's split says why instead of doing nothing", () => {
+  /* The cap card has buttons and no .sp-q line. The short-of-codes message was
+     written into .sp-q only, so a 3-ticket split with 2 codes left did nothing
+     and said nothing (owner, 16 Oct 2026). Run wireSplit on a card like it. */
+  let inserted = null, booked = false, onClick = null;
+  const btn = { dataset: { n: "3" }, addEventListener: (_, f) => { onClick = f; } };
+  const ways = { insertAdjacentHTML: (where, html) => { inserted = { where, html }; } };
+  const box = { querySelectorAll: () => [btn], querySelector: (s) => (s === ".sp-ways" ? ways : null) };
+  const wrap = { querySelector: () => box };
+  const wireSplit = new Function("SW_QUOTA_LEFT", "splitAndBook",
+    body("wireSplit") + "\nreturn wireSplit;")(2, () => { booked = true; });
+  wireSplit(wrap, [], {}, { sel: "#myCapCard" });
+  onClick();
+  assert.equal(booked, false, "nothing books with too few codes");
+  assert.ok(inserted, "the reason is shown");
+  assert.equal(inserted.where, "beforebegin");
+  assert.match(inserted.html, /3 tickets needs 3 booking codes and you have 2 left/);
+});

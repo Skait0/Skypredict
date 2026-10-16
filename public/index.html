@@ -15952,10 +15952,14 @@ function wireSplit(wrap,picks,B,opt){
         /* Said above the buttons, not instead of them: with two codes left
            and three tickets asked for, two tickets is still affordable and
            replacing the row would have taken that away as well. */
-        var q=box.querySelector(".sp-q");
-        if(q) q.outerHTML="<p class='sp-q sp-short'>"+n+" tickets needs "+n+
+        var msg="<p class='sp-q sp-short'>"+n+" tickets needs "+n+
           " booking codes and you have "+(+SW_QUOTA_LEFT===0?"none":(+SW_QUOTA_LEFT))+
           " left today. More after midnight.</p>";
+        /* My slip's cap card has no .sp-q line, so the reason went nowhere and
+           the tap did nothing (owner, 16 Oct 2026). Put it above the buttons. */
+        var q=box.querySelector(".sp-q"), ways=box.querySelector(".sp-ways");
+        if(q) q.outerHTML=msg;
+        else if(ways) ways.insertAdjacentHTML("beforebegin",msg);
         return;
       }
       splitAndBook(picks,n,box,B,opt);
