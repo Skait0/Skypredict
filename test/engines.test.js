@@ -930,3 +930,20 @@ test("3 in a row: a small payout takes the safest version, a big one reaches for
   big.concat(small).forEach((c) => assert.ok(/^NR3_/.test(c.code), "only the No side is ever picked: " + c.code));
   api.WSP.legodd = 1.4;
 });
+
+test("the top fifth of the lever reaches further; Bankers keeps its count", () => {
+  /* Owner, 16 Oct 2026: keep "the lever sets the size" AND the old More games
+     monster slips. Up to 80% the count is what it always was; from there it
+     climbs to 46 at the end. Bankers, the safe style, keeps its own count. */
+  const rp = new Function(grab("riskParams") + "; var DATA={fixtures:[]}; return riskParams;")();
+  for (const r of [0, 20, 40, 60, 80]) assert.strictEqual(rp(r).maxGames, Math.round(3 + r / 100 * 32), "unchanged at " + r);
+  assert.strictEqual(rp(100).maxGames, 46);
+  assert.ok(rp(90).maxGames > Math.round(3 + 0.9 * 32), "climbing in the top fifth");
+  reset();
+  const big = [];
+  for (let k = 0; k < 8; k++) BOARD.forEach((f) => big.push(priced(Object.assign({}, f, { home: f.home + " " + k, away: f.away + " " + k }))));
+  api.setFixtures(big);
+  api.BUILD.risk = 100;
+  api.WSP.legodd = 1.4; const bal = api.buildPicks().length;
+  assert.ok(bal > 35, "Balanced reaches past the old 35 at the end: " + bal);
+});

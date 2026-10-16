@@ -13535,7 +13535,13 @@ function riskParams(r){
   var pool=0; try{pool=DATA.fixtures.filter(function(x){return notStarted(x);}).length;}catch(e){}
   var floorBoost = pool>=40 ? 0.10 : pool>=25 ? 0.06 : 0;
   var span = pool>=40 ? 0.22 : pool>=25 ? 0.26 : 0.30;
-  return {minConf:Math.min(0.75,(0.72+floorBoost)-span*f), maxGames:Math.round(3+f*32),
+  /* THE TOP OF THE LEVER GOES FURTHER (owner, 16 Oct 2026). Since the lever sets the
+     size for every style (buildPicks LEVER), the far right was capped at Balanced's 35
+     games - smaller than the old "More games" monster slips. Up to 80% nothing changes;
+     from there to the end the count climbs to 46, the old More games count, so every
+     style reaches the old ceiling or beyond, each in its own shape. */
+  var games = f<=0.8 ? 3+f*32 : 3+0.8*32+(f-0.8)/0.2*(46-(3+0.8*32));
+  return {minConf:Math.min(0.75,(0.72+floorBoost)-span*f), maxGames:Math.round(games),
     tier:(r<33?0:(r<66?1:2))};
 }
 /* The middle stop is "Medium" (owner, 12 Oct 2026), so it never shares a word with
@@ -14922,7 +14928,10 @@ function buildPicks(neutral){
   });
   var _use=slipUse();
   var removedCount=Object.keys(BUILD.removed).length;
-  var cap=Math.max(0,Math.round(p.maxGames*sty.games)-removedCount);
+  /* Bankers keeps the count it always had: the longer top of the lever (riskParams) is
+     for the styles that build to its size, not for the safe style. */
+  var _games=bankersOn()?Math.round(3+f0*32):p.maxGames;
+  var cap=Math.max(0,Math.round(_games*sty.games)-removedCount);
   /* THE LEVER SETS HOW BIG THE SLIP IS; THE STYLE SETS HOW IT GETS THERE (owner,
      16 Oct 2026: at the far right "More games, smaller odds" paid more than any
      other style, because 46 short legs multiply past 25 long ones - the style was
@@ -14935,7 +14944,7 @@ function buildPicks(neutral){
   if(ref){
     target=ref.reduce(function(t,c){ var o=legOdd(c.f,c.code,c.p,B); return t*(o>1?o:oddOf(c.p)); },1);
     cap=Math.max(0,ref.length);
-    loopCap=Math.max(cap,Math.round(p.maxGames*1.6)-removedCount);
+    loopCap=Math.max(cap,Math.min(60,Math.round(p.maxGames*1.6))-removedCount);   /* 60: no bookmaker takes a longer slip */
   }
   /* Europe first. South American games are held back unless Europe can't fill
      the slip, or the user has reshuffled a couple of times and clearly wants a
@@ -23962,7 +23971,9 @@ function renderBuilderOutput(){
      cannot grow. Nothing on screen said that, which makes a working slider look
      broken. Naming the window is the actionable half: the fix is to widen it,
      not to keep dragging. */
-  var _short = !firstVisit && picks.length < p.maxGames;
+  /* Only when the card really ran out (BUILD._pool): Fewer games is short of the dial's
+     count by design, and was told its window had run dry. */
+  var _short = !firstVisit && picks.length < p.maxGames && picks.length >= (BUILD._pool||0);
   $("riskSub").textContent=firstVisit ? "Move slider to build"
     : (picks.length+" game"+(picks.length===1?"":"s")+" \u00b7 each pick "+P0(p.minConf)+"%+"+
        (_short ? " \u00b7 all that clear the bar in this window" : ""));
