@@ -15960,6 +15960,7 @@ function wireSplit(wrap,picks,B,opt){
         var q=box.querySelector(".sp-q"), ways=box.querySelector(".sp-ways");
         if(q) q.outerHTML=msg;
         else if(ways) ways.insertAdjacentHTML("beforebegin",msg);
+        else box.insertAdjacentHTML("afterbegin",msg);
         return;
       }
       splitAndBook(picks,n,box,B,opt);
