@@ -14757,13 +14757,27 @@ function judgedP(f,code,p){
   return dogHcap(f,code)?p-HCAP_DOG_BAR:p;
 }
 
-function buildPicks(){
+function buildPicks(neutral){
   /* The book being built for, read once. Every price question below is
      asked of THIS book - the peeks it replaced all read sportyOdds, so a
      Bet9ja slip was being judged against SportyBet's prices. */
   var B=curBook();
   var p=riskParams(BUILD.risk), allowed=allowedMarkets(p.tier), cand=[];
-  var sty=sliderStyle();
+  /* neutral: the Balanced slip at this risk, built only to read its total (see LEVER). */
+  var sty=neutral?{per:1.4,games:1,pull:0}:sliderStyle();
+  /* MORE / FEWER GAMES ARE MEASURED AGAINST BALANCED AT THIS RISK (16 Oct 2026). A fixed
+     x1.25 / x1.7 meant More games took BIGGER legs than Balanced low on the dial (where
+     Balanced sits near x1.16) and Fewer games matched Balanced at the top (where Balanced
+     is already near x1.7). So the Balanced slip is built first: its legs set the price the
+     style leans from (a quarter shorter, two fifths longer) and its total sets the size
+     (see LEVER below). Bankers keeps its own rule: every leg x1.25 or under. */
+  var ref=null;
+  if(!neutral&&sty.pull&&!bankersOn()){
+    ref=buildPicks(true)||[];
+    var lgs=ref.map(function(c){ var o=legOdd(c.f,c.code,c.p,B); return o>1?o:oddOf(c.p); });
+    var bal=lgs.length?Math.exp(lgs.reduce(function(a,o){ return a+Math.log(o); },0)/lgs.length):0;
+    if(bal>1) sty={per:1+(bal-1)*(sty.per<1.4?0.75:1.4),games:sty.games,pull:1};
+  }
   var mkOn={"1X":BUILD.mk.wd,"X2":BUILD.mk.wd,"12":BUILD.mk.any,"1":BUILD.mk.out,"2":BUILD.mk.out,
     "OVER_0.5":BUILD.mk.o05===true,"NR3_ANY":BUILD.mk.nr3===true,"NR3_H":BUILD.mk.nr3===true,"NR3_A":BUILD.mk.nr3===true,"OVER_1.5":BUILD.mk.o15,"OVER_2.5":BUILD.mk.o25,"OVER_3.5":BUILD.mk.o35,"UNDER_4.5":BUILD.mk.u45,
     "FH_OVER_0.5":BUILD.mk.fh,
@@ -14909,6 +14923,20 @@ function buildPicks(){
   var _use=slipUse();
   var removedCount=Object.keys(BUILD.removed).length;
   var cap=Math.max(0,Math.round(p.maxGames*sty.games)-removedCount);
+  /* THE LEVER SETS HOW BIG THE SLIP IS; THE STYLE SETS HOW IT GETS THERE (owner,
+     16 Oct 2026: at the far right "More games, smaller odds" paid more than any
+     other style, because 46 short legs multiply past 25 long ones - the style was
+     changing the craziness, not just the shape). The Balanced slip at this risk
+     sets the target total; More games and Fewer games then take legs in their own
+     ranked order until they reach it - short legs need more games, long legs
+     fewer. The count bound is generous (x1.6) so a style whose legs are short can
+     still get there; a board that cannot reach it stops at the bound. Not Bankers. */
+  var target=0, loopCap=cap;
+  if(ref){
+    target=ref.reduce(function(t,c){ var o=legOdd(c.f,c.code,c.p,B); return t*(o>1?o:oddOf(c.p)); },1);
+    cap=Math.max(0,ref.length);
+    loopCap=Math.max(cap,Math.round(p.maxGames*1.6)-removedCount);
+  }
   /* Europe first. South American games are held back unless Europe can't fill
      the slip, or the user has reshuffled a couple of times and clearly wants a
      different mix. Once allowed in they're penalised rather than cut, so Europe
@@ -14981,7 +15009,7 @@ function buildPicks(){
      continent rules or the reader's own removals, all of which have run by
      here. Counting after them is the difference between "three of thirty-five"
      with no explanation and the sentence that explains it. */
-  BUILD._pool=cand.length;
+  if(!neutral) BUILD._pool=cand.length;
   /* League diversity: prefer spreading picks across leagues, softly. `cand` is
      already sorted best-first; we take from the top but add a small rank penalty
      per leg already drawn from the same country, so one league can't dominate the
@@ -15009,7 +15037,8 @@ function buildPicks(){
     if(best){ c.code=best.code; c.p=best.p; }
     return c;
   }
-  while(picked.length<cap){
+  var tot=1;
+  while(target>1 ? (picked.length<loopCap && !(picked.length>=2 && tot>=target)) : picked.length<cap){
     var bi=-1,bs=Infinity;
     for(var i=0;i<cand.length;i++){ if(usedIx[i]) continue;
       var s=i+LEAGUE_PEN*(lc[countryOf(cand[i].f.league)]||0);
@@ -15025,8 +15054,9 @@ function buildPicks(){
     picked.push(cand[bi]);
     var cc=countryOf(cand[bi].f.league); lc[cc]=(lc[cc]||0)+1;
     mc[cand[bi].code]=(mc[cand[bi].code]||0)+1;
+    var lo=legOdd(cand[bi].f,cand[bi].code,cand[bi].p,B); tot*=lo>1?lo:oddOf(cand[bi].p);
   }
-  BUILD.picks=picked;
+  if(!neutral) BUILD.picks=picked;
   return picked;
 }
 function oddOf(p){var q=Math.max(0.06,Math.min(0.97,p));return Math.pow(1/q,0.85);}

@@ -684,21 +684,44 @@ test("Team corners: off by default, built by both engines when on, only where Sp
    clicked, it should apply"). More games at smaller odds each, or fewer at
    bigger; Balanced leaves the Slider exactly as it was. */
 test("the slip style moves the slider's count and its leg odds, and Balanced moves nothing", () => {
+  /* LEVER (owner, 16 Oct 2026): the lever sets how big the slip is, the style how it
+     gets there. More games and Fewer games reach Balanced's total at the same risk,
+     with shorter or longer legs than Balanced picks there. On this eleven-game board
+     every style often needs all eleven, so the count can only drop for Fewer games. */
   reset();
-  api.BUILD.risk = 20;
   const run = (lo) => { api.WSP.legodd = lo; const p = api.buildPicks();
-    return { n: p.length, odd: p.reduce((a, c) => a + api.legOdd(c.f, c.code, c.p), 0) / (p.length || 1),
-             shape: shape(p) }; };
-  const neutral = run(1.35), bal = run(1.4), more = run(1.25), fewer = run(1.7);
-  assert.strictEqual(bal.shape, neutral.shape, "Balanced is the Slider as it was");
-  assert.ok(more.n > bal.n, `More games: ${more.n} v ${bal.n}`);
-  assert.ok(fewer.n < bal.n, `Fewer games: ${fewer.n} v ${bal.n}`);
-  /* Leg odds where the dial leaves room for them - at a safe setting every
-     leg that qualifies is priced about 1.2 to 1.3 whatever the style. */
-  api.BUILD.risk = 60;
-  const more60 = run(1.25), fewer60 = run(1.7);
-  assert.ok(fewer60.odd > more60.odd,
-    `bigger odds each: ${fewer60.odd.toFixed(2)} v ${more60.odd.toFixed(2)}`);
+    const odds = p.map((c) => api.legOdd(c.f, c.code, c.p));
+    return { n: p.length, odd: odds.reduce((x, y) => x + y, 0) / (odds.length || 1),
+             tot: odds.reduce((x, y) => x * y, 1), shape: shape(p) }; };
+  api.BUILD.risk = 20;
+  assert.strictEqual(run(1.4).shape, run(1.35).shape, "Balanced is the Slider as it was");
+  api.BUILD.risk = 80;
+  const more = run(1.25), bal = run(1.4), fewer = run(1.7);
+  assert.ok(fewer.n <= bal.n && bal.n <= more.n, `games: fewer ${fewer.n}, balanced ${bal.n}, more ${more.n}`);
+  assert.ok(fewer.odd > bal.odd && bal.odd > more.odd,
+    `leg odds: fewer ${fewer.odd.toFixed(2)}, balanced ${bal.odd.toFixed(2)}, more ${more.odd.toFixed(2)}`);
+});
+
+test("on a full card the lever sets the size: every style lands near Balanced's total", () => {
+  /* Owner, 16 Oct 2026: at the far right "More games, smaller odds" paid more than
+     any style, because 46 short legs multiply past 25 long ones. A card big enough
+     to fill any style: the eleven games cloned six times under new names. */
+  reset();
+  const big = [];
+  for (let k = 0; k < 6; k++) BOARD.forEach((f) => big.push(priced(Object.assign({}, f, { home: f.home + " " + k, away: f.away + " " + k }))));
+  api.setFixtures(big);
+  api.BUILD.risk = 100;
+  const run = (lo) => { api.WSP.legodd = lo; const p = api.buildPicks();
+    const odds = p.map((c) => api.legOdd(c.f, c.code, c.p));
+    return { n: p.length, odd: Math.exp(odds.reduce((x, y) => x + Math.log(y), 0) / (odds.length || 1)),
+             logTot: odds.reduce((x, y) => x + Math.log(y), 0) }; };
+  const more = run(1.25), bal = run(1.4), fewer = run(1.7);
+  assert.ok(more.n > bal.n && bal.n > fewer.n, `games: more ${more.n}, balanced ${bal.n}, fewer ${fewer.n}`);
+  assert.ok(more.odd < bal.odd && bal.odd < fewer.odd,
+    `leg odds: more ${more.odd.toFixed(2)}, balanced ${bal.odd.toFixed(2)}, fewer ${fewer.odd.toFixed(2)}`);
+  for (const [name, x] of [["More games", more], ["Fewer games", fewer]])
+    assert.ok(Math.abs(x.logTot - bal.logTot) < Math.log(3),
+      `${name} total x${Math.round(Math.exp(x.logTot))} against Balanced x${Math.round(Math.exp(bal.logTot))}`);
 });
 
 /* Owner, 11 Oct 2026: "only give double chance when its a little strong home
