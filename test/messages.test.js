@@ -164,7 +164,7 @@ test("a hostile reply is stored as text and drawn as text everywhere", async () 
   for (const call of ["bubble({id:m.id,at:m.created_at,mine:!m.from_admin,body:m.body},Infinity,", "bubble({id:m.id,at:m.created_at,mine:!m.from_admin,body:m.body},Infinity); })"])
     assert.ok(src.includes(call), "admin views draw replies as the user's own (escaped): " + call.slice(0, 40));
   assert.ok(src.includes("esc(api.textOf(last.from_admin?last.body:esc(last.body)).slice(0,70))"), "the conversation preview escapes");
-  assert.ok(src.includes("if(!m.user_id){ if(m.from_admin) bc.push(m); return; }"), "only the admin's broadcasts are drawn as HTML");
+  assert.ok(src.includes("if(!m.user_id){ if(m.from_admin) (m.adminHidden?gone:bc).push(m); return; }"), "only the admin's broadcasts are drawn as HTML");
   /* And what the escape does to it. */
   const esc = (x) => String(x).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   assert.doesNotMatch(esc(evil), /<img|<script|<a /);
@@ -296,13 +296,18 @@ test("Delete takes a broadcast off the admin's list only; Unsend takes it from e
   await w.call(post(w.boss, "send", { to: "all", html: "<b>Two</b>" }));
   const [one, two] = w.rows.map((r) => r.id);
   assert.strictEqual((await w.call(post(w.boss, "msghide", { id: one }))).code, 200);
-  const mine = (await w.call(get(w.boss, "threads"))).json().messages.map((m) => m.id);
-  assert.ok(!mine.includes(one) && mine.includes(two), "gone from the admin's Broadcasts sent");
+  const mine = (await w.call(get(w.boss, "threads"))).json().messages;
+  /* Off the list, but still reachable to Unsend (owner, 16 Oct 2026): it comes back marked. */
+  assert.ok(mine.find((m) => m.id === one).adminHidden, "marked as deleted from the admin's Broadcasts sent");
+  assert.ok(!mine.find((m) => m.id === two).adminHidden);
   assert.ok((await w.call(get(w.ada, "inbox"))).json().messages.some((m) => m.id === one), "users keep it");
   assert.strictEqual((await w.call(post(w.boss, "unsend", { id: two }))).code, 200);
   assert.ok(!(await w.call(get(w.ada, "inbox"))).json().messages.some((m) => m.id === two), "Unsend takes it from users");
   const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
   assert.ok(src.includes(">Unsend</button>") && src.includes("data-bc-del="), "both buttons on each broadcast");
+  assert.strictEqual((await w.call(post(w.boss, "unsend", { id: one }))).code, 200, "a deleted one can still be unsent");
+  assert.ok(!(await w.call(get(w.ada, "inbox"))).json().messages.some((m) => m.id === one), "and then users lose it too");
+  assert.match(src, /Deleted from this list, still showing to users/);
 });
 
 /* Owner, 14 Oct 2026 (screenshot): a sent broadcast's folded line read

@@ -137,7 +137,10 @@ function make(deps) {
              deleted leaves their Broadcasts sent list, and users keep it.
              Unsend is the one that takes it from everyone. */
           const gone = new Set((reads && reads.hidden) || []);
-          const shown = list.filter((m) => !(m.user_id == null && gone.has(Number(m.id))));
+          /* ...but they still come back, marked: a deleted broadcast users still
+             see must stay reachable to Unsend (owner, 16 Oct 2026: "i cant unsend
+             it in admin because its no longer there"). The page folds them away. */
+          const shown = list.map((m) => (m.user_id == null && gone.has(Number(m.id)) ? Object.assign({ adminHidden: true }, m) : m));
           return H.sendJson(res, 200, { messages: shown, readAt: (reads && reads.read_at) || null });
         }
         if (action === "gifs") {

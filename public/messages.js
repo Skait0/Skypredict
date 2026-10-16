@@ -182,6 +182,7 @@
     ".swm-bc .m-body{margin-top:8px}.swm-bc .m-body[hidden]{display:none}"+
     ".swm-bc{flex-wrap:wrap}.swm-bc-acts{display:flex;gap:6px;flex-wrap:wrap;flex:none}.swa-pillbtn.swm-del-b{color:var(--red-ink)}"+
     "@media(max-width:520px){.swm-bc-acts{flex:1 1 100%;margin-top:8px}}"+
+    ".swm-gone{border-top:1px solid var(--line)}.swm-gone summary{cursor:pointer;padding:12px;font-size:12.5px;font-weight:700;color:var(--faint)}.swm-gone-t{display:block;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"+
     ".swm-shut .m-body{max-height:3em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 45%,transparent);mask-image:linear-gradient(#000 45%,transparent)}.swm-shut .m-body .m-gif{display:none}"+
     ".swm-tog{margin-left:auto;border:0;background:none;color:var(--accent);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;padding:2px 4px}.swm-meta .swm-tog{margin-left:auto}.swm-meta .swm-tog+.swm-del{margin-left:0}"+
     ".swm-del{border:0;background:none;color:var(--faint);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;padding:2px 4px}.swm-del:hover,.swm-del.swm-arm{color:var(--red-ink)}"+
@@ -642,11 +643,12 @@
         var cv=panel.querySelector("#swmConvos"), sent=panel.querySelector("#swmSent");
         if(code!==200){ var w="<div class='swa-set'><span class='swa-st'><small>"+(code===503?"Messages are not set up yet. Run sql/messages.sql in Supabase.":"Could not load messages.")+"</small></span></div>";
           cv.innerHTML=w; sent.innerHTML=w; return; }
-        var seen=Date.parse(j.readAt||"")||0, by={}, order=[], bc=[];
+        var seen=Date.parse(j.readAt||"")||0, by={}, order=[], bc=[], gone=[];
         (j.messages||[]).forEach(function(m){
           /* Only the admin's own broadcasts are drawn as HTML here; a row with no
-             thread that is not from the admin is never treated as one. */
-          if(!m.user_id){ if(m.from_admin) bc.push(m); return; }
+             thread that is not from the admin is never treated as one. One the admin
+             deleted from this list goes in `gone`: users still have it. */
+          if(!m.user_id){ if(m.from_admin) (m.adminHidden?gone:bc).push(m); return; }
           if(!by[m.user_id]){ by[m.user_id]=[]; order.push(m.user_id); }
           by[m.user_id].push(m); });
         var unread=0;
@@ -673,6 +675,13 @@
             "<button type='button' class='swa-pillbtn swm-del-b' data-unsend='"+esc(String(m.id))+"'>Unsend</button>"+
             "<button type='button' class='swa-pillbtn' data-bc-del='"+esc(String(m.id))+"'>Delete</button></span></div>"; }).join(""):
           "<div class='swa-set'><span class='swa-st'><small>Nothing sent to everyone yet.</small></span></div>";
+        /* DELETED HERE, STILL WITH USERS (owner, 16 Oct 2026): Delete only clears
+           this list, so these stay reachable, folded at the foot, to Unsend. */
+        if(gone.length) sent.insertAdjacentHTML("beforeend","<details class='swm-gone'><summary>Deleted from this list, still showing to users ("+gone.length+")</summary>"+
+          gone.map(function(m){ var line=textOf(clean(m.body).replace(/<img[^>]*>/g," ")).slice(0,90)||"GIF";
+            return "<div class='swa-set swm-bc'><span class='swa-st'><b class='swm-gone-t'>"+esc(line)+"</b><small>"+esc(when(m.created_at))+"</small></span>"+
+              "<span class='swm-bc-acts'><button type='button' class='swa-pillbtn swm-del-b' data-unsend='"+esc(String(m.id))+"'>Unsend</button></span></div>"; }).join("")+
+          "</details>");
         var bcBy={}; bc.forEach(function(m){ bcBy[String(m.id)]=m; });
         /* Edit: into the editor, and Send becomes Save changes for that message. */
         sent.querySelectorAll("[data-bc-edit]").forEach(function(b){ b.onclick=function(){
