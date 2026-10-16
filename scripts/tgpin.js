@@ -29,7 +29,8 @@ async function tg(method, body) {
     const photos = String(process.env.TG_PHOTOS || "").split(",").map((s) => s.trim()).filter(Boolean).slice(0, 10);
     if (photos.length) {
       const r = await tg("sendMediaGroup", { chat_id: chat,
-        media: photos.map((u, i) => Object.assign({ type: "photo", media: u }, i === 0 ? { caption: withBot(text, 1024).slice(0, 1024) } : {})) });
+        /* An .mp4 goes as a video (promo cut-downs, 16 Oct 2026); Telegram fetches up to 20 MB by URL. */
+        media: photos.map((u, i) => Object.assign(/\.mp4(\?|$)/i.test(u) ? { type: "video", media: u, supports_streaming: true } : { type: "photo", media: u }, i === 0 ? { caption: withBot(text, 1024).slice(0, 1024) } : {})) });
       console.log("posted album of " + r.length);
       return;
     }
