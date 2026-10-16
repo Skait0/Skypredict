@@ -22,10 +22,14 @@ const test = require("node:test");
 const assert = require("node:assert");
 const handler = require("../api/book.js");
 
+/* THE TRIAL (16 Oct 2026) refuses a signed-out booking outright, so these
+   carry a session cookie whose lookup finds nothing - the one case that still
+   takes the device count, which is what most of this file is about. */
 const post = (extra) => Object.assign({
   method: "POST",
   query: { book: "sporty" },
-  headers: { "x-sw-device": "device-abc123", "x-forwarded-for": "105.112.4.9" },
+  headers: { "x-sw-device": "device-abc123", "x-forwarded-for": "105.112.4.9",
+             cookie: "__Host-sw_session=x" },
   body: { selections: [{ eventId: "1", prediction: "1X" }] },
 }, extra || {});
 
@@ -83,6 +87,17 @@ async function run(opts, fn) {
 
 test("the route is a handler, wired and requirable exactly as Vercel loads it", () => {
   assert.equal(typeof handler, "function");
+});
+
+test("signed out, the trial refuses before the bookmaker or the count is asked", async () => {
+  const r = res();
+  const { seen } = await run({ used: 0 }, () => handler(post({
+    headers: { "x-sw-device": "device-abc123", "x-forwarded-for": "105.112.4.9" } }), r));
+  assert.equal(r._o.code, 429);
+  assert.equal(r._o.body.plan, "guest");
+  assert.match(r._o.body.message, /Sign in/);
+  assert.equal(seen.bookings, 0);
+  assert.equal(seen.inserts, 0);
 });
 
 test("a device that has booked ten times today is refused", async () => {

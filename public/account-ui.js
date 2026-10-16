@@ -82,10 +82,10 @@
   function subHtml(q,role,plan,until){
     var u=role==="plus"?dayMonth(until):"";
     var what=role==="admin"?"Every feature, no limit":role==="ff"?"Every feature, 100 codes a day":
-      role==="plus"?"20 codes a day"+(u?", until "+esc(u):""):"2 codes a day";
+      role==="plus"?"20 codes a day"+(u?", until "+esc(u):""):"2 trial codes";
     return "<p class='swa-h'>Your plan</p><div class='swa-card'><div class='swa-subtop'><span><b"+(role==="admin"?" class='swa-gold'":"")+">"+esc(plan||"Free plan")+"</b><small>"+what+"</small></span>"+
       (canBuy(role)?"<button class='swa-pillbtn swa-pgo' type='button' data-plus>"+(role==="plus"?"Add days":"Get Wizard Pass")+"</button>":"")+"</div>"+
-      (role==="admin"||q?"<div class='swa-subuse'>"+codesHtml(q,role).replace("class='swa-q'","class='swa-q swa-q0'")+(role==="admin"?"":"<small>Resets at midnight</small>")+"</div>":"")+"</div>";
+      (role==="admin"||q?"<div class='swa-subuse'>"+codesHtml(q,role).replace("class='swa-q'","class='swa-q swa-q0'")+(role==="admin"?"":role==="plus"||role==="ff"?"<small>Resets at midnight</small>":"")+"</div>":"")+"</div>";
   }
   /* THE PLUS SCREEN (owner, 16 Oct 2026). o = GET /api/pay/offer plus role and
      plusUntil. Prepaid: nothing renews, a new pass stacks on the days left. */

@@ -38,6 +38,9 @@ const opts = {
   /* The paygate (owner, 16 Oct 2026): signed-in free accounts 2 a day, any
      Plus pass 20, counted per account (u:<id>). lib/roles.js holds the numbers. */
   freeLimit: R.FREE_CODES,
+  /* The trial (owner, 16 Oct 2026): free is FREE_CODES for the account's
+     lifetime and the phone's, and signed out books nothing. lib/bookgate.js. */
+  trial: true,
   plusLimit: R.PLUS_CODES,
   sessionCookie: S.COOKIE,
   /* Once per booking: the gate, the counter and the ledger all ask, and each answer is

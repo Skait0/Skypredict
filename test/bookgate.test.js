@@ -333,7 +333,7 @@ function heldStore() {
     rows,
     async holdBooking(subject, day) { await tick(); const id = next++; rows.push({ id, subject, day }); return { ok: true, id }; },
     async releaseBooking(id) { await tick(); const i = rows.findIndex((r) => r.id === id); if (i >= 0) rows.splice(i, 1); return { ok: true }; },
-    async countBookings(subject, day, cap, upto) { await tick(); return { ok: true, n: rows.filter((r) => r.subject === subject && r.day === day && (upto == null || r.id <= upto)).length }; },
+    async countBookings(subject, day, cap, upto) { await tick(); return { ok: true, n: rows.filter((r) => r.subject === subject && (day === "*" || r.day === day) && (upto == null || r.id <= upto)).length }; },
     async recordBooking(subject, day) { const id = next++; rows.push({ id, subject, day }); return { ok: true }; },
   };
 }
@@ -371,4 +371,83 @@ test("a booking the bookmaker refused gives its place back", async () => {
   await release(r);
   assert.equal(db.rows.length, 0);
   assert.equal((await gate(signedIn())).remaining, 1, "both codes still there");
+});
+
+/* ------------------------------------------------------------ the trial */
+
+/* o.trial (owner, 16 Oct 2026): 2 codes for an account's lifetime and for a
+   phone's, and signed out books nothing. */
+const trialOpts = (db, user, clock) => ({ db, freeLimit: 2, plusLimit: 20, sessionCookie: "sw_s", trial: true,
+  exempt: ["our-own-phone-0123456789"], now: clock || (() => at),
+  roleOf: async () => (user ? { role: user.role || "free", userId: user.id } : null) });
+const onPhone = (device, signedIn) => ({ headers: Object.assign({ "x-sw-device": device },
+  signedIn ? { cookie: "sw_s=tok" } : {}) });
+
+test("trial: signed out books nothing, and is told to sign in", async () => {
+  const gate = G.makeGate(trialOpts(heldStore(), null));
+  const v = await gate(onPhone("device-abc123", false));
+  assert.equal(v.allow, false);
+  assert.equal(v.plan, "guest");
+});
+
+test("trial: a made-up device id per request no longer buys codes", async () => {
+  /* Before: each new x-sw-device got the device limit (10) - unlimited codes. */
+  const gate = G.makeGate(trialOpts(heldStore(), null));
+  for (let i = 0; i < 5; i++) assert.equal((await gate(onPhone("random-" + i + "-xxxxxx", false))).allow, false);
+});
+
+test("trial: our own exempt phone still books signed out", async () => {
+  const gate = G.makeGate(trialOpts(heldStore(), null));
+  assert.equal((await gate(onPhone("our-own-phone-0123456789", false))).allow, true);
+});
+
+test("trial: a free account gets 2 codes for life, not 2 a day", async () => {
+  const db = heldStore();
+  let t = at;
+  const gate = G.makeGate(trialOpts(db, { id: "acct1" }, () => t));
+  assert.equal((await gate(onPhone("device-abc123", true))).allow, true);
+  assert.equal((await gate(onPhone("device-abc123", true))).allow, true);
+  t += 2 * 86400000;                       /* two days later */
+  const v = await gate(onPhone("device-abc123", true));
+  assert.equal(v.allow, false, "the trial does not come back at midnight");
+  assert.equal(v.plan, "free");
+  assert.equal(v.trial, true);
+});
+
+test("trial: a second account on the same phone gets nothing", async () => {
+  const db = heldStore();
+  const first = G.makeGate(trialOpts(db, { id: "acct1" }));
+  await first(onPhone("device-abc123", true));
+  await first(onPhone("device-abc123", true));
+  const second = G.makeGate(trialOpts(db, { id: "acct2" }));
+  assert.equal((await second(onPhone("device-abc123", true))).allow, false, "the phone has used its 2");
+  assert.equal((await second(onPhone("device-other99", true))).allow, true, "a new phone is a new trial");
+});
+
+test("trial: refused bookings give back both the account's and the phone's place", async () => {
+  const db = heldStore();
+  const o = trialOpts(db, { id: "acct1" });
+  const r = onPhone("device-abc123", true);
+  assert.equal((await G.makeGate(o)(r)).allow, true);
+  assert.equal(db.rows.length, 2, "an account row and a phone row");
+  await G.makeRelease(o)(r);
+  assert.equal(db.rows.length, 0);
+});
+
+test("trial: a Plus pass is still 20 a day", async () => {
+  const db = heldStore();
+  let t = at;
+  const gate = G.makeGate(trialOpts(db, { id: "acct1", role: "plus" }, () => t));
+  for (let i = 0; i < 20; i++) assert.equal((await gate(onPhone("device-abc123", true))).allow, true);
+  assert.equal((await gate(onPhone("device-abc123", true))).allow, false);
+  t += 86400000;
+  assert.equal((await gate(onPhone("device-abc123", true))).allow, true, "back after midnight");
+});
+
+test("trial: a signed-in reader whose lookup failed is not told to sign in", async () => {
+  const o = trialOpts(heldStore(), null);
+  o.roleOf = async () => { throw new Error("db slow"); };
+  o.deviceLimit = 10;
+  const v = await G.makeGate(o)(onPhone("device-abc123", true));
+  assert.notEqual(v.plan, "guest");
 });

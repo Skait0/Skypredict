@@ -154,7 +154,7 @@ test("subscription card follows the plan", () => {
   assert.doesNotMatch(p("ff", "Family & friends"), /data-plus/);
   assert.match(p("admin", "Admin"), /No limit/);
   assert.doesNotMatch(p("admin", "Admin"), /data-plus/);
-  assert.match(p(undefined, undefined), /Free plan[\s\S]*2 codes a day[\s\S]*data-plus>Get Wizard Pass/);
+  assert.match(p(undefined, undefined), /Free plan[\s\S]*2 trial codes[\s\S]*data-plus>Get Wizard Pass/);
   const plus = UI.profileHtml({ name: "A", avatar: "fire", role: "plus", plan: "Plus", plusUntil: "2026-11-12T10:00:00Z",
     record: { built: 0, won: 0, settled: 0 }, quota: null });
   assert.match(plus, /20 codes a day, until 12 Nov[\s\S]*data-plus>Add days/);

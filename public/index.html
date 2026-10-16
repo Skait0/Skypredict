@@ -11749,8 +11749,14 @@ function bookErrHTML(d,B){
   /* THE PAYGATE (owner, 16 Oct 2026): an account on 2 a day is offered Plus
      right here (account-ui.js opens it on [data-plus]); a pass holder at 20,
      or a device, is told when it resets. */
+  /* THE TRIAL (owner, 16 Oct 2026): signed out books nothing, and a free
+     account's 2 codes are once, not daily (lib/bookgate.js o.trial). */
+  if(kind==="capped"&&d.plan==="guest")
+    return "<div class='code-err code-plus'><b>Sign in to try "+(d.limit||2)+" codes on us.</b>"+
+      "<span>Your slip is saved. It takes a few seconds with Google or your email.</span>"+
+      "<a class='code-plusgo' href='/login?return="+encodeURIComponent(location.pathname+location.search)+"'>Sign in</a></div>";
   if(kind==="capped"&&d.plan==="free"&&window.swPlus)
-    return "<div class='code-err code-plus'><b>That's your "+(d.limit||2)+" codes for today.</b>"+
+    return "<div class='code-err code-plus'><b>"+(d.trial?"You've used your "+(d.limit||2)+" trial codes.":"That's your "+(d.limit||2)+" codes for today.")+"</b>"+
       "<span>Your slip is saved. Wizard Pass gives you 20 codes a day on every bookie, from ₦200. Pay once, nothing renews.</span>"+
       "<button type='button' class='code-plusgo' data-plus>Get Wizard Pass</button></div>";
   if(kind==="capped")
@@ -15954,7 +15960,7 @@ function wireSplit(wrap,picks,B,opt){
            replacing the row would have taken that away as well. */
         var msg="<p class='sp-q sp-short'>"+n+" tickets needs "+n+
           " booking codes and you have "+(+SW_QUOTA_LEFT===0?"none":(+SW_QUOTA_LEFT))+
-          " left today. More after midnight.</p>";
+          " left.</p>";   /* not "after midnight": trial codes do not come back */
         /* My slip's cap card has no .sp-q line, so the reason went nowhere and
            the tap did nothing (owner, 16 Oct 2026). Put it above the buttons. */
         var q=box.querySelector(".sp-q"), ways=box.querySelector(".sp-ways");

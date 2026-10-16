@@ -40,7 +40,12 @@ alter table public.book_quota enable row level security;
 -- and the allowance with it - so keep a fortnight for looking at usage during
 -- the awareness month and drop the rest.
 --
---   delete from public.book_quota where day < current_date - interval '14 days';
+--   delete from public.book_quota where day < current_date - interval '14 days'
+--     and subject not like 'u:%' and subject not like 't-%';
+--
+-- NEVER delete the u: and t- rows: the free trial counts them for life
+-- (lib/bookgate.js, 16 Oct 2026). Deleting them hands every account and
+-- phone its trial codes again.
 --
 -- Run it from the Supabase SQL editor, or schedule it with pg_cron if this
 -- table ever grows fast enough to matter.
