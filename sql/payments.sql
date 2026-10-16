@@ -30,13 +30,22 @@ begin
     where reference = p_ref and status = 'pending' and amount_kobo = p_amount
     returning * into r;
   if not found then return null; end if;
-  insert into public.subscriptions (user_id, plan, status, current_period_end, provider, provider_ref)
-    values (r.user_id, r.pass, 'active', now() + make_interval(days => r.days), 'paystack', r.reference)
+  insert into public.subscriptions as s
+    (user_id, plan, status, current_period_end,
+     provider, provider_ref)
+  values
+    (r.user_id, r.pass, 'active',
+     now() + make_interval(days => r.days),
+     'paystack', r.reference)
   on conflict (user_id) do update set
-    plan = excluded.plan, status = 'active', provider = 'paystack', provider_ref = excluded.provider_ref,
-    current_period_end = greatest(now(), coalesce(public.subscriptions.current_period_end, now()))
-                         + make_interval(days => r.days)
-  returning current_period_end into v_end;
+    plan = excluded.plan,
+    status = 'active',
+    provider = 'paystack',
+    provider_ref = excluded.provider_ref,
+    current_period_end =
+      greatest(now(), coalesce(s.current_period_end, now()))
+      + make_interval(days => r.days)
+  returning s.current_period_end into v_end;
   return v_end;
 end;
 $$;
