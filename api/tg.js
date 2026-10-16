@@ -21,6 +21,8 @@ const D = require("../lib/doctor.js");
 const CONVERT = require("../lib/convert.js");
 const SB = require("../lib/supabase.js");
 const QUOTA = require("../lib/quota.js");
+const R = require("../lib/roles.js");
+const TGLINK = require("../lib/tglink.js");
 const FOLLOW = require("../lib/follow.js");
 const ASK = require("../lib/ask.js");
 const S = require("../lib/slipedit.js");
@@ -129,12 +131,9 @@ async function onConvert(cq) {
   if (tag !== "cv" || !ORDER.includes(to) || !ORDER.includes(from) || !/^[A-Z0-9]{4,16}$/.test(code || "")) return;
   const say = (text) => tg("sendMessage", { chat_id: chat.id, text, parse_mode: "HTML",
     disable_web_page_preview: true, reply_to_message_id: cq.message.message_id });
-  const subject = subjectOf(cq.from && cq.from.id);
-  const day = QUOTA.dayOf(Date.now());
-  /* Counted over every day: the trial is once (rows are still filed by day). */
-  const used = await SB.countBookings(subject, QUOTA.ALL_DAYS, CONVERT_CAP).catch(() => ({ ok: false, n: null }));
-  if (used.ok && used.n >= CONVERT_CAP) {
-    await say("🔥 You've used your " + CONVERT_CAP + " trial codes.\n\nWant more? " + PLUS_LINE);
+  const q = await quota(cq.from && cq.from.id, 1);
+  if (!q.ok) {
+    await say("🔥 " + spent(q) + (q.plan === "trial" ? "\n\nWant more? " + PLUS_LINE : ""));
     return;
   }
   tg("sendChatAction", { chat_id: chat.id, action: "typing" }).catch(() => {});
@@ -146,8 +145,7 @@ async function onConvert(cq) {
       ". Try another bookie, or <a href=\"" + SITE + "/?book=" + from + "&code=" + code + "&go=convert\">the full converter</a>.");
     return;
   }
-  await SB.recordBooking(subject, day, "tgbot").catch(() => {});
-  const left = used.ok ? Math.max(0, CONVERT_CAP - used.n - 1) : null;
+  await SB.recordBooking(q.subject, q.day, "tgbot").catch(() => {});
   const stuck = r.stuck || [];
   const out = ["🔁 <b>" + D.BOOK_NAMES[to] + ": <code>" + r.code + "</code></b> 🔥",
     r.booked.length + " of " + legs.length + " games converted."];
@@ -155,8 +153,7 @@ async function onConvert(cq) {
     esc((s.leg.home || "") + " v " + (s.leg.away || "")) + " (" + esc(s.why) + ")").join("; ") +
     (stuck.length > 4 ? "; +" + (stuck.length - 4) + " more" : ""));
   if ((r.changed || []).length) out.push("Line moved to what " + D.BOOK_NAMES[to] + " sells on " + r.changed.length + " leg" + (r.changed.length === 1 ? "" : "s") + ".");
-  out.push("", (left != null ? "⚡ " + left + " trial code" + (left === 1 ? "" : "s") + " left. " : "") +
-    PLUS_LINE, "<i>18+</i>");
+  out.push("", leftLine(q, 1), "<i>18+</i>");
   await say(out.join("\n"));
 }
 
@@ -165,10 +162,39 @@ async function onConvert(cq) {
    a split into three costs three. Same fail-open rule on a count we cannot
    read. */
 async function quota(uid, cost) {
-  const subject = subjectOf(uid), day = QUOTA.dayOf(Date.now());
-  const used = await SB.countBookings(subject, QUOTA.ALL_DAYS, CONVERT_CAP).catch(() => ({ ok: false, n: null }));
-  return { subject, day, used, ok: !(used.ok && used.n + cost > CONVERT_CAP),
-           left: (k) => (used.ok ? Math.max(0, CONVERT_CAP - used.n - k) : null) };
+  const b = await budgetOf(uid);
+  const used = await SB.countBookings(b.subject, b.countDay, b.cap).catch(() => ({ ok: false, n: null }));
+  return { subject: b.subject, day: b.day, plan: b.plan, cap: b.cap, used, ok: !(used.ok && used.n + cost > b.cap),
+           left: (k) => (used.ok ? Math.max(0, b.cap - used.n - k) : null) };
+}
+
+/* CONNECTED ACCOUNTS (owner, 16 Oct 2026; lib/tglink.js). A Telegram linked to
+   a Plus or Family & friends account books on that account's daily codes -
+   counted with the site's, as "u:<id>", so the 20 are 20 across both. The
+   admin is counted under a cap no one reaches. Unlinked, free, or a lookup
+   that fails: this Telegram's trial, counted over every day. */
+async function budgetOf(uid) {
+  const day = QUOTA.dayOf(Date.now());
+  const trial = { subject: subjectOf(uid), day, countDay: QUOTA.ALL_DAYS, cap: CONVERT_CAP, plan: "trial" };
+  try {
+    const userId = await SB.tgUserOf(trial.subject);
+    if (!userId) return trial;
+    const AUTHDB = require("../lib/auth/db.js");
+    const u = await AUTHDB.userById(userId);
+    const role = u ? await R.roleOf(AUTHDB, u, process.env) : "free";
+    if (role === "admin") return { subject: "u:" + userId, day, countDay: day, cap: 1000, plan: "admin" };
+    if (role === "plus" || role === "ff") return { subject: "u:" + userId, day, countDay: day, cap: R.codeLimitFor(role), plan: role };
+  } catch (e) { /* the trial, as if unlinked */ }
+  return trial;
+}
+/* What the reader is told when the codes run out, and how many are left. */
+const spent = (q) => q.plan === "trial" ? "You've used your " + q.cap + " trial codes."
+  : "That's your " + q.cap + " codes for today - more after midnight.";
+function leftLine(q, k) {
+  const l = q.left(k);
+  if (q.plan === "admin") return "";
+  if (q.plan !== "trial") return l != null ? "⚡ " + l + " code" + (l === 1 ? "" : "s") + " left today." : "";
+  return (l != null ? "⚡ " + l + " trial code" + (l === 1 ? "" : "s") + " left. " : "") + PLUS_LINE;
 }
 const xOdds = (o) => "×" + (o >= 100 ? Math.round(o).toLocaleString("en") : o.toFixed(2));
 const legNames = (ls, n) => ls.slice(0, n).map((l) => esc((l.home || "?") + " v " + (l.away || "?"))).join("; ") +
@@ -200,9 +226,10 @@ async function onAsk(msg, ask, book, code, legs) {
   const q = await quota(msg.from && msg.from.id, cost);
   if (!q.ok) {
     const have = q.left(0);
+    const kind = q.plan === "trial" ? " trial code" : " code";
     await say("🔥 That needs " + cost + " new code" + (cost === 1 ? "" : "s") + " and you have " +
-      (have ? have + " trial code" + (have === 1 ? "" : "s") + " left" : "used your " + CONVERT_CAP + " trial codes") +
-      ".\n\n" + PLUS_LINE);
+      (have ? have + kind + (have === 1 ? "" : "s") + " left" : "used your " + q.cap + kind + "s") +
+      "." + (q.plan === "trial" ? "\n\n" + PLUS_LINE : ""));
     return;
   }
   const fx = await fixtures();
@@ -225,8 +252,7 @@ async function onAsk(msg, ask, book, code, legs) {
     await say(out.join("\n"), convertButtons(book, r.code));
     return true;
   };
-  const tail = (k) => { const l = q.left(k); return (l != null ? "⚡ " + l + " trial code" + (l === 1 ? "" : "s") + " left. " : "") +
-    PLUS_LINE + "\n<i>18+</i>"; };
+  const tail = (k) => leftLine(q, k) + "\n<i>18+</i>";
 
   if (ask.kind === "trim" || ask.kind === "keep") {
     const plan = ask.kind === "trim" ? ASK.planTrim(legs, fx, ask.odds) : ASK.planKeep(legs, fx, ask.games);
@@ -300,7 +326,7 @@ async function onToday(msg, ask) {
   const book = ask.book || "sporty", B = D.BOOK_NAMES[book];
   const q = await quota(msg.from && msg.from.id, 1);
   if (!q.ok) {
-    await say("🔥 You've used your " + CONVERT_CAP + " trial codes. " + PLUS_LINE);
+    await say("🔥 " + spent(q) + (q.plan === "trial" ? " " + PLUS_LINE : ""));
     return;
   }
   tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
@@ -324,7 +350,8 @@ async function onToday(msg, ask) {
     lines.push(esc(D.label(x.leg)) + (p ? " · <b>" + pc(p) + "</b>" : ""));
   }
   const l = q.left(1);
-  lines.push("", (l != null ? "⚡ " + l + " trial code" + (l === 1 ? "" : "s") + " left. " : "") +
+  lines.push("", (l != null && q.plan !== "admin" ? "⚡ " + l + (q.plan === "trial" ? " trial code" : " code") + (l === 1 ? "" : "s") +
+    (q.plan === "trial" ? " left. " : " left today. ") : "") +
     "Every graded code on <a href=\"" + SITE + "/booking-codes\">soccerwizard.live</a>", "<i>Estimates, not certainties. 18+</i>");
   await say(lines.join("\n"), convertButtons(book, r.code));
 }
@@ -354,6 +381,18 @@ module.exports = async function handler(req, res) {
     disable_web_page_preview: true, reply_to_message_id: msg.message_id });
 
   try {
+    /* CONNECT TELEGRAM: "Connect Telegram" in the account panel opens
+       t.me/<bot>?start=link_<token> (lib/tglink.js). */
+    const link = /^\/start\s+link_([0-9a-z]{55})\s*$/.exec(msg.text);
+    if (link) {
+      const userId = TGLINK.readToken(link[1], Date.now(), process.env.AUTH_PEPPER);
+      const done = userId ? await SB.putTgLink(subjectOf(msg.from && msg.from.id), userId).catch(() => ({ ok: false })) : { ok: false };
+      await say(done.ok
+        ? "✅ <b>Connected to your Soccerwizard account.</b>\n\nYour Wizard Pass works here now - send me a code 🧙"
+        : userId ? "Couldn't connect just now. Tap Connect Telegram on the site again."
+        : "That link has expired. Tap Connect Telegram on <a href=\"" + SITE + "\">soccerwizard.live</a> for a fresh one.");
+      return res.status(200).json({ ok: true });
+    }
     /* t.me/<bot>?start=book_CODE arrives as "/start book_CODE" - the site's
        code dialog opens the bot on the code the reader just got. */
     const deep = /^\/start\s+(sporty|bet9ja|betking|betpawa|onexbet|betway)_([A-Za-z0-9]{4,16})\s*$/i.exec(msg.text);

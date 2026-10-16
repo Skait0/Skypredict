@@ -19,7 +19,8 @@ const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup", "slipdetail", "
 const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle", "send", "unsend", "edit", "gift"];
 /* THE MESSAGE BOARD (owner, 14 Oct 2026; sql/messages.sql, public/messages.js):
    any signed-in reader reads their inbox, marks it read and replies in it. */
-const READER_GET = ["inbox"];
+const READER_GET = ["inbox", "tglink"];
+const TG_BOT = "Soccerwizardhqbot";   /* the bot api/tg.js answers as */
 const READER_POST = ["msgread", "msghide", "reply"];
 const MSG = require("../public/messages.js");
 const REPLY_MAX = 1000, BODY_MAX = 12000, TO_MAX = 200;
@@ -322,6 +323,13 @@ function make(deps) {
         return H.sendJson(res, 200, { ok: true });
       }
 
+      /* CONNECT TELEGRAM (lib/tglink.js): a 15-minute link that opens the bot
+         and ties this Telegram to this account, so a pass works there too. */
+      if (action === "tglink") {
+        const token = require("../lib/tglink.js").makeToken(s.userId, t, env.AUTH_PEPPER);
+        if (!token) return H.sendJson(res, 503, { error: "unavailable" });
+        return H.sendJson(res, 200, { url: "https://t.me/" + TG_BOT + "?start=link_" + token });
+      }
       /* The inbox: the reader's thread, every broadcast, and the welcome, newest
          first. The admin's answer also says how many replies wait for them. */
       if (action === "inbox") {

@@ -126,7 +126,13 @@
   function profileHtml(o){
     return "<label class='swa-lbl' for='swaName'>Name on your slips</label>"+
       "<input class='swa-in' id='swaName' maxlength='24' autocomplete='nickname' value=\""+esc(o.name)+"\">"+
-      pickerHtml(o.avatar,o.role,o.personal)+recordHtml(o.record)+subHtml(o.quota,o.role,o.plan,o.plusUntil);
+      pickerHtml(o.avatar,o.role,o.personal)+recordHtml(o.record)+subHtml(o.quota,o.role,o.plan,o.plusUntil)+tgHtml();
+  }
+  /* CONNECT TELEGRAM (owner, 16 Oct 2026; lib/tglink.js): ties the bot to this
+     account, so a Wizard Pass works in the bot too. */
+  function tgHtml(){
+    return "<p class='swa-h'>Telegram bot</p><div class='swa-card'><div class='swa-set'><span class='swa-st'><b>Wizard's Eye</b>"+
+      "<small>Connect it to use your pass there too.</small></span><button class='swa-pillbtn' type='button' data-tglink>Connect Telegram</button></div></div>";
   }
   function grantsHtml(list){
     if(!list.length) return "<div class='swa-set'><span class='swa-st'><small>No one yet. Add an email above.</small></span></div>";
@@ -473,6 +479,12 @@
   });
   /* Any [data-plus] on the page opens Plus: the code-limit message, the plan card. */
   d.addEventListener("click",function(e){ var b=e.target.closest&&e.target.closest("[data-plus]"); if(b){ e.preventDefault(); plus(); } });
+  /* [data-tglink]: fetch a fresh 15-minute link and open the bot on it. Same tab, so
+     iOS opens the Telegram app rather than blocking a pop-up after the wait. */
+  d.addEventListener("click",function(e){ var b=e.target.closest&&e.target.closest("[data-tglink]"); if(!b||!root.swAcct) return;
+    e.preventDefault(); b.disabled=true; var was=b.textContent; b.textContent="Opening...";
+    root.swAcct.req("GET","/api/account/tglink",null,function(code,j){ b.disabled=false; b.textContent=was;
+      if(code===200&&j&&j.url) root.location.href=j.url; else b.textContent="Try again"; }); });
   function acct(){ return root.swAcct||{st:{email:""}}; }
   /* Admin only once the server has said so in this page view (index.html saveRole, swAdminLive). */
   function role(){ var r=lsGet("sw.role")||"free"; return r==="admin"&&root.swAdminLive!==true?"free":r; }
