@@ -44,7 +44,7 @@ test("a Plus account gets 20 a day", async () => {
   assert.equal((await gateFor(store({ "u:u1": 20 }), "plus")(withCookie)).allow, false);
 });
 
-test("the 429 tells a free account about Plus and a pass holder about midnight", async () => {
+test("the 429 tells a free account about the Wizard Pass and a pass holder about midnight", async () => {
   const proxy = require("../lib/bookproxy.js");
   const run = async (plan, limit) => {
     const h = proxy.makeHandler({ gate: async () => ({ allow: false, counted: true, remaining: 0, limit, plan }) });
@@ -55,7 +55,7 @@ test("the 429 tells a free account about Plus and a pass holder about midnight",
   const f = await run("free", 2);
   assert.equal(f.code, 429);
   assert.deepEqual([f.body.error, f.body.plan, f.body.limit], ["capped", "free", 2]);
-  assert.match(f.body.message, /Plus gives you 20 a day, from ₦200/);
+  assert.match(f.body.message, /Wizard Pass gives you 20 a day, from ₦200/);
   assert.match((await run("plus", 20)).body.message, /today's 20 booking codes[\s\S]*after midnight/);
 });
 

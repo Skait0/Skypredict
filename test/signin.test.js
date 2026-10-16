@@ -17,7 +17,7 @@ test("signin.js is ES5 and uses no raw colours but white and Google's G", () => 
 
 test("copy is exact", () => {
   assert.strictEqual(S.WORDING, "Email me the wizard's best picks. Unsubscribe any time.");
-  assert.deepStrictEqual(S.HEAD, { book: "book this slip", build: "build a slip", slips: "see your slips", plus: "get Plus" });
+  assert.deepStrictEqual(S.HEAD, { book: "book this slip", build: "build a slip", slips: "see your slips", plus: "get the Wizard Pass" });
   /* "Free." dropped (owner, 14 Oct 2026). */
   assert.match(src, /<p class='swsi-s'>Your slips follow you to every phone and laptop\.<\/p>/);
   assert.match(src, /use_fedcm_for_button:true,button_auto_select:true/, "Continue as you signs in with that account");

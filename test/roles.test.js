@@ -57,7 +57,7 @@ test("codeLimitFor and planLabel", () => {
   assert.strictEqual(R.codeLimitFor("ff"), 100);
   assert.strictEqual(R.codeLimitFor("free"), 2);
   assert.strictEqual(R.codeLimitFor("plus"), 20);
-  assert.strictEqual(R.planLabel("plus"), "Plus");
+  assert.strictEqual(R.planLabel("plus"), "Wizard Pass");
   assert.strictEqual(R.planLabel("admin"), "Admin");
   assert.strictEqual(R.planLabel("ff"), "Family & friends");
   assert.strictEqual(R.planLabel("free"), "Free plan");

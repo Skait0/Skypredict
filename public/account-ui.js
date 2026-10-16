@@ -37,7 +37,7 @@
     return "<div class='swa-id'><b>"+esc(o.name)+"</b><small>"+esc(o.email)+"</small>"+planHtml(o)+"</div>"+
       codesHtml(o.quota,o.role)+
       "<div class='swa-list'>"+
-        (canBuy(o.role)?"<button class='swa-mi swa-mplus' type='button' role='menuitem' data-go='plus'>"+I.bolt+(o.role==="plus"?"Add days to Plus":"Get Plus")+"<span class='swa-r'>20 codes a day</span></button>":"")+
+        (canBuy(o.role)?"<button class='swa-mi swa-mplus' type='button' role='menuitem' data-go='plus'>"+I.bolt+(o.role==="plus"?"Add days":"Get Wizard Pass")+"<span class='swa-r'>"+(o.role==="plus"?"Wizard Pass":"20 codes a day")+"</span></button>":"")+
         "<button class='swa-mi' type='button' role='menuitem' data-go='profile'>"+I.user+"Profile</button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='slips'>"+I.slips+"My slips<span class='swa-r swa-n'>"+(o.slips||0)+"</span></button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='msgs'>"+I.chat+"Messages"+(o.unread?"<span class='swa-r swa-unr'>"+(o.unread>9?"9+":o.unread)+"</span>":"")+"</button>"+
@@ -84,7 +84,7 @@
     var what=role==="admin"?"Every feature, no limit":role==="ff"?"Every feature, 100 codes a day":
       role==="plus"?"20 codes a day"+(u?", until "+esc(u):""):"2 codes a day";
     return "<p class='swa-h'>Your plan</p><div class='swa-card'><div class='swa-subtop'><span><b"+(role==="admin"?" class='swa-gold'":"")+">"+esc(plan||"Free plan")+"</b><small>"+what+"</small></span>"+
-      (canBuy(role)?"<button class='swa-pillbtn swa-pgo' type='button' data-plus>"+(role==="plus"?"Add days":"Get Plus")+"</button>":"")+"</div>"+
+      (canBuy(role)?"<button class='swa-pillbtn swa-pgo' type='button' data-plus>"+(role==="plus"?"Add days":"Get Wizard Pass")+"</button>":"")+"</div>"+
       (role==="admin"||q?"<div class='swa-subuse'>"+codesHtml(q,role).replace("class='swa-q'","class='swa-q swa-q0'")+(role==="admin"?"":"<small>Resets at midnight</small>")+"</div>":"")+"</div>";
   }
   /* THE PLUS SCREEN (owner, 16 Oct 2026). o = GET /api/pay/offer plus role and
@@ -103,7 +103,7 @@
     var sel=(o.passes||[]).filter(function(p){ return p.pass===pick; })[0];
     return "<p class='swa-note'>20 booking codes a day on every bookie, from every tool: the Wizard, Slider, Converter, Edit for me, Split and Trim. "+
         "Pay once. Nothing renews.</p>"+
-      (u?"<p class='swa-note swa-on'>Your Plus runs until <b>"+esc(u)+"</b>. A new pass adds its days on top.</p>":"")+
+      (u?"<p class='swa-note swa-on'>Your Wizard Pass runs until <b>"+esc(u)+"</b>. A new pass adds its days on top.</p>":"")+
       (f&&f.open&&f.seatsLeft>0&&f.monthsLeft===3?"<p class='swa-note swa-fwn'><b>Founding Wizards:</b> the first 500 users pay "+naira(1500)+" for their first 3 month passes. "+f.seatsLeft+" places left.</p>":"")+
       "<div class='swa-passes'>"+(passes||"<p class='swa-note'>Prices did not load. Check your connection and try again.</p>")+"</div>"+
       (sel?"<button class='swa-outbtn swa-go' id='swaPay' type='button'>Pay "+naira(sel.naira)+" with Paystack</button>":"")+
@@ -490,7 +490,7 @@
     var pick="month", offer={passes:[]};
     var me={role:role(),plusUntil:lsGet("sw.plusUntil")};
     function draw(){
-      var v=view("Plus",plusHtml({passes:offer.passes,founder:offer.founder,role:me.role,plusUntil:me.plusUntil},pick));
+      var v=view("Wizard Pass",plusHtml({passes:offer.passes,founder:offer.founder,role:me.role,plusUntil:me.plusUntil},pick));
       v.querySelectorAll("[data-pass]").forEach(function(b){ b.onclick=function(){ pick=b.getAttribute("data-pass"); draw(); }; });
       var pay=v.querySelector("#swaPay"), msg=v.querySelector("#swaMsg");
       if(pay) pay.onclick=function(){
@@ -518,11 +518,11 @@
       a.req("GET","/api/pay/verify?ref="+m[1],null,function(code,j){
         if(code===200&&j&&j.paid){
           a.req("GET","/api/me",null,function(c2,me){ if(c2===200&&me&&me.signedIn&&a.saveRole) a.saveRole(me); });
-          a.notice("Plus is on"+(j.until?" until "+dayMonth(j.until):"")+". 20 codes a day.");
+          a.notice("Your Wizard Pass is on"+(j.until?" until "+dayMonth(j.until):"")+". 20 codes a day.");
           return;
         }
         if(++tries<6) return setTimeout(ask,2500);
-        a.notice("Payment not confirmed yet. If you paid, Plus switches on within a few minutes.");
+        a.notice("Payment not confirmed yet. If you paid, your Wizard Pass switches on within a few minutes.");
       });
     })();
   }

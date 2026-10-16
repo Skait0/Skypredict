@@ -69,9 +69,9 @@ const HELLO =
    counted in book_quota like every site booking, under a hashed Telegram id
    and src "tgbot". A count we cannot read lets the conversion through, the
    same fail-open rule the site's gate uses - an outage of ours is not the
-   reader's problem. The cap is the funnel: past it, Plus on the site. */
+   reader's problem. The cap is the funnel: past it, the Wizard Pass on the site. */
 const CONVERT_CAP = 2;
-const PLUS_LINE = "Plus on <a href=\"" + SITE + "\">soccerwizard.live</a>: 20 codes a day, from ₦200 🧙";
+const PLUS_LINE = "Wizard Pass on <a href=\"" + SITE + "\">soccerwizard.live</a>: 20 codes a day, from ₦200 🧙";
 const subjectOf = (uid) => "tg-" + crypto.createHash("sha256")
   .update((process.env.SW_QUOTA_PEPPER || "") + ":" + uid).digest("hex").slice(0, 24);
 

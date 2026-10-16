@@ -154,17 +154,17 @@ test("subscription card follows the plan", () => {
   assert.doesNotMatch(p("ff", "Family & friends"), /data-plus/);
   assert.match(p("admin", "Admin"), /No limit/);
   assert.doesNotMatch(p("admin", "Admin"), /data-plus/);
-  assert.match(p(undefined, undefined), /Free plan[\s\S]*2 codes a day[\s\S]*data-plus>Get Plus/);
+  assert.match(p(undefined, undefined), /Free plan[\s\S]*2 codes a day[\s\S]*data-plus>Get Wizard Pass/);
   const plus = UI.profileHtml({ name: "A", avatar: "fire", role: "plus", plan: "Plus", plusUntil: "2026-11-12T10:00:00Z",
     record: { built: 0, won: 0, settled: 0 }, quota: null });
   assert.match(plus, /20 codes a day, until 12 Nov[\s\S]*data-plus>Add days/);
 });
 
-test("menu: Get Plus for free, Add days for Plus, nothing to buy for ff/admin; founder badge", () => {
+test("menu: Get Wizard Pass for free, Add days for pass holders, nothing to buy for ff/admin; founder badge", () => {
   const base = { name: "A", email: "a@b.c", quota: null, slips: 0 };
-  assert.match(UI.menuHtml(Object.assign({}, base, { role: "free" })), /data-go='plus'>[\s\S]*Get Plus/);
-  const pl = UI.menuHtml(Object.assign({}, base, { role: "plus", plan: "Plus", plusUntil: "2026-11-12T10:00:00Z", founder: true }));
-  assert.match(pl, /Plus · until 12 Nov/); assert.match(pl, /Add days to Plus/); assert.match(pl, /Founding Wizard/);
+  assert.match(UI.menuHtml(Object.assign({}, base, { role: "free" })), /data-go='plus'>[\s\S]*Get Wizard Pass/);
+  const pl = UI.menuHtml(Object.assign({}, base, { role: "plus", plan: "Wizard Pass", plusUntil: "2026-11-12T10:00:00Z", founder: true }));
+  assert.match(pl, /Wizard Pass · until 12 Nov/); assert.match(pl, />Add days<span class='swa-r'>Wizard Pass</); assert.match(pl, /Founding Wizard/);
   for (const role of ["ff", "admin"]) assert.doesNotMatch(UI.menuHtml(Object.assign({}, base, { role })), /data-go='plus'/);
 });
 
