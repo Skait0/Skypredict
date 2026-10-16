@@ -171,3 +171,15 @@ test("the write is authenticated too", async () => {
   assert.ok(h.apikey);
   assert.match(String(h.Authorization || ""), /^Bearer /);
 });
+
+test("a signed-in account is counted and recorded", async () => {
+  /* The paygate counts accounts as "u:<id>". The old pattern refused the colon,
+     so every account answered "not a subject", the gate failed open and a free
+     account booked 20 codes on 16 Oct 2026. */
+  const u = "u:3f2b8c1e-9d4a-4b7e-a1c2-5e6f7a8b9c0d";
+  const c = await withFetch(okJson([{ id: 1 }, { id: 2 }]), () => DB.countBookings(u, "2026-10-16", 2));
+  assert.deepStrictEqual(c.out, { ok: true, n: 2 });
+  assert.match(c.seen[0].url, /subject=eq\.u%3A3f2b8c1e/);
+  const r = await withFetch(okJson(null), () => DB.recordBooking(u, "2026-10-16"));
+  assert.strictEqual(r.seen.length, 1, "the row is written");
+});
