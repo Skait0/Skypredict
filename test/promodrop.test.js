@@ -9,8 +9,8 @@ test("only today's drops from their time, never one already logged", () => {
   const at = (iso) => Date.parse(iso) - 3600e3;   /* a Lagos clock time */
   assert.deepEqual(due(q, {}, at("2026-10-17T12:00:00Z")).length, 0, "before 12:30 nothing");
   assert.deepEqual(due(q, {}, at("2026-10-17T12:31:00Z")).map((d) => d.kind), ["clip"]);
-  assert.deepEqual(due(q, {}, at("2026-10-17T19:05:00Z")).map((d) => d.time), ["12:30", "14:00", "19:00"]);
-  assert.deepEqual(due(q, { "2026-10-17 12:30": {} }, at("2026-10-17T19:05:00Z")).map((d) => d.time), ["14:00", "19:00"]);
+  assert.deepEqual(due(q, {}, at("2026-10-17T19:05:00Z")).map((d) => d.time), ["12:30", "14:00", "14:20", "19:00"]);
+  assert.deepEqual(due(q, { "2026-10-17 12:30": {} }, at("2026-10-17T19:05:00Z")).map((d) => d.time), ["14:00", "14:20", "19:00"]);
 });
 
 test("every clip has its own cover and every post keeps the rules", () => {
