@@ -390,3 +390,19 @@ test("the inbox's notification button is wired only while the inbox is still ope
   assert.match(body, /if\(isOn\|\|!ping\.isConnected\) return;/, "a late answer after leaving the inbox does nothing");
   assert.doesNotMatch(body, /querySelector/, "never looks the button up after the answer comes back");
 });
+
+/* Owner, 17 Oct 2026: "i have to close the admin before message closes and marks as
+   read" and "win slips keep giving me notification badges". */
+test("an admin conversation closes in place, is read when opened, and wins do not badge the avatar", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
+  const i = src.indexOf("function convo(id,list){");
+  const body = src.slice(i, src.indexOf("load();\n    return { to:to, load:load };", i));
+  assert.match(body, /data-close-convo/, "a Close button");
+  assert.match(body, /e\.key==="Escape"/, "Esc closes it");
+  assert.match(body, /a\.req\("POST","\/api\/account\/msgread",\{what:"inbox"\}/, "opening it marks it read");
+  assert.match(body, /e\.key==="Enter"&&!e\.shiftKey/, "Enter sends a quick reply");
+  assert.match(body, /\/api\/account\/send",\{to:\[id\]/, "the reply goes to this reader only");
+  const page = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  assert.match(page, /function swAdminBadgeRefresh\(\)\{ paintAdminBadge\(window\.swMsg\?swMsg\.adminUnread\(\):0\); \}/, "won slips stay in Alerts");
+  assert.match(page, /#hdAccount \.bt-badge\{top:-5px;right:-5px;/, "the dot sits on the avatar's edge");
+});

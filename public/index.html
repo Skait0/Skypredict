@@ -1261,7 +1261,8 @@ a.btab{text-decoration:none}
    14 Oct 2026: "the count kinda hinders the wizard avatar"). The number is in
    the menu, beside Messages. */
 #btAdminN{min-width:0;width:10px;height:10px;padding:0;border-radius:50%;font-size:0;top:-1px;right:-3px}
-#hdAccount .bt-badge{top:-2px;right:-2px;min-width:0;width:12px;height:12px;padding:0;border-radius:50%;
+/* On the avatar's edge, outside the circle, like a phone app badge (owner, 17 Oct 2026). */
+#hdAccount .bt-badge{top:-5px;right:-5px;min-width:0;width:14px;height:14px;padding:0;border-radius:50%;
   font-size:0;line-height:0;color:transparent;overflow:hidden}
 @media(min-width:721px){
   /* it opens the right-hand group, so it takes the push the X icon used to - and
@@ -21742,7 +21743,9 @@ function adminBadge(){
     swAdminBadgeRefresh();
   });
 }
-function swAdminBadgeRefresh(){ paintAdminBadge(adminHitsN+(window.swMsg?swMsg.adminUnread():0)); }
+/* MESSAGES ONLY ON THE AVATAR (owner, 17 Oct 2026: "win slips keep giving me
+   notification badges"). Won-slip alerts keep their own count in Admin > Alerts. */
+function swAdminBadgeRefresh(){ paintAdminBadge(window.swMsg?swMsg.adminUnread():0); }
 window.swAdminBadgeRefresh=swAdminBadgeRefresh;
 /* Bottom-bar haptics: 22ms (owner, 14 Oct 2026: "a little haptic feedback"),
    up from 15ms, which many Android phones are too coarse to play. buzz()

@@ -160,6 +160,7 @@
     ".m-big{font-size:1.3em;font-weight:800}.m-crest{display:block;width:160px;height:auto;margin:4px auto 2px}.m-small{font-size:.82em;color:var(--faint)}.m-gold{color:var(--accent)}.m-red{color:var(--red-ink)}.m-green{color:var(--green-ink)}.m-center{text-align:center}"+
     ".m-glow{color:var(--accent);text-shadow:0 0 10px rgba(242,184,75,.75),0 0 2px rgba(242,184,75,.9)}"+
     ".m-emo{width:1.75em;height:1.75em;vertical-align:-.45em;display:inline-block}.m-gif{display:block;max-width:100%;height:auto;max-height:180px;border-radius:8px;margin:6px 0}"+
+    ".swm-cv-hd{display:flex;align-items:center;justify-content:space-between;gap:10px}.swm-cv-hd .swa-h{margin:0}.swm-qr{margin-top:8px}"+
     /* the banner under the header */
     ".swm-ban{display:flex;gap:12px;align-items:flex-start;max-width:1100px;margin:10px auto 0;padding:12px 14px;border-radius:12px;border:1px solid var(--accent);"+
       "background:linear-gradient(135deg,rgba(242,184,75,.14),rgba(230,57,70,.08)) var(--card);box-sizing:border-box;animation:swmIn .35s cubic-bezier(.23,1,.32,1)}"+
@@ -727,16 +728,44 @@
     function convo(id,list){
       var r=byId(id)||{id:id,email:""}, box=panel.querySelector("#swmConvo");
       box.hidden=false;
-      box.innerHTML="<p class='swa-h'>"+esc(nameOf(r))+" <small>"+esc(r.email)+"</small></p><div class='swm-thread'>"+
+      /* A CONVERSATION OPENS, IS READ, AND CLOSES IN PLACE (owner, 17 Oct 2026: "i have
+         to close the admin before message closes and marks as read"). Close and Esc go
+         back to the list; the row's count clears the moment it opens; a reply is typed
+         right here, Enter sends and Shift+Enter is a new line, like a chat app. */
+      var row=panel.querySelector("[data-rid='"+id+"']"), un=row&&row.querySelector(".swm-unr");
+      if(un){ un.outerHTML="<i>now</i>"; }
+      a.req("POST","/api/account/msgread",{what:"inbox"},function(c2){ if(c2===200){ state.adminUnread=0; if(root.swAdminBadgeRefresh) root.swAdminBadgeRefresh(); } });
+      box.innerHTML="<div class='swm-cv-hd'><p class='swa-h'>"+esc(nameOf(r))+" <small>"+esc(r.email)+"</small></p>"+
+        "<button type='button' class='swa-pillbtn' data-close-convo aria-label='Close conversation'>Close</button></div><div class='swm-thread'>"+
         (list||[]).slice().reverse().map(function(m){ return bubble({id:m.id,at:m.created_at,mine:!m.from_admin,body:m.body},Infinity,
           m.from_admin?"<button type='button' class='swa-pillbtn' data-unsend='"+esc(String(m.id))+"'>Unsend</button>":""); }).join("")+
-        "</div><div class='swm-acts'><button type='button' class='swa-pillbtn' data-reply-to>Reply with the editor</button><button type='button' class='swa-pillbtn' data-open-user>Open their profile</button></div>";
+        "</div><div class='swm-rep swm-qr'><textarea rows='1' maxlength='2000' placeholder='Reply to "+esc(nameOf(r))+"' aria-label='Reply'></textarea>"+
+        "<button type='button' class='swm-send' data-qr-send>Send</button></div>"+
+        "<div class='swm-acts'><button type='button' class='swa-pillbtn' data-reply-to>Open the full editor</button><button type='button' class='swa-pillbtn' data-open-user>Open their profile</button></div>";
       /* In the admin's view the reader's words sit on the left and the admin's on the right. */
       box.querySelectorAll(".swm-msg").forEach(function(el){ el.classList.toggle("swm-me"); el.classList.toggle("swm-wiz"); });
       box.querySelectorAll(".swm-msg.swm-wiz .swm-who").forEach(function(w){ w.remove(); });
       wireUnsend(box);
       box.querySelector("[data-reply-to]").onclick=function(){ to(id); try{ panel.querySelector(".swm-ed").scrollIntoView({block:"center",behavior:"smooth"}); }catch(e){} };
       box.querySelector("[data-open-user]").onclick=function(){ goTab("swaTLk"); if(root.swMsg._openReader) root.swMsg._openReader(id); };
+      function shut(){ box.hidden=true; box.innerHTML=""; d.removeEventListener("keydown",onKey); if(row) try{ row.focus(); }catch(e){} }
+      function onKey(e){ if(e.key==="Escape"&&!box.hidden){ e.preventDefault(); shut(); } }
+      d.addEventListener("keydown",onKey);
+      box.querySelector("[data-close-convo]").onclick=shut;
+      var qta=box.querySelector(".swm-qr textarea"), qgo=box.querySelector("[data-qr-send]");
+      function qsend(){
+        var t=qta.value.replace(/^\s+|\s+$/g,""); if(!t){ qta.focus(); return; }
+        qgo.disabled=true; qgo.textContent="Sending";
+        var html="<p>"+esc(t).replace(/\n/g,"<br>")+"</p>";
+        a.req("POST","/api/account/send",{to:[id],html:html},function(code){
+          qgo.disabled=false; qgo.textContent="Send";
+          if(code===200){ qta.value=""; load(); }
+          else { qgo.textContent="Try again"; }
+        });
+      }
+      qgo.onclick=qsend;
+      qta.addEventListener("keydown",function(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); qsend(); } });
+      setTimeout(function(){ try{ qta.focus({preventScroll:true}); }catch(e){} },60);
       try{ box.scrollIntoView({block:"start",behavior:"smooth"}); }catch(e){}
     }
     load();
