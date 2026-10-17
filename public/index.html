@@ -1010,6 +1010,12 @@ select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .country-h .chev{color:var(--faint);font-size:12px;transition:transform .25s}
 .country.shut .chev{transform:rotate(-90deg)}
 .country.shut .country-body{display:none}
+/* THE BOARD IS ~40,000 ELEMENTS on a full day (owner, 17 Oct 2026: "the site is
+   not fluid ... feels like it hangs"). A phone laid out every one of them on
+   each tap, about a second at mid-Android speed. Off-screen countries now skip
+   layout and paint until they scroll near; "auto" remembers each one's real
+   height after its first draw, so the scrollbar does not jump. */
+.country{content-visibility:auto;contain-intrinsic-size:auto 640px}
 .country-h .count{margin-left:auto;font-size:12px;color:var(--faint);
   background:var(--card);border:1px solid var(--line);border-radius:99px;
   padding:4px 11px;font-weight:700}
@@ -10800,6 +10806,7 @@ function syncFilterBtn(){
     if(open){ var q=$("q"); if(q) try{q.focus({preventScroll:true});}catch(e){q.focus();} }
   });
 })();
+var BOARD_STALE=false;
 function render(){
   document.documentElement.classList.toggle("list",!!V.list);
   formIndexInvalidate();
@@ -10814,6 +10821,11 @@ function render(){
   document.documentElement.classList.remove("is-results");
   renderPotd(); renderSlipOfDay(); renderRecord(); renderBookAll(); renderSlipTease();
   renderMyResults(); wireSlipsSheet();
+  /* NOT WHILE IT CANNOT BE SEEN (owner, 17 Oct 2026, "feels like it hangs"):
+     the list below is the costly part of every render - half a second of
+     innerHTML on a phone - and Build, Live and the Converter hide it. It is
+     drawn once, when Home is opened again (setView). */
+  if(V.view&&V.view!=="pred"){ BOARD_STALE=true; return; }
   const list=shown();
   renderBoardHead(list);
   if(!list.length){
@@ -21222,6 +21234,7 @@ function setView(v,noGate,repaint){
   if(v==="build") renderBuilder();
   if(v==="live"){ renderLive(); fetchLive(); try{window.__wireAlert&&window.__wireAlert();}catch(e){} }
   if(v==="pred") renderLiveStrip();
+  if(v==="pred"&&BOARD_STALE){ BOARD_STALE=false; render(); }
   /* A REPAINT IS NOT A NAVIGATION (owner, 11 Oct 2026: "when im scrolling down
      on the build me a slip page, it abruptly scrolls me back up"). paint()
      re-applies the view you are already on whenever fresh odds land - every
