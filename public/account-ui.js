@@ -11,6 +11,8 @@
     return n?n.charAt(0).toUpperCase()+n.slice(1).toLowerCase():"You";
   }
   var I={
+    clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 4 3 11l7 2 2 7 9-16Z"/><path d="m10 13 4-4"/></svg>',
     user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
     slips:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
     gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
@@ -39,6 +41,8 @@
       "<div class='swa-list'>"+
         (canBuy(o.role)?"<button class='swa-mi swa-mplus' type='button' role='menuitem' data-go='plus'>"+I.bolt+(o.role==="plus"?"Add days":"Get Wizard Pass")+"<span class='swa-r'>"+(o.role==="plus"?"Wizard Pass":"20 codes a day")+"</span></button>":"")+
         "<button class='swa-mi' type='button' role='menuitem' data-go='profile'>"+I.user+"Profile</button>"+
+        "<button class='swa-mi' type='button' role='menuitem' data-go='daily'>"+I.clock+"My daily slip<span class='swa-r'>10:30</span></button>"+
+        "<button class='swa-mi' type='button' role='menuitem' data-go='tg'>"+I.send+"Telegram bot</button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='slips'>"+I.slips+"My slips<span class='swa-r swa-n'>"+(o.slips||0)+"</span></button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='msgs'>"+I.chat+"Messages"+(o.unread?"<span class='swa-r swa-unr'>"+(o.unread>9?"9+":o.unread)+"</span>":"")+"</button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='settings'>"+I.gear+"Settings</button>"+
@@ -162,9 +166,9 @@
       "<div class='swa-set'><span class='swa-st'><b>Your odds</b><small>We pick the games. You copy the code.</small></span>"+
         "<select class='swa-in swa-sel' id='swaRung' aria-label='Your odds'><option value='0'>Off</option>"+
         RUNGS.map(function(x){ return "<option value='"+x+"'>x"+x+"</option>"; }).join("")+"</select></div>"+
-      "<div class='swa-set'><span class='swa-st'><b>Your bookie</b></span>"+
-        "<select class='swa-in swa-sel' id='swaRBook' aria-label='Your bookie'>"+
-        BOOK_KEYS.map(function(k){ return "<option value='"+k+"'>"+esc(BOOK_NAME[k])+"</option>"; }).join("")+"</select></div>"+
+      "<div class='swa-set swa-bkset'><span class='swa-st'><b>Your bookie</b></span>"+
+        "<div class='swa-bkchips' id='swaRBook' role='radiogroup' aria-label='Your bookie'>"+
+        BOOK_KEYS.map(function(k){ return "<button class='swa-bkc' type='button' role='radio' data-bk='"+k+"' aria-checked='false' aria-label='"+esc(BOOK_NAME[k])+"'>"+markOf(k)+"</button>"; }).join("")+"</div></div>"+
       "<div class='swa-set'><span class='swa-st'><b>Phone alert</b><small>At 10:30, with the code.</small></span>"+
         "<button class='swa-sw' id='swaRPush' type='button' role='switch' aria-checked='true' aria-label='Phone alert'></button></div>"+
       "<div class='swa-set'><span class='swa-st'><small id='swaRNote'>On Telegram too: connect the bot below, then send /daily to it.</small></span></div>"+
@@ -172,15 +176,24 @@
   }
   function dailyFill(v,role){
     var box=v.querySelector("#swaDaily"); if(!box||!root.swAcct) return;
-    var rg=box.querySelector("#swaRung"), bk=box.querySelector("#swaRBook"), pu=box.querySelector("#swaRPush"), nt=box.querySelector("#swaRNote");
+    var rg=box.querySelector("#swaRung"), bkBox=box.querySelector("#swaRBook"), pu=box.querySelector("#swaRPush"), nt=box.querySelector("#swaRNote");
+    /* The chips stand in for a select: bk.value reads and sets the chosen book. */
+    var bk={ get value(){ var c=bkBox.querySelector("[aria-checked='true']"); return c?c.getAttribute("data-bk"):"sporty"; },
+      set value(k){ [].forEach.call(bkBox.querySelectorAll(".swa-bkc"),function(c){ c.setAttribute("aria-checked",String(c.getAttribute("data-bk")===k)); }); } };
     var cur=null; try{ cur=root.curBookKey?root.curBookKey():lsGet("sw.book"); }catch(e){}
-    if(cur&&BOOK_KEYS.indexOf(cur)>=0) bk.value=cur;
+    bk.value=cur&&BOOK_KEYS.indexOf(cur)>=0?cur:"sporty";
+    if(root.swDailyPreset){ rg.value=String(root.swDailyPreset); }
     function show(j){
       if(!j) return;
       rg.value=String(j.rung||0); if(j.book) bk.value=j.book; pu.setAttribute("aria-checked",String(j.push!==false));
       if(j.telegram) nt.textContent="Telegram is on. Send /daily off to the bot to stop it there.";
     }
-    root.swAcct.req("GET","/api/account/autopilot",null,function(code,j){ if(code===200) show(j); });
+    root.swAcct.req("GET","/api/account/autopilot",null,function(code,j){
+      if(code!==200) return;
+      /* Opened from "Get this every morning": that rung, saved now unless one is already set. */
+      var pre=root.swDailyPreset; root.swDailyPreset=null;
+      if(pre&&!j.rung){ rg.value=String(pre); save(); } else show(j);
+    });
     function save(){
       var r=+rg.value;
       root.swAcct.req("POST","/api/account/setautopilot",r?{rung:r,book:bk.value,push:pu.getAttribute("aria-checked")==="true"}:{rung:null},function(code,j){
@@ -188,8 +201,17 @@
         else nt.textContent="Couldn't save. Check your connection and try again.";
       });
     }
-    rg.addEventListener("change",save); bk.addEventListener("change",function(){ if(+rg.value) save(); });
+    rg.addEventListener("change",save);
+    bkBox.addEventListener("click",function(e){ var c=e.target.closest&&e.target.closest(".swa-bkc"); if(!c) return; bk.value=c.getAttribute("data-bk"); if(+rg.value) save(); });
     pu.addEventListener("click",function(){ pu.setAttribute("aria-checked",String(pu.getAttribute("aria-checked")!=="true")); if(+rg.value) save(); });
+  }
+  function profileAt(sel){
+    profile();
+    setTimeout(function(){ var e=d.querySelector(sel); if(e&&e.scrollIntoView) e.scrollIntoView({block:"center",behavior:"smooth"}); },120);
+  }
+  function daily(rung){
+    if(rung) root.swDailyPreset=rung;
+    profileAt(isPass(role())?"#swaDaily":".swa-h");
   }
   function tgFill(v,role){
     var b=v.querySelector("[data-tglink]"), t=v.querySelector("#swaTgT");
@@ -250,7 +272,7 @@
     if(!r.found) return msg(r.email+" has no account."+(r.ff?" Family & friends is waiting for them when they sign up.":""));
     var devs=(r.devices||[]).map(function(d){ return esc((d.label||"Device")+" · "+ago(d.last_used_at)); }).join("<br>");
     var codes=r.codes==null?"Free users are counted by device, so their codes are not tied to the account.":
-      (r.codes.length?r.codes.map(function(c){ return c.code+" · "+(BOOK_NAME[c.book]||c.book)+" · "+c.status+" · "+ago(c.created_at); }).join(" | "):"No codes yet.");
+      (r.codes.length?r.codes.map(function(c){ return esc(c.code)+" · "+markOf(c.book)+" · "+esc(c.status)+" · "+ago(c.created_at); }).join(" | "):"No codes yet.");
     return "<div class='swa-set'><span class='swa-st'><b>"+esc(r.email)+"</b><small>"+esc(r.plan+" · joined "+ago(r.created_at)+" · last seen "+ago(r.last_seen_at)+(r.google?" · Google":""))+"</small></span></div>"+
       "<div class='swa-set'><span class='swa-st'><b>Signed in on "+(r.devices||[]).length+"</b><small>"+(devs||"No devices")+"</small></span>"+
         ((r.devices||[]).length&&r.role!=="admin"?"<button class='swa-pillbtn' type='button' data-lk-out>Sign out everywhere</button>":"")+"</div>"+
@@ -390,7 +412,7 @@
      which way it went (/api/account/settle). */
   function checkHtml(h){
     return "<div class='swa-set swa-chkbox' data-chkbox='"+esc(String(h.id))+"' hidden><span class='swa-st'>"+
-      "<small data-full></small><small>Code "+esc(h.code)+" on "+esc(BOOK_NAME[h.book]||h.book)+". Check the legs marked Check there, then say how it went.</small></span>"+
+      "<small data-full></small><small>Code "+esc(h.code)+" on "+markOf(h.book)+". Check the legs marked Check there, then say how it went.</small></span>"+
       "<button type='button' class='swa-pillbtn' data-settle='landed'>It landed</button>"+
       "<button type='button' class='swa-pillbtn' data-settle='lost'>It lost</button></div>";
   }
@@ -471,7 +493,7 @@
     ".swa-subtop small{display:block;font-size:12px;font-weight:600;color:var(--faint);margin-top:2px}.swa-soon{margin-left:auto;font-size:12px;font-weight:700;color:var(--faint);white-space:nowrap}"+
     ".swa-subuse{border-top:1px solid var(--line);padding:11px 12px 12px}.swa-q0{margin:0}.swa-subuse small{display:block;margin-top:6px;font-size:12px;font-weight:600;color:var(--faint)}"+
     ".swa-set{display:flex;align-items:center;gap:12px;padding:12px;min-height:52px;width:100%;box-sizing:border-box;border:0;background:none;color:inherit;font:inherit;text-align:left}.swa-set0{padding-bottom:8px}"+
-    ".swa-st{flex:1;min-width:0}.swa-st b{display:block;overflow-wrap:anywhere;font-size:13.5px;font-weight:700}.swa-st small{display:block;font-size:12px;font-weight:600;color:var(--faint);margin-top:1px}.swa-in.swa-sel{flex:none;width:auto;min-width:118px;max-width:46%;height:38px;font-size:14px;padding:0 30px 0 10px;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A3A0A6' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 9px center;background-size:14px}"+
+    ".swa-st{flex:1;min-width:0}.swa-st b{display:block;overflow-wrap:anywhere;font-size:13.5px;font-weight:700}.swa-st small{display:block;font-size:12px;font-weight:600;color:var(--faint);margin-top:1px}.swa-bkset{flex-wrap:wrap}.swa-bkset .swa-st{flex:1 1 100%}.swa-bkchips{display:flex;flex-wrap:wrap;gap:6px;width:100%}.swa-bkc{display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:var(--r-chip,6px);background:var(--card);cursor:pointer;font:inherit;font-size:14px;font-weight:800}.swa-bkc[aria-checked=true]{border-color:var(--accent);background:rgba(242,184,75,.12)}.swa-bkc:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.swa-in.swa-sel{flex:none;width:auto;min-width:118px;max-width:46%;height:38px;font-size:14px;padding:0 30px 0 10px;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A3A0A6' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 9px center;background-size:14px}"+
     ".swa-link{cursor:pointer}.swa-chev{width:16px;height:16px;color:var(--faint)}"+
     ".swa-seg{display:flex;background:var(--card-2);border-radius:8px;padding:3px;gap:2px}.swa-seg button{border:0;background:none;color:var(--soft);font:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:6px;cursor:pointer}.swa-seg button[aria-pressed=true]{background:var(--card);color:var(--text)}"+
     ".swa-books{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 12px}.swa-books button{border:1px solid var(--line);background:var(--card-2);border-radius:6px;padding:7px 11px;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer;color:var(--text)}.swa-books button[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}"+
@@ -543,6 +565,8 @@
       var go=b.getAttribute("data-go"); close();
       if(go==="slips"&&root.openSlipsSheet) root.openSlipsSheet("all");
       else if(go==="profile") profile();
+      else if(go==="daily") daily();
+      else if(go==="tg") profileAt("[data-tglink]");
       else if(go==="settings") settings();
       else if(go==="msgs"&&root.swMsg) root.swMsg.inbox();
       else if(go==="admin") admin();
@@ -1016,5 +1040,5 @@
     return false;
   }
   root.swPlus={open:plus};
-  root.swAccountUI={eatPop:eatPop,open:open,close:close,toggle:toggle,profile:profile,settings:settings,admin:admin,plus:plus,closeView:closeView,view:view,mark:mark,restore:restore,push:{ok:pushOk,state:pushState,on:pushOn,off:pushOff}};
+  root.swAccountUI={eatPop:eatPop,open:open,close:close,toggle:toggle,profile:profile,daily:daily,isPass:function(){ return isPass(role()); },settings:settings,admin:admin,plus:plus,closeView:closeView,view:view,mark:mark,restore:restore,push:{ok:pushOk,state:pushState,on:pushOn,off:pushOff}};
 })(typeof window!=="undefined"?window:this);
