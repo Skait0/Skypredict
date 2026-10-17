@@ -10887,14 +10887,30 @@ function render(){
   Object.keys(byC).forEach(function(c){
     cRank[c]=Math.min.apply(null,byC[c].map(leagueRank));
   });
+  BOARD_LAZY={};
   html+=Object.keys(byC).sort(function(a,b){
     var fa=isFav("c:"+a)?0:1, fb=isFav("c:"+b)?0:1;
     return fa-fb || cRank[a]-cRank[b] || a.localeCompare(b);
-  }).map(function(c){
+  }).map(function(c,ci){
     /* Within a country, its top flight leads too. */
     const ls=byC[c].sort(function(x,y){
       return leagueRank(x)-leagueRank(y) || x.localeCompare(y);});
     const n=ls.reduce(function(t,l){return t+byL[l].length;},0);
+    /* DRAWN WHEN IT IS NEAR (owner, 17 Oct 2026: "feels like it hangs"). A
+       full day is ~280 games and ~40,000 elements, built and laid out on every
+       tap. The first countries are drawn now; the rest keep their header and
+       count, and their games are built when they scroll near or are opened
+       (fillCountry). Same rows, same order - only later. */
+    if(ci>=BOARD_EAGER && list.length>BOARD_EAGER_GAMES){
+      var lk="c"+ci; BOARD_LAZY[lk]=function(){
+        return ls.map(function(l){return blockFor(l,byL[l]);}).join("");};
+      return "<section class='country"+(SHUT[c]?" shut":"")+"'>"+
+        "<div class='country-h' role='button' tabindex='0' data-toggle=\""+esc(c)+"\">"+
+          "<span class='chev'>▾</span><h2>"+flagFor(c)+"<span>"+esc(c)+"</span></h2>"+
+          "<button class='star' data-fav=\"c:"+esc(c)+"\" aria-pressed='"+isFav("c:"+c)+"' aria-label='Pin country'>"+(isFav("c:"+c)?"★":"☆")+"</button>"+
+          "<span class='count'>"+n+"</span></div>"+
+        "<div class='country-body' data-lazy='"+lk+"'></div></section>";
+    }
     return "<section class='country"+(SHUT[c]?" shut":"")+"'>"+
       "<div class='country-h' role='button' tabindex='0' data-toggle=\""+esc(c)+"\">"+
         "<span class='chev'>\u25be</span><h2>"+flagFor(c)+"<span>"+esc(c)+"</span></h2>"+
@@ -10907,7 +10923,34 @@ function render(){
   /* Re-attaches after every render until it is dismissed. No scroll here -
      a page that jumps on load is worse than one that explains nothing. */
   runCoach();
-  document.querySelectorAll(".lrow").forEach(function(r){
+  wireBoard(document);
+  observe();
+  watchLazy();
+}
+var BOARD_EAGER=2, BOARD_EAGER_GAMES=40, BOARD_LAZY={}, LAZY_IO=null;
+/* Builds a waiting country's games and wires them like the rest of the board. */
+function fillCountry(body){
+  var k=body&&body.dataset.lazy, mk=k&&BOARD_LAZY[k]; if(!mk) return;
+  delete BOARD_LAZY[k]; body.removeAttribute("data-lazy");
+  if(LAZY_IO) LAZY_IO.unobserve(body);
+  body.innerHTML=mk(); wireBoard(body); observe();
+}
+function watchLazy(){
+  if(LAZY_IO) LAZY_IO.disconnect();
+  var bodies=document.querySelectorAll("#list .country-body[data-lazy]");
+  if(!bodies.length) return;
+  if(!("IntersectionObserver" in window)){ bodies.forEach(fillCountry); return; }
+  /* Well ahead of the screen, so a reader scrolling down never meets an empty
+     country - it is filled while it is still more than a screen away. */
+  LAZY_IO=new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting) fillCountry(e.target); });
+  },{rootMargin:"1500px 0px"});
+  bodies.forEach(function(b){ LAZY_IO.observe(b); });
+}
+/* Row, add, pin and fold wiring, for the whole board after a render or for
+   one country's games when they are filled in. */
+function wireBoard(scope){
+  scope.querySelectorAll(".lrow").forEach(function(r){
     r.addEventListener("click",function(e){
       if(e.target.closest(".opt-add")||e.target.closest(".m-add")) return;
       setRowOpen(r,!LOPEN[r.dataset.lf]);});
@@ -10923,24 +10966,25 @@ function render(){
       setRowOpen(r,false);
       var t=r.querySelector(".lrow-toggle"); if(t) t.focus();});});
 
-  document.querySelectorAll(".m-btn").forEach(function(b){
+  scope.querySelectorAll(".m-btn").forEach(function(b){
     b.addEventListener("click",function(){openSheet(b.dataset.fx);});});
-  document.querySelectorAll(".m-add").forEach(function(b){
+  scope.querySelectorAll(".m-add").forEach(function(b){
     var on=myslipHas(b.dataset.add,b.dataset.code); b.classList.toggle("on",on);
     var _ic=b.querySelector(".ma-ic"); if(_ic)_ic.innerHTML=on?CHK:PLUS;
     b.lastChild.textContent=on?" Added":" Add to slip";
     b.addEventListener("click",function(e){e.stopPropagation();
       if(!b.dataset.code) return;
       toggleMy(b.dataset.add,b.dataset.code,b.dataset.label,b.dataset.p,b);});});
-  document.querySelectorAll("[data-fav]").forEach(function(b){
+  scope.querySelectorAll("[data-fav]").forEach(function(b){
     b.addEventListener("click",function(e){e.stopPropagation();toggleFav(b.dataset.fav);});});
-  document.querySelectorAll("[data-toggle]").forEach(function(h){
+  scope.querySelectorAll("[data-toggle]").forEach(function(h){
     const hit=function(){const c=h.dataset.toggle;SHUT[c]=!SHUT[c];
-      h.closest(".country").classList.toggle("shut",!!SHUT[c]);};
+      var sec=h.closest(".country"); sec.classList.toggle("shut",!!SHUT[c]);
+      /* A folded country is never on screen, so it is filled when opened. */
+      if(!SHUT[c]) fillCountry(sec.querySelector(".country-body[data-lazy]"));};
     h.addEventListener("click",hit);
     h.addEventListener("keydown",function(e){
       if(e.key==="Enter"||e.key===" "){e.preventDefault();hit();}});});
-  observe();
 }
 
 /* ---------------------------------------------------------------- sheet */
