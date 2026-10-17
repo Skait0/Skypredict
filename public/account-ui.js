@@ -360,7 +360,7 @@
       "<p class='swa-h'>Booking</p><div class='swa-card'><div class='swa-set swa-set0'><span class='swa-st'><b>Default bookmaker</b><small>Codes open here first</small></span></div><div class='swa-books'>"+books+"</div></div>"+
       "<p class='swa-h'>Notifications</p><div class='swa-card'><div class='swa-set'><span class='swa-st'><b>Picks by email</b><small>The day's picks, each morning</small></span>"+
         "<button class='swa-sw' id='swaMail' type='button' role=\"switch\" aria-checked=\""+(!!o.mail)+"\" aria-label='Picks by email'></button></div>"+
-        "<div class='swa-set'><span class='swa-st'><b>Phone notifications</b><small>Pick of the day at 9am, and when your slip lands</small></span>"+
+        "<div class='swa-set'><span class='swa-st'><b>Phone notifications</b><small>Messages from the Wizard, pick of the day at 9am, and when your slip lands</small></span>"+
         "<button class='swa-sw' id='swaPush' type='button' role=\"switch\" aria-checked=\"false\" aria-label='Phone notifications'></button></div></div>"+
       "<p class='swa-h'>Account</p><div class='swa-card'><button class='swa-set swa-link' id='swaDevs' type='button'><span class='swa-st'><b>Signed-in devices</b><small>"+devWords(o.devices)+"</small></span>"+CHEV+"</button></div>"+
       "<button class='swa-outbtn' id='swaOut' type='button'>Sign out</button>"+

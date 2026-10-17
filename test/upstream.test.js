@@ -105,3 +105,21 @@ test("a body with no matches array is left alone", () => {
   assert.deepStrictEqual(dedupeMatches({ error: "x" }), { error: "x" });
   assert.strictEqual(dedupeMatches(null), null);
 });
+
+/* Owner, 17 Oct 2026: tapping a bookie "lags badly". 1xBet's feed was 19 MB, four
+   fifths of it booking material nothing on this side reads. */
+const { slimMatches } = require("../lib/upstream.js");
+test("a second book's feed keeps what the page and the converter read, and nothing else", () => {
+  const ev = { eventId: 7, teams: "Italy - Belgium", kickoff: "2026-09-25T18:45:00Z", startdate: "2026-09-25",
+    league: "World", country: "World", odds: { 1: 2.1 }, srId: 42, sel: { big: "x".repeat(500) }, raw: { y: 1 }, sub: "a", slotId: 3, eventCode: 9 };
+  const out = slimMatches({ success: true, count: 1, matches: { 7: ev } });
+  assert.deepStrictEqual(out.matches[7], { eventId: 7, teams: "Italy - Belgium", kickoff: "2026-09-25T18:45:00Z",
+    startdate: "2026-09-25", league: "World", country: "World", odds: { 1: 2.1 }, srId: 42 });
+  assert.strictEqual(out.count, 1, "the rest of the body is untouched");
+  assert.deepStrictEqual(slimMatches({ matches: [ev] }).matches[0].teams, "Italy - Belgium", "an array of matches too");
+  assert.deepStrictEqual(slimMatches({ error: "x" }), { error: "x" });
+  assert.strictEqual(slimMatches(null), null);
+  /* What the converter reads from a feed is the same either way. */
+  const C = require("../lib/convert.js");
+  assert.deepStrictEqual(C.events("onexbet", out), C.events("onexbet", { matches: { 7: ev } }));
+});

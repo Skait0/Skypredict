@@ -10725,15 +10725,18 @@ function listRowHTML(f){
     "<button type='button' class='sr-only lrow-toggle' aria-expanded='"+(_open?"true":"false")+
       "' aria-controls='"+_mid+"'>Options for "+esc(f.home)+" v "+esc(f.away)+"</button>"+
     "<span class='lt-time'>"+esc(kickTime(f))+"</span>"+
-    "<span class='lt-match'><span class='tm'>"+esc(f.home)+"</span><span class='vs'>v</span><span class='tm'>"+esc(f.away)+"</span>"+statusSlot(f)+(id===POTD_ID?"<span class='lt-pick' title='Pick of the day' aria-label='Pick of the day'>★</span>":"")+"</span>"+
+    "<span class='lt-match'><span class='tm'>"+esc(f.home)+"</span><span class='vs'>v</span><span class='tm'>"+esc(f.away)+"</span>"+statusSlot(f)+(id===POTD_ID?"<span class='lt-pick' title='Pick of the day' aria-label='Pick of the day'>★</span>":"")+
+      /* In the match cell, not the Tip cell (owner, 17 Oct 2026): beside the
+         meter it squeezed the tip itself to one letter, "O", on exactly the rows
+         we most want read. */
+      (t3?"<i class='lt-our'>Our pick</i>":"")+"</span>"+
     "<span class='lt-p"+(lead==="h"?" lead":"")+"'>"+_lt100[0]+"<small>%</small></span>"+
     "<span class='lt-p"+(lead==="d"?" lead":"")+"'>"+_lt100[1]+"<small>%</small></span>"+
     "<span class='lt-p"+(lead==="a"?" lead":"")+"'>"+_lt100[2]+"<small>%</small></span>"+
     "<span class='lt-tip'><span class='vdot'></span><span class='tx' title=\""+esc(pk.label)+"\">"+esc(pk.label)+"</span>"+
       (pk.o?"<i class='todd num'>x"+pk.o.toFixed(2)+"</i>":"")+
       "<i class='grade'>"+P0(pk.p)+"%</i>"+
-      "<i class='mtr' style='--p:"+Math.max(0,Math.min(1,+pk.p||0)).toFixed(2)+"' aria-hidden='true'><b></b></i>"+
-      (t3?"<i class='lt-our'>Our pick</i>":"")+"</span>"+
+      "<i class='mtr' style='--p:"+Math.max(0,Math.min(1,+pk.p||0)).toFixed(2)+"' aria-hidden='true'><b></b></i>"+"</span>"+
     "<span class='lt-score' title='One way this match could end, drawn from our score distribution - not the most likely score'>"+pk.sc+"</span>"+
     "<span class='lt-chev' aria-hidden='true'>\u25be</span>"+
     /* inert while shut: the panel is collapsed with max-height, which hides it
@@ -12754,7 +12757,12 @@ function refreshByoPanels(){
     renderByo();
   }catch(e){}
 }
-function attachEventIds(sporty,B){
+/* `sliced`: match in short slices with a break between them and return a
+   promise of the count - for a second book's feed, which lands while the
+   reader is using the page (owner, 17 Oct 2026: tapping a bookie "lags badly";
+   1xBet's feed alone held the phone for seven seconds). Same fixtures, same
+   order, same answers; only the waiting is shared out. */
+function attachEventIds(sporty,B,sliced){
   B=B||BOOKS.sporty;
   if(!sporty||!sporty.length) return 0;
   try{ FEED_RAW[B.key]=sporty; }catch(e){}
@@ -12808,7 +12816,7 @@ function attachEventIds(sporty,B){
   });
   var hasCountries=Object.keys(byLeagueDay).length>0;
   var hits=0, nearMisses=0, noMatches=0, goneFromFeed=0, notListed=0;
-  DATA.fixtures.forEach(function(f){
+  function one(f){
     var cand=[];
     /* Candidate window: ±3 days around our fixture date (SportyBet's UTC start
        can land a day either side of our local date, esp. late-night SA/MX games). */
@@ -12951,12 +12959,29 @@ function attachEventIds(sporty,B){
           "start:", dbgBest?new Date(dbgBest.startTime).toISOString().slice(0,10):"-");}catch(e){}
       }
     }
-  });
+  }
+  function said(){
   try{console.log("["+B.key+"] matched "+hits+"/"+DATA.fixtures.length+" from "+sporty.length+
     " events (near:"+nearMisses+", none:"+noMatches+", of which "+goneFromFeed+
     " already kicked off and "+notListed+" not published by them yet; feed runs to "+
     (feedMax?new Date(feedMax).toISOString().slice(0,10):"?")+")");}catch(e){}
+  }
+  if(sliced) return eachSliced(DATA.fixtures.slice(),one).then(function(){ said(); var n=hits; return n; });
+  DATA.fixtures.forEach(one);
+  said();
   return hits;
+}
+/* Runs fn over list in slices of about 30ms, handing the page back between
+   them so a tap is answered within a frame or two, not after the whole list. */
+function eachSliced(list,fn){
+  var i=0;
+  return new Promise(function(done){
+    (function step(){
+      var t0=Date.now();
+      while(i<list.length&&Date.now()-t0<30) fn(list[i++]);
+      if(i<list.length) setTimeout(step,0); else done();
+    })();
+  });
 }
 
 /* ---- the booking half of a bookmaker -----------------------------------
@@ -12998,7 +13023,9 @@ function setBook(k){
   try{ clearPrompts(); }catch(e){}
   /* The badges on every leg say whether THIS book has the game, so they all
      change meaning at once. */
-  try{ renderBuilder(); }catch(e){}
+  /* Only while it shows: setView("build") draws it fresh on the way in, and off
+     screen it cost a tenth of a second of every bookie tap on Home. */
+  try{ if(document.documentElement.classList.contains("mode-build")) renderBuilder(); }catch(e){}
   try{ if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet(); }catch(e){}
   try{ paintBookPickers(); }catch(e){}
 }
@@ -13310,7 +13337,15 @@ function paintBookPickers(){
   /* The pills carry how much of the slip each book can take, and that count is
      the whole reason this is a choice. So a picker on screen is the other
      signal that the other feeds are wanted. */
-  try{ Object.keys(BOOKS).forEach(ensureBookFeed); }catch(e){}
+  /* Only when a picker is actually on screen (owner, 17 Oct 2026: a bookie tab
+     on Home "lags badly"). Called from setBook and every repaint, this fetched
+     all six feeds from the home page too, and each one landing froze the phone
+     for seconds - for pills nobody could see. Opening Build or My slip asks again. */
+  /* Read off state, not layout: the closed My slip sheet keeps its picker in
+     the page with a layout box, so "is it rendered" said yes on Home. */
+  var _seen=document.documentElement.classList.contains("mode-build")||
+    !!($("mySheet")&&$("mySheet").classList.contains("on"));
+  if(_seen) try{ Object.keys(BOOKS).forEach(ensureBookFeed); }catch(e){}
   try{ document.querySelectorAll('[data-bookpick]:not([data-bookpick="build"])')
     .forEach(paintBookPicker); }catch(e){}
   /* "book them to SportyBet" is a promise about which app the code opens in,
@@ -13413,7 +13448,7 @@ async function loadSecondBook(url,B){
     if(!r.ok) return 0;                 /* 503 while their sweep is still cold */
     var d=await r.json();
     var rows=b9Rows((d&&d.matches)||{});
-    var n=rows.length?attachEventIds(rows,B):0;
+    var n=rows.length?await attachEventIds(rows,B,true):0;
     if(n) refreshByoPanels();
     return n;
   }catch(e){ return 0; }
@@ -13520,7 +13555,7 @@ function ensureBookFeed(k){
            k==="betpawa"?loadBetpawa:k==="onexbet"?loadOnexbet:
            k==="betway"?loadBetway:null;
   if(!load) return Promise.resolve(0);
-  BOOK_FEED[k]=load().then(function(n){ BOOK_FEED_DONE[k]=1; if(n) repaintAfterMatch(); return n; })
+  BOOK_FEED[k]=load().then(function(n){ BOOK_FEED_DONE[k]=1; if(n) repaintSoon(); return n; })
     .catch(function(){ BOOK_FEED_DONE[k]=1; return 0; });
   return BOOK_FEED[k];
 }
@@ -13577,6 +13612,18 @@ async function loadSporty(){
 }
 /* Redraw whatever is currently showing ids, without disturbing anything the
    user is part-way through. */
+/* Feeds that land close together repaint once, not once each: a repaint is a
+   full board render, about half a second on a phone (owner, 17 Oct 2026). */
+var REPAINT_T=0, REPAINT_SINCE=0;
+function repaintSoon(){
+  clearTimeout(REPAINT_T);
+  if(!REPAINT_SINCE) REPAINT_SINCE=Date.now();
+  /* Another feed still on its way: wait for it (up to 4s from the first), so
+     the builder's five feeds cost one repaint, not five. */
+  var waiting=Object.keys(BOOK_FEED).some(function(k){ return !BOOK_FEED_DONE[k]; });
+  var ms=waiting?Math.max(150,4000-(Date.now()-REPAINT_SINCE)):150;
+  REPAINT_T=setTimeout(function(){ REPAINT_SINCE=0; repaintAfterMatch(); },ms);
+}
 function repaintAfterMatch(){
   /* New prices change what the Wizard can reach without changing any input
      its ceiling is keyed on, so the probe starts over - and the payout rungs
@@ -25588,6 +25635,10 @@ load().catch(function(){});
         return true; };
       if(once("msgs")){
         if(root.swMsg) root.swMsg.inbox(); else root.addEventListener("load",function(){ if(root.swMsg) root.swMsg.inbox(); });
+      }
+      /* A user's reply pings the admin's phone with /?admin=1 (api/account.js). */
+      if(once("admin")){
+        if(root.swAccountUI) root.swAccountUI.admin(); else root.addEventListener("load",function(){ if(root.swAccountUI) root.swAccountUI.admin(); });
       }
       if(once("account")){
         if(root.swAccountUI) root.swAccountUI.settings(); else root.addEventListener("load",function(){ if(root.swAccountUI) root.swAccountUI.settings(); });

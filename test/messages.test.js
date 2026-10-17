@@ -135,6 +135,24 @@ test("a new message pings phones, and a push that fails never fails the send", a
   assert.strictEqual(w.rows.length, 3, "in the inbox whatever the push did");
 });
 
+/* Owner, 17 Oct 2026: "when i get sent a message, i should get them too". */
+test("a user's reply pings the admin's phones, and a push that fails never fails the reply", async () => {
+  const w = await world();
+  const r = await w.call(post(w.ada, "reply", { text: "Thanks wizard " + "y".repeat(200) }));
+  assert.strictEqual(r.code, 200);
+  assert.deepStrictEqual(w.pings[0][0], [w.boss.id], "only the admin's phones");
+  assert.strictEqual(w.pings[0][1].url, "/?admin=1", "the tap opens Admin");
+  assert.ok(w.pings[0][1].body.startsWith("Thanks wizard y") && w.pings[0][1].body.length <= 120);
+  assert.doesNotMatch(w.pings[0][1].title + w.pings[0][1].body, /—/);
+  w.pingCtl.fail = true;
+  assert.strictEqual((await w.call(post(w.ada, "reply", { text: "Still here" }))).code, 200);
+  assert.strictEqual(w.rows.length, 2, "in the conversation whatever the push did");
+  /* The admin answering in their own inbox does not ping themselves. */
+  w.pingCtl.fail = false;
+  await w.call(post(w.boss, "reply", { text: "note to self" }));
+  assert.strictEqual(w.pings.length, 1);
+});
+
 /* Owner, 14 Oct 2026: "remove the reply for readers except i say otherwise". */
 /* Owner, 14 Oct 2026: "lets give the users the ability to reply. i want feedback
    from users for now. make sure the input from the users are secure and cant

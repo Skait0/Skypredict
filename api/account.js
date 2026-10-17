@@ -374,8 +374,23 @@ function make(deps) {
         if (!text) return H.sendJson(res, 400, { error: "empty" });
         if (text.length > REPLY_MAX) return H.sendJson(res, 400, { error: "too_long" });
         if (!(await db.rlHit("msg:" + s.userId, 3600, 20))) return H.sendJson(res, 429, { error: "slow_down" });
-        const got = await msgs.add([{ created_at: new Date(t).toISOString(), user_id: s.userId, from_admin: false, body: text }]);
-        return got && got[0] ? H.sendJson(res, 200, { ok: true, id: got[0].id }) : H.sendJson(res, 503, { error: "unavailable" });
+        const at = new Date(t).toISOString();
+        const got = await msgs.add([{ created_at: at, user_id: s.userId, from_admin: false, body: text }]);
+        if (!(got && got[0])) return H.sendJson(res, 503, { error: "unavailable" });
+        /* THE ADMIN HEARS IT TOO (owner, 17 Oct 2026: "when i get sent a message, i
+           should get them too"). Same ping as a send, to every admin account's
+           phones; it opens Admin on its Messages tab. A failed ping never fails the
+           reply - it is already in the conversations list and the Alerts tab. */
+        try {
+          const ids = [];
+          for (const e of String(env.SW_ADMIN_EMAILS || "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean)) {
+            const u = await db.userByEmail(e);
+            if (u && u.id && u.id !== s.userId) ids.push(u.id);
+          }
+          if (ids.length) await ping(ids, { title: "New message from a user 💬",
+            body: text.length > 120 ? text.slice(0, 117) + "..." : text, url: "/?admin=1" }, at);
+        } catch (e) { await report(e, { route: "account/reply-push" }); }
+        return H.sendJson(res, 200, { ok: true, id: got[0].id });
       }
 
       if (action === "consent") {

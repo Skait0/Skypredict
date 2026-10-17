@@ -187,6 +187,7 @@
     ".swm-tog{margin-left:auto;border:0;background:none;color:var(--accent);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;padding:2px 4px}.swm-meta .swm-tog{margin-left:auto}.swm-meta .swm-tog+.swm-del{margin-left:0}"+
     ".swm-del{border:0;background:none;color:var(--faint);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;padding:2px 4px}.swm-del:hover,.swm-del.swm-arm{color:var(--red-ink)}"+
     ".swm-rep{display:flex;gap:8px;align-items:flex-end;position:sticky;bottom:0;background:var(--bg);padding:8px 0 4px}"+
+    ".swm-ping{display:flex;gap:10px;align-items:center;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);font-size:13.5px;line-height:1.35}.swm-ping span{flex:1}.swm-ping .swm-send{height:38px;padding:0 14px;font-size:13px}"+
     ".swm-rep textarea{flex:1;min-height:44px;max-height:140px;resize:vertical;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:14.5px;padding:10px 12px;box-sizing:border-box}"+
     ".swm-tag{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);border:1px solid var(--line);border-radius:4px;padding:1px 5px}"+
     /* the send button and its answer */
@@ -336,10 +337,24 @@
     style(); root.swAccountUI.close();
     /* Replies are back on (owner, 14 Oct 2026: "i want feedback from users").
        Plain text only: the server cleans it and every view escapes it. */
-    var v=root.swAccountUI.view("Messages","<div class='swm-thread' id='swmThread'><p class='swa-note'>Loading...</p></div>"+
+    /* NOTIFICATIONS OFF? SAY SO WHERE THE MESSAGES ARE (owner, 17 Oct 2026: "when i
+       send messages to users, they should get the notification"). A push only
+       reaches a phone that switched it on while signed in, and that switch lived
+       in Settings alone. Shown only when this phone could have it and does not. */
+    var v=root.swAccountUI.view("Messages","<div class='swm-ping' id='swmPing' hidden><span>Get a ping on your phone when the Wizard messages you.</span>"+
+      "<button type='button' class='swm-send' id='swmPingGo'>Turn on</button></div>"+
+      "<div class='swm-thread' id='swmThread'><p class='swa-note'>Loading...</p></div>"+
       "<div class='swm-rep'><textarea id='swmRe' maxlength='1000' rows='1' placeholder='Questions, ideas or feedback?' aria-label='Your reply'></textarea>"+
       "<button type='button' class='swm-send' id='swmReGo'>Send</button></div>");
     var box=v.querySelector("#swmThread"), ta=v.querySelector("#swmRe"), go=v.querySelector("#swmReGo");
+    var P=root.swAccountUI.push, ping=v.querySelector("#swmPing");
+    if(P&&P.ok()&&root.Notification&&Notification.permission!=="denied") P.state(function(isOn){
+      if(isOn) return;
+      ping.hidden=false;
+      var pb=v.querySelector("#swmPingGo");
+      pb.onclick=function(){ sendState(pb,"busy");
+        P.on(function(ok,m){ if(ok){ ping.hidden=true; } else sendState(pb,"bad",m); }); };
+    });
     if(root.swAccountUI.mark) root.swAccountUI.mark("msgs");
     go.onclick=function(){
       var t=ta.value.replace(/^\s+|\s+$/g,""); if(!t){ ta.focus(); return; }
