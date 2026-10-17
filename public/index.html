@@ -5994,10 +5994,10 @@ html.is-results #codeCard{display:none}
 /* READY-MADE SLIPS PANEL (17 Oct 2026). A favoured panel per DESIGN.md: card ground,
    accent rim. The rungs are a segmented tray; the chosen one is filled gold because it
    is the thing acted on. Numbers in the display face, tabular. */
-.lad{margin-top:12px;padding:16px;background:var(--card);border:1px solid var(--accent-rim);border-radius:12px}
-.lad-h{margin:0 0 12px;font-family:var(--disp);font-size:22px;line-height:1.05;font-weight:800;text-transform:uppercase;letter-spacing:.005em;color:var(--text);text-wrap:balance}
-.lad-rungs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:4px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-seg)}
-.lad-r{min-height:48px;padding:0 2px;font:800 21px/1 var(--disp);font-variant-numeric:tabular-nums;color:var(--soft);background:transparent;border:0;border-radius:var(--r-md);cursor:pointer;
+.lad{margin-top:10px;padding:12px;background:var(--card);border:1px solid var(--accent-rim);border-radius:12px}
+.lad-h{margin:0 0 8px;font-family:var(--disp);font-size:18px;line-height:1.05;font-weight:800;text-transform:uppercase;letter-spacing:.005em;color:var(--text);text-wrap:balance}
+.lad-rungs{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:3px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-seg)}
+.lad-r{min-height:40px;padding:0 2px;font:800 19px/1 var(--disp);font-variant-numeric:tabular-nums;color:var(--soft);background:transparent;border:0;border-radius:var(--r-md);cursor:pointer;
   transition:background 160ms var(--ease-out),color 160ms var(--ease-out),transform 120ms var(--ease-out)}
 .lad-r small{font-size:.62em;margin-right:1px;opacity:.8}
 .lad-r[aria-checked="true"]{background:var(--accent);color:var(--on-accent)}
@@ -6005,18 +6005,30 @@ html.is-results #codeCard{display:none}
 .lad-r:not(:disabled):active{transform:scale(.97)}
 @media (hover:hover){.lad-r:not(:disabled):not([aria-checked="true"]):hover{color:var(--text);background:var(--card-2)}}
 .lad-r:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.lad-body{margin-top:12px}
+.lad-body{margin-top:8px}
 .lad-code{display:flex;align-items:center;gap:10px}
-.lad-code code{flex:1;min-width:0;font:800 30px/1 var(--disp);letter-spacing:.08em;font-variant-numeric:tabular-nums;color:var(--accent);overflow-wrap:anywhere}
-.lad-copy{flex:none;padding:11px 18px;font:800 13.5px/1 inherit;color:var(--on-accent);background:var(--accent);border:0;border-radius:var(--r-chip);cursor:pointer;transition:transform 120ms var(--ease-out)}
+.lad-code code{flex:1;min-width:0;font:800 26px/1 var(--disp);letter-spacing:.08em;font-variant-numeric:tabular-nums;color:var(--accent);overflow-wrap:anywhere}
+.lad-copy{flex:none;padding:9px 16px;font:800 13.5px/1 inherit;color:var(--on-accent);background:var(--accent);border:0;border-radius:var(--r-chip);cursor:pointer;transition:transform 120ms var(--ease-out)}
 .lad-copy:active{transform:scale(.97)}
 .lad-copy:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-.lad-meta{margin:8px 0 0;font-size:12.5px;line-height:1.5;color:var(--soft)}
+.lad-meta{margin:6px 0 0;font-size:12px;line-height:1.4;color:var(--soft)}
 .lad-meta b{color:var(--text);font-weight:800}
-.lad-wait{display:flex;align-items:center;gap:10px;font-size:13.5px;line-height:1.45;color:var(--soft)}
+.lad-wait{display:flex;align-items:center;gap:10px;font-size:12.5px;line-height:1.4;color:var(--soft)}
 .lad-wait svg{flex:none;width:22px;height:22px;color:var(--accent)}
-.lad-wait b{display:block;color:var(--text);font-size:15px;font-weight:800}
+.lad-wait b{display:block;color:var(--text);font-size:14px;font-weight:800}
 @media (prefers-reduced-motion:no-preference){.lad-code code.lad-in{animation:ladIn 420ms var(--ease-out)}}
+/* SHORT PHONES (owner, 17 Oct 2026: "make it tighter so that build me a slip shows
+   on mobile"). On a 640px-tall screen the offer button must stay on the first screen:
+   the headline goes to screen readers only and the details line folds away. */
+@media (max-width:767px) and (max-height:700px){
+  .lad{margin-top:6px;padding:10px}
+  .lad-h{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .lad-r{min-height:36px;font-size:18px}
+  .lad-body{margin-top:6px}
+  .lad-code code{font-size:22px}
+  .lad-copy{padding:8px 14px}
+  .lad-meta{display:none}
+}
 @keyframes ladIn{from{opacity:.15;filter:blur(3px);transform:translateY(3px)}to{opacity:1;filter:none;transform:none}}
 .ck-th{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;color:var(--soft)}
 .ck-tile.big .ck-th{color:var(--win-ink)}
