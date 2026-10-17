@@ -347,11 +347,12 @@
       "<div class='swm-rep'><textarea id='swmRe' maxlength='1000' rows='1' placeholder='Questions, ideas or feedback?' aria-label='Your reply'></textarea>"+
       "<button type='button' class='swm-send' id='swmReGo'>Send</button></div>");
     var box=v.querySelector("#swmThread"), ta=v.querySelector("#swmRe"), go=v.querySelector("#swmReGo");
-    var P=root.swAccountUI.push, ping=v.querySelector("#swmPing");
+    /* The answer is async and every account panel shares one box: a reader who left
+       the inbox first has a different panel there, with no #swmPingGo (Sentry, 17 Oct 2026). */
+    var P=root.swAccountUI.push, ping=v.querySelector("#swmPing"), pb=v.querySelector("#swmPingGo");
     if(P&&P.ok()&&root.Notification&&Notification.permission!=="denied") P.state(function(isOn){
-      if(isOn) return;
+      if(isOn||!ping.isConnected) return;
       ping.hidden=false;
-      var pb=v.querySelector("#swmPingGo");
       pb.onclick=function(){ sendState(pb,"busy");
         P.on(function(ok,m){ if(ok){ ping.hidden=true; } else sendState(pb,"bad",m); }); };
     });

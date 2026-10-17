@@ -378,3 +378,15 @@ test("a push's ?msgs=1 opens the inbox once, then leaves the address", () => {
   assert.match(idx, /if\(once\("msgs"\)\)\{/);
   assert.match(idx, /if\(once\("account"\)\)\{/);
 });
+
+/* Sentry, 17 Oct 2026: "Cannot set properties of null (setting 'onclick')" in the
+   inbox. The push state answers late, and every account panel shares one box, so a
+   reader who had already left the inbox had no #swmPingGo to wire. */
+test("the inbox's notification button is wired only while the inbox is still open", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
+  const i = src.indexOf("P.state(function(isOn){");
+  assert.ok(i > 0);
+  const body = src.slice(i, src.indexOf("});", i));
+  assert.match(body, /if\(isOn\|\|!ping\.isConnected\) return;/, "a late answer after leaving the inbox does nothing");
+  assert.doesNotMatch(body, /querySelector/, "never looks the button up after the answer comes back");
+});
