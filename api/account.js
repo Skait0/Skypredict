@@ -144,7 +144,7 @@ function make(deps) {
              see must stay reachable to Unsend (owner, 16 Oct 2026: "i cant unsend
              it in admin because its no longer there"). The page folds them away. */
           const shown = list.map((m) => (m.user_id == null && gone.has(Number(m.id)) ? Object.assign({ adminHidden: true }, m) : m));
-          return H.sendJson(res, 200, { messages: shown, readAt: (reads && reads.read_at) || null });
+          return H.sendJson(res, 200, { messages: shown, readAt: (reads && reads.read_at) || null, threadReads: (reads && reads.threads) || {} });
         }
         if (action === "gifs") {
           const got = await msgs.gifs(String((req.query || {}).q || ""), env);
@@ -385,10 +385,16 @@ function make(deps) {
         const seen = Date.parse(reads.read_at || "") || 0;
         return H.sendJson(res, 200, { messages: out, readAt: reads.read_at, bannerAt: reads.banner_at,
           unread: isAdmin ? 0 : out.filter((m) => !m.mine && Date.parse(m.at) > seen).length,
-          adminUnread: isAdmin ? (await msgs.repliesSince(reads.read_at)) || 0 : 0 });
+          adminUnread: isAdmin ? (await (msgs.unreadReplies ? msgs.unreadReplies(reads) : msgs.repliesSince(reads.read_at))) || 0 : 0 });
       }
       if (action === "msgread") {
-        const what = ((await H.readJson(req, 256)) || {}).what;
+        const mb = (await H.readJson(req, 256)) || {}, what = mb.what;
+        /* One conversation, for the admin's inbox (sql/thread_reads.sql). */
+        if (what === "thread") {
+          if (!C.UUID_RE.test(String(mb.id || ""))) return H.sendJson(res, 400, { error: "bad_request" });
+          const ok = msgs.markThread ? await msgs.markThread(s.userId, String(mb.id), new Date(t).toISOString()) : false;
+          return ok ? H.sendJson(res, 200, { ok: true }) : H.sendJson(res, 503, { error: "unavailable" });
+        }
         if (what !== "inbox" && what !== "banner") return H.sendJson(res, 400, { error: "bad_request" });
         const done = await msgs.markRead(s.userId, what === "inbox" ? "read_at" : "banner_at", new Date(t).toISOString());
         return done ? H.sendJson(res, 200, { ok: true }) : H.sendJson(res, 503, { error: "unavailable" });

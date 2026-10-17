@@ -660,7 +660,9 @@
         var cv=panel.querySelector("#swmConvos"), sent=panel.querySelector("#swmSent");
         if(code!==200){ var w="<div class='swa-set'><span class='swa-st'><small>"+(code===503?"Messages are not set up yet. Run sql/messages.sql in Supabase.":"Could not load messages.")+"</small></span></div>";
           cv.innerHTML=w; sent.innerHTML=w; return; }
-        var seen=Date.parse(j.readAt||"")||0, by={}, order=[], bc=[], gone=[];
+        var seen=Date.parse(j.readAt||"")||0, tr=j.threadReads||{}, by={}, order=[], bc=[], gone=[];
+        /* A conversation is read from the later of the inbox read and its own. */
+        var seenOf=function(uid){ return Math.max(seen,Date.parse(tr[uid]||"")||0); };
         (j.messages||[]).forEach(function(m){
           /* Only the admin's own broadcasts are drawn as HTML here; a row with no
              thread that is not from the admin is never treated as one. One the admin
@@ -672,13 +674,14 @@
         loadReaders(function(){
           cv.innerHTML=order.length?order.map(function(id){
             var t=by[id], r=byId(id)||{id:id,email:"Deleted account"}, last=t[0];
-            var n=t.filter(function(m){ return !m.from_admin&&Date.parse(m.created_at)>seen; }).length; unread+=n;
+            var n=t.filter(function(m){ return !m.from_admin&&Date.parse(m.created_at)>seenOf(id); }).length; unread+=n;
             return rowHtml(r,"",n?"<span class='swm-unr'>"+n+"</span>":"<i>"+esc(ago(last.created_at))+"</i>").replace("<small>"+esc(r.email)+"</small>",
               "<small>"+(last.from_admin?"You: ":"")+esc(api.textOf(last.from_admin?last.body:esc(last.body)).slice(0,70))+"</small>"); }).join(""):
             "<div class='swa-set'><span class='swa-st'><small>No conversations yet. Replies from users show up here.</small></span></div>";
           setCount(v,"swaTMsg",unread?unread+" new":"");
           cv.querySelectorAll("[data-rid]").forEach(function(b){ b.onclick=function(){ convo(b.getAttribute("data-rid"),by[b.getAttribute("data-rid")]); }; });
-          if(unread) a.req("POST","/api/account/msgread",{what:"inbox"},function(c2){ if(c2===200){ state.adminUnread=0; if(root.swAdminBadgeRefresh) root.swAdminBadgeRefresh(); } });
+          /* Opening the tab no longer marks everything read: each conversation is read when opened. */
+          state.adminUnread=unread; if(root.swAdminBadgeRefresh) root.swAdminBadgeRefresh();
         });
         /* Each broadcast is one line until it is opened (owner, 14 Oct 2026:
            "sent broadcast should be collapsed till i open it"). */
@@ -732,9 +735,11 @@
          to close the admin before message closes and marks as read"). Close and Esc go
          back to the list; the row's count clears the moment it opens; a reply is typed
          right here, Enter sends and Shift+Enter is a new line, like a chat app. */
-      var row=panel.querySelector("[data-rid='"+id+"']"), un=row&&row.querySelector(".swm-unr");
+      var row=panel.querySelector("[data-rid='"+id+"']"), un=row&&row.querySelector(".swm-unr"), had=un?(+un.textContent||0):0;
       if(un){ un.outerHTML="<i>now</i>"; }
-      a.req("POST","/api/account/msgread",{what:"inbox"},function(c2){ if(c2===200){ state.adminUnread=0; if(root.swAdminBadgeRefresh) root.swAdminBadgeRefresh(); } });
+      /* Only THIS conversation is marked read; the others keep their counts. */
+      a.req("POST","/api/account/msgread",{what:"thread",id:id},function(c2){
+        if(c2===200){ state.adminUnread=Math.max(0,state.adminUnread-had); if(root.swAdminBadgeRefresh) root.swAdminBadgeRefresh(); } });
       box.innerHTML="<div class='swm-cv-hd'><p class='swa-h'>"+esc(nameOf(r))+" <small>"+esc(r.email)+"</small></p>"+
         "<button type='button' class='swa-pillbtn' data-close-convo aria-label='Close conversation'>Close</button></div><div class='swm-thread'>"+
         (list||[]).slice().reverse().map(function(m){ return bubble({id:m.id,at:m.created_at,mine:!m.from_admin,body:m.body},Infinity,

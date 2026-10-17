@@ -399,10 +399,23 @@ test("an admin conversation closes in place, is read when opened, and wins do no
   const body = src.slice(i, src.indexOf("load();\n    return { to:to, load:load };", i));
   assert.match(body, /data-close-convo/, "a Close button");
   assert.match(body, /e\.key==="Escape"/, "Esc closes it");
-  assert.match(body, /a\.req\("POST","\/api\/account\/msgread",\{what:"inbox"\}/, "opening it marks it read");
+  assert.ok(body.includes('a.req("POST","/api/account/msgread",{what:"thread",id:id}'), "opening it marks THIS conversation read");
   assert.match(body, /e\.key==="Enter"&&!e\.shiftKey/, "Enter sends a quick reply");
   assert.match(body, /\/api\/account\/send",\{to:\[id\]/, "the reply goes to this reader only");
   const page = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
   assert.match(page, /function swAdminBadgeRefresh\(\)\{ paintAdminBadge\(window\.swMsg\?swMsg\.adminUnread\(\):0\); \}/, "won slips stay in Alerts");
   assert.match(page, /#hdAccount \.bt-badge\{top:-5px;right:-5px;/, "the dot sits on the avatar's edge");
+});
+
+/* Owner, 17 Oct 2026: "do the per-conversation read status". */
+test("each admin conversation keeps its own read time", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
+  assert.ok(src.includes("var seenOf=function(uid){ return Math.max(seen,Date.parse(tr[uid]||\"\")||0); };"), "a row counts from its own read time");
+  assert.ok(!src.includes('if(unread) a.req("POST","/api/account/msgread",{what:"inbox"}'), "opening the tab no longer marks everything read");
+  const api = fs.readFileSync(path.join(__dirname, "..", "api", "account.js"), "utf8");
+  assert.ok(api.includes('if (what === "thread") {'), "the server marks one conversation");
+  assert.ok(api.includes("threadReads: (reads && reads.threads) || {}"), "the list gets every conversation's read time");
+  const lib = fs.readFileSync(path.join(__dirname, "..", "lib", "messages.js"), "utf8");
+  assert.ok(lib.includes("async function markThread(uid, readerId, iso)") && lib.includes("async function unreadReplies(reads)"));
+  assert.match(fs.readFileSync(path.join(__dirname, "..", "sql", "thread_reads.sql"), "utf8"), /add column if not exists threads jsonb/);
 });
