@@ -77,7 +77,8 @@
       "x": "How much do you want to win today? 🤔\n\nSay x10. Say x100. The Wizard builds the slip. Or slide your risk. Then split it, shuffle it, save it, book it.\n\nsoccerwizard.live\n18+",
       "ig": "How much do you want to win today? 🤔\n\nName it. Slide it. Split it. Book it.\n\nDrop your number below and we'll see who's bold 👇\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
       "igVideo": "/promo/how-much-today-ig.mp4",
-      "coverMs": 36000
+      "coverMs": 36000,
+      "buffer": "x + instagram scheduled"
     },
     {
       "date": "2026-10-17",
@@ -144,7 +145,7 @@
       "coverMs": 20500,
       "x": "Only 500 people get this crest 🧙\n\nThe first 500 Wizard Pass holders become Founding Wizards: ₦1,500 a month for your first 3 months, and the crest on your profile for good.\n\nWhen the 500 places go, they are gone.\n\nsoccerwizard.live/wizard-pass\n18+",
       "ig": "Only 500 people get this crest 🧙\n\nThe first 500 Wizard Pass holders become Founding Wizards:\n\n• ₦1,500 a month for your first 3 months\n• The Founding Wizard crest on your profile for good\n\nWhen the 500 places go, they are gone.\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
-      "buffer": "pending (X and Instagram both 10/10 in Buffer)"
+      "buffer": "instagram scheduled; x waits for a slot (promo-hq/buf-catchup.cjs, 18 Oct 19:23)"
     }
   ]
 }
