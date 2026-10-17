@@ -690,10 +690,10 @@ test("every result ends with a Home link back to the site (owner, 11 Oct 2026)",
   const html = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "penalty.html"), "utf8");
   /* A visible button since 17 Oct 2026 ("can we put a home button on the result page? visible"),
      above the tips card rather than under it. */
-  assert.match(html, /function homeLink\(\)\{var a=el\("a","btn ghost shome"\);a\.href="\/";/);
+  assert.match(html, /function homeLink\(alone\)\{var a=el\("a","btn ghost shome"\);a\.href="\/";/);
   assert.ok(!/tipsCard\(\),(?:F\.)?homeLink\(\)/.test(html.replace(/F\.tipsCard/g, "tipsCard")), "Home comes before the tips, never under them");
   assert.match(html, /homeLink:homeLink/, "exported for the daily and for-fun screens");
-  const uses = (html.match(/(?:F\.)?homeLink\(\)/g) || []).length - 1;
+  const uses = (html.match(/(?:F\.)?homeLink\((?:true)?\)/g) || []).length;
   assert.strictEqual(uses, 7, "practice, duel, survival, faced, for fun, daily, pause menu");
 });
 

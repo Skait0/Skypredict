@@ -190,6 +190,17 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
    it closes (owner, 13 Oct 2026 - Score! Hero's timed finish, one gesture still) */
 #ring{position:absolute;left:0;top:0;width:96px;height:96px;margin:-48px 0 0 -48px;border:3px solid var(--gold);border-radius:50%;opacity:0;pointer-events:none;z-index:6}
 #ring.on{animation:pw-close .5s linear forwards}#ring.hit{border-color:var(--green);opacity:1;animation:none;transform:scale(1.25);transition:transform .15s,opacity .3s}
+/* CHARGING, NOT CLOSING (owner, 17 Oct 2026: "let it seem like it charging from almost nothing to a
+   charged ring"). Same 500ms as the perfect-strike window: a faint small ring fills round in gold and
+   lands full and bright exactly when a flick is perfect. Browsers without @property keep the old ring. */
+@property --rp{syntax:"<number>";inherits:false;initial-value:0}
+@supports (background:conic-gradient(red 0deg,blue 0deg)){
+  #ring{border:0;background:conic-gradient(from -90deg,var(--gold) calc(var(--rp)*360deg),rgba(242,184,75,.14) 0);
+    -webkit-mask:radial-gradient(circle,transparent 42px,#000 43px);mask:radial-gradient(circle,transparent 42px,#000 43px)}
+  #ring.on{animation:pw-charge .5s linear forwards}
+  #ring.hit{background:var(--green);--rp:1}
+}
+@keyframes pw-charge{0%{--rp:0;opacity:.2;transform:scale(.6)}80%{opacity:.9}100%{--rp:1;opacity:1;transform:scale(1);filter:brightness(1.4)}}
 @keyframes pw-close{0%{opacity:.5;transform:scale(2)}100%{opacity:1;transform:scale(1)}}
 /* LITE: a phone that cannot hold 40fps loses the decoration, never the game */
 .lite .beam,.lite .crowd i,.lite .grass:before{display:none}.lite #crowdc{animation:none!important}
@@ -1077,10 +1088,15 @@ function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=c
 /* A BUTTON, NOT SMALL PRINT (owner, 17 Oct 2026: "can we put a home button on the
    result page? visible"). Was an underlined grey link under the tips card, below the
    fold; now a full-width button with the wizard, placed above the tips. */
-function homeLink(){var a=el("a","btn ghost shome");a.href="/";
+/* Results also go back to the game's own menu (owner, 17 Oct 2026: "no way to play other modes or go
+   back to the game menu"); the pause menu has Quit to menu, so it asks for Home alone. */
+function homeLink(alone){var a=el("a","btn ghost shome");a.href="/";
   var i=document.createElement("img");i.src="/penalty/wiz-64.webp?v=12";i.alt="";i.width=22;i.height=22;a.appendChild(i);
   a.appendChild(document.createTextNode("Soccerwizard home"));
-  a.addEventListener("click",function(){track("home_clicked");});return a;}
+  a.addEventListener("click",function(){track("home_clicked");});
+  if(alone) return a;
+  var m=btn("Game menu","ghost",function(){track("menu_clicked");location.href="/penalty";}),r=el("div","row");
+  r.appendChild(m);r.appendChild(a);return r;}
 function sheet(nodes,isMenu){PW.tag("");PW.fx.combo(0);var s=$("sheet");s.textContent="";s.removeAttribute("data-duel");
   var foot=el("div","sfoot");
   if(!isMenu&&window.PWHome){var m=el("button","smenu","Menu");m.type="button";m.addEventListener("click",function(){closeSheet();window.PWHome();});foot.appendChild(m);}
@@ -1399,7 +1415,7 @@ function paused(){var rz=$("resign"),snd=F.btn(PW.muted?"Sound off":"Sound on","
   if(MODE==="cpu")nodes.push(F.btn("Restart match","ghost",function(){location.href="/penalty?play=cpu";}));
   nodes.push(F.row(snd,F.btn("How to play","ghost",function(){PW.coachReset();F.closeSheet();})));
   if(!rz.hidden)nodes.push(F.btn("Resign this duel","ghost",function(){F.closeSheet();rz.onclick();}));
-  nodes.push(F.btn("Quit to menu","ghost",function(){location.href="/penalty";}),F.homeLink());
+  nodes.push(F.btn("Quit to menu","ghost",function(){location.href="/penalty";}),F.homeLink(true));
   F.sheet(nodes,true);}
 $("pause").addEventListener("pointerdown",function(e){e.stopPropagation();});
 $("pause").addEventListener("click",function(e){e.stopPropagation();paused();});
