@@ -14947,9 +14947,12 @@ function dogHcap(f,code){
    never above x1.15 in any style (owner, 17 Oct: "lower the to nil to 1.15. nothing more"),
    from x1.10 (Bankers takes x1.02 up), and only where we rate it 80%+. Held out, the 60-70% band ran ten points hot. */
 var WTN_MIN=1.10, WTN_BANKERS_MIN=1.02, WTN_MAX=1.15, WTN_P=0.8;
+/* THE PRICE IS THIS BOOK'S, OR SPORTYBET'S WHEN THIS BOOK'S FEED DOES NOT CARRY THE MARKET
+   (17 Oct 2026: Bet9ja, BetKing and betPawa sell it but their sweeps do not fetch it, so a
+   gate on their own quote built zero games for tomorrow). legOdd reads the same fallback. */
 function wtnOk(f,code,p){
   var B=curBook();
-  if(!bookQuotes(f,code,B)) return false;
+  if(!bookQuotes(f,code,B)&&!bookQuotes(f,code,BOOKS.sporty)) return false;
   var o=legOdd(f,code,p,B);
   if(o>WTN_MAX) return false;
   if(o<(bankersOn()?WTN_BANKERS_MIN:WTN_MIN)) return false;
