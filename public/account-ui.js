@@ -166,7 +166,7 @@
         "<select class='swa-in swa-sel' id='swaRBook' aria-label='Your bookie'>"+
         BOOK_KEYS.map(function(k){ return "<option value='"+k+"'>"+esc(BOOK_NAME[k])+"</option>"; }).join("")+"</select></div>"+
       "<div class='swa-set'><span class='swa-st'><b>Phone alert</b><small>At 10:30, with the code.</small></span>"+
-        "<input type='checkbox' id='swaRPush' checked aria-label='Phone alert'></div>"+
+        "<button class='swa-sw' id='swaRPush' type='button' role='switch' aria-checked='true' aria-label='Phone alert'></button></div>"+
       "<div class='swa-set'><span class='swa-st'><small id='swaRNote'>On Telegram too: connect the bot below, then send /daily to it.</small></span></div>"+
       "</div>";
   }
@@ -177,19 +177,19 @@
     if(cur&&BOOK_KEYS.indexOf(cur)>=0) bk.value=cur;
     function show(j){
       if(!j) return;
-      rg.value=String(j.rung||0); if(j.book) bk.value=j.book; pu.checked=j.push!==false;
+      rg.value=String(j.rung||0); if(j.book) bk.value=j.book; pu.setAttribute("aria-checked",String(j.push!==false));
       if(j.telegram) nt.textContent="Telegram is on. Send /daily off to the bot to stop it there.";
     }
     root.swAcct.req("GET","/api/account/autopilot",null,function(code,j){ if(code===200) show(j); });
     function save(){
       var r=+rg.value;
-      root.swAcct.req("POST","/api/account/setautopilot",r?{rung:r,book:bk.value,push:pu.checked}:{rung:null},function(code,j){
+      root.swAcct.req("POST","/api/account/setautopilot",r?{rung:r,book:bk.value,push:pu.getAttribute("aria-checked")==="true"}:{rung:null},function(code,j){
         if(code===200){ show(j); nt.textContent=r?"Saved. Your x"+r+" code comes at 10:30 every morning.":"Off. No daily slip."; }
         else nt.textContent="Couldn't save. Check your connection and try again.";
       });
     }
     rg.addEventListener("change",save); bk.addEventListener("change",function(){ if(+rg.value) save(); });
-    pu.addEventListener("change",function(){ if(+rg.value) save(); });
+    pu.addEventListener("click",function(){ pu.setAttribute("aria-checked",String(pu.getAttribute("aria-checked")!=="true")); if(+rg.value) save(); });
   }
   function tgFill(v,role){
     var b=v.querySelector("[data-tglink]"), t=v.querySelector("#swaTgT");
@@ -471,7 +471,7 @@
     ".swa-subtop small{display:block;font-size:12px;font-weight:600;color:var(--faint);margin-top:2px}.swa-soon{margin-left:auto;font-size:12px;font-weight:700;color:var(--faint);white-space:nowrap}"+
     ".swa-subuse{border-top:1px solid var(--line);padding:11px 12px 12px}.swa-q0{margin:0}.swa-subuse small{display:block;margin-top:6px;font-size:12px;font-weight:600;color:var(--faint)}"+
     ".swa-set{display:flex;align-items:center;gap:12px;padding:12px;min-height:52px;width:100%;box-sizing:border-box;border:0;background:none;color:inherit;font:inherit;text-align:left}.swa-set0{padding-bottom:8px}"+
-    ".swa-st{flex:1;min-width:0}.swa-st b{display:block;overflow-wrap:anywhere;font-size:13.5px;font-weight:700}.swa-st small{display:block;font-size:12px;font-weight:600;color:var(--faint);margin-top:1px}"+
+    ".swa-st{flex:1;min-width:0}.swa-st b{display:block;overflow-wrap:anywhere;font-size:13.5px;font-weight:700}.swa-st small{display:block;font-size:12px;font-weight:600;color:var(--faint);margin-top:1px}.swa-in.swa-sel{flex:none;width:auto;min-width:118px;max-width:46%;height:38px;font-size:14px;padding:0 30px 0 10px;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A3A0A6' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 9px center;background-size:14px}"+
     ".swa-link{cursor:pointer}.swa-chev{width:16px;height:16px;color:var(--faint)}"+
     ".swa-seg{display:flex;background:var(--card-2);border-radius:8px;padding:3px;gap:2px}.swa-seg button{border:0;background:none;color:var(--soft);font:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:6px;cursor:pointer}.swa-seg button[aria-pressed=true]{background:var(--card);color:var(--text)}"+
     ".swa-books{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 12px}.swa-books button{border:1px solid var(--line);background:var(--card-2);border-radius:6px;padding:7px 11px;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer;color:var(--text)}.swa-books button[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}"+
