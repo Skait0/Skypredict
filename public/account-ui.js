@@ -134,7 +134,7 @@
   function profileHtml(o){
     return "<label class='swa-lbl' for='swaName'>Name on your slips</label>"+
       "<input class='swa-in' id='swaName' maxlength='24' autocomplete='nickname' value=\""+esc(o.name)+"\">"+
-      pickerHtml(o.avatar,o.role,o.personal)+recordHtml(o.record)+subHtml(o.quota,o.role,o.plan,o.plusUntil,o.founder,o.founderNo)+tgHtml(o.role);
+      pickerHtml(o.avatar,o.role,o.personal)+recordHtml(o.record)+subHtml(o.quota,o.role,o.plan,o.plusUntil,o.founder,o.founderNo)+dailyHtml(o.role)+tgHtml(o.role);
   }
   /* CONNECT TELEGRAM (owner, 16 Oct 2026; lib/tglink.js): ties the bot to this
      account, so a Wizard Pass works in the bot too. A real link, filled by tgFill
@@ -145,6 +145,51 @@
     return "<p class='swa-h'>Telegram bot</p><div class='swa-card'><div class='swa-set'><span class='swa-st'><b>Wizard's Eye</b>"+
       "<small id='swaTgT'>"+tgPitch(role)+"</small></span>"+
       "<a class='swa-pillbtn swa-tgbtn' data-tglink target='_blank' rel='noopener'>Connect</a></div></div>";
+  }
+  /* MY DAILY SLIP (owner, 17 Oct 2026; api/ladder.js, lib/ladder.js). Wizard Pass:
+     pick one payout from the daily ladder and a bookie; the code comes every morning
+     at 10:30 as a phone alert, and on Telegram after /daily in the bot. */
+  var RUNGS=[5,10,20,100,1000], BOOK_KEYS=["sporty","bet9ja","betking","betpawa","onexbet","betway"];
+  function isPass(role){ return role==="plus"||role==="ff"||role==="admin"; }
+  function dailyHtml(role){
+    if(!isPass(role)){
+      /* The Play Store app sells nothing (Play billing rules, index.html sw-twa). */
+      if(d&&d.documentElement&&d.documentElement.classList.contains("sw-twa")) return "";
+      return "<p class='swa-h'>My daily slip</p><div class='swa-card'><div class='swa-set'><span class='swa-st'><b>Your slip, every morning</b>"+
+        "<small>Pick your odds once. We send the code at 10:30. Comes with Wizard Pass.</small></span></div></div>";
+    }
+    return "<p class='swa-h'>My daily slip</p><div class='swa-card' id='swaDaily'>"+
+      "<div class='swa-set'><span class='swa-st'><b>Your odds</b><small>We pick the games. You copy the code.</small></span>"+
+        "<select class='swa-in swa-sel' id='swaRung' aria-label='Your odds'><option value='0'>Off</option>"+
+        RUNGS.map(function(x){ return "<option value='"+x+"'>x"+x+"</option>"; }).join("")+"</select></div>"+
+      "<div class='swa-set'><span class='swa-st'><b>Your bookie</b></span>"+
+        "<select class='swa-in swa-sel' id='swaRBook' aria-label='Your bookie'>"+
+        BOOK_KEYS.map(function(k){ return "<option value='"+k+"'>"+esc(BOOK_NAME[k])+"</option>"; }).join("")+"</select></div>"+
+      "<div class='swa-set'><span class='swa-st'><b>Phone alert</b><small>At 10:30, with the code.</small></span>"+
+        "<input type='checkbox' id='swaRPush' checked aria-label='Phone alert'></div>"+
+      "<div class='swa-set'><span class='swa-st'><small id='swaRNote'>On Telegram too: connect the bot below, then send /daily to it.</small></span></div>"+
+      "</div>";
+  }
+  function dailyFill(v,role){
+    var box=v.querySelector("#swaDaily"); if(!box||!root.swAcct) return;
+    var rg=box.querySelector("#swaRung"), bk=box.querySelector("#swaRBook"), pu=box.querySelector("#swaRPush"), nt=box.querySelector("#swaRNote");
+    var cur=null; try{ cur=root.curBookKey?root.curBookKey():lsGet("sw.book"); }catch(e){}
+    if(cur&&BOOK_KEYS.indexOf(cur)>=0) bk.value=cur;
+    function show(j){
+      if(!j) return;
+      rg.value=String(j.rung||0); if(j.book) bk.value=j.book; pu.checked=j.push!==false;
+      if(j.telegram) nt.textContent="Telegram is on. Send /daily off to the bot to stop it there.";
+    }
+    root.swAcct.req("GET","/api/account/autopilot",null,function(code,j){ if(code===200) show(j); });
+    function save(){
+      var r=+rg.value;
+      root.swAcct.req("POST","/api/account/setautopilot",r?{rung:r,book:bk.value,push:pu.checked}:{rung:null},function(code,j){
+        if(code===200){ show(j); nt.textContent=r?"Saved. Your x"+r+" code comes at 10:30 every morning.":"Off. No daily slip."; }
+        else nt.textContent="Couldn't save. Check your connection and try again.";
+      });
+    }
+    rg.addEventListener("change",save); bk.addEventListener("change",function(){ if(+rg.value) save(); });
+    pu.addEventListener("change",function(){ if(+rg.value) save(); });
   }
   function tgFill(v,role){
     var b=v.querySelector("[data-tglink]"), t=v.querySelector("#swaTgT");
@@ -667,6 +712,7 @@
       record:root.swRecord?root.swRecord():{built:0,won:0,settled:0},
       quota:root.swQuotaToday?root.swQuotaToday():null}));
     tgFill(v,role());
+    dailyFill(v,role());
     var nm=v.querySelector("#swaName");
     nm.addEventListener("change",function(){
       var t=nm.value.replace(/^\s+|\s+$/g,"").replace(/[<>]/g,"").slice(0,24);

@@ -5991,6 +5991,12 @@ html.is-results #codeCard{display:none}
 .ck-tile{border:1px solid var(--line);border-radius:var(--r-md);background:var(--card-2);
   padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-width:0}
 .ck-tile.big{border-color:rgba(242,184,75,.45)}
+/* THE DAILY LADDER (17 Oct 2026): one tile, a button per payout. */
+.ck-rungs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px}
+.ck-rung{font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;color:var(--soft);background:transparent;
+  border:1px solid var(--line);border-radius:var(--r-chip);padding:3px 9px;transition:border-color 140ms var(--ease-out),background 140ms var(--ease-out)}
+.ck-rung[aria-pressed="true"]{border-color:var(--accent);background:rgba(242,184,75,.12);color:var(--text)}
+.ck-rung:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .ck-th{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;color:var(--soft)}
 .ck-tile.big .ck-th{color:var(--win-ink)}
 .ck-th .ck-tot{margin-left:auto}
@@ -19688,7 +19694,8 @@ function isTop3(f){
     var ORDER=["sporty","bet9ja","betking","betpawa","onexbet","betway"];
     var daily={}; ORDER.forEach(function(k){ if(d.codes[k]&&BOOKS[k]) daily[k]=d.codes[k]; });
     if(!Object.keys(daily).length) return;
-    var big=null;
+    var big=null, ladder=null, rung=null;
+    try{ rung=+localStorage.getItem("sw.rung")||null; }catch(e){}
     var pick=null; try{ pick=curBook()&&curBook().key; }catch(e){}
     if(!daily[pick]) pick=ORDER.filter(function(k){return daily[k];})[0];
     /* The build writes the NEWEST code, which between midnight and mkcode's
@@ -19716,14 +19723,25 @@ function isTop3(f){
         : "<span class='ck-none'>Not on this book today</span>";
     }
     function paintCard(){
-      var tabs=ORDER.filter(function(k){ return BOOKS[k]&&(daily[k]||(big&&big.codes[k])); }).map(function(k){
+      var tabs=ORDER.filter(function(k){ return BOOKS[k]&&(daily[k]||(big&&big.codes[k])||(ladder||[]).some(function(r){ return r.codes&&r.codes[k]; })); }).map(function(k){
         return "<button class='ck-tab' type='button' role='tab' data-book='"+k+"' aria-selected='"+(k===pick)+"'>"+
           (BOOKS[k].mark||esc(BOOKS[k].label))+"</button>";
       }).join("");
       /* a book that booked fewer legs than the slip says so (mkcode short, 13 Oct 2026) */
       var sh=d.short&&d.short[pick]&&daily[pick]?"<span class='ck-none'>"+d.short[pick]+" of "+d.n+" games on this book</span>":"";
       var tiles="<div class='ck-tile'><div class='ck-th'>"+esc(when)+odds+"</div>"+chip(daily[pick])+sh+"</div>";
-      if(big) tiles+="<div class='ck-tile big'><div class='ck-th'>Big odds of the day<span class='ck-tot'>×"+
+      /* THE DAILY LADDER (api/ladder.js, 10:30 Lagos): pick the odds, copy the code.
+         Its x10 IS Big odds of the day, so that tile steps aside when the ladder is in. */
+      var lad=(ladder||[]).filter(function(r){ return r&&r.codes; });
+      if(lad.length){
+        var cur=lad.filter(function(r){ return r.rung===rung; })[0]||lad.filter(function(r){ return r.rung===10; })[0]||lad[0];
+        var lc=cur.codes[pick], nl=(cur.legs||[]).length;
+        tiles+="<div class='ck-tile big'><div class='ck-th'>Pick your odds</div><div class='ck-rungs'>"+
+          lad.map(function(r){ return "<button class='ck-rung' type='button' data-rung='"+r.rung+"' aria-pressed='"+(r===cur)+"'>×"+r.rung+"</button>"; }).join("")+
+          "</div>"+chip(lc&&lc.code)+
+          "<span class='ck-none'>"+(lc&&lc.n<nl?lc.n+" of "+nl:nl)+" games · pays about ×"+Math.round(Number(cur.odds))+"</span></div>";
+      }
+      else if(big) tiles+="<div class='ck-tile big'><div class='ck-th'>Big odds of the day<span class='ck-tot'>×"+
         Number(big.odds).toFixed(2)+"</span></div>"+chip(big.codes[pick]&&big.codes[pick].code)+"</div>";
       host.innerHTML="<div class='ck-top'><a class='ck-tag' href='/booking-codes'>Daily booking codes</a></div>"+
         "<div class='ck-tabs' role='tablist' aria-label='Bookmaker'>"+tabs+"</div>"+
@@ -19746,12 +19764,19 @@ function isTop3(f){
       if(!ORDER.some(function(k){return b.codes[k]&&b.codes[k].code;})) return;
       big=b; paintCard();
     }).catch(function(){});
+    fetch("/api/ladder").then(function(r){return r.json();}).then(function(j){
+      var rows=j&&Array.isArray(j.rungs)?j.rungs:[];
+      if(!rows.length) return;
+      ladder=rows; paintCard();
+    }).catch(function(){});
     host.addEventListener("click",function(e){
       var t=e.target&&e.target.closest?e.target.closest(".ck-tab"):null;
       /* A tab is the reader choosing their bookmaker, not just a view: it sets
          the site-wide book (setBook, remembered in sw.book), so the builder,
          My slip and every booking follow it from here. */
       if(t){ pick=t.getAttribute("data-book"); try{ setBook(pick); }catch(err){} paintCard(); ckReveal(host); return; }
+      var rg=e.target&&e.target.closest?e.target.closest(".ck-rung"):null;
+      if(rg){ rung=+rg.getAttribute("data-rung"); try{ localStorage.setItem("sw.rung",String(rung)); }catch(err){} paintCard(); return; }
       var b=e.target&&e.target.closest?e.target.closest(".ck-chip"):null;
       if(!b) return;
       copyText(b.getAttribute("data-code"));

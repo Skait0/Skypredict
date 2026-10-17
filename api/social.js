@@ -90,7 +90,16 @@ module.exports = async function handler(req, res) {
     const stored = await SB.getBigOdds(S.dayOf(now));
     let slip = stored.ok && stored.row ? BIG.fromRow(stored.row) : null;
     if (!slip && stored.ok && !stored.row) {
-      slip = await BIG.mint(pay, now);
+      /* THE LADDER'S x10 IS TODAY'S BIG ODDS (17 Oct 2026): booked at 10:30 by
+         api/ladder.js with the same rules, so one day never shows two x10 codes. */
+      const lad = await SB.getLadder(S.dayOf(now));
+      const x10 = lad.ok && lad.rows.find((r) => r.rung === 10);
+      if (x10) {
+        const row = { day: x10.day, odds: Number(x10.odds), codes: x10.codes, legs: x10.legs };
+        slip = Object.assign(BIG.fromRow(row) || {}, { row });
+        if (!slip.x) slip = null;
+      }
+      if (!slip) slip = await BIG.mint(pay, now);
       /* Stored for the site's daily codes card (/api/bigodds) before posting. */
       if (slip) await SB.putBigOdds(slip.row);
     }

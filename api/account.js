@@ -19,9 +19,9 @@ const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup", "slipdetail", "
 const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle", "send", "unsend", "edit", "gift"];
 /* THE MESSAGE BOARD (owner, 14 Oct 2026; sql/messages.sql, public/messages.js):
    any signed-in reader reads their inbox, marks it read and replies in it. */
-const READER_GET = ["inbox", "tglink"];
+const READER_GET = ["inbox", "tglink", "autopilot"];
 const TG_BOT = "Soccerwizardhqbot";   /* the bot api/tg.js answers as */
-const READER_POST = ["msgread", "msghide", "reply"];
+const READER_POST = ["msgread", "msghide", "reply", "setautopilot"];
 const MSG = require("../public/messages.js");
 const REPLY_MAX = 1000, BODY_MAX = 12000, TO_MAX = 200;
 /* Users' replies are ON again (owner, 14 Oct 2026: "lets give the users the
@@ -62,6 +62,9 @@ function make(deps) {
   const msgs = deps.msgs || require("../lib/messages.js");
   /* Connect Telegram's "Connected" line (sql/tglinks.sql); a dep so tests need no database. */
   const tgLinked = deps.tgLinked || ((uid) => require("../lib/supabase.js").tgLinkedFor(uid));
+  /* MY DAILY SLIP (lib/ladder.js, sql/ladder.sql): a dep so tests need no database. */
+  const auto = deps.autopilot || { get: (uid) => require("../lib/supabase.js").getAutopilot(uid),
+    put: (uid, set) => require("../lib/supabase.js").putAutopilot(uid, set) };
   /* A new message pings the readers' phones: the line is stored on each of their
      subscriptions, then an empty push goes out. Overnight (22:00-06:00 Lagos)
      the line waits for the 9am push, like "your slip landed". Returns phones pinged. */
@@ -330,6 +333,34 @@ function make(deps) {
         return H.sendJson(res, 200, { ok: true });
       }
 
+      /* MY DAILY SLIP (owner, 17 Oct 2026): Wizard Pass only. A reader picks one rung
+         of the daily ladder and one bookie; api/ladder.js sends that code every
+         morning. Reading it is open to any signed-in reader so the panel can say
+         what a pass would give; changing it needs the pass. */
+      if (action === "autopilot" || action === "setautopilot") {
+        const user = await db.userById(s.userId);
+        if (!user) return H.sendJson(res, 401, { error: "signed_out", reason: "deleted" }, [S.clearCookie(S.COOKIE)]);
+        const role = await R.roleOf(db, user, env);
+        const pass = role === "plus" || role === "ff" || role === "admin";
+        if (action === "setautopilot") {
+          if (!pass) return H.sendJson(res, 403, { error: "pass_only" });
+          const b = (await H.readJson(req, 1024)) || {};
+          const RUNGS = require("../lib/ladder.js").RUNGS.map((r) => r.x);
+          const BOOKS = Object.keys(require("../lib/ladder.js").BOOK_NAMES);
+          let set;
+          if (b.rung === null || b.rung === 0) set = { rung: null };
+          else {
+            if (!RUNGS.includes(Number(b.rung)) || !BOOKS.includes(String(b.book))) return H.sendJson(res, 400, { error: "bad_choice" });
+            set = { rung: Number(b.rung), book: String(b.book), push: b.push !== false };
+          }
+          const out = await auto.put(s.userId, set);
+          if (!out.ok) return H.sendJson(res, 503, { error: "unavailable" });
+        }
+        const got = await auto.get(s.userId);
+        const r = got.ok && got.row;
+        return H.sendJson(res, 200, { pass, rung: r ? r.rung : null, book: r ? r.book : null,
+          push: r ? r.push !== false : true, telegram: !!(r && r.tg_chat) });
+      }
       /* CONNECT TELEGRAM (lib/tglink.js): a 15-minute link that opens the bot
          and ties this Telegram to this account, so a pass works there too. */
       if (action === "tglink") {

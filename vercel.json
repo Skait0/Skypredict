@@ -76,6 +76,10 @@
       "maxDuration": 120,
       "memory": 256
     },
+    "api/ladder.js": {
+      "maxDuration": 300,
+      "memory": 256
+    },
     "api/bigodds.js": {
       "maxDuration": 10,
       "memory": 128
@@ -117,6 +121,14 @@
     {
       "path": "/api/push?a=morning",
       "schedule": "2 8 * * *"
+    },
+    {
+      "path": "/api/ladder?a=run",
+      "schedule": "30 9 * * *"
+    },
+    {
+      "path": "/api/ladder?a=run",
+      "schedule": "45 9 * * *"
     }
   ],
   "headers": [

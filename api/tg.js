@@ -393,6 +393,30 @@ module.exports = async function handler(req, res) {
         : "That link has expired. Tap Connect Telegram on <a href=\"" + SITE + "\">soccerwizard.live</a> for a fresh one.");
       return res.status(200).json({ ok: true });
     }
+    /* MY DAILY SLIP on Telegram (17 Oct 2026, lib/ladder.js): tg_links keeps only a
+       hashed id, which cannot be messaged, so "/daily" files this chat on the
+       reader's autopilot row. "/daily off" stops Telegram delivery. Wizard Pass. */
+    const daily = /^\/daily(?:\s+(off|stop))?\s*$/i.exec(msg.text);
+    if (daily) {
+      let line = "Connect Telegram on <a href=\"" + SITE + "\">soccerwizard.live</a> first (your account, Connect Telegram). Then send /daily again.";
+      try {
+        const userId = await SB.tgUserOf(subjectOf(msg.from && msg.from.id));
+        if (userId) {
+          const AUTHDB = require("../lib/auth/db.js");
+          const u = await AUTHDB.userById(userId);
+          const role = u ? await R.roleOf(AUTHDB, u, process.env) : "free";
+          const got = await SB.getAutopilot(userId);
+          if (!["plus", "ff", "admin"].includes(role)) line = "My daily slip comes with Wizard Pass. " + PLUS_LINE;
+          else if (!(got.ok && got.row)) line = "Pick your daily slip first: on <a href=\"" + SITE + "\">soccerwizard.live</a>, open your account, then My daily slip. Then send /daily again.";
+          else if (daily[1]) line = (await SB.putAutopilot(userId, { tg_chat: null })).ok ? "Done. No more daily slips here. Your phone alerts stay as they are." : "Couldn't change it just now. Try again.";
+          else line = (await SB.putAutopilot(userId, { tg_chat: chat })).ok
+            ? "✅ <b>Done.</b> Your x" + got.row.rung + " slip comes here every morning at 10:30.\n\nSend /daily off to stop."
+            : "Couldn't turn it on just now. Try again.";
+        }
+      } catch (e) { line = "Couldn't check just now. Try again."; }
+      await say(line);
+      return res.status(200).json({ ok: true });
+    }
     /* t.me/<bot>?start=book_CODE arrives as "/start book_CODE" - the site's
        code dialog opens the bot on the code the reader just got. */
     const deep = /^\/start\s+(sporty|bet9ja|betking|betpawa|onexbet|betway)_([A-Za-z0-9]{4,16})\s*$/i.exec(msg.text);
