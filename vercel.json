@@ -23,28 +23,28 @@
       "memory": 512
     },
     "api/fixtures.js": {
-      "maxDuration": 15,
-      "memory": 256
+      "maxDuration": 30,
+      "memory": 1024
     },
     "api/bet9ja.js": {
-      "maxDuration": 15,
-      "memory": 256
+      "maxDuration": 30,
+      "memory": 1024
     },
     "api/betking.js": {
-      "maxDuration": 15,
-      "memory": 256
+      "maxDuration": 30,
+      "memory": 1024
     },
     "api/betpawa.js": {
-      "maxDuration": 15,
-      "memory": 256
+      "maxDuration": 30,
+      "memory": 1024
     },
     "api/onexbet.js": {
-      "maxDuration": 15,
-      "memory": 256
+      "maxDuration": 30,
+      "memory": 1024
     },
     "api/betway.js": {
-      "maxDuration": 15,
-      "memory": 256
+      "maxDuration": 30,
+      "memory": 1024
     },
     "api/s.js": {
       "maxDuration": 10,

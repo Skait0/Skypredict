@@ -309,7 +309,8 @@ test("shared refusals: what SportyBet refused for anyone is skipped by everyone,
   api.note({ id: "b", code: "1X" }, { key: "sporty" });
   assert.deepStrictEqual(Object.keys(api.today()).sort(), ["sporty|a|HOME_OVER_0.5", "sporty|b|1X"]);
   assert.deepStrictEqual(Object.keys(api.local()), ["sporty|b|1X"], "shared ones are never written to this browser");
-  assert.match(src2, /attachEventIds\(d\.matches,BOOKS\.sporty\);\s*setSharedRefused\(d\.refused\);/);
+  /* attachWithPairs since 17 Oct 2026: the server's pairing, else attachEventIds. */
+  assert.match(src2, /attachWithPairs\(d\.matches,BOOKS\.sporty,d\.pairs\);\s*setSharedRefused\(d\.refused\);/);
 });
 
 test("a swap never offers double chance the builders would not (owner, 11 Oct 2026)", () => {

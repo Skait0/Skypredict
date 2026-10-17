@@ -12781,7 +12781,9 @@ function refreshByoPanels(){
    reader is using the page (owner, 17 Oct 2026: tapping a bookie "lags badly";
    1xBet's feed alone held the phone for seven seconds). Same fixtures, same
    order, same answers; only the waiting is shared out. */
-function attachEventIds(sporty,B,sliced){
+/* `list`: match only these fixtures (default all) - attachWithPairs passes the
+   ones the server's table does not cover. Each fixture is matched on its own. */
+function attachEventIds(sporty,B,sliced,list){
   B=B||BOOKS.sporty;
   if(!sporty||!sporty.length) return 0;
   try{ FEED_RAW[B.key]=sporty; }catch(e){}
@@ -12796,6 +12798,9 @@ function attachEventIds(sporty,B,sliced){
      U23" in Serie C) has a plain league name and is untouched. */
   sporty=sporty.filter(function(m){ return !isSimEvent(m) && !leagueTag(m.league); });
   try{ FEED[B.key]=sporty; }catch(e){}
+  /* Nothing left to match (the server's pairing covered every fixture): the
+     feed is kept above, and the indexes below would be built for nobody. */
+  if(list&&!list.length) return sliced?Promise.resolve(0):0;
   /* Verbose per-fixture match logging is opt-in: add ?debug=1 (or #debug) to the
      URL. Off by default so visitors get a clean console and we skip the
      full-feed closest-match scan that only exists to diagnose misses. */
@@ -12985,10 +12990,32 @@ function attachEventIds(sporty,B,sliced){
     " already kicked off and "+notListed+" not published by them yet; feed runs to "+
     (feedMax?new Date(feedMax).toISOString().slice(0,10):"?")+")");}catch(e){}
   }
-  if(sliced) return eachSliced(DATA.fixtures.slice(),one).then(function(){ said(); var n=hits; return n; });
-  DATA.fixtures.forEach(one);
+  if(sliced) return eachSliced((list||DATA.fixtures).slice(),one).then(function(){ said(); var n=hits; return n; });
+  (list||DATA.fixtures).forEach(one);
   said();
   return hits;
+}
+/* THE SERVER'S PAIRING, WHEN IT IS FOR THESE PREDICTIONS (owner, 17 Oct 2026:
+   "go 2"). The feed proxies pair once for everybody with this same matcher
+   (lib/pairs.js) and send pairs = {for: generatedAt, ids: {fid: eventId|null}}.
+   Used only when it was made from the predictions this page holds; a fixture
+   it does not list (a game kept from earlier, sticky) or whose event is not in
+   this copy of the feed goes through attachEventIds, as everything did before.
+   Same return as attachEventIds: the count, or a promise of it when sliced. */
+function attachWithPairs(rows,B,pairs,sliced){
+  var ids=pairs&&pairs.ids;
+  if(!ids||!DATA||pairs.for!==DATA.generatedAt) return attachEventIds(rows,B,sliced);
+  var byId={}, rest=[], hits=0;
+  rows.forEach(function(m){ if(m&&m.eventId!=null) byId[m.eventId]=m; });
+  DATA.fixtures.forEach(function(f){
+    var k=fid(f);
+    if(!Object.prototype.hasOwnProperty.call(ids,k)){ rest.push(f); return; }
+    var id=ids[k]; if(id==null) return;
+    var m=byId[id]; if(m){ attachTo(f,m,B); hits++; } else rest.push(f);
+  });
+  /* The rest - often none - still runs, and it is what keeps FEED filled. */
+  var more=attachEventIds(rows,B,sliced,rest);
+  return sliced&&more&&more.then ? more.then(function(n){ return n+hits; }) : (more||0)+hits;
 }
 /* Runs fn over list in slices of about 30ms, handing the page back between
    them so a tap is answered within a frame or two, not after the whole list. */
@@ -13467,7 +13494,7 @@ async function loadSecondBook(url,B){
     if(!r.ok) return 0;                 /* 503 while their sweep is still cold */
     var d=await r.json();
     var rows=b9Rows((d&&d.matches)||{});
-    var n=rows.length?await attachEventIds(rows,B,true):0;
+    var n=rows.length?await attachWithPairs(rows,B,d&&d.pairs,true):0;
     if(n) refreshByoPanels();
     return n;
   }catch(e){ return 0; }
@@ -13609,7 +13636,7 @@ async function loadSporty(){
         var d=await r.json();
         if(d&&d.matches&&d.matches.length){
           SPORTY_AT=Date.now();
-          var n=attachEventIds(d.matches,BOOKS.sporty);
+          var n=attachWithPairs(d.matches,BOOKS.sporty,d.pairs);
           setSharedRefused(d.refused);
           if(n) refreshByoPanels();
           /* Only repaint for a rescue - on the first load the caller paints
