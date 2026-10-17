@@ -2399,5 +2399,75 @@
       "betway": 4
     },
     "odds": 1.5
+  },
+  "2026-10-17": {
+    "date": "2026-10-17",
+    "generated": "2026-10-17T10:24:06.998Z",
+    "firstKickoff": "2026-10-17T14:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-17",
+        "home": "Betis",
+        "away": "Barcelona",
+        "league": "Spain La Liga 1",
+        "kickoff": "2026-10-17T16:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.889,
+        "market": "OVER_1.5",
+        "odd": 1.05
+      },
+      {
+        "date": "2026-10-17",
+        "home": "Man City",
+        "away": "Ipswich",
+        "league": "England Premier League",
+        "kickoff": "2026-10-17T14:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.81,
+        "market": "1X",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-17",
+        "home": "Real Pilar",
+        "away": "Ituzaingó",
+        "league": "Argentina Primera B",
+        "kickoff": "2026-10-17T22:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.861,
+        "market": "1X",
+        "odd": 1.08
+      },
+      {
+        "date": "2026-10-17",
+        "home": "Stockport",
+        "away": "Bromley",
+        "league": "England League 1",
+        "kickoff": "2026-10-17T14:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.797,
+        "market": "1X",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-17",
+        "home": "Den Haag",
+        "away": "PSV Eindhoven",
+        "league": "Netherlands Eredivisie",
+        "kickoff": "2026-10-17T14:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.921,
+        "market": "OVER_1.5",
+        "odd": 1.09
+      }
+    ],
+    "codes": {
+      "sporty": "RMFVBB",
+      "bet9ja": "5W7BCRD",
+      "betking": "F31GV8",
+      "betpawa": "DZKIKMI",
+      "betway": "BW7A9DAB4E"
+    },
+    "odds": 1.42
   }
 }
