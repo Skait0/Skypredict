@@ -10374,7 +10374,9 @@ function renderCats(){
     return "<button class='cat' data-c='"+c.k+"' aria-pressed='"+(V.cat===c.k)+"'"+
       (n?"":" disabled")+">"+c.label+"<span class='n'>"+n+"</span></button>";}).join("");
   $("cats").querySelectorAll(".cat").forEach(function(b){
-    b.addEventListener("click",function(){V.cat=b.dataset.c;render();});});
+    b.addEventListener("click",function(){V.cat=b.dataset.c;
+      $("cats").querySelectorAll(".cat").forEach(function(x){ x.setAttribute("aria-pressed",x===b?"true":"false"); });
+      refilterSoon();});});
 }
 
 function renderControls(){
@@ -10829,7 +10831,24 @@ function render(){
      innerHTML on a phone - and Build, Live and the Converter hide it. It is
      drawn once, when Home is opened again (setView). */
   if(V.view&&V.view!=="pred"){ BOARD_STALE=true; return; }
+  renderBoard();
+}
+/* A FILTER CHANGES THE LIST, NOT THE PAGE (owner, 17 Oct 2026: "fix the category
+   chips lag too"). A chip, the search box, the odds range or the sort used to run
+   render(), which redraws the day stepper, the daily card, the record, Slip of
+   the day and six more panels none of them touch - about 60% of a chip tap on a
+   phone. They now redraw the chips, the count and the list; anything else still
+   goes through render(). */
+function refilter(){
+  if(V.off<0||(V.view&&V.view!=="pred")) return render();
+  renderCats(); syncFilterBtn(); renderBoard();
+}
+/* Called after a filter is set: the chip shows the tap at once, the list follows
+   on the next frame - the tap is answered before the work starts. */
+function refilterSoon(){ requestAnimationFrame(function(){ setTimeout(refilter,0); }); }
+function renderBoard(){
   const list=shown();
+  var _fc=$("finder-count"); if(_fc) _fc.textContent=list.length+" game"+(list.length===1?"":"s");
   renderBoardHead(list);
   if(!list.length){
     /* A DEAD END WITH A WAY OUT. Four controls can empty this board - the
@@ -24521,12 +24540,12 @@ function paint(){
   var yr=$("yr"); if(yr) yr.textContent=new Date().getFullYear();
   const box=$("q");
   if(box){let t=null;box.addEventListener("input",function(){
-    clearTimeout(t);t=setTimeout(function(){V.q=box.value;render();},160);});}
+    clearTimeout(t);t=setTimeout(function(){V.q=box.value;refilter();},160);});}
   /* "1,5" is read as 1.5; anything that is not a price clears that end. */
   ["omin","omax"].forEach(function(id){ var el=$(id); if(!el||el._w) return; el._w=1; var t=null;
     el.addEventListener("input",function(){ clearTimeout(t); t=setTimeout(function(){
-      var n=parseFloat(String(el.value).replace(",",".")); V[id]=n>1?n:0; render(); },300); }); });
-  var bs=$("bsort"); if(bs&&!bs._w){ bs._w=1; bs.addEventListener("change",function(){ V.sort=BSORTS[bs.value]?bs.value:""; render(); }); }
+      var n=parseFloat(String(el.value).replace(",",".")); V[id]=n>1?n:0; refilter(); },300); }); });
+  var bs=$("bsort"); if(bs&&!bs._w){ bs._w=1; bs.addEventListener("change",function(){ V.sort=BSORTS[bs.value]?bs.value:""; refilter(); }); }
   render();
   /* The scope segment is painted once at init, before any fixtures exist, and
      a page deep-linked to #build can draw the builder before the payload lands.
