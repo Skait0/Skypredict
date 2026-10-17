@@ -14944,9 +14944,9 @@ function dogHcap(f,code){
 /* Both guards live inside judgedP so every caller - and every test harness that lifts judgedP
    on its own - gets them with it. */
 /* WIN TO NIL - NO (owner, 17 Oct 2026): only on a real price at the book being built for,
-   never above x1.30 in any style, from x1.10 (Bankers takes x1.02 up, under its own x1.25
-   cap), and only where we rate it 80%+. Held out, the 60-70% band ran ten points hot. */
-var WTN_MIN=1.10, WTN_BANKERS_MIN=1.02, WTN_MAX=1.30, WTN_P=0.8;
+   never above x1.15 in any style (owner, 17 Oct: "lower the to nil to 1.15. nothing more"),
+   from x1.10 (Bankers takes x1.02 up), and only where we rate it 80%+. Held out, the 60-70% band ran ten points hot. */
+var WTN_MIN=1.10, WTN_BANKERS_MIN=1.02, WTN_MAX=1.15, WTN_P=0.8;
 function wtnOk(f,code,p){
   var B=curBook();
   if(!bookQuotes(f,code,B)) return false;
@@ -23310,8 +23310,8 @@ function renderShared(){
        payout - the safest at a small one, a longer one at a big one. */
     {k:"nr3", label:"3 in a row: No", tier:0, sub:"No 3-goal run", icon:'<path d="M5 12h3M10.5 12h3M16 12h3"/><path d="M4 4l16 16"/>'},
     /* Win to nil - No (owner, 17 Oct 2026). Both sides behind one chip, only
-       priced x1.10-1.30 (Bankers from x1.02) and rated 80%+: see wtnOk. */
-    {k:"wtn", label:"Win to nil: No", tier:0, sub:"x1.10-1.30", icon:'<circle cx="12" cy="12" r="10"/><path d="M9 9l6 6M15 9l-6 6"/>'},
+       priced x1.10-1.15 (Bankers from x1.02) and rated 80%+: see wtnOk. */
+    {k:"wtn", label:"Win to nil: No", tier:0, sub:"x1.10-1.15", icon:'<circle cx="12" cy="12" r="10"/><path d="M9 9l6 6M15 9l-6 6"/>'},
     {k:"u45", label:"Under 4.5", tier:0, sub:"Under 4.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M8 12h8"/>'},
     {k:"fh", label:"1st half goal", tier:2, sub:"FH over 0.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l3.5 2"/>'},
     /* One side's goals rather than the two added together. Both sides go in

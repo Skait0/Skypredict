@@ -5,7 +5,7 @@
  * (owner, 17 Oct 2026). Held out over 4,962 matches (fit before the last 60
  * days of data/results): home predicted 76.0%, landed 76.1%; away 83.7%,
  * landed 84.9%. The 60-70% band ran about ten points hot, so the builders take
- * it only at 80%+. Owner's price rule: never above x1.30 in any style, from
+ * it only at 80%+. Owner's price rule: never above x1.15 in any style, from
  * x1.10, and Bankers from x1.02 (under its own x1.25 cap).
  */
 
@@ -50,7 +50,7 @@ test("graded the same on the page and on the server: No loses only to a win with
   }
 });
 
-test("the builders take it only on a real price x1.10-1.30, Bankers from x1.02, and at 80%+", () => {
+test("the builders take it only on a real price x1.10-1.15, Bankers from x1.02, and at 80%+", () => {
   const consts = /var WTN_MIN=[^\n]*/.exec(src)[0];
   const make = (bankers) => new Function("bookQuotes", "legOdd", "curBook", "bankersOn",
     consts + "\n" + grab("wtnOk") + "\nreturn wtnOk;")(
@@ -60,13 +60,14 @@ test("the builders take it only on a real price x1.10-1.30, Bankers from x1.02, 
     () => bankers);
   const ok = make(false), bk = make(true);
   const f = (o) => ({ sportyOdds: { WTN_H_N: o } });
-  assert.strictEqual(ok(f(1.2), "WTN_H_N", 0.85), true);
-  assert.strictEqual(ok(f(1.30), "WTN_H_N", 0.85), true, "x1.30 is the top");
-  assert.strictEqual(ok(f(1.31), "WTN_H_N", 0.9), false, "never above x1.30");
+  assert.strictEqual(ok(f(1.12), "WTN_H_N", 0.85), true);
+  assert.strictEqual(ok(f(1.15), "WTN_H_N", 0.85), true, "x1.15 is the top");
+  assert.strictEqual(ok(f(1.16), "WTN_H_N", 0.9), false, "never above x1.15");
+  assert.strictEqual(ok(f(1.30), "WTN_H_N", 0.9), false, "x1.30 was the old top");
   assert.strictEqual(ok(f(1.05), "WTN_H_N", 0.95), false, "under x1.10 outside Bankers");
   assert.strictEqual(bk(f(1.05), "WTN_H_N", 0.95), true, "Bankers takes x1.02 up");
   assert.strictEqual(bk(f(1.01), "WTN_H_N", 0.99), false, "a collapsed price is not a price");
-  assert.strictEqual(ok(f(1.2), "WTN_H_N", 0.79), false, "under 80% is refused");
+  assert.strictEqual(ok(f(1.12), "WTN_H_N", 0.79), false, "under 80% is refused");
   assert.strictEqual(ok({ sportyOdds: {} }, "WTN_H_N", 0.95), false, "no price at the book, no leg");
   assert.match(grab("judgedP"), /if\(\/\^WTN_\[HA\]_N\$\/\.test\(code\)&&!wtnOk\(f,code,p\)\) return -1;/, "every builder goes through judgedP");
 });
