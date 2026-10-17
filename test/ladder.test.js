@@ -182,3 +182,13 @@ test("the admin's notice line shows only to signed-in readers", () => {
   assert.doesNotMatch(page, /window\.swNoticeCheck=function\(\)\{[^\n]*\}\;\n    top\.insertAdjacentElement/, "never drawn unconditionally");
   assert.match(page, /if\(root\.swNoticeSync\) try\{ root\.swNoticeSync\(\); \}catch\(e\)\{\}/, "sign-in and sign-out redraw it");
 });
+
+/* Owner, 17 Oct 2026: Bankers at x2k previewed "40 games, x476", then Conjure gave
+   x2k. The preview sliced at 40 while the build allowed 50 for Bankers. */
+test("the Wizard's preview and its build use one leg cap", () => {
+  const page = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  const RULE = "(isJackpotOdds(T)||bankersOn())?JACKPOT_LEG_CAP:40";
+  assert.ok(page.includes("var T=WSP.odds, cap=" + RULE + ","), "the build");
+  assert.ok(page.includes(".slice(0," + RULE.replace("(T)", "(WSP.odds)") + ");"), "the preview caps legs exactly as the build does");
+  assert.ok(!page.includes(".slice(0,isJackpotOdds(WSP.odds)?JACKPOT_LEG_CAP:40)"), "no private 40-leg cap left in the preview");
+});

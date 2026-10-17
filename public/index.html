@@ -22012,6 +22012,10 @@ const BETSLIP_MAX=50;
    refused whole by the server. BETSLIP_MAX is only the fallback. */
 function slipMax(B){ return (B&&+B.max)||BETSLIP_MAX; }
 const JACKPOT_LEG_CAP=50;
+/* THE BUILD AND ITS PREVIEW CAP LEGS THE SAME WAY (owner, 17 Oct 2026: Bankers at x2k
+   previewed "40 games, x476" and Conjure then gave x2k). Bankers takes 50 legs at any
+   payout; the preview kept its own 40. Written twice (test harnesses lift wspBuild
+   alone); test/ladder.test.js holds the two equal. */
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
 var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o05:false,nr3:false,wtn:false,o15:true,o25:false,o35:false,u45:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,tcorn:false,shots:false,tshots:false,hcap:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* The slip style is remembered (and synced) since accounts, 29 Sep 2026. */
@@ -24425,7 +24429,7 @@ function renderBuilderOutput(){
       var _g=wspBuild();
       WSP._exh=!!_g.exhausted; WSP._short=!!_g.short;
       picks=_g.picks.map(function(c){return {f:c.f,id:c.id,code:c.code,p:c.p,eventId:(c.f&&c.f.eventId)||null};})
-        .slice(0,isJackpotOdds(WSP.odds)?JACKPOT_LEG_CAP:40);
+        .slice(0,(isJackpotOdds(WSP.odds)||bankersOn())?JACKPOT_LEG_CAP:40);
     }
   } else {
     picks = firstVisit ? [] : buildPicks();
