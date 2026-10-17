@@ -5991,12 +5991,33 @@ html.is-results #codeCard{display:none}
 .ck-tile{border:1px solid var(--line);border-radius:var(--r-md);background:var(--card-2);
   padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-width:0}
 .ck-tile.big{border-color:rgba(242,184,75,.45)}
-/* THE DAILY LADDER (17 Oct 2026): one tile, a button per payout. */
-.ck-rungs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px}
-.ck-rung{font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;color:var(--soft);background:transparent;
-  border:1px solid var(--line);border-radius:var(--r-chip);padding:3px 9px;transition:border-color 140ms var(--ease-out),background 140ms var(--ease-out)}
-.ck-rung[aria-pressed="true"]{border-color:var(--accent);background:rgba(242,184,75,.12);color:var(--text)}
-.ck-rung:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* READY-MADE SLIPS PANEL (17 Oct 2026). A favoured panel per DESIGN.md: card ground,
+   accent rim. The rungs are a segmented tray; the chosen one is filled gold because it
+   is the thing acted on. Numbers in the display face, tabular. */
+.lad{margin-top:12px;padding:16px;background:var(--card);border:1px solid var(--accent-rim);border-radius:12px}
+.lad-h{margin:0 0 12px;font-family:var(--disp);font-size:22px;line-height:1.05;font-weight:800;text-transform:uppercase;letter-spacing:.005em;color:var(--text);text-wrap:balance}
+.lad-rungs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:4px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-seg)}
+.lad-r{min-height:48px;padding:0 2px;font:800 21px/1 var(--disp);font-variant-numeric:tabular-nums;color:var(--soft);background:transparent;border:0;border-radius:var(--r-md);cursor:pointer;
+  transition:background 160ms var(--ease-out),color 160ms var(--ease-out),transform 120ms var(--ease-out)}
+.lad-r small{font-size:.62em;margin-right:1px;opacity:.8}
+.lad-r[aria-checked="true"]{background:var(--accent);color:var(--on-accent)}
+.lad-r:disabled{color:var(--faint);opacity:.55;cursor:default}
+.lad-r:not(:disabled):active{transform:scale(.97)}
+@media (hover:hover){.lad-r:not(:disabled):not([aria-checked="true"]):hover{color:var(--text);background:var(--card-2)}}
+.lad-r:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lad-body{margin-top:12px}
+.lad-code{display:flex;align-items:center;gap:10px}
+.lad-code code{flex:1;min-width:0;font:800 30px/1 var(--disp);letter-spacing:.08em;font-variant-numeric:tabular-nums;color:var(--accent);overflow-wrap:anywhere}
+.lad-copy{flex:none;padding:11px 18px;font:800 13.5px/1 inherit;color:var(--on-accent);background:var(--accent);border:0;border-radius:var(--r-chip);cursor:pointer;transition:transform 120ms var(--ease-out)}
+.lad-copy:active{transform:scale(.97)}
+.lad-copy:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.lad-meta{margin:8px 0 0;font-size:12.5px;line-height:1.5;color:var(--soft)}
+.lad-meta b{color:var(--text);font-weight:800}
+.lad-wait{display:flex;align-items:center;gap:10px;font-size:13.5px;line-height:1.45;color:var(--soft)}
+.lad-wait svg{flex:none;width:22px;height:22px;color:var(--accent)}
+.lad-wait b{display:block;color:var(--text);font-size:15px;font-weight:800}
+@media (prefers-reduced-motion:no-preference){.lad-code code.lad-in{animation:ladIn 420ms var(--ease-out)}}
+@keyframes ladIn{from{opacity:.15;filter:blur(3px);transform:translateY(3px)}to{opacity:1;filter:none;transform:none}}
 .ck-th{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;color:var(--soft)}
 .ck-tile.big .ck-th{color:var(--win-ink)}
 .ck-th .ck-tot{margin-left:auto}
@@ -7819,6 +7840,14 @@ html:not(.reduce) .tk-item.flash{border-radius:var(--r-md);animation:tkWash 2s v
         <div class="sc-proof" id="scProof" hidden></div>
       </div>
 
+      <!-- READY-MADE SLIPS (owner, 17 Oct 2026: "make it unmissable"). The daily
+           ladder, x5 to x1000, booked at 10:30 Lagos (api/ladder.js). Second on a
+           phone, under the offer, and always drawn: before 10:30 it says when. -->
+      <section class="lad" id="ladder" aria-labelledby="ladH">
+        <h2 class="lad-h" id="ladH">Pick your odds. Copy the code.</h2>
+        <div class="lad-rungs" role="radiogroup" aria-label="Odds" id="ladRungs"></div>
+        <div class="lad-body" id="ladBody" aria-live="polite"></div>
+      </section>
       <div id="myres"></div>
       <div id="potd"></div>
       <div id="daily"></div>
@@ -13110,6 +13139,7 @@ function setBook(k){
   try{ if(document.documentElement.classList.contains("mode-build")) renderBuilder(); }catch(e){}
   try{ if($("mySheet")&&$("mySheet").classList.contains("on")) renderMySheet(); }catch(e){}
   try{ paintBookPickers(); }catch(e){}
+  try{ paintLadder(); }catch(e){}
 }
 /* The event id this book knows the fixture by. Picks carry SportyBet's id
    inline from when they were built, so read the fixture rather than the pick -
@@ -19668,6 +19698,71 @@ function isTop3(f){
   }
   return !!TOP3.ids[fid(f)];
 }
+/* ---- READY-MADE SLIPS: the daily ladder panel (api/ladder.js) ----
+   One fetch shared with the codes card. The panel is always drawn: rungs not
+   booked yet are disabled, and before 10:30 Lagos the body says when they come. */
+var LADDER_P=null;
+function ladderRows(){
+  if(!LADDER_P) LADDER_P=fetch("/api/ladder").then(function(r){ return r.json(); })
+    .then(function(j){ return j&&Array.isArray(j.rungs)?j.rungs.filter(function(r){ return r&&r.codes; }):[]; })
+    .catch(function(){ return []; });
+  return LADDER_P;
+}
+var LADDER={rows:null,rung:null};
+var LAD_RUNGS=[5,10,20,100,1000];
+var LAD_CLOCK="<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 2'/></svg>";
+function paintLadder(fresh){
+  var rr=$("ladRungs"), body=$("ladBody"); if(!rr||!body) return;
+  var rows=LADDER.rows||[], have={};
+  rows.forEach(function(r){ have[r.rung]=r; });
+  if(LADDER.rung==null){ var st=null; try{ st=+localStorage.getItem("sw.rung")||null; }catch(e){} LADDER.rung=st||10; }
+  if(rows.length&&!have[LADDER.rung]) LADDER.rung=(have[10]?10:rows[0].rung);
+  rr.innerHTML=LAD_RUNGS.map(function(x){
+    var on=x===LADDER.rung&&!!have[x];
+    return "<button class='lad-r' type='button' role='radio' data-rung='"+x+"' aria-checked='"+on+"'"+
+      (rows.length&&!have[x]?" disabled":"")+(rows.length?"":" disabled")+"><small>x</small>"+x+"</button>";
+  }).join("");
+  var B=curBook(), cur=have[LADDER.rung];
+  if(!rows.length){
+    var lagos=new Date(Date.now()+3600e3), before=lagos.getUTCHours()*60+lagos.getUTCMinutes()<10*60+45;
+    body.innerHTML="<div class='lad-wait'>"+LAD_CLOCK+"<span><b>"+(LADDER.rows===null?"Loading today's slips":before?"Ready at 10:30":"No ready-made slips today")+"</b>"+
+      (LADDER.rows===null?"":before?"x5 to x1000, picked and booked for you every morning.":"Not enough strong games today. Back tomorrow at 10:30.")+"</span></div>";
+    return;
+  }
+  var c=cur.codes[B.key], n=(cur.legs||[]).length;
+  if(!c){
+    var other=Object.keys(cur.codes).filter(function(k){ return BOOKS[k]; })[0];
+    body.innerHTML="<p class='lad-meta'>This slip is not on "+(B.mark||esc(B.label))+" today."+
+      (other?" It is on "+(BOOKS[other].mark||esc(BOOKS[other].label))+".":"")+"</p>";
+    return;
+  }
+  body.innerHTML="<div class='lad-code'><code"+(fresh?" class='lad-in'":"")+">"+esc(c.code)+"</code>"+
+    "<button class='lad-copy' type='button' data-code='"+esc(c.code)+"'>Copy</button></div>"+
+    "<p class='lad-meta'><b>"+(c.n<n?c.n+" of "+n:n)+" games</b> on "+(B.mark||esc(B.label))+" · pays about <b>×"+Math.round(Number(cur.odds)).toLocaleString("en")+"</b> · 18+</p>";
+}
+(function(){
+  var box=$("ladder"); if(!box) return;
+  paintLadder();
+  ladderRows().then(function(rows){ LADDER.rows=rows; paintLadder(true); });
+  box.addEventListener("click",function(e){
+    var r=e.target&&e.target.closest?e.target.closest(".lad-r"):null;
+    if(r&&!r.disabled){ LADDER.rung=+r.getAttribute("data-rung"); try{ localStorage.setItem("sw.rung",String(LADDER.rung)); }catch(err){} paintLadder(true); try{ buzz(15); }catch(err){} return; }
+    var cp=e.target&&e.target.closest?e.target.closest(".lad-copy"):null;
+    if(!cp) return;
+    copyText(cp.getAttribute("data-code"));
+    cp.textContent="Copied"; try{ buzz(22); }catch(err){}
+    setTimeout(function(){ cp.textContent="Copy"; },1600);
+  });
+  /* Arrow keys move through the rungs, as a radio group should. */
+  box.addEventListener("keydown",function(e){
+    var r=e.target&&e.target.closest?e.target.closest(".lad-r"):null; if(!r) return;
+    if(e.key!=="ArrowRight"&&e.key!=="ArrowLeft") return;
+    var all=[].slice.call(box.querySelectorAll(".lad-r:not(:disabled)")), i=all.indexOf(r);
+    var nx=all[(i+(e.key==="ArrowRight"?1:all.length-1))%all.length]; if(!nx) return;
+    e.preventDefault(); nx.click(); var f=box.querySelector(".lad-r[data-rung='"+nx.getAttribute("data-rung")+"']"); f&&f.focus();
+  });
+})();
+
 /* ---- The day's booking code, on the board ----
    /booking-codes is the page with the strongest claim on this site - every
    code we ever published, with what happened to each leg of it - and it was
@@ -19694,8 +19789,7 @@ function isTop3(f){
     var ORDER=["sporty","bet9ja","betking","betpawa","onexbet","betway"];
     var daily={}; ORDER.forEach(function(k){ if(d.codes[k]&&BOOKS[k]) daily[k]=d.codes[k]; });
     if(!Object.keys(daily).length) return;
-    var big=null, ladder=null, rung=null;
-    try{ rung=+localStorage.getItem("sw.rung")||null; }catch(e){}
+    var big=null, ladder=null;
     var pick=null; try{ pick=curBook()&&curBook().key; }catch(e){}
     if(!daily[pick]) pick=ORDER.filter(function(k){return daily[k];})[0];
     /* The build writes the NEWEST code, which between midnight and mkcode's
@@ -19732,16 +19826,8 @@ function isTop3(f){
       var tiles="<div class='ck-tile'><div class='ck-th'>"+esc(when)+odds+"</div>"+chip(daily[pick])+sh+"</div>";
       /* THE DAILY LADDER (api/ladder.js, 10:30 Lagos): pick the odds, copy the code.
          Its x10 IS Big odds of the day, so that tile steps aside when the ladder is in. */
-      var lad=(ladder||[]).filter(function(r){ return r&&r.codes; });
-      if(lad.length){
-        var cur=lad.filter(function(r){ return r.rung===rung; })[0]||lad.filter(function(r){ return r.rung===10; })[0]||lad[0];
-        var lc=cur.codes[pick], nl=(cur.legs||[]).length;
-        tiles+="<div class='ck-tile big'><div class='ck-th'>Pick your odds</div><div class='ck-rungs'>"+
-          lad.map(function(r){ return "<button class='ck-rung' type='button' data-rung='"+r.rung+"' aria-pressed='"+(r===cur)+"'>×"+r.rung+"</button>"; }).join("")+
-          "</div>"+chip(lc&&lc.code)+
-          "<span class='ck-none'>"+(lc&&lc.n<nl?lc.n+" of "+nl:nl)+" games · pays about ×"+Math.round(Number(cur.odds))+"</span></div>";
-      }
-      else if(big) tiles+="<div class='ck-tile big'><div class='ck-th'>Big odds of the day<span class='ck-tot'>×"+
+      /* The ladder's x10 IS Big odds of the day, and the Ready-made slips panel shows it. */
+      if(big&&!(ladder||[]).some(function(r){ return r&&r.rung===10; })) tiles+="<div class='ck-tile big'><div class='ck-th'>Big odds of the day<span class='ck-tot'>×"+
         Number(big.odds).toFixed(2)+"</span></div>"+chip(big.codes[pick]&&big.codes[pick].code)+"</div>";
       host.innerHTML="<div class='ck-top'><a class='ck-tag' href='/booking-codes'>Daily booking codes</a></div>"+
         "<div class='ck-tabs' role='tablist' aria-label='Bookmaker'>"+tabs+"</div>"+
@@ -19764,19 +19850,13 @@ function isTop3(f){
       if(!ORDER.some(function(k){return b.codes[k]&&b.codes[k].code;})) return;
       big=b; paintCard();
     }).catch(function(){});
-    fetch("/api/ladder").then(function(r){return r.json();}).then(function(j){
-      var rows=j&&Array.isArray(j.rungs)?j.rungs:[];
-      if(!rows.length) return;
-      ladder=rows; paintCard();
-    }).catch(function(){});
+    ladderRows().then(function(rows){ if(rows.length){ ladder=rows; paintCard(); } });
     host.addEventListener("click",function(e){
       var t=e.target&&e.target.closest?e.target.closest(".ck-tab"):null;
       /* A tab is the reader choosing their bookmaker, not just a view: it sets
          the site-wide book (setBook, remembered in sw.book), so the builder,
          My slip and every booking follow it from here. */
       if(t){ pick=t.getAttribute("data-book"); try{ setBook(pick); }catch(err){} paintCard(); ckReveal(host); return; }
-      var rg=e.target&&e.target.closest?e.target.closest(".ck-rung"):null;
-      if(rg){ rung=+rg.getAttribute("data-rung"); try{ localStorage.setItem("sw.rung",String(rung)); }catch(err){} paintCard(); return; }
       var b=e.target&&e.target.closest?e.target.closest(".ck-chip"):null;
       if(!b) return;
       copyText(b.getAttribute("data-code"));

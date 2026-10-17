@@ -127,6 +127,13 @@ Saira Condensed, uppercase, one colour (`h1 em` inherits); `h1` is 30px.
   they are on `BOOKS.<key>.mark`; in `lib/pages.js` they are in the `MARK`
   map. Reuse those - do not retype the markup. The converter's bookmaker row
   wraps, so the sixth book is never off a phone screen.
+- **Ready-made slips (`#ladder`, 17 Oct 2026)**: the daily ladder, x5 to x1000. A
+  favoured panel (card ground, `--accent-rim`), placed under the offer so it is
+  the second thing on a phone. Headline in `--disp` uppercase, no label above it.
+  The rungs are one segmented tray (`--bg` ground, `--r-seg`); the chosen rung is
+  filled gold because it is the thing acted on; rungs not booked today are
+  disabled, never hidden. The code is 30px `--disp` gold beside a filled gold
+  Copy. Always drawn: before 10:30 Lagos it says "Ready at 10:30".
 - **Code card (SportyBet)**: SportyBet keeps the full-width Open; under it,
   in words, "This code also works on football.com - same slip." and a
   smaller football.com button (14 Oct 2026). The bigger book leads.

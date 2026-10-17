@@ -117,7 +117,8 @@ test("wired: two crons at 10:30 and 10:45 Lagos, Big odds reuses the x10, the ca
   assert.match(social, /r\.rung === 10/, "Big odds of the day takes the ladder's x10 when it is there");
   const page = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
   assert.match(page, /fetch\("\/api\/ladder"\)/);
-  assert.match(page, /class='ck-rung'/);
+  assert.match(page, /class='lad-r'/);
+  assert.match(page, /id="ladder"/, "the Ready-made slips panel sits under the offer");
   const ui = fs.readFileSync(path.join(__dirname, "..", "public", "account-ui.js"), "utf8");
   assert.match(ui, /\/api\/account\/setautopilot/);
   assert.match(ui, /sw-twa/, "the Play app pitches nothing");
