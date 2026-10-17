@@ -15234,6 +15234,37 @@ function buildPicks(neutral){
     mc[cand[bi].code]=(mc[cand[bi].code]||0)+1;
     var lo=legOdd(cand[bi].f,cand[bi].code,cand[bi].p,B); tot*=lo>1?lo:oddOf(cand[bi].p);
   }
+  /* THE LAST LEG ONLY IF IT LANDS NEARER (17 Oct 2026). Legs are taken until the
+     total reaches Balanced's, and a long last leg could carry a style two or three
+     times past it. Kept only when the total with it is closer to the target than
+     without it, so the three styles pay about the same at every lever position. */
+  /* FULL AND STILL SHORT (owner, 17 Oct 2026): at the far right More games' short
+     legs could not multiply to Balanced's total inside the book's limit, or ran
+     out of games clearing the bar first - 48 legs on SportyBet paid x89k against
+     Balanced's x362k. So, once no more legs can be added, legs move
+     to the longer market their own game already offers (from _alts: same bar,
+     same game), the smallest step first, only until the total is reached. A full
+     slip at the same total still averages a shorter leg than Balanced's. */
+  if(target>1&&tot<target&&picked.length>=2){
+    var steps=[];
+    picked.forEach(function(c){
+      var o0=legOdd(c.f,c.code,c.p,B); o0=o0>1?o0:oddOf(c.p);
+      (c._alts||[]).forEach(function(a){
+        var o1=legOdd(c.f,a.code,a.p,B); o1=o1>1?o1:oddOf(a.p);
+        if(o1>o0) steps.push({c:c,a:a,o0:o0,o1:o1});
+      });
+    });
+    steps.sort(function(x,y){ return x.o1/x.o0-y.o1/y.o0; });
+    var moved={};
+    for(var si=0;si<steps.length&&tot<target;si++){
+      var st=steps[si]; if(moved[st.c.id]) continue;
+      moved[st.c.id]=1; st.c.code=st.a.code; st.c.p=st.a.p; tot*=st.o1/st.o0;
+    }
+  }
+  if(target>1&&picked.length>2&&tot>target){
+    var last=picked[picked.length-1], lo2=legOdd(last.f,last.code,last.p,B); lo2=lo2>1?lo2:oddOf(last.p);
+    if(Math.abs(Math.log(tot/lo2/target))<Math.abs(Math.log(tot/target))) picked.pop();
+  }
   if(!neutral) BUILD.picks=picked;
   return picked;
 }
