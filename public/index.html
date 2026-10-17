@@ -11882,7 +11882,14 @@ function swNoticeHash(t){ var h=5381; for(var i=0;i<t.length;i++) h=((h*33)^t.ch
     el.querySelector("p").textContent=t;
     el.querySelector("button").onclick=function(){ el.remove(); try{ localStorage.setItem("sw.noticeX",h); }catch(e){} };
     window.swNoticeCheck=function(){ if(seen()&&el.parentNode) el.remove(); };
-    top.insertAdjacentElement("afterend",el);
+    /* SIGNED-IN READERS ONLY (owner, 17 Oct 2026: "no banner should show without
+       sign up"). Drawn when the account says signed in, taken down on sign-out. */
+    window.swNoticeSync=function(){
+      var on=!!(window.swAcct&&window.swAcct.st&&window.swAcct.st.on);
+      if(on&&!seen()&&!el.parentNode) top.insertAdjacentElement("afterend",el);
+      else if(!on&&el.parentNode) el.remove();
+    };
+    window.swNoticeSync();
   }).catch(function(){}); }catch(e){}
 })();
 /* Whatever reason the service gave, in whichever field it used. */
@@ -25817,6 +25824,7 @@ load().catch(function(){});
        account had the Admin tab). */
     root.swAdminLive=!!(me&&me.role==="admin");
     if(root.swRoleChanged) try{ root.swRoleChanged(); }catch(e){}
+    if(root.swNoticeSync) try{ root.swNoticeSync(); }catch(e){}
   }
   function signedOutHere(reason,quiet){
     var had=!!readMeta(ls);

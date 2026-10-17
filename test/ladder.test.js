@@ -172,3 +172,13 @@ test("a rung that SportyBet booked short of 80% of its payout is not stored unde
     assert.ok(row && row.rung === 5 && row.codes.sporty.code === "OK5" && row.day === "2026-10-18");
   } finally { BIG.bookAll = real; }
 });
+
+/* Owner, 17 Oct 2026: "no banner should show without sign up". The admin's notice
+   line is drawn only while the account says signed in, and goes on sign-out. */
+test("the admin's notice line shows only to signed-in readers", () => {
+  const page = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  assert.match(page, /var on=!!\(window\.swAcct&&window\.swAcct\.st&&window\.swAcct\.st\.on\);/);
+  assert.match(page, /if\(on&&!seen\(\)&&!el\.parentNode\) top\.insertAdjacentElement\("afterend",el\);/);
+  assert.doesNotMatch(page, /window\.swNoticeCheck=function\(\)\{[^\n]*\}\;\n    top\.insertAdjacentElement/, "never drawn unconditionally");
+  assert.match(page, /if\(root\.swNoticeSync\) try\{ root\.swNoticeSync\(\); \}catch\(e\)\{\}/, "sign-in and sign-out redraw it");
+});
