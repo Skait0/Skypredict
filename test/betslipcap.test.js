@@ -125,14 +125,20 @@ test("the split offered at the cap deals tickets that all fit", () => {
   /* UP TO FOUR, like every other split on the site - a single forced number
      is a fact, not a choice. Only the ways that cannot be placed are dropped:
      170 in two tickets is 85 on a slip that takes 50. */
-  assert.deepStrictEqual(env.capWays(60), [2, 3, 4]);
-  assert.deepStrictEqual(env.capWays(170), [4]);
-  assert.deepStrictEqual(env.capWays(400), [8],
-    "when nothing up to four fits, the limit names the number");
+  /* AND SHORTER TICKETS TOO (owner, 17 Oct 2026: 257 games came out as one
+     offer of six 42-game tickets; "some users may want shorter slips"). Each
+     ticket size that fits - 50, 40, 30, 20, 15, 10, 5 - names its count, up to
+     30 tickets. */
+  assert.deepStrictEqual(env.capWays(60), [2, 3, 4, 6, 12]);
+  assert.deepStrictEqual(env.capWays(170), [4, 5, 6, 9, 12, 17]);
+  assert.deepStrictEqual(env.capWays(257), [6, 7, 9, 13, 18, 26]);
+  assert.deepStrictEqual(env.capWays(400), [8, 10, 14, 20, 27],
+    "when nothing up to four fits, the sizes that do still give a choice");
+  assert.ok(env.capWays(2000).every((n) => n * 50 >= 2000), "every way must fit");
   /* And a 40-game book (BetKing, Betway) gets ways that fit 40: 90 in two
      tickets is 45 a ticket, which those betslips refuse. */
   const B40 = { max: 40 };
-  assert.deepStrictEqual(env.capWays(90, B40), [3, 4]);
+  assert.deepStrictEqual(env.capWays(90, B40), [3, 4, 5, 6, 9, 18]);
   for (const w of env.capWays(170, B40))
     for (const p of env.splitPicks(Array.from({ length: 170 }, (_, i) => i), w))
       assert.ok(p.length <= 40, "a 40-game book was dealt a ticket of " + p.length);
@@ -341,4 +347,18 @@ test("short of codes, My slip's split says why instead of doing nothing", () => 
   assert.ok(inserted, "the reason is shown");
   assert.equal(inserted.where, "beforebegin");
   assert.match(inserted.html, /3 tickets needs 3 booking codes and you have 2 left/);
+});
+
+/* Owner, 17 Oct 2026: no way out of the split tickets on the board, no Make safer
+   on them, "Add all" still offered after the tips were added, and no Convert
+   beside Make safer under a code. */
+test("the board's split tickets can be closed and made safer, and Add all steps aside once added", () => {
+  const html = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "index.html"), "utf8");
+  assert.match(html, /wireSplit\(host,bookable,B,\{sel:"#bookAllCard",close:function\(\)\{ host\.innerHTML=""; \}\}\)/, "Add all passes a way out");
+  assert.match(html, /\(opt\.close\?"<div class='ca'><button class='confirm-cancel sp-done'/, "the tickets draw Done when there is somewhere to go");
+  assert.match(html, /<button class='sp-open sp-safe' type='button' data-c='/, "each booked ticket offers Make safer");
+  assert.match(html, /btn\.classList\.toggle\("show",bookable\.length>=2&&!inSlip\);/, "Add all hides once every tip is in the slip");
+  assert.match(html, /function saveMy\(\)\{[^}]*\}catch\(e\)\{\}\s*\/\*[^*]*\*\/\s*try\{ renderBookAll\(\); \}catch\(e\)\{\}\}/, "and follows the slip");
+  assert.match(html, /convertHere\(wrap,code,B,picks\);/, "the code modal wires Convert");
+  assert.match(html, /data-cb='/, "Convert's pills are not [data-book], which would switch the site's book");
 });

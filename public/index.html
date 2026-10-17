@@ -3956,6 +3956,11 @@ html{interpolate-size:allow-keywords}
   .sp-ways{grid-template-columns:repeat(auto-fit,minmax(88px,1fr))}
   .sp-t{gap:7px;padding:7px 9px}
   .code-split .sp-t b{font-size:15px}
+  /* Copy, Open and Safer on their own line under the code (17 Oct 2026): three
+     buttons beside it squeezed "29 games - x667" down to "29 gam...". */
+  .sp-t{flex-wrap:wrap}
+  .sp-t .sp-m{flex:1 1 55%;white-space:nowrap}
+  .sp-t .sp-copy{margin-left:auto}
 }
 .code-modal-scrim{position:fixed;inset:0;z-index:220;background:rgba(10,14,10,.45);
   backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px;
@@ -4090,6 +4095,7 @@ html{interpolate-size:allow-keywords}
 /* The three levels, each a row that books when tapped: name and how many games
    it changes on the left, what it pays on the right in the site's gold. */
 .code-safer--pick{display:block}
+.code-conv{flex-wrap:wrap}.code-conv .cc-books{flex:1 1 100%;margin-top:4px}.code-conv .cc-out{flex:1 1 100%}.code-conv .cc-out:empty{display:none}.code-conv .cc-book{margin-top:6px}
 .cs-lvs{display:flex;flex-direction:column;gap:6px;margin-top:10px}
 .cs-lv{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:10px;
   width:100%;padding:9px 12px;font:inherit;text-align:left;cursor:pointer;color:#fff;
@@ -15926,6 +15932,19 @@ function showCode(code,hostId,save,B,picks,d){
           "fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' "+
           "stroke-linejoin='round'/></svg></a>"+
     "</div>"+
+    /* CONVERT, BESIDE MAKE SAFER (owner, 17 Oct 2026: "just like we have make
+       safer, we should have a convert button"). Same games, booked on the book
+       the reader picks - see convertHere. */
+    "<div class='code-safer code-conv'>"+
+      "<div class='cs-txt'><b>On another bookie?</b>"+
+        "<span>Same games, booked on the one you pick.</span></div>"+
+      "<button class='cs-go cc-go' type='button'>Convert"+
+        "<svg viewBox='0 0 16 16' aria-hidden='true'><path d='M6 3.5 10.5 8 6 12.5' "+
+          "fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' "+
+          "stroke-linejoin='round'/></svg></button>"+
+      "<div class='bookpick cc-books' hidden></div>"+
+      "<div class='cc-out' id='codeConvOut' aria-live='polite'></div>"+
+    "</div>"+
     /* THE ASK LIVES WHERE THE READER IS HAPPIEST: the moment a code lands.
        An icon on screen all day gets tuned out; one line here, under a code
        they just got, is the best-converting spot the site has (24 Sep). No
@@ -15982,6 +16001,7 @@ function showCode(code,hostId,save,B,picks,d){
   wrap.querySelector("[data-sh]").addEventListener("click",function(){shareCode(code,_live,B);});
   wireSplit(wrap,picks,B);
   saferHere(wrap,code,B);
+  convertHere(wrap,code,B,picks);
   reconcileCode(code,picks,B).then(function(kept){
     if(!kept||kept.length>=picks.length) return;
     _useKept(kept);
@@ -16055,6 +16075,38 @@ function saferDoneHTML(plan,before,after,n,started,oldCode,B){
         (started===1?"is":"are")+" left out. ":"")+
       "Your old code, "+esc(oldCode)+", still works.</p>"+
   "</div>";
+}
+/* Convert, from the code modal. Our own picks are rebooked on the chosen book
+   once its feed is in: the games it lists, through doBookList like any slip, and
+   the new code opens in its own modal. A code with no picks behind it (Your
+   slips) goes to the converter, which reads the code from the bookmaker.
+   [data-cb], not [data-book]: a [data-book] click switches the site's book. */
+function convertHere(wrap,code,B,picks){
+  var box=wrap.querySelector(".code-conv"); if(!box) return;
+  var go=box.querySelector(".cc-go"), books=box.querySelector(".cc-books"), out=box.querySelector(".cc-out");
+  books.innerHTML=Object.keys(BOOKS).filter(function(k){ return k!==B.key; }).map(function(k){
+    return "<button class='bp' type='button' data-cb='"+k+"' aria-label='"+esc(BOOKS[k].label)+"'>"+BOOKS[k].mark+"</button>"; }).join("");
+  go.addEventListener("click",function(){ books.hidden=!books.hidden; out.innerHTML=""; });
+  books.addEventListener("click",function(e){
+    var b=e.target.closest("[data-cb]"); if(!b) return;
+    var k=b.getAttribute("data-cb"), B2=BOOKS[k]; if(!B2) return;
+    if(!picks||!picks.length){
+      location.href="/?book="+encodeURIComponent(B.key)+"&code="+encodeURIComponent(code)+"&to="+encodeURIComponent(k)+"&go=convert";
+      return;
+    }
+    if(SW_QUOTA_LEFT!==null&&isFinite(+SW_QUOTA_LEFT)&&+SW_QUOTA_LEFT<1){
+      out.innerHTML="<p class='cs-msg'>A new code needs a booking code and you have none left today.</p>"; return; }
+    out.innerHTML="<p class='cs-msg'>Checking "+B2.mark+"'s games…</p>";
+    Promise.resolve(ensureBookFeed(k)).then(function(){
+      var going=picks.filter(function(c){ return !!bookIdOf(c,B2); });
+      if(!going.length){ out.innerHTML="<p class='cs-msg'>None of these games are on "+B2.mark+" right now.</p>"; return; }
+      var book=function(){ doBookList(going,"codeConvOut",null,"",B2); };
+      if(going.length===picks.length) return book();
+      out.innerHTML="<p class='cs-msg'>"+going.length+" of these "+picks.length+" games are on "+B2.mark+".</p>"+
+        "<button class='cs-go cc-book' type='button'>Book those "+going.length+"</button>";
+      out.querySelector(".cc-book").addEventListener("click",book);
+    }).catch(function(){ out.innerHTML="<p class='cs-msg'>Couldn't reach "+B2.mark+". Try again in a moment.</p>"; });
+  });
 }
 function saferHere(wrap,code,B){
   var box=wrap.querySelector(".code-safer"), go=box&&box.querySelector(".cs-go");
@@ -16229,20 +16281,34 @@ function splitWays(len){
    choice up to four, it is only the ones that cannot be placed that go.
    When nothing up to four fits, the limit itself names the number, which is
    the only honest offer left. */
+/* AND BY TICKET SIZE (owner, 17 Oct 2026: 257 games on the board came out as
+   one offer, six tickets of 42+, "some users may want shorter slips"). Beside
+   the 2-4 ways that fit, each of these sizes that fits this book's slip names
+   its own ticket count - 257 games at 50 a slip offers 6, 7, 9, 13, 18 and 26
+   tickets. Capped at SPLIT_MAX_TICKETS: each ticket is a booking code, and
+   the quota check in wireSplit still says so before anything is booked. */
 function capWays(len,B){
-  var cap=slipMax(B);
-  var fits=splitWays(len).filter(function(n){return Math.ceil(len/n)<=cap;});
+  var SPLIT_SIZES=[50,40,30,20,15,10,5], SPLIT_MAX_TICKETS=30;
+  var cap=slipMax(B), seen={};
+  splitWays(len).forEach(function(n){ if(Math.ceil(len/n)<=cap) seen[n]=1; });
+  SPLIT_SIZES.forEach(function(s){
+    if(s>cap) return;
+    var n=Math.ceil(len/s);
+    if(n>=2&&n<=SPLIT_MAX_TICKETS&&len/n>=2) seen[n]=1;
+  });
+  var fits=Object.keys(seen).map(Number).sort(function(a,b){return a-b;});
   return fits.length?fits:[Math.ceil(len/cap)];
 }
 /* The row of ticket counts, priced by leg count rather than payout: at the cap
    the question is "will this fit", and the odds of each part are already on
-   screen above. */
+   screen above. Past four tickets the sizes are said once ("19-20 games
+   each"), not as a sum of twenty numbers. */
 function capWaysHTML(picks,B){
   return "<div class='sp-ways'>"+capWays(picks.length,B).map(function(n){
-    var parts=splitPicks(picks,n);
+    var parts=splitPicks(picks,n), lo=parts[parts.length-1].length, hi=parts[0].length;
     return "<button class='sp-way' type='button' data-n='"+n+"'><b>"+n+
-      " tickets</b><span>"+parts.map(function(p){return p.length;}).join(" + ")+
-      " games</span></button>";}).join("")+"</div>";
+      " tickets</b><span>"+(n<=4?parts.map(function(p){return p.length;}).join(" + ")+" games":
+        (lo===hi?hi:lo+"-"+hi)+" games each")+"</span></button>";}).join("")+"</div>";
 }
 function splitRowHTML(n,parts,B){
   return "<div class='sp-row'><b>"+n+" tickets</b>"+
@@ -16277,7 +16343,7 @@ function splitAndBook(picks,n,host,B,opt){
      ticket unbooked and carries on with the rest - so the other tickets'
      codes always show. The question comes up in the ask pop-up. */
   function step(i){
-    if(i>=parts.length){ renderSplit(out,done,B,oddsOf); return; }
+    if(i>=parts.length){ renderSplit(out,done,B,oddsOf,opt); return; }
     var part=parts[i], mine=part.map(function(x){ return pickOf(x,B); });
     var next=function(t){
       done.push(t);
@@ -16320,8 +16386,8 @@ function bookErrText(d,B){
     .trim().slice(0,120);
 }
 
-function renderSplit(out,done,B,oddsOf){
-  oddsOf=oddsOf||totalOdds;
+function renderSplit(out,done,B,oddsOf,opt){
+  oddsOf=oddsOf||totalOdds; opt=opt||{};
   var ok=done.filter(function(t){return t.code;});
   out.innerHTML="<div class='sp-head'>"+
       (ok.length===done.length
@@ -16339,11 +16405,26 @@ function renderSplit(out,done,B,oddsOf){
             (B.open
               ? "<a class='sp-open' href='"+B.open+encodeURIComponent(t.code)+
                   "' target='_blank' rel='noopener'>Open</a>"
-              : "")
+              : "")+
+            /* MAKE SAFER, PER TICKET (owner, 17 Oct 2026: "when those codes are
+               also booked, i think there should be a make safer button"). The
+               same pill as under a single code, opened on this ticket's code -
+               as Your slips does. */
+            "<button class='sp-open sp-safe' type='button' data-c='"+esc(t.code)+
+              "' aria-label='Make ticket "+(i+1)+" safer'>Safer</button>"
           : "<b class='sp-none'>Not booked</b><span class='sp-m'>"+esc(t.why||"")+"</span>")+
         "</div>";}).join("")+
     (ok.length?"<p class='sp-note'>Each code is its own ticket. Load them one "+
-      "at a time in "+B.mark+".</p>":"");
+      "at a time in "+B.mark+".</p>":"")+
+    /* A way out (owner, 17 Oct 2026: "there is no exit button"). Only where the
+       caller has somewhere to go back to - the code modal has its own X. */
+    (opt.close?"<div class='ca'><button class='confirm-cancel sp-done' type='button'>Done</button></div>":"");
+  out.querySelectorAll(".sp-safe").forEach(function(b){
+    b.addEventListener("click",function(){
+      showCode(b.dataset.c,"codeSaferHost",null,B,[]);
+      var go=document.querySelector("#codeModal .cs-go"); if(go) go.click();
+    });});
+  var dn=out.querySelector(".sp-done"); if(dn) dn.addEventListener("click",opt.close);
   out.querySelectorAll(".sp-copy").forEach(function(b){
     b.addEventListener("click",function(){
       copyText(b.dataset.c);
@@ -18841,7 +18922,13 @@ function renderBookAll(){
      `c.eventId` is SportyBet's id - so the count on the button, and the list
      behind it, were SportyBet's answer read out to a reader on BetKing. */
   var bookable=picks.filter(function(c){return bookTakes(c,curBook());});
-  btn.classList.toggle("show",bookable.length>=2);
+  /* NOT ONCE THEY ARE ALL IN THE SLIP (owner, 17 Oct 2026: "after we have split
+     the tickets or have added all the slip on the board to ticket, why does
+     'add all n tips to slip' still show?"). Every way out of the Add all card
+     puts them there (fillSlip); it comes back when the board has a tip the
+     slip does not, or the slip is cleared. */
+  var inSlip=bookable.length>0&&bookable.every(function(c){ return myslipHas(c.id,c.code); });
+  btn.classList.toggle("show",bookable.length>=2&&!inSlip);
   var n=$("bookAllN"); if(n) n.textContent=bookable.length;
   /* In the Draw picks view bookAllPicks adds draws, so the button says so. */
   var t=btn.querySelector(".ba-tx2"); if(t) t.textContent=V.cat==="draw"?"draws to slip":"tips to slip";
@@ -18943,7 +19030,7 @@ function confirmBookAll(){
     b.addEventListener("click",fillSlip);
   });
   wirePicker();
-  wireSplit(host,bookable,B,{sel:"#bookAllCard"});
+  wireSplit(host,bookable,B,{sel:"#bookAllCard",close:function(){ host.innerHTML=""; }});
   host.querySelector(".confirm-go").addEventListener("click",function(){
     fillSlip();
     window.__wizChime&&window.__wizChime();
@@ -20452,7 +20539,9 @@ function startLive(){
 /* ===================================================== my slip (manual pick) */
 var MYSLIP=[];
 try{MYSLIP=JSON.parse(localStorage.getItem("sw.myslip")||"[]");}catch(e){MYSLIP=[];}
-function saveMy(){try{localStorage.setItem("sw.myslip",JSON.stringify(MYSLIP));}catch(e){}}
+function saveMy(){try{localStorage.setItem("sw.myslip",JSON.stringify(MYSLIP));}catch(e){}
+  /* The board's "Add all" button follows what is in the slip (renderBookAll). */
+  try{ renderBookAll(); }catch(e){}}
 /* Sync (the swAccount script) rewrote the stored copies: read them back and
    redraw - slips, My slip, favourites, and since 14 Oct 2026 every setting. */
 window.swReloadSynced=function(){

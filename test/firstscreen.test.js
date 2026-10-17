@@ -80,7 +80,7 @@ function sheetHTML(book, save) {
     },
     curBook: () => book, footballLink: () => ({ href: "https://www.football.com/", blank: true }),
     codeTotHTML: () => "", quotaNoteHTML: () => "", splitBoxHTML: () => "", esc: (s) => String(s),
-    scrollLock() {}, rememberShortLink() {}, wireSplit() {}, saferHere() {},
+    scrollLock() {}, rememberShortLink() {}, wireSplit() {}, saferHere() {}, convertHere() {},
     reconcileCode: () => new Promise(() => {}), SW_QUOTA_LEFT: null,
   };
   vm.runInNewContext(grab("showCode") + "\nshowCode('SB7XK2Q9','bookResult'," + (save ? "function(){}" : "null") + ",curBook(),[],null);", ctx);
