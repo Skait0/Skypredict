@@ -12671,10 +12671,17 @@ function evStart(m){
    mismatch, and refusing on it would drop good matches whenever the feed
    omits a kick-off. */
 var MATCH_WINDOW_MS=24*60*60*1000;
+/* attachEventIds asks this for one fixture against every event in turn, so
+   the fixture's kick-off is parsed once and kept until a different one is
+   asked about (owner, 17 Oct 2026: parsing it per pair was part of the
+   page's load freeze). Same string, same number - the answer is unchanged.
+   Kept on the function, like tokset's cache, so the tests and the bot that
+   lift it out by name carry it with them. */
 function sameSlot(f,m){
   if(!f||!f.kickoff) return true;
   var t=evStart(m); if(!isFinite(t)) return true;
-  var k=Date.parse(f.kickoff); if(!isFinite(k)) return true;
+  if(f.kickoff!==sameSlot.ks){ sameSlot.ks=f.kickoff; sameSlot.k=Date.parse(f.kickoff); }
+  var k=sameSlot.k; if(!isFinite(k)) return true;
   return Math.abs(t-k)<=MATCH_WINDOW_MS;
 }
 /* SPORTRADAR'S MATCH ID, where a book shares it. SportyBet's event id is
@@ -12836,8 +12843,10 @@ function attachEventIds(sporty,B){
     }
     if(!best) cand.forEach(function(m){
       if(!sameSlot(f,m)) return;
-      /* Per-side scoring: BOTH sides must meet minimum (0.6), then combine */
+      /* Per-side scoring: BOTH sides must meet minimum (0.6), then combine.
+         A home side under it decides the pair, so the away side is not scored. */
       var sHome = simTeams(f.home, m.homeTeam);
+      if (sHome < 0.6) return;
       var sAway = simTeams(f.away, m.awayTeam);
       if (sHome >= 0.6 && sAway >= 0.6) {
         var combined = sHome + sAway;
@@ -12854,6 +12863,7 @@ function attachEventIds(sporty,B){
          searches every event on the feed regardless of date. */
       if(!sameSlot(f,m)) return;
       var sHome = simTeams(f.home, m.homeTeam);
+      if (sHome < 0.7) return;
       var sAway = simTeams(f.away, m.awayTeam);
       if (sHome >= 0.7 && sAway >= 0.7) {  // stricter for global search
         var combined = sHome + sAway;
