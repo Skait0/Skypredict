@@ -81,32 +81,29 @@
     },
     {
       "date": "2026-10-17",
-      "time": "19:00",
+      "time": "14:00",
       "kind": "feature",
-      "x": "Your Wizard Pass now works in Telegram too 🔮\n\nOne tap on Connect Telegram in your profile and Wizard's Eye uses your daily codes. Drop any code in the bot, get it converted.\n\nsoccerwizard.live/wizard-pass\n18+"
+      "image": "/promo/cards/matchday-type-your-odds.jpg",
+      "x": "Big games today ⚽\n\nWant x50? Just type it. We build the slip and give you the code for SportyBet, Bet9ja, BetKing, betPawa, 1xBet or Betway.\n\nsoccerwizard.live\n18+",
+      "ig": "Big games today ⚽ Want x50? Just type it.\n\nType your odds, we build the slip. Get the code for SportyBet, Bet9ja, BetKing, betPawa, 1xBet or Betway.\n\nWhat odds are you going for today? Tell us below 👇\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
+      "buffer": "x + instagram scheduled (weekend push, owner yes 17 Oct)"
+    },
+    {
+      "date": "2026-10-17",
+      "time": "19:00",
+      "kind": "clip",
+      "video": "/promo/your-pass-now-in-telegram.mp4",
+      "cover": "/promo/covers/your-pass-now-in-telegram.jpg",
+      "igVideo": "/promo/your-pass-now-in-telegram-ig.mp4",
+      "coverMs": 19500,
+      "x": "Your Wizard Pass now works in Telegram too 🔮\n\nOne tap on Connect Telegram in your profile and Wizard's Eye uses your daily codes. Drop any code in the bot, get it converted.\n\nsoccerwizard.live/wizard-pass\n18+",
+      "ig": "Got the Wizard Pass? 🧙 Now it works in Telegram.\n\n1. Open your profile on the site\n2. Tap Connect\n3. Send the bot a code\n\nOne pass. The site and Telegram.\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
+      "igTime": "15:30",
+      "buffer": "x 19:00 + instagram reel scheduled (weekend push, owner yes 17 Oct)"
     },
     {
       "date": "2026-10-18",
       "time": "19:00",
-      "kind": "feature",
-      "x": "We rebuilt the slider 🎚️\n\nThe lever now decides how big your slip is. The style decides how: more short legs, or fewer bigger ones. Same payout, your shape.\n\nAnd the far right goes further than ever.\n\nsoccerwizard.live\n18+"
-    },
-    {
-      "date": "2026-10-19",
-      "time": "19:00",
-      "kind": "feature",
-      "x": "Never tried the Wizard? 👀\n\nSign in and your first 2 booking codes are on us. See a real code load on your bookie before you spend a kobo.\n\nsoccerwizard.live\n18+"
-    },
-    {
-      "date": "2026-10-20",
-      "time": "19:00",
-      "kind": "feature",
-      "image": "/fw/wizard-pass-live.jpg",
-      "x": "The first 500 Wizard Pass holders become Founding Wizards 🧙\n\n₦1,500 months for their first 3 months, and the Founding Wizard crest on their profile for good. Once the 500 places go, they are gone.\n\nsoccerwizard.live/wizard-pass\n18+"
-    },
-    {
-      "date": "2026-10-24",
-      "time": "12:30",
       "kind": "clip",
       "video": "/promo/slide-right-odds-go-up.mp4",
       "cover": "/promo/covers/slide-right-odds-go-up.jpg",
@@ -114,31 +111,28 @@
       "coverMs": 17300,
       "x": "Slide right. Odds go up. 🎚️\n\nSafest, Safe, Medium, Bold, Risky. You see the real odds at every step. Want fewer games? One tap.\n\nsoccerwizard.live\n18+",
       "ig": "Slide right. Odds go up. 🎚️\n\nMove the slider and watch the odds change. Want fewer games? One tap. You choose.\n\nWhich one are you, Safe or Risky? 👇\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
-      "buffer": "instagram scheduled; x pending (10-post limit)"
+      "igTime": "15:30",
+      "buffer": "x 19:00 + instagram reel scheduled (weekend push, owner yes 17 Oct)"
     },
     {
-      "date": "2026-10-25",
-      "time": "12:30",
+      "date": "2026-10-19",
+      "time": "19:00",
       "kind": "clip",
       "video": "/promo/try-2-codes.mp4",
       "cover": "/promo/covers/try-2-codes.jpg",
       "igVideo": "/promo/try-2-codes-ig.mp4",
       "coverMs": 19700,
-      "x": "Never tried the Wizard? 👀\n\nSign in, copy your code, paste it on your bookie. Your first 2 codes are on us.\n\nsoccerwizard.live\n18+",
+      "x": "Never tried the Wizard? 👀\n\nSign in and your first 2 booking codes are on us. See a real code load on your bookie before you spend a kobo.\n\nsoccerwizard.live\n18+",
       "ig": "Never tried the Wizard? 👀\n\n1. Sign in with Google or email\n2. Copy your code\n3. Paste it on your bookie\n\nYour first 2 codes are on us.\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
-      "buffer": "instagram scheduled; x pending (10-post limit)"
+      "igTime": "19:00",
+      "buffer": "x 19:00 + instagram reel scheduled (weekend push, owner yes 17 Oct)"
     },
     {
-      "date": "2026-10-26",
-      "time": "12:30",
-      "kind": "clip",
-      "video": "/promo/your-pass-now-in-telegram.mp4",
-      "cover": "/promo/covers/your-pass-now-in-telegram.jpg",
-      "igVideo": "/promo/your-pass-now-in-telegram-ig.mp4",
-      "coverMs": 19500,
-      "x": "Got the Wizard Pass? 🧙\n\nNow it works in Telegram too. Open your profile, tap Connect, send the bot a code.\n\nOne pass. The site and Telegram.\n\nsoccerwizard.live\n18+",
-      "ig": "Got the Wizard Pass? 🧙 Now it works in Telegram.\n\n1. Open your profile on the site\n2. Tap Connect\n3. Send the bot a code\n\nOne pass. The site and Telegram.\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
-      "buffer": "instagram scheduled; x pending (10-post limit)"
+      "date": "2026-10-20",
+      "time": "19:00",
+      "kind": "feature",
+      "image": "/fw/wizard-pass-live.jpg",
+      "x": "The first 500 Wizard Pass holders become Founding Wizards 🧙\n\n₦1,500 months for their first 3 months, and the Founding Wizard crest on their profile for good. Once the 500 places go, they are gone.\n\nsoccerwizard.live/wizard-pass\n18+"
     }
   ]
 }

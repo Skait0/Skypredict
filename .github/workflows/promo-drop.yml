@@ -1,10 +1,11 @@
 # The daily social drop on Telegram (data/promo-queue.json; X + Instagram are
-# scheduled in Buffer). 11:30 and 18:00 UTC = 12:30 and 19:00 Lagos. GitHub's
+# scheduled in Buffer). 11:30, 13:00 and 18:00 UTC = 12:30, 14:00 and 19:00 Lagos. GitHub's
 # scheduler can run late; the script posts whatever is due and not yet logged.
 name: Promo drop
 on:
   schedule:
     - cron: "30 11 * * *"
+    - cron: "0 13 * * *"
     - cron: "0 18 * * *"
   workflow_dispatch:
 permissions:
