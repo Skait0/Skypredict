@@ -1,12 +1,13 @@
 # The daily social drop on Telegram (data/promo-queue.json; X + Instagram are
-# scheduled in Buffer). EVERY HOUR AT :17 (owner, 17 Oct 2026): runs pinned to
+# scheduled in Buffer). EVERY HOUR AT :02 (owner, 17 Oct 2026; :02 so a drop lands
+# close to its X/Instagram time): runs pinned to
 # :00 and :30 were skipped by GitHub's busy scheduler - the 12:30 drop never ran.
 # The script posts only what is due today and not yet in data/promo-log.json, so
 # a skipped run is caught by the next one and nothing posts twice.
 name: Promo drop
 on:
   schedule:
-    - cron: "17 * * * *"
+    - cron: "2 * * * *"
   workflow_dispatch:
 permissions:
   contents: write
