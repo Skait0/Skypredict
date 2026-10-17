@@ -242,7 +242,7 @@ svg.layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;poin
 #sheet .note{color:var(--gold);font-weight:800}
 #sheet .note span+span:before{content:"";display:inline-block;width:1px;height:.9em;margin:0 8px;vertical-align:-1px;background:var(--line)}
 /* "Home" under a result (owner, 11 Oct 2026): a plain word, back to the site. */
-.shome{padding:10px 4px;color:var(--soft);font-size:13px;font-weight:800;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line)}
+.shome{display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}.shome img{border-radius:50%}
 .shome:hover{opacity:1}
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;margin-top:8px;border:0;border-radius:8px;font:800 15px "Plus Jakarta Sans",system-ui;cursor:pointer;text-decoration:none;transition:transform .12s}
 .btn:active{transform:scale(.97)}
@@ -559,7 +559,7 @@ var K={x:0,y:0.85,rot:0,img:"k-set.webp",flip:1,bob:0,sq:1};       // keeper, on
 var S={x:-0.72,z:-1.25,img:"s-stand.webp"};                       // shooter, behind the ball
 var B={x:0,y:0.11,z:0,rot:0,vis:1,alpha:1,fly:false};                      // ball
 /* the art version: bump when sprites are replaced, so no browser keeps the old ones */
-var SPV="13";
+var SPV="14";
 function setImg(el,f){if(el.getAttribute("data-f")!==f){el.setAttribute("data-f",f);el.src="/penalty/"+f+"?v="+SPV;}}
 var BPV=null;
 function place(){
@@ -919,7 +919,7 @@ function playKick(k){
   S.img="s-run.webp";
   var sx0=S.x;
   return tween(180,function(u){S.x=sx0+(-0.42-sx0)*u;S.z=-1.25+0.65*u;}).then(function(){
-    S.img="s-strike.webp";fx.buzz(12);sfx("kick",0.55+0.45*power,0.92+0.16*power);if(spell)hiss(1.6,500,45,0.9,false,0.7);hitStop=0.075;B.fly=true;summon();
+    S.img="s-strike.webp";fx.buzz(12);/* NO BOOM (owner, 17 Oct 2026: "there is a boom sound when the player takes a shot"): the kick sample was nearly all below 150 Hz. It is bass-cut now (kick.mp3, SPV 14), with a short bright snap for boot on ball, and the spell sweep stops at 220 Hz, not 45. */sfx("kick",0.7+0.3*power,0.95+0.12*power);hiss(0.07,3200,1400,0.35+0.25*power,false,1.3);if(spell)hiss(1.6,900,220,0.6,false,0.7);hitStop=0.075;B.fly=true;summon();
     if(SLOWNEXT){TS=0.38;CAM_FX.zoomTo=1.14;}
     return new Promise(function(done){
       var t=0,phase="fly",after=0,k0={x:K.x,y:K.y},reacted=false,launched=false,landed=false,settled=false,landT=0,heldIt=false,loadT=0,fallV=0;
@@ -1074,7 +1074,13 @@ function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=c
 /* Back to Soccerwizard, at the foot of every result (owner, 11 Oct 2026: "add a
    home word link to the result page"). The wizard top-left does the same from
    the pitch; this is where the eye lands when a game ends. */
-function homeLink(){var a=el("a","shome","Home");a.href="/";a.addEventListener("click",function(){track("home_clicked");});return a;}
+/* A BUTTON, NOT SMALL PRINT (owner, 17 Oct 2026: "can we put a home button on the
+   result page? visible"). Was an underlined grey link under the tips card, below the
+   fold; now a full-width button with the wizard, placed above the tips. */
+function homeLink(){var a=el("a","btn ghost shome");a.href="/";
+  var i=document.createElement("img");i.src="/penalty/wiz-64.webp?v=12";i.alt="";i.width=22;i.height=22;a.appendChild(i);
+  a.appendChild(document.createTextNode("Soccerwizard home"));
+  a.addEventListener("click",function(){track("home_clicked");});return a;}
 function sheet(nodes,isMenu){PW.tag("");PW.fx.combo(0);var s=$("sheet");s.textContent="";s.removeAttribute("data-duel");
   var foot=el("div","sfoot");
   if(!isMenu&&window.PWHome){var m=el("button","smenu","Menu");m.type="button";m.addEventListener("click",function(){closeSheet();window.PWHome();});foot.appendChild(m);}
@@ -1108,7 +1114,7 @@ function practice(){PW.setOpponent(null);PW.resetStreak();PW.setSolo(true);var o
     var head=st.winner==="a"?"You beat the computer "+st.a+"-"+st.b:st.winner==="b"?"The computer won "+st.b+"-"+st.a:"Draw, "+st.a+"-"+st.b;
     var early=outs.length<2*REG?(st.winner==="a"?"The computer can't catch up, so it ends early. ":"You can't catch up with the kicks left, so it ends early. "):"";
     var acts=el("div","row");acts.appendChild(btn("Play again","red",function(){closeSheet();practice();}));acts.appendChild(btn("Challenge a friend","ghost",function(){closeSheet();challenger();}));
-    sheet([el("h2",null,head)].concat(early?[el("p",null,early.trim())]:[],[report(),acts,tipsCard(),homeLink()]));}
+    sheet([el("h2",null,head)].concat(early?[el("p",null,early.trim())]:[],[report(),acts,homeLink(),tipsCard()]));}
   PW.vs(PW.NAME||"You",PW.char,"Computer",null,"FRIENDLY").then(next);}
 
 function askName(){return new Promise(function(done){
@@ -1230,7 +1236,7 @@ function duelEnd(d,me,opp){$("resign").hidden=true;clearInterval(DPOLL);var my=d
     w==="draw"?"You drew with "+opp+", "+my+"-"+th:w===me?"You beat "+opp+" "+my+"-"+th:opp+" beat you "+th+"-"+my;
   track("duel_finished");
   sheet([el("h2",null,head)].concat(d.h2h?[el("p","note","Head to head: "+h2hLine(d.h2h,opp))]:[],[btn("Rematch "+opp,"red",function(){closeSheet();challenger();})],
-    shareSheet(head+" on Wizard Penalty. Think you can do better?",ORIGIN+"/penalty","duel_result"),[tipsCard(),homeLink()]));}
+    shareSheet(head+" on Wizard Penalty. Think you can do better?",ORIGIN+"/penalty","duel_result"),[homeLink(),tipsCard()]));}
 function duelsList(){api("GET","duels",null,{device:PW.DEV}).then(function(r){var list=el("ol","lb"),ds=(r.j&&r.j.duels)||[];
   if(!ds.length)list.appendChild(el("li","lbe","No duels yet. Start one and send the link."));
   ds.forEach(function(x){var li=el("li",x.mine&&!x.done?"you":"");li.style.cursor="pointer";li.appendChild(el("b",null,x.done?(x.calledOff?"\u2013":x.won?"W":x.draw?"D":"L"):x.mine?"\u25b6":"\u2026"));
@@ -1377,7 +1383,7 @@ function daily(){var outs=[],day=null,i=0;PW.setSolo(false);PW.newBoard("The Wiz
         var text="Wizard Penalty #"+num+" vs the Wizard Keeper\n"+grid+" "+x.j.score+"/5"+(n>1?" \ud83d\udd25"+n:"");
         var nodes=[F.el("h2",null,x.j.score+"/5 against the Wizard Keeper"),F.el("p","dgrid",grid),
           F.el("p",null,(x.j.better!=null?"Better than "+x.j.better+"% of players today. ":"")+"Streak: "+n+(n===1?" day":" days"))];
-        F.sheet(nodes.concat(F.shareSheet(text,location.origin+"/penalty","daily"),[F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),F.tipsCard(),F.homeLink()]));
+        F.sheet(nodes.concat(F.shareSheet(text,location.origin+"/penalty","daily"),[F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend","ghost",function(){F.closeSheet();F.challenger();}),F.homeLink(),F.tipsCard()]));
       });});}
   start();}
 
