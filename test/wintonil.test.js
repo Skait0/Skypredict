@@ -5,8 +5,8 @@
  * (owner, 17 Oct 2026). Held out over 4,962 matches (fit before the last 60
  * days of data/results): home predicted 76.0%, landed 76.1%; away 83.7%,
  * landed 84.9%. The 60-70% band ran about ten points hot, so the builders take
- * it only at 80%+. Owner's price rule: never above x1.15 in any style, from
- * x1.10, and Bankers from x1.02 (under its own x1.25 cap).
+ * it only at 80%+. Owner's price rule: x1.02 to x1.15 in every style, the
+ * same floor as Bankers (17 Oct 2026).
  */
 
 const test = require("node:test");
@@ -50,7 +50,7 @@ test("graded the same on the page and on the server: No loses only to a win with
   }
 });
 
-test("the builders take it only on a real price x1.10-1.15, Bankers from x1.02, and at 80%+", () => {
+test("the builders take it only on a real price x1.02-1.15, and at 80%+", () => {
   const consts = /var WTN_MIN=[^\n]*/.exec(src)[0];
   const BOOKS = { sporty: { odds: "sportyOdds" }, bet9ja: { odds: "bet9jaOdds" } };
   const make = (bankers, book = "sporty") => new Function("bookQuotes", "legOdd", "curBook", "bankersOn", "BOOKS",
@@ -65,7 +65,7 @@ test("the builders take it only on a real price x1.10-1.15, Bankers from x1.02, 
   assert.strictEqual(ok(f(1.15), "WTN_H_N", 0.85), true, "x1.15 is the top");
   assert.strictEqual(ok(f(1.16), "WTN_H_N", 0.9), false, "never above x1.15");
   assert.strictEqual(ok(f(1.30), "WTN_H_N", 0.9), false, "x1.30 was the old top");
-  assert.strictEqual(ok(f(1.05), "WTN_H_N", 0.95), false, "under x1.10 outside Bankers");
+  assert.strictEqual(ok(f(1.05), "WTN_H_N", 0.95), true, "x1.02 up in every style, like Bankers");
   assert.strictEqual(bk(f(1.05), "WTN_H_N", 0.95), true, "Bankers takes x1.02 up");
   assert.strictEqual(bk(f(1.01), "WTN_H_N", 0.99), false, "a collapsed price is not a price");
   assert.strictEqual(ok(f(1.12), "WTN_H_N", 0.79), false, "under 80% is refused");
