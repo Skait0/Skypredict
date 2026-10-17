@@ -106,7 +106,7 @@ test("every POST carries the site's request header", () => {
 });
 
 test("analytics events named in the spec are sent", () => {
-  for (const e of ["duel_created", "duel_finished", "tips_clicked", "share"]) assert.match(html, new RegExp('track\\("' + e + '"'));
+  for (const e of ["practice_finished", "survival_over", "tips_clicked", "share"]) assert.match(html, new RegExp('track\\("' + e + '"'));
 });
 
 /* The old blind challenge (kicks/friend/result, ?c= links) was removed on
@@ -117,24 +117,11 @@ test("the old blind challenge is gone from the page", () => {
 });
 
 
-test("daily share line is numbered, Wordle-style, with the grid and the streak (owner, 9 Oct 2026)", () => {
-  assert.ok(html.includes('"Wizard Penalty #"+num+" vs the Wizard Keeper'), "numbered share line");
-  assert.ok(html.includes('F.el("p","dgrid",grid)'), "the grid shows on the result too");
-  assert.match(html, /"⚽":"❌"/);
-});
 
-test("the streak advances only on consecutive Lagos days", () => {
-  assert.match(html, /function bumpStreak\(day\)/);
-  assert.match(html, /function lagos\(ms\)\{return new Date\(ms\+3600000\)/);
-});
 
-test("the daily go is tracked", () => {
-  assert.match(html, /track\("daily_played"/);
-});
 
-test("a duel link opens the duel, anything else the home screen", () => {
-  assert.match(html, /if\(dq&&\/\^\[A-Za-z0-9\]\{6\}\$\/\.test\(dq\)\)F\.duel\(dq\.toUpperCase\(\)\);/);
-  assert.match(html, /else if\(q\.get\("play"\)==="cpu"\)\{[^}]*F\.practice\(\);\}else home\(\);/, "Restart match lands back in a computer match");
+test("a link opens the home screen, or a computer match after Restart", () => {
+  assert.match(html, /if\(q\.get\("play"\)==="cpu"\)\{[^}]*F\.practice\(\);\}else home\(\);/, "Restart match lands back in a computer match");
 });
 
 /* Owner, 8 Oct 2026: "another character as the wizard. players can choose
@@ -146,9 +133,6 @@ test("players choose Ten or The Wizard, the choice is kept, the opponent is the 
   for (const pose of ["stand", "run", "strike", "follow", "arms", "slide", "head"]) assert.match(html, new RegExp('"sw-' + pose + '\.webp"'), "wizard shooter " + pose);
 });
 
-test("the daily keeper is always The Wizard", () => {
-  assert.match(html, /function daily\(\)\{[^}]*PW\.setOpponent\("wizard"\)/);
-});
 
 /* Final review fixes, 8 Oct 2026. */
 test("lightning is yours alone, and only for a real perfect strike or a hot streak", () => {
@@ -159,16 +143,11 @@ test("lightning is yours alone, and only for a real perfect strike or a hot stre
 
 test("the streak starts at zero every match", () => {
   assert.match(html, /resetStreak:function\(\)\{streak=0;/);
-  for (const f of ["challenger", "daily"]) assert.match(html, new RegExp("function " + f + "\\([^)]*\\)\\{[^]{0,200}PW\\.resetStreak\\(\\)"), f);
+  for (const f of ["practice", "survival"]) assert.match(html, new RegExp("function " + f + "\\([^)]*\\)\\{[^]{0,200}PW\\.resetStreak\\(\\)"), f);
 });
 
 
 
-test("a daily go resumes where it stopped, and a finished day can be replayed for fun", () => {
-  assert.match(html, /api\("GET","dailystate",null,\{device:PW\.DEV\}\)/);
-  assert.match(html, /function forFun\(\)/);
-  assert.match(html, /Play again for fun/);
-});
 
 
 /* Owner on the preview, 8 Oct 2026: "i get, cant reach the pitch". The server
@@ -192,13 +171,12 @@ test("a full match against the computer needs no server and is offered from home
 test("the scoreboard names fit a phone", () => {
   assert.doesNotMatch(html, /\.score \.who\{[^}]*max-width:80px/);
   assert.doesNotMatch(html, /setScore\(0,0,"Wizard Keeper"\)/, "the long label is gone");
-  assert.match(html, /newBoard\("The Wizard",true\)/);
 });
 
 test("Play the computer is the first button on the home screen", () => {
   const home = grabFn("home");
-  const i = home.indexOf('"Play the computer"'), j = home.indexOf('"Wizard Keeper"'), k = home.indexOf('"Challenge a friend"');
-  assert.ok(i > 0 && i < j && i < k, "first, above the fold on a phone");
+  const i = home.indexOf('"Play the computer"'), j = home.indexOf('"Ranked"');
+  assert.ok(i > 0 && i < j, "first, above the fold on a phone");
 });
 
 /* Round 3, owner 8 Oct 2026: "the select, the meter and the flick at the same
@@ -393,7 +371,7 @@ test("the Sudden Death keeper reads you better with every goal, but never perfec
 
 test("Sudden Death is Ranked (owner, 9 Oct 2026): judged on the server, on the home screen beside the leaderboard", () => {
   const f = grabFn("survival");
-  assert.match(f, /api\("POST","ranked",\{device:PW\.DEV,name:name,club:club,run:run,i:i,spot:s\.spot,power:s\.power\}\)/);
+  assert.match(f, /api\("POST","ranked",\{device:PW\.DEV,name:name,run:run,i:i,spot:s\.spot,power:s\.power\}\)/);
   assert.doesNotMatch(f, /smartDive|consumeSpell/, "nothing on the phone decides a ranked kick");
   assert.match(html, /F\.btn\("Ranked","ghost".*F\.btn\("Leaderboard","ghost"/);
   assert.match(grabFn("leaderboard"), /api\("GET","board",null,\{period:per,device:PW\.DEV\}\)/);
@@ -526,9 +504,9 @@ test("the trail is a spell: star motes spiral round the ball's path; a summoning
   assert.match(html, /function summon\(/);
 });
 
-test("solo modes add wind and a spell meter; challenges and the daily stay plain and fair", () => {
-  for (const f of ["practice", "forFun"]) assert.match(grabFn(f), /PW\.setSolo\(true\)/, f);
-  for (const f of ["challenger", "daily", "survival"]) assert.match(grabFn(f), /PW\.setSolo\(false\)/, f);
+test("the computer match adds wind and a spell meter; Ranked stays plain and fair", () => {
+  assert.match(grabFn("practice"), /PW\.setSolo\(true\)/);
+  assert.match(grabFn("survival"), /PW\.setSolo\(false\)/);
   assert.match(html, /function consumeSpell\(/);
   assert.match(html, /id="cast"/);
   assert.match(html, /id="wind"/);
@@ -545,8 +523,8 @@ test("the legendary shot: LEGEND shows only while you aim, freezes the keeper, a
   assert.match(grabFn("playKick"), /\$\("app"\)\.classList\.add\("legend"\)/);
   assert.match(html, /#app\.legend #keeper\{filter:/);
   assert.doesNotMatch(html, /id="runes"/, "the rune circle is gone");
-  assert.match(html, /#spellbox\[hidden\]\{display:none\}/, "display:flex must not beat hidden: no meter in challenges or the daily");
-  for (const f of ["practice", "forFun"]) assert.match(grabFn(f), /if\(sp&&o==="save"\)o="goal"/, f);
+  assert.match(html, /#spellbox\[hidden\]\{display:none\}/, "display:flex must not beat hidden: no meter in Ranked");
+  assert.match(grabFn("practice"), /if\(sp&&o==="save"\)o="goal"/);
 });
 
 test("every sprite address carries the art version, so new art is never served from an old cache", () => {
@@ -608,16 +586,12 @@ test("release step 2 (owner, 9 Oct 2026): Wizard Penalty in the phone bar with a
   assert.match(index, /a\.btab\{text-decoration:none\}/);
 });
 
-test("owner, 9 Oct 2026: a way back to the site on every screen; the challenge result counts what the board counts", () => {
+test("owner, 9 Oct 2026: a way back to the site on every screen", () => {
   assert.match(html, /<a id="exit" href="\/" aria-label="Soccerwizard home"><img src="\/penalty\/wiz-64\.webp\?v=/, "the way out shows where it goes");
   /* owner, 13 Oct 2026: the start screen shows a labelled Home button up top, so the
      footer word went. */
   assert.match(html, /<span>Home<\/span><\/a>/);
   assert.match(html, /#app:has\(#sheet\.on\) #exit span\{display:inline\}/);
-  /* owner, 9 Oct 2026: duels replace blind kicks - a challenge opens with one
-     sealed shot, never a pretend match against the computer */
-  assert.match(grabFn("challenger"), /api\("POST","duel_new",\{device:PW\.DEV,name:name,/);
-  assert.match(grabFn("sealedShot"), /outcome:"locked",sealedFor:who/);
 });
 
 test("owner, 9 Oct 2026: every end-of-game sheet has a way back to the game menu", () => {
@@ -664,7 +638,7 @@ test("game lettering stays cheap to draw (owner, 9 Oct 2026: 'it lags and its gl
 
 test("batch 2 (owner, 9 Oct 2026): a League tab with your division's crest, promotion when your division goes up", () => {
   const lb = grabFn("leaderboard");
-  assert.match(lb, /\[\["league","League"\],\["clubs","Clubs"\],\["today","Today"\],\["week","Week"\],\["all","All time"\]\]/);
+  assert.match(lb, /\[\["league","League"\],\["today","Today"\],\["week","Week"\],\["all","All time"\]\]/);
   assert.match(lb, /per==="league"&&r\.j\.division/);
   assert.match(grabFn("crest"), /<svg viewBox="0 0 48 56"/);
   assert.match(grabFn("promote"), /PW\.fx\.pop\("PROMOTED!",DIV\[t\]\[1\],DIV\[t\]\[2\]\.toUpperCase\(\)\)/);
@@ -679,12 +653,6 @@ test("match report card (owner, 9 Oct 2026): stars, top bins and your saves afte
   assert.match(grabFn("playKick"), /if\(you&&top\)TOPS\+\+;/);
 });
 
-test("club wars (owner, 9 Oct 2026): pick a club once, its badge by your name, a Clubs table", () => {
-  const ids = [...html.matchAll(/\["([a-z-]+)","[^"]+","[A-Z0-9]{3}","#/g)].map((m) => m[1]);
-  assert.deepStrictEqual(ids, require("../lib/penalty.js").CLUBS, "the page's clubs are the ones the server stores");
-  assert.match(html, /askName\(\)\.then\(function\(name\)\{return pickClub\(\)/, "Ranked asks for a club after the name");
-  assert.match(html, /li\.appendChild\(nameCell\(x\)\)/, "names on the tables carry the badge");
-});
 
 test("every result ends with a Home link back to the site (owner, 11 Oct 2026)", () => {
   const html = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "penalty.html"), "utf8");
@@ -692,16 +660,15 @@ test("every result ends with a Home link back to the site (owner, 11 Oct 2026)",
      above the tips card rather than under it. */
   assert.match(html, /function homeLink\(alone\)\{var a=el\("a","btn ghost shome"\);a\.href="\/";/);
   assert.ok(!/tipsCard\(\),(?:F\.)?homeLink\(\)/.test(html.replace(/F\.tipsCard/g, "tipsCard")), "Home comes before the tips, never under them");
-  assert.match(html, /homeLink:homeLink/, "exported for the daily and for-fun screens");
   const uses = (html.match(/(?:F\.)?homeLink\((?:true)?\)/g) || []).length;
-  assert.strictEqual(uses, 7, "practice, duel, survival, faced, for fun, daily, pause menu");
+  assert.strictEqual(uses, 3, "practice, survival, pause menu");
 });
 
 test("a match has a pause menu, and mute and pause sit at the top of the screen (owner, 13 Oct 2026)", () => {
   const html = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "penalty.html"), "utf8");
   assert.match(html, /<button id="pause" type="button" aria-label="Pause">/);
   assert.match(html, /function paused\(\)\{/);
-  for (const w of ["Resume", "Restart match", "Quit to menu", "Resign this duel"]) assert.ok(html.includes('"' + w + '"'), w);
+  for (const w of ["Resume", "Restart match", "Quit to menu"]) assert.ok(html.includes('"' + w + '"'), w);
   assert.match(html, /#pause,#snd\{position:absolute;top:calc\(86px/, "not the bottom corner a phone cuts off");
   assert.match(html, /touch-action:pan-y;overscroll-behavior:contain/, "a long result scrolls with a finger");
   assert.match(html, /function down\(e\)\{if\(e\.target\.closest\("#sheet,button,a"\)\)return;/, "a tap on the menu is never a shot");
@@ -738,7 +705,6 @@ test("kicker tells only against the computer, true two times in three", () => {
   assert.match(html, /tc=cs\.spot%3;if\(Math\.random\(\)>0\.65\)/);
   assert.match(html, /return PW\.pickDive\(tc\)\.then\(function\(dv\)\{var o=R\.judge\(cs,dv\);/, "tap to dive before the shot (owner: very simple)");
   assert.ok(!/saveLive|diveOf/.test(html), "no swipe or live save");
-  assert.match(html, /return PW\.pickDive\(\)\.then\(function\(dv\)\{return post\(\{dive:dv\}\)/, "a duel has no tell: the shot is sealed");
 });
 
 test("a slow phone drops the decoration, never the game; ?fps shows the frame rate", () => {
@@ -784,9 +750,18 @@ test("the stadium boards say WIZARD PENALTY too (owner, 15 Oct 2026: 'hope it ch
    The daily Wizard Keeper result had none, and Ranked only said "Again". */
 test("every end-of-game screen offers a way to play again", () => {
   const html = fs.readFileSync(path.join(__dirname, "..", "public", "penalty.html"), "utf8");
-  assert.ok(html.includes('F.btn("Play again for fun","red",function(){F.closeSheet();forFun();}),F.btn("Challenge a friend"'), "daily result: Play again for fun");
   assert.ok(html.includes('btn("Play again","red",function(){closeSheet();survival();})'), "Ranked result: Play again");
   assert.ok(!/btn\("Again"/.test(html), "no bare 'Again' button");
   assert.ok(html.includes('btn("Play again","red",function(){closeSheet();practice();})'), "vs computer");
-  assert.ok(/btn\("Rematch "\+opp/.test(html), "friend duel: Rematch");
+});
+
+/* Owner, 17 Oct 2026: "remove all the club competition, just leave ranked, remove
+   the vs also, the mechanism is too much hassle. so its just against the computer
+   and ranked". Menu: Play the computer, Ranked, Leaderboard. */
+test("only the computer and Ranked are left: no duels, no clubs, no Wizard Keeper", () => {
+  const home = grabFn("home");
+  for (const w of ["Challenge a friend", "Wizard Keeper", "Your duels", "Your turn vs"]) assert.ok(!home.includes(w), w);
+  for (const f of ["challenger", "duel", "duelsList", "pickClub", "daily", "forFun"]) assert.doesNotMatch(html, new RegExp("function " + f + "\\("), f);
+  assert.doesNotMatch(html, /Challenge a friend|"Clubs"|duel_new|dailystate|id="resign"/);
+  assert.match(home, /"Play the computer".*"Ranked".*"Leaderboard"/s);
 });
