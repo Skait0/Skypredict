@@ -581,9 +581,10 @@ function place(){
     for(var gi=0;gi<3;gi++){var g=$("kg"+gi),hs=KHIST[3*(gi+1)];if(!hs){g.style.opacity=0;continue;}
       if(g.src!==hs.src)g.src=hs.src;g.style.width=hs.w;g.style.height=hs.h;g.style.transform=hs.tf;g.style.opacity=[0.32,0.18,0.08][gi];}}
   /* his shadow: on the ground under him, smaller and fainter the higher he is */
-  var gp0=P(K.x,0,GOAL.z),air=Math.max(0,K.y-0.85)+Math.max(0,-K.bob)/kp.s,ks=$("kshadow"),kw=Math.min(kh*ar,1.2*kp.s)*(1-Math.min(0.5,air*0.35));
+  /* sized per pose; the hop only scales it, so the idle keeper never relayouts or repaints the page */
+  var gp0=P(K.x,0,GOAL.z),air=Math.max(0,K.y-0.85)+Math.max(0,-K.bob)/kp.s,ks=$("kshadow"),kw=Math.min(kh*ar,1.2*kp.s),kf=1-Math.min(0.5,air*0.35);
   ks.style.width=kw+"px";ks.style.height=kw*0.22+"px";ks.style.opacity=Math.max(0.15,0.55-air*0.25);
-  ks.style.transform="translate("+(gp0.x-kw/2)+"px,"+(gp0.y-kw*0.11)+"px)";
+  ks.style.transform="translate("+(gp0.x-kw/2)+"px,"+(gp0.y-kw*0.11)+"px) scale("+kf+")";
   var sh=$("shooter"),sp=P(S.x,0,S.z),sH=1.75*sp.s*0.6,sim=IMG[file(S.img)],sar=sim&&sim.naturalWidth?sim.naturalWidth/sim.naturalHeight:0.47;
   setImg(sh,file(S.img));sh.style.height=sH+"px";sh.style.width=sH*sar+"px";sh.style.transform="translate("+(sp.x-sH*sar/2)+"px,"+(sp.y-sH)+"px)";
   /* drawn 0.30m across so it reads on a phone, physics rests it at 0.11m (a
