@@ -179,6 +179,7 @@ test("Plus screen: three passes, founder price struck through, pay button names 
   assert.match(h, /<b>480<\/b> of 500 places left/);
   assert.match(h, /wiz-spell\.webp/);
   assert.match(h, /Nothing renews/);
+  assert.match(h, /We don't keep your card\. No hidden charges\./, "the card line sits under Pay (owner, 18 Oct 2026)");
   assert.doesNotMatch(h, /\bfree\b/i, "never say free in marketing");
   assert.match(UI.plusHtml({ passes, founder: null, role: "free" }, "week"), /Pay ₦800 with Paystack/);
   assert.match(UI.plusHtml({ passes, role: "plus", plusUntil: "2026-11-12T10:00:00Z" }, "day"), /runs until <b>12 Nov<\/b>/);

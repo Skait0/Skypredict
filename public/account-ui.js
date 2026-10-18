@@ -132,7 +132,7 @@
           "<div class='swa-fwbar' role='img' aria-label='"+taken+" of 500 places taken'><i style='--to:"+Math.max(2,Math.round(100*taken/500))+"%'></i></div></div>":"")+
       "<div class='swa-passes'>"+(passes||"<p class='swa-note'>Prices did not load. Check your connection and try again.</p>")+"</div>"+
       (sel?"<button class='swa-wppay' id='swaPay' type='button'>"+LOCKI+"<span>Pay "+naira(sel.naira)+" with Paystack</span></button>":"")+
-      "<p class='swa-wpfine'>Card, bank transfer or USSD, on Paystack's secure page. 18+.</p>"+
+      "<p class='swa-wpfine'>Card, bank transfer or USSD, on Paystack's secure page. We don't keep your card. No hidden charges. 18+.</p>"+
       "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>";
   }
   function profileHtml(o){
