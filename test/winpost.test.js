@@ -16,7 +16,7 @@ const dayOf = (t) => new Date(t + LAGOS).toISOString().slice(0, 10);
 const hourOf = (t) => new Date(t + LAGOS).getUTCHours();
 const at = (h) => Date.UTC(2026, 9, 12, h - 1);               /* h o'clock Lagos */
 const slip = (id, odds, over) => Object.assign({ id, status: "landed", book: "sporty", total_odds: odds, leg_count: 3,
-  settled_at: new Date(at(15)).toISOString(), legs: [{ name: "Arsenal to win" }, { name: "Lazio over 1.5 goals" }, { name: "Porto or draw" }] }, over || {});
+  settled_at: new Date(at(15)).toISOString(), legs: [{ name: "Arsenal to win", verdict: "won" }, { name: "Lazio over 1.5 goals", verdict: "won" }, { name: "Porto or draw", verdict: "won" }] }, over || {});
 
 test("the rank follows the odds, and below x5 there is no post", () => {
   assert.strictEqual(P.rankOf(4.99), null);
@@ -141,7 +141,7 @@ test("a slip with pushes posts what it paid, not the booked odds (owner, 18 Oct 
     "the grader's seen marks count too");
 });
 
-test("win approvals: nothing posts by itself; the owner is asked once per new win (owner, 18 Oct 2026)", () => {
+test("win approvals: an unconfirmed win waits; the owner is asked once (owner, 18 Oct 2026)", () => {
   const WIN = require("../lib/winpost.js");
   const now = Date.parse("2026-10-19T11:00:00Z"), hourOf = () => 12;
   const win = (id, odds, over) => Object.assign({ id, status: "landed", book: "sporty", total_odds: odds, leg_count: 3, legs: [], settled_at: "2026-10-19T09:00:00Z" }, over || {});
@@ -153,7 +153,7 @@ test("win approvals: nothing posts by itself; the owner is asked once per new wi
   assert.match(WIN.askText(win(1, 12)), /waiting for your OK: ×12.00 · 3 games, every leg won/);
   const fs = require("fs"), path = require("path");
   const social = fs.readFileSync(path.join(__dirname, "..", "api", "social.js"), "utf8");
-  assert.ok(!social.includes("WIN.pick("), "the hourly run no longer posts wins");
+  assert.ok(social.includes("WIN.pick(") && social.includes("WIN.toAsk("), "confirmed wins post themselves; the rest are asked about");
   assert.match(social, /kind: "winask"/);
 });
 
@@ -176,4 +176,17 @@ test("today at a glance adds up the day (owner, 18 Oct 2026)", () => {
   assert.deepStrictEqual(out.payments, { n: 1, naira: 2000 });
   const html = require("../public/account-ui.js").todayHtml(out);
   assert.match(html, /1 waiting: ×12/); assert.match(html, /x5 landed · x10 lost/); assert.ok(html.includes("X 9/10 · Instagram 10/10 · Facebook 4/10"));
+});
+
+test("confirmed = every game won on its final score; only those post themselves (owner, 18 Oct 2026)", () => {
+  const WIN = require("../lib/winpost.js");
+  const w = (legs, over) => Object.assign({ id: 9, status: "landed", book: "sporty", total_odds: 20, leg_count: legs.length, legs, settled_at: new Date(at(15)).toISOString() }, over || {});
+  const won = w([{ name: "a", verdict: "won" }, { name: "b", verdict: "won" }]);
+  const voided = w([{ name: "a", verdict: "won", odds: 2 }, { name: "b", verdict: "void", odds: 1.5 }]);
+  const byHand = w([{ name: "a" }, { name: "b" }], { seen: { 0: "won" } });
+  const partial = w([{ name: "a", verdict: "won" }], { leg_count: 5 });
+  assert.deepStrictEqual([won, voided, byHand, partial].map(WIN.confirmed), [true, false, false, false]);
+  assert.strictEqual(WIN.confirmed(w([{ name: "a" }, { name: "b" }], { seen: { 0: "won", 1: "won" } })), true, "the grader's seen marks count");
+  assert.deepStrictEqual(P.pick([won, Object.assign({}, voided, { id: 10 })], [], "x", at(15), dayOf, hourOf).map((s) => s.id), [9]);
+  assert.deepStrictEqual(WIN.toAsk([won, Object.assign({}, voided, { id: 10 })], [], at(15), hourOf).map((s) => s.id), [10]);
 });

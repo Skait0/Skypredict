@@ -116,12 +116,23 @@ module.exports = async function handler(req, res) {
     const ok = it.channel === "x" ? await postX(it.text) : await postTG(it.text);
     if (ok) { await SB.logSocial({ key: it.key, channel: it.channel, kind: it.kind, text: it.text }); sent.push(it.key); }
   }
-  /* WON SLIPS WAIT FOR THE OWNER (owner, 18 Oct 2026: win approvals, after a x121.88
-     slip went out that had paid x12.52). Nothing is posted here: each new x5+ win goes
+  /* THE REST WAIT FOR THE OWNER (owner, 18 Oct 2026: win approvals, after a x121.88
+     slip went out that had paid x12.52). Each new x5+ win that is not confirmed goes
      to the owner's own chat once, the banner with what it paid, and the owner posts it
      from Admin > Won slips (api/account.js postwin). The banner in that chat can be
      forwarded as it is. */
   const landed = await SB.landedSlipsSince(new Date(now - 864e5).toISOString());
+  /* A CONFIRMED win (every game won on its final score, lib/winpost.js confirmed) still
+     posts itself, three a day per channel, biggest first. */
+  if (landed.ok) {
+    for (const ch of ["tg", "x", "fb"]) {
+      for (const s of WIN.pick(landed.rows, log.rows, ch, now, S.dayOf, S.hourOf)) {
+        const text = WIN.caption(s, ch), img = WIN.imageUrl(SITE, s);
+        const ok = ch === "x" ? await postX(text, img) : ch === "fb" ? await postFB(text, img) : await postTGPhoto(img, text);
+        if (ok) { await SB.logSocial({ key: WIN.key(s, ch), channel: ch, kind: "win", text }); sent.push(WIN.key(s, ch)); }
+      }
+    }
+  }
   const owner = String(process.env.SW_OWNER_TG_CHAT || "").trim();
   if (landed.ok && owner) {
     for (const s of WIN.toAsk(landed.rows, log.rows, now, S.hourOf)) {
