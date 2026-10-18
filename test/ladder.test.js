@@ -91,6 +91,11 @@ test("the open x5 and Big odds share no game with the locked x10 and x20", async
   assert.ok([...games(x5)].every((g) => !shut.has(g)), "x5 keeps out every x10 and x20 game");
   const big = BIG.pick(pay, now, feed, { skip: L.openSkips(locked)[0] });
   assert.ok(big && [...games(big)].every((g) => !shut.has(g)), "Big odds keeps them out too");
+  /* Owner, 18 Oct 2026: "keep out x5 too" - Big odds had been x5's games plus 4. */
+  const withX5 = locked.concat([{ rung: 5, legs: x5.legs.map((l) => ({ home: l.home, away: l.away })) }]);
+  const big2 = BIG.pick(pay, now, feed, { skip: L.bigSkips(withX5)[0] });
+  assert.ok(big2 && [...games(big2)].every((g) => !shut.has(g) && !games(x5).has(g)), "Big odds keeps out x5, x10 and x20");
+  assert.deepStrictEqual(L.bigSkips(withX5).map((s) => s.size), [games(x5).size + shut.size, games(x5).size + locked[0].legs.length, locked[0].legs.length]);
   /* 20 games: x20 takes 16, too few left, so x5 falls back to keeping out x10's only. */
   const small = { fixtures: pay.fixtures.slice(0, 20) }, sf = feed.slice(0, 20);
   const r10 = L.pickRung(small, now, sf, L.RUNGS[1]), r20 = L.pickRung(small, now, sf, L.RUNGS[2]);
@@ -204,7 +209,7 @@ test("wired: two crons at 10:30 and 10:45 Lagos, Big odds books its own slip, th
   assert.ok(v.functions["api/ladder.js"].maxDuration >= 120);
   const social = fs.readFileSync(path.join(__dirname, "..", "api", "social.js"), "utf8");
   assert.doesNotMatch(social, /rung === 10/, "Big odds of the day never posts the ladder's x10, which is Wizard Pass only");
-  assert.match(social, /BIG\.mint\(pay, now, L\.openSkips\(/, "and is picked around the locked rungs' games");
+  assert.match(social, /BIG\.mint\(pay, now, L\.bigSkips\(/, "and is picked around the locked rungs' games and x5");
   const page = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
   /* The panel's fetch, run: signed in asks ?mine=1 whatever sw.role says; signing in
      or a new pass asks again (saveRole calls swLadderSync). */
