@@ -461,7 +461,7 @@
         (pd&&pd.odds?" · <span class='swa-gold'>×"+esc(Number(pd.odds).toLocaleString("en-US",{maximumFractionDigits:2}))+" paid</span>":
           h.total_odds?" · <span class='swa-gold'>×"+esc(Number(h.total_odds).toLocaleString("en-US",{maximumFractionDigits:2}))+"</span>":"")+"</b>"+
         "<small>"+esc(games+" · "+when+(h.who?" · "+h.who:""))+"</small>"+
-        (pd?"<small>"+esc(pd.won+" won, "+pd.pushed+" pushed (stake back). Booked at ×"+Number(h.total_odds).toLocaleString("en-US",{maximumFractionDigits:2}))+"</small>":"")+
+        (pd?"<small>"+esc(pd.won+" won, "+pd.pushed+" voided (stake back). Booked at ×"+Number(h.total_odds).toLocaleString("en-US",{maximumFractionDigits:2}))+"</small>":"")+
         (postedLine?"<small>"+esc(postedLine)+"</small>":"")+
         "<small>"+esc(srcWords(h.src))+"</small>"+
         (legs.length?"<small>"+esc(legs.slice(0,3).join(" · "))+"</small>"+

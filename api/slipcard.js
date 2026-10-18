@@ -50,7 +50,7 @@ async function listBanner(id) {
   if (!r) return null;
   const legs = Array.isArray(row.legs) ? row.legs : [], seen = row.seen || {};
   const picks = legs.map((l, i) => ({ text: l && l.name, push: (l && l.verdict ? l.verdict : seen[i]) === "void" }));
-  return CARD.buildWinList(r.id, p.games, p.odds, picks, p.pushed ? "Total paid - " + p.won + " won, " + p.pushed + " pushed" : null);
+  return CARD.buildWinList(r.id, p.games, p.odds, picks, p.pushed ? "Total paid - " + p.won + " won, " + p.pushed + " voided" : null);
 }
 
 module.exports = async (req, res) => {

@@ -131,9 +131,9 @@ test("a slip with pushes posts what it paid, not the booked odds (owner, 18 Oct 
     { name: "Celta +1 handicap", odds: 1.15, verdict: "void" }, { name: "Palace +1 handicap", odds: 1.35, verdict: "void" }];
   const row = { id: 73, book: "sporty", status: "landed", total_odds: 121.88, leg_count: 14, legs };
   assert.deepStrictEqual(WIN.paid(row), { odds: 14.02, pushed: 3, won: 11, games: 14 });
-  assert.match(WIN.caption(row, "x"), /×14\.02 on SportyBet: 14 games, 11 won, 3 pushed \(stake back\)/);
+  assert.match(WIN.caption(row, "x"), /×14\.02 on SportyBet: 14 games, 11 won, 3 voided \(stake back\)/);
   assert.doesNotMatch(WIN.caption(row, "x"), /every leg won|121/);
-  assert.match(WIN.caption(row, "tg"), /↩️ Iberia \+2 handicap \(push\)/);
+  assert.match(WIN.caption(row, "tg"), /↩️ Iberia \+2 handicap \(voided\)/);
   assert.match(WIN.imageUrl("s", row), /&p=3$/, "a new card once the pushes are known");
   assert.strictEqual(WIN.paid({ total_odds: 50, leg_count: 2, legs: [{ name: "a", verdict: "void" }, { name: "b" }] }).odds, null,
     "a push without its price is not posted as a win");

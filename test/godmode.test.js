@@ -245,7 +245,7 @@ test("the admin list says when a win landed, what it paid and where it was poste
   const base = { id: 73, status: "landed", code: "Z13XFH", book: "sporty", total_odds: 121.88, leg_count: 14, legs: [],
     settled_at: "2026-10-16T21:05:00Z", paid: { odds: 14.02, pushed: 3, won: 11, games: 14 }, share: { img: "i", x: "c", tg: "c" } };
   const some = UI.hitsHtml([Object.assign({ posted: [{ ch: "tg", at: "2026-10-18T20:40:00Z" }] }, base)]);
-  assert.match(some, /×14\.02 paid/); assert.match(some, /11 won, 3 pushed \(stake back\)\. Booked at ×121\.88/);
+  assert.match(some, /×14\.02 paid/); assert.match(some, /11 won, 3 voided \(stake back\)\. Booked at ×121\.88/);
   assert.match(some, /Posted: Telegram /); assert.match(some, />Post to the rest</);
   assert.match(some, /\d{1,2}:\d{2}/, "a time, not only a day");
   const none = UI.hitsHtml([Object.assign({ posted: [] }, base)]);
