@@ -6040,6 +6040,8 @@ html.is-results #codeCard{display:none}
 .lad-meta b{color:var(--text);font-weight:800}
 .lad-wait{display:flex;align-items:center;gap:10px;font-size:12.5px;line-height:1.4;color:var(--soft)}
 .lad-wait svg{flex:none;width:22px;height:22px;color:var(--accent)}
+.lad-won{display:flex;flex-direction:column;gap:2px;font-size:12.5px;line-height:1.4;color:var(--soft)}
+.lad-won b{font:800 20px/1.1 var(--disp);text-transform:uppercase;color:var(--accent)}
 .lad-wait b{display:block;color:var(--text);font-size:14px;font-weight:800}
 .lad-auto{display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:4px 0;font-family:inherit;font-weight:800;font-size:12.5px;line-height:1.3;color:var(--accent);background:none;border:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--accent-rim)}
 .lad-auto svg{width:15px;height:15px;flex:none}
@@ -19827,6 +19829,17 @@ function paintLadder(fresh){
     return;
   }
   var c=cur.codes[B.key], n=cur.games||(cur.legs||[]).length;
+  /* END STATES (owner, 18 Oct 2026; api/ladder.js rungState). Every game won: the rung
+     says so in gold and stays up all day. A game kicked off: the code would book only
+     part of the slip, so it is not shown. */
+  if(cur.state==="landed"){
+    body.innerHTML="<div class='lad-won'><b>x"+cur.rung+" landed</b><span>Every game won · paid about ×"+Math.round(Number(cur.odds)).toLocaleString("en")+". New slips tomorrow at 10:30. 18+</span></div>";
+    return;
+  }
+  if(cur.state==="started"){
+    body.innerHTML="<div class='lad-wait'>"+LAD_CLOCK+"<span><b>Games have started</b>This code no longer books the full slip. New slips tomorrow at 10:30.</span></div>";
+    return;
+  }
   if(c&&cur.locked){
     var twa=document.documentElement.classList.contains("sw-twa");
     body.innerHTML="<p class='lad-meta'><b>"+(c.n<n?c.n+" of "+n:n)+" games</b> on "+(B.mark||esc(B.label))+" · pays about <b>×"+Math.round(Number(cur.odds)).toLocaleString("en")+"</b> · 18+</p>"+

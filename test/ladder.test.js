@@ -316,3 +316,19 @@ test("a rung with a lost game is marked lost, locked or not (owner, 18 Oct 2026)
   const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
   assert.match(src, /rows=all\.filter\(function\(r\)\{ return !r\.lost; \}\)/, "the page greys a lost rung out");
 });
+
+test("each rung carries its end state: landed, started or live (owner, 18 Oct 2026)", async () => {
+  const leg = (home, code) => ({ home, away: home + " FC", code });
+  const now = Date.parse("2026-10-18T18:00:00Z");
+  const day = [{ day: "2026-10-18", rung: 5, odds: 5, legs: [leg("Alpha", "1")], codes: { sporty: { code: "S5", n: 1 } } },
+    { day: "2026-10-18", rung: 10, odds: 10, legs: [leg("Beta", "1"), leg("Gamma", "1")], codes: { sporty: { code: "S10", n: 2 } } },
+    { day: "2026-10-18", rung: 20, odds: 20, legs: [leg("Delta", "1")], codes: { sporty: { code: "S20", n: 1 } } }];
+  const results = [{ match_date: "2026-10-18", home: "Alpha", away: "Alpha FC", hg: 2, ag: 0 }];
+  const fixtures = [{ home: "Beta", away: "Beta FC", kickoff: "2026-10-18T17:00:00Z" }, { home: "Gamma", away: "Gamma FC", kickoff: "2026-10-18T20:00:00Z" },
+    { home: "Delta", away: "Delta FC", kickoff: "2026-10-18T20:00:00Z" }];
+  const { d } = deps({ now: () => now, getLadder: async () => ({ ok: true, rows: day }), results: async () => results, payload: async () => ({ fixtures }) });
+  const r = res(); await API.make(d)({ query: {}, headers: {} }, r);
+  assert.deepStrictEqual(r.body.rungs.map((x) => x.state), ["landed", "started", "live"]);
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  assert.match(src, /if\(cur\.state==="landed"\)/); assert.match(src, /if\(cur\.state==="started"\)/);
+});

@@ -98,7 +98,10 @@ function make(deps) {
     const day = S.dayOf(deps.now());
     const got = await deps.getLadder(day);
     const res0 = got.ok && got.rows.length && deps.results ? (await deps.results(day).catch(() => [])) || [] : [];
-    const rows = (got.ok ? got.rows : []).map((r) => Object.assign({}, r, { lost: L.rungLost(r, res0) }));
+    /* Each rung's end state (lib/ladder.js rungState): lost, landed, started or live. */
+    const pay = got.ok && got.rows.length && deps.payload ? await Promise.resolve().then(() => deps.payload()).catch(() => null) : null;
+    const fx = (pay && pay.fixtures) || null, now = deps.now();
+    const rows = (got.ok ? got.rows : []).map((r) => { const state = L.rungState(r, res0, fx, now); return Object.assign({}, r, { state, lost: state === "lost" }); });
     if (q.mine) {
       res.setHeader("Cache-Control", "private, no-store");
       const pass = PASS.includes(await deps.roleOfReq(req));
