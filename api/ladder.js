@@ -64,10 +64,15 @@ async function deliver(now, rows, deps) {
     const row = byRung[a.rung];
     const msg = row && L.note(row, a.book);
     if (!msg) { out.notToday++; continue; }
-    if (!PASS.includes(await deps.roleOf(a.user_id))) { out.notPass++; continue; }
+    const pass = PASS.includes(await deps.roleOf(a.user_id));
+    /* A pass that ran out gets one "pass ended" line, then silence: last_sent_day
+       holds "ended:<day>" until a renewed pass sends again and overwrites it. */
+    if (!pass && String(a.last_sent_day || "").startsWith("ended:")) { out.notPass++; continue; }
+    const say = pass ? msg : L.ended(a.rung);
     let reached = false;
-    if (a.push) reached = (await deps.push(a.user_id, msg.push, new Date(now).toISOString())) || reached;
-    if (a.tg_chat) reached = (await deps.tg(a.tg_chat, msg.tg)) || reached;
+    if (a.push) reached = (await deps.push(a.user_id, say.push, new Date(now).toISOString())) || reached;
+    if (a.tg_chat) reached = (await deps.tg(a.tg_chat, say.tg)) || reached;
+    if (!pass) { out.notPass++; if (reached) await deps.markSent(a.user_id, "ended:" + day); continue; }
     if (reached && await deps.markSent(a.user_id, day)) out.sent++;
   }
   return out;

@@ -55,7 +55,7 @@ function deps(over) {
     mint: async (p, n, f, rung) => { store.minted.push(rung.x); return { day: "2026-10-18", rung: rung.x, odds: rung.x, legs: [1, 2],
       codes: { sporty: { code: "S" + rung.x, n: 2 }, bet9ja: { code: "B" + rung.x, n: 2 } } }; },
     autopilotDue: async () => ({ ok: true, rows: [] }),
-    markSent: async (uid) => { store.sent.push(uid); return true; },
+    markSent: async (uid, day) => { (String(day).startsWith("ended:") ? (store.ended = store.ended || []) : store.sent).push(uid); return true; },
     roleOf: async () => "plus",
     push: async (uid, note) => { store.pushed.push([uid, note]); return true; },
     tg: async (chat, text) => { store.tg.push([chat, text]); return true; },
@@ -92,10 +92,29 @@ test("only Wizard Pass readers are sent their rung, and only once something reac
   });
   const out = await API.deliver(now, rows, d);
   assert.deepStrictEqual(store.sent.sort(), ["pass-push", "pass-tg"]);
-  assert.deepStrictEqual(store.tg.map((x) => x[0]), [777], "Telegram only where the reader turned it on");
+  assert.deepStrictEqual(store.tg.map((x) => x[0]), [777, 9], "Telegram only where the reader turned it on");
   assert.strictEqual(out.notPass, 1);
   assert.strictEqual(out.notToday, 2, "no rung today, or no code on that bookie");
   assert.ok(!store.sent.includes("push-fails"), "a send that reached nobody is tried again at 10:45");
+});
+
+test("a lapsed pass hears once that it ended, then nothing until it renews", async () => {
+  const rows = [{ rung: 20, odds: 21, legs: [1], codes: { sporty: { code: "S20", n: 1 } } }];
+  const due = [
+    { user_id: "lapsed", rung: 20, book: "sporty", push: true, tg_chat: 9, last_sent_day: "2026-10-17" },
+    { user_id: "told", rung: 20, book: "sporty", push: true, tg_chat: 8, last_sent_day: "ended:2026-10-17" },
+  ];
+  const { d, store } = deps({ autopilotDue: async () => ({ ok: true, rows: due }), roleOf: async () => "free" });
+  const out = await API.deliver(now, rows, d);
+  assert.strictEqual(out.notPass, 2);
+  assert.deepStrictEqual(store.ended, ["lapsed"], "marked so the 10:45 retry and tomorrow stay silent");
+  assert.deepStrictEqual(store.sent, [], "a lapsed reader is never marked as sent today");
+  assert.deepStrictEqual(store.tg.map((x) => x[0]), [9]);
+  assert.ok(!store.tg[0][1].includes("S20") && !store.pushed[0][1].includes("S20"), "no code goes to a lapsed pass");
+  for (const t of [store.pushed[0][1], store.tg[0][1]]) { assert.match(t, /ended/); assert.match(t, /18\+/); assert.doesNotMatch(t, /—|bfreeb|load am/i); }
+  const { d: d2, store: s2 } = deps({ autopilotDue: async () => ({ ok: true, rows: [Object.assign({}, due[1])] }) });
+  await API.deliver(now, rows, d2);
+  assert.deepStrictEqual(s2.sent, ["told"], "a renewed pass gets its code again");
 });
 
 test("the cron route needs the cron secret; the public read is cached at the edge", async () => {
