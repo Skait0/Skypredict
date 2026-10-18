@@ -468,7 +468,7 @@
           (legs.length>3&&!off?"<details class='swa-more'><summary><span class='swa-m'>Show "+(legs.length-3)+" more</span><span class='swa-l'>Show less</span></summary><small>"+esc(legs.slice(3).join(" · "))+"</small></details>":""):"")+"</span>"+
         (open?"<button type='button' class='swa-pillbtn' data-chk='"+esc(String(h.id))+"' data-code='"+esc(h.code)+"' aria-expanded='false'>"+(h.status==="check"?"Check":"See all "+esc(games))+"</button>":"")+
         (h.share?"<button type='button' class='swa-pillbtn' data-share='"+esc(JSON.stringify(h.share))+"'>Share</button>"+
-          (allPosted?"":"<button type='button' class='swa-pillbtn' data-postwin='"+esc(String(h.id))+"'>"+(posted.length?"Post to the rest":"Post to our channels")+"</button>")+
+          (allPosted?"<span class='swa-shared'>✓ Shared</span>":"<button type='button' class='swa-pillbtn' data-postwin='"+esc(String(h.id))+"'>"+(posted.length?"Post to the rest":"Post to our channels")+"</button>")+
           "<small class='swa-postmsg' role='status' aria-live='polite'></small>":"")+"</div>"+
         (open?checkHtml(h):""); }).join("");
   }
@@ -546,7 +546,7 @@
     /* A landed slip's buttons (See all, Share, Post to our channels) sit on their own line
        under the text: three of them beside it squeezed the words into a column (18 Oct 2026). */
     ".swa-hit{flex-wrap:wrap;gap:8px}.swa-hit .swa-st{flex:1 1 100%}.swa-hit .swa-pillbtn+.swa-pillbtn{margin-left:0}"+
-    ".swa-postmsg{flex:1 1 100%;font-size:12.5px;font-weight:600;color:var(--soft);line-height:1.45}.swa-postmsg:empty{display:none}"+
+    ".swa-postmsg{flex:1 1 100%;font-size:12.5px;font-weight:600;color:var(--soft);line-height:1.45}.swa-postmsg:empty{display:none}.swa-shared{display:inline-flex;align-items:center;padding:6px 12px;border-radius:6px;background:var(--card-2);color:var(--green-ink);font-size:12px;font-weight:800}"+
     ".swa-h{font-size:13px;font-weight:700;color:var(--soft);margin:18px 2px 8px}.swa-h small{font-weight:600;color:var(--faint);margin-left:6px}"+
     ".swa-lbl{display:block;font-size:12px;font-weight:700;color:var(--faint);margin:0 0 5px}.swa-ta{height:auto;min-height:62px;padding:9px 12px;line-height:1.4;resize:vertical}.swa-more summary{cursor:pointer;font-size:12px;font-weight:800;color:var(--accent);list-style:none;margin-top:2px}.swa-more summary::-webkit-details-marker{display:none}.swa-more .swa-l,.swa-more[open] .swa-m{display:none}.swa-more[open] .swa-l{display:inline}.swa-bk{font-weight:800}"+
     ".swa-in{width:100%;height:42px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:15px;font-weight:700;padding:0 12px;box-sizing:border-box}"+
@@ -1013,8 +1013,9 @@
           var nm={tg:"Telegram",x:"X",fb:"Facebook"}, list=function(xs){ return (xs||[]).map(function(x){ return nm[x]||x; }).join(" and "); };
           if(c!==200||!j){ b.disabled=false; b.removeAttribute("data-armed"); b.textContent="Post to our channels";
             tell(c===409?"Only a landed win at x5 or more can be posted.":c===0?"No connection. Try again.":"Something went wrong. Try again."); return; }
-          b.textContent=(j.failed&&j.failed.length)?"Try again":"Posted";
-          if(j.failed&&j.failed.length){ b.disabled=false; b.removeAttribute("data-armed"); }
+          /* Every channel has it: the button goes and the row says Shared (owner, 18 Oct 2026). */
+          if(!(j.failed&&j.failed.length)){ var tag=d.createElement("span"); tag.className="swa-shared"; tag.textContent="✓ Shared"; b.replaceWith(tag); }
+          else { b.textContent="Try again"; b.disabled=false; b.removeAttribute("data-armed"); }
           tell([j.sent.length?"Posted on "+list(j.sent)+".":"", j.already.length?"Already on "+list(j.already)+".":"",
             j.failed.length?"Could not post on "+list(j.failed)+(j.why?j.failed.map(function(x){ return j.why[x]?" ("+(nm[x]||x)+": "+j.why[x]+")":""; }).join(""):"")+". Tap to try again.":""].filter(Boolean).join(" "));
         }); }; });
