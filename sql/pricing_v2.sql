@@ -12,7 +12,8 @@ alter table public.payments add constraint payments_days_check check (days >= 0)
 
 -- 2. apply_payment as before, plus: a Starter pack is marked paid and returns now() without
 --    a pass; and a shorter pass bought on top of a running longer one keeps the longer
---    plan's name (from 1 Nov the plan sets codes a day: day 40, week 50, month 60).
+--    plan's name. (Written for per-plan limits; from 1 Nov every pass is unlimited with a fair-use
+--    100 a day, so the plan name no longer changes anyone's codes. Harmless either way.)
 create or replace function public.apply_payment(p_ref text, p_amount int)
 returns timestamptz language plpgsql security definer set search_path = public as $$
 declare r public.payments; v_end timestamptz;

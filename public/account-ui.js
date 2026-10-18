@@ -22,9 +22,12 @@
     bolt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>'
   };
   function dayMonth(iso){ var t=Date.parse(iso||""); if(!isFinite(t)) return ""; try{ return new Date(t).toLocaleDateString("en-GB",{day:"numeric",month:"short"}); }catch(e){ return ""; } }
+  /* EACH CLASS ITS OWN COLOUR (owner, 18 Oct 2026): free silver, Wizard Pass gold, Founding
+     Wizard ruby, Family & friends electric, Admin platinum (tokens in index.html). */
+  function clsOf(role,fw){ return role==="admin"?"admin":role==="ff"?"ff":fw?"founder":role==="plus"?"pass":"free"; }
   /* "Plus · until 12 Nov", and the Founding Wizard badge (api/pay.js) for good once earned. */
   function planHtml(o){ var u=o.role==="plus"?dayMonth(o.plusUntil):"";
-    return "<span class='swa-plan"+(o.role==="admin"?" swa-gold":"")+"'>"+esc(o.plan||"Free plan")+(u?" · until "+esc(u):"")+"</span>"+
+    return "<span class='swa-plan swa-c-"+clsOf(o.role,o.founder)+"'>"+esc(o.plan||"Free plan")+(u?" · until "+esc(u):"")+"</span>"+
       (o.founder?"<span class='swa-fw'>Founding Wizard</span>":""); }
   /* Everyone but admin and Family & friends can buy or top up a pass. */
   function canBuy(role){ return role!=="admin"&&role!=="ff"; }
@@ -109,7 +112,8 @@
     var u=role==="plus"?dayMonth(until):"";
     var what=role==="admin"?"Every feature, no limit":role==="ff"?"Every feature, 100 codes a day":
       role==="plus"?((+lsGet("sw.codeLimit")||20)>=100?"Unlimited codes":(+lsGet("sw.codeLimit")||20)+" codes a day")+(u?", until "+esc(u):""):"2 trial codes";
-    return "<p class='swa-h'>Your plan</p><div class='swa-card"+(fw?" swa-fwcard":role==="ff"?" swa-ffcard":"")+"'><div class='swa-subtop'><span><b"+(role==="admin"?" class='swa-gold'":"")+">"+esc(plan||"Free plan")+"</b><small>"+what+"</small></span>"+
+    var cls=clsOf(role,fw);
+    return "<p class='swa-h'>Your plan</p><div class='swa-card"+(fw?" swa-fwcard":role==="ff"?" swa-ffcard":role==="plus"?" swa-wpcard":role==="admin"?" swa-adcard":"")+"'><div class='swa-subtop'><span><b class='swa-c-"+cls+"'>"+esc(plan||"Free plan")+"</b><small>"+what+"</small></span>"+
       (canBuy(role)?"<button class='swa-pillbtn swa-pgo' type='button' data-plus>"+(role==="plus"?"Add days":"Get Wizard Pass")+"</button>":"")+"</div>"+
       (fw?fwHtml(fwNo):role==="ff"?ffHtml():role==="plus"?wpCrestHtml():"")+
       (role==="admin"||q?"<div class='swa-subuse'>"+codesHtml(q,role).replace("class='swa-q'","class='swa-q swa-q0'")+(role==="admin"?"":role==="plus"||role==="ff"?"<small>Resets at midnight</small>":"")+"</div>":"")+"</div>";
@@ -130,7 +134,7 @@
     var fw=p.pass==="month"&&p.naira<p.full;
     var was=Math.max(p.full||0,p.next||0);
     var per=(p.days>1?p.days+" days · "+naira(p.naira/p.days)+" a day":"24 hours")+(p.unlimited?" · unlimited codes":p.codes?" · "+p.codes+" codes a day":"");
-    return "<button type='button' class='swa-pass' data-pass='"+esc(p.pass)+"' aria-pressed='"+(p.pass===pick?"true":"false")+"'>"+
+    return "<button type='button' class='swa-pass swa-tier-"+esc(fw?"fw":p.pass)+"' data-pass='"+esc(p.pass)+"' aria-pressed='"+(p.pass===pick?"true":"false")+"'>"+
       (p.pass==="month"?"<span class='swa-best'>Best value</span>":"")+
       "<span class='swa-st'><b>"+esc(p.label)+"</b><small>"+per+"</small>"+
       (fw?"<small class='swa-fwp'>Founding Wizard price"+(f&&f.monthsLeft<3?" · "+f.monthsLeft+" of 3 months left":"")+"</small>":"")+"</span>"+
@@ -536,13 +540,13 @@
     ".swa-wpwiz{position:absolute;top:52px;right:-2px;width:70px;height:70px;pointer-events:none}"+
     ".swa-wpsub{margin:0;font-size:13.5px;line-height:1.45;font-weight:600;color:var(--soft)}.swa-wpsub b{color:var(--text)}"+
     ".swa-wpnow{margin:10px 0 0;font-size:13.5px;font-weight:600;color:var(--soft)}.swa-wpnow b{color:var(--accent)}"+
-    ".swa-fwpanel{margin:16px 0 0;padding:12px 14px;border:1px solid var(--accent-rim);border-radius:12px;background:var(--card)}"+
+    ".swa-fwpanel{margin:16px 0 0;padding:12px 14px;border:1px solid var(--cls-founder-rim);border-radius:12px;background:var(--card)}"+
     ".swa-fwhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px}"+
-    ".swa-fwt{font-family:var(--disp);font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:.005em;color:var(--accent)}"+
+    ".swa-fwt{font-family:var(--disp);font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:.005em;color:var(--cls-founder)}"+
     ".swa-fwleft{font-size:12px;font-weight:700;color:var(--faint);white-space:nowrap}.swa-fwleft b{font-family:var(--disp);font-size:15px;color:var(--text);font-variant-numeric:tabular-nums}"+
     ".swa-fwd{margin:4px 0 10px;font-size:13px;line-height:1.45;color:var(--soft)}.swa-fwd b{color:var(--text)}"+
     ".swa-fwbar{height:5px;border-radius:99px;background:var(--raise);overflow:hidden}"+
-    ".swa-fwbar i{display:block;height:100%;width:0;border-radius:99px;background:var(--accent);transition:width 1.1s var(--ease-out,cubic-bezier(.23,1,.32,1)) .15s}.swa-fwbar i.on{width:var(--to)}"+
+    ".swa-fwbar i{display:block;height:100%;width:0;border-radius:99px;background:var(--cls-founder);transition:width 1.1s var(--ease-out,cubic-bezier(.23,1,.32,1)) .15s}.swa-fwbar i.on{width:var(--to)}"+
     ".swa-wp .swa-passes{margin-top:18px}"+
     ".swa-wprec{margin:6px 0 0;font-size:12.5px;line-height:1.45;color:var(--soft)}.swa-wprec a{color:var(--accent);font-weight:700}"+
     ".swa-wppay{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;height:52px;margin-top:16px;border:0;border-radius:var(--r-lg,8px);background:var(--accent);color:var(--on-accent);"+
@@ -556,23 +560,26 @@
       ".swa-fwpanel{margin-top:10px;padding:9px 12px}.swa-fwd{margin:2px 0 8px;font-size:12.5px}.swa-wppay{height:46px;margin-top:10px}.swa-wpfine{margin-top:6px}}"+
     "@media (prefers-reduced-motion:reduce){.swa-fwbar i{transition:none}}"+
     /* Passes: Saira numerals for the price, the month marked with a flat tag. */
-    ".swa-fw{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:var(--r-sm);border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:800}"+
+    ".swa-fw{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:var(--r-sm);border:1px solid var(--cls-founder);color:var(--cls-founder);font-size:11px;font-weight:800}"+
     ".swa-mplus{color:var(--accent)}.swa-mplus svg{color:var(--accent)}.swa-mplus .swa-r{font-size:11.5px;font-weight:700}"+
     ".swa-ffcard{border-color:var(--electric-rim)}.swa-ffseal b{color:var(--electric)!important}"+
-    ".swa-fwcard{border-color:var(--accent-rim)}.swa-fwseal,.swa-xseal{display:flex;align-items:center;gap:14px;padding:12px 14px;border-top:1px solid var(--line)}.swa-fwseal img,.swa-xseal img{flex:none;width:80px;height:92px}.swa-fwseal b,.swa-xseal b{display:block;font-family:var(--disp);font-size:20px;font-weight:800;text-transform:uppercase;letter-spacing:.005em;color:var(--accent);line-height:1.1}.swa-fwseal small,.swa-xseal small{display:block;margin-top:3px;font-size:12.5px;font-weight:600;color:var(--soft);line-height:1.45}.swa-tgbtn{flex:none;text-decoration:none;white-space:nowrap}.swa-pgo{margin-left:auto;border-color:var(--accent);color:var(--accent);white-space:nowrap}"+
+    ".swa-c-free{color:var(--cls-free)!important}.swa-c-pass{color:var(--accent)!important}.swa-c-founder{color:var(--cls-founder)!important}.swa-c-ff{color:var(--electric)!important}.swa-c-admin{color:var(--cls-admin)!important}"+
+    ".swa-wpcard{border-color:var(--accent-rim)}.swa-adcard{border-color:var(--cls-admin-rim)}.swa-fwseal b{color:var(--cls-founder)!important}"+
+    ".swa-pass{--tier:var(--accent)}.swa-tier-day{--tier:var(--tier-day)}.swa-tier-week{--tier:var(--tier-week)}.swa-tier-fw{--tier:var(--cls-founder)}"+
+    ".swa-fwcard{border-color:var(--cls-founder-rim)}.swa-fwseal,.swa-xseal{display:flex;align-items:center;gap:14px;padding:12px 14px;border-top:1px solid var(--line)}.swa-fwseal img,.swa-xseal img{flex:none;width:80px;height:92px}.swa-fwseal b,.swa-xseal b{display:block;font-family:var(--disp);font-size:20px;font-weight:800;text-transform:uppercase;letter-spacing:.005em;color:var(--accent);line-height:1.1}.swa-fwseal small,.swa-xseal small{display:block;margin-top:3px;font-size:12.5px;font-weight:600;color:var(--soft);line-height:1.45}.swa-tgbtn{flex:none;text-decoration:none;white-space:nowrap}.swa-pgo{margin-left:auto;border-color:var(--accent);color:var(--accent);white-space:nowrap}"+
     ".swa-passes{display:grid;gap:11px;margin:0}"+
     ".swa-pass{position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:66px;padding:11px 16px 11px 48px;border:1.5px solid var(--line);border-radius:12px;"+
       "background:var(--card);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .18s,background-color .18s}"+
     /* a drawn radio: an empty ring, gold and ticked when picked */
     ".swa-pass::before{content:'';position:absolute;left:16px;top:50%;width:18px;height:18px;margin-top:-10px;border-radius:50%;border:2px solid var(--grey);box-sizing:content-box;"+
       "background:no-repeat center/12px 12px}"+
-    ".swa-pass[aria-pressed=true]{border-color:var(--accent);background:var(--card-2)}"+
-    ".swa-pass[aria-pressed=true]::before{border-color:var(--accent);background-color:var(--accent);"+
+    ".swa-pass[aria-pressed=true]{border-color:var(--tier);background:var(--card-2)}"+
+    ".swa-pass[aria-pressed=true]::before{border-color:var(--tier);background-color:var(--tier);"+
       "background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2314120E' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E\")}"+
     ".swa-pass .swa-st b{font-family:var(--disp);font-size:19px;line-height:1.05;font-weight:800;text-transform:uppercase;letter-spacing:.005em}"+
-    ".swa-pass .swa-st small{margin-top:2px}.swa-fwp{color:var(--accent)!important;font-weight:700!important}"+
+    ".swa-pass .swa-st small{margin-top:2px}.swa-fwp{color:var(--cls-founder)!important;font-weight:700!important}"+
     ".swa-price{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--disp)}"+
-    ".swa-price b{display:block;font-size:28px;line-height:1;font-weight:800;color:var(--accent)}.swa-price s{display:block;font-size:14px;font-weight:700;color:var(--faint)}"+
+    ".swa-price b{display:block;font-size:28px;line-height:1;font-weight:800;color:var(--tier)}.swa-price s{display:block;font-size:14px;font-weight:700;color:var(--faint)}"+
     ".swa-best{position:absolute;top:-10px;left:46px;padding:2px 8px;border-radius:var(--r-sm,4px);background:var(--accent);color:var(--on-accent);font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}"+
     "@media (hover:hover){.swa-pass:hover{border-color:var(--accent-rim)}}"+
     ".swa-pass:focus-visible,.swa-pgo:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"+

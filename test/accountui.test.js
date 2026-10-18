@@ -145,7 +145,7 @@ test("menu: plan label from the account, Admin item only for admin, admin codes 
   assert.doesNotMatch(fr, /data-go='admin'/); assert.doesNotMatch(ff, /data-go='admin'/);
   assert.match(ad, /data-go='admin'/); assert.match(ad, />Admin</);
   assert.match(ff, /Family &amp; friends/); assert.match(ff, /4<\/span> of 100/);
-  assert.match(ad, /swa-plan swa-gold'>Admin/); assert.match(ad, /No limit/); assert.doesNotMatch(ad, /swa-bar/);
+  assert.match(ad, /swa-plan swa-c-admin'>Admin/, "admin wears platinum (owner, 18 Oct 2026: each class its own colour)"); assert.match(ad, /No limit/); assert.doesNotMatch(ad, /swa-bar/);
 });
 
 test("subscription card follows the plan", () => {
@@ -276,6 +276,21 @@ test("a Founding Wizard's plan card carries the crest, their number and the than
 
 /* Owner, 18 Oct 2026: "special electric badge for family and friends", and "similar for the
    wizard pass also, different but not as glamorous". One crest per card, never two. */
+test("each class carries its own colour, and each pass its own on the pricing card", () => {
+  const m = (o) => UI.menuHtml(Object.assign({ name: "A", email: "a@b.c", quota: null, slips: 0 }, o));
+  assert.match(m({ role: "free", plan: "Free plan" }), /swa-plan swa-c-free'/);
+  assert.match(m({ role: "plus", plan: "Wizard Pass" }), /swa-plan swa-c-pass'/);
+  assert.match(m({ role: "plus", plan: "Wizard Pass", founder: true }), /swa-plan swa-c-founder'/);
+  assert.match(m({ role: "ff", plan: "Family & friends" }), /swa-plan swa-c-ff'/);
+  const passes = [{ pass: "day", days: 1, label: "Day pass", naira: 200, full: 200 }, { pass: "week", days: 7, label: "Week pass", naira: 800, full: 800 },
+    { pass: "month", days: 30, label: "Month pass", naira: 1500, full: 2000 }];
+  const h = UI.plusHtml({ passes, founder: { open: true, seats: 200, seatsLeft: 192, monthsLeft: 3 }, role: "free" }, "month");
+  assert.match(h, /swa-pass swa-tier-day'/); assert.match(h, /swa-pass swa-tier-week'/);
+  assert.match(h, /swa-pass swa-tier-fw'/, "the founder-priced month wears ruby");
+  for (const t of ["--cls-free", "--cls-founder", "--cls-admin", "--tier-day", "--tier-week", "--electric"])
+    assert.ok(fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8").includes(t + ":"), t + " is a site token");
+});
+
 test("Family & friends get the electric crest, a pass the plain gold one, a founder only theirs", () => {
   const p = (o) => UI.profileHtml(Object.assign({ name: "A", avatar: "fire", record: { built: 0, won: 0, settled: 0 }, quota: null }, o));
   const ff = p({ role: "ff", plan: "Family & friends" });

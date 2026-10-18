@@ -50,7 +50,8 @@ begin
 end;
 $$;
 
--- Founding Wizards (owner, 16 Oct 2026): the first 500 buyers pay the founder
+-- Founding Wizards (owner, 16 Oct 2026; 200 places and an end on 31 Oct from 18 Oct, both
+-- enforced in api/pay.js, not here): the first buyers pay the founder
 -- price on their first 3 month passes. taken = founders so far, mine = this
 -- reader's founder months already paid.
 create or replace function public.founder_offer(p_user uuid)
