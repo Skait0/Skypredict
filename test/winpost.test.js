@@ -116,7 +116,13 @@ test("a landed slip with games off our board opens every leg, not only the track
   assert.match(html, /data-chkbox='9'/);
   assert.doesNotMatch(html, /data-settle=/, "a landed slip is already settled");
   const full = ui.hitsHtml([{ id: 9, status: "landed", code: "ABC12", book: "sporty", total_odds: 60, leg_count: 5, legs }]);
-  assert.doesNotMatch(full, /data-chk=/); assert.match(full, /Show 2 more/);
+  assert.match(full, /data-chk='9'[^>]*>See all 5 games</, "every row opens its games, where each can be set by hand");
+  const UI = require("../public/account-ui.js");
+  const panel = UI.legsHtml({ legs: [{ pick: "Iberia +2 handicap", odds: 5.6, match: "St. Truiden v Iberia", score: "2-0", verdict: "void" }] }, 73);
+  assert.match(panel, /1 games: 0 won, 1 voided/);
+  assert.match(panel, /data-fix='73\|0\|lost'/); assert.match(panel, /data-fix='73\|0\|void' aria-pressed='true'>Voided/);
+  assert.doesNotMatch(UI.legsHtml({ legs: [{ pick: "x", match: "a v b", our: 71 }] }, null), /data-fix/, "the inspector shows no fix buttons");
+  assert.match(UI.legsHtml({ legs: [{ pick: "x", match: "a v b", our: 71 }] }, null), /ours 71%/);
 });
 
 test("the Telegram caption counts every game, not only the ones on our board", () => {

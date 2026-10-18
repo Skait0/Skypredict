@@ -15,8 +15,8 @@ const { report } = require("../lib/report.js");
 const SW = require("../lib/slipwatch.js");
 
 const REAUTH_MS = 10 * 60e3;
-const ADMIN_GET = ["today", "grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit", "readers", "reader", "threads", "gifs", "alerts", "blendtest"];
-const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle", "postwin", "send", "unsend", "edit", "gift"];
+const ADMIN_GET = ["today", "inspect", "grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit", "readers", "reader", "threads", "gifs", "alerts", "blendtest"];
+const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle", "postwin", "fixleg", "send", "unsend", "edit", "gift"];
 /* THE MESSAGE BOARD (owner, 14 Oct 2026; sql/messages.sql, public/messages.js):
    any signed-in reader reads their inbox, marks it read and replies in it. */
 const READER_GET = ["inbox", "tglink", "autopilot"];
@@ -63,6 +63,7 @@ function make(deps) {
     fill: (id, patch) => require("../lib/supabase.js").patchSiteSlip(id, patch),
     wasPosted: (key) => require("../lib/supabase.js").socialHas(key),
     winPosts: () => require("../lib/supabase.js").winPosts(),
+    board: () => fetch((process.env.SITE_ORIGIN || "https://www.soccerwizard.live") + "/predictions.json").then((r) => r.json()),
     logPost: (row) => require("../lib/supabase.js").logSocial(row) };
   /* TODAY AT A GLANCE (lib/glance.js): the day's inputs; a dep so tests need no network. */
   const glanceIn = deps.glance || {
@@ -270,7 +271,10 @@ function make(deps) {
           const DET = require("../lib/slipdetail.js");
           const since = new Date(Date.parse(row.created_at || "") - 2 * 864e5 || t - 14 * 864e5).toISOString().slice(0, 10);
           const results = await slips.results(since);
-          if (legs) return H.sendJson(res, 200, { readBack: true, legs: DET.detail(legs, results) });
+          /* A leg the owner set by hand (fixleg) shows the owner's verdict. */
+          if (legs) return H.sendJson(res, 200, { readBack: true, legs: DET.detail(legs, results).map((r, i) => {
+            const own = (row.legs || [])[i];
+            return own && own.byHand ? Object.assign(r, { verdict: own.verdict, why: "Set by hand." }) : r; }) });
           /* Fallback: the graded legs the ledger kept, with what it saw. */
           const seen = row.seen || {};
           return H.sendJson(res, 200, { readBack: false, untracked: row.untracked | 0,
@@ -296,6 +300,63 @@ function make(deps) {
         /* POST A WIN BY HAND (owner, 18 Oct 2026: "shouldnt there be a button to enable me
            push to our channels"). A landed x5+ slip goes out on Telegram, X and Facebook as
            the hourly win post would; a channel it already went to is skipped. */
+        /* EVERY LEG ON THE ROW (postwin, fixleg): games the ledger never tracked, or legs
+           without a verdict, are read back from the bookie and stored with their price and
+           verdict, so the banner (api/slipcard.js reads the row) and captions list them all.
+           A leg set by hand keeps the owner's verdict. Nothing grades a settled row again. */
+        const fillRow = async (row, id) => {
+          if (!(Number(row.untracked) > 0 || (row.legs || []).some((l) => !l || !l.verdict))) return row;
+          let legs = null; try { legs = await slips.read(row.book, row.code); } catch (e) { legs = null; }
+          if (!legs || !legs.length) return row;
+          const since = new Date(Date.parse(row.created_at || "") - 2 * 864e5 || t - 14 * 864e5).toISOString().slice(0, 10);
+          const full = require("../lib/slipdetail.js").full(legs, await slips.results(since));
+          (row.legs || []).forEach((l, i) => { if (l && l.byHand && full[i]) Object.assign(full[i], { verdict: l.verdict, byHand: true }); });
+          /* seen indexed the old legs; the verdicts now sit on each leg */
+          await slips.fill(id, { legs: full, untracked: 0, seen: {} });
+          return Object.assign(row, { legs: full, untracked: 0, seen: {} });
+        };
+        /* FIX A GAME BY HAND (owner, 18 Oct 2026): the owner sets one leg won, lost or voided
+           when the grader got it wrong. The slip's status follows: a lost leg loses it, every
+           leg won or voided lands it. What it paid and its banner follow the legs. */
+        if (action === "fixleg") {
+          const b = (await H.readJson(req, 256)) || {};
+          const id = String(b.id || ""), i = Number(b.i), v = String(b.verdict || "");
+          if (!/^\d{1,18}$/.test(id) || !Number.isInteger(i) || i < 0 || !["won", "lost", "void"].includes(v)) return H.sendJson(res, 400, { error: "bad_request" });
+          const row = await slips.byId(id);
+          if (!row) return H.sendJson(res, 404, { error: "no_slip" });
+          await fillRow(row, id);
+          const seen = row.seen || {};
+          const legs = (row.legs || []).map((l, k) => Object.assign({}, l, l && l.verdict ? {} : seen[k] ? { verdict: seen[k] } : {}));
+          if (i >= legs.length) return H.sendJson(res, 400, { error: "bad_request" });
+          legs[i] = Object.assign({}, legs[i], { verdict: v, byHand: true });
+          const games = row.leg_count || legs.length;
+          const status = legs.some((l) => l.verdict === "lost") ? "lost"
+            : legs.length === games && legs.every((l) => l.verdict === "won" || l.verdict === "void") ? "landed" : row.status;
+          const patch = { legs, seen: {}, status };
+          if (status !== row.status) patch.settled_at = new Date(t).toISOString();
+          await slips.fill(id, patch);
+          await record("fixleg", "slip " + id, { leg: i, verdict: v, from: row.status, to: status });
+          const WIN = require("../lib/winpost.js");
+          return H.sendJson(res, 200, { status, paid: WIN.paid(Object.assign({}, row, patch)) });
+        }
+        /* THE CODE INSPECTOR (owner, 18 Oct 2026): any code from the six books, every leg
+           in words with our number on it (the board's, as Wizard's Eye reads it) and its
+           result where a final score settles it. Read only. */
+        if (action === "inspect") {
+          const q = req.query || {}, book = String(q.book || "").toLowerCase(), code = String(q.code || "").trim();
+          if (!require("../lib/books.js").KEYS.includes(book) || !/^[A-Za-z0-9]{3,24}$/.test(code)) return H.sendJson(res, 400, { error: "bad_request" });
+          let legs = null; try { legs = await slips.read(book, code); } catch (e) { legs = null; }
+          if (!legs || !legs.length) return H.sendJson(res, 404, { error: "unreadable" });
+          const D = require("../lib/doctor.js"), DET = require("../lib/slipdetail.js");
+          const since = new Date(t - 3 * 864e5).toISOString().slice(0, 10);
+          const [results, pay] = await Promise.all([slips.results(since).catch(() => []), (slips.board ? slips.board() : Promise.resolve(null)).catch(() => null)]);
+          const fixtures = (pay && pay.fixtures) || [];
+          const rows = DET.detail(legs, results);
+          return H.sendJson(res, 200, { book, code, legs: rows.map((r, k) => {
+            const f = D.findFixture(fixtures, legs[k]), raw = f ? D.probOf(f, legs[k].prediction) : null;
+            return Object.assign(r, { our: raw == null ? null : Math.round(D.blend(raw, +legs[k].odds) * 100) });
+          }) });
+        }
         if (action === "postwin") {
           const b = (await H.readJson(req, 256)) || {};
           const id = String(b.id || "");
@@ -304,19 +365,7 @@ function make(deps) {
           if (!row) return H.sendJson(res, 404, { error: "no_slip" });
           const WIN = require("../lib/winpost.js"), SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
 
-          /* Games the ledger never tracked: read the slip back so the banner (api/slipcard.js
-             reads the row) and the caption list all of them. The row is settled, so
-             nothing grades these legs again. */
-          if (Number(row.untracked) > 0 || (row.legs || []).some((l) => !l || !l.verdict)) {
-            let legs = null; try { legs = await slips.read(row.book, row.code); } catch (e) { legs = null; }
-            if (legs && legs.length) {
-              const since = new Date(Date.parse(row.created_at || "") - 2 * 864e5 || t - 14 * 864e5).toISOString().slice(0, 10);
-              const full = require("../lib/slipdetail.js").full(legs, await slips.results(since));
-              /* seen indexed the old legs; the verdicts now sit on each leg */
-              await slips.fill(id, { legs: full, untracked: 0, seen: {} });
-              Object.assign(row, { legs: full, untracked: 0, seen: {} });
-            }
-          }
+          await fillRow(row, id);
           /* What it paid, pushes at odds 1 (lib/winpost.js paid): under x5 it is not a win post. */
           if (row.status !== "landed" || !WIN.rankOf(WIN.paid(row).odds)) return H.sendJson(res, 409, { error: "not_a_win" });
           const sent = [], already = [], failed = [], why = {};

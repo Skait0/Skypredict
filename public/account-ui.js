@@ -271,6 +271,15 @@
   function markOf(k){ var m=null; try{ m=root.swBookMarks?root.swBookMarks():null; }catch(e){}
     return "<span class='swa-bk'>"+(m&&m[k]?m[k]:esc(BOOK_NAME[k]||k))+"</span>"; }
   function msg(t){ return "<div class='swa-set'><span class='swa-st'><small>"+esc(t)+"</small></span></div>"; }
+  /* PAUSE SWITCHES (lib/flags.js pause): on means paused for today, Lagos time. */
+  var PAUSE_ROWS=[["wins","Win posts","Confirmed wins stop posting. Wins still come to you."],["bigodds","Big odds of the day","No Big odds slip is booked or posted."],["ladder","Daily ladder","No ladder slips are booked, sent or shown."]];
+  function lagosDay(){ return new Date(Date.now()+3600e3).toISOString().slice(0,10); }
+  function pauseHtml(fl){
+    var p=(fl&&fl.pause)||{}, day=lagosDay();
+    return PAUSE_ROWS.map(function(r){ var on=p[r[0]]===day;
+      return "<div class='swa-set'><span class='swa-st'><b>"+esc(r[1])+"</b><small>"+esc(on?"Paused today. "+r[2]:"Running")+"</small></span>"+
+        "<button class='swa-sw' type='button' role='switch' data-pause='"+r[0]+"' aria-checked='"+on+"' aria-label='Pause "+esc(r[1])+" today'></button></div>"; }).join("");
+  }
   function switchesHtml(fl){
     var off=(fl&&fl.booksOff)||[];
     return Object.keys(BOOK_NAME).map(function(k){ var on=off.indexOf(k)<0;
@@ -333,8 +342,9 @@
      is remembered on this device. The two lists that grow carry their count on the
      tab, so a closed one still says what it holds. */
   /* Messages and Readers (owner, 14 Oct 2026) are filled by public/messages.js. */
-  var ADMIN_TABS=[["swaTToday","Today"],["swaTMsg","Messages"],["swaTAlerts","Alerts"],["swaTLk","Users"],["swaTSw","Switches"],["swaTStatus","Status"],["swaTNums","Numbers"],
-    ["swaTGrants","Family & friends"],["swaTHits","Won slips"],["swaTModel","Model test"],["swaTLog","Log"]];
+  /* Most used first (owner, 18 Oct 2026: "optimize the ui for admin"). */
+  var ADMIN_TABS=[["swaTToday","Today"],["swaTHits","Won slips"],["swaTInspect","Inspect"],["swaTMsg","Messages"],["swaTAlerts","Alerts"],["swaTSw","Switches"],
+    ["swaTLk","Users"],["swaTGrants","Family & friends"],["swaTStatus","Status"],["swaTNums","Numbers"],["swaTModel","Model test"],["swaTLog","Log"]];
   /* THE MODEL TEST (owner, 18 Oct 2026; api/account.js blendtest, lib/blendtest.js): the same
      board games picked three ways and graded, and the model's own record by day since 20 Sep. */
   var MODE_NAME={model:"Our model alone",old:"Old mix (30-75% bookie, before 30 Sep)",now:"Today (90% bookie)"};
@@ -359,6 +369,9 @@
         "<button class='swa-sw' id='swaMaint' type='button' role='switch' aria-checked='false' aria-label='Maintenance mode'></button></div></div>"+
         "<label class='swa-lbl' for='swaMaintMsg'>Message on the maintenance page</label>"+
         "<input class='swa-in' id='swaMaintMsg' type='text' maxlength='120' autocomplete='off' placeholder='Back by 8pm with fresh picks.'>"+
+        "<label class='swa-lbl'>Pause for today (back on by itself at midnight)</label>"+
+        "<div class='swa-card' id='swaPause'>"+msg("Loading")+"</div>"+
+        "<label class='swa-lbl'>Bookmakers</label>"+
         "<div class='swa-card' id='swaSw'>"+msg("Loading")+"</div>"+
         /* The old one-line notice is the message board now (Messages tab). One still up is shown here to clear. */
         "<div id='swaOldNotice' hidden><label class='swa-lbl'>Old notice line, still showing</label><div class='swa-card'><div class='swa-set'><span class='swa-st'><small id='swaNoticeT'></small></span>"+
@@ -366,6 +379,12 @@
       swaTMsg:"<div class='swa-card'>"+msg("Loading")+"</div>",
       swaTStatus:"<div class='swa-card' id='swaStatus'>"+msg("Loading")+"</div>",
       swaTNums:"<div class='swa-card' id='swaNums'>"+msg("Loading")+"</div>",
+      swaTInspect:"<p class='swa-note'>Paste any booking code to see every game, our number on it and how it went.</p>"+
+        "<div class='swa-bkchips' id='swaInBooks' role='radiogroup' aria-label='Bookmaker'></div>"+
+        "<label class='swa-lbl' for='swaInCode'>Booking code</label>"+
+        "<input class='swa-in' id='swaInCode' type='text' autocomplete='off' autocapitalize='characters' spellcheck='false' maxlength='24'>"+
+        "<button class='swa-outbtn swa-go' id='swaInGo' type='button'>Inspect</button>"+
+        "<div class='swa-card swa-chkbox' id='swaIn' hidden></div>",
       swaTLk:"<p class='swa-note'>Type a user's email to see their plan, devices and booked codes. From there you can sign them out everywhere or give them Family &amp; friends.</p>"+
         "<label class='swa-lbl' for='swaLkEmail'>User's email</label>"+
         "<input class='swa-in' id='swaLkEmail' type='email' autocomplete='off' autocapitalize='none' spellcheck='false'>"+
@@ -475,7 +494,9 @@
       /* h.legs holds only the legs on our board (lib/slipwatch.js trackAll); the rest
          are read back from the bookie by slipdetail, the same panel as Check (owner,
          18 Oct 2026: "14 games but i can only see 5"). */
-      var off=(h.leg_count||0)>legs.length, open=h.status==="check"||off;
+      /* Every row opens its games (lib/slipdetail.js, read back from the bookie), where each
+         game can be set by hand (api/account.js fixleg). */
+      var open=true;
       return "<div class='swa-set swa-hit'><span class='swa-st'><b>"+esc(h.code)+" · "+markOf(h.book)+
         (pd&&pd.odds?" · <span class='swa-gold'>×"+esc(Number(pd.odds).toLocaleString("en-US",{maximumFractionDigits:2}))+" paid</span>":
           h.total_odds?" · <span class='swa-gold'>×"+esc(Number(h.total_odds).toLocaleString("en-US",{maximumFractionDigits:2}))+"</span>":"")+"</b>"+
@@ -483,8 +504,7 @@
         (pd?"<small>"+esc(pd.won+" won, "+pd.pushed+" voided (stake back). Booked at ×"+Number(h.total_odds).toLocaleString("en-US",{maximumFractionDigits:2}))+"</small>":"")+
         (postedLine?"<small>"+esc(postedLine)+"</small>":"")+
         "<small>"+esc(srcWords(h.src))+"</small>"+
-        (legs.length?"<small>"+esc(legs.slice(0,3).join(" · "))+"</small>"+
-          (legs.length>3&&!off?"<details class='swa-more'><summary><span class='swa-m'>Show "+(legs.length-3)+" more</span><span class='swa-l'>Show less</span></summary><small>"+esc(legs.slice(3).join(" · "))+"</small></details>":""):"")+"</span>"+
+        (legs.length?"<small>"+esc(legs.slice(0,3).join(" · ")+(legs.length>3?" · …":""))+"</small>":"")+"</span>"+
         (open?"<button type='button' class='swa-pillbtn' data-chk='"+esc(String(h.id))+"' data-code='"+esc(h.code)+"' aria-expanded='false'>"+(h.status==="check"?"Check":"See all "+esc(games))+"</button>":"")+
         (h.share?"<button type='button' class='swa-pillbtn' data-share='"+esc(JSON.stringify(h.share))+"'>Share</button>"+
           (allPosted?"<span class='swa-shared'>✓ Shared</span>":"<button type='button' class='swa-pillbtn' data-postwin='"+esc(String(h.id))+"'>"+(posted.length?"Post to the rest":"Post to our channels")+"</button>")+
@@ -495,6 +515,20 @@
      rest (corners, shots, first half) cannot be read off a final score. Tapping
      Check opens the legs; the owner looks the code up on the bookmaker and says
      which way it went (/api/account/settle). */
+  /* ONE SLIP'S GAMES, IN WORDS (slipdetail, inspect). fixId: the row id, to show the
+     Won / Lost / Voided buttons that set a game by hand (owner, 18 Oct 2026). */
+  var VERDICT={won:"<b class='swa-won'>Won</b>",void:"<b class='swa-open'>Voided</b>",lost:"<b class='swa-lost'>Lost</b>"};
+  function legsHtml(d,fixId){
+    var won=0,lost=0,voided=0,open=0;
+    var rows=(d.legs||[]).map(function(l,i){
+      if(l.verdict==="won") won++; else if(l.verdict==="void") voided++; else if(l.verdict==="lost") lost++; else open++;
+      var fix=fixId?"<span class='swa-fix' role='group' aria-label='Set this game'>"+["won","lost","void"].map(function(v){
+        return "<button type='button' data-fix='"+esc(fixId+"|"+i+"|"+v)+"' aria-pressed='"+(l.verdict===v)+"'>"+(v==="void"?"Voided":v==="won"?"Won":"Lost")+"</button>"; }).join("")+"</span>":"";
+      return "<div class='swa-leg'>"+(VERDICT[l.verdict]||"<b class='swa-open'>Open</b>")+"<span><b>"+esc(l.pick)+"</b>"+(l.odds?" @ "+esc(String(l.odds)):"")+
+        (l.our!=null?" · ours "+esc(String(l.our))+"%":"")+
+        "<br>"+esc(l.match)+(l.score?" · "+esc(l.score):"")+(l.why?"<br><i>"+esc(l.why)+"</i>":"")+fix+"</span></div>"; }).join("");
+    return "<b>"+(d.legs||[]).length+" games: "+won+" won"+(voided?", "+voided+" voided":"")+(lost?", "+lost+" lost":"")+(open?", "+open+" open":"")+"</b>"+rows;
+  }
   function checkHtml(h){
     if(h.status!=="check") return "<div class='swa-set swa-chkbox' data-chkbox='"+esc(String(h.id))+"' hidden><span class='swa-st'><small data-full></small></span></div>";
     return "<div class='swa-set swa-chkbox' data-chkbox='"+esc(String(h.id))+"' hidden><span class='swa-st'>"+
@@ -522,7 +556,7 @@
         "<input class='swa-in' id='swaDelIn' autocomplete='off' autocapitalize='characters'><button class='swa-outbtn swa-danger' id='swaDelGo' type='button'>Delete for good</button></div>"+
       "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>";
   }
-  var api={firstNameOf:firstNameOf,menuHtml:menuHtml,plusHtml:plusHtml,naira:naira,codesHtml:codesHtml,esc:esc,I:I,AV_FREE:AV_FREE,AV_FF:AV_FF,AV_OWNER:AV_OWNER,AV_PERSONAL:AV_PERSONAL,pickerHtml:pickerHtml,grantsHtml:grantsHtml,hitsHtml:hitsHtml,adminHtml:adminHtml,recordHtml:recordHtml,modelHtml:modelHtml,todayHtml:todayHtml,profileHtml:profileHtml,settingsHtml:settingsHtml};
+  var api={firstNameOf:firstNameOf,menuHtml:menuHtml,plusHtml:plusHtml,naira:naira,codesHtml:codesHtml,esc:esc,I:I,AV_FREE:AV_FREE,AV_FF:AV_FF,AV_OWNER:AV_OWNER,AV_PERSONAL:AV_PERSONAL,pickerHtml:pickerHtml,grantsHtml:grantsHtml,hitsHtml:hitsHtml,adminHtml:adminHtml,recordHtml:recordHtml,modelHtml:modelHtml,todayHtml:todayHtml,legsHtml:legsHtml,pauseHtml:pauseHtml,profileHtml:profileHtml,settingsHtml:settingsHtml};
   if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
   if(!root.document) return;
 
@@ -550,7 +584,7 @@
        colour behind it so nothing shows through. */
     ".swa-view .swa-in-wrap>.swa-back{position:sticky;top:-16px;z-index:5;width:calc(100% + 32px);margin:-16px -16px 0;padding:14px 16px 8px;background:var(--bg);box-sizing:border-box}"+
     ".swa-t{margin:0 0 16px;font-size:22px;font-weight:800;letter-spacing:-.01em}"+
-    ".swa-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:4px -2px 4px;padding:2px}.swa-tabs::-webkit-scrollbar{display:none}"+
+    ".swa-tabs{display:flex;flex-wrap:nowrap;gap:6px;margin:4px -2px 4px;padding:2px 2px 6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.swa-tabs::-webkit-scrollbar{display:none}.swa-tabs::-webkit-scrollbar{display:none}"+
     ".swa-tab{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--soft);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}"+
     ".swa-tab[aria-selected='true']{background:var(--red-fill);border-color:transparent;color:#fff}.swa-tab:focus-visible{outline:2px solid var(--red);outline-offset:2px}"+
     ".swa-tab .swa-cnt{font-size:11px;font-weight:800;opacity:.85}.swa-tab .swa-cnt:empty{display:none}"+
@@ -558,7 +592,10 @@
     ".swa-alk{display:inline-block;margin-right:6px;padding:0 6px;border-radius:4px;background:var(--card-2);color:var(--soft);font-size:11px;font-weight:700}"+
     ".swa-alk-founder,.swa-alk-win{color:var(--accent)}.swa-alk-payment{color:var(--green-ink)}"+
     ".swa-panel[hidden],.swa-set[hidden]{display:none!important}.swa-panel>.swa-card+.swa-lbl{margin-top:18px}"+
-    ".swa-leg{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}.swa-leg>b{flex:0 0 46px;font-size:11px;text-transform:uppercase;letter-spacing:.04em}"+
+    ".swa-leg{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}.swa-leg>b{flex:0 0 60px;font-size:11px;text-transform:uppercase;letter-spacing:.04em}"+
+    ".swa-fix{display:flex;gap:4px;margin-top:6px}.swa-fix button{flex:1;min-height:30px;border:1px solid var(--line);background:var(--card-2);color:var(--soft);border-radius:6px;font:inherit;font-size:11.5px;font-weight:800;cursor:pointer}"+
+    ".swa-fix button[aria-pressed=true]{border-color:var(--accent);color:var(--text)}.swa-fix button:disabled{opacity:.5}"+
+    "#swaInBooks{margin-bottom:10px}#swaMaintMsg{margin-bottom:16px}"+
     ".swa-leg span{flex:1;min-width:0;color:var(--soft)}.swa-leg span b{color:var(--text);font-size:13px}.swa-leg i{font-style:normal;color:var(--faint)}"+
     ".swa-won{color:var(--green-ink)}.swa-lost{color:var(--red-ink)}.swa-open{color:var(--amber)}"+
     ".swa-chkbox{flex-wrap:wrap;gap:8px}.swa-chkbox .swa-st{flex:1 1 100%}.swa-chkbox small{display:block;margin-top:6px}.swa-chkbox small b{display:block;color:var(--text);font-size:12.5px;margin-bottom:2px}.swa-set .swa-pillbtn+.swa-pillbtn{margin-left:6px}"+
@@ -1048,14 +1085,14 @@
           full.setAttribute("data-done","1"); full.textContent="Reading every leg...";
           a.req("GET","/api/account/slipdetail?id="+encodeURIComponent(id),null,function(c3,d){
             if(c3!==200||!d||!d.legs){ full.removeAttribute("data-done"); full.textContent="Could not read the slip. Tap Check again to retry."; return; }
-            var won=0,lost=0,open=0;
-            var rows=d.legs.map(function(l){
-              if(l.verdict==="won"||l.verdict==="void") won++; else if(l.verdict==="lost") lost++; else open++;
-              var mark=l.verdict==="won"?"<b class='swa-won'>Won</b>":l.verdict==="void"?"<b class='swa-won'>Void</b>":l.verdict==="lost"?"<b class='swa-lost'>Lost</b>":"<b class='swa-open'>Check</b>";
-              return "<div class='swa-leg'>"+mark+"<span><b>"+esc(l.pick)+"</b>"+(l.odds?" @ "+esc(String(l.odds)):"")+
-                "<br>"+esc(l.match)+(l.score?" · "+esc(l.score):"")+(l.why?"<br><i>"+esc(l.why)+"</i>":"")+"</span></div>"; }).join("");
-            full.innerHTML="<b>"+d.legs.length+" legs: "+won+" won"+(lost?", "+lost+" lost":"")+(open?", "+open+" to check":"")+"</b>"+rows+
+            full.innerHTML=legsHtml(d,id)+
               (d.readBack?"":"<i>The bookmaker no longer shows this code, so these are only the legs we graded"+(d.untracked?" ("+d.untracked+" more not shown)":"")+".</i>");
+            /* SET A GAME BY HAND (api/account.js fixleg): the slip's status and what it paid follow. */
+            full.querySelectorAll("[data-fix]").forEach(function(fb){ fb.onclick=function(){
+              var p=fb.getAttribute("data-fix").split("|"); full.querySelectorAll("[data-fix]").forEach(function(x){ x.disabled=true; });
+              a.req("POST","/api/account/fixleg",{id:p[0],i:+p[1],verdict:p[2]},function(c4,j4){
+                if(c4!==200){ full.querySelectorAll("[data-fix]").forEach(function(x){ x.disabled=false; }); return fail(c4,j4); }
+                say("Game set to "+(p[2]==="void"?"voided":p[2])+". The slip is now "+j4.status+(j4.paid&&j4.paid.odds?", paid ×"+j4.paid.odds:"")+"."); hitsLoad(); }); }; });
           });
         }
         panel.querySelectorAll("[data-settle]").forEach(function(s){ s.onclick=function(){
@@ -1087,6 +1124,22 @@
         msg(code===503?"The log is not set up yet. Run sql/admin.sql in Supabase.":"Could not load the log."); }); }
     logLoad();
     v.querySelector("[data-tab='swaTLog']").addEventListener("click",logLoad);
+    /* THE CODE INSPECTOR (api/account.js inspect). */
+    var inBook="sporty", inBox=v.querySelector("#swaIn"), inChips=v.querySelector("#swaInBooks");
+    function inPaint(){ inChips.innerHTML=Object.keys(BOOK_NAME).map(function(k){
+      return "<button type='button' class='swa-bkc' role='radio' data-inbk='"+k+"' aria-checked='"+(k===inBook)+"'>"+markOf(k)+"</button>"; }).join("");
+      inChips.querySelectorAll("[data-inbk]").forEach(function(b){ b.onclick=function(){ inBook=b.getAttribute("data-inbk"); inPaint(); }; }); }
+    inPaint();
+    function inspect(){
+      var code=v.querySelector("#swaInCode").value.replace(/[^A-Za-z0-9]/g,"");
+      if(!code) return say("Paste a booking code first.");
+      var go=v.querySelector("#swaInGo"); go.disabled=true; inBox.hidden=false; inBox.innerHTML=msg("Reading "+code+"...");
+      a.req("GET","/api/account/inspect?book="+inBook+"&code="+encodeURIComponent(code),null,function(c,j){ go.disabled=false;
+        if(c===404){ inBox.innerHTML=msg(BOOK_NAME[inBook]+" could not read "+code+". Check the code and the bookmaker."); return; }
+        if(c!==200||!j){ inBox.innerHTML=""; inBox.hidden=true; return fail(c,j); }
+        inBox.innerHTML="<div class='swa-set'><span class='swa-st'><small>"+legsHtml(j,null)+"</small></span></div>"; }); }
+    v.querySelector("#swaInGo").onclick=inspect;
+    v.querySelector("#swaInCode").onkeydown=function(e){ if(e.key==="Enter") inspect(); };
     function todayLoad(){ a.req("GET","/api/account/today",null,function(code,j){
       var box=v.querySelector("#swaToday"); if(!box) return;
       box.innerHTML=code===200&&j?todayHtml(j):msg("Could not load today.");
@@ -1102,6 +1155,12 @@
     function paintSw(){
       v.querySelector("#swaMaint").setAttribute("aria-checked",flags.maint?"true":"false");
       v.querySelector("#swaOldNotice").hidden=!flags.notice; v.querySelector("#swaNoticeT").textContent=flags.notice||"";
+      var pb=v.querySelector("#swaPause"); pb.innerHTML=pauseHtml(flags);
+      pb.querySelectorAll("[data-pause]").forEach(function(b){ b.onclick=function(){
+        var k=b.getAttribute("data-pause"), day=lagosDay(), p=Object.assign({},flags.pause||{}), on=p[k]!==day;
+        if(on) p[k]=day; else delete p[k];
+        b.disabled=true;
+        saveFlags({pause:p},(PAUSE_ROWS.filter(function(r){ return r[0]===k; })[0][1])+(on?" paused for today.":" running again.")); }; });
       var box=v.querySelector("#swaSw"); box.innerHTML=switchesHtml(flags);
       box.querySelectorAll("[data-book-sw]").forEach(function(b){ b.onclick=function(){
         var k=b.getAttribute("data-book-sw"), off=flags.booksOff.slice(), i=off.indexOf(k);

@@ -11,7 +11,7 @@ const read = (p) => fs.readFileSync(path.join(__dirname, "..", p), "utf8");
 
 test("the switch survives cleaning; anything but true is off", () => {
   assert.deepStrictEqual(F.clean({ maint: true, maintMsg: "  Back  by 8pm " }),
-    { booksOff: [], notice: "", maint: true, maintMsg: "Back by 8pm" });
+    { booksOff: [], notice: "", maint: true, maintMsg: "Back by 8pm", pause: {} });
   assert.strictEqual(F.clean({ maint: "yes" }).maint, false);
   assert.strictEqual(F.clean({ maintMsg: "x".repeat(500) }).maintMsg.length, F.MAINT_MAX);
 });

@@ -64,6 +64,15 @@ async function postTG(text) {
   return !!(b && b.ok);
 }
 /* The won-slip banner with its caption (1024 is Telegram's photo caption limit). */
+/* A plain message to one chat (the owner's), without the channel's bot footer. */
+async function tgTo(chat, text) {
+  const t = (process.env.TELEGRAM_BOT_TOKEN || "").trim();
+  if (!t || !chat) return false;
+  const r = await fetch("https://api.telegram.org/bot" + t + "/sendMessage", { method: "POST",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chat, text }) }).catch(() => null);
+  const b = r ? await r.json().catch(() => null) : null;
+  return !!(b && b.ok);
+}
 async function postTGPhoto(photo, caption, chat) {
   const t = (process.env.TELEGRAM_BOT_TOKEN || "").trim();
   if (!t) return false;
@@ -88,6 +97,10 @@ module.exports = async function handler(req, res) {
   if (!pay || !Array.isArray(pay.fixtures)) return res.status(200).json({ ok: false, why: "no payload" });
 
   const items = S.due(pay, now, posted, lastPost);
+  /* PAUSE SWITCHES (lib/flags.js pause, Admin > Switches): wins, Big odds, the ladder. */
+  const FL = require("../lib/flags.js");
+  const flags = await FL.get(now).catch(() => ({}));
+  const paused = (what) => FL.pausedOn(flags, what, S.dayOf(now));
   /* Big odds of the day: 11:00 Lagos, only on a day with enough bankers. */
   /* ONE MINTING A DAY, EVER (code review, 24 Sep). Each channel is gated on
      its own key, and once today's slip is stored any retry re-posts THOSE
@@ -95,7 +108,7 @@ module.exports = async function handler(req, res) {
      already showed. */
   const bigKey = (ch) => "bigodds|" + S.dayOf(now) + "|" + ch;
   const bigDue = ["x", "tg"].filter((ch) => !posted.has(bigKey(ch)));
-  if (S.hourOf(now) === 11 && bigDue.length) {
+  if (S.hourOf(now) === 11 && bigDue.length && !paused("bigodds")) {
     const stored = await SB.getBigOdds(S.dayOf(now));
     let slip = stored.ok && stored.row ? BIG.fromRow(stored.row) : null;
     if (!slip && stored.ok && !stored.row) {
@@ -124,7 +137,7 @@ module.exports = async function handler(req, res) {
   const landed = await SB.landedSlipsSince(new Date(now - 864e5).toISOString());
   /* A CONFIRMED win (every game won on its final score, lib/winpost.js confirmed) still
      posts itself, three a day per channel, biggest first. */
-  if (landed.ok) {
+  if (landed.ok && !paused("wins")) {
     for (const ch of ["tg", "x", "fb"]) {
       for (const s of WIN.pick(landed.rows, log.rows, ch, now, S.dayOf, S.hourOf)) {
         const text = WIN.caption(s, ch), img = WIN.imageUrl(SITE, s);
@@ -140,6 +153,18 @@ module.exports = async function handler(req, res) {
         await SB.logSocial({ key: WIN.askKey(s), channel: "owner", kind: "winask", text: WIN.askText(s) });
         sent.push(WIN.askKey(s));
       }
+    }
+  }
+  /* FEED ALARMS (lib/alarms.js): once a day each, to the owner's own chat. */
+  if (owner) {
+    const day = S.dayOf(now);
+    const [lad, stats] = await Promise.all([SB.getLadder(day).catch(() => null), SB.adminStats().catch(() => null)]);
+    const found = require("../lib/alarms.js").alarms({ now, hour: S.hourOf(now), payload: pay,
+      ladder: lad && lad.ok ? lad.rows : null, ladderPaused: paused("ladder"), stats: stats && stats.ok ? stats.stats : null });
+    for (const a of found) {
+      const key = "alarm|" + a.id + "|" + day;
+      if (posted.has(key)) continue;
+      if (await tgTo(owner, a.text)) { await SB.logSocial({ key, channel: "owner", kind: "alarm", text: a.text }); sent.push(key); }
     }
   }
   /* THE MORNING RECAP (lib/winpost.js recap): 10:00 Lagos, yesterday's x5+ wins, once per channel. */

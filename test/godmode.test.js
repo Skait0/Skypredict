@@ -16,8 +16,8 @@ const account = require("../api/account.js");
 
 test("only known bookies and one clean notice line survive", () => {
   assert.deepStrictEqual(F.clean({ booksOff: ["SPORTY", "sporty", "nope", "bet9ja"], notice: "  Slow\n tonight  " }),
-    { booksOff: ["sporty", "bet9ja"], notice: "Slow tonight", maint: false, maintMsg: "" });
-  assert.deepStrictEqual(F.clean(null), { booksOff: [], notice: "", maint: false, maintMsg: "" });
+    { booksOff: ["sporty", "bet9ja"], notice: "Slow tonight", maint: false, maintMsg: "", pause: {} });
+  assert.deepStrictEqual(F.clean(null), { booksOff: [], notice: "", maint: false, maintMsg: "", pause: {} });
   assert.strictEqual(F.clean({ notice: "x".repeat(500) }).notice.length, F.NOTICE_MAX);
 });
 
@@ -107,8 +107,8 @@ test("admin pauses a bookie and sets a notice", async () => {
   const w = await world();
   const r = await w.call(post(w.boss, "setflags", { booksOff: ["bet9ja", "x"], notice: "Bet9ja is down" }));
   assert.strictEqual(r.code, 200);
-  assert.deepStrictEqual(r.json(), { booksOff: ["bet9ja"], notice: "Bet9ja is down", maint: false, maintMsg: "" });
-  assert.deepStrictEqual((await w.call(get(w.boss, "flags"))).json(), { booksOff: ["bet9ja"], notice: "Bet9ja is down", maint: false, maintMsg: "" });
+  assert.deepStrictEqual(r.json(), { booksOff: ["bet9ja"], notice: "Bet9ja is down", maint: false, maintMsg: "", pause: {} });
+  assert.deepStrictEqual((await w.call(get(w.boss, "flags"))).json(), { booksOff: ["bet9ja"], notice: "Bet9ja is down", maint: false, maintMsg: "", pause: {} });
 });
 
 test("admin reads the numbers", async () => {
@@ -252,4 +252,70 @@ test("the admin list says when a win landed, what it paid and where it was poste
   assert.match(none, /Waiting for your OK/); assert.match(none, />Post to our channels</);
   const all = UI.hitsHtml([Object.assign({ posted: ["tg", "x", "fb"].map((ch) => ({ ch, at: "2026-10-18T20:40:00Z" })) }, base)]);
   assert.doesNotMatch(all, /data-postwin=/, "nothing left to post"); assert.match(all, /✓ Shared/);
+});
+
+test("fix a game by hand: the slip's status follows the legs (owner, 18 Oct 2026)", async () => {
+  const w = await world();
+  /* world() has no fixleg row; build one through the same deps */
+  const account = require("../api/account.js");
+  const rows = { 61: { id: 61, book: "sporty", code: "FIX1", status: "landed", total_odds: 20, leg_count: 2, created_at: "2026-10-12T10:00:00Z",
+    legs: [{ name: "A", verdict: "won", odds: 4 }, { name: "B", verdict: "won", odds: 5 }] } };
+  const log = [];
+  const slips = { hits: async () => ({ ok: true, rows: [] }), byId: async (id) => rows[id] || null,
+    fill: async (id, patch) => Object.assign(rows[id], patch), read: async () => null, results: async () => [] };
+  const h = account.make({ db: w.db, now: () => Date.UTC(2026, 9, 13, 10), env: { SW_ADMIN_EMAILS: "boss@x.com" }, slips,
+    audit: { log: async (r) => { log.push(r); return true; }, list: async () => ({ ok: true, rows: [] }) } });
+  const call = async (req) => { const r = fakeRes(); await h(req, r); return r; };
+  assert.strictEqual((await call(post(w.plain, "fixleg", { id: "61", i: 0, verdict: "lost" }))).code, 403);
+  assert.strictEqual((await call(post(w.boss, "fixleg", { id: "61", i: 0, verdict: "maybe" }))).code, 400);
+  assert.strictEqual((await call(post(w.boss, "fixleg", { id: "61", i: 5, verdict: "won" }))).code, 400);
+  let r = (await call(post(w.boss, "fixleg", { id: "61", i: 1, verdict: "void" }))).json();
+  assert.strictEqual(r.status, "landed"); assert.strictEqual(r.paid.odds, 4, "a voided leg pays odds 1");
+  assert.strictEqual(rows[61].legs[1].byHand, true);
+  r = (await call(post(w.boss, "fixleg", { id: "61", i: 0, verdict: "lost" }))).json();
+  assert.strictEqual(r.status, "lost"); assert.strictEqual(rows[61].status, "lost");
+  assert.strictEqual(log.filter((x) => x.action === "fixleg").length, 2, "every fix is in the audit log");
+});
+
+test("pause switches are kept for one Lagos day only", () => {
+  const F = require("../lib/flags.js");
+  const f = F.clean({ pause: { wins: "2026-10-19", ladder: "tomorrow", bigodds: "2026-10-18" } });
+  assert.deepStrictEqual(f.pause, { wins: "2026-10-19", bigodds: "2026-10-18" });
+  assert.strictEqual(F.pausedOn(f, "wins", "2026-10-19"), true);
+  assert.strictEqual(F.pausedOn(f, "bigodds", "2026-10-19"), false, "yesterday's pause has ended");
+  const UI = require("../public/account-ui.js");
+  assert.match(UI.pauseHtml({ pause: {} }), /data-pause='wins' aria-checked='false'/);
+});
+
+test("feed alarms: board, results, ladder, a bookie gone quiet", () => {
+  const A = require("../lib/alarms.js");
+  const now = Date.parse("2026-10-19T13:00:00Z");
+  const quiet = A.alarms({ now, hour: 14, payload: { generatedAt: "2026-10-19T09:00:00Z", degradedSources: 0 }, ladder: [{ rung: 5 }], ladderPaused: false,
+    stats: { books: [{ book: "sporty", today: 40, lastHour: 9, last: "2026-10-19T12:50:00Z" }] } });
+  assert.deepStrictEqual(quiet, [], "a healthy afternoon raises nothing");
+  const bad = A.alarms({ now, hour: 14, payload: { generatedAt: "2026-10-19T02:00:00Z", degradedSources: 3 }, ladder: [], ladderPaused: false,
+    stats: { books: [{ book: "sporty", today: 40, lastHour: 9, last: "2026-10-19T12:50:00Z" }, { book: "bet9ja", today: 12, lastHour: 0, last: "2026-10-19T10:30:00Z" }] } });
+  assert.deepStrictEqual(bad.map((a) => a.id), ["board", "results", "ladder", "book-bet9ja"]);
+  assert.strictEqual(A.alarms({ now, hour: 14, ladder: [], ladderPaused: true }).length, 0, "a paused ladder is not an alarm");
+  const fs = require("fs"), path = require("path");
+  const social = fs.readFileSync(path.join(__dirname, "..", "api", "social.js"), "utf8");
+  assert.match(social, /"alarm\|" \+ a\.id \+ "\|" \+ day/, "once a day per alarm");
+  assert.match(social, /!paused\("wins"\)/); assert.match(social, /!paused\("bigodds"\)/);
+});
+
+test("the code inspector reads any code with our number and the result", async () => {
+  const w = await world();
+  const account = require("../api/account.js");
+  const slips = { hits: async () => ({ ok: true, rows: [] }),
+    read: async (book, code) => (code === "GOOD1" ? [{ home: "Alpha", away: "Beta", prediction: "1", odds: 1.8, kickoff: "2026-10-12T15:00:00Z" }] : null),
+    results: async () => [{ match_date: "2026-10-12", home: "Alpha", away: "Beta", hg: 2, ag: 0 }],
+    board: async () => ({ fixtures: [{ home: "Alpha", away: "Beta", kickoff: "2026-10-12T15:00:00Z", home_p: 0.6, draw_p: 0.25, away_p: 0.15 }] }) };
+  const h = account.make({ db: w.db, now: () => Date.UTC(2026, 9, 13, 10), env: { SW_ADMIN_EMAILS: "boss@x.com" }, slips });
+  const call = async (req) => { const r = fakeRes(); await h(req, r); return r; };
+  assert.strictEqual((await call(get(w.plain, "inspect", { book: "sporty", code: "GOOD1" }))).code, 403);
+  assert.strictEqual((await call(get(w.boss, "inspect", { book: "nope", code: "GOOD1" }))).code, 400);
+  assert.strictEqual((await call(get(w.boss, "inspect", { book: "sporty", code: "BAD99" }))).code, 404);
+  const r = (await call(get(w.boss, "inspect", { book: "sporty", code: "GOOD1" }))).json();
+  assert.strictEqual(r.legs.length, 1); assert.strictEqual(r.legs[0].verdict, "won"); assert.strictEqual(r.legs[0].score, "2-0");
+  assert.ok(r.legs[0].our > 50 && r.legs[0].our < 70, "our blended number: " + r.legs[0].our);
 });

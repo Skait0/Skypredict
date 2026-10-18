@@ -90,12 +90,15 @@ function make(deps) {
     if (q.a === "run") {
       if (!allowed(req)) return res.status(401).json({ ok: false });
       const now = deps.now();
+      /* Paused for today in Admin > Switches (lib/flags.js): nothing is booked or sent. */
+      if (deps.paused && await deps.paused(S.dayOf(now))) return res.status(200).json({ ok: true, paused: true });
       const f = await fill(now, deps);
       if (!f.ok) return res.status(200).json({ ok: false, why: "ladder unreadable" });
       const d = await deliver(now, f.rows, deps);
       return res.status(200).json({ ok: true, rungs: f.rows.map((r) => r.rung), minted: f.minted, delivery: d });
     }
     const day = S.dayOf(deps.now());
+    if (deps.paused && await deps.paused(day)) { applyCache(res, POLICY); return res.status(200).json({ ok: true, paused: true, rungs: [] }); }
     const got = await deps.getLadder(day);
     const res0 = got.ok && got.rows.length && deps.results ? (await deps.results(day).catch(() => [])) || [] : [];
     /* Each rung's end state (lib/ladder.js rungState): lost, landed, started or live. */
@@ -115,6 +118,7 @@ function make(deps) {
 const live = {
   now: () => Date.now(),
   getLadder: SB.getLadder, putLadder: SB.putLadder,
+  paused: async (day) => { const FL = require("../lib/flags.js"); return FL.pausedOn(await FL.get().catch(() => ({})), "ladder", day); },
   /* Today's final scores, for greying out a rung that has lost (lib/ladder.js rungLost). */
   results: async (day) => (await SB.recentResults(day)).rows || [],
   autopilotDue: SB.autopilotDue, markSent: SB.markAutopilotSent,
