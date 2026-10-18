@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 92" width="80" height="92">
+<!-- Family & friends crest (owner, 18 Oct 2026: "special electric badge"). The bolt glows and the
+     sparks crackle every few seconds; still for anyone who asks for reduced motion. -->
+<style>
+.glow{animation:glow 2.4s ease-in-out infinite}
+.arc,.rim{opacity:0;animation:zap 3.6s linear infinite}
+.a2{animation-delay:1.3s}.a3{animation-delay:2.4s}.rim{animation-duration:1.2s}
+@keyframes glow{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes zap{0%,84%,100%{opacity:0}86%{opacity:1}88%{opacity:.15}90%{opacity:1}93%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.glow,.arc,.rim{animation:none}.glow{opacity:.8}}
+</style>
+<defs>
+<linearGradient id="sh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16305c"/><stop offset="1" stop-color="#0a1428"/></linearGradient>
+<linearGradient id="bo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#8fe3ff"/></linearGradient>
+<filter id="gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.2"/></filter>
+</defs>
+<path d="M40 3 74 14v30c0 22-15 37-34 45C21 81 6 66 6 44V14Z" fill="url(#sh)" stroke="#4FC3F7" stroke-width="2.5"/>
+<path class="rim" d="M40 3 74 14v30c0 22-15 37-34 45C21 81 6 66 6 44V14Z" fill="none" stroke="#dff7ff" stroke-width="3" filter="url(#gl)"/>
+<path d="M40 10 67 19v25c0 18-12 30-27 37C25 74 13 62 13 44V19Z" fill="none" stroke="#ffffff" stroke-opacity=".18"/>
+<polygon class="glow" points="46,15 26,51 39,51 32,78 55,38 42,38 50,15" fill="#4FC3F7" filter="url(#gl)"/>
+<polygon points="46,15 26,51 39,51 32,78 55,38 42,38 50,15" fill="url(#bo)"/>
+<polyline class="arc" points="27,28 18,33 24,38 12,45 18,48 4,56" fill="none" stroke="#e6faff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline class="arc a2" points="52,46 62,49 56,55 70,60 64,64 78,70" fill="none" stroke="#e6faff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline class="arc a3" points="50,20 58,14 57,22 67,17 66,24 76,20" fill="none" stroke="#e6faff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

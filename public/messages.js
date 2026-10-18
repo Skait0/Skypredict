@@ -135,7 +135,7 @@
   function founderHtml(no){
     return "<p><img src=\"/fw/crest.webp\" alt=\"Founding Wizard crest\"></p>"+
       "<h3 class=\"m-big m-gold\">Welcome, Founding Wizard"+(no?" No. "+no:"")+"</h3>"+
-      "<p>You are one of the first 500 to back Soccerwizard, and we will not forget it. "+
+      "<p>You are one of the first 200 to back Soccerwizard, and we will not forget it. "+
       "Your Founding Wizard crest is on your profile for good, and your first three month passes stay at the founders' price.</p>"+
       "<p>Thank you for believing in the Wizard early. Reply here any time: we read every message.</p>";
   }

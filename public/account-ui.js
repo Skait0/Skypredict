@@ -88,15 +88,30 @@
      database has not said) still shows the honour. */
   function fwHtml(no){
     return "<div class='swa-fwseal'><img src='/fw/crest-sm.webp' alt='Founding Wizard crest' width='80' height='92'>"+
-      "<span><b>Founding Wizard</b><small>"+(no?"No. "+esc(no)+" of the first 500. ":"")+"With thanks for being one of the first.</small></span></div>";
+      "<span><b>Founding Wizard</b><small>"+(no?"No. "+esc(no)+" of the first 200. ":"")+"With thanks for being one of the first.</small></span></div>";
+  }
+  /* THE FAMILY & FRIENDS CREST (owner, 18 Oct 2026: "special electric badge for family and
+     friends"): a lightning shield on the plan card, where Founding Wizards get theirs:
+     public/fw/ff-crest.svg, whose bolt glows and sparks crackle every few seconds, still for
+     anyone who asks for reduced motion. */
+  function ffHtml(){
+    return "<div class='swa-xseal swa-ffseal'><img src='/fw/ff-crest.svg' alt='Family and friends crest' width='80' height='92'>"+
+      "<span><b>Family &amp; friends</b><small>One of the Wizard's own.</small></span></div>";
+  }
+  /* THE WIZARD PASS CREST (owner, 18 Oct 2026: "similar for the wizard pass also, different
+     but not as glamorous"): public/fw/pass-crest.svg, plain gold with the wand's star, no motion.
+     A Founding Wizard shows their own crest instead. */
+  function wpCrestHtml(){
+    return "<div class='swa-xseal swa-wpseal'><img src='/fw/pass-crest.svg' alt='Wizard Pass crest' width='80' height='92'>"+
+      "<span><b>Wizard Pass</b><small>Thanks for backing the Wizard.</small></span></div>";
   }
   function subHtml(q,role,plan,until,fw,fwNo){
     var u=role==="plus"?dayMonth(until):"";
     var what=role==="admin"?"Every feature, no limit":role==="ff"?"Every feature, 100 codes a day":
       role==="plus"?((+lsGet("sw.codeLimit")||20)>=100?"Unlimited codes":(+lsGet("sw.codeLimit")||20)+" codes a day")+(u?", until "+esc(u):""):"2 trial codes";
-    return "<p class='swa-h'>Your plan</p><div class='swa-card"+(fw?" swa-fwcard":"")+"'><div class='swa-subtop'><span><b"+(role==="admin"?" class='swa-gold'":"")+">"+esc(plan||"Free plan")+"</b><small>"+what+"</small></span>"+
+    return "<p class='swa-h'>Your plan</p><div class='swa-card"+(fw?" swa-fwcard":role==="ff"?" swa-ffcard":"")+"'><div class='swa-subtop'><span><b"+(role==="admin"?" class='swa-gold'":"")+">"+esc(plan||"Free plan")+"</b><small>"+what+"</small></span>"+
       (canBuy(role)?"<button class='swa-pillbtn swa-pgo' type='button' data-plus>"+(role==="plus"?"Add days":"Get Wizard Pass")+"</button>":"")+"</div>"+
-      (fw?fwHtml(fwNo):"")+
+      (fw?fwHtml(fwNo):role==="ff"?ffHtml():role==="plus"?wpCrestHtml():"")+
       (role==="admin"||q?"<div class='swa-subuse'>"+codesHtml(q,role).replace("class='swa-q'","class='swa-q swa-q0'")+(role==="admin"?"":role==="plus"||role==="ff"?"<small>Resets at midnight</small>":"")+"</div>":"")+"</div>";
   }
   /* THE PLUS SCREEN (owner, 16 Oct 2026). o = GET /api/pay/offer plus role and
@@ -125,17 +140,19 @@
     var u=o.role==="plus"?dayMonth(o.plusUntil):"", f=o.founder;
     var passes=(o.passes||[]).map(function(p){ return passHtml(p,pick,f); }).join("");
     var sel=(o.passes||[]).filter(function(p){ return p.pass===pick; })[0];
-    var taken=f?Math.max(0,500-f.seatsLeft):0;
+    var seats=(f&&f.seats)||200, taken=f?Math.max(0,seats-f.seatsLeft):0;
     var unl=(o.passes||[]).some(function(p){ return p.unlimited; }), cap=unl?o.passes[0].codes:20;
     return "<img class='swa-wpwiz' src='/emo/wiz-spell.webp' alt='' width='112' height='112'>"+
       "<p class='swa-wpsub'><b>"+(unl?"Unlimited booking codes":"20 booking codes a day")+"</b> on every bookie, from every tool: the Wizard, Slider, Converter, Edit for me, Split and Trim. Pay once. Nothing renews.</p>"+
+      /* THE ONE THING THE OTHERS DO NOT HAVE (owner, 18 Oct 2026): a public, graded record. */
+      "<p class='swa-wprec'>Every pick is graded in public, win or lose. <a href='/how-it-works'>See our record</a></p>"+
       (o.switchAt?"<p class='swa-wpnow'><b>New prices from 1 Nov.</b> Buy now at today's price. From 1 Nov every running pass gets unlimited codes (fair use).</p>":"")+
       (u?"<p class='swa-wpnow'>Your pass runs until <b>"+esc(u)+"</b>. A new pass adds its days on top.</p>":"")+
       (f&&f.open&&f.seatsLeft>0&&f.monthsLeft===3?
         "<div class='swa-fwpanel'><div class='swa-fwhead'><span class='swa-fwt'>Founding Wizards</span>"+
-            "<span class='swa-fwleft'><b>"+f.seatsLeft+"</b> of 500 places left</span></div>"+
-          "<p class='swa-fwd'>The first 500 users pay <b>"+naira(1500)+"</b> for their first 3 month passes.</p>"+
-          "<div class='swa-fwbar' role='img' aria-label='"+taken+" of 500 places taken'><i style='--to:"+Math.max(2,Math.round(100*taken/500))+"%'></i></div></div>":"")+
+            "<span class='swa-fwleft'><b>"+f.seatsLeft+"</b> of "+seats+" places left</span></div>"+
+          "<p class='swa-fwd'>The first "+seats+" users pay <b>"+naira(1500)+"</b> for their first 3 month passes.</p>"+
+          "<div class='swa-fwbar' role='img' aria-label='"+taken+" of "+seats+" places taken'><i style='--to:"+Math.max(2,Math.round(100*taken/seats))+"%'></i></div></div>":"")+
       "<div class='swa-passes'>"+(passes||"<p class='swa-note'>Prices did not load. Check your connection and try again.</p>")+"</div>"+
       (sel?"<button class='swa-wppay' id='swaPay' type='button'>"+LOCKI+"<span>Pay "+naira(sel.naira)+" with Paystack</span></button>":"")+
       "<p class='swa-wpfine'>Card, bank transfer or USSD, on Paystack's secure page. We don't keep your card. No hidden charges. 18+."+(unl?" Fair use: up to "+cap+" codes a day.":"")+"</p>"+
@@ -526,6 +543,7 @@
     ".swa-fwbar{height:5px;border-radius:99px;background:var(--raise);overflow:hidden}"+
     ".swa-fwbar i{display:block;height:100%;width:0;border-radius:99px;background:var(--accent);transition:width 1.1s var(--ease-out,cubic-bezier(.23,1,.32,1)) .15s}.swa-fwbar i.on{width:var(--to)}"+
     ".swa-wp .swa-passes{margin-top:18px}"+
+    ".swa-wprec{margin:6px 0 0;font-size:12.5px;line-height:1.45;color:var(--soft)}.swa-wprec a{color:var(--accent);font-weight:700}"+
     ".swa-wppay{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;height:52px;margin-top:16px;border:0;border-radius:var(--r-lg,8px);background:var(--accent);color:var(--on-accent);"+
       "font:inherit;font-size:16px;font-weight:800;cursor:pointer}.swa-wppay svg{width:18px;height:18px}.swa-wppay[disabled]{opacity:.6;cursor:default}"+
     ".swa-wppay:focus-visible{outline:2px solid var(--text);outline-offset:3px}"+
@@ -539,7 +557,8 @@
     /* Passes: Saira numerals for the price, the month marked with a flat tag. */
     ".swa-fw{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:var(--r-sm);border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:800}"+
     ".swa-mplus{color:var(--accent)}.swa-mplus svg{color:var(--accent)}.swa-mplus .swa-r{font-size:11.5px;font-weight:700}"+
-    ".swa-fwcard{border-color:var(--accent-rim)}.swa-fwseal{display:flex;align-items:center;gap:14px;padding:12px 14px;border-top:1px solid var(--line)}.swa-fwseal img{flex:none;width:80px;height:92px}.swa-fwseal b{display:block;font-family:var(--disp);font-size:20px;font-weight:800;text-transform:uppercase;letter-spacing:.005em;color:var(--accent);line-height:1.1}.swa-fwseal small{display:block;margin-top:3px;font-size:12.5px;font-weight:600;color:var(--soft);line-height:1.45}.swa-tgbtn{flex:none;text-decoration:none;white-space:nowrap}.swa-pgo{margin-left:auto;border-color:var(--accent);color:var(--accent);white-space:nowrap}"+
+    ".swa-ffcard{border-color:var(--electric-rim)}.swa-ffseal b{color:var(--electric)!important}"+
+    ".swa-fwcard{border-color:var(--accent-rim)}.swa-fwseal,.swa-xseal{display:flex;align-items:center;gap:14px;padding:12px 14px;border-top:1px solid var(--line)}.swa-fwseal img,.swa-xseal img{flex:none;width:80px;height:92px}.swa-fwseal b,.swa-xseal b{display:block;font-family:var(--disp);font-size:20px;font-weight:800;text-transform:uppercase;letter-spacing:.005em;color:var(--accent);line-height:1.1}.swa-fwseal small,.swa-xseal small{display:block;margin-top:3px;font-size:12.5px;font-weight:600;color:var(--soft);line-height:1.45}.swa-tgbtn{flex:none;text-decoration:none;white-space:nowrap}.swa-pgo{margin-left:auto;border-color:var(--accent);color:var(--accent);white-space:nowrap}"+
     ".swa-passes{display:grid;gap:11px;margin:0}"+
     ".swa-pass{position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:66px;padding:11px 16px 11px 48px;border:1.5px solid var(--line);border-radius:12px;"+
       "background:var(--card);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .18s,background-color .18s}"+

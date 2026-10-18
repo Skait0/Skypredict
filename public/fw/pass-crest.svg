@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 92" width="80" height="92">
+<!-- Wizard Pass crest (owner, 18 Oct 2026: "similar for the wizard pass, different but not as
+     glamorous"): the same shield, plain gold with the wand's star, no motion. -->
+<path d="M40 3 74 14v30c0 22-15 37-34 45C21 81 6 66 6 44V14Z" fill="#17150f" stroke="#F2B84B" stroke-width="2.5"/>
+<path d="M40 10 67 19v25c0 18-12 30-27 37C25 74 13 62 13 44V19Z" fill="none" stroke="#F2B84B" stroke-opacity=".25"/>
+<polygon points="40,24 45.3,37.6 59.5,38.3 48.5,47.4 52.2,61.2 40,53.4 27.8,61.2 31.5,47.4 20.5,38.3 34.7,37.6" fill="#F2B84B"/>
+</svg>

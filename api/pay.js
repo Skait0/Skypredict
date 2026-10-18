@@ -2,7 +2,8 @@
 /* /api/pay/:action - Plus passes through Paystack (owner, 16 Oct 2026).
    Prepaid, never auto-renewed. The prices and codes are lib/pricing.js: today's
    until 1 Nov 2026, then the new ones.
-   Founding Wizards: the first 500 buyers pay N1,500 for their first 3 month passes.
+   Founding Wizards: the first 200 buyers (owner, 18 Oct 2026: was 500) pay N1,500 for their
+   first 3 month passes.
 
      GET  offer    prices, and whether this reader still gets the founder price
      POST start    {pass} -> a pending payments row + Paystack checkout url
@@ -21,7 +22,7 @@ const S = require("../lib/auth/session.js");
 const { report } = require("../lib/report.js");
 
 const P = require("../lib/pricing.js");
-const FOUNDER = { kobo: 150000, seats: 500, months: 3 };
+const FOUNDER = { kobo: 150000, seats: 200, months: 3 };
 
 /* The founder price, for a month pass only: still seats left, or this reader
    already holds one, and fewer than 3 founder months paid. */
@@ -114,7 +115,7 @@ function make(deps) {
             codes: cur[k].codes, unlimited: !!cur[k].unlimited, naira: priceOf(k, o, t) / 100, full: cur[k].kobo / 100,
             next: soon && P.NEXT[k] ? P.NEXT[k].kobo / 100 : null })),
           switchAt: soon ? new Date(P.SWITCH_AT).toISOString() : null,
-          founder: o ? { open: founderOpen(o), seatsLeft: Math.max(0, FOUNDER.seats - o.taken), monthsLeft: Math.max(0, FOUNDER.months - o.mine) } : null,
+          founder: o ? { open: founderOpen(o), seats: FOUNDER.seats, seatsLeft: Math.max(0, FOUNDER.seats - o.taken), monthsLeft: Math.max(0, FOUNDER.months - o.mine) } : null,
         }, cookies);
       }
 

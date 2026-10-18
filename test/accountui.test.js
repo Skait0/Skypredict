@@ -172,11 +172,12 @@ test("Plus screen: three passes, founder price struck through, pay button names 
   const passes = [{ pass: "day", days: 1, label: "Day pass", naira: 200, full: 200 },
     { pass: "week", days: 7, label: "Week pass", naira: 800, full: 800 },
     { pass: "month", days: 30, label: "Month pass", naira: 1500, full: 2000 }];
-  const h = UI.plusHtml({ passes, founder: { open: true, seatsLeft: 480, monthsLeft: 3 }, role: "free" }, "month");
+  const h = UI.plusHtml({ passes, founder: { open: true, seats: 200, seatsLeft: 192, monthsLeft: 3 }, role: "free" }, "month");
   assert.equal((h.match(/data-pass=/g) || []).length, 3);
   assert.match(h, /<s>₦2,000<\/s><b>₦1,500<\/b>/);
   assert.match(h, /Pay ₦1,500 with Paystack/);
-  assert.match(h, /<b>480<\/b> of 500 places left/);
+  assert.match(h, /<b>192<\/b> of 200 places left/);
+  assert.match(h, /The first 200 users pay/, "200 places (owner, 18 Oct 2026: was 500)");
   assert.match(h, /wiz-spell\.webp/);
   assert.match(h, /Nothing renews/);
   assert.match(h, /We don't keep your card\. No hidden charges\./, "the card line sits under Pay (owner, 18 Oct 2026)");
@@ -268,7 +269,31 @@ test("a Founding Wizard's plan card carries the crest, their number and the than
   const fw = p({ founder: true, founderNo: "37" });
   assert.match(fw, /swa-card swa-fwcard/, "the gold-rimmed, favoured card");
   assert.match(fw, /src='\/fw\/crest-sm\.webp'/);
-  assert.match(fw, /No\. 37 of the first 500\. With thanks for being one of the first\./);
+  assert.match(fw, /No\. 37 of the first 200\. With thanks for being one of the first\./);
   assert.match(p({ founder: true }), /<small>With thanks for being one of the first\./, "no number yet still honours them");
-  assert.doesNotMatch(p({}), /swa-fwseal|crest/, "nobody else gets it");
+  assert.doesNotMatch(p({}), /swa-fwseal|crest-sm/, "nobody else gets it");
+});
+
+/* Owner, 18 Oct 2026: "special electric badge for family and friends", and "similar for the
+   wizard pass also, different but not as glamorous". One crest per card, never two. */
+test("Family & friends get the electric crest, a pass the plain gold one, a founder only theirs", () => {
+  const p = (o) => UI.profileHtml(Object.assign({ name: "A", avatar: "fire", record: { built: 0, won: 0, settled: 0 }, quota: null }, o));
+  const ff = p({ role: "ff", plan: "Family & friends" });
+  assert.match(ff, /swa-card swa-ffcard/);
+  assert.match(ff, /src='\/fw\/ff-crest\.svg'/);
+  assert.match(ff, /One of the Wizard's own\./);
+  const pass = p({ role: "plus", plan: "Wizard Pass" });
+  assert.match(pass, /src='\/fw\/pass-crest\.svg'/);
+  assert.doesNotMatch(pass, /ff-crest|crest-sm/);
+  const fw = p({ role: "plus", plan: "Wizard Pass", founder: true });
+  assert.match(fw, /crest-sm\.webp/);
+  assert.doesNotMatch(fw, /pass-crest|ff-crest/, "a founder shows their own crest only");
+  assert.doesNotMatch(p({ role: "free", plan: "Free plan" }), /crest/);
+});
+
+test("the electric crest animates on its own and holds still for reduced motion", () => {
+  const svg = fs.readFileSync(path.join(__dirname, "..", "public", "fw", "ff-crest.svg"), "utf8");
+  assert.match(svg, /@keyframes zap/);
+  assert.match(svg, /prefers-reduced-motion:reduce\)\{[^}]*animation:none/);
+  assert.doesNotMatch(fs.readFileSync(path.join(__dirname, "..", "public", "fw", "pass-crest.svg"), "utf8"), /animation|@keyframes/, "the pass crest is plain");
 });

@@ -1,7 +1,7 @@
 "use strict";
 /* THE PAYGATE (owner, 16 Oct 2026): 2 codes a day on a signed-in account, 20 on
    any Plus pass, prepaid Day N200 / Week N800 / Month N2,000 through Paystack,
-   Founding Wizards N1,500 on their first 3 month passes, first 500 buyers.
+   Founding Wizards N1,500 on their first 3 month passes, first 200 buyers (500 until 18 Oct 2026).
    These drive the real gate, the real roles and the real /api/pay against
    fakes of the database and of Paystack. */
 const test = require("node:test");
@@ -120,8 +120,9 @@ test("prices: day 200, week 800, month 2,000; the founder month 1,500", () => {
   assert.deepEqual([PAY.priceOf("day"), PAY.priceOf("week"), PAY.priceOf("month")], [20000, 80000, 200000]);
   assert.equal(PAY.priceOf("month", { taken: 0, mine: 0 }), 150000);
   assert.equal(PAY.priceOf("week", { taken: 0, mine: 0 }), 80000, "founder price is the month pass only");
-  assert.equal(PAY.priceOf("month", { taken: 500, mine: 0 }), 200000, "seats gone");
-  assert.equal(PAY.priceOf("month", { taken: 500, mine: 2 }), 150000, "a founder keeps it past the 500th buyer");
+  assert.equal(PAY.priceOf("month", { taken: 200, mine: 0 }), 200000, "the 200 places are gone");
+  assert.equal(PAY.priceOf("month", { taken: 199, mine: 0 }), 150000, "the 200th buyer still gets it");
+  assert.equal(PAY.priceOf("month", { taken: 200, mine: 2 }), 150000, "a founder keeps it past the 200th buyer");
   assert.equal(PAY.priceOf("month", { taken: 10, mine: 3 }), 200000, "after 3 founder months, the normal price");
 });
 
@@ -201,7 +202,7 @@ test("offer: prices for the page, and seats left", async () => {
   const w = world({ taken: 120 });
   const r = (await w.call(Object.assign(getReq("pay", {}), { query: { action: "offer" } }))).json();
   assert.deepEqual(r.passes.map((p) => [p.pass, p.naira, p.full]), [["day", 200, 200], ["week", 800, 800], ["month", 1500, 2000]]);
-  assert.deepEqual(r.founder, { open: true, seatsLeft: 380, monthsLeft: 3 });
+  assert.deepEqual(r.founder, { open: true, seats: 200, seatsLeft: 80, monthsLeft: 3 }, "200 places (owner, 18 Oct 2026)");
 });
 
 test("no secret key, no paygate: every action is a 404", async () => {
