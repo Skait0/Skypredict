@@ -135,8 +135,8 @@
       "date": "2026-10-20",
       "time": "19:00",
       "kind": "feature",
-      "image": "/fw/wizard-pass-live.jpg",
-      "x": "The first 500 Wizard Pass holders become Founding Wizards 🧙\n\n₦1,500 months for their first 3 months, and the Founding Wizard crest on their profile for good. Once the 500 places go, they are gone.\n\nsoccerwizard.live/wizard-pass\n18+"
+      "image": "/promo/new-prices-reminder.jpg",
+      "x": "The first 200 Wizard Pass holders become Founding Wizards 🧙\n\n₦1,500 a month for their first 3 months, and the Founding Wizard crest on their profile for good. Ends 31 Oct, or when the 200 places go.\n\nsoccerwizard.live/wizard-pass\n18+"
     },
     {
       "date": "2026-10-26",
@@ -146,9 +146,9 @@
       "cover": "/promo/covers/founding-wizards.jpg",
       "igVideo": "/promo/founding-wizards-ig.mp4",
       "coverMs": 20500,
-      "x": "Only 500 people get this crest 🧙\n\nThe first 500 Wizard Pass holders become Founding Wizards: ₦1,500 a month for your first 3 months, and the crest on your profile for good.\n\nWhen the 500 places go, they are gone.\n\nsoccerwizard.live/wizard-pass\n18+",
-      "ig": "Only 500 people get this crest 🧙\n\nThe first 500 Wizard Pass holders become Founding Wizards:\n\n• ₦1,500 a month for your first 3 months\n• The Founding Wizard crest on your profile for good\n\nWhen the 500 places go, they are gone.\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
-      "buffer": "instagram scheduled; x waits for a slot (promo-hq/buf-catchup.cjs, 18 Oct 19:23)"
+      "x": "Only 200 people get this crest 🧙\n\nThe first 200 Wizard Pass holders become Founding Wizards: ₦1,500 a month for your first 3 months, and the crest on your profile for good.\n\nEnds 31 Oct, or when the 200 places go.\n\nsoccerwizard.live/wizard-pass\n18+",
+      "ig": "Only 200 people get this crest 🧙\n\nThe first 200 Wizard Pass holders become Founding Wizards:\n\n• ₦1,500 a month for your first 3 months\n• The Founding Wizard crest on your profile for good\n\nEnds 31 Oct, or when the 200 places go.\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
+      "buffer": "re-cut for 200 places 18 Oct; re-schedule with buf-catchup"
     },
     {
       "date": "2026-10-17",
