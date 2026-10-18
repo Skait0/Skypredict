@@ -104,3 +104,16 @@ test("the owner gets a shareable copy of every channel win, and the admin page c
   assert.doesNotMatch(ui.hitsHtml([{ status: "check", code: "ABC12", book: "sporty", total_odds: 11.55, legs: [] }]), /data-share=/,
     "only a landed win can be shared");
 });
+
+test("a landed slip with games off our board opens every leg, not only the tracked ones", () => {
+  /* owner, 18 Oct 2026: "a landed slip thats 14 games but i can only see 5" */
+  const ui = require("../public/account-ui.js");
+  const legs = [1, 2, 3, 4, 5].map((i) => ({ name: "Team " + i + " to win" }));
+  const html = ui.hitsHtml([{ id: 9, status: "landed", code: "ABC12", book: "sporty", total_odds: 60, leg_count: 14, legs }]);
+  assert.match(html, /data-chk='9'[^>]*>See all 14 games</);
+  assert.doesNotMatch(html, /Show 2 more/, "no partial list that reads as the whole slip");
+  assert.match(html, /data-chkbox='9'/);
+  assert.doesNotMatch(html, /data-settle=/, "a landed slip is already settled");
+  const full = ui.hitsHtml([{ id: 9, status: "landed", code: "ABC12", book: "sporty", total_odds: 60, leg_count: 5, legs }]);
+  assert.doesNotMatch(full, /data-chk=/); assert.match(full, /Show 2 more/);
+});

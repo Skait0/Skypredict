@@ -445,21 +445,26 @@
       var when=""; try{ when=new Date(h.settled_at||h.created_at).toLocaleDateString(undefined,{day:"numeric",month:"short"}); }catch(e){}
       var legs=(h.legs||[]).map(function(l){ return l.name; });
       var games=(h.leg_count||legs.length)+" game"+((h.leg_count||legs.length)===1?"":"s");
+      /* h.legs holds only the legs on our board (lib/slipwatch.js trackAll); the rest
+         are read back from the bookie by slipdetail, the same panel as Check (owner,
+         18 Oct 2026: "14 games but i can only see 5"). */
+      var off=(h.leg_count||0)>legs.length, open=h.status==="check"||off;
       return "<div class='swa-set'><span class='swa-st'><b>"+esc(h.code)+" · "+markOf(h.book)+
         (h.total_odds?" · <span class='swa-gold'>×"+esc(Number(h.total_odds).toLocaleString("en-US",{maximumFractionDigits:2}))+"</span>":"")+"</b>"+
         "<small>"+esc(games+" · "+when+(h.who?" · "+h.who:""))+"</small>"+
         "<small>"+esc(srcWords(h.src))+"</small>"+
         (legs.length?"<small>"+esc(legs.slice(0,3).join(" · "))+"</small>"+
-          (legs.length>3?"<details class='swa-more'><summary><span class='swa-m'>Show "+(legs.length-3)+" more</span><span class='swa-l'>Show less</span></summary><small>"+esc(legs.slice(3).join(" · "))+"</small></details>":""):"")+"</span>"+
-        (h.status==="check"?"<button type='button' class='swa-pillbtn' data-chk='"+esc(String(h.id))+"' data-code='"+esc(h.code)+"' aria-expanded='false'>Check</button>":"")+
+          (legs.length>3&&!off?"<details class='swa-more'><summary><span class='swa-m'>Show "+(legs.length-3)+" more</span><span class='swa-l'>Show less</span></summary><small>"+esc(legs.slice(3).join(" · "))+"</small></details>":""):"")+"</span>"+
+        (open?"<button type='button' class='swa-pillbtn' data-chk='"+esc(String(h.id))+"' data-code='"+esc(h.code)+"' aria-expanded='false'>"+(h.status==="check"?"Check":"See all "+esc(games))+"</button>":"")+
         (h.share?"<button type='button' class='swa-pillbtn' data-share='"+esc(JSON.stringify(h.share))+"'>Share</button>":"")+"</div>"+
-        (h.status==="check"?checkHtml(h):""); }).join("");
+        (open?checkHtml(h):""); }).join("");
   }
   /* SETTLE A "CHECK" BY HAND (owner, 13 Oct 2026). Every leg we could grade won; the
      rest (corners, shots, first half) cannot be read off a final score. Tapping
      Check opens the legs; the owner looks the code up on the bookmaker and says
      which way it went (/api/account/settle). */
   function checkHtml(h){
+    if(h.status!=="check") return "<div class='swa-set swa-chkbox' data-chkbox='"+esc(String(h.id))+"' hidden><span class='swa-st'><small data-full></small></span></div>";
     return "<div class='swa-set swa-chkbox' data-chkbox='"+esc(String(h.id))+"' hidden><span class='swa-st'>"+
       "<small data-full></small><small>Code "+esc(h.code)+" on "+markOf(h.book)+". Check the legs marked Check there, then say how it went.</small></span>"+
       "<button type='button' class='swa-pillbtn' data-settle='landed'>It landed</button>"+
