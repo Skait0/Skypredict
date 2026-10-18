@@ -286,7 +286,7 @@ test("each class carries its own colour, and each pass its own on the pricing ca
     { pass: "month", days: 30, label: "Month pass", naira: 1500, full: 2000 }];
   const h = UI.plusHtml({ passes, founder: { open: true, seats: 200, seatsLeft: 192, monthsLeft: 3 }, role: "free" }, "month");
   assert.match(h, /swa-pass swa-tier-day'/); assert.match(h, /swa-pass swa-tier-week'/);
-  assert.match(h, /swa-pass swa-tier-fw'/, "the founder-priced month wears ruby");
+  assert.match(h, /swa-pass swa-tier-fw[ ']/, "the founder-priced month wears ruby");
   for (const t of ["--cls-free", "--cls-founder", "--cls-admin", "--tier-day", "--tier-week", "--electric"])
     assert.ok(fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8").includes(t + ":"), t + " is a site token");
 });
@@ -311,4 +311,22 @@ test("the electric crest animates on its own and holds still for reduced motion"
   assert.match(svg, /@keyframes zap/);
   assert.match(svg, /prefers-reduced-motion:reduce\)\{[^}]*animation:none/);
   assert.doesNotMatch(fs.readFileSync(path.join(__dirname, "..", "public", "fw", "pass-crest.svg"), "utf8"), /animation|@keyframes/, "the pass crest is plain");
+});
+
+test("a founder sees today's N2,000 struck, not the 1 Nov N4,000; Best value never sits on the title", () => {
+  /* Owner, 18 Oct 2026: "since there are still spots for founders, shouldnt that be the price
+     seen now ... the 2000 is slashed till the spots are filled". And "the best offer gets cut off":
+     on short phones the badge covered MONTH PASS. */
+  const passes = [{ pass: "day", days: 1, label: "Day pass", naira: 200, full: 200, next: 500 },
+    { pass: "week", days: 7, label: "Week pass", naira: 800, full: 800, next: 1500 },
+    { pass: "month", days: 30, label: "Month pass", naira: 1500, full: 2000, next: 4000 }];
+  const h = UI.plusHtml({ passes, founder: { open: true, seats: 200, seatsLeft: 192, monthsLeft: 3 }, role: "free" }, "month");
+  assert.match(h, /<s>₦2,000<\/s><b>₦1,500<\/b>/);
+  assert.doesNotMatch(h, /<s>₦4,000<\/s>/);
+  assert.match(h, /<s>₦500<\/s><b>₦200<\/b>/, "day and week still show the 1 Nov price struck");
+  const shut = passes.map((p) => (p.pass === "month" ? Object.assign({}, p, { naira: 2000 }) : p));
+  assert.match(UI.plusHtml({ passes: shut, founder: { open: false }, role: "free" }, "month"), /<s>₦4,000<\/s><b>₦2,000<\/b>/, "no founder place: the 1 Nov price struck");
+  assert.match(h, /swa-pass swa-tier-fw swa-hasbest/);
+  assert.match(src, /\.swa-pass\.swa-hasbest\{padding-top:16px\}/);
+  assert.match(src, /\.swa-wp \.swa-pass\.swa-hasbest\{padding-top:15px\}/, "and inside the short-phone rules, which set 7px");
 });

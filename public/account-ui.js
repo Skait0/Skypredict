@@ -132,9 +132,11 @@
      unlimited codes with a stated fair-use limit (lib/pricing.js FAIR_USE). */
   function passHtml(p,pick,f){
     var fw=p.pass==="month"&&p.naira<p.full;
-    var was=Math.max(p.full||0,p.next||0);
+    /* A founder sees today's month price struck, not the 1 Nov one (owner, 18 Oct 2026: "the
+       2000 is slashed till the spots are filled"). */
+    var was=fw?p.full:Math.max(p.full||0,p.next||0);
     var per=(p.days>1?p.days+" days · "+naira(p.naira/p.days)+" a day":"24 hours")+(p.unlimited?" · unlimited codes":p.codes?" · "+p.codes+" codes a day":"");
-    return "<button type='button' class='swa-pass swa-tier-"+esc(fw?"fw":p.pass)+"' data-pass='"+esc(p.pass)+"' aria-pressed='"+(p.pass===pick?"true":"false")+"'>"+
+    return "<button type='button' class='swa-pass swa-tier-"+esc(fw?"fw":p.pass)+(p.pass==="month"?" swa-hasbest":"")+"' data-pass='"+esc(p.pass)+"' aria-pressed='"+(p.pass===pick?"true":"false")+"'>"+
       (p.pass==="month"?"<span class='swa-best'>Best value</span>":"")+
       "<span class='swa-st'><b>"+esc(p.label)+"</b><small>"+per+"</small>"+
       (fw?"<small class='swa-fwp'>Founding Wizard price"+(f&&f.monthsLeft<3?" · "+f.monthsLeft+" of 3 months left":"")+"</small>":"")+"</span>"+
@@ -556,7 +558,7 @@
     /* short phones (iPhone SE, 360x640): tighter, so it still fits above the tab bar */
     "@media (max-height:660px){.swa-wp .swa-t{font-size:32px;margin:12px 66px 12px 0}.swa-wpwiz{width:56px;height:56px;top:44px}"+
       ".swa-wpsub{font-size:12.5px;line-height:1.4}.swa-wp .swa-pass{min-height:54px;padding-top:7px;padding-bottom:7px}.swa-wp .swa-price b{font-size:23px}"+
-      ".swa-wp .swa-pass .swa-st b{font-size:17px}.swa-wp .swa-passes{gap:9px;margin-top:12px}"+
+      ".swa-wp .swa-pass .swa-st b{font-size:17px}.swa-wp .swa-passes{gap:9px;margin-top:12px}.swa-wp .swa-pass.swa-hasbest{padding-top:15px}"+
       ".swa-fwpanel{margin-top:10px;padding:9px 12px}.swa-fwd{margin:2px 0 8px;font-size:12.5px}.swa-wppay{height:46px;margin-top:10px}.swa-wpfine{margin-top:6px}}"+
     "@media (prefers-reduced-motion:reduce){.swa-fwbar i{transition:none}}"+
     /* Passes: Saira numerals for the price, the month marked with a flat tag. */
@@ -580,7 +582,7 @@
     ".swa-pass .swa-st small{margin-top:2px}.swa-fwp{color:var(--cls-founder)!important;font-weight:700!important}"+
     ".swa-price{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--disp)}"+
     ".swa-price b{display:block;font-size:28px;line-height:1;font-weight:800;color:var(--tier)}.swa-price s{display:block;font-size:14px;font-weight:700;color:var(--faint)}"+
-    ".swa-best{position:absolute;top:-10px;left:46px;padding:2px 8px;border-radius:var(--r-sm,4px);background:var(--accent);color:var(--on-accent);font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}"+
+    ".swa-best{position:absolute;top:-10px;left:46px;padding:2px 8px;border-radius:var(--r-sm,4px);background:var(--accent);color:var(--on-accent);font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}.swa-pass.swa-hasbest{padding-top:16px}"+
     "@media (hover:hover){.swa-pass:hover{border-color:var(--accent-rim)}}"+
     ".swa-pass:focus-visible,.swa-pgo:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"+
     "@media (hover:hover){.swa-mi:hover{background:var(--card-2)}}"+
