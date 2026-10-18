@@ -111,7 +111,7 @@ function make(deps) {
            strikes through beside today's. */
         return H.sendJson(res, 200, {
           passes: Object.keys(cur).map((k) => ({ pass: k, days: cur[k].days, label: cur[k].label,
-            codes: cur[k].codes, naira: priceOf(k, o, t) / 100, full: cur[k].kobo / 100,
+            codes: cur[k].codes, unlimited: !!cur[k].unlimited, naira: priceOf(k, o, t) / 100, full: cur[k].kobo / 100,
             next: soon && P.NEXT[k] ? P.NEXT[k].kobo / 100 : null })),
           switchAt: soon ? new Date(P.SWITCH_AT).toISOString() : null,
           founder: o ? { open: founderOpen(o), seatsLeft: Math.max(0, FOUNDER.seats - o.taken), monthsLeft: Math.max(0, FOUNDER.months - o.mine) } : null,

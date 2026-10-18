@@ -267,8 +267,9 @@ test("the first founder pass brings the crest and a thank-you, once; nothing els
 
 /* ----------------------------------- new prices from 1 Nov 2026 (lib/pricing.js) */
 /* Owner, 18 Oct 2026: today's prices and 20 a day for everybody until 1 Nov, then by
-   itself Day N500 40 a day, Week N1,500 50, Month N4,000 60; no N200 plan after the
-   switch ("take off the 200"). Founding Wizards stay N1,500 for 3 months. */
+   itself Day N500, Week N1,500, Month N4,000, each unlimited codes with a stated fair-use
+   limit of 100 a day; no N200 plan after the switch ("take off the 200"). Founding Wizards
+   stay N1,500 for 3 months. */
 const PR = require("../lib/pricing.js");
 const SWITCH = PR.SWITCH_AT;
 
@@ -276,18 +277,19 @@ test("pricing: today's table until 1 Nov 00:00 Lagos, then the new one", () => {
   assert.equal(new Date(SWITCH).toISOString(), "2026-10-31T23:00:00.000Z");
   assert.deepEqual(Object.keys(PR.passesAt(SWITCH - 1)), ["day", "week", "month"]);
   assert.deepEqual(["day", "week", "month"].map((k) => PR.codesFor(k, SWITCH - 1)), [20, 20, 20]);
-  assert.deepEqual(["day", "week", "month"].map((k) => PR.codesFor(k, SWITCH)), [40, 50, 60]);
+  assert.deepEqual(["day", "week", "month"].map((k) => PR.codesFor(k, SWITCH)), [100, 100, 100], "unlimited, fair use 100");
+  assert.ok(["day", "week", "month"].every((k) => PR.passesAt(SWITCH)[k].unlimited));
   assert.deepEqual(Object.keys(PR.passesAt(SWITCH)), ["day", "week", "month"], "no N200 plan after the switch");
   assert.deepEqual(["day", "week", "month"].map((k) => PR.passesAt(SWITCH)[k].kobo), [50000, 150000, 400000]);
-  assert.equal(PR.codesFor("gift-of-old", SWITCH), 40, "an unknown plan gets the Day allowance");
+  assert.equal(PR.codesFor("gift-of-old", SWITCH), 100, "an unknown plan gets the Day allowance");
 });
 
-test("the gate gives a pass its plan's codes a day, by the date", async () => {
+test("the gate gives a pass its codes a day by the date: 20 now, the fair-use 100 from 1 Nov", async () => {
   const gate = (plan, t) => G.makeGate({ db: store({ "u:u1": 0 }), userLimit: 100, freeLimit: R.FREE_CODES, trial: true,
     plusLimit: (p, tt) => R.codeLimitFor("plus", p, tt), pepper: "p", sessionCookie: "sess",
     roleOf: async () => ({ role: "plus", plan, userId: "u1" }), now: () => t });
   assert.equal((await gate("month", SWITCH - 1)(withCookie)).limit, 20, "nobody moves up before 1 Nov");
-  assert.deepEqual(await Promise.all(["day", "week", "month"].map(async (p) => (await gate(p, SWITCH)(withCookie)).limit)), [40, 50, 60]);
+  assert.deepEqual(await Promise.all(["day", "week", "month"].map(async (p) => (await gate(p, SWITCH)(withCookie)).limit)), [100, 100, 100]);
 });
 
 test("the offer: before 1 Nov today's prices with the new ones to strike through, then the new ones", async () => {
@@ -302,7 +304,8 @@ test("the offer: before 1 Nov today's prices with the new ones to strike through
   w.advance(SWITCH - Date.UTC(2026, 9, 16, 10));
   const after = (await w.call(Object.assign(getReq("pay", {}), { query: { action: "offer" } }))).json();
   assert.deepEqual(after.passes.map((p) => [p.pass, p.naira, p.next, p.codes]),
-    [["day", 500, null, 40], ["week", 1500, null, 50], ["month", 1500, null, 60]]);
+    [["day", 500, null, 100], ["week", 1500, null, 100], ["month", 1500, null, 100]]);
+  assert.ok(after.passes.every((p) => p.unlimited));
   assert.equal(after.switchAt, null);
 });
 

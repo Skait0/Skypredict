@@ -93,7 +93,7 @@
   function subHtml(q,role,plan,until,fw,fwNo){
     var u=role==="plus"?dayMonth(until):"";
     var what=role==="admin"?"Every feature, no limit":role==="ff"?"Every feature, 100 codes a day":
-      role==="plus"?(+lsGet("sw.codeLimit")||20)+" codes a day"+(u?", until "+esc(u):""):"2 trial codes";
+      role==="plus"?((+lsGet("sw.codeLimit")||20)>=100?"Unlimited codes":(+lsGet("sw.codeLimit")||20)+" codes a day")+(u?", until "+esc(u):""):"2 trial codes";
     return "<p class='swa-h'>Your plan</p><div class='swa-card"+(fw?" swa-fwcard":"")+"'><div class='swa-subtop'><span><b"+(role==="admin"?" class='swa-gold'":"")+">"+esc(plan||"Free plan")+"</b><small>"+what+"</small></span>"+
       (canBuy(role)?"<button class='swa-pillbtn swa-pgo' type='button' data-plus>"+(role==="plus"?"Add days":"Get Wizard Pass")+"</button>":"")+"</div>"+
       (fw?fwHtml(fwNo):"")+
@@ -109,12 +109,12 @@
      favoured strip for the founders. Sized to fit a phone above the tab bar. */
   var LOCKI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   /* PRICES FROM 1 NOV 2026 (owner, 18 Oct 2026; lib/pricing.js). Until then each pass
-     carries its new price (next), struck through beside today's; from then each pass
-     shows its own codes a day. */
+     carries its new price (next), struck through beside today's; from then every pass is
+     unlimited codes with a stated fair-use limit (lib/pricing.js FAIR_USE). */
   function passHtml(p,pick,f){
     var fw=p.pass==="month"&&p.naira<p.full;
     var was=Math.max(p.full||0,p.next||0);
-    var per=(p.days>1?p.days+" days · "+naira(p.naira/p.days)+" a day":"24 hours")+(p.codes?" · "+p.codes+" codes a day":"");
+    var per=(p.days>1?p.days+" days · "+naira(p.naira/p.days)+" a day":"24 hours")+(p.unlimited?" · unlimited codes":p.codes?" · "+p.codes+" codes a day":"");
     return "<button type='button' class='swa-pass' data-pass='"+esc(p.pass)+"' aria-pressed='"+(p.pass===pick?"true":"false")+"'>"+
       (p.pass==="month"?"<span class='swa-best'>Best value</span>":"")+
       "<span class='swa-st'><b>"+esc(p.label)+"</b><small>"+per+"</small>"+
@@ -126,10 +126,10 @@
     var passes=(o.passes||[]).map(function(p){ return passHtml(p,pick,f); }).join("");
     var sel=(o.passes||[]).filter(function(p){ return p.pass===pick; })[0];
     var taken=f?Math.max(0,500-f.seatsLeft):0;
-    var top=Math.max.apply(null,[20].concat((o.passes||[]).filter(function(p){ return p.codes; }).map(function(p){ return p.codes; })));
+    var unl=(o.passes||[]).some(function(p){ return p.unlimited; }), cap=unl?o.passes[0].codes:20;
     return "<img class='swa-wpwiz' src='/emo/wiz-spell.webp' alt='' width='112' height='112'>"+
-      "<p class='swa-wpsub'><b>"+(o.switchAt?"20 booking codes a day":"Up to "+top+" booking codes a day")+"</b> on every bookie, from every tool: the Wizard, Slider, Converter, Edit for me, Split and Trim. Pay once. Nothing renews.</p>"+
-      (o.switchAt?"<p class='swa-wpnow'><b>New prices from 1 Nov.</b> Buy now at today's price. From 1 Nov every running pass gets 40 to 60 codes a day.</p>":"")+
+      "<p class='swa-wpsub'><b>"+(unl?"Unlimited booking codes":"20 booking codes a day")+"</b> on every bookie, from every tool: the Wizard, Slider, Converter, Edit for me, Split and Trim. Pay once. Nothing renews.</p>"+
+      (o.switchAt?"<p class='swa-wpnow'><b>New prices from 1 Nov.</b> Buy now at today's price. From 1 Nov every running pass gets unlimited codes (fair use).</p>":"")+
       (u?"<p class='swa-wpnow'>Your pass runs until <b>"+esc(u)+"</b>. A new pass adds its days on top.</p>":"")+
       (f&&f.open&&f.seatsLeft>0&&f.monthsLeft===3?
         "<div class='swa-fwpanel'><div class='swa-fwhead'><span class='swa-fwt'>Founding Wizards</span>"+
@@ -138,7 +138,7 @@
           "<div class='swa-fwbar' role='img' aria-label='"+taken+" of 500 places taken'><i style='--to:"+Math.max(2,Math.round(100*taken/500))+"%'></i></div></div>":"")+
       "<div class='swa-passes'>"+(passes||"<p class='swa-note'>Prices did not load. Check your connection and try again.</p>")+"</div>"+
       (sel?"<button class='swa-wppay' id='swaPay' type='button'>"+LOCKI+"<span>Pay "+naira(sel.naira)+" with Paystack</span></button>":"")+
-      "<p class='swa-wpfine'>Card, bank transfer or USSD, on Paystack's secure page. We don't keep your card. No hidden charges. 18+.</p>"+
+      "<p class='swa-wpfine'>Card, bank transfer or USSD, on Paystack's secure page. We don't keep your card. No hidden charges. 18+."+(unl?" Fair use: up to "+cap+" codes a day.":"")+"</p>"+
       "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>";
   }
   function profileHtml(o){
@@ -727,7 +727,7 @@
           a.req("GET","/api/me",null,function(c2,me){
             if(c2===200&&me&&me.signedIn&&a.saveRole) a.saveRole(me);
             var n=me&&typeof me.codeLimit==="number"?me.codeLimit:20;
-            a.notice("Your Wizard Pass is on"+(j.until?" until "+dayMonth(j.until):"")+". "+n+" codes a day.");
+            a.notice("Your Wizard Pass is on"+(j.until?" until "+dayMonth(j.until):"")+". "+(n>=100?"Unlimited codes.":n+" codes a day."));
           });
           return;
         }

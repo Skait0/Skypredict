@@ -28,5 +28,6 @@ test("until 1 Nov the new prices are struck through beside today's; from then th
   assert.match(before, /New prices from 1 Nov/);
   assert.doesNotMatch(after, /<s>|New prices from 1 Nov/);
   assert.doesNotMatch(after, /₦200/, "no N200 plan after the switch");
-  assert.match(after, /60 codes a day/);
+  assert.match(after, /Unlimited booking codes/);
+  assert.match(after, /Is it really unlimited\?[\s\S]*Fair use: up to 100 codes a day/, "the limit is stated, not hidden");
 });
