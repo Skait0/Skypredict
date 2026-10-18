@@ -67,12 +67,44 @@ function res() { const r = { code: 0, body: null, headers: {} }; r.status = (c) 
 test("10:30 books every missing rung once; 10:45 books only what is still missing", async () => {
   const { d, store } = deps();
   const one = await API.fill(now, d);
-  assert.deepStrictEqual(store.minted, [5, 10, 20, 100, 1000]);
-  assert.deepStrictEqual(one.minted, [5, 10, 20, 100, 1000]);
+  assert.deepStrictEqual(store.minted, [10, 20, 100, 1000, 5], "the open x5 is booked after the locked rungs");
+  assert.deepStrictEqual(one.minted, [10, 20, 100, 1000, 5]);
   store.minted.length = 0;
   const two = await API.fill(now, d);
   assert.deepStrictEqual(store.minted, [], "a stored rung is never booked a second time");
   assert.strictEqual(two.rows.length, 5);
+});
+
+/* Owner, 18 Oct 2026: every rung stacked the same safest-first games, so the open x5
+   gave away most of the locked x10. x5 and Big odds are now picked around them. */
+test("the open x5 and Big odds share no game with the locked x10 and x20", async () => {
+  const BIG = require("../lib/bigodds.js");
+  const games = (p) => new Set(p.legs.map((l) => l.home + "|" + l.away));
+  const row = (x) => { const p = L.pickRung(pay, now, feed, L.RUNGS.find((r) => r.x === x));
+    return { rung: x, legs: p.legs.map((l) => ({ home: l.home, away: l.away })) }; };
+  const locked = [row(10), row(20)];
+  const shut = new Set([].concat(...locked.map((r) => r.legs.map((l) => l.home + "|" + l.away))));
+  const before = games(L.pickRung(pay, now, feed, L.RUNGS[0]));
+  assert.ok([...before].every((g) => shut.has(g)), "without the locked rows, x5 is the first games of x10 (the leak)");
+  const x5 = L.pickRung(pay, now, feed, L.RUNGS[0], locked);
+  assert.ok(x5 && x5.odds >= 5 * L.SHORT);
+  assert.ok([...games(x5)].every((g) => !shut.has(g)), "x5 keeps out every x10 and x20 game");
+  const big = BIG.pick(pay, now, feed, { skip: L.openSkips(locked)[0] });
+  assert.ok(big && [...games(big)].every((g) => !shut.has(g)), "Big odds keeps them out too");
+  /* 20 games: x20 takes 16, too few left, so x5 falls back to keeping out x10's only. */
+  const small = { fixtures: pay.fixtures.slice(0, 20) }, sf = feed.slice(0, 20);
+  const r10 = L.pickRung(small, now, sf, L.RUNGS[1]), r20 = L.pickRung(small, now, sf, L.RUNGS[2]);
+  const lk = [{ rung: 10, legs: r10.legs }, { rung: 20, legs: r20.legs }];
+  const fb = L.pickRung(small, now, sf, L.RUNGS[0], lk);
+  assert.ok(fb && fb.legs.every((l) => !r10.legs.some((m) => m.home === l.home)), "fallback still keeps x10 out");
+  assert.strictEqual(L.pickRung({ fixtures: pay.fixtures.slice(0, 12) }, now, feed.slice(0, 12), L.RUNGS[0],
+    [{ rung: 10, legs: L.pickRung({ fixtures: pay.fixtures.slice(0, 12) }, now, feed.slice(0, 12), L.RUNGS[1]).legs }]), null,
+    "nothing left once x10 is out: no x5 that day rather than a leak");
+  /* fill hands x5 the locked rows booked before it. */
+  const { d } = deps({ mint: async (p, n, f, rung, rows) => { if (rung.x === 5) d.seen = rows.map((r) => r.rung);
+    return { rung: rung.x, odds: rung.x, legs: [], codes: { sporty: { code: "S", n: 1 } } }; } });
+  await API.fill(now, d);
+  assert.deepStrictEqual(d.seen, [10, 20, 100, 1000]);
 });
 
 test("only Wizard Pass readers are sent their rung, and only once something reached them", async () => {
@@ -171,7 +203,8 @@ test("wired: two crons at 10:30 and 10:45 Lagos, Big odds books its own slip, th
   assert.deepStrictEqual(runs, ["30 9 * * *", "45 9 * * *"]);
   assert.ok(v.functions["api/ladder.js"].maxDuration >= 120);
   const social = fs.readFileSync(path.join(__dirname, "..", "api", "social.js"), "utf8");
-  assert.doesNotMatch(social, /getLadder/, "Big odds of the day never posts the ladder's x10, which is Wizard Pass only");
+  assert.doesNotMatch(social, /rung === 10/, "Big odds of the day never posts the ladder's x10, which is Wizard Pass only");
+  assert.match(social, /BIG\.mint\(pay, now, L\.openSkips\(/, "and is picked around the locked rungs' games");
   const page = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
   assert.match(page, /fetch\(ladPass\(\)\?"\/api\/ladder\?mine=1":"\/api\/ladder"\)/,"a pass asks for every code; everyone else gets the cached public read");
   assert.match(page, /class='lad-r'/);

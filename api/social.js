@@ -12,6 +12,7 @@
 const SB = require("../lib/supabase.js");
 const S = require("../lib/social.js");
 const BIG = require("../lib/bigodds.js");
+const L = require("../lib/ladder.js");
 const WIN = require("../lib/winpost.js");
 
 const SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
@@ -91,8 +92,10 @@ module.exports = async function handler(req, res) {
     let slip = stored.ok && stored.row ? BIG.fromRow(stored.row) : null;
     if (!slip && stored.ok && !stored.row) {
       /* Its own slip, never the ladder's x10 (18 Oct 2026): x10 is Wizard Pass only,
-         and this one goes out on X and Telegram for everyone. */
-      slip = await BIG.mint(pay, now);
+         and this one goes out on X and Telegram for everyone. Picked around the
+         locked rungs' games too, or it would be x10 again (lib/ladder.js KEEP_OUT). */
+      const lad = await SB.getLadder(S.dayOf(now));
+      slip = await BIG.mint(pay, now, L.openSkips(lad.ok ? lad.rows : []));
       /* Stored for the site's daily codes card (/api/bigodds) before posting. */
       if (slip) await SB.putBigOdds(slip.row);
     }

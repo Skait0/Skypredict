@@ -43,7 +43,8 @@ async function fill(now, deps) {
   const have = await deps.getLadder(day);
   if (!have.ok) return { ok: false, rows: [] };
   const done = new Set(have.rows.map((r) => r.rung));
-  const todo = L.RUNGS.filter((r) => !done.has(r.x));
+  /* The open x5 last: it is picked around the locked rungs' games (lib/ladder.js KEEP_OUT). */
+  const todo = L.RUNGS.filter((r) => !done.has(r.x)).sort((a, b) => (a.x === L.OPEN_RUNG) - (b.x === L.OPEN_RUNG));
   if (!todo.length) return { ok: true, rows: have.rows, minted: [] };
   const pay = await deps.payload();
   if (!pay || !Array.isArray(pay.fixtures)) return { ok: true, rows: have.rows, minted: [] };
@@ -52,7 +53,7 @@ async function fill(now, deps) {
   /* One rung at a time: six books per rung in parallel is already the burst the
      bookies tolerate. */
   for (const rung of todo) {
-    const row = await deps.mint(pay, now, feed, rung);
+    const row = await deps.mint(pay, now, feed, rung, have.rows.concat(minted));
     if (row && (await deps.putLadder(row)).ok) minted.push(row);
   }
   return { ok: true, rows: have.rows.concat(minted), minted: minted.map((r) => r.rung) };
