@@ -45,10 +45,12 @@ async function listBanner(id) {
   const WIN = require("../lib/winpost.js");
   const row = await SB.siteSlipById(id);
   if (!row || row.status !== "landed") return null;
-  const r = WIN.rankOf(row.total_odds);
+  /* What it paid, a push at odds 1 (lib/winpost.js paid), and pushes marked as such. */
+  const p = WIN.paid(row), r = WIN.rankOf(p.odds);
   if (!r) return null;
-  const legs = Array.isArray(row.legs) ? row.legs : [];
-  return CARD.buildWinList(r.id, row.leg_count || legs.length, row.total_odds, legs.map((l) => l && l.name));
+  const legs = Array.isArray(row.legs) ? row.legs : [], seen = row.seen || {};
+  const picks = legs.map((l, i) => ({ text: l && l.name, push: (l && l.verdict ? l.verdict : seen[i]) === "void" }));
+  return CARD.buildWinList(r.id, p.games, p.odds, picks, p.pushed ? "Total paid - " + p.won + " won, " + p.pushed + " pushed" : null);
 }
 
 module.exports = async (req, res) => {

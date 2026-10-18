@@ -438,11 +438,19 @@
   function hitsHtml(list){
     if(!list.length) return "<div class='swa-set'><span class='swa-st'><small>No landed slips yet. They show up here within ten minutes of the last game ending.</small></span></div>";
     var landed=list.filter(function(h){ return h.status==="landed"; });
-    var best=landed.reduce(function(m,h){ return Math.max(m,Number(h.total_odds)||0); },0);
+    var best=landed.reduce(function(m,h){ return Math.max(m,Number(h.paid&&h.paid.pushed?h.paid.odds:h.total_odds)||0); },0);
     var head="<div class='swa-set'><span class='swa-st'><b>"+landed.length+" landed"+(best?" · biggest ×"+esc(best.toLocaleString("en-US",{maximumFractionDigits:2})):"")+"</b>"+
       "<small>"+(list.length-landed.length)+" to check by hand</small></span></div>";
     return head+list.map(function(h){
-      var when=""; try{ when=new Date(h.settled_at||h.created_at).toLocaleDateString(undefined,{day:"numeric",month:"short"}); }catch(e){}
+      /* A time as well as a day (owner, 18 Oct 2026: "i need a time stamp"). */
+      var stamp=function(t){ try{ return new Date(t).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } };
+      var when=stamp(h.settled_at||h.created_at);
+      /* Where it already went (social_log), so a win is not posted twice by mistake. */
+      var CHN={tg:"Telegram",x:"X",fb:"Facebook"}, posted=h.posted||[];
+      var postedLine=h.share?(posted.length?"Posted: "+posted.map(function(p){ return (CHN[p.ch]||p.ch)+" "+stamp(p.at); }).join(" · "):"Not posted yet"):"";
+      var allPosted=["tg","x","fb"].every(function(c){ return posted.some(function(p){ return p.ch===c; }); });
+      /* What it paid: a push returns the stake, so it counts as odds 1 (lib/winpost.js paid). */
+      var pd=h.paid&&h.paid.pushed?h.paid:null;
       var legs=(h.legs||[]).map(function(l){ return l.name; });
       var games=(h.leg_count||legs.length)+" game"+((h.leg_count||legs.length)===1?"":"s");
       /* h.legs holds only the legs on our board (lib/slipwatch.js trackAll); the rest
@@ -450,14 +458,17 @@
          18 Oct 2026: "14 games but i can only see 5"). */
       var off=(h.leg_count||0)>legs.length, open=h.status==="check"||off;
       return "<div class='swa-set swa-hit'><span class='swa-st'><b>"+esc(h.code)+" · "+markOf(h.book)+
-        (h.total_odds?" · <span class='swa-gold'>×"+esc(Number(h.total_odds).toLocaleString("en-US",{maximumFractionDigits:2}))+"</span>":"")+"</b>"+
+        (pd&&pd.odds?" · <span class='swa-gold'>×"+esc(Number(pd.odds).toLocaleString("en-US",{maximumFractionDigits:2}))+" paid</span>":
+          h.total_odds?" · <span class='swa-gold'>×"+esc(Number(h.total_odds).toLocaleString("en-US",{maximumFractionDigits:2}))+"</span>":"")+"</b>"+
         "<small>"+esc(games+" · "+when+(h.who?" · "+h.who:""))+"</small>"+
+        (pd?"<small>"+esc(pd.won+" won, "+pd.pushed+" pushed (stake back). Booked at ×"+Number(h.total_odds).toLocaleString("en-US",{maximumFractionDigits:2}))+"</small>":"")+
+        (postedLine?"<small>"+esc(postedLine)+"</small>":"")+
         "<small>"+esc(srcWords(h.src))+"</small>"+
         (legs.length?"<small>"+esc(legs.slice(0,3).join(" · "))+"</small>"+
           (legs.length>3&&!off?"<details class='swa-more'><summary><span class='swa-m'>Show "+(legs.length-3)+" more</span><span class='swa-l'>Show less</span></summary><small>"+esc(legs.slice(3).join(" · "))+"</small></details>":""):"")+"</span>"+
         (open?"<button type='button' class='swa-pillbtn' data-chk='"+esc(String(h.id))+"' data-code='"+esc(h.code)+"' aria-expanded='false'>"+(h.status==="check"?"Check":"See all "+esc(games))+"</button>":"")+
         (h.share?"<button type='button' class='swa-pillbtn' data-share='"+esc(JSON.stringify(h.share))+"'>Share</button>"+
-          "<button type='button' class='swa-pillbtn' data-postwin='"+esc(String(h.id))+"'>Post to our channels</button>"+
+          (allPosted?"":"<button type='button' class='swa-pillbtn' data-postwin='"+esc(String(h.id))+"'>"+(posted.length?"Post to the rest":"Post to our channels")+"</button>")+
           "<small class='swa-postmsg' role='status' aria-live='polite'></small>":"")+"</div>"+
         (open?checkHtml(h):""); }).join("");
   }

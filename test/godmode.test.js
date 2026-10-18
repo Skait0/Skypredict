@@ -80,7 +80,7 @@ async function world() {
     wasPosted: async (k) => postedKeys.has(k), logPost: async (row) => { postedKeys.add(row.key); },
     read: async () => [{ home: "Riga", away: "Kairat", prediction: "1X" }, { home: "St. Truiden", away: "Iberia", prediction: "AH_2_-2" },
       { home: "Freiburg", away: "Jablonec", prediction: "OVER_1.5" }],
-    fill: async (id, patch) => Object.assign(wins[id], patch),
+    fill: async (id, patch) => Object.assign(wins[id], patch),    results: async () => [{ match_date: "2026-10-15", home: "Freiburg", away: "Jablonec", hg: 3, ag: 2 }],
     settle: async (id, to) => { if (ledger[id] !== "check") return { ok: true, changed: false }; ledger[id] = to; return { ok: true, changed: true }; } };
   const log = [];
   const audit = { log: async (row) => { log.push(row); return true; }, list: async () => ({ ok: true, rows: log.slice().reverse() }) };
@@ -238,4 +238,18 @@ test("a refused or failed admin action is not logged as done", async () => {
   await w.call(post(w.plain, "setflags", { booksOff: ["sporty"] }));
   await w.call(post(w.boss, "settle", { id: "42", status: "lost" }));   /* not a check slip: 409 */
   assert.deepStrictEqual(w.log, []);
+});
+
+test("the admin list says when a win landed, what it paid and where it was posted (owner, 18 Oct 2026)", () => {
+  const UI = require("../public/account-ui.js");
+  const base = { id: 73, status: "landed", code: "Z13XFH", book: "sporty", total_odds: 121.88, leg_count: 14, legs: [],
+    settled_at: "2026-10-16T21:05:00Z", paid: { odds: 14.02, pushed: 3, won: 11, games: 14 }, share: { img: "i", x: "c", tg: "c" } };
+  const some = UI.hitsHtml([Object.assign({ posted: [{ ch: "tg", at: "2026-10-18T20:40:00Z" }] }, base)]);
+  assert.match(some, /×14\.02 paid/); assert.match(some, /11 won, 3 pushed \(stake back\)\. Booked at ×121\.88/);
+  assert.match(some, /Posted: Telegram /); assert.match(some, />Post to the rest</);
+  assert.match(some, /\d{1,2}:\d{2}/, "a time, not only a day");
+  const none = UI.hitsHtml([Object.assign({ posted: [] }, base)]);
+  assert.match(none, /Not posted yet/); assert.match(none, />Post to our channels</);
+  const all = UI.hitsHtml([Object.assign({ posted: ["tg", "x", "fb"].map((ch) => ({ ch, at: "2026-10-18T20:40:00Z" })) }, base)]);
+  assert.doesNotMatch(all, /data-postwin=/, "nothing left to post");
 });

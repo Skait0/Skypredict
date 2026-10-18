@@ -97,7 +97,7 @@ test("the owner gets a shareable copy of every channel win, and the admin page c
   assert.match(ping, /await sendPhoto\(owner, WIN\.imageUrl\(SITE, slip\), WIN\.caption\(slip, "x"\)\);/,
     "the x20 ping is the banner itself, ready to forward");
   const account = fs.readFileSync(path.join(__dirname, "..", "api", "account.js"), "utf8");
-  assert.match(account, /share: \{ img: WIN\.imageUrl\(SITE, h\), x: WIN\.caption\(h, "x"\), tg: WIN\.caption\(h, "tg"\) \}/);
+  assert.match(account, /share = \{ img: WIN\.imageUrl\(SITE, h\), x: WIN\.caption\(h, "x"\), tg: WIN\.caption\(h, "tg"\) \}/);
   const ui = require("../public/account-ui.js");
   const html = ui.hitsHtml([{ status: "landed", code: "ABC12", book: "sporty", total_odds: 11.55, leg_count: 7, legs: [],
     share: { img: "https://x/a.png", x: "cap", tg: "cap" } }]);
@@ -123,4 +123,20 @@ test("the Telegram caption counts every game, not only the ones on our board", (
   const WIN = require("../lib/winpost.js");
   const c = WIN.caption({ book: "sporty", total_odds: 60, leg_count: 14, legs: [{ name: "A" }, { name: "B" }] }, "tg");
   assert.match(c, /…and 12 more/); assert.match(c, /14 games on SportyBet/);
+});
+
+test("a slip with pushes posts what it paid, not the booked odds (owner, 18 Oct 2026)", () => {
+  const WIN = require("../lib/winpost.js");
+  const legs = [{ name: "Iberia +2 handicap", odds: 5.6, verdict: "void" }, { name: "Hajduk +1 handicap", odds: 1.25, verdict: "won" },
+    { name: "Celta +1 handicap", odds: 1.15, verdict: "void" }, { name: "Palace +1 handicap", odds: 1.35, verdict: "void" }];
+  const row = { id: 73, book: "sporty", status: "landed", total_odds: 121.88, leg_count: 14, legs };
+  assert.deepStrictEqual(WIN.paid(row), { odds: 14.02, pushed: 3, won: 11, games: 14 });
+  assert.match(WIN.caption(row, "x"), /×14\.02 on SportyBet: 14 games, 11 won, 3 pushed \(stake back\)/);
+  assert.doesNotMatch(WIN.caption(row, "x"), /every leg won|121/);
+  assert.match(WIN.caption(row, "tg"), /↩️ Iberia \+2 handicap \(push\)/);
+  assert.match(WIN.imageUrl("s", row), /&p=3$/, "a new card once the pushes are known");
+  assert.strictEqual(WIN.paid({ total_odds: 50, leg_count: 2, legs: [{ name: "a", verdict: "void" }, { name: "b" }] }).odds, null,
+    "a push without its price is not posted as a win");
+  assert.strictEqual(WIN.paid({ total_odds: 50, leg_count: 2, legs: [{ name: "a", odds: 2 }, { name: "b", odds: 25 }], seen: { 0: "void" } }).odds, 25,
+    "the grader's seen marks count too");
 });

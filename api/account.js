@@ -62,6 +62,7 @@ function make(deps) {
     whyFailed: (ch) => (ch === "tg" ? "" : require("./social.js").lastWhy()),
     fill: (id, patch) => require("../lib/supabase.js").patchSiteSlip(id, patch),
     wasPosted: (key) => require("../lib/supabase.js").socialHas(key),
+    winPosts: () => require("../lib/supabase.js").winPosts(),
     logPost: (row) => require("../lib/supabase.js").logSocial(row) };
   /* The admin's switches and numbers; deps too, for the same reason. */
   const flags = deps.flags || require("../lib/flags.js");
@@ -241,8 +242,14 @@ function make(deps) {
           if (!got || !got.ok) return H.sendJson(res, 503, { error: "unavailable" });
           /* Each landed win carries what sharing it needs: the rank banner and both captions. */
           const WIN = require("../lib/winpost.js"), SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
-          const hits = (got.rows || []).map((h) => (h.status === "landed" && WIN.rankOf(h.total_odds))
-            ? Object.assign({}, h, { share: { img: WIN.imageUrl(SITE, h), x: WIN.caption(h, "x"), tg: WIN.caption(h, "tg") } }) : h);
+          /* Where each win already went and when (social_log win|<id>|<channel>), and what it paid. */
+          const posts = slips.winPosts ? await slips.winPosts() : [];
+          const postedOf = (id) => posts.filter((p) => String(p.key).split("|")[1] === String(id)).map((p) => ({ ch: p.channel, at: p.posted_at }));
+          const hits = (got.rows || []).map((h) => {
+            const p = WIN.paid(h), out = Object.assign({}, h, { paid: p, posted: postedOf(h.id) });
+            if (h.status === "landed" && WIN.rankOf(p.odds)) out.share = { img: WIN.imageUrl(SITE, h), x: WIN.caption(h, "x"), tg: WIN.caption(h, "tg") };
+            return out;
+          });
           return H.sendJson(res, 200, { hits });
         }
         /* Every leg of one booked slip in words, with a score and a verdict where a
@@ -290,18 +297,22 @@ function make(deps) {
           const row = await slips.byId(id);
           if (!row) return H.sendJson(res, 404, { error: "no_slip" });
           const WIN = require("../lib/winpost.js"), SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
-          if (row.status !== "landed" || !WIN.rankOf(row.total_odds)) return H.sendJson(res, 409, { error: "not_a_win" });
+
           /* Games the ledger never tracked: read the slip back so the banner (api/slipcard.js
              reads the row) and the caption list all of them. The row is settled, so
              nothing grades these legs again. */
-          if (Number(row.untracked) > 0) {
+          if (Number(row.untracked) > 0 || (row.legs || []).some((l) => !l || !l.verdict)) {
             let legs = null; try { legs = await slips.read(row.book, row.code); } catch (e) { legs = null; }
             if (legs && legs.length) {
-              const full = require("../lib/slipdetail.js").names(legs);
-              await slips.fill(id, { legs: full, untracked: 0 });
-              Object.assign(row, { legs: full, untracked: 0 });
+              const since = new Date(Date.parse(row.created_at || "") - 2 * 864e5 || t - 14 * 864e5).toISOString().slice(0, 10);
+              const full = require("../lib/slipdetail.js").full(legs, await slips.results(since));
+              /* seen indexed the old legs; the verdicts now sit on each leg */
+              await slips.fill(id, { legs: full, untracked: 0, seen: {} });
+              Object.assign(row, { legs: full, untracked: 0, seen: {} });
             }
           }
+          /* What it paid, pushes at odds 1 (lib/winpost.js paid): under x5 it is not a win post. */
+          if (row.status !== "landed" || !WIN.rankOf(WIN.paid(row).odds)) return H.sendJson(res, 409, { error: "not_a_win" });
           const sent = [], already = [], failed = [], why = {};
           for (const ch of ["tg", "x", "fb"]) {
             const key = WIN.key(row, ch);
