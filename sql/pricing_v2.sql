@@ -1,5 +1,7 @@
 -- sql/pricing_v2.sql - Wizard Pass prices from 1 Nov 2026 (lib/pricing.js). Run once in the
--- Supabase SQL editor BEFORE the deploy that ships it. Safe to run again.
+-- Supabase SQL editor BEFORE the deploy that ships it. Safe to run again. APPLIED 18 Oct 2026.
+-- The N200 Starter was dropped the same day (owner: "take off the 200"): nothing sells it, so the
+-- 'starter' pass value and its branch below are unused and harmless.
 --
 -- 1. A N200 Starter pack: 10 codes for good, no days. It is a payments row like the
 --    passes, but it never touches subscriptions (lib/bookgate.js counts what was bought).

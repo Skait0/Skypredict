@@ -1,7 +1,7 @@
 "use strict";
 /* /wizard-pass (owner, 16 Oct 2026): the public page for the pass. Prices from
    lib/pricing.js: today's until 1 Nov 2026 with the new ones struck through, then
-   the new table with a Starter pack (owner, 18 Oct 2026). */
+   the new table, with no N200 plan (owner, 18 Oct 2026). */
 const test = require("node:test");
 const assert = require("node:assert");
 const P = require("../lib/pages.js");
@@ -26,8 +26,7 @@ test("until 1 Nov the new prices are struck through beside today's; from then th
   const before = P.renderWizardPass(BEFORE), after = P.renderWizardPass(AFTER);
   for (const k of ["day", "week", "month"]) assert.ok(before.includes("<s>" + naira(PR.NEXT[k].kobo) + "</s>"), k + " struck through");
   assert.match(before, /New prices from 1 Nov/);
-  assert.doesNotMatch(before, /Starter/, "Starter is not on sale before the switch");
   assert.doesNotMatch(after, /<s>|New prices from 1 Nov/);
-  assert.match(after, /Starter[\s\S]*10 codes, any time/);
+  assert.doesNotMatch(after, /₦200/, "no N200 plan after the switch");
   assert.match(after, /60 codes a day/);
 });

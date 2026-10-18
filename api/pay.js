@@ -1,7 +1,7 @@
 "use strict";
 /* /api/pay/:action - Plus passes through Paystack (owner, 16 Oct 2026).
    Prepaid, never auto-renewed. The prices and codes are lib/pricing.js: today's
-   until 1 Nov 2026, then the new ones (with a N200 Starter of 10 codes).
+   until 1 Nov 2026, then the new ones.
    Founding Wizards: the first 500 buyers pay N1,500 for their first 3 month passes.
 
      GET  offer    prices, and whether this reader still gets the founder price
@@ -77,8 +77,6 @@ function make(deps) {
         return new Date(end).toISOString();
       }
     }
-    /* A Starter pack has no pass end: paid is all there is to say. */
-    if (row.pass === "starter") return row.status === "paid" ? new Date(now()).toISOString() : null;
     const s = await db.subscription(row.user_id);
     return s && s.current_period_end ? new Date(s.current_period_end).toISOString() : null;
   }
@@ -110,10 +108,10 @@ function make(deps) {
         const o = await db.founderOffer(signedIn ? s.userId : null).catch(() => null);
         const cur = P.passesAt(t), soon = t < P.SWITCH_AT;
         /* Before the switch each pass also carries its new price (next), which the card
-           strikes through beside today's; Starter appears only once it is on sale. */
+           strikes through beside today's. */
         return H.sendJson(res, 200, {
           passes: Object.keys(cur).map((k) => ({ pass: k, days: cur[k].days, label: cur[k].label,
-            codes: cur[k].codes, total: !!cur[k].total, naira: priceOf(k, o, t) / 100, full: cur[k].kobo / 100,
+            codes: cur[k].codes, naira: priceOf(k, o, t) / 100, full: cur[k].kobo / 100,
             next: soon && P.NEXT[k] ? P.NEXT[k].kobo / 100 : null })),
           switchAt: soon ? new Date(P.SWITCH_AT).toISOString() : null,
           founder: o ? { open: founderOpen(o), seatsLeft: Math.max(0, FOUNDER.seats - o.taken), monthsLeft: Math.max(0, FOUNDER.months - o.mine) } : null,
@@ -127,7 +125,7 @@ function make(deps) {
         const row = db.REF_RE.test(ref) ? await db.paymentByRef(ref) : null;
         if (!row || row.user_id !== s.userId) return H.sendJson(res, 404, { error: "not_found" }, cookies);
         const until = await settle(ps, ref);
-        return H.sendJson(res, 200, { paid: !!until, until: row.pass === "starter" ? null : until, pass: row.pass }, cookies);
+        return H.sendJson(res, 200, { paid: !!until, until, pass: row.pass }, cookies);
       }
 
       /* start */

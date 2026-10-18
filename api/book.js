@@ -43,8 +43,6 @@ const opts = {
   trial: true,
   /* A pass's codes a day by its plan and the date (lib/pricing.js: 20 until 1 Nov 2026). */
   plusLimit: (plan, t) => R.codeLimitFor("plus", plan, t),
-  /* Starter packs bought (10 codes each, website only, from 1 Nov 2026). */
-  starterOf: async (userId) => require("../lib/pricing.js").starterCodes(await AUTHDB.starterPaid(userId)),
   sessionCookie: S.COOKIE,
   /* Once per booking: the gate, the counter and the ledger all ask, and each answer is
      up to five reads. Kept on the request, so the next booking asks afresh. */
