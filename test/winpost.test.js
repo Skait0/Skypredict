@@ -39,10 +39,27 @@ test("what went out today counts against the three, and nothing is posted twice"
   assert.deepStrictEqual(P.pick(landed, log, "x", at(18), dayOf, hourOf).map((s) => s.id), [2, 4, 1], "each channel has its own three");
 });
 
-test("nothing goes out at night, and yesterday's wins are not today's posts", () => {
+test("nothing goes out at night; a late win goes out next morning; older than a day, never", () => {
   assert.deepStrictEqual(P.pick([slip(1, 50)], [], "tg", at(3), dayOf, hourOf), []);
   const old = slip(1, 50, { settled_at: new Date(at(15) - 864e5).toISOString() });
   assert.deepStrictEqual(P.pick([old], [], "tg", at(18), dayOf, hourOf), []);
+  /* settled 22:50 Lagos last night, after the window shut: posted at 09:00 */
+  const late = slip(2, 12, { settled_at: new Date(at(23) - 864e5 - 10 * 60e3).toISOString() });
+  assert.deepStrictEqual(P.pick([late], [], "tg", at(9), dayOf, hourOf).map((s) => s.id), [2]);
+});
+
+test("the morning recap: yesterday's x5+ wins, the biggest, no count of the losers", () => {
+  const y = dayOf(at(15) - 864e5), prev = (h) => new Date(at(h) - 864e5).toISOString();
+  const rows = [slip(1, 10.11, { settled_at: prev(21) }), slip(2, 6.7, { settled_at: prev(23) }), slip(3, 4.2, { settled_at: prev(20) }),
+    slip(4, 99, { settled_at: new Date(at(9)).toISOString() })];
+  const t = P.recap(rows, y, dayOf);
+  assert.match(t, /Yesterday 2 Soccerwizard slips landed at x5 or more\. Biggest: ×10\.11/, "x4.2 and today's x99 are not yesterday's x5+ wins");
+  assert.match(t, /18\+/); assert.doesNotMatch(t, /—|free|load am| of \d+ slips/i);
+  assert.match(P.recap([rows[0]], y, dayOf), /Yesterday a Soccerwizard slip landed ×10\.11\./);
+  assert.strictEqual(P.recap([rows[2]], y, dayOf), null, "no x5+ win yesterday, no post");
+  const fs = require("fs"), path = require("path");
+  const social = fs.readFileSync(path.join(__dirname, "..", "api", "social.js"), "utf8");
+  assert.match(social, /S\.hourOf\(now\) === 10 && recapDue/, "the recap goes out at 10:00 Lagos");
 });
 
 test("the captions credit a rank, never a person or a code", () => {

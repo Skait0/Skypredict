@@ -121,5 +121,18 @@ module.exports = async function handler(req, res) {
       }
     }
   }
+  /* THE MORNING RECAP (lib/winpost.js recap): 10:00 Lagos, yesterday's x5+ wins, once per channel. */
+  const recapDue = ["x", "tg"].filter((ch) => !posted.has("winrecap|" + S.dayOf(now) + "|" + ch));
+  if (S.hourOf(now) === 10 && recapDue.length) {
+    const yesterday = S.dayOf(now - 864e5);
+    const from = Date.parse(yesterday + "T00:00:00Z") - 3600e3;   /* Lagos midnight */
+    const got = await SB.landedSlipsSince(new Date(from).toISOString());
+    const text = got.ok ? WIN.recap(got.rows, yesterday, S.dayOf) : null;
+    if (text) for (const ch of recapDue) {
+      const key = "winrecap|" + S.dayOf(now) + "|" + ch;
+      const ok = ch === "x" ? await postX(text) : await postTG(text);
+      if (ok) { await SB.logSocial({ key, channel: ch, kind: "winrecap", text }); sent.push(key); }
+    }
+  }
   return res.status(200).json({ ok: true, due: items.length, sent });
 };
