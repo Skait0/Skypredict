@@ -15,7 +15,7 @@ const { report } = require("../lib/report.js");
 const SW = require("../lib/slipwatch.js");
 
 const REAUTH_MS = 10 * 60e3;
-const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit", "readers", "reader", "threads", "gifs", "alerts"];
+const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit", "readers", "reader", "threads", "gifs", "alerts", "blendtest"];
 const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle", "send", "unsend", "edit", "gift"];
 /* THE MESSAGE BOARD (owner, 14 Oct 2026; sql/messages.sql, public/messages.js):
    any signed-in reader reads their inbox, marks it read and replies in it. */
@@ -207,6 +207,22 @@ function make(deps) {
           if (!messages && !readers) return H.sendJson(res, 503, { error: "unavailable" });
           return H.sendJson(res, 200, { alerts: require("../lib/alerts.js").buildAlerts(
             { messages, readers, payments, slips: hits && hits.rows }, 100) });
+        }
+        /* THE MODEL TEST (owner, 18 Oct 2026; lib/blendtest.js): every board game since the
+           price log began logging main markets, replayed as the model alone, the old mix and
+           today's 90% book, graded on the final score; plus the model's own published record
+           by day since 20 Sep. The price log lives on the public repo's pricelog branch. */
+        if (action === "blendtest") {
+          const BT = require("../lib/blendtest.js"), SB = require("../lib/supabase.js");
+          const months = [new Date(t - 20 * 864e5), new Date(t)].map((d) => d.toISOString().slice(0, 7));
+          const text = await Promise.all([...new Set(months)].map((m) =>
+            fetch("https://raw.githubusercontent.com/Skait0/Skypredict/pricelog/" + m + ".jsonl").then((r) => (r.ok ? r.text() : "")).catch(() => "")));
+          const rows = [];
+          for (const line of text.join("\n").split("\n")) { if (line.indexOf('"main"') < 0) continue; try { rows.push(JSON.parse(line)); } catch (e) { /* a torn line */ } }
+          const since = new Date(t - 14 * 864e5).toISOString().slice(0, 10);
+          const [recent, verified] = await Promise.all([SB.recentResults(since), SB.verifiedResults()]);
+          return H.sendJson(res, 200, { test: BT.compare(rows, recent.ok ? recent.rows : []), snapshots: rows.length,
+            record: BT.recordByDay(verified.ok ? verified.rows : [], "2026-09-20") });
         }
         if (action === "audit") {
           const got = await audit.list(200);

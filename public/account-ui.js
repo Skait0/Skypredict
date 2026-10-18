@@ -316,7 +316,25 @@
      tab, so a closed one still says what it holds. */
   /* Messages and Readers (owner, 14 Oct 2026) are filled by public/messages.js. */
   var ADMIN_TABS=[["swaTMsg","Messages"],["swaTAlerts","Alerts"],["swaTLk","Users"],["swaTSw","Switches"],["swaTStatus","Status"],["swaTNums","Numbers"],
-    ["swaTGrants","Family & friends"],["swaTHits","Won slips"],["swaTLog","Log"]];
+    ["swaTGrants","Family & friends"],["swaTHits","Won slips"],["swaTModel","Model test"],["swaTLog","Log"]];
+  /* THE MODEL TEST (owner, 18 Oct 2026; api/account.js blendtest, lib/blendtest.js): the same
+     board games picked three ways and graded, and the model's own record by day since 20 Sep. */
+  var MODE_NAME={model:"Our model alone",old:"Old mix (30-75% bookie, before 30 Sep)",now:"Today (90% bookie)"};
+  function pct(x){ return x==null?"-":(Math.round(x*1000)/10)+"%"; }
+  function modelHtml(j){
+    var t=j.test||{}, h="<b>Same games, three ways</b>";
+    if(!t.games) h+="<p class='swa-note'>No graded games yet. The price log started saving the main markets on 18 Oct; results come in as the games finish. Check back in a few days.</p>";
+    else {
+      h+="<p class='swa-note'>"+t.games+" games, "+esc(t.from)+" to "+esc(t.to)+". Each mix picks its own headline tip on every game; landed is how many of those won.</p>";
+      ["model","old","now"].forEach(function(k){ var m=t.modes[k];
+        h+="<div class='swa-set'><span class='swa-st'><b>"+esc(MODE_NAME[k])+"</b><small>"+m.hit+" of "+m.n+" landed · said "+pct(m.claimed)+" · Brier "+(m.brier==null?"-":m.brier.toFixed(3))+
+          (k!=="model"?" · picked differently on "+t.differ[k]+" games":"")+"</small></span><b>"+pct(m.rate)+"</b></div>"; });
+    }
+    var r=j.record||[], n=0, hit=0; r.forEach(function(d){ n+=d.n; hit+=d.hit; });
+    h+="<b>Our model's published record since 20 Sep</b><p class='swa-note'>"+hit+" of "+n+" tips landed ("+pct(n?hit/n:null)+"). These tips are the model's own, before and after 30 Sep.</p>";
+    h+=r.map(function(d){ return "<div class='swa-set'><span class='swa-st'><b>"+esc(d.date)+"</b><small>"+d.hit+" of "+d.n+"</small></span><b>"+pct(d.n?d.hit/d.n:null)+"</b></div>"; }).join("");
+    return h;
+  }
   function adminHtml(list){
     var body={
       swaTSw:"<div class='swa-card'><div class='swa-set'><span class='swa-st'><b>Maintenance mode</b><small>Every user sees the maintenance page and all booking stops. You still see the site.</small></span>"+
@@ -341,6 +359,7 @@
         "<div class='swa-card' id='swaGrants'>"+(list?grantsHtml(list):msg("Loading"))+"</div>",
       swaTHits:"<div class='swa-card' id='swaHits'>"+msg("Loading")+"</div>",
       swaTLog:"<div class='swa-card' id='swaLog'>"+msg("Loading")+"</div>",
+      swaTModel:"<div class='swa-card' id='swaModel'>"+msg("Loading")+"</div>",
       swaTAlerts:"<div class='swa-card' id='swaAlerts'>"+msg("Loading")+"</div>"};
     return "<div class='swa-tabs' role='tablist' aria-label='Admin sections'>"+ADMIN_TABS.map(function(t){
         return "<button type='button' role='tab' class='swa-tab' id='"+t[0]+"B' data-tab='"+t[0]+"' aria-controls='"+t[0]+"' aria-selected='false'>"+
@@ -466,7 +485,7 @@
         "<input class='swa-in' id='swaDelIn' autocomplete='off' autocapitalize='characters'><button class='swa-outbtn swa-danger' id='swaDelGo' type='button'>Delete for good</button></div>"+
       "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>";
   }
-  var api={firstNameOf:firstNameOf,menuHtml:menuHtml,plusHtml:plusHtml,naira:naira,codesHtml:codesHtml,esc:esc,I:I,AV_FREE:AV_FREE,AV_FF:AV_FF,AV_OWNER:AV_OWNER,AV_PERSONAL:AV_PERSONAL,pickerHtml:pickerHtml,grantsHtml:grantsHtml,hitsHtml:hitsHtml,adminHtml:adminHtml,recordHtml:recordHtml,profileHtml:profileHtml,settingsHtml:settingsHtml};
+  var api={firstNameOf:firstNameOf,menuHtml:menuHtml,plusHtml:plusHtml,naira:naira,codesHtml:codesHtml,esc:esc,I:I,AV_FREE:AV_FREE,AV_FF:AV_FF,AV_OWNER:AV_OWNER,AV_PERSONAL:AV_PERSONAL,pickerHtml:pickerHtml,grantsHtml:grantsHtml,hitsHtml:hitsHtml,adminHtml:adminHtml,recordHtml:recordHtml,modelHtml:modelHtml,profileHtml:profileHtml,settingsHtml:settingsHtml};
   if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
   if(!root.document) return;
 
@@ -1009,6 +1028,9 @@
         msg(code===503?"The log is not set up yet. Run sql/admin.sql in Supabase.":"Could not load the log."); }); }
     logLoad();
     v.querySelector("[data-tab='swaTLog']").addEventListener("click",logLoad);
+    function modelLoad(){ a.req("GET","/api/account/blendtest",null,function(code,j){
+      v.querySelector("#swaModel").innerHTML=code===200?modelHtml(j):msg("Could not load the model test."); }); }
+    v.querySelector("[data-tab='swaTModel']").addEventListener("click",modelLoad);
     var flags={booksOff:[],notice:""};
     var board=null; try{ board=root.swBoard?root.swBoard():null; }catch(e){}
     function paintSw(){
