@@ -104,6 +104,7 @@ test("Google's button fades in only after the Continue as swap (owner, 18 Oct 20
      waits for 1s of quiet after the frame's last load or resize, capped at 3.5s. */
   assert.match(src, /settle=function\(\)\{ clearTimeout\(quiet\); quiet=setTimeout\(show,1000\); \}/);
   assert.match(src, /new MutationObserver\(settle\)\.observe\(f,\{attributes:true\}\)/);
-  assert.match(src, /settle\(\); setTimeout\(show,3500\);/);
+  assert.match(src, /f\.addEventListener\("load",settle\);/);
+  assert.match(src, /\{attributes:true\}\); \}catch\(e\)\{\}\r?\n\s*setTimeout\(show,3500\);/, "the clock starts at load, not when the frame is added");
   assert.doesNotMatch(src, /slot\.classList\.add\("ready"\); \},700\)/, "the old fixed 700ms is gone");
 });
