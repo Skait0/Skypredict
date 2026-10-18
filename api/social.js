@@ -28,25 +28,29 @@ async function gql(k, query) {
   if (!r.ok || !b || b.errors) throw new Error("buffer " + r.status);
   return b.data;
 }
-let XCH = null;
-async function postX(text, image) {
+/* Buffer channels by service, looked up once per instance. */
+const BCH = {};
+async function postBuffer(service, text, image, extra) {
   const k = (process.env.BUFFER_KEY || "").trim();
   if (!k) return false;
   try {
-    if (!XCH) {
+    if (!BCH[service]) {
       const org = (await gql(k, "{account{organizations{id}}}")).account.organizations[0].id;
       const ch = (await gql(k, `{channels(input:{organizationId:${JSON.stringify(org)}}){id service}}`)).channels
-        .find((c) => c.service === "twitter");
-      XCH = ch && ch.id;
+        .find((c) => c.service === service);
+      BCH[service] = ch && ch.id;
     }
-    if (!XCH) return false;
+    if (!BCH[service]) return false;
     /* An image rides as assets:[{image:{url}}] - `images` is not a field (24 Sep). */
     const assets = image ? `assets:[{image:{url:${JSON.stringify(image)}}}],` : "";
-    const res = (await gql(k, `mutation{createPost(input:{text:${JSON.stringify(text)},channelId:${JSON.stringify(XCH)},` +
-      assets + `schedulingType:automatic,mode:shareNow}){__typename ... on PostActionSuccess{post{id}} ... on MutationError{message}}}`)).createPost;
+    const res = (await gql(k, `mutation{createPost(input:{text:${JSON.stringify(text)},channelId:${JSON.stringify(BCH[service])},` +
+      assets + (extra || "") + `schedulingType:automatic,mode:shareNow}){__typename ... on PostActionSuccess{post{id}} ... on MutationError{message}}}`)).createPost;
     return res.__typename === "PostActionSuccess";
   } catch (e) { return false; }
 }
+const postX = (text, image) => postBuffer("twitter", text, image);
+/* The Facebook Page (owner, 18 Oct 2026: "include facebook"); Buffer wants the post type. */
+const postFB = (text, image) => postBuffer("facebook", text, image, "metadata:{facebook:{type:post}},");
 async function postTG(text) {
   const t = (process.env.TELEGRAM_BOT_TOKEN || "").trim();
   if (!t) return false;
@@ -113,10 +117,10 @@ module.exports = async function handler(req, res) {
      never a person or a code. social_log's key stops a double post. */
   const landed = await SB.landedSlipsSince(new Date(now - 864e5).toISOString());
   if (landed.ok) {
-    for (const ch of ["tg", "x"]) {
+    for (const ch of ["tg", "x", "fb"]) {
       for (const s of WIN.pick(landed.rows, log.rows, ch, now, S.dayOf, S.hourOf)) {
         const text = WIN.caption(s, ch), img = WIN.imageUrl(SITE, s);
-        const ok = ch === "x" ? await postX(text, img) : await postTGPhoto(img, text);
+        const ok = ch === "x" ? await postX(text, img) : ch === "fb" ? await postFB(text, img) : await postTGPhoto(img, text);
         if (ok) { await SB.logSocial({ key: WIN.key(s, ch), channel: ch, kind: "win", text }); sent.push(WIN.key(s, ch)); }
         /* A copy the owner can share (12 Oct 2026: a channel post could not be shared): the same banner
            to their own chat, with the X-ready caption, once per win (on the Telegram post). */
@@ -142,4 +146,5 @@ module.exports = async function handler(req, res) {
 };
 /* The admin's "Post to our channels" on a landed win (api/account.js postwin). */
 module.exports.postX = postX;
+module.exports.postFB = postFB;
 module.exports.postTGPhoto = postTGPhoto;

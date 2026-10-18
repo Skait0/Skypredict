@@ -57,7 +57,9 @@ function make(deps) {
     read: (book, code) => require("../lib/upstream.js").readSlip(book, code),
     results: async (since) => (await require("../lib/supabase.js").recentResults(since)).rows || [],
     /* "Post to our channels" on a landed win: the same banner, captions and social_log key as the hourly win post. */
-    postWin: (ch, text, img) => (ch === "x" ? require("./social.js").postX(text, img) : require("./social.js").postTGPhoto(img, text)),
+    postWin: (ch, text, img) => { const P = require("./social.js");
+      return ch === "x" ? P.postX(text, img) : ch === "fb" ? P.postFB(text, img) : P.postTGPhoto(img, text); },
+    fill: (id, patch) => require("../lib/supabase.js").patchSiteSlip(id, patch),
     wasPosted: (key) => require("../lib/supabase.js").socialHas(key),
     logPost: (row) => require("../lib/supabase.js").logSocial(row) };
   /* The admin's switches and numbers; deps too, for the same reason. */
@@ -278,7 +280,7 @@ function make(deps) {
           return H.sendJson(res, 200, { ok: true });
         }
         /* POST A WIN BY HAND (owner, 18 Oct 2026: "shouldnt there be a button to enable me
-           push to our channels"). A landed x5+ slip goes out on Telegram and X exactly as
+           push to our channels"). A landed x5+ slip goes out on Telegram, X and Facebook as
            the hourly win post would; a channel it already went to is skipped. */
         if (action === "postwin") {
           const b = (await H.readJson(req, 256)) || {};
@@ -288,8 +290,19 @@ function make(deps) {
           if (!row) return H.sendJson(res, 404, { error: "no_slip" });
           const WIN = require("../lib/winpost.js"), SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
           if (row.status !== "landed" || !WIN.rankOf(row.total_odds)) return H.sendJson(res, 409, { error: "not_a_win" });
+          /* Games the ledger never tracked: read the slip back so the banner (api/slipcard.js
+             reads the row) and the caption list all of them. The row is settled, so
+             nothing grades these legs again. */
+          if (Number(row.untracked) > 0) {
+            let legs = null; try { legs = await slips.read(row.book, row.code); } catch (e) { legs = null; }
+            if (legs && legs.length) {
+              const full = require("../lib/slipdetail.js").names(legs);
+              await slips.fill(id, { legs: full, untracked: 0 });
+              Object.assign(row, { legs: full, untracked: 0 });
+            }
+          }
           const sent = [], already = [], failed = [];
-          for (const ch of ["tg", "x"]) {
+          for (const ch of ["tg", "x", "fb"]) {
             const key = WIN.key(row, ch);
             if (await slips.wasPosted(key)) { already.push(ch); continue; }
             const text = WIN.caption(row, ch);

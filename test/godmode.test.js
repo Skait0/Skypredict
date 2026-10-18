@@ -71,13 +71,16 @@ async function world() {
   const admin = { stats: async () => ({ ok: true, stats: { users: 3, codesToday: 7, books: [] } }),
     slipsOf: async () => [{ book: "sporty", code: "ABC", status: "open", created_at: new Date(clock()).toISOString() }] };
   const ledger = { 41: "check", 42: "landed" };
-  const wins = { 51: { id: 51, book: "sporty", code: "Z13XFH", status: "landed", total_odds: 60, leg_count: 14, legs: [{ name: "Riga or draw" }] },
+  const wins = { 51: { id: 51, book: "sporty", code: "Z13XFH", status: "landed", total_odds: 60, leg_count: 3, untracked: 2, legs: [{ name: "Riga or draw" }] },
     52: { id: 52, book: "sporty", code: "SMALL1", status: "landed", total_odds: 3, leg_count: 3, legs: [] } };
   const posts = [], postedKeys = new Set(["win|51|tg"]);
   const slips = { hits: async () => ({ ok: true, rows: [] }),
     byId: async (id) => wins[id] || null,
     postWin: async (ch, text, img) => { posts.push({ ch, text, img }); return true; },
     wasPosted: async (k) => postedKeys.has(k), logPost: async (row) => { postedKeys.add(row.key); },
+    read: async () => [{ home: "Riga", away: "Kairat", prediction: "1X" }, { home: "St. Truiden", away: "Iberia", prediction: "AH_2_-2" },
+      { home: "Freiburg", away: "Jablonec", prediction: "OVER_1.5" }],
+    fill: async (id, patch) => Object.assign(wins[id], patch),
     settle: async (id, to) => { if (ledger[id] !== "check") return { ok: true, changed: false }; ledger[id] = to; return { ok: true, changed: true }; } };
   const log = [];
   const audit = { log: async (row) => { log.push(row); return true; }, list: async () => ({ ok: true, rows: log.slice().reverse() }) };
@@ -88,7 +91,7 @@ async function world() {
     return { id: u.id, cookie: S.COOKIE + "=" + (await S.startSession(db, u.id, "Chrome/129 Android", clock())).token };
   };
   const boss = await user("boss@x.com"), mum = await user("mum@home.com"), plain = await user("a@b.com");
-  return { db, call, boss, mum, plain, stored: () => stored, ledger, log, posts };
+  return { db, call, boss, mum, plain, stored: () => stored, ledger, log, posts, wins };
 }
 const get = (who, action, query) => Object.assign(getReq("account", {}, { cookie: who.cookie }), { query: Object.assign({ action }, query || {}) });
 const post = (who, action, body) => Object.assign(postReq("account", body, { cookie: who.cookie }), { query: { action } });
@@ -153,8 +156,10 @@ test("a landed win is posted to our channels by the admin, once per channel", as
   assert.strictEqual((await w.call(post(w.boss, "postwin", { id: "99" }))).code, 404);
   assert.strictEqual((await w.call(post(w.boss, "postwin", { id: "52" }))).code, 409, "under x5 is not a win post");
   const r = (await w.call(post(w.boss, "postwin", { id: "51" }))).json();
-  assert.deepStrictEqual(r, { sent: ["x"], already: ["tg"], failed: [] }, "Telegram already had it");
-  assert.match(w.posts[0].text, /14 games/);
+  assert.deepStrictEqual(r, { sent: ["x", "fb"], already: ["tg"], failed: [] }, "Telegram already had it");
+  assert.match(w.posts[0].text, /3 games/);
+  assert.match(w.posts[1].text, /✅ Iberia \+2 handicap\n✅ Over 1\.5 goals \(Freiburg v Jablonec\)/, "Facebook lists every game, read back from the bookie");
+  assert.strictEqual(w.wins[51].untracked, 0, "the row now holds every leg, so the banner shows them too");
   assert.deepStrictEqual((await w.call(post(w.boss, "postwin", { id: "51" }))).json().sent, [], "never twice");
   const UI = require("../public/account-ui.js");
   assert.match(UI.hitsHtml([{ id: 51, status: "landed", code: "Z13XFH", book: "sporty", total_odds: 60, leg_count: 14, legs: [],

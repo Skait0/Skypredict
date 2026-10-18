@@ -985,13 +985,13 @@
           return navigator.share(data);
         }).catch(function(e){ if(!e||e.name!=="AbortError") fallback(); });
       }; });
-      /* POST TO OUR CHANNELS (api/account.js postwin): Telegram + X, as the hourly win post.
+      /* POST TO OUR CHANNELS (api/account.js postwin): Telegram, X and Facebook, as the hourly win post.
          It goes out to everyone, so the first tap only asks; the second posts. */
       box.querySelectorAll("[data-postwin]").forEach(function(b){ b.onclick=function(){
-        if(b.getAttribute("data-armed")!=="1"){ b.setAttribute("data-armed","1"); b.textContent="Tap again to post on Telegram + X"; return; }
+        if(b.getAttribute("data-armed")!=="1"){ b.setAttribute("data-armed","1"); b.textContent="Tap again to post on Telegram, X + Facebook"; return; }
         b.disabled=true; b.textContent="Posting...";
         a.req("POST","/api/account/postwin",{id:b.getAttribute("data-postwin")},function(c,j){
-          var nm={tg:"Telegram",x:"X"}, list=function(xs){ return (xs||[]).map(function(x){ return nm[x]||x; }).join(" and "); };
+          var nm={tg:"Telegram",x:"X",fb:"Facebook"}, list=function(xs){ return (xs||[]).map(function(x){ return nm[x]||x; }).join(" and "); };
           if(c!==200||!j){ b.disabled=false; b.removeAttribute("data-armed"); b.textContent="Post to our channels"; return fail(c,j); }
           b.textContent=(j.failed&&j.failed.length)?"Try again":"Posted";
           if(j.failed&&j.failed.length){ b.disabled=false; b.removeAttribute("data-armed"); }
