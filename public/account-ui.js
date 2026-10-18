@@ -449,7 +449,7 @@
          are read back from the bookie by slipdetail, the same panel as Check (owner,
          18 Oct 2026: "14 games but i can only see 5"). */
       var off=(h.leg_count||0)>legs.length, open=h.status==="check"||off;
-      return "<div class='swa-set'><span class='swa-st'><b>"+esc(h.code)+" · "+markOf(h.book)+
+      return "<div class='swa-set swa-hit'><span class='swa-st'><b>"+esc(h.code)+" · "+markOf(h.book)+
         (h.total_odds?" · <span class='swa-gold'>×"+esc(Number(h.total_odds).toLocaleString("en-US",{maximumFractionDigits:2}))+"</span>":"")+"</b>"+
         "<small>"+esc(games+" · "+when+(h.who?" · "+h.who:""))+"</small>"+
         "<small>"+esc(srcWords(h.src))+"</small>"+
@@ -531,6 +531,9 @@
     ".swa-leg span{flex:1;min-width:0;color:var(--soft)}.swa-leg span b{color:var(--text);font-size:13px}.swa-leg i{font-style:normal;color:var(--faint)}"+
     ".swa-won{color:var(--green-ink)}.swa-lost{color:var(--red-ink)}.swa-open{color:var(--amber)}"+
     ".swa-chkbox{flex-wrap:wrap;gap:8px}.swa-chkbox .swa-st{flex:1 1 100%}.swa-chkbox small{display:block;margin-top:6px}.swa-chkbox small b{display:block;color:var(--text);font-size:12.5px;margin-bottom:2px}.swa-set .swa-pillbtn+.swa-pillbtn{margin-left:6px}"+
+    /* A landed slip's buttons (See all, Share, Post to our channels) sit on their own line
+       under the text: three of them beside it squeezed the words into a column (18 Oct 2026). */
+    ".swa-hit{flex-wrap:wrap;gap:8px}.swa-hit .swa-st{flex:1 1 100%}.swa-hit .swa-pillbtn+.swa-pillbtn{margin-left:0}"+
     ".swa-h{font-size:13px;font-weight:700;color:var(--soft);margin:18px 2px 8px}.swa-h small{font-weight:600;color:var(--faint);margin-left:6px}"+
     ".swa-lbl{display:block;font-size:12px;font-weight:700;color:var(--faint);margin:0 0 5px}.swa-ta{height:auto;min-height:62px;padding:9px 12px;line-height:1.4;resize:vertical}.swa-more summary{cursor:pointer;font-size:12px;font-weight:800;color:var(--accent);list-style:none;margin-top:2px}.swa-more summary::-webkit-details-marker{display:none}.swa-more .swa-l,.swa-more[open] .swa-m{display:none}.swa-more[open] .swa-l{display:inline}.swa-bk{font-weight:800}"+
     ".swa-in{width:100%;height:42px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:15px;font-weight:700;padding:0 12px;box-sizing:border-box}"+
@@ -988,7 +991,7 @@
       /* POST TO OUR CHANNELS (api/account.js postwin): Telegram, X and Facebook, as the hourly win post.
          It goes out to everyone, so the first tap only asks; the second posts. */
       box.querySelectorAll("[data-postwin]").forEach(function(b){ b.onclick=function(){
-        if(b.getAttribute("data-armed")!=="1"){ b.setAttribute("data-armed","1"); b.textContent="Tap again to post on Telegram, X + Facebook"; return; }
+        if(b.getAttribute("data-armed")!=="1"){ b.setAttribute("data-armed","1"); b.textContent="Tap again to post"; return; }
         b.disabled=true; b.textContent="Posting...";
         a.req("POST","/api/account/postwin",{id:b.getAttribute("data-postwin")},function(c,j){
           var nm={tg:"Telegram",x:"X",fb:"Facebook"}, list=function(xs){ return (xs||[]).map(function(x){ return nm[x]||x; }).join(" and "); };

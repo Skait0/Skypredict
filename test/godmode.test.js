@@ -164,6 +164,8 @@ test("a landed win is posted to our channels by the admin, once per channel", as
   const UI = require("../public/account-ui.js");
   assert.match(UI.hitsHtml([{ id: 51, status: "landed", code: "Z13XFH", book: "sporty", total_odds: 60, leg_count: 14, legs: [],
     share: { img: "i", x: "c", tg: "c" } }]), /data-postwin='51'>Post to our channels</);
+  assert.match(UI.hitsHtml([{ id: 51, status: "landed", code: "Z", book: "sporty", total_odds: 60, legs: [] }]), /class='swa-set swa-hit'/,
+    "the buttons wrap under the text instead of squeezing it");
 });
 
 test("every clipboard write on the site catches its refusal", () => {
