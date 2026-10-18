@@ -485,11 +485,19 @@ async function writePages(payload) {
   /* One permanent page per day of codes. Dated by its own day, like the match
      archive: once its games are graded it never changes again. */
   let codePages = 0;
+  /* THE DAILY LADDER on each day's page (owner, 18 Oct 2026), locked the same way
+     the site's panel is: x5 with its codes, the rest odds and game count only. */
+  const ladderOf = {};
+  try {
+    const L = require("../lib/ladder.js");
+    const got = await DB.allLadder();
+    if (got.ok) for (const r of got.rows) (ladderOf[r.day] = ladderOf[r.day] || []).push(L.locked(r));
+  } catch (e) { warn("ladder for code pages failed: " + e.message); }
   try {
     if (codeDays.length) fs.mkdirSync(path.join(PUB, "booking-codes"), { recursive: true });
     for (const e of codeDays) {
       const rel = P.codesDayPath(e.date);
-      fs.writeFileSync(path.join(PUB, rel.slice(1) + ".html"), P.renderCodesDay(e, resultOf));
+      fs.writeFileSync(path.join(PUB, rel.slice(1) + ".html"), P.renderCodesDay(e, resultOf, ladderOf[e.date]));
       paths.push(e.date < today ? { path: rel, lastmod: e.date } : rel);
       codePages++;
     }

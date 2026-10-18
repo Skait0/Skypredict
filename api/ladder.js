@@ -25,16 +25,7 @@ const { applyCache, BROWSER_REVALIDATE } = require("../lib/cachepolicy.js");
 const SITE = () => process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
 const POLICY = { browser: BROWSER_REVALIDATE, cdn: "public, s-maxage=300", vercel: "public, s-maxage=300" };
 const PASS = ["plus", "ff", "admin"];
-const OPEN_RUNG = 5;
-
-/* A rung without a pass: the odds and how many games per book, no code, no legs
-   (a list of games is the slip, just typed by hand). */
-function locked(row) {
-  if (row.rung === OPEN_RUNG) return row;
-  const codes = {};
-  Object.keys(row.codes || {}).forEach((k) => { codes[k] = { n: row.codes[k] && row.codes[k].n }; });
-  return { day: row.day, rung: row.rung, odds: row.odds, games: Array.isArray(row.legs) ? row.legs.length : 0, codes, legs: [], locked: true };
-}
+const locked = L.locked;
 
 async function tgSend(chat, text) {
   const t = process.env.TELEGRAM_BOT_TOKEN;

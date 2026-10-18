@@ -139,6 +139,22 @@ test("only x5 shows its code without a pass; ?mine=1 opens every rung for a pass
   assert.strictEqual(pass.headers["Cache-Control"], "private, no-store", "a pass reply is never cached at the edge");
 });
 
+test("the /booking-codes day page shows the ladder: x5 with its codes, the rest Wizard Pass only", () => {
+  const P = require("../lib/pages.js");
+  const rows = [5, 100].map((x) => L.locked({ day: "2026-10-18", rung: x, odds: x * 1.07, legs: [1, 2, 3, 4],
+    codes: { sporty: { code: "SP" + x, n: 4 }, bet9ja: { code: "BN" + x, n: 3 } } }));
+  const entry = { date: "2026-10-18", codes: { sporty: "DAY1" }, legs: [{ home: "A", away: "B", tip: "1", date: "2026-10-18" }] };
+  const html = P.renderCodesDay(entry, () => null, rows);
+  assert.match(html, /x5 booking code/);
+  assert.match(html, /SP5/); assert.match(html, /BN5/);
+  assert.match(html, /x100 booking code/);
+  assert.doesNotMatch(html, /SP100|BN100/, "a locked rung's code never reaches the static page");
+  assert.match(html, /Wizard Pass only/);
+  assert.doesNotMatch(P.renderCodesDay(entry, () => null), /Pick your odds/, "no ladder that day, no section");
+  const build = fs.readFileSync(path.join(__dirname, "..", "scripts", "prebuild.js"), "utf8");
+  assert.match(build, /L\.locked\(r\)/, "the build locks the rows before rendering");
+});
+
 test("the cron route needs the cron secret; the public read is cached at the edge", async () => {
   const { d } = deps();
   const h = API.make(d);
