@@ -303,3 +303,16 @@ test("the Wizard's preview and its build use one leg cap", () => {
   assert.ok(page.includes(".slice(0," + RULE.replace("(T)", "(WSP.odds)") + ");"), "the preview caps legs exactly as the build does");
   assert.ok(!page.includes(".slice(0,isJackpotOdds(WSP.odds)?JACKPOT_LEG_CAP:40)"), "no private 40-leg cap left in the preview");
 });
+
+test("a rung with a lost game is marked lost, locked or not (owner, 18 Oct 2026)", async () => {
+  const leg = (home, code) => ({ home, away: home + " FC", code });
+  const day = [{ day: "2026-10-18", rung: 5, odds: 5, legs: [leg("Alpha", "1"), leg("Beta", "OVER_1.5")], codes: { sporty: { code: "S5", n: 2 } } },
+    { day: "2026-10-18", rung: 10, odds: 10, legs: [leg("Gamma", "1X")], codes: { sporty: { code: "S10", n: 1 } } }];
+  const results = [{ match_date: "2026-10-18", home: "Alpha", away: "Alpha FC", hg: 0, ag: 1 },
+    { match_date: "2026-10-18", home: "Gamma", away: "Gamma FC", hg: 1, ag: 1 }];
+  const { d } = deps({ getLadder: async () => ({ ok: true, rows: day }), results: async () => results });
+  const r = res(); await API.make(d)({ query: {}, headers: {} }, r);
+  assert.deepStrictEqual(r.body.rungs.map((x) => x.lost), [true, false], "Alpha lost the x5; Gamma's draw keeps the x10's 1X alive");
+  const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  assert.match(src, /rows=all\.filter\(function\(r\)\{ return !r\.lost; \}\)/, "the page greys a lost rung out");
+});

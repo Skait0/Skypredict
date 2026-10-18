@@ -2308,6 +2308,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .sl2-leg .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sl2-leg .p{color:var(--soft);font-size:12px;font-weight:600}
 .sl2-tog{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;height:38px;border:0;border-top:1px solid var(--line);background:none;color:var(--soft);font:inherit;font-size:12.5px;font-weight:700;border-radius:0 0 12px 12px;cursor:pointer}
 .sl2-tog svg{width:15px;height:15px;transition:transform 250ms var(--ease-out)}.sl2.open .sl2-tog svg{transform:rotate(180deg)}
+.sl2-tog-top{height:34px;border-top:0;border-bottom:1px solid var(--line);border-radius:0}
 @media (hover:hover){.sl2-a:not(.share):hover{background:var(--raise)}.sl2-tog:hover{color:var(--text)}}
 /* Kickoff countdown. Quiet by default; amber inside the hour, which is when
    it stops being information and starts being a deadline. */
@@ -9076,7 +9077,9 @@ function renderSlipsSheet(){
         (sp.code?"<div class='sl2-code'><span class='num'>"+esc(sp.code)+"</span><button type='button' data-slcp=\""+esc(sp.code)+"\" aria-label='Copy booking code'>"+COPY_SVG+"Copy</button></div>":"")+
         "<div class='sl2-mid'><span>"+progressWords(sp.legs)+"</span><div class='sl2-prog'>"+sp.legs.map(function(l){
           return "<i class='"+(l.res==="win"?"w":l.res==="lose"?"l":"")+"'></i>"; }).join("")+"</div></div>"+
-        "<div class='sl2-legs'>"+sp.legs.map(function(l){
+        /* A second Hide at the top of the games (owner, 18 Oct 2026: "scrolling a long
+           ticket all the way down to hide it is a hassle"). Only there while open. */
+        "<div class='sl2-legs'><button class='sl2-tog sl2-tog-top' type='button' data-slop='"+esc(sp.sid)+"' aria-expanded='true'><span>Hide games</span>"+CHEV_SVG+"</button>"+sp.legs.map(function(l){
           var sc=(l.hg!=null&&l.ag!=null)?(" "+l.hg+"-"+l.ag):"";
           return "<div class='sl2-leg "+(l.res||"open")+"'><span class='d'></span><span class='t'>"+esc(l.home)+" v "+esc(l.away)+"</span><span class='p'>"+esc(l.label||l.code)+esc(sc)+"</span></div>"; }).join("")+"</div>"+
         "<button class='sl2-tog' type='button' data-slop='"+esc(sp.sid)+"' aria-expanded='"+open+"'><span>"+(open?"Hide games":"Show "+sp.legs.length+" games")+"</span>"+CHEV_SVG+"</button>"+
@@ -9102,7 +9105,7 @@ function renderSlipsSheet(){
 /* Show/Hide games flips the card in place; a full redraw made the list jump. */
 function slipToggle(card,on){
   card.classList.toggle("open",on);
-  var t=card.querySelector(".sl2-tog"); if(!t) return;
+  var t=card.querySelector(".sl2-tog:not(.sl2-tog-top)"); if(!t) return;
   t.setAttribute("aria-expanded",on?"true":"false");
   t.firstChild.textContent=on?"Hide games":"Show "+card.querySelectorAll(".sl2-leg").length+" games";
 }
@@ -19800,8 +19803,15 @@ var LAD_RUNGS=[5,10,20,100,1000];
 var LAD_CLOCK="<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 2'/></svg>";
 function paintLadder(fresh){
   var rr=$("ladRungs"), body=$("ladBody"); if(!rr||!body) return;
-  var rows=LADDER.rows||[], have={};
+  /* A rung that has lost (api/ladder.js rungLost) is greyed out like an empty one, no
+     word about it (owner, 18 Oct 2026: "dont put the lost, just gray it out"). */
+  var all=LADDER.rows||[], rows=all.filter(function(r){ return !r.lost; }), have={};
   rows.forEach(function(r){ have[r.rung]=r; });
+  if(all.length&&!rows.length){
+    rr.innerHTML=LAD_RUNGS.map(function(x){ return "<button class='lad-r' type='button' role='radio' data-rung='"+x+"' aria-checked='false' disabled><small>x</small>"+x+"</button>"; }).join("");
+    body.innerHTML="<div class='lad-wait'>"+LAD_CLOCK+"<span><b>New slips tomorrow at 10:30</b>x5 to x1000, picked and booked for you every morning.</span></div>";
+    return;
+  }
   if(LADDER.rung==null){ var st=null; try{ st=+localStorage.getItem("sw.rung")||null; }catch(e){} LADDER.rung=st||(ladPass()?10:5); }
   if(rows.length&&!have[LADDER.rung]) LADDER.rung=(have[10]?10:rows[0].rung);
   rr.innerHTML=LAD_RUNGS.map(function(x){

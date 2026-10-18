@@ -95,8 +95,10 @@ function make(deps) {
       const d = await deliver(now, f.rows, deps);
       return res.status(200).json({ ok: true, rungs: f.rows.map((r) => r.rung), minted: f.minted, delivery: d });
     }
-    const got = await deps.getLadder(S.dayOf(deps.now()));
-    const rows = got.ok ? got.rows : [];
+    const day = S.dayOf(deps.now());
+    const got = await deps.getLadder(day);
+    const res0 = got.ok && got.rows.length && deps.results ? (await deps.results(day).catch(() => [])) || [] : [];
+    const rows = (got.ok ? got.rows : []).map((r) => Object.assign({}, r, { lost: L.rungLost(r, res0) }));
     if (q.mine) {
       res.setHeader("Cache-Control", "private, no-store");
       const pass = PASS.includes(await deps.roleOfReq(req));
@@ -110,6 +112,8 @@ function make(deps) {
 const live = {
   now: () => Date.now(),
   getLadder: SB.getLadder, putLadder: SB.putLadder,
+  /* Today's final scores, for greying out a rung that has lost (lib/ladder.js rungLost). */
+  results: async (day) => (await SB.recentResults(day)).rows || [],
   autopilotDue: SB.autopilotDue, markSent: SB.markAutopilotSent,
   payload: () => fetch(SITE() + "/predictions.json").then((r) => r.json()).catch(() => null),
   feed: () => BIG.feedNow().catch(() => []),
