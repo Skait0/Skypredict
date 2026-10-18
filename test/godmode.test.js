@@ -156,7 +156,7 @@ test("a landed win is posted to our channels by the admin, once per channel", as
   assert.strictEqual((await w.call(post(w.boss, "postwin", { id: "99" }))).code, 404);
   assert.strictEqual((await w.call(post(w.boss, "postwin", { id: "52" }))).code, 409, "under x5 is not a win post");
   const r = (await w.call(post(w.boss, "postwin", { id: "51" }))).json();
-  assert.deepStrictEqual(r, { sent: ["x", "fb"], already: ["tg"], failed: [] }, "Telegram already had it");
+  assert.deepStrictEqual(r, { sent: ["x", "fb"], already: ["tg"], failed: [], why: {} }, "Telegram already had it");
   assert.match(w.posts[0].text, /3 games/);
   assert.match(w.posts[1].text, /✅ Iberia \+2 handicap\n✅ Over 1\.5 goals \(Freiburg v Jablonec\)/, "Facebook lists every game, read back from the bookie");
   assert.strictEqual(w.wins[51].untracked, 0, "the row now holds every leg, so the banner shows them too");
@@ -166,6 +166,8 @@ test("a landed win is posted to our channels by the admin, once per channel", as
     share: { img: "i", x: "c", tg: "c" } }]), /data-postwin='51'>Post to our channels</);
   assert.match(UI.hitsHtml([{ id: 51, status: "landed", code: "Z", book: "sporty", total_odds: 60, legs: [] }]), /class='swa-set swa-hit'/,
     "the buttons wrap under the text instead of squeezing it");
+  assert.match(UI.hitsHtml([{ id: 51, status: "landed", code: "Z", book: "sporty", total_odds: 60, legs: [], share: { img: "i", x: "c", tg: "c" } }]),
+    /data-postwin='51'>Post to our channels<\/button><small class='swa-postmsg' role='status'/, "the result shows under the button");
 });
 
 test("every clipboard write on the site catches its refusal", () => {

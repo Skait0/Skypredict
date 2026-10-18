@@ -59,6 +59,7 @@ function make(deps) {
     /* "Post to our channels" on a landed win: the same banner, captions and social_log key as the hourly win post. */
     postWin: (ch, text, img) => { const P = require("./social.js");
       return ch === "x" ? P.postX(text, img) : ch === "fb" ? P.postFB(text, img) : P.postTGPhoto(img, text); },
+    whyFailed: (ch) => (ch === "tg" ? "" : require("./social.js").lastWhy()),
     fill: (id, patch) => require("../lib/supabase.js").patchSiteSlip(id, patch),
     wasPosted: (key) => require("../lib/supabase.js").socialHas(key),
     logPost: (row) => require("../lib/supabase.js").logSocial(row) };
@@ -301,16 +302,16 @@ function make(deps) {
               Object.assign(row, { legs: full, untracked: 0 });
             }
           }
-          const sent = [], already = [], failed = [];
+          const sent = [], already = [], failed = [], why = {};
           for (const ch of ["tg", "x", "fb"]) {
             const key = WIN.key(row, ch);
             if (await slips.wasPosted(key)) { already.push(ch); continue; }
             const text = WIN.caption(row, ch);
             if (await slips.postWin(ch, text, WIN.imageUrl(SITE, row))) { await slips.logPost({ key, channel: ch, kind: "win", text }); sent.push(ch); }
-            else failed.push(ch);
+            else { failed.push(ch); if (slips.whyFailed) why[ch] = slips.whyFailed(ch) || ""; }
           }
-          await record("postwin", "slip " + id, { sent, already, failed });
-          return H.sendJson(res, 200, { sent, already, failed });
+          await record("postwin", "slip " + id, { sent, already, failed, why });
+          return H.sendJson(res, 200, { sent, already, failed, why });
         }
         if (action === "flags") {
           if (flags._reset) flags._reset(); // the admin sees the stored switches, not a cached copy

@@ -30,9 +30,12 @@ async function gql(k, query) {
 }
 /* Buffer channels by service, looked up once per instance. */
 const BCH = {};
+/* Why the last Buffer post failed, for the admin's button (api/account.js postwin). */
+let lastWhy = "";
 async function postBuffer(service, text, image, extra) {
   const k = (process.env.BUFFER_KEY || "").trim();
-  if (!k) return false;
+  lastWhy = "";
+  if (!k) { lastWhy = "BUFFER_KEY is not set"; return false; }
   try {
     if (!BCH[service]) {
       const org = (await gql(k, "{account{organizations{id}}}")).account.organizations[0].id;
@@ -40,13 +43,14 @@ async function postBuffer(service, text, image, extra) {
         .find((c) => c.service === service);
       BCH[service] = ch && ch.id;
     }
-    if (!BCH[service]) return false;
+    if (!BCH[service]) { lastWhy = "no " + service + " channel in Buffer"; return false; }
     /* An image rides as assets:[{image:{url}}] - `images` is not a field (24 Sep). */
     const assets = image ? `assets:[{image:{url:${JSON.stringify(image)}}}],` : "";
     const res = (await gql(k, `mutation{createPost(input:{text:${JSON.stringify(text)},channelId:${JSON.stringify(BCH[service])},` +
       assets + (extra || "") + `schedulingType:automatic,mode:shareNow}){__typename ... on PostActionSuccess{post{id}} ... on MutationError{message}}}`)).createPost;
+    if (res.__typename !== "PostActionSuccess") lastWhy = res.message || res.__typename;
     return res.__typename === "PostActionSuccess";
-  } catch (e) { return false; }
+  } catch (e) { lastWhy = String(e && e.message || e); return false; }
 }
 const postX = (text, image) => postBuffer("twitter", text, image);
 /* The Facebook Page (owner, 18 Oct 2026: "include facebook"); Buffer wants the post type. */
@@ -147,4 +151,5 @@ module.exports = async function handler(req, res) {
 /* The admin's "Post to our channels" on a landed win (api/account.js postwin). */
 module.exports.postX = postX;
 module.exports.postFB = postFB;
+module.exports.lastWhy = () => lastWhy;
 module.exports.postTGPhoto = postTGPhoto;
