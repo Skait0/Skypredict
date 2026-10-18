@@ -163,3 +163,34 @@ test("the preference does not override the market switches", () => {
     assert.notStrictEqual(c.code, "GG", "GG is switched off and must not be picked");
   }
 });
+
+/* Owner, 18 Oct 2026: "i slid to 84 odds and i shuffled and it went to 1007 odds".
+   The dial fixes the number of games, and a shuffle re-ranks them with a jitter of
+   up to +/-95%, so the same count could average x1.30 a leg one time and x1.50 the
+   next: 17 legs make x86 or x985. A shuffle now keeps the total that was on screen
+   (BUILD.keep) while the settings it was built under stay the same. */
+test("a shuffle keeps the odds the slider was set to", () => {
+  const board = [];
+  for (let i = 0; i < 60; i++) {
+    const p = 0.6 + (i % 10) * 0.035;
+    const f = fx("H" + i, "A" + i, { "1X": +(1.05 + (i % 8) * 0.09).toFixed(2), "OVER_1.5": +(1.12 + (i % 6) * 0.12).toFixed(2), "OVER_2.5": +(1.5 + (i % 7) * 0.22).toFixed(2) });
+    f.dc1x = p + 0.15; f.o15 = p + 0.1; f.o25 = p - 0.05;
+    board.push(f);
+  }
+  const E = engine(board);
+  E.BUILD.risk = 70;
+  const total = (picks) => picks.reduce((t, c) => t * (c.f.sportyOdds[c.code] || 1), 1);
+  const shown = total(E.buildPicks());
+  let worst = 0, freeWorst = 0;
+  for (let s = 2; s < 40; s++) {
+    E.BUILD.seed = s; E.BUILD.shuffles = s;
+    E.BUILD.keep = null; freeWorst = Math.max(freeWorst, Math.abs(Math.log(total(E.buildPicks()) / shown)));
+    E.BUILD.keep = { sig: E.BUILD._sig, total: shown };
+    worst = Math.max(worst, Math.abs(Math.log(total(E.buildPicks()) / shown)));
+  }
+  assert.ok(Math.exp(freeWorst) > 3, "the board must be one where an unkept shuffle drifts, or this proves nothing (x" + Math.exp(freeWorst).toFixed(2) + ")");
+  assert.ok(Math.exp(worst) < 1.35, "a shuffle kept the odds within x" + Math.exp(worst).toFixed(2) + " of x" + shown.toFixed(1));
+  E.BUILD.risk = 40; const moved = E.buildPicks();
+  assert.notStrictEqual(E.BUILD._sig, E.BUILD.keep.sig, "moving the slider is a new setting, so the kept total no longer applies");
+  assert.ok(moved.length > 0);
+});

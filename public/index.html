@@ -15224,6 +15224,20 @@ function buildPicks(neutral){
     cap=Math.max(0,ref.length);
     loopCap=Math.max(cap,Math.round(p.maxGames*1.6)-removedCount);
   }
+  /* A SHUFFLE KEEPS THE ODDS (owner, 18 Oct 2026: "i slid to 84 odds and i shuffled and
+     it went to 1007 odds"). The dial fixes the count and the shuffle jitter re-ranks the
+     games, so the same count could average x1.30 a leg or x1.50: 17 legs make x86 or
+     x985. The Shuffle button stores the total on screen with the settings it was built
+     under (BUILD.keep); while they are unchanged that total is the target, reached the
+     same way the styles reach Balanced's. Any other change is a new slip. Not Bankers. */
+  var sig=[BUILD.risk,WSP.legodd,B.key,JSON.stringify(BUILD.mk),scopeFixtures().map(fid).join(",")].join("|");
+  if(!neutral){
+    BUILD._sig=sig;
+    if(BUILD.keep&&BUILD.keep.sig===sig&&BUILD.keep.total>1&&!bankersOn()){
+      target=BUILD.keep.total;
+      loopCap=Math.max(cap,Math.round(p.maxGames*1.6)-removedCount);
+    }
+  }
   /* NEVER MORE LEGS THAN THE BOOK TAKES (owner, 16 Oct 2026: "max is 50 ... for some
      bookies its 40 legs tops"). slipMax is the selected bookmaker's limit. */
   cap=Math.min(cap,slipMax(B)); loopCap=Math.min(loopCap,slipMax(B));
@@ -24787,7 +24801,10 @@ document.querySelectorAll(".bld-mode-btn").forEach(function(btn){
 });
 $("bookBtn").addEventListener("click",function(){ addBuiltToSlip(BUILD.picks,"slider"); });
 $("clearBtn").addEventListener("click",clearSlip);
-$("shuffleBtn").addEventListener("click",function(){if(BUILD.mode==="wizard"){wspConjure(true);return;}BUILD.touched=true;BUILD.seed=Math.floor(Math.random()*1e6);BUILD.shuffles=(BUILD.shuffles||0)+1;BUILD.removed={};renderBuilder();});
+$("shuffleBtn").addEventListener("click",function(){if(BUILD.mode==="wizard"){wspConjure(true);return;}
+  /* The total on screen, kept for every shuffle until a setting changes (buildPicks). */
+  if(!(BUILD.keep&&BUILD.keep.sig===BUILD._sig)) BUILD.keep={sig:BUILD._sig,total:(BUILD.picks||[]).reduce(function(t,c){ var o=legOdd(c.f,c.code,c.p); return t*(o>1?o:oddOf(c.p)); },1)};
+  BUILD.touched=true;BUILD.seed=Math.floor(Math.random()*1e6);BUILD.shuffles=(BUILD.shuffles||0)+1;BUILD.removed={};renderBuilder();});
 
 var CONTACT_EMAIL="hello@soccerwizard.live";
 /* Contact dialog.
