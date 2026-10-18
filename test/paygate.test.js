@@ -55,7 +55,7 @@ test("the 429 tells a free account about the Wizard Pass and a pass holder about
   const f = await run("free", 2);
   assert.equal(f.code, 429);
   assert.deepEqual([f.body.error, f.body.plan, f.body.limit], ["capped", "free", 2]);
-  assert.match(f.body.message, /Wizard Pass gives you 20 a day, from ₦200/);
+  assert.match(f.body.message, /Wizard Pass gives you 20 codes a day, from ₦200/);
   assert.match((await run("plus", 20)).body.message, /today's 20 booking codes[\s\S]*after midnight/);
 });
 
@@ -151,7 +151,7 @@ test("paid once: the webhook and the return page both settle, the pass is credit
   const w = world();
   const u = await w.user("a@b.com");
   const { reference } = await w.start(u, "week");
-  assert.deepEqual(await w.verify(u, reference), { paid: false, until: null }, "not paid yet");
+  assert.deepEqual(await w.verify(u, reference), { paid: false, until: null, pass: "week" }, "not paid yet");
   w.ps.status[reference] = "success";
   assert.equal((await w.hook(reference)).code, 200);
   const first = w.subs[u.id].current_period_end;
@@ -220,7 +220,7 @@ test("Paystack down at start: a 502, and the page can try again", async () => {
 test("the bot gives 2 codes a day and points past them to Plus, never 'unlimited'", () => {
   const src = require("fs").readFileSync(require("path").join(__dirname, "..", "api", "tg.js"), "utf8");
   assert.match(src, /const CONVERT_CAP = 2;/);
-  assert.match(src, /20 codes a day, from ₦200/);
+  assert.match(src, /pricing\.js"\)\.pitch\(Date\.now\(\)\)/, "the offer line follows the date (lib/pricing.js)");
   assert.doesNotMatch(src, /no daily limit|"Unlimited/);
 });
 
@@ -263,4 +263,80 @@ test("the first founder pass brings the crest and a thank-you, once; nothing els
   w.ps.status[m2.reference] = "success";
   await w.hook(m2.reference);
   assert.equal(w.inbox.length, 1, "their second founder month is not a second welcome");
+});
+
+/* ----------------------------------- new prices from 1 Nov 2026 (lib/pricing.js) */
+/* Owner, 18 Oct 2026: today's prices and 20 a day for everybody until 1 Nov, then by
+   itself Day N500 40 a day, Week N1,500 50, Month N4,000 60, and a N200 Starter of 10
+   codes for good on the website. Founding Wizards stay N1,500 for 3 months. */
+const PR = require("../lib/pricing.js");
+const SWITCH = PR.SWITCH_AT;
+
+test("pricing: today's table until 1 Nov 00:00 Lagos, then the new one", () => {
+  assert.equal(new Date(SWITCH).toISOString(), "2026-10-31T23:00:00.000Z");
+  assert.deepEqual(Object.keys(PR.passesAt(SWITCH - 1)), ["day", "week", "month"]);
+  assert.deepEqual(["day", "week", "month"].map((k) => PR.codesFor(k, SWITCH - 1)), [20, 20, 20]);
+  assert.deepEqual(["day", "week", "month"].map((k) => PR.codesFor(k, SWITCH)), [40, 50, 60]);
+  assert.deepEqual(["starter", "day", "week", "month"].map((k) => PR.passesAt(SWITCH)[k].kobo), [20000, 50000, 150000, 400000]);
+  assert.equal(PR.codesFor("gift-of-old", SWITCH), 40, "an unknown plan gets the Day allowance");
+  assert.equal(PR.codesFor("starter", SWITCH), 40, "Starter is not a pass and sets no daily limit");
+  assert.equal(PR.starterCodes(3), 30);
+});
+
+test("the gate gives a pass its plan's codes a day, by the date", async () => {
+  const gate = (plan, t) => G.makeGate({ db: store({ "u:u1": 0 }), userLimit: 100, freeLimit: R.FREE_CODES, trial: true,
+    plusLimit: (p, tt) => R.codeLimitFor("plus", p, tt), pepper: "p", sessionCookie: "sess",
+    roleOf: async () => ({ role: "plus", plan, userId: "u1" }), now: () => t });
+  assert.equal((await gate("month", SWITCH - 1)(withCookie)).limit, 20, "nobody moves up before 1 Nov");
+  assert.deepEqual(await Promise.all(["day", "week", "month"].map(async (p) => (await gate(p, SWITCH)(withCookie)).limit)), [40, 50, 60]);
+});
+
+test("Starter codes are spent once the 2 trial codes are gone, and do not come back at midnight", async () => {
+  const gate = (counts, bought) => G.makeGate({ db: store(counts), freeLimit: R.FREE_CODES, trial: true, plusLimit: 20,
+    pepper: "p", sessionCookie: "sess", roleOf: async () => ({ role: "free", plan: null, userId: "u1" }),
+    starterOf: async () => bought, now: () => SWITCH + 864e5 });
+  const ok = await gate({ "u:u1": 2, "c:u1": 3 }, 10)(withCookie);
+  assert.deepEqual([ok.allow, ok.plan, ok.limit, ok.remaining], [true, "starter", 10, 6]);
+  const out = await gate({ "u:u1": 2, "c:u1": 10 }, 10)(withCookie);
+  assert.deepEqual([out.allow, out.plan], [false, "starter"]);
+  const none = await gate({ "u:u1": 2 }, 0)(withCookie);
+  assert.deepEqual([none.allow, none.plan], [false, "free"], "no Starter bought: the trial refusal as before");
+  const trialLeft = await gate({ "u:u1": 1, "c:u1": 0 }, 10)(withCookie);
+  assert.deepEqual([trialLeft.allow, trialLeft.plan], [true, "free"], "the trial codes go first");
+});
+
+test("the offer: before 1 Nov today's prices with the new ones to strike through; Starter only from then", async () => {
+  const w = world();
+  const before = (await w.call(Object.assign(getReq("pay", {}), { query: { action: "offer" } }))).json();
+  assert.deepEqual(before.passes.map((p) => [p.pass, p.naira, p.next, p.codes]),
+    [["day", 200, 500, 20], ["week", 800, 1500, 20], ["month", 1500, 4000, 20]], "the founder month still shows N1,500");
+  assert.ok(before.switchAt);
+  const u = await w.user("a@b.com");
+  assert.equal((await w.call(Object.assign(postReq("pay", { pass: "starter" }, { cookie: u.cookie }), { query: { action: "start" } }))).code, 400,
+    "Starter is not on sale before 1 Nov");
+  w.advance(SWITCH - Date.UTC(2026, 9, 16, 10));
+  const after = (await w.call(Object.assign(getReq("pay", {}), { query: { action: "offer" } }))).json();
+  assert.deepEqual(after.passes.map((p) => [p.pass, p.naira, p.next, p.codes]),
+    [["starter", 200, null, 10], ["day", 500, null, 40], ["week", 1500, null, 50], ["month", 1500, null, 60]]);
+  assert.equal(after.switchAt, null);
+});
+
+test("a Starter pack is paid once and never becomes a pass; a N1,500 Week pass is no founder", async () => {
+  const w = world();
+  w.advance(SWITCH - Date.UTC(2026, 9, 16, 10));
+  const u = await w.user("a@b.com");
+  const s = await w.start(u, "starter");
+  assert.deepEqual([w.pays[s.reference].pass, w.pays[s.reference].days, w.pays[s.reference].amount_kobo, w.pays[s.reference].founder],
+    ["starter", 0, 20000, false]);
+  w.db.applyPayment = async (ref, amount) => { const p = w.pays[ref]; if (!p || p.status !== "pending" || p.amount_kobo !== amount) return null;
+    p.status = "paid"; return new Date().toISOString(); };   /* sql/pricing_v2.sql: Starter returns now(), no pass */
+  w.ps.status[s.reference] = "success"; await w.hook(s.reference);
+  const v = await w.verify(u, s.reference);
+  assert.deepEqual([v.paid, v.until, v.pass], [true, null, "starter"]);
+  assert.equal(w.subs[u.id], undefined, "no pass");
+  const x = await w.user("x@b.com");
+  const wk = await w.start(x, "week");
+  assert.deepEqual([w.pays[wk.reference].amount_kobo, w.pays[wk.reference].founder], [150000, false]);
+  w.ps.status[wk.reference] = "success"; await w.hook(wk.reference);
+  assert.equal(w.inbox.length, 0, "the founder welcome follows the flag, not the amount");
 });

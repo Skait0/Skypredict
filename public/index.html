@@ -11947,7 +11947,7 @@ function bookErrHTML(d,B){
       "<span>Your slip is saved. Everything else on the board still works.</span></div>";
   if(kind==="capped"&&d.plan==="free"&&window.swPlus)
     return "<div class='code-err code-plus'><b>"+(d.trial?"You've used your "+(d.limit||2)+" trial codes.":"That's your "+(d.limit||2)+" codes for today.")+"</b>"+
-      "<span>Your slip is saved. Wizard Pass gives you 20 codes a day on every bookie, from ₦200. Pay once, nothing renews.</span>"+
+      "<span>Your slip is saved. Wizard Pass gives you codes every day on every bookie, from ₦200. Pay once, nothing renews.</span>"+
       "<button type='button' class='code-plusgo' data-plus>Get Wizard Pass</button></div>";
   if(kind==="capped")
     return "<div class='code-err'><b>That's today's "+(d&&d.limit?d.limit+" ":"")+"booking codes.</b>"+

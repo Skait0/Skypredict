@@ -74,7 +74,8 @@ const HELLO =
    same fail-open rule the site's gate uses - an outage of ours is not the
    reader's problem. The cap is the funnel: past it, the Wizard Pass on the site. */
 const CONVERT_CAP = 2;
-const PLUS_LINE = "Wizard Pass on <a href=\"" + SITE + "\">soccerwizard.live</a>: 20 codes a day, from ₦200 🧙";
+/* The date decides the offer (lib/pricing.js: new prices from 1 Nov 2026). */
+const plusLine = () => "Wizard Pass on <a href=\"" + SITE + "\">soccerwizard.live</a>: " + require("../lib/pricing.js").pitch(Date.now()) + " 🧙";
 const subjectOf = (uid) => "tg-" + crypto.createHash("sha256")
   .update((process.env.SW_QUOTA_PEPPER || "") + ":" + uid).digest("hex").slice(0, 24);
 
@@ -133,7 +134,7 @@ async function onConvert(cq) {
     disable_web_page_preview: true, reply_to_message_id: cq.message.message_id });
   const q = await quota(cq.from && cq.from.id, 1);
   if (!q.ok) {
-    await say("🔥 " + spent(q) + (q.plan === "trial" ? "\n\nWant more? " + PLUS_LINE : ""));
+    await say("🔥 " + spent(q) + (q.plan === "trial" ? "\n\nWant more? " + plusLine() : ""));
     return;
   }
   tg("sendChatAction", { chat_id: chat.id, action: "typing" }).catch(() => {});
@@ -181,9 +182,9 @@ async function budgetOf(uid) {
     if (!userId) return trial;
     const AUTHDB = require("../lib/auth/db.js");
     const u = await AUTHDB.userById(userId);
-    const role = u ? await R.roleOf(AUTHDB, u, process.env) : "free";
+    const ri = u ? await R.roleInfo(AUTHDB, u, process.env) : { role: "free", plan: null }, role = ri.role;
     if (role === "admin") return { subject: "u:" + userId, day, countDay: day, cap: 1000, plan: "admin" };
-    if (role === "plus" || role === "ff") return { subject: "u:" + userId, day, countDay: day, cap: R.codeLimitFor(role), plan: role };
+    if (role === "plus" || role === "ff") return { subject: "u:" + userId, day, countDay: day, cap: R.codeLimitFor(role, ri.plan), plan: role };
   } catch (e) { /* the trial, as if unlinked */ }
   return trial;
 }
@@ -194,7 +195,7 @@ function leftLine(q, k) {
   const l = q.left(k);
   if (q.plan === "admin") return "";
   if (q.plan !== "trial") return l != null ? "⚡ " + l + " code" + (l === 1 ? "" : "s") + " left today." : "";
-  return (l != null ? "⚡ " + l + " trial code" + (l === 1 ? "" : "s") + " left. " : "") + PLUS_LINE;
+  return (l != null ? "⚡ " + l + " trial code" + (l === 1 ? "" : "s") + " left. " : "") + plusLine();
 }
 const xOdds = (o) => "×" + (o >= 100 ? Math.round(o).toLocaleString("en") : o.toFixed(2));
 const legNames = (ls, n) => ls.slice(0, n).map((l) => esc((l.home || "?") + " v " + (l.away || "?"))).join("; ") +
@@ -229,7 +230,7 @@ async function onAsk(msg, ask, book, code, legs) {
     const kind = q.plan === "trial" ? " trial code" : " code";
     await say("🔥 That needs " + cost + " new code" + (cost === 1 ? "" : "s") + " and you have " +
       (have ? have + kind + (have === 1 ? "" : "s") + " left" : "used your " + q.cap + kind + "s") +
-      "." + (q.plan === "trial" ? "\n\n" + PLUS_LINE : ""));
+      "." + (q.plan === "trial" ? "\n\n" + plusLine() : ""));
     return;
   }
   const fx = await fixtures();
@@ -326,7 +327,7 @@ async function onToday(msg, ask) {
   const book = ask.book || "sporty", B = D.BOOK_NAMES[book];
   const q = await quota(msg.from && msg.from.id, 1);
   if (!q.ok) {
-    await say("🔥 " + spent(q) + (q.plan === "trial" ? " " + PLUS_LINE : ""));
+    await say("🔥 " + spent(q) + (q.plan === "trial" ? " " + plusLine() : ""));
     return;
   }
   tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
@@ -406,7 +407,7 @@ module.exports = async function handler(req, res) {
           const u = await AUTHDB.userById(userId);
           const role = u ? await R.roleOf(AUTHDB, u, process.env) : "free";
           const got = await SB.getAutopilot(userId);
-          if (!["plus", "ff", "admin"].includes(role)) line = "My daily slip comes with Wizard Pass. " + PLUS_LINE;
+          if (!["plus", "ff", "admin"].includes(role)) line = "My daily slip comes with Wizard Pass. " + plusLine();
           else if (!(got.ok && got.row)) line = "Pick your daily slip first: on <a href=\"" + SITE + "\">soccerwizard.live</a>, open your account, then My daily slip. Then send /daily again.";
           else if (daily[1]) line = (await SB.putAutopilot(userId, { tg_chat: null })).ok ? "Done. No more daily slips here. Your phone alerts stay as they are." : "Couldn't change it just now. Try again.";
           else line = (await SB.putAutopilot(userId, { tg_chat: chat })).ok

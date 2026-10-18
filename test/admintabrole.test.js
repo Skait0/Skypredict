@@ -86,7 +86,7 @@ test("saveRole tells the page, and the account sheet's own Admin refuses other r
   assert.match(grab(src, "saveRole"), /root\.swRoleChanged\(\)/);
   assert.match(grab(ui, "admin"), /if\(role\(\)!=="admin"\) return;/);
   /* The real gate: admin comes only from SW_ADMIN_EMAILS on the server. */
-  assert.match(fs.readFileSync(path.join(__dirname, "..", "lib", "roles.js"), "utf8"), /if \(admins\.includes\(email\)\) return "admin";/);
+  assert.match(fs.readFileSync(path.join(__dirname, "..", "lib", "roles.js"), "utf8"), /if \(admins\.includes\(email\)\) return \{ role: "admin", plan: null \};/);
 });
 
 /* Owner, 14 Oct 2026: "when i refresh on the admin page, it takes me back to the

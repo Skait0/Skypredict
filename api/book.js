@@ -41,7 +41,10 @@ const opts = {
   /* The trial (owner, 16 Oct 2026): free is FREE_CODES for the account's
      lifetime and the phone's, and signed out books nothing. lib/bookgate.js. */
   trial: true,
-  plusLimit: R.PLUS_CODES,
+  /* A pass's codes a day by its plan and the date (lib/pricing.js: 20 until 1 Nov 2026). */
+  plusLimit: (plan, t) => R.codeLimitFor("plus", plan, t),
+  /* Starter packs bought (10 codes each, website only, from 1 Nov 2026). */
+  starterOf: async (userId) => require("../lib/pricing.js").starterCodes(await AUTHDB.starterPaid(userId)),
   sessionCookie: S.COOKIE,
   /* Once per booking: the gate, the counter and the ledger all ask, and each answer is
      up to five reads. Kept on the request, so the next booking asks afresh. */
@@ -49,7 +52,9 @@ const opts = {
     const s = await S.readSession(AUTHDB, req, Date.now());
     if (s.state !== "ok") return null;
     const u = await AUTHDB.userById(s.userId);
-    return u ? { role: await R.roleOf(AUTHDB, u, process.env), userId: u.id } : null;
+    if (!u) return null;
+    const r = await R.roleInfo(AUTHDB, u, process.env);
+    return { role: r.role, plan: r.plan, userId: u.id };
   })()),
   /* Temporary, for diagnosing a quota that reports "open". Unset it again
      once the answer is known - it puts database errors in a response header. */

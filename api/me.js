@@ -51,7 +51,7 @@ function make(deps) {
           role === "plus" && db.subscription ? db.subscription(s.userId).catch(() => null) : null,
           db.founderOffer ? db.founderOffer(s.userId).catch(() => null) : null]);
         return H.sendJson(res, 200, { signedIn: true, email: user.email, role, plan: R.planLabel(role),
-          codeLimit: role === "admin" ? "none" : R.codeLimitFor(role), personal, version: row ? row.version : 0,
+          codeLimit: role === "admin" ? "none" : R.codeLimitFor(role, sub && sub.plan, t), personal, version: row ? row.version : 0,
           plusUntil: sub && sub.current_period_end ? new Date(sub.current_period_end).toISOString() : null,
           founder: !!(fo && fo.mine > 0),
           /* Their place among the Founding Wizards, for the plan card (sql/founder_no.sql). */

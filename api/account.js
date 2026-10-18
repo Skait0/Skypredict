@@ -40,7 +40,8 @@ function cleanReply(raw) {
 }
 
 /* Gifts (action "gift"): the pass lengths and names are the ones sold (api/pay.js). */
-const { PASSES } = require("./pay.js");
+/* Giftable passes and their days (lib/pricing.js; a Starter pack is not a pass). */
+const { NOW: PASSES } = require("../lib/pricing.js");
 const GIFT_REASONS = ["gift", "reimburse"], GIFT_NOTE_MAX = 500;
 /* The inbox message is MSG.giftHtml (public/messages.js), shared with the admin's preview. */
 function make(deps) {

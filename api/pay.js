@@ -1,8 +1,8 @@
 "use strict";
 /* /api/pay/:action - Plus passes through Paystack (owner, 16 Oct 2026).
-   Prepaid, never auto-renewed: Day N200, Week N800, Month N2,000, each 20
-   codes a day (lib/roles.js). Founding Wizards: the first 500 buyers pay
-   N1,500 for their first 3 month passes.
+   Prepaid, never auto-renewed. The prices and codes are lib/pricing.js: today's
+   until 1 Nov 2026, then the new ones (with a N200 Starter of 10 codes).
+   Founding Wizards: the first 500 buyers pay N1,500 for their first 3 month passes.
 
      GET  offer    prices, and whether this reader still gets the founder price
      POST start    {pass} -> a pending payments row + Paystack checkout url
@@ -20,17 +20,13 @@ const H = require("../lib/auth/http.js");
 const S = require("../lib/auth/session.js");
 const { report } = require("../lib/report.js");
 
-const PASSES = {
-  day: { days: 1, kobo: 20000, label: "Day pass" },
-  week: { days: 7, kobo: 80000, label: "Week pass" },
-  month: { days: 30, kobo: 200000, label: "Month pass" },
-};
+const P = require("../lib/pricing.js");
 const FOUNDER = { kobo: 150000, seats: 500, months: 3 };
 
 /* The founder price, for a month pass only: still seats left, or this reader
    already holds one, and fewer than 3 founder months paid. */
 const founderOpen = (o) => !!o && o.mine < FOUNDER.months && (o.mine > 0 || o.taken < FOUNDER.seats);
-const priceOf = (pass, offer) => pass === "month" && founderOpen(offer) ? FOUNDER.kobo : PASSES[pass].kobo;
+const priceOf = (pass, offer, t) => pass === "month" && founderOpen(offer) ? FOUNDER.kobo : P.passesAt(t)[pass].kobo;
 
 function paystack(secret, fetchImpl) {
   const f = fetchImpl || fetch;
@@ -76,10 +72,13 @@ function make(deps) {
       if (!t || t.status !== "success" || t.currency !== "NGN" || Number(t.amount) !== row.amount_kobo) return null;
       const end = await db.applyPayment(ref, row.amount_kobo);
       if (end) {
-        if (row.amount_kobo === FOUNDER.kobo) await welcomeFounder(row.user_id);
+        /* The flag, not the amount: from 1 Nov a Week pass also costs N1,500. */
+        if (row.founder) await welcomeFounder(row.user_id);
         return new Date(end).toISOString();
       }
     }
+    /* A Starter pack has no pass end: paid is all there is to say. */
+    if (row.pass === "starter") return row.status === "paid" ? new Date(now()).toISOString() : null;
     const s = await db.subscription(row.user_id);
     return s && s.current_period_end ? new Date(s.current_period_end).toISOString() : null;
   }
@@ -109,9 +108,14 @@ function make(deps) {
 
       if (action === "offer") {
         const o = await db.founderOffer(signedIn ? s.userId : null).catch(() => null);
+        const cur = P.passesAt(t), soon = t < P.SWITCH_AT;
+        /* Before the switch each pass also carries its new price (next), which the card
+           strikes through beside today's; Starter appears only once it is on sale. */
         return H.sendJson(res, 200, {
-          passes: Object.keys(PASSES).map((k) => ({ pass: k, days: PASSES[k].days, label: PASSES[k].label,
-            naira: priceOf(k, o) / 100, full: PASSES[k].kobo / 100 })),
+          passes: Object.keys(cur).map((k) => ({ pass: k, days: cur[k].days, label: cur[k].label,
+            codes: cur[k].codes, total: !!cur[k].total, naira: priceOf(k, o, t) / 100, full: cur[k].kobo / 100,
+            next: soon && P.NEXT[k] ? P.NEXT[k].kobo / 100 : null })),
+          switchAt: soon ? new Date(P.SWITCH_AT).toISOString() : null,
           founder: o ? { open: founderOpen(o), seatsLeft: Math.max(0, FOUNDER.seats - o.taken), monthsLeft: Math.max(0, FOUNDER.months - o.mine) } : null,
         }, cookies);
       }
@@ -123,22 +127,24 @@ function make(deps) {
         const row = db.REF_RE.test(ref) ? await db.paymentByRef(ref) : null;
         if (!row || row.user_id !== s.userId) return H.sendJson(res, 404, { error: "not_found" }, cookies);
         const until = await settle(ps, ref);
-        return H.sendJson(res, 200, { paid: !!until, until }, cookies);
+        return H.sendJson(res, 200, { paid: !!until, until: row.pass === "starter" ? null : until, pass: row.pass }, cookies);
       }
 
       /* start */
       if (!(await db.rlHit("pay:" + s.userId, 600, 10))) return H.sendJson(res, 429, { error: "slow_down", minutes: 10 }, cookies);
       const body = await H.readJson(req, 1024);
       const pass = body && body.pass;
-      if (!Object.prototype.hasOwnProperty.call(PASSES, pass)) return H.sendJson(res, 400, { error: "bad_pass" }, cookies);
+      const cur = P.passesAt(t);
+      if (!Object.prototype.hasOwnProperty.call(cur, pass)) return H.sendJson(res, 400, { error: "bad_pass" }, cookies);
       const user = await db.userById(s.userId);
       if (!user || !user.email) return H.sendJson(res, 401, { error: "signed_out" });
       /* A founder-offer outage charges the full price rather than guessing. */
       const o = pass === "month" ? await db.founderOffer(s.userId).catch(() => null) : null;
-      const kobo = priceOf(pass, o);
+      const kobo = priceOf(pass, o, t);
       const reference = "sw_" + crypto.randomBytes(10).toString("hex");
-      const row = await db.insertPayment({ reference, user_id: s.userId, pass, days: PASSES[pass].days,
-        amount_kobo: kobo, founder: kobo === FOUNDER.kobo });
+      const row = await db.insertPayment({ reference, user_id: s.userId, pass, days: cur[pass].days,
+        /* The month's founder price only: from 1 Nov a Week pass also costs N1,500. */
+        amount_kobo: kobo, founder: pass === "month" && founderOpen(o) });
       if (!row) throw new Error("payment row insert failed");
       const init = await ps.init({ email: user.email, amount: kobo, currency: "NGN", reference,
         callback_url: H.ORIGIN + "/?paid=" + reference, metadata: { pass } });
@@ -154,6 +160,5 @@ function make(deps) {
 
 module.exports = make({ db: require("../lib/auth/db.js") });
 module.exports.make = make;
-module.exports.PASSES = PASSES;
 module.exports.FOUNDER = FOUNDER;
 module.exports.priceOf = priceOf;

@@ -39,7 +39,7 @@
     return "<div class='swa-id'><b>"+esc(o.name)+"</b><small>"+esc(o.email)+"</small>"+planHtml(o)+"</div>"+
       codesHtml(o.quota,o.role)+
       "<div class='swa-list'>"+
-        (canBuy(o.role)?"<button class='swa-mi swa-mplus' type='button' role='menuitem' data-go='plus'>"+I.bolt+(o.role==="plus"?"Add days":"Get Wizard Pass")+"<span class='swa-r'>"+(o.role==="plus"?"Wizard Pass":"20 codes a day")+"</span></button>":"")+
+        (canBuy(o.role)?"<button class='swa-mi swa-mplus' type='button' role='menuitem' data-go='plus'>"+I.bolt+(o.role==="plus"?"Add days":"Get Wizard Pass")+"<span class='swa-r'>"+(o.role==="plus"?"Wizard Pass":"From ₦200")+"</span></button>":"")+
         "<button class='swa-mi' type='button' role='menuitem' data-go='profile'>"+I.user+"Profile</button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='daily'>"+I.clock+"My daily slip<span class='swa-r'>10:30</span></button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='tg'>"+I.send+"Telegram bot</button>"+
@@ -93,7 +93,7 @@
   function subHtml(q,role,plan,until,fw,fwNo){
     var u=role==="plus"?dayMonth(until):"";
     var what=role==="admin"?"Every feature, no limit":role==="ff"?"Every feature, 100 codes a day":
-      role==="plus"?"20 codes a day"+(u?", until "+esc(u):""):"2 trial codes";
+      role==="plus"?(+lsGet("sw.codeLimit")||20)+" codes a day"+(u?", until "+esc(u):""):"2 trial codes";
     return "<p class='swa-h'>Your plan</p><div class='swa-card"+(fw?" swa-fwcard":"")+"'><div class='swa-subtop'><span><b"+(role==="admin"?" class='swa-gold'":"")+">"+esc(plan||"Free plan")+"</b><small>"+what+"</small></span>"+
       (canBuy(role)?"<button class='swa-pillbtn swa-pgo' type='button' data-plus>"+(role==="plus"?"Add days":"Get Wizard Pass")+"</button>":"")+"</div>"+
       (fw?fwHtml(fwNo):"")+
@@ -108,22 +108,29 @@
      the site's own type: the gold display title with the wizard, Saira prices, one
      favoured strip for the founders. Sized to fit a phone above the tab bar. */
   var LOCKI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  /* PRICES FROM 1 NOV 2026 (owner, 18 Oct 2026; lib/pricing.js). Until then each pass
+     carries its new price (next), struck through beside today's; from then a Starter
+     pack of 10 codes joins, and each pass shows its own codes a day. */
   function passHtml(p,pick,f){
     var fw=p.pass==="month"&&p.naira<p.full;
-    var per=p.days>1?p.days+" days · "+naira(p.naira/p.days)+" a day":"24 hours";
+    var was=Math.max(p.full||0,p.next||0);
+    var per=p.total?(p.codes+" codes, any time · website"):
+      (p.days>1?p.days+" days · "+naira(p.naira/p.days)+" a day":"24 hours")+(p.codes?" · "+p.codes+" codes a day":"");
     return "<button type='button' class='swa-pass' data-pass='"+esc(p.pass)+"' aria-pressed='"+(p.pass===pick?"true":"false")+"'>"+
       (p.pass==="month"?"<span class='swa-best'>Best value</span>":"")+
       "<span class='swa-st'><b>"+esc(p.label)+"</b><small>"+per+"</small>"+
       (fw?"<small class='swa-fwp'>Founding Wizard price"+(f&&f.monthsLeft<3?" · "+f.monthsLeft+" of 3 months left":"")+"</small>":"")+"</span>"+
-      "<span class='swa-price'>"+(fw?"<s>"+naira(p.full)+"</s>":"")+"<b>"+naira(p.naira)+"</b></span></button>";
+      "<span class='swa-price'>"+(was>p.naira?"<s>"+naira(was)+"</s>":"")+"<b>"+naira(p.naira)+"</b></span></button>";
   }
   function plusHtml(o,pick){
     var u=o.role==="plus"?dayMonth(o.plusUntil):"", f=o.founder;
     var passes=(o.passes||[]).map(function(p){ return passHtml(p,pick,f); }).join("");
     var sel=(o.passes||[]).filter(function(p){ return p.pass===pick; })[0];
     var taken=f?Math.max(0,500-f.seatsLeft):0;
+    var top=Math.max.apply(null,[20].concat((o.passes||[]).filter(function(p){ return !p.total&&p.codes; }).map(function(p){ return p.codes; })));
     return "<img class='swa-wpwiz' src='/emo/wiz-spell.webp' alt='' width='112' height='112'>"+
-      "<p class='swa-wpsub'><b>20 booking codes a day</b> on every bookie, from every tool: the Wizard, Slider, Converter, Edit for me, Split and Trim. Pay once. Nothing renews.</p>"+
+      "<p class='swa-wpsub'><b>"+(o.switchAt?"20 booking codes a day":"Up to "+top+" booking codes a day")+"</b> on every bookie, from every tool: the Wizard, Slider, Converter, Edit for me, Split and Trim. Pay once. Nothing renews.</p>"+
+      (o.switchAt?"<p class='swa-wpnow'><b>New prices from 1 Nov.</b> Buy now at today's price. From 1 Nov every running pass gets 40 to 60 codes a day.</p>":"")+
       (u?"<p class='swa-wpnow'>Your pass runs until <b>"+esc(u)+"</b>. A new pass adds its days on top.</p>":"")+
       (f&&f.open&&f.seatsLeft>0&&f.monthsLeft===3?
         "<div class='swa-fwpanel'><div class='swa-fwhead'><span class='swa-fwt'>Founding Wizards</span>"+
@@ -680,7 +687,7 @@
     var pick="month", offer={passes:[]};
     var me={role:role(),plusUntil:lsGet("sw.plusUntil")};
     function draw(){
-      var v=view("Wizard Pass",plusHtml({passes:offer.passes,founder:offer.founder,role:me.role,plusUntil:me.plusUntil},pick),"swa-wp");
+      var v=view("Wizard Pass",plusHtml({passes:offer.passes,founder:offer.founder,switchAt:offer.switchAt,role:me.role,plusUntil:me.plusUntil},pick),"swa-wp");
       var pay=v.querySelector("#swaPay"), msg=v.querySelector("#swaMsg");
       /* A tap picks in place: no redraw, so the scroll stays and the bar does not replay. */
       v.querySelectorAll("[data-pass]").forEach(function(b){ b.onclick=function(){
@@ -718,8 +725,12 @@
     (function ask(){
       a.req("GET","/api/pay/verify?ref="+m[1],null,function(code,j){
         if(code===200&&j&&j.paid){
-          a.req("GET","/api/me",null,function(c2,me){ if(c2===200&&me&&me.signedIn&&a.saveRole) a.saveRole(me); });
-          a.notice("Your Wizard Pass is on"+(j.until?" until "+dayMonth(j.until):"")+". 20 codes a day.");
+          a.req("GET","/api/me",null,function(c2,me){
+            if(c2===200&&me&&me.signedIn&&a.saveRole) a.saveRole(me);
+            var n=me&&typeof me.codeLimit==="number"?me.codeLimit:20;
+            a.notice(j.pass==="starter"?"Your 10 Starter codes are ready. Use them any time on the website.":
+              "Your Wizard Pass is on"+(j.until?" until "+dayMonth(j.until):"")+". "+n+" codes a day.");
+          });
           return;
         }
         if(++tries<6) return setTimeout(ask,2500);
