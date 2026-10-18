@@ -149,13 +149,13 @@ test("the cron route needs the cron secret; the public read is cached at the edg
   assert.ok(Array.isArray(r2.body.rungs));
 });
 
-test("wired: two crons at 10:30 and 10:45 Lagos, Big odds reuses the x10, the card and the panel use it", () => {
+test("wired: two crons at 10:30 and 10:45 Lagos, Big odds books its own slip, the panel uses it", () => {
   const v = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "vercel.json"), "utf8"));
   const runs = v.crons.filter((c) => c.path === "/api/ladder?a=run").map((c) => c.schedule).sort();
   assert.deepStrictEqual(runs, ["30 9 * * *", "45 9 * * *"]);
   assert.ok(v.functions["api/ladder.js"].maxDuration >= 120);
   const social = fs.readFileSync(path.join(__dirname, "..", "api", "social.js"), "utf8");
-  assert.match(social, /r\.rung === 10/, "Big odds of the day takes the ladder's x10 when it is there");
+  assert.doesNotMatch(social, /getLadder/, "Big odds of the day never posts the ladder's x10, which is Wizard Pass only");
   const page = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
   assert.match(page, /fetch\(ladPass\(\)\?"\/api\/ladder\?mine=1":"\/api\/ladder"\)/,"a pass asks for every code; everyone else gets the cached public read");
   assert.match(page, /class='lad-r'/);

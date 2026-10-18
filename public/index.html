@@ -19848,7 +19848,7 @@ function ladAuto(){
     var ORDER=["sporty","bet9ja","betking","betpawa","onexbet","betway"];
     var daily={}; ORDER.forEach(function(k){ if(d.codes[k]&&BOOKS[k]) daily[k]=d.codes[k]; });
     if(!Object.keys(daily).length) return;
-    var big=null, ladder=null;
+    var big=null;
     var pick=null; try{ pick=curBook()&&curBook().key; }catch(e){}
     if(!daily[pick]) pick=ORDER.filter(function(k){return daily[k];})[0];
     /* The build writes the NEWEST code, which between midnight and mkcode's
@@ -19883,10 +19883,8 @@ function ladAuto(){
       /* a book that booked fewer legs than the slip says so (mkcode short, 13 Oct 2026) */
       var sh=d.short&&d.short[pick]&&daily[pick]?"<span class='ck-none'>"+d.short[pick]+" of "+d.n+" games on this book</span>":"";
       var tiles="<div class='ck-tile'><div class='ck-th'>"+esc(when)+odds+"</div>"+chip(daily[pick])+sh+"</div>";
-      /* THE DAILY LADDER (api/ladder.js, 10:30 Lagos): pick the odds, copy the code.
-         Its x10 IS Big odds of the day, so that tile steps aside when the ladder is in. */
-      /* The ladder's x10 IS Big odds of the day, and the Ready-made slips panel shows it. */
-      if(big&&!(ladder||[]).some(function(r){ return r&&r.rung===10; })) tiles+="<div class='ck-tile big'><div class='ck-th'>Big odds of the day<span class='ck-tot'>×"+
+      /* Big odds of the day is its own slip again (18 Oct 2026): the ladder's x10 is Wizard Pass only. */
+      if(big) tiles+="<div class='ck-tile big'><div class='ck-th'>Big odds of the day<span class='ck-tot'>×"+
         Number(big.odds).toFixed(2)+"</span></div>"+chip(big.codes[pick]&&big.codes[pick].code)+"</div>";
       host.innerHTML="<div class='ck-top'><a class='ck-tag' href='/booking-codes'>Daily booking codes</a></div>"+
         "<div class='ck-tabs' role='tablist' aria-label='Bookmaker'>"+tabs+"</div>"+
@@ -19909,7 +19907,6 @@ function ladAuto(){
       if(!ORDER.some(function(k){return b.codes[k]&&b.codes[k].code;})) return;
       big=b; paintCard();
     }).catch(function(){});
-    ladderRows().then(function(rows){ if(rows.length){ ladder=rows; paintCard(); } });
     host.addEventListener("click",function(e){
       var t=e.target&&e.target.closest?e.target.closest(".ck-tab"):null;
       /* A tab is the reader choosing their bookmaker, not just a view: it sets
