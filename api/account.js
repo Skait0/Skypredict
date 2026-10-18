@@ -220,7 +220,7 @@ function make(deps) {
           const rows = [];
           for (const line of text.join("\n").split("\n")) { if (line.indexOf('"main"') < 0) continue; try { rows.push(JSON.parse(line)); } catch (e) { /* a torn line */ } }
           const since = new Date(t - 14 * 864e5).toISOString().slice(0, 10);
-          const [recent, verified] = await Promise.all([SB.recentResults(since), SB.verifiedResults()]);
+          const [recent, verified] = await Promise.all([SB.recentResults(since), SB.publishedSince("2026-09-20")]);
           return H.sendJson(res, 200, { test: BT.compare(rows, recent.ok ? recent.rows : []), snapshots: rows.length,
             record: BT.recordByDay(verified.ok ? verified.rows : [], "2026-09-20") });
         }
