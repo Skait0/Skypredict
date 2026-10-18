@@ -2,6 +2,10 @@
 /* THE DAILY LADDER (lib/ladder.js, sql/ladder.sql).
  *
  * GET /api/ladder           today's rungs for the site's codes card (public).
+ *                           Only x5 carries its codes; the other rungs show odds
+ *                           and game count, codes and legs held back (owner, 18 Oct).
+ * GET /api/ladder?mine=1    the same, but every code for a Wizard Pass session
+ *                           (never cached: it differs per reader).
  * GET /api/ladder?a=run     the 10:30 and 10:45 Lagos crons: book every rung
  *                           still missing today, then send each Wizard Pass
  *                           reader their rung on their bookie (push, Telegram).
@@ -21,6 +25,16 @@ const { applyCache, BROWSER_REVALIDATE } = require("../lib/cachepolicy.js");
 const SITE = () => process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
 const POLICY = { browser: BROWSER_REVALIDATE, cdn: "public, s-maxage=300", vercel: "public, s-maxage=300" };
 const PASS = ["plus", "ff", "admin"];
+const OPEN_RUNG = 5;
+
+/* A rung without a pass: the odds and how many games per book, no code, no legs
+   (a list of games is the slip, just typed by hand). */
+function locked(row) {
+  if (row.rung === OPEN_RUNG) return row;
+  const codes = {};
+  Object.keys(row.codes || {}).forEach((k) => { codes[k] = { n: row.codes[k] && row.codes[k].n }; });
+  return { day: row.day, rung: row.rung, odds: row.odds, games: Array.isArray(row.legs) ? row.legs.length : 0, codes, legs: [], locked: true };
+}
 
 async function tgSend(chat, text) {
   const t = process.env.TELEGRAM_BOT_TOKEN;
@@ -90,8 +104,14 @@ function make(deps) {
       return res.status(200).json({ ok: true, rungs: f.rows.map((r) => r.rung), minted: f.minted, delivery: d });
     }
     const got = await deps.getLadder(S.dayOf(deps.now()));
+    const rows = got.ok ? got.rows : [];
+    if (q.mine) {
+      res.setHeader("Cache-Control", "private, no-store");
+      const pass = PASS.includes(await deps.roleOfReq(req));
+      return res.status(200).json({ ok: true, pass, rungs: pass ? rows : rows.map(locked) });
+    }
     applyCache(res, POLICY);
-    return res.status(200).json({ ok: true, rungs: got.ok ? got.rows : [] });
+    return res.status(200).json({ ok: true, rungs: rows.map(locked) });
   };
 }
 
@@ -106,6 +126,15 @@ const live = {
     try {
       const AUTHDB = require("../lib/auth/db.js");
       const u = await AUTHDB.userById(uid);
+      return u ? await R.roleOf(AUTHDB, u, process.env) : "free";
+    } catch (e) { return "free"; }
+  },
+  roleOfReq: async (req) => {
+    try {
+      const AUTHDB = require("../lib/auth/db.js");
+      const s = await require("../lib/auth/session.js").readSession(AUTHDB, req, Date.now());
+      if (s.state !== "ok") return "free";
+      const u = await AUTHDB.userById(s.userId);
       return u ? await R.roleOf(AUTHDB, u, process.env) : "free";
     } catch (e) { return "free"; }
   },
@@ -125,3 +154,4 @@ module.exports = make(live);
 module.exports.make = make;
 module.exports.fill = fill;
 module.exports.deliver = deliver;
+module.exports.locked = locked;

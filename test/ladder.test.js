@@ -117,6 +117,28 @@ test("a lapsed pass hears once that it ended, then nothing until it renews", asy
   assert.deepStrictEqual(s2.sent, ["told"], "a renewed pass gets its code again");
 });
 
+test("only x5 shows its code without a pass; ?mine=1 opens every rung for a pass", async () => {
+  const day = [5, 10, 1000].map((x) => ({ day: "2026-10-18", rung: x, odds: x, legs: [1, 2, 3],
+    codes: { sporty: { code: "S" + x, n: 3 }, bet9ja: { code: "B" + x, n: 2 } } }));
+  const run = async (query, role) => {
+    const { d } = deps({ getLadder: async () => ({ ok: true, rows: day }), roleOfReq: async () => role });
+    const r = res(); await API.make(d)({ query, headers: {} }, r); return r;
+  };
+  const pub = await run({}, "plus");
+  assert.match(JSON.stringify(pub.body.rungs[0]), /S5/, "x5 is open to everyone");
+  for (const r of pub.body.rungs.slice(1)) {
+    assert.doesNotMatch(JSON.stringify(r), /S10|B10|S1000|B1000/, "no code leaves for a locked rung");
+    assert.strictEqual(r.locked, true); assert.strictEqual(r.games, 3); assert.deepStrictEqual(r.legs, []);
+    assert.strictEqual(r.codes.bet9ja.n, 2, "the panel can still say how many games on each book");
+  }
+  const free = await run({ mine: "1" }, "free");
+  assert.doesNotMatch(JSON.stringify(free.body), /S10|S1000/);
+  assert.strictEqual(free.headers["Cache-Control"], "private, no-store");
+  const pass = await run({ mine: "1" }, "plus");
+  assert.match(JSON.stringify(pass.body), /S10.*S1000/);
+  assert.strictEqual(pass.headers["Cache-Control"], "private, no-store", "a pass reply is never cached at the edge");
+});
+
 test("the cron route needs the cron secret; the public read is cached at the edge", async () => {
   const { d } = deps();
   const h = API.make(d);
@@ -135,7 +157,7 @@ test("wired: two crons at 10:30 and 10:45 Lagos, Big odds reuses the x10, the ca
   const social = fs.readFileSync(path.join(__dirname, "..", "api", "social.js"), "utf8");
   assert.match(social, /r\.rung === 10/, "Big odds of the day takes the ladder's x10 when it is there");
   const page = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
-  assert.match(page, /fetch\("\/api\/ladder"\)/);
+  assert.match(page, /fetch\(ladPass\(\)\?"\/api\/ladder\?mine=1":"\/api\/ladder"\)/,"a pass asks for every code; everyone else gets the cached public read");
   assert.match(page, /class='lad-r'/);
   assert.match(page, /id="ladder"/, "the Ready-made slips panel sits under the offer");
   const ui = fs.readFileSync(path.join(__dirname, "..", "public", "account-ui.js"), "utf8");
