@@ -206,7 +206,23 @@ test("wired: two crons at 10:30 and 10:45 Lagos, Big odds books its own slip, th
   assert.doesNotMatch(social, /rung === 10/, "Big odds of the day never posts the ladder's x10, which is Wizard Pass only");
   assert.match(social, /BIG\.mint\(pay, now, L\.openSkips\(/, "and is picked around the locked rungs' games");
   const page = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
-  assert.match(page, /fetch\(ladPass\(\)\?"\/api\/ladder\?mine=1":"\/api\/ladder"\)/,"a pass asks for every code; everyone else gets the cached public read");
+  /* The panel's fetch, run: signed in asks ?mine=1 whatever sw.role says; signing in
+     or a new pass asks again (saveRole calls swLadderSync). */
+  const src = page.slice(page.indexOf("var LADDER_P=null"), page.indexOf("var LADDER={rows:null"));
+  const sync = /window\.swLadderSync=function\(\)\{.*\};/.exec(page)[0];
+  assert.match(page, /if\(root\.swLadderSync\) try\{ root\.swLadderSync\(\); \}catch\(e\)\{\}/);
+  const asked = [], store = {};
+  const win = { swAcct: { st: { on: false } } };
+  const ctx = { window: win, LADDER: {}, paintLadder: () => {},
+    localStorage: { getItem: (k) => (k in store ? store[k] : null) },
+    fetch: (u) => { asked.push(u); return Promise.resolve({ json: () => ({ rungs: [] }) }); } };
+  require("vm").runInNewContext(src + sync + ";this.rows=ladderRows;", ctx);
+  ctx.rows();
+  win.swAcct.st.on = true; win.swLadderSync();
+  store["sw.role"] = "plus"; win.swLadderSync();
+  win.swLadderSync();
+  assert.deepStrictEqual(asked, ["/api/ladder", "/api/ladder?mine=1", "/api/ladder?mine=1"],
+    "signed out: public read; signed in with no role cached: ?mine=1; new pass: asked again; nothing changed: no fetch");
   assert.match(page, /class='lad-r'/);
   assert.match(page, /id="ladder"/, "the Ready-made slips panel sits under the offer");
   const ui = fs.readFileSync(path.join(__dirname, "..", "public", "account-ui.js"), "utf8");

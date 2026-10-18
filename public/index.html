@@ -19732,12 +19732,14 @@ function isTop3(f){
 /* ---- READY-MADE SLIPS: the daily ladder panel (api/ladder.js) ----
    One fetch shared with the codes card. The panel is always drawn: rungs not
    booked yet are disabled, and before 10:30 Lagos the body says when they come. */
-var LADDER_P=null;
-/* Only x5 carries its code for everyone (owner, 18 Oct 2026); a Wizard Pass reader
-   asks ?mine=1 for every rung. The server decides, so a stale sw.role opens nothing. */
+var LADDER_P=null, LADDER_WHO=null;
+/* Only x5 carries its code for everyone (owner, 18 Oct 2026); a signed-in reader
+   asks ?mine=1, and the server opens every rung for a Wizard Pass. A stale or empty
+   sw.role neither opens nor hides anything. */
 function ladPass(){ var r=null; try{ r=localStorage.getItem("sw.role"); }catch(e){} return r==="plus"||r==="ff"||r==="admin"; }
+function ladWho(){ var on=!!(window.swAcct&&window.swAcct.st&&window.swAcct.st.on); return on||ladPass()?"mine:"+ladPass():"open"; }
 function ladderRows(){
-  if(!LADDER_P) LADDER_P=fetch(ladPass()?"/api/ladder?mine=1":"/api/ladder").then(function(r){ return r.json(); })
+  if(!LADDER_P) LADDER_P=fetch((LADDER_WHO=ladWho())!=="open"?"/api/ladder?mine=1":"/api/ladder").then(function(r){ return r.json(); })
     .then(function(j){ return j&&Array.isArray(j.rungs)?j.rungs.filter(function(r){ return r&&r.codes; }):[]; })
     .catch(function(){ return []; });
   return LADDER_P;
@@ -19804,6 +19806,8 @@ function ladAuto(){
   var box=$("ladder"); if(!box) return;
   paintLadder();
   ladderRows().then(function(rows){ LADDER.rows=rows; paintLadder(true); });
+  /* Sign in, sign out or a new pass (saveRole): ask again, not at the next load. */
+  window.swLadderSync=function(){ if(LADDER_P&&ladWho()!==LADDER_WHO){ LADDER_P=null; ladderRows().then(function(rows){ LADDER.rows=rows; paintLadder(true); }); } };
   box.addEventListener("click",function(e){
     var r=e.target&&e.target.closest?e.target.closest(".lad-r"):null;
     if(r&&!r.disabled){ LADDER.rung=+r.getAttribute("data-rung"); try{ localStorage.setItem("sw.rung",String(LADDER.rung)); }catch(err){} paintLadder(true); try{ buzz(15); }catch(err){} return; }
@@ -25874,6 +25878,7 @@ load().catch(function(){});
     root.swAdminLive=!!(me&&me.role==="admin");
     if(root.swRoleChanged) try{ root.swRoleChanged(); }catch(e){}
     if(root.swNoticeSync) try{ root.swNoticeSync(); }catch(e){}
+    if(root.swLadderSync) try{ root.swLadderSync(); }catch(e){}
   }
   function signedOutHere(reason,quiet){
     var had=!!readMeta(ls);
