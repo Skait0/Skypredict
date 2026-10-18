@@ -73,7 +73,8 @@ test("the captions credit a rank, never a person or a code", () => {
 });
 
 test("a slip with an id links its list banner by id, and nothing else", () => {
-  assert.strictEqual(P.imageUrl("https://www.soccerwizard.live", slip(42, 11.55)), "https://www.soccerwizard.live/api/slipcard?w=42");
+  assert.match(P.imageUrl("https://www.soccerwizard.live", slip(42, 11.55)), /^https:\/\/www\.soccerwizard\.live\/api\/slipcard\?w=42(&n=\d+)?$/);
+  assert.notStrictEqual(P.imageUrl("s", { id: 7, legs: [{}] }), P.imageUrl("s", { id: 7, legs: [{}, {}] }), "a filled row gets a new card URL");
 });
 
 test("the banner exists for every rank the captions can name", () => {

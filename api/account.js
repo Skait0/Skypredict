@@ -306,7 +306,10 @@ function make(deps) {
           for (const ch of ["tg", "x", "fb"]) {
             const key = WIN.key(row, ch);
             if (await slips.wasPosted(key)) { already.push(ch); continue; }
-            const text = WIN.caption(row, ch);
+            /* Not word for word the hourly post: Buffer refuses a text it already posted
+               ("already scheduled or posted around the same time"), and a post the owner
+               deleted to fix still counts. */
+            const text = "🧾 Receipts\n\n" + WIN.caption(row, ch);
             if (await slips.postWin(ch, text, WIN.imageUrl(SITE, row))) { await slips.logPost({ key, channel: ch, kind: "win", text }); sent.push(ch); }
             else { failed.push(ch); if (slips.whyFailed) why[ch] = slips.whyFailed(ch) || ""; }
           }
