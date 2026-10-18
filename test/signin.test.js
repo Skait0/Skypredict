@@ -98,3 +98,12 @@ test("Google's button fades in, in its own box over a plain pill, never over our
   assert.ok(src.includes('theme:"outline"'));
   assert.ok(src.includes(".swsi-g[hidden],.swsi-gbtn[hidden]{display:none!important}"));
 });
+
+test("Google's button fades in only after the Continue as swap (owner, 18 Oct 2026)", () => {
+  /* Google repaints Continue with into Continue as you after load, with no event. The fade
+     waits for 1s of quiet after the frame's last load or resize, capped at 3.5s. */
+  assert.match(src, /settle=function\(\)\{ clearTimeout\(quiet\); quiet=setTimeout\(show,1000\); \}/);
+  assert.match(src, /new MutationObserver\(settle\)\.observe\(f,\{attributes:true\}\)/);
+  assert.match(src, /settle\(\); setTimeout\(show,3500\);/);
+  assert.doesNotMatch(src, /slot\.classList\.add\("ready"\); \},700\)/, "the old fixed 700ms is gone");
+});

@@ -206,11 +206,17 @@
         (function wait(n){
           var f=slot.querySelector("iframe");
           if(!f){ if(n<40) setTimeout(function(){ wait(n+1); },100); return; }
-          var done=false, show=function(){ if(done) return; done=true;
-            /* Google repaints "Continue with" into "Continue as you" a moment
-               after its frame loads: wait that out, then one fade. */
-            setTimeout(function(){ if(!live(sid)) return; slot.classList.add("ready"); },700); };
-          f.addEventListener("load",show); setTimeout(show,1500);
+          /* Google repaints "Continue with" into "Continue as you" some time
+             after its frame loads, and says nothing when it does (measured in a
+             signed-in Chrome, 18 Oct 2026: load, then one resize ~0.4s later).
+             The old 700ms after load faded in before the swap (owner: "its the
+             continue as swap"). Now: fade in once the frame has been quiet for
+             1s after its last load or resize, and never later than 3.5s. */
+          var done=false, quiet=null, show=function(){ if(done||!live(sid)) return; done=true; clearTimeout(quiet); slot.classList.add("ready"); },
+            settle=function(){ clearTimeout(quiet); quiet=setTimeout(show,1000); };
+          f.addEventListener("load",settle);
+          try{ new MutationObserver(settle).observe(f,{attributes:true}); }catch(e){}
+          settle(); setTimeout(show,3500);
         })(0);
         try{ g.prompt(); }catch(e){} }
       if(root.google&&root.google.accounts) go();
