@@ -2469,5 +2469,79 @@
       "betway": "BW7A9DAB4E"
     },
     "odds": 1.42
+  },
+  "2026-10-18": {
+    "date": "2026-10-18",
+    "generated": "2026-10-18T10:40:55.137Z",
+    "firstKickoff": "2026-10-18T12:30:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-18",
+        "home": "Halmstad",
+        "away": "Hammarby",
+        "league": "Sweden Allsvenskan",
+        "kickoff": "2026-10-18T14:30:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.889,
+        "market": "X2",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-18",
+        "home": "PAOK",
+        "away": "Iraklis",
+        "league": "Greece Super League",
+        "kickoff": "2026-10-18T18:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.794,
+        "market": "1X",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-18",
+        "home": "Stromsgodset",
+        "away": "Haugesund",
+        "league": "Norway 1st Division",
+        "kickoff": "2026-10-18T12:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.945,
+        "market": "OVER_1.5",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-18",
+        "home": "Asane",
+        "away": "Stabaek",
+        "league": "Norway 1st Division",
+        "kickoff": "2026-10-18T15:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.911,
+        "market": "OVER_1.5",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-18",
+        "home": "M'gladbach",
+        "away": "Hoffenheim",
+        "league": "Germany Bundesliga 1",
+        "kickoff": "2026-10-18T15:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.895,
+        "market": "OVER_1.5",
+        "odd": 1.1
+      }
+    ],
+    "codes": {
+      "sporty": "UQQZB3",
+      "bet9ja": "5WCGJQT",
+      "betking": "N41A67",
+      "betpawa": "TAJGLN9",
+      "onexbet": "99C71",
+      "betway": "BW7AFBD3B1"
+    },
+    "short": {
+      "onexbet": 4
+    },
+    "odds": 1.44
   }
 }
