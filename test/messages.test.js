@@ -419,3 +419,21 @@ test("each admin conversation keeps its own read time", () => {
   assert.ok(lib.includes("async function markThread(uid, readerId, iso)") && lib.includes("async function unreadReplies(reads)"));
   assert.match(fs.readFileSync(path.join(__dirname, "..", "sql", "thread_reads.sql"), "utf8"), /add column if not exists threads jsonb/);
 });
+
+/* read_at no longer moves when a conversation is opened, so the unread window only
+   grows: past the 500 cap the newest replies must be the ones counted. */
+test("the admin's unread count reads newest first and honours each conversation's read time", async () => {
+  const SB = require("../lib/supabase.js");
+  const real = SB.call, asked = [];
+  const A = "11111111-1111-4111-8111-111111111111", B = "22222222-2222-4222-8222-222222222222";
+  try {
+    SB.call = async (url) => { asked.push(url); return { ok: true, body: [
+      { user_id: A, created_at: "2026-10-18T09:00:00Z" }, { user_id: A, created_at: "2026-10-18T07:00:00Z" },
+      { user_id: B, created_at: "2026-10-18T08:00:00Z" }] }; };
+    delete require.cache[require.resolve("../lib/messages.js")];
+    const M = require("../lib/messages.js");
+    const n = await M.unreadReplies({ read_at: "2026-10-01T00:00:00Z", threads: { [A]: "2026-10-18T08:00:00Z" } });
+    assert.strictEqual(n, 2, "A's 07:00 reply was read at 08:00; A's 09:00 and B's 08:00 were not");
+    assert.match(asked[0], /&order=created_at\.desc&limit=500$/);
+  } finally { SB.call = real; delete require.cache[require.resolve("../lib/messages.js")]; }
+});
