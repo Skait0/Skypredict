@@ -298,6 +298,24 @@
     if(rec&&rec.total) rows.push(["Our picks",num(rec.correct)+" of "+num(rec.total)+" right ("+Math.round(100*rec.correct/rec.total)+"%) · last "+(rec.days||14)+" days"]);
     return rows.map(function(r){ return "<div class='swa-set'><span class='swa-st'><b>"+esc(r[0])+"</b><small>"+esc(r[1])+"</small></span></div>"; }).join("");
   }
+  /* TODAY AT A GLANCE (owner, 18 Oct 2026; api/account.js today, lib/glance.js). */
+  var LAD_WORD={landed:"landed",lost:"lost",live:"playing"};
+  function todayHtml(j){
+    var pc=function(t){ return t&&t.n?num(t.hit)+" of "+num(t.n)+" landed ("+Math.round(100*t.hit/t.n)+"%)":"no results yet"; };
+    var x=function(o){ return "×"+Number(o).toLocaleString("en-US",{maximumFractionDigits:2}); };
+    var w=j.wins||{waiting:[]}, wait=w.waiting||[], bq=j.buffer;
+    var rows=[
+      ["Wins waiting for your OK",wait.length?wait.length+" waiting: "+wait.slice(0,4).map(function(h){ return x(h.odds); }).join(", ")+". Post them from Won slips.":"None waiting",
+        wait.length?"<button type='button' class='swa-pillbtn' data-go='swaTHits'>Open</button>":""],
+      ["Wins today",num(w.today||0)+" landed at x5 or more",""],
+      ["Our picks","Today: "+pc(j.tips&&j.tips.today)+" · Yesterday: "+pc(j.tips&&j.tips.yesterday),""],
+      ["Ladder",(j.ladder||[]).length?(j.ladder||[]).map(function(r){ return "x"+r.rung+" "+(LAD_WORD[r.state]||r.state); }).join(" · "):"Not booked yet today",""],
+      ["Codes booked",j.codes==null?"Not available":num(j.codes)+" today",""],
+      ["New accounts",j.signups==null?"Not available":num(j.signups)+" today"+(j.active!=null?" · "+num(j.active)+" signed-in users seen":""),""],
+      ["Payments",num((j.payments||{}).n||0)+" today · "+naira((j.payments||{}).naira||0),""],
+      ["Buffer queue",bq?"X "+num(bq.twitter||0)+"/10 · Instagram "+num(bq.instagram||0)+"/10 · Facebook "+num(bq.facebook||0)+"/10 scheduled":"Could not read Buffer",""]];
+    return rows.map(function(r){ return "<div class='swa-set'><span class='swa-st'><b>"+esc(r[0])+"</b><small>"+esc(r[1])+"</small></span>"+r[2]+"</div>"; }).join("");
+  }
   function lookupHtml(r){
     if(!r.found) return msg(r.email+" has no account."+(r.ff?" Family & friends is waiting for them when they sign up.":""));
     var devs=(r.devices||[]).map(function(d){ return esc((d.label||"Device")+" · "+ago(d.last_used_at)); }).join("<br>");
@@ -315,7 +333,7 @@
      is remembered on this device. The two lists that grow carry their count on the
      tab, so a closed one still says what it holds. */
   /* Messages and Readers (owner, 14 Oct 2026) are filled by public/messages.js. */
-  var ADMIN_TABS=[["swaTMsg","Messages"],["swaTAlerts","Alerts"],["swaTLk","Users"],["swaTSw","Switches"],["swaTStatus","Status"],["swaTNums","Numbers"],
+  var ADMIN_TABS=[["swaTToday","Today"],["swaTMsg","Messages"],["swaTAlerts","Alerts"],["swaTLk","Users"],["swaTSw","Switches"],["swaTStatus","Status"],["swaTNums","Numbers"],
     ["swaTGrants","Family & friends"],["swaTHits","Won slips"],["swaTModel","Model test"],["swaTLog","Log"]];
   /* THE MODEL TEST (owner, 18 Oct 2026; api/account.js blendtest, lib/blendtest.js): the same
      board games picked three ways and graded, and the model's own record by day since 20 Sep. */
@@ -360,6 +378,7 @@
       swaTHits:"<div class='swa-card' id='swaHits'>"+msg("Loading")+"</div>",
       swaTLog:"<div class='swa-card' id='swaLog'>"+msg("Loading")+"</div>",
       swaTModel:"<div class='swa-card' id='swaModel'>"+msg("Loading")+"</div>",
+      swaTToday:"<div class='swa-card' id='swaToday'>"+msg("Loading")+"</div>",
       swaTAlerts:"<div class='swa-card' id='swaAlerts'>"+msg("Loading")+"</div>"};
     return "<div class='swa-tabs' role='tablist' aria-label='Admin sections'>"+ADMIN_TABS.map(function(t){
         return "<button type='button' role='tab' class='swa-tab' id='"+t[0]+"B' data-tab='"+t[0]+"' aria-controls='"+t[0]+"' aria-selected='false'>"+
@@ -447,7 +466,7 @@
       var when=stamp(h.settled_at||h.created_at);
       /* Where it already went (social_log), so a win is not posted twice by mistake. */
       var CHN={tg:"Telegram",x:"X",fb:"Facebook"}, posted=h.posted||[];
-      var postedLine=h.share?(posted.length?"Posted: "+posted.map(function(p){ return (CHN[p.ch]||p.ch)+" "+stamp(p.at); }).join(" · "):"Not posted yet"):"";
+      var postedLine=h.share?(posted.length?"Posted: "+posted.map(function(p){ return (CHN[p.ch]||p.ch)+" "+stamp(p.at); }).join(" · "):"Waiting for your OK"):"";
       var allPosted=["tg","x","fb"].every(function(c){ return posted.some(function(p){ return p.ch===c; }); });
       /* What it paid: a push returns the stake, so it counts as odds 1 (lib/winpost.js paid). */
       var pd=h.paid&&h.paid.pushed?h.paid:null;
@@ -503,7 +522,7 @@
         "<input class='swa-in' id='swaDelIn' autocomplete='off' autocapitalize='characters'><button class='swa-outbtn swa-danger' id='swaDelGo' type='button'>Delete for good</button></div>"+
       "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>";
   }
-  var api={firstNameOf:firstNameOf,menuHtml:menuHtml,plusHtml:plusHtml,naira:naira,codesHtml:codesHtml,esc:esc,I:I,AV_FREE:AV_FREE,AV_FF:AV_FF,AV_OWNER:AV_OWNER,AV_PERSONAL:AV_PERSONAL,pickerHtml:pickerHtml,grantsHtml:grantsHtml,hitsHtml:hitsHtml,adminHtml:adminHtml,recordHtml:recordHtml,modelHtml:modelHtml,profileHtml:profileHtml,settingsHtml:settingsHtml};
+  var api={firstNameOf:firstNameOf,menuHtml:menuHtml,plusHtml:plusHtml,naira:naira,codesHtml:codesHtml,esc:esc,I:I,AV_FREE:AV_FREE,AV_FF:AV_FF,AV_OWNER:AV_OWNER,AV_PERSONAL:AV_PERSONAL,pickerHtml:pickerHtml,grantsHtml:grantsHtml,hitsHtml:hitsHtml,adminHtml:adminHtml,recordHtml:recordHtml,modelHtml:modelHtml,todayHtml:todayHtml,profileHtml:profileHtml,settingsHtml:settingsHtml};
   if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
   if(!root.document) return;
 
@@ -1068,6 +1087,13 @@
         msg(code===503?"The log is not set up yet. Run sql/admin.sql in Supabase.":"Could not load the log."); }); }
     logLoad();
     v.querySelector("[data-tab='swaTLog']").addEventListener("click",logLoad);
+    function todayLoad(){ a.req("GET","/api/account/today",null,function(code,j){
+      var box=v.querySelector("#swaToday"); if(!box) return;
+      box.innerHTML=code===200&&j?todayHtml(j):msg("Could not load today.");
+      setCount(v,"swaTToday",code===200&&j&&j.wins&&j.wins.waiting&&j.wins.waiting.length?String(j.wins.waiting.length):"");
+      box.querySelectorAll("[data-go]").forEach(function(b){ b.onclick=function(){ var t=v.querySelector("[data-tab='"+b.getAttribute("data-go")+"']"); if(t) t.click(); }; }); }); }
+    todayLoad();
+    v.querySelector("[data-tab='swaTToday']").addEventListener("click",todayLoad);
     function modelLoad(){ a.req("GET","/api/account/blendtest",null,function(code,j){
       v.querySelector("#swaModel").innerHTML=code===200?modelHtml(j):msg("Could not load the model test."); }); }
     v.querySelector("[data-tab='swaTModel']").addEventListener("click",modelLoad);

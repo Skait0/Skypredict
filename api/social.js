@@ -116,20 +116,18 @@ module.exports = async function handler(req, res) {
     const ok = it.channel === "x" ? await postX(it.text) : await postTG(it.text);
     if (ok) { await SB.logSocial({ key: it.key, channel: it.channel, kind: it.kind, text: it.text }); sent.push(it.key); }
   }
-  /* WON SLIPS (lib/winpost.js): today's landed site slips at x5+, biggest first,
-     three a day per channel, the banner plus a caption crediting a wizard rank -
-     never a person or a code. social_log's key stops a double post. */
+  /* WON SLIPS WAIT FOR THE OWNER (owner, 18 Oct 2026: win approvals, after a x121.88
+     slip went out that had paid x12.52). Nothing is posted here: each new x5+ win goes
+     to the owner's own chat once, the banner with what it paid, and the owner posts it
+     from Admin > Won slips (api/account.js postwin). The banner in that chat can be
+     forwarded as it is. */
   const landed = await SB.landedSlipsSince(new Date(now - 864e5).toISOString());
-  if (landed.ok) {
-    for (const ch of ["tg", "x", "fb"]) {
-      for (const s of WIN.pick(landed.rows, log.rows, ch, now, S.dayOf, S.hourOf)) {
-        const text = WIN.caption(s, ch), img = WIN.imageUrl(SITE, s);
-        const ok = ch === "x" ? await postX(text, img) : ch === "fb" ? await postFB(text, img) : await postTGPhoto(img, text);
-        if (ok) { await SB.logSocial({ key: WIN.key(s, ch), channel: ch, kind: "win", text }); sent.push(WIN.key(s, ch)); }
-        /* A copy the owner can share (12 Oct 2026: a channel post could not be shared): the same banner
-           to their own chat, with the X-ready caption, once per win (on the Telegram post). */
-        const owner = String(process.env.SW_OWNER_TG_CHAT || "").trim();
-        if (ok && ch === "tg" && owner) await postTGPhoto(img, WIN.caption(s, "x"), owner);
+  const owner = String(process.env.SW_OWNER_TG_CHAT || "").trim();
+  if (landed.ok && owner) {
+    for (const s of WIN.toAsk(landed.rows, log.rows, now, S.hourOf)) {
+      if (await postTGPhoto(WIN.imageUrl(SITE, s), WIN.askText(s), owner)) {
+        await SB.logSocial({ key: WIN.askKey(s), channel: "owner", kind: "winask", text: WIN.askText(s) });
+        sent.push(WIN.askKey(s));
       }
     }
   }
@@ -152,4 +150,16 @@ module.exports = async function handler(req, res) {
 module.exports.postX = postX;
 module.exports.postFB = postFB;
 module.exports.lastWhy = () => lastWhy;
+/* Scheduled posts per Buffer channel (limit 10 each on the free plan), for Admin > Today. */
+module.exports.bufferQueue = async () => {
+  const k = (process.env.BUFFER_KEY || "").trim();
+  if (!k) return null;
+  try {
+    const org = (await gql(k, "{account{organizations{id}}}")).account.organizations[0].id;
+    const d = await gql(k, `{posts(input:{organizationId:${JSON.stringify(org)},filter:{status:[scheduled]}},first:100){edges{node{channelService}}}}`);
+    const out = { twitter: 0, instagram: 0, facebook: 0 };
+    d.posts.edges.forEach((e) => { const c = e.node.channelService; out[c] = (out[c] || 0) + 1; });
+    return out;
+  } catch (e) { return null; }
+};
 module.exports.postTGPhoto = postTGPhoto;

@@ -249,7 +249,7 @@ test("the admin list says when a win landed, what it paid and where it was poste
   assert.match(some, /Posted: Telegram /); assert.match(some, />Post to the rest</);
   assert.match(some, /\d{1,2}:\d{2}/, "a time, not only a day");
   const none = UI.hitsHtml([Object.assign({ posted: [] }, base)]);
-  assert.match(none, /Not posted yet/); assert.match(none, />Post to our channels</);
+  assert.match(none, /Waiting for your OK/); assert.match(none, />Post to our channels</);
   const all = UI.hitsHtml([Object.assign({ posted: ["tg", "x", "fb"].map((ch) => ({ ch, at: "2026-10-18T20:40:00Z" })) }, base)]);
   assert.doesNotMatch(all, /data-postwin=/, "nothing left to post"); assert.match(all, /✓ Shared/);
 });

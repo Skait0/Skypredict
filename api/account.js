@@ -15,7 +15,7 @@ const { report } = require("../lib/report.js");
 const SW = require("../lib/slipwatch.js");
 
 const REAUTH_MS = 10 * 60e3;
-const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit", "readers", "reader", "threads", "gifs", "alerts", "blendtest"];
+const ADMIN_GET = ["today", "grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit", "readers", "reader", "threads", "gifs", "alerts", "blendtest"];
 const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle", "postwin", "send", "unsend", "edit", "gift"];
 /* THE MESSAGE BOARD (owner, 14 Oct 2026; sql/messages.sql, public/messages.js):
    any signed-in reader reads their inbox, marks it read and replies in it. */
@@ -64,6 +64,12 @@ function make(deps) {
     wasPosted: (key) => require("../lib/supabase.js").socialHas(key),
     winPosts: () => require("../lib/supabase.js").winPosts(),
     logPost: (row) => require("../lib/supabase.js").logSocial(row) };
+  /* TODAY AT A GLANCE (lib/glance.js): the day's inputs; a dep so tests need no network. */
+  const glanceIn = deps.glance || {
+    results: async (since) => (await require("../lib/supabase.js").recentResults(since)).rows || [],
+    ladder: async (d) => { const g = await require("../lib/supabase.js").getLadder(d); return g && g.ok ? g.rows : []; },
+    buffer: () => require("./social.js").bufferQueue(),
+  };
   /* The admin's switches and numbers; deps too, for the same reason. */
   const flags = deps.flags || require("../lib/flags.js");
   const admin = deps.admin || { stats: () => require("../lib/supabase.js").adminStats(),
@@ -337,6 +343,18 @@ function make(deps) {
           if (!done) return H.sendJson(res, 503, { error: "unavailable" });
           await record("setflags", null, { before: { booksOff: before.booksOff, notice: before.notice, maint: before.maint }, after: done });
           return H.sendJson(res, 200, done);
+        }
+        if (action === "today") {
+          const SOC = require("../lib/social.js"), G = require("../lib/glance.js");
+          const today = SOC.dayOf(t), yesterday = SOC.dayOf(t - 864e5);
+          const safe = (p, d) => Promise.resolve().then(() => p()).catch(() => d);
+          const [stats, results, ladder, hits, posts, payments, buffer] = await Promise.all([
+            safe(async () => { const g = await admin.stats(); return g && g.ok ? g.stats : null; }, null),
+            safe(() => glanceIn.results(yesterday), []), safe(() => glanceIn.ladder(today), []),
+            safe(async () => { const g = await slips.hits(200); return g && g.ok ? g.rows : []; }, []),
+            safe(() => (slips.winPosts ? slips.winPosts() : []), []),
+            safe(() => (db.recentPayments ? db.recentPayments(100) : []), []), safe(() => glanceIn.buffer(), null)]);
+          return H.sendJson(res, 200, G.glance({ day: today, yesterday, dayOf: SOC.dayOf, stats, results, ladder, hits, posts, payments, buffer }));
         }
         if (action === "stats") {
           const got = await admin.stats();

@@ -91,8 +91,8 @@ test("the banner exists for every rank the captions can name", () => {
 test("the owner gets a shareable copy of every channel win, and the admin page can share it", () => {
   const fs = require("fs"), path = require("path");
   const social = fs.readFileSync(path.join(__dirname, "..", "api", "social.js"), "utf8");
-  assert.match(social, /if \(ok && ch === "tg" && owner\) await postTGPhoto\(img, WIN\.caption\(s, "x"\), owner\);/,
-    "after the channel post, the same banner goes to the owner's own chat");
+  assert.match(social, /await postTGPhoto\(WIN\.imageUrl\(SITE, s\), WIN\.askText\(s\), owner\)/,
+    "each new win's banner goes to the owner's own chat, ready to forward");
   const ping = fs.readFileSync(path.join(__dirname, "..", "lib", "ownerping.js"), "utf8");
   assert.match(ping, /await sendPhoto\(owner, WIN\.imageUrl\(SITE, slip\), WIN\.caption\(slip, "x"\)\);/,
     "the x20 ping is the banner itself, ready to forward");
@@ -139,4 +139,41 @@ test("a slip with pushes posts what it paid, not the booked odds (owner, 18 Oct 
     "a push without its price is not posted as a win");
   assert.strictEqual(WIN.paid({ total_odds: 50, leg_count: 2, legs: [{ name: "a", odds: 2 }, { name: "b", odds: 25 }], seen: { 0: "void" } }).odds, 25,
     "the grader's seen marks count too");
+});
+
+test("win approvals: nothing posts by itself; the owner is asked once per new win (owner, 18 Oct 2026)", () => {
+  const WIN = require("../lib/winpost.js");
+  const now = Date.parse("2026-10-19T11:00:00Z"), hourOf = () => 12;
+  const win = (id, odds, over) => Object.assign({ id, status: "landed", book: "sporty", total_odds: odds, leg_count: 3, legs: [], settled_at: "2026-10-19T09:00:00Z" }, over || {});
+  const rows = [win(1, 12), win(2, 3), win(3, 40), win(4, 9, { settled_at: "2026-10-17T09:00:00Z" }), win(5, 20)];
+  const log = [{ key: "winask|3" }, { key: "win|5|tg" }];
+  assert.deepStrictEqual(WIN.toAsk(rows, log, now, hourOf).map((s) => s.id), [1],
+    "x3 is under x5, #3 was asked already, #4 is older than a day, #5 is already on a channel");
+  assert.deepStrictEqual(WIN.toAsk(rows, [], now, () => 23), [], "not at night");
+  assert.match(WIN.askText(win(1, 12)), /waiting for your OK: ×12.00 · 3 games, every leg won/);
+  const fs = require("fs"), path = require("path");
+  const social = fs.readFileSync(path.join(__dirname, "..", "api", "social.js"), "utf8");
+  assert.ok(!social.includes("WIN.pick("), "the hourly run no longer posts wins");
+  assert.match(social, /kind: "winask"/);
+});
+
+test("today at a glance adds up the day (owner, 18 Oct 2026)", () => {
+  const G = require("../lib/glance.js");
+  const dayOf = (ms) => new Date(ms + 3600e3).toISOString().slice(0, 10);
+  const out = G.glance({ day: "2026-10-19", yesterday: "2026-10-18", dayOf,
+    stats: { codesToday: 40, signupsToday: 3, activeToday: 12 },
+    results: [{ match_date: "2026-10-19", hit: true }, { match_date: "2026-10-19", hit: false }, { match_date: "2026-10-18", hit: true },
+      { match_date: "2026-10-19", hit: true, source: "sweep" }, { match_date: "2026-10-19", home: "A", away: "B", hg: 2, ag: 0, hit: true }],
+    ladder: [{ day: "2026-10-19", rung: 10, legs: [{ home: "A", away: "B", code: "2" }] }, { day: "2026-10-19", rung: 5, legs: [{ home: "A", away: "B", code: "1" }] }],
+    hits: [{ id: 7, status: "landed", total_odds: 12, leg_count: 3, legs: [], settled_at: "2026-10-19T08:00:00Z" },
+      { id: 8, status: "landed", total_odds: 30, leg_count: 3, legs: [], settled_at: "2026-10-18T08:00:00Z" }],
+    posts: [{ key: "win|8|tg" }],
+    payments: [{ paid_at: "2026-10-19T07:00:00Z", amount_kobo: 200000 }, { paid_at: "2026-10-17T07:00:00Z", amount_kobo: 500000 }],
+    buffer: { twitter: 9, instagram: 10, facebook: 4 } });
+  assert.deepStrictEqual(out.tips.today, { n: 3, hit: 2 }, "the sweep's rows are not our picks");
+  assert.deepStrictEqual(out.ladder.map((r) => r.rung + " " + r.state), ["5 landed", "10 lost"]);
+  assert.deepStrictEqual(out.wins, { today: 1, waiting: [{ id: 7, odds: 12 }] });
+  assert.deepStrictEqual(out.payments, { n: 1, naira: 2000 });
+  const html = require("../public/account-ui.js").todayHtml(out);
+  assert.match(html, /1 waiting: ×12/); assert.match(html, /x5 landed · x10 lost/); assert.ok(html.includes("X 9/10 · Instagram 10/10 · Facebook 4/10"));
 });
