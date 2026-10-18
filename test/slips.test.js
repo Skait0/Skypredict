@@ -361,3 +361,18 @@ test("a whole corners line and a -1 count are never settled", () => {
   assert.equal(g(null, "SHOTS_OV_24.5", 1, 0, { hc: 5, ac: 4, hsh: 14, ash: 11 }), true);
   assert.equal(g(null, "CORNERS_OV_8.5", 1, 0), null, "an older caller with no stats answers as before");
 });
+
+test("a lost slip keeps grading its other games, without being announced again", () => {
+  /* owner, 18 Oct 2026: "it still shows that a lot of games to play on each ticket
+     even when they have all played". One lost leg settled the slip, and nothing after
+     that graded the rest: 30 of the owner's slips read "1 lost, 19 to play". */
+  const leg = (home, code, res) => ({ date: "2026-10-17", home, away: home + " B", code, res });
+  api.setSlips([{ at: "a", settled: true, won: false, legs: [leg("A", "1", "lose"), leg("C", "OVER_1.5"), leg("E", "GG")] }]);
+  api.setData({ fixtures: [], results: [
+    { date: "2026-10-17", home: "C", away: "C B", hg: 2, ag: 1 }, { date: "2026-10-17", home: "E", away: "E B", hg: 1, ag: 0 }] });
+  const fresh = api.settleSlips();
+  const s = api.slips()[0];
+  assert.deepStrictEqual(s.legs.map((l) => l.res), ["lose", "win", "lose"]);
+  assert.strictEqual(s.settled, true); assert.strictEqual(s.won, false);
+  assert.strictEqual(fresh.length, 0, "a slip already settled is not announced again");
+});

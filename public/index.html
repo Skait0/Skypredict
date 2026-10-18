@@ -8812,7 +8812,19 @@ function settleSlips(){
     });
   });
   SLIPS.forEach(function(s){
-    if(s.settled) return;
+    /* A LOST SLIP STILL HAS GAMES (owner, 18 Oct 2026: "it still shows that a lot of
+       games to play on each ticket even when they have all played"). One lost leg
+       settles it, and the rest used to stay "to play" for good. They are graded as
+       their scores arrive; the slip's verdict and its announcement do not change. */
+    if(s.settled){
+      (s.legs||[]).forEach(function(l){
+        if(l.res==="win"||l.res==="lose"||l.res==="void") return;
+        var sc=finalScoreFor(l); if(!sc) return;
+        var g=legVerdict(l, sc); if(g==="wait") return;
+        l.res=g==null?"void":g; l.hg=sc.hg; l.ag=sc.ag; changed=true;
+      });
+      return;
+    }
     var hits=0, graded=0, lost=0, unknown=0;
     s.legs.forEach(function(l){
       if(l.res==="win"||l.res==="lose"){ graded++; if(l.res==="win")hits++; else lost++; return; }
