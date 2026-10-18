@@ -2,6 +2,7 @@
 /* The daily drop (owner, 16 Oct 2026): each queued post goes out once, on its day, from its time. */
 const test = require("node:test");
 const assert = require("node:assert");
+const fs = require("fs"), path = require("path");
 const { due } = require("../scripts/promodrop.js");
 const q = require("../data/promo-queue.json");
 
@@ -19,5 +20,14 @@ test("every clip has its own cover and every post keeps the rules", () => {
     for (const t of [d.x, d.ig].filter(Boolean)) {
       assert.doesNotMatch(t, /\bfree\b/i, "no free"); assert.doesNotMatch(t, /—/, "no em dash"); assert.match(t, /18\+/, "18+");
     }
+  }
+});
+
+test("what Telegram fetches is under its 20 MB limit (the 18 Oct penalty clip was 33 MB)", () => {
+  for (const d of q.drops) {
+    const media = d.tgVideo || d.video || d.image;
+    if (!media || d.date < "2026-10-18") continue;
+    const size = fs.statSync(path.join(__dirname, "..", "public", media)).size;
+    assert.ok(size < 19.5e6, d.date + " " + d.time + " " + media + " is " + (size / 1e6).toFixed(1) + " MB");
   }
 });
