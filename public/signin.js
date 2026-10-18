@@ -211,12 +211,13 @@
              signed-in Chrome, 18 Oct 2026: load, then one resize ~0.4s later).
              The old 700ms after load faded in before the swap (owner: "its the
              continue as swap"). Now: fade in once the frame has been quiet for
-             1s after its last load or resize, and never later than 3.5s. */
+             1s after its last load or resize (the clock starts at load, never
+             before), and never later than 3.5s. */
           var done=false, quiet=null, show=function(){ if(done||!live(sid)) return; done=true; clearTimeout(quiet); slot.classList.add("ready"); },
             settle=function(){ clearTimeout(quiet); quiet=setTimeout(show,1000); };
           f.addEventListener("load",settle);
           try{ new MutationObserver(settle).observe(f,{attributes:true}); }catch(e){}
-          settle(); setTimeout(show,3500);
+          setTimeout(show,3500);
         })(0);
         try{ g.prompt(); }catch(e){} }
       if(root.google&&root.google.accounts) go();
