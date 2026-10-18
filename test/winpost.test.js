@@ -117,3 +117,9 @@ test("a landed slip with games off our board opens every leg, not only the track
   const full = ui.hitsHtml([{ id: 9, status: "landed", code: "ABC12", book: "sporty", total_odds: 60, leg_count: 5, legs }]);
   assert.doesNotMatch(full, /data-chk=/); assert.match(full, /Show 2 more/);
 });
+
+test("the Telegram caption counts every game, not only the ones on our board", () => {
+  const WIN = require("../lib/winpost.js");
+  const c = WIN.caption({ book: "sporty", total_odds: 60, leg_count: 14, legs: [{ name: "A" }, { name: "B" }] }, "tg");
+  assert.match(c, /…and 12 more/); assert.match(c, /14 games on SportyBet/);
+});

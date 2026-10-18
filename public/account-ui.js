@@ -456,7 +456,8 @@
         (legs.length?"<small>"+esc(legs.slice(0,3).join(" · "))+"</small>"+
           (legs.length>3&&!off?"<details class='swa-more'><summary><span class='swa-m'>Show "+(legs.length-3)+" more</span><span class='swa-l'>Show less</span></summary><small>"+esc(legs.slice(3).join(" · "))+"</small></details>":""):"")+"</span>"+
         (open?"<button type='button' class='swa-pillbtn' data-chk='"+esc(String(h.id))+"' data-code='"+esc(h.code)+"' aria-expanded='false'>"+(h.status==="check"?"Check":"See all "+esc(games))+"</button>":"")+
-        (h.share?"<button type='button' class='swa-pillbtn' data-share='"+esc(JSON.stringify(h.share))+"'>Share</button>":"")+"</div>"+
+        (h.share?"<button type='button' class='swa-pillbtn' data-share='"+esc(JSON.stringify(h.share))+"'>Share</button>"+
+          "<button type='button' class='swa-pillbtn' data-postwin='"+esc(String(h.id))+"'>Post to our channels</button>":"")+"</div>"+
         (open?checkHtml(h):""); }).join("");
   }
   /* SETTLE A "CHECK" BY HAND (owner, 13 Oct 2026). Every leg we could grade won; the
@@ -984,6 +985,19 @@
           return navigator.share(data);
         }).catch(function(e){ if(!e||e.name!=="AbortError") fallback(); });
       }; });
+      /* POST TO OUR CHANNELS (api/account.js postwin): Telegram + X, as the hourly win post.
+         It goes out to everyone, so the first tap only asks; the second posts. */
+      box.querySelectorAll("[data-postwin]").forEach(function(b){ b.onclick=function(){
+        if(b.getAttribute("data-armed")!=="1"){ b.setAttribute("data-armed","1"); b.textContent="Tap again to post on Telegram + X"; return; }
+        b.disabled=true; b.textContent="Posting...";
+        a.req("POST","/api/account/postwin",{id:b.getAttribute("data-postwin")},function(c,j){
+          var nm={tg:"Telegram",x:"X"}, list=function(xs){ return (xs||[]).map(function(x){ return nm[x]||x; }).join(" and "); };
+          if(c!==200||!j){ b.disabled=false; b.removeAttribute("data-armed"); b.textContent="Post to our channels"; return fail(c,j); }
+          b.textContent=(j.failed&&j.failed.length)?"Try again":"Posted";
+          if(j.failed&&j.failed.length){ b.disabled=false; b.removeAttribute("data-armed"); }
+          say([j.sent.length?"Posted on "+list(j.sent)+".":"", j.already.length?"Already on "+list(j.already)+".":"",
+            j.failed.length?"Could not post on "+list(j.failed)+". Tap to try again.":""].filter(Boolean).join(" "));
+        }); }; });
       box.querySelectorAll("[data-chk]").forEach(function(b){ b.onclick=function(){
         var id=b.getAttribute("data-chk"), code=b.getAttribute("data-code")||"The slip", panel=box.querySelector("[data-chkbox='"+id+"']"); if(!panel) return;
         panel.hidden=!panel.hidden; b.setAttribute("aria-expanded",String(!panel.hidden));

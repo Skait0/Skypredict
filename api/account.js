@@ -16,7 +16,7 @@ const SW = require("../lib/slipwatch.js");
 
 const REAUTH_MS = 10 * 60e3;
 const ADMIN_GET = ["grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit", "readers", "reader", "threads", "gifs", "alerts", "blendtest"];
-const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle", "send", "unsend", "edit", "gift"];
+const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle", "postwin", "send", "unsend", "edit", "gift"];
 /* THE MESSAGE BOARD (owner, 14 Oct 2026; sql/messages.sql, public/messages.js):
    any signed-in reader reads their inbox, marks it read and replies in it. */
 const READER_GET = ["inbox", "tglink", "autopilot"];
@@ -55,7 +55,11 @@ function make(deps) {
     notified: (id) => require("../lib/supabase.js").patchSiteSlip(id, { notified: true }),
     byId: (id) => require("../lib/supabase.js").siteSlipForCheck(id),
     read: (book, code) => require("../lib/upstream.js").readSlip(book, code),
-    results: async (since) => (await require("../lib/supabase.js").recentResults(since)).rows || [] };
+    results: async (since) => (await require("../lib/supabase.js").recentResults(since)).rows || [],
+    /* "Post to our channels" on a landed win: the same banner, captions and social_log key as the hourly win post. */
+    postWin: (ch, text, img) => (ch === "x" ? require("./social.js").postX(text, img) : require("./social.js").postTGPhoto(img, text)),
+    wasPosted: (key) => require("../lib/supabase.js").socialHas(key),
+    logPost: (row) => require("../lib/supabase.js").logSocial(row) };
   /* The admin's switches and numbers; deps too, for the same reason. */
   const flags = deps.flags || require("../lib/flags.js");
   const admin = deps.admin || { stats: () => require("../lib/supabase.js").adminStats(),
@@ -272,6 +276,28 @@ function make(deps) {
             try { if (await slips.ping(SW.pingText(got.row), got.row)) await slips.notified(id); } catch (e) { /* settled either way */ }
           }
           return H.sendJson(res, 200, { ok: true });
+        }
+        /* POST A WIN BY HAND (owner, 18 Oct 2026: "shouldnt there be a button to enable me
+           push to our channels"). A landed x5+ slip goes out on Telegram and X exactly as
+           the hourly win post would; a channel it already went to is skipped. */
+        if (action === "postwin") {
+          const b = (await H.readJson(req, 256)) || {};
+          const id = String(b.id || "");
+          if (!/^\d{1,18}$/.test(id)) return H.sendJson(res, 400, { error: "bad_request" });
+          const row = await slips.byId(id);
+          if (!row) return H.sendJson(res, 404, { error: "no_slip" });
+          const WIN = require("../lib/winpost.js"), SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
+          if (row.status !== "landed" || !WIN.rankOf(row.total_odds)) return H.sendJson(res, 409, { error: "not_a_win" });
+          const sent = [], already = [], failed = [];
+          for (const ch of ["tg", "x"]) {
+            const key = WIN.key(row, ch);
+            if (await slips.wasPosted(key)) { already.push(ch); continue; }
+            const text = WIN.caption(row, ch);
+            if (await slips.postWin(ch, text, WIN.imageUrl(SITE, row))) { await slips.logPost({ key, channel: ch, kind: "win", text }); sent.push(ch); }
+            else failed.push(ch);
+          }
+          await record("postwin", "slip " + id, { sent, already, failed });
+          return H.sendJson(res, 200, { sent, already, failed });
         }
         if (action === "flags") {
           if (flags._reset) flags._reset(); // the admin sees the stored switches, not a cached copy

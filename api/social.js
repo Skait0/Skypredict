@@ -140,3 +140,6 @@ module.exports = async function handler(req, res) {
   }
   return res.status(200).json({ ok: true, due: items.length, sent });
 };
+/* The admin's "Post to our channels" on a landed win (api/account.js postwin). */
+module.exports.postX = postX;
+module.exports.postTGPhoto = postTGPhoto;
