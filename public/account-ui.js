@@ -151,7 +151,8 @@
       (f&&f.open&&f.seatsLeft>0&&f.monthsLeft===3?
         "<div class='swa-fwpanel'><div class='swa-fwhead'><span class='swa-fwt'>Founding Wizards</span>"+
             "<span class='swa-fwleft'><b>"+f.seatsLeft+"</b> of "+seats+" places left</span></div>"+
-          "<p class='swa-fwd'>The first "+seats+" users pay <b>"+naira(1500)+"</b> for their first 3 month passes.</p>"+
+          "<p class='swa-fwd'>The first "+seats+" users pay <b>"+naira(1500)+"</b> for their first 3 month passes."+
+            (f.endsAt?" <b>Ends "+dayMonth(new Date(Date.parse(f.endsAt)-1).toISOString())+"</b> or when the places go.":"")+"</p>"+
           "<div class='swa-fwbar' role='img' aria-label='"+taken+" of "+seats+" places taken'><i style='--to:"+Math.max(2,Math.round(100*taken/seats))+"%'></i></div></div>":"")+
       "<div class='swa-passes'>"+(passes||"<p class='swa-note'>Prices did not load. Check your connection and try again.</p>")+"</div>"+
       (sel?"<button class='swa-wppay' id='swaPay' type='button'>"+LOCKI+"<span>Pay "+naira(sel.naira)+" with Paystack</span></button>":"")+

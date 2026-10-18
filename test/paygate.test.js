@@ -202,7 +202,7 @@ test("offer: prices for the page, and seats left", async () => {
   const w = world({ taken: 120 });
   const r = (await w.call(Object.assign(getReq("pay", {}), { query: { action: "offer" } }))).json();
   assert.deepEqual(r.passes.map((p) => [p.pass, p.naira, p.full]), [["day", 200, 200], ["week", 800, 800], ["month", 1500, 2000]]);
-  assert.deepEqual(r.founder, { open: true, seats: 200, seatsLeft: 80, monthsLeft: 3 }, "200 places (owner, 18 Oct 2026)");
+  assert.deepEqual(r.founder, { open: true, seats: 200, endsAt: "2026-10-31T23:00:00.000Z", seatsLeft: 80, monthsLeft: 3 }, "200 places, ends with the old prices (owner, 18 Oct 2026)");
 });
 
 test("no secret key, no paygate: every action is a 404", async () => {
@@ -305,9 +305,17 @@ test("the offer: before 1 Nov today's prices with the new ones to strike through
   w.advance(SWITCH - Date.UTC(2026, 9, 16, 10));
   const after = (await w.call(Object.assign(getReq("pay", {}), { query: { action: "offer" } }))).json();
   assert.deepEqual(after.passes.map((p) => [p.pass, p.naira, p.next, p.codes]),
-    [["day", 500, null, 100], ["week", 1500, null, 100], ["month", 1500, null, 100]]);
+    [["day", 500, null, 100], ["week", 1500, null, 100], ["month", 4000, null, 100]], "no founder price for a new buyer after 1 Nov");
+  assert.deepEqual([after.founder.open, after.founder.endsAt], [false, null]);
   assert.ok(after.passes.every((p) => p.unlimited));
   assert.equal(after.switchAt, null);
+});
+
+test("the founder offer takes new Founding Wizards until 1 Nov 00:00 Lagos; those who joined keep it", () => {
+  assert.equal(PAY.priceOf("month", { taken: 8, mine: 0 }, SWITCH - 1), 150000, "open on 31 Oct");
+  assert.equal(PAY.priceOf("month", { taken: 8, mine: 0 }, SWITCH), 400000, "closed to new buyers from 1 Nov");
+  assert.equal(PAY.priceOf("month", { taken: 8, mine: 1 }, SWITCH), 150000, "a founder keeps it for the rest of their 3 months");
+  assert.equal(PAY.priceOf("month", { taken: 8, mine: 3 }, SWITCH), 400000, "after their 3 founder months, the normal price");
 });
 
 test("from 1 Nov a N1,500 Week pass is no founder, and there is no N200 plan to buy", async () => {

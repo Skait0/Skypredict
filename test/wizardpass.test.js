@@ -14,7 +14,7 @@ test("the page charges what checkout charges, never says free, and leads into th
   for (const t of [BEFORE, AFTER]) {
     const h = P.renderWizardPass(t), cur = PR.passesAt(t);
     for (const k of Object.keys(cur)) assert.ok(h.includes(naira(cur[k].kobo)), k + " price at " + new Date(t).toISOString());
-    assert.ok(h.includes(naira(FOUNDER.kobo)), "the founders' price");
+    if (t < PR.SWITCH_AT) assert.ok(h.includes(naira(FOUNDER.kobo)), "the founders' price");
     const words = h.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/g, "");
     assert.doesNotMatch(words, /\bfree\b/i, "no \"free\" in marketing (owner, 13 Oct 2026)");
     assert.match(h, /<a class="go" href="\/\?pass=1">Get Wizard Pass<\/a>/);
@@ -28,6 +28,8 @@ test("until 1 Nov the new prices are struck through beside today's; from then th
   assert.match(before, /New prices from 1 Nov/);
   assert.doesNotMatch(after, /<s>|New prices from 1 Nov/);
   assert.doesNotMatch(after, /₦200/, "no N200 plan after the switch");
+  assert.match(before, /Founding Wizards[\s\S]*Ends 31 Oct/);
+  assert.doesNotMatch(after, /Founding Wizards/, "the founder offer ends with the old prices");
   assert.match(after, /Unlimited booking codes/);
   assert.match(after, /Is it really unlimited\?[\s\S]*Fair use: up to 100 codes a day/, "the limit is stated, not hidden");
 });

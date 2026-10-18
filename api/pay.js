@@ -26,8 +26,12 @@ const FOUNDER = { kobo: 150000, seats: 200, months: 3 };
 
 /* The founder price, for a month pass only: still seats left, or this reader
    already holds one, and fewer than 3 founder months paid. */
-const founderOpen = (o) => !!o && o.mine < FOUNDER.months && (o.mine > 0 || o.taken < FOUNDER.seats);
-const priceOf = (pass, offer, t) => pass === "month" && founderOpen(offer) ? FOUNDER.kobo : P.passesAt(t)[pass].kobo;
+/* THE OFFER ENDS WITH THE OLD PRICES (owner, 18 Oct 2026): no new Founding Wizards from
+   1 Nov 00:00 Lagos (or once the 200 places go); anyone who joined before keeps the price
+   for the rest of their 3 founder months. */
+const founderOpen = (o, t) => !!o && o.mine < FOUNDER.months &&
+  (o.mine > 0 || (o.taken < FOUNDER.seats && (t == null ? Date.now() : t) < P.SWITCH_AT));
+const priceOf = (pass, offer, t) => pass === "month" && founderOpen(offer, t) ? FOUNDER.kobo : P.passesAt(t == null ? Date.now() : t)[pass].kobo;
 
 function paystack(secret, fetchImpl) {
   const f = fetchImpl || fetch;
@@ -115,7 +119,7 @@ function make(deps) {
             codes: cur[k].codes, unlimited: !!cur[k].unlimited, naira: priceOf(k, o, t) / 100, full: cur[k].kobo / 100,
             next: soon && P.NEXT[k] ? P.NEXT[k].kobo / 100 : null })),
           switchAt: soon ? new Date(P.SWITCH_AT).toISOString() : null,
-          founder: o ? { open: founderOpen(o), seats: FOUNDER.seats, seatsLeft: Math.max(0, FOUNDER.seats - o.taken), monthsLeft: Math.max(0, FOUNDER.months - o.mine) } : null,
+          founder: o ? { open: founderOpen(o, t), seats: FOUNDER.seats, endsAt: soon ? new Date(P.SWITCH_AT).toISOString() : null, seatsLeft: Math.max(0, FOUNDER.seats - o.taken), monthsLeft: Math.max(0, FOUNDER.months - o.mine) } : null,
         }, cookies);
       }
 
@@ -143,7 +147,7 @@ function make(deps) {
       const reference = "sw_" + crypto.randomBytes(10).toString("hex");
       const row = await db.insertPayment({ reference, user_id: s.userId, pass, days: cur[pass].days,
         /* The month's founder price only: from 1 Nov a Week pass also costs N1,500. */
-        amount_kobo: kobo, founder: pass === "month" && founderOpen(o) });
+        amount_kobo: kobo, founder: pass === "month" && founderOpen(o, t) });
       if (!row) throw new Error("payment row insert failed");
       const init = await ps.init({ email: user.email, amount: kobo, currency: "NGN", reference,
         callback_url: H.ORIGIN + "/?paid=" + reference, metadata: { pass } });
