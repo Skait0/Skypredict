@@ -18526,8 +18526,11 @@ function splitBoxInner(picks,oddsOf){
       /* Only the SOURCE row, or this would light a target pill too - both
          rows are .byo-b on purpose, and the target pills live inside the
          conversion panel that is about to be thrown away anyway. */
-      sec.querySelectorAll(".byo-book:not(.byo-to .byo-book) .byo-b")
-        .forEach(function(o){ o.classList.toggle("on",o===b); });
+      /* closest(), not ":not(.byo-to .byo-book)": a combinator inside :not() is newer
+         CSS that older phone browsers reject, which threw here and left the old
+         legs on screen (Sentry, 18 Oct 2026). */
+      sec.querySelectorAll(".byo-book .byo-b")
+        .forEach(function(o){ if(!o.closest(".byo-to")) o.classList.toggle("on",o===b); });
       /* The legs in view came from another book and mean nothing here. */
       BYO.legs=null; $("byoOut").innerHTML="";
       /* A target chosen against the old source may BE the new source, and a
