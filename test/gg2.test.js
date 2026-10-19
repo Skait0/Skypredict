@@ -1,0 +1,60 @@
+"use strict";
+
+/**
+ * Both teams score 2+, Yes: the crazy leg (owner, 19 Oct 2026: "its a crazy
+ * bet", Yes only). Held out over 5,572 matches the model said 14.1% and it
+ * landed 15.9%; its 15-20% calls landed 17.6%. The builders take it only on a
+ * real price and where we rate it 18%+. Sold by SportyBet, Bet9ja, BetKing and
+ * 1xBet; betPawa does not sell it.
+ */
+
+const test = require("node:test");
+const assert = require("node:assert");
+const fs = require("fs");
+const path = require("path");
+const M = require("../lib/model.js");
+const legrade = require("../lib/legrade.js");
+
+const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+function grab(name) {
+  const i = src.indexOf("\nfunction " + name + "(");
+  assert.ok(i > 0, "not found in index.html: " + name);
+  let d = 0, k = src.indexOf("{", i);
+  for (; k < src.length; k++) {
+    if (src[k] === "{") d++;
+    else if (src[k] === "}") { d--; if (!d) break; }
+  }
+  return src.slice(i, k + 1);
+}
+
+test("gg2 is the both-scored-two-or-more corner of the model's scoreline matrix", () => {
+  const m = M.scoreMatrix(1.6, 1.3, 8);
+  const k = M.markets({ matrix: m, lh: 1.6, la: 1.3, total: 2.9 }, { drawBoost: 0 });
+  let y = 0; m.forEach((row, i) => row.forEach((p, j) => { if (i >= 2 && j >= 2) y += p; }));
+  assert.ok(Math.abs(k.gg2 - y) < 1e-9);
+  assert.ok(k.gg2 < k.btts, "a subset of both teams scoring");
+});
+
+test("graded the same on the page and on the server", () => {
+  const gradeLeg = new Function(grab("gradeLeg") + "\nreturn gradeLeg;")();
+  for (const [hg, ag, yes] of [[2, 2, true], [3, 2, true], [2, 1, false], [4, 0, false], [0, 0, false]]) {
+    assert.strictEqual(gradeLeg({}, "GG2_Y", hg, ag), yes, `page ${hg}-${ag}`);
+    assert.strictEqual(legrade.gradeLeg("GG2_Y", { hg, ag }), yes, `server ${hg}-${ag}`);
+    assert.strictEqual(legrade.gradeLeg("GG2_N", { hg, ag }), !yes, `server No ${hg}-${ag}`);
+  }
+});
+
+test("the builders take it only on a real price and at 18%+, never on betPawa or Betway", () => {
+  const consts = /var WTN_MIN=[^\n]*/.exec(src)[0];
+  const BOOKS = { sporty: { odds: "sportyOdds" } };
+  const judged = new Function("wtnOk", "legOdd", "curBook", "dogHcap", "HCAP_DOG_BAR", "bookQuotes", "BOOKS",
+    consts + "\n" + grab("judgedP") + "\nreturn judgedP;")(
+    () => true, () => 1, () => BOOKS.sporty, () => false, 0.02, (f, c, B) => !!(f[B.odds] && f[B.odds][c] > 1.01), BOOKS);
+  const priced = { sportyOdds: { GG2_Y: 4.75 } };
+  assert.strictEqual(judged(priced, "GG2_Y", 0.2), 0.2);
+  assert.strictEqual(judged(priced, "GG2_Y", 0.17), -1, "under 18% is refused");
+  assert.strictEqual(judged({ sportyOdds: {} }, "GG2_Y", 0.3), -1, "no price, no leg");
+  assert.match(src, /"GG2_Y":\["sporty","bet9ja","betking","onexbet"\]/);
+  assert.match(src, /var BUILD=\{[^\n]*gg2:false/, "off by default");
+  assert.doesNotMatch(grab("codeMarket"), /GG2/, "not named before it has graded results");
+});
