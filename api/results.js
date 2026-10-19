@@ -30,6 +30,8 @@ module.exports = async function handler(req, res) {
       for (const k of ["hc", "ac", "hsh", "ash"]) if (Number.isFinite(r[k]) && r[k] >= 0) o[k] = r[k];
       /* The goal order, where it was needed and known (see lib/statsfill.js). */
       if (typeof r.seq === "string" && /^[HA]+$/.test(r.seq)) o.seq = r.seq;
+      /* The half-time score, so the page can settle half-time legs (19 Oct 2026). */
+      if (Number.isInteger(r.hth) && Number.isInteger(r.hta) && r.hth >= 0 && r.hta >= 0 && r.hth <= r.hg && r.hta <= r.ag) { o.hth = r.hth; o.hta = r.hta; }
       return o;
     });
   return res.status(200).json({ ok: true, results });

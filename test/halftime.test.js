@@ -94,3 +94,24 @@ test("every builder gates them through judgedP like Win to nil, and they are nev
   /* Betway sells no 2nd-half match total (API NOT_CARRIED). */
   assert.match(src, /"SH_OVER_0\.5":\["sporty","bet9ja","betking","betpawa","onexbet"\]/);
 });
+
+test("My slips settles half-time legs exactly as the server does, and waits without a half-time score", () => {
+  /* Until 19 Oct 2026 the page had no half-time score and voided these legs at full time,
+     so a lost first-half leg read as a refund and its slip could read as won. */
+  const gradeLeg = new Function("nr3Grade", grab("gradeLeg") + "\nreturn gradeLeg;")(() => null);
+  const codes = ["FH_OVER_0.5", "FH_UNDER_2.5", "FH_DC_1X", "SH_OVER_0.5", "SH_UNDER_2.5",
+    "WINHALF_H_Y", "WINHALF_H_N", "WINHALF_A_Y", "WINHALF_A_N"];
+  let n = 0;
+  for (let hg = 0; hg <= 4; hg++) for (let ag = 0; ag <= 4; ag++)
+    for (let h1 = 0; h1 <= hg; h1++) for (let a1 = 0; a1 <= ag; a1++)
+      for (const c of codes) {
+        assert.strictEqual(gradeLeg(null, c, hg, ag, { hth: h1, hta: a1 }), legrade.gradeLeg(c, { hg, ag, hth: h1, hta: a1 }), `${c} ${hg}-${ag} (${h1}-${a1})`);
+        n++;
+      }
+  assert.ok(n > 1000);
+  for (const c of codes) {
+    assert.strictEqual(gradeLeg(null, c, 2, 1, {}), null, c + " waits for the half-time score");
+    assert.ok(new Function(grab("awaitsStats") + "\nreturn awaitsStats;")()(c), c + " is kept waiting, not voided");
+  }
+  assert.match(fs.readFileSync(path.join(__dirname, "..", "api", "results.js"), "utf8"), /o\.hth = r\.hth; o\.hta = r\.hta;/, "the results feed carries it");
+});

@@ -8645,6 +8645,7 @@ function finalScoreFor(leg){
       if(r.hc!=null&&r.ac!=null){ out.hc=r.hc; out.ac=r.ac; }
       if(r.hsh!=null&&r.ash!=null){ out.hsh=r.hsh; out.ash=r.ash; }
       if(typeof r.seq==="string") out.seq=r.seq;
+      if(r.hth!=null&&r.hta!=null){ out.hth=r.hth; out.hta=r.hta; }
       return out;
     }
   }
@@ -8788,7 +8789,9 @@ function refreshSlipUI(){
    refund and stays void. */
 /* "3 or more in a row" waits the same way for its goal order (seq, filled by
    lib/statsfill.js beside the corners) when the score alone cannot decide it. */
-function awaitsStats(code){ return /^(CORNERS|SHOTS|NR3)_/.test(code||""); }
+/* Half-time legs wait the same way for the half-time score (19 Oct 2026). Until then
+   the page voided them at full time, so a lost first-half leg read as a refund. */
+function awaitsStats(code){ return /^(CORNERS|SHOTS|NR3)_/.test(code||"")||/^(FH_OVER_0.5|FH_UNDER_2.5|FH_DC_1X|SH_OVER_0.5|SH_UNDER_2.5|WINHALF_[HA]_[YN])$/.test(code||""); }
 function statsGivenUp(l){
   var t=Date.parse((l.date||"")+"T00:00:00Z");
   return !isFinite(t) || Date.now()-t > 3*864e5;
@@ -14708,6 +14711,21 @@ function gradeLeg(f,c,hg,ag,st){
     case"WTN_A_N": return !(ag>hg&&hg===0);
     case"OVER_0.5": return tot>0.5;
     case"NR3_ANY": return nr3Grade(hg,ag,"any",st&&st.seq);
+    /* Half-time legs, from the half-time score when the result carries one (lib/legrade.js
+       settles the same codes the same way on the server). */
+    case"FH_OVER_0.5":case"FH_UNDER_2.5":case"FH_DC_1X":case"SH_OVER_0.5":case"SH_UNDER_2.5":
+    case"WINHALF_H_Y":case"WINHALF_H_N":case"WINHALF_A_Y":case"WINHALF_A_N":{
+      var h1=st&&st.hth, a1=st&&st.hta;
+      if(typeof h1!=="number"||typeof a1!=="number"||h1>hg||a1>ag) return null;
+      var h2=hg-h1, a2=ag-a1;
+      if(c==="FH_OVER_0.5") return h1+a1>0.5;
+      if(c==="FH_UNDER_2.5") return h1+a1<2.5;
+      if(c==="FH_DC_1X") return h1>=a1;
+      if(c==="SH_OVER_0.5") return h2+a2>0.5;
+      if(c==="SH_UNDER_2.5") return h2+a2<2.5;
+      var won=c.charAt(8)==="H"?(h1>a1||h2>a2):(a1>h1||a2>h2);
+      return c.charAt(10)==="Y"?won:!won;
+    }
     case"NR3_H": return nr3Grade(hg,ag,"h",st&&st.seq);
     case"NR3_A": return nr3Grade(hg,ag,"a",st&&st.seq);
     case"NG": return !both;
@@ -20584,6 +20602,8 @@ function pullServerResults(){
             ["hc","ac","hsh","ash"].forEach(function(q){ if(r[q]!=null) x[q]=r[q]; });
             added++;
           }
+          /* So does the half-time score, for the half-time legs (19 Oct 2026). */
+          if(x.hth==null&&r.hth!=null){ x.hth=r.hth; x.hta=r.hta; added++; }
           return;
         }
         DATA.results.push(r); have[k]=r; added++;
