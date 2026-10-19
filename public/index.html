@@ -15101,7 +15101,7 @@ function dogHcap(f,code){
 /* WIN TO NIL - NO (owner, 17 Oct 2026): only on a real price at the book being built for,
    never above x1.15 in any style (owner, 17 Oct: "lower the to nil to 1.15. nothing more"),
    from x1.02 in every style, like Bankers (owner, 17 Oct: "increase the floor to match the bankers odds"), and only where we rate it 80%+. Held out, the 60-70% band ran ten points hot. */
-var WTN_MIN=1.02, WTN_BANKERS_MIN=1.02, WTN_MAX=1.15, WTN_ENOUGH=8, WTN_LEVELS=[0.8,0.77,0.75], DRAW_ENOUGH=8, DRAW_LEVELS=[0.26,0.24], HALF_MIN=1.02, HALF_P=0.7, GG2_P=0.12, GG2_ENOUGH=8, GG2_LEVELS=[{p:0.18,side:1.2,total:2.9,scored:3},{p:0.15,side:1.1,total:2.7,scored:3},{p:0.12,side:1.0,total:2.5,scored:2}];
+var WTN_MIN=1.02, WTN_BANKERS_MIN=1.02, WTN_MAX=1.15, WTN_ENOUGH=8, WTN_LEVELS=[0.8,0.77,0.75], DRAW_ENOUGH=8, DRAW_LEVELS=[0.26,0.24], HALF_MIN=1.02, HALF_P=0.7, GG2_P=0.12, GG2_MAX_ODD=6, GG2_ENOUGH=8, GG2_LEVELS=[{p:0.18,side:1.2,total:2.9,scored:3},{p:0.15,side:1.1,total:2.7,scored:3},{p:0.12,side:1.0,total:2.5,scored:2}];
 /* GG+, BOTH TEAMS SCORE 2+ (owner, 19 Oct 2026): only on a real price (SportyBet's standing in, as
    for Win to nil) and only in a high-scoring game ("only looks for potential high scoring games,
    high scoring teams, high scoring leagues, teams that currently scoring goals"): our chance, the
@@ -15111,10 +15111,15 @@ var WTN_MIN=1.02, WTN_BANKERS_MIN=1.02, WTN_MAX=1.15, WTN_ENOUGH=8, WTN_LEVELS=[
    THE BAR FOLLOWS THE DAY ("on days when there are no games, lower the percentage, like today"):
    the strictest level that gives a day GG2_ENOUGH priced games, else the loosest. GG2_P is the
    loosest chance, which the builders' own floors let through; the day's level decides. */
+/* UP TO x6 (owner, 19 Oct 2026: "i want us to be able to get odds up to 6 also"): a game whose
+   bookie prices GG+ at GG2_MAX_ODD or less is in even under the day's chance, so long as we rate it
+   GG2_P+ and the game is high-scoring; the day's chance bar still lets in the rest. */
 function gg2Pass(f,L){
   var lh=Number(f&&f.lh)||0, la=Number(f&&f.la)||0, p=mProb(f,"GG2_Y");
-  return p!=null&&p>=L.p&&Math.min(lh,la)>=L.side&&lh+la>=L.total&&f.sc_h>=L.scored&&f.sc_a>=L.scored&&
-    (bookQuotes(f,"GG2_Y",curBook())||bookQuotes(f,"GG2_Y",BOOKS.sporty));
+  if(!(p!=null&&p>=GG2_P&&Math.min(lh,la)>=L.side&&lh+la>=L.total&&f.sc_h>=L.scored&&f.sc_a>=L.scored)) return false;
+  var B=curBook(), own=bookQuotes(f,"GG2_Y",B);
+  if(!own&&!bookQuotes(f,"GG2_Y",BOOKS.sporty)) return false;
+  return p>=L.p||legOdd(f,"GG2_Y",p,own?B:BOOKS.sporty)<=GG2_MAX_ODD;
 }
 var GG2_LV={};
 function gg2Level(f){

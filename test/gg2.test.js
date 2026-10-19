@@ -50,7 +50,7 @@ function gate(dayFixtures) {
   const BOOKS = { sporty: { odds: "sportyOdds" } };
   return new Function("wtnOk", "legOdd", "curBook", "dogHcap", "HCAP_DOG_BAR", "bookQuotes", "BOOKS", "mProb", "DATA",
     consts + "\n" + grab("gg2Pass") + "\nvar GG2_LV={};\n" + grab("gg2Level") + "\n" + grab("judgedP") + "\nreturn judgedP;")(
-    () => true, () => 1, () => ({ key: "sporty", odds: "sportyOdds" }), () => false, 0.02,
+    () => true, (f, c) => f.sportyOdds[c], () => ({ key: "sporty", odds: "sportyOdds" }), () => false, 0.02,
     (f, c, B) => !!(f[B.odds] && f[B.odds][c] > 1.01), BOOKS, (f) => f.gg2, { fixtures: dayFixtures });
 }
 const game = (o) => Object.assign({ date: "2026-10-24", sportyOdds: { GG2_Y: 4.75 }, lh: 1.7, la: 1.4, sc_h: 5, sc_a: 4, gg2: 0.2 }, o);
@@ -60,7 +60,11 @@ test("a busy day keeps the strict bar: 18%+, 1.2+ for the weaker side, 2.9+ goal
   const judged = gate(busy);
   const w = (o) => judged(game(o), "GG2_Y", (o && o.gg2) || 0.2);
   assert.strictEqual(w({}), 0.2);
-  assert.strictEqual(w({ gg2: 0.17 }), -1, "under 18% is refused on a busy day");
+  assert.strictEqual(w({ gg2: 0.17, sportyOdds: { GG2_Y: 7.5 } }), -1, "under 18% and over x6 is refused on a busy day");
+  /* Up to x6 (owner, 19 Oct 2026: "i want us to be able to get odds up to 6 also"). */
+  assert.strictEqual(w({ gg2: 0.14, sportyOdds: { GG2_Y: 5.9 } }), 0.14, "priced x6 or less is in, under the day's chance");
+  assert.strictEqual(w({ gg2: 0.11, sportyOdds: { GG2_Y: 5.9 } }), -1, "but never under our 12%");
+  assert.strictEqual(w({ gg2: 0.14, sportyOdds: { GG2_Y: 5.9 }, sc_a: 2 }), -1, "and always a high-scoring game");
   assert.strictEqual(w({ sportyOdds: {} }), -1, "no price, no leg");
   assert.strictEqual(w({ lh: 1.8, la: 1.15 }), -1, "below 1.2 for the weaker side");
   assert.strictEqual(w({ lh: 1.6, la: 1.25 }), -1, "under 2.9 goals expected");
