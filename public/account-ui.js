@@ -307,6 +307,13 @@
     if(rec&&rec.total) rows.push(["Our picks",num(rec.correct)+" of "+num(rec.total)+" right ("+Math.round(100*rec.correct/rec.total)+"%) · last "+(rec.days||14)+" days"]);
     return rows.map(function(r){ return "<div class='swa-set'><span class='swa-st'><b>"+esc(r[0])+"</b><small>"+esc(r[1])+"</small></span></div>"; }).join("");
   }
+  /* TRACKING LINKS (owner, 19 Oct 2026): soccerwizard.live/?t=<tag>, per tag (lib/refs.js). */
+  function refsHtml(list){
+    if(!list.length) return msg("No visits yet. Share soccerwizard.live/?t=name (letters, numbers, - or _).");
+    return list.map(function(r){
+      return "<div class='swa-set'><span class='swa-st'><b>?t="+esc(r.ref)+"</b><small>"+esc(num(r.visits)+" visits, "+num(r.users)+" signed in ("+num(r.newUsers)+" new), "+
+        num(r.passes)+" passes, ₦"+num(r.naira))+"</small></span></div>"; }).join("");
+  }
   /* TODAY AT A GLANCE (owner, 18 Oct 2026; api/account.js today, lib/glance.js). */
   var LAD_WORD={landed:"landed",lost:"lost",live:"playing"};
   function todayHtml(j){
@@ -378,7 +385,7 @@
         "<button class='swa-pillbtn' id='swaNoticeOff' type='button'>Clear</button></div></div></div>",
       swaTMsg:"<div class='swa-card'>"+msg("Loading")+"</div>",
       /* Status and Numbers in one tab (owner, 18 Oct 2026: fewer tabs; Today has the day). */
-      swaTStatus:"<div class='swa-card' id='swaStatus'>"+msg("Loading")+"</div><label class='swa-lbl'>Numbers</label><div class='swa-card' id='swaNums'>"+msg("Loading")+"</div>",
+      swaTStatus:"<div class='swa-card' id='swaStatus'>"+msg("Loading")+"</div><label class='swa-lbl'>Numbers</label><div class='swa-card' id='swaNums'>"+msg("Loading")+"</div><label class='swa-lbl'>Tracking links</label><div class='swa-card' id='swaRefs'>"+msg("Loading")+"</div>",
       swaTInspect:"<p class='swa-note'>Paste any booking code to see every game, our number on it and how it went.</p>"+
         "<div class='swa-bkchips' id='swaInBooks' role='radiogroup' aria-label='Bookmaker'></div>"+
         "<label class='swa-lbl' for='swaInCode'>Booking code</label>"+
@@ -1188,6 +1195,10 @@
       var bad=msg(code===503?"Numbers are not set up yet. Run sql/admin.sql in Supabase.":"Could not load the numbers.");
       v.querySelector("#swaStatus").innerHTML=code===200?statusHtml(j,board):bad;
       v.querySelector("#swaNums").innerHTML=code===200?numbersHtml(j,board):bad;
+    });
+    a.req("GET","/api/account/refs",null,function(code,j){
+      var box=v.querySelector("#swaRefs"); if(!box||!box.isConnected) return;
+      box.innerHTML=code===200?refsHtml(j.refs||[]):msg("Could not load the tracking links.");
     });
     var lkIn=v.querySelector("#swaLkEmail"), lkGo=v.querySelector("#swaLkGo"), lkBox=v.querySelector("#swaLk");
     function lookup(){

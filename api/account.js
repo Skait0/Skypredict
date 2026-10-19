@@ -15,7 +15,7 @@ const { report } = require("../lib/report.js");
 const SW = require("../lib/slipwatch.js");
 
 const REAUTH_MS = 10 * 60e3;
-const ADMIN_GET = ["today", "inspect", "grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit", "readers", "reader", "threads", "gifs", "alerts", "blendtest"];
+const ADMIN_GET = ["today", "inspect", "grants", "hits", "flags", "stats", "lookup", "slipdetail", "audit", "readers", "reader", "threads", "gifs", "alerts", "blendtest", "refs"];
 const ADMIN_POST = ["grant", "revoke", "setflags", "signout", "settle", "postwin", "fixleg", "send", "unsend", "edit", "gift"];
 /* THE MESSAGE BOARD (owner, 14 Oct 2026; sql/messages.sql, public/messages.js):
    any signed-in reader reads their inbox, marks it read and replies in it. */
@@ -404,6 +404,14 @@ function make(deps) {
             safe(() => (slips.winPosts ? slips.winPosts() : []), []),
             safe(() => (db.recentPayments ? db.recentPayments(100) : []), []), safe(() => glanceIn.buffer(), null)]);
           return H.sendJson(res, 200, G.glance({ day: today, yesterday, dayOf: SOC.dayOf, stats, results, ladder, hits, posts, payments, buffer }));
+        }
+        /* Tracking links (lib/refs.js, sql/refs.sql): visits, sign-ins, new
+           accounts and passes per ?t= tag. */
+        if (action === "refs") {
+          const hits = await db.refHits();
+          const who = [...new Set(hits.filter((h) => h.kind === "user").map((h) => h.who))];
+          const [users, paid] = await Promise.all([db.usersCreated(who), db.paidBy(who)]);
+          return H.sendJson(res, 200, { refs: require("../lib/refs.js").summary(hits, users, paid) });
         }
         if (action === "stats") {
           const got = await admin.stats();

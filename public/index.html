@@ -25885,6 +25885,24 @@ load().catch(function(){});
   function rawNow(){ var s="",k; for(k in KEYS) s+=ls.getItem(KEYS[k])+"\u0001"; for(k in PREFS) s+=ls.getItem(PREFS[k])+"\u0001"; return s; }
   function isSyncedKey(k){ var x; for(x in KEYS) if(own(KEYS,x)&&KEYS[x]===k) return true; for(x in PREFS) if(own(PREFS,x)&&PREFS[x]===k) return true; return false; }
   function reload(){ try{ if(root.swReloadSynced) root.swReloadSynced(); }catch(e){} }
+  /* TRACKING LINKS (owner, 19 Oct 2026; api/ref.js, lib/refs.js): the first
+     ?t=<tag> a device arrives with is kept in sw.ref. It is told to the
+     server once as a visit, and once more for each account that signs in
+     here, so the admin can count what a tracking link brought in. */
+  function refPing(email){
+    try{
+      var m=/[?&]t=([A-Za-z0-9_-]{1,24})(?:[&#]|$)/.exec(root.location.search||""), r=ls.getItem("sw.ref");
+      if(m&&!r){ r=m[1].toLowerCase(); ls.setItem("sw.ref",r); }
+      if(!r||!root.fetch) return;
+      var v=ls.getItem("sw.refv");
+      if(!v){ v=(root.crypto&&crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+Date.now()).replace(/-/g,"").slice(0,32); ls.setItem("sw.refv",v); }
+      var key=email?"sw.refu":"sw.refs", val=r+(email?"|"+email:"");
+      if(ls.getItem(key)===val) return;
+      root.fetch("/api/ref",{method:"POST",credentials:"same-origin",keepalive:true,headers:{"Content-Type":"application/json","X-SW-Request":"1"},
+        body:JSON.stringify({ref:r,v:v})}).then(function(x){ if(x.ok) try{ ls.setItem(key,val); }catch(e){} },function(){});
+    }catch(e){}
+  }
+  refPing("");
   function req(method,url,body,cb){
     var x=new XMLHttpRequest();
     x.open(method,url,true);
@@ -25953,6 +25971,7 @@ load().catch(function(){});
        admin by itself (owner, 14 Oct 2026: a separate device's Family & friends
        account had the Admin tab). */
     root.swAdminLive=!!(me&&me.role==="admin");
+    if(me&&me.email) refPing(me.email);
     if(root.swRoleChanged) try{ root.swRoleChanged(); }catch(e){}
     if(root.swNoticeSync) try{ root.swNoticeSync(); }catch(e){}
     if(root.swLadderSync) try{ root.swLadderSync(); }catch(e){}
