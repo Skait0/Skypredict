@@ -45,7 +45,9 @@
         (canBuy(o.role)?"<button class='swa-mi swa-mplus' type='button' role='menuitem' data-go='plus'>"+I.bolt+(o.role==="plus"?"Add days":"Get Wizard Pass")+"<span class='swa-r'>"+(o.role==="plus"?"Wizard Pass":"Codes every day")+"</span></button>":"")+
         "<button class='swa-mi' type='button' role='menuitem' data-go='profile'>"+I.user+"Profile</button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='daily'>"+I.clock+"My daily slip<span class='swa-r'>10:30</span></button>"+
-        "<button class='swa-mi' type='button' role='menuitem' data-go='tg'>"+I.send+"Telegram bot</button>"+
+        /* Connect sits on the row itself (owner, 19 Oct 2026: "the connect button in front of
+           telegram bot"): one tap opens the bot, through the [data-tglink] handler below. */
+        "<a class='swa-mi' role='menuitem' href='#' data-tglink>"+I.send+"Telegram bot<span class='swa-r swa-tgpill'>Connect</span></a>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='slips'>"+I.slips+"My slips<span class='swa-r swa-n'>"+(o.slips||0)+"</span></button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='msgs'>"+I.chat+"Messages"+(o.unread?"<span class='swa-r swa-unr'>"+(o.unread>9?"9+":o.unread)+"</span>":"")+"</button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='settings'>"+I.gear+"Settings</button>"+
@@ -580,7 +582,7 @@
     ".swa-list{border-top:1px solid var(--line);padding:6px}"+
     ".swa-mi{width:100%;display:flex;align-items:center;gap:11px;padding:10px 9px;border:0;background:none;border-radius:8px;color:var(--text);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;text-align:left}"+
     ".swa-unr{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red);color:#fff;font-size:10.5px;font-weight:800;line-height:18px;text-align:center;box-sizing:border-box}"+
-    ".swa-mi svg{width:18px;height:18px;color:var(--soft);flex:none}.swa-r{margin-left:auto;color:var(--faint)}.swa-out{color:var(--soft)}"+
+    ".swa-mi svg{width:18px;height:18px;color:var(--soft);flex:none}.swa-r{margin-left:auto;color:var(--faint)}.swa-out{color:var(--soft)}a.swa-mi{text-decoration:none;box-sizing:border-box}.swa-tgpill{border:1px solid var(--line);background:var(--card-2);color:var(--text);padding:3px 10px;border-radius:6px;font-size:11.5px;font-weight:800}"+
     ".swa-mi:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"+
     ".swa-tab.swa-new::after{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-left:6px;vertical-align:middle}"+
     ".swa-view{position:fixed;inset:0;z-index:9982;background:var(--bg);color:var(--text);overflow-y:auto;padding:16px 16px 40px;transform:translateX(100%);visibility:hidden;transition:transform .28s cubic-bezier(.23,1,.32,1),visibility 0s .28s}"+
@@ -729,9 +731,11 @@
   d.addEventListener("click",function(e){ var b=e.target.closest&&e.target.closest("[data-tglink]"); if(!b||!root.swAcct) return;
     if(b.getAttribute("href")&&Date.now()-(+b.getAttribute("data-at")||0)<10*60e3) return;
     e.preventDefault(); if(b.getAttribute("aria-busy")) return;
-    b.setAttribute("aria-busy","true"); var was=b.textContent; b.textContent="Opening…";
-    root.swAcct.req("GET","/api/account/tglink",null,function(code,j){ b.removeAttribute("aria-busy"); b.textContent=was;
-      if(code===200&&j&&j.url) root.location.href=j.url; else b.textContent="Try again"; }); });
+    /* The menu row carries an icon and a pill: only the pill's words change. */
+    var lb=b.querySelector(".swa-tgpill")||b;
+    b.setAttribute("aria-busy","true"); var was=lb.textContent; lb.textContent="Opening…";
+    root.swAcct.req("GET","/api/account/tglink",null,function(code,j){ b.removeAttribute("aria-busy"); lb.textContent=was;
+      if(code===200&&j&&j.url) root.location.href=j.url; else lb.textContent="Try again"; }); });
   function acct(){ return root.swAcct||{st:{email:""}}; }
   /* Admin only once the server has said so in this page view (index.html saveRole, swAdminLive). */
   function role(){ var r=lsGet("sw.role")||"free"; return r==="admin"&&root.swAdminLive!==true?"free":r; }
