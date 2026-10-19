@@ -97,3 +97,11 @@ test("the builders let GG+ through their own confidence floors, or the chip buil
   /* Both places in the Slider: the first pick, and the alternatives the style spreads across. */
   assert.strictEqual((grab("buildPicks").match(/if\(v<\(c==="GG2_Y"\?GG2_P:p\.minConf\)\) return;/g) || []).length, 2);
 });
+
+test("the Slider stops a slip of long legs at the dial's own payout, so the style can tell GG+ slips apart", () => {
+  /* 19 Oct 2026, owner: "the slip style doesnt work for ggplus option ... in the slider". Measured on
+     the live board: GG+ at risk 90 went 40/37/35 legs to 21/19/18; every other market set unchanged. */
+  const bp = grab("buildPicks");
+  assert.match(bp, /var dialTop=\(bankersOn\(\)\|\|neutral\)\?0:Math\.pow\(2\.2,p\.maxGames\);/);
+  assert.match(bp, /!\(dialTop>1 && picked\.length>=2 && tot>=dialTop\)/);
+});

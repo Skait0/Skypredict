@@ -15507,7 +15507,16 @@ function buildPicks(neutral){
     return c;
   }
   var tot=1;
-  while(target>1 ? (picked.length<loopCap && !(picked.length>=2 && tot>=target)) : picked.length<cap){
+  /* A PAYOUT CEILING THAT FOLLOWS THE DIAL (19 Oct 2026, owner: "the slip style doesnt work for
+     ggplus option ... in the slider", "it works well with the wizard"). The dial sets a game count
+     made for short legs; GG+ legs are x4-6, so a GG+ slip ran to 35-39 legs whatever the style.
+     The ceiling is the dial's own game count at x2.2 a leg: normal slips average x1.2-2.0 a
+     leg (x2.0 at the far right, Fewer games) and never reach it; a slip of long legs stops
+     there, so More games takes more, cheaper GG+ legs and Fewer games fewer, dearer ones - the
+     Wizard's behaviour - in about half the legs it ran to before. */
+  var dialTop=(bankersOn()||neutral)?0:Math.pow(2.2,p.maxGames);
+  while((target>1 ? (picked.length<loopCap && !(picked.length>=2 && tot>=target)) : picked.length<cap) &&
+        !(dialTop>1 && picked.length>=2 && tot>=dialTop)){
     var bi=-1,bs=Infinity;
     for(var i=0;i<cand.length;i++){ if(usedIx[i]) continue;
       var s=i+LEAGUE_PEN*(lc[countryOf(cand[i].f.league)]||0);
