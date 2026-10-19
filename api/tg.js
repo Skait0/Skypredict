@@ -54,6 +54,15 @@ async function readCode(book, code) {
   } catch (e) { return null; } finally { clearTimeout(t); }
 }
 
+/* THE MENU IS THE HELP (owner, 19 Oct 2026: "make the bot very easy to use"): /start shows the
+   buttons under the chat box (lib/ask.js menuKeyboard), and typing stays optional. */
+const HELLO_MENU =
+  "🧙 <b>Welcome to the Wizard</b>\n\nTap a button below:\n" +
+  "🎯 <b>Build a slip</b> - pick your odds, get a code\n" +
+  "🔍 <b>Check a code</b> - send any code, see the weak games\n" +
+  "📅 <b>Ladder</b> - today's x5 to x1000 codes\n" +
+  "🏦 <b>Change bookie</b> - " + BOOKS.list("or") + "\n\n" +
+  "Or just send a code, or type a number like <b>50</b> for a x50 slip.\n<i>18+</i>";
 const HELLO =
   "🔮 <b>The Wizard's Eye</b> 🧙\n<i>Drop any code. The Wizard's Eye sees it all.</i>\n\n" +
   "Send me any booking code - " + BOOKS.list("or") + " - and you get:\n" +
@@ -79,12 +88,27 @@ const plusLine = () => "Wizard Pass on <a href=\"" + SITE + "\">soccerwizard.liv
 const subjectOf = (uid) => "tg-" + crypto.createHash("sha256")
   .update((process.env.SW_QUOTA_PEPPER || "") + ":" + uid).digest("hex").slice(0, 24);
 
-/* One button per other book, and Follow my slip, under every doctor reply. */
-function convertButtons(from, code) {
-  const row = ORDER.filter((b) => b !== from).map((b) => ({
-    text: "🔁 " + D.BOOK_NAMES[b], callback_data: ["cv", b, from, code].join("|") }));
-  return { inline_keyboard: [row, [{ text: "🔔 Follow my slip", callback_data: ["fw", from, code].join("|") }]] };
+
+/* EVERY CODE ENDS WITH WHAT YOU CAN DO WITH IT (owner, 19 Oct 2026): the site's converter
+   tools as buttons. Trim, Split and Convert open their choices in place of these buttons. */
+function toolButtons(book, code) {
+  const k = (t, d) => ({ text: t, callback_data: d + "|" + book + "|" + code });
+  return { inline_keyboard: [[k("🛡 Edit for me", "ed"), k("✂️ Trim", "tr"), k("➗ Split", "sp")],
+    [k("🔁 Convert", "cx"), { text: "🔔 Follow", callback_data: ["fw", book, code].join("|") }]] };
 }
+function choiceButtons(kind, book, code) {
+  const back = [{ text: "◀ Back", callback_data: ["bk0", book, code].join("|") }];
+  const xs = (list) => list.map((x) => ({ text: "x" + x, callback_data: ["tq", book, code, x].join("|") }));
+  if (kind === "tr") return { inline_keyboard: [xs([5, 10, 20, 50]), xs([100, 500, 1000]), back] };
+  if (kind === "sp") return { inline_keyboard: [[2, 3, 4].map((n) => ({ text: n + " tickets", callback_data: ["sq", book, code, n].join("|") })), back] };
+  if (kind === "cx") {
+    const others = ORDER.filter((b) => b !== book).map((b) => ({ text: D.BOOK_NAMES[b], callback_data: ["cv", b, book, code].join("|") }));
+    return { inline_keyboard: [others.slice(0, 3), others.slice(3), back] };
+  }
+  return toolButtons(book, code);
+}
+const bookButtons = (data) => ({ inline_keyboard: [ORDER.slice(0, 3), ORDER.slice(3)].map((row) =>
+  row.map((b) => ({ text: D.BOOK_NAMES[b], callback_data: data(b) }))) });
 
 /* FOLLOW MY SLIP (lib/follow.js, api/tgfollow.js). Up to FOLLOW_CAP open at
    once per person, so the ten-minute job stays small; a slip settles within a
@@ -250,11 +274,21 @@ async function onAsk(msg, ask, book, code, legs) {
     const out = [head, "<code>" + r.code + "</code> · " + r.booked.length + " game" + (r.booked.length === 1 ? "" : "s") +
       (odds ? " · <b>" + odds + "</b>" : "")].concat(lines || []);
     if ((r.stuck || []).length) out.push("⚠️ " + B + " refused " + legNames(r.stuck.map((s) => s.leg), 3));
-    await say(out.join("\n"), convertButtons(book, r.code));
+    await say(out.join("\n"), toolButtons(book, r.code));
     return true;
   };
   const tail = (k) => leftLine(q, k) + "\n<i>18+</i>";
 
+  if (ask.kind === "saferDo") {
+    const plan = await saferPlan(book, legs);
+    if (!plan.length) { await say("Nothing to change any more - the prices may have moved. Your code stays as it is."); return; }
+    tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
+    const swap = new Map(plan.map((x) => [x.leg, x.to]));
+    const r = await CONVERT.bookPicks(book, legs.map((l) => ({ leg: l, eventId: l.eventId, code: swap.get(l) || l.prediction })));
+    await done(r, "🛡 <b>Made safer</b> - " + plan.length + " game" + (plan.length === 1 ? "" : "s") +
+      " moved to an easier bet, the rest as they were 🔥", ["", tail(1)], null);
+    return;
+  }
   if (ask.kind === "trim" || ask.kind === "keep") {
     const plan = ask.kind === "trim" ? ASK.planTrim(legs, fx, ask.odds) : ASK.planKeep(legs, fx, ask.games);
     if (ask.kind === "trim" && plan.short) {
@@ -354,7 +388,137 @@ async function onToday(msg, ask) {
   lines.push("", (l != null && q.plan !== "admin" ? "⚡ " + l + (q.plan === "trial" ? " trial code" : " code") + (l === 1 ? "" : "s") +
     (q.plan === "trial" ? " left. " : " left today. ") : "") +
     "Every graded code on <a href=\"" + SITE + "/booking-codes\">soccerwizard.live</a>", "<i>Estimates, not certainties. 18+</i>");
-  await say(lines.join("\n"), convertButtons(book, r.code));
+  await say(lines.join("\n"), toolButtons(book, r.code));
+}
+
+/* EDIT FOR ME: which legs move, on the reader's bookie's own prices (lib/ask.js planSafer). */
+async function saferPlan(book, legs) {
+  let body = null;
+  try { body = await (await fetch(SITE + CONVERT.FEED[book], { signal: AbortSignal.timeout(8000) })).json(); } catch (e) { body = null; }
+  const evs = CONVERT.events(book, body);
+  const priceOf = (l, c) => { const e = CONVERT.pair(evs, l); return e && +e.odds[c] > 1.01 ? +e.odds[c] : null; };
+  return ASK.planSafer(legs, await fixtures(), priceOf);
+}
+async function onSaferAsk(chat, replyTo, book, code, legs) {
+  const say = (text, markup) => tg("sendMessage", { chat_id: chat, text, parse_mode: "HTML",
+    disable_web_page_preview: true, reply_to_message_id: replyTo, reply_markup: markup });
+  tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
+  const plan = await saferPlan(book, legs);
+  if (!plan.length) {
+    await say("🛡 Nothing to change: every game we rate is already " + pc(ASK.TIGHT) + "+, or " + D.BOOK_NAMES[book] +
+      " sells nothing safer on it.\n\nTrim it to your odds instead?", choiceButtons("tr", book, code));
+    return;
+  }
+  const lines = ["🛡 <b>Edit for me</b> - " + plan.length + " of " + legs.length + " games to an easier bet on the same game:", ""];
+  for (const x of plan.slice(0, 8)) {
+    lines.push(esc((x.leg.home || "?") + " v " + (x.leg.away || "?")) + "\n   " + esc(D.label(x.leg)) + " " + pc(x.pOld) +
+      " → <b>" + esc(D.label(Object.assign({}, x.leg, { prediction: x.to }))) + " " + pc(x.pNew) + "</b>");
+  }
+  if (plan.length > 8) lines.push("+" + (plan.length - 8) + " more");
+  lines.push("", "Safer bets pay less. Nothing is booked until you tap <b>Do it</b>.", "<i>18+</i>");
+  await say(lines.join("\n"), { inline_keyboard: [[{ text: "✅ Do it", callback_data: ["eq", book, code].join("|") },
+    { text: "Keep as is", callback_data: ["bk0", book, code].join("|") }]] });
+}
+
+/* BUILD A SLIP (owner, 19 Oct 2026): a payout -> a slip from today's board on the reader's
+   bookie, picked by the daily ladder's own rule (lib/bigodds.js pick) and its leg budgets.
+   "Another one" leaves out the games of the slips before it. */
+async function onBuild(chat, replyTo, fromId, book, target, nth) {
+  const say = (text, markup) => tg("sendMessage", { chat_id: chat, text, parse_mode: "HTML",
+    disable_web_page_preview: true, reply_to_message_id: replyTo, reply_markup: markup });
+  const q = await quota(fromId, 1);
+  if (!q.ok) { await say("🔥 " + spent(q) + (q.plan === "trial" ? "\n\n" + plusLine() : "")); return; }
+  tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
+  const BIG = require("../lib/bigodds.js");
+  const pay = await (await fetch(SITE + "/predictions.json")).json().catch(() => ({}));
+  let feed = [];
+  try { feed = await BIG.feedNow(); } catch (e) { feed = []; }
+  const now = Date.now(), o = { target, maxLegs: ASK.legBudget(target), floor: target * 0.8 };
+  const skip = new Set();
+  let picked = null;
+  for (let i = 0; i <= (nth || 0); i++) {
+    picked = BIG.pick(pay || {}, now, feed, Object.assign({ skip }, o));
+    if (!picked) break;
+    if (i < (nth || 0)) picked.legs.forEach((l) => skip.add(l.home + "|" + l.away));
+  }
+  if (!picked) {
+    await say("😤 Not enough games left today to build a strong x" + target + (nth ? " that's different from the last one" : "") +
+      ". Try a smaller number, or the builder on <a href=\"" + SITE + "\">soccerwizard.live</a> 🧙");
+    return;
+  }
+  const r = await CONVERT.convert(picked.legs, book, now);
+  if (!r.code) { await say("😤 " + D.BOOK_NAMES[book] + " wouldn't take it" + (r.error ? " - " + esc(r.error) : "") + ". Try another bookie."); return; }
+  await SB.recordBooking(q.subject, q.day, "tgbot").catch(() => {});
+  const lines = ["🎯 <b>Your x" + target + " on " + D.BOOK_NAMES[book] + "</b> 🔥",
+    "<code>" + r.code + "</code> · " + r.booked.length + " games" + (r.odds ? " · <b>" + xOdds(r.odds) + "</b>" : ""), ""];
+  for (const x of r.booked.slice(0, 8)) lines.push(esc(D.label(x.leg)) + (x.leg.p ? " · <b>" + pc(x.leg.p) + "</b>" : ""));
+  if (r.booked.length > 8) lines.push("+" + (r.booked.length - 8) + " more");
+  if ((r.stuck || []).length) lines.push("⚠️ " + D.BOOK_NAMES[book] + " refused " + legNames(r.stuck.map((x) => x.leg), 3));
+  lines.push("", leftLine(q, 1), "<i>Estimates, not certainties. 18+</i>");
+  const tools = toolButtons(book, r.code);
+  tools.inline_keyboard.unshift([{ text: "🔁 Another x" + target, callback_data: ["bd", book, target, (nth || 0) + 1].join("|") }]);
+  await say(lines.join("\n"), tools);
+}
+async function onBuildMenu(chat, replyTo, book) {
+  const xs = (list) => list.map((x) => ({ text: "x" + x, callback_data: ["bd", book, x, 0].join("|") }));
+  await tg("sendMessage", { chat_id: chat, reply_to_message_id: replyTo, parse_mode: "HTML",
+    text: "🎯 <b>How much do you want to win?</b> On " + D.BOOK_NAMES[book] + ".\nTap one, or type any number like <b>30</b>.",
+    reply_markup: { inline_keyboard: [xs([5, 10, 20, 50]), xs([100, 500, 1000])] } });
+}
+/* TODAY'S LADDER: the 10:30 codes (lib/ladder.js). x5 for everyone, every rung on Wizard Pass. */
+async function onLadder(chat, replyTo, fromId, book) {
+  const say = (text) => tg("sendMessage", { chat_id: chat, text, parse_mode: "HTML", disable_web_page_preview: true, reply_to_message_id: replyTo });
+  const L = require("../lib/ladder.js"), SOC = require("../lib/social.js");
+  const got = await SB.getLadder(SOC.dayOf(Date.now())).catch(() => ({ ok: false }));
+  const rows = got && got.ok ? got.rows : [];
+  if (!rows.length) { await say("📅 Today's ladder lands at <b>10:30</b>. Check back then 🧙"); return; }
+  const b = await budgetOf(fromId), pass = ["plus", "ff", "admin"].includes(b.plan);
+  const lines = ["📅 <b>Today's ladder on " + D.BOOK_NAMES[book] + "</b>", ""];
+  for (const r of rows) {
+    const c = r.codes && r.codes[book];
+    const head = "<b>x" + r.rung + "</b> · " + (r.legs || []).length + " games · " + xOdds(+r.odds || 0);
+    if (!c) lines.push(head + " · not on " + D.BOOK_NAMES[book] + " today");
+    else if (pass || r.rung === L.OPEN_RUNG) lines.push(head + " · <code>" + c.code + "</code>");
+    else lines.push(head + " · 🔒 Wizard Pass");
+  }
+  if (!pass) lines.push("", "Every rung comes with Wizard Pass. " + plusLine());
+  lines.push("<i>18+</i>");
+  await say(lines.join("\n"));
+}
+/* Every button's tap, by its first word. Choices open in place; actions read the code fresh. */
+async function onButton(cq) {
+  const chat = cq.message && cq.message.chat;
+  if (!chat || chat.type !== "private") return;
+  const p = String(cq.data || "").split("|"), tag = p[0];
+  const edit = (markup) => tg("editMessageReplyMarkup", { chat_id: chat.id, message_id: cq.message.message_id, reply_markup: markup });
+  const msgLike = { chat, message_id: cq.message.message_id, from: cq.from };
+  if (tag === "fw") return onFollow(cq);
+  if (tag === "cv") return onConvert(cq);
+  if (tag === "bk") {
+    if (!ORDER.includes(p[1])) return;
+    await tg("sendMessage", { chat_id: chat.id, parse_mode: "HTML", text: "🏦 Done. Your bookie is now <b>" + D.BOOK_NAMES[p[1]] + "</b>.",
+      reply_markup: ASK.menuKeyboard(p[1]) });
+    return;
+  }
+  if (tag === "bd") {
+    const x = +p[2];
+    if (!ORDER.includes(p[1]) || !(x >= 2 && x <= ASK.MAX_BUILD)) return;
+    return onBuild(chat.id, cq.message.message_id, cq.from && cq.from.id, p[1], x, Math.min(5, +p[3] || 0));
+  }
+  const book = p[1], code = p[2];
+  if (!ORDER.includes(book) || !/^[A-Z0-9]{4,16}$/.test(code || "")) return;
+  if (tag === "bk0") return edit(toolButtons(book, code));
+  if (tag === "tr" || tag === "sp" || tag === "cx") return edit(choiceButtons(tag, book, code));
+  const legs = await readCode(book, code);
+  if (!legs) {
+    await tg("sendMessage", { chat_id: chat.id, reply_to_message_id: cq.message.message_id,
+      text: "That code can't be read any more - it may have expired or its games started." });
+    return;
+  }
+  if (tag === "ed") return onSaferAsk(chat.id, cq.message.message_id, book, code, legs);
+  if (tag === "eq") return onAsk(msgLike, { kind: "saferDo" }, book, code, legs);
+  if (tag === "tq" && +p[3] > 1) return onAsk(msgLike, { kind: "trim", odds: +p[3] }, book, code, legs);
+  if (tag === "sq" && +p[3] >= 2) return onAsk(msgLike, { kind: "split", n: Math.min(4, +p[3]) }, book, code, legs);
 }
 
 const esc = (s) => String(s).replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
@@ -370,7 +534,7 @@ module.exports = async function handler(req, res) {
   if (cq) {
     /* Stop the button's spinner first; the work can take a few seconds. */
     await tg("answerCallbackQuery", { callback_query_id: cq.id, text: "On it 🧙" }).catch(() => {});
-    try { await (String(cq.data || "").startsWith("fw|") ? onFollow(cq) : onConvert(cq)); } catch (e) { /* the reader can tap again */ }
+    try { await onButton(cq); } catch (e) { /* the reader can tap again */ }
     return res.status(200).json({ ok: true });
   }
   const msg = req.body && req.body.message;
@@ -421,7 +585,23 @@ module.exports = async function handler(req, res) {
     /* t.me/<bot>?start=book_CODE arrives as "/start book_CODE" - the site's
        code dialog opens the bot on the code the reader just got. */
     const deep = /^\/start\s+(sporty|bet9ja|betking|betpawa|onexbet|betway)_([A-Za-z0-9]{4,16})\s*$/i.exec(msg.text);
-    if (!deep && /^\/(start|help)\b/i.test(msg.text)) { await say(HELLO); return res.status(200).json({ ok: true }); }
+    if (!deep && /^\/(start|menu)\b/i.test(msg.text)) {
+      await tg("sendMessage", { chat_id: chat, text: HELLO_MENU, parse_mode: "HTML", disable_web_page_preview: true,
+        reply_markup: ASK.menuKeyboard("sporty") });
+      return res.status(200).json({ ok: true });
+    }
+    if (!deep && /^\/help\b/i.test(msg.text)) { await say(HELLO); return res.status(200).json({ ok: true }); }
+    const menu = deep ? null : ASK.parseMenu(msg.text);
+    if (menu) {
+      if (menu.kind === "menuBuild") await onBuildMenu(chat, msg.message_id, menu.book);
+      else if (menu.kind === "ladder") await onLadder(chat, msg.message_id, msg.from && msg.from.id, menu.book);
+      else if (menu.kind === "bookie") await tg("sendMessage", { chat_id: chat, text: "🏦 Which bookie do you use?",
+        reply_to_message_id: msg.message_id, reply_markup: bookButtons((b) => "bk|" + b) });
+      else await tg("sendMessage", { chat_id: chat, parse_mode: "HTML", reply_to_message_id: msg.message_id,
+        text: "🔍 Send me the code - from any bookie. I'll show you the strong games and the weak ones.",
+        reply_markup: { force_reply: true, input_field_placeholder: "Paste the code here" } });
+      return res.status(200).json({ ok: true });
+    }
     let { code, book } = deep ? { code: deep[2].toUpperCase(), book: deep[1].toLowerCase() } : D.parse(msg.text);
     /* "trim to 150" sent as a reply to the bot's read of a code acts on that
        code - the reply carries it, so nothing has to be remembered. */
@@ -429,9 +609,16 @@ module.exports = async function handler(req, res) {
     if (!code && !deep && rt) { const r = D.parse(rt); code = r.code; book = book || r.book; }
     const ask = deep ? null : ASK.parseAsk(msg.text, code);
     if (!code && ask && ask.kind === "today") { await onToday(msg, ask); return res.status(200).json({ ok: true }); }
+    if (!code && ask && ask.kind === "build") {
+      if (ask.book) await onBuild(chat, msg.message_id, msg.from && msg.from.id, ask.book, ask.odds, 0);
+      else await tg("sendMessage", { chat_id: chat, reply_to_message_id: msg.message_id, parse_mode: "HTML",
+        text: "🎯 A x" + ask.odds + " slip - on which bookie?", reply_markup: bookButtons((b) => ["bd", b, ask.odds, 0].join("|")) });
+      return res.status(200).json({ ok: true });
+    }
     if (!code) {
-      await say("Send me a booking code, like <code>HUW6YC</code> - add what to do with it if you like " +
-        "(<i>trim to 150 odds</i>, <i>split into 2</i>). Or ask for <i>today's 5 safest</i> 🧙");
+      await tg("sendMessage", { chat_id: chat, parse_mode: "HTML", reply_to_message_id: msg.message_id,
+        text: "Send me a booking code, like <code>HUW6YC</code>, or type a number like <b>50</b> for a x50 slip. " +
+          "The buttons below do the rest 🧙", reply_markup: ASK.menuKeyboard("sporty") });
       return res.status(200).json({ ok: true });
     }
     tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
@@ -449,14 +636,15 @@ module.exports = async function handler(req, res) {
     }
     /* An instruction goes straight to its answer; "safer" and a bare
        "convert" are what the read already offers, so they get the read. */
-    if (ask && ask.kind !== "safer" && !(ask.kind === "convert" && !ask.to)) {
+    if (ask && ask.kind === "safer") { await onSaferAsk(chat, msg.message_id, used, code, legs); return res.status(200).json({ ok: true }); }
+    if (ask && !(ask.kind === "convert" && !ask.to)) {
       await onAsk(msg, ask, used, code, legs);
       return res.status(200).json({ ok: true });
     }
     const pay = await (await fetch(SITE + "/predictions.json")).json().catch(() => ({}));
     await tg("sendMessage", { chat_id: chat, text: D.reply(used, code, legs, (pay && pay.fixtures) || [], SITE),
       parse_mode: "HTML", disable_web_page_preview: true, reply_to_message_id: msg.message_id,
-      reply_markup: convertButtons(used, code) });
+      reply_markup: toolButtons(used, code) });
   } catch (e) {
     await say("Something went wrong reading that code. Try again in a minute.").catch(() => {});
   }
