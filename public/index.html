@@ -9674,7 +9674,7 @@ function blendWeight(gap){
 }
 var BLEND_FIELDS=["home_p","draw_p","away_p","dc1x","dcx2","dc12","anybody","o05","o15","o25","o35","o45","btts",
   "h_o05","a_o05","h_o15","a_o15","fh_o05","home_btts","away_btts","draw_btts","home_o25","away_o25","draw_o25",
-  "fh_u25","ht_1x","sh_o05","sh_u25","tip","tip_p","score"];
+  "fh_u25","ht_1x","sh_o05","sh_u25","wtnh","wtna","tip","tip_p","score"];
 function blendFixture(f){
   var o=f.sportyOdds; if(!o) return; var B=0.30;
   /* BLEND FROM THE MODEL EVERY TIME, NOT FROM THE LAST BLEND. An open tab
@@ -15073,7 +15073,11 @@ function dogHcap(f,code){
 /* WIN TO NIL - NO (owner, 17 Oct 2026): only on a real price at the book being built for,
    never above x1.15 in any style (owner, 17 Oct: "lower the to nil to 1.15. nothing more"),
    from x1.02 in every style, like Bankers (owner, 17 Oct: "increase the floor to match the bankers odds"), and only where we rate it 80%+. Held out, the 60-70% band ran ten points hot. */
-var WTN_MIN=1.02, WTN_BANKERS_MIN=1.02, WTN_MAX=1.15, WTN_P=0.8;
+var WTN_MIN=1.02, WTN_BANKERS_MIN=1.02, WTN_MAX=1.15, WTN_P=0.8, HALF_MAX=1.20, HALF_SOFT=1.15, HALF_HIGH_BAR=0.03;
+/* HALF-TIME LEGS share this gate, with their own top (owner, 19 Oct 2026: "raise cap for that
+   option to 1.20 but pick the lower odd at first"): up to x1.20, and a leg priced over x1.15
+   ranks HALF_HIGH_BAR lower in judgedP, so the builders reach for it only once the cheaper
+   ones are used up. */
 /* THE PRICE IS THIS BOOK'S, OR SPORTYBET'S WHEN THIS BOOK'S FEED DOES NOT CARRY THE MARKET
    (17 Oct 2026: Bet9ja, BetKing and betPawa sell it but their sweeps do not fetch it, so a
    gate on their own quote built zero games for tomorrow). legOdd reads the same fallback. */
@@ -15081,7 +15085,7 @@ function wtnOk(f,code,p){
   var B=curBook();
   if(!bookQuotes(f,code,B)&&!bookQuotes(f,code,BOOKS.sporty)) return false;
   var o=legOdd(f,code,p,B);
-  if(o>WTN_MAX) return false;
+  if(o>(/^WTN_/.test(code)?WTN_MAX:HALF_MAX)) return false;
   if(o<(bankersOn()?WTN_BANKERS_MIN:WTN_MIN)) return false;
   return p>=WTN_P;
 }
@@ -15098,7 +15102,10 @@ function judgedP(f,code,p){
   if(/^WTN_[HA]_N$/.test(code)&&!wtnOk(f,code,p)) return -1;
   /* The half-time legs take Win to nil's gate (owner, 17 Oct 2026: "same window x1.02 to x1.15
      for all four", plus our 80%+). */
-  if(/^(FH_UNDER_2\.5|FH_DC_1X|SH_OVER_0\.5|SH_UNDER_2\.5)$/.test(code)&&!wtnOk(f,code,p)) return -1;
+  if(/^(FH_UNDER_2\.5|FH_DC_1X|SH_OVER_0\.5|SH_UNDER_2\.5)$/.test(code)){
+    if(!wtnOk(f,code,p)) return -1;
+    if(legOdd(f,code,p,curBook())>HALF_SOFT) return p-HALF_HIGH_BAR;
+  }
   if(hcapRout(f,code)) return -1;
   return dogHcap(f,code)?p-HCAP_DOG_BAR:p;
 }
@@ -23592,8 +23599,8 @@ function renderShared(){
        priced x1.02-1.15 and rated 80%+: see wtnOk. */
     {k:"wtn", label:"Win to nil: No", tier:0, sub:"x1.02-1.15", icon:'<circle cx="12" cy="12" r="10"/><path d="M9 9l6 6M15 9l-6 6"/>'},
     /* Half-time legs (owner, 17 Oct 2026: "add the top four"): 1st half under 2.5, half-time
-       home or draw, 2nd half over 0.5 and under 2.5, behind one chip. Same gate as Win to nil. */
-    {k:"half", label:"Half-time", tier:0, sub:"x1.02-1.15", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 2v20"/>'},
+       home or draw, 2nd half over 0.5 and under 2.5, behind one chip. Win to nil's gate, up to x1.20, cheaper legs first. */
+    {k:"half", label:"Half-time", tier:0, sub:"x1.02-1.20", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 2v20"/>'},
     {k:"u45", label:"Under 4.5", tier:0, sub:"Under 4.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M8 12h8"/>'},
     {k:"fh", label:"1st half goal", tier:2, sub:"FH over 0.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l3.5 2"/>'},
     /* One side's goals rather than the two added together. Both sides go in

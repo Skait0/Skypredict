@@ -58,9 +58,36 @@ test("graded on the server from the half-time score, never guessed without one",
   }
 });
 
+test("up to x1.20 (owner, 19 Oct 2026), Win to nil still stops at x1.15", () => {
+  const consts = /var WTN_MIN=[^\n]*/.exec(src)[0];
+  const BOOKS = { sporty: { odds: "sportyOdds" } };
+  const ok = new Function("bookQuotes", "legOdd", "curBook", "bankersOn", "BOOKS", consts + "\n" + grab("wtnOk") + "\nreturn wtnOk;")(
+    (f, c, B) => !!(f[B.odds] && f[B.odds][c] > 1.01), (f, c) => f.sportyOdds[c], () => BOOKS.sporty, () => false, BOOKS);
+  const f = (c, o) => ({ sportyOdds: { [c]: o } });
+  assert.strictEqual(ok(f("FH_DC_1X", 1.18), "FH_DC_1X", 0.85), true);
+  assert.strictEqual(ok(f("FH_DC_1X", 1.20), "FH_DC_1X", 0.85), true, "x1.20 is the top");
+  assert.strictEqual(ok(f("FH_DC_1X", 1.21), "FH_DC_1X", 0.9), false);
+  assert.strictEqual(ok(f("FH_DC_1X", 1.18), "FH_DC_1X", 0.79), false, "under 80% is refused");
+  assert.strictEqual(ok(f("WTN_H_N", 1.18), "WTN_H_N", 0.9), false, "Win to nil keeps x1.15");
+});
+
+test("the cheaper legs come first: over x1.15 ranks lower in judgedP", () => {
+  const consts = /var WTN_MIN=[^\n]*/.exec(src)[0];
+  const judged = new Function("wtnOk", "legOdd", "curBook", "dogHcap", "HCAP_DOG_BAR", consts + "\n" + grab("judgedP") + "\nreturn judgedP;")(
+    () => true, (f, c) => f.o, () => ({}), () => false, 0.02);
+  assert.strictEqual(judged({ o: 1.12 }, "FH_UNDER_2.5", 0.86), 0.86);
+  assert.ok(judged({ o: 1.18 }, "FH_UNDER_2.5", 0.86) < 0.86, "x1.18 is pushed behind");
+  assert.strictEqual(judged({ o: 1.18 }, "1X", 0.86), 0.86, "nothing else moves");
+});
+
+test("Win to nil is reset before each re-blend like every other blended field", () => {
+  const list = /var BLEND_FIELDS=\[([^\]]*)\]/.exec(src)[1];
+  for (const k of ["wtnh", "wtna", "fh_u25", "ht_1x", "sh_o05", "sh_u25"]) assert.ok(list.includes('"' + k + '"'), k);
+});
+
 test("every builder gates them through judgedP like Win to nil, and they are never a tip", () => {
-  assert.match(grab("judgedP"), /if\(\/\^\(FH_UNDER_2\\\.5\|FH_DC_1X\|SH_OVER_0\\\.5\|SH_UNDER_2\\\.5\)\$\/\.test\(code\)&&!wtnOk\(f,code,p\)\) return -1;/);
-  assert.match(src, /\{k:"half", label:"Half-time", tier:0, sub:"x1\.02-1\.15"/);
+  assert.match(grab("judgedP"), /if\(\/\^\(FH_UNDER_2\\\.5\|FH_DC_1X\|SH_OVER_0\\\.5\|SH_UNDER_2\\\.5\)\$\/\.test\(code\)\)\{\n    if\(!wtnOk\(f,code,p\)\) return -1;/);
+  assert.match(src, /\{k:"half", label:"Half-time", tier:0, sub:"x1\.02-1\.20"/);
   assert.match(src, /var BUILD=\{[^\n]*wtn:false,half:false,fh:false/, "the chip is off by default in the Slider");
   assert.match(src, /var WSP=\{[^\n]*wtn:false,half:false,o15:true/, "and in the Wizard");
   assert.doesNotMatch(grab("codeMarket"), /FH_UNDER_2\.5|FH_DC_1X|SH_OVER_0\.5|SH_UNDER_2\.5/, "not named before it has graded results");
