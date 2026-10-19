@@ -13984,8 +13984,11 @@ function allowedMarkets(t){
          /* One side finding the net at all - the likeliest thing on the card
             after a double chance. */
          "HOME_OVER_0.5","AWAY_OVER_0.5"];
-  if(t>=1) m=m.concat(["12","OVER_2.5"]);
-  if(t>=2) m=m.concat(["GG","GG2_Y","OVER_3.5","FH_OVER_0.5",
+  /* GG+ opens at Medium, not Bold (owner, 19 Oct 2026: "so there is no way to reduce the
+     number of legs safely?"). Tier 1 starts at 33, which riskWord calls Safe, so the build
+     also asks for risk 40+ (GG2_MIN_RISK in MKT_CFG, mirrored in buildPicks). */
+  if(t>=1) m=m.concat(["12","OVER_2.5","GG2_Y"]);
+  if(t>=2) m=m.concat(["GG","OVER_3.5","FH_OVER_0.5",
                        "HOME_OVER_1.5","AWAY_OVER_1.5"]);
   /* THE COMBINATIONS SIT WHERE THEIR RECORD PUTS THEM, not where they felt
      they belonged. Measured over 2,377 held-out matches: result or over 1.5
@@ -15222,7 +15225,7 @@ function buildPicks(neutral){
     if(bal>1) sty={per:1+(bal-1)*(sty.per<1.4?0.75:1.4),games:sty.games,pull:1};
   }
   var mkOn={"1X":BUILD.mk.wd,"X2":BUILD.mk.wd,"12":BUILD.mk.any,"1":BUILD.mk.out,"2":BUILD.mk.out,
-    "OVER_0.5":BUILD.mk.o05===true,"NR3_ANY":BUILD.mk.nr3===true,"NR3_H":BUILD.mk.nr3===true,"NR3_A":BUILD.mk.nr3===true,"WTN_H_N":BUILD.mk.wtn===true,"WTN_A_N":BUILD.mk.wtn===true,"GG2_Y":BUILD.mk.gg2===true,"FH_UNDER_2.5":BUILD.mk.fhu25===true,"FH_DC_1X":BUILD.mk.ht1x===true,"SH_OVER_0.5":BUILD.mk.sho05===true,"SH_UNDER_2.5":BUILD.mk.shu25===true,"OVER_1.5":BUILD.mk.o15,"OVER_2.5":BUILD.mk.o25,"OVER_3.5":BUILD.mk.o35,"UNDER_4.5":BUILD.mk.u45,
+    "OVER_0.5":BUILD.mk.o05===true,"NR3_ANY":BUILD.mk.nr3===true,"NR3_H":BUILD.mk.nr3===true,"NR3_A":BUILD.mk.nr3===true,"WTN_H_N":BUILD.mk.wtn===true,"WTN_A_N":BUILD.mk.wtn===true,"GG2_Y":BUILD.mk.gg2===true&&BUILD.risk>=40,"FH_UNDER_2.5":BUILD.mk.fhu25===true,"FH_DC_1X":BUILD.mk.ht1x===true,"SH_OVER_0.5":BUILD.mk.sho05===true,"SH_UNDER_2.5":BUILD.mk.shu25===true,"OVER_1.5":BUILD.mk.o15,"OVER_2.5":BUILD.mk.o25,"OVER_3.5":BUILD.mk.o35,"UNDER_4.5":BUILD.mk.u45,
     "FH_OVER_0.5":BUILD.mk.fh,
     "HOME_OVER_0.5":BUILD.mk.tts,"AWAY_OVER_0.5":BUILD.mk.tts,
     "HOME_OVER_1.5":BUILD.mk.tts2,"AWAY_OVER_1.5":BUILD.mk.tts2,"GG":BUILD.mk.both,
@@ -15513,8 +15516,14 @@ function buildPicks(neutral){
      The ceiling is the dial's own game count at x2.2 a leg: normal slips average x1.2-2.0 a
      leg (x2.0 at the far right, Fewer games) and never reach it; a slip of long legs stops
      there, so More games takes more, cheaper GG+ legs and Fewer games fewer, dearer ones - the
-     Wizard's behaviour - in about half the legs it ran to before. */
-  var dialTop=(bankersOn()||neutral)?0:Math.pow(2.2,p.maxGames);
+     Wizard's behaviour - in about half the legs it ran to before.
+     The step ramps from x1.35 a game at Medium (risk 40) to x2.2 at the right-hand end (owner,
+     19 Oct 2026: "so there is no way to reduce the number of legs safely?"). Measured on the live
+     board: GG+ alone 5 legs at 40, 6 at 55, 10 at 70, 15 at 85, 25 at 100; the default, goals,
+     corners/handicap/shots, win-to-nil/draw combos, half-time and all-but-GG+ sets unchanged in
+     every one of 15 risk/style cells each. */
+  var dialStep=1.35+0.85*Math.min(1,Math.max(0,(BUILD.risk-40)/60));
+  var dialTop=(bankersOn()||neutral)?0:Math.pow(dialStep,p.maxGames);
   while((target>1 ? (picked.length<loopCap && !(picked.length>=2 && tot>=target)) : picked.length<cap) &&
         !(dialTop>1 && picked.length>=2 && tot>=dialTop)){
     var bi=-1,bs=Infinity;
@@ -23607,12 +23616,12 @@ function emptyWhy(){
       on.push(m);
     });
     if(!on.length) return "Switch a market on to build anything.";
-    var locked=on.filter(function(m){ return p.tier<m.tier; });
+    var locked=on.filter(function(m){ return p.tier<m.tier||(m.minRisk&&BUILD.risk<m.minRisk); });
     if(locked.length===on.length){
       /* Name the level it opens at (owner, 19 Oct 2026: GG+ alone below Bold just said "No games"). */
-      var need=Math.max.apply(null,locked.map(function(m){return m.tier;}));
+      var need=Math.max.apply(null,locked.map(function(m){return m.minRisk||(m.tier>=2?66:33);}));
       return locked.map(function(m){return m.label;}).join(" and ")+
-        (locked.length===1?" opens":" open")+" at "+riskWord(need>=2?66:33)+". Slide right.";
+        (locked.length===1?" opens":" open")+" at "+riskWord(need)+". Slide right.";
     }
     /* Unlocked, so ask what they actually reach on today's card. */
     var fx=scopeFixtures()||[], best=0, bestName="";
@@ -23732,7 +23741,7 @@ function renderShared(){
     {k:"both", label:"Both score", tier:2, sub:"GG", icon:'<path d="M17 21V5A2 2 0 0015 3H9A2 2 0 007 5V21"/><path d="M7 7H17"/><path d="M9 11H15"/><path d="M9 15H15"/><path d="M9 19H15"/>'},
     /* Both teams score 2+ (owner, 19 Oct 2026: "its a crazy bet"). The Yes only, about x4-5,
        on a real price and where we rate it 18%+ (see judgedP). */
-    {k:"gg2", label:"GG+", tier:2, sub:"Both score 2+", icon:'<path d="M17 21V5A2 2 0 0015 3H9A2 2 0 007 5V21"/><path d="M9 9H15"/><path d="M9 15H15"/>'},
+    {k:"gg2", label:"GG+", tier:1, minRisk:40, sub:"Both score 2+", icon:'<path d="M17 21V5A2 2 0 0015 3H9A2 2 0 007 5V21"/><path d="M9 9H15"/><path d="M9 15H15"/>'},
     /* A RESULT OR GOALS, ONE MARKET. Both bookmakers sell these as a single
        selection, so a leg books like any other; the model prices them off the
        same scoreline matrix as everything above. All four start off - see
@@ -23791,7 +23800,7 @@ function renderShared(){
       // Tier locks are a slider concept (unlock riskier markets as you slide up).
       // The wizard has its own market model, so nothing is tier-locked there -
       // otherwise "Both score" (tier 2) shows greyed out and can't be enabled.
-      var locked=(BUILD.mode!=="wizard") && (p.tier < m.tier);
+      var locked=(BUILD.mode!=="wizard") && (p.tier < m.tier || (m.minRisk && BUILD.risk < m.minRisk));
       /* A market the CURRENT bookmaker does not sell is locked for the same
          reason a tier lock is: it cannot produce a leg, so a chip that lights
          up is a control that does nothing. It unlocks by switching book, and

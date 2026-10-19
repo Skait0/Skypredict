@@ -98,10 +98,23 @@ test("the builders let GG+ through their own confidence floors, or the chip buil
   assert.strictEqual((grab("buildPicks").match(/if\(v<\(c==="GG2_Y"\?GG2_P:p\.minConf\)\) return;/g) || []).length, 2);
 });
 
+test("GG+ opens at Medium (risk 40), the same number in the build, the chip and the message", () => {
+  /* Owner, 19 Oct 2026: "so there is no way to reduce the number of legs safely?" - GG+ moved
+     from Bold to Medium, so sliding left keeps cutting legs; never at Safe or Safest. */
+  assert.match(grab("allowedMarkets"), /if\(t>=1\) m=m\.concat\(\["12","OVER_2\.5","GG2_Y"\]\)/);
+  assert.match(grab("buildPicks"), /"GG2_Y":BUILD\.mk\.gg2===true&&BUILD\.risk>=40,/);
+  assert.match(src, /\{k:"gg2", label:"GG\+", tier:1, minRisk:40,/);
+  const riskWord = new Function(grab("riskWord") + "\nreturn riskWord;")();
+  assert.strictEqual(riskWord(40), "Medium");
+  assert.strictEqual(riskWord(39), "Safe");
+});
+
 test("the Slider stops a slip of long legs at the dial's own payout, so the style can tell GG+ slips apart", () => {
   /* 19 Oct 2026, owner: "the slip style doesnt work for ggplus option ... in the slider". Measured on
      the live board: GG+ at risk 90 went 40/37/35 legs to 21/19/18; every other market set unchanged. */
   const bp = grab("buildPicks");
-  assert.match(bp, /var dialTop=\(bankersOn\(\)\|\|neutral\)\?0:Math\.pow\(2\.2,p\.maxGames\);/);
+  /* The step ramps x1.35 a game at Medium to x2.2 at the right-hand end (fewer GG+ legs to the left). */
+  assert.match(bp, /var dialStep=1\.35\+0\.85\*Math\.min\(1,Math\.max\(0,\(BUILD\.risk-40\)\/60\)\);/);
+  assert.match(bp, /var dialTop=\(bankersOn\(\)\|\|neutral\)\?0:Math\.pow\(dialStep,p\.maxGames\);/);
   assert.match(bp, /!\(dialTop>1 && picked\.length>=2 && tot>=dialTop\)/);
 });
