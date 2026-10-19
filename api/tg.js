@@ -57,12 +57,16 @@ async function readCode(book, code) {
 /* THE MENU IS THE HELP (owner, 19 Oct 2026: "make the bot very easy to use"): /start shows the
    buttons under the chat box (lib/ask.js menuKeyboard), and typing stays optional. */
 const HELLO_MENU =
-  "🧙 <b>Welcome to the Wizard</b>\n\nTap a button below:\n" +
-  "🎯 <b>Build a slip</b> - pick your odds, get a code\n" +
-  "🔍 <b>Check a code</b> - send any code, see the weak games\n" +
-  "📅 <b>Daily odds</b> - today's x5 to x1000 codes\n" +
-  "🏦 <b>Change bookie</b> - " + BOOKS.list("or") + "\n\n" +
-  "Or just send a code, or type a number like <b>50</b> for a x50 slip.\n<i>18+</i>";
+  "🧙 <b>Welcome to Soccerwizard</b>\n" +
+  "<i>Our model picks the games. You pick the odds.</i>\n\n" +
+  "<b>Try it now - just type a number:</b>\n" +
+  "<code>50</code>  →  a x50 slip, booked, code in seconds\n\n" +
+  "<b>Or send any booking code:</b>\n" +
+  "<code>HUW6YC</code>  →  strong games, weak games, what it pays\n" +
+  "then one tap to 🛡 make it safer, ✂️ trim, ➗ split or 🔁 convert\n\n" +
+  "📅 <b>Daily odds</b>: x5 to x1000 codes every morning at 10:30\n" +
+  "🏦 Works on " + BOOKS.list("and") + "\n\n" +
+  "<b>First, which bookie do you use?</b> 👇\n<i>18+ · Play responsibly</i>";
 const HELLO =
   "🔮 <b>The Wizard's Eye</b> 🧙\n<i>Drop any code. The Wizard's Eye sees it all.</i>\n\n" +
   "Send me any booking code - " + BOOKS.list("or") + " - and you get:\n" +
@@ -496,8 +500,12 @@ async function onButton(cq) {
   if (tag === "cv") return onConvert(cq);
   if (tag === "bk") {
     if (!ORDER.includes(p[1])) return;
-    await tg("sendMessage", { chat_id: chat.id, parse_mode: "HTML", text: "🏦 Done. Your bookie is now <b>" + D.BOOK_NAMES[p[1]] + "</b>.",
+    await tg("sendMessage", { chat_id: chat.id, parse_mode: "HTML",
+      text: "✅ <b>" + D.BOOK_NAMES[p[1]] + "</b> it is. Your menu is under the chat box 👇\n\n" +
+        "Type a number like <b>50</b> for a x50 slip, or send any booking code.",
       reply_markup: ASK.menuKeyboard(p[1]) });
+    await tg("sendMessage", { chat_id: chat.id, parse_mode: "HTML", text: "🎯 Or start with one of these:",
+      reply_markup: { inline_keyboard: [[10, 50, 100].map((x) => ({ text: "🎯 x" + x + " slip", callback_data: ["bd", p[1], x, 0].join("|") }))] } });
     return;
   }
   if (tag === "bd") {
@@ -586,8 +594,28 @@ module.exports = async function handler(req, res) {
        code dialog opens the bot on the code the reader just got. */
     const deep = /^\/start\s+(sporty|bet9ja|betking|betpawa|onexbet|betway)_([A-Za-z0-9]{4,16})\s*$/i.exec(msg.text);
     if (!deep && /^\/(start|menu)\b/i.test(msg.text)) {
-      await tg("sendMessage", { chat_id: chat, text: HELLO_MENU, parse_mode: "HTML", disable_web_page_preview: true,
-        reply_markup: ASK.menuKeyboard("sporty") });
+      /* Two messages: the welcome with buttons to try straight away (an inline keyboard), then
+         the menu under the chat box (a reply keyboard) - Telegram allows one kind per message. */
+      /* BOOKIE FIRST (owner, 19 Oct 2026: the example bot "asks for the preferred bookie of a user
+         after the start button"): the welcome ends on that question; the answer sets the menu. */
+      const pick = bookButtons((b) => "bk|" + b);
+      pick.inline_keyboard.push([{ text: "📖 How it works", web_app: { url: SITE + "/bot" } }]);
+      await tg("sendMessage", { chat_id: chat, text: HELLO_MENU, parse_mode: "HTML", disable_web_page_preview: true, reply_markup: pick });
+      return res.status(200).json({ ok: true });
+    }
+    /* The Menu button's commands (scripts/tgwebhook.js), routed like the menu's own buttons. */
+    const cmd = /^\/(build|check|dailyodds|bookie|guide)\b/i.exec(msg.text);
+    if (!deep && cmd) {
+      const c = cmd[1].toLowerCase();
+      if (c === "build") await onBuildMenu(chat, msg.message_id, "sporty");
+      else if (c === "dailyodds") await onLadder(chat, msg.message_id, msg.from && msg.from.id, "sporty");
+      else if (c === "bookie") await tg("sendMessage", { chat_id: chat, text: "🏦 Which bookie do you use?",
+        reply_to_message_id: msg.message_id, reply_markup: bookButtons((b) => "bk|" + b) });
+      else if (c === "guide") await tg("sendMessage", { chat_id: chat, text: "📖 The whole bot in one page, with examples you can tap:",
+        reply_markup: { inline_keyboard: [[{ text: "📖 Open the guide", web_app: { url: SITE + "/bot" } }]] } });
+      else await tg("sendMessage", { chat_id: chat, parse_mode: "HTML", reply_to_message_id: msg.message_id,
+        text: "🔍 Send me the code - from any bookie. I'll show you the strong games and the weak ones.",
+        reply_markup: { force_reply: true, input_field_placeholder: "Paste the code here" } });
       return res.status(200).json({ ok: true });
     }
     if (!deep && /^\/help\b/i.test(msg.text)) { await say(HELLO); return res.status(200).json({ ok: true }); }

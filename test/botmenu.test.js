@@ -69,12 +69,19 @@ function bot() {
   return { send, tap, sent, done };
 }
 
-test("/start shows the menu; a tap on Build a slip offers the payouts on that bookie", async () => {
+test("/start asks for the bookie first; the answer sets the menu; Build a slip offers payouts there", async () => {
   const b = bot();
   try {
     await b.send("/start");
     const m = b.sent.find((s) => s.method === "sendMessage");
-    assert.ok(m.body.reply_markup.keyboard, "the menu under the chat box");
+    assert.match(m.body.text, /which bookie do you use/i);
+    const picks = m.body.reply_markup.inline_keyboard.flat();
+    assert.ok(picks.some((k) => k.callback_data === "bk|betking"), "a button per bookie");
+    assert.ok(picks.some((k) => k.web_app && /\/bot$/.test(k.web_app.url)), "and the guide");
+    await b.tap("bk|betking");
+    const set = b.sent.filter((s) => s.method === "sendMessage");
+    assert.ok(set.some((s) => s.body.reply_markup && s.body.reply_markup.keyboard &&
+      s.body.reply_markup.keyboard[0][0].text === "🎯 Build a slip · BetKing"), "the menu, on that bookie");
     await b.send("🎯 Build a slip · BetKing");
     const last = b.sent[b.sent.length - 1].body;
     const data = last.reply_markup.inline_keyboard.flat().map((k) => k.callback_data);

@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>How the bot works | Soccerwizard</title>
+<meta name="description" content="Type your odds and get a booking code. Check, fix, trim, split or convert any code. SportyBet, Bet9ja, BetKing, betPawa, 1xBet and Betway. 18+">
+<link rel="canonical" href="https://www.soccerwizard.live/bot">
+<link rel="icon" href="/icon-192.png">
+<!-- THE BOT'S GUIDE (owner, 19 Oct 2026: "an interactive, simple cool instruction page that is easy
+     to understand" - "outdo this", beside SportyClaw's wall of /start text). One thing per tab;
+     each plays a short chat so the reader sees exactly what to send and what comes back.
+     Opened from the bot's "How it works" button (a Telegram web app) and at /bot. No outside
+     scripts or fonts. Plain English, one idea per line, 18+. -->
+<style>
+:root{--bg:#0D0D0F;--card:#161619;--card2:#1E1E22;--line:#2A2A30;--text:#F2F1F0;--soft:#B9B6B0;--faint:#85827C;
+  --accent:#F2B84B;--on-accent:#14120E;--red:#DB3643;--me:#2B5278;--me-ink:#fff;--bot:#1E1E22;--good:#4CC38A}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#E9E4DA;--card:#F4F1EA;--card2:#EFEBE2;--line:#D6D0C4;
+  --text:#1B1A18;--soft:#4C4943;--faint:#6E6A63;--accent:#9A6B12;--on-accent:#fff;--me:#DCEFD4;--me-ink:#1B1A18;--bot:#fff;--good:#1E7F52}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:560px;margin:0 auto;padding:18px 16px 40px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.top img{width:36px;height:36px;border-radius:8px}
+.top b{font-size:15px;letter-spacing:.02em}
+h1{font-family:"Saira Condensed","Roboto Condensed","Arial Narrow",sans-serif;font-size:34px;line-height:1.02;
+  margin:14px 0 6px;text-transform:uppercase;letter-spacing:.01em}
+h1 em{color:var(--accent);font-style:normal}
+.lead{color:var(--soft);margin:0 0 18px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:8px;
+  padding:9px 12px;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.what{margin:6px 0 12px;font-weight:700}
+.what small{display:block;font-weight:400;color:var(--soft);margin-top:2px}
+.phone{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.bar{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--card2)}
+.bar i{width:30px;height:30px;border-radius:50%;background:var(--accent);display:grid;place-items:center;font-style:normal}
+.bar span b{display:block;font-size:14px}.bar span small{color:var(--good);font-size:12px}
+.chat{min-height:330px;padding:14px 12px;display:flex;flex-direction:column;gap:9px}
+.msg{max-width:86%;padding:8px 11px;border-radius:12px;font-size:14px;opacity:0;transform:translateY(6px);
+  transition:opacity .25s ease,transform .25s ease;white-space:pre-line}
+.msg.in{opacity:1;transform:none}
+.me{align-self:flex-end;background:var(--me);color:var(--me-ink);border-bottom-right-radius:4px}
+.bot{align-self:flex-start;background:var(--bot);border:1px solid var(--line);border-bottom-left-radius:4px}
+.bot b{color:var(--accent)}
+code{font-family:ui-monospace,Consolas,monospace;background:rgba(127,127,127,.18);padding:1px 5px;border-radius:4px}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px}
+.keys span{border:1px solid var(--line);border-radius:7px;padding:6px 4px;text-align:center;font-size:12.5px;font-weight:700;background:var(--card2)}
+.keys span.hot{border-color:var(--accent);color:var(--accent)}
+.dots{align-self:flex-start;display:flex;gap:4px;padding:10px 12px;border-radius:12px;background:var(--bot);border:1px solid var(--line)}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--faint);animation:b 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,60%,100%{opacity:.3}30%{opacity:1}}
+.again{display:block;margin:10px auto 0;background:none;border:0;color:var(--soft);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer}
+.go{display:block;text-align:center;margin:22px 0 8px;background:var(--red);color:#fff;text-decoration:none;font-weight:800;
+  padding:14px;border-radius:10px;font-size:16px}
+.facts{margin:20px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.facts li{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px}
+.facts li b{display:block}
+.foot{color:var(--faint);font-size:12px;text-align:center;margin-top:18px}
+@media (prefers-reduced-motion:reduce){.msg{transition:none}.dots i{animation:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top"><img src="/icon-192.png" alt="" width="36" height="36"><b>Soccerwizard bot</b></div>
+  <h1>Type your odds.<br><em>Get a code.</em></h1>
+  <p class="lead">Our model picks the games. You pick the odds. Tap a tab to see how.</p>
+
+  <div class="tabs" role="tablist" aria-label="What the bot does">
+    <button class="tab" role="tab" aria-selected="true" data-d="build">🎯 Build a slip</button>
+    <button class="tab" role="tab" aria-selected="false" data-d="check">🔍 Check a code</button>
+    <button class="tab" role="tab" aria-selected="false" data-d="safer">🛡 Make it safer</button>
+    <button class="tab" role="tab" aria-selected="false" data-d="convert">🔁 Other bookie</button>
+    <button class="tab" role="tab" aria-selected="false" data-d="daily">📅 Daily odds</button>
+  </div>
+  <p class="what" id="what" aria-live="polite"></p>
+
+  <div class="phone" role="img" aria-label="An example chat with the bot">
+    <div class="bar"><i>🧙</i><span><b>Soccerwizard</b><small>online</small></span></div>
+    <div class="chat" id="chat"></div>
+  </div>
+  <button class="again" id="again" type="button">Play it again</button>
+
+  <a class="go" href="https://t.me/Soccerwizardhqbot?start=guide">Open the bot in Telegram</a>
+
+  <ul class="facts">
+    <li><b>Works on six bookies</b>SportyBet, Bet9ja, BetKing, betPawa, 1xBet and Betway.</li>
+    <li><b>Same codes as the site</b>Every code the bot books counts toward your codes for the day. Wizard Pass gives 20 a day.</li>
+    <li><b>Never swaps your bet without asking</b>Make it safer shows every change first. Nothing is booked until you tap Do it.</li>
+    <li><b>Stuck?</b>Tap the Menu button by the chat box, or send /start.</li>
+  </ul>
+  <p class="foot">Estimates, not certainties. 18+ · Play responsibly · <a href="/" style="color:inherit">soccerwizard.live</a></p>
+</main>
+<script>
+(function(){
+  /* Each demo: what it is, then the chat - "me" and "bot" lines, with optional buttons. */
+  var D={
+    build:{what:["Type a number.","The bot builds a slip that pays about that, and books it on your bookie."],chat:[
+      {me:"50"},
+      {bot:"🎯 <b>Your x50 on SportyBet</b> 🔥\n<code>ZQ8KQ4</code> · 9 games · <b>×52.40</b>\n\nBarcelona to score · 86%\nArsenal or draw · 84%\nOver 1.5 goals · 81%\n+6 more",
+       keys:["🔁 Another x50","🛡 Edit for me","✂️ Trim"],hot:0}]},
+    check:{what:["Send any booking code.","You see which games are strong, which are weak, and what it pays."],chat:[
+      {me:"HUW6YC"},
+      {bot:"🔮 <b>Wizard's Eye · SportyBet HUW6YC</b>\n8 games · <b>6 strong</b>, 2 to tighten\n\n🔥 Inter to win · 81%\n🔥 Over 1.5 (Ajax v PSV) · 80%\n👀 Roma to win · 48%\n👀 Both teams score · 51%",
+       keys:["🛡 Edit for me","✂️ Trim","➗ Split"],hot:0}]},
+    safer:{what:["Tap Edit for me under any code.","Weak games move to a safer bet on the same game. You see it all before anything is booked."],chat:[
+      {me:"🛡 Edit for me"},
+      {bot:"🛡 <b>Edit for me</b> - 2 of 8 games to an easier bet:\n\nRoma to win 48% → <b>Roma or draw 73%</b>\nBoth teams score 51% → <b>Over 1.5 goals 78%</b>\n\nSafer bets pay less.",
+       keys:["✅ Do it","Keep as is"],hot:0},
+      {me:"✅ Do it"},
+      {bot:"🛡 <b>Made safer</b> 🔥\n<code>NQYTMC</code> · 8 games · <b>×14.20</b>"}]},
+    convert:{what:["Tap Convert, then pick a bookie.","Same games, new code. Any game they don't sell is named, never swapped."],chat:[
+      {me:"🔁 Convert"},
+      {bot:"Which bookie?",keys:["Bet9ja","BetKing","betPawa","1xBet","Betway"],hot:0},
+      {me:"Bet9ja"},
+      {bot:"🔁 <b>Bet9ja: <code>5WH6GZN</code></b> 🔥\n29 of 29 games converted."}]},
+    daily:{what:["Tap Daily odds.","Five ready-made slips every morning at 10:30, from x5 to x1000."],chat:[
+      {me:"📅 Daily odds · SportyBet"},
+      {bot:"📅 <b>Daily odds on SportyBet</b>\n\n<b>x5</b> · 8 games · ×5.3 · <code>NQYTMC</code>\n<b>x10</b> · 12 games · ×10.4 · 🔒 Wizard Pass\n<b>x20</b> · 16 games · ×21.0 · 🔒 Wizard Pass\n<b>x100</b> · 30 games · ×98 · 🔒 Wizard Pass\n<b>x1000</b> · 40 games · ×1,040 · 🔒 Wizard Pass"}]}
+  };
+  var chat=document.getElementById("chat"), what=document.getElementById("what"), timers=[], cur="build";
+  var still=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function clear(){ timers.forEach(clearTimeout); timers=[]; chat.innerHTML=""; }
+  function later(fn,ms){ timers.push(setTimeout(fn,still?0:ms)); }
+  function bubble(line){
+    var m=document.createElement("div");
+    m.className="msg "+(line.me?"me":"bot");
+    if(line.me) m.textContent=line.me; else m.innerHTML=line.bot;
+    if(line.keys){ var k=document.createElement("div"); k.className="keys";
+      line.keys.forEach(function(t,i){ var s=document.createElement("span"); s.textContent=t; if(i===line.hot) s.className="hot"; k.appendChild(s); });
+      m.appendChild(k); }
+    chat.appendChild(m); requestAnimationFrame(function(){ m.classList.add("in"); });
+  }
+  function play(id){
+    clear(); cur=id; var d=D[id], t=300;
+    what.innerHTML="<span></span><small></small>"; what.firstChild.textContent=d.what[0]; what.lastChild.textContent=d.what[1];
+    d.chat.forEach(function(line){
+      if(line.bot&&!still){ var dots; later(function(){ dots=document.createElement("div"); dots.className="dots"; dots.innerHTML="<i></i><i></i><i></i>"; chat.appendChild(dots); },t); t+=900;
+        later(function(){ if(dots&&dots.parentNode) dots.parentNode.removeChild(dots); bubble(line); },t); }
+      else later(function(){ bubble(line); },t);
+      t+=line.me?700:1300;
+    });
+  }
+  document.querySelectorAll(".tab").forEach(function(b){
+    b.addEventListener("click",function(){
+      document.querySelectorAll(".tab").forEach(function(x){ x.setAttribute("aria-selected",x===b?"true":"false"); });
+      play(b.getAttribute("data-d"));
+    });
+  });
+  document.getElementById("again").addEventListener("click",function(){ play(cur); });
+  play("build");
+})();
+</script>
+</body>
+</html>

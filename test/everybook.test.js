@@ -180,7 +180,9 @@ test("the bot's words did not change when they moved onto the list", () => {
   const w = read("scripts/tgwebhook.js");
   const expr = /short_description:\s*([\s\S]*?) \}\);/.exec(w)[1];
   assert.strictEqual(new Function("require", "return " + expr)((p) => require(require("node:path").join(ROOT, "scripts", p))),
-    "🔮 The Wizard's Eye: drop any SportyBet, Bet9ja, BetKing, betPawa, 1xBet or Betway code. It sees it all.");
+    /* Rewritten by the owner's ask, 19 Oct 2026 ("our telegram bot should have a start button"):
+       the line a reader sees above START now says what the bot does, in the same few words. */
+    "🧙 Type your odds, get a code. Check, fix and convert any code on six bookies. 18+");
   const miss = /" on any of the " \+ BOOKS\.COUNT_WORD \+ " bookies"/;
   assert.match(read("api/tg.js"), miss);
   assert.strictEqual(B.COUNT_WORD, "six");
