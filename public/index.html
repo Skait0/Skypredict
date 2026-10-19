@@ -8791,7 +8791,7 @@ function refreshSlipUI(){
    lib/statsfill.js beside the corners) when the score alone cannot decide it. */
 /* Half-time legs wait the same way for the half-time score (19 Oct 2026). Until then
    the page voided them at full time, so a lost first-half leg read as a refund. */
-function awaitsStats(code){ return /^(CORNERS|SHOTS|NR3)_/.test(code||"")||/^(FH_OVER_0.5|FH_UNDER_2.5|FH_DC_1X|SH_OVER_0.5|SH_UNDER_2.5|WINHALF_[HA]_[YN])$/.test(code||""); }
+function awaitsStats(code){ return /^(CORNERS|SHOTS|NR3)_/.test(code||"")||/^(FH_OVER_0\.5|FH_UNDER_2\.5|FH_DC_1X|SH_OVER_0\.5|SH_UNDER_2\.5|WINHALF_[HA]_[YN])$/.test(code||""); }
 function statsGivenUp(l){
   var t=Date.parse((l.date||"")+"T00:00:00Z");
   return !isFinite(t) || Date.now()-t > 3*864e5;
@@ -11224,7 +11224,7 @@ addEventListener("keydown",function(e){
    last market switched on before it had one took over the wizard's picks for a
    week. They begin earning a record the moment the next card is graded; until
    then they are there for anyone who goes looking. */
-var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o05:false,o15:true,o25:false,o35:false,u45:false,nr3:false,wtn:false,half:false,gg2:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,corn:false,tcorn:false,shots:false,tshots:false,hcap:false},touched:false,mode:"slider"};
+var BUILD={risk:null,removed:{},picks:[],booking:false,seed:Math.floor(Math.random()*1e6),shuffles:0,mk:{wd:true,any:false,out:true,o05:false,o15:true,o25:false,o35:false,u45:false,nr3:false,wtn:false,fhu25:false,ht1x:false,sho05:false,shu25:false,gg2:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,corn:false,tcorn:false,shots:false,tshots:false,hcap:false},touched:false,mode:"slider"};
 /* NO `draw` KEY HERE, deliberately. The draw is a Wizard market and lives in
    WSP.mk alone. It was briefly mirrored into BUILD.mk like every other toggle,
    which was inert - "X" is in neither allowedMarkets nor mkOn, so no risk
@@ -15101,11 +15101,16 @@ function dogHcap(f,code){
 /* WIN TO NIL - NO (owner, 17 Oct 2026): only on a real price at the book being built for,
    never above x1.15 in any style (owner, 17 Oct: "lower the to nil to 1.15. nothing more"),
    from x1.02 in every style, like Bankers (owner, 17 Oct: "increase the floor to match the bankers odds"), and only where we rate it 80%+. Held out, the 60-70% band ran ten points hot. */
-var WTN_MIN=1.02, WTN_BANKERS_MIN=1.02, WTN_MAX=1.15, WTN_P=0.8, HALF_MAX=1.20, HALF_SOFT=1.15, HALF_HIGH_BAR=0.03, GG2_P=0.18, GG2_SIDE=1.3, GG2_TOTAL=2.9, GG2_SCORED=4;
-/* HALF-TIME LEGS share this gate, with their own top (owner, 19 Oct 2026: "raise cap for that
-   option to 1.20 but pick the lower odd at first"): up to x1.20, and a leg priced over x1.15
-   ranks HALF_HIGH_BAR lower in judgedP, so the builders reach for it only once the cheaper
-   ones are used up. */
+var WTN_MIN=1.02, WTN_BANKERS_MIN=1.02, WTN_MAX=1.15, WTN_P=0.8, HALF_MIN=1.02, HALF_P=0.7, GG2_P=0.18, GG2_SIDE=1.2, GG2_TOTAL=2.9, GG2_SCORED=3;
+/* HALF-TIME LEGS (owner, 19 Oct 2026: "increase the odds to allow more markets and be filtered
+   by slipstyle"): no top price - the slip style picks the length, as for every other market
+   (Bankers keeps its own x1.25 cap) - but a real price of x1.02+ and our 70%+. Held out, these
+   markets were calibrated within about two points at every level. */
+function halfOk(f,code,p){
+  var B=curBook();
+  if(!bookQuotes(f,code,B)&&!bookQuotes(f,code,BOOKS.sporty)) return false;
+  return legOdd(f,code,p,B)>=HALF_MIN&&p>=HALF_P;
+}
 /* THE PRICE IS THIS BOOK'S, OR SPORTYBET'S WHEN THIS BOOK'S FEED DOES NOT CARRY THE MARKET
    (17 Oct 2026: Bet9ja, BetKing and betPawa sell it but their sweeps do not fetch it, so a
    gate on their own quote built zero games for tomorrow). legOdd reads the same fallback. */
@@ -15113,7 +15118,7 @@ function wtnOk(f,code,p){
   var B=curBook();
   if(!bookQuotes(f,code,B)&&!bookQuotes(f,code,BOOKS.sporty)) return false;
   var o=legOdd(f,code,p,B);
-  if(o>(/^WTN_/.test(code)?WTN_MAX:HALF_MAX)) return false;
+  if(o>WTN_MAX) return false;
   if(o<(bankersOn()?WTN_BANKERS_MIN:WTN_MIN)) return false;
   return p>=WTN_P;
 }
@@ -15128,12 +15133,7 @@ function judgedP(f,code,p){
   }
   if(code==="UNDER_4.5"&&u45Rout(f)) return -1;
   if(/^WTN_[HA]_N$/.test(code)&&!wtnOk(f,code,p)) return -1;
-  /* The half-time legs take Win to nil's gate (owner, 17 Oct 2026: "same window x1.02 to x1.15
-     for all four", plus our 80%+). */
-  if(/^(FH_UNDER_2\.5|FH_DC_1X|SH_OVER_0\.5|SH_UNDER_2\.5)$/.test(code)){
-    if(!wtnOk(f,code,p)) return -1;
-    if(legOdd(f,code,p,curBook())>HALF_SOFT) return p-HALF_HIGH_BAR;
-  }
+  if(/^(FH_UNDER_2\.5|FH_DC_1X|SH_OVER_0\.5|SH_UNDER_2\.5)$/.test(code)&&!halfOk(f,code,p)) return -1;
   /* Both teams score 2+, Yes (owner, 19 Oct 2026): only on a real price (SportyBet's standing
      in, as for Win to nil) and only where we rate it 18%+. Held out, 15-20% calls landed 17.6%. */
   if(code==="GG2_Y"&&(p<GG2_P||(!bookQuotes(f,code,curBook())&&!bookQuotes(f,code,BOOKS.sporty)))) return -1;
@@ -15170,7 +15170,7 @@ function buildPicks(neutral){
     if(bal>1) sty={per:1+(bal-1)*(sty.per<1.4?0.75:1.4),games:sty.games,pull:1};
   }
   var mkOn={"1X":BUILD.mk.wd,"X2":BUILD.mk.wd,"12":BUILD.mk.any,"1":BUILD.mk.out,"2":BUILD.mk.out,
-    "OVER_0.5":BUILD.mk.o05===true,"NR3_ANY":BUILD.mk.nr3===true,"NR3_H":BUILD.mk.nr3===true,"NR3_A":BUILD.mk.nr3===true,"WTN_H_N":BUILD.mk.wtn===true,"WTN_A_N":BUILD.mk.wtn===true,"GG2_Y":BUILD.mk.gg2===true,"FH_UNDER_2.5":BUILD.mk.half===true,"FH_DC_1X":BUILD.mk.half===true,"SH_OVER_0.5":BUILD.mk.half===true,"SH_UNDER_2.5":BUILD.mk.half===true,"OVER_1.5":BUILD.mk.o15,"OVER_2.5":BUILD.mk.o25,"OVER_3.5":BUILD.mk.o35,"UNDER_4.5":BUILD.mk.u45,
+    "OVER_0.5":BUILD.mk.o05===true,"NR3_ANY":BUILD.mk.nr3===true,"NR3_H":BUILD.mk.nr3===true,"NR3_A":BUILD.mk.nr3===true,"WTN_H_N":BUILD.mk.wtn===true,"WTN_A_N":BUILD.mk.wtn===true,"GG2_Y":BUILD.mk.gg2===true,"FH_UNDER_2.5":BUILD.mk.fhu25===true,"FH_DC_1X":BUILD.mk.ht1x===true,"SH_OVER_0.5":BUILD.mk.sho05===true,"SH_UNDER_2.5":BUILD.mk.shu25===true,"OVER_1.5":BUILD.mk.o15,"OVER_2.5":BUILD.mk.o25,"OVER_3.5":BUILD.mk.o35,"UNDER_4.5":BUILD.mk.u45,
     "FH_OVER_0.5":BUILD.mk.fh,
     "HOME_OVER_0.5":BUILD.mk.tts,"AWAY_OVER_0.5":BUILD.mk.tts,
     "HOME_OVER_1.5":BUILD.mk.tts2,"AWAY_OVER_1.5":BUILD.mk.tts2,"GG":BUILD.mk.both,
@@ -22183,7 +22183,7 @@ const JACKPOT_LEG_CAP=50;
    payout; the preview kept its own 40. Written twice (test harnesses lift wspBuild
    alone); test/ladder.test.js holds the two equal. */
 function isJackpotOdds(o){ return typeof o==="number" && o>=JACKPOT_ODDS; }
-var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o05:false,nr3:false,wtn:false,half:false,gg2:false,o15:true,o25:false,o35:false,u45:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,tcorn:false,shots:false,tshots:false,hcap:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
+var WSP={odds:null,legodd:1.4,everyGame:false,mk:{wd:true,any:false,out:true,o05:false,nr3:false,wtn:false,fhu25:false,ht1x:false,sho05:false,shu25:false,gg2:false,o15:true,o25:false,o35:false,u45:false,fh:false,tts:true,tts2:false,both:false,dro25:false,drgg:false,rsgg:false,rso25:false,dro15:false,rso15:false,weh:false,draw:false,corn:false,tcorn:false,shots:false,tshots:false,hcap:false},seed:Math.floor(Math.random()*1e6),shuffles:0,conjured:false,removed:{}};
 /* The slip style is remembered (and synced) since accounts, 29 Sep 2026. */
 try{var _lo=+localStorage.getItem("sw.legodd"); if(_lo>1&&_lo<10) WSP.legodd=_lo;}catch(e){}
 /* The short-slip header (see wspConjure), kept with the slip across reloads.
@@ -22273,7 +22273,10 @@ function wspMarkets(){var m=[];
   if(WSP.mk.nr3)m=m.concat(["NR3_ANY","NR3_H","NR3_A"]);
   if(WSP.mk.wtn)m=m.concat(["WTN_H_N","WTN_A_N"]);
   if(WSP.mk.gg2)m.push("GG2_Y");
-  if(WSP.mk.half)m=m.concat(["FH_UNDER_2.5","FH_DC_1X","SH_OVER_0.5","SH_UNDER_2.5"]);
+  if(WSP.mk.fhu25)m.push("FH_UNDER_2.5");
+  if(WSP.mk.ht1x)m.push("FH_DC_1X");
+  if(WSP.mk.sho05)m.push("SH_OVER_0.5");
+  if(WSP.mk.shu25)m.push("SH_UNDER_2.5");
   if(WSP.mk.fh)m.push("FH_OVER_0.5");
   /* Both sides go in the pool and the better one wins on its own merits.
      Unlike a match result, backing either team to score is a real bet
@@ -23137,7 +23140,7 @@ function wspMaxReach(at){
    because the mapping is the one thing that would silently rot: a market added
    to wspMarkets and not to this list simply stops being reported on. */
 var MKT_CODES={wd:["1X","X2"],any:["12"],out:["1","2"],o15:["OVER_1.5"],
-  o05:["OVER_0.5"],nr3:["NR3_ANY","NR3_H","NR3_A"],wtn:["WTN_H_N","WTN_A_N"],half:["FH_UNDER_2.5","FH_DC_1X","SH_OVER_0.5","SH_UNDER_2.5"],gg2:["GG2_Y"],o25:["OVER_2.5"],o35:["OVER_3.5"],u45:["UNDER_4.5"],fh:["FH_OVER_0.5"],
+  o05:["OVER_0.5"],nr3:["NR3_ANY","NR3_H","NR3_A"],wtn:["WTN_H_N","WTN_A_N"],fhu25:["FH_UNDER_2.5"],ht1x:["FH_DC_1X"],sho05:["SH_OVER_0.5"],shu25:["SH_UNDER_2.5"],gg2:["GG2_Y"],o25:["OVER_2.5"],o35:["OVER_3.5"],u45:["UNDER_4.5"],fh:["FH_OVER_0.5"],
   tts:["HOME_OVER_0.5","AWAY_OVER_0.5"],tts2:["HOME_OVER_1.5","AWAY_OVER_1.5"],
   both:["GG"],draw:["X"],corn:["CORNERS_OV_7.5","CORNERS_OV_8.5","CORNERS_OV_9.5","CORNERS_OV_10.5"],
   tcorn:["CORNERS_H_OV_3.5","CORNERS_H_OV_4.5","CORNERS_H_OV_5.5","CORNERS_A_OV_2.5","CORNERS_A_OV_3.5","CORNERS_A_OV_4.5"],
@@ -23405,7 +23408,7 @@ function renderBldDock(){
    way to name the chip that fell short. One table, read twice, beats two
    tables that can disagree. */
 var MKT_BY_CHIP={wd:["1X","X2"],any:["12"],out:["1","2"],
-  o05:["OVER_0.5"],nr3:["NR3_ANY","NR3_H","NR3_A"],wtn:["WTN_H_N","WTN_A_N"],half:["FH_UNDER_2.5","FH_DC_1X","SH_OVER_0.5","SH_UNDER_2.5"],gg2:["GG2_Y"],o15:["OVER_1.5"],o25:["OVER_2.5"],o35:["OVER_3.5"],u45:["UNDER_4.5"],fh:["FH_OVER_0.5"],
+  o05:["OVER_0.5"],nr3:["NR3_ANY","NR3_H","NR3_A"],wtn:["WTN_H_N","WTN_A_N"],fhu25:["FH_UNDER_2.5"],ht1x:["FH_DC_1X"],sho05:["SH_OVER_0.5"],shu25:["SH_UNDER_2.5"],gg2:["GG2_Y"],o15:["OVER_1.5"],o25:["OVER_2.5"],o35:["OVER_3.5"],u45:["UNDER_4.5"],fh:["FH_OVER_0.5"],
   tts:["HOME_OVER_0.5","AWAY_OVER_0.5"],tts2:["HOME_OVER_1.5","AWAY_OVER_1.5"],
   both:["GG"],
   dro25:["MIX_X_OV_2.5"],drgg:["MIXGG_X"],rsgg:["MIXGG_1","MIXGG_2"],
@@ -23639,9 +23642,12 @@ function renderShared(){
     /* Win to nil - No (owner, 17 Oct 2026). Both sides behind one chip, only
        priced x1.02-1.15 and rated 80%+: see wtnOk. */
     {k:"wtn", label:"Win to nil: No", tier:0, sub:"x1.02-1.15", icon:'<circle cx="12" cy="12" r="10"/><path d="M9 9l6 6M15 9l-6 6"/>'},
-    /* Half-time legs (owner, 17 Oct 2026: "add the top four"): 1st half under 2.5, half-time
-       home or draw, 2nd half over 0.5 and under 2.5, behind one chip. Win to nil's gate, up to x1.20, cheaper legs first. */
-    {k:"half", label:"Half-time", tier:0, sub:"x1.02-1.20", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 2v20"/>'},
+    /* Half-time legs (owner, 17 Oct 2026: "add the top four"; 19 Oct: "half time should be
+       seperated"): one chip each, rated 70%+ on a real price, length set by the slip style. */
+    {k:"fhu25", label:"1st half under 2.5", tier:0, sub:"Half-time goals", only:["sporty","bet9ja","betking","betpawa","onexbet"], icon:'<circle cx="12" cy="12" r="10"/><path d="M12 2v20"/><path d="M5 12h4"/>'},
+    {k:"ht1x", label:"Half-time 1X", tier:0, sub:"Home or draw at the break", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 2v20"/>'},
+    {k:"sho05", label:"2nd half over 0.5", tier:0, sub:"A goal after the break", only:["sporty","bet9ja","betking","betpawa","onexbet"], icon:'<circle cx="12" cy="12" r="10"/><path d="M12 2v20"/><path d="M15 9v6M12 12h6"/>'},
+    {k:"shu25", label:"2nd half under 2.5", tier:0, sub:"Second-half goals", only:["sporty","bet9ja","betking","betpawa","onexbet"], icon:'<circle cx="12" cy="12" r="10"/><path d="M12 2v20"/><path d="M15 12h4"/>'},
     {k:"u45", label:"Under 4.5", tier:0, sub:"Under 4.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M8 12h8"/>'},
     {k:"fh", label:"1st half goal", tier:2, sub:"FH over 0.5", icon:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l3.5 2"/>'},
     /* One side's goals rather than the two added together. Both sides go in
@@ -23765,7 +23771,7 @@ function renderShared(){
        button in one place like it used to be, small, well tightened. arrange them in
        order"). Every chip in one block, no headings, in reading order: result, goals,
        team goals, combos, then corners, shots and handicap. */
-    var ORDER=["wd","any","out","weh","draw","o05","o15","o25","o35","u45","nr3","wtn","half","fh","both","gg2",
+    var ORDER=["wd","any","out","weh","draw","o05","o15","o25","o35","u45","nr3","wtn","fhu25","ht1x","sho05","shu25","fh","both","gg2",
       "tts","tts2","drgg","rsgg","dro25","rso25","dro15","rso15","corn","tcorn","shots","tshots","hcap"];
     var cs=ORDER.map(function(k){ return shown.filter(function(m){ return m.k===k; })[0]; }).filter(Boolean);
     var html="<div class='mk-chips mk-one'>"+cs.map(chipOf).join("")+"</div>"+(BUILD.mode!=="wizard"&&shown.some(function(m){ return p.tier<m.tier; })

@@ -58,26 +58,19 @@ test("graded on the server from the half-time score, never guessed without one",
   }
 });
 
-test("up to x1.20 (owner, 19 Oct 2026), Win to nil still stops at x1.15", () => {
+test("no top price: the slip style picks the length; a real price x1.02+ and 70%+ (owner, 19 Oct 2026)", () => {
   const consts = /var WTN_MIN=[^\n]*/.exec(src)[0];
-  const BOOKS = { sporty: { odds: "sportyOdds" } };
-  const ok = new Function("bookQuotes", "legOdd", "curBook", "bankersOn", "BOOKS", consts + "\n" + grab("wtnOk") + "\nreturn wtnOk;")(
-    (f, c, B) => !!(f[B.odds] && f[B.odds][c] > 1.01), (f, c) => f.sportyOdds[c], () => BOOKS.sporty, () => false, BOOKS);
+  const BOOKS = { sporty: { odds: "sportyOdds" }, bet9ja: { odds: "bet9jaOdds" } };
+  const ok = new Function("bookQuotes", "legOdd", "curBook", "BOOKS", consts + "\n" + grab("halfOk") + "\nreturn halfOk;")(
+    (f, c, B) => !!(f[B.odds] && f[B.odds][c] > 1.01), (f, c) => f.sportyOdds[c], () => BOOKS.bet9ja, BOOKS);
   const f = (c, o) => ({ sportyOdds: { [c]: o } });
-  assert.strictEqual(ok(f("FH_DC_1X", 1.18), "FH_DC_1X", 0.85), true);
-  assert.strictEqual(ok(f("FH_DC_1X", 1.20), "FH_DC_1X", 0.85), true, "x1.20 is the top");
-  assert.strictEqual(ok(f("FH_DC_1X", 1.21), "FH_DC_1X", 0.9), false);
-  assert.strictEqual(ok(f("FH_DC_1X", 1.18), "FH_DC_1X", 0.79), false, "under 80% is refused");
-  assert.strictEqual(ok(f("WTN_H_N", 1.18), "WTN_H_N", 0.9), false, "Win to nil keeps x1.15");
-});
-
-test("the cheaper legs come first: over x1.15 ranks lower in judgedP", () => {
-  const consts = /var WTN_MIN=[^\n]*/.exec(src)[0];
-  const judged = new Function("wtnOk", "legOdd", "curBook", "dogHcap", "HCAP_DOG_BAR", consts + "\n" + grab("judgedP") + "\nreturn judgedP;")(
-    () => true, (f, c) => f.o, () => ({}), () => false, 0.02);
-  assert.strictEqual(judged({ o: 1.12 }, "FH_UNDER_2.5", 0.86), 0.86);
-  assert.ok(judged({ o: 1.18 }, "FH_UNDER_2.5", 0.86) < 0.86, "x1.18 is pushed behind");
-  assert.strictEqual(judged({ o: 1.18 }, "1X", 0.86), 0.86, "nothing else moves");
+  assert.strictEqual(ok(f("FH_DC_1X", 1.45), "FH_DC_1X", 0.72), true, "no top price any more");
+  assert.strictEqual(ok(f("FH_DC_1X", 1.45), "FH_DC_1X", 0.69), false, "under 70% is refused");
+  assert.strictEqual(ok({ sportyOdds: {} }, "FH_DC_1X", 0.9), false, "no price anywhere, no leg");
+  assert.strictEqual(ok(f("SH_OVER_0.5", 1.1), "SH_OVER_0.5", 0.8), true, "SportyBet's price stands in for a book whose feed lacks it");
+  const wtn = new Function("bookQuotes", "legOdd", "curBook", "bankersOn", "BOOKS", consts + "\n" + grab("wtnOk") + "\nreturn wtnOk;")(
+    (f, c, B) => !!(f[B.odds] && f[B.odds][c] > 1.01), (f, c) => f.sportyOdds[c], () => BOOKS.sporty, () => false, BOOKS);
+  assert.strictEqual(wtn(f("WTN_H_N", 1.18), "WTN_H_N", 0.9), false, "Win to nil keeps x1.15");
 });
 
 test("Win to nil is reset before each re-blend like every other blended field", () => {
@@ -86,14 +79,19 @@ test("Win to nil is reset before each re-blend like every other blended field", 
 });
 
 test("every builder gates them through judgedP like Win to nil, and they are never a tip", () => {
-  assert.match(grab("judgedP"), /if\(\/\^\(FH_UNDER_2\\\.5\|FH_DC_1X\|SH_OVER_0\\\.5\|SH_UNDER_2\\\.5\)\$\/\.test\(code\)\)\{\n    if\(!wtnOk\(f,code,p\)\) return -1;/);
-  assert.match(src, /\{k:"half", label:"Half-time", tier:0, sub:"x1\.02-1\.20"/);
-  assert.match(src, /var BUILD=\{[^\n]*wtn:false,half:false,gg2:false,fh:false/, "the chip is off by default in the Slider");
-  assert.match(src, /var WSP=\{[^\n]*wtn:false,half:false,gg2:false,o15:true/, "and in the Wizard");
+  assert.match(grab("judgedP"), /\.test\(code\)&&!halfOk\(f,code,p\)\) return -1;/);
+  /* One chip each (owner, 19 Oct 2026: "half time should be seperated"). */
+  for (const [k, label] of [["fhu25", "1st half under 2.5"], ["ht1x", "Half-time 1X"], ["sho05", "2nd half over 0.5"], ["shu25", "2nd half under 2.5"]])
+    assert.ok(src.includes('{k:"' + k + '", label:"' + label + '", tier:0'), k);
+  /* ...and each chip switches its own market in the Slider, not a neighbour's. */
+  for (const [code, k] of [["FH_UNDER_2.5", "fhu25"], ["FH_DC_1X", "ht1x"], ["SH_OVER_0.5", "sho05"], ["SH_UNDER_2.5", "shu25"]])
+    assert.ok(src.includes('"' + code + '":BUILD.mk.' + k + '===true'), code + " follows " + k);
+  assert.match(src, /var BUILD=\{[^\n]*wtn:false,fhu25:false,ht1x:false,sho05:false,shu25:false,gg2:false,fh:false/, "the chips are off by default in the Slider");
+  assert.match(src, /var WSP=\{[^\n]*wtn:false,fhu25:false,ht1x:false,sho05:false,shu25:false,gg2:false,o15:true/, "and in the Wizard");
   assert.doesNotMatch(grab("codeMarket"), /FH_UNDER_2\.5|FH_DC_1X|SH_OVER_0\.5|SH_UNDER_2\.5/, "not named before it has graded results");
   /* Betway sells no 2nd-half match total (API NOT_CARRIED), and answered "not priced" for the
      1st half under 2.5 on Tottenham v Coventry, 19 Oct 2026, while it booked half-time 1X. */
-  assert.match(src, /"FH_UNDER_2.5":["sporty","bet9ja","betking","betpawa","onexbet"]/);
+  assert.ok(src.includes('"FH_UNDER_2.5":["sporty","bet9ja","betking","betpawa","onexbet"]'));
   assert.match(src, /"SH_OVER_0\.5":\["sporty","bet9ja","betking","betpawa","onexbet"\]/);
 });
 

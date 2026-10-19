@@ -57,9 +57,12 @@ test("the builders take it only on a real price and at 18%+, never on betPawa or
   assert.strictEqual(judged(Object.assign({ sportyOdds: {} }, hot), "GG2_Y", 0.3), -1, "no price, no leg");
   /* Only high-scoring games (owner, 19 Oct 2026). */
   const w = (o) => judged(Object.assign({}, priced, o), "GG2_Y", 0.25);
-  assert.strictEqual(w({ la: 1.2 }), -1, "the weaker side must be expected to score 1.3+");
-  assert.strictEqual(w({ lh: 1.5, la: 1.3 }), -1, "2.9+ goals expected in all");
-  assert.strictEqual(w({ sc_a: 3 }), -1, "each side scored in 4 of its last 5");
+  /* Loosened 19 Oct 2026 (owner: "yes do all"): 1.2 for the weaker side, 3 of the last 5. */
+  assert.strictEqual(w({ la: 1.2 }), 0.25, "the weaker side expected to score 1.2 is enough");
+  assert.strictEqual(w({ lh: 1.8, la: 1.15 }), -1, "below 1.2 is not, even with goals enough in all");
+  assert.strictEqual(w({ lh: 1.6, la: 1.25 }), -1, "2.9+ goals expected in all");
+  assert.strictEqual(w({ sc_a: 3 }), 0.25, "scored in 3 of its last 5 is enough");
+  assert.strictEqual(w({ sc_a: 2 }), -1, "2 of 5 is not");
   assert.strictEqual(w({ sc_h: null }), -1, "no recent games, no leg");
   assert.strictEqual(w({}), 0.25);
   assert.match(src, /"GG2_Y":\["sporty","bet9ja","betking","onexbet"\]/);
