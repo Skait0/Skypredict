@@ -198,6 +198,17 @@ async function canary(key) {
     let r;
     try { r = await canary(k); }
     catch (e) { r = { book: k, ok: false, why: "threw: " + e.message }; }
+    /* ONE RETRY FOR A BLIP (owner, 19 Oct 2026: "mint code failed again. we need to stop that
+       error from happening"). The mint had booked on all six books minutes earlier; the canary's
+       own BetKing call answered 502 and turned the run red - the same 502 seen on other days,
+       gone a minute later. A 5xx or a throw is tried once more after a pause; a wrong code, a
+       wrong leg count or a wrong market still fails at once, because those are the wire. */
+    if (!r.ok && /^(booking 5\d\d|threw)/.test(r.why || "")) {
+      console.log("retry " + k.padEnd(9) + r.why);
+      await new Promise((res) => setTimeout(res, 20000));
+      try { r = await canary(k); }
+      catch (e) { r = { book: k, ok: false, why: "threw: " + e.message }; }
+    }
     results.push(r);
     console.log((r.ok ? "ok   " : "FAIL ") + k.padEnd(9) + r.why);
   }
