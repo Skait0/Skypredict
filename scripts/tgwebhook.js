@@ -25,6 +25,7 @@ async function tg(method, body) {
   const B = require("../lib/books.js");
   await tg("setMyCommands", { commands: [
     { command: "start", description: "Open the menu" },
+    { command: "convert", description: "Convert a code to your bookie" },
     { command: "build", description: "Build a slip: pick your odds" },
     { command: "check", description: "Check a booking code" },
     { command: "dailyodds", description: "Today's x5 to x1000 codes" },

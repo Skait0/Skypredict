@@ -66,7 +66,8 @@ function bot() {
   const tap = (data) => tg({ method: "POST", headers: hdr,
     body: { callback_query: { id: "q", data, from: { id: 42 }, message: { message_id: 9, chat: { id: 42, type: "private" } } } } }, res);
   const done = () => { global.fetch = realFetch; delete process.env.TELEGRAM_BOT_TOKEN; };
-  return { send, tap, sent, done };
+  const raw = (body) => tg({ method: "POST", headers: hdr, body }, res);
+  return { send, tap, sent, done, tg: raw };
 }
 
 test("/start asks for the bookie first; the answer sets the menu; Build a slip offers payouts there", async () => {
@@ -81,7 +82,7 @@ test("/start asks for the bookie first; the answer sets the menu; Build a slip o
     await b.tap("bk|betking");
     const set = b.sent.filter((s) => s.method === "sendMessage");
     assert.ok(set.some((s) => s.body.reply_markup && s.body.reply_markup.keyboard &&
-      s.body.reply_markup.keyboard[0][0].text === "🎯 Build a slip · BetKing"), "the menu, on that bookie");
+      s.body.reply_markup.keyboard.flat().some((k) => k.text === "🎯 Build a slip · BetKing")), "the menu, on that bookie");
     await b.send("🎯 Build a slip · BetKing");
     const last = b.sent[b.sent.length - 1].body;
     const data = last.reply_markup.inline_keyboard.flat().map((k) => k.callback_data);
@@ -109,5 +110,39 @@ test("a bare number asks which bookie before it books anything", async () => {
     const m = b.sent.filter((s) => s.method === "sendMessage").pop().body;
     assert.match(m.text, /x30/);
     assert.ok(m.reply_markup.inline_keyboard.flat().some((k) => k.callback_data === "bd|bet9ja|30|0"));
+  } finally { b.done(); }
+});
+
+test("Convert has its own button, command and link, and the answer goes to the bookie asked for", async () => {
+  /* Owner, 19 Oct 2026: "its the most used, it should have its own link". */
+  const kb = ASK.menuKeyboard("bet9ja");
+  assert.strictEqual(kb.keyboard[0][0].text, "🔁 Convert a code to Bet9ja", "first in the menu");
+  assert.deepStrictEqual(ASK.parseMenu("🔁 Convert a code to Bet9ja"), { kind: "menuConvert", book: "bet9ja" });
+  assert.strictEqual(ASK.convertTarget(ASK.CONVERT_ASK + "Bet9ja. Any bookie, any size."), "bet9ja");
+  const b = bot();
+  try {
+    await b.send("🔁 Convert a code to Bet9ja");
+    const ask = b.sent.filter((s) => s.method === "sendMessage").pop().body;
+    assert.ok(ask.reply_markup.force_reply, "asks for the code");
+    await b.send("/start convert");
+    const pick = b.sent.filter((s) => s.method === "sendMessage").pop().body;
+    assert.ok(pick.reply_markup.inline_keyboard.flat().some((k) => k.callback_data === "ct|betking"), "the link asks which bookie");
+  } finally { b.done(); }
+});
+
+test("every tool is one tap from the menu and goes straight to its job", async () => {
+  /* Owner, 19 Oct 2026: "all the tools should be easy to access ... less clicks and brainwork". */
+  const labels = ASK.menuKeyboard("sporty").keyboard.flat().map((k) => k.text);
+  for (const t of Object.values(ASK.TOOL)) assert.ok(labels.includes(t), t);
+  assert.strictEqual(ASK.toolAsked(ASK.TOOL_ASK.trim + " Any bookie."), "trim");
+  const b = bot();
+  try {
+    await b.send("✂️ Trim a code");
+    assert.ok(b.sent.filter((s) => s.method === "sendMessage").pop().body.reply_markup.force_reply);
+    await b.tg({ message: { message_id: 7, from: { id: 42 }, chat: { id: 42, type: "private" }, text: "HUW6YC",
+      reply_to_message: { text: ASK.TOOL_ASK.trim + " Any bookie." } } });
+    const last = b.sent.filter((s) => s.method === "sendMessage").pop().body;
+    assert.match(last.text, /To what odds/);
+    assert.ok(last.reply_markup.inline_keyboard.flat().some((k) => /^tq\|/.test(k.callback_data)), "the trim choices, at once");
   } finally { b.done(); }
 });

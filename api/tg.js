@@ -463,6 +463,13 @@ async function onBuild(chat, replyTo, fromId, book, target, nth) {
   tools.inline_keyboard.unshift([{ text: "🔁 Another x" + target, callback_data: ["bd", book, target, (nth || 0) + 1].join("|") }]);
   await say(lines.join("\n"), tools);
 }
+/* CONVERT A CODE (owner, 19 Oct 2026: "its the most used, it should have its own link"). Asked as
+   a reply prompt, so the answer carries the bookie and nothing is stored. */
+async function askConvert(chat, replyTo, book) {
+  await tg("sendMessage", { chat_id: chat, reply_to_message_id: replyTo, parse_mode: "HTML",
+    text: ASK.CONVERT_ASK + "<b>" + D.BOOK_NAMES[book] + "</b>. Any bookie, any size.",
+    reply_markup: { force_reply: true, input_field_placeholder: "Paste the code here" } });
+}
 async function onBuildMenu(chat, replyTo, book) {
   const xs = (list) => list.map((x) => ({ text: "x" + x, callback_data: ["bd", book, x, 0].join("|") }));
   await tg("sendMessage", { chat_id: chat, reply_to_message_id: replyTo, parse_mode: "HTML",
@@ -508,6 +515,7 @@ async function onButton(cq) {
       reply_markup: { inline_keyboard: [[10, 50, 100].map((x) => ({ text: "🎯 x" + x + " slip", callback_data: ["bd", p[1], x, 0].join("|") }))] } });
     return;
   }
+  if (tag === "ct") { if (ORDER.includes(p[1])) await askConvert(chat.id, cq.message.message_id, p[1]); return; }
   if (tag === "bd") {
     const x = +p[2];
     if (!ORDER.includes(p[1]) || !(x >= 2 && x <= ASK.MAX_BUILD)) return;
@@ -593,7 +601,7 @@ module.exports = async function handler(req, res) {
     /* t.me/<bot>?start=book_CODE arrives as "/start book_CODE" - the site's
        code dialog opens the bot on the code the reader just got. */
     const deep = /^\/start\s+(sporty|bet9ja|betking|betpawa|onexbet|betway)_([A-Za-z0-9]{4,16})\s*$/i.exec(msg.text);
-    if (!deep && /^\/(start|menu)\b/i.test(msg.text)) {
+    if (!deep && /^\/(start|menu)\b(?!\s+convert)/i.test(msg.text)) {
       /* Two messages: the welcome with buttons to try straight away (an inline keyboard), then
          the menu under the chat box (a reply keyboard) - Telegram allows one kind per message. */
       /* BOOKIE FIRST (owner, 19 Oct 2026: the example bot "asks for the preferred bookie of a user
@@ -604,10 +612,12 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
     /* The Menu button's commands (scripts/tgwebhook.js), routed like the menu's own buttons. */
-    const cmd = /^\/(build|check|dailyodds|bookie|guide)\b/i.exec(msg.text);
+    const cmd = /^\/(build|check|dailyodds|bookie|guide|convert)\b/i.exec(msg.text) || /^\/start\s+(convert)\s*$/i.exec(msg.text);
     if (!deep && cmd) {
       const c = cmd[1].toLowerCase();
-      if (c === "build") await onBuildMenu(chat, msg.message_id, "sporty");
+      if (c === "convert") await tg("sendMessage", { chat_id: chat, text: "🔁 Convert a code to which bookie?",
+        reply_to_message_id: msg.message_id, reply_markup: bookButtons((b) => "ct|" + b) });
+      else if (c === "build") await onBuildMenu(chat, msg.message_id, "sporty");
       else if (c === "dailyodds") await onLadder(chat, msg.message_id, msg.from && msg.from.id, "sporty");
       else if (c === "bookie") await tg("sendMessage", { chat_id: chat, text: "🏦 Which bookie do you use?",
         reply_to_message_id: msg.message_id, reply_markup: bookButtons((b) => "bk|" + b) });
@@ -621,7 +631,10 @@ module.exports = async function handler(req, res) {
     if (!deep && /^\/help\b/i.test(msg.text)) { await say(HELLO); return res.status(200).json({ ok: true }); }
     const menu = deep ? null : ASK.parseMenu(msg.text);
     if (menu) {
-      if (menu.kind === "menuBuild") await onBuildMenu(chat, msg.message_id, menu.book);
+      if (menu.kind === "menuConvert") await askConvert(chat, msg.message_id, menu.book);
+      else if (menu.kind === "tool") await tg("sendMessage", { chat_id: chat, reply_to_message_id: msg.message_id,
+        text: ASK.TOOL_ASK[menu.tool] + " Any bookie.", reply_markup: { force_reply: true, input_field_placeholder: "Paste the code here" } });
+      else if (menu.kind === "menuBuild") await onBuildMenu(chat, msg.message_id, menu.book);
       else if (menu.kind === "ladder") await onLadder(chat, msg.message_id, msg.from && msg.from.id, menu.book);
       else if (menu.kind === "bookie") await tg("sendMessage", { chat_id: chat, text: "🏦 Which bookie do you use?",
         reply_to_message_id: msg.message_id, reply_markup: bookButtons((b) => "bk|" + b) });
@@ -634,7 +647,10 @@ module.exports = async function handler(req, res) {
     /* "trim to 150" sent as a reply to the bot's read of a code acts on that
        code - the reply carries it, so nothing has to be remembered. */
     const rt = msg.reply_to_message && (msg.reply_to_message.text || msg.reply_to_message.caption);
-    if (!code && !deep && rt) { const r = D.parse(rt); code = r.code; book = book || r.book; }
+    /* A code sent in answer to "Send the code you want on Bet9ja." goes straight to Bet9ja. */
+    const convertTo = rt ? ASK.convertTarget(rt) : null;
+    const toolTo = rt ? ASK.toolAsked(rt) : null;
+    if (!code && !deep && rt && !convertTo && !toolTo) { const r = D.parse(rt); code = r.code; book = book || r.book; }
     const ask = deep ? null : ASK.parseAsk(msg.text, code);
     if (!code && ask && ask.kind === "today") { await onToday(msg, ask); return res.status(200).json({ ok: true }); }
     if (!code && ask && ask.kind === "build") {
@@ -664,7 +680,20 @@ module.exports = async function handler(req, res) {
     }
     /* An instruction goes straight to its answer; "safer" and a bare
        "convert" are what the read already offers, so they get the read. */
-    if (ask && ask.kind === "safer") { await onSaferAsk(chat, msg.message_id, used, code, legs); return res.status(200).json({ ok: true }); }
+    if (convertTo) {
+      if (convertTo === used) await say("That code is already on " + D.BOOK_NAMES[used] + " 🙂 Send a code from another bookie.");
+      else await onConvert({ message: { chat: msg.chat, message_id: msg.message_id }, from: msg.from, data: ["cv", convertTo, used, code].join("|") });
+      return res.status(200).json({ ok: true });
+    }
+    /* A code sent in answer to a tool's question goes straight to that tool. */
+    if (toolTo === "safer" || (ask && ask.kind === "safer")) { await onSaferAsk(chat, msg.message_id, used, code, legs); return res.status(200).json({ ok: true }); }
+    if (toolTo === "trim" || toolTo === "split") {
+      await tg("sendMessage", { chat_id: chat, reply_to_message_id: msg.message_id, parse_mode: "HTML",
+        text: (toolTo === "trim" ? "✂️ <b>Trim " + code + "</b> - " + legs.length + " games. To what odds?\nWe keep the games our model likes best."
+          : "➗ <b>Split " + code + "</b> - " + legs.length + " games. Into how many tickets?"),
+        reply_markup: choiceButtons(toolTo === "trim" ? "tr" : "sp", used, code) });
+      return res.status(200).json({ ok: true });
+    }
     if (ask && !(ask.kind === "convert" && !ask.to)) {
       await onAsk(msg, ask, used, code, legs);
       return res.status(200).json({ ok: true });
