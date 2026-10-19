@@ -2543,5 +2543,76 @@
       "onexbet": 4
     },
     "odds": 1.44
+  },
+  "2026-10-19": {
+    "date": "2026-10-19",
+    "generated": "2026-10-19T12:37:10.542Z",
+    "firstKickoff": "2026-10-19T15:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-19",
+        "home": "Fram",
+        "away": "Akranes",
+        "league": "Iceland Besta deild",
+        "kickoff": "2026-10-19T19:15:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.92,
+        "market": "OVER_1.5",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-19",
+        "home": "Jong Ajax",
+        "away": "De Graafschap",
+        "league": "Netherlands Eerste Divisie",
+        "kickoff": "2026-10-19T18:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.885,
+        "market": "OVER_1.5",
+        "odd": 1.08
+      },
+      {
+        "date": "2026-10-19",
+        "home": "Tatran Prešov",
+        "away": "Žilina II",
+        "league": "Slovakia 2. Liga",
+        "kickoff": "2026-10-19T15:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.783,
+        "market": "1X",
+        "odd": 1.1
+      },
+      {
+        "date": "2026-10-19",
+        "home": "Beitar Jerusalem",
+        "away": "Maccabi Tel Aviv",
+        "league": "Israel Premier League",
+        "kickoff": "2026-10-19T17:30:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.87,
+        "market": "OVER_1.5",
+        "odd": 1.12
+      },
+      {
+        "date": "2026-10-19",
+        "home": "Sp Braga",
+        "away": "Gil Vicente",
+        "league": "Portugal Primeira Liga",
+        "kickoff": "2026-10-19T19:15:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.782,
+        "market": "1X",
+        "odd": 1.14
+      }
+    ],
+    "codes": {
+      "sporty": "ZQ8KQ4",
+      "bet9ja": "5WGXDZD",
+      "betking": "1P19DS",
+      "betpawa": "Q13FQIM",
+      "onexbet": "EF8F2",
+      "betway": "BW7B4298BB"
+    },
+    "odds": 1.62
   }
 }
