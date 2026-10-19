@@ -50,10 +50,18 @@ test("the builders take it only on a real price and at 18%+, never on betPawa or
   const judged = new Function("wtnOk", "legOdd", "curBook", "dogHcap", "HCAP_DOG_BAR", "bookQuotes", "BOOKS",
     consts + "\n" + grab("judgedP") + "\nreturn judgedP;")(
     () => true, () => 1, () => BOOKS.sporty, () => false, 0.02, (f, c, B) => !!(f[B.odds] && f[B.odds][c] > 1.01), BOOKS);
-  const priced = { sportyOdds: { GG2_Y: 4.75 } };
+  const hot = { lh: 1.7, la: 1.4, sc_h: 5, sc_a: 4 };
+  const priced = Object.assign({ sportyOdds: { GG2_Y: 4.75 } }, hot);
   assert.strictEqual(judged(priced, "GG2_Y", 0.2), 0.2);
   assert.strictEqual(judged(priced, "GG2_Y", 0.17), -1, "under 18% is refused");
-  assert.strictEqual(judged({ sportyOdds: {} }, "GG2_Y", 0.3), -1, "no price, no leg");
+  assert.strictEqual(judged(Object.assign({ sportyOdds: {} }, hot), "GG2_Y", 0.3), -1, "no price, no leg");
+  /* Only high-scoring games (owner, 19 Oct 2026). */
+  const w = (o) => judged(Object.assign({}, priced, o), "GG2_Y", 0.25);
+  assert.strictEqual(w({ la: 1.2 }), -1, "the weaker side must be expected to score 1.3+");
+  assert.strictEqual(w({ lh: 1.5, la: 1.3 }), -1, "2.9+ goals expected in all");
+  assert.strictEqual(w({ sc_a: 3 }), -1, "each side scored in 4 of its last 5");
+  assert.strictEqual(w({ sc_h: null }), -1, "no recent games, no leg");
+  assert.strictEqual(w({}), 0.25);
   assert.match(src, /"GG2_Y":\["sporty","bet9ja","betking","onexbet"\]/);
   assert.match(src, /var BUILD=\{[^\n]*gg2:false/, "off by default");
   assert.doesNotMatch(grab("codeMarket"), /GG2/, "not named before it has graded results");

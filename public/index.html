@@ -10644,7 +10644,7 @@ function moreHTML(f){
       opt(esc(f.away)+" won't score 3 in a row",mProb(f,"NR3_A"),false,"NR3_A",id)+
       opt("Both teams score",f.btts,f.btts>=.6,"GG",id)+
       /* A pick, not a tip: the crazy one (owner, 19 Oct 2026). */
-      opt("Both teams score 2+",mProb(f,"GG2_Y"),false,"GG2_Y",id)+
+      opt("GG+ (both teams score 2+)",mProb(f,"GG2_Y"),false,"GG2_Y",id)+
       opt("Goal in 1st half",f.fh_o05,f.fh_o05!=null&&f.fh_o05>=.7,"FH_OVER_0.5",id)+
       /* Picks, not tips: the half-time legs (owner, 17 Oct 2026). */
       opt("1st half: under 2.5 goals",mProb(f,"FH_UNDER_2.5"),false,"FH_UNDER_2.5",id)+
@@ -14776,8 +14776,8 @@ function mLabel(f,c){
     case"UNDER_4.5":return"Under 4.5 goals";
     case"WTN_H_N":return esc(f.home)+" won't win to nil";
     case"WTN_A_N":return esc(f.away)+" won't win to nil";
-    case"GG2_Y":return"Both teams score 2+";
-    case"GG2_N":return"Both teams won't score 2+";
+    case"GG2_Y":return"GG+ (both teams score 2+)";
+    case"GG2_N":return"GG+: No";
     case"FH_UNDER_2.5":return"1st half: under 2.5 goals";
     case"FH_DC_1X":return esc(f.home)+" or draw at half-time";
     case"SH_OVER_0.5":return"2nd half: over 0.5 goals";
@@ -15082,7 +15082,7 @@ function dogHcap(f,code){
 /* WIN TO NIL - NO (owner, 17 Oct 2026): only on a real price at the book being built for,
    never above x1.15 in any style (owner, 17 Oct: "lower the to nil to 1.15. nothing more"),
    from x1.02 in every style, like Bankers (owner, 17 Oct: "increase the floor to match the bankers odds"), and only where we rate it 80%+. Held out, the 60-70% band ran ten points hot. */
-var WTN_MIN=1.02, WTN_BANKERS_MIN=1.02, WTN_MAX=1.15, WTN_P=0.8, HALF_MAX=1.20, HALF_SOFT=1.15, HALF_HIGH_BAR=0.03, GG2_P=0.18;
+var WTN_MIN=1.02, WTN_BANKERS_MIN=1.02, WTN_MAX=1.15, WTN_P=0.8, HALF_MAX=1.20, HALF_SOFT=1.15, HALF_HIGH_BAR=0.03, GG2_P=0.18, GG2_SIDE=1.3, GG2_TOTAL=2.9, GG2_SCORED=4;
 /* HALF-TIME LEGS share this gate, with their own top (owner, 19 Oct 2026: "raise cap for that
    option to 1.20 but pick the lower odd at first"): up to x1.20, and a leg priced over x1.15
    ranks HALF_HIGH_BAR lower in judgedP, so the builders reach for it only once the cheaper
@@ -15118,6 +15118,13 @@ function judgedP(f,code,p){
   /* Both teams score 2+, Yes (owner, 19 Oct 2026): only on a real price (SportyBet's standing
      in, as for Win to nil) and only where we rate it 18%+. Held out, 15-20% calls landed 17.6%. */
   if(code==="GG2_Y"&&(p<GG2_P||(!bookQuotes(f,code,curBook())&&!bookQuotes(f,code,BOOKS.sporty)))) return -1;
+  /* ...and only in a high-scoring game (owner, 19 Oct 2026: "only looks for potential high scoring
+     games, high scoring teams, high scoring leagues, teams that currently scoring goals"): both
+     sides expected to score GG2_SIDE+ (the board's top quarter for the weaker side), GG2_TOTAL+
+     goals in all, and each side scored in GG2_SCORED+ of its last 5. The expected goals already
+     carry the team's attack and its league's scoring. */
+  if(code==="GG2_Y"&&!(Math.min(Number(f.lh)||0,Number(f.la)||0)>=GG2_SIDE&&(Number(f.lh)||0)+(Number(f.la)||0)>=GG2_TOTAL&&
+    f.sc_h>=GG2_SCORED&&f.sc_a>=GG2_SCORED)) return -1;
   if(hcapRout(f,code)) return -1;
   return dogHcap(f,code)?p-HCAP_DOG_BAR:p;
 }
@@ -23623,7 +23630,7 @@ function renderShared(){
     {k:"both", label:"Both score", tier:2, sub:"GG", icon:'<path d="M17 21V5A2 2 0 0015 3H9A2 2 0 007 5V21"/><path d="M7 7H17"/><path d="M9 11H15"/><path d="M9 15H15"/><path d="M9 19H15"/>'},
     /* Both teams score 2+ (owner, 19 Oct 2026: "its a crazy bet"). The Yes only, about x4-5,
        on a real price and where we rate it 18%+ (see judgedP). */
-    {k:"gg2", label:"Both score 2+", tier:2, sub:"GG 2+", icon:'<path d="M17 21V5A2 2 0 0015 3H9A2 2 0 007 5V21"/><path d="M9 9H15"/><path d="M9 15H15"/>'},
+    {k:"gg2", label:"GG+", tier:2, sub:"Both score 2+", icon:'<path d="M17 21V5A2 2 0 0015 3H9A2 2 0 007 5V21"/><path d="M9 9H15"/><path d="M9 15H15"/>'},
     /* A RESULT OR GOALS, ONE MARKET. Both bookmakers sell these as a single
        selection, so a leg books like any other; the model prices them off the
        same scoreline matrix as everything above. All four start off - see
