@@ -108,7 +108,9 @@ test("a draw is not held to a floor no draw can clear", () => {
      about a third of the card at a 29.7% actual draw rate, against a 24.2%
      base. */
   const fn = grab("wspBuild");
-  assert.match(fn, /var floor=\(c==="X"\)\?0\.26:\(c==="GG"\)\?0\.42:0\.5;/,
+  /* GG+ joined on 19 Oct 2026 for the same reason: a ~20% leg under the flat 0.5 floor was a
+     chip that turned on and returned nothing; it takes its own 18% gate (GG2_P). */
+  assert.match(fn, /var floor=\(c==="X"\)\?0\.26:\(c==="GG"\)\?0\.42:\(c==="GG2_Y"\)\?GG2_P:0\.5;/,
     "the draw needs a floor it can actually clear");
   /* vj: the judged figure (HCAP_DOG_BAR), which is v for every non-handicap. */
   assert.match(fn, /if\(vj<floor\)return;/, "and the floor must be applied");

@@ -69,3 +69,10 @@ test("the builders take it only on a real price and at 18%+, never on betPawa or
   assert.match(src, /var BUILD=\{[^\n]*gg2:false/, "off by default");
   assert.doesNotMatch(grab("codeMarket"), /GG2/, "not named before it has graded results");
 });
+
+test("the builders let GG+ through their own confidence floors, or the chip builds nothing", () => {
+  /* 19 Oct 2026, owner: "i still dont see the gg+ populating games". The gate passed 143 priced
+     games while the Wizard's flat 0.5 floor and the Slider's minConf dropped every ~20% leg. */
+  assert.match(grab("wspBuild"), /\(c==="GG2_Y"\)\?GG2_P:0\.5;/);
+  assert.match(grab("buildPicks"), /if\(v<\(c==="GG2_Y"\?GG2_P:p\.minConf\)\) return;/);
+});

@@ -15251,7 +15251,9 @@ function buildPicks(neutral){
       var v0=mProb(f,c);
       if(v0==null||isNaN(v0)) return;
       var v=judgedP(f,c,v0);
-      if(v<p.minConf) return;
+      /* GG+ is a long shot by design (owner, 19 Oct 2026): its own 18% gate in judgedP, not the
+         slider's confidence floor, or the chip turns on and returns nothing. */
+      if(v<(c==="GG2_Y"?GG2_P:p.minConf)) return;
       if(bankersOn()&&!(legOdd(f,c,v0,B)<=BANKER_MAX)) return;
       var score=(1-f0)*v + f0*(oddOf(v)/12);
       /* A QUOTE OUTRANKS AN ESTIMATE ON A CLOSE CALL.
@@ -22416,7 +22418,7 @@ function wspBuild(){
          29.7% of the time, so the bar admits draws that actually land more
          often than the 24.2% base. The model reads low on draws, which is the
          same under-confidence the calibration work found elsewhere. */
-      var floor=(c==="X")?0.26:(c==="GG")?0.42:0.5;
+      var floor=(c==="X")?0.26:(c==="GG")?0.42:(c==="GG2_Y")?GG2_P:0.5;
       /* Judged, not shown: see HCAP_DOG_BAR. The real figure goes back on
          the picks before they leave this function. */
       var vj=judgedP(f,c,v);
@@ -23194,7 +23196,7 @@ function idleReason(k, longStyle){
     codes.forEach(function(c){
       var p=mProb(f,c);
       if(p==null||isNaN(p)) return;
-      var floor=(c==="X")?0.26:(c==="GG")?0.42:0.5;
+      var floor=(c==="X")?0.26:(c==="GG")?0.42:(c==="GG2_Y")?GG2_P:0.5;
       if(p>=floor) any=true;
     });
   });
