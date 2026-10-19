@@ -54,7 +54,7 @@ test("wired: an admin-only endpoint and a Model test tab", () => {
   assert.match(acc, /const ADMIN_GET = \[[^\]]*"blendtest"/);
   assert.match(acc, /raw\.githubusercontent\.com\/Skait0\/Skypredict\/pricelog\//);
   const UI = require("../public/account-ui.js");
-  assert.match(UI.adminHtml([]), /data-tab='swaTModel'[^>]*>Model test/);
+  assert.match(UI.adminHtml([]), /data-tab='swaTModel'[^>]*>Model</);
   const h = UI.modelHtml({ test: { games: 0 }, record: [{ date: "2026-09-20", n: 10, hit: 8 }] });
   assert.match(h, /No graded games yet/); assert.match(h, /8 of 10 tips landed \(80%\)/);
 });

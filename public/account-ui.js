@@ -344,7 +344,7 @@
   /* Messages and Readers (owner, 14 Oct 2026) are filled by public/messages.js. */
   /* Most used first (owner, 18 Oct 2026: "optimize the ui for admin"). */
   var ADMIN_TABS=[["swaTToday","Today"],["swaTHits","Won slips"],["swaTInspect","Inspect"],["swaTMsg","Messages"],["swaTAlerts","Alerts"],["swaTSw","Switches"],
-    ["swaTLk","Users"],["swaTGrants","Family & friends"],["swaTStatus","Status"],["swaTNums","Numbers"],["swaTModel","Model test"],["swaTLog","Log"]];
+    ["swaTLk","Users"],["swaTGrants","Family & friends"],["swaTStatus","Status"],["swaTModel","Model"],["swaTLog","Log"]];
   /* THE MODEL TEST (owner, 18 Oct 2026; api/account.js blendtest, lib/blendtest.js): the same
      board games picked three ways and graded, and the model's own record by day since 20 Sep. */
   var MODE_NAME={model:"Our model alone",old:"Old mix (30-75% bookie, before 30 Sep)",now:"Today (90% bookie)"};
@@ -377,8 +377,8 @@
         "<div id='swaOldNotice' hidden><label class='swa-lbl'>Old notice line, still showing</label><div class='swa-card'><div class='swa-set'><span class='swa-st'><small id='swaNoticeT'></small></span>"+
         "<button class='swa-pillbtn' id='swaNoticeOff' type='button'>Clear</button></div></div></div>",
       swaTMsg:"<div class='swa-card'>"+msg("Loading")+"</div>",
-      swaTStatus:"<div class='swa-card' id='swaStatus'>"+msg("Loading")+"</div>",
-      swaTNums:"<div class='swa-card' id='swaNums'>"+msg("Loading")+"</div>",
+      /* Status and Numbers in one tab (owner, 18 Oct 2026: fewer tabs; Today has the day). */
+      swaTStatus:"<div class='swa-card' id='swaStatus'>"+msg("Loading")+"</div><label class='swa-lbl'>Numbers</label><div class='swa-card' id='swaNums'>"+msg("Loading")+"</div>",
       swaTInspect:"<p class='swa-note'>Paste any booking code to see every game, our number on it and how it went.</p>"+
         "<div class='swa-bkchips' id='swaInBooks' role='radiogroup' aria-label='Bookmaker'></div>"+
         "<label class='swa-lbl' for='swaInCode'>Booking code</label>"+
@@ -584,8 +584,8 @@
        colour behind it so nothing shows through. */
     ".swa-view .swa-in-wrap>.swa-back{position:sticky;top:-16px;z-index:5;width:calc(100% + 32px);margin:-16px -16px 0;padding:14px 16px 8px;background:var(--bg);box-sizing:border-box}"+
     ".swa-t{margin:0 0 16px;font-size:22px;font-weight:800;letter-spacing:-.01em}"+
-    ".swa-tabs{display:flex;flex-wrap:nowrap;gap:6px;margin:4px -2px 4px;padding:2px 2px 6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.swa-tabs::-webkit-scrollbar{display:none}.swa-tabs::-webkit-scrollbar{display:none}"+
-    ".swa-tab{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--soft);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}"+
+    ".swa-tabs{display:flex;flex-wrap:wrap;gap:5px;margin:4px -2px 4px;padding:2px}.swa-tabs::-webkit-scrollbar{display:none}"+
+    ".swa-tab{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--soft);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}"+
     ".swa-tab[aria-selected='true']{background:var(--red-fill);border-color:transparent;color:#fff}.swa-tab:focus-visible{outline:2px solid var(--red);outline-offset:2px}"+
     ".swa-tab .swa-cnt{font-size:11px;font-weight:800;opacity:.85}.swa-tab .swa-cnt:empty{display:none}"+
     ".swa-aldot{display:inline-block;width:8px;height:8px;border-radius:99px;background:var(--red);margin-right:7px;vertical-align:1px}"+
