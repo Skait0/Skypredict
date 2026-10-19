@@ -66,11 +66,12 @@ test("plan, email and user_id cannot be written through sync", async () => {
   assert.strictEqual(w.db.t.users.find((u) => u.id === a.id).email, "a@b.com");
 });
 
-test("a payload over 256 KB is refused with 413", async () => {
+/* 1 MB since 19 Oct 2026 (was 256 KB, which a heavy slip history outgrew and stopped syncing). */
+test("a payload over 1 MB is refused with 413", async () => {
   const w = world();
   const a = await w.user("a@b.com");
   const big = payload({ s1: slip("s1", { legs: new Array(60).fill(Object.assign({}, leg, { label: "x".repeat(499) })) }) });
-  for (let i = 2; i < 12; i++) big.slips.items["s" + i] = big.slips.items.s1;
+  for (let i = 2; i < 40; i++) big.slips.items["s" + i] = big.slips.items.s1;
   const r = await w.me(mePost(a.cookie, { base_version: 0, data: big }));
   assert.strictEqual(r.code, 413); assert.deepStrictEqual(r.json(), { error: "too_big" });
 });
