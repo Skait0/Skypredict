@@ -15350,7 +15350,10 @@ function buildPicks(neutral){
         var v0=mProb(f,c);
         if(v0==null||isNaN(v0)) return;
         var v=judgedP(f,c,v0);
-        if(v<p.minConf) return;
+        /* GG+ by its own gate here too (19 Oct 2026, owner: "the slip style doesnt work for ggplus
+           option ... in the slider"): the spread's alternatives kept the flat minConf, so GG+ could
+           be the first pick but never an alternative the style could lean toward or away from. */
+        if(v<(c==="GG2_Y"?GG2_P:p.minConf)) return;
         if(bankersOn()&&!(legOdd(f,c,v0,B)<=BANKER_MAX)) return;
         /* The same score the market was chosen by above, kept so the spread
            below can prefer a different market without abandoning what the risk
