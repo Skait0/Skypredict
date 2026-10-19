@@ -49,7 +49,7 @@ test("it fires only when the wider window would actually help", () => {
   /* Narrow is a single day OR a span of days now. Both top out below the
      jackpot rungs, so the offer stands from either. */
   assert.match(m[1], /SCOPE!=="all"/, "only from a narrow window");
-  assert.match(m[1], /_typed<=\(WSP\._wideMaxTarget\|\|50000\)/,
+  assert.match(m[1], /_typed<=\(WSP\._wideMaxTarget\|\|1000000\)/,
     "and only when the wide ladder actually reaches it");
 });
 
@@ -106,8 +106,12 @@ test("both ceilings come from one list", () => {
   assert.match(code, /var WIDE_ODDS=\[10,50,100,500,1000,2000,6000,20000,50000\];/);
   assert.match(code, /var odds=jackOK\?WIDE_ODDS:WIDE_ODDS\.filter\(function\(o\)\{return o<JACKPOT_FROM;\}\);/,
     "the day ladder must be a slice of the wide one, not a second literal");
-  assert.match(code, /WSP\._wideMaxTarget=WIDE_ODDS\[WIDE_ODDS\.length-1\];/,
-    "and the wide ceiling must be read off the end of it");
+  /* Since 19 Oct 2026 the typed target goes past the ladder (owner: "why cant i type over
+     100000"), so both ceilings are one constant: CUSTOM_MAX. */
+  assert.match(code, /var CUSTOM_MAX=1000000;\s*WSP\._wideMaxTarget=CUSTOM_MAX;/, "the wide ceiling is the one constant");
+  assert.match(code, /WSP\._maxTarget=jackOK\?CUSTOM_MAX:odds\[odds\.length-1\];/,
+    "and a window with the jackpot rungs reaches it too");
+  assert.match(code, /maxlength='7'/, "the box takes seven digits");
 });
 
 test("the day ladder still holds exactly what it used to", () => {

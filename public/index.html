@@ -1940,7 +1940,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .wsp-cust{display:inline-flex;align-items:center;gap:2px;background:var(--card-2);
   border:1px dashed var(--line);border-radius:var(--r-chip);padding:0 12px 0 13px;height:38px}
 .wsp-cust-x{font-size:13px;font-weight:700;color:var(--faint)}
-.wsp-cust-in{width:56px;background:transparent;border:0;outline:0;color:var(--text);
+.wsp-cust-in{width:62px;background:transparent;border:0;outline:0;color:var(--text);
   font:inherit;font-weight:700;font-size:13px;padding:0}
 .wsp-cust-in::placeholder{color:var(--faint);font-weight:600}
 /* Focus is neutral on purpose. Red is what a chip turns when it is SELECTED,
@@ -24190,11 +24190,15 @@ function renderWizardPanel(){
      it would drift the first time a rung is added or moved. */
   var WIDE_ODDS=[10,50,100,500,1000,2000,6000,20000,50000];
   var odds=jackOK?WIDE_ODDS:WIDE_ODDS.filter(function(o){return o<JACKPOT_FROM;});
-  WSP._wideMaxTarget=WIDE_ODDS[WIDE_ODDS.length-1];
+  /* The box goes past the ladder (owner, 19 Oct 2026: "why cant i type over 100000"): up to
+     CUSTOM_MAX wherever the jackpot rungs are on offer. The Wizard builds its best try and says
+     when it falls short, as it does for any rung. */
+  var CUSTOM_MAX=1000000;
+  WSP._wideMaxTarget=CUSTOM_MAX;
   /* The ceiling the chips currently express, so the custom box can clamp to
      the same limit. It moves with the board: the jackpot rungs appear
      whenever the pool in front of the reader can actually build them. */
-  WSP._maxTarget=odds[odds.length-1];
+  WSP._maxTarget=jackOK?CUSTOM_MAX:odds[odds.length-1];
   /* REACHABLE BEFORE CONJURE, NOT AFTER. Reported (critique, 6 Oct): x100
      picked, Conjure pressed, x15.55 handed back with the reason in small grey
      type under the legs. The same probe as the jackpot gate, asked per rung:
@@ -24256,8 +24260,8 @@ function renderWizardPanel(){
        and tells you nothing about the risk you are taking. */
     "<span class='wsp-cust'><span class='wsp-cust-x' aria-hidden='true'>×</span>"+
       "<input id='wspCust' class='wsp-cust-in' type='text' inputmode='numeric' "+
-      "autocomplete='off' maxlength='5' placeholder='own' "+
-      "aria-label='Your own target payout, from 2 to 50000' value='"+
+      "autocomplete='off' maxlength='7' placeholder='own' "+
+      "aria-label='Your own target payout, from 2 to 1000000' value='"+
       ((WSP.odds&&odds.indexOf(WSP.odds)<0)?WSP.odds:"")+"'></span>"+
     /* The ceiling, said once and only when a rung is out of reach, in the
        same format as the slip header and the miss note. Inside the chip row (a
@@ -24449,12 +24453,12 @@ function renderWizardPanel(){
          above them was being silently wiped by the guard above - typing
          50000 on Today cleared the box and chose nothing. Landing on the
          highest reachable number says what happened. */
-      var _ceil=WSP._maxTarget||50000;
+      var _ceil=WSP._maxTarget||1000000;
       var _typed=parseInt(raw,10)||0;
       var v=Math.max(2,Math.min(_ceil,_typed));
       _cust.value=v;
       /* Clamped, and the wider window would not have clamped it. */
-      var _needsWider=(_typed>_ceil && SCOPE!=="all" && _typed<=(WSP._wideMaxTarget||50000));
+      var _needsWider=(_typed>_ceil && SCOPE!=="all" && _typed<=(WSP._wideMaxTarget||1000000));
       WSP._typed="";
       if(v!==WSP.odds){
         WSP.odds=v; WSP._sig=null; WSP.conjured=false;
