@@ -15101,7 +15101,34 @@ function dogHcap(f,code){
 /* WIN TO NIL - NO (owner, 17 Oct 2026): only on a real price at the book being built for,
    never above x1.15 in any style (owner, 17 Oct: "lower the to nil to 1.15. nothing more"),
    from x1.02 in every style, like Bankers (owner, 17 Oct: "increase the floor to match the bankers odds"), and only where we rate it 80%+. Held out, the 60-70% band ran ten points hot. */
-var WTN_MIN=1.02, WTN_BANKERS_MIN=1.02, WTN_MAX=1.15, WTN_P=0.8, HALF_MIN=1.02, HALF_P=0.7, GG2_P=0.18, GG2_SIDE=1.2, GG2_TOTAL=2.9, GG2_SCORED=3;
+var WTN_MIN=1.02, WTN_BANKERS_MIN=1.02, WTN_MAX=1.15, WTN_P=0.8, HALF_MIN=1.02, HALF_P=0.7, GG2_P=0.12, GG2_ENOUGH=8, GG2_LEVELS=[{p:0.18,side:1.2,total:2.9,scored:3},{p:0.15,side:1.1,total:2.7,scored:3},{p:0.12,side:1.0,total:2.5,scored:2}];
+/* GG+, BOTH TEAMS SCORE 2+ (owner, 19 Oct 2026): only on a real price (SportyBet's standing in, as
+   for Win to nil) and only in a high-scoring game ("only looks for potential high scoring games,
+   high scoring teams, high scoring leagues, teams that currently scoring goals"): our chance, the
+   weaker side's expected goals (the board's top quarter at the first level), the game's expected
+   goals, and how many of its last 5 each side scored in. The expected goals already carry the
+   team's attack and its league's scoring.
+   THE BAR FOLLOWS THE DAY ("on days when there are no games, lower the percentage, like today"):
+   the strictest level that gives a day GG2_ENOUGH priced games, else the loosest. GG2_P is the
+   loosest chance, which the builders' own floors let through; the day's level decides. */
+function gg2Pass(f,L){
+  var lh=Number(f&&f.lh)||0, la=Number(f&&f.la)||0, p=mProb(f,"GG2_Y");
+  return p!=null&&p>=L.p&&Math.min(lh,la)>=L.side&&lh+la>=L.total&&f.sc_h>=L.scored&&f.sc_a>=L.scored&&
+    (bookQuotes(f,"GG2_Y",curBook())||bookQuotes(f,"GG2_Y",BOOKS.sporty));
+}
+var GG2_LV={};
+function gg2Level(f){
+  var day=f&&f.date, key=day+"|"+curBook().key, hit=GG2_LV[key], now=Date.now();
+  if(hit&&now-hit.at<60000) return hit.L;     /* prices arrive after the board: asked again each minute */
+  var same=((typeof DATA!=="undefined"&&DATA.fixtures)||[]).filter(function(x){ return x.date===day; });
+  var L=GG2_LEVELS[GG2_LEVELS.length-1];
+  for(var i=0;i<GG2_LEVELS.length;i++){
+    var n=same.filter(function(x){ return gg2Pass(x,GG2_LEVELS[i]); }).length;
+    if(n>=GG2_ENOUGH){ L=GG2_LEVELS[i]; break; }
+  }
+  GG2_LV[key]={at:now,L:L};
+  return L;
+}
 /* HALF-TIME LEGS (owner, 19 Oct 2026: "increase the odds to allow more markets and be filtered
    by slipstyle"): no top price - the slip style picks the length, as for every other market
    (Bankers keeps its own x1.25 cap) - but a real price of x1.02+ and our 70%+. Held out, these
@@ -15134,16 +15161,8 @@ function judgedP(f,code,p){
   if(code==="UNDER_4.5"&&u45Rout(f)) return -1;
   if(/^WTN_[HA]_N$/.test(code)&&!wtnOk(f,code,p)) return -1;
   if(/^(FH_UNDER_2\.5|FH_DC_1X|SH_OVER_0\.5|SH_UNDER_2\.5)$/.test(code)&&!halfOk(f,code,p)) return -1;
-  /* Both teams score 2+, Yes (owner, 19 Oct 2026): only on a real price (SportyBet's standing
-     in, as for Win to nil) and only where we rate it 18%+. Held out, 15-20% calls landed 17.6%. */
-  if(code==="GG2_Y"&&(p<GG2_P||(!bookQuotes(f,code,curBook())&&!bookQuotes(f,code,BOOKS.sporty)))) return -1;
-  /* ...and only in a high-scoring game (owner, 19 Oct 2026: "only looks for potential high scoring
-     games, high scoring teams, high scoring leagues, teams that currently scoring goals"): both
-     sides expected to score GG2_SIDE+ (the board's top quarter for the weaker side), GG2_TOTAL+
-     goals in all, and each side scored in GG2_SCORED+ of its last 5. The expected goals already
-     carry the team's attack and its league's scoring. */
-  if(code==="GG2_Y"&&!(Math.min(Number(f.lh)||0,Number(f.la)||0)>=GG2_SIDE&&(Number(f.lh)||0)+(Number(f.la)||0)>=GG2_TOTAL&&
-    f.sc_h>=GG2_SCORED&&f.sc_a>=GG2_SCORED)) return -1;
+  /* Both teams score 2+, Yes: a real price and a high-scoring game, at the day's level (gg2Level). */
+  if(code==="GG2_Y"&&!gg2Pass(f,gg2Level(f))) return -1;
   if(hcapRout(f,code)) return -1;
   return dogHcap(f,code)?p-HCAP_DOG_BAR:p;
 }

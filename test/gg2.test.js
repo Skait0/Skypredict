@@ -44,27 +44,43 @@ test("graded the same on the page and on the server", () => {
   }
 });
 
-test("the builders take it only on a real price and at 18%+, never on betPawa or Betway", () => {
+/* The gate, lifted with what it reads: the day's fixtures in DATA, each priced or not. */
+function gate(dayFixtures) {
   const consts = /var WTN_MIN=[^\n]*/.exec(src)[0];
   const BOOKS = { sporty: { odds: "sportyOdds" } };
-  const judged = new Function("wtnOk", "legOdd", "curBook", "dogHcap", "HCAP_DOG_BAR", "bookQuotes", "BOOKS",
-    consts + "\n" + grab("judgedP") + "\nreturn judgedP;")(
-    () => true, () => 1, () => BOOKS.sporty, () => false, 0.02, (f, c, B) => !!(f[B.odds] && f[B.odds][c] > 1.01), BOOKS);
-  const hot = { lh: 1.7, la: 1.4, sc_h: 5, sc_a: 4 };
-  const priced = Object.assign({ sportyOdds: { GG2_Y: 4.75 } }, hot);
-  assert.strictEqual(judged(priced, "GG2_Y", 0.2), 0.2);
-  assert.strictEqual(judged(priced, "GG2_Y", 0.17), -1, "under 18% is refused");
-  assert.strictEqual(judged(Object.assign({ sportyOdds: {} }, hot), "GG2_Y", 0.3), -1, "no price, no leg");
-  /* Only high-scoring games (owner, 19 Oct 2026). */
-  const w = (o) => judged(Object.assign({}, priced, o), "GG2_Y", 0.25);
-  /* Loosened 19 Oct 2026 (owner: "yes do all"): 1.2 for the weaker side, 3 of the last 5. */
-  assert.strictEqual(w({ la: 1.2 }), 0.25, "the weaker side expected to score 1.2 is enough");
-  assert.strictEqual(w({ lh: 1.8, la: 1.15 }), -1, "below 1.2 is not, even with goals enough in all");
-  assert.strictEqual(w({ lh: 1.6, la: 1.25 }), -1, "2.9+ goals expected in all");
-  assert.strictEqual(w({ sc_a: 3 }), 0.25, "scored in 3 of its last 5 is enough");
-  assert.strictEqual(w({ sc_a: 2 }), -1, "2 of 5 is not");
+  return new Function("wtnOk", "legOdd", "curBook", "dogHcap", "HCAP_DOG_BAR", "bookQuotes", "BOOKS", "mProb", "DATA",
+    consts + "\n" + grab("gg2Pass") + "\nvar GG2_LV={};\n" + grab("gg2Level") + "\n" + grab("judgedP") + "\nreturn judgedP;")(
+    () => true, () => 1, () => ({ key: "sporty", odds: "sportyOdds" }), () => false, 0.02,
+    (f, c, B) => !!(f[B.odds] && f[B.odds][c] > 1.01), BOOKS, (f) => f.gg2, { fixtures: dayFixtures });
+}
+const game = (o) => Object.assign({ date: "2026-10-24", sportyOdds: { GG2_Y: 4.75 }, lh: 1.7, la: 1.4, sc_h: 5, sc_a: 4, gg2: 0.2 }, o);
+
+test("a busy day keeps the strict bar: 18%+, 1.2+ for the weaker side, 2.9+ goals, 3 of the last 5", () => {
+  const busy = Array.from({ length: 10 }, () => game());
+  const judged = gate(busy);
+  const w = (o) => judged(game(o), "GG2_Y", (o && o.gg2) || 0.2);
+  assert.strictEqual(w({}), 0.2);
+  assert.strictEqual(w({ gg2: 0.17 }), -1, "under 18% is refused on a busy day");
+  assert.strictEqual(w({ sportyOdds: {} }), -1, "no price, no leg");
+  assert.strictEqual(w({ lh: 1.8, la: 1.15 }), -1, "below 1.2 for the weaker side");
+  assert.strictEqual(w({ lh: 1.6, la: 1.25 }), -1, "under 2.9 goals expected");
+  assert.strictEqual(w({ sc_a: 2 }), -1, "2 of 5");
   assert.strictEqual(w({ sc_h: null }), -1, "no recent games, no leg");
-  assert.strictEqual(w({}), 0.25);
+});
+
+test("a thin day lowers the bar until there are enough games (owner, 19 Oct 2026: \"like today\")", () => {
+  /* Two games clear the strict bar; eight more clear only the loosest. */
+  const thin = [game(), game()].concat(Array.from({ length: 8 }, () => game({ gg2: 0.13, lh: 1.5, la: 1.05, sc_h: 2, sc_a: 3 })));
+  const busy25 = Array.from({ length: 10 }, () => game({ date: "2026-10-25" }));
+  const judged = gate(thin.concat(busy25));
+  assert.strictEqual(judged(game({ gg2: 0.13, lh: 1.5, la: 1.05, sc_h: 2, sc_a: 3 }), "GG2_Y", 0.13), 0.13, "taken at the loosest level");
+  assert.strictEqual(judged(game({ gg2: 0.11 }), "GG2_Y", 0.11), -1, "never under 12%");
+  assert.strictEqual(judged(game({ sportyOdds: {} }), "GG2_Y", 0.3), -1, "never without a price");
+  /* A busy day beside it keeps its own, strict bar. */
+  assert.strictEqual(judged(game({ date: "2026-10-25", gg2: 0.13, lh: 1.5, la: 1.05, sc_h: 2, sc_a: 3 }), "GG2_Y", 0.13), -1);
+});
+
+test("GG+ stays off betPawa and Betway, off by default, and never named before it is graded", () => {
   assert.match(src, /"GG2_Y":\["sporty","bet9ja","betking","onexbet"\]/);
   assert.match(src, /var BUILD=\{[^\n]*gg2:false/, "off by default");
   assert.doesNotMatch(grab("codeMarket"), /GG2/, "not named before it has graded results");
