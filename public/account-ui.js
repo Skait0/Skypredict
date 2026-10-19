@@ -281,7 +281,7 @@
     return "<span class='swa-bk'>"+(m&&m[k]?m[k]:esc(BOOK_NAME[k]||k))+"</span>"; }
   function msg(t){ return "<div class='swa-set'><span class='swa-st'><small>"+esc(t)+"</small></span></div>"; }
   /* PAUSE SWITCHES (lib/flags.js pause): on means paused for today, Lagos time. */
-  var PAUSE_ROWS=[["wins","Win posts","Confirmed wins stop posting. Wins still come to you."],["bigodds","Big odds of the day","No Big odds slip is booked or posted."],["ladder","Daily ladder","No ladder slips are booked, sent or shown."]];
+  var PAUSE_ROWS=[["wins","Win posts","Confirmed wins stop posting. Wins still come to you."],["bigodds","Big odds of the day","No Big odds slip is booked or posted."],["ladder","Daily odds","No Daily odds slips are booked, sent or shown."]];
   function lagosDay(){ return new Date(Date.now()+3600e3).toISOString().slice(0,10); }
   function pauseHtml(fl){
     var p=(fl&&fl.pause)||{}, day=lagosDay();
@@ -334,7 +334,7 @@
         wait.length?"<button type='button' class='swa-pillbtn' data-go='swaTHits'>Open</button>":""],
       ["Wins today",num(w.today||0)+" landed at x5 or more",""],
       ["Our picks","Today: "+pc(j.tips&&j.tips.today)+" · Yesterday: "+pc(j.tips&&j.tips.yesterday),""],
-      ["Ladder",(j.ladder||[]).length?(j.ladder||[]).map(function(r){ return "x"+r.rung+" "+(LAD_WORD[r.state]||r.state); }).join(" · "):"Not booked yet today",""],
+      ["Daily odds",(j.ladder||[]).length?(j.ladder||[]).map(function(r){ return "x"+r.rung+" "+(LAD_WORD[r.state]||r.state); }).join(" · "):"Not booked yet today",""],
       ["Codes booked",j.codes==null?"Not available":num(j.codes)+" today",""],
       ["New accounts",j.signups==null?"Not available":num(j.signups)+" today"+(j.active!=null?" · "+num(j.active)+" signed-in users seen":""),""],
       ["Payments",num((j.payments||{}).n||0)+" today · "+naira((j.payments||{}).naira||0),""],

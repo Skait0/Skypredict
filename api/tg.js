@@ -60,7 +60,7 @@ const HELLO_MENU =
   "🧙 <b>Welcome to the Wizard</b>\n\nTap a button below:\n" +
   "🎯 <b>Build a slip</b> - pick your odds, get a code\n" +
   "🔍 <b>Check a code</b> - send any code, see the weak games\n" +
-  "📅 <b>Ladder</b> - today's x5 to x1000 codes\n" +
+  "📅 <b>Daily odds</b> - today's x5 to x1000 codes\n" +
   "🏦 <b>Change bookie</b> - " + BOOKS.list("or") + "\n\n" +
   "Or just send a code, or type a number like <b>50</b> for a x50 slip.\n<i>18+</i>";
 const HELLO =
@@ -471,9 +471,9 @@ async function onLadder(chat, replyTo, fromId, book) {
   const L = require("../lib/ladder.js"), SOC = require("../lib/social.js");
   const got = await SB.getLadder(SOC.dayOf(Date.now())).catch(() => ({ ok: false }));
   const rows = got && got.ok ? got.rows : [];
-  if (!rows.length) { await say("📅 Today's ladder lands at <b>10:30</b>. Check back then 🧙"); return; }
+  if (!rows.length) { await say("📅 Today's daily odds land at <b>10:30</b>. Check back then 🧙"); return; }
   const b = await budgetOf(fromId), pass = ["plus", "ff", "admin"].includes(b.plan);
-  const lines = ["📅 <b>Today's ladder on " + D.BOOK_NAMES[book] + "</b>", ""];
+  const lines = ["📅 <b>Daily odds on " + D.BOOK_NAMES[book] + "</b>", ""];
   for (const r of rows) {
     const c = r.codes && r.codes[book];
     const head = "<b>x" + r.rung + "</b> · " + (r.legs || []).length + " games · " + xOdds(+r.odds || 0);

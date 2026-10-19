@@ -12,7 +12,8 @@ test("the menu carries the bookie in its labels, so the bot never has to remembe
   assert.ok(labels.includes("🎯 Build a slip · Bet9ja"));
   assert.ok(kb.is_persistent && kb.resize_keyboard);
   assert.deepStrictEqual(ASK.parseMenu("🎯 Build a slip · Bet9ja"), { kind: "menuBuild", book: "bet9ja" });
-  assert.deepStrictEqual(ASK.parseMenu("📅 Ladder · 1xBet"), { kind: "ladder", book: "onexbet" });
+  assert.deepStrictEqual(ASK.parseMenu("📅 Daily odds · 1xBet"), { kind: "ladder", book: "onexbet" });
+  assert.deepStrictEqual(ASK.parseMenu("📅 Ladder · 1xBet"), { kind: "ladder", book: "onexbet" }, "an old keyboard still works");
   assert.deepStrictEqual(ASK.parseMenu("🏦 Change bookie"), { kind: "bookie" });
   assert.strictEqual(ASK.parseMenu("HUW6YC"), null);
 });
