@@ -24740,7 +24740,7 @@ function renderBuilderOutput(){
   if(_rb){ _rb.innerHTML=firstVisit ? "Drag me" : (picks.length
       ? "<b>"+pre+(odds>=100?Math.round(odds).toLocaleString("en"):odds.toFixed(2))+"</b><i>"+
         picks.length+" game"+(picks.length===1?"":"s")+"</i>"
-      : (/ opens? at (w+)./.test(_why) ? "Opens at "+RegExp.$1 : "No games")); }
+      : (/ opens? at (\w+)\./.test(_why) ? "Opens at "+RegExp.$1 : "No games")); }
   var avg=picks.length?picks.reduce(function(t,c){return t+c.p;},0)/picks.length:0;
   /* On a jackpot ticket the confidence tile is dropped rather than shown.
      It reads as the chance of the slip and it is nothing of the kind - it is

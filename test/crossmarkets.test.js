@@ -779,6 +779,11 @@ test("an empty slip says which control to move", () => {
   /* And name the level it opens at (19 Oct 2026: GG+ alone below Bold said only "No games"). */
   assert.ok(fn.includes('" opens":" open")+" at "+riskWord(') && fn.includes(". Slide right."),
     "a market above the dial must say so, and name the level it opens at");
+  /* The bubble shows "Opens at <level>" read from that sentence; a shell edit once stripped the regex's backslashes. */
+  const bubble = /\/ opens\? at \(\\w\+\)\\\.\/\.test\(_why\)/;
+  assert.match(src, bubble, "the bubble's regex lost its backslashes");
+  const re = / opens? at (\w+)\./;
+  assert.strictEqual(re.exec("GG+ opens at Bold. Slide right.")[1], "Bold");
   assert.match(fn, /tops out at/, "a market under the floor must say so");
   assert.match(fn, /Slide right, or switch on a safer market/);
   /* Every chip must be mappable to its codes, or the sentence names nothing. */
