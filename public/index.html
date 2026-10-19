@@ -15101,7 +15101,7 @@ function dogHcap(f,code){
 /* WIN TO NIL - NO (owner, 17 Oct 2026): only on a real price at the book being built for,
    never above x1.15 in any style (owner, 17 Oct: "lower the to nil to 1.15. nothing more"),
    from x1.02 in every style, like Bankers (owner, 17 Oct: "increase the floor to match the bankers odds"), and only where we rate it 80%+. Held out, the 60-70% band ran ten points hot. */
-var WTN_MIN=1.02, WTN_BANKERS_MIN=1.02, WTN_MAX=1.15, WTN_P=0.8, HALF_MIN=1.02, HALF_P=0.7, GG2_P=0.12, GG2_ENOUGH=8, GG2_LEVELS=[{p:0.18,side:1.2,total:2.9,scored:3},{p:0.15,side:1.1,total:2.7,scored:3},{p:0.12,side:1.0,total:2.5,scored:2}];
+var WTN_MIN=1.02, WTN_BANKERS_MIN=1.02, WTN_MAX=1.15, WTN_ENOUGH=8, WTN_LEVELS=[0.8,0.77,0.75], DRAW_ENOUGH=8, DRAW_LEVELS=[0.26,0.24], HALF_MIN=1.02, HALF_P=0.7, GG2_P=0.12, GG2_ENOUGH=8, GG2_LEVELS=[{p:0.18,side:1.2,total:2.9,scored:3},{p:0.15,side:1.1,total:2.7,scored:3},{p:0.12,side:1.0,total:2.5,scored:2}];
 /* GG+, BOTH TEAMS SCORE 2+ (owner, 19 Oct 2026): only on a real price (SportyBet's standing in, as
    for Win to nil) and only in a high-scoring game ("only looks for potential high scoring games,
    high scoring teams, high scoring leagues, teams that currently scoring goals"): our chance, the
@@ -15141,13 +15141,41 @@ function halfOk(f,code,p){
 /* THE PRICE IS THIS BOOK'S, OR SPORTYBET'S WHEN THIS BOOK'S FEED DOES NOT CARRY THE MARKET
    (17 Oct 2026: Bet9ja, BetKing and betPawa sell it but their sweeps do not fetch it, so a
    gate on their own quote built zero games for tomorrow). legOdd reads the same fallback. */
-function wtnOk(f,code,p){
+function wtnPriced(f,code,p){
   var B=curBook();
   if(!bookQuotes(f,code,B)&&!bookQuotes(f,code,BOOKS.sporty)) return false;
   var o=legOdd(f,code,p,B);
   if(o>WTN_MAX) return false;
-  if(o<(bankersOn()?WTN_BANKERS_MIN:WTN_MIN)) return false;
-  return p>=WTN_P;
+  return !(o<(bankersOn()?WTN_BANKERS_MIN:WTN_MIN));
+}
+function wtnOk(f,code,p){ return wtnPriced(f,code,p)&&p>=wtnLevel(f); }
+/* THE BAR FOLLOWS THE DAY, as GG+'s does (owner, 19 Oct 2026: "add to win to nil and draws"):
+   80%, then 77%, then 75% - the strictest that gives the day WTN_ENOUGH games inside the price
+   window, else 75%. The x1.15 cap never moves. Held out, 75-80% calls ran close to true. */
+var WTN_LV={};
+function wtnLevel(f){
+  var day=f&&f.date, key=day+"|"+curBook().key+"|"+(bankersOn()?1:0), hit=WTN_LV[key], now=Date.now();
+  if(hit&&now-hit.at<60000) return hit.P;
+  var same=((typeof DATA!=="undefined"&&DATA.fixtures)||[]).filter(function(x){ return x.date===day; });
+  var P=WTN_LEVELS[WTN_LEVELS.length-1];
+  for(var i=0;i<WTN_LEVELS.length;i++){
+    var n=same.filter(function(x){ return ["WTN_H_N","WTN_A_N"].some(function(c){
+      var q=mProb(x,c); return q!=null&&q>=WTN_LEVELS[i]&&wtnPriced(x,c,q); }); }).length;
+    if(n>=WTN_ENOUGH){ P=WTN_LEVELS[i]; break; }
+  }
+  WTN_LV[key]={at:now,P:P};
+  return P;
+}
+/* DRAWS LIKEWISE: 26%, or 24% on a day with fewer than DRAW_ENOUGH draws at 26%+. */
+var DRAW_LV={};
+function drawFloor(f){
+  var day=f&&f.date, hit=DRAW_LV[day], now=Date.now();
+  if(hit&&now-hit.at<60000) return hit.P;
+  var n=((typeof DATA!=="undefined"&&DATA.fixtures)||[]).filter(function(x){
+    if(x.date!==day) return false; var q=mProb(x,"X"); return q!=null&&q>=DRAW_LEVELS[0]; }).length;
+  var P=n>=DRAW_ENOUGH?DRAW_LEVELS[0]:DRAW_LEVELS[1];
+  DRAW_LV[day]={at:now,P:P};
+  return P;
 }
 function judgedP(f,code,p){
   function u45Rout(f){ return !!f&&((Number(f.lh)||0)+(Number(f.la)||0)>=3||Math.max(Number(f.lh)||0,Number(f.la)||0)>=1.9); }
@@ -22437,7 +22465,7 @@ function wspBuild(){
          29.7% of the time, so the bar admits draws that actually land more
          often than the 24.2% base. The model reads low on draws, which is the
          same under-confidence the calibration work found elsewhere. */
-      var floor=(c==="X")?0.26:(c==="GG")?0.42:(c==="GG2_Y")?GG2_P:0.5;
+      var floor=(c==="X")?drawFloor(f):(c==="GG")?0.42:(c==="GG2_Y")?GG2_P:0.5;
       /* Judged, not shown: see HCAP_DOG_BAR. The real figure goes back on
          the picks before they leave this function. */
       var vj=judgedP(f,c,v);
@@ -23215,7 +23243,7 @@ function idleReason(k, longStyle){
     codes.forEach(function(c){
       var p=mProb(f,c);
       if(p==null||isNaN(p)) return;
-      var floor=(c==="X")?0.26:(c==="GG")?0.42:(c==="GG2_Y")?GG2_P:0.5;
+      var floor=(c==="X")?drawFloor(f):(c==="GG")?0.42:(c==="GG2_Y")?GG2_P:0.5;
       if(p>=floor) any=true;
     });
   });

@@ -110,8 +110,10 @@ test("a draw is not held to a floor no draw can clear", () => {
   const fn = grab("wspBuild");
   /* GG+ joined on 19 Oct 2026 for the same reason: a ~20% leg under the flat 0.5 floor was a
      chip that turned on and returned nothing; it takes its own 18% gate (GG2_P). */
-  assert.match(fn, /var floor=\(c==="X"\)\?0\.26:\(c==="GG"\)\?0\.42:\(c==="GG2_Y"\)\?GG2_P:0\.5;/,
+  /* The draw's floor follows the day since 19 Oct 2026 (drawFloor: 26%, or 24% on a thin day). */
+  assert.match(fn, /var floor=\(c==="X"\)\?drawFloor\(f\):\(c==="GG"\)\?0\.42:\(c==="GG2_Y"\)\?GG2_P:0\.5;/,
     "the draw needs a floor it can actually clear");
+  assert.match(src, /DRAW_LEVELS=\[0\.26,0\.24\]/, "26% on a normal day, 24% only on a thin one");
   /* vj: the judged figure (HCAP_DOG_BAR), which is v for every non-handicap. */
   assert.match(fn, /if\(vj<floor\)return;/, "and the floor must be applied");
   assert.ok(!/0\.30/.test(/var floor=[^;]*/.exec(fn)[0]),
@@ -155,7 +157,7 @@ test("turning the draw ON asks first", () => {
   /* THE COPY MUST QUOTE THE FLOOR THE BUILDER ACTUALLY USES. It said "reaches
      30%" for a while after the floor moved to 26% - a warning describing a
      rule that no longer existed, which is worse than no number at all. */
-  const floor = /var floor=\(c==="X"\)\?([0-9.]+):/.exec(grab("wspBuild"));
+  const floor = /DRAW_LEVELS=\[([0-9.]+),/.exec(src);   /* the normal day's floor */
   assert.ok(floor, "the draw floor must be findable");
   const pct = Math.round(parseFloat(floor[1]) * 100);
   assert.ok(ask.indexOf(pct + "%") >= 0,

@@ -361,7 +361,9 @@ test("an empty window says so and names the day, not the markets", () => {
 
 test("markets that build nothing say so and name the markets", () => {
   reset();
-  Object.keys(api.WSP.mk).forEach(k => { api.WSP.mk[k] = (k === "draw"); });  /* no draw clears 0.26 here */
+  /* GG+ with no SportyBet prices here builds nothing. (It was the draw until 19 Oct 2026, when the
+     draw's floor began dropping to 24% on a thin day - and this small board is a thin day.) */
+  Object.keys(api.WSP.mk).forEach(k => { api.WSP.mk[k] = (k === "gg2"); });
   api.renderWizardPanel();
   const html = api.ELS.wizardPanel.innerHTML;
   assert.match(html, /No game in all upcoming games clears the bar on the markets you have on\. Switch on more markets/);

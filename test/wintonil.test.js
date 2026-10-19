@@ -53,14 +53,18 @@ test("graded the same on the page and on the server: No loses only to a win with
 test("the builders take it only on a real price x1.02-1.15, and at 80%+", () => {
   const consts = /var WTN_MIN=[^\n]*/.exec(src)[0];
   const BOOKS = { sporty: { odds: "sportyOdds" }, bet9ja: { odds: "bet9jaOdds" } };
-  const make = (bankers, book = "sporty") => new Function("bookQuotes", "legOdd", "curBook", "bankersOn", "BOOKS",
-    consts + "\n" + grab("wtnOk") + "\nreturn wtnOk;")(
+  /* The gate with what it reads since 19 Oct 2026: the day's fixtures (wtnLevel). A busy day here,
+     so the strict 80% applies; the thin-day test below drops it. */
+  const D = "2026-10-24";
+  const busy = Array.from({ length: 10 }, () => ({ date: D, sportyOdds: { WTN_H_N: 1.12 }, p: 0.85 }));
+  const make = (bankers, book = "sporty", day = busy) => new Function("bookQuotes", "legOdd", "curBook", "bankersOn", "BOOKS", "mProb", "DATA",
+    consts + "\n" + grab("wtnPriced") + "\n" + grab("wtnOk") + "\nvar WTN_LV={};\n" + grab("wtnLevel") + "\nreturn wtnOk;")(
     (f, c, B) => !!(f[B.odds] && f[B.odds][c] > 1.01),
     (f, c, p, B) => (f[B.odds] && f[B.odds][c] > 1.01 ? f[B.odds][c] : f.sportyOdds && f.sportyOdds[c]),
-    () => BOOKS[book],
-    () => bankers, BOOKS);
+    () => Object.assign({ key: book }, BOOKS[book]),
+    () => bankers, BOOKS, (f, c) => (c === "WTN_H_N" ? f.p : null), { fixtures: day });
   const ok = make(false), bk = make(true);
-  const f = (o) => ({ sportyOdds: { WTN_H_N: o } });
+  const f = (o) => ({ date: D, sportyOdds: { WTN_H_N: o } });
   assert.strictEqual(ok(f(1.12), "WTN_H_N", 0.85), true);
   assert.strictEqual(ok(f(1.15), "WTN_H_N", 0.85), true, "x1.15 is the top");
   assert.strictEqual(ok(f(1.16), "WTN_H_N", 0.9), false, "never above x1.15");
@@ -77,6 +81,13 @@ test("the builders take it only on a real price x1.02-1.15, and at 80%+", () => 
   assert.strictEqual(b9({ sportyOdds: { WTN_H_N: 1.12 }, bet9jaOdds: { WTN_H_N: 1.25 } }, "WTN_H_N", 0.85), false, "the book's own price wins when it has one");
   assert.strictEqual(b9(f(1.2), "WTN_H_N", 0.85), false, "the cap holds on the stand-in price too");
   assert.match(grab("judgedP"), /if\(\/\^WTN_\[HA\]_N\$\/\.test\(code\)&&!wtnOk\(f,code,p\)\) return -1;/, "every builder goes through judgedP");
+  /* ONLY ON A THIN DAY (owner, 19 Oct 2026: "only on thin days! dont forget that rule"): with
+     too few games at 80% the day steps to 77%, then 75% - never lower, and the cap never moves. */
+  const thin = make(false, "sporty", busy.slice(0, 3));
+  assert.strictEqual(thin(f(1.12), "WTN_H_N", 0.76), true, "a thin day takes 75%+");
+  assert.strictEqual(thin(f(1.12), "WTN_H_N", 0.74), false, "never under 75%");
+  assert.strictEqual(thin(f(1.2), "WTN_H_N", 0.9), false, "the x1.15 cap holds on a thin day too");
+  assert.strictEqual(ok(f(1.12), "WTN_H_N", 0.76), false, "a busy day keeps 80%");
 });
 
 test("it is a pick and a chip, off by default, never the board's tip, and 1xBet is never asked", () => {

@@ -68,8 +68,10 @@ test("no top price: the slip style picks the length; a real price x1.02+ and 70%
   assert.strictEqual(ok(f("FH_DC_1X", 1.45), "FH_DC_1X", 0.69), false, "under 70% is refused");
   assert.strictEqual(ok({ sportyOdds: {} }, "FH_DC_1X", 0.9), false, "no price anywhere, no leg");
   assert.strictEqual(ok(f("SH_OVER_0.5", 1.1), "SH_OVER_0.5", 0.8), true, "SportyBet's price stands in for a book whose feed lacks it");
-  const wtn = new Function("bookQuotes", "legOdd", "curBook", "bankersOn", "BOOKS", consts + "\n" + grab("wtnOk") + "\nreturn wtnOk;")(
-    (f, c, B) => !!(f[B.odds] && f[B.odds][c] > 1.01), (f, c) => f.sportyOdds[c], () => BOOKS.sporty, () => false, BOOKS);
+  const wtn = new Function("bookQuotes", "legOdd", "curBook", "bankersOn", "BOOKS", "mProb", "DATA",
+    consts + "\n" + grab("wtnPriced") + "\n" + grab("wtnOk") + "\nvar WTN_LV={};\n" + grab("wtnLevel") + "\nreturn wtnOk;")(
+    (f, c, B) => !!(f[B.odds] && f[B.odds][c] > 1.01), (f, c) => f.sportyOdds[c], () => ({ key: "sporty", odds: "sportyOdds" }), () => false, BOOKS,
+    () => null, { fixtures: [] });
   assert.strictEqual(wtn(f("WTN_H_N", 1.18), "WTN_H_N", 0.9), false, "Win to nil keeps x1.15");
 });
 
