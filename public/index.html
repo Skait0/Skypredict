@@ -17958,6 +17958,13 @@ function byoConversion(){
     else if(!l.prediction) stuck.push({leg:l,why:"a market we don't carry"});
     else if(id==null&&!f) stuck.push({leg:l,why:to.label+" doesn't list this game"});
     else if(id==null) stuck.push({leg:l,why:to.label+" doesn't list this game"});
+    /* THE GAME IS LISTED, BUT IS THE MARKET SOLD? (19 Oct 2026, a real convert: 2nd half
+       over 0.5, 1st half under 2.5 and GG+ "moved" to Betway, which sells none of them, and
+       the booking's refusal rescue swapped in other bets.) BOOK_ONLY says which books sell
+       a market; a leg the target does not sell stays behind with its reason, like a game
+       the book does not list. */
+    else if(!bookAllows(l.prediction,to)) stuck.push({leg:l,why:to.label+" doesn't sell "+
+      (f?mLabel(f,l.prediction).replace(/<[^>]+>/g,""):"this market")});
     else {
       /* Only when the line itself cannot travel. A market the other book
          sells is never substituted. */

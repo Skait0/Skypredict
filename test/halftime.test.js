@@ -115,3 +115,17 @@ test("My slips settles half-time legs exactly as the server does, and waits with
   }
   assert.match(fs.readFileSync(path.join(__dirname, "..", "api", "results.js"), "utf8"), /o\.hth = r\.hth; o\.hta = r\.hta;/, "the results feed carries it");
 });
+
+test("the converter keeps behind a leg whose market the target book does not sell", () => {
+  /* 19 Oct 2026, a real convert of SportyBet YFE5TV: 2nd half over 0.5, 1st half under 2.5
+     and GG+ "moved" to Betway, which sells none of them, and the booking's refusal rescue
+     swapped in other bets (BW7B3F6C3A). BOOK_ONLY now stops them at the preview, named. */
+  const conv = grab("byoConversion");
+  assert.match(conv, /else if\(!bookAllows\(l\.prediction,to\)\) stuck\.push\(\{leg:l,why:to\.label\+" doesn't sell "/);
+  const bookAllows = new Function("BOOK_ONLY", "curBook", grab("bookAllows") + "\nreturn bookAllows;")(
+    new Function(/var BOOK_ONLY=\{[\s\S]*?\};/.exec(src)[0] + "\nreturn BOOK_ONLY;")(), () => ({ key: "sporty" }));
+  assert.strictEqual(bookAllows("SH_OVER_0.5", { key: "betway" }), false);
+  assert.strictEqual(bookAllows("GG2_Y", { key: "betpawa" }), false);
+  assert.strictEqual(bookAllows("FH_DC_1X", { key: "betway" }), true, "Betway does sell half-time 1X");
+  assert.strictEqual(bookAllows("GG2_Y", { key: "bet9ja" }), true);
+});
