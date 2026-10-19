@@ -110,6 +110,13 @@
     return "<div class='swa-xseal swa-wpseal'><img src='/fw/pass-crest.svg' alt='Wizard Pass crest' width='80' height='92'>"+
       "<span><b>Wizard Pass</b><small>Thanks for backing the Wizard.</small></span></div>";
   }
+  /* THE ADMIN CREST (owner, 19 Oct 2026: "i dont see a badge for me the admin. i thought wed
+     made one" - 18 Oct gave admin the platinum colour only): public/fw/admin-crest.svg, the
+     shield in platinum with the Wizard's crown and a slow light across it. */
+  function adCrestHtml(){
+    return "<div class='swa-xseal swa-adseal'><img src='/fw/admin-crest.svg' alt='Admin crest' width='80' height='92'>"+
+      "<span><b>Admin</b><small>Keeper of the Wizard.</small></span></div>";
+  }
   function subHtml(q,role,plan,until,fw,fwNo){
     var u=role==="plus"?dayMonth(until):"";
     var what=role==="admin"?"Every feature, no limit":role==="ff"?"Every feature, 100 codes a day":
@@ -117,7 +124,7 @@
     var cls=clsOf(role,fw);
     return "<p class='swa-h'>Your plan</p><div class='swa-card"+(fw?" swa-fwcard":role==="ff"?" swa-ffcard":role==="plus"?" swa-wpcard":role==="admin"?" swa-adcard":"")+"'><div class='swa-subtop'><span><b class='swa-c-"+cls+"'>"+esc(plan||"Free plan")+"</b><small>"+what+"</small></span>"+
       (canBuy(role)?"<button class='swa-pillbtn swa-pgo' type='button' data-plus>"+(role==="plus"?"Add days":"Get Wizard Pass")+"</button>":"")+"</div>"+
-      (fw?fwHtml(fwNo):role==="ff"?ffHtml():role==="plus"?wpCrestHtml():"")+
+      (fw?fwHtml(fwNo):role==="ff"?ffHtml():role==="plus"?wpCrestHtml():role==="admin"?adCrestHtml():"")+
       (role==="admin"||q?"<div class='swa-subuse'>"+codesHtml(q,role).replace("class='swa-q'","class='swa-q swa-q0'")+(role==="admin"?"":role==="plus"||role==="ff"?"<small>Resets at midnight</small>":"")+"</div>":"")+"</div>";
   }
   /* THE PLUS SCREEN (owner, 16 Oct 2026). o = GET /api/pay/offer plus role and
@@ -670,7 +677,7 @@
     /* Passes: Saira numerals for the price, the month marked with a flat tag. */
     ".swa-fw{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:var(--r-sm);border:1px solid var(--cls-founder);color:var(--cls-founder);font-size:11px;font-weight:800}"+
     ".swa-mplus{color:var(--accent)}.swa-mplus svg{color:var(--accent)}.swa-mplus .swa-r{font-size:11.5px;font-weight:700}"+
-    ".swa-ffcard{border-color:var(--electric-rim)}.swa-ffseal b{color:var(--electric)!important}"+
+    ".swa-ffcard{border-color:var(--electric-rim)}.swa-ffseal b{color:var(--electric)!important}.swa-adseal b{color:var(--cls-admin)!important}"+
     ".swa-c-free{color:var(--cls-free)!important}.swa-c-pass{color:var(--accent)!important}.swa-c-founder{color:var(--cls-founder)!important}.swa-c-ff{color:var(--electric)!important}.swa-c-admin{color:var(--cls-admin)!important}"+
     ".swa-wpcard{border-color:var(--accent-rim)}.swa-adcard{border-color:var(--cls-admin-rim)}.swa-fwseal b{color:var(--cls-founder)!important}"+
     ".swa-pass{--tier:var(--accent)}.swa-tier-day{--tier:var(--tier-day)}.swa-tier-week{--tier:var(--tier-week)}.swa-tier-fw{--tier:var(--cls-founder)}"+
