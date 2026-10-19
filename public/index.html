@@ -1982,6 +1982,12 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .ask-card .confirm-card .ca{justify-content:stretch;position:sticky;bottom:-16px;z-index:1;
   margin-bottom:-16px;padding:10px 0 16px;background:var(--card)}
 .ask-card .confirm-card .ca button{flex:1 1 auto}
+/* The one-market bookie ask, compact (owner, 19 Oct 2026: "its too big"). */
+.ask-card:has(.ask-compact){width:min(360px,100%);padding:14px 14px 12px}
+.ask-card .ask-compact>p{font-size:13.5px;line-height:1.35;margin:0 0 8px}
+.ask-card .ask-compact .ca{gap:7px;bottom:-12px;margin-bottom:-12px;padding:8px 0 12px}
+.ask-card .ask-compact .ca button{font-size:13px;padding:9px 12px}
+.confirm-card .confirm-go.ask-bk{background:var(--raise);color:var(--text);border:1px solid var(--line)}
 /* Compact on purpose (owner, 29 Sep 2026: "reduce the font size and tighten
    the swap pills, make it small but readable"). 12px is the floor. */
 .ask-refusal>p:first-child{font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
@@ -24034,19 +24040,23 @@ function renderShared(){
        ran to five lines at 390px and the last of them sat on the panel's own
        bottom edge - reported as cut off. It pops up since 19 Oct 2026. Same two facts, once each: who
        sells it, and what the tap will do. */
+    /* Bookies in their wordmarks, and compact (owner, 19 Oct 2026: "doesnt have the bookie
+       colors ... its too big"). The switch buttons are dark bookie chips: a red wordmark on
+       the red confirm button would vanish. */
+    var marks=function(keys){ var l=keys.map(bookMark); return l.length<2?(l[0]||""):l.slice(0,-1).join(", ")+" and "+l[l.length-1]; };
     showPrompt("mkAsk",
-      "<div class='confirm-card'><p><b>"+esc(lbl)+": "+esc(bookNames(have,"and"))+
-      " only.</b> "+esc(bookNames(lose,"and"))+" "+(lose.length>1?"do":"does")+
+      "<div class='confirm-card ask-compact'><p><b>"+esc(lbl)+": "+marks(have)+
+      " only.</b> "+marks(lose)+" "+(lose.length>1?"do":"does")+
       " not sell this line.</p>"+
       "<p>"+(here
-        ? "You are on "+esc(curBook().label)+". Turn it on?"
+        ? "You are on "+bookMark(curBook().key)+". Turn it on?"
         : "Switch book and turn it on?")+"</p>"+
       "<div class='ca'>"+
       (here ? "<button class='confirm-go' type='button' data-use='"+esc(curBook().key)+
               "'>Turn it on</button>" : "")+
       have.filter(function(x){return !here||x!==curBook().key;}).map(function(x){
-        return "<button class='confirm-go' type='button' data-use='"+esc(x)+"'>"+
-          (here?"Use ":"Switch to ")+esc(BOOKS[x].label)+"</button>";}).join("")+
+        return "<button class='confirm-go ask-bk' type='button' data-use='"+esc(x)+"'>"+
+          (here?"Use ":"Switch to ")+bookMark(x)+"</button>";}).join("")+
       "<button class='confirm-cancel' type='button'>Cancel</button></div></div>","Before you turn it on");
     var h=promptEl("mkAsk");
     h.querySelectorAll(".confirm-go").forEach(function(btn){

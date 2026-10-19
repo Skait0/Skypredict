@@ -333,8 +333,9 @@ test("the chip asks before it narrows which bookmakers the slip can go to", () =
   /* It has to name the books - that is the whole request - and it has to name
      the one that cannot take it, because that is what the reader is giving
      up. Both come off the chip's own list, never a hard-coded name. */
-  assert.match(fn, /bookNames\(have,"and"\)/, "the prompt no longer names the books that sell it");
-  assert.match(fn, /bookNames\(lose,"and"\)/, "the prompt no longer names what it costs");
+  /* As wordmarks since 19 Oct 2026 (marks(), built on bookMark). */
+  assert.match(fn, /marks\(have\)/, "the prompt no longer names the books that sell it");
+  assert.match(fn, /marks\(lose\)/, "the prompt no longer names what it costs");
   assert.doesNotMatch(fn, /Bet9ja|BetKing|SportyBet/,
     "a book is named in the prompt's own text rather than read off the list");
   /* A button per book, and turning the market on is part of the same tap:
@@ -369,7 +370,7 @@ function runAskBookOnly(curKey) {
     esc: (s) => String(s),
     window: {},
   };
-  new Function(...Object.keys(env), grab("bookNames") + body + "\nreturn window.askBookOnly;")
+  new Function(...Object.keys(env), grab("bookNames") + grab("bookMark") + body + "\nreturn window.askBookOnly;")
     (...Object.values(env))("dro15", ["bet9ja", "betking"]);
   return host.innerHTML;
 }
@@ -390,6 +391,12 @@ test("the prompt tells the reader which bookmakers can take the bet", () => {
   assert.match(onB9, /Turn it on/);
   assert.doesNotMatch(onB9, /Switch to Bet9ja/);
   assert.match(onB9, /data-use='betking'/, "the other book that sells it is still offered");
+  /* Owner, 19 Oct 2026: bookies in their wordmark colours, and a compact card. */
+  assert.match(onSporty, /class='confirm-card ask-compact'/);
+  assert.match(onSporty, /class='confirm-go ask-bk'/, "switch buttons are dark bookie chips, so a red wordmark shows");
+  const fn = src.slice(src.indexOf("window.askBookOnly=function"), src.indexOf("\n  };", src.indexOf("window.askBookOnly=function")));
+  assert.doesNotMatch(fn, /esc\(bookNames\(/, "plain bookie names are back in the prompt");
+  assert.match(fn, /keys\.map\(bookMark\)/);
 });
 
 test("the panel the prompt opens in has no fixed ceiling to be cut off at", () => {
