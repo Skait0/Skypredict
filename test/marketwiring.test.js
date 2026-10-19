@@ -50,6 +50,7 @@ const FIXTURE = {
   home: "Arsenal", away: "Chelsea", date: "2026-09-16", league: "England Premier League",
   home_p: 0.52, draw_p: 0.24, away_p: 0.24, dc1x: 0.76, dcx2: 0.48, dc12: 0.76,
   anybody: 0.76, o15: 0.80, o25: 0.56, o35: 0.30, o45: 0.12, wtnh: 0.20, wtna: 0.10, btts: 0.54, fh_o05: 0.70,
+  fh_u25: 0.88, ht_1x: 0.80, sh_o05: 0.78, sh_u25: 0.82,
   h_o05: 0.74, h_o15: 0.40, a_o05: 0.70, a_o15: 0.36,
   draw_o25: 0.14, draw_o15: 0.19, draw_btts: 0.17,
   home_o25: 0.63, home_o15: 0.70, home_btts: 0.62,
