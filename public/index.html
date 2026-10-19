@@ -23609,8 +23609,10 @@ function emptyWhy(){
     if(!on.length) return "Switch a market on to build anything.";
     var locked=on.filter(function(m){ return p.tier<m.tier; });
     if(locked.length===on.length){
+      /* Name the level it opens at (owner, 19 Oct 2026: GG+ alone below Bold just said "No games"). */
+      var need=Math.max.apply(null,locked.map(function(m){return m.tier;}));
       return locked.map(function(m){return m.label;}).join(" and ")+
-        (locked.length===1?" unlocks":" unlock")+" further right on the dial.";
+        (locked.length===1?" opens":" open")+" at "+riskWord(need>=2?66:33)+". Slide right.";
     }
     /* Unlocked, so ask what they actually reach on today's card. */
     var fx=scopeFixtures()||[], best=0, bestName="";
@@ -24724,7 +24726,8 @@ function renderBuilderOutput(){
   /* Only when the card really ran out (BUILD._pool): Fewer games is short of the dial's
      count by design, and was told its window had run dry. */
   var _short = !firstVisit && picks.length < p.maxGames && picks.length >= (BUILD._pool||0);
-  $("riskSub").textContent=firstVisit ? "Move slider to build"
+  var _why=(!firstVisit&&!picks.length&&BUILD.mode==="slider")?emptyWhy():"";
+  $("riskSub").textContent=firstVisit ? "Move slider to build" : _why ? _why
     : (picks.length+" game"+(picks.length===1?"":"s")+" \u00b7 each pick "+P0(p.minConf)+"%+"+
        (_short ? " \u00b7 all that clear the bar in this window" : ""));
   // Stats
@@ -24737,7 +24740,7 @@ function renderBuilderOutput(){
   if(_rb){ _rb.innerHTML=firstVisit ? "Drag me" : (picks.length
       ? "<b>"+pre+(odds>=100?Math.round(odds).toLocaleString("en"):odds.toFixed(2))+"</b><i>"+
         picks.length+" game"+(picks.length===1?"":"s")+"</i>"
-      : "No games"); }
+      : (/ opens? at (w+)./.test(_why) ? "Opens at "+RegExp.$1 : "No games")); }
   var avg=picks.length?picks.reduce(function(t,c){return t+c.p;},0)/picks.length:0;
   /* On a jackpot ticket the confidence tile is dropped rather than shown.
      It reads as the chance of the slip and it is nothing of the kind - it is

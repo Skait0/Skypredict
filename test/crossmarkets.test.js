@@ -776,8 +776,9 @@ test("an empty slip says which control to move", () => {
      useful for none. Reported on Win a half: on, nothing built at Safe or
      Balanced, no reason given - and the board was never the problem. */
   const fn = src.slice(src.indexOf("function emptyWhy()"), src.indexOf("function renderBuilder("));
-  assert.ok(fn.includes("unlocks") && fn.includes("further right on the dial"),
-    "a market above the dial must say so");
+  /* And name the level it opens at (19 Oct 2026: GG+ alone below Bold said only "No games"). */
+  assert.ok(fn.includes('" opens":" open")+" at "+riskWord(') && fn.includes(". Slide right."),
+    "a market above the dial must say so, and name the level it opens at");
   assert.match(fn, /tops out at/, "a market under the floor must say so");
   assert.match(fn, /Slide right, or switch on a safer market/);
   /* Every chip must be mappable to its codes, or the sentence names nothing. */
