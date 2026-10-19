@@ -27,7 +27,9 @@ test("booking questions are asked in the pop-up, the build's own two stay in the
     fn("promptEl") + "\n" + decl("SCROLL_HELD") + "\n" + fn("scrollLock") + "\n" + fn("askLock") + "\n" +
     fn("showPrompt") + "\n" + fn("clearPrompt") +
     "\nreturn {showPrompt:showPrompt, clearPrompt:clearPrompt, promptEl:promptEl};")($);
-  for (const t of ["bookResult", "myBookResult", "byoConvOut", "codeSaferHost"]) {
+  /* mkAsk joined the pop-up on 19 Oct 2026 (owner: "make it pop up because sometimes, i have to
+     scroll down to accept"). */
+  for (const t of ["bookResult", "myBookResult", "byoConvOut", "codeSaferHost", "mkAsk"]) {
     assert.ok(api.showPrompt(t, "<div class='confirm-card'>ask</div>"), t);
     assert.strictEqual(els.askBody.innerHTML, "<div class='confirm-card'>ask</div>", t + " goes to the pop-up");
     assert.strictEqual(els.askModal.hidden, false, t + " opens it");
@@ -37,7 +39,7 @@ test("booking questions are asked in the pop-up, the build's own two stay in the
     api.clearPrompt(t);
     assert.strictEqual(els.askModal.hidden, true, t + " closes it");
   }
-  for (const t of ["payAsk", "mkAsk"]) {
+  for (const t of ["payAsk"]) {
     api.showPrompt(t, "inline");
     assert.strictEqual(els[t].innerHTML, "inline", t + " stays beside its chips");
   }

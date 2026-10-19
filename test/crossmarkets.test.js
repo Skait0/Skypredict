@@ -363,7 +363,7 @@ function runAskBookOnly(curKey) {
     MKT_CFG: [{ k: "dro15", label: "Draw or o1.5", only: ["bet9ja", "betking"] }],
     BUILD: { mk: {} }, WSP: { mk: {} },
     curBook() { return env.BOOKS[curKey]; },
-    $: () => host,
+    $: () => host, promptEl: () => host,
     showPrompt: (t, html) => { host.innerHTML = html; return true; },
     clearPrompt() {}, setBook() {}, renderBuilder() {},
     esc: (s) => String(s),

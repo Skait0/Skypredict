@@ -13323,9 +13323,10 @@ function bookWire(){
    Get code stayed hidden until a bookie toggle happened to call clearPrompts.
    Reported as "the get code button disappears till i toggle between the
    bookies". A pop-up covers the button while it asks, so nothing is hidden.
-   The two asks about the build itself (payAsk, mkAsk) stay in the panel:
-   they are about the chips they sit under, not about a booking. */
-var INLINE_ASK={payAsk:1,mkAsk:1};
+   The payout ask stays in the panel, beside the payout it is about. The chip
+   asks (mkAsk) pop up too since 19 Oct 2026 (owner: "make it pop up because
+   sometimes, i have to scroll down to accept"). */
+var INLINE_ASK={payAsk:1};
 var ASK_FOR=null;
 function askHost(){
   var m=$("askModal"); if(m) return m;
@@ -23881,8 +23882,8 @@ function renderShared(){
       "they do.</p>"+
       "<p>Add draws to what the builder can pick?</p>"+
       "<div class='ca'><button class='confirm-go' type='button'>Add draws</button>"+
-      "<button class='confirm-cancel' type='button'>No thanks</button></div></div>")) return;
-    var host=$("mkAsk");
+      "<button class='confirm-cancel' type='button'>No thanks</button></div></div>","Before you add it")) return;
+    var host=promptEl("mkAsk");
     host.querySelector(".confirm-go").addEventListener("click",function(){
       clearPrompt("mkAsk");
       WSP.mk[k]=true;               /* the wizard only - never BUILD.mk */
@@ -23921,7 +23922,7 @@ function renderShared(){
     /* TWO SHORT LINES, because this one is read on a phone inside the filters
        panel rather than in a modal with the screen to itself. The long version
        ran to five lines at 390px and the last of them sat on the panel's own
-       bottom edge - reported as cut off. Same two facts, said once each: who
+       bottom edge - reported as cut off. It pops up since 19 Oct 2026. Same two facts, once each: who
        sells it, and what the tap will do. */
     showPrompt("mkAsk",
       "<div class='confirm-card'><p><b>"+esc(lbl)+": "+esc(bookNames(have,"and"))+
@@ -23936,8 +23937,8 @@ function renderShared(){
       have.filter(function(x){return !here||x!==curBook().key;}).map(function(x){
         return "<button class='confirm-go' type='button' data-use='"+esc(x)+"'>"+
           (here?"Use ":"Switch to ")+esc(BOOKS[x].label)+"</button>";}).join("")+
-      "<button class='confirm-cancel' type='button'>Cancel</button></div></div>");
-    var h=$("mkAsk");
+      "<button class='confirm-cancel' type='button'>Cancel</button></div></div>","Before you turn it on");
+    var h=promptEl("mkAsk");
     h.querySelectorAll(".confirm-go").forEach(function(btn){
       btn.addEventListener("click",function(){ turnOn(btn.dataset.use); });
     });
