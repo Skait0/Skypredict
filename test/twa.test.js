@@ -47,3 +47,10 @@ test("the app opening runs once per app open, in the app only, and gets out of t
   assert.ok(html.includes('o.querySelector("img").setAttribute("src","/fw/app-open.webp")'), "the icon is fetched only in the app");
   assert.ok(/@media \(prefers-reduced-motion:reduce\)\{\n  \.sw-open #swOpen\{animation:soOut/.test(html), "reduced motion gets a plain fade");
 });
+
+test("Play's account deletion page exists, lists the steps, and says what is deleted and kept", () => {
+  const P = require("../lib/pages.js");
+  const h = P.renderDeleteAccount("20 October 2026");
+  for (const s of ["Tap <strong>Delete account</strong>", "What is deleted", "What is kept", "hello@soccerwizard.live"]) assert.ok(h.includes(s), s);
+  assert.ok(read("scripts/prebuild.js").includes('["/delete-account", () => P.renderDeleteAccount(updated)]'));
+});
