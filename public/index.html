@@ -16150,6 +16150,10 @@ function orbHTML(){
 function bookRounds(picks,B,src,target,h,round){
   round=round||0;
   if(!round&&window.swGate&&!swGate("book",gateDetail(picks,B),function(){bookRounds(picks,B,src,target,h,0);},"")){ h.idle(); return; }
+  /* Every Cancel calls h.stop. Make it safer, the converter and the board passed none, so
+     Cancel on the moved-line question left their button busy for good (a reader, 20 Oct 2026:
+     "the make safest option he picks is stuck and he cant do anything again"). */
+  if(!h.stop) h.stop=h.idle;
   /* Only for callers that ask (h.dropStarted: the converter's edit tools).
      Every other path books exactly as it did before 5 Oct 2026. */
   if(!round&&h.dropStarted){

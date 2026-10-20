@@ -236,3 +236,30 @@ test("a pulled game is dropped after one swap, and the rest of the ticket books"
   assert.strictEqual(calls.length, 3, "book, one swap, then leave it out - not four swaps: " + JSON.stringify(calls));
   assert.ok(toasts.some((t) => /won't take at all/.test(t)), "and the reader is told");
 });
+
+/* A reader, 20 Oct 2026: Make it safer, the pop-up says a line has moved, Cancel - and the level
+   he picked stays stuck, nothing works again. Cancel calls h.stop; Make it safer, the converter
+   and the board never passed one, so their buttons were never released. bookRounds now falls
+   back to idle. */
+test("Cancel on the moved-line question releases a caller that passed no stop", async () => {
+  const picks = [];
+  for (let i = 0; i < 4; i++) picks.push(leg(i, true));
+  const stubs = {
+    $: () => ({ innerHTML: "" }),
+    bookFetch() { return Promise.resolve({ success: true, booking_code: "NOPE" }); },
+    lineCheck(p, B, t, go, stop) { setImmediate(() => { if (stop) stop(); }); return true; },
+  };
+  const names = Object.keys(stubs);
+  const body = "var window={};function fixtureById(){return null;}\n" + BOOKS.prelude("sporty") +
+    "\nvar REFUSAL_ROUNDS=" + ROUNDS + ";\n" + WHY().replace("function lineCheck(){ return false; }", "") + fn("dropUnbookable") + "\n" + fn("slipMax") + ";var BETSLIP_MAX=50;" + fn("bookRounds") +
+    "\nreturn function(p,src,t,h){ return bookRounds(p,BOOKS.sporty,src,t,h); };";
+  const bookRounds = new Function(...names, body)(...names.map((k) => stubs[k]));
+  for (const src of ["safer", "convert", "board"]) {
+    const got = await new Promise((done) => {
+      setTimeout(() => done("stuck"), 300);
+      bookRounds(picks, src, "codeSaferHost", { busy() {}, idle() { done("released"); },
+        code() { done("code"); }, fail() { done("fail"); } });
+    });
+    assert.strictEqual(got, "released", src);
+  }
+});
