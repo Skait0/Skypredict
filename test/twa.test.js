@@ -38,3 +38,12 @@ test("the built pages (Daily codes, matches) hide Load it and Download app in th
   assert.strictEqual(src.split("${TWA_HEAD}").length - 1, 2, "both page heads carry it");
   assert.ok(P);
 });
+
+test("the app opening runs once per app open, in the app only, and gets out of the way", () => {
+  const html = read("public/index.html");
+  assert.ok(html.includes('if(sessionStorage.getItem("sw.twa")==="1"&&sessionStorage.getItem("sw.open")!=="1"){'), "app only, once a session");
+  assert.ok(html.includes("#swOpen{display:none}"), "hidden on the website");
+  assert.ok(/document\.documentElement\.classList\.remove\("sw-open"\); if\(o\.parentNode\) o\.parentNode\.removeChild\(o\); \},1600\)/.test(html), "removed after 1.6s");
+  assert.ok(html.includes('o.querySelector("img").setAttribute("src","/fw/app-open.webp")'), "the icon is fetched only in the app");
+  assert.ok(/@media \(prefers-reduced-motion:reduce\)\{\n  \.sw-open #swOpen\{animation:soOut/.test(html), "reduced motion gets a plain fade");
+});
