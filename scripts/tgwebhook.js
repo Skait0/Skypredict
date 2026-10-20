@@ -26,7 +26,7 @@ async function tg(method, body) {
   await tg("setMyCommands", { commands: [
     { command: "start", description: "Open the menu" },
     { command: "convert", description: "Convert a code to your bookie" },
-    { command: "build", description: "Build a slip: pick your odds" },
+    { command: "build", description: "Build me a slip: tap a payout, we pick" },
     { command: "check", description: "Check a booking code" },
     { command: "dailyodds", description: "Today's x5 to x1000 codes" },
     { command: "bookie", description: "Change your bookie" },

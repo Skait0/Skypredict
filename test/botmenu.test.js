@@ -9,9 +9,10 @@ const ASK = require("../lib/ask.js");
 test("the menu carries the bookie in its labels, so the bot never has to remember it", () => {
   const kb = ASK.menuKeyboard("bet9ja");
   const labels = kb.keyboard.flat().map((b) => b.text);
-  assert.ok(labels.includes("🎯 Build a slip · Bet9ja"));
+  assert.ok(labels.includes("🧙 Build me a slip · Bet9ja"));
   assert.ok(kb.is_persistent && kb.resize_keyboard);
-  assert.deepStrictEqual(ASK.parseMenu("🎯 Build a slip · Bet9ja"), { kind: "menuBuild", book: "bet9ja" });
+  assert.deepStrictEqual(ASK.parseMenu("🧙 Build me a slip · Bet9ja"), { kind: "menuBuild", book: "bet9ja" });
+  assert.deepStrictEqual(ASK.parseMenu("🎯 Build a slip · Bet9ja"), { kind: "menuBuild", book: "bet9ja" }, "a keyboard from before 20 Oct still works");
   assert.deepStrictEqual(ASK.parseMenu("📅 Daily odds · 1xBet"), { kind: "ladder", book: "onexbet" });
   assert.deepStrictEqual(ASK.parseMenu("📅 Ladder · 1xBet"), { kind: "ladder", book: "onexbet" }, "an old keyboard still works");
   assert.deepStrictEqual(ASK.parseMenu("🏦 Change bookie"), { kind: "bookie" });
@@ -82,11 +83,13 @@ test("/start asks for the bookie first; the answer sets the menu; Build a slip o
     await b.tap("bk|betking");
     const set = b.sent.filter((s) => s.method === "sendMessage");
     assert.ok(set.some((s) => s.body.reply_markup && s.body.reply_markup.keyboard &&
-      s.body.reply_markup.keyboard.flat().some((k) => k.text === "🎯 Build a slip · BetKing")), "the menu, on that bookie");
-    await b.send("🎯 Build a slip · BetKing");
+      s.body.reply_markup.keyboard.flat().some((k) => k.text === "🧙 Build me a slip · BetKing")), "the menu, on that bookie");
+    await b.send("🧙 Build me a slip · BetKing");
     const last = b.sent[b.sent.length - 1].body;
     const data = last.reply_markup.inline_keyboard.flat().map((k) => k.callback_data);
-    assert.ok(data.includes("bd|betking|50|0"));
+    /* Pick for me's payouts, the site's five (20 Oct 2026). */
+    for (const x of [2, 5, 20, 100, 1000]) assert.ok(data.includes("bd|betking|" + x + "|0"), "x" + x);
+    assert.match(last.text, /Pick for me/);
   } finally { b.done(); }
 });
 

@@ -22187,21 +22187,31 @@ function pickForMe(target,day,B,seed){
     if(ok.length) codes=ok;
     else if(pricedFixture(f,B)) return;
     else codes=codes.filter(function(c){ return safeUnpriced(c); });
-    var best=null;
+    var opts=[];
     codes.forEach(function(c){
       var v0=mProb(f,c); if(v0==null||isNaN(v0)) return;
       var p=judgedP(f,c,v0); if(!(p>=0.5)) return;
       var o=legOdd(f,c,v0,B); if(!(o>=min)) return;
-      if(!best||p>best._p) best={f:f,id:fid(f),code:c,p:v0,_p:p,o:o,eventId:f.eventId||null};
+      opts.push({f:f,id:fid(f),code:c,p:v0,_p:p,o:o,eventId:f.eventId||null});
     });
-    if(best) pool.push(best);
+    if(opts.length){ opts.sort(function(a,b){ return b._p-a._p; }); pool.push(opts); }
   });
   /* Near-equals swap places per reader: +-1.5 points of noise, seeded, so a reader keeps
      their slip until they shuffle and the surest games still lead. */
-  pool.forEach(function(x){ x._k=x._p+(h32(seed+"|"+x.id)-0.5)*0.03; });
+  pool.forEach(function(x){ x._k=x[0]._p+(h32(seed+"|"+x[0].id)-0.5)*0.03; });
   pool.sort(function(a,b){ return b._k-a._k; });
-  var picks=[], tot=1;
-  for(var i=0;i<pool.length&&tot<target&&picks.length<max;i++){ picks.push(pool[i]); tot*=pool[i].o; }
+  /* No market family on more than 40% of the slip (owner, 14 Oct 2026, on Daily odds: "all the
+     games always seem to double chance"; the bot's x5 on 20 Oct was 10 of 12 Under 4.5). Each
+     game gives its surest leg in a family with room, else its next surest. lib/bigodds.js family. */
+  function fam(c){ return (c==="1X"||c==="X2"||c==="12")?"dc":(c==="1"||c==="2")?"win":/^(HOME|AWAY)_OVER_/.test(c)?"team":
+    /^OVER_/.test(c)?"over":/^UNDER_/.test(c)?"under":(c==="GG"||c==="NG")?"btts":/^NR3_/.test(c)?"nr3":/^WTN_/.test(c)?"wtn":c; }
+  var picks=[], tot=1, fc={};
+  for(var i=0;i<pool.length&&tot<target&&picks.length<max;i++){
+    var cap=Math.max(2,Math.ceil(0.4*(picks.length+1)));
+    var l=pool[i].filter(function(o){ return (fc[fam(o.code)]||0)<cap; })[0];
+    if(!l) continue;
+    fc[fam(l.code)]=(fc[fam(l.code)]||0)+1; picks.push(l); tot*=l.o;
+  }
   return {picks:picks, odds:tot, short:tot<target};
 }
 var PFM={day:"0",shuffles:0,busy:false,timers:[]};

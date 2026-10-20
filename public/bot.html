@@ -72,7 +72,7 @@ code{font-family:ui-monospace,Consolas,monospace;background:rgba(127,127,127,.18
   <p class="lead">Our model picks the games. You pick the odds. Tap a tab to see how.</p>
 
   <div class="tabs" role="tablist" aria-label="What the bot does">
-    <button class="tab" role="tab" aria-selected="true" data-d="build">🎯 Build a slip</button>
+    <button class="tab" role="tab" aria-selected="true" data-d="build">🧙 Build me a slip</button>
     <button class="tab" role="tab" aria-selected="false" data-d="check">🔍 Check a code</button>
     <button class="tab" role="tab" aria-selected="false" data-d="safer">🛡 Make it safer</button>
     <button class="tab" role="tab" aria-selected="false" data-d="convert">🔁 Other bookie</button>
@@ -100,10 +100,10 @@ code{font-family:ui-monospace,Consolas,monospace;background:rgba(127,127,127,.18
 (function(){
   /* Each demo: what it is, then the chat - "me" and "bot" lines, with optional buttons. */
   var D={
-    build:{what:["Type a number.","The bot builds a slip that pays about that, and books it on your bookie."],chat:[
-      {me:"50"},
-      {bot:"🎯 <b>Your x50 on SportyBet</b> 🔥\n<code>ZQ8KQ4</code> · 9 games · <b>×52.40</b>\n\nBarcelona to score · 86%\nArsenal or draw · 84%\nOver 1.5 goals · 81%\n+6 more",
-       keys:["🔁 Another x50","🛡 Edit for me","✂️ Trim"],hot:0}]},
+    build:{what:["Tap Build me a slip, then a payout, or type any number.","Pick for me takes the surest market in each game and books it on your bookie. x20 and up come with Wizard Pass."],chat:[
+      {me:"5"},
+      {bot:"🧙 <b>Picked for you: x5 on SportyBet</b> 🔥\n<code>ZQ8KQ4</code> · 10 games · <b>×5.21</b>\n\nArsenal v Everton · Under 4.5 goals · 83%\nMarseille to score · 83%\nAth Bilbao v Sociedad · Over 1.5 goals · 76%\n+7 more",
+       keys:["🔁 Another x5","🛡 Edit for me","✂️ Trim"],hot:0}]},
     check:{what:["Send any booking code.","You see which games are strong, which are weak, and what it pays."],chat:[
       {me:"HUW6YC"},
       {bot:"🔮 <b>Wizard's Eye · SportyBet HUW6YC</b>\n8 games · <b>6 strong</b>, 2 to tighten\n\n🔥 Inter to win · 81%\n🔥 Over 1.5 (Ajax v PSV) · 80%\n👀 Roma to win · 48%\n👀 Both teams score · 51%",

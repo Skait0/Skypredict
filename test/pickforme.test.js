@@ -45,8 +45,8 @@ test("each game gives its surest market, and the slip stops at the payout", () =
   const pick = engine(Array.from({ length: 30 }, (_, i) => game(i)));
   const r = pick(5, "0", null, "s");
   assert.ok(r.odds >= 5 && !r.short);
-  assert.ok(r.picks.every((c) => c.code === "1X"), "the surest market in each game");
-  assert.strictEqual(r.picks.length, 9, "1.2^9 is the first to reach x5");
+  assert.strictEqual(r.picks[0].code, "1X", "the surest market leads");
+  assert.ok(r.picks.length <= 9, "reaches x5 in about nine");
 });
 
 test("never more than 40 games, or the bookie's own limit", () => {
@@ -112,4 +112,12 @@ test("the chooser sits under the code pop-up, the toasts and booking questions",
   const chooser = +/\.bm-scrim\{[^}]*z-index:(\d+)/.exec(src)[1];
   const code = +/\.code-modal-scrim\{[^}]*z-index:(\d+)/.exec(src)[1];
   assert.ok(chooser > 151 && chooser < 200 && chooser < code, "chooser " + chooser + ", code pop-up " + code);
+});
+
+test("no market family on more than 40% of the slip, on the site as in the bot", () => {
+  /* Owner, 14 Oct 2026, on Daily odds: "all the games always seem to double chance". */
+  const g = Array.from({ length: 30 }, (_, i) => game(i));
+  const r = engine(g)(20, "0", null, "s");
+  const dc = r.picks.filter((c) => c.code === "1X" || c.code === "X2").length;
+  assert.ok(dc <= Math.max(2, Math.ceil(0.4 * r.picks.length)), dc + " double chances in " + r.picks.length);
 });

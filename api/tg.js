@@ -424,36 +424,39 @@ async function onSaferAsk(chat, replyTo, book, code, legs) {
     { text: "Keep as is", callback_data: ["bk0", book, code].join("|") }]] });
 }
 
-/* BUILD A SLIP (owner, 19 Oct 2026): a payout -> a slip from today's board on the reader's
-   bookie, picked by the daily ladder's own rule (lib/bigodds.js pick) and its leg budgets.
-   "Another one" leaves out the games of the slips before it. */
+/* BUILD ME A SLIP: PICK FOR ME (owner, 20 Oct 2026: "now do the telegram"). The site's Pick for
+   me (lib/pickforme.js): a payout -> the surest market in each game still to come today, on the
+   reader's bookie, at most 40 games. Today first; when today cannot reach the payout, the coming
+   days, and the message says so. x2 and x5 for everyone, x20 and up with Wizard Pass. "Another"
+   is a new shuffle for this reader, not a different rule. */
 async function onBuild(chat, replyTo, fromId, book, target, nth) {
   const say = (text, markup) => tg("sendMessage", { chat_id: chat, text, parse_mode: "HTML",
     disable_web_page_preview: true, reply_to_message_id: replyTo, reply_markup: markup });
+  const PFM = require("../lib/pickforme.js");
   const q = await quota(fromId, 1);
   if (!q.ok) { await say("🔥 " + spent(q) + (q.plan === "trial" ? "\n\n" + plusLine() : "")); return; }
+  if (target > PFM.FREE_UP_TO && !["plus", "ff", "admin"].includes(q.plan)) {
+    await say("🔒 <b>x" + target + " and up come with Wizard Pass.</b> x2 and x5 are open to everyone.\n\n" + plusLine(),
+      { inline_keyboard: [[2, 5].map((x) => ({ text: "x" + x, callback_data: ["bd", book, x, 0].join("|") }))] });
+    return;
+  }
   tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
   const BIG = require("../lib/bigodds.js");
   const pay = await (await fetch(SITE + "/predictions.json")).json().catch(() => ({}));
   let feed = [];
   try { feed = await BIG.feedNow(); } catch (e) { feed = []; }
-  const now = Date.now(), o = { target, maxLegs: ASK.legBudget(target), floor: target * 0.8 };
-  const skip = new Set();
-  let picked = null;
-  for (let i = 0; i <= (nth || 0); i++) {
-    picked = BIG.pick(pay || {}, now, feed, Object.assign({ skip }, o));
-    if (!picked) break;
-    if (i < (nth || 0)) picked.legs.forEach((l) => skip.add(l.home + "|" + l.away));
-  }
-  if (!picked) {
-    await say("😤 Not enough games left today to build a strong x" + target + (nth ? " that's different from the last one" : "") +
-      ". Try a smaller number, or the builder on <a href=\"" + SITE + "\">soccerwizard.live</a> 🧙");
+  const now = Date.now(), seed = String(fromId) + "|" + QUOTA.dayOf(now) + "|" + (nth || 0);
+  let picked = PFM.pick(pay || {}, now, feed, target, "today", seed), later = false;
+  if (picked.short || picked.legs.length < 2) { picked = PFM.pick(pay || {}, now, feed, target, "all", seed); later = true; }
+  if (picked.short || picked.legs.length < 2) {
+    await say("😤 Not enough games on the board for x" + target + " right now. Try a smaller payout 🧙");
     return;
   }
   const r = await CONVERT.convert(picked.legs, book, now);
   if (!r.code) { await say("😤 " + D.BOOK_NAMES[book] + " wouldn't take it" + (r.error ? " - " + esc(r.error) : "") + ". Try another bookie."); return; }
-  await SB.recordBooking(q.subject, q.day, "tgbot").catch(() => {});
-  const lines = ["🎯 <b>Your x" + target + " on " + D.BOOK_NAMES[book] + "</b> 🔥",
+  await SB.recordBooking(q.subject, q.day, "pickforme").catch(() => {});
+  const lines = ["🧙 <b>Picked for you: x" + target + " on " + D.BOOK_NAMES[book] + "</b> 🔥",
+    ...(later ? ["Not enough games left today, so this one runs into the coming days."] : []),
     "<code>" + r.code + "</code> · " + r.booked.length + " games" + (r.odds ? " · <b>" + xOdds(r.odds) + "</b>" : ""), ""];
   for (const x of r.booked.slice(0, 8)) lines.push(esc(D.label(x.leg)) + (x.leg.p ? " · <b>" + pc(x.leg.p) + "</b>" : ""));
   if (r.booked.length > 8) lines.push("+" + (r.booked.length - 8) + " more");
@@ -470,11 +473,17 @@ async function askConvert(chat, replyTo, book) {
     text: ASK.CONVERT_ASK + "<b>" + D.BOOK_NAMES[book] + "</b>. Any bookie, any size.",
     reply_markup: { force_reply: true, input_field_placeholder: "Paste the code here" } });
 }
+/* BUILD ME A SLIP, the three ways (owner, 20 Oct 2026; the site's chooser): Pick for me right
+   here by payout, Slider and Wizard on the site. */
 async function onBuildMenu(chat, replyTo, book) {
   const xs = (list) => list.map((x) => ({ text: "x" + x, callback_data: ["bd", book, x, 0].join("|") }));
-  await tg("sendMessage", { chat_id: chat, reply_to_message_id: replyTo, parse_mode: "HTML",
-    text: "🎯 <b>How much do you want to win?</b> On " + D.BOOK_NAMES[book] + ".\nTap one, or type any number like <b>30</b>.",
-    reply_markup: { inline_keyboard: [xs([5, 10, 20, 50]), xs([100, 500, 1000])] } });
+  await tg("sendMessage", { chat_id: chat, reply_to_message_id: replyTo, parse_mode: "HTML", disable_web_page_preview: true,
+    text: "🧙 <b>Build me a slip</b> on " + D.BOOK_NAMES[book] + "\n\n" +
+      "⚡ <b>Pick for me</b>: no options to choose. We take the surest market in each game and stop at your payout. " +
+      "Tap one, or type any number like <b>30</b>.\n\n" +
+      "🎚️ <b>Slider</b> and 🔮 <b>Wizard</b>: choose your own options on the site.\n\n<i>x20 and up come with Wizard Pass. 18+</i>",
+    reply_markup: { inline_keyboard: [xs([2, 5, 20]), xs([100, 1000]),
+      [{ text: "🎚️ Slider", url: SITE + "/" }, { text: "🔮 Wizard", url: SITE + "/" }]] } });
 }
 /* TODAY'S LADDER: the 10:30 codes (lib/ladder.js). x5 for everyone, every rung on Wizard Pass. */
 async function onLadder(chat, replyTo, fromId, book) {
