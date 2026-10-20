@@ -167,6 +167,21 @@ test("menu screens close on ✖, and a code never carries Close", async () => {
   } finally { b.done(); }
 });
 
+test("past 6 messages a minute the bot says wait, once, then stays quiet", async () => {
+  const b = bot();
+  try {
+    for (let i = 0; i < 6; i++) await b.send("🏦 Change bookie");
+    const before = b.sent.length;
+    await b.send("🏦 Change bookie");
+    const wait = b.sent.slice(before).filter((s) => s.method === "sendMessage");
+    assert.strictEqual(wait.length, 1);
+    assert.match(wait[0].body.text, /Wait a minute, then send again/);
+    const n = b.sent.length;
+    await b.send("🏦 Change bookie");
+    assert.strictEqual(b.sent.length, n, "said once, not every time");
+  } finally { b.done(); }
+});
+
 test("a bare number asks which bookie before it books anything", async () => {
   const b = bot();
   try {

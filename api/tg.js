@@ -658,6 +658,9 @@ async function onButton(cq) {
   if (tag === "sq" && +p[3] >= 2) return onAsk(msgLike, { kind: "split", n: Math.min(4, +p[3]) }, book, code, legs);
 }
 
+/* 6 messages a minute per chat, in this instance's memory (lib/readlimit.js says why that is enough). */
+const takeMsg = require("../lib/readlimit.js").makeLimiter({ limit: 6, windowMs: 60e3 });
+const noticed = new Map();
 const esc = (s) => String(s).replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -681,6 +684,13 @@ module.exports = async function handler(req, res) {
   const chat = msg.chat.id;
   const say = (text) => tg("sendMessage", { chat_id: chat, text, parse_mode: "HTML",
     disable_web_page_preview: true, reply_to_message_id: msg.message_id });
+  /* RATE LIMIT (SportyClaw review, 20 Oct 2026): a brake, per chat, said once in plain words. */
+  const lim = takeMsg(String(chat));
+  if (!lim.allow) {
+    if (noticed.size > 5000) noticed.clear();
+    if (!(noticed.get(chat) > Date.now() - 60e3)) { noticed.set(chat, Date.now()); await say("⏳ Too many messages. Wait a minute, then send again."); }
+    return res.status(200).json({ ok: true });
+  }
 
   try {
     /* CONNECT TELEGRAM: "Connect Telegram" in the account panel opens
