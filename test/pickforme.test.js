@@ -80,7 +80,7 @@ test("a reader keeps their slip until they shuffle; two readers get different sl
 
 test("the big button opens the chooser; x20 and up need a pass; it books as pickforme", () => {
   assert.match(src, /if\(b\.classList\.contains\("sc-go-primary"\)\) openBuildChooser\(goMode\); else goMode\(b\.dataset\.scmode\);/);
-  assert.match(src, /var PFM_MAX=40, PFM_PAYS=\[2,5,20,100,1000\], PFM_FREE=5;/);
+  assert.match(src, /var PFM_MAX=40, PFM_PAYS=\[2,5,10,20,50,100,150,200\], PFM_FREE=5;/);
   const run = grab("pfmRun");
   assert.match(run, /if\(T>PFM_FREE&&!pfmPass\(\)\)/);
   assert.match(run, /bookRounds\(r\.picks,B,"pickforme","pfmOut",/);

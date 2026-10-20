@@ -51,8 +51,8 @@ test("x1000 inside 40 legs asks every leg for payout^(1/40); readers get differe
 test("the bot's payouts and pass line match the site", () => {
   const fs = require("fs");
   const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
-  assert.match(src, /PFM_PAYS=\[2,5,20,100,1000\], PFM_FREE=5;/);
-  assert.deepStrictEqual(PFM.PAYS, [2, 5, 20, 100, 1000]);
+  assert.match(src, /PFM_PAYS=\[2,5,10,20,50,100,150,200\], PFM_FREE=5;/);
+  assert.deepStrictEqual(PFM.PAYS, [2, 5, 10, 20, 50, 100, 150, 200]);
   assert.strictEqual(PFM.FREE_UP_TO, 5);
   const tg = fs.readFileSync(path.join(__dirname, "..", "api", "tg.js"), "utf8");
   assert.match(tg, /if \(target > PFM\.FREE_UP_TO && !\["plus", "ff", "admin"\]\.includes\(q\.plan\)\)/);

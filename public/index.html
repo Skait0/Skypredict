@@ -2006,13 +2006,12 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .bm-ic svg{width:16px;height:16px}
 .bm-new{font-size:10px;font-weight:800;letter-spacing:.06em;color:#1a1205;background:var(--accent);padding:3px 6px;border-radius:999px}
 .bm-usual{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--faint)}
-.bm-arw{margin-left:auto;display:flex;color:var(--soft)}.bm-usual+.bm-arw{margin-left:8px}
-.bm-arw svg{width:18px;height:18px}
 .bm-opt p{margin:7px 0 10px;font-size:12.5px;font-weight:600;line-height:1.35;color:var(--soft)}
 .bm-seg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;padding:3px;border-radius:var(--r-seg);background:var(--bg);border:1px solid var(--line);margin-bottom:8px}
 .bm-seg button{height:30px;border:0;border-radius:var(--r-chip);background:none;color:var(--soft);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .bm-seg button.on{background:rgba(230,57,70,.16);color:var(--text);box-shadow:inset 0 0 0 1.5px var(--red)}
-.bm-pay{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.bm-pay{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.bm-opt p.bm-more{margin:8px 0 0;font-size:12px;color:var(--faint)}
 .bm-pc{position:relative;height:38px;border-radius:var(--r-md);border:1.5px solid var(--wr);color:var(--wr);background:var(--card);font:800 17px/1 var(--disp);cursor:pointer;display:flex;align-items:center;justify-content:center}
 .bm-pc small{font-size:11px;margin-right:1px}
 .bm-pc[data-lock]{opacity:.62}
@@ -2020,11 +2019,24 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .bm-note{margin-top:10px;padding:10px;border-radius:var(--r-md);background:var(--bg);border:1px solid var(--line);font-size:12.5px;font-weight:600;line-height:1.4;color:var(--soft)}
 .bm-note b{color:var(--text)}
 .bm-pass{display:block;width:100%;margin-top:8px;height:36px;border:0;border-radius:var(--r-md);background:var(--accent);color:#1a1205;font:inherit;font-weight:800;cursor:pointer}
-.bm-track{position:relative;height:10px;border-radius:5px;background:linear-gradient(90deg,#2FD48A,#F2B84B 50%,#E63946);margin:14px 6px 9px}
-.bm-track i{position:absolute;left:62%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--text);border:5px solid var(--red)}
-.bm-ticks{display:flex;justify-content:space-between;font-size:10.5px;font-weight:700;color:var(--faint)}
-.bm-own{display:flex;align-items:center;gap:8px;height:40px;border-radius:var(--r-md);border:1.5px dashed var(--line);background:var(--card);padding:0 12px;font-weight:800;font-size:18px;color:var(--faint)}
-.bm-own input{flex:1;min-width:0;border:0;background:none;color:var(--text);font:inherit;font-size:18px;outline:0}
+.bm-open{display:flex;align-items:center;justify-content:center;gap:4px;height:42px;border-radius:var(--r-md);font-size:14.5px;font-weight:800}
+.bm-open svg{width:16px;height:16px}
+.bm-core{border-width:1.5px}
+.bm-core .bm-oh b{font-size:17px}
+.bm-sl{border-color:rgba(230,57,70,.45);background:linear-gradient(160deg,rgba(230,57,70,.12),transparent 55%),var(--card-2)}
+.bm-sl .bm-ic{background:rgba(230,57,70,.18);color:var(--red)}
+.bm-sl .bm-open{background:var(--red);color:#fff}
+.bm-wz{border-color:rgba(242,184,75,.45);background:linear-gradient(160deg,rgba(242,184,75,.12),transparent 55%),var(--card-2)}
+.bm-wz .bm-ic{background:rgba(242,184,75,.18);color:var(--accent)}
+.bm-wz .bm-open{background:var(--accent);color:#1a1205}
+.bm-wz p{padding-right:64px}
+.bm-wzart{position:absolute;right:4px;top:6px;height:96px;width:auto;opacity:.9;pointer-events:none;transform:scaleX(-1)}
+.bm-risk{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:11px;font-weight:800}
+.bm-risk span:first-child{color:#2FD48A}.bm-risk span:last-child{color:var(--red)}
+.bm-risk i{flex:1;height:4px;border-radius:2px;background:linear-gradient(90deg,#2FD48A,#F2B84B 50%,#E63946)}
+.bm-name{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin:0 0 10px;font:800 20px/1 var(--disp);color:var(--accent)}
+.bm-name span:last-child{font:700 12px/1 var(--sans,inherit);color:var(--soft)}
+@media (hover:hover){.bm-link:hover .bm-open{filter:brightness(1.08)}.bm-sl:hover{border-color:var(--red)}.bm-wz:hover{border-color:var(--accent)}}
 .bm-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:4px 0 0;font-size:11px;font-weight:600;color:var(--faint)}
 .bm-foot b{color:var(--soft);white-space:nowrap}
 .bm-other .bm-link{opacity:.4}
@@ -2057,7 +2069,19 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .bm-sum{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px}
 .bm-sum b{font:800 32px/1 var(--disp);color:var(--accent);animation:bmPop .35s cubic-bezier(.3,1.6,.5,1) both}
 .bm-sum span{font-size:12px;font-weight:700;color:var(--soft)}
-.bm-acts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.bm-acts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px}
+.bm-get{display:block;width:100%;height:44px;margin-top:10px;border:0;border-radius:var(--r-md);background:var(--accent);color:#1a1205;font:inherit;font-size:15px;font-weight:800;cursor:pointer}
+.bm-games[hidden]{display:none}
+.bm-games li.bm-in{box-shadow:inset 3px 0 0 var(--accent);animation:bmFlip .45s cubic-bezier(.2,.9,.3,1.2) both}
+.bm-opt p.bm-swap{margin:8px 0 0;font-size:12px;font-weight:700;color:var(--accent);animation:bmFade .3s ease-out both}
+.bm-opt p.bm-hint{margin:8px 0 0;font-size:12px;font-weight:600;color:var(--soft);text-align:center}
+.bm-hint b{color:var(--text)}
+.bm-act.bm-nudge{animation:bmNudge .9s ease-in-out 2}
+@keyframes bmFlip{from{opacity:0;transform:perspective(500px) rotateX(-80deg)}to{opacity:1;transform:none}}
+@keyframes bmFade{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+@keyframes bmNudge{0%,100%{transform:none;box-shadow:none}30%{transform:scale(1.06);box-shadow:0 0 0 3px rgba(242,184,75,.45)}60%{transform:rotate(-2deg)}}
+@media (prefers-reduced-motion:reduce){.bm-games li.bm-in,.bm-swap,.bm-act.bm-nudge{animation:none}}
+@media (hover:hover){.bm-get:hover{filter:brightness(1.08)}.bm-act:hover{border-color:var(--soft)}}
 .bm-act{height:34px;border-radius:var(--r-md);border:1px solid var(--line);background:var(--raise);color:var(--text);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
 .bm-games{list-style:none;margin:8px 0 0;padding:0;max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:3px}
 .bm-games li{display:flex;gap:6px;align-items:center;padding:6px 8px;border-radius:var(--r-md);background:var(--bg);font-size:11.5px;font-weight:700}
@@ -7979,14 +8003,10 @@ html:not(.reduce) .tk-item.flash{border-radius:var(--r-md);animation:tkWash 2s v
         <div class="sc-proof" id="scProof" hidden></div>
       </div>
 
-      <!-- READY-MADE SLIPS (owner, 17 Oct 2026: "make it unmissable"). The daily
-           ladder, x5 to x1000, booked at 10:30 Lagos (api/ladder.js). Second on a
-           phone, under the offer, and always drawn: before 10:30 it says when. -->
-      <section class="lad" id="ladder" aria-labelledby="ladH">
-        <h2 class="lad-h" id="ladH">Daily odds. Pick yours, copy the code.</h2>
-        <div class="lad-rungs" role="radiogroup" aria-label="Odds" id="ladRungs"></div>
-        <div class="lad-body" id="ladBody" aria-live="polite"></div>
-      </section>
+      <!-- The "Daily odds. Pick yours" ladder panel left the home page (owner, 20 Oct
+           2026: "too many ways to book"); Pick for me covers it. The 10:30 ladder still
+           books for Wizard Pass delivery (My daily slip, bot /daily). Its script and
+           CSS stay and draw nothing without #ladder. -->
       <div id="myres"></div>
       <div id="potd"></div>
       <div id="daily"></div>
@@ -22162,7 +22182,7 @@ $("logo").addEventListener("click",function(e){e.preventDefault();setView("pred"
    most 40 games (owner: "40 is fine"). When the surest legs cannot reach the payout inside 40,
    every leg has to pay at least payout^(1/40). Held out over 60 days on our model alone: 82.7%
    of these legs landed against 79.3% for the default chips. */
-var PFM_MAX=40, PFM_PAYS=[2,5,20,100,1000], PFM_FREE=5;
+var PFM_MAX=40, PFM_PAYS=[2,5,10,20,50,100,150,200], PFM_FREE=5;
 function pickForMe(target,day,B,seed){
   B=B||curBook();
   var max=Math.min(PFM_MAX,slipMax(B)), min=Math.max(1.15,Math.pow(target,1/max));
@@ -22220,7 +22240,7 @@ function pfmSeed(){
   var s="x"; try{ s=localStorage.getItem("sw.pfm.seed"); if(!s){ s=Math.random().toString(36).slice(2,10); localStorage.setItem("sw.pfm.seed",s); } }catch(e){}
   return s+"|"+new Date().toISOString().slice(0,10)+"|"+PFM.shuffles;
 }
-var PFM_WR={2:"#2FD48A",5:"#7FD13F",20:"#D9C53A",100:"#F2913B",1000:"#E63946"};
+var PFM_WR={2:"#2FD48A",5:"#7FD13F",10:"#B5CF3A",20:"#D9C53A",50:"#EDA93C",100:"#F2913B",150:"#EE6A40",200:"#E63946"};
 var PFM_ICON={
   pfm:"<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M13 2L4 14h7l-1 8 9-12h-7l1-8z'/></svg>",
   slider:"<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'><line x1='4' y1='4' x2='4' y2='20' stroke-width='3'/><line x1='12' y1='4' x2='12' y2='20' stroke-width='3'/><line x1='20' y1='4' x2='20' y2='20' stroke-width='3'/><circle cx='4' cy='12' r='3' fill='currentColor'/><circle cx='12' cy='8' r='3' fill='currentColor'/><circle cx='20' cy='16' r='3' fill='currentColor'/></svg>",
@@ -22254,25 +22274,34 @@ function openBuildChooser(goMode){
         "<div class='bm-seg' role='radiogroup' aria-label='When'>"+
           [["0","Today"],["1","Tomorrow"],["all","All upcoming"]].map(function(d){
             return "<button type='button' role='radio' data-day='"+d[0]+"' aria-checked='"+(PFM.day===d[0])+"'"+(PFM.day===d[0]?" class='on'":"")+">"+d[1]+"</button>"; }).join("")+
-        "</div><div class='bm-pay' id='pfmPay'>"+pfmPayHTML()+"</div></div>"+
+        "</div><div class='bm-pay' id='pfmPay'>"+pfmPayHTML()+"</div>"+
+        /* Pick for me stops at x200 (owner, 20 Oct 2026): bigger odds are the Slider's and the Wizard's job. */
+        "<p class='bm-more'>Want bigger odds? Use the Slider or the Wizard below.</p></div>"+
       "<div class='bm-stage' id='pfmStage' hidden aria-live='polite'>"+
         "<span class='bm-badge' id='pfmBadge'></span><div class='bm-list' id='pfmList'></div>"+
-        "<span class='bm-booking' id='pfmBooking'>Booking on "+bookMark(B.key)+"…</span>"+
+        "<span class='bm-booking' id='pfmBooking'>Your slip is ready</span>"+
         "<div class='bm-count'><b id='pfmOdds'>x1.00</b><span id='pfmGames'>0 games</span></div>"+
         "<svg class='bm-rune' viewBox='0 0 150 150' aria-hidden='true'><circle cx='75' cy='75' r='70' fill='none' stroke='#F2B84B' stroke-width='1.5' stroke-dasharray='2 7'/><circle cx='75' cy='75' r='56' fill='none' stroke='#F2B84B' stroke-opacity='.6' stroke-width='1' stroke-dasharray='14 6 3 6'/><path stroke='#F2B84B' stroke-width='2' stroke-linecap='round' d='M75 3v10M75 137v10M3 75h10M137 75h10M24 24l7 7M119 119l7 7M24 126l7-7M119 31l7-7'/></svg>"+
         "<img class='bm-wiz' src='/fw/wiz-cast.webp' alt='' width='96' height='132'>"+
         "<i class='bm-ring'></i><i class='bm-ring two'></i><i class='bm-orb'></i></div>"+
       "<div id='pfmSum'></div><div id='pfmOut'></div>"+
     "</section>"+
-    "<section class='bm-opt bm-link' data-go='slider' tabindex='0' role='button'>"+
-      "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.slider+"</span><b>Slider</b>"+(usual==="slider"?"<span class='bm-usual'>Your usual</span>":"")+"<span class='bm-arw'>"+PFM_ICON.go+"</span></div>"+
+    /* No pretend controls here (owner, 20 Oct 2026: "i still get confused and try to use the
+       mini slider or the wizard"), and no demotion either ("they are still the core of our
+       website"): each card has its own colour, says what it is best for, shows a picture of what
+       it does that nobody can grab, and ends in a filled button. */
+    "<section class='bm-opt bm-link bm-core bm-sl' data-go='slider' tabindex='0' role='button'>"+
+      "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.slider+"</span><b>Slider</b>"+(usual==="slider"?"<span class='bm-usual'>Your usual</span>":"")+"</div>"+
       "<p>Choose your options. Slide right for bigger odds.</p>"+
-      "<div class='bm-track' aria-hidden='true'><i></i></div><div class='bm-ticks' aria-hidden='true'><span>Safest</span><span>Safe</span><span>Medium</span><span>Bold</span><span>Risky</span></div>"+
+      "<div class='bm-risk' aria-hidden='true'><span>Safest</span><i></i><span>Risky</span></div>"+
+      "<span class='bm-open'>Open the Slider"+PFM_ICON.go+"</span>"+
     "</section>"+
-    "<section class='bm-opt bm-link' data-go='wizard' tabindex='0' role='button'>"+
-      "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.wizard+"</span><b>Wizard</b>"+(usual==="wizard"?"<span class='bm-usual'>Your usual</span>":"")+"<span class='bm-arw'>"+PFM_ICON.go+"</span></div>"+
-      "<p>Type the odds you want. We find the games.</p>"+
-      "<label class='bm-own'>× <input id='bmOwn' inputmode='numeric' autocomplete='off' placeholder='500' aria-label='The odds you want'></label>"+
+    "<section class='bm-opt bm-link bm-core bm-wz' data-go='wizard' tabindex='0' role='button'>"+
+      "<img class='bm-wzart' src='/fw/wiz-cast.webp' alt='' width='70' height='96' loading='lazy'>"+
+      "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.wizard+"</span><b>Wizard</b>"+(usual==="wizard"?"<span class='bm-usual'>Your usual</span>":"")+"</div>"+
+      "<p>Name the odds you want. We find the games.</p>"+
+      "<div class='bm-name' aria-hidden='true'><span>x5</span><span>x50</span><span>x500</span><span>any number</span></div>"+
+      "<span class='bm-open'>Open the Wizard"+PFM_ICON.go+"</span>"+
     "</section>"+
     "<p class='bm-foot'><span>Change your bookie any time.</span><b>18+ · Play responsibly</b></p></div>";
   m.querySelector(".bm-x").addEventListener("click",closeBuildChooser);
@@ -22282,14 +22311,10 @@ function openBuildChooser(goMode){
     $("pfmSum").innerHTML=""; $("pfmOut").innerHTML=""; }); });
   m.querySelectorAll("[data-pay]").forEach(function(b){ b.addEventListener("click",function(){ pfmRun(+b.dataset.pay); }); });
   m.querySelectorAll("[data-go]").forEach(function(s){
-    function go(e){ if(e.target&&e.target.id==="bmOwn") return;
-      var own=String(($("bmOwn")||{}).value||"").replace(/[^0-9]/g,""), mode=s.dataset.go;
-      closeBuildChooser(); goMode(mode);
-      if(mode==="wizard"&&own){ var c=$("wspCust"); if(c){ c.value=own; c.dispatchEvent(new Event("blur")); } } }
+    function go(){ closeBuildChooser(); goMode(s.dataset.go); }
     s.addEventListener("click",go);
-    s.addEventListener("keydown",function(e){ if(e.key==="Enter"&&e.target===s) go(e); });
+    s.addEventListener("keydown",function(e){ if(e.key==="Enter"&&e.target===s) go(); });
   });
-  var own=$("bmOwn"); if(own) own.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); e.target.closest("[data-go]").click(); } });
   m.hidden=false; askLock(true);
   var f=m.querySelector(".bm-x"); if(f&&f.focus) try{ f.focus({preventScroll:true}); }catch(e){}
 }
@@ -22299,8 +22324,8 @@ function closeBuildChooser(){
   m.hidden=true; m.innerHTML=""; askLock(false);
 }
 /* THE CONJURING (owner: "wizardy asf", "the more the odds, the longer"). The games appear as
-   they are picked and the payout climbs with each; booking runs at the same time, and the code
-   lands when both are done. Transform and opacity only. Reduced motion skips to the result. */
+   they are picked and the payout climbs with each; then the full list waits for Get code, which
+   is the only step that books. Transform and opacity only. Reduced motion skips to the result. */
 function pfmRun(T){
   if(PFM.busy) return;
   var B=curBook(), out=$("pfmOut"), sum=$("pfmSum");
@@ -22323,42 +22348,71 @@ function pfmRun(T){
   PFM.busy=true;
   var card=$("bmPfm"), body=$("pfmBody"), stage=$("pfmStage"), list=$("pfmList");
   var reduced=REDUCED, CLIMB=reduced?0:(1.4+0.6*Math.log10(T))*1000, STEP=CLIMB/r.picks.length;
-  var st={anim:reduced, busied:false, result:null};
   function later(fn,ms){ PFM.timers.push(setTimeout(fn,ms)); }
   function reset(){ PFM.timers.forEach(clearTimeout); PFM.timers=[]; PFM.busy=false;
     var bc=$("bmScrim")&&$("bmScrim").querySelector(".bm-card"); if(bc) bc.classList.remove("bm-other");
-    card.classList.remove("conj","done"); stage.hidden=true; body.hidden=false; list.innerHTML=""; }
-  function finish(){
-    if(!st.anim||!st.result) return;
-    if(!$("pfmOut")) return;                 /* closed while the booking was in the air */
+    card.classList.remove("conj","cast","done"); stage.hidden=true; body.hidden=false; list.innerHTML=""; sum.innerHTML=""; out.innerHTML=""; }
+  /* Games first, booking on the tap (owner, 20 Oct 2026: "show the games then get code" and
+     "let users see the games before their request is used"). Nothing is booked, and no request
+     is spent, until Get code; Shuffle and Change payout are free. */
+  /* SHUFFLE SAYS WHAT IT DOES (owner, 20 Oct 2026: "how do they know to toggle it? some people
+     might not know what it does"). Until a reader's first shuffle, a line under the buttons says
+     it and the button nudges once. A shuffle swaps in place: new games flip in with a gold edge,
+     a line counts swapped and kept, and no re-conjuring. A board with nothing as safe says so. */
+  function lk(c){ return c.id+"|"+c.code; }
+  function show(prev,note){
+    if(!$("pfmOut")) return;                  /* closed during the conjuring */
     PFM.busy=false; card.classList.add("done"); stage.hidden=true;
-    if(st.result.code){
-      var code=st.result.code[0], sent=st.result.code[1], d=st.result.code[2];
-      var tv=totalOdds(sent);
-      sum.innerHTML="<div class='bm-sum'><b>x"+(tv>=100?Math.round(tv).toLocaleString("en"):tv.toFixed(2))+"</b><span>"+sent.length+" games · "+bookMark(B.key)+"</span></div>"+
-        "<div class='bm-acts'><button class='bm-act' type='button' data-a='shuffle'>Shuffle</button><button class='bm-act' type='button' data-a='games'>See the games</button></div>"+
-        "<ol class='bm-games' hidden>"+sent.map(function(c){ return "<li><span>"+esc(c.f?(c.f.home+" v "+c.f.away):"")+"</span><em>"+esc(c.f?mLabel(c.f,c.code):c.code)+"</em><b>"+legOdd(c.f,c.code,c.p,B).toFixed(2)+"</b></li>"; }).join("")+"</ol>";
-      sum.querySelector("[data-a='shuffle']").addEventListener("click",function(){ PFM.shuffles++; reset(); pfmRun(T); });
-      sum.querySelector("[data-a='games']").addEventListener("click",function(){ var g=sum.querySelector(".bm-games"); g.hidden=!g.hidden; });
-      showCode(code,"pfmOut",function(){ rememberSlip(sent,totalOdds(sent),code,B.key); },B,sent,d);
-    } else {
-      body.hidden=false; card.classList.remove("conj");
-      showBookErr("pfmOut",bookErrHTML(st.result.fail,B));
-    }
+    var tv=totalOdds(r.picks), was={}, nNew=0, learnt=false;
+    try{ learnt=localStorage.getItem("sw.pfm.shuf")==="1"; }catch(e){}
+    (prev||[]).forEach(function(c){ was[lk(c)]=1; });
+    sum.innerHTML="<div class='bm-sum'><b>x"+(tv>=100?Math.round(tv).toLocaleString("en"):tv.toFixed(2))+"</b><span>"+r.picks.length+" games · "+bookMark(B.key)+"</span></div>"+
+      "<ol class='bm-games' id='pfmList2'>"+r.picks.map(function(c,i){ var nw=prev&&!was[lk(c)]; if(nw) nNew++;
+        return "<li"+(nw?" class='bm-in' style='animation-delay:"+(i*40)+"ms'":"")+"><span>"+esc(c.f?(c.f.home+" v "+c.f.away):"")+"</span><em>"+esc(c.f?mLabel(c.f,c.code):c.code)+"</em><b>"+legOdd(c.f,c.code,c.p,B).toFixed(2)+"</b></li>"; }).join("")+"</ol>"+
+      (note?"<p class='bm-swap' aria-live='polite'>"+note+"</p>":prev?"<p class='bm-swap' aria-live='polite'>Swapped "+nNew+(nNew===1?" game":" games")+" for others just as safe. "+(r.picks.length-nNew)+" kept.</p>":"")+
+      "<button class='bm-get' type='button' data-a='code'>Get code</button>"+
+      "<div class='bm-acts'><button class='bm-act' type='button' data-a='games' aria-expanded='true' aria-controls='pfmList2'>Hide games</button><button class='bm-act' type='button' data-a='shuffle'>Shuffle</button><button class='bm-act' type='button' data-a='back'>Change payout</button></div>"+
+      (learnt?"":"<p class='bm-hint'>Don't like a game? <b>Shuffle</b> swaps some for others just as safe. Same payout.</p>");
+    if(!learnt&&!prev&&!REDUCED) later(function(){ var s=sum.querySelector("[data-a='shuffle']"); if(s) s.classList.add("bm-nudge"); },900);
+    var get=sum.querySelector("[data-a='code']"), booked=null;
+    function lock(on){ PFM.busy=on; get.disabled=on; get.textContent=on?"Booking…":"Get code";
+      sum.querySelectorAll("[data-a='shuffle'],[data-a='back']").forEach(function(b){ b.disabled=on; }); }
+    get.addEventListener("click",function(){
+      if(booked){ showCode(booked[0],"pfmOut",booked[3],B,booked[1],booked[2]); return; }
+      var busied=false; out.innerHTML=""; lock(true);
+      bookRounds(r.picks,B,"pickforme","pfmOut",{
+        busy:function(){ busied=true; },
+        idle:function(){ if(!busied) lock(false); },
+        code:function(code,sent,d){ lock(false); if(!$("pfmOut")) return;
+          var save=function(){ rememberSlip(sent,totalOdds(sent),code,B.key); };
+          booked=[code,sent,d,save]; get.textContent="Show code";
+          showCode(code,"pfmOut",save,B,sent,d); },
+        fail:function(d){ lock(false); if($("pfmOut")) showBookErr("pfmOut",bookErrHTML(d,B)); },
+        stop:function(){ lock(false); }
+      });
+    });
+    sum.querySelector("[data-a='shuffle']").addEventListener("click",function(){
+      try{ localStorage.setItem("sw.pfm.shuf","1"); }catch(e){}
+      var old=r.picks, key=function(p){ return p.map(lk).sort().join(); };
+      PFM.shuffles++; var nx=pickForMe(T,PFM.day,B,pfmSeed());
+      if(nx.picks.length<2||nx.short||key(nx.picks)===key(old)){
+        show(null,"These are the safest games "+(PFM.day==="0"?"today":PFM.day==="1"?"tomorrow":"on the board")+" for x"+T+"."+(PFM.day==="all"?"":" Try All upcoming for more."));
+        return; }
+      /* Kept games hold their places; the new ones take the swapped games' rows, extras at the end. */
+      var inNx={}, inOld={}; nx.picks.forEach(function(c){ inNx[lk(c)]=c; }); old.forEach(function(c){ inOld[lk(c)]=1; });
+      var fresh=nx.picks.filter(function(c){ return !inOld[lk(c)]; }), ord=[];
+      old.forEach(function(c){ if(inNx[lk(c)]) ord.push(inNx[lk(c)]); else if(fresh.length) ord.push(fresh.shift()); });
+      nx.picks=ord.concat(fresh);
+      r=nx; out.innerHTML=""; try{ buzz(15); }catch(e){} show(old); });
+    sum.querySelector("[data-a='back']").addEventListener("click",reset);
+    sum.querySelector("[data-a='games']").addEventListener("click",function(){ var g=sum.querySelector(".bm-games"), b=this; g.hidden=!g.hidden;
+      b.textContent=g.hidden?"Show games":"Hide games"; b.setAttribute("aria-expanded",!g.hidden); });
   }
-  bookRounds(r.picks,B,"pickforme","pfmOut",{
-    busy:function(){ st.busied=true; },
-    idle:function(){ if(!st.busied) reset(); },
-    code:function(code,sent,d){ st.result={code:[code,sent,d]}; finish(); },
-    fail:function(d){ st.result={fail:d}; finish(); },
-    stop:function(){ reset(); }
-  });
-  if(!PFM.busy) return;                       /* the gate or a prompt took over */
   body.hidden=true; stage.hidden=false; card.classList.add("conj");
   $("bmScrim").querySelector(".bm-card").classList.add("bm-other"); buzzConjure();
   $("pfmBadge").textContent="x"+T; $("pfmBadge").style.setProperty("--wr",PFM_WR[T]);
   $("pfmOdds").textContent="x1.00"; $("pfmGames").textContent="0 games";
-  if(reduced) return;
+  if(reduced){ show(); return; }
   var tot=1;
   r.picks.forEach(function(c,i){
     later(function(){
@@ -22374,7 +22428,7 @@ function pfmRun(T){
     },220+i*STEP);
   });
   later(function(){ card.classList.add("cast"); },220+CLIMB);
-  later(function(){ st.anim=true; finish(); },220+CLIMB+500);
+  later(show,220+CLIMB+500);
 }
 (function(){
   var cta=$("slipCta"); if(!cta) return;

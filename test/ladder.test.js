@@ -229,7 +229,7 @@ test("wired: two crons at 10:30 and 10:45 Lagos, Big odds books its own slip, th
   assert.deepStrictEqual(asked, ["/api/ladder", "/api/ladder?mine=1", "/api/ladder?mine=1"],
     "signed out: public read; signed in with no role cached: ?mine=1; new pass: asked again; nothing changed: no fetch");
   assert.match(page, /class='lad-r'/);
-  assert.match(page, /id="ladder"/, "the Ready-made slips panel sits under the offer");
+  assert.doesNotMatch(page, /id="ladder"/, "the ladder panel left the home page (owner, 20 Oct 2026)");
   const ui = fs.readFileSync(path.join(__dirname, "..", "public", "account-ui.js"), "utf8");
   assert.match(ui, /\/api\/account\/setautopilot/);
   assert.match(ui, /sw-twa/, "the Play app pitches nothing");

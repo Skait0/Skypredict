@@ -433,6 +433,14 @@ async function onBuild(chat, replyTo, fromId, book, target, nth) {
   const say = (text, markup) => tg("sendMessage", { chat_id: chat, text, parse_mode: "HTML",
     disable_web_page_preview: true, reply_to_message_id: replyTo, reply_markup: markup });
   const PFM = require("../lib/pickforme.js");
+  /* Pick for me stops at x200 (owner, 20 Oct 2026); bigger odds go to the Slider and the Wizard.
+     Asked before the quota, so a refused payout costs no request. */
+  const top = PFM.PAYS[PFM.PAYS.length - 1];
+  if (target > top) {
+    await say("⚡ <b>Pick for me goes up to x" + top + ".</b> Want bigger odds? Use the Slider or the Wizard on the site.",
+      { inline_keyboard: [[{ text: "🎚️ Slider", url: SITE + "/" }, { text: "🔮 Wizard", url: SITE + "/" }]] });
+    return;
+  }
   const q = await quota(fromId, 1);
   if (!q.ok) { await say("🔥 " + spent(q) + (q.plan === "trial" ? "\n\n" + plusLine() : "")); return; }
   if (target > PFM.FREE_UP_TO && !["plus", "ff", "admin"].includes(q.plan)) {
@@ -480,9 +488,9 @@ async function onBuildMenu(chat, replyTo, book) {
   await tg("sendMessage", { chat_id: chat, reply_to_message_id: replyTo, parse_mode: "HTML", disable_web_page_preview: true,
     text: "🧙 <b>Build me a slip</b> on " + D.BOOK_NAMES[book] + "\n\n" +
       "⚡ <b>Pick for me</b>: no options to choose. We take the surest market in each game and stop at your payout. " +
-      "Tap one, or type any number like <b>30</b>.\n\n" +
-      "🎚️ <b>Slider</b> and 🔮 <b>Wizard</b>: choose your own options on the site.\n\n<i>x20 and up come with Wizard Pass. 18+</i>",
-    reply_markup: { inline_keyboard: [xs([2, 5, 20]), xs([100, 1000]),
+      "Tap one, or type any number up to <b>200</b>.\n\n" +
+      "🎚️ <b>Slider</b> and 🔮 <b>Wizard</b>: choose your own options on the site. Want bigger odds? Use these.\n\n<i>x10 and up come with Wizard Pass. 18+</i>",
+    reply_markup: { inline_keyboard: [xs([2, 5, 10, 20]), xs([50, 100, 150, 200]),
       [{ text: "🎚️ Slider", url: SITE + "/" }, { text: "🔮 Wizard", url: SITE + "/" }]] } });
 }
 /* TODAY'S LADDER: the 10:30 codes (lib/ladder.js). x5 for everyone, every rung on Wizard Pass. */

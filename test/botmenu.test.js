@@ -87,8 +87,8 @@ test("/start asks for the bookie first; the answer sets the menu; Build a slip o
     await b.send("🧙 Build me a slip · BetKing");
     const last = b.sent[b.sent.length - 1].body;
     const data = last.reply_markup.inline_keyboard.flat().map((k) => k.callback_data);
-    /* Pick for me's payouts, the site's five (20 Oct 2026). */
-    for (const x of [2, 5, 20, 100, 1000]) assert.ok(data.includes("bd|betking|" + x + "|0"), "x" + x);
+    /* Pick for me's payouts, the site's eight, x2 to x200 (20 Oct 2026). */
+    for (const x of [2, 5, 10, 20, 50, 100, 150, 200]) assert.ok(data.includes("bd|betking|" + x + "|0"), "x" + x);
     assert.match(last.text, /Pick for me/);
   } finally { b.done(); }
 });
