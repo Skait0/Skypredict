@@ -174,7 +174,7 @@ function make(deps) {
          login credentials that can bypass" a one-time code, and its reviewers cannot read our
          mail. For the one address in REVIEW_EMAIL the code is REVIEW_CODE and no email goes out;
          everything else holds: one use, ten minutes, five tries, the same rate limits and bot check. */
-      const rc = String(process.env.REVIEW_CODE || "");
+      const rc = String(process.env.REVIEW_CODE || "").trim();
       const review = /^\d{6}$/.test(rc) && !!process.env.REVIEW_EMAIL && email === C.normEmail(process.env.REVIEW_EMAIL);
       const code = review ? rc : E.newCode();
       if (!(await db.insertCode({ email, code_hash: E.codeHash(pepper(), email, code), expires_at: iso(t + E.CODE_TTL_MS) })))
