@@ -106,3 +106,10 @@ test("markets people know: no handicaps or GG+, however sure the model is", () =
   const r = engine(g)(5, "0", null, "s");
   assert.ok(r.picks.length && r.picks.every((c) => c.code !== "AH_1_2" && c.code !== "GG2_Y"));
 });
+
+test("the chooser sits under the code pop-up, the toasts and booking questions", () => {
+  /* The first live code (K1JL6P, 20 Oct 2026) opened behind it. */
+  const chooser = +/\.bm-scrim\{[^}]*z-index:(\d+)/.exec(src)[1];
+  const code = +/\.code-modal-scrim\{[^}]*z-index:(\d+)/.exec(src)[1];
+  assert.ok(chooser > 151 && chooser < 200 && chooser < code, "chooser " + chooser + ", code pop-up " + code);
+});

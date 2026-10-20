@@ -1988,9 +1988,11 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .ask-card .ask-compact .ca{gap:7px;bottom:-12px;margin-bottom:-12px;padding:8px 0 12px}
 .ask-card .ask-compact .ca button{font-size:13px;padding:9px 12px}
 .confirm-card .confirm-go.ask-bk{background:var(--raise);color:var(--text);border:1px solid var(--line)}
-/* BUILD ME A SLIP chooser (20 Oct 2026). Under the ask scrim (240) so a booking question
-   raised from inside it opens on top. Motion is transform and opacity only. */
-.bm-scrim{position:fixed;inset:0;z-index:230;background:rgba(10,14,10,.5);backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow:auto;overscroll-behavior:contain}
+/* BUILD ME A SLIP chooser (20 Oct 2026). Layer 190: over the sheets (151), under the toasts
+   (200), the code pop-up (220) and the ask scrim (240), so the booked code, a toast and any
+   booking question open on top of it (the first live code opened behind it). Motion is
+   transform and opacity only. */
+.bm-scrim{position:fixed;inset:0;z-index:190;background:rgba(10,14,10,.5);backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow:auto;overscroll-behavior:contain}
 .bm-scrim[hidden]{display:none}
 .bm-card{position:relative;width:min(400px,100%);margin:auto 0;background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 14px 12px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
 .bm-h{margin:0;padding-right:40px;font:800 26px/1 var(--disp);text-transform:uppercase;letter-spacing:.01em}
