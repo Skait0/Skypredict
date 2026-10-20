@@ -2614,5 +2614,76 @@
       "betway": "BW7B4298BB"
     },
     "odds": 1.62
+  },
+  "2026-10-20": {
+    "date": "2026-10-20",
+    "generated": "2026-10-20T11:11:42.946Z",
+    "firstKickoff": "2026-10-20T18:45:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-20",
+        "home": "Paris SG",
+        "away": "Barcelona",
+        "league": "International Clubs UEFA Champions League",
+        "kickoff": "2026-10-20T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.716,
+        "market": "OVER_1.5",
+        "odd": 1.04
+      },
+      {
+        "date": "2026-10-20",
+        "home": "Roma",
+        "away": "Slovan Bratislava",
+        "league": "International Clubs UEFA Champions League",
+        "kickoff": "2026-10-20T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.71,
+        "market": "OVER_1.5",
+        "odd": 1.06
+      },
+      {
+        "date": "2026-10-20",
+        "home": "Man City",
+        "away": "AEK",
+        "league": "International Clubs UEFA Champions League",
+        "kickoff": "2026-10-20T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.717,
+        "market": "OVER_1.5",
+        "odd": 1.07
+      },
+      {
+        "date": "2026-10-20",
+        "home": "Stuttgart",
+        "away": "Ath Madrid",
+        "league": "International Clubs UEFA Champions League",
+        "kickoff": "2026-10-20T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.71,
+        "market": "OVER_1.5",
+        "odd": 1.14
+      },
+      {
+        "date": "2026-10-20",
+        "home": "Barnet",
+        "away": "Swindon",
+        "league": "England League 2",
+        "kickoff": "2026-10-20T18:45:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.828,
+        "market": "1X",
+        "odd": 1.15
+      }
+    ],
+    "codes": {
+      "sporty": "MVM0DE",
+      "bet9ja": "5WL58FQ",
+      "betking": "AR1JK9",
+      "betpawa": "ON4G8UV",
+      "onexbet": "34XDF",
+      "betway": "BW7B7BA9D9"
+    },
+    "odds": 1.55
   }
 }
