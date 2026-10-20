@@ -150,6 +150,23 @@ test("the menu has How we did yesterday and the penalty game", () => {
   assert.strictEqual(ASK.yesterday({ results: [] }, now).n, 0);
 });
 
+test("menu screens close on ✖, and a code never carries Close", async () => {
+  /* SportyClaw review, 20 Oct 2026: navigation edits in place; Close takes a menu away. */
+  const b = bot();
+  try {
+    await b.send("🧙 Build me a slip · BetKing");
+    const menu = b.sent.filter((s) => s.method === "sendMessage").pop().body;
+    assert.ok(menu.reply_markup.inline_keyboard.flat().some((k) => k.callback_data === "x"));
+    await b.send("30");
+    assert.ok(b.sent.filter((s) => s.method === "sendMessage").pop().body.reply_markup.inline_keyboard.flat().some((k) => k.callback_data === "x"));
+    await b.tap("x");
+    assert.ok(b.sent.some((s) => s.method === "deleteMessage" && s.body.message_id === 9));
+    await b.tap("rs|sporty|HUW6YC");
+    const res = b.sent.filter((s) => s.method === "sendMessage").pop().body;
+    assert.ok(!res.reply_markup.inline_keyboard.flat().some((k) => k.callback_data === "x"), "results stay");
+  } finally { b.done(); }
+});
+
 test("a bare number asks which bookie before it books anything", async () => {
   const b = bot();
   try {

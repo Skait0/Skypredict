@@ -124,6 +124,10 @@ function choiceButtons(kind, book, code) {
 }
 const bookButtons = (data) => ({ inline_keyboard: [ORDER.slice(0, 3), ORDER.slice(3)].map((row) =>
   row.map((b) => ({ text: D.BOOK_NAMES[b], callback_data: data(b) }))) });
+/* ✖ CLOSE (SportyClaw review, 20 Oct 2026): a menu or question message goes away on a tap.
+   Results and codes never carry it - a reader keeps those. */
+const CLOSE = { text: "✖ Close", callback_data: "x" };
+const withClose = (markup) => ({ inline_keyboard: markup.inline_keyboard.concat([[CLOSE]]) });
 
 /* FOLLOW MY SLIP (lib/follow.js, api/tgfollow.js). Up to FOLLOW_CAP open at
    once per person, so the ten-minute job stays small; a slip settles within a
@@ -434,7 +438,7 @@ async function onSaferAsk(chat, replyTo, book, code, legs) {
   if (plan.length > 8) lines.push("+" + (plan.length - 8) + " more");
   lines.push("", "Safer bets pay less. Nothing is booked until you tap <b>Do it</b>.", "<i>18+</i>");
   await say(lines.join("\n"), { inline_keyboard: [[{ text: "✅ Do it", callback_data: ["eq", book, code].join("|") },
-    { text: "Keep as is", callback_data: ["bk0", book, code].join("|") }]] });
+    { text: "✖ Keep as is", callback_data: "x" }]] });
 }
 
 /* BUILD ME A SLIP: PICK FOR ME (owner, 20 Oct 2026: "now do the telegram"). The site's Pick for
@@ -570,7 +574,7 @@ async function onBuildMenu(chat, replyTo, book) {
       "Tap one, or type any number up to <b>200</b>.\n\n" +
       "🎚️ <b>Slider</b> and 🔮 <b>Wizard</b>: choose your own options on the site. Want bigger odds? Use these.\n\n<i>x20 and up come with Wizard Pass. 18+</i>",
     reply_markup: { inline_keyboard: [xs([2, 5, 10, 20]), xs([50, 100, 150, 200]),
-      [{ text: "🎚️ Slider", url: SITE + "/" }, { text: "🔮 Wizard", url: SITE + "/" }]] } });
+      [{ text: "🎚️ Slider", url: SITE + "/" }, { text: "🔮 Wizard", url: SITE + "/" }], [CLOSE]] } });
 }
 /* TODAY'S LADDER: the 10:30 codes (lib/ladder.js). x5 for everyone, every rung on Wizard Pass. */
 async function onLadder(chat, replyTo, fromId, book) {
@@ -606,6 +610,7 @@ async function onButton(cq) {
     await SB.putBotVote({ job: v.job, vote: v.vote, who: subjectOf(cq.from && cq.from.id), msg: cq.message.message_id }).catch(() => {});
     return;
   }
+  if (tag === "x") { await tg("deleteMessage", { chat_id: chat.id, message_id: cq.message.message_id }); return; }
   if (tag === "fw") return onFollow(cq);
   if (tag === "cv") return onConvert(cq);
   if (tag === "bk") {
@@ -732,11 +737,11 @@ module.exports = async function handler(req, res) {
     if (!deep && cmd) {
       const c = cmd[1].toLowerCase();
       if (c === "convert") await tg("sendMessage", { chat_id: chat, text: "🔁 Convert a code to which bookie?",
-        reply_to_message_id: msg.message_id, reply_markup: bookButtons((b) => "ct|" + b) });
+        reply_to_message_id: msg.message_id, reply_markup: withClose(bookButtons((b) => "ct|" + b)) });
       else if (c === "build") await onBuildMenu(chat, msg.message_id, "sporty");
       else if (c === "dailyodds") await onLadder(chat, msg.message_id, msg.from && msg.from.id, "sporty");
       else if (c === "bookie") await tg("sendMessage", { chat_id: chat, text: "🏦 Which bookie do you use?",
-        reply_to_message_id: msg.message_id, reply_markup: bookButtons((b) => "bk|" + b) });
+        reply_to_message_id: msg.message_id, reply_markup: withClose(bookButtons((b) => "bk|" + b)) });
       else if (c === "guide") await tg("sendMessage", { chat_id: chat, text: "📖 The whole bot in one page, with examples you can tap:",
         reply_markup: { inline_keyboard: [[{ text: "📖 Open the guide", web_app: { url: SITE + "/bot" } }]] } });
       else await tg("sendMessage", { chat_id: chat, parse_mode: "HTML", reply_to_message_id: msg.message_id,
@@ -760,7 +765,7 @@ module.exports = async function handler(req, res) {
       }
       else if (menu.kind === "ladder") await onLadder(chat, msg.message_id, msg.from && msg.from.id, menu.book);
       else if (menu.kind === "bookie") await tg("sendMessage", { chat_id: chat, text: "🏦 Which bookie do you use?",
-        reply_to_message_id: msg.message_id, reply_markup: bookButtons((b) => "bk|" + b) });
+        reply_to_message_id: msg.message_id, reply_markup: withClose(bookButtons((b) => "bk|" + b)) });
       else await tg("sendMessage", { chat_id: chat, parse_mode: "HTML", reply_to_message_id: msg.message_id,
         text: "🔍 Send me the code - from any bookie. I'll show you the strong games and the weak ones.",
         reply_markup: { force_reply: true, input_field_placeholder: "Paste the code here" } });
@@ -782,7 +787,7 @@ module.exports = async function handler(req, res) {
     if (!code && ask && ask.kind === "build") {
       if (ask.book) await onBuild(chat, msg.message_id, msg.from && msg.from.id, ask.book, ask.odds, 0);
       else await tg("sendMessage", { chat_id: chat, reply_to_message_id: msg.message_id, parse_mode: "HTML",
-        text: "🎯 A x" + ask.odds + " slip - on which bookie?", reply_markup: bookButtons((b) => ["bd", b, ask.odds, 0].join("|")) });
+        text: "🎯 A x" + ask.odds + " slip - on which bookie?", reply_markup: withClose(bookButtons((b) => ["bd", b, ask.odds, 0].join("|"))) });
       return res.status(200).json({ ok: true });
     }
     if (!code) {
