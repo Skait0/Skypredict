@@ -123,6 +123,19 @@ test("Change markets lists only the swaps this slip has, and a choice books it",
   } finally { b.done(); }
 });
 
+test("Results grades the ticket leg by leg and offers a new slip", async () => {
+  /* SportyClaw review, 20 Oct 2026: check my ticket. With no score banked a leg waits. */
+  const b = bot();
+  try {
+    await b.tap("rs|sporty|HUW6YC");
+    const m = b.sent.filter((s) => s.method === "sendMessage").pop().body;
+    assert.match(m.text, /Results for HUW6YC/);
+    assert.match(m.text, /⏳/);
+    const data = m.reply_markup.inline_keyboard.flat().map((k) => k.callback_data);
+    assert.ok(data.includes("rs|sporty|HUW6YC") && data.includes("nb|sporty") && data.includes("fb|u|results"));
+  } finally { b.done(); }
+});
+
 test("a bare number asks which bookie before it books anything", async () => {
   const b = bot();
   try {

@@ -27,6 +27,7 @@ const FOLLOW = require("../lib/follow.js");
 const ASK = require("../lib/ask.js");
 const S = require("../lib/slipedit.js");
 const BOOKS = require("../lib/books.js");
+const TICKET = require("../lib/ticket.js");
 
 const SITE = process.env.SITE_ORIGIN || "https://www.soccerwizard.live";
 const ORDER = BOOKS.KEYS;
@@ -43,16 +44,22 @@ async function tg(method, body) {
   return r.json().catch(() => null);
 }
 
-async function readCode(book, code) {
+/* {legs}, or why not: notFound (the book has no slip behind it - a wrong code, or one whose games
+   are over: every book but SportyBet drops those), expired (Betway says so), or neither (a blip). */
+async function readSlip(book, code) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 8000);
   try {
     const r = await fetch(UPSTREAM + "/api/slip?book=" + book + "&code=" + encodeURIComponent(code),
       { signal: ctrl.signal, headers: { accept: "application/json" } });
     const b = await r.json().catch(() => null);
-    return b && b.success && Array.isArray(b.legs) && b.legs.length ? b.legs : null;
-  } catch (e) { return null; } finally { clearTimeout(t); }
+    if (b && b.success && Array.isArray(b.legs) && b.legs.length) return { legs: b.legs };
+    return { notFound: !!(b && b.notFound), expired: /expired/i.test((b && b.error) || "") };
+  } catch (e) { return {}; } finally { clearTimeout(t); }
 }
+const readCode = async (book, code) => (await readSlip(book, code)).legs || null;
+/* A code that won't open ends on the next thing to do (item 8 of the SportyClaw review). */
+const newButtons = (book) => ({ inline_keyboard: [[{ text: "🧙 Build a new one", callback_data: "nb|" + book }]] });
 
 /* THE MENU IS THE HELP (owner, 19 Oct 2026: "make the bot very easy to use"): /start shows the
    buttons under the chat box (lib/ask.js menuKeyboard), and typing stays optional. */
@@ -99,7 +106,7 @@ function toolButtons(book, code, job) {
   const k = (t, d) => ({ text: t, callback_data: d + "|" + book + "|" + code });
   const rows = [[k("🛡 Edit for me", "ed"), k("✂️ Trim", "tr"), k("➗ Split", "sp")],
     [k("🔁 Convert", "cx"), k("🔄 Change markets", "cm")],
-    [{ text: "🔔 Follow", callback_data: ["fw", book, code].join("|") }]];
+    [{ text: "🔔 Follow", callback_data: ["fw", book, code].join("|") }, k("📋 Results", "rs")]];
   /* 👍 / 👎 under every answer (owner, 20 Oct 2026); Back to these buttons has no job, so no vote row. */
   if (job) rows.push(ASK.voteRow(job));
   return { inline_keyboard: rows };
@@ -136,8 +143,8 @@ async function onFollow(cq) {
       "One frees up as soon as it settles. Every graded code lives on <a href=\"" + SITE + "/booking-codes\">soccerwizard.live</a> 🧙");
     return;
   }
-  const legs = await readCode(from, code);
-  if (!legs) { await say("That code can't be read any more - it may have expired or its games started."); return; }
+  const got = await readSlip(from, code), legs = got.legs;
+  if (!legs) { await say(TICKET.whyNot(got, D.BOOK_NAMES[from], code)); return; }
   const pay = await (await fetch(SITE + "/predictions.json")).json().catch(() => ({}));
   const tracked = FOLLOW.track(legs, (pay && pay.fixtures) || []);
   if (!tracked.length) {
@@ -170,8 +177,8 @@ async function onConvert(cq) {
     return;
   }
   tg("sendChatAction", { chat_id: chat.id, action: "typing" }).catch(() => {});
-  const legs = await readCode(from, code);
-  if (!legs) { await say("That code can't be read any more - it may have expired or its games started."); return; }
+  const got = await readSlip(from, code), legs = got.legs;
+  if (!legs) { await say(TICKET.whyNot(got, D.BOOK_NAMES[from], code)); return; }
   const r = await CONVERT.convert(legs, to);
   if (!r.code) {
     await say("😤 " + D.BOOK_NAMES[to] + " couldn't take this one" + (r.error ? " - " + esc(r.error) : "") +
@@ -532,6 +539,20 @@ async function onMerge(msg, codes, hint) {
   out.push("", leftLine(q, 1), "<i>18+</i>");
   await say(out.join("\n"), toolButtons(to, r.code, "merge"));
 }
+/* CHECK MY TICKET (SportyClaw review, 20 Oct 2026; lib/ticket.js): every leg against the scores
+   we bank, ✅ / ❌ / ⏳. Follow my slip stays the way to hear about games still to play. */
+async function onResults(chat, replyTo, book, code, legs) {
+  tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
+  const since = new Date(Date.now() - 10 * 864e5).toISOString().slice(0, 10);
+  const got = await SB.recentResults(since).catch(() => ({ rows: [] }));
+  const g = TICKET.grade(legs, got.rows || []);
+  const rows = [];
+  if (!g.done) rows.push([{ text: "🔄 Check again", callback_data: ["rs", book, code].join("|") },
+    { text: "🔔 Follow", callback_data: ["fw", book, code].join("|") }]);
+  rows.push([{ text: "🧙 Build a new one", callback_data: "nb|" + book }], ASK.voteRow("results"));
+  await tg("sendMessage", { chat_id: chat, reply_to_message_id: replyTo, parse_mode: "HTML", disable_web_page_preview: true,
+    text: TICKET.text(code, D.BOOK_NAMES[book], g), reply_markup: { inline_keyboard: rows } });
+}
 /* CONVERT A CODE (owner, 19 Oct 2026: "its the most used, it should have its own link"). Asked as
    a reply prompt, so the answer carries the bookie and nothing is stored. */
 async function askConvert(chat, replyTo, book) {
@@ -598,6 +619,7 @@ async function onButton(cq) {
     return;
   }
   if (tag === "ct") { if (ORDER.includes(p[1])) await askConvert(chat.id, cq.message.message_id, p[1]); return; }
+  if (tag === "nb") { if (ORDER.includes(p[1])) await onBuildMenu(chat.id, cq.message.message_id, p[1]); return; }
   if (tag === "bd") {
     const x = +p[2];
     if (!ORDER.includes(p[1]) || !(x >= 2 && x <= ASK.MAX_BUILD)) return;
@@ -607,12 +629,13 @@ async function onButton(cq) {
   if (!ORDER.includes(book) || !/^[A-Z0-9]{4,16}$/.test(code || "")) return;
   if (tag === "bk0") return edit(toolButtons(book, code));
   if (tag === "tr" || tag === "sp" || tag === "cx") return edit(choiceButtons(tag, book, code));
-  const legs = await readCode(book, code);
+  const got = await readSlip(book, code), legs = got.legs;
   if (!legs) {
-    await tg("sendMessage", { chat_id: chat.id, reply_to_message_id: cq.message.message_id,
-      text: "That code can't be read any more - it may have expired or its games started." });
+    await tg("sendMessage", { chat_id: chat.id, reply_to_message_id: cq.message.message_id, parse_mode: "HTML",
+      text: TICKET.whyNot(got, D.BOOK_NAMES[book], code), reply_markup: newButtons(book) });
     return;
   }
+  if (tag === "rs") return onResults(chat.id, cq.message.message_id, book, code, legs);
   if (tag === "cm") {
     const kb = ASK.changeButtons(legs, book, code);
     if (kb.inline_keyboard.length > 1) return edit(kb);
@@ -764,14 +787,17 @@ module.exports = async function handler(req, res) {
     tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
 
     /* The book named, or each in turn: one code rarely means something on two. */
-    let legs = null, used = null;
+    let legs = null, used = null, miss = {};
     for (const b of book ? [book] : ORDER) {
-      legs = await readCode(b, code);
-      if (legs) { used = b; break; }
+      const got = await readSlip(b, code);
+      if (got.legs) { legs = got.legs; used = b; break; }
+      miss = got;
     }
     if (!legs) {
-      await say("I couldn't read <code>" + code + "</code>" + (book ? " on " + D.BOOK_NAMES[book] : " on any of the " + BOOKS.COUNT_WORD + " bookies") +
-        ". Check the code - or it may have expired, or every game may have started.");
+      await tg("sendMessage", { chat_id: chat, parse_mode: "HTML", disable_web_page_preview: true, reply_to_message_id: msg.message_id,
+        text: book ? TICKET.whyNot(miss, D.BOOK_NAMES[book], code) : "I couldn't read <code>" + code + "</code>" + " on any of the " + BOOKS.COUNT_WORD + " bookies" +
+          ". Check the code. Most bookies remove a code once its games are over.",
+        reply_markup: newButtons(book || "sporty") });
       return res.status(200).json({ ok: true });
     }
     /* An instruction goes straight to its answer; "safer" and a bare
@@ -794,6 +820,8 @@ module.exports = async function handler(req, res) {
       await onAsk(msg, ask, used, code, legs);
       return res.status(200).json({ ok: true });
     }
+    /* Every game over: the results, not a read of a slip that can't be edited or split any more. */
+    if (TICKET.allOver(legs, Date.now())) { await onResults(chat, msg.message_id, used, code, legs); return res.status(200).json({ ok: true }); }
     const pay = await (await fetch(SITE + "/predictions.json")).json().catch(() => ({}));
     await tg("sendMessage", { chat_id: chat, text: D.reply(used, code, legs, (pay && pay.fixtures) || [], SITE),
       parse_mode: "HTML", disable_web_page_preview: true, reply_to_message_id: msg.message_id,
