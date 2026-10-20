@@ -95,10 +95,13 @@ const subjectOf = (uid) => "tg-" + crypto.createHash("sha256")
 
 /* EVERY CODE ENDS WITH WHAT YOU CAN DO WITH IT (owner, 19 Oct 2026): the site's converter
    tools as buttons. Trim, Split and Convert open their choices in place of these buttons. */
-function toolButtons(book, code) {
+function toolButtons(book, code, job) {
   const k = (t, d) => ({ text: t, callback_data: d + "|" + book + "|" + code });
-  return { inline_keyboard: [[k("🛡 Edit for me", "ed"), k("✂️ Trim", "tr"), k("➗ Split", "sp")],
-    [k("🔁 Convert", "cx"), { text: "🔔 Follow", callback_data: ["fw", book, code].join("|") }]] };
+  const rows = [[k("🛡 Edit for me", "ed"), k("✂️ Trim", "tr"), k("➗ Split", "sp")],
+    [k("🔁 Convert", "cx"), { text: "🔔 Follow", callback_data: ["fw", book, code].join("|") }]];
+  /* 👍 / 👎 under every answer (owner, 20 Oct 2026); Back to these buttons has no job, so no vote row. */
+  if (job) rows.push(ASK.voteRow(job));
+  return { inline_keyboard: rows };
 }
 function choiceButtons(kind, book, code) {
   const back = [{ text: "◀ Back", callback_data: ["bk0", book, code].join("|") }];
@@ -158,8 +161,8 @@ async function onConvert(cq) {
   if (!chat || chat.type !== "private") return;
   const [tag, to, from, code] = String(cq.data || "").split("|");
   if (tag !== "cv" || !ORDER.includes(to) || !ORDER.includes(from) || !/^[A-Z0-9]{4,16}$/.test(code || "")) return;
-  const say = (text) => tg("sendMessage", { chat_id: chat.id, text, parse_mode: "HTML",
-    disable_web_page_preview: true, reply_to_message_id: cq.message.message_id });
+  const say = (text, markup) => tg("sendMessage", { chat_id: chat.id, text, parse_mode: "HTML",
+    disable_web_page_preview: true, reply_to_message_id: cq.message.message_id, reply_markup: markup });
   const q = await quota(cq.from && cq.from.id, 1);
   if (!q.ok) {
     await say("🔥 " + spent(q) + (q.plan === "trial" ? "\n\nWant more? " + plusLine() : ""));
@@ -183,7 +186,7 @@ async function onConvert(cq) {
     (stuck.length > 4 ? "; +" + (stuck.length - 4) + " more" : ""));
   if ((r.changed || []).length) out.push("Line moved to what " + D.BOOK_NAMES[to] + " sells on " + r.changed.length + " leg" + (r.changed.length === 1 ? "" : "s") + ".");
   out.push("", leftLine(q, 1), "<i>18+</i>");
-  await say(out.join("\n"));
+  await say(out.join("\n"), { inline_keyboard: [ASK.voteRow("convert")] });
 }
 
 /* INSTRUCTIONS (28 Sep 2026): trim, keep, split, change, today. Each books
@@ -236,6 +239,8 @@ async function fixtures() {
 }
 /* Re-book legs of a code at its own bookie: their own event ids, the market
    on each leg (changed or not). */
+/* Which job a reply to an instruction was, for its 👍 / 👎. */
+const JOB_OF = { saferDo: "edit", trim: "trim", keep: "trim", change: "change", split: "split" };
 const picksOf = (legs) => legs.map((l) => ({ leg: l, eventId: l.eventId, code: l.prediction }));
 
 async function onAsk(msg, ask, book, code, legs) {
@@ -278,7 +283,7 @@ async function onAsk(msg, ask, book, code, legs) {
     const out = [head, "<code>" + r.code + "</code> · " + r.booked.length + " game" + (r.booked.length === 1 ? "" : "s") +
       (odds ? " · <b>" + odds + "</b>" : "")].concat(lines || []);
     if ((r.stuck || []).length) out.push("⚠️ " + B + " refused " + legNames(r.stuck.map((s) => s.leg), 3));
-    await say(out.join("\n"), toolButtons(book, r.code));
+    await say(out.join("\n"), toolButtons(book, r.code, JOB_OF[ask.kind]));
     return true;
   };
   const tail = (k) => leftLine(q, k) + "\n<i>18+</i>";
@@ -392,7 +397,7 @@ async function onToday(msg, ask) {
   lines.push("", (l != null && q.plan !== "admin" ? "⚡ " + l + (q.plan === "trial" ? " trial code" : " code") + (l === 1 ? "" : "s") +
     (q.plan === "trial" ? " left. " : " left today. ") : "") +
     "Every graded code on <a href=\"" + SITE + "/booking-codes\">soccerwizard.live</a>", "<i>Estimates, not certainties. 18+</i>");
-  await say(lines.join("\n"), toolButtons(book, r.code));
+  await say(lines.join("\n"), toolButtons(book, r.code, "today"));
 }
 
 /* EDIT FOR ME: which legs move, on the reader's bookie's own prices (lib/ask.js planSafer). */
@@ -470,7 +475,7 @@ async function onBuild(chat, replyTo, fromId, book, target, nth) {
   if (r.booked.length > 8) lines.push("+" + (r.booked.length - 8) + " more");
   if ((r.stuck || []).length) lines.push("⚠️ " + D.BOOK_NAMES[book] + " refused " + legNames(r.stuck.map((x) => x.leg), 3));
   lines.push("", leftLine(q, 1), "<i>Estimates, not certainties. 18+</i>");
-  const tools = toolButtons(book, r.code);
+  const tools = toolButtons(book, r.code, "pick");
   tools.inline_keyboard.unshift([{ text: "🔁 Another x" + target, callback_data: ["bd", book, target, (nth || 0) + 1].join("|") }]);
   await say(lines.join("\n"), tools);
 }
@@ -520,6 +525,13 @@ async function onButton(cq) {
   const p = String(cq.data || "").split("|"), tag = p[0];
   const edit = (markup) => tg("editMessageReplyMarkup", { chat_id: chat.id, message_id: cq.message.message_id, reply_markup: markup });
   const msgLike = { chat, message_id: cq.message.message_id, from: cq.from };
+  if (tag === "fb") {
+    const v = ASK.parseVote(cq.data);
+    if (!v) return;
+    await edit(ASK.dropVoteRow(cq.message.reply_markup));
+    await SB.putBotVote({ job: v.job, vote: v.vote, who: subjectOf(cq.from && cq.from.id), msg: cq.message.message_id }).catch(() => {});
+    return;
+  }
   if (tag === "fw") return onFollow(cq);
   if (tag === "cv") return onConvert(cq);
   if (tag === "bk") {
@@ -566,7 +578,7 @@ module.exports = async function handler(req, res) {
   const cq = req.body && req.body.callback_query;
   if (cq) {
     /* Stop the button's spinner first; the work can take a few seconds. */
-    await tg("answerCallbackQuery", { callback_query_id: cq.id, text: "On it 🧙" }).catch(() => {});
+    await tg("answerCallbackQuery", { callback_query_id: cq.id, text: /^fb\|/.test(cq.data || "") ? "Thanks 🧙" : "On it 🧙" }).catch(() => {});
     try { await onButton(cq); } catch (e) { /* the reader can tap again */ }
     return res.status(200).json({ ok: true });
   }
@@ -718,7 +730,7 @@ module.exports = async function handler(req, res) {
     const pay = await (await fetch(SITE + "/predictions.json")).json().catch(() => ({}));
     await tg("sendMessage", { chat_id: chat, text: D.reply(used, code, legs, (pay && pay.fixtures) || [], SITE),
       parse_mode: "HTML", disable_web_page_preview: true, reply_to_message_id: msg.message_id,
-      reply_markup: toolButtons(used, code) });
+      reply_markup: toolButtons(used, code, "read") });
   } catch (e) {
     await say("Something went wrong reading that code. Try again in a minute.").catch(() => {});
   }

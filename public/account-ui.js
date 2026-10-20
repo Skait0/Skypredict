@@ -313,6 +313,8 @@
       ["Family & friends",num(st.ffMembers)],
       ["Codes booked",num(st.codesToday)+" today, "+num(st.codes7d)+" in the last 7 days"],
       ["Slips that landed",num(st.landed7d)+" in the last 7 days"]];
+    var bv=st.botVotes||[];
+    if(bv.length) rows.push(["Bot 👍 / 👎, last 7 days",bv.map(function(v){ return v.job+" "+num(v.up)+" / "+num(v.dn); }).join(" · ")]);
     if(rec&&rec.total) rows.push(["Our picks",num(rec.correct)+" of "+num(rec.total)+" right ("+Math.round(100*rec.correct/rec.total)+"%) · last "+(rec.days||14)+" days"]);
     return rows.map(function(r){ return "<div class='swa-set'><span class='swa-st'><b>"+esc(r[0])+"</b><small>"+esc(r[1])+"</small></span></div>"; }).join("");
   }

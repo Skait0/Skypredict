@@ -73,7 +73,12 @@ function make(deps) {
   };
   /* The admin's switches and numbers; deps too, for the same reason. */
   const flags = deps.flags || require("../lib/flags.js");
-  const admin = deps.admin || { stats: () => require("../lib/supabase.js").adminStats(),
+  /* Bot 👍 / 👎 per job over 7 days ride along with the numbers (sql/bot_feedback.sql);
+     a missing table reads as no votes. */
+  const admin = deps.admin || { stats: async () => { const SB = require("../lib/supabase.js");
+      const [g, votes] = await Promise.all([SB.adminStats(), SB.botVotes(7).catch(() => [])]);
+      if (g && g.ok) g.stats = Object.assign({}, g.stats, { botVotes: require("../lib/ask.js").voteSummary(votes) });
+      return g; },
     slipsOf: (subject) => require("../lib/supabase.js").slipsBySubject(subject, 10) };
   const msgs = deps.msgs || require("../lib/messages.js");
   /* Connect Telegram's "Connected" line (sql/tglinks.sql); a dep so tests need no database. */
