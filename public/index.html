@@ -1988,6 +1988,91 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .ask-card .ask-compact .ca{gap:7px;bottom:-12px;margin-bottom:-12px;padding:8px 0 12px}
 .ask-card .ask-compact .ca button{font-size:13px;padding:9px 12px}
 .confirm-card .confirm-go.ask-bk{background:var(--raise);color:var(--text);border:1px solid var(--line)}
+/* BUILD ME A SLIP chooser (20 Oct 2026). Under the ask scrim (240) so a booking question
+   raised from inside it opens on top. Motion is transform and opacity only. */
+.bm-scrim{position:fixed;inset:0;z-index:230;background:rgba(10,14,10,.5);backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow:auto;overscroll-behavior:contain}
+.bm-scrim[hidden]{display:none}
+.bm-card{position:relative;width:min(400px,100%);margin:auto 0;background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 14px 12px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.bm-h{margin:0;padding-right:40px;font:800 26px/1 var(--disp);text-transform:uppercase;letter-spacing:.01em}
+.bm-sub{margin:6px 0 12px;font-size:12.5px;font-weight:600;color:var(--faint)}
+.bm-opt{position:relative;display:block;width:100%;text-align:left;background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px;margin-bottom:9px;color:var(--text);overflow:hidden}
+.bm-link{cursor:pointer;transition:opacity .25s}
+.bm-link:hover,.bm-link:focus-visible{border-color:var(--soft);outline:0}
+.bm-oh{display:flex;align-items:center;gap:9px}
+.bm-oh b{font-size:15.5px;font-weight:800}
+.bm-ic{width:30px;height:30px;border-radius:var(--r-md);background:var(--raise);display:grid;place-items:center;flex:none}
+.bm-ic svg{width:16px;height:16px}
+.bm-new{font-size:10px;font-weight:800;letter-spacing:.06em;color:#1a1205;background:var(--accent);padding:3px 6px;border-radius:999px}
+.bm-usual{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--faint)}
+.bm-arw{margin-left:auto;display:flex;color:var(--soft)}.bm-usual+.bm-arw{margin-left:8px}
+.bm-arw svg{width:18px;height:18px}
+.bm-opt p{margin:7px 0 10px;font-size:12.5px;font-weight:600;line-height:1.35;color:var(--soft)}
+.bm-seg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;padding:3px;border-radius:var(--r-seg);background:var(--bg);border:1px solid var(--line);margin-bottom:8px}
+.bm-seg button{height:30px;border:0;border-radius:var(--r-chip);background:none;color:var(--soft);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.bm-seg button.on{background:rgba(230,57,70,.16);color:var(--text);box-shadow:inset 0 0 0 1.5px var(--red)}
+.bm-pay{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.bm-pc{position:relative;height:38px;border-radius:var(--r-md);border:1.5px solid var(--wr);color:var(--wr);background:var(--card);font:800 17px/1 var(--disp);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.bm-pc small{font-size:11px;margin-right:1px}
+.bm-pc[data-lock]{opacity:.62}
+.bm-lk{position:absolute;top:3px;right:3px;display:flex}.bm-lk svg{width:10px;height:10px}
+.bm-note{margin-top:10px;padding:10px;border-radius:var(--r-md);background:var(--bg);border:1px solid var(--line);font-size:12.5px;font-weight:600;line-height:1.4;color:var(--soft)}
+.bm-note b{color:var(--text)}
+.bm-pass{display:block;width:100%;margin-top:8px;height:36px;border:0;border-radius:var(--r-md);background:var(--accent);color:#1a1205;font:inherit;font-weight:800;cursor:pointer}
+.bm-track{position:relative;height:10px;border-radius:5px;background:linear-gradient(90deg,#2FD48A,#F2B84B 50%,#E63946);margin:14px 6px 9px}
+.bm-track i{position:absolute;left:62%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--text);border:5px solid var(--red)}
+.bm-ticks{display:flex;justify-content:space-between;font-size:10.5px;font-weight:700;color:var(--faint)}
+.bm-own{display:flex;align-items:center;gap:8px;height:40px;border-radius:var(--r-md);border:1.5px dashed var(--line);background:var(--card);padding:0 12px;font-weight:800;font-size:18px;color:var(--faint)}
+.bm-own input{flex:1;min-width:0;border:0;background:none;color:var(--text);font:inherit;font-size:18px;outline:0}
+.bm-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:4px 0 0;font-size:11px;font-weight:600;color:var(--faint)}
+.bm-foot b{color:var(--soft);white-space:nowrap}
+.bm-other .bm-link{opacity:.4}
+/* the conjuring */
+.bm-pfm::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1.5px var(--accent),0 0 34px rgba(242,184,75,.35);opacity:0;transition:opacity .4s;pointer-events:none}
+.bm-pfm.conj::after{opacity:1}
+.bm-stage{position:relative;height:186px;margin:6px -12px -12px;background:radial-gradient(70% 60% at 22% 88%,rgba(242,184,75,.22),rgba(242,184,75,0) 70%)}
+.bm-stage[hidden]{display:none}
+.bm-badge{position:absolute;right:12px;top:4px;height:30px;padding:0 10px;border-radius:var(--r-md);border:1.5px solid var(--wr);color:var(--wr);background:var(--card);font:800 17px/27px var(--disp);animation:bmPop .3s cubic-bezier(.3,1.6,.5,1) both}
+.bm-pfm.cast .bm-badge{background:var(--wr);color:#fff}
+.bm-list{position:absolute;left:128px;right:12px;top:42px;height:116px;overflow:hidden}
+.bm-leg{display:flex;align-items:center;gap:6px;height:26px;margin-bottom:3px;padding:0 8px;border-radius:var(--r-md);background:var(--card);border:1px solid var(--line);font-size:10.5px;font-weight:700;white-space:nowrap;animation:bmLeg .24s cubic-bezier(.2,.9,.3,1) both}
+.bm-leg span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.bm-leg em{font-style:normal;color:var(--faint);overflow:hidden;text-overflow:ellipsis;max-width:42%}
+.bm-leg b{color:var(--green)}
+.bm-count{position:absolute;left:128px;right:12px;bottom:10px;display:flex;align-items:baseline;justify-content:space-between}
+.bm-count b{font:800 30px/1 var(--disp);color:var(--accent);transform-origin:0 100%}
+.bm-count b.tick{animation:bmTick .12s ease-out}
+.bm-count b.mile{animation:bmMile .4s cubic-bezier(.3,1.6,.5,1)}
+.bm-count span{font-size:11.5px;font-weight:700;color:var(--soft)}
+.bm-booking{position:absolute;left:128px;top:62px;font-size:13px;font-weight:700;color:var(--soft);opacity:0}
+.bm-pfm.cast .bm-list{opacity:0;transition:opacity .2s}
+.bm-pfm.cast .bm-booking{opacity:1;transition:opacity .2s .15s}
+.bm-wiz{position:absolute;left:-4px;bottom:-12px;height:132px;width:auto;animation:bmRise .4s cubic-bezier(.3,1.4,.5,1) .1s both}
+.bm-orb{position:absolute;left:46px;bottom:62px;width:18px;height:18px;margin:0 0 -9px -9px;border-radius:50%;background:#FFE7A3;box-shadow:0 0 18px 6px rgba(242,184,75,.8);animation:bmOrb .5s ease-in-out .35s infinite alternate both}
+.bm-ring{position:absolute;left:46px;bottom:62px;width:30px;height:30px;margin:0 0 -15px -15px;border-radius:50%;border:2px solid var(--accent);opacity:0;animation:bmRing 1.1s ease-out .4s infinite}
+.bm-ring.two{animation-delay:.95s}
+.bm-rune{position:absolute;left:46px;bottom:62px;width:150px;height:150px;margin:0 0 -75px -75px;opacity:.85;animation:bmRune 3.2s linear infinite}
+.bm-pfm.cast .bm-rune{animation:bmBurst .5s ease-out forwards}
+.bm-sum{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px}
+.bm-sum b{font:800 32px/1 var(--disp);color:var(--accent);animation:bmPop .35s cubic-bezier(.3,1.6,.5,1) both}
+.bm-sum span{font-size:12px;font-weight:700;color:var(--soft)}
+.bm-acts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.bm-act{height:34px;border-radius:var(--r-md);border:1px solid var(--line);background:var(--raise);color:var(--text);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+.bm-games{list-style:none;margin:8px 0 0;padding:0;max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:3px}
+.bm-games li{display:flex;gap:6px;align-items:center;padding:6px 8px;border-radius:var(--r-md);background:var(--bg);font-size:11.5px;font-weight:700}
+.bm-games li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bm-games li em{font-style:normal;color:var(--faint)}
+.bm-games li b{color:var(--green)}
+#pfmOut:not(:empty){margin-top:8px}
+@keyframes bmPop{from{opacity:0;transform:scale(1.5)}to{opacity:1;transform:none}}
+@keyframes bmLeg{from{opacity:0;transform:translate(-80px,70px) scale(.4)}to{opacity:1;transform:none}}
+@keyframes bmTick{from{transform:scale(1.12)}to{transform:none}}
+@keyframes bmMile{from{transform:scale(1.45);opacity:.7}to{transform:none;opacity:1}}
+@keyframes bmRise{from{opacity:0;transform:translateY(140px)}to{opacity:1;transform:none}}
+@keyframes bmOrb{from{transform:scale(1)}to{transform:scale(1.25)}}
+@keyframes bmRing{from{opacity:.9;transform:scale(.3)}to{opacity:0;transform:scale(4)}}
+@keyframes bmRune{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes bmBurst{to{opacity:0;transform:scale(1.6) rotate(200deg)}}
+@media (prefers-reduced-motion:reduce){.bm-stage *{animation:none!important}}
 /* Compact on purpose (owner, 29 Sep 2026: "reduce the font size and tighten
    the swap pills, make it small but readable"). 12px is the floor. */
 .ask-refusal>p:first-child{font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
@@ -22067,11 +22152,216 @@ $("tab-convert").addEventListener("click",goConvert);
 $("bt-convert").addEventListener("click",function(){navBuzz();goConvert();});
 $("bt-play").addEventListener("click",function(){navBuzz();});
 $("logo").addEventListener("click",function(e){e.preventDefault();setView("pred");});
+/* PICK FOR ME (owner, 20 Oct 2026: "how can we get those kind of safe games and odds as a
+   feature?", after Make it safer turned a x1000 slip into a x49 of picks they had not chosen).
+   No chips: for every game still to come in the window, the surest market this bookie sells,
+   judged by our model, at its real price where we hold one. Surest first, with a per-reader
+   seeded shuffle among near-equals so two readers do not get one slip, until the payout, at
+   most 40 games (owner: "40 is fine"). When the surest legs cannot reach the payout inside 40,
+   every leg has to pay at least payout^(1/40). Held out over 60 days on our model alone: 82.7%
+   of these legs landed against 79.3% for the default chips. */
+var PFM_MAX=40, PFM_PAYS=[2,5,20,100,1000], PFM_FREE=5;
+function pickForMe(target,day,B,seed){
+  B=B||curBook();
+  var max=Math.min(PFM_MAX,slipMax(B)), min=Math.max(1.15,Math.pow(target,1/max));
+  var refused=refusedToday(), rk=B.key+"|", all=allowedMarkets(2), pool=[];
+  function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
+  (DATA.fixtures||[]).forEach(function(f){
+    if(!notStarted(f)) return;
+    if(day!=="all"&&dayOff(fDay(f))!==+day) return;
+    var codes=all.filter(function(c){ return bookAllows(c,B)&&!refused[rk+fid(f)+"|"+c]&&cornersOpen(f,c); });
+    /* The bookie's own list first: a market it prices on this game is a market it takes. */
+    var priced=codes.filter(function(c){ return bookVerdict(f,c,B)==="priced"; });
+    if(priced.length) codes=priced;
+    else if(pricedFixture(f,B)) return;
+    else codes=codes.filter(function(c){ return safeUnpriced(c); });
+    var best=null;
+    codes.forEach(function(c){
+      var v0=mProb(f,c); if(v0==null||isNaN(v0)) return;
+      var p=judgedP(f,c,v0); if(!(p>=0.5)) return;
+      var o=legOdd(f,c,v0,B); if(!(o>=min)) return;
+      if(!best||p>best._p) best={f:f,id:fid(f),code:c,p:v0,_p:p,o:o,eventId:f.eventId||null};
+    });
+    if(best) pool.push(best);
+  });
+  /* Near-equals swap places per reader: +-1.5 points of noise, seeded, so a reader keeps
+     their slip until they shuffle and the surest games still lead. */
+  pool.forEach(function(x){ x._k=x._p+(h32(seed+"|"+x.id)-0.5)*0.03; });
+  pool.sort(function(a,b){ return b._k-a._k; });
+  var picks=[], tot=1;
+  for(var i=0;i<pool.length&&tot<target&&picks.length<max;i++){ picks.push(pool[i]); tot*=pool[i].o; }
+  return {picks:picks, odds:tot, short:tot<target};
+}
+var PFM={day:"0",shuffles:0,busy:false,timers:[]};
+function pfmPass(){ var ui=window.swAccountUI; return ui&&ui.isPass?!!ui.isPass():ladPass(); }
+function pfmSeed(){
+  var s="x"; try{ s=localStorage.getItem("sw.pfm.seed"); if(!s){ s=Math.random().toString(36).slice(2,10); localStorage.setItem("sw.pfm.seed",s); } }catch(e){}
+  return s+"|"+new Date().toISOString().slice(0,10)+"|"+PFM.shuffles;
+}
+var PFM_WR={2:"#2FD48A",5:"#7FD13F",20:"#D9C53A",100:"#F2913B",1000:"#E63946"};
+var PFM_ICON={
+  pfm:"<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M13 2L4 14h7l-1 8 9-12h-7l1-8z'/></svg>",
+  slider:"<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'><line x1='4' y1='4' x2='4' y2='20' stroke-width='3'/><line x1='12' y1='4' x2='12' y2='20' stroke-width='3'/><line x1='20' y1='4' x2='20' y2='20' stroke-width='3'/><circle cx='4' cy='12' r='3' fill='currentColor'/><circle cx='12' cy='8' r='3' fill='currentColor'/><circle cx='20' cy='16' r='3' fill='currentColor'/></svg>",
+  wizard:"<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2L15 8H22M12 2L9 8H2M12 2V22M5 14H19M12 22L9 16H2M12 22L15 16H22'/><circle cx='12' cy='12' r='3' fill='currentColor'/></svg>",
+  go:"<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round'><path d='M9 6l6 6-6 6'/></svg>",
+  lock:"<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round'><rect x='5' y='11' width='14' height='10' rx='2'/><path d='M8 11V8a4 4 0 018 0v3'/></svg>"};
+function pfmPayHTML(){
+  var pass=pfmPass();
+  return PFM_PAYS.map(function(t){
+    var lock=t>PFM_FREE&&!pass;
+    return "<button class='bm-pc' type='button' data-pay='"+t+"' style='--wr:"+PFM_WR[t]+"'"+(lock?" data-lock='1'":"")+">"+
+      (lock?"<i class='bm-lk'>"+PFM_ICON.lock+"</i>":"")+"<small>x</small>"+t+"</button>";
+  }).join("");
+}
+function openBuildChooser(goMode){
+  var B=curBook(), m=$("bmScrim");
+  if(!m){
+    m=document.createElement("div"); m.className="bm-scrim"; m.id="bmScrim"; m.hidden=true;
+    document.body.appendChild(m);
+    m.addEventListener("click",function(e){ if(e.target===m) closeBuildChooser(); });
+    document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!m.hidden) closeBuildChooser(); });
+  }
+  var usual=null; try{ usual=localStorage.getItem("sw.mode"); }catch(e){}
+  m.innerHTML="<div class='bm-card' role='dialog' aria-modal='true' aria-labelledby='bmTtl'>"+
+    "<button class='ask-x bm-x' type='button' aria-label='Close'>"+XSVG+"</button>"+
+    "<h2 class='bm-h' id='bmTtl'>Build me a slip</h2>"+
+    "<p class='bm-sub'>Three ways. Same "+bookMark(B.key)+" code at the end.</p>"+
+    "<section class='bm-opt bm-pfm' id='bmPfm'>"+
+      "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.pfm+"</span><b>Pick for me</b><span class='bm-new'>NEW</span></div>"+
+      "<div class='bm-body' id='pfmBody'><p>No options to choose. We take the surest market in each game and stop at your payout.</p>"+
+        "<div class='bm-seg' role='radiogroup' aria-label='When'>"+
+          [["0","Today"],["1","Tomorrow"],["all","All upcoming"]].map(function(d){
+            return "<button type='button' role='radio' data-day='"+d[0]+"' aria-checked='"+(PFM.day===d[0])+"'"+(PFM.day===d[0]?" class='on'":"")+">"+d[1]+"</button>"; }).join("")+
+        "</div><div class='bm-pay' id='pfmPay'>"+pfmPayHTML()+"</div></div>"+
+      "<div class='bm-stage' id='pfmStage' hidden aria-live='polite'>"+
+        "<span class='bm-badge' id='pfmBadge'></span><div class='bm-list' id='pfmList'></div>"+
+        "<span class='bm-booking' id='pfmBooking'>Booking on "+bookMark(B.key)+"…</span>"+
+        "<div class='bm-count'><b id='pfmOdds'>x1.00</b><span id='pfmGames'>0 games</span></div>"+
+        "<svg class='bm-rune' viewBox='0 0 150 150' aria-hidden='true'><circle cx='75' cy='75' r='70' fill='none' stroke='#F2B84B' stroke-width='1.5' stroke-dasharray='2 7'/><circle cx='75' cy='75' r='56' fill='none' stroke='#F2B84B' stroke-opacity='.6' stroke-width='1' stroke-dasharray='14 6 3 6'/><path stroke='#F2B84B' stroke-width='2' stroke-linecap='round' d='M75 3v10M75 137v10M3 75h10M137 75h10M24 24l7 7M119 119l7 7M24 126l7-7M119 31l7-7'/></svg>"+
+        "<img class='bm-wiz' src='/fw/wiz-cast.webp' alt='' width='96' height='132'>"+
+        "<i class='bm-ring'></i><i class='bm-ring two'></i><i class='bm-orb'></i></div>"+
+      "<div id='pfmSum'></div><div id='pfmOut'></div>"+
+    "</section>"+
+    "<section class='bm-opt bm-link' data-go='slider' tabindex='0' role='button'>"+
+      "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.slider+"</span><b>Slider</b>"+(usual==="slider"?"<span class='bm-usual'>Your usual</span>":"")+"<span class='bm-arw'>"+PFM_ICON.go+"</span></div>"+
+      "<p>Choose your options. Slide right for bigger odds.</p>"+
+      "<div class='bm-track' aria-hidden='true'><i></i></div><div class='bm-ticks' aria-hidden='true'><span>Safest</span><span>Safe</span><span>Medium</span><span>Bold</span><span>Risky</span></div>"+
+    "</section>"+
+    "<section class='bm-opt bm-link' data-go='wizard' tabindex='0' role='button'>"+
+      "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.wizard+"</span><b>Wizard</b>"+(usual==="wizard"?"<span class='bm-usual'>Your usual</span>":"")+"<span class='bm-arw'>"+PFM_ICON.go+"</span></div>"+
+      "<p>Type the odds you want. We find the games.</p>"+
+      "<label class='bm-own'>× <input id='bmOwn' inputmode='numeric' autocomplete='off' placeholder='500' aria-label='The odds you want'></label>"+
+    "</section>"+
+    "<p class='bm-foot'><span>Change your bookie any time.</span><b>18+ · Play responsibly</b></p></div>";
+  m.querySelector(".bm-x").addEventListener("click",closeBuildChooser);
+  m.querySelectorAll("[data-day]").forEach(function(b){ b.addEventListener("click",function(){
+    if(PFM.busy) return; PFM.day=b.dataset.day;
+    m.querySelectorAll("[data-day]").forEach(function(x){ var on=x===b; x.classList.toggle("on",on); x.setAttribute("aria-checked",on); });
+    $("pfmSum").innerHTML=""; $("pfmOut").innerHTML=""; }); });
+  m.querySelectorAll("[data-pay]").forEach(function(b){ b.addEventListener("click",function(){ pfmRun(+b.dataset.pay); }); });
+  m.querySelectorAll("[data-go]").forEach(function(s){
+    function go(e){ if(e.target&&e.target.id==="bmOwn") return;
+      var own=String(($("bmOwn")||{}).value||"").replace(/[^0-9]/g,""), mode=s.dataset.go;
+      closeBuildChooser(); goMode(mode);
+      if(mode==="wizard"&&own){ var c=$("wspCust"); if(c){ c.value=own; c.dispatchEvent(new Event("blur")); } } }
+    s.addEventListener("click",go);
+    s.addEventListener("keydown",function(e){ if(e.key==="Enter"&&e.target===s) go(e); });
+  });
+  var own=$("bmOwn"); if(own) own.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); e.target.closest("[data-go]").click(); } });
+  m.hidden=false; askLock(true);
+  var f=m.querySelector(".bm-x"); if(f&&f.focus) try{ f.focus({preventScroll:true}); }catch(e){}
+}
+function closeBuildChooser(){
+  var m=$("bmScrim"); if(!m||m.hidden) return;
+  PFM.timers.forEach(clearTimeout); PFM.timers=[]; PFM.busy=false;
+  m.hidden=true; m.innerHTML=""; askLock(false);
+}
+/* THE CONJURING (owner: "wizardy asf", "the more the odds, the longer"). The games appear as
+   they are picked and the payout climbs with each; booking runs at the same time, and the code
+   lands when both are done. Transform and opacity only. Reduced motion skips to the result. */
+function pfmRun(T){
+  if(PFM.busy) return;
+  var B=curBook(), out=$("pfmOut"), sum=$("pfmSum");
+  out.innerHTML=""; sum.innerHTML="";
+  if(T>PFM_FREE&&!pfmPass()){
+    var twa=document.documentElement.classList.contains("sw-twa");
+    out.innerHTML="<div class='bm-note'><b>x"+T+" and up come with Wizard Pass.</b> x2 and x5 are open to everyone."+
+      (twa?"":"<button class='bm-pass' type='button'>See Wizard Pass</button>")+"</div>";
+    var pb=out.querySelector(".bm-pass");
+    if(pb) pb.addEventListener("click",function(){ var ui=window.swAccountUI, on=!!(window.swAcct&&window.swAcct.st&&window.swAcct.st.on);
+      closeBuildChooser(); if(!ui) return; if(!on&&ui.open) ui.open(); else if(ui.plus) ui.plus(); });
+    return;
+  }
+  var r=pickForMe(T,PFM.day,B,pfmSeed());
+  if(r.picks.length<2||r.short){
+    out.innerHTML="<div class='bm-note'><b>Not enough games left "+(PFM.day==="0"?"today":PFM.day==="1"?"tomorrow":"on the board")+" for x"+T+".</b> "+
+      (PFM.day==="all"?"Try a smaller payout.":"Try All upcoming or a smaller payout.")+"</div>";
+    return;
+  }
+  PFM.busy=true;
+  var card=$("bmPfm"), body=$("pfmBody"), stage=$("pfmStage"), list=$("pfmList");
+  var reduced=REDUCED, CLIMB=reduced?0:(1.4+0.6*Math.log10(T))*1000, STEP=CLIMB/r.picks.length;
+  var st={anim:reduced, busied:false, result:null};
+  function later(fn,ms){ PFM.timers.push(setTimeout(fn,ms)); }
+  function reset(){ PFM.timers.forEach(clearTimeout); PFM.timers=[]; PFM.busy=false;
+    var bc=$("bmScrim")&&$("bmScrim").querySelector(".bm-card"); if(bc) bc.classList.remove("bm-other");
+    card.classList.remove("conj","done"); stage.hidden=true; body.hidden=false; list.innerHTML=""; }
+  function finish(){
+    if(!st.anim||!st.result) return;
+    if(!$("pfmOut")) return;                 /* closed while the booking was in the air */
+    PFM.busy=false; card.classList.add("done"); stage.hidden=true;
+    if(st.result.code){
+      var code=st.result.code[0], sent=st.result.code[1], d=st.result.code[2];
+      var tv=totalOdds(sent);
+      sum.innerHTML="<div class='bm-sum'><b>x"+(tv>=100?Math.round(tv).toLocaleString("en"):tv.toFixed(2))+"</b><span>"+sent.length+" games · "+bookMark(B.key)+"</span></div>"+
+        "<div class='bm-acts'><button class='bm-act' type='button' data-a='shuffle'>Shuffle</button><button class='bm-act' type='button' data-a='games'>See the games</button></div>"+
+        "<ol class='bm-games' hidden>"+sent.map(function(c){ return "<li><span>"+esc(c.f?(c.f.home+" v "+c.f.away):"")+"</span><em>"+esc(c.f?mLabel(c.f,c.code):c.code)+"</em><b>"+legOdd(c.f,c.code,c.p,B).toFixed(2)+"</b></li>"; }).join("")+"</ol>";
+      sum.querySelector("[data-a='shuffle']").addEventListener("click",function(){ PFM.shuffles++; reset(); pfmRun(T); });
+      sum.querySelector("[data-a='games']").addEventListener("click",function(){ var g=sum.querySelector(".bm-games"); g.hidden=!g.hidden; });
+      showCode(code,"pfmOut",function(){ rememberSlip(sent,totalOdds(sent),code,B.key); },B,sent,d);
+    } else {
+      body.hidden=false; card.classList.remove("conj");
+      showBookErr("pfmOut",bookErrHTML(st.result.fail,B));
+    }
+  }
+  bookRounds(r.picks,B,"pickforme","pfmOut",{
+    busy:function(){ st.busied=true; },
+    idle:function(){ if(!st.busied) reset(); },
+    code:function(code,sent,d){ st.result={code:[code,sent,d]}; finish(); },
+    fail:function(d){ st.result={fail:d}; finish(); },
+    stop:function(){ reset(); }
+  });
+  if(!PFM.busy) return;                       /* the gate or a prompt took over */
+  body.hidden=true; stage.hidden=false; card.classList.add("conj");
+  $("bmScrim").querySelector(".bm-card").classList.add("bm-other"); buzzConjure();
+  $("pfmBadge").textContent="x"+T; $("pfmBadge").style.setProperty("--wr",PFM_WR[T]);
+  $("pfmOdds").textContent="x1.00"; $("pfmGames").textContent="0 games";
+  if(reduced) return;
+  var tot=1;
+  r.picks.forEach(function(c,i){
+    later(function(){
+      tot*=c.o;
+      var row=document.createElement("div"); row.className="bm-leg";
+      row.innerHTML="<span>"+esc(c.f.home+" v "+c.f.away)+"</span><em>"+esc(mLabel(c.f,c.code))+"</em><b>"+c.o.toFixed(2)+"</b>";
+      list.insertBefore(row,list.firstChild);
+      while(list.children.length>4) list.removeChild(list.lastChild);
+      var oe=$("pfmOdds"); oe.textContent="x"+(tot>=100?Math.round(tot).toLocaleString("en"):tot.toFixed(2));
+      $("pfmGames").textContent=(i+1)+((i+1)===1?" game":" games");
+      oe.classList.remove("tick","mile"); void oe.offsetWidth;
+      oe.classList.add([10,100,1000].some(function(m){ return m<T&&tot>=m&&tot/c.o<m; })?"mile":"tick");
+    },220+i*STEP);
+  });
+  later(function(){ card.classList.add("cast"); },220+CLIMB);
+  later(function(){ st.anim=true; finish(); },220+CLIMB+500);
+}
 (function(){
   var cta=$("slipCta"); if(!cta) return;
   function goMode(mode){ try{localStorage.setItem("sw.mode",mode);}catch(e){} BUILD.mode=mode; setView("build"); }
+  /* BUILD ME A SLIP asks how (owner, 20 Oct 2026: "make the three options equal. they click the
+     build me a slip. they get a modal with the categories and information about each builder"). */
   cta.querySelectorAll("[data-scmode]").forEach(function(b){
-    b.addEventListener("click",function(e){e.stopPropagation();goMode(b.dataset.scmode);});
+    b.addEventListener("click",function(e){e.stopPropagation();
+      if(b.classList.contains("sc-go-primary")) openBuildChooser(goMode); else goMode(b.dataset.scmode);});
   });
   /* The second path is not another builder - it is the board. It used to say
      "Choose games myself" and go to the slider, which chooses for you; the

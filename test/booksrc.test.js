@@ -43,12 +43,13 @@ test("every booking call site says where it came from", () => {
      now, as "safer", apart from the converter's "editor" it used to hand to.
      Nine since 28 Sep: the converter's Trim to odds and Change markets.
      Eight since 8 Oct: the builder's own "builder" booking went - builders
-     hand their picks to My slip, which books them under the legs' labels. */
-  assert.equal(labelled.length + derived.length, 8,
-    "expected eight attributed call sites, found " + (labelled.length + derived.length) +
+     hand their picks to My slip, which books them under the legs' labels.
+     Nine since 20 Oct: Pick for me books straight from the Build me a slip chooser. */
+  assert.equal(labelled.length + derived.length, 9,
+    "expected nine attributed call sites, found " + (labelled.length + derived.length) +
     ": " + calls.join(" | "));
   assert.equal(derived.length, 1, "only My slip derives its label");
-  ["split", "convert", "editor", "board", "safer", "trim", "change"].forEach((s) => {
+  ["split", "convert", "editor", "board", "safer", "trim", "change", "pickforme"].forEach((s) => {
     assert.ok(labelled.some((c) => c.includes('"' + s + '"')), s + " is not labelled anywhere");
   });
   /* And the three writers that fill My slip must stamp what they are, or the
