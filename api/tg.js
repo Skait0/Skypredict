@@ -98,7 +98,8 @@ const subjectOf = (uid) => "tg-" + crypto.createHash("sha256")
 function toolButtons(book, code, job) {
   const k = (t, d) => ({ text: t, callback_data: d + "|" + book + "|" + code });
   const rows = [[k("🛡 Edit for me", "ed"), k("✂️ Trim", "tr"), k("➗ Split", "sp")],
-    [k("🔁 Convert", "cx"), { text: "🔔 Follow", callback_data: ["fw", book, code].join("|") }]];
+    [k("🔁 Convert", "cx"), k("🔄 Change markets", "cm")],
+    [{ text: "🔔 Follow", callback_data: ["fw", book, code].join("|") }]];
   /* 👍 / 👎 under every answer (owner, 20 Oct 2026); Back to these buttons has no job, so no vote row. */
   if (job) rows.push(ASK.voteRow(job));
   return { inline_keyboard: rows };
@@ -559,6 +560,17 @@ async function onButton(cq) {
     await tg("sendMessage", { chat_id: chat.id, reply_to_message_id: cq.message.message_id,
       text: "That code can't be read any more - it may have expired or its games started." });
     return;
+  }
+  if (tag === "cm") {
+    const kb = ASK.changeButtons(legs, book, code);
+    if (kb.inline_keyboard.length > 1) return edit(kb);
+    await tg("sendMessage", { chat_id: chat.id, reply_to_message_id: cq.message.message_id,
+      text: "🔄 Nothing on this slip I can change. Try 🛡 Edit for me instead." });
+    return;
+  }
+  if (tag === "cq") {
+    if (!Object.hasOwn(S.CHANGE_FROM, p[3] || "") || !Object.hasOwn(S.CHANGE_TO, p[4] || "")) return;
+    return onAsk(msgLike, { kind: "change", from: p[3], to: p[4] }, book, code, legs);
   }
   if (tag === "ed") return onSaferAsk(chat.id, cq.message.message_id, book, code, legs);
   if (tag === "eq") return onAsk(msgLike, { kind: "saferDo" }, book, code, legs);

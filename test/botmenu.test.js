@@ -106,6 +106,23 @@ test("Trim opens its choices in place of the buttons, and Back puts them back", 
   } finally { b.done(); }
 });
 
+test("Change markets lists only the swaps this slip has, and a choice books it", async () => {
+  /* SportyClaw review, 20 Oct 2026: the site's "Change markets" in the bot. */
+  const b = bot();
+  try {
+    await b.tap("cm|sporty|HUW6YC");
+    const e = b.sent.filter((s) => s.method === "editMessageReplyMarkup").pop();
+    const keys = e.body.reply_markup.inline_keyboard.flat();
+    const data = keys.map((k) => k.callback_data);
+    assert.ok(data.includes("cq|sporty|HUW6YC|home|dc"), "the slip's home win can go to win or draw");
+    assert.ok(!data.some((d) => /\|draw\|/.test(d || "")), "no draws on the slip, so no draw swap");
+    assert.ok(data.includes("bk0|sporty|HUW6YC"), "and Back");
+    assert.ok(data.every((d) => !d || d.length <= 64));
+    await b.tap("cq|sporty|HUW6YC|home|dc");
+    assert.ok(b.sent.filter((s) => s.method === "sendMessage").length, "the choice answers");
+  } finally { b.done(); }
+});
+
 test("a bare number asks which bookie before it books anything", async () => {
   const b = bot();
   try {
