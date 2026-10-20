@@ -22182,7 +22182,7 @@ $("logo").addEventListener("click",function(e){e.preventDefault();setView("pred"
    most 40 games (owner: "40 is fine"). When the surest legs cannot reach the payout inside 40,
    every leg has to pay at least payout^(1/40). Held out over 60 days on our model alone: 82.7%
    of these legs landed against 79.3% for the default chips. */
-var PFM_MAX=40, PFM_PAYS=[2,5,10,20,50,100,150,200], PFM_FREE=5;
+var PFM_MAX=40, PFM_PAYS=[2,5,10,20,50,100,150,200], PFM_FREE=10;
 function pickForMe(target,day,B,seed){
   B=B||curBook();
   var max=Math.min(PFM_MAX,slipMax(B)), min=Math.max(1.15,Math.pow(target,1/max));
@@ -22332,7 +22332,7 @@ function pfmRun(T){
   out.innerHTML=""; sum.innerHTML="";
   if(T>PFM_FREE&&!pfmPass()){
     var twa=document.documentElement.classList.contains("sw-twa");
-    out.innerHTML="<div class='bm-note'><b>x"+T+" and up come with Wizard Pass.</b> x2 and x5 are open to everyone."+
+    out.innerHTML="<div class='bm-note'><b>x"+T+" and up come with Wizard Pass.</b> x2, x5 and x10 are open to everyone."+
       (twa?"":"<button class='bm-pass' type='button'>See Wizard Pass</button>")+"</div>";
     var pb=out.querySelector(".bm-pass");
     if(pb) pb.addEventListener("click",function(){ var ui=window.swAccountUI, on=!!(window.swAcct&&window.swAcct.st&&window.swAcct.st.on);

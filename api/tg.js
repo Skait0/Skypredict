@@ -427,7 +427,7 @@ async function onSaferAsk(chat, replyTo, book, code, legs) {
 /* BUILD ME A SLIP: PICK FOR ME (owner, 20 Oct 2026: "now do the telegram"). The site's Pick for
    me (lib/pickforme.js): a payout -> the surest market in each game still to come today, on the
    reader's bookie, at most 40 games. Today first; when today cannot reach the payout, the coming
-   days, and the message says so. x2 and x5 for everyone, x20 and up with Wizard Pass. "Another"
+   days, and the message says so. x2, x5 and x10 for everyone, x20 and up with Wizard Pass. "Another"
    is a new shuffle for this reader, not a different rule. */
 async function onBuild(chat, replyTo, fromId, book, target, nth) {
   const say = (text, markup) => tg("sendMessage", { chat_id: chat, text, parse_mode: "HTML",
@@ -444,8 +444,8 @@ async function onBuild(chat, replyTo, fromId, book, target, nth) {
   const q = await quota(fromId, 1);
   if (!q.ok) { await say("🔥 " + spent(q) + (q.plan === "trial" ? "\n\n" + plusLine() : "")); return; }
   if (target > PFM.FREE_UP_TO && !["plus", "ff", "admin"].includes(q.plan)) {
-    await say("🔒 <b>x" + target + " and up come with Wizard Pass.</b> x2 and x5 are open to everyone.\n\n" + plusLine(),
-      { inline_keyboard: [[2, 5].map((x) => ({ text: "x" + x, callback_data: ["bd", book, x, 0].join("|") }))] });
+    await say("🔒 <b>x" + target + " and up come with Wizard Pass.</b> x2, x5 and x10 are open to everyone.\n\n" + plusLine(),
+      { inline_keyboard: [[2, 5, 10].map((x) => ({ text: "x" + x, callback_data: ["bd", book, x, 0].join("|") }))] });
     return;
   }
   tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
@@ -489,7 +489,7 @@ async function onBuildMenu(chat, replyTo, book) {
     text: "🧙 <b>Build me a slip</b> on " + D.BOOK_NAMES[book] + "\n\n" +
       "⚡ <b>Pick for me</b>: no options to choose. We take the surest market in each game and stop at your payout. " +
       "Tap one, or type any number up to <b>200</b>.\n\n" +
-      "🎚️ <b>Slider</b> and 🔮 <b>Wizard</b>: choose your own options on the site. Want bigger odds? Use these.\n\n<i>x10 and up come with Wizard Pass. 18+</i>",
+      "🎚️ <b>Slider</b> and 🔮 <b>Wizard</b>: choose your own options on the site. Want bigger odds? Use these.\n\n<i>x20 and up come with Wizard Pass. 18+</i>",
     reply_markup: { inline_keyboard: [xs([2, 5, 10, 20]), xs([50, 100, 150, 200]),
       [{ text: "🎚️ Slider", url: SITE + "/" }, { text: "🔮 Wizard", url: SITE + "/" }]] } });
 }

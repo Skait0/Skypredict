@@ -4,7 +4,7 @@
  * Pick for me (owner, 20 Oct 2026): "Build me a slip" asks how - Pick for me, Slider or
  * Wizard. Pick for me takes no options: the surest market this bookie sells in every game
  * still to come in the window, surest first with a per-reader shuffle among near-equals,
- * until the payout, at most 40 games ("40 is fine"). x2 and x5 for everyone, x20 and up
+ * until the payout, at most 40 games ("40 is fine"). x2, x5 and x10 for everyone, x20 and up
  * with a pass. Held out over 60 days on our model alone: 82.7% of these legs landed against
  * 79.3% for the default chips.
  */
@@ -80,7 +80,7 @@ test("a reader keeps their slip until they shuffle; two readers get different sl
 
 test("the big button opens the chooser; x20 and up need a pass; it books as pickforme", () => {
   assert.match(src, /if\(b\.classList\.contains\("sc-go-primary"\)\) openBuildChooser\(goMode\); else goMode\(b\.dataset\.scmode\);/);
-  assert.match(src, /var PFM_MAX=40, PFM_PAYS=\[2,5,10,20,50,100,150,200\], PFM_FREE=5;/);
+  assert.match(src, /var PFM_MAX=40, PFM_PAYS=\[2,5,10,20,50,100,150,200\], PFM_FREE=10;/);
   const run = grab("pfmRun");
   assert.match(run, /if\(T>PFM_FREE&&!pfmPass\(\)\)/);
   assert.match(run, /bookRounds\(r\.picks,B,"pickforme","pfmOut",/);
