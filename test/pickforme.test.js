@@ -29,8 +29,9 @@ function engine(games, opts = {}) {
   const env = {
     DATA: { fixtures: games }, PFM_MAX: 40,
     curBook: () => ({ key: "sporty" }), slipMax: () => opts.slipMax || 50,
-    refusedToday: () => ({}), allowedMarkets: () => ["1X", "X2", "OVER_1.5", "HOME_OVER_0.5"],
-    bookAllows: () => true, cornersOpen: () => true, bookVerdict: () => "priced", pricedFixture: () => true, safeUnpriced: () => true,
+    refusedToday: () => ({}), allowedMarkets: () => ["1X", "X2", "OVER_1.5", "HOME_OVER_0.5", "AH_1_2", "GG2_Y"],
+    bookAllows: () => true, cornersOpen: () => true, bookQuotes: () => true, BOOKS: { sporty: {} }, dcOk: () => true,
+    HCAP_CODES: ["AH_1_2"], CORNER_CODES: [], TEAM_CORNER_CODES: [], SHOTS_CODES: [], TEAM_SHOTS_CODES: [], bookVerdict: (f, c) => (f.v && f.v[c]) || "priced", pricedFixture: () => true, safeUnpriced: () => true,
     notStarted: (f) => Date.parse(f.kickoff) > now, dayOff: (d) => d, fDay: (f) => f.day,
     fid: (f) => f.id, mProb: (f, c) => f.p[c], judgedP: (f, c, p) => p, legOdd: (f, c) => f.o[c],
   };
@@ -87,4 +88,21 @@ test("the big button opens the chooser; x20 and up need a pass; it books as pick
   /* The three ways, named in the site's words. */
   const open = grab("openBuildChooser");
   for (const w of ["Pick for me", "Slider", "Wizard", "Build me a slip", "18+"]) assert.ok(open.includes(w), w + " missing");
+});
+
+test("a market the price sweep never fetches still counts, as it does in the Slider", () => {
+  /* Live on 20 Oct 2026 every market read "unknown" and Pick for me said "not enough games"
+     for x2 on all upcoming. Only "no" (the bookie lists the game without the market) is out. */
+  const g = Array.from({ length: 12 }, (_, i) => game(i, { v: { "1X": "unknown", "X2": "unknown", "OVER_1.5": "unknown", "HOME_OVER_0.5": "unknown" } }));
+  assert.ok(engine(g)(2, "0", null, "s").picks.length >= 2, "unknown markets were thrown away");
+  const no = Array.from({ length: 12 }, (_, i) => game(i, { v: { "1X": "no", "X2": "no", "OVER_1.5": "no", "HOME_OVER_0.5": "no" } }));
+  assert.strictEqual(engine(no)(2, "0", null, "s").picks.length, 0, "a market the bookie does not sell got in");
+});
+
+test("markets people know: no handicaps or GG+, however sure the model is", () => {
+  /* Live on 20 Oct 2026 the surest picks were all Asian handicaps. */
+  const g = Array.from({ length: 12 }, (_, i) => game(i, { p: { "1X": 0.8, "X2": 0.4, "OVER_1.5": 0.7, "HOME_OVER_0.5": 0.75, "AH_1_2": 0.97, "GG2_Y": 0.99 },
+    o: { "1X": 1.2, "X2": 2.2, "OVER_1.5": 1.3, "HOME_OVER_0.5": 1.25, "AH_1_2": 1.2, "GG2_Y": 5 } }));
+  const r = engine(g)(5, "0", null, "s");
+  assert.ok(r.picks.length && r.picks.every((c) => c.code !== "AH_1_2" && c.code !== "GG2_Y"));
 });

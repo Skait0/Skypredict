@@ -22164,15 +22164,25 @@ var PFM_MAX=40, PFM_PAYS=[2,5,20,100,1000], PFM_FREE=5;
 function pickForMe(target,day,B,seed){
   B=B||curBook();
   var max=Math.min(PFM_MAX,slipMax(B)), min=Math.max(1.15,Math.pow(target,1/max));
-  var refused=refusedToday(), rk=B.key+"|", all=allowedMarkets(2), pool=[];
+  /* Markets people know (live on 20 Oct 2026 the surest picks were all Asian handicaps): no
+     handicaps, corners, shots or GG+. */
+  var skip={}; [].concat(HCAP_CODES,CORNER_CODES,TEAM_CORNER_CODES,SHOTS_CODES,TEAM_SHOTS_CODES,["GG2_Y"]).forEach(function(c){ skip[c]=1; });
+  var refused=refusedToday(), rk=B.key+"|", all=allowedMarkets(2).filter(function(c){ return !skip[c]; }), pool=[];
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
   (DATA.fixtures||[]).forEach(function(f){
     if(!notStarted(f)) return;
     if(day!=="all"&&dayOff(fDay(f))!==+day) return;
-    var codes=all.filter(function(c){ return bookAllows(c,B)&&!refused[rk+fid(f)+"|"+c]&&cornersOpen(f,c); });
-    /* The bookie's own list first: a market it prices on this game is a market it takes. */
-    var priced=codes.filter(function(c){ return bookVerdict(f,c,B)==="priced"; });
-    if(priced.length) codes=priced;
+    var homeFav=f.home_p>f.away_p;
+    /* The Slider's own sanity checks (buildPicks sane()), so a pick here is one it could make. */
+    var codes=all.filter(function(c){ return bookAllows(c,B)&&!refused[rk+fid(f)+"|"+c]&&cornersOpen(f,c)&&
+      !(/^NR3_/.test(c)&&!bookQuotes(f,c,BOOKS.sporty))&&!(c==="1"&&!homeFav)&&!(c==="2"&&homeFav)&&
+      !((c==="1X"||c==="X2")&&!dcOk(f,c)); });
+    /* The Slider's rule, word for word (buildPicks): a market the bookie prices on this game,
+       or one its price sweep never fetches ("unknown"), is a market it takes; a game it prices
+       with none of ours is dropped; a game with no prices at all keeps only the safe markets.
+       Live on 20 Oct 2026 every market read "unknown", and "priced" alone built nothing. */
+    var ok=codes.filter(function(c){ var v=bookVerdict(f,c,B); return v==="priced"||v==="unknown"; });
+    if(ok.length) codes=ok;
     else if(pricedFixture(f,B)) return;
     else codes=codes.filter(function(c){ return safeUnpriced(c); });
     var best=null;
