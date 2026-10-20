@@ -33,6 +33,18 @@ test("merge keeps the target book's legs, moves the others, and keeps a shared g
   assert.strictEqual(m.dupes, 1);
 });
 
+test("a game that has started or ended never goes into a merged code", () => {
+  /* Live, 21 Oct 2026 00:42: RMFVBB (5 ended) + KLHGFR booked XC3PNP with 13 games - SportyBet took
+     the finished ones. Its read-back has no kick-off, only a status: "Not Start" is the only safe one. */
+  const now = Date.now();
+  const own = (status, kickoff) => ({ home: "A" + status, away: "B", eventId: "sr:match:" + status, prediction: "1", status, kickoff });
+  const m = C.merge([{ book: "sporty", legs: [own("Ended", ""), own("H2", ""), own("9", ""), own("Not Start", ""), own("", ""),
+    own(undefined, now - 36e5)] }], "sporty", [], now);
+  assert.deepStrictEqual(m.picks.map((p) => p.leg.status), ["Not Start", ""]);
+  assert.ok(m.stuck.every((s) => s.why === "already started"));
+  assert.ok(C.started({ status: "Ended" }, now) && !C.started({ status: "Not Start" }, now) && !C.started({ kickoff: now + 36e5 }, now));
+});
+
 test("the webhook books one merged code and counts it as one", () => {
   const src = require("fs").readFileSync(require("path").join(__dirname, "../api/tg.js"), "utf8");
   assert.ok(/D\.parseAll\(/.test(src) && /CONVERT\.merge\(/.test(src), "the webhook merges");
