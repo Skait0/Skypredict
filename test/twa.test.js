@@ -30,3 +30,11 @@ test("in the app no button opens a bookie's betslip; the code, Copy and a paste 
   assert.ok(html.includes("<span class='code-paste code-paste--twa'>Paste this code into the booking code box "));
   assert.ok(!/\.sw-twa[^{]*\.code-copy[^{]*\{display:none/.test(html), "Copy is never hidden");
 });
+
+test("the built pages (Daily codes, matches) hide Load it and Download app in the app", () => {
+  const P = require("../lib/pages.js");
+  const src = read("lib/pages.js");
+  assert.ok(src.includes(".sw-twa .ck-go,.sw-twa .code-row a,.sw-twa .tn-inst{display:none!important}"));
+  assert.strictEqual(src.split("${TWA_HEAD}").length - 1, 2, "both page heads carry it");
+  assert.ok(P);
+});

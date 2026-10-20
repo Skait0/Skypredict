@@ -98,7 +98,9 @@ test("the page carries a working form and no converter of its own", () => {
   assert.match(html, /name="go" value="convert"/);
   assert.match(html, /name="go" value="read"/);
   assert.match(html, /name="code"[^>]*pattern="\[A-Za-z0-9\]\{4,16\}"/);
-  assert.doesNotMatch(html, /<script(?![^>]*application\/ld\+json)/,
+  /* The one exception is the Play app's class switch (lib/pages.js TWA_HEAD, 20 Oct 2026),
+     which reads sessionStorage and nothing else. */
+  assert.doesNotMatch(html, /<script(?![^>]*application\/ld\+json)(?!>try\{if\(sessionStorage\.getItem\("sw\.twa"\)==="1"\)document\.documentElement\.classList\.add\("sw-twa"\)\}catch\(e\)\{\}<\/script>)/,
     "this page ships no script");
 });
 
