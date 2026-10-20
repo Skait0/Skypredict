@@ -751,6 +751,13 @@ module.exports = async function handler(req, res) {
       else if (menu.kind === "tool") await tg("sendMessage", { chat_id: chat, reply_to_message_id: msg.message_id,
         text: ASK.TOOL_ASK[menu.tool] + " Any bookie.", reply_markup: { force_reply: true, input_field_placeholder: "Paste the code here" } });
       else if (menu.kind === "menuBuild") await onBuildMenu(chat, msg.message_id, menu.book);
+      else if (menu.kind === "yday") {
+        const y = ASK.yesterday(await (await fetch(SITE + "/predictions.json")).json().catch(() => ({})), Date.now());
+        await tg("sendMessage", { chat_id: chat, reply_to_message_id: msg.message_id, parse_mode: "HTML",
+          text: y.n ? "📊 <b>Yesterday: " + y.hit + " of " + y.n + " of our tips landed</b> (" + Math.round(100 * y.hit / y.n) + "%) 🧙\n\nEvery day's results are on the site.\n<i>18+</i>"
+            : "📊 Yesterday's results aren't in yet. Check back soon 🧙",
+          reply_markup: { inline_keyboard: [[{ text: "📋 Past results", url: SITE + "/booking-codes" }]] } });
+      }
       else if (menu.kind === "ladder") await onLadder(chat, msg.message_id, msg.from && msg.from.id, menu.book);
       else if (menu.kind === "bookie") await tg("sendMessage", { chat_id: chat, text: "🏦 Which bookie do you use?",
         reply_to_message_id: msg.message_id, reply_markup: bookButtons((b) => "bk|" + b) });

@@ -136,6 +136,20 @@ test("Results grades the ticket leg by leg and offers a new slip", async () => {
   } finally { b.done(); }
 });
 
+test("the menu has How we did yesterday and the penalty game", () => {
+  /* SportyClaw review, 20 Oct 2026. The number is the site hero's (windowRecord(1)), from the payload. */
+  const kb = ASK.menuKeyboard("sporty").keyboard.flat();
+  assert.ok(kb.some((k) => k.text === ASK.MENU.yday));
+  const pen = kb.find((k) => k.web_app);
+  assert.ok(pen && /\/penalty$/.test(pen.web_app.url), "the game opens inside Telegram");
+  assert.deepStrictEqual(ASK.parseMenu(ASK.MENU.yday), { kind: "yday" });
+  const now = Date.parse("2026-10-21T09:00:00Z");
+  const pay = { results: [{ date: "2026-10-20", hit: true }, { date: "2026-10-20", hit: false }, { date: "2026-10-20", hit: true },
+    { date: "2026-10-19", hit: false }] };
+  assert.deepStrictEqual(ASK.yesterday(pay, now), { day: "2026-10-20", hit: 2, n: 3 });
+  assert.strictEqual(ASK.yesterday({ results: [] }, now).n, 0);
+});
+
 test("a bare number asks which bookie before it books anything", async () => {
   const b = bot();
   try {
