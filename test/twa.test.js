@@ -21,3 +21,12 @@ test("the site vouches for the app (Digital Asset Links)", () => {
   assert.ok(al[0].target.sha256_cert_fingerprints.length >= 1);
   assert.deepEqual(al[0].relation, ["delegate_permission/common.handle_all_urls"]);
 });
+
+/* Google Play: no "call to action to wager" in the app (owner, 20 Oct 2026). */
+test("in the app no button opens a bookie's betslip; the code, Copy and a paste line stay", () => {
+  const html = read("public/index.html");
+  assert.ok(html.includes(".sw-twa .code-opens .code-open,.sw-twa .code-two,.sw-twa .sp-open,.sw-twa .sc-go-primary .sc-lbl>span{display:none!important}"));
+  assert.ok(html.includes(".sw-twa .code-paste--twa{display:block}"));
+  assert.ok(html.includes("<span class='code-paste code-paste--twa'>Paste this code into the booking code box "));
+  assert.ok(!/\.sw-twa[^{]*\.code-copy[^{]*\{display:none/.test(html), "Copy is never hidden");
+});

@@ -375,3 +375,24 @@ test("unsubscribe says so only when the write went through: a failed revoke is a
   assert.doesNotMatch(r.body, /unsubscribed/);
   assert.ok(logged.some((l) => /unsubscribe write failed/.test(l)), "report() saw it");
 });
+
+/* Google Play's reviewers need reusable sign-in details and cannot read our mail (20 Oct 2026). */
+test("the review address signs in with REVIEW_CODE, sends no mail, and nobody else gets it", async () => {
+  process.env.REVIEW_EMAIL = "Review@Soccerwizard.live"; process.env.REVIEW_CODE = "246810";
+  try {
+    const w = world();
+    assert.strictEqual((await w.call(postReq("email/send", { email: "review@soccerwizard.live", turnstile: "ok" }))).code, 200);
+    assert.strictEqual(w.sent.length, 0, "no email for the review address");
+    assert.strictEqual((await w.call(postReq("email/verify", { email: "review@soccerwizard.live", code: "246810" }))).code, 200);
+    assert.strictEqual((await w.call(postReq("email/verify", { email: "review@soccerwizard.live", code: "246810" }))).code, 400, "still one use per send");
+    await w.call(postReq("email/send", { email: "review@soccerwizard.live", turnstile: "ok" }));
+    assert.strictEqual((await w.call(postReq("email/verify", { email: "review@soccerwizard.live", code: "246810" }))).code, 200, "reusable after a new send");
+    await w.call(postReq("email/send", { email: "a@b.com", turnstile: "ok" }));
+    assert.strictEqual(w.sent.length, 1, "everyone else still gets mail");
+    assert.notStrictEqual(w.sent[0].c, "246810");
+    assert.strictEqual((await w.call(postReq("email/verify", { email: "a@b.com", code: "246810" }))).code, 400, "the review code opens no other account");
+    process.env.REVIEW_CODE = "12ab";
+    await w.call(postReq("email/send", { email: "review@soccerwizard.live", turnstile: "ok" }));
+    assert.strictEqual(w.sent.length, 2, "a malformed REVIEW_CODE turns the bypass off");
+  } finally { delete process.env.REVIEW_EMAIL; delete process.env.REVIEW_CODE; }
+});

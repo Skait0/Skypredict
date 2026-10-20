@@ -170,9 +170,16 @@ function make(deps) {
       if (!(await turnstile.verify(body.turnstile, firstIp(req)))) return H.sendJson(res, 400, { error: "bot" });
       if (!(await db.rlHit("send:e:" + emailKey(email), 900, 3))) return H.sendJson(res, 429, { error: "slow_down", minutes: 15 });
       await db.killCodes(email, iso(t));
-      const code = E.newCode();
+      /* THE PLAY REVIEWER'S ACCOUNT (owner approved, 20 Oct 2026). Google Play needs "reusable
+         login credentials that can bypass" a one-time code, and its reviewers cannot read our
+         mail. For the one address in REVIEW_EMAIL the code is REVIEW_CODE and no email goes out;
+         everything else holds: one use, ten minutes, five tries, the same rate limits and bot check. */
+      const rc = String(process.env.REVIEW_CODE || "");
+      const review = /^\d{6}$/.test(rc) && !!process.env.REVIEW_EMAIL && email === C.normEmail(process.env.REVIEW_EMAIL);
+      const code = review ? rc : E.newCode();
       if (!(await db.insertCode({ email, code_hash: E.codeHash(pepper(), email, code), expires_at: iso(t + E.CODE_TTL_MS) })))
         throw new Error("code insert failed");
+      if (review) return H.sendJson(res, 200, { ok: true });
       if (!(await E.sendCode(email, code))) {
         await report(new Error("Resend refused a code email"), { route: "email/send" });
         return H.sendJson(res, 502, { error: "send_failed" });
