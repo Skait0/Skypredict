@@ -482,7 +482,7 @@ async function onBuild(chat, replyTo, fromId, book, target, nth) {
 }
 /* COMBINE CODES (SportyClaw review, 20 Oct 2026; the site's merge, lib/convert.js merge). Each
    code is read on its own bookie - the one named first, then the last code's bookie (friends'
-   codes are usually two books), then the rest - inside 30 seconds. One booking, so one code. */
+   codes mostly share a bookie), then the rest - inside 30 seconds. One booking, so one code. */
 async function onMerge(msg, codes, hint) {
   const chat = msg.chat.id;
   const say = (text, markup) => tg("sendMessage", { chat_id: chat, text, parse_mode: "HTML",
