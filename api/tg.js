@@ -480,6 +480,58 @@ async function onBuild(chat, replyTo, fromId, book, target, nth) {
   tools.inline_keyboard.unshift([{ text: "🔁 Another x" + target, callback_data: ["bd", book, target, (nth || 0) + 1].join("|") }]);
   await say(lines.join("\n"), tools);
 }
+/* COMBINE CODES (SportyClaw review, 20 Oct 2026; the site's merge, lib/convert.js merge). Each
+   code is read on its own bookie - the one named first, then the last code's bookie (friends'
+   codes are usually two books), then the rest - inside 30 seconds. One booking, so one code. */
+async function onMerge(msg, codes, hint) {
+  const chat = msg.chat.id;
+  const say = (text, markup) => tg("sendMessage", { chat_id: chat, text, parse_mode: "HTML",
+    disable_web_page_preview: true, reply_to_message_id: msg.message_id, reply_markup: markup });
+  const q = await quota(msg.from && msg.from.id, 1);
+  if (!q.ok) { await say("🔥 " + spent(q) + (q.plan === "trial" ? "\n\n" + plusLine() : "")); return; }
+  tg("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
+  const t0 = Date.now(), reads = [], missed = [];
+  let last = null;
+  for (const c of codes) {
+    let got = null;
+    for (const b of [...new Set([hint, last, ...ORDER].filter(Boolean))]) {
+      if (Date.now() - t0 > 30e3) break;
+      const legs = await readCode(b, c);
+      if (legs) { got = { book: b, code: c, legs }; break; }
+    }
+    if (got) { reads.push(got); last = got.book; } else missed.push(c);
+  }
+  const notRead = missed.length ? "Couldn't read: " + missed.map((c) => "<code>" + c + "</code>").join(", ") + "." : "";
+  if (reads.length < 2) {
+    await say("I need two codes I can read to combine them. " + notRead +
+      (reads.length ? "\nRead <code>" + reads[0].code + "</code> on its own instead - send it alone." : ""));
+    return;
+  }
+  const to = hint || reads[0].book, B = D.BOOK_NAMES[to];
+  let evs = [];
+  if (reads.some((r) => r.book !== to)) {
+    let body = null;
+    try { body = await (await fetch(SITE + CONVERT.FEED[to], { signal: AbortSignal.timeout(8000) })).json(); } catch (e) { body = null; }
+    evs = CONVERT.events(to, body);
+    if (!evs.length) { await say("😤 " + B + "'s games are not loading right now. Try again in a minute."); return; }
+  }
+  const m = CONVERT.merge(reads, to, evs, Date.now());
+  if (m.picks.length < 2) { await say("😤 Not enough games left to combine on " + B + ". " + notRead); return; }
+  const r = await CONVERT.bookPicks(to, m.picks, m.stuck);
+  if (!r.code) { await say("😤 " + B + " wouldn't take it" + (r.error ? " - " + esc(r.error) : "") + ". Try another bookie."); return; }
+  await SB.recordBooking(q.subject, q.day, "tgbot").catch(() => {});
+  const stuck = r.stuck || [];
+  const out = ["🔗 <b>" + reads.length + " codes in one, on " + B + "</b> 🔥",
+    "<code>" + r.code + "</code> · " + r.booked.length + " games" + (r.odds ? " · <b>" + xOdds(r.odds) + "</b>" : "")];
+  if (m.dupes) out.push(m.dupes + " game" + (m.dupes === 1 ? " was" : "s were") + " on two codes. Kept once.");
+  if (stuck.length) out.push("Left behind: " + stuck.slice(0, 4).map((s) =>
+    esc((s.leg.home || "") + " v " + (s.leg.away || "")) + " (" + esc(s.why) + ")").join("; ") +
+    (stuck.length > 4 ? "; +" + (stuck.length - 4) + " more" : ""));
+  if ((m.changed || []).length) out.push("Line moved to what " + B + " sells on " + m.changed.length + " leg" + (m.changed.length === 1 ? "" : "s") + ".");
+  if (notRead) out.push(notRead);
+  out.push("", leftLine(q, 1), "<i>18+</i>");
+  await say(out.join("\n"), toolButtons(to, r.code, "merge"));
+}
 /* CONVERT A CODE (owner, 19 Oct 2026: "its the most used, it should have its own link"). Asked as
    a reply prompt, so the answer carries the bookie and nothing is stored. */
 async function askConvert(chat, replyTo, book) {
@@ -691,6 +743,9 @@ module.exports = async function handler(req, res) {
     /* A code sent in answer to "Send the code you want on Bet9ja." goes straight to Bet9ja. */
     const convertTo = rt ? ASK.convertTarget(rt) : null;
     const toolTo = rt ? ASK.toolAsked(rt) : null;
+    /* Two or more codes in one message: one slip, on the bookie named or asked for, else the first code's. */
+    const many = deep ? [] : D.parseAll(msg.text);
+    if (many.length >= 2) { await onMerge(msg, many, convertTo || book); return res.status(200).json({ ok: true }); }
     if (!code && !deep && rt && !convertTo && !toolTo) { const r = D.parse(rt); code = r.code; book = book || r.book; }
     const ask = deep ? null : ASK.parseAsk(msg.text, code);
     if (!code && ask && ask.kind === "today") { await onToday(msg, ask); return res.status(200).json({ ok: true }); }
