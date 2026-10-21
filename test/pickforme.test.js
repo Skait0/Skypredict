@@ -244,3 +244,31 @@ test("Merlin's Pick and Pick for me fold their games until asked, and say the wi
   assert.match(run, /ST\.open=!g\.hidden/, "the reader's own Show or Hide holds through Shuffle");
   assert.match(run, /ST\.busy=true; ST\.open=null;/, "a new payout starts folded again");
 });
+
+test("Build me a slip: Slider and Wizard first, then Pick for me, then Merlin's Pick, each in its own colour (owner, 21 Oct 2026)", () => {
+  const open = grab("openBuildChooser");
+  const at = (s) => open.indexOf(s);
+  assert.ok(at("bm-sl'") < at("bm-wz'") && at("bm-wz'") < at("id='bmPfm'") && at("id='bmPfm'") < at("id='bmWsx'"), "the order");
+  assert.match(open, /bm-pfm bm-pf' id='bmPfm'/);
+  assert.match(open, /bm-pfm bm-wsx' id='bmWsx'/);
+  assert.match(src, /\.bm-pf\{border-color:rgba\(47,212,138/);
+  assert.match(src, /\.bm-wsx\{border-color:rgba\(59,130,246/, "night blue: violet is kept for the Conjure button alone (aitells)");
+  assert.match(open, /Bigger odds\? Use the Slider or the Wizard\./);
+});
+
+test("Merlin's Pick has its own animation: a sky that weighs the games, then draws the chosen ones into a constellation", () => {
+  const run = grab("pfmRun");
+  assert.match(run, /if\(K===WSX_K\)\{ merlinSky\(\); return; \}/);
+  assert.match(run, /"Weighing "\+Math\.round\(W\*s\/MS\)/, "it counts the games it really weighed");
+  assert.match(run, /path\.setAttribute\("points",pts\.slice\(0,k\+1\)\.join\(" "\)\)/, "the constellation grows a star at a time");
+  assert.match(run, /if\(reduced\)\{ show\(\); return; \}/, "reduced motion goes straight to the slip");
+  assert.match(src, /weighed:groups\.length/);
+});
+
+test("Build me a slip fits one phone screen: Slider and Wizard side by side, quick cards' payouts on one row (owner, 21 Oct 2026)", () => {
+  assert.match(grab("openBuildChooser"), /"<div class='bm-duo'>"\+/);
+  assert.match(src, /\.bm-duo\{display:grid;grid-template-columns:1fr 1fr/);
+  assert.match(src, /\.bm-pf \.bm-pay,\.bm-wsx \.bm-pay\{grid-template-columns:repeat\(8,1fr\)/);
+  assert.match(src, /@media \(max-height:760px\)\{\.bm-scrim\{padding:8px\}/, "short screens give back the margins");
+  assert.match(src, /@media \(max-height:690px\)\{\.bm-sub\{display:none\}/);
+});

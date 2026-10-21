@@ -2094,6 +2094,39 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .bm-games li b{color:var(--green)}
 #pfmOut:not(:empty),#wsxOut:not(:empty){margin-top:8px}
 .bm-chance{margin:6px 0 0;font-size:12.5px;font-weight:600;color:var(--soft)}
+/* Pick for me green, Merlin's Pick night blue, dressed like the Slider and the Wizard, smaller
+   and tighter (owner, 21 Oct 2026). Below them: Merlin's sky. */
+.bm-pf{border-color:rgba(47,212,138,.45);background:linear-gradient(160deg,rgba(47,212,138,.11),transparent 55%),var(--card-2)}
+.bm-wsx{border-color:rgba(59,130,246,.5);background:linear-gradient(160deg,rgba(59,130,246,.15),transparent 55%),var(--card-2)}
+.bm-pf .bm-ic{background:rgba(47,212,138,.18);color:#2FD48A}.bm-wsx .bm-ic{background:rgba(59,130,246,.2);color:#7DB3FF}
+.bm-pf .bm-get{background:#2FD48A;color:#06210f}.bm-wsx .bm-get{background:#3B82F6;color:#fff}
+.bm-pf::after{box-shadow:inset 0 0 0 1.5px #2FD48A,0 0 30px rgba(47,212,138,.3)}.bm-wsx::after{box-shadow:inset 0 0 0 1.5px #3B82F6,0 0 30px rgba(59,130,246,.4)}
+.bm-duo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px}.bm-duo .bm-opt{display:flex;flex-direction:column;margin:0;padding:10px}
+.bm-duo .bm-oh b{font-size:15.5px}.bm-duo p{margin:5px 0 8px;font-size:12px;padding-right:0}.bm-duo .bm-open{margin-top:auto;height:38px;font-size:13px}
+.bm-duo .bm-wzart{height:54px;top:4px;right:2px;opacity:.75}.bm-duo .bm-wz .bm-oh{padding-right:34px}.bm-duo .bm-name{font-size:16px;gap:3px 8px}
+.bm-pf,.bm-wsx{padding:10px}
+@media (max-height:690px){.bm-sub{display:none}.bm-h{margin-bottom:8px}.bm-stage{height:156px}.bm-list{height:86px}.bm-wiz{height:112px}}
+@media (max-height:760px){.bm-scrim{padding:8px}.bm-card{padding:12px 10px 8px}.bm-h{font-size:22px}.bm-sub{margin:4px 0 8px}.bm-opt{margin-bottom:7px}.bm-duo{margin-bottom:7px}}.bm-pf .bm-oh b,.bm-wsx .bm-oh b{font-size:15.5px}
+.bm-pf .bm-ic,.bm-wsx .bm-ic{width:26px;height:26px}.bm-pf .bm-ic svg,.bm-wsx .bm-ic svg{width:14px;height:14px}
+.bm-pf p,.bm-wsx p{margin:5px 0 8px;font-size:12px}.bm-pf .bm-seg,.bm-wsx .bm-seg{margin-bottom:6px}
+.bm-pf .bm-seg button,.bm-wsx .bm-seg button{height:26px;font-size:11.5px}
+.bm-pf .bm-pc,.bm-wsx .bm-pc{height:30px;font-size:13.5px}.bm-pf .bm-pc small,.bm-wsx .bm-pc small{font-size:9px}
+.bm-pf .bm-pay,.bm-wsx .bm-pay{grid-template-columns:repeat(8,1fr);gap:3px}.bm-pf .bm-lk,.bm-wsx .bm-lk{top:1px;right:1px}
+.bm-pf p.bm-more{margin:6px 0 0;font-size:11.5px}
+.bm-pf .bm-get,.bm-wsx .bm-get{height:40px;margin-top:8px}.bm-pf .bm-act,.bm-wsx .bm-act{height:30px;font-size:12px}
+.bm-pf .bm-sum b,.bm-wsx .bm-sum b{font-size:28px}.bm-wsx .bm-sum b{color:#A9CCFF}
+.bm-wsx .bm-stage{background:radial-gradient(75% 70% at 26% 55%,rgba(59,130,246,.3),rgba(59,130,246,0) 72%)}
+.mz-sky,.mz-lines{position:absolute;left:0;top:0;width:122px;height:100%;overflow:hidden}
+.mz-st,.mz-pk{position:absolute;border-radius:50%}
+.mz-st{width:3px;height:3px;margin:-1.5px;background:#E3EEFF;opacity:.2;animation:mzTw 1.7s ease-in-out infinite alternate}
+.mz-sky.weigh .mz-st{animation-duration:.28s}
+.mz-pk{width:9px;height:9px;margin:-4.5px;background:#FFF1C9;box-shadow:0 0 10px 3px rgba(169,204,255,.85);opacity:0;transform:scale(.2);transition:opacity .25s,transform .4s cubic-bezier(.3,1.6,.5,1)}
+.mz-pk.on{opacity:1;transform:scale(1)}.mz-sky.done .mz-pk{animation:mzFlash .5s ease-out}
+.mz-sky.done::after{content:"";position:absolute;left:-30px;top:16%;width:44px;height:2px;background:linear-gradient(90deg,transparent,#fff);animation:mzShoot .65s ease-out forwards}
+.mz-lines polyline{fill:none;stroke:#A9CCFF;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
+.mz-weigh{position:absolute;left:128px;top:12px;font-size:11.5px;font-weight:800;color:#A9CCFF}
+@keyframes mzTw{from{opacity:.12}to{opacity:.75}}@keyframes mzFlash{50%{transform:scale(1.9)}}
+@keyframes mzShoot{from{transform:translate(0,0) rotate(18deg);opacity:1}to{transform:translate(190px,58px) rotate(18deg);opacity:0}}
 @keyframes bmPop{from{opacity:0;transform:scale(1.5)}to{opacity:1;transform:none}}
 @keyframes bmLeg{from{opacity:0;transform:translate(-80px,70px) scale(.4)}to{opacity:1;transform:none}}
 @keyframes bmTick{from{transform:scale(1.12)}to{transform:none}}
@@ -22446,7 +22479,7 @@ function wizardSpecial(target,day,B,seed){
   }
   if(!picks||!picks.length||picks.length>max) return {picks:[],odds:1,short:true};
   var tot=picks.reduce(function(a,x){ return a*x.o; },1);
-  return {picks:picks, odds:tot, short:tot<target*0.995,
+  return {picks:picks, odds:tot, short:tot<target*0.995, weighed:groups.length,
     chance:picks.reduce(function(a,x){ return a*x._p; },1)};
 }
 var PFM={day:"0",shuffles:0,busy:false,timers:[]}, WSX={day:"0",shuffles:0,busy:false,timers:[]};
@@ -22488,45 +22521,12 @@ function openBuildChooser(goMode){
     "<button class='ask-x bm-x' type='button' aria-label='Close'>"+XSVG+"</button>"+
     "<h2 class='bm-h' id='bmTtl'>Build me a slip</h2>"+
     "<p class='bm-sub'>Four ways. Same "+bookMark(B.key)+" code at the end.</p>"+
-    "<section class='bm-opt bm-pfm' id='bmPfm'>"+
-      "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.pfm+"</span><b>Pick for me</b><span class='bm-new'>NEW</span></div>"+
-      "<div class='bm-body' id='pfmBody'><p>No options to choose. We take the surest market in each game and stop at your payout.</p>"+
-        "<div class='bm-seg' role='radiogroup' aria-label='When'>"+
-          [["0","Today"],["1","Tomorrow"],["all","All upcoming"]].map(function(d){
-            return "<button type='button' role='radio' data-day='"+d[0]+"' aria-checked='"+(PFM.day===d[0])+"'"+(PFM.day===d[0]?" class='on'":"")+">"+d[1]+"</button>"; }).join("")+
-        "</div><div class='bm-pay' id='pfmPay'>"+pfmPayHTML()+"</div>"+
-        /* Pick for me stops at x200 (owner, 20 Oct 2026): bigger odds are the Slider's and the Wizard's job. */
-        "<p class='bm-more'>Want bigger odds? Use the Slider or the Wizard below.</p></div>"+
-      "<div class='bm-stage' id='pfmStage' hidden aria-live='polite'>"+
-        "<span class='bm-badge' id='pfmBadge'></span><div class='bm-list' id='pfmList'></div>"+
-        "<span class='bm-booking' id='pfmBooking'>Your slip is ready</span>"+
-        "<div class='bm-count'><b id='pfmOdds'>x1.00</b><span id='pfmGames'>0 games</span></div>"+
-        "<svg class='bm-rune' viewBox='0 0 150 150' aria-hidden='true'><circle cx='75' cy='75' r='70' fill='none' stroke='#F2B84B' stroke-width='1.5' stroke-dasharray='2 7'/><circle cx='75' cy='75' r='56' fill='none' stroke='#F2B84B' stroke-opacity='.6' stroke-width='1' stroke-dasharray='14 6 3 6'/><path stroke='#F2B84B' stroke-width='2' stroke-linecap='round' d='M75 3v10M75 137v10M3 75h10M137 75h10M24 24l7 7M119 119l7 7M24 126l7-7M119 31l7-7'/></svg>"+
-        "<img class='bm-wiz' src='/fw/wiz-cast.webp' alt='' width='96' height='132'>"+
-        "<i class='bm-ring'></i><i class='bm-ring two'></i><i class='bm-orb'></i></div>"+
-      "<div id='pfmSum'></div><div id='pfmOut'></div>"+
-    "</section>"+
-    /* MERLIN'S PICK (owner, 21 Oct 2026): its own card, Pick for me untouched. */
-    "<section class='bm-opt bm-pfm bm-wsx' id='bmWsx'>"+
-      "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.merlin+"</span><b>Merlin's Pick</b><span class='bm-new'>NEW</span></div>"+
-      "<div class='bm-body' id='wsxBody'><p>Name a payout. Merlin tests every mix of games and keeps the slip most likely to land.</p>"+
-        "<div class='bm-seg' role='radiogroup' aria-label='When'>"+
-          [["0","All day"],["60","Next 60 min"],["all","All upcoming"]].map(function(d){
-            return "<button type='button' role='radio' data-wday='"+d[0]+"' aria-checked='"+(WSX.day===d[0])+"'"+(WSX.day===d[0]?" class='on'":"")+">"+d[1]+"</button>"; }).join("")+
-        "</div><div class='bm-pay' id='wsxPay'>"+pfmPayHTML(WSX_PAYS,"data-wpay")+"</div></div>"+
-      "<div class='bm-stage' id='wsxStage' hidden aria-live='polite'>"+
-        "<span class='bm-badge' id='wsxBadge'></span><div class='bm-list' id='wsxList'></div>"+
-        "<span class='bm-booking' id='wsxBooking'>Your slip is ready</span>"+
-        "<div class='bm-count'><b id='wsxOdds'>x1.00</b><span id='wsxGames'>0 games</span></div>"+
-        "<svg class='bm-rune' viewBox='0 0 150 150' aria-hidden='true'><circle cx='75' cy='75' r='70' fill='none' stroke='#F2B84B' stroke-width='1.5' stroke-dasharray='2 7'/><circle cx='75' cy='75' r='56' fill='none' stroke='#F2B84B' stroke-opacity='.6' stroke-width='1' stroke-dasharray='14 6 3 6'/><path stroke='#F2B84B' stroke-width='2' stroke-linecap='round' d='M75 3v10M75 137v10M3 75h10M137 75h10M24 24l7 7M119 119l7 7M24 126l7-7M119 31l7-7'/></svg>"+
-        "<img class='bm-wiz' src='/fw/wiz-cast.webp' alt='' width='96' height='132'>"+
-        "<i class='bm-ring'></i><i class='bm-ring two'></i><i class='bm-orb'></i></div>"+
-      "<div id='wsxSum'></div><div id='wsxOut'></div>"+
-    "</section>"+
     /* No pretend controls here (owner, 20 Oct 2026: "i still get confused and try to use the
        mini slider or the wizard"), and no demotion either ("they are still the core of our
        website"): each card has its own colour, says what it is best for, shows a picture of what
        it does that nobody can grab, and ends in a filled button. */
+    /* Side by side, so all four fit one phone screen (owner, 21 Oct 2026: "no scrolling"). */
+    "<div class='bm-duo'>"+
     "<section class='bm-opt bm-link bm-core bm-sl' data-go='slider' tabindex='0' role='button'>"+
       "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.slider+"</span><b>Slider</b>"+(usual==="slider"?"<span class='bm-usual'>Your usual</span>":"")+"</div>"+
       "<p>Choose your options. Slide right for bigger odds.</p>"+
@@ -22539,6 +22539,47 @@ function openBuildChooser(goMode){
       "<p>Name the odds you want. We find the games.</p>"+
       "<div class='bm-name' aria-hidden='true'><span>x5</span><span>x50</span><span>x500</span><span>any number</span></div>"+
       "<span class='bm-open'>Open the Wizard"+PFM_ICON.go+"</span>"+
+    "</section></div>"+
+    /* Slider and Wizard first, then Pick for me, then Merlin's Pick (owner, 21 Oct 2026). */
+    "<section class='bm-opt bm-core bm-pfm bm-pf' id='bmPfm'>"+
+      "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.pfm+"</span><b>Pick for me</b><span class='bm-new'>NEW</span></div>"+
+      "<div class='bm-body' id='pfmBody'><p>No options to choose. We take the surest market in each game and stop at your payout.</p>"+
+        "<div class='bm-seg' role='radiogroup' aria-label='When'>"+
+          [["0","Today"],["1","Tomorrow"],["all","All upcoming"]].map(function(d){
+            return "<button type='button' role='radio' data-day='"+d[0]+"' aria-checked='"+(PFM.day===d[0])+"'"+(PFM.day===d[0]?" class='on'":"")+">"+d[1]+"</button>"; }).join("")+
+        "</div><div class='bm-pay' id='pfmPay'>"+pfmPayHTML()+"</div>"+
+        /* Pick for me stops at x200 (owner, 20 Oct 2026): bigger odds are the Slider's and the Wizard's job. */
+        "<p class='bm-more'>Bigger odds? Use the Slider or the Wizard.</p></div>"+
+      "<div class='bm-stage' id='pfmStage' hidden aria-live='polite'>"+
+        "<span class='bm-badge' id='pfmBadge'></span><div class='bm-list' id='pfmList'></div>"+
+        "<span class='bm-booking' id='pfmBooking'>Your slip is ready</span>"+
+        "<div class='bm-count'><b id='pfmOdds'>x1.00</b><span id='pfmGames'>0 games</span></div>"+
+        "<svg class='bm-rune' viewBox='0 0 150 150' aria-hidden='true'><circle cx='75' cy='75' r='70' fill='none' stroke='#F2B84B' stroke-width='1.5' stroke-dasharray='2 7'/><circle cx='75' cy='75' r='56' fill='none' stroke='#F2B84B' stroke-opacity='.6' stroke-width='1' stroke-dasharray='14 6 3 6'/><path stroke='#F2B84B' stroke-width='2' stroke-linecap='round' d='M75 3v10M75 137v10M3 75h10M137 75h10M24 24l7 7M119 119l7 7M24 126l7-7M119 31l7-7'/></svg>"+
+        "<img class='bm-wiz' src='/fw/wiz-cast.webp' alt='' width='96' height='132'>"+
+        "<i class='bm-ring'></i><i class='bm-ring two'></i><i class='bm-orb'></i></div>"+
+      "<div id='pfmSum'></div><div id='pfmOut'></div>"+
+    "</section>"+
+    /* MERLIN'S PICK (owner, 21 Oct 2026): its own card, Pick for me untouched. */
+    "<section class='bm-opt bm-core bm-pfm bm-wsx' id='bmWsx'>"+
+      "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.merlin+"</span><b>Merlin's Pick</b><span class='bm-new'>NEW</span></div>"+
+      "<div class='bm-body' id='wsxBody'><p>Name a payout. Merlin tests every mix of games and keeps the slip most likely to land.</p>"+
+        "<div class='bm-seg' role='radiogroup' aria-label='When'>"+
+          [["0","All day"],["60","Next 60 min"],["all","All upcoming"]].map(function(d){
+            return "<button type='button' role='radio' data-wday='"+d[0]+"' aria-checked='"+(WSX.day===d[0])+"'"+(WSX.day===d[0]?" class='on'":"")+">"+d[1]+"</button>"; }).join("")+
+        "</div><div class='bm-pay' id='wsxPay'>"+pfmPayHTML(WSX_PAYS,"data-wpay")+"</div></div>"+
+      /* MERLIN'S SKY (owner, 21 Oct 2026: "create another animation for merlin's pick. suprise
+         me!"). Stars flicker fast while he weighs the window's games, then the chosen ones light
+         one by one and join into a constellation as the payout climbs, and a shooting star
+         seals it. Opacity and transform, plus one SVG line; reduced motion goes straight to the slip. */
+      "<div class='bm-stage mz-stage' id='wsxStage' hidden aria-live='polite'>"+
+        "<span class='bm-badge' id='wsxBadge'></span>"+
+        "<div class='mz-sky' id='wsxSky' aria-hidden='true'></div>"+
+        "<svg class='mz-lines' viewBox='0 0 100 100' preserveAspectRatio='none' aria-hidden='true'><polyline id='wsxPath' points='' vector-effect='non-scaling-stroke'/></svg>"+
+        "<span class='mz-weigh' id='wsxWeigh'></span>"+
+        "<div class='bm-list' id='wsxList'></div>"+
+        "<span class='bm-booking' id='wsxBooking'>Merlin has chosen</span>"+
+        "<div class='bm-count'><b id='wsxOdds'>x1.00</b><span id='wsxGames'>0 games</span></div></div>"+
+      "<div id='wsxSum'></div><div id='wsxOut'></div>"+
     "</section>"+
     "<p class='bm-foot'><span>Change your bookie any time.</span><b>18+ · Play responsibly</b></p></div>";
   m.querySelector(".bm-x").addEventListener("click",closeBuildChooser);
@@ -22664,21 +22705,48 @@ function pfmRun(T,K){
   $(K.p+"Odds").textContent="x1.00"; $(K.p+"Games").textContent="0 games";
   if(reduced){ show(); return; }
   var tot=1;
-  r.picks.forEach(function(c,i){
-    later(function(){
-      tot*=c.o;
-      var row=document.createElement("div"); row.className="bm-leg";
-      row.innerHTML="<span>"+esc(c.f.home+" v "+c.f.away)+"</span><em>"+esc(mLabel(c.f,c.code))+"</em><b>"+c.o.toFixed(2)+"</b>";
-      list.insertBefore(row,list.firstChild);
-      while(list.children.length>4) list.removeChild(list.lastChild);
-      var oe=$(K.p+"Odds"); oe.textContent="x"+(tot>=100?Math.round(tot).toLocaleString("en"):tot.toFixed(2));
-      $(K.p+"Games").textContent=(i+1)+((i+1)===1?" game":" games");
-      oe.classList.remove("tick","mile"); void oe.offsetWidth;
-      oe.classList.add([10,100,1000].some(function(m){ return m<T&&tot>=m&&tot/c.o<m; })?"mile":"tick");
-    },220+i*STEP);
-  });
+  function addLeg(c,i){
+    tot*=c.o;
+    var row=document.createElement("div"); row.className="bm-leg";
+    row.innerHTML="<span>"+esc(c.f.home+" v "+c.f.away)+"</span><em>"+esc(mLabel(c.f,c.code))+"</em><b>"+c.o.toFixed(2)+"</b>";
+    list.insertBefore(row,list.firstChild);
+    while(list.children.length>4) list.removeChild(list.lastChild);
+    var oe=$(K.p+"Odds"); oe.textContent="x"+(tot>=100?Math.round(tot).toLocaleString("en"):tot.toFixed(2));
+    $(K.p+"Games").textContent=(i+1)+((i+1)===1?" game":" games");
+    oe.classList.remove("tick","mile"); void oe.offsetWidth;
+    oe.classList.add([10,100,1000].some(function(m){ return m<T&&tot>=m&&tot/c.o<m; })?"mile":"tick");
+  }
+  if(K===WSX_K){ merlinSky(); return; }
+  r.picks.forEach(function(c,i){ later(function(){ addLeg(c,i); },220+i*STEP); });
   later(function(){ card.classList.add("cast"); },220+CLIMB);
   later(show,220+CLIMB+500);
+  /* MERLIN'S SKY: 30 faint stars flicker fast while "Weighing N games" counts up (the games he
+     really searched), then each chosen game lights a bright star on a gentle arc, a line joins
+     it to the last, and the payout climbs; a shooting star crosses as the slip is sealed. Star
+     places are seeded by the payout, so the sky is the same each time for the same ask. */
+  function merlinSky(){
+    var sky=$("wsxSky"), path=$("wsxPath"), wl=$("wsxWeigh"), N=r.picks.length, pts=[], html="", i;
+    var h=function(k){ var x=Math.sin(k*12.9898+T*78.233)*43758.5453; return x-Math.floor(x); };
+    for(i=0;i<30;i++) html+="<i class='mz-st' style='left:"+(4+h(i)*92).toFixed(1)+"%;top:"+(5+h(i+50)*90).toFixed(1)+"%;animation-delay:"+(h(i+99)*1.6).toFixed(2)+"s'></i>";
+    for(i=0;i<N;i++){
+      var t=N>1?i/(N-1):0.5, x=10+t*80, y=Math.max(8,Math.min(92,80-Math.sin(t*Math.PI)*52+(h(i+200)-0.5)*18));
+      pts.push(x.toFixed(1)+","+y.toFixed(1));
+      html+="<i class='mz-pk' style='left:"+x.toFixed(1)+"%;top:"+y.toFixed(1)+"%'></i>";
+    }
+    sky.innerHTML=html; sky.className="mz-sky weigh"; path.setAttribute("points","");
+    var W=r.weighed||N, WEIGH=Math.min(1200,500+W*4), MS=12;
+    for(i=1;i<=MS;i++) (function(s){ later(function(){
+      wl.textContent="Weighing "+Math.round(W*s/MS).toLocaleString("en")+" game"+(W===1?"":"s"); },s*WEIGH/MS); })(i);
+    var stars=sky.querySelectorAll(".mz-pk"), go=WEIGH+250, PER=CLIMB/N;
+    r.picks.forEach(function(c,k){ later(function(){
+      if(!k){ sky.classList.remove("weigh"); wl.textContent="Merlin's choice"; }
+      stars[k].classList.add("on");
+      path.setAttribute("points",pts.slice(0,k+1).join(" "));
+      addLeg(c,k);
+    },go+k*PER); });
+    later(function(){ sky.classList.add("done"); card.classList.add("cast"); wl.textContent=""; },go+CLIMB);
+    later(show,go+CLIMB+750);
+  }
 }
 (function(){
   var cta=$("slipCta"); if(!cta) return;
