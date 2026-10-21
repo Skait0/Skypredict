@@ -2052,9 +2052,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .bm-other .bm-pfm:not(.bm-sel):hover,.bm-other .bm-pfm:not(.bm-sel):focus-within{opacity:1}
 /* While a slip shows, the cards beside it fold to their names and buttons, so the slip and its
    games still fit one phone screen (owner, 21 Oct 2026). */
-.bm-other .bm-duo p,.bm-other .bm-duo .bm-risk,.bm-other .bm-duo .bm-name,.bm-other .bm-duo .bm-wzart,
-.bm-other .bm-pfm:not(.bm-sel) .bm-body>p{display:none}
-.bm-other .bm-duo .bm-open{margin-top:8px}
+.bm-other .bm-pfm:not(.bm-sel) .bm-pane{display:none}
 /* the conjuring */
 .bm-pfm::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1.5px var(--accent),0 0 34px rgba(242,184,75,.35);opacity:0;transition:opacity .4s;pointer-events:none}
 .bm-pfm.conj::after{opacity:1}
@@ -2113,11 +2111,19 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .bm-wsx{border-color:rgba(59,130,246,.5);background:linear-gradient(160deg,rgba(59,130,246,.15),transparent 55%),var(--card-2)}
 .bm-pf .bm-ic{background:rgba(47,212,138,.18);color:var(--green)}.bm-wsx .bm-ic{background:rgba(59,130,246,.2);color:var(--night)}
 .bm-pf::after{box-shadow:inset 0 0 0 1.5px var(--green)}.bm-wsx::after{box-shadow:inset 0 0 0 1.5px var(--night)}
-.bm-duo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px}.bm-duo .bm-opt{display:flex;flex-direction:column;margin:0;padding:10px}
-.bm-duo .bm-oh b{font-size:15.5px}.bm-duo p{margin:5px 0 8px;font-size:12px;padding-right:0}.bm-duo .bm-open{margin-top:auto;height:38px;font-size:13px}
-.bm-duo .bm-wzart{height:54px;top:4px;right:2px;opacity:.75}.bm-duo .bm-wz .bm-oh,.bm-duo .bm-wz p{padding-right:34px}.bm-duo .bm-name{font-size:16px;gap:3px 8px}
-.bm-duo .bm-oh{flex-wrap:wrap;row-gap:2px}.bm-duo .bm-usual{order:3;flex-basis:100%;margin:0 0 0 39px}
-.bm-pf,.bm-wsx{padding:10px}.bm-pf .bm-oh b,.bm-wsx .bm-oh b{font-size:15.5px}
+.bm-row{padding:0}
+.bm-rh{display:flex;align-items:center;gap:12px;width:100%;padding:12px;background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.bm-rt{flex:1;min-width:0}.bm-rt b{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:800}
+.bm-rt small{display:block;margin-top:3px;font-size:12.5px;font-weight:600;color:var(--soft)}
+.bm-chev{flex:none;display:flex;color:var(--faint);transition:transform .2s var(--ease-out)}.bm-chev svg{width:18px;height:18px}
+.bm-row .bm-usual{margin-left:0}
+.bm-pfm.is-open .bm-chev{transform:rotate(90deg)}
+.bm-pane{padding:0 12px 12px}
+.bm-opt.bm-row .bm-ic{width:30px;height:30px}.bm-opt.bm-row .bm-ic svg{width:16px;height:16px}.bm-pfm:not(.is-open) .bm-pane{display:none}
+.bm-sl .bm-ic{background:rgba(230,57,70,.18);color:var(--red)}.bm-wz .bm-ic{background:rgba(242,184,75,.18);color:var(--accent)}
+@media (hover:hover){.bm-rh:hover .bm-chev{color:var(--text)}}
+.bm-rh:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:inherit}
+.bm-pf,.bm-wsx{padding:0}.bm-pf .bm-oh b,.bm-wsx .bm-oh b{font-size:15.5px}
 @media (max-height:690px){.bm-sub{display:none}.bm-h{margin-bottom:8px}.bm-stage{height:156px}.bm-list{height:86px}.bm-wiz{height:112px}}
 @media (max-height:760px){.bm-scrim{padding:8px}.bm-card{padding:12px 10px 8px}.bm-h{font-size:22px}.bm-sub{margin:4px 0 8px}.bm-opt{margin-bottom:7px}.bm-duo{margin-bottom:7px}}
 .bm-pf .bm-ic,.bm-wsx .bm-ic{width:26px;height:26px}.bm-pf .bm-ic svg,.bm-wsx .bm-ic svg{width:14px;height:14px}
@@ -22531,6 +22537,13 @@ function pfmPayHTML(pays,attr){
       (lock?"<i class='bm-lk'>"+PFM_ICON.lock+"</i>":"")+"<small>x</small>"+t+"</button>";
   }).join("");
 }
+/* One row of the chooser: Slider and Wizard go to their builders (data-go); the quick builders open in place (data-open). */
+function bmRow(key,icon,name,line,usual,open,isNew){
+  var quick=key==="pfm"||key==="wsx";
+  return "<button type='button' class='bm-rh' "+(quick?"data-open='"+key+"' aria-expanded='"+!!open+"'":"data-go='"+key+"'")+">"+
+    "<span class='bm-ic'>"+icon+"</span><span class='bm-rt'><b>"+name+(isNew?" <span class='bm-new'>NEW</span>":"")+"</b><small>"+line+"</small></span>"+
+    (usual?"<span class='bm-usual'>Your usual</span>":"")+"<span class='bm-chev' aria-hidden='true'>"+PFM_ICON.go+"</span></button>";
+}
 function openBuildChooser(goMode){
   var B=curBook(), m=$("bmScrim");
   if(!m){
@@ -22539,34 +22552,20 @@ function openBuildChooser(goMode){
     m.addEventListener("click",function(e){ if(e.target===m) closeBuildChooser(); });
     document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!m.hidden) closeBuildChooser(); });
   }
-  var usual=null; try{ usual=localStorage.getItem("sw.mode"); }catch(e){}
+  var usual=null, open=""; try{ usual=localStorage.getItem("sw.mode"); open=localStorage.getItem("sw.bmopen")||""; }catch(e){}
   m.innerHTML="<div class='bm-card' role='dialog' aria-modal='true' aria-labelledby='bmTtl'>"+
     "<button class='ask-x bm-x' type='button' aria-label='Close'>"+XSVG+"</button>"+
     "<h2 class='bm-h' id='bmTtl'>Build me a slip</h2>"+
-    "<p class='bm-sub'>Four ways. Same "+bookMark(B.key)+" code at the end.</p>"+
-    /* No pretend controls here (owner, 20 Oct 2026: "i still get confused and try to use the
-       mini slider or the wizard"), and no demotion either ("they are still the core of our
-       website"): each card has its own colour, says what it is best for, shows a picture of what
-       it does that nobody can grab, and ends in a filled button. */
-    /* Side by side, so all four fit one phone screen (owner, 21 Oct 2026: "no scrolling"). */
-    "<div class='bm-duo'>"+
-    "<section class='bm-opt bm-link bm-core bm-sl' data-go='slider' tabindex='0' role='button'>"+
-      "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.slider+"</span><b>Slider</b>"+(usual==="slider"?"<span class='bm-usual'>Your usual</span>":"")+"</div>"+
-      "<p>Choose your options. Slide right for bigger odds.</p>"+
-      "<div class='bm-risk' aria-hidden='true'><span>Safest</span><i></i><span>Risky</span></div>"+
-      "<span class='bm-open'>Open the Slider"+PFM_ICON.go+"</span>"+
-    "</section>"+
-    "<section class='bm-opt bm-link bm-core bm-wz' data-go='wizard' tabindex='0' role='button'>"+
-      "<img class='bm-wzart' src='/fw/wiz-cast.webp' alt='' width='70' height='96' loading='lazy'>"+
-      "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.wizard+"</span><b>Wizard</b>"+(usual==="wizard"?"<span class='bm-usual'>Your usual</span>":"")+"</div>"+
-      "<p>Name the odds you want. We find the games.</p>"+
-      "<div class='bm-name' aria-hidden='true'><span>x5</span><span>x50</span><span>x500</span><span>any number</span></div>"+
-      "<span class='bm-open'>Open the Wizard"+PFM_ICON.go+"</span>"+
-    "</section></div>"+
-    /* Slider and Wizard first, then Pick for me, then Merlin's Pick (owner, 21 Oct 2026). */
-    "<section class='bm-opt bm-core bm-pfm bm-pf' id='bmPfm'>"+
-      "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.pfm+"</span><b>Pick for me</b><span class='bm-new'>NEW</span></div>"+
-      "<div class='bm-body' id='pfmBody'><p>No options to choose. We take the surest market in each game and stop at your payout.</p>"+
+    "<p class='bm-sub'>Four ways to build a slip. Get a "+bookMark(B.key)+" code.</p>"+
+    /* FOUR ROWS (owner, 21 Oct 2026, from the flyer's last frame: "should that show first? then the user
+       selects what they want after reading the details"). Each builder is one row: colour, name, what it is
+       for. Slider and Wizard open their builders; Pick for me and Merlin's Pick open in place with their
+       details, time and payouts, and the one used last opens by itself next time. */
+    "<section class='bm-opt bm-row bm-link bm-sl'>"+bmRow("slider",PFM_ICON.slider,"Slider","Slide for bigger odds.",usual==="slider")+"</section>"+
+    "<section class='bm-opt bm-row bm-link bm-wz'>"+bmRow("wizard",PFM_ICON.wizard,"Wizard","Type your odds. We find the games.",usual==="wizard")+"</section>"+
+    "<section class='bm-opt bm-row bm-pfm bm-pf"+(open==="pfm"?" is-open":"")+"' id='bmPfm'>"+bmRow("pfm",PFM_ICON.pfm,"Pick for me","No options. Tap a payout.",false,open==="pfm")+
+      "<div class='bm-pane'>"+
+      "<div class='bm-body' id='pfmBody'><p>No options to choose. We take the surest market in each game and stop at your payout. Up to x200.</p>"+
         "<div class='bm-seg' role='radiogroup' aria-label='When'>"+
           [["0","Today"],["1","Tomorrow"],["all","All upcoming"]].map(function(d){
             return "<button type='button' role='radio' data-day='"+d[0]+"' aria-checked='"+(PFM.day===d[0])+"'"+(PFM.day===d[0]?" class='on'":"")+">"+d[1]+"</button>"; }).join("")+
@@ -22580,12 +22579,13 @@ function openBuildChooser(goMode){
         "<svg class='bm-rune' viewBox='0 0 150 150' aria-hidden='true'><circle cx='75' cy='75' r='70' fill='none' stroke='#F2B84B' stroke-width='1.5' stroke-dasharray='2 7'/><circle cx='75' cy='75' r='56' fill='none' stroke='#F2B84B' stroke-opacity='.6' stroke-width='1' stroke-dasharray='14 6 3 6'/><path stroke='#F2B84B' stroke-width='2' stroke-linecap='round' d='M75 3v10M75 137v10M3 75h10M137 75h10M24 24l7 7M119 119l7 7M24 126l7-7M119 31l7-7'/></svg>"+
         "<img class='bm-wiz' src='/fw/wiz-cast.webp' alt='' width='96' height='132'>"+
         "<i class='bm-ring'></i><i class='bm-ring two'></i><i class='bm-orb'></i></div>"+
-      "<div id='pfmSum'></div><div id='pfmOut'></div>"+
+      "<div id='pfmSum'></div><div id='pfmOut'></div></div>"+
     "</section>"+
     /* MERLIN'S PICK (owner, 21 Oct 2026): its own card, Pick for me untouched. */
-    "<section class='bm-opt bm-core bm-pfm bm-wsx' id='bmWsx'>"+
-      "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.merlin+"</span><b>Merlin's Pick</b><span class='bm-new'>NEW</span></div>"+
-      "<div class='bm-body' id='wsxBody'><p>Name a payout. Merlin tests every mix of games and keeps the slip most likely to land.</p>"+
+    "<section class='bm-opt bm-row bm-pfm bm-wsx"+(open==="wsx"?" is-open":"")+"' id='bmWsx'>"+bmRow("wsx",PFM_ICON.merlin,"Merlin's Pick","The slip most likely to land.",false,open==="wsx",true)+
+      "<div class='bm-pane'>"+
+      "<div class='bm-body' id='wsxBody'><p>Name a payout. Merlin tests every mix of games and keeps the slip most likely to land. "+
+        "A lower payout is more likely to land.</p>"+
         "<div class='bm-seg' role='radiogroup' aria-label='When'>"+
           [["0","All day"],["60","Next 60 min"],["all","All upcoming"]].map(function(d){
             return "<button type='button' role='radio' data-wday='"+d[0]+"' aria-checked='"+(WSX.day===d[0])+"'"+(WSX.day===d[0]?" class='on'":"")+">"+d[1]+"</button>"; }).join("")+
@@ -22602,7 +22602,7 @@ function openBuildChooser(goMode){
         "<div class='bm-list' id='wsxList'></div>"+
         "<span class='bm-booking' id='wsxBooking'>Merlin has chosen</span>"+
         "<div class='bm-count'><b id='wsxOdds'>x1.00</b><span id='wsxGames'>0 games</span></div></div>"+
-      "<div id='wsxSum'></div><div id='wsxOut'></div>"+
+      "<div id='wsxSum'></div><div id='wsxOut'></div></div>"+
     "</section>"+
     "<p class='bm-foot'><span>Change your bookie any time.</span><b>18+ · Play responsibly</b></p></div>";
   m.querySelector(".bm-x").addEventListener("click",closeBuildChooser);
@@ -22616,6 +22616,13 @@ function openBuildChooser(goMode){
     m.querySelectorAll("[data-wday]").forEach(function(x){ var on=x===b; x.classList.toggle("on",on); x.setAttribute("aria-checked",on); });
     $("wsxSum").innerHTML=""; $("wsxOut").innerHTML=""; }); });
   m.querySelectorAll("[data-wpay]").forEach(function(b){ b.addEventListener("click",function(){ pfmRun(+b.dataset.wpay,WSX_K); }); });
+  m.querySelectorAll("[data-open]").forEach(function(b){ b.addEventListener("click",function(){
+    if(PFM.busy||WSX.busy) return;
+    var sec=b.closest(".bm-pfm"), opening=!sec.classList.contains("is-open");
+    m.querySelectorAll(".bm-pfm").forEach(function(x){ x.classList.remove("is-open"); x.querySelector("[data-open]").setAttribute("aria-expanded","false"); });
+    if(opening){ sec.classList.add("is-open"); b.setAttribute("aria-expanded","true"); }
+    try{ localStorage.setItem("sw.bmopen",opening?b.dataset.open:""); }catch(e){}
+  }); });
   m.querySelectorAll("[data-go]").forEach(function(s){
     function go(){ closeBuildChooser(); goMode(s.dataset.go); }
     s.addEventListener("click",go);

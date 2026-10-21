@@ -239,7 +239,7 @@ test("Merlin's Pick and Pick for me fold their games until asked, and say the wi
   assert.match(src, /\.bm-pf \.bm-games,\.bm-wsx \.bm-games\{max-height:132px/, "in a short box, so the panel still fits the phone");
   assert.match(run, /games · "\+\(when\?when\+" · ":""\)\+bookMark/, "the result names its time window");
   assert.match(run, /data-a='back'>Payout or time</, "the way back says it changes the time too");
-  assert.match(src, /PFM_ICON\.merlin\+"<\/span><b>Merlin's Pick<\/b>/, "Merlin has his own mark, not the Wizard's");
+  assert.match(src, /bmRow\("wsx",PFM_ICON\.merlin,"Merlin's Pick"/, "Merlin has his own mark, not the Wizard's");
   assert.match(run, /id='"\+K\.p\+"List2'"\+\(gOpen\?"":" hidden"\)/);
   assert.match(run, /\(gOpen\?"Hide games":"Show games"\)/);
   assert.match(run, /ST\.open=!g\.hidden/, "the reader's own Show or Hide holds through Shuffle");
@@ -250,8 +250,8 @@ test("Build me a slip: Slider and Wizard first, then Pick for me, then Merlin's 
   const open = grab("openBuildChooser");
   const at = (s) => open.indexOf(s);
   assert.ok(at("bm-sl'") < at("bm-wz'") && at("bm-wz'") < at("id='bmPfm'") && at("id='bmPfm'") < at("id='bmWsx'"), "the order");
-  assert.match(open, /bm-pfm bm-pf' id='bmPfm'/);
-  assert.match(open, /bm-pfm bm-wsx' id='bmWsx'/);
+  assert.match(open, /bm-pfm bm-pf"\+\(open==="pfm"\?" is-open":""\)\+"' id='bmPfm'/);
+  assert.match(open, /bm-pfm bm-wsx"\+\(open==="wsx"\?" is-open":""\)\+"' id='bmWsx'/);
   assert.match(src, /\.bm-pf\{border-color:rgba\(47,212,138/);
   assert.match(src, /\.bm-wsx\{border-color:rgba\(59,130,246/, "night blue: violet is kept for the Conjure button alone (aitells)");
   assert.match(open, /Bigger odds\? Use the Slider or the Wizard\./);
@@ -266,9 +266,15 @@ test("Merlin's Pick has its own animation: a sky that weighs the games, then dra
   assert.match(src, /weighed:groups\.length/);
 });
 
-test("Build me a slip fits one phone screen: Slider and Wizard side by side, quick cards' payouts on one row (owner, 21 Oct 2026)", () => {
-  assert.match(grab("openBuildChooser"), /"<div class='bm-duo'>"\+/);
-  assert.match(src, /\.bm-duo\{display:grid;grid-template-columns:1fr 1fr/);
+test("Build me a slip is four rows; Slider and Wizard open their builders, the quick ones open in place (owner, 21 Oct 2026)", () => {
+  const open = grab("openBuildChooser"), row = grab("bmRow");
+  assert.match(row, /data-open='"\+key\+"' aria-expanded=/, "the quick builders open in place");
+  assert.match(row, /data-go='"\+key\+"'/, "Slider and Wizard go to their builders");
+  assert.match(open, /open=localStorage\.getItem\("sw\.bmopen"\)/, "the one used last opens by itself");
+  assert.match(open, /localStorage\.setItem\("sw\.bmopen",opening\?b\.dataset\.open:""\)/);
+  assert.match(open, /Four ways to build a slip\. Get a "\+bookMark\(B\.key\)\+" code\./, "not 'same code at the end' (owner: confusing)");
+  assert.match(src, /\.bm-pfm:not\(\.is-open\) \.bm-pane\{display:none\}/);
+  assert.ok(!/bm-duo/.test(open), "the side-by-side pair is gone");
   assert.match(src, /\.bm-pf \.bm-pay,\.bm-wsx \.bm-pay\{grid-template-columns:repeat\(8,1fr\)/);
   assert.match(src, /@media \(max-height:760px\)\{\.bm-scrim\{padding:8px\}/, "short screens give back the margins");
   assert.match(src, /@media \(max-height:690px\)\{\.bm-sub\{display:none\}/);
