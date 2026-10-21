@@ -2685,5 +2685,79 @@
       "betway": "BW7B7BA9D9"
     },
     "odds": 1.55
+  },
+  "2026-10-21": {
+    "date": "2026-10-21",
+    "generated": "2026-10-21T11:27:38.736Z",
+    "firstKickoff": "2026-10-21T19:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-21",
+        "home": "Real Madrid",
+        "away": "RB Leipzig",
+        "league": "International Clubs UEFA Champions League",
+        "kickoff": "2026-10-21T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.705,
+        "market": "OVER_1.5",
+        "odd": 1.04
+      },
+      {
+        "date": "2026-10-21",
+        "home": "FC Cincinnati",
+        "away": "DC United",
+        "league": "USA MLS",
+        "kickoff": "2026-10-21T23:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.902,
+        "market": "OVER_1.5",
+        "odd": 1.08
+      },
+      {
+        "date": "2026-10-21",
+        "home": "Aston Villa",
+        "away": "Viking",
+        "league": "International Clubs UEFA Champions League",
+        "kickoff": "2026-10-21T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.7,
+        "market": "OVER_1.5",
+        "odd": 1.08
+      },
+      {
+        "date": "2026-10-21",
+        "home": "Inter",
+        "away": "Shakhtar",
+        "league": "International Clubs UEFA Champions League",
+        "kickoff": "2026-10-21T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.725,
+        "market": "OVER_1.5",
+        "odd": 1.09
+      },
+      {
+        "date": "2026-10-21",
+        "home": "Club Brugge",
+        "away": "Lens",
+        "league": "International Clubs UEFA Champions League",
+        "kickoff": "2026-10-21T19:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.698,
+        "market": "OVER_1.5",
+        "odd": 1.1
+      }
+    ],
+    "codes": {
+      "sporty": "HL0148",
+      "bet9ja": "5WQ5BBX",
+      "betking": "FX181E",
+      "betpawa": "HJ7VATA",
+      "onexbet": "L4M4J",
+      "betway": "BW7BCEE427"
+    },
+    "short": {
+      "betpawa": 4
+    },
+    "odds": 1.45
   }
 }
