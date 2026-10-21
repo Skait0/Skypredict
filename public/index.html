@@ -11505,7 +11505,20 @@ loadLeaguePicks();
    no tiers would bench every league. Cached per fixture list, because
    leagueAllowed runs once per fixture. */
 var VOL_SRC=null, VOL_MAP={};
+/* Also volatile, whatever their tier: every league added from API-Football's
+   second and third waves and the NPFL (scripts/apifbackfill.js). The owner,
+   21 Oct 2026: they stay out until the reader says yes in the pop-up. */
+var VOL_NEW={"Germany 3. Liga":1,"France Ligue 3":1,"Italy Serie C, Group A":1,"Italy Serie C, Group B":1,
+  "Italy Serie C, Group C":1,"Spain Primera Federacion":1,"Brazil Brasileiro Serie B":1,"Argentina Primera Nacional":1,
+  "Austria 2. Liga":1,"Greece Super League 2":1,"Slovakia 2. Liga":1,"Bulgaria Vtora Liga":1,"Sweden Superettan":1,
+  "Mexico Liga de Expansion MX":1,"USA USL Championship":1,"Colombia Liga DIMAYOR":1,"Uruguay Primera Division":1,
+  "Chile Primera Division":1,"Northern Ireland Premiership":1,"Northern Ireland Championship":1,
+  "Ecuador LigaPro Primera A":1,"Paraguay Division de Honor":1,"Canada Canadian Premier League":1,
+  "Guatemala Liga Nacional":1,"Japan J2 League":1,"Ireland First Division":1,"Finland Ykkosliiga":1,
+  "Russia 1. Liga":1,"Egypt 2. Division A":1,"Brazil Brasileiro Serie C":1,"Argentina Primera B":1,
+  "Denmark 2nd Division":1,"Nigeria Premier League":1};
 function isVolatile(l){
+  if(VOL_NEW[l]===1) return true;
   var all=(DATA&&DATA.fixtures)||[];
   if(VOL_SRC!==all){
     VOL_SRC=all; VOL_MAP={};
@@ -24527,7 +24540,7 @@ function askVolatile(){
     WSP._sig=null; renderBuilder();
   };
   showPrompt("volAsk","<div class='confirm-card'><p>Want the volatile leagues in too?"+
-    "<span class='cf-list'>These are third divisions and below, where results swing a lot, "+
+    "<span class='cf-list'>These are third divisions and below, and leagues we added lately, where results swing a lot, "+
     "so they sit on the bench unless you call them up: "+
     vol.map(function(x){return esc(compOf(x.league))+" ("+esc(countryOf(x.league))+")";}).join(", ")+
     ".</span></p><div class='ca'>"+

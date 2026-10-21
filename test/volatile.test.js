@@ -21,6 +21,8 @@ function grab(name) {
   return src.slice(i, k + 1);
 }
 
+const VOL_NEW_SRC = src.match(/var VOL_NEW=\{[\s\S]*?\};/)[0];
+
 /* A fake button that records its click handler, and a prompt host that hands
    them out by class - enough of the DOM for askVolatile to wire itself up. */
 function harness(fixtures, store) {
@@ -52,7 +54,7 @@ function harness(fixtures, store) {
     "function clearPrompt(t){UI.cleared++;}" +
     "function updateFiltersSum(){}" +
     "function favLeague(l){return !isVolatile(l);}" +
-    "var BLD_PICK={}, VOL_IN=false, VOL_SRC=null, VOL_MAP={};" +
+    "var BLD_PICK={}, VOL_IN=false, VOL_SRC=null, VOL_MAP={};" + VOL_NEW_SRC +
     grab("tierOf") + grab("compOf") + grab("countryOf") +
     grab("loadLeaguePicks") + grab("isVolatile") + grab("leagueDefault") +
     grab("leagueAllowed") + grab("leaguesChosen") + grab("leaguePicksTouched") +
@@ -91,6 +93,20 @@ test("volatile = every fixture tier 3 or lower; unranked does not count", () => 
   assert.strictEqual(H.isVolatile("Russia Russian Cup"), false, "one top-flight fixture keeps it in");
   assert.strictEqual(H.isVolatile("Old Payload League"), false,
     "no tier stamped must not bench a league");
+});
+
+test("every league added since API-Football is volatile, whatever its tier (owner, 21 Oct 2026)", () => {
+  /* The second and third waves and the NPFL in scripts/apifbackfill.js LEAGUES. */
+  const bf = fs.readFileSync(path.join(__dirname, "..", "scripts", "apifbackfill.js"), "utf8");
+  const tail = bf.slice(bf.indexOf("The second wave"), bf.indexOf("};", bf.indexOf("The second wave")));
+  const added = [...new Set([...tail.matchAll(/^\s*\d+: "([^"]+)"/gm)].map((m) => m[1]))];
+  assert.ok(added.length >= 30, "found the added leagues: " + added.length);
+  const H = harness(added.map((league) => ({ league, tier: 1 })).concat(BOARD));
+  for (const l of added) assert.strictEqual(H.isVolatile(l), true, l);
+  assert.strictEqual(H.isVolatile("England Premier League"), false);
+  assert.ok(H.scopeFixtures().every((f) => !added.includes(f.league)), "left out until the pop-up's yes");
+  H.resetLeagues(); H.ask.go.click();
+  assert.ok(H.scopeFixtures().some((f) => f.league === "Nigeria Premier League"), "Add them brings them in");
 });
 
 test("volatile leagues are listed but left out by default", () => {
