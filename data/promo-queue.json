@@ -296,6 +296,14 @@
       "image": "/promo/covers/founding-wizards.jpg",
       "x": "Founding Wizard: 184 of 200 left. 🧙👑\n₦1,500 a month, locked for 3 months.\n\nOn Nov 1 prices go up:\nDay ₦200 → ₦500\nWeek ₦800 → ₦1,500\nMonth ₦2,000 → ₦4,000\n\n👉 soccerwizard.live\n18+ Play responsibly.",
       "ig": "Founding Wizard: 184 of 200 left. 🧙👑\n₦1,500 a month, locked for 3 months.\n\nOn Nov 1 prices go up:\nDay ₦200 → ₦500\nWeek ₦800 → ₦1,500\nMonth ₦2,000 → ₦4,000\n\nLink in bio 👆\n18+ Play responsibly."
+    },
+    {
+      "date": "2026-10-21",
+      "time": "16:00",
+      "kind": "feature",
+      "x": "Got 2 codes? Make them one. 🔮\n\nSend both to our bot. Any bookies. One slip back.\n\nAlso new in the bot:\n📋 Check your ticket, game by game\n🔄 Change markets in one tap\n\n👉 t.me/Soccerwizardhqbot\n18+",
+      "buffer": false,
+      "_note": "Telegram only from the queue; X goes by promo-hq/x-bot-announce-once.cjs (owner yes 21 Oct)"
     }
   ]
 }
