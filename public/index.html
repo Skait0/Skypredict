@@ -9104,7 +9104,8 @@ function renderMyResults(){
   var host=$("myres"); if(!host) return;
   var c=slipCounts();
   if(!c.all){ host.innerHTML=""; return; }
-  var rows=SLIPS.filter(function(s){ return !(window.swPend&&window.swPend.hidden(s.sid)); }).slice(0,2);
+  /* One recent ticket, so the page sits higher (owner, 21 Oct 2026); See all has the rest. */
+  var rows=SLIPS.filter(function(s){ return !(window.swPend&&window.swPend.hidden(s.sid)); }).slice(0,1);
   host.innerHTML=
     "<div class='ys'><div class='ys-top'><h3>Your slips</h3><span class='ys-ct'><span class='num'>"+c.all+"</span> saved</span>"+
       "<button class='ys-all' type='button' data-ysf='all'>See all<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></button></div>"+
