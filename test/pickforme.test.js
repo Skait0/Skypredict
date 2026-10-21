@@ -252,7 +252,7 @@ test("Build me a slip: Slider and Wizard first, then Pick for me, then Merlin's 
   assert.ok(at("bm-sl'") < at("bm-wz'") && at("bm-wz'") < at("id='bmPfm'") && at("id='bmPfm'") < at("id='bmWsx'"), "the order");
   assert.match(open, /bm-pfm bm-pf"\+\(open==="pfm"\?" is-open":""\)\+"' id='bmPfm'/);
   assert.match(open, /bm-pfm bm-wsx"\+\(open==="wsx"\?" is-open":""\)\+"' id='bmWsx'/);
-  assert.match(src, /\.bm-pf\{border-color:rgba\(47,212,138/);
+  assert.match(src, /\.bm-pf\{border-color:rgba\(255,138,61/, "Pick for me is orange (owner, 21 Oct 2026 pm)");
   assert.match(src, /\.bm-wsx\{border-color:rgba\(59,130,246/, "night blue: violet is kept for the Conjure button alone (aitells)");
   assert.match(open, /Bigger odds\? Use the Slider or the Wizard\./);
 });
