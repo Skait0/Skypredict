@@ -296,3 +296,11 @@ test("Get code asks before a booking code is used (owner, 21 Oct 2026: a mistake
   assert.match(run, /Yes, use 1 code/);
   assert.match(run, /Not now/);
 });
+
+test("opening or folding a quick builder ends the last one's highlight, so the other unfolds (owner, 21 Oct 2026)", () => {
+  const open = grab("openBuildChooser");
+  const h = open.indexOf('m.querySelectorAll("[data-open]")');
+  const body = open.slice(h, open.indexOf("m.querySelectorAll(\"[data-go]\")", h));
+  assert.match(body, /classList\.remove\("bm-other"\)/);
+  assert.match(body, /classList\.remove\("bm-sel"\)/);
+});

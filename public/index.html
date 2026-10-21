@@ -22623,6 +22623,9 @@ function openBuildChooser(goMode){
   m.querySelectorAll("[data-open]").forEach(function(b){ b.addEventListener("click",function(){
     if(PFM.busy||WSX.busy) return;
     var sec=b.closest(".bm-pfm"), opening=!sec.classList.contains("is-open");
+    /* Moving on from a built slip ends its highlight: the dimmed rows hid their panes, so Merlin's Pick
+       would not unfold after Pick for me until the chooser was reopened (owner, 21 Oct 2026). */
+    m.querySelector(".bm-card").classList.remove("bm-other"); m.querySelectorAll(".bm-pfm").forEach(function(x){ x.classList.remove("bm-sel"); });
     m.querySelectorAll(".bm-pfm").forEach(function(x){ x.classList.remove("is-open"); x.querySelector("[data-open]").setAttribute("aria-expanded","false"); });
     if(opening){ sec.classList.add("is-open"); b.setAttribute("aria-expanded","true"); }
     try{ localStorage.setItem("sw.bmopen",opening?b.dataset.open:""); }catch(e){}
