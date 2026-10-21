@@ -44,6 +44,17 @@ test("a code whose games are all over is spotted from the book's own status", ()
   assert.ok(!T.allOver([{ kickoff: "" }], Date.now()), "nothing to go on");
 });
 
+test("a part-finished code says how many games are over and points at Results", () => {
+  /* Live, 21 Oct 2026: KLHGFR (4 ended, 1 playing, 3 to come) read as "None of these games are on
+     our board" and nothing else, which looks broken. */
+  const now = Date.now();
+  const legs = [{ status: "Ended" }, { status: "Ended" }, { status: "H2" }, { status: "Not Start" }, { status: "" }];
+  assert.match(T.startedLine(legs, now), /3 of 5 games have started or ended[\s\S]*Results/);
+  assert.strictEqual(T.startedLine([{ status: "Not Start" }], now), "", "nothing started, nothing said");
+  const src = require("fs").readFileSync(require("path").join(__dirname, "../api/tg.js"), "utf8");
+  assert.ok(/TICKET\.startedLine\(/.test(src), "the read uses it");
+});
+
 test("an unreadable code says why in plain words", () => {
   assert.match(T.whyNot({ expired: true }, "Betway", "BW12345678"), /started or ended/);
   assert.match(T.whyNot({ notFound: true }, "Bet9ja", "5WGXDZD"), /Check the code[\s\S]*games are over/);

@@ -845,7 +845,7 @@ module.exports = async function handler(req, res) {
     /* Every game over: the results, not a read of a slip that can't be edited or split any more. */
     if (TICKET.allOver(legs, Date.now())) { await onResults(chat, msg.message_id, used, code, legs); return res.status(200).json({ ok: true }); }
     const pay = await (await fetch(SITE + "/predictions.json")).json().catch(() => ({}));
-    await tg("sendMessage", { chat_id: chat, text: D.reply(used, code, legs, (pay && pay.fixtures) || [], SITE),
+    await tg("sendMessage", { chat_id: chat, text: TICKET.startedLine(legs, Date.now()) + D.reply(used, code, legs, (pay && pay.fixtures) || [], SITE),
       parse_mode: "HTML", disable_web_page_preview: true, reply_to_message_id: msg.message_id,
       reply_markup: toolButtons(used, code, "read") });
   } catch (e) {
