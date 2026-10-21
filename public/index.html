@@ -11555,6 +11555,24 @@ function setVolIn(v){
   VOL_IN=!!v;
   try{localStorage.setItem("sw.volin",VOL_IN?"1":"0");}catch(e){}
 }
+/* Settings > Leagues (account-ui.js, owner 21 Oct 2026): every league we cover,
+   edited as the same list as All leagues > Edit, so the two never disagree. A
+   tick there is the reader's own yes to a volatile league. A change switches
+   the builder to All leagues, or the list would do nothing under Favourites. */
+window.swLeagues={
+  rows:function(){
+    return ((DATA&&DATA.leagues)||[]).map(function(l){
+      return {league:l,country:countryOf(l),name:favName(l),vol:isVolatile(l),
+        on:Object.prototype.hasOwnProperty.call(BLD_PICK,l)?!!BLD_PICK[l]:leagueDefault(l)};
+    });
+  },
+  set:function(ls,on){
+    setTopOnly(false);
+    ls.forEach(function(l){ setLeaguePicked(l,on); });
+    WSP._sig=null;
+    try{ renderBuilder(); }catch(e){}
+  }
+};
 /* Is this fixture inside the window - the ONE answer, because the board, the
    league picker and the counts drift apart the moment there are two copies of
    it. A second copy of exactly this predicate is what produced the chip-count
@@ -24531,11 +24549,13 @@ function resetLeagues(){
 }
 function askVolatile(){
   var vol=leaguesOnBoard().filter(function(x){return isVolatile(x.league);});
+  /* A league the reader set by hand (Settings > Leagues or Edit) keeps that
+     choice: the ask names, and its answer covers, only the ones left to decide
+     (owner, 21 Oct 2026 - it used to overwrite hand ticks too). */
+  vol=vol.filter(function(x){ return !Object.prototype.hasOwnProperty.call(BLD_PICK,x.league); });
   if(!vol.length) return;
   var done=function(add){
-    /* The answer covers every volatile league, so drop any hand tick on one. */
     setVolIn(add);
-    vol.forEach(function(x){ if(Object.prototype.hasOwnProperty.call(BLD_PICK,x.league)) setLeaguePicked(x.league,add); });
     clearPrompt("volAsk");
     WSP._sig=null; renderBuilder();
   };

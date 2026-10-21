@@ -563,6 +563,8 @@
     return "<p class='swa-h'>Appearance</p><div class='swa-card'><div class='swa-set'><span class='swa-st'><b>Theme</b></span>"+
         "<div class='swa-seg'><button type='button' data-theme=\"dark\" aria-pressed=\""+(o.theme!=="light")+"\">Dark</button><button type='button' data-theme=\"light\" aria-pressed=\""+(o.theme==="light")+"\">Light</button></div></div></div>"+
       "<p class='swa-h'>Booking</p><div class='swa-card'><div class='swa-set swa-set0'><span class='swa-st'><b>Default bookmaker</b><small>Codes open here first</small></span></div><div class='swa-books'>"+books+"</div></div>"+
+      (o.leagues?"<p class='swa-h'>Leagues</p><div class='swa-card'><button class='swa-set swa-link' id='swaLg' type='button'><span class='swa-st'><b>Leagues in your slips</b><small>"+
+        o.leagues.on+" of "+o.leagues.n+" leagues on</small></span>"+CHEV+"</button></div>":"")+
       "<p class='swa-h'>Notifications</p><div class='swa-card'><div class='swa-set'><span class='swa-st'><b>Picks by email</b><small>The day's picks, each morning</small></span>"+
         "<button class='swa-sw' id='swaMail' type='button' role=\"switch\" aria-checked=\""+(!!o.mail)+"\" aria-label='Picks by email'></button></div>"+
         "<div class='swa-set'><span class='swa-st'><b>Phone notifications</b><small>Messages from the Wizard, pick of the day at 9am, and when your slip lands</small></span>"+
@@ -574,7 +576,26 @@
         "<input class='swa-in' id='swaDelIn' autocomplete='off' autocapitalize='characters'><button class='swa-outbtn swa-danger' id='swaDelGo' type='button'>Delete for good</button></div>"+
       "<p class='swa-msg' id='swaMsg' role='status' aria-live='polite'></p>";
   }
-  var api={firstNameOf:firstNameOf,menuHtml:menuHtml,plusHtml:plusHtml,naira:naira,codesHtml:codesHtml,esc:esc,I:I,AV_FREE:AV_FREE,AV_FF:AV_FF,AV_OWNER:AV_OWNER,AV_PERSONAL:AV_PERSONAL,pickerHtml:pickerHtml,grantsHtml:grantsHtml,hitsHtml:hitsHtml,adminHtml:adminHtml,recordHtml:recordHtml,modelHtml:modelHtml,todayHtml:todayHtml,legsHtml:legsHtml,pauseHtml:pauseHtml,profileHtml:profileHtml,settingsHtml:settingsHtml};
+  /* Settings > Leagues: every league we cover, by country. rows from the page
+     (window.swLeagues.rows): {league,country,name,vol,on}. A country's switch is
+     on only when all its leagues are. */
+  function leaguesHtml(rows){
+    var by={}, order=[];
+    rows.forEach(function(x){ if(!by[x.country]){ by[x.country]=[]; order.push(x.country); } by[x.country].push(x); });
+    order.sort(function(a,b){ return a.localeCompare(b); });
+    var sw=function(attr,val,on,label){ return "<button class='swa-sw' type='button' role='switch' "+attr+"=\""+esc(val)+"\" aria-checked=\""+on+"\" aria-label=\""+esc(label)+"\"></button>"; };
+    return "<p class='swa-note'>Pick the leagues your slips may use. Volatile leagues stay off until you switch them on. "+
+      "This is the same list as All leagues in the builder, so a change here switches the builder to All leagues.</p>"+
+      "<input class='swa-in' id='swaLgFind' type='search' placeholder='Find a league or country' autocomplete='off'>"+
+      order.map(function(c){
+        var ls=by[c].sort(function(a,b){ return a.name.localeCompare(b.name); }), k=ls.filter(function(x){ return x.on; }).length;
+        return "<div class='swa-card' data-lgc=\""+esc(c)+"\"><div class='swa-set'><span class='swa-st'><b>"+esc(c)+"</b><small>"+k+" of "+ls.length+" on</small></span>"+
+          sw("data-lc",c,k===ls.length,"All of "+c)+"</div>"+
+          ls.map(function(x){ return "<div class='swa-set' data-lgr=\""+esc((x.name+" "+c).toLowerCase())+"\"><span class='swa-st'>"+esc(x.name)+
+            (x.vol?"<small>Volatile</small>":"")+"</span>"+sw("data-ll",x.league,x.on,x.name+", "+c)+"</div>"; }).join("")+"</div>";
+      }).join("");
+  }
+  var api={firstNameOf:firstNameOf,leaguesHtml:leaguesHtml,menuHtml:menuHtml,plusHtml:plusHtml,naira:naira,codesHtml:codesHtml,esc:esc,I:I,AV_FREE:AV_FREE,AV_FF:AV_FF,AV_OWNER:AV_OWNER,AV_PERSONAL:AV_PERSONAL,pickerHtml:pickerHtml,grantsHtml:grantsHtml,hitsHtml:hitsHtml,adminHtml:adminHtml,recordHtml:recordHtml,modelHtml:modelHtml,todayHtml:todayHtml,legsHtml:legsHtml,pauseHtml:pauseHtml,profileHtml:profileHtml,settingsHtml:settingsHtml};
   if(typeof module!=="undefined"&&module.exports){ module.exports=api; return; }
   if(!root.document) return;
 
@@ -647,6 +668,7 @@
     ".swa-go{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}.swa-go[disabled]{opacity:.6;cursor:default}"+
     ".swa-fine{text-align:center}.swa-del{border:0;background:none;font:inherit;font-size:12.5px;font-weight:700;color:var(--red-ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}"+
     ".swa-note,.swa-msg{font-size:13px;color:var(--soft);line-height:1.5}.swa-card+.swa-card{margin-top:0}.swa-card .swa-set+.swa-set{border-top:1px solid var(--line)}"+
+    ".swa-card[data-lgc]{margin-top:10px}#swaLgFind{margin:12px 0 2px}"+
     ".swa-pillbtn{border:1px solid var(--line);background:var(--card-2);color:var(--text);border-radius:6px;padding:6px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}"+
     ".swa-set:focus-visible,.swa-seg button:focus-visible,.swa-books button:focus-visible,.swa-sw:focus-visible,.swa-outbtn:focus-visible,.swa-del:focus-visible,.swa-pillbtn:focus-visible,.swa-in:focus-visible,.swa-back:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"+
     /* THE WIZARD PASS PAGE (owner, 16 Oct 2026): simple, every detail in sight, one screen
@@ -966,7 +988,9 @@
     close(); mark("settings");
     var a=acct();
     var v=view("Settings",settingsHtml({theme:lsGet("sw.theme")==="light"?"light":"dark",
-      book:root.swBookKey?root.swBookKey():"sporty",marks:root.swBookMarks?root.swBookMarks():{},mail:false,devices:null}));
+      book:root.swBookKey?root.swBookKey():"sporty",marks:root.swBookMarks?root.swBookMarks():{},mail:false,devices:null,
+      leagues:lgCount()}));
+    if(v.querySelector("#swaLg")) v.querySelector("#swaLg").onclick=leagues;
     function say(t){ v.querySelector("#swaMsg").textContent=t||""; }
     function fail(code,j){ if(code===0) return say("No connection. Check your data and try again.");
       if(j&&j.error==="reauth") return say("For your safety, sign in again, then delete within 10 minutes.");
@@ -995,6 +1019,39 @@
         if(code===401) return a.signedOutHere(j&&j.reason);
         fail(code,j);
         if(j&&j.error==="reauth"){ var l=d.createElement("a"); l.textContent=" Sign in again"; l.href="/login?return="+encodeURIComponent("/?account=1"); v.querySelector("#swaMsg").appendChild(l); }
+      });
+    };
+  }
+  function lgCount(){
+    var rows=root.swLeagues?root.swLeagues.rows():[];
+    return rows.length?{on:rows.filter(function(x){ return x.on; }).length,n:rows.length}:null;
+  }
+  function leagues(){
+    if(!root.swLeagues) return;
+    var v=view("Leagues in your slips",leaguesHtml(root.swLeagues.rows()));
+    v.querySelector(".swa-back").onclick=settings;
+    var find=v.querySelector("#swaLgFind");
+    /* Repaint the switches and counts from the page's answer, so what shows is what is stored. */
+    function paint(){
+      var on={}; root.swLeagues.rows().forEach(function(x){ on[x.league]=x.on; });
+      v.querySelectorAll("[data-lgc]").forEach(function(card){
+        var bs=card.querySelectorAll("[data-ll]"), k=0;
+        bs.forEach(function(b){ var o=!!on[b.getAttribute("data-ll")]; b.setAttribute("aria-checked",o?"true":"false"); if(o) k++; });
+        card.querySelector("[data-lc]").setAttribute("aria-checked",k===bs.length?"true":"false");
+        card.querySelector(".swa-set small").textContent=k+" of "+bs.length+" on";
+      });
+    }
+    v.querySelectorAll("[data-ll]").forEach(function(b){ b.onclick=function(){
+      root.swLeagues.set([b.getAttribute("data-ll")],b.getAttribute("aria-checked")!=="true"); paint(); }; });
+    v.querySelectorAll("[data-lc]").forEach(function(b){ b.onclick=function(){
+      var ls=[]; b.closest("[data-lgc]").querySelectorAll("[data-ll]").forEach(function(x){ ls.push(x.getAttribute("data-ll")); });
+      root.swLeagues.set(ls,b.getAttribute("aria-checked")!=="true"); paint(); }; });
+    find.oninput=function(){
+      var q=find.value.trim().toLowerCase();
+      v.querySelectorAll("[data-lgc]").forEach(function(card){
+        var any=false;
+        card.querySelectorAll("[data-lgr]").forEach(function(r){ var m=!q||r.getAttribute("data-lgr").indexOf(q)>=0; r.hidden=!m; if(m) any=true; });
+        card.hidden=!any;
       });
     };
   }

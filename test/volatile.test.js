@@ -164,12 +164,23 @@ test("asked again on the next switch in, and Keep after Add takes them back out"
   assert.deepStrictEqual(leagues(H.scopeFixtures()), SAFE);
 });
 
-test("the answer covers every volatile league, hand ticks included", () => {
+test("a league set by hand keeps its choice: the ask leaves it out and its answer does not touch it (owner, 21 Oct 2026)", () => {
   const H = harness(BOARD);
   H.setLeaguePicked("England League 1", true);
-  H.resetLeagues(); H.ask.keep.click();
-  assert.strictEqual(H.leagueAllowed("England League 1"), false);
-  assert.strictEqual(H.store["sw.bldpick"], "{}");
+  H.resetLeagues();
+  assert.ok(!/League 1 \(England\)/.test(H.ui.html), "not asked about again");
+  assert.match(H.ui.html, /League 2 \(England\)/);
+  H.ask.keep.click();
+  assert.strictEqual(H.leagueAllowed("England League 1"), true, "Keep them out does not undo a hand tick");
+  assert.strictEqual(H.leagueAllowed("England League 2"), false);
+  assert.deepStrictEqual(JSON.parse(H.store["sw.bldpick"]), { "England League 1": 1 });
+});
+
+test("every volatile league already set by hand, no pop-up", () => {
+  const H = harness(BOARD);
+  for (const l of ["England League 1", "England League 2", "Italy Serie C, Group A"]) H.setLeaguePicked(l, true);
+  H.resetLeagues();
+  assert.strictEqual(H.ui.html, null);
 });
 
 test("no volatile league on the board, no pop-up", () => {
