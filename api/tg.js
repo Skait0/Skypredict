@@ -95,7 +95,7 @@ const HELLO =
    reader's problem. The cap is the funnel: past it, the Wizard Pass on the site. */
 const CONVERT_CAP = 2;
 /* The date decides the offer (lib/pricing.js: new prices from 1 Nov 2026). */
-const plusLine = () => "Wizard Pass on <a href=\"" + SITE + "\">soccerwizard.live</a>: " + require("../lib/pricing.js").pitch(Date.now()) + " 🧙";
+const plusLine = () => "Wizard Pass on <a href=\"" + SITE + "/wizard-pass\">soccerwizard.live</a>: " + require("../lib/pricing.js").pitch(Date.now()) + " 🧙";
 const subjectOf = (uid) => "tg-" + crypto.createHash("sha256")
   .update((process.env.SW_QUOTA_PEPPER || "") + ":" + uid).digest("hex").slice(0, 24);
 

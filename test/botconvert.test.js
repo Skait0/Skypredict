@@ -92,7 +92,7 @@ test("past the two trial codes the bot sends people to the Wizard Pass on the si
     assert.strictEqual(countedDay, "*", "counted over every day, not today");
     const msg = b.sent.find((s) => s.method === "sendMessage");
     assert.match(msg.body.text, /used your 2 trial codes[\s\S]*Wizard Pass/);
-    assert.match(msg.body.text, /soccerwizard\.live/);
+    assert.match(msg.body.text, /soccerwizard\.live\/wizard-pass/, "the link opens the pass page, not the board");
     assert.strictEqual(booked, false, "no read, no booking once the cap is reached");
   } finally { b.done(); }
 });
