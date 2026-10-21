@@ -235,7 +235,8 @@ test("Merlin's Pick: All day, Next 60 min and All upcoming (owner, 21 Oct 2026)"
 
 test("Merlin's Pick and Pick for me fold their games until asked, and say the window (owner, 21 Oct 2026)", () => {
   const run = grab("pfmRun");
-  assert.match(run, /gOpen=ST\.open!=null\?ST\.open:false/, "folded by default on both cards");
+  assert.match(run, /gOpen=ST\.open!=null\?ST\.open:true/, "the games show once the slip is built (owner, 21 Oct 2026, later the same day)");
+  assert.match(src, /\.bm-pf \.bm-games,\.bm-wsx \.bm-games\{max-height:132px/, "in a short box, so the panel still fits the phone");
   assert.match(run, /games · "\+\(when\?when\+" · ":""\)\+bookMark/, "the result names its time window");
   assert.match(run, /data-a='back'>Payout or time</, "the way back says it changes the time too");
   assert.match(src, /PFM_ICON\.merlin\+"<\/span><b>Merlin's Pick<\/b>/, "Merlin has his own mark, not the Wizard's");
@@ -276,4 +277,8 @@ test("Build me a slip fits one phone screen: Slider and Wizard side by side, qui
 test("the quick card in use is highlighted and the rest dim (owner, 21 Oct 2026)", () => {
   assert.match(grab("pfmRun"), /x\.classList\.toggle\("bm-sel",x===card\); if\(x!==card\) x\.classList\.remove\("conj"\)/);
   assert.match(src, /\.bm-other \.bm-pfm:not\(\.bm-sel\)\{opacity:\.45/);
+});
+
+test("Get code on the quick cards books with the wand, like every other Book button (owner, 21 Oct 2026)", () => {
+  assert.match(grab("pfmRun"), /if\(on\) get\.innerHTML=wandHTML\("Booking…"\)/);
 });

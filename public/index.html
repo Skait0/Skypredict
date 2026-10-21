@@ -2050,6 +2050,11 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
    21 Oct 2026: "let the selected tab be highlighted"). */
 .bm-other .bm-pfm:not(.bm-sel){opacity:.45;transition:opacity .25s}
 .bm-other .bm-pfm:not(.bm-sel):hover,.bm-other .bm-pfm:not(.bm-sel):focus-within{opacity:1}
+/* While a slip shows, the cards beside it fold to their names and buttons, so the slip and its
+   games still fit one phone screen (owner, 21 Oct 2026). */
+.bm-other .bm-duo p,.bm-other .bm-duo .bm-risk,.bm-other .bm-duo .bm-name,.bm-other .bm-duo .bm-wzart,
+.bm-other .bm-pfm:not(.bm-sel) .bm-body>p{display:none}
+.bm-other .bm-duo .bm-open{margin-top:8px}
 /* the conjuring */
 .bm-pfm::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1.5px var(--accent),0 0 34px rgba(242,184,75,.35);opacity:0;transition:opacity .4s;pointer-events:none}
 .bm-pfm.conj::after{opacity:1}
@@ -2124,6 +2129,8 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .bm-pf p.bm-more{margin:6px 0 0;font-size:11.5px}
 .bm-pf .bm-get,.bm-wsx .bm-get{height:40px;margin-top:8px}.bm-pf .bm-act,.bm-wsx .bm-act{height:30px;font-size:12px}
 .bm-pf .bm-sum b,.bm-wsx .bm-sum b{font-size:28px}
+.bm-pf .bm-games,.bm-wsx .bm-games{max-height:132px;margin-top:6px;overscroll-behavior:contain}.bm-pf .bm-games li,.bm-wsx .bm-games li{padding:5px 8px;font-size:11px}
+@media (max-height:690px){.bm-pf .bm-games,.bm-wsx .bm-games{max-height:96px}}
 .bm-wsx .bm-stage{background:radial-gradient(75% 70% at 26% 55%,rgba(59,130,246,.3),rgba(59,130,246,0) 72%)}
 .mz-sky,.mz-lines{position:absolute;left:0;top:0;width:122px;height:100%;overflow:hidden}
 .mz-st,.mz-pk{position:absolute;border-radius:50%}
@@ -22660,7 +22667,10 @@ function pfmRun(T,K){
   function show(prev,note){
     if(!$(K.p+"Out")) return;                  /* closed during the conjuring */
     ST.busy=false; card.classList.add("done"); stage.hidden=true;
-    var tv=totalOdds(r.picks), was={}, nNew=0, learnt=false, gOpen=ST.open!=null?ST.open:false;
+    /* Games open again once the slip is built (owner, 21 Oct 2026: "let the codes show, after the
+       payout is selected and generated" - the games, not the booking code); the list scrolls
+       inside a short box so the panel still fits the phone. */
+    var tv=totalOdds(r.picks), was={}, nNew=0, learnt=false, gOpen=ST.open!=null?ST.open:true;
     /* The window the slip came from, said on the result: its buttons fold away with the payouts. */
     var when={"0":K===WSX_K?"All day":"Today","1":"Tomorrow","60":"Next 60 min","all":"All upcoming"}[ST.day]||"";
     try{ learnt=localStorage.getItem("sw.pfm.shuf")==="1"; }catch(e){}
@@ -22679,7 +22689,9 @@ function pfmRun(T,K){
       (learnt?"":"<p class='bm-hint'>Don't like a game? <b>Shuffle</b> swaps some for others just as safe. Same payout.</p>");
     if(!learnt&&!prev&&!REDUCED) later(function(){ var s=sum.querySelector("[data-a='shuffle']"); if(s) s.classList.add("bm-nudge"); },900);
     var get=sum.querySelector("[data-a='code']"), booked=null;
-    function lock(on){ ST.busy=on; get.disabled=on; get.textContent=on?"Booking…":"Get code";
+    /* The wand while it books, as on every other Book button (owner, 21 Oct 2026: "why doesnt
+       the booking animation ... showing here"). */
+    function lock(on){ ST.busy=on; get.disabled=on; if(on) get.innerHTML=wandHTML("Booking…"); else get.textContent="Get code";
       sum.querySelectorAll("[data-a='shuffle'],[data-a='back']").forEach(function(b){ b.disabled=on; }); }
     get.addEventListener("click",function(){
       if(booked){ showCode(booked[0],K.p+"Out",booked[3],B,booked[1],booked[2]); return; }
