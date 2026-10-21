@@ -272,3 +272,8 @@ test("Build me a slip fits one phone screen: Slider and Wizard side by side, qui
   assert.match(src, /@media \(max-height:760px\)\{\.bm-scrim\{padding:8px\}/, "short screens give back the margins");
   assert.match(src, /@media \(max-height:690px\)\{\.bm-sub\{display:none\}/);
 });
+
+test("the quick card in use is highlighted and the rest dim (owner, 21 Oct 2026)", () => {
+  assert.match(grab("pfmRun"), /x\.classList\.toggle\("bm-sel",x===card\); if\(x!==card\) x\.classList\.remove\("conj"\)/);
+  assert.match(src, /\.bm-other \.bm-pfm:not\(\.bm-sel\)\{opacity:\.45/);
+});

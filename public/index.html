@@ -320,6 +320,7 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
      The light theme sets its own below; without that, a dark-theme glow leaks
      onto a parchment bar and reads as a smudge. */
   --green:#2FD48A;
+  --night:#7DB3FF;   /* Merlin's Pick only (owner, 21 Oct 2026); its light value is below */
   --green-ink:#4FE39E;
   --green-wash:rgba(47,212,138,.13);
   --electric:#4FC3F7;          /* the Family & friends crest's ink (public/fw/ff-crest.svg) */
@@ -437,6 +438,7 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
      than a glow, so the ring carries the meaning here and the bloom only
      softens its edge. */
   --green:#0D814F;    /* 4.36:1, holding its old 4.31 */
+  --night:#1F5FD1;
   --green-ink:#0B7047;
   --green-wash:rgba(14,138,85,.10);
   --electric:#0277BD;
@@ -2044,6 +2046,10 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .bm-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:4px 0 0;font-size:11px;font-weight:600;color:var(--faint)}
 .bm-foot b{color:var(--soft);white-space:nowrap}
 .bm-other .bm-link{opacity:.4}
+/* The quick card in use keeps its ring; the other one dims with the rest until touched (owner,
+   21 Oct 2026: "let the selected tab be highlighted"). */
+.bm-other .bm-pfm:not(.bm-sel){opacity:.45;transition:opacity .25s}
+.bm-other .bm-pfm:not(.bm-sel):hover,.bm-other .bm-pfm:not(.bm-sel):focus-within{opacity:1}
 /* the conjuring */
 .bm-pfm::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1.5px var(--accent),0 0 34px rgba(242,184,75,.35);opacity:0;transition:opacity .4s;pointer-events:none}
 .bm-pfm.conj::after{opacity:1}
@@ -2074,7 +2080,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .bm-sum b{font:800 32px/1 var(--disp);color:var(--accent);animation:bmPop .35s cubic-bezier(.3,1.6,.5,1) both}
 .bm-sum span{font-size:12px;font-weight:700;color:var(--soft)}
 .bm-acts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px}
-.bm-get{display:block;width:100%;height:44px;margin-top:10px;border:0;border-radius:var(--r-md);background:var(--accent);color:#1a1205;font:inherit;font-size:15px;font-weight:800;cursor:pointer}
+.bm-get{display:block;width:100%;height:44px;margin-top:10px;border:0;border-radius:var(--r-md);background:var(--accent);color:var(--on-accent);font:inherit;font-size:15px;font-weight:800;cursor:pointer}
 .bm-games[hidden]{display:none}
 .bm-games li.bm-in{box-shadow:inset 3px 0 0 var(--accent);animation:bmFlip .45s cubic-bezier(.2,.9,.3,1.2) both}
 .bm-opt p.bm-swap{margin:8px 0 0;font-size:12px;font-weight:700;color:var(--accent);animation:bmFade .3s ease-out both}
@@ -2095,26 +2101,29 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 #pfmOut:not(:empty),#wsxOut:not(:empty){margin-top:8px}
 .bm-chance{margin:6px 0 0;font-size:12.5px;font-weight:600;color:var(--soft)}
 /* Pick for me green, Merlin's Pick night blue, dressed like the Slider and the Wizard, smaller
-   and tighter (owner, 21 Oct 2026). Below them: Merlin's sky. */
+   and tighter (owner, 21 Oct 2026). Design review the same day: the card colour is a tint and an
+   icon only; the booking button and the total stay gold, as everywhere (DESIGN.md: gold marks the
+   code and the total odds), and the active card gets a ring, not a glow. */
 .bm-pf{border-color:rgba(47,212,138,.45);background:linear-gradient(160deg,rgba(47,212,138,.11),transparent 55%),var(--card-2)}
 .bm-wsx{border-color:rgba(59,130,246,.5);background:linear-gradient(160deg,rgba(59,130,246,.15),transparent 55%),var(--card-2)}
-.bm-pf .bm-ic{background:rgba(47,212,138,.18);color:#2FD48A}.bm-wsx .bm-ic{background:rgba(59,130,246,.2);color:#7DB3FF}
-.bm-pf .bm-get{background:#2FD48A;color:#06210f}.bm-wsx .bm-get{background:#3B82F6;color:#fff}
-.bm-pf::after{box-shadow:inset 0 0 0 1.5px #2FD48A,0 0 30px rgba(47,212,138,.3)}.bm-wsx::after{box-shadow:inset 0 0 0 1.5px #3B82F6,0 0 30px rgba(59,130,246,.4)}
+.bm-pf .bm-ic{background:rgba(47,212,138,.18);color:var(--green)}.bm-wsx .bm-ic{background:rgba(59,130,246,.2);color:var(--night)}
+.bm-pf::after{box-shadow:inset 0 0 0 1.5px var(--green)}.bm-wsx::after{box-shadow:inset 0 0 0 1.5px var(--night)}
 .bm-duo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px}.bm-duo .bm-opt{display:flex;flex-direction:column;margin:0;padding:10px}
 .bm-duo .bm-oh b{font-size:15.5px}.bm-duo p{margin:5px 0 8px;font-size:12px;padding-right:0}.bm-duo .bm-open{margin-top:auto;height:38px;font-size:13px}
-.bm-duo .bm-wzart{height:54px;top:4px;right:2px;opacity:.75}.bm-duo .bm-wz .bm-oh{padding-right:34px}.bm-duo .bm-name{font-size:16px;gap:3px 8px}
-.bm-pf,.bm-wsx{padding:10px}
+.bm-duo .bm-wzart{height:54px;top:4px;right:2px;opacity:.75}.bm-duo .bm-wz .bm-oh,.bm-duo .bm-wz p{padding-right:34px}.bm-duo .bm-name{font-size:16px;gap:3px 8px}
+.bm-duo .bm-oh{flex-wrap:wrap;row-gap:2px}.bm-duo .bm-usual{order:3;flex-basis:100%;margin:0 0 0 39px}
+.bm-pf,.bm-wsx{padding:10px}.bm-pf .bm-oh b,.bm-wsx .bm-oh b{font-size:15.5px}
 @media (max-height:690px){.bm-sub{display:none}.bm-h{margin-bottom:8px}.bm-stage{height:156px}.bm-list{height:86px}.bm-wiz{height:112px}}
-@media (max-height:760px){.bm-scrim{padding:8px}.bm-card{padding:12px 10px 8px}.bm-h{font-size:22px}.bm-sub{margin:4px 0 8px}.bm-opt{margin-bottom:7px}.bm-duo{margin-bottom:7px}}.bm-pf .bm-oh b,.bm-wsx .bm-oh b{font-size:15.5px}
+@media (max-height:760px){.bm-scrim{padding:8px}.bm-card{padding:12px 10px 8px}.bm-h{font-size:22px}.bm-sub{margin:4px 0 8px}.bm-opt{margin-bottom:7px}.bm-duo{margin-bottom:7px}}
 .bm-pf .bm-ic,.bm-wsx .bm-ic{width:26px;height:26px}.bm-pf .bm-ic svg,.bm-wsx .bm-ic svg{width:14px;height:14px}
 .bm-pf p,.bm-wsx p{margin:5px 0 8px;font-size:12px}.bm-pf .bm-seg,.bm-wsx .bm-seg{margin-bottom:6px}
 .bm-pf .bm-seg button,.bm-wsx .bm-seg button{height:26px;font-size:11.5px}
 .bm-pf .bm-pc,.bm-wsx .bm-pc{height:30px;font-size:13.5px}.bm-pf .bm-pc small,.bm-wsx .bm-pc small{font-size:9px}
-.bm-pf .bm-pay,.bm-wsx .bm-pay{grid-template-columns:repeat(8,1fr);gap:3px}.bm-pf .bm-lk,.bm-wsx .bm-lk{top:1px;right:1px}
+.bm-pf .bm-pay,.bm-wsx .bm-pay{grid-template-columns:repeat(8,1fr);gap:3px}
+.bm-pf .bm-lk,.bm-wsx .bm-lk{top:2px;right:2px}.bm-pf .bm-lk svg,.bm-wsx .bm-lk svg{width:7px;height:7px}
 .bm-pf p.bm-more{margin:6px 0 0;font-size:11.5px}
 .bm-pf .bm-get,.bm-wsx .bm-get{height:40px;margin-top:8px}.bm-pf .bm-act,.bm-wsx .bm-act{height:30px;font-size:12px}
-.bm-pf .bm-sum b,.bm-wsx .bm-sum b{font-size:28px}.bm-wsx .bm-sum b{color:#A9CCFF}
+.bm-pf .bm-sum b,.bm-wsx .bm-sum b{font-size:28px}
 .bm-wsx .bm-stage{background:radial-gradient(75% 70% at 26% 55%,rgba(59,130,246,.3),rgba(59,130,246,0) 72%)}
 .mz-sky,.mz-lines{position:absolute;left:0;top:0;width:122px;height:100%;overflow:hidden}
 .mz-st,.mz-pk{position:absolute;border-radius:50%}
@@ -2123,8 +2132,12 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .mz-pk{width:9px;height:9px;margin:-4.5px;background:#FFF1C9;box-shadow:0 0 10px 3px rgba(169,204,255,.85);opacity:0;transform:scale(.2);transition:opacity .25s,transform .4s cubic-bezier(.3,1.6,.5,1)}
 .mz-pk.on{opacity:1;transform:scale(1)}.mz-sky.done .mz-pk{animation:mzFlash .5s ease-out}
 .mz-sky.done::after{content:"";position:absolute;left:-30px;top:16%;width:44px;height:2px;background:linear-gradient(90deg,transparent,#fff);animation:mzShoot .65s ease-out forwards}
-.mz-lines polyline{fill:none;stroke:#A9CCFF;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
-.mz-weigh{position:absolute;left:128px;top:12px;font-size:11.5px;font-weight:800;color:#A9CCFF}
+.mz-lines polyline{fill:none;stroke:var(--night);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
+.mz-weigh{position:absolute;left:128px;top:12px;font-size:11.5px;font-weight:800;color:var(--night)}
+/* A light page gets ink stars and a gold choice, or the sky vanishes into the card. */
+[data-theme="light"] .mz-st{background:var(--night)}
+[data-theme="light"] .mz-pk{background:var(--accent);box-shadow:0 0 8px 2px rgba(142,91,8,.35)}
+[data-theme="light"] .mz-sky.done::after{background:linear-gradient(90deg,transparent,var(--night))}
 @keyframes mzTw{from{opacity:.12}to{opacity:.75}}@keyframes mzFlash{50%{transform:scale(1.9)}}
 @keyframes mzShoot{from{transform:translate(0,0) rotate(18deg);opacity:1}to{transform:translate(190px,58px) rotate(18deg);opacity:0}}
 @keyframes bmPop{from{opacity:0;transform:scale(1.5)}to{opacity:1;transform:none}}
@@ -22700,6 +22713,7 @@ function pfmRun(T,K){
       b.textContent=g.hidden?"Show games":"Hide games"; b.setAttribute("aria-expanded",!g.hidden); });
   }
   body.hidden=true; stage.hidden=false; card.classList.add("conj");
+  document.querySelectorAll(".bm-pfm").forEach(function(x){ x.classList.toggle("bm-sel",x===card); if(x!==card) x.classList.remove("conj"); });
   $("bmScrim").querySelector(".bm-card").classList.add("bm-other"); buzzConjure();
   $(K.p+"Badge").textContent="x"+T; $(K.p+"Badge").style.setProperty("--wr",(PFM_WR[T]||"#F2B84B"));
   $(K.p+"Odds").textContent="x1.00"; $(K.p+"Games").textContent="0 games";
