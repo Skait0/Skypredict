@@ -2092,7 +2092,8 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .bm-games li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bm-games li em{font-style:normal;color:var(--faint)}
 .bm-games li b{color:var(--green)}
-#pfmOut:not(:empty){margin-top:8px}
+#pfmOut:not(:empty),#wsxOut:not(:empty){margin-top:8px}
+.bm-chance{margin:6px 0 0;font-size:12.5px;font-weight:600;color:var(--soft)}
 @keyframes bmPop{from{opacity:0;transform:scale(1.5)}to{opacity:1;transform:none}}
 @keyframes bmLeg{from{opacity:0;transform:translate(-80px,70px) scale(.4)}to{opacity:1;transform:none}}
 @keyframes bmTick{from{transform:scale(1.12)}to{transform:none}}
@@ -15051,6 +15052,12 @@ function mLabel(f,c){
   var side3=function(k){return k==="1"?esc(f.home):(k==="2"?esc(f.away):"Draw");};
   var mx=/^MIX_([12X])_(OV|UN)_([\d.]+)$/.exec(c||"");
   if(mx) return side3(mx[1])+" or "+(mx[2]==="OV"?"over ":"under ")+mx[3]+" goals";
+  /* Goal lines with no case above - Under 3.5, team unders and the rest - and "both score: no".
+     Merlin's Pick (21 Oct 2026) reaches every line the bookie quotes, and printed
+     "AWAY_UNDER_1.5" where a sentence belongs. */
+  if(c==="NG") return "Both teams to score: No";
+  var ou=/^(HOME_|AWAY_)?(OVER|UNDER)_(\d+\.5)$/.exec(c||"");
+  if(ou) return (ou[1]==="HOME_"?esc(f.home)+" ":ou[1]==="AWAY_"?esc(f.away)+" ":"")+(ou[1]?ou[2].toLowerCase():ou[2]==="OVER"?"Over":"Under")+" "+ou[3]+" goals";
   /* Everything the converter learned to read today. Parameterised rather than
      a case each, because the lines and thresholds come from whatever the books
      are selling. Unlabelled, these printed as their own codes on the panel -
@@ -22343,24 +22350,128 @@ function pickForMe(target,day,B,seed){
   }
   return {picks:picks, odds:tot, short:tot<target};
 }
-var PFM={day:"0",shuffles:0,busy:false,timers:[]};
-function pfmPass(){ var ui=window.swAccountUI; return ui&&ui.isPass?!!ui.isPass():ladPass(); }
-function pfmSeed(){
-  var s="x"; try{ s=localStorage.getItem("sw.pfm.seed"); if(!s){ s=Math.random().toString(36).slice(2,10); localStorage.setItem("sw.pfm.seed",s); } }catch(e){}
-  return s+"|"+new Date().toISOString().slice(0,10)+"|"+PFM.shuffles;
+/* MERLIN'S PICK (owner, 21 Oct 2026). Pick for me takes the surest leg in every game until the
+   payout, so it piles on short legs - and the bookie's margin is paid again on every one. This
+   searches every combination of the window's games for the slip MOST LIKELY TO LAND that still
+   reaches the payout (exact: a multiple-choice knapsack over log odds, maximising the sum of log
+   chance). Same model, same prices; measured on the 21 Oct board at x30: 2.25% against 1.56% for
+   the default Wizard. Its rules: every leg 60%+ judged, the favourite's side only for a result
+   bet (backsUnderdog), no Under in a cup tie with a clear favourite (the rout shape), volatile
+   leagues only with the reader's yes, markets people know (no handicaps, corners, shots, GG+),
+   and no market family on more than 40% of the slip (Pick for me's rule). Shuffle nudges near
+   equals by a seeded hair, so a reader can see another slip almost as likely. */
+var WSX_PAYS=[5,10,20,30,50,100,200,500], WSX_MINP=0.6, WSX_STEP=0.01;
+function wizardSpecial(target,day,B,seed){
+  B=B||curBook();
+  var max=Math.min(PFM_MAX,slipMax(B));
+  var skip={}; [].concat(HCAP_CODES,CORNER_CODES,TEAM_CORNER_CODES,SHOTS_CODES,TEAM_SHOTS_CODES,["GG2_Y"]).forEach(function(c){ skip[c]=1; });
+  var refused=refusedToday(), rk=B.key+"|", all=allowedMarkets(2).filter(function(c){ return !skip[c]; }), groups=[];
+  function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
+  var CUP=/\b(cup|copa|pokal|coupe|coppa|ta[cç]a|beker|trophy|shield)\b/i;
+  (DATA.fixtures||[]).forEach(function(f){
+    if(!notStarted(f)) return;
+    /* "60": the next 60 minutes' kick-offs (owner, 21 Oct 2026: all day, next 60 minutes, all upcoming). */
+    if(day==="60"){ var ko=Date.parse(f.kickoff||""); if(!(ko-Date.now()<=60*60e3)) return; }
+    else if(day!=="all"&&dayOff(fDay(f))!==+day) return;
+    if(isVolatile(f.league)&&!VOL_IN) return;
+    var homeFav=f.home_p>f.away_p, rout=CUP.test(f.league||"")&&Math.max(f.home_p||0,f.away_p||0)>=0.6;
+    /* Every market the bookie quotes on this game that the model can price - unders, both to
+       score, Draw or GG among them - not only the builder's chip list. Halves, corners, shots,
+       handicaps, draws, GG+ and the "won't" markets stay out: markets people know. */
+    var seen={}, mine=[];
+    all.concat(Object.keys(f[B.odds]||{}),Object.keys(f.sportyOdds||{})).forEach(function(c){
+      if(seen[c]||skip[c]||/^(CORNERS|SHOTS|AH_|FH_|SH_|HT|DNB|NR3|WTN|GG2|X$)/.test(c)) return; seen[c]=1; mine.push(c); });
+    var codes=mine.filter(function(c){ return bookAllows(c,B)&&!refused[rk+fid(f)+"|"+c]&&cornersOpen(f,c)&&
+      !(/^NR3_/.test(c)&&!bookQuotes(f,c,BOOKS.sporty))&&!(c==="1"&&!homeFav)&&!(c==="2"&&homeFav)&&
+      !((c==="1X"||c==="X2")&&!dcOk(f,c))&&!backsUnderdog(f,c)&&!(rout&&/^UNDER_/.test(c))&&
+      mLabel(f,c)!==c; /* a market we cannot name in words is not one to hand a reader */ });
+    /* Pick for me's bookie rule, word for word. */
+    var ok=codes.filter(function(c){ var v=bookVerdict(f,c,B); return v==="priced"||v==="unknown"; });
+    if(ok.length) codes=ok;
+    else if(pricedFixture(f,B)) return;
+    else codes=codes.filter(function(c){ return safeUnpriced(c); });
+    /* REAL PRICES ONLY (measured 21 Oct 2026): an estimated price is our own figure with no
+       margin in it, so it looks free and the search stacked dozens of them - 30+ legs, worse
+       than Pick for me. Every leg here carries a bookie's quote (this book's, else SportyBet's
+       as the market's own), at x1.15 or more like Pick for me's floor. */
+    var opts=[];
+    codes.forEach(function(c){
+      var v0=mProb(f,c); if(v0==null||isNaN(v0)) return;
+      var p=judgedP(f,c,v0); if(!(p>=WSX_MINP)) return;
+      if(!hasRealOdd(f,c,B)&&!bookQuotes(f,c,BOOKS.sporty)) return;
+      var o=legOdd(f,c,v0,B); if(!(o>=1.15)) return;
+      opts.push({f:f,id:fid(f),code:c,p:v0,_p:p,o:o,eventId:f.eventId||null,
+        _lp:Math.log(p)+(h32(seed+"|"+fid(f)+"|"+c)-0.5)*0.03});
+    });
+    /* An option beaten on both price and chance by another of ITS OWN family can never be the
+       best choice; one from another family is kept, because the 40% cap may need it. */
+    opts=opts.filter(function(a){ return !opts.some(function(b){ return b!==a&&fam(b.code)===fam(a.code)&&b.o>=a.o&&b._p>=a._p&&(b.o>a.o||b._p>a._p); }); });
+    if(opts.length) groups.push(opts);
+  });
+  function fam(c){ return (c==="1X"||c==="X2"||c==="12")?"dc":(c==="1"||c==="2")?"win":/^(HOME|AWAY)_OVER_/.test(c)?"team":
+    /^OVER_/.test(c)?"over":/^UNDER_/.test(c)?"under":(c==="GG"||c==="NG")?"btts":/^NR3_/.test(c)?"nr3":/^WTN_/.test(c)?"wtn":/^MIX/.test(c)?"combo":c; }
+  var NEED=Math.ceil(Math.log(target)/WSX_STEP), CAP=NEED+160;
+  function solve(){
+    /* Weights round DOWN, so a slip that clears NEED in steps clears the payout for real. */
+    var dp=new Float64Array(CAP+1).fill(-Infinity); dp[0]=0;
+    var back=[];
+    groups.forEach(function(g){
+      var nd=dp.slice(), ch=new Int16Array(CAP+1).fill(-1), fr=new Int32Array(CAP+1);
+      for(var b=0;b<=CAP;b++){ if(dp[b]===-Infinity) continue;
+        for(var j=0;j<g.length;j++){ var x=g[j]; if(x._out) continue;
+          var nb=Math.min(CAP,b+Math.floor(Math.log(x.o)/WSX_STEP)), v=dp[b]+x._lp;
+          if(v>nd[nb]){ nd[nb]=v; ch[nb]=j; fr[nb]=b; } } }
+      back.push([ch,fr]); dp=nd;
+    });
+    var best=-Infinity, bi=-1;
+    for(var b=NEED;b<=CAP;b++) if(dp[b]>best){ best=dp[b]; bi=b; }
+    if(bi<0) return null;
+    var picks=[];
+    for(var i=groups.length-1;i>=0;i--){ var j=back[i][0][bi]; if(j>=0){ picks.push(groups[i][j]); bi=back[i][1][bi]; } }
+    return picks.reverse();
+  }
+  /* The 40% family cap, by repair: the weakest leg of a family over its cap loses that option
+     and the search runs again. A handful of rounds at most. */
+  /* A board that only offers one family (prices missing, so only the safe markets are left)
+     cannot meet the cap at all: then the uncapped best stands, rather than no slip. */
+  var picks=null, free=null;
+  for(var round=0;round<30;round++){
+    picks=solve(); if(!free) free=picks;
+    if(!picks){ picks=free; break; }
+    var fc={}; picks.forEach(function(x){ (fc[fam(x.code)]=fc[fam(x.code)]||[]).push(x); });
+    var cap=Math.max(2,Math.ceil(0.4*picks.length)), over=null;
+    for(var k in fc) if(fc[k].length>cap&&(!over||fc[k].length>over.length)) over=fc[k];
+    if(!over) break;
+    over.sort(function(a,b){ return a._p-b._p; })[0]._out=true;
+  }
+  if(!picks||!picks.length||picks.length>max) return {picks:[],odds:1,short:true};
+  var tot=picks.reduce(function(a,x){ return a*x.o; },1);
+  return {picks:picks, odds:tot, short:tot<target*0.995,
+    chance:picks.reduce(function(a,x){ return a*x._p; },1)};
 }
-var PFM_WR={2:"#2FD48A",5:"#7FD13F",10:"#B5CF3A",20:"#D9C53A",50:"#EDA93C",100:"#F2913B",150:"#EE6A40",200:"#E63946"};
+var PFM={day:"0",shuffles:0,busy:false,timers:[]}, WSX={day:"0",shuffles:0,busy:false,timers:[]};
+/* The two quick builders share one set of screens; K says which one is running. */
+var PFM_K={p:"pfm",card:"bmPfm",st:PFM,eng:pickForMe,tag:"pickforme",what:"safest"},
+    WSX_K={p:"wsx",card:"bmWsx",st:WSX,eng:wizardSpecial,tag:"merlin",what:"likeliest"};
+function pfmPass(){ var ui=window.swAccountUI; return ui&&ui.isPass?!!ui.isPass():ladPass(); }
+function pfmSeed(st){
+  var s="x"; try{ s=localStorage.getItem("sw.pfm.seed"); if(!s){ s=Math.random().toString(36).slice(2,10); localStorage.setItem("sw.pfm.seed",s); } }catch(e){}
+  return s+"|"+new Date().toISOString().slice(0,10)+"|"+(st||PFM).shuffles;
+}
+var PFM_WR={2:"#2FD48A",5:"#7FD13F",10:"#B5CF3A",20:"#D9C53A",30:"#E3B83B",50:"#EDA93C",100:"#F2913B",150:"#EE6A40",200:"#E63946",500:"#C2185B"};
 var PFM_ICON={
   pfm:"<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M13 2L4 14h7l-1 8 9-12h-7l1-8z'/></svg>",
   slider:"<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'><line x1='4' y1='4' x2='4' y2='20' stroke-width='3'/><line x1='12' y1='4' x2='12' y2='20' stroke-width='3'/><line x1='20' y1='4' x2='20' y2='20' stroke-width='3'/><circle cx='4' cy='12' r='3' fill='currentColor'/><circle cx='12' cy='8' r='3' fill='currentColor'/><circle cx='20' cy='16' r='3' fill='currentColor'/></svg>",
   wizard:"<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2L15 8H22M12 2L9 8H2M12 2V22M5 14H19M12 22L9 16H2M12 22L15 16H22'/><circle cx='12' cy='12' r='3' fill='currentColor'/></svg>",
+  /* Merlin's own mark (owner, 21 Oct 2026: "the logo is the same with wizard"): his pointed hat and a star. */
+  merlin:"<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2.5L6.5 17.5h11z'/><path d='M3 20.5c3-1.4 15-1.4 18 0'/><path d='M12 9.2l.8 1.6 1.7.2-1.3 1.2.3 1.7-1.5-.8-1.5.8.3-1.7-1.3-1.2 1.7-.2z' fill='currentColor' stroke-width='1'/></svg>",
   go:"<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round'><path d='M9 6l6 6-6 6'/></svg>",
   lock:"<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round'><rect x='5' y='11' width='14' height='10' rx='2'/><path d='M8 11V8a4 4 0 018 0v3'/></svg>"};
-function pfmPayHTML(){
+function pfmPayHTML(pays,attr){
   var pass=pfmPass();
-  return PFM_PAYS.map(function(t){
+  return (pays||PFM_PAYS).map(function(t){
     var lock=t>PFM_FREE&&!pass;
-    return "<button class='bm-pc' type='button' data-pay='"+t+"' style='--wr:"+PFM_WR[t]+"'"+(lock?" data-lock='1'":"")+">"+
+    return "<button class='bm-pc' type='button' "+(attr||"data-pay")+"='"+t+"' style='--wr:"+PFM_WR[t]+"'"+(lock?" data-lock='1'":"")+">"+
       (lock?"<i class='bm-lk'>"+PFM_ICON.lock+"</i>":"")+"<small>x</small>"+t+"</button>";
   }).join("");
 }
@@ -22376,7 +22487,7 @@ function openBuildChooser(goMode){
   m.innerHTML="<div class='bm-card' role='dialog' aria-modal='true' aria-labelledby='bmTtl'>"+
     "<button class='ask-x bm-x' type='button' aria-label='Close'>"+XSVG+"</button>"+
     "<h2 class='bm-h' id='bmTtl'>Build me a slip</h2>"+
-    "<p class='bm-sub'>Three ways. Same "+bookMark(B.key)+" code at the end.</p>"+
+    "<p class='bm-sub'>Four ways. Same "+bookMark(B.key)+" code at the end.</p>"+
     "<section class='bm-opt bm-pfm' id='bmPfm'>"+
       "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.pfm+"</span><b>Pick for me</b><span class='bm-new'>NEW</span></div>"+
       "<div class='bm-body' id='pfmBody'><p>No options to choose. We take the surest market in each game and stop at your payout.</p>"+
@@ -22394,6 +22505,23 @@ function openBuildChooser(goMode){
         "<img class='bm-wiz' src='/fw/wiz-cast.webp' alt='' width='96' height='132'>"+
         "<i class='bm-ring'></i><i class='bm-ring two'></i><i class='bm-orb'></i></div>"+
       "<div id='pfmSum'></div><div id='pfmOut'></div>"+
+    "</section>"+
+    /* MERLIN'S PICK (owner, 21 Oct 2026): its own card, Pick for me untouched. */
+    "<section class='bm-opt bm-pfm bm-wsx' id='bmWsx'>"+
+      "<div class='bm-oh'><span class='bm-ic'>"+PFM_ICON.merlin+"</span><b>Merlin's Pick</b><span class='bm-new'>NEW</span></div>"+
+      "<div class='bm-body' id='wsxBody'><p>Name a payout. Merlin tests every mix of games and keeps the slip most likely to land.</p>"+
+        "<div class='bm-seg' role='radiogroup' aria-label='When'>"+
+          [["0","All day"],["60","Next 60 min"],["all","All upcoming"]].map(function(d){
+            return "<button type='button' role='radio' data-wday='"+d[0]+"' aria-checked='"+(WSX.day===d[0])+"'"+(WSX.day===d[0]?" class='on'":"")+">"+d[1]+"</button>"; }).join("")+
+        "</div><div class='bm-pay' id='wsxPay'>"+pfmPayHTML(WSX_PAYS,"data-wpay")+"</div></div>"+
+      "<div class='bm-stage' id='wsxStage' hidden aria-live='polite'>"+
+        "<span class='bm-badge' id='wsxBadge'></span><div class='bm-list' id='wsxList'></div>"+
+        "<span class='bm-booking' id='wsxBooking'>Your slip is ready</span>"+
+        "<div class='bm-count'><b id='wsxOdds'>x1.00</b><span id='wsxGames'>0 games</span></div>"+
+        "<svg class='bm-rune' viewBox='0 0 150 150' aria-hidden='true'><circle cx='75' cy='75' r='70' fill='none' stroke='#F2B84B' stroke-width='1.5' stroke-dasharray='2 7'/><circle cx='75' cy='75' r='56' fill='none' stroke='#F2B84B' stroke-opacity='.6' stroke-width='1' stroke-dasharray='14 6 3 6'/><path stroke='#F2B84B' stroke-width='2' stroke-linecap='round' d='M75 3v10M75 137v10M3 75h10M137 75h10M24 24l7 7M119 119l7 7M24 126l7-7M119 31l7-7'/></svg>"+
+        "<img class='bm-wiz' src='/fw/wiz-cast.webp' alt='' width='96' height='132'>"+
+        "<i class='bm-ring'></i><i class='bm-ring two'></i><i class='bm-orb'></i></div>"+
+      "<div id='wsxSum'></div><div id='wsxOut'></div>"+
     "</section>"+
     /* No pretend controls here (owner, 20 Oct 2026: "i still get confused and try to use the
        mini slider or the wizard"), and no demotion either ("they are still the core of our
@@ -22418,7 +22546,12 @@ function openBuildChooser(goMode){
     if(PFM.busy) return; PFM.day=b.dataset.day;
     m.querySelectorAll("[data-day]").forEach(function(x){ var on=x===b; x.classList.toggle("on",on); x.setAttribute("aria-checked",on); });
     $("pfmSum").innerHTML=""; $("pfmOut").innerHTML=""; }); });
-  m.querySelectorAll("[data-pay]").forEach(function(b){ b.addEventListener("click",function(){ pfmRun(+b.dataset.pay); }); });
+  m.querySelectorAll("[data-pay]").forEach(function(b){ b.addEventListener("click",function(){ pfmRun(+b.dataset.pay,PFM_K); }); });
+  m.querySelectorAll("[data-wday]").forEach(function(b){ b.addEventListener("click",function(){
+    if(WSX.busy) return; WSX.day=b.dataset.wday;
+    m.querySelectorAll("[data-wday]").forEach(function(x){ var on=x===b; x.classList.toggle("on",on); x.setAttribute("aria-checked",on); });
+    $("wsxSum").innerHTML=""; $("wsxOut").innerHTML=""; }); });
+  m.querySelectorAll("[data-wpay]").forEach(function(b){ b.addEventListener("click",function(){ pfmRun(+b.dataset.wpay,WSX_K); }); });
   m.querySelectorAll("[data-go]").forEach(function(s){
     function go(){ closeBuildChooser(); goMode(s.dataset.go); }
     s.addEventListener("click",go);
@@ -22429,15 +22562,16 @@ function openBuildChooser(goMode){
 }
 function closeBuildChooser(){
   var m=$("bmScrim"); if(!m||m.hidden) return;
-  PFM.timers.forEach(clearTimeout); PFM.timers=[]; PFM.busy=false;
+  [PFM,WSX].forEach(function(st){ st.timers.forEach(clearTimeout); st.timers=[]; st.busy=false; });
   m.hidden=true; m.innerHTML=""; askLock(false);
 }
 /* THE CONJURING (owner: "wizardy asf", "the more the odds, the longer"). The games appear as
    they are picked and the payout climbs with each; then the full list waits for Get code, which
    is the only step that books. Transform and opacity only. Reduced motion skips to the result. */
-function pfmRun(T){
-  if(PFM.busy) return;
-  var B=curBook(), out=$("pfmOut"), sum=$("pfmSum");
+function pfmRun(T,K){
+  K=K||PFM_K; var ST=K.st;
+  if(ST.busy) return;
+  var B=curBook(), out=$(K.p+"Out"), sum=$(K.p+"Sum");
   out.innerHTML=""; sum.innerHTML="";
   if(T>PFM_FREE&&!pfmPass()){
     var twa=document.documentElement.classList.contains("sw-twa");
@@ -22448,17 +22582,17 @@ function pfmRun(T){
       closeBuildChooser(); if(!ui) return; if(!on&&ui.open) ui.open(); else if(ui.plus) ui.plus(); });
     return;
   }
-  var r=pickForMe(T,PFM.day,B,pfmSeed());
+  var r=K.eng(T,ST.day,B,pfmSeed(ST));
   if(r.picks.length<2||r.short){
-    out.innerHTML="<div class='bm-note'><b>Not enough games left "+(PFM.day==="0"?"today":PFM.day==="1"?"tomorrow":"on the board")+" for x"+T+".</b> "+
-      (PFM.day==="all"?"Try a smaller payout.":"Try All upcoming or a smaller payout.")+"</div>";
+    out.innerHTML="<div class='bm-note'><b>Not enough games "+(ST.day==="60"?"kicking off in the next 60 minutes":"left "+(ST.day==="0"?"today":ST.day==="1"?"tomorrow":"on the board"))+" for x"+T+".</b> "+
+      (ST.day==="all"?"Try a smaller payout.":"Try All upcoming or a smaller payout.")+"</div>";
     return;
   }
-  PFM.busy=true;
-  var card=$("bmPfm"), body=$("pfmBody"), stage=$("pfmStage"), list=$("pfmList");
+  ST.busy=true; ST.open=null;
+  var card=$(K.card), body=$(K.p+"Body"), stage=$(K.p+"Stage"), list=$(K.p+"List");
   var reduced=REDUCED, CLIMB=reduced?0:(1.4+0.6*Math.log10(T))*1000, STEP=CLIMB/r.picks.length;
-  function later(fn,ms){ PFM.timers.push(setTimeout(fn,ms)); }
-  function reset(){ PFM.timers.forEach(clearTimeout); PFM.timers=[]; PFM.busy=false;
+  function later(fn,ms){ ST.timers.push(setTimeout(fn,ms)); }
+  function reset(){ ST.timers.forEach(clearTimeout); ST.timers=[]; ST.busy=false;
     var bc=$("bmScrim")&&$("bmScrim").querySelector(".bm-card"); if(bc) bc.classList.remove("bm-other");
     card.classList.remove("conj","cast","done"); stage.hidden=true; body.hidden=false; list.innerHTML=""; sum.innerHTML=""; out.innerHTML=""; }
   /* Games first, booking on the tap (owner, 20 Oct 2026: "show the games then get code" and
@@ -22470,42 +22604,49 @@ function pfmRun(T){
      a line counts swapped and kept, and no re-conjuring. A board with nothing as safe says so. */
   function lk(c){ return c.id+"|"+c.code; }
   function show(prev,note){
-    if(!$("pfmOut")) return;                  /* closed during the conjuring */
-    PFM.busy=false; card.classList.add("done"); stage.hidden=true;
-    var tv=totalOdds(r.picks), was={}, nNew=0, learnt=false;
+    if(!$(K.p+"Out")) return;                  /* closed during the conjuring */
+    ST.busy=false; card.classList.add("done"); stage.hidden=true;
+    var tv=totalOdds(r.picks), was={}, nNew=0, learnt=false, gOpen=ST.open!=null?ST.open:false;
+    /* The window the slip came from, said on the result: its buttons fold away with the payouts. */
+    var when={"0":K===WSX_K?"All day":"Today","1":"Tomorrow","60":"Next 60 min","all":"All upcoming"}[ST.day]||"";
     try{ learnt=localStorage.getItem("sw.pfm.shuf")==="1"; }catch(e){}
     (prev||[]).forEach(function(c){ was[lk(c)]=1; });
-    sum.innerHTML="<div class='bm-sum'><b>x"+(tv>=100?Math.round(tv).toLocaleString("en"):tv.toFixed(2))+"</b><span>"+r.picks.length+" games · "+bookMark(B.key)+"</span></div>"+
-      "<ol class='bm-games' id='pfmList2'>"+r.picks.map(function(c,i){ var nw=prev&&!was[lk(c)]; if(nw) nNew++;
+    sum.innerHTML="<div class='bm-sum'><b>x"+(tv>=100?Math.round(tv).toLocaleString("en"):tv.toFixed(2))+"</b><span>"+r.picks.length+" games · "+(when?when+" · ":"")+bookMark(B.key)+"</span></div>"+
+      /* Merlin's Pick says how likely, in plain words, on the model's judged figures. */
+      (r.chance>0?"<p class='bm-chance'>Lands about 1 time in "+Math.max(2,Math.round(1/r.chance))+", on our model.</p>":"")+
+      /* Both quick builders fold their games until asked (owner, 21 Oct 2026: "it shouldnt open the
+         games by default ... its overshadowing the rest", then "fold that too" for Pick for me).
+         A reader's own Show or Hide holds through Shuffle. */
+      "<ol class='bm-games' id='"+K.p+"List2'"+(gOpen?"":" hidden")+">"+r.picks.map(function(c,i){ var nw=prev&&!was[lk(c)]; if(nw) nNew++;
         return "<li"+(nw?" class='bm-in' style='animation-delay:"+(i*40)+"ms'":"")+"><span>"+esc(c.f?(c.f.home+" v "+c.f.away):"")+"</span><em>"+esc(c.f?mLabel(c.f,c.code):c.code)+"</em><b>"+legOdd(c.f,c.code,c.p,B).toFixed(2)+"</b></li>"; }).join("")+"</ol>"+
       (note?"<p class='bm-swap' aria-live='polite'>"+note+"</p>":prev?"<p class='bm-swap' aria-live='polite'>Swapped "+nNew+(nNew===1?" game":" games")+" for others just as safe. "+(r.picks.length-nNew)+" kept.</p>":"")+
       "<button class='bm-get' type='button' data-a='code'>Get code</button>"+
-      "<div class='bm-acts'><button class='bm-act' type='button' data-a='games' aria-expanded='true' aria-controls='pfmList2'>Hide games</button><button class='bm-act' type='button' data-a='shuffle'>Shuffle</button><button class='bm-act' type='button' data-a='back'>Change payout</button></div>"+
+      "<div class='bm-acts'><button class='bm-act' type='button' data-a='games' aria-expanded='"+gOpen+"' aria-controls='"+K.p+"List2'>"+(gOpen?"Hide games":"Show games")+"</button><button class='bm-act' type='button' data-a='shuffle'>Shuffle</button><button class='bm-act' type='button' data-a='back'>Payout or time</button></div>"+
       (learnt?"":"<p class='bm-hint'>Don't like a game? <b>Shuffle</b> swaps some for others just as safe. Same payout.</p>");
     if(!learnt&&!prev&&!REDUCED) later(function(){ var s=sum.querySelector("[data-a='shuffle']"); if(s) s.classList.add("bm-nudge"); },900);
     var get=sum.querySelector("[data-a='code']"), booked=null;
-    function lock(on){ PFM.busy=on; get.disabled=on; get.textContent=on?"Booking…":"Get code";
+    function lock(on){ ST.busy=on; get.disabled=on; get.textContent=on?"Booking…":"Get code";
       sum.querySelectorAll("[data-a='shuffle'],[data-a='back']").forEach(function(b){ b.disabled=on; }); }
     get.addEventListener("click",function(){
-      if(booked){ showCode(booked[0],"pfmOut",booked[3],B,booked[1],booked[2]); return; }
+      if(booked){ showCode(booked[0],K.p+"Out",booked[3],B,booked[1],booked[2]); return; }
       var busied=false; out.innerHTML=""; lock(true);
-      bookRounds(r.picks,B,"pickforme","pfmOut",{
+      bookRounds(r.picks,B,K.tag,K.p+"Out",{
         busy:function(){ busied=true; },
         idle:function(){ if(!busied) lock(false); },
-        code:function(code,sent,d){ lock(false); if(!$("pfmOut")) return;
+        code:function(code,sent,d){ lock(false); if(!$(K.p+"Out")) return;
           var save=function(){ rememberSlip(sent,totalOdds(sent),code,B.key); };
           booked=[code,sent,d,save]; get.textContent="Show code";
-          showCode(code,"pfmOut",save,B,sent,d); },
-        fail:function(d){ lock(false); if($("pfmOut")) showBookErr("pfmOut",bookErrHTML(d,B)); },
+          showCode(code,K.p+"Out",save,B,sent,d); },
+        fail:function(d){ lock(false); if($(K.p+"Out")) showBookErr(K.p+"Out",bookErrHTML(d,B)); },
         stop:function(){ lock(false); }
       });
     });
     sum.querySelector("[data-a='shuffle']").addEventListener("click",function(){
       try{ localStorage.setItem("sw.pfm.shuf","1"); }catch(e){}
       var old=r.picks, key=function(p){ return p.map(lk).sort().join(); };
-      PFM.shuffles++; var nx=pickForMe(T,PFM.day,B,pfmSeed());
+      ST.shuffles++; var nx=K.eng(T,ST.day,B,pfmSeed(ST));
       if(nx.picks.length<2||nx.short||key(nx.picks)===key(old)){
-        show(null,"These are the safest games "+(PFM.day==="0"?"today":PFM.day==="1"?"tomorrow":"on the board")+" for x"+T+"."+(PFM.day==="all"?"":" Try All upcoming for more."));
+        show(null,"These are the "+K.what+" games "+(ST.day==="60"?"in the next 60 minutes":ST.day==="0"?"today":ST.day==="1"?"tomorrow":"on the board")+" for x"+T+"."+(ST.day==="all"?"":" Try All upcoming for more."));
         return; }
       /* Kept games hold their places; the new ones take the swapped games' rows, extras at the end. */
       var inNx={}, inOld={}; nx.picks.forEach(function(c){ inNx[lk(c)]=c; }); old.forEach(function(c){ inOld[lk(c)]=1; });
@@ -22514,13 +22655,13 @@ function pfmRun(T){
       nx.picks=ord.concat(fresh);
       r=nx; out.innerHTML=""; try{ buzz(15); }catch(e){} show(old); });
     sum.querySelector("[data-a='back']").addEventListener("click",reset);
-    sum.querySelector("[data-a='games']").addEventListener("click",function(){ var g=sum.querySelector(".bm-games"), b=this; g.hidden=!g.hidden;
+    sum.querySelector("[data-a='games']").addEventListener("click",function(){ var g=sum.querySelector(".bm-games"), b=this; g.hidden=!g.hidden; ST.open=!g.hidden;
       b.textContent=g.hidden?"Show games":"Hide games"; b.setAttribute("aria-expanded",!g.hidden); });
   }
   body.hidden=true; stage.hidden=false; card.classList.add("conj");
   $("bmScrim").querySelector(".bm-card").classList.add("bm-other"); buzzConjure();
-  $("pfmBadge").textContent="x"+T; $("pfmBadge").style.setProperty("--wr",PFM_WR[T]);
-  $("pfmOdds").textContent="x1.00"; $("pfmGames").textContent="0 games";
+  $(K.p+"Badge").textContent="x"+T; $(K.p+"Badge").style.setProperty("--wr",(PFM_WR[T]||"#F2B84B"));
+  $(K.p+"Odds").textContent="x1.00"; $(K.p+"Games").textContent="0 games";
   if(reduced){ show(); return; }
   var tot=1;
   r.picks.forEach(function(c,i){
@@ -22530,8 +22671,8 @@ function pfmRun(T){
       row.innerHTML="<span>"+esc(c.f.home+" v "+c.f.away)+"</span><em>"+esc(mLabel(c.f,c.code))+"</em><b>"+c.o.toFixed(2)+"</b>";
       list.insertBefore(row,list.firstChild);
       while(list.children.length>4) list.removeChild(list.lastChild);
-      var oe=$("pfmOdds"); oe.textContent="x"+(tot>=100?Math.round(tot).toLocaleString("en"):tot.toFixed(2));
-      $("pfmGames").textContent=(i+1)+((i+1)===1?" game":" games");
+      var oe=$(K.p+"Odds"); oe.textContent="x"+(tot>=100?Math.round(tot).toLocaleString("en"):tot.toFixed(2));
+      $(K.p+"Games").textContent=(i+1)+((i+1)===1?" game":" games");
       oe.classList.remove("tick","mile"); void oe.offsetWidth;
       oe.classList.add([10,100,1000].some(function(m){ return m<T&&tot>=m&&tot/c.o<m; })?"mile":"tick");
     },220+i*STEP);

@@ -36,7 +36,11 @@ test("every booking call site says where it came from", () => {
      than a source - the wizard, the slider and the board's Book all empty into
      it - so it reads the label off the legs it was handed, and falls back to
      "myslip" when nothing built them. */
-  const labelled = calls.filter((c) => /,\s*"[a-z]+"\)/.test(c) ||
+  /* Pick for me and Merlin's Pick share one screen (21 Oct 2026): its label is the running
+     card's own tag, each a literal, checked below. */
+  assert.match(src, /PFM_K=\{[^}]*tag:"pickforme"/);
+  assert.match(src, /WSX_K=\{[^}]*tag:"merlin"/);
+  const labelled = calls.filter((c) => /bookRounds\(r\.picks,B,K\.tag,/.test(c) || /,\s*"[a-z]+"\)/.test(c) ||
     /book(?:Rounds|Legs)\([^,]+,[^,]+,"[a-z]+"/.test(c));
   const derived = calls.filter((c) => /_via\|\|"myslip"\)/.test(c));
   /* Seven since 24 Sep 2026: Make it safer books from the code modal itself
@@ -49,7 +53,7 @@ test("every booking call site says where it came from", () => {
     "expected nine attributed call sites, found " + (labelled.length + derived.length) +
     ": " + calls.join(" | "));
   assert.equal(derived.length, 1, "only My slip derives its label");
-  ["split", "convert", "editor", "board", "safer", "trim", "change", "pickforme"].forEach((s) => {
+  ["split", "convert", "editor", "board", "safer", "trim", "change"].forEach((s) => {
     assert.ok(labelled.some((c) => c.includes('"' + s + '"')), s + " is not labelled anywhere");
   });
   /* And the three writers that fill My slip must stamp what they are, or the

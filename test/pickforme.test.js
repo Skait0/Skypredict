@@ -83,7 +83,8 @@ test("the big button opens the chooser; x20 and up need a pass; it books as pick
   assert.match(src, /var PFM_MAX=40, PFM_PAYS=\[2,5,10,20,50,100,150,200\], PFM_FREE=10;/);
   const run = grab("pfmRun");
   assert.match(run, /if\(T>PFM_FREE&&!pfmPass\(\)\)/);
-  assert.match(run, /bookRounds\(r\.picks,B,"pickforme","pfmOut",/);
+  assert.match(run, /bookRounds\(r\.picks,B,K\.tag,K\.p\+"Out",/);
+  assert.match(src, /PFM_K=\{p:"pfm",card:"bmPfm",st:PFM,eng:pickForMe,tag:"pickforme"/, "Pick for me still books as pickforme");
   assert.match(run, /CLIMB=reduced\?0:\(1\.4\+0\.6\*Math\.log10\(T\)\)\*1000/, "the bigger the payout, the longer the spell");
   /* The three ways, named in the site's words. */
   const open = grab("openBuildChooser");
@@ -120,4 +121,126 @@ test("no market family on more than 40% of the slip, on the site as in the bot",
   const r = engine(g)(20, "0", null, "s");
   const dc = r.picks.filter((c) => c.code === "1X" || c.code === "X2").length;
   assert.ok(dc <= Math.max(2, Math.ceil(0.4 * r.picks.length)), dc + " double chances in " + r.picks.length);
+});
+
+/* MERLIN'S PICK (owner, 21 Oct 2026): its own card beside Pick for me. Not the surest leg in
+   every game until the payout, but the slip MOST LIKELY TO LAND that still reaches it, searched
+   over every mix of games. Measured on the 21 Oct board at x30: 2.25% against 1.56% for the
+   default Wizard, same model, same prices. */
+function special(games, opts = {}) {
+  const now = Date.parse("2026-10-20T12:00:00Z");
+  const env = {
+    DATA: { fixtures: games }, PFM_MAX: 40, WSX_MINP: 0.6, WSX_STEP: 0.005, VOL_IN: !!opts.volIn,
+    curBook: () => ({ key: "sporty", odds: "sportyOdds" }), slipMax: () => opts.slipMax || 50,
+    refusedToday: () => ({}), allowedMarkets: () => ["1X", "X2", "OVER_1.5", "OVER_2.5", "UNDER_3.5", "HOME_OVER_0.5", "MIXGG_1", "MIXGG_2", "AH_1_2"],
+    bookAllows: () => true, cornersOpen: () => true, hasRealOdd: () => false, bookQuotes: (f, c) => !!(f.sportyOdds && f.sportyOdds[c] > 1.01), BOOKS: { sporty: {} }, dcOk: () => true,
+    HCAP_CODES: ["AH_1_2"], CORNER_CODES: [], TEAM_CORNER_CODES: [], SHOTS_CODES: [], TEAM_SHOTS_CODES: [],
+    bookVerdict: () => "priced", pricedFixture: () => true, safeUnpriced: () => true,
+    isVolatile: (l) => /Volatile/.test(l || ""),
+    notStarted: (f) => Date.parse(f.kickoff) > now, dayOff: (d) => d, fDay: (f) => f.day,
+    fid: (f) => f.id, mProb: (f, c) => f.p[c], judgedP: (f, c, p) => p, legOdd: (f, c) => f.o[c], mLabel: (f, c) => "L " + c,
+  };
+  return new Function(...Object.keys(env), grab("backsUnderdog") + grab("wizardSpecial") + "\nreturn wizardSpecial;")(...Object.values(env));
+}
+const sg = (i, p, o, x) => Object.assign({ sportyOdds: o, id: "s" + i, day: 0, kickoff: "2026-10-20T18:00:00Z", league: "Spain La Liga",
+  home_p: 0.5, away_p: 0.25, p, o }, x);
+const chanceOf = (r) => r.picks.reduce((a, c) => a * c.p, 1);
+
+test("Merlin's Pick: the likeliest slip that reaches the payout, not the surest leg in every game", () => {
+  /* Twelve games each with a safe 1X (80% at 1.20) and three bigger picks (66% at 1.50) in other
+     families. x5 from the surest legs takes nine (0.8^9 = 13.4%); four bigger ones make x5.06 at
+     0.66^4 = 19%, two families at most two each, inside the 40% cap. */
+  const big = { "OVER_1.5": 0.66, "HOME_OVER_0.5": 0.66, "UNDER_3.5": 0.66 }, bigO = { "OVER_1.5": 1.5, "HOME_OVER_0.5": 1.5, "UNDER_3.5": 1.5 };
+  const g = Array.from({ length: 12 }, (_, i) => sg(i, Object.assign({ "1X": 0.8 }, big), Object.assign({ "1X": 1.2 }, bigO)));
+  const r = special(g)(5, "0", null, "s");
+  assert.ok(r.odds >= 5 && !r.short, "reaches the payout: x" + r.odds);
+  assert.ok(chanceOf(r) > Math.pow(0.8, 9) * 1.3, "likelier than the surest-first slip: " + chanceOf(r).toFixed(3) + " v " + Math.pow(0.8, 9).toFixed(3));
+  assert.ok(Math.abs(r.chance - chanceOf(r)) < 1e-9, "the chance it reports is the slip's own");
+});
+
+test("Merlin's Pick finds the true best mix (checked against every combination on a small board)", () => {
+  const P = [[0.82, 1.18], [0.7, 1.45], [0.62, 1.7]];
+  const g = Array.from({ length: 6 }, (_, i) => sg(i, { "1X": P[0][0] - i * 0.01, "OVER_1.5": P[1][0] + i * 0.005, "OVER_2.5": P[2][0] },
+    { "1X": P[0][1], "OVER_1.5": P[1][1] + i * 0.02, "OVER_2.5": P[2][1] }));
+  const r = special(g)(8, "0", null, "s");
+  let best = 0;
+  const codes = ["1X", "OVER_1.5", "OVER_2.5"];
+  (function walk(i, p, o) {
+    if (i === g.length) { if (o >= 8 && p > best) best = p; return; }
+    walk(i + 1, p, o);
+    for (const c of codes) walk(i + 1, p * g[i].p[c], o * g[i].o[c]);
+  })(0, 1, 1);
+  assert.ok(chanceOf(r) >= best * 0.97, "the search's x" + r.odds.toFixed(2) + " at " + chanceOf(r).toFixed(4) + " v the best " + best.toFixed(4));
+});
+
+test("Merlin's Pick's rules: 60%+, the favourite's side, no Under in a cup rout, volatile only with a yes", () => {
+  const legs = (g, o) => special(g, o)(3, "0", null, "s").picks.map((c) => c.id + ":" + c.code);
+  /* Filler from three families, so the 40% cap is not what decides. */
+  const base = (i, x) => { const c = ["1X", "HOME_OVER_0.5", "UNDER_3.5"][i % 3]; return sg(i, { [c]: 0.8 }, { [c]: 1.2 }, x); };
+  const filler = Array.from({ length: 10 }, (_, i) => base(100 + i));
+  /* A 58% leg at a fat price never gets in. */
+  assert.ok(!legs([sg(1, { "OVER_2.5": 0.58 }, { "OVER_2.5": 2.6 }), ...filler]).includes("s1:OVER_2.5"));
+  /* The weaker team's "or both score" never, even at a price the search would love. */
+  assert.ok(!legs([sg(2, { "MIXGG_2": 0.7 }, { "MIXGG_2": 1.9 }), ...filler]).includes("s2:MIXGG_2"));
+  /* Under 3.5 in a cup tie with a 70% favourite: the rout shape, out. */
+  const cup = sg(3, { "UNDER_3.5": 0.72 }, { "UNDER_3.5": 1.7 }, { league: "Cyprus Cup", home_p: 0.7, away_p: 0.1 });
+  assert.ok(!legs([cup, ...filler]).includes("s3:UNDER_3.5"));
+  /* A volatile league sits out until the reader has said yes to them. */
+  const vol = sg(4, { "OVER_1.5": 0.75 }, { "OVER_1.5": 1.6 }, { league: "Volatile 3rd tier" });
+  assert.ok(!legs([vol, ...filler]).includes("s4:OVER_1.5"));
+  assert.ok(legs([vol, ...filler], { volIn: true }).includes("s4:OVER_1.5"));
+});
+
+test("Merlin's Pick keeps any one market family to 40% of the slip, says when it cannot reach, and shuffles", () => {
+  const g = Array.from({ length: 20 }, (_, i) => sg(i, { "OVER_1.5": 0.7, "1X": 0.66 }, { "OVER_1.5": 1.5, "1X": 1.48 }));
+  const r = special(g)(20, "0", null, "s");
+  const over = r.picks.filter((c) => c.code === "OVER_1.5").length;
+  assert.ok(over <= Math.max(2, Math.ceil(0.4 * r.picks.length)), over + " of " + r.picks.length + " are Over 1.5");
+  assert.ok(r.odds >= 20);
+  assert.ok(special(g.slice(0, 3))(1e6, "0", null, "s").short, "x1,000,000 from three games");
+  const ids = (seed) => special(g)(5, "0", null, seed).picks.map((c) => c.id).join(",");
+  assert.strictEqual(ids("a|0"), ids("a|0"), "one seed, one slip");
+  assert.notStrictEqual(ids("a|0"), ids("a|1"), "Shuffle changed nothing");
+});
+
+test("Merlin's Pick on a board with one market family still builds, instead of nothing", () => {
+  /* No prices anywhere leaves only the safe markets; the 40% cap cannot be met, and the best
+     slip without it stands. */
+  const g = Array.from({ length: 12 }, (_, i) => sg(i, { "1X": 0.8 }, { "1X": 1.2 }));
+  const r = special(g)(3, "0", null, "s");
+  assert.ok(!r.short && r.odds >= 3 && r.picks.length === 7, r.picks.length + " legs, x" + r.odds);
+});
+
+test("Merlin's Pick takes a leg only at a bookie's real price, never our own estimate", () => {
+  /* Measured 21 Oct 2026: estimated prices carry no margin, look free, and the search stacked
+     30+ of them. A game with no quote for the market is passed over. */
+  const quoted = Array.from({ length: 10 }, (_, i) => sg(i, { "OVER_1.5": 0.72, "HOME_OVER_0.5": 0.72 }, { "OVER_1.5": 1.35, "HOME_OVER_0.5": 1.35 }));
+  const est = sg(99, { "OVER_1.5": 0.9 }, { "OVER_1.5": 1.4 }, { sportyOdds: {} });
+  const r = special([est, ...quoted])(5, "0", null, "s");
+  assert.ok(!r.picks.some((c) => c.id === "s99"), "an unquoted leg got in");
+  assert.ok(r.odds >= 5);
+});
+
+test("Merlin's Pick: All day, Next 60 min and All upcoming (owner, 21 Oct 2026)", () => {
+  const soon = new Date(Date.now() + 30 * 60e3).toISOString(), later = new Date(Date.now() + 5 * 3600e3).toISOString();
+  const g = Array.from({ length: 16 }, (_, i) => sg(i, { "OVER_1.5": 0.75, "HOME_OVER_0.5": 0.75, "UNDER_3.5": 0.75 },
+    { "OVER_1.5": 1.3, "HOME_OVER_0.5": 1.3, "UNDER_3.5": 1.3 }, { kickoff: i < 8 ? soon : later, day: 0 }));
+  const ids = (d) => special(g)(3, d, null, "s").picks.map((c) => +c.id.slice(1));
+  assert.ok(ids("60").length && ids("60").every((i) => i < 8), "Next 60 min takes only games kicking off within the hour");
+  assert.ok(special(g.slice(8))(3, "60", null, "s").short, "nothing kicking off soon: says so");
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "index.html"), "utf8");
+  assert.match(src, /\[\["0","All day"\],\["60","Next 60 min"\],\["all","All upcoming"\]\]/);
+  assert.match(src, /Not enough games "\+\(ST\.day==="60"\?"kicking off in the next 60 minutes"/);
+});
+
+test("Merlin's Pick and Pick for me fold their games until asked, and say the window (owner, 21 Oct 2026)", () => {
+  const run = grab("pfmRun");
+  assert.match(run, /gOpen=ST\.open!=null\?ST\.open:false/, "folded by default on both cards");
+  assert.match(run, /games · "\+\(when\?when\+" · ":""\)\+bookMark/, "the result names its time window");
+  assert.match(run, /data-a='back'>Payout or time</, "the way back says it changes the time too");
+  assert.match(src, /PFM_ICON\.merlin\+"<\/span><b>Merlin's Pick<\/b>/, "Merlin has his own mark, not the Wizard's");
+  assert.match(run, /id='"\+K\.p\+"List2'"\+\(gOpen\?"":" hidden"\)/);
+  assert.match(run, /\(gOpen\?"Hide games":"Show games"\)/);
+  assert.match(run, /ST\.open=!g\.hidden/, "the reader's own Show or Hide holds through Shuffle");
+  assert.match(run, /ST\.busy=true; ST\.open=null;/, "a new payout starts folded again");
 });
