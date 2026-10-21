@@ -58,3 +58,9 @@ test("the bot's payouts and pass line match the site", () => {
   assert.match(tg, /if \(target > PFM\.FREE_UP_TO && !\["plus", "ff", "admin"\]\.includes\(q\.plan\)\)/);
   assert.doesNotMatch(require("../lib/pickforme.js").MARKETS.join(), /AH_|CORNER|SHOT|GG2/);
 });
+
+/* Owner, 21 Oct 2026: no Unders of any kind in Pick for me, on the site or the bot. */
+test("the bot's Pick for me never offers an Under", () => {
+  const { MARKETS } = require("../lib/pickforme.js");
+  assert.deepStrictEqual(MARKETS.filter((c) => /UNDER/.test(c)), [], "an Under is back in MARKETS");
+});

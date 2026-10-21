@@ -29,7 +29,7 @@ function engine(games, opts = {}) {
   const env = {
     DATA: { fixtures: games }, PFM_MAX: 40,
     curBook: () => ({ key: "sporty" }), slipMax: () => opts.slipMax || 50,
-    refusedToday: () => ({}), allowedMarkets: () => ["1X", "X2", "OVER_1.5", "HOME_OVER_0.5", "AH_1_2", "GG2_Y"],
+    refusedToday: () => ({}), allowedMarkets: () => opts.markets || ["1X", "X2", "OVER_1.5", "HOME_OVER_0.5", "AH_1_2", "GG2_Y"],
     bookAllows: () => true, cornersOpen: () => true, bookQuotes: () => true, BOOKS: { sporty: {} }, dcOk: () => true,
     HCAP_CODES: ["AH_1_2"], CORNER_CODES: [], TEAM_CORNER_CODES: [], SHOTS_CODES: [], TEAM_SHOTS_CODES: [], bookVerdict: (f, c) => (f.v && f.v[c]) || "priced", pricedFixture: () => true, safeUnpriced: () => true,
     notStarted: (f) => Date.parse(f.kickoff) > now, dayOff: (d) => d, fDay: (f) => f.day,
@@ -303,4 +303,19 @@ test("opening or folding a quick builder ends the last one's highlight, so the o
   const body = open.slice(h, open.indexOf("m.querySelectorAll(\"[data-go]\")", h));
   assert.match(body, /classList\.remove\("bm-other"\)/);
   assert.match(body, /classList\.remove\("bm-sel"\)/);
+});
+
+/* Owner, 21 Oct 2026: "under games are insanely risky. ruined all tickets today" (Lille 2-2 at
+   half time sank three posted codes on one Under 3.5). Neither quick builder takes an Under of
+   any kind - match, team or line - even when it is the surest leg on the board. */
+test("neither quick builder ever picks an Under, even the surest leg on the board", () => {
+  const U = ["UNDER_3.5", "UNDER_4.5", "AWAY_UNDER_1.5", "HOME_UNDER_1.5"];
+  const g = Array.from({ length: 30 }, (_, i) => game(i, {
+    p: { "1X": 0.7, "X2": 0.4, "OVER_1.5": 0.68, "HOME_OVER_0.5": 0.69, "UNDER_3.5": 0.9, "UNDER_4.5": 0.95, "AWAY_UNDER_1.5": 0.9, "HOME_UNDER_1.5": 0.9 },
+    o: { "1X": 1.3, "X2": 2.2, "OVER_1.5": 1.35, "HOME_OVER_0.5": 1.3, "UNDER_3.5": 1.25, "UNDER_4.5": 1.2, "AWAY_UNDER_1.5": 1.3, "HOME_UNDER_1.5": 1.3 } }));
+  const pfm = engine(g, { markets: ["1X", "X2", "OVER_1.5", "HOME_OVER_0.5"].concat(U) })(20, "0", null, "s");
+  assert.ok(pfm.picks.length && pfm.picks.every((c) => !/UNDER_/.test(c.code)), "Pick for me: " + pfm.picks.map((c) => c.code).join(","));
+  const sp = g.map((x, i) => sg(i, x.p, x.o));
+  const ws = special(sp)(20, "0", null, "s");
+  assert.ok(ws.picks.length && ws.picks.every((c) => !/UNDER_/.test(c.code)), "Merlin's Pick: " + ws.picks.map((c) => c.code).join(","));
 });

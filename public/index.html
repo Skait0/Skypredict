@@ -22368,9 +22368,10 @@ function pickForMe(target,day,B,seed){
   B=B||curBook();
   var max=Math.min(PFM_MAX,slipMax(B)), min=Math.max(1.15,Math.pow(target,1/max));
   /* Markets people know (live on 20 Oct 2026 the surest picks were all Asian handicaps): no
-     handicaps, corners, shots or GG+. */
+     handicaps, corners, shots or GG+. NO UNDERS of any kind (owner, 21 Oct 2026: "under games
+     are insanely risky. ruined all tickets today" - one 2-2 first half sank three codes). */
   var skip={}; [].concat(HCAP_CODES,CORNER_CODES,TEAM_CORNER_CODES,SHOTS_CODES,TEAM_SHOTS_CODES,["GG2_Y"]).forEach(function(c){ skip[c]=1; });
-  var refused=refusedToday(), rk=B.key+"|", all=allowedMarkets(2).filter(function(c){ return !skip[c]; }), pool=[];
+  var refused=refusedToday(), rk=B.key+"|", all=allowedMarkets(2).filter(function(c){ return !skip[c]&&!/UNDER_/.test(c); }), pool=[];
   function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0)/4294967296;}
   (DATA.fixtures||[]).forEach(function(f){
     if(!notStarted(f)) return;
@@ -22445,7 +22446,8 @@ function wizardSpecial(target,day,B,seed){
        handicaps, draws, GG+ and the "won't" markets stay out: markets people know. */
     var seen={}, mine=[];
     all.concat(Object.keys(f[B.odds]||{}),Object.keys(f.sportyOdds||{})).forEach(function(c){
-      if(seen[c]||skip[c]||/^(CORNERS|SHOTS|AH_|FH_|SH_|HT|DNB|NR3|WTN|GG2|X$)/.test(c)) return; seen[c]=1; mine.push(c); });
+      /* No Unders of any kind (owner, 21 Oct 2026), as in Pick for me. */
+      if(seen[c]||skip[c]||/^(CORNERS|SHOTS|AH_|FH_|SH_|HT|DNB|NR3|WTN|GG2|X$)/.test(c)||/UNDER_/.test(c)) return; seen[c]=1; mine.push(c); });
     var codes=mine.filter(function(c){ return bookAllows(c,B)&&!refused[rk+fid(f)+"|"+c]&&cornersOpen(f,c)&&
       !(/^NR3_/.test(c)&&!bookQuotes(f,c,BOOKS.sporty))&&!(c==="1"&&!homeFav)&&!(c==="2"&&homeFav)&&
       !((c==="1X"||c==="X2")&&!dcOk(f,c))&&!backsUnderdog(f,c)&&!(rout&&/^UNDER_/.test(c))&&
