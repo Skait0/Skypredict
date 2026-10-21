@@ -114,8 +114,7 @@ module.exports = async function handler(req, res) {
     if (!slip && stored.ok && !stored.row) {
       /* Its own slip, never the ladder's x10 (18 Oct 2026): x10 is Wizard Pass only,
          and this one goes out on X and Telegram for everyone. Picked around the
-         locked rungs' games too, or it would be x10 again, and around the open x5
-         (lib/ladder.js BIG_KEEP_OUT). */
+         ladder's games, every rung (lib/ladder.js takenGames: no game on two codes). */
       const lad = await SB.getLadder(S.dayOf(now));
       slip = await BIG.mint(pay, now, L.bigSkips(lad.ok ? lad.rows : []));
       /* Stored for the site's daily codes card (/api/bigodds) before posting. */

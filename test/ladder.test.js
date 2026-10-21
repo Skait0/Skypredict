@@ -67,49 +67,38 @@ function res() { const r = { code: 0, body: null, headers: {} }; r.status = (c) 
 test("10:30 books every missing rung once; 10:45 books only what is still missing", async () => {
   const { d, store } = deps();
   const one = await API.fill(now, d);
-  assert.deepStrictEqual(store.minted, [10, 20, 100, 1000, 5], "the open x5 is booked after the locked rungs");
-  assert.deepStrictEqual(one.minted, [10, 20, 100, 1000, 5]);
+  assert.deepStrictEqual(store.minted, [5, 10, 20, 100, 1000], "smallest rung first, so a long shot never takes the open x5's games");
+  assert.deepStrictEqual(one.minted, [5, 10, 20, 100, 1000]);
   store.minted.length = 0;
   const two = await API.fill(now, d);
   assert.deepStrictEqual(store.minted, [], "a stored rung is never booked a second time");
   assert.strictEqual(two.rows.length, 5);
 });
 
-/* Owner, 18 Oct 2026: every rung stacked the same safest-first games, so the open x5
-   gave away most of the locked x10. x5 and Big odds are now picked around them. */
-test("the open x5 and Big odds share no game with the locked x10 and x20", async () => {
+/* Owner, 21 Oct 2026: "that shoulds be something we dont compromise on" - one Lille leg sank
+   three codes posted together. No game is on two of the day's codes: every rung and Big odds
+   of the day are picked around every game already booked, smallest rung first, no fallback. */
+test("no game is on two of the day's codes, and a rung that cannot fit is left out", async () => {
   const BIG = require("../lib/bigodds.js");
-  const games = (p) => new Set(p.legs.map((l) => l.home + "|" + l.away));
-  const row = (x) => { const p = L.pickRung(pay, now, feed, L.RUNGS.find((r) => r.x === x));
-    return { rung: x, legs: p.legs.map((l) => ({ home: l.home, away: l.away })) }; };
-  const locked = [row(10), row(20)];
-  const shut = new Set([].concat(...locked.map((r) => r.legs.map((l) => l.home + "|" + l.away))));
-  const before = games(L.pickRung(pay, now, feed, L.RUNGS[0]));
-  assert.ok([...before].every((g) => shut.has(g)), "without the locked rows, x5 is the first games of x10 (the leak)");
-  const x5 = L.pickRung(pay, now, feed, L.RUNGS[0], locked);
-  assert.ok(x5 && x5.odds >= 5 * L.SHORT);
-  assert.ok([...games(x5)].every((g) => !shut.has(g)), "x5 keeps out every x10 and x20 game");
-  const big = BIG.pick(pay, now, feed, { skip: L.openSkips(locked)[0] });
-  assert.ok(big && [...games(big)].every((g) => !shut.has(g)), "Big odds keeps them out too");
-  /* Owner, 18 Oct 2026: "keep out x5 too" - Big odds had been x5's games plus 4. */
-  const withX5 = locked.concat([{ rung: 5, legs: x5.legs.map((l) => ({ home: l.home, away: l.away })) }]);
-  const big2 = BIG.pick(pay, now, feed, { skip: L.bigSkips(withX5)[0] });
-  assert.ok(big2 && [...games(big2)].every((g) => !shut.has(g) && !games(x5).has(g)), "Big odds keeps out x5, x10 and x20");
-  assert.deepStrictEqual(L.bigSkips(withX5).map((s) => s.size), [games(x5).size + shut.size, games(x5).size + locked[0].legs.length, locked[0].legs.length]);
-  /* 20 games: x20 takes 16, too few left, so x5 falls back to keeping out x10's only. */
-  const small = { fixtures: pay.fixtures.slice(0, 20) }, sf = feed.slice(0, 20);
-  const r10 = L.pickRung(small, now, sf, L.RUNGS[1]), r20 = L.pickRung(small, now, sf, L.RUNGS[2]);
-  const lk = [{ rung: 10, legs: r10.legs }, { rung: 20, legs: r20.legs }];
-  const fb = L.pickRung(small, now, sf, L.RUNGS[0], lk);
-  assert.ok(fb && fb.legs.every((l) => !r10.legs.some((m) => m.home === l.home)), "fallback still keeps x10 out");
-  assert.strictEqual(L.pickRung({ fixtures: pay.fixtures.slice(0, 12) }, now, feed.slice(0, 12), L.RUNGS[0],
-    [{ rung: 10, legs: L.pickRung({ fixtures: pay.fixtures.slice(0, 12) }, now, feed.slice(0, 12), L.RUNGS[1]).legs }]), null,
-    "nothing left once x10 is out: no x5 that day rather than a leak");
-  /* fill hands x5 the locked rows booked before it. */
-  const { d } = deps({ mint: async (p, n, f, rung, rows) => { if (rung.x === 5) d.seen = rows.map((r) => r.rung);
+  const key = (l) => l.home + "|" + l.away;
+  const rows = [];
+  for (const r of L.RUNGS) {
+    const p = L.pickRung(pay, now, feed, r, rows);
+    if (p) rows.push({ rung: r.x, legs: p.legs.map((l) => ({ home: l.home, away: l.away })) });
+  }
+  const all = [].concat(...rows.map((r) => r.legs.map(key)));
+  assert.strictEqual(new Set(all).size, all.length, "a game on two rungs");
+  assert.deepStrictEqual(rows.slice(0, 3).map((r) => r.rung), [5, 10, 20], "the small rungs come first and fit on 40 games");
+  assert.ok(!rows.some((r) => r.rung === 1000), "x1000 needs games already taken, so it sits out rather than share");
+  const big = BIG.pick(pay, now, feed, { skip: L.bigSkips(rows)[0] });
+  assert.ok(!big || big.legs.every((l) => !all.includes(key(l))), "Big odds shares a game with the ladder");
+  assert.strictEqual(L.bigSkips(rows).length, 1, "no fallback that lets a ladder game back in");
+  /* fill books smallest first and hands each rung the rows booked before it. */
+  const seen = {};
+  const { d } = deps({ mint: async (p, n, f, rung, rs) => { seen[rung.x] = rs.map((r) => r.rung);
     return { rung: rung.x, odds: rung.x, legs: [], codes: { sporty: { code: "S", n: 1 } } }; } });
   await API.fill(now, d);
-  assert.deepStrictEqual(d.seen, [10, 20, 100, 1000]);
+  assert.deepStrictEqual(seen, { 5: [], 10: [5], 20: [5, 10], 100: [5, 10, 20], 1000: [5, 10, 20, 100] });
 });
 
 test("only Wizard Pass readers are sent their rung, and only once something reached them", async () => {

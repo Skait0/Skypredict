@@ -43,8 +43,9 @@ async function fill(now, deps) {
   const have = await deps.getLadder(day);
   if (!have.ok) return { ok: false, rows: [] };
   const done = new Set(have.rows.map((r) => r.rung));
-  /* The open x5 last: it is picked around the locked rungs' games (lib/ladder.js KEEP_OUT). */
-  const todo = L.RUNGS.filter((r) => !done.has(r.x)).sort((a, b) => (a.x === L.OPEN_RUNG) - (b.x === L.OPEN_RUNG));
+  /* Smallest rung first, each picked around every game already booked today (lib/ladder.js
+     takenGames): no game on two codes, and the open x5 is never left out for a long shot. */
+  const todo = L.RUNGS.filter((r) => !done.has(r.x));
   if (!todo.length) return { ok: true, rows: have.rows, minted: [] };
   const pay = await deps.payload();
   if (!pay || !Array.isArray(pay.fixtures)) return { ok: true, rows: have.rows, minted: [] };
