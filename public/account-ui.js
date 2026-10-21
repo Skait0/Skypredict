@@ -193,7 +193,7 @@
   /* MY DAILY SLIP (owner, 17 Oct 2026; api/ladder.js, lib/ladder.js). Wizard Pass:
      pick one payout from the daily ladder and a bookie; the code comes every morning
      at 10:30 as a phone alert, and on Telegram after /daily in the bot. */
-  var RUNGS=[5,10,20,100,1000], BOOK_KEYS=["sporty","bet9ja","betking","betpawa","onexbet","betway"];
+  var RUNGS=[5,10,20,30], BOOK_KEYS=["sporty","bet9ja","betking","betpawa","onexbet","betway"];
   function isPass(role){ return role==="plus"||role==="ff"||role==="admin"; }
   function dailyHtml(role){
     if(!isPass(role)){

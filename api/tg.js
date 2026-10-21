@@ -71,7 +71,7 @@ const HELLO_MENU =
   "<b>Or send any booking code:</b>\n" +
   "<code>HUW6YC</code>  →  strong games, weak games, what it pays\n" +
   "then one tap to 🛡 make it safer, ✂️ trim, ➗ split or 🔁 convert\n\n" +
-  "📅 <b>Daily odds</b>: x5 to x1000 codes every morning at 10:30\n" +
+  "📅 <b>Daily odds</b>: x5 to x30 codes every morning at 10:30\n" +
   "🏦 Works on " + BOOKS.list("and") + "\n\n" +
   "<b>First, which bookie do you use?</b> 👇\n<i>18+ · Play responsibly</i>";
 const HELLO =

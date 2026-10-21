@@ -20249,7 +20249,7 @@ function ladderRows(){
   return LADDER_P;
 }
 var LADDER={rows:null,rung:null};
-var LAD_RUNGS=[5,10,20,100,1000];
+var LAD_RUNGS=[5,10,20,30]; /* Merlin's Pick rungs since 22 Oct 2026 (lib/ladder.js RUNGS) */
 var LAD_CLOCK="<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 2'/></svg>";
 function paintLadder(fresh){
   var rr=$("ladRungs"), body=$("ladBody"); if(!rr||!body) return;
@@ -20259,7 +20259,7 @@ function paintLadder(fresh){
   rows.forEach(function(r){ have[r.rung]=r; });
   if(all.length&&!rows.length){
     rr.innerHTML=LAD_RUNGS.map(function(x){ return "<button class='lad-r' type='button' role='radio' data-rung='"+x+"' aria-checked='false' disabled><small>x</small>"+x+"</button>"; }).join("");
-    body.innerHTML="<div class='lad-wait'>"+LAD_CLOCK+"<span><b>New slips tomorrow at 10:30</b>x5 to x1000, picked and booked for you every morning.</span></div>";
+    body.innerHTML="<div class='lad-wait'>"+LAD_CLOCK+"<span><b>New slips tomorrow at 10:30</b>x5 to x30 from Merlin's Pick, booked for you every morning.</span></div>";
     return;
   }
   if(LADDER.rung==null){ var st=null; try{ st=+localStorage.getItem("sw.rung")||null; }catch(e){} LADDER.rung=st||(ladPass()?10:5); }
@@ -20273,7 +20273,7 @@ function paintLadder(fresh){
   if(!rows.length){
     var lagos=new Date(Date.now()+3600e3), before=lagos.getUTCHours()*60+lagos.getUTCMinutes()<10*60+45;
     body.innerHTML="<div class='lad-wait'>"+LAD_CLOCK+"<span><b>"+(LADDER.rows===null?"Loading today's slips":before?"Ready at 10:30":"No ready-made slips today")+"</b>"+
-      (LADDER.rows===null?"":before?"x5 to x1000, picked and booked for you every morning.":"Not enough strong games today. Back tomorrow at 10:30.")+"</span></div>";
+      (LADDER.rows===null?"":before?"x5 to x30 from Merlin's Pick, booked for you every morning.":"Not enough strong games today. Back tomorrow at 10:30.")+"</span></div>";
     return;
   }
   var c=cur.codes[B.key], n=cur.games||(cur.legs||[]).length;

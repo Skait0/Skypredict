@@ -14,7 +14,7 @@ const at = (lagosIso) => Date.parse(lagosIso + "+01:00");
 const now = at("2026-10-18T10:30:00");
 /* 40 games, every one with three 75%+ legs priced x1.15-1.40 at SportyBet. */
 const games = Array.from({ length: 40 }, (_, i) => ({ date: "2026-10-18", home: "H" + i, away: "A" + i,
-  kickoff: "2026-10-18T17:00:00Z", dc1x: 0.92, o15: 0.86, h_o05: 0.9, home_p: 0.78 }));
+  kickoff: "2026-10-18T17:00:00Z", dc1x: 0.92, o15: 0.86, h_o05: 0.9, home_p: 0.78, away_p: 0.08 }));
 const pay = { fixtures: games };
 const feed = games.map((f, i) => ({ id: i, home: f.home, away: f.away, ko: Date.parse(f.kickoff),
   odds: { "1X": 1.15, "OVER_1.5": 1.22, "HOME_OVER_0.5": 1.18, "1": 1.32 } }));
@@ -30,7 +30,8 @@ test("each rung reaches at least 80% of its payout inside its leg budget, or is 
   const thin = { fixtures: games.slice(0, 9) };
   assert.strictEqual(L.pickRung(thin, now, feed.slice(0, 9), { x: 1000, maxLegs: 40 }), null,
     "nine games cannot make x1000, so the rung is left out rather than published short");
-  assert.deepStrictEqual(L.RUNGS.map((r) => r.x), [5, 10, 20, 100, 1000]);
+  /* Merlin's Pick rungs (owner, 22 Oct 2026: "replace them"). */
+  assert.deepStrictEqual(L.RUNGS.map((r) => r.x), [5, 10, 20, 30]);
   assert.ok(L.RUNGS.every((r) => r.maxLegs <= 40), "40 is the smallest bookie limit");
 });
 
@@ -67,12 +68,12 @@ function res() { const r = { code: 0, body: null, headers: {} }; r.status = (c) 
 test("10:30 books every missing rung once; 10:45 books only what is still missing", async () => {
   const { d, store } = deps();
   const one = await API.fill(now, d);
-  assert.deepStrictEqual(store.minted, [5, 10, 20, 100, 1000], "smallest rung first, so a long shot never takes the open x5's games");
-  assert.deepStrictEqual(one.minted, [5, 10, 20, 100, 1000]);
+  assert.deepStrictEqual(store.minted, [5, 10, 20, 30], "smallest rung first, so a long shot never takes the open x5's games");
+  assert.deepStrictEqual(one.minted, [5, 10, 20, 30]);
   store.minted.length = 0;
   const two = await API.fill(now, d);
   assert.deepStrictEqual(store.minted, [], "a stored rung is never booked a second time");
-  assert.strictEqual(two.rows.length, 5);
+  assert.strictEqual(two.rows.length, 4);
 });
 
 /* Owner, 21 Oct 2026: "that shoulds be something we dont compromise on" - one Lille leg sank
@@ -89,7 +90,6 @@ test("no game is on two of the day's codes, and a rung that cannot fit is left o
   const all = [].concat(...rows.map((r) => r.legs.map(key)));
   assert.strictEqual(new Set(all).size, all.length, "a game on two rungs");
   assert.deepStrictEqual(rows.slice(0, 3).map((r) => r.rung), [5, 10, 20], "the small rungs come first and fit on 40 games");
-  assert.ok(!rows.some((r) => r.rung === 1000), "x1000 needs games already taken, so it sits out rather than share");
   const big = BIG.pick(pay, now, feed, { skip: L.bigSkips(rows)[0] });
   assert.ok(!big || big.legs.every((l) => !all.includes(key(l))), "Big odds shares a game with the ladder");
   assert.strictEqual(L.bigSkips(rows).length, 1, "no fallback that lets a ladder game back in");
@@ -98,7 +98,7 @@ test("no game is on two of the day's codes, and a rung that cannot fit is left o
   const { d } = deps({ mint: async (p, n, f, rung, rs) => { seen[rung.x] = rs.map((r) => r.rung);
     return { rung: rung.x, odds: rung.x, legs: [], codes: { sporty: { code: "S", n: 1 } } }; } });
   await API.fill(now, d);
-  assert.deepStrictEqual(seen, { 5: [], 10: [5], 20: [5, 10], 100: [5, 10, 20], 1000: [5, 10, 20, 100] });
+  assert.deepStrictEqual(seen, { 5: [], 10: [5], 20: [5, 10], 30: [5, 10, 20] });
 });
 
 test("only Wizard Pass readers are sent their rung, and only once something reached them", async () => {
@@ -251,12 +251,12 @@ test("My daily slip: only a Wizard Pass reader can set it, to a real rung and bo
   const r0 = await call(get(free));
   assert.strictEqual(r0.code, 200);
   assert.strictEqual(r0.json().pass, false);
-  assert.strictEqual((await call(post(free, { rung: 100, book: "sporty" }))).code, 403, "no pass, no daily slip");
+  assert.strictEqual((await call(post(free, { rung: 30, book: "sporty" }))).code, 403, "no pass, no daily slip");
   assert.strictEqual((await call(post(pass, { rung: 50, book: "sporty" }))).code, 400, "x50 is not a rung");
-  assert.strictEqual((await call(post(pass, { rung: 100, book: "nairabet" }))).code, 400, "only our six bookies");
-  const ok = await call(post(pass, { rung: 100, book: "betking", push: true }));
+  assert.strictEqual((await call(post(pass, { rung: 30, book: "nairabet" }))).code, 400, "only our six bookies");
+  const ok = await call(post(pass, { rung: 30, book: "betking", push: true }));
   assert.strictEqual(ok.code, 200);
-  assert.deepStrictEqual([ok.json().rung, ok.json().book, ok.json().pass], [100, "betking", true]);
+  assert.deepStrictEqual([ok.json().rung, ok.json().book, ok.json().pass], [30, "betking", true]);
   const off = await call(post(pass, { rung: null }));
   assert.strictEqual(off.json().rung, null, "Off removes it");
 });
@@ -320,4 +320,18 @@ test("each rung carries its end state: landed, started or live (owner, 18 Oct 20
   assert.deepStrictEqual(r.body.rungs.map((x) => x.state), ["landed", "started", "live"]);
   const src = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
   assert.match(src, /if\(cur\.state==="landed"\)/); assert.match(src, /if\(cur\.state==="started"\)/);
+});
+
+/* The daily drop (owner, 22 Oct 2026: "we should drop these codes everyday", "x5 code + teaser"). */
+test("the daily drop shows the x5 code, only the payouts of the rest, and nothing without an x5", () => {
+  const row = (x, code, n) => ({ rung: x, odds: x, legs: new Array(n), codes: { sporty: { code, n } } });
+  const t = L.drop([row(5, "VZ6QMG", 4), row(10, "UEZAC3", 6), row(30, "H0EA2Y", 9)]);
+  assert.match(t, /x5 · SportyBet VZ6QMG · 4 games\n/);
+  assert.match(t, /x10 · 6 games · Wizard Pass/);
+  assert.match(t, /x30 · 9 games · Wizard Pass/);
+  assert.ok(!/UEZAC3|H0EA2Y/.test(t), "a Pass code went out in the open");
+  assert.ok(/18\+$/.test(t) && !/—|\bfree\b/i.test(t), "house rules");
+  assert.match(L.drop([row(5, "AB0CDE", 4)]), /\(0 is a zero\)/);
+  assert.strictEqual(L.drop([row(10, "UEZAC3", 6)]), null);
+  assert.ok(t.replace("soccerwizard.live", "x".repeat(23)).length <= 280, "fits on X");
 });

@@ -123,9 +123,20 @@ module.exports = async function handler(req, res) {
     if (slip) for (const ch of bigDue) items.push({ key: bigKey(ch), kind: "bigodds", channel: ch, text: slip[ch] });
   }
 
+  /* THE DAILY CODES (owner, 22 Oct 2026: "we should drop these codes everyday"): 11:00 Lagos,
+     after the 10:30 and 10:45 ladder runs, the x5 code and the other rungs' payouts
+     (lib/ladder.js drop). Once per channel per day; nothing on a day without an x5. */
+  const ladKey = (ch) => "ladder|" + S.dayOf(now) + "|" + ch;
+  const ladDue = ["x", "fb", "tg"].filter((ch) => !posted.has(ladKey(ch)));
+  if (S.hourOf(now) === 11 && ladDue.length && !paused("ladder")) {
+    const lad = await SB.getLadder(S.dayOf(now));
+    const text = lad.ok ? L.drop(lad.rows) : null;
+    if (text) for (const ch of ladDue) items.push({ key: ladKey(ch), kind: "ladder", channel: ch, text });
+  }
+
   const sent = [];
   for (const it of items) {
-    const ok = it.channel === "x" ? await postX(it.text) : await postTG(it.text);
+    const ok = it.channel === "x" ? await postX(it.text) : it.channel === "fb" ? await postFB(it.text) : await postTG(it.text);
     if (ok) { await SB.logSocial({ key: it.key, channel: it.channel, kind: it.kind, text: it.text }); sent.push(it.key); }
   }
   /* THE REST WAIT FOR THE OWNER (owner, 18 Oct 2026: win approvals, after a x121.88
