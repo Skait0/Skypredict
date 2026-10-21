@@ -13373,7 +13373,7 @@ function attachEventIds(sporty,B,sliced,list){
     /* Debug logging (opt-in via ?debug=1). Counts stay live for the summary. */
     if (bestScore > 0 && bestScore < 1.2) {
       nearMisses++;
-      if (SPORTY_DEBUG) try{console.log("["+B.key+"] NEAR MISS:", f.home, "v", f.away, "->", best?.homeTeam, "v", best?.awayTeam, "score:", bestScore.toFixed(2));}catch(e){}
+      if (SPORTY_DEBUG) try{console.log("["+B.key+"] NEAR MISS:", f.home, "v", f.away, "->", best&&best.homeTeam, "v", best&&best.awayTeam, "score:", bestScore.toFixed(2));}catch(e){}
     }
     if (!best && bestScore === 0) {
       noMatches++;

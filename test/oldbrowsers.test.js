@@ -17,3 +17,17 @@ test("no querySelector puts a combinator inside :not()", () => {
   }
   assert.deepStrictEqual(bad, []);
 });
+
+/* Sentry, 21 Oct 2026: "SyntaxError: Unexpected token ." from Facebook's in-app browser on
+   Android 9 (Chrome 72 WebView). One `best?.homeTeam` in a debug line was enough: a syntax
+   error stops the whole script, so the page never ran for that reader. Every script the page
+   ships must parse as ES2019 (Chrome 72): no ?., no ??, no ||= or &&=. */
+test("every script the page ships parses in an ES2019 browser (Chrome 72)", () => {
+  const acorn = require("acorn");
+  const pub = path.join(__dirname, "..", "public"), bad = [];
+  const parse = (name, src) => { try { acorn.parse(src, { ecmaVersion: 2019, allowReturnOutsideFunction: true }); } catch (e) { bad.push(name + " " + e.message); } };
+  const html = fs.readFileSync(path.join(pub, "index.html"), "utf8");
+  for (const m of html.matchAll(/<script(?![^>]*\bsrc=)(?![^>]*type=["'](?:application\/ld\+json|module|importmap)["'])[^>]*>([\s\S]*?)<\/script>/g)) parse("index.html", m[1]);
+  for (const f of fs.readdirSync(pub).filter((f) => f.endsWith(".js") && !/^app\.[0-9a-f]+\.js$/.test(f))) parse(f, fs.readFileSync(path.join(pub, f), "utf8"));
+  assert.deepStrictEqual(bad, []);
+});
