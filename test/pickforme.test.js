@@ -288,3 +288,11 @@ test("the quick card in use is highlighted and the rest dim (owner, 21 Oct 2026)
 test("Get code on the quick cards books with the wand, like every other Book button (owner, 21 Oct 2026)", () => {
   assert.match(grab("pfmRun"), /if\(on\) get\.innerHTML=wandHTML\("Booking…"\)/);
 });
+
+test("Get code asks before a booking code is used (owner, 21 Oct 2026: a mistake tap)", () => {
+  const run = grab("pfmRun");
+  const ask = run.indexOf("get.dataset.sure"), book = run.indexOf("bookRounds(");
+  assert.ok(ask > 0 && ask < book, "the question comes before any booking");
+  assert.match(run, /Yes, use 1 code/);
+  assert.match(run, /Not now/);
+});

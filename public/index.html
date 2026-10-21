@@ -2134,6 +2134,7 @@ html.is-results .bookall-row,html.mode-build .bookall-row,html.mode-live .bookal
 .bm-pf .bm-lk,.bm-wsx .bm-lk{top:2px;right:2px}.bm-pf .bm-lk svg,.bm-wsx .bm-lk svg{width:7px;height:7px}
 .bm-pf p.bm-more{margin:6px 0 0;font-size:11.5px}
 .bm-pf .bm-get,.bm-wsx .bm-get{height:40px;margin-top:8px}.bm-pf .bm-act,.bm-wsx .bm-act{height:30px;font-size:12px}
+.bm-sure{margin:8px 0 0;font-size:12.5px;font-weight:600;color:var(--soft);text-align:center}.bm-nosure{margin-left:6px;padding:0;border:0;background:none;color:var(--text);font:inherit;font-weight:800;text-decoration:underline;cursor:pointer}
 .bm-pf .bm-sum b,.bm-wsx .bm-sum b{font-size:28px}
 .bm-pf .bm-games,.bm-wsx .bm-games{max-height:132px;margin-top:6px;overscroll-behavior:contain}.bm-pf .bm-games li,.bm-wsx .bm-games li{padding:5px 8px;font-size:11px}
 @media (max-height:690px){.bm-pf .bm-games,.bm-wsx .bm-games{max-height:96px}}
@@ -22563,7 +22564,7 @@ function openBuildChooser(goMode){
        details, time and payouts, and the one used last opens by itself next time. */
     "<section class='bm-opt bm-row bm-link bm-sl'>"+bmRow("slider",PFM_ICON.slider,"Slider","Slide for bigger odds.",usual==="slider")+"</section>"+
     "<section class='bm-opt bm-row bm-link bm-wz'>"+bmRow("wizard",PFM_ICON.wizard,"Wizard","Type your odds. We find the games.",usual==="wizard")+"</section>"+
-    "<section class='bm-opt bm-row bm-pfm bm-pf"+(open==="pfm"?" is-open":"")+"' id='bmPfm'>"+bmRow("pfm",PFM_ICON.pfm,"Pick for me","No options. Tap a payout.",false,open==="pfm")+
+    "<section class='bm-opt bm-row bm-pfm bm-pf"+(open==="pfm"?" is-open":"")+"' id='bmPfm'>"+bmRow("pfm",PFM_ICON.pfm,"Pick for me","Tap a payout. We pick the safest games.",false,open==="pfm")+
       "<div class='bm-pane'>"+
       "<div class='bm-body' id='pfmBody'><p>No options to choose. We take the surest market in each game and stop at your payout. Up to x200.</p>"+
         "<div class='bm-seg' role='radiogroup' aria-label='When'>"+
@@ -22705,6 +22706,16 @@ function pfmRun(T,K){
       sum.querySelectorAll("[data-a='shuffle'],[data-a='back']").forEach(function(b){ b.disabled=on; }); }
     get.addEventListener("click",function(){
       if(booked){ showCode(booked[0],K.p+"Out",booked[3],B,booked[1],booked[2]); return; }
+      /* Ask before a code is used (owner, 21 Oct 2026: "it might be a mistake tap"). */
+      if(!get.dataset.sure){
+        get.dataset.sure="1"; get.textContent="Yes, use 1 code";
+        get.insertAdjacentHTML("beforebegin","<p class='bm-sure'>This uses 1 booking code"+
+          (SW_QUOTA_LEFT!==null?" ("+SW_QUOTA_LEFT+" left)":"")+". <button type='button' class='bm-nosure'>Not now</button></p>");
+        sum.querySelector(".bm-nosure").addEventListener("click",function(){
+          delete get.dataset.sure; get.textContent="Get code"; var q=sum.querySelector(".bm-sure"); if(q) q.remove(); });
+        return;
+      }
+      var q0=sum.querySelector(".bm-sure"); if(q0) q0.remove();
       var busied=false; out.innerHTML=""; lock(true);
       bookRounds(r.picks,B,K.tag,K.p+"Out",{
         busy:function(){ busied=true; },
