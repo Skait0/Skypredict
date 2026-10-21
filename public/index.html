@@ -7501,6 +7501,8 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 .fav-sw[aria-checked=true]{background:var(--green)}
 .fav-sw[aria-checked=true]:after{transform:translateX(16px)}
 .fav-sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mk-fav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;padding:10px 12px;border:1px solid var(--line-soft);border-radius:10px;font-size:13px;font-weight:700;color:var(--text)}
+.mk-fav small{display:block;margin-top:2px;font-size:12px;font-weight:600;color:var(--faint)}
 .fav-none{margin:0;padding:18px 16px;font-size:13px;color:var(--faint)}
 .fav-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px calc(16px + env(safe-area-inset-bottom));
   border-top:1px solid var(--line);flex-shrink:0}
@@ -14732,6 +14734,22 @@ var TEAM_SHOTS_CODES=["SHOTS_H_OV_7.5","SHOTS_H_OV_8.5","SHOTS_H_OV_9.5","SHOTS_
    clear - the chip itself starts off. */
 /* Whole lines (+-1, +-2) joined 30 Sep 2026: SportyBet, Bet9ja and 1xBet
    sell them, BetKing and Betpawa do not (see BOOK_ONLY). */
+/* BACK THE FAVOURITE (owner, 21 Oct 2026: "most of the time the model picks the weaker
+   team"). A combo ("Getafe or both score") or a handicap names one team, and both
+   builders like its bigger price - measured on the 21 Oct board, the Wizard took the
+   weaker side on 87% of its combo legs. With this on (the default) those markets back
+   only the side the model rates stronger, the rule a straight win already follows.
+   Team goals, corners and shots are left alone: they ask for an attack, not a result. */
+var FAV_SIDE=true; try{ FAV_SIDE=localStorage.getItem("sw.favside")!=="0"; }catch(e){}
+function backsUnderdog(f,c){
+  var m=/^(?:MIXGG_|MIX_)([12])(?:_|$)/.exec(c||"")||/^AH_([12])_/.exec(c||"");
+  if(!m||!f||f.home_p==null||f.away_p==null) return false;
+  return m[1]==="1" ? f.home_p<f.away_p : f.away_p<f.home_p;
+}
+function setFavSide(on){
+  FAV_SIDE=!!on;
+  try{ localStorage.setItem("sw.favside",FAV_SIDE?"1":"0"); }catch(e){}
+}
 var HCAP_CODES=["AH_1_1.5","AH_1_2.5","AH_2_-1.5","AH_2_-2.5","AH_1_-1.5","AH_2_1.5","AH_1_1","AH_1_2","AH_2_-1","AH_2_-2","AH_1_-1","AH_2_1"];
 /* IS THIS CORNERS LINE ACTUALLY OPEN? Books open corners a few days before
    kick-off and some leagues never - measured 23 Sep 2026: Spanish second
@@ -15458,6 +15476,7 @@ function buildPicks(neutral){
       if(/^NR3_/.test(c)&&!bookQuotes(f,c,BOOKS.sporty)) return false;
       if(c==="1"&&!homeFav) return false;
       if(c==="2"&&homeFav) return false;
+      if(FAV_SIDE&&backsUnderdog(f,c)) return false;
       if((c==="1X"||c==="X2")&&!dcOk(f,c)) return false;
       return true;
     }
@@ -15595,7 +15614,7 @@ function buildPicks(neutral){
      x985. The Shuffle button stores the total on screen with the settings it was built
      under (BUILD.keep); while they are unchanged that total is the target, reached the
      same way the styles reach Balanced's. Any other change is a new slip. Not Bankers. */
-  var sig=[BUILD.risk,WSP.legodd,B.key,JSON.stringify(BUILD.mk),scopeFixtures().map(fid).join(",")].join("|");
+  var sig=[BUILD.risk,WSP.legodd,B.key,JSON.stringify(BUILD.mk),FAV_SIDE,scopeFixtures().map(fid).join(",")].join("|");
   if(!neutral){
     BUILD._sig=sig;
     if(BUILD.keep&&BUILD.keep.sig===sig&&BUILD.keep.total>1&&!bankersOn()){
@@ -21239,6 +21258,7 @@ window.swReloadSynced=function(){
     var fb=null; try{ fb=JSON.parse(g("sw.favleagues")||"{}"); }catch(e){}
     FAVB=(fb&&typeof fb==="object"&&!Array.isArray(fb))?fb:{};
     loadLeaguePicks();
+    FAV_SIDE=g("sw.favside")!=="0";
     var lo=+g("sw.legodd"); if(lo>1&&lo<10) WSP.legodd=lo;
     loadMarkets(); MK_SAVED=JSON.stringify({b:BUILD.mk,w:WSP.mk});
     var vw=g("sw.view"); if(vw) V.list=(vw==="list");
@@ -22939,6 +22959,7 @@ function wspBuild(){
     fAllowed.forEach(function(c){
       if(refused[rk+fid(f)+"|"+c])return;
       if(c==="1"&&!homeFav)return; if(c==="2"&&homeFav)return;
+      if(FAV_SIDE&&backsUnderdog(f,c))return;
       if((c==="1X"||c==="X2")&&!dcOk(f,c))return;
       if(!cornersOpen(f,c))return;
       var v=mProb(f,c); if(v==null||isNaN(v))return;
@@ -23661,7 +23682,7 @@ function wspMaxReach(at){
   at=at||1e12;
   var sig=[wspStyleOn(),JSON.stringify(WSP.mk),!!TOP_ONLY,SCOPE,SDAY,SPAN,TOD,
            JSON.stringify(BLD_PICK),!!VOL_IN,curBook().key,scopeFixtures().length,
-           !!WSP.everyGame,Math.min(WSP.shuffles||0,3),
+           !!WSP.everyGame,Math.min(WSP.shuffles||0,3),FAV_SIDE,
            Object.keys(WSP.removed||{}).length].join("|");
   var slot=WSP_REACH[at]||(WSP_REACH[at]={sig:null,max:0});
   if(slot.sig===sig) return slot.max;
@@ -23705,7 +23726,7 @@ function moreReach(kind,at){
   if(!leaguesLeftOut()) return null;
   var sig=[kind,at,kind==="sld"?BUILD.risk:0,wspStyleOn(),WSP.legodd,JSON.stringify(WSP.mk),JSON.stringify(BUILD.mk),!!TOP_ONLY,
     JSON.stringify(BLD_PICK),!!VOL_IN,curBook().key,SCOPE,SDAY,SPAN,TOD,DATA.fixtures.length,
-    Object.keys(WSP.removed||{}).length,Object.keys(BUILD.removed||{}).length,Math.min(WSP.shuffles||0,3)].join("|");
+    Object.keys(WSP.removed||{}).length,Object.keys(BUILD.removed||{}).length,Math.min(WSP.shuffles||0,3),FAV_SIDE].join("|");
   if(MORE_REACH.sig===sig) return MORE_REACH.v;
   var one=function(){
     if(kind==="wiz"){
@@ -24392,9 +24413,17 @@ function renderShared(){
     var ORDER=["wd","any","out","weh","draw","o05","o15","o25","o35","u45","nr3","wtn","fhu25","ht1x","sho05","shu25","fh","both","gg2",
       "tts","tts2","drgg","rsgg","dro25","rso25","dro15","rso15","corn","tcorn","shots","tshots","hcap"];
     var cs=ORDER.map(function(k){ return shown.filter(function(m){ return m.k===k; })[0]; }).filter(Boolean);
-    var html="<div class='mk-chips mk-one'>"+cs.map(chipOf).join("")+"</div>"+(BUILD.mode!=="wizard"&&shown.some(function(m){ return p.tier<m.tier; })
+    /* The favourite switch, only while a market it governs is on (see FAV_SIDE). */
+    var _mk=BUILD.mode==="wizard"?WSP.mk:BUILD.mk;
+    var _favRow=(_mk.rsgg||_mk.rso25||_mk.rso15||_mk.hcap)
+      ? "<div class='mk-fav'><span>Back the favourite in combos and handicaps<small>Off: the weaker team can be picked too, for bigger odds</small></span>"+
+        "<button type='button' class='fav-sw' role='switch' id='mkFavSide' aria-checked='"+FAV_SIDE+"' aria-label='Back the favourite in combos and handicaps'></button></div>" : "";
+    var html="<div class='mk-chips mk-one'>"+cs.map(chipOf).join("")+"</div>"+_favRow+(BUILD.mode!=="wizard"&&shown.some(function(m){ return p.tier<m.tier; })
       ? "<p class='mk-note'>Padlocked markets open up as you slide towards Bold.</p>" : "");
     mkw.innerHTML=html;
+    var _fs=$("mkFavSide");
+    if(_fs) _fs.addEventListener("click",function(){
+      setFavSide(!FAV_SIDE); WSP._sig=null; WSP._slip=null; BUILD.keep=null; renderBuilder(); });
     var rs=$("mkReset");
     if(rs){
       var on=marketCount();
@@ -26522,7 +26551,7 @@ load().catch(function(){});
   "use strict";
   var KEYS={slips:"sw.slips.v1",myslip:"sw.myslip",livefav:"sw.livefav",leaguefav:"formline.favs.v1"};
   var PREFS={book:"sw.book",mk:"sw.mk",risk:"sw.risk",mode:"sw.mode",wspodds:"sw.wspodds",
-    bldpick:"sw.bldpick",volin:"sw.volin",favmode:"sw.favmode",favleagues:"sw.favleagues",scope:"sw.scope",legodd:"sw.legodd",
+    bldpick:"sw.bldpick",volin:"sw.volin",favside:"sw.favside",favmode:"sw.favmode",favleagues:"sw.favleagues",scope:"sw.scope",legodd:"sw.legodd",
     avatar:"sw.avatar",name:"sw.name",theme:"sw.theme",noticex:"sw.noticeX",sday:"sw.sday",span:"sw.span",view:"sw.view"};
   var META="sw.sync.meta", SLIPS_KEEP=60;
 

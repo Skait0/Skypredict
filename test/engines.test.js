@@ -65,7 +65,7 @@ const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "
      same bug survived. */
   "bookVerdict", "bookMayTake", "bookIsPriced", "bookIdOf",
   "hasRealOdd", "pricedFixture", "o05Of", "nr3Poisson", "nr3Of", "mProb", "riskParams",
-  "allowedMarkets", "highScoringLeague", "dcOk", "dcGoalsSwap", "preferGoalsOverDouble", "isJackpotOdds", "wspMarkets",
+  "allowedMarkets", "highScoringLeague", "dcOk", "backsUnderdog", "dcGoalsSwap", "preferGoalsOverDouble", "isJackpotOdds", "wspMarkets",
   /* The wizard now asks which markets have a published record before it
      reaches for one, so its harness needs them too. */
   "codeMarket", "provenMarkets", "isProven",
@@ -87,7 +87,7 @@ const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "
   "wspBuild", "refusedDay", "refusedToday", "noteRefused"];
 
 const api = new Function([
-  "var TOP_ONLY=false;",
+  "var FAV_SIDE=true;", "var TOP_ONLY=false;",
   (src.match(/var POPULAR=\[[\s\S]*?\];/) || [""])[0], (src.match(/var POPULAR_ALIAS=\{[\s\S]*?\};/) || [""])[0], "var FAVB={};",
   "var FIXTURES=[];",
   /* null reads exactly like absent to every function that looks at it
@@ -116,7 +116,7 @@ const api = new Function([
            setFixtures(f){ FIXTURES = f; },
            setData(d){ DATA = d; },
            setTopOnly(v){ TOP_ONLY = v; },
-           setUse(u){ USE = u; },
+           setUse(u){ USE = u; }, setFavSide(v){ FAV_SIDE = v; },
            setBook(b){ CURB = b; } };
 `)();
 
@@ -813,12 +813,18 @@ test("an underdog +1.5 that only edges Over 1.5 loses the call; the favourite's 
   const legs = api.buildPicks();
   assert.strictEqual(legs.length, 1);
   assert.strictEqual(legs[0].code, "OVER_1.5", "79.5% underdog +1.5 judged 77.5%, so Over 1.5 at 79% wins");
-  /* Clearly stronger, it still gets picked - and shows its real figure. */
+  /* Clearly stronger, it still gets picked - and shows its real figure - once the reader
+     has switched "Back the favourite" off (owner, 21 Oct 2026: on by default, and then
+     a handicap never backs the weaker side). */
   const strong = [f(0.79, 0.12)].map(x => { const y = priced(x); y.sportyOdds["AH_2_-1.5"] = 1.12; return y; });
   api.setFixtures(strong);
-  const s = api.buildPicks();
-  assert.strictEqual(s[0].code, "AH_2_-1.5");
-  assert.ok(Math.abs(s[0].p - 0.88) < 1e-9, "the ticket shows 88%, not the judged 86%: " + s[0].p);
+  assert.notStrictEqual(api.buildPicks()[0].code, "AH_2_-1.5", "Back the favourite: the underdog's head start is never picked");
+  api.setFavSide(false);
+  try {
+    const s = api.buildPicks();
+    assert.strictEqual(s[0].code, "AH_2_-1.5");
+    assert.ok(Math.abs(s[0].p - 0.88) < 1e-9, "the ticket shows 88%, not the judged 86%: " + s[0].p);
+  } finally { api.setFavSide(true); }
 });
 
 /* Owner, 11 Oct 2026: "best prediction known to exist". A line the book sells
@@ -963,4 +969,56 @@ test("no slip passes the bookmaker's own leg limit: 50, or 40 where the book say
       assert.ok(n <= (max || 50), `style ${lo}, book limit ${max || 50}: ${n} legs`);
     }
   }
+});
+
+/* Owner, 21 Oct 2026: "most of the time the model picks the weaker team" in "Result or
+   both score" and "Result or over 2.5" (the Wizard took the weaker side on 87% of its
+   combo legs on that day's board). "Back the favourite", on by default, holds combos
+   and handicaps to the side the model rates stronger in both builders; off, the
+   weaker side may be picked again for its price. */
+test("Back the favourite: combos and handicaps never back the weaker team unless switched off", () => {
+  const o = (p) => Math.round((1 / Math.max(0.02, p)) * 100) / 100;
+  const board = BOARD.map((f) => {
+    const y = priced(f);
+    const or = (a, b) => Math.min(0.97, a + b * (1 - a) * 0.9);
+    Object.assign(y, { home_btts: or(f.home_p, f.btts), away_btts: or(f.away_p, f.btts),
+      home_o25: or(f.home_p, f.o25), away_o25: or(f.away_p, f.o25) });
+    Object.assign(y.sportyOdds, { "MIXGG_1": o(y.home_btts), "MIXGG_2": o(y.away_btts),
+      "MIX_1_OV_2.5": o(y.home_o25), "MIX_2_OV_2.5": o(y.away_o25) });
+    return y;
+  });
+  const weak = (c) => {
+    const m = /^(?:MIXGG_|MIX_)([12])/.exec(c.code) || /^AH_([12])_/.exec(c.code);
+    return !!m && (m[1] === "1" ? c.f.home_p < c.f.away_p : c.f.away_p < c.f.home_p);
+  };
+  const legs = () => {
+    const out = [];
+    for (const risk of [30, 60, 100]) for (const seed of [1, 2, 3]) {
+      Object.assign(api.BUILD, { risk, seed, keep: null }); out.push(...api.buildPicks());
+    }
+    for (const odds of [3, 20, 100]) for (const seed of [1, 2, 3]) {
+      Object.assign(api.WSP, { odds, seed, slider: false }); const r = api.wspBuild(); out.push(...((r && r.picks) || []));
+    }
+    return out;
+  };
+  reset();
+  api.setFixtures(board);
+  const mk = { wd: false, any: false, out: false, o15: false, o25: false, o35: false, fh: false,
+               tts: false, tts2: false, both: false, rsgg: true, rso25: true };
+  api.BUILD.mk = Object.assign({}, mk); api.WSP.mk = Object.assign({}, mk);
+  const on = legs();
+  assert.ok(on.some((c) => /^MIX/.test(c.code)), "combos are still picked, on the favourite");
+  assert.deepStrictEqual(on.filter(weak).map((c) => c.f.home + " v " + c.f.away + " " + c.code), []);
+  api.setFavSide(false);
+  try {
+    assert.ok(legs().some(weak), "switched off, the weaker side can come back for its price");
+  } finally { api.setFavSide(true); }
+});
+
+test("the Back the favourite switch shows under the markets only while a combo or handicap is on, and syncs", () => {
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "index.html"), "utf8");
+  assert.match(src, /var _favRow=\(_mk\.rsgg\|\|_mk\.rso25\|\|_mk\.rso15\|\|_mk\.hcap\)/);
+  assert.match(src, /id='mkFavSide' aria-checked='"\+FAV_SIDE\+"'/);
+  assert.match(src, /favside:"sw\.favside"/, "the choice follows the reader to other devices");
+  assert.match(src, /FAV_SIDE=g\("sw\.favside"\)!=="0"/, "and is read back when a sync lands");
 });
