@@ -330,3 +330,14 @@ test("a founder sees today's N2,000 struck, not the 1 Nov N4,000; Best value nev
   assert.match(src, /\.swa-pass\.swa-hasbest\{padding-top:16px\}/);
   assert.match(src, /\.swa-wp \.swa-pass\.swa-hasbest\{padding-top:15px\}/, "and inside the short-phone rules, which set 7px");
 });
+
+test("the menu's Telegram row says Connected in plain words once linked, never a check mark (owner, 21 Oct 2026)", () => {
+  const UI = require("../public/account-ui.js");
+  const base = { name: "A", email: "a@b.c", role: "free", slips: 0 };
+  assert.match(UI.menuHtml(base), /Telegram bot<span class='swa-r swa-tgpill'>Connect<\/span>/);
+  const on = UI.menuHtml(Object.assign({ tg: true }, base));
+  assert.match(on, /Telegram bot<span class='swa-r swa-tgpill'>Connected<\/span>/);
+  assert.ok(!/✓|✔|✅/.test(on));
+  const src = require("fs").readFileSync(require("path").join(__dirname, "../public/account-ui.js"), "utf8");
+  assert.ok(/lsSet\("sw\.tglinked"/.test(src), "the server's answer is kept for the next menu");
+});

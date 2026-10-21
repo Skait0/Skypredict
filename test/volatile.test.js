@@ -60,11 +60,11 @@ function harness(fixtures, store) {
     grab("leagueAllowed") + grab("leaguesChosen") + grab("leaguePicksTouched") +
     grab("setLeaguePicked") + grab("clearLeaguePicks") + grab("setVolIn") +
     grab("inScope") + grab("scopeFixtures") + grab("windowWords") + grab("leaguesOnBoard") + grab("leagueCount") +
-    grab("resetLeagues") + grab("askVolatile") + grab("renderLeaguePicker") + "\n" +
+    grab("resetLeagues") + grab("askVolatile") + grab("renderLeaguePicker") + grab("useMoreLeagues") + "\n" +
     "loadLeaguePicks();" +
     "return {scopeFixtures:scopeFixtures, leaguesOnBoard:leaguesOnBoard," +
     " setLeaguePicked:setLeaguePicked, leagueAllowed:leagueAllowed, isVolatile:isVolatile," +
-    " resetLeagues:resetLeagues, renderLeaguePicker:renderLeaguePicker, ask:ASK, store:STORE, topOnly:function(){return TOP_ONLY;}};"
+    " resetLeagues:resetLeagues, useMoreLeagues:useMoreLeagues, renderLeaguePicker:renderLeaguePicker, ask:ASK, store:STORE, topOnly:function(){return TOP_ONLY;}};"
   )(fixtures, store, ui, btn, EL);
   H.ui = ui;
   H.summary = () => { H.renderLeaguePicker(); return EL.lgpSum.textContent; };
@@ -221,4 +221,18 @@ test("showPrompt labels the dialog, defaulting to the booking label", () => {
   assert.strictEqual(lbl.textContent, "Add volatile leagues?");
   show("bookResult", "<p>x</p>");
   assert.strictEqual(lbl.textContent, "Before we book", "a later booking ask resets it");
+});
+
+test("Use more leagues puts back what the reader left out, keeps their own ticks, and asks before any volatile one (owner, 21 Oct 2026)", () => {
+  const H = harness(BOARD, { "sw.favmode": "1" });
+  H.setLeaguePicked("Spain La Liga 1", false);
+  H.setLeaguePicked("England League 1", true);
+  H.useMoreLeagues(false);
+  assert.strictEqual(H.topOnly(), false, "the builder moves to All leagues");
+  assert.deepStrictEqual(JSON.parse(H.store["sw.bldpick"]), { "England League 1": 1 }, "the left-out league is back; the hand tick stays");
+  assert.strictEqual(H.ui.html, null, "no volatile gain: no pop-up");
+  H.useMoreLeagues(true);
+  assert.ok(H.ui.html && /League 2 \(England\)/.test(H.ui.html), "a volatile gain goes through the usual ask");
+  assert.ok(!/League 1 \(England\)/.test(H.ui.html), "not about the one already ticked");
+  assert.strictEqual(H.leagueAllowed("England League 2"), false, "nothing volatile comes in before the yes");
 });

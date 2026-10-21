@@ -62,7 +62,9 @@ const FNS = ["cornersK", "cLgamma", "cornersOver", "cornersOpen", "countryOf", "
   "renderWizardPanel", "renderMySheet", "riskWord", "paintTicks", "repaintAfterMatch",
   /* renderBuilderOutput and wspConjure, driven for real, and what they lean on. */
   "renderBuilderOutput", "wspConjure", "putMissNote", "addBuiltToSlip", "riskParams", "buildPicks", "sliderStyle", "styleFit",
-  "totalOdds", "oddsAreReal", "conf"];
+  "totalOdds", "oddsAreReal", "conf",
+  /* More leagues, bigger slips (21 Oct 2026). */
+  "leaguesLeftOut", "withMoreLeagues", "moreReach", "moreLeaguesLine"];
 
 /* The page's own restore statement for the short-slip header, run as written. */
 const RESTORE_MISS = /try\{var _wm=JSON\.parse\(localStorage\.getItem\("sw\.wspmiss"\)[\s\S]*?\}catch\(e\)\{\}/.exec(src);
@@ -71,7 +73,7 @@ if (!RESTORE_MISS) throw new Error("sw.wspmiss restore statement not found in in
 const api = new Function("STUB", [
   "var TOP_ONLY=false, SCOPE='all', SDAY=0, SPAN=3, TOD='all', BLD_PICK={}, VOL_IN=true;",
   (src.match(/var POPULAR=\[[\s\S]*?\];/) || [""])[0], (src.match(/var POPULAR_ALIAS=\{[\s\S]*?\};/) || [""])[0], "var FAVB={};",
-  "var FIXTURES=[], MYSLIP=[];",
+  "var FIXTURES=[], MYSLIP=[], MORE_REACH={sig:null,v:null};",
   (/^var BUILD=\{[\s\S]*?\};/m.exec(src) || [""])[0],
   "var DATA=null, STORE={}, localStorage={getItem(k){return k in STORE?STORE[k]:null},",
   "  setItem(k,v){STORE[k]=String(v)},removeItem(k){delete STORE[k]}};",
@@ -197,6 +199,35 @@ test("the ceiling is the pool the Wizard builds from: Favourite leagues moves it
     const c = chips(api.ELS.wizardPanel.innerHTML);
     assert.ok(Object.keys(c).some(o => +o <= all && +o > one && c[o]),
       "a rung reachable before the picker change must be disabled after it");
+  } finally {
+    LEAGUES.forEach(l => api.setFav(l, false));
+    api.setTop(false);
+  }
+});
+
+test("leagues left out that would reach further: the line says how far, with the way in (owner, 21 Oct 2026)", () => {
+  reset();
+  const all = api.wspMaxReach(19999);
+  api.renderWizardPanel();
+  assert.ok(!/data-moreleagues/.test(api.ELS.wizardPanel.innerHTML), "every league already in: no more-leagues line");
+  api.setTop(true);
+  LEAGUES.forEach(l => api.setFav(l, true));
+  api.setFav(LEAGUES[0], false);
+  api.setFav(LEAGUES[1], false);
+  try {
+    api.clearReach();
+    const one = api.wspMaxReach(19999);
+    api.renderWizardPanel();
+    const html = api.ELS.wizardPanel.innerHTML;
+    const m = /Your leagues reach up to <b>×([\d,.]+)<\/b>[^<]*With more leagues: up to <b>×([\d,.]+)<\/b>/.exec(html);
+    assert.ok(m, "the line names both numbers: " + html.slice(html.indexOf("wsp-reach"), html.indexOf("wsp-reach") + 400));
+    const n = (t) => +t.replace(/,/g, "");
+    assert.ok(Math.abs(n(m[1]) - one) <= Math.max(0.01, one * 0.001), "today's reach is the Wizard's own ceiling");
+    assert.ok(Math.abs(n(m[2]) - all) <= Math.max(0.01, all * 0.001), "the bigger number is what all the leagues really build: x" + all);
+    assert.match(html, /data-moreleagues='plain'>Use more leagues</);
+    assert.match(html, /data-chooseleagues='1'>Choose leagues</);
+    assert.ok(!/✓|✅/.test(html), "no check mark (owner)");
+    assert.strictEqual(api.wspMaxReach(19999), one, "measuring with more leagues leaves the reader's own pool alone");
   } finally {
     LEAGUES.forEach(l => api.setFav(l, false));
     api.setTop(false);
@@ -418,6 +449,35 @@ test("the Slider shows the total once, gold on the foot, and the subtitle is a p
   api.renderBuilderOutput();
   assert.match(stats.innerHTML, /Total odds/);
   assert.ok(!stats.classList.contains("stats-2"));
+});
+
+test("the Slider at its right-hand end says what more leagues would give, and only then (owner, 21 Oct 2026)", () => {
+  reset();
+  api.BUILD.mode = "slider"; api.BUILD.risk = 100; api.BUILD.touched = true; api.BUILD.removed = {};
+  api.renderBuilderOutput();
+  assert.strictEqual(api.ELS.bldMore.hidden, true, "every league in: nothing to say");
+  const allPicks = api.BUILD.picks.length;
+  api.setTop(true);
+  LEAGUES.forEach(l => api.setFav(l, true));
+  api.setFav(LEAGUES[0], false);
+  api.setFav(LEAGUES[1], false);
+  try {
+    api.renderBuilderOutput();
+    const mine = api.BUILD.picks.slice();
+    const html = api.ELS.bldMore.innerHTML;
+    assert.strictEqual(api.ELS.bldMore.hidden, false);
+    const m = /This is the biggest slip your leagues give [^.]*\. With more leagues: up to <b>×([\d,.]+)<\/b>/.exec(html);
+    assert.ok(m, "the line: " + html);
+    assert.ok(mine.length < allPicks, "one league builds a shorter slip than three");
+    assert.ok(mine.every(c => c.f.league === LEAGUES[2]), "the reader's slip stays on their own league after the measuring build");
+    assert.match(html, /data-moreleagues='plain'>Use more leagues</);
+    api.BUILD.risk = 80;
+    api.renderBuilderOutput();
+    assert.strictEqual(api.ELS.bldMore.hidden, true, "not at the right-hand end: nothing said");
+  } finally {
+    LEAGUES.forEach(l => api.setFav(l, false));
+    api.setTop(false);
+  }
 });
 
 test("Bankers gets 50 legs at any payout; the other styles keep 40 below the jackpot (owner, 11 Oct 2026)", () => {

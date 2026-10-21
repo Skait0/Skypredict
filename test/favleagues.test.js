@@ -129,3 +129,10 @@ test("league names read as readers say them, without eating a real number", () =
   assert.strictEqual(api.favName("France Ligue 1"), "Ligue 1");
   assert.strictEqual(api.favName("Spain La Liga 1"), "La Liga");
 });
+
+test("All leagues > Edit uses switches like Settings > Leagues, not a tick (owner, 21 Oct 2026)", () => {
+  const s = grab("renderFavSheet");
+  assert.ok(s.includes("class='fav-sw' role='switch'"), "a switch under All leagues");
+  assert.ok(!s.includes("m8 12.5 2.7 2.7"), "the check mark is gone");
+  assert.ok(s.includes("fav-star"), "Favourite leagues keep their star");
+});

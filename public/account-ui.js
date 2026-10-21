@@ -46,8 +46,9 @@
         "<button class='swa-mi' type='button' role='menuitem' data-go='profile'>"+I.user+"Profile</button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='daily'>"+I.clock+"My daily slip<span class='swa-r'>10:30</span></button>"+
         /* Connect sits on the row itself (owner, 19 Oct 2026: "the connect button in front of
-           telegram bot"): one tap opens the bot, through the [data-tglink] handler below. */
-        "<a class='swa-mi' role='menuitem' href='#' data-tglink>"+I.send+"Telegram bot<span class='swa-r swa-tgpill'>Connect</span></a>"+
+           telegram bot"): one tap opens the bot, through the [data-tglink] handler below.
+           "Connected" in plain words once linked (owner, 21 Oct 2026: never a check mark). */
+        "<a class='swa-mi' role='menuitem' href='#' data-tglink>"+I.send+"Telegram bot<span class='swa-r swa-tgpill'>"+(o.tg?"Connected":"Connect")+"</span></a>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='slips'>"+I.slips+"My slips<span class='swa-r swa-n'>"+(o.slips||0)+"</span></button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='msgs'>"+I.chat+"Messages"+(o.unread?"<span class='swa-r swa-unr'>"+(o.unread>9?"9+":o.unread)+"</span>":"")+"</button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='settings'>"+I.gear+"Settings</button>"+
@@ -258,6 +259,7 @@
     root.swAcct.req("GET","/api/account/tglink",null,function(code,j){
       if(code!==200||!j||!j.url) return;
       b.href=j.url; b.setAttribute("data-at",String(Date.now()));
+      if(j.linked!=null) lsSet("sw.tglinked",j.linked?"1":"0");
       if(j.linked){ b.textContent="Reconnect"; if(t) t.textContent="Connected. "+tgPitch(role).replace(" too","").replace("Use","You can use"); }
     });
   }
@@ -776,7 +778,16 @@
     var a=acct();
     menu.innerHTML=menuHtml({name:firstNameOf(savedName(),a.st.email),email:a.st.email,role:role(),plan:lsGet("sw.plan"),
       plusUntil:lsGet("sw.plusUntil"),founder:lsGet("sw.founder")==="1",
-      quota:root.swQuotaToday?root.swQuotaToday():null,slips:root.swSlipCount?root.swSlipCount():0,unread:root.swMsg?root.swMsg.unread():0});
+      quota:root.swQuotaToday?root.swQuotaToday():null,slips:root.swSlipCount?root.swSlipCount():0,unread:root.swMsg?root.swMsg.unread():0,
+      tg:lsGet("sw.tglinked")==="1"});
+    /* The last answer shows at once; the server's answer corrects it, and its link
+       is the one a tap then opens. */
+    var tgRow=menu.querySelector("[data-tglink]");
+    if(tgRow&&root.swAcct) root.swAcct.req("GET","/api/account/tglink",null,function(code,j){
+      if(code!==200||!j||!j.url) return;
+      tgRow.href=j.url; tgRow.setAttribute("data-at",String(Date.now()));
+      if(j.linked!=null){ lsSet("sw.tglinked",j.linked?"1":"0"); tgRow.querySelector(".swa-tgpill").textContent=j.linked?"Connected":"Connect"; }
+    });
     lastFocus=d.activeElement;
     scrim.classList.add("on"); menu.classList.add("on");
     var av=d.getElementById("hdAccount"); if(av) av.setAttribute("aria-expanded","true");

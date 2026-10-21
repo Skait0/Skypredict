@@ -7386,6 +7386,8 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 @keyframes swUndoBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 @media (prefers-reduced-motion:reduce){.sw-card,.sw-undo,.sw-swipe,.ys-live,.ys-dot.run,.ys-live:after,.ys-dot.run:after,.sw-undo .u-bar{animation:none!important;transition:none!important}}
 .bld-empty .bld-alt{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+.wsp-reach .bld-alt,.bld-more .bld-alt{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.bld-more .bld-alt{justify-content:center}
 
 /* ================================================= builder filters, 11 Oct 2026
    One card, three sections (When / Leagues / Markets); the bar names what is
@@ -7494,6 +7496,11 @@ html.sw-gate-on #swGate{height:100vh; height:100dvh}
 .fav-star svg{width:22px;height:22px}
 .fav-star.on{color:var(--accent)}
 .fav-star:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.fav-sw{width:42px;height:26px;border-radius:99px;border:0;background:var(--raise);position:relative;cursor:pointer;flex:none;padding:0}
+.fav-sw:after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+.fav-sw[aria-checked=true]{background:var(--green)}
+.fav-sw[aria-checked=true]:after{transform:translateX(16px)}
+.fav-sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .fav-none{margin:0;padding:18px 16px;font-size:13px;color:var(--faint)}
 .fav-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px calc(16px + env(safe-area-inset-bottom));
   border-top:1px solid var(--line);flex-shrink:0}
@@ -8302,6 +8309,7 @@ html:not(.reduce) .tk-item.flash{border-radius:var(--r-md);animation:tkWash 2s v
          nothing, and the reason is the same one - the markets that are on do
          not reach the confidence floor on today's card. -->
     <p class="bld-note" id="bldShort" hidden></p>
+    <p class="bld-note bld-more" id="bldMore" hidden></p>
     <div class="bookpick" data-bookpick="build" role="group" aria-label="Bookmaker" hidden></div>
     <div class="bld-foot stage-in stage-in-4" id="bldFoot" data-parallax="0.2">
       <!-- THE WORD, NOT JUST THE GLYPH. Crossing arrows mean shuffle to
@@ -23672,6 +23680,77 @@ function wspMaxReach(at){
   slot.sig=sig;
   return slot.max;
 }
+/* MORE LEAGUES, BIGGER SLIPS (owner, 21 Oct 2026). When a payout is out of reach,
+   or the Slider sits at its right-hand end, and the reader has leagues left out,
+   build the same slip again as if they were back in, so the page can say what
+   that would give. Measured, never promised: the same builders, run with the
+   league choice swapped and put back. "plain" puts back every league the reader
+   left out and leaves volatile ones as they are; "vol" adds the volatile ones too.
+   A league the reader switched on by hand stays on in both. */
+function leaguesLeftOut(){
+  if(TOP_ONLY) return true;
+  for(var k in BLD_PICK) if(Object.prototype.hasOwnProperty.call(BLD_PICK,k)&&!BLD_PICK[k]) return true;
+  if(VOL_IN) return false;
+  return DATA.fixtures.some(function(f){ return isVolatile(f.league)&&!Object.prototype.hasOwnProperty.call(BLD_PICK,f.league)&&notStarted(f)&&inScope(f); });
+}
+function withMoreLeagues(vol,fn){
+  var top=TOP_ONLY, pick=BLD_PICK, vin=VOL_IN, mine={};
+  for(var k in pick) if(Object.prototype.hasOwnProperty.call(pick,k)&&pick[k]) mine[k]=1;
+  TOP_ONLY=false; BLD_PICK=mine; VOL_IN=vin||vol;
+  try{ return fn(); }catch(e){ return 0; }
+  finally{ TOP_ONLY=top; BLD_PICK=pick; VOL_IN=vin; }
+}
+var MORE_REACH={sig:null,v:null};
+function moreReach(kind,at){
+  if(!leaguesLeftOut()) return null;
+  var sig=[kind,at,kind==="sld"?BUILD.risk:0,wspStyleOn(),WSP.legodd,JSON.stringify(WSP.mk),JSON.stringify(BUILD.mk),!!TOP_ONLY,
+    JSON.stringify(BLD_PICK),!!VOL_IN,curBook().key,SCOPE,SDAY,SPAN,TOD,DATA.fixtures.length,
+    Object.keys(WSP.removed||{}).length,Object.keys(BUILD.removed||{}).length,Math.min(WSP.shuffles||0,3)].join("|");
+  if(MORE_REACH.sig===sig) return MORE_REACH.v;
+  var one=function(){
+    if(kind==="wiz"){
+      var was=WSP.odds; WSP.odds=at;
+      try{ var r=wspBuild(); return (r&&isFinite(r.odds))?r.odds:0; } finally{ WSP.odds=was; }
+    }
+    var keep={sig:BUILD._sig,pool:BUILD._pool,picks:BUILD.picks};
+    try{ var p=buildPicks(); return p&&p.length?totalOdds(p):0; }
+    finally{ BUILD._sig=keep.sig; BUILD._pool=keep.pool; BUILD.picks=keep.picks; }
+  };
+  var v={plain:withMoreLeagues(false,one)};
+  v.vol=VOL_IN?v.plain:withMoreLeagues(true,one);
+  MORE_REACH.sig=sig; MORE_REACH.v=v;
+  return v;
+}
+/* The line itself, or "" when more leagues would not raise the payout by a
+   twentieth. cur is what the reader's own leagues reach now. */
+function moreLeaguesLine(m,cur,lead){
+  if(!m) return "";
+  var x=function(o){ return "<b>×"+(o>=100?Math.round(o).toLocaleString("en"):o.toFixed(2))+"</b>"; };
+  var plain=m.plain>cur*1.05, vol=!VOL_IN&&m.vol>Math.max(cur,m.plain)*1.05;
+  if(!plain&&!vol) return "";
+  var with_=plain
+    ? "With more leagues: up to "+x(m.plain)+(vol?", or "+x(m.vol)+" with the volatile leagues":"")+"."
+    : "With the volatile leagues: up to "+x(m.vol)+".";
+  return lead+" "+with_+
+    "<span class='bld-alt'><button type='button' class='wsp-chip' data-moreleagues='"+(vol?"vol":"plain")+"'>Use more leagues</button>"+
+    "<button type='button' class='wsp-chip' data-chooseleagues='1'>Choose leagues</button></span>";
+}
+/* "Use more leagues": every league the reader left out goes back in, the builder
+   moves to All leagues, and when the gain needs the volatile ones the usual ask
+   puts that question - nothing volatile comes in without its yes.
+   "Choose leagues": the All leagues Edit list, to pick them one by one. */
+function useMoreLeagues(vol){
+  setTopOnly(false);
+  for(var k in BLD_PICK) if(Object.prototype.hasOwnProperty.call(BLD_PICK,k)&&!BLD_PICK[k]) delete BLD_PICK[k];
+  try{localStorage.setItem("sw.bldpick",JSON.stringify(BLD_PICK));}catch(e){}
+  WSP._sig=null; renderBuilder();
+  if(vol) askVolatile();
+}
+function chooseLeagues(){ setTopOnly(false); WSP._sig=null; renderBuilder(); openFavSheet(); }
+document.addEventListener("click",function(e){
+  var b=e.target.closest&&e.target.closest("[data-moreleagues],[data-chooseleagues]"); if(!b) return;
+  if(b.hasAttribute("data-moreleagues")) useMoreLeagues(b.getAttribute("data-moreleagues")==="vol"); else chooseLeagues();
+});
 // --- Wizard panel rendering (replaces renderWsp) ---
 /* WHICH TOGGLE PRODUCES WHICH LEG. Kept beside the chips rather than derived,
    because the mapping is the one thing that would silently rot: a market added
@@ -24620,20 +24699,21 @@ function renderFavSheet(){
      (untick to leave a league out - owner, 14 Oct 2026). */
   var all=!TOP_ONLY;
   if($("favSheet-title")) $("favSheet-title").textContent=all?"All leagues":"Favourite leagues";
-  if($("favReset")) $("favReset").textContent=all?"Tick them all":"Reset to the top 20";
-  if(sub) sub.textContent="Leagues "+windowWords(true)+". "+(all?"Untick one to leave it out of your slips.":"Star one to add it to your favourites.");
+  if($("favReset")) $("favReset").textContent=all?"Turn them all on":"Reset to the top 20";
+  if(sub) sub.textContent="Leagues "+windowWords(true)+". "+(all?"Switch one off to leave it out of your slips.":"Star one to add it to your favourites.");
   var rows=favRows().filter(function(x){ return !q||x.league.toLowerCase().indexOf(q)>=0; });
   var row=function(x){
-    var ico=all
-      ? (x.on?"<circle cx='12' cy='12' r='9' fill='currentColor'/><path d='m8 12.5 2.7 2.7L16.2 9.6' fill='none' stroke='#fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/>"
-             :"<circle cx='12' cy='12' r='8.5' fill='none' stroke='currentColor' stroke-width='2'/>")
-      : x.on?"<path d='m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z' fill='currentColor'/>"
-      :"<path d='m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z' fill='none' stroke='currentColor' stroke-width='2' stroke-linejoin='round'/>";
     var note=all ? (isVolatile(x.league)?" \u00b7 volatile":"") : (FAVB[x.league]===1?" \u00b7 added by you":"");
-    return "<div class='fav-row'><span class='fav-nm'>"+esc(favName(x.league))+"<span class='fav-ct'>"+esc(countryOf(x.league))+
-      " \u00b7 "+x.n+" game"+(x.n===1?"":"s")+note+"</span></span>"+
-      "<button type='button' class='fav-star"+(x.on?" on":"")+"' data-fl=\""+esc(x.league)+"\" aria-pressed='"+x.on+"' aria-label='"+
-      (all?(x.on?"Leave out ":"Put back "):(x.on?"Remove ":"Add "))+esc(favName(x.league))+"'><svg viewBox='0 0 24 24' aria-hidden='true'>"+ico+"</svg></button></div>";
+    var nm="<div class='fav-row'><span class='fav-nm'>"+esc(favName(x.league))+"<span class='fav-ct'>"+esc(countryOf(x.league))+
+      " \u00b7 "+x.n+" game"+(x.n===1?"":"s")+note+"</span></span>";
+    /* All leagues: a switch, the same as Settings > Leagues (owner, 21 Oct 2026:
+       no check mark on the site). Favourites keep their star. */
+    if(all) return nm+"<button type='button' class='fav-sw' role='switch' data-fl=\""+esc(x.league)+"\" aria-checked='"+x.on+
+      "' aria-label='"+esc(favName(x.league))+", "+esc(countryOf(x.league))+"'></button></div>";
+    var ico=x.on?"<path d='m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z' fill='currentColor'/>"
+      :"<path d='m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z' fill='none' stroke='currentColor' stroke-width='2' stroke-linejoin='round'/>";
+    return nm+"<button type='button' class='fav-star"+(x.on?" on":"")+"' data-fl=\""+esc(x.league)+"\" aria-pressed='"+x.on+"' aria-label='"+
+      (x.on?"Remove ":"Add ")+esc(favName(x.league))+"'><svg viewBox='0 0 24 24' aria-hidden='true'>"+ico+"</svg></button></div>";
   };
   var on=rows.filter(function(x){ return x.on; }), off=rows.filter(function(x){ return !x.on; });
   list.innerHTML=(on.length?"<p class='fav-h'>"+(all?"In your slips":"Your favourites")+" \u00b7 "+on.length+"</p>"+on.map(row).join(""):"")+
@@ -24783,6 +24863,14 @@ function renderWizardPanel(){
     _reachLine="Your games and markets reach up to <b>×"+
       (_topReach>=100?Math.round(_topReach).toLocaleString("en"):_topReach.toFixed(2))+
       "</b> "+windowWords()+". Switch on more markets to go bigger.";
+  }
+  /* Leagues left out that would reach further: that line instead, with the way in. */
+  if(_topReach>0&&(_topReach>=1.005||_inWin)){
+    var _first=0; odds.some(function(o){ if(canReach(o)) return false; _first=o; return true; });
+    var _more=_first?moreLeaguesLine(moreReach("wiz",isJackpotOdds(_first)?1e12:JACKPOT_ODDS-1),_topReach,
+      _topReach<1.005?"Nothing on your leagues "+windowWords()+" clears the bar.":
+      "Your leagues reach up to <b>×"+(_topReach>=100?Math.round(_topReach).toLocaleString("en"):_topReach.toFixed(2))+"</b> "+windowWords()+"."):"";
+    if(_more) _reachLine=_more;
   }
   /* Named for what they change, not for a promise they cannot keep.
      "Safer, more games" was the reported-worst of the three and measurably
@@ -25298,6 +25386,14 @@ function renderBuilderOutput(){
                         : " - slide right for a lower bar, or switch on more markets.");
       sh.hidden=false;
     }else{ sh.textContent=""; sh.hidden=true; }
+  }
+  /* The Slider at its right-hand end with leagues left out: what more leagues
+     would give (moreReach). */
+  var mo=$("bldMore");
+  if(mo){
+    var _ml=(BUILD.mode==="slider"&&BUILD.risk>=99&&picks.length)
+      ? moreLeaguesLine(moreReach("sld",0),totalOdds(picks),"This is the biggest slip your leagues give "+windowWords()+".") : "";
+    mo.innerHTML=_ml; mo.hidden=!_ml;
   }
   /* NO SYNC INTO MY SLIP (owner, 7 Oct 2026). The builder used to write its
      picks into My slip on every render; now a slip goes there only through
@@ -26613,7 +26709,7 @@ load().catch(function(){});
   }
   function signedOutHere(reason,quiet){
     var had=!!readMeta(ls);
-    st.on=false; clearSynced(ls); saveRole(null); reload(); paintButton(); if(root.swAccountUI){ root.swAccountUI.close(); root.swAccountUI.closeView(); }
+    st.on=false; clearSynced(ls); saveRole(null); try{ ls.removeItem("sw.tglinked"); }catch(e){} reload(); paintButton(); if(root.swAccountUI){ root.swAccountUI.close(); root.swAccountUI.closeView(); }
     if(had&&!quiet) notice(reason==="displaced"?"Signed out: this account was used on a newer device.":"You were signed out. Sign in again to sync.");
   }
 
