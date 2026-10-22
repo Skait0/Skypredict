@@ -60,28 +60,28 @@
     },
     {
       "date": "2026-10-22",
-      "time": "12:30",
+      "time": "23:59",
       "kind": "clip",
-      "video": "/promo/promo-tour.mp4",
-      "cover": "/promo/covers/promo-tour.jpg",
-      "x": "Stop picking. Start conjuring. 🧙🔥\n\nSlide from safest to maddest. Shuffle for a new slip every tap. Convert it to your bookie.\n\nYour slip in seconds 👉 soccerwizard.live\n18+",
-      "ig": "Stop picking. Start conjuring. 🧙🔥\n\nSlide from safest to maddest. Shuffle for a new slip every tap. Convert it to your bookie.\n\nSafest or maddest, which side are you? 👇\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
-      "igVideo": "/promo/promo-tour-ig.mp4",
-      "coverMs": 64433,
-      "tgVideo": "/promo/promo-tour-tg.mp4"
+      "video": "/promo/telegram-bot.mp4",
+      "cover": "/promo/covers/telegram-bot.jpg",
+      "x": "Soccerwizard is now on Telegram. 🧙\n\nType 10. Get a booking code.\nNeed Bet9ja? One tap.\nSend any code. See every game.\nx5 to x30 every morning.\n\n👉 t.me/Soccerwizardhqbot\n18+",
+      "ig": "Soccerwizard is now on Telegram. 🧙\n\nType 10. Get a booking code.\nNeed Bet9ja? One tap.\nSend any code. See every game.\nx5 to x30 every morning.\n\nOpen the bot: t.me/Soccerwizardhqbot\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball #telegram",
+      "igVideo": "/promo/telegram-bot-ig.mp4",
+      "coverMs": 22500,
+      "note": "replaced promo-tour (old screens, green tick), owner 22 Oct 2026",
+      "hold": "22 Oct: held until the clip is rendered (owner restart pending); set back to 12:30 or later before posting"
     },
     {
       "date": "2026-10-23",
       "time": "12:30",
       "kind": "clip",
-      "video": "/promo/how-much-today.mp4",
-      "cover": "/promo/covers/how-much-today.jpg",
-      "x": "How much do you want to win today? 💰🤔\n\nx10? x100? x1000? Name it. The Wizard builds the slip. 🧙\n\nThen split it, shuffle it, book it. ⚡\n\nsoccerwizard.live\n18+",
-      "ig": "How much do you want to win today? 💰🤔\n\nx10? x100? x1000? Name it. The Wizard builds the slip. 🧙 Then split it, shuffle it, book it. ⚡\n\nDrop your number below 👇 Let's see who's bold\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
-      "igVideo": "/promo/how-much-today-ig.mp4",
-      "coverMs": 36000,
-      "buffer": "x + instagram scheduled",
-      "tgVideo": "/promo/how-much-today-tg.mp4"
+      "video": "/promo/daily-codes.mp4",
+      "cover": "/promo/covers/daily-codes.jpg",
+      "x": "Every morning, Merlin's Pick books 4 codes. 🧙\n\nx5 · x10 · x20 · x30\nThe likeliest slip at each payout.\n\nAt 11:00 the x5 code goes out here, on Instagram, Facebook and Telegram. Wizard Pass opens all four.\n\nsoccerwizard.live\n18+",
+      "ig": "Every morning, Merlin's Pick books 4 codes. 🧙\n\nx5 · x10 · x20 · x30\nThe likeliest slip at each payout.\n\nAt 11:00 the x5 code goes out on Instagram, X, Facebook and Telegram. Wizard Pass opens all four.\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball",
+      "igVideo": "/promo/daily-codes-ig.mp4",
+      "coverMs": 26300,
+      "note": "replaced how-much-today (old screens), owner 22 Oct 2026"
     },
     {
       "date": "2026-10-17",
@@ -189,7 +189,7 @@
     },
     {
       "date": "2026-10-29",
-      "time": "19:00",
+      "time": "13:30",
       "kind": "feature",
       "image": "/promo/new-prices-reminder.jpg",
       "x": "3 DAYS left at today's prices. ⏳🧙\n\nNow: Day ₦200 · Week ₦800 · Month ₦2,000\nFrom 1 Nov: ₦500 · ₦1,500 · ₦4,000\n\nBuy now. Unlimited codes from 1 Nov. 🔥\n\nsoccerwizard.live\n18+",
@@ -198,7 +198,7 @@
     },
     {
       "date": "2026-10-31",
-      "time": "19:00",
+      "time": "13:30",
       "kind": "feature",
       "image": "/promo/new-prices-reminder.jpg",
       "x": "LAST DAY at today's prices. 🚨\n\nTonight: Day ₦200 · Week ₦800 · Month ₦2,000\nTomorrow: ₦500 · ₦1,500 · ₦4,000\n\nFounding Wizards closes TONIGHT. 🧙👑\n\nsoccerwizard.live\n18+",
@@ -358,6 +358,15 @@
       "ig": "Yesterday's x5 from Merlin's Pick landed. 🧙\n\nVZ6QMG, 4 of 4:\nBayern 2-2 Arsenal\nBetis 1-0 Feyenoord\nReal Madrid 4-1 Leipzig\nLevante 3-1 Athletic\n\nPaid x5.04 on SportyBet.\n\nToday's codes: soccerwizard.live\n18+",
       "buffer": false,
       "_note": "Telegram from the queue; X/IG/FB by promo-hq/x5-won-once.cjs (owner yes 21 Oct: post the x5 win with the card)"
+    },
+    {
+      "date": "2026-10-22",
+      "time": "11:30",
+      "kind": "feature",
+      "image": "/promo/covers/safe20-2026-10-22.jpg",
+      "buffer": false,
+      "x": "Safer x20 from Merlin's Pick 🧙\n\nSportyBet Y5NEDC\n12 games today, every pick 73% or more on our model. ×20.55\n\nBet9ja 5WTMX32 · BetKing TP1MZE · Betway BW7C1359F3\n\nFirst kick-off 14:30.\nsoccerwizard.live\n18+",
+      "note": "Telegram only; X/IG/FB by safe20-once.cjs (owner 22 Oct)"
     }
   ]
 }
