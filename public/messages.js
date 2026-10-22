@@ -63,7 +63,9 @@
     ["var","var","m-pulse"],["red","red card","m-wiggle"],["whistle","whistle","m-wiggle"],["scarf","scarf","m-wave"]];
   var WIZ_RE=/^\/emo\/wiz-[a-z0-9]{1,12}\.webp$/;
   /* The Founding Wizard crest (owner, 16 Oct 2026), the one site image a message may carry beyond emoji. */
-  var FW_RE=/^\/fw\/crest(-sm)?\.webp$/;
+  /* fw-crest since 22 Oct 2026 (no crescent moons); a message sent before then names /fw/crest*.webp,
+     which no longer exists, so it is drawn with the new file. */
+  var FW_RE=/^\/fw\/(fw-)?crest(-sm)?\.webp$/;
   var GIF_RE=/^https:\/\/media\d?\.giphy\.com\/media\/[A-Za-z0-9._\-\/]{1,200}\.(gif|webp)$/;
   function unent(s){ return String(s).replace(/&nbsp;|&#160;/g," ").replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,"<").replace(/&gt;/g,">"); }
   /* A link goes to the web over https, or somewhere on our own site. */
@@ -90,7 +92,7 @@
         if(tag==="img"){ var src=unent(a.src||""), alt=esc(unent(a.alt||"").slice(0,40));
           if(EMO_RE.test(src)) out+="<img class=\"m-emo"+motOf(a["class"])+"\" src=\""+esc(src)+"\" alt=\""+alt+"\" width=\"28\" height=\"28\">";
           else if(WIZ_RE.test(src)) out+="<img class=\"m-emo m-wiz"+motOf(a["class"])+"\" src=\""+esc(src)+"\" alt=\""+alt+"\" width=\"44\" height=\"44\">";
-          else if(FW_RE.test(src)) out+="<img class=\"m-crest\" src=\""+esc(src)+"\" alt=\""+alt+"\" width=\"160\" height=\"185\">";
+          else if(FW_RE.test(src)) out+="<img class=\"m-crest\" src=\""+esc(src.replace(/^\/fw\/crest/,"/fw/fw-crest"))+"\" alt=\""+alt+"\" width=\"160\" height=\"185\">";
           else if(GIF_RE.test(src)) out+="<img class=\"m-gif\" src=\""+esc(src)+"\" alt=\""+alt+"\" loading=\"lazy\">";
           return ""; }
         if(tag==="a"){ var h=okHref(a.href||""); out+=h?"<a href=\""+esc(h)+"\""+(h.charAt(0)==="/"?"":" target=\"_blank\" rel=\"noopener nofollow\"")+">":"<a>"; return ""; }
