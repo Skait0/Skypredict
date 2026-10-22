@@ -300,7 +300,7 @@ test("feed alarms: board, results, ladder, a bookie gone quiet", () => {
   const fs = require("fs"), path = require("path");
   const social = fs.readFileSync(path.join(__dirname, "..", "api", "social.js"), "utf8");
   assert.match(social, /"alarm\|" \+ a\.id \+ "\|" \+ day/, "once a day per alarm");
-  assert.match(social, /!paused\("wins"\)/); assert.match(social, /!paused\("bigodds"\)/);
+  assert.match(social, /!paused\("wins"\)/); assert.doesNotMatch(social, /kind: "bigodds"/, "Big odds of the day stopped (22 Oct 2026)");
 });
 
 test("the code inspector reads any code with our number and the result", async () => {

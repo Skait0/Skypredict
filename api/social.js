@@ -4,14 +4,10 @@
  * Asks lib/social.js what is due this Lagos hour, posts each item to X (via
  * Buffer, BUFFER_KEY) or the Telegram channel (the bot, TELEGRAM_BOT_TOKEN),
  * and logs it in social_log - whose unique key is what stops a double post.
- * Big odds of the day (lib/bigodds.js) is minted here too, because it books
- * real codes.
- *
  * Auth as api/tgfollow.js: CRON_SECRET when set, else Vercel's cron agent.
  */
 const SB = require("../lib/supabase.js");
 const S = require("../lib/social.js");
-const BIG = require("../lib/bigodds.js");
 const L = require("../lib/ladder.js");
 const WIN = require("../lib/winpost.js");
 
@@ -101,27 +97,8 @@ module.exports = async function handler(req, res) {
   const FL = require("../lib/flags.js");
   const flags = await FL.get(now).catch(() => ({}));
   const paused = (what) => FL.pausedOn(flags, what, S.dayOf(now));
-  /* Big odds of the day: 11:00 Lagos, only on a day with enough bankers. */
-  /* ONE MINTING A DAY, EVER (code review, 24 Sep). Each channel is gated on
-     its own key, and once today's slip is stored any retry re-posts THOSE
-     codes - it never books a second set that disagrees with what one channel
-     already showed. */
-  const bigKey = (ch) => "bigodds|" + S.dayOf(now) + "|" + ch;
-  const bigDue = ["x", "tg"].filter((ch) => !posted.has(bigKey(ch)));
-  if (S.hourOf(now) === 11 && bigDue.length && !paused("bigodds")) {
-    const stored = await SB.getBigOdds(S.dayOf(now));
-    let slip = stored.ok && stored.row ? BIG.fromRow(stored.row) : null;
-    if (!slip && stored.ok && !stored.row) {
-      /* Its own slip, never the ladder's x10 (18 Oct 2026): x10 is Wizard Pass only,
-         and this one goes out on X and Telegram for everyone. Picked around the
-         ladder's games, every rung (lib/ladder.js takenGames: no game on two codes). */
-      const lad = await SB.getLadder(S.dayOf(now));
-      slip = await BIG.mint(pay, now, L.bigSkips(lad.ok ? lad.rows : []));
-      /* Stored for the site's daily codes card (/api/bigodds) before posting. */
-      if (slip) await SB.putBigOdds(slip.row);
-    }
-    if (slip) for (const ch of bigDue) items.push({ key: bigKey(ch), kind: "bigodds", channel: ch, text: slip[ch] });
-  }
+  /* Big odds of the day stopped (owner, 22 Oct 2026: "stop big odds of the day"): the
+     11:00 Merlin drop below replaces it. */
 
   /* THE DAILY CODES (owner, 22 Oct 2026: "we should drop these codes everyday"): 11:00 Lagos,
      after the 10:30 and 10:45 ladder runs, the x5 code and the other rungs' payouts
