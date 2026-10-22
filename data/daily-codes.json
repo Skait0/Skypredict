@@ -2759,5 +2759,75 @@
       "betpawa": 4
     },
     "odds": 1.45
+  },
+  "2026-10-22": {
+    "date": "2026-10-22",
+    "generated": "2026-10-22T11:27:30.854Z",
+    "firstKickoff": "2026-10-22T13:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-22",
+        "home": "Buducnost",
+        "away": "Arsenal Tivat",
+        "league": "Montenegro 1. CFL",
+        "kickoff": "2026-10-22T16:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.847,
+        "market": "1X",
+        "odd": 1.1
+      },
+      {
+        "date": "2026-10-22",
+        "home": "Trabzonspor",
+        "away": "Hearts",
+        "league": "International Clubs UEFA Conference League",
+        "kickoff": "2026-10-22T16:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.706,
+        "market": "OVER_1.5",
+        "odd": 1.11
+      },
+      {
+        "date": "2026-10-22",
+        "home": "OFI Crete",
+        "away": "Leverkusen",
+        "league": "International Clubs UEFA Europa League",
+        "kickoff": "2026-10-22T16:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.692,
+        "market": "OVER_1.5",
+        "odd": 1.11
+      },
+      {
+        "date": "2026-10-22",
+        "home": "Mornar Bar",
+        "away": "Mladost DG",
+        "league": "Montenegro 1. CFL",
+        "kickoff": "2026-10-22T13:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.839,
+        "market": "1X",
+        "odd": 1.13
+      },
+      {
+        "date": "2026-10-22",
+        "home": "Jablonec",
+        "away": "Brighton",
+        "league": "International Clubs UEFA Conference League",
+        "kickoff": "2026-10-22T16:45:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.68,
+        "market": "OVER_1.5",
+        "odd": 1.13
+      }
+    ],
+    "codes": {
+      "sporty": "YN66EH",
+      "bet9ja": "5WTWLGF",
+      "betking": "U316DZ",
+      "onexbet": "TAU4L",
+      "betway": "BW7C1772D7"
+    },
+    "odds": 1.73
   }
 }
