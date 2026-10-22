@@ -17798,7 +17798,9 @@ function saferDial(){ return SAFER_STRENGTH[BYO.saferHow]||SAFER_STRENGTH.normal
    replaces. Nearest qualifying step first (owner, 11 Oct: Over 0.5 at 1.05 on
    every game "too low"), so the slip keeps as much of its price as it can. */
 var EDIT_SAFE_MIN=0.80;
-var BOOK_SAFE=["1X","X2","12","OVER_0.5","HOME_OVER_0.5","AWAY_OVER_0.5","OVER_1.5","UNDER_3.5","UNDER_4.5"];
+/* NO UNDERS (owner, 22 Oct 2026: "keep unders out of edit for me too"), the rule Pick for me
+   and Merlin's Pick already follow: one open game sinks an Under however safe it rates. */
+var BOOK_SAFE=["1X","X2","12","OVER_0.5","HOME_OVER_0.5","AWAY_OVER_0.5","OVER_1.5"];
 function feedRowOf(l,B){
   var rows=(FEED_RAW&&FEED_RAW[B.key])||[], id=String(l&&l.eventId||"");
   for(var i=0;i<rows.length;i++) if(String(rows[i].eventId)===id) return rows[i];
@@ -17811,7 +17813,7 @@ function saferSafest(l,B,f){
     var pOld=mProb(f,from), own=f[B.odds]||{};
     if(lim!==true&&pOld!=null&&pOld>=lim) return null;
     swapOptions(f).forEach(function(o){
-      if(o.code===from||!(o.p>=EDIT_SAFE_MIN)) return;
+      if(o.code===from||!(o.p>=EDIT_SAFE_MIN)||/UNDER_/.test(o.code)) return;
       if(pOld!=null&&!(o.p-pOld>=gain)) return;
       if(!(own[o.code]>1.01)||!bookAllows(o.code,B)||bookVerdict(f,o.code,B)==="not-priced") return;
       if((o.code==="1X"||o.code==="X2")&&!dcOk(f,o.code)) return;
