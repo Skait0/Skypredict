@@ -341,3 +341,9 @@ test("the menu's Telegram row says Connected in plain words once linked, never a
   const src = require("fs").readFileSync(require("path").join(__dirname, "../public/account-ui.js"), "utf8");
   assert.ok(/lsSet\("sw\.tglinked"/.test(src), "the server's answer is kept for the next menu");
 });
+
+test("a connected Telegram row says Open bot, never Reconnect (owner, 22 Oct 2026)", () => {
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "account-ui.js"), "utf8");
+  assert.ok(src.includes('if(j.linked){ b.textContent="Open bot";'), "connected: Open bot");
+  assert.ok(!/textContent="Reconnect"/.test(src), "no Reconnect label");
+});

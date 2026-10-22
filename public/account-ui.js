@@ -260,7 +260,9 @@
       if(code!==200||!j||!j.url) return;
       b.href=j.url; b.setAttribute("data-at",String(Date.now()));
       if(j.linked!=null) lsSet("sw.tglinked",j.linked?"1":"0");
-      if(j.linked){ b.textContent="Reconnect"; if(t) t.textContent="Connected. "+tgPitch(role).replace(" too","").replace("Use","You can use"); }
+      /* "Open bot", not "Reconnect" (owner, 22 Oct 2026: it read as broken beside the menu's
+         "Connected"). The link is the same: opening it from here also re-links a stale account. */
+      if(j.linked){ b.textContent="Open bot"; if(t) t.textContent="Connected. "+tgPitch(role).replace(" too","").replace("Use","You can use"); }
     });
   }
   function grantsHtml(list){
