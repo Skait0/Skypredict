@@ -260,7 +260,12 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
              The browser's own notice that a resize spilled into the next frame;
              nothing breaks and readers see nothing. Both engines' wordings, exactly. */
           /^ResizeObserver loop limit exceeded$/,
-          /^ResizeObserver loop completed with undelivered notifications\.?$/
+          /^ResizeObserver loop completed with undelivered notifications\.?$/,
+          /* 22 Oct: Facebook's in-app browser (Android, "Facebook 540", fbclid in the link)
+             injects a keyboard logger that calls its app through a Java bridge; when the app
+             closes the bridge it throws "Error invoking enableDidUserTypeOnKeyboardLogging:
+             Java object is gone". Their script, our page - named exactly. */
+          /enableDidUserTypeOnKeyboardLogging/
         ],
         tracesSampleRate:0,          // errors only, no perf overhead
         replaysSessionSampleRate:0,

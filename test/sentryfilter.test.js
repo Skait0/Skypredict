@@ -37,7 +37,15 @@ const HTML = fs.readFileSync(
    deliberate act; widening a pattern is not. */
 const SILENCED = ["CONFIG", "currentInset", "webkit",
   /* 22 Oct 2026: the browser's own resize notice, not injected script, harmless. */
-  "ResizeObserver"];
+  "ResizeObserver",
+  /* 22 Oct 2026: Facebook's in-app browser's keyboard logger losing its Java bridge. */
+  "enableDidUserTypeOnKeyboardLogging"];
+
+test("Facebook's in-app keyboard logger is dropped, and only it", () => {
+  const drops = (m) => ignorePatterns().some((re) => re.test(m));
+  assert.ok(drops("Error invoking enableDidUserTypeOnKeyboardLogging: Java object is gone"));
+  assert.strictEqual(drops("Error invoking showCode: Java object is gone"), false);
+});
 
 test("the ResizeObserver notice is dropped, in both engines' words", () => {
   const drops = (m) => ignorePatterns().some((re) => re.test(m));
