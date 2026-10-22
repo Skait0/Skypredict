@@ -11,7 +11,9 @@ test("each locked entry point asks swGate first", () => {
   assert.match(fnBody("bookMy"), /^\s*if\(window\.swGate&&!swGate\("book",/);
   assert.match(fnBody("splitAndBook"), /^\s*if\(window\.swGate&&!swGate\("book",/);
   assert.match(fnBody("openSlipsSheet"), /^\s*if\(window\.swGate&&!swGate\("slips",null,function\(\)\{openSlipsSheet\(filter\);\},"slips"\)\) return;/);
-  assert.match(html, /\$\("tab-build"\)\.addEventListener\("click",function\(\)\{if\(window\.swGate&&!swGate\("build",null,function\(\)\{setView\("build"\);\},"build"\)\) return; setView\("build"\);\}\);/);
+  /* Both Build tabs go through askHowToBuild (22 Oct 2026), which walls first. */
+  assert.match(html, /function askHowToBuild\(\)\{ if\(window\.swGate&&!swGate\("build",null,askHowToBuild,"build"\)\) return; openBuildChooser\(/);
+  assert.match(html, /\$\("tab-build"\)\.addEventListener\("click",askHowToBuild\);/);
   assert.match(html, /if\(window\.swGate&&!swGate\("book",null,function\(\)\{go\.click\(\);\},""\)\) return;\s*BYO\._booking=true;/);
 });
 

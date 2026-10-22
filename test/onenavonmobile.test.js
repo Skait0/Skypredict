@@ -183,11 +183,9 @@ test("the chips keep their row and the button rides it", () => {
     "the button must be a sibling of #cats, never a child");
 });
 
-test("the Build tab opens the four-builder chooser, not the last builder (owner, 22 Oct 2026)", () => {
-  const fs = require("fs"), path = require("path");
-  const index = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
-  const h = /\$\("bt-build"\)\.addEventListener\("click",function\(\)\{([\s\S]{0,260}?)\}\);/.exec(index);
-  assert.ok(h, "Build tab handler found");
-  assert.match(h[1], /openBuildChooser\(/, "asks how");
-  assert.doesNotMatch(h[1], /^navBuzz\(\);setView\("build"\)/, "does not jump straight to a builder");
+test("both Build tabs open the four-builder chooser, not the last builder (owner, 22 Oct 2026)", () => {
+  /* There is no other way back to the chooser once a builder is open (owner). */
+  assert.ok(idx.includes("function askHowToBuild(){ if(window.swGate&&!swGate(\"build\",null,askHowToBuild,\"build\")) return; openBuildChooser("), "asks how");
+  assert.ok(idx.includes('$("tab-build").addEventListener("click",askHowToBuild);'), "desktop tab");
+  assert.ok(idx.includes('$("bt-build").addEventListener("click",function(){navBuzz();askHowToBuild();});'), "mobile tab");
 });

@@ -22334,14 +22334,16 @@ window.addEventListener("load",function(){ setTimeout(adminBadge,2500); });
 setInterval(function(){ if(!document.hidden) adminBadge(); },5*60*1000);
 document.addEventListener("visibilitychange",function(){ if(!document.hidden) adminBadge(); });
 $("tab-live").addEventListener("click",function(){setView("live");});
-$("tab-build").addEventListener("click",function(){if(window.swGate&&!swGate("build",null,function(){setView("build");},"build")) return; setView("build");});
+/* The Build tabs ask how, like Build me a slip (owner, 22 Oct 2026: they reopened the last builder, so
+   Pick for me and Merlin's Pick never showed, and nothing else leads back to the chooser). Slider and
+   Wizard still open the builder page. The sign-in wall comes first, as it did for the desktop tab. */
+function askHowToBuild(){ if(window.swGate&&!swGate("build",null,askHowToBuild,"build")) return; openBuildChooser(function(mode){
+  try{localStorage.setItem("sw.mode",mode);}catch(e){} BUILD.mode=mode; setView("build"); }); }
+$("tab-build").addEventListener("click",askHowToBuild);
 $("liveRefresh").addEventListener("click",fetchLive);
 $("bt-pred").addEventListener("click",function(){navBuzz();setView("pred");});
 $("bt-live").addEventListener("click",function(){navBuzz();setView("live");});
-/* The Build tab asks how, like Build me a slip (owner, 22 Oct 2026: it reopened the last builder, so
-   Pick for me and Merlin's Pick never showed). Slider and Wizard still open the builder page. */
-$("bt-build").addEventListener("click",function(){navBuzz();openBuildChooser(function(mode){
-  try{localStorage.setItem("sw.mode",mode);}catch(e){} BUILD.mode=mode; setView("build"); });});
+$("bt-build").addEventListener("click",function(){navBuzz();askHowToBuild();});
 /* THE CONVERTER HAS A WAY IN NOW. It sits at the foot of the builder, which is
    two taps and a scroll from anywhere, and the owner has said twice they could
    not find it. It is not a view of its own - it is one panel inside the
