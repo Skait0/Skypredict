@@ -113,7 +113,7 @@
     "<p>The crystal ball is warm and today's board is live. Here is how to make it work for you:</p><ul>"+
     "<li><b>Read the board.</b> Every game gets our chance on every market, worked out from real results. The higher the %, the stronger the pick.</li>"+
     "<li><b>Build a slip.</b> Tap the picks you like, or let <b>Build me a slip</b> pick for you, and choose how safe you want it.</li>"+
-    "<li><b>Book it in one tap.</b> Get a booking code for SportyBet, Bet9ja, BetKing, betPawa, 1xBet or Betway. Got a code already? Paste it in the converter and move it to another bookie.</li>"+
+    "<li><b>Book it in one tap.</b> Get a booking code for SportyBet, Bet9ja, BetKing, betPawa, 1xBet, Betway or MSport. Got a code already? Paste it in the converter and move it to another bookie.</li>"+
     "<li><b>Edit for me.</b> One tap swaps a risky leg for a safer bet on the same game.</li>"+
     "<li><b>Follow it live.</b> Your slips track themselves and tell you when they land "+emo("1f389","party")+"</li></ul>"+
     "<p><b><span class=\"m-glow\">Why the Wizard?</span></b> Our picks are numbers, not vibes. We show our record every day, wins and losses, so you always know how we are doing. Six bookies, one place, free.</p>"+
@@ -811,7 +811,7 @@
       card.innerHTML="<p class='swa-note'>Loading...</p>";
       a.req("GET","/api/account/reader?id="+encodeURIComponent(id),null,function(code,r){
         if(code!==200||!r||!r.found){ card.innerHTML="<p class='swa-note'>"+(code===404?"That account no longer exists.":"Could not load this user.")+"</p>"; return; }
-        var BOOK={sporty:"SportyBet",bet9ja:"Bet9ja",betking:"BetKing",betpawa:"betPawa",onexbet:"1xBet",betway:"Betway"};
+        var BOOK={sporty:"SportyBet",bet9ja:"Bet9ja",betking:"BetKing",betpawa:"betPawa",onexbet:"1xBet",betway:"Betway",msport:"MSport"};
         var devs=(r.devices||[]).map(function(x){ return esc((x.label||"Device")+" · "+ago(x.last_used_at)); }).join("<br>")||"None";
         var codes=r.codes==null?"Free users' codes are counted by device, not account.":
           (r.codes.length?r.codes.map(function(c){ return esc(c.code+" · "+(BOOK[c.book]||c.book)+" · "+c.status+" · "+ago(c.created_at)); }).join("<br>"):"No codes yet.");

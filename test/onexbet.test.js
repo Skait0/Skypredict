@@ -23,7 +23,7 @@ test("BOOKS.onexbet opens their slip by code", () => {
 });
 
 test("the book sits in the site-wide order and the feed loader", () => {
-  assert.match(src, /var ORDER=\["sporty","bet9ja","betking","betpawa","onexbet"(,"betway")?\]/);
+  assert.match(src, /var ORDER=\["sporty","bet9ja","betking","betpawa","onexbet"(,"betway")?(,"msport")?\]/);
   assert.match(src, /k==="onexbet"\?loadOnexbet/);
   assert.match(src, /function loadOnexbet\(\)\{ return loadSecondBook\(ONEXBET_FIXTURES,BOOKS\.onexbet\); \}/);
 });
@@ -105,7 +105,7 @@ test("the corners chip never hands 1xBet a line it does not sell", () => {
   /* Review I2: 1xBet's total-corners card runs 8.5-11.5 (verified absent at
      7.5 on eight deep cards), and the corners chip offers 7.5-10.5. */
   const ONLY = new Function("return " + src.match(/var BOOK_ONLY=(\{[\s\S]*?\});/)[1] + ";")();
-  assert.deepStrictEqual([].concat(ONLY["CORNERS_OV_7.5"]).sort(), ["bet9ja", "betking", "betpawa", "sporty"]);
+  assert.deepStrictEqual([].concat(ONLY["CORNERS_OV_7.5"]).sort(), ["bet9ja", "betking", "betpawa", "msport", "sporty"]);
 });
 
 test("the bot's converter and the page agree on which books sell whole lines", () => {

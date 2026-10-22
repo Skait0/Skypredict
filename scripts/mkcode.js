@@ -98,6 +98,7 @@ const FEEDS = {
   betpawa: "/api/betpawa/fixtures",
   onexbet: "/api/onexbet/fixtures",
   betway: "/api/betway/fixtures",
+  msport: "/api/msport/fixtures",
 };
 
 async function events(which) {
@@ -327,9 +328,15 @@ if (require.main === module) (async () => {
     console.log("betway fixtures: " + e.message + " - publishing without it");
     return [];
   });
+  /* MSPORT, LAST OF ALL, ON THE SAME ADDITIVE TERMS (22 Oct 2026): its ids are Sportradar's,
+     so every leg pairs by srId; any failure costs MSport the day and nothing else. */
+  const mp = await events("msport").catch((e) => {
+    console.log("msport fixtures: " + e.message + " - publishing without it");
+    return [];
+  });
   console.log(`feeds: ${sporty.length} SportyBet events, ${b9.length} Bet9ja events, ` +
               `${bk.length} BetKing events, ${bp.length} Betpawa events, ${xb.length} 1xBet events, ` +
-              `${wy.length} Betway events`);
+              `${wy.length} Betway events, ${mp.length} MSport events`);
 
   /* Most confident FIRST BY THE MARKET-LED NUMBER, the one the site shows. */
   pool.sort((a, b) => blendedConf(b, findEvent(b, sporty)) - blendedConf(a, findEvent(a, sporty)));
@@ -342,13 +349,14 @@ if (require.main === module) (async () => {
     const s = findEvent(f, sporty), sr = srOf(s), b = findEvent(f, b9, sr);
     if (!s || !b) continue;
     const k = findEvent(f, bk, sr), w = findEvent(f, bp, sr), x = findEvent(f, xb, sr),
-          y = findEvent(f, wy, sr);
+          y = findEvent(f, wy, sr), z = findEvent(f, mp, sr);
     const market = M.tipCode(f);
     picked.push({ f: f, sporty: s.eventId, bet9ja: b.eventId,
                   betking: k ? k.eventId : null,
                   betpawa: w ? w.eventId : null,
                   onexbet: x ? x.eventId : null,
-                  betway: y ? y.eventId : null, market: market,
+                  betway: y ? y.eventId : null,
+                  msport: z ? z.eventId : null, market: market,
                   odd: legOdd(s, market) });
   }
   if (picked.length < legs) {
@@ -418,14 +426,15 @@ if (require.main === module) (async () => {
       const f = spare.shift();
       const sp = findEvent(f, sporty), spr = srOf(sp), bb = findEvent(f, b9, spr),
             kk = findEvent(f, bk, spr), ww = findEvent(f, bp, spr), xx = findEvent(f, xb, spr),
-            yy = findEvent(f, wy, spr);
+            yy = findEvent(f, wy, spr), zz = findEvent(f, mp, spr);
       if (sp && bb) {
         const market = M.tipCode(f);
         working.push({ f: f, sporty: sp.eventId, bet9ja: bb.eventId,
                        betking: kk ? kk.eventId : null,
                        betpawa: ww ? ww.eventId : null,
                        onexbet: xx ? xx.eventId : null,
-                       betway: yy ? yy.eventId : null, market: market,
+                       betway: yy ? yy.eventId : null,
+                       msport: zz ? zz.eventId : null, market: market,
                        odd: legOdd(sp, market) });
       }
     }
@@ -446,7 +455,7 @@ if (require.main === module) (async () => {
    * priced all five picks each day. If that stops being true the log line
    * below is where it shows.
    *
-   * Betpawa, 1xBet and Betway join on exactly BetKing's terms.
+   * Betpawa, 1xBet, Betway and MSport join on exactly BetKing's terms.
    *
    * THEY TAKE WHAT THEY CAN (owner, 13 Oct 2026). All-or-nothing cost betPawa
    * and 1xBet the 13 Oct code over one unpriced Over 1.5 each, and 1xBet the
@@ -455,7 +464,7 @@ if (require.main === module) (async () => {
    * fewer than legs-1 - and short[book] tells every page and post it holds
    * fewer games than the slip. */
   const short = {};
-  for (const bk of ["betking", "betpawa", "onexbet", "betway"]) {
+  for (const bk of ["betking", "betpawa", "onexbet", "betway", "msport"]) {
     let sel = working.filter((p) => p[bk]);
     let out = { ok: false, why: `${sel.length} of ${working.length} legs on its feed` };
     for (let go = 0; go < 2 && sel.length >= working.length - 1; go++) {
@@ -495,7 +504,7 @@ if (require.main === module) (async () => {
   };
   console.log(`sporty: ${codes.sporty || "-"}   bet9ja: ${codes.bet9ja || "-"}   ` +
               `betking: ${codes.betking || "-"}   betpawa: ${codes.betpawa || "-"}   ` +
-              `onexbet: ${codes.onexbet || "-"}   betway: ${codes.betway || "-"}`);
+              `onexbet: ${codes.onexbet || "-"}   betway: ${codes.betway || "-"}   msport: ${codes.msport || "-"}`);
 
   /* --dry was declared at the top of this file, documented in the usage line,
      and never read - so a "dry" run booked two real slips and wrote the file

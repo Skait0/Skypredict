@@ -304,10 +304,10 @@ test("each book carries its own limit, and the 40-game books are 40", () => {
   const i = src.indexOf("var BOOKS={");
   const books = new Function(
     'var BOOK_URL="",SPORTY_URL="",B9_URL="",B9_BOOK_URL="",BK_URL=null,BK_BOOK_URL="",' +
-    'BP_URL=null,BP_BOOK_URL="",XB_URL="",XB_BOOK_URL="",WY_URL="",WY_BOOK_URL="";' +
+    'BP_URL=null,BP_BOOK_URL="",XB_URL="",XB_BOOK_URL="",WY_URL="",WY_BOOK_URL="",MP_URL="",MP_BOOK_URL="";' +
     src.slice(i, src.indexOf("\n};", i) + 3) + "\nreturn BOOKS;")();
   const max = Object.fromEntries(Object.keys(books).map((k) => [k, books[k].max]));
-  assert.deepStrictEqual(max, { sporty: 50, bet9ja: 50, betking: 40, betpawa: 50, onexbet: 50, betway: 40 });
+  assert.deepStrictEqual(max, { sporty: 50, bet9ja: 50, betking: 40, betpawa: 50, onexbet: 50, betway: 40, msport: 50 });
   const slipMax = new Function("BETSLIP_MAX", body("slipMax") + "\nreturn slipMax;")(50);
   assert.strictEqual(slipMax(books.betway), 40);
   assert.strictEqual(slipMax({}), 50, "a book with no limit falls back to 50");

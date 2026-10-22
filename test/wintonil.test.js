@@ -94,7 +94,8 @@ test("it is a pick and a chip, off by default, never the board's tip, and 1xBet 
   assert.ok(src.includes('opt(esc(f.home)+" won\'t win to nil",mProb(f,"WTN_H_N"),false,"WTN_H_N",id)'));
   assert.match(src, /\{k:"wtn", label:"Win to nil: No", tier:0,/);
   assert.strictEqual((src.match(/nr3:false,wtn:false,/g) || []).length, 2, "off in the Slider and the Wizard");
-  assert.match(src, /"WTN_H_N":\["sporty","bet9ja","betking","betpawa","betway"\]/, "1xBet does not sell it");
+  /* MSport priced it on its eight deepest cards (22 Oct 2026). */
+  assert.match(src, /"WTN_H_N":\["sporty","bet9ja","betking","betpawa","betway","msport"\]/, "1xBet does not sell it");
   const build = fs.readFileSync(path.join(__dirname, "..", "lib", "build.js"), "utf8");
   assert.doesNotMatch(build, /WTN_/, "the build never makes it a tip");
 });

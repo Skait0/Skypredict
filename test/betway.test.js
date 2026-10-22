@@ -29,7 +29,7 @@ test("BOOKS.betway opens their slip by code", () => {
 });
 
 test("the book sits in the site-wide order and the feed loader", () => {
-  assert.match(src, /var ORDER=\["sporty","bet9ja","betking","betpawa","onexbet","betway"\]/);
+  assert.match(src, /var ORDER=\["sporty","bet9ja","betking","betpawa","onexbet","betway","msport"\]/);
   assert.match(src, /k==="betway"\?loadBetway/);
   assert.match(src, /function loadBetway\(\)\{ return loadSecondBook\(BETWAY_FIXTURES,BOOKS\.betway\); \}/);
 });
@@ -73,7 +73,7 @@ test("every wordmark selector list that names betPawa names Betway", () => {
 });
 
 test("the entry screen names Betway (owner-facing first screen, missed by the sweep, caught driving the page)", () => {
-  assert.match(src, /<p class="sw-g-sub">[^<]*(?:<[^>]+>[^<]*)*<span class="wym">betway<\/span> code\.<\/p>/);
+  assert.match(src, /<p class="sw-g-sub">[^<]*(?:<[^>]+>[^<]*)*<span class="wym">betway<\/span> or <span class="mpm">MSport<\/span> code\.<\/p>/);
 });
 
 test("the header cycle, the builder and the code card carry Betway", () => {

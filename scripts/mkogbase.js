@@ -173,9 +173,11 @@ function advanceOf(ctx, font) {
       ["Bet", "#f2f1f0", NAME], ["King", "#ffc400", NAME], [", ", null],
       ["bet", "#f2f1f0", NAME], ["Pawa", "#9ce800", NAME], [", ", null],
       /* 1xBet, 29 Sep 2026: white "1X" and "BET" in the accent off their logo. */
-      ["1X", "#f2f1f0", NAME], ["BET", "#14a0ff", NAME], [" or ", null],
+      ["1X", "#f2f1f0", NAME], ["BET", "#14a0ff", NAME], [", ", null],
       /* Betway, 14 Oct 2026: one lowercase word, white on their black. */
-      ["betway", "#f2f1f0", NAME], [" code in one tap", null],
+      ["betway", "#f2f1f0", NAME], [" or ", null],
+      /* MSport, 22 Oct 2026: capitals in their one yellow, off their logo. */
+      ["MSPORT", "#ffca27", NAME], [" code in one tap", null],
     ];
     const fontOf = (s) => s[2] || STYLES.leagues.font;
     let total = 0;

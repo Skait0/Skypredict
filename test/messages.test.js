@@ -44,7 +44,7 @@ test("clean() keeps the editor's formatting and drops everything that could run"
 
 test("the welcome is wizardy, survives clean(), and follows the voice rules", () => {
   assert.strictEqual(M.clean(M.WELCOME), M.WELCOME);
-  assert.match(M.textOf(M.WELCOME), /Welcome[\s\S]*Build me a slip[\s\S]*SportyBet, Bet9ja, BetKing, betPawa, 1xBet or Betway[\s\S]*Telegram or X[\s\S]*18\+/);
+  assert.match(M.textOf(M.WELCOME), /Welcome[\s\S]*Build me a slip[\s\S]*SportyBet, Bet9ja, BetKing, betPawa, 1xBet, Betway or MSport[\s\S]*Telegram or X[\s\S]*18\+/);
   assert.doesNotMatch(M.WELCOME, /—|load am/i);
 });
 
