@@ -93,7 +93,7 @@
      thank-you on the plan card, kept for good like the badge. No number yet (the
      database has not said) still shows the honour. */
   function fwHtml(no){
-    return "<div class='swa-fwseal'><img src='/fw/crest-sm.webp' alt='Founding Wizard crest' width='80' height='92'>"+
+    return "<div class='swa-fwseal'><img src='/fw/fw-crest-sm.webp' alt='Founding Wizard crest' width='80' height='92'>"+
       "<span><b>Founding Wizard</b><small>"+(no?"No. "+esc(no)+" of the first 200. ":"")+"With thanks for being one of the first.</small></span></div>";
   }
   /* THE FAMILY & FRIENDS CREST (owner, 18 Oct 2026: "special electric badge for family and

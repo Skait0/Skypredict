@@ -133,7 +133,7 @@
   /* WELCOME, FOUNDING WIZARD (owner, 16 Oct 2026): sent once, when someone's first
      founder pass is paid (api/pay.js). The crest leads, like the gift box. */
   function founderHtml(no){
-    return "<p><img src=\"/fw/crest.webp\" alt=\"Founding Wizard crest\"></p>"+
+    return "<p><img src=\"/fw/fw-crest.webp\" alt=\"Founding Wizard crest\"></p>"+
       "<h3 class=\"m-big m-gold\">Welcome, Founding Wizard"+(no?" No. "+no:"")+"</h3>"+
       "<p>You are one of the first 200 to back Soccerwizard, and we will not forget it. "+
       "Your Founding Wizard crest is on your profile for good, and your first three month passes stay at the founders' price.</p>"+
