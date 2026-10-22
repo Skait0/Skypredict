@@ -117,9 +117,9 @@ module.exports = async function handler(req, res) {
     const cardUrl = SITE + "/api/slipcard?d=" + S.dayOf(now);
     const card = text && (await fetch(cardUrl).then((r) => r.ok).catch(() => false)) ? cardUrl : null;
     if (text) for (const ch of ladDue) {
-      if (ch !== "ig") items.push({ key: ladKey(ch), kind: "ladder", channel: ch, text, image: card });
+      if (ch !== "ig") items.push({ key: ladKey(ch), kind: "ladder", channel: ch, text: S.signed(text, ch), image: card });
       else if (card) items.push({ key: ladKey(ch), kind: "ladder", channel: ch, image: card,
-        text: text.replace("All six bookies: soccerwizard.live", "All six bookies: soccerwizard.live (link in bio)") +
+        text: S.signed(text, ch).replace("All six bookies: soccerwizard.live", "All six bookies: soccerwizard.live (link in bio)") +
           "\n\n#football #bookingcode #sportybet #naijafootball" });
     }
   }
@@ -138,7 +138,7 @@ module.exports = async function handler(req, res) {
       if (row) await SB.putBigOdds(row);
     }
     const text = row && SAFE.post(row);
-    if (text) for (const ch of safeDue) items.push({ key: safeKey(ch), kind: "safe20", channel: ch, text });
+    if (text) for (const ch of safeDue) items.push({ key: safeKey(ch), kind: "safe20", channel: ch, text: S.signed(text, ch) });
   }
   /* ...and its result the next morning, a win or a loss, from 10:00 until every game has a final score. */
   const yday = S.dayOf(now - 864e5), resKey = (ch) => "safe20res|" + yday + "|" + ch;

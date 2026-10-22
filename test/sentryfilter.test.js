@@ -35,7 +35,16 @@ const HTML = fs.readFileSync(
 /* The identifiers we have agreed to drop, each one traced to an in-app
    browser injecting script into our page. Adding to this list is the
    deliberate act; widening a pattern is not. */
-const SILENCED = ["CONFIG", "currentInset", "webkit"];
+const SILENCED = ["CONFIG", "currentInset", "webkit",
+  /* 22 Oct 2026: the browser's own resize notice, not injected script, harmless. */
+  "ResizeObserver"];
+
+test("the ResizeObserver notice is dropped, in both engines' words", () => {
+  const drops = (m) => ignorePatterns().some((re) => re.test(m));
+  assert.ok(drops("ResizeObserver loop limit exceeded"));
+  assert.ok(drops("ResizeObserver loop completed with undelivered notifications."));
+  assert.strictEqual(drops("TypeError: ResizeObserver is not a constructor"), false);
+});
 
 /* The array as the browser actually receives it. */
 function ignorePatterns() {

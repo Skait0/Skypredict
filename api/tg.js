@@ -197,7 +197,7 @@ async function onConvert(cq) {
     esc((s.leg.home || "") + " v " + (s.leg.away || "")) + " (" + esc(s.why) + ")").join("; ") +
     (stuck.length > 4 ? "; +" + (stuck.length - 4) + " more" : ""));
   if ((r.changed || []).length) out.push("Line moved to what " + D.BOOK_NAMES[to] + " sells on " + r.changed.length + " leg" + (r.changed.length === 1 ? "" : "s") + ".");
-  out.push("", leftLine(q, 1), "<i>18+</i>");
+  out.push("", leftLine(q, 1), BYLINE, "<i>18+</i>");
   await say(out.join("\n"), { inline_keyboard: [ASK.voteRow("convert")] });
 }
 
@@ -244,6 +244,11 @@ const xOdds = (o) => "×" + (o >= 100 ? Math.round(o).toLocaleString("en") : o.t
 const legNames = (ls, n) => ls.slice(0, n).map((l) => esc((l.home || "?") + " v " + (l.away || "?"))).join("; ") +
   (ls.length > n ? "; +" + (ls.length - n) + " more" : "");
 const pc = (p) => Math.round(p * 100) + "%";
+/* "Over 1.5 goals" alone names no game: add the match when the label carries no team (as lib/follow.js). */
+const legLine = (l) => { const n = D.label(l);
+  return l.home && !n.includes(l.home) && !n.includes(l.away) ? n + " (" + l.home + " v " + l.away + ")" : n; };
+/* Our sign-off under every code the bot hands out (owner, 22 Oct 2026; lib/social.js SIG). */
+const BYLINE = "🧙 <i>" + require("../lib/social.js").SIG + "</i>";
 const TO_SITE = (book, code, go) => SITE + "/?book=" + book + "&code=" + code + (go ? "&go=" + go : "");
 async function fixtures() {
   const pay = await (await fetch(SITE + "/predictions.json")).json().catch(() => ({}));
@@ -298,7 +303,7 @@ async function onAsk(msg, ask, book, code, legs) {
     await say(out.join("\n"), toolButtons(book, r.code, JOB_OF[ask.kind]));
     return true;
   };
-  const tail = (k) => leftLine(q, k) + "\n<i>18+</i>";
+  const tail = (k) => leftLine(q, k) + "\n" + BYLINE + "\n<i>18+</i>";
 
   if (ask.kind === "saferDo") {
     const plan = await saferPlan(book, legs);
@@ -403,12 +408,12 @@ async function onToday(msg, ask) {
     "<code>" + r.code + "</code> · " + r.booked.length + " games" + (r.odds ? " · <b>" + xOdds(r.odds) + "</b>" : ""), ""];
   for (const x of r.booked) {
     const p = byLeg.get(x.leg);
-    lines.push(esc(D.label(x.leg)) + (p ? " · <b>" + pc(p) + "</b>" : ""));
+    lines.push(esc(legLine(x.leg)) + (p ? " · <b>" + pc(p) + "</b>" : ""));
   }
   const l = q.left(1);
   lines.push("", (l != null && q.plan !== "admin" ? "⚡ " + l + (q.plan === "trial" ? " trial code" : " code") + (l === 1 ? "" : "s") +
     (q.plan === "trial" ? " left. " : " left today. ") : "") +
-    "Every graded code on <a href=\"" + SITE + "/booking-codes\">soccerwizard.live</a>", "<i>Estimates, not certainties. 18+</i>");
+    "Every graded code on <a href=\"" + SITE + "/booking-codes\">soccerwizard.live</a>", BYLINE, "<i>Estimates, not certainties. 18+</i>");
   await say(lines.join("\n"), toolButtons(book, r.code, "today"));
 }
 
@@ -483,10 +488,10 @@ async function onBuild(chat, replyTo, fromId, book, target, nth) {
   const lines = ["🧙 <b>Picked for you: x" + target + " on " + D.BOOK_NAMES[book] + "</b> 🔥",
     ...(later ? ["Not enough games left today, so this one runs into the coming days."] : []),
     "<code>" + r.code + "</code> · " + r.booked.length + " games" + (r.odds ? " · <b>" + xOdds(r.odds) + "</b>" : ""), ""];
-  for (const x of r.booked.slice(0, 8)) lines.push(esc(D.label(x.leg)) + (x.leg.p ? " · <b>" + pc(x.leg.p) + "</b>" : ""));
+  for (const x of r.booked.slice(0, 8)) lines.push(esc(legLine(x.leg)) + (x.leg.p ? " · <b>" + pc(x.leg.p) + "</b>" : ""));
   if (r.booked.length > 8) lines.push("+" + (r.booked.length - 8) + " more");
   if ((r.stuck || []).length) lines.push("⚠️ " + D.BOOK_NAMES[book] + " refused " + legNames(r.stuck.map((x) => x.leg), 3));
-  lines.push("", leftLine(q, 1), "<i>Estimates, not certainties. 18+</i>");
+  lines.push("", leftLine(q, 1), BYLINE, "<i>Estimates, not certainties. 18+</i>");
   const tools = toolButtons(book, r.code, "pick");
   tools.inline_keyboard.unshift([{ text: "🔁 Another x" + target, callback_data: ["bd", book, target, (nth || 0) + 1].join("|") }]);
   await say(lines.join("\n"), tools);
@@ -540,7 +545,7 @@ async function onMerge(msg, codes, hint) {
     (stuck.length > 4 ? "; +" + (stuck.length - 4) + " more" : ""));
   if ((m.changed || []).length) out.push("Line moved to what " + B + " sells on " + m.changed.length + " leg" + (m.changed.length === 1 ? "" : "s") + ".");
   if (notRead) out.push(notRead);
-  out.push("", leftLine(q, 1), "<i>18+</i>");
+  out.push("", leftLine(q, 1), BYLINE, "<i>18+</i>");
   await say(out.join("\n"), toolButtons(to, r.code, "merge"));
 }
 /* CHECK MY TICKET (SportyClaw review, 20 Oct 2026; lib/ticket.js): every leg against the scores
@@ -593,7 +598,7 @@ async function onLadder(chat, replyTo, fromId, book) {
     else lines.push(head + " · 🔒 Wizard Pass");
   }
   if (!pass) lines.push("", "Every rung comes with Wizard Pass. " + plusLine());
-  lines.push("<i>18+</i>");
+  lines.push(BYLINE, "<i>18+</i>");
   await say(lines.join("\n"));
 }
 /* Every button's tap, by its first word. Choices open in place; actions read the code fresh. */

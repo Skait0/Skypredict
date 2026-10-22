@@ -255,7 +255,12 @@ document.documentElement.setAttribute("data-theme",t||"dark");})();
              in one. Named exactly, per the rule above. */
           /Can't find variable: currentInset\b/,
           /\bcurrentInset is not defined\b/,
-          /window\.webkit\.messageHandlers/
+          /window\.webkit\.messageHandlers/,
+          /* 22 Oct: "ResizeObserver loop limit exceeded" (one reader, chatgpt.com link).
+             The browser's own notice that a resize spilled into the next frame;
+             nothing breaks and readers see nothing. Both engines' wordings, exactly. */
+          /^ResizeObserver loop limit exceeded$/,
+          /^ResizeObserver loop completed with undelivered notifications\.?$/
         ],
         tracesSampleRate:0,          // errors only, no perf overhead
         replaysSessionSampleRate:0,
