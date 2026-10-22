@@ -767,8 +767,7 @@ module.exports = async function handler(req, res) {
     if (!deep && /^\/help\b/i.test(msg.text)) { await say(HELLO); return res.status(200).json({ ok: true }); }
     const menu = deep ? null : ASK.parseMenu(msg.text);
     if (menu) {
-      if (menu.kind === "menuConvert") await askConvert(chat, msg.message_id, menu.book);
-      else if (menu.kind === "tool") await tg("sendMessage", { chat_id: chat, reply_to_message_id: msg.message_id,
+      if (menu.kind === "tool") await tg("sendMessage", { chat_id: chat, reply_to_message_id: msg.message_id,
         text: ASK.TOOL_ASK[menu.tool] + " Any bookie.", reply_markup: { force_reply: true, input_field_placeholder: "Paste the code here" } });
       else if (menu.kind === "menuBuild") await onBuildMenu(chat, msg.message_id, menu.book);
       else if (menu.kind === "yday") {
@@ -836,6 +835,12 @@ module.exports = async function handler(req, res) {
     }
     /* A code sent in answer to a tool's question goes straight to that tool. */
     if (toolTo === "safer" || (ask && ask.kind === "safer")) { await onSaferAsk(chat, msg.message_id, used, code, legs); return res.status(200).json({ ok: true }); }
+    if (toolTo === "convert") {
+      await tg("sendMessage", { chat_id: chat, reply_to_message_id: msg.message_id, parse_mode: "HTML",
+        text: "🔁 <b>Convert " + code + "</b> - " + legs.length + " games on " + D.BOOK_NAMES[used] + ". To which bookie?",
+        reply_markup: choiceButtons("cx", used, code) });
+      return res.status(200).json({ ok: true });
+    }
     if (toolTo === "trim" || toolTo === "split") {
       await tg("sendMessage", { chat_id: chat, reply_to_message_id: msg.message_id, parse_mode: "HTML",
         text: (toolTo === "trim" ? "✂️ <b>Trim " + code + "</b> - " + legs.length + " games. To what odds?\nWe keep the games our model likes best."

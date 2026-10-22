@@ -195,14 +195,21 @@ test("a bare number asks which bookie before it books anything", async () => {
 test("Convert has its own button, command and link, and the answer goes to the bookie asked for", async () => {
   /* Owner, 19 Oct 2026: "its the most used, it should have its own link". */
   const kb = ASK.menuKeyboard("bet9ja");
-  assert.strictEqual(kb.keyboard[0][0].text, "🔁 Convert a code to Bet9ja", "first in the menu");
-  assert.deepStrictEqual(ASK.parseMenu("🔁 Convert a code to Bet9ja"), { kind: "menuConvert", book: "bet9ja" });
+  /* Owner, 22 Oct 2026: "to Bet9ja" read as the only bookie it does, so no bookie in the label. */
+  assert.strictEqual(kb.keyboard[0][0].text, "🔁 Convert a code", "first in the menu");
+  assert.deepStrictEqual(ASK.parseMenu("🔁 Convert a code"), { kind: "tool", tool: "convert" });
+  assert.deepStrictEqual(ASK.parseMenu("🔁 Convert a code to Bet9ja"), { kind: "tool", tool: "convert" }, "old keyboards");
   assert.strictEqual(ASK.convertTarget(ASK.CONVERT_ASK + "Bet9ja. Any bookie, any size."), "bet9ja");
   const b = bot();
   try {
-    await b.send("🔁 Convert a code to Bet9ja");
+    await b.send("🔁 Convert a code");
     const ask = b.sent.filter((s) => s.method === "sendMessage").pop().body;
     assert.ok(ask.reply_markup.force_reply, "asks for the code");
+    await b.tg({ message: { message_id: 7, from: { id: 42 }, chat: { id: 42, type: "private" }, text: "HUW6YC",
+      reply_to_message: { text: ask.text } } });
+    const which = b.sent.filter((s) => s.method === "sendMessage").pop().body;
+    assert.match(which.text, /To which bookie/);
+    assert.ok(which.reply_markup.inline_keyboard.flat().filter((k) => /^cv\|/.test(k.callback_data)).length >= 4, "every other bookie, one tap");
     await b.send("/start convert");
     const pick = b.sent.filter((s) => s.method === "sendMessage").pop().body;
     assert.ok(pick.reply_markup.inline_keyboard.flat().some((k) => k.callback_data === "ct|betking"), "the link asks which bookie");
