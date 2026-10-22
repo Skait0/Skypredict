@@ -182,3 +182,12 @@ test("the chips keep their row and the button rides it", () => {
   assert.ok(cats.indexOf('id="fbtn"') > cats.indexOf('id="cats"'),
     "the button must be a sibling of #cats, never a child");
 });
+
+test("the Build tab opens the four-builder chooser, not the last builder (owner, 22 Oct 2026)", () => {
+  const fs = require("fs"), path = require("path");
+  const index = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  const h = /\$\("bt-build"\)\.addEventListener\("click",function\(\)\{([\s\S]{0,260}?)\}\);/.exec(index);
+  assert.ok(h, "Build tab handler found");
+  assert.match(h[1], /openBuildChooser\(/, "asks how");
+  assert.doesNotMatch(h[1], /^navBuzz\(\);setView\("build"\)/, "does not jump straight to a builder");
+});
