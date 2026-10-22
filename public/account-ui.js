@@ -1115,6 +1115,7 @@
             if(c2===200){ say("Removed."); load(); } else { b.disabled=false; fail(c2,j2); } }); }; });
       });
     }
+    var hitsOpen=null;   /* the ticket to open again after a redraw (a leg set by hand) */
     function hitsLoad(){ a.req("GET","/api/account/hits",null,function(code,j){
       var box=v.querySelector("#swaHits"); if(!box) return;
       if(code===200){ var hs=j.hits||[], nc=hs.filter(function(h){ return h.status==="check"; }).length;
@@ -1182,7 +1183,9 @@
               var p=fb.getAttribute("data-fix").split("|"); full.querySelectorAll("[data-fix]").forEach(function(x){ x.disabled=true; });
               a.req("POST","/api/account/fixleg",{id:p[0],i:+p[1],verdict:p[2]},function(c4,j4){
                 if(c4!==200){ full.querySelectorAll("[data-fix]").forEach(function(x){ x.disabled=false; }); return fail(c4,j4); }
-                say("Game set to "+(p[2]==="void"?"voided":p[2])+". The slip is now "+j4.status+(j4.paid&&j4.paid.odds?", paid ×"+j4.paid.odds:"")+"."); hitsLoad(); }); }; });
+                say("Game set to "+(p[2]==="void"?"voided":p[2])+". The slip is now "+j4.status+(j4.paid&&j4.paid.odds?", paid ×"+j4.paid.odds:"")+".");
+                /* The list redraws folded; this ticket opens again so the next leg can be set (owner, 22 Oct 2026). */
+                hitsOpen=id; hitsLoad(); }); }; });
           });
         }
         panel.querySelectorAll("[data-settle]").forEach(function(s){ s.onclick=function(){
@@ -1193,6 +1196,7 @@
             else { panel.querySelectorAll("button").forEach(function(x){ x.disabled=false; });
               if(c2===409) say("Already settled. Refreshing."), hitsLoad(); else fail(c2,j2); } }); }; });
       }; });
+      if(hitsOpen){ var reopen=box.querySelector("[data-chk='"+hitsOpen+"']"); hitsOpen=null; if(reopen) reopen.click(); }
     }); }
     hitsLoad();
     /* Alerts: the count on the tab is what came in since this device last opened it;

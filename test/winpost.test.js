@@ -204,3 +204,30 @@ test("a pick stored as a raw market code reads in words (22 Oct 2026)", () => {
   assert.match(tg, /Feyenoord under 1\.5 goals/);
   assert.doesNotMatch(tg, /[A-Z]+_[A-Z0-9_.]+/, "no raw market codes");
 });
+
+/* Owner, 22 Oct 2026: "obviously played on monday but just graded today". A x549 shots slip
+   played Monday 19 Oct settled Thursday (shots wait for match statistics) and went out as
+   "just landed". A win is fresh only within 36 hours of its last kick-off. */
+test("a win that settled days after its games is not posted as just landed; it waits for the owner", () => {
+  const W = require("../lib/winpost.js");
+  const now = Date.parse("2026-10-22T20:00:00Z"), dayOf = (t) => new Date(t + 3600e3).toISOString().slice(0, 10), hourOf = () => 15;
+  const legs = (ko) => Array.from({ length: 3 }, () => ({ ko, verdict: "won", name: "Shots over 25.5", odds: 2 }));
+  const stale = { id: "old", status: "landed", total_odds: 8, leg_count: 3, settled_at: "2026-10-22T18:00:00Z", legs: legs("2026-10-19T17:30:00Z") };
+  const fresh = { id: "new", status: "landed", total_odds: 8, leg_count: 3, settled_at: "2026-10-22T18:00:00Z", legs: legs("2026-10-22T14:00:00Z") };
+  assert.deepStrictEqual(W.pick([stale, fresh], [], "x", now, dayOf, hourOf).map((s) => s.id), ["new"]);
+  assert.deepStrictEqual(W.toAsk([stale, fresh], [], now, hourOf).map((s) => s.id), ["old"], "the owner decides on the late one");
+  // The morning recap counts the day the games were played, not the day they were graded.
+  assert.strictEqual(W.recap([stale], "2026-10-21", dayOf), null);
+  assert.match(W.recap([stale], "2026-10-19", dayOf), /Yesterday a Soccerwizard slip landed/);
+});
+
+test("a landed slip whose legs lost their times falls back to when it was booked (slip #2111)", () => {
+  const W = require("../lib/winpost.js");
+  const now = Date.parse("2026-10-22T21:40:00Z"), dayOf = (t) => new Date(t + 3600e3).toISOString().slice(0, 10), hourOf = () => 15;
+  const legs = Array.from({ length: 12 }, () => ({ code: "SHOTS_OV_25.5", verdict: "won", odds: 1.7 }));
+  const s2111 = { id: 2111, status: "landed", total_odds: 549.48, leg_count: 12, legs, created_at: "2026-10-19T13:54:24Z", settled_at: "2026-10-22T21:33:51Z" };
+  assert.deepStrictEqual(W.pick([s2111], [], "x", now, dayOf, hourOf), [], "booked 80 hours ago: not just landed");
+  assert.deepStrictEqual(W.toAsk([s2111], [], now, hourOf).map((s) => s.id), [2111], "the owner is asked instead");
+  const today = Object.assign({}, s2111, { id: 7, created_at: "2026-10-22T09:00:00Z" });
+  assert.deepStrictEqual(W.pick([today], [], "x", now, dayOf, hourOf).map((s) => s.id), [7], "booked today: posts as before");
+});
