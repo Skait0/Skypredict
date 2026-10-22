@@ -31,3 +31,13 @@ test("skipped games stay out, games without a SportyBet price stay out, and shor
   assert.strictEqual(M.pick(pay, now, feed.slice(0, 2), 30, 20), null, "two priced games cannot make x30");
   assert.strictEqual(M.pick(pay, now, feed, 1000, 4), null, "x1000 in four legs cannot be done");
 });
+
+test("volatile leagues stay out, as on the site for a reader who never said yes", () => {
+  const lg = (f, i) => Object.assign({}, f, { league: i < 10 ? "Nigeria Premier League" : i < 20 ? "Lower League" : "Top League", tier: i < 20 && i >= 10 ? 4 : 1 });
+  const p = M.pick({ fixtures: games.map(lg) }, now, feed, 5, 8);
+  const ids = new Set(p.legs.map((l) => Number(l.home.slice(1))));
+  assert.ok([...ids].every((i) => i >= 20), "the NPFL (listed) and an all tier-4 league are left out");
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "index.html"), "utf8");
+  const site = /var VOL_NEW=\{([\s\S]*?)\};/.exec(src)[1].match(/"[^"]+"/g).map((s) => JSON.parse(s)).sort();
+  assert.deepStrictEqual([...M.VOL_NEW].sort(), site, "same list as the site's VOL_NEW");
+});
