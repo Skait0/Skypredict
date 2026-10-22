@@ -29,7 +29,9 @@ if git diff --quiet "$PREV" HEAD -- . \
     ':(exclude)test' ':(exclude)docs' ':(exclude)*.md' \
     ':(exclude).github' ':(exclude).superpowers' \
     ':(exclude)graphify-out' ':(exclude)graphify-src' \
-    ':(exclude)public/promo' ':(exclude)data/promo-queue.json' ':(exclude)data/promo-log.json'; then
+    ':(exclude)public/promo' ':(exclude)data/promo-queue.json' ':(exclude)data/promo-log.json' \
+    ':(exclude)scripts/tgwebhook.js' ':(exclude)scripts/ignore-build.sh'; then
+  # The bot's menu texts run from the Telegram workflow, and this file only decides builds (22 Oct 2026).
   # Promo cards, clips and the Telegram queue and log (owner, 22 Oct 2026): the site never
   # reads them; posts take them from the repo through jsDelivr (scripts/promodrop.js).
   echo "ignore-build: only tests/docs/notes/promo changed since $PREV - skipping"

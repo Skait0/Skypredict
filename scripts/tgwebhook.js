@@ -24,11 +24,11 @@ async function tg(method, body) {
      reads above Telegram's START button; the commands fill the Menu button by the chat box. */
   const B = require("../lib/books.js");
   await tg("setMyCommands", { commands: [
-    { command: "start", description: "Open the menu" },
-    { command: "convert", description: "Convert a code to your bookie" },
+    { command: "start", description: "Restart: fresh menu" },
+    { command: "convert", description: "Convert a code to any bookie" },
     { command: "build", description: "Build me a slip: tap a payout, we pick" },
     { command: "check", description: "Check a booking code" },
-    { command: "dailyodds", description: "Today's x5 to x1000 codes" },
+    { command: "dailyodds", description: "Today's x5 to x30 codes" },
     { command: "bookie", description: "Change your bookie" },
     { command: "guide", description: "How it works, in pictures" },
     { command: "daily", description: "My daily slip here (Wizard Pass)" },
@@ -41,7 +41,7 @@ async function tg(method, body) {
     "🎯 Type 50 and get a x50 slip, booked on your bookie\n" +
     "🔍 Send any code and see the strong games and the weak ones\n" +
     "🛡 Make it safer, ✂️ trim it, ➗ split it, 🔁 move it to another bookie\n" +
-    "📅 Daily odds: x5 to x1000 codes every morning at 10:30\n\n" +
+    "📅 Daily odds: x5 to x30 codes every morning at 10:30\n\n" +
     B.list("and") + ".\n\nTap START. 18+" });
   const me = await tg("getMe", {});
   console.log("bot @" + me.username);
