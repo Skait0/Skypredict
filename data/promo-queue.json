@@ -60,7 +60,7 @@
     },
     {
       "date": "2026-10-22",
-      "time": "23:59",
+      "time": "13:30",
       "kind": "clip",
       "video": "/promo/telegram-bot.mp4",
       "cover": "/promo/covers/telegram-bot.jpg",
@@ -68,8 +68,7 @@
       "ig": "Soccerwizard is now on Telegram. 🧙\n\nType 10. Get a booking code.\nNeed Bet9ja? One tap.\nSend any code. See every game.\nx5 to x30 every morning.\n\nOpen the bot: t.me/Soccerwizardhqbot\n\nLink in bio. 18+ | Bet responsibly.\n\n#football #bookingcode #sportybet #bet9ja #naijafootball #telegram",
       "igVideo": "/promo/telegram-bot-ig.mp4",
       "coverMs": 22500,
-      "note": "replaced promo-tour (old screens, green tick), owner 22 Oct 2026",
-      "hold": "22 Oct: held until the clip is rendered (owner restart pending); set back to 12:30 or later before posting"
+      "note": "replaced promo-tour (old screens, green tick), owner 22 Oct 2026"
     },
     {
       "date": "2026-10-23",
