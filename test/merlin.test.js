@@ -41,3 +41,19 @@ test("volatile leagues stay out, as on the site for a reader who never said yes"
   const site = /var VOL_NEW=\{([\s\S]*?)\};/.exec(src)[1].match(/"[^"]+"/g).map((s) => JSON.parse(s)).sort();
   assert.deepStrictEqual([...M.VOL_NEW].sort(), site, "same list as the site's VOL_NEW");
 });
+
+test("the daily codes card: x5 code large, other rungs without codes, nothing without an x5", () => {
+  const K = require("../lib/codescard.js");
+  const rows = [{ rung: 5, odds: 5.12, legs: [1, 2, 3, 4], codes: { sporty: { code: "NQ0TMC" } } },
+    { rung: 10, odds: 10.3, legs: [1, 2, 3, 4, 5, 6], codes: { sporty: { code: "SECRET" } } }];
+  const L = K.lines(rows, "2026-10-22");
+  assert.strictEqual(L.code, "NQ0TMC");
+  assert.strictEqual(L.date, "Thursday 22 October");
+  assert.deepStrictEqual(L.rungs, [{ x: "x10", rest: "6 games  ·  Wizard Pass" }]);
+  assert.ok(!JSON.stringify(L).includes("SECRET"), "x10's code never reaches the card");
+  const png = K.build(rows, "2026-10-22");
+  assert.ok(png && png.slice(1, 4).toString() === "PNG");
+  assert.strictEqual(K.build(rows.slice(1), "2026-10-22"), null);
+  const social = require("fs").readFileSync(require("path").join(__dirname, "..", "api", "social.js"), "utf8");
+  assert.match(social, /\["x", "fb", "tg", "ig"\]/, "the drop goes to Instagram too");
+});

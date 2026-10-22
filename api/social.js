@@ -51,6 +51,8 @@ async function postBuffer(service, text, image, extra) {
 const postX = (text, image) => postBuffer("twitter", text, image);
 /* The Facebook Page (owner, 18 Oct 2026: "include facebook"); Buffer wants the post type. */
 const postFB = (text, image) => postBuffer("facebook", text, image, "metadata:{facebook:{type:post}},");
+/* Instagram (22 Oct 2026, the daily codes): a feed post, picture required. */
+const postIG = (text, image) => postBuffer("instagram", text, image, "metadata:{instagram:{type:post,shouldShareToFeed:true}},");
 async function postTG(text) {
   const t = (process.env.TELEGRAM_BOT_TOKEN || "").trim();
   if (!t) return false;
@@ -104,16 +106,27 @@ module.exports = async function handler(req, res) {
      after the 10:30 and 10:45 ladder runs, the x5 code and the other rungs' payouts
      (lib/ladder.js drop). Once per channel per day; nothing on a day without an x5. */
   const ladKey = (ch) => "ladder|" + S.dayOf(now) + "|" + ch;
-  const ladDue = ["x", "fb", "tg"].filter((ch) => !posted.has(ladKey(ch)));
+  const ladDue = ["x", "fb", "tg", "ig"].filter((ch) => !posted.has(ladKey(ch)));
   if (S.hourOf(now) === 11 && ladDue.length && !paused("ladder")) {
     const lad = await SB.getLadder(S.dayOf(now));
     const text = lad.ok ? L.drop(lad.rows) : null;
-    if (text) for (const ch of ladDue) items.push({ key: ladKey(ch), kind: "ladder", channel: ch, text });
+    /* Instagram takes no post without a picture: the day's codes card (lib/codescard.js,
+       /api/slipcard?d=), and only once it answers, so Buffer never fetches a 404 (that fetch
+       also puts it in the edge cache). */
+    const cardUrl = SITE + "/api/slipcard?d=" + S.dayOf(now);
+    const card = text && ladDue.includes("ig") && (await fetch(cardUrl).then((r) => r.ok).catch(() => false)) ? cardUrl : null;
+    if (text) for (const ch of ladDue) {
+      if (ch !== "ig") items.push({ key: ladKey(ch), kind: "ladder", channel: ch, text });
+      else if (card) items.push({ key: ladKey(ch), kind: "ladder", channel: ch, image: card,
+        text: text.replace("All six bookies: soccerwizard.live", "All six bookies: soccerwizard.live (link in bio)") +
+          "\n\n#football #bookingcode #sportybet #naijafootball" });
+    }
   }
 
   const sent = [];
   for (const it of items) {
-    const ok = it.channel === "x" ? await postX(it.text) : it.channel === "fb" ? await postFB(it.text) : await postTG(it.text);
+    const ok = it.channel === "x" ? await postX(it.text) : it.channel === "fb" ? await postFB(it.text) :
+      it.channel === "ig" ? await postIG(it.text, it.image) : await postTG(it.text);
     if (ok) { await SB.logSocial({ key: it.key, channel: it.channel, kind: it.kind, text: it.text }); sent.push(it.key); }
   }
   /* THE REST WAIT FOR THE OWNER (owner, 18 Oct 2026: win approvals, after a x121.88

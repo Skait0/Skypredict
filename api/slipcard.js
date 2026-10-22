@@ -53,7 +53,28 @@ async function listBanner(id) {
   return CARD.buildWinList(r.id, p.games, p.odds, picks, p.pushed ? "Total paid - " + p.won + " won, " + p.pushed + " voided" : null);
 }
 
+/* ?d=<YYYY-MM-DD>: that day's Merlin codes card (lib/codescard.js), read from the ladder row,
+   never from the query, as ?w=. The 11:00 drop's Instagram picture (api/social.js). No x5 code:
+   404, not the site card, so a post never goes out under the wrong picture. Ten minutes at the
+   edge, because the 10:45 run can still fill a rung after 10:30. */
+async function codesCard(req, res, day) {
+  let png = null;
+  try {
+    const lad = await require("../lib/supabase.js").getLadder(day);
+    png = lad.ok ? require("../lib/codescard.js").build(lad.rows, day) : null;
+  } catch (e) { png = null; }
+  if (!png) { res.statusCode = 404; return res.end("no card"); }
+  res.setHeader("Content-Type", "image/png");
+  res.setHeader("Content-Length", png.length);
+  applyCache(res, { browser: BROWSER_REVALIDATE, cdn: "public, s-maxage=600", vercel: "public, s-maxage=600" });
+  res.statusCode = 200;
+  return res.end(png);
+}
+
 module.exports = async (req, res) => {
+  let d = req.query && req.query.d;
+  if (d == null && req.url) { try { d = new URL(req.url, "https://x").searchParams.get("d"); } catch (e) { d = null; } }
+  if (d != null) return /^\d{4}-\d{2}-\d{2}$/.test(String(d)) ? codesCard(req, res, String(d)) : (res.statusCode = 404, res.end("no card"));
   let g = null, o = null, rk = null, w = null;
   if (req.query) { g = req.query.g; o = req.query.o; rk = req.query.r; w = req.query.w; }
   if (g == null && w == null && req.url) {
