@@ -6,7 +6,7 @@
 
 create table if not exists public.site_slips (
   id           bigint generated always as identity primary key,
-  book         text not null,                 -- sporty | bet9ja | betking | betpawa | onexbet | betway
+  book         text not null,                 -- sporty | bet9ja | betking | betpawa | onexbet | betway | msport
   code         text not null,
   who          text,                          -- admin | user | device | ip | none
   subject      text,                          -- u:<id>, a device id or a hashed address (same as book_quota)

@@ -93,8 +93,9 @@ test("every builder gates them through judgedP like Win to nil, and they are nev
   assert.doesNotMatch(grab("codeMarket"), /FH_UNDER_2\.5|FH_DC_1X|SH_OVER_0\.5|SH_UNDER_2\.5/, "not named before it has graded results");
   /* Betway sells no 2nd-half match total (API NOT_CARRIED), and answered "not priced" for the
      1st half under 2.5 on Tottenham v Coventry, 19 Oct 2026, while it booked half-time 1X. */
-  assert.ok(src.includes('"FH_UNDER_2.5":["sporty","bet9ja","betking","betpawa","onexbet"]'));
-  assert.match(src, /"SH_OVER_0\.5":\["sporty","bet9ja","betking","betpawa","onexbet"\]/);
+  /* MSport priced both on its eight deepest cards (22 Oct 2026), market ids SportyBet's. */
+  assert.ok(src.includes('"FH_UNDER_2.5":["sporty","bet9ja","betking","betpawa","onexbet","msport"]'));
+  assert.match(src, /"SH_OVER_0\.5":\["sporty","bet9ja","betking","betpawa","onexbet","msport"\]/);
 });
 
 test("My slips settles half-time legs exactly as the server does, and waits without a half-time score", () => {

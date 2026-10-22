@@ -26,8 +26,8 @@ const ROOT = path.join(__dirname, "..");
 const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
 const KEYS = Object.keys(new Function(
   'var BOOK_URL="",SPORTY_URL="",B9_URL="",B9_BOOK_URL="",BK_URL=null,BK_BOOK_URL="",' +
-  'BP_URL=null,BP_BOOK_URL="",XB_URL="",XB_BOOK_URL="",WY_URL="",WY_BOOK_URL="";\n' + decl("BOOKS") + "\nreturn BOOKS;")());
-const LABEL = { sporty: "SportyBet", bet9ja: "Bet9ja", betking: "BetKing", betpawa: "betPawa", onexbet: "1xBet", betway: "Betway" };
+  'BP_URL=null,BP_BOOK_URL="",XB_URL="",XB_BOOK_URL="",WY_URL="",WY_BOOK_URL="",MP_URL="",MP_BOOK_URL="";\n' + decl("BOOKS") + "\nreturn BOOKS;")());
+const LABEL = { sporty: "SportyBet", bet9ja: "Bet9ja", betking: "BetKing", betpawa: "betPawa", onexbet: "1xBet", betway: "Betway", msport: "MSport" };
 
 test("the book list these tests walk is the page's own", () => {
   assert.deepStrictEqual(KEYS.slice().sort(), Object.keys(LABEL).sort(),
@@ -88,7 +88,7 @@ test("the link-preview image lists every book", () => {
 test("the static pages name 1xBet where they list the books", () => {
   const P = read("lib/pages.js");
   assert.match(require("../lib/pages.js").renderCodesHub([], () => null),
-    /<title>Free SportyBet, Bet9ja, BetKing, betPawa, 1xBet and Betway booking codes/);
+    /<title>Free SportyBet, Bet9ja, BetKing, betPawa, 1xBet, Betway and MSport booking codes/);
   assert.match(P, /<li><b>1xBet<\/b>: <code>\$\{esc\(XB_SHARE\)\}YOURCODE<\/code><\/li>/);
   assert.match(P, /<h2>By hand, on 1xBet<\/h2>/);
   assert.match(P, /<li><b>Betway<\/b>: <code>\$\{esc\(WY_SHARE\)\}YOURCODE<\/code><\/li>/);
@@ -96,7 +96,7 @@ test("the static pages name 1xBet where they list the books", () => {
   assert.match(P, /<h2>By hand, on BetKing or betPawa<\/h2>/);
   /* The <title>s stay short on purpose - 60 characters with the brand, pinned in
      convertpage/bookinglinks tests - so the five names live in h1, sub and body. */
-  assert.match(require("../lib/pages.js").renderConvertPage(), /<p class="meta">Or any of the six to any other\.<\/p>/);
+  assert.match(require("../lib/pages.js").renderConvertPage(), /<p class="meta">Or any of the seven to any other\.<\/p>/);
 });
 
 /* ONE LIST OF LIVE BOOKS, AND EVERY COUNT OR LIST READS IT (7 Oct 2026).
@@ -176,16 +176,16 @@ test("the bot's words did not change when they moved onto the list", () => {
      before lib/books.js existed (7 Oct 2026). */
   const tg = require("../api/tg.js");
   assert.ok(tg.HELLO.startsWith("🔮 <b>The Wizard's Eye</b> 🧙\n<i>Drop any code. The Wizard's Eye sees it all.</i>\n\n" +
-    "Send me any booking code - SportyBet, Bet9ja, BetKing, betPawa, 1xBet or Betway - and you get:\n"));
+    "Send me any booking code - SportyBet, Bet9ja, BetKing, betPawa, 1xBet, Betway or MSport - and you get:\n"));
   const w = read("scripts/tgwebhook.js");
   const expr = /short_description:\s*([\s\S]*?) \}\);/.exec(w)[1];
   assert.strictEqual(new Function("require", "return " + expr)((p) => require(require("node:path").join(ROOT, "scripts", p))),
     /* Rewritten by the owner's ask, 19 Oct 2026 ("our telegram bot should have a start button"):
        the line a reader sees above START now says what the bot does, in the same few words. */
-    "🧙 Type your odds, get a code. Check, fix and convert any code on six bookies. 18+");
+    "🧙 Type your odds, get a code. Check, fix and convert any code on seven bookies. 18+");
   const miss = /" on any of the " \+ BOOKS\.COUNT_WORD \+ " bookies"/;
   assert.match(read("api/tg.js"), miss);
-  assert.strictEqual(B.COUNT_WORD, "six");
+  assert.strictEqual(B.COUNT_WORD, "seven");
 });
 
 test("the app footer is the static footer: same pills, legal links, h3 heads", () => {

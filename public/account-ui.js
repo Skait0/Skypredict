@@ -193,7 +193,7 @@
   /* MY DAILY SLIP (owner, 17 Oct 2026; api/ladder.js, lib/ladder.js). Wizard Pass:
      pick one payout from the daily ladder and a bookie; the code comes every morning
      at 10:30 as a phone alert, and on Telegram after /daily in the bot. */
-  var RUNGS=[5,10,20,30], BOOK_KEYS=["sporty","bet9ja","betking","betpawa","onexbet","betway"];
+  var RUNGS=[5,10,20,30], BOOK_KEYS=["sporty","bet9ja","betking","betpawa","onexbet","betway","msport"];
   function isPass(role){ return role==="plus"||role==="ff"||role==="admin"; }
   function dailyHtml(role){
     if(!isPass(role)){
@@ -494,7 +494,7 @@
   var SRC_WORDS={convert:"Converted: the user's own picks",board:"Built from our board",safer:"Made safer from our picks",
     split:"Split from our picks",myslip:"My slip (our picks)"};
   function srcWords(s){ return s?(SRC_WORDS[s]||"Built on the site ("+s+")"):"Source not recorded"; }
-  var BOOK_NAME={sporty:"SportyBet",bet9ja:"Bet9ja",betking:"BetKing",betpawa:"Betpawa",onexbet:"1xBet",betway:"Betway"};
+  var BOOK_NAME={sporty:"SportyBet",bet9ja:"Bet9ja",betking:"BetKing",betpawa:"Betpawa",onexbet:"1xBet",betway:"Betway",msport:"MSport"};
   function hitsHtml(list){
     if(!list.length) return "<div class='swa-set'><span class='swa-st'><small>No landed slips yet. They show up here within ten minutes of the last game ending.</small></span></div>";
     var landed=list.filter(function(h){ return h.status==="landed"; });

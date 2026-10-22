@@ -21,7 +21,7 @@ alter table public.daily_ladder enable row level security;
 create table if not exists public.autopilot (
   user_id        uuid primary key references public.users(id) on delete cascade,
   rung           int  not null check (rung in (5, 10, 20, 100, 1000)),
-  book           text not null check (book in ('sporty','bet9ja','betking','betpawa','onexbet','betway')),
+  book           text not null check (book in ('sporty','bet9ja','betking','betpawa','onexbet','betway','msport')),
   push           boolean not null default true,
   tg_chat        bigint,
   last_sent_day  text,

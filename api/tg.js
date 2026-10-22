@@ -1,7 +1,7 @@
 "use strict";
 /* POST /api/tg - the Telegram bot's webhook. The code doctor.
  *
- * Someone sends the bot a booking code (any of the six books, or a share
+ * Someone sends the bot a booking code (any of the books, or a share
  * link carrying one); it reads the code the same way /api/slip does, lays the
  * legs against today's board and answers with our model's read - strongest,
  * weakest, the chance they all land - plus links to convert or soften it on
@@ -736,7 +736,7 @@ module.exports = async function handler(req, res) {
     }
     /* t.me/<bot>?start=book_CODE arrives as "/start book_CODE" - the site's
        code dialog opens the bot on the code the reader just got. */
-    const deep = /^\/start\s+(sporty|bet9ja|betking|betpawa|onexbet|betway)_([A-Za-z0-9]{4,16})\s*$/i.exec(msg.text);
+    const deep = /^\/start\s+(sporty|bet9ja|betking|betpawa|onexbet|betway|msport)_([A-Za-z0-9]{4,16})\s*$/i.exec(msg.text);
     if (!deep && /^\/(start|menu)\b(?!\s+convert)/i.test(msg.text)) {
       /* Two messages: the welcome with buttons to try straight away (an inline keyboard), then
          the menu under the chat box (a reply keyboard) - Telegram allows one kind per message. */

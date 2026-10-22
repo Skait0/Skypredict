@@ -119,7 +119,7 @@ module.exports = async function handler(req, res) {
     if (text) for (const ch of ladDue) {
       if (ch !== "ig") items.push({ key: ladKey(ch), kind: "ladder", channel: ch, text: S.signed(text, ch), image: card });
       else if (card) items.push({ key: ladKey(ch), kind: "ladder", channel: ch, image: card,
-        text: S.signed(text, ch).replace("All six bookies: soccerwizard.live", "All six bookies: soccerwizard.live (link in bio)") +
+        text: S.signed(text, ch).replace(/(All \w+ bookies: soccerwizard\.live)/, "$1 (link in bio)") +
           "\n\n#football #bookingcode #sportybet #naijafootball" });
     }
   }

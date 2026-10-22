@@ -46,6 +46,10 @@
       "maxDuration": 30,
       "memory": 1024
     },
+    "api/msport.js": {
+      "maxDuration": 30,
+      "memory": 1024
+    },
     "api/s.js": {
       "maxDuration": 10,
       "memory": 256
