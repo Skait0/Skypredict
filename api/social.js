@@ -110,13 +110,14 @@ module.exports = async function handler(req, res) {
   if (S.hourOf(now) === 11 && ladDue.length && !paused("ladder")) {
     const lad = await SB.getLadder(S.dayOf(now));
     const text = lad.ok ? L.drop(lad.rows) : null;
-    /* Instagram takes no post without a picture: the day's codes card (lib/codescard.js,
-       /api/slipcard?d=), and only once it answers, so Buffer never fetches a 404 (that fetch
-       also puts it in the edge cache). */
+    /* The day's codes card (lib/codescard.js, /api/slipcard?d=) on every channel (owner, 22 Oct
+       2026: "we are promoting!"), once it answers, so Buffer never fetches a 404 (that fetch also
+       puts it in the edge cache). Without it X, Facebook and Telegram still get the text;
+       Instagram, which takes no post without a picture, waits for the next hourly run. */
     const cardUrl = SITE + "/api/slipcard?d=" + S.dayOf(now);
-    const card = text && ladDue.includes("ig") && (await fetch(cardUrl).then((r) => r.ok).catch(() => false)) ? cardUrl : null;
+    const card = text && (await fetch(cardUrl).then((r) => r.ok).catch(() => false)) ? cardUrl : null;
     if (text) for (const ch of ladDue) {
-      if (ch !== "ig") items.push({ key: ladKey(ch), kind: "ladder", channel: ch, text });
+      if (ch !== "ig") items.push({ key: ladKey(ch), kind: "ladder", channel: ch, text, image: card });
       else if (card) items.push({ key: ladKey(ch), kind: "ladder", channel: ch, image: card,
         text: text.replace("All six bookies: soccerwizard.live", "All six bookies: soccerwizard.live (link in bio)") +
           "\n\n#football #bookingcode #sportybet #naijafootball" });
@@ -125,8 +126,8 @@ module.exports = async function handler(req, res) {
 
   const sent = [];
   for (const it of items) {
-    const ok = it.channel === "x" ? await postX(it.text) : it.channel === "fb" ? await postFB(it.text) :
-      it.channel === "ig" ? await postIG(it.text, it.image) : await postTG(it.text);
+    const ok = it.channel === "x" ? await postX(it.text, it.image) : it.channel === "fb" ? await postFB(it.text, it.image) :
+      it.channel === "ig" ? await postIG(it.text, it.image) : it.image ? await postTGPhoto(it.image, it.text) : await postTG(it.text);
     if (ok) { await SB.logSocial({ key: it.key, channel: it.channel, kind: it.kind, text: it.text }); sent.push(it.key); }
   }
   /* THE REST WAIT FOR THE OWNER (owner, 18 Oct 2026: win approvals, after a x121.88
