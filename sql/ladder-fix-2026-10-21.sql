@@ -4,6 +4,7 @@
 -- SportyBet codes only: no other book was minted for these. The page updates on the next build.
 
 create table public.daily_ladder_bak_20261023 as select * from public.daily_ladder where day = '2026-10-21';
+alter table public.daily_ladder_bak_20261023 enable row level security;
 
 delete from public.daily_ladder where day = '2026-10-21';
 
