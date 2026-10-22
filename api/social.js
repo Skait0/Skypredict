@@ -129,7 +129,7 @@ module.exports = async function handler(req, res) {
      the stored row, it never books a second slip. */
   const SAFE = require("../lib/safer20.js");
   const day = S.dayOf(now), safeKey = (ch) => "safe20|" + day + "|" + ch;
-  const safeDue = ["x", "fb", "tg"].filter((ch) => !posted.has(safeKey(ch)));
+  const safeDue = ["x", "fb", "tg", "ig"].filter((ch) => !posted.has(safeKey(ch)));
   if (S.hourOf(now) === 12 && safeDue.length && !paused("ladder")) {
     const stored = await SB.getBigOdds(day);
     let row = stored.ok && stored.row ? stored.row : null;
@@ -138,7 +138,17 @@ module.exports = async function handler(req, res) {
       if (row) await SB.putBigOdds(row);
     }
     const text = row && SAFE.post(row);
-    if (text) for (const ch of safeDue) items.push({ key: safeKey(ch), kind: "safe20", channel: ch, text: S.signed(text, ch) });
+    /* ITS OWN CARD (owner, 22 Oct 2026, lib/codescard.js buildSafer), on every channel once it
+       answers, so Instagram - which takes no post without a picture - gets the x20 too. Without
+       the card X, Facebook and Telegram still get the text; Instagram sits the day out. */
+    const safeUrl = SITE + "/api/slipcard?s=" + day;
+    const safeCard = text && (await fetch(safeUrl).then((r) => r.ok).catch(() => false)) ? safeUrl : null;
+    if (text) for (const ch of safeDue) {
+      if (ch !== "ig") items.push({ key: safeKey(ch), kind: "safe20", channel: ch, text: S.signed(text, ch), image: safeCard });
+      else if (safeCard) items.push({ key: safeKey(ch), kind: "safe20", channel: ch, image: safeCard,
+        text: S.signed(text, ch).replace(/\nsoccerwizard\.live\n/, "\nsoccerwizard.live (link in bio)\n") +
+          "\n\n#football #bookingcode #sportybet #naijafootball" });
+    }
   }
   /* ...and its result the next morning, a win or a loss, from 10:00 until every game has a final score. */
   const yday = S.dayOf(now - 864e5), resKey = (ch) => "safe20res|" + yday + "|" + ch;

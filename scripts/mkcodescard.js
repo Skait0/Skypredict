@@ -10,6 +10,7 @@
  *   assets/codes-base.z    the 1080x1350 card as deflated RGBA: header, headline, footer
  *   assets/codes-text.z    alpha masks for ASCII 32-126 and "·" in three faces (big, mid, small)
  *   assets/codes-card.json each face's cell, baseline and advances, and the card's size
+ *   assets/safer-base.z    the safer x20 card's base (22 Oct 2026, same faces and footer)
  *
  * lib/codescard.js writes the date, the x5 code and the rungs onto the base.
  */
@@ -45,7 +46,7 @@ const SOCIAL_FOOT = `<div class="soc"><span><i class="x">${ICON.x}</i>@soccerwiz
   <span><i class="fb">${ICON.fb}</i>soccerwizardhq</span><span><i class="tg">${ICON.tg}</i>@soccerwizardTG</span></div>
   <div class="end"><b>soccerwizard.live</b><span><span class="r">18+</span> &middot; Play responsibly</span></div>`;
 
-const BASE = `<!doctype html><html><head><meta charset="utf-8">
+const page = (kicker, h1) => `<!doctype html><html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Saira+Condensed:wght@700;800&display=swap" rel="stylesheet">
 <style>
 html,body{margin:0;background:#0D0D0F}
@@ -60,8 +61,8 @@ h1{margin:28px 0 0;font:800 120px/0.92 'Saira Condensed';text-transform:uppercas
 h1 em{font-style:normal;color:#F2B84B}
 </style></head><body>
 <div class="c" id="card">
-  <div class="top"><img src="${BADGE}" alt=""><div><div class="brand">Soccerwizard</div><div class="k">Merlin's Pick &middot; daily codes</div></div></div>
-  <h1>Today's <em>codes</em></h1>
+  <div class="top"><img src="${BADGE}" alt=""><div><div class="brand">Soccerwizard</div><div class="k">${kicker}</div></div></div>
+  <h1>${h1}</h1>
   ${SOCIAL_FOOT}
 </div></body></html>`;
 
@@ -70,7 +71,7 @@ h1 em{font-style:normal;color:#F2B84B}
   const b = await puppeteer.launch({ executablePath: process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: "new" });
   const pg = await b.newPage();
   await pg.setViewport({ width: W, height: H });
-  await pg.setContent(BASE, { waitUntil: "networkidle0" });
+  await pg.setContent(page("Merlin's Pick &middot; daily codes", "Today's <em>codes</em>"), { waitUntil: "networkidle0" });
   await pg.evaluate(async (faces) => { for (const f of Object.values(faces)) await document.fonts.load(f); await document.fonts.ready; }, FACES);
   const png = await (await pg.$("#card")).screenshot({ type: "png" });
 
@@ -98,7 +99,22 @@ h1 em{font-style:normal;color:#F2B84B}
     const all = new Uint8Array(off); let p = 0; for (const f of parts) { all.set(f, p); p += f.length; }
     return { base, text: b64(all), meta };
   }, png.toString("base64"), FACES, W, H);
+  /* THE SAFER X20 CARD (owner, 22 Oct 2026): the 12:00 post's picture, so Instagram gets it too.
+     Same faces, same footer; lib/codescard.js buildSafer writes the day, the price and one row
+     per bookie onto it. */
+  await pg.setContent(page("Merlin's Pick &middot; every pick 72%+", "Safer <em>x20</em>"), { waitUntil: "load", timeout: 60000 });
+  await pg.evaluate(async (faces) => { for (const f of Object.values(faces)) await document.fonts.load(f); await document.fonts.ready; }, FACES);
+  const png2 = await (await pg.$("#card")).screenshot({ type: "png" });
+  const safer = await pg.evaluate(async (pngB64, W, H) => {
+    const img = new Image(); img.src = "data:image/png;base64," + pngB64; await img.decode();
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const x = c.getContext("2d"); x.drawImage(img, 0, 0);
+    const u8 = new Uint8Array(x.getImageData(0, 0, W, H).data.buffer);
+    let s = ""; for (let i = 0; i < u8.length; i += 32768) s += String.fromCharCode.apply(null, u8.subarray(i, i + 32768));
+    return btoa(s);
+  }, png2.toString("base64"), W, H);
   await b.close();
+  fs.writeFileSync(path.join(ASSETS, "safer-base.z"), zlib.deflateSync(Buffer.from(safer, "base64"), { level: 9 }));
 
   fs.writeFileSync(path.join(ASSETS, "codes-base.z"), zlib.deflateSync(Buffer.from(out.base, "base64"), { level: 9 }));
   fs.writeFileSync(path.join(ASSETS, "codes-text.z"), zlib.deflateSync(Buffer.from(out.text, "base64"), { level: 9 }));

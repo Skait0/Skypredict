@@ -116,7 +116,8 @@ test("the converter, the bot and the daily code know the sixth book", () => {
   assert.match(read("lib/convert.js"), /betway: "\/api\/betway"/);
   assert.strictEqual(require("../lib/doctor.js").BOOK_NAMES.betway, "Betway");
   assert.match(read("lib/bigodds.js"), /\["betway", "Betway"\]/);
-  assert.match(read("scripts/mkcode.js"), /for \(const bk of \[[^\]]*"betway"\]\)[\s\S]*codes\[bk\] = /);
+  // Betway anywhere in the additive books (MSport joined after it, 22 Oct 2026).
+  assert.match(read("scripts/mkcode.js"), /for \(const bk of \[[^\]]*"betway"[^\]]*\]\)[\s\S]*codes\[bk\] = /);
   assert.match(read("scripts/namesaudit.js"), /betway: "\/api\/betway"/);
   assert.match(read("lib/slipwatch.js"), /betway: "Betway"/);
 });

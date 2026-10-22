@@ -71,10 +71,32 @@ async function codesCard(req, res, day) {
   return res.end(png);
 }
 
+/* ?s=<YYYY-MM-DD>: that day's safer x20 card (lib/codescard.js buildSafer), read from its stored
+   big_odds row, never from the query. Only days the safer x20 ran (lib/safer20.js FIRST_DAY): before
+   then big_odds held Big odds of the day, and its row must never be drawn as a safer x20. */
+async function saferCard(req, res, day) {
+  let png = null;
+  try {
+    if (day >= require("../lib/safer20.js").FIRST_DAY) {
+      const got = await require("../lib/supabase.js").getBigOdds(day);
+      png = got.ok && got.row ? require("../lib/codescard.js").buildSafer(got.row, day) : null;
+    }
+  } catch (e) { png = null; }
+  if (!png) { res.statusCode = 404; return res.end("no card"); }
+  res.setHeader("Content-Type", "image/png");
+  res.setHeader("Content-Length", png.length);
+  applyCache(res, { browser: BROWSER_REVALIDATE, cdn: "public, s-maxage=600", vercel: "public, s-maxage=600" });
+  res.statusCode = 200;
+  return res.end(png);
+}
+
 module.exports = async (req, res) => {
-  let d = req.query && req.query.d;
-  if (d == null && req.url) { try { d = new URL(req.url, "https://x").searchParams.get("d"); } catch (e) { d = null; } }
+  let d = req.query && req.query.d, s = req.query && req.query.s;
+  if ((d == null || s == null) && req.url) {
+    try { const q = new URL(req.url, "https://x").searchParams; if (d == null) d = q.get("d"); if (s == null) s = q.get("s"); } catch (e) { /* none */ }
+  }
   if (d != null) return /^\d{4}-\d{2}-\d{2}$/.test(String(d)) ? codesCard(req, res, String(d)) : (res.statusCode = 404, res.end("no card"));
+  if (s != null) return /^\d{4}-\d{2}-\d{2}$/.test(String(s)) ? saferCard(req, res, String(s)) : (res.statusCode = 404, res.end("no card"));
   let g = null, o = null, rk = null, w = null;
   if (req.query) { g = req.query.g; o = req.query.o; rk = req.query.r; w = req.query.w; }
   if (g == null && w == null && req.url) {
