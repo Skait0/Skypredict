@@ -258,7 +258,7 @@ test("the first founder pass brings the crest and a thank-you, once; nothing els
   await w.verify(u, m1.reference);                /* and the return page lands too */
   assert.equal(w.inbox.length, 1, "one welcome, however many times the payment is reported");
   assert.equal(w.inbox[0].user_id, u.id);
-  assert.match(w.inbox[0].body, /src="\/fw\/crest\.webp"/);
+  assert.match(w.inbox[0].body, /src="\/fw\/fw-crest\.webp"/);
   assert.match(w.inbox[0].body, /Welcome, Founding Wizard/);
   const m2 = await w.start(u, "month");
   w.ps.status[m2.reference] = "success";

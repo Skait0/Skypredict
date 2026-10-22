@@ -268,7 +268,7 @@ test("a Founding Wizard's plan card carries the crest, their number and the than
     record: { built: 0, won: 0, settled: 0 }, quota: null }, o));
   const fw = p({ founder: true, founderNo: "37" });
   assert.match(fw, /swa-card swa-fwcard/, "the gold-rimmed, favoured card");
-  assert.match(fw, /src='\/fw\/crest-sm\.webp'/);
+  assert.match(fw, /src='\/fw\/fw-crest-sm\.webp'/);
   assert.match(fw, /No\. 37 of the first 200\. With thanks for being one of the first\./);
   assert.match(p({ founder: true }), /<small>With thanks for being one of the first\./, "no number yet still honours them");
   assert.doesNotMatch(p({}), /swa-fwseal|crest-sm/, "nobody else gets it");
