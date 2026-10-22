@@ -28,8 +28,11 @@ fi
 if git diff --quiet "$PREV" HEAD -- . \
     ':(exclude)test' ':(exclude)docs' ':(exclude)*.md' \
     ':(exclude).github' ':(exclude).superpowers' \
-    ':(exclude)graphify-out' ':(exclude)graphify-src'; then
-  echo "ignore-build: only tests/docs/notes changed since $PREV - skipping"
+    ':(exclude)graphify-out' ':(exclude)graphify-src' \
+    ':(exclude)public/promo' ':(exclude)data/promo-queue.json' ':(exclude)data/promo-log.json'; then
+  # Promo cards, clips and the Telegram queue and log (owner, 22 Oct 2026): the site never
+  # reads them; posts take them from the repo through jsDelivr (scripts/promodrop.js).
+  echo "ignore-build: only tests/docs/notes/promo changed since $PREV - skipping"
   exit 0
 fi
 

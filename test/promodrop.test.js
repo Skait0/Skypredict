@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert");
 const fs = require("fs"), path = require("path");
-const { due } = require("../scripts/promodrop.js");
+const { due, mediaUrl } = require("../scripts/promodrop.js");
 const q = require("../data/promo-queue.json");
 
 test("only today's drops from their time, never one already logged", () => {
@@ -30,4 +30,13 @@ test("what Telegram fetches is under its 20 MB limit (the 18 Oct penalty clip wa
     const size = fs.statSync(path.join(__dirname, "..", "public", media)).size;
     assert.ok(size < 19.5e6, d.date + " " + d.time + " " + media + " is " + (size / 1e6).toFixed(1) + " MB");
   }
+});
+
+test("media comes from the repo through jsDelivr at the run's commit, over 20 MB from the site (22 Oct 2026)", () => {
+  const site = "https://www.soccerwizard.live";
+  assert.strictEqual(mediaUrl(site, "/promo/founding-wizards.mp4", "abc123"), "https://cdn.jsdelivr.net/gh/Skait0/Skypredict@abc123/public/promo/founding-wizards.mp4");
+  assert.strictEqual(mediaUrl(site, "/promo/the-penalty.mp4", "abc123"), site + "/promo/the-penalty.mp4", "33 MB: jsDelivr refuses it");
+  assert.strictEqual(mediaUrl(site, "/promo/founding-wizards.mp4", ""), site + "/promo/founding-wizards.mp4", "no commit, no jsDelivr");
+  const ib = fs.readFileSync(path.join(__dirname, "..", "scripts", "ignore-build.sh"), "utf8");
+  for (const p of ["public/promo", "data/promo-queue.json", "data/promo-log.json"]) assert.ok(ib.includes(":(exclude)" + p), p + " does not build the site");
 });

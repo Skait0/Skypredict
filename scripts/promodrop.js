@@ -11,6 +11,17 @@ const ROOT = path.join(__dirname, "..");
 const QUEUE = path.join(ROOT, "data", "promo-queue.json"), LOG = path.join(ROOT, "data", "promo-log.json");
 const LAGOS_MS = 3600e3;
 
+/* MEDIA FROM THE REPO, NOT THE SITE (owner, 22 Oct 2026: promo pushes were paying for builds).
+   public/promo is skipped by scripts/ignore-build.sh, so a new card may never reach the site.
+   The repo is public: jsDelivr serves the file at this commit with its real type, at once.
+   Over 20 MB jsDelivr refuses it, so those stay on the site (they predate the change). */
+const CDN = "https://cdn.jsdelivr.net/gh/Skait0/Skypredict@";
+function mediaUrl(site, media, sha) {
+  let size = Infinity;
+  try { size = fs.statSync(path.join(ROOT, "public", media)).size; } catch (e) { /* not in the checkout: the site's copy */ }
+  return sha && size <= 20e6 ? CDN + sha + "/public" + media : site + media;
+}
+
 function due(queue, log, nowMs) {
   const t = new Date(nowMs + LAGOS_MS).toISOString();
   const today = t.slice(0, 10), hhmm = t.slice(11, 16);
@@ -24,7 +35,7 @@ function main() {
   if (!list.length) { console.log("nothing due"); return; }
   for (const d of list) {
     const media = d.tgVideo || d.video || d.image; // tgVideo: a copy under the 20 MB Telegram fetch limit
-    const env = Object.assign({}, process.env, { TG_PIN: "0", TG_PIN_TEXT: d.x, TG_PHOTOS: media ? queue.site + media : "" });
+    const env = Object.assign({}, process.env, { TG_PIN: "0", TG_PIN_TEXT: d.x, TG_PHOTOS: media ? mediaUrl(queue.site, media, process.env.GITHUB_SHA) : "" });
     if (process.argv.includes("--dry")) { console.log("would post", d.date, d.time, d.kind, media || "(text)"); continue; }
     execFileSync(process.execPath, [path.join(__dirname, "tgpin.js")], { env, stdio: "inherit" });
     log[d.date + " " + d.time] = { kind: d.kind, at: new Date().toISOString() };
@@ -32,4 +43,4 @@ function main() {
   }
 }
 if (require.main === module) main();
-module.exports = { due };
+module.exports = { due, mediaUrl };
