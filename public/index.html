@@ -6004,6 +6004,12 @@ html.wiz-mode #slip,html.wiz-mode #bldFoot,html.wiz-mode #bldNote{display:none}
 /* Gold, flat - the way h1 em carries colour everywhere else (DESIGN.md). */
 .bld-title em{font-style:normal;color:var(--accent)}
 .bld-mode-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+/* Back to the four-builder chooser (owner, 22 Oct 2026: "no way back to the selector"). */
+.bld-back{display:inline-flex;align-items:center;gap:6px;min-height:36px;margin:0 0 4px;padding:0;
+  background:none;border:0;font:inherit;font-size:13px;font-weight:700;color:var(--soft);cursor:pointer;
+  -webkit-tap-highlight-color:transparent}
+.bld-back:hover{color:var(--text)}
+.bld-back:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:6px}
 .bld-help{width:26px;height:26px;flex-shrink:0;border-radius:50%;cursor:pointer;
   background:var(--card-2);border:1px solid var(--line);color:var(--soft);
   font:inherit;font-weight:800;font-size:13px;line-height:1;
@@ -8272,6 +8278,7 @@ html:not(.reduce) .tk-item.flash{border-radius:var(--r-md);animation:tkWash 2s v
 
   <section id="builder">
     <div class="bld-head">
+      <button class="bld-back" id="bldAllBack" type="button"><span aria-hidden="true">←</span>All builders</button>
       <h2 class="bld-title">Build <em>a slip</em></h2>
       <div class="bld-mode-row">
       <div class="bld-mode stage-in stage-in-1" role="tablist" aria-label="Build mode" data-parallax="1.2">
@@ -22345,6 +22352,7 @@ $("tab-live").addEventListener("click",function(){setView("live");});
 function askHowToBuild(){ if(window.swGate&&!swGate("build",null,askHowToBuild,"build")) return; openBuildChooser(function(mode){
   try{localStorage.setItem("sw.mode",mode);}catch(e){} BUILD.mode=mode; setView("build"); }); }
 $("tab-build").addEventListener("click",askHowToBuild);
+$("bldAllBack").addEventListener("click",askHowToBuild);
 $("liveRefresh").addEventListener("click",fetchLive);
 $("bt-pred").addEventListener("click",function(){navBuzz();setView("pred");});
 $("bt-live").addEventListener("click",function(){navBuzz();setView("live");});
