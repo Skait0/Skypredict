@@ -26,7 +26,7 @@ test("every clip has its own cover and every post keeps the rules", () => {
 test("what Telegram fetches is under its 20 MB limit (the 18 Oct penalty clip was 33 MB)", () => {
   for (const d of q.drops) {
     const media = d.tgVideo || d.video || d.image;
-    if (!media || d.date < "2026-10-18") continue;
+    if (!media || d.date < "2026-10-18" || media.startsWith("/api/")) continue; // a server-drawn card (e.g. /api/slipcard?d=)
     const size = fs.statSync(path.join(__dirname, "..", "public", media)).size;
     assert.ok(size < 19.5e6, d.date + " " + d.time + " " + media + " is " + (size / 1e6).toFixed(1) + " MB");
   }

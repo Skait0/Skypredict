@@ -124,6 +124,34 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  /* THE SAFER X20 (owner, 22 Oct 2026, lib/safer20.js): booked and posted at 12:00 Lagos on X,
+     Facebook and Telegram; stored in big_odds so tomorrow can grade it. Once a day: a retry posts
+     the stored row, it never books a second slip. */
+  const SAFE = require("../lib/safer20.js");
+  const day = S.dayOf(now), safeKey = (ch) => "safe20|" + day + "|" + ch;
+  const safeDue = ["x", "fb", "tg"].filter((ch) => !posted.has(safeKey(ch)));
+  if (S.hourOf(now) === 12 && safeDue.length && !paused("ladder")) {
+    const stored = await SB.getBigOdds(day);
+    let row = stored.ok && stored.row ? stored.row : null;
+    if (!row && stored.ok) {
+      row = await SAFE.mint(pay, now, await require("../lib/bigodds.js").feedNow().catch(() => []));
+      if (row) await SB.putBigOdds(row);
+    }
+    const text = row && SAFE.post(row);
+    if (text) for (const ch of safeDue) items.push({ key: safeKey(ch), kind: "safe20", channel: ch, text });
+  }
+  /* ...and its result the next morning, a win or a loss, from 10:00 until every game has a final score. */
+  const yday = S.dayOf(now - 864e5), resKey = (ch) => "safe20res|" + yday + "|" + ch;
+  const resDue = ["x", "fb", "tg"].filter((ch) => !posted.has(resKey(ch)));
+  if (S.hourOf(now) >= 10 && S.hourOf(now) <= 14 && resDue.length) {
+    const stored = await SB.getBigOdds(yday);
+    const yrow = stored.ok && stored.row ? stored.row : SAFE.seed(yday);
+    if (yrow && (yrow.legs || []).length) {
+      const text = SAFE.result(yrow, (await SB.recentResults(yday)).rows || []);
+      if (text) for (const ch of resDue) items.push({ key: resKey(ch), kind: "safe20res", channel: ch, text });
+    }
+  }
+
   const sent = [];
   for (const it of items) {
     const ok = it.channel === "x" ? await postX(it.text, it.image) : it.channel === "fb" ? await postFB(it.text, it.image) :

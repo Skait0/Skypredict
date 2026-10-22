@@ -1,0 +1,116 @@
+{
+  "day": "2026-10-22",
+  "odds": 20.55,
+  "codes": {
+    "sporty": {
+      "code": "Y5NEDC",
+      "n": 12
+    },
+    "bet9ja": {
+      "code": "5WTMX32",
+      "n": 12
+    },
+    "betking": {
+      "code": "TP1MZE",
+      "n": 12
+    },
+    "betpawa": {
+      "code": "2Q0WQDV",
+      "n": 6
+    },
+    "onexbet": {
+      "code": "F3Y3L",
+      "n": 8
+    },
+    "betway": {
+      "code": "BW7C1359F3",
+      "n": 12
+    }
+  },
+  "legs": [
+    {
+      "home": "Sturm Graz",
+      "away": "Marseille",
+      "code": "MIX_2_OV_2.5",
+      "p": 0.7372406593406593,
+      "odds": 1.3
+    },
+    {
+      "home": "Omonia",
+      "away": "Benfica",
+      "code": "MIX_X_OV_2.5",
+      "p": 0.7403518272425248,
+      "odds": 1.29
+    },
+    {
+      "home": "Celtic",
+      "away": "Celta",
+      "code": "AWAY_OVER_0.5",
+      "p": 0.7651142857142857,
+      "odds": 1.25
+    },
+    {
+      "home": "Hoffenheim",
+      "away": "Lyon",
+      "code": "AWAY_OVER_0.5",
+      "p": 0.7584721088435373,
+      "odds": 1.26
+    },
+    {
+      "home": "Jagiellonia",
+      "away": "Anderlecht",
+      "code": "MIXGG_1",
+      "p": 0.7312075245365321,
+      "odds": 1.31
+    },
+    {
+      "home": "Kairat Almaty",
+      "away": "Panathinaikos",
+      "code": "OVER_1.5",
+      "p": 0.7558721088435374,
+      "odds": 1.26
+    },
+    {
+      "home": "Crvena zvezda",
+      "away": "FC Copenhagen",
+      "code": "12",
+      "p": 0.7354406593406593,
+      "odds": 1.3
+    },
+    {
+      "home": "Ajax",
+      "away": "Atalanta",
+      "code": "MIX_2_OV_2.5",
+      "p": 0.7356406593406593,
+      "odds": 1.3
+    },
+    {
+      "home": "Sp Braga",
+      "away": "Gent",
+      "code": "12",
+      "p": 0.7274075245365321,
+      "odds": 1.31
+    },
+    {
+      "home": "Thun",
+      "away": "Hajduk Split",
+      "code": "HOME_OVER_0.5",
+      "p": 0.7639721088435374,
+      "odds": 1.26
+    },
+    {
+      "home": "Monaco",
+      "away": "Freiburg",
+      "code": "12",
+      "p": 0.7344406593406593,
+      "odds": 1.3
+    },
+    {
+      "home": "Hibernians",
+      "away": "Gzira",
+      "code": "OVER_1.5",
+      "p": 0.7317406593406593,
+      "odds": 1.3
+    }
+  ]
+}

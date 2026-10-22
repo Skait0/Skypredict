@@ -66,7 +66,7 @@ test("the captions credit a rank, never a person or a code", () => {
   const s = slip(7, 124.5, { code: "SECRET1", subject: "u:42", who: "user" });
   const tg = P.caption(s, "tg"), x = P.caption(s, "x");
   assert.match(tg, /An Archmage just landed ×124\.50/);
-  assert.match(tg, /✅ Arsenal to win/);
+  assert.match(tg, /⚽ Arsenal to win/); assert.doesNotMatch(tg + x, /✅/, "no green tick (owner, 21 Oct 2026)");
   assert.match(x, /One of our Archmages just landed ×124\.50 on SportyBet/);
   for (const t of [tg, x]) { assert.doesNotMatch(t, /SECRET1|u:42/); assert.doesNotMatch(t, /\bfree\b/i); }
   assert.ok(x.length <= 280, "fits on X: " + x.length);
@@ -195,4 +195,12 @@ test("confirmed = every game won on its final score; only those post themselves 
   assert.strictEqual(WIN.confirmed(w([{ name: "a" }, { name: "b" }], { seen: { 0: "won", 1: "won" } })), true, "the grader's seen marks count");
   assert.deepStrictEqual(P.pick([won, Object.assign({}, voided, { id: 10 })], [], "x", at(15), dayOf, hourOf).map((s) => s.id), [9]);
   assert.deepStrictEqual(WIN.toAsk([won, Object.assign({}, voided, { id: 10 })], [], at(15), hourOf).map((s) => s.id), [10]);
+});
+
+test("a pick stored as a raw market code reads in words (22 Oct 2026)", () => {
+  const s = slip(3, 5.1, {});
+  s.legs = [{ name: "AWAY_UNDER_1.5 (Betis v Feyenoord)" }, { name: "MIX_X_OV_1.5 (Levante v Athletic)" }];
+  const tg = P.caption(s, "tg");
+  assert.match(tg, /Feyenoord under 1\.5 goals/);
+  assert.doesNotMatch(tg, /[A-Z]+_[A-Z0-9_.]+/, "no raw market codes");
 });

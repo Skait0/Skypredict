@@ -1,0 +1,34 @@
+"use strict";
+/* The safer x20 of the day (lib/safer20.js, owner 22 Oct 2026): posted in the reply layout,
+   graded the next morning, the result posted win or loss. */
+const test = require("node:test");
+const assert = require("node:assert");
+const SAFE = require("../lib/safer20.js");
+const row = { day: "2026-10-22", odds: 20.55,
+  codes: { sporty: { code: "Y5NEDC", n: 2 }, bet9ja: { code: "5WTMX32", n: 2 }, betpawa: { code: "2Q0WQDV", n: 1 } },
+  legs: [{ home: "Celtic", away: "Celta", code: "GG" }, { home: "Thun", away: "Hajduk Split", code: "OVER_1.5" }] };
+
+test("the post: one bookie and code per line, partial bookies say how much, 18+", () => {
+  const t = SAFE.post(row);
+  assert.match(t, /\nSportyBet: Y5NEDC\nBet9ja: 5WTMX32\n/);
+  assert.doesNotMatch(t, /betPawa/, "only SportyBet, Bet9ja, BetKing and Betway are listed");
+  assert.match(t, /every pick 72% or more/); assert.match(t, /18\+$/);
+  assert.doesNotMatch(t, /\bfree\b|—/i);
+});
+
+test("graded on final scores: landed, lost with the misses named, nothing while a game is open", () => {
+  const res = (h1, a1, h2, a2) => [{ match_date: "2026-10-22", home: "Celtic", away: "Celta", hg: h1, ag: a1 },
+    { match_date: "2026-10-22", home: "Thun", away: "Hajduk Split", hg: h2, ag: a2 }];
+  assert.match(SAFE.result(row, res(1, 1, 2, 0)), /^🔥 Yesterday's safer x20 landed: 2 of 2 games, ×20\.55 on SportyBet \(Y5NEDC\)/);
+  const lost = SAFE.result(row, res(1, 0, 2, 0));
+  assert.match(lost, /^Yesterday's safer x20 lost: 1 of 2 games won\.\nMissed: .*Celtic v Celta/);
+  assert.match(lost, /wins and misses/);
+  assert.strictEqual(SAFE.result(row, res(1, 1, null, null).slice(0, 1)), null, "Thun v Hajduk has no score yet");
+});
+
+test("the hand-booked first one is seeded for 23 Oct; the home page gets no tile", () => {
+  assert.strictEqual(SAFE.seed("2026-10-22").codes.sporty.code, "Y5NEDC");
+  assert.strictEqual(SAFE.seed("2026-10-23"), null);
+  const fs = require("fs"), path = require("path");
+  assert.match(fs.readFileSync(path.join(__dirname, "..", "api", "bigodds.js"), "utf8"), /big: null \}\);\s*\};/);
+});

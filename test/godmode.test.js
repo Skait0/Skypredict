@@ -158,7 +158,7 @@ test("a landed win is posted to our channels by the admin, once per channel", as
   const r = (await w.call(post(w.boss, "postwin", { id: "51" }))).json();
   assert.deepStrictEqual(r, { sent: ["x", "fb"], already: ["tg"], failed: [], why: {} }, "Telegram already had it");
   assert.match(w.posts[0].text, /3 games/);
-  assert.match(w.posts[1].text, /✅ Iberia \+2 handicap\n✅ Over 1\.5 goals \(Freiburg v Jablonec\)/, "Facebook lists every game, read back from the bookie");
+  assert.match(w.posts[1].text, /⚽ Iberia \+2 handicap\n⚽ Over 1\.5 goals \(Freiburg v Jablonec\)/, "Facebook lists every game, read back from the bookie");
   assert.strictEqual(w.wins[51].untracked, 0, "the row now holds every leg, so the banner shows them too");
   assert.deepStrictEqual((await w.call(post(w.boss, "postwin", { id: "51" }))).json().sent, [], "never twice");
   const UI = require("../public/account-ui.js");
