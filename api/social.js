@@ -143,7 +143,9 @@ module.exports = async function handler(req, res) {
   /* ...and its result the next morning, a win or a loss, from 10:00 until every game has a final score. */
   const yday = S.dayOf(now - 864e5), resKey = (ch) => "safe20res|" + yday + "|" + ch;
   const resDue = ["x", "fb", "tg"].filter((ch) => !posted.has(resKey(ch)));
-  if (S.hourOf(now) >= 10 && S.hourOf(now) <= 14 && resDue.length) {
+  /* Only days the safer x20 ran (from 22 Oct 2026): before then big_odds held Big odds of the day, and
+     on 22 Oct its 21 Oct row went out labelled "safer x20" (owner caught it). */
+  if (yday >= SAFE.FIRST_DAY && S.hourOf(now) >= 10 && S.hourOf(now) <= 14 && resDue.length) {
     const stored = await SB.getBigOdds(yday);
     const yrow = stored.ok && stored.row ? stored.row : SAFE.seed(yday);
     if (yrow && (yrow.legs || []).length) {

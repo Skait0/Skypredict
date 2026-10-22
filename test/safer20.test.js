@@ -32,3 +32,9 @@ test("the hand-booked first one is seeded for 23 Oct; the home page gets no tile
   const fs = require("fs"), path = require("path");
   assert.match(fs.readFileSync(path.join(__dirname, "..", "api", "bigodds.js"), "utf8"), /big: null \}\);\s*\};/);
 });
+
+test("a Big odds of the day row (before 22 Oct 2026) is never posted as a safer x20 result", () => {
+  assert.strictEqual(SAFE.FIRST_DAY, "2026-10-22");
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "api", "social.js"), "utf8");
+  assert.match(src, /if \(yday >= SAFE\.FIRST_DAY && S\.hourOf\(now\) >= 10/);
+});
