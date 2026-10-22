@@ -279,10 +279,9 @@ test("fix a game by hand: the slip's status follows the legs (owner, 18 Oct 2026
 
 test("pause switches are kept for one Lagos day only", () => {
   const F = require("../lib/flags.js");
-  const f = F.clean({ pause: { wins: "2026-10-19", ladder: "tomorrow", bigodds: "2026-10-18" } });
-  assert.deepStrictEqual(f.pause, { wins: "2026-10-19", bigodds: "2026-10-18" });
+  const f = F.clean({ pause: { wins: "2026-10-19", ladder: "tomorrow", bigodds: "2026-10-19" } });
+  assert.deepStrictEqual(f.pause, { wins: "2026-10-19" }, "Big odds has no switch since 22 Oct 2026");
   assert.strictEqual(F.pausedOn(f, "wins", "2026-10-19"), true);
-  assert.strictEqual(F.pausedOn(f, "bigodds", "2026-10-19"), false, "yesterday's pause has ended");
   const UI = require("../public/account-ui.js");
   assert.match(UI.pauseHtml({ pause: {} }), /data-pause='wins' aria-checked='false'/);
 });

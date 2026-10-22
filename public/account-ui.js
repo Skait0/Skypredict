@@ -283,7 +283,7 @@
     return "<span class='swa-bk'>"+(m&&m[k]?m[k]:esc(BOOK_NAME[k]||k))+"</span>"; }
   function msg(t){ return "<div class='swa-set'><span class='swa-st'><small>"+esc(t)+"</small></span></div>"; }
   /* PAUSE SWITCHES (lib/flags.js pause): on means paused for today, Lagos time. */
-  var PAUSE_ROWS=[["wins","Win posts","Confirmed wins stop posting. Wins still come to you."],["bigodds","Big odds of the day","No Big odds slip is booked or posted."],["ladder","Daily odds","No Daily odds slips are booked, sent or shown."]];
+  var PAUSE_ROWS=[["wins","Win posts","Confirmed wins stop posting. Wins still come to you."],["ladder","Daily odds","No Daily odds slips are booked, sent or shown."]];
   function lagosDay(){ return new Date(Date.now()+3600e3).toISOString().slice(0,10); }
   function pauseHtml(fl){
     var p=(fl&&fl.pause)||{}, day=lagosDay();
