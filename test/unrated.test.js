@@ -193,3 +193,9 @@ test("a women's side under a neutral competition name is refused, and no team we
   assert.deepStrictEqual(hit, [], "men's sides refused as women's");
   assert.ok(names.size > 500, "read only " + names.size + " team names - the scan is broken");
 });
+
+test("Russia's youth league (MFL) is refused, North Macedonia's senior MFL leagues are not (23 Oct 2026)", () => {
+  assert.strictEqual(isUnratedCompetition("Russia MFL, Division A"), true);
+  for (const l of ["North Macedonia 1. MFL", "North Macedonia 2. MFL", "Russia Premier League"])
+    assert.strictEqual(isUnratedCompetition(l), false, l);
+});
