@@ -230,4 +230,7 @@ test("a landed slip whose legs lost their times falls back to when it was booked
   assert.deepStrictEqual(W.toAsk([s2111], [], now, hourOf).map((s) => s.id), [2111], "the owner is asked instead");
   const today = Object.assign({}, s2111, { id: 7, created_at: "2026-10-22T09:00:00Z" });
   assert.deepStrictEqual(W.pick([today], [], "x", now, dayOf, hourOf).map((s) => s.id), [7], "booked today: posts as before");
+  // 23 Oct 2026: the 10:00 recap called it "Yesterday a Soccerwizard slip landed ×549.48".
+  assert.strictEqual(W.recap([s2111], "2026-10-22", dayOf), null, "settled yesterday, booked Monday: not yesterday's win");
+  assert.match(W.recap([s2111], "2026-10-19", dayOf), /×549\.48/);
 });
