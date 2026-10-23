@@ -361,3 +361,17 @@ test("the bookie's score can lose it too; no score yet keeps it open; only a thi
   await W.tick(other.deps);
   assert.strictEqual(other.rows[0].status, "open", "its turn is the next run");
 });
+
+test("an old stuck slip waits open for its one look; with no score from the bookie either it then closes", async () => {
+  const old = (id) => Object.assign(stuck(id), { total_odds: 9, last_kickoff: "2026-10-08T14:00:00Z" });   /* past the three days, under x20 */
+  const waiting = world({ rows: [old(dueId + 1)], deps: bookie(null) });
+  await W.tick(waiting.deps);
+  assert.strictEqual(waiting.rows[0].status, "open", "not closed before its turn");
+  const looked = world({ rows: [old(dueId)], deps: bookie(null) });
+  await W.tick(looked.deps);
+  assert.strictEqual(looked.rows[0].status, "ungraded", "nobody could settle a leg: it closes quietly, as before");
+  assert.strictEqual(looked.rows[0].seen.looked, 1);
+  const again = world({ rows: [Object.assign(old(dueId + 1), { seen: { 0: "won", looked: 1 } })], deps: bookie(null) });
+  await W.tick(again.deps);
+  assert.strictEqual(again.rows[0].status, "ungraded", "looked once already: it closes on any run");
+});
