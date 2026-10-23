@@ -324,3 +324,40 @@ test("It landed on a check slip pings the owner and dates the win today", async 
   const acc = require("fs").readFileSync(require("path").join(__dirname, "..", "api", "account.js"), "utf8");
   assert.match(acc, /to === "landed" && got\.row && Number\(got\.row\.total_odds\) >= SW\.PING_AT && slips\.ping/);
 });
+
+/* THE BOOKIE'S SCORE WHEN OURS NEVER CAME (owner, 23 Oct 2026: "the game that just won was
+   played on our platform but it didnt show up on our backend"). K4MXX4, a 12/12 x99 Merlin's
+   Pick, sat open: our results had no Vitoria SC Guimaraes 5-0 Maritimo. Once the last game
+   should be over, the slip is read back and the missing legs are settled on SportyBet's own
+   final score, by Sportradar id. */
+const NOW_K4 = Date.UTC(2026, 9, 12, 20, 30);
+const dueId = (3 - (Math.floor(NOW_K4 / 6e5) % 3)) % 3 + 3;
+const stuck = (id) => ({ id, status: "open", book: "sporty", code: "K4MXX4", total_odds: 99.44, untracked: 0, notified: false,
+  legs: [leg("A", "B", "Home win"), leg("Guimaraes", "Maritimo", null, "MIX_X_OV_2.5")], seen: { 0: "won" }, last_kickoff: "2026-10-12T14:00:00Z" });
+const bookie = (score) => ({
+  readCode: async () => [{ eventId: "sr:match:1", srId: "1", prediction: "1", home: "A", away: "B", odds: 2 },
+    { eventId: "sr:match:72530980", srId: "72530980", prediction: "MIX_X_OV_2.5", home: "Vitoria SC Guimaraes", away: "Maritimo Madeira", odds: 1.37 }],
+  results: async () => [R("A", "B", 2, 0)],
+  scores: async (ids) => (ids.includes("72530980") && score ? { 72530980: { home: "Vitoria SC Guimaraes", away: "Maritimo Madeira", hg: score[0], ag: score[1], hth: 1, hta: 0, start: Date.UTC(2026, 9, 12, 14) } } : {}),
+  now: () => NOW_K4,
+});
+
+test("a slip our results left short lands on the bookie's own final score, and the owner is pinged", async () => {
+  const w = world({ rows: [stuck(dueId)], deps: bookie([5, 0]) });
+  await W.tick(w.deps);
+  assert.strictEqual(w.rows[0].status, "landed");
+  assert.strictEqual(w.pings.length, 1);
+  assert.strictEqual(w.rows[0].legs.length, 2, "every leg kept for the win post");
+});
+
+test("the bookie's score can lose it too; no score yet keeps it open; only a third of the stuck slips each run", async () => {
+  const lost = world({ rows: [stuck(dueId)], deps: bookie([0, 1]) });
+  await W.tick(lost.deps);
+  assert.strictEqual(lost.rows[0].status, "lost");
+  const none = world({ rows: [stuck(dueId)], deps: bookie(null) });
+  await W.tick(none.deps);
+  assert.strictEqual(none.rows[0].status, "open");
+  const other = world({ rows: [stuck(dueId + 1)], deps: bookie([5, 0]) });
+  await W.tick(other.deps);
+  assert.strictEqual(other.rows[0].status, "open", "its turn is the next run");
+});

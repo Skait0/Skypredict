@@ -44,6 +44,8 @@ function slipDeps() {
     checkSlips: (n) => SB.checkSiteSlips(n),
     patch: (id, p) => SB.patchSiteSlip(id, p),
     readCode,
+    /* The bookie's final scores by Sportradar id, for legs our results table never got. */
+    scores: require("../lib/upstream.js").readScores,
     /* "Your slip landed" to the reader's phones. Overnight the line is held and
        the 9am push shows it (api/push.js noteFor). */
     userPing: async (userId, note) => {
