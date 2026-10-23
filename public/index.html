@@ -27131,7 +27131,7 @@ load().catch(function(){});
     if(keepalive){
       /* A page being hidden may never get the answer; the next load reconciles. */
       if(root.fetch&&body.length<60000) try{ root.fetch("/api/me",{method:"POST",keepalive:true,credentials:"same-origin",
-        headers:{"Content-Type":"application/json","X-SW-Request":"1"},body:body}); }catch(e){}
+        headers:{"Content-Type":"application/json","X-SW-Request":"1"},body:body}).catch(function(){}); }catch(e){}
       if(cb) cb();
       return;
     }

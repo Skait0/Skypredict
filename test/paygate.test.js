@@ -160,7 +160,9 @@ test("paid once: the webhook and the return page both settle, the pass is credit
   const v = await w.verify(u, reference);        /* and the page asks too */
   assert.deepEqual([v.paid, v.until], [true, first]);
   assert.equal(Date.parse(first) - Date.UTC(2026, 9, 16, 10), 7 * 864e5);
-  assert.equal(await R.roleOf(w.db, { id: u.id, email: "a@b.com" }, {}), "plus");
+  /* On the test's own clock (16 Oct): roleOf reads the real one, so after 23 Oct 10:00 this week pass had
+     "expired" and the test failed by the calendar (23 Oct 2026). */
+  assert.equal(R.isPlus(w.subs[u.id], Date.UTC(2026, 9, 16, 10)), true);
 });
 
 test("passes stack on the days left; nothing is credited for the wrong amount or a stranger's ref", async () => {
