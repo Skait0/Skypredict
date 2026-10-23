@@ -150,7 +150,7 @@ module.exports = async function handler(req, res) {
           "\n\n#football #bookingcode #sportybet #naijafootball" });
     }
   }
-  /* ...and its result the next morning, a win or a loss, from 10:00 until every game has a final score. */
+  /* ...and its result the next morning if it landed (wins only: owner, 23 Oct 2026), from 10:00 until every game has a final score. */
   const yday = S.dayOf(now - 864e5), resKey = (ch) => "safe20res|" + yday + "|" + ch;
   const resDue = ["x", "fb", "tg"].filter((ch) => !posted.has(resKey(ch)));
   /* Only days the safer x20 ran (from 22 Oct 2026): before then big_odds held Big odds of the day, and

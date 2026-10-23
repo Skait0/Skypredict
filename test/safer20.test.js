@@ -16,13 +16,11 @@ test("the post: one bookie and code per line, partial bookies say how much, 18+"
   assert.doesNotMatch(t, /\bfree\b|—/i);
 });
 
-test("graded on final scores: landed, lost with the misses named, nothing while a game is open", () => {
+test("graded on final scores: landed posts, a loss posts nothing, nothing while a game is open", () => {
   const res = (h1, a1, h2, a2) => [{ match_date: "2026-10-22", home: "Celtic", away: "Celta", hg: h1, ag: a1 },
     { match_date: "2026-10-22", home: "Thun", away: "Hajduk Split", hg: h2, ag: a2 }];
   assert.match(SAFE.result(row, res(1, 1, 2, 0)), /^🔥 Yesterday's safer x20 landed: 2 of 2 games, ×20\.55 on SportyBet \(Y5NEDC\)/);
-  const lost = SAFE.result(row, res(1, 0, 2, 0));
-  assert.match(lost, /^Yesterday's safer x20 lost: 1 of 2 games won\.\nMissed: .*Celtic v Celta/);
-  assert.match(lost, /wins and misses/);
+  assert.strictEqual(SAFE.result(row, res(1, 0, 2, 0)), null, "a loss is never posted");
   assert.strictEqual(SAFE.result(row, res(1, 1, null, null).slice(0, 1)), null, "Thun v Hajduk has no score yet");
 });
 
