@@ -104,8 +104,9 @@ test("shell tokens match the app, cards are 12px, footer heads are h3", () => {
 test("the footer is the essential few, privacy and terms in the legal row", () => {
   const f = P.pageFooter();
   const pills = f.slice(f.indexOf('class="foot-links"'), f.indexOf("</nav>")).match(/<a /g).length;
-  /* 9 since 18 Oct 2026: the Facebook Page joined X and Telegram (owner). */
-  assert.ok(pills <= 9, pills + " footer pills");
+  /* 9 since 18 Oct 2026: the Facebook Page joined X and Telegram (owner).
+     10 since 23 Oct 2026: the WhatsApp Channel (owner). */
+  assert.ok(pills <= 10, pills + " footer pills");
   const legal = f.slice(f.indexOf('class="foot-legal"'));
   assert.match(legal, /href="\/privacy"/);
   assert.match(legal, /href="\/terms"/);
