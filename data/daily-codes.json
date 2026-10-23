@@ -2829,5 +2829,76 @@
       "betway": "BW7C1772D7"
     },
     "odds": 1.73
+  },
+  "2026-10-23": {
+    "date": "2026-10-23",
+    "generated": "2026-10-23T11:17:20.015Z",
+    "firstKickoff": "2026-10-23T15:00:00.000Z",
+    "legs": [
+      {
+        "date": "2026-10-23",
+        "home": "Go Ahead Eagles",
+        "away": "Telstar",
+        "league": "Netherlands Eredivisie",
+        "kickoff": "2026-10-23T18:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.893,
+        "market": "OVER_1.5",
+        "odd": 1.12
+      },
+      {
+        "date": "2026-10-23",
+        "home": "Hebar",
+        "away": "Nesebar",
+        "league": "Bulgaria Vtora Liga",
+        "kickoff": "2026-10-23T15:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.819,
+        "market": "1X",
+        "odd": 1.1
+      },
+      {
+        "date": "2026-10-23",
+        "home": "Portadown",
+        "away": "Linfield",
+        "league": "Northern Ireland Premiership",
+        "kickoff": "2026-10-23T18:45:00.000Z",
+        "tip": "X2, draw or away",
+        "tip_p": 0.862,
+        "market": "X2",
+        "odd": 1.12
+      },
+      {
+        "date": "2026-10-23",
+        "home": "De Graafschap",
+        "away": "Waalwijk",
+        "league": "Netherlands Eerste Divisie",
+        "kickoff": "2026-10-23T18:00:00.000Z",
+        "tip": "Over 1.5",
+        "tip_p": 0.897,
+        "market": "OVER_1.5",
+        "odd": 1.11
+      },
+      {
+        "date": "2026-10-23",
+        "home": "Gjilani",
+        "away": "Llapi",
+        "league": "Kosovo Superliga",
+        "kickoff": "2026-10-23T16:00:00.000Z",
+        "tip": "1X, home or draw",
+        "tip_p": 0.806,
+        "market": "1X",
+        "odd": 1.11
+      }
+    ],
+    "codes": {
+      "sporty": "NGFKXD",
+      "bet9ja": "5WYHPMS",
+      "betking": "V81MCS",
+      "onexbet": "KR6S5",
+      "betway": "BW7C5AFAFE",
+      "msport": "B2AWGW9"
+    },
+    "odds": 1.7
   }
 }
