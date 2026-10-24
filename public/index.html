@@ -7700,8 +7700,20 @@ html:not(.reduce) .wiz-face.tip{animation:wizTip .65s var(--ease-out)}
 .yday b{color:var(--green-ink);font-variant-numeric:tabular-nums}
 /* The day's code: gold tile, large display-face code. */
 #codeCard .ck-tile:first-child{border-color:var(--accent-rim);background:linear-gradient(180deg,rgba(242,184,75,.07),transparent 70%) var(--card-2)}
-#codeCard .ck-tile:first-child .ck-chip code{font-family:var(--disp);font-size:24px;letter-spacing:.1em}
+#codeCard .ck-tile:first-child .ck-chip code{font-family:var(--disp);font-size:19px;letter-spacing:.06em}
 #codeCard .ck-tile:first-child .ck-tot{font-family:var(--disp);font-size:15px}
+/* In the rail, tight (owner, 24 Oct 2026): one swipeable row of bookies, the day's code and
+   Merlin's Pick side by side even on a phone, both codes in the display face. */
+#codeCard{margin:10px 0 0;padding:10px 12px}
+#codeCard .ck-top{margin-bottom:6px}
+#codeCard .ck-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -12px 8px;padding:0 12px}
+#codeCard .ck-tabs::-webkit-scrollbar{display:none}
+#codeCard .ck-tab{flex:none;padding:4px 9px}
+#codeCard .ck-tiles{grid-template-columns:1fr 1fr;gap:8px}
+#codeCard .ck-tile{padding:8px 10px;gap:6px}
+#codeCard .ck-tile .ck-chip{flex-wrap:wrap;gap:2px 8px;padding:5px 10px}
+#codeCard .ck-tile .ck-chip code{font-family:var(--disp);font-size:19px;letter-spacing:.06em}
+#codeCard .ck-foot{margin-top:8px}
 .ck-rev span{display:inline-block;animation:ckCh .2s var(--ease-out) both}
 @keyframes ckCh{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 .ck-chip.ck-ok{animation:ckPop .2s var(--ease-out)}
@@ -8204,7 +8216,12 @@ html:not(.reduce) .tk-item.flash{border-radius:var(--r-md);animation:tkWash 2s v
       <!-- The "Daily odds. Pick yours" ladder panel left the home page (owner, 20 Oct
            2026: "too many ways to book"); Pick for me covers it. The 10:30 ladder still
            books for Wizard Pass delivery (My daily slip, bot /daily). Its script and
-           CSS stay and draw nothing without #ladder. -->
+           CSS stay and draw nothing without #ladder.
+           THE DAILY CODES CARD TAKES ITS PLACE (owner, 24 Oct 2026: "what happened to the
+           daily codes and the bookie switcher ... make sure the daily merlin's pick is by
+           the side of it ... tighten as much as possible"). It sat under the board's
+           heading, far below the fold on a phone. -->
+      <section class="ck-card" id="codeCard" hidden></section>
       <div id="myres"></div>
       <div id="potd"></div>
       <div id="daily"></div>
@@ -8264,8 +8281,8 @@ html:not(.reduce) .tk-item.flash{border-radius:var(--r-md);animation:tkWash 2s v
        slip" and the filters the N is counted from, which split a set of
        controls with an advert. Here it is the first thing under the board's
        own heading, and the view toggle, the Add all button and the date bar
-       stay together above the board they act on. -->
-  <section class="ck-card" id="codeCard" hidden></section>
+       stay together above the board they act on.
+       Moved to the home rail, under the offer, on 24 Oct 2026. -->
 
   <!-- The two controls that change what you are looking at - how it is drawn,
        and which day - sit together on one row above the board. -->
@@ -20496,7 +20513,7 @@ function ladAuto(){
     var ORDER=["sporty","bet9ja","betking","betpawa","onexbet","betway","msport"];
     var daily={}; ORDER.forEach(function(k){ if(d.codes[k]&&BOOKS[k]) daily[k]=d.codes[k]; });
     if(!Object.keys(daily).length) return;
-    var big=null;
+    var big=null, mp=null;
     var pick=null; try{ pick=curBook()&&curBook().key; }catch(e){}
     if(!daily[pick]) pick=ORDER.filter(function(k){return daily[k];})[0];
     /* The build writes the NEWEST code, which between midnight and mkcode's
@@ -20524,29 +20541,41 @@ function ladAuto(){
         : "<span class='ck-none'>Not on this book today</span>";
     }
     function paintCard(){
-      var tabs=ORDER.filter(function(k){ return BOOKS[k]&&(daily[k]||(big&&big.codes[k])||(ladder||[]).some(function(r){ return r.codes&&r.codes[k]; })); }).map(function(k){
+      var tabs=ORDER.filter(function(k){ return BOOKS[k]&&(daily[k]||(big&&big.codes[k])||(mp&&mp.codes[k])); }).map(function(k){
         return "<button class='ck-tab' type='button' role='tab' data-book='"+k+"' aria-selected='"+(k===pick)+"'>"+
           (BOOKS[k].mark||esc(BOOKS[k].label))+"</button>";
       }).join("");
       /* a book that booked fewer legs than the slip says so (mkcode short, 13 Oct 2026) */
       var sh=d.short&&d.short[pick]&&daily[pick]?"<span class='ck-none'>"+d.short[pick]+" of "+d.n+" games on this book</span>":"";
       var tiles="<div class='ck-tile'><div class='ck-th'>"+esc(when)+odds+"</div>"+chip(daily[pick])+sh+"</div>";
+      /* MERLIN'S PICK BESIDE IT (owner, 24 Oct 2026: "make sure the daily merlin's pick is by
+         the side of it"). Today's x5 from the 10:30 ladder, open to everyone; x10 to x30
+         stay Wizard Pass. A started slip shows no code (it would book part of it). */
+      if(mp){
+        var mc=mp.codes[pick], mn=mp.games||(mp.legs||[]).length;
+        var mbody=mp.state==="landed"?"<span class='ck-none'>Every game won. New code at 10:30.</span>":
+          mp.state==="started"?"<span class='ck-none'>Games started. New code at 10:30.</span>":
+          chip(mc&&mc.code)+(mc&&mc.n<mn?"<span class='ck-none'>"+mc.n+" of "+mn+" games on this book</span>":"");
+        tiles+="<div class='ck-tile big'><div class='ck-th'>Merlin's Pick<span class='ck-tot'>×"+Number(mp.odds).toFixed(2)+
+          "</span></div>"+mbody+"<span class='ck-none'>x10 to x30: Wizard Pass</span></div>";
+      }
       /* Big odds of the day is its own slip again (18 Oct 2026): the ladder's x10 is Wizard Pass only. */
       if(big) tiles+="<div class='ck-tile big'><div class='ck-th'>Big odds of the day<span class='ck-tot'>×"+
         Number(big.odds).toFixed(2)+"</span></div>"+chip(big.codes[pick]&&big.codes[pick].code)+"</div>";
       host.innerHTML="<div class='ck-top'><a class='ck-tag' href='/booking-codes'>Daily booking codes</a></div>"+
         "<div class='ck-tabs' role='tablist' aria-label='Bookmaker'>"+tabs+"</div>"+
         "<div class='ck-tiles'>"+tiles+"</div>"+
-        "<div class='ck-foot'>"+foot+"<span class='ck-all'> · <a href='/booking-codes'>All books &amp; past codes &rsaquo;</a></span></div>"+
-        /* True since 24 Sep: the mint run posts the code to both, every morning
-           (xqueue.js, tgpost.js). Said only once the channel really gets it. */
-        "<div class='ck-soc'>Posted every morning on "+
-          "<a href='https://x.com/soccerwizardhq' target='_blank' rel='noopener'>X</a> and "+
-          "<a href='https://t.me/soccerwizardTG' target='_blank' rel='noopener'>Telegram</a></div>";
+        /* Tight (24 Oct 2026): the tag already links to every book and past code, and the
+           "Posted every morning on X and Telegram" line went with it. */
+        "<div class='ck-foot'>"+foot+"</div>";
     }
     paintCard();
     host.hidden=false;
     afterReveal(function(){ ckReveal(host); });
+    ladderRows().then(function(rows){
+      mp=rows.filter(function(r){ return r.rung===5&&!r.lost; })[0]||null;
+      if(mp) paintCard();
+    }).catch(function(){});
     /* BIG ODDS OF THE DAY, when there is one (api/bigodds.js, minted at 11:00
        Lagos on a good day). A second tile on the same tabs; nothing is drawn
        on a day without one. */
@@ -26857,6 +26886,9 @@ document.addEventListener("click",function(e){
 },true);
 window.addEventListener("load",function(){ setTimeout(function(){
   try{ if(/[?&]noclarity\b/.test(location.search)) return; }catch(e){}
+  /* Robots and deployment URLs are not readers (24 Oct 2026: Vercel's headless check of each new
+     deployment showed up as "HeadlessChrome, United States" recordings). */
+  try{ if(navigator.webdriver||/HeadlessChrome/.test(navigator.userAgent)||/\.vercel\.app$/.test(location.hostname)) return; }catch(e){}
   (function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
     t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
     y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","z2i2bcn4s1");

@@ -275,9 +275,10 @@ test("one handle, used everywhere", () => {
     "more than one X handle on the site: " + [...new Set(links)].join(", "));
   /* Four since 24 Sep: the header and the daily code card carry it too.
      Five since 25 Sep: the booked-code modal, under the Telegram button.
-     Six since 13 Oct: the maintenance page. */
-  assert.strictEqual(links.length, 6,
-    "expected the header's, the daily card's, the footer's, the contact dialog's and the code modal's, found " + links.length);
+     Six since 13 Oct: the maintenance page. Five since 24 Oct: the daily card went tight
+     and lost its own line (the header still carries the handle). */
+  assert.strictEqual(links.length, 5,
+    "expected the header's, the footer's, the contact dialog's and the code modal's, found " + links.length);
 });
 
 /* --------------------------------------------------------- the split hub */
