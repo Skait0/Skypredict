@@ -6429,6 +6429,9 @@ html.booting .sc-proof[hidden]{display:flex!important;visibility:hidden;min-heig
      matches this; the rail-child selectors cover the moment before it runs. */
   .home-grid>.home-rail>.slip-cta,.home-grid>.slip-cta{order:1}
   .home-grid>.home-rail>#myres,.home-grid>#myres{order:2}
+  /* The daily codes card, straight under the offer (24 Oct 2026); without an order it
+     jumped above the offer. */
+  .home-grid>.home-rail>#codeCard{order:2}
   .home-grid>.home-main{order:3}
   /* Everything below the first screen of games (the board is capped at 78vh
      on a phone, see "board cap"), in the order a reader acts on it: the
