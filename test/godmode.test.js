@@ -318,3 +318,15 @@ test("the code inspector reads any code with our number and the result", async (
   assert.strictEqual(r.legs.length, 1); assert.strictEqual(r.legs[0].verdict, "won"); assert.strictEqual(r.legs[0].score, "2-0");
   assert.ok(r.legs[0].our > 50 && r.legs[0].our < 70, "our blended number: " + r.legs[0].our);
 });
+
+test("Check and Inspect settle a game our results never got on the bookie's own score (23 Oct 2026, K4MXX4)", () => {
+  const DET2 = require("../lib/slipdetail.js");
+  const legs = [{ home: "Vitoria SC Guimaraes", away: "Maritimo Madeira", prediction: "MIX_X_OV_2.5", odds: 1.37, kickoff: "", eventId: "sr:match:72530980", srId: "72530980" }];
+  assert.strictEqual(DET2.detail(legs, [])[0].verdict, null, "our results alone: no final score");
+  const scores = { 72530980: { home: "Vitoria SC Guimaraes", away: "Maritimo Madeira", hg: 5, ag: 0, hth: 1, hta: 0, start: Date.UTC(2026, 9, 23, 19, 45) } };
+  const d = DET2.detail(legs, DET2.bookRows(legs, scores));
+  assert.strictEqual(d[0].verdict, "won");
+  assert.strictEqual(d[0].score, "5-0");
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "api", "account.js"), "utf8");
+  assert.strictEqual((src.match(/DET\.bookRows\(legs, got\)/g) || []).length, 2, "slipdetail and inspect both use it");
+});

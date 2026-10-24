@@ -56,6 +56,8 @@ function make(deps) {
     byId: (id) => require("../lib/supabase.js").siteSlipForCheck(id),
     read: (book, code) => require("../lib/upstream.js").readSlip(book, code),
     results: async (since) => (await require("../lib/supabase.js").recentResults(since)).rows || [],
+    /* The bookie's final scores by Sportradar id, for games our results never got. */
+    scores: (ids) => require("../lib/upstream.js").readScores(ids),
     /* "Post to our channels" on a landed win: the same banner, captions and social_log key as the hourly win post. */
     postWin: (ch, text, img) => { const P = require("./social.js");
       return ch === "x" ? P.postX(text, img) : ch === "fb" ? P.postFB(text, img) : P.postTGPhoto(img, text); },
@@ -276,8 +278,9 @@ function make(deps) {
           const DET = require("../lib/slipdetail.js");
           const since = new Date(Date.parse(row.created_at || "") - 2 * 864e5 || t - 14 * 864e5).toISOString().slice(0, 10);
           const results = await slips.results(since);
+          const got = legs && slips.scores ? (await slips.scores(legs.map(DET.srOf)).catch(() => ({}))) || {} : {};
           /* A leg the owner set by hand (fixleg) shows the owner's verdict. */
-          if (legs) return H.sendJson(res, 200, { readBack: true, legs: DET.detail(legs, results).map((r, i) => {
+          if (legs) return H.sendJson(res, 200, { readBack: true, legs: DET.detail(legs, DET.bookRows(legs, got).concat(results)).map((r, i) => {
             const own = (row.legs || [])[i];
             return own && own.byHand ? Object.assign(r, { verdict: own.verdict, why: "Set by hand." }) : r; }) });
           /* Fallback: the graded legs the ledger kept, with what it saw. */
@@ -356,7 +359,8 @@ function make(deps) {
           const since = new Date(t - 3 * 864e5).toISOString().slice(0, 10);
           const [results, pay] = await Promise.all([slips.results(since).catch(() => []), (slips.board ? slips.board() : Promise.resolve(null)).catch(() => null)]);
           const fixtures = (pay && pay.fixtures) || [];
-          const rows = DET.detail(legs, results);
+          const got = slips.scores ? (await slips.scores(legs.map(DET.srOf)).catch(() => ({}))) || {} : {};
+          const rows = DET.detail(legs, DET.bookRows(legs, got).concat(results));
           return H.sendJson(res, 200, { book, code, legs: rows.map((r, k) => {
             const f = D.findFixture(fixtures, legs[k]), raw = f ? D.probOf(f, legs[k].prediction) : null;
             return Object.assign(r, { our: raw == null ? null : Math.round(D.blend(raw, +legs[k].odds) * 100) });
