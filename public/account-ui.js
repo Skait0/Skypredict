@@ -864,6 +864,7 @@
     var a=acct();
     if(!a.st.on){ if(root.swGate) root.swGate("plus",null,plus,""); return; }
     close(); mark("plus");
+    if(root.swEv) root.swEv("pass_opened");   /* Clarity funnel, index.html */
     var pick="month", offer={passes:[]};
     var me={role:role(),plusUntil:lsGet("sw.plusUntil")};
     function draw(){
@@ -905,6 +906,7 @@
     (function ask(){
       a.req("GET","/api/pay/verify?ref="+m[1],null,function(code,j){
         if(code===200&&j&&j.paid){
+          if(root.swEv) root.swEv("paid");
           a.req("GET","/api/me",null,function(c2,me){
             if(c2===200&&me&&me.signedIn&&a.saveRole) a.saveRole(me);
             var n=me&&typeof me.codeLimit==="number"?me.codeLimit:20;

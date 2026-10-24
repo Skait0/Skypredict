@@ -12265,7 +12265,9 @@ function bookFetch(sel,B,src){
         return {_kind:(e&&e.name==="AbortError")?"timeout":"net"};
       });
   }
-  return attempt();
+  /* Clarity funnel (24 Oct 2026): tapped Get code, then booked or not, tagged with the surface. */
+  if(window.swEv) swEv("get_code",src);
+  return attempt().then(function(d){ if(window.swEv) swEv(d&&d.success&&B.codeOf(d)?"code_booked":"code_failed",src); return d; });
 }
 /* The admin page (account-ui.js) reads the build time and the pick record
    from here: DATA is a let, so it is not on window. */
@@ -26840,6 +26842,19 @@ load().catch(function(){});
    records a few dozen visits a day). Loaded 3s after the page is up, so a cheap phone on
    mobile data feels nothing. Typed input is masked by Clarity; the account menu and every
    account/admin screen carry data-clarity-mask (public/account-ui.js). ?noclarity turns it off. */
+/* THE FUNNEL (owner, 24 Oct 2026: yes to named steps). Events queue from the first tap and the
+   script drains them once it loads: builder_<slider|wizard|pfm|wsx>, get_code / code_booked /
+   code_failed (bookFetch, with the surface as the "src" tag), code_copied, pass_opened,
+   pay_tapped and paid (public/account-ui.js). No personal data: names of steps only. */
+window.clarity=window.clarity||function(){(window.clarity.q=window.clarity.q||[]).push(arguments)};
+window.swEv=function(name,src){ try{ if(src) clarity("set","src",String(src)); clarity("event",name); }catch(e){} };
+document.addEventListener("click",function(e){
+  var t=e.target&&e.target.closest?e.target:null; if(!t) return;
+  var row=t.closest(".bm-rh,.bld-mode-btn");
+  if(row){ swEv("builder_"+(row.getAttribute("data-go")||row.getAttribute("data-open")||row.getAttribute("data-mode")||"other")); return; }
+  if(t.closest(".code-copy,.sp-copy,.lad-copy,.ck-chip,[data-slcp]")){ swEv("code_copied"); return; }
+  if(t.closest("#swaPay")) swEv("pay_tapped");
+},true);
 window.addEventListener("load",function(){ setTimeout(function(){
   try{ if(/[?&]noclarity\b/.test(location.search)) return; }catch(e){}
   (function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};

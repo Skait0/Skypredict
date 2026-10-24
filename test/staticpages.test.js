@@ -153,6 +153,13 @@ test("the privacy page names what actually leaves the browser", () => {
   assert.match(h, /Microsoft Clarity records taps/, "the page names the recorder");
   const ui = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "account-ui.js"), "utf8");
   assert.strictEqual((ui.match(/setAttribute\("data-clarity-mask","true"\)/g) || []).length, 2, "account menu and account screens masked");
+  /* The funnel's named steps (owner, 24 Oct 2026), each fired where it happens. */
+  assert.match(index, /swEv\("get_code",src\)/);
+  assert.match(index, /"code_booked":"code_failed"/);
+  assert.match(index, /swEv\("code_copied"\)/);
+  assert.match(index, /swEv\("builder_"/);
+  assert.match(ui, /swEv\("pass_opened"\)/);
+  assert.match(ui, /swEv\("paid"\)/);
 });
 
 test("and it does not claim protections the site does not have", () => {
