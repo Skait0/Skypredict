@@ -147,6 +147,12 @@ test("the privacy page names what actually leaves the browser", () => {
   assert.match(h, /Sentry/, "the error reporter must be named");
   assert.match(h, /Vercel Analytics/, "the analytics must be named");
   assert.match(h, /SportyBet/, "the booking call sends selections out");
+  /* Clarity records taps and scrolls (24 Oct 2026): the page must say so, and the account
+     screens it promises are hidden must really carry the mask. */
+  assert.ok(/clarity\.ms\/tag\//.test(index), "Clarity loads");
+  assert.match(h, /Microsoft Clarity records taps/, "the page names the recorder");
+  const ui = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "account-ui.js"), "utf8");
+  assert.strictEqual((ui.match(/setAttribute\("data-clarity-mask","true"\)/g) || []).length, 2, "account menu and account screens masked");
 });
 
 test("and it does not claim protections the site does not have", () => {

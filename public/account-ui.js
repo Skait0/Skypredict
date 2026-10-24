@@ -732,7 +732,7 @@
     if(menu) return;
     var st=d.createElement("style"); st.textContent=CSS; d.head.appendChild(st);
     scrim=d.createElement("div"); scrim.className="swa-scrim"; d.body.appendChild(scrim);
-    menu=d.createElement("div"); menu.className="swa-menu"; menu.setAttribute("role","menu"); menu.setAttribute("aria-label","Your account");
+    menu=d.createElement("div"); menu.className="swa-menu"; menu.setAttribute("data-clarity-mask","true"); menu.setAttribute("role","menu"); menu.setAttribute("aria-label","Your account");
     d.body.appendChild(menu);
     scrim.addEventListener("click",close);
     d.addEventListener("keydown",function(e){ if(e.key==="Escape"&&menu.classList.contains("on")) close(); });
@@ -815,7 +815,7 @@
   var viewEl=null, pushed=false, ownBack=false;
   function view(title,html,cls){
     ensure();
-    if(!viewEl){ viewEl=d.createElement("div"); viewEl.className="swa-view"; viewEl.setAttribute("role","dialog"); viewEl.setAttribute("aria-modal","true"); d.body.appendChild(viewEl);
+    if(!viewEl){ viewEl=d.createElement("div"); viewEl.className="swa-view"; viewEl.setAttribute("data-clarity-mask","true"); viewEl.setAttribute("role","dialog"); viewEl.setAttribute("aria-modal","true"); d.body.appendChild(viewEl);
       d.addEventListener("keydown",function(e){ if(e.key==="Escape"&&viewEl.classList.contains("on")) closeView(); }); }
     viewEl.classList[cls==="swa-wp"?"add":"remove"]("swa-wp");   /* the Wizard Pass page dresses its own title */
     viewEl.setAttribute("aria-label",title);
