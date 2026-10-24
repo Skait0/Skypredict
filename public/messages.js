@@ -425,7 +425,14 @@
     return html;
   }
   /* The box to type in, with the emoji picker above it. send(text, done) does the sending. */
-  function composer(host,ph,send){
+  /* DRAFTS KEEP (owner, 24 Oct 2026: "whenever im typing and i leave the page, i cant find it
+     anymore when i come back to the editor"). What is typed is kept on this device per
+     conversation, like WhatsApp, until it is sent. */
+  function draftGet(k){ try{ return root.localStorage.getItem("sw.draft."+k)||""; }catch(e){ return ""; } }
+  function draftSet(k,v){ try{ if(v&&String(v).replace(/<[^>]*>|\s+/g,"")) root.localStorage.setItem("sw.draft."+k,v); else root.localStorage.removeItem("sw.draft."+k); }catch(e){} }
+  function keepDraft(area,k){ if(!area||!root.MutationObserver) return;
+    new MutationObserver(function(){ draftSet(k,clean(area.innerHTML)); }).observe(area,{childList:true,subtree:true,characterData:true,attributes:true}); }
+  function composer(host,ph,send,key){
     host.innerHTML="<div class='swc-emo' hidden><div class='swc-emos'>"+EMO.map(function(e){
         return "<button type='button' data-ch='"+esc(emoChar(e[0]))+"' title='"+esc(e[1])+"'><img src='/emo/"+e[0]+".webp' alt='"+esc(e[1])+"' loading='lazy' width='30' height='30'></button>"; }).join("")+
       "</div></div><button type='button' class='swc-ebtn' aria-label='Emoji' aria-expanded='false'><img src='/emo/1f60e.webp' alt='' width='24' height='24'></button>"+
@@ -438,11 +445,12 @@
       var t=ta.value.replace(/^\s+|\s+$/g,""); if(!t||go.classList.contains("swc-busy")) return;
       go.classList.add("swc-busy"); go.disabled=true; pk.hidden=true; eb.setAttribute("aria-expanded","false");
       send(t,function(ok,why){ go.classList.remove("swc-busy");
-        if(ok){ ta.value=""; grow(); host.removeAttribute("data-err"); }
+        if(ok){ ta.value=""; grow(); host.removeAttribute("data-err"); if(key) draftSet(key,""); }
         else { host.setAttribute("data-err",why||"Not sent. Try again."); grow(); }
         try{ ta.focus({preventScroll:true}); }catch(e){} });
     }
-    ta.addEventListener("input",function(){ grow(); host.removeAttribute("data-err"); });
+    if(key&&draftGet(key)){ ta.value=draftGet(key); setTimeout(grow,0); }
+    ta.addEventListener("input",function(){ grow(); host.removeAttribute("data-err"); if(key) draftSet(key,ta.value); });
     /* Enter sends on a computer, Shift+Enter is a new line; on a phone Enter is a new line and the arrow sends. */
     ta.addEventListener("keydown",function(e){ if(desk&&e.key==="Enter"&&!e.shiftKey&&!e.isComposing){ e.preventDefault(); fire(); } });
     go.onclick=fire;
@@ -451,7 +459,7 @@
     pk.addEventListener("mousedown",function(e){ e.preventDefault(); });
     pk.onclick=function(e){ var b=e.target.closest("[data-ch]"); if(!b) return;
       var c=b.getAttribute("data-ch"), s=ta.selectionStart==null?ta.value.length:ta.selectionStart, en=ta.selectionEnd==null?s:ta.selectionEnd;
-      ta.value=ta.value.slice(0,s)+c+ta.value.slice(en); var p=s+c.length; try{ ta.setSelectionRange(p,p); }catch(x){} grow(); };
+      ta.value=ta.value.slice(0,s)+c+ta.value.slice(en); var p=s+c.length; try{ ta.setSelectionRange(p,p); }catch(x){} grow(); if(key) draftSet(key,ta.value); };
     d.addEventListener("pointerdown",function(e){ if(!pk.hidden&&!host.contains(e.target)){ pk.hidden=true; eb.setAttribute("aria-expanded","false"); } });
     return { focus:function(){ try{ ta.focus({preventScroll:true}); }catch(e){} } };
   }
@@ -507,7 +515,7 @@
     composer(v.querySelector("#swcComp"),"Message the Wizard",function(t,done){
       acct().req("POST","/api/account/reply",{text:t},function(code,j){
         if(code!==200) return done(false,errWords(code,j));
-        state.msgs.unshift({id:j.id,at:new Date().toISOString(),mine:true,body:t}); draw(); done(true); }); });
+        state.msgs.unshift({id:j.id,at:new Date().toISOString(),mine:true,body:t}); draw(); done(true); }); },"me");
     poll(function(j){
       if(!j){ body.innerHTML="<p class='swa-note'>Could not load your messages. Try again in a moment.</p>"; return; }
       if(since===null) since=Date.parse(state.readAt||"")||0;
@@ -548,7 +556,8 @@
           (data.bc?data.bc+" sent to everyone":"Send to everyone or pick users")+"</small></span></button>";
         html+=ids.map(function(id){
           var t=data.by[id], r=byId(id)||{id:id,email:"Deleted account"}, last=t[0], n=unreadOf(id); unread+=n;
-          var prev=(last.from_admin?"You: ":"")+api.textOf(last.from_admin?last.body:esc(last.body)).slice(0,80);
+          var dr=draftGet("u."+id)||api.textOf(draftGet("u."+id+".h"));
+          var prev=dr?"Draft: "+dr.slice(0,70):(last.from_admin?"You: ":"")+api.textOf(last.from_admin?last.body:esc(last.body)).slice(0,80);
           return "<button type='button' class='swc-li"+(n?" swc-unread":"")+"' data-rid='"+esc(id)+"'><img class='swc-lav' src='"+avOf(r)+"' alt=''>"+
             "<span class='swc-lt'><b>"+esc(nameOf(r))+"</b><small>"+esc(prev)+"</small></span>"+
             "<span class='swc-lr'><time>"+esc(ago(last.created_at))+"</time>"+(n?"<span class='swm-unr'>"+n+"</span>":"")+"</span></button>"; }).join("");
@@ -596,30 +605,31 @@
         var c=composer(comp,"Reply to "+nameOf(r),function(t,done){
           acct().req("POST","/api/account/send",{to:[id],html:quickHtml(t)},function(code,j){
             if(code!==200) return done(false,errWords(code,j));
-            load(function(){ draw(); }); done(true); }); });
+            load(function(){ draw(); }); done(true); }); },"u."+id);
         var aa=d.createElement("button"); aa.type="button"; aa.className="swc-aa"; aa.setAttribute("aria-label","Wizard emotes, GIFs and styles"); aa.title="Wizard emotes, GIFs and styles"; aa.textContent="Aa";
         comp.insertBefore(aa,comp.querySelector("textarea")); aa.onclick=rich;
         return c;
       }
       function rich(){
-        var typed=(comp.querySelector("textarea")||{}).value||"";
+        var typed=(comp.querySelector("textarea")||{}).value||""; draftSet("u."+id,"");
         comp.classList.add("swc-richon");
         comp.innerHTML="<div class='swc-rich'>"+editorHtml()+"<div class='swc-rich-ft'><button type='button' class='swa-pillbtn' data-simple>Simple reply</button>"+
           "<button type='button' class='swm-send' data-rich-go>Send</button></div></div>";
         var ed=wireEditor(comp,acct(),function(t){ comp.setAttribute("data-err",t); }), go=comp.querySelector("[data-rich-go]");
-        if(typed.replace(/\s+/g,"")) ed.set(quickHtml(typed));
-        comp.querySelector("[data-simple]").onclick=function(){ simple().focus(); };
+        if(typed.replace(/\s+/g,"")) ed.set(quickHtml(typed)); else if(draftGet("u."+id+".h")) ed.set(draftGet("u."+id+".h"));
+        keepDraft(comp.querySelector(".swm-area"),"u."+id+".h");
+        comp.querySelector("[data-simple]").onclick=function(){ var t=api.textOf(ed.html()); draftSet("u."+id+".h",""); if(t) draftSet("u."+id,t); simple().focus(); };
         go.onclick=function(){
           var html=ed.html(); if(api.isEmpty(html)){ ed.focus(); return sendState(go,"bad","Write something first"); }
           sendState(go,"busy");
           acct().req("POST","/api/account/send",{to:[id],html:html},function(code,j){
             if(code!==200) return sendState(go,"bad",errWords(code,j));
-            sendState(go,"ok","✓ Sent"); ed.clear(); load(function(){ draw(); }); });
+            sendState(go,"ok","✓ Sent"); ed.clear(); draftSet("u."+id+".h",""); load(function(){ draw(); }); });
         };
         ed.focus();
       }
       var c=simple();
-      draw(); c.focus();
+      draw(); if(draftGet("u."+id+".h")) rich(); else c.focus();
       /* Opening a conversation is reading it; only this one is marked. */
       var had=data&&data.by[id]?unreadOf(id):0;
       acct().req("POST","/api/account/msgread",{what:"thread",id:id},function(c2){
@@ -846,6 +856,8 @@
     style();
     var panel=v.querySelector("#swaTMsg"); panel.innerHTML=messagesHtml();
     var ed=wireEditor(panel,a,say), go=panel.querySelector("#swmGo"), mode="all", picked=[];
+    if(draftGet("bcast")) ed.set(draftGet("bcast"));
+    keepDraft(panel.querySelector(".swm-area"),"bcast");
     /* The id of a sent broadcast being edited; Send becomes Save changes. */
     var editing=null;
     var pickBox=panel.querySelector("#swmPick"), pin=panel.querySelector("#swmPickIn"), plist=panel.querySelector("#swmPickList"), chips=panel.querySelector("#swmChips");
@@ -882,7 +894,7 @@
         if(code!==200) return sendState(go,"bad",errWords(code,j));
         sendState(go,"ok",mode==="all"?"✓ Broadcast sent":"✓ Message sent"+(picked.length>1?" to "+picked.length:""));
         say(j.pinged?"Pinged "+j.pinged+" phone"+(j.pinged===1?"":"s")+".":"In their inboxes. No phones pinged (none have notifications on, or it is quiet hours: they get it at 9am).");
-        ed.clear(); picked=[]; paintChips(); setTimeout(label,2700); load();
+        ed.clear(); draftSet("bcast",""); picked=[]; paintChips(); setTimeout(label,2700); load();
       });
     };
     /* A reader picked from elsewhere (the customer view's "Message them"). */
