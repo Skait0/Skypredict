@@ -365,7 +365,7 @@
      tab, so a closed one still says what it holds. */
   /* Messages and Readers (owner, 14 Oct 2026) are filled by public/messages.js. */
   /* Most used first (owner, 18 Oct 2026: "optimize the ui for admin"). */
-  var ADMIN_TABS=[["swaTToday","Today"],["swaTHits","Won slips"],["swaTInspect","Inspect"],["swaTMsg","Messages"],["swaTAlerts","Alerts"],["swaTSw","Switches"],
+  var ADMIN_TABS=[["swaTToday","Today"],["swaTHits","Won slips"],["swaTInspect","Inspect"],["swaTAlerts","Alerts"],["swaTSw","Switches"],
     ["swaTLk","Users"],["swaTGrants","Family & friends"],["swaTStatus","Status"],["swaTModel","Model"],["swaTLog","Log"]];
   /* THE MODEL TEST (owner, 18 Oct 2026; api/account.js blendtest, lib/blendtest.js): the same
      board games picked three ways and graded, and the model's own record by day since 20 Sep. */
@@ -398,7 +398,6 @@
         /* The old one-line notice is the message board now (Messages tab). One still up is shown here to clear. */
         "<div id='swaOldNotice' hidden><label class='swa-lbl'>Old notice line, still showing</label><div class='swa-card'><div class='swa-set'><span class='swa-st'><small id='swaNoticeT'></small></span>"+
         "<button class='swa-pillbtn' id='swaNoticeOff' type='button'>Clear</button></div></div></div>",
-      swaTMsg:"<div class='swa-card'>"+msg("Loading")+"</div>",
       /* Status and Numbers in one tab (owner, 18 Oct 2026: fewer tabs; Today has the day). */
       swaTStatus:"<div class='swa-card' id='swaStatus'>"+msg("Loading")+"</div><label class='swa-lbl'>Numbers</label><div class='swa-card' id='swaNums'>"+msg("Loading")+"</div><label class='swa-lbl'>Tracking links</label><div class='swa-card' id='swaRefs'>"+msg("Loading")+"</div>",
       swaTInspect:"<p class='swa-note'>Paste any booking code to see every game, our number on it and how it went.</p>"+
@@ -780,7 +779,7 @@
     var a=acct();
     menu.innerHTML=menuHtml({name:firstNameOf(savedName(),a.st.email),email:a.st.email,role:role(),plan:lsGet("sw.plan"),
       plusUntil:lsGet("sw.plusUntil"),founder:lsGet("sw.founder")==="1",
-      quota:root.swQuotaToday?root.swQuotaToday():null,slips:root.swSlipCount?root.swSlipCount():0,unread:root.swMsg?root.swMsg.unread():0,
+      quota:root.swQuotaToday?root.swQuotaToday():null,slips:root.swSlipCount?root.swSlipCount():0,unread:root.swMsg?(role()==="admin"?root.swMsg.adminUnread():root.swMsg.unread()):0,
       tg:lsGet("sw.tglinked")==="1"});
     /* The last answer shows at once; the server's answer corrects it, and its link
        is the one a tap then opens. */
@@ -817,7 +816,8 @@
     ensure();
     if(!viewEl){ viewEl=d.createElement("div"); viewEl.className="swa-view"; viewEl.setAttribute("data-clarity-mask","true"); viewEl.setAttribute("role","dialog"); viewEl.setAttribute("aria-modal","true"); d.body.appendChild(viewEl);
       d.addEventListener("keydown",function(e){ if(e.key==="Escape"&&viewEl.classList.contains("on")) closeView(); }); }
-    viewEl.classList[cls==="swa-wp"?"add":"remove"]("swa-wp");   /* the Wizard Pass page dresses its own title */
+    viewEl.classList[cls==="swa-wp"?"add":"remove"]("swa-wp");
+    viewEl.classList[cls==="swa-chat"?"add":"remove"]("swa-chat");   /* the Messages chat fills the screen (public/messages.js) */   /* the Wizard Pass page dresses its own title */
     viewEl.setAttribute("aria-label",title);
     viewEl.innerHTML="<div class='swa-in-wrap'><button class='swa-back' type='button'>"+BACK+"Back</button><h2 class='swa-t'>"+esc(title)+"</h2>"+html+"</div>";
     viewEl.querySelector(".swa-back").onclick=closeView;
@@ -1317,7 +1317,6 @@
     load();
     /* The message board's two tabs. Drawn last: Readers replaces the old email lookup. */
     if(root.swMsg) root.swMsg.admin(v,a,say,setCount,function(id){ var b=v.querySelector("[data-tab='"+id+"']"); if(b) b.click(); });
-    else v.querySelector("#swaTMsg").innerHTML=msg("Messages did not load. Refresh the page.");
   }
   function eatPop(){
     if(ownBack){ ownBack=false; return true; }

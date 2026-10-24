@@ -27,9 +27,9 @@ test("a source that failed is just left out", () => {
   assert.equal(buildAlerts({ readers: Array.from({ length: 300 }, (_, i) => ({ id: "u" + i, created_at: new Date(Date.UTC(2026, 9, 1) + i * 6e4).toISOString() })) }, 100).length, 100);
 });
 
-test("the page shows Alerts after Messages and marks new ones with a dot", () => {
+test("the page shows Alerts after Inspect (Messages moved to the profile, 24 Oct 2026) and marks new ones with a dot", () => {
   const ui = require("fs").readFileSync(require("path").join(__dirname, "..", "public", "account-ui.js"), "utf8");
-  assert.match(ui, /\["swaTMsg","Messages"\],\["swaTAlerts","Alerts"\]/);
+  assert.match(ui, /\["swaTInspect","Inspect"\],\["swaTAlerts","Alerts"\]/);
   assert.match(ui, /swa-aldot/);
   assert.match(ui, /localStorage\.setItem\("sw\.alertsSeen"/);
 });

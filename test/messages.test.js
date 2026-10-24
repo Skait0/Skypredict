@@ -226,10 +226,13 @@ test("a reader deletes a message from their own inbox only, the welcome too", as
   assert.strictEqual(w.rows.length, 1, "nothing deleted for real");
 });
 
-test("the inbox folds and deletes, and the banner keeps GIFs for the inbox", () => {
+test("the inbox is a chat that deletes, and the banner keeps GIFs for the inbox", () => {
   const src = fs.readFileSync(path.join(__dirname, "..", "public", "messages.js"), "utf8");
   assert.ok(src.includes("/api/account/msghide") && src.includes("Tap again to delete"), "delete asks twice, then hides");
-  assert.ok(src.includes("swm-shut") && src.includes('(open?"Less":"More")'), "messages fold");
+  /* Owner, 24 Oct 2026: a chat, the box fixed at the foot, emoji opening ABOVE it, the admin's inbox in the profile. */
+  assert.ok(src.includes('"swa-chat"') && src.includes(".swc-emo{position:absolute;left:0;right:0;bottom:100%"), "chat layout, emoji above the box");
+  assert.ok(src.includes("if(isAdmin()) return adminInbox(opt||{});"), "the admin's Messages is the admin inbox");
+  assert.ok(src.includes(".swm-ed{display:flex;flex-direction:column}.swm-tb{order:0}.swm-pop{order:1}.swm-area{order:2}"), "the full editor's pickers open under its toolbar");
   assert.ok(src.includes("open to see it") && src.includes("swm-gifchip"), "a GIF in the banner is a chip");
   assert.ok(src.includes(".swm-ban .m-body .m-gif{display:none}"));
   assert.ok(src.includes("swAdminBadgeRefresh(); banner(); return; }"), "the admin sees the banner too");

@@ -260,6 +260,49 @@
     ".m-wavy>span:nth-child(8n+6){animation-delay:.4s}.m-wavy>span:nth-child(8n+7){animation-delay:.48s}.m-wavy>span:nth-child(8n){animation-delay:.56s}"+
     ".swm-mots{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}.swm-mots button{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 9px;border:1px solid var(--line);border-radius:99px;background:none;color:var(--soft);font:inherit;font-size:12px;font-weight:800;cursor:pointer}"+
     ".swm-mots button[aria-pressed=true]{background:var(--accent);border-color:transparent;color:var(--on-accent)}.swm-mots img{width:16px;height:16px}"+
+    /* THE CHAT INBOX (24 Oct 2026): a full-height chat, the box to type in fixed at the foot */
+    ".swa-view.swa-chat{padding:0;overflow:hidden;display:flex;flex-direction:column}"+
+    ".swa-view.swa-chat .swa-in-wrap{flex:1;min-height:0;width:100%;max-width:760px;display:flex;flex-direction:column;padding:12px 16px 0;box-sizing:border-box}"+
+    ".swa-view.swa-chat .swa-t{margin:4px 0 6px}"+
+    ".swc{flex:1;min-height:0;display:flex;flex-direction:column}"+
+    ".swc-hd{display:flex;align-items:center;gap:10px;padding:6px 0 12px;border-bottom:1px solid var(--line)}"+
+    ".swc-hd>img,.swc-hd .swc-lav{width:40px;height:40px;border-radius:50%;flex:none;object-fit:cover}"+
+    ".swc-hd>div{flex:1;min-width:0}.swc-hd b{display:block;font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"+
+    ".swc-hd small{display:block;font-size:12px;font-weight:600;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"+
+    ".swc-bk{flex:none;width:36px;height:36px;border:0;border-radius:50%;background:none;color:var(--text);cursor:pointer;display:grid;place-items:center}.swc-bk:hover{background:var(--card-2)}"+
+    ".swc-body{flex:1;min-height:0;overflow-y:auto;padding:10px 2px 12px;display:flex;flex-direction:column;overscroll-behavior:contain}"+
+    ".swc-day{text-align:center;margin:14px 0 6px}.swc-day span{font-size:11.5px;font-weight:800;color:var(--faint);background:var(--card);border:1px solid var(--line);border-radius:99px;padding:3px 10px}"+
+    ".swc-row{display:flex;align-items:flex-end;gap:8px;margin-top:8px}.swc-row.swc-run{margin-top:3px}.swc-row.swc-out{justify-content:flex-end}"+
+    ".swc-av{width:28px;flex:none}.swc-av img{width:28px;height:28px;border-radius:50%;display:block}"+
+    ".swc-b{max-width:min(78%,560px);padding:9px 12px 6px;border-radius:16px;background:var(--card);border:1px solid var(--line)}"+
+    ".swc-in .swc-b{border-bottom-left-radius:5px}.swc-out .swc-b{background:rgba(242,184,75,.15);border-color:rgba(242,184,75,.34);border-bottom-right-radius:5px}"+
+    ".swc-b.swc-fresh{box-shadow:0 0 0 1px var(--accent)}"+
+    ".swc-meta{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:3px;font-size:11px;font-weight:700;color:var(--faint)}"+
+    ".swc-act{display:none;border:0;background:none;color:var(--red-ink);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;padding:2px 4px}.swc-sel .swc-act{display:inline}"+
+    "@media(hover:hover){.swc-row:hover .swc-act{display:inline}}"+
+    ".swc-empty{margin:auto;max-width:300px;text-align:center;color:var(--faint);font-size:13.5px;line-height:1.5;padding:24px 0}"+
+    ".swc-comp{position:relative;display:flex;gap:6px;align-items:flex-end;padding:10px 0 calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--bg)}"+
+    ".swc-comp[data-err]:after{content:attr(data-err);position:absolute;left:52px;top:-20px;font-size:12px;font-weight:800;color:var(--red-ink)}"+
+    ".swc-comp textarea{flex:1;min-height:44px;max-height:140px;resize:none;border-radius:22px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:15px;line-height:1.4;padding:11px 16px;box-sizing:border-box;outline:none}"+
+    ".swc-comp textarea:focus{border-color:var(--accent)}"+
+    ".swc-ebtn,.swc-go{flex:none;width:44px;height:44px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;padding:0}"+
+    ".swc-ebtn{background:none}.swc-ebtn:hover,.swc-ebtn[aria-expanded=true]{background:var(--card-2)}"+
+    ".swc-go{background:var(--accent);color:var(--on-accent);transition:transform .12s,opacity .12s}.swc-go:active{transform:scale(.94)}.swc-go[disabled]{opacity:.45;cursor:default}"+
+    ".swc-emo{position:absolute;left:0;right:0;bottom:100%;margin-bottom:6px;max-height:260px;overflow-y:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.35);padding:8px;z-index:2}.swc-emo[hidden]{display:none}"+
+    ".swc-emos{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:2px}.swc-emos button{border:0;background:none;border-radius:8px;padding:4px;cursor:pointer}.swc-emos button:hover{background:var(--card-2)}"+
+    /* the admin's list */
+    ".swc-lhd{display:flex;gap:8px;align-items:center;padding:2px 0 10px}.swc-lhd .swa-in{flex:1;margin:0}"+
+    ".swc-new{flex:none;display:inline-flex;align-items:center;gap:6px;height:42px;padding:0 14px;border:0;border-radius:10px;background:var(--accent);color:var(--on-accent);font:inherit;font-size:14px;font-weight:800;cursor:pointer}"+
+    ".swc-list{flex:1;min-height:0;overflow-y:auto;border-top:1px solid var(--line)}"+
+    ".swc-li{display:flex;align-items:center;gap:12px;width:100%;padding:12px 4px;border:0;border-bottom:1px solid var(--line);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}.swc-li:hover{background:var(--card)}"+
+    ".swc-lav{width:46px;height:46px;border-radius:50%;flex:none;object-fit:cover}.swc-mega{display:grid;place-items:center;background:rgba(242,184,75,.16);color:var(--accent)}"+
+    ".swc-lt{flex:1;min-width:0}.swc-lt b{display:block;font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"+
+    ".swc-lt small{display:block;font-size:13px;font-weight:500;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}"+
+    ".swc-unread .swc-lt b{font-weight:900}.swc-unread .swc-lt small{color:var(--text);font-weight:700}"+
+    ".swc-lr{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px}.swc-lr time{font-size:11.5px;font-weight:700;color:var(--faint)}.swc-unread .swc-lr time{color:var(--accent)}"+
+    ".swc-bcast{flex:1;min-height:0;overflow-y:auto;padding:4px 2px 24px}.swc-say{font-size:13px;font-weight:700;color:var(--soft);min-height:1em}"+
+    /* the full editor's pickers open right under its toolbar, not under the text */
+    ".swm-ed{display:flex;flex-direction:column}.swm-tb{order:0}.swm-pop{order:1}.swm-area{order:2}"+
     "@media (prefers-reduced-motion:reduce){.swm-ban,.m-wave,.m-bounce,.m-wiggle,.m-jello,.m-spin,.m-pulse,.m-wavy>span{animation:none}}";
   var styled=false;
   function style(){ if(styled) return; styled=true; var s=d.createElement("style"); s.textContent=CSS; d.head.appendChild(s); }
@@ -335,82 +378,237 @@
       "<div class='m-body'>"+(m.mine?esc(m.body).replace(/\n/g,"<br>"):clean(m.body))+"</div>"+
       "<div class='swm-meta'>"+(m.bcast?"<span class='swm-tag'>To everyone</span>":"")+esc(when(m.at))+(admin||"")+"</div></div>";
   }
-  function inbox(){
+  /* THE INBOX AS A CHAT (owner, 24 Oct 2026: "i dont like the messages userflow, its
+     doesnt feel like an inbox would normally feel ... give me a simple inbox setup ...
+     why dont we just make my messages in the admin tab the messages in my profile").
+     WhatsApp / iMessage / Intercom: one conversation, newest at the bottom, days
+     marked, the box to type in fixed at the foot with the emoji picker opening ABOVE
+     it. A reader has one conversation, with the Wizard. The admin's Messages is the
+     admin inbox: every conversation in a list, newest first, unread in bold with a
+     count; a row opens the chat; Broadcasts is a row of its own. */
+  var CHAR={};   /* emoji character -> its animated image code, for the admin's quick replies */
+  function emoChar(cp){ return String(cp).split("_").map(function(h){ return String.fromCodePoint(parseInt(h,16)); }).join(""); }
+  EMO.forEach(function(e){ CHAR[emoChar(e[0])]=e; });
+  var CHARS=Object.keys(CHAR).sort(function(a,b){ return b.length-a.length; });
+  /* The admin's typed text as message HTML: escaped, line breaks kept, known emoji animated. */
+  function quickHtml(t){
+    var h=esc(t);
+    CHARS.forEach(function(c){ if(h.indexOf(c)>=0) h=h.split(c).join(emo(CHAR[c][0],CHAR[c][1])); });
+    return "<p>"+h.replace(/\n/g,"<br>")+"</p>";
+  }
+  var SEND_I="<svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M5 12h13M13 6l6 6-6 6'/></svg>";
+  var BACK_I="<svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M15 6l-6 6 6 6'/></svg>";
+  var MEGA_I="<svg viewBox='0 0 24 24' width='22' height='22' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z'/><path d='M16 9a4 4 0 0 1 0 6'/><path d='M19 6a8 8 0 0 1 0 12'/></svg>";
+  var PEN_I="<svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 20h9'/><path d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'/></svg>";
+  function dayOf(iso){ var t=new Date(iso); if(!isFinite(t)) return "";
+    var a=new Date(); a.setHours(0,0,0,0); var b=new Date(t); b.setHours(0,0,0,0); var n=Math.round((a-b)/864e5);
+    if(n===0) return "Today"; if(n===1) return "Yesterday";
+    try{ return t.toLocaleDateString(undefined,n<7?{weekday:"long"}:{weekday:"short",day:"numeric",month:"short"}); }catch(e){ return ""; } }
+  function hm(iso){ try{ return new Date(iso).toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } }
+  /* Rows for one conversation, oldest first: {id, at, out, html, bcast, act}. `out` is the
+     viewer's own side (right). Day labels between days; the other side's avatar only on
+     the first of a run. */
+  function chatRows(list,avatar){
+    var html="", day="", prev=null;
+    list.forEach(function(m){
+      var dl=dayOf(m.at); if(dl!==day){ day=dl; prev=null; html+="<div class='swc-day'><span>"+esc(dl)+"</span></div>"; }
+      var run=prev&&prev.out===m.out&&(Date.parse(m.at)-Date.parse(prev.at))<5*60e3;
+      html+="<div class='swc-row "+(m.out?"swc-out":"swc-in")+(run?" swc-run":"")+"' data-id='"+esc(String(m.id))+"'>"+
+        (m.out?"":"<span class='swc-av'>"+(run?"":avatar)+"</span>")+
+        "<div class='swc-b"+(m.fresh?" swc-fresh":"")+"'><div class='m-body'>"+m.html+"</div>"+
+        "<div class='swc-meta'>"+(m.bcast?"<span class='swm-tag'>To everyone</span>":"")+"<time>"+esc(hm(m.at))+"</time>"+(m.act||"")+"</div></div></div>";
+      prev=m;
+    });
+    return html;
+  }
+  /* The box to type in, with the emoji picker above it. send(text, done) does the sending. */
+  function composer(host,ph,send){
+    host.innerHTML="<div class='swc-emo' hidden><div class='swc-emos'>"+EMO.map(function(e){
+        return "<button type='button' data-ch='"+esc(emoChar(e[0]))+"' title='"+esc(e[1])+"'><img src='/emo/"+e[0]+".webp' alt='"+esc(e[1])+"' loading='lazy' width='30' height='30'></button>"; }).join("")+
+      "</div></div><button type='button' class='swc-ebtn' aria-label='Emoji' aria-expanded='false'><img src='/emo/1f60e.webp' alt='' width='24' height='24'></button>"+
+      "<textarea rows='1' maxlength='2000' placeholder='"+esc(ph)+"' aria-label='Message'></textarea>"+
+      "<button type='button' class='swc-go' aria-label='Send' disabled>"+SEND_I+"</button>";
+    var ta=host.querySelector("textarea"), go=host.querySelector(".swc-go"), eb=host.querySelector(".swc-ebtn"), pk=host.querySelector(".swc-emo");
+    var desk=!!(root.matchMedia&&root.matchMedia("(pointer:fine)").matches);
+    function grow(){ ta.style.height="auto"; ta.style.height=Math.min(ta.scrollHeight,140)+"px"; go.disabled=!ta.value.replace(/\s+/g,""); }
+    function fire(){
+      var t=ta.value.replace(/^\s+|\s+$/g,""); if(!t||go.classList.contains("swc-busy")) return;
+      go.classList.add("swc-busy"); go.disabled=true; pk.hidden=true; eb.setAttribute("aria-expanded","false");
+      send(t,function(ok,why){ go.classList.remove("swc-busy");
+        if(ok){ ta.value=""; grow(); host.removeAttribute("data-err"); }
+        else { host.setAttribute("data-err",why||"Not sent. Try again."); grow(); }
+        try{ ta.focus({preventScroll:true}); }catch(e){} });
+    }
+    ta.addEventListener("input",function(){ grow(); host.removeAttribute("data-err"); });
+    /* Enter sends on a computer, Shift+Enter is a new line; on a phone Enter is a new line and the arrow sends. */
+    ta.addEventListener("keydown",function(e){ if(desk&&e.key==="Enter"&&!e.shiftKey&&!e.isComposing){ e.preventDefault(); fire(); } });
+    go.onclick=fire;
+    eb.addEventListener("mousedown",function(e){ e.preventDefault(); });
+    eb.onclick=function(){ pk.hidden=!pk.hidden; eb.setAttribute("aria-expanded",String(!pk.hidden)); };
+    pk.addEventListener("mousedown",function(e){ e.preventDefault(); });
+    pk.onclick=function(e){ var b=e.target.closest("[data-ch]"); if(!b) return;
+      var c=b.getAttribute("data-ch"), s=ta.selectionStart==null?ta.value.length:ta.selectionStart, en=ta.selectionEnd==null?s:ta.selectionEnd;
+      ta.value=ta.value.slice(0,s)+c+ta.value.slice(en); var p=s+c.length; try{ ta.setSelectionRange(p,p); }catch(x){} grow(); };
+    d.addEventListener("pointerdown",function(e){ if(!pk.hidden&&!host.contains(e.target)){ pk.hidden=true; eb.setAttribute("aria-expanded","false"); } });
+    return { focus:function(){ try{ ta.focus({preventScroll:true}); }catch(e){} } };
+  }
+  /* Tapping a bubble shows its actions (Delete / Unsend); tapping it again hides them. */
+  function wireBubbles(body){
+    body.addEventListener("click",function(e){
+      if(e.target.closest("a,button")) return;
+      var r=e.target.closest(".swc-row"); if(!r||!r.querySelector(".swc-act")) return;
+      var was=r.classList.contains("swc-sel");
+      body.querySelectorAll(".swc-sel").forEach(function(x){ x.classList.remove("swc-sel"); });
+      if(!was) r.classList.add("swc-sel");
+    });
+  }
+  function bottom(body){ try{ body.scrollTop=body.scrollHeight; }catch(e){} }
+  /* A two-tap action: the first tap asks, the second does it. */
+  function twoTap(b,ask,run){
+    var armed=null, label=b.textContent;
+    b.onclick=function(e){ e.stopPropagation();
+      if(!armed){ b.textContent=ask; b.classList.add("swm-arm"); armed=setTimeout(function(){ armed=null; b.textContent=label; b.classList.remove("swm-arm"); },3000); return; }
+      clearTimeout(armed); armed=null; b.disabled=true; b.textContent="..."; run(function(ok){ if(!ok){ b.disabled=false; b.textContent="Try again"; } }); };
+  }
+
+  function inbox(opt){
     if(!on()||!root.swAccountUI||!root.swAccountUI.view) return;
     style(); root.swAccountUI.close();
-    /* Replies are back on (owner, 14 Oct 2026: "i want feedback from users").
-       Plain text only: the server cleans it and every view escapes it. */
-    /* NOTIFICATIONS OFF? SAY SO WHERE THE MESSAGES ARE (owner, 17 Oct 2026: "when i
-       send messages to users, they should get the notification"). A push only
-       reaches a phone that switched it on while signed in, and that switch lived
-       in Settings alone. Shown only when this phone could have it and does not. */
-    var v=root.swAccountUI.view("Messages","<div class='swm-ping' id='swmPing' hidden><span>Get a ping on your phone when the Wizard messages you.</span>"+
-      "<button type='button' class='swm-send' id='swmPingGo'>Turn on</button></div>"+
-      "<div class='swm-thread' id='swmThread'><p class='swa-note'>Loading...</p></div>"+
-      "<div class='swm-rep'><textarea id='swmRe' maxlength='1000' rows='1' placeholder='Questions, ideas or feedback?' aria-label='Your reply'></textarea>"+
-      "<button type='button' class='swm-send' id='swmReGo'>Send</button></div>");
-    var box=v.querySelector("#swmThread"), ta=v.querySelector("#swmRe"), go=v.querySelector("#swmReGo");
-    /* The answer is async and every account panel shares one box: a reader who left
-       the inbox first has a different panel there, with no #swmPingGo (Sentry, 17 Oct 2026). */
+    if(isAdmin()) return adminInbox(opt||{});
+    var WIZ_AV="<img src='/wiz-logo.png' alt=''>";
+    var v=root.swAccountUI.view("Messages","<div class='swc'><div class='swc-hd'>"+WIZ_AV+"<div><b>The Wizard</b><small>Soccerwizard team</small></div></div>"+
+      "<div class='swm-ping' id='swmPing' hidden><span>Get a ping on your phone when the Wizard messages you.</span><button type='button' class='swm-send' id='swmPingGo'>Turn on</button></div>"+
+      "<div class='swc-body' id='swcBody'><p class='swa-note'>Loading...</p></div><div class='swc-comp' id='swcComp'></div></div>","swa-chat");
+    var body=v.querySelector("#swcBody");
+    /* NOTIFICATIONS OFF? SAY SO WHERE THE MESSAGES ARE (owner, 17 Oct 2026). Kept from the old inbox. */
     var P=root.swAccountUI.push, ping=v.querySelector("#swmPing"), pb=v.querySelector("#swmPingGo");
     if(P&&P.ok()&&root.Notification&&Notification.permission!=="denied") P.state(function(isOn){
-      if(isOn||!ping.isConnected) return;
-      ping.hidden=false;
-      pb.onclick=function(){ sendState(pb,"busy");
-        P.on(function(ok,m){ if(ok){ ping.hidden=true; } else sendState(pb,"bad",m); }); };
-    });
+      if(isOn||!ping.isConnected) return; ping.hidden=false;
+      pb.onclick=function(){ sendState(pb,"busy"); P.on(function(ok,m){ if(ok) ping.hidden=true; else sendState(pb,"bad",m); }); }; });
     if(root.swAccountUI.mark) root.swAccountUI.mark("msgs");
-    go.onclick=function(){
-      var t=ta.value.replace(/^\s+|\s+$/g,""); if(!t){ ta.focus(); return; }
-      sendState(go,"busy");
-      acct().req("POST","/api/account/reply",{text:t},function(code,j){
-        if(code!==200) return sendState(go,"bad",errWords(code,j));
-        ta.value=""; sendState(go,"ok","✓ Sent");
-        state.msgs.unshift({id:j.id,at:new Date().toISOString(),mine:true,body:t}); draw();
-      });
-    };
-    /* Each message folds to one line; unread ones and the newest start open.
-       Delete hides a message for this reader only (owner, 14 Oct 2026): first
-       tap asks, second tap deletes. */
-    var since=Date.parse(state.readAt||"")||0;
+    var since=null;   /* the read mark from before this visit, so what is new stays marked while open */
     function draw(){
-      var list=state.msgs.slice().reverse(), newest=list.length?list[list.length-1].id:null;
-      box.innerHTML=list.length?list.map(function(m){
-        var open=m.id===newest||(!m.mine&&Date.parse(m.at)>since);
-        return "<div class='swm-fold"+(open?"":" swm-shut")+"' data-id='"+esc(String(m.id))+"'>"+
-          bubble(m,since,"<button type='button' class='swm-tog'>"+(open?"Less":"More")+"</button><button type='button' class='swm-del'>Delete</button>")+"</div>";
-      }).join(""):"<p class='swa-note'>No messages.</p>";
-      box.querySelectorAll(".swm-fold").forEach(function(f){
-        var tog=f.querySelector(".swm-tog"), del=f.querySelector(".swm-del"), armed=null;
-        function set(shut){ f.classList.toggle("swm-shut",shut); tog.textContent=shut?"More":"Less"; tog.setAttribute("aria-expanded",String(!shut)); }
-        /* A message that fits in its folded height has nothing to fold. */
-        var mb=f.querySelector(".m-body"), was=f.classList.contains("swm-shut");
-        f.classList.add("swm-shut"); var fits=mb.scrollHeight<=mb.clientHeight+2&&!/class="m-gif"/.test(mb.innerHTML);
-        if(!was) f.classList.remove("swm-shut");
-        if(fits){ f.classList.remove("swm-shut"); tog.remove(); tog={setAttribute:function(){},textContent:""}; }
-        tog.setAttribute("aria-expanded",String(!f.classList.contains("swm-shut")));
-        tog.onclick=function(e){ e.stopPropagation(); set(!f.classList.contains("swm-shut")); };
-        f.onclick=function(e){ if(f.classList.contains("swm-shut")&&!e.target.closest("button,a")) set(false); };
-        del.onclick=function(){
-          if(!armed){ del.textContent="Tap again to delete"; del.classList.add("swm-arm");
-            armed=setTimeout(function(){ armed=null; del.textContent="Delete"; del.classList.remove("swm-arm"); },3000); return; }
-          clearTimeout(armed); del.disabled=true; del.textContent="Deleting...";
-          var id=f.getAttribute("data-id");
+      var list=state.msgs.slice().reverse().map(function(m){
+        return { id:m.id, at:m.at, out:!!m.mine, bcast:m.bcast, fresh:!m.mine&&Date.parse(m.at)>since,
+          html:m.mine?esc(m.body).replace(/\n/g,"<br>"):clean(m.body), act:"<button type='button' class='swc-act' data-del>Delete</button>" }; });
+      body.innerHTML=list.length?chatRows(list,WIZ_AV):"<p class='swc-empty'>No messages yet. Say hello, ask a question or share an idea. The Wizard reads every one.</p>";
+      body.querySelectorAll("[data-del]").forEach(function(b){ var id=b.closest(".swc-row").getAttribute("data-id");
+        /* Delete hides a message for this reader only (owner, 14 Oct 2026). */
+        twoTap(b,"Tap again to delete",function(done){
           acct().req("POST","/api/account/msghide",{id:Number(id)},function(code){
-            if(code!==200){ del.disabled=false; del.textContent="Could not delete. Try again"; armed=null; return; }
-            state.msgs=state.msgs.filter(function(x){ return String(x.id)!==id; }); draw(); paint();
-          });
-        };
-      });
-      var last=box.lastElementChild; if(last) try{ last.scrollIntoView({block:"end"}); }catch(e){}
+            if(code!==200) return done(false);
+            state.msgs=state.msgs.filter(function(x){ return String(x.id)!==id; }); draw(); paint(); }); }); });
+      bottom(body);
     }
+    wireBubbles(body);
+    composer(v.querySelector("#swcComp"),"Message the Wizard",function(t,done){
+      acct().req("POST","/api/account/reply",{text:t},function(code,j){
+        if(code!==200) return done(false,errWords(code,j));
+        state.msgs.unshift({id:j.id,at:new Date().toISOString(),mine:true,body:t}); draw(); done(true); }); });
     poll(function(j){
-      if(!j){ box.innerHTML="<p class='swa-note'>Could not load your messages. Try again in a moment.</p>"; return; }
+      if(!j){ body.innerHTML="<p class='swa-note'>Could not load your messages. Try again in a moment.</p>"; return; }
+      if(since===null) since=Date.parse(state.readAt||"")||0;
       draw();
       /* Opening the inbox is reading it: the badge and the banner go. */
       acct().req("POST","/api/account/msgread",{what:"inbox"},function(code){
         if(code===200){ state.readAt=new Date().toISOString(); state.unread=0; paint(); } });
     });
+  }
+
+  /* THE ADMIN'S INBOX, in the profile's Messages (owner, 24 Oct 2026). List, chat, Broadcasts. */
+  function adminInbox(opt){
+    var v=root.swAccountUI.view("Messages","<div class='swc' id='swcA'></div>","swa-chat"), host=v.querySelector("#swcA");
+    if(root.swAccountUI.mark) root.swAccountUI.mark("msgs");
+    var data=null, q="";
+    function load(cb){
+      acct().req("GET","/api/account/threads",null,function(code,j){
+        if(code!==200){ data=null; return cb(code); }
+        var seen=Date.parse(j.readAt||"")||0, tr=j.threadReads||{}, by={}, order=[], bc=0;
+        (j.messages||[]).forEach(function(m){
+          if(!m.user_id){ if(m.from_admin&&!m.adminHidden) bc++; return; }
+          if(!by[m.user_id]){ by[m.user_id]=[]; order.push(m.user_id); } by[m.user_id].push(m); });
+        data={by:by,order:order,bc:bc,seenOf:function(uid){ return Math.max(seen,Date.parse(tr[uid]||"")||0); }};
+        loadReaders(function(){ cb(200); });
+      });
+    }
+    function unreadOf(id){ return data.by[id].filter(function(m){ return !m.from_admin&&Date.parse(m.created_at)>data.seenOf(id); }).length; }
+    function list(){
+      host.innerHTML="<div class='swc-lhd'><input class='swa-in' type='search' id='swcQ' placeholder='Search conversations' aria-label='Search conversations' autocomplete='off'>"+
+        "<button type='button' class='swc-new' id='swcNew' aria-label='New message'>"+PEN_I+"<span>New</span></button></div><div class='swc-list' id='swcList'><p class='swa-note'>Loading...</p></div>";
+      var qi=host.querySelector("#swcQ"), box=host.querySelector("#swcList"); qi.value=q;
+      host.querySelector("#swcNew").onclick=function(){ compose(); };
+      function rows(){
+        if(!data){ box.innerHTML="<p class='swa-note'>Could not load messages.</p>"; return; }
+        var unread=0, ql=q.toLowerCase();
+        var ids=data.order.filter(function(id){ var r=byId(id)||{}; return !ql||(nameOf(r)+" "+(r.email||"")).toLowerCase().indexOf(ql)>=0; });
+        var html="<button type='button' class='swc-li swc-bcrow' data-bc><span class='swc-lav swc-mega'>"+MEGA_I+"</span><span class='swc-lt'><b>Broadcasts</b><small>"+
+          (data.bc?data.bc+" sent to everyone":"Send to everyone or pick users")+"</small></span></button>";
+        html+=ids.map(function(id){
+          var t=data.by[id], r=byId(id)||{id:id,email:"Deleted account"}, last=t[0], n=unreadOf(id); unread+=n;
+          var prev=(last.from_admin?"You: ":"")+api.textOf(last.from_admin?last.body:esc(last.body)).slice(0,80);
+          return "<button type='button' class='swc-li"+(n?" swc-unread":"")+"' data-rid='"+esc(id)+"'><img class='swc-lav' src='"+avOf(r)+"' alt=''>"+
+            "<span class='swc-lt'><b>"+esc(nameOf(r))+"</b><small>"+esc(prev)+"</small></span>"+
+            "<span class='swc-lr'><time>"+esc(ago(last.created_at))+"</time>"+(n?"<span class='swm-unr'>"+n+"</span>":"")+"</span></button>"; }).join("");
+        if(!ids.length) html+="<p class='swc-empty'>"+(q?"No conversation matches.":"No conversations yet. When a user writes to the Wizard, it shows up here.")+"</p>";
+        box.innerHTML=html;
+        if(!q){ state.adminUnread=unread; if(root.swAdminBadgeRefresh) root.swAdminBadgeRefresh(); }
+        box.querySelector("[data-bc]").onclick=function(){ compose(); };
+        box.querySelectorAll("[data-rid]").forEach(function(b){ b.onclick=function(){ chat(b.getAttribute("data-rid")); }; });
+      }
+      qi.oninput=function(){ q=qi.value.replace(/^\s+|\s+$/g,""); rows(); };
+      if(data) rows();
+      load(function(){ if(host.querySelector("#swcList")===box) rows(); });
+    }
+    function chat(id){
+      var r=byId(id)||{id:id,email:""};
+      host.innerHTML="<div class='swc-hd'><button type='button' class='swc-bk' aria-label='Back to all conversations'>"+BACK_I+"</button>"+
+        "<img src='"+avOf(r)+"' alt=''><div><b>"+esc(nameOf(r))+"</b><small>"+esc(r.email||"")+"</small></div>"+
+        "<button type='button' class='swa-pillbtn swc-prof'>Profile</button></div>"+
+        "<div class='swc-body' id='swcBody'></div><div class='swc-comp' id='swcComp'></div>";
+      var body=host.querySelector("#swcBody");
+      host.querySelector(".swc-bk").onclick=list;
+      host.querySelector(".swc-prof").onclick=function(){
+        if(!root.swAccountUI.admin) return; root.swAccountUI.admin();
+        setTimeout(function(){ var t=d.querySelector("[data-tab='swaTLk']"); if(t) t.click(); if(root.swMsg._openReader) root.swMsg._openReader(id); },80); };
+      function draw(){
+        var t=(data&&data.by[id])||[];
+        var rows=t.slice().reverse().map(function(m){ return { id:m.id, at:m.created_at, out:!!m.from_admin,
+          html:m.from_admin?clean(m.body):esc(m.body).replace(/\n/g,"<br>"),
+          act:m.from_admin?"<button type='button' class='swc-act' data-unsend='"+esc(String(m.id))+"'>Unsend</button>":"" }; });
+        body.innerHTML=rows.length?chatRows(rows,"<img src='"+avOf(r)+"' alt=''>"):"<p class='swc-empty'>No messages with "+esc(nameOf(r))+" yet. They also get every broadcast.</p>";
+        body.querySelectorAll("[data-unsend]").forEach(function(b){
+          twoTap(b,"Tap again to unsend",function(done){
+            acct().req("POST","/api/account/unsend",{id:b.getAttribute("data-unsend")},function(code){
+              if(code!==200) return done(false); load(function(){ draw(); }); }); }); });
+        bottom(body);
+      }
+      wireBubbles(body);
+      var c=composer(host.querySelector("#swcComp"),"Reply to "+nameOf(r),function(t,done){
+        acct().req("POST","/api/account/send",{to:[id],html:quickHtml(t)},function(code,j){
+          if(code!==200) return done(false,errWords(code,j));
+          load(function(){ draw(); }); done(true); }); });
+      draw(); c.focus();
+      /* Opening a conversation is reading it; only this one is marked. */
+      var had=data&&data.by[id]?unreadOf(id):0;
+      acct().req("POST","/api/account/msgread",{what:"thread",id:id},function(c2){
+        if(c2===200&&had){ state.adminUnread=Math.max(0,state.adminUnread-had); if(root.swAdminBadgeRefresh) root.swAdminBadgeRefresh();
+          data.seenOf=(function(f){ return function(u){ return u===id?Date.now():f(u); }; })(data.seenOf); } });
+    }
+    /* Broadcasts: the full editor (styles, animated emoji, GIFs, links), Everyone or Pick
+       users, and every broadcast sent with Edit, Resend, Unsend and Delete. */
+    function compose(to){
+      host.innerHTML="<div class='swc-hd'><button type='button' class='swc-bk' aria-label='Back to all conversations'>"+BACK_I+"</button>"+
+        "<span class='swc-lav swc-mega'>"+MEGA_I+"</span><div><b>New message</b><small>To everyone, or pick users</small></div></div>"+
+        "<div class='swc-bcast'><div id='swaTMsg'></div><p class='swc-say' id='swcSay' aria-live='polite'></p></div>";
+      host.querySelector(".swc-bk").onclick=list;
+      var sayEl=host.querySelector("#swcSay");
+      var m=messagesTab(v,acct(),function(t){ sayEl.textContent=t; },function(){},function(){});
+      var cv=v.querySelector("#swmConvos"); if(cv){ cv.style.display="none"; if(cv.previousElementSibling) cv.previousElementSibling.style.display="none"; }
+      var one=v.querySelector("#swmConvo"); if(one) one.style.display="none";
+      if(to) m.to(to);
+    }
+    if(opt.to) chat(opt.to); else list();
+    if(opt.to) load(function(){ if(host.querySelector("#swcBody")) chat(opt.to); });
   }
 
   /* ------------------------------------------------------- admin: shared */
@@ -850,7 +1048,7 @@
         card.querySelectorAll(".swm-msg").forEach(function(el){ el.classList.toggle("swm-me"); el.classList.toggle("swm-wiz"); });
         card.querySelectorAll(".swm-msg.swm-wiz .swm-who").forEach(function(w){ w.remove(); });
         card.querySelector("[data-back]").onclick=function(){ show(); inp.focus(); };
-        card.querySelector("[data-msg]").onclick=function(){ goTab("swaTMsg"); if(msgTab) msgTab.to(r.id); };
+        card.querySelector("[data-msg]").onclick=function(){ if(msgTab) msgTab.to(r.id); };
         var ff=card.querySelector("[data-ff]");
         if(ff) ff.onclick=function(){ ff.disabled=true; a.req("POST","/api/account/"+ff.getAttribute("data-ff"),{email:r.email},function(c2){
           if(c2===200){ say("Done."); readers=null; open(id); } else { ff.disabled=false; say("Something went wrong. Try again."); } }); };
@@ -897,8 +1095,8 @@
   /* Called by account-ui.js when the Admin view opens: fills both tabs. */
   function admin(v,a,say,setCount,goTab){
     readers=null;
-    var m=messagesTab(v,a,say,setCount,goTab);
-    readersTab(v,a,say,m,goTab);
+    /* Messages lives in the profile now (owner, 24 Oct 2026): Message them opens that chat. */
+    readersTab(v,a,say,{to:function(id){ inbox({to:id}); }},goTab);
   }
 
   root.swMsg={poll:poll,inbox:inbox,admin:admin,unread:function(){ return state.unread; },adminUnread:function(){ return state.adminUnread; }};
