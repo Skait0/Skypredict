@@ -52,7 +52,7 @@
         "<button class='swa-mi' type='button' role='menuitem' data-go='slips'>"+I.slips+"My slips<span class='swa-r swa-n'>"+(o.slips||0)+"</span></button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='msgs'>"+I.chat+"Messages"+(o.unread?"<span class='swa-r swa-unr'>"+(o.unread>9?"9+":o.unread)+"</span>":"")+"</button>"+
         "<button class='swa-mi' type='button' role='menuitem' data-go='settings'>"+I.gear+"Settings</button>"+
-        (o.role==="admin"?"<button class='swa-mi' type='button' role='menuitem' data-go='admin'>"+I.shield+"Admin</button>":"")+
+        (o.role==="admin"?"<button class='swa-mi swa-mi-admin' type='button' role='menuitem' data-go='admin'>"+I.shield+"Admin</button>":"")+
       "</div><div class='swa-list'>"+
         "<button class='swa-mi swa-out' type='button' role='menuitem' data-go='out'>"+I.out+"Sign out</button></div>";
   }
@@ -618,6 +618,8 @@
     ".swa-mi svg{width:18px;height:18px;color:var(--soft);flex:none}.swa-r{margin-left:auto;color:var(--faint)}.swa-out{color:var(--soft)}a.swa-mi{text-decoration:none;box-sizing:border-box}.swa-tgpill{border:1px solid var(--line);background:var(--card-2);color:var(--text);padding:3px 10px;border-radius:6px;font-size:11.5px;font-weight:800}"+
     ".swa-mi:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"+
     ".swa-tab.swa-new::after{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-left:6px;vertical-align:middle}"+
+    /* On a phone the bottom bar has Admin, so the avatar menu does not repeat it (owner, 24 Oct 2026). */
+    "@media(max-width:720px){.swa-mi-admin{display:none}}"+
     ".swa-view{position:fixed;inset:0;z-index:9982;background:var(--bg);color:var(--text);overflow-y:auto;padding:16px 16px 40px;transform:translateX(100%);visibility:hidden;transition:transform .28s cubic-bezier(.23,1,.32,1),visibility 0s .28s}"+
     ".swa-view.on{transform:none;visibility:visible;transition:transform .28s cubic-bezier(.23,1,.32,1),visibility 0s}.swa-in-wrap{max-width:520px;margin:0 auto}"+
     ".swa-back{display:flex;align-items:center;gap:4px;border:0;background:none;color:var(--soft);font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:6px 4px 6px 0}.swa-back svg{width:18px;height:18px}"+

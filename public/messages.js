@@ -301,6 +301,9 @@
     ".swc-unread .swc-lt b{font-weight:900}.swc-unread .swc-lt small{color:var(--text);font-weight:700}"+
     ".swc-lr{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px}.swc-lr time{font-size:11.5px;font-weight:700;color:var(--faint)}.swc-unread .swc-lr time{color:var(--accent)}"+
     ".swc-bcast{flex:1;min-height:0;overflow-y:auto;padding:4px 2px 24px}.swc-say{font-size:13px;font-weight:700;color:var(--soft);min-height:1em}"+
+    /* Aa: the full editor inside a reply */
+    ".swc-aa{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--accent);font:inherit;font-size:15px;font-weight:900;cursor:pointer;padding:0}.swc-aa:hover{border-color:var(--accent)}"+
+    ".swc-comp.swc-richon{display:block}.swc-rich .swm-area{min-height:80px;max-height:180px}.swc-rich-ft{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px}"+
     /* the full editor's pickers open right under its toolbar, not under the text */
     ".swm-ed{display:flex;flex-direction:column}.swm-tb{order:0}.swm-pop{order:1}.swm-area{order:2}"+
     "@media (prefers-reduced-motion:reduce){.swm-ban,.m-wave,.m-bounce,.m-wiggle,.m-jello,.m-spin,.m-pulse,.m-wavy>span{animation:none}}";
@@ -583,10 +586,39 @@
         bottom(body);
       }
       wireBubbles(body);
-      var c=composer(host.querySelector("#swcComp"),"Reply to "+nameOf(r),function(t,done){
-        acct().req("POST","/api/account/send",{to:[id],html:quickHtml(t)},function(code,j){
-          if(code!==200) return done(false,errWords(code,j));
-          load(function(){ draw(); }); done(true); }); });
+      /* Aa OPENS THE FULL EDITOR IN THE REPLY (owner, 24 Oct 2026: "when i want to reply a
+         message, there is no way to access the wizard emoji or other editor tools"): Wizard
+         emotes, animated emoji, GIFs, styles and links, the way Slack's formatting toggle
+         works; Simple reply goes back to the one-line box. */
+      var comp=host.querySelector("#swcComp");
+      function simple(){
+        comp.classList.remove("swc-richon");
+        var c=composer(comp,"Reply to "+nameOf(r),function(t,done){
+          acct().req("POST","/api/account/send",{to:[id],html:quickHtml(t)},function(code,j){
+            if(code!==200) return done(false,errWords(code,j));
+            load(function(){ draw(); }); done(true); }); });
+        var aa=d.createElement("button"); aa.type="button"; aa.className="swc-aa"; aa.setAttribute("aria-label","Wizard emotes, GIFs and styles"); aa.title="Wizard emotes, GIFs and styles"; aa.textContent="Aa";
+        comp.insertBefore(aa,comp.querySelector("textarea")); aa.onclick=rich;
+        return c;
+      }
+      function rich(){
+        var typed=(comp.querySelector("textarea")||{}).value||"";
+        comp.classList.add("swc-richon");
+        comp.innerHTML="<div class='swc-rich'>"+editorHtml()+"<div class='swc-rich-ft'><button type='button' class='swa-pillbtn' data-simple>Simple reply</button>"+
+          "<button type='button' class='swm-send' data-rich-go>Send</button></div></div>";
+        var ed=wireEditor(comp,acct(),function(t){ comp.setAttribute("data-err",t); }), go=comp.querySelector("[data-rich-go]");
+        if(typed.replace(/\s+/g,"")) ed.set(quickHtml(typed));
+        comp.querySelector("[data-simple]").onclick=function(){ simple().focus(); };
+        go.onclick=function(){
+          var html=ed.html(); if(api.isEmpty(html)){ ed.focus(); return sendState(go,"bad","Write something first"); }
+          sendState(go,"busy");
+          acct().req("POST","/api/account/send",{to:[id],html:html},function(code,j){
+            if(code!==200) return sendState(go,"bad",errWords(code,j));
+            sendState(go,"ok","✓ Sent"); ed.clear(); load(function(){ draw(); }); });
+        };
+        ed.focus();
+      }
+      var c=simple();
       draw(); c.focus();
       /* Opening a conversation is reading it; only this one is marked. */
       var had=data&&data.by[id]?unreadOf(id):0;
