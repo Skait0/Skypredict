@@ -159,7 +159,7 @@
     var seats=(f&&f.seats)||200, taken=f?Math.max(0,seats-f.seatsLeft):0;
     var unl=(o.passes||[]).some(function(p){ return p.unlimited; }), cap=unl?o.passes[0].codes:20;
     return "<img class='swa-wpwiz' src='/emo/wiz-spell.webp' alt='' width='112' height='112'>"+
-      "<p class='swa-wpsub'><b>"+(unl?"Unlimited booking codes":"20 booking codes a day")+"</b> on every bookie, from every tool: the Wizard, Slider, Converter, Edit for me, Split and Trim. Pay once. Nothing renews.</p>"+
+      "<p class='swa-wpsub'><b>"+(unl?"Unlimited booking codes":"20 booking codes a day")+"</b> on every bookie, from every tool: the Wizard, Slider, Code Lab, Edit for me, Split and Trim. Pay once. Nothing renews.</p>"+
       /* THE ONE THING THE OTHERS DO NOT HAVE (owner, 18 Oct 2026): a public, graded record. */
       "<p class='swa-wprec'>Every pick is graded in public, win or lose. <a href='/how-it-works'>See our record</a></p>"+
       (o.switchAt?"<p class='swa-wpnow'><b>New prices from 1 Nov.</b> Buy now at today's price. From 1 Nov every running pass gets unlimited codes (fair use).</p>":"")+

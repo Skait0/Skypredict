@@ -146,9 +146,9 @@ test("the converter has a way in from the navigation", () => {
   assert.match(index, /id="bt-convert"/, "no bottom-bar entry");
   assert.match(index, /\$\("tab-convert"\)\.addEventListener\("click",goConvert\)/);
   assert.match(index, /\$\("bt-convert"\)\.addEventListener/);
-  /* The entry keeps its word whatever the icon does: "Converter", never the
+  /* The entry keeps its word whatever the icon does: "Code Lab" since 24 Oct 2026 (was "Converter"), never the
      names of the two books we happen to carry today. */
-  assert.match(index, /id="bt-convert"[\s\S]{0,600}>Converter</, "the entry lost its word");
+  assert.match(index, /id="bt-convert"[\s\S]{0,600}>Code Lab</, "the entry lost its word");
   assert.doesNotMatch(index, /SB<i>/, "the entry names individual bookmakers again");
   /* And its icon must not be the shuffle glyph, which #shuffleBtn owns. */
   const conv = index.slice(index.indexOf('id="bt-convert"'));

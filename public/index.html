@@ -3830,6 +3830,20 @@ html{interpolate-size:allow-keywords}
 .byo-hint{margin:7px 0 0;font-size:12px;font-weight:600;color:var(--faint);line-height:1.45}
 .byo-teaser{margin:12px 0 0;font-size:12px;font-weight:600;color:var(--faint)}
 .byo-teaser b{color:var(--soft);font-weight:700}
+/* The tools, as a lit grid (24 Oct 2026): gold rim, gold icons, the name in white. */
+.lab-tools{margin:14px 0 0;padding:14px;border:1px solid var(--accent-rim);border-radius:14px;
+  background:radial-gradient(120% 140% at 0 0,rgba(242,184,75,.13),transparent 60%),var(--card)}
+.lab-tools .lt-h{margin:0 0 10px;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.lab-tools .lt-g{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.lab-tools li{display:grid;grid-template-columns:30px 1fr;grid-template-rows:auto auto;column-gap:9px;align-items:center;
+  padding:9px 10px;border-radius:10px;background:var(--card-2);border:1px solid var(--line)}
+.lab-tools li:nth-child(3){border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-rim)}
+.lab-tools .lt-i{grid-row:1/3;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(242,184,75,.16);color:var(--accent)}
+.lab-tools .lt-i svg{width:16px;height:16px}
+.lab-tools b{font-size:13px;font-weight:800;color:var(--text);line-height:1.2}
+.lab-tools i{font-style:normal;font-size:11.5px;font-weight:600;color:var(--faint);line-height:1.25}
+.lab-tools li:last-child:nth-child(odd){grid-column:1/-1}
+@media(min-width:900px){.lab-tools .lt-g{grid-template-columns:repeat(3,minmax(0,1fr))}.lab-tools li:last-child:nth-child(odd){grid-column:auto}}
 .byo-side:not(:has(.byo-job:not([disabled]))) .byo-jobs{display:none}
 .byo-side:has(.byo-job:not([disabled])) .byo-teaser{display:none}
 /* WRAPS, NEVER RUNS OFF THE SCREEN (owner, 14 Oct 2026: Betway missing from
@@ -8127,7 +8141,7 @@ html:not(.reduce) .tk-item.flash{border-radius:var(--r-md);animation:tkWash 2s v
     <nav class="nav" role="tablist" aria-label="View">
       <button id="tab-pred" class="navt on" type="button" role="tab">Predictions</button>
       <button id="tab-live" class="navt" type="button" role="tab">Live<span class="nv-x"> scores</span> <span class="live-dot" id="liveDot" hidden></span></button>
-      <button id="tab-convert" class="navt" type="button" role="tab">Converter</button>
+      <button id="tab-convert" class="navt" type="button" role="tab">Code Lab</button>
       <button id="tab-build" class="navt build" type="button" role="tab">Build me a slip</button>
     </nav>
     <span class="when" id="when"></span>
@@ -8516,7 +8530,7 @@ html:not(.reduce) .tk-item.flash{border-radius:var(--r-md);animation:tkWash 2s v
        panel two screens down. One converter still, moved not copied. -->
   <section id="converter">
     <div class="conv-head stage-in stage-in-1">
-      <h2 class="stage-in stage-in-2">Converter</h2>
+      <h2 class="stage-in stage-in-2">Code Lab</h2>
     </div>
     <p class="conv-sub stage-in stage-in-2">Paste a booking code, or several
       from different bookmakers, and we'll read them into one slip. Then
@@ -8583,8 +8597,21 @@ html:not(.reduce) .tk-item.flash{border-radius:var(--r-md);animation:tkWash 2s v
            as a broken page and pushed everything below them down; the owner
            asked for them gone (12 Oct 2026). This one line still says what the
            page can do, and the cards appear, live, the moment a code is read. -->
-      <p class="byo-teaser">Then: <b>Convert</b> · <b>Edit</b> · <b>Split</b> ·
-        <b>Trim</b> · <b>Change markets</b></p>
+      <!-- THE CODE LAB'S TOOLS, HARD TO MISS (owner, 24 Oct 2026: "people dont know it has
+           other functions ... make it hard to miss and stylish"). Shown until a code is read,
+           when the real cards take their place; nothing here is a greyed-out button. -->
+      <div class="byo-teaser lab-tools" role="note" aria-label="What the Code Lab does">
+        <p class="lt-h">Paste a code, then the Wizard can</p>
+        <ul class="lt-g">
+          <li><span class="lt-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><b>Read it</b><i>Our chance on every game</i></li>
+          <li><span class="lt-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"/></svg></span><b>Edit for me</b><i>Safer picks, same games</i></li>
+          <li><span class="lt-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.1 15.9M14.5 14.5L20 20M8.1 8.1L12 12"/></svg></span><b>Trim to odds</b><i>Name a payout, e.g. x500</i></li>
+          <li><span class="lt-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M14.5 12h6.5M18 9l3 3-3 3"/></svg></span><b>Convert</b><i>To all 7 bookies</i></li>
+          <li><span class="lt-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v7a3 3 0 003 3h6a3 3 0 013 3v5"/><path d="M6 21v-5a3 3 0 013-3"/></svg></span><b>Split it</b><i>Smaller tickets</i></li>
+          <li><span class="lt-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h13l-3-3M20 17H7l3 3"/></svg></span><b>Change markets</b><i>One change, every game</i></li>
+          <li><span class="lt-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v6a6 6 0 006 6h0a6 6 0 006-6V3"/><path d="M12 15v6"/></svg></span><b>Merge</b><i>Codes from any bookies, one slip</i></li>
+        </ul>
+      </div>
       <div class="byo-jobs" id="byoJobs" role="group" aria-label="What to do with the code">
         <button class="byo-job" type="button" data-job="edit" disabled>
           <span class="bj-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"/></svg></span>
@@ -8778,7 +8805,7 @@ html:not(.reduce) .tk-item.flash{border-radius:var(--r-md);animation:tkWash 2s v
        over there" and stays true however many books we add. The word
        under it carries the rest. -->
   <button class="btab" id="bt-build" type="button" aria-label="Build me a slip"><span class="bt-ic"><i class="bt-staff" aria-hidden="true"></i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5.6" r="3.4"/><path d="M12 3.6l.62 1.28 1.4.2-1.01.98.24 1.4L12 6.78l-1.25.66.24-1.4-1.01-.98 1.4-.2z" fill="currentColor" stroke="none"/><path d="M12 9v10.4"/><path d="M10.6 11.4h2.8"/><path d="M10.4 19.4h3.2"/></svg></span>Build</button>
-  <button class="btab" id="bt-convert" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M14.5 12h6.5M18 9l3 3-3 3"/></svg></span>Converter</button>
+  <button class="btab" id="bt-convert" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M14.5 12h6.5M18 9l3 3-3 3"/></svg></span>Code Lab</button>
   <button class="btab" id="bt-live" type="button"><span class="bt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle class="lv-core" cx="12" cy="12" r="2"/><path d="M5 12a7 7 0 0 1 7-7M19 12a7 7 0 0 1-7 7"/></svg></span>Live</button>
   <!-- WIZARD PENALTY (release step 2). A game controller (owner, 13 Oct 2026: "change
        the joystick to a controller icon. much more recogniseable"): the pad, a
