@@ -375,3 +375,21 @@ test("an old stuck slip waits open for its one look; with no score from the book
   await W.tick(again.deps);
   assert.strictEqual(again.rows[0].status, "ungraded", "looked once already: it closes on any run");
 });
+
+test("a code the bookie no longer reads back still settles on the legs the ledger kept, by their Sportradar ids", async () => {
+  const row = stuck(dueId);
+  row.legs = row.legs.map((l, i) => Object.assign({}, l, { sr: i ? "72530980" : "1", odds: i ? 1.37 : 2 }));
+  const w = world({ rows: [row], deps: Object.assign(bookie([5, 0]), { readCode: async () => null }) });
+  await W.tick(w.deps);
+  assert.strictEqual(w.rows[0].status, "landed");
+  const noIds = world({ rows: [stuck(dueId)], deps: Object.assign(bookie([5, 0]), { readCode: async () => null }) });
+  await W.tick(noIds.deps);
+  assert.strictEqual(noIds.rows[0].status, "open", "legs saved before 24 Oct carry no id: nothing to ask");
+});
+
+test("the ledger keeps each leg's Sportradar id", () => {
+  const f = [{ date: "2026-10-23", home: "Guimaraes", away: "Maritimo", kickoff: "2026-10-23T19:45:00Z" }];
+  const t = W.trackAll([{ home: "Guimaraes", away: "Maritimo", kickoff: Date.parse("2026-10-23T19:45:00Z"), prediction: "MIX_X_OV_2.5", odds: 1.37, eventId: "sr:match:72530980" }], f);
+  assert.strictEqual(t.length, 1);
+  assert.strictEqual(t[0].sr, "72530980");
+});
