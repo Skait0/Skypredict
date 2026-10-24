@@ -11,7 +11,7 @@ const row = { day: "2026-10-22", odds: 20.55,
 test("the post: one bookie and code per line, partial bookies say how much, 18+", () => {
   const t = SAFE.post(row);
   assert.match(t, /\nSportyBet: Y5NEDC\nBet9ja: 5WTMX32\n/);
-  assert.doesNotMatch(t, /betPawa/, "only SportyBet, Bet9ja, BetKing and Betway are listed");
+  assert.match(t, /\nbetPawa: 2Q0WQDV \(1 of 2\)\n/, "every bookie that took it is listed (owner, 24 Oct 2026)");
   assert.match(t, /every pick 72% or more/); assert.match(t, /18\+$/);
   assert.doesNotMatch(t, /\bfree\b|—/i);
 });
@@ -35,4 +35,16 @@ test("a Big odds of the day row (before 22 Oct 2026) is never posted as a safer 
   assert.strictEqual(SAFE.FIRST_DAY, "2026-10-22");
   const src = require("fs").readFileSync(require("path").join(__dirname, "..", "api", "social.js"), "utf8");
   assert.match(src, /if \(yday >= SAFE\.FIRST_DAY && S\.hourOf\(now\) >= 10/);
+});
+
+test("all seven bookies fit X's 280: a long slip gets the short form, every code kept", () => {
+  const S = require("../lib/social.js");
+  const big = { day: "2026-10-24", odds: 22.11, legs: Array.from({ length: 12 }, () => ({ home: "A", away: "B", code: "1X" })),
+    codes: { sporty: { code: "ABCDEF", n: 12 }, bet9ja: { code: "5WTMX32", n: 11 }, betking: { code: "ABCDEF", n: 11 }, betpawa: { code: "2Q0WQDV", n: 11 },
+      onexbet: { code: "ABCDE", n: 11 }, betway: { code: "BW7C61B3D5", n: 11 }, msport: { code: "B2B4RQY", n: 11 } } };
+  const t = SAFE.post(big);
+  assert.ok(S.xLen(t) <= 280, "X length " + S.xLen(t));
+  for (const c of ["ABCDEF", "5WTMX32", "2Q0WQDV", "ABCDE", "BW7C61B3D5", "B2B4RQY"]) assert.ok(t.includes(c), c);
+  assert.match(t, /\n1xBet: ABCDE \(11\)\n/);
+  assert.match(t, /18\+$/);
 });
